@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 
-voi set_density( void *foo, const char *response )
+void set_density( void *foo, const char *response )
 {
    sscanf( response, "%d", &(wet_spu.density) );
 }
@@ -66,7 +66,7 @@ SPUOptions wetSPUOptions[] = {
    { "ripple_scale", CR_FLOAT, 1, "1", NULL, NULL, 
      "Line Color", (SPUOptionCB)set_ripple_scale },
 
-   { "time_scale", CR_FLOAT, 1, ".1", NULL, NULL
+   { "time_scale", CR_FLOAT, 1, ".1", NULL, NULL,
      "Time Scale", (SPUOptionCB)set_time_scale },
 
    { "ior", CR_FLOAT, 1, "1.2", NULL, NULL, 
@@ -80,9 +80,6 @@ SPUOptions wetSPUOptions[] = {
 void wetspuGatherConfiguration( void )
 {
 	CRConnection *conn;
-	char response[8096];
-
-	__setDefaults();
 
 	/* Connect to the mothership and identify ourselves. */
 	
@@ -92,7 +89,7 @@ void wetspuGatherConfiguration( void )
 		/* The mothership isn't running.  Some SPU's can
 		 * recover gracefully, some should issue an error
 		 * here. */
-  	        crSPUSetDefaultParams( (void *)&wet_spu, wetSPUOptions );
+		crSPUSetDefaultParams( (void *)&wet_spu, wetSPUOptions );
 		return;
 	}
 
