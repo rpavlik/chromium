@@ -115,7 +115,6 @@ void STATE_APIENTRY crStateDepthRange(GLclampd znear, GLclampd zfar)
 
 	vb->depth = g->neg_bitid;
 	vb->dirty = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 

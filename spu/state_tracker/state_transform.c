@@ -59,7 +59,6 @@ void crStateTransformInitBits (CRTransformBits *t)
 {
 	t->dirty = GLBITS_ONES;
 	t->matrix[1] = GLBITS_ONES;
-	t->compress = GLBITS_ONES;
 }
 
 void crStateTransformInit(CRTransformState *t) 
@@ -429,7 +428,6 @@ void STATE_APIENTRY crStateLoadIdentity()
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 
 }
@@ -466,7 +464,6 @@ void STATE_APIENTRY crStatePopMatrix()
 	t->transformValid = 0;
 
 	tb->matrix[t->matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 
@@ -505,7 +502,6 @@ void STATE_APIENTRY crStatePushMatrix()
 	(*t->depth)++;
 
 	tb->matrix[t->matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 
@@ -547,7 +543,6 @@ void STATE_APIENTRY crStateLoadMatrixf(const GLfloat *m1)
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 
 }
@@ -589,7 +584,6 @@ void STATE_APIENTRY crStateLoadMatrixd(const GLdouble *m1)
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 
@@ -668,7 +662,6 @@ void STATE_APIENTRY crStateMultMatrixf(const GLfloat *m1)
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 
@@ -740,7 +733,6 @@ void STATE_APIENTRY crStateMultMatrixd(const GLdouble *m1)
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 
@@ -771,7 +763,6 @@ void STATE_APIENTRY crStateTranslatef(GLfloat x_arg, GLfloat y_arg, GLfloat z_ar
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 
@@ -803,7 +794,6 @@ void STATE_APIENTRY crStateTranslated(GLdouble x_arg, GLdouble y_arg, GLdouble z
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }	
 
@@ -942,7 +932,6 @@ void STATE_APIENTRY crStateScalef (GLfloat x_arg, GLfloat y_arg, GLfloat z_arg)
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 
@@ -981,7 +970,6 @@ void STATE_APIENTRY crStateScaled (GLdouble x_arg, GLdouble y_arg, GLdouble z_ar
 	t->transformValid = 0;
 
 	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 }
 
