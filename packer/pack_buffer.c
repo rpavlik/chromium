@@ -161,9 +161,39 @@ int crPackNumData( int buffer_size ) {
 		- crPackNumOpcodes(buffer_size);
 }
 
-/*
- * Initialize the given buffer.
+
+/**
+ * Initialize the given CRPackBuffer object.
  * The buffer may or may not be currently bound to a CRPackContext.
+ *
+ * Opcodes and operands are packed into a buffer in a special way.
+ * Opcodes start at opcode_start and go downward in memory while operands
+ * start at data_start and go upward in memory.  The buffer is full when we
+ * either run out of opcode space or operand space.
+ *
+ * Diagram (memory addresses increase upward):
+ *
+ *     data_end -> |         |    <- buf->pack + buf->size
+ *                 +---------+
+ *                 |         |
+ *                 |         |
+ *                 | operands|
+ *                 |         |
+ *                 |         |
+ *   data_start -> +---------+
+ * opcode_start -> |         |
+ *                 |         |
+ *                 | opcodes |
+ *                 |         |
+ *                 |         |
+ *  opcode_end  -> +---------+    <- buf->pack
+ *
+ * \param buf  the CRPackBuffer to initialize
+ * \param pack  the address of the buffer for packing opcodes/operands.
+ * \param size  size of the buffer, in bytes
+ * \param mtu   max transmission unit size, in bytes.  When the buffer
+ *              has 'mtu' bytes in it, we have to send it.  The MTU might
+ *              be somewhat smaller than the buffer size.
  */
 void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int mtu )
 {
