@@ -25,6 +25,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	packspuCreateFunctions();
 	packspuGatherConfiguration();
 	packspuConnectToServer();
+	crStateInit();
 	pack_spu.ctx = crStateCreateContext();
 	crStateMakeCurrent( pack_spu.ctx );
 	return &the_functions;

@@ -9,10 +9,17 @@ extern "C" {
 #endif
 
 typedef struct {
+	GLbitvalue dirty;
+	GLbitvalue pack;
+	GLbitvalue unpack;
+	GLbitvalue transfer;
+	GLbitvalue zoom;
+} CRPixelBits;
+
+typedef struct {
 	GLint		   rowLength;
 	GLint		   skipRows;
 	GLint		   skipPixels;
-	GLint		   skipAlignment;
 	GLint		   alignment;
 	GLint		   imageHeight;
 	GLint		   skipImages;
@@ -23,17 +30,44 @@ typedef struct {
 typedef struct {
 	CRPackState pack;
 	CRPackState unpack;
-	GLint		   indexShift;
-	GLint		   indexOffset;
-	GLcolorf	 scale;
-	GLfloat		 depthScale;
-	GLcolorf	 bias;
-	GLfloat		 depthBias;
-	GLfloat		 xZoom;
-	GLfloat		 yZoom;
+	GLboolean   mapColor;
+	GLboolean   mapStencil;
+	GLint		    indexShift;
+	GLint		    indexOffset;
+	GLcolorf	  scale;
+	GLfloat		  depthScale;
+	GLcolorf	  bias;
+	GLfloat		  depthBias;
+	GLfloat		  xZoom;
+	GLfloat		  yZoom;
+
+	GLint		    pixelmapmaxsize;
+
+	GLfloat		 *pixelmapitoi;
+	GLfloat		 *pixelmapstos;
+	GLfloat		 *pixelmapitor;
+	GLfloat		 *pixelmapitog;
+	GLfloat		 *pixelmapitob;
+	GLfloat		 *pixelmapitoa;
+	GLfloat		 *pixelmaprtor;
+	GLfloat		 *pixelmapgtog;
+	GLfloat		 *pixelmapbtob;
+	GLfloat		 *pixelmapatoa;
+ 
+	GLint		    pixelmapitoisize;
+	GLint		    pixelmapstossize;
+	GLint		    pixelmapitorsize;
+	GLint		    pixelmapitogsize;
+	GLint		    pixelmapitobsize;
+	GLint		    pixelmapitoasize;
+	GLint		    pixelmaprtorsize;
+	GLint		    pixelmapgtogsize;
+	GLint		    pixelmapbtobsize;
+	GLint		    pixelmapatoasize;
 } CRPixelState;
 
 void crStatePixelInit( CRPixelState *pixel );
+void crStatePixelInitBits( CRPixelBits *pixelbits );
 
 #ifdef __cplusplus
 }

@@ -14,6 +14,7 @@
 #include "cr_string.h"
 #include "cr_url.h"
 #include "cr_net.h"
+#include "cr_netserver.h"
 
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) // 2MB
 
@@ -360,4 +361,9 @@ int crNetRecv( void )
 int crGetPID( void )
 {
 	return (int) getpid();
+}
+
+void crNetServerConnect( CRNetServer *ns )
+{
+	ns->conn = crNetConnectToServer( ns->name, 7000, ns->buffer_size );
 }

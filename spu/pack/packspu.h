@@ -8,7 +8,7 @@
 #endif
 
 #include "cr_glstate.h"
-#include "cr_net.h"
+#include "cr_netserver.h"
 #include "cr_pack.h"
 
 void packspuCreateFunctions( void );
@@ -19,10 +19,7 @@ void packspuFlush( void );
 typedef struct {
 	int id;
 
-	char *server_name;
-	int buffer_size;
-	CRConnection *conn;
-
+	CRNetServer server;
 	CRPackBuffer buffer;
 
 	CRContext *ctx;

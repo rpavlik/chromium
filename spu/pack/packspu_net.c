@@ -88,8 +88,8 @@ void packspuFlush( void )
 	hdr = __prependHeader( buf, &len );
 	hdr->senderId = 0;
 
-	crNetSend( pack_spu.conn, &(buf->pack), hdr, len );
-	buf->pack = crNetAlloc( pack_spu.conn );
+	crNetSend( pack_spu.server.conn, &(buf->pack), hdr, len );
+	buf->pack = crNetAlloc( pack_spu.server.conn );
 	crPackSetBuffer( buf );
 	crPackResetPointers();
 }
@@ -115,20 +115,20 @@ void packspuHuge( CROpcode opcode, void *buf )
 	msg = (CRMessageOpcodes *) src;
 
 	msg->type       = CR_MESSAGE_OPCODES;
-	msg->senderId   = pack_spu.conn->sender_id;
+	msg->senderId   = pack_spu.server.conn->sender_id;
 	msg->numOpcodes = 1;
 
-	crNetSend( pack_spu.conn, NULL, src, len );
+	crNetSend( pack_spu.server.conn, NULL, src, len );
 }
 
 void packspuConnectToServer( void )
 {
 	crNetInit( packspuReceiveData, NULL );
 
-	pack_spu.conn = crNetConnectToServer( pack_spu.server_name, 7000, pack_spu.buffer_size );
+	crNetServerConnect( &(pack_spu.server) );
 
-	pack_spu.buffer.pack = crNetAlloc( pack_spu.conn );
-	pack_spu.buffer.size = pack_spu.buffer_size;
+	pack_spu.buffer.pack = crNetAlloc( pack_spu.server.conn );
+	pack_spu.buffer.size = pack_spu.server.buffer_size;
 	crPackSetBuffer( &pack_spu.buffer );
 	crPackResetPointers();
 	crPackFlushFunc( packspuFlush );

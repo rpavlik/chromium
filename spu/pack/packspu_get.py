@@ -25,17 +25,10 @@ for func_name in keys:
 	if return_type != 'void' or stub_common.FindSpecial( "../../packer/packer_get", func_name):
 		print '%s PACKSPU_APIENTRY packspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 		print '{'
-		print '\tint writeback = 1;'
+		print '\tint writeback = pack_spu.server.conn->type == CR_DROP_PACKETS ? 0 : 1;'
 		if return_type != 'void':
-			# This is really gross -- this only happens in glGetString, which
-			# sucks, because I don't know how big the string is going to be.
-			# Let's just make a stab at it for now.
-			if string.find( return_type, '*' ) != -1:
-				print '\t%s return_val[8096]; // GROSS HACK' % string.replace( return_type, '*', '' )
-				args.append( "&return_val[0]" )
-			else:
-				print '\t%s return_val;' % return_type
-				args.append( "&return_val" )
+			print '\t%s return_val = (%s) 0;' % (return_type, return_type)
+			args.append( "&return_val" )
 		args.append( "&writeback" )
 		print '\tcrPack%s%s;' % (func_name, stub_common.CallString( args ) )
 		print '\tpackspuFlush();'

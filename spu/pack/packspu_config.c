@@ -21,7 +21,7 @@ void packspuGatherConfiguration( void )
 
 	if (crMothershipSPUParam( conn, response, "server" ) )
 	{
-		pack_spu.server_name = crStrdup( response );
+		pack_spu.server.name = crStrdup( response );
 	}
 	else
 	{
@@ -29,7 +29,7 @@ void packspuGatherConfiguration( void )
 	}
 
 	crMothershipGetMTU( conn, response );
-	sscanf( response, "%d", &(pack_spu.buffer_size) );
+	sscanf( response, "%d", &(pack_spu.server.buffer_size) );
 
 	crMothershipDisconnect( conn );
 }

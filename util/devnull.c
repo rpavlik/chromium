@@ -4,7 +4,6 @@
 
 void crDevnullWriteExact( CRConnection *conn, void *buf, unsigned int len )
 {
-	crWarning( "Writing exact data on a devnull connection" );
 	(void) conn;
 	(void) buf;
 	(void) len;
@@ -12,7 +11,6 @@ void crDevnullWriteExact( CRConnection *conn, void *buf, unsigned int len )
 
 void *crDevnullAlloc( void )
 {
-	crWarning( "Allocating memory on a devnull connection" );
 	return crAlloc( crNetMTU() );
 }
 
@@ -26,7 +24,6 @@ void crDevnullSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 
 void crDevnullFree( CRConnection *conn, void *buf )
 {
-	crWarning( "Freeing memory by a devnull connection" );
 	crFree( buf );
 	(void) conn;
 }
@@ -34,7 +31,6 @@ void crDevnullFree( CRConnection *conn, void *buf )
 void crDevnullSend( CRConnection *conn, void **bufp,
 				 void *start, unsigned int len )
 {
-	crWarning( "\"Sending\" Data on a devnull connection" );
 	
 	if (bufp)
 	{
@@ -73,13 +69,11 @@ void crDevnullAccept( CRConnection *conn, unsigned short port )
 
 void crDevnullDoConnect( CRConnection *conn )
 {
-	crWarning( "Making a Dev/Null connection" );
 	(void) conn;
 }
 
 void crDevnullDoDisconnect( CRConnection *conn )
 {
-	crWarning( "\"Disconnecting\" a Dev/Null connection" );
 	(void) conn;
 }
 
