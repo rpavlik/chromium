@@ -24,6 +24,7 @@ float V3_Norm(HVect v);
 HVect V3_Unit(HVect v);
 HVect V3_Scale(HVect v, float s);
 HVect V3_Negate(HVect v);
+HVect V3_Add(HVect v1, HVect v2);
 HVect V3_Sub(HVect v1, HVect v2);
 float V3_Dot(HVect v1, HVect v2);
 HVect V3_Cross(HVect v1, HVect v2);

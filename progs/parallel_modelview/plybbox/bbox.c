@@ -35,8 +35,8 @@ int main( int argc, char *argv[] )
 		crError( "Can't open %s for reading!", argv[1] );
 	}
 
-	bounds.maxx = bounds.maxy = bounds.maxz = -FLT_MAX;
-	bounds.minx = bounds.miny = bounds.minz = FLT_MAX;
+	bounds.max.x = bounds.max.y = bounds.max.z = -FLT_MAX;
+	bounds.min.x = bounds.min.y = bounds.min.z = FLT_MAX;
 
 	ply  = ply_read (fp, &nelems, &elist);
 	ply_get_info (ply, &version, &file_type);
@@ -63,17 +63,17 @@ int main( int argc, char *argv[] )
 			/* grab all the vertex elements */
 			for (j = 0; j < num_elems; j++) {
 				ply_get_element (ply, vlist+j);
-				if (vlist[j].x > bounds.maxx) bounds.maxx = vlist[j].x;
-				if (vlist[j].y > bounds.maxy) bounds.maxy = vlist[j].y;
-				if (vlist[j].z > bounds.maxz) bounds.maxz = vlist[j].z;
-				if (vlist[j].x < bounds.minx) bounds.minx = vlist[j].x;
-				if (vlist[j].y < bounds.miny) bounds.miny = vlist[j].y;
-				if (vlist[j].z < bounds.minz) bounds.minz = vlist[j].z;
+				if (vlist[j].x > bounds.max.x) bounds.max.x = vlist[j].x;
+				if (vlist[j].y > bounds.max.y) bounds.max.y = vlist[j].y;
+				if (vlist[j].z > bounds.max.z) bounds.max.z = vlist[j].z;
+				if (vlist[j].x < bounds.min.x) bounds.min.x = vlist[j].x;
+				if (vlist[j].y < bounds.min.y) bounds.min.y = vlist[j].y;
+				if (vlist[j].z < bounds.min.z) bounds.min.z = vlist[j].z;
 			}
 		}
 	}
 
-	fprintf( stdout, "%f %f %f %f %f %f\n", bounds.minx, bounds.miny, bounds.minz, bounds.maxx, bounds.maxy, bounds.maxz );
+	fprintf( stdout, "%d %f %f %f %f %f %f\n", nverts, bounds.min.x, bounds.min.y, bounds.min.z, bounds.max.x, bounds.max.y, bounds.max.z );
 
 	ply_close (ply);
 	return 0;

@@ -19,6 +19,14 @@ glGetChromiumParametervCRProc glGetChromiumParametervCR;
 glBarrierCreateCRProc glBarrierCreateCR;
 glBarrierExecCRProc   glBarrierExecCR;
 
+int DrawFrame( void );
+void CreateGraphicsContext( void );
+void SetupGraphicsState( void );
+void SetupCamera( void );
+void CreateDisplayLists( void );
+void ParseArguments( int argc, char *argv[] );
+
+
 int DrawFrame( void )
 {
 	int i;
@@ -216,9 +224,9 @@ void ParseArguments( int argc, char *argv[] )
 	}
 	if (!globals.ply_root)
 	{
-		crWarning( "No ply root specified, defaulting to /cr/data/powerplant." );
+		crWarning( "No ply root specified, defaulting to /home/dale/plys." );
 		crWarning( "It's good to be the king." );
-		globals.ply_root = crStrdup( "/cr/data/powerplant" );
+		globals.ply_root = crStrdup( "/home/dale/plys" );
 	}
 }
 

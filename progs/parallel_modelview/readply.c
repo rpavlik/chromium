@@ -32,6 +32,10 @@ typedef struct mfi_list {
 
 MFIList *mfi_head = NULL, *mfi_tail = NULL;
 
+void ParseModelInfo( void );
+void ReadFile( MFIList *mfi, Model *model );
+
+
 void ParseModelInfo( void )
 {
 	FILE *fp;

@@ -95,6 +95,8 @@ void add_property(PlyFile *, char **);
 void add_comment(PlyFile *, char *);
 void add_obj_info(PlyFile *, char *);
 
+int get_prop_type(char *type_name);
+
 /* copy a property */
 void copy_property(PlyProperty *, PlyProperty *);
 
@@ -119,10 +121,12 @@ void binary_get_element(PlyFile *, char *);
 char *my_alloc(int, int, char *);
 
 /* byte ordering */
-void get_native_binary_type();
+void get_native_binary_type(void);
 void swap_bytes(char *, int);
 
-void check_types();
+void check_types(void);
+
+void setup_other_props(PlyElement *elem);
 
 /*************/
 /*  Writing  */
