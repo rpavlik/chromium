@@ -14,6 +14,17 @@ the caller.  Options can be boolean, integer, float or string.
 from wxPython.wx import *
 
 
+def _BackslashChars(s):
+	"""Return the string with tab characters replaced by \t, etc."""
+	# XXX do same thing for newlines, etc?
+	return string.replace(s, "\t", "\\t")
+
+def _UnBackslashChars(s):
+	"""Return the string with \t sequences converted to real tabs, etc."""
+	# XXX do same thing for newlines, etc?
+	return string.replace(s, "\\t", "\t")
+
+
 class SPUDialog(wxDialog):
 	def __init__(self, parent, id, title, optionList=None):
 		"""parent, id, and title are the standard wxDialog parameters.
@@ -36,7 +47,7 @@ class SPUDialog(wxDialog):
 		innerSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		outerSizer.Add(innerSizer, option=1, flag=wxALL|wxGROW, border=10)
 		
-		if optionList:
+		if optionList and len(optionList) > 0:
 			i = 0
 			for opt in optionList.Options():
 				controls = []
@@ -94,7 +105,8 @@ class SPUDialog(wxDialog):
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
 					# XXX support [opt.Count] widgets?
 					assert opt.Count == 1
-					ctrl = wxTextCtrl(parent=self, id=100+i, value=opt.Value[0])
+					s = _BackslashChars(opt.Value[0])
+					ctrl = wxTextCtrl(parent=self, id=100+i, value=s)
 					rowSizer.Add(ctrl, option=1, flag=wxEXPAND)
 					innerSizer.Add(rowSizer, flag=wxALL|wxEXPAND, border=4)
 					controls.append(ctrl)
@@ -113,7 +125,8 @@ class SPUDialog(wxDialog):
 
 		else:
 			# no options, display a message
-			label = wxStaticText(parent=self, id=-1, label="No options")
+			label = wxStaticText(parent=self, id=-1,
+								 label="No options for this SPU class.")
 			innerSizer.Add(label, flag=wxALIGN_CENTER|wxALL, border=4)
 
 		# XXX still need to write the callbacks for each control
@@ -177,7 +190,8 @@ class SPUDialog(wxDialog):
 				# must be (a) text or float box(es)
 				assert isinstance(ctrls[0], wxTextCtrl)
 				for i in range(count):
-					ctrls[i].SetValue(str(newValue[i]))
+					s = _BackslashChars(str(newValue[i]))
+					ctrls[i].SetValue(s)
 
 	# name is an SPU option like bbox_line_width
 	def GetValue(self, name):
@@ -188,7 +202,10 @@ class SPUDialog(wxDialog):
 			result = []
 			count = len(ctrls)
 			for i in range(count):
-				result.append(ctrls[i].GetValue())
+				s = ctrls[i].GetValue()
+				if isinstance(ctrls[i], wxTextCtrl):
+					s = _UnBackslashChars(s)
+				result.append(s)
 			return result
 		else:
 			return [] # empty list
