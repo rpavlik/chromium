@@ -116,6 +116,34 @@ SPUOptions binaryswapspuOptions[] = {
 };
 
 
+static int
+ParseVisString( const char *visString )
+{
+	int mask = 0;
+	if (crStrlen(visString) > 0) {
+		if (crStrstr(visString, "rgb"))
+			mask |= CR_RGB_BIT;
+		if (crStrstr(visString, "alpha"))
+			mask |= CR_ALPHA_BIT;
+		if (crStrstr(visString, "z") || crStrstr(visString, "depth"))
+			mask |= CR_DEPTH_BIT;
+		if (crStrstr(visString, "stencil"))
+			mask |= CR_STENCIL_BIT;
+		if (crStrstr(visString, "accum"))
+			mask |= CR_ACCUM_BIT;
+		if (crStrstr(visString, "stereo"))
+			mask |= CR_STEREO_BIT;
+		if (crStrstr(visString, "multisample"))
+			mask |= CR_MULTISAMPLE_BIT;
+		if (crStrstr(visString, "double"))
+			mask |= CR_DOUBLE_BIT;
+		if (crStrstr(visString, "pbuffer"))
+			mask |= CR_PBUFFER_BIT;
+	}
+	return mask;
+}
+
+
 void binaryswapspuGatherConfiguration( Binaryswapspu *binaryswap_spu )
 {
 	CRConnection *conn;
@@ -137,7 +165,7 @@ void binaryswapspuGatherConfiguration( Binaryswapspu *binaryswap_spu )
 	crSPUGetMothershipParams( conn, (void *)binaryswap_spu, binaryswapspuOptions );
 	
 	
-	/* Get the a few options from the Render SPU from which we inherit */
+	/* Get a few options from the Render SPU from which we inherit */
 	{
 		char response[1000];
 		if (crMothershipGetSPUParam( conn, response, "resizable" )) {
@@ -149,6 +177,13 @@ void binaryswapspuGatherConfiguration( Binaryswapspu *binaryswap_spu )
 			int renderToAppWindow = 0;
 			sscanf(response, "%d", &renderToAppWindow);
 			binaryswap_spu->renderToAppWindow = renderToAppWindow;
+		}
+		if (crMothershipGetSPUParam( conn, response, "default_visual" )) {
+			binaryswap_spu->default_visual = ParseVisString(response);
+		}
+		else {
+			/* This *MUST* match the default in the Render SPU */
+			binaryswap_spu->default_visual = CR_RGB_BIT | CR_DOUBLE_BIT | CR_DEPTH_BIT;
 		}
 	}
 

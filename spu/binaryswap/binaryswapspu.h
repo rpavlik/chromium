@@ -76,6 +76,7 @@ typedef struct {
 	int resizable;
 	int local_visualization;
 	int renderToAppWindow;
+	int default_visual;
 	/*@}*/
 
 	CRHashTable *contextTable;
