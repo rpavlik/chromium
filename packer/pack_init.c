@@ -26,7 +26,6 @@ CRPackContext *crPackNewContext( int swapping )
 	GET_PACKER_CONTEXT(pc);
         crMemZero( pc, sizeof(CRPackContext));
 #endif
-	crDebug( "crPackInit() INITIALIZATION swapping=%d", swapping );
 	pc->swapping = swapping;
 	pc->Flush = NULL;
 	pc->SendHuge = NULL;

@@ -28,7 +28,6 @@ void crStateDiffAPI( SPUDispatchTable *api )
 	if (!diff_api.AlphaFunc) 
 	{
 		/* Called when starting up Chromium */
-		crDebug( "CALLING INIT ON %p", (void *)&(diff_api) );
 		crSPUInitDispatchTable( &(diff_api) );
 	}
 	crSPUCopyDispatchTable( &(diff_api), api );
