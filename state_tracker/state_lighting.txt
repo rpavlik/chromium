@@ -40,7 +40,6 @@
 :attenuation:constantAttenuation:Lightf, GL_LIGHT0+i, GL_CONSTANT_ATTENUATION
 :attenuation:linearAttenuation:Lightf, GL_LIGHT0+i, GL_LINEAR_ATTENUATION
 :attenuation:quadraticAttenuation:Lightf, GL_LIGHT0+i, GL_QUADRATIC_ATTENUATION
-:attenuation:constantAttenuation:Lightf, GL_LIGHT0+i, GL_CONSTANT_ATTENUATION
 :position:*if (fromCtx->transform.matrixMode != GL_MODELVIEW) { diff_api.MatrixMode(GL_MODELVIEW); fromCtx->transform.matrixMode = GL_MODELVIEW; }
 :position:*diff_api.PushMatrix();
 :position:*diff_api.LoadIdentity();
