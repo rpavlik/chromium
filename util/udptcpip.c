@@ -78,7 +78,7 @@ typedef int socklen_t;
 #endif
 
 static void
-crUDPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
+crUDPIPWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 {
 	int retval;
 	if ( len > conn->mtu + sizeof(conn->seq) )
@@ -235,7 +235,7 @@ static void crUDPTCPIPAccept( CRConnection *conn, char *hostname, unsigned short
 
 static unsigned int safelen=0;
 static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
-				void *start, unsigned int len )
+				const void *start, unsigned int len )
 {
 	static unsigned int safedone=0;
 	CRTCPIPBuffer *udptcpip_buffer;
@@ -296,6 +296,11 @@ static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 	crLockMutex(&cr_tcpip.mutex);
 #endif
 	crBufferPoolPush( cr_tcpip.bufpool, udptcpip_buffer, conn->buffer_size );
+	/* Since the buffer's now in the 'free' buffer pool, the caller can't
+	 * use it any more.  Setting bufp to NULL will make sure the caller
+	 * doesn't try to re-use the buffer.
+	 */
+	*bufp = NULL;
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.mutex);
 #endif
@@ -303,7 +308,7 @@ static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 
 static unsigned int barflen=0;
 static void crUDPTCPIPBarf( CRConnection *conn, void **bufp,
-				void *start, unsigned int len)
+				const void *start, unsigned int len)
 {
 	static unsigned int barfdone=0;
 	static const unsigned int sizes[]={

@@ -63,9 +63,9 @@ typedef void (*CRNetCloseFunc)( unsigned int sender_id );
 
 void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc );
 void *crNetAlloc( CRConnection *conn );
-void crNetSend( CRConnection *conn, void **bufp, void *start, unsigned int len );
-void crNetBarf( CRConnection *conn, void **bufp, void *start, unsigned int len );
-void crNetSendExact( CRConnection *conn, void *start, unsigned int len );
+void crNetSend( CRConnection *conn, void **bufp, const void *start, unsigned int len );
+void crNetBarf( CRConnection *conn, void **bufp, const void *start, unsigned int len );
+void crNetSendExact( CRConnection *conn, const void *start, unsigned int len );
 void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len );
 unsigned int  crNetGetMessage( CRConnection *conn, CRMessage **message );
 unsigned int  crNetPeekMessage( CRConnection *conn, CRMessage **message );
@@ -126,9 +126,9 @@ struct CRConnection {
 	int port;
 
 	void *(*Alloc)( CRConnection *conn );
-	void  (*Send)( CRConnection *conn, void **buf, void *start, unsigned int len );
-	void  (*Barf)( CRConnection *conn, void **buf, void *start, unsigned int len );
-	void  (*SendExact)( CRConnection *conn, void *start, unsigned int len );
+	void  (*Send)( CRConnection *conn, void **buf, const void *start, unsigned int len );
+	void  (*Barf)( CRConnection *conn, void **buf, const void *start, unsigned int len );
+	void  (*SendExact)( CRConnection *conn, const void *start, unsigned int len );
 	void  (*Recv)( CRConnection *conn, void *buf, unsigned int len );
 	void  (*Free)( CRConnection *conn, void *buf );
 	void  (*InstantReclaim)( CRConnection *conn, CRMessage *mess );

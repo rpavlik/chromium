@@ -229,7 +229,7 @@ crTCPIPReadExact( CRConnection *conn, void *buf, unsigned int len )
 }
 
 int
-__tcpip_write_exact( CRSocket sock, void *buf, unsigned int len )
+__tcpip_write_exact( CRSocket sock, const void *buf, unsigned int len )
 {
 	int err;
 	char *src = (char *) buf;
@@ -266,7 +266,7 @@ __tcpip_write_exact( CRSocket sock, void *buf, unsigned int len )
 }
 
 void
-crTCPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
+crTCPIPWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 {
 	if ( __tcpip_write_exact( conn->tcp_socket, buf, len) <= 0 )
 	{
@@ -568,7 +568,7 @@ crTCPIPSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 
 static void
 crTCPIPSend( CRConnection *conn, void **bufp,
-	     void *start, unsigned int len )
+						 const void *start, unsigned int len )
 {
 	CRTCPIPBuffer *tcpip_buffer;
 	unsigned int      *lenp;
@@ -620,6 +620,11 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 	crLockMutex(&cr_tcpip.mutex);
 #endif
 	crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, tcpip_buffer->allocated );
+	/* Since the buffer's now in the 'free' buffer pool, the caller can't
+	 * use it any more.  Setting bufp to NULL will make sure the caller
+	 * doesn't try to re-use the buffer.
+	 */
+	*bufp = NULL;
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.mutex);
 #endif

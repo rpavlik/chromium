@@ -79,7 +79,7 @@ crFileReadExact( CRConnection *conn, void *buf, unsigned int len )
 }
 
 static void
-crFileWriteExact( CRConnection *conn, void *buf, unsigned int len )
+crFileWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 {
 	int retval = write( conn->fd, buf, len );
 	if ( retval < (int) len )
@@ -137,7 +137,7 @@ crFileSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 }
 
 static void
-crFileSend( CRConnection *conn, void **bufp, void *start, unsigned int len )
+crFileSend( CRConnection *conn, void **bufp, const void *start, unsigned int len )
 {
 	CRFileBuffer *file_buffer;
 	unsigned int      *lenp;

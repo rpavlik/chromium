@@ -524,7 +524,7 @@ void *crNetAlloc( CRConnection *conn )
  * "send" implementation. */
 
 void crNetSend( CRConnection *conn, void **bufp,
-		            void *start, unsigned int len )
+		            const void *start, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) start;
 	CRASSERT( conn );
@@ -555,7 +555,7 @@ void crNetSend( CRConnection *conn, void **bufp,
  * "barf" implementation. */
 
 void crNetBarf( CRConnection *conn, void **bufp,
-		            void *start, unsigned int len )
+		            const void *start, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) start;
 	CRASSERT( conn );
@@ -585,7 +585,7 @@ void crNetBarf( CRConnection *conn, void **bufp,
 /* Send something exact on a connection without the message length
  * header. */
 
-void crNetSendExact( CRConnection *conn, void *buf, unsigned int len )
+void crNetSendExact( CRConnection *conn, const void *buf, unsigned int len )
 {
 	conn->SendExact( conn, buf, len );
 }

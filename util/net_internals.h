@@ -60,7 +60,7 @@ extern void crTCPIPDoDisconnect( CRConnection *conn );
 extern int crTCPIPErrno( void );
 extern char *crTCPIPErrorString( int err );
 extern void crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port );
-extern void crTCPIPWriteExact( CRConnection *conn, void *buf, unsigned int len );
+extern void crTCPIPWriteExact( CRConnection *conn, const void *buf, unsigned int len );
 extern void crTeacSetRank( int );
 extern void crTeacSetContextRange( int, int );
 extern void crTeacSetNodeRange( const char *, const char * );
@@ -68,7 +68,7 @@ extern void crTeacSetKey( const unsigned char *key, const int keyLength );
 extern void crTCPIPFree( CRConnection *conn, void *buf );
 extern void *crTCPIPAlloc( CRConnection *conn );
 extern void crTCPIPReadExact( CRConnection *conn, void *buf, unsigned int len );
-extern int __tcpip_write_exact( CRSocket sock, void *buf, unsigned int len );
+extern int __tcpip_write_exact( CRSocket sock, const void *buf, unsigned int len );
 extern int __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len );
 extern void __tcpip_dead_connection( CRConnection *conn );
 

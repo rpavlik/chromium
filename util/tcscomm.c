@@ -64,10 +64,10 @@ void crTcscommFree( CRConnection *, void * );
 int crTcscommErrno( void );
 char *crTcscommErrorString( int err );
 void crTcscommReadExact( int tcscomm_id, void *buf, unsigned int len );
-void crTcscommWriteExact( CRConnection *conn, void *buf, unsigned int len );
+void crTcscommWriteExact( CRConnection *conn, const void *buf, unsigned int len );
 void *crTcscommAlloc( CRConnection *conn );
 void crTcscommSend( CRConnection *conn, void **bufp,
-		    void *start, unsigned int len );
+		    const void *start, unsigned int len );
 void crTcscommSingleRecv( CRConnection *conn, void *buf, unsigned int len );
 void crTcscommHandleNewMessage( CRConnection *conn, CRMessage *msg,
 				unsigned int len );
@@ -140,7 +140,7 @@ crTcscommReadExact( int tcscomm_id, void *buf, unsigned int len )
 }
 
 static int
-__write_exact( int tcscomm_id, void *buf, unsigned int len )
+__write_exact( int tcscomm_id, const void *buf, unsigned int len )
 {
   int   num_written = 0;
   void *src = (void *) buf;
@@ -156,7 +156,7 @@ __write_exact( int tcscomm_id, void *buf, unsigned int len )
 }
 
 void
-crTcscommWriteExact( CRConnection *conn, void *buf, unsigned int len )
+crTcscommWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 {
   int retval = __write_exact( conn->tcscomm_id, buf, len );
   if ( retval <= 0 ) {
@@ -415,7 +415,7 @@ crTcscommFree( CRConnection *conn, void *buf )
 
 void
 crTcscommSend( CRConnection *conn, void **bufp,
-	    void *start, unsigned int len )
+	    const void *start, unsigned int len )
 {
   CRTcscommBuffer *tcscomm_buffer;
   char *buf = NULL;

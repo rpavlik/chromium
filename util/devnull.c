@@ -10,7 +10,7 @@
 #include "net_internals.h"
 
 static void
-crDevnullWriteExact( CRConnection *conn, void *buf, unsigned int len )
+crDevnullWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 {
 	(void) conn;
 	(void) buf;
@@ -41,7 +41,7 @@ crDevnullFree( CRConnection *conn, void *buf )
 
 static void
 crDevnullSend( CRConnection *conn, void **bufp,
-				 void *start, unsigned int len )
+				 const void *start, unsigned int len )
 {
 	
 	if (bufp)

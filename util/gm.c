@@ -136,7 +136,7 @@ static struct {
 #define CR_GM_SYNCHRONOUS          0
 
 void crGmSend( CRConnection *conn, void **bufp, 
-		void *start, unsigned int len );
+		const void *start, unsigned int len );
 void crGmFree( CRConnection *conn, void *buf );
 
 #if CR_GM_DEBUG || CR_GM_CREDITS_DEBUG
@@ -367,7 +367,7 @@ static void * cr_gm_dma_malloc( unsigned long length )
 
 /* All the functions that shouldn't get called */
 
-void crGmSendExact( CRConnection *conn, void *buf, unsigned int len )
+void crGmSendExact( CRConnection *conn, const void *buf, unsigned int len )
 {
 	crError( "crGmSendExact shouldn't ever get called." );
 	(void) conn;
@@ -1068,7 +1068,7 @@ static void crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 }
 
 void crGmSend( CRConnection *conn, void **bufp, 
-	       void *start, unsigned int len )
+	       const void *start, unsigned int len )
 {
 	CRGmBuffer *gm_buffer;
 	
