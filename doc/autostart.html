@@ -27,7 +27,12 @@ program normally and have it run on Chromium.
 <h2 class="PageSubHeading">Preparation</h2>
 
 <p>
-The following steps need to be taken first:
+This example assumes that Chromium is located in /usr/local/Chromium-x.y/.
+Adjust these instructions accordingly if you have Chromium installed
+elsewhere.
+</P>
+<P>
+The following steps need to be taken:
 </p>
 
 <p><b>1. (For Unix/Linux) Use libcrfaker.so instead of libGL.so</b></p>
@@ -40,10 +45,10 @@ where to find the library.
 For example:
 
 <pre>
-   cd /usr/local/Chromium-1.0/cr/lib/Linux
+   cd /usr/local/Chromium-x.y/cr/lib/Linux
    ln -s libcrfaker.so libGL.so
    ln -s libcrfaker.so libGL.so.1
-   setenv LD_LIBRARY_PATH /usr/local/Chromium-1.0/cr/lib/Linux
+   setenv LD_LIBRARY_PATH /usr/local/Chromium-x.y/cr/lib/Linux
 </pre>
 
 <p><b>1. (For Microsoft Windows) Use libcrfaker.dll instead of opengl32.dll</b></p>
@@ -56,9 +61,9 @@ find the library. This will ensure that the new opengl32.dll will
 be picked up before the system's version.
 
 <pre>
-   cd c:\Chromium-1.0\cr\bin\WIN_NT
+   cd c:\Chromium-x.y\cr\bin\WIN_NT
    copy libcrfaker.dll opengl32.dll
-   set PATH=c:\Chromium-1.0\cr\bin\WIN_NT;....
+   set PATH=c:\Chromium-x.y\cr\bin\WIN_NT;....
 </pre>
 
 <p><b>2. Make a configuration file</b></p>
@@ -81,7 +86,7 @@ Make sure your configuration:
 
 <p>
 Save your configuration to a file such as
-<code>/usr/local/Chromium-1.0/cr/mothership/configs/myconfig.conf</code>
+<code>/usr/local/Chromium-x.y/cr/mothership/configs/myconfig.conf</code>
 </p>
 
 <p><b>XXX -temporary</b></p>
@@ -89,7 +94,7 @@ Save your configuration to a file such as
 For the time being, you may have to edit your configuration file and
 specify the following:
 <pre>
-sys.path.append( "/usr/local/Chromium-1.0/cr/mothership/server" )
+sys.path.append( "/usr/local/Chromium-x.y/cr/mothership/server" )
 </pre>
 <p>
 Otherwise, the configuration script may not be able to find the mothership.py
@@ -116,9 +121,9 @@ Here's an example:
 </p>
 
 <pre>
-atlantis  /usr/local/Chromium-1.0/cr/mothership/configs/myconfig.conf
-city      /usr/local/Chromium-1.0/cr/mothership/configs/tilecity.conf -r1 -c2
-*         /usr/local/Chromium-1.0/cr/mothership/configs/default.conf %p
+atlantis  /usr/local/Chromium-x.y/cr/mothership/configs/myconfig.conf
+city      /usr/local/Chromium-x.y/cr/mothership/configs/tilecity.conf -r1 -c2
+*         /usr/local/Chromium-x.y/cr/mothership/configs/default.conf %p
 </pre>
 
 <p>
@@ -145,7 +150,7 @@ If the <b>CR_CONFIG</B> environment variable is set, it will override
 the <code>.crconfigs</code> file.  Here's an example:
 </p>
 <pre>
-   setenv CR_CONFIG "/usr/local/Chromium-1.0/cr/mothership/configs/tilecity.conf -r1 -c2"
+   setenv CR_CONFIG "/usr/local/Chromium-x.y/cr/mothership/configs/tilecity.conf -r1 -c2"
 </pre>
 
 
@@ -184,9 +189,9 @@ Here are some things to check if this doesn't work:
 <li>(Unix/Linux only) Run <code>ldd programname</code> and verify that you're linked against
 the faker library.  You should see something like this:
 <pre>
-    libGL.so => /usr/local/Chromium-1.0/cr/lib/Linux/libGL.so (0x4010b000)
+    libGL.so => /usr/local/Chromium-x.y/cr/lib/Linux/libGL.so (0x4010b000)
 </pre>
-/usr/local/Chromium-1.0/cr/lib/Linux/libGL.so should be a symlink to
+/usr/local/Chromium-x.y/cr/lib/Linux/libGL.so should be a symlink to
 libcrfaker.so
 <li>(Microsoft Windows only) Check that the 'python.exe' application is within the system PATH if crSpawn fails. The easiest way to check this is open a 'cmd' prompt and type 'python' and hit return. If Python doesn't start - check your setup.
 <li>Examine the output of the crfaker to see if your configuration is
@@ -194,7 +199,7 @@ being found:
 <pre>
     CR Debug(foo:26248): Spawning mothership with argv:
     CR Debug(foo:26248): argv[0] = 'python'
-    CR Debug(foo:26248): argv[1] = '/usr/local/Chromium-1.0/cr/mothership/tools/tilecity.conf'
+    CR Debug(foo:26248): argv[1] = '/usr/local/Chromium-x.y/cr/mothership/tools/tilecity.conf'
     CR Debug(foo:26248): argv[2] = '-r1'
     CR Debug(foo:26248): argv[3] = '-c2'
 </pre>
