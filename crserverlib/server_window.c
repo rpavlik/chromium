@@ -19,6 +19,7 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 
 	if (cr_server.sharedWindows) {
 		int pos;
+		unsigned int j;
 		/* find empty position in my (curclient) windowList */
 		for (pos = 0; pos < CR_MAX_WINDOWS; pos++) {
 			if (cr_server.curClient->windowList[pos] == 0) {
@@ -31,7 +32,6 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 		}
 
 		/* Look if any other client has a window for this slot */
-		unsigned int j;
 		for (j = 0; j < cr_server.numClients; j++) {
 			if (cr_server.clients[j].windowList[pos] != 0) {
 				/* use that client's window */
@@ -107,7 +107,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchWindowSize( GLint window, GLint wi
   CRMuralInfo *mural;
 
 	mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
-	CRASSERT(mural);
+	if (!mural) {
+		 crWarning("CRServer: invalid window %d passed to WindowSize()", window);
+		 return;
+	}
 	mural->underlyingDisplay[2] = width;
 	mural->underlyingDisplay[3] = height;
 	crServerInitializeTiling(mural);
