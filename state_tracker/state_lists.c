@@ -273,7 +273,7 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 		GLuint temp = f->max - f->min;
 		if (temp >= (GLuint) (range - 1))
 		{
-			GLuint i;
+			GLint i;
 			ret = f->min;
 			f->min += range-1;
 			/*

@@ -49,10 +49,10 @@
  * clip coord to window coord mapping
  */
 #define MAP_POINT( Q, P, VP )                                      \
-   Q.x = ((P.x / P.w) + 1.0) * VP.viewportW / 2.0 + VP.viewportX;  \
-   Q.y = ((P.y / P.w) + 1.0) * VP.viewportH / 2.0 + VP.viewportY;  \
-   Q.z = ((P.z / P.w) + 1.0) * (VP.farClip - VP.nearClip) / 2.0 + VP.nearClip;\
-   Q.w = P.w;
+   Q.x = (GLfloat) (((P.x / P.w) + 1.0) * VP.viewportW / 2.0 + VP.viewportX);  \
+   Q.y = (GLfloat) (((P.y / P.w) + 1.0) * VP.viewportH / 2.0 + VP.viewportY);  \
+   Q.z = (GLfloat) (((P.z / P.w) + 1.0) * (VP.farClip - VP.nearClip) / 2.0 + VP.nearClip);\
+   Q.w = (GLfloat) P.w;
 
 
 /*
@@ -285,7 +285,7 @@ clip_line(const CRVertex *v0in, const CRVertex *v1in,
  * Return: number of vertices in vOut
  */
 static GLuint
-clip_polygon(const CRVertex *vIn, int inCount,
+clip_polygon(const CRVertex *vIn, unsigned int inCount,
 						 CRVertex *vOut)
 {
 	CRVertex inlist[20], outlist[20];
@@ -515,7 +515,7 @@ feedback_rasterpos(void)
 	v.winPos = g->current.rasterPos;
 	v.color = g->current.rasterColor;  /* XXX need to apply lighting */
 	v.secondaryColor = g->current.rasterSecondaryColor;
-	v.index = g->current.rasterIndex;  /* XXX need to apply lighting */
+	v.index = (GLfloat) g->current.rasterIndex;  /* XXX need to apply lighting */
 
 	/* Don't do this, we're capturing TexCoord ourselves and
 	 * we'd miss the conversion in RasterPosUpdate */
@@ -1422,25 +1422,25 @@ crStateFeedbackRectf(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1)
 void STATE_APIENTRY
 crStateFeedbackRecti(GLint x0, GLint y0, GLint x1, GLint y1)
 {
-   crStateFeedbackRectf(x0, y0, x1, y1);
+   crStateFeedbackRectf((GLfloat) x0, (GLfloat) y0, (GLfloat) x1, (GLfloat) y1);
 }
 
 void STATE_APIENTRY
 crStateFeedbackRectd(GLdouble x0, GLdouble y0, GLdouble x1, GLdouble y1)
 {
-   crStateFeedbackRectf(x0, y0, x1, y1);
+   crStateFeedbackRectf((GLfloat) x0, (GLfloat) y0, (GLfloat) x1, (GLfloat) y1);
 }
 
 void STATE_APIENTRY
 crStateFeedbackRects(GLshort x0, GLshort y0, GLshort x1, GLshort y1)
 {
-   crStateFeedbackRectf(x0, y0, x1, y1);
+   crStateFeedbackRectf((GLfloat) x0, (GLfloat) y0, (GLfloat) x1, (GLfloat) y1);
 }
 
 void STATE_APIENTRY
 crStateFeedbackRectiv(const GLint *v0, const GLint *v1)
 {
-   crStateFeedbackRectf(v0[0], v0[1], v1[0], v1[1]);
+   crStateFeedbackRectf((GLfloat) v0[0], (GLfloat) v0[1], (GLfloat) v1[0], (GLfloat) v1[1]);
 }
 
 void STATE_APIENTRY
@@ -1452,13 +1452,13 @@ crStateFeedbackRectfv(const GLfloat *v0, const GLfloat *v1)
 void STATE_APIENTRY
 crStateFeedbackRectdv(const GLdouble *v0, const GLdouble *v1)
 {
-   crStateFeedbackRectf(v0[0], v0[1], v1[0], v1[1]);
+   crStateFeedbackRectf((GLfloat) v0[0], (GLfloat) v0[1], (GLfloat) v1[0], (GLfloat) v1[1]);
 }
 
 void STATE_APIENTRY
 crStateFeedbackRectsv(const GLshort *v0, const GLshort *v1)
 {
-   crStateFeedbackRectf(v0[0], v0[1], v1[0], v1[1]);
+   crStateFeedbackRectf((GLfloat) v0[0], (GLfloat) v0[1], (GLfloat) v1[0], (GLfloat) v1[1]);
 }
 
 /**********************************************************************/
@@ -1987,13 +1987,13 @@ crStateSelectEnd(void)
 void STATE_APIENTRY
 crStateSelectVertex2d(GLdouble x, GLdouble y)
 {
-	crStateSelectVertex4f(x, y, 0.0, 1.0);
+	crStateSelectVertex4f((GLfloat) x, (GLfloat) y, 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex2dv(const GLdouble * v)
 {
-	crStateSelectVertex4f(v[0], v[1], 0.0, 1.0);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], 0.0, 1.0);
 }
 
 void STATE_APIENTRY
@@ -2011,37 +2011,37 @@ crStateSelectVertex2fv(const GLfloat * v)
 void STATE_APIENTRY
 crStateSelectVertex2i(GLint x, GLint y)
 {
-	crStateSelectVertex4f(x, y, 0.0, 1.0);
+	crStateSelectVertex4f((GLfloat) x, (GLfloat) y, 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex2iv(const GLint * v)
 {
-	crStateSelectVertex4f(v[0], v[1], 0.0, 1.0);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex2s(GLshort x, GLshort y)
 {
-	crStateSelectVertex4f(x, y, 0.0, 1.0);
+	crStateSelectVertex4f((GLfloat) x, (GLfloat) y, 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex2sv(const GLshort * v)
 {
-	crStateSelectVertex4f(v[0], v[1], 0.0, 1.0);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex3d(GLdouble x, GLdouble y, GLdouble z)
 {
-	crStateSelectVertex4f(x, y, z, 1.0);
+	crStateSelectVertex4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex3dv(const GLdouble * v)
 {
-	crStateSelectVertex4f(v[0], v[1], v[2], 1.0);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0);
 }
 
 void STATE_APIENTRY
@@ -2059,37 +2059,37 @@ crStateSelectVertex3fv(const GLfloat * v)
 void STATE_APIENTRY
 crStateSelectVertex3i(GLint x, GLint y, GLint z)
 {
-	crStateSelectVertex4f(x, y, z, 1.0);
+	crStateSelectVertex4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex3iv(const GLint * v)
 {
-	crStateSelectVertex4f(v[0], v[1], v[2], 1.0);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex3s(GLshort x, GLshort y, GLshort z)
 {
-	crStateSelectVertex4f(x, y, z, 1.0);
+	crStateSelectVertex4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex3sv(const GLshort * v)
 {
-	crStateSelectVertex4f(v[0], v[1], v[2], 1.0);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-	crStateSelectVertex4f(x, y, z, w);
+	crStateSelectVertex4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex4dv(const GLdouble * v)
 {
-	crStateSelectVertex4f(v[0], v[1], v[2], v[3]);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void STATE_APIENTRY
@@ -2101,13 +2101,13 @@ crStateSelectVertex4fv(const GLfloat * v)
 void STATE_APIENTRY
 crStateSelectVertex4i(GLint x, GLint y, GLint z, GLint w)
 {
-	crStateSelectVertex4f(x, y, z, w);
+	crStateSelectVertex4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void STATE_APIENTRY
 crStateSelectVertex4iv(const GLint * v)
 {
-	crStateSelectVertex4f(v[0], v[1], v[2], v[3]);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void STATE_APIENTRY
@@ -2119,19 +2119,19 @@ crStateSelectVertex4s(GLshort x, GLshort y, GLshort z, GLshort w)
 void STATE_APIENTRY
 crStateSelectVertex4sv(const GLshort * v)
 {
-	crStateSelectVertex4f(v[0], v[1], v[2], v[3]);
+	crStateSelectVertex4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos2d(GLdouble x, GLdouble y)
 {
-	crStateSelectRasterPos4f(x, y, 0.0, 1.0);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos2dv(const GLdouble * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], 0.0, 1.0);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0, 1.0);
 }
 
 void STATE_APIENTRY
@@ -2149,37 +2149,37 @@ crStateSelectRasterPos2fv(const GLfloat * v)
 void STATE_APIENTRY
 crStateSelectRasterPos2i(GLint x, GLint y)
 {
-	crStateSelectRasterPos4f(x, y, 0.0, 1.0);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos2iv(const GLint * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], 0.0, 1.0);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos2s(GLshort x, GLshort y)
 {
-	crStateSelectRasterPos4f(x, y, 0.0, 1.0);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos2sv(const GLshort * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], 0.0, 1.0);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
-	crStateSelectRasterPos4f(x, y, z, 1.0);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos3dv(const GLdouble * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], v[2], 1.0);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] , 1.0);
 }
 
 void STATE_APIENTRY
@@ -2191,43 +2191,43 @@ crStateSelectRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 void STATE_APIENTRY
 crStateSelectRasterPos3fv(const GLfloat * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], v[2], 1.0);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] , 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos3i(GLint x, GLint y, GLint z)
 {
-	crStateSelectRasterPos4f(x, y, z, 1.0);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos3iv(const GLint * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], v[2], 1.0);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] , 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos3s(GLshort x, GLshort y, GLshort z)
 {
-	crStateSelectRasterPos4f(x, y, z, 1.0);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos3sv(const GLshort * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], v[2], 1.0);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] , 1.0);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-	crStateSelectRasterPos4f(x, y, z, w);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos4dv(const GLdouble * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], v[2], v[3]);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] , (GLfloat) v[3]);
 }
 
 void STATE_APIENTRY
@@ -2239,25 +2239,25 @@ crStateSelectRasterPos4fv(const GLfloat * v)
 void STATE_APIENTRY
 crStateSelectRasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
-	crStateSelectRasterPos4f(x, y, z, w);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos4iv(const GLint * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], v[2], v[3]);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
-	crStateSelectRasterPos4f(x, y, z, w);
+	crStateSelectRasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void STATE_APIENTRY
 crStateSelectRasterPos4sv(const GLshort * v)
 {
-	crStateSelectRasterPos4f(v[0], v[1], v[2], v[3]);
+	crStateSelectRasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2] , (GLfloat) v[3]);
 }
 
 void STATE_APIENTRY
@@ -2274,25 +2274,25 @@ crStateSelectRectf(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1)
 void STATE_APIENTRY
 crStateSelectRecti(GLint x0, GLint y0, GLint x1, GLint y1)
 {
-   crStateSelectRectf(x0, y0, x1, y1);
+   crStateSelectRectf((GLfloat) x0, (GLfloat) y0, (GLfloat) x1, (GLfloat) y1);
 }
 
 void STATE_APIENTRY
 crStateSelectRectd(GLdouble x0, GLdouble y0, GLdouble x1, GLdouble y1)
 {
-   crStateSelectRectf(x0, y0, x1, y1);
+   crStateSelectRectf((GLfloat) x0, (GLfloat) y0, (GLfloat) x1, (GLfloat) y1);
 }
 
 void STATE_APIENTRY
 crStateSelectRects(GLshort x0, GLshort y0, GLshort x1, GLshort y1)
 {
-   crStateSelectRectf(x0, y0, x1, y1);
+   crStateSelectRectf((GLfloat) x0, (GLfloat) y0, (GLfloat) x1, (GLfloat) y1);
 }
 
 void STATE_APIENTRY
 crStateSelectRectiv(const GLint *v0, const GLint *v1)
 {
-   crStateSelectRectf(v0[0], v0[1], v1[0], v1[1]);
+   crStateSelectRectf((GLfloat) v0[0], (GLfloat) v0[1], (GLfloat) v1[0], (GLfloat) v1[1]);
 }
 
 void STATE_APIENTRY
@@ -2304,13 +2304,13 @@ crStateSelectRectfv(const GLfloat *v0, const GLfloat *v1)
 void STATE_APIENTRY
 crStateSelectRectdv(const GLdouble *v0, const GLdouble *v1)
 {
-   crStateSelectRectf(v0[0], v0[1], v1[0], v1[1]);
+   crStateSelectRectf((GLfloat) v0[0], (GLfloat) v0[1], (GLfloat) v1[0], (GLfloat) v1[1]);
 }
 
 void STATE_APIENTRY
 crStateSelectRectsv(const GLshort *v0, const GLshort *v1)
 {
-   crStateSelectRectf(v0[0], v0[1], v1[0], v1[1]);
+   crStateSelectRectf((GLfloat) v0[0], (GLfloat) v0[1], (GLfloat) v1[0], (GLfloat) v1[1]);
 }
 
 
