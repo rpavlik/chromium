@@ -38,7 +38,7 @@ int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) buf;
 
-	switch( msg->type )
+	switch( msg->header.type )
 	{
 		case CR_MESSAGE_WRITEBACK:
 			packspuWriteback( &(msg->writeback) );
@@ -73,15 +73,13 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
 
 	if (pack_spu.swap)
 	{
-		hdr->type       = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
-		hdr->senderId   = SWAP32(senderID);
-		hdr->numOpcodes = SWAP32(num_opcodes);
+		hdr->header.type = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
+		hdr->numOpcodes  = SWAP32(num_opcodes);
 	}
 	else
 	{
-		hdr->type       = CR_MESSAGE_OPCODES;
-		hdr->senderId   = senderID;
-		hdr->numOpcodes = num_opcodes;
+		hdr->header.type = CR_MESSAGE_OPCODES;
+		hdr->numOpcodes  = num_opcodes;
 	}
 
 	*len = buf->data_current - (unsigned char *) hdr;
@@ -136,15 +134,13 @@ void packspuHuge( CROpcode opcode, void *buf )
 
 	if (pack_spu.swap)
 	{
-		msg->type       = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
-		msg->senderId   = SWAP32(pack_spu.server.conn->sender_id);
-		msg->numOpcodes = SWAP32(1);
+		msg->header.type = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
+		msg->numOpcodes  = SWAP32(1);
 	}
 	else
 	{
-		msg->type       = CR_MESSAGE_OPCODES;
-		msg->senderId   = pack_spu.server.conn->sender_id;
-		msg->numOpcodes = 1;
+		msg->header.type = CR_MESSAGE_OPCODES;
+		msg->numOpcodes  = 1;
 	}
 
 	crNetSend( pack_spu.server.conn, NULL, src, len );

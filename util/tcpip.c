@@ -53,6 +53,7 @@ typedef struct CRTCPIPBuffer {
 	unsigned int          magic;
 	CRTCPIPBufferKind     kind;
 	unsigned int          len;
+	unsigned int          allocated;
 	unsigned int          pad;
 } CRTCPIPBuffer;
 
@@ -176,12 +177,23 @@ static int __read_exact( CRSocket sock, void *buf, unsigned int len )
 
 		if ( num_read < 0 )
 		{
-			if ( crTCPIPErrno( ) == EINTR )
+			int error = crTCPIPErrno();
+			switch( error )
 			{
-				crWarning( "__read_exact(TCPIP): "
-						"caught an EINTR, looping for more data" );
-				continue;
+				case EINTR:
+					crWarning( "__read_exact(TCPIP): "
+							"caught an EINTR, looping for more data" );
+					continue;
+				case EBADF: crWarning( "EBADF" ); break;
+				case ECONNREFUSED: crWarning( "ECONNREFUSED" ); break;
+				case ENOTCONN: crWarning( "ENOTCONN" ); break;
+				case ENOTSOCK: crWarning( "ENOTSOCK" ); break;
+				case EAGAIN: crWarning( "EAGAIN" ); break;
+				case EFAULT: crWarning( "EFAULT" ); break;
+				case EINVAL: crWarning( "EINVAL" ); break;
+				default: break;
 			}
+			crWarning( "Bad bad bad socket error: %s", crTCPIPErrorString( error ) );
 			return -1;
 		}
 
@@ -303,8 +315,14 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 	struct hostent    *host;
 	struct in_addr     sin_addr;
 
-	if (cr_tcpip.server_sock == -1)
+	static unsigned short last_port = 0;
+
+	if (port != last_port)
 	{
+		/* with the new OOB stuff, we can have multiple ports being 
+		 * accepted on, so we need to redo the server socket every time.
+		 */
+
 		cr_tcpip.server_sock = socket( AF_INET, SOCK_STREAM, 0 );
 		if ( cr_tcpip.server_sock == -1 )
 		{
@@ -349,6 +367,8 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 		}
 
 		__copy_of_crMothershipDisconnect( mother );
+
+		sscanf( response, "%d", &(conn->id) );
 	}
 
 	addr_length =	sizeof( addr );
@@ -391,6 +411,7 @@ void *crTCPIPAlloc( CRConnection *conn )
 		buf->magic = CR_TCPIP_BUFFER_MAGIC;
 		buf->kind  = CRTCPIPMemory;
 		buf->pad   = 0;
+		buf->allocated = conn->mtu;
 	}
 	return (void *)( buf + 1 );
 }
@@ -507,6 +528,7 @@ void crTCPIPFree( CRConnection *conn, void *buf )
 int crTCPIPRecv( void )
 {
 	CRMessage *msg;
+	CRMessageType cached_type;
 	int    num_ready, max_fd;
 	fd_set read_fds;
 	int i;
@@ -592,6 +614,7 @@ int crTCPIPRecv( void )
 		read_ret = __read_exact( sock, tcpip_buffer + 1, len );
 		if ( read_ret <= 0 )
 		{
+			crWarning( "Bad juju: %d %d", tcpip_buffer->allocated, len );
 			crFree( tcpip_buffer );
 			__dead_connection( conn );
 			i--;
@@ -605,9 +628,11 @@ int crTCPIPRecv( void )
 		conn->recv_credits -= len;
 
 		msg = (CRMessage *) (tcpip_buffer + 1);
+		cached_type = msg->header.type;
 		if (conn->swap)
 		{
-			msg->type = (CRMessageType) SWAP32( msg->type );
+			msg->header.type = (CRMessageType) SWAP32( msg->header.type );
+			msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
 		}
 		if (!cr_tcpip.recv( conn, tcpip_buffer + 1, len ))
 		{
@@ -615,9 +640,13 @@ int crTCPIPRecv( void )
 		}
 
 		/* CR_MESSAGE_OPCODES is freed in
-		 * crserver/server_stream.c */
-		if (msg->type != CR_MESSAGE_OPCODES)
+		 * crserver/server_stream.c 
+		 *
+		 * OOB messages are the programmer's problem.  -- Humper 12/17/01 */
+		if (cached_type != CR_MESSAGE_OPCODES && cached_type != CR_MESSAGE_OOB)
+		{
 			crTCPIPFree( conn, tcpip_buffer + 1 );
+		}
 	}
 
 	return 1;
@@ -724,7 +753,7 @@ int crTCPIPDoConnect( CRConnection *conn )
 
 		__copy_of_crMothershipDisconnect( mother );
 
-		sscanf( response, "%d", &(remote_endianness) );
+		sscanf( response, "%d %d", &(conn->id), &(remote_endianness) );
 
 		if (conn->endianness != remote_endianness)
 		{

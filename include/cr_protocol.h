@@ -17,6 +17,7 @@ typedef enum {
 	CR_MESSAGE_MULTI_BODY,
 	CR_MESSAGE_MULTI_TAIL,
 	CR_MESSAGE_FLOW_CONTROL,
+	CR_MESSAGE_OOB,
 	CR_MESSAGE_ERROR
 } CRMessageType;
 
@@ -32,34 +33,38 @@ typedef union {
 	/* unsigned int  junk[512]; */
 } CRNetworkPointer;
 
-typedef struct CRMessageOpcodes {
+typedef struct {
 	CRMessageType          type;
-	unsigned int           senderId;
+	unsigned int           conn_id;
+} CRMessageHeader;
+
+typedef struct CRMessageOpcodes {
+	CRMessageHeader        header;
 	unsigned int           numOpcodes;
 } CRMessageOpcodes;
 
 typedef struct CRMessageWriteback {
-	CRMessageType          type;
+	CRMessageHeader        header;
 	CRNetworkPointer       writeback_ptr;
 } CRMessageWriteback;
 
 typedef struct CRMessageReadback {
-	CRMessageType          type;
+	CRMessageHeader        header;
 	CRNetworkPointer       writeback_ptr;
 	CRNetworkPointer       readback_ptr;
 } CRMessageReadback;
 
 typedef struct CRMessageMulti {
-	CRMessageType          type;
+	CRMessageHeader        header;
 } CRMessageMulti;
 
 typedef struct CRMessageFlowControl {
-	CRMessageType          type;
+	CRMessageHeader        header;
 	unsigned int           credits;
 } CRMessageFlowControl;
 
 typedef struct CRMessageReadPixels {
-	CRMessageType          type;
+	CRMessageHeader        header;
 	unsigned int           bytes_per_row;
 	unsigned int           stride;
 	unsigned int           rows;
@@ -67,7 +72,7 @@ typedef struct CRMessageReadPixels {
 } CRMessageReadPixels;
 
 typedef union {
-	CRMessageType        type;
+	CRMessageHeader      header;
 	CRMessageOpcodes     opcodes;
 	CRMessageWriteback   writeback;
 	CRMessageReadback   readback;

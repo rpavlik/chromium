@@ -447,13 +447,13 @@ crGmCreditZero( CRGmConnection *gm_conn )
 		cr_gm.credit_tail = gm_conn;
 	}
 }
-#define CR_GM_HASH(n,p)	cr_gm.gm_conn_hash[ (n) & (CR_GM_CONN_HASH_SIZE-1) ]
+#define CR_GM_HASH(n)	cr_gm.gm_conn_hash[ (n) & (CR_GM_CONN_HASH_SIZE-1) ]
 
 static void crGmConnectionAdd( CRConnection *conn )
 {
 	CRGmConnection *gm_conn, **bucket;
 
-	bucket = &CR_GM_HASH( conn->gm_node_id, conn->gm_port_id );
+	bucket = &CR_GM_HASH( conn->id );
 
 	for ( gm_conn = *bucket; gm_conn != NULL; gm_conn = gm_conn->hash_next )
 	{
@@ -518,7 +518,7 @@ void crGmAccept( CRConnection *conn, unsigned short port )
 	 * this connection.  The mothership will sit on the acceptrequest 
 	 * until someone connects. */
 	
-	sscanf( response, "%d %d", &(conn->gm_node_id), &(conn->gm_port_num) );
+	sscanf( response, "%d %d %d", &(conn->id), &(conn->gm_node_id), &(conn->gm_port_num) );
 	
 	/* NOW, we can add the connection, since we have enough information 
 	 * to uniquely determine the sender when we get a packet! */
@@ -548,7 +548,7 @@ int crGmDoConnect( CRConnection *conn )
 	 * this connection.  The mothership will sit on the connectrequest 
 	 * until someone accepts. */
 	
-	sscanf( response, "%d %d %d", &(conn->gm_node_id), &(conn->gm_port_num), &(remote_endianness) );
+	sscanf( response, "%d %d %d %d", &(conn->id), &(conn->gm_node_id), &(conn->gm_port_num), &(remote_endianness) );
 
 	if (remote_endianness != conn->endianness)
 	{
@@ -573,24 +573,21 @@ void crGmDoDisconnect( CRConnection *conn )
 
 
 	static __inline CRGmConnection *
-crGmConnectionLookup( unsigned int node_id, unsigned int port_num )
+crGmConnectionLookup( int id )
 {
 	CRGmConnection *gm_conn;
 
-	CRASSERT( node_id < cr_gm.num_nodes );
-
-	gm_conn = CR_GM_HASH( node_id, port_id );
+	gm_conn = CR_GM_HASH( id );
 	while ( gm_conn )
 	{
-		if ( gm_conn->node_id == node_id && gm_conn->port_num == port_num )
+		if ( gm_conn->conn->id == id )
 		{
 			return gm_conn;
 		}
 		gm_conn = gm_conn->hash_next;
 	}
 
-	crError( "GM: lookup on unknown source: node=%u port=%u",
-			node_id, port_num );
+	crError( "GM: lookup on unknown connection: id=%d", id );
 
 	/* unreached */
 	return NULL;
@@ -624,7 +621,7 @@ cr_gm_provide_receive_buffer( void *buf )
 	CRASSERT( ((CRGmBuffer *) msg - 1)->magic 
 			== CR_GM_BUFFER_RECV_MAGIC );
 
-	msg->type = CR_MESSAGE_ERROR;
+	msg->header.type = CR_MESSAGE_ERROR;
 
 	gm_provide_receive_buffer( cr_gm.port, buf,
 			cr_gm.message_size,
@@ -811,7 +808,7 @@ crGmSendCredits( CRConnection *conn )
 
 	msg = (CRMessageFlowControl *) ( gm_buffer + 1 );
 
-	msg->type    = CR_MESSAGE_FLOW_CONTROL;
+	msg->header.type    = CR_MESSAGE_FLOW_CONTROL;
 	msg->credits = conn->recv_credits;
 
 #if CR_GM_CREDITS_DEBUG
@@ -886,19 +883,8 @@ int crGmRecv( void )
 		case GM_HIGH_PEER_RECV_EVENT:
 			{
 				gm_u32_t len = gm_ntoh_u32( event->recv.length );
-				CRMessage *msg = (CRMessage *)
-					gm_ntohp( event->recv.buffer );
-				gm_u16_t src_node = gm_ntoh_u16( event->recv.sender_node_id );
-				gm_u8_t  src_port = gm_ntoh_u8( event->recv.sender_port_id );
-				CRGmConnection *gm_conn = 
-					crGmConnectionLookup( src_node, src_port );
-
-#if CR_GM_DEBUG
-				cr_gm_debug( "gm_receive: src=%d:%d buf=%p len=%u (%s)",
-						src_node, src_port, msg, len, 
-						cr_gm_str_event_type( event ) );
-#endif
-
+				CRMessage *msg = (CRMessage *) gm_ntohp( event->recv.buffer );
+				CRGmConnection *gm_conn = crGmConnectionLookup( msg->header.conn_id );
 				crGmRecvOther( gm_conn, msg, len );
 			}
 			break;
@@ -987,12 +973,12 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 
 		if ( len + sizeof(*msg) > conn->mtu )
 		{
-			msg->type = CR_MESSAGE_MULTI_BODY;
+			msg->header.type = CR_MESSAGE_MULTI_BODY;
 			n_bytes   = conn->mtu - sizeof(*msg);
 		}
 		else
 		{
-			msg->type = CR_MESSAGE_MULTI_TAIL;
+			msg->header.type = CR_MESSAGE_MULTI_TAIL;
 			n_bytes   = len;
 		}
 		memcpy( msg + 1, src, n_bytes );
@@ -1107,8 +1093,7 @@ crGmFree( CRConnection *conn, void *buf )
 			break;
 	}
 
-	crGmCreditIncrease( crGmConnectionLookup( conn->gm_node_id, 
-				conn->gm_port_num ) );
+	crGmCreditIncrease( crGmConnectionLookup( conn->id ) );
 }
 
 #if 0

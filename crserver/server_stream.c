@@ -149,9 +149,9 @@ void crServerSerializeRemoteStreams(void)
 			char *data_ptr;
 
 			(void) crNetGetMessage( cr_server.curClient->conn, &msg );
-			if (msg->type != CR_MESSAGE_OPCODES)
+			if (msg->header.type != CR_MESSAGE_OPCODES)
 			{
-				crError( "SPU %d sent me CRAP (type=0x%x)", client->spu_id, msg->type );
+				crError( "SPU %d sent me CRAP (type=0x%x)", client->spu_id, msg->header.type );
 			}
 
 			msg_opcodes = (CRMessageOpcodes *) msg;

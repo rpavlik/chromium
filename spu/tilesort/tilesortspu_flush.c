@@ -41,15 +41,14 @@ static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned i
 
 	if (tilesort_spu.swap)
 	{
-		hdr->type       = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
-		hdr->numOpcodes = SWAP32(num_opcodes);
+		hdr->header.type= (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
+		hdr->numOpcodes  = SWAP32(num_opcodes);
 	}
 	else
 	{
-		hdr->type       = CR_MESSAGE_OPCODES;
-		hdr->numOpcodes = num_opcodes;
+		hdr->header.type = CR_MESSAGE_OPCODES;
+		hdr->numOpcodes  = num_opcodes;
 	}
-	hdr->senderId   = (unsigned int) ~0;  /* to be initialized by caller */
 
 	*len = pack->data_current - (unsigned char *) hdr;
 
@@ -76,14 +75,6 @@ static void __sendServerBuffer( TileSortSPUServer *server )
 		return;
 
 	hdr = __applySendBufferHeader( pack, &len );
-	if (tilesort_spu.swap)
-	{
-		hdr->senderId = SWAP32(server->net.conn->sender_id);
-	}
-	else
-	{
-		hdr->senderId = server->net.conn->sender_id;
-	}
 
 	crNetSend( server->net.conn, &pack->pack, hdr, len );
 	crPackInitBuffer( pack, crNetAlloc( server->net.conn ), pack->size, END_FLUFF );
@@ -171,15 +162,13 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 
 	if (tilesort_spu.swap)
 	{
-		msg->type       = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
-		msg->senderId   = SWAP32(state_server->net.conn->sender_id);
-		msg->numOpcodes = SWAP32(1);
+		msg->header.type = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
+		msg->numOpcodes  = SWAP32(1);
 	}
 	else
 	{
-		msg->type       = CR_MESSAGE_OPCODES;
-		msg->senderId   = state_server->net.conn->sender_id;
-		msg->numOpcodes = 1;
+		msg->header.type = CR_MESSAGE_OPCODES;
+		msg->numOpcodes  = 1;
 	}
 
 	/* the pipeserver's buffer might have data in it, and that should
@@ -489,14 +478,6 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 			crDebug( "Doing the big packet send thing" );
 			__sendServerBuffer( state_server );
-			if (tilesort_spu.swap)
-			{
-				big_packet_hdr->senderId = SWAP32(state_server->net.conn->sender_id);
-			}
-			else
-			{
-				big_packet_hdr->senderId = state_server->net.conn->sender_id;
-			}
 			crNetSend( state_server->net.conn, NULL, big_packet_hdr, big_packet_len );
 		}
 		else

@@ -85,7 +85,7 @@ CRConnection *crNetConnectToServer( char *server,
 	conn = (CRConnection *) crAlloc( sizeof(*conn) );
 
 	conn->type               = CR_NO_CONNECTION; /* we don't know yet */
-	conn->sender_id          = 0;                    /* unique ID for every transmitter */
+	conn->id                 = 0;                /* Each connection has an id */
 	conn->total_bytes        = 0;                    /* how many bytes have we sent? */
 	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
@@ -157,7 +157,7 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned i
 
 	conn = (CRConnection *) crAlloc( sizeof( *conn ) );
 	conn->type               = CR_NO_CONNECTION; /* we don't know yet */
-	conn->sender_id          = 0;                    /* unique ID for every transmitter */
+	conn->id                 = 0;                /* Each connection has an id */
 	conn->total_bytes        = 0;                    /* how many bytes have we sent? */
 	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
@@ -277,8 +277,9 @@ void *crNetAlloc( CRConnection *conn )
  * "send" implementation. */
 
 void crNetSend( CRConnection *conn, void **bufp, 
-		void *start, unsigned int len )
+		            void *start, unsigned int len )
 {
+	CRMessage *msg = (CRMessage *) start;
 	CRASSERT( conn );
 	CRASSERT( len > 0 );
 	if ( bufp ) {
@@ -298,6 +299,7 @@ void crNetSend( CRConnection *conn, void **bufp,
 
 	conn->total_bytes += len;
 
+	msg->header.conn_id = conn->id;
 	conn->Send( conn, bufp, start, len );
 }
 
@@ -378,7 +380,7 @@ static void crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned in
 
 	conn->InstantReclaim( conn, (CRMessage *) msg );
 
-	if (msg->type == CR_MESSAGE_MULTI_TAIL)
+	if (msg->header.type == CR_MESSAGE_MULTI_TAIL)
 	{
 		conn->HandleNewMessage( 
 				conn, 
@@ -438,7 +440,7 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 	
 	CRMessage *msg = (CRMessage *) buf;
 
-	switch( msg->type )
+	switch( msg->header.type )
 	{
 		case CR_MESSAGE_MULTI_BODY:
 		case CR_MESSAGE_MULTI_TAIL:
@@ -448,6 +450,7 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 			crNetRecvFlowControl( conn, &(msg->flowControl), len );
 			return;
 		case CR_MESSAGE_OPCODES:
+		case CR_MESSAGE_OOB:
 			{
 				/*CRMessageOpcodes *ops = (CRMessageOpcodes *) msg; 
 				 *unsigned char *data_ptr = (unsigned char *) ops + sizeof( *ops) + ((ops->numOpcodes + 3 ) & ~0x03); 

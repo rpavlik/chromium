@@ -32,7 +32,7 @@ void crServerReturnValue( const void *payload, unsigned int payload_len )
 	int msg_len = sizeof( *rb ) + payload_len;
 	rb = (CRMessageReadback *) crAlloc( msg_len );
 
-	rb->type = CR_MESSAGE_READBACK;
+	rb->header.type = CR_MESSAGE_READBACK;
 	memcpy( &(rb->writeback_ptr), &(cr_server.writeback_ptr), sizeof( rb->writeback_ptr ) );
 	memcpy( &(rb->readback_ptr), &(cr_server.return_ptr), sizeof( rb->readback_ptr ) );
 	memcpy( rb+1, payload, payload_len );

@@ -72,7 +72,7 @@ typedef struct CRMultiBuffer {
 
 struct CRConnection {
 	CRConnectionType type;
-	unsigned int sender_id;
+	unsigned int id; // from the mothership
 
 	CRMessageList *messageList, *messageTail;
 
