@@ -146,7 +146,7 @@ crServerDispatchProgramLocalParameter4fARB(GLenum target, GLuint index, GLfloat 
 			 * then pre-multiply it by the base matrix and update the program
 			 * parameters with the new matrix.
 			 */
-			if (index == prog->projParamStart + 3) {
+			if (index == (GLuint) (prog->projParamStart + 3)) {
 				const CRMuralInfo *mural = cr_server.curClient->currentMural;
 				const GLfloat *baseMat = (const GLfloat *) &(mural->extents[mural->curExtent].baseProjection);
 				int i;
@@ -195,7 +195,7 @@ crServerDispatchProgramParameter4fNV(GLenum target, GLuint index, GLfloat x, GLf
 			 * then pre-multiply it by the base matrix and update the program
 			 * parameters with the new matrix.
 			 */
-			if (index == prog->projParamStart + 3) {
+			if (index == (GLuint) (prog->projParamStart + 3)) {
 				const CRMuralInfo *mural = cr_server.curClient->currentMural;
 				const GLfloat *baseMat = (const GLfloat *) &(mural->extents[mural->curExtent].baseProjection);
 				int i;
