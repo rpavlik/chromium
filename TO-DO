@@ -22,3 +22,8 @@ Wes Bethel:
   spu, then save the config file. The config file doesn't contain the
   array spu I asked for. There may be related problems for other
   app-side SPU additions - I've not checked.
+
+Rewrite the opengl_stub/defs.py file so that we don't need to manually
+update the stack_sizes array.  The sizes should be obtained by calling
+apiutil.PacketLength() or something similar.
+
