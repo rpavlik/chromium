@@ -124,9 +124,11 @@ void ZPIXSPU_APIENTRY zpixBitmap( GLsizei width,
 				  GLfloat ymove,
 				  const GLubyte *bitmap )
 {
-     /*XXX remember and pass it through for now */
-     zpix_spu.rXnew = xmove;
-     zpix_spu.rYnew = ymove;
+     if(bitmap == NULL){
+	  /*XXX remember and pass it through for now */
+	  zpix_spu.rXnew = xmove;
+	  zpix_spu.rYnew = ymove;
+     }
      zpix_spu.child.Bitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 }
 
