@@ -245,7 +245,9 @@ binaryswapspuInit( int id, SPU *child, SPU *self,
 	window->index = 0;
 	window->renderWindow = 0; /* default render SPU window */
 	window->childWindow = 0;  /* default child SPU window */
-	window->visBits = binaryswap_spu.default_visual;
+	binaryswapspuTweakVisBits(binaryswap_spu.default_visual,
+														&window->childVisBits,
+														&window->superVisBits);
 	crHashtableAdd(binaryswap_spu.windowTable, 0, window);
 	
 	binaryswapspuConnectToPeers();

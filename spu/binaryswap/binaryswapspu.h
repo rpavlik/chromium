@@ -36,7 +36,8 @@ typedef struct {
 	GLubyte *msgBuffer;
 	GLint bytesPerColor, bytesPerDepth;  /**< bytes per pixel */
 	GLenum depthType;  /**< GL_UNSIGNED_SHORT or GL_FLOAT */
-	GLint visBits;
+	GLint superVisBits;
+	GLint childVisBits;
 	
 	int* read_x;
 	int* read_y;
@@ -62,7 +63,8 @@ typedef struct {
 	GLint renderContext;
 	GLint childContext;
 	WindowInfo *currentWindow;
-	GLint visBits;
+	GLint superVisBits;
+	GLint childVisBits;
 } ContextInfo;
 
 typedef struct {
@@ -132,12 +134,18 @@ extern Binaryswapspu binaryswap_spu;
 
 #ifdef CHROMIUM_THREADSAFE
 extern CRtsd _BinaryswapTSD;
-#define GET_CONTEXT(T)  ContextInfo *T = crGetTSD(&_BinaryswapTSD)
+#define GET_CONTEXT(C)  ContextInfo *C = crGetTSD(&_BinaryswapTSD)
+#define SET_CONTEXT(C)  crSetTSD(&_BinaryswapTSD, C)
 #else
-#define GET_CONTEXT(T)  ContextInfo *T = binaryswap_spu.currentContext
+#define GET_CONTEXT(C)  ContextInfo *C = binaryswap_spu.currentContext
+#define SET_CONTEXT(C)  binaryswap_spu.currentContext = C
 #endif
 
 
 extern void binaryswapspuGatherConfiguration( Binaryswapspu *spu );
+
+extern void binaryswapspuTweakVisBits(GLint visBits, GLint *childVisBits,
+																			GLint *superVisBits);
+
 
 #endif /* BINARYSWAP_SPU_H */

@@ -177,7 +177,7 @@ binaryswapspu_ResizeWindow(WindowInfo * window, int newWidth, int newHeight)
 		window->bytesPerColor = 3 * sizeof(GLubyte);
 
 	if (binaryswap_spu.depth_composite)
-		window->bytesPerDepth = 4;
+		window->bytesPerDepth = sizeof(GLuint);
 	else
 		window->bytesPerDepth = 0;
 
@@ -417,17 +417,21 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 			/* depth composite */
 			if (read_width > 0 && read_height > 0)
 			{
+				GLubyte *colors =
+					(GLubyte *) window->msgBuffer	+	binaryswap_spu.offset;
+				GLuint *depths =
+					(GLuint *) ((GLubyte *) window->msgBuffer +	/* base address */
+											(read_width * read_height * 3) +	/* color information */
+											binaryswap_spu.offset);	        /* message header */
+
 				binaryswap_spu.super.ReadPixels(read_start_x, read_start_y,
 																				read_width, read_height,
 																				GL_RGB, GL_UNSIGNED_BYTE,
-																				(GLubyte *) window->msgBuffer +
-																				binaryswap_spu.offset);
+																				colors);
 				binaryswap_spu.super.ReadPixels(read_start_x, read_start_y,
 																				read_width, read_height,
 																				GL_DEPTH_COMPONENT, GL_UNSIGNED_INT,
-																				(GLubyte *) window->msgBuffer +	/* base address */
-																				(read_width * read_height * 3) +	/* color information */
-																				binaryswap_spu.offset);	/* message header */
+																				depths);
 			}
 
 			if (binaryswap_spu.highlow[i])
@@ -720,9 +724,10 @@ DoBinaryswap(WindowInfo * window)
 		binaryswap_spu.super.GetIntegerv(GL_BLEND_DST, &super_blend_dst);
 		binaryswap_spu.super.GetIntegerv(GL_BLEND_SRC, &super_blend_src);
 	}
+
+	/* Things depth compositing mucks with */
 	if (binaryswap_spu.depth_composite)
 	{
-		/* Things depth compositing mucks with */
 		binaryswap_spu.super.GetBooleanv(GL_COLOR_WRITEMASK,
 																		 super_color_writemask);
 		binaryswap_spu.super.GetIntegerv(GL_DEPTH_FUNC, &super_depth_func);
@@ -750,6 +755,7 @@ DoBinaryswap(WindowInfo * window)
 	binaryswap_spu.child.PixelStorei(GL_UNPACK_ALIGNMENT,
 																	 child_unpackAlignment);
 
+	/* Restore GL state we may have changed */
 	if (binaryswap_spu.alpha_composite)
 	{
 		if (super_blend)
@@ -945,12 +951,37 @@ binaryswapspuSwapBuffers(GLint win, GLint flags)
 }
 
 
+/**
+ * When we create a window or context, we need to twiddle with the
+ * visual bitmask a bit.  Do that here.
+ */
+void
+binaryswapspuTweakVisBits(GLint visBits,
+													GLint *childVisBits, GLint *superVisBits)
+{
+	*superVisBits = visBits;
+
+	/* If doing z-compositing, need stencil buffer */
+	if (binaryswap_spu.depth_composite)
+		*superVisBits |= CR_STENCIL_BIT;
+	else if (binaryswap_spu.alpha_composite)
+		*superVisBits |= CR_ALPHA_BIT;
+
+	/* we should probably be able to get away with a single-buffered pbuffer */
+	if (visBits & CR_PBUFFER_BIT)
+		*superVisBits &= ~CR_DOUBLE_BIT;
+
+	/* final display window should probably be visible */
+	*childVisBits = visBits & ~CR_PBUFFER_BIT;
+}
+
+
 static GLint BINARYSWAPSPU_APIENTRY
 binaryswapspuCreateContext(const char *dpyName, GLint visBits)
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
-	GLint childVisBits;
+	GLint childVisBits, superVisBits;
 
 	CRASSERT(binaryswap_spu.child.BarrierCreateCR);
 
@@ -967,20 +998,14 @@ binaryswapspuCreateContext(const char *dpyName, GLint visBits)
 		return -1;
 	}
 
-	/* If doing z-compositing, need stencil buffer */
-	if (binaryswap_spu.depth_composite)
-		visBits |= CR_STENCIL_BIT;
-	else if (binaryswap_spu.alpha_composite)
-		visBits |= CR_ALPHA_BIT;
-
-	/* final display window should probably be visible */
-	childVisBits = visBits & ~CR_PBUFFER_BIT;
+	binaryswapspuTweakVisBits(visBits, &childVisBits, &superVisBits);
 
 	context->renderContext =
-		binaryswap_spu.super.CreateContext(dpyName, visBits);
+		binaryswap_spu.super.CreateContext(dpyName, superVisBits);
 	context->childContext =
 		binaryswap_spu.child.CreateContext(dpyName, childVisBits);
-	context->visBits = visBits;
+	context->childVisBits = childVisBits;
+	context->superVisBits = superVisBits;
 
 	if (context->renderContext < 0 || context->childContext < 0)
 	{
@@ -1019,12 +1044,9 @@ binaryswapspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 
 	if (context && window)
 	{
-		CRASSERT(context->visBits == window->visBits);
-#ifdef CHROMIUM_THREADSAFE
-		crSetTSD(&_BinaryswapTSD, context);
-#else
-		binaryswap_spu.currentContext = context;
-#endif
+		CRASSERT(context->superVisBits == window->superVisBits);
+		CRASSERT(context->childVisBits == window->childVisBits);
+		SET_CONTEXT(context);
 		CRASSERT(window);
 		context->currentWindow = window;
 		binaryswap_spu.super.MakeCurrent(window->renderWindow,
@@ -1034,11 +1056,7 @@ binaryswapspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 	}
 	else
 	{
-#ifdef CHROMIUM_THREADSAFE
-		crSetTSD(&_BinaryswapTSD, NULL);
-#else
-		binaryswap_spu.currentContext = NULL;
-#endif
+		SET_CONTEXT(NULL);
 	}
 }
 
@@ -1048,7 +1066,7 @@ binaryswapspuWindowCreate(const char *dpyName, GLint visBits)
 {
 	WindowInfo *window;
 	static GLint freeID = 1;			/* skip default window 0 */
-	GLint childVisBits;
+	GLint childVisBits, superVisBits;
 
 	/* Error out on second window */
 	if (freeID != 1)
@@ -1056,15 +1074,6 @@ binaryswapspuWindowCreate(const char *dpyName, GLint visBits)
 		crError("Binaryswap can't deal with multiple windows!");
 		return 0;
 	}
-
-	/* If doing z-compositing, need stencil buffer */
-	if (binaryswap_spu.depth_composite)
-		visBits |= CR_STENCIL_BIT;
-	else if (binaryswap_spu.alpha_composite)
-		visBits |= CR_ALPHA_BIT;
-
-	/* final display window should probably be visible */
-	childVisBits = visBits & ~CR_PBUFFER_BIT;
 
 	/* allocate window */
 	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
@@ -1074,15 +1083,19 @@ binaryswapspuWindowCreate(const char *dpyName, GLint visBits)
 		return -1;
 	}
 
+	binaryswapspuTweakVisBits(visBits, &childVisBits, &superVisBits);
+
 	/* init window */
 	window->index = freeID;
-	window->renderWindow = binaryswap_spu.super.WindowCreate(dpyName, visBits);
+	window->renderWindow =
+		binaryswap_spu.super.WindowCreate(dpyName, superVisBits);
 	window->childWindow =
 		binaryswap_spu.child.WindowCreate(dpyName, childVisBits);
 	window->width = -1;						/* unknown */
 	window->height = -1;					/* unknown */
 	window->msgBuffer = NULL;
-	window->visBits = visBits;
+	window->childVisBits = childVisBits;
+	window->superVisBits = superVisBits;
 
 	if (window->renderWindow < 0 || window->childWindow < 0)
 	{
@@ -1213,6 +1226,26 @@ binaryswapspuChromiumParametervCR(GLenum target, GLenum type,
 }
 
 
+static void BINARYSWAPSPU_APIENTRY
+binaryswapspuDrawBuffer(GLenum buffer)
+{
+	GET_CONTEXT(context);
+	WindowInfo *window;
+
+	window = context->currentWindow;
+	CRASSERT(window);
+
+	if (window->superVisBits & CR_PBUFFER_BIT) {
+		/* we only have a front color buffer */
+		if (buffer != GL_FRONT) {
+			crWarning("Binaryswap SPU: bad glDrawBuffer(0x%x)", buffer);
+			buffer = GL_FRONT;
+		}
+		binaryswap_spu.super.DrawBuffer(buffer);
+	}
+}
+
+
 SPUNamedFunctionTable _cr_binaryswap_table[] = {
 	{"SwapBuffers", (SPUGenericFunction) binaryswapspuSwapBuffers},
 	{"CreateContext", (SPUGenericFunction) binaryswapspuCreateContext},
@@ -1229,5 +1262,6 @@ SPUNamedFunctionTable _cr_binaryswap_table[] = {
 	{"Flush", (SPUGenericFunction) binaryswapspuFlush},
 	{"ClearColor", (SPUGenericFunction) binaryswapspuClearColor},
 	{"ChromiumParametervCR", (SPUGenericFunction) binaryswapspuChromiumParametervCR},
+	{"DrawBuffer", (SPUGenericFunction) binaryswapspuDrawBuffer},
 	{NULL, NULL}
 };
