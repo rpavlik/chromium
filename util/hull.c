@@ -262,10 +262,16 @@ crHullInteriorBox(const double *pnts, int npnts, double *bbox)
 				continue;
 
 			p1 = pnts + 2 * a;
-			A = p0[1] - p1[1] + (v[1] / v[0]) * (p1[0] - p0[0]);
-			B = v[1] * v[1] / v[0] + v[0];
+			if (v[0] == 0.0)
+				A = 0.0;
+			else
+				A = p0[1] - p1[1] + (v[1] / v[0]) * (p1[0] - p0[0]);
+			if (v[0] == 0.0)
+				B = 0.0;
+			else
+				B = v[1] * v[1] / v[0] + v[0];
 
-			if (A / B > 0)
+			if (B != 0.0 && A / B > 0)
 			{
 				continue;
 			}
