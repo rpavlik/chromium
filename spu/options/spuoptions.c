@@ -118,7 +118,7 @@ static void print_option( SPUOptions *opt )
       printf("NULL, ");
 
    if (opt->max)
-      printf("\"%s\"", opt->min);
+      printf("\"%s\"", opt->max);
    else
       printf("NULL");
    
