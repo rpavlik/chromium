@@ -302,7 +302,7 @@ GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowIn
 
 	SetForegroundWindow( visual->hWnd );
 
-	SetWindowPos( visual->hWnd, HWND_TOPMOST, 
+	SetWindowPos( visual->hWnd, HWND_TOP, 
 			window->x, window->y,
 			window_plus_caption_width, 
 			window_plus_caption_height,

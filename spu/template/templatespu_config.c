@@ -34,7 +34,11 @@ void templatespuGatherConfiguration( void )
 	crMothershipIdentifySPU( conn, template_spu.id );
 
 	/* CONFIGURATION STUFF HERE */
-
+	/* if (crMothershipGetSPUParam( conn, response, "something") ) 
+	 * {
+	 *   DO SOMETHING
+	 * }
+	 */
 	(void) response;
 
 	crMothershipDisconnect( conn );

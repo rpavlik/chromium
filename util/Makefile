@@ -27,6 +27,7 @@ FILES = bufpool \
 	mem \
 	net \
 	pixel \
+	rand \
 	string \
 	threads \
 	tcpip \

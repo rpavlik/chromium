@@ -13,7 +13,9 @@ crWarning
 crDebug
 crParseURL
 crAlloc
+crCalloc
 crRealloc
+crMemset
 crFree
 crStrSplit
 crStrSplitn
@@ -88,3 +90,5 @@ crUnlockMutex
 crThreadID
 crInitBarrier
 crWaitBarrier
+crRandFloat
+crRandSeed
