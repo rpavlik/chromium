@@ -17,11 +17,14 @@
 void
 vncspuStartServerThread(void)
 {
+#ifdef WINDOWS
+	crError("VNC SPU not supported on Windows yet");
+#else
 	extern void * vnc_main(void *);
 	pthread_t th;
-	int id;
-
-	id = pthread_create(&th, NULL, vnc_main, NULL);
+	int id = pthread_create(&th, NULL, vnc_main, NULL);
+	(void) id;
+#endif
 }
 
 
