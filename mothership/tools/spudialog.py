@@ -11,6 +11,7 @@
 the caller.  Options can be boolean, integer, float or string.
 """
 
+import string
 from wxPython.wx import *
 
 
