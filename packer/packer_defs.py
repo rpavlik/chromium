@@ -155,7 +155,8 @@ crPackResetPointers
 crPackAppendBuffer
 crPackAppendBoundedBuffer
 crPackSetBuffer
-crPackGetBuffer
+crPackSetBufferDEBUG
+crPackReleaseBuffer
 crPackFlushFunc
 crPackFlushArg
 crPackSendHugeFunc
