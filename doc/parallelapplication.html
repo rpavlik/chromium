@@ -30,10 +30,23 @@
 		</td>
 	</tr>
 </table>
-<p>The Chromium server can serialize multiple incoming streams from a
-distributed OpenGL application.&nbsp; Here we describe a trivial parallel
-application using Chromium.&nbsp; The application that we will be considering
-is called psubmit, and can be found in the directory <code>cr/progs/psumit</code>.</p>
+
+<p>
+Parallel rendering is characterized by more two or more programs
+(or threads) simultaneously sending graphics commands to the rendering system.
+Typically, each process (or thread) will render a part of the entire model or
+scene.  The pieces are combined at some point to form the final image.
+</p>
+<p>
+When rendering very large, complex models the bottleneck may be in submitting
+graphics commands to the rendering system.
+Parallel rendering tries to overcome that bottleneck.
+</p>
+<p>
+Here we describe parallel rendering with Chromium by using a trivial
+program called <code>psubmit</code>.
+</p>
+
 <h2 class="PageSubHeading">The Basic Idea</h2>
 <p>Writing a parallel OpenGL application is pretty simple.&nbsp; You have a
 bunch of processes, each one of which is responsible for a portion of the model
@@ -45,7 +58,7 @@ However, <i>ordering</i> requirements add some complexity to the process.</p>
 
 <p>OpenGL provides <i>ordered semantics</i>.&nbsp; That means that if function A
 is called before function B, the resulting image should look as if A happened
-before B.&nbsp; With parallel programs, it's no longer clear which function is
+before B.&nbsp; With parallel programs it's no longer clear which function is
 getting called first.&nbsp; Therefore, if you aren't using the depth test (for
 example), and you draw two overlapping triangles in parallel, you don't know
 which one will appear on top.&nbsp; To get around this problem, Chromium
@@ -53,6 +66,9 @@ implements the parallel API proposed by <a href="http://graphics.stanford.edu/pa
 Stoll and Hanrahan in SIGGRAPH '98</a>.&nbsp; This API extends OpenGL to have
 barriers and semaphores, which are sufficient to express almost all ordering
 constraints that come up in graphics.</p>
+
+<h2 class="PageSubHeading">The psubmit Program</h2>
+
 <p>Let's take a look at the <code>main</code> function of <code>psubmit.c</code>
 in <code>cr/progs/psubmit</code>.&nbsp; The first thing this function does is
 determines how many of its peers exist, and which instance number (starting from
@@ -145,8 +161,10 @@ for (frame = 0; ; frame++)
 <p>
 There are two sample parallel submission configuration scripts included
 with Chromium.
-psubmit_first.conf demonstrates sort-first rendering with the tilesort SPU.
-psubmit_last.conf demonstrates sort-last rendering with the readback SPU.
+psubmit_first.conf demonstrates parallel sort-first rendering with the
+tilesort SPU.
+psubmit_last.conf demonstrates parallel sort-last rendering with the
+readback SPU.
 </p>
 
 <p>To run the psubmit_first demo you'll need to issue the following commands,
@@ -169,6 +187,29 @@ probably from four separate shell windows:</p>
 <li><code>crappfaker</code>
 <li><code>crappfaker</code>
 </ul>
+
+
+<h2 class="PageSubHeading">Parallel Programming Difficulties</h2>
+
+<p>
+Among the difficulties in writing parallel applications are dealing with
+user input events and window management.
+Suppose you want to implement interactive rotation in your parallel
+application.  Since there are N client/application windows, mouse movement
+events that are detected in one window should be duplicated in all the
+other windows.  Otherwise only part of the rendering will be rotated.
+Similarly, if one window is resized, they should all be resized.
+</p>
+<p>
+At this time there is no simple solution to this problem.
+But looking forward, there are plans to develop a toolkit similar to GLUT,
+tentatively called CRUT (Chromium Utility Toolkit).
+With CRUT, input events and window changes will be automatically sent to
+all peers in a parallel application.
+For more information, try asking on the Chromium developers mailing list.
+</p>
+
+
 
 </body>
 
