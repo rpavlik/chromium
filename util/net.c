@@ -378,8 +378,6 @@ static void crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned in
 	memcpy( dst, src, len );
 	multi->len += len;
 
-	conn->InstantReclaim( conn, (CRMessage *) msg );
-
 	if (msg->header.type == CR_MESSAGE_MULTI_TAIL)
 	{
 		conn->HandleNewMessage( 
@@ -392,6 +390,9 @@ static void crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned in
 		multi->len = 0;
 		multi->max = 0;
 	}
+	
+	/* Don't do this too early! */
+	conn->InstantReclaim( conn, (CRMessage *) msg );
 }
 
 static void crNetRecvFlowControl( CRConnection *conn,
