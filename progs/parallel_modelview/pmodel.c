@@ -3,7 +3,7 @@
 #include <GL/glu.h>
 
 #include "pmodel.h"
-#include "cr_applications.h"
+#include "chromium.h"
 #include "cr_error.h"
 #include "cr_string.h"
 
