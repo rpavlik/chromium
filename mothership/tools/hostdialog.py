@@ -74,7 +74,7 @@ class HostDialog(wxDialog):
 		outerSizer.Add(innerSizer, option=1, flag=wxALL|wxGROW, border=4)
 		self.listBox = wxEditableListBox(parent=self, id=-1,
 										 label="Host names", size=(250, 250))
-		innerSizer.Add(self.listBox, flag=wxGROW|wxALL, border=2)
+		innerSizer.Add(self.listBox, option=1, flag=wxGROW|wxALL, border=2)
 
 		# OK / Cancel buttons
 		rowSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
