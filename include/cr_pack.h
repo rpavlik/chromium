@@ -51,6 +51,8 @@ typedef struct {
 
 extern DLLDATA CRPackGlobals cr_packer_globals;
 
+void crPackInit( int swapping );
+
 void crPackSetBuffer( CRPackBuffer *buffer );
 void crPackGetBuffer( CRPackBuffer *buffer );
 void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int extra );

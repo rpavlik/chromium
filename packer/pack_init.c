@@ -10,7 +10,7 @@
 
 void crPackInit( int swapping )
 {
-	crDebug( "INITIALIZATION: %d", swapping );
+	crDebug( "Initializing the packer.  I'm %sgoing to be swapping bytes.", swapping ? "" : "not " );
 	cr_packer_globals.swapping = swapping;
 	cr_packer_globals.Flush = NULL;
 	cr_packer_globals.SendHuge = NULL;
