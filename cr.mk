@@ -276,10 +276,12 @@ ifdef WINDOWS
 LIBRARIES := $(foreach lib,$(LIBRARIES),$(TOP)/built/$(lib)/$(ARCH)/$(LIBPREFIX)$(lib)$(LIBSUFFIX))
 LIBRARIES += $(foreach lib,$(PERSONAL_LIBRARIES),$(TOP)/built/$(lib)/$(ARCH)/$(LIBPREFIX)$(SHORT_TARGET_NAME)_$(lib)_copy$(LIBSUFFIX))
 #LIBRARIES := $(LIBRARIES:$(DLLSUFFIX)=$(LIBSUFFIX))
+STATICLIBRARIES :=
 
 else
 
 LDFLAGS += -L$(DSO_DIR)
+STATICLIBRARIES := $(foreach lib,$(LIBRARIES),$(wildcard $(TOP)/lib/$(ARCH)/lib$(lib)$(LIBSUFFIX)))
 LIBRARIES := $(foreach lib,$(LIBRARIES),-l$(lib))
 LIBRARIES += $(foreach lib,$(PERSONAL_LIBRARIES),-l$(SHORT_TARGET_NAME)_$(lib)_copy)
 P_LIB_FILES := $(foreach lib,$(PERSONAL_LIBRARIES),$(TOP)/lib/$(ARCH)/$(LIBPREFIX)$(SHORT_TARGET_NAME)_$(lib)_copy$(DLLSUFFIX) )
@@ -289,7 +291,9 @@ endif
 dep: $(DEPS)
 	@$(MAKE) $(PARALLELMAKEFLAGS) recurse INCLUDEDEPS=1
 
-$(PROG_TARGET): $(OBJS)
+# XXX this target should also have a dependency on all static Cr libraries.
+# For example: crserver depends on libcrstate.a and libcrserverlib.a
+$(PROG_TARGET): $(OBJS) $(STATICLIBRARIES)
 ifdef PROGRAM
 	@$(ECHO) "Linking $(PROGRAM) for $(ARCH)"
 ifdef WINDOWS
@@ -305,7 +309,7 @@ endif
 
 endif
 
-$(LIBNAME): $(OBJS) $(LIB_DEFS)
+$(LIBNAME): $(OBJS) $(LIB_DEFS) $(STATICLIBRARIES)
 ifdef LIBRARY
 	@$(ECHO) "Linking $@"
 ifdef WINDOWS
@@ -366,7 +370,7 @@ endif
 
 relink: $(COPY_TARGETS)
 
-$(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX): $(OBJS)
+$(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX): $(OBJS) $(STATICLIBRARIES)
 	@$(ECHO) "Linking $(LIBPREFIX)$*_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)"
 	$(MKDIR) $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)
 ifdef WINDOWS
@@ -398,7 +402,7 @@ endif
 endif
 	@$(CP) $@ $(DSO_DIR)
 
-$(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%$(DLLSUFFIX): $(OBJS)
+$(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%$(DLLSUFFIX): $(OBJS) $(STATICLIBRARIES)
 	@$(ECHO) "Linking $(LIBPREFIX)$*$(DLLSUFFIX)"
 	$(MKDIR) $(TOP)/built/$*/$(ARCH)
 ifdef WINDOWS
