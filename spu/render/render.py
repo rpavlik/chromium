@@ -47,14 +47,20 @@ extern glxfuncptr glxGetProcAddressARB( const GLubyte *name );
 #error I don't know where your system's GL lives.  Too bad.
 #endif
 
-static void __fillin( int offset, char *name, SPUGenericFunction func )
+#define FILLIN( n, f ) if (__fillin( function_index, (n), (f) ) == 1 ) function_index++;
+
+int function_index = 0;
+
+static int __fillin( int offset, char *name, SPUGenericFunction func )
 {
 	if (name != NULL && func == NULL)
 	{
-		crError( "NULL function for %s", name );
+		crDebug( "NULL function for %s", name );
+		return 0; /* The function will come from error */
 	}
 	render_table[offset].name = crStrdup( name );
 	render_table[offset].fn = func;
+	return 1;
 }
 
 static CRDLL *__findSystemGL( void )
@@ -123,18 +129,16 @@ for fun in possibly_useful_glx_functions:
 	print '\trender_spu.%s = (%sFunc_t) crDLLGetNoError( dll, "%s" );' % (fun, fun, fun)
 print '#endif'
 
-index = 0
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "render_nop", func_name ):
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) __renderNop%s );' % (index, func_name, func_name )
+		print '\tFILLIN( "%s", (SPUGenericFunction) __renderNop%s );' % (func_name, func_name )
 	elif stub_common.FindSpecial( "render", func_name ): 
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
+		print '\tFILLIN( "%s", (SPUGenericFunction) renderspu%s );' % (func_name, func_name )
 	elif stub_common.FindSpecial( "render_extensions", func_name ):
 		continue;
 	else:
-		print '\t__fillin( %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
-	index += 1
+		print '\tFILLIN( "%s", crDLLGet( dll, "gl%s" ) );' % (func_name, func_name )
 print '}'
 
 print """
@@ -142,21 +146,18 @@ void renderspuLoadSystemExtensions( void )
 {"""
 print '#ifdef WINDOWS'
 for func_name in stub_common.AllSpecials( 'render_extensions' ):
-	print '\t__fillin( %3d, "%s", (SPUGenericFunction) render_spu.wglGetProcAddress( "gl%s" ) );' % (index, func_name, func_name )
-	index += 1
+	print '\tFILLIN( "%s", (SPUGenericFunction) render_spu.wglGetProcAddress( "gl%s" ) );' % (func_name, func_name )
 print '#else'
-index -= len(stub_common.AllSpecials( 'render_extensions' ) )
 print '\tif (render_spu.glXGetProcAddressARB == NULL)'
 print '\t{'
-print '\t\t__fillin( %3d, NULL, NULL );' % index
+print '\t\tFILLIN( NULL, NULL );'
 print '\t\treturn;'
 print '\t}'
 print '\telse'
 print '\t{'
 for func_name in stub_common.AllSpecials( 'render_extensions' ):
-	print '\t\t__fillin( %3d, "%s", (SPUGenericFunction) render_spu.glXGetProcAddressARB( "gl%s" ) );' % (index, func_name, func_name )
-	index += 1
+	print '\t\tFILLIN( "%s", (SPUGenericFunction) render_spu.glXGetProcAddressARB( "gl%s" ) );' % (func_name, func_name )
 print '\t}'
 print '#endif'
-print '\t__fillin( %3d, NULL, NULL );' % index
+print '\tFILLIN( NULL, NULL );'
 print '}'
