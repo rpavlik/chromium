@@ -4,7 +4,7 @@ from wxPython.wx import *
 import crtypes
 import crutils
 import intdialog
-from tilesort_temp import *
+from tilesort_template import *
 
 
 # Eventually we'll move these into separate files in a special directory.
