@@ -530,6 +530,8 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	crDebug( "Render SPU: actual window x, y, width, height: %d, %d, %d, %d",
 					 window->x, window->y, window->width, window->height );
 
+	XSync(dpy, 0);
+
 	return GL_TRUE;
 }
 
