@@ -7,7 +7,7 @@ extern "C" {
 
 typedef struct CRList CRList;
 typedef struct CRListIterator CRListIterator;
-typedef int ( *CRListCompareFunc ) ( void *element1, void *element2 );
+typedef int ( *CRListCompareFunc ) ( const void *element1, const void *element2 );
 typedef void ( *CRListApplyFunc ) ( void *element, void *arg );
 
 CRList *crAllocList( void );
