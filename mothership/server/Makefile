@@ -11,7 +11,7 @@ BANNER = Making your local configuration file
 
 include $(TOP)/cr.mk
 
-crconfig.py:
+crconfig.py: Makefile
 	@echo Generating crconfig.py
 	@echo "import os" > crconfig.py
 	@echo "arch = \"${ARCH}\"" >> crconfig.py

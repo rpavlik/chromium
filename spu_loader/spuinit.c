@@ -62,6 +62,7 @@ static int validate_option( SPUOptions *opt, const char *response )
    const char *min = opt->min;
    const char *max = opt->max;
    int i = 0;
+	 int retval;
 
    if (opt->type == CR_STRING)
       return 1;
@@ -69,28 +70,28 @@ static int validate_option( SPUOptions *opt, const char *response )
    if (opt->numValues == 0)
       return 1;
 
-   for (;;) {
-      if (!validate_one_option( opt, response, min, max )) {
-	 return 0;
-      }
-      if (++i == opt->numValues) {
-	 return 1;
-      }
-      if (min) {
-	 while (*min != ' ' && *min) min++;
-	 while (*min == ' ') min++;
-      }
-      if (max) {
-	 while (*max != ' ' && *max) max++;
-	 while (*max == ' ') max++;
-      }
-      if (response) {
-	 while (*response != ' ' && *response) response++;
-	 while (*response == ' ') response++;
-      }
-   }
-   
-   return 1;
+	 for (;;) {
+		 if (!validate_one_option( opt, response, min, max )) {
+			 retval = 0; break;
+		 }
+		 if (++i == opt->numValues) {
+			 retval = 1; break;
+		 }
+		 if (min) {
+			 while (*min != ' ' && *min) min++;
+			 while (*min == ' ') min++;
+		 }
+		 if (max) {
+			 while (*max != ' ' && *max) max++;
+			 while (*max == ' ') max++;
+		 }
+		 if (response) {
+			 while (*response != ' ' && *response) response++;
+			 while (*response == ' ') response++;
+		 }
+	 }
+
+	 return retval;
 }
 
 /* Query the mothership, else use the default value for each option:
