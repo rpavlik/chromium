@@ -17,7 +17,7 @@
 
 <h1 class="PageHeading">Getting Chromium</h1>
 
-<p>Chromium is maintained at <a href="http://www.sourceforge.net/projects/chromium">SourceForge</a>.&nbsp;
+<p>Chromium is maintained at <a href="http://www.sourceforge.net/projects/chromium" target="_parent">SourceForge</a>.&nbsp;
 In addition to the source code, you'll also find a bug tracking system and three
 mailing lists.&nbsp; Even if you're not a developer, you may wish to subscribe
 to chromium-announce to receive information about updated releases.</p>
@@ -27,7 +27,7 @@ to chromium-announce to receive information about updated releases.</p>
 <p>To get the source code, you do <i>not</i> have to be a registered SourceForge
 user.&nbsp; You can get the source in one of two ways:</p>
 <p>First, you can download the latest release, which is available
-from the <a href="http://www.sourceforge.net/projects/chromium">main
+from the <a href="http://www.sourceforge.net/projects/chromium" target="_parent">main
 project page</a>, under <b>Latest File Releases</b>.
 This will be a
 gzip'ed tar file of the entire source tree on the release date, along with a
@@ -44,12 +44,12 @@ or
 <p>Alternately, you can check out the top-of-tree source code from the CVS
 repository, if you want to live on the bleeding edge.&nbsp;
 To check out the source code, just follow the instructions on the <a
-href="http://sourceforge.net/cvs/?group_id=16529">CVS repository
+href="http://sourceforge.net/cvs/?group_id=16529" target="_parent">CVS repository
 page</a>.&nbsp; If you're unfamiliar with CVS, useful documentation is
-available in <i><a href="http://cvsbook.red-bean.com/cvsbook.html">Open Source
+available in <i><a href="http://cvsbook.red-bean.com/cvsbook.html" target="_parent">Open Source
 Development with CVS</a></i>.
 If you want to track the CVS sources you should subscribe to the developers
-and CVS check-in <a href="http://sourceforge.net/mail/?group_id=16529">
+and CVS check-in <a href="http://sourceforge.net/mail/?group_id=16529" target="_parent">
 mailing lists</a>.  That's where new development is discussed.
 </p>
 
@@ -58,9 +58,9 @@ mailing lists</a>.  That's where new development is discussed.
 <h2 class="PageSubHeading">Prerequisites</h2>
 
 <p>
-You will need <a href="http://www.python.org">Python 2.2</a> or later,
-and <a href="http://www.perl.org">Perl 5.0</a> or later to build on any
-platform.
+You will need <a href="http://www.python.org" target="_parent">Python
+2.2</a> or later, and <a href="http://www.perl.org"
+target="_parent">Perl 5.0</a> or later to build on any platform.
 </p>
 
 <p>
@@ -79,8 +79,8 @@ At least initially, you shouldn't have to change anything in this file.
 </p>
 
 <p>
-If you have <a href="http://www.myri.com/scs/index.html">Myrinet
-GM libraries</a>, you can turn on GM support in the file
+If you have <a href="http://www.myri.com/scs/index.html" target="_parent">
+Myrinet GM libraries</a>, you can turn on GM support in the file
 <code>cr-X.Y/util/Makefile</code> before building.
 There are instructions in that file.
 </p>
@@ -95,7 +95,7 @@ Binaries are put in <code> cr-X.Y/bin/&lt;ARCH&gt;</code>, where
 <code>&lt;ARCH&gt;</code>
 is the name of your architecture (Actually, it's what's
 returned by the &quot;<code>uname</code>&quot; command.&nbsp; Except on
-Windows, where <a href="http://cygwin.com/">cygwin's</a>
+Windows, where <a href="http://cygwin.com/" target="_parent">cygwin's</a>
 &quot;<code>uname</code>&quot; returns something long and silly, so it gets
 re-written to &quot;<code>WIN_NT</code>&quot;.).&nbsp; You should add this
 directory to your <code>PATH</code>.</p>
@@ -109,7 +109,7 @@ directory to your <code>PATH</code>.</p>
     variable.&nbsp; Chromium builds a <i>lot</i> of shared libraries, so you
     can't skip this step.</li>
   <br>
-  <li><b>Windows</b>:&nbsp; You will also need to install the <a href="http://cygwin.com/">cygwin
+  <li><b>Windows</b>:&nbsp; You will also need to install the <a href="http://cygwin.com/" target="_parent">cygwin
     tools</a> to build Chromium.&nbsp; If you're building from the Windows shell
     (as opposed to the cygwin bash implementation), you will need to set the
     environment variable &quot;<code>MAKE_MODE</code>&quot; to the string &quot;<code>unix</code>&quot;.&nbsp;
@@ -157,6 +157,16 @@ directory to your <code>PATH</code>.</p>
 <h2 class="PageSubHeading">Special Notes</h2>
 
 <h3>NVIDIA drivers with Red Hat Linux</h3>
+
+<p>
+Firstly, NVIDIA's OpenGL header files (gl.h and glext.h) are somewhat broken.
+Just don't use them!
+If you accidentally install NVIDIA's header files in /usr/include/GL
+you should replace them with the stock XFree86 OpenGL headers or the
+headers included with Mesa.
+</p>
+
+
 <p>
 If you're using RedHat Linux 9.0 (or later?) with NVIDIA hardware/drivers
 you'll probably have to set the CR_SYSTEM_GL_PATH environment variable
