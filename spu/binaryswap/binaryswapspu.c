@@ -152,7 +152,7 @@ int getClippedWindow(GLdouble modl[16], GLdouble proj[16],
 		y2=binaryswap_spu.bbox->ymax;
 		z2=binaryswap_spu.bbox->zmax;
 	}
-	else{ //no bounding box defined
+	else{ /* no bounding box defined */
 		return 0;
 		crDebug("No BBox");
 	}
