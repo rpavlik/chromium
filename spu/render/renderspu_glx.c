@@ -850,6 +850,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 				jw: we might have to call glXMakeCurrent(dpy, 0, 0) to unbind
         the context from the window before destroying it. -Brian
 		  */
+			render_spu.ws.glXMakeCurrent(window->visual->dpy, 0, 0);
 			renderspu_SystemDestroyWindow( window );
 #endif 
 			renderspu_SystemCreateWindow( context->visual, window->visible, window );
