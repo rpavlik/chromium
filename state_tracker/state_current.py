@@ -90,7 +90,7 @@ void crStateCurrentRecover( void )
 	GLtexcoord_p	*texCoord	= &(c->current->texCoord);
 	GLindex_p		*index		= &(c->current->index);
 	GLedgeflag_p	*edgeFlag	= &(c->current->edgeFlag);
-	int i;
+	unsigned int i;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
 	DIRTY(nbitID, g->neg_bitid);
