@@ -257,6 +257,8 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 				break;
 			case GLX_SAMPLES_SGIS: /* aka GLX_SAMPLES_ARB */
 				/* just ignore value for now, we'll try to get 4 samples/pixel */
+				if (attrib[1] > 4)
+					return NULL;
 				attrib++;
 				break;
 
@@ -276,13 +278,17 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 	vis = crChooseVisual(&stub.wsInterface, dpy, screen, GL_FALSE, visBits);
 	if (!vis && (visBits & CR_STEREO_BIT)) {
 		/* try non-stereo */
-		vis = crChooseVisual(&stub.wsInterface, dpy, screen, GL_FALSE,
-												 visBits & ~CR_STEREO_BIT);
+		visBits &= ~CR_STEREO_BIT;
+		vis = crChooseVisual(&stub.wsInterface, dpy, screen, GL_FALSE, visBits);
 	}
 
-	AddVisualInfo(dpy, screen, vis->visual->visualid, visBits);
-
-	/*crDebug("glXChooseVisual returning 0x%x", (int) vis->visual->visualid);*/
+	if (vis) {
+		AddVisualInfo(dpy, screen, vis->visual->visualid, visBits);
+		/*
+		crDebug("glXChooseVisual returning xvis=0x%x, visbits=0x%x",
+						(int) vis->visual->visualid, visBits);
+		*/
+	}
 	return vis;
 }
 
@@ -371,11 +377,11 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 																						vis->visual->visualid);
 			if (v) {
 				visBits = v->visBits;
-				crDebug("%s visBits=0x%x", __FUNCTION__, visBits);
+				/*crDebug("%s visBits=0x%x", __FUNCTION__, visBits);*/
 			}
 			else {
 				visBits = CR_RGB_BIT | CR_DOUBLE_BIT | CR_DEPTH_BIT;
-				crDebug("%s default visBits=0x%x", __FUNCTION__, visBits);
+				/*crDebug("%s default visBits=0x%x", __FUNCTION__, visBits);*/
 			}
 
 			/*crDebug("ComputeVisBits(0x%x) = 0x%x", (int)vis->visual->visualid, visBits);*/
