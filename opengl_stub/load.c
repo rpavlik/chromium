@@ -264,7 +264,7 @@ static char **LookupMothershipConfig(const char *procName)
 	/* first, check if the CR_CONFIG env var is set */
 	{
 		const char *conf = crGetenv("CR_CONFIG");
-		if (conf)
+		if (conf && crStrlen(conf) > 0)
 			return crStrSplit(conf, " ");
 	}
 
@@ -551,7 +551,7 @@ void stubInit(void)
 
 		if (args) {
 			/* Build the argument vector and try spawning the mothership! */
-			int mothershipPort = 10000;
+			int mothershipPort = DEFAULT_MOTHERSHIP_PORT;
 			char *argv[1000];
 			int arg = 0;
 
@@ -577,7 +577,7 @@ void stubInit(void)
 			}
 			argv[arg++] = NULL;
 
-			if (mothershipPort != 10000) {
+			if (mothershipPort != DEFAULT_MOTHERSHIP_PORT) {
 				char localHost[1000], mothershipStr[1010];
 				crGetHostname(localHost, 1000);
 				sprintf(mothershipStr, "%s:%d", localHost, mothershipPort);
