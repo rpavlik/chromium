@@ -10,3 +10,10 @@ state_tracker/gendiffcode.pl to Python.
 In state_polygon_gen.c in crStatePolygonSwitch() we need a better test
 for updating the polygon stipple.  As-is we're calling diff.PolygonStipple
 all the time.
+
+
+Separate auto-start controls for server and app nodes.
+
+Don't require a program argument in sort-last template.
+
+Sort-last template seems to require all command line args, instead of none.
