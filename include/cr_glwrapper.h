@@ -7,5 +7,6 @@
 #endif
 
 #include <GL/gl.h>
+#include <GL/glext.h>
 
 #endif /* CR_GLWRAPPER_H */
