@@ -14,13 +14,13 @@
 
 */
 
+#include "../common/logo.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
-#include "../common/logo.h"
 
 /* #define CCN_DEBUG */
 #define DISPLAY_LISTS
@@ -200,6 +200,9 @@ Reshape(int width, int height)
 static void
 Keyboard(unsigned char key, int x, int y)
 {
+	(void) x;
+	(void) y;
+
 	switch (key)
 	{
 	case 'Q':
@@ -315,7 +318,9 @@ InitSpecial(void)
 		          texmapY = 128,
 		          texmapSize = texmapX * texmapY * 3;
 		FILE *file;
-		GLubyte textureData[texmapSize];
+		GLubyte *textureData;
+		
+		textureData = malloc(texmapSize);
 
 		/* Load brick texture. */
 		if ((file = fopen("brick.raw", "rb")) == NULL)
@@ -356,6 +361,7 @@ InitSpecial(void)
 			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, texmapX, texmapY,
 					  GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData);
 		}
+		free(textureData);
 	}
 }
 

@@ -11,6 +11,7 @@ LIBRARY = crextensionscommon
 FILES = logo util
 SHARED = 1
 OPENGL = 1
+GLUT = 1
 
 LIBRARIES = crutil
 ifeq ($(ARCH),AIX)

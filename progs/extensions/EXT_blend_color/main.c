@@ -13,13 +13,13 @@
 */
 
 
+#include "../common/logo.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
-#include "../common/logo.h"
 
 #ifndef GL_EXT_blend_color
 #error Please update your GL/glext.h header file.
@@ -148,6 +148,8 @@ Reshape(int width, int height)
 static void
 Keyboard(unsigned char key, int x, int y)
 {
+	(void) x;
+	(void) y;
 	switch (key)
 	{
 	case 'Q':

@@ -15,13 +15,13 @@
 */
 
 
+#include "../common/logo.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
-#include "../common/logo.h"
 
 #define TEST_EXTENSION_STRING  "GL_EXT_secondary_color"
 #ifndef GL_EXT_secondary_color
@@ -168,6 +168,8 @@ Reshape(int width, int height)
 static void
 Keyboard(unsigned char key, int x, int y)
 {
+	(void) x;
+	(void) y;
 	switch (key)
 	{
 	case 'Q':

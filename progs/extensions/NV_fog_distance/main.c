@@ -15,13 +15,13 @@
 */
 
 
+#include "../common/logo.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
-#include "../common/logo.h"
 
 #define	TEST_EXTENSION_STRING	"GL_NV_fog_distance"
 #ifndef	GL_NV_fog_distance
@@ -151,6 +151,9 @@ Keyboard(unsigned char key, int x, int y)
 {
 	static GLboolean wireframe = GL_FALSE;
 
+	(void) x;
+	(void) y;
+
 	switch (key)
 	{
 	case 'Q':
@@ -183,6 +186,9 @@ static void
 Special(int key, int x, int y)
 {
 	static GLfloat fogDistance = 15;
+
+	(void) x;
+	(void) y;
 
 	switch (key)
 	{

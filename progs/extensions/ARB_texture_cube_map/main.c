@@ -16,13 +16,13 @@
 */
 
 
+#include "../common/logo.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
-#include "../common/logo.h"
 
 /* #define CCN_DEBUG */
 #define DISPLAY_LISTS
@@ -185,6 +185,8 @@ Reshape(int width, int height)
 static void
 Keyboard(unsigned char key, int x, int y)
 {
+	(void) x;
+	(void) y;
 	switch (key)
 	{
 	case 'Q':
@@ -282,7 +284,11 @@ InitSpecial(void)
 	{
 		const int texmapX = 128, texmapY = 128, texmapSize = texmapX * texmapY * 3;
 		FILE *file;
-		GLubyte textureData[6][texmapSize];
+		int i;
+		GLubyte *textureData[6];
+
+		for (i = 0; i < 6; i++)
+			textureData[i] = malloc(texmapSize);
 
 		/* PosX: */
 		{
@@ -381,6 +387,8 @@ InitSpecial(void)
 			     texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[4]);
 		glTexImage2D((GLenum) GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, 0, GL_RGB8,
 			     texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[5]);
+		for (i = 0; i < 6; i++)
+			free(textureData[i]);
 	}
 
 	glEnable(GL_DEPTH_TEST);

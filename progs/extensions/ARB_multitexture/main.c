@@ -15,7 +15,9 @@
 
 */
 
+#define GL_GLEXT_LEGACY /* for glActiveTextureARB etc */
 
+#include "../common/logo.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +25,6 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
-#include "../common/logo.h"
 
 /* #define CCN_DEBUG */
 #define DISPLAY_LISTS
@@ -193,6 +194,8 @@ Reshape(int width, int height)
 static void
 Keyboard(unsigned char key, int x, int y)
 {
+	(void) x;
+	(void) y;
 	switch (key)
 	{
 	case 'Q':
@@ -312,7 +315,10 @@ InitSpecial(void)
 		const int texmapX = 128,
 			texmapY = 128, texmapSize = texmapX * texmapY * 3;
 		FILE *file;
-		GLubyte textureData[texmapSize];
+		GLubyte *textureData;
+
+		textureData = malloc(texmapSize);
+
 		/* Load grass texture. */
 		{
 			if ((file = fopen("terrain1.raw", "rb")) == NULL)
@@ -355,6 +361,7 @@ InitSpecial(void)
 						  GL_UNSIGNED_BYTE, textureData);
 			}
 		}
+		free(textureData);
 	}
 	/* Load heightmap data. */
 	{
@@ -363,8 +370,11 @@ InitSpecial(void)
 		const float size = 0.5, sizeV = 0.05, offsetV = -10, texScale = 0.15;
 
 		FILE *file;
-		GLubyte height[heightmapX * heightmapY];
-		GLfloat normals[heightmapX * heightmapY * 3], vec1[3], vec2[3];
+		GLubyte *height;
+		GLfloat *normals, vec1[3], vec2[3];
+
+		height = malloc(heightmapX * heightmapY);
+		normals = malloc(heightmapX * heightmapY * 3);
 
 		file = fopen("height.raw", "rb");
 		if (file == NULL)
@@ -410,6 +420,8 @@ InitSpecial(void)
 				normals[y * heightNormRow + x * 3 + 2] = k * magInv;
 			}
 		}
+		free(normals);
+		free(height);
 
 #ifdef DISPLAY_LISTS
 		glNewList(eGrassList, GL_COMPILE);

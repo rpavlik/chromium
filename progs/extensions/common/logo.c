@@ -14,6 +14,7 @@
 
  */
 
+#include "logo.h"
 #include <stdio.h>
 #include <GL/gl.h>
 #include "cr_logo.h"

@@ -7,6 +7,11 @@
 #ifndef CR_EXTENSIONS_LOGO_H
 #define CR_EXTENSIONS_LOGO_H
 
+#ifdef WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
