@@ -111,7 +111,7 @@ crBufferPoolPop( CRBufferPool *pool, unsigned int bytes )
 {
 	Buffer *b, *prev, *maybe_use;
 	unsigned int next_smallest = UINT_MAX;
-	int i;
+	unsigned int i;
 
 	prev = NULL;
 	maybe_use = NULL;

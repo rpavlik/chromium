@@ -17,8 +17,7 @@ import stub_common;
 
 stub_common.CopyrightDef()
 
-print """DESCRIPTION ""
-EXPORTS
+print """EXPORTS
 """
 
 keys = gl_mapping.keys()

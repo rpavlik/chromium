@@ -2,6 +2,5 @@
 ; All rights reserved.
 ;
 ; See the file LICENSE.txt for information on redistributing this software.
-DESCRIPTION ""
 EXPORTS
 SPULoad

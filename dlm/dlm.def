@@ -3,7 +3,6 @@
 	;
 	; See the file LICENSE.txt for information on redistributing this software.
 	
-DESCRIPTION ""
 EXPORTS
 crDLMNewContext
 crDLMErrorFunction

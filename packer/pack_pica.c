@@ -133,7 +133,7 @@ void PACK_APIENTRY crPackPicaCreateContext(const PICAuint *config,
 {
 
      crWarning("You can't really pack PICA calls!");
-     *return_value = -1;
+     *return_value = (PICAcontextID) -1;
      (void) writeback;
      (void) config;
      (void) nodes;
@@ -145,7 +145,7 @@ void PACK_APIENTRY crPackPicaCreateContextSWAP(const PICAuint *config,
 {
 
      crWarning("You can't really pack PICA calls!");
-     *return_value = -1;
+     *return_value = (PICAcontextID) -1;
      (void) writeback;
      (void) config;
      (void) nodes;
@@ -392,7 +392,7 @@ void PACK_APIENTRY crPackPicaBindLocalContext(PICAcontextID globalCtx,
 {
 
      crWarning("You can't really pack PICA calls!");
-     *return_value = -1;
+     *return_value = (PICAcontextID) -1;
      (void) writeback;
      (void) globalCtx;
      (void) node;
@@ -403,7 +403,7 @@ void PACK_APIENTRY crPackPicaBindLocalContextSWAP(PICAcontextID globalCtx,
 {
 
      crWarning("You can't really pack PICA calls!");
-     *return_value = -1;
+     *return_value = (PICAcontextID) -1;
      (void) writeback;
      (void) globalCtx;
      (void) node;
@@ -510,6 +510,7 @@ void PACK_APIENTRY crPackPicaQueryFrame(PICAcontextID ctx,
      
      crWarning("You can't really pack PICA calls!");
      *return_value = -1;
+     (void) ctx;
      (void) writeback;
      (void) frameID;
      (void) nodeID;
@@ -523,6 +524,7 @@ void PACK_APIENTRY crPackPicaQueryFrameSWAP(PICAcontextID ctx,
      
      crWarning("You can't really pack PICA calls!");
      *return_value = -1;
+     (void) ctx;
      (void) writeback;
      (void) frameID;
      (void) nodeID;
@@ -537,6 +539,7 @@ void PACK_APIENTRY crPackPicaAddGfxFramelet(PICAcontextID lctx,
      
      crWarning("You can't really pack PICA calls!");
      *return_value = -1;
+     (void) lctx;
      (void) writeback;
      (void) srcRect;
      (void) dstPos;
@@ -552,6 +555,7 @@ void PACK_APIENTRY crPackPicaAddGfxFrameletSWAP(PICAcontextID lctx,
      
      crWarning("You can't really pack PICA calls!");
      *return_value = -1;
+     (void) lctx;
      (void) writeback;
      (void) srcRect;
      (void) dstPos;
@@ -570,6 +574,7 @@ void PACK_APIENTRY crPackPicaAddMemFramelet(PICAcontextID lctx,
      
      crWarning("You can't really pack PICA calls!");
      *return_value = -1;
+     (void) lctx;
      (void) writeback;
      (void) colorBuffer;
      (void) depthBuffer;
@@ -593,6 +598,7 @@ void PACK_APIENTRY crPackPicaAddMemFrameletSWAP(PICAcontextID lctx,
      
      crWarning("You can't really pack PICA calls!");
      *return_value = -1;
+     (void) lctx;
      (void) writeback;
      (void) colorBuffer;
      (void) depthBuffer;
@@ -616,6 +622,7 @@ void PACK_APIENTRY crPackPicaReadFrame(PICAcontextID lctx,
      *return_value = -1;
      (void) writeback;
      (void) lctx;
+     (void) frameID;
      (void) format;
      (void) colorbuffer;
      (void) depthbuffer;
@@ -635,6 +642,7 @@ void PACK_APIENTRY crPackPicaReadFrameSWAP(PICAcontextID lctx,
      *return_value = -1;
      (void) writeback;
      (void) lctx;
+     (void) frameID;
      (void) format;
      (void) colorbuffer;
      (void) depthbuffer;

@@ -16,7 +16,6 @@ gl_mapping = cPickle.load( parsed_file )
 
 stub_common.CopyrightDef()
 
-print "DESCRIPTION \"\""
 print "EXPORTS"
 
 keys = gl_mapping.keys()

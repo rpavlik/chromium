@@ -14,7 +14,6 @@ gl_mapping = cPickle.load( parsed_file )
 
 stub_common.CopyrightDef()
 
-print "DESCRIPTION \"\""
 print "EXPORTS"
 
 stack_sizes = {

@@ -198,7 +198,8 @@ RELEASE_STRING += (THREADSAFE)
 endif
 
 ifdef WINDOWS
-LDFLAGS += /incremental:no /pdb:none
+LDFLAGS += /incremental:no 
+#LDFLAGS += /pdb:none
 ifndef RELEASE
 LDFLAGS += /debug
 endif
