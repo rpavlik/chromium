@@ -228,10 +228,11 @@ class CR:
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s" % args )
 
 	def do_opengldll( self, sock, args ):
-		app_id = int(args)
+		(id_string, hostname) = args.split( " " )
+		app_id = int(id_string)
 		for node in self.nodes:
 			if isinstance(node,CRApplicationNode):
-				if node.id == app_id and not node.spusloaded:
+				if ((app_id == -1 and hostname == node.host) or node.id == app_id) and not node.spusloaded:
 					node.spusloaded = 1
 					spuchain = "%d" % len(node.SPUs)
 					for spu in node.SPUs:

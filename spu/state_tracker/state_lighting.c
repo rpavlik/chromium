@@ -131,14 +131,11 @@ void STATE_APIENTRY crStateColorMaterial (GLenum face, GLenum mode)
 		return;
 	}
 
-	/* need to do more here than just setting the state.... */
 	l->colorMaterialFace = face;
 	l->colorMaterialMode = mode;
 	lb->colorMaterial = g->neg_bitid;
 	lb->dirty = g->neg_bitid;
 }
-
-
 
 void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param) 
 {
@@ -1035,3 +1032,19 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 	}
 }
 
+void crStateColorMaterialRecover(void)
+{
+	CRContext *g = GetCurrentContext();
+	CRLightingState *l = &(g->lighting);
+	CRCurrentState *c = &(g->current);
+
+	// Assuming that the "current" values are up to date,
+	// this function will extract them into the material
+	// values if COLOR_MATERIAL has been enabled on the
+	// client.
+
+	if (l->colorMaterial)
+	{
+		crStateMaterialfv( l->colorMaterialFace, l->colorMaterialMode, &(c->color.r) );
+	}
+}

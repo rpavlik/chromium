@@ -4,7 +4,17 @@
 #include "cr_spu.h"
 #include "state/cr_statetypes.h"
 
-#define FLUSH() if (g->flush_func != NULL) { g->flush_func( g->flush_arg ); g->flush_func = NULL; }
+// Set the flush_func to NULL *before* it's called, so that we can
+// call state functions from within flush without infinite recursion.
+// Yucky, but "necessary" for color material.
+
+#define FLUSH() \
+	if (g->flush_func != NULL) \
+	{ \
+		CRStateFlushFunc ff = g->flush_func; \
+		g->flush_func = NULL; \
+		ff( g->flush_arg ); \
+	}
 
 typedef void (SPU_APIENTRY *glAble)(GLenum);
 

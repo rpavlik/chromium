@@ -72,6 +72,8 @@ void crStateLightingDiff(CRLightingBits *bb, GLbitvalue bitID,
 void crStateLightingSwitch(CRLightingBits *bb, GLbitvalue bitID, 
 		CRLightingState *from, CRLightingState *to);
 
+void crStateColorMaterialRecover( );
+
 #ifdef __cplusplus
 }
 #endif

@@ -37,7 +37,12 @@ void StubInit(void)
 
 	if (!app_id)
 	{
-		crError( "How did the faker get loaded without crappfaker?! (CR_APPLICATION_ID_NUMBER not found)" );
+		crWarning( "the OpenGL faker was loaded without crappfaker!\n"
+							 "Defaulting to an application id of -1!\n"
+							 "This won't work if you're debugging a parallel application!\n"
+							 "In this case, set the CR_APPLICATION_ID_NUMBER environment\n"
+							 "variable to the right thing (see opengl_stub/load.c)" );
+		app_id = "-1";
 	}
 	conn = crMothershipConnect( );
 	if (!conn)

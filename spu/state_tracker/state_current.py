@@ -108,7 +108,7 @@ for k in current_fns.keys():
 
 print '''
 
-void crStateCurrentRecover( CRCurrentStatePointers *current_ptrs )
+void crStateCurrentRecover( void )
 {
 	unsigned char *v;
 	convert_func convert=NULL;
@@ -122,11 +122,11 @@ void crStateCurrentRecover( CRCurrentStatePointers *current_ptrs )
 	static const GLvectorf normal_default		= {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLfloat index_default			= 0.0f;
 	static const GLboolean edgeFlag_default		= GL_TRUE;
-	GLnormal_p		*normal		= &(current_ptrs->normal);
-	GLcolor_p		*color		= &(current_ptrs->color);
-	GLtexcoord_p	*texCoord	= &(current_ptrs->texCoord);
-	GLindex_p		*index		= &(current_ptrs->index);
-	GLedgeflag_p	*edgeFlag	= &(current_ptrs->edgeFlag);
+	GLnormal_p		*normal		= &(c->current->normal);
+	GLcolor_p		*color		= &(c->current->color);
+	GLtexcoord_p	*texCoord	= &(c->current->texCoord);
+	GLindex_p		*index		= &(c->current->index);
+	GLedgeflag_p	*edgeFlag	= &(c->current->edgeFlag);
 
 	/* Save pre state */
 	c->normalPre = c->normal;

@@ -8,6 +8,7 @@ FILES = printspu \
 		printspu_get \
 		printspu_hint \
 		printspu_init \
+		printspu_lighting \
 		printspu_matrices
 
 LIBRARIES = crutil crmothership spuload

@@ -42,6 +42,18 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->buffer.dirty = neg_bitid;
 			break;
 		case GL_COLOR_MATERIAL :
+			if (!val)
+			{
+				// We're TURNING OFF color material.  In this case,
+				// we should make sure that the very very latest 
+				// color that was specified gets copied into the
+				// material parameters, since this might be our
+				// last chance (see frame 1 of progs/kirchner
+				// for an example of why).
+
+				crStateCurrentRecover( );
+				crStateColorMaterialRecover( );
+			}
 			g->lighting.colorMaterial = val;
 			sb->lighting.enable = neg_bitid;
 			sb->lighting.dirty = neg_bitid;

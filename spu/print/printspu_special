@@ -7,3 +7,5 @@ GetDoublev
 GetFloatv
 GetIntegerv
 Hint
+Materialfv
+Materialiv

@@ -31,4 +31,5 @@ crStateDiffAPI
 crStateSetCurrentPointers
 crStateCurrentRecover
 crStateTransformUpdateTransform
+crStateColorMaterialRecover
 """

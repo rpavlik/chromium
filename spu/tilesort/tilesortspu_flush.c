@@ -310,7 +310,17 @@ static void __doFlush( CRContext *ctx, int broadcast )
 	// from the collection of pointers that we have in the geometry 
 	// buffer.
 
-	crStateCurrentRecover( &(cr_packer_globals.current) );
+	crStateCurrentRecover( );
+
+	// If GL_COLOR_MATERIAL is enabled, we need to copy the color values
+	// into the state element for materials so that Gets will work and so
+	// that the material will get sent down.
+	//
+	// We know we can do this now because this function will get called if
+	// glDisable turns off COLOR_MATERIAL, so that would be the very very
+	// latest time we could actually get away with that.
+
+	crStateColorMaterialRecover( );
 
 	// Okay.  Now, we need to un-hide the bonus space for the extra glEnd packet
 	// and try to close off the begin/end if it exists.  This is a pretty

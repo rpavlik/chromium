@@ -124,7 +124,15 @@ void crMothershipIdentifyFaker( CRConnection *conn, char *response )
 
 void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_id )
 {
-	INSIST( crMothershipSendString( conn, response, "opengldll %s", app_id ));
+	char hostname[1024];
+	char *temp;
+	if ( crGetHostname( hostname, sizeof(hostname) ) )
+	{
+		crError( "Couldn't get my own hostname?" );
+	}
+	temp = crStrchr( hostname, '.' );
+	if (temp) *temp = '\0';
+	INSIST( crMothershipSendString( conn, response, "opengldll %s %s", app_id, hostname ));
 }
 
 void crMothershipIdentifyServer( CRConnection *conn, char *response )

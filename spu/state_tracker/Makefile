@@ -43,10 +43,7 @@ DIFF_FILES = buffer \
 DIFF_FILES1 = $(addprefix state_, $(DIFF_FILES))
 DIFF_FILES2 = $(addsuffix _gen, $(DIFF_FILES1))
 
-# They're in this order because I'm debugging the differencing files
-# and it's irritating to have to wait for the whole compile to get
-# to them.  -Greg
-FILES = $(DIFF_FILES2) $(REGULAR_FILES)
+FILES = $(REGULAR_FILES) $(DIFF_FILES2)
 
 LIB_DEFS = state.def
 
