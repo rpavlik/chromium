@@ -635,9 +635,7 @@ unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 	{
 		int len = crNetPeekMessage( conn, message );
 		if (len) return len;
-		/* No work left in the queue, return */
-		if ( !crNetRecv() )
-			return 0;
+		crNetRecv();
 	}
 
 #ifndef WINDOWS
