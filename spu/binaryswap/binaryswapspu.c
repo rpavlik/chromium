@@ -4,13 +4,13 @@
 * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
+#include <float.h>  /* for DBL_MAX */
+
 #include "cr_spu.h"
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_bbox.h"
 #include "cr_url.h"
-#include <float.h>
 
 #include "binaryswapspu.h"
 
@@ -155,9 +155,7 @@ getClippedWindow(GLdouble modl[16], GLdouble proj[16],
 		z2=binaryswap_spu.bbox->zmax;
 	}
 	else{ /* no bounding box defined */
-		/*
 		crDebug("binaryswap SPU: No BBox");
-		*/
 		return 0;
 	}
 		
@@ -343,8 +341,8 @@ static void CheckWindowSize( WindowInfo *window )
 	{
 		/* not resizable - ask render SPU for its window size */
 		binaryswap_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-							     window->renderWindow, 
-							     GL_INT, 2, newSize);
+																								 window->renderWindow, 
+																								 GL_INT, 2, newSize);
 	}
 
 	if (newSize[0] != window->width || newSize[1] != window->height)
@@ -372,7 +370,7 @@ static void CheckWindowSize( WindowInfo *window )
 			CRASSERT(newSize[0] > 0);
 			CRASSERT(newSize[1] > 0);
 			binaryswap_spu.super.WindowSize( window->renderWindow, 
-							 newSize[0], newSize[1] );
+																			 newSize[0], newSize[1] );
 			binaryswap_spu.super.Viewport( 0, 0, newSize[0], newSize[1] );
 			
 			/* set child's viewport too */
@@ -420,9 +418,11 @@ static void CompositeNode( WindowInfo *window,
 	
 	CRASSERT(window->width > 0);
 	CRASSERT(window->height > 0);
+	crDebug("Composite Node start");
 	/* figure out our portion for each stage */
 	for(i=0; i<binaryswap_spu.stages; i++)
 	{
+		crDebug("Do header");
 		/* set up message header */
 		((BinarySwapMsg*) window->msgBuffer)->start_x        = window->read_x[i];
 		((BinarySwapMsg*) window->msgBuffer)->start_y        = window->read_y[i];
@@ -446,15 +446,15 @@ static void CompositeNode( WindowInfo *window,
 				((BinarySwapMsg*) window->msgBuffer)->clipped_x+1;
 		else
 			((BinarySwapMsg*) window->msgBuffer)->clipped_width  = 
-				endx - ((BinarySwapMsg*) window->msgBuffer)->clipped_x+1;
+				endx - ((BinarySwapMsg*) window->msgBuffer)->clipped_x;
 		
 		if(endy > (window->read_y[i]+window->read_height[i]))
 			((BinarySwapMsg*) window->msgBuffer)->clipped_height = 
 				(window->read_y[i]+window->read_height[i]) - 
-				((BinarySwapMsg*) window->msgBuffer)->clipped_y+1;
+				((BinarySwapMsg*) window->msgBuffer)->clipped_y;
 		else
 			((BinarySwapMsg*) window->msgBuffer)->clipped_height = 
-				endy - ((BinarySwapMsg*) window->msgBuffer)->clipped_y+1;
+				endy - ((BinarySwapMsg*) window->msgBuffer)->clipped_y;
 		
 		if(((BinarySwapMsg*) window->msgBuffer)->clipped_width < 0)
 			((BinarySwapMsg*) window->msgBuffer)->clipped_width = 0; 
@@ -480,20 +480,26 @@ static void CompositeNode( WindowInfo *window,
 			/* lower of pair => recv,send */
 			if(binaryswap_spu.highlow[i])
 			{
+				crDebug("Get");
 				crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
+				crDebug("Send");
 				crNetSend( binaryswap_spu.peer_send[i], NULL, window->msgBuffer, 
 					   (read_width * read_height * 4) + binaryswap_spu.offset);
 				if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
 					binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
+				crDebug("Done");
 			}
 			/* higher of pair => send,recv */
 			else
 			{
+				crDebug("Send");
 				crNetSend( binaryswap_spu.peer_send[i], NULL, window->msgBuffer, 
 					   (read_width * read_height * 4) + binaryswap_spu.offset);
 				if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
 					binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
+				crDebug("Get");
 				crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
+				crDebug("Done");
 			}
 			
 			/* get render info from other node */
@@ -504,6 +510,7 @@ static void CompositeNode( WindowInfo *window,
 			draw_height = render_info->clipped_height;
 			other_depth = render_info->depth;
 			
+			crDebug("Convert and draw");
 			/* get incoming fb */
 			if(draw_width > 0 && draw_width > 0){
 				incoming_color = (GLubyte*)((GLubyte*)incoming_msg + binaryswap_spu.offset);
@@ -552,20 +559,26 @@ static void CompositeNode( WindowInfo *window,
 			/* lower of pair => recv,send */
 			if(binaryswap_spu.highlow[i])
 			{
+				crDebug("Get 564");
 				crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
+				crDebug("Send");
 				crNetSend( binaryswap_spu.peer_send[i], NULL, window->msgBuffer,  
 					   read_width*read_height*(3+4) + binaryswap_spu.offset);
 				if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
 					binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
+				crDebug("Done");
 			}
 			/* higher of pair => send,recv */
 			else
 			{
+				crDebug("Send");
 				crNetSend( binaryswap_spu.peer_send[i], NULL, window->msgBuffer, 
 					   read_width*read_height*(3+4) + binaryswap_spu.offset);
 				if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
 					binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
+				crDebug("Get");
 				crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
+				crDebug("Done");
 			}
 			
 			/* get render info from other node */
@@ -575,6 +588,7 @@ static void CompositeNode( WindowInfo *window,
 			draw_width  = render_info->clipped_width;
 			draw_height = render_info->clipped_height;
 			
+			crDebug("Convert and draw");
 			if(draw_width > 0 && draw_width > 0){
 				/* get incoming fb */
 				incoming_color = (GLubyte*)((GLubyte*)incoming_msg + binaryswap_spu.offset);
@@ -667,7 +681,9 @@ static void CompositeNode( WindowInfo *window,
 		}
 		
 		/* clean up the memory allocated for the recv */
+		crDebug("Free");
 		crNetFree( binaryswap_spu.peer_recv[i], incoming_msg );
+		crDebug("Done");
 	}
 
 	draw_x = recalc_start_x;
@@ -675,6 +691,7 @@ static void CompositeNode( WindowInfo *window,
 	draw_width = recalc_end_x - recalc_start_x + 1;
 	draw_height = recalc_end_y - recalc_start_y + 1;
 
+	crDebug("Talk to child");
 	if(draw_width > 0 && draw_height > 0){
 		/* send our final portion off to child */
 		binaryswap_spu.super.ReadPixels( draw_x, draw_y, draw_width, draw_height, 
@@ -707,6 +724,7 @@ static void CompositeNode( WindowInfo *window,
 		
 		binaryswap_spu.child.SemaphoreVCR( MUTEX_SEMAPHORE );	
 	}
+	crDebug("Done");
 }
 
 
@@ -1017,7 +1035,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuMakeCurrent(GLint win, GLint nat
 		 */
 		binaryswap_spu.child.MatrixMode(GL_PROJECTION);
 		binaryswap_spu.child.LoadIdentity();
-		binaryswap_spu.child.Ortho(0.0, 1.0, 0.0, 1.0, -1., 1.);
+		binaryswap_spu.child.Ortho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
 	}
 	else {
 #ifdef CHROMIUM_THREADSAFE
@@ -1129,9 +1147,9 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuViewport( GLint x,
 }
 
 static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum target, 
-								     GLenum type, 
-								     GLsizei count, 
-								     GLvoid *values)
+																																		 GLenum type, 
+																																		 GLsizei count, 
+																																		 GLvoid *values)
 {
 	switch( target )
 	{

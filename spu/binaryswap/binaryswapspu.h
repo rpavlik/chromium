@@ -86,10 +86,7 @@ typedef struct {
 	
 	/* Stor a list of all nodes we will be swapping with */
 	char ** swap_partners;
-	
-	/* How many nodes do we have? */
-	int numnodes;
-	
+		
 	/* What is our number in the network. Used to find swap partners
 	   from network list */
 	int node_num;
