@@ -334,31 +334,6 @@ extern void APIENTRY glGetBufferPointerv(GLenum, GLenum, GLvoid* *);
 #endif
 
 
-/* XXX temporary until glext.h is updated! */
-#ifndef GL_ARB_occlusion_query
-#define GL_ARB_occlusion_query 1
-
-#define GL_SAMPLES_PASSED_ARB         0x8914
-#define GL_QUERY_COUNTER_BITS_ARB     0x8864
-#define GL_CURRENT_QUERY_ARB          0x8865
-#define GL_QUERY_RESULT_ARB           0x8866
-#define GL_QUERY_RESULT_AVAILABLE_ARB 0x8867
-
-#ifdef GL_GLEXT_PROTOTYPES
-extern void APIENTRY glGenQueriesARB(GLsizei n, GLuint *ids);
-extern void APIENTRY glDeleteQueriesARB(GLsizei n, const GLuint *ids);
-extern GLboolean APIENTRY glIsQueryARB(GLuint id);
-extern void APIENTRY glBeginQueryARB(GLenum target, GLuint id);
-extern void APIENTRY glEndQueryARB(GLenum target);
-extern void APIENTRY glGetQueryivARB(GLenum target, GLenum pname, GLint *params);
-extern void APIENTRY glGetQueryObjectivARB(GLuint id, GLenum pname, GLint *params);
-extern void APIENTRY glGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params);
-#endif
-
-#endif /* GL_ARB_occlusion_query */
-
-
-
 /**********************************************************************/
 /*****            Chromium Extensions to OpenGL                   *****/
 /*****                                                            *****/
@@ -560,6 +535,13 @@ extern void APIENTRY glZPixCR(GLsizei, GLsizei, GLenum, GLenum, GLenum, GLint, G
 
 #endif /* GL_CR_zpix */
 
+
+#ifndef GL_CR_window_position
+#define GL_CR_window_position 1
+
+#define GL_WINDOW_POSITION_CR           0x8B19
+
+#endif /* GL_CR_window_position */
 
 
 /**********************************************************************/

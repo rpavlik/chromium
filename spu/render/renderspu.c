@@ -319,8 +319,11 @@ static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y
 	WindowInfo *window;
 	CRASSERT(win >= 0);
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
-	if (window)
+	if (window) {
 		renderspu_SystemWindowPosition( window, x, y );
+		window->x = x;
+		window->y = y;
+	}
 }
 
 static void RENDER_APIENTRY renderspuWindowShow( GLint win, GLint flag )
@@ -767,6 +770,23 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 				renderspu_SystemGetWindowSize(window, &w, &h);
 				size[0] = w;
 				size[1] = h;
+			}
+		}
+		break;
+	case GL_WINDOW_POSITION_CR:
+		/* return window position, as a screen coordinate */
+		{
+			GLint *pos = (GLint *) values;
+			WindowInfo *window;
+			CRASSERT(type == GL_INT);
+			CRASSERT(count == 2);
+			CRASSERT(values);
+			pos[0] = pos[1] = 0;  /* default */
+			window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, index);
+			if (window)
+			{
+				pos[0] = window->x;
+				pos[1] = window->y;
 			}
 		}
 		break;
