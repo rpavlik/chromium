@@ -128,10 +128,14 @@ static void RENDER_APIENTRY renderspuDestroyContext( GLint ctx )
 
 void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)
 {
-	if (crWindow >= 0 && ctx >= 0) {
-		WindowInfo *window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, crWindow);
-		ContextInfo *context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
-		context->currentWindow = crWindow;
+	WindowInfo *window;
+	ContextInfo *context;
+
+	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, crWindow);
+	context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
+
+	if (window && context)
+	{
 #ifdef CHROMIUM_THREADSAFE
 		crSetTSD(&_RenderTSD, context);
 #else
