@@ -1,3 +1,8 @@
+/*
+ * Measure performance of the crPackVertex3fv function.
+ */
+
+
 #include "cr_pack.h"
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
@@ -6,7 +11,7 @@
 
 #define UNUSED( x ) ((void) (x))
 
-CRPackContext *pack_context;
+static CRPackContext *pack_context;
 
 static void do_nothing( CROpcode opcode, void *buf )
 {
@@ -25,17 +30,18 @@ static void reset_buffer( void *arg )
 static void MeasurePerformance( void )
 {
 	CRTimer *timer = crTimerNewTimer();
-	int i;
+	int i, j;
 	float vertices[3] = { 0,0,0 }; /* Whatever */
 	double elapsed, start_time;
-	int count = 0;
+	int count;
 
 	crStartTimer( timer );
-	start_time = crTimerTime( timer );
 
-	for (;;)
+	count = 0;
+	start_time = crTimerTime( timer );
+	for (j = 0; j < 5; j++)
 	{
-		for (i = 0; i < GRANULARITY ; i++)
+		for (i = 0; i < GRANULARITY; i++)
 		{
 			/* Note: I don't like the word vertexes, but I'm willing 
 			 * to live with it.  However, 'vertice' is NOT A WORD! */
@@ -44,7 +50,20 @@ static void MeasurePerformance( void )
 		}
 		count ++;
 		elapsed = crTimerTime( timer ) - start_time;
-		crDebug( "Pack Rate: %f vertices/sec", (count * GRANULARITY) / elapsed );
+		crDebug( "Pack Rate: %f glVertex3fv/sec", (count * GRANULARITY) / elapsed );
+	}
+
+	count = 0;
+	start_time = crTimerTime( timer );
+	for (j = 0; j < 5; j++)
+	{
+		for (i = 0; i < GRANULARITY; i++)
+		{
+			crPackVertex3f(vertices[0], vertices[1], vertices[2]);
+		}
+		count ++;
+		elapsed = crTimerTime( timer ) - start_time;
+		crDebug( "Pack Rate: %f glVertex3f/sec", (count * GRANULARITY) / elapsed );
 	}
 }
 
