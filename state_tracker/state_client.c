@@ -209,6 +209,15 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param)
 			DIRTY(cb->pack, g->neg_bitid);
 			break;
 #endif
+		case GL_PACK_SKIP_IMAGES:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Skip Images: %f", param);
+				return;
+			}
+			c->pack.skipImages = param;
+			DIRTY(cb->pack, g->neg_bitid);
+			break;
 		case GL_PACK_SKIP_PIXELS:
 			if (param < 0.0f) 
 			{
@@ -268,6 +277,15 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param)
 			DIRTY(cb->unpack, g->neg_bitid);
 			break;
 #endif
+		case GL_UNPACK_SKIP_IMAGES:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Skip Images: %f", param);
+				return;
+			}
+			c->unpack.skipImages = param;
+			DIRTY(cb->unpack, g->neg_bitid);
+			break;
 		case GL_UNPACK_SKIP_PIXELS:
 			if (param < 0.0f) 
 			{
