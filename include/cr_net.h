@@ -75,14 +75,17 @@ typedef struct __closeFuncList {
 } CRNetCloseFuncList;
 
 typedef struct __messageListNode {
-	CRMessage *mesg;   /* the actual message (header + payload) */
-	unsigned int len;  /* length of message (header + payload) */
+	CRMessage *mesg;    /* the actual message (header + payload) */
+	unsigned int len;   /* length of message (header + payload) */
+	CRConnection *conn; /* some messages are assoc. with specific connections*/
 	struct __messageListNode *next;  /* next in list */
 } CRMessageListNode;
 
 typedef struct {
 	CRMessageListNode *head, *tail;
+	int numMessages;
 	CRmutex lock;
+	CRcondition nonEmpty;
 } CRMessageList;
 
 
@@ -114,7 +117,7 @@ struct CRConnection {
 	unsigned int buffer_size;
 	unsigned int krecv_buf_size;
 	int broker;              /* is connection brokered through mothership? */
-
+	int threaded;            /* is this a threaded connection? */
 	int endianness, swap;
 	int actual_network;      /* is this a real network? */
 
@@ -138,6 +141,8 @@ struct CRConnection {
 	void  (*SendExact)( CRConnection *conn, const void *start, unsigned int len );
 	/* To receive data.  'len' bytes will be placed into 'buf'. */
 	void  (*Recv)( CRConnection *conn, void *buf, unsigned int len );
+	/* To receive one message on the connection */
+	void  (*RecvMsg)( CRConnection *conn );
 	/* What's this??? */
 	void  (*InstantReclaim)( CRConnection *conn, CRMessage *mess );
  /* Called when a full CR_MESSAGE_MULTI_HEAD/TAIL message has been received */
@@ -231,6 +236,12 @@ extern void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
 
 extern CRConnection *crNetConnectToServer( const char *server, unsigned short default_port, int mtu, int broker );
 extern CRConnection *crNetAcceptClient( const char *protocol, const char *hostname, unsigned short port, unsigned int mtu, int broker );
+
+
+extern void crInitMessageList(CRMessageList *list);
+extern void crEnqueueMessage(CRMessageList *list, CRMessage *msg, unsigned int len, CRConnection *conn);
+extern void crDequeueMessage(CRMessageList *list, CRMessage **msg, unsigned int *len, CRConnection **conn);
+
 
 
 /*

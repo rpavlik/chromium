@@ -247,6 +247,11 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 	conn->tcscomm_id         = -1;
 	conn->tcscomm_rank       = port;
 
+#ifdef CHROMIUM_THREADSAFE
+	crInitMutex(&conn->messageList.lock);
+	crInitCondition(&conn->messageList.nonEmpty);
+#endif
+
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
 	InitConnection(conn, protocol, mtu);
 	/* special case */
@@ -491,6 +496,134 @@ void crNetFree( CRConnection *conn, void *buf )
 }
 
 
+void
+crInitMessageList(CRMessageList *list)
+{
+	list->head = list->tail = NULL;
+	list->numMessages = 0;
+#ifdef CHROMIUM_THREADSAFE
+	crInitMutex(&list->lock);
+	crInitCondition(&list->nonEmpty);
+#endif
+}
+
+
+/**
+ * Add a message node to the end of the message list.
+ * \param list  the message list
+ * \param msg   points to start of message buffer
+ * \param len   length of message, in bytes
+ * \param conn  connection associated with message (may be NULL)
+ */
+void 
+crEnqueueMessage(CRMessageList *list, CRMessage *msg, unsigned int len,
+								 CRConnection *conn)
+{
+	CRMessageListNode *node;
+
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&list->lock);
+#endif
+
+	node = (CRMessageListNode *) crAlloc(sizeof(CRMessageListNode));
+	node->mesg = msg;
+	node->len = len;
+	node->conn = conn;
+	node->next = NULL;
+
+	/* insert at tail */
+	if (list->tail)
+		list->tail->next = node;
+	else
+		list->head = node;
+	list->tail = node;
+
+	list->numMessages++;
+
+#ifdef CHROMIUM_THREADSAFE
+	crSignalCondition(&list->nonEmpty);
+	crUnlockMutex(&list->lock);
+#endif
+}
+
+
+/**
+ * Remove first message node from message list and return it.
+ * Don't block.
+ * \return 1 if message was dequeued, 0 otherwise.
+ */
+static int
+crDequeueMessageNoBlock(CRMessageList *list, CRMessage **msg,
+												unsigned int *len, CRConnection **conn)
+{
+	int retval;
+
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&list->lock);
+#endif
+
+	if (list->head) {
+		CRMessageListNode *node = list->head;
+
+		/* unlink the node */
+		list->head = node->next;
+		if (!list->head) {
+			/* empty list */
+			list->tail = NULL;
+		}
+
+		*msg = node->mesg;
+		*len = node->len;
+		if (conn)
+			*conn = node->conn;
+
+		list->numMessages--;
+
+		crFree(node);
+		retval = 1;
+	}
+	else {
+		*msg = NULL;
+		*len = 0;
+		retval = 0;
+	}
+
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&list->lock);
+#endif
+
+	return retval;
+}
+
+
+/**
+ * Remove message from tail of list.  Block until non-empty if needed.
+ * \param list  the message list
+ * \param msg   returns start of message
+ * \param len   returns message length, in bytes
+ * \param conn  returns connection associated with message (may be NULL)
+ */
+void
+crDequeueMessage(CRMessageList *list, CRMessage **msg, unsigned int *len,
+								 CRConnection **conn)
+{
+	while (1) {
+		int k = crDequeueMessageNoBlock(list, msg, len, conn);
+		if (k) {
+			return;
+		}
+		else {
+#ifdef CHROMIUM_THREADSAFE
+			crLockMutex(&list->lock);
+			crWaitCondition(&list->nonEmpty, &list->lock);
+			crUnlockMutex(&list->lock);
+#endif
+		}
+	}
+}
+
+
+
 /**
  * Send a set of commands on a connection.  Pretty straightforward, just
  * error checking, byte counting, and a dispatch to the protocol's
@@ -504,10 +637,11 @@ void crNetFree( CRConnection *conn, void *buf )
  *               object!
  * \param len  number of bytes to send
  */
-void crNetSend( CRConnection *conn, void **bufp,
-		            const void *start, unsigned int len )
+void
+crNetSend(CRConnection *conn, void **bufp, const void *start, unsigned int len)
 {
 	CRMessage *msg = (CRMessage *) start;
+
 	CRASSERT( conn );
 	CRASSERT( len > 0 );
 	if ( bufp ) {
@@ -516,15 +650,14 @@ void crNetSend( CRConnection *conn, void **bufp,
 		 */
 		CRASSERT( start >= *bufp );
 		CRASSERT( (unsigned char *) start + len <=
-				(unsigned char *) *bufp + conn->buffer_size );
+							(unsigned char *) *bufp + conn->buffer_size );
 	}
 
 #ifndef NDEBUG
 	if ( conn->send_credits > CR_INITIAL_RECV_CREDITS )
 	{
-		crError( "crNetSend: send_credits=%u, looks like there is a "
-				"leak (max=%u)", conn->send_credits,
-				CR_INITIAL_RECV_CREDITS );
+		crError( "crNetSend: send_credits=%u, looks like there is a leak (max=%u)",
+						 conn->send_credits, CR_INITIAL_RECV_CREDITS );
 	}
 #endif
 
@@ -806,18 +939,7 @@ crNetDefaultRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 	/* If we make it this far, it's not a special message, so append it to
 	 * the end of the connection's list of received messages.
 	 */
-	{
-		CRMessageListNode *node;
-		node = (CRMessageListNode *) crAlloc(sizeof(CRMessageListNode));
-		node->mesg = msg;
-		node->len = len;
-		node->next = NULL;
-		if (conn->messageList.tail)
-			conn->messageList.tail->next = node;
-		else
-			conn->messageList.head = node;
-		conn->messageList.tail = node;
-	}
+	crEnqueueMessage(&conn->messageList, msg, len, conn);
 }
 
 
@@ -864,24 +986,12 @@ crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
 unsigned int
 crNetPeekMessage( CRConnection *conn, CRMessage **message )
 {
-	if (conn->messageList.head) {
-		CRMessageListNode *node = conn->messageList.head;
-		unsigned int len;
-
-		/* unlink the node */
-		conn->messageList.head = node->next;
-		if (!conn->messageList.head) {
-			/* empty list */
-			conn->messageList.tail = NULL;
-		}
-
-		*message = node->mesg;
-		len = node->len;
-		crFree(node);
-
+	unsigned int len;
+	CRConnection *dummyConn;
+	if (crDequeueMessageNoBlock(&conn->messageList, message, &len, &dummyConn))
 		return len;
-	}
-	return 0;
+	else
+		return 0;
 }
 
 
@@ -900,8 +1010,7 @@ crNetGetMessage( CRConnection *conn, CRMessage **message )
 	for (;;)
 	{
 		int len = crNetPeekMessage( conn, message );
-		if (len)
-			return len;
+		if (len) return len;
 		crNetRecv();
 	}
 
@@ -915,6 +1024,8 @@ crNetGetMessage( CRConnection *conn, CRMessage **message )
 /**
  * Read a \n-terminated string from a socket.  Replace the \n with \0.
  * Useful for reading from the mothership.
+ * \note This is an extremely inefficient way to read a string!
+ *
  * \param conn  the network connection
  * \param buf  buffer in which to place results
  */

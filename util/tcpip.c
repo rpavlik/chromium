@@ -754,11 +754,12 @@ crTCPIPUserbufRecv(CRConnection *conn, CRMessage *msg)
 
 
 /**
- * Receive incoming data on the given connection.
- * By the time we call this, we already know there's something to receive.
+ * Receive the next message on the given connection.
+ * If we're being called by crTCPIPRecv(), we already know there's
+ * something to receive.
  */
 static void
-crTCPIPRecvOnConnection(CRConnection *conn)
+crTCPIPReceiveMessage(CRConnection *conn)
 {
 	CRMessage *msg;
 	CRMessageType cached_type;
@@ -1054,7 +1055,10 @@ crTCPIPRecv( void )
 		if ( !FD_ISSET( sock, &read_fds ) )
 			continue;
 
-		crTCPIPRecvOnConnection(conn);
+		if (conn->threaded)
+			continue;
+
+		crTCPIPReceiveMessage(conn);
 	}
 
 #ifdef CHROMIUM_THREADSAFE
@@ -1339,6 +1343,7 @@ crTCPIPConnection( CRConnection *conn )
 	conn->Send = crTCPIPSend;
 	conn->SendExact = crTCPIPWriteExact;
 	conn->Recv = crTCPIPSingleRecv;
+	conn->RecvMsg = crTCPIPReceiveMessage;
 	conn->Free = crTCPIPFree;
 	conn->Accept = crTCPIPAccept;
 	conn->Connect = crTCPIPDoConnect;
