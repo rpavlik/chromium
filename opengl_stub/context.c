@@ -257,8 +257,17 @@ static char *GetWindowTitle( HDC drawable, GLboolean recurseUp )
 
 static void GetCursorPosition( HDC drawable, int pos[2] )
 {
-	/* XXX to do */
-	pos[0] = pos[1] = 0;
+  	RECT rect;
+	HWND hwnd;
+	POINT point;
+
+	hwnd = WindowFromDC( drawable );
+  	GetClientRect( hwnd, &rect );
+  
+  	GetCursorPos (&point);
+
+	pos[0] = point.x - rect.left;
+	pos[1] = point.y - rect.top;
 }
 
 #else
