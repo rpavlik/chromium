@@ -43,6 +43,13 @@ class CRNode:
 		self.host = host
 		if (host == 'localhost'):
 			self.host = gethostname()
+
+		# unqualify the hostname if it is already that way.
+		# e.g., turn "foo.bar.baz" into "foo"
+		period = self.host.find( "." )
+		if period != -1:
+			self.host = self.host[:index]
+
 		self.SPUs = []
 		self.spokenfor = 0
 		self.spusloaded = 0
