@@ -48,4 +48,8 @@ for func_name in keys:
 
 	print "\tts_%s," % (func_name)
 
+print "\tNULL,  /* copyList */"
+print "\tNULL,  /* copy_of */"
+print "\t0,     /* mark */"
+print "\tNULL   /* server */"
 print "};"
