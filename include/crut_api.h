@@ -16,7 +16,7 @@ extern "C" {
 
 /* Compile-time version tests */
 #define CRUT_MAJOR_VERSION 1
-#define CRUT_MINOR_VERSION 1
+#define CRUT_MINOR_VERSION 9
 #define CRUT_PATCH_VERSION 0
 
 /* Display mode bit masks. */
@@ -177,6 +177,9 @@ typedef struct
     int winY;
     int winWidth;
     int winHeight;
+
+    int compositeAlpha;
+    int compositeDepth;
 
     char menuBuffer[MENU_MAX_SIZE];
 

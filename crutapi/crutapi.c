@@ -68,6 +68,12 @@ crutGetWindowParams( CRUTAPI *crut_api)
 		&crut_api->winY, 
 		&crut_api->winWidth, 
 		&crut_api->winHeight );
+
+    crDebug("CRUTserver window geometry is %s", response);
+
+    crMothershipGetCRUTServerParam( crut_api->mothershipConn, response, "composite_mode" );
+    crut_api->compositeAlpha = crStrstr(response, "alpha") ? 1 : 0;
+    crut_api->compositeDepth = crStrcmp(response, "depth") ? 1 : 0;
 }
 
 void

@@ -307,6 +307,7 @@ crutInitServer(char *mothership, int argc, char *argv[])
 #ifndef WINDOWS
     int drawable;
 #endif
+    int displayMode;
 
     crNetInit( NULL/*crutServerRecv*/, crutServerClose );
 
@@ -318,7 +319,14 @@ crutInitServer(char *mothership, int argc, char *argv[])
     
     /* set up GLUT window */
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_STENCIL);
+
+    displayMode = GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA;
+    if (crut_api.compositeAlpha)
+       displayMode |= GLUT_ALPHA;
+    if (crut_api.compositeDepth)
+       displayMode |= GLUT_STENCIL;
+    glutInitDisplayMode(displayMode);
+
     glutInitWindowPosition( crut_api.winX,crut_api.winY );
     glutInitWindowSize( crut_api.winWidth,crut_api.winHeight );
     
@@ -329,8 +337,8 @@ crutInitServer(char *mothership, int argc, char *argv[])
     /* give window id to mothership */
 #ifndef WINDOWS
 #ifdef DARWIN
-	/* XXX \todo crut get current drawable (this only gets glut win_num) */
-	drawable = glutGetWindow();
+    /* XXX \todo crut get current drawable (this only gets glut win_num) */
+    drawable = glutGetWindow();
 #else
     /* XXX is this cast safe? */
     drawable = (int) glXGetCurrentDrawable();
