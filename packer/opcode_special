@@ -148,3 +148,4 @@ TexCoordPointer
 EdgeFlagPointer
 IndexPointer
 SecondaryColorPointerEXT
+VertexArrayRangeNV

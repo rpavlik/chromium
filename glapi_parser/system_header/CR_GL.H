@@ -87,3 +87,6 @@ void glChromiumParameterfCR (GLenum target, GLfloat value);
 void glChromiumParametervCR (GLenum target, GLenum type, GLsizei count, const GLvoid *values);
 void glGetChromiumParametervCR (GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values);
 void glTexImage3DEXT (GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+/* GL_NV_vertex_array_range */
+void glVertexArrayRangeNV (GLsizei length, const GLvoid *pointer);
+void glFlushVertexArrayRangeNV (void);

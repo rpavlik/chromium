@@ -48,3 +48,5 @@ WindowCreate
 WindowDestroy
 WindowSize
 WindowPosition
+VertexArrayRangeNV
+FlushVertexArrayRangeNV

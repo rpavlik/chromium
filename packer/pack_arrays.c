@@ -76,3 +76,12 @@ void PACK_APIENTRY crPackInterleavedArrays( GLenum format, GLsizei stride, const
 	UNUSED( pointer );
 	crWarning( "Unimplemented crPackInterleavedArrays" );
 }
+
+
+void PACK_APIENTRY crPackVertexArrayRangeNV( GLsizei length, const GLvoid *pointer )
+{
+	UNUSED( length );
+	UNUSED( pointer );
+	crWarning( "Unimplemented crPackVertexArrayRangeNV" );
+}
+
