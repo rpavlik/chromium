@@ -233,10 +233,10 @@ void crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj, GLuint nam
 
 #define INIT_LEVELS(ARRAY)											\
 	tobj->ARRAY = (CRTextureLevel *) crAlloc(sizeof(CRTextureLevel)	\
-												 * t->maxLevel);				\
+												 * (t->maxLevel + 1));				\
 	if (!tobj->ARRAY)															\
 		return; /* out of memory */									\
-	for (i=0; i<t->maxLevel; i++)									\
+	for (i = 0; i <= t->maxLevel; i++)						\
 	{																							\
 		tl                = &(tobj->ARRAY[i]);			\
 		tl->compressed    = GL_FALSE;								\
@@ -630,7 +630,7 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash)
 		 }
 		 if (levels) {
 			 /* free all mipmap levels for this face */
-			 for (k = 0; k < t->maxLevel; k++) {
+			 for (k = 0; k <= t->maxLevel; k++) {
 				 CRTextureLevel *tl = levels + k;
 				 if (tl->img) {
 					 crFree(tl->img);
@@ -2655,42 +2655,42 @@ static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
 	switch (target)
 	{
 		case GL_TEXTURE_1D:
-			if (level >= t->maxLevel)
+			if (level > t->maxLevel)
 				return NULL;
 			tobj = unit->currentTexture1D;
 			timg = tobj->level + level;
 			break;
 
 		case GL_PROXY_TEXTURE_1D:
-			if (level >= t->maxLevel)
+			if (level > t->maxLevel)
 				return NULL;
 			tobj = &(t->proxy1D);
 			timg = tobj->level + level;
 			break;
 
 		case GL_TEXTURE_2D:
-			if (level >= t->maxLevel)
+			if (level > t->maxLevel)
 				return NULL;
 			tobj = unit->currentTexture2D;
 			timg = tobj->level + level;
 			break;
 
 		case GL_PROXY_TEXTURE_2D:
-			if (level >= t->maxLevel)
+			if (level > t->maxLevel)
 				return NULL;
 			tobj = &(t->proxy2D);
 			timg = tobj->level + level;
 			break;
 #ifdef CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_3D:
-			if (level >= t->max3DLevel)
+			if (level > t->max3DLevel)
 				return NULL;
 			tobj = unit->currentTexture3D;
 			timg = tobj->level + level;
 			break;
 
 		case GL_PROXY_TEXTURE_3D:
-			if (level >= t->max3DLevel)
+			if (level > t->max3DLevel)
 				return NULL;
 			tobj = &(t->proxy3D);
 			timg = tobj->level + level;
@@ -2698,13 +2698,13 @@ static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
 #endif
 #ifdef CR_NV_texture_rectangle
 		case GL_TEXTURE_RECTANGLE_NV:
-			if (level >= t->maxRectLevel)
+			if (level > t->maxRectLevel)
 				return NULL;
 			tobj = unit->currentTextureRect;
 			timg = tobj->level + level;
 			break;
 		case GL_PROXY_TEXTURE_RECTANGLE_NV:
-			if (level >= t->maxRectLevel)
+			if (level > t->maxRectLevel)
 				return NULL;
 			tobj = &(t->proxyRect);
 			timg = tobj->level + level;
@@ -2712,49 +2712,49 @@ static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
 #endif
 #ifdef CR_ARB_texture_cube_map
 		case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-			if (level >= t->maxCubeMapLevel)
+			if (level > t->maxCubeMapLevel)
 				return NULL;
 			tobj = &(t->proxyCubeMap);
 			timg = tobj->level + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-			if (level >= t->maxCubeMapLevel)
+			if (level > t->maxCubeMapLevel)
 				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->level + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-			if (level >= t->maxCubeMapLevel)
+			if (level > t->maxCubeMapLevel)
 				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->negativeXlevel + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-			if (level >= t->maxCubeMapLevel)
+			if (level > t->maxCubeMapLevel)
 				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->positiveYlevel + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-			if (level >= t->maxCubeMapLevel)
+			if (level > t->maxCubeMapLevel)
 				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->negativeYlevel + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-			if (level >= t->maxCubeMapLevel)
+			if (level > t->maxCubeMapLevel)
 				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->positiveZlevel + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-			if (level >= t->maxCubeMapLevel)
+			if (level > t->maxCubeMapLevel)
 				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->negativeYlevel + level;
@@ -3361,7 +3361,7 @@ void crStateTextureObjSwitchCallback( unsigned long key, void *data1, void *data
 		{
 			case GL_TEXTURE_1D:
 			case GL_TEXTURE_2D:
-				for (j=0; j<fromCtx->texture.maxLevel; j++) 
+				for (j = 0; j <= fromCtx->texture.maxLevel; j++) 
 				{
 					CRTextureLevel *tl = &(tobj->level[j]);
 					FILLDIRTY(tl->dirty);
@@ -3370,7 +3370,7 @@ void crStateTextureObjSwitchCallback( unsigned long key, void *data1, void *data
 #ifdef CR_OPENGL_VERSION_1_2
 			case GL_TEXTURE_3D:
 #endif
-				for (j=0; j<fromCtx->texture.max3DLevel; j++) 
+				for (j = 0; j <= fromCtx->texture.max3DLevel; j++) 
 				{
 					CRTextureLevel *tl = &(tobj->level[j]);
 					FILLDIRTY(tl->dirty);
@@ -3378,7 +3378,7 @@ void crStateTextureObjSwitchCallback( unsigned long key, void *data1, void *data
 				break;
 #ifdef CR_ARB_texture_cube_map
 			case GL_TEXTURE_CUBE_MAP_ARB:
-				for (j=0; j<fromCtx->texture.maxCubeMapLevel; j++) 
+				for (j = 0; j <= fromCtx->texture.maxCubeMapLevel; j++) 
 				{
 					CRTextureLevel *tl;
 					/* Positive X */
@@ -3987,7 +3987,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 		switch (tobj->target)
 		{
 			case GL_TEXTURE_1D:
-				for (lvl = 0; lvl < from->maxLevel; lvl++) 
+				for (lvl = 0; lvl <= from->maxLevel; lvl++) 
 				{
 					CRTextureLevel *tl = &(tobj->level[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
@@ -4007,7 +4007,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 				}
 				break;
 			case GL_TEXTURE_2D:
-				for (lvl = 0; lvl < from->maxLevel; lvl++) 
+				for (lvl = 0; lvl <= from->maxLevel; lvl++) 
 				{
 					CRTextureLevel *tl = &(tobj->level[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
@@ -4028,7 +4028,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 				break;
 #ifdef CR_OPENGL_VERSION_1_2
 			case GL_TEXTURE_3D:
-				for (lvl = 0; lvl < from->maxLevel; lvl++) 
+				for (lvl = 0; lvl <= from->maxLevel; lvl++) 
 				{
 					CRTextureLevel *tl = &(tobj->level[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
@@ -4052,7 +4052,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 #ifdef CR_NV_texture_rectangle 
 			case GL_TEXTURE_RECTANGLE_NV:
 				/* only one level */
-				for (lvl = 0; lvl < from->maxRectLevel; lvl++) 
+				for (lvl = 0; lvl <= from->maxRectLevel; lvl++) 
 				{
 					CRTextureLevel *tl;
 					tl = &(tobj->level[lvl]);
@@ -4075,7 +4075,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 #endif
 #ifdef CR_ARB_texture_cube_map
 			case GL_TEXTURE_CUBE_MAP_ARB:
-				for (lvl = 0; lvl < from->maxCubeMapLevel; lvl++) 
+				for (lvl = 0; lvl <= from->maxCubeMapLevel; lvl++) 
 				{
 					CRTextureLevel *tl;
 					/* Positive X */

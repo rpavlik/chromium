@@ -193,7 +193,7 @@ typedef struct {
 
 	GLuint		curTextureUnit; /* GL_ACTIVE_TEXTURE */
 
-	GLint		maxLevel;
+	GLint		maxLevel;  /* number of mipmap levels possible: [0..max] */
 	GLint		max3DLevel;
 	GLint		maxCubeMapLevel;
 	GLint	  maxRectLevel;
