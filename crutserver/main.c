@@ -1,5 +1,6 @@
 /* Written by Dale Beermann (beermann@cs.virginia.edu) */
 
+#include <stdlib.h>
 #include "crutserver.h"
 #include "cr_error.h"
 #include "cr_mem.h"
@@ -362,6 +363,10 @@ crutInitServer(char *mothership, int argc, char *argv[])
     crMothershipGetParam( crut_api.mothershipConn, "crut_callbacks_menu", response );
     crut_server.callbacks.menu = crStrToInt(response);
 
+    /* Exit flag */
+    crMothershipGetCRUTServerParam( crut_api.mothershipConn, response, "exit_on_escape");
+    crut_server.exit_on_escape = crStrToInt(response);
+
 #ifdef USE_CRUT_MENUS
     crutGetMenuXML();
 
@@ -386,6 +391,8 @@ static void
 handleKeyboard(unsigned char key, int x, int y) 
 {
     crutSendKeyboardEvent( &crut_api, key, x, y );
+    if (key == 27 && crut_server.exit_on_escape)
+       exit(0);
 }
 
 static void 

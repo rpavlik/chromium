@@ -80,6 +80,7 @@ typedef struct
 
     itemValue* valueTable;
 
+    int exit_on_escape;
 } CRUTServer;
 
 extern CRUTServer crut_server;
