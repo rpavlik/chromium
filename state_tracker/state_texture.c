@@ -2851,7 +2851,7 @@ void STATE_APIENTRY crStateGetTexLevelParameteriv (GLenum target, GLint level,
 		case GL_TEXTURE_HEIGHT:
 			*params = (GLint) timg->height;
 			break;
-#if CR_OPENGL_VERSION_1_2
+#ifdef CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_DEPTH:
 			*params = (GLint) timg->depth;
 			break;
@@ -4170,6 +4170,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID)) 
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage1D(GL_TEXTURE_1D, lvl,
 																			tl->internalFormat,
@@ -4186,6 +4189,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID)) 
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage2D(GL_TEXTURE_2D, lvl,
 																			tl->internalFormat,
@@ -4203,6 +4209,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID)) 
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage3D(GL_TEXTURE_3D, lvl,
 																			tl->internalFormat,
@@ -4224,6 +4233,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID))
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage2D(GL_TEXTURE_RECTANGLE_NV, lvl,
 																			tl->internalFormat,
@@ -4244,6 +4256,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID))
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, lvl,
 																			tl->internalFormat,
@@ -4256,6 +4271,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID))
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, lvl,
 																			tl->internalFormat,
@@ -4268,6 +4286,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID)) 
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, lvl,
 																			tl->internalFormat,
@@ -4280,6 +4301,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID))
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, lvl,
 																			tl->internalFormat,
@@ -4292,6 +4316,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID))
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, lvl,
 																			tl->internalFormat,
@@ -4304,6 +4331,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 								if (CHECKDIRTY(tl->dirty, bitID))
 								{
 									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, lvl,
 																			tl->internalFormat,
