@@ -473,7 +473,7 @@ void renderspu_SystemDestroyContext( ContextInfo *context )
 }
 
 
-void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint nativeWindow, ContextInfo *context )
+void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, ContextInfo *context )
 {
 	CRASSERT(render_spu.ws.glXMakeCurrent);
 
@@ -496,6 +496,7 @@ void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint 
 
 		    -- jw
 		  */
+			printf("make current delete window\n");
 			renderspu_SystemDestroyWindow( window );
 #endif 
 			renderspu_SystemCreateWindow( context->visual, GL_FALSE, window );
@@ -506,9 +507,6 @@ void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint 
 		}
 
 		CRASSERT(context->context);
-
-		if (thread)
-			thread->dpy = window->visual->dpy;
 
 		if (render_spu.render_to_app_window && nativeWindow)
 		{
@@ -526,10 +524,6 @@ void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint 
 																		window->window, context->context );
 		}
 	
-	}
-	else if (thread && thread->dpy)
-	{
-		render_spu.ws.glXMakeCurrent( thread->dpy, 0, 0 );
 	}
 }
 
@@ -586,24 +580,18 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 	}
 }
 
-void renderspu_SystemSwapBuffers( GLint window, GLint flags )
+void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 {
-	if (window >= 0) {
-		WindowInfo *w;
-		CRASSERT(window >= 0);
-		CRASSERT(window < MAX_WINDOWS);
-		w = &(render_spu.windows[window]);
-		/* render_to_app_window:
-		 * w->nativeWindow will only be non-zero if the
-		 * render_spu.render_to_app_window option is true and
-		 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
-		 * structure.
-		 */
-		if (w->nativeWindow)
-			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
-		else
-			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
-	}
+	CRASSERT(w);
+
+	/* render_to_app_window:
+	 * w->nativeWindow will only be non-zero if the
+	 * render_spu.render_to_app_window option is true and
+	 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
+	 * structure.
+	 */
+	if (w->nativeWindow)
+		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
 	else
-		crWarning("renderspu_SwapBuffers(NULL window)");
+		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
 }

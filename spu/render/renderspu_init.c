@@ -35,6 +35,7 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 	GLint defaultWin, defaultCtx;
 	/* Don't ask for ALPHA, if we don't have it, we fail immediately */
 	const GLuint visualBits = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT | CR_STENCIL_BIT /*| CR_ALPHA_BIT*/;
+	WindowInfo *windowInfo;
 
 	(void) child;
 	(void) context_id;
@@ -63,6 +64,9 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 
 	numFuncs += numSpecial;
 
+	render_spu.contextTable = crAllocHashtable();
+	render_spu.windowTable = crAllocHashtable();
+
 	/*
 	 * Create the default window and context.  Their indexes are zero and
 	 * a client can use them without calling CreateContext or CreateWindow.
@@ -74,7 +78,10 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 	CRASSERT(defaultWin == 0);
 	CRASSERT(defaultCtx == 0);
 	renderspuMakeCurrent( defaultWin, 0, defaultCtx );
-	render_spu.windows[defaultWin].mapPending = GL_TRUE;
+
+	windowInfo = (WindowInfo *) crHashtableSearch(render_spu.windowTable, 0);
+	CRASSERT(windowInfo);
+	windowInfo->mapPending = GL_TRUE;
 
 	/*
 	 * Get the OpenGL extension functions.

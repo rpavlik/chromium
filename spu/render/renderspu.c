@@ -11,24 +11,6 @@
 #include "cr_applications.h"
 #include "renderspu.h"
 
-/*
- * Allocate a new ThreadInfo structure and bind this to the calling thread
- * with crSetTSD().
- */
-#ifdef CHROMIUM_THREADSAFE
-static ThreadInfo *renderspuNewThread( unsigned long id )
-{
-	ThreadInfo *thread = crCalloc(sizeof(ThreadInfo));
-	if (thread) {
-		crSetTSD(&_RenderTSD, thread);
-		thread->id = id;
-		thread->currentContext = -1;
-		thread->currentWindow = -1;
-	}
-	return thread;
-}
-#endif
-
 
 /*
  * Visual functions
@@ -108,8 +90,9 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 
 GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits )
 {
+	static GLint freeID = 0;
+	ContextInfo *context;
 	VisualInfo *visual;
-	int i;
 
 	if (!dpyName || crStrlen(render_spu.display_string)>0)
 		dpyName = render_spu.display_string;
@@ -118,24 +101,16 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 	if (!visual)
 		return -1;
 
-	/* find free slot in contexts[] array */
-	for (i = 0; i < MAX_CONTEXTS; i++) {
-		if (!render_spu.contexts[i].inUse)
-			break;
-	}
-	if (i == MAX_CONTEXTS)
+	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
+	if (!context)
+		return -1;
+	if (!renderspu_SystemCreateContext( visual, context ))
 		return -1;
 
-	if (!renderspu_SystemCreateContext( visual, &(render_spu.contexts[i]) ))
-		return -1;
+	crHashtableAdd(render_spu.contextTable, freeID, context);
+	freeID++;
 
-	render_spu.contexts[i].inUse = GL_TRUE;
-
-	/*
-	printf("%s return %d\n", __FUNCTION__, i);
-	*/
-
-	return i;
+	return freeID - 1;
 }
 
 
@@ -145,44 +120,32 @@ static void RENDER_APIENTRY renderspuDestroyContext( GLint ctx )
 
 	CRASSERT(ctx);
 
-	context = &(render_spu.contexts[ctx]);
+	context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
+	CRASSERT(context);
 	renderspu_SystemDestroyContext( context );
-	context->inUse = GL_FALSE;
-	context->everCurrent = GL_FALSE;
+	crHashtableDelete(render_spu.contextTable, ctx);
 }
 
 void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)
 {
-	GET_THREAD(thread);
-
-#ifdef CHROMIUM_THREADSAFE
-	if (!thread) {
-		thread = renderspuNewThread( crThreadID() );
-	}
-#endif
-
-	CRASSERT(thread);
-
 	if (crWindow >= 0 && ctx >= 0) {
-		WindowInfo *window;
-		ContextInfo *context;
-		thread->currentWindow = crWindow;
-		thread->currentContext = ctx;
-		window = &(render_spu.windows[crWindow]);
-		context = &(render_spu.contexts[ctx]);
+		WindowInfo *window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, crWindow);
+		ContextInfo *context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
+		context->currentWindow = crWindow;
+		crSetTSD(&_RenderTSD, context);
 
-		if (!window->inUse)
+		if (!window)
 		{
 			crDebug("renderspuMakeCurrent: invalid window id: %d", crWindow);
 			return;
 		}
-		if (!context->inUse)
+		if (!context)
 		{
 			crDebug("renderspuMakeCurrent: invalid context id: %d", ctx);
 			return;
 		}
 
-		renderspu_SystemMakeCurrent( thread, window, nativeWindow, context );
+		renderspu_SystemMakeCurrent( /*thread,*/ window, nativeWindow, context );
 		if (!context->everCurrent) {
 			/* print OpenGL info */
 			crDebug( "Render SPU: GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
@@ -200,10 +163,9 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 			window->mapPending = GL_FALSE;
 		}
 	}
-	else {
-		thread->currentWindow = -1;
-		thread->currentContext = -1;
-		renderspu_SystemMakeCurrent( thread, NULL, 0, NULL );
+	else
+	{
+		crSetTSD(&_RenderTSD, NULL);
 	}
 }
 
@@ -214,11 +176,13 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 
 GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits )
 {
+	static GLint freeID = 0;
+	WindowInfo *window;
 	VisualInfo *visual;
 	GLboolean showIt;
 	int i;
 
-	if (!dpyName || crStrlen(render_spu.display_string)>0)
+	if (!dpyName || crStrlen(render_spu.display_string) > 0)
 		dpyName = render_spu.display_string;
 
 	visual = renderspuFindVisual( dpyName, visBits );
@@ -228,55 +192,61 @@ GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits 
 		return -1;
 	}
 
-	/* find an empty slot in windows[] array */
-	for (i = 0; i < MAX_WINDOWS; i++) {
-		if (!render_spu.windows[i].inUse)
-			break;
-	}
-	if (i == MAX_WINDOWS)
+	/* Allocate WindowInfo */
+	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
+	if (!window)
 	{
-		crWarning( "Couldn't create a window, i == MAX_WINDOWS" );
+		crWarning( "render SPU: Couldn't create a window" );
 		return -1;
 	}
+
+	crHashtableAdd(render_spu.windowTable, freeID, window);
+	i = freeID;
+	freeID++;
 
 	/* Have GLX/WGL create the window */
 	if (render_spu.render_to_app_window)
 		showIt = 0;
 	else
 		showIt = i > 0;
-	if (!renderspu_SystemCreateWindow( visual, showIt, &(render_spu.windows[i]) ))
+
+	if (!renderspu_SystemCreateWindow( visual, showIt, window ))
 	{
 		crWarning( "Couldn't create a window, renderspu_SystemCreateWindow failed" );
 		return -1;
 	}
 
-	render_spu.windows[i].inUse = GL_TRUE;
-
 	return i;
 }
 
-static void RENDER_APIENTRY renderspuDestroyWindow( GLint window )
+static void RENDER_APIENTRY renderspuDestroyWindow( GLint win )
 {
-	CRASSERT(window >= 0);
-	CRASSERT(window < MAX_WINDOWS);
-	renderspu_SystemDestroyWindow( &(render_spu.windows[window]) );
-	render_spu.windows[window].inUse = GL_FALSE;
+	WindowInfo *window;
+	CRASSERT(win >= 0);
+	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
+	CRASSERT(window);
+	renderspu_SystemDestroyWindow( window );
+	crHashtableDelete(render_spu.windowTable, win);
 }
 
-static void RENDER_APIENTRY renderspuWindowSize( GLint window, GLint w, GLint h )
+static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
 {
-	CRASSERT(window >= 0);
-	CRASSERT(window < MAX_WINDOWS);
+	WindowInfo *window;
+	CRASSERT(win >= 0);
 	CRASSERT(w > 0);
 	CRASSERT(h > 0);
-	renderspu_SystemWindowSize( &(render_spu.windows[window]), w, h );
+	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
+	if (window)
+		renderspu_SystemWindowSize( window, w, h );
 }
 
-static void RENDER_APIENTRY renderspuWindowPosition( GLint window, GLint x, GLint y )
+static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y )
 {
-	CRASSERT(window >= 0);
-	CRASSERT(window < MAX_WINDOWS);
-	renderspu_SystemWindowPosition( &(render_spu.windows[window]), x, y );
+	WindowInfo *window;
+	CRASSERT(win >= 0);
+	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
+	if (window)
+		renderspu_SystemWindowPosition( window, x, y );
 }
 
 /*
@@ -399,15 +369,8 @@ static void DrawCursor( GLint x, GLint y )
 
 void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 {
-	WindowInfo *w;
-
-	if (window < 0 || window >= MAX_WINDOWS)
-	{
-		crDebug("renderspuSwapBuffers: window id %d out of range", window);
-		return;
-	}
-	w = &(render_spu.windows[window]);
-	if (!w->inUse)
+	WindowInfo *w = (WindowInfo *) crHashtableSearch(render_spu.windowTable, window);
+	if (!w)
 	{
 		crDebug("renderspuSwapBuffers: invalid window id: %d", window);
 		return;
@@ -422,7 +385,7 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 	if (render_spu.drawCursor)
 		DrawCursor( render_spu.cursorX, render_spu.cursorY );
 
-	renderspu_SystemSwapBuffers( window, flags );
+	renderspu_SystemSwapBuffers( w, flags );
 }
 
 
@@ -656,19 +619,17 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 	case GL_WINDOW_SIZE_CR:
 		{
 			GLint w, h, *size = (GLint *) values;
+			WindowInfo *window;
 			CRASSERT(type == GL_INT);
 			CRASSERT(count == 2);
 			CRASSERT(values);
 			size[0] = size[1] = 0;  /* default */
-			if (index < MAX_WINDOWS)
+			window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, index);
+			if (window)
 			{
-				WindowInfo *window = &(render_spu.windows[index]);
-				if (window->inUse)
-				{
-					renderspu_SystemGetWindowSize(window, &w, &h);
-					size[0] = w;
-					size[1] = h;
-				}
+				renderspu_SystemGetWindowSize(window, &w, &h);
+				size[0] = w;
+				size[1] = h;
 			}
 		}
 		break;

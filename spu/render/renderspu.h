@@ -21,8 +21,6 @@
 #include "cr_server.h"
 
 #define MAX_VISUALS 32
-#define MAX_WINDOWS 32
-#define MAX_CONTEXTS 32
 
 typedef struct {
 	GLbitfield visAttribs;
@@ -37,7 +35,6 @@ typedef struct {
 } VisualInfo;
 
 typedef struct {
-	GLboolean inUse;
 	int x, y;
 	int width, height;
 	VisualInfo *visual;
@@ -51,24 +48,15 @@ typedef struct {
 } WindowInfo;
 
 typedef struct {
-	GLboolean inUse;
 	VisualInfo *visual;
 	GLboolean everCurrent;
+	int currentWindow;
 #ifdef WINDOWS
 	HGLRC hRC;
 #else
 	GLXContext context;
 #endif
 } ContextInfo;
-
-typedef struct {
-	unsigned long id;
-	int currentContext;
-	int currentWindow;
-#ifndef WINDOWS
-	Display *dpy;
-#endif
-} ThreadInfo;
 
 typedef struct {
 	SPUDispatchTable self;
@@ -100,12 +88,11 @@ typedef struct {
 	int numVisuals;
 	VisualInfo visuals[MAX_VISUALS];
 
-	WindowInfo windows[MAX_WINDOWS];
-
-	ContextInfo contexts[MAX_CONTEXTS];
+	CRHashTable *windowTable;
+	CRHashTable *contextTable;
 
 #ifndef CHROMIUM_THREADSAFE
-	ThreadInfo singleThread;
+	ContextInfo *currentContext;
 #endif
 
 	crOpenGLInterface ws;  /* Window System interface */
@@ -117,9 +104,9 @@ extern RenderSPU render_spu;
 
 #ifdef CHROMIUM_THREADSAFE
 extern CRtsd _RenderTSD;
-#define GET_THREAD(T)  ThreadInfo *T = (ThreadInfo *) crGetTSD(&_RenderTSD)
+#define GET_CONTEXT(T)  ContextInfo *T = (ContextInfo *) crGetTSD(&_RenderTSD)
 #else
-#define GET_THREAD(T)  ThreadInfo *T = &(render_spu.singleThread)
+#define GET_CONTEXT(T)  ContextInfo *T = render_spu->currentContext
 #endif
 
 extern void renderspuGatherConfiguration( RenderSPU *spu );
@@ -134,8 +121,8 @@ extern void renderspu_SystemWindowSize( WindowInfo *window, int w, int h );
 extern void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h );
 extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
 extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
-extern void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint windowInfor, ContextInfo *context );
-extern void renderspu_SystemSwapBuffers( GLint window, GLint flags );
+extern void renderspu_SystemMakeCurrent( WindowInfo *window, GLint windowInfor, ContextInfo *context );
+extern void renderspu_SystemSwapBuffers( WindowInfo *window, GLint flags );
 extern int renderspuCreateFunctions( SPUNamedFunctionTable table[] );
 
 extern GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits );

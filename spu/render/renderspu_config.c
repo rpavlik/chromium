@@ -98,10 +98,6 @@ static void gather_userbuf( RenderSPU *render_spu, const char *response )
 	sscanf( response, "%d", &(render_spu->gather_userbuf_size) );
 }
 
-
-
-
-
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions renderSPUOptions[] = {

@@ -397,7 +397,7 @@ void renderspu_SystemDestroyContext( ContextInfo *context )
 	context->hRC = NULL;
 }
 
-void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint nativeWindow, ContextInfo *context )
+void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, ContextInfo *context )
 {
 	CRASSERT(render_spu.ws.wglMakeCurrent);
 
@@ -416,7 +416,8 @@ void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint 
 			render_spu.ws.wglMakeCurrent( window->visual->device_context, context->hRC );
 		}
 
-	} else if (thread) {
+	}
+	else {
 		render_spu.ws.wglMakeCurrent( 0, 0 );
 	}
 }
@@ -479,35 +480,29 @@ static void renderspuHandleWindowMessages( HWND hWnd )
 	BringWindowToTop( hWnd );
 }
 
-void renderspu_SystemSwapBuffers( GLint window, GLint flags )
+void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 {
-	if (window >= 0) {
-		int return_value;
-		WindowInfo *w;
-		CRASSERT(window >= 0);
-		CRASSERT(window < MAX_WINDOWS);
-		w = &(render_spu.windows[window]);
+	int return_value;
 
-		/* peek at the windows message queue */
-		renderspuHandleWindowMessages( w->visual->hWnd );
+	/* peek at the windows message queue */
+	renderspuHandleWindowMessages( w->visual->hWnd );
 
-		/* render_to_app_window:
-		 * w->nativeWindow will only be non-zero if the
-		 * render_spu.render_to_app_window option is true and
-		 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
-		 * structure.
-		 */
-		if (w->nativeWindow)
-			return_value = render_spu.ws.wglSwapBuffers( w->nativeWindow );
-		else
-			return_value = render_spu.ws.wglSwapBuffers( w->visual->device_context );
-		if (!return_value)
-		{
-			/* GOD DAMN IT.  The latest versions of the NVIDIA drivers
-		 	* return failure from wglSwapBuffers, but it works just fine.
-		 	* WHAT THE HELL?! */
+	/* render_to_app_window:
+	 * w->nativeWindow will only be non-zero if the
+	 * render_spu.render_to_app_window option is true and
+	 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
+	 * structure.
+	 */
+	if (w->nativeWindow)
+		return_value = render_spu.ws.wglSwapBuffers( w->nativeWindow );
+	else
+		return_value = render_spu.ws.wglSwapBuffers( w->visual->device_context );
+	if (!return_value)
+	{
+		/* GOD DAMN IT.  The latest versions of the NVIDIA drivers
+	 	* return failure from wglSwapBuffers, but it works just fine.
+	 	* WHAT THE HELL?! */
 
-			crWarning( "wglSwapBuffers failed: return value of %d!", return_value);
-		}
+		crWarning( "wglSwapBuffers failed: return value of %d!", return_value);
 	}
 }
