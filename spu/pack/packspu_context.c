@@ -225,9 +225,6 @@ void PACKSPU_APIENTRY packspu_MakeCurrent( GLint window, GLint nativeWindow, GLi
 	}
 }
 
-
-extern void PACKSPU_APIENTRY packspu_GetIntegerv( GLenum pname, GLint *params );
-
 void PACKSPU_APIENTRY packspu_Finish( void )
 {
 	GET_THREAD(thread);
