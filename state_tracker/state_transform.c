@@ -1303,8 +1303,8 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 	if ( (from->modelViewStack.depth != to->modelViewStack.depth) ||
 	      CHECKDIRTY(t->modelviewMatrix, bitID) )
 	{
-		int td = to->modelViewStack.depth;
-		int fd = from->modelViewStack.depth;
+		GLuint td = to->modelViewStack.depth;
+		GLuint fd = from->modelViewStack.depth;
 
 		if (td != fd ||
 				!matrix_equal(to->modelViewStack.top, from->modelViewStack.top))
@@ -1338,8 +1338,8 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 	if ( (from->projectionStack.depth != to->projectionStack.depth) ||
 	      CHECKDIRTY(t->projectionMatrix, bitID) )
 	{
-		int td = to->projectionStack.depth;
-		int fd = from->projectionStack.depth;
+		GLuint td = to->projectionStack.depth;
+		GLuint fd = from->projectionStack.depth;
 
 		if (td != fd ||
 				!matrix_equal(to->projectionStack.top, from->projectionStack.top)) {
@@ -1378,8 +1378,8 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 	{
 		for (j = 0 ; j < maxTextureUnits ; j++)
 		{
-			int td = to->textureStack[j].depth;
-			int fd = from->textureStack[j].depth;
+			GLuint td = to->textureStack[j].depth;
+			GLuint fd = from->textureStack[j].depth;
 
 			if (td != fd ||
 					!matrix_equal(to->textureStack[j].top, from->textureStack[j].top))
@@ -1420,8 +1420,8 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 	if ( (from->colorStack.depth != to->colorStack.depth) ||
 	      CHECKDIRTY(t->colorMatrix, bitID) )
 	{
-		int td = to->colorStack.depth;
-		int fd = from->colorStack.depth;
+		GLuint td = to->colorStack.depth;
+		GLuint fd = from->colorStack.depth;
 		if (td != fd || !matrix_equal(to->colorStack.top, from->colorStack.top))
 		{
 			diff_api.MatrixMode(GL_COLOR);
