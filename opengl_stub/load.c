@@ -12,7 +12,10 @@
 #include "cr_mothership.h"
 #include "cr_environment.h"
 #include "stub.h"
+#include <stdlib.h>
+#include <signal.h>
 
+void StubCleanup(int signo);
 
 static void InitVars(void)
 {
@@ -29,8 +32,27 @@ static void InitVars(void)
 	stub.minChromiumWindowHeight = 0;
 	stub.matchWindowTitle = NULL;
 	stub.threadSafe = GL_FALSE;
+
+	signal(SIGTERM, StubCleanup);
+	signal(SIGQUIT, StubCleanup);
+	signal(SIGINT, StubCleanup);
 }
 
+void StubCleanup(int signo)
+{
+	SPU *the_spu = stub.spu;
+
+	while (1) {
+		if (the_spu && the_spu->cleanup) {
+			printf("Cleaning up SPU %s\n",the_spu->name);
+			the_spu->cleanup();
+		} else 
+			break;
+		the_spu = the_spu->superSPU;
+	}
+
+	exit(0);
+}
 
 void StubInit(void)
 {
