@@ -186,8 +186,10 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 		winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 		if (!winInfo)
 			return NULL;
+#ifndef WINDOWS
 		crStrncpy(winInfo->dpyName, DisplayString(dpy), MAX_DPY_NAME);
 		winInfo->dpyName[MAX_DPY_NAME-1] = 0;
+#endif
 		winInfo->drawable = drawable;
 		winInfo->type = UNDECIDED;
 		winInfo->spuWindow = -1;
