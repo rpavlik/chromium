@@ -11,13 +11,7 @@
 #include "cr_string.h"
 #include "cr_error.h"
 
-float verts[3][3] = {
-	{ -1, 1, -1 },
-	{ -1, -1, 0 },
-	{ .5, 0, 1 }
-};
-
-float colors[7][4] = {
+static GLfloat colors[7][4] = {
 	{1,0,0,1},
 	{0,1,0,1},
 	{0,0,1,1},
@@ -91,7 +85,7 @@ int main(int argc, char *argv[])
 	static const GLfloat white[4] = { 1, 1, 1, 1 };
 	static const GLfloat gray[4] = { 0.25, 0.25, 0.25, 1 };
 	static const GLfloat pos[4] = { -1, -1, 10, 0 };
-	int rank = -1, size=-1;
+	int rank = -1, size = -1, barrierSize = -1;
 	int i, ctx, frame;
 	int window = 0;  /* default window */
 	float theta;
@@ -124,6 +118,15 @@ int main(int argc, char *argv[])
 			size = crStrToInt( argv[i+1] );
 			i++;
 		}
+		else if (!crStrcmp( argv[i], "-barrier" ))
+		{
+			if (i == argc - 1)
+			{
+				crError( "-barrier requires an argument" );
+			}
+			barrierSize = crStrToInt( argv[i+1] );
+			i++;
+		}
 		else if (!crStrcmp( argv[i], "-swap" ))
 		{
 			swapFlag = 1;
@@ -145,6 +148,8 @@ int main(int argc, char *argv[])
 	{
 		crError( "Bogus rank: %d (size = %d)", rank, size );
 	}
+	if (barrierSize < 0)
+		barrierSize = size;
 
 #define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
 
@@ -171,7 +176,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
-	glBarrierCreateCR_ptr( MASTER_BARRIER, size );
+	glBarrierCreateCR_ptr( MASTER_BARRIER, barrierSize );
 
 	theta = (float)(360.0 / (float) size);
 
