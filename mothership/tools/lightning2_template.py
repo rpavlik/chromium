@@ -921,6 +921,7 @@ class LightningDialog(wxDialog):
 			# update the template vars and mothership
 			self.__UpdateVarsFromWidgets()
 			self.Template.UpdateMothership(mothership)
+			mothership.Template = self.Template
 		return retVal
 
 
@@ -982,6 +983,7 @@ def Create_Lightning2(parentWindow, mothership):
 	serverNode.SetPosition(210, 80)
 	serverNode.Select()
 	readbackSPU = crutils.NewSPU("readback")
+	readbackSPU.SetOption('window_geometry', [0, 0, 400, 400])  # XXX fix me
 	packSPU = crutils.NewSPU("pack")
 	serverNode.AddSPU(readbackSPU)
 	serverNode.AddSPU(packSPU)
