@@ -38,6 +38,9 @@ from crconfig import arch, crdir, crbindir, crlibdir
 # Version string
 Version = "1.8"
 
+# Default port we'll listen on (also set in cr_net.h)
+DefaultMothershipPort = 10000
+
 # This controls whether debug messages are printed (1=yes, 0=no)
 DebugMode = 0
 
@@ -899,9 +902,10 @@ class CR:
 		raise KeyboardInterrupt
 
 	def Go( self, PORT = -1 ):
-		"""Go(PORT=10000)
+		"""Go(portNumber)
 		Starts the ball rolling.
-		This starts the mothership's event loop."""
+		This starts the mothership's event loop.
+		The optional parameter is the mothership port we'll listen on."""
 		if self.mother:
 			CRInfo("This is Chromium Daughtership, Version " + Version)
 			# You must always listen to your mother.
@@ -923,11 +927,11 @@ class CR:
 						except Exception, val:
 							CRInfo("Could not parse port number from <%s>: %s"%(motherString,val))
 							CRInfo("Using default PORT!")
-							PORT = 10000
+							PORT = DefaultMothershipPort
 					else:
-						PORT = 10000 # default value
+						PORT = DefaultMothershipPort # default value
 				else:
-					PORT = 10000  # default value
+					PORT = DefaultMothershipPort  # default value
 
 			for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
 				(af, socktype, proto, canonname, sa) = res
@@ -2162,7 +2166,7 @@ class CRDaughtership:
 		if mother == None:
 			CRInfo("I lost my mother - using localhost on default port")
 			motherHost = 'localhost'
-			motherPort = 10000
+			motherPort = DefaultMothershipPort
 		else:
 			colon = string.find(mother, ':')
 			if colon >= 0:
@@ -2171,10 +2175,10 @@ class CRDaughtership:
 					motherPort = int(mother[colon+1:])
 				except:
 					CRInfo("Illegal port number %s, using default" % mother[colon+1:])
-					motherPort = 10000
+					motherPort = DefaultMothershipPort
 			else:
 				motherHost = mother
-				motherPort = 10000
+				motherPort = DefaultMothershipPort
 
 		# When we start the daughtership as a surrogate mothership, it will
 		# read the CRMOTHERSHIP variable to configure itself.  Make sure it
