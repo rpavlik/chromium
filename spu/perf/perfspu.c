@@ -9,6 +9,7 @@
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_mem.h"
+#include "cr_pixeldata.h"
 #include "perfspu.h"
 
 typedef struct __perf_list {
@@ -199,7 +200,18 @@ void perfspuDumpCounters(char *pstring, PerfPrim *old, PerfPrim *new)
 		perfspuDumpVertices(pstring, &old->polygon, &new->polygon);
 	}
 
+	if (perf_spu.old_draw_pixels < perf_spu.draw_pixels) {
+		fprintf( perf_spu.log_file, "%sDRAWPIXELS%s%d%s%d\n", output, perf_spu.separator, perf_spu.draw_pixels, perf_spu.separator, perf_spu.draw_pixels - perf_spu.old_draw_pixels);
+	}
+		
+	if (perf_spu.old_read_pixels < perf_spu.read_pixels) {
+		fprintf( perf_spu.log_file, "%sREADPIXELS%s%d%s%d\n", output, perf_spu.separator, perf_spu.read_pixels, perf_spu.separator, perf_spu.read_pixels - perf_spu.old_read_pixels);
+	}
+		
+
 	crMemcpy(old, new, sizeof(PerfPrim));
+	perf_spu.old_draw_pixels = perf_spu.draw_pixels;
+	perf_spu.old_read_pixels = perf_spu.read_pixels;
 
 	crFree(output);
 	
@@ -394,11 +406,15 @@ void PERFSPU_APIENTRY perfspuEnd( )
 
 void PERFSPU_APIENTRY perfspuDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
+	perf_spu.draw_pixels += crImageSize( format, type, width, height );
+
 	perf_spu.super.DrawPixels( width, height, format, type, pixels );
 }
 
 void PERFSPU_APIENTRY perfspuReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
 {
+	perf_spu.read_pixels += crImageSize( format, type, width, height );
+
 	perf_spu.super.ReadPixels( x, y, width, height, format, type, pixels );
 }
 

@@ -22,6 +22,10 @@ static void __setDefaults( void )
 	perf_spu.log_file = stderr;
 	perf_spu.frame_counter = 0;
 	perf_spu.timer_event = 0.0f;
+	perf_spu.old_draw_pixels = 0;
+	perf_spu.old_read_pixels = 0;
+	perf_spu.draw_pixels = 0;
+	perf_spu.read_pixels = 0;
 	crMemset(&perf_spu.framestats, 0, sizeof(PerfPrim));
 	crMemset(&perf_spu.old_framestats, 0, sizeof(PerfPrim));
 	crMemset(&perf_spu.timerstats, 0, sizeof(PerfPrim));

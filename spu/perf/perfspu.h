@@ -71,6 +71,11 @@ typedef struct {
 	int clear_counter;
 	int swap_counter;
 
+	int old_draw_pixels;
+	int draw_pixels;
+	int old_read_pixels;
+	int read_pixels;
+
 	PerfPrim framestats;
 	PerfPrim old_framestats;
  
