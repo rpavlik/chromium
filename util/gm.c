@@ -11,7 +11,9 @@
 #ifdef WINDOWS
 #pragma warning( push, 3 )
 #endif
+
 #include <gm.h>
+
 #ifdef WINDOWS
 #pragma warning( pop )
 #endif
@@ -24,10 +26,12 @@
 #include "cr_string.h"
 #include "cr_bufpool.h"
 #include "cr_net.h"
+#include "cr_endian.h"
+#include "cr_threads.h"
+#include "cr_environment.h"
+#include "net_internals.h"
 #include "cr_protocol.h"
 #include "cr_string.h"
-#include "cr_threads.h"
-#include "net_internals.h"
 
 #define CR_GM_USE_CREDITS 1
 #define CR_GM_SEND_CREDITS_THRESHOLD ( 1 << 18 )
@@ -511,7 +515,8 @@ static void crGmConnectionAdd( CRConnection *conn )
 }
 
 
-void crGmAccept( CRConnection *conn, char *hostname, unsigned short port )
+void 
+crGmAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	CRConnection *mother;
 	char response[8096];
@@ -1463,7 +1468,7 @@ void crGmConnection( CRConnection *conn )
 #endif
 }
 
-CRConnection* crGmDump( int *num )
+CRConnection** crGmDump( int *num )
 {
 	/* TODO */
 
