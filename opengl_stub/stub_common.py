@@ -3,6 +3,13 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+import sys
+curver = sys.version_info[0] + sys.version_info[1]/10.0
+if curver < 2.2:
+	print >>sys.stderr, "Your python is version %g.  Chromium requires at least"%(curver)
+	print >>sys.stderr, "version 2.2.  Please upgrade your python installation."
+	sys.exit(1)
+
 import string;
 import re;
 
