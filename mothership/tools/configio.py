@@ -307,12 +307,11 @@ def ReadConfig(mothership, file, filename=""):
 		sys.argv = newArgv
 		dialog.Destroy()
 
-	exec contents
+#	exec contents
 		
 	# Try to execute the config file
 	try:
-		pass
-#		exec contents
+		exec contents
 	except:
 		# get exception info
 		(type, value, callStack) = sys.exc_info()
