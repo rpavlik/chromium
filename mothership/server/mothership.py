@@ -138,6 +138,7 @@ class CR:
 		self.mtu = mtu;
 
 	def Go( self, PORT=10000 ):
+		print >> sys.stderr, "This is Chromium, Version ALPHA"
 		try:
 			HOST = ""
 			try:
