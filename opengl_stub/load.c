@@ -137,7 +137,7 @@ static void stubInitVars(void)
 #endif
 
 	/* At the very least we want CR_RGB_BIT. */
-	stub.desiredVisual = CR_RGB_BIT;
+	stub.desiredVisual = CR_INVALID_VISUAL_BIT;
 	stub.haveNativeOpenGL = GL_FALSE;
 	stub.spu = NULL;
 	stub.appDrawCursor = 0;

@@ -306,14 +306,17 @@ typedef struct {
 
 
 /* Used to communicate visual attributes throughout Chromium */
-#define CR_RGB_BIT          0x1
-#define CR_ALPHA_BIT        0x2
-#define CR_DEPTH_BIT        0x4
-#define CR_STENCIL_BIT      0x8
-#define CR_ACCUM_BIT        0x10
-#define CR_DOUBLE_BIT       0x20
-#define CR_STEREO_BIT       0x40
-#define CR_MULTISAMPLE_BIT  0x80
+#define CR_INVALID_VISUAL_BIT 0x1
+#define CR_RGB_BIT            0x2
+#define CR_ALPHA_BIT          0x4
+#define CR_DEPTH_BIT          0x8
+#define CR_STENCIL_BIT        0x10
+#define CR_ACCUM_BIT          0x20
+#define CR_DOUBLE_BIT         0x40
+#define CR_STEREO_BIT         0x80
+#define CR_MULTISAMPLE_BIT    0x100
+
+#define CR_DEFAULT_VISUAL_BITS (CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT)
 
 #define CR_MAX_CONTEXTS      512
 #define CR_MAX_BITARRAY      (CR_MAX_CONTEXTS / 32) /* 32 contexts per uint */

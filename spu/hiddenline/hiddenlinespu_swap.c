@@ -43,7 +43,7 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 	static SPUDispatchTable hacked_child_dispatch;
 	BufList *temp, *next;
 	static int frame_counter = 1;
-	static int do_hiddenline = 0;
+	static int do_hiddenline = 1;
 
 #ifdef WINDOWS
 #define PRESSED( key ) (GetAsyncKeyState( key ) & (1<<15))
@@ -100,7 +100,7 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 		 * offsets.  Note that this means we need to ignore calls to glColor,
 		 * disable texturing, disable lighting, things like that. */
 
-		hiddenline_spu.super.PolygonOffset( 1.5f, 0.000001f );
+		hiddenline_spu.super.PolygonOffset( -1.5f, 0.000001f );
 		hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		hiddenline_spu.super.Color3f( hiddenline_spu.poly_r, hiddenline_spu.poly_g, hiddenline_spu.poly_b );
 
