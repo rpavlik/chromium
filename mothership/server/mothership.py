@@ -332,6 +332,7 @@ class CRNode:
 		self.autostart_argv = []
 		self.dynamic_host = False
 		self.nodeIndex = -1 # set when added to a CR
+		self.crut_spokenfor = 0
 
 		# Add the default constraint to the node.
 		self.constraints = []
@@ -515,7 +516,6 @@ class CRApplicationNode(CRNode):
 		self.id = CRApplicationNode.AppID
 		CRApplicationNode.AppID += 1
 		self.Conf('start_dir', '.')
-		self.crut_spokenfor = 0
 
 	def SetApplication( self, app ):
 		"""SetApplication(name)
