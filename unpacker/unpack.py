@@ -220,6 +220,7 @@ void crUnpack( void *data, void *opcodes,
 
 	for (i = 0 ; i < num_opcodes ; i++)
 	{
+		/*crDebug(\"Unpacking opcode %d\\n\", *unpack_opcodes);*/
 		switch( *unpack_opcodes )
 		{"""
 
@@ -263,9 +264,12 @@ for func_name in keys:
 print """
 void crUnpackExtend(void)
 {
-	GLenum extend_opcode = %s;
+	GLenum extend_opcode = %s;""" % ReadData( 4, 'GLenum' );
+
+print """
+	/*crDebug(\"Unpacking extended opcode \%d\\n\", extend_opcode);*/
 	switch( extend_opcode )
-	{""" % ReadData( 4, 'GLenum' );
+	{"""
 
 for func_name in keys:
 	if stub_common.FindSpecial( "unpacker", func_name ): continue
