@@ -745,6 +745,8 @@ static void get_row(const char *src, GLenum srcFormat, GLenum srcType,
 				}
 			}
 			break;
+		default:
+			crError("unexpected source format in get_row in pixel.c");
 	}
 }
 
@@ -1217,7 +1219,7 @@ static void put_row(char *dst, GLenum dstFormat, GLenum dstType,
 			}
 			break;
 		default:
-			crError("unexpected type in put_row in pixel.c");
+			crError("unexpected dest type in put_row in pixel.c");
 	}
 }
 
