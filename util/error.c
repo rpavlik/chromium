@@ -96,8 +96,6 @@ void crError( char *format, ... )
 #endif
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
-	if (canada)
-		crStrcat( txt, ", eh?" );
 	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
 #ifdef WINDOWS
 	if (getenv( "CR_GUI_ERROR" ) != NULL)
