@@ -34,23 +34,12 @@ void packspuReadback( CRMessageReadback *rb, unsigned int len )
 	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
-void packspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
-{
-	int payload_len = len - sizeof( *rp );
-
-	memcpy ( pack_spu.ReadPixels, ((char *)rp) + sizeof(*rp), payload_len );
-	pack_spu.ReadPixels = 0;
-}
-
 int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) buf;
 
 	switch( msg->type )
 	{
-		case CR_MESSAGE_READ_PIXELS:
-			packspuReadPixels( &(msg->readPixels), len );
-			break;
 		case CR_MESSAGE_WRITEBACK:
 			packspuWriteback( &(msg->writeback) );
 			break;
