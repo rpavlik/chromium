@@ -401,6 +401,14 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 }
 
 
+void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
+{
+	/* XXX TO-DO: return size of the window in w, h */
+	*w = window->width;  /* just a temporary hack */
+	*h = window->height;  /* just a temporary hack */
+}
+
+
 void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 {
 	int winprop;

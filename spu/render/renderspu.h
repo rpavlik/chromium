@@ -86,6 +86,7 @@ typedef struct {
 	int          sync;
 #endif
 	int render_to_app_window;
+	int resizable;
 
 	GLboolean drawCursor;
 	GLint cursorX, cursorY;
@@ -124,6 +125,7 @@ extern void renderspu_SystemDestroyContext( ContextInfo *context );
 extern GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window );
 extern void renderspu_SystemDestroyWindow( WindowInfo *window );
 extern void renderspu_SystemWindowSize( WindowInfo *window, int w, int h );
+extern void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h );
 extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
 extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
 extern void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint windowInfor, ContextInfo *context );

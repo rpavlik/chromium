@@ -66,6 +66,11 @@ static void render_to_app_window( RenderSPU *render_spu, const char *response )
 	sscanf( response, "%d", &(render_spu->render_to_app_window) );
 }
 
+static void resizable( RenderSPU *render_spu, const char *response )
+{
+	sscanf( response, "%d", &(render_spu->resizable) );
+}
+
 
 
 /* option, type, nr, default, min, max, title, callback
@@ -96,6 +101,9 @@ SPUOptions renderSPUOptions[] = {
 
    { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
      "Render to app window", (SPUOptionCB)render_to_app_window },
+
+   { "resizable", CR_BOOL, 1, "0", NULL, NULL,
+     "Resizable window", (SPUOptionCB)resizable },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

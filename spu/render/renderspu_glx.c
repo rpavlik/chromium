@@ -350,7 +350,10 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	hints.min_height = hints.height;
 	hints.max_width = hints.width;
 	hints.max_height = hints.height;
-	hints.flags = USPosition | USSize | PMinSize | PMaxSize;
+	if (render_spu.resizable)
+		hints.flags = USPosition | USSize;
+	else
+		hints.flags = USPosition | USSize | PMinSize | PMaxSize;
 	XSetStandardProperties( dpy, window->window,
 			WINDOW_NAME, WINDOW_NAME,
 			None, NULL, 0, &hints );
@@ -524,6 +527,22 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 	CRASSERT(window);
 	CRASSERT(window->visual);
 	XResizeWindow(window->visual->dpy, window->window, w, h);
+	XSync(window->visual->dpy, 0);
+}
+
+
+void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
+{
+	Window root;
+	int x, y;
+	unsigned int width, height, bw, d;
+	CRASSERT(window);
+	CRASSERT(window->visual);
+	CRASSERT(window->window);
+	XGetGeometry(window->visual->dpy, window->window, &root,
+							 &x, &y, &width, &height, &bw, &d);
+	*w = (int) width;
+	*h = (int) height;
 }
 
 
@@ -532,6 +551,7 @@ void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 	CRASSERT(window);
 	CRASSERT(window->visual);
 	XMoveWindow(window->visual->dpy, window->window, x, y);
+	XSync(window->visual->dpy, 0);
 }
 
 
