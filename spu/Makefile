@@ -7,7 +7,7 @@ TOP = ..
 
 SUBDIRS = tester options
 SUBDIRS += error nop pack passthrough print readback render template tilesort
-SUBDIRS += saveframe comm array binaryswap counter hiddenline
+SUBDIRS += saveframe comm array binaryswap perf hiddenline
 
 ifneq ($(ARCH), WIN_NT)
 SUBDIRS += dist_texture
