@@ -37,6 +37,12 @@ printf_mapping = {
 	'GLsizei':    ('%u','unsigned')
 }
 
+returnvalue_mapping = {
+	'GLint':      ('%d','int'),
+	'GLuint':     ('%u','unsigned'),
+	'GLboolean':  ('%hhd','char'),
+}
+
 keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 
 for func_name in keys:
@@ -116,19 +122,19 @@ for func_name in keys:
 	print '%s )\\n"%s );' % ( printfstr, argstr )
 	print '\tfflush( print_spu.fp );'
 
-	if return_type == "GLint":
+	if returnvalue_mapping.has_key( return_type ):
+		(format, type) = returnvalue_mapping[return_type]
 		print '\t{'
-		print '\t\tint res =',
-	else:
-		if return_type != "void":
-			print '\treturn',
-		else:
-			print '\t',
-	print 'print_spu.passthrough.%s( %s );' % (func_name, apiutil.MakeCallString(params))
-	if return_type == "GLint":
-		print '\t\tfprintf( print_spu.fp, "= %d\\n", res);'
+		print '\t\t%s res = print_spu.passthrough.%s( %s );' % (type, func_name, apiutil.MakeCallString(params))
+		print '\t\tfprintf( print_spu.fp, "= %s\\n", res);' % format
+		print '\t\tfflush( print_spu.fp );'
 		print '\t\treturn res;'
 		print '\t}'
+	elif return_type != "void":
+		print '\treturn print_spu.passthrough.%s( %s );' % (func_name, apiutil.MakeCallString(params))
+	else:
+		print '\tprint_spu.passthrough.%s( %s );' % (func_name, apiutil.MakeCallString(params))
+
 	print '}'
 
 print 'SPUNamedFunctionTable _cr_print_table[] = {'
