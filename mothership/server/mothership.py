@@ -123,21 +123,21 @@ class SPU:
 	def AddServer( self, node, protocol='tcpip', port=7000 ):
         	"""AddServer(node, protocol='tcpip', port=7000)
                 Tells a client node where to find its server."""
-		node.Conf( 'port', port )
 #		if protocol == 'tcpip':
 #			self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
 #		elif (protocol.startswith('file') or protocol.startswith('swapfile')):
 		if (protocol.startswith('file') or protocol.startswith('swapfile')):
 			self.__add_server( node, "%s" % protocol )
 			# Don't tell the server "node" about this.
-			return
 		else:
 			# XXX use node.host or node.ipaddr here??? (BP)
 			self.__add_server( node, "%s://%s:%d" % (protocol,node.host,port) )
 			# use this for tcp/ip : send hostname rather than ip
 			# (waiting for getaddrinfo, for probing which one is
 			#  available)
- 		node.AddClient( self, protocol )
+		if node != None:
+			node.Conf( 'port', port )
+			node.AddClient( self, protocol )
 
 	def AddDisplay(self, display_id, w, h, align_matrix, align_matrix_inv):
 		"""AddDisplay(display_id, w, h, align_matrix, align_matrix_inv)
@@ -368,6 +368,9 @@ class SockWrapper:
 	def Success( self, msg ):
 		self.Reply( SockWrapper.NOERROR, msg )
 
+	def Failure( self, code, msg ):
+		self.Reply( code, msg )
+
 class CRSpawner(threading.Thread):
 	"""A class used to start processes on nodes.
 
@@ -450,7 +453,6 @@ class CR:
 		                   the list of new tiles.
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
-	    ClientError:	Sends an error message on the given socket.
 	"""
 	def __init__( self ):
 		self.nodes = []
@@ -613,12 +615,6 @@ class CR:
 			except:
 				pass
 
-	def ClientError( self, sock_wrapper, code, msg ):
-		"""ClientError(sock_wrapper, code, msg)
-		Sends an error message on the given socket."""
-		sock_wrapper.Reply( code, msg )
-		self.ClientDisconnect( sock_wrapper )
-
 	def ClientDisconnect( self, sock_wrapper ):
 		"""ClientDisconnect(sock_wrapper)
 		Disconnects from the client on the given socket."""
@@ -694,7 +690,7 @@ class CR:
 						return
 			sock.tcscomm_connect_wait = (my_hostname, my_rank, my_endianness)
 		else:
-			self.ClientError( sock, SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
+			sock.Failure( SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
 	def do_acceptrequest( self, sock, args ):
 		"""do_acceptrequest(sock, args)
@@ -760,7 +756,7 @@ class CR:
 						return
 			sock.tcscomm_accept_wait = (hostname, rank, endianness)
 		else:
-			self.ClientError( sock, SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
+			sock.Failure( SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
 	def do_faker( self, sock, args ):
 		"""do_faker(sock, args)
@@ -772,13 +768,13 @@ class CR:
 					try:
 						application = node.config['application']
 					except:
-						self.ClientError( sock, SockWrapper.NOAPPLICATION, "Client node has no application!" )
+						sock.Failure( SockWrapper.NOAPPLICATION, "Client node has no application!" )
 						return
 					node.spokenfor = 1
 					sock.node = node
 					sock.Success( "%d %s" % (node.id, application) )
 					return
-		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
+		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
 
 	def do_server( self, sock, args ):
 		"""do_server(sock, args)
@@ -799,7 +795,7 @@ class CR:
 					return
                 # Wasn't able to find the server.  Figure out what ones
                 # were expected.
-		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s.  Expected one of: %s" % (args, nodenames))
+		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of server host %s.  Expected one of: %s" % (args, nodenames))
 
 	def do_opengldll( self, sock, args ):
 		"""do_opengldll(sock, args)
@@ -817,7 +813,7 @@ class CR:
 					sock.Success( spuchain )
 					sock.node = node
 					return
-		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL for application %d" % app_id )
+		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL for application %d" % app_id )
 
 	def do_spu( self, sock, args ):
 		"""do_spu(sock, args)
@@ -825,10 +821,10 @@ class CR:
 		try:
 			spuid = int(args)
 		except:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "Bogus SPU name: %s" % args )
+			sock.Failure( SockWrapper.UNKNOWNSPU, "Bogus SPU name: %s" % args )
 			return
 		if not allSPUs.has_key( spuid ):
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "Never heard of SPU %d" % spuid )
+			sock.Failure( SockWrapper.UNKNOWNSPU, "Never heard of SPU %d" % spuid )
 			return
 		sock.SPUid = spuid
 		sock.Success( "Hello, %s SPU!" % allSPUs[spuid].name )
@@ -837,7 +833,7 @@ class CR:
 		"""do_spuparam(sock, args)
 		Sends the given SPU (or global) parameter."""
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
 			return
 		spu = allSPUs[sock.SPUid]
 		if not spu.config.has_key( args ):
@@ -847,7 +843,7 @@ class CR:
 					response = values
 					break
 			else:
-				sock.Reply( SockWrapper.UNKNOWNPARAM,
+				sock.Failure( SockWrapper.UNKNOWNPARAM,
                                             "SPU %d (%s) doesn't have param %s"
                                             % (sock.SPUid,
                                                allSPUs[sock.SPUid].name,
@@ -870,7 +866,7 @@ class CR:
 			response = spu.config[key]
 		else:
 			# Okay, there's no specific parameter for the SPU.  Try the global SPU configurations.
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (spuid, args) )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (spuid, args) )
 			return
 		CRDebug("responding with args = " + `response`)
 		sock.Success( string.join( response, " " ) )	
@@ -881,7 +877,7 @@ class CR:
 		Sets a SPU parameter."""
 		# XXX this should be reviewed by Greg  (BrianP)
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't set SPU parameters without telling me what SPU id you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't set SPU parameters without telling me what SPU id you are!" )
 			return
 		spu = allSPUs[sock.SPUid]
 		#spu = self.allSPUConf
@@ -896,10 +892,10 @@ class CR:
 		"""do_serverparam(sock, args)
 		Sends the given server parameter."""
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for server parameters without telling me what server you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for server parameters without telling me what server you are!" )
 			return
 		if not sock.node.config.has_key( args ):
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "Server doesn't have param %s" % (args) )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "Server doesn't have param %s" % (args) )
 			return
 		#sock.Success( string.join( sock.node.config[args], " " ) )
 		sock.Success( sock.node.config[args] )
@@ -908,10 +904,10 @@ class CR:
 		"""do_fakerparam(sock, args)
 		Sends the given app faker parameter."""
 		if sock.node == None or not isinstance(sock.node,CRApplicationNode):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for faker parameters without telling me what app faker you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for faker parameters without telling me what app faker you are!" )
 			return
 		if not sock.node.config.has_key( args ):
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "Faker doesn't have param %s" % (args) )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "Faker doesn't have param %s" % (args) )
 			return
 		sock.Success( sock.node.config[args] )
 
@@ -919,11 +915,11 @@ class CR:
 		"""do_servers(sock, args)
 		Sends the list of servers."""
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for servers without telling me what SPU id you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't ask for servers without telling me what SPU id you are!" )
 			return
 		spu = allSPUs[sock.SPUid]
 		if len(spu.servers) == 0:
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
 			return
 
 		servers = "%d " % len(spu.servers)
@@ -941,16 +937,19 @@ class CR:
 		"""
 		# XXX this might only be temporary (BrianP)
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for server ids without telling me what SPU id you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't ask for server ids without telling me what SPU id you are!" )
 			return
 		spu = allSPUs[sock.SPUid]
 		if len(spu.servers) == 0:
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
 			return
 
 		servers = "%d " % len(spu.servers)
 		for i in range(len(spu.servers)):
 			(node, url) = spu.servers[i]
+			if node == None:
+				sock.Failure( SockWrapper.UNKNOWNSERVER, "Sorry, I don't know what SPU the server is running, you didn't tell me." )
+				return
 			servers += "%d" % (node.SPUs[0].ID)
 			if i != len(spu.servers) - 1:
 				servers += ' '
@@ -960,15 +959,15 @@ class CR:
 		"""do_tiles(sock, args)
 		Sends the defined tiles for a SPU."""
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for tiles without telling me what SPU id you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't ask for tiles without telling me what SPU id you are!" )
 			return
 		spu = allSPUs[sock.SPUid]
 		if len(spu.servers) == 0:
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
 			return
 		server_num = int(args)
 		if server_num < 0 or server_num >= len(spu.servers):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "SPU %d doesn't have a server numbered %d" % (sock.SPUid, server_num) )
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "SPU %d doesn't have a server numbered %d" % (sock.SPUid, server_num) )
 		(node, url) = spu.servers[server_num]
 		self.tileReply( sock, node )
 
@@ -976,7 +975,7 @@ class CR:
 		"""do_servertiles(sock, args)
 		Sends the defined tiles for a server."""
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for tiles without telling me what server you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for tiles without telling me what server you are!" )
 			return
 		self.tileReply( sock, sock.node )
 
@@ -985,7 +984,7 @@ class CR:
 		Packages up a tile message for socket communication.
 		"""
 		if len(node.tiles) == 0:
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "server doesn't have tiles!" )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "server doesn't have tiles!" )
 			return
 		tiles = "%d " % len(node.tiles)
 		for i in range(len(node.tiles)):
@@ -999,7 +998,7 @@ class CR:
 		"""do_servertiles(sock, args)
 		Sends the defined tiles for a server."""
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for tiles without telling me what server you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for tiles without telling me what server you are!" )
 			return
 		self.displaytileReply( sock, sock.node )
 
@@ -1008,7 +1007,7 @@ class CR:
 		Packages up a tile message for socket communication.
 		"""
 		if len(node.tiles_on_displays) == 0:
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "server doesn't have tiles!" )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "server doesn't have tiles!" )
 			return
 		tiles = "%d " % len(node.tiles_on_displays)
 		for i in range(len(node.tiles_on_displays)):
@@ -1044,15 +1043,15 @@ class CR:
 		"""do_tiles(sock, args)
 		Sends the defined tiles for a SPU."""
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for tiles without telling me what SPU id you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't ask for tiles without telling me what SPU id you are!" )
 			return
 		spu = allSPUs[sock.SPUid]
 		if len(spu.servers) == 0:
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
 			return
 		server_num = int(args)
 		if server_num < 0 or server_num >= len(spu.servers):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "SPU %d doesn't have a server numbered %d" % (sock.SPUid, server_num) )
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "SPU %d doesn't have a server numbered %d" % (sock.SPUid, server_num) )
 		(node, url) = spu.servers[server_num]
 		self.displayTileReply( sock, node )
 
@@ -1061,7 +1060,7 @@ class CR:
 		Packages up a tile message for socket communication.
 		"""
 		if len(node.tiles_on_displays) == 0:
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "server doesn't have display tiles!" )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "server doesn't have display tiles!" )
 			return
 		tiles = "%d " % len(node.tiles_on_displays)
 		for i in range(len(node.tiles_on_displays)):
@@ -1075,7 +1074,7 @@ class CR:
 		"""do_clients(sock, args)
 		Sends the list of clients to a server."""
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for clients without telling me what server you are!" )
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for clients without telling me what server you are!" )
 			return
 		total_clients = len(sock.node.clients) + len(sock.node.file_clients)
 		clients = "%d " % total_clients
@@ -1103,10 +1102,10 @@ class CR:
 		"""do_rank( sock, args )
 		Retrieves the node's rank and sends it on the socket."""
 		if sock.node == None:
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "Identify yourself!" )
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "Identify yourself!" )
 			return
 		if not sock.node.config.has_key( 'rank' ):
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "Node didn't say what it's rank is." )
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "Node didn't say what it's rank is." )
 			return
 		sock.Success( sock.node.config['rank'] )
 
@@ -1126,7 +1125,7 @@ class CR:
 		"""Call the user's tile layout function and return the resulting
 		list of tiles."""
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU,
+			sock.Failure( SockWrapper.UNKNOWNSPU,
 							  "You can't ask for a new tile layout without "
 							  "telling me what (tilesort) SPU id you are!" )
 			return
@@ -1168,13 +1167,13 @@ class CR:
 			return
 		words = string.split( line )
 		if len(words) == 0: 
-			self.ClientError( sock_wrapper, SockWrapper.NOTHINGTOSAY, "Request was empty?" )
+			sock.Failure( SockWrapper.NOTHINGTOSAY, "Request was empty?" )
 			return
 		command = string.lower( words[0] )
                 #CRDebug("command = " + command)
 		try:
 			fn = getattr(self, 'do_%s' % command )
 		except AttributeError:
-			self.ClientError( sock_wrapper, SockWrapper.UNKNOWNCOMMAND, "Unknown command: %s" % command )
+			sock_wrapper.Failure( SockWrapper.UNKNOWNCOMMAND, "Unknown command: %s" % command )
 			return
 		fn( sock_wrapper, string.join( words[1:] ) )

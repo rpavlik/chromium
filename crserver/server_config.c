@@ -52,7 +52,6 @@ crServerGatherConfiguration(char *mothership)
 
 	char **clientchain, **clientlist;
 	int numClients;
-	int a_non_file_client;
 
 	__setDefaults();
 
@@ -189,7 +188,6 @@ crServerGatherConfiguration(char *mothership)
 	 * Call crNetAcceptClient() for each client.
 	 * Also, look for a client that's _not_ using the file: protocol.
 	 */
-	a_non_file_client = -1;
 	cr_server.clients = (CRClient *) crAlloc(sizeof(CRClient) * numClients);
 	for (i = 0; i < numClients; i++)
 	{
@@ -203,14 +201,10 @@ crServerGatherConfiguration(char *mothership)
 		client->conn = crNetAcceptClient(cr_server.protocol,
 																		 cr_server.tcpip_port, cr_server.mtu, 1);
 
-		if (crStrncmp(cr_server.protocol, "file", crStrlen("file")))
-		{
-			a_non_file_client = i;
-		}
 	}
 
 	/* Ask the mothership for the tile info */
-	crServerGetTileInfo(conn, a_non_file_client);
+	crServerGetTileInfo(conn);
 
 	crMothershipDisconnect(conn);
 }
@@ -229,7 +223,7 @@ absf(float a)
  * tile info in order to compute the total mural size.
  */
 void
-crServerGetTileInfo(CRConnection * conn, int nonFileClient)
+crServerGetTileInfo(CRConnection * conn)
 {
 	char response[8096];
 
@@ -397,7 +391,7 @@ crServerGetTileInfo(CRConnection * conn, int nonFileClient)
 	}
 
 
-	if (nonFileClient != -1)
+	if (cr_server.clients[0].spu_id != -1) // out-of-nowhere file client
 	{
 		/* Sigh -- the servers need to know how big the whole mural is if we're 
 		 * doing tiling, so they can compute their base projection.  For now, 
@@ -416,7 +410,7 @@ crServerGetTileInfo(CRConnection * conn, int nonFileClient)
 		int i;
 		char **serverchain;
 
-		crMothershipIdentifySPU(conn, cr_server.clients[nonFileClient].spu_id);
+		crMothershipIdentifySPU(conn, cr_server.clients[0].spu_id);
 		crMothershipGetServers(conn, response);
 
 		/* crMothershipGetServers() response is of the form
@@ -429,7 +423,7 @@ crServerGetTileInfo(CRConnection * conn, int nonFileClient)
 		if (num_servers == 0)
 		{
 			crError("No servers specified for SPU %d?!",
-							cr_server.clients[nonFileClient].spu_id);
+							cr_server.clients[0].spu_id);
 		}
 
 		for (i = 0; i < num_servers; i++)
@@ -521,5 +515,4 @@ crServerGetTileInfo(CRConnection * conn, int nonFileClient)
 		crWarning
 			("It looks like there are nothing but file clients.  That suits me just fine.");
 	}
-
 }

@@ -198,7 +198,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
-		int writeback = tilesort_spu.num_servers ? 1 : 0;
+		int writeback = 1;
 		GLint return_val = 0;
 
 		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
@@ -213,16 +213,37 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
 
-		/* Get return value */
-		while (writeback) {
-			crNetRecv();
+		if (!thread0->net[0].conn->actual_network)
+		{
+			/* HUMUNGOUS HACK TO MATCH SERVER NUMBERING (from packspu_context.c)
+			 *
+			 * The hack exists solely to make file networking work for now.  This
+			 * is totally gross, but since the server expects the numbers to start
+			 * from 5000, we need to write them out this way.  This would be
+			 * marginally less gross if the numbers (500 and 5000) were maybe
+			 * some sort of #define'd constants somewhere so the client and the
+			 * server could be aware of how each other were numbering things in
+			 * cases like file networking where they actually
+			 * care. 
+			 *
+			 * 	-Humper 
+			 *
+			 */
+			return_val = 5000;
 		}
+		else
+		{
+			/* Get return value */
+			while (writeback) {
+				crNetRecv();
+			}
 
-		if (tilesort_spu.swap)
-			return_val = (GLint) SWAP32(return_val);
+			if (tilesort_spu.swap)
+				return_val = (GLint) SWAP32(return_val);
 
-		if (!return_val)
-			return 0;  /* something went wrong on the server */
+			if (!return_val)
+				return 0;  /* something went wrong on the server */
+		}
 
 		server->serverCtx[slot] = return_val;
 	}
