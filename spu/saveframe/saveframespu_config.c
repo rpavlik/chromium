@@ -81,14 +81,18 @@ static void
 set_geometry(void *foo, const char *response)
 {
 	int x, y, w, h, result;
-	result = sscanf(response, "%d, %d, %d, %d", &x, &y, &w, &h);
+	if (response[0] == '[')
+		result = sscanf(response, "[%d, %d, %d, %d]", &x, &y, &w, &h);
+	else
+		result = sscanf(response, "%d, %d, %d, %d", &x, &y, &w, &h);
+
 	saveframe_spu.x = result > 0 ? x : 0;
 	saveframe_spu.y = result > 1 ? y : 0;
 	saveframe_spu.width = result > 2 ? w : -1;
 	saveframe_spu.height = result > 3 ? h : -1;
 
 	if ((saveframe_spu.width != -1) && (saveframe_spu.height != -1))
-		ResizeBuffer();
+		saveframespuResizeBuffer();
 }
 
 static void

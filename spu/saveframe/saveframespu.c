@@ -136,7 +136,7 @@ swapBuffers(GLint window, GLint flags)
 			saveframe_spu.width = geom[2];
 			saveframe_spu.height = geom[3];
 
-			ResizeBuffer();
+			saveframespuResizeBuffer();
 		}
 
 		if (saveThisFrame && !(flags & CR_SUPPRESS_SWAP_BIT))
@@ -218,7 +218,7 @@ viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 	saveframe_spu.y = y;
 
 	if (sizeChange)
-		ResizeBuffer();
+		saveframespuResizeBuffer();
 	saveframe_spu.child.Viewport(x, y, width, height);
 }
 
@@ -304,7 +304,7 @@ SPUNamedFunctionTable _cr_saveframe_table[] = {
 };
 
 void
-ResizeBuffer(void)
+saveframespuResizeBuffer(void)
 {
 	if (saveframe_spu.buffer != NULL)
 		crFree(saveframe_spu.buffer);

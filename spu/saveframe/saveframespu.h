@@ -23,7 +23,7 @@
 #endif
 
 void saveframespuGatherConfiguration( const SPU *child_spu );
-void ResizeBuffer(void);
+void saveframespuResizeBuffer(void);
 
 typedef struct {
 	int id;
