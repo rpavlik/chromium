@@ -25,10 +25,9 @@ void crStateFlushArg( void *arg )
 
 void crStateDiffAPI( SPUDispatchTable *api )
 {
-	static int first_time = 1;
-	if (first_time)
+	if (!diff_api.AlphaFunc) 
 	{
-		first_time = 0;
+		/* Called when starting up Chromium */
 		crDebug( "CALLING INIT ON %p", (void *)&(diff_api) );
 		crSPUInitDispatchTable( &(diff_api) );
 	}
