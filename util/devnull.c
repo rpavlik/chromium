@@ -64,6 +64,13 @@ void crDevnullInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 	(void) closeFunc;
 }
 
+void crDevnullAccept( CRConnection *conn, unsigned short port )
+{
+	crError( "Well, you *could* accept a devnull client, but you'd be disappointed. ");
+	(void) conn;
+	(void) port;
+}
+
 void crDevnullDoConnect( CRConnection *conn )
 {
 	crWarning( "Making a Dev/Null connection" );
@@ -84,6 +91,7 @@ void crDevnullConnection( CRConnection *conn )
 	conn->SendExact  = crDevnullWriteExact;
 	conn->Recv  = crDevnullSingleRecv;
 	conn->Free  = crDevnullFree;
+	conn->Accept = crDevnullAccept;
 	conn->Connect = crDevnullDoConnect;
 	conn->Disconnect = crDevnullDoDisconnect;
 }

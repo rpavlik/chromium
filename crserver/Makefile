@@ -1,8 +1,8 @@
 TOP = ..
 
 PROGRAM = crserver
-FILES = main
+FILES = main server_config
 
-LIBRARIES = crutil crmothership
+LIBRARIES = spuload crutil crmothership
 
 include $(TOP)/cr.mk

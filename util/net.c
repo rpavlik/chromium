@@ -31,10 +31,6 @@ static struct {
 	CRNetCloseFunc       close;       // what to do when a client goes down
 	int                  use_gm;      // count the number of people using GM
 	int                  num_clients; // count the number of total clients (unused?)
-	struct {
-		CRSocket         sock;
-		CRNetConnectFunc connect;
-	} server;                         // Stuff for our TCPIP connection (still need this?)
 } cr_net;
 
 // This the common interface that every networking type should export in order
@@ -59,7 +55,7 @@ NETWORK_TYPE( Devnull );
 //
 // Not sure if the MTU argument should be here -- maybe in crNetInit()?
 
-CRConnection *crConnectToServer( char *server, 
+CRConnection *crNetConnectToServer( char *server, 
 		unsigned short default_port, int mtu )
 {
 	char hostname[4096], protocol[4096];
@@ -130,6 +126,64 @@ CRConnection *crConnectToServer( char *server,
 	return conn;
 }
 
+// Accept a client on various interfaces.
+
+CRConnection *crNetAcceptClient( char *protocol, unsigned short port )
+{
+	CRConnection *conn;
+
+	CRASSERT( cr_net.initialized );
+
+	conn = (CRConnection *) crAlloc( sizeof( *conn ) );
+	conn->type               = CR_NO_CONNECTION; // we don't know yet
+	conn->sender_id          = 0;                    // unique ID for every transmitter
+	conn->pending_writebacks = 0;
+	conn->total_bytes        = 0;                    // how many bytes have we sent?
+	conn->send_credits       = 0;
+	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
+	// conn->hostname           = crStrdup( hostname ); 
+	// conn->port               = port;
+	conn->Alloc              = NULL;                 // How do we allocate buffers to send?
+	conn->Send               = NULL;                 // How do we send things?
+	conn->Free               = NULL;                 // How do we receive things?
+	conn->tcp_socket         = 0;
+	conn->gm_node_id         = 0;
+
+	// now, just dispatch to the appropriate protocol's initialization functions.
+	
+	if ( !strcmp( protocol, "devnull" ) )
+	{
+		crDevnullInit( cr_net.recv, cr_net.close );
+		crDevnullConnection( conn );
+	}
+#ifdef GM_SUPPORT
+	// XXX UNIMPLEMENTED!!!
+	else if ( !strcmp( protocol, "gm" ) )
+	{
+		/* just note that we are trying to setup GM, we'll have to
+			 finish this later... */
+		conn->type = WIREGL_GM;
+		request->please_use_gm = 1;
+
+		wireGLGmInit( wiregl_net.recv, wiregl_net.close );
+		request->gm_node_id = wireGLGmNodeId( );
+		request->gm_port_num = wireGLGmPortNum( );
+	}
+#endif
+	else if ( !strcmp( protocol, "tcpip" ) )
+	{
+		crTCPIPInit( cr_net.recv, cr_net.close );
+		crTCPIPConnection( conn );
+	}
+	else
+	{
+		crError( "Unknown Protocol: \"%s\"", protocol );
+	}
+
+	crNetAccept( conn, port );
+	return conn;
+}
+
 // Start the ball rolling.  give functions to handle incoming traffic
 // (usually placing blocks on a queue), and a handler for dropped
 // connections.
@@ -177,8 +231,6 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 		cr_net.use_gm      = 0;
 		cr_net.num_clients = 0;
 
-		cr_net.server.sock    = 0;
-		cr_net.server.connect = NULL;
 		cr_net.initialized = 1;
 	}
 }
@@ -253,6 +305,11 @@ void crNetDisconnect( CRConnection *conn )
 	conn->Disconnect( conn );
 }
 
+void crNetAccept( CRConnection *conn, unsigned short port )
+{
+	conn->Accept( conn, port );
+}
+
 // Do a blocking receive on a particular connection.  This only
 // really works for TCPIP, but it's really only used (right now) by
 // the mothership client library.
@@ -305,7 +362,6 @@ int crNetRecv( void )
 
 	return found_work;
 }
-
 
 #if 0
 

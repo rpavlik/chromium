@@ -33,4 +33,6 @@ void packspuGatherConfiguration( void )
 	{
 		sscanf( response, "%d", &(pack_spu.buffer_size) );
 	}
+
+	crMothershipDisconnect( conn );
 }

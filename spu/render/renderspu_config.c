@@ -40,4 +40,6 @@ void renderspuGatherConfiguration( void )
 				&(render_spu.window_y), &(render_spu.window_width),
 				&(render_spu.window_height) );
 	}
+
+	crMothershipDisconnect( conn );
 }

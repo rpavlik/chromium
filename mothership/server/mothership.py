@@ -8,16 +8,24 @@ def CRDebug( str ):
 
 allSPUs = {}
 
+def Conf( config, key, *values ):
+	def makestr( x ):
+		if type(x) == types.StringType: return x
+		return repr(x)
+	config[key] = map( makestr, values )
+
 class SPU:
 	def __init__( self, name ):
 		self.name = name
 		self.config = {}
+		self.clientargs = []
 
 	def Conf( self, key, *values ):
-		def makestr( x ):
-			if type(x) == types.StringType: return x
-			return repr(x)
-		self.config[key] = map( makestr, values )
+		Conf( self.config, key, *values )
+
+	def Server( self, node, protocol='tcpip', port=7000 ):
+		self.Conf( 'server', "%s://%s:%d" % (protocol,node.host,port) )
+		node.AddClient( self, protocol )
 
 class CRNode:
 	SPUIndex = 0
@@ -37,7 +45,16 @@ class CRNode:
 		allSPUs[spu.ID] = spu
 
 class CRNetworkNode(CRNode):
-	pass
+	def __init__( self, host ):
+		CRNode.__init__(self,host)
+		self.config = {}
+		self.clients = []
+
+	def Conf( self, key, *values ):
+		Conf( self.config, key, *values )
+
+	def AddClient( self, node, protocol ):
+		self.clients.append( (node,protocol) )
 
 class CRApplicationNode(CRNode):
 	def SetApplication( self, app ):
@@ -53,6 +70,7 @@ class SockWrapper:
 	UNKNOWNCOMMAND = 402
 	UNKNOWNSPU = 403
 	UNKNOWNPARAM = 404
+	UNKNOWNSERVER = 405
 
 	def __init__(self, sock):
 		self.sock = sock
@@ -128,7 +146,12 @@ class CR:
 				if isinstance(node,CRNetworkNode):
 					node.spokenfor = 1
 					node.spusloaded = 1
-					sock.Success( "" )
+					sock.node = node
+
+					spuchain = "%d" % len(node.SPUs)
+					for spu in node.SPUs:
+						spuchain += " %d %sspu" % (spu.ID, spu.name)
+					sock.Success( spuchain )
 					return
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s" % args )
 
@@ -157,10 +180,32 @@ class CR:
 			return
 		spu = allSPUs[sock.SPUid]
 		if not spu.config.has_key( args ):
-			self.ClientError( sock, SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (sock.SPUid, args) )
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (sock.SPUid, args) )
 			return
 		print "responding with args = " + `spu.config[args]`
 		sock.Success( string.join( spu.config[args], " " ) )	
+
+	def do_serverparam( self, sock, args ):
+		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for Server parameters without telling me what server you are!" )
+			return
+		if not sock.node.config.has_key( args ):
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "Server doesn't have param %s" % (args) )
+			return
+		sock.Success( string.join( sock.node.config[args], " " ) )	
+
+	def do_clients( self, sock, args ):
+		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for clients without telling me what server you are!" )
+			return
+		clients = "%d " % len(sock.node.clients)
+		for i in range(len(sock.node.clients)):
+			(spu, protocol) = sock.node.clients[i]
+			print >> sys.stderr, `sock.node.clients[i]`
+			clients += "%s %d" % (protocol, spu.ID)
+			if i != len(sock.node.clients) -1:
+				clients += ','
+		sock.Success( clients )
 	
 	def do_reset( self, sock, args ):
 		for node in self.nodes:

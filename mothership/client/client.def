@@ -6,4 +6,9 @@ crMothershipSendString
 crMothershipReadResponse
 crMothershipIdentifySPU
 crMothershipSPUParam
-crMothershipReset
+crMothershipServerParam
+crMothershipIdentifyFaker
+crMothershipIdentifyOpenGL
+crMothershipIdentifyServer
+crMothershipGetStartdir
+crMothershipGetClients

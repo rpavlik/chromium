@@ -145,10 +145,7 @@ static struct {
 	CRBufferPool         bufpool;
 	CRNetReceiveFunc     recv;
 	CRNetCloseFunc       close;
-	struct {
-		CRSocket           sock;
-		CRVoidFunc         connect;
-	} server;
+	CRSocket             server_sock;
 } cr_tcpip;
 
 static int __read_exact( CRSocket sock, void *buf, unsigned int len )
@@ -232,9 +229,114 @@ void crTCPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
 	if ( retval <= 0 )
 	{
 		int err = crTCPIPErrno( );
-		crError( "crTCPIPWriteExact: %s", 
-						   crTCPIPErrorString( err ) );
+		crError( "crTCPIPWriteExact: %s", crTCPIPErrorString( err ) );
 	}
+}
+
+//
+// Make sockets do what we want:
+//
+// 1) Change the size of the send/receive buffers to 64K
+// 2) Turn off Nagle's algorithm
+
+static void __crSpankSocket( CRSocket sock )
+{
+	int sndbuf = 64*1024;
+	int rcvbuf = sndbuf;
+	int tcp_nodelay = 1;
+
+	if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, 
+				(char *) &sndbuf, sizeof(sndbuf) ) )
+	{
+		int err = crTCPIPErrno( );
+		crWarning( "setsockopt( SO_SNDBUF=%d ) : %s",
+				sndbuf, crTCPIPErrorString( err ) );
+	}
+
+	if ( setsockopt( sock, SOL_SOCKET, SO_RCVBUF,
+				(char *) &rcvbuf, sizeof(rcvbuf) ) )
+	{
+		int err = crTCPIPErrno( );
+		crWarning( "setsockopt( SO_RCVBUF=%d ) : %s",
+				rcvbuf, crTCPIPErrorString( err ) );
+	}
+
+	if ( setsockopt( sock, IPPROTO_TCP, TCP_NODELAY,
+				(char *) &tcp_nodelay, sizeof(tcp_nodelay) ) )
+	{
+		int err = crTCPIPErrno( );
+		crWarning( "setsockopt( TCP_NODELAY=%d )"
+				" : %s", tcp_nodelay, crTCPIPErrorString( err ) );
+	}
+}
+
+
+#if defined( WINDOWS ) || defined( IRIX ) || defined( IRIX64 )
+typedef int socklen_t;
+#endif
+
+void crTCPIPAccept( CRConnection *conn, unsigned short port )
+{
+	int err;
+	struct sockaddr_in servaddr;
+	struct sockaddr    addr;
+	socklen_t          addr_length;
+	struct hostent    *host;
+	struct in_addr     sin_addr;
+
+	if (cr_tcpip.server_sock == -1)
+	{
+		cr_tcpip.server_sock = socket( AF_INET, SOCK_STREAM, 0 );
+		if ( cr_tcpip.server_sock == -1 )
+		{
+			err = crTCPIPErrno( );
+			crError( "Couldn't create socket: %s", crTCPIPErrorString( err ) );
+		}
+		__crSpankSocket( cr_tcpip.server_sock );
+
+		servaddr.sin_family = AF_INET;
+		servaddr.sin_addr.s_addr = INADDR_ANY;
+		servaddr.sin_port = htons( port );
+
+		if ( bind( cr_tcpip.server_sock, (struct sockaddr *) &servaddr, sizeof(servaddr) ) )
+		{
+			err = crTCPIPErrno( );
+			crError( "Couldn't bind to socket (port=%d): %s", port, crTCPIPErrorString( err ) );
+		}
+
+		if ( listen( cr_tcpip.server_sock, 100 /* max pending connections */ ) )
+		{
+			err = crTCPIPErrno( );
+			crError( "Couldn't listen on socket: %s", crTCPIPErrorString( err ) );
+		}
+	}
+
+	addr_length =	sizeof( addr );
+	conn->tcp_socket = accept( cr_tcpip.server_sock, (struct sockaddr *) &addr, &addr_length );
+	if (conn->tcp_socket == -1)
+	{
+		err = crTCPIPErrno( );
+		crError( "Couldn't accept client: %s", crTCPIPErrorString( err ) );
+	}
+	sin_addr = ((struct sockaddr_in *) &addr)->sin_addr;
+	host = gethostbyaddr( (char *) &sin_addr, sizeof( sin_addr), AF_INET );
+	if (host == NULL )
+	{
+		char *temp = inet_ntoa( sin_addr );
+		conn->hostname = crStrdup( temp );
+	}
+	else
+	{
+		char *temp;
+		conn->hostname = crStrdup( host->h_name );
+
+		temp = conn->hostname;
+		while (*temp && *temp != '.' )
+			temp++;
+		*temp = '\0';
+	}
+
+	crDebug( "Accepted connection from \"%s\".", conn->hostname );
 }
 
 void *crTCPIPAlloc( void )
@@ -300,11 +402,6 @@ static void __dead_connection( CRConnection *conn )
 {
 	crWarning( "Dead connection (sock=%d, host=%s)",
 				   conn->tcp_socket, conn->hostname );
-	if ( cr_tcpip.server.connect )
-	{
-		crWarning( "Closing server socket" );
-		crCloseSocket( cr_tcpip.server.sock );
-	}
 	exit( 0 );
 }
 
@@ -341,11 +438,6 @@ int crTCPIPRecv( void )
 
 	max_fd = 0;
 	FD_ZERO( &read_fds );
-	if ( cr_tcpip.server.connect )
-	{
-		FD_SET( cr_tcpip.server.sock, &read_fds );
-		max_fd = (int) cr_tcpip.server.sock + 1;
-	}
 	for ( i = 0; i < cr_tcpip.num_conns; i++ )
 	{
 		CRConnection *conn = cr_tcpip.conns[i];
@@ -378,12 +470,6 @@ int crTCPIPRecv( void )
 
 	if ( num_ready == 0 )
 		return 0;
-
-	if ( cr_tcpip.server.connect && 
-		 FD_ISSET( cr_tcpip.server.sock, &read_fds ) )
-	{
-		cr_tcpip.server.connect( );
-	}
 
 	for ( i = 0; i < cr_tcpip.num_conns; i++ )
 	{
@@ -483,8 +569,7 @@ void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 	cr_tcpip.num_conns = 0;
 	cr_tcpip.conns     = NULL;
 	
-	cr_tcpip.server.sock    = 0;
-	cr_tcpip.server.connect = NULL;
+	cr_tcpip.server_sock    = -1;
 
 	crBufferPoolInit( &cr_tcpip.bufpool, 16 );
 
@@ -493,44 +578,6 @@ void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 
 	cr_tcpip.initialized = 1;
 }
-
-//
-// Make sockets do what we want:
-//
-// 1) Change the size of the send/receive buffers to 64K
-// 2) Turn off Nagle's algorithm
-
-static void __crSpankSocket( CRSocket sock )
-{
-	int sndbuf = 64*1024;
-	int rcvbuf = sndbuf;
-	int tcp_nodelay = 1;
-
-	if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, 
-				(char *) &sndbuf, sizeof(sndbuf) ) )
-	{
-		int err = crTCPIPErrno( );
-		crWarning( "setsockopt( SO_SNDBUF=%d ) : %s",
-				sndbuf, crTCPIPErrorString( err ) );
-	}
-
-	if ( setsockopt( sock, SOL_SOCKET, SO_RCVBUF,
-				(char *) &rcvbuf, sizeof(rcvbuf) ) )
-	{
-		int err = crTCPIPErrno( );
-		crWarning( "setsockopt( SO_RCVBUF=%d ) : %s",
-				rcvbuf, crTCPIPErrorString( err ) );
-	}
-
-	if ( setsockopt( sock, IPPROTO_TCP, TCP_NODELAY,
-				(char *) &tcp_nodelay, sizeof(tcp_nodelay) ) )
-	{
-		int err = crTCPIPErrno( );
-		crWarning( "setsockopt( TCP_NODELAY=%d )"
-				" : %s", tcp_nodelay, crTCPIPErrorString( err ) );
-	}
-}
-
 // The function that actually connects.  This should only be called by clients
 // Servers have another way to set up the socket.
 
@@ -610,6 +657,7 @@ void crTCPIPConnection( CRConnection *conn )
 	conn->SendExact  = crTCPIPWriteExact;
 	conn->Recv  = crTCPIPSingleRecv;
 	conn->Free  = crTCPIPFree;
+	conn->Accept = crTCPIPAccept;
 	conn->Connect = crTCPIPDoConnect;
 	conn->Disconnect = crTCPIPDoDisconnect;
 
@@ -617,14 +665,6 @@ void crTCPIPConnection( CRConnection *conn )
 	crRealloc( (void **) &cr_tcpip.conns, n_bytes );
 
 	cr_tcpip.conns[cr_tcpip.num_conns++] = conn;
-}
-void crTCPIPBecomeServer( CRSocket sock, CRVoidFunc connectFunc )
-{
-	CRASSERT( cr_tcpip.server.connect == NULL );
-	CRASSERT( connectFunc != NULL );
-
-	cr_tcpip.server.sock    = sock;
-	cr_tcpip.server.connect = connectFunc;
 }
 
 int crGetHostname( char *buf, unsigned int len )
@@ -637,85 +677,3 @@ int crGetHostname( char *buf, unsigned int len )
 	}
 	return ret;
 }
-
-
-#if 0
-#define CR_BIND_TRIES 8
-	for ( i = 0; i < WIREGL_BIND_TRIES; i++ )
-	{
-	}
-
-	if ( i == WIREGL_BIND_TRIES )
-	{
-		crSimpleError( "Couldn't find server %s", hostname );
-	}
-
-	if ( i > 0 )
-	{
-		crWarning( WIREGL_WARN_VERBOSE_DEBUG, "Connected on alternate "
-				"port %u", port );
-	}
-
-	if ( request->max_send < 1024 )
-	{
-		crSimpleError( "crConnectToServer: max_send too small (%d)\n",
-				request->max_send );
-	}
-
-
-	/* calculate the request size */
-	request_size = sizeof(*request);
-	for (p = request; p->peer[0]; p++)
-		request_size += sizeof(*request);
-
-	crTCPIPWriteExact( conn->tcp_socket, request, request_size );
-
-	crTCPIPReadExact( conn->tcp_socket, &response, sizeof(response) );
-
-	if ( response.magic != WIREGL_CONNECTION_MAGIC )
-	{
-		crSimpleError( "crFinishConnectToServer: connection "
-				"magic=0x%x, expected 0x%x",
-				response.magic, WIREGL_CONNECTION_MAGIC );
-	}
-
-	if ( response.size != sizeof(response) )
-	{
-		crSimpleError( "crFinishConnectToServer: server claims "
-				"response is %u bytes, I expect %u bytes\n",
-				response.size, sizeof(response) );
-	}
-
-	if ( response.max_send < __wiregl_max_send )
-	{
-		crSimpleError( "crFinishConnectToServer: server has a "
-				"max_send=%d, but client is using %d",
-				response.max_send, __wiregl_max_send );
-	}
-
-	conn->sender_id = response.client_id;
-
-	switch ( conn->type )
-	{
-#ifdef GM_SUPPORT
-		case WIREGL_GM:
-			/* set this up as a TCPIP connection first, so that we can
-			 * detect a client disconnect via socket death */
-			crTCPIPConnection( conn );
-
-			/* and now set it up correctly for GM */
-			conn->gm_node_id  = response.gm_node_id;
-			conn->gm_port_num = response.gm_port_num;
-			wiregl_net.use_gm++;
-			crGmConnection( conn );
-			break;
-#endif
-		case WIREGL_TCPIP:
-			crTCPIPConnection( conn );
-			break;
-
-		default:
-			crError( "crFinishConnectToServer: conn->type=%u?",
-					conn->type );
-	}
-#endif

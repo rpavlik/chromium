@@ -58,7 +58,7 @@ void packspuConnectToServer( void )
 {
 	crNetInit( packspuReceiveData, NULL );
 
-	pack_spu.conn = crConnectToServer( pack_spu.server_name, 7000, pack_spu.buffer_size );
+	pack_spu.conn = crNetConnectToServer( pack_spu.server_name, 7000, pack_spu.buffer_size );
 
 	pack_spu.buffer.pack = crNetAlloc( pack_spu.conn );
 	pack_spu.buffer.size = pack_spu.buffer_size;

@@ -59,7 +59,7 @@ void crError( char *format, ... )
 			temp--;
 		}
 
-		offset = sprintf( txt, "\t-----------------------\n\tWindows ERROR: %s\n\t-----------------\nCR Error(%s:%d): ", buf, my_hostname, my_pid );
+		offset = sprintf( txt, "\t-----------------------\n\tWindows ERROR: %s\n\t----------------------\nCR Error(%s:%d): ", buf, my_hostname, my_pid );
 	}
 	else
 	{

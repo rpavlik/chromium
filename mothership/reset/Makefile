@@ -1,6 +1,6 @@
 TOP = ../..
 
-PROGRAM = resetmothership
+PROGRAM = resetms
 FILES = reset
 
 LIBRARIES = crmothership crutil

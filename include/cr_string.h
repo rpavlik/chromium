@@ -14,5 +14,6 @@ char  *crStrchr( const char *str, char c );
 char  *crStrrchr( const char *str, char c );
 int    crStrToInt( const char *str );
 char **crStrSplit( const char *str, const char *splitstr );
+char **crStrSplitn( const char *str, const char *splitstr, int n );
 
 #endif /* CR_STRING_H */

@@ -12,6 +12,7 @@ crAlloc
 crRealloc
 crFree
 crStrSplit
+crStrSplitn
 crStrlen
 crStrchr
 crStrrchr
@@ -24,7 +25,8 @@ crStrcat
 crStrToInt
 crGetHostname
 crGetPID
-crConnectToServer
+crNetAcceptClient
+crNetConnectToServer
 crNetInit
 crNetAlloc
 crNetSend

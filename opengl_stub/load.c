@@ -18,7 +18,6 @@ void StubInit(void)
 	
 	CRConnection *conn;
 	char response[1024];
-	char hostname[1024];
 	char **spuchain;
 	int num_spus;
 	int *spu_ids;
@@ -31,14 +30,7 @@ void StubInit(void)
 	stub_initialized = 1;
 	
 	conn = crMothershipConnect( );
-	if (crGetHostname( hostname, sizeof( hostname ) ) )
-	{
-		crError( "Couldn't get my own hostname in the OpenGL DLL!" );
-	}
-	if (!crMothershipSendString( conn, response, "opengldll %s", hostname ))
-	{
-		crError( "Mothership didn't like my OpenGL stub: %s", response );
-	}
+	crMothershipIdentifyOpenGL( conn, response );
 	crMothershipDisconnect( conn );
 	crDebug( "response = \"%s\"", response );
 	spuchain = crStrSplit( response, " " );
@@ -53,6 +45,11 @@ void StubInit(void)
 	}
 
 	stub_spu = LoadSPUChain( num_spus, spu_ids, spu_names );
+
+	crFree( spuchain );
+	crFree( spu_ids );
+	crFree( spu_names );
+
 
 	// This is unlikely to change -- We still want to initialize our dispatch
 	// table with the functions of the first SPU in the chain.

@@ -215,7 +215,7 @@ char **crStrSplit( const char *str, const char *splitstr )
 {
 	char  *temp = (char *) str;
 	int num_args = __numOccurrences( str, splitstr ) + 1;
-	char **faked_argv = (char **) crAlloc( (num_args + 1)*sizeof(char *) );
+	char **faked_argv = (char **) crAlloc( (num_args + 1)*sizeof( *faked_argv ) );
 	int i;
 
 	for (i = 0 ; i < num_args ; i++)
@@ -223,6 +223,31 @@ char **crStrSplit( const char *str, const char *splitstr )
 		char *end;
 		end = crStrstr( temp, splitstr );
 		if (!end)
+			end = temp + crStrlen( temp );
+		faked_argv[i] = crStrndup( temp, end-temp );
+		temp = end + strlen(splitstr);
+	}
+	faked_argv[num_args] = NULL;
+	return faked_argv;
+}
+
+char **crStrSplitn( const char *str, const char *splitstr, int n )
+{
+	char **faked_argv;
+	int i;
+	char *temp = (char *) str;
+	int num_args = __numOccurrences( str, splitstr );
+
+	if (num_args > n)
+		num_args = n;
+	num_args++;
+
+	faked_argv = (char **) crAlloc( (num_args + 1) * sizeof( *faked_argv ) );
+	for (i = 0 ; i < num_args ; i++)
+	{
+		char *end;
+		end = crStrstr( temp, splitstr );
+		if (!end || i == num_args - 1 )
 			end = temp + crStrlen( temp );
 		faked_argv[i] = crStrndup( temp, end-temp );
 		temp = end + strlen(splitstr);

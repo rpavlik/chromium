@@ -42,6 +42,7 @@ void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len );
 void crNetReadline( CRConnection *conn, void *buf );
 int  crNetRecv( void );
 void crNetFree( CRConnection *conn, void *buf );
+void crNetAccept( CRConnection *conn, unsigned short port );
 void crNetConnect( CRConnection *conn );
 void crNetDisconnect( CRConnection *conn );
 void crCloseSocket( CRSocket sock );
@@ -59,6 +60,7 @@ struct CRConnection {
 	void  (*SendExact)( CRConnection *conn, void *start, unsigned int len );
 	void  (*Recv)( CRConnection *conn, void *buf, unsigned int len );
 	void  (*Free)( CRConnection *conn, void *buf );
+	void  (*Accept)( CRConnection *conn, unsigned short port );
 	void  (*Connect)( CRConnection *conn );
 	void  (*Disconnect)( CRConnection *conn );
 
@@ -84,6 +86,7 @@ struct CRConnection {
 	unsigned int gm_port_num;
 };
 
-CRConnection *crConnectToServer( char *server, unsigned short default_port, int mtu );
+CRConnection *crNetConnectToServer( char *server, unsigned short default_port, int mtu );
+CRConnection *crNetAcceptClient( char *protocol, unsigned short port );
 
 #endif /* CR_NET_H */

@@ -679,7 +679,6 @@ int main( int argc, char **argv )
 		// ask what I should do.
 	
 		CRConnection *conn;
-		char hostname[1024];
 		char response[1024];
 		int num_args = 1;
 		int args_allocated = 1;
@@ -688,19 +687,10 @@ int main( int argc, char **argv )
 			xsetenv( "MOTHERSHIP", mothership );
 		conn = crMothershipConnect( );
 	
-		if ( crGetHostname( hostname, sizeof(hostname) ) )
-		{
-			crError( "Couldn't get my own hostname?" );
-		}
-		if (!crMothershipSendString( conn, response, "faker %s", hostname ))
-		{
-			crError ("Bad mothership response: %s", response );
-		}
+		crMothershipIdentifyFaker( conn, response );
 		faked_argv = crStrSplit( response, " " );
-		if (!crMothershipSendString( conn, response, "startdir" ))
-		{
-			crError( "Bad mothership response: %s", response );
-		}
+		crMothershipGetStartdir( conn, response );
+
 		if (chdir( response ))
 		{
 			crError( "Couldn't change to the starting directory: %s", response );

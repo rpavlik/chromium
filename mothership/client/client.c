@@ -16,6 +16,8 @@ CRConnection *crMothershipConnect( void )
 	CRConnection *conn;
 	char mother_url[1024];
 
+	crNetInit( NULL, NULL );
+
 	mother_server = getenv( "CRMOTHERSHIP" );
 	if (!mother_server)
 	{
@@ -25,8 +27,7 @@ CRConnection *crMothershipConnect( void )
 
 	sprintf( mother_url, "%s:%d", mother_server, mother_port );
 
-	crNetInit( NULL, NULL );
-	conn = crConnectToServer( mother_server, 10000, 8096 );
+	conn = crNetConnectToServer( mother_server, 10000, 8096 );
 	return conn;
 }
 
@@ -89,11 +90,63 @@ int crMothershipSPUParam( CRConnection *conn, char *response, char *param, ... )
 	return crMothershipSendString( conn, response, "spuparam %s", txt );
 }
 
+int crMothershipServerParam( CRConnection *conn, char *response, char *param, ... )
+{
+	va_list args;
+	char txt[8096];
+	va_start( args, param );
+	vsprintf( txt, param, args );
+	va_end( args );
+
+	return crMothershipSendString( conn, response, "serverparam %s", txt );
+}
+
 void crMothershipReset( CRConnection *conn )
 {
 	if (!crMothershipSendString( conn, NULL, "reset" ))
 	{
 		crError( "Couldn't reset the server!" );
 	}
+}
 
+#define INSIST(x) if (!x) crError( "Bad Mothership response: %s", response )
+
+void crMothershipIdentifyFaker( CRConnection *conn, char *response )
+{
+	char hostname[1024];
+	if ( crGetHostname( hostname, sizeof(hostname) ) )
+	{
+		crError( "Couldn't get my own hostname?" );
+	}
+	INSIST( crMothershipSendString( conn, response, "faker %s", hostname ));
+}
+
+void crMothershipIdentifyOpenGL( CRConnection *conn, char *response )
+{
+	char hostname[1024];
+	if ( crGetHostname( hostname, sizeof(hostname) ) )
+	{
+		crError( "Couldn't get my own hostname?" );
+	}
+	INSIST( crMothershipSendString( conn, response, "opengldll %s", hostname ));
+}
+
+void crMothershipIdentifyServer( CRConnection *conn, char *response )
+{
+	char hostname[1024];
+	if ( crGetHostname( hostname, sizeof(hostname) ) )
+	{
+		crError( "Couldn't get my own hostname?" );
+	}
+	INSIST( crMothershipSendString( conn, response, "server %s", hostname ));
+}
+
+void crMothershipGetStartdir( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "startdir" ));
+}
+
+void crMothershipGetClients( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "clients" ));
 }

@@ -3,6 +3,7 @@
 int main( int argc, char *argv[] )
 {
 	CRConnection *conn = crMothershipConnect( );
-	crMothershipReset( conn );
+	crMothershipSendString( conn, NULL, "reset" );
+	crMothershipDisconnect( conn );
 	return 0;
 }
