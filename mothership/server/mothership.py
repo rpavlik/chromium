@@ -530,8 +530,9 @@ class CRApplicationNode(CRNode):
 		if node != None:
 			node.AddCRUTClient( self, protocol, port)
 
+
 class SockWrapper:
-	"Internal convenience class for handling sockets"
+	"""Internal convenience class for handling sockets"""
 	NOERROR_MORE = 100
 	NOERROR = 200
 	UNKNOWNHOST = 400
@@ -545,12 +546,21 @@ class SockWrapper:
 	INVALIDPARAM = 408
 
 	def __init__(self, sock):
-		self.sock = sock
+		self.sock = sock # A low-level socket object
 		self.file = sock.makefile( "r" )
 		self.SPUid = -1
 		self.node = None
+
+		# Info for brokered network connections.  These are used to
+		# implement the 'acceptrequest' and 'connectrequest' routines.
+
+		# (hostname, port, endianness) of an outstanding accept request:
 		self.tcpip_accept_wait = None
+
+		# (hostname, port, endianness) of an outstanding connect request:
 		self.tcpip_connect_wait = None
+
+		# similar for other protocols:
 		self.sdp_accept_wait = None
 		self.sdp_connect_wait = None
 		self.ib_accept_wait = None
@@ -566,6 +576,7 @@ class SockWrapper:
 		return string.strip(self.file.readline())
 
 	def Send(self, str):
+		"""Append a newline to str and send it over the socket"""
 		self.sock.send( str + "\n" )
 
 	def Reply(self, code, s=None):
@@ -576,12 +587,14 @@ class SockWrapper:
 		CRDebug( 'Replying (%d): "%s"' % ( code, s ) )
 
 	def Success( self, msg ):
+		"""Send a success message over the socket"""
 		self.Reply( SockWrapper.NOERROR, msg )
 
 	def MoreComing( self, msg ):
 		self.Reply( SockWrapper.NOERROR_MORE, msg )
 
 	def Failure( self, code, msg ):
+		"""Send a failure message over the socket"""
 		self.Reply( code, msg )
 
 
@@ -968,7 +981,7 @@ class CR:
 					for sock in ready:
 						if sock == s:
 							# accept a new connection
-							conn, addr = s.accept()
+							(conn, addr) = s.accept()
 							self.wrappers[conn] = SockWrapper(conn)
 							self.all_sockets.append( conn )
 						else:
@@ -1017,6 +1030,9 @@ class CR:
 		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
 		port = int(port_str)
 		endianness = int(endianness_str)
+		# Loop over all of the mothership's socket wrappers, looking for
+		# a socket which has an Accept pending on the same host and port.
+		# When found, return a new connection ID.
 		for server_sock in self.wrappers.values():
 			if server_sock.tcpip_accept_wait != None:
 				(server_hostname, server_port, server_endianness) = server_sock.tcpip_accept_wait
@@ -1028,6 +1044,11 @@ class CR:
 				else:
 					CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")"
 							 % (server_hostname, server_port, hostname, port) )
+			else:
+				CRDebug("tcpip_accept_wait")
+		# If we get here, the other end of the connection hasn't contacted
+		# the mothership yet.  So, save this request's hostname, port and
+		# endianness for when the matching "acceptrequest" message comes in.
 		sock.tcpip_connect_wait = (hostname, port, endianness)
 		return
 
@@ -1162,6 +1183,9 @@ class CR:
 		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
 		port = int(port_str)
 		endianness = int(endianness_str)
+		# Loop over all of the mothership's socket wrappers, looking for
+		# a socket which has a Connect pending on the same host and port.
+		# When found, return a new connection ID and the server's endianness.
 		for client_sock in self.wrappers.values():
 			if client_sock.tcpip_connect_wait != None:
 				(client_hostname, client_port, client_endianness) = client_sock.tcpip_connect_wait
@@ -1174,6 +1198,9 @@ class CR:
 					CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
 			else:
 				CRDebug( "tcpip_connect_wait" )
+		# If we get here, the other end of the connection hasn't contacted
+		# the mothership yet.  So, save this request's hostname, port and
+		# endianness for when the matching "connectrequest" message comes in.
 		sock.tcpip_accept_wait = (hostname, port, endianness)
 		return
 
