@@ -1,2 +1,5 @@
 .cvsignore
 convert.pyc
+state_get.c
+state_isenabled.c
+state.def

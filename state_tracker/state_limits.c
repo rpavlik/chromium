@@ -357,7 +357,7 @@ crStateSetExtensionString( CRContext *ctx, const GLubyte *extensions )
    if (ctx->limits.extensions)
       crFree((void *) ctx->limits.extensions);
 
-   ctx->limits.extensions = crStrdup(extensions);
+   ctx->limits.extensions = (const GLubyte *)crStrdup((const char*)extensions);
 
    crStateExtensionsInit(&(ctx->limits), &(ctx->extensions));
 }

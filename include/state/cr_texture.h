@@ -175,7 +175,7 @@ typedef struct {
 	CRTextureObj proxyCubeMap;
 #endif
 
-	GLint		curTextureUnit; /* GL_ACTIVE_TEXTURE */
+	GLuint		curTextureUnit; /* GL_ACTIVE_TEXTURE */
 
 	GLint		maxLevel;
 	GLint		max3DLevel;

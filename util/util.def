@@ -116,3 +116,4 @@ crGetCurrentDir
 crHashtableAllocKeys
 crHashtableDeleteBlock
 crHashtableIsKeyUsed
+crHashtableWalk

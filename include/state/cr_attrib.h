@@ -242,7 +242,7 @@ typedef struct {
 
 typedef struct {
 #if 111
-	GLint		curTextureUnit;
+	GLuint		curTextureUnit;
 	CRTextureUnit unit[CR_MAX_TEXTURE_UNITS];
 
 #else
@@ -272,7 +272,7 @@ typedef struct {
 	GLint maxLevel[4];
 #endif
 
-	GLint		curTextureUnit;
+	GLuint		curTextureUnit;
 	GLenum		envMode[CR_MAX_TEXTURE_UNITS];
 	GLcolorf	envColor[CR_MAX_TEXTURE_UNITS];
 
