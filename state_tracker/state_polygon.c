@@ -62,7 +62,7 @@ void STATE_APIENTRY crStateCullFace(GLenum mode)
 	if (mode != GL_FRONT && mode != GL_BACK)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-				"glCullFace called with bogus mode: %d", mode);
+				"glCullFace called with bogus mode: 0x%x", mode);
 		return;
 	}
 
@@ -90,7 +90,7 @@ void STATE_APIENTRY crStateFrontFace (GLenum mode)
 	if (mode != GL_CW && mode != GL_CCW)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-				"glFrontFace called with bogus mode: %d", mode);
+				"glFrontFace called with bogus mode: 0x%x", mode);
 		return;
 	}
 
@@ -118,7 +118,7 @@ void  STATE_APIENTRY crStatePolygonMode (GLenum face, GLenum mode)
 	if (mode != GL_POINT && mode != GL_LINE && mode != GL_FILL)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-				"glPolygonMode called with bogus mode: %d", mode);
+				"glPolygonMode called with bogus mode: 0x%x", mode);
 		return;
 	}
 
@@ -133,7 +133,7 @@ void  STATE_APIENTRY crStatePolygonMode (GLenum face, GLenum mode)
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"glPolygonMode called with bogus face: %d", face);
+					"glPolygonMode called with bogus face: 0x%x", face);
 			return;
 	}
 	DIRTY(pb->mode, g->neg_bitid);
