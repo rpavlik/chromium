@@ -1642,6 +1642,7 @@ param		pname		GLenum
 param		params		const GLint *
 category	1.0
 chromium	pack
+vectoralias	TexGeni
 
 name		FeedbackBuffer
 return		void
