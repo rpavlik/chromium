@@ -14,7 +14,6 @@ FILES = unpack \
 	unpack_clipplane \
 	unpack_context \
 	unpack_drawpixels \
-	unpack_feedback \
 	unpack_fog \
 	unpack_lights \
 	unpack_map \

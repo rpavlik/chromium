@@ -17,7 +17,6 @@ DrawElements
 DrawRangeElements
 DrawPixels
 EdgeFlagPointer
-FeedbackBuffer
 Fogfv
 Fogiv
 IndexPointer
