@@ -102,7 +102,7 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 
 	if (render_spu.numVisuals >= MAX_VISUALS)
 	{
-		crWarning( "Couldn't create a visual, too many visuals already" );
+		crWarning( "Render SPU: Couldn't create a visual, too many visuals already" );
 		return NULL;
 	}
 
@@ -115,7 +115,7 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 		return &(render_spu.visuals[i]);
 	}
 	else {
-		crWarning( "Couldn't get a visual, renderspu_SystemInitVisual failed" );
+		crWarning( "Render SPU: Couldn't get a visual, renderspu_SystemInitVisual failed" );
 		return NULL;
 	}
 }
@@ -129,6 +129,7 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 	ContextInfo *context;
 	VisualInfo *visual;
 
+	crDebug("Render SPU: In renderspuCreateContext(visBits=0x%x)", visBits);
 	if (!dpyName || crStrlen(render_spu.display_string)>0)
 		dpyName = render_spu.display_string;
 
@@ -242,7 +243,7 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	visual = renderspuFindVisual( dpyName, visBits );
 	if (!visual)
 	{
-		crWarning( "Couldn't create a window, renderspuFindVisual returned NULL" );
+		crWarning( "Render SPU: Couldn't create a window, renderspuFindVisual returned NULL" );
 		return -1;
 	}
 
@@ -250,7 +251,7 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 	if (!window)
 	{
-		crWarning( "render SPU: Couldn't create a window" );
+		crWarning( "Render SPU: Couldn't create a window" );
 		return -1;
 	}
 
@@ -287,7 +288,7 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	/* Have GLX/WGL/AGL create the window */
 	if (!renderspu_SystemCreateWindow( visual, showIt, window ))
 	{
-		crWarning( "Couldn't create a window, renderspu_SystemCreateWindow failed" );
+		crWarning( "Render SPU: Couldn't create a window, renderspu_SystemCreateWindow failed" );
 		return -1;
 	}
 
@@ -689,7 +690,7 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 			render_spu.cursorY = ((GLint *) values)[1];
 		}
 		else {
-			crWarning("Bad type or count for ChromiumParametervCR(GL_CURSOR_POSITION_CR)");
+			crWarning("Render SPU: Bad type or count for ChromiumParametervCR(GL_CURSOR_POSITION_CR)");
 		}
 		break;
 
@@ -706,8 +707,8 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 			}
 			else
 			{
-				crError("expecting MESSAGE_GATHER. got crap! (%d of %d)", client_num, 
-								render_spu.server->numClients-1);
+				crError("Render SPU: expecting MESSAGE_GATHER. got crap! (%d of %d)",
+								client_num, render_spu.server->numClients-1);
 			}
 		}
 
