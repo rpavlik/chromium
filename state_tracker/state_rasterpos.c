@@ -23,50 +23,7 @@ crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	CRTransformState *t = &(g->transform);
 	CRViewportState *v = &(g->viewport);
 	GLvectorf p;
-	CRStateBits *sb = GetCurrentBits();
-	CRCurrentBits *cb = &(sb->current);
 	int i;
-
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
-		return;
-	}
-
-	FLUSH();
-
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
-		return;
-	}
-
-	FLUSH();
-
-	/* update current color, texcoord, etc from the CurrentStatePointers */
-	crStateCurrentRecover();
-
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
-		return;
-	}
-
-	FLUSH();
-
-	/* update current color, texcoord, etc from the CurrentStatePointers */
-	crStateCurrentRecover();
-
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
-		return;
-	}
-
-	FLUSH();
-
-	/* update current color, texcoord, etc from the CurrentStatePointers */
-	crStateCurrentRecover();
 
 	if (g->current.inBeginEnd)
 	{
@@ -120,16 +77,6 @@ crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 #endif
 		 c->rasterAttrib[VERT_ATTRIB_FOG][0] = 0.0; /*(GLfloat)
 						sqrt( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );*/
-
-	/*
-	**  Need handle these for glGet...
-	**  c->rasterdistance;
-	**  c->rastercolor;
-	**  c->rasterindex;
-	**  c->rastertexture;
-	*/
-	DIRTY(cb->dirty, g->neg_bitid);
-	DIRTY(cb->rasterPos, g->neg_bitid);
 }
 
 
