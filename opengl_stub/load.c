@@ -15,9 +15,70 @@
 #include <stdlib.h>
 #include <signal.h>
 
-void StubCleanup(int signo);
 
-static void InitVars(void)
+SPUDispatchTable glim;
+Stub stub;
+
+
+static void stubInitNativeDispatch( void )
+{
+#define MAX_FUNCS 1000
+	SPUNamedFunctionTable gl_funcs[MAX_FUNCS];
+	int numFuncs;
+
+	numFuncs = crLoadOpenGL( &stub.wsInterface, gl_funcs );
+
+	stub.haveNativeOpenGL = (numFuncs > 0);
+
+	/* XXX call this after context binding */
+	numFuncs += crLoadOpenGLExtensions( &stub.wsInterface, gl_funcs + numFuncs );
+
+	CRASSERT(numFuncs < MAX_FUNCS);
+
+	crSPUInitDispatch( &stub.nativeDispatch, gl_funcs );
+	crSPUInitDispatchNops( &stub.nativeDispatch );
+#undef MAX_FUNCS
+}
+
+
+/*
+ * Use the GL function pointers in <spu> to initialize the static glim
+ * dispatch table.
+ */
+static void stubInitSPUDispatch( SPU *spu )
+{
+	crSPUInitDispatchTable( &stub.spuDispatch );
+	crSPUCopyDispatchTable( &stub.spuDispatch, &(spu->dispatch_table) );
+
+	memcpy(&glim, &stub.spuDispatch, sizeof(SPUDispatchTable));
+}
+
+
+/*
+ * This is called by the SIGTERM signal handler when we exit.
+ * We call the all the SPU's cleanup functions.
+ */
+static void stubCleanup(int signo)
+{
+	SPU *the_spu = stub.spu;
+
+	while (1) {
+		if (the_spu && the_spu->cleanup) {
+			printf("Cleaning up SPU %s\n",the_spu->name);
+			the_spu->cleanup();
+		} else 
+			break;
+		the_spu = the_spu->superSPU;
+	}
+
+	exit(0);
+}
+
+
+/*
+ * Init variables in the stub structure, install signal handler.
+ */
+static void stubInitVars(void)
 {
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&stub.mutex);
@@ -33,24 +94,9 @@ static void InitVars(void)
 	stub.matchWindowTitle = NULL;
 	stub.threadSafe = GL_FALSE;
 
-	signal(SIGTERM, StubCleanup);
+	signal(SIGTERM, stubCleanup);
 }
 
-void StubCleanup(int signo)
-{
-	SPU *the_spu = stub.spu;
-
-	while (1) {
-		if (the_spu && the_spu->cleanup) {
-			printf("Cleaning up SPU %s\n",the_spu->name);
-			the_spu->cleanup();
-		} else 
-			break;
-		the_spu = the_spu->superSPU;
-	}
-
-	exit(0);
-}
 
 void StubInit(void)
 {
@@ -76,7 +122,7 @@ void StubInit(void)
 		return;
 	stub_initialized = 1;
 	
-	InitVars();
+	stubInitVars();
 
 	/* this is set by the app_faker! */
 	app_id = crGetenv( "CR_APPLICATION_ID_NUMBER" );
@@ -157,9 +203,13 @@ void StubInit(void)
 
 	/* This is unlikely to change -- We still want to initialize our dispatch 
 	 * table with the functions of the first SPU in the chain. */
+	stubInitSPUDispatch( stub.spu );
 
-	stubFakerInit( stub.spu );
+	/* Load pointers to native OpenGL functions into stub.nativeDispatch */
+	stubInitNativeDispatch();
 }
+
+
 
 /* Sigh -- we can't do initialization at load time, since Windows forbids 
  * the loading of other libraries from DLLMain. */

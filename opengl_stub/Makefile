@@ -34,7 +34,7 @@ endif
 
 SHARED = 1
 LIBRARY = crfaker
-FILES = getprocaddress init load stub context dummyfuncs
+FILES = getprocaddress load stub context dummyfuncs
 LIBRARIES = crmothership crutil spuload
 
 ifdef THREADSAFE

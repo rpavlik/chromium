@@ -14,6 +14,7 @@
 
 #ifdef WINDOWS
 
+/* WGL versions */
 extern HGLRC stubCreateContext( HDC hdc );
 extern BOOL WINAPI stubMakeCurrent( HDC drawable, HGLRC context );
 extern BOOL stubDestroyContext( HGLRC context );
@@ -21,6 +22,7 @@ extern BOOL stubSwapBuffers( HDC hdc );
 
 #else
 
+/* GLX versions */
 extern GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct );
 extern Bool stubMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext context );
 extern void stubDestroyContext( Display *dpy, GLXContext context );
@@ -31,12 +33,7 @@ extern void stubUseXFont( Display *dpy, Font font, int first, int count, int lis
 #endif
 
 extern void stubMatchWindowTitle( const char *title );
-
-extern void stubFakerInit( SPU *fns );
 extern void StubInit(void);
-
-extern void stubCheckMultithread( void );
-extern void stubSetDispatch( const SPUDispatchTable *table );
 
 
 extern SPUDispatchTable glim;
@@ -49,7 +46,6 @@ typedef struct {
 	SPU *spu;
 
 	crOpenGLInterface wsInterface;
-	SPUDispatchTable glim;
 	SPUDispatchTable spuDispatch;
 	SPUDispatchTable nativeDispatch;
 

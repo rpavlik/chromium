@@ -67,6 +67,58 @@ static ContextInfo Context[CR_MAX_CONTEXTS];
 extern int FindVisualInfo( Display *dpy, XVisualInfo *vis);
 #endif
 
+
+/*
+ * This function should be called from MakeCurrent().  It'll detect if
+ * we're in a multi-thread situation, and do the right thing for dispatch.
+ */
+#ifdef CHROMIUM_THREADSAFE
+static void stubCheckMultithread( void )
+{
+	static unsigned long knownID;
+	static GLboolean firstCall = GL_TRUE;
+
+	if (stub.threadSafe)
+		return;  /* nothing new, nothing to do */
+
+	if (firstCall) {
+		knownID = crThreadID();
+		firstCall = GL_FALSE;
+	}
+	else if (knownID != crThreadID()) {
+		/* going thread-safe now! */
+		stub.threadSafe = GL_TRUE;
+		memcpy(&glim, &stubThreadsafeDispatch, sizeof(SPUDispatchTable));
+	}
+}
+#endif
+
+
+/*
+ * Install the given dispatch table as the table used for all gl* calls.
+ */
+static void stubSetDispatch( const SPUDispatchTable *table )
+{
+	CRASSERT(table);
+
+#ifdef CHROMIUM_THREADSAFE
+	/* always set the per-thread dispatch pointer */
+	crSetTSD(&stub.dispatchTSD, (void *) table);
+	if (stub.threadSafe) {
+		/* Do nothing - the thread-safe dispatch functions will call GetTSD()
+		 * to get a pointer to the dispatch table, and jump through it.
+		 */
+	}
+	else 
+#endif
+	{
+		/* Single thread mode - just install the caller's dispatch table */
+		memcpy(&glim, table, sizeof(SPUDispatchTable));
+	}
+}
+
+
+
 #ifdef WINDOWS
 HGLRC stubCreateContext( HDC hdc )
 #else
