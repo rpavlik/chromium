@@ -242,8 +242,6 @@ void crServerGetTileInfo( CRConnection *conn, int nonFileClient )
 							 cr_server.clients[nonFileClient].spu_id );
 		}
 
-		num_servers = num_servers;
-
 		for (i = 0 ; i < num_servers ; i++)
 		{
 			char **tilechain, **tilelist;
@@ -284,10 +282,18 @@ void crServerGetTileInfo( CRConnection *conn, int nonFileClient )
 					}
 					else {
 						/* subsequent tile - make sure it's the same size as first */
-						if (w != optTileWidth || h != optTileHeight) {
+						if (w != optTileWidth || h != optTileHeight)
+						{
 							crWarning("Tile %d on server %d is not the right size!",
-												i, tile);
+												tile, i);
 							crWarning("All tiles must be same size with optimize_bucket.");
+							crWarning("Turning off server's optimize_bucket.");
+							cr_server.optimizeBucket = 0;
+						}
+						else if (x1 % optTileWidth != 0 || x2 % optTileWidth != 0 ||
+										 y1 % optTileHeight != 0 || y2 % optTileHeight != 0)
+						{
+							crWarning("Tile %d on server %d is not positioned correctly to use optimize_bucket.", tile, i);
 							crWarning("Turning off server's optimize_bucket.");
 							cr_server.optimizeBucket = 0;
 						}

@@ -137,6 +137,13 @@ void crServerNewTiles(int muralWidth, int muralHeight,
 			cr_server.maxTileHeight = h;
 	}
 
+	/* Check if we can use optimized bucketing */
+	if (cr_server.optimizeBucket)
+	{
+		if (!crServerCheckTileLayout())
+			cr_server.optimizeBucket = 0;
+	}
+
 	crServerInitializeTiling();
 
 	/*

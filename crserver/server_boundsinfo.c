@@ -27,6 +27,48 @@ static BucketRegion *rhash[HASHRANGE][HASHRANGE];
 #define BKT_DOWNHASH(a, range) ((a)*HASHRANGE/(range))
 #define BKT_UPHASH(a, range) ((a)*HASHRANGE/(range) + ((a)*HASHRANGE%(range)?1:0))
 
+
+/*
+ * Test if we can really use optimizeBucket with the current set of
+ * tiles.
+ * Return GL_TRUE if so, GL_FALSE if not.
+ */
+GLboolean crServerCheckTileLayout(void)
+{
+	int optTileWidth = 0, optTileHeight = 0;
+	int i;
+
+	for (i = 0; i < cr_server.numExtents; i++)
+	{
+		const int w = cr_server.extents[i].x2 - cr_server.extents[i].x1;
+		const int h = cr_server.extents[i].y2 - cr_server.extents[i].y1;
+
+		if (optTileWidth == 0 && optTileHeight == 0) {
+			/* first tile */
+			optTileWidth = w;
+			optTileHeight = h;
+		}
+		else
+		{
+			/* subsequent tile - make sure it's the same size as first */
+			if (w != optTileWidth || h != optTileHeight)
+			{
+				return GL_FALSE;
+			}
+			else if (cr_server.extents[i].x1 % optTileWidth != 0 ||
+							 cr_server.extents[i].x2 % optTileWidth != 0 ||
+							 cr_server.extents[i].y1 % optTileHeight != 0 ||
+							 cr_server.extents[i].y2 % optTileHeight != 0)
+			{
+				return GL_FALSE;
+			}
+		}
+	}
+
+	return GL_TRUE;
+}
+
+
 void crServerFillBucketingHash(void) 
 {
 	int i, j, k, m;

@@ -63,5 +63,6 @@ void crServerSetTransformBounds( CRTransformState *t, const GLrecti *outputwindo
 void crServerFillBucketingHash(void);
 
 void crServerNewTiles(int muralWidth, int muralHeight, int numTiles, const int *tileBounds);
+GLboolean crServerCheckTileLayout(void);
 
 #endif /* CR_SERVER_H */
