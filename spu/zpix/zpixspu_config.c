@@ -16,7 +16,7 @@ __setDefaults(ZpixSPU * zpix_spu)
 	zpix_spu->debug = 0;
 	zpix_spu->client_id = 0;
 	zpix_spu->no_diff = 0;     /* use  buffer differencing */
-	zpix_spu->ztype = ZLIB;    /* gnu zlib                 */
+	zpix_spu->ztype = GL_ZLIB_COMPRESSION_CR;    /* gnu zlib                 */
 	zpix_spu->ztype_parm = -1; /* zlib's default parm */
 }
 
@@ -52,17 +52,17 @@ static void
 set_ztype(ZpixSPU * zpix_spu, const char *response)
 {
 	if (crStrcmp(response, "None") == 0)
-		zpix_spu->ztype = ZNONE;
+		zpix_spu->ztype = GL_NONE;
 	else if (crStrcmp(response, "Zlib") == 0)
-		zpix_spu->ztype = ZLIB;
+		zpix_spu->ztype = GL_ZLIB_COMPRESSION_CR;
 	else if (crStrcmp(response, "RLE") == 0)
-		zpix_spu->ztype = ZRLE;
+		zpix_spu->ztype = GL_RLE_COMPRESSION_CR;
 	else if (crStrcmp(response, "PLE") == 0)
-		zpix_spu->ztype = ZPLE;
+		zpix_spu->ztype = GL_PLE_COMPRESSION_CR;
 	else
 	{
 		crWarning("Bad value (%s) for ZPix compression ", response);
-		zpix_spu->ztype = ZLIB;
+		zpix_spu->ztype = GL_ZLIB_COMPRESSION_CR;
 	}
 
 	crDebug("Zpix SPU config: ztype = %d", zpix_spu->ztype);
@@ -86,7 +86,7 @@ SPUOptions zpixSPUOptions[] = {
 	{"client_id", CR_INT, 1, "0", NULL, NULL,
 	 "Client ID when using multiple clients", (SPUOptionCB) set_client_id},
 	{"no_diff", CR_BOOL, 1, "0", NULL, NULL,
-	 "Suppress buffer differencing", (SPUOptionCB) set_no_diff},
+	 "Suppress inter-frame differencing", (SPUOptionCB) set_no_diff},
 	{"debug", CR_BOOL, 1, "0", NULL, NULL,
 	 "Debug mode", (SPUOptionCB) set_debug},
 	{"verbose", CR_BOOL, 1, "0", NULL, NULL,

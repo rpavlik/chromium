@@ -18,17 +18,6 @@
 
 
 /* 
- * compression types
- */
-typedef enum
-{
-	ZNONE = 0, /* no compression       */
-	ZLIB = 1,  /* Gnu Zlib compression */
-	ZRLE = 2,  /* Run Length Encoding  */
-	ZPLE = 3   /* "packed" rle         */
-} ZTYPE;
-
-/* 
  * frame buffer types
  */
 typedef enum
@@ -113,7 +102,7 @@ typedef struct
 	int verbose;				/* 0 = quiet; 1 = chatty */
 	int debug;					/* 0 = normal; 1 = debug */
 	int no_diff;				/* 0 = difference; 1 = suppress  */
-	ZTYPE ztype;				/* compression type - See ZStateType enum */
+	GLenum ztype;				/* compression type */
 	int ztype_parm;			/* parameter for ztype */
 
 	/* instance data */

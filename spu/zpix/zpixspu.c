@@ -81,7 +81,7 @@ FriskPLE(PLEbuf * p_plebuf)
   RasterPos2i:   Record x,y  from glRasterPos2i
 ----------------------------------------------------------*/
 static void ZPIXSPU_APIENTRY
-zpixRasterPos2i(GLint x, GLint y)
+zpixspuRasterPos2i(GLint x, GLint y)
 {
 	/*XXX make sure it's what we expect */
 	CRASSERT(0 == x);
@@ -101,7 +101,7 @@ zpixRasterPos2i(GLint x, GLint y)
   the raster position with glBitmap instead of glRasterPos2i.
   This makes me a little ill...
 ----------------------------------------------------------*/
-/*void ZPIXSPU_APIENTRY zpixBitmap( GLsizei width, 
+/*void ZPIXSPU_APIENTRY zpixspuBitmap( GLsizei width, 
 				  GLsizei height,
 				  GLfloat xorig,
 				  GLfloat yorig,
@@ -119,11 +119,14 @@ zpixRasterPos2i(GLint x, GLint y)
 
 
 /*----------------------------------------------------------
-  zpixDrawPixels:  Compress the data from glDrawPixels
-------------------------------------------------------------*/
+ * zpixDrawPixels:  Compress the data passed to glDrawPixels and pass it on
+ * to zpix_spu.child.ZPixCR().  This will typically be the pack SPU function.
+ * XXX NOTE:
+ *  This code doesn't currently deal with any of the glPixelStore parameters.
+ *------------------------------------------------------------*/
 static void ZPIXSPU_APIENTRY
-zpixDrawPixels(GLsizei width, GLsizei height,
-							 GLenum format, GLenum type, const GLvoid * pixels)
+zpixspuDrawPixels(GLsizei width, GLsizei height,
+									GLenum format, GLenum type, const GLvoid * pixels)
 {
 	int bufw;
 	GLuint *p_old;
@@ -132,14 +135,14 @@ zpixDrawPixels(GLsizei width, GLsizei height,
 	int pixsize;
 	GLuint plen;
 	int zlen;
-	ZTYPE ztype;
+	GLenum ztype;
 	FBTYPE FBtype;
 	GLint zclient;
 
 	zpix_spu.n++;
 	ztype = zpix_spu.ztype;
 	zclient = zpix_spu.client_id;
-	pixsize = crPixelSize(format, type);
+	pixsize = crPixelSize(format, type);  /* bytes per pixel */
 	plen = pixsize * width * height;
 
 	if (1 == zpix_spu.verbose)
@@ -268,7 +271,7 @@ zpixDrawPixels(GLsizei width, GLsizei height,
 	switch (ztype)
 	{
 
-	case ZNONE:									/* no compression - no use except debugging */
+	case GL_NONE:									/* no compression - no use except debugging */
 		/* update statistics */
 		zpix_spu.sum_bytes += plen;
 		zpix_spu.sum_zbytes += plen;
@@ -278,7 +281,7 @@ zpixDrawPixels(GLsizei width, GLsizei height,
 		break;
 
 
-	case ZLIB:										/* use gnu zlib compression */
+	case GL_ZLIB_COMPRESSION_CR:								/* use gnu zlib compression */
 		{
 			unsigned long zliblen;
 			int rc;
@@ -310,11 +313,11 @@ zpixDrawPixels(GLsizei width, GLsizei height,
 		}
 		break;
 
-	case ZRLE:										/* classic run length encoding */
+	case GL_RLE_COMPRESSION_CR:							/* classic run length encoding */
 		crError("Zpix - RLE unimplemented  ztype = %d", ztype);
 		break;
 
-	case ZPLE:
+	case GL_PLE_COMPRESSION_CR:
 		/* XXX this big chunk of code should go into its own function */
 		{
 			PLEbuf *p_plebuf, pletmp;
@@ -492,11 +495,11 @@ zpixDrawPixels(GLsizei width, GLsizei height,
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 /*--------------------------------------------------------
-      Decompress data and then glDrawPixels 
+ * Decompress the incomping data and then call glDrawPixels.
 ----------------------------------------------------------*/
 static void ZPIXSPU_APIENTRY
-zpixZPixCR(GLsizei width, GLsizei height, GLenum format, GLenum type,
-					 GLenum ztype, GLint zclient, GLint zlen, const GLvoid * zpixels)
+zpixspuZPixCR(GLsizei width, GLsizei height, GLenum format, GLenum type,
+							GLenum ztype, GLint zclient, GLint zlen, const GLvoid * zpixels)
 {
 	GLuint plen;
 	GLuint *p_dif;
@@ -527,9 +530,9 @@ zpixZPixCR(GLsizei width, GLsizei height, GLenum format, GLenum type,
 		FBtype = FBCOLOR;
 	}
 
-	pixsize = crPixelSize(format, type);
+	pixsize = crPixelSize(format, type);   /* bytes per pixel */
 	plen = pixsize * width * height;
-	zpix_spu.ztype = (ZTYPE) ztype;
+	zpix_spu.ztype = ztype;
 
 	/* Select client shadow buffers */
 
@@ -626,12 +629,12 @@ zpixZPixCR(GLsizei width, GLsizei height, GLenum format, GLenum type,
 
 	switch (ztype)
 	{
-	case ZNONE:
+	case GL_NONE:
 		/* no compression - only useful for debugging */
 		crMemcpy(zpix_spu.b.dBuf[FBtype], zpixels, zlen);
 		break;
 
-	case ZLIB:
+	case GL_ZLIB_COMPRESSION_CR:
 		/* Decompress and then DrawPixels */
 		{
 			unsigned long zldlen, zliblen;
@@ -647,11 +650,11 @@ zpixZPixCR(GLsizei width, GLsizei height, GLenum format, GLenum type,
 		}
 		break;
 
-	case ZRLE:										/* classic run length encoding */
+	case GL_RLE_COMPRESSION_CR:							/* classic run length encoding */
 		crError("Zpix - RLE unimplemented  ztype = %d", ztype);
 		break;
 
-	case ZPLE:
+	case GL_PLE_COMPRESSION_CR:
 		/* XXX Move this code into a new function */
 		{
 			int n, run, runt;
@@ -792,9 +795,9 @@ zpixZPixCR(GLsizei width, GLsizei height, GLenum format, GLenum type,
 
 
 SPUNamedFunctionTable _cr_zpix_table[] = {
-	{"RasterPos2i", (SPUGenericFunction) zpixRasterPos2i},
-	{"DrawPixels", (SPUGenericFunction) zpixDrawPixels},
-	/*{ "Bitmap", (SPUGenericFunction) zpixBitmap }, */
-	{"ZPixCR", (SPUGenericFunction) zpixZPixCR},
+	{"RasterPos2i", (SPUGenericFunction) zpixspuRasterPos2i},
+	{"DrawPixels", (SPUGenericFunction) zpixspuDrawPixels},
+	/*{ "Bitmap", (SPUGenericFunction) zpixspuBitmap }, */
+	{"ZPixCR", (SPUGenericFunction) zpixspuZPixCR},
 	{NULL, NULL}
 };

@@ -107,7 +107,7 @@ zpixSPUCleanup(void)
 						zpix_spu.no_diff);
 		crDebug("Zpix compression %7.2f %% - avg_b %.0f avg_zb %.0f",
 						pcz, avg_b, avg_zb);
-		if (ZPLE == zpix_spu.ztype)
+		if (GL_PLE_COMPRESSION_CR == zpix_spu.ztype)
 		{
 			avg_runs = zpix_spu.sum_runs / zpix_spu.n;
 			avg_prefv = zpix_spu.sum_prefv / zpix_spu.n;

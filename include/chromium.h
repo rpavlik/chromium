@@ -528,20 +528,28 @@ extern void APIENTRY glGetChromiumParametervCR(GLenum target, GLuint index, GLen
 #endif /* GL_CR_server_matrix */
 
 
-#ifndef GL_CR_zpix
-#define GL_CR_zpix 1
-
-extern void APIENTRY glZPixCR(GLsizei, GLsizei, GLenum, GLenum, GLenum, GLint, GLint, const GLvoid *);
-
-#endif /* GL_CR_zpix */
-
-
 #ifndef GL_CR_window_position
 #define GL_CR_window_position 1
 
 #define GL_WINDOW_POSITION_CR           0x8B19
 
 #endif /* GL_CR_window_position */
+
+
+#ifndef GL_CR_zpix
+#define GL_CR_zpix 1
+
+#define GL_ZLIB_COMPRESSION_CR          0x8B20
+#define GL_RLE_COMPRESSION_CR           0x8B21
+#define GL_PLE_COMPRESSION_CR           0x8B22
+
+/* XXX A better name would be glCompressedDrawPixelsCR() */
+extern void APIENTRY glZPixCR(GLsizei width, GLsizei height, GLenum format,
+                              GLenum type, GLenum compressionType,
+                              GLint client, GLint compressedSize,
+                              const GLvoid *image);
+
+#endif /* GL_CR_zpix */
 
 
 /**********************************************************************/
