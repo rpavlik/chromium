@@ -48,7 +48,7 @@ typedef struct {
 /* Message header */
 typedef struct {
 	CRMessageHeader header;
-	double depth;
+	float depth;
 	int start_x, start_y;
 	int width, height;
 	int clipped_x, clipped_y;
@@ -117,14 +117,14 @@ typedef struct {
 	int *highlow;
 	
 	/* What is the depth of the frame buffer */
-	double depth;
+	float depth;
 	
 	/* Stores the bounding box if used */
 	BBox *bbox;  /* Either NULL or points to bboxValues */
 	BBox bboxValues;
 
 	/* Store model and projection matix for clip */
-	GLdouble modl[16], proj[16];
+	GLfloat modl[16], proj[16];
 	
 } Binaryswapspu;
 

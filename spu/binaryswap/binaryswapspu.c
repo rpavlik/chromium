@@ -32,19 +32,19 @@
  *
  ****************************************************************/
 static void
-clipCoords (GLdouble modl[16], GLdouble proj[16], 
-	    GLdouble *x1, GLdouble *y1, GLdouble *z1,
-	    GLdouble *x2, GLdouble *y2, GLdouble *z2) 
+clipCoords (GLfloat modl[16], GLfloat proj[16], 
+	    GLfloat *x1, GLfloat *y1, GLfloat *z1,
+	    GLfloat *x2, GLfloat *y2, GLfloat *z2) 
 {
-	static GLdouble m[16];
+	static GLfloat m[16];
 	int i;
 	
-	GLdouble x[8], y[8], z[8], w[8];
-	GLdouble vx1, vy1, vz1;
-	GLdouble vx2, vy2, vz2;
+	GLfloat x[8], y[8], z[8], w[8];
+	GLfloat vx1, vy1, vz1;
+	GLfloat vx2, vy2, vz2;
 	
-	GLdouble xmin=DBL_MAX, ymin=DBL_MAX, zmin=DBL_MAX;
-	GLdouble xmax=-DBL_MAX, ymax=-DBL_MAX, zmax=-DBL_MAX;
+	GLfloat xmin=DBL_MAX, ymin=DBL_MAX, zmin=DBL_MAX;
+	GLfloat xmax=-DBL_MAX, ymax=-DBL_MAX, zmax=-DBL_MAX;
 	
 	m[0] =  proj[0] * modl[0] + proj[4]  * modl[1]  + 
 		proj[8] * modl[2] + proj[12] * modl[3];	
@@ -138,12 +138,12 @@ clipCoords (GLdouble modl[16], GLdouble proj[16],
  * application.
  *******************************************************/
 static int
-getClippedWindow(GLdouble modl[16], GLdouble proj[16], 
+getClippedWindow(GLfloat modl[16], GLfloat proj[16], 
 		 int *xstart, int* ystart,
 		 int* xend, int* yend )
 {
 	GLfloat viewport[4];
-	GLdouble x1, x2, y1, y2, z1, z2;
+	GLfloat x1, x2, y1, y2, z1, z2;
 	int win_height, win_width;
 	
 	if(binaryswap_spu.bbox != NULL){
@@ -410,7 +410,7 @@ static void CompositeNode( WindowInfo *window,
 	BinarySwapMsg *render_info = NULL;
 	int draw_x = 0, draw_y = 0;
 	int draw_width = 0, draw_height = 0;
-	double other_depth = 0.0;   
+	float other_depth = 0.0;   
 
 	int recalc_end_x = 0, recalc_end_y = 0;
 	int recalc_start_x = 0, recalc_start_y = 0;
@@ -750,8 +750,8 @@ static void DoBinaryswap( WindowInfo *window )
 	GLint super_packAlignment, super_unpackAlignment;
 	GLint child_unpackAlignment;
 	GLint super_viewport[4];
-	GLdouble super_proj_matrix[16];
-	GLdouble super_modl_matrix[16];
+	GLfloat super_proj_matrix[16];
+	GLfloat super_modl_matrix[16];
 	GLboolean super_blend = GL_FALSE;
 	GLint super_blend_dst = 0, super_blend_src = 0;
 	GLboolean super_color_writemask[4];
@@ -795,8 +795,8 @@ static void DoBinaryswap( WindowInfo *window )
 	/* things we are going to change that we need to put back */
 	/* fix things up for reading and drawing pixels */
 	binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, super_viewport );
-	binaryswap_spu.super.GetDoublev ( GL_PROJECTION_MATRIX, super_proj_matrix);
-	binaryswap_spu.super.GetDoublev ( GL_MODELVIEW_MATRIX, super_modl_matrix);
+	binaryswap_spu.super.GetFloatv ( GL_PROJECTION_MATRIX, super_proj_matrix);
+	binaryswap_spu.super.GetFloatv ( GL_MODELVIEW_MATRIX, super_modl_matrix);
 
 	/* Things alpha compositing mucks with */
 	if(binaryswap_spu.alpha_composite)
@@ -827,8 +827,8 @@ static void DoBinaryswap( WindowInfo *window )
 	binaryswap_spu.super.Viewport( 0, 0, window->width, window->height );
 	binaryswap_spu.super.MatrixMode(GL_PROJECTION);
 	binaryswap_spu.super.LoadIdentity();
-	binaryswap_spu.super.Ortho(0.0, (GLdouble) window->width, 0.0, 
-				   (GLdouble) window->height, -1., 1.);
+	binaryswap_spu.super.Ortho(0.0, (GLfloat) window->width, 0.0, 
+				   (GLfloat) window->height, -1., 1.);
 	binaryswap_spu.super.MatrixMode(GL_MODELVIEW);
 	binaryswap_spu.super.LoadIdentity();
 
@@ -847,9 +847,9 @@ static void DoBinaryswap( WindowInfo *window )
 				       super_viewport[2], 
 				       super_viewport[3] );
 	binaryswap_spu.super.MatrixMode(GL_PROJECTION);
-	binaryswap_spu.super.LoadMatrixd(super_proj_matrix);
+	binaryswap_spu.super.LoadMatrixf(super_proj_matrix);
 	binaryswap_spu.super.MatrixMode(GL_MODELVIEW);
-	binaryswap_spu.super.LoadMatrixd(super_modl_matrix);
+	binaryswap_spu.super.LoadMatrixf(super_modl_matrix);
 
 	if(binaryswap_spu.alpha_composite)
 	{
@@ -1137,8 +1137,8 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum targ
 		binaryswap_spu.bboxValues.ymax = ((GLfloat *) values)[4];
 		binaryswap_spu.bboxValues.zmax = ((GLfloat *) values)[5];
 		binaryswap_spu.bbox = &(binaryswap_spu.bboxValues);
-		binaryswap_spu.super.GetDoublev( GL_PROJECTION_MATRIX, binaryswap_spu.proj );
-		binaryswap_spu.super.GetDoublev( GL_MODELVIEW_MATRIX,  binaryswap_spu.modl );
+		binaryswap_spu.super.GetFloatv( GL_PROJECTION_MATRIX, binaryswap_spu.proj );
+		binaryswap_spu.super.GetFloatv( GL_MODELVIEW_MATRIX,  binaryswap_spu.modl );
 		break;
 	case GL_DEFAULT_BBOX_CR:
 		CRASSERT(count == 0);
