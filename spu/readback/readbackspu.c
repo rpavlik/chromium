@@ -471,7 +471,6 @@ ProcessTiles(WindowInfo * window)
 		const int drawy = extents[i].imagewindow.y1;
 		const int w = extents[i].outputwindow.x2 - extents[i].outputwindow.x1;
 		const int h = extents[i].outputwindow.y2 - extents[i].outputwindow.y1;
-		CRASSERT(i == 0);
 		CRASSERT(w >= 1);
 		CRASSERT(h >= 1);
 		CompositeTile(window, w, h, readx, ready, drawx, drawy);
