@@ -17,6 +17,7 @@
 
 /* --- Preprocessor --------------------------------------------------------- */
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "exec.h"

@@ -17,10 +17,10 @@
 
 /* --- Preprocessor --------------------------------------------------------- */
 
+#include <math.h>
+#include <stdlib.h>
 #include "exec.h"
 #include "../common/logo.h"
-
-#include <math.h>
 
 
 /* --- Global Variables ----------------------------------------------------- */
