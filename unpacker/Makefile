@@ -41,6 +41,8 @@ LIB_COPIES = crserver \
 	injectorspu \
 	archsplitspu
 
+include $(TOP)/options.mk
+
 ifeq ($(USE_VNC), 1)
 LIB_COPIES += vncviewer
 endif
