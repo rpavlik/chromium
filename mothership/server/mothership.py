@@ -1453,16 +1453,20 @@ class CR:
 		servers = "%d " % len(spu.servers)
 		for i in range(len(spu.servers)):
 			(node, formatURL) = spu.servers[i]
-			# The formatURL string may include a reference to the resolved hostname.
-			# Replace it if it does.
-			host = node.host
-			if node.dynamic_host:
-				if dynamicHosts.has_key(host):
-					host = dynamicHosts[host]
-				else:
-					sock.Failure( SockWrapper.UNKNOWNSERVER, "Server for dynamic host '%s' must be started before the appfaker" % (host) )
-					return
-			url = formatURL % {'host': host}
+			# The formatURL string may include a reference to the
+			# resolved hostname. Replace it if it does.
+			if node:
+				host = node.host
+				if node.dynamic_host:
+					if dynamicHosts.has_key(host):
+						host = dynamicHosts[host]
+					else:
+						sock.Failure( SockWrapper.UNKNOWNSERVER, "Server for dynamic host '%s' must be started before the appfaker" % (host) )
+						return
+				url = formatURL % {'host': host}
+			else:
+				# probably a file: URL
+				url = formatURL
 			servers += "%s" % (url)
 			if i != len(spu.servers) -1:
 				servers += ','
