@@ -208,6 +208,16 @@ mainloop: while ($line = <FILE>) {
 						$i++;
 					}
 				}
+				elsif (substr ($func, -3) eq "vNV") {
+					$v_type = substr ($func, -4, 1);
+					$num_elems = $#elems+1;
+					print $tab.$v_types{$v_type}." varg[$num_elems];\n";
+					$i = 0;
+					foreach $elem (@elems) {
+						print $tab."varg[$i] = $target->".$elem.";\n";
+						$i++;
+					}
+				}
 
 				print $tab."diff_api.$func (";
 				foreach $funcarg (@funcargs) {
@@ -215,7 +225,7 @@ mainloop: while ($line = <FILE>) {
 				}
 
 ## Handle vargs
-				if (substr ($func, -1) eq "v") {
+				if (substr ($func, -1) eq "v" or substr ($func, -3) eq "vNV") {
 					print "varg";
 				} else {
 					$first = 1;

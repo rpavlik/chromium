@@ -25,6 +25,7 @@ void crPackOffsetCurrentPointers( int offset )
 {
 	GLnormal_p		*normal		= &(cr_packer_globals.current.normal);
 	GLcolor_p		*color		= &(cr_packer_globals.current.color);
+	GLsecondarycolor_p	*secondaryColor	= &(cr_packer_globals.current.secondaryColor);
 	GLtexcoord_p	*texCoord	= &(cr_packer_globals.current.texCoord);
 	GLindex_p		*index		= &(cr_packer_globals.current.index);
 	GLedgeflag_p	*edgeFlag	= &(cr_packer_globals.current.edgeFlag);
@@ -56,6 +57,7 @@ void crPackNullCurrentPointers( void )
 {
 	GLnormal_p		*normal		= &(cr_packer_globals.current.normal);
 	GLcolor_p		*color		= &(cr_packer_globals.current.color);
+	GLsecondarycolor_p	*secondaryColor	= &(cr_packer_globals.current.secondaryColor);
 	GLtexcoord_p	*texCoord	= &(cr_packer_globals.current.texCoord);
 	GLindex_p		*index		= &(cr_packer_globals.current.index);
 	GLedgeflag_p	*edgeFlag	= &(cr_packer_globals.current.edgeFlag);

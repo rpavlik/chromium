@@ -57,3 +57,4 @@ CreateContext
 ArrayElement
 DrawArrays
 DrawElements
+SecondaryColorPointerEXT

@@ -64,6 +64,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 	crStateListsInit (&(ctx->lists) );
 	crStatePixelInit( &(ctx->pixel) );
 	crStatePolygonInit (&(ctx->polygon) );
+	crStateRegCombinerInit (&(ctx->regcombiner) );
 	crStateStencilInit( &(ctx->stencil) );
 	crStateTextureInit( (&ctx->limits), &(ctx->texture) );
 	crStateTransformInit( &(ctx->transform) );

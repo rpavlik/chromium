@@ -122,19 +122,6 @@ void crStateTextureInit(const CRLimitsState *limits, CRTextureState *t)
 		t->unit[i].envMode = GL_MODULATE;
 		t->unit[i].envColor = zero_color;
 	}
-
-	/* XXX somebody didn't finish this work */
-#if 0
-#if defined(GL_ARB_texture_cube_map) || defined(GL_EXT_texture_cube_map)
-	t->extensions.cubeMap = GL_FALSE;
-#endif
-#ifdef CR_NV_register_combiners
-	t->extensions.regCombiners = GL_FALSE;
-#endif
-#ifdef CR_NV_register_combiners2
-	t->extensions.regPerStageConstants = GL_FALSE;
-#endif
-#endif /* 0 */
 }
 
 void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint name, GLenum target)
@@ -1395,7 +1382,7 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 			return;
 		}
 	}
-#endif
+#endif /* CR_ARB_texture_cube_map */
 	else
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexSubImage2D target != GL_TEXTURE_2D: %d", target);

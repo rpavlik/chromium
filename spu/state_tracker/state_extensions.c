@@ -64,7 +64,14 @@ void crStateExtensionsInit( CRContext *g )
 	if (hasExtension((const char*)g->limits.extensions, "GL_EXT_blend_subtract"))
 		g->extensions.EXT_blend_subtract = GL_TRUE;
 
-	if (hasExtension((const char*)g->limits.extensions, "GL_EXT_texture_edge_clamp"))
+	if (hasExtension((const char*)g->limits.extensions, "GL_EXT_secondary_color"))
+		g->extensions.EXT_secondary_color = GL_TRUE;
+
+	if (hasExtension((const char*)g->limits.extensions, "GL_EXT_separate_specular_color"))
+		g->extensions.EXT_separate_specular_color = GL_TRUE;
+
+	if (hasExtension((const char*)g->limits.extensions, "GL_EXT_texture_edge_clamp") ||
+		hasExtension((const char*)g->limits.extensions, "GL_SGIS_texture_edge_clamp"))
 		g->extensions.EXT_texture_edge_clamp = GL_TRUE;
 
 	if (hasExtension((const char*)g->limits.extensions, "GL_EXT_texture_filter_anisotropic"))
@@ -76,5 +83,9 @@ void crStateExtensionsInit( CRContext *g )
 	if (hasExtension((const char*)g->limits.extensions, "GL_NV_texgen_reflection"))
 		g->extensions.NV_texgen_reflection = GL_TRUE;
 
-}
+	if (hasExtension((const char*)g->limits.extensions, "GL_NV_register_combiners2"))
+		g->extensions.NV_register_combiners2 = GL_TRUE;
 
+	if (hasExtension((const char*)g->limits.extensions, "GL_NV_texgen_reflection"))
+		g->extensions.NV_texgen_reflection = GL_TRUE;
+}

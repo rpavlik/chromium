@@ -30,3 +30,10 @@ GetTexLevelParameterfv
 GetTexLevelParameteriv
 GetTexParameterfv
 GetTexParameteriv
+#GetCombinerInputParameterfvNV
+#GetCombinerInputParameterivNV
+#GetCombinerOutputParameterfvNV
+#GetCombinerOutputParameterivNV
+#GetFinalCombinerInputParameterfvNV
+#GetFinalCombinerInputParameterivNV
+#GetCombinerStageParameterfvNV

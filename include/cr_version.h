@@ -36,12 +36,18 @@
 #define CR_EXT_blend_color 1
 #define CR_EXT_blend_minmax 1
 #define CR_EXT_blend_subtract 1
+#define CR_EXT_secondary_color 1
+#define CR_EXT_separate_specular_color 1
 #define CR_EXT_texture_cube_map 1
 #define CR_EXT_texture_edge_clamp 1
 #define CR_EXT_texture_filter_anisotropic 1
 #define CR_NV_fog_distance 1
+#define CR_NV_register_combiners 1
+#define CR_NV_register_combiners2 1
 #define CR_NV_texgen_reflection 1
+#define CR_SGIS_texture_edge_clamp 1
 /*#define CR_ARB_imaging 1    not yet */
+/*#define CR_NV_vertex_program 1    not yet */
 
 
 #endif /* CR_VERSION_H */

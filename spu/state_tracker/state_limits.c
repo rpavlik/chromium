@@ -56,6 +56,7 @@ void crStateLimitsPrint (const CRLimitsState *l)
 	fprintf(stderr, "GL_SMOOTH_LINE_WIDTH_RANGE = %f .. %f\n",
 		l->smoothLineWidthRange[0], l->smoothLineWidthRange[1]);
 	fprintf(stderr, "GL_LINE_WIDTH_GRANULARITY = %f\n", l->lineWidthGranularity);
+	fprintf(stderr, "GL_MAX_GENERAL_COMBINERS_NV = %d\n", l->maxGeneralCombiners);
 	fprintf(stderr, "GL_EXTENSIONS = %s\n", (const char *) l->extensions);
 	fprintf(stderr, "------------------------------------------\n");
 }

@@ -171,6 +171,27 @@ void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 			l->lightModelAmbient.b = param[2];
 			l->lightModelAmbient.a = param[3];
 			break;
+#ifdef CR_EXT_separate_specular_color
+		case GL_LIGHT_MODEL_COLOR_CONTROL_EXT:
+			if( g->extensions.EXT_separate_specular_color )
+			{
+				if( param[0] == GL_SEPARATE_SPECULAR_COLOR_EXT || param[0] == GL_SINGLE_COLOR_EXT )
+				{
+					l->lightModelColorControlEXT = (GLenum) param[0];
+				}
+				else
+				{
+					crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "LightModel: Invalid param for LIGHT_MODEL_COLOR_CONTROL: 0x%x", param[0] );
+					return;				
+				}
+			}
+			else
+			{
+				crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "LightModel( LIGHT_MODEL_COLOR_CONTROL, ...) - EXT_separate_specular_color is unavailable." );
+				return;
+			}
+			break;
+#endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModelfv: Invalid pname: %d", pname);
 			return;
@@ -183,6 +204,7 @@ void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 {
 	GLfloat f_param;
 	GLcolor f_color;
+	CRContext *g = GetCurrentContext();
 
 	switch (pname) 
 	{
@@ -198,6 +220,17 @@ void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 			f_color.a = ((GLfloat)param[3])/GL_MAXINT;
 			crStateLightModelfv( pname, (GLfloat *) &f_color );
 			break;
+#ifdef CR_EXT_separate_specular_color
+		case GL_LIGHT_MODEL_COLOR_CONTROL_EXT:
+			if( g->extensions.EXT_separate_specular_color ) {
+				f_param = (GLfloat) (*param);
+				crStateLightModelfv( pname, &f_param );
+			} else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModeliv(GL_LIGHT_MODEL_COLOR_CONTROL_EXT, ...) - EXT_separate_specular_color not enabled!" );
+				return;
+			}
+			break;
+#endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModeliv: Invalid pname: %d", pname);
 			return;

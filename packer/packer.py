@@ -40,10 +40,16 @@ keys.sort()
 def SmackVector( func_name ):
 	match = re.search( r"v$", func_name )
 	arb_match = re.search( r"vARB$", func_name )
+	ext_match = re.search( r"vEXT$", func_name )
+	nv_match = re.search( r"vNV$", func_name )
 	if match:
 		ret = re.sub( "v$", "", func_name )
 	elif arb_match:
 		ret = re.sub( "vARB$", "ARB", func_name )
+	elif ext_match:
+		ret = re.sub( "vEXT$", "EXT", func_name )
+	elif nv_match:
+		ret = re.sub( "vNV$", "NV", func_name )
 	else:
 		ret = func_name
 	return ret
@@ -79,6 +85,14 @@ def UpdateCurrentPointer( func_name ):
 	if m :
 		k = m.group(1)
 		name = '%s%s' % (k[:1].lower(),k[1:])
+		type = m.group(3) + m.group(2)
+		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
+		return
+
+	m = re.search( r"^(SecondaryColor)(3)(ub|b|us|s|ui|i|f|d)EXT$", func_name )
+	if m :
+		k = m.group(1)
+		name = 'secondaryColor'
 		type = m.group(3) + m.group(2)
 		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return

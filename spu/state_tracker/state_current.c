@@ -11,11 +11,13 @@ void crStateCurrentInit( CRCurrentState *c )
 {
 	GLvectorf	default_normal     = {0.0f, 0.0f, 1.0f, 1.0f};
 	GLcolorf	default_color	     = {1.0f, 1.0f, 1.0f, 1.0f};
+	GLcolorf	default_secondaryColor = {0.0f, 0.0f, 0.0f, 0.0f};
 	GLtexcoordf default_texcoord = {0.0f, 0.0f, 0.0f, 1.0f};
 	GLvectorf default_rasterpos  = {0.0f, 0.0f, 0.0f, 1.0f};
 	int i;
 
 	c->color	= default_color;
+	c->secondaryColor = default_secondaryColor;
 	c->index	= 1.0f;
 	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
@@ -142,6 +144,17 @@ void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 		c->color &= nbitID;
 	}
 
+#ifdef CR_EXT_secondary_color
+	if (c->secondaryColor & bitID) {
+		if (COMPARE_COLOR(from->secondaryColor,to->secondaryColor)) {
+			diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->color));
+			c->secondaryColor = GLBITS_ONES;
+			c->dirty = GLBITS_ONES;
+		}
+		c->secondaryColor &= nbitID;
+	}
+#endif
+
 	if (c->index & bitID) {
 		if (to->index != from->index) {
 			diff_api.Indexf (to->index);
@@ -223,6 +236,16 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
 		from->color = to->color;
 		c->color &= nbitID;
 	}
+
+#ifdef CR_EXT_secondary_color
+	if (c->secondaryColor & bitID) {
+		if (COMPARE_COLOR(from->secondaryColor,to->secondaryColorPre)) {
+			diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->secondaryColorPre.r));
+		}
+		from->secondaryColor = to->secondaryColor;
+		c->secondaryColor &= nbitID;
+	}
+#endif
 
 	if (c->index & bitID) {
 		if (from->index != to->indexPre) {

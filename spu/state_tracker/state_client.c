@@ -23,6 +23,7 @@ void crStateClientInitBits (CRClientBits *c)
 	c->v = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	c->n = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	c->c = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->s = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	c->i = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	c->t = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	c->e = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
@@ -35,6 +36,7 @@ void crStateClientInitBits (CRClientBits *c)
 	c->valloc = GLCLIENT_BIT_ALLOC;
 	c->nalloc = GLCLIENT_BIT_ALLOC;
 	c->calloc = GLCLIENT_BIT_ALLOC;
+	c->salloc = GLCLIENT_BIT_ALLOC;
 	c->ialloc = GLCLIENT_BIT_ALLOC;
 	c->talloc = GLCLIENT_BIT_ALLOC;
 	c->ealloc = GLCLIENT_BIT_ALLOC;
@@ -60,6 +62,11 @@ void crStateClientInit(CRClientState *c)
 	c->c.type = GL_NONE;
 	c->c.stride = 0;
 	c->c.enabled = 0;
+	c->s.p = NULL;
+	c->s.size = 0;
+	c->s.type = GL_NONE;
+	c->s.stride = 0;
+	c->s.enabled = 0;
 	c->e.p = NULL;
 	c->e.size = 0;
 	c->e.type = GL_NONE;
@@ -88,6 +95,8 @@ void crStateClientInit(CRClientState *c)
 void crStateClientSetClientState(CRClientState *c, CRClientBits *cb, 
 		GLbitvalue neg_bitid, GLenum array, GLboolean state) 
 {
+	CRContext *g = GetCurrentContext();
+
 	switch (array) 
 	{
 		case GL_VERTEX_ARRAY:
@@ -108,8 +117,19 @@ void crStateClientSetClientState(CRClientState *c, CRClientBits *cb,
 		case GL_EDGE_FLAG_ARRAY:
 			c->e.enabled = state;
 			break;	
+#ifdef CR_EXT_secondary_color
+		case GL_SECONDARY_COLOR_ARRAY_EXT:
+			if( g->extensions.EXT_secondary_color ){
+				c->s.enabled = state;
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid Enum passed to Enable/Disable Client State: SECONDARY_COLOR_ARRAY_EXT - EXT_secondary_color is not enabled." );
+				return;
+			}
+			break;
+#endif
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid Enum passed to Enable/Disable Client State");
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid Enum passed to Enable/Disable Client State: 0x%x", array );
 			return;
 	}
 	cb->dirty = neg_bitid;
@@ -243,6 +263,46 @@ void STATE_APIENTRY crStateColorPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->c), size, type, stride, p);
+	cb->dirty = g->neg_bitid;
+	cb->clientPointer = g->neg_bitid;
+}
+
+void STATE_APIENTRY crStateSecondaryColorPointerEXT(GLint size,
+		GLenum type, GLsizei stride, const GLvoid *p)
+{
+	CRContext *g = GetCurrentContext();
+	CRClientState *c = &(g->client);
+	CRStateBits *sb = GetCurrentBits();
+	CRClientBits *cb = &(sb->client);
+
+	FLUSH();
+
+	if ( !g->extensions.EXT_secondary_color )
+	{
+		crError( "glSecondaryColorPointerEXT called but EXT_secondary_color is disabled." );
+		return;
+	}
+
+	if (size != 3)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glSecondaryColorPointerEXT: invalid size: %d", size);
+		return;
+	}
+	if (type != GL_BYTE && type != GL_UNSIGNED_BYTE &&
+			type != GL_SHORT && type != GL_UNSIGNED_SHORT &&
+			type != GL_INT && type != GL_UNSIGNED_INT &&
+			type != GL_FLOAT && type != GL_DOUBLE)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glSecondaryColorPointerEXT: invalid type: %d", type);
+		return;
+	}
+	if (stride < 0) 
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glSecondaryColorPointerEXT: stride was negative: %d", stride);
+		return;
+	}
+
+	crStateClientSetPointer(&(c->s), size, type, stride, p);
 	cb->dirty = g->neg_bitid;
 	cb->clientPointer = g->neg_bitid;
 }
@@ -724,6 +784,17 @@ void STATE_APIENTRY crStateGetPointerv(GLenum pname, GLvoid * * params)
 		case GL_EDGE_FLAG_ARRAY_POINTER:
 			*params = (GLvoid *) c->e.p;
 			break;
+#ifdef CR_EXT_secondary_color
+		case GL_SECONDARY_COLOR_ARRAY_POINTER_EXT:
+			if( g->extensions.EXT_secondary_color ){
+				*params = (GLvoid *) c->s.p;
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid Enum passed to glGetPointerv: SECONDARY_COLOR_ARRAY_EXT - EXT_secondary_color is not enabled." );
+				return;
+			}
+			break;
+#endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 					"glGetPointerv: invalid pname: %d", pname);

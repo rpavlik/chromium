@@ -26,12 +26,14 @@ typedef struct {
 	GLbitvalue  *i;
 	GLbitvalue  *t;
 	GLbitvalue  *e;
+	GLbitvalue	*s;
 	int valloc;
 	int nalloc;
 	int calloc;
 	int ialloc;
 	int talloc;
 	int ealloc;
+	int salloc;
 } CRClientBits;
 
 typedef struct {
@@ -51,6 +53,7 @@ typedef struct {
 	CRClientPointer i;
 	CRClientPointer t[CR_MAX_TEXTURE_UNITS];
 	CRClientPointer e;
+	CRClientPointer s;
 
 	GLint curClientTextureUnit;
 

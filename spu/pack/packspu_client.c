@@ -15,6 +15,11 @@ void PACKSPU_APIENTRY packspu_ColorPointer( GLint size, GLenum type, GLsizei str
 	crStateColorPointer( size, type, stride, pointer );
 }
 
+void PACKSPU_APIENTRY packspu_SecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
+{
+	crStateSecondaryColorPointerEXT( size, type, stride, pointer );
+}
+
 void PACKSPU_APIENTRY packspu_VertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateVertexPointer( size, type, stride, pointer );

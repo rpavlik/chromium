@@ -25,6 +25,7 @@ typedef struct CRContext CRContext;
 #include "state/cr_lists.h"
 #include "state/cr_pixel.h"
 #include "state/cr_polygon.h"
+#include "state/cr_regcombiner.h"
 #include "state/cr_stencil.h"
 #include "state/cr_texture.h"
 #include "state/cr_transform.h"
@@ -52,6 +53,7 @@ typedef struct {
 	CRListsBits     lists;
 	CRPixelBits     pixel;
 	CRPolygonBits   polygon;
+	CRRegCombinerBits regcombiner;
 	CRStencilBits   stencil;
 	CRTextureBits   texture;
 	CRTransformBits transform;
@@ -82,6 +84,7 @@ struct CRContext {
 	CRListsState     lists;
 	CRPixelState     pixel;
 	CRPolygonState   polygon;
+	CRRegCombinerState regcombiner;
 	CRStencilState   stencil;
 	CRTextureState   texture;
 	CRTransformState transform;
@@ -107,6 +110,7 @@ struct CRContext {
 #define GLUPDATE_IMAGING	0x08000
 #define GLUPDATE_SELECTION	0x10000
 #define GLUPDATE_ATTRIB		0x20000 
+#define GLUPDATE_REGCOMBINER	0x40000
 
 extern CRContext *__currentContext;
 extern CRStateBits *__currentBits;

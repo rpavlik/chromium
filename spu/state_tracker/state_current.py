@@ -51,7 +51,7 @@ for k in current_fns.keys():
 			else:
 				print '\tcase CR_%s%d%s_OPCODE: \\' % (ucname,size,uctype)
 			
-			if (ucname == 'COLOR' or ucname == 'NORMAL') and type != 'f' and type != 'd':
+			if (ucname == 'COLOR' or ucname == 'NORMAL' or ucname == 'SECONDARYCOLOR') and type != 'f' and type != 'd':
 				print '\t\t__convert_rescale_%s%d (vdata, (%s *) (data)); \\' % (type,size,gltypes[type]['type'])
 			else:
 				print '\t\t__convert_%s%d (vdata, (%s *) (data)); \\' % (type,size,gltypes[type]['type'])
@@ -80,12 +80,14 @@ void crStateCurrentRecover( void )
 	CRCurrentBits *cb = &(b->current);
 	GLbitvalue nbitID = g->neg_bitid;
 	static const GLcolorf color_default			= {0.0f, 0.0f, 0.0f, 1.0f};
+	static const GLcolorf secondaryColor_default= {0.0f, 0.0f, 0.0f, 0.0f};
 	static const GLtexcoordf texCoord_default	= {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLvectorf normal_default		= {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLfloat index_default			= 0.0f;
 	static const GLboolean edgeFlag_default		= GL_TRUE;
 	GLnormal_p		*normal		= &(c->current->normal);
 	GLcolor_p		*color		= &(c->current->color);
+	GLsecondarycolor_p *secondaryColor = &(c->current->secondaryColor);
 	GLtexcoord_p	*texCoord	= &(c->current->texCoord);
 	GLindex_p		*index		= &(c->current->index);
 	GLedgeflag_p	*edgeFlag	= &(c->current->edgeFlag);
@@ -95,6 +97,7 @@ void crStateCurrentRecover( void )
 	/* Save pre state */
 	c->normalPre = c->normal;
 	c->colorPre = c->color;
+	c->secondaryColorPre = c->secondaryColor;
 	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
 		c->texCoordPre[i] = c->texCoord[i];
@@ -122,7 +125,7 @@ for k in current_fns.keys():
 			print '%s\tif (v < %s)' % (indent, ptr)
 			print '%s\t{' % indent
 			print '%s\t\tv = %s;' % (indent, ptr)
-			if (k == 'Color' or k == 'Normal') and type != 'f' and type != 'd' and type != 'l':
+			if (k == 'Color' or k == 'Normal' or k == 'SecondaryColor') and type != 'f' and type != 'd' and type != 'l':
 				print '%s\t\tconvert = (convert_func) __convert_rescale_%s%d;' % (indent,type,size)
 			else:
 				print '%s\t\tconvert = (convert_func) __convert_%s%d;' % (indent,type,size)
@@ -142,6 +145,8 @@ for k in current_fns.keys():
 	elif k == 'TexCoord':
 		print '%s\t\tconvert(&(c->%s[i].s), v);' % (indent,name)
 	elif k == 'Color':
+		print '%s\t\tconvert(&(c->%s.r), v);' % (indent,name)
+	elif k == 'SecondaryColor':
 		print '%s\t\tconvert(&(c->%s.r), v);' % (indent,name)
 	if current_fns[k].has_key( 'array' ):
 		print '%s\t\tcb->%s[i] = nbitID;' % (indent,name)

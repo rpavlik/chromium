@@ -64,6 +64,19 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->lighting.enable = neg_bitid;
 			sb->lighting.dirty = neg_bitid;
 			break;
+#ifdef CR_EXT_secondary_color
+		case GL_COLOR_SUM_EXT :
+			if (g->extensions.EXT_secondary_color) { /* XXX does EXT_separate_specular color support this enable, too? */
+				g->lighting.colorSumEXT = val;
+				sb->lighting.enable = neg_bitid;
+				sb->lighting.dirty = neg_bitid;
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(GL_COLOR_SUM_EXT) - No support for secondary color!");
+				return;
+			}
+			break;
+#endif
 		case GL_CULL_FACE :
 			g->polygon.cullFace = val;
 			sb->polygon.enable = neg_bitid;
@@ -139,6 +152,32 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->polygon.enable = neg_bitid;
 			sb->polygon.dirty = neg_bitid;
 			break;
+#ifdef CR_NV_register_combiners
+		case GL_REGISTER_COMBINERS_NV :
+			if (g->extensions.NV_register_combiners) {
+				g->regcombiner.enabledRegCombiners = val;
+				sb->regcombiner.enable = neg_bitid;
+				sb->regcombiner.dirty = neg_bitid;
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(GL_REGISTER_COMBINERS_NV) - No support for NV_register_combiners");
+				return;
+			}
+			break;
+#endif
+#ifdef CR_NV_register_combiners2
+		case GL_PER_STAGE_CONSTANTS_NV :
+			if (g->extensions.NV_register_combiners2) {
+				g->regcombiner.enabledPerStageConstants = val;
+				sb->regcombiner.enable = neg_bitid;
+				sb->regcombiner.dirty = neg_bitid;
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(GL_PER_STAGE_CONSTANTS_NV) - No support for NV_register_combiners2");
+				return;
+			}
+			break;
+#endif
 		case GL_SCISSOR_TEST :
 			g->viewport.scissorTest = val;
 			sb->viewport.enable = neg_bitid;
@@ -235,35 +274,6 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->eval.enable2D[cap - GL_MAP2_COLOR_4] = neg_bitid;
 			sb->eval.dirty = neg_bitid;
 			break;
-
-#if 0 /* XXX not finished yet */
-#ifdef CR_NV_register_combiners
-		case GL_REGISTER_COMBINERS_NV:
-			if (g->extensions.NV_register_combiners) {
-				g->texture.extensions.regCombiners = val;
-				sb->texture.extensions.regCombiners = neg_bitid;
-				sb->texture.dirty = neg_bitid;
-			}
-			else {
-				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
-				return;
-			}
-			break;
-#endif
-#ifdef CR_NV_register_combiners2
-		case GL_PER_STAGE_CONSTANTS_NV:
-			if (g->extensions.NV_register_combiners) {
-				g->texture.extensions.regPerStageConstants = val;
-				sb->texture.extensions.regPerStageConstants = neg_bitid;
-				sb->texture.dirty = neg_bitid;
-			}
-			else {
-				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
-				return;
-			}
-			break;
-#endif
-#endif /* 0 not finshed */
 
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable called with bogus cap: %d", cap);

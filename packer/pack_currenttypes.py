@@ -12,6 +12,12 @@ current_fns = {
 		'default': [0,0,0,1],
 		'members': ['r', 'g', 'b', 'a']
 	},
+	'SecondaryColor': {
+		'types': ['b','ub','s','us','i','ui','f','d'],
+		'sizes': [3],
+		'default': [0,0,0],
+		'members': ['r', 'g', 'b']
+	},
 	'Normal': {
 		'types': ['b','s','i','f','d'],
 		'sizes': [3],

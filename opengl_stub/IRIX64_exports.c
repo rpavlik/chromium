@@ -300,6 +300,22 @@ extern void *__glim_Rotatef;
 extern void *__glim_Scaled;
 extern void *__glim_Scalef;
 extern void *__glim_Scissor;
+extern void *__glim_SecondaryColor3bEXT;
+extern void *__glim_SecondaryColor3bvEXT;
+extern void *__glim_SecondaryColor3dEXT;
+extern void *__glim_SecondaryColor3dvEXT;
+extern void *__glim_SecondaryColor3fEXT;
+extern void *__glim_SecondaryColor3fvEXT;
+extern void *__glim_SecondaryColor3iEXT;
+extern void *__glim_SecondaryColor3ivEXT;
+extern void *__glim_SecondaryColor3sEXT;
+extern void *__glim_SecondaryColor3svEXT;
+extern void *__glim_SecondaryColor3ubEXT;
+extern void *__glim_SecondaryColor3ubvEXT;
+extern void *__glim_SecondaryColor3uiEXT;
+extern void *__glim_SecondaryColor3uivEXT;
+extern void *__glim_SecondaryColor3usEXT;
+extern void *__glim_SecondaryColor3usvEXT;
 extern void *__glim_SelectBuffer;
 extern void *__glim_SemaphoreCreate;
 extern void *__glim_SemaphoreDestroy;
@@ -683,6 +699,22 @@ typedef void (*glRotatef_ptr) ( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 typedef void (*glScaled_ptr) ( GLdouble x, GLdouble y, GLdouble z ) ;
 typedef void (*glScalef_ptr) ( GLfloat x, GLfloat y, GLfloat z ) ;
 typedef void (*glScissor_ptr) ( GLint x, GLint y, GLsizei width, GLsizei height ) ;
+typedef void (*glSecondaryColor3bEXT_ptr) ( GLbyte red, GLbyte green, GLbyte blue ) ;
+typedef void (*glSecondaryColor3bvEXT_ptr) ( const GLbyte *v ) ;
+typedef void (*glSecondaryColor3dEXT_ptr) ( GLdouble red, GLdouble green, GLdouble blue ) ;
+typedef void (*glSecondaryColor3dvEXT_ptr) ( const GLdouble *v ) ;
+typedef void (*glSecondaryColor3fEXT_ptr) ( GLfloat red, GLfloat green, GLfloat blue ) ;
+typedef void (*glSecondaryColor3fvEXT_ptr) ( const GLfloat *v ) ;
+typedef void (*glSecondaryColor3iEXT_ptr) ( GLint red, GLint green, GLint blue ) ;
+typedef void (*glSecondaryColor3ivEXT_ptr) ( const GLint *v ) ;
+typedef void (*glSecondaryColor3sEXT_ptr) ( GLshort red, GLshort green, GLshort blue ) ;
+typedef void (*glSecondaryColor3svEXT_ptr) ( const GLshort *v ) ;
+typedef void (*glSecondaryColor3ubEXT_ptr) ( GLubyte red, GLubyte green, GLubyte blue ) ;
+typedef void (*glSecondaryColor3ubvEXT_ptr) ( const GLubyte *v ) ;
+typedef void (*glSecondaryColor3uiEXT_ptr) ( GLuint red, GLuint green, GLuint blue ) ;
+typedef void (*glSecondaryColor3uivEXT_ptr) ( const GLuint *v ) ;
+typedef void (*glSecondaryColor3usEXT_ptr) ( GLushort red, GLushort green, GLushort blue ) ;
+typedef void (*glSecondaryColor3usvEXT_ptr) ( const GLushort *v ) ;
 typedef void (*glSelectBuffer_ptr) ( GLsizei size, GLuint *buffer ) ;
 typedef void (*glSemaphoreCreate_ptr) ( GLuint name, GLuint count ) ;
 typedef void (*glSemaphoreDestroy_ptr) ( GLuint name ) ;
@@ -2232,6 +2264,86 @@ void glScalef ( GLfloat x, GLfloat y, GLfloat z )
 void glScissor ( GLint x, GLint y, GLsizei width, GLsizei height )
 {
 	((glScissor_ptr) __glim_Scissor) ( x , y , width , height );
+}
+
+void glSecondaryColor3bEXT ( GLbyte red, GLbyte green, GLbyte blue )
+{
+	((glSecondaryColor3bEXT_ptr) __glim_SecondaryColor3bEXT) ( red , green , blue );
+}
+
+void glSecondaryColor3bvEXT ( const GLbyte *v )
+{
+	((glSecondaryColor3bvEXT_ptr) __glim_SecondaryColor3bvEXT) ( v );
+}
+
+void glSecondaryColor3dEXT ( GLdouble red, GLdouble green, GLdouble blue )
+{
+	((glSecondaryColor3dEXT_ptr) __glim_SecondaryColor3dEXT) ( red , green , blue );
+}
+
+void glSecondaryColor3dvEXT ( const GLdouble *v )
+{
+	((glSecondaryColor3dvEXT_ptr) __glim_SecondaryColor3dvEXT) ( v );
+}
+
+void glSecondaryColor3fEXT ( GLfloat red, GLfloat green, GLfloat blue )
+{
+	((glSecondaryColor3fEXT_ptr) __glim_SecondaryColor3fEXT) ( red , green , blue );
+}
+
+void glSecondaryColor3fvEXT ( const GLfloat *v )
+{
+	((glSecondaryColor3fvEXT_ptr) __glim_SecondaryColor3fvEXT) ( v );
+}
+
+void glSecondaryColor3iEXT ( GLint red, GLint green, GLint blue )
+{
+	((glSecondaryColor3iEXT_ptr) __glim_SecondaryColor3iEXT) ( red , green , blue );
+}
+
+void glSecondaryColor3ivEXT ( const GLint *v )
+{
+	((glSecondaryColor3ivEXT_ptr) __glim_SecondaryColor3ivEXT) ( v );
+}
+
+void glSecondaryColor3sEXT ( GLshort red, GLshort green, GLshort blue )
+{
+	((glSecondaryColor3sEXT_ptr) __glim_SecondaryColor3sEXT) ( red , green , blue );
+}
+
+void glSecondaryColor3svEXT ( const GLshort *v )
+{
+	((glSecondaryColor3svEXT_ptr) __glim_SecondaryColor3svEXT) ( v );
+}
+
+void glSecondaryColor3ubEXT ( GLubyte red, GLubyte green, GLubyte blue )
+{
+	((glSecondaryColor3ubEXT_ptr) __glim_SecondaryColor3ubEXT) ( red , green , blue );
+}
+
+void glSecondaryColor3ubvEXT ( const GLubyte *v )
+{
+	((glSecondaryColor3ubvEXT_ptr) __glim_SecondaryColor3ubvEXT) ( v );
+}
+
+void glSecondaryColor3uiEXT ( GLuint red, GLuint green, GLuint blue )
+{
+	((glSecondaryColor3uiEXT_ptr) __glim_SecondaryColor3uiEXT) ( red , green , blue );
+}
+
+void glSecondaryColor3uivEXT ( const GLuint *v )
+{
+	((glSecondaryColor3uivEXT_ptr) __glim_SecondaryColor3uivEXT) ( v );
+}
+
+void glSecondaryColor3usEXT ( GLushort red, GLushort green, GLushort blue )
+{
+	((glSecondaryColor3usEXT_ptr) __glim_SecondaryColor3usEXT) ( red , green , blue );
+}
+
+void glSecondaryColor3usvEXT ( const GLushort *v )
+{
+	((glSecondaryColor3usvEXT_ptr) __glim_SecondaryColor3usvEXT) ( v );
 }
 
 void glSelectBuffer ( GLsizei size, GLuint *buffer )

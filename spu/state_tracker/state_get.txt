@@ -136,6 +136,10 @@ GLclampf?b?ub?s?us?i?ui?f?d     GL_CURRENT_RASTER_COLOR          g->current.rast
 GLfloat                                         GL_CURRENT_RASTER_DISTANCE       g->current.rasterDistance
 GLdouble                                        GL_CURRENT_RASTER_INDEX          g->current.rasterIndex
 
+#GLclampf  GL_CURRENT_SECONDARY_COLOR_EXT g->lighting.secondaryColor.r g->lighting.secondaryColor.g g->lighting.secondaryColor.b
+#GLint     GL_SECONDARY_COLOR_ARRAY_SIZE_EXT
+#GLint     GL_SECONDARY_COLOR_ARRAY_TYPE_EXT
+#GLint     GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT
 
 # Implementation-dependent limits queries
 
@@ -165,5 +169,3 @@ GLfloat GL_SMOOTH_POINT_SIZE_GRANULARITY g->limits.pointSizeGranularity
 GLfloat GL_ALIASED_LINE_WIDTH_RANGE      g->limits.aliasedLineWidthRange[0] g->limits.aliasedLineWidthRange[1]
 GLfloat GL_SMOOTH_LINE_WIDTH_RANGE       g->limits.smoothLineWidthRange[0] g->limits.smoothLineWidthRange[1]
 GLfloat GL_SMOOTH_LINE_WIDTH_GRANULARITY g->limits.lineWidthGranularity
-
-

@@ -15,6 +15,7 @@ extern "C" {
 
 
 #define CR_MAX_TEXTURE_UNITS		8
+#define CR_MAX_GENERAL_COMBINERS	8
 #define CR_MAX_TEXTURE_SIZE		2048
 #define CR_MAX_3D_TEXTURE_SIZE		512
 #define CR_MAX_CUBE_TEXTURE_SIZE	2048
@@ -55,6 +56,7 @@ typedef struct {
 	GLuint max3DTextureSize;	/* OpenGL 1.2 */
 	GLuint maxCubeMapTextureSize;	/* GL_ARB_texture_cube_map */
 	GLfloat maxTextureAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
+	GLuint maxGeneralCombiners;		/* GL_NV_register_combiners */
 	GLuint maxLights;
 	GLuint maxClipPlanes;
 	GLuint maxProjectionStackDepth;

@@ -190,6 +190,39 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				break;
 		}
 	}
+#ifdef CR_EXT_secondary_color
+	if (c->s.enabled) 
+	{
+		p = c->s.p + index*c->s.stride;
+		switch (c->s.type)
+		{
+			case GL_BYTE:
+				crPackSecondaryColor3bv((GLbyte *)p); break;
+				break;
+			case GL_UNSIGNED_BYTE:
+				crPackSecondaryColor3ubv((GLubyte *)p); break;
+				break;
+			case GL_SHORT:
+				crPackSecondaryColor3sv((GLshort *)p); break;
+				break;
+			case GL_UNSIGNED_SHORT:
+				crPackSecondaryColor3usv((GLushort *)p); break;
+				break;
+			case GL_INT:
+				crPackSecondaryColor3iv((GLint *)p); break;
+				break;
+			case GL_UNSIGNED_INT:
+				crPackSecondaryColor3uiv((GLuint *)p); break;
+				break;
+			case GL_FLOAT:
+				crPackSecondaryColor3fv((GLfloat *)p); break;
+				break;
+			case GL_DOUBLE:
+				crPackSecondaryColor3dv((GLdouble *)p); break;
+				break;
+		}
+	}
+#endif
 }
 
 void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c) 

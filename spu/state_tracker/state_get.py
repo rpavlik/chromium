@@ -197,7 +197,8 @@ for rettype in types:
 		print '\t\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_ENUM, "glGet%sv");' % rettype
 		print "\t\t\t}"
 		print "\t\t\tbreak;"
-		print '#endif /* %s */' % ifdef
+		#print '#endif /* %s */' % ifdef
+		print '#endif /* CR_%s */' % ext
   
 	print '\t\tdefault:'
 	print '\t\t\tcrStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glGet: Unknown enum: 0x%x", pname);'

@@ -60,3 +60,12 @@ void PACK_APIENTRY crPackIndexPointer( GLenum type, GLsizei stride, const GLvoid
 	UNUSED( pointer );
 	crError( "Unimplemented crPackIndexPointer" );
 }
+
+void PACK_APIENTRY crPackSecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
+{
+	UNUSED( size );
+	UNUSED( type );
+	UNUSED( stride );
+	UNUSED( pointer );
+	crError( "Unimplemented crPackSecondaryColorPointerEXT" );
+}

@@ -188,3 +188,12 @@ EdgeFlagPointer
 GetPointerv
 ActiveTextureARB
 ClientActiveTextureARB
+CombinerParameterfvNV
+CombinerParameterivNV
+CombinerParameterfNV
+CombinerParameteriNV
+CombinerInputNV
+CombinerOutputNV
+FinalCombinerInputNV
+CombinerStageParameterfvNV
+GetCombinerStageParameterfvNV

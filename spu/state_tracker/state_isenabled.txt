@@ -39,8 +39,11 @@ GLboolean GL_TEXTURE_GEN_R g->texture.unit[g->texture.curTextureUnit].textureGen
 GLboolean GL_TEXTURE_GEN_Q g->texture.unit[g->texture.curTextureUnit].textureGen.q
 GLboolean GL_TEXTURE_1D g->texture.unit[g->texture.curTextureUnit].enabled1D
 GLboolean GL_TEXTURE_2D g->texture.unit[g->texture.curTextureUnit].enabled2D
-# GLboolean GL_TEXTURE_2D g->texture.unit[g->texture.curTextureUnit].enabled3D
+# GLboolean GL_TEXTURE_3D g->texture.unit[g->texture.curTextureUnit].enabled3D
 GLboolean GL_TEXTURE_CUBE_MAP_ARB g->texture.unit[g->texture.curTextureUnit].enabledCubeMap
 
 GLboolean GL_UNPACK_SWAP_BYTES        g->pixel.unpack.swapBytes
 GLboolean GL_UNPACK_LSB_FIRST         g->pixel.unpack.psLSBFirst
+GLboolean GL_REGISTER_COMBINERS_NV    g->regcombiner.enabledRegCombiners
+GLboolean GL_PER_STAGE_CONSTANTS_NV   g->regcombiner.enabledPerStageConstants
+GLboolean GL_COLOR_SUM_EXT			  g->lighting.colorSumEXT

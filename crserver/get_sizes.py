@@ -252,7 +252,19 @@ extensions_num_get_values = {
 	'GL_TEXTURE_BINDING_CUBE_MAP_ARB': (1, 'CR_ARB_texture_cube_map'),
 	'GL_TEXTURE_CUBE_MAP_ARB': (1, 'CR_ARB_texture_cube_map'),
 	'GL_ACTIVE_TEXTURE_ARB': (1, 'CR_ARB_multitexture'),
-	'GL_MAX_TEXTURE_UNITS_ARB': (1, 'CR_ARB_multitexture')
+	'GL_MAX_TEXTURE_UNITS_ARB': (1, 'CR_ARB_multitexture'),
+	'GL_NUM_GENERAL_COMBINERS_NV': (1, 'CR_NV_register_combiners'),
+	'GL_MAX_GENERAL_COMBINERS_NV': (1, 'CR_NV_register_combiners'),
+	'GL_COLOR_SUM_CLAMP_NV': (1, 'CR_NV_register_combiners'),
+	'GL_CONSTANT_COLOR0_NV': (4, 'CR_NV_register_combiners'),
+	'GL_CONSTANT_COLOR1_NV': (4, 'CR_NV_register_combiners'),
+	'GL_PER_STAGE_CONSTANTS_NV': (1, 'CR_NV_register_combiners2'),
+	'GL_LIGHT_MODEL_COLOR_CONTROL_EXT': (1, 'CR_EXT_separate_specular_color'),
+	'GL_COLOR_SUM_EXT': (1, 'CR_EXT_secondary_color'),
+	'GL_CURRENT_SECONDARY_COLOR_EXT': (3, 'CR_EXT_secondary_color'),
+	'GL_SECONDARY_COLOR_ARRAY_SIZE_EXT': (1, 'CR_EXT_secondary_color'),
+	'GL_SECONDARY_COLOR_ARRAY_TYPE_EXT': (1, 'CR_EXT_secondary_color'),
+	'GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT': (1, 'CR_EXT_secondary_color')
 }
 
 get_keys = num_get_values.keys() + extensions_num_get_values.keys()

@@ -94,6 +94,12 @@ static char *crExtensionString =
 #ifdef CR_EXT_blend_subtract
 	"GL_EXT_blend_subtract "
 #endif
+#ifdef CR_EXT_secondary_color
+	"GL_EXT_secondary_color "
+#endif
+#ifdef CR_EXT_separate_specular_color
+	"GL_EXT_separate_specular_color "
+#endif
 #ifdef CR_EXT_texture_cube_map
 	"GL_EXT_texture_cube_map "
 #endif
@@ -106,8 +112,17 @@ static char *crExtensionString =
 #ifdef CR_NV_fog_distance
 	"GL_NV_fog_distance "
 #endif
+#ifdef CR_NV_register_combiners
+	"GL_NV_register_combiners "
+#endif
+#ifdef CR_NV_register_combiners2
+	"GL_NV_register_combiners2 "
+#endif
 #ifdef CR_NV_texgen_reflection
 	"GL_NV_texgen_reflection"
+#endif
+#ifdef CR_SGIS_texture_edge_clamp
+	"GL_SGIS_texture_edge_clamp"
 #endif
 	"";
 
@@ -124,6 +139,7 @@ void crSPUInitGLLimits( CRLimitsState *l )
 	l->max3DTextureSize = CR_MAX_3D_TEXTURE_SIZE;
 	l->maxCubeMapTextureSize = CR_MAX_CUBE_TEXTURE_SIZE;
 	l->maxTextureAnisotropy = CR_MAX_TEXTURE_ANISOTROPY;
+	l->maxGeneralCombiners = CR_MAX_GENERAL_COMBINERS;
 	l->maxLights = CR_MAX_LIGHTS;
 	l->maxClipPlanes = CR_MAX_CLIP_PLANES;
 	l->maxClientAttribStackDepth = CR_MAX_ATTRIB_STACK_DEPTH;
@@ -277,6 +293,7 @@ void crSPUQueryGLLimits( CRConnection *conn, int spu_id, CRLimitsState *limits )
 	GET_INT_LIMIT(max3DTextureSize, GL_MAX_3D_TEXTURE_SIZE, 256);
 	GET_INT_LIMIT(maxCubeMapTextureSize, GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, 256);
 	GET_FLOAT_LIMIT(maxTextureAnisotropy, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, 0.0);
+	GET_INT_LIMIT(maxGeneralCombiners, GL_MAX_GENERAL_COMBINERS_NV, 0);
 	GET_INT_LIMIT(maxLights, GL_MAX_LIGHTS, 8);
 	GET_INT_LIMIT(maxClipPlanes, GL_MAX_CLIP_PLANES, 8);
 	GET_INT_LIMIT(maxProjectionStackDepth, GL_MAX_PROJECTION_STACK_DEPTH, 2);
@@ -365,6 +382,10 @@ void crSPUReportGLLimits( const CRLimitsState *limits, int spu_id )
 	if (crStrstr((const char*)limits->extensions, "GL_EXT_texture_filter_anisotropic"))
 	{
 		REPORT_FLOAT(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, limits->maxTextureAnisotropy);
+	}
+	if (crStrstr((const char*)limits->extensions, "GL_NV_register_combiners"))
+	{
+		REPORT_INT(GL_MAX_GENERAL_COMBINERS_NV, limits->maxGeneralCombiners);
 	}
 
 	REPORT_INT(GL_MAX_LIGHTS, limits->maxLights);
@@ -477,6 +498,14 @@ void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits
 	else
 	{
 		limits->maxTextureAnisotropy = 0.0;
+	}
+	if (crStrstr((const char*)limits->extensions, "GL_NV_register_combiners"))
+	{
+		(*getIntegerv)(GL_MAX_GENERAL_COMBINERS_NV, &limits->maxGeneralCombiners);
+	}
+	else
+	{
+		limits->maxGeneralCombiners = 0;
 	}
 
 	(*getIntegerv)(GL_MAX_LIGHTS, (GLint*)&limits->maxLights);
@@ -606,6 +635,7 @@ void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merg
 		CHECK_LIMIT(aliasedLineWidthRange[0]);
 		CHECK_LIMIT(aliasedLineWidthRange[1]);
 		CHECK_LIMIT(lineWidthGranularity);
+		CHECK_LIMIT(maxGeneralCombiners);
 
         /* find the intersection of limits[i].extensions and
          * merged.extensions */

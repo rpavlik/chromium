@@ -127,3 +127,11 @@ MultiTexCoord4dvARB
 MultiTexCoord4fvARB
 MultiTexCoord4ivARB
 MultiTexCoord4svARB
+SecondaryColor3dvEXT
+SecondaryColor3fvEXT
+SecondaryColor3ivEXT
+SecondaryColor3svEXT
+SecondaryColor3bvEXT
+SecondaryColor3uivEXT
+SecondaryColor3usvEXT
+SecondaryColor3ubvEXT

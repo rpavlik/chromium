@@ -18,6 +18,7 @@ typedef struct {
 	GLbitvalue  dirty;
 	GLbitvalue  enable;
 	GLbitvalue  color;
+	GLbitvalue	secondaryColor;
 	GLbitvalue  index;
 	GLbitvalue  texCoord[CR_MAX_TEXTURE_UNITS];
 	GLbitvalue  normal;
@@ -28,6 +29,7 @@ typedef struct {
 typedef struct {
 	GLvectorf	pos;
 	GLcolorf	color;
+	GLcolorf	secondaryColor;
 	GLtexcoordf	texCoord[CR_MAX_TEXTURE_UNITS];
 	GLvectorf	normal;
 	GLboolean	edgeFlag;
@@ -37,12 +39,14 @@ typedef struct {
 
 typedef struct {
 	GLcolorf     color;
+	GLcolorf     secondaryColor;
 	GLfloat      index;
 	GLtexcoordf  texCoord[CR_MAX_TEXTURE_UNITS];
 	GLvectorf    normal;
 	GLboolean    edgeFlag;
 
 	GLcolorf     colorPre;
+	GLcolorf     secondaryColorPre;
 	GLfloat      indexPre;
 	GLtexcoordf  texCoordPre[CR_MAX_TEXTURE_UNITS];
 	GLvectorf    normalPre;

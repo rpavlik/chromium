@@ -30,6 +30,7 @@ REGULAR_FILES = state_attrib \
 	state_pixel \
 	state_polygon \
 	state_rasterpos \
+	state_regcombiner \
 	state_stencil \
 	state_texture \
 	state_transform \
@@ -42,6 +43,7 @@ DIFF_FILES = buffer \
 	line \
 	pixel \
 	polygon \
+	regcombiner \
 	stencil \
 	viewport
 
@@ -111,6 +113,10 @@ state_pixel_gen.c: state_pixel.txt gendiffcode.pl
 state_polygon_gen.c: state_polygon.txt gendiffcode.pl
 	@$(ECHO) Making $@
 	@$(PERL) gendiffcode.pl Polygon > $@
+
+state_regcombiner_gen.c: state_regcombiner.txt gendiffcode.pl
+	@$(ECHO) Making $@
+	@$(PERL) gendiffcode.pl RegCombiner > $@
 
 state_stencil_gen.c: state_stencil.txt gendiffcode.pl
 	@$(ECHO) Making $@
