@@ -30,11 +30,11 @@ for k in gltypes.keys():
 	for i in range(1,5):
 		print 'void __convert_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k]['type'])
 		if k == 'd':
-		  for j in range(1,i-1):
+		  for j in range(i-1):
 		    print '\t*dst++ = (GLfloat) __read_double(src++);'
 		  print '\t*dst = (GLfloat) __read_double(src);'
 		else:
-		  for j in range(1,i-1):
+		  for j in range(i-1):
 		    print '\t*dst++ = (GLfloat) *src++;';
 		  print '\t*dst = (GLfloat) *src;';
 		print '}\n';
@@ -54,7 +54,7 @@ for k in gltypes.keys():
 	if k != 'f' and k != 'd' and k != 'l':
 		for i in range(1,5):
 			print 'void __convert_rescale_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k]['type'])
-			for j in range(1,i-1):
+			for j in range(i-1):
 				print '\t*dst++ = ((GLfloat) *src++) / %s;' % scale[k]
 			print '\t*dst = ((GLfloat) *src) / %s;' % scale[k]
 			print '}\n'
