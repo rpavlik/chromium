@@ -162,10 +162,8 @@ void binaryswapspuGatherConfiguration( Binaryswapspu *binaryswap_spu )
 		}
 	}	
 	
-	if(binaryswap_spu->mtu == -1)
-	{
-		binaryswap_spu->mtu = crMothershipGetMTU( conn );
-	}
+
+	binaryswap_spu->mtu = crMothershipGetMTU( conn );
 	
 	crMothershipDisconnect( conn );
 }
