@@ -118,7 +118,7 @@ to an array of two integers with represents the cursor's (x,y) position.
 <h2 class="PageSubHeading">GL_CR_bounding_box</h2>
 <p>This extension is used to inform Chromium that subsequent geometry
 is bounded by a specific bounding box.  This information can be used
-to improve the performance of the tile-sort SPU.
+to improve the performance of the tile-sort, readback and binaryswap SPUs.
 </p>
 <p>This extension requires the GL_CR_state_parameter extension.</p>
 
@@ -127,11 +127,28 @@ to improve the performance of the tile-sort SPU.
 
 <dl>
 <dt>GL_DEFAULT_BBOX_CR</dt>
-<dd>XXX definintion?</dd>
+<dd>This turns off bounding box tracking.
+    The <code>count</code> parameter should be zero.
+    The <code>type</code> parameter value is not significant.
+    </dd>
 <dt>GL_SCREEN_BBOX_CR</dt>
-<dd>XXX definintion?</dd>
+<dd>Specifies that subsequent OpenGL primitives will lie within a particular
+    region of the window.
+    <code>count</code> should be 8.
+    <code>type</code> should be GL_FLOAT.
+    <code>values</code> is an array of eight floating point values specifying
+    the window-space bounding box: <code>[xmin, ymin, zmin, wmin, xmax, ymax,
+    zmax, wmax]</code>.
+    </dd>
 <dt>GL_OBJECT_BBOX_CR</dt>
-<dd>XXX definintion?</dd>
+<dd>Specifies that subsequent OpenGL primitives will lie within a particular
+    object-space bounding box.
+    <code>count</code> should be 6.
+    <code>type</code> should be GL_FLOAT.
+    <code>values</code> is an array of six floating point values specifying
+    the object-space bounding box: <code>[xmin, ymin, zmin, xmax, ymax,
+    zmax]</code>.
+    </dd>
 </dl>
 
 
