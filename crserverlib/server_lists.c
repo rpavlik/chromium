@@ -67,13 +67,54 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchNewList( GLuint list, GLenum mode 
 void SERVER_DISPATCH_APIENTRY crServerDispatchCallList( GLuint list )
 {
 	list = TranslateListID( list );
-	cr_server.head_spu->dispatch_table.CallList( list );
+
+	/* Loop over the extents (tiles) calling glCallList() */
+	{
+		CRMuralInfo *mural = cr_server.curClient->currentMural;
+		int i;
+		for ( i = 0; i < mural->numExtents; i++ )
+		{
+			CRExtent *extent = &mural->extents[i];
+
+			mural->curExtent = i;
+
+			if (cr_server.run_queue->client->currentCtx) {
+				crServerSetOutputBounds( cr_server.run_queue->client->currentCtx,
+																 &extent->outputwindow,
+																 &mural->imagespace,
+																 &extent->imagewindow,
+																 &extent->clippedImagewindow);
+			}
+
+			cr_server.head_spu->dispatch_table.CallList( list );
+		}
+	}
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchCallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
-	/* XXX not sure what to do here */
-	cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
+	/* XXX not sure what to do here, in terms of ID translation */
+	/* Loop over the extents (tiles) calling glCallList() */
+	{
+		CRMuralInfo *mural = cr_server.curClient->currentMural;
+		int i;
+		for ( i = 0; i < mural->numExtents; i++ )
+		{
+			CRExtent *extent = &mural->extents[i];
+
+			mural->curExtent = i;
+
+			if (cr_server.run_queue->client->currentCtx) {
+				crServerSetOutputBounds( cr_server.run_queue->client->currentCtx,
+																 &extent->outputwindow,
+																 &mural->imagespace,
+																 &extent->imagewindow,
+																 &extent->clippedImagewindow);
+			}
+
+			cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
+		}
+	}
 }
 
 GLboolean SERVER_DISPATCH_APIENTRY crServerDispatchIsList( GLuint list )
