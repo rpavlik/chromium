@@ -24,13 +24,15 @@
 #ifdef WIN32
 #pragma warning( push, 3 )
 #include <windows.h>
+#include <iostream>
+using namespace std;
+#else
+#include <iostream.h>
 #endif
 
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
-#include <iostream>
-using namespace std;
 
 /*#define	CCN_DEBUG 
  *#define DISPLAY_LISTS */

@@ -30,6 +30,16 @@
 #endif
 
 
+#ifndef GLX_ARB_get_proc_address
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void *glXGetProcAddressARB( const GLubyte *name );
+#ifdef __cplusplus
+}
+#endif
+#endif
+
 
 /*
  * typedefs for the GL_CR_state_parameter functions
