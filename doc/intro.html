@@ -34,7 +34,11 @@ rendering algorithms can be implemented on clusters with ease.&nbsp;
       may be combined into a hybrid configuration.</li>
   <li>OpenGL command stream filtering - OpenGL command streams may
       be intercepted and modified by a stream processing unit (SPU)
-      to implement non-photorealistic rendering (NPR) effects, etc.</li>
+      to implement non-photorealistic rendering (NPR) effects, etc.
+      Here's an <a href="http://graphics.stanford.edu/papers/archsplit/"
+      target="_parent">interesting example</a>.</li>
+
+
   <li>Many OpenGL programs can be used with Chromium without
       modification.</li>
   <li>One can write Chromium-specific applications which perform parallel
@@ -44,7 +48,8 @@ rendering algorithms can be implemented on clusters with ease.&nbsp;
 </ul>
 
 <p>Chromium is derived from the
-<a href="http://graphics.stanford.edu/software/wiregl">WireGL</a> project.
+<a href="http://graphics.stanford.edu/software/wiregl" target="_parent">
+WireGL</a> project.
 Even if you're completely happy with your WireGL setup, we recommend
 replacing it with Chromium for several reasons:</p>
 <ul>
@@ -60,25 +65,33 @@ See the the <a href="help.html" target="main">Where to
 get help</a> link for other resources.
 </p>
 
+<h2 class="PageSubHeading">Credits</h2>
+
+
 <p>Chromium is mainly the product of
-<a href="http://www.cs.virginia.edu/~humper/">Greg
+<a href="http://www.cs.virginia.edu/~humper/" target="_parent">Greg
 Humphreys</a>.&nbsp; However, a few other individuals deserve special
-mention.&nbsp; <a href="http://graphics.stanford.edu/~ianbuck/">Ian Buck</a>
+mention.&nbsp; <a href="http://graphics.stanford.edu/~ianbuck/"
+target="_parent">Ian Buck</a>
 wrote the original state tracking and bucketing system for WireGL, which the
 Chromium &quot;tilesort&quot; SPU and &quot;state_tracker&quot; library are
 loosely based on.&nbsp; Ian has also been in charge of the WireGL release
-process and maintenance for its 80+ users.&nbsp; <a href="http://graphics.stanford.edu/~eldridge/">Matthew
+process and maintenance for its 80+ users.&nbsp;
+<a href="http://graphics.stanford.edu/~eldridge/" target="_parent">Matthew
 Eldridge</a> made significant improvements to WireGL's networking libraries and
 the overall system design, and his design philosophy (if not his code) lives on
-in Chromium.&nbsp; <a href="http://www.ccntech.com/">Chris Niederauer</a> did
+in Chromium.&nbsp;
+<a href="http://www.ccntech.com/" target="_parent">Chris Niederauer</a> did
 most of the implementation of the OpenGL extensions, including all of the
 NVIDIA-specific ones.&nbsp; He also designed the Chromium logo and did a lot of
 really useful slave labor for us last summer when we were building our
 cluster. </p>
 
-<p>For the beta and 1.0, 1.1 and 1.2 releases
-<a href="mailto:brian@tungstengraphics.com">Brian Paul</a> and
-<a href="http://www.xfree86.org/~alanh">Alan Hourihane</a> of Tungsten
+<p>For the beta and 1.0, 1.1, 1.2 and 1.3 releases
+<a href="mailto:brian-no-spam@tungstengraphics.com" target="_parent">
+Brian Paul</a> and
+<a href="http://www.xfree86.org/~alanh" target="_parent">
+Alan Hourihane</a> of Tungsten
 Graphics, Inc. contributed many new features.</p>
 
 
@@ -368,7 +381,11 @@ Graphics, Inc. contributed many new features.</p>
   </ul>
 <li>Bug Fixes
   <ul>
-  <li>Fix glRasterPos bugs accidently introduced by a bad CVS merge
+  <li>Fix glRasterPos bugs accidently introduced by a bad CVS merge.
+  <li>Fixed a few bugs in GL_SELECT mode.
+  <li>Fixed some demo compilation problems (GetProcAddress stuff).
+  <li>Fixed memory-usage bugs in ARB_multitexture2 demo.
+  <li>glIsList() and glIsTexture() didn't always work.
   </ul>
 </ul>
 
