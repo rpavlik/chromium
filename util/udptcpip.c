@@ -605,8 +605,6 @@ crUDPTCPIPRecv( void )
 	return 1;
 }
 
-extern void crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
-
 void crUDPTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 {
 	crTCPIPInit( rfl, cfl, mtu );

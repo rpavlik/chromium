@@ -48,7 +48,7 @@ typedef struct CRTCPIPBuffer {
 	CRTCPIPBufferKind     kind;
 	unsigned int          len;
 	unsigned int          allocated;
-	unsigned int          pad;
+	unsigned int          pad;  /* may be clobbered by crTCPIPSend() */
 } CRTCPIPBuffer;
 
 typedef struct {

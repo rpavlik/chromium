@@ -563,54 +563,55 @@ static void
 crTCPIPSend( CRConnection *conn, void **bufp,
 						 const void *start, unsigned int len )
 {
-	CRTCPIPBuffer *tcpip_buffer;
-	unsigned int      *lenp;
-
 	if ( !conn || conn->type == CR_NO_CONNECTION )
 		return;
 
-	if ( bufp == NULL )
-	{
-		/* we are doing synchronous sends from user memory, so no need
-		 * to get fancy.  Simply write the length & the payload and
-		 * return. */
+	if (!bufp) {
+		/* We're sending a user-allocated buffer.
+		 * Simply write the length & the payload and return.
+		 */
 		const int sendable_len = conn->swap ? SWAP32(len) : len;
 		crTCPIPWriteExact( conn, &sendable_len, sizeof(len) );
-		if ( !conn || conn->type == CR_NO_CONNECTION)
+		if (!conn || conn->type == CR_NO_CONNECTION)
 			return;
 		crTCPIPWriteExact( conn, start, len );
-		return;
 	}
-	tcpip_buffer = (CRTCPIPBuffer *)(*bufp) - 1;
+	else {
+		/* The region [start .. start + len + 1] lies within a buffer that
+		 * was allocated with crTCPIPAlloc() and can be put into the free
+		 * buffer pool when we're done sending it.
+		 */
+		CRTCPIPBuffer *tcpip_buffer;
+		unsigned int *lenp;
 
-	CRASSERT( tcpip_buffer->magic == CR_TCPIP_BUFFER_MAGIC );
+		tcpip_buffer = (CRTCPIPBuffer *)(*bufp) - 1;
 
-	/* All of the buffers passed to the send function were allocated
-	 * with crTCPIPAlloc(), which includes a header with a 4 byte
-	 * length field, to insure that we always have a place to write
-	 * the length field, even when start == *bufp. */
-	lenp = (unsigned int *) start - 1;
-	*lenp = conn->swap ? SWAP32(len) : len;
+		CRASSERT( tcpip_buffer->magic == CR_TCPIP_BUFFER_MAGIC );
 
-	if ( __tcpip_write_exact( conn->tcp_socket, lenp, len + sizeof(int) ) < 0 )
-	{
-		__tcpip_dead_connection( conn );
+		/* All of the buffers passed to the send function were allocated
+		 * with crTCPIPAlloc(), which includes a header with a 4 byte
+		 * pad field, to insure that we always have a place to write
+		 * the length field, even when start == *bufp.
+		 */
+		lenp = (unsigned int *) start - 1;
+		*lenp = conn->swap ? SWAP32(len) : len;
+
+		crTCPIPWriteExact(conn, lenp, len + sizeof(unsigned int));
+
+		/* Reclaim this pointer for reuse */
+#ifdef CHROMIUM_THREADSAFE
+		crLockMutex(&cr_tcpip.mutex);
+#endif
+		crBufferPoolPush(cr_tcpip.bufpool, tcpip_buffer, tcpip_buffer->allocated);
+#ifdef CHROMIUM_THREADSAFE
+		crUnlockMutex(&cr_tcpip.mutex);
+#endif
+		/* Since the buffer's now in the 'free' buffer pool, the caller can't
+		 * use it any more.  Setting bufp to NULL will make sure the caller
+		 * doesn't try to re-use the buffer.
+		 */
+		*bufp = NULL;
 	}
-
-	/* reclaim this pointer for reuse and try to keep the client from
-		 accidentally reusing it directly */
-#ifdef CHROMIUM_THREADSAFE
-	crLockMutex(&cr_tcpip.mutex);
-#endif
-	crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, tcpip_buffer->allocated );
-	/* Since the buffer's now in the 'free' buffer pool, the caller can't
-	 * use it any more.  Setting bufp to NULL will make sure the caller
-	 * doesn't try to re-use the buffer.
-	 */
-	*bufp = NULL;
-#ifdef CHROMIUM_THREADSAFE
-	crUnlockMutex(&cr_tcpip.mutex);
-#endif
 }
 
 

@@ -512,6 +512,9 @@ void crNetSend( CRConnection *conn, void **bufp,
 	CRASSERT( conn );
 	CRASSERT( len > 0 );
 	if ( bufp ) {
+		/* The region from [start .. start + len - 1] must lie inside the
+		 * buffer pointed to by *bufp.
+		 */
 		CRASSERT( start >= *bufp );
 		CRASSERT( (unsigned char *) start + len <=
 				(unsigned char *) *bufp + conn->buffer_size );
@@ -786,11 +789,10 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 			{
 				char string[128];
 				crBytesToString( string, sizeof(string), msg, len );
-				crWarning( "\n\nI'm ABOUT TO EXPLODE!  Did you add a new\n"
-						       "message type and forget to tell crNetDefaultRecv\n"
-									 "about it?\n\n" );
-				crError( "crNetDefaultRecv: received a bad message: "
-						"buf=[%s]", string );
+				crError("crNetDefaultRecv: received a bad message: type=%d buf=[%s]\n"
+								"Did you add a new message type and forget to tell "
+								"crNetDefaultRecv() about it?\n",
+								msg->header.type, string );
 			}
 	}
 
@@ -826,7 +828,7 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 
 /**
  * Default handler for receiving data.  Called via crNetRecv().
- * Typically, the various implementations of the network layer call this
+ * Typically, the various implementations of the network layer call this.
  */
 void
 crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
@@ -836,10 +838,17 @@ crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
 	{
 		if (rfl->recv( conn, buf, len ))
 		{
-			/* message was consumed - all done */
+			/* Message was consumed by somebody (maybe a SPU).
+			 * All done.
+			 */
 			return;
 		}
 	}
+	/* Append the message to the connection's message list.  It'll be
+	 * consumed later (by crNetPeekMessage or crNetGetMessage and
+	 * then freed with a call to crNetFree()).  At this point, the buffer
+	 * *must* have been allocated with crNetAlloc!
+	 */
 	crNetDefaultRecv( conn, buf, len );
 }
 
