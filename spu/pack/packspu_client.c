@@ -14,7 +14,10 @@ void PACKSPU_APIENTRY packspu_FogCoordPointerEXT( GLenum type, GLsizei stride, c
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackFogCoordPointerEXT( type, stride, pointer );
+		if (pack_spu.swap)
+			crPackFogCoordPointerEXTSWAP( type, stride, pointer );
+		else
+			crPackFogCoordPointerEXT( type, stride, pointer );
 	}
 #endif
 	crStateFogCoordPointerEXT( type, stride, pointer );
@@ -25,7 +28,10 @@ void PACKSPU_APIENTRY packspu_ColorPointer( GLint size, GLenum type, GLsizei str
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackColorPointer( size, type, stride, pointer );
+		if (pack_spu.swap)
+			crPackColorPointerSWAP( size, type, stride, pointer );
+		else
+			crPackColorPointer( size, type, stride, pointer );
 	}
 #endif
 	crStateColorPointer( size, type, stride, pointer );
@@ -36,7 +42,10 @@ void PACKSPU_APIENTRY packspu_SecondaryColorPointerEXT( GLint size, GLenum type,
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackSecondaryColorPointerEXT( size, type, stride, pointer );
+		if (pack_spu.swap)
+			crPackSecondaryColorPointerEXTSWAP( size, type, stride, pointer );
+		else
+			crPackSecondaryColorPointerEXT( size, type, stride, pointer );
 	}
 #endif
 	crStateSecondaryColorPointerEXT( size, type, stride, pointer );
@@ -48,7 +57,10 @@ void PACKSPU_APIENTRY packspu_VertexPointer( GLint size, GLenum type, GLsizei st
 	GET_CONTEXT(ctx);
 	CRASSERT(ctx->clientState->extensions.ARB_vertex_buffer_object);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackVertexPointer( size, type, stride, pointer );
+		if (pack_spu.swap)
+			crPackVertexPointerSWAP( size, type, stride, pointer );
+		else
+			crPackVertexPointer( size, type, stride, pointer );
 	}
 #endif
 	crStateVertexPointer( size, type, stride, pointer );
@@ -59,7 +71,10 @@ void PACKSPU_APIENTRY packspu_TexCoordPointer( GLint size, GLenum type, GLsizei 
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackTexCoordPointer( size, type, stride, pointer );
+		if (pack_spu.swap)
+			crPackTexCoordPointerSWAP( size, type, stride, pointer );
+		else
+			crPackTexCoordPointer( size, type, stride, pointer );
 	}
 #endif
 	crStateTexCoordPointer( size, type, stride, pointer );
@@ -70,7 +85,10 @@ void PACKSPU_APIENTRY packspu_NormalPointer( GLenum type, GLsizei stride, const 
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackNormalPointer( type, stride, pointer );
+		if (pack_spu.swap)
+			crPackNormalPointerSWAP( type, stride, pointer );
+		else
+			crPackNormalPointer( type, stride, pointer );
 	}
 #endif
 	crStateNormalPointer( type, stride, pointer );
@@ -81,7 +99,10 @@ void PACKSPU_APIENTRY packspu_EdgeFlagPointer( GLsizei stride, const GLvoid *poi
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackEdgeFlagPointer( stride, pointer );
+		if (pack_spu.swap)
+			crPackEdgeFlagPointerSWAP( stride, pointer );
+		else
+			crPackEdgeFlagPointer( stride, pointer );
 	}
 #endif
 	crStateEdgeFlagPointer( stride, pointer );
@@ -92,7 +113,10 @@ void PACKSPU_APIENTRY packspu_VertexAttribPointerARB( GLuint index, GLint size, 
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackVertexAttribPointerARB( index, size, type, normalized, stride, pointer );
+		if (pack_spu.swap)
+			crPackVertexAttribPointerARBSWAP( index, size, type, normalized, stride, pointer );
+		else
+			crPackVertexAttribPointerARB( index, size, type, normalized, stride, pointer );
 	}
 #endif
 	crStateVertexAttribPointerARB( index, size, type, normalized, stride, pointer );
@@ -103,7 +127,10 @@ void PACKSPU_APIENTRY packspu_VertexAttribPointerNV( GLuint index, GLint size, G
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackVertexAttribPointerNV( index, size, type, stride, pointer );
+		if (pack_spu.swap)
+			crPackVertexAttribPointerNVSWAP( index, size, type, stride, pointer );
+		else
+			crPackVertexAttribPointerNV( index, size, type, stride, pointer );
 	}
 #endif
 	crStateVertexAttribPointerNV( index, size, type, stride, pointer );
@@ -119,7 +146,10 @@ void PACKSPU_APIENTRY packspu_InterleavedArrays( GLenum format, GLsizei stride, 
 #if CR_ARB_vertex_buffer_object
 	GET_CONTEXT(ctx);
 	if (ctx->clientState->extensions.ARB_vertex_buffer_object) {
-		crPackInterleavedArrays( format, stride, pointer );
+		if (pack_spu.swap)
+			crPackInterleavedArraysSWAP( format, stride, pointer );
+		else
+			crPackInterleavedArrays( format, stride, pointer );
 	}
 #endif
 	crStateInterleavedArrays( format, stride, pointer );
