@@ -13,8 +13,6 @@
 #include "state_internals.h"
 
 /*  Here are the order of the enums */
-/*      GL_MAP1_VERTEX_3 */
-/*      GL_MAP1_VERTEX_4 */
 /*      GL_MAP1_COLOR_4 */
 /*      GL_MAP1_INDEX */
 /*      GL_MAP1_NORMAL */
@@ -22,8 +20,9 @@
 /*      GL_MAP1_TEXTURE_COORD_2 */
 /*      GL_MAP1_TEXTURE_COORD_3 */
 /*      GL_MAP1_TEXTURE_COORD_4 */
-/*      GL_MAP2_VERTEX_3 */
-/*      GL_MAP2_VERTEX_4 */
+/*      GL_MAP1_VERTEX_3 */
+/*      GL_MAP1_VERTEX_4 */
+
 /*      GL_MAP2_COLOR_4 */
 /*      GL_MAP2_INDEX */
 /*      GL_MAP2_NORMAL */
@@ -31,33 +30,78 @@
 /*      GL_MAP2_TEXTURE_COORD_2 */
 /*      GL_MAP2_TEXTURE_COORD_3 */
 /*      GL_MAP2_TEXTURE_COORD_4 */
+/*      GL_MAP2_VERTEX_3 */
+/*      GL_MAP2_VERTEX_4 */
 
-const int gleval_sizes[] = {3, 4, 4, 1, 3, 1, 2, 3, 4};
+const int gleval_sizes[] = {4, 1, 3, 1, 2, 3, 4, 3, 4};
+
+
+/* Initialize a 1-D evaluator map */
+static void
+init_1d_map( CREvaluatorState *e, GLenum map, int n, const float *initial )
+{
+	GLint i;
+	const GLint k = map - GL_MAP1_COLOR_4;
+	CRASSERT(k >= 0);
+	CRASSERT(k < GLEVAL_TOT);
+	e->eval1D[k].u1 = 0.0;
+	e->eval1D[k].u2 = 1.0;
+	e->eval1D[k].order = 1;
+	e->eval1D[k].coeff = (GLdouble *) crAlloc(n * sizeof(GLdouble));
+	for (i = 0; i < n; i++)
+		e->eval1D[k].coeff[i] = initial[i];
+}
+
+
+/* Initialize a 2-D evaluator map */
+static void
+init_2d_map( CREvaluatorState *e, GLenum map, int n, const float *initial )
+{
+	GLint i;
+	const GLint k = map - GL_MAP2_COLOR_4;
+	CRASSERT(k >= 0);
+	CRASSERT(k < GLEVAL_TOT);
+	e->eval2D[k].u1 = 0.0;
+	e->eval2D[k].u2 = 1.0;
+	e->eval2D[k].v1 = 0.0;
+	e->eval2D[k].v2 = 1.0;
+	e->eval2D[k].uorder = 1;
+	e->eval2D[k].vorder = 1;
+	e->eval2D[k].coeff = (GLdouble *) crAlloc(n * sizeof(GLdouble));
+	for (i = 0; i < n; i++)
+		e->eval2D[k].coeff[i] = initial[i];
+}
+
 
 void crStateEvaluatorInit(CREvaluatorState *e) 
 {
-	int i;
+	static GLfloat vertex[4] = { 0.0, 0.0, 0.0, 1.0 };
+	static GLfloat normal[3] = { 0.0, 0.0, 1.0 };
+	static GLfloat index[1] = { 1.0 };
+	static GLfloat color[4] = { 1.0, 1.0, 1.0, 1.0 };
+	static GLfloat texcoord[4] = { 0.0, 0.0, 0.0, 1.0 };
 
 	e->autoNormal = GL_FALSE;
 
-	/* What are the correct defaults?!? */
-	for (i=0; i < GLEVAL_TOT; i++) 
-	{
-		e->enable1D[i] = GL_FALSE;
-		e->eval1D[i].coeff = (GLdouble *) crAlloc (sizeof(GLdouble) * CR_MAX_EVAL_ORDER);
-		e->eval1D[i].order = 0;
-		e->eval1D[i].u1 = 0.0;
-		e->eval1D[i].u2 = 1.0;
+	init_1d_map(e, GL_MAP1_VERTEX_3, 3, vertex);
+	init_1d_map(e, GL_MAP1_VERTEX_4, 4, vertex);
+	init_1d_map(e, GL_MAP1_INDEX, 1, index);
+	init_1d_map(e, GL_MAP1_COLOR_4, 4, color);
+	init_1d_map(e, GL_MAP1_NORMAL, 3, normal);
+	init_1d_map(e, GL_MAP1_TEXTURE_COORD_1, 1, texcoord);
+	init_1d_map(e, GL_MAP1_TEXTURE_COORD_2, 2, texcoord);
+	init_1d_map(e, GL_MAP1_TEXTURE_COORD_3, 3, texcoord);
+	init_1d_map(e, GL_MAP1_TEXTURE_COORD_4, 4, texcoord);
 
-		e->enable2D[i] = GL_FALSE;
-		e->eval2D[i].coeff= (GLdouble *) crAlloc (sizeof(GLdouble) * CR_MAX_EVAL_ORDER);
-		e->eval2D[i].uorder=0;
-		e->eval2D[i].vorder=0;
-		e->eval2D[i].u1=0.0;
-		e->eval2D[i].u2=1.0;
-		e->eval2D[i].v1=0.0;
-		e->eval2D[i].v2=1.0;
-	}
+	init_2d_map(e, GL_MAP2_VERTEX_3, 3, vertex);
+	init_2d_map(e, GL_MAP2_VERTEX_4, 4, vertex);
+	init_2d_map(e, GL_MAP2_INDEX, 1, index);
+	init_2d_map(e, GL_MAP2_COLOR_4, 4, color);
+	init_2d_map(e, GL_MAP2_NORMAL, 3, normal);
+	init_2d_map(e, GL_MAP2_TEXTURE_COORD_1, 1, texcoord);
+	init_2d_map(e, GL_MAP2_TEXTURE_COORD_2, 2, texcoord);
+	init_2d_map(e, GL_MAP2_TEXTURE_COORD_3, 3, texcoord);
+	init_2d_map(e, GL_MAP2_TEXTURE_COORD_4, 4, texcoord);
 
 	e->un1D = 1;
 	e->u11D = 0.0; 

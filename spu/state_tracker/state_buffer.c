@@ -19,7 +19,7 @@ void crStateBufferInit (CRBufferState *b)
 	b->blend     = GL_FALSE;
 	b->alphaTest = GL_FALSE;
 	b->logicOp   = GL_FALSE;
-	b->dither    = GL_FALSE;
+	b->dither    = GL_TRUE;
 	b->depthMask = GL_TRUE;
 
 	b->alphaTestFunc = GL_ALWAYS;
@@ -46,6 +46,25 @@ void crStateBufferInit (CRBufferState *b)
 #if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
 	b->blendEquation = GL_FUNC_ADD_EXT;
 #endif
+
+	/* XXX This info should really go into a 'framebuffer' struct */
+	b->auxBuffers = 0;
+	b->rgbaMode = GL_TRUE;
+	b->indexMode = GL_FALSE;
+	b->doubleBuffer = GL_TRUE;
+	b->stereo = GL_FALSE;
+	b->subPixelBits = 4;
+	b->redBits = 8;
+	b->greenBits = 8;
+	b->blueBits = 8;
+	b->alphaBits = 8;
+	b->indexBits = 0;
+	b->depthBits = 16;
+	b->stencilBits = 0;
+	b->accumRedBits = 0;
+	b->accumGreenBits = 0;
+	b->accumBlueBits = 0;
+	b->accumAlphaBits = 0;
 }
 
 void STATE_APIENTRY crStateAlphaFunc (GLenum func, GLclampf ref) 

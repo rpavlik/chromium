@@ -185,7 +185,12 @@ void STATE_APIENTRY crStatePolygonStipple (const GLubyte *p)
 
 void STATE_APIENTRY crStateGetPolygonStipple( GLubyte *b )
 {
-	crStateError( __LINE__, __FILE__, GL_NO_ERROR,
-			"GetPolygonStipple is unimplemented." );
-	(void)b;
+	CRContext *g = GetCurrentContext();
+	CRPolygonState *poly = &(g->polygon);
+	CRPixelState *pix = &(g->pixel);
+
+	/* XXX untested */
+	crPixelCopy2D( (void *) b, poly->stipple,
+				   GL_COLOR_INDEX, GL_BITMAP, 32, 32,
+				   &(pix->unpack) );
 }

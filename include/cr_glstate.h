@@ -19,6 +19,7 @@ typedef struct CRContext CRContext;
 #include "state/cr_current.h"
 #include "state/cr_evaluators.h"
 #include "state/cr_fog.h"
+#include "state/cr_hint.h"
 #include "state/cr_lighting.h"
 #include "state/cr_limits.h"
 #include "state/cr_line.h"
@@ -48,6 +49,7 @@ typedef struct {
 	CRCurrentBits   current;
 	CREvaluatorBits eval;
 	CRFogBits       fog;
+	CRHintBits      hint;
 	CRLightingBits  lighting;
 	CRLineBits      line;
 	CRListsBits     lists;
@@ -78,6 +80,7 @@ struct CRContext {
 	CREvaluatorState eval;
 	CRExtensionState extensions;
 	CRFogState       fog;
+	CRHintState      hint;
 	CRLightingState  lighting;
 	CRLimitsState    limits;
 	CRLineState      line;
@@ -122,6 +125,7 @@ extern SPUDispatchTable diff_api;
 void crStateInit(void);
 CRContext *crStateCreateContext(const CRLimitsState *limits);
 void crStateMakeCurrent(CRContext *ctx);
+void crStateDestroyContext(CRContext *ctx);
 
 void crStateFlushFunc( CRStateFlushFunc ff );
 void crStateFlushArg( void *arg );

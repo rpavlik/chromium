@@ -29,6 +29,7 @@ typedef struct {
 	GLboolean newEnd;
 	CRListsFreeElem *freeList;
 	GLuint base;
+	GLuint currentIndex;  /* list being built */
 } CRListsState;
 
 void crStateListsInit(CRListsState *l);

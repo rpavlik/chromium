@@ -41,6 +41,28 @@ void crStatePixelInit(CRPixelState *p) {
 	p->depthBias          = 0.0f;
 	p->xZoom              = 1.0f;
 	p->yZoom              = 1.0f;
+
+	p->mapStoS[0] = 0;
+	p->mapItoI[0] = 0;
+	p->mapItoR[0] = 0.0;
+	p->mapItoG[0] = 0.0;
+	p->mapItoB[0] = 0.0;
+	p->mapItoA[0] = 0.0;
+	p->mapRtoR[0] = 0.0;
+	p->mapGtoG[0] = 0.0;
+	p->mapBtoB[0] = 0.0;
+	p->mapAtoA[0] = 0.0;
+
+	p->mapItoIsize   = 1;
+	p->mapStoSsize   = 1;
+	p->mapItoRsize   = 1;
+	p->mapItoGsize   = 1;
+	p->mapItoBsize   = 1;
+	p->mapItoAsize   = 1;
+	p->mapRtoRsize   = 1;
+	p->mapGtoGsize   = 1;
+	p->mapBtoBsize   = 1;
+	p->mapAtoAsize   = 1;
 }
 
 void STATE_APIENTRY crStatePixelStoref (GLenum pname, GLfloat param) {
@@ -269,14 +291,6 @@ void STATE_APIENTRY crStatePixelZoom (GLfloat xfactor, GLfloat yfactor)
 	pb->dirty = g->neg_bitid;
 }
 
-#define UNUSED(x) ((void)(x))
-
-void STATE_APIENTRY crStatePixelMapfv (GLenum map, GLint mapsize, const GLfloat * values) {
-	UNUSED(map);
-	UNUSED(mapsize);
-	UNUSED(values);
-	crStateError( __LINE__, __FILE__, GL_NO_ERROR, "Unimplemented Call: PixelMapfv" );
-}
 
 void STATE_APIENTRY crStateBitmap( GLsizei width, GLsizei height, 
 		GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, 
@@ -319,34 +333,333 @@ void STATE_APIENTRY crStateBitmap( GLsizei width, GLsizei height,
 	c->rasterPosPre.y += ymove;
 }
  
-void STATE_APIENTRY crStatePixelMapuiv (GLenum map, GLint mapsize, const GLuint * values) {
-	UNUSED(map);
-	UNUSED(mapsize);
-	UNUSED(values);
-	crStateError( __LINE__, __FILE__, GL_NO_ERROR, "Unimplemented Call: PixelMapuiv" );
+
+#define UNUSED(x) ((void)(x))
+
+#define CLAMP(x, min, max)  ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
+
+void STATE_APIENTRY crStatePixelMapfv (GLenum map, GLint mapsize, const GLfloat * values)
+{
+	CRContext *g = GetCurrentContext();
+	CRStateBits *sb = GetCurrentBits();
+	CRPixelState *p = &(g->pixel);
+	CRPixelBits *pb = &(sb->pixel);
+	GLint i;
+
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "PixelMap called in Begin/End");
+		return;
+	}
+
+	FLUSH();
+
+	if (mapsize < 0 || mapsize > CR_MAX_PIXEL_MAP_TABLE) {
+	   crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "PixelMap(mapsize)");
+	   return;
+	}
+
+	if (map >= GL_PIXEL_MAP_S_TO_S && map <= GL_PIXEL_MAP_I_TO_A) {
+	   /* XXX check that mapsize is a power of two */
+	}
+
+	switch (map) {
+	case GL_PIXEL_MAP_S_TO_S:
+		p->mapStoSsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+			p->mapStoS[i] = (GLint) values[i];
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_I:
+		p->mapItoIsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+			p->mapItoI[i] = (GLint) values[i];
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_R:
+		p->mapItoRsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+			GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
+			p->mapItoR[i] = val;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_G:
+		p->mapItoGsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+			GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
+			p->mapItoG[i] = val;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_B:
+		p->mapItoBsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+            GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
+			p->mapItoB[i] = val;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_A:
+		p->mapItoAsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+            GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
+			p->mapItoA[i] = val;
+		}
+		break;
+	case GL_PIXEL_MAP_R_TO_R:
+		p->mapRtoRsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+			p->mapRtoR[i] = CLAMP( values[i], 0.0F, 1.0F );
+		}
+		break;
+	case GL_PIXEL_MAP_G_TO_G:
+		p->mapGtoGsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+			p->mapGtoG[i] = CLAMP( values[i], 0.0F, 1.0F );
+		}
+		break;
+	case GL_PIXEL_MAP_B_TO_B:
+		p->mapBtoBsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+			p->mapBtoB[i] = CLAMP( values[i], 0.0F, 1.0F );
+		}
+		break;
+	case GL_PIXEL_MAP_A_TO_A:
+		p->mapAtoAsize = mapsize;
+		for (i=0;i<mapsize;i++) {
+			p->mapAtoA[i] = CLAMP( values[i], 0.0F, 1.0F );
+		}
+		break;
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "PixelMap(map)");
+		return;
+	}
+
+	pb->maps = g->neg_bitid;
+	pb->dirty = g->neg_bitid;
+}
+
+void STATE_APIENTRY crStatePixelMapuiv (GLenum map, GLint mapsize, const GLuint * values)
+{
+   GLfloat fvalues[CR_MAX_PIXEL_MAP_TABLE];
+   GLint i;
+   if (map==GL_PIXEL_MAP_I_TO_I || map==GL_PIXEL_MAP_S_TO_S) {
+      for (i=0;i<mapsize;i++) {
+         fvalues[i] = (GLfloat) values[i];
+      }
+   }
+   else {
+      for (i=0;i<mapsize;i++) {
+         fvalues[i] = values[i] / 4294967295.0F;
+      }
+   }
+   crStatePixelMapfv(map, mapsize, fvalues);
 }
  
-void STATE_APIENTRY crStatePixelMapusv (GLenum map, GLint mapsize, const GLushort * values) {
-	UNUSED(map);
-	UNUSED(mapsize);
-	UNUSED(values);
-	crStateError( __LINE__, __FILE__, GL_NO_ERROR, "Unimplemented Call: PixelMapusv" );
+void STATE_APIENTRY crStatePixelMapusv (GLenum map, GLint mapsize, const GLushort * values)
+{
+   GLfloat fvalues[CR_MAX_PIXEL_MAP_TABLE];
+   GLint i;
+   if (map==GL_PIXEL_MAP_I_TO_I || map==GL_PIXEL_MAP_S_TO_S) {
+      for (i=0;i<mapsize;i++) {
+         fvalues[i] = (GLfloat) values[i];
+      }
+   }
+   else {
+      for (i=0;i<mapsize;i++) {
+         fvalues[i] = values[i] / 65535.0F;
+      }
+   }
+   crStatePixelMapfv(map, mapsize, fvalues);
+}
+
+ 
+void STATE_APIENTRY crStateGetPixelMapfv (GLenum map, GLfloat * values)
+{
+	CRContext *g = GetCurrentContext();
+	CRPixelState *p = &(g->pixel);
+	GLint i;
+
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+					 "GetPixelMapfv called in Begin/End");
+		return;
+	}
+
+	switch (map) {
+	case GL_PIXEL_MAP_S_TO_S:
+		for (i = 0; i < p->mapStoSsize; i++) {
+			values[i] = p->mapStoS[i];
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_I:
+		for (i = 0; i < p->mapItoIsize; i++) {
+			values[i] = p->mapItoI[i];
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_R:
+		memcpy(values, p->mapItoR, p->mapItoRsize * sizeof(GLfloat));
+		break;
+	case GL_PIXEL_MAP_I_TO_G:
+		memcpy(values, p->mapItoG, p->mapItoGsize * sizeof(GLfloat));
+		break;
+	case GL_PIXEL_MAP_I_TO_B:
+		memcpy(values, p->mapItoB, p->mapItoBsize * sizeof(GLfloat));
+		break;
+	case GL_PIXEL_MAP_I_TO_A:
+		memcpy(values, p->mapItoA, p->mapItoAsize * sizeof(GLfloat));
+		break;
+	case GL_PIXEL_MAP_R_TO_R:
+		memcpy(values, p->mapRtoR, p->mapRtoRsize * sizeof(GLfloat));
+		break;
+	case GL_PIXEL_MAP_G_TO_G:
+		memcpy(values, p->mapGtoG, p->mapGtoGsize * sizeof(GLfloat));
+		break;
+	case GL_PIXEL_MAP_B_TO_B:
+		memcpy(values, p->mapBtoB, p->mapBtoBsize * sizeof(GLfloat));
+		break;
+	case GL_PIXEL_MAP_A_TO_A:
+		memcpy(values, p->mapAtoA, p->mapAtoAsize * sizeof(GLfloat));
+		break;
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "GetPixelMap(map)");
+		return;
+	}
 }
  
-void STATE_APIENTRY crStateGetPixelMapfv (GLenum map, GLfloat * values) {
-	UNUSED(map);
-	UNUSED(values);
-	crStateError( __LINE__, __FILE__, GL_NO_ERROR, "Unimplemented Call: GetPixelMapfv" );
+void STATE_APIENTRY crStateGetPixelMapuiv (GLenum map, GLuint * values)
+{
+	const GLfloat maxUint = 4294967295.0F;
+	CRContext *g = GetCurrentContext();
+	CRPixelState *p = &(g->pixel);
+	GLint i;
+
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+					 "GetPixelMapuiv called in Begin/End");
+		return;
+	}
+
+	switch (map) {
+	case GL_PIXEL_MAP_S_TO_S:
+		for (i = 0; i < p->mapStoSsize; i++) {
+			values[i] = p->mapStoS[i];
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_I:
+		for (i = 0; i < p->mapItoIsize; i++) {
+			values[i] = p->mapItoI[i];
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_R:
+		for (i = 0; i < p->mapItoRsize; i++) {
+			values[i] = p->mapItoR[i] * maxUint;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_G:
+		for (i = 0; i < p->mapItoGsize; i++) {
+			values[i] = p->mapItoG[i] * maxUint;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_B:
+		for (i = 0; i < p->mapItoBsize; i++) {
+			values[i] = p->mapItoB[i] * maxUint;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_A:
+		for (i = 0; i < p->mapItoAsize; i++) {
+			values[i] = p->mapItoA[i] * maxUint;
+		}
+		break;
+	case GL_PIXEL_MAP_R_TO_R:
+		for (i = 0; i < p->mapRtoRsize; i++) {
+			values[i] = p->mapRtoR[i] * maxUint;
+		}
+		break;
+	case GL_PIXEL_MAP_G_TO_G:
+		for (i = 0; i < p->mapGtoGsize; i++) {
+			values[i] = p->mapGtoG[i] * maxUint;
+		}
+		break;
+	case GL_PIXEL_MAP_B_TO_B:
+		for (i = 0; i < p->mapBtoBsize; i++) {
+			values[i] = p->mapBtoB[i] * maxUint;
+		}
+		break;
+	case GL_PIXEL_MAP_A_TO_A:
+		for (i = 0; i < p->mapAtoAsize; i++) {
+			values[i] = p->mapAtoA[i] * maxUint;
+		}
+		break;
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "GetPixelMapuiv(map)");
+		return;
+	}
 }
  
-void STATE_APIENTRY crStateGetPixelMapuiv (GLenum map, GLuint * values) {
-	UNUSED(map);
-	UNUSED(values);
-	crStateError( __LINE__, __FILE__, GL_NO_ERROR, "Unimplemented Call: GetPixelMapuiv" );
-}
- 
-void STATE_APIENTRY crStateGetPixelMapusv (GLenum map, GLushort * values) {
-	UNUSED(map);
-	UNUSED(values);
-	crStateError( __LINE__, __FILE__, GL_NO_ERROR, "Unimplemented Call: GetPixelMapusv" );
+void STATE_APIENTRY crStateGetPixelMapusv (GLenum map, GLushort * values)
+{
+	const GLfloat maxUshort = 65535.0F;
+	CRContext *g = GetCurrentContext();
+	CRPixelState *p = &(g->pixel);
+	GLint i;
+
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+					 "GetPixelMapusv called in Begin/End");
+		return;
+	}
+
+	switch (map) {
+	case GL_PIXEL_MAP_S_TO_S:
+		for (i = 0; i < p->mapStoSsize; i++) {
+			values[i] = p->mapStoS[i];
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_I:
+		for (i = 0; i < p->mapItoIsize; i++) {
+			values[i] = p->mapItoI[i];
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_R:
+		for (i = 0; i < p->mapItoRsize; i++) {
+			values[i] = p->mapItoR[i] * maxUshort;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_G:
+		for (i = 0; i < p->mapItoGsize; i++) {
+			values[i] = p->mapItoG[i] * maxUshort;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_B:
+		for (i = 0; i < p->mapItoBsize; i++) {
+			values[i] = p->mapItoB[i] * maxUshort;
+		}
+		break;
+	case GL_PIXEL_MAP_I_TO_A:
+		for (i = 0; i < p->mapItoAsize; i++) {
+			values[i] = p->mapItoA[i] * maxUshort;
+		}
+		break;
+	case GL_PIXEL_MAP_R_TO_R:
+		for (i = 0; i < p->mapRtoRsize; i++) {
+			values[i] = p->mapRtoR[i] * maxUshort;
+		}
+		break;
+	case GL_PIXEL_MAP_G_TO_G:
+		for (i = 0; i < p->mapGtoGsize; i++) {
+			values[i] = p->mapGtoG[i] * maxUshort;
+		}
+		break;
+	case GL_PIXEL_MAP_B_TO_B:
+		for (i = 0; i < p->mapBtoBsize; i++) {
+			values[i] = p->mapBtoB[i] * maxUshort;
+		}
+		break;
+	case GL_PIXEL_MAP_A_TO_A:
+		for (i = 0; i < p->mapAtoAsize; i++) {
+			values[i] = p->mapAtoA[i] * maxUshort;
+		}
+		break;
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "GetPixelMapusv(map)");
+		return;
+	}
 }

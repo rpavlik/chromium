@@ -7,7 +7,7 @@ import sys, re, string
 sys.path.append( "../../opengl_stub" )
 import stub_common;
 
-line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s+(.*)\s*$')
+line_re = re.compile           (r'^(\S+)\s+(GL_\S+)\s+(.*)\s*$')
 extensions_line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s(GL_\S+)\s+(.*)\s*$')
 
 params = {}
@@ -141,11 +141,13 @@ header = """
 		pname == GL_CURRENT_NORMAL || pname == GL_EDGE_FLAG ||
 		pname == GL_CURRENT_TEXTURE_COORDS )
 	{
+#if 0
 		crStateError(__LINE__,__FILE__, GL_INVALID_OPERATION,
 			"Unimplemented glGet of a 'current' value" );
-#if 0
-		GLstatebits *sb = GetStateBits( );
-		__glcurrent_recover( &g->current, &sb->current, g->bitID );
+#else
+		/*CRStateBits *sb = GetCurrentBits( );*/
+		crStateCurrentRecover();/* &g->current, &sb->current, g->bitID );*/
+		
 #endif
 	}
 

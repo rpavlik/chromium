@@ -38,11 +38,17 @@ void crStateLightingInit (CRLightingState *l)
 	l->specular[0] = zero_color;
 	l->emission[0] = zero_color;
 	l->shininess[0] = 0.0f;
+	l->indexes[0][0] = 0;
+	l->indexes[0][1] = 1;
+	l->indexes[0][2] = 1;
 	l->ambient[1] = ambient_color;
 	l->diffuse[1] = diffuse_color;
 	l->specular[1] = zero_color;
 	l->emission[1] = zero_color;
 	l->shininess[1] = 0.0f;
+	l->indexes[1][0] = 0;
+	l->indexes[1][1] = 1;
+	l->indexes[1][2] = 1;
 	l->lightModelAmbient = ambient_color;
 	l->lightModelLocalViewer = GL_FALSE;
 	l->lightModelTwoSide = GL_FALSE;
@@ -936,8 +942,23 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 			}
 			break;
 		case GL_COLOR_INDEXES :
-			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-					"glGetMaterialfv: We don't do color indexes, sorry: %d", pname);
+			switch (face)
+			{
+				case GL_FRONT:
+					param[0] = (GLfloat) l->indexes[0][0];
+					param[1] = (GLfloat) l->indexes[0][1];
+					param[2] = (GLfloat) l->indexes[0][2];
+					break;
+				case GL_BACK:
+					param[0] = (GLfloat) l->indexes[1][0];
+					param[1] = (GLfloat) l->indexes[1][1];
+					param[2] = (GLfloat) l->indexes[1][2];
+					break;
+				default:
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+							"glGetMaterialfv: bad face: %d", face);
+					return;
+			}
 			return;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -955,7 +976,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-				"glGetMaterialfv called in begin/end");
+				"glGetMaterialiv called in begin/end");
 		return;
 	}
 
@@ -978,7 +999,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialiv: bad face: %d", face);
 					return;
 			}
 			break;
@@ -999,7 +1020,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialiv: bad face: %d", face);
 					return;
 			}
 			break;
@@ -1020,7 +1041,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialiv: bad face: %d", face);
 					return;
 			}
 			break;
@@ -1041,7 +1062,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialiv: bad face: %d", face);
 					return;
 			}
 			break;
@@ -1055,17 +1076,32 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialiv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_COLOR_INDEXES :
-			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-					"glGetMaterialfv: We don't do color indexes, sorry: %d", pname);
+			switch (face)
+			{
+				case GL_FRONT:
+					param[0] = (GLint) l->indexes[0][0];
+					param[1] = (GLint) l->indexes[0][1];
+					param[2] = (GLint) l->indexes[0][2];
+					break;
+				case GL_BACK:
+					param[0] = (GLint) l->indexes[1][0];
+					param[1] = (GLint) l->indexes[1][1];
+					param[2] = (GLint) l->indexes[1][2];
+					break;
+				default:
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+							"glGetMaterialiv: bad face: %d", face);
+					return;
+			}
 			return;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"glGetMaterialfv: bad pname: %d", pname);
+					"glGetMaterialiv: bad pname: %d", pname);
 			return;
 	}
 }

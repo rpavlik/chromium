@@ -58,11 +58,12 @@ typedef struct {
 	GLenum		shadeModel;
 	GLenum		colorMaterialMode;
 	GLenum		colorMaterialFace;
-	GLcolorf	ambient[2];
-	GLcolorf	diffuse[2];
-	GLcolorf	specular[2];
-	GLcolorf	emission[2];
-	GLfloat		shininess[2];
+	GLcolorf	ambient[2];     /* material front/back */
+	GLcolorf	diffuse[2];     /* material front/back */
+	GLcolorf	specular[2];     /* material front/back */
+	GLcolorf	emission[2];     /* material front/back */
+	GLfloat		shininess[2];     /* material front/back */
+    GLint       indexes[2][3];    /* material front/back amb/diff/spec */
 	GLcolorf	lightModelAmbient;
 	GLboolean	lightModelLocalViewer;
 	GLboolean	lightModelTwoSide;

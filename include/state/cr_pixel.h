@@ -9,6 +9,7 @@
 
 #include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
+#include "state/cr_limits.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,6 +21,7 @@ typedef struct {
 	GLbitvalue unpack;
 	GLbitvalue transfer;
 	GLbitvalue zoom;
+	GLbitvalue maps;
 } CRPixelBits;
 
 typedef struct {
@@ -47,27 +49,27 @@ typedef struct {
 	GLfloat		  xZoom;
 	GLfloat		  yZoom;
 
-	GLfloat		 *pixelmapitoi;
-	GLfloat		 *pixelmapstos;
-	GLfloat		 *pixelmapitor;
-	GLfloat		 *pixelmapitog;
-	GLfloat		 *pixelmapitob;
-	GLfloat		 *pixelmapitoa;
-	GLfloat		 *pixelmaprtor;
-	GLfloat		 *pixelmapgtog;
-	GLfloat		 *pixelmapbtob;
-	GLfloat		 *pixelmapatoa;
+	GLint		 mapItoI[CR_MAX_PIXEL_MAP_TABLE];
+	GLint		 mapStoS[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		 mapItoR[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		 mapItoG[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		 mapItoB[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		 mapItoA[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		 mapRtoR[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		 mapGtoG[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		 mapBtoB[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		 mapAtoA[CR_MAX_PIXEL_MAP_TABLE];
  
-	GLint		    pixelmapitoisize;
-	GLint		    pixelmapstossize;
-	GLint		    pixelmapitorsize;
-	GLint		    pixelmapitogsize;
-	GLint		    pixelmapitobsize;
-	GLint		    pixelmapitoasize;
-	GLint		    pixelmaprtorsize;
-	GLint		    pixelmapgtogsize;
-	GLint		    pixelmapbtobsize;
-	GLint		    pixelmapatoasize;
+	GLint		    mapItoIsize;
+	GLint		    mapStoSsize;
+	GLint		    mapItoRsize;
+	GLint		    mapItoGsize;
+	GLint		    mapItoBsize;
+	GLint		    mapItoAsize;
+	GLint		    mapRtoRsize;
+	GLint		    mapGtoGsize;
+	GLint		    mapBtoBsize;
+	GLint		    mapAtoAsize;
 } CRPixelState;
 
 void crStatePixelInit( CRPixelState *pixel );

@@ -78,12 +78,13 @@ typedef struct {
 	GLint	greenBits;
 	GLint	blueBits;
 	GLint	alphaBits;
+	GLint	indexBits;
 	GLint	depthBits;
 	GLint	stencilBits;
-	GLint	accumredBits;
-	GLint	accumgreenBits;
-	GLint	accumblueBits;
-	GLint	accumalphaBits;
+	GLint	accumRedBits;
+	GLint	accumGreenBits;
+	GLint	accumBlueBits;
+	GLint	accumAlphaBits;
 } CRBufferState;
 
 void crStateBufferInitBits(CRBufferBits *bb);
