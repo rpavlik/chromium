@@ -116,6 +116,19 @@ static void crServerCleanup( int sigio )
 	exit(0);
 }
 
+
+static void
+crPrintHelp(void)
+{
+	printf("Usage: crserver [OPTIONS]\n");
+	printf("Options:\n");
+	printf("  -mothership URL  Specifies URL for contacting the mothership.\n");
+	printf("                   URL is of the form [protocol://]hostname[:port]\n");
+	printf("  -port N          Specifies the port number this server will listen to.\n");
+	printf("  -help            Prints this information.\n");
+}
+
+
 int CRServerMain( int argc, char *argv[] )
 {
 	int i;
@@ -134,7 +147,7 @@ int CRServerMain( int argc, char *argv[] )
 			mothership = argv[i+1];
 			i++;
 		}
-		if (!crStrcmp( argv[i], "-port" ))
+		else if (!crStrcmp( argv[i], "-port" ))
 		{
 			/* This is the port on which we'll accept client connections */
 			if (i == argc - 1)
@@ -143,6 +156,11 @@ int CRServerMain( int argc, char *argv[] )
 			}
 			cr_server.tcpip_port = crStrToInt(argv[i+1]);
 			i++;
+		}
+		else if (!crStrcmp( argv[i], "-help" ))
+		{
+			crPrintHelp();
+			exit(0);
 		}
 	}
 
