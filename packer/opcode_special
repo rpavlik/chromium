@@ -99,6 +99,13 @@ TexCoord4dv
 TexCoord4fv
 TexCoord4iv
 TexCoord4sv
+TexEnvf
+TexEnvi
+TexGend
+TexGenf
+TexGeni
+TexParameterf
+TexParameteri
 Vertex2dv
 Vertex2fv
 Vertex2iv
@@ -135,3 +142,10 @@ SecondaryColor3bvEXT
 SecondaryColor3uivEXT
 SecondaryColor3usvEXT
 SecondaryColor3ubvEXT
+VertexPointer
+ColorPointer
+NormalPointer
+TexCoordPointer
+EdgeFlagPointer
+IndexPointer
+SecondaryColorPointerEXT

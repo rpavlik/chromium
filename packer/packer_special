@@ -48,10 +48,17 @@ TexEnviv
 TexGendv
 TexGenfv
 TexGeniv
+TexEnvf
+TexEnvi
+TexGend
+TexGenf
+TexGeni
 TexImage1D
 TexImage2D
 TexParameterfv
 TexParameteriv
+TexParameterf
+TexParameteri
 TexSubImage1D
 TexSubImage2D
 CreateContext

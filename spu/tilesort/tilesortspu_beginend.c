@@ -47,15 +47,29 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 	{
 		int i;
 
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		for (i = 0 ; i < tilesort_spu.ctx->limits.maxTextureUnits; i++)
 		{
-			if (tilesort_spu.swap)
+			if (i == 0)
 			{
-				crPackMultiTexCoord4fvARBSWAP ( i + GL_TEXTURE0_ARB, (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+				if (tilesort_spu.swap)
+				{
+					crPackTexCoord4fvSWAP ( (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+				}
+				else
+				{
+					crPackTexCoord4fv ( (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+				}
 			}
 			else
 			{
-				crPackMultiTexCoord4fvARB ( i + GL_TEXTURE0_ARB, (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+				if (tilesort_spu.swap)
+				{
+					crPackMultiTexCoord4fvARBSWAP ( i + GL_TEXTURE0_ARB, (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+				}
+				else
+				{
+					crPackMultiTexCoord4fvARB ( i + GL_TEXTURE0_ARB, (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+				}
 			}
 		}
 		if (tilesort_spu.swap)

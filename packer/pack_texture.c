@@ -159,6 +159,16 @@ void PACK_APIENTRY crPackTexEnviv( GLenum target, GLenum pname,
 	WRITE_OPCODE( CR_TEXENVIV_OPCODE );
 }
 
+void PACK_APIENTRY crPackTexEnvf( GLenum target, GLenum pname, GLfloat param )
+{
+	crPackTexEnvfv( target, pname, &param );
+}
+
+void PACK_APIENTRY crPackTexEnvi( GLenum target, GLenum pname, GLint param )
+{
+	crPackTexEnviv( target, pname, &param );
+}
+
 void PACK_APIENTRY crPackPrioritizeTextures( GLsizei n,
 		const GLuint *textures, const GLclampf *priorities )
 {
@@ -220,6 +230,21 @@ void PACK_APIENTRY crPackTexGeniv( GLenum coord, GLenum pname,
 	WRITE_OPCODE( CR_TEXGENIV_OPCODE );
 }
 
+void PACK_APIENTRY crPackTexGend( GLenum coord, GLenum pname, GLdouble param )
+{
+	crPackTexGendv( coord, pname, &param );
+}
+
+void PACK_APIENTRY crPackTexGenf( GLenum coord, GLenum pname, GLfloat param )
+{
+	crPackTexGenfv( coord, pname, &param );
+}
+
+void PACK_APIENTRY crPackTexGeni( GLenum coord, GLenum pname, GLint param )
+{
+	crPackTexGeniv( coord, pname, &param );
+}
+
 static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat *params )
 {
 	unsigned char *data_ptr;
@@ -267,6 +292,16 @@ void PACK_APIENTRY crPackTexParameteriv( GLenum target, GLenum pname,
 {
 	__handleTexParameterData( target, pname, (GLfloat *) params );
 	WRITE_OPCODE( CR_TEXPARAMETERIV_OPCODE );
+}
+
+void PACK_APIENTRY crPackTexParameterf( GLenum target, GLenum pname, GLfloat param )
+{
+	crPackTexParameterfv( target, pname, &param );
+}
+
+void PACK_APIENTRY crPackTexParameteri( GLenum target, GLenum pname, GLint param )
+{
+	crPackTexParameteriv( target, pname, &param );
 }
 
 void PACK_APIENTRY crPackTexSubImage2D (GLenum target, GLint level, 

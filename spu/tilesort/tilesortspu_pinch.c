@@ -20,8 +20,7 @@
 #define IS_COLOR(a)		((a) >= CR_COLOR3B_OPCODE && (a) <= CR_COLOR4US_OPCODE)
 #define IS_NORMAL(a)	((a) >= CR_NORMAL3B_OPCODE && (a) <= CR_NORMAL3S_OPCODE)
 #define IS_INDEX(a)		((a) >= CR_INDEXD_OPCODE && (a) <= CR_INDEXS_OPCODE)
-#define IS_TEXCOORD(a)	(((a) >= CR_TEXCOORD1D_OPCODE && (a) <= CR_TEXCOORD4S_OPCODE) || \
-		((a) == CR_EXTEND_OPCODE && *(data+4) >= CR_MULTITEXCOORD1DARB_EXTEND_OPCODE && *(data+4) <= CR_MULTITEXCOORD4SARB_EXTEND_OPCODE))
+#define IS_TEXCOORD(a)	(((a) >= CR_TEXCOORD1D_OPCODE && (a) <= CR_TEXCOORD4S_OPCODE) || (((a) >= CR_MULTITEXCOORD1DARB_OPCODE) && ((a) <= CR_MULTITEXCOORD4SARB_OPCODE)))
 #define IS_EDGEFLAG(a)	((a) == CR_EDGEFLAG_OPCODE)
 
 #define ASSERT_BOUNDS(op, data) \
@@ -57,7 +56,7 @@ void tilesortspuPinch (void)
 	v_current.pos = vdefault;
 	v_current.color = c->color;
 	v_current.normal = c->normal;
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0 ; i < tilesort_spu.ctx->limits.maxTextureUnits ; i++)
 	{
 		texCoord_ptr[i] = tilesort_spu.ctx->current.current->texCoord.ptr[i];
 		v_current.texCoord[i] = c->texCoord[i];
@@ -269,7 +268,7 @@ void tilesortspuPinch (void)
 			}
 
 			/* Is the texture pointer after my vertex? */
-			for (j = 0 ; j < CR_MAX_TEXTURE_UNITS ; j++)
+			for (j = 0 ; j < tilesort_spu.ctx->limits.maxTextureUnits ; j++)
 			{
 				if (texCoord_ptr[j] > vtx_data) 
 				{
@@ -329,7 +328,7 @@ void tilesortspuPinch (void)
 		{
 			v_current.color = c->colorPre;
 			v_current.normal = c->normalPre;
-			for (j = 0 ; j < CR_MAX_TEXTURE_UNITS; j++)
+			for (j = 0 ; j < tilesort_spu.ctx->limits.maxTextureUnits; j++)
 			{
 				v_current.texCoord[j] = c->texCoordPre[j];
 			}
@@ -396,17 +395,31 @@ void __pinchIssueParams (CRVertex *vtx)
 	GLfloat val[4];
 	int i;
 
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0 ; i < tilesort_spu.ctx->limits.maxTextureUnits ; i++)
 	{
 		val[0] = vtx->texCoord[i].s; val[1] = vtx->texCoord[i].t;
 		val[2] = vtx->texCoord[i].r; val[3] = vtx->texCoord[i].q;
-		if (tilesort_spu.swap)
+		if (i == 0)
 		{
-			crPackMultiTexCoord4fvARBSWAP( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
+			if (tilesort_spu.swap)
+			{
+				crPackTexCoord4fvSWAP( (const GLfloat *) val);
+			}
+			else
+			{
+				crPackTexCoord4fv( (const GLfloat *) val);
+			}
 		}
 		else
 		{
-			crPackMultiTexCoord4fvARB( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
+			if (tilesort_spu.swap)
+			{
+				crPackMultiTexCoord4fvARBSWAP( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
+			}
+			else
+			{
+				crPackMultiTexCoord4fvARB( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
+			}
 		}
 	}
 	val[0] = vtx->normal.x; val[1] = vtx->normal.y;
@@ -492,7 +505,7 @@ void tilesortspuPinchRestoreTriangle( void )
 		}
 
 		/* Setup values for next vertex */
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		for (i = 0 ; i < tilesort_spu.ctx->limits.maxTextureUnits; i++)
 		{
 			v.texCoord[i] = c->texCoord[i];
 		}

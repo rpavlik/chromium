@@ -35,6 +35,8 @@ for k in current_fns.keys():
 				print '\tcase CR_%s_OPCODE: \\' % ucname
 			else:
 				print '\tcase CR_%s%d%s_OPCODE: \\' % (ucname,size,uctype)
+				if ucname == 'TEXCOORD':
+					print '\tcase CR_MULTI%s%d%sARB_OPCODE: \\' % (ucname,size,uctype)
 			
 			if (ucname == 'COLOR' or ucname == 'NORMAL') and type != 'f' and type != 'd':
 				print '\t\t__convert_rescale_%s%d (vdata, (%s *) (data)); \\' % (type,size,gltypes[type]['type'])
@@ -43,7 +45,7 @@ for k in current_fns.keys():
 			print '\t\tbreak; \\'
 
 	print '\tdefault: \\'
-	print '\t\tcrError ( "Unknown opcode in VPINCH_CONVERT_%s" ); \\' % ucname
+	print '\t\tcrError ( "Unknown opcode in VPINCH_CONVERT_%s: %%d", op ); \\' % ucname
 	print '\t}\\'
 
 	i = 0
