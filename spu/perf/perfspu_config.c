@@ -116,24 +116,25 @@ void set_dump_on_finish( void *foo, const char *response )
 SPUOptions perfSPUOptions[] = {
 
    { "perf_log_file", CR_STRING, 1, "stderr", NULL, NULL, 
-     "Performance SPU Log file name (or stdout,stderr)", (SPUOptionCB)set_log_file },
+     "Log file name (or stdout,stderr)", (SPUOptionCB)set_log_file },
 
    { "perf_set_token", CR_STRING, 1, "\t", NULL, NULL, 
-     "Performance SPU filter token", (SPUOptionCB)set_token },
-
-   { "perf_set_dump_on_swap_count", CR_INT, 1, "0", "0", "99999",
-     "Performance SPU Dump Statistics on SwapBuffers Count", (SPUOptionCB)set_dump_on_swap_count },
+     "Filter token", (SPUOptionCB)set_token },
 
    { "perf_set_log_separator", CR_STRING, 1, "\t", NULL, NULL, 
-     "Performance SPU Log File separator", (SPUOptionCB)set_separator },
+     "Log file separator", (SPUOptionCB)set_separator },
 
-   { "perf_set_mothership_log", CR_INT, 1, "0", "0", "1",
-     "Performance SPU Log to Mothership", (SPUOptionCB)set_mothership_log },
+   { "perf_set_dump_on_swap_count", CR_INT, 1, "0", "0", "99999",
+     "Dump statistics on SwapBuffers count", (SPUOptionCB)set_dump_on_swap_count },
 
-   { "perf_set_dump_on_flush", CR_INT, 1, "0", "0", "1",
-     "Performance SPU Dump Statistics on glFlush", (SPUOptionCB)set_dump_on_flush },
-   { "perf_set_dump_on_finish", CR_INT, 1, "0", "0", "1",
-     "Performance SPU Dump Statistics on glFinish", (SPUOptionCB)set_dump_on_finish },
+   { "perf_set_mothership_log", CR_BOOL, 1, "0", "0", "1",
+     "Log to Mothership", (SPUOptionCB)set_mothership_log },
+
+   { "perf_set_dump_on_flush", CR_BOOL, 1, "0", "0", "1",
+     "Dump statistics on glFlush", (SPUOptionCB)set_dump_on_flush },
+
+   { "perf_set_dump_on_finish", CR_BOOL, 1, "0", "0", "1",
+     "Dump statistics on glFinish", (SPUOptionCB)set_dump_on_finish },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
