@@ -94,6 +94,9 @@ extern void crTcscommSetRank( int );
 extern void crTcscommSetContextRange( int, int );
 extern void crTcscommSetNodeRange( const char *, const char * );
 #endif
+#ifdef SDP_SUPPORT
+NETWORK_TYPE( SDP );
+#endif
 
 
 /**
@@ -246,6 +249,17 @@ crNetConnectToServer( const char *server,	unsigned short default_port,
 		crTCPIPConnection( conn );
 		crDebug("Done calling crTCPIPConnection");
 	}
+#ifdef SDP_SUPPORT
+	else if ( !crStrcmp( protocol, "sdp" ) )
+	{	
+		cr_net.use_tcpip++;
+		crDebug("Calling crSDPInit()");
+		crSDPInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crDebug("Calling crSDPIPConnection");
+		crSDPConnection( conn );
+		crDebug("Done calling crSDPConnection");
+	}
+#endif
 #ifdef IB_SUPPORT
 	else if ( !crStrcmp( protocol, "ib" ) )
 	{	
@@ -404,6 +418,14 @@ crNetAcceptClient( const char *protocol, char *hostname,
 		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crTCPIPConnection( conn );
 	}
+#ifdef SDP_SUPPORT
+	else if ( !crStrcmp( protocol, "sdp" ) )
+	{
+		cr_net.use_tcpip++;
+		crSDPInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crSDPConnection( conn );
+	}
+#endif
 	else if ( !crStrcmp( protocol, "udptcpip" ) )
 	{
 		cr_net.use_udp++;
@@ -514,6 +536,9 @@ extern CRConnection** crDevnullDump( int * num );
 #ifdef GM_SUPPORT
 extern CRConnection** crGmDump( int * num );
 #endif
+#ifdef SDP_SUPPORT
+extern CRConnection** crSDPDump( int * num );
+#endif
 extern CRConnection** crFileDump( int * num );
 
 CRConnection** crNetDump( int* num )
@@ -535,6 +560,10 @@ CRConnection** crNetDump( int* num )
 #endif
 #ifdef IB_SUPPORT
 	c = crIBDump( num );
+	if ( c ) return c;
+#endif
+#ifdef SDP_SUPPORT
+	c = crSDPDump( num );
 	if ( c ) return c;
 #endif
 
@@ -1003,7 +1032,11 @@ int crNetRecv( void )
 	int found_work = 0;
 
 	if ( cr_net.use_tcpip )
-		found_work += crTCPIPRecv();
+		found_work += crTCPIPRecv();	
+#ifdef SDP_SUPPORT
+	if ( cr_net.use_sdp )
+		found_work += crSDPRecv();
+#endif
 #ifdef IB_SUPPORT
 	if ( cr_net.use_ib )
 		found_work += crIBRecv();

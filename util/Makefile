@@ -93,6 +93,10 @@ LDFLAGS += -lelan3
 FILES += tcscomm
 endif
 
+ifeq ($(SDP_SUPPORT), 1)
+FILES += sdp
+endif
+
 include ${TOP}/cr.mk
 
 debug_opcodes.c: debug_opcodes.py $(TOP)/glapi_parser/APIspec.txt

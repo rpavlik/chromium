@@ -72,6 +72,55 @@ extern int __tcpip_write_exact( CRSocket sock, const void *buf, unsigned int len
 extern int __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len );
 extern void __tcpip_dead_connection( CRConnection *conn );
 
+typedef enum {
+        CRSDPMemory,
+        CRSDPMemoryBig
+} CRSDPBufferKind;
+
+#define CR_SDP_BUFFER_MAGIC 0x89134532
+
+typedef struct CRSDPBuffer {
+	unsigned int          magic;
+	CRSDPBufferKind     kind;
+	unsigned int          len;
+	unsigned int          allocated;
+	unsigned int          pad;
+} CRSDPBuffer;
+
+typedef struct {
+	int                  initialized;
+	int                  num_conns;
+	CRConnection         **conns;
+	CRBufferPool         *bufpool;
+#ifdef CHROMIUM_THREADSAFE
+	CRmutex              mutex;
+	CRmutex              recvmutex;
+#endif
+	CRNetReceiveFuncList *recv_list;
+	CRNetCloseFuncList *close_list;
+	CRSocket             server_sock;
+} cr_sdp_data;
+
+extern cr_sdp_data cr_sdp;
+
+extern void crSDPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
+extern void crSDPConnection( CRConnection *conn );
+extern int crSDPRecv( void );
+extern CRConnection** crSDPDump( int *num );
+extern int crSDPDoConnect( CRConnection *conn );
+extern void crSDPDoDisconnect( CRConnection *conn );
+extern int crSDPErrno( void );
+extern char *crSDPErrorString( int err );
+extern void crSDPAccept( CRConnection *conn, char *hostname, unsigned short port );
+extern void crSDPWriteExact( CRConnection *conn, const void *buf, unsigned int len );
+extern void crSDPFree( CRConnection *conn, void *buf );
+extern void *crSDPAlloc( CRConnection *conn );
+extern void crSDPReadExact( CRConnection *conn, void *buf, unsigned int len );
+extern int __sdp_write_exact( CRSocket sock, const void *buf, unsigned int len );
+extern int __sdp_read_exact( CRSocket sock, void *buf, unsigned int len );
+extern void __sdp_dead_connection( CRConnection *conn );
+extern int __crSDPSelect( int n, fd_set *readfds, int sec, int usec );
+
 extern void crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
 extern void crIBConnection( CRConnection *conn );
 extern int crIBRecv( void );
