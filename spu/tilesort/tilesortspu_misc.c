@@ -91,10 +91,12 @@ static void sendTileInfoToServers(void)
 		tileInfo[3] = server->num_extents;
 		for (j = 0; j < server->num_extents; j++)
 		{
+			int w = server->extents[j].x2 - server->extents[j].x1;
+			int h = server->extents[j].y2 - server->extents[j].y1;
 			tileInfo[4 + j * 4 + 0] = server->extents[j].x1;
 			tileInfo[4 + j * 4 + 1] = server->extents[j].y1;
-			tileInfo[4 + j * 4 + 2] = server->extents[j].x2;
-			tileInfo[4 + j * 4 + 3] = server->extents[j].y2;
+			tileInfo[4 + j * 4 + 2] = w;
+			tileInfo[4 + j * 4 + 3] = h;
 		}
 		arraySize = 4 + 4 * server->num_extents;
 
@@ -221,14 +223,14 @@ static GLboolean getNewTiling(int muralWidth, int muralHeight)
 	tiles = crStrSplit(n_tiles[1], ",");
 	for (i = 0; i < numTiles; i++)
 	{
-		int server, x1, y1, x2, y2, t;
-		sscanf(tiles[i], "%d %d %d %d %d", &server, &x1, &y1, &x2, &y2);
+		int server, x, y, w, h, t;
+		sscanf(tiles[i], "%d %d %d %d %d", &server, &x, &y, &w, &h);
 		/*crDebug("Tile on %d: %d %d %d %d\n", server, x1, y1, x2, y2);*/
 		t = tilesort_spu.servers[server].num_extents;
-		tilesort_spu.servers[server].extents[t].x1 = x1;
-		tilesort_spu.servers[server].extents[t].y1 = y1;
-		tilesort_spu.servers[server].extents[t].x2 = x2;
-		tilesort_spu.servers[server].extents[t].y2 = y2;
+		tilesort_spu.servers[server].extents[t].x1 = x;
+		tilesort_spu.servers[server].extents[t].y1 = y;
+		tilesort_spu.servers[server].extents[t].x2 = x + w;
+		tilesort_spu.servers[server].extents[t].y2 = y + h;
 		tilesort_spu.servers[server].num_extents = t + 1;
 	}
 

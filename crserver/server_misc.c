@@ -95,11 +95,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
  * The boundaries are specified in mural space.
  * Input: muralWidth/Height - size of the overall mural
  *        numTiles - number of tiles
- * Input: tileBounds[0] = bounds[0].x1
- *        tileBounds[1] = bounds[0].y1
- *        tileBounds[2] = bounds[0].x2
- *        tileBounds[3] = bounds[0].y2
- *        tileBounds[4] = bounds[1].x1
+ * Input: tileBounds[0] = bounds[0].x
+ *        tileBounds[1] = bounds[0].y
+ *        tileBounds[2] = bounds[0].width
+ *        tileBounds[3] = bounds[0].height
+ *        tileBounds[4] = bounds[1].x
  *        ...
  */
 void crServerNewTiles(int muralWidth, int muralHeight,
@@ -111,7 +111,7 @@ void crServerNewTiles(int muralWidth, int muralHeight,
 	crDebug("  New mural size: %d x %d", muralWidth, muralHeight);
 	for (i = 0; i < numTiles; i++)
 	{
-		crDebug("  Tile %d: %d, %d .. %d, %d", i,
+		crDebug("  Tile %d: %d, %d  %d x %d", i,
 						tileBounds[i*4], tileBounds[i*4+1],
 						tileBounds[i*4+2], tileBounds[i*4+3]);
 	}
@@ -127,12 +127,14 @@ void crServerNewTiles(int muralWidth, int muralHeight,
 	cr_server.maxTileHeight = 0;
 	for (i = 0; i < numTiles; i++)
 	{
-		int h;
-		cr_server.extents[i].x1 = tileBounds[i * 4 + 0];
-		cr_server.extents[i].y1 = tileBounds[i * 4 + 1];
-		cr_server.extents[i].x2 = tileBounds[i * 4 + 2];
-		cr_server.extents[i].y2 = tileBounds[i * 4 + 3];
-		h = cr_server.extents[i].y2 - cr_server.extents[i].y1;
+		const int x = tileBounds[i * 4 + 0];
+		const int y = tileBounds[i * 4 + 1];
+		const int w = tileBounds[i * 4 + 2];
+		const int h = tileBounds[i * 4 + 3];
+		cr_server.extents[i].x1 = x;
+		cr_server.extents[i].y1 = y;
+		cr_server.extents[i].x2 = x + w;
+		cr_server.extents[i].y2 = y + h;
 		if (h > cr_server.maxTileHeight)
 			cr_server.maxTileHeight = h;
 	}

@@ -82,7 +82,7 @@ static GLboolean Anim = GL_TRUE;
 #define MAX_TILES_PER_SERVER 100
 
 struct rect {
-	int x1, y1, x2, y2;
+	int x, y, w, h;
 };
 
 static struct rect ServerTiles[MAX_SERVERS][MAX_TILES_PER_SERVER];
@@ -136,10 +136,10 @@ LayoutMural(int muralWidth, int muralHeight, int tileSize, int numServers)
 			for (j = cols - 1; j >= 0; j--) {
 				const int srv = k % numServers;
 				struct rect *r = &(ServerTiles[srv][NumTiles[srv]]);
-				r->x1 = j * tileSize;
-				r->x2 = r->x1 + tileSize;
-				r->y1 = i * tileSize;
-				r->y2 = r->y1 + tileSize;
+				r->x = j * tileSize;
+				r->y = i * tileSize;
+				r->w = tileSize;
+				r->h = tileSize;
 				NumTiles[srv]++;
 				k++;
 			}
@@ -149,10 +149,10 @@ LayoutMural(int muralWidth, int muralHeight, int tileSize, int numServers)
 			for (j = 0; j < cols; j++) {
 				const int srv = k % numServers;
 				struct rect *r = &(ServerTiles[srv][NumTiles[srv]]);
-				r->x1 = j * tileSize;
-				r->x2 = r->x1 + tileSize;
-				r->y1 = i * tileSize;
-				r->y2 = r->y1 + tileSize;
+				r->x = j * tileSize;
+				r->y = i * tileSize;
+				r->w = tileSize;
+				r->h = tileSize;
 				NumTiles[srv]++;
 				k++;
 			}
@@ -177,7 +177,7 @@ PrintMural(void)
 		printf("Server %d, %d tiles:\n", i, NumTiles[i]);
 		for (j = 0; j < NumTiles[i]; j++) {
 			const struct rect *r = &(ServerTiles[i][j]);
-			printf("  %d: %d, %d .. %d, %d\n", j, r->x1, r->y1, r->x2, r->y2);
+			printf("  %d: %d, %d %d x %d\n", j, r->x, r->y, r->w, r->h);
 		}
 	}
 }
@@ -199,67 +199,15 @@ UpdateMural(void)
 		params[3] = NumTiles[i]; /* num tiles on this server */
 		for (j = 0; j < NumTiles[i]; j++) {
 			const struct rect *r = &(ServerTiles[i][j]);
-			params[4 + j * 4 + 0] = r->x1;
-			params[4 + j * 4 + 1] = r->y1;
-			params[4 + j * 4 + 2] = r->x2;
-			params[4 + j * 4 + 3] = r->y2;
+			params[4 + j * 4 + 0] = r->x;
+			params[4 + j * 4 + 1] = r->y;
+			params[4 + j * 4 + 2] = r->w;
+			params[4 + j * 4 + 3] = r->h;
 		}
 		count = 4 + NumTiles[i] * 4;
 		glChromiumParametervCRptr(GL_TILE_INFO_CR, GL_INT, count, params);
 	}
 }
-
-
-
-/*
- * Query the number of servers, tiles, the tile bounds, etc.
- */
-#if 0
-static mural_t *
-FetchMuralInformation(void)
-{
-	mural_t *m;
-	GLuint v[4], s, t;
-
-	m = malloc(sizeof(mural_t));
-	assert(m);
-
-	glGetChromiumParametervCRptr(GL_MURAL_SIZE_CR, 0, GL_INT, 2, v);
-	m->Width = v[0];
-	m->Height = v[1];
-
-	glGetChromiumParametervCRptr(GL_NUM_SERVERS_CR, 0, GL_INT, 1,
-															 &(m->NumServers));
-
-	m->Servers = malloc(m->NumServers * sizeof(server_t));
-	assert(m->Servers);
-
-	for (s = 0; s < m->NumServers; s++) {
-		server_t *server = m->Servers + s;
-		GLuint tiles;
-
-		server->Width = DefaultServerWidth;
-		server->Height = DefaultServerHeight;
-
-		glGetChromiumParametervCRptr(GL_NUM_TILES_CR, s, GL_INT, 1, &tiles);
-		server->NumTiles = tiles;
-
-		for (t = 0; t < tiles; t++) {
-			GLuint index = (s << 16) | t;
-			glGetChromiumParametervCRptr(GL_TILE_BOUNDS_CR, index, GL_INT, 4, v);
-			server->TileBounds[t].x0 = v[0];
-			server->TileBounds[t].y0 = v[1];
-			server->TileBounds[t].x1 = v[2];
-			server->TileBounds[t].y1 = v[3];
-		}
-	}
-
-	if (AllocTiles)
-		AllocTilesOnServers(m);
-
-	return m;
-}
-#endif
 
 
 static void
