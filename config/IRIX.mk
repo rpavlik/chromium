@@ -6,7 +6,7 @@
 # Set USE_DMX to 1 if you want to enable DMX support.
 # You'll need the libdmx.a library and dmxext.h header in the usual X
 # directories.
-USE_DMX = 1
+USE_DMX = 0
 
 
 # Disabled warnings:
