@@ -129,7 +129,10 @@ spu.Conf('bucket_mode', 'Uniform Grid')
           If non-zero, render a <em>virtual cursor</em> which tracks the
           location of the user's mouse pointer in the application window.
           This typically only works well with applications that constantly
-          redraw the 3D window's contents.  Default is 0.</td>
+          redraw the 3D window's contents.  Default is 0.
+          <br>
+          Note: you must also set the application node's show_cursor
+          option to make this work.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">render_to_app_window</td>
