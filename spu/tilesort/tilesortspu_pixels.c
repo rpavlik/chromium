@@ -579,7 +579,7 @@ static void pixeltransfer_flush(void)
 								 (!already_flushed[0]))
 			{
 				crStateEnable(GL_TEXTURE_1D);
-				tilesortspuFlush(thread);
+				tilesortspuBroadcastGeom(1);
 				crStateDisable(GL_TEXTURE_1D);
 				already_flushed[0] = 1;
 			}
@@ -589,7 +589,7 @@ static void pixeltransfer_flush(void)
 								 (!already_flushed[1]))
 			{
 				crStateEnable(GL_TEXTURE_2D);
-				tilesortspuFlush(thread);
+				tilesortspuBroadcastGeom(1);
 				crStateDisable(GL_TEXTURE_2D);
 				already_flushed[1] = 1;
  			}
@@ -600,7 +600,7 @@ static void pixeltransfer_flush(void)
 								 (!already_flushed[2]))
 			{
 				crStateEnable(GL_TEXTURE_3D);
-				tilesortspuFlush(thread);
+				tilesortspuBroadcastGeom(1);
 				crStateDisable(GL_TEXTURE_3D);
 				already_flushed[2] = 1;
 			}
@@ -613,7 +613,7 @@ static void pixeltransfer_flush(void)
 				if (ctx->extensions.ARB_texture_cube_map)
 				{
 					crStateEnable(GL_TEXTURE_CUBE_MAP_ARB);
-					tilesortspuFlush(thread);
+					tilesortspuBroadcastGeom(1);
 					crStateDisable(GL_TEXTURE_CUBE_MAP_ARB);
 					already_flushed[3] = 1;
 				}
@@ -627,7 +627,7 @@ static void pixeltransfer_flush(void)
 				if (ctx->extensions.ARB_texture_rectangle)
 				{
 					crStateEnable(GL_TEXTURE_RECTANGLE_NV);
-					tilesortspuFlush(thread);
+					tilesortspuBroadcastGeom(1);
 					crStateDisable(GL_TEXTURE_RECTANGLE_NV);
 					already_flushed[4] = 1;
 				}
@@ -659,14 +659,24 @@ static void pixeltransfer_flush(void)
 }
 void TILESORTSPU_APIENTRY tilesortspu_PixelTransferi (GLenum pname, GLint param)
 {
+	GET_CONTEXT(ctx);
+	/* Don't flush if we're not really changing the on/off state.
+	 * This is a special case for OpenRM, but safe for everyone.
+	 */
+	if (pname == GL_MAP_COLOR && ctx->pixel.mapColor == param)
+		return;
 	pixeltransfer_flush();
- 	
-	crStatePixelTransferi ( pname, param );
+	crStatePixelTransferi( pname, param );
 }
  
 void TILESORTSPU_APIENTRY tilesortspu_PixelTransferf (GLenum pname, GLfloat param)
 {
+	GET_CONTEXT(ctx);
+	/* Don't flush if we're not really changing the on/off state.
+	 * This is a special case for OpenRM, but safe for everyone.
+	 */
+	if (pname == GL_MAP_COLOR && ctx->pixel.mapColor == (GLint) param)
+		return;
 	pixeltransfer_flush();
- 
-	crStatePixelTransferf ( pname, param );
+	crStatePixelTransferf( pname, param );
 }
