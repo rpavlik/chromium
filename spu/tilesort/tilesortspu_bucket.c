@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <float.h>
 #include "tilesortspu.h"
 #include "cr_bbox.h"
 #include "cr_glstate.h"
@@ -499,7 +500,18 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 	bucketInfo->screenMax.y = ymax;
 	bucketInfo->screenMax.z = zmax;
 
-	if (tilesort_spu.bucketMode != WARPED_GRID)
+	if (tilesort_spu.bucketMode == WARPED_GRID)
+	{
+		if (xmin == FLT_MAX || ymin == FLT_MAX || zmin == FLT_MAX ||
+			xmax == -FLT_MAX || ymax == -FLT_MAX || zmax == -FLT_MAX)
+		{
+			/* trivial reject */
+			for (j=0;j<CR_MAX_BITARRAY;j++)
+	     			bucketInfo->hits[j] = 0;
+			return;
+		}
+	}
+	else
 	{
 		/* triv reject */
 		if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
@@ -514,8 +526,8 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 		if (ymin < -1.0f) ymin = -1.0f;
 		if (xmax > 1.0f) xmax = 1.0f;
 		if (ymax > 1.0f) ymax = 1.0f;
-
 	}
+
 	ibounds.x1 = (int) (tilesort_spu.halfViewportWidth*xmin + tilesort_spu.viewportCenterX);
 	ibounds.x2 = (int) (tilesort_spu.halfViewportWidth*xmax + tilesort_spu.viewportCenterX);
 	ibounds.y1 = (int) (tilesort_spu.halfViewportHeight*ymin + tilesort_spu.viewportCenterY);
