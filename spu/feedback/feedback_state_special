@@ -30,7 +30,3 @@ PushAttrib
 PopAttrib
 PassThrough
 PolygonMode
-Color3fv
-Color3f
-Color4fv
-Color4f

@@ -107,6 +107,11 @@ struct CRContext {
 	CRTextureState   texture;
 	CRTransformState transform;
 	CRViewportState  viewport;
+
+	/* For buffering vertices for selection/feedback */
+	GLuint    vCount;
+	CRVertex  vBuffer[4];
+	GLboolean lineReset;
 };
 
 

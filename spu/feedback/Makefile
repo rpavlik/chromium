@@ -27,7 +27,7 @@ LIBRARIES -= crstate
 endif
 
 
-PRECOMP = feedbackspu.c feedbackspu_state.c feedback.h
+PRECOMP = feedbackspu.c feedbackspu_state.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += feedback.def
@@ -41,7 +41,3 @@ feedbackspu.c: feedback.py feedback_special select_special feedback_state_specia
 feedbackspu_state.c: feedback_state.py feedback_state_special
 	@$(ECHO) Building the Feedback \& Selection State Tracker
 	@$(PYTHON) feedback_state.py > $@
-
-feedback.h: feedback_funcs.py feedback_special select_special
-	@$(ECHO) Making feedback.h
-	@$(PYTHON) feedback_funcs.py > $@

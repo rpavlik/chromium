@@ -30,6 +30,7 @@ typedef struct {
 } CRCurrentBits;
 
 typedef struct {
+	/* Pre-transform values */
 	GLvectorf	pos;
 	GLcolorf	color;
 	GLcolorf	secondaryColor;
@@ -40,6 +41,10 @@ typedef struct {
 #ifdef CR_EXT_fog_coord
 	GLfloat		fogCoord;
 #endif
+	/* Post-transform values */
+	GLvectorf	eyePos;
+	GLvectorf	clipPos;
+	GLvectorf	winPos;
 } CRVertex;
 
 
@@ -47,6 +52,7 @@ typedef struct {
  * XXX NV vertex attribs should alias conventional attribs.
  */
 typedef struct {
+	/* XXX use a CRVertex for this state */
 	GLcolorf     color;
 	GLcolorf     secondaryColor;
 	GLfloat      index;
@@ -58,6 +64,7 @@ typedef struct {
 	GLfloat      fogCoord;
 #endif
 
+	/* XXX use a CRVertex for this state */
 	GLcolorf     colorPre;
 	GLcolorf     secondaryColorPre;
 	GLfloat      indexPre;
@@ -71,6 +78,7 @@ typedef struct {
 
 	CRCurrentStatePointers   *current;
 
+	/* XXX use a CRVertex for this state */
 	GLvectorf    rasterPos;
 	GLvectorf    rasterPosPre;
 
