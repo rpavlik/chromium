@@ -629,7 +629,7 @@ class CR:
 		"""Go(PORT=10000)
 		Starts the ball rolling.
 		This starts the mothership's event loop."""
-		CRInfo("This is Chromium, Version BETA")
+		CRInfo("This is Chromium, Version 1.1")
 		try:
 			for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
 				(af, socktype, proto, canonname, sa) = res
