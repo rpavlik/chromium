@@ -41,6 +41,7 @@ void crPackSetContext( CRPackContext *pc )
 	crSetTSD( &_PackerTSD, pc );
 #else
 	CRASSERT( pc == &cr_packer_globals );
+	(void)pc;
 #endif
 }
 
