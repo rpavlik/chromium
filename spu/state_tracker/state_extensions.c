@@ -81,8 +81,8 @@ void crStateExtensionsInit( CRContext *g )
 	if (hasExtension((const char*)g->limits.extensions, "GL_NV_fog_distance"))
 		g->extensions.NV_fog_distance = GL_TRUE;
 
-	if (hasExtension((const char*)g->limits.extensions, "GL_NV_texgen_reflection"))
-		g->extensions.NV_texgen_reflection = GL_TRUE;
+	if (hasExtension((const char*)g->limits.extensions, "GL_NV_register_combiners"))
+		g->extensions.NV_register_combiners = GL_TRUE;
 
 	if (hasExtension((const char*)g->limits.extensions, "GL_NV_register_combiners2"))
 		g->extensions.NV_register_combiners2 = GL_TRUE;
