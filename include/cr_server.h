@@ -20,6 +20,8 @@
 extern "C" {
 #endif
 
+#define CR_MAX_WINDOWS 100
+
 typedef struct {
 	CRrecti imagewindow;    /**< coordinates in mural space */
 	CRrectf bounds;         /**< normalized coordinates in [-1,-1] x [1,1] */
@@ -65,6 +67,7 @@ typedef struct {
 	CRContext *currentCtx;
 	GLint currentWindow;
 	CRMuralInfo *currentMural;
+	GLint windowList[CR_MAX_WINDOWS];
 } CRClient;
 
 
@@ -134,6 +137,7 @@ typedef struct {
 	int sharedDisplayLists;
 	int sharedTextureObjects;
 	int sharedPrograms;
+	int sharedWindows;
 	int localTileSpec;
 	int useDMX;
 	int overlapBlending;

@@ -698,6 +698,7 @@ class NetworkNode(Node):
 			Option("shared_display_lists", "Share Display Lists among all clients", "BOOL", 1, [1], [], []),
 			Option("shared_texture_objects", "Share Texture Objects among all clients", "BOOL", 1, [1], [], []),
 			Option("shared_programs", "Share Program IDs among all clients", "BOOL", 1, [1], [], []),
+			Option("shared_windows", "Share Window ID's among all clients", "BOOL", 1, [0], [], []),
 			Option("use_dmx", "Use DMX", "BOOL", 1, [0], [], []),
 			Option("vertprog_projection_param", "Vertex Program Projection Matrix Register Start or Name", "STRING", 1, [""], [], []),
 			Option("stereo_view", "Stereo View (Eyes)", "ENUM", 1, ['Both'], ['Both', 'Left', 'Right'], []),

@@ -34,6 +34,7 @@ setDefaults(void)
 	cr_server.sharedDisplayLists = 1;
 	cr_server.sharedTextureObjects = 1;
 	cr_server.sharedPrograms = 1;
+	cr_server.sharedWindows = 0;
 	cr_server.useDMX = 0;
 	cr_server.vpProjectionMatrixParameter = -1;
 	cr_server.vpProjectionMatrixVariable = NULL;
@@ -264,6 +265,10 @@ crServerGatherConfiguration(char *mothership)
 	{
 		cr_server.sharedPrograms = crStrToInt(response);
 	}
+	if (crMothershipGetServerParam(conn, response, "shared_windows"))
+	{
+		cr_server.sharedWindows = crStrToInt(response);
+	}
 	if (crMothershipGetServerParam(conn, response, "use_dmx"))
 	{
 		cr_server.useDMX = crStrToInt(response);
@@ -309,6 +314,8 @@ crServerGatherConfiguration(char *mothership)
 		crMatrixInitFromString(&cr_server.projectionMatrix[1], response);
 		cr_server.projectionOverride = GL_TRUE;
 	}
+
+
 
 	/*
 	crMatrixPrint("Left view", &cr_server.viewMatrix[0]);

@@ -14,25 +14,51 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchWindowDestroy( GLint window );
 GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName, GLint visBits )
 {
 	CRMuralInfo *mural;
-	GLint windowID;
+	GLint windowID = -1;
 	GLint dims[2];
 
-	/*
-	 * Create a new mural when a new window is created.
-	 */
-	mural = (CRMuralInfo *) crCalloc(sizeof(CRMuralInfo));
-	if (!mural) {
-		return -1;
+	if (cr_server.sharedWindows) {
+		int pos;
+		/* find empty position in my (curclient) windowList */
+		for (pos = 0; pos < CR_MAX_WINDOWS; pos++) {
+			if (cr_server.curClient->windowList[pos] == 0) {
+				break;
+			}
+		}
+		if (pos == CR_MAX_WINDOWS) {
+			crWarning("Too many windows in crserver!");
+			return -1;
+		}
+
+		/* Look if any other client has a window for this slot */
+		unsigned int j;
+		for (j = 0; j < cr_server.numClients; j++) {
+			if (cr_server.clients[j].windowList[pos] != 0) {
+				/* use that client's window */
+				windowID = cr_server.clients[j].windowList[pos];
+				cr_server.curClient->windowList[pos] = windowID;
+				crServerReturnValue( &windowID, sizeof(windowID) ); /* real return value */
+				crDebug("CRServer: sharing window %d", windowID);
+				return windowID;
+			}
+		}
 	}
 
+	/*
+	 * Have first SPU make a new window, get initial size.
+	 */
 	windowID = cr_server.head_spu->dispatch_table.WindowCreate( dpyName, visBits );
+	crDebug("CRServer: created new window %d", windowID);
+	if (windowID < 0)
+		return windowID; /* error case */
 	crServerReturnValue( &windowID, sizeof(windowID) ); /* real return value */
-
-	/* Get window's initial size */
 	cr_server.head_spu->dispatch_table.GetChromiumParametervCR(GL_WINDOW_SIZE_CR, windowID, GL_INT, 2, dims);
 
-	/* initialize the window/mural using the default mural */
-	{
+	/*
+	 * Create a new mural for the new window.
+	 */
+	mural = (CRMuralInfo *) crCalloc(sizeof(CRMuralInfo));
+	if (mural) {
 		CRMuralInfo *defaultMural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, 0);
 		CRASSERT(defaultMural);
 		mural->width = defaultMural->width;
@@ -48,13 +74,23 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 		mural->underlyingDisplay[3] = dims[1];
 
 		crServerInitializeTiling(mural);
+		/* hash tables are indexed by window ID */
+		crHashtableAdd(cr_server.muralTable, windowID, mural);
+	}
+	else {
+		/* out of memory */
+		return -1;
 	}
 
-	/*
-	 * We use the window ID returned from the SPU chain to also identify
-	 * murals.
-	 */
-	crHashtableAdd(cr_server.muralTable, windowID, mural);
+	if (cr_server.sharedWindows) {
+		int pos;
+		for (pos = 0; pos < CR_MAX_WINDOWS; pos++) {
+			if (cr_server.curClient->windowList[pos] == 0) {
+				cr_server.curClient->windowList[pos] = windowID;
+				break;
+			}
+		}
+	}
 
 	return windowID; /* WILL PROBABLY BE IGNORED */
 }

@@ -160,6 +160,16 @@ for the Chromium server.</p>
     </td>
   </tr>
 
+  <tr>
+    <td width="19%" class="ConfigOption">shared_texture_objects</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       If zero, all clients connected to the server will get a private pool
+       of texture object IDs.  If one, all clients connected to the server
+       will share a common pool of texture object IDs.
+       The default is one (a shared pool of IDs).
+    </td>
+  </tr>
 
   <tr>
     <td width="19%" class="ConfigOption">shared_programs</td>
@@ -173,13 +183,15 @@ for the Chromium server.</p>
   </tr>
 
   <tr>
-    <td width="19%" class="ConfigOption">shared_texture_objects</td>
+    <td width="19%" class="ConfigOption">shared_windows</td>
     <td width="12%" class="ConfigType">Boolean</td>
     <td width="115%" class="ConfigDesc">
-       If zero, all clients connected to the server will get a private pool
-       of texture object IDs.  If one, all clients connected to the server
-       will share a common pool of texture object IDs.
-       The default is one (a shared pool of IDs).
+       If true, clients will share windows on the server.
+       Otherwise, every client request for a new window will create a new
+       window that's never shared among clients.
+       Typically would be set for sort-last rendering, or parallel rendering
+       into one window.
+       The default is zero (no window sharing).
     </td>
   </tr>
 
