@@ -27,5 +27,6 @@ Finish
 PixelStorei
 PixelStoref
 CreateContext
+crCreateWindow
 MakeCurrent
 DestroyContext
