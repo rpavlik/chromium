@@ -44,7 +44,7 @@ static float colors[7][4] = {
 static crCreateContextProc   crCreateContextCR;
 static crMakeCurrentProc     crMakeCurrentCR;
 static crSwapBuffersProc     crSwapBuffersCR;
-static crCreateWindowProc    crCreateWindowCR;
+static crWindowCreateProc    crWindowCreateCR;
 static crWindowPositionProc  crWindowPositionCR;
 static glBarrierCreateCRProc glBarrierCreateCR;
 static glBarrierExecCRProc   glBarrierExecCR;
@@ -269,10 +269,10 @@ int main(int argc, char *argv[])
 	GET_FUNCTION(crCreateContextCR, crCreateContextProc, "crCreateContext");
 	GET_FUNCTION(crMakeCurrentCR, crMakeCurrentProc, "crMakeCurrent");
 	GET_FUNCTION(crSwapBuffersCR, crSwapBuffersProc, "crSwapBuffers");
-	GET_FUNCTION(crCreateWindowCR, crCreateWindowProc, "crCreateWindow");
+	GET_FUNCTION(crWindowCreateCR, crWindowCreateProc, "crWindowCreate");
 	GET_FUNCTION(crWindowPositionCR, crWindowPositionProc, "crWindowPosition");
 
-	Context[0].Window = crCreateWindowCR(dpy, visual);
+	Context[0].Window = crWindowCreateCR(dpy, visual);
 	/*	Context[0].Context = crCreateContextCR(dpy, visual);*/
 	if (Context[0].Window < 0) {
 		 crError("Failed to create 0th window!\n");
@@ -287,9 +287,9 @@ int main(int argc, char *argv[])
 		if (i > 0) {
 			if (multiWindow) {
 				/* a new window */
-				Context[i].Window = crCreateWindowCR(dpy, visual);
+				Context[i].Window = crWindowCreateCR(dpy, visual);
 				if (Context[i].Window < 0) {
-					crError("crCreateWindowCR() failed!\n");
+					crError("crWindowCreateCR() failed!\n");
 					return 0;
 				}
 				crWindowPositionCR(Context[i].Window, 420*i, 20);
