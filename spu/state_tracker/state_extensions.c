@@ -112,6 +112,7 @@ int crStateGetTexParameterivExtensions( CRTextureObj *tobj, GLenum pname, GLint 
 
 void crStateTextureDiffParameterExtensions( CRTextureObj *tobj )
 {
+	(void) tobj;
 #ifdef GL_EXT_texture_filter_anisotropic
 	diff_api.TexParameterf(tobj->target, GL_TEXTURE_MAX_ANISOTROPY_EXT, tobj->extensions.maxAnisotropy);
 #endif

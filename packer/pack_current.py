@@ -17,16 +17,27 @@ void crPackOffsetCurrentPointers( int offset )
 	GLtexcoord_p	*texCoord	= &(cr_packer_globals.current.texCoord);
 	GLindex_p		*index		= &(cr_packer_globals.current.index);
 	GLedgeflag_p	*edgeFlag	= &(cr_packer_globals.current.edgeFlag);
-
+	
+	int i;
 """
 
 for k in current_fns.keys():
 	name = '%s%s' % (k[:1].lower(),k[1:])
 	for type in current_fns[k]['types']:
 		for size in current_fns[k]['sizes']:
+			indent = ""
 			ptr = "%s->%s%d" % (name, type, size )
-			print "\tif ( %s )" % ptr
-			print "\t\t%s += offset;" % ptr
+			if current_fns[k].has_key( 'array' ):
+				print '\tfor (i = 0 ; i < %s ; i++)' % current_fns[k]['array']
+				print '\t{'
+				ptr += "[i]"
+				indent = "\t"
+			print "%s\tif ( %s )" % (indent, ptr)
+			print "%s\t{" % indent
+			print "%s\t\t%s += offset;" % (indent, ptr )
+			print "%s\t}" % indent
+			if current_fns[k].has_key( 'array' ):
+				print '\t}'
 print """
 }
 
@@ -37,6 +48,8 @@ void crPackNullCurrentPointers( void )
 	GLtexcoord_p	*texCoord	= &(cr_packer_globals.current.texCoord);
 	GLindex_p		*index		= &(cr_packer_globals.current.index);
 	GLedgeflag_p	*edgeFlag	= &(cr_packer_globals.current.edgeFlag);
+
+	int i;
 """
 
 for k in current_fns.keys():
@@ -44,6 +57,14 @@ for k in current_fns.keys():
 	for type in current_fns[k]['types']:
 		for size in current_fns[k]['sizes']:
 			ptr = "%s->%s%d" % (name, type, size )
-			print "\t%s = NULL;" % ptr
+			indent = ""
+			if current_fns[k].has_key( 'array' ):
+				print '\tfor (i = 0 ; i < %s ; i++)' % current_fns[k]['array']
+				print '\t{'
+				ptr += "[i]"
+				indent = "\t"
+			print "%s\t%s = NULL;" % (indent, ptr )
+			if current_fns[k].has_key( 'array' ):
+				print '\t}'
 
 print "}"

@@ -32,7 +32,12 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 {
 	if (tilesort_spu.pinchState.isLoop)
 	{
-		crPackTexCoord4fv ((GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord.s));
+		int i;
+
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		{
+			crPackMultiTexCoord4fvARB ( i + GL_TEXTURE0_ARB, (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+		}
 		crPackNormal3fv((GLfloat *) &(tilesort_spu.pinchState.vtx->normal.x));
 		crPackEdgeFlag(tilesort_spu.pinchState.vtx->edgeFlag);
 		crPackColor4fv((GLfloat *) &(tilesort_spu.pinchState.vtx->color.r));

@@ -81,10 +81,15 @@ void crStateCurrentRecover( void )
 	GLindex_p		*index		= &(c->current->index);
 	GLedgeflag_p	*edgeFlag	= &(c->current->edgeFlag);
 
+	int i;
+
 	/* Save pre state */
 	c->normalPre = c->normal;
 	c->colorPre = c->color;
-	c->texCoordPre = c->texCoord;
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	{
+		c->texCoordPre[i] = c->texCoord[i];
+	}
 	c->indexPre = c->index;
 	c->edgeFlagPre = c->edgeFlag;
 
@@ -95,32 +100,50 @@ for k in current_fns.keys():
 	print '\tv=NULL;'
 	name = '%s%s' % (k[:1].lower(),k[1:])
 
+	indent = ""
+	if current_fns[k].has_key( 'array' ):
+		print '\tfor (i = 0 ; i < %s ; i++)' % current_fns[k]['array']
+		print '\t{'
+		indent += "\t"
 	for type in current_fns[k]['types']:
 		for size in current_fns[k]['sizes']:
 			ptr = '%s->%s%d' % (name, type, size )
-			print '\tif (v < %s)' % ptr
-			print '\t{'
-			print '\t\tv = %s;' % ptr
+			if current_fns[k].has_key( 'array' ):
+				ptr += "[i]"
+			print '%s\tif (v < %s)' % (indent, ptr)
+			print '%s\t{' % indent
+			print '%s\t\tv = %s;' % (indent, ptr)
 			if (k == 'Color' or k == 'Normal') and type != 'f' and type != 'd' and type != 'l':
-				print '\t\tconvert = (convert_func) __convert_rescale_%s%d;' % (type,size)
+				print '%s\t\tconvert = (convert_func) __convert_rescale_%s%d;' % (indent,type,size)
 			else:
-				print '\t\tconvert = (convert_func) __convert_%s%d;' % (type,size)
-			print '\t}'
+				print '%s\t\tconvert = (convert_func) __convert_%s%d;' % (indent,type,size)
+			print '%s\t}' % indent
 	print ''
-	print '\tif (v != NULL) {'
-	print '\t\tc->%s = %s_default;' % (name,name)
+	print '%s\tif (v != NULL) {' % indent
+	if current_fns[k].has_key( 'array' ):
+		print '%s\t\tc->%s[i] = %s_default;' % (indent,name,name)
+	else:
+		print '%s\t\tc->%s = %s_default;' % (indent,name,name)
 	if k == 'EdgeFlag':
-		print '\t\t__convert_boolean (&(c->%s), v);' % name
+		print '%s\t\t__convert_boolean (&(c->%s), v);' % (indent, name)
 	elif k == 'Index':
-		print '\t\tconvert(&(c->%s), v);' % name
+		print '%s\t\tconvert(&(c->%s), v);' % (indent,name)
 	elif k == 'Normal':
-		print '\t\tconvert(&(c->%s.x), v);' % name
+		print '%s\t\tconvert(&(c->%s.x), v);' % (indent,name)
 	elif k == 'TexCoord':
-		print '\t\tconvert(&(c->%s.s), v);' % name
+		print '%s\t\tconvert(&(c->%s[i].s), v);' % (indent,name)
 	elif k == 'Color':
-		print '\t\tconvert(&(c->%s.r), v);' % name
-	print '\t\tcb->%s = nbitID;' % name
-	print '\t\tcb->dirty = nbitID;'
-	print '\t}'
-	print '\t%s->ptr = v;' % name
+		print '%s\t\tconvert(&(c->%s.r), v);' % (indent,name)
+	if current_fns[k].has_key( 'array' ):
+		print '%s\t\tcb->%s[i] = nbitID;' % (indent,name)
+	else:
+		print '%s\t\tcb->%s = nbitID;' % (indent,name)
+	print '%s\t\tcb->dirty = nbitID;' % indent
+	print '%s\t}' % indent
+	if current_fns[k].has_key( 'array' ):
+		print '%s\t%s->ptr[i] = v;' % (indent, name )
+	else:
+		print '%s\t%s->ptr = v;' % (indent, name )
+	if current_fns[k].has_key( 'array' ):
+		print '\t}'
 print '}'

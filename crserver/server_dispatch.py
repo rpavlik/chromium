@@ -34,11 +34,24 @@ keys.sort()
 
 for func_name in keys:
 	current = 0
-	m = re.search( r"^(Color|Normal|TexCoord)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
+	array = ""
+	m = re.search( r"^(Color|Normal)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
 	if m :
 		current = 1
 		name = string.lower( m.group(1)[:1] ) + m.group(1)[1:]
 		type = m.group(3) + m.group(2)
+	m = re.search( r"^(TexCoord)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
+	if m :
+		current = 1
+		name = string.lower( m.group(1)[:1] ) + m.group(1)[1:]
+		type = m.group(3) + m.group(2)
+		array = "[0]"
+	m = re.search( r"^(MultiTexCoord)([1234])(ub|b|us|s|ui|i|f|d)ARB$", func_name )
+	if m :
+		current = 1
+		name = "texCoord"
+		type = m.group(3) + m.group(2)
+		array = "[texture-GL_TEXTURE0_ARB]"
 	m = re.match( r"^(Index)(ub|b|us|s|ui|i|f|d)$", func_name )
 	if m :
 		current = 1
@@ -55,8 +68,8 @@ for func_name in keys:
 		print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s%s' % ( func_name, stub_common.ArgumentString( names, types ) )
 		print '{'
 		print '\tcr_server.head_spu->dispatch_table.%s%s;' % (func_name, stub_common.CallString( names ) )
-		print "\tcr_server.current." + name + "." + type + " = cr_unpackData;"
-		print '}'	
+		print "\tcr_server.current.%s.%s%s = cr_unpackData;" % (name,type,array)
+		print '}\n'	
 
 print """
 void crServerInitDispatch(void)

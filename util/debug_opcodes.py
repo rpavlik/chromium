@@ -28,7 +28,7 @@ keys = gl_mapping.keys()
 keys.sort();
 
 for func_name in keys:
-	if not stub_common.FindSpecial( "../packer/opcode", func_name ):
+	if not stub_common.FindSpecial( "../packer/opcode", func_name ) and not stub_common.FindSpecial( "../packer/opcode_extend", func_name ):
 		print '\t\tcase %s:' % stub_common.OpcodeName( func_name )
 		print '\t\t\tfprintf( fp, "%s\\n" ); ' % stub_common.OpcodeName( func_name )
 		print '\t\t\tbreak;'

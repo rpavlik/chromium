@@ -17,7 +17,8 @@ current_fns = {
 		'types': ['s','i','f','d'],
 		'sizes': [1,2,3,4],
 		'default': [0,0,0,1],
-		'members': ['s', 't', 'p', 'q']
+		'members': ['s', 't', 'p', 'q'],
+		'array': 'CR_MAX_TEXTURE_UNITS'
 	},
 	'EdgeFlag': {
 		'types': ['l'],

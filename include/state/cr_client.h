@@ -42,8 +42,10 @@ typedef struct {
 	CRClientPointer n;
 	CRClientPointer c;
 	CRClientPointer i;
-	CRClientPointer t;
+	CRClientPointer t[CR_MAX_TEXTURE_UNITS];
 	CRClientPointer e;
+
+	GLint curClientTextureUnit;
 
 	int *list;
 	int list_alloc;

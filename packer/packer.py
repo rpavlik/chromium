@@ -41,7 +41,15 @@ print "};"
 print ""
 
 def SmackVector( func_name ):
-		return re.sub( "v$", "", func_name )
+	match = re.search( r"v$", func_name )
+	arb_match = re.search( r"vARB$", func_name )
+	if match:
+		ret = re.sub( "v$", "", func_name )
+	elif arb_match:
+		ret = re.sub( "vARB$", "ARB", func_name )
+	else:
+		ret = func_name
+	return ret
 
 def VectorLength( func_name ):
 	m = re.search( r"([0-9])", func_name )
@@ -57,7 +65,7 @@ def WriteData( offset, arg_type, arg_name ):
 	return retval
 
 def UpdateCurrentPointer( func_name ):
-	m = re.search( r"^(Color|Normal|TexCoord)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
+	m = re.search( r"^(Color|Normal)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
 	if m :
 		k = m.group(1)
 		name = '%s%s' % (k[:1].lower(),k[1:])
@@ -65,10 +73,26 @@ def UpdateCurrentPointer( func_name ):
 		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
 
+	m = re.search( r"^(TexCoord)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
+	if m :
+		k = m.group(1)
+		name = 'texCoord'
+		type = m.group(3) + m.group(2)
+		print "\tcr_packer_globals.current.%s.%s[0] = data_ptr;" % (name,type)
+		return
+
+	m = re.search( r"^(MultiTexCoord)([1234])(ub|b|us|s|ui|i|f|d)ARB$", func_name )
+	if m :
+		k = m.group(1)
+		name = 'texCoord'
+		type = m.group(3) + m.group(2)
+		print "\tcr_packer_globals.current.%s.%s[texture-GL_TEXTURE0_ARB] = data_ptr;" % (name,type)
+		return
+
 	m = re.match( r"^(Index)(ub|b|us|s|ui|i|f|d)$", func_name )
 	if m :
 		k = m.group(1)
-		name = '%s%s' % (k[:1].lower(),k[1:])
+		name = 'index'
 		type = m.group(2) + "1"
 		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
@@ -76,7 +100,7 @@ def UpdateCurrentPointer( func_name ):
 	m = re.match( r"^(EdgeFlag)$", func_name )
 	if m :
 		k = m.group(1)
-		name = '%s%s' % (k[:1].lower(),k[1:])
+		name = 'edgeFlag'
 		type = "l1"
 		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
@@ -105,8 +129,6 @@ for func_name in keys:
 		is_extended = 1
 		arg_types.append( "int *" )
 		arg_names.append( "writeback" )
- 	elif stub_common.FindSpecial( "opcode_extend", func_name ):
-		is_extended = 1
 	print 'void PACK_APIENTRY ' + stub_common.PackFunction( func_name ),
 	print stub_common.ArgumentString( arg_names, arg_types )
 	print '{'
@@ -115,12 +137,19 @@ for func_name in keys:
 	vector_nelem = stub_common.IsVector( func_name )
 	if vector_nelem :
 		func_name = SmackVector( func_name )
-		vector_arg_type = re.sub( r"\*", "", arg_types[0] )
+		vector_arg_type = re.sub( r"\*", "", arg_types[len(arg_types)-1] )
 		vector_arg_type = re.sub( "const ", "", vector_arg_type )
 		vector_arg_type = string.strip( vector_arg_type )
-		packet_length = stub_common.WordAlign( vector_nelem * stub_common.lengths[vector_arg_type] )
+		packet_length = stub_common.PacketLength( arg_types[:-1] ) + stub_common.WordAlign( vector_nelem * stub_common.lengths[vector_arg_type] )
 	else:
-		packet_length = stub_common.PacketLength( arg_types )
+		try:
+			packet_length = stub_common.PacketLength( arg_types )
+		except:
+			print >> sys.stderr, "WHY DID THIS FAIL: " + `arg_types`
+
+	# do this on the new name so that MultiTexCoords can work out
+ 	if stub_common.FindSpecial( "opcode_extend", func_name ):
+		is_extended = 1
 
 	if packet_length == -1:
 		print '\tcrError ( "%s needs to be special cased!");' % orig_func_name
@@ -142,17 +171,16 @@ for func_name in keys:
 			counter = 8
 			print WriteData( 0, 'int', packet_length )
 			print WriteData( 4, 'GLenum', stub_common.ExtendedOpcodeName( func_name ) )
-		if vector_nelem :
-			for index in range( 0, vector_nelem ):
-				print WriteData( index*stub_common.lengths[vector_arg_type], vector_arg_type, arg_names[-1] + ("[%d]" %index) )
-		else:
-			for index in range(0,len(arg_names)):
-				if arg_names[index] != '':
-					print WriteData( counter, arg_types[index], arg_names[index] )
-					if string.find( arg_types[index], '*' ) != -1:
-						counter += stub_common.PointerSize()
-					else:
-						counter += stub_common.lengths[arg_types[index]]
+		for index in range(0,len(arg_names)):
+			if vector_nelem and index == len(arg_names)-1:
+				for index in range( 0, vector_nelem ):
+					print WriteData( counter + index*stub_common.lengths[vector_arg_type], vector_arg_type, arg_names[-1] + ("[%d]" %index) )
+			elif arg_names[index] != '':
+				print WriteData( counter, arg_types[index], arg_names[index] )
+				if string.find( arg_types[index], '*' ) != -1:
+					counter += stub_common.PointerSize()
+				else:
+					counter += stub_common.lengths[arg_types[index]]
 		if is_extended:
 			print "\tWRITE_OPCODE( CR_EXTEND_OPCODE );"
 		else:

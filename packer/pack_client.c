@@ -15,13 +15,13 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 	{
 		crPackEdgeFlagv(c->e.p + index*c->e.stride);
 	}
-	if (c->t.enabled) 
+	if (c->t[c->curClientTextureUnit].enabled) 
 	{
-		p = c->t.p + index*c->t.stride;
-		switch (c->t.type) 
+		p = c->t[c->curClientTextureUnit].p + index*c->t[c->curClientTextureUnit].stride;
+		switch (c->t[c->curClientTextureUnit].type) 
 		{
 			case GL_SHORT:
-				switch (c->t.size) 
+				switch (c->t[c->curClientTextureUnit].size) 
 				{
 					case 1: crPackTexCoord1sv((GLshort *)p); break;
 					case 2: crPackTexCoord2sv((GLshort *)p); break;
@@ -30,7 +30,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_INT:
-				switch (c->t.size) 
+				switch (c->t[c->curClientTextureUnit].size) 
 				{
 					case 1: crPackTexCoord1iv((GLint *)p); break;
 					case 2: crPackTexCoord2iv((GLint *)p); break;
@@ -39,7 +39,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_FLOAT:
-				switch (c->t.size) 
+				switch (c->t[c->curClientTextureUnit].size) 
 				{
 					case 1: crPackTexCoord1fv((GLfloat *)p); break;
 					case 2: crPackTexCoord2fv((GLfloat *)p); break;
@@ -48,7 +48,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_DOUBLE:
-				switch (c->t.size) 
+				switch (c->t[c->curClientTextureUnit].size) 
 				{
 					case 1: crPackTexCoord1dv((GLdouble *)p); break;
 					case 2: crPackTexCoord2dv((GLdouble *)p); break;

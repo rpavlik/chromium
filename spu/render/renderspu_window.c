@@ -576,7 +576,7 @@ void renderspuCreateWindow( void )
 	{
 		crError( "Couldn't set up the device context!  Yikes!" );
 	}
-	//DebugBreak();
+
 	render_spu.hRC = render_spu.wglCreateContext( render_spu.device_context );
 	if (!render_spu.hRC)
 	{

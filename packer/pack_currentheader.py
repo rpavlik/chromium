@@ -7,15 +7,23 @@ print """
 
 #ifndef CR_CURRENT_H
 #define CR_CURRENT_H
+
+#define CR_MAX_TEXTURE_UNITS 8
 """
 
 for k in current_fns.keys():
 	name = k.lower();
 	print "typedef struct {"
-	print "\tunsigned char *ptr;"
+	if current_fns[k].has_key( 'array' ):
+		print "\tunsigned char *ptr[%s];" % current_fns[k]['array']
+	else:
+		print "\tunsigned char *ptr;"
 	for type in current_fns[k]['types']:
 		for size in current_fns[k]['sizes']:
-			print "\tunsigned char *%s%d;" % (type, size)
+			if current_fns[k].has_key( 'array' ):
+				print "\tunsigned char *%s%d[%s];" % (type, size, current_fns[k]['array'])
+			else:
+				print "\tunsigned char *%s%d;" % (type, size)
 	print "} GL%s_p;\n" % name
 
 print "typedef struct {"

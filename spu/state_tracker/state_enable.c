@@ -134,40 +134,40 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->stencil.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_1D :
-			g->texture.enabled1D = val;
-			sb->texture.enable = neg_bitid;
+			g->texture.enabled1D[g->texture.curTextureUnit] = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_2D :
-			g->texture.enabled2D = val;
-			sb->texture.enable = neg_bitid;
+			g->texture.enabled2D[g->texture.curTextureUnit] = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 #if 0
 		case GL_TEXTURE_3D :
-			g->texture.enabled3D = val;
-			sb->texture.enable = neg_bitid;
+			g->texture.enabled3D[g->texture.curTextureUnit] = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 #endif
 		case GL_TEXTURE_GEN_Q :
-			g->texture.textureGen.q = val;
-			sb->texture.enable = neg_bitid;
+			g->texture.textureGen[g->texture.curTextureUnit].q = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_GEN_R :
-			g->texture.textureGen.p = val;
-			sb->texture.enable = neg_bitid;
+			g->texture.textureGen[g->texture.curTextureUnit].p = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_GEN_S :
-			g->texture.textureGen.s = val;
-			sb->texture.enable = neg_bitid;
+			g->texture.textureGen[g->texture.curTextureUnit].s = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_GEN_T :
-			g->texture.textureGen.t = val;
-			sb->texture.enable = neg_bitid;
+			g->texture.textureGen[g->texture.curTextureUnit].t = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_MAP1_COLOR_4 :
@@ -179,6 +179,11 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_MAP1_TEXTURE_COORD_4 :
 		case GL_MAP1_VERTEX_3 :
 		case GL_MAP1_VERTEX_4 :
+			if (g->texture.curTextureUnit != GL_TEXTURE0_ARB)
+			{
+				crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "Map stuff was enabled while the current texture unit was not GL_TEXTURE0_ARB!" );
+				return;
+			}
 			g->eval.enable1D[cap - GL_MAP1_COLOR_4] = val;
 			sb->eval.enable1D[cap - GL_MAP1_COLOR_4] = neg_bitid;
 			sb->eval.dirty = neg_bitid;
@@ -192,6 +197,11 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_MAP2_TEXTURE_COORD_4 :
 		case GL_MAP2_VERTEX_3 :
 		case GL_MAP2_VERTEX_4 :
+			if (g->texture.curTextureUnit != GL_TEXTURE0_ARB)
+			{
+				crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "Map stuff was enabled while the current texture unit was not GL_TEXTURE0_ARB!" );
+				return;
+			}
 			g->eval.enable2D[cap - GL_MAP2_COLOR_4] = val;
 			sb->eval.enable2D[cap - GL_MAP2_COLOR_4] = neg_bitid;
 			sb->eval.dirty = neg_bitid;

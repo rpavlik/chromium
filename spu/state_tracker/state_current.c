@@ -7,10 +7,14 @@ void crStateCurrentInit( CRCurrentState *c )
 	GLcolorf	default_color	     = {1.0f, 1.0f, 1.0f, 1.0f};
 	GLtexcoordf default_texcoord = {0.0f, 0.0f, 0.0f, 1.0f};
 	GLvectorf default_rasterpos  = {0.0f, 0.0f, 0.0f, 1.0f};
+	int i;
 
 	c->color	= default_color;
 	c->index	= 1.0f;
-	c->texCoord = default_texcoord;
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	{
+		c->texCoord[i] = default_texcoord;
+	}
 	c->normal	= default_normal;
 
 	c->rasterPos = default_rasterpos;
@@ -84,6 +88,7 @@ void STATE_APIENTRY crStateEnd( void )
 void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 					 CRCurrentState *from, CRCurrentState *to) 
 {
+	int i;
 	GLbitvalue nbitID = ~bitID;
 
 	if (c->enable & bitID) {
@@ -149,13 +154,16 @@ void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 		c->normal &= nbitID;
 	}
 
-	if (c->texCoord & bitID) {
-		if (COMPARE_TEXCOORD (from->texCoord, to->texCoordPre)) {
-			diff_api.TexCoord4fv ((GLfloat *) &(to->texCoord.s));
-			c->normal = GLBITS_ONES;
-			c->dirty = GLBITS_ONES;
+	for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	{
+		if (c->texCoord[i] & bitID) {
+			if (COMPARE_TEXCOORD (from->texCoord[i], to->texCoordPre[i])) {
+				diff_api.MultiTexCoord4fvARB (i+GL_TEXTURE0_ARB, (GLfloat *) &(to->texCoord[i].s));
+				c->normal = GLBITS_ONES;
+				c->dirty = GLBITS_ONES;
+			}
+			c->texCoord[i] &= nbitID;
 		}
-		c->texCoord &= nbitID;
 	}
 
 	c->dirty &= nbitID;
@@ -164,6 +172,7 @@ void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
 					 CRCurrentState *from, CRCurrentState *to) 
 {
+	int i;
 	GLbitvalue nbitID = ~bitID;
 
 	if (c->enable & bitID) {
@@ -225,12 +234,15 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
 		c->normal &= nbitID;
 	}
 
-	if (c->texCoord & bitID) {
-		if (COMPARE_TEXCOORD (from->texCoord, to->texCoordPre)) {
-			diff_api.TexCoord4fv ((GLfloat *) &(to->texCoordPre.s));
+	for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	{
+		if (c->texCoord[i] & bitID) {
+			if (COMPARE_TEXCOORD (from->texCoord[i], to->texCoordPre[i])) {
+				diff_api.MultiTexCoord4fvARB (GL_TEXTURE0_ARB + i, (GLfloat *) &(to->texCoordPre[i].s));
+			}
+			from->texCoord[i] = to->texCoord[i];
+			c->texCoord[i] &= nbitID;
 		}
-		from->texCoord = to->texCoord;
-		c->texCoord &= nbitID;
 	}
 
 	if (c->edgeFlag & bitID) {

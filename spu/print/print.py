@@ -56,31 +56,32 @@ for func_name in keys:
 
 	vector_nelem = stub_common.IsVector( func_name )
 	if vector_nelem != 0:
-		printfstr += '['
-		vector_arg_type = re.sub( r'\*', '', types[0] )
+		vector_arg_type = re.sub( r'\*', '', types[len(types)-1] )
 		vector_arg_type = re.sub( r'const ', '', vector_arg_type )
 		vector_arg_type = string.strip( vector_arg_type );
-		for index in range( vector_nelem ):
-			if printf_mapping.has_key( vector_arg_type ):
-				printfstr += printf_mapping[vector_arg_type]
-				arg = '%s[%d]' % (names[0], index)
-				if vector_arg_type == 'GLboolean':
-					argstr += '%s ? "true" : "false"' % arg
-				else:
-					argstr += arg
-			if index != vector_nelem - 1:
-				printfstr += ", "
-				argstr += ", "
-		printfstr += ']'
-	else:
-		for i in range(len(names)):
-			name = names[i]
-			type = types[i]
-			if type == 'void':
-				printfstr = ""
-				argstr = ""
-				break;
+	for i in range(len(names)):
+		name = names[i]
+		type = types[i]
+		if type == 'void':
+			printfstr = ""
+			argstr = ""
+			break;
 
+		if vector_nelem != 0 and i == len(names)-1:
+			printfstr += '['
+			for index in range( vector_nelem ):
+				if printf_mapping.has_key( vector_arg_type ):
+					printfstr += printf_mapping[vector_arg_type]
+					arg = '%s[%d]' % (names[len(names)-1], index)
+					if vector_arg_type == 'GLboolean':
+						argstr += '%s ? "true" : "false"' % arg
+					else:
+						argstr += arg
+				if index != vector_nelem - 1:
+					printfstr += ", "
+					argstr += ", "
+			printfstr += ']'
+		else:
 			if printf_mapping.has_key( type ):
 				printfstr += printf_mapping[type];
 				if type == 'GLenum':

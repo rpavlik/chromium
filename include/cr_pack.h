@@ -66,6 +66,8 @@ void crHugePacket( CROpcode op, void *ptr );
 void crPackFree( void *ptr );
 void crNetworkPointerWrite( CRNetworkPointer *, void * );
 
+void SanityCheck(void);
+
 #define GET_BUFFERED_POINTER( len ) \
   data_ptr = cr_packer_globals.buffer.data_current; \
   if (data_ptr + (len) > cr_packer_globals.buffer.data_end ) \
@@ -102,7 +104,7 @@ void crNetworkPointerWrite( CRNetworkPointer *, void * );
   crWriteUnalignedDouble( data_ptr + (offset), (data) )
 #endif
 
-#define WRITE_OPCODE( opcode ) \
+#define WRITE_OPCODE( opcode )  \
   *(cr_packer_globals.buffer.opcode_current--) = (unsigned char) opcode
 
 #define WRITE_NETWORK_POINTER( offset, data ) \

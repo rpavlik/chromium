@@ -13,7 +13,7 @@ typedef struct {
 	GLbitvalue  enable;
 	GLbitvalue  color;
 	GLbitvalue  index;
-	GLbitvalue  texCoord;
+	GLbitvalue  texCoord[CR_MAX_TEXTURE_UNITS];
 	GLbitvalue  normal;
 	GLbitvalue  raster;
 	GLbitvalue  edgeFlag;
@@ -22,7 +22,7 @@ typedef struct {
 typedef struct {
 	GLvectorf	pos;
 	GLcolorf	color;
-	GLtexcoordf	texCoord;
+	GLtexcoordf	texCoord[CR_MAX_TEXTURE_UNITS];
 	GLvectorf	normal;
 	GLboolean	edgeFlag;
 	GLfloat		index;
@@ -32,13 +32,13 @@ typedef struct {
 typedef struct {
 	GLcolorf     color;
 	GLfloat      index;
-	GLtexcoordf  texCoord;
+	GLtexcoordf  texCoord[CR_MAX_TEXTURE_UNITS];
 	GLvectorf    normal;
 	GLboolean    edgeFlag;
 
 	GLcolorf     colorPre;
 	GLfloat      indexPre;
-	GLtexcoordf  texCoordPre;
+	GLtexcoordf  texCoordPre[CR_MAX_TEXTURE_UNITS];
 	GLvectorf    normalPre;
 	GLboolean    edgeFlagPre;
 
@@ -73,7 +73,7 @@ void crStateCurrentDiff(CRCurrentBits *bb, GLbitvalue bitID,
 void crStateCurrentSwitch(CRCurrentBits *bb, GLbitvalue bitID, 
 		CRCurrentState *from, CRCurrentState *to);
 
-#ifdef __cplusplusk
+#ifdef __cplusplus
 }
 #endif
 

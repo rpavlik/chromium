@@ -182,3 +182,5 @@ NormalPointer
 TexCoordPointer
 EdgeFlagPointer
 GetPointerv
+ActiveTextureARB
+ClientActiveTextureARB

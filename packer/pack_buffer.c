@@ -162,3 +162,21 @@ void crNetworkPointerWrite( CRNetworkPointer *dst, void *src )
 	dst->ptrAlign[1] = 0xCafeBabe;
 	memcpy( dst, &src, sizeof(src) );
 }
+
+void SanityCheck( void )
+{
+	unsigned char *ptr = cr_packer_globals.buffer.opcode_start;
+
+	while (ptr > cr_packer_globals.buffer.opcode_current)
+	{
+		if (ptr[0] == CR_EXTEND_OPCODE &&
+				ptr[1] == CR_EXTEND_OPCODE &&
+				ptr[2] == CR_EXTEND_OPCODE &&
+				ptr[3] == CR_EXTEND_OPCODE &&
+				ptr[4] == CR_EXTEND_OPCODE)
+		{
+			DebugBreak();
+		}
+		ptr--;
+	}
+}

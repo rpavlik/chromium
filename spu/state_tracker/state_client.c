@@ -36,38 +36,56 @@ void crStateClientInitBits (CRClientBits *c)
 
 void crStateClientInit(CRClientState *c) 
 {
-	CRClientPointer *lookup[6];
-	CRClientPointer *cp;
 	int i;
-
-	lookup[0] = &(c->v);
-	lookup[1] = &(c->c);
-	lookup[2] = &(c->e);
-	lookup[3] = &(c->i);
-	lookup[4] = &(c->n);
-	lookup[5] = &(c->t);
 
 	c->maxElementsIndices = 16384; // XXX
 	c->maxElementsVertices = 16384; // XXX
+
+	c->curClientTextureUnit = 0;
 
 	c->list_alloc = GLCLIENT_LIST_ALLOC;
 	c->list_size = 0;
 	c->list = (int *) malloc (c->list_alloc * sizeof (int));
 
-	for (i=0; i<GLCLIENT_NUMPOINTERS; i++) 
+	c->v.p = NULL;
+	c->v.size = 0;
+	c->v.type = GL_NONE;
+	c->v.stride = 0;
+	c->v.enabled = 0;
+	c->c.p = NULL;
+	c->c.size = 0;
+	c->c.type = GL_NONE;
+	c->c.stride = 0;
+	c->c.enabled = 0;
+	c->e.p = NULL;
+	c->e.size = 0;
+	c->e.type = GL_NONE;
+	c->e.stride = 0;
+	c->e.enabled = 0;
+	c->i.p = NULL;
+	c->i.size = 0;
+	c->i.type = GL_NONE;
+	c->i.stride = 0;
+	c->i.enabled = 0;
+	c->n.p = NULL;
+	c->n.size = 0;
+	c->n.type = GL_NONE;
+	c->n.stride = 0;
+	c->n.enabled = 0;
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
-		cp = lookup[i];
-		cp->p = NULL;
-		cp->size = 0;
-		cp->type = GL_NONE;
-		cp->stride = 0;
-		cp->enabled = 0;
+		c->t[i].p = NULL;
+		c->t[i].size = 0;
+		c->t[i].type = GL_NONE;
+		c->t[i].stride = 0;
+		c->t[i].enabled = 0;
 	}
 }
 
 void crStateClientSetClientState(CRClientState *c, CRClientBits *cb, 
 		GLbitvalue neg_bitid, GLenum array, GLboolean state) 
 {
+	int i;
 	switch (array) 
 	{
 		case GL_VERTEX_ARRAY:
@@ -83,7 +101,10 @@ void crStateClientSetClientState(CRClientState *c, CRClientBits *cb,
 			c->i.enabled = state;
 			break;
 		case GL_TEXTURE_COORD_ARRAY:
-			c->t.enabled = state;
+			for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+			{
+				c->t[i].enabled = state;
+			}
 			break;
 		case GL_EDGE_FLAG_ARRAY:
 			c->e.enabled = state;
@@ -308,7 +329,7 @@ void STATE_APIENTRY crStateTexCoordPointer(GLint size, GLenum type,
 		return;
 	}
 
-	crStateClientSetPointer(&(c->t), size, type, stride, p);
+	crStateClientSetPointer(&(c->t[c->curClientTextureUnit]), size, type, stride, p);
 	cb->dirty = g->neg_bitid;
 	cb->clientPointer = g->neg_bitid;
 }
@@ -610,7 +631,7 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 **  TexturePointer
 */
 
-	cp = &(c->t);
+	cp = &(c->t[c->curClientTextureUnit]);
 	cp->enabled = GL_TRUE;
 	switch (format) 
 	{
@@ -698,7 +719,7 @@ void STATE_APIENTRY crStateGetPointerv(GLenum pname, GLvoid * * params)
 			*params = (GLvoid *) c->i.p;
 			break;
 		case GL_TEXTURE_COORD_ARRAY_POINTER:
-			*params = (GLvoid *) c->t.p;
+			*params = (GLvoid *) c->t[c->curClientTextureUnit].p;
 			break;
 		case GL_EDGE_FLAG_ARRAY_POINTER:
 			*params = (GLvoid *) c->e.p;

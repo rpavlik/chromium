@@ -29,12 +29,12 @@ GLboolean GL_POLYGON_SMOOTH           g->polygon.polygonSmooth
 GLboolean GL_POLYGON_STIPPLE          g->polygon.polygonStipple
 GLboolean GL_NORMALIZE                g->current.normalize
 GLboolean GL_RGBA_MODE                GL_TRUE
-GLboolean GL_TEXTURE_GEN_S            g->texture.textureGen.s
-GLboolean GL_TEXTURE_GEN_T            g->texture.textureGen.t
-GLboolean GL_TEXTURE_GEN_R            g->texture.textureGen.p
-GLboolean GL_TEXTURE_GEN_Q            g->texture.textureGen.q
-GLboolean GL_TEXTURE_1D               g->texture.enabled1D
-GLboolean GL_TEXTURE_2D               g->texture.enabled2D
+GLboolean GL_TEXTURE_GEN_S g->texture.textureGen[g->texture.curTextureUnit].s
+GLboolean GL_TEXTURE_GEN_T g->texture.textureGen[g->texture.curTextureUnit].t
+GLboolean GL_TEXTURE_GEN_R g->texture.textureGen[g->texture.curTextureUnit].p
+GLboolean GL_TEXTURE_GEN_Q g->texture.textureGen[g->texture.curTextureUnit].q
+GLboolean GL_TEXTURE_1D g->texture.enabled1D[g->texture.curTextureUnit]
+GLboolean GL_TEXTURE_2D g->texture.enabled2D[g->texture.curTextureUnit]
 # GLboolean GL_TEXTURE_3D               g->texture.enabled3D
 GLboolean GL_UNPACK_SWAP_BYTES        g->pixel.unpack.swapBytes
 GLboolean GL_UNPACK_LSB_FIRST         g->pixel.unpack.psLSBFirst

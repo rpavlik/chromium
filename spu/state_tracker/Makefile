@@ -30,7 +30,6 @@ REGULAR_FILES = state_attrib \
 	state_viewport
 
 DIFF_FILES = buffer \
-	client \
 	current \
 	fog \
 	lighting \
@@ -39,6 +38,8 @@ DIFF_FILES = buffer \
 	polygon \
 	stencil \
 	viewport
+
+	#client \
 
 DIFF_FILES1 = $(addprefix state_, $(DIFF_FILES))
 DIFF_FILES2 = $(addsuffix _gen, $(DIFF_FILES1))

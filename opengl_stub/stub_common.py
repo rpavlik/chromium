@@ -162,7 +162,7 @@ def CallString( arg_names ):
 	return output
 
 def IsVector ( func_name ) :
-	m = re.search( r"^(Color|EdgeFlag|EvalCoord|Index|Normal|TexCoord|Vertex|RasterPos)([1234]?)(ub|b|us|s|ui|i|f|d|)v$", func_name )
+	m = re.search( r"^(Color|EdgeFlag|EvalCoord|Index|Normal|TexCoord|MultiTexCoord|Vertex|RasterPos)([1234]?)(ub|b|us|s|ui|i|f|d|)v(ARB)?$", func_name )
 	if m :
 		if m.group(2) :
 			return string.atoi( m.group(2) )

@@ -14,7 +14,8 @@
 #define IS_COLOR(a)		((a) >= CR_COLOR3B_OPCODE && (a) <= CR_COLOR4US_OPCODE)
 #define IS_NORMAL(a)	((a) >= CR_NORMAL3B_OPCODE && (a) <= CR_NORMAL3S_OPCODE)
 #define IS_INDEX(a)		((a) >= CR_INDEXD_OPCODE && (a) <= CR_INDEXS_OPCODE)
-#define IS_TEXCOORD(a)	((a) >= CR_TEXCOORD1D_OPCODE && (a) <= CR_TEXCOORD4S_OPCODE)
+#define IS_TEXCOORD(a)	(((a) >= CR_TEXCOORD1D_OPCODE && (a) <= CR_TEXCOORD4S_OPCODE) || \
+		((a) == CR_EXTEND_OPCODE && *(data+4) >= CR_MULTITEXCOORD1DARB_EXTEND_OPCODE && *(data+4) <= CR_MULTITEXCOORD4SARB_EXTEND_OPCODE))
 #define IS_EDGEFLAG(a)	((a) == CR_EDGEFLAG_OPCODE)
 
 #define ASSERT_BOUNDS(op, data) \
@@ -32,7 +33,7 @@ void tilesortspuPinch (void)
 	int numRestore;
 	int loop = 0;
 	int wind = 0;
-	int i;
+	int i, j;
 	unsigned char * op;
 	unsigned char * data;
 	unsigned char * vtx_op;
@@ -40,16 +41,21 @@ void tilesortspuPinch (void)
 
 	unsigned char *color_ptr = tilesort_spu.ctx->current.current->color.ptr;
 	unsigned char *normal_ptr = tilesort_spu.ctx->current.current->normal.ptr;
-	unsigned char *texCoord_ptr = tilesort_spu.ctx->current.current->texCoord.ptr;
+	unsigned char *texCoord_ptr[CR_MAX_TEXTURE_UNITS];
 	unsigned char *edgeFlag_ptr = tilesort_spu.ctx->current.current->edgeFlag.ptr;
 	// unsigned char *index_ptr = tilesort_spu.ctx->current.current->index.ptr;
 
 	CRVertex v_current;
 
+
 	v_current.pos = vdefault;
 	v_current.color = c->color;
 	v_current.normal = c->normal;
-	v_current.texCoord = c->texCoord;
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	{
+		texCoord_ptr[i] = tilesort_spu.ctx->current.current->texCoord.ptr[i];
+		v_current.texCoord[i] = c->texCoord[i];
+	}
 	v_current.edgeFlag = c->edgeFlag;
 	v_current.index = c->index;
 
@@ -257,29 +263,32 @@ void tilesortspuPinch (void)
 			}
 
 			/* Is the texture pointer after my vertex? */
-			if (texCoord_ptr > vtx_data) 
+			for (j = 0 ; j < CR_MAX_TEXTURE_UNITS ; j++)
 			{
+				if (texCoord_ptr[j] > vtx_data) 
+				{
 
-				/* Perform the search */
-				op = vtx_op+1;
-				data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
-				while (op <= cr_packer_globals.buffer.opcode_start && !IS_TEXCOORD(*op)) 
-				{
-					op++;
-					data -= __cr_packet_length_table[*op];
-				}
+					/* Perform the search */
+					op = vtx_op+1;
+					data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
+					while (op <= cr_packer_globals.buffer.opcode_start && !IS_TEXCOORD(*op)) 
+					{
+						op++;
+						data -= __cr_packet_length_table[*op];
+					}
 
-				/* Did I hit the begining of the buffer? */
-				if (op > cr_packer_globals.buffer.opcode_start) 
-				{
-					v_current.texCoord = c->texCoordPre;
-					texCoord_ptr = NULL;
-				} 
-				else 
-				{
-					ASSERT_BOUNDS (op, data);
-					VPINCH_CONVERT_TEXCOORD (*op, data, v_current.texCoord)
-						texCoord_ptr = data;
+					/* Did I hit the begining of the buffer? */
+					if (op > cr_packer_globals.buffer.opcode_start) 
+					{
+						v_current.texCoord[j] = c->texCoordPre[j];
+						texCoord_ptr[j] = NULL;
+					} 
+					else 
+					{
+						ASSERT_BOUNDS (op, data);
+						VPINCH_CONVERT_TEXCOORD (*op, data, v_current.texCoord[i])
+							texCoord_ptr[j] = data;
+					}
 				}
 			}
 
@@ -314,7 +323,10 @@ void tilesortspuPinch (void)
 		{
 			v_current.color = c->colorPre;
 			v_current.normal = c->normalPre;
-			v_current.texCoord = c->texCoordPre;
+			for (j = 0 ; j < CR_MAX_TEXTURE_UNITS; j++)
+			{
+				v_current.texCoord[j] = c->texCoordPre[j];
+			}
 			v_current.edgeFlag = c->edgeFlagPre;
 		}
 
@@ -376,10 +388,14 @@ void tilesortspuPinch (void)
 void __pinchIssueParams (CRVertex *vtx) 
 {
 	GLfloat val[4];
+	int i;
 
-	val[0] = vtx->texCoord.s; val[1] = vtx->texCoord.t;
-	val[2] = vtx->texCoord.p; val[3] = vtx->texCoord.q;
-	crPackTexCoord4fv((const GLfloat *) val);
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	{
+		val[0] = vtx->texCoord[i].s; val[1] = vtx->texCoord[i].t;
+		val[2] = vtx->texCoord[i].p; val[3] = vtx->texCoord[i].q;
+		crPackMultiTexCoord4fvARB( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
+	}
 	val[0] = vtx->normal.x; val[1] = vtx->normal.y;
 	val[2] = vtx->normal.z;
 	crPackNormal3fv((const GLfloat *) val);
@@ -434,7 +450,10 @@ void tilesortspuPinchRestoreTriangle( void )
 		}
 
 		/* Setup values for next vertex */
-		v.texCoord = c->texCoord;
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		{
+			v.texCoord[i] = c->texCoord[i];
+		}
 		v.normal   = c->normal;
 		v.edgeFlag = c->edgeFlag;
 		v.color    = c->color;

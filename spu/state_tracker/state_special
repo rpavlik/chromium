@@ -191,3 +191,5 @@ PushAttrib
 PopAttrib
 Bitmap
 BlendColorEXT
+ActiveTextureARB
+ClientActiveTextureARB

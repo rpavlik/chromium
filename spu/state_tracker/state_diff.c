@@ -39,11 +39,13 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 		crStateListsDiff	(&(sb->lists), bitID,
 							 &(from->lists), &(to->lists));
 	}
+#if 0
 	if (update & GLUPDATE_CLIENT && sb->client.dirty & bitID)
 	{
 		crStateClientDiff	(&(sb->client), bitID,
 							 &(from->client), &(to->client));
 	}
+#endif
 	if (update & GLUPDATE_BUFFER && sb->buffer.dirty & bitID)
 	{
 		crStateBufferDiff	(&(sb->buffer), bitID,
@@ -142,11 +144,13 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 		crStateListsSwitch	(&(sb->lists), bitID,
 							 &(from->lists), &(to->lists));
 	}
+#if 0
 	if (update & GLUPDATE_CLIENT && sb->client.dirty & bitID)
 	{
 		crStateClientSwitch	(&(sb->client), bitID,
 							 &(from->client), &(to->client));
 	}
+#endif
 	if (update & GLUPDATE_BUFFER && sb->buffer.dirty & bitID)
 	{
 		crStateBufferSwitch	(&(sb->buffer), bitID,

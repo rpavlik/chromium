@@ -65,15 +65,18 @@ def FindWritebackPointer( return_type, arg_types ):
 
 def MakeNormalCall( return_type, func_name, arg_types, arg_names, counter_init = 0 ):
 	counter = counter_init;
+	copy_of_types = arg_types[:]
 	for i in range( 0, len(arg_names) ):
 		if arg_names[i] != '':
-			arg_len = stub_common.PacketLength( [arg_types[i]] )
-			counter = stub_common.FixAlignment( counter, arg_len )
-			if string.find( arg_types[i], '*' ) != -1:
+			#arg_len = stub_common.PacketLength( [arg_types[i]] )
+			#counter = stub_common.FixAlignment( counter, arg_len )
+			if string.find( copy_of_types[i], '*' ) != -1:
 				arg_names[i] = 'NULL'
+				copy_of_types[i] = 'void'
 			else:
-				print "\t%s %s = %s;" % ( arg_types[i], arg_names[i], ReadData( counter, arg_types[i] ) )
-			counter = counter + arg_len
+				print "\t%s %s = %s;" % ( copy_of_types[i], arg_names[i], ReadData( counter, copy_of_types[i] ) )
+			#counter = counter + arg_len
+			counter += stub_common.lengths[copy_of_types[i]]
 	if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ):
 		FindReturnPointer( return_type, arg_types );
 		FindWritebackPointer( return_type, arg_types );
@@ -161,6 +164,8 @@ print """
 
 for func_name in keys:
 		( return_type, arg_names, arg_types ) = gl_mapping[func_name]
+		if stub_common.FindSpecial( "unpacker", func_name ):
+			continue
 		if stub_common.FindSpecial( "unpacker_extend", func_name ):
 			continue
 		if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ) or func_name in stub_common.AllSpecials( "../packer/opcode_extend" ):
@@ -176,6 +181,7 @@ void crUnpackExtend(void)
 	switch( extend_opcode )
 	{""" % ReadData( 4, 'GLenum' );
 for func_name in keys:
+	if stub_common.FindSpecial( "unpacker", func_name ): continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 	if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ) or func_name in stub_common.AllSpecials( "../packer/opcode_extend" ):
 		print '\t\tcase %s:' % stub_common.ExtendedOpcodeName( func_name )
