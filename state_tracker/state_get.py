@@ -124,25 +124,6 @@ static GLint __clampf_to_int( GLfloat f )
 		return 0x80000000;
 	return (GLint) floor( f * 2147483647.5f );
 }
-
-#define TRANSPOSE( to, from ) \
-   GLmatrix tm; \
-   to.m00 = from.m00; \
-   to.m01 = from.m10; \
-   to.m02 = from.m20; \
-   to.m03 = from.m30; \
-   to.m10 = from.m01; \
-   to.m11 = from.m11; \
-   to.m12 = from.m21; \
-   to.m13 = from.m31; \
-   to.m20 = from.m02; \
-   to.m21 = from.m12; \
-   to.m22 = from.m22; \
-   to.m23 = from.m32; \
-   to.m30 = from.m03; \
-   to.m31 = from.m13; \
-   to.m32 = from.m23; \
-   to.m33 = from.m33; \
 """
 
 header = """
