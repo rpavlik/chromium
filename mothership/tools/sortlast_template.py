@@ -57,7 +57,8 @@ from mothership import *
 _ConfigBody = """
 def Usage():
 	print "Usage:"
-	print "  %s [-w imageWidth] [-h imageHeight] [-s servers] [program]" % sys.argv[0]
+	print "  %s [--help] [-w imageWidth] [-h imageHeight]" % sys.argv[0]
+	print "     [-s servers] [program]"
 	sys.exit(0)
 
 
@@ -82,14 +83,16 @@ for (name, value) in READBACK_OPTIONS:
 		WIDTH = value[2]
 		HEIGHT = value[3]
 
-# Check for program name/args on command line
+# Process command line args
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], "w:h:s:")
+	(opts, args) = getopt.getopt(sys.argv[1:], "w:h:s:", ["help"])
 except getopt.GetoptError:
 	Usage()
 
 for (name, value) in opts:
-	if name == "-w":
+	if name == "--help":
+		Usage()
+	elif name == "-w":
 		WIDTH = int(value)
 	elif name == "-h":
 		HEIGHT = int(value)

@@ -127,7 +127,8 @@ from mothership import *
 _ConfigBody = """
 def Usage():
 	print "Usage:"
-	print "  %s [-c columns] [-r rows] [-w tileWidth] [-h tileHeight] [-s servers] [program]" % sys.argv[0]
+	print "  %s [--help] [-c columns] [-r rows] [-w tileWidth]" % sys.argv[0]
+	print "     [-h tileHeight] [-s servers] [program]"
 	sys.exit(0)
 	
 
@@ -148,12 +149,14 @@ for (name, value) in MOTHERSHIP_OPTIONS:
 
 # Check for program name/args on command line
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], "c:r:w:h:s:")
+	(opts, args) = getopt.getopt(sys.argv[1:], "c:r:w:h:s:", ["help"])
 except getopt.GetoptError:
 	Usage()
 
 for (name, value) in opts:
-	if name == "-c":
+	if name == "--help":
+		Usage()
+	elif name == "-c":
 		TILE_COLS = int(value)
 	elif name == "-r":
 		TILE_ROWS = int(value)
