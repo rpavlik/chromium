@@ -44,8 +44,6 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
 		ctx->neg_bitid[j] = ~(ctx->bitid[j]);
 	}
 
-	crDebug( "Creating a context (id=%d addr=%p)", ctx->id, (void *)ctx);
-
 	/* use Chromium's OpenGL defaults */
 	crStateLimitsInit( &(ctx->limits) );
 	crStateExtensionsInit( &(ctx->limits), &(ctx->extensions) );

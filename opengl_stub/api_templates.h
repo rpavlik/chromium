@@ -12,6 +12,8 @@ extern SPUDispatchTable glim;
 extern GLint APIENTRY crCreateContext(const char *dpyName, GLint visBits);
 extern void APIENTRY crDestroyContext(GLint context);
 extern void APIENTRY crMakeCurrent(GLint drawable, GLint context);
+extern GLint APIENTRY crGetCurrentContext( void );
+extern GLint APIENTRY crGetCurrentWindow( void );
 extern void APIENTRY crSwapBuffers(GLint drawable, GLint flags);
 
 extern GLint APIENTRY crWindowCreate(const char *dpyName, GLint visBits);

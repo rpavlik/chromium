@@ -35,11 +35,6 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 								 unsigned int num_contexts )
 {
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
-#if 0
-	GLint vpdims[2];
-	GLint totalDims[2];
-	int i, j;
-#endif
 
 	(void) context_id;
 	(void) num_contexts;
@@ -48,11 +43,11 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 
 #if DEBUG_FP_EXCEPTIONS
 	{
-            fpu_control_t mask;
-            _FPU_GETCW(mask);
-            mask &= ~(_FPU_MASK_IM | _FPU_MASK_DM | _FPU_MASK_ZM
-                      | _FPU_MASK_OM | _FPU_MASK_UM);
-            _FPU_SETCW(mask);
+		fpu_control_t mask;
+		_FPU_GETCW(mask);
+		mask &= ~(_FPU_MASK_IM | _FPU_MASK_DM | _FPU_MASK_ZM
+							| _FPU_MASK_OM | _FPU_MASK_UM);
+		_FPU_SETCW(mask);
 	}
 #endif
 
@@ -65,7 +60,13 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	crInitMutex(&_TileSortMutex);
 #endif
 
-	_math_init_eval();
+	thread0->state_server_index = -1;	 /* one-time init for thread */
+
+	tilesortspuInitEvaluators();
+
+	/* Init window, context hash tables */
+	tilesort_spu.windowTable = crAllocHashtable();
+	tilesort_spu.contextTable = crAllocHashtable();
 
 	tilesort_spu.id = id;
 	tilesortspuGatherConfiguration( child );
@@ -86,9 +87,15 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 
 	crStateInit();
 	tilesortspuCreateDiffAPI();
-	tilesortspuBucketingInit();
 
-	tilesortspuComputeMaxViewport();
+	if (tilesort_spu.useDMX) {
+		/* load OpenGL */
+		int n = crLoadOpenGL( &tilesort_spu.ws, NULL);
+		if (!n) {
+			crWarning("Tilesort SPU: Unable to load OpenGL, disabling DMX");
+			tilesort_spu.useDMX = 0;
+		}
+	}
 
 	return &tilesort_functions;
 }
@@ -100,9 +107,28 @@ tilesortSPUSelfDispatch(SPUDispatchTable *self)
 	crSPUCopyDispatchTable( &(tilesort_spu.self), self );
 }
 
+static void freeContextCallback(void *data)
+{
+	 ContextInfo *contextInfo = (ContextInfo *) data;
+	 crFree(contextInfo->server);
+	 crStateDestroyContext(contextInfo->State);
+	 crFree(contextInfo);
+}
+
+static void freeWindowCallback(void *data)
+{
+	 WindowInfo *winInfo = (WindowInfo *) data;
+	 tilesortspuFreeWindowInfo(winInfo);
+}
+
 static int
 tilesortSPUCleanup(void)
 {
+	crFreeHashtable(tilesort_spu.windowTable, freeWindowCallback);
+	tilesort_spu.windowTable = NULL;
+	crFreeHashtable(tilesort_spu.contextTable, freeContextCallback);
+	tilesort_spu.contextTable = NULL;
+
 	return 1;
 }
 

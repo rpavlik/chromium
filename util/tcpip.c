@@ -1107,6 +1107,7 @@ crTCPIPDoConnect( CRConnection *conn )
 	{
 		int err = crTCPIPErrno( );
 		crWarning( "socket error: %s", crTCPIPErrorString( err ) );
+		cr_tcpip.conns[conn->index] = NULL; /* remove from table */
 		return 0;
 	}
 
@@ -1118,6 +1119,7 @@ crTCPIPDoConnect( CRConnection *conn )
 	if ( !hp )
 	{
 		crWarning( "Unknown host: \"%s\"", conn->hostname );
+		cr_tcpip.conns[conn->index] = NULL; /* remove from table */
 		return 0;
 	}
 
@@ -1142,6 +1144,7 @@ crTCPIPDoConnect( CRConnection *conn )
 	if ( err )
 	{
 		crWarning( "Unknown host: \"%s\": %s", conn->hostname, gai_strerror(err) );
+		cr_tcpip.conns[conn->index] = NULL; /* remove from table */
 		return 0;
 	}
 #endif
@@ -1247,6 +1250,7 @@ crTCPIPDoConnect( CRConnection *conn )
 	freeaddrinfo(res);
 	crWarning( "Couln't find any suitable way to connect to %s", conn->hostname );
 #endif
+	cr_tcpip.conns[conn->index] = NULL; /* remove from table */
 	return 0;
 }
 

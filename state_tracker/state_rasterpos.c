@@ -9,16 +9,20 @@
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-static void
-crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w) 
+
+/*
+ * Apply modelview, projection, viewport transformations to (x,y,z,w)
+ * and update the current raster position attributes.
+ * Do NOT set dirty state.
+ */
+void
+crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
 	CRContext *g = GetCurrentContext();
 	CRCurrentState *c = &(g->current);
 	CRTransformState *t = &(g->transform);
 	CRViewportState *v = &(g->viewport);
 	GLvectorf p;
-	CRStateBits *sb = GetCurrentBits();
-	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -28,13 +32,18 @@ crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 
 	FLUSH();
 
+	/* update current color, texcoord, etc from the CurrentStatePointers */
+	crStateCurrentRecover();
+
 	p.x = x;
 	p.y = y;
 	p.z = z;
 	p.w = w;
 
+	/* Apply modelview and projection matrix */
 	crStateTransformXformPoint(t, &p);	
 
+	/* clip test */
 	if (p.x >  p.w || p.y >  p.w || p.z > p.w ||
 		  p.x < -p.w || p.y < -p.w || p.z < -p.w) 
 	{
@@ -42,39 +51,41 @@ crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 		return;
 	} 
 
+	/* divide by W (perspective projection) */
 	p.x /= p.w;
 	p.y /= p.w;
 	p.z /= p.w;
 	p.w = 1.0f;
 
+	/* map from NDC to window coords */
 	crStateViewportApply(v, &p);
 
 	c->rasterValid = GL_TRUE;
 	c->rasterPos = p;
-	c->rasterPosPre = p;
-
 	c->rasterColor = c->color;
 	c->rasterSecondaryColor = c->secondaryColor;
 	c->rasterIndex = c->index;
 	c->rasterTexture = c->texCoord[0];
-
-	/* XXX need to update raster distance... */
-	/* from Mesa... */
 #ifdef CR_EXT_fog_coord
 	if (g->fog.fogCoordinateSource == GL_FOG_COORDINATE_EXT)
 		 c->rasterDistance = c->fogCoord;
 	else
 #endif
-		 c->rasterDistance = 0.0; /*(GLfloat)
+		/* XXX FIX */
+		c->rasterDistance = 0.0; /*(GLfloat)
 						sqrt( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );*/
+}
 
-	/*
-	**  Need handle these for glGet...
-	**  c->rasterdistance;
-	**  c->rastercolor;
-	**  c->rasterindex;
-	**  c->rastertexture;
-	*/
+
+/* As above, but set dirty flags */
+static void RasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+	CRContext *g = GetCurrentContext();
+	CRStateBits *sb = GetCurrentBits();
+	CRCurrentBits *cb = &(sb->current);
+
+	crStateRasterPosUpdate(x, y, z, w);
+
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->raster, g->neg_bitid);
 }
@@ -82,122 +93,122 @@ crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 
 void STATE_APIENTRY crStateRasterPos2d(GLdouble x, GLdouble y)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
+	RasterPos4f((GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos2f(GLfloat x, GLfloat y)
 {
-	crStateRasterPosUpdate(x, y, 0.0f, 1.0f);
+	RasterPos4f(x, y, 0.0f, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos2i(GLint x, GLint y)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
+	RasterPos4f((GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos2s(GLshort x, GLshort y)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
+	RasterPos4f((GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
+	RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 {
-	crStateRasterPosUpdate(x, y, z, 1.0f);
+	RasterPos4f(x, y, z, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos3i(GLint x, GLint y, GLint z)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
+	RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos3s(GLshort x, GLshort y, GLshort z)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
+	RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+	RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void STATE_APIENTRY crStateRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
-	crStateRasterPosUpdate(x, y, z, w);
+	RasterPos4f(x, y, z, w);
 }
 
 void STATE_APIENTRY crStateRasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+	RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void STATE_APIENTRY crStateRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
-	crStateRasterPosUpdate((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+	RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 void STATE_APIENTRY crStateRasterPos2dv(const GLdouble *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos2fv(const GLfloat *v)
 {
-	crStateRasterPosUpdate(v[0], v[1], 0.0f, 1.0f);
+	RasterPos4f(v[0], v[1], 0.0f, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos2iv(const GLint *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos2sv(const GLshort *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos3dv(const GLdouble *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos3fv(const GLfloat *v)
 {
-	crStateRasterPosUpdate(v[0], v[1], v[2], 1.0f);
+	RasterPos4f(v[0], v[1], v[2], 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos3iv(const GLint *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos3sv(const GLshort *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 }
 
 void STATE_APIENTRY crStateRasterPos4dv(const GLdouble *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void STATE_APIENTRY crStateRasterPos4fv(const GLfloat *v)
 {
-	crStateRasterPosUpdate(v[0], v[1], v[2], v[3]);
+	RasterPos4f(v[0], v[1], v[2], v[3]);
 }
 
 void STATE_APIENTRY crStateRasterPos4iv(const GLint *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 void STATE_APIENTRY crStateRasterPos4sv(const GLshort *v)
 {
-	crStateRasterPosUpdate((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+	RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 
@@ -227,7 +238,6 @@ crStateWindowPosUpdate(GLfloat x, GLfloat y, GLfloat z)
 	c->rasterPos.y = y;
 	c->rasterPos.z = z;
 	c->rasterPos.w = 1.0;
-	c->rasterPosPre = c->rasterPos;
 
 	c->rasterColor = c->color;
 	c->rasterSecondaryColor = c->secondaryColor;

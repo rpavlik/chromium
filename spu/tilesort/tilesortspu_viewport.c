@@ -9,65 +9,11 @@
 #include "cr_glstate.h"
 #include "cr_error.h"
 
-#ifdef WINDOWS
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
-static int __getWindowSize( int *width_return, int *height_return )
-{
-#ifdef WINDOWS
-	RECT r;
-
-	if (!tilesort_spu.client_hwnd) {
-		tilesort_spu.client_hwnd = WindowFromDC( tilesort_spu.client_hdc );
-	}
-	if (!tilesort_spu.client_hwnd) {
-		if (tilesort_spu.fakeWindowWidth != 0) {
-			*width_return = tilesort_spu.fakeWindowWidth;
-			*height_return = tilesort_spu.fakeWindowHeight;
-			return 1;
-		}
-		return 0;
-	}
-
-	GetClientRect( tilesort_spu.client_hwnd, &r );
-	*width_return = r.right - r.left;
-	*height_return = r.bottom - r.top;
-
-#else /* X11 */
-	Window root;
-	int x, y;
-	unsigned int width, height, border, depth;
-
-	if (!tilesort_spu.glx_display || !tilesort_spu.glx_drawable) {
-		if (tilesort_spu.fakeWindowWidth != 0) {
-			*width_return = tilesort_spu.fakeWindowWidth;
-			*height_return = tilesort_spu.fakeWindowHeight;
-			return 1;
-		}
-		return 0;
-	}
-
-	if (!XGetGeometry( tilesort_spu.glx_display, 
-										 tilesort_spu.glx_drawable,
-										 &root, &x, &y, &width, &height, &border, &depth )) {
-		crError( "XGetGeometry failed" );
-	}
-
-	*width_return  = width;
-	*height_return = height;
-
-#endif
-
-	return 1;
-}
-
 void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
-	GET_CONTEXT(ctx);
-	CRCurrentState *c = &(ctx->current);
-	int w, h;
+	GET_THREAD(thread);
+	CRCurrentState *c = &(thread->currentContext->State->current);
+	WindowInfo *winInfo;
 
 	if (c->inBeginEnd)
 	{
@@ -83,37 +29,53 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 		return;
 	}
 
-	if (!__getWindowSize( &w, &h ))
+	winInfo = thread->currentContext->currentWindow;
+	CRASSERT(winInfo);
+
+	/* XXX is this check needed?  Should we updateWindowInfo everytime? */
+	if (winInfo->lastWidth == 0 && winInfo->lastHeight == 0) {
+		 tilesortspuUpdateWindowInfo(winInfo);
+	}
+	CRASSERT(winInfo->lastWidth > 0);
+	CRASSERT(winInfo->lastHeight > 0);
+
+	if (winInfo->lastWidth == 0 || winInfo->lastHeight == 0) 
 	{
-		crError( "Couldn't get the window size in tilesortspu_Viewport!\nIf there is no Window, you can set some bogus\ndimensions in the configuration manager." );
+		crError( "Couldn't get the window size in tilesortspu_Viewport!\n"
+						 "If there is no Window, set fake_window_dims for the "
+						 "tilesort SPU." );
 	}
 
 	if (tilesort_spu.scaleToMuralSize)
 	{
 		/* This is the usual case */
-		tilesort_spu.widthScale = (float) (tilesort_spu.muralWidth) / (float) w;
-		tilesort_spu.heightScale = (float) (tilesort_spu.muralHeight) / (float) h;
+		winInfo->widthScale = (float) winInfo->muralWidth / (float) winInfo->lastWidth;
+		winInfo->heightScale = (float) winInfo->muralHeight / (float) winInfo->lastHeight;
 	}
 	else {
 		/* This is helpful for running Glean and other programs that are
 		 * sensitive to viewport scaling.
 		 */
-		tilesort_spu.widthScale = 1.0;
-		tilesort_spu.heightScale = 1.0;
+		winInfo->widthScale = 1.0;
+		winInfo->heightScale = 1.0;
 	}
 
+
 	/*
-	printf("%s() %d, %d, %d, %d   muralWidth=%d muralHeight=%d  wScale=%f hScale=%f\n", __FUNCTION__, x, y, width, height, tilesort_spu.muralWidth, tilesort_spu.muralHeight, tilesort_spu.widthScale, tilesort_spu.heightScale);
+	if (tilesort_spu.useDMX) {
+		CRASSERT( winInfo->widthScale == 1.0 );
+		CRASSERT( winInfo->heightScale == 1.0 );
+	}
 	*/
 
 	/* Scale the viewport up to the mural's size */
 	{
 		GLint vpx, vpy, vpw, vph;
 
-		vpx = (int) (x * tilesort_spu.widthScale + 0.5f);
-		vpy = (int) (y * tilesort_spu.heightScale + 0.5f);
-		vpw = (int) (width * tilesort_spu.widthScale + 0.5f);
-		vph = (int) (height * tilesort_spu.heightScale + 0.5f);
+		vpx = (int) (x * winInfo->widthScale + 0.5f);
+		vpy = (int) (y * winInfo->heightScale + 0.5f);
+		vpw = (int) (width * winInfo->widthScale + 0.5f);
+		vph = (int) (height * winInfo->heightScale + 0.5f);
 
 		if (vpw == 0 && width > 0)
 			vpw = 1;
@@ -121,17 +83,20 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 			vph = 1;
 
 		crStateViewport(vpx, vpy, vpw, vph);
-		tilesortspuSetBucketingBounds(vpx, vpy, vpw, vph);
+		tilesortspuSetBucketingBounds(winInfo, vpx, vpy, vpw, vph);
 	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
+	GET_THREAD(thread);
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
+
 	if (tilesort_spu.scaleToMuralSize) {
-		GLint newX = (GLint) (x * tilesort_spu.widthScale + 0.5F);
-		GLint newY = (GLint) (y * tilesort_spu.heightScale + 0.5F);
-		GLint newW = (GLint) (width * tilesort_spu.widthScale + 0.5F);
-		GLint newH = (GLint) (height * tilesort_spu.heightScale + 0.5F);
+		GLint newX = (GLint) (x * winInfo->widthScale + 0.5F);
+		GLint newY = (GLint) (y * winInfo->heightScale + 0.5F);
+		GLint newW = (GLint) (width * winInfo->widthScale + 0.5F);
+		GLint newH = (GLint) (height * winInfo->heightScale + 0.5F);
 		crStateScissor(newX, newY, newW, newH);
 	}
 	else {

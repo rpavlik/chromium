@@ -61,6 +61,7 @@ crNetBarf
 crPixelCopy1D
 crPixelCopy2D
 crPixelCopy3D
+crBitmapCopy
 crPixelSize
 crImageSize
 crTextureSize
@@ -100,6 +101,7 @@ crWaitBarrier
 crRandFloat
 crRandInt
 crRandSeed
+crRandAutoSeed
 crTransformBBox
 crWarpPoint
 crHullInteriorBox
@@ -111,10 +113,6 @@ crSpawn
 crKill
 crGetProcName
 crGetCurrentDir
-crAllocIdPool
-crFreeIdPool
-crIdPoolAllocBlock
-crIdPoolFreeBlock
-crIdPoolAllocId
-crIdPoolIsIdFree
-crIdPoolIsIdUsed
+crHashtableAllocKeys
+crHashtableDeleteBlock
+crHashtableIsKeyUsed

@@ -21,38 +21,65 @@ extern "C" {
 #endif
 
 typedef struct {
-	int spu_id;
-	int number;
-	CRmatrix baseProjection;
-	CRConnection *conn;
+	CRrecti imagewindow;    /* coordinates in mural space */
+	CRrectf bounds;         /* normalized coordinates in [-1,-1] x [1,1] */
+	CRrecti outputwindow;   /* coordinates in server's rendering window */
+	CRrecti clippedImagewindow;  /* imagewindow clipped to current viewport */
+	/* XXX these aren't used yet */
+	CRmatrix baseProjection;  /* pre-multiplied onto projection matrix */
+	CRrecti scissorBox;     /* passed to back-end OpenGL */
+	CRrecti viewport;       /* passed to back-end OpenGL */
+} CRExtent;
+
+struct BucketingInfo;
+
+typedef struct {
+	int width, height;
+	CRrecti imagespace;                /* the whole mural rectangle */
+	int curExtent;
+	int numExtents;                    /* number of tiles */
+	CRExtent extents[CR_MAX_EXTENTS];  /* per-tile info */
+	int maxTileHeight;                 /* the tallest tile's height */
+
+	/* optimized, hash-based tile bucketing */
+	int optimizeBucket;
+	struct BucketingInfo *bucketInfo;
+
+	unsigned int underlyingDisplay[4]; /* needed for laying out the extents */
+
+} CRMuralInfo;
+
+/*
+ * A client is basically an upstream Cr Node (connected via mothership)
+ */
+typedef struct {
+	int spu_id;        /* id of the last SPU in the client's SPU chain */
+	int number;        /* each client gets an integer ID, starting at zero */
+	CRConnection *conn;       /* network connection from the client */
 
 	CRContext *currentCtx;
 	GLint currentWindow;
+	CRMuralInfo *currentMural;
+
+	CRmatrix baseProjection;  /* really per-mural tile info */
 } CRClient;
 
-typedef struct st_CRPoly
-{
+typedef struct CRPoly_t {
 	int npoints;
 	double *points;
-	struct st_CRPoly *next;
+	struct CRPoly_t *next;
 } CRPoly;
 
-typedef struct {
-	CRrecti outputwindow;   /* coordinates in server's rendering window */
-	CRrecti imagewindow;    /* coordinates in mural space */
-	CRrectf bounds;         /* normalized coordinates in [-1,-1] x [1,1] */
-	int     display;        /* not used (historical?) */
-} CRRunQueueExtent;
-
-typedef struct __runqueue {
+/*
+ * There's one of these run queue entries per client
+ * The run queue is a circular, doubly-linked list of these objects.
+ */
+typedef struct RunQueue_t {
 	CRClient *client;
-	CRrecti imagespace;     /* the whole mural rectangle */
-	int numExtents;
-	CRRunQueueExtent extent[CR_MAX_EXTENTS];
 	int blocked;
-	int number;
-	struct __runqueue *next;
-	struct __runqueue *prev;
+	int number;             /* corresponds to client->number */
+	struct RunQueue_t *next;
+	struct RunQueue_t *prev;
 } RunQueue;
 
 typedef struct {
@@ -65,23 +92,14 @@ typedef struct {
 
 	GLboolean firstCallCreateContext;
 	GLboolean firstCallMakeCurrent;
+	GLint currentWindow;
+	GLint currentNativeWindow;
 
-	int optimizeBucket;
-	int numExtents;  /* number of tiles */
-	int curExtent;
-	/* coordinates of each tile's rectangle in mural coord space */
-	CRrecti extents[CR_MAX_EXTENTS];
-	/* coords of the tile in the server's rendering window */
-	CRrecti outputwindow[CR_MAX_EXTENTS];
-	int maxTileHeight; /* the tallest tile's height */
+	CRHashTable *muralTable;  /* hash table where all murals are stored */
 
-	int useL2;
 	int mtu;
 	int buffer_size;
 	char protocol[1024];
-
-	unsigned int muralWidth, muralHeight;
-	unsigned int underlyingDisplay[4]; /* needed for laying out the extents */
 
 	SPU *head_spu;
 	SPUDispatchTable dispatch;
@@ -95,19 +113,24 @@ typedef struct {
 
 	CRContext *context[CR_MAX_CONTEXTS];
 
+	/* configuration options */
+	int useL2;
 	int ignore_papi;
-
 	unsigned int maxBarrierCount;
 	unsigned int clearCount;
+	int optimizeBucket;
 	int only_swap_once;
 	int debug_barriers;
 	int sharedDisplayLists;
 	int sharedTextureObjects;
 	int sharedPrograms;
 	int localTileSpec;
+	int useDMX;
 	int overlapBlending;
+
 	GLfloat alignment_matrix[16], unnormalized_alignment_matrix[16];
 	
+	/* tile overlap/blending info - this should probably be per-mural */
 	CRPoly **overlap_geom;
 	CRPoly *overlap_knockout;
 	float *overlap_intens;

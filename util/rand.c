@@ -6,6 +6,13 @@
 
 #include "cr_rand.h"
 
+#ifdef WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
+
 
 /* Period parameters */
 #define N 624
@@ -25,7 +32,8 @@
 static unsigned long mt[N]; /* the array for the state vector  */
 static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
 
-void crRandSeed(unsigned long seed) {
+void crRandSeed(unsigned long seed)
+{
 	/* setting initial seeds to mt[N] using the generator Line 25 of Table 1
 	   in [KNUTH 1981, The Art of Computer Programming Vol. 2 (2nd Ed.),
 	   pp102
@@ -34,6 +42,24 @@ void crRandSeed(unsigned long seed) {
 	for (mti=1; mti<N; mti++)
 		mt[mti] = (69069 * mt[mti-1]) & 0xffffffff;
 }
+
+
+/*
+ * Seed the generator based on time of day or a system counter.
+ */
+void crRandAutoSeed(void)
+{
+#if defined(WINDOWS)
+	LARGE_INTEGER counter;
+	QueryPerformanceCounter( &counter );
+	crRandSeed((unsigned long) counter.QuadPart);
+#else
+	struct timeval timeofday;
+	gettimeofday( &timeofday, 0 );	
+	crRandSeed((unsigned long) timeofday.tv_usec);
+#endif
+}
+
 
 static double genrand( void ) 
 {

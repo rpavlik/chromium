@@ -8,7 +8,6 @@
 #include "state/cr_statetypes.h"
 #include "state/cr_texture.h"
 #include "cr_hash.h"
-#include "cr_idpool.h"
 #include "cr_string.h"
 #include "cr_mem.h"
 #include "cr_version.h"
@@ -71,7 +70,6 @@ void crStateTextureInit(CRContext *ctx)
 #endif
 
 	/* Initalize id pool and hash table */
-	t->idPool = crAllocIdPool();
 	t->idHash = crAllocHashtable();
 
 	crStateTextureInitTextureObj(t, &(t->base1D), 0, GL_TEXTURE_1D);
@@ -162,23 +160,20 @@ void crStateTextureInit(CRContext *ctx)
 }
 
 
+
+/* This is called for each entry in the texture object hash table */
+static void DeleteTextureCallback( void *data )
+{
+    crStateTextureDelete_t( NULL, (CRTextureObj *) data );
+}
+
+
 /*
  * Free all the texture state associated with t.
  */
 void crStateTextureFree( CRTextureState *t ) 
 {
-  	/* walk hash table, freeing texture objects */
-	CR_HASHTABLE_WALK_MANUAL_STEP(t->idHash, entry)
-		CRTextureObj *tobj = (CRTextureObj *) entry->data;
-
-		entry->data = NULL;
-
-		CR_HASHTABLE_STEP(entry);
-		crStateTextureDelete_t(t, tobj);
-	CR_HASHTABLE_WALK_END(t->idHash);
-	 
-	crFreeIdPool(t->idPool);
-	crFreeHashtable(t->idHash);
+	crFreeHashtable(t->idHash, DeleteTextureCallback);
 }
 
 
@@ -555,7 +550,6 @@ crStateTextureAllocate_t (CRTextureState *t, GLuint name)
 		return NULL;
 
 	/* reserve the ID and insert into hash table */
-	crIdPoolAllocId( t->idPool, name );
 	crHashtableAdd( t->idHash, name, (void *) tobj );
 
 	crStateTextureInitTextureObj(t, tobj, name, GL_NONE);
@@ -573,8 +567,7 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj)
 	CRASSERT(tobj);
 
 	/* remove from hash table */
-	crHashtableDelete( t->idHash, tobj->name, GL_FALSE );
-	crIdPoolFreeBlock( t->idPool, tobj->name, 1 );
+	crHashtableDelete( t->idHash, tobj->name, NULL );
 
 	/* Free the images */
 	for (k = 0; k < t->maxLevel; k++) 
@@ -620,7 +613,7 @@ void STATE_APIENTRY crStateGenTextures(GLsizei n, GLuint *textures)
 		return;
 	}
 
-	start = crIdPoolAllocBlock(t->idPool, n);
+	start = crHashtableAllocKeys(t->idHash, n);
 	if (start)
 	{
 		GLint i;

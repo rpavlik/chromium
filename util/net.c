@@ -206,20 +206,20 @@ CRConnection *crNetConnectToServer( char *server,
 	}
 #endif
 #ifdef TEAC_SUPPORT
-  else if ( !crStrcmp( protocol, "quadrics" ) )
-    {
-      cr_net.use_teac++;
-      crTeacInit( cr_net.recv_list, cr_net.close_list, mtu );
-      crTeacConnection( conn );
-    }
+	else if ( !crStrcmp( protocol, "quadrics" ) )
+	{
+		cr_net.use_teac++;
+		crTeacInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crTeacConnection( conn );
+	}
 #endif
 #ifdef TCSCOMM_SUPPORT
-  else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
-    {
-      cr_net.use_tcscomm++;
-      crTcscommInit( cr_net.recv_list, cr_net.close_list, mtu );
-      crTcscommConnection( conn );
-    }
+	else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
+	{
+		cr_net.use_tcscomm++;
+		crTcscommInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crTcscommConnection( conn );
+	}
 #endif
 	else if ( !crStrcmp( protocol, "tcpip" ) )
 	{

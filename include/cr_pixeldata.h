@@ -31,9 +31,15 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 										const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
 										const CRPixelPackState *srcPacking );
 
-void crPixelCopy3D( GLsizei width, GLsizei height, GLsizei depth, GLvoid *dstPtr, GLenum dstFormat, GLenum dstType,
-	            const CRPixelPackState *dstPacking, const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
-	            const CRPixelPackState *srcPacking );
+void crPixelCopy3D( GLsizei width, GLsizei height, GLsizei depth,
+										GLvoid *dstPtr, GLenum dstFormat, GLenum dstType,
+										const CRPixelPackState *dstPacking, const GLvoid *srcPtr,
+										GLenum srcFormat, GLenum srcType,
+										const CRPixelPackState *srcPacking );
+
+void crBitmapCopy( GLsizei width, GLsizei height, GLubyte *dstPtr,
+									 const GLubyte *srcPtr, const CRPixelPackState *srcPacking );
+
 
 #ifdef __cplusplus
 }

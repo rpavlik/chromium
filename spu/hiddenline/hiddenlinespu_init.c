@@ -6,7 +6,7 @@
 
 #include "hiddenlinespu.h"
 #include "cr_packfunctions.h"
-#include <stdio.h>
+#include "cr_mem.h"
 
 extern SPUNamedFunctionTable _cr_hiddenline_table[];
 HiddenlineSPU hiddenline_spu;
@@ -67,7 +67,7 @@ static void hiddenlineSPUSelfDispatch(SPUDispatchTable *self)
 
 static int hiddenlineSPUCleanup(void)
 {
-	crFreeHashtable(hiddenline_spu.contextTable);
+	crFreeHashtable(hiddenline_spu.contextTable, crFree);
 	return 1;
 }
 

@@ -3,6 +3,12 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+# Set USE_DMX to 1 if you want to enable DMX support.
+# You'll need the libdmx.a library and dmxext.h header in the usual X
+# directories.
+USE_DMX = 1
+
+
 # Disabled warnings:
 # 1174: The function "f" was declared but never referenced.
 # 3201: The parameter "i" was never referenced.
@@ -69,3 +75,7 @@ ifeq ($(QT),1)
     UIC=$(QTDIR)/bin/uic
 endif
 
+ifeq ($(USE_DMX), 1)
+CXXFLAGS += -DUSE_DMX
+CFLAGS += -DUSE_DMX
+endif

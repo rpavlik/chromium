@@ -191,6 +191,9 @@ void crStateTransformInit(CRContext *ctx)
 #ifdef CR_OPENGL_VERSION_1_2
 	t->rescaleNormals = GL_FALSE;
 #endif
+#ifdef CR_IBM_rasterpos_clip
+	t->rasterPositionUnclipped = GL_FALSE;
+#endif
 
 	t->transformValid = 0;
 
@@ -1211,6 +1214,14 @@ void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, CRbitva
 #else
 		(void) able;
 #endif
+#ifdef CR_IBM_rasterpos_clip
+		if (from->rasterPositionUnclipped != to->rasterPositionUnclipped)
+		{
+			able[to->rasterPositionUnclipped](GL_RASTER_POSITION_UNCLIPPED_IBM);
+			FILLDIRTY(t->enable);
+			FILLDIRTY(t->dirty);
+		}
+#endif
 		INVERTDIRTY(t->enable, nbitID);
 	}
 
@@ -1353,6 +1364,13 @@ void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, CRbitvalue
 #else
 		(void) able;
 #endif
+#ifdef CR_IBM_rasterpos_clip
+		if (from->rasterPositionUnclipped != to->rasterPositionUnclipped) {
+			able[to->rasterPositionUnclipped](GL_RASTER_POSITION_UNCLIPPED_IBM);
+			from->rasterPositionUnclipped = to->rasterPositionUnclipped;
+		}
+#endif
+
 		INVERTDIRTY(t->enable, nbitID);
 	}
 

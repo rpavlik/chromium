@@ -78,10 +78,10 @@ typedef struct {
 
 	CRCurrentStatePointers   *current;
 
+	GLvectorf    rasterOrigin;   /* needed for tilesort support */
+
 	/* XXX use a CRVertex for this state */
 	GLvectorf    rasterPos;
-	GLvectorf    rasterPosPre;
-
 	GLfloat      rasterDistance; /* aka fog coord */
 	GLcolorf     rasterColor;
 	GLcolorf     rasterSecondaryColor;
@@ -89,6 +89,7 @@ typedef struct {
 	GLdouble     rasterIndex;
 	GLboolean    rasterValid;
 
+	/* glBegin/End state */
 	GLboolean    inBeginEnd;
 	GLenum       mode;
 	GLuint       beginEndMax;
@@ -106,6 +107,9 @@ void crStateCurrentDiff(CRCurrentBits *bb, CRbitvalue *bitID,
 void crStateCurrentSwitch(GLuint maxTexUnits,
 		CRCurrentBits *bb, CRbitvalue *bitID,
 		CRCurrentState *from, CRCurrentState *to);
+
+void crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+
 
 #ifdef __cplusplus
 }

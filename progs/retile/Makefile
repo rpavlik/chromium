@@ -14,7 +14,7 @@ GLUT = 1
 FILES = retile
 
 ifeq ($(ARCH), SunOS)
-LDFLAGS += -lcrfaker 
+LDFLAGS += -lcrfaker
 endif
 
 include ${TOP}/cr.mk

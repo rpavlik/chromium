@@ -241,8 +241,8 @@ void TILESORTSPU_APIENTRY tilesortspu_GetBooleanv( GLenum pname, GLboolean *para
  * intersect with Chromium's known extensions, and append the Chromium-
  * specific extensions.
  */
-static const GLubyte *
-GetExtensionsString(void)
+const GLubyte *
+tilesortspuGetExtensionsString(void)
 {
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 	const GLubyte **extensions, *ext;
@@ -307,7 +307,7 @@ const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 	if (pname == GL_EXTENSIONS)
 	{
 		/* Query all servers for their extensions, return the intersection */
-		return GetExtensionsString();
+		return tilesortspuGetExtensionsString();
 	}
 	else
 	{

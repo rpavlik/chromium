@@ -8,7 +8,6 @@
 #define CR_STATE_LISTS_H
 
 #include "cr_hash.h"
-#include "cr_idpool.h"
 #include "state/cr_statetypes.h"
 
 #ifdef __cplusplus
@@ -21,11 +20,11 @@ typedef struct {
 } CRListsBits;
 
 typedef struct {
-	GLuint base;          /* set by glListBase */
-	GLuint currentIndex;  /* list currently being built (or zero) */
-	GLenum mode;          /* GL_COMPILE, GL_COMPILE_AND_EXECUTE or zero */
-	CRHashTable *hash;    /* map display list IDs to CRListEffect structs */
-	CRIdPool *idPool;
+	GLboolean newEnd;
+	GLuint base;
+	GLuint currentIndex;  /* list being built */
+	GLenum mode;
+	CRHashTable *hash;  /* map display list IDs to CRListEffect structs */
 } CRListsState;
 
 /*

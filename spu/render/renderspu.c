@@ -149,7 +149,7 @@ static void RENDER_APIENTRY renderspuDestroyContext( GLint ctx )
 	context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
 	CRASSERT(context);
 	renderspu_SystemDestroyContext( context );
-	crHashtableDelete(render_spu.contextTable, ctx, GL_TRUE);
+	crHashtableDelete(render_spu.contextTable, ctx, crFree);
 }
 
 void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)
@@ -183,7 +183,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 			/* print OpenGL info */
 			crDebug( "Render SPU: GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
 			crDebug( "Render SPU: GL_RENDERER: %s", render_spu.ws.glGetString( GL_RENDERER ) );
-			crDebug( "Render SPU: GL_VERSION:  %s", render_spu.ws.glGetString( GL_VERSION ) );
+			CRASSERT(render_spu.ws.glGetString( GL_VERSION ) );
 			context->everCurrent = GL_TRUE;
 		}
 		if (crWindow == 0 && window->mapPending &&
@@ -246,6 +246,7 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	else
 		showIt = i > 0;
 
+	crDebug("Render SPU: Creating window (visBits=0x%x, id=%d)", visBits, i);
 	if (!renderspu_SystemCreateWindow( visual, showIt, window ))
 	{
 		crWarning( "Couldn't create a window, renderspu_SystemCreateWindow failed" );
@@ -262,7 +263,7 @@ static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
 	CRASSERT(window);
 	renderspu_SystemDestroyWindow( window );
-	crHashtableDelete(render_spu.windowTable, win, GL_TRUE);
+	crHashtableDelete(render_spu.windowTable, win, crFree);
 }
 
 static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
@@ -460,7 +461,7 @@ static void RENDER_APIENTRY renderspuBarrierCreateCR( GLuint name, GLuint count 
 
 static void RENDER_APIENTRY renderspuBarrierDestroyCR( GLuint name )
 {
-	crHashtableDelete( render_spu.barrierHash, name, GL_TRUE );
+	crHashtableDelete( render_spu.barrierHash, name, crFree );
 }
 
 static void RENDER_APIENTRY renderspuBarrierExecCR( GLuint name )

@@ -123,6 +123,9 @@ static const char *crExtensions =
 #ifdef CR_EXT_texture3D
 	"GL_EXT_texture3D "
 #endif
+#ifdef CR_IBM_rasterpos_clip
+	"GL_IBM_rasterpo_clip "
+#endif
 #ifdef CR_NV_fog_distance
 	"GL_NV_fog_distance "
 #endif

@@ -259,6 +259,9 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 CR_GLXFuncPtr glXGetProcAddress( const GLubyte *name );
 #endif /* GLX_ARB_get_proc_address */
 
+#ifndef GL_RASTER_POSITION_UNCLIPPED_IBM
+#define GL_RASTER_POSITION_UNCLIPPED_IBM  0x19262
+#endif
 
 #ifdef WINDOWS
 /* XXX how about this prototype for wglGetProcAddress()?
@@ -464,6 +467,8 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 typedef GLint (APIENTRY *crCreateContextProc)(const char *dpyName, GLint visBits);
 typedef void (APIENTRY *crDestroyContextProc)(GLint context);
 typedef void (APIENTRY *crMakeCurrentProc)(GLint window, GLint context);
+typedef GLint (APIENTRY *crGetCurrentContextProc)(void);
+typedef GLint (APIENTRY *crGetCurrentWindowProc)(void);
 typedef void (APIENTRY *crSwapBuffersProc)(GLint window, GLint flags);
 
 typedef GLint (APIENTRY *crWindowCreateProc)(const char *dpyName, GLint visBits);

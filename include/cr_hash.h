@@ -7,55 +7,27 @@
 #ifndef CR_HASH_H
 #define CR_HASH_H
 
+#include "chromium.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define CR_NUM_BUCKETS 1047
+typedef struct CRHashTable CRHashTable;
 
-typedef struct CRHashNode {
-	unsigned int key;
-	void *data;
-	struct CRHashNode *next;
-} CRHashNode;
-
-typedef struct CRHashTable {
-	unsigned int num_elements;
-	CRHashNode *buckets[CR_NUM_BUCKETS];
-} CRHashTable;
+/* Callback function used for freeing/deleting table entries */
+typedef void (*CRHashtableCallback)(void *data);
 
 CRHashTable *crAllocHashtable( void );
-void crFreeHashtable( CRHashTable *hash );
+void crFreeHashtable( CRHashTable *hash, CRHashtableCallback deleteCallback );
 void crHashtableAdd( CRHashTable *h, unsigned int key, void *data );
-void crHashtableDelete( CRHashTable *h, unsigned int key, int freeData );
-void *crHashtableSearch( CRHashTable *h, unsigned int key );
+GLuint crHashtableAllocKeys( CRHashTable *h, GLsizei range );
+void crHashtableDelete( CRHashTable *h, unsigned int key, CRHashtableCallback deleteCallback );
+void crHashtableDeleteBlock( CRHashTable *h, unsigned int key, GLsizei range, CRHashtableCallback deleteFunc );
+void *crHashtableSearch( const CRHashTable *h, unsigned int key );
 void crHashtableReplace( CRHashTable *h, unsigned int key, void *data, int free_mem );
-unsigned int crHashtableNumElements( CRHashTable *h) ;
-
-#define CR_HASHTABLE_WALK( h, t ) {               \
-  CRHashNode *t;                                  \
-  int _;                                          \
-  if (h) {                                        \
-    for (_ = 0; _ < CR_NUM_BUCKETS ; _++) {       \
-      for (t = h->buckets[_] ; t; t = t->next) {
-
-#define CR_HASHTABLE_WALK_MANUAL_STEP( h, t ) {   \
-  CRHashNode *t;                                  \
-  int _;                                          \
-  if (h) {                                        \
-    for (_ = 0; _ < CR_NUM_BUCKETS ; _++) {       \
-		t = h->buckets[_];                          \
-		while (t) {                                 \
-
-#define CR_HASHTABLE_STEP(t)                      \
-			t = t->next; 
-
-#define CR_HASHTABLE_WALK_END( h )                \
-      }	                                          \
-    }                                             \
-  }                                               \
-}
-
+unsigned int crHashtableNumElements( const CRHashTable *h) ;
+GLboolean crHashtableIsKeyUsed( const CRHashTable *h, GLuint id );
 
 #ifdef __cplusplus
 } /* extern "C" */

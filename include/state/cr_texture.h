@@ -7,7 +7,6 @@
 #ifndef CR_STATE_TEXTURE_H
 #define CR_STATE_TEXTURE_H
 
-#include "cr_idpool.h"
 #include "cr_hash.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_limits.h"
@@ -158,8 +157,6 @@ typedef struct {
 } CRTextureUnit;
 
 typedef struct {
-	/* FIXME: these should be moved into a shared-context structure */
-	CRIdPool          *idPool;  /* for GenTextures */
 	CRHashTable       *idHash;  /* to map IDs to CRTextureObj objects */
 
 	/* Default texture objects (name = 0) */

@@ -446,7 +446,7 @@ _math_de_casteljau_surf(GLfloat * cn, GLfloat * out, GLfloat * du,
  * Do one-time initialization for evaluators.
  */
 void
-_math_init_eval(void)
+tilesortspuInitEvaluators(void)
 {
    GLuint i;
 

@@ -14,14 +14,23 @@ void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 {
 	GET_THREAD(thread);
 	int writeback = tilesort_spu.num_servers;
+	WindowInfo *winInfo;
+	int serverWindow;
+
 	tilesortspuFlush( thread );
+
+	winInfo = tilesortspuGetWindowInfo(window, 0);
+	CRASSERT(winInfo);
+	/* NOTE: winInfo->server[n].window should be the same for all n! */
+	serverWindow = winInfo->server[0].window;
+
 	if (tilesort_spu.swap)
 	{
-		crPackSwapBuffersSWAP( window, flags );
+		crPackSwapBuffersSWAP( serverWindow, flags );
 	}
 	else
 	{
-		crPackSwapBuffers( window, flags );
+		crPackSwapBuffers( serverWindow, flags );
 	}
 	if (tilesort_spu.syncOnSwap)
 	{
@@ -49,8 +58,8 @@ void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 	if (tilesort_spu.emit_GATHER_POST_SWAPBUFFERS)
 	{
 		if (tilesort_spu.swap)
-			crPackChromiumParameteriCRSWAP(GL_GATHER_POST_SWAPBUFFERS_CR, window);
+			crPackChromiumParameteriCRSWAP(GL_GATHER_POST_SWAPBUFFERS_CR, serverWindow);
 		else
-			crPackChromiumParameteriCR(GL_GATHER_POST_SWAPBUFFERS_CR, window);
+			crPackChromiumParameteriCR(GL_GATHER_POST_SWAPBUFFERS_CR, serverWindow);
 	}
 }

@@ -7,7 +7,6 @@
 #ifndef CR_STATE_PROGRAM_H
 #define CR_STATE_PROGRAM_H
 
-#include "cr_idpool.h"
 #include "cr_hash.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_limits.h"
@@ -54,7 +53,6 @@ typedef struct {
 	GLfloat VertexProgramParameters[MAX_VERTEX_PROGRAM_PARAMETERS][4];
 
 	CRHashTable *programHash;  /* XXX belongs in shared state, actually */
-	CRIdPool *programPool;
 } CRProgramState;
 
 

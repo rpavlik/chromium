@@ -73,6 +73,8 @@
 #define CR_EXT_texture_object 1
 #define CR_EXT_texture3D 1
 
+#define CR_IBM_rasterpos_clip 1
+
 #define CR_NV_fog_distance 1
 #define CR_NV_register_combiners 1
 #define CR_NV_register_combiners2 1

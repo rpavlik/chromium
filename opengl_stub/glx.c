@@ -12,10 +12,11 @@
 #include "cr_mothership.h"
 #include "stub.h"
 
+#define MULTISAMPLE 1
+
 /* For optimizing glXMakeCurrent */
 static Display *currentDisplay = NULL;
 static GLXDrawable currentDrawable = 0;
-static GLXContext currentContext = 0;
 
 
 /*
@@ -145,9 +146,10 @@ GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 		desiredVisual |= CR_DOUBLE_BIT;
 	if (stereo)
 		desiredVisual |= CR_STEREO_BIT;
+#if MULTISAMPLE
 	if (sampleBuffers > 0 && samples > 0)
 		desiredVisual |= CR_MULTISAMPLE_BIT;
-
+#endif
 	/* Should we be checking more ... ??? */
 
 	return desiredVisual;
@@ -158,7 +160,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 	XVisualInfo *vis;
 	int *attrib, wants_rgb;
 
-	StubInit();
+	stubInit();
 
 	wants_rgb = 0;
 
@@ -251,14 +253,18 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				break;
 
 			case GLX_SAMPLE_BUFFERS_SGIS: /* aka GLX_SAMPLES_ARB */
+#if MULTISAMPLE
 				if (attrib[1] > 0)
 					stub.desiredVisual |= CR_MULTISAMPLE_BIT;
 				attrib++;
 				break;
+#endif
 			case GLX_SAMPLES_SGIS: /* aka GLX_SAMPLES_ARB */
+#if MULTISAMPLE
 				/* just ignore value for now, we'll try to get 4 samples/pixel */
 				attrib++;
 				break;
+#endif
 
 			default:
 				crWarning( "glXChooseVisual: bad attrib=0x%x", *attrib );
@@ -332,43 +338,32 @@ unsigned long mask )
  */
 GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct )
 {
+	stubInit();
 	return stubCreateContext( dpy, vis, share, direct);
 }
 
 
 void glXDestroyContext( Display *dpy, GLXContext ctx )
 {
-	stubDestroyContext( dpy, ctx );
+	(void) dpy;
+	stubDestroyContext( (GLint) ctx );
 }
 
 
 Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 {
+	ContextInfo *context;
+	WindowInfo *window;
 	Bool retVal;
 
-	if (drawable == 0 && ctx == 0) {
-		/* Glean is one app that calls glXMakeCurrent(dpy, 0, 0).
-		 * We can safely ignore it.
-		 */
-		currentDrawable = 0;
-		currentContext = 0;
-		stub.currentContext = -1;
-		return True;
+	context = (ContextInfo *) crHashtableSearch(stub.contextTable, (int) ctx);
+	window = stubGetWindowInfo(dpy, drawable);
+
+	if (context && context->type == UNDECIDED) {
+  	XSync(dpy, 0); /* sync to force window creation on the server */
 	}
 
-	/*
-	if (currentDrawable && currentDrawable != drawable)
-		crWarning("Multiple drawables not fully supported!");
-	*/
-
-	retVal = stubMakeCurrent( dpy, drawable, ctx );
-
-	if (retVal) {
-		currentDisplay = dpy;
-		currentDrawable = drawable;
-		currentContext = ctx;
-	}
-
+	retVal = stubMakeCurrent(window, context);
 	return retVal;
 }
 
@@ -379,6 +374,7 @@ GLXPixmap glXCreateGLXPixmap( Display *dpy, XVisualInfo *vis, Pixmap pixmap )
 	(void) vis;
 	(void) pixmap;
 
+	stubInit();
 	crWarning( "Unsupported GLX Call: glXCreateGLXPixmap()" );
 	return (GLXPixmap) 0;
 }
@@ -395,7 +391,7 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 	(void) dpy;
 	(void) vis;
 
-	StubInit();
+	stubInit();
 
 	/* try to satisfy this request with the native glXGetConfig() */
 	if (stub.haveNativeOpenGL)
@@ -490,15 +486,18 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_SAMPLE_BUFFERS_SGIS:
+#if MULTISAMPLE
 			stub.desiredVisual |= CR_MULTISAMPLE_BIT;
 			*value = 0;  /* fix someday */
 			break;
+#endif
 
 		case GLX_SAMPLES_SGIS:
+#if MULTISAMPLE
 			stub.desiredVisual |= CR_MULTISAMPLE_BIT;
 			*value = 0;  /* fix someday */
 			break;
-
+#endif
 
 		case GLX_VISUAL_CAVEAT_EXT:
 			*value = GLX_NONE_EXT;
@@ -543,7 +542,10 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 
 GLXContext glXGetCurrentContext( void )
 {
-	return currentContext;
+	if (stub.currentContext)
+		return (GLXContext) stub.currentContext->id;
+	else
+		return (GLXContext) NULL;
 }
 
 GLXDrawable glXGetCurrentDrawable( void )
@@ -582,7 +584,8 @@ Bool glXQueryVersion( Display *dpy, int *major, int *minor )
 
 void glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 {
-	stubSwapBuffers( dpy, drawable );
+	const WindowInfo *window = stubGetWindowInfo(dpy, drawable);
+	stubSwapBuffers( window, 0 );
 }
 
 void glXUseXFont( Font font, int first, int count, int listBase )

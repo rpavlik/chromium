@@ -1,0 +1,282 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Using Chromium with DMX</h1>
+<p>
+<A HREF="http://dmx.sourceforge.net/" target="_parent">DMX</A>
+allows X to be run on a cluster of systems such that the X display/desktop
+can span many individual screens.
+For example, a cluster of 12 computers running X can be harnessed to provide
+a large tiled display of 4 x 3 screens.
+Windows can span screen boundaries.
+</p>
+
+<p>
+Needless to say, DMX works with X-based systems; not Windows.
+</p>
+
+<p>
+Since version 1.2, Chromium has support for DMX so that OpenGL applications
+can work transparently on a DMX display.
+</p>
+
+<p>
+Previously, when Chromium's tilesort SPU was used to drive a large, tiled
+display there were a number of problems:
+<p>
+<ul>
+<li>The original application window was created but left empty while
+    Chromium rendered to the back-end screens.
+<li>Mouse-based interaction was difficult because the pointer wasn't
+    visible with the Chromium rendering.
+<li>Only one OpenGL window was supported.
+</ul>
+
+<p>
+These problems are now fixed for DMX displays since Chromium directly
+renders into the real X windows.
+In short, OpenGL applications "just work" the way you'd expect.
+</p>
+
+
+<h2 class="PageSubHeading">Setup</h2>
+
+<p>
+You should already have DMX up and running on your graphics cluster.
+See the <HREF="http://dmx.sourceforge.net/" target="_parent">
+DMX documentation</A> for instructions.
+</p>
+
+<p>
+Furtheremore, you'll need to copy the <code>dmxext.h</code> header file
+from <code>dmx/xc/include/extensions/dmxext.h</code> into your usual X
+header file directory, such as <code>/usr/X11R6/include/X11/extensions</code>.
+Then, the DMX client library, <code>libdmx.a</code> should be copied from
+<code>dmx/build/xc/exports/lib/libdmx.a</code> to your usual X library
+directory, such as <code>/usr/X11R6/lib</code>.
+</p>
+
+<p>
+You'll need to compile Chromium with DMX support.  To do this, edit
+<code>cr/config/Linux.mk</code> (or another config file for your system)
+and set <code>USE_DMX=1</code>.
+</p>
+
+<p>
+Then, rebuild Chromium by doing <code>make clean</code>
+followed by <code>make</code>.
+</p>
+
+<h2 class="PageSubHeading">Running Manually</h2>
+
+<p>
+Edit the sample <code>mothership/config/dmx.conf</code> configuration script -
+you'll have to edit the TILE_ROWS, TILE_COLS and HOSTS settings, at least.
+</p>
+
+<p>
+Start the mothership:  <code>python dmx.conf appname</code>
+</p>
+<p>
+On each of the back-end systems:
+<ul>
+<li>open a shell.
+<li>set the DISPLAY env var to the native X display (i.e. "cluster7:0")
+<li>set the CRMOTHERSHIP env var to the host where the mothership is running.
+<li>set the LD_LIBRARY_PATH env var to your Chromium lib directory
+<li>start a crserver
+</ul>
+
+On the DMX front-end system:
+<ul>
+<li>open a shell
+<li>set the DISPLAY env var to the DMX server (i.e. "frontend:1")
+<li>set the CRMOTHERSHIP env var to the host where the mothership is running.
+<li>set the LD_LIBRARY_PATH env var to your Chromium lib directory
+<li>start a crappfaker
+</ul>
+</p>
+
+<p>
+At this point, your OpenGL application should be running on DMX.
+</p>
+
+
+<h2 class="PageSubHeading">Running with Auto-start</h2>
+
+<p>
+Ideally, one would like to able to start an OpenGL application in the normal
+manner and have it use DMX+Chromium automatically, without manually starting
+a mothership and set of crservers as we did above.
+The auto-start feature lets you do just that.
+</p>
+
+<h3>Prerequisites</h3>
+
+<ol>
+<li>Your ~/.crsite file needs to be setup (or $CRSITE or /etc/crsite).
+<br>
+<br>
+<li>Your ~/.crconfigs file needs to be setup.  Specifically, it needs a
+    line like this:
+    <pre>
+    *  /usr/local/Chromium/cr/mothership/configs/autodmx.conf %m %p
+    </pre>
+    This tells Chromium's libcrfaker to use the autodmx.conf config file
+    when running any application (indicated by *).  The %m is replaced by
+    a random mothership port.  The %p is replaced by the program name.
+<br>
+<br>
+<li>libGL.so and libGL.so.1 must be symlink to libcrfaker.so
+<br>
+<br>
+<li>The back-end/cluster machines must have the crserver binary in the
+    search path (typically /usr/local/bin or /usr/bin) and a properly
+    set LD_LIBRARY_PATH (you can tweak it below).
+<br>
+<br>
+<li>rsh to the back-end/cluster machines must work.
+<br>
+<br>
+<li>You may need to tweak the value of 'crdir' in the autodmx.conf file.
+</ol>
+
+<h3>How it works</h3>
+
+<ol>
+<li>When the app starts, libcrfaker will fail to find the mothership on
+     its first try.  That'll signal it to search the .crconfigs file for
+     a mothership config to spawn.  libcrfaker will choose a random port
+     number for the mothership.
+<br>
+<br>
+<li>The mothership is spawned with autodmx.conf.  In turn, it uses rsh
+    to start up the crservers on the back-end machines.  Another random
+    port number is used for the crservers.
+<br>
+<br>
+<li>Control returns to libcrfaker where it proceeds to load the client-side
+    SPU chain (tilesort).  Then, control returns to the application.
+</ol>
+
+<h3>Disclaimer</h3>
+
+<p>
+The auto-start code is a bit rough and may not work reliably at this time.
+</p>
+
+
+
+
+<h2 class="PageSubHeading">Configuration Details</h2>
+
+<p>
+The dmx.conf file is an example configuration for using Chromium with DMX.
+If you decide to change it or make your own configuration file
+there are a few critical settings to be aware of.
+</p>
+
+<p>
+The client/application node must be configured to track window size changes:
+</p>
+<pre>
+     clientnode.Conf('track_window_size', 1)
+</pre>
+
+<p>
+The tilesort SPU must be set to use DMX:
+</p>
+<pre>
+     tilesortspu.Conf('use_dmx', 1)
+</pre>
+
+<p>
+The best bucketing mode to use is 'Non-Uniform Grid'.  The 'Uniform Grid'
+mode can't be used since it's extremely rare for a window to be subdivided
+into identical tiles.
+</p>
+<pre>
+     tilesortspu.Conf('bucket_mode', 'Non-Uniform Grid')
+</pre>
+
+<p>
+The server/network node must be configured to use DMX.  Optimized bucketing
+is of no use and should be disabled.
+</p>
+<pre>
+     servernode.Conf('use_dmx', 1)
+     servernode.Conf('optimize_bucket', 0)
+</pre>
+
+<p>
+The server's render SPUs should be configured to render into the application
+window and the SPUs needs to know the appropriate X display for the back-end
+X servers:
+</p>
+<pre>
+     renderspu.Conf('render_to_app_window', 1)
+     renderspu.Conf('display_string', HOSTS[n] + ":0")
+</pre>
+
+
+<h2 class="PageSubHeading">Troubleshooting</h2>
+
+<p>
+If compilation fails, be sure the dmxext.h header is in the right place
+(see above).
+</p>
+
+<p>
+If everything's working correctly you should see "GL_CR_dmx" in the list
+of OpenGL extensions listed by the <code>glxinfo</code> program.
+</p>
+
+<p>
+More to come...
+</p>
+
+
+<h2 class="PageSubHeading">How Chromium Works with DMX</h2>
+
+<p>
+Each of the back-end systems runs a crserver.
+Each crserver has a render SPU.
+</p>
+<p>
+The mothership is configured for a crNetworkNode (crserver) on each
+back-end server.
+A tilesort SPU is configured for the front-end application (crappfaker).
+</p>
+<p>
+Chromium's libGL faker loads the tilesort SPU.
+When a new OpenGL window is created, the tilesort SPU uses the DMX extension
+to find the window information on the back-end X servers which corresponds
+to the new X window.
+The tilesort SPU directs the N back-end render SPUs to directly draw into the
+back-end windows.
+</p>
+<p>
+Whenever the DMX OpenGL window is moved or resized the tilesort SPU recomputes
+a new tiling and sends that information to the backend crservers.
+</p>
+
+
+
+
+</body>
+
+</html>

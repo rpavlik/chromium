@@ -312,6 +312,14 @@ static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 			DIRTY(sb->multisample.dirty, neg_bitid);
 			break;
 #endif
+#ifdef CR_IBM_rasterpos_clip
+		case GL_RASTER_POSITION_UNCLIPPED_IBM:
+			g->transform.rasterPositionUnclipped = val;
+			DIRTY(sb->transform.enable, neg_bitid);
+			DIRTY(sb->transform.dirty, neg_bitid);
+			break;
+#endif
+
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable called with bogus cap: 0x%x", cap);
 			return;

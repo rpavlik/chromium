@@ -5,6 +5,7 @@
  */
 
 #include "unpacker.h"
+#include "cr_error.h"
 
 void crUnpackDrawPixels( void )
 {
@@ -37,7 +38,7 @@ void crUnpackBitmap( void )
 
 	if ( !is_null )
 	{
-		bitmap = (GLubyte *) DATA_POINTER( sizeof(int) + 28, GLvoid );
+		bitmap = DATA_POINTER( sizeof(int) + 28, GLubyte );
 	}
 
 	cr_unpackDispatch.PixelStorei( GL_UNPACK_ROW_LENGTH, 0 );

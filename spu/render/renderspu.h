@@ -39,6 +39,8 @@ typedef struct {
 	int width, height;
 	VisualInfo *visual;
 	GLboolean mapPending;
+	GLboolean visible;
+	GLboolean everCurrent; /* has this window ever been bound? */
 #ifndef WINDOWS
 	Window window;
 	Window nativeWindow;  /* for render_to_app_window */

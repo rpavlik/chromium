@@ -61,7 +61,7 @@ void crStateLimitsPrint (const CRLimitsState *l)
 
 void crStateLimitsDestroy(CRLimitsState *l)
 {
-	crFree(l->extensions);
+	crFree((void *) l->extensions);
 }
 
 
@@ -284,6 +284,9 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 
 	if (hasExtension((const char*)limits->extensions, "GL_EXT_texture_lod_bias"))
 		extensions->EXT_texture_lod_bias = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_IBM_rasterpos_clip"))
+		extensions->IBM_rasterpos_clip = GL_TRUE;
 
 	if (hasExtension((const char*)limits->extensions, "GL_NV_fog_distance"))
 		extensions->NV_fog_distance = GL_TRUE;

@@ -975,7 +975,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuDestroyContext( GLint ctx )
 	context = (ContextInfo *) crHashtableSearch(binaryswap_spu.contextTable, ctx);
 	CRASSERT(context);
 	binaryswap_spu.super.DestroyContext(context->renderContext);
-	crHashtableDelete(binaryswap_spu.contextTable, ctx, GL_TRUE);
+	crHashtableDelete(binaryswap_spu.contextTable, ctx, crFree);
 }
 
 
@@ -1063,7 +1063,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowDestroy( GLint win )
 	window = (WindowInfo *) crHashtableSearch(binaryswap_spu.windowTable, win);
 	CRASSERT(window);
 	binaryswap_spu.super.WindowDestroy(window->renderWindow);
-	crHashtableDelete(binaryswap_spu.windowTable, win, GL_TRUE);
+	crHashtableDelete(binaryswap_spu.windowTable, win, crFree);
 }
 
 static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowSize( GLint win, GLint w, GLint h )

@@ -22,93 +22,71 @@ typedef struct BucketRegion {
 } BucketRegion;
 
 #define HASHRANGE 256
-static BucketRegion *rhash[HASHRANGE][HASHRANGE];
 
 #define BKT_DOWNHASH(a, range) ((a)*HASHRANGE/(range))
 #define BKT_UPHASH(a, range) ((a)*HASHRANGE/(range) + ((a)*HASHRANGE%(range)?1:0))
 
+struct BucketingInfo {
+	BucketRegion *rhash[HASHRANGE][HASHRANGE];
+	BucketRegion *rlist;
+};
+
 
 /*
- * Test if we can really use optimizeBucket with the current set of
- * tiles.
- * Return GL_TRUE if so, GL_FALSE if not.
+ * At this point we know that the tiles are uniformly sized so we can use
+ * a hash-based bucketing method.  Setup the hash table now.
  */
-GLboolean crServerCheckTileLayout(void)
-{
-	int optTileWidth = 0, optTileHeight = 0;
-	int i;
-
-	for (i = 0; i < cr_server.numExtents; i++)
-	{
-		const int w = cr_server.extents[i].x2 - cr_server.extents[i].x1;
-		const int h = cr_server.extents[i].y2 - cr_server.extents[i].y1;
-
-		if (optTileWidth == 0 && optTileHeight == 0) {
-			/* first tile */
-			optTileWidth = w;
-			optTileHeight = h;
-		}
-		else
-		{
-			/* subsequent tile - make sure it's the same size as first */
-			if (w != optTileWidth || h != optTileHeight)
-			{
-				return GL_FALSE;
-			}
-			else if (cr_server.extents[i].x1 % optTileWidth != 0 ||
-							 cr_server.extents[i].x2 % optTileWidth != 0 ||
-							 cr_server.extents[i].y1 % optTileHeight != 0 ||
-							 cr_server.extents[i].y2 % optTileHeight != 0)
-			{
-				return GL_FALSE;
-			}
-		}
-	}
-
-	return GL_TRUE;
-}
-
-
-void crServerFillBucketingHash(void) 
+static GLboolean
+fillBucketingHash(CRMuralInfo *mural)
 {
 	int i, j, k, m;
 	int r_len = 0;
 	int xinc, yinc;
 	int rlist_alloc = 64 * 128;
-
-	BucketRegion *rlist;
 	BucketRegion *rptr;
+	struct BucketingInfo *bucketInfo;
+
+	if (mural->bucketInfo) {
+		crFree(mural->bucketInfo->rlist);
+		crFree(mural->bucketInfo);
+		mural->bucketInfo = NULL;
+	}
+
+	bucketInfo = (struct BucketingInfo *) crCalloc(sizeof(struct BucketingInfo));
+	if (!bucketInfo)
+		return GL_FALSE;
 
 	/* Allocate rlist (don't free it!!!) */
-	rlist = (BucketRegion *) crAlloc( rlist_alloc * sizeof(*rlist) );
+	bucketInfo->rlist = (BucketRegion *) crAlloc(rlist_alloc * sizeof(BucketRegion));
 
 	for ( i = 0; i < HASHRANGE; i++ )
 	{
 		for ( j = 0; j < HASHRANGE; j++ )
 		{
-			rhash[i][j] = NULL;
+			bucketInfo->rhash[i][j] = NULL;
 		}
 	}
 
 	/* Fill the rlist */
-	xinc = cr_server.extents[0].x2 - cr_server.extents[0].x1;
-	yinc = cr_server.extents[0].y2 - cr_server.extents[0].y1;
+	xinc = mural->extents[0].imagewindow.x2 - mural->extents[0].imagewindow.x1;
+	yinc = mural->extents[0].imagewindow.y2 - mural->extents[0].imagewindow.y1;
 
-	rptr = rlist;
-	for (i=0; i < (int) cr_server.muralWidth; i+=xinc) 
+	rptr = bucketInfo->rlist;
+	for (i=0; i < (int) mural->width; i+=xinc) 
 	{
-		for (j=0; j < (int) cr_server.muralHeight; j+=yinc) 
+		for (j=0; j < (int) mural->height; j+=yinc) 
 		{
-			for (k=0; k < cr_server.numExtents; k++) 
+			for (k=0; k < mural->numExtents; k++) 
 			{
-				if (cr_server.extents[k].x1 == i && cr_server.extents[k].y1 == j) 
+				if (mural->extents[k].imagewindow.x1 == i &&
+						mural->extents[k].imagewindow.y1 == j) 
 				{
-					rptr->extents = cr_server.extents[k]; /* x1,y1,x2,y2 */
+					rptr->extents = mural->extents[k].imagewindow; /* x1,y1,x2,y2 */
 					rptr->id = k;
 					break;
 				}
 			}
-			if (k == cr_server.numExtents) 
+			if (k == mural->numExtents) 
 			{
 				rptr->extents.x1 = i;
 				rptr->extents.y1 = j;
@@ -119,28 +97,28 @@ void crServerFillBucketingHash(void)
 			rptr++;
 		}
 	}
-	r_len = rptr - rlist;
+	r_len = rptr - bucketInfo->rlist;
 
 	/* Fill hash table */
 	for (i = 0; i < r_len; i++)
 	{
-		BucketRegion *r = &rlist[i];
+		BucketRegion *r = &bucketInfo->rlist[i];
 
-		for (k=BKT_DOWNHASH(r->extents.x1, (int)cr_server.muralWidth);
-		     k<=BKT_UPHASH(r->extents.x2, (int)cr_server.muralWidth) &&
+		for (k=BKT_DOWNHASH(r->extents.x1, (int)mural->width);
+		     k<=BKT_UPHASH(r->extents.x2, (int)mural->width) &&
 			     k < HASHRANGE;
 		     k++) 
 		{
-			for (m=BKT_DOWNHASH(r->extents.y1, (int)cr_server.muralHeight);
-			     m<=BKT_UPHASH(r->extents.y2, (int)cr_server.muralHeight) &&
+			for (m=BKT_DOWNHASH(r->extents.y1, (int)mural->height);
+			     m<=BKT_UPHASH(r->extents.y2, (int)mural->height) &&
 				     m < HASHRANGE;
 			     m++) 
 			{
-				if ( rhash[m][k] == NULL ||
-				     (rhash[m][k]->extents.x1 > r->extents.x1 &&
-				      rhash[m][k]->extents.y1 > r->extents.y1))
+				if ( bucketInfo->rhash[m][k] == NULL ||
+				     (bucketInfo->rhash[m][k]->extents.x1 > r->extents.x1 &&
+				      bucketInfo->rhash[m][k]->extents.y1 > r->extents.y1))
 				{
-					rhash[m][k] = r;
+					bucketInfo->rhash[m][k] = r;
 				}
 			}
 		}
@@ -149,7 +127,7 @@ void crServerFillBucketingHash(void)
 	/* Initialize links */
 	for (i=0; i<r_len; i++) 
 	{
-		BucketRegion *r = &rlist[i];
+		BucketRegion *r = &bucketInfo->rlist[i];
 		r->right = NULL;
 		r->up    = NULL;
 	}
@@ -157,10 +135,10 @@ void crServerFillBucketingHash(void)
 	/* Build links */
 	for (i=0; i<r_len; i++) 
 	{
-		BucketRegion *r = &rlist[i];
+		BucketRegion *r = &bucketInfo->rlist[i];
 		for (j=0; j<r_len; j++) 
 		{
-			BucketRegion *q = &rlist[j];
+			BucketRegion *q = &bucketInfo->rlist[j];
 			if (r==q)
 				continue;
 
@@ -182,7 +160,103 @@ void crServerFillBucketingHash(void)
 		}
 	}
 
+	mural->bucketInfo = bucketInfo;
+	return GL_TRUE;
 }
+
+
+/*
+ * Check if the tiles are the same size.  If so, initialize hash-based
+ * bucketing.
+ */
+GLboolean
+crServerInitializeBucketing(CRMuralInfo *mural)
+{
+	int optTileWidth = 0, optTileHeight = 0;
+	int i;
+
+	for (i = 0; i < mural->numExtents; i++)
+	{
+		const int w = mural->extents[i].imagewindow.x2 -
+			mural->extents[i].imagewindow.x1;
+		const int h = mural->extents[i].imagewindow.y2 -
+			mural->extents[i].imagewindow.y1;
+
+		if (optTileWidth == 0 && optTileHeight == 0) {
+			/* First tile */
+			optTileWidth = w;
+			optTileHeight = h;
+		}
+		else
+		{
+			/* Subsequent tile - make sure it's the same size as first and
+			 * falls on the expected x/y location.
+			 */
+			if (w != optTileWidth || h != optTileHeight) {
+				crWarning("Tile %d, %d .. %d, %d is not the right size!",
+									mural->extents[i].imagewindow.x1, mural->extents[i].imagewindow.y1,
+									mural->extents[i].imagewindow.x2, mural->extents[i].imagewindow.y2);
+				crWarning("All tiles must be same size with optimize_bucket.");
+				crWarning("Turning off optimize_bucket for this mural.");
+				return GL_FALSE;
+			}
+			else if ((mural->extents[i].imagewindow.x1 % optTileWidth) != 0 ||
+							 (mural->extents[i].imagewindow.x2 % optTileWidth) != 0 ||
+							 (mural->extents[i].imagewindow.y1 % optTileHeight) != 0 ||
+							 (mural->extents[i].imagewindow.y2 % optTileHeight) != 0)
+			{
+				crWarning("Tile %d, %d .. %d, %d is not positioned correctly "
+									"to use optimize_bucket.",
+									mural->extents[i].imagewindow.x1, mural->extents[i].imagewindow.y1,
+									mural->extents[i].imagewindow.x2, mural->extents[i].imagewindow.y2);
+				crWarning("Turning off optimize_bucket for this mural.");
+				return GL_FALSE;
+			}
+		}
+	}
+
+	return fillBucketingHash(mural);
+}
+
+
+/*
+ * XXX this isn't used yet.  The idea is to compute the clipped image window
+ * and baseProjection for all tiles up front and just recompute this info when
+ * the viewport or mural changes.
+ *
+ * Compute ancilliary tiling information which is dependant on the viewport.
+ * Also compute the baseProjection matrix for the extents.
+ * Input: mural - the mural to compute tiling for
+ *        ctx - context to get viewport bounds from
+ */
+void
+crServerComputeOutputBounds( CRMuralInfo *mural, CRContext *ctx )
+{
+	int i;
+
+	for ( i = 0; i < mural->numExtents; i++ )
+	{
+		CRExtent *extent = &mural->extents[i];
+		CRrecti clippedImagespace;  /* unused */
+
+		crServerSetViewportBounds( &(ctx->viewport),
+															 &extent->outputwindow,
+															 &mural->imagespace,
+															 &extent->imagewindow,
+															 &clippedImagespace,
+															 &extent->clippedImagewindow );
+
+		crServerRecomputeBaseProjection( &extent->baseProjection,
+																		 ctx->viewport.viewportX,
+																		 ctx->viewport.viewportY,
+																		 ctx->viewport.viewportW,
+																		 ctx->viewport.viewportH );
+	}
+}
+
+
+
+
 
 /*
  * Prepare for rendering a tile.  Setup viewport and base projection.
@@ -191,15 +265,22 @@ void crServerFillBucketingHash(void)
  *         imagespace - whole mural rectangle
  *         imagewindow - tile bounds within the mural
  */
-void crServerSetOutputBounds( CRContext *ctx, 
-												const CRrecti *outputwindow, 
-												const CRrecti *imagespace, 
-												const CRrecti *imagewindow )
+void
+crServerSetOutputBounds( CRContext *ctx, 
+												 const CRrecti *outputwindow, 
+												 const CRrecti *imagespace, 
+												 const CRrecti *imagewindow,
+												 CRrecti *clippedImagewindow)
 {
-	CRrecti p, q;
+	CRrecti clippedImagespace;
 
-	crServerSetViewportBounds( &(ctx->viewport), outputwindow,
-														 imagespace, imagewindow, &p, &q );
+	crServerSetViewportBounds( &(ctx->viewport),
+														 outputwindow,
+														 imagespace,
+														 imagewindow,
+														 &clippedImagespace,
+														 clippedImagewindow );
+
 	crServerRecomputeBaseProjection( &(cr_server.curClient->baseProjection),
 																	 ctx->viewport.viewportX,
 																	 ctx->viewport.viewportY,
@@ -208,28 +289,30 @@ void crServerSetOutputBounds( CRContext *ctx,
 	crServerApplyBaseProjection();
 }
 
+
 void SERVER_DISPATCH_APIENTRY
 crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 															GLint len, GLint num_opcodes )
 {
+	CRMuralInfo *mural = cr_server.curClient->currentMural;
 	char *data_ptr = (char*)(payload + ((num_opcodes + 3 ) & ~0x03));
-	int i;
 	unsigned int bx, by;
 
 	crUnpackPush();
 
-	bx = BKT_DOWNHASH(bounds->x1, cr_server.muralWidth);
-	by = BKT_DOWNHASH(bounds->y1, cr_server.muralHeight);
+	bx = BKT_DOWNHASH(bounds->x1, mural->width);
+	by = BKT_DOWNHASH(bounds->y1, mural->height);
 
 	/* Check for out of bounds, and optimizebucket to enable */
-	if ((bx <= HASHRANGE) &&
-	    (by <= HASHRANGE) &&
-	    cr_server.optimizeBucket)
+	if (mural->optimizeBucket && (bx <= HASHRANGE) && (by <= HASHRANGE))
 	{
-		BucketRegion *r;
-		BucketRegion *p;
+		const struct BucketingInfo *bucketInfo = mural->bucketInfo;
+		const BucketRegion *r;
+		const BucketRegion *p;
 
-		for (r = rhash[by][bx]; r && bounds->y2 >= r->extents.y1;
+		CRASSERT(bucketInfo);
+
+		for (r = bucketInfo->rhash[by][bx]; r && bounds->y2 >= r->extents.y1;
 		     r = r->up)
 		{
 			for (p=r; p && bounds->x2 >= p->extents.x1; p = p->right)
@@ -239,12 +322,14 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 					bounds->y1 < p->extents.y2 &&
 					bounds->y2 >= p->extents.y1 )
 				{
-					cr_server.curExtent = p->id;
+					CRExtent *extent = &mural->extents[p->id];
+					mural->curExtent = p->id;
 					if (cr_server.run_queue->client->currentCtx) {
 						crServerSetOutputBounds( cr_server.run_queue->client->currentCtx,
-																		 &cr_server.run_queue->extent[p->id].outputwindow,
-																		 &cr_server.run_queue->imagespace,
-																		 &cr_server.run_queue->extent[p->id].imagewindow );
+																		 &extent->outputwindow,
+																		 &mural->imagespace,
+																		 &extent->imagewindow,
+																		 &extent->clippedImagewindow);
 					}
 					crUnpack( data_ptr, data_ptr-1, num_opcodes, &(cr_server.dispatch) );
 				}
@@ -254,9 +339,10 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 	else 
 	{
 		/* non-optimized bucketing */
-		for ( i = 0; i < cr_server.run_queue->numExtents; i++ )
+		int i;
+		for ( i = 0; i < mural->numExtents; i++ )
 		{
-			const CRRunQueueExtent *extent = &cr_server.run_queue->extent[i];
+			CRExtent *extent = &mural->extents[i];
 
 			if ((!cr_server.localTileSpec) &&
 			    ( !( extent->imagewindow.x2 > bounds->x1 &&
@@ -267,14 +353,14 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 				continue;
 			}
 
-			cr_server.curExtent = i;
+			mural->curExtent = i;
 
 			if (cr_server.run_queue->client->currentCtx) {
-
 				crServerSetOutputBounds( cr_server.run_queue->client->currentCtx,
 																 &extent->outputwindow,
-																 &cr_server.run_queue->imagespace,
-																 &extent->imagewindow );
+																 &mural->imagespace,
+																 &extent->imagewindow,
+																 &extent->clippedImagewindow);
 			}
 
 			crUnpack( data_ptr, data_ptr-1, num_opcodes, &(cr_server.dispatch) );

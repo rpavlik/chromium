@@ -6,50 +6,98 @@
 
 #include "cr_spu.h"
 #include "cr_error.h" 
+#include "cr_mem.h" 
 #include "stub.h"
 #include "api_templates.h"
 
+/*
+ * Returns -1 on error
+ */
 int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 {
-	StubInit();
-	return stub.spu->dispatch_table.CreateContext( dpyName, visBits );
+	ContextInfo *context;
+	stubInit();
+	context = stubNewContext(dpyName, visBits, CHROMIUM);
+	return context ? context->id : -1;
 }
 
 void APIENTRY crDestroyContext( GLint context )
 {
-	stub.spu->dispatch_table.DestroyContext( context );
+  	stubDestroyContext(context);
 }
 
 void APIENTRY crMakeCurrent( GLint window, GLint context )
 {
-	const GLint nativeWindow = 0;
-	stub.spu->dispatch_table.MakeCurrent( window, nativeWindow, context );
+	WindowInfo *winInfo = (WindowInfo *)
+		crHashtableSearch(stub.windowTable, (unsigned int) window);
+	ContextInfo *contextInfo = (ContextInfo *)
+		crHashtableSearch(stub.contextTable, context);
+	if (contextInfo && contextInfo->type == NATIVE) {
+		crWarning("Can't call crMakeCurrent with native GL context");
+		return;
+	}
+	stubMakeCurrent(winInfo, contextInfo);
+}
+
+GLint APIENTRY crGetCurrentContext( void )
+{
+	stubInit();
+	if (stub.currentContext)
+	  return stub.currentContext->id;
+	else
+	  return 0;
+}
+
+GLint APIENTRY crGetCurrentWindow( void )
+{
+	stubInit();
+	if (stub.currentContext && stub.currentContext->currentDrawable)
+	  return stub.currentContext->currentDrawable->spuWindow;
+	else
+	  return -1;
 }
 
 void APIENTRY crSwapBuffers( GLint window, GLint flags )
 {
-	stub.spu->dispatch_table.SwapBuffers( window, flags );
+	const WindowInfo *winInfo = (const WindowInfo *)
+		crHashtableSearch(stub.windowTable, (unsigned int) window);
+	if (winInfo)
+		stubSwapBuffers(winInfo, flags);
 }
 
+/*
+ * Returns -1 on error
+ */
 GLint APIENTRY crWindowCreate( const char *dpyName, GLint visBits )
 {
-	StubInit();
-	return stub.spu->dispatch_table.WindowCreate( dpyName, visBits );
+	stubInit();
+	return stubNewWindow( dpyName, visBits );
 }
 
 void APIENTRY crWindowDestroy( GLint window )
 {
-	stub.spu->dispatch_table.WindowDestroy( window );
+	WindowInfo *winInfo = (WindowInfo *)
+		crHashtableSearch(stub.windowTable, (unsigned int) window);
+	if (winInfo && winInfo->type == CHROMIUM) {
+		stub.spu->dispatch_table.WindowDestroy( winInfo->spuWindow );
+		crHashtableDelete(stub.windowTable, window, crFree);
+	}
 }
 
 void APIENTRY crWindowSize( GLint window, GLint w, GLint h )
 {
-	stub.spu->dispatch_table.WindowSize( window, w, h );
+	const WindowInfo *winInfo = (const WindowInfo *)
+		crHashtableSearch(stub.windowTable, (unsigned int) window);
+	if (winInfo && winInfo->type == CHROMIUM)
+		stub.spu->dispatch_table.WindowSize( window, w, h );
 }
 
 void APIENTRY crWindowPosition( GLint window, GLint x, GLint y )
 {
-	stub.spu->dispatch_table.WindowPosition( window, x, y );
+	const WindowInfo *winInfo = (const WindowInfo *)
+		crHashtableSearch(stub.windowTable, (unsigned int) window);
+	if (winInfo && winInfo->type == CHROMIUM)
+		stub.spu->dispatch_table.WindowPosition( window, x, y );
 }
 
 void APIENTRY stub_GetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values )

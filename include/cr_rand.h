@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 void crRandSeed( unsigned long seed );
+void crRandAutoSeed(void);
 float crRandFloat( float min, float max );
 int crRandInt( int min, int max );
 

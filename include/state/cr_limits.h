@@ -18,7 +18,7 @@ extern "C" {
 /* glGetString strings */
 #define CR_RENDERER "Chromium"
 #define CR_VENDOR "Humper"
-#define CR_VERSION "1.1.1"   /* Chromium version, not OpenGL version */
+#define CR_VERSION "1.2"   /* Chromium version, not OpenGL version */
 
 
 #define CR_MAX_TEXTURE_UNITS		8
@@ -95,7 +95,7 @@ typedef struct {
 	GLuint numCompressedFormats;
 	GLenum compressedFormats[10];
 #endif
-	GLubyte *extensions;
+	const GLubyte *extensions;
 
 	/* Framebuffer/visual attributes */
 	GLuint redBits, greenBits, blueBits, alphaBits;
@@ -147,6 +147,7 @@ typedef struct {
 	GLboolean EXT_texture_filter_anisotropic;
 	GLboolean EXT_texture_lod_bias;
 	GLboolean EXT_texture3D;
+	GLboolean IBM_rasterpos_clip;
 	GLboolean NV_fog_distance;
 	GLboolean NV_register_combiners;
 	GLboolean NV_register_combiners2;

@@ -10,8 +10,10 @@
 #include "cr_mem.h"
 #include "cr_string.h"
 #include "cr_mothership.h"
+#include "cr_net.h"
 #include "cr_environment.h"
 #include "cr_process.h"
+#include "cr_rand.h"
 #include "stub.h"
 #include <stdlib.h>
 #include <signal.h>
@@ -59,15 +61,30 @@ static ViewportFunc_t origViewport;
 
 static void stubCheckWindowSize(void)
 {
+	int winX, winY;
 	unsigned int winW, winH;
-	GLint c = stub.currentContext;
-	if (c < 0)
+	WindowInfo *window;
+
+	if (!stub.currentContext)
 		return;
-	stubGetWindowSize( &(stub.Context[c]), &winW, &winH );
-	if (winW && winH && (winW != stub.spuWindowWidth || winH != stub.spuWindowHeight)) {
-		stub.spuDispatch.WindowSize( stub.spuWindow, winW, winH );
-		stub.spuWindowWidth = winW;
-		stub.spuWindowHeight = winH;
+
+	window = stub.currentContext->currentDrawable;
+
+	stubGetWindowGeometry( window, &winX, &winY, &winW, &winH );
+
+	if (winW && winH) {
+		if (winW != window->width || winH != window->height) {
+			if (window->type == CHROMIUM)
+				stub.spuDispatch.WindowSize( window->spuWindow, winW, winH );
+			window->width = winW;
+			window->height = winH;
+		}
+		if (winX != window->x || winY != window->y) {
+			if (window->type == CHROMIUM)
+				stub.spuDispatch.WindowPosition( window->spuWindow, winX, winY );
+			window->x = winX;
+			window->y = winY;
+		}
 	}
 }
 
@@ -138,11 +155,11 @@ static void stubSPUTearDown(void)
 
 static void stubExitHandler(void)
 {
-	stubSPUTearDown();
-
 	/* kill the mothership we spawned earlier */
 	if (stub.mothershipPID)
 		crKill(stub.mothershipPID);
+
+	stubSPUTearDown();
 }
 
 /*
@@ -161,6 +178,8 @@ static void stubSignalHandler(int signo)
  */
 static void stubInitVars(void)
 {
+	WindowInfo *defaultWin;
+
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&stub.mutex);
 #endif
@@ -176,10 +195,18 @@ static void stubInitVars(void)
 	stub.maxChromiumWindowHeight = 0;
 	stub.matchWindowTitle = NULL;
 	stub.threadSafe = GL_FALSE;
-	stub.spuWindowWidth = 0;
-	stub.spuWindowHeight = 0;
 	stub.trackWindowSize = 0;
 	stub.mothershipPID = 0;
+
+	stub.freeContextNumber = 500;
+	stub.contextTable = crAllocHashtable();
+	stub.currentContext = NULL;
+
+	stub.windowTable = crAllocHashtable();
+
+	defaultWin = (WindowInfo *) crCalloc(sizeof(WindowInfo));
+	defaultWin->type = CHROMIUM;
+	crHashtableAdd(stub.windowTable, 0, defaultWin);
 
 #if 1
 	atexit(stubExitHandler);
@@ -239,7 +266,7 @@ static char **LookupMothershipConfig(const char *procName)
 }
 
 
-void StubInit(void)
+void stubInit(void)
 {
 	/* Here is where we contact the mothership to find out what we're supposed
 	 * to  be doing.  Networking code in a DLL initializer.  I sure hope this 
@@ -310,6 +337,7 @@ void StubInit(void)
 
 		if (args) {
 			/* Build the argument vector and try spawning the mothership! */
+			int mothershipPort = 10000;
 			char *argv[1000];
 
 			argv[0] = PYTHON_EXE;
@@ -319,11 +347,26 @@ void StubInit(void)
 					argv[1 + i] = procName;
 				else if (crStrcmp(args[i], "%d") == 0)
 					argv[1 + i] = currentDir;
+				else if (crStrcmp(args[i], "%m") == 0) {
+					/* generate random port for mothership */
+					char portString[10];
+					crRandAutoSeed();
+					mothershipPort = crRandInt(10001, 10100);
+					sprintf(portString, "%d", mothershipPort);
+					argv[1 + i] = portString;
+				}
 				else
 					argv[1 + i] = args[i];
 			}
 			i++;
 			argv[i++] = NULL;
+
+			if (mothershipPort != 10000) {
+				char localHost[1000], mothershipStr[1010];
+				crGetHostname(localHost, 1000);
+				sprintf(mothershipStr, "%s:%d", localHost, mothershipPort);
+				crSetenv("CRMOTHERSHIP", mothershipStr);
+			}
 
 			crDebug("Spawning mothership with argv:");
 			for (i = 0; argv[i]; i++) {
@@ -334,7 +377,6 @@ void StubInit(void)
 			crSleep(1);
 
 			crFreeStrings(args);
-
 			conn = crMothershipConnect( );
 			if (conn)
 			{
@@ -394,6 +436,13 @@ void StubInit(void)
 		sscanf( response, "%d", &stub.trackWindowSize );
 	}
 
+	if (conn && crMothershipGetFakerParam( conn, response, "match_window_count" )
+		&& response[0]) {
+		int c;
+		sscanf( response, "%d", &c );
+		crDebug( "match_window_count: %d", c);
+		stub.matchChromiumWindowCount = c;
+	}
 
 #if 0
 	if (conn && crMothershipGetSPUDir( conn, response ))

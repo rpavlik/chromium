@@ -28,10 +28,13 @@ FILES = tilesortspu \
 	tilesortspu_net \
 	tilesortspu_pinch_gen \
 	tilesortspu_pixels \
+	tilesortspu_rasterpos \
 	tilesortspu_rect \
 	tilesortspu_swap \
+	tilesortspu_tiles \
 	tilesortspu_unimplemented \
-	tilesortspu_viewport
+	tilesortspu_viewport \
+	tilesortspu_window
 
 ifdef WINDOWS
 TRACKS_STATE = 1
@@ -58,6 +61,9 @@ ifdef WINDOWS
 LDFLAGS += user32.lib gdi32.lib
 else
 LDFLAGS += -lXmu -lX11
+ifeq ($(USE_DMX), 1)
+LDFLAGS += -ldmx
+endif
 endif
 
 tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed tilesortspu_proto.h

@@ -248,8 +248,6 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 #else
 		render_spu.use_lut8 = 0;
 #endif  
-
-
 	}
 
 	/* End the list */
@@ -257,6 +255,28 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 
 	vis = render_spu.ws.glXChooseVisual( dpy, screen, attribList );
 	return vis;
+}
+
+
+static XVisualInfo *
+chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
+{
+  while (1) {
+	XVisualInfo *vis = chooseVisual(dpy, screen, visAttribs);
+	if (vis)
+	  return vis;
+
+	if (visAttribs & CR_MULTISAMPLE_BIT)
+	  visAttribs &= ~CR_MULTISAMPLE_BIT;
+	else if (visAttribs & CR_STEREO_BIT)
+	  visAttribs &= ~CR_STEREO_BIT;
+	else if (visAttribs & CR_ACCUM_BIT)
+	  visAttribs &= ~CR_ACCUM_BIT;
+	else if (visAttribs & CR_ALPHA_BIT)
+	  visAttribs &= ~CR_ALPHA_BIT;
+	else
+	  return NULL;
+  }
 }
 
 
@@ -274,7 +294,6 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 		dpyName = NULL;
 
 	visual->dpy = XOpenDisplay(dpyName);  
-
 	if (!visual->dpy)
 	{
 		crWarning( "Couldn't initialize the visual because visual->dpy was NULL" );
@@ -282,7 +301,7 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 	}
 
 	screen = DefaultScreen(visual->dpy);
-	visual->visual = chooseVisual(visual->dpy, screen, visual->visAttribs);
+	visual->visual = chooseVisualRetry(visual->dpy, screen, visual->visAttribs);
 	if (!visual->visual) {
 		char s[1000];
 		renderspuMakeVisString( visual->visAttribs, s );
@@ -356,10 +375,6 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	}
 
 	/*
-	 * Open the display, check for GLX support
-	 */
-
-	/*
 	 * Query screen size if we're going full-screen
 	 */
 	if ( render_spu.fullscreen )
@@ -368,17 +383,14 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		Window root_window;
 
 		/* disable the screensaver */
-		XSetScreenSaver( dpy, 0, 0, PreferBlanking,
-				AllowExposures );
+		XSetScreenSaver( dpy, 0, 0, PreferBlanking, AllowExposures );
 		crDebug( "Render SPU: Just turned off the screensaver" );
 
 		/* Figure out how big the screen is, and make the window that size */
-
 		root_window = DefaultRootWindow( dpy );
 		XGetWindowAttributes( dpy, root_window, &xwa );
 
-		crDebug( "Render SPU: root window=%dx%d",
-						 xwa.width, xwa.height );
+		crDebug( "Render SPU: root window=%dx%d", xwa.width, xwa.height );
 
 		window->x = 0;
 		window->y = 0;
@@ -428,32 +440,36 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		return GL_FALSE;
 	}
 
-    /* Make a clear cursor to get rid of the monitor cursor */
+	crDebug( "Render SPU: Created window on display %s, Xvisual 0x%x",
+					 DisplayString(visual->dpy),
+					 (int) visual->visual->visual->visualid  /* yikes */
+					 );
+
+	/* Make a clear cursor to get rid of the monitor cursor */
 	if ( render_spu.fullscreen )
 	{
-        Pixmap pixmap;
-        Cursor cursor;
-        XColor colour;
-        char clearByte = 0;
+		Pixmap pixmap;
+		Cursor cursor;
+		XColor colour;
+		char clearByte = 0;
         
-        /* AdB - Only bother to create a 1x1 cursor (byte) */
-        pixmap = XCreatePixmapFromBitmapData(dpy, window->window, &clearByte, 1, 1, 1, 0, 1);
-	    if(!pixmap){
-		    crWarning("Unable to create clear cursor pixmap");
-		    return GL_FALSE;
-	    }
+		/* AdB - Only bother to create a 1x1 cursor (byte) */
+		pixmap = XCreatePixmapFromBitmapData(dpy, window->window, &clearByte,
+																				 1, 1, 1, 0, 1);
+		if(!pixmap){
+			crWarning("Unable to create clear cursor pixmap");
+			return GL_FALSE;
+		}
         
-	    cursor = XCreatePixmapCursor(dpy, pixmap, pixmap, &colour, &colour, 0, 0);
-	    if(!cursor){
-		    crWarning("Unable to create clear cursor from zero byte pixmap");
-		    return GL_FALSE;
-	    }
-	    XDefineCursor(dpy, window->window, cursor);
-        XFreePixmap(dpy, pixmap);
+		cursor = XCreatePixmapCursor(dpy, pixmap, pixmap, &colour, &colour, 0, 0);
+		if(!cursor){
+			crWarning("Unable to create clear cursor from zero byte pixmap");
+			return GL_FALSE;
+		}
+		XDefineCursor(dpy, window->window, cursor);
+		XFreePixmap(dpy, pixmap);
 	}
     
-	crDebug( "Render SPU: Created the window on display %s",
-			 visual->displayName ? visual->displayName : "(default)" );
 	hints.x = window->x;
 	hints.y = window->y;
 	hints.width = window->width;
@@ -469,6 +485,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	XSetStandardProperties( dpy, window->window,
 			WINDOW_NAME, WINDOW_NAME,
 			None, NULL, 0, &hints );
+
 #if 1
 	/* New item!  This is needed so that the sgimouse server can find
 	 * the crDebug window. 
@@ -485,13 +502,12 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	crFree( class_hints->res_class );
 	XFree( class_hints );
 
-	crDebug( "Render SPU: About to make current to the context" );
-
 	if (showIt) {
 		XMapWindow( dpy, window->window );
 		XIfEvent( dpy, &event, WaitForMapNotify, 
 							(char *) window->window );
 	}
+	window->visible = showIt;
 
 #if 0
 	/* Note: There is a nasty bug somewhere in glXMakeCurrent() for
@@ -526,7 +542,6 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	/*
 	 * End GLX code
 	 */
-
 	crDebug( "Render SPU: actual window x, y, width, height: %d, %d, %d, %d",
 					 window->x, window->y, window->width, window->height );
 
@@ -567,8 +582,10 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 	}
 
 	is_direct = render_spu.ws.glXIsDirect( visual->dpy, context->context );
-	crDebug( "Render SPU: Created a context (%s)",
-			is_direct ? "direct" : "indirect" );
+	crDebug( "Render SPU: Created %s context on display %s, Xvisual 0x%x",
+					 is_direct ? "DIRECT" : "INDIRECT",
+					 DisplayString(visual->dpy),
+					 (int) visual->visual->visual->visualid );
 
 	if ( render_spu.force_direct && !is_direct )
 	{
@@ -582,7 +599,10 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 
 void renderspu_SystemDestroyContext( ContextInfo *context )
 {
+#if 0
+	/* XXX disable for now - causes segfaults w/ NVIDIA's driver */
 	render_spu.ws.glXDestroyContext( context->visual->dpy, context->context );
+#endif
 	context->visual = NULL;
 	context->context = 0;
 }
@@ -592,9 +612,10 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 {
 	CRConnection* conn;
 	char response[8096];
+	Bool b;
 
 	CRASSERT(render_spu.ws.glXMakeCurrent);
-	
+
 	if (window && context) {
 		if (window->visual != context->visual) {
 			/*
@@ -618,7 +639,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		  */
 			renderspu_SystemDestroyWindow( window );
 #endif 
-			renderspu_SystemCreateWindow( context->visual, GL_FALSE, window );
+			renderspu_SystemCreateWindow( context->visual, window->visible, window );
 			/*
 			crError("In renderspu_SystemMakeCurrent() window and context"
 							" weren't created with same visual!");
@@ -656,24 +677,39 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			if (WindowExists(window->visual->dpy, nativeWindow))
 			{
 				window->nativeWindow = (Window) nativeWindow;
-				render_spu.ws.glXMakeCurrent( window->visual->dpy,
+				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																			(Window) nativeWindow, context->context );
+				CRASSERT(b);
 			}
 			else
 			{
 				crWarning("render SPU's render_to_app_window option is set but the appliction window ID 0x%x is invalid on the display named %s", (unsigned int) nativeWindow, DisplayString(window->visual->dpy));
 				CRASSERT(window->window);
-				render_spu.ws.glXMakeCurrent( window->visual->dpy,
+				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																			window->window, context->context );
+				CRASSERT(b);
 			}
 		}
 		else
 		{
 			/* This is the normal case - rendering to the render SPU's own window */
 			CRASSERT(window->window);
-			render_spu.ws.glXMakeCurrent( window->visual->dpy,
+			b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																		window->window, context->context );
+			CRASSERT(b);
 		}
+
+		/* XXX this is a total hack to work around an NVIDIA driver bug */
+		if (render_spu.self.GetFloatv) {
+			GLfloat f[4];
+			render_spu.self.GetFloatv(GL_CURRENT_RASTER_POSITION, f);
+			if (!window->everCurrent || f[1] < 0.0) {
+				crDebug("Resetting raster pos");
+				render_spu.self.WindowPos2iARB(0, 0);
+				window->everCurrent = GL_TRUE;
+			}
+		}
+
 	}
 }
 
@@ -718,15 +754,14 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 	{
 		if (showIt)
 		{
-			XEvent event;
 			XMapWindow( window->visual->dpy, window->window );
-			XIfEvent( window->visual->dpy, &event, WaitForMapNotify, 
-								(char *) window->window );
+			XSync(window->visual->dpy, 0);
 		}
 		else
 		{
 			XUnmapWindow( window->visual->dpy, window->window );
 		}
+		window->visible = showIt;
 	}
 }
 
@@ -746,3 +781,19 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
 }
 
+
+#if 0
+void RENDER_APIENTRY renderspuBitmap(GLint w, GLint h, GLfloat xo, GLfloat yo, GLfloat xm, GLfloat ym, const GLubyte *b)
+{
+	crDebug("%s %d x %d move %f, %f  %p", __FUNCTION__, w, h,
+					xm, ym, b);
+	 /*	 render_spu.self.Bitmap(w, h, xo, yo, xm, ym, b);*/
+}
+
+
+void RENDER_APIENTRY renderspuRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+	crDebug("%s %f, %f, %f, %f", __FUNCTION__, x, y, z, w);
+	 /*	 render_spu.self.Bitmap(w, h, xo, yo, xm, ym, b);*/
+}
+#endif

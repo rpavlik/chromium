@@ -53,14 +53,6 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyNam
 			cr_server.context[ctxPos] = newCtx;
 			crStateSetCurrentPointers( newCtx, &(cr_server.current) );
 			retVal = MAGIC_OFFSET + ctxPos;
-
-			/* Fix up viewport & scissor */
-			if (cr_server.muralWidth != 0 && cr_server.muralHeight != 0) {
-				cr_server.context[ctxPos]->viewport.viewportW = cr_server.muralWidth;
-				cr_server.context[ctxPos]->viewport.viewportH = cr_server.muralHeight;
-				cr_server.context[ctxPos]->viewport.scissorW = cr_server.muralWidth;
-				cr_server.context[ctxPos]->viewport.scissorH = cr_server.muralHeight;
-			}
 		}
 	}
 
@@ -86,6 +78,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint nativeWindow, GLint context )
 {
+	CRMuralInfo *mural;
 	int ctxPos;
 	CRContext *ctx;
 
@@ -93,6 +86,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 		ctxPos = context - MAGIC_OFFSET;
 		CRASSERT(ctxPos >= 0);
 		CRASSERT(ctxPos < CR_MAX_CONTEXTS);
+
+		mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
+		CRASSERT(mural);
 
 		/* Update the state tracker's current context */
 		ctx = cr_server.context[ctxPos];
@@ -102,9 +98,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 	else {
 		ctx = NULL;
 		window = -1;
+		mural = NULL;
 	}
 
 	cr_server.curClient->currentCtx = ctx;
+	cr_server.curClient->currentMural = mural;
 	cr_server.curClient->currentWindow = window;
 
 	/* This is a hack to force updating the 'current' attribs */
@@ -116,24 +114,40 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 	crStateMakeCurrent( ctx );
 
 	/* check if being made current for first time, update viewport */
-	if (ctx &&
-		ctx->viewport.outputDims.x1 == 0 &&
-		ctx->viewport.outputDims.x2 == 0 &&
-		ctx->viewport.outputDims.y1 == 0 &&
-		ctx->viewport.outputDims.y2 == 0) {
-		ctx->viewport.outputDims.x1 = cr_server.underlyingDisplay[0];
-		ctx->viewport.outputDims.x2 = cr_server.underlyingDisplay[2];
-		ctx->viewport.outputDims.y1 = cr_server.underlyingDisplay[1];
-		ctx->viewport.outputDims.y2 = cr_server.underlyingDisplay[3];
+	if (ctx) {
+		if (ctx->viewport.outputDims.x1 == 0 &&
+				ctx->viewport.outputDims.x2 == 0 &&
+				ctx->viewport.outputDims.y1 == 0 &&
+				ctx->viewport.outputDims.y2 == 0) {
+			ctx->viewport.outputDims.x1 = mural->underlyingDisplay[0];
+			ctx->viewport.outputDims.x2 = mural->underlyingDisplay[2];
+			ctx->viewport.outputDims.y1 = mural->underlyingDisplay[1];
+			ctx->viewport.outputDims.y2 = mural->underlyingDisplay[3];
+			/* this requires a GL context */
+			crServerBeginTiling(mural);
+		}
+		if (ctx->viewport.viewportW == 0) {
+			ctx->viewport.viewportW = mural->width;
+			ctx->viewport.viewportH = mural->height;
+			ctx->viewport.scissorW = mural->width;
+			ctx->viewport.scissorH = mural->height;
+		}
 	}
 
-	if (cr_server.firstCallMakeCurrent) {
+	if (cr_server.firstCallMakeCurrent ||
+			cr_server.currentWindow != window ||
+			cr_server.currentNativeWindow != nativeWindow) {
 		/* Since the cr server serialized all incoming contexts/clients into
 		 * one output stream of GL commands, we only need to call the head
 		 * SPU's MakeCurrent() function once.
+		 * BUT, if we're rendering to multiple windows, we do have to issue
+		 * MakeCurrent() calls sometimes.  The same GL context will always be
+		 * used though.
 		 */
 		cr_server.head_spu->dispatch_table.MakeCurrent( window, nativeWindow, cr_server.SpuContext );
 		cr_server.firstCallMakeCurrent = GL_FALSE;
+		cr_server.currentWindow = window;
+		cr_server.currentNativeWindow = nativeWindow;
 	}
 }
 

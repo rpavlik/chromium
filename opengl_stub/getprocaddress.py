@@ -42,13 +42,15 @@ print """
 print """
 CR_PROC CR_APIENTRY crGetProcAddress( const char *name )
 {
-	StubInit();
+	stubInit();
 """
 
 bonus_functions = [
 	"crCreateContext",
 	"crDestroyContext",
 	"crMakeCurrent",
+	"crGetCurrentContext",
+	"crGetCurrentWindow",
 	"crSwapBuffers",
 	"crWindowCreate",
 	"crWindowDestroy",

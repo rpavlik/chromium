@@ -86,6 +86,8 @@ SecondaryColor3dEXT
 MakeCurrent
 CreateContext
 DestroyContext
+WindowCreate
+WindowDestroy
 ReadPixels
 GetChromiumParametervCR
 ChromiumParametervCR

@@ -14,7 +14,7 @@
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreateCR( GLuint name, GLuint count )
 {
-	CRBarrier *barrier;
+	CRServerBarrier *barrier;
 #if DEBUG_BARRIERS
 	char debug_buf[4096];
 #endif
@@ -25,7 +25,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreateCR( GLuint name, GLui
 		return;
 	}
 
-	barrier = (CRBarrier *) crHashtableSearch( cr_server.barriers, name );
+	barrier = (CRServerBarrier *) crHashtableSearch( cr_server.barriers, name );
 
 #if DEBUG_BARRIERS
 	sprintf( debug_buf, "BarrierCreateCR( %d, %d )", name, count );
@@ -51,7 +51,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreateCR( GLuint name, GLui
 
 	if ( barrier == NULL )
 	{
-		barrier = (CRBarrier *) crAlloc( sizeof(*barrier) );
+		barrier = (CRServerBarrier *) crAlloc( sizeof(*barrier) );
 		barrier->count = count;
 		barrier->num_waiting = 0;
 		barrier->waiting = (RunQueue **) 
@@ -100,7 +100,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierDestroyCR( GLuint name )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExecCR( GLuint name )
 {
-	CRBarrier *barrier;
+	CRServerBarrier *barrier;
 #if DEBUG_BARRIERS
 	char debug_buf[4096];
 #endif
@@ -111,7 +111,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExecCR( GLuint name )
 		return;
 	}
 
-	barrier = (CRBarrier *) crHashtableSearch( cr_server.barriers, name );
+	barrier = (CRServerBarrier *) crHashtableSearch( cr_server.barriers, name );
 	if ( barrier == NULL )
 	{
 		crError( "crServerDispatchBarrierExec: No such barrier: %d", name );
@@ -148,7 +148,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExecCR( GLuint name )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GLuint count )
 {
-	CRSemaphore *sema;
+	CRServerSemaphore *sema;
 
 	if (cr_server.ignore_papi)
 	{
@@ -160,7 +160,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GL
 	if (sema)
 	   return; /* already created */
 
-	sema = (CRSemaphore *) crAlloc( sizeof( *sema ) );
+	sema = (CRServerSemaphore *) crAlloc( sizeof( *sema ) );
 	crHashtableAdd( cr_server.semaphores, name, sema );
 	sema->count = count;
 	sema->waiting = sema->tail = NULL;
@@ -182,7 +182,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreDestroyCR( GLuint name )
 /* Semaphore wait */
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 {
-	CRSemaphore *sema;
+	CRServerSemaphore *sema;
 
 	if (cr_server.ignore_papi)
 	{
@@ -190,7 +190,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 		return;
 	}
 
-	sema = (CRSemaphore *) crHashtableSearch( cr_server.semaphores, name );
+	sema = (CRServerSemaphore *) crHashtableSearch( cr_server.semaphores, name );
 	if (!sema)
 	{
 		crError( "No such semaphore: %d", name );
@@ -229,7 +229,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 /* Semaphore signal */
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreVCR( GLuint name )
 {
-	CRSemaphore *sema;
+	CRServerSemaphore *sema;
 
 	if (cr_server.ignore_papi)
 	{
@@ -237,7 +237,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreVCR( GLuint name )
 		return;
 	}
 
-	sema = (CRSemaphore *) crHashtableSearch( cr_server.semaphores, name );
+	sema = (CRServerSemaphore *) crHashtableSearch( cr_server.semaphores, name );
 	if (!sema)
 	{
 		crError( "No such semaphore: %d", name );

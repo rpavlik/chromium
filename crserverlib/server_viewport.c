@@ -50,28 +50,28 @@ static void crServerViewportConvertToOutput (const CRrecti *imagewindow,
  * Output:  clipped_imagespace - imagespace after scissor is applied
  *          clipped_imagewindow - imagewindow after scissor is applied
  */
-void crServerSetViewportBounds (CRViewportState *v,
-							  const CRrecti *outputwindow,
-							  const CRrecti *imagespace,
-							  const CRrecti *imagewindow,
-							  CRrecti *clipped_imagespace,
-							  CRrecti *clipped_imagewindow) 
+void
+crServerSetViewportBounds( CRViewportState *v,
+													 const CRrecti *outputwindow,
+													 const CRrecti *imagespace,
+													 const CRrecti *imagewindow,
+													 CRrecti *clipped_imagespace,
+													 CRrecti *clipped_imagewindow )
 {
 	CRrecti q;
 
 	v->outputDims = *imagewindow;
 
-	v->widthScale = (GLfloat) ( outputwindow->x2 - outputwindow->x1 );
-	v->widthScale /= (GLfloat) ( imagespace->x2 - imagespace->x1 );
-
-	v->heightScale = (GLfloat) ( outputwindow->y2 - outputwindow->y1 );
-	v->heightScale /= (GLfloat) ( imagespace->y2 - imagespace->y1 );
+	v->widthScale = (GLfloat) ( outputwindow->x2 - outputwindow->x1 )
+								/ (GLfloat) ( imagespace->x2 - imagespace->x1 );
+	
+	v->heightScale = (GLfloat) ( outputwindow->y2 - outputwindow->y1 )
+								 / (GLfloat) ( imagespace->y2 - imagespace->y1 );
 
 	v->x_offset = outputwindow->x1;
 	v->y_offset = outputwindow->y1;
 
-	/* If the scissor is invalid 
-	** set it to the whole output
+	/* If the scissor is disabled set it to the whole output.
 	** We might as well use the actual scissorTest rather than
 	** scissorValid - it never gets reset anyway.
 	*/
@@ -94,7 +94,7 @@ void crServerSetViewportBounds (CRViewportState *v,
 		cr_server.head_spu->dispatch_table.Scissor(q.x1,  q.y1, 
 			q.x2 - q.x1, q.y2 - q.y1);
 	}
-	
+
 	/* if the viewport is not valid,
 	** set it to the entire output.
 	*/
@@ -139,16 +139,17 @@ void crServerSetViewportBounds (CRViewportState *v,
 
 	crServerViewportConvertToOutput(imagewindow, outputwindow, &q);
 
-	cr_server.head_spu->dispatch_table.Viewport (q.x1,  q.y1, 
-		q.x2 - q.x1, q.y2 - q.y1);
+	cr_server.head_spu->dispatch_table.Viewport(q.x1,  q.y1, 
+																							q.x2 - q.x1, q.y2 - q.y1);
 }
 
 #if 0
 void crServerClampViewport( int x, int y, unsigned int width, unsigned int height,
 		int *server_x, int *server_y, unsigned int *server_width, unsigned int *server_height, int extent )
 {
-	*server_x = x - cr_server.extents[extent].x1;
-	*server_y = y - cr_server.extents[extent].y1;
+	CRMuralInfo *mural = cr_server.mural;
+	*server_x = x - mural->extents[extent].x1;
+	*server_y = y - mural->extents[extent].y1;
 	*server_width = width;
 	*server_height = height;
 	if (*server_x < 0)
@@ -159,13 +160,13 @@ void crServerClampViewport( int x, int y, unsigned int width, unsigned int heigh
 	{
 		*server_y = 0;
 	}
-	if (*server_x + width > (unsigned int) (cr_server.extents[extent].x2 - cr_server.extents[extent].x1))
+	if (*server_x + width > (unsigned int) (mural->extents[extent].x2 - cr_server.extents[extent].x1))
 	{
-		*server_width = cr_server.extents[extent].x2 - cr_server.extents[extent].x1 - *server_x;
+		*server_width = mural->extents[extent].x2 - cr_server.extents[extent].x1 - *server_x;
 	}
-	if (*server_y + height > (unsigned int) (cr_server.extents[extent].y2 - cr_server.extents[extent].y1))
+	if (*server_y + height > (unsigned int) (mural->extents[extent].y2 - cr_server.extents[extent].y1))
 	{
-		*server_height = cr_server.extents[extent].y2 - cr_server.extents[extent].y1 - *server_y;
+		*server_height = mural->extents[extent].y2 - cr_server.extents[extent].y1 - *server_y;
 	}
 }
 #endif
@@ -192,14 +193,18 @@ void crServerApplyBaseProjection(void)
 
 /*
  * Recompute the "base projection" matrix.  We examine the server extent
- * specified by cr_server.curExtent.  I think the base projection matrix
- * maps the extent space into the mural space (a scale and translate).
- * Input: x, y - mural origin (always 0,0?)
- * Input: w, h - mural width, height
+ * specified by mural->curExtent.
+ * Basically we compute the projection matrix scale/bias values needed to
+ * map the extent's region (in mural space) into the given back-end
+ * viewport space.
+ *
+ * Input: x, y, w, h - viewport pos and size (in mural coords)
  * Output: base - base projection matrix.
  */
 void crServerRecomputeBaseProjection(CRmatrix *base, GLint x, GLint y, GLint w, GLint h)
 {
+	const CRMuralInfo *mural = cr_server.curClient->currentMural;
+	const CRExtent *extent = mural->extents + mural->curExtent;
 	GLfloat xscale, yscale;
 	GLfloat xtrans, ytrans;
 	CRrectf p;
@@ -208,16 +213,14 @@ void crServerRecomputeBaseProjection(CRmatrix *base, GLint x, GLint y, GLint w, 
 	 * We need to take account of the current viewport parameters,
 	 * and they are passed to this function as x, y, w, h.
  	 * In the default case (from main.c) we pass the the
-	 * full muralsize of 0, 0, muralWidth, muralHeight
+	 * full muralsize of 0, 0, width, height
 	 */
-	p.x1 = ((GLfloat) (cr_server.extents[cr_server.curExtent].x1) - x) / (w);
-	p.y1 = ((GLfloat) (cr_server.extents[cr_server.curExtent].y1) - y) / (h);
-	p.x2 = ((GLfloat) (cr_server.extents[cr_server.curExtent].x2) - x) / (w);
-	p.y2 = ((GLfloat) (cr_server.extents[cr_server.curExtent].y2) - y) / (h);
+	p.x1 = (GLfloat) (extent->clippedImagewindow.x1 - x) / w;
+	p.y1 = (GLfloat) (extent->clippedImagewindow.y1 - y) / h;
+	p.x2 = (GLfloat) (extent->clippedImagewindow.x2 - x) / w;
+	p.y2 = (GLfloat) (extent->clippedImagewindow.y2 - y) / h;
 
-	/* XXX This gets real kludgy.
-	 * It's tricky when viewport's cross server boundaries
-	 * and we can only hope for the best.
+	/* XXX not sure this clamping is really neeed anymore
 	 */
 	if (p.x1 < 0.0) { 
 		p.x1 = 0.0;
@@ -241,10 +244,11 @@ void crServerRecomputeBaseProjection(CRmatrix *base, GLint x, GLint y, GLint w, 
 	ytrans = -(p.y2 + p.y1) / 2.0f;
 
 	*base = identity_matrix;
+
 	base->m00 = xscale;
 	base->m11 = yscale;
-	base->m30 = xtrans*xscale;
-	base->m31 = ytrans*yscale;
+	base->m30 = xtrans * xscale;
+	base->m31 = ytrans * yscale;
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchViewport( GLint x, GLint y, GLsizei width, GLsizei height )

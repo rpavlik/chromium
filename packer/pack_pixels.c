@@ -160,13 +160,17 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 	WRITE_OPCODE( pc, CR_READPIXELS_OPCODE );
 }
 
+/* Round N up to the next multiple of 8 */
+#define CEIL8(N)  (((N) + 7) & ~0x7)
+
 void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height, 
 		GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove,
 		const GLubyte *bitmap, const CRPixelPackState *unpack )
 {
+	const int isnull = (bitmap == NULL);
 	unsigned char *data_ptr;
-	int row_length, data_length=0;
-	int isnull = (bitmap == NULL);
+	int data_length = 0;
+	GLubyte *destBitmap = NULL;
 	int packet_length = 
 		sizeof( width ) + 
 		sizeof( height ) +
@@ -178,44 +182,21 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 
 	if ( bitmap )
 	{
-		if ( unpack->skipRows != 0 ||
-			   unpack->skipPixels != 0 )
-		{
-			crError( "crPackBitmap: I don't know how to unpack the data!  The skipRows or skipPixels is non-zero." );
-		}
-
-		if (unpack->rowLength > 0)
-			row_length = unpack->rowLength;
-		else 
-			row_length = width;
-
-		switch (unpack->alignment) {
-			case 1:
-				row_length = ( ( row_length + 7 ) & ~7 ) >> 3;
-				break;
-			case 2:
-				row_length = ( ( row_length + 15 ) & ~15 ) >> 4;
-				break;
-			case 4:
-				row_length = ( ( row_length + 31 ) & ~31 ) >> 5;
-				break;
-			case 8:
-				row_length = ( ( row_length + 63 ) & ~63 ) >> 6;
-				break;
-			default:
-				crError( "crPackBitmap: I don't know how to unpack the data! The alignment isn't one I know." );
-				return;
-		}
-
-		if (unpack->imageHeight > 0)
-			data_length = row_length * unpack->imageHeight;
-		else
-			data_length = row_length * height;
-
+		data_length = CEIL8(width) * height / 8;
 		packet_length += data_length;
+
+		data_ptr = (unsigned char *) crPackAlloc( packet_length );
+		destBitmap = data_ptr + 28;
+
+		crBitmapCopy(width, height, destBitmap, bitmap, unpack);
+		/*
+		crMemcpy(destBitmap, bitmap, data_length);
+		*/
+	}
+	else {
+		data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	}
 
-	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, GLsizei, width );
 	WRITE_DATA( 4, GLsizei, height );
 	WRITE_DATA( 8, GLfloat, xorig );
@@ -223,10 +204,6 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 	WRITE_DATA( 16, GLfloat, xmove );
 	WRITE_DATA( 20, GLfloat, ymove );
 	WRITE_DATA( 24, GLuint, isnull );
-	if ( bitmap )
-	{
-		crMemcpy( data_ptr + 28, bitmap, data_length );
-	}
 
 	crHugePacket( CR_BITMAP_OPCODE, data_ptr );
 }

@@ -46,7 +46,8 @@ void crStateCurrentInit( CRContext *ctx )
 #endif
 
 	c->rasterPos = default_rasterpos;
-	c->rasterPosPre = c->rasterPos;
+
+	c->rasterOrigin = default_rasterpos; /* (0, 0, 0, 1) */
 
 	c->rasterDistance = 0.0f; /* aka fog coord */
 	c->rasterColor = default_color;
@@ -161,15 +162,17 @@ void crStateCurrentSwitch( GLuint maxTextureUnits,
 
 	if (CHECKDIRTY(c->raster, bitID)) {
 		if (to->rasterValid) {
-			if (to->rasterPosPre.x != from->rasterPos.x ||
-				to->rasterPosPre.y != from->rasterPos.y) {
-					GLvectorf p;
-					p.x = to->rasterPosPre.x - from->rasterPos.x;
-					p.y = to->rasterPosPre.y - from->rasterPos.y;
-					diff_api.Bitmap(0, 0, 0.0f, 0.0f, p.x, p.y, 0);
-					FILLDIRTY(c->raster);
-					FILLDIRTY(c->dirty);
-			}
+		  const GLfloat fromX = from->rasterPos.x + from->rasterOrigin.x;
+		  const GLfloat fromY = from->rasterPos.y + from->rasterOrigin.y;
+		  const GLfloat toX = to->rasterPos.x + to->rasterOrigin.x;
+		  const GLfloat toY = to->rasterPos.y + to->rasterOrigin.y;
+		  if (toX != fromX || toY != fromY) {
+			  const GLfloat dx = toX - fromX;
+			  const GLfloat dy = toY - fromY;
+			  diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
+			  FILLDIRTY(c->raster);
+			  FILLDIRTY(c->dirty);
+		  }
 		}
 		INVERTDIRTY(c->raster, nbitID);
 	}
@@ -259,17 +262,25 @@ void crStateCurrentDiff (CRCurrentBits *c, CRbitvalue *bitID,
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
 
+	/*
+	 * Use glBitmap to move the current raster position.
+	 * Problems: we never get the current color (always get white) Z value
+	 * is always zero, no texgen, etc.
+	 */
 	if (CHECKDIRTY(c->raster, bitID)) {
 		from->rasterValid = to->rasterValid;
 		if (to->rasterValid) {
-			if (to->rasterPosPre.x != from->rasterPos.x ||
-				to->rasterPosPre.y != from->rasterPos.y) {
-					GLvectorf p;
-					p.x = to->rasterPosPre.x - from->rasterPos.x;
-					p.y = to->rasterPosPre.y - from->rasterPos.y;
-					diff_api.Bitmap(0, 0, 0.0f, 0.0f, p.x, p.y, 0);
+			const GLfloat fromX = from->rasterPos.x + from->rasterOrigin.x;
+			const GLfloat fromY = from->rasterPos.y + from->rasterOrigin.y;
+			const GLfloat toX = to->rasterPos.x + to->rasterOrigin.x;
+			const GLfloat toY = to->rasterPos.y + to->rasterOrigin.y;
+			if (toX != fromX || toY != fromY) {
+				const GLfloat dx = toX - fromX;
+				const GLfloat dy = toY - fromY;
+				diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
+				from->rasterPos.x += dx;
+				from->rasterPos.y += dy;
 			}
-			from->rasterPos = to->rasterPos;
 		}
 		INVERTDIRTY(c->raster, nbitID);
 	}

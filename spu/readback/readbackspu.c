@@ -4,13 +4,13 @@
 * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
+#include <float.h>  /* for DBL_MAX */
+
 #include "cr_spu.h"
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_bbox.h"
 #include "cr_url.h"
-#include <float.h>
 
 #include "readbackspu.h"
 
@@ -505,6 +505,20 @@ CompositeTile(WindowInfo * window, int w, int h,
 
 
 /*
+ * Get the mural information for the given window.
+ */
+static const CRMuralInfo *
+getMuralInfo(int window)
+{
+	if (readback_spu.server)
+		return (CRMuralInfo *) crHashtableSearch(readback_spu.server->muralTable,
+																						 window);
+	else
+		return NULL;
+}
+
+
+/*
  * Do readback/composite for a window.
  * This involves:
  *   - computing the image regions (tiles) to process
@@ -516,18 +530,21 @@ CompositeTile(WindowInfo * window, int w, int h,
 static void
 ProcessTiles(WindowInfo * window)
 {
-	CRrecti extent0, outputwindow0;
-	const CRrecti *extents;
-	const CRrecti *outputwindow;
+	const CRMuralInfo *mural;
+	CRExtent extent0;
+	const CRExtent *extents;
 	int numExtents;
 	int i;
 
-	if (readback_spu.server && readback_spu.server->numExtents > 0)
+	/* XXX DMX verify window->renderWindow is correct! */
+	mural = getMuralInfo(window->renderWindow);
+
+	if (mural && mural->numExtents > 0)
 	{
 		/* we're running on the server, loop over tiles */
-		numExtents = readback_spu.server->numExtents;
-		extents = readback_spu.server->extents;
-		outputwindow = readback_spu.server->outputwindow;
+		numExtents = mural->numExtents;
+		extents = mural->extents;
+		/*outputwindow = mural->outputwindow;*/
 	}
 	else
 	{
@@ -565,16 +582,16 @@ ProcessTiles(WindowInfo * window)
 			}
 		}
 
-		extent0.x1 = x;
-		extent0.y1 = y;
-		extent0.x2 = x + w;
-		extent0.y2 = y + h;
+		extent0.imagewindow.x1 = x;
+		extent0.imagewindow.y1 = y;
+		extent0.imagewindow.x2 = x + w;
+		extent0.imagewindow.y2 = y + h;
+		extent0.outputwindow.x1 = x;
+		extent0.outputwindow.y1 = y;
+		extent0.outputwindow.x2 = x + w;
+		extent0.outputwindow.y2 = y + h;
 		extents = &extent0;
-		outputwindow0.x1 = x;
-		outputwindow0.y1 = y;
-		outputwindow0.x2 = x + w;
-		outputwindow0.y2 = y + h;
-		outputwindow = &outputwindow0;
+		/*outputwindow = &outputwindow0;*/
 	}
 
 	/*
@@ -614,12 +631,21 @@ ProcessTiles(WindowInfo * window)
 	 */
 	for (i = 0; i < numExtents; i++)
 	{
+#if 0
 		const int readx = outputwindow[i].x1;
 		const int ready = outputwindow[i].y1;
 		const int drawx = extents[i].x1;
 		const int drawy = extents[i].y1;
 		int w = outputwindow[i].x2 - outputwindow[i].x1;
 		int h = outputwindow[i].y2 - outputwindow[i].y1;
+#else
+		const int readx = extents[i].outputwindow.x1;
+		const int ready = extents[i].outputwindow.y1;
+		const int drawx = extents[i].imagewindow.x1;
+		const int drawy = extents[i].imagewindow.y1;
+		const int w = extents[i].outputwindow.x2 - extents[i].outputwindow.x1;
+		const int h = extents[i].outputwindow.y2 - extents[i].outputwindow.y1;
+#endif
 		CompositeTile(window, w, h, readx, ready, drawx, drawy);
 	}
 
@@ -790,7 +816,7 @@ readbackspuDestroyContext(GLint ctx)
 	context = (ContextInfo *) crHashtableSearch(readback_spu.contextTable, ctx);
 	CRASSERT(context);
 	readback_spu.super.DestroyContext(context->renderContext);
-	crHashtableDelete(readback_spu.contextTable, ctx, GL_TRUE);
+	crHashtableDelete(readback_spu.contextTable, ctx, crFree);
 }
 
 
@@ -879,7 +905,7 @@ readbackspuWindowDestroy(GLint win)
 	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
 	CRASSERT(window);
 	readback_spu.super.WindowDestroy(window->renderWindow);
-	crHashtableDelete(readback_spu.windowTable, win, GL_TRUE);
+	crHashtableDelete(readback_spu.windowTable, win, crFree);
 }
 
 static void READBACKSPU_APIENTRY
@@ -978,21 +1004,30 @@ readbackspuChromiumParameteriCR(GLenum target, GLint value)
 		readback_spu.barrierSize = value;
 		break;
 	case GL_GATHER_POST_SWAPBUFFERS_CR:
-		if ((!readback_spu.server) || (readback_spu.server->numExtents < 0))
-			crError("bleh! trying to do GATHER on appfaker.");
-
 		if (readback_spu.gather_url)
 		{
+			const WindowInfo *window;
+			const CRMuralInfo *mural;
+			const CRrecti *outputwindow;
 			GLint draw_parm[7];
 			CRMessage *msg;
 			static int first_time = 1;
-			WindowInfo *window = (WindowInfo *)
-				crHashtableSearch(readback_spu.windowTable, value);
-			CRrecti *outputwindow = readback_spu.server->outputwindow;
-			int w = outputwindow[0].x2 - outputwindow[0].x1;
-			int h = outputwindow[0].y2 - outputwindow[0].y1;
+			int w, h;
 
+			/* Get window information */
+			window = (const WindowInfo *) crHashtableSearch(readback_spu.windowTable, value);
 			CRASSERT(window);
+
+			/* get mural information, if running on a server node */
+			/* XXX DMX verify window->renderWindow is correct! */
+			mural = getMuralInfo(window->renderWindow);
+
+			if (!mural || mural->numExtents < 0)
+					crError("bleh! trying to do GATHER on appfaker.");
+
+			outputwindow = &(mural->extents[0].outputwindow);
+			w = outputwindow[0].x2 - outputwindow[0].x1;
+			h = outputwindow[0].y2 - outputwindow[0].y1;
 
 			/* only swap 1 tiled-rgb ATM */
 			draw_parm[0] = 0;

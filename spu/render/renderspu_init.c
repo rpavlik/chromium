@@ -111,6 +111,7 @@ renderSPUInit( int id, SPU *child, SPU *self,
 	 * Create the default window and context.  Their indexes are zero and
 	 * a client can use them without calling CreateContext or WindowCreate.
 	 */
+	crDebug("Render SPU: Creating default window (visBits=0x%x, id=0)", visualBits);
 	defaultWin = renderspuWindowCreate( NULL, visualBits );
 	if (defaultWin < 0) {
 		/* If we failed to get a default single buffered visual,
@@ -131,6 +132,7 @@ renderSPUInit( int id, SPU *child, SPU *self,
 	windowInfo = (WindowInfo *) crHashtableSearch(render_spu.windowTable, 0);
 	CRASSERT(windowInfo);
 	windowInfo->mapPending = GL_TRUE;
+	windowInfo->visible = GL_TRUE;
 
 	/*
 	 * Get the OpenGL extension functions.
@@ -191,38 +193,25 @@ static void renderSPUSelfDispatch(SPUDispatchTable *self)
 }
 
 
+static void DeleteContextCallback( void *data )
+{
+	ContextInfo *context = (ContextInfo *) data;
+	renderspu_SystemDestroyContext(context);
+	crFree(context);
+}
+
+static void DeleteWindowCallback( void *data )
+{
+	WindowInfo *window = (WindowInfo *) data;
+	renderspu_SystemDestroyWindow(window);
+	crFree(window);
+}
+
 static int renderSPUCleanup(void)
 {
-	WindowInfo *window;
-	ContextInfo *context;
-	Barrier *barrier;
-
-	CR_HASHTABLE_WALK( render_spu.contextTable, entry)
-		context = (ContextInfo *) entry->data;
-		CRASSERT(context);
-		renderspu_SystemDestroyContext(context);
-		crFree(context);
-		entry->data = NULL;
-	CR_HASHTABLE_WALK_END( render_spu.contextTable )
-	crFreeHashtable(render_spu.contextTable);
-
-	CR_HASHTABLE_WALK( render_spu.windowTable, entry)
-		window = (WindowInfo *) entry->data;
-		CRASSERT(window);
-		renderspu_SystemDestroyWindow(window);
-		crFree(window);
-		entry->data = NULL;
-	CR_HASHTABLE_WALK_END( render_spu.windowTable )
-	crFreeHashtable(render_spu.windowTable);
-
-	CR_HASHTABLE_WALK( render_spu.barrierHash, entry)
-		barrier = (Barrier *) entry->data;
-		CRASSERT(barrier);
-		crFree(barrier);
-		entry->data = NULL;
-	CR_HASHTABLE_WALK_END( render_spu.barrierHash )
-	crFreeHashtable(render_spu.barrierHash);
-
+	crFreeHashtable(render_spu.contextTable, DeleteContextCallback);
+	crFreeHashtable(render_spu.windowTable, DeleteWindowCallback);
+	crFreeHashtable(render_spu.barrierHash, crFree);
 	return 1;
 }
 

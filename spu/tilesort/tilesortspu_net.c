@@ -17,6 +17,7 @@
 static void
 tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 {
+	GET_THREAD(thread);
 	int payload_len = len - sizeof( *rp );
 	char *dest_ptr;
 	char *src_ptr = (char*)rp + sizeof(*rp);
@@ -55,7 +56,7 @@ tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 #endif
 	}
 
-	--tilesort_spu.ReadPixels;
+	thread->currentContext->readPixelsCount--;
 }
 
 static int

@@ -11,8 +11,10 @@
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixf( const GLfloat *m )
 {
+	const CRMuralInfo *mural = cr_server.curClient->currentMural;
+
 	crStateLoadMatrixf( m );
-	if (cr_server.numExtents > 0 && cr_server.curClient->currentCtx->transform.mode == GL_PROJECTION)
+	if (mural->numExtents > 0 && cr_server.curClient->currentCtx->transform.mode == GL_PROJECTION)
 	{
 		/* we're loading a matrix onto the projection stack -- better put the base 
 		 * projection there first! */
@@ -27,8 +29,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixf( const GLfloat *m )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixd( const GLdouble *m )
 {
+	const CRMuralInfo *mural = cr_server.curClient->currentMural;
+
 	crStateLoadMatrixd( m );
-	if (cr_server.numExtents > 0 && cr_server.curClient->currentCtx->transform.mode == GL_PROJECTION)
+	if (mural->numExtents > 0 && cr_server.curClient->currentCtx->transform.mode == GL_PROJECTION)
 	{
 		/* we're loading a matrix onto the projection stack -- better put the base 
 		 * projection there first! */
@@ -43,8 +47,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixd( const GLdouble *m )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadIdentity( void )
 {
+  const CRMuralInfo *mural = cr_server.curClient->currentMural;
+
 	crStateLoadIdentity();
-	if (cr_server.numExtents > 0 && cr_server.curClient->currentCtx->transform.mode == GL_PROJECTION)
+	if (mural->numExtents > 0 && cr_server.curClient->currentCtx->transform.mode == GL_PROJECTION)
 	{
 		/* we're loading a matrix onto the projection stack -- better put the base 
 		 * projection there first! */

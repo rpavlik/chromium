@@ -48,7 +48,7 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 {
 	DWORD okayFlags;
 
-	StubInit();
+	stubInit();
 
 	/* 
 	 * NOTE!!!
@@ -144,19 +144,19 @@ BOOL WINAPI wglSetPixelFormat_prox( HDC hdc, int pixelFormat,
 
 BOOL WINAPI wglDeleteContext_prox( HGLRC hglrc )
 {
-	stubDestroyContext( hglrc );
+	stubDestroyContext( (GLint) hglrc );
 	return 1;
 }
 
 BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 {
-	if (hglrc == NULL)
-	{
-		stub.currentContext = -1;
-		return 1;
-	}
+	ContextInfo *context;
+	WindowInfo *window;
 
-	return (stubMakeCurrent( hdc, hglrc ));
+	context = (ContextInfo *) crHashtableSearch(stub.contextTable, (int) hglrc);
+	window = stubGetWindowInfo(hdc);
+
+	return stubMakeCurrent( window, context );
 }
 
 HGLRC WINAPI wglGetCurrentContext_prox( void )
@@ -230,13 +230,15 @@ BOOL WINAPI wglShareLists_prox( HGLRC hglrc1, HGLRC hglrc2 )
 
 HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 {
+	stubInit();
 	return stubCreateContext( hdc );
 }
 
 BOOL WINAPI
 wglSwapBuffers_prox( HDC hdc )
 {
-	stubSwapBuffers( hdc );
+	const WindowInfo *window = stubGetWindowInfo(hdc);
+	stubSwapBuffers( window, 0 );
 	return 1;
 }
 
@@ -248,6 +250,7 @@ BOOL WINAPI wglCopyContext_prox( HGLRC src, HGLRC dst, UINT mask )
 
 HGLRC WINAPI wglCreateLayerContext_prox( HDC hdc, int layerPlane )
 {
+	stubInit();
 	crWarning( "wglCreateLayerContext: unsupported" );
 	return 0;
 }

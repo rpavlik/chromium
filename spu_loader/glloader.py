@@ -167,7 +167,8 @@ print """
  * Initialize the 'interface' structure with the WGL or GLX window system
  * interface functions.
  * Then, fill in the table with (name, pointer) pairs for all the core
- * OpenGL entrypoint functions.
+ * OpenGL entrypoint functions.  But only if table is not NULL
+ * Return: number of entries placed in table[], or 0 if error.
  */
 int
 crLoadOpenGL( crOpenGLInterface *interface, SPUNamedFunctionTable table[] )
@@ -214,14 +215,20 @@ possibly_useful_glx_functions = [
 ]
 
 print '#ifdef WINDOWS'
+
 for fun in useful_wgl_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun,fun,fun)
+
 print '#else'
+print '\t/* GLX */'
+
 for fun in useful_glx_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun, fun, fun)
 for fun in possibly_useful_glx_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun, fun, fun)
 print '#endif'
+print ''
+print '\tif (entry) {'
 
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
@@ -232,11 +239,16 @@ for func_name in keys:
 #	elif stub_common.FindSpecial( "glloader_nop", func_name ):
 #		print '\tFILLIN_OPT( "%s", crDLLGetNoError(glDll, "gl%s"), (SPUGenericFunction) Nop%s );' % (func_name, func_name, func_name )
 	else:
-		print '\tFILLIN( "%s", crDLLGetNoError(glDll, "gl%s"));' % (func_name, func_name)
+		print '\t\tFILLIN( "%s", crDLLGetNoError(glDll, "gl%s"));' % (func_name, func_name)
 
-print '\tentry->name = NULL;'
-print '\tentry->fn = NULL;'
-print '\treturn entry - table;  /* number of entries filled */'
+print '\t\t/* end of table markers */'
+print '\t\tentry->name = NULL;'
+print '\t\tentry->fn = NULL;'
+print '\t\treturn entry - table;  /* number of entries filled */'
+print '\t}'
+print '\telse {'
+print '\t\treturn 1;  /* token value */'
+print '\t}'
 print '}'
 
 

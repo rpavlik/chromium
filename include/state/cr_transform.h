@@ -48,6 +48,9 @@ typedef struct {
 #ifdef CR_OPENGL_VERSION_1_2
 	GLboolean rescaleNormals;
 #endif
+#ifdef CR_IBM_rasterpos_clip
+	GLboolean rasterPositionUnclipped;
+#endif
 	GLboolean normalize;
 } CRTransformState;
 

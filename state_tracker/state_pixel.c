@@ -184,11 +184,9 @@ void STATE_APIENTRY crStateBitmap( GLsizei width, GLsizei height,
 
 	c->rasterPos.x += xmove;
 	c->rasterPos.y += ymove;
+
 	DIRTY(cb->raster, g->neg_bitid);
 	DIRTY(cb->dirty, g->neg_bitid);
-
-	c->rasterPosPre.x += xmove;
-	c->rasterPosPre.y += ymove;
 }
  
 

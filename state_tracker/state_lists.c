@@ -13,25 +13,15 @@
 void crStateListsDestroy(CRContext *ctx)
 {
 	CRListsState *l = &ctx->lists;
-	CRListEffect *effect;
-
-	CR_HASHTABLE_WALK( l->hash, entry)
-		effect = (CRListEffect *) entry->data;
-		CRASSERT(effect);
-		crFree(effect);
-		entry->data = NULL;
-	CR_HASHTABLE_WALK_END( l->hash)
-	crFreeHashtable(l->hash);
-
-	crFreeIdPool(l->idPool);
+	crFreeHashtable(l->hash, crFree); /* call crFree for each entry */
 }
 
 void crStateListsInit(CRContext *ctx)
 {
 	CRListsState *l = &ctx->lists;
 
+	l->newEnd = GL_FALSE;
 	l->mode = 0;
-	l->idPool = crAllocIdPool();
 	l->hash = crAllocHashtable();
 }
 
@@ -67,8 +57,6 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 	}
 
 	FLUSH();
-
-	crIdPoolAllocId(l->idPool, list);
 
 	l->currentIndex = list;
 	l->mode = mode;
@@ -114,7 +102,7 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 		return 0;
 	}
 
-	return crIdPoolAllocBlock(l->idPool, range);
+	return crHashtableAllocKeys(l->hash, range);
 }
 	
 void STATE_APIENTRY crStateDeleteLists (GLuint list, GLsizei range)
@@ -137,8 +125,7 @@ void STATE_APIENTRY crStateDeleteLists (GLuint list, GLsizei range)
 
 	for (i=0; i<range; i++)
 	{
-		crHashtableDelete(l->hash, list + i, GL_TRUE);
-		crIdPoolFreeBlock(l->idPool, list, range);
+		crHashtableDeleteBlock(l->hash, list + i, range, crFree); /* call crFree to delete list data */
 	}
 }
 
@@ -154,7 +141,7 @@ GLboolean STATE_APIENTRY crStateIsList(GLuint list)
 		return GL_FALSE;
 	}
 
-	return crIdPoolIsIdUsed(l->idPool, list);
+	return crHashtableIsKeyUsed(l->hash, list);
 }
 	
 void STATE_APIENTRY crStateListBase (GLuint base)

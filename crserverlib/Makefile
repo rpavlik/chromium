@@ -31,7 +31,9 @@ FILES = server_main \
 	server_retval \
 	server_simpleget \
 	server_stream \
+	server_tiles \
 	server_viewport \
+	server_window \
 	server_writeback
 
 LIB_DEFS = crserverlib.def

@@ -14,6 +14,7 @@
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 {
+	CRMuralInfo *mural = cr_server.curClient->currentMural;
 	const RunQueue *q = cr_server.run_queue;
 
 	if (cr_server.only_swap_once)
@@ -28,7 +29,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 		   return;
 	}
 
-	if (cr_server.numExtents == 0)
+	if (mural->numExtents == 0)
 	{
 		cr_server.head_spu->dispatch_table.Clear( mask );
 	}
@@ -43,11 +44,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 			cr_server.head_spu->dispatch_table.Enable( GL_SCISSOR_TEST );
 		}
 
-		for ( i = 0; i < q->numExtents; i++ )
+		for ( i = 0; i < mural->numExtents; i++ )
 		{
-			const CRRunQueueExtent *extent = &q->extent[i];
+			CRExtent *extent = &mural->extents[i];
 			crServerSetOutputBounds( q->client->currentCtx, &extent->outputwindow,
-					&q->imagespace, &extent->imagewindow );
+															 &mural->imagespace, &extent->imagewindow,
+															 &extent->clippedImagewindow);
 			cr_server.head_spu->dispatch_table.Clear( mask );
 		}
 		if (!scissor_on)

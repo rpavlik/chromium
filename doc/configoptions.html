@@ -364,6 +364,27 @@ configuration options that the render SPU accepts, plus a few more:
       behaviour).  If set to 0, the viewport will not be rescaled.  This is
       useful for conformance testing.  The default is 1.</td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">retile_on_resize</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If non-zero, when the
+      tilesort SPU's WindowSize() function is called, the SPU will try to
+      find a new mural size and tile layout to match the new window size.
+      Typically, the WindowSize() function is called only if the application
+      node's track_window_size option is set.  The default is 1.<br>
+      With some applications, setting track_window_size to 1 and
+      retile_on_resize to 0 is needed to get reasonable results.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">use_dmx</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    This should be set to 1 if using DMX.  When set, this option makes the
+    tilesort SPU query the DMX server for updated window size/position
+    information whenever the application window size/position changes.
+    The DMX server information will be used to compute a new tile arrangment.
+    The default is 0.</td>
+  </tr>
 </table>
 
 <h2 class="PageSubHeading">Saveframe SPU</h2>

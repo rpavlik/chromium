@@ -1222,3 +1222,86 @@ void crPixelCopy3D( GLsizei width, GLsizei height, GLsizei depth,
 	tex_size = crTextureSize( dstFormat, dstType, width, height, depth );
 	crMemcpy( (void *) dstPtr, (void *) srcPtr, tex_size ); 
 }
+
+/* Round N up to the next multiple of 8 */
+#define CEIL8(N)  (((N) + 7) & ~0x7)
+
+void crBitmapCopy( GLsizei width, GLsizei height, GLubyte *dstPtr,
+									 const GLubyte *srcPtr, const CRPixelPackState *srcPacking )
+{
+	if (srcPacking->psLSBFirst == GL_FALSE &&
+			(srcPacking->rowLength == 0 || srcPacking->rowLength == width) &&
+			srcPacking->skipRows == 0 &&
+			srcPacking->skipPixels == 0 &&
+			srcPacking->alignment == 1) {
+		/* simple case */
+		crMemcpy(dstPtr, srcPtr, CEIL8(width) * height / 8);
+	}
+	else {
+		/* general case */
+		const GLubyte *srcRow;
+		const GLint dst_row_length = CEIL8(width) / 8;
+		GLubyte *dstRow;
+		GLint src_row_length;
+		GLint i, j;
+
+		if (srcPacking->rowLength > 0)
+			src_row_length = srcPacking->rowLength;
+		else 
+			src_row_length = width;
+
+		switch (srcPacking->alignment) {
+			case 1:
+				src_row_length = ( ( src_row_length + 7 ) & ~7 ) >> 3;
+				break;
+			case 2:
+				src_row_length = ( ( src_row_length + 15 ) & ~15 ) >> 4;
+				break;
+			case 4:
+				src_row_length = ( ( src_row_length + 31 ) & ~31 ) >> 5;
+				break;
+			case 8:
+				src_row_length = ( ( src_row_length + 63 ) & ~63 ) >> 6;
+				break;
+			default:
+				crError( "Invalid unpack alignment in crBitmapCopy");
+				return;
+		}
+
+		/* src_row_length and dst_row_length are in bytes */
+
+		srcRow = srcPtr + src_row_length * srcPacking->skipRows;
+		dstRow = dstPtr;
+
+		if (srcPacking->psLSBFirst) {
+			for (j = 0; j < height; j++) {
+				crMemZero(dstRow, dst_row_length);
+				for (i = 0; i < width; i++) {
+					const GLint iByte = (i + srcPacking->skipPixels) / 8;
+					const GLint iBit  = (i + srcPacking->skipPixels) % 8;
+					const GLubyte b = srcRow[iByte];
+					if (b & (1 << iBit))
+						dstRow[i / 8] |= (128 >> (i % 8));
+				}
+				srcRow += src_row_length;
+				dstRow += dst_row_length;
+			}
+		}
+		else {
+			/* unpack MSB first */
+			for (j = 0; j < height; j++) {
+				crMemZero(dstRow, dst_row_length);
+				for (i = 0; i < width; i++) {
+					const GLint iByte = (i + srcPacking->skipPixels) / 8;
+					const GLint iBit  = (i + srcPacking->skipPixels) % 8;
+					const GLubyte b = srcRow[iByte];
+					if (b & (128 >> iBit))
+						dstRow[i / 8] |= (128 >> (i % 8));
+				}
+				srcRow += src_row_length;
+				dstRow += dst_row_length;
+			}
+		}
+	}
+}
+

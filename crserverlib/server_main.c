@@ -19,15 +19,22 @@ CRServer cr_server;
 
 int CRServerMain( int argc, char *argv[] );
 
+static void DeleteBarrierCallback( void *data )
+{
+	CRServerBarrier *barrier = (CRServerBarrier *) data;
+	crFree(barrier->waiting);
+	crFree(barrier);
+}
+
+
 static void crServerTearDown( void )
 {
 	SPU *the_spu = cr_server.head_spu;
-	CRBarrier *barrier;
-	CRSemaphore *sema;
 	unsigned int i;
 
-	/* Free all context info */
 	crStateSetCurrent( NULL );
+
+	/* Free all context info */
 	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
 		if (cr_server.context[i] != NULL) {
 			crStateDestroyContext( cr_server.context[i] );
@@ -37,24 +44,11 @@ static void crServerTearDown( void )
 	crFree( cr_server.clients );
 	crFree( cr_server.overlap_intens );
 
-	/* Deallocate semaphores */
-	CR_HASHTABLE_WALK( cr_server.semaphores, entry)
-		sema = (CRSemaphore *) entry->data;
-		CRASSERT(sema);
-		crFree(sema);
-		entry->data = NULL;
-	CR_HASHTABLE_WALK_END( cr_server.semaphores)
-	crFreeHashtable(cr_server.semaphores);
-
-	/* Deallocate barriers */
-	CR_HASHTABLE_WALK( cr_server.barriers, entry)
-		barrier = (CRBarrier *) entry->data;
-		CRASSERT(barrier);
-		crFree(barrier->waiting);
-		crFree(barrier);
-		entry->data = NULL;
-	CR_HASHTABLE_WALK_END( cr_server.barriers)
-	crFreeHashtable(cr_server.barriers);
+	/* Deallocate all semaphores */
+	crFreeHashtable(cr_server.semaphores, crFree);
+ 
+	/* Deallocate all barriers */
+	crFreeHashtable(cr_server.barriers, DeleteBarrierCallback);
 
 	while (1) {
 		if (the_spu && the_spu->cleanup) {
@@ -84,6 +78,8 @@ int CRServerMain( int argc, char *argv[] )
 	int i;
 	unsigned int j;
 	char *mothership = NULL;
+	CRMuralInfo *defaultMural;
+
 	for (i = 1 ; i < argc ; i++)
 	{
 		if (!crStrcmp( argv[i], "-mothership" ))
@@ -106,6 +102,13 @@ int CRServerMain( int argc, char *argv[] )
 	cr_server.firstCallCreateContext = GL_TRUE;
 	cr_server.firstCallMakeCurrent = GL_TRUE;
 
+	/*
+	 * Create default mural info and hash table.
+	 */
+	cr_server.muralTable = crAllocHashtable();
+	defaultMural = (CRMuralInfo *) crCalloc(sizeof(CRMuralInfo));
+	crHashtableAdd(cr_server.muralTable, 0, defaultMural);
+
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
 
@@ -118,7 +121,6 @@ int CRServerMain( int argc, char *argv[] )
 		crServerAddToRunQueue( &cr_server.clients[j] );
 	}
 
-	crServerInitializeTiling();
 	crServerInitDispatch();
 	crStateDiffAPI( &(cr_server.head_spu->dispatch_table) );
 
@@ -135,30 +137,6 @@ int CRServerMain( int argc, char *argv[] )
 	return 0;
 }
 
-
-/*
- * After we've received the tile parameters from the mothership
- * we do all the initialization to perform tile sorting.
- */
-void crServerInitializeTiling(void)
-{
-
-	if (cr_server.numExtents > 0)
-	{
-		unsigned int j;
-		for ( j = 0 ; j < cr_server.numClients ; j++)
-		{
-			crServerRecomputeBaseProjection( &(cr_server.clients[j].baseProjection), 0, 0, cr_server.muralWidth, cr_server.muralHeight );
-		}
-		cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
-		cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.clients[0].baseProjection) );
-		
-		if (cr_server.optimizeBucket)
-		{
-			crServerFillBucketingHash();
-		}
-	}
-}
 
 #if 0
 int main( int argc, char *argv[] )

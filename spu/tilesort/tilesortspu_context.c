@@ -4,9 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#ifdef WINDOWS
-#include <stdlib.h> 	/* for atoi() */
-#endif
 #include "tilesortspu.h"
 #include "tilesortspu_proto.h"
 #include "cr_error.h"
@@ -14,7 +11,6 @@
 #include "cr_packfunctions.h"
 #include "cr_string.h"
 
-#define MAGIC_OFFSET 8000
 
 /*
  * Initialize per-thread data.
@@ -65,7 +61,6 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 
 
 	thread->currentContext = NULL;
-	thread->currentContextIndex = -1;
 }
 
 /*
@@ -85,6 +80,8 @@ static ThreadInfo *tilesortspuNewThread( GLint slot )
 	CRASSERT(tilesort_spu.numThreads < MAX_THREADS);
 	thread = &(tilesort_spu.thread[tilesort_spu.numThreads]);
 	tilesort_spu.numThreads++;
+
+	thread->state_server_index = -1;
 
 	thread->net = (CRNetServer *) crCalloc( tilesort_spu.num_servers * sizeof(CRNetServer) );
 	thread->pack = (CRPackBuffer *) crCalloc( tilesort_spu.num_servers * sizeof(CRPackBuffer) );
@@ -109,54 +106,43 @@ static ThreadInfo *tilesortspuNewThread( GLint slot )
 #endif
 
 
-GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint visual )
+GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint visBits )
 {
+	static GLint freeContextID = 200;
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
-	int i, slot;
+	ContextInfo *contextInfo;
+	int i;
 
-	crDebug( "In tilesortspu_CreateContext" );
+	crDebug( "Tilesort SPU: CreateContext(visBits=0x%x)", visBits );
 
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&_TileSortMutex);
 #endif
 
+	contextInfo = (ContextInfo *) crCalloc(sizeof(ContextInfo));
+	if (!contextInfo)
+		return -1;
+
+
 #ifdef WINDOWS
 	crDebug("Tilesort SPU: HDC = %s\n", dpyName);
 	if (!dpyName)
-		tilesort_spu.client_hdc = GetDC(NULL);
+		contextInfo->client_hdc = GetDC(NULL);
 	else
-		tilesort_spu.client_hdc = (HDC) atoi(dpyName);
-	tilesort_spu.client_hwnd = NULL;
+		contextInfo->client_hdc = (HDC) crStrToInt(dpyName);
 #else
 	crDebug("Tilesort SPU: Displayname = %s\n", (dpyName ? dpyName : "(null)"));
-	tilesort_spu.glx_display = XOpenDisplay(dpyName);
+	
+	contextInfo->dpy = XOpenDisplay(dpyName);
 #endif
-
-	/*
-	 * Find empty position in context[] array
-	 */
-	for (slot = 0; slot < CR_MAX_CONTEXTS; slot++) {
-		if (tilesort_spu.context[slot].State == NULL) {
-			break;
-		}
-	}
-	if (slot == CR_MAX_CONTEXTS) {
-#ifdef CHROMIUM_THREADSAFE
-		crUnlockMutex(&_TileSortMutex);
-#endif
-		return 0;  /* too many contexts */
-	}
-	if (slot == tilesort_spu.numContexts) {
-		tilesort_spu.numContexts++;
-	}
 
 	crPackSetContext( thread0->packer );
 	/*
 	 * Allocate the state tracker state for this context.
 	 * The GL limits were computed in tilesortspuGatherConfiguration().
 	 */
-	tilesort_spu.context[slot].State = crStateCreateContext( &tilesort_spu.limits, visual );
-	if (!tilesort_spu.context[slot].State) {
+	contextInfo->State = crStateCreateContext( &tilesort_spu.limits, visBits );
+	if (!contextInfo->State) {
 		crWarning( "tilesortspuCreateContext: crStateCreateContext() failed\n");
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&_TileSortMutex);
@@ -165,18 +151,25 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	}
 
 	/* Initialize viewport & scissor */
-	tilesort_spu.context[slot].State->viewport.viewportW = tilesort_spu.muralWidth;
-	tilesort_spu.context[slot].State->viewport.viewportH = tilesort_spu.muralHeight;
-	tilesort_spu.context[slot].State->viewport.scissorW = tilesort_spu.muralWidth;
-	tilesort_spu.context[slot].State->viewport.scissorH = tilesort_spu.muralHeight;
+	/* Set to -1 then set them for the first time in MakeCurrent */
+	contextInfo->State->viewport.viewportW = -1;
+	contextInfo->State->viewport.viewportH = -1;
+	contextInfo->State->viewport.scissorW = -1;
+	contextInfo->State->viewport.scissorH = -1;
+
+	contextInfo->providedBBOX = GL_DEFAULT_BBOX_CR;
 
 	/* Set the Current pointers now...., then reset vtx_count below... */
-	crStateSetCurrentPointers( tilesort_spu.context[slot].State,
-						 &(thread0->packer->current) );
+	crStateSetCurrentPointers( contextInfo->State, &(thread0->packer->current) );
 
 	/* Set the vtx_count to nil, this MUST come after the
 	 * crStateSetCurrentPointers above... */
-	tilesort_spu.context[slot].State->current.current->vtx_count = 0;
+	contextInfo->State->current.current->vtx_count = 0;
+
+	/*
+	 * Per-server context stuff.
+	 */
+	contextInfo->server = (ServerContextInfo *) crCalloc(tilesort_spu.num_servers * sizeof(ServerContextInfo));
 
 	/*
 	 * Allocate a CRContext for each server and initialize its buffer.
@@ -184,14 +177,8 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
-		TileSortSPUServer *server = tilesort_spu.servers + i;
-		server->context[slot] = crStateCreateContext( &tilesort_spu.limits, visual );
-		server->context[slot]->current.rasterPos.x =
-			server->context[slot]->current.rasterPosPre.x =
-			(float) server->extents[0].x1;
-		server->context[slot]->current.rasterPos.y =
-			server->context[slot]->current.rasterPosPre.y =
-			(float) server->extents[0].y1;
+		contextInfo->server[i].State = crStateCreateContext( &tilesort_spu.limits,
+																												 visBits );
 	}
 
 	/*
@@ -200,16 +187,15 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
-		TileSortSPUServer *server = tilesort_spu.servers + i;
 		int writeback = 1;
 		GLint return_val = 0;
 
 		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
 
 		if (tilesort_spu.swap)
-			crPackCreateContextSWAP( dpyName, visual, &return_val, &writeback);
+			crPackCreateContextSWAP( dpyName, visBits, &return_val, &writeback);
 		else
-			crPackCreateContext( dpyName, visual, &return_val, &writeback );
+			crPackCreateContext( dpyName, visBits, &return_val, &writeback );
 
 		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
 
@@ -248,12 +234,12 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 				return 0;  /* something went wrong on the server */
 		}
 
-		server->serverCtx[slot] = return_val;
+		contextInfo->server[i].serverContext = return_val;
+		if (i > 0) {
+			/* all server should return the same value */
+			CRASSERT(return_val == contextInfo->server[0].serverContext);
+		}
 	}
-
-	/*
-	printf("***** %s() returned %d\n", __FUNCTION__, MAGIC_OFFSET + ctxPos);
-	*/
 
 	/* The default pack buffer */
 	crPackSetBuffer( thread0->packer, &(thread0->geometry_pack) );
@@ -262,7 +248,9 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	crUnlockMutex(&_TileSortMutex);
 #endif
 
-	return MAGIC_OFFSET + slot;
+	contextInfo->id = freeContextID;
+	crHashtableAdd(tilesort_spu.contextTable, freeContextID, contextInfo);
+	return freeContextID++;
 }
 
 
@@ -271,49 +259,57 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 {
 	GET_THREAD(thread);
 	ContextInfo *newCtx;
-	int i, ctxPos = ctx - MAGIC_OFFSET;
-
-	/*
-	printf("***** %s @ %p(%p, %d, %d)  ctxPos=%d\n", __FUNCTION__, &tilesortspu_MakeCurrent, display, drawable, ctx, ctxPos);
-	*/
+	int i;
+	WindowInfo *winInfo;
 
 #ifdef CHROMIUM_THREADSAFE
 	if (!thread)
-		thread = tilesortspuNewThread( ctxPos );
+		thread = tilesortspuNewThread( 0 );
 #endif
 	CRASSERT(thread);
-
-#ifndef WINDOWS
-	tilesort_spu.glx_drawable = (Drawable) nativeWindow;
-#endif
 
 	if (thread->currentContext)
 		tilesortspuFlush( thread );
 
 	if (ctx) {
-		CRASSERT(ctxPos >= 0);
-		CRASSERT(ctxPos < tilesort_spu.numContexts);
-		CRASSERT(tilesort_spu.context[ctxPos].State);
+		newCtx = (ContextInfo *) crHashtableSearch(tilesort_spu.contextTable, ctx);
+		CRASSERT(newCtx);
 
-		newCtx = &tilesort_spu.context[ctxPos];
+		winInfo = tilesortspuGetWindowInfo(window, nativeWindow);
+		CRASSERT(winInfo);
+#ifdef WINDOWS
+		winInfo->client_hwnd = WindowFromDC( newCtx->client_hdc );
+#else
+		winInfo->dpy = newCtx->dpy;
+#endif
 
 		thread->currentContext = newCtx;
-		thread->currentContextIndex = ctxPos;
+		thread->currentContext->currentWindow = winInfo;
 
-		crStateSetCurrentPointers( tilesort_spu.context[ctxPos].State,
-															 &(thread->packer->current) );
+		crStateSetCurrentPointers( newCtx->State, &(thread->packer->current) );
+
+#ifndef WINDOWS
+		if (nativeWindow) {
+			CRASSERT(winInfo->xwin == nativeWindow);
+		}
+#endif
+
+		/* XXX this might be excessive to do here */
+		/* have to do it at least once for new windows to get back-end info */
+		tilesortspuUpdateWindowInfo(winInfo);
 	}
 	else {
+		winInfo = NULL;
 		thread->currentContext = NULL;
-		thread->currentContextIndex = -1;
+		newCtx = NULL;
 	}
 
 	/* Get the default buffer */
 	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
 
-	if (ctx) {
+	if (newCtx) {
 		crPackSetContext( thread->packer );
-		crStateSetCurrent( tilesort_spu.context[ctxPos].State );
+		crStateSetCurrent( newCtx->State );
 		crStateFlushArg( (void *) thread );
 	}
 	else {
@@ -326,22 +322,44 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
-		TileSortSPUServer *server = tilesort_spu.servers + i;
-		int serverCtx;
-
 		/* Now send MakeCurrent to the i-th server */
 		crPackSetBuffer( thread->packer, &(thread->pack[i]) );
 
 		if (ctx) {
-			 CRASSERT(server->context[ctxPos]);
-			 CRASSERT(server->serverCtx[ctxPos]);
+			const int serverCtx = newCtx ? newCtx->server[i].serverContext : 0;
+			int serverWindow;
 
-			 serverCtx = server->serverCtx[ctxPos];
+			if (winInfo) {
+#ifdef USE_DMX
+				/* translate nativeWindow to a back-end child window ID */
+				nativeWindow = (GLint) winInfo->backendWindows[i].xsubwin;
+#endif
 
-			 if (tilesort_spu.swap)
-				 crPackMakeCurrentSWAP( window, nativeWindow, serverCtx );
-			 else
-				 crPackMakeCurrent( window, nativeWindow, serverCtx );
+				/* translate Cr window number to server window number */
+				serverWindow = winInfo->server[i].window;
+			}
+			else {
+				serverWindow = 0;
+			}
+
+			if (!winInfo->validRasterOrigin) {
+				/* set raster origin */
+				if (winInfo->server[i].num_extents > 0) {
+					newCtx->server[i].State->current.rasterOrigin.x
+						= (GLfloat) winInfo->server[i].extents[0].x1;
+					newCtx->server[i].State->current.rasterOrigin.y
+						= (GLfloat) winInfo->server[i].extents[0].y1;
+				}
+				else {
+					newCtx->server[i].State->current.rasterOrigin.x = 0;
+					newCtx->server[i].State->current.rasterOrigin.y = 0;
+				}
+			}
+
+			if (tilesort_spu.swap)
+				crPackMakeCurrentSWAP( serverWindow, nativeWindow, serverCtx );
+			else
+				crPackMakeCurrent( serverWindow, nativeWindow, serverCtx );
 		}
 		else {
 			if (tilesort_spu.swap)
@@ -352,26 +370,52 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 
 		crPackGetBuffer( thread->packer, &(thread->pack[i]) );
 	}
+	winInfo->validRasterOrigin = GL_TRUE;
+
+	/* Do one-time initializations */
+	if (newCtx) {
+		if (newCtx->State->viewport.viewportW == -1 ||
+				newCtx->State->viewport.viewportH == -1) {
+			/* set initial viewport and scissor bounds */
+			tilesortspu_Viewport(0, 0, winInfo->lastWidth, winInfo->lastHeight);
+			tilesortspu_Scissor(0, 0, winInfo->lastWidth, winInfo->lastHeight);
+		}
+	}
 
 	/* Restore the default buffer */
 	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
-}
 
+	if (newCtx && !newCtx->everCurrent) {
+		/* This is the first time the context has been made current.  Query
+		 * the servers' extension strings and update our notion of which
+		 * extensions we have, don't have.
+		 */
+		const GLubyte *ext = tilesortspuGetExtensionsString();
+		if (newCtx->State->limits.extensions)
+			crFree((void *) newCtx->State->limits.extensions);
+		newCtx->State->limits.extensions = ext;
+		crStateExtensionsInit(&(newCtx->State->limits),
+													&(newCtx->State->extensions)), 
+		newCtx->everCurrent = GL_TRUE;
+		/*
+		crDebug("Have IBM clip? %d", newCtx->State->extensions.IBM_rasterpos_clip);
+		*/
+	}
+}
 
 
 void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 {
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	ContextInfo *contextInfo;
 	GET_THREAD(thread);
-	int i, ctxPos = ctx - MAGIC_OFFSET;
+	int i;
 
-	CRASSERT(ctxPos >= 0);
-	CRASSERT(ctxPos < CR_MAX_CONTEXTS);
-
-	if (!tilesort_spu.context[ctxPos].State)
+	contextInfo = (ContextInfo *) crHashtableSearch(tilesort_spu.contextTable, ctx);
+	if (!contextInfo)
 		return;
 
-	if (thread->currentContext == &(tilesort_spu.context[ctxPos])) {
+	if (thread->currentContext == contextInfo) {
 		/* flush the current context */
 		tilesortspuFlush(thread);
 		/* unbind */
@@ -387,12 +431,12 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
-		TileSortSPUServer *server = tilesort_spu.servers + i;
 		int serverCtx;
 
 		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
 
-		serverCtx = server->serverCtx[ctxPos];
+		serverCtx = contextInfo->server[i].serverContext;
+
 		if (tilesort_spu.swap)
 			crPackDestroyContextSWAP( serverCtx );
 		else
@@ -400,22 +444,24 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 
 		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
 
-		server->serverCtx[ctxPos] = 0;
-		crStateDestroyContext(server->context[ctxPos]);
-		server->context[ctxPos] = NULL;
+		contextInfo->server[i].serverContext = 0;
+		crStateDestroyContext(contextInfo->server[i].State);
+		contextInfo->server[i].State = NULL;
 	}
 
 	/* Check if we're deleting the currently bound context */
-	if (thread->currentContext == &(tilesort_spu.context[ctxPos])) {
+	if (thread->currentContext == contextInfo) {
 		/* unbind */
 		thread->currentContext = NULL;
-		thread->currentContextIndex = -1;
 	}
 
 	/* Destroy the tilesort state context */
-	crStateDestroyContext( tilesort_spu.context[ctxPos].State );
-	tilesort_spu.context[ctxPos].State = NULL;
+	crFree(contextInfo->server);
+	crStateDestroyContext(contextInfo->State);
+	crHashtableDelete(tilesort_spu.contextTable, ctx, crFree);
 
 	/* The default buffer */
 	crPackSetBuffer( thread0->packer, &(thread->geometry_pack) );
 }
+
+

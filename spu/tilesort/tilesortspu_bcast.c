@@ -297,12 +297,11 @@ static void execute_side_effects(GLuint list)
 		int j;
 		/* loop over back-end server contexts */
 		for (j = 0; j < tilesort_spu.num_servers; j++) {
-			CRContext *c;
-			c = tilesort_spu.servers[j].context[thread->currentContextIndex];
-			CRASSERT(c);
+			CRContext *serverState = thread->currentContext->server[j].State;
+			CRASSERT(serverState);
 			/* update context's raster pos */
-			c->current.rasterPos.x += effect->rasterPosDx;
-			c->current.rasterPos.y += effect->rasterPosDy;
+			serverState->current.rasterPos.x += effect->rasterPosDx;
+			serverState->current.rasterPos.y += effect->rasterPosDy;
 			/*
 			printf("Post CallLists %d  ctx=%p dx/dy = %f, %f  new=%f, %f\n", list,
 						 (void *) (&c->current),
@@ -318,7 +317,7 @@ void TILESORTSPU_APIENTRY tilesortspu_CallList( GLuint list )
 {
 	GET_THREAD(thread);
 
-	if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR) {
+	if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) {
 		tilesortspuFlush( thread );
 	}
 
@@ -327,7 +326,7 @@ void TILESORTSPU_APIENTRY tilesortspu_CallList( GLuint list )
 	else
 	   crPackCallList( list );
 
-	if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR) {
+	if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) {
 		/* we don't have a bounding box for the geometry in this
 		 * display list, so need to broadcast.
 		 */
@@ -350,7 +349,7 @@ void TILESORTSPU_APIENTRY tilesortspu_CallLists( GLsizei n, GLenum type, const G
 	GET_CONTEXT(ctx);
 	GLint i;
 
-	if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR) {
+	if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) {
 		tilesortspuFlush( thread );
 	}
 
@@ -363,7 +362,7 @@ void TILESORTSPU_APIENTRY tilesortspu_CallLists( GLsizei n, GLenum type, const G
 		crPackCallLists( n, type, lists );
 	}
 
-	if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR) {
+	if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) {
 		/* we don't have a bounding box for the geometry in this
 		 * display list, so need to broadcast.
 		 */

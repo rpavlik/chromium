@@ -142,7 +142,7 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 	unsigned char        *src;
 	CRMessageOpcodes *msg;
 
-	if (tilesort_spu.inDrawPixels)
+	if (thread->currentContext->inDrawPixels)
 	{
 		tilesortspuFlush( thread );
 		return;
@@ -182,7 +182,8 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 
 static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 {
-	
+	GET_THREAD(thread);
+
 #define DRAW_BBOX_MAX_SERVERS 128
 	static int init=0;
 	static GLfloat c[DRAW_BBOX_MAX_SERVERS][3];
@@ -231,7 +232,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 
 	if (tilesort_spu.swap)
 	{
-		if (tilesort_spu.providedBBOX == GL_SCREEN_BBOX_CR)
+		if (thread->currentContext->providedBBOX == GL_SCREEN_BBOX_CR)
 			crPackPushAttribSWAP(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TRANSFORM_BIT);
 		else
 			crPackPushAttribSWAP(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
@@ -249,7 +250,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 		crPackLineWidthSWAP(tilesort_spu.bboxLineWidth);
 		crPackColor3fvSWAP(outcolor);
 
-		if (tilesort_spu.providedBBOX == GL_SCREEN_BBOX_CR) {
+		if (thread->currentContext->providedBBOX == GL_SCREEN_BBOX_CR) {
 			crPackMatrixModeSWAP( GL_MODELVIEW ) ;
 			crPackPushMatrixSWAP() ;
 			crPackLoadIdentitySWAP() ;
@@ -298,7 +299,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 	}
 	else
 	{
-		if (tilesort_spu.providedBBOX == GL_SCREEN_BBOX_CR)
+		if (thread->currentContext->providedBBOX == GL_SCREEN_BBOX_CR)
 			crPackPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TRANSFORM_BIT);
 		else
 			crPackPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
@@ -315,7 +316,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 
 		crPackLineWidth(tilesort_spu.bboxLineWidth);
 		crPackColor3fv(outcolor);
-		if (tilesort_spu.providedBBOX == GL_SCREEN_BBOX_CR) {
+		if (thread->currentContext->providedBBOX == GL_SCREEN_BBOX_CR) {
 			crPackMatrixMode( GL_MODELVIEW ) ;
 			crPackPushMatrix() ;
 			crPackLoadIdentity() ;
@@ -367,6 +368,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 {
 	GET_THREAD(thread);
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	CRMessageOpcodes *big_packet_hdr = NULL;
 	unsigned int big_packet_len = 0;
 	TileSortBucketInfo bucket_info;
@@ -374,7 +376,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 	/*crDebug( "in __doFlush (broadcast = %d)", broadcast ); */
 
-	if (thread->state_server != NULL)
+	if (thread->state_server_index != -1)
 	{
 		/* This means that the context differencer had so much state 
 		 * to dump that it overflowed the server's network buffer 
@@ -427,8 +429,8 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			broadcast = 1;
 		} else {
 			/*crDebug( "About to bucket the geometry" ); */
-			tilesortspuBucketGeometry(&bucket_info);
-			if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR)
+			tilesortspuBucketGeometry(winInfo, &bucket_info);
+			if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR)
 				crPackResetBBOX( thread->packer );
 		}
 	}
@@ -494,7 +496,6 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		int node32 = i >> 5;
 		int node = i & 0x1f;
 
-		thread->state_server = tilesort_spu.servers + i;
 		thread->state_server_index = i;
 
 		/* Check to see if this server needs geometry from us. */
@@ -507,7 +508,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 		/* Okay, it does.  */
 
-		thread->state_server->vertexCount += thread->packer->current.vtx_count;
+		thread->currentContext->server[i].vertexCount += thread->packer->current.vtx_count;
 
 		/* We're going to do lazy state evaluation now */
 
@@ -516,8 +517,8 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		{
 			/*crDebug( "pack buffer before differencing" ); 
 			 *tilesortspuDebugOpcodes( &(thread->packer->buffer) ); */
-			CRContext *serverContext = thread->state_server->context[thread->currentContextIndex];
-			crStateDiffContext( serverContext, ctx );
+			CRContext *serverState = thread->currentContext->server[i].State;
+			crStateDiffContext( serverState, ctx );
 			if (tilesort_spu.drawBBOX && !broadcast)
 			{
 				__drawBBOX( &bucket_info );
@@ -572,7 +573,6 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	/* We're done with the servers.  Wipe the thread->state_server 
 	 * variable so we know that.  */
 
-	thread->state_server = NULL;
 	thread->state_server_index = -1;
 
 	for ( i = 0 ; i < tilesort_spu.num_servers; i++ )

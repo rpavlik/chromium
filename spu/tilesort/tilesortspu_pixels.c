@@ -23,6 +23,8 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 	CRViewportState *v = &(ctx->viewport);
 	GLfloat screen_bbox[8];
 	GLenum hint;
+	GLint zoomedWidth = (GLint) (width * ctx->pixel.xZoom + 0.5);
+	GLint zoomedHeight = (GLint) (height * ctx->pixel.yZoom + 0.5);
 
 	(void) v;
 
@@ -54,13 +56,13 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 	tilesortspuFlush( thread );
 
 	/* min x, y, z, w */
-	screen_bbox[0] = (c->rasterPos.x)/v->viewportW;
-	screen_bbox[1] = (c->rasterPos.y)/v->viewportH;
+	screen_bbox[0] = (c->rasterPos.x) / v->viewportW;
+	screen_bbox[1] = (c->rasterPos.y) / v->viewportH;
 	screen_bbox[2] = 0.0;
 	screen_bbox[3] = 1.0;
 	/* max x, y, z, w */
-	screen_bbox[4] = (c->rasterPos.x + width)/v->viewportW;
-	screen_bbox[5] = (c->rasterPos.y + height)/v->viewportH;
+	screen_bbox[4] = (c->rasterPos.x + zoomedWidth) / v->viewportW;
+	screen_bbox[5] = (c->rasterPos.y + zoomedHeight) / v->viewportH;
 	screen_bbox[6] = 0.0;
 	screen_bbox[7] = 1.0;
 
@@ -74,7 +76,7 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 	screen_bbox[4] -= 1.0f;
 	screen_bbox[5] -= 1.0f;
 
-	hint = tilesort_spu.providedBBOX;
+	hint = thread->currentContext->providedBBOX;
 	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
 
 	/* 
@@ -83,16 +85,16 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 	 * specially handle the DrawPixels call
 	 */
 
-	tilesort_spu.inDrawPixels = 1;
+	thread->currentContext->inDrawPixels = GL_TRUE;
 	crPackDrawPixels (width, height, format, type, pixels, &(ctx->client.unpack));
 
 	if (thread->packer->buffer.data_current != thread->packer->buffer.data_start)
 	{
 		tilesortspuFlush( thread );
 	}
-	tilesort_spu.inDrawPixels = 0;
+	thread->currentContext->inDrawPixels = GL_FALSE;
 
-	tilesort_spu.providedBBOX = hint;
+	thread->currentContext->providedBBOX = hint;
 }
 
 
@@ -128,6 +130,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height,
 void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
 {
 	GET_CONTEXT(ctx);
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	CRCurrentState *c = &(ctx->current);
 	CRPixelPackState *p = &(ctx->client.pack);
 	CRViewportState *v = &(ctx->viewport);
@@ -180,7 +183,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	screen_bbox[4] -= 1.0f;
 	screen_bbox[5] -= 1.0f;
 
-	hint = tilesort_spu.providedBBOX;
+	hint = thread->currentContext->providedBBOX;
 	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
 	tilesortspuFlush( thread );
 
@@ -273,14 +276,13 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	rect.y2 = y + height;
 	stride  = width * bytes_per_pixel;
 
-	tilesort_spu.ReadPixels = 0;
+	thread->currentContext->readPixelsCount = 0;
 	for ( i = 0; i < tilesort_spu.num_servers; i++ )
 	{
-		TileSortSPUServer *server = tilesort_spu.servers + i;
 		CRPackBuffer *pack = &(thread->pack[i]);
 
 		/* Grab current server's boundaries */
-		isect = server->extents[0];  /* x1,y1,x2,y2 */
+		isect = winInfo->server[i].extents[0];  /* x1,y1,x2,y2 */
 
 		/* Reset rectangle to current boundary for server */
 		if ( isect.x1 < rect.x1 ) isect.x1 = rect.x1;
@@ -293,13 +295,13 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 			continue;
 
 		/* We've got one in the pot ! */
-		tilesort_spu.ReadPixels++;
+		thread->currentContext->readPixelsCount++;
 
 		/* Build new ReadPixels parameters */
 		new_width  = isect.x2 - isect.x1;
 		new_height = isect.y2 - isect.y1;
-		new_x      = isect.x1 - server->extents[0].x1;
-		new_y      = isect.y1 - server->extents[0].y1;
+		new_x      = isect.x1 - winInfo->server[i].extents[0].x1;
+		new_y      = isect.y1 - winInfo->server[i].extents[0].y1;
 
 		bytes_per_row = new_width * bytes_per_pixel;
 
@@ -350,12 +352,12 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	tilesortspuFlush( thread );
 
 	/* We need to receive them all back before continuing */
-	while ( tilesort_spu.ReadPixels > 0 )
+	while ( thread->currentContext->readPixelsCount > 0 )
 	{
 		crNetRecv( );
 	}
 
-	tilesort_spu.providedBBOX = hint;
+	thread->currentContext->providedBBOX = hint;
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
@@ -367,8 +369,15 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 	(void)v;
 	(void)c;
 
+	if (!c->rasterValid)
+		return;
+
 	buffer = (char*) crAlloc(width * height * 4);
 
+	/*
+	 * XXX this isn't quite good enough.  If any pixel transfer operations
+	 * are enabled, they'll be applied twice: during readback and drawing.
+	 */
 	switch (type) {
 		case GL_COLOR:
 			tilesortspu_ReadPixels(x,y,width,height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
@@ -405,6 +414,7 @@ static void tilesortspu_exec_Bitmap(
 	CRViewportState *v = &(ctx->viewport);
 	GLfloat screen_bbox[8];
 	GLenum hint;
+	GLfloat xmove2, ymove2;
 
 	if (!c->rasterValid)
 	{
@@ -413,26 +423,43 @@ static void tilesortspu_exec_Bitmap(
 
 	tilesortspuFlush( thread );
 
-	crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
-	if (tilesort_spu.swap)
-	{
-		crPackBitmapSWAP ( width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack) );
+	/*
+	 * Compute screen-space bounding box for this bitmap
+	 */
+	if (xmove || ymove) {
+		/**
+		 ** If the raster position is going to be moved by drawing this
+		 ** bitmap, we have to broadcast the bitmap to all servers (by using
+		 ** a really big bounding box).  If we don't, the current raster
+		 ** position on some servers will be incorrect.
+		 **/
+		/* min x, y, z, w */
+		screen_bbox[0] = -1000000;
+		screen_bbox[1] = -1000000;
+		screen_bbox[2] = 0.0;
+		screen_bbox[3] = 1.0;
+		/* max x, y, z, w */
+		screen_bbox[4] = 1000000;
+		screen_bbox[5] = 1000000;
+		screen_bbox[6] = 0.0;
+		screen_bbox[7] = 1.0;
 	}
-	else
-	{
-		crPackBitmap ( width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack) );
+	else {
+		/**
+		 ** No xmove or ymove so we can just send this bitmap to the
+		 ** relevant servers.
+		 **/
+		/* min x, y, z, w */
+		screen_bbox[0] = (c->rasterPos.x - xorig)/v->viewportW;
+		screen_bbox[1] = (c->rasterPos.y - yorig)/v->viewportH;
+		screen_bbox[2] = 0.0;
+		screen_bbox[3] = 1.0;
+		/* max x, y, z, w */
+		screen_bbox[4] = (c->rasterPos.x - xorig + width) / v->viewportW;
+		screen_bbox[5] = (c->rasterPos.y - yorig + height) / v->viewportH;
+		screen_bbox[6] = 0.0;
+		screen_bbox[7] = 1.0;
 	}
-
-	/* min x, y, z, w */
-	screen_bbox[0] = (c->rasterPos.x - xorig)/v->viewportW;
-	screen_bbox[1] = (c->rasterPos.y - yorig)/v->viewportH;
-	screen_bbox[2] = 0.0;
-	screen_bbox[3] = 1.0;
-	/* max x, y, z, w */
-	screen_bbox[4] = (c->rasterPos.x - xorig + width) / v->viewportW;
-	screen_bbox[5] = (c->rasterPos.y - yorig + height) / v->viewportH;
-	screen_bbox[6] = 0.0;
-	screen_bbox[7] = 1.0;
 
 	screen_bbox[0] *= 2.0f;
 	screen_bbox[1] *= 2.0f;
@@ -444,18 +471,42 @@ static void tilesortspu_exec_Bitmap(
 	screen_bbox[4] -= 1.0f;
 	screen_bbox[5] -= 1.0f;
 
-	hint = tilesort_spu.providedBBOX;
+	hint = thread->currentContext->providedBBOX;
 	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
 
-	c->rasterPosPre.x -= xmove;
-	c->rasterPosPre.y -= ymove;
+	if (ctx->extensions.IBM_rasterpos_clip) {
+		/* send delta with the bitmap command */
+		xmove2 = xmove;
+		ymove2 = ymove;
+	}
+	else {
+		/* don't send the delta, we'll just record it later */
+		xmove2 = 0;
+		ymove2 = 0;
+	}
+
+	if (tilesort_spu.swap)
+	{
+		crPackBitmapSWAP ( width, height, xorig, yorig, xmove2, ymove2, bitmap, &(ctx->client.unpack) );
+	}
+	else
+	{
+		crPackBitmap ( width, height, xorig, yorig, xmove2, ymove2, bitmap, &(ctx->client.unpack) );
+	}
 
 	tilesortspuFlush( thread );
 
-	c->rasterPosPre.x += xmove;
-	c->rasterPosPre.y += ymove;
+	if (ctx->extensions.IBM_rasterpos_clip) {
+		/* update our local notion of the raster pos, but don't set dirty state */
+		ctx->current.rasterPos.x += xmove;
+		ctx->current.rasterPos.y += ymove;
+	}
+	else {
+		/* update state and set dirty flag */
+		crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
+	}
 
-	tilesort_spu.providedBBOX = hint;
+	thread->currentContext->providedBBOX = hint;
 }
 
 
@@ -509,9 +560,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
  */
 static void pixeltransfer_flush(void)
 {
-	GET_CONTEXT(ctx);
+	GET_CONTEXT(ctx);  /* this gets thread too */
 	GLboolean tex_state[5];
-	int a, orig_active_unit;
+	int i, orig_active_unit;
 	int already_flushed[5];
 	unsigned int unit;
 	
@@ -555,14 +606,12 @@ static void pixeltransfer_flush(void)
 		 * sure which. So, flush each of them individually 
 		 */
 		crMemset(already_flushed, 0, 5 * sizeof(int));
-		for (a = 0; a < tilesort_spu.num_servers; a++)
+		for (i = 0; i < tilesort_spu.num_servers; i++)
 		{
-			GET_THREAD(thread);
-			TileSortSPUServer *serv = 	tilesort_spu.servers+a;
-			CRContext *serv_ctx = serv->context[thread->currentContextIndex];
+			CRContext *serverState = thread->currentContext->server[i].State;
 
 			/* First flush, 1D */
-			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_1D, unit)) && 
+			if ((crStateTextureCheckDirtyImages(serverState, ctx, GL_TEXTURE_1D, unit)) && 
 								 (!already_flushed[0]))
 			{
 				crStateEnable(GL_TEXTURE_1D);
@@ -572,7 +621,7 @@ static void pixeltransfer_flush(void)
 			}
 
 			/* Now, flush 2D */
-			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_2D, unit)) &&
+			if ((crStateTextureCheckDirtyImages(serverState, ctx, GL_TEXTURE_2D, unit)) &&
 								 (!already_flushed[1]))
 			{
 				crStateEnable(GL_TEXTURE_2D);
@@ -583,7 +632,7 @@ static void pixeltransfer_flush(void)
 		
 			/* yada yada yada */
 #ifdef CR_OPENGL_VERSION_1_2
-			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_3D, unit)) && 
+			if ((crStateTextureCheckDirtyImages(serverState, ctx, GL_TEXTURE_3D, unit)) && 
 								 (!already_flushed[2]))
 			{
 				crStateEnable(GL_TEXTURE_3D);
@@ -594,7 +643,7 @@ static void pixeltransfer_flush(void)
 #endif
  	
 #ifdef CR_ARB_texture_cube_map
-			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_CUBE_MAP_ARB, unit)) &&
+			if ((crStateTextureCheckDirtyImages(serverState, ctx, GL_TEXTURE_CUBE_MAP_ARB, unit)) &&
 								(!already_flushed[3]))
 			{
 				if (ctx->extensions.ARB_texture_cube_map)
@@ -608,7 +657,7 @@ static void pixeltransfer_flush(void)
 #endif
 
 #ifdef CR_NV_texture_rectangle
-			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_RECTANGLE_NV, unit)) &&
+			if ((crStateTextureCheckDirtyImages(serverState, ctx, GL_TEXTURE_RECTANGLE_NV, unit)) &&
 								(!already_flushed[4]))
 			{
 				if (ctx->extensions.ARB_texture_rectangle)

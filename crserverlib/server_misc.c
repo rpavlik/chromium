@@ -53,21 +53,22 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetChromiumParametervCR(GLenum tar
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
+	CRMuralInfo *mural = cr_server.curClient->currentMural;
 	static unsigned int gather_connect_count = 0;
 
 	switch (target) {
 	case GL_SET_MAX_VIEWPORT_CR:
-	    {
-		GLint *maxDims = (GLint *)values;
-		cr_server.limits.maxViewportDims[0] = maxDims[0];
-		cr_server.limits.maxViewportDims[1] = maxDims[1];
-	    }
-	    break;
+		{
+			GLint *maxDims = (GLint *)values;
+			cr_server.limits.maxViewportDims[0] = maxDims[0];
+			cr_server.limits.maxViewportDims[1] = maxDims[1];
+		}
+		break;
 
 	case GL_TILE_INFO_CR:
 		/* message from tilesort SPU to set new tile bounds */
 		{
-			int numTiles, muralWidth, muralHeight, server, tiles;
+			int numTiles, muralWidth, muralheight, server, tiles;
 			int *tileBounds;
 			CRASSERT(count >= 4);
 			CRASSERT((count - 4) % 4 == 0); /* must be multiple of four */
@@ -76,11 +77,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 			tileBounds = (GLint *) values;
 			server = tileBounds[0];
 			muralWidth = tileBounds[1];
-			muralHeight = tileBounds[2];
+			muralheight = tileBounds[2];
 			tiles = tileBounds[3];
 			CRASSERT(tiles == numTiles);
 			tileBounds += 4; /* skip over header values */
-			crServerNewTiles(muralWidth, muralHeight, numTiles, tileBounds);
+			crServerNewMuralTiling(mural, muralWidth, muralheight, numTiles, tileBounds);
 		}
 		break;
 
@@ -112,92 +113,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 	default:
 		cr_server.head_spu->dispatch_table.ChromiumParametervCR( target, type, count, values );
 		break;
-	}
-}
-
-
-
-/*
- * Replace the current tile list with a new one.
- * The boundaries are specified in mural space.
- * Input: muralWidth/Height - size of the overall mural
- *        numTiles - number of tiles
- * Input: tileBounds[0] = bounds[0].x
- *        tileBounds[1] = bounds[0].y
- *        tileBounds[2] = bounds[0].width
- *        tileBounds[3] = bounds[0].height
- *        tileBounds[4] = bounds[1].x
- *        ...
- */
-void crServerNewTiles(int muralWidth, int muralHeight,
-											int numTiles, const int *tileBounds)
-{
-	int i;
-
-	crDebug("Reconfiguring tiles in crServerNewTiles:");
-	crDebug("  New mural size: %d x %d", muralWidth, muralHeight);
-	for (i = 0; i < numTiles; i++)
-	{
-		crDebug("  Tile %d: %d, %d  %d x %d", i,
-						tileBounds[i*4], tileBounds[i*4+1],
-						tileBounds[i*4+2], tileBounds[i*4+3]);
-	}
-
-	/*
-	 * This section basically mimics what's done during crServerGetTileInfo()
-	 */
-	cr_server.muralWidth = muralWidth;
-	cr_server.muralHeight = muralHeight;
-
-	cr_server.numExtents = numTiles;
-	CRASSERT(numTiles < CR_MAX_EXTENTS);  /* clamp instead? */
-	cr_server.maxTileHeight = 0;
-	for (i = 0; i < numTiles; i++)
-	{
-		const int x = tileBounds[i * 4 + 0];
-		const int y = tileBounds[i * 4 + 1];
-		const int w = tileBounds[i * 4 + 2];
-		const int h = tileBounds[i * 4 + 3];
-		cr_server.extents[i].x1 = x;
-		cr_server.extents[i].y1 = y;
-		cr_server.extents[i].x2 = x + w;
-		cr_server.extents[i].y2 = y + h;
-		if (h > cr_server.maxTileHeight)
-			cr_server.maxTileHeight = h;
-	}
-
-	/* Check if we can use optimized bucketing */
-	if (cr_server.optimizeBucket)
-	{
-		if (!crServerCheckTileLayout())
-			cr_server.optimizeBucket = 0;
-	}
-
-	crServerInitializeTiling();
-
-	/*
-	 * This section mimics what's done during crServerAddToRunQueue()
-	 */
-	{
-		/* find ourself in the run queue */
-		RunQueue *q = cr_server.run_queue;
-		int found = 0;
-		do
-		{
-			if (q->client == cr_server.curClient)
-			{
-				/* update our extent info */
-				crServerInitializeQueueExtents(q);
-				found = 1;
-				break;
-			}
-			q = q->next;
-		}
-		while (q != cr_server.run_queue);
-		if (!found)
-		{
-			crError("Problem in crServerNewTiles: RunQueue entry for client %d not found!", cr_server.curClient->number);
-		}
 	}
 }
 

@@ -3,6 +3,12 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+# Set USE_DMX to 1 if you want to enable DMX support.
+# You'll need the libdmx.a library and dmxext.h header in the usual X
+# directories.
+USE_DMX = 1
+
+
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++
 CC = gcc
@@ -75,5 +81,10 @@ ifeq ($(QT),1)
     QTDIR=/insert/path/to/qt/here/qt-2.3.1
     MOC=$(QTDIR)/bin/moc
     UIC=$(QTDIR)/bin/uic
+endif
+
+ifeq ($(USE_DMX), 1)
+CXXFLAGS += -DUSE_DMX
+CFLAGS += -DUSE_DMX
 endif
 

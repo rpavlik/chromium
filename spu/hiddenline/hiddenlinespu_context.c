@@ -77,5 +77,5 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_DestroyContext( GLint ctx )
 	context = crHashtableSearch(hiddenline_spu.contextTable, ctx);
 	CRASSERT(context);
 	hiddenline_spu.super.DestroyContext(context->super_context);
-	crHashtableDelete(hiddenline_spu.contextTable, ctx, GL_TRUE);
+	crHashtableDelete(hiddenline_spu.contextTable, ctx, crFree);
 }
