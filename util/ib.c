@@ -1172,7 +1172,7 @@ void
 											conn->buffer_size );
 		count++;
 	}  
-	crWarning("conn: %d fast recovered %d, pool = %d", conn->id, count, crBufferPoolGetNumBuffers( ib_conn->send_pool));
+	//crWarning("conn: %d fast recovered %d, pool = %d", conn->id, count, crBufferPoolGetNumBuffers( ib_conn->send_pool));
 
 	ib_buffer = (CRIBBuffer *) 
 		crBufferPoolPop( ib_conn->send_pool, conn->buffer_size );

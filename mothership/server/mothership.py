@@ -319,6 +319,8 @@ class CRNode:
 		self.config = {}
 		self.tcpip_accept_wait = None
 		self.tcpip_connect_wait = None
+		self.sdp_accept_wait = None
+		self.sdp_connect_wait = None
 		self.ib_accept_wait = None
 		self.ib_connect_wait = None
 		self.gm_accept_wait = None
@@ -568,6 +570,8 @@ class SockWrapper:
 		self.node = None
 		self.tcpip_accept_wait = None
 		self.tcpip_connect_wait = None
+		self.sdp_accept_wait = None
+		self.sdp_connect_wait = None
 		self.ib_accept_wait = None
 		self.ib_connect_wait = None
 		self.gm_accept_wait = None
@@ -1044,6 +1048,22 @@ class CR:
 					else:
 						CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")" % (server_hostname, server_port, hostname, port) )
 			sock.tcpip_connect_wait = (hostname, port, endianness)
+		elif (protocol == 'sdp'):
+			(p, hostname, port_str, endianness_str) = connect_info
+			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+			port = int(port_str)
+			endianness = int(endianness_str)
+			for server_sock in self.wrappers.values():
+				if server_sock.sdp_accept_wait != None:
+					(server_hostname, server_port, server_endianness) = server_sock.sdp_accept_wait
+					if SameHost(server_hostname, hostname) and server_port == port:
+						sock.Success( "%d %d" % (self.conn_id, server_endianness ) )
+						server_sock.Success( "%d" % self.conn_id )
+						self.conn_id += 1
+						return
+					else:
+						CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")" % (server_hostname, server_port, hostname, port) )
+			sock.sdp_connect_wait = (hostname, port, endianness)
 		elif (protocol == 'ib'):
 			(p, hostname, port_str, node_id_str, endianness_str, lid1, qp_ous, qp) = connect_info
 			CRInfo("do_connectrequest processing ib protocol")
@@ -1135,6 +1155,25 @@ class CR:
 					CRDebug( "tcpip_connect_wait" )
 						
 			sock.tcpip_accept_wait = (hostname, port, endianness)
+		elif protocol == 'sdp':
+			(p, hostname, port_str, endianness_str) = accept_info
+			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+			port = int(port_str)
+			endianness = int(endianness_str)
+			for client_sock in self.wrappers.values():
+				if client_sock.sdp_connect_wait != None:
+					(client_hostname, client_port, client_endianness) = client_sock.sdp_connect_wait
+					if SameHost(client_hostname, hostname) and client_port == port:
+						sock.Success( "%d" % self.conn_id )
+						client_sock.Success( "%d %d" % (self.conn_id, endianness ) )
+						self.conn_id += 1
+						return
+					else:
+						CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
+				else:
+					CRDebug( "sdp_connect_wait" )
+						
+			sock.sdp_accept_wait = (hostname, port, endianness)
 		elif protocol == 'ib':
 			(p, hostname, port_str, node_id_str, endianness_str, lid1, qp_ous, qp) = accept_info
 			CRInfo("do_acceptrequest processing ib protocol")

@@ -158,6 +158,15 @@ crNetConnectToServer( const char *server,	unsigned short default_port,
 		   hostname, port, protocol );
 	}
 
+	/* This makes me ill, but we need to "fix" the hostname for sdp. MCH */
+	if( !crStrcmp( protocol, "sdp")){
+	     char* temp;
+	     temp = strtok(hostname, ".");
+	     crStrcat(temp, "ib");
+	     strcpy(hostname, temp);
+	     crDebug("SDP rename hostname: %s", hostname);    
+	}
+
 	conn = (CRConnection *) crCalloc( sizeof(*conn) );
 	if (!conn)
 		return NULL;
@@ -257,7 +266,7 @@ crNetConnectToServer( const char *server,	unsigned short default_port,
 		cr_net.use_sdp++;
 		crDebug("Calling crSDPInit()");
 		crSDPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crDebug("Calling crSDPIPConnection");
+		crDebug("Calling crSDPConnection");
 		crSDPConnection( conn );
 		crDebug("Done calling crSDPConnection");
 	}
