@@ -179,7 +179,7 @@ Key(unsigned char key, int x, int y)
     switch (key) 
     {
     case 27:           /* Esc will quit */
-        exit(1);
+        exit(0);
         break;
     case 's':
 	screenshot++;
@@ -414,7 +414,8 @@ main(int argc, char **argv)
     glutReshapeFunc(Reshape);
     glutKeyboardFunc(Key);
     moving = GL_TRUE;
-    glutIdleFunc(Animate);
+    if (moving)
+       glutIdleFunc(Animate);
     glutVisibilityFunc(Visible);
     glutCreateMenu(menuSelect);
     glutAddMenuEntry("Start motion", 1);
