@@ -554,21 +554,26 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 {
 	switch (target) {
 	case GL_WINDOW_SIZE_CR:
-	   {
-		  CRASSERT(type == GL_INT);
-		  CRASSERT(count == 2);
-		  CRASSERT(values);
-		  if (index >= 0 && index < MAX_WINDOWS) {
-			 GLint w, h, *size = (GLint *) values;
-			 WindowInfo *window = &(render_spu.windows[index]);
-			 renderspu_SystemGetWindowSize(window, &w, &h);
-			 size[0] = w;
-			 size[1] = h;
-		  }
-	   }
-	   break;
+		{
+			GLint w, h, *size = (GLint *) values;
+			CRASSERT(type == GL_INT);
+			CRASSERT(count == 2);
+			CRASSERT(values);
+			size[0] = size[1] = 0;  /* default */
+			if (index >= 0 && index < MAX_WINDOWS)
+			{
+				WindowInfo *window = &(render_spu.windows[index]);
+				if (window->inUse)
+				{
+					renderspu_SystemGetWindowSize(window, &w, &h);
+					size[0] = w;
+					size[1] = h;
+				}
+			}
+		}
+		break;
 	default:
-	   ; /* nothing - silence compiler */
+		; /* nothing - silence compiler */
 	}
 }
 
