@@ -127,12 +127,12 @@ SPUOptions perfSPUOptions[] = {
    { "perf_set_log_separator", CR_STRING, 1, "\t", NULL, NULL, 
      "Performance SPU Log File separator", (SPUOptionCB)set_separator },
 
-   { "perf_set_mothership_log", CR_INT, 0, "0", "0", "1",
+   { "perf_set_mothership_log", CR_INT, 1, "0", "0", "1",
      "Performance SPU Log to Mothership", (SPUOptionCB)set_mothership_log },
 
-   { "perf_set_dump_on_flush", CR_INT, 0, "0", "0", "1",
+   { "perf_set_dump_on_flush", CR_INT, 1, "0", "0", "1",
      "Performance SPU Dump Statistics on glFlush", (SPUOptionCB)set_dump_on_flush },
-   { "perf_set_dump_on_finish", CR_INT, 0, "0", "0", "1",
+   { "perf_set_dump_on_finish", CR_INT, 1, "0", "0", "1",
      "Performance SPU Dump Statistics on glFinish", (SPUOptionCB)set_dump_on_finish },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
