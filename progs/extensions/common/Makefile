@@ -15,7 +15,7 @@ GLUT = 1
 
 LIBRARIES = crutil
 ifeq ($(ARCH),AIX)
-LIBRARIES += GL
+LIBRARIES += GL glut
 endif
 
 LIB_DEFS = common.def
