@@ -1647,10 +1647,6 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 
 		for (i = to->colorStack.depth; i <= to->colorStack.depth; i++)
 		{
-			if (from->matrixMode != GL_COLOR) {
-				diff_api.MatrixMode(GL_COLOR);
-				from->matrixMode = GL_COLOR;
-			}
 			LOADMATRIX(to->colorStack.stack + i);
 			crMemcpy(from->colorStack.stack + i, to->colorStack.stack + i, sizeof(CRmatrix));
 
