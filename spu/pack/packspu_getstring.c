@@ -63,7 +63,7 @@ GetVersionString(void)
 
 	CRASSERT(crStrlen((char *)return_value) < 100);
 
-	version = crStrToFloat(return_value);
+	version = crStrToFloat((char *) return_value);
 	version = crStateComputeVersion(version);
 
 	return version;

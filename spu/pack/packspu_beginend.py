@@ -22,6 +22,7 @@ void PACKSPU_APIENTRY packspu_Begin( GLenum mode )
 	GET_THREAD(thread);
 	CRPackBuffer *buf = &thread->BeginEndBuffer;
 
+	/* XXX comparing mode >= 0 here is not needed since mode is unsigned */
 	CRASSERT( mode >= GL_POINTS && mode <= GL_POLYGON );
 
 	if (pack_spu.swap)
