@@ -154,6 +154,7 @@ void crServerNewTiles(int muralWidth, int muralHeight,
 				found = 1;
 				break;
 			}
+			q = q->next;
 		}
 		while (q != run_queue);
 		if (!found)
