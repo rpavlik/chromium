@@ -416,9 +416,14 @@ static void DrawCursor( GLint x, GLint y )
 	render_spu.self.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	render_spu.self.Color3f(1, 1, 1);
+
+	/* save current raster pos */
+	render_spu.self.PushAttrib(GL_CURRENT_BIT);
 	SetRasterPos(x, y);
 	render_spu.self.Bitmap(POINTER_WIDTH, POINTER_HEIGHT, 1.0, 31.0, 0, 0,
 								(const GLubyte *) pointerBitmap);
+	/* restore current raster pos */
+	render_spu.self.PopAttrib();
 
 	if (lighting)
 	   render_spu.self.Enable(GL_LIGHTING);
