@@ -17,4 +17,7 @@ int    crStrToInt( const char *str );
 char **crStrSplit( const char *str, const char *splitstr );
 char **crStrSplitn( const char *str, const char *splitstr, int n );
 
+void   crBytesToString( char *string, int nstring, void *data, int ndata );
+void   crWordsToString( char *string, int nstring, void *data, int ndata );
+
 #endif /* CR_STRING_H */
