@@ -211,6 +211,8 @@ static void stubInitVars(void)
 	stub.minChromiumWindowHeight = 0;
 	stub.maxChromiumWindowWidth = 0;
 	stub.maxChromiumWindowHeight = 0;
+	stub.matchChromiumWindowCount = 0;
+	stub.matchChromiumWindowID = NULL;
 	stub.matchWindowTitle = NULL;
 	stub.threadSafe = GL_FALSE;
 	stub.trackWindowSize = 0;
@@ -444,6 +446,41 @@ void stubInit(void)
 		crDebug( "maximum_window_size: %d x %d", w, h );
 		stub.maxChromiumWindowWidth = w;
 		stub.maxChromiumWindowHeight = h;
+	}
+
+	if (conn && crMothershipGetFakerParam( conn, response, "ignore_window_list" )
+		&& response[0]) {
+		unsigned int n;
+		int count = 0;
+		char *ns;
+		char *copyns;
+		crDebug( "ignore_window_list: %s", response);
+		ns = (char *)crAlloc(sizeof(response));
+		copyns = response;
+		while (sscanf(copyns , "%d,%s", &n, ns) == 2) {
+			count++;
+			copyns = ns;
+		}
+
+		stub.matchChromiumWindowID = crCalloc(count * sizeof(unsigned int));
+
+		count = 0;
+		copyns = response;
+		while (sscanf(copyns , "%d,%s", &n, ns) == 2) {
+			stub.matchChromiumWindowID[count] = n;
+			copyns = ns;
+			count++;
+		}
+		stub.matchChromiumWindowID[count] = n;
+
+		stub.numIgnoreWindowID = count;
+
+		crDebug("Ignoring window ID's : ");
+		while (count >= 0) {
+			crDebug("%d", stub.matchChromiumWindowID[count]);
+			count--;
+		}
+		crFree(ns);
 	}
 
 	if (conn && crMothershipGetFakerParam( conn, response, "match_window_title" )

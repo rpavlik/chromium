@@ -510,11 +510,25 @@ stubCheckUseChromium( WindowInfo *window )
 	/*  If the user's specified a window count for Chromium, see if
 	 *  this window satisfies that criterium.
 	 */
+	stub.matchChromiumWindowCounter++;
 	if (stub.matchChromiumWindowCount > 0) {
-		stub.matchChromiumWindowCounter++;
 		if (stub.matchChromiumWindowCounter != stub.matchChromiumWindowCount) {
 			crDebug("Using native GL, app window doesn't meet match_window_count");
 			return GL_FALSE;
+		}
+	}
+
+	/* If the user's specified a window list to ignore, see if this
+	 * window satisfies that criterium.
+	 */
+	if (stub.matchChromiumWindowID) {
+		GLuint i;
+
+		for (i = 0; i <= stub.numIgnoreWindowID; i++) {
+			if (stub.matchChromiumWindowID[i] == stub.matchChromiumWindowCounter) {
+				crDebug("Ignore window ID %d, using native GL", stub.matchChromiumWindowID[i]);
+				return GL_FALSE;
+			}
 		}
 	}
 

@@ -111,6 +111,8 @@ typedef struct {
 	GLuint maxChromiumWindowHeight;
 	GLuint matchChromiumWindowCount;
 	GLuint matchChromiumWindowCounter;
+	GLuint *matchChromiumWindowID;
+	GLuint numIgnoreWindowID;
 	char *matchWindowTitle;
 	int trackWindowSize;
 	int trackWindowPos;
