@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 		printf("Where:\n");
 		printf("  -t N  sets number of threads to create\n");
 		printf("  -w    create N windows instead of one\n");
-		printf("  -w1   only swap one of N threads\n");
+		printf("  -s1   only swap one of N threads\n");
 		printf("  -b    use barriers\n");
 		return 0;
 	}
