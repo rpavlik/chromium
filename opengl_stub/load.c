@@ -19,6 +19,11 @@
 #include <signal.h>
 
 
+/*
+ * If you change this, see the comments in tilesortspu_context.c
+ */
+#define MAGIC_CONTEXT_BASE 500
+
 #define CONFIG_LOOKUP_FILE ".crconfigs"
 
 #ifdef WINDOWS
@@ -198,7 +203,7 @@ static void stubInitVars(void)
 	stub.trackWindowSize = 0;
 	stub.mothershipPID = 0;
 
-	stub.freeContextNumber = 500;
+	stub.freeContextNumber = MAGIC_CONTEXT_BASE;
 	stub.contextTable = crAllocHashtable();
 	stub.currentContext = NULL;
 
