@@ -327,20 +327,19 @@ void crHashtableWalk( CRHashTable *hash, CRHashtableWalkCallback walkFunc , void
 {
 	int i;
 	CRHashNode *entry;
-	void *dataPtr1;
 
-	if ( !hash) return;
+	if (!hash)
+		return;
 
-	for ( i = 0; i < CR_NUM_BUCKETS; i++ )
+	for (i = 0; i < CR_NUM_BUCKETS; i++)
 	{
-		entry =  hash->buckets[i];
-		if ( entry ) 
+		entry = hash->buckets[i];
+		while (entry) 
 		{
-			dataPtr1 = entry->data;
-			entry = entry->next;
-			if (dataPtr1 && walkFunc) {
-				(*walkFunc)( dataPtr2, dataPtr1 );
+			if (entry->data && walkFunc) {
+				(*walkFunc)( entry->key, entry->data, dataPtr2 );
 			}
+			entry = entry->next;
 		}
 	}
 }
@@ -418,7 +417,8 @@ void *crHashtableSearch( const CRHashTable *h, unsigned long key )
 	return temp->data;
 }
 
-void crHashtableReplace( CRHashTable *h, unsigned long key, void *data, int free_mem )
+void crHashtableReplace( CRHashTable *h, unsigned long key, void *data,
+						 CRHashtableCallback deleteFunc)
 {
 	unsigned int index = crHash( key );
 	CRHashNode *temp;
@@ -432,9 +432,9 @@ void crHashtableReplace( CRHashTable *h, unsigned long key, void *data, int free
 		crHashtableAdd( h, key, data );
 		return;
 	}
-	if ( free_mem )
+	if ( temp->data && deleteFunc )
 	{
-		crFree( temp->data );
+		(*deleteFunc)( temp->data );
 	}
 	temp->data = data;
 }

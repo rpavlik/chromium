@@ -20,28 +20,35 @@
 
 
 static void
-crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj);
+crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash);
+/* This constant makes code more readable.  UPDATE_HASH means that the hash is
+ * to be updated as the texture is deleted; this is the common case.  If !UPDATE_HASH
+ * is passed, the hash is not to be updated; this is the case if the hashtable is
+ * currently being traversed (a hash table update in this case will corrupt the
+ * traversal, and may cause the crserver to die with a segmentation fault).
+ */
+#define UPDATE_HASH 1
 
 
 void crStateTextureDestroy(CRContext *ctx)
 {
 	CRTextureState *t = &ctx->texture;
 
-	crStateTextureDelete_t(t, &(t->base1D));
-	crStateTextureDelete_t(t, &(t->base2D));
+	crStateTextureDelete_t(t, &(t->base1D), UPDATE_HASH);
+	crStateTextureDelete_t(t, &(t->base2D), UPDATE_HASH);
 #ifdef CR_OPENGL_VERSION_1_2
-	crStateTextureDelete_t(t, &(t->base3D));
+	crStateTextureDelete_t(t, &(t->base3D), UPDATE_HASH);
 #endif
 #ifdef CR_ARB_texture_cube_map
-	crStateTextureDelete_t(t, &(t->baseCubeMap));
+	crStateTextureDelete_t(t, &(t->baseCubeMap), UPDATE_HASH);
 #endif
-	crStateTextureDelete_t(t, &(t->proxy1D));
-	crStateTextureDelete_t(t, &(t->proxy2D));
+	crStateTextureDelete_t(t, &(t->proxy1D), UPDATE_HASH);
+	crStateTextureDelete_t(t, &(t->proxy2D), UPDATE_HASH);
 #ifdef CR_OPENGL_VERSION_1_2
-	crStateTextureDelete_t(t, &(t->proxy3D));
+	crStateTextureDelete_t(t, &(t->proxy3D), UPDATE_HASH);
 #endif
 #ifdef CR_ARB_texture_cube_map
-	crStateTextureDelete_t(t, &(t->proxyCubeMap));
+	crStateTextureDelete_t(t, &(t->proxyCubeMap), UPDATE_HASH);
 #endif
 	crStateTextureFree( t );
 }
@@ -162,9 +169,9 @@ void crStateTextureInit(CRContext *ctx)
 
 
 /* This is called for each entry in the texture object hash table */
-static void DeleteTextureCallback( void *data1 , void *data2)
+static void DeleteTextureCallback( unsigned long key, void *texObj , void *texState)
 {
-    crStateTextureDelete_t( (CRTextureState *) data1, (CRTextureObj *) data2 );
+    crStateTextureDelete_t( (CRTextureState *) texState, (CRTextureObj *) texObj, !UPDATE_HASH );
 }
 
 
@@ -554,7 +561,7 @@ crStateTextureAllocate_t (CRContext *ctx, GLuint name)
 
 
 static void
-crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj) 
+crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash) 
 {
 	int k;
 
@@ -562,7 +569,7 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj)
 	CRASSERT(tobj);
 
 	/* remove from hash table */
-	if (t) {
+	if (t && updateHash) {
 		crHashtableDeleteBlock( t->idHash, tobj->name, 1, NULL ); /* null callback */
 	}
 
@@ -661,7 +668,7 @@ void STATE_APIENTRY crStateDeleteTextures(GLsizei n, const GLuint *textures)
 		if (name && tObj)
 		{
 			GLuint u;
-			crStateTextureDelete_t(t, tObj);
+			crStateTextureDelete_t(t, tObj, UPDATE_HASH);
 			/* if the currentTexture is deleted, 
 			 ** reset back to the base texture.
 			 */
