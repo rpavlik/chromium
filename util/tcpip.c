@@ -94,15 +94,16 @@ char *crTCPIPErrorString( int err )
 		case WSAECONNREFUSED: X( "connection refused" );
 		case WSAECONNRESET:   X( "connection reset" );
 		default:
-                        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                                FORMAT_MESSAGE_FROM_SYSTEM |
-                                FORMAT_MESSAGE_MAX_WIDTH_MASK, NULL, err,
-                                MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
-                                (LPTSTR) &temp, 0, NULL );
-                        if ( temp )
-                        {
-                            crStrncpy( buf, temp, sizeof(buf)-1 );
-                        }
+			FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER |
+						   FORMAT_MESSAGE_FROM_SYSTEM |
+						   FORMAT_MESSAGE_MAX_WIDTH_MASK, NULL, err,
+						   MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
+						   (LPTSTR) &temp, 0, NULL );
+			if ( temp )
+			{
+				crStrncpy( buf, temp, sizeof(buf)-1 );
+				buf[sizeof(buf)-1] = 0;
+			}
 	}
 
 #undef X
@@ -134,6 +135,7 @@ char *crTCPIPErrorString( int err )
 	if ( temp )
 	{
 		crStrncpy( buf, temp, sizeof(buf)-1 );
+		buf[sizeof(buf)-1] = 0;
 	}
 	else
 	{

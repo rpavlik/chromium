@@ -128,12 +128,13 @@ void crStrcpy( char *dest, const char *src )
 
 void crStrncpy( char *dest, const char *src, unsigned int len )
 {
-	unsigned int str_len = crStrlen(src);
-	unsigned int copy_len = str_len;
-	if (copy_len > len - 1)
-		copy_len = len;
-	memcpy( dest, src, copy_len );
-	dest[len] = '\0';
+	const unsigned int str_len = crStrlen(src);
+	if (str_len > len - 1) {
+		memcpy( dest, src, len );  /* NOTE: not null-terminated! */
+	}
+	else {
+		memcpy( dest, src, str_len + 1 );  /* includes null terminator */
+	}
 }
 
 void crStrcat( char *dest, const char *src )

@@ -41,8 +41,11 @@ int crParseURL( char *url, char *protocol, char *hostname,
 	}
 	else 
 	{
-		if (protocol != NULL)
-			crStrncpy( protocol, url, temp-url );
+		if (protocol != NULL) {
+			int len = temp - url;
+			crStrncpy( protocol, url, len );
+			protocol[len] = 0;
+		}
 		temp += 3;
 	}
 
@@ -62,8 +65,12 @@ int crParseURL( char *url, char *protocol, char *hostname,
 	temp2 = crStrrchr( temp2, ':' );
 	if ( temp2 )
 	{
-		if (hostname != NULL)
-			crStrncpy( hostname, temp, temp2 - temp );
+		if (hostname != NULL) {
+			int len = temp2 - temp;
+			crStrncpy( hostname, temp, len );
+			hostname[len] = 0;
+		}
+
 		temp2++;
 		if ( !is_digit_string( temp2 ) )
 			goto bad_url;

@@ -76,6 +76,7 @@ void crError( char *format, ... )
 		if ( temp )
 		{
 			crStrncpy( buf, temp, sizeof(buf)-1 );
+			buf[sizeof(buf)-1] = 0;
 		}
 
 		temp = buf + crStrlen(buf) - 1;
@@ -181,6 +182,7 @@ void crDebug( char *format, ... )
 		if ( temp )
 		{
 			crStrncpy( buf, temp, sizeof(buf)-1 );
+			buf[sizeof(buf)-1] = 0;
 		}
 
 		temp = buf + crStrlen(buf) - 1;
