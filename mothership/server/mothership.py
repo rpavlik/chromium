@@ -36,6 +36,11 @@ from crconfig import arch, crdir
 crbindir = os.path.join(crdir,'bin',arch)
 crlibdir = os.path.join(crdir,'lib',arch)
 
+def CRInfo( str ):
+	"""CRInfo(str)
+	Prints informational messages to stderr."""
+	print >> sys.stderr, str
+
 def CRDebug( str ):
 	"""CRDebug(str)
 	Prints debugging message to stderr."""
@@ -316,9 +321,9 @@ class CRSpawner(threading.Thread):
 		for node in self.nodes:
 			if node.autostart != "":
 				os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
-				print >> sys.stderr, "Autostart for node %s: %s" % (node.host, str(node.autostart_argv))
+				CRInfo("Autostart for node %s: %s" % (node.host, str(node.autostart_argv)))
 			else:
-				print >> sys.stderr, "Nothing to start for node %s" % node.host
+				CRInfo("Nothing to start for node %s" % node.host)
 
 class CR:
 	"""Main class that controls the mothership
@@ -393,10 +398,12 @@ class CR:
 		
 	# Added by BrianP
 	def SetParam( self, key, value ):
-		self.param[key] = [value]
+		"""Set a global mothership parameter value (via Python)"""
+		self.param[key] = value
 
 	# Added by BrianP
 	def GetParam( self, key ):
+		"""Get a global mothership parameter value (via Python)"""
 		if self.param.has_key(key):
 			return string.join(self.param[key], "")
 		else:
@@ -404,6 +411,7 @@ class CR:
 
 	# Added by BrianP
 	def do_setparam( self, sock, args ):
+		"""Set a global mothership parameter value (via C)"""
 		params = args.split( " ", 1 )
 		key = params[0]
 		value = params[1]
@@ -413,11 +421,12 @@ class CR:
 		
 	# Added by BrianP
 	def do_getparam( self, sock, args ):
+		"""Get a global mothership parameter value (via C)"""
 		key = args
 		if not self.param.has_key(key):
 			response = ""
 		else:
-			response = string.join(self.param[key], "")
+			response = str(self.param[key])
 		sock.Success( response )
 		return
 		
@@ -425,7 +434,7 @@ class CR:
 		"""Go(PORT=10000)
 		Starts the ball rolling.
 		This starts the mothership's event loop."""
-		print >> sys.stderr, "This is Chromium, Version ALPHA"
+		CRInfo("This is Chromium, Version ALPHA")
 		try:
 			HOST = ""
 			try:
@@ -471,9 +480,9 @@ class CR:
 					sock.close( )
 			except:
 				pass
-			print >> sys.stderr, "\n\nThank you for using Chromium!"
+			CRInfo("\n\nThank you for using Chromium!")
 		except:
-			print >> sys.stderr, "\n\nMOTHERSHIP EXCEPTION!  TERRIBLE!"
+			CRInfo("\n\nMOTHERSHIP EXCEPTION!  TERRIBLE!")
 			traceback.print_exc(None, sys.stderr)
 			try:
 				for sock in self.all_sockets:
@@ -686,21 +695,15 @@ class CR:
                                 return
 		else:
 			response = spu.config[args]
-		print >> sys.stderr, "responding with args = " + `response`
+		CRDebug("responding with args = " + `response`)
 		sock.Success( string.join( response, " " ) )	
 
 	def do_namedspuparam( self, sock, args ):
 		"""do_namedspuparam(sock, args)
 		Sends the given SPU parameter."""
-		# XXX New- Greg should review (BrianP)
-##		if sock.SPUid == -1:
-##			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
-##			return
 		params = args.split( " " )
 		spuid = int(params[0])
 		key = params[1]
-		#print >> sys.stderr, "Get named spu param id is %d" % spuid
-		#print >> sys.stderr, "Get named spu param key is " + key
 		spu = allSPUs[spuid]
 		if spu.config.has_key( key ):
 			response = spu.config[key]
@@ -708,7 +711,7 @@ class CR:
 			# Okay, there's no specific parameter for the SPU.  Try the global SPU configurations.
 			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (spuid, args) )
 			return
-		print >> sys.stderr, "responding with args = " + `response`
+		CRDebug("responding with args = " + `response`)
 		sock.Success( string.join( response, " " ) )	
 
 
@@ -724,9 +727,8 @@ class CR:
 		params = args.split( " ", 1 )
 		key = params[0]
 		value = params[1]
-		# print >> sys.stderr, "Setting key " + key + " to " + value
 		spu.config[key] = [value]
-		print >> sys.stderr, "responding with OK"
+		CRDebug("responding with OK")
 		sock.Success( "OK" )
 
 	def do_serverparam( self, sock, args ):
@@ -807,7 +809,7 @@ class CR:
 
 	def tileReply( self, sock, node ):
 		"""tileReply(sock, node)
-		Packages up a tile message for socket communication."
+		Packages up a tile message for socket communication.
 		"""
 		if len(node.tiles) == 0:
 			sock.Reply( SockWrapper.UNKNOWNPARAM, "server doesn't have tiles!" )
@@ -876,7 +878,7 @@ class CR:
 		do_* function."""
 		try:
 			line = string.strip(sock_wrapper.readline())
-			print >> sys.stderr, "Processing mothership request: \"%s\"" % line
+			CRDebug("Processing mothership request: \"%s\"" % line)
 		except:
 			CRDebug( "Client quit without saying goodbye?  How rude!" )
 			self.ClientDisconnect( sock_wrapper )
