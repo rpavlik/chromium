@@ -896,8 +896,7 @@ XVisualInfo *glXGetVisualFromFBConfigSGIX(Display *dpy,
 	return NULL;
 }
 
-GLXFBConfig glXGetFBConfigFromVisualSGIX(Display *dpy,
-																				 XVisualInfo *vis)
+GLXFBConfigSGIX glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis)
 {
 	(void) dpy;
 	(void) vis;
