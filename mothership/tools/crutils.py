@@ -35,6 +35,14 @@ def MakeHostname(format, number):
 	result += format[p.end():]
 	return result
 
+def MakeHostnames(format, start, count):
+	"""Return a list of hostname generated from format string, start and
+	count."""
+	names = []
+	for i in range(count):
+		names.append(MakeHostname(format, start + i))
+	return names
+
 
 #----------------------------------------------------------------------
 
