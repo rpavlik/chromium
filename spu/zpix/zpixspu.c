@@ -107,7 +107,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
                                           GLenum type, 
                                     const GLvoid *pixels )
 {
-        int        bufi, bufw;
+        int        bufi = 0, bufw;
         uint      *p_old;
         uint      *p_new;
         uint      *p_dif;
