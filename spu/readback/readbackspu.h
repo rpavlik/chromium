@@ -56,7 +56,6 @@ typedef struct {
 	int extract_alpha;
 	int local_visualization;
 	int visualize_depth;
-	int drawX, drawY;
 	int resizable;
 	WindowInfo windows[MAX_WINDOWS];
 
@@ -70,7 +69,6 @@ typedef struct {
 	GLint renderContext;
 	GLint childWindow;
 	GLint childContext;
-	GLint childW, childH;
 
 	GLint barrierCount;
 
