@@ -1870,9 +1870,13 @@ crStateProgramDiff(CRProgramBits *b, CRbitvalue *bitID,
 	if (to->vpEnabled) {
 		for (i = 0; i < toCtx->limits.maxVertexProgramEnvParams / 4; i++) {
 			if (CHECKDIRTY(b->trackMatrix[i], bitID))	{
-				if (from->TrackMatrix[i] != to->TrackMatrix[i])	{
-					diff_api.Enable (to->TrackMatrix[i]);
+				if (from->TrackMatrix[i] != to->TrackMatrix[i] ||
+						from->TrackMatrixTransform[i] != to->TrackMatrixTransform[i])	{
+					diff_api.TrackMatrixNV(GL_VERTEX_PROGRAM_NV, i * 4,
+																 to->TrackMatrix[i],
+																 to->TrackMatrixTransform[i]);
 					from->TrackMatrix[i] = to->TrackMatrix[i];
+					from->TrackMatrixTransform[i] = to->TrackMatrixTransform[i];
 				}
 				CLEARDIRTY(b->trackMatrix[i], nbitID);
 			}
@@ -2126,7 +2130,9 @@ crStateProgramSwitch(CRProgramBits *b, CRbitvalue *bitID,
 		for (i = 0; i < toCtx->limits.maxVertexProgramEnvParams / 4; i++) {
 			if (CHECKDIRTY(b->trackMatrix[i], bitID))	{
 				if (from->TrackMatrix[i] != to->TrackMatrix[i])	{
-					diff_api.Enable(to->TrackMatrix[i]);
+					diff_api.TrackMatrixNV(GL_VERTEX_PROGRAM_NV, i * 4,
+																 to->TrackMatrix[i],
+																 to->TrackMatrixTransform[i]);
 				}
 				CLEARDIRTY(b->trackMatrix[i], nbitID);
 			}
