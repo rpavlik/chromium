@@ -21,7 +21,6 @@ Public functions and classes:
                     SPU graph.
 
 Other internal functions/classes:
-    Conf:           Sets a key/values list of configuration values.
     CRNode:         Base class that defines a node in the SPU graph
     CRDebug:        Used to print out debugging messages.
     CROutput:       Used to print messages to a logfile.
@@ -78,11 +77,6 @@ def MakeString( x ):
 	else:
 		return repr(x)
 
-def Conf( config, key, value ):
-	"""Sets the configuration in "config" of "key" to "value".  The value is
-	either a simple integer, float or string or a list."""
-	#config[key] = map( MakeString, value )
-	config[key] = value
 
 
 class SPU:
@@ -108,9 +102,9 @@ class SPU:
 			print "***WARNING: Obsolete syntax detected in Conf('%s', ...)!" % key
 			print "***WARNING: Put brackets around N-element values (i.e. Python list syntax)."
 		if len(values) > 1:
-			Conf( self.config, key, list(values) )
+			self.config[key] = list(values)
 		else:
-			Conf( self.config, key, values[0] )
+			self.config[key] = values[0]
 
 	def __add_server( self, node, url ):
 		self.servers.append( (node, url) )
@@ -201,12 +195,12 @@ class CRNode:
 
 	def Conf( self, key, value ):
 		"""Sets a key/value list in this node's configuration"""
-		Conf( self.config, key, value )
+		self.config[key] = value
 
 	def SPUDir( self, dir ):
 	    	"""SPUDir(dir)
 		Sets the directory that SPUs start in."""
-		self.config['spu_dir'] = dir
+		self.Conf('spu_dir', dir)
 
 	def AutoStart( self, program ):
 		if type( program ) == types.StringType:
@@ -274,21 +268,21 @@ class CRApplicationNode(CRNode):
 		CRNode.__init__(self, host)
 		self.id = CRApplicationNode.AppID
 		CRApplicationNode.AppID += 1;
-		self.config['start_dir'] = '.'
+		self.Conf('start_dir', '.')
 
 	def SetApplication( self, app ):
 		"""SetApplication(name)
 		Sets the name of the application that's run."""
-		self.config['application'] = app
+		self.Conf('application', app)
 
 	def StartDir( self, dir ):
 		"""SetApplication(dir)
 		Sets the directory the application starts in."""
-		self.config['start_dir'] = dir
+		self.Conf('start_dir', dir)
 
 	def ClientDLL( self, dir ):
 		"""Set the directory to search for the crfaker library."""
-		self.config['client_dll'] = dir
+		self.Conf('client_dll', dir)
 
 class SockWrapper:
 	"Internal convenience class for handling sockets"
@@ -431,7 +425,7 @@ class CR:
 			i = appOptions.index(key)
 		except:
 			# this is a mothership option
-			Conf(self.config, key, value)
+			self.config[key] = value
 		else:
 			# this is an app node option (backward compatibility hack)
 			print "NOTICE: %s is an obsolete mothership option; it's now an app node option" % key
@@ -450,12 +444,12 @@ class CR:
 		"""MTU(size)
 		Sets the maximum buffer size allowed in communication
 		between SPUs."""
-		Conf(self.config, "MTU", mtu)
+		self.Conf("MTU", mtu)
 
 	# XXX obsolete; use Conf() instead
 	def SetParam( self, key, value ):
 		print "NOTICE: cr.SetParam() is obsolete; use cr.Conf() instead."
-		Conf(self.config, key, value)
+		self.Conf(key, value)
 
 	# Added by BrianP
 	def do_setparam( self, sock, args ):
@@ -463,7 +457,7 @@ class CR:
 		params = args.split( " ", 1 )
 		key = params[0]
 		value = params[1]
-		Conf(self.config, key, value)
+		self.Conf(key, value)
 		sock.Success( "OK" )
 		return
 		
