@@ -36,6 +36,9 @@ convolution and colortables
 </ul>
 
 <p>
+To support feedback & selection, you need to use the feedbackSPU.
+</p>
+<p>
 Display lists aren't completely conformant.  The problem is that state
 changes contained in display lists aren't visible to the state
 tracker.  A concrete example of this problem is text rendering.
@@ -49,6 +52,8 @@ the tilesort SPU (1 tile, 100x100 pixels) with comments explaining
 some of the failures:
 </p>
 <pre>
+    Viewport Clamp test (Test number #2) failed.
+       Chromium extends the default viewport.
     DrawPixels test (Test number #29) failed.
        GL_DEPTH_COMPONENT test fails because of glRasterPos problem.
     CopyPixels test (Test number #30) failed.
@@ -58,9 +63,8 @@ some of the failures:
     Display Lists test (Test number #72) failed.
        Known display list problem.
     Texture Edge Clamp test (Test number #75) not supported (not an error).
-    Packed Pixels test (Test number #76) not supported (not an error).
-    Texture LOD test (Test number #77) not supported (not an error).
-    Rescale Normal test (Test number #78) not supported (not an error).
+    Packed Pixels test (Test number #76) failed.
+    Texture LOD test (Test number #77) failed.
     Color Table test (Test number #79) not supported (not an error).
     Convolution test (Test number #80) not supported (not an error).
     Convolution Border test (Test number #81) not supported (not an error).
@@ -68,7 +72,6 @@ some of the failures:
     MinMax test (Test number #83) not supported (not an error).
     Texture Combine test (Test number #85) not supported (not an error).
     Texture Cube Map test (Test number #86) failed.
-    Transpose Matrix test (Test number #87) not supported (not an error).
     Texture Add test (Test number #88) not supported (not an error).
 </pre>
 <p>
@@ -78,20 +81,26 @@ results of running the OpenGL conformance tests with the tilesort SPU
 of the failures:
 </p>
 <pre>
+    Viewport Clamp test (Test number #2) failed.
+       Chromium extends the default viewport.
     Viewport Transformation test (Test number #8) failed.
        This may never be fixed because of the way the tilesort SPU
        manipulates the OpenGL viewport.
+    Buffer Clear test (Test number #9) failed.
     Buffer Invariance test (Test number #14) failed.
        This test happens to draw a point which exactly falls in the
        center of the mural and winds up getting culled.  If the point is
        moved, the test passes.
     Scissor test (Test number #18) failed.
+    Stencil Plane Operation test (Test number #22) failed.
+    Blend test (Test number #26) failed.
     DrawPixels test (Test number #29) failed.
        (as per single tile above)
     CopyPixels test (Test number #30) failed.
        (as per single tile above)
     Bitmap Rasterization test (Test number #31) failed.
        (as per single tile above)
+    Anti-aliased Point test (Test number #33) failed.
     Line Rasterization test (Test number #34) failed.
     Line Stipple test (Test number #35) failed.
        Line stipple can't be properly handled when lines cross tiles.
@@ -113,10 +122,10 @@ of the failures:
     Mipmaps Selection test (Test number #70) failed.
     Display Lists test (Test number #72) failed.
        Known display list problem.
-    Texture Edge Clamp test (Test number #75) not supported (not an error).
-    Packed Pixels test (Test number #76) not supported (not an error).
-    Texture LOD test (Test number #77) not supported (not an error).
-    Rescale Normal test (Test number #78) not supported (not an error).
+    Texture Edge Clamp test (Test number #75) failed.
+    Packed Pixels test (Test number #76) failed.
+    Texture LOD test (Test number #77) failed.
+    Rescale Normal test (Test number #78) failed.
     Color Table test (Test number #79) not supported (not an error).
     Convolution test (Test number #80) not supported (not an error).
     Convolution Border test (Test number #81) not supported (not an error).
@@ -125,7 +134,6 @@ of the failures:
     MultiTexture test (Test number #84) failed.
     Texture Combine test (Test number #85) not supported (not an error).
     Texture Cube Map test (Test number #86) failed.
-    Transpose Matrix test (Test number #87) not supported (not an error).
     Texture Add test (Test number #88) not supported (not an error).
 </pre>
 
@@ -183,8 +191,26 @@ multisample color buffers may be problematic, however.
 <h2 class="PageSubHeading">WGL</h2>
 
 <p>
-TBD: document known WGL issues.
+The following WGL functions are not implemented by Chromium.  Calling
+them will result in an error message.  Zero will be returned if the
+function returns a value.
 </p>
+
+<ul>
+<li><code>wglShareLists</code>
+<li><code>wglCopyContext</code>
+<li><code>wglCreateLayerContext</code>
+<li><code>wglUseFontBitmapsA</code>
+<li><code>wglUseFontBitmapsW</code>
+<li><code>wglDescribeLayerPlane</code>
+<li><code>wglSetLayerPaletteEntries</code>
+<li><code>wglGetLayerPaletteEntries</code>
+<li><code>wglRealizeLayerPalette</code>
+<li><code>wglSwapMultipleBuffers</code>
+<li><code>wglUseFontOutlinesA</code>
+<li><code>wglUseFontOutlinesW</code>
+<li><code>wglSwapLayerBuffers</code>
+</ul>
 
 
 </body>
