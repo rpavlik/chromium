@@ -152,7 +152,14 @@ configuration options that the render SPU accepts, plus a few more:
     <td width="115%" class="ConfigDesc" height="74">If set to 1, the depth
       buffer values will be used to do <em>Z-compositing</em> of the color
       images.  This is used for <em>sort-last</em> configurations.
-      The default is 1.</td>
+      The default is 0.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">extract_alpha</td>
+    <td width="12%" class="ConfigType" height="74">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="74">If set to 1, the alpha
+      values will be sent along with the RGB values.
+      The default is 0.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">local_visualization</td>
@@ -168,14 +175,6 @@ configuration options that the render SPU accepts, plus a few more:
       buffer values will be sent downstream as a luminance image, rather
       than sending the RGB image.  This allows one to see the Z buffer
       values as a grayscale image.  The default is 0.</td>
-  </tr>
-  <tr>
-    <td width="19%" class="ConfigOption" height="38">drawpixels_pos</td>
-    <td width="12%" class="ConfigType" height="38">2 Integers</td>
-    <td width="115%" class="ConfigDesc" height="38">Specifies the window
-      coordinate at which the downstream glDrawPixels commands should be
-      positioned.  This is used for reassembling image tiles into a complete
-      image.  The default values are 0, 0.</td>
   </tr>
 </table>
 
