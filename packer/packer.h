@@ -7,9 +7,6 @@
 #ifndef CR_PACKER_H
 #define CR_PACKER_H
 
-#define CHROMIUM_THREADSAFE 1
-
-
 #ifdef WINDOWS
 #ifdef DLLDATA
 #undef DLLDATA
@@ -17,6 +14,7 @@
 #define DLLDATA __declspec(dllexport)
 #endif
 
+#include <stdio.h>  /* for sprintf() */
 #include "cr_pack.h"
 #include "cr_packfunctions.h"
 #include "packer_extensions.h"
