@@ -3,6 +3,9 @@
 
 extern SPU *stub_spu;
 
+// I *know* most of the parameters are unused, dammit.
+#pragma warning( disable: 4100 )
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
@@ -63,7 +66,6 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 		CRError( "wglChoosePixelFormat: asked for a strange layer\n" );
 	}
 
-	(void)hdc;
 
 	return 1;
 }
@@ -74,23 +76,17 @@ BOOL WINAPI wglSetPixelFormat_prox( HDC hdc, int pixelFormat,
 	if ( pixelFormat != 1 ) {
 		CRError( "wglSetPixelFormat: pixelFormat=%d?\n", pixelFormat );
 	}
-	(void)(hdc);
-	(void)(pdf);
 
 	return 1;
 }
 
 BOOL WINAPI wglDeleteContext_prox( HGLRC hglrc )
 {
-	(void)(hglrc);
 	return 1;
 }
 
 BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 {
-	(void)(hdc);
-	(void)(hglrc);
-	
 	//wireGLMakeCurrent( );
 	stub_spu->dispatch_table.MakeCurrent();
 
