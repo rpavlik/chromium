@@ -5,6 +5,7 @@
 
 TOP = ../..
 
+OPENGL = 1
 SHARED = 1
 LIBRARY = binaryswapspu
 FILES = binaryswapspu \

@@ -69,7 +69,7 @@ void binaryswapspuGatherConfiguration( void )
     crFree(nodes);
     
     /* figure out how many stages we have */
-    binaryswap_spu.stages = (log(count)/log(2)+0.1);
+    binaryswap_spu.stages = (int)(log(count)/log(2)+0.1);
     crDebug("Swapping Stages: %d", binaryswap_spu.stages);
     
   }

@@ -48,8 +48,8 @@ void binaryswapspuConnectToPeer( void )
   
   /* Loop through and check hostnames and such */
   for(i=0; i<binaryswap_spu.stages; i++){
-    if (!crParseURL( binaryswap_spu.swap_partners[i], protocol, 
-		     hostname, &ports[i], BINARYSWAP_SPU_PORT+(i*2) ) ){
+    if (!crParseURL( binaryswap_spu.swap_partners[i], protocol, hostname,
+		     &ports[i], (unsigned short)(BINARYSWAP_SPU_PORT+(i*2)) ) ){
       crFree(ports);
       crError( "Malformed URL: \"%s\"", binaryswap_spu.swap_partners[i] );
     }

@@ -232,8 +232,8 @@ void BINARYSWAPSPU_APIENTRY binaryswapSwapBuffers( void )
 
   int i, xdiv, ydiv;
   float other_depth;
-  int draw_x, draw_y;
-  int draw_width, draw_height;
+  int draw_x = 0, draw_y = 0;
+  int draw_width = 0, draw_height = 0;
   GLubyte* incoming_color;
   GLfloat* incoming_depth;
   CRMessage *incoming_msg;
@@ -345,7 +345,7 @@ void BINARYSWAPSPU_APIENTRY binaryswapSwapBuffers( void )
     /* figure out which mode to use, depth or alpha */
     if(binaryswap_spu.alpha_composite){
       binaryswap_spu.super.ReadPixels( read_x[i], read_y[i], width[i], height[i], 
-				       GL_BGRA, GL_UNSIGNED_BYTE, 
+				       GL_BGRA_EXT, GL_UNSIGNED_BYTE, 
 				       (unsigned char*)binaryswap_spu.outgoing_msg +
 				       binaryswap_spu.offset ); 
 
@@ -391,13 +391,13 @@ void BINARYSWAPSPU_APIENTRY binaryswapSwapBuffers( void )
       }
       binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
       binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
-				       GL_BGRA, GL_UNSIGNED_BYTE, incoming_color ); 
+				       GL_BGRA_EXT, GL_UNSIGNED_BYTE, incoming_color ); 
       
     }
     /* depth composite */
     else{ 
       binaryswap_spu.super.ReadPixels( read_x[i], read_y[i], width[i], height[i], 
-				       GL_BGR, GL_UNSIGNED_BYTE, 
+				       GL_BGR_EXT, GL_UNSIGNED_BYTE, 
 				       (unsigned char*)binaryswap_spu.outgoing_msg +
 				       binaryswap_spu.offset ); 
       binaryswap_spu.super.ReadPixels( read_x[i], read_y[i], width[i], height[i], 
@@ -453,7 +453,7 @@ void BINARYSWAPSPU_APIENTRY binaryswapSwapBuffers( void )
       binaryswap_spu.super.StencilFunc( GL_EQUAL, 1, 1 );
       binaryswap_spu.super.StencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
       binaryswap_spu.super.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-      binaryswap_spu.super.DrawPixels( draw_width, draw_height, GL_BGR, 
+      binaryswap_spu.super.DrawPixels( draw_width, draw_height, GL_BGR_EXT, 
 				       GL_UNSIGNED_BYTE, incoming_color );
       binaryswap_spu.super.Disable( GL_STENCIL_TEST );
       binaryswap_spu.super.Enable( GL_DEPTH_TEST ); 
