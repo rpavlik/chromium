@@ -31,11 +31,10 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 	(void) context_id;
 	(void) num_contexts;
 
-	renderspuLoadSystemGL( );
-
 	render_spu.id = id;
 	render_spu.dispatch = NULL;
 	renderspuGatherConfiguration();
+	renderspuLoadSystemGL( );
 	renderspuCreateWindow();
 	
 	/* SIGH -- we have to wait until the very bitter end to load the 
@@ -60,13 +59,15 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 void renderSPUSelfDispatch(SPUDispatchTable *self)
 {
 	render_spu.dispatch = self;
+	(void) raw_bytes;
+	/*
 	render_spu.dispatch->ClearColor( 1, 0, 0, 1 );
 	render_spu.dispatch->Clear( GL_COLOR_BUFFER_BIT );
 	render_spu.dispatch->ClearColor( 0, 0, 0, 1 );
 
 	render_spu.dispatch->TexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR );
 	render_spu.dispatch->TexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR );
-	render_spu.dispatch->TexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, CR_LOGO_H_WIDTH, CR_LOGO_H_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, raw_bytes );
+	render_spu.dispatch->TexImage2D( GL_TEXTURE_2D, 0, 4, CR_LOGO_H_WIDTH, CR_LOGO_H_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, raw_bytes );
 
 	render_spu.dispatch->PushMatrix();
 	render_spu.dispatch->LoadIdentity();
@@ -94,6 +95,7 @@ void renderSPUSelfDispatch(SPUDispatchTable *self)
 	render_spu.dispatch->PopMatrix();
 	render_spu.dispatch->MatrixMode( GL_MODELVIEW );
 	render_spu.dispatch->SwapBuffers();
+	*/
 }
 
 int renderSPUCleanup(void)

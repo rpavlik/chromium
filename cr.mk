@@ -64,7 +64,11 @@ ifdef OPENGL
 ifdef WINDOWS
 LDFLAGS += glu32.lib opengl32.lib
 else
+ifdef SYSTEM_OPENGL_LIBRARY
+LDFLAGS += -L/usr/X11R6/lib -lGLU $(SYSTEM_OPENGL_LIBRARY) -lXmu -lXi -lX11
+else
 LDFLAGS += -L/usr/X11R6/lib -lGLU -lGL -lXmu -lXi -lX11
+endif
 endif
 endif
 

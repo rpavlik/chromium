@@ -10,7 +10,6 @@
 
 void crSPUInitDispatchTable( SPUDispatchTable *table )
 {
-	crDebug( "initializing dispatch table %p", table );
 	table->copy_of = NULL;
 	table->copyList = NULL;
 	table->mark = 0;

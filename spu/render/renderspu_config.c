@@ -10,6 +10,7 @@
 #include "cr_string.h"
 #include "cr_mem.h"
 #include "cr_error.h"
+#include "cr_environment.h"
 
 #include <stdio.h>
 
@@ -80,6 +81,11 @@ void renderspuGatherConfiguration( void )
 	{
 		crFree( render_spu.window_title );
 		render_spu.window_title = crStrdup( response );
+	}
+
+	if (crMothershipGetSPUParam( conn, response, "system_gl_path" ) )
+	{
+		crSetenv( "CR_SYSTEM_GL_PATH", response );
 	}
 
 #ifndef WINDOWS

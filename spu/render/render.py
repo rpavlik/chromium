@@ -29,6 +29,7 @@ print """
 #include "cr_spu.h"
 #include "cr_string.h"
 #include "cr_error.h"
+#include "cr_environment.h"
 #include "renderspu.h"
 """
 
@@ -63,17 +64,24 @@ static int __fillin( int offset, char *name, SPUGenericFunction func )
 	return 1;
 }
 
-static CRDLL *__findSystemGL( void )
+static CRDLL *__findSystemGL( char *provided_system_path )
 {
 	CRDLL *dll;
 	char system_path[8096];
+	if (provided_system_path)
+	{
+		crStrcpy( system_path, provided_system_path );
+	}
+	else
+	{
 #if defined(WINDOWS)
-	GetSystemDirectory(system_path, MAX_PATH);
+		GetSystemDirectory(system_path, MAX_PATH);
 #elif defined(IRIX) || defined(IRIX64)
-	crStrcpy( system_path, "/usr/lib32" );
+		crStrcpy( system_path, "/usr/lib32" );
 #else
-	crStrcpy( system_path, "/usr/lib" );
+		crStrcpy( system_path, "/usr/lib" ); 
 #endif
+	}
 	crStrcat( system_path, "/" );
 	crStrcat( system_path, SYSTEM_GL );
 	dll = crDLLOpen( system_path );
@@ -96,7 +104,7 @@ void renderspuLoadSystemGL( void )
 	CRDLL *dll;
 	
 	crDebug( "About to look for the system's OpenGL" );
-	dll = __findSystemGL();
+	dll = __findSystemGL( crGetenv( "CR_SYSTEM_GL_PATH" ) );
 	crDebug( "Found it: 0x%p", dll );
 """
 

@@ -25,7 +25,7 @@ CRDLL *crDLLOpen( const char *dllname )
 	dll->hinstLib = LoadLibrary( dllname );
 	dll_err = NULL;
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux)
-	dll->hinstLib = dlopen( dllname, RTLD_NOW | RTLD_GLOBAL /* RTLD_LAZY */ );
+	dll->hinstLib = dlopen( dllname, RTLD_LAZY );
 	dll_err = dlerror();
 #else
 #error DSO

@@ -668,6 +668,14 @@ int main( int argc, char **argv )
 
 			mothership = argv[i];
 		}
+		else if ( !crStrcmp( argv[i], "-mesa" ) ) 
+		{
+			char *mesa_path = crGetenv( "CR_MESA_LIB_PATH" );
+			if (mesa_path)
+			{
+				crSetenv( "CR_SYSTEM_GL_PATH", mesa_path );
+			}
+		}
 		else if ( !crStrcmp( argv[i], "-v" ) ||
 				!crStrcmp( argv[i], "-verbose" ) ) {
 			verbose = 1;
