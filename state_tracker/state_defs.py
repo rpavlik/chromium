@@ -49,7 +49,7 @@ crStateLimitsInit
 crStateMergeExtensions
 __currentBits
 __stateChromiumExtensions
-__stateExtensionsString
+__stateExtensionString
 __stateAppOnlyExtensions
 crStateFeedbackVertex2d
 crStateFeedbackVertex2dv
