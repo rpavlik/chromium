@@ -22,7 +22,7 @@ print """
 #include "cr_error.h"
 #include "cr_environment.h"
 
-
+#include <stdio.h>
 #if defined(WINDOWS)
 #include <windows.h>
 #include <process.h>
@@ -31,7 +31,6 @@ print """
 #elif defined (DARWIN)
 #define SYSTEM_GL "libdl.dylib"
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
-#include <sys/stat.h>
 #if defined(AIX)
 #define SYSTEM_GL "libGL.o"
 #else
@@ -62,15 +61,17 @@ fillin( SPUNamedFunctionTable *entry, const char *funcName, SPUGenericFunction f
 
 static int FileExists(char *directory, char *filename)
 {
-	struct stat stat_buf;
+	FILE *f;
 	char fullFilename[8096];
 
 	crStrcpy(fullFilename, directory);
 	crStrcat(fullFilename, "/");
 	crStrcat(fullFilename, filename);
 
-	if (stat(fullFilename, &stat_buf) == 0) {
-	    return 1;
+	f = fopen(fullFilename, "r");
+	if (f) {
+		fclose(f);
+		return 1;
 	}
 	else {
 	    return 0;
