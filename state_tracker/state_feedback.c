@@ -1094,7 +1094,7 @@ crStateFeedbackVertex3i(GLint v0, GLint v1, GLint v2)
 void STATE_APIENTRY
 crStateFeedbackVertex3iv(const GLint * v)
 {
-	crStateFeedbackVertex4f((GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
+	crStateFeedbackVertex4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 }
 
 void STATE_APIENTRY
