@@ -24,55 +24,59 @@ void printError(char *name);
 
 void crPackTestPointParameterfvARB(void)
 {
-	GLubyte params[100000];/* VECP2 */
-	crDebug ( "PointParameterfvARB is a stub and needs to be special cased  0!");
-	return;
-	glPointParameterfvARB(GL_POINT_SIZE_MIN_ARB, 	(const GLfloat *)params /* VEC3 */
-);
-	if(errChk)
-		printError("glPointParameterfvARB(GL_POINT_SIZE_MIN_ARB, )");
-	if (verbose)
-		crDebug("glPointParameterfvARB( GL_POINT_SIZE_MIN_ARB,  )");
-	glPointParameterfvARB(GL_POINT_SIZE_MAX_ARB, 	(const GLfloat *)params /* VEC3 */
-);
-	if(errChk)
-		printError("glPointParameterfvARB(GL_POINT_SIZE_MAX_ARB, )");
-	if (verbose)
-		crDebug("glPointParameterfvARB( GL_POINT_SIZE_MAX_ARB,  )");
-	glPointParameterfvARB(GL_POINT_FADE_THRESHOLD_SIZE_ARB, 	(const GLfloat *)params /* VEC3 */
-);
-	if(errChk)
-		printError("glPointParameterfvARB(GL_POINT_FADE_THRESHOLD_SIZE_ARB, )");
-	if (verbose)
-		crDebug("glPointParameterfvARB( GL_POINT_FADE_THRESHOLD_SIZE_ARB,  )");
-	glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, 	(const GLfloat *)params /* VEC3 */
-);
-	if(errChk)
-		printError("glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, )");
-	if (verbose)
-		crDebug("glPointParameterfvARB( GL_POINT_DISTANCE_ATTENUATION_ARB,  )");
+    GLfloat params[3] = { 1 / 5.0, 0.0, 0.0 };
+
+    glPointParameterfvARB(GL_POINT_SIZE_MIN_ARB, (const GLfloat *) params	/* VEC3 */
+	);
+    if (errChk)
+	printError("glPointParameterfvARB(GL_POINT_SIZE_MIN_ARB, )");
+    if (verbose)
+	crDebug("glPointParameterfvARB( GL_POINT_SIZE_MIN_ARB,  )");
+    glPointParameterfvARB(GL_POINT_SIZE_MAX_ARB, (const GLfloat *) params	/* VEC3 */
+	);
+    if (errChk)
+	printError("glPointParameterfvARB(GL_POINT_SIZE_MAX_ARB, )");
+    if (verbose)
+	crDebug("glPointParameterfvARB( GL_POINT_SIZE_MAX_ARB,  )");
+    glPointParameterfvARB(GL_POINT_FADE_THRESHOLD_SIZE_ARB, (const GLfloat *) params	/* VEC3 */
+	);
+    if (errChk)
+	printError
+	    ("glPointParameterfvARB(GL_POINT_FADE_THRESHOLD_SIZE_ARB, )");
+    if (verbose)
+	crDebug
+	    ("glPointParameterfvARB( GL_POINT_FADE_THRESHOLD_SIZE_ARB,  )");
+    glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, (const GLfloat *) params	/* VEC3 */
+	);
+    if (errChk)
+	printError
+	    ("glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, )");
+    if (verbose)
+	crDebug
+	    ("glPointParameterfvARB( GL_POINT_DISTANCE_ATTENUATION_ARB,  )");
 }
 void crPackTestPointParameteriv(void)
 {
-	GLubyte param[100000];/* VECP2 */
-	crDebug ( "PointParameteriv is a stub and needs to be special cased  0!");
-	return;
-	glPointParameteriv(GL_POINT_SIZE_MIN_ARB, 	(const GLint *)param /* VEC3 */
-);
-	if(errChk)
-		printError("glPointParameteriv(GL_POINT_SIZE_MIN_ARB, )");
-	if (verbose)
-		crDebug("glPointParameteriv( GL_POINT_SIZE_MIN_ARB,  )");
-	glPointParameteriv(GL_POINT_SIZE_MAX_ARB, 	(const GLint *)param /* VEC3 */
-);
-	if(errChk)
-		printError("glPointParameteriv(GL_POINT_SIZE_MAX_ARB, )");
-	if (verbose)
-		crDebug("glPointParameteriv( GL_POINT_SIZE_MAX_ARB,  )");
-	glPointParameteriv(GL_POINT_FADE_THRESHOLD_SIZE_ARB, 	(const GLint *)param /* VEC3 */
-);
-	if(errChk)
-		printError("glPointParameteriv(GL_POINT_FADE_THRESHOLD_SIZE_ARB, )");
-	if (verbose)
-		crDebug("glPointParameteriv( GL_POINT_FADE_THRESHOLD_SIZE_ARB,  )");
+    GLfloat param[3] = { 1 / 5.0, 0.0, 0.0 };
+
+    glPointParameteriv(GL_POINT_SIZE_MIN_ARB, (const GLint *) param	/* VEC3 */
+	);
+    if (errChk)
+	printError("glPointParameteriv(GL_POINT_SIZE_MIN_ARB, )");
+    if (verbose)
+	crDebug("glPointParameteriv( GL_POINT_SIZE_MIN_ARB,  )");
+    glPointParameteriv(GL_POINT_SIZE_MAX_ARB, (const GLint *) param	/* VEC3 */
+	);
+    if (errChk)
+	printError("glPointParameteriv(GL_POINT_SIZE_MAX_ARB, )");
+    if (verbose)
+	crDebug("glPointParameteriv( GL_POINT_SIZE_MAX_ARB,  )");
+    glPointParameteriv(GL_POINT_FADE_THRESHOLD_SIZE_ARB, (const GLint *) param	/* VEC3 */
+	);
+    if (errChk)
+	printError
+	    ("glPointParameteriv(GL_POINT_FADE_THRESHOLD_SIZE_ARB, )");
+    if (verbose)
+	crDebug
+	    ("glPointParameteriv( GL_POINT_FADE_THRESHOLD_SIZE_ARB,  )");
 }

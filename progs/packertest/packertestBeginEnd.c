@@ -297,38 +297,41 @@ static void init_test06(void)
 }
 
 static float pntA[3] = {
-    -160.0, 0.0, 0.0
+    1.6, 0.0, 0.0
 };
 static float pntB[3] = {
-    -130.0, 0.0, 0.0
+    1.3, 0.0, 0.0
 };
 
 static int test06(int size, int num)
 {
-    int i;
+    int i, j;
 
-    for (i = 0; i < 360; i += 5) {
-	glRotatef(5.0, 0, 0, 1);
+    for (j = 0; j < num; j++)
+	for (i = 0; i < 360; i += 5) {
+	    glRotatef(5.0, 0, 0, 1);
 
-	glColor3f(1.0, 1.0, 0.0);
-	glBegin(GL_LINE_STRIP);
+	    glColor3f(1.0, 1.0, 0.0);
+	    glBegin(GL_LINE_STRIP);
 #if 0
-	if (errChk)
-	    printError("glBegin(GL_LINE_STRIP)");
+	    if (errChk)
+		printError("glBegin(GL_LINE_STRIP)");
 #endif
-	if (verbose)
-	    crDebug("glBegin( GL_LINE_STRIP )");
-	glVertex3fv(pntA);
-	glVertex3fv(pntB);
-	glEnd();
+	    if (verbose)
+		crDebug("glBegin( GL_LINE_STRIP )");
+	    pntA[0] = pntA[0] + size / 2;
+	    pntB[0] = pntB[0] + size / 2;
+	    glVertex3fv(pntA);
+	    glVertex3fv(pntB);
+	    glEnd();
 
-	glPointSize(1);
+	    glPointSize(1);
 
-	glBegin(GL_POINTS);
-	glVertex3fv(pntA);
-	glVertex3fv(pntB);
-	glEnd();
-    }
+	    glBegin(GL_POINTS);
+	    glVertex3fv(pntA);
+	    glVertex3fv(pntB);
+	    glEnd();
+	}
     return size * num / 5;
 }
 
@@ -364,7 +367,7 @@ static void init_test07(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-static void outline(Quad quad)
+static void outline(Quad quad, int size)
 {
     glBegin(GL_LINE_LOOP);
 #if 0
@@ -373,23 +376,24 @@ static void outline(Quad quad)
 #endif
         if (verbose)
 	    crDebug("glBegin( GL_LINE_LOOP )");
-        glVertex3fv(quad[0]);
-        glVertex3fv(quad[1]);
-        glVertex3fv(quad[2]);
-        glVertex3fv(quad[3]);
+        glVertex3fv(quad[0] + size / 2);
+        glVertex3fv(quad[1] + size / 2);
+        glVertex3fv(quad[2] + size / 2);
+        glVertex3fv(quad[3] + size / 2);
     glEnd();
 }
 
 static int test07(int size, int num)
 {
-    int i;
+    int i,j;
 
     /*
      * draw an outlined polygon 
      */
 
-    for ( i = 0; i < MAXQUAD; i++)
-	  outline(quads[i]);
+    for ( j = 0; j < num; j++)
+        for ( i = 0; i < MAXQUAD; i++)
+	  outline(quads[i], size);
 
 
     return size * num / 5;
@@ -411,7 +415,7 @@ static void init_test08(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-static void fill(Quad quad)
+static void fill(Quad quad, int size)
 {
     /*
      * draw an outlined polygon 
@@ -423,20 +427,21 @@ static void fill(Quad quad)
 #endif
         if (verbose)
 	    crDebug("glBegin( GL_QUADS )");
-        glVertex3fv(quad[0]);
-        glVertex3fv(quad[1]);
-        glVertex3fv(quad[2]);
-        glVertex3fv(quad[3]);
+        glVertex3fv(quad[0] + size / 2);
+        glVertex3fv(quad[1] + size / 2);
+        glVertex3fv(quad[2] + size / 2);
+        glVertex3fv(quad[3] + size / 2);
     glEnd();
 }
 
 static int test08(int size, int num)
 {
-    int i;
+    int i,j;
 
 
-    for ( i = 0; i < MAXQUAD; i++)
-	  fill(quads[i]);
+    for ( j = 0; j < num; j++)
+    	for ( i = 0; i < MAXQUAD; i++)
+	  fill(quads[i], size);
 
 
     return size * num / 5;
@@ -653,27 +658,27 @@ typedef struct {
 } benchmark;
 
 static benchmark bmarks[NUM_BMARKS] = {
-    {"Simple Points", "Pnts", init_test01, test01, 0, 0,
+    {"Simple Points", "Pnts", init_test01, test01, 			0, 0,
      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-    {"Smooth Lines", "Lins", init_test02, test02, 1, 5,
+    {"Smooth Lines", "Lins", init_test02, test02, 			1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
-    {"ZSmooth Triangles", "Tris", init_test03, test03, 1, 5,
+    {"ZSmooth Triangles", "Tris", init_test03, test03, 			1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
-    {"ZSmooth Tex Blend Triangles", "Tris", init_test04, test04, 1, 5,
+    {"ZSmooth Tex Blend Triangles", "Tris", init_test04, test04, 	1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
-    {"ZSmooth Tex Blend TMesh Triangles", "Tris", init_test05, test05, 2, 8,
+    {"ZSmooth Tex Blend TMesh Triangles", "Tris", init_test05, test05, 	2, 8,
      {400, 250, 100, 50, 25, 10, 5, 2, 0, 0}},
-    {"Line Strips", "Linestr", init_test06, test06, 1, 5,
+    {"Line Strips", "Linestr", init_test06, test06, 			1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
-    {"Line Loop", "Lineloop", init_test07, test07, 1, 5,
+    {"Line Loop", "Lineloop", init_test07, test07, 			1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
-    {"Quads", "Quads", init_test08, test08, 1, 5,
+    {"Quads", "Quads", init_test08, test08, 				1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
-    {"TriangleFan", "TriFan", init_test09, test09, 1, 5,
+    {"TriangleFan", "TriFan", init_test09, test09, 			1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
-    {"QuadStrip", "QuadSt", init_test10, test10, 1, 5,
+    {"QuadStrip", "QuadSt", init_test10, test10, 			1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
-    {"Polygon", "Polygon", init_test11, test11, 1, 5,
+    {"Polygon", "Polygon", init_test11, test11, 			1, 5,
      {480, 250, 100, 50, 25, 0, 0, 0, 0, 0}},
 };
 
@@ -700,7 +705,7 @@ static void dotest0param(benchmark * bmark)
     }
     glPopAttrib();
 
-    crDebug( "Elapsed time for the calibration test (%d): %f\n",
+    crDebug( "Elapsed time for the calibration test (%d): %f",
 	    calibnum, dtime);
 
     num = (int) ((BMARKS_TIME / dtime) * calibnum);
@@ -710,7 +715,7 @@ static void dotest0param(benchmark * bmark)
     if (num < 1)
 	num = 1;
 
-    crDebug( "Selected number of benchmark iterations: %d\n", num);
+    crDebug( "Selected number of benchmark iterations: %d", num);
 
     mintime = HUGE_VAL;
     maxtime = -HUGE_VAL;
@@ -729,7 +734,7 @@ static void dotest0param(benchmark * bmark)
 	dtime = (etime - stime) / 1000.0;
 	tottime += dtime;
 
-	crDebug( "Elapsed time for run %d: %f\n", j, dtime);
+	crDebug( "Elapsed time for run %d: %f", j, dtime);
 
 	if (dtime < mintime)
 	    mintime = dtime;
@@ -739,29 +744,28 @@ static void dotest0param(benchmark * bmark)
 
     tottime -= mintime + maxtime;
 
-    crDebug( "%s\n%f %s/sec", bmark->name,
+    crDebug( "%s%f %s/sec", bmark->name,
 	    numelem / (tottime / 3.0), bmark->unit);
 
     if (bmark->type == 3)
-	crDebug( ", MPixel Fill/sec: %f\n\n",
+	crDebug( ", MPixel Fill/sec: %f",
 		(numelem * bmark->size[0] * (float) bmark->size[0]) /
 		(1000000.0 * tottime / 3.0));
     else
-	crDebug( "\n\n");
+	crDebug( " ");
 }
 
 /***************************************************************************/
-#if 0
 
 static void dotest1param(benchmark * bmark)
 {
     float stime, etime, dtime, tottime, maxtime, mintime;
     int num, numelem, calibnum, j, k;
 
-    crDebug( "%s\n", bmark->name);
+    crDebug( "%s", bmark->name);
 
     for (j = 0; j < bmark->numsize; j++) {
-	crDebug( "Current size: %d\n", bmark->size[j]);
+	crDebug( "Current size: %d", bmark->size[j]);
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	bmark->init();
@@ -779,7 +783,7 @@ static void dotest1param(benchmark * bmark)
 	}
 	glPopAttrib();
 
-	crDebug( "Elapsed time for the calibration test (%d): %f\n",
+	crDebug( "Elapsed time for the calibration test (%d): %f",
 		calibnum, dtime);
 
 	num = (int) ((BMARKS_TIME / dtime) * calibnum);
@@ -787,7 +791,7 @@ static void dotest1param(benchmark * bmark)
 	if (num < 1)
 	    num = 1;
 
-	crDebug( "Selected number of benchmark iterations: %d\n", num);
+	crDebug( "Selected number of benchmark iterations: %d", num);
 
 	mintime = HUGE_VAL;
 	maxtime = -HUGE_VAL;
@@ -806,7 +810,7 @@ static void dotest1param(benchmark * bmark)
 	    dtime = (etime - stime) / 1000.0;
 	    tottime += dtime;
 
-	    crDebug( "Elapsed time for run %d: %f\n", k, dtime);
+	    crDebug( "Elapsed time for run %d: %f", k, dtime);
 
 	    if (dtime < mintime)
 		mintime = dtime;
@@ -819,16 +823,15 @@ static void dotest1param(benchmark * bmark)
 	crDebug( "SIZE=%03d => %f %s/sec", bmark->size[j],
 		numelem / (tottime / 3.0), bmark->unit);
 	if (bmark->type == 2)
-	    crDebug( ", MPixel Fill/sec: %f\n",
+	    crDebug( ", MPixel Fill/sec: %f",
 		    (numelem * bmark->size[j] * bmark->size[j] / 2) /
 		    (1000000.0 * tottime / 3.0));
 	else
-	    crDebug( "\n");
+	    crDebug( " ");
     }
 
-    crDebug( "\n\n");
+    crDebug( " ");
 }
-#endif
 
 /***************************************************************************/
 
@@ -842,20 +845,18 @@ void crPackTestBegin(void)
 	glDrawBuffer(GL_BACK);
 
     for (i = 0; i < NUM_BMARKS; i++) {
-	crDebug( "Benchmark: %d\n", i);
+	crDebug( "Benchmark: %d", i);
 
-        dotest0param(&bmarks[i]);
-#if 0
 	switch (bmarks[i].type) {
 	case 0:
 	case 3:
+            dotest0param(&bmarks[i]);
 	    break;
 	case 1:
 	case 2:
 	    dotest1param(&bmarks[i]);
 	    break;
 	}
-#endif
     }
 }
 
