@@ -1423,8 +1423,9 @@ static void
 select_rasterpos(void)
 {
 	CRContext *g = GetCurrentContext();
-   if (g->current.rasterValid)
-      update_hitflag(g->current.rasterPos.z);
+   
+	if (g->current.rasterValid)
+		update_hitflag(g->current.rasterPos.z);
 }
 
 static void
@@ -1635,6 +1636,14 @@ crStateSelectVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 }
 
 void STATE_APIENTRY
+crStateSelectRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+	crStateRasterPos4f( x, y, z, w );
+
+	select_rasterpos();
+}
+
+void STATE_APIENTRY
 crStateSelectBegin(GLenum mode)
 {
 	CRContext *g = GetCurrentContext();
@@ -1798,6 +1807,143 @@ crStateSelectVertex4sv(const GLshort * v)
 	crStateSelectVertex4f(v[0], v[1], v[2], v[3]);
 }
 
+void STATE_APIENTRY
+crStateSelectRasterPos2d(GLdouble x, GLdouble y)
+{
+	crStateSelectRasterPos4f(x, y, 0.0, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos2dv(const GLdouble * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], 0.0, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos2f(GLfloat x, GLfloat y)
+{
+	crStateSelectRasterPos4f(x, y, 0.0, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos2fv(const GLfloat * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], 0.0, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos2i(GLint x, GLint y)
+{
+	crStateSelectRasterPos4f(x, y, 0.0, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos2iv(const GLint * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], 0.0, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos2s(GLshort x, GLshort y)
+{
+	crStateSelectRasterPos4f(x, y, 0.0, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos2sv(const GLshort * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], 0.0, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
+{
+	crStateSelectRasterPos4f(x, y, z, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos3dv(const GLdouble * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], v[2], 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
+{
+	crStateSelectRasterPos4f(x, y, z, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos3fv(const GLfloat * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], v[2], 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos3i(GLint x, GLint y, GLint z)
+{
+	crStateSelectRasterPos4f(x, y, z, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos3iv(const GLint * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], v[2], 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos3s(GLshort x, GLshort y, GLshort z)
+{
+	crStateSelectRasterPos4f(x, y, z, 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos3sv(const GLshort * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], v[2], 1.0);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+	crStateSelectRasterPos4f(x, y, z, w);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos4dv(const GLdouble * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], v[2], v[3]);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos4fv(const GLfloat * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], v[2], v[3]);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos4i(GLint x, GLint y, GLint z, GLint w)
+{
+	crStateSelectRasterPos4f(x, y, z, w);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos4iv(const GLint * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], v[2], v[3]);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
+{
+	crStateSelectRasterPos4f(x, y, z, w);
+}
+
+void STATE_APIENTRY
+crStateSelectRasterPos4sv(const GLshort * v)
+{
+	crStateSelectRasterPos4f(v[0], v[1], v[2], v[3]);
+}
 
 void STATE_APIENTRY
 crStateSelectRectf(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1)
