@@ -255,7 +255,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 	replicate_spu.context[slot].visBits = visual;
 	replicate_spu.context[slot].currentWindow = 0; /* not bound */
 	replicate_spu.context[slot].dlmState = crDLMNewContext(
-			replicate_spu.context[slot].displayListManager);
+			replicate_spu.context[slot].displayListManager, &replicate_spu.context[slot].State->client);
 
 #if 0
 	/* Set the Current pointers now.... */

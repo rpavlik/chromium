@@ -198,7 +198,7 @@ void replicatespuFlush(void *arg )
 	buf = &(thread->buffer);
 	CRASSERT(buf);
 
-	crPackGetBuffer( thread->packer, buf );
+	crPackReleaseBuffer( thread->packer );
 
 	/*
 	printf("%s thread=%p thread->id = %d thread->pc=%p t2->id=%d t2->pc=%p packbuf=%p packbuf=%p\n",
