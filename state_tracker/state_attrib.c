@@ -45,6 +45,55 @@ void crStateAttribInit (CRAttribState *a)
 	a->viewportStackDepth = 0;
 }
 
+
+static void
+copy_texunit(CRTextureUnit *dest, const CRTextureUnit *src)
+{
+	dest->enabled1D = src->enabled1D;
+	dest->enabled2D = src->enabled2D;
+	dest->enabled3D = src->enabled3D;
+	dest->enabledCubeMap = src->enabledCubeMap;
+	dest->envMode = src->envMode;
+	dest->envColor = src->envColor;
+	dest->textureGen = src->textureGen;
+	dest->objSCoeff = src->objSCoeff;
+	dest->objTCoeff = src->objTCoeff;
+	dest->objRCoeff = src->objRCoeff;
+	dest->objQCoeff = src->objQCoeff;
+	dest->eyeSCoeff = src->eyeSCoeff;
+	dest->eyeTCoeff = src->eyeTCoeff;
+	dest->eyeRCoeff = src->eyeRCoeff;
+	dest->eyeQCoeff = src->eyeQCoeff;
+	dest->gen = src->gen;
+	dest->currentTexture1D = src->currentTexture1D;
+	dest->currentTexture2D = src->currentTexture2D;
+	dest->currentTexture3D = src->currentTexture3D;
+	dest->currentTextureCubeMap = src->currentTextureCubeMap;
+}
+
+static void
+copy_texobj(CRTextureObj *dest, const CRTextureObj *src, GLboolean copyName)
+{
+	if (copyName)
+		dest->name = src->name;
+	dest->borderColor = src->borderColor;
+	dest->wrapS = src->wrapS;
+	dest->wrapT = src->wrapT;
+	dest->minFilter = src->minFilter;
+	dest->magFilter = src->magFilter;
+#ifdef CR_OPENGL_VERSION_1_2
+	dest->priority = src->priority;
+	dest->wrapR = src->wrapR;
+	dest->minLod = src->minLod;
+	dest->maxLod = src->maxLod;
+	dest->baseLevel = src->baseLevel;
+	dest->maxLevel = src->maxLevel;
+#endif
+#ifdef CR_EXT_texture_filter_anisotropic
+	dest->maxAnisotropy = src->maxAnisotropy;
+#endif
+}
+
 void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 {
 	CRContext *g = GetCurrentContext();
@@ -373,87 +422,22 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	}
 	if (mask & GL_TEXTURE_BIT)
 	{
-		a->textureStack[a->textureStackDepth].curTextureUnit = g->texture.curTextureUnit;
+		CRTextureStack *tState = a->textureStack + a->textureStackDepth;
+		tState->curTextureUnit = g->texture.curTextureUnit;
 		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
-			a->textureStack[a->textureStackDepth].enabled1D[i] = g->texture.unit[i].enabled1D;
-			a->textureStack[a->textureStackDepth].enabled2D[i] = g->texture.unit[i].enabled2D;
+			/* per-unit state */
+			copy_texunit(&tState->unit[i], &g->texture.unit[i]);
+			/* texture object state */
+			copy_texobj(&tState->unit[i].Saved1D, g->texture.unit[i].currentTexture1D, GL_TRUE);
+			copy_texobj(&tState->unit[i].Saved2D, g->texture.unit[i].currentTexture2D, GL_TRUE);
 #ifdef CR_OPENGL_VERSION_1_2
-			a->textureStack[a->textureStackDepth].enabled3D[i] = g->texture.unit[i].enabled3D;
+			copy_texobj(&tState->unit[i].Saved3D, g->texture.unit[i].currentTexture3D, GL_TRUE);
 #endif
 #ifdef CR_ARB_texture_cube_map
-			a->textureStack[a->textureStackDepth].enabledCubeMap[i] = g->texture.unit[i].enabledCubeMap;
+			copy_texobj(&tState->unit[i].SavedCubeMap, g->texture.unit[i].currentTextureCubeMap, GL_TRUE);
 #endif
-			a->textureStack[a->textureStackDepth].textureGen[i] = g->texture.unit[i].textureGen;
-			a->textureStack[a->textureStackDepth].objSCoeff[i] = g->texture.unit[i].objSCoeff;
-			a->textureStack[a->textureStackDepth].objTCoeff[i] = g->texture.unit[i].objTCoeff;
-			a->textureStack[a->textureStackDepth].objRCoeff[i] = g->texture.unit[i].objRCoeff;
-			a->textureStack[a->textureStackDepth].objQCoeff[i] = g->texture.unit[i].objQCoeff;
-			a->textureStack[a->textureStackDepth].eyeSCoeff[i] = g->texture.unit[i].eyeSCoeff;
-			a->textureStack[a->textureStackDepth].eyeTCoeff[i] = g->texture.unit[i].eyeTCoeff;
-			a->textureStack[a->textureStackDepth].eyeRCoeff[i] = g->texture.unit[i].eyeRCoeff;
-			a->textureStack[a->textureStackDepth].eyeQCoeff[i] = g->texture.unit[i].eyeQCoeff;
-			a->textureStack[a->textureStackDepth].gen[i] = g->texture.unit[i].gen;
-			a->textureStack[a->textureStackDepth].envMode[i] = g->texture.unit[i].envMode;
-			a->textureStack[a->textureStackDepth].envColor[i] = g->texture.unit[i].envColor;
 		}
-		/* Is this right?  It sure doesn't seem right. */
-		a->textureStack[a->textureStackDepth].borderColor[0] = g->texture.currentTexture1D->borderColor;
-		a->textureStack[a->textureStackDepth].minFilter[0] = g->texture.currentTexture1D->minFilter;
-		a->textureStack[a->textureStackDepth].magFilter[0] = g->texture.currentTexture1D->magFilter;
-		a->textureStack[a->textureStackDepth].wrapS[0] = g->texture.currentTexture1D->wrapS;
-		a->textureStack[a->textureStackDepth].wrapT[0] = g->texture.currentTexture1D->wrapT;
-#ifdef CR_OPENGL_VERSION_1_2
-		a->textureStack[a->textureStackDepth].wrapR[0] = g->texture.currentTexture1D->wrapR;
-		a->textureStack[a->textureStackDepth].priority[0] = g->texture.currentTexture1D->priority;
-		a->textureStack[a->textureStackDepth].minLod[0] = g->texture.currentTexture1D->minLod;
-		a->textureStack[a->textureStackDepth].maxLod[0] = g->texture.currentTexture1D->maxLod;
-		a->textureStack[a->textureStackDepth].baseLevel[0] = g->texture.currentTexture1D->baseLevel;
-		a->textureStack[a->textureStackDepth].maxLevel[0] = g->texture.currentTexture1D->maxLevel;
-#endif
-
-		a->textureStack[a->textureStackDepth].borderColor[1] = g->texture.currentTexture2D->borderColor;
-		a->textureStack[a->textureStackDepth].minFilter[1] = g->texture.currentTexture2D->minFilter;
-		a->textureStack[a->textureStackDepth].magFilter[1] = g->texture.currentTexture2D->magFilter;
-		a->textureStack[a->textureStackDepth].wrapS[1] = g->texture.currentTexture2D->wrapS;
-		a->textureStack[a->textureStackDepth].wrapT[1] = g->texture.currentTexture2D->wrapT;
-#ifdef CR_OPENGL_VERSION_1_2
-		a->textureStack[a->textureStackDepth].wrapR[1] = g->texture.currentTexture2D->wrapR;
-		a->textureStack[a->textureStackDepth].priority[1] = g->texture.currentTexture2D->priority;
-		a->textureStack[a->textureStackDepth].minLod[1] = g->texture.currentTexture2D->minLod;
-		a->textureStack[a->textureStackDepth].maxLod[1] = g->texture.currentTexture2D->maxLod;
-		a->textureStack[a->textureStackDepth].baseLevel[1] = g->texture.currentTexture2D->baseLevel;
-		a->textureStack[a->textureStackDepth].maxLevel[1] = g->texture.currentTexture2D->maxLevel;
-#endif
-
-#ifdef CR_OPENGL_VERSION_1_2
-		a->textureStack[a->textureStackDepth].borderColor[2] = g->texture.currentTexture3D->borderColor;
-		a->textureStack[a->textureStackDepth].minFilter[2] = g->texture.currentTexture3D->minFilter;
-		a->textureStack[a->textureStackDepth].magFilter[2] = g->texture.currentTexture3D->magFilter;
-		a->textureStack[a->textureStackDepth].wrapS[2] = g->texture.currentTexture3D->wrapS;
-		a->textureStack[a->textureStackDepth].wrapT[2] = g->texture.currentTexture3D->wrapT;
-		a->textureStack[a->textureStackDepth].wrapR[2] = g->texture.currentTexture3D->wrapR;
-		a->textureStack[a->textureStackDepth].priority[2] = g->texture.currentTexture3D->priority;
-		a->textureStack[a->textureStackDepth].minLod[2] = g->texture.currentTexture3D->minLod;
-		a->textureStack[a->textureStackDepth].maxLod[2] = g->texture.currentTexture3D->maxLod;
-		a->textureStack[a->textureStackDepth].baseLevel[2] = g->texture.currentTexture3D->baseLevel;
-		a->textureStack[a->textureStackDepth].maxLevel[2] = g->texture.currentTexture3D->maxLevel;
-#endif
-#ifdef CR_ARB_texture_cube_map
-		a->textureStack[a->textureStackDepth].borderColor[3] = g->texture.currentTextureCubeMap->borderColor;
-		a->textureStack[a->textureStackDepth].minFilter[3] = g->texture.currentTextureCubeMap->minFilter;
-		a->textureStack[a->textureStackDepth].magFilter[3] = g->texture.currentTextureCubeMap->magFilter;
-		a->textureStack[a->textureStackDepth].wrapS[3] = g->texture.currentTextureCubeMap->wrapS;
-		a->textureStack[a->textureStackDepth].wrapT[3] = g->texture.currentTextureCubeMap->wrapT;
-#ifdef CR_OPENGL_VERSION_1_2
-		a->textureStack[a->textureStackDepth].wrapR[3] = g->texture.currentTextureCubeMap->wrapR;
-		a->textureStack[a->textureStackDepth].priority[3] = g->texture.currentTextureCubeMap->priority;
-		a->textureStack[a->textureStackDepth].minLod[3] = g->texture.currentTextureCubeMap->minLod;
-		a->textureStack[a->textureStackDepth].maxLod[3] = g->texture.currentTextureCubeMap->maxLod;
-		a->textureStack[a->textureStackDepth].baseLevel[3] = g->texture.currentTextureCubeMap->baseLevel;
-		a->textureStack[a->textureStackDepth].maxLevel[3] = g->texture.currentTextureCubeMap->maxLevel;
-#endif
-#endif
 		a->textureStackDepth++;
 	}
 	if (mask & GL_TRANSFORM_BIT)
@@ -1019,95 +1003,33 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_TEXTURE_BIT)
 	{
+		CRTextureStack *tState;
 		if (a->textureStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty texture stack!" );
 			return;
 		}
 		a->textureStackDepth--;
-		g->texture.curTextureUnit = a->textureStack[a->textureStackDepth].curTextureUnit;
+		tState = a->textureStack + a->textureStackDepth;
+
+		g->texture.curTextureUnit = tState->curTextureUnit;
 		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
-			g->texture.unit[i].enabled1D = a->textureStack[a->textureStackDepth].enabled1D[i];
-			g->texture.unit[i].enabled2D = a->textureStack[a->textureStackDepth].enabled2D[i];
+			copy_texunit(&g->texture.unit[i], &tState->unit[i]);
+			/* first, restore the bindings! */
+			g->texture.unit[i].currentTexture1D = crStateTextureGet(GL_TEXTURE_1D, tState->unit[i].Saved1D.name);
+			copy_texobj(g->texture.unit[i].currentTexture1D, &tState->unit[i].Saved1D, GL_FALSE);
+			g->texture.unit[i].currentTexture2D = crStateTextureGet(GL_TEXTURE_2D, tState->unit[i].Saved2D.name);
+			copy_texobj(g->texture.unit[i].currentTexture2D, &tState->unit[i].Saved2D, GL_FALSE);
 #ifdef CR_OPENGL_VERSION_1_2
-			g->texture.unit[i].enabled3D = a->textureStack[a->textureStackDepth].enabled3D[i];
+			g->texture.unit[i].currentTexture3D = crStateTextureGet(GL_TEXTURE_3D, tState->unit[i].Saved3D.name);
+			copy_texobj(g->texture.unit[i].currentTexture3D, &tState->unit[i].Saved3D, GL_FALSE);
 #endif
 #ifdef CR_ARB_texture_cube_map
-			g->texture.unit[i].enabledCubeMap = a->textureStack[a->textureStackDepth].enabledCubeMap[i];
+			g->texture.unit[i].currentTextureCubeMap = crStateTextureGet(GL_TEXTURE_CUBE_MAP_ARB, tState->unit[i].SavedCubeMap.name);
+			copy_texobj(g->texture.unit[i].currentTextureCubeMap, &tState->unit[i].SavedCubeMap, GL_FALSE);
 #endif
-			g->texture.unit[i].textureGen = a->textureStack[a->textureStackDepth].textureGen[i];
-			g->texture.unit[i].objSCoeff = a->textureStack[a->textureStackDepth].objSCoeff[i];
-			g->texture.unit[i].objTCoeff = a->textureStack[a->textureStackDepth].objTCoeff[i];
-			g->texture.unit[i].objRCoeff = a->textureStack[a->textureStackDepth].objRCoeff[i];
-			g->texture.unit[i].objQCoeff = a->textureStack[a->textureStackDepth].objQCoeff[i];
-			g->texture.unit[i].eyeSCoeff = a->textureStack[a->textureStackDepth].eyeSCoeff[i];
-			g->texture.unit[i].eyeTCoeff = a->textureStack[a->textureStackDepth].eyeTCoeff[i];
-			g->texture.unit[i].eyeRCoeff = a->textureStack[a->textureStackDepth].eyeRCoeff[i];
-			g->texture.unit[i].eyeQCoeff = a->textureStack[a->textureStackDepth].eyeQCoeff[i];
-			g->texture.unit[i].gen = a->textureStack[a->textureStackDepth].gen[i];
-			g->texture.unit[i].envMode = a->textureStack[a->textureStackDepth].envMode[i];
-			g->texture.unit[i].envColor = a->textureStack[a->textureStackDepth].envColor[i];
 		}
-		/* Is this right?  It sure doesn't seem right. */
-		g->texture.currentTexture1D->borderColor = a->textureStack[a->textureStackDepth].borderColor[0];
-		g->texture.currentTexture2D->borderColor = a->textureStack[a->textureStackDepth].borderColor[1];
-		g->texture.currentTexture3D->borderColor = a->textureStack[a->textureStackDepth].borderColor[2];
-#ifdef CR_ARB_texture_cube_map
-		g->texture.currentTextureCubeMap->borderColor = a->textureStack[a->textureStackDepth].borderColor[3];
-#endif
-		g->texture.currentTexture1D->minFilter = a->textureStack[a->textureStackDepth].minFilter[0];
-		g->texture.currentTexture2D->minFilter = a->textureStack[a->textureStackDepth].minFilter[1];
-		g->texture.currentTexture3D->minFilter = a->textureStack[a->textureStackDepth].minFilter[2];
-#ifdef CR_ARB_texture_cube_map
-		g->texture.currentTextureCubeMap->minFilter = a->textureStack[a->textureStackDepth].minFilter[3];
-#endif
-		g->texture.currentTexture1D->magFilter = a->textureStack[a->textureStackDepth].magFilter[0];
-		g->texture.currentTexture2D->magFilter = a->textureStack[a->textureStackDepth].magFilter[1];
-		g->texture.currentTexture3D->magFilter = a->textureStack[a->textureStackDepth].magFilter[2];
-#ifdef CR_ARB_texture_cube_map
-		g->texture.currentTextureCubeMap->magFilter = a->textureStack[a->textureStackDepth].magFilter[3];
-#endif
-		g->texture.currentTexture1D->wrapS = a->textureStack[a->textureStackDepth].wrapS[0];
-		g->texture.currentTexture2D->wrapS = a->textureStack[a->textureStackDepth].wrapS[1];
-		g->texture.currentTexture3D->wrapS = a->textureStack[a->textureStackDepth].wrapS[2];
-#ifdef CR_ARB_texture_cube_map
-		g->texture.currentTextureCubeMap->wrapS = a->textureStack[a->textureStackDepth].wrapS[3];
-#endif
-		g->texture.currentTexture1D->wrapT = a->textureStack[a->textureStackDepth].wrapT[0];
-		g->texture.currentTexture2D->wrapT = a->textureStack[a->textureStackDepth].wrapT[1];
-		g->texture.currentTexture3D->wrapT = a->textureStack[a->textureStackDepth].wrapT[2];
-#ifdef CR_ARB_texture_cube_map
-		g->texture.currentTextureCubeMap->wrapT = a->textureStack[a->textureStackDepth].wrapT[3];
-#endif
-#ifdef CR_OPENGL_VERSION_1_2
-		g->texture.currentTexture1D->wrapR = a->textureStack[a->textureStackDepth].wrapR[0];
-		g->texture.currentTexture2D->wrapR = a->textureStack[a->textureStackDepth].wrapR[1];
-		g->texture.currentTexture3D->wrapR = a->textureStack[a->textureStackDepth].wrapR[2];
-#ifdef CR_ARB_texture_cube_map
-		g->texture.currentTextureCubeMap->wrapR = a->textureStack[a->textureStackDepth].wrapR[3];
-#endif
-		g->texture.currentTexture1D->priority = a->textureStack[a->textureStackDepth].priority[0];
-		g->texture.currentTexture2D->priority = a->textureStack[a->textureStackDepth].priority[1];
-		g->texture.currentTexture3D->priority = a->textureStack[a->textureStackDepth].priority[2];
-		g->texture.currentTextureCubeMap->priority = a->textureStack[a->textureStackDepth].priority[3];
-		g->texture.currentTexture1D->minLod = a->textureStack[a->textureStackDepth].minLod[0];
-		g->texture.currentTexture2D->minLod = a->textureStack[a->textureStackDepth].minLod[1];
-		g->texture.currentTexture3D->minLod = a->textureStack[a->textureStackDepth].minLod[2];
-		g->texture.currentTextureCubeMap->minLod = a->textureStack[a->textureStackDepth].minLod[3];
-		g->texture.currentTexture1D->maxLod = a->textureStack[a->textureStackDepth].maxLod[0];
-		g->texture.currentTexture2D->maxLod = a->textureStack[a->textureStackDepth].maxLod[1];
-		g->texture.currentTexture3D->maxLod = a->textureStack[a->textureStackDepth].maxLod[2];
-		g->texture.currentTextureCubeMap->maxLod = a->textureStack[a->textureStackDepth].maxLod[3];
-		g->texture.currentTexture1D->baseLevel = a->textureStack[a->textureStackDepth].baseLevel[0];
-		g->texture.currentTexture2D->baseLevel = a->textureStack[a->textureStackDepth].baseLevel[1];
-		g->texture.currentTexture3D->baseLevel = a->textureStack[a->textureStackDepth].baseLevel[2];
-		g->texture.currentTextureCubeMap->baseLevel = a->textureStack[a->textureStackDepth].baseLevel[3];
-		g->texture.currentTexture1D->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[0];
-		g->texture.currentTexture2D->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[1];
-		g->texture.currentTexture3D->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[2];
-		g->texture.currentTextureCubeMap->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[3];
-#endif
 		DIRTY(sb->texture.dirty, g->neg_bitid);
 		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
@@ -1119,19 +1041,20 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			DIRTY(sb->texture.gen[i], g->neg_bitid);
 		}
 
-		DIRTY(g->texture.currentTexture1D->dirty, g->neg_bitid);
-		DIRTY(g->texture.currentTexture2D->dirty, g->neg_bitid);
-		DIRTY(g->texture.currentTexture3D->dirty, g->neg_bitid);
-
 		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
-			DIRTY(g->texture.currentTexture1D->dirty, g->neg_bitid);
-			DIRTY(g->texture.currentTexture2D->dirty, g->neg_bitid);
-			DIRTY(g->texture.currentTexture3D->dirty, g->neg_bitid);
-
-			DIRTY(g->texture.currentTexture1D->paramsBit[i], g->neg_bitid);
-			DIRTY(g->texture.currentTexture2D->paramsBit[i], g->neg_bitid);
-			DIRTY(g->texture.currentTexture3D->paramsBit[i], g->neg_bitid);
+			DIRTY(g->texture.unit[i].currentTexture1D->dirty, g->neg_bitid);
+			DIRTY(g->texture.unit[i].currentTexture2D->dirty, g->neg_bitid);
+			DIRTY(g->texture.unit[i].currentTexture3D->dirty, g->neg_bitid);
+#ifdef CR_ARB_texture_cube_map
+			DIRTY(g->texture.unit[i].currentTextureCubeMap->dirty, g->neg_bitid);
+#endif
+			DIRTY(g->texture.unit[i].currentTexture1D->paramsBit[i], g->neg_bitid);
+			DIRTY(g->texture.unit[i].currentTexture2D->paramsBit[i], g->neg_bitid);
+			DIRTY(g->texture.unit[i].currentTexture3D->paramsBit[i], g->neg_bitid);
+#ifdef CR_ARB_texture_cube_map
+			DIRTY(g->texture.unit[i].currentTextureCubeMap->paramsBit[i], g->neg_bitid);
+#endif
 		}
 	}
 	if (mask & GL_TRANSFORM_BIT)

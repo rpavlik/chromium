@@ -237,11 +237,22 @@ typedef struct {
 } CRStencilBufferStack;
 
 typedef struct {
+#if 111
+	GLint		curTextureUnit;
+	CRTextureUnit unit[CR_MAX_TEXTURE_UNITS];
+
+#else
 	GLboolean	enabled1D[CR_MAX_TEXTURE_UNITS];
 	GLboolean	enabled2D[CR_MAX_TEXTURE_UNITS];
 	GLboolean	enabled3D[CR_MAX_TEXTURE_UNITS];
 #ifdef CR_ARB_texture_cube_map
 	GLboolean	enabledCubeMap[CR_MAX_TEXTURE_UNITS];
+#endif
+	CRTextureObj *current1D[CR_MAX_TEXTURE_UNITS];
+	CRTextureObj *current2D[CR_MAX_TEXTURE_UNITS];
+	CRTextureObj *current3D[CR_MAX_TEXTURE_UNITS];
+#ifdef CR_ARB_texture_cube_map
+	CRTextureObj *currentCubeMap[CR_MAX_TEXTURE_UNITS];
 #endif
 	GLcolorf borderColor[4];  /* 4 = 1D, 2D, 3D and cube map textures */
 	GLenum minFilter[4];
@@ -271,6 +282,7 @@ typedef struct {
 	GLvectorf	eyeRCoeff[CR_MAX_TEXTURE_UNITS];
 	GLvectorf	eyeQCoeff[CR_MAX_TEXTURE_UNITS];
 	GLtexcoorde	gen[CR_MAX_TEXTURE_UNITS];
+#endif
 } CRTextureStack;
 
 typedef struct {

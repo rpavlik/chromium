@@ -167,9 +167,9 @@ GLenum    GL_POINT_SMOOTH_HINT            g->hint.pointSmooth
 GLenum    GL_POLYGON_SMOOTH_HINT          g->hint.polygonSmooth
 GLenum    GL_PERSPECTIVE_CORRECTION_HINT  g->hint.perspectiveCorrection
 
-GLint     GL_TEXTURE_BINDING_1D g->texture.unit[g->texture.curTextureUnit].currentTexture1DName
-GLint     GL_TEXTURE_BINDING_2D g->texture.unit[g->texture.curTextureUnit].currentTexture2DName
-GLint     GL_TEXTURE_BINDING_3D g->texture.unit[g->texture.curTextureUnit].currentTexture3DName
+GLint     GL_TEXTURE_BINDING_1D g->texture.unit[g->texture.curTextureUnit].currentTexture1D->name
+GLint     GL_TEXTURE_BINDING_2D g->texture.unit[g->texture.curTextureUnit].currentTexture2D->name
+GLint     GL_TEXTURE_BINDING_3D g->texture.unit[g->texture.curTextureUnit].currentTexture3D->name
 
 GLboolean GL_VERTEX_ARRAY             g->client.v.enabled
 GLint     GL_VERTEX_ARRAY_SIZE        g->client.v.size

@@ -23,6 +23,7 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 	for (i = 0 ; i < limits->maxTextureUnits ; i++)
 	{
 		c->texCoord[i] = default_texcoord;
+		c->texCoordPre[i] = default_texcoord;
 	}
 	c->normal	= default_normal;
 #ifdef CR_EXT_fog_coord

@@ -60,20 +60,20 @@ typedef struct __CRTextureObj {
 	CRTextureLevel        *positiveZlevel;
 	CRTextureLevel        *negativeZlevel;
 #endif
-	
-	GLcolorf	             borderColor;
-	GLenum		             target;
-	GLuint		             name;
+
+	GLcolorf               borderColor;
+	GLenum                 target;
+	GLuint                 name;
 	struct __CRTextureObj *next;
-	GLenum		             minFilter, magFilter;
-	GLenum		             wrapS, wrapT;
+	GLenum                 minFilter, magFilter;
+	GLenum                 wrapS, wrapT;
 #ifdef CR_OPENGL_VERSION_1_2
-	GLenum		             wrapR;
-	GLfloat                      priority;
-	GLfloat                      minLod;
-	GLfloat                      maxLod;
-	GLint                        baseLevel;
-	GLint                        maxLevel;
+	GLenum                 wrapR;
+	GLfloat                priority;
+	GLfloat                minLod;
+	GLfloat                maxLod;
+	GLint                  baseLevel;
+	GLint                  maxLevel;
 #endif
 
 	GLbitvalue	           dirty[CR_MAX_BITARRAY];
@@ -102,11 +102,12 @@ typedef struct {
 } CRTextureBits;
 
 typedef struct {
-	GLuint        currentTexture1DName;
-	GLuint        currentTexture2DName;
-	GLuint        currentTexture3DName;
+	/* Current texture objects (in terms of glBindTexture and glActiveTexture) */
+	CRTextureObj *currentTexture1D;
+	CRTextureObj *currentTexture2D;
+	CRTextureObj *currentTexture3D;
 #ifdef CR_ARB_texture_cube_map
-	GLuint	      currentTextureCubeMapName;
+	CRTextureObj *currentTextureCubeMap;
 #endif
 
 	GLboolean	enabled1D;
@@ -129,6 +130,14 @@ typedef struct {
 	GLvectorf	eyeRCoeff;
 	GLvectorf	eyeQCoeff;
 	GLtexcoorde	gen;
+
+	/* These are only used for glPush/PopAttrib */
+	CRTextureObj Saved1D;
+	CRTextureObj Saved2D;
+	CRTextureObj Saved3D;
+#ifdef CR_ARB_texture_cube_map
+	CRTextureObj SavedCubeMap;
+#endif
 } CRTextureUnit;
 
 typedef struct {
@@ -140,14 +149,6 @@ typedef struct {
 	CRTextureObj      *mapping[CRTEXTURE_HASHSIZE];
 	CRTextureFreeElem *freeList;
 	CRTextureID       *hwidhash[CRTEXTURE_HASHSIZE];
-
-	/* Current texture objects (in terms of glBindTexture and glActiveTexture) */
-	CRTextureObj *currentTexture1D;
-	CRTextureObj *currentTexture2D;
-	CRTextureObj *currentTexture3D;
-#ifdef CR_ARB_texture_cube_map
-	CRTextureObj *currentTextureCubeMap;
-#endif
 
 	/* Default texture objects (name = 0) */
 	CRTextureObj base1D;
@@ -183,7 +184,7 @@ void crStateTextureInit(const CRLimitsState *limits, CRTextureState *t);
 void crStateTextureInitTexture(GLuint name);
 CRTextureObj *crStateTextureAllocate(GLuint name);
 void crStateTextureDelete(GLuint name);
-CRTextureObj *crStateTextureGet(GLuint textureid);
+CRTextureObj *crStateTextureGet(GLenum target, GLuint textureid);
 int crStateTextureGetSize(GLenum target, GLenum level);
 const GLvoid * crStateTextureGetData(GLenum target, GLenum level);
 
