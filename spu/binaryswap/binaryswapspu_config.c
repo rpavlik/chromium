@@ -5,14 +5,11 @@
  */
 
 #include "binaryswapspu.h"
-
 #include "cr_mothership.h"
 #include "cr_string.h"
 #include "cr_mem.h"
 #include "cr_error.h"
 
-#include <string.h>
-#include <stdio.h>
 #include <math.h>
 
 
@@ -81,9 +78,68 @@ static void set_type( void *foo, const char *response )
    }
 }
 
+static void __setDefaults( BinaryswapSPU *binaryswap_spu )
+{
+  /* default window */
+  binaryswap_spu->windows[0].inUse = GL_TRUE;
+  binaryswap_spu->windows[0].renderWindow = 0;
+  binaryswap_spu->windows[0].childWindow = 0;
+  binaryswap_spu->barrierCount = 0;
+  
+  /* This will make the viewport be computed later */
+  binaryswap_spu->halfViewportWidth = 0;
+  binaryswap_spu->cleared_this_frame = 0;
+  binaryswap_spu->bbox = NULL;
+  
+  binaryswap_spu->resizable = 0;
+}
+
+void set_extract_depth( BinaryswapSPU *binaryswap_spu, const char *response )
+{
+   binaryswap_spu->extract_depth = crStrToInt( response );
+}
+
+void set_extract_alpha( BinaryswapSPU *binaryswap_spu, const char *response )
+{
+   binaryswap_spu->extract_alpha = crStrToInt( response );
+}
+
+void set_local_visualization( BinaryswapSPU *binaryswap_spu, const char *response )
+{
+   binaryswap_spu->local_visualization = crStrToInt( response );
+}
+
+void set_visualize_depth( BinaryswapSPU *binaryswap_spu, const char *response )
+{
+   binaryswap_spu->visualize_depth = crStrToInt( response );
+}
+
+void set_drawpixels_pos( BinaryswapSPU *binaryswap_spu, const char *response )
+{
+   sscanf( response, "%d %d", &binaryswap_spu->drawX, &binaryswap_spu->drawY );
+}
+
+
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions binaryswapSPUOptions[] = {
+
+   /* Really a multiple choice:  Extract depth or alpha.
+    */
+   { "extract_depth", CR_BOOL, 1, "0", NULL, NULL,
+     "Extract Depth Values", (SPUOptionCB)set_extract_depth },
+
+   { "extract_alpha", CR_BOOL, 1, "0", NULL, NULL,
+     "Extract Alpha Values", (SPUOptionCB)set_extract_alpha },
+
+   { "local_visualization", CR_BOOL, 1, "1", NULL, NULL,
+     "Local Visualization", (SPUOptionCB)set_local_visualization },
+
+   { "visualize_depth", CR_BOOL, 1, "0", NULL, NULL,
+     "Visualize Depth as Grayscale", (SPUOptionCB)set_visualize_depth },
+
+   { "drawpixels_pos", CR_INT, 2, "0, 0", "0, 0", NULL,
+     "glDrawPixels Position (x,y)", (SPUOptionCB)set_drawpixels_pos },
 
    { "peers", CR_STRING, 1, "", NULL, NULL, 
      "Peers", (SPUOptionCB)set_peers},
@@ -96,52 +152,61 @@ SPUOptions binaryswapSPUOptions[] = {
    { "type", CR_STRING, 1, "depth", NULL, NULL, 
      "Composite type (alpha/depth)", (SPUOptionCB)set_type},
 
-
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+
 };
 
 
-void binaryswapspuGatherConfiguration( void )
+void binaryswapspuGatherConfiguration( BinaryswapSPU *binaryswap_spu )
 {
-  CRConnection *conn;
-  char response[8096];
   int i;
+  CRConnection *conn;
+  
+  __setDefaults( binaryswap_spu );
   
   /* Connect to the mothership and identify ourselves. */
+  
   conn = crMothershipConnect( );
-  if (!conn){
-    /* The mothership isn't running.  Some SPU's can recover gracefully, some 
-     * should issue an error here. */
-    return;
+  if (!conn)
+    {
+      /* The mothership isn't running.  Some SPU's can recover gracefully, some 
+       * should issue an error here. */
+      crSPUSetDefaultParams( binaryswap_spu, binaryswapSPUOptions );
+      return;
+    }
+  crMothershipIdentifySPU( conn, binaryswap_spu->id );
+  
+  crSPUGetMothershipParams( conn, (void *)binaryswap_spu, binaryswapSPUOptions );
+  
+  /* we can either composite with alpha or Z, but not both */
+  if (binaryswap_spu->extract_depth && binaryswap_spu->extract_alpha) {
+    crWarning("Binaryswap SPU can't extract both depth and alpha, using depth");
+    binaryswap_spu->extract_alpha = 0;
   }
-  crMothershipIdentifySPU( conn, binaryswap_spu.id );
   
-  crSPUGetMothershipParams( conn, &binaryswap_spu, binaryswapSPUOptions );
-  
+  /* Get the render SPU's resizable setting */
+  {
+    char response[1000];
+    if (crMothershipGetSPUParam( conn, response, "resizable" )) {
+      int resizable = 0;
+      sscanf(response, "%d", &resizable);
+      binaryswap_spu->resizable = resizable;
+    }
+    printf(">>>>>>> resizable = %d\n", binaryswap_spu->resizable);
+  }
+
   /* build list of swap partners */
-  binaryswap_spu.swap_partners = crAlloc(binaryswap_spu.stages*sizeof(char*));
-  for( i=0; i<binaryswap_spu.stages; i++ ){
+  binaryswap_spu->swap_partners = crAlloc(binaryswap_spu->stages*sizeof(char*));
+  for( i=0; i<binaryswap_spu->stages; i++ ){
     /* are we the high in the pair? */
-    if((binaryswap_spu.node_num%((int)pow(2, i+1)))/((int)pow(2, i))){
-      binaryswap_spu.swap_partners[i] = crStrdup(binaryswap_spu.peer_names[binaryswap_spu.node_num - (int)pow(2, i)]);
+    if((binaryswap_spu->node_num%((int)pow(2, i+1)))/((int)pow(2, i))){
+      binaryswap_spu->swap_partners[i] = crStrdup(binaryswap_spu->peer_names[binaryswap_spu->node_num - (int)pow(2, i)]);
     }
     /* or the low? */
     else{
-      binaryswap_spu.swap_partners[i] = crStrdup(binaryswap_spu.peer_names[binaryswap_spu.node_num + (int)pow(2, i)]);
+      binaryswap_spu->swap_partners[i] = crStrdup(binaryswap_spu->peer_names[binaryswap_spu->node_num + (int)pow(2, i)]);
     }
   }
   
-  crMothershipGetMTU( conn, response );
-  sscanf( response, "%d", &(binaryswap_spu.mtu) );
-  
   crMothershipDisconnect( conn );
 }
-
-
-
-
-
-
-
-
-

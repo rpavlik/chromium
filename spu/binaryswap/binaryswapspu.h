@@ -14,10 +14,27 @@
 #endif
 
 #include "cr_spu.h"
+#include "cr_server.h"
+#include "cr_threads.h"
 #include "cr_net.h"
 
-#define BINARYSWAP_SPU_PORT 8192
-#define BSWAP_BARRIER 1
+#define MAX_WINDOWS             32
+#define MAX_CONTEXTS            32
+#define BINARYSWAP_SPU_PORT     8192
+#define BINARYSWAP_BARRIER      1
+#define CREATE_CONTEXT_BARRIER  2
+#define MAKE_CURRENT_BARRIER    3
+#define DESTROY_CONTEXT_BARRIER 4
+
+
+typedef struct {
+  unsigned long id;
+  int currentContext;
+  int currentWindow;
+#ifndef WINDOWS
+  Display *dpy;
+#endif
+} ThreadInfo;
 
 /* Message header */
 typedef struct {
@@ -27,18 +44,55 @@ typedef struct {
   int width, height;
 } BinarySwapMsg;
 
-/* Bounding box layout */
-typedef struct {
-  float x1, y1, z1, x2, y2, z2;
-} BBox;
 
-void binaryswapspuGatherConfiguration( void );
+typedef struct {
+  GLboolean inUse;
+  GLint renderWindow;
+  GLint childWindow;
+  GLint width, height;
+  GLubyte *colorBuffer;
+  GLvoid *depthBuffer;
+  GLenum depthType;  /* GL_UNSIGNED_SHORT or GL_FLOAT */
+} WindowInfo;
+
+typedef struct {
+  GLboolean inUse;
+  GLint renderContext;
+  GLint childContext;
+  CRContext *tracker;  /* for tracking matrix state */
+} ContextInfo;
 
 typedef struct {
   int id;
   int has_child;
   SPUDispatchTable self, child, super;
+  CRServer *server;
   
+  int extract_depth;
+  int extract_alpha;
+  int local_visualization;
+  int visualize_depth;
+  int drawX, drawY;
+  int resizable;
+  
+  WindowInfo windows[MAX_WINDOWS];
+  
+  ContextInfo contexts[MAX_CONTEXTS];
+  
+#ifndef CHROMIUM_THREADSAFE
+  ThreadInfo singleThread;
+#endif
+  
+  GLint renderWindow;
+  GLint renderContext;
+  GLint childWindow;
+  GLint childContext;
+  
+  GLint barrierCount;
+  
+  float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
+  int cleared_this_frame;
+
   /* Store a list of all nodes in our swap network */
   char ** peer_names;
   
@@ -81,18 +135,20 @@ typedef struct {
   float depth;
 
   /* Stores the bounding box if used */
-  BBox* bounding_box;
+  struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;
 
 } BinaryswapSPU;
 
 extern BinaryswapSPU binaryswap_spu;
 
+#ifdef CHROMIUM_THREADSAFE
+extern CRtsd _BinaryswapTSD;
+#define GET_THREAD(T)  ThreadInfo *T = crGetTSD(&_BinaryswapTSD)
+#else
+#define GET_THREAD(T)  ThreadInfo *T = &(binaryswap_spu.singleThread)
+#endif
+
+
+extern void binaryswapspuGatherConfiguration( BinaryswapSPU *spu );
+
 #endif /* BINARYSWAP_SPU_H */
-
-
-
-
-
-
-
-

@@ -5,16 +5,15 @@
 
 TOP = ../..
 
-OPENGL = 1
 SHARED = 1
 LIBRARY = binaryswapspu
 FILES = binaryswapspu \
 	binaryswapspu_config \
 	binaryswapspu_init
+TRACKS_STATE = 1
 
-LIBRARIES = spuload crutil crmothership 
+LIBRARIES = spuload crutil crmothership
 
-PRECOMP =
 SLOP = $(PRECOMP)
 
 LIB_DEFS += binaryswapspu.def

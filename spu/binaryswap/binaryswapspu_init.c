@@ -5,14 +5,21 @@
  */
 
 #include "cr_spu.h"
-#include "cr_url.h"
 #include "cr_mem.h"
+#include "cr_url.h"
 #include "cr_error.h"
 #include "binaryswapspu.h"
+
 #include <stdio.h>
 #include <math.h>
 
 extern SPUNamedFunctionTable binaryswap_table[];
+
+BinaryswapSPU binaryswap_spu;
+
+#ifdef CHROMIUM_THREADSAFE
+CRtsd _BinaryswapTSD;
+#endif
 
 SPUFunctions binaryswap_functions = {
   NULL, /* CHILD COPY */
@@ -41,6 +48,7 @@ void binaryswapspuConnectToPeer( void )
   int i;
   
   /* initialize recv function */
+  crDebug("init");
   crNetInit( binaryswapspuReceiveData, NULL );
   
   /* set up arrary for ports */
@@ -49,15 +57,17 @@ void binaryswapspuConnectToPeer( void )
   /* Loop through and check hostnames and such */
   for(i=0; i<binaryswap_spu.stages; i++){
     if (!crParseURL( binaryswap_spu.swap_partners[i], protocol, hostname,
-		     &ports[i], (unsigned short)(BINARYSWAP_SPU_PORT+(i*2)) ) ){
+		     &ports[i], (unsigned short)(BINARYSWAP_SPU_PORT+(i*2)))){
       crFree(ports);
       crError( "Malformed URL: \"%s\"", binaryswap_spu.swap_partners[i] );
     }
   }
   
   /* allocate send/recv arrays for OOB communication */
-  binaryswap_spu.peer_recv = crAlloc(binaryswap_spu.numnodes*sizeof(CRConnection*));
-  binaryswap_spu.peer_send = crAlloc(binaryswap_spu.numnodes*sizeof(CRConnection*));
+  binaryswap_spu.peer_recv = crAlloc(binaryswap_spu.numnodes*
+				     sizeof(CRConnection*));
+  binaryswap_spu.peer_send = crAlloc(binaryswap_spu.numnodes*
+				     sizeof(CRConnection*));
   
   /* tracks network connection order */
   binaryswap_spu.highlow = crAlloc(binaryswap_spu.numnodes);
@@ -65,34 +75,52 @@ void binaryswapspuConnectToPeer( void )
   /* set up accept connect paths for OOB */
   for(i=0; i<binaryswap_spu.stages; i++){
     /* lower of pair => accept,connect */
-    binaryswap_spu.highlow[i] = (binaryswap_spu.node_num%((int)pow(2, i+1)))/((int)pow(2, i));
+    binaryswap_spu.highlow[i] = (binaryswap_spu.node_num%((int)pow(2, i+1)))
+      /((int)pow(2, i));
     if(binaryswap_spu.highlow[i]){
-      binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, (short) (ports[i]+1), 
+      crDebug("accept");
+      binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, 
+						       (short) (ports[i]+1), 
 						       binaryswap_spu.mtu, 1 );
-      binaryswap_spu.peer_send[i] = crNetConnectToServer( binaryswap_spu.swap_partners[i], ports[i], 
-							  binaryswap_spu.mtu, 1 );
+      crDebug("connect");
+      binaryswap_spu.peer_send[i] = crNetConnectToServer( binaryswap_spu.swap_partners[i], 
+							  ports[i], 
+							  binaryswap_spu.mtu, 
+							  1 );
+      crDebug("done");
     }
     /* higher of pair => connect,accept */
     else{
-      binaryswap_spu.peer_send[i] = crNetConnectToServer( binaryswap_spu.swap_partners[i], (short) (ports[i]+1), 
-							  binaryswap_spu.mtu, 1 );
+      crDebug("connect");
+      binaryswap_spu.peer_send[i] = crNetConnectToServer( binaryswap_spu.swap_partners[i], 
+							  (short) (ports[i]+1),
+							  binaryswap_spu.mtu, 
+							  1 );
+      crDebug("accept");
       binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, ports[i], 
 						       binaryswap_spu.mtu, 1 );
+      crDebug("done");
     }
   }
   /* cleanup */
   crFree(ports);
 }
 
+
+
 SPUFunctions *binaryswapSPUInit( int id, SPU *child, SPU *super,
 				 unsigned int context_id,
 				 unsigned int num_contexts )
 {
-  
   (void) super;
   (void) context_id;
   (void) num_contexts;
   
+#ifdef CHROMIUM_THREADSAFE
+  crDebug("Binaryswap SPU: thread-safe");
+#endif
+  
+  crMemZero(&binaryswap_spu, sizeof(binaryswap_spu));
   binaryswap_spu.id = id;
   binaryswap_spu.has_child = 0;
   if (child){
@@ -102,9 +130,12 @@ SPUFunctions *binaryswapSPUInit( int id, SPU *child, SPU *super,
   }
   crSPUInitDispatchTable( &(binaryswap_spu.super) );
   crSPUCopyDispatchTable( &(binaryswap_spu.super), &(super->dispatch_table) );
-  binaryswapspuGatherConfiguration();
-  
-  binaryswapspuConnectToPeer();
+  binaryswapspuGatherConfiguration( &binaryswap_spu );
+   
+  binaryswapspuConnectToPeer(); 
+  crDebug("############# connect complete");
+  crStateInit();
+  crDebug("############# stateinit complete");
   
   return &binaryswap_functions;
 }
@@ -113,10 +144,12 @@ void binaryswapSPUSelfDispatch(SPUDispatchTable *self)
 {
   crSPUInitDispatchTable( &(binaryswap_spu.self) );
   crSPUCopyDispatchTable( &(binaryswap_spu.self), self );
+  
+  binaryswap_spu.server = (CRServer *)(self->server);
 }
 
 int binaryswapSPUCleanup(void)
-{
+{ 
   if(binaryswap_spu.outgoing_msg != NULL){
     crFree(binaryswap_spu.outgoing_msg);
   }
@@ -136,8 +169,6 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
   *cleanup = binaryswapSPUCleanup;
   *options = binaryswapSPUOptions;
   *flags = (SPU_NO_PACKER|SPU_NOT_TERMINAL|SPU_MAX_SERVERS_ZERO);
-
+  
   return 1;
 }
-
-
