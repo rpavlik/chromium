@@ -47,7 +47,8 @@ void PACKSPU_APIENTRY packspu_Begin( GLenum mode )
 		if ( mode == GL_LINES || mode == GL_TRIANGLES || mode == GL_QUADS || mode == GL_POLYGON )
 		{
 			CRASSERT(!buf->pack);
-			crPackGetBuffer( thread->packer, &thread->normBuffer );
+
+			crPackReleaseBuffer( thread->packer );
 			buf->pack = crNetAlloc( thread->server.conn );
 			crPackInitBuffer( buf, buf->pack, thread->server.conn->buffer_size, thread->server.conn->mtu );
 			buf->holds_BeginEnd = 1;
@@ -72,7 +73,7 @@ void PACKSPU_APIENTRY packspu_End( void )
 	{
 		CRASSERT(buf->pack);
 
-		crPackGetBuffer( thread->packer, buf );
+		crPackReleaseBuffer( thread->packer );
 		crPackSetBuffer( thread->packer, &thread->normBuffer );
 		if ( !crPackCanHoldBuffer( buf ) )
 			packspuFlush( (void *) thread );
@@ -101,7 +102,7 @@ static void DoVertex( void )
 	int num_opcode;
 
 	/*crDebug( "really doing Vertex" );*/
-	crPackGetBuffer( thread->packer, buf );
+	crPackReleaseBuffer( thread->packer );
 	num_data = buf->data_current - buf->data_start;
 	num_opcode = buf->opcode_start - buf->opcode_current;
 	crPackSetBuffer( thread->packer, gbuf );
@@ -110,7 +111,7 @@ static void DoVertex( void )
 		packspuFlush( (void *) thread );
 
 	crPackAppendBuffer( buf );
-	crPackGetBuffer( thread->packer, gbuf );
+	crPackReleaseBuffer( thread->packer );
 	crPackSetBuffer( thread->packer, buf );
 	crPackResetPointers(thread->packer);
 }
