@@ -34,17 +34,17 @@ extern "C" {
 #define APIENTRY
 #endif
 
-WINGDIAPI void APIENTRY glBarrierCreate (GLuint name, GLuint count);
-WINGDIAPI void APIENTRY glBarrierDestroy (GLuint name);
-WINGDIAPI void APIENTRY glBarrierExec (GLuint name);
-WINGDIAPI void APIENTRY glSemaphoreCreate (GLuint name, GLuint count);
-WINGDIAPI void APIENTRY glSemaphoreDestroy (GLuint name);
-WINGDIAPI void APIENTRY glSemaphoreP (GLuint name);
-WINGDIAPI void APIENTRY glSemaphoreV (GLuint name);
+typedef WINGDIAPI void (APIENTRY *glBarrierCreateProc) (GLuint name, GLuint count);
+typedef WINGDIAPI void (APIENTRY *glBarrierDestroyProc) (GLuint name);
+typedef WINGDIAPI void (APIENTRY *glBarrierExecProc) (GLuint name);
+typedef WINGDIAPI void (APIENTRY *glSemaphoreCreateProc) (GLuint name, GLuint count);
+typedef WINGDIAPI void (APIENTRY *glSemaphoreDestroyProc) (GLuint name);
+typedef WINGDIAPI void (APIENTRY *glSemaphorePProc) (GLuint name);
+typedef WINGDIAPI void (APIENTRY *glSemaphoreVProc) (GLuint name);
 
-void APIENTRY crCreateContext(void);
-void APIENTRY crMakeCurrent(void);
-void APIENTRY crSwapBuffers(void);
+typedef void (APIENTRY *crCreateContextProc)(void);
+typedef void (APIENTRY *crMakeCurrentProc)(void);
+typedef void (APIENTRY *crSwapBuffersProc)(void);
 
 typedef int (CR_APIENTRY *CR_PROC)();
 CR_PROC APIENTRY crGetProcAddress( const char *name );

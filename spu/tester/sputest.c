@@ -13,8 +13,8 @@
 int main(int argc, char *argv[])
 {
 	SPU *spu;
-	int ids[] = { 3 };
-	char *spunames[] = { "render" };
+	int ids[] = { 0, 1 };
+	char *spunames[] = { "readback", "pack" };
 	float angle = 0;
 	GLfloat v1[3] = { .25, .25, 0 }; 
 	GLfloat v2[3] = { .25, .5, 0 }; 

@@ -7,9 +7,8 @@ TOP = ../..
 
 PROGRAM = psubmit
 FILES = psubmit
-OPENGL = 1
 MATH = 1
 
-LIBRARIES = crutil crapp
+LIBRARIES = crutil crfaker
 
 include ${TOP}/cr.mk

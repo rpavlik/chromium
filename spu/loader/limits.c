@@ -76,6 +76,7 @@ limits are propogated all the way up to the client.
  * rendering SPUs to reflect what we can really offer to client apps.
  */
 static char *crExtensionString =
+  "GL_CHROMIUM "
 #ifdef CR_ARB_imaging
 	"GL_ARB_imaging "
 #endif

@@ -27,6 +27,13 @@ float colors[7][3] = {
 
 static const int MASTER_BARRIER = 1;
 
+crCreateContextProc crCreateContextCR;
+crMakeCurrentProc   crMakeCurrentCR;
+crSwapBuffersProc   crSwapBuffersCR;
+
+glBarrierCreateProc glBarrierCreateCR;
+glBarrierExecProc   glBarrierExecCR;
+
 int main(int argc, char *argv[])
 {
 	int rank = -1, size=-1;
@@ -71,11 +78,20 @@ int main(int argc, char *argv[])
 		crError( "Bogus rank: %d (size = %d)", rank, size );
 	}
 
-	crCreateContext();
-	crMakeCurrent();
+#define LOAD( x ) x##CR = (x##Proc) crGetProcAddress( #x )
+
+	LOAD( crCreateContext );
+	LOAD( crMakeCurrent );
+	LOAD( crSwapBuffers );
+
+	crCreateContextCR();
+	crMakeCurrentCR();
+
+	LOAD( glBarrierCreate );
+	LOAD( glBarrierExec );
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
-	glBarrierCreate( MASTER_BARRIER, size );
+	glBarrierCreateCR( MASTER_BARRIER, size );
 	glEnable( GL_DEPTH_TEST );
 
 	for (;;)
@@ -85,7 +101,7 @@ int main(int argc, char *argv[])
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		}
 
-		glBarrierExec( MASTER_BARRIER );
+		glBarrierExecCR( MASTER_BARRIER );
 
 		glRotatef(1,0,0,1);
 		glBegin( GL_TRIANGLES );
@@ -95,11 +111,11 @@ int main(int argc, char *argv[])
 		glVertex3f(verts[rank%4][6], verts[rank%4][7], verts[rank%4][8]);
 		glEnd();
 
-		glBarrierExec( MASTER_BARRIER );
+		glBarrierExecCR( MASTER_BARRIER );
 
 		if (rank == 0)
 		{
-			crSwapBuffers();
+			crSwapBuffersCR();
 		}
 
 		/* ARGH -- need to trick out the compiler this sucks. */

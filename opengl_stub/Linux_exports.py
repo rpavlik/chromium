@@ -36,27 +36,31 @@ for index in range(len(keys)):
 # Deal with NVIDIA driver lossage.  These functions will never be called, but
 # the symbols need to exist.  Fooey.
 
-GLcore_crap = [
-	'__glTLSCXIndex',
-	'__glXthreadGlxc',
-	'__glNVTLSIndex',
-	'NvRmConfigGet',
-	'NvRmArchHeap',
-	'NvRmConfigGetEx',
-	'NvRmAllocMemory',
-	'NvRmFree',
-	'NvRmAllocChannelDma',
-	'NvRmAllocRoot',
-	'NvRmAllocDevice',
-	'NvRmAllocContextDma',
-	'NvRmAlloc',
-	'NvRmIoFlush'
-]
+nvidia_symbols = 0
 
-for crap in GLcore_crap:
-	print "\t.align 4"
-	print ".globl %s" % crap
-	print "\t.type %s,@function" % crap
-	print "%s:" % crap
-	
+if nvidia_symbols:
+	GLcore_crap = [
+		'__glTLSCXIndex',
+		'__glXthreadGlxc',
+		'__glNVTLSIndex',
+		'NvRmConfigGet',
+		'NvRmArchHeap',
+		'NvRmConfigGetEx',
+		'NvRmAllocMemory',
+		'NvRmFree',
+		'NvRmAllocChannelDma',
+		'NvRmAllocRoot',
+		'NvRmAllocDevice',
+		'NvRmAllocContextDma',
+		'NvRmAlloc',
+		'NvRmIoFlush'
+	]
+
+	for crap in GLcore_crap:
+		print "\t.align 4"
+		print ".globl %s" % crap
+		print "\t.type %s,@function" % crap
+		print "%s:" % crap
+		print "\tret"
+		
 

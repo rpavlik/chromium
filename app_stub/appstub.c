@@ -27,7 +27,7 @@
 #define APIENTRY
 #define WINGDIAPI
 
-#define OPENGL_LIBRARY_NAME "libGL.so"
+#define OPENGL_LIBRARY_NAME "/usr/lib/libGL.so"
 
 static char *map_dll_error( void )
 {
