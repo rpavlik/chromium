@@ -26,6 +26,7 @@ print """
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_spu.h"
+#include "stub.h"
 
 #include <stdio.h>
 
@@ -40,7 +41,9 @@ for func_name in stub_common.AllSpecials( "getprocaddress" ):
 
 print """
 CR_PROC CR_APIENTRY crGetProcAddress( const char *name )
-{"""
+{
+	StubInit();
+"""
 
 bonus_functions = [
 	"crCreateContext",
