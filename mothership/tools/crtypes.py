@@ -60,9 +60,7 @@ class Option:
 				replaced = 1
 				break
 		# write the option
-		if self.Type == "INT" or self.Type == "BOOL":
-			file.write(prefixStr + '("' + self.Name + '", ' + valueStr + ')' + suffixStr + '\n')
-		elif self.Type == "FLOAT":
+		if self.Type == "FLOAT" or self.Type == "INT" or self.Type == "BOOL":
 			file.write(prefixStr + '("' + self.Name + '", ' + valueStr + ')' + suffixStr + '\n')
 		elif self.Type == "STRING":
 			# XXX replace " chars with ' chars
