@@ -198,8 +198,8 @@ GLuint crdlm_GenLists(GLsizei range);
 GLboolean crdlm_IsList(GLuint list);
 
 /* special case export */
-void crdlm_compile_CallList(GLuint list);
-void crdlm_compile_CallLists(GLsizei n, GLenum type, const GLvoid *lists);
+void DLM_APIENTRY crdlm_compile_CallList(GLuint list);
+void DLM_APIENTRY crdlm_compile_CallLists(GLsizei n, GLenum type, const GLvoid *lists);
 
 #ifdef __cplusplus
 }
