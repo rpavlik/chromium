@@ -252,6 +252,7 @@ static GLboolean getNewTiling(int muralWidth, int muralHeight)
 	 * that if the tile size is fixed, but the rows and columns is variable,
 	 * the mural size will be a multiple of the tile size.
 	 */
+
 	tilesort_spu.muralWidth = maxX;
 	tilesort_spu.muralHeight = maxY;
 #endif
@@ -308,8 +309,21 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 		/*
 		 * XXX not sure what to do about RANDOM or WARPED_GRID option here.
 		 */
-		if (!getNewTiling(w, h))
-			defaultNewTiling(w, h);
+		
+		/*
+		 * For WARPED_GRID and local_tile_spec, the mural size should the size of 
+		 * the display. 
+		 *
+		 * If we proceed with defaultNewTiling(), the mural size ends up as the 
+		 * faked window size.
+		 */ 
+		if (tilesort_spu.bucketMode != WARPED_GRID)
+		{
+			if (!getNewTiling(w, h))
+			{
+				defaultNewTiling(w, h);
+			}
+		}
 	}
 
 	/* print new tile information */
