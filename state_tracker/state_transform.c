@@ -108,6 +108,13 @@ static void _math_transposed( GLdouble to[16], const GLdouble from[16] )
 	to[15] = from[15];
 }
 
+/* Return 1 if the matrices are equal, return 0 otherwise.
+ */
+static int matrix_equal(const CRmatrix *m, const CRmatrix *n)
+{
+	 return crMemcmp((void *) &(m->m00),
+									 (void *) &(n->m00), 16 * sizeof(GLfloat)) == 0;
+}
 
 static void
 init_matrix_stack(CRMatrixStack *stack, int maxDepth)
@@ -1299,72 +1306,10 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 		int td = to->modelViewStack.depth;
 		int fd = from->modelViewStack.depth;
 
-		diff_api.MatrixMode(GL_MODELVIEW);
-
-		if (fd > td)
+		if (td != fd ||
+				!matrix_equal(to->modelViewStack.top, from->modelViewStack.top))
 		{
-			for (i = td; i < fd; i++) 
-			{
-				diff_api.PopMatrix();
-			}
-			fd = td;
-		}
-
-		for (i = fd; i <= td; i++)
-		{
-			LOADMATRIX(to->modelViewStack.stack + i);
-			FILLDIRTY(t->modelviewMatrix);
-			FILLDIRTY(t->dirty);
-
-			/* Don't want to push on the current matrix */
-			if (i != to->modelViewStack.depth)
-				diff_api.PushMatrix();
-		}
-		CLEARDIRTY(t->modelviewMatrix, nbitID);
-	}
-
-	if ( (from->projectionStack.depth != to->projectionStack.depth) ||
-	      CHECKDIRTY(t->projectionMatrix, bitID) )
-	{
-		int td = to->projectionStack.depth;
-		int fd = from->projectionStack.depth;
-
-		diff_api.MatrixMode(GL_PROJECTION);
-
-		if (fd > td)
-		{
-			for (i = td; i < fd; i++) 
-			{
-				diff_api.PopMatrix();
-			}
-			fd = td;
-		}
-
-		for (i = fd; i <= td; i++)
-		{
-			LOADMATRIX(to->projectionStack.stack + i);
-			FILLDIRTY(t->projectionMatrix);
-			FILLDIRTY(t->dirty);
-
-			/* Don't want to push on the current matrix */
-			if (i != to->projectionStack.depth)
-				diff_api.PushMatrix();
-		}
-		CLEARDIRTY(t->projectionMatrix, nbitID);
-	}
-
-	for (i = 0 ; i < maxTextureUnits ; i++)
-		if (from->textureStack[i].depth != to->textureStack[i].depth)
-			checktex = 1;
-	
-	if ( checktex || CHECKDIRTY(t->textureMatrix, bitID) )
-	{
-		for (j = 0 ; j < maxTextureUnits ; j++)
-		{
-			int td = to->textureStack[j].depth;
-			int fd = from->textureStack[j].depth;
-
-			diff_api.MatrixMode(GL_TEXTURE);
+			diff_api.MatrixMode(GL_MODELVIEW);
 
 			if (fd > td)
 			{
@@ -1377,45 +1322,129 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 
 			for (i = fd; i <= td; i++)
 			{
-				diff_api.ActiveTextureARB( j + GL_TEXTURE0_ARB );
-				LOADMATRIX(to->textureStack[j].stack + i);
-				FILLDIRTY(t->textureMatrix);
+				LOADMATRIX(to->modelViewStack.stack + i);
+				FILLDIRTY(t->modelviewMatrix);
 				FILLDIRTY(t->dirty);
-	
+
 				/* Don't want to push on the current matrix */
-				if (i != to->textureStack[j].depth)
+				if (i != to->modelViewStack.depth)
 					diff_api.PushMatrix();
 			}
 		}
+		CLEARDIRTY(t->modelviewMatrix, nbitID);
+	}
+
+	/* Projection matrix */
+	if ( (from->projectionStack.depth != to->projectionStack.depth) ||
+	      CHECKDIRTY(t->projectionMatrix, bitID) )
+	{
+		int td = to->projectionStack.depth;
+		int fd = from->projectionStack.depth;
+
+		if (td != fd ||
+				!matrix_equal(to->projectionStack.top, from->projectionStack.top)) {
+
+			diff_api.MatrixMode(GL_PROJECTION);
+
+			if (fd > td)
+			{
+				for (i = td; i < fd; i++) 
+				{
+					diff_api.PopMatrix();
+				}
+				fd = td;
+			}
+
+			for (i = fd; i <= td; i++)
+			{
+				LOADMATRIX(to->projectionStack.stack + i);
+				FILLDIRTY(t->projectionMatrix);
+				FILLDIRTY(t->dirty);
+
+				/* Don't want to push on the current matrix */
+				if (i != to->projectionStack.depth)
+					diff_api.PushMatrix();
+			}
+		}
+		CLEARDIRTY(t->projectionMatrix, nbitID);
+	}
+
+	/* Texture matrices */
+	for (i = 0 ; i < maxTextureUnits ; i++)
+		if (from->textureStack[i].depth != to->textureStack[i].depth)
+			checktex = 1;
+	
+	if ( checktex || CHECKDIRTY(t->textureMatrix, bitID) )
+	{
+		for (j = 0 ; j < maxTextureUnits ; j++)
+		{
+			int td = to->textureStack[j].depth;
+			int fd = from->textureStack[j].depth;
+
+			if (td != fd ||
+					!matrix_equal(to->textureStack[j].top, from->textureStack[j].top))
+			{
+				diff_api.MatrixMode(GL_TEXTURE);
+
+				if (fd > td)
+				{
+					for (i = td; i < fd; i++) 
+					{
+						diff_api.PopMatrix();
+					}
+					fd = td;
+				}
+
+				diff_api.ActiveTextureARB( j + GL_TEXTURE0_ARB );
+				for (i = fd; i <= td; i++)
+				{
+					LOADMATRIX(to->textureStack[j].stack + i);
+					FILLDIRTY(t->textureMatrix);
+					FILLDIRTY(t->dirty);
+
+					/* Don't want to push on the current matrix */
+					if (i != to->textureStack[j].depth)
+						diff_api.PushMatrix();
+				}
+			}
+		}
+
+		/* Since we were mucking with the active texture unit above set it to the
+		 * proper value now.  
+		 */
+		diff_api.ActiveTextureARB(GL_TEXTURE0_ARB + toCtx->texture.curTextureUnit);
 		CLEARDIRTY(t->textureMatrix, nbitID);
 	}
 
+	/* Color matrix */
 	if ( (from->colorStack.depth != to->colorStack.depth) ||
 	      CHECKDIRTY(t->colorMatrix, bitID) )
 	{
 		int td = to->colorStack.depth;
 		int fd = from->colorStack.depth;
-
-		diff_api.MatrixMode(GL_COLOR);
-
-		if (fd > td)
+		if (td != fd || !matrix_equal(to->colorStack.top, from->colorStack.top))
 		{
-			for (i = td; i < fd; i++) 
+			diff_api.MatrixMode(GL_COLOR);
+
+			if (fd > td)
 			{
-				diff_api.PopMatrix();
+				for (i = td; i < fd; i++) 
+				{
+					diff_api.PopMatrix();
+				}
+				fd = td;
 			}
-			fd = td;
-		}
 
-		for (i = fd; i <= td; i++)
-		{
-			LOADMATRIX(to->colorStack.stack + i);
-			FILLDIRTY(t->colorMatrix);
-			FILLDIRTY(t->dirty);
+			for (i = fd; i <= td; i++)
+			{
+				LOADMATRIX(to->colorStack.stack + i);
+				FILLDIRTY(t->colorMatrix);
+				FILLDIRTY(t->dirty);
 
-			/* Don't want to push on the current matrix */
-			if (i != to->colorStack.depth)
-				diff_api.PushMatrix();
+				/* Don't want to push on the current matrix */
+				if (i != to->colorStack.depth)
+					diff_api.PushMatrix();
+			}
 		}
 		CLEARDIRTY(t->colorMatrix, nbitID);
 	}
@@ -1423,11 +1452,10 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 	to->modelViewProjectionValid = 0;
 	CLEARDIRTY(t->dirty, nbitID);
 
-	/* Since we were mucking with the current matrix and texture unit above 
+	/* Since we were mucking with the current matrix above 
 	 * set it to the proper value now.  
 	 */
 	diff_api.MatrixMode(to->matrixMode);
-	diff_api.ActiveTextureARB(GL_TEXTURE0_ARB + toCtx->texture.curTextureUnit);
 }
 
 void
@@ -1552,6 +1580,7 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 		CLEARDIRTY(t->modelviewMatrix, nbitID);
 	}
 
+	/* Projection matrix */
 	if ( (from->projectionStack.depth != to->projectionStack.depth) ||
 	      CHECKDIRTY(t->projectionMatrix, bitID) )
 	{
@@ -1585,6 +1614,7 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 		CLEARDIRTY(t->projectionMatrix, nbitID);
 	}
 
+	/* Texture matrices */
 	for (i = 0 ; i < maxTextureUnits ; i++)
 		if (from->textureStack[i].depth != to->textureStack[i].depth)
 			checktex = 1;
@@ -1627,6 +1657,7 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 		CLEARDIRTY(t->textureMatrix, nbitID);
 	}
 
+	/* Color matrix */
 	if ( (from->colorStack.depth != to->colorStack.depth) ||
 	      CHECKDIRTY(t->colorMatrix, bitID) )
 	{
