@@ -65,6 +65,10 @@
 #include <dirent.h>
 #endif
 
+#ifdef FreeBSD
+#include <signal.h>
+#endif
+
 #include "cr_mothership.h"
 #include "cr_mem.h"
 #include "cr_environment.h"

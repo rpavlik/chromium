@@ -5,7 +5,7 @@
 
 import entrypoints
 
-hacks = ["TexImage3D", "EdgeFlagPointer" ]
+hacks = []
 
 entrypoints.GenerateEntrypoints(hacks)
 

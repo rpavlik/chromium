@@ -153,7 +153,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
         int       pixsize;
         GLuint      alen, plen;
         int       r, rc;
-        ulong     zliblen;
+        unsigned long     zliblen;
         int       zlen;
         ZTYPE     ztype;
         FBTYPE    FBtype;
@@ -315,7 +315,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
 
         case ZLIB:  /* use gnu zlib compression */
 
-             zliblen = (ulong) zlen;
+             zliblen = (unsigned long) zlen;
              rc = compress2(zpix_spu.zBuf[FBtype], &zliblen,
                             zpix_spu.b.dBuf[FBtype],
                             plen, zpix_spu.ztype_parm);
@@ -541,7 +541,7 @@ void ZPIXSPU_APIENTRY zpixZPixCR( GLsizei width,
                                 GLint   zlen, 
                                 const GLvoid  *zpixels )
 {
-        ulong   zldlen, zliblen;
+        unsigned long   zldlen, zliblen;
         GLuint    alen, plen;
         GLuint    *p_fb;
         GLuint    *p_dif;
@@ -689,8 +689,8 @@ void ZPIXSPU_APIENTRY zpixZPixCR( GLsizei width,
        case ZLIB:
            /* Decompress and then DrawPixels */
 
-            zliblen = (ulong) zlen;
-            zldlen  = (ulong) dlen;
+            zliblen = (unsigned long) zlen;
+            zldlen  = (unsigned long) dlen;
 
             rc = uncompress(zpix_spu.b.dBuf[FBtype], &zldlen, zpixels, zliblen);
 

@@ -62,7 +62,7 @@
 
 #ifdef DARWIN
 #include <stddef.h>
-#else
+#elif !defined(FreeBSD)
 #include <malloc.h>  /* to get ptrdiff_t used below */
 #endif
 
