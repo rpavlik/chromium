@@ -323,6 +323,28 @@ void crFreeHashtable( CRHashTable *hash, CRHashtableCallback deleteFunc )
 }
 
 
+void crHashtableWalk( CRHashTable *hash, CRHashtableWalkCallback walkFunc , void *dataPtr2)
+{
+	int i;
+	CRHashNode *entry;
+	void *dataPtr1;
+
+	if ( !hash) return;
+
+	for ( i = 0; i < CR_NUM_BUCKETS; i++ )
+	{
+		entry =  hash->buckets[i];
+		if ( entry ) 
+		{
+			dataPtr1 = entry->data;
+			entry = entry->next;
+			if (dataPtr1 && walkFunc) {
+				(*walkFunc)( dataPtr2, dataPtr1 );
+			}
+		}
+	}
+}
+
 static unsigned int crHash( unsigned int key )
 {
 	return key % CR_NUM_BUCKETS;

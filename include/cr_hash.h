@@ -17,6 +17,8 @@ typedef struct CRHashTable CRHashTable;
 
 /* Callback function used for freeing/deleting table entries */
 typedef void (*CRHashtableCallback)(void *data);
+/* Callback function used for walking through table entries */
+typedef void (*CRHashtableWalkCallback)(void *data1, void *data2);
 
 CRHashTable *crAllocHashtable( void );
 void crFreeHashtable( CRHashTable *hash, CRHashtableCallback deleteCallback );
@@ -28,6 +30,7 @@ void *crHashtableSearch( const CRHashTable *h, unsigned int key );
 void crHashtableReplace( CRHashTable *h, unsigned int key, void *data, int free_mem );
 unsigned int crHashtableNumElements( const CRHashTable *h) ;
 GLboolean crHashtableIsKeyUsed( const CRHashTable *h, GLuint id );
+void crHashtableWalk( CRHashTable *hash, CRHashtableWalkCallback walkFunc , void *data);
 
 #ifdef __cplusplus
 } /* extern "C" */
