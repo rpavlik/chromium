@@ -19,14 +19,30 @@ void set_buffer_size( void *foo, const char *response )
 
 void set_poly_color( void *foo, const char *response )
 {
-	sscanf( response, "%f %f %f", &(hiddenline_spu.poly_r), 
-					&(hiddenline_spu.poly_g), &(hiddenline_spu.poly_b) );
+	float r, g, b;
+	if( response[0] == '[' )
+		sscanf( response, "[ %f, %f, %f ]", &r, &g, &b );
+	else if( crStrchr( response, ',' ))
+		sscanf( response, "%f, %f, %f", &r, &g, &b );
+	else
+		sscanf( response, "%f %f %f", &r, &g, &b );
+	hiddenline_spu.poly_r = r;
+	hiddenline_spu.poly_g = g;
+	hiddenline_spu.poly_b = b;
 }
 
 void set_line_color( void *foo, const char *response )
 {
-	sscanf( response, "%f %f %f", &(hiddenline_spu.line_r), 
-					&(hiddenline_spu.line_g), &(hiddenline_spu.line_b) );
+	float r, g, b;
+	if( response[0] == '[' )
+		sscanf( response, "[ %f, %f, %f ]", &r, &g, &b );
+	else if( crStrchr( response, ',' ))
+		sscanf( response, "%f, %f, %f", &r, &g, &b );
+	else
+		sscanf( response, "%f %f %f", &r, &g, &b );
+	hiddenline_spu.line_r = r;
+	hiddenline_spu.line_g = g;
+	hiddenline_spu.line_b = b;
 }
 
 void set_line_width( void *foo, const char *response )
@@ -40,16 +56,16 @@ void set_line_width( void *foo, const char *response )
 SPUOptions hiddenlineSPUOptions[] = {
 
 	{ "buffer_size", CR_INT, 1, "32768", "128", "1048576", 
-		"Buffer Size (bytes)", (SPUOptionCB)set_buffer_size },
+	  "Buffer Size (bytes)", (SPUOptionCB)set_buffer_size },
 
 	{ "poly_color", CR_FLOAT, 3, ".75, .75, 0", "0, 0, 0", "1, 1, 1", 
-		"Polygon Color (r, g, b)", (SPUOptionCB)set_poly_color },
+	  "Polygon Color (r, g, b)", (SPUOptionCB)set_poly_color },
 
 	{ "line_color", CR_FLOAT, 3, "0, 0, 0", "0, 0, 0", "1, 1, 1", 
-		"Line Color (r, g, b)", (SPUOptionCB)set_line_color },
+	  "Line Color (r, g, b)", (SPUOptionCB)set_line_color },
 
 	{ "line_width", CR_FLOAT, 1, "1", "0", "20", 
-		"Line Width", (SPUOptionCB)set_line_width },
+	  "Line Width", (SPUOptionCB)set_line_width },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL }
 };
