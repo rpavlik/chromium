@@ -39,13 +39,15 @@ GLuint __evaluator_components( GLenum target )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum query, GLdouble *v )
 {
-	int evalcomp = __evaluator_components( target );
-	GLdouble coeffs[evalcomp];
+	GLdouble *coeffs;
 	GLdouble order[2];
 	GLdouble domain[4];
 	GLdouble *retptr = NULL;
 	int dimension = 0;
 	unsigned int size = sizeof(GLdouble);
+	int evalcomp = __evaluator_components(target);
+
+	coeffs = (GLdouble *)crAlloc(sizeof(GLdouble) * evalcomp);
 
 	(void) v;
 
@@ -92,7 +94,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum qu
 			break;
 		case GL_COEFF:
 			cr_server.head_spu->dispatch_table.GetMapdv( target, query, coeffs );
-			retptr = &(coeffs[0]);
+			retptr = coeffs;
 			size *= evalcomp;
 			size *= dimension;
 			break;
@@ -102,17 +104,23 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum qu
 	}
 			
 	crServerReturnValue( retptr, size );
+	if (query == GL_COEFF)
+	{
+		crFree(coeffs);
+	}
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum query, GLfloat *v )
 {
-	int evalcomp = __evaluator_components( target );
-	GLfloat coeffs[evalcomp];
+	GLfloat *coeffs;
 	GLfloat order[2];
 	GLfloat domain[4];
 	GLfloat *retptr = NULL;
 	int dimension = 0;
 	unsigned int size = sizeof(GLfloat);
+	int evalcomp = __evaluator_components(target);
+
+	coeffs = (GLfloat *)crAlloc(sizeof(GLdouble) * evalcomp);
 
 	(void) v;
 	switch( target )
@@ -158,7 +166,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum qu
 			break;
 		case GL_COEFF:
 			cr_server.head_spu->dispatch_table.GetMapfv( target, query, coeffs );
-			retptr = &(coeffs[0]);
+			retptr = coeffs;
 			size *= evalcomp;
 			size *= dimension;
 			break;
@@ -168,17 +176,23 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum qu
 	}
 			
 	crServerReturnValue( retptr, size );
+	if (query == GL_COEFF)
+	{
+		crFree(coeffs);
+	}
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum query, GLint *v )
 {
-	int evalcomp = __evaluator_components( target );
-	GLint coeffs[evalcomp];
+	GLint *coeffs;
 	GLint order[2];
 	GLint domain[4];
 	GLint *retptr = NULL;
 	int dimension = 0;
 	unsigned int size = sizeof(GLint);
+	int evalcomp = __evaluator_components(target);
+
+	coeffs = (GLint *)crAlloc(sizeof(GLdouble) * evalcomp);
 
 	(void) v;
 	switch( target )
@@ -224,7 +238,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum qu
 			break;
 		case GL_COEFF:
 			cr_server.head_spu->dispatch_table.GetMapiv( target, query, coeffs );
-			retptr = &(coeffs[0]);
+			retptr = coeffs;
 			size *= evalcomp;
 			size *= dimension;
 			break;
@@ -234,5 +248,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum qu
 	}
 			
 	crServerReturnValue( retptr, size );
+	if (query == GL_COEFF)
+	{
+		crFree(coeffs);
+	}
 }
 
