@@ -29,10 +29,11 @@ float colors[7][4] = {
 
 static const int MASTER_BARRIER = 100;
 
-crCreateContextProc crCreateContext;
-crMakeCurrentProc   crMakeCurrent;
-crSwapBuffersProc   crSwapBuffers;
+crCreateContextProc glCreateContextCR;
+crMakeCurrentProc   glMakeCurrentCR;
+crSwapBuffersProc   glSwapBuffersCR;
 
+glChromiumParametervCRProc glChromiumParametervCR;
 glBarrierCreateCRProc glBarrierCreateCR;
 glBarrierExecCRProc   glBarrierExecCR;
 
@@ -144,21 +145,22 @@ int main(int argc, char *argv[])
 		crError( "Bogus rank: %d (size = %d)", rank, size );
 	}
 
-#define LOAD( x ) x## = (x##Proc) crGetProcAddress( #x )
+#define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
 
-	LOAD( crCreateContext );
-	LOAD( crMakeCurrent );
-	LOAD( crSwapBuffers );
+	LOAD( CreateContext );
+	LOAD( MakeCurrent );
+	LOAD( SwapBuffers );
 
-	ctx = crCreateContext(dpy, visual);
+	ctx = glCreateContextCR(dpy, visual);
 	if (ctx < 0) {
-		crError("crCreateContext() call failed!\n");
+		crError("glCreateContextCR() call failed!\n");
 		return 0;
 	}
-	crMakeCurrent(window, ctx);
+	glMakeCurrentCR(window, ctx);
 
-	LOAD( glBarrierCreateCR );
-	LOAD( glBarrierExecCR );
+#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
+	LOAD2( BarrierCreate );
+	LOAD2( BarrierExec );
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
 	glBarrierCreateCR( MASTER_BARRIER, size );
@@ -210,11 +212,11 @@ int main(int argc, char *argv[])
 		 */
 		if (swapFlag) {
 			/* really swap */
-			crSwapBuffers( window, 0 );
+			glSwapBuffersCR( window, 0 );
 		}
 		else {
 			/* don't really swap, just mark end of frame */
-			crSwapBuffers( window, CR_SUPPRESS_SWAP_BIT );
+			glSwapBuffersCR( window, CR_SUPPRESS_SWAP_BIT );
 		}
 
 		/* ARGH -- need to trick out the compiler this sucks. */
