@@ -579,7 +579,7 @@ static void pixeltransfer_flush(void)
 								 (!already_flushed[0]))
 			{
 				crStateEnable(GL_TEXTURE_1D);
-				tilesortspuBroadcastGeom(1);
+				tilesortspuFlush(thread);
 				crStateDisable(GL_TEXTURE_1D);
 				already_flushed[0] = 1;
 			}
@@ -589,7 +589,7 @@ static void pixeltransfer_flush(void)
 								 (!already_flushed[1]))
 			{
 				crStateEnable(GL_TEXTURE_2D);
-				tilesortspuBroadcastGeom(1);
+				tilesortspuFlush(thread);
 				crStateDisable(GL_TEXTURE_2D);
 				already_flushed[1] = 1;
  			}
@@ -600,7 +600,7 @@ static void pixeltransfer_flush(void)
 								 (!already_flushed[2]))
 			{
 				crStateEnable(GL_TEXTURE_3D);
-				tilesortspuBroadcastGeom(1);
+				tilesortspuFlush(thread);
 				crStateDisable(GL_TEXTURE_3D);
 				already_flushed[2] = 1;
 			}
@@ -613,7 +613,7 @@ static void pixeltransfer_flush(void)
 				if (ctx->extensions.ARB_texture_cube_map)
 				{
 					crStateEnable(GL_TEXTURE_CUBE_MAP_ARB);
-					tilesortspuBroadcastGeom(1);
+					tilesortspuFlush(thread);
 					crStateDisable(GL_TEXTURE_CUBE_MAP_ARB);
 					already_flushed[3] = 1;
 				}
@@ -627,7 +627,7 @@ static void pixeltransfer_flush(void)
 				if (ctx->extensions.ARB_texture_rectangle)
 				{
 					crStateEnable(GL_TEXTURE_RECTANGLE_NV);
-					tilesortspuBroadcastGeom(1);
+					tilesortspuFlush(thread);
 					crStateDisable(GL_TEXTURE_RECTANGLE_NV);
 					already_flushed[4] = 1;
 				}
