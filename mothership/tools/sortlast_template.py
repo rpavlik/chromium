@@ -784,7 +784,7 @@ class SortlastTemplate(templatebase.TemplateBase):
 		serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
 
 		# write app node options
-		substitutions = [ (crconfig.crbindir, 'crbindir') ]
+		substitutions = [ ('start_dir', 'crbindir') ]
 		clientNode.GetOptions().Write(file, "APP_OPTIONS", substitutions)
 
 		# write mothership options

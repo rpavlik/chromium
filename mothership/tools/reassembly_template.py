@@ -1277,7 +1277,8 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 
 		# write tilesort SPU options
 		tilesortSPU = FindTilesortSPU(mothership)
-		tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS")
+		substitutions = [ ("fake_window_dims", "[TILE_COLS * TILE_WIDTH, TILE_ROWS * TILE_HEIGHT]") ]
+		tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS", substitutions)
 
 		# write render SPU options
 		readbackSPU = FindReadbackSPU(mothership)

@@ -960,13 +960,8 @@ class TilesortTemplate(templatebase.TemplateBase):
 
 		# write tilesort SPU options
 		tilesortSPU = FindTilesortSPU(mothership)
-		fakeDims = tilesortSPU.GetOption('fake_window_dims')
-		if fakeDims[0] == 0 and fakeDims[1] == 0:
-			# set fake window dims to mural size
-			w = template.Columns * template.TileWidth
-			h = template.Rows * template.TileHeight
-			tilesortSPU.SetOption('fake_window_dims', [w, h])
-		tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS")
+		substitutions = [ ("fake_window_dims", "[TILE_COLS * TILE_WIDTH, TILE_ROWS * TILE_HEIGHT]") ]
+		tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS", substitutions)
 
 		# write render SPU options
 		renderSPU = FindRenderSPU(mothership)

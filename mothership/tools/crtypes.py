@@ -46,26 +46,24 @@ class Option:
 		new.Value = self.Value[:]
 		return new
 
-	def Write(self, file, prefixStr="", suffixStr="", subst=[]):
+	def Write(self, file, prefixStr="", suffixStr="", valueOverride=''):
 		"""Write the option to the file as
-		<prefix>("name" = "value")<suffix>."""
+		<prefix>("name" = "value")<suffix>.
+		If valueOverride is not the empty string use it to override the
+		option's current value."""
 		if self.Count == 1:
 			valueStr = str(self.Value[0])
 		else:
 			valueStr = str(self.Value)
 		# do value substitutions (crbindir)
-		replaced = 0
-		for (old, new) in subst:
-			if valueStr == old:
-				valueStr = new
-				replaced = 1
-				break
+		if valueOverride:
+			valueStr = valueOverride
 		# write the option
 		if self.Type == "FLOAT" or self.Type == "INT" or self.Type == "BOOL":
 			file.write(prefixStr + '("' + self.Name + '", ' + valueStr + ')' + suffixStr + '\n')
 		elif self.Type == "STRING":
 			# XXX replace " chars with ' chars
-			if replaced:
+			if valueOverride:
 				file.write(prefixStr + '("' + self.Name + '", ' + valueStr + ')' + suffixStr + '\n')
 			else:
 				file.write(prefixStr + '("' + self.Name + '", "' + valueStr + '")' + suffixStr + '\n')
@@ -192,10 +190,20 @@ class OptionList:
 			print "%s = %s" % (opt.Name, str(opt.Value))
 		
 	def Write(self, file, name, substitutions=[]):
-		"""Write the list of options to the given file handle."""
+		"""Write the list of options to the given file handle.
+		substitutions is an optional list of tuples ('name', 'value') which
+		specify special values to override those in the option list.
+		'name' is the option name and 'value' is the overriding value
+		expressed as a _string_."""
 		file.write("%s = [\n" % name)
 		for opt in self.__Options:
-			opt.Write(file, '\t', ',', substitutions)
+			# check if we need to put in a substitute value for this option
+			valueOverride = ''
+			for (name, newVal) in substitutions:
+				if opt.Name == name:
+					valueOverride = newVal
+					break
+			opt.Write(file, '\t', ',', valueOverride)
 		file.write("]\n")
 
 	def Read(self, file, substitutions=[]):
