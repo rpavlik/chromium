@@ -68,6 +68,9 @@ LDFLAGS += -L/usr/X11R6/lib -lGLU -lGL -lXmu -lXi -lX11
 endif
 endif
 
+ifdef MATH
+LDFLAGS += -lm
+endif
 
 OBJDIR := $(BUILDDIR)/$(ARCH)
 DEPDIR := $(BUILDDIR)/$(ARCH)/dependencies
