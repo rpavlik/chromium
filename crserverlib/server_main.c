@@ -26,6 +26,7 @@ static void crServerTearDown( void )
 	unsigned int i, num_elements;
 
 	/* Free all context info */
+	crStateSetCurrent( NULL );
 	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
 		if (cr_server.context[i] != NULL) {
 			crStateDestroyContext( cr_server.context[i] );
