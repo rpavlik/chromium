@@ -821,9 +821,7 @@ int crNetRecv( void )
 
 	found_work += crTCPIPRecv( );
 
-#if 0 /* causing some problems currently.... */
 	found_work += crUDPTCPIPRecv( );
-#endif
 
 	found_work += crFileRecv( );
 

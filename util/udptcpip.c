@@ -487,6 +487,9 @@ int crUDPTCPIPRecv( void )
 			 */
 			CRSocket sock = conn->tcp_socket;
 
+			if (conn->type != CR_UDPTCPIP)
+				continue;
+
 			if ( (int) sock + 1 > max_fd )
 				max_fd = (int) sock + 1;
 			FD_SET( sock, &read_fds );
