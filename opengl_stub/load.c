@@ -254,7 +254,7 @@ void StubInit(void)
 	if (conn && crMothershipGetFakerParam( conn, response, "spu_dir" ) && crStrlen(response) > 0)
 #endif
 	{
-		spu_dir = response;
+		spu_dir = crStrdup(response);
 	}
 	else
 	{
@@ -304,6 +304,8 @@ void StubInit(void)
 
 	crFree( spuchain );
 	crFree( spu_ids );
+	for(i=0;i<num_spus;++i) crFree(spu_names[i]);
+	crFree(spu_dir);
 	crFree( spu_names );
 
 	crSPUInitDispatchTable( &glim );
