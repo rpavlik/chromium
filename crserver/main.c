@@ -22,7 +22,7 @@ void crServerClose( unsigned int id )
 	(void) id;
 }
 
-void ServerCleanup( int sigio )
+void crServerCleanup( int sigio )
 {
 	SPU *the_spu = cr_server.head_spu;
 
@@ -56,9 +56,9 @@ int main( int argc, char *argv[] )
 		}
 	}
 
-	signal( SIGTERM, ServerCleanup );
+	signal( SIGTERM, crServerCleanup );
 #ifndef WINDOWS
-	signal( SIGPIPE, ServerCleanup );
+	signal( SIGPIPE, crServerCleanup );
 #endif
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
