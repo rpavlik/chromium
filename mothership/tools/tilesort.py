@@ -107,7 +107,7 @@ ServerOptions = [
 ]
 
 GlobalOptions = [
-	("minimum_window_size", "int", 2, (0,0), "Minimum Chromium App Window Size"),
+	("minimum_window_size", "string", 1, "0 0", "Minimum Chromium App Window Size (w h)"),
 	("match_window_title", "string", 1, "", "Match App Window Title"),
 	("show_cursor", "bool", 1, false, "Show Virtual cursor"),
 	("MTU", "int", 1, (1024*1024), "Mean Transmission Unit (bytes)"),
@@ -193,14 +193,19 @@ for row in range(TILE_ROWS):
 		renderspu.Conf('system_gl_path', RENDER_system_gl_path)
 
 		if singleServer:
-			renderspu.Conf('window_geometry', 1.1 * col * TILE_WIDTH, 1.1 * row * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
+			renderspu.Conf('window_geometry',
+						   int(1.1 * col * TILE_WIDTH),
+						   int(1.1 * row * TILE_HEIGHT),
+						   TILE_WIDTH, TILE_HEIGHT)
 			host = HOSTNAME
 		else:
 			renderspu.Conf('window_geometry', 0, 0, TILE_WIDTH, TILE_HEIGHT)
 			host = MakeHostname(HOSTNAME, FIRSTHOST + index)
 		servernode = CRNetworkNode(host)
 
-		servernode.AddTile(col * TILE_WIDTH, (TILE_ROWS - row - 1) * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
+		servernode.AddTile(col * TILE_WIDTH,
+						   (TILE_ROWS - row - 1) * TILE_HEIGHT,
+						   TILE_WIDTH, TILE_HEIGHT)
 
 		servernode.AddSPU(renderspu)
 		servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
@@ -214,9 +219,9 @@ for row in range(TILE_ROWS):
 
 
 cr.AddNode(clientnode)
-#cr.SetParam('minimum_window_size', fix-me)
+cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
 cr.SetParam('match_window_title', GLOBAL_match_window_title)
-#cr.SetParam('show_cursor', GLOBAL_show_cursor)
+cr.SetParam('show_cursor', GLOBAL_show_cursor)
 cr.Go()
 
 """
