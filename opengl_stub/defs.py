@@ -44,4 +44,7 @@ for func_name in ( "wglChoosePixelFormat",
 		   "wglChoosePixelFormat" ):
     print func_name + " = " + func_name + "_prox";
 
+print "crCreateContext"
+print "crMakeCurrent"
+print "crSwapBuffers"
 #print "DllMain"

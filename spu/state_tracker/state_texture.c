@@ -101,6 +101,12 @@ void crStateTextureInit(CRTextureState *t)
 	crStateTextureInitTextureObj(t, &(t->base2D), 0);
 	crStateTextureInitTextureObj(t, &(t->base3D), 0);
 
+	t->base1D.target = GL_TEXTURE_1D;
+	t->base2D.target = GL_TEXTURE_2D;
+#if 0
+	t->base3D.target = GL_TEXTURE_3D;
+#endif
+
 	t->gen.s = GL_EYE_LINEAR;
 	t->gen.t = GL_EYE_LINEAR;
 	t->gen.p = GL_EYE_LINEAR;
