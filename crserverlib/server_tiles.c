@@ -28,6 +28,9 @@ initializeExtents(CRMuralInfo *mural)
 	y = 0;
 	y_max = 0;
 
+	CRASSERT(mural->width > 0);
+	CRASSERT(mural->height > 0);
+
 	/* Basically just copy the server's list of tiles to the RunQueue
 	 * and compute some derived tile information.
 	 */
@@ -512,8 +515,14 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 	}
 	else
 	{
-		crWarning
-			("It looks like there are nothing but file clients.  That suits me just fine.");
+		crWarning("It looks like there are nothing but file clients."
+							"  That suits me just fine.");
+		CRASSERT(mural->numExtents > 0);
+		/* Set mural size equal to extent 0's image window size */
+		mural->width = (mural->extents[0].imagewindow.x2 -
+										mural->extents[0].imagewindow.x1);
+		mural->height = (mural->extents[0].imagewindow.y2 -
+										 mural->extents[0].imagewindow.y1);
 	}
 
 	/* Prepare data structures for tiling/bucketing */
