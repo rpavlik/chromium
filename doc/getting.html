@@ -5,21 +5,25 @@
 <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
 <meta name="ProgId" content="FrontPage.Editor.Document">
 <title>New Page 1</title>
-<base target="_blank">
+<base target="new_window">
+<link rel="stylesheet" type="text/css" href="chromium.css">
 </head>
 
 <body>
 
-<p align="center"><font size="7">Getting Chromium</font></p>
-<p>Chromium is maintained at <a href="http://www.sourceforge.net/projects/chromium" target="_blank">SourceForge</a>.&nbsp;
+<p class="PageHeading">Getting Chromium</p>
+
+<p>Chromium is maintained at <a href="http://www.sourceforge.net/projects/chromium">SourceForge</a>.&nbsp;
 In addition to the source code, you'll also find a bug tracking system and three
 mailing lists.&nbsp; Even if you're not a developer, you may wish to subscribe
 to chromium-announce to receive information about updated releases.</p>
-<p align="center"><font size="5">Obtaining source code</font></p>
+
+<p class="PageSubHeading">Obtaining source code</p>
+
 <p>To get the source code, you do <i>not</i> have to be a registered SourceForge
 user.&nbsp; You can get the source in one of two ways:</p>
 <p>First, you can download the actual alpha release snapshot, which is available
-from the <a href="http://www.sourceforge.net/projects/chromium" target="_blank">main
+from the <a href="http://www.sourceforge.net/projects/chromium">main
 project page</a>, under &quot;Latest File Releases&quot;.&nbsp; This will be a
 gzip'ed tar file of the entire source tree on the release date, along with a
 copy of this documentation.&nbsp; Simply extract the archive and you've got
@@ -30,23 +34,25 @@ this release and the BETA release scheduled for October, many bugs will surely
 be fixed, and many new features and modules will be added.&nbsp; Announcements
 will be sent to chromium-announce when particularly interesting features are
 available or particularly bad bugs are fixed.&nbsp; To check out the source
-code, just follow the instructions on the &quot;CVS repository&quot; link near
-the bottom of the <a href="http://www.sourceforge.net/projects/chromium" target="_blank">main
-project page</a>.&nbsp; If you're unfamiliar with CVS, useful documentation is
-available in &quot;Open Source Development with CVS&quot;.&nbsp; Most of the
-technical documentation in this book is free under the terms of the GPL, and is
-available from <a href="http://cvsbook.red-bean.com" target="_blank">cvsbook.red-bean.com</a>.</p>
-<p align="center"><font size="5">Compiling the source</font></p>
+code, just follow the instructions on the <a
+href="http://sourceforge.net/cvs/?group_id=16529">CVS repository
+page</a>.&nbsp; If you're unfamiliar with CVS, useful documentation is
+available in <i><a href="http://cvsbook.red-bean.com/cvsbook.html">Open Source
+Development with CVS</a></i>.</p>
+
+<p class="PageSubHeading">Compiling the source</p>
+
 <p>All of Chromium lives under a directory called &quot;<code>cr</code>&quot;.&nbsp; Change
-to that directory, and type &quot;<code>make</code>&quot;.&nbsp; You will need <a href="http://www.python.org" target="_blank">Python
+to that directory, and type &quot;<code>make</code>&quot;.&nbsp; You will need <a href="http://www.python.org">Python
 2.0</a> or later, and <a href="http://www.perl.org">Perl 5.0</a> or later to
 build on any platform.&nbsp; Binaries are put in <code> cr/bin/&lt;ARCH&gt;</code>, where
 <code>
-&lt;ARCH&gt;</code> is the name of your architecture (actually, it's what's returned by
-the &quot;<code>uname</code>&quot; command).&nbsp; You should add this directory to your
-<code>PATH</code>.&nbsp; (On Windows, <a href="http://sources.redhat.com/cygwin/">cygwin's</a>
-&quot;<code>uname</code>&quot; returns something long and silly, so it gets re-written to
-&quot;<code>WIN_NT</code>&quot;).</p>
+&lt;ARCH&gt;</code> is the name of your architecture (Actually, it's what's
+returned by the &quot;<code>uname</code>&quot; command.&nbsp; Except on
+Windows, where <a href="http://sources.redhat.com/cygwin/">cygwin's</a>
+&quot;<code>uname</code>&quot; returns something long and silly, so it gets
+re-written to &quot;<code>WIN_NT</code>&quot;.).&nbsp; You should add this
+directory to your <code>PATH</code>.</p>
 <p>NOTE: If you do not have <a href="http://www.myri.com/scs/index.html">Myrinet
 GM libraries</a>, you should turn off GM support in the file <code>cr/util/Makefile</code>
 before building.&nbsp; There are instructions in that file.</p>
@@ -67,8 +73,7 @@ before building.&nbsp; There are instructions in that file.</p>
 </ul>
 <p>Note that Chromium version ALPHA does not support byte-swapping of arguments,
 so all machines involved in the cluster have to have the same endianness.&nbsp;
-This simply means that you can't (currently) render between IRIX and
-Linux.&nbsp; This will be fixed for the next release.</p>
+This will be fixed for the next release.</p>
 
 </body>
 

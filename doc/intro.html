@@ -5,14 +5,15 @@
 <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
 <meta name="ProgId" content="FrontPage.Editor.Document">
 <title>New Page 1</title>
-<base target="_blank">
+<base target="new_window">
+<link rel="stylesheet" type="text/css" href="chromium.css">
 </head>
 
 <body bgcolor="#FFFFFF">
 
-<p align="center"><font size="7">Chromium Introduction</font></p>
+<p class="PageHeading">Chromium Introduction</p>
 <p>Chromium is a new system for interactive rendering on clusters of
-workstations.&nbsp; It is a completely extensible architecture, so new parallel
+workstations.&nbsp; It is a completely extensible architecture, so that parallel
 rendering algorithms can be implemented on clusters with ease.&nbsp; This
 release provides the ability to do parallel sort-first rendering in the style of
 <a href="http://graphics.stanford.edu/software/wiregl">WireGL</a>.&nbsp; Future
@@ -28,22 +29,23 @@ replacing it with Chromium for two reasons:</p>
 <p>This documentation is meant to serve as a guide for early adopters of the
 Chromium system.&nbsp; <i>The July release is an alpha release!</i>&nbsp; It
 will have many bugs in it, and certain features will not work.&nbsp; However,
-Chromium cannot be a full success without the participation of the community,
+Chromium cannot be a full success without the participation of the user community,
 and early adoption of this technology is the best way to make an impact on the
-core design or modules early.</p>
+core design or modules.</p>
 <p>Up to this point, Chromium is mainly the product of one graduate student, <a href="http://graphics.stanford.edu/~humper">Greg
 Humphreys</a>.&nbsp; However, a few other individuals deserve special
 mention.&nbsp; <a href="http://graphics.stanford.edu/~ianbuck/">Ian Buck</a>
 wrote the original state tracking and bucketing system for WireGL, which the
 Chromium &quot;tilesort&quot; SPU and &quot;state_tracker&quot; library are
 loosely based on.&nbsp; Ian has also been in charge of the WireGL release
-process and maintenance for our 80+ users.&nbsp; <a href="http://graphics.stanford.edu/~eldridge/">Matthew
+process and maintenance for its 80+ users.&nbsp; <a href="http://graphics.stanford.edu/~eldridge/">Matthew
 Eldridge</a> made significant improvements to WireGL's networking libraries and
 the overall system design, and his design philosophy (if not his code) lives on
 in Chromium.&nbsp; <a href="http://www.ccntech.com/">Chris Niederauer</a> did
-most of the implementation of the OpenGL extensions, including all of the NVIDIA
-specific ones.&nbsp; He also did a lot of really useful physical labor for us
-last summer when we were building our cluster. </p>
+most of the implementation of the OpenGL extensions, including all of the
+NVIDIA-specific ones.&nbsp; He also designed the Chromium logo and did a lot of
+really useful physical labor for us last summer when we were building our
+cluster. </p>
 
 </body>
 

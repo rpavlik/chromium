@@ -1,0 +1,7 @@
+.PageHeading { text-align: Center; font-size: 36pt }
+.CodeFrame { background-color: #E6E6E6 }
+.LineNumbers { font-family: Courier New; font-size: 10pt; text-align: right }
+.CodeListing { font-family: Courier New; color: #DD0000; font-size: 10pt }
+.PageSubHeading { text-align: Center; font-size: 24pt }
+.ProvidedThing { font-style: italic }
+.ProvidedDesc { margin-left: 36pt; margin-right: 72pt }

@@ -5,37 +5,37 @@
 <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
 <meta name="ProgId" content="FrontPage.Editor.Document">
 <title>New Page 1</title>
+<link rel="stylesheet" type="text/css" href="chromium.css">
 </head>
 
 <body>
 
-<p align="center"><font size="7">Your First Chromium Run</font></p>
+<p class="PageHeading">Your First Chromium Run</p>
 <p>Your first Chromium run will be something quite simple.&nbsp; One of the
-programs built during the compile of the Chromium system is called &quot;<code>fonttest</code>&quot; --
+programs built during the compile of the Chromium system is called &quot;<code>fonttest</code>&quot; -
 you can go ahead and run it now.&nbsp; If everything is OK, you should see a
 window appear with a text message in it.&nbsp; This window is using the system's
-OpenGL -- nothing Chromium-related has happened yet.&nbsp; To run this program
+OpenGL - nothing Chromium-related has happened yet.&nbsp; To run this program
 using Chromium, you will need to follow these three steps (you'll need three
 shell windows open):</p>
 <ol>
-  <li>Pieces of any Chromium run will need to know what they are supposed to be
+  <li>Components of any Chromium run will need to know what they are supposed to be
     doing.&nbsp; They get this information from the <i>configuration mothership</i>.&nbsp;
     The mothership is controlled by scripts written in the <a href="http://www.python.org" target="_blank">Python</a>
     programming language.&nbsp; One such script is located in <code> cr/mothership/configs/crdemo.conf</code>.&nbsp;&nbsp;<br>
     <br>
     <b>NOTE</b>: You must edit this file to point at the directory containing
-    binaries for Chromium.&nbsp; This should be self-explanatory at the top of
-    the file.&nbsp; I personally install things in a directory called
+    binaries for Chromium.&nbsp; 
+    I personally install things in a directory called
     &quot;C:\work&quot;, so if you installed things somewhere else, you need to
-    edit the value of <code>CR_BIN_DIR</code>.<br>
+    edit the value of <code>CR_BIN_DIR</code> at the top of the file.&nbsp; No other changes to the file should be necessary.<br>
     <br>
-    Once you have edited the configuration script to match your installation
-    location, change to the <code> cr/mothership/configs</code> directory, and type:<br>
+    Now change to the <code> cr/mothership/configs</code> directory, and type:<br>
     <br>
     <code>python crdemo.conf fonttest</code><br>
     <br>
     The mothership will now be running, and you should see a message to that
-    effect.<br>
+    effect.<br><br>
   </li>
   <li>In another window, start the Chromium server.&nbsp; From <i>any</i>
     directory, run<br>
@@ -50,11 +50,11 @@ shell windows open):</p>
     system's OpenGL implementation.&nbsp; Unfortunately, in Microsoft Windows,
     the created window doesn't listen to events, so you can't move it around or
     bring it to the front, which can be pretty annoying.&nbsp; This will be
-    fixed in a later release.<br>
+    fixed in a later release.<br><br>
   </li>
-  <li>In (yet) another window, start the Chromium &quot;application
+  <li>In a third window, start the Chromium &quot;application
     faker&quot;.&nbsp; This is a loader program that will start another
-    unmodified application running and make sure that it finds the Chromium
+    unmodified application and make sure that it finds the Chromium
     OpenGL shared library instead of the system's.&nbsp; From <i>any</i>
     directory, run<br>
     <br>
@@ -62,19 +62,20 @@ shell windows open):</p>
     <br>
     Again, the faker (and the OpenGL DLL, and the SPU's loaded by the OpenGL
     DLL) will all configure themselves by asking questions of the mothership
-    from step1.</li>
+    started in step 1.</li>
 </ol>
 
 <p>Once you run the application faker, you should get another blank window, and
 the text rendering should appear in the (previously blank) window from step
-2.&nbsp; The blank window belongs to the &quot;<code>fonttest</code>&quot;' program started by the
-application faker.&nbsp; As far as that application knows, it is rendering to
-that window.&nbsp; The Chromium OpenGL DLL intercepts all calls to OpenGL and
-sends them over the network (in this case, a TCP/IP connection to your local
-machine) to the Chromium server, where they are dispatched to the system.</p>
-<p>The Chromium run you have just done corresponds to the following graph of
+2.&nbsp; The blank window belongs to the <code>fonttest</code>
+program started by the application faker.&nbsp; As far as
+<code>fonttest</code> knows, it is rendering to the blank
+window.&nbsp; The Chromium OpenGL DLL intercepts all of <code>fonttest</code>'s calls to OpenGL and sends
+them over the network (in this case, a TCP/IP connection to your local machine)
+to the Chromium server, where they are dispatched to the system.</p> <p>The
+Chromium run you have just done corresponds to the following graph of
 nodes:</p>
-<p align="center"><img border="0" src="helloworld.gif"></p>
+<p align="center"><img border="0" src="helloworld.gif" width="662" height="193"></p>
 
 </body>
 

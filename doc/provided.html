@@ -5,122 +5,123 @@
 <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
 <meta name="ProgId" content="FrontPage.Editor.Document">
 <title>New Page 1</title>
+<link rel="stylesheet" type="text/css" href="chromium.css">
 </head>
 
 <body>
 
-<p align="center"><font size="7">What Comes With Chromium ALPHA?</font></p>
-<p align="left">Chromium can (thankfully) do more than just the <a href="helloworld.html">Hello,
-World</a> demo, even in this ALPHA release.&nbsp; In particular, it comes with a
-couple of other SPU's that let it behave like <a href="http://graphics.stanford.edu/software/wiregl">WireGL</a>
-with a few new features to boot.&nbsp; Note that since this is an ALPHA release,
+<p class="PageHeading"><font size="7">What Comes With Chromium ALPHA?</font></p>
+<p>Chromium can (thankfully) do more than just the <a href="helloworld.html">Hello,
+World</a> demo, even in this alpha release.&nbsp; In particular, it comes with a
+couple of other SPU's that let it behave like <a href="http://graphics.stanford.edu/software/wiregl" target="new_window">WireGL</a>
+with a few new features to boot.&nbsp; Note that since this is an alpha release,
 statements like &quot;the full OpenGL API&quot; or &quot;the full OpenGL
 graphics state&quot; should be taken with a grain of salt; some things haven't
 been fully implemented, and some things probably don't work right.</p>
-<p align="center"><font size="5">What you've seen so far</font></p>
+<p class="PageSubHeading"><font size="5">What you've seen so far</font></p>
 <p>If you've been reading the documentation in order, you've already seen a few
-crucial Chromium components, and those are (obviously) provided with the ALPHA
+crucial Chromium components, and those are (obviously) provided with the alpha
 release:</p>
 <ul>
-  <li><i>The configuration mothership<br>
-    &nbsp;&nbsp; </i> The mothership handles all configuration requests for all
-    components of the system.</li>
-  <li><i>Several example configuration scripts<br>
-    &nbsp;&nbsp;&nbsp; </i>The provided example scripts are the ones that I use
+  <li><p class="ProvidedThing">The configuration mothership</p> 
+    <p class="ProvidedDesc">The mothership handles all configuration requests for all
+    components of the system.</p></li>
+  <li><p class="ProvidedThing">Several example configuration scripts</p>
+  <p class="ProvidedDesc"> The provided example scripts are the ones that I use
     from day-to-day.&nbsp; Many of them are quite similar and just point at
     different demo directories, although some are set up specifically to drive
-    Stanford's display wall</li>
-  <li><i>A &quot;render&quot; SPU <br>
-    &nbsp;&nbsp; </i> This SPU hands all OpenGL calls to the system's OpenGL
-    implementation.</li>
-  <li><i>A &quot;pack&quot; SPU that generates a network stream<br>
-    &nbsp;&nbsp;&nbsp; </i>This SPU generates a streaming encoding of its OpenGL
+    Stanford's display wall</p></li>
+  <li><p class="ProvidedThing">A &quot;render&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU hands all OpenGL calls to the system's OpenGL
+    implementation.</p></li>
+  <li><p class="ProvidedThing">A &quot;pack&quot; SPU that generates a network stream</p>
+  <p class="ProvidedDesc"> This SPU generates a streaming encoding of its OpenGL
     calls.&nbsp; Although the calls are encoded verbatim (i.e., with no
     analysis), some state tracking is still necessary in order to properly
-    unpack pixel data for texture maps.</li>
-  <li><i>An OpenGL replacement library<br>
-    &nbsp;&nbsp;&nbsp; </i>This library &quot;fakes&quot; unmodified
+    unpack pixel data for texture maps.</p></li>
+  <li><p class="ProvidedThing">An OpenGL replacement library</p>
+  <p class="ProvidedDesc"> This library &quot;fakes&quot; unmodified
     applications into rendering to a SPU.&nbsp; Although SPU's implement the
-    OpenGL interface, they only actually export a very small number of
+    OpenGL interface, they actually only export a very small number of
     symbols.&nbsp; The SPU loader will create a collection of function pointers
     for the SPU's functions.&nbsp; The replacement library is necessary to
     actually resemble the system's OpenGL interface sufficiently to broker
     requests from applications to SPU's.&nbsp; Note that an application could
     easily load a SPU from disk itself and use it without the OpenGL library,
     which would be one possible way to render to a local screen and over a
-    network simultaneously.</li>
-  <li><i>An application launcher<br>
-    &nbsp;&nbsp; </i> The launcher, called &quot;<code>crappfaker</code>&quot;,
+    network simultaneously.</p></li>
+  <li><p class="ProvidedThing">An application launcher</p>
+  <p class="ProvidedDesc"> The launcher, called &quot;<code>crappfaker</code>&quot;,
     launches applications in a special way that causes them to load the OpenGL
-    replacement library rather than the system's library.</li>
-  <li><i>A network server</i> <br>
-    &nbsp;&nbsp;&nbsp; This server, called &quot;<code>crserver</code>&quot;, is
+    replacement library rather than the system's library.</p></li>
+  <li><p class="ProvidedThing">A network server</p>
+  <p class="ProvidedDesc"> This server, called &quot;<code>crserver</code>&quot;, is
     responsible for dispatching incoming blocks of encoded OpenGL commands to a
     chain of SPU's.&nbsp; In fact, as we will see, the network server is really
     a stream &quot;serializer&quot;.&nbsp; It is the job of the server to accept
-    streams from <i>multiple</i> clients, and context switch between them as
+    streams from multiple clients, and context switch between them as
     allowed by the <a href="parallelapplication.html">parallel API extensions</a>.&nbsp;
     In addition, a server can manage multiple tiles, and is responsible for
     re-decoding a block of work multiple times, with appropriate modifications
-    to the viewing matrices for multiple tiles.</li>
+    to the viewing matrices for multiple tiles.</p></li>
 </ul>
-<p align="center"><font size="5">Other SPU's</font></p>
+<p class="PageSubHeading"><font size="5">Other SPU's</font></p>
 <p>In addition to the SPU's shown so far, several more are provided.&nbsp; Some
 of the SPU's are intended to be used directly in a graph, and others are more
 useful as starting points for new SPU's, or SPU's to <a href="newspu.html">inherit
 from</a>.</p>
 <ul>
-  <li><i>The &quot;error&quot; SPU<br>
-    &nbsp;&nbsp; </i> This SPU will issue a fatal error on any OpenGL
+  <li><p class="ProvidedThing">The &quot;error&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will issue a fatal error on any OpenGL
     call.&nbsp; The error message will contain the name of the function
     called.&nbsp; This SPU is useful for handling &quot;impossible&quot;
     function calls.&nbsp; If the reader is already familiar with <a href="newspu.html">SPU
     inheritance</a>, all SPU's are implicitly a subSPU of the &quot;error&quot;
-    SPU.</li>
-  <li><i>The &quot;nop&quot; SPU<br>
-    &nbsp;&nbsp; </i> This SPU will silently discard all OpenGL calls.&nbsp;
+    SPU.</p></li>
+  <li><p class="ProvidedThing">The &quot;nop&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will silently discard all OpenGL calls.&nbsp;
     This SPU is most useful for understanding the performance of applications
     and cluster configurations.&nbsp; By replacing the &quot;render&quot; SPU
     with the &quot;nop&quot; SPU, time spent actually executing OpenGL commands
     can be eliminated.&nbsp; Similarly, the &quot;nop&quot; SPU can be used on
     the client to make all OpenGL calls &quot;free&quot;.&nbsp; This helps
-    establish a baseline for performance.</li>
-  <li><i>The &quot;passthrough&quot; SPU<br>
-    &nbsp;&nbsp; </i> This SPU will pass all calls to the next SPU in a
+    establish a baseline for performance.</p></li>
+  <li><p class="ProvidedThing">The &quot;passthrough&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will pass all calls to the next SPU in a
     chain.&nbsp; Note that it can therefore never appear as the last SPU in a
     chain (this is a checked, fatal error).&nbsp; This SPU is not useful by
     itself, but it is a very useful SPU to inherit from in order to implement a
     subset of the OpenGL API.&nbsp; An example of such a SPU is shown in the
-    &quot;<a href="newspu">Writing a new SPU</a>&quot; section.</li>
-  <li><i>The &quot;print&quot; SPU<br>
-    &nbsp;&nbsp; </i> This SPU was alluded to in the &quot;<a href="configscripts.html">Configuration
+    &quot;<a href="newspu.html">Writing a new SPU</a>&quot; section.</p></li>
+  <li><p class="ProvidedThing">The &quot;print&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU was mentioned in the &quot;<a href="configscripts.html">Configuration
     scripts</a>&quot; section.&nbsp; It produces a human-readable dump of all
     OpenGL calls, either to standard output (default), or to a file.&nbsp; This
     is an invaluable tool for debugging, although it does have a fairly serious
     impact on performance.&nbsp; Some attempt is also made to turn <code>GLenum</code>
-    types back into human-readable strings (thanks to <a href="http://graphics.stanford.edu/~kekoa">Kekoa
-    Proudfoot</a> for this code).</li>
-  <li><i>The &quot;template&quot; SPU<br>
-    &nbsp;&nbsp;&nbsp; </i>This SPU actually implements no functions (it is
+    types back into human-readable strings (thanks to <a href="http://graphics.stanford.edu/~kekoa" target="new_window">Kekoa
+    Proudfoot</a> for this code).</p></li>
+  <li><p class="ProvidedThing">The &quot;template&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU actually implements no functions (it is
     therefore exactly equivalent to the &quot;error&quot; SPU, due to the
     implicit inheritance).&nbsp; However, a script is provided to rename all
     files and update the source code to create a new SPU of a given name.&nbsp;
     Therefore, when creating a new SPU, a copy should be made of the <code>cr/spu/template</code>
     directory, and this script should be run.&nbsp; This is the approach used in
-    the &quot;<a href="newspu.html">Writing a new SPU</a>&quot; section.</li>
-  <li><i>The &quot;tilesort&quot; SPU<br>
-    &nbsp;&nbsp;&nbsp; </i>This SPU uses the techniques described in our <a href="http://graphics.stanford.edu/papers/clust_render/" target="_blank">SuperComputing
+    the &quot;<a href="newspu.html">Writing a new SPU</a>&quot; section.</p></li>
+  <li><p class="ProvidedThing">The &quot;tilesort&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU uses the techniques described in our <a href="http://graphics.stanford.edu/papers/clust_render/" target="new_window">SuperComputing
     2000 paper</a> to drive a tiled display efficiently from a single serial
     stream of OpenGL commands.&nbsp; One-third of the logic of WireGL can be
     found in this library (the other thirds being in the server, and the state
-    tracker, listed below).</li>
+    tracker, listed below).</p></li>
 </ul>
-<p align="center"><font size="5">Useful libraries</font></p>
+<p class="PageSubHeading"><font size="5">Useful libraries</font></p>
 <p>Chromium also builds several shared libraries which can be used by any
 component.</p>
 <ul>
-  <li><i>An &quot;application stub&quot; library for Chromium-aware applications<br>
-    &nbsp;&nbsp;&nbsp; </i>This library can be used by Chromium-aware
+  <li><p class="ProvidedThing">An &quot;application stub&quot; library for Chromium-aware applications</p>
+  <p class="ProvidedDesc"> This library can be used by Chromium-aware
     applications that wish, for instance, to use the Parallel API.&nbsp; It also
     provides routines for creating an OpenGL context without ever opening a
     window, a useful thing for a distributed application to do (since it doesn't
@@ -130,15 +131,15 @@ component.</p>
     the Chromium-specific functions as OpenGL extensions and using something
     like <code>wglGetProcAddress</code> to extract the function pointers, since
     the application stub library is portable and applications don't need to
-    concern themselves with the type of system they are running on.</li>
-  <li><i>A client library for the configuration mothership<br>
-    &nbsp;&nbsp; </i> Applications that need to talk to the configuration
+    concern themselves with the type of system they are running on.</p></li>
+  <li><p class="ProvidedThing">A client library for the configuration mothership</p>
+  <p class="ProvidedDesc"> Applications that need to talk to the configuration
     mothership will use this library to make queries.&nbsp; It hides the fact
     that the mothership is possibly on a remote machine through an opaque &quot;<code>CRConnection</code>&quot;
     data structure.&nbsp; New SPU's or other system components can access any
-    piece of configuration through this library.</li>
-  <li><i>A library for packing WireGL-format network buffers<br>
-    &nbsp;&nbsp; </i> This library provides a &quot;packing&quot; function for
+    piece of configuration through this library.</p></li>
+  <li><p class="ProvidedThing">A library for packing WireGL-format network buffers</p>
+  <p class="ProvidedDesc"> This library provides a &quot;packing&quot; function for
     each OpenGL function.&nbsp; When such a function is called, the function
     arguments and an opcode are packed into a buffer for eventual
     transmission.&nbsp; Although this library exports a full OpenGL interface,
@@ -146,14 +147,14 @@ component.</p>
     OpenGL calls requiring pixel data (e.g., <code>glTexImage2D</code>) require
     additional arguments detailing the unpacking state.&nbsp; For an example of
     this usage, see <code>cr/spu/pack/pack_pixel.c</code>.&nbsp; Currently, this
-    library is used by both the &quot;pack&quot; and &quot;tilesort&quot; SPU's.</li>
-  <li><i>A library for loading SPUs from disk<br>
-    &nbsp;&nbsp;&nbsp; </i>This library loads a SPU from a named file and
+    library is used by both the &quot;pack&quot; and &quot;tilesort&quot; SPU's.</p></li>
+  <li><p class="ProvidedThing">A library for loading SPUs from disk</p>
+  <p class="ProvidedDesc"> This library loads a SPU from a named file and
     creates its dispatch table.&nbsp; Although this library is mostly designed
     to be used internally by the OpenGL stub library and the server,
-    applications can load SPU's explicitly if they wish.</li>
-  <li><i>A library for tracking OpenGL state<br>
-    &nbsp;&nbsp;&nbsp; </i>This library provides the necessary functionality to
+    applications can load SPU's explicitly if they wish.</p></li>
+  <li><p class="ProvidedThing">A library for tracking OpenGL state</p>
+  <p class="ProvidedDesc"> This library provides the necessary functionality to
     track the complete OpenGL graphics state.&nbsp; This library is quite
     complex, both because the OpenGL state is large and intricate, and also
     because it contains the logic for doing differencing between contexts.&nbsp;
@@ -162,21 +163,21 @@ component.</p>
     when updating a tiled display or switching between contexts on the
     server.&nbsp; This library does most of the OpenGL error checking, and
     satisfies <code>glGet*</code> requests locally.&nbsp; For a description of
-    the techniques used by this library, see our <a href="http://graphics.stanford.edu/papers/state_tracking" target="_blank">2000
+    the techniques used by this library, see our <a href="http://graphics.stanford.edu/papers/state_tracking" target="new_window">2000
     Eurographics/SIGGRAPH Workshop on Graphics Hardware paper</a>.&nbsp; This
     library is used heavily by both the &quot;tilesort&quot; SPU and the server,
-    but the &quot;pack&quot; SPU uses it sparingly to keep track of the pixel
-    unpack state for textures.</li>
-  <li><i>A library for unpacking WireGL-format network buffers<br>
-    &nbsp;&nbsp; </i> The dual of the packing library mentioned above, this
+    and the &quot;pack&quot; SPU uses it sparingly to keep track of the pixel
+    unpack state for textures.</p></li>
+  <li><p class="ProvidedThing">A library for unpacking WireGL-format network buffers</p>
+  <p class="ProvidedDesc"> The dual of the packing library mentioned above, this
     library decodes network-encoded OpenGL streams and dispatches them to an
     arbitrary SPU interface.&nbsp; Currently this is only used by the server,
-    although a special SPU could use the pack library <i>and</i> the unpack
-    library together to make multiple passes over a stream.</li>
-  <li><i>A &quot;utility&quot; library<br>
-    &nbsp;&nbsp; </i> This library contains a number of useful routines and data
+    although a special SPU could use the pack library and the unpack
+    library together to make multiple passes over a stream.</p></li>
+  <li><p class="ProvidedThing">A &quot;utility&quot; library</p>
+  <p class="ProvidedDesc"> This library contains a number of useful routines and data
     structures that are used by many components of the system.&nbsp; A (possibly
-    non-exhaustive) list of features exported by this library is:
+    non-exhaustive) list of features exported by this library is:</p>
     <ul>
     	<li>Buffer pool management -- efficient &quot;allocate&quot; and
           &quot;free&quot; of fixed-size buffers</li>
@@ -191,7 +192,7 @@ component.</p>
     	<li>Routines for packing/unpacking pixel data</li>
     	<li>Routines for robustly handling strings, including splitting strings
           on a substring (useful in parsing mothership responses)</li>
-    	<li>Routines for cracking apart URL's, since server's are specified
+    	<li>Routines for cracking apart URL's, since servers are specified
           using a pseudo-URL type syntax</li>
     	<li>A connection-based networking abstraction supporting multiple
           transport layers, credit-based flow control, and message fragmentation</li>
@@ -205,12 +206,12 @@ component.</p>
   </li>
 </ul>
 
-<p align="center"><font size="5">Other programs</font></p>
+<p class="PageSubHeading"><font size="5">Other programs</font></p>
 <p>A few small programs are built as part off the Chromium build process.&nbsp;
 They won't all be listed here, as many of them are small test or demo programs.</p>
 <ul>
-  <li><code>resetms<br>
-    &nbsp;&nbsp; </code> This program resets the mothership to its initial
+  <li><p class="ProvidedThing">resetms</p> 
+  <p class="ProvidedDesc"> This program resets the mothership to its initial
     state.&nbsp; Because multiple applications or servers could run on one
     computer (called, say, &quot;sluff&quot;), the mothership remembers when it
     has been contacted by a server running on &quot;sluff&quot;, so the next
@@ -221,35 +222,35 @@ They won't all be listed here, as many of them are small test or demo programs.<
     of the mothership's internal state.&nbsp; This is generally preferable to
     quitting the mothership and starting it again, especially since the socket
     isn't always properly released, which will prevent the mothership from
-    starting up on its default port for a minute or two.</li>
-  <li><code>sputest</code><br>
-    &nbsp;&nbsp;&nbsp; This program is a simple demonstration that an
-    application can load a mSPU and use it without the help of &quot;<code>crappfaker</code>&quot;
+    starting up on its default port for a minute or two.</p></li>
+  <li><p class="ProvidedThing">sputest</p>
+  <p class="ProvidedDesc"> This program is a simple demonstration that an
+    application can load a SPU and use it without the help of &quot;<code>crappfaker</code>&quot;
     or the OpenGL stub library.&nbsp; It draws a single triangle rotating around
-    the center of the screen.</li>
-  <li>psubmit<br>
-    &nbsp;&nbsp;&nbsp; This is just about the simplest example of a parallel
+    the center of the screen.</p></li>
+  <li><p class="ProvidedThing">psubmit</p>
+  <p class="ProvidedDesc"> This is just about the simplest example of a parallel
     OpenGL program.&nbsp; Instance &quot;1&quot; of this program will draw a
     blue triangle, and instance &quot;2&quot; of this program will draw a green
     triangle.&nbsp; With the right config script (see <code>cr/mothership/configs/psubmit.conf</code>
     for an example), this program can be used to verify that the server's
     parallel API synchronization primitives are working and that parallel
-    submission is, in theory, possible.</li>
+    submission is, in theory, possible.</p></li>
 </ul>
 <p>Most of the other programs that are built are designed to exercise one
-particular portion of the system.&nbsp; Some of them are contributed bugs from
-WireGL (thanks in particular to Peter Kirchner for providing some VERY stripped
+particular portion of the system.&nbsp; Some of them are contributed by
+WireGL users (thanks in particular to Peter Kirchner for providing some VERY stripped
 down programs that trip a bug), and there are a number of programs that each
-demonstrate the functionality of a single OpenGL extensions, thanks to <a href="http://www.ccntech.com">Chris
+demonstrate the functionality of a single OpenGL extension, thanks to <a href="http://www.ccntech.com" target="new_window">Chris
 Niederauer</a> (all found in the <code>cr/progs/extensions/*</code>
 directories).&nbsp; Run them.&nbsp; Show off anisotropic texture filtering on
 your display wall, it's fun.</p>
-<p align="center"><font size="5">Miscellany</font></p>
+<p class="PageSubHeading"><font size="5">Miscellany</font></p>
 <p>The Chromium ALPHA distribution contains some other useful stuff that isn't a
 SPU, library, or program:</p>
 <ul>
-  <li><i>A pretty slick build system<br>
-    &nbsp;&nbsp;&nbsp; </i>Chromium's build system is mainly designed to achieve
+  <li><p class="ProvidedThing">A pretty slick build system</p>
+  <p class="ProvidedDesc"> Chromium's build system is mainly designed to achieve
     two goals.&nbsp; First, creating a new Makefile for a library or program
     should be as simple as possible.&nbsp; Second, it should be possible to
     build the code on multiple operating systems from the same network-mounted
@@ -260,21 +261,20 @@ SPU, library, or program:</p>
     will also quit with an error on various system-dependent things in the
     &quot;utility&quot; library, such as the abstraction for DLL's, etc.&nbsp;
     The build system also includes a very fast perl-based C/C++ dependency
-    generator due to <a href="http://graphics.stanford.edu/~eldridge">Matthew
-    Eldridge</a> in <code>cr/scripts/fastdep.pl</code>.</li>
-  <li><i>This documentation</i> <br>
-    &nbsp;&nbsp;&nbsp; A copy of this documentation can be found in <code>cr/doc</code>,
-    if that's not where you're reading it from already.</li>
-  <li><i>A parsed representation of the OpenGL API<br>
-    &nbsp;&nbsp; </i> The scripts in <code>cr/glapi_parser </code>parse a
+    generator due to <a href="http://graphics.stanford.edu/~eldridge" target="new_window">Matthew
+    Eldridge</a> in <code>cr/scripts/fastdep.pl</code>.</p></li>
+  <li><p class="ProvidedThing">This documentation</p>
+  <p class="ProvidedDesc"> A copy of this documentation can be found in <code>cr/doc</code>,
+    if that's not where you're reading it from already.</p></li>
+  <li><p class="ProvidedThing">A parsed representation of the OpenGL API</p>
+  <p class="ProvidedDesc"> The scripts in <code>cr/glapi_parser </code>parse a
     massaged version of the Windows OpenGL header, and also a Chromium-specific
     header containing our supported extension functions (e.g., <code>glBlendColorEXT</code>,
     <code>glBarrierExec</code>, etc).&nbsp; This parsed representation is used
     by almost every component of the system to automatically generate some or
-    all of their code.</li>
-  <li><i>Useful routines for manipulating the parsed representation of the
-    OpenGL API<br>
-    &nbsp;&nbsp; </i> The routines available in <code>cr/opengl_stub/stub_common.py</code>
+    all of their code.</p></li>
+  <li><p class="ProvidedThing">Useful routines for manipulating the parsed representation of the OpenGL API</p>
+  <p class="ProvidedDesc"> The routines available in <code>cr/opengl_stub/stub_common.py</code>
     are available for use by any Python script that is generating Chromium
     code.&nbsp; It is used quite heavily throughout most of the system.&nbsp; In
     particular, it provides a very easy way to tag certain OpenGL functions as
@@ -282,7 +282,7 @@ SPU, library, or program:</p>
     can be auto-generated, but some (like <code>glMaterialfv</code>) are more
     complicated and need to be coded by hand.&nbsp; The complex functions can
     simply be listed in a separate file, and the contents of that file
-    efficiently examined through the API exposed by these Python routines.</li>
+    efficiently examined through the API exposed by these Python routines.</p></li>
 </ul>
 
 </body>
