@@ -486,9 +486,12 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 	ymax = bucketInfo->objectMax.y;
 	zmax = bucketInfo->objectMax.z;
 
-	if (tilesort_spu.providedBBOX == GL_OBJECT_BBOX_CR)
+	if (tilesort_spu.providedBBOX != GL_SCREEN_BBOX_CR)
 	{
-		/* transform bounding box provided in object coords to window coords */
+		/* The current bounds were either provided by the user with
+		 * GL_OBJECT_BBOX_CR or computed automatically by Chromium (in
+		 * object coords.  Transform the box to window coords.
+		 */
 		crTransformBBox( xmin, ymin, zmin, xmax, ymax, zmax, m,
 		                 &xmin, &ymin, &zmin, &xmax, &ymax, &zmax );
 	}
