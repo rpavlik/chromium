@@ -228,11 +228,11 @@ GLboolean tilesortspuInitGridBucketing(void)
 	/* mural coverage test */
 	if (Grid.rowY1[0] != 0)
 		return GL_FALSE;   /* first row must start at zero */
-	if (Grid.rowY2[Grid.rows - 1] != tilesort_spu.muralHeight)
+	if (Grid.rowY2[Grid.rows - 1] != (int) tilesort_spu.muralHeight)
 		return GL_FALSE;   /* last row must and at mural height */
 	if (Grid.colX1[0] != 0)
 		return GL_FALSE;   /* first column must start at zero */
-	if (Grid.colX2[Grid.columns - 1] != tilesort_spu.muralWidth)
+	if (Grid.colX2[Grid.columns - 1] != (int) tilesort_spu.muralWidth)
 		return GL_FALSE;   /* last column must and at mural width */
 
 	/* make sure the rows and columns adjoin without gaps or overlaps */
