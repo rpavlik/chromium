@@ -190,7 +190,6 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 			else
 				context->haveWindowPosARB = GL_FALSE;
 			context->everCurrent = GL_TRUE;
-			window->everCurrent = GL_TRUE;
 		}
 		if (crWindow == 0 && window->mapPending &&
 				!render_spu.render_to_app_window) {
@@ -201,6 +200,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 			renderspu_SystemShowWindow( window, GL_TRUE );
 			window->mapPending = GL_FALSE;
 		}
+		window->everCurrent = GL_TRUE;
 	}
 	else
 	{
