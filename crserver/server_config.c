@@ -14,6 +14,10 @@
 
 #include "server.h"
 
+#ifdef WINDOWS
+#pragma warning( disable: 4706 )
+#endif
+
 
 static void
 __setDefaults(void)
@@ -337,7 +341,7 @@ crServerGetTileInfo(CRConnection * conn)
 
 		if ((cr_server.localTileSpec) && (num_displays))
 		{
-			int w, h, id, idx, our_idx;
+			int w, h, id, idx, our_idx = 0;
 			float pnt[2], tmp[9], hom[9], hom_inv[9], Sx, Sy;
 			float cent[2], warped[2];
 			double *corners, bbox[4];

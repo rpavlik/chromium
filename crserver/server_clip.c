@@ -388,7 +388,7 @@ __generate_masks(int n, int ***mask, int *nmasks)
 	int a, b, c, d, e;
 	int i, idx, isec_size, add;
 
-	*mask = (int **)crAlloc(pow(2, n)*sizeof(int));
+	*mask = (int **)crAlloc((unsigned int)pow(2, n)*sizeof(int));
 	for (a=0; a<pow(2, n); a++)
 		(*mask)[a] = (int *)crAlloc(n*sizeof(int));
 
