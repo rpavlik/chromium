@@ -11,6 +11,8 @@
 #include "cr_error.h"
 #include "cr_glstate.h"
 #include "cr_string.h"
+#include <signal.h>
+#include <stdlib.h>
 
 CRServer cr_server;
 
@@ -18,6 +20,22 @@ void crServerClose( unsigned int id )
 {
 	crError( "Client disconnected!" );
 	(void) id;
+}
+
+void ServerCleanup( int sigio )
+{
+	SPU *the_spu = cr_server.head_spu;
+
+	while (1) {
+		if (the_spu && the_spu->cleanup) {
+			printf("Cleaning up SPU %s\n",the_spu->name);
+			the_spu->cleanup();
+		} else 
+			break;
+		the_spu = the_spu->superSPU;
+	}
+
+	exit(0);
 }
 
 int main( int argc, char *argv[] )
@@ -38,6 +56,7 @@ int main( int argc, char *argv[] )
 		}
 	}
 
+	signal( SIGTERM, ServerCleanup );
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
 	crServerGatherConfiguration(mothership);
