@@ -6,6 +6,11 @@
 
 #include "teac.h"
 
+/* Notes-
+ * -Why is elan3_fini dropping core?  It's intermittent, and seems to
+ *  depend on relative timing of multiple calls.
+ */
+
 #ifdef CHROMIUM
 #include <cr_string.h>
 #include <cr_mem.h>
@@ -36,10 +41,44 @@ static void crDebug( const char* fmt, ... ) {
 #define EADDR_ALLOC_MAIN            0x400000
 #define ALLOC_MAIN_SIZE	            0x2000000
 
-/* Notes-
- * -Why is elan3_fini dropping core?  It's intermittent, and seems to
- *  depend on relative timing of multiple calls.
+/* We need some defs to handle changes in structures between software
+ * revisions.  
  */
+/* Capability shape is the same between KITE and pre-KITE */
+#ifdef ELAN_PRE_KITE
+
+/* software level is PRE_KITE */
+#define TEAC_DEVINFO_TYPE 0
+#define TEAC_CAP_TYPE 0
+
+#else
+#ifdef ELAN_PRE_EAGLE
+
+/* software level is KITE */
+
+#ifdef LINUX
+#define TEAC_DEVINFO_TYPE 1
+#define TEAC_CREATE_TYPE 1
+#else
+#define TEAC_DEVINFO_TYPE 0
+#define TEAC_CREATE_TYPE 0
+#endif
+#define TEAC_CAP_TYPE 1
+
+#else
+/* software level is EAGLE */
+#define TEAC_DEVINFO_TYPE 2
+#define TEAC_CAP_TYPE 2
+#define TEAC_CREATE_TYPE 2
+
+#endif
+#endif
+
+#if (TEAC_CAP_TYPE == 2)
+#define TEAC_CAP_ENTRIES(cap) ELAN_CAP_ENTRIES(cap)
+#else
+#define TEAC_CAP_ENTRIES(cap) (cap->Entries)
+#endif
 
 /* In the future we will use the bitwise AND of the rail masks */
 #define RAIL 0
@@ -296,7 +335,12 @@ static E3_Addr teac_main2elan( ELAN3_CTX *ctx, void* main_addr )
 Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank, 
 		 const unsigned char key[TEAC_KEY_SIZE])
 {
+#if (TEAC_DEVINFO_TYPE == 2)
+  ELAN_DEVINFO info;
+  ELAN_POSITION position;
+#else
   ELAN3_DEVINFO	info;
+#endif
   ELAN_CAPABILITY *cap;
   Tcomm* result= NULL;
   int i;
@@ -305,11 +349,8 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank,
   int b;
   char buf[256];
   char* here;
-#if ( (! __linux__) || ELAN_PRE_KITE )
+#if ( TEAC_CREATE_TYPE == 0 )
   void* control;
-#endif
-#if 0
-static char junkString[256];
 #endif
 
   if (!nodeTablesInitialized) initialize_node_tables();
@@ -347,8 +388,19 @@ static char junkString[256];
   result->hctx = (hctx>lctx) ? hctx : lctx;
   
   cap = &(result->cap);
+#if (TEAC_CAP_TYPE == 2)
+  elan_nullcap(cap);
+  /* Initialize the UserKey to the given value */
+  crMemcpy((void*)&(cap->cap_userkey.key_values),key,TEAC_KEY_SIZE);
+  cap->cap_lowcontext = lctx;
+  cap->cap_mycontext = lctx + (myrank%4);
+  cap->cap_highcontext = hctx;
+  cap->cap_lownode = result->lhost;
+  cap->cap_highnode = result->hhost;
+  cap->cap_type = 
+    ELAN_CAP_TYPE_BLOCK | ELAN_CAP_TYPE_NO_BITMAP | ELAN_CAP_TYPE_MULTI_RAIL;
+#else
   elan3_nullcap(cap);
-  
   /* Initialize the UserKey to the given value */
   crMemcpy((void*)&(cap->UserKey),key,TEAC_KEY_SIZE);
   cap->LowContext = lctx;
@@ -359,6 +411,7 @@ static char junkString[256];
   cap->Entries = (hctx - lctx + 1) * (cap->HighNode - cap->LowNode + 1);
   cap->Type = 
     ELAN_CAP_TYPE_BLOCK | ELAN_CAP_TYPE_NO_BITMAP | ELAN_CAP_TYPE_MULTI_RAIL;
+#endif
   
   if ((result->ctx = elan3_init( 0, EADDR_ALLOC_MAIN, ALLOC_MAIN_SIZE, 
 				 EADDR_ALLOC_ELAN, ALLOC_ELAN_SIZE))
@@ -368,7 +421,7 @@ static char junkString[256];
   }
   elan3_block_inputter (result->ctx, 1);
   
-#if ( (! __linux__) || ELAN_PRE_KITE )
+#if ( TEAC_CREATE_TYPE == 0 )
   if ((control = elan3_control_open (RAIL)) != NULL)  {
     if (elan3_create(control, &(result->cap)))  {
       crDebug("elan3_create failed with <%s>, but that's OK!\n",
@@ -381,30 +434,51 @@ static char junkString[256];
     teac_Close(result);
     return NULL;
   }                                                                       
-#else
+#elif ( TEAC_CREATE_TYPE == 1 )
   if (elan3_create(result->ctx, &(result->cap)))  {
     crDebug("elan3_create failed with <%s>, but that's OK!\n",
 	    strerror(errno));
     errno= 0;
   }
+#else
+  /* I don't think we have to do anything here! */
 #endif
 
+#if (TEAC_DEVINFO_TYPE == 2)
+  (void)elan3_get_devinfo(result->ctx, &info);
+  (void)elan3_get_position(result->ctx, &position);
+  crDebug("Position mode %d, NodeID %d, NumNodes %d, NumLevels %d\n",
+	  position.pos_mode,position.pos_nodeid, position.pos_nodes,
+	  position.pos_levels);
+  if (position.pos_mode != ELAN_POS_MODE_SWITCHED)
+    crDebug("WARNING: position mode is not %d!\n",ELAN_POS_MODE_SWITCHED);
+  crDebug("Rail %d\n",info.dev_rail);
+#elif (TEAC_DEVINFO_TYPE == 1)
   elan3_devinfo(0, &info);
-
-#if ( (! __linux__) || ELAN_PRE_KITE )
-  crDebug("NodeId: %d, NumLevels: %d, NodeLevel: %d\n",
-	  info.NodeId, info.NumLevels, info.NodeLevel);
-#else
   crDebug("NodeId: %d, NumNodes: %d, NumLevels: %d, NodeLevel: %d\n",
 	  info.Position.NodeId, info.Position.NumNodes, 
 	  info.Position.NumLevels, info.Position.NodeLevel);
+#else
+  elan3_devinfo(0, &info);
+  crDebug("NodeId: %d, NumLevels: %d, NodeLevel: %d\n",
+	  info.NodeId, info.NumLevels, info.NodeLevel);
 #endif
 
 #if 0
+  {
+    static char junkString[256];
+#if (TEAC_CAP_TYPE == 2)
+    crDebug("Capability: <%s>\n",
+	    elan_capability_string(&(result->cap),junkString));
+    crDebug("railmask is %d\n",result->cap.cap_railmask);
+    crDebug("bitmap is %x\n",result->cap.cap_bitmap[0]);
+#else
   crDebug("Capability: <%s>\n",
           elan3_capability_string(&(result->cap),junkString));
   crDebug("railmask is %d\n",result->cap.RailMask);
   crDebug("bitmap is %x\n",result->cap.Bitmap[0]);
+#endif
+  }
 #endif
 
   /* Reality check. */
@@ -414,19 +488,28 @@ static char junkString[256];
     return NULL;
   }
   if ((here= crStrchr(buf,'.')) != NULL) *here= '\0';
-#if ( (! __linux__) || ELAN_PRE_KITE )
-  if (trans_host(buf) != info.NodeId) {
+
+#if (TEAC_DEVINFO_TYPE == 2)
+  if (trans_host(buf) != position.pos_nodeid) {
     fprintf(stderr,
  "teac_Init: Expected Quadrics port id %d does not match real value %d!\n",
-	    trans_host(buf), info.NodeId);
+	    trans_host(buf), position.pos_nodeid);
     teac_Close(result);
     return NULL;
   }
-#else
+#elif (TEAC_DEVINFO_TYPE == 1)
   if (trans_host(buf) != info.Position.NodeId) {
     fprintf(stderr,
  "teac_Init: Expected Quadrics port id %d does not match real value %d!\n",
 	    trans_host(buf), info.Position.NodeId);
+    teac_Close(result);
+    return NULL;
+  }
+#else
+  if (trans_host(buf) != info.NodeId) {
+    fprintf(stderr,
+ "teac_Init: Expected Quadrics port id %d does not match real value %d!\n",
+	    trans_host(buf), info.NodeId);
     teac_Close(result);
     return NULL;
   }
@@ -453,33 +536,33 @@ static char junkString[256];
   }
   
   if (!(result->r_event= 
-	(sdramaddr_t**)crAlloc( cap->Entries*sizeof(sdramaddr_t*) ))) {
+	(sdramaddr_t**)crAlloc( TEAC_CAP_ENTRIES(cap)*sizeof(sdramaddr_t*) ))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
-	    cap->Entries*sizeof(sdramaddr_t*));
+	    TEAC_CAP_ENTRIES(cap)*sizeof(sdramaddr_t*));
     teac_Close(result);
     return(NULL);
   }
   if (!(result->r_event[0]=
-	(sdramaddr_t*)crAlloc( cap->Entries*NUM_SEND_BUFFERS
+	(sdramaddr_t*)crAlloc( TEAC_CAP_ENTRIES(cap)*NUM_SEND_BUFFERS
 			      * sizeof(sdramaddr_t) ))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
-	    cap->Entries*NUM_SEND_BUFFERS*sizeof(sdramaddr_t));
+	    TEAC_CAP_ENTRIES(cap)*NUM_SEND_BUFFERS*sizeof(sdramaddr_t));
     teac_Close(result);
     return(NULL);
   }
   if (!(result->r_event[0][0]=
 	elan3_allocElan(result->ctx, E3_EVENT_ALIGN, 
-		cap->Entries*NUM_SEND_BUFFERS*sizeof(E3_BlockCopyEvent)))) {
+		TEAC_CAP_ENTRIES(cap)*NUM_SEND_BUFFERS*sizeof(E3_BlockCopyEvent)))) {
     perror("teac_Init: elan3_allocElan failed for r_event block");
     teac_Close(result);
     return(NULL);
   }
-  for (j=1; j<cap->Entries; j++) {
+  for (j=1; j<TEAC_CAP_ENTRIES(cap); j++) {
     result->r_event[j]= result->r_event[0] + j*NUM_SEND_BUFFERS;
     result->r_event[j][0]= 
       result->r_event[0][0]+j*NUM_SEND_BUFFERS*sizeof(E3_BlockCopyEvent);
   }
-  for (j=0; j<cap->Entries; j++) 
+  for (j=0; j<TEAC_CAP_ENTRIES(cap); j++) 
     for (i=1; i<NUM_SEND_BUFFERS; i++) {
       result->r_event[j][i]= 
 	result->r_event[j][0] + i*sizeof(E3_BlockCopyEvent);
@@ -489,20 +572,20 @@ static char junkString[256];
 #endif
 
   if (!(result->m_rcv= 
-	(volatile E3_uint32**)crAlloc( cap->Entries*sizeof(E3_uint32*) ))) {
+	(volatile E3_uint32**)crAlloc( TEAC_CAP_ENTRIES(cap)*sizeof(E3_uint32*) ))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
-	    cap->Entries*sizeof(E3_uint32*));
+	    TEAC_CAP_ENTRIES(cap)*sizeof(E3_uint32*));
     teac_Close(result);
     return(NULL);
   }
   if (!(result->m_rcv[0]= (volatile E3_uint32*)
 	elan3_allocMain(result->ctx, 0, 
-			cap->Entries*NUM_SEND_BUFFERS*sizeof(E3_uint32)))) {
+			TEAC_CAP_ENTRIES(cap)*NUM_SEND_BUFFERS*sizeof(E3_uint32)))) {
     perror("teac_Init: elan3_allocMain failed for m_rcv block");
     teac_Close(result);
     return(NULL);
   }
-  for (i=1; i<cap->Entries; i++)
+  for (i=1; i<TEAC_CAP_ENTRIES(cap); i++)
     result->m_rcv[i]= result->m_rcv[0] + i*NUM_SEND_BUFFERS;
 #if 0
   crDebug("Base of m_rcv is %lx -> %lx\n",
@@ -510,20 +593,20 @@ static char junkString[256];
 	  (long)teac_main2elan(result->ctx,(void*)(result->m_rcv[0])));
 #endif
   
-  if (!(result->mbuff= (teacMsg**)crAlloc( cap->Entries*sizeof(teacMsg*) ))) {
+  if (!(result->mbuff= (teacMsg**)crAlloc( TEAC_CAP_ENTRIES(cap)*sizeof(teacMsg*) ))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
-	    cap->Entries*sizeof(teacMsg*));
+	    TEAC_CAP_ENTRIES(cap)*sizeof(teacMsg*));
     teac_Close(result);
     return(NULL);
   }
   if (!(result->mbuff[0]= (teacMsg*)
 	elan3_allocMain(result->ctx, 8, 
-			cap->Entries*NUM_SEND_BUFFERS*sizeof(teacMsg)))) {
+			TEAC_CAP_ENTRIES(cap)*NUM_SEND_BUFFERS*sizeof(teacMsg)))) {
     perror("teac_Init: elan3_allocMain failed for mbuff block");
     teac_Close(result);
     return(NULL);
   }
-  for (i=1; i<cap->Entries; i++)
+  for (i=1; i<TEAC_CAP_ENTRIES(cap); i++)
     result->mbuff[i]= result->mbuff[0] + i*NUM_SEND_BUFFERS;
 #if 0
   crDebug("Base of mbuff is %lx -> %lx\n",
@@ -636,7 +719,7 @@ static char junkString[256];
 			  result->sbuf_pull_event[i], result->sbuf_ready[i]);
   }
 
-  for (j=0; j<cap->Entries; j++) 
+  for (j=0; j<TEAC_CAP_ENTRIES(cap); j++) 
     for (i=0; i<NUM_SEND_BUFFERS; i++) {
       elan3_initevent_word (result->ctx, 
 			    result->r_event[j][i], &(result->m_rcv[j][i]));
@@ -645,7 +728,7 @@ static char junkString[256];
   /* Get the message receive events ready to fire, in case something
    * comes in before receive gets called.
    */
-  for (j=0; j<cap->Entries; j++)
+  for (j=0; j<TEAC_CAP_ENTRIES(cap); j++)
     for (i=0; i<NUM_SEND_BUFFERS; i++) {
       elan3_primeevent(result->ctx, result->r_event[j][i], 1);
     }
@@ -667,9 +750,6 @@ static char junkString[256];
 void teac_Close(Tcomm *tcomm)
 {
   int i;
-#if 0
-  char buf[256];
-#endif
 
   if (tcomm) {
     /* First we have to wait until all pending messages have been
@@ -720,9 +800,13 @@ void teac_Close(Tcomm *tcomm)
       if (tcomm->mbuff[0] != NULL) elan3_free(tcomm->ctx, tcomm->mbuff[0]);
       crFree(tcomm->mbuff);
     }
-#if 0
+#if (TEAC_CREATE_TYPE==2)
     elan3_detach(tcomm->ctx);
     elan3_fini(tcomm->ctx);
+#else
+    /* elan3_detach and elan3_destroy seem to crash sometimes in 
+     * these versions. 
+     */
 #endif
   }
 }
@@ -963,7 +1047,7 @@ RBuffer* teac_Recv(Tcomm* tcomm, int id)
 #endif
     if (tcomm->mbuff[id][i].new) {
       if ((lowestMsgnum < 0) 
-	  || (tcomm->mbuff[id][i].msgnum < lowestMsgnum)) {
+	  || (tcomm->mbuff[id][i].msgnum < (E3_uint32)lowestMsgnum)) {
 	lowestMsgnum= tcomm->mbuff[id][i].msgnum;
 	iBuf= i;
       }
@@ -1062,9 +1146,9 @@ char* teac_getConnString(Tcomm *c, int id, char* buf, int buflen)
 int teac_getConnId(Tcomm *c, const char* host, int rank)
 {
   int node= trans_host(host);
+#if 0
   crDebug("getConnId: <%s> %d %d maps to %d %d\n",
 	  host, rank, c->lhost, node, (4*(node - c->lhost) + (rank%4)));
-#if 0
 #endif
   return (4*(node - c->lhost) + (rank%4));
 }
@@ -1073,7 +1157,12 @@ int teac_getHostInfo(Tcomm *c, char* host, const int hostLength,
 		     int* railMask, int *nodeId, 
 		     long* sdramBaseAddr, long* elanBaseAddr)
 {
+#if (TEAC_DEVINFO_TYPE == 2)
+  ELAN_DEVINFO info;
+  ELAN_POSITION position;
+#else
   ELAN3_DEVINFO	info;
+#endif
   char* here;
 
   if (gethostname(host,hostLength-1)) {
@@ -1083,13 +1172,23 @@ int teac_getHostInfo(Tcomm *c, char* host, const int hostLength,
   host[hostLength-1]= '\0';
   if ((here= crStrchr(host,'.')) != NULL) *here= '\0';
 
+#if (TEAC_DEVINFO_TYPE == 2)
+  (void)elan3_get_devinfo(c->ctx, &info);
+  (void)elan3_get_position(c->ctx, &position);
+  *nodeId= position.pos_nodeid;
+#elif (TEAC_DEVINFO_TYPE == 1)
   elan3_devinfo(0, &info);
-#if ( (! __linux__) || ELAN_PRE_KITE )
-  *nodeId= info.NodeId;
-#else
   *nodeId= info.Position.NodeId;
+#else
+  elan3_devinfo(0, &info);
+  *nodeId= info.NodeId;
 #endif
+
+#if (TEAC_CAP_TYPE == 2)
+  *railMask= c->cap.cap_railmask;
+#else
   *railMask= c->cap.RailMask;
+#endif
 
   *sdramBaseAddr= (int)c->r_event[0][0];
 	  
