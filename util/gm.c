@@ -739,7 +739,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 
 		default:
 			crGmFree( gm_conn->conn, temp+1 );
-			break
+			break;
 		}
 	}
 	else
