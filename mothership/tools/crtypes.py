@@ -143,6 +143,10 @@ class SpuObject:
 		assert optName in self.__Options.keys() # OK?
 		self.__Options[optName] = value
 		
+	def Conf(self, var, *values):
+		"""Set an option, via config file"""
+		self.__Options[var] = values
+
 	def PrintOptions(self):
 		for name in self.__Options.keys():
 			print "%s is %s" % (name, repr(self.__Options[name]))
@@ -226,6 +230,7 @@ class Node:
 		#self.__Label = ""
 		self.SetHosts(hostnames)
 		self.__HostPattern = (hostnames[0], 1)
+		self.__SPUdir = ""
 		self.__FontHeight = 0
 
 	def Clone(self):
@@ -493,6 +498,14 @@ class Node:
 		else:
 			return 0
 
+	def SPUDir(self, dir):
+		"""Set SPU directory, from config file."""
+		self.__SPUdir = dir
+
+	def ClientDLL(self, dll):
+		"""Needed for reading config files."""
+		pass
+
 
 class NetworkNode(Node):
 	"""A CRNetworkNode object"""
@@ -548,7 +561,15 @@ class ApplicationNode(Node):
 	def __init__(self, hostnames=["localhost"], count=1):
 		Node.__init__(self, hostnames, 0, count,
 					  color=wxPython.wx.wxColor(55,160,55))
+		self.__StartDir = ""
+		self.__Application = ""
 
+	def StartDir(self, dir):
+		self.__StartDir = dir
+
+	def SetApplication(self, app):
+		self.__Application = app
+		
 # ----------------------------------------------------------------------
 
 class Mothership:
@@ -614,6 +635,9 @@ class Mothership:
 		assert name in self.__GlobalOptions.keys()
 		self.__GlobalOptions[name] = value
 
+	def SetParam(self, name, value):
+		self.SetGlobalOption(name, value)
+
 	def GetServerOptions(self):
 		"""Get the server options (a dictionary)"""
 		return self.__ServerOptions
@@ -635,8 +659,14 @@ class Mothership:
 		"""Set the MTU size (in bytes)."""
 		self.__MTU = bytes
 
+	def AllSPUConf(self, spuName, var, *values):
+		"""Set var/values for all SPUs that match spuName"""
+		# needed for loading configs
+		pass
+
 	def Go(self):
 		"""Run the mothership."""
+		# needed for loading configs
 		pass
 
 	def SetTemplateType(self, type):
