@@ -1,325 +1,395 @@
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+     See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Chromium Extensions to OpenGL</h1>
-<p>Chromium defines several extensions to the OpenGL API to provide
-special features.
-This section documents those extensions.
-</p>
-<p>
-All Chromium extensions to OpenGL are identified by <EM>CR</EM> in
-the same way that <EM>SGI</EM> is used to identify SGI's OpenGL
-extensions.
-</p>
-<p>
-At compile time the application should use
-<code>#ifdef extension_name / #endif</code> around Chromium-related
-code so that it'll compile when the extension is not defined.
-</p>
-<p>
-At runtime the application should call <code>glGetString(GL_EXTENSIONS)</code>
-to see if the particular extension is supported.
-Then the application should use <code>wglGetProcAddress()</code>
-or <code>glXGetProcAddress()</code> to obtain a pointer to any
-extension functions that are needed.
-</p>
-
-<p>
-The following extensions are available.
-</p>
-
-<ul>
-<li><a href="#GL_CR_state_parameter">GL_CR_state_parameter</a>
-<li><a href="#GL_CR_cursor_position">GL_CR_cursor_position</a>
-<li><a href="#GL_CR_bounding_box">GL_CR_bounding_box</a>
-<li><a href="#GL_CR_print_string">GL_CR_print_string</a>
-<li><a href="#GL_CR_tilesort_info">GL_CR_tilesort_info</a>
-<li><a href="#GL_CR_window_size">GL_CR_window_size</a>
-<li><a href="#GL_CR_readback_barrier_size">GL_CR_readback_barrier_size</a>
-<li><a href="#GL_CR_tile_info">GL_CR_tile_info</a>
-<li><a href="#GL_CR_synchronization">GL_CR_synchronization</a>
-<li><a href="#GL_CR_server_id_sharing">GL_CR_server_id_sharing</a>
-<li><a href="#GL_CR_server_matrix">GL_CR_server_matrix</a>
-</ul>
-
-
-
-<a name="GL_CR_state_parameter">
-<h2 class="PageSubHeading">GL_CR_state_parameter</h2>
-<p>This extension adds three new functions to OpenGL.  By itself, this
-extension provides no new features.  Instead, other Chromium extensions
-are layered on top of this one.
-</p>
-
-<dl>
-<dt>glChromiumParameteriCR(GLenum target, GLint value)</dt>
-<dd>Set a Chromium parameter to an integer value.<br>
-<code>target</code> specifies the parameter being set.<br>
-<code>value</code> is the integer value.<br>
-The error <code>GL_INVALID_ENUM</code> will be recorded if <code>target</code>
-is not a recognized value.
-</dd>
-
-<dt>glChromiumParameterfCR(GLenum target, GLfloat value)</dt>
-<dd>Set a Chromium parameter to a floating point value.<br>
-<code>target</code> specifies the parameter being set.<br>
-<code>value</code> is the floating point value.<br>
-The error <code>GL_INVALID_ENUM</code> will be recorded if <code>target</code>
-is not a recognized value.
-</dd>
-
-<dt>glChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
-const GLvoid *values)</dt>
-<dd>Specifies a vector of parameters to Chromium.<br>
-<code>target</code> specifies the parameter being set.<br>
-<code>type</code> specifies the datatype of the value(s) and may
-be <code>GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT,
-GL_INT, GL_UNSIGNED_INT, GL_FLOAT or GL_DOUBLE</code>.<br>
-<code>count</code> specifies the number of values in the vector and
-must be greater than or equal to one.<br>
-<code>values</code> points to the beginning of the values vector.<br>
-The error <code>GL_INVALID_ENUM</code> will be recorded if <code>target</code>
-or <code>type</code> is not a recognized value.  The error
-<code>GL_INVALID_VALUE</code> will be recorded if <code>count</code>
-is less than one.
-</dd>
-
-<dt>glGetChromiumParametervCR(GLenum target, GLuint index,GLenum type,
-GLsizei count, GLvoid *values)</dt>
-<dd>Queries Chromium state.<br>
-<code>target</code> specifies the parameter to query.<br>
-<code>index</code> specifies the element in an array of target values,
-if applicable.<br>
-<code>type</code> specifies the datatype of the return value(s) and
-may be <code>GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT,
-GL_INT, GL_UNSIGNED_INT, GL_FLOAT or GL_DOUBLE</code>.<br>
-<code>count</code> specifies the number of values in the return values
-vector and must be greater than or equal to one.<br>
-<code>values</code> points to the beginning of the return values vector.<br>
-The error <code>GL_INVALID_ENUM</code> will be recorded if <code>target</code>
-or <code>type</code> is not a recognized value.  The error
-<code>GL_INVALID_VALUE</code> will be recorded if <code>count</code>
-is less than one.
-</dd>
-
-
-</dl>
-
-
-<a name="GL_CR_cursor_position">
-<h2 class="PageSubHeading">GL_CR_cursor_position</h2>
-<p>This extension is used internally to Chromium to specify the position
-of the virtual cursor.</p>
-<p>This extension requires the GL_CR_state_parameter extension.</p>
-
-<p>
-The new token <code>CR_CURSOR_POSITION_CR</code> may be specified as
-the <code>target</code> parameter to <code>glChromiumParametervCR</code>.
-The <code>type</code> parameter must be <code>GL_INTEGER</code> and
-<code>count</code> must be 2.  The <code>values</code> parameter points
-to an array of two integers with represents the cursor's (x,y) position.
-</p>
-
-
-<a name="GL_CR_bounding_box">
-<h2 class="PageSubHeading">GL_CR_bounding_box</h2>
-<p>This extension is used to inform Chromium that subsequent geometry
-is bounded by a specific bounding box.  This information can be used
-to improve the performance of the tile-sort, readback and binaryswap SPUs.
-</p>
-<p>This extension requires the GL_CR_state_parameter extension.</p>
-
-<p>New tokens accepted by the <code>target</code> parameter to
-<code>glChromiumParametervCR</code>:
-
-<dl>
-<dt>GL_DEFAULT_BBOX_CR</dt>
-<dd>This turns off bounding box tracking.
-    The <code>count</code> parameter should be zero.
-    The <code>type</code> parameter value is not significant.
-    </dd>
-<dt>GL_SCREEN_BBOX_CR</dt>
-<dd>Specifies that subsequent OpenGL primitives will lie within a particular
-    region of the window.
-    <code>count</code> should be 8.
-    <code>type</code> should be GL_FLOAT.
-    <code>values</code> is an array of eight floating point values specifying
-    the window-space bounding box: <code>[xmin, ymin, zmin, wmin, xmax, ymax,
-    zmax, wmax]</code>.
-    </dd>
-<dt>GL_OBJECT_BBOX_CR</dt>
-<dd>Specifies that subsequent OpenGL primitives will lie within a particular
-    object-space bounding box.
-    <code>count</code> should be 6.
-    <code>type</code> should be GL_FLOAT.
-    <code>values</code> is an array of six floating point values specifying
-    the object-space bounding box: <code>[xmin, ymin, zmin, xmax, ymax,
-    zmax]</code>.
-    </dd>
-</dl>
-
-
-<a name="GL_CR_print_string">
-<h2 class="PageSubHeading">GL_CR_print_string</h2>
-<p>This extension is allows the application to insert its own text
-into the output produced by the printSPU.
-</p>
-<p>This extension requires the GL_CR_state_parameter extension.</p>
-
-<p>
-The print SPU can emit user text by calling
-<code>glChromiumParametervCR(GL_PRINT_STRING_CR, GL_BYTE, count, string)</code>
-where <code>count</code> is the length of the text and <code>string</code>
-is the text.
-</p>
-
-<p>XXX what about printing integers and floats?</p>
-<p>XXX should we rely on count specifying the string length, or assume
-that it's a null-terminated string?</p>
-
-
-<a name="GL_CR_tilesort_info">
-<h2 class="PageSubHeading">GL_CR_tilesort_info</h2>
-<p>This extension is allows the application to query and set parameters
-of the tilesort SPU, if present.
-</p>
-<p>This extension requires the GL_CR_state_parameter extension.</p>
-<p>The query targets currently supported with the
-<code>glGetChromiumParametervCR</code> function are:</p>
-
-<dl>
-
-<dt>GL_MURAL_SIZE_CR</dt>
-<dd>Returns the width and height of the mural.<br>
-<code>index</code> is ignored.<br>
-<code>type</code> must be <code>GL_INT</code>.<br>
-<code>count</code> must be 2.<br>
-<code>values[0]</code> will return the width<br>
-<code>values[1]</code> will return the height.
-</dd>
-
-<dt>GL_NUM_SERVERS_CR</dt>
-<dd>Returns the number of tilesort servers.<br>
-<code>index</code> is ignored.<br>
-<code>type</code> must be <code>GL_INT</code>.<br>
-<code>count</code> must be 1.<br>
-<code>values[0]</code> will return the number of servers.
-</dd>
-
-<dt>GL_VERTEX_COUNTS_CR</dt>
-<dd>Returns the number of vertices that have been sent to each of the
-tilesort servers.<br>
-<code>index</code> is ignored.<br>
-<code>type</code> must be <code>GL_INT</code>.<br>
-<code>count</code> should be N, where N is the number of servers returned by
-querying <code>GL_NUM_SERVERS_CR</code>.<br>
-<code>values[i]</code> will return the number of vertices sent to server i
-where 0 <= i < N.
-</dd>
-
-<dt>GL_NUM_TILES_CR</dt>
-<dd>Returns the number of tils on a particular server.<br>
-<code>index</code> specifies the server number.<br>
-<code>type</code> must be <code>GL_INT</code>.<br>
-<code>count</code> must be 1.<br>
-<code>values[0]</code> will return the number of tiles on the given server.
-</dd>
-
-<dt>GL_TILE_BOUNDS_CR</dt>
-<dd>Returns the bounds of a tile on a server.<br>
-<code>index</b> encodes both the server number and tile number:
-index = server * 65536 + tile.  Alternately, index = (server << 16) | tile.<br>
-<code>type</b> must be <code>GL_INT</b>.<br>
-<code>count</b> must be 4.<br>
-<code>values[0]</b> will return x1 (left).<br>
-<code>values[1]</b> will return y1 (bottom).<br>
-<code>values[2]</b> will return x2 (right).<br>
-<code>values[3]</b> will return y2 (top).
-</dd>
-
-
-</dl>
-
-<p>The vertex counters which are queried with <code>GL_VERTEX_COUNTS_CR</code>
-may be reset to zero with either of the following commands:</p>
-
-<ul>
-<li><code>glChromiumParameteriCR(GL_RESET_VERTEX_COUNTERS_CR, 0);</code>
-<li><code>glChromiumParameterfCR(GL_RESET_VERTEX_COUNTERS_CR, 0.0);</code>
-</ul>
-
-
-<a name="GL_CR_window_size">
-<h2 class="PageSubHeading">GL_CR_window_size</h2>
-<p>This extension allows you to query the size of the currently bound
-rendering window.
-This extension requires the GL_CR_state_parameter extension.</p>
-
-<p>New tokens accepted by the <code>target</code> parameter to
-<code>glGetChromiumParametervCR</code>:
-
-<dl>
-<dt>GL_WINDOW_SIZE_CR</dt>
-<dd>The <code>count</code> parameter should be 2.
-    The <code>type</code> parameter should be GL_INT.
-    <code>values[0]</code> will be the window width.
-    <code>values[1]</code> will be the window height.
-    </dd>
-</dl>
-
-
-
-<a name="GL_CR_readback_barrier_size">
-<h2 class="PageSubHeading">GL_CR_readback_barrier_size</h2>
-<p>This extension allows you to specify the number of clients which should
-synchronize on barriers within the readback SPU.  This <em>does not</em>
-set the barrier size for the application's barriers.
-This extension requires the GL_CR_state_parameter extension.</p>
-<p>See the <code>threadtest.c</code> file for an example.</p>
-
-<p>New tokens accepted by the <code>target</code> parameter to
-<code>glChromiumParameteriCR</code>:
-
-<dl>
-<dt>GL_WINDOW_SIZE_CR</dt>
-<dd>The <code>value</code> parameter indicates the barrier size.
-    </dd>
-</dl>
-
-
-
-<a name="GL_CR_tile_info">
-<h2 class="PageSubHeading">GL_CR_tile_info</h2>
-<p>This extension allows you to specify the tilesort parameters (number
-of tiles and their sizes) to the tilesort SPU and servers.
-This extension requires the GL_CR_state_parameter extension.</p>
-
-<p>New tokens accepted by the <code>target</code> parameter to
-<code>glChromiumParametervCR</code>:
-
-<dl>
-<dt>GL_TILE_INFO_CR</dt>
-<dd>The <code>count</code> parameter indicates the number of tile parameters,
-    defined below.
-    </dd>
-    The <code>type</code> parameter should be GL_INT.
-    The <code>values</code> parameter defines an array of values as
-    follows:
-<pre>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Chromium Extensions to OpenGL
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Chromium Extensions to OpenGL
+    </h1>
+    <p>
+      Chromium defines several extensions to the OpenGL API to provide special
+      features. This section documents those extensions.
+    </p>
+    <p>
+      All Chromium extensions to OpenGL are identified by <em>CR</em> in the
+      same way that <em>SGI</em> is used to identify SGI's OpenGL extensions.
+    </p>
+    <p>
+      At compile time the application should use <code>#ifdef extension_name /
+      #endif</code> around Chromium-related code so that it'll compile when the
+      extension is not defined.
+    </p>
+    <p>
+      At runtime the application should call
+      <code>glGetString(GL_EXTENSIONS)</code> to see if the particular
+      extension is supported. Then the application should use
+      <code>wglGetProcAddress()</code> or <code>glXGetProcAddress()</code> to
+      obtain a pointer to any extension functions that are needed.
+    </p>
+    <p>
+      The following extensions are available.
+    </p>
+    <ul>
+      <li>
+        <a href="#GL_CR_state_parameter">GL_CR_state_parameter</a>
+      </li>
+      <li>
+        <a href="#GL_CR_cursor_position">GL_CR_cursor_position</a>
+      </li>
+      <li>
+        <a href="#GL_CR_bounding_box">GL_CR_bounding_box</a>
+      </li>
+      <li>
+        <a href="#GL_CR_print_string">GL_CR_print_string</a>
+      </li>
+      <li>
+        <a href="#GL_CR_tilesort_info">GL_CR_tilesort_info</a>
+      </li>
+      <li>
+        <a href="#GL_CR_window_size">GL_CR_window_size</a>
+      </li>
+      <li>
+        <a href="#GL_CR_readback_barrier_size">GL_CR_readback_barrier_size</a>
+      </li>
+      <li>
+        <a href="#GL_CR_tile_info">GL_CR_tile_info</a>
+      </li>
+      <li>
+        <a href="#GL_CR_synchronization">GL_CR_synchronization</a>
+      </li>
+      <li>
+        <a href="#GL_CR_server_id_sharing">GL_CR_server_id_sharing</a>
+      </li>
+      <li>
+        <a href="#GL_CR_server_matrix">GL_CR_server_matrix</a>
+      </li>
+    </ul><a name="GL_CR_state_parameter" id="GL_CR_state_parameter"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_state_parameter
+    </h2>
+    <p>
+      This extension adds three new functions to OpenGL. By itself, this
+      extension provides no new features. Instead, other Chromium extensions
+      are layered on top of this one.
+    </p>
+    <dl>
+      <dt>
+        glChromiumParameteriCR(GLenum target, GLint value)
+      </dt>
+      <dd>
+        Set a Chromium parameter to an integer value.<br>
+        <code>target</code> specifies the parameter being set.<br>
+        <code>value</code> is the integer value.<br>
+        The error <code>GL_INVALID_ENUM</code> will be recorded if
+        <code>target</code> is not a recognized value.
+      </dd>
+      <dt>
+        glChromiumParameterfCR(GLenum target, GLfloat value)
+      </dt>
+      <dd>
+        Set a Chromium parameter to a floating point value.<br>
+        <code>target</code> specifies the parameter being set.<br>
+        <code>value</code> is the floating point value.<br>
+        The error <code>GL_INVALID_ENUM</code> will be recorded if
+        <code>target</code> is not a recognized value.
+      </dd>
+      <dt>
+        glChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const
+        GLvoid *values)
+      </dt>
+      <dd>
+        Specifies a vector of parameters to Chromium.<br>
+        <code>target</code> specifies the parameter being set.<br>
+        <code>type</code> specifies the datatype of the value(s) and may be
+        <code>GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT, GL_INT,
+        GL_UNSIGNED_INT, GL_FLOAT or GL_DOUBLE</code>.<br>
+        <code>count</code> specifies the number of values in the vector and
+        must be greater than or equal to one.<br>
+        <code>values</code> points to the beginning of the values vector.<br>
+        The error <code>GL_INVALID_ENUM</code> will be recorded if
+        <code>target</code> or <code>type</code> is not a recognized value. The
+        error <code>GL_INVALID_VALUE</code> will be recorded if
+        <code>count</code> is less than one.
+      </dd>
+      <dt>
+        glGetChromiumParametervCR(GLenum target, GLuint index,GLenum type,
+        GLsizei count, GLvoid *values)
+      </dt>
+      <dd>
+        Queries Chromium state.<br>
+        <code>target</code> specifies the parameter to query.<br>
+        <code>index</code> specifies the element in an array of target values,
+        if applicable.<br>
+        <code>type</code> specifies the datatype of the return value(s) and may
+        be <code>GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT,
+        GL_INT, GL_UNSIGNED_INT, GL_FLOAT or GL_DOUBLE</code>.<br>
+        <code>count</code> specifies the number of values in the return values
+        vector and must be greater than or equal to one.<br>
+        <code>values</code> points to the beginning of the return values
+        vector.<br>
+        The error <code>GL_INVALID_ENUM</code> will be recorded if
+        <code>target</code> or <code>type</code> is not a recognized value. The
+        error <code>GL_INVALID_VALUE</code> will be recorded if
+        <code>count</code> is less than one.
+      </dd>
+    </dl><a name="GL_CR_cursor_position" id="GL_CR_cursor_position"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_cursor_position
+    </h2>
+    <p>
+      This extension is used internally to Chromium to specify the position of
+      the virtual cursor.
+    </p>
+    <p>
+      This extension requires the GL_CR_state_parameter extension.
+    </p>
+    <p>
+      The new token <code>CR_CURSOR_POSITION_CR</code> may be specified as the
+      <code>target</code> parameter to <code>glChromiumParametervCR</code>. The
+      <code>type</code> parameter must be <code>GL_INTEGER</code> and
+      <code>count</code> must be 2. The <code>values</code> parameter points to
+      an array of two integers with represents the cursor's (x,y) position.
+    </p><a name="GL_CR_bounding_box" id="GL_CR_bounding_box"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_bounding_box
+    </h2>
+    <p>
+      This extension is used to inform Chromium that subsequent geometry is
+      bounded by a specific bounding box. This information can be used to
+      improve the performance of the tile-sort, readback and binaryswap SPUs.
+    </p>
+    <p>
+      This extension requires the GL_CR_state_parameter extension.
+    </p>
+    <p>
+      New tokens accepted by the <code>target</code> parameter to <code class=
+      "Function">glChromiumParametervCR</code>:
+    </p>
+    <dl>
+      <dt>
+        GL_DEFAULT_BBOX_CR
+      </dt>
+      <dd>
+        This turns off bounding box tracking. The <code>count</code> parameter
+        should be zero. The <code>type</code> parameter value is not
+        significant.
+      </dd>
+      <dt>
+        GL_SCREEN_BBOX_CR
+      </dt>
+      <dd>
+        Specifies that subsequent OpenGL primitives will lie within a
+        particular region of the window. <code>count</code> should be 8.
+        <code>type</code> should be GL_FLOAT. <code>values</code> is an array
+        of eight floating point values specifying the window-space bounding
+        box: <code>[xmin, ymin, zmin, wmin, xmax, ymax, zmax, wmax]</code>.
+      </dd>
+      <dt>
+        GL_OBJECT_BBOX_CR
+      </dt>
+      <dd>
+        Specifies that subsequent OpenGL primitives will lie within a
+        particular object-space bounding box. <code>count</code> should be 6.
+        <code>type</code> should be GL_FLOAT. <code>values</code> is an array
+        of six floating point values specifying the object-space bounding box:
+        <code>[xmin, ymin, zmin, xmax, ymax, zmax]</code>.
+      </dd>
+    </dl><a name="GL_CR_print_string" id="GL_CR_print_string"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_print_string
+    </h2>
+    <p>
+      This extension is allows the application to insert its own text into the
+      output produced by the printSPU.
+    </p>
+    <p>
+      This extension requires the GL_CR_state_parameter extension.
+    </p>
+    <p>
+      The print SPU can emit user text by calling
+      <code>glChromiumParametervCR(GL_PRINT_STRING_CR, GL_BYTE, count,
+      string)</code> where <code>count</code> is the length of the text and
+      <code>string</code> is the text.
+    </p>
+    <p>
+      XXX what about printing integers and floats?
+    </p>
+    <p>
+      XXX should we rely on count specifying the string length, or assume that
+      it's a null-terminated string?
+    </p><a name="GL_CR_tilesort_info" id="GL_CR_tilesort_info"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_tilesort_info
+    </h2>
+    <p>
+      This extension is allows the application to query and set parameters of
+      the tilesort SPU, if present.
+    </p>
+    <p>
+      This extension requires the GL_CR_state_parameter extension.
+    </p>
+    <p>
+      The query targets currently supported with the <code class=
+      "Function">glGetChromiumParametervCR</code> function are:
+    </p>
+    <dl>
+      <dt>
+        GL_MURAL_SIZE_CR
+      </dt>
+      <dd>
+        Returns the width and height of the mural.<br>
+        <code>index</code> is ignored.<br>
+        <code>type</code> must be <code>GL_INT</code>.<br>
+        <code>count</code> must be 2.<br>
+        <code>values[0]</code> will return the width<br>
+        <code>values[1]</code> will return the height.
+      </dd>
+      <dt>
+        GL_NUM_SERVERS_CR
+      </dt>
+      <dd>
+        Returns the number of tilesort servers.<br>
+        <code>index</code> is ignored.<br>
+        <code>type</code> must be <code>GL_INT</code>.<br>
+        <code>count</code> must be 1.<br>
+        <code>values[0]</code> will return the number of servers.
+      </dd>
+      <dt>
+        GL_VERTEX_COUNTS_CR
+      </dt>
+      <dd>
+        Returns the number of vertices that have been sent to each of the
+        tilesort servers.<br>
+        <code>index</code> is ignored.<br>
+        <code>type</code> must be <code>GL_INT</code>.<br>
+        <code>count</code> should be N, where N is the number of servers
+        returned by querying <code>GL_NUM_SERVERS_CR</code>.<br>
+        <code>values[i]</code> will return the number of vertices sent to
+        server i where 0 &lt;= i &lt; N.
+      </dd>
+      <dt>
+        GL_NUM_TILES_CR
+      </dt>
+      <dd>
+        Returns the number of tils on a particular server.<br>
+        <code>index</code> specifies the server number.<br>
+        <code>type</code> must be <code>GL_INT</code>.<br>
+        <code>count</code> must be 1.<br>
+        <code>values[0]</code> will return the number of tiles on the given
+        server.
+      </dd>
+      <dt>
+        GL_TILE_BOUNDS_CR
+      </dt>
+      <dd>
+        Returns the bounds of a tile on a server.<br>
+        <code>index</code> encodes both the server number and tile number:
+        index = server * 65536 + tile. Alternately, index = (server &lt;&lt;
+        16) | tile.<br>
+        <code>type</code> must be <code>GL_INT</code>.<br>
+        <code>count</code> must be 4.<br>
+        <code>values[0]</code> will return x1 (left).<br>
+        <code>values[1]</code> will return y1 (bottom).<br>
+        <code>values[2]</code> will return x2 (right).<br>
+        <code>values[3]</code> will return y2 (top).
+      </dd>
+    </dl>
+    <p>
+      The vertex counters which are queried with
+      <code>GL_VERTEX_COUNTS_CR</code> may be reset to zero with either of the
+      following commands:
+    </p>
+    <ul>
+      <li>
+        <code>glChromiumParameteriCR(GL_RESET_VERTEX_COUNTERS_CR, 0);</code>
+      </li>
+      <li>
+        <code>glChromiumParameterfCR(GL_RESET_VERTEX_COUNTERS_CR, 0.0);</code>
+      </li>
+    </ul><a name="GL_CR_window_size" id="GL_CR_window_size"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_window_size
+    </h2>
+    <p>
+      This extension allows you to query the size of the currently bound
+      rendering window. This extension requires the GL_CR_state_parameter
+      extension.
+    </p>
+    <p>
+      New tokens accepted by the <code>target</code> parameter to <code class=
+      "Function">glGetChromiumParametervCR</code>:
+    </p>
+    <dl>
+      <dt>
+        GL_WINDOW_SIZE_CR
+      </dt>
+      <dd>
+        The <code>count</code> parameter should be 2. The <code>type</code>
+        parameter should be GL_INT. <code>values[0]</code> will be the window
+        width. <code>values[1]</code> will be the window height.
+      </dd>
+    </dl><a name="GL_CR_readback_barrier_size" id=
+    "GL_CR_readback_barrier_size"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_readback_barrier_size
+    </h2>
+    <p>
+      This extension allows you to specify the number of clients which should
+      synchronize on barriers within the readback SPU. This <em>does not</em>
+      set the barrier size for the application's barriers. This extension
+      requires the GL_CR_state_parameter extension.
+    </p>
+    <p>
+      See the <span class="File">threadtest.c</span> file for an example.
+    </p>
+    <p>
+      New tokens accepted by the <code>target</code> parameter to <code class=
+      "Function">glChromiumParameteriCR</code>:
+    </p>
+    <dl>
+      <dt>
+        GL_WINDOW_SIZE_CR
+      </dt>
+      <dd>
+        The <code>value</code> parameter indicates the barrier size.
+      </dd>
+    </dl><a name="GL_CR_tile_info" id="GL_CR_tile_info"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_tile_info
+    </h2>
+    <p>
+      This extension allows you to specify the tilesort parameters (number of
+      tiles and their sizes) to the tilesort SPU and servers. This extension
+      requires the GL_CR_state_parameter extension.
+    </p>
+    <p>
+      New tokens accepted by the <code>target</code> parameter to <code class=
+      "Function">glChromiumParametervCR</code>:
+    </p>
+    <dl>
+      <dt>
+        GL_TILE_INFO_CR
+      </dt>
+      <dd>
+        The <code>count</code> parameter indicates the number of tile
+        parameters, defined below.
+      </dd>
+      <dt>
+        The <code>type</code> parameter should be GL_INT. The
+        <code>values</code> parameter defines an array of values as follows:
+      </dt>
+      <dd>
+        <pre>
    values[0] = the server number
    values[1] = the overall mural width
    values[2] = the overall mural height
@@ -332,172 +402,184 @@ This extension requires the GL_CR_state_parameter extension.</p>
    values[9] = second tile y pos
    values[10] = second tile width
    ...
-</pre>
-   <code>count</code> should be 4 + 4 * (number of tiles).
-</dl>
-
-
-<a name="GL_CR_synchronization">
-<h2 class="PageSubHeading">GL_CR_synchronization</h2>
-<p>This extension defines semaphore and barrier functions for synchronization.
-
-<dl>
-<dt>glBarrierCreateCR(GLuint name, GLuint count)</dt>
-<dd>Create a barrier with the given name and count.  The count indicates
-how many clients must meet at the barrier before it is released.
-If count is zero, the crserver will automatically set count to the number
-of clients currently connected to the server.
-</dd>
-
-<dt>glBarrierDestroyCR(GLuint name)</dt>
-<dd>Destroys the named barrier.
-
-<dt>glBarrierExecCR(GLuint name)</dt>
-<dd>Causes the caller to wait on the barrier until all peers meet the
-barrier.
-
-<dt>glSemaphoreCreateCR(GLuint name, GLuint value)</dt>
-<dd>Creates a semaphore with the given name and value.  Value indicates
-the initial semaphore value.
-
-<dt>glSemaphoreDestroyCR(GLuint name)</dt>
-<dd>Destroys the named semaphore.
-
-<dt>glSemaphorePCR(GLuint name)</dt>
-<dd>Decrements the named semaphore.  This is the <em>wait</em> operation.
-
-<dt>glSemaphoreVCR(GLuint name)</dt>
-<dd>Increments the named semaphore.  This is the <em>signal</em> operation.
-
-</dd>
-<p>See the <a href="parallelapplication.html">Writing a parallel
-application section</a> for more information.
-</p>
-
-
-<a name="GL_CR_server_id_sharing">
-<h2 class="PageSubHeading">GL_CR_server_id_sharing</h2>
-<p>This extension allows control over display list, texture object and
-vertex program ID management in network/server nodes.
-This is useful for parallel applications.
-</p>
-
-<p>
-Specifically, it allows a program to set the values for the server
-configuration options: <b>shared_display_lists</b>,
-<b>shared_texture_objects</b>&nbsp;
-and <b>shared_programs</b>&nbsp; at runtime.
-</p>
-
-<p>New tokens accepted by the <code>target</code> parameter to
-<code>glChromiumParameteriCR</code>:
-
-<dl>
-<dt>GL_SHARED_DISPLAY_LISTS_CR</dt>
-<dd>The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
-    whether display list IDs should be shared or unshared by all clients,
-    respectively.
-    This corresponds to the <b>shared_display_lists</b> network node
-    configuration option.
-    The default value is GL_TRUE.
-</dd>
-<dt>GL_SHARED_TEXTURE_OBJECTS_CR</dt>
-<dd>The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
-    whether texture object IDs should be shared or unshared by all clients,
-    respectively.
-    This corresponds to the <b>shared_texture_objects</b> network node
-    configuration option.
-    The default value is GL_TRUE.
-</dd>
-<dt>GL_SHARED_PROGRAMS_CR</dt>
-<dd>The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
-    whether vertex/fragment program IDs should be shared or unshared by all
-    clients, respectively.
-    This corresponds to the <b>shared_programs</b> network node
-    configuration option.
-    The default value is GL_TRUE.
-</dd>
-</dl>
-
-<p>In general, only parallel applications need to be concerned with these
-parameters.
-For example, if each of N instances of a parallel application create a
-display list named K and each application puts different OpenGL commands
-into the N instances of K, then GL_SHARED_DISPLAY_LISTS_CR should be set to
-GL_FALSE.
-The server will then distinguish between the N different lists named K.
-</p>
-
-
-
-<a name="GL_CR_server_matrix">
-<h2 class="PageSubHeading">GL_CR_server_matrix</h2>
-
-<p>
-This extension allows an application to specify unique projection and
-viewing matrices for each server in a tilesort configuration.
-This is typically used to support a non-planar rendering environment,
-such as a CAVE.
-See the <a href="nonplanar.html">Non-planer tilesort</a> section for
-details.
-</p>
-
-<p>
-Three new tokens for glChromiumParametervCR are introduced:
-</p>
-<ul>
-<li>GL_SERVER_VIEW_MATRIX_CR
-<li>GL_SERVER_PROJECTION_MATRIX_CR
-<li>GL_SERVER_FRUSTUM_CR
-</ul>
-
-
-<p>
-To set the per-server view matrix, call:
-</p>
-<pre>
+</pre><code>count</code> should be 4 + 4 * (number of tiles).
+      </dd>
+    </dl><a name="GL_CR_synchronization" id="GL_CR_synchronization"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_synchronization
+    </h2>
+    <p>
+      This extension defines semaphore and barrier functions for
+      synchronization.
+    </p>
+    <dl>
+      <dt>
+        glBarrierCreateCR(GLuint name, GLuint count)
+      </dt>
+      <dd>
+        Create a barrier with the given name and count. The count indicates how
+        many clients must meet at the barrier before it is released. If count
+        is zero, the crserver will automatically set count to the number of
+        clients currently connected to the server.
+      </dd>
+      <dt>
+        glBarrierDestroyCR(GLuint name)
+      </dt>
+      <dd>
+        Destroys the named barrier.
+      </dd>
+      <dt>
+        glBarrierExecCR(GLuint name)
+      </dt>
+      <dd>
+        Causes the caller to wait on the barrier until all peers meet the
+        barrier.
+      </dd>
+      <dt>
+        glSemaphoreCreateCR(GLuint name, GLuint value)
+      </dt>
+      <dd>
+        Creates a semaphore with the given name and value. Value indicates the
+        initial semaphore value.
+      </dd>
+      <dt>
+        glSemaphoreDestroyCR(GLuint name)
+      </dt>
+      <dd>
+        Destroys the named semaphore.
+      </dd>
+      <dt>
+        glSemaphorePCR(GLuint name)
+      </dt>
+      <dd>
+        Decrements the named semaphore. This is the <em>wait</em> operation.
+      </dd>
+      <dt>
+        glSemaphoreVCR(GLuint name)
+      </dt>
+      <dd>
+        Increments the named semaphore. This is the <em>signal</em> operation.
+      </dd>
+    </dl>
+    <p>
+      See the <a href="parallelapplication.html">Writing a parallel application
+      section</a> for more information.
+    </p><a name="GL_CR_server_id_sharing" id="GL_CR_server_id_sharing"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_server_id_sharing
+    </h2>
+    <p>
+      This extension allows control over display list, texture object and
+      vertex program ID management in network/server nodes. This is useful for
+      parallel applications.
+    </p>
+    <p>
+      Specifically, it allows a program to set the values for the server
+      configuration options: <em>shared_display_lists</em>,
+      <em>shared_texture_objects</em> and <em>shared_programs</em> at runtime.
+    </p>
+    <p>
+      New tokens accepted by the <code>target</code> parameter to <code class=
+      "Function">glChromiumParameteriCR</code>:
+    </p>
+    <dl>
+      <dt>
+        GL_SHARED_DISPLAY_LISTS_CR
+      </dt>
+      <dd>
+        The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
+        whether display list IDs should be shared or unshared by all clients,
+        respectively. This corresponds to the <em>shared_display_lists</em>
+        network node configuration option. The default value is GL_TRUE.
+      </dd>
+      <dt>
+        GL_SHARED_TEXTURE_OBJECTS_CR
+      </dt>
+      <dd>
+        The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
+        whether texture object IDs should be shared or unshared by all clients,
+        respectively. This corresponds to the <em>shared_texture_objects</em>
+        network node configuration option. The default value is GL_TRUE.
+      </dd>
+      <dt>
+        GL_SHARED_PROGRAMS_CR
+      </dt>
+      <dd>
+        The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
+        whether vertex/fragment program IDs should be shared or unshared by all
+        clients, respectively. This corresponds to the <em>shared_programs</em>
+        network node configuration option. The default value is GL_TRUE.
+      </dd>
+    </dl>
+    <p>
+      In general, only parallel applications need to be concerned with these
+      parameters. For example, if each of N instances of a parallel application
+      create a display list named K and each application puts different OpenGL
+      commands into the N instances of K, then GL_SHARED_DISPLAY_LISTS_CR
+      should be set to GL_FALSE. The server will then distinguish between the N
+      different lists named K.
+    </p><a name="GL_CR_server_matrix" id="GL_CR_server_matrix"></a>
+    <h2 class="PageSubHeading">
+      GL_CR_server_matrix
+    </h2>
+    <p>
+      This extension allows an application to specify unique projection and
+      viewing matrices for each server in a tilesort configuration. This is
+      typically used to support a non-planar rendering environment, such as a
+      CAVE. See the <a href="nonplanar.html">Non-planer tilesort</a> section
+      for details.
+    </p>
+    <p>
+      Three new tokens for <code class="Function">glChromiumParametervCR</code>
+      are introduced:
+    </p>
+    <ul>
+      <li>GL_SERVER_VIEW_MATRIX_CR
+      </li>
+      <li>GL_SERVER_PROJECTION_MATRIX_CR
+      </li>
+      <li>GL_SERVER_FRUSTUM_CR
+      </li>
+    </ul>
+    <p>
+      To set the per-server view matrix, call:
+    </p>
+    <pre class="GrayCodeListing2">
    glChromiumParameterv(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 17, m)
 </pre>
-<p>
-where m[0] is the server index, starting at zero and m[1] through m[16]
-specify the sixteen elements of the view matrix.
-</p>
-
-<p>
-To set the per-server projection matrix, call:
-</p>
-<pre>
+    <p>
+      where m[0] is the server index, starting at zero and m[1] through m[16]
+      specify the sixteen elements of the view matrix.
+    </p>
+    <p>
+      To set the per-server projection matrix, call:
+    </p>
+    <pre class="GrayCodeListing2">
    glChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT, 17, m)
 </pre>
-<p>
-where m[0] is the server index, starting at zero and m[1] through m[16]
-specify the sixteen elements of the projection matrix.
-</p>
-
-<p>
-Alternately, the per-server projection matrix may be set by calling:
-</p>
-<pre>
+    <p>
+      where m[0] is the server index, starting at zero and m[1] through m[16]
+      specify the sixteen elements of the projection matrix.
+    </p>
+    <p>
+      Alternately, the per-server projection matrix may be set by calling:
+    </p>
+    <pre class="GrayCodeListing2">
    glChromiumParametervCR(GL_SERVER_FRUSTUM_CR, GL_FLOAT, 7, m)
 </pre>
-<p>
-where m[0] is the server index, starting at zero and m[1] through m[7]
-are the left, right, bottom, top, near and far frustum parameters.
-</p>
-
-<p>
-Note that these functions are meant to be used by applications which
-are running with a tilesort SPU.
-</p>
-
-<p>
-Also note that if the application sets the view or projection matrices
-then the Python configuration file <em>should not</em> set the matrices
-via configuration options.
-I.e. either set the matrices in the configuration file or the application,
-but not both places.
-</p>
-
-</body>
-
+    <p>
+      where m[0] is the server index, starting at zero and m[1] through m[7]
+      are the left, right, bottom, top, near and far frustum parameters.
+    </p>
+    <p>
+      Note that these functions are meant to be used by applications which are
+      running with a tilesort SPU.
+    </p>
+    <p>
+      Also note that if the application sets the view or projection matrices
+      then the Python configuration file <em>should not</em> set the matrices
+      via configuration options. I.e. either set the matrices in the
+      configuration file or the application, but not both places.
+    </p>
+  </body>
 </html>

@@ -1,107 +1,131 @@
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+     See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Adding OpenGL Extensions to Chromium</h1>
-<p>In order to use particular OpenGL extensions in your OpenGL application,
-Chromium must also implement those extensions.  This page describes
-how OpenGL extensions are implemented in Chromium and how to add new ones.</p>
-
-<h2 class="PageSubHeading">Compile-time extension support</h2>
-<p>The <code>include/cr_versions.h</code> file defines a preprocessor
-token for each extension Chromium supports.  For example:</p>
-<pre>
-#define CR_ARB_multitexture 1
-#define CR_ARB_texture_cube_map 1
-#define CR_EXT_blend_color 1
-#define CR_EXT_blend_minmax 1
-#define CR_EXT_blend_subtract 1
-</pre>
-<p>Most Chromium client programs are ordinary OpenGL applications and should
-use the <code>GL_</code>-prefixed tokens to test for extensions.
-However, Chromium-specific applications may use these tokens if needed.</p>
-
-<p>Internally, Chromium uses these tokens to determine which OpenGL extensions
-should be enabled.  If one wants to disable a particular extension in
-Chromium you can simply comment-out the appropriate <code>#define</code>.</p>
-
-<p>When adding a new extension to chromium you should surround all the new
-code for that extension with <code>#ifdef CR_(extension name)</code> and
-<code>#endif</code>.</p>
-
-
-<h2 class="PageSubHeading">Run-time extension support</h2>
-<p>At runtime, Chromium clients should use <code>glGetString(GL_EXTENSIONS)</code>
-to determine if extensions are supported.</p>
-<p>Internally, Chromium will compute the extension string by examining the
-extensions supported by each back-end OpenGL implementation, finding the
-intersection, and propogating the list up through the SPU DAG to be sure
-the extensions are supported by all the Chromium SPUs.</p>
-<p>Extension strings and OpenGL limits like maximum texture size and
-number of light sources for each SPU are stored in the mothership.  When
-each SPU is initialized it reports its OpenGL extensions and limits to
-the mothership.  Some SPUs, like the tilesort SPU, will query the mothership
-for its children/server SPU limits in order to determine its own limits.</p>
-
-<h2 class="PageSubHeading">Adding new extensions</h2>
-<p>Here are the steps for adding a new extension to Chromium:</p>
-<ol>
-  <li>Add a new <code>CR_</code>* token to <code>include/cr_versions.h</code>.
-  <li>Add a new GLboolean field to the <code>CRExtensionState</code> structure
-      in the <code>include/state/cr_limits.h</code> file.
-  <li>Add new code in <code>crStateExtensionsInit()</code>
-      in <code>spu/state_tracker/state_limits.c</code> to initialize the
-      new boolean.
-      Update the extension strings in
-      <code>state_tracker/state_limits.c</code> as well.
-  <li>Implement the new code for the extension as needed throughout Chromium.
-      Specifically, the packer, unpacker and state tracker are the major
-      modules which need updating.
-      The best advice here is to look at existing extensions for ideas.
-  <li>Extensions which only add new tokens to existing functions are easiest
-      to implement.  Often, only the state tracker needs to be updated.
-  <li>Extensions which add new OpenGL functions are more work.  The
-      file <code>glapi_parser/APIspec.txt</code> defines all the OpenGL
-      API functions (entry points).  New extension functions should be
-      added to this file, following the example of others.
-      Read the information at the top of the file first.
-  <li>The code for new extensions should be surrounded by
-      <code>#ifdef CR_(extension_name)</code> and <code>#endif</code> so that
-      it can be disabled if desired.
-      See the <code>GL_TEXTURE_CUBE_MAP_ARB</code> clause in
-      <code>__enableSet()</code> in <code>spu/state_tracker/state_enable.c</code>
-      for an example.
-</ol>
-
-
-<h2 class="PageSubHeading">Application-only extensions</h2>
-<p>
-A short-cut to adding new extensions is to implment them for the
-application-side only.
-This means that the extension can only be used by
-SPUs running on the application node (such as the render SPU or readback
-SPU when using a sort-last configuration).
-An examples of an application-only extension is GL_NV_fence.
-</p>
-<p>
-Basically, only the OpenGL API dispatcher needs to be updated.
-The extension should be added to the <code>__stateAppOnlyExtensions</code>
-string in <code>state_tracker/state_limits.c</code>.
-
-
-</body>
-
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Adding OpenGL Extensions to Chromium
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Adding OpenGL Extensions to Chromium
+    </h1>
+    <p>
+      In order to use particular OpenGL extensions in your OpenGL application,
+      Chromium must also implement those extensions. This page describes how
+      OpenGL extensions are implemented in Chromium and how to add new ones.
+    </p>
+    <h2 class="PageSubHeading">
+      Compile-time extension support
+    </h2>
+    <p>
+      The <span class="File">include/cr_versions.h</span> file defines a
+      preprocessor token for each extension Chromium supports. For example:
+    </p>
+    <p class="GrayCodeListing2">
+      #define CR_ARB_multitexture 1<br>
+      #define CR_ARB_texture_cube_map 1<br>
+      #define CR_EXT_blend_color 1<br>
+      #define CR_EXT_blend_minmax 1<br>
+      #define CR_EXT_blend_subtract 1<br>
+    </p>
+    <p>
+      Most Chromium client programs are ordinary OpenGL applications and should
+      use the <code>GL_</code>-prefixed tokens to test for extensions. However,
+      Chromium-specific applications may use these tokens if needed.
+    </p>
+    <p>
+      Internally, Chromium uses these tokens to determine which OpenGL
+      extensions should be enabled. If one wants to disable a particular
+      extension in Chromium you can simply comment-out the appropriate
+      <code>#define</code>.
+    </p>
+    <p>
+      When adding a new extension to chromium you should surround all the new
+      code for that extension with <code>#ifdef CR_(extension name)</code> and
+      <code>#endif</code>.
+    </p>
+    <h2 class="PageSubHeading">
+      Run-time extension support
+    </h2>
+    <p>
+      At runtime, Chromium clients should use
+      <code>glGetString(GL_EXTENSIONS)</code> to determine if extensions are
+      supported.
+    </p>
+    <p>
+      Internally, Chromium will compute the extension string by examining the
+      extensions supported by each back-end OpenGL implementation, finding the
+      intersection, and propogating the list up through the SPU DAG to be sure
+      the extensions are supported by all the Chromium SPUs.
+    </p>
+    <p>
+      Extension strings and OpenGL limits like maximum texture size and number
+      of light sources for each SPU are stored in the mothership. When each SPU
+      is initialized it reports its OpenGL extensions and limits to the
+      mothership. Some SPUs, like the tilesort SPU, will query the mothership
+      for its children/server SPU limits in order to determine its own limits.
+    </p>
+    <h2 class="PageSubHeading">
+      Adding new extensions
+    </h2>
+    <p>
+      Here are the steps for adding a new extension to Chromium:
+    </p>
+    <ol>
+      <li>Add a new <code>CR_</code>* token to <span class=
+      "File">include/cr_versions.h</span>.
+      </li>
+      <li>Add a new GLboolean field to the <code>CRExtensionState</code>
+      structure in the <span class="File">include/state/cr_limits.h</span>
+      file.
+      </li>
+      <li>Add new code in <code class="Function">crStateExtensionsInit</code>
+      in <span class="File">spu/state_tracker/state_limits.c</span> to
+      initialize the new boolean. Update the extension strings in
+        <span class="File">state_tracker/state_limits.c</span> as well.
+      </li>
+      <li>Implement the new code for the extension as needed throughout
+      Chromium. Specifically, the packer, unpacker and state tracker are the
+      major modules which need updating. The best advice here is to look at
+      existing extensions for ideas.
+      </li>
+      <li>Extensions which only add new tokens to existing functions are
+      easiest to implement. Often, only the state tracker needs to be updated.
+      </li>
+      <li>Extensions which add new OpenGL functions are more work. The file
+      <span class="File">glapi_parser/APIspec.txt</span> defines all the OpenGL
+      API functions (entry points). New extension functions should be added to
+      this file, following the example of others. Read the information at the
+      top of the file first.
+      </li>
+      <li>The code for new extensions should be surrounded by <code>#ifdef
+      CR_(extension_name)</code> and <code>#endif</code> so that it can be
+      disabled if desired. See the <code>GL_TEXTURE_CUBE_MAP_ARB</code> clause
+      in <code class="Function">__enableSet()</code> in <span class=
+      "File">spu/state_tracker/state_enable.c</span> for an example.
+      </li>
+    </ol>
+    <h2 class="PageSubHeading">
+      Application-only extensions
+    </h2>
+    <p>
+      A short-cut to adding new extensions is to implment them for the
+      application-side only. This means that the extension can only be used by
+      SPUs running on the application node (such as the render SPU or readback
+      SPU when using a sort-last configuration). An examples of an
+      application-only extension is GL_NV_fence.
+    </p>
+    <p>
+      Basically, only the OpenGL API dispatcher needs to be updated. The
+      extension should be added to the <code>__stateAppOnlyExtensions</code>
+      string in <span class="File">state_tracker/state_limits.c</span>.
+    </p>
+  </body>
 </html>
