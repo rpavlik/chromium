@@ -37,6 +37,7 @@ void REPLICATESPU_APIENTRY replicatespu_ReadPixels( GLint x, GLint y, GLsizei wi
 	unsigned int i;
 	ContextInfo *ctx = thread->currentContext;
 	CRClientState *clientState = &(ctx->State->client);
+	int writeback;
 
 	/* flush any pending data, before broadcast unset */
 	replicatespuFlush( (void *) thread );
@@ -53,12 +54,12 @@ void REPLICATESPU_APIENTRY replicatespu_ReadPixels( GLint x, GLint y, GLsizei wi
 			if (replicate_spu.swap)
 			{
 				crPackReadPixelsSWAP( x, y, width, height, format, type, pixels,
-							&(clientState->pack) );
+							&(clientState->pack), &writeback );
 			}
 			else
 			{
 				crPackReadPixels( x, y, width, height, format, type, pixels,
-							&(clientState->pack) );
+							&(clientState->pack), &writeback );
 			}
 			replicatespuFlush( (void *) thread );
 

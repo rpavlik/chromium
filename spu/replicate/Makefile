@@ -50,11 +50,13 @@ LIB_DEFS += replicate.def
 
 include ${TOP}/cr.mk
 
-replicatespu.c: replicate.py replicatespu_special replicatespu_unimplemented_special ../../glapi_parser/gl_header.parsed replicatespu_state_special replicatespu_get_special replicatespu_proto.h
+APIFILES = ../../glapi_parser/apiutil.py ../../glapi_parser/APIspec.txt
+
+replicatespu.c: replicate.py replicatespu_special replicatespu_unimplemented_special $(APIFILES) replicatespu_state_special replicatespu_get_special replicatespu_proto.h
 	@$(ECHO) Building the Replicate SPU
 	@$(PYTHON) replicate.py > $@
 
-replicatespu_diffapi.c: diffapi.py ../../glapi_parser/gl_header.parsed replicatespu_state_special replicatespu_diff_special
+replicatespu_diffapi.c: diffapi.py $(APIFILES) replicatespu_state_special replicatespu_diff_special
 	@$(ECHO) Building the Replicate Differencing API
 	@$(PYTHON) diffapi.py > $@
 
@@ -62,14 +64,14 @@ replicatespu_state.c: replicatespu_state.py replicatespu_state_special replicate
 	@$(ECHO) Building the Replicate SPU State Tracker
 	@$(PYTHON) replicatespu_state.py > $@
 
-replicatespu_flush.c: replicatespu_flush.py replicatespu_flush_special ../../glapi_parser/gl_header.parsed
+replicatespu_flush.c: replicatespu_flush.py replicatespu_flush_special $(APIFILES)
 	@$(ECHO) Building the Replicate SPU Auto-flushing functions
 	@$(PYTHON) replicatespu_flush.py > $@
 
-replicatespu_beginend.c: replicatespu_beginend.py replicatespu_vertex_special ../../glapi_parser/gl_header.parsed replicatespu_proto.h
+replicatespu_beginend.c: replicatespu_beginend.py replicatespu_vertex_special $(APIFILES) replicatespu_proto.h
 	@$(ECHO) Building the Replicate SPU Vertex functions
 	@$(PYTHON) replicatespu_beginend.py > $@
 
-replicatespu_proto.h: replicatespu_proto.py replicatespu_special replicatespu_unimplemented_special ../../glapi_parser/gl_header.parsed
+replicatespu_proto.h: replicatespu_proto.py replicatespu_special replicatespu_unimplemented_special $(APIFILES)
 	@$(ECHO) Building the Replicate SPU prototypes header
 	@$(PYTHON) replicatespu_proto.py > $@

@@ -56,57 +56,113 @@ void REPLICATESPU_APIENTRY replicatespu_InterleavedArrays( GLenum format, GLsize
 
 void REPLICATESPU_APIENTRY replicatespu_ArrayElement( GLint index )
 {
-        GET_CONTEXT(ctx);
-	CRClientState *clientState = &(ctx->State->client);
-	if (replicate_spu.swap)
-	{
-		crPackArrayElementSWAP( index, clientState );
+	GLboolean serverArrays = GL_FALSE;
+
+#if CR_ARB_vertex_buffer_object
+	GET_CONTEXT(ctx);
+	if (ctx->State->extensions.ARB_vertex_buffer_object)
+		serverArrays = crStateUseServerArrays();
+#endif
+
+	if (serverArrays) {
+		/* Send the DrawArrays command over the wire */
+		if (replicate_spu.swap)
+			crPackArrayElementSWAP( index );
+		else
+			crPackArrayElement( index );
 	}
-	else
-	{
-		crPackArrayElement( index, clientState );
+	else {
+		/* evaluate locally */
+		GET_CONTEXT(ctx);
+		CRClientState *clientState = &(ctx->State->client);
+		if (replicate_spu.swap)
+			crPackExpandArrayElementSWAP( index, clientState );
+		else
+			crPackExpandArrayElement( index, clientState );
 	}
 }
 
 void REPLICATESPU_APIENTRY replicatespu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices )
 {
-        GET_CONTEXT(ctx);
-	CRClientState *clientState = &(ctx->State->client);
-	if (replicate_spu.swap)
-	{
-		crPackDrawElementsSWAP( mode, count, type, indices, clientState );
+	GLboolean serverArrays = GL_FALSE;
+
+#if CR_ARB_vertex_buffer_object
+	GET_CONTEXT(ctx);
+	if (ctx->State->extensions.ARB_vertex_buffer_object)
+		serverArrays = crStateUseServerArrays();
+#endif
+
+	if (serverArrays) {
+		/* Send the DrawArrays command over the wire */
+		if (replicate_spu.swap)
+			crPackDrawElementsSWAP( mode, count, type, indices );
+		else
+			crPackDrawElements( mode, count, type, indices );
 	}
-	else
-	{
-		crPackDrawElements( mode, count, type, indices, clientState );
+	else {
+		/* evaluate locally */
+		GET_CONTEXT(ctx);
+		CRClientState *clientState = &(ctx->State->client);
+		if (replicate_spu.swap)
+			crPackExpandDrawElementsSWAP( mode, count, type, indices, clientState );
+		else
+			crPackExpandDrawElements( mode, count, type, indices, clientState );
 	}
 }
 
 void REPLICATESPU_APIENTRY replicatespu_DrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices )
 {
-        GET_CONTEXT(ctx);
-	CRClientState *clientState = &(ctx->State->client);
-	if (replicate_spu.swap)
-	{
-		crPackDrawRangeElementsSWAP( mode, start, end, count, type, indices, clientState );
+	GLboolean serverArrays = GL_FALSE;
+
+#if CR_ARB_vertex_buffer_object
+	GET_CONTEXT(ctx);
+	if (ctx->State->extensions.ARB_vertex_buffer_object)
+		 serverArrays = crStateUseServerArrays();
+#endif
+
+	if (serverArrays) {
+		/* Send the DrawRangeElements command over the wire */
+		if (replicate_spu.swap)
+			crPackDrawRangeElementsSWAP( mode, start, end, count, type, indices );
+		else
+			crPackDrawRangeElements( mode, start, end, count, type, indices );
 	}
-	else
-	{
-		crPackDrawRangeElements( mode, start, end, count, type, indices, clientState );
+	else {
+		/* evaluate locally */
+		GET_CONTEXT(ctx);
+		CRClientState *clientState = &(ctx->State->client);
+		if (replicate_spu.swap)
+			crPackExpandDrawRangeElementsSWAP( mode, start, end, count, type, indices, clientState );
+		else
+			crPackExpandDrawRangeElements( mode, start, end, count, type, indices, clientState );
 	}
 }
 
 void REPLICATESPU_APIENTRY replicatespu_DrawArrays( GLenum mode, GLint first, GLsizei count )
 {
-        GET_CONTEXT(ctx);
-	CRClientState *clientState = &(ctx->State->client);
-	if (replicate_spu.swap)
-	{
-		crPackDrawArraysSWAP( mode, first, count, clientState );
+	GLboolean serverArrays = GL_FALSE;
+
+#if CR_ARB_vertex_buffer_object
+	GET_CONTEXT(ctx);
+	if (ctx->State->extensions.ARB_vertex_buffer_object)
+		 serverArrays = crStateUseServerArrays();
+#endif
+
+	if (serverArrays) {
+		/* Send the DrawArrays command over the wire */
+		if (replicate_spu.swap)
+			crPackDrawArraysSWAP( mode, first, count );
+		else
+			crPackDrawArrays( mode, first, count );
 	}
-	else
-	{
-		crPackDrawArrays( mode, first, count, clientState );
+	else {
+		/* evaluate locally */
+		GET_CONTEXT(ctx);
+		CRClientState *clientState = &(ctx->State->client);
+		if (replicate_spu.swap)
+			crPackExpandDrawArraysSWAP( mode, first, count, clientState );
+		else
+			crPackExpandDrawArrays( mode, first, count, clientState );
 	}
 }
 
@@ -125,30 +181,24 @@ void REPLICATESPU_APIENTRY replicatespu_ClientActiveTextureARB( GLenum texUnit )
 	crStateClientActiveTextureARB( texUnit );
 }
 
+#ifdef CR_EXT_multi_draw_arrays
 void REPLICATESPU_APIENTRY replicatespu_MultiDrawArraysEXT( GLenum mode, GLint *first, GLsizei *count, GLsizei primcount )
 {
-        GET_CONTEXT(ctx);
-	CRClientState *clientState = &(ctx->State->client);
-	if (replicate_spu.swap)
-	{
-		crPackMultiDrawArraysEXTSWAP( mode, first, count, primcount, clientState );
-	}
-	else
-	{
-		crPackMultiDrawArraysEXT( mode, first, count, primcount, clientState );
+	GLint i;
+	for (i = 0; i < primcount; i++) {
+		if (count[i] > 0) {
+			replicatespu_DrawArrays(mode, first[i], count[i]);
+		}
 	}
 }
 
 void REPLICATESPU_APIENTRY replicatespu_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount )
 {
-        GET_CONTEXT(ctx);
-	CRClientState *clientState = &(ctx->State->client);
-	if (replicate_spu.swap)
-	{
-		crPackMultiDrawElementsEXTSWAP( mode, count, type, indices, primcount, clientState );
-	}
-	else
-	{
-		crPackMultiDrawElementsEXT( mode, count, type, indices, primcount, clientState );
+	GLint i;
+	for (i = 0; i < primcount; i++) {
+		if (count[i] > 0) {
+			replicatespu_DrawElements(mode, count[i], type, indices[i]);
+		}
 	}
 }
+#endif

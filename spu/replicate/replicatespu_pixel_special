@@ -2,6 +2,13 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
-PixelStorei
-PixelStoref
-GetBufferPointervARB
+DrawPixels
+TexImage1D
+TexImage2D
+TexImage3D
+TexImage3DEXT
+TexSubImage1D
+TexSubImage2D
+TexSubImage3D
+Bitmap
+ZPix
