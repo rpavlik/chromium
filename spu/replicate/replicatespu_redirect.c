@@ -264,7 +264,7 @@ void replicatespuReplicateCreateContext(int ipaddress)
 		{
 			unsigned int u;
 			CRTextureState *to = &(replicate_spu.context[slot].State->texture);
-			crHashtableWalk(to->idHash, crStateTextureObjDiffCallback, temp_c);
+			crHashtableWalk(to->idHash, TextureObjDiffCallback, temp_c);
 
 		/* Now troll the currentTexture bindings too.  
 		 * Note that the callback function
@@ -274,10 +274,10 @@ void replicatespuReplicateCreateContext(int ipaddress)
 	 	 */
 #define DUMMY_KEY 0
 			for (u = 0; u < temp_c->limits.maxTextureUnits; u++) {
-				crStateTextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture1D, (void *)temp_c );
-				crStateTextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture2D, (void *)temp_c );
-				crStateTextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture3D, (void *)temp_c );
-				crStateTextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTextureCubeMap, (void *)temp_c );
+				TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture1D, (void *)temp_c );
+				TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture2D, (void *)temp_c );
+				TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture3D, (void *)temp_c );
+				TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTextureCubeMap, (void *)temp_c );
 			}
 		}
 #endif
