@@ -80,10 +80,14 @@ static void render_to_crut_window( RenderSPU *render_spu, const char *response )
 	sscanf( response, "%d", &(render_spu->render_to_crut_window) );
 }
 
-
 static void resizable( RenderSPU *render_spu, const char *response )
 {
 	sscanf( response, "%d", &(render_spu->resizable) );
+}
+
+static void set_borderless( RenderSPU *render_spu, const char *response )
+{
+	sscanf( response, "%d", &(render_spu->borderless) );
 }
 
 static void gather_url( RenderSPU *render_spu, const char *response )
@@ -176,6 +180,9 @@ SPUOptions renderSPUOptions[] = {
 
    { "window_geometry", CR_INT, 4, "0, 0, 256, 256", "0, 0, 1, 1", NULL, 
      "Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
+
+   { "borderless", CR_BOOL, 1, "0", NULL, NULL,
+     "Borderless Window", (SPUOptionCB) set_borderless },
 
    { "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
      "System GL Path", (SPUOptionCB)set_system_gl_path },

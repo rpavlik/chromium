@@ -78,17 +78,18 @@ typedef struct {
 	unsigned int defaultWidth, defaultHeight;
 	int use_L2;
 	int fullscreen, ontop;
-	char        display_string[100];
+	char display_string[100];
 #ifndef WINDOWS
-	int          try_direct;
-	int          force_direct;
-	int          sync;
+	int try_direct;
+	int force_direct;
+	int sync;
 #endif
 	int render_to_app_window;
-        int render_to_crut_window;
-        int crut_drawable;
+	int render_to_crut_window;
+	int crut_drawable;
 	int resizable;
 	int use_lut8, lut8[3][256];
+	int borderless;
 
 	CRServer *server;
 	int gather_port;

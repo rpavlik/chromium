@@ -19,6 +19,24 @@
 #include "cr_mem.h"
 #include "renderspu.h"
 
+
+/*
+ * Stuff from MwmUtils.h
+ */
+typedef struct
+{
+    unsigned long       flags;
+    unsigned long       functions;
+    unsigned long       decorations;
+    long                inputMode;
+    unsigned long       status;
+} PropMotifWmHints;
+
+#define PROP_MOTIF_WM_HINTS_ELEMENTS    5
+#define MWM_HINTS_DECORATIONS   (1L << 1)
+
+
+
 #define WINDOW_NAME render_spu.window_title
 
 static Bool WindowExistsFlag;
@@ -436,11 +454,14 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 	flags = CWBorderPixel | CWColormap | CWEventMask;
 
-	if (render_spu.fullscreen)
+#if 0
+	/* old way of removing borders - see new way below */
+	if (render_spu.fullscreen || render_spu.borderless)
 	{
 		swa.override_redirect = True;
 		flags |= CWOverrideRedirect;
 	}
+#endif
 
 	if ( window->window ) {
 		/* destroy the old one */
@@ -461,6 +482,35 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 					 DisplayString(visual->dpy),
 					 (int) visual->visual->visual->visualid  /* yikes */
 					 );
+
+	if (render_spu.fullscreen || render_spu.borderless)
+	{
+		/* Disable border/decorations with an MWM property (observed by most
+		 * modern window managers.
+		 */
+		PropMotifWmHints motif_hints;
+		Atom prop, proptype;
+
+		/* setup the property */
+		motif_hints.flags = MWM_HINTS_DECORATIONS;
+		motif_hints.decorations = 0; /* Turn off all decorations */
+
+		/* get the atom for the property */
+		prop = XInternAtom( dpy, "_MOTIF_WM_HINTS", True );
+		if (prop) {
+			/* not sure this is correct, seems to work, XA_WM_HINTS didn't work */
+			proptype = prop;
+
+			XChangeProperty( dpy, window->window,        /* display, window */
+											 prop, proptype,              /* property, type */
+											 32,                          /* format: 32-bit datums */
+											 PropModeReplace,                /* mode */
+											 (unsigned char *) &motif_hints, /* data */
+											 PROP_MOTIF_WM_HINTS_ELEMENTS    /* nelements */
+											 );
+		}
+	}
+
 
 	/* Make a clear cursor to get rid of the monitor cursor */
 	if ( render_spu.fullscreen )
