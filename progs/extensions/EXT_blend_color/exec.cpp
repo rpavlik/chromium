@@ -15,7 +15,10 @@
 #include "../common/logo.h"
 
 #ifndef WIN32
-#include <GL/glxext.h>
+#define GL_GLEXT_PROTOTYPES
+#include <GL/glext.h>
+#else
+PFNGLBLENDCOLOREXTPROC glBlendColorEXT;
 #endif
 
 
@@ -29,9 +32,6 @@ static GLfloat	bgColor[4] = { 0.2, 0.3, 0.8, 0.0 };
 
 /* --- Extension Declarations ---------------------------------------------- */
 
-//typedef void (APIENTRY *PFNGLBLENDCOLOREXTPROC)( GLclampf, GLclampf, GLclampf, GLclampf );
-
-PFNGLBLENDCOLOREXTPROC glBlendColorEXT;
 
 /* --- Function Definitions ------------------------------------------------- */
 
@@ -88,14 +88,12 @@ void	InitSpecial	( void )
 	
 #ifdef WIN32
 	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)wglGetProcAddress( "glBlendColorEXT" );
-#else
-	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)glXGetProcAddressARB( "glBlendColorEXT" );
-#endif
 	if ( glBlendColorEXT == NULL )
 	{
 		cout << "Error linking to extensions!" << endl;
 		exit( 0 );
 	}
+#endif
 
 	return;
 }
@@ -188,8 +186,6 @@ void	Reshape		( int width, int height )
 
 void	Keyboard	( unsigned char key, int x, int y )
 {
-	static	GLboolean	wireframe = false;
-
 	switch( key )
 	{
 		case 'Q':
