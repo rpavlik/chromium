@@ -642,6 +642,7 @@ void STATE_APIENTRY crStateMaterialiv (GLenum face, GLenum pname, const GLint *p
 		case GL_SHININESS:
 			f_param = (GLfloat) (*param);
 			crStateMaterialfv( face, pname, (GLfloat *) &f_param );
+			break;
 		case GL_COLOR_INDEXES :
 			crError( "Unimplemented GL_COLOR_INDEX in glMaterialiv" );
 			break;
