@@ -353,7 +353,7 @@ DrawMesh(const TriangleMesh *mesh, DrawMode drawMode)
 			 * performance by 25x with (some?) NVIDIA drivers!!!
 			 */
 			glVertexPointer(3, GL_FLOAT, 0, 0);
-			glNormalPointer(GL_BYTE, 0, (void *) mesh->VertexBytes);
+			glNormalPointer(GL_BYTE, 0, (void *) (unsigned long) mesh->VertexBytes);
 			glEnable(GL_VERTEX_ARRAY);
 			glEnable(GL_NORMAL_ARRAY);
 			first = 0;
