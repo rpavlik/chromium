@@ -11,17 +11,20 @@ Globals globals;
 
 static const int MASTER_BARRIER = 100;
 
-crCreateContextProc crCreateContextCR;
-crMakeCurrentProc   crMakeCurrentCR;
-crSwapBuffersProc   crSwapBuffersCR;
+crCreateContextProc glCreateContextCR;
+crMakeCurrentProc   glMakeCurrentCR;
+crSwapBuffersProc   glSwapBuffersCR;
 
-glBarrierCreateProc glBarrierCreateCR;
-glBarrierExecProc   glBarrierExecCR;
+glChromiumParametervCRProc glChromiumParametervCR;
+glBarrierCreateCRProc glBarrierCreateCR;
+glBarrierExecCRProc   glBarrierExecCR;
 
 int DrawFrame( void )
 {
 	int i;
 	static int frame_count = 0;
+	static float bogus_bounds[6] = {0,0,0,0,0,0};
+	Model *model;
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	glMatrixMode( GL_MODELVIEW );
@@ -36,11 +39,16 @@ int DrawFrame( void )
 	glRotatef( frame_count, 1 ,0, 0 );
 	frame_count++;
 
-	for (i = 0 ; i < globals.num_models ; i++)
+	for (i = 0,model=globals.models ; 
+			 model; 
+			 i++,model = model->next)
 	{
+		glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, &(model->bounds) );
 		glCallList( globals.dpy_list_base + i );
+		glFlush();
 	}
-	crSwapBuffersCR( globals.window, 0 );
+	glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bogus_bounds );
+	glSwapBuffersCR( globals.window, 0 );
 
 	return 1;
 }
@@ -51,21 +59,23 @@ void CreateGraphicsContext( )
 	const char *dpy = NULL;
 
 	globals.window = 0;
-#define LOAD( x ) x##CR = (x##Proc) crGetProcAddress( #x )
+#define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
 
-	LOAD( crCreateContext );
-	LOAD( crMakeCurrent );
-	LOAD( crSwapBuffers );
+	LOAD( CreateContext );
+	LOAD( MakeCurrent );
+	LOAD( SwapBuffers );
 
-	globals.ctx = crCreateContextCR(dpy, visual);
+	globals.ctx = glCreateContextCR(dpy, visual);
 	if (globals.ctx < 0) 
 	{
-		crError("crCreateContextCR() call failed!\n");
+		crError("glCreateContextCR() call failed!\n");
 	}
-	crMakeCurrentCR(globals.window, globals.ctx);
+	glMakeCurrentCR(globals.window, globals.ctx);
 
-	LOAD( glBarrierCreate );
-	LOAD( glBarrierExec );
+#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
+  LOAD2( ChromiumParameterv );
+	LOAD2( BarrierCreate );
+	LOAD2( BarrierExec );
 }
 
 void SetupGraphicsState( void )

@@ -160,17 +160,6 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
  * Chromium extensions
  */
 
-#ifndef GL_CR_state_parameter
-#define GL_CR_state_parameter 1
-
-extern void glChromiumParameteriCR(GLenum target, GLint value);
-extern void glChromiumParameterfCR(GLenum target, GLfloat value);
-extern void glChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values);
-extern void glGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values);
-
-#endif /* GL_CR_state_parameter */
-
-
 #ifndef GL_CR_cursor_position
 #define GL_CR_cursor_position 1
 

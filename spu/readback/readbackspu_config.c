@@ -16,6 +16,11 @@ static void __setDefaults( ReadbackSPU *readback_spu )
 	readback_spu->windows[0].childWindow = 0;
 	readback_spu->depthType = GL_FLOAT;
 	readback_spu->barrierCount = 0;
+
+	/* This will make the viewport be computed later */
+	readback_spu->halfViewportWidth = 0;
+	readback_spu->cleared_this_frame = 0;
+	readback_spu->bbox = NULL;
 }
 
 void set_extract_depth( ReadbackSPU *readback_spu, const char *response )

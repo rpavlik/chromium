@@ -53,6 +53,7 @@ crNetConnect
 crNetDisconnect
 crNetServerConnect
 crNetGetMessage
+crNetPeekMessage
 crPixelCopy1D
 crPixelCopy2D
 crPixelSize
@@ -92,3 +93,4 @@ crInitBarrier
 crWaitBarrier
 crRandFloat
 crRandSeed
+crTransformBBox

@@ -70,7 +70,8 @@ LIB_COPIES = crserver \
 	arrayspu \
 	hiddenlinespu \
 	nopspu \
-	simplequeryspu
+	simplequeryspu \
+	readbackspu
 
 include $(TOP)/cr.mk
 

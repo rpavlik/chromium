@@ -20,7 +20,8 @@ endif
 
 SHARED = 1
 LIBRARY = crutil
-FILES = bufpool \
+FILES = bbox \
+	bufpool \
 	devnull \
 	dll \
 	endian \
@@ -40,11 +41,11 @@ FILES = bufpool \
 PRECOMP = debug_opcodes.c
 SLOP += ${PRECOMP}
 
-#ifeq ($(ARCH),Linux)
-#CFLAGS += -DGM_SUPPORT
-#FILES += gm
-#LDFLAGS += -lgm
-#endif
+ifeq ($(ARCH),Linux)
+CFLAGS += -DGM_SUPPORT
+FILES += gm
+LDFLAGS += -lgm
+endif
 
 LIB_DEFS = util.def
 

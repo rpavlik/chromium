@@ -48,6 +48,10 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *super,
 	crSPUCopyDispatchTable( &(readback_spu.super), &(super->dispatch_table) );
 	readbackspuGatherConfiguration( &readback_spu );
 
+	crStateInit();
+	readback_spu.ctx = crStateCreateContext( NULL );
+	crStateMakeCurrent( readback_spu.ctx );
+
 	return &readback_functions;
 }
 

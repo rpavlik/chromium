@@ -6,11 +6,13 @@
 
 #include "cr_applications.h"
 #include "cr_spu.h"
+#include "cr_error.h" 
 #include "stub.h"
 
 
 int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 {
+	crDebug( "In CreateConetxt" );
 	StubInit();
 	return stub.spu->dispatch_table.CreateContext( dpyName, visBits );
 }

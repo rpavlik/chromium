@@ -29,12 +29,12 @@ float colors[7][4] = {
 
 static const int MASTER_BARRIER = 100;
 
-crCreateContextProc crCreateContextCR;
-crMakeCurrentProc   crMakeCurrentCR;
-crSwapBuffersProc   crSwapBuffersCR;
+crCreateContextProc crCreateContext;
+crMakeCurrentProc   crMakeCurrent;
+crSwapBuffersProc   crSwapBuffers;
 
-glBarrierCreateProc glBarrierCreateCR;
-glBarrierExecProc   glBarrierExecCR;
+glBarrierCreateCRProc glBarrierCreateCR;
+glBarrierExecCRProc   glBarrierExecCR;
 
 #ifndef M_PI
 # define M_PI		3.14159265358979323846	/* pi */
@@ -144,21 +144,21 @@ int main(int argc, char *argv[])
 		crError( "Bogus rank: %d (size = %d)", rank, size );
 	}
 
-#define LOAD( x ) x##CR = (x##Proc) crGetProcAddress( #x )
+#define LOAD( x ) x## = (x##Proc) crGetProcAddress( #x )
 
 	LOAD( crCreateContext );
 	LOAD( crMakeCurrent );
 	LOAD( crSwapBuffers );
 
-	ctx = crCreateContextCR(dpy, visual);
+	ctx = crCreateContext(dpy, visual);
 	if (ctx < 0) {
-		crError("crCreateContextCR() call failed!\n");
+		crError("crCreateContext() call failed!\n");
 		return 0;
 	}
-	crMakeCurrentCR(window, ctx);
+	crMakeCurrent(window, ctx);
 
-	LOAD( glBarrierCreate );
-	LOAD( glBarrierExec );
+	LOAD( glBarrierCreateCR );
+	LOAD( glBarrierExecCR );
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
 	glBarrierCreateCR( MASTER_BARRIER, size );
@@ -210,11 +210,11 @@ int main(int argc, char *argv[])
 		 */
 		if (swapFlag) {
 			/* really swap */
-			crSwapBuffersCR( window, 0 );
+			crSwapBuffers( window, 0 );
 		}
 		else {
 			/* don't really swap, just mark end of frame */
-			crSwapBuffersCR( window, CR_SUPPRESS_SWAP_BIT );
+			crSwapBuffers( window, CR_SUPPRESS_SWAP_BIT );
 		}
 
 		/* ARGH -- need to trick out the compiler this sucks. */

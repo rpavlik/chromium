@@ -20,7 +20,7 @@ typedef struct {
 } Point;
 
 typedef struct {
-	Point max,min;
+	Point min, max;
 } BBOX;
 
 typedef struct _mlist {

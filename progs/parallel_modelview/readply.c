@@ -208,7 +208,7 @@ void ReadFiles( void )
 	globals.models = NULL;
 	globals.num_models = 0;
 
-	tris_per_node = 50000;
+	tris_per_node = 500000;
 
 	crDebug( "Triangles per node: %d", tris_per_node );
 
@@ -219,6 +219,7 @@ void ReadFiles( void )
 			Model *model = (Model *) crAlloc( sizeof( *model ) );
 			ReadFile( mfi, model );
 			model->next = globals.models;
+			model->bounds = mfi->file_info.bounds;
 			globals.models = model;
 			globals.num_models++;
 		}

@@ -33,13 +33,18 @@ extern "C" {
 #define CR_SUPPRESS_SWAP_BIT 0X1
 
 
-typedef void (APIENTRY *glBarrierCreateProc) (GLuint name, GLuint count);
-typedef void (APIENTRY *glBarrierDestroyProc) (GLuint name);
-typedef void (APIENTRY *glBarrierExecProc) (GLuint name);
-typedef void (APIENTRY *glSemaphoreCreateProc) (GLuint name, GLuint count);
-typedef void (APIENTRY *glSemaphoreDestroyProc) (GLuint name);
-typedef void (APIENTRY *glSemaphorePProc) (GLuint name);
-typedef void (APIENTRY *glSemaphoreVProc) (GLuint name);
+typedef void (APIENTRY *glBarrierCreateCRProc) (GLuint name, GLuint count);
+typedef void (APIENTRY *glBarrierDestroyCRProc) (GLuint name);
+typedef void (APIENTRY *glBarrierExecCRProc) (GLuint name);
+typedef void (APIENTRY *glSemaphoreCreateCRProc) (GLuint name, GLuint count);
+typedef void (APIENTRY *glSemaphoreDestroyCRProc) (GLuint name);
+typedef void (APIENTRY *glSemaphorePCRProc) (GLuint name);
+typedef void (APIENTRY *glSemaphoreVCRProc) (GLuint name);
+
+typedef void (APIENTRY *glChromiumParameteriCRProc) (GLenum target, GLint value);
+typedef void (APIENTRY *glChromiumParameterfCRProc) (GLenum target, GLfloat value);
+typedef void (APIENTRY *glChromiumParametervCRProc) (GLenum target, GLenum type, GLsizei count, const GLvoid *values);
+typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values);
 
 typedef GLint (APIENTRY *crCreateContextProc)(const char *dpyName, GLint visBits);
 typedef void (APIENTRY *crDestroyContextProc)(GLint context);

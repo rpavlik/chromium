@@ -10,6 +10,7 @@ LIBRARY = readbackspu
 FILES = readbackspu \
 	readbackspu_config \
 	readbackspu_init
+TRACKS_STATE = 1
 
 LIBRARIES = spuload crutil crmothership
 

@@ -53,6 +53,7 @@ void crNetSend( CRConnection *conn, void **bufp, void *start, unsigned int len )
 void crNetSendExact( CRConnection *conn, void *start, unsigned int len );
 void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len );
 unsigned int  crNetGetMessage( CRConnection *conn, CRMessage **message );
+unsigned int  crNetPeekMessage( CRConnection *conn, CRMessage **message );
 void crNetReadline( CRConnection *conn, void *buf );
 int  crNetRecv( void );
 void crNetFree( CRConnection *conn, void *buf );

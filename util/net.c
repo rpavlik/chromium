@@ -563,32 +563,39 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 	conn->messageTail = msglist;
 }
 
+unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message )
+{
+	if (conn->messageList != NULL)
+	{
+		CRMessageList *temp;
+		unsigned int len;
+		*message = conn->messageList->mesg;
+		len = conn->messageList->len;
+		temp = conn->messageList;
+		conn->messageList = conn->messageList->next;
+		if (!conn->messageList)
+		{
+			conn->messageTail = NULL;
+		}
+#ifdef CHROMIUM_THREADSAFE
+		crLockMutex(&cr_net.mutex);
+#endif
+		crBufferPoolPush( &(cr_net.message_list_pool), temp );
+#ifdef CHROMIUM_THREADSAFE
+		crUnlockMutex(&cr_net.mutex);
+#endif
+		return len;
+	}
+	return 0;
+}
+
 unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 {
 	/* spin until we're out of work to do */
 	for (;;)
 	{
-		if (conn->messageList != NULL)
-		{
-			CRMessageList *temp;
-			unsigned int len;
-			*message = conn->messageList->mesg;
-			len = conn->messageList->len;
-			temp = conn->messageList;
-			conn->messageList = conn->messageList->next;
-			if (!conn->messageList)
-			{
-				conn->messageTail = NULL;
-			}
-#ifdef CHROMIUM_THREADSAFE
-			crLockMutex(&cr_net.mutex);
-#endif
-			crBufferPoolPush( &(cr_net.message_list_pool), temp );
-#ifdef CHROMIUM_THREADSAFE
-			crUnlockMutex(&cr_net.mutex);
-#endif
-			return len;
-		}
+		int len = crNetPeekMessage( conn, message );
+		if (len) return len;
 		/* No work left in the queue, return */
 		if ( !crNetRecv() )
 			return 0;
