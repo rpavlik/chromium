@@ -311,7 +311,7 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 /* Create a new client */
 void crNetNewClient( CRConnection *conn, CRNetServer *ns )
 {
-	unsigned int len = sizeof(CRMessageNewClient*);
+	unsigned int len = sizeof(CRMessageNewClient*); /* XXX why pointer??? */
 	CRMessageNewClient msg;
 
 	CRASSERT( conn );
@@ -699,6 +699,7 @@ void crNetSendExact( CRConnection *conn, const void *buf, unsigned int len )
 /**
  * Connect to a server, as specified by the 'name' and 'buffer_size' fields
  * of the CRNetServer parameter.
+ * When done, the CrNetServer's conn field will be initialized.
  */
 void crNetServerConnect( CRNetServer *ns )
 {

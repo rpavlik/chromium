@@ -1304,12 +1304,12 @@ crTCPIPConnection( CRConnection *conn )
 
 	CRASSERT( cr_tcpip.initialized );
 
-	conn->type  = CR_TCPIP;
+	conn->type = CR_TCPIP;
 	conn->Alloc = crTCPIPAlloc;
-	conn->Send  = crTCPIPSend;
-	conn->SendExact  = crTCPIPWriteExact;
-	conn->Recv  = crTCPIPSingleRecv;
-	conn->Free  = crTCPIPFree;
+	conn->Send = crTCPIPSend;
+	conn->SendExact = crTCPIPWriteExact;
+	conn->Recv = crTCPIPSingleRecv;
+	conn->Free = crTCPIPFree;
 	conn->Accept = crTCPIPAccept;
 	conn->Connect = crTCPIPDoConnect;
 	conn->Disconnect = crTCPIPDoDisconnect;
