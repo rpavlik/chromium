@@ -133,7 +133,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExecCR( GLuint name )
 		GLuint i;
 
 		if (cr_server.debug_barriers)
-			crDebug("crserver: BarrierExec(id=%d, num_waiting=%d/%d) - release.", name, barrier->num_waiting, barrier->count);
+			crDebug("crserver: BarrierExec(client=%d, id=%d, num_waiting=%d/%d) - release",
+							cr_server.curClient->number, name, barrier->num_waiting,
+							barrier->count);
 
 		for ( i = 0; i < barrier->count; i++ )
 		{
@@ -142,7 +144,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExecCR( GLuint name )
 		barrier->num_waiting = 0;
 	}
 	else if (cr_server.debug_barriers)
-		crDebug("crserver: BarrierExec(id=%d, num_waiting=%d/%d) - block", name, barrier->num_waiting, barrier->count);
+		crDebug("crserver: BarrierExec(client=%d, id=%d, num_waiting=%d/%d) - block",
+						cr_server.curClient->number, name, barrier->num_waiting,
+						barrier->count);
 
 }
 
@@ -158,7 +162,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GL
 
 	sema = crHashtableSearch(cr_server.semaphores, name);
 	if (sema)
-	   return; /* already created */
+		return; /* already created */
 
 	sema = (CRServerSemaphore *) crAlloc( sizeof( *sema ) );
 	crHashtableAdd( cr_server.semaphores, name, sema );
@@ -199,8 +203,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 	{
 		/* go */
 		if (cr_server.debug_barriers)
-			crDebug("crserver: SemaphoreP(id=%d, count=%d) decrement to %d",
-					name, sema->count, sema->count - 1);
+			crDebug("crserver: SemaphoreP(client=%d, id=%d, count=%d) decrement to %d",
+							cr_server.curClient->number, name, sema->count, sema->count - 1);
 		sema->count--;
 	}
 	else
@@ -208,8 +212,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 		/* block */
 		wqnode *node;
 		if (cr_server.debug_barriers)
-			crDebug("crserver: SemaphoreP(id=%d, count=%d) - block.",
-					name, sema->count);
+			crDebug("crserver: SemaphoreP(client=%d, id=%d, count=%d) - block.",
+							cr_server.curClient->number, name, sema->count);
 		cr_server.run_queue->blocked = 1;
 		node = (wqnode *) crAlloc( sizeof( *node ) );
 		node->q = cr_server.run_queue;
@@ -246,8 +250,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreVCR( GLuint name )
 	{
 		wqnode *temp = sema->waiting;
 		if (cr_server.debug_barriers)
-			crDebug("crserver: SemaphoreV(id=%d, count=%d) - unblock.",
-					name, sema->count);
+			crDebug("crserver: SemaphoreV(client=%d, id=%d, count=%d) - unblock.",
+							cr_server.curClient->number, name, sema->count);
 		/* unblock one waiter */
 		temp->q->blocked = 0;
 		sema->waiting = temp->next;
@@ -261,8 +265,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreVCR( GLuint name )
 	{
 		/* nobody's waiting */
 		if (cr_server.debug_barriers)
-			crDebug("crserver: SemaphoreV(id=%d, count=%d) - increment to %d",
-					name, sema->count, sema->count + 1);
+			crDebug("crserver: SemaphoreV(client=%d, id=%d, count=%d) - increment to %d",
+							cr_server.curClient->number, name, sema->count, sema->count + 1);
 		sema->count++;
 	}
 }
