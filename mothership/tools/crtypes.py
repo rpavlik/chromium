@@ -168,6 +168,7 @@ class SpuObject:
 											  width=1, style=0)
 		self.__FillBrush = wxPython.wx.wxLIGHT_GREY_BRUSH
 		self.__OptionList = None
+		self.__TileLayoutFunction = None
 
 	def Clone(self):
 		"""Return a deep copy/clone of this SpuObject"""
@@ -260,6 +261,10 @@ class SpuObject:
 		"""Set an option, via config file"""
 		self.__OptionList.Conf(var, values)
 
+	def TileLayoutFunction(self, func):
+		"""Set the tile layout function for a tilesort SPU"""
+		self.__TileLayoutFunction = func
+		
 	def PrintOptions(self):
 		self.__OptionList.Print()
 
