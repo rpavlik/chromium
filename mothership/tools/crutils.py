@@ -46,53 +46,6 @@ def MakeHostnames(format, start, count):
 
 #----------------------------------------------------------------------
 
-class ExceptionHandler:
-	""" A simple error-handling class to write exceptions to a text file.
-
-	    Under MS Windows, the standard DOS console window doesn't scroll and
-	    closes as soon as the application exits, making it hard to find and
-	    view Python exceptions.  This utility class allows you to handle Python
-	    exceptions in a more friendly manner.
-	"""
-
-	def __init__(self):
-		""" Standard constructor.
-		"""
-		print "making exception handler"
-		self._buff = ""
-		if os.path.exists("errors.txt"):
-			os.remove("errors.txt") # Delete previous error log, if any.
-
-
-	def write(self, s):
-		""" Write the given error message to a text file.
-
-			Note that if the error message doesn't end in a carriage return, we
-			have to buffer up the inputs until a carriage return is received.
-		"""
-		if (s[-1] != "\n") and (s[-1] != "\r"):
-			self._buff = self._buff + s
-			return
-
-		try:
-			s = self._buff + s
-			self._buff = ""
-
-			if s[:9] == "Traceback":
-			# Tell the user than an exception occurred.
-				wxMessageBox("An internal error has occurred.\nPlease " + \
-					 "refer to the 'errors.txt' file for details.",
-					 "Error", wxOK | wxCENTRE | wxICON_EXCLAMATION)
-
-			f = open("errors.txt", "a")
-			f.write(s)
-			f.close()
-		except:
-			pass # Don't recursively crash on errors.
-
-
-#----------------------------------------------------------------------
-
 def FindSPUNamesInDir(spuDirectory):
 	"""Return list of SPUs in the given directory."""
 	# filenames to match:
@@ -237,3 +190,56 @@ def NewApplicationNode(count = 1):
 		hosts = ["localhost"]
 	return crtypes.ApplicationNode(hosts, count)
 
+
+#----------------------------------------------------------------------
+
+def SplitNode(node, mothership):
+	"""Split an N-instance node into N separate 1-instance nodes."""
+	clients = mothership.FindClients(node)
+	(x, y) = node.GetPosition()
+	names = node.GetHosts()[:]
+	# make count-1 new nodes
+	for i in range(node.GetCount() - 1):
+		newNode = node.Clone()
+		newNode.SetCount(1)
+		y += 70
+		newNode.SetPosition(x, y)
+		newNode.SetHosts( names[i+1 : i+2] )  # name[i+1]
+		mothership.AddNode(newNode)
+		# connect clients to the new node
+		for c in clients:
+			if c.LastSPU().CanAddServer():
+				c.LastSPU().AddServer(newNode)
+	# fix up the original node
+	node.SetCount(1)
+	node.SetHosts( names[0:1] )
+
+def MergeNodes(nodes, mothership):
+	"""Merge a list of nodes into a single node.
+	Return 1 for success, 0 for failure."""
+	# XXX Problem:  what about the downstream servers???
+	# make sure all the nodes are identical (or pretty similar)
+	# Also, compute totalCount
+	# Also, build list of all hostnames
+	assert len(nodes) > 1
+	totalCount = 0
+	first = nodes[0]
+	names = []
+	for n in nodes:
+		totalCount += n.GetCount()
+		names += n.GetHosts()
+		if n != first and not first.IsSimilarTo(n):
+			return 0
+		
+	# we'll keep the first node and just change its count
+	# disconnect the extra nodes from their clients
+	for n in nodes:
+		if n != first:
+			clients = mothership.FindClients(n)
+			for c in clients:
+				c.LastSPU().RemoveServer(n)
+			mothership.RemoveNode(n)
+	# Set total count on first node
+	first.SetCount(totalCount)
+	first.SetHosts(names)
+	return 1

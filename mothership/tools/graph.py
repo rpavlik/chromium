@@ -945,52 +945,15 @@ class MainFrame(wxFrame):
 		"""Node / Split callback"""
 		for node in self.mothership.SelectedNodes():
 			if node.GetCount() > 1:
-				clients = self.mothership.FindClients(node)
-				(x, y) = node.GetPosition()
-				# make count-1 new nodes
-				for i in range(node.GetCount() - 1):
-					#newNode = copy.deepcopy(node)
-					newNode = node.Clone()
-					newNode.SetCount(1)
-					y += 70
-					newNode.SetPosition(x, y)
-					self.mothership.AddNode(newNode)
-					# connect clients to the new node
-					for c in clients:
-						if c.LastSPU().CanAddServer():
-							c.LastSPU().AddServer(newNode)
-				node.SetCount(1)
+				crutils.SplitNode(node, self.mothership)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
 	def doMergeNodes(self, event):
 		"""Node / Merge callback"""
 		nodes = self.mothership.SelectedNodes()
-		# make sure all the nodes are identical (or pretty similar)
-		assert len(nodes) > 1
-		similar = 1
-		first = nodes[0]
-		for n in nodes:
-			if n != first and not first.IsSimilarTo(n):
-				similar = 0
-				break
-		if not similar:
+		if not crutils.MergeNodes(nodes, self.mothership):
 			self.Notify("The selected nodes are too dissimilar to be merged.")
-			return
-		# determine total node count
-		totalCount = 0
-		for n in nodes:
-			totalCount += n.GetCount()
-		# we'll keep the first node and just change its count
-		# disconnect the extra nodes from their clients
-		for n in nodes:
-			if n != first:
-				clients = self.mothership.FindClients(n)
-				for c in clients:
-					c.LastSPU().RemoveServer(n)
-				self.mothership.RemoveNode(n)
-		# Set total count on first node
-		first.SetCount(totalCount)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
