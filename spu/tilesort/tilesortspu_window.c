@@ -30,83 +30,6 @@
 
 
 #ifdef USE_DMX
-/**
- * XXX \todo taken from renderspu_glx.c, share somehow?
- *
- * Find suitable GLX visual for a back-end child window.
- */
-static XVisualInfo *
-chooseVisual( Display *dpy, int screen, GLint visAttribs )
-{
-	XVisualInfo *vis;
-	int attribList[100];
-	int i = 0;
-
-	CRASSERT(visAttribs & CR_RGB_BIT);  /* anybody need color index */
-
-	attribList[i++] = GLX_RGBA;
-	attribList[i++] = GLX_RED_SIZE;
-	attribList[i++] = 1;
-	attribList[i++] = GLX_GREEN_SIZE;
-	attribList[i++] = 1;
-	attribList[i++] = GLX_BLUE_SIZE;
-	attribList[i++] = 1;
-
-	if (visAttribs & CR_ALPHA_BIT)
-	{
-		attribList[i++] = GLX_ALPHA_SIZE;
-		attribList[i++] = 1;
-	}
-
-	if (visAttribs & CR_DOUBLE_BIT)
-		attribList[i++] = GLX_DOUBLEBUFFER;
-
-	if (visAttribs & CR_STEREO_BIT)
-		attribList[i++] = GLX_STEREO;
-
-	if (visAttribs & CR_DEPTH_BIT)
-	{
-		attribList[i++] = GLX_DEPTH_SIZE;
-		attribList[i++] = 1;
-	}
-
-	if (visAttribs & CR_STENCIL_BIT)
-	{
-		attribList[i++] = GLX_STENCIL_SIZE;
-		attribList[i++] = 1;
-	}
-
-	if (visAttribs & CR_ACCUM_BIT)
-	{
-		attribList[i++] = GLX_ACCUM_RED_SIZE;
-		attribList[i++] = 1;
-		attribList[i++] = GLX_ACCUM_GREEN_SIZE;
-		attribList[i++] = 1;
-		attribList[i++] = GLX_ACCUM_BLUE_SIZE;
-		attribList[i++] = 1;
-		if (visAttribs & CR_ALPHA_BIT)
-		{
-			attribList[i++] = GLX_ACCUM_ALPHA_SIZE;
-			attribList[i++] = 1;
-		}
-	}
-
-	if (visAttribs & CR_MULTISAMPLE_BIT)
-	{
-		attribList[i++] = GLX_SAMPLE_BUFFERS_SGIS;
-		attribList[i++] = 1;
-		attribList[i++] = GLX_SAMPLES_SGIS;
-		attribList[i++] = 4;
-	}
-
-	/* End the list */
-	attribList[i++] = None;
-
-	CRASSERT(tilesort_spu.ws.glXChooseVisual);
-	vis = tilesort_spu.ws.glXChooseVisual( dpy, screen, attribList );
-	return vis;
-}
-
 
 /**
  * Try to get an XVisualInfo that satisfies the visAttribs mask.
@@ -117,7 +40,8 @@ static XVisualInfo *
 chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 {
   while (1) {
-		XVisualInfo *vis = chooseVisual(dpy, screen, visAttribs);
+		XVisualInfo *vis = crChooseVisual(&tilesort_spu.ws, dpy, screen,
+																			GL_FALSE, visAttribs);
 		if (vis)
 			return vis;
 
@@ -237,48 +161,50 @@ tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 			subwinH = 1;
 
 		if (backend->xwin != 0 && backend->xsubwin == 0) {
-			/* Create a child of the back-end X window.  We do this to work
-			 * around a memory allocation problem found with NVIDIA drivers.
-			 * See discussion from Feb 2002 on the DMX-devel mailing list.
-			 * This also gives us flexibility in choosing the window's visual.
-			 */
-			XSetWindowAttributes attribs;
-			Window root;
-			unsigned long attribMask;
-			int scr;
-			XVisualInfo *visInfo;
+			{
+				/* Create a child of the back-end X window.  We do this to work
+				 * around a memory allocation problem found with NVIDIA drivers.
+				 * See discussion from Feb 2002 on the DMX-devel mailing list.
+				 * This also gives us flexibility in choosing the window's visual.
+				 */
+				XSetWindowAttributes attribs;
+				Window root;
+				unsigned long attribMask;
+				int scr;
+				XVisualInfo *visInfo;
 
-			scr = DefaultScreen(backend->dpy);
-			root = RootWindow(backend->dpy, scr);
+				scr = DefaultScreen(backend->dpy);
+				root = RootWindow(backend->dpy, scr);
 
-			visInfo = chooseVisualRetry(backend->dpy, scr, winInfo->visBits);
-			CRASSERT(visInfo);
+				visInfo = chooseVisualRetry(backend->dpy, scr, winInfo->visBits);
+				CRASSERT(visInfo);
 
-			attribs.background_pixel = 0;
-			attribs.border_pixel = 0;
-			attribs.colormap = XCreateColormap(backend->dpy, root,
-																				 visInfo->visual, AllocNone);
-			attribMask = /*CWBackPixel |*/ CWBorderPixel | CWColormap;
+				attribs.background_pixel = 0;
+				attribs.border_pixel = 0;
+				attribs.colormap = XCreateColormap(backend->dpy, root,
+																					 visInfo->visual, AllocNone);
+				attribMask = CWBorderPixel | CWColormap;
 
-			backend->xsubwin = XCreateWindow(backend->dpy,
-																			 backend->xwin, /* parent */
-																			 subwinX, subwinY,
-																			 subwinW, subwinH,
-																			 0, /* border width */
-																			 visInfo->depth, /* depth */
-																			 InputOutput, /* class */
-																			 visInfo->visual,
-																			 attribMask, &attribs);
+				backend->xsubwin = XCreateWindow(backend->dpy,
+																				 backend->xwin, /* parent */
+																				 subwinX, subwinY,
+																				 subwinW, subwinH,
+																				 0, /* border width */
+																				 visInfo->depth, /* depth */
+																				 InputOutput, /* class */
+																				 visInfo->visual,
+																				 attribMask, &attribs);
 
-			/*
-			crDebug("Created child 0x%x of 0x%x on server %d with visual 0x%x\n",
-						 (int)backend->xsubwin, (int)backend->xwin, i,
-						 (int) visInfo->visualid);
-			*/
-			CRASSERT(backend->xsubwin);
-			XMapWindow(backend->dpy, backend->xsubwin);
-			XSync(backend->dpy, 0);
-			winInfo->newBackendWindows = GL_TRUE;
+				/*
+				crDebug("Created child 0x%x of 0x%x on server %d with visual 0x%x\n",
+							 (int)backend->xsubwin, (int)backend->xwin, i,
+							 (int) visInfo->visualid);
+				*/
+				CRASSERT(backend->xsubwin);
+				XMapWindow(backend->dpy, backend->xsubwin);
+				XSync(backend->dpy, 0);
+				winInfo->newBackendWindows = GL_TRUE;
+			}
 		}
 		else if (backend->xsubwin) {
 			 /* Move/resize the existing child window.  We want the child to
@@ -709,7 +635,9 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 	WindowInfo *winInfo;
 	int i;
 
+	/*
 	crDebug("Tilesort SPU: WindowCreate(%s, 0x%x)", dpyName, visBits);
+	*/
 
 	if (tilesort_spu.forceQuadBuffering && tilesort_spu.stereoMode == CRYSTAL)
 		visBits |= CR_STEREO_BIT;
