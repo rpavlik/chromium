@@ -97,11 +97,11 @@ opengl.def: stub_common.py defs.py
 	@$(ECHO) "Creating the defs file..."
 	@$(PYTHON) defs.py > opengl.def
 
-getprocaddress.c: getprocaddress.py getprocaddress_special
+getprocaddress.c: getprocaddress.py getprocaddress_special alias_exports.py
 	@$(ECHO) "Creating crGetProcAddress"
 	@$(PYTHON) getprocaddress.py > getprocaddress.c
 
-$(ARCH_EXPORTS): stub_common.py $(ARCH_EXPORTS_PY)
+$(ARCH_EXPORTS): stub_common.py $(ARCH_EXPORTS_PY) alias_exports.py
 	@$(ECHO) "Creating the OpenGL DLL export functions (for $(ARCH))"
 	@$(PYTHON) $(ARCH_EXPORTS_PY) > $(ARCH_EXPORTS)
 
