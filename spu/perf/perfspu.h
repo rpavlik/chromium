@@ -32,7 +32,7 @@ typedef struct {
 	int has_child;
 	SPUDispatchTable self, child, super;
 
-	int log_file;
+	FILE *log_file;
 } perfSPU;
 
 extern perfSPU perf_spu;

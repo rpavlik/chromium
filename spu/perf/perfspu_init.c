@@ -45,7 +45,7 @@ SPUFunctions *perfSPUInit( int id, SPU *child, SPU *super,
 	perfspuGatherConfiguration();
 
 	if (crStrlen(crGetenv("CR_PERF_LOG_FILE")) > 0)
-	    perf_spu.log_file = open( crGetenv("CR_PERF_LOG_FILE"), O_RDWR );
+	    perf_spu.log_file = fopen( crGetenv("CR_PERF_LOG_FILE"), "w" );
 
 	if (!perf_spu.log_file)
 	    crWarning("Couldn't open log file %s, not logging to this file.\n",crGetenv("CR_PERF_LOG_FILE"));
@@ -61,7 +61,7 @@ void perfSPUSelfDispatch(SPUDispatchTable *self)
 
 int perfSPUCleanup(void)
 {
-	close( perf_spu.log_file );
+	fclose( perf_spu.log_file );
 	return 1;
 }
 
