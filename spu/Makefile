@@ -10,6 +10,6 @@ TOP = ..
 
 SUBDIRS = tester
 SUBDIRS += error nop pack passthrough print readback render template tilesort
-SUBDIRS += saveframe comm array binaryswap counter hiddenline
+SUBDIRS += saveframe comm array binaryswap counter hiddenline dist_texture
 
 include ${TOP}/cr.mk

@@ -64,6 +64,8 @@ void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level,
 	unsigned char *data_ptr;
 	int packet_length;
 	int isnull = (pixels == NULL);
+	int is_distrib = ( (type == GL_TRUE) || (type == GL_FALSE) ) ;
+	int distrib_buf_len ;
 
 	packet_length = 
 		sizeof( target ) +
@@ -78,7 +80,16 @@ void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level,
 
 	if (pixels)
 	{
-		packet_length += crImageSize( format, type, width, height );
+		if ( is_distrib )
+		{
+			distrib_buf_len = strlen( pixels ) + 1 +
+				( (type == GL_TRUE) ? width*height*3 : 0 ) ;
+			packet_length += distrib_buf_len ;
+		}
+		else
+		{
+			packet_length += crImageSize( format, type, width, height );
+		}
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
@@ -94,9 +105,15 @@ void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level,
 
 	if (pixels)
 	{
-		crPixelCopy2D( width, height,
-									 (void *)(data_ptr + 36), format, type, NULL,  /* dst */
-									 pixels, format, type, unpackstate );  /* src */
+	  if ( is_distrib )
+		{
+			memcpy( (void*)(data_ptr + 36), pixels, distrib_buf_len ) ;
+		}
+		else
+		{		crPixelCopy2D( width, height,
+							   (void *)(data_ptr + 36), format, type, NULL,  /* dst */
+							   pixels, format, type, unpackstate );  /* src */
+		}
 	}
 
 	crHugePacket( CR_TEXIMAGE2D_OPCODE, data_ptr );

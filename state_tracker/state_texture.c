@@ -1197,7 +1197,8 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 	CRTextureLevel *tl = NULL;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-  unsigned int i;
+	unsigned int i;
+	int is_distrib = ( (type == GL_TRUE) || (type == GL_FALSE) ) ;
 
 	if (g->current.inBeginEnd)
 	{
@@ -1288,7 +1289,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 			/* EMPTY BODY */
 		}
 	}
-	if (width < 0 || i!=1) 
+	if ( width < 0 || ((i!=1) && (!is_distrib)) )
 	{
 		if (target == GL_PROXY_TEXTURE_2D)
 		{
@@ -1320,7 +1321,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 			/* EMPTY BODY */
 		}
 	}
-	if (height < 0 || i!=1) 
+	if ( height < 0 || ((i!=1) && (!is_distrib)) )
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage2D height is not valid: %d", height);
 		return;
@@ -1395,7 +1396,15 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 	{
 		tobj = t->currentTexture2D;
 		tl = tobj->level+level;
-		tl->bytes = crImageSize(format, type, width, height);
+		if ( is_distrib )
+		{
+			tl->bytes = strlen(pixels) + 1 +
+				( type == GL_TRUE ? width*height*3 : 0 ) ;
+		}
+		else
+		{
+			tl->bytes = crImageSize(format, type, width, height);
+		}
 	}
 	else if (target == GL_PROXY_TEXTURE_2D) {
 		tobj = &(t->proxy2D);
@@ -1459,9 +1468,18 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 			return;
 		}
 		if (pixels)
-			crPixelCopy2D( width, height,
+		{
+			if ( is_distrib )
+			{
+				memcpy( (void*)tl->img, (void*)pixels, tl->bytes ) ;
+			}
+			else
+			{
+				crPixelCopy2D( width, height,
 										 (GLvoid *) (tl->img), format, type, NULL, /* dst */
 										 pixels, format,type, &(c->unpack) );  /* src */
+			}
+		}
 	}
 
 	tl->width = width;
@@ -1473,7 +1491,12 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 	tl->border = border;
 	tl->type = type;
 	if (width && height)
-		tl->bytesPerPixel = tl->bytes / (width * height);
+	{
+		if ( is_distrib )
+			tl->bytesPerPixel = 3 ;
+		else
+			tl->bytesPerPixel = tl->bytes / (width * height);
+	}
 	else
 		tl->bytesPerPixel = 0;
 
