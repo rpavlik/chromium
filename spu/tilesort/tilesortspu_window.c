@@ -659,7 +659,7 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 	WindowInfo *winInfo;
 	int i;
 
-	crDebug("Tilesort SPU: CreateWindow(%s, 0x%x)", dpyName, visBits);
+	crDebug("Tilesort SPU: WindowCreate(%s, 0x%x)", dpyName, visBits);
 
 	if (tilesort_spu.forceQuadBuffering && tilesort_spu.stereoMode == CRYSTAL)
 		visBits |= CR_STEREO_BIT;
