@@ -53,6 +53,7 @@ typedef struct
 	int maxFrames;
 	int useVBO;
 	int useBBox;
+	int usePbuffer;
 
 	/* derived */
 	float theta, zPos, radius;
@@ -581,6 +582,7 @@ ParseOptions(int argc, char *argv[], Options *options)
 	options->maxFrames = 1000/* * 1000 * 1000*/;
 	options->useVBO = 1;
 	options->useBBox = 0;
+	options->usePbuffer = 0;
 
 	for (i = 1 ; i < argc ; i++)
 	{
@@ -664,6 +666,10 @@ ParseOptions(int argc, char *argv[], Options *options)
 		{
 			options->useBBox = 1;
 		}
+		else if (!strcmp( argv[i], "-pbuffer" ))
+		{
+			options->usePbuffer = 1;
+		}
 		else if (!strcmp( argv[i], "-h" ) || !strcmp(argv[i], "--help"))
 		{
 			PrintHelp();
@@ -702,6 +708,9 @@ ChromiumMain(const Options *options)
 	double t0;
 	int frameCount;
 	TriangleMesh *mesh;
+
+	if (options->usePbuffer)
+		visual |= CR_PBUFFER_BIT;
 
 #define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
 
