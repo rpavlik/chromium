@@ -4,9 +4,8 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_pack.h"
 #include "cr_error.h"
-#include "cr_packfunctions.h"
+#include "packer.h"
 #include <stdio.h>
 
 void crPackInit( int swapping )

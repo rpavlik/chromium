@@ -31,7 +31,7 @@ from get_sizes import *;
 from get_components import *;
 
 easy_swaps = { 
-	'GenTextures': 'n',
+	'GenTextures': '(unsigned int) n',
 	'GetClipPlane': '4',
 	'GetPolygonStipple': '0',
 	'GetTexImage': '0' 
@@ -66,7 +66,7 @@ for func_name in keys:
 			print '\t%s return_val = (%s) 0;' % (return_type, return_type)
 			args.append( "&return_val" )
 		if (func_name in easy_swaps.keys() and easy_swaps[func_name] != '0') or func_name in simple_funcs or func_name in hard_funcs.keys():
-			print '\tint i;'
+			print '\tunsigned int i;'
 		args.append( "&writeback" )
 		print '\tif (pack_spu.swap)'
 		print '\t{'
@@ -100,7 +100,10 @@ for func_name in keys:
 				print '\t{'
 				print '\t\tfor (i = 0 ; i < __numValues( pname ) ; i++)'
 				print '\t\t{'
-				print '\t\t\t%s[i] = %s(%s[i]);' % (args[-2], simple_swaps[index], args[-2])
+				if simple_swaps[index] == 'SWAPDOUBLE':
+					print '\t\t\t%s[i] = %s(%s[i]);' % (args[-2], simple_swaps[index], args[-2])
+				else:
+					print '\t\t\t((GLuint *) %s)[i] = %s(%s[i]);' % (args[-2], simple_swaps[index], args[-2])
 				print '\t\t}'
 				print '\t}'
 		if func_name in hard_funcs.keys():
@@ -108,7 +111,10 @@ for func_name in keys:
 			print '\t{'
 			print '\t\tfor (i = 0 ; i < __lookupComponents(pname) ; i++)'
 			print '\t\t{'
-			print '\t\t\t%s[i] = %s(%s[i]);' % (args[-2], hard_funcs[func_name], args[-2])
+			if hard_funcs[func_name] == 'SWAPDOUBLE':
+				print '\t\t\t%s[i] = %s(%s[i]);' % (args[-2], hard_funcs[func_name], args[-2])
+			else:
+				print '\t\t\t((GLuint *) %s)[i] = %s(%s[i]);' % (args[-2], hard_funcs[func_name], args[-2])
 			print '\t\t}'
 			print '\t}'
 		print '}\n'

@@ -87,6 +87,6 @@ pack_current.c: pack_current.py pack_currenttypes.py
 	@$(ECHO) Making the current functions...
 	@$(PYTHON) pack_current.py > $@
 
-%_swap.c: %.c
+%_swap.c: %.c pack_swap.py
 	@$(ECHO) Making the swapping version of $<
 	@$(PYTHON) pack_swap.py $< > $@

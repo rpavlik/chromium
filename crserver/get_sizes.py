@@ -258,7 +258,7 @@ extensions_num_get_values = {
 get_keys = num_get_values.keys() + extensions_num_get_values.keys()
 get_keys.sort()
 
-print "struct nv_struct { GLenum pname; int num_values; } num_values_array[] = {"
+print "struct nv_struct { GLenum pname; unsigned int num_values; } num_values_array[] = {"
 for key in get_keys:
 	try:
 		print '\t{ %s, %d },' % (key, num_get_values[key])
@@ -271,7 +271,7 @@ print "\t{ 0, 0 }"
 print "};"
 
 print """
-static int __numValues( GLenum pname )
+static unsigned int __numValues( GLenum pname )
 {
 	struct nv_struct *temp;
 	
