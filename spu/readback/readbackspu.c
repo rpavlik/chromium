@@ -105,16 +105,26 @@ CheckWindowSize(WindowInfo * window)
 
 	newSize[0] = newSize[1] = 0;
 
-	if (readback_spu.readSizeX > 0 && readback_spu.readSizeY > 0) {
+	if (readback_spu.readSizeX > 0 && readback_spu.readSizeY > 0)
+	{
 	    newSize[0] = readback_spu.readSizeX;
 	    newSize[1] = readback_spu.readSizeY;
 	}
 	else if (readback_spu.gather_url || readback_spu.resizable)
 	{
-		/* ask downstream SPU (probably render) for its window size */
-		readback_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-																							 window->childWindow,
-																							 GL_INT, 2, newSize);
+		if (readback_spu.renderToAppWindow)
+		{
+			/* query parent Render SPU's window size */
+			readback_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																								 window->renderWindow,
+																								 GL_INT, 2, newSize);
+		}
+		else {
+			/* ask downstream SPU (probably render) for its window size */
+			readback_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																								 window->childWindow,
+																								 GL_INT, 2, newSize);
+		}
 		if (newSize[0] == 0 && newSize[1] == 0)
 		{
 			/* something went wrong - recover - try viewport */

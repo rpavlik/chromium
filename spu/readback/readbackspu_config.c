@@ -139,7 +139,7 @@ void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 	{
 		/* The mothership isn't running.  Some SPU's can recover gracefully, some 
 		 * should issue an error here. */
-	        crSPUSetDefaultParams( readback_spu, readbackSPUOptions );
+		crSPUSetDefaultParams( readback_spu, readbackSPUOptions );
 		return;
 	}
 	crMothershipIdentifySPU( conn, readback_spu->id );
@@ -152,13 +152,18 @@ void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 		readback_spu->extract_alpha = 0;
 	}
 
-	/* Get the render SPU's resizable setting */
+	/* Get the a few options from the Render SPU from which we inherit */
 	{
 		char response[1000];
 		if (crMothershipGetSPUParam( conn, response, "resizable" )) {
 			int resizable = 0;
 			sscanf(response, "%d", &resizable);
 			readback_spu->resizable = resizable;
+		}
+		if (crMothershipGetSPUParam( conn, response, "render_to_app_window" )) {
+			int renderToAppWindow = 0;
+			sscanf(response, "%d", &renderToAppWindow);
+			readback_spu->renderToAppWindow = renderToAppWindow;
 		}
 	}
 

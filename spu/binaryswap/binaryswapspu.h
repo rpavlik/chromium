@@ -19,13 +19,13 @@
 #include "cr_threads.h"
 
 #define BINARYSWAP_SPU_PORT	8192
-#define CLEAR_BARRIER           1
-#define SWAP_BARRIER            2
-#define POST_SWAP_BARRIER       3
-#define CREATE_CONTEXT_BARRIER  4
-#define MAKE_CURRENT_BARRIER    5
-#define DESTROY_CONTEXT_BARRIER 6
-#define MUTEX_SEMAPHORE         7
+#define CLEAR_BARRIER           52001
+#define SWAP_BARRIER            52002
+#define POST_SWAP_BARRIER       52003
+#define CREATE_CONTEXT_BARRIER  52004
+#define MAKE_CURRENT_BARRIER    52005
+#define DESTROY_CONTEXT_BARRIER 52006
+#define MUTEX_SEMAPHORE         52007
 
 typedef struct {
 	GLint index;         /**< my window number */
@@ -73,6 +73,7 @@ typedef struct {
 	/*@{*/
 	int resizable;
 	int local_visualization;
+	int renderToAppWindow;
 	/*@}*/
 
 	CRHashTable *contextTable;

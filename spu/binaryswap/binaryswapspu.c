@@ -170,10 +170,21 @@ static void CheckWindowSize( WindowInfo *window )
 	newSize[0] = newSize[1] = 0;
 	if (binaryswap_spu.resizable)
 	{
-		/* ask downstream SPU (probably render) for its window size */
-		binaryswap_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-							     window->childWindow, 
-							     GL_INT, 2, newSize);
+		if (binaryswap_spu.renderToAppWindow)
+		{
+			/* query parent Render SPU's window size */
+			binaryswap_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																									 window->renderWindow,
+																									 GL_INT, 2, newSize);
+		}
+		else
+		{
+			/* ask downstream SPU (probably render) for its window size */
+			binaryswap_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																									 window->childWindow, 
+																									 GL_INT, 2, newSize);
+		}
+
 		if (newSize[0] == 0 && newSize[1] == 0)
 		{
 			/* something went wrong - recover - try viewport */

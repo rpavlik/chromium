@@ -138,7 +138,7 @@ void binaryswapspuGatherConfiguration( Binaryswapspu *binaryswap_spu )
 	crSPUGetMothershipParams( conn, (void *)binaryswap_spu, binaryswapspuOptions );
 	
 	
-	/* Get the render SPU's resizable setting */
+	/* Get the a few options from the Render SPU from which we inherit */
 	{
 		char response[1000];
 		if (crMothershipGetSPUParam( conn, response, "resizable" )) {
@@ -146,7 +146,13 @@ void binaryswapspuGatherConfiguration( Binaryswapspu *binaryswap_spu )
 			sscanf(response, "%d", &resizable);
 			binaryswap_spu->resizable = resizable;
 		}
+		if (crMothershipGetSPUParam( conn, response, "render_to_app_window" )) {
+			int renderToAppWindow = 0;
+			sscanf(response, "%d", &renderToAppWindow);
+			binaryswap_spu->renderToAppWindow = renderToAppWindow;
+		}
 	}
+
 	/* build list of swap partners */
 	binaryswap_spu->swap_partners = crAlloc(binaryswap_spu->stages*sizeof(char*));
 	for( i=0; i<binaryswap_spu->stages; i++ ){

@@ -54,6 +54,7 @@ typedef struct {
 	int local_visualization;
 	int visualize_depth;
 	int resizable;
+	int renderToAppWindow;
 	char *gather_url;
 	int gather_mtu;
 	int readSizeX, readSizeY;
@@ -74,9 +75,9 @@ typedef struct {
 
 } ReadbackSPU;
 
-#define CLEAR_BARRIER   1
-#define SWAP_BARRIER    2
-#define MUTEX_SEMAPHORE 3
+#define CLEAR_BARRIER   42001
+#define SWAP_BARRIER    42002
+#define MUTEX_SEMAPHORE 42003
 
 extern ReadbackSPU readback_spu;
 
