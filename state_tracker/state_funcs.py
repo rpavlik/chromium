@@ -39,4 +39,12 @@ keys.sort();
 for func_name in stub_common.AllSpecials( "state" ):
 	(return_type, names, types) = gl_mapping[func_name]
 	print '%s STATE_APIENTRY crState%s%s;' % (return_type, func_name, stub_common.ArgumentString( names, types ))
+
+for func_name in stub_common.AllSpecials( "state_feedback" ):
+	(return_type, names, types) = gl_mapping[func_name]
+	print '%s STATE_APIENTRY crStateFeedback%s%s;' % (return_type, func_name, stub_common.ArgumentString( names, types ))
+
+for func_name in stub_common.AllSpecials( "state_select" ):
+	(return_type, names, types) = gl_mapping[func_name]
+	print '%s STATE_APIENTRY crStateSelect%s%s;' % (return_type, func_name, stub_common.ArgumentString( names, types ))
 print '\n#endif /* CR_STATE_FUNCS_H */'

@@ -70,7 +70,8 @@ SLOP = $(PRECOMP)
 
 LIB_COPIES = packspu \
 	tilesortspu \
-	hiddenlinespu
+	hiddenlinespu \
+	archsplitspu
 
 include $(TOP)/cr.mk
 

@@ -110,11 +110,11 @@ state_isenabled.c: state_isenabled.py state_isenabled.txt state_extensions_isena
 	@$(ECHO) Making the IsEnabled function
 	@$(PYTHON) state_isenabled.py > $@
 
-state.def: state_defs.py state_special
+state.def: state_defs.py state_special state_select_special state_feedback_special
 	@$(ECHO) Making state.def
 	@$(PYTHON) state_defs.py > $@
 
-../include/state/cr_statefuncs.h: state_funcs.py state_special
+../include/state/cr_statefuncs.h: state_funcs.py state_special state_feedback_special state_select_special
 	@$(ECHO) Making cr_statefuncs.h
 	@$(PYTHON) state_funcs.py > $@
 
