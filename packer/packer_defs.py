@@ -48,5 +48,5 @@ crPackFlushFunc
 crPackFlushArg
 crPackSendHugeFunc
 crPackBoundsInfo
-cr_packer_globals
+crPackResetBBOX
 """

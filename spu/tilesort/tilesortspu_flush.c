@@ -9,6 +9,10 @@
 
 static TileSortSPUServer *state_server = NULL;
 
+#ifdef WINDOWS
+extern __declspec( dllimport ) CRPackGlobals cr_packer_globals;
+#endif
+
 static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned int *len )
 {
 	int num_opcodes;
@@ -128,11 +132,11 @@ static void __doFlush( CRContext *ctx )
 	}
 
 	// Here's the big part -- call the bucketer!
-	// This will also call the "pincher".
 
 	crDebug( "About to bucket the geometry" );
 	bucket_info = tilesortspuBucketGeometry();
 	bounds = bucket_info->pixelBounds;
+	crPackResetBBOX();
 
 	// Okay.  Now, we need to un-hide the bonus space for the extra glEnd packet
 	// and try to close off the begin/end if it exists.  This is a pretty

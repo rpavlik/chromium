@@ -8,9 +8,11 @@
 #include "state/cr_currentpointers.h"
 
 #ifdef WINDOWS
-#define PACK_APIENTRY __stdcall
+#ifndef DLLDATA 
+#define DLLDATA __declspec(dllimport)
+#endif
 #else
-#define PACK_APIENTRY
+#define DLLDATA
 #endif
 
 typedef struct {
@@ -36,7 +38,7 @@ typedef struct {
 	CRBBOXPoint bounds_min, bounds_max;
 } CRPackGlobals;
 
-extern CRPackGlobals cr_packer_globals;
+extern DLLDATA CRPackGlobals cr_packer_globals;
 
 void crPackSetBuffer( CRPackBuffer *buffer );
 void crPackGetBuffer( CRPackBuffer *buffer );
@@ -45,6 +47,8 @@ void crPackResetPointers( int extra );
 void crPackFlushFunc( CRPackFlushFunc ff );
 void crPackFlushArg( void *flush_arg );
 void crPackSendHugeFunc( CRPackSendHugeFunc shf );
+
+void crPackResetBBOX(void);
 
 void crPackAppendBuffer( CRPackBuffer *buffer );
 void crPackAppendBoundedBuffer( CRPackBuffer *buffer, GLrecti *bounds );

@@ -1,8 +1,7 @@
 #include "cr_mem.h"
-#include "cr_pack.h"
+#include "packer.h"
 #include "cr_error.h"
 #include "cr_protocol.h"
-#include "cr_packfunctions.h"
 
 #include <stdio.h>
 #include <stdlib.h>

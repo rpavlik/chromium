@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cr_packfunctions.h"
-#include "cr_pack.h"
+#include "packer.h"
 #include "cr_glwrapper.h"
 #include "cr_pixeldata.h"
 #include "cr_error.h"

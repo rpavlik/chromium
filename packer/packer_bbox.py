@@ -13,11 +13,21 @@ gl_mapping = cPickle.load( parsed_file )
 
 print """
 #include "cr_glwrapper.h"
-#include "cr_pack.h"
+#include "packer.h"
 #include "cr_opcodes.h"
-#include "cr_packfunctions.h"
 #include "pack_bbox.h"
 
+#include <float.h>
+
+void crPackResetBBOX(void)
+{
+	cr_packer_globals.bounds_min.x =  FLT_MAX;
+	cr_packer_globals.bounds_min.y =  FLT_MAX;
+	cr_packer_globals.bounds_min.z =  FLT_MAX;
+	cr_packer_globals.bounds_max.x = -FLT_MAX;
+	cr_packer_globals.bounds_max.y = -FLT_MAX;
+	cr_packer_globals.bounds_max.z = -FLT_MAX;
+}
 """
 
 def WriteData( offset, arg_type, arg_name ):

@@ -17,6 +17,12 @@ print """#ifndef CR_PACKFUNCTIONS_H
 #include "cr_glwrapper.h"
 #include "state/cr_pixel.h"
 #include "cr_pack.h"
+
+#ifdef WINDOWS
+#define PACK_APIENTRY __stdcall
+#else
+#define PACK_APIENTRY
+#endif
 """
 
 keys = gl_mapping.keys()
@@ -45,5 +51,5 @@ for n in [2,3,4]:
 			func_name = 'Vertex%d%s%s' % (n,t,v)
 			( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 			print 'void PACK_APIENTRY crPack%sBBOX%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-			
+
 print '\n#endif /* CR_PACKFUNCTIONS_H */'

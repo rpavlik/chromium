@@ -14,13 +14,12 @@ gl_mapping = cPickle.load( parsed_file )
 
 print """
 #include "cr_glwrapper.h"
-#include "cr_pack.h"
+#include "packer.h"
 #include "cr_opcodes.h"
-#include "cr_packfunctions.h"
 
 #define PACK_UNUSED(x) ((void)(x))
 
-CRPackGlobals cr_packer_globals;
+DLLDATA CRPackGlobals cr_packer_globals;
 
 char *__cr_opcode_names[] = {
 """

@@ -45,6 +45,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
 	crPackFlushFunc( tilesortspuFlush );
 	crPackSendHugeFunc( tilesortspuHuge );
+	crPackResetBBOX();
 
 	crStateInit();
 	tilesort_spu.ctx = crStateCreateContext();
