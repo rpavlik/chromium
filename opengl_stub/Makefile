@@ -9,7 +9,7 @@ include ${TOP}/arch.mk
 
 SHARED = 1
 LIBRARY = crfaker
-FILES = getprocaddress load stub context dummyfuncs NULLfuncs dispatch_layer
+FILES = getprocaddress load stub context dummyfuncs NULLfuncs
 LIBRARIES = crmothership crutil spuload
 
 ifeq ($(THREADSAFE), 1)

@@ -33,7 +33,7 @@
 #endif
 
 
-extern SPUDispatchTable glim; /* declared in dispatch_layer.c in spu loader */
+SPUDispatchTable glim;
 SPUDispatchTable stubThreadsafeDispatch;
 Stub stub;
 

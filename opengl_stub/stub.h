@@ -35,7 +35,6 @@
 #include "cr_hash.h"
 #include "cr_process.h"
 #include "cr_spu.h"
-#include "cr_dispatch.h"
 #include "cr_threads.h"
 #include "spu_dispatch_table.h"
 
@@ -76,15 +75,6 @@ struct context_info_t
 	Bool direct;
 	GLXContext glxContext;
 #endif
-
-	/* This is the control point for the lowest-level dispatch
-	 * table associated with this context.  It's either going to
-	 * point to the Native API, or to the SPU API.  It will be in
-	 * effect unless overridden by another utility (like the
-	 * Display List Manager).
-	 */
-	crCurrentDispatchInfo dispatchInfo;
-	crDispatchLayer *bottomDispatchLayer;
 };
 
 struct window_info_t

@@ -90,7 +90,6 @@ stubCheckMultithread( void )
 /*
  * Install the given dispatch table as the table used for all gl* calls.
  */
-#if 00
 static void
 stubSetDispatch( SPUDispatchTable *table )
 {
@@ -116,7 +115,6 @@ stubSetDispatch( SPUDispatchTable *table )
 			crSPUCopyDispatchTable(&glim, table);
 	}
 }
-#endif
 
 
 /*
@@ -223,17 +221,6 @@ stubNewContext( const char *dpyName, GLint visBits, ContextType type )
 		stub.spu->dispatch_table.DestroyContext(spuContext);
 		return NULL;
 	}
-
-#if 11
-	/* Before we can allocate a dispatch layer, we have to set up our
-	 * own context's dispatch stack.  This will initialize it (to 
-	 * empty), but won't change the current dispatch stack (which
-	 * we're not allowed to do until someone makes the context
-	 * current).
-	 */
-	crInitDispatchInfo(&context->dispatchInfo);
-	context->bottomDispatchLayer = NULL;
-#endif
 
 	if (!dpyName)
 		dpyName = "";
@@ -592,6 +579,7 @@ stubCheckUseChromium( WindowInfo *window )
 		}
 
 		GetWindowTitle( window, title );
+		crDebug("title[0] = %d window=%x\n", (int) title[0], (int) window->drawable);
 		if (title[0]) {
 			if (wildcard) {
 				if (crStrstr(title, titlePattern)) {
@@ -605,7 +593,7 @@ stubCheckUseChromium( WindowInfo *window )
 			}
 		}
 		crFree(titlePattern);
-		crDebug("Using native GL, app window title doesn't match match_window_title string");
+		crDebug("Using native GL, app window title doesn't match match_window_title string (\"%s\" != \"%s\")", title, stub.matchWindowTitle);
 		return GL_FALSE;
 	}
 
@@ -676,25 +664,6 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			context->type = NATIVE;
 		}
 
-		/* Switch to this context's dispatch table, so we can
-		 * allocate and manipulate an associated dispatch
-		 * table layer.
-		 */
-		crSetCurrentDispatchInfo(&context->dispatchInfo);
-
-		/* If this is the first time we're making this context
-		 * current, we'll need to allocate our own dispatch table
-		 * layer, so that we can manipulate the the bottom-level
-		 * dispatch table.  (The bottom level will either be the
-		 * SPU functions, or the native OpenGL functions, depending
-		 * on the type of context.)
-		 */
-		if (!context->bottomDispatchLayer) {
-			context->bottomDispatchLayer = crNewDispatchLayer(NULL, NULL, NULL);
-			if (!context->bottomDispatchLayer)
-				return 0; /* false */
-  	}
-
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&stub.mutex);
 #endif
@@ -713,8 +682,6 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 																										window->drawable,
 																										context->glxContext );
 #endif
-		crChangeDispatchLayer(context->bottomDispatchLayer, 
-													&stub.nativeDispatch);
 	}
 	else {
 		/*
@@ -726,7 +693,11 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		if (context->currentDrawable && context->currentDrawable != window)
 			crWarning("Rebinding context %p to a different window", context);
 
-		if (stubCheckUseChromium(window)) {
+		if (window->type == NATIVE) {
+			crWarning("Can't rebind a chromium context to a native window\n");
+			retVal = 0;
+		}
+		else {
 			if (window->spuWindow == -1) 
 				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
 
@@ -734,20 +705,13 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 				(GLint) window->drawable, context->spuContext );
 
 			retVal = 1;
-		} else {
-			crWarning("Can't rebind a chromium context to a native window\n");
-			retVal = 0;
 		}
-
-		crChangeDispatchLayer(context->bottomDispatchLayer, 
-													&stub.spuDispatch);
 	}
 
 	window->type = context->type;
 	context->currentDrawable = window;
 	stub.currentContext = context;
 
-#if 0000
 	if (retVal) {
 		/* Now, if we've transitions from Chromium to native rendering, or
 		 * vice versa, we have to change all the OpenGL entrypoint pointers.
@@ -767,7 +731,6 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			/* no API switch needed */
 		}
 	}
-#endif
 
 	if (!window->width && window->type == CHROMIUM) {
 		/* Now call Viewport to setup initial parameters */
@@ -819,7 +782,6 @@ stubDestroyContext( unsigned long contextId )
 
 	if (stub.currentContext == context) {
 		stub.currentContext = NULL;
-		crSetCurrentDispatchInfo(NULL);
 	}
 
 	crMemZero(context, sizeof(ContextInfo));  /* just to be safe */
