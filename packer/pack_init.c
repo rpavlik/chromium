@@ -11,6 +11,7 @@
 
 #ifdef CHROMIUM_THREADSAFE
 CRtsd _PackerTSD;
+int cr_packer_globals;  /* dummy - for the sake of packer.def */
 #else
 DLLDATA CRPackContext cr_packer_globals;
 #endif
