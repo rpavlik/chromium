@@ -395,7 +395,7 @@ ProcessTiles(WindowInfo * window)
 	{
 		/* we're running on the appfaker  */
 		int x1, y1, x2, y2;
-		if (window->bboxUnion.x1 == 0 && window->bboxUnion.x1 == 0) {
+		if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
 			/* use whole window */
 			x1 = 0;
 			y1 = 0;
