@@ -13,3 +13,5 @@ GetIntegerv
 Hint
 Materialfv
 Materialiv
+Lightfv
+Lightiv
