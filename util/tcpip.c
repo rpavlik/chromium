@@ -647,7 +647,7 @@ __crSelect( int n, fd_set *readfds, int sec, int usec )
 	{ 
 		int err, num_ready;
 
-		if (sec || usec)
+		if (sec >= 0 || usec >= 0)
 		{
 			/* We re-init everytime for Linux, as it corrupts
 			 * the timeout structure, but other OS's
@@ -871,12 +871,13 @@ crTCPIPRecv( void )
 
 	if ( num_conns )
 	{
-		num_ready = __crSelect( max_fd, &read_fds, 0, 500 );
+		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
 	}
 	else
 	{
 		crWarning( "Waiting for first connection..." );
-		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
+		/* force blocking */
+		num_ready = __crSelect( max_fd, &read_fds, -1, -1 );
 	}
 
 	if ( num_ready == 0 ) {

@@ -40,6 +40,10 @@ static struct {
 	int                  initialized; /* flag */
 	CRNetReceiveFuncList *recv_list;  /* what to do with arriving packets */
 	CRNetCloseFuncList   *close_list; /* what to do when a client goes down */
+	int                  use_tcpip;      /* count the number of people using GM */
+	int                  use_ib;      /* count the number of people using GM */
+	int                  use_file;      /* count the number of people using GM */
+	int                  use_udp;      /* count the number of people using GM */
 	int                  use_gm;      /* count the number of people using GM */
   int                  use_teac;    /* count the number of people using teac */
   int                  use_tcscomm; /* count the number of people using tcscomm
@@ -185,12 +189,13 @@ CRConnection *crNetConnectToServer( const char *server,
 		crDevnullConnection( conn );
 	}
 	else if ( !crStrcmp( protocol, "file" ) )
-	{
+	{	
+		cr_net.use_file++;
 		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crFileConnection( conn );
 	}
 	else if ( !crStrcmp( protocol, "swapfile" ) )
-	{
+	{	cr_net.use_file++;
 		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crFileConnection( conn );
 		conn->swap = 1;
@@ -220,8 +225,9 @@ CRConnection *crNetConnectToServer( const char *server,
 	}
 #endif
 	else if ( !crStrcmp( protocol, "tcpip" ) )
-	{
-	    crDebug("Calling crTCPIPInit()");
+	{	
+		cr_net.use_tcpip++;
+		crDebug("Calling crTCPIPInit()");
 		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crDebug("Calling crTCPIPConnection");
 		crTCPIPConnection( conn );
@@ -229,7 +235,8 @@ CRConnection *crNetConnectToServer( const char *server,
 	}
 #ifdef IB_SUPPORT
 	else if ( !crStrcmp( protocol, "ib" ) )
-	{
+	{	
+		cr_net.use_ib++;
 	        crDebug("Calling crIBInit()");
 		crIBInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crIBConnection( conn );
@@ -237,7 +244,8 @@ CRConnection *crNetConnectToServer( const char *server,
 	}
 #endif
 	else if ( !crStrcmp( protocol, "udptcpip" ) )
-	{
+	{	
+		cr_net.use_udp++;
 		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crUDPTCPIPConnection( conn );
 	}
@@ -340,6 +348,7 @@ CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned 
 	     !crStrncmp( protocol, "swapfile", crStrlen( "swapfile" ) ) )
 	{
 		char filename[4096];
+		cr_net.use_file++;
 		if (!crParseURL( protocol, NULL, filename, NULL, 0 ))
 		{
 			crError( "Malformed URL: \"%s\"", protocol );
@@ -357,34 +366,37 @@ CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned 
 	}
 #endif
 #ifdef TEAC_SUPPORT
-  else if ( !crStrcmp( protocol, "quadrics" ) )
-    {
-      cr_net.use_teac++;
-      crTeacInit( cr_net.recv_list, cr_net.close_list, mtu );
-      crTeacConnection( conn );
-    }
+	else if ( !crStrcmp( protocol, "quadrics" ) )
+	{
+		cr_net.use_teac++;
+		crTeacInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crTeacConnection( conn );
+	}
 #endif
 #ifdef TCSCOMM_SUPPORT
-  else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
-    {
-      cr_net.use_tcscomm++;
-      crTcscommInit( cr_net.recv_list, cr_net.close_list, mtu );
-      crTcscommConnection( conn );
-    }
+	else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
+	{
+		cr_net.use_tcscomm++;
+		crTcscommInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crTcscommConnection( conn );
+	}
 #endif
 	else if ( !crStrcmp( protocol, "tcpip" ) )
 	{
+		cr_net.use_tcpip++;
 		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crTCPIPConnection( conn );
 	}
 	else if ( !crStrcmp( protocol, "udptcpip" ) )
 	{
+		cr_net.use_udp++;
 		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crUDPTCPIPConnection( conn );
 	}
 #ifdef IB_SUPPORT
 	else if ( !crStrcmp( protocol, "ib" ) )
 	{
+		cr_net.use_ib++;
 	        crDebug("Calling crIBInit() from crNetAcceptClient");
 		crIBInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crIBConnection( conn );
@@ -426,6 +438,12 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 #endif
 
 		cr_net.use_gm      = 0;
+		cr_net.use_udp     = 0;
+		cr_net.use_tcpip   = 0;
+		cr_net.use_udp     = 0;
+		cr_net.use_tcscomm = 0;
+		cr_net.use_teac    = 0;
+		cr_net.use_file    = 0;
 		cr_net.num_clients = 0;
 #ifdef CHROMIUM_THREADSAFE
 		crInitMutex(&cr_net.mutex);
@@ -892,13 +910,17 @@ int crNetRecv( void )
 {
 	int found_work = 0;
 
-	found_work += crTCPIPRecv( );
+	if ( cr_net.use_tcpip )
+	     found_work += crTCPIPRecv( );
 #ifdef IB_SUPPORT
-	found_work += crIBRecv( );
+	if ( cr_net.use_ib )
+	     found_work += crIBRecv( );
 #endif
-	found_work += crUDPTCPIPRecv( );
-
-	found_work += crFileRecv( );
+	if ( cr_net.use_udp )
+	     found_work += crUDPTCPIPRecv( );
+	
+	if ( cr_net.use_file )
+	     found_work += crFileRecv( );
 
 #ifdef GM_SUPPORT
 	if ( cr_net.use_gm )

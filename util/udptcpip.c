@@ -466,12 +466,13 @@ crUDPTCPIPRecv( void )
 
 	if ( num_conns )
 	{
-		num_ready = __crSelect( max_fd, &read_fds, 0, 500 );
+		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
 	}
 	else
 	{
 		crWarning( "Waiting for first connection..." );
-		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
+		/* force blocking */
+		num_ready = __crSelect( max_fd, &read_fds, -1, -1 );
 	}
 
 	if ( num_ready == 0 ) {

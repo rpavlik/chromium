@@ -81,7 +81,7 @@ extern void crIBDoDisconnect( CRConnection *conn );
 extern int crIBErrno( void );
 extern char *crIBErrorString( int err );
 extern void crIBAccept( CRConnection *conn, char *hostname, unsigned short port );
-extern void crIBWriteExact( CRConnection *conn, void *buf, unsigned int len );
+extern void crIBWriteExact( CRConnection *conn, const void *buf, unsigned int len );
 extern void crIBFree( CRConnection *conn, void *buf );
 extern void *crIBAlloc( CRConnection *conn );
 extern void crIBReadExact( CRConnection *conn, void *buf, unsigned int len );

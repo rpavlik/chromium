@@ -52,8 +52,6 @@
 #include <evapi.h>
 #include <vapi_common.h>
 
-#define MAX_PORTS_NUM		1
-
 typedef enum {
     RET_OK  = 0,
     RET_ERR = -1
@@ -73,16 +71,15 @@ typedef struct {
 	VAPI_mr_hndl_t         mr_hndl_r;
 } buffer_params_t;
 
-#define MAX_RECV_BUFS 8
-#define MAX_SEND_BUFS 8
+#define MAX_BUFS 8
 
 struct params_tx_s {
 	VAPI_pd_hndl_t         pd_hndl;
 	int                    max_inline_size;
 	int                    max_cap_inline_size;
 	u_int8_t               qp_ous_rd_atom;  /* Maximum number of oust. RDMA read/atomic as target */ 
-	buffer_params_t        r_buffers[MAX_RECV_BUFS];
-	buffer_params_t        s_buffers[MAX_SEND_BUFS];
+	buffer_params_t        r_buffers[MAX_BUFS];
+	buffer_params_t        s_buffers[MAX_BUFS];
 	EVAPI_async_handler_hndl_t async_hndl;
 	EVAPI_compl_handler_hndl_t comp_hndl;
 
@@ -145,16 +142,13 @@ static struct {
 
 	int		num_ah;
 	int             size;
-	int             iter;
 	IB_mtu_t        mtu;
-	int             port_num;
 	int             alloc_aligned;
 	u_int32_t       num_cqe;
 	u_int32_t       num_r_wqe;
 	u_int32_t       num_s_wqe;
 	u_int32_t       num_rsge;
 	u_int32_t       num_ssge;
-	int		ports_num;
 	
 	int                  initialized;
 	unsigned int         node_id;
@@ -297,9 +291,6 @@ void* cr_ib_recv( CRConnection *conn, unsigned int* len);
 static void async_events_handler( VAPI_hca_hndl_t hca_hndl,
 				  VAPI_event_record_t *event_p, 
 				  void* priv_data);
-/*static void comp_events_handler( VAPI_hca_hndl_t hca_hndl,
-				 VAPI_cq_hndl_t cq_hndl, 
-				 void* priv_data);*/
 
 static ret_val_t qp_init2rts_one_qp(params_tx *params);
 
@@ -317,13 +308,12 @@ ret_val_t qp_create(params_tx *params)
      qp_init_attr.cap.max_sg_size_sq = cr_ib.num_ssge;
      qp_init_attr.pd_hndl            = params->pd_hndl;
      qp_init_attr.rdd_hndl           = 0;
-     qp_init_attr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
-     qp_init_attr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
+     qp_init_attr.sq_sig_type        = VAPI_SIGNAL_ALL_WR;
+     qp_init_attr.rq_sig_type        = VAPI_SIGNAL_ALL_WR;
      qp_init_attr.ts_type            = IB_TS_RC;
      qp_init_attr.rq_cq_hndl         = params->r_cq_hndl;
      qp_init_attr.sq_cq_hndl         = params->s_cq_hndl;
-     
-     
+          
      params->qp_hndl = INVAL_HNDL;
      res= VAPI_create_qp(cr_ib.hca_hndl, 
 			 &qp_init_attr, 
@@ -402,7 +392,7 @@ ret_val_t create_common_resources(params_tx *params)
      
     
      /********************** get port properties  **********************/
-     params->port_num = (IB_port_t)(1);
+     crWarning("Trying port %d", params->port_num);
      res = VAPI_query_hca_port_prop(hca_hndl,
 				    (IB_port_t)params->port_num,
 				    ( VAPI_hca_port_t *)&hca_port);
@@ -428,13 +418,6 @@ ret_val_t create_common_resources(params_tx *params)
 	  return(RET_ERR);
      }
      params->r_cq_hndl = r_cq_hndl;
-
-     res = EVAPI_set_comp_eventh(hca_hndl, r_cq_hndl, EVAPI_POLL_CQ_UNBLOCK_HANDLER, params, &(params->comp_hndl));
-     if (res != VAPI_OK) {
-	     printf("Error: Creating in EVAPI_set_comp_eventh (recv) : %s\n", 
-		    VAPI_strerror(res));
-	     return(RET_ERR);
-     } 
 	  
      /********************** async event handler **********************/
      res= EVAPI_set_async_event_handler(hca_hndl,async_events_handler,
@@ -446,7 +429,7 @@ ret_val_t create_common_resources(params_tx *params)
      }
      
      /********************** SEND MR **********************/
-     for(i=0; i<MAX_SEND_BUFS; i++){
+     for(i=0; i<MAX_BUFS; i++){
 	     real_send_buf = VMALLOC(size+2*sizeof(CRIBBuffer)+PAGE_SIZE_ALIGN);
 	     send_buf = (void *) MT_UP_ALIGNX_VIRT(real_send_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
 	     
@@ -482,7 +465,7 @@ ret_val_t create_common_resources(params_tx *params)
 	     params->s_buffers[i].mr_hndl_s = mr_hndl;
      }
      /**********************  RECV MR  **********************/
-     for(i=0; i<MAX_RECV_BUFS; i++){
+     for(i=0; i<MAX_BUFS; i++){
 	     real_recv_buf = VMALLOC(size+2*sizeof(CRIBBuffer)+PAGE_SIZE_ALIGN);
 	     recv_buf = (void *) MT_UP_ALIGNX_VIRT(real_recv_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
 
@@ -522,6 +505,21 @@ ret_val_t create_common_resources(params_tx *params)
      return(RET_OK);
 }
 
+static void show_qp_state(VAPI_hca_hndl_t  hca_hndl, VAPI_qp_hndl_t qp_hndl, VAPI_qp_num_t  qp_num)
+{
+     VAPI_qp_attr_t       qp_attr;
+     VAPI_qp_attr_mask_t  qp_attr_mask;
+     VAPI_qp_init_attr_t  qp_init_attr;
+     VAPI_ret_t           res;
+     
+     res = VAPI_query_qp(hca_hndl, qp_hndl, &qp_attr, &qp_attr_mask, &qp_init_attr );
+     if (res == VAPI_OK) {
+	  crWarning("=== QP handle 0x%x, QP num 0x%x: state %d\n", (unsigned)qp_hndl, (unsigned)qp_num, qp_attr.qp_state);
+     }
+     else {
+	  crWarning("Error on VAPI_query_qp: %s\n", VAPI_strerror(res));
+     }
+}
 
 static ret_val_t qp_init2rts_one_qp(params_tx *params)
 {
@@ -552,8 +550,7 @@ static ret_val_t qp_init2rts_one_qp(params_tx *params)
      qp_attr.port     = port_num;
      QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PORT);
      
-     qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ | 
-	  VAPI_EN_REM_ATOMIC_OP;
+     qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ | VAPI_EN_REM_ATOMIC_OP;
      QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_REMOTE_ATOMIC_FLAGS);
      
      res = VAPI_modify_qp(hca_hndl, qp_hndl, &qp_attr, &qp_attr_mask, &qp_cap);
@@ -580,7 +577,7 @@ static ret_val_t qp_init2rts_one_qp(params_tx *params)
      qp_attr.av.sl            = 0;
      qp_attr.av.grh_flag      = FALSE;
      qp_attr.av.dlid          = dlid;
-     qp_attr.av.static_rate   = 0;
+     qp_attr.av.static_rate   = 2;
      qp_attr.av.src_path_bits = 0;
      QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_AV);
      
@@ -590,8 +587,8 @@ static ret_val_t qp_init2rts_one_qp(params_tx *params)
      qp_attr.rq_psn           = 0;
      QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RQ_PSN);
      
-     qp_attr.pkey_ix = 0;
-     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PKEY_IX);
+     /*qp_attr.pkey_ix = 0;
+       QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PKEY_IX);*/
      
      qp_attr.min_rnr_timer = 0;
      QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_MIN_RNR_TIMER);
@@ -616,10 +613,10 @@ static ret_val_t qp_init2rts_one_qp(params_tx *params)
      qp_attr.timeout   = 18; /* ~1 sec */
      QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_TIMEOUT);
      
-     qp_attr.retry_count   = 1;
+     qp_attr.retry_count   = 6;
      QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RETRY_COUNT);
      
-     qp_attr.rnr_retry     = 5;
+     qp_attr.rnr_retry     = 6;
      QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RNR_RETRY);
      
      qp_attr.ous_dst_rd_atom  = params->qp_ous_rd_atom;
@@ -676,7 +673,7 @@ VAPI_ret_t poll_cq_nowait(VAPI_hca_hndl_t hca_hndl,
      
      if (res == VAPI_OK) {
 	     if (sc_p->status != VAPI_SUCCESS) {
-		     printf("Completion with error on send queue (syndrome=0x%x=%s , opcode=%d=%s)\n",
+		     printf("Completion with error on queue (syndrome=0x%x=%s , opcode=%d=%s)\n",
 			    sc_p->vendor_err_syndrome,VAPI_wc_status_sym(sc_p->status),sc_p->opcode,VAPI_cqe_opcode_sym(sc_p->opcode));
 		     printf("%s: completion with error (%d) detected\n", __func__, sc_p->status);
 		     return(VAPI_EGEN);
@@ -695,15 +692,6 @@ static void async_events_handler( VAPI_hca_hndl_t hca_hndl,
 	    VAPI_event_record_sym(event_p->type),
 	    event_p->syndrome,VAPI_event_syndrome_sym(event_p->syndrome));
 }
-
-/*static void comp_events_handler( VAPI_hca_hndl_t hca_hndl, 
-				  VAPI_cq_hndl_t cq_hndl, 
-				  void* priv_data)
-{
-	
-	printf("Got completion event on %d\n", cq_hndl);
-	EVAPI_clear_comp_eventh(hca_hndl, ((params_tx*) priv_data)->comp_hndl);
-}*/
 
 /*************************************************************************
  * Function: clean_up
@@ -729,7 +717,7 @@ static void clean_up(params_tx *params)
 	}
 	
 	/* cleanup MRs */
-	for(i=0; i<MAX_SEND_BUFS; i++){
+	for(i=0; i<MAX_BUFS; i++){
 		if (params->s_buffers[i].mr_hndl_s != VAPI_INVAL_HNDL) {
 			VAPI_deregister_mr(cr_ib.hca_hndl,params->s_buffers[i].mr_hndl_s);
 		}
@@ -739,7 +727,7 @@ static void clean_up(params_tx *params)
 		}
 	}
 
-	for(i=0; i<MAX_RECV_BUFS; i++){
+	for(i=0; i<MAX_BUFS; i++){
 		if  (params->r_buffers[i].mr_hndl_r != VAPI_INVAL_HNDL) {
 			VAPI_deregister_mr(cr_ib.hca_hndl,params->r_buffers[i].mr_hndl_r);
 		}
@@ -771,23 +759,21 @@ static void   init_params(params_tx *params)
 	params->pd_hndl     = VAPI_INVAL_HNDL;
 
 	params->max_inline_size           = 400; 
-	for (i=0; i<MAX_PORTS_NUM; i++) {
-		params->port_num     = i+1;
-		params->lid          = -1;
-		params->d_lid        = -1;
-		params->num_of_qps   = 1;
-		params->r_cq_hndl    = VAPI_INVAL_HNDL;
-		params->s_cq_hndl    = VAPI_INVAL_HNDL;
-	}
+	params->port_num     = 1;
+	params->lid          = -1;
+	params->d_lid        = -1;
+	params->num_of_qps   = 1;
+	params->r_cq_hndl    = VAPI_INVAL_HNDL;
+	params->s_cq_hndl    = VAPI_INVAL_HNDL;
 	
 	params->num_of_qps = 1;
 
 	/* per buffer */
-	for(i=0; i<MAX_RECV_BUFS; i++){
+	for(i=0; i<MAX_BUFS; i++){
 		params->r_buffers[i].recv_buf    = NULL;
 		params->r_buffers[i].mr_hndl_r   = VAPI_INVAL_HNDL;
 	}
-	for(i=0; i<MAX_SEND_BUFS; i++){
+	for(i=0; i<MAX_BUFS; i++){
 		params->s_buffers[i].send_buf    = NULL;
 		params->s_buffers[i].mr_hndl_s   = VAPI_INVAL_HNDL;
 	}
@@ -831,17 +817,17 @@ static void   print_params(params_tx *p_params)
 {
 	params_tx *p = p_params;
 	
-	printf("========== test parameters ==========\n");
+	printf("========== parameters ==========\n");
 	
-	printf("IN: size %d, iter %d, mtu %d\n", 
-		     cr_ib.size, cr_ib.iter, cr_ib.mtu);
+	printf("IN: size %d, mtu %d\n", 
+		     cr_ib.size, cr_ib.mtu);
 	printf("IN: alloc_aligned %d\n", cr_ib.alloc_aligned);
-	printf("IN: port_num %d, ports_num %d \n", 
-		     cr_ib.port_num, cr_ib.ports_num);
+	printf("IN: port_num %d\n", 
+		     p->port_num);
 	printf("IN: NUMs: cqe %d, r_wqe %d, s_wqe %d, rsge %d, ssge %d\n",
 		     cr_ib.num_cqe, cr_ib.num_r_wqe, cr_ib.num_s_wqe, cr_ib.num_rsge, cr_ib.num_ssge);
-	printf("HANDLEs: hca 0x%x, pd 0x%x\n",
-		     (unsigned int)cr_ib.hca_hndl, (unsigned int)p->pd_hndl);
+	printf("HANDLEs: hca 0x%x, pd 0x%x, qp 0x%x\n",
+		     (unsigned int)cr_ib.hca_hndl, (unsigned int)p->pd_hndl, (unsigned int)p->qp_hndl);
 	printf("max_inline_size %d, max_cap_inline_size %d, ous_src_rd_atom %d, ous_dst_rd_atom %d\n",
 	       p->max_inline_size, p->max_cap_inline_size, cr_ib.hca_cap.max_qp_ous_rd_atom, p->qp_ous_rd_atom );
 	printf("port %d, lid %d, dlid %d, s_cq 0x%x, r_cq 0x%x, "
@@ -873,7 +859,7 @@ ret_val_t ib_post_recv_buffers( params_tx *params_p)
 	rr.sg_lst_p   = &sg_entry_r;
 
 	/* Pre-post all recv buffers */
-	for (i=0;i<MAX_RECV_BUFS;i++) {
+	for (i=0;i<MAX_BUFS;i++) {
 		rr.id = i;
 		sg_entry_r.lkey = params_p->r_buffers[i].recv_lkey;
 		sg_entry_r.len  = cr_ib.size;
@@ -952,7 +938,7 @@ static void crIBConnectionAdd( CRConnection *conn, CRIBConnection* ib_conn_in )
 }
 
 void* cr_ib_recv( CRConnection *conn, 
-		      unsigned int* len)
+		  unsigned int* len)
 {
 	CRIBConnection* ib_conn;
 	VAPI_wc_desc_t      rc;
@@ -965,12 +951,13 @@ void* cr_ib_recv( CRConnection *conn,
 	VAPI_cq_hndl_t      r_cq_hndl;
 	ib_conn = crIBConnectionLookup(conn->id);
 
+	rc.byte_len = 0;
+
 	r_cq_hndl = ib_conn->params.r_cq_hndl;
 
 	/* sit and wait for a recv completion*/
 	res = poll_cq_nowait(hca_hndl, r_cq_hndl, &rc);
 	if (res == VAPI_OK) {
-		
 		//crDebug("I got recv buffer id %d, len %d", (int)rc.id, rc.byte_len);
 		dst = ib_conn->params.r_buffers[rc.id].recv_buf;
 		//crDebug("I'm setting it to 0x%x", (unsigned int)dst);
@@ -980,6 +967,20 @@ void* cr_ib_recv( CRConnection *conn,
 		  crDebug("I recv buf=[%s]", string);*/
 		
 		return dst;
+	}
+	else if( res == VAPI_EGEN){
+	     crWarning("RECV error on conn %d", conn->id);
+	     show_qp_state(hca_hndl, ib_conn->params.qp_hndl, ib_conn->params.qp_num);
+	     if(rc.byte_len > 0){
+		  crWarning("recovering");
+		  dst = ib_conn->params.r_buffers[rc.id].recv_buf;
+		  *len = rc.byte_len;
+		  return dst;
+	     }
+	     else{
+		  *len = 0;
+		  return NULL;
+	     }
 	}
 	else{
 		*len = 0;
@@ -1011,6 +1012,7 @@ ret_val_t cr_ib_send( CRConnection *conn, const void *buf,
 	sr.comp_type   = VAPI_SIGNALED;
 	sr.set_se      = FALSE;
 	sr.remote_qkey = 0;
+	sr.fence = TRUE;   /* In case we are sending a notification after RDMA-R */
 	
 	sr.sg_lst_len = 1;
 	sr.sg_lst_p = &sg_entry_s;
@@ -1027,14 +1029,14 @@ ret_val_t cr_ib_send( CRConnection *conn, const void *buf,
 		res = EVAPI_post_inline_sr(hca_hndl, qp_hndl, &sr);
 	}
 	else {
-		sg_entry_s.addr = (VAPI_virt_addr_t)(MT_virt_addr_t)buf;
+ 		sg_entry_s.addr = (VAPI_virt_addr_t)(MT_virt_addr_t)buf;
 		sg_entry_s.len  = len;
 		sg_entry_s.lkey = ib_conn->params.s_buffers[id].send_lkey;
 		res = VAPI_post_sr(hca_hndl, qp_hndl, &sr);
 	}
 	if (res != VAPI_OK) {
 		printf("sg_list_len %d\n", sr.sg_lst_len );
-		printf("Error: Posting send desc : %s\n", VAPI_strerror(res));
+		printf("Error: Posting send desc (%d): %s\n", id, VAPI_strerror(res));
 		return RET_ERR;
 	}
 	return RET_OK;
@@ -1048,7 +1050,6 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
      char tmp_msg[8096];
      char my_hostname[256];
      int i;
-     //u_int64_t t_start=0, t_end=0;
      CRIBConnection *ib_conn;
 
      crWarning( "crIBAccept is being called -- brokering the connection through the mothership!." );
@@ -1081,11 +1082,11 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
 	     clean_up(&ib_conn->params);
      } 
 
-     sprintf(tmp_msg, "acceptrequest ib %s %d %d %d %d lid_p1=%d lid_p2=%d qp_ous=%d qp=%d", 
+     sprintf(tmp_msg, "acceptrequest ib %s %d %d %d lid_p1=%d qp_ous=%d qp=%d", 
 	     my_hostname,
-	     conn->port, cr_ib.node_id, 
-	     cr_ib.port_num, conn->endianness, 
-	     ib_conn->params.lid,
+	     conn->port, 
+	     cr_ib.node_id, 
+	     conn->endianness, 
 	     ib_conn->params.lid,
 	     (int)MIN2(DFLT_QP_OUS_RD_ATOM, 
 		       cr_ib.hca_cap.max_qp_ous_rd_atom), 
@@ -1096,15 +1097,14 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
      {
 	  crError( "Mothership didn't like my accept request" );
      }
-     sscanf( response, "%d %d %d", &(conn->id), 
-	     &(conn->ib_node_id), &(conn->ib_port_num) );
+     sscanf( response, "%d %d %d", 
+	     &(conn->id), 
+	     &(conn->ib_node_id), 
+	     &(conn->ib_port_num) );
      /* The response will contain the IB information for the guy who accepted 
       * this connection.  The mothership will sit on the acceptrequest 
       * until someone connects. */
      msg2num(response, "lid_p1=", -1, 
-	     &(ib_conn->params.d_lid), 
-	     sizeof(ib_conn->params.d_lid));
-     msg2num(response, "lid_p2=", -1, 
 	     &(ib_conn->params.d_lid), 
 	     sizeof(ib_conn->params.d_lid));
      msg2num(response, "qp_ous=", 8, 
@@ -1126,7 +1126,7 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
      print_params( &ib_conn->params );
 
      // setup all recv buffers
-     for(i=0; i<MAX_RECV_BUFS; i++){
+     for(i=0; i<MAX_BUFS; i++){
 	     CRIBBuffer *ib_buffer = (CRIBBuffer*)ib_conn->params.r_buffers[i].recv_buf;
 	     ib_buffer->magic = CR_IB_BUFFER_MAGIC;
 	     ib_buffer->kind = CRIBMemory;
@@ -1138,20 +1138,19 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
      ib_post_recv_buffers( &ib_conn->params );
 
      // and push all of the send buffers
-     ib_conn->send_pool = crBufferPoolInit(0);
-     for(i=0; i<MAX_SEND_BUFS; i++){
+     ib_conn->send_pool = crBufferPoolInit(MAX_BUFS);
+     for(i=0; i<MAX_BUFS; i++){
 	     CRIBBuffer *ib_buffer = (CRIBBuffer*)ib_conn->params.s_buffers[i].send_buf;
 	     ib_buffer->magic = CR_IB_BUFFER_MAGIC;
 	     ib_buffer->kind = CRIBMemory;
 	     ib_buffer->len = conn->buffer_size;
 	     ib_buffer->id = i;
 	     crBufferPoolPush( ib_conn->send_pool, ib_buffer, conn->buffer_size);
-     }
-
+     } 
+     crWarning("conn: %d buffer count = %d", conn->id, crBufferPoolGetNumBuffers( ib_conn->send_pool));
+     
      crDebug("Accept!");
      __copy_of_crMothershipDisconnect( mother );
-     
-     (void) port;
 }
 
 void
@@ -1165,20 +1164,23 @@ void
 	VAPI_hca_hndl_t     hca_hndl    = cr_ib.hca_hndl;
 	VAPI_qp_hndl_t      qp_hndl;
 	VAPI_cq_hndl_t      s_cq_hndl;
+	int count = 0;
 
 	ib_conn = crIBConnectionLookup(conn->id);	
 
 	qp_hndl   = ib_conn->params.qp_hndl;
 	s_cq_hndl = ib_conn->params.s_cq_hndl;
 
-	//fprintf(stderr, "fast buffer recover: ");
+	//fprintf(stderr, "fast buffer recover: \n");
 	// see if other buffers finished but don't block unless it's needed
 	while(poll_cq_nowait(hca_hndl,s_cq_hndl,&sc) == VAPI_OK){
 	     //fprintf(stderr, "conn: %d, recovered #%d\n", conn->id, (int)sc.id);
-		crBufferPoolPush( ib_conn->send_pool, ib_conn->params.s_buffers[sc.id].send_buf, 
-				  conn->buffer_size );
-	}
-	//fprintf(stderr, "done\n");
+	     crBufferPoolPush( ib_conn->send_pool, ib_conn->params.s_buffers[sc.id].send_buf, 
+			       conn->buffer_size );
+	     count++;
+	   
+	}  
+	crWarning("conn: %d fast recovered %d, pool = %d", conn->id, count, crBufferPoolGetNumBuffers( ib_conn->send_pool));
 
 	ib_buffer = (CRIBBuffer *) 
 		crBufferPoolPop( ib_conn->send_pool, conn->buffer_size );
@@ -1187,13 +1189,12 @@ void
 	{
 		crWarning("Crap: out of IB buffers, blocking to try to get one!");
 		poll_cq(hca_hndl,s_cq_hndl,&sc);
-		crWarning("Got one!");
-		//fprintf(stderr, "conn: %d, recovered #%d\n", conn->id, (int)sc.id);
+		fprintf(stderr, "Got one!: conn: %d, recovered #%d\n", conn->id, (int)sc.id);
 		ib_buffer = (CRIBBuffer*)(ib_conn->params.s_buffers[sc.id].send_buf);
 	}
 	
 	//crWarning("IBAlloc returning 0x%x", (unsigned int)(ib_buffer+1));
-
+	//crWarning("IBAlloc returning buffer %d", ib_buffer->id);
 	return (void*)(ib_buffer + 1);
 }
 
@@ -1339,22 +1340,20 @@ crIBRecv( void )
 		CRIBBuffer *ib_buffer = NULL;
 		unsigned int   len;
 		CRConnection  *conn = cr_ib.conns[i];
-		
+
+		//fprintf(stderr, ".");
+
 		ib_buffer = cr_ib_recv( conn, &len );
 		
 		if( len > 0 ){
-			if(ib_buffer == NULL)
-				crWarning("Why am I null?");
-
 			ib_buffer->len = len;
 			
 			msg = (CRMessage *) (ib_buffer + 1);	
-
-		/* 	crBytesToString( string, sizeof(string), msg, len ); */
+			
+			/* 	crBytesToString( string, sizeof(string), msg, len ); */
 /* 			crDebug("RECV buf=[%s]", string); */
 			
-			crNetDispatchMessage( cr_ib.recv_list, conn, msg, len );
-			
+			crNetDispatchMessage( cr_ib.recv_list, conn, msg, len );	
 			
 			/* CR_MESSAGE_OPCODES is freed in
 			 * crserverlib/server_stream.c 
@@ -1362,11 +1361,12 @@ crIBRecv( void )
 			 * OOB messages are the programmer's problem.  -- Humper 12/17/01 */
 			if (msg->header.type != CR_MESSAGE_OPCODES && msg->header.type != CR_MESSAGE_OOB)
 			{
-			     crIBFree( conn, ib_buffer + 1 );
+				crIBFree( conn, ib_buffer + 1 );
 			}
 			found++;
 		}
 	}
+	//fprintf(stderr, "\n");
 	return found;
 }
 
@@ -1403,9 +1403,9 @@ crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 
 	if (cr_ib.initialized)
 	{
-		crWarning("#############################");
-		crWarning("IB layer already initialized!");
-		crWarning("#############################");
+		crWarning("#################################");
+		crWarning("# IB layer already initialized! #");
+		crWarning("#################################");
 		return;
 	}
 
@@ -1419,18 +1419,15 @@ crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 
 	/* ignore the wizard behind the curtain */
 	strcpy(cr_ib.hca_id,"InfiniHost0");	
-	cr_ib.num_ah        = 256;
-	cr_ib.iter          = 10000;
-	cr_ib.size          = mtu;
-	cr_ib.ports_num     = 1; //default
-	cr_ib.port_num      = 1; //default
+	cr_ib.num_ah          = 256;
+	cr_ib.size            = mtu;
 	cr_ib.mtu             = MTU1024;
-	cr_ib.num_ssge        = 20; // To support inline data
-	cr_ib.num_rsge        = 20; // To support inline data
+	cr_ib.num_ssge        = 40; // To support inline data
+	cr_ib.num_rsge        = 40; // To support inline data
 	cr_ib.alloc_aligned   = 1;
-	cr_ib.num_cqe         = 66;
-	cr_ib.num_r_wqe       = 32;  
-	cr_ib.num_s_wqe       = 32;
+	cr_ib.num_cqe         = MAX_BUFS+2;
+	cr_ib.num_r_wqe       = MAX_BUFS;  
+	cr_ib.num_s_wqe       = MAX_BUFS;
 	
 	open_hca();
 }
@@ -1442,8 +1439,7 @@ crIBDoConnect( CRConnection *conn )
      char response[8096];
      char tmp_msg[8096];
      int remote_endianness;
-     int i;	
-     //u_int64_t t_start=0, t_end=0;
+     int i;
      CRIBConnection *ib_conn;
 
      crWarning( "crIBDoConnect is being called -- brokering the connection through the mothership!." );
@@ -1467,11 +1463,11 @@ crIBDoConnect( CRConnection *conn )
 	     clean_up(&ib_conn->params);
      }
 
-     sprintf(tmp_msg, "connectrequest ib %s %d %d %d %d lid_p1=%d lid_p2=%d qp_ous=%d qp=%d", 
+     sprintf(tmp_msg, "connectrequest ib %s %d %d %d lid_p1=%d qp_ous=%d qp=%d", 
 	     conn->hostname,
-	     conn->port, cr_ib.node_id, 
-	     cr_ib.port_num, conn->endianness, 
-	     ib_conn->params.lid,
+	     conn->port, 
+	     cr_ib.node_id,
+	     conn->endianness, 
 	     ib_conn->params.lid,
 	     (int)MIN2(DFLT_QP_OUS_RD_ATOM, 
 		       cr_ib.hca_cap.max_qp_ous_rd_atom), 
@@ -1483,15 +1479,14 @@ crIBDoConnect( CRConnection *conn )
 	     crError( "Mothership didn't like my connect request" );
      }
      
-     sscanf( response, "%d %d %d %d", &(conn->id), &(conn->ib_node_id), 
-	     &(conn->ib_port_num), &(remote_endianness) );
+     sscanf( response, "%d %d %d", 
+	     &(conn->id), 
+	     &(conn->ib_node_id), 
+	     &(remote_endianness) );
      /* The response will contain the IB information for the guy who accepted 
       * this connection.  The mothership will sit on the connectrequest 
       * until someone accepts. */
      msg2num(response, "lid_p1=", -1, 
-	     &(ib_conn->params.d_lid), 
-	     sizeof(ib_conn->params.d_lid));
-     msg2num(response, "lid_p2=", -1, 
 	     &(ib_conn->params.d_lid), 
 	     sizeof(ib_conn->params.d_lid));
      msg2num(response, "qp_ous=", 8, 
@@ -1513,7 +1508,7 @@ crIBDoConnect( CRConnection *conn )
      print_params( &ib_conn->params );
 
      // setup all recv buffers
-     for(i=0; i<MAX_RECV_BUFS; i++){
+     for(i=0; i<MAX_BUFS; i++){
 	     CRIBBuffer *ib_buffer = (CRIBBuffer*)ib_conn->params.r_buffers[i].recv_buf;
 	     ib_buffer->magic = CR_IB_BUFFER_MAGIC;
 	     ib_buffer->kind = CRIBMemory;
@@ -1525,15 +1520,16 @@ crIBDoConnect( CRConnection *conn )
      ib_post_recv_buffers( &ib_conn->params );
 
      // and push all of the send buffers
-     ib_conn->send_pool = crBufferPoolInit(0);
-     for(i=0; i<MAX_SEND_BUFS; i++){
+     ib_conn->send_pool = crBufferPoolInit(MAX_BUFS);
+     for(i=0; i<MAX_BUFS; i++){
 	     CRIBBuffer *ib_buffer = (CRIBBuffer*)ib_conn->params.s_buffers[i].send_buf;
 	     ib_buffer->magic = CR_IB_BUFFER_MAGIC;
 	     ib_buffer->kind = CRIBMemory;
 	     ib_buffer->len = conn->buffer_size;
 	     ib_buffer->id = i;
 	     crBufferPoolPush( ib_conn->send_pool, ib_buffer, conn->buffer_size);
-     }
+     } 
+     crWarning("conn: %d buffer count = %d", conn->id, crBufferPoolGetNumBuffers( ib_conn->send_pool));
 
      if (remote_endianness != conn->endianness)
      {
