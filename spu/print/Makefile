@@ -27,21 +27,10 @@ LIB_DEFS += print.def
 include ${TOP}/cr.mk
 
 
-# Where are the gl.h and glext.h headers located?
-ifdef WINDOWS
-# INCLUDE is an env var defined specifically for Visual Studio (I'm told)
-GL_HEADERS = $(INCLUDE)/GL/gl.h
-else
-GL_HEADERS = /usr/include/GL/gl.h
-endif
-
-GL_HEADERS += $(TOP)/include/GL/glext.h $(TOP)/include/chromium.h
-
-
 printspu.c: print.py printspu_unimplemented_special printspu_special ../../glapi_parser/apiutil.py ../../glapi_parser/APIspec.txt
 	@$(ECHO) Building the Print SPU
 	@$(PYTHON) print.py > $@
 
 
-printspu_enums.c: enums.py
-	@$(PYTHON) enums.py $(GL_HEADERS) > $@
+#To generate a new printspu_enums.c file, do this:
+#	python enums.py /usr/include/GL/gl.h ../../include/GL/glext.h ../../include/chromium.h > printspu_enums.c
