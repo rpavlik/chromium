@@ -35,44 +35,44 @@ crutProxyRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 	    /* forward events */
 	    if ( crut_proxy.msg->msg_type == CRUT_MOUSE_EVENT ) 
 	    {
-	        CRUTMouseMsg *msg = (CRUTMouseMsg*) msg;
-		crutSendMouseEvent( &crut_api, msg->button, msg->state, msg->x, msg->y);
+	        CRUTMouseMsg *msg1 = (CRUTMouseMsg*) msg;
+		crutSendMouseEvent( &crut_api, msg1->button, msg1->state, msg1->x, msg1->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_RESHAPE_EVENT ) 
 	    {
-	        CRUTReshapeMsg *msg = (CRUTReshapeMsg*) msg;
-		crutSendReshapeEvent( &crut_api, msg->width, msg->height);
+	        CRUTReshapeMsg *msg1 = (CRUTReshapeMsg*) msg;
+		crutSendReshapeEvent( &crut_api, msg1->width, msg1->height);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_VISIBILITY_EVENT ) 
 	    {
-		 CRUTVisibilityMsg *msg = (CRUTVisibilityMsg*) msg;
-		 crutSendVisibilityEvent( &crut_api, msg->state);
+		 CRUTVisibilityMsg *msg1 = (CRUTVisibilityMsg*) msg;
+		 crutSendVisibilityEvent( &crut_api, msg1->state);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_KEYBOARD_EVENT ) 
 	    {
-	        CRUTKeyboardMsg *msg = (CRUTKeyboardMsg*) msg;
-		crutSendKeyboardEvent( &crut_api, msg->key, msg->x, msg->y);
+	        CRUTKeyboardMsg *msg1 = (CRUTKeyboardMsg*) msg;
+		crutSendKeyboardEvent( &crut_api, msg1->key, msg1->x, msg1->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_MOTION_EVENT ) 
 	    {
-	        CRUTMotionMsg *msg = (CRUTMotionMsg*) msg;
-		crutSendMotionEvent( &crut_api, msg->x, msg->y);
+	        CRUTMotionMsg *msg1 = (CRUTMotionMsg*) msg;
+		crutSendMotionEvent( &crut_api, msg1->x, msg1->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_PASSIVE_MOTION_EVENT ) 
 	    {
-	        CRUTPassiveMotionMsg *msg = (CRUTPassiveMotionMsg*) msg;
-		crutSendPassiveMotionEvent( &crut_api, msg->x, msg->y);
+	        CRUTPassiveMotionMsg *msg1 = (CRUTPassiveMotionMsg*) msg;
+		crutSendPassiveMotionEvent( &crut_api, msg1->x, msg1->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_MENU_EVENT ) 
 	    {
-	        CRUTMenuMsg *msg = (CRUTMenuMsg*) msg;
-		crutSendMenuEvent( &crut_api, msg->menuID, msg->value );
+	        CRUTMenuMsg *msg1 = (CRUTMenuMsg*) msg;
+		crutSendMenuEvent( &crut_api, msg1->menuID, msg1->value );
 	    } 
 
 	    return 1; /* HANDLED */
