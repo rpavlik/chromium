@@ -131,7 +131,7 @@ renderSPUInit( int id, SPU *child, SPU *self,
 		render_spu.default_visual = CR_RGB_BIT | CR_DOUBLE_BIT;
 		defaultWin = renderspuWindowCreate( NULL, render_spu.default_visual );
 	}
-	crDebug( "WindowCreate returned %d", defaultWin );
+	crDebug( "Render SPU: WindowCreate returned %d (0=normal)", defaultWin );
 	if (defaultWin != 0) {
 		crError("Render SPU unable to create default window (check DISPLAY settings)");
 	}
