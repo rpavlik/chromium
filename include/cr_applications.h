@@ -3,6 +3,10 @@
 
 #include "cr_glwrapper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CR_SCREEN_BBOX_HINT 0x10000001
 #define CR_OBJECT_BBOX_HINT 0x10000002
 #define CR_DEFAULT_BBOX_HINT 0x10000003
@@ -28,5 +32,9 @@ WINGDIAPI void APIENTRY glSemaphoreV (GLuint name);
 void crCreateContext(void);
 void crMakeCurrent(void);
 void crSwapBuffers(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_APPLICATIONS_H */

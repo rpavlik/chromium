@@ -1,5 +1,5 @@
 TOP = ..
 
-SUBDIRS = fonttest
+SUBDIRS = fonttest psubmit
 
 include ${TOP}/cr.mk
