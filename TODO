@@ -1,7 +1,5 @@
 Before July Alpha release:
 	DrawPixels
-	RasterPos
-		Debug fonttest on multiple tiles
 	test GM support 
 		can't test without a switch -- DAMMIT!
 	Parallel applications
@@ -9,10 +7,6 @@ Before July Alpha release:
 		Test context switching code
 		context switching for pushattrib stack -- yuck
 	Documentation
-		How to run
-		How to configure
-		How to write a SPU
-		Code organization
 
 Before October release:
 	Implement LSB and SWAP_BYTES for pixel data (un)packing.

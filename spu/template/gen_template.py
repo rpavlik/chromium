@@ -16,7 +16,10 @@ def ProcessFile( fn, spuname ):
 	inputfile = open( fn, 'r' )
 	outputfile = open( fn + "_TEMP", 'w' )
 	for line in inputfile.readlines():
-		outputfile.write( line.replace( "template", spuname ) )
+		newline = line.replace( "template", spuname )
+		newline = newline.replace( "TEMPLATE", spuname.upper() )
+		newline = newline.replace( "Template", (spuname[:1].upper() + spuname[1:]) )
+		outputfile.write( newline )
 	inputfile.close()
 	outputfile.close()
 	os.unlink( fn )
