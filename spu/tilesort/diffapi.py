@@ -46,6 +46,8 @@ print """
 void tilesortspuCreateDiffAPI( void )
 {
 	SPUDispatchTable table;
+
+	crSPUInitDispatchTable(&table);
 """
 
 keys = gl_mapping.keys()
