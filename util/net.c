@@ -127,7 +127,7 @@ CRConnection *crNetConnectToServer( char *server,
 	if ( !crStrcmp( protocol, "quadrics" ) ||
 	     !crStrcmp( protocol, "quadrics-tcscomm" ) ) {
 	  /* For Quadrics protocols, treat "port" as "rank" */
-	  if ( port < CR_QUADRICS_HIGHEST_RANK ) {
+	  if ( port > CR_QUADRICS_HIGHEST_RANK ) {
 	    crWarning( "Invalid crserver rank, %d, defaulting to %d\n",
 		       port, CR_QUADRICS_LOWEST_RANK );
 	    port = CR_QUADRICS_LOWEST_RANK;
@@ -182,7 +182,6 @@ CRConnection *crNetConnectToServer( char *server,
 	conn->userbuf_len        = 0;
 
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
-	
 	if ( !crStrcmp( protocol, "devnull" ) )
 	{
 		crDevnullInit( cr_net.recv_list, cr_net.close_list, mtu );
