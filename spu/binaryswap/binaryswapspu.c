@@ -138,9 +138,8 @@ clipCoords (GLfloat modl[16], GLfloat proj[16],
  * application.
  *******************************************************/
 static int
-getClippedWindow(GLfloat modl[16], GLfloat proj[16], 
-		 int *xstart, int* ystart,
-		 int* xend, int* yend )
+getClippedWindow(int *xstart, int* ystart,
+								 int* xend, int* yend )
 {
 	GLfloat viewport[4];
 	GLfloat x1, x2, y1, y2, z1, z2;
@@ -158,8 +157,8 @@ getClippedWindow(GLfloat modl[16], GLfloat proj[16],
 	     /*crDebug("binaryswap SPU: No BBox");*/
 		return 0;
 	}
-		
-	clipCoords(modl, proj, &x1, &y1, &z1, &x2, &y2, &z2);
+	
+	clipCoords(binaryswap_spu.modl, binaryswap_spu.proj, &x1, &y1, &z1, &x2, &y2, &z2);
 	/* Sanity check... */
 	if( x2 < x1 || y2 < y1 || z2 < z1){
 		crWarning( "Damnit!!!!, we screwed up the clipping somehow..." );
@@ -192,7 +191,8 @@ getClippedWindow(GLfloat modl[16], GLfloat proj[16],
  */
 static void BuildSwapLimits( WindowInfo *window )
 {
-	int xdiv = 1, ydiv = 1, i = 0;
+	int i = 0;
+	int other_x, other_y, other_width, other_height;
 	/* clean up old data structures */
 	if(window->read_x)
 		crFree(window->read_x);
@@ -216,23 +216,30 @@ static void BuildSwapLimits( WindowInfo *window )
 		/* even stage => right/left */
 		if(i%2 == 0)
 		{
-			xdiv *=2;
 			/* right */
 			if(!binaryswap_spu.highlow[i])
 			{
 				crDebug("Swap %d: right", i);
 				if(i==0)
 				{
-					window->read_x[i] = window->width/(xdiv);
+					window->read_x[i] = window->width/2;
 					window->read_y[i] = 0;
+					window->read_width[i]  = window->width/2 + window->width%2;
+					window->read_height[i] = window->height;
+
+					other_x = 0;
+					other_y = 0;
+					other_width  = window->width/2;
+					other_height = window->height;				
 				}
 				else
 				{
-					window->read_x[i] = window->read_x[i-1]+window->width/(xdiv);
-					if(binaryswap_spu.highlow[i-1])
-					     window->read_y[i] = window->read_y[i-1] - window->height/(ydiv);
-					else
-					     window->read_y[i] = window->height/(ydiv) + window->read_y[i-1];
+					window->read_x[i] = other_x + other_width/2;
+					window->read_y[i] = other_y;
+					window->read_width[i]  = other_width/2 + other_width%2;
+					window->read_height[i] = other_height;
+				
+					other_width = other_width/2;				
 				}
 			}
 			/* left */
@@ -243,44 +250,53 @@ static void BuildSwapLimits( WindowInfo *window )
 				{
 					window->read_y[i] = 0;
 					window->read_x[i] = 0;
+					window->read_width[i] = window->width/2;
+					window->read_height[i] = window->height;
+
+					other_x = window->width/2;
+					other_y = 0;
+					other_width  = window->width/2 + window->width%2;
+					other_height = window->height;
 				}
 				else
-				{
-					window->read_x[i] = window->read_x[i-1];
-					if(binaryswap_spu.highlow[i-1])
-					     window->read_y[i] = window->read_y[i-1] - window->height/(ydiv);
-					else
-					     window->read_y[i] = window->height/(ydiv) + window->read_y[i-1];
+				{					
+					window->read_x[i] = other_x;
+					window->read_y[i] = other_y;					
+					window->read_width[i] = other_width/2;
+					window->read_height[i] = other_height;
+					
+					other_x = other_x + other_width/2;
+					other_width = other_width/2 + other_width%2;
 				}
 			}
 		}
 		/* odd stage  => top/bottom */
 		else
 		{
-			ydiv *=2;
 			/* top */
 			if(binaryswap_spu.highlow[i])
 			{
 				crDebug("Swap %d: top", i);
-				if(!binaryswap_spu.highlow[i-1])
-				     window->read_x[i] = window->read_x[i-1] - window->width/(xdiv);
-				else
-				     window->read_x[i] = window->width/(xdiv) + window->read_x[i-1];	     
-				window->read_y[i] = window->read_y[i-1]+window->height/(ydiv);
+				window->read_x[i] = other_x;
+				window->read_y[i] = other_y + other_height/2;
+				window->read_width[i] = other_width;
+				window->read_height[i] = other_height/2 + other_height%2;
+
+				other_height = other_height/2;
 			}
 			/* bottom */
 			else
 			{
 				crDebug("Swap %d: bottom", i);
-				if(!binaryswap_spu.highlow[i-1])
-				     window->read_x[i] = window->read_x[i-1] - window->width/(xdiv);
-				else
-				     window->read_x[i] = window->width/(xdiv) + window->read_x[i-1];
-				window->read_y[i] = window->read_y[i-1];
+				window->read_x[i] = other_x;
+				window->read_y[i] = other_y;
+				window->read_width[i] = other_width;
+				window->read_height[i] = other_height/2;
+
+				other_y = other_y + other_height/2;
+				other_height = other_height/2 + other_height%2;
 			}
 		}
-		window->read_width[i] = window->width/xdiv;
-		window->read_height[i] = window->height/ydiv;
 		crDebug("Width: %d, Height: %d", window->read_width[i], window->read_height[i]);
 		crDebug("x: %d, y: %d", window->read_x[i], window->read_y[i]);
 	}
@@ -454,11 +470,12 @@ static void CompositeNode( WindowInfo *window,
 			msg->clipped_width = 0; 
 		if(msg->clipped_height < 0)
 			msg->clipped_height = 0;
-		
+
 		read_start_x = msg->clipped_x;
 		read_start_y = msg->clipped_y;
 		read_width   = msg->clipped_width;
 		read_height  = msg->clipped_height;
+		
 		
 		/* read our portion for this pass */
 		/* figure out which mode to use, depth or alpha */
@@ -504,20 +521,23 @@ static void CompositeNode( WindowInfo *window,
 				/* figure out blend function based on z */
 					binaryswap_spu.super.Enable(GL_BLEND);
 				/* Other image is on top of ours! */
-				if(binaryswap_spu.depth > other_depth)
+				if(binaryswap_spu.depth >= other_depth)
 				{
 					/* over operator */
-					binaryswap_spu.super.BlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); 
+					binaryswap_spu.super.BlendFunc  ( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); 
+					binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
+					binaryswap_spu.super.DrawPixels ( draw_width, draw_height, 
+																						GL_RGBA, GL_UNSIGNED_BYTE, incoming_color ); 
 				}
 				/* other image is under ours */
 				else
 				{  
 					/* under operator */
-					binaryswap_spu.super.BlendFunc( GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA ); 
+					binaryswap_spu.super.BlendFunc  ( GL_ONE_MINUS_DST_ALPHA, GL_ONE );
+					binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
+					binaryswap_spu.super.DrawPixels ( draw_width, draw_height, 
+																						GL_RGBA, GL_UNSIGNED_BYTE, incoming_color );
 				}	
-				binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
-				binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
-																				 GL_RGBA, GL_UNSIGNED_BYTE, incoming_color ); 
 				
 				if(binaryswap_spu.depth < other_depth)
 				{
@@ -632,12 +652,12 @@ static void CompositeNode( WindowInfo *window,
 		
 		/* find optimal ending point for readback based on 
 		   this nodes region and the partner's region */
-		recalc_end_x = render_info->start_x + render_info->width - 1;
-		if(endx > (render_info->clipped_x + render_info->clipped_width - 1)){
+		recalc_end_x = render_info->start_x + render_info->width;
+		if(endx > (render_info->clipped_x + render_info->clipped_width)){
 			recalc_temp = endx;
 		}
 		else{
-			recalc_temp = (render_info->clipped_x + render_info->clipped_width - 1);
+			recalc_temp = (render_info->clipped_x + render_info->clipped_width);
 			if(render_info->clipped_width > 0 && render_info->clipped_height > 0)
 				endx = recalc_temp;
 		}
@@ -645,12 +665,12 @@ static void CompositeNode( WindowInfo *window,
 			recalc_end_x = recalc_temp;
 		}
 		
-		recalc_end_y = render_info->start_y + render_info->height - 1;
-		if(endy > (render_info->clipped_y + render_info->clipped_height - 1)){
+		recalc_end_y = render_info->start_y + render_info->height;
+		if(endy > (render_info->clipped_y + render_info->clipped_height)){
 			recalc_temp = endy;
 		}
 		else{
-			recalc_temp = (render_info->clipped_y + render_info->clipped_height - 1);
+			recalc_temp = (render_info->clipped_y + render_info->clipped_height);
 			if(render_info->clipped_width > 0 && render_info->clipped_height > 0)
 				endy = recalc_temp;
 		}
@@ -664,8 +684,8 @@ static void CompositeNode( WindowInfo *window,
 
 	draw_x = recalc_start_x;
 	draw_y = recalc_start_y;
-	draw_width = recalc_end_x - recalc_start_x + 1;
-	draw_height = recalc_end_y - recalc_start_y + 1;
+	draw_width = recalc_end_x - recalc_start_x;
+	draw_height = recalc_end_y - recalc_start_y;
 
 	if(draw_width > 0 && draw_height > 0){	
 		/* send our final portion off to child */
@@ -718,9 +738,8 @@ static void ProcessNode( WindowInfo *window )
 	int read_end_y = window->height;
 
 	/* deal with clipping */
-	getClippedWindow( binaryswap_spu.modl, binaryswap_spu.proj, 
-			  &read_start_x, &read_start_y, 
-			  &read_end_x, &read_end_y);
+	getClippedWindow( &read_start_x, &read_start_y, 
+										&read_end_x, &read_end_y);
 	
 	/* One will typically use serverNode.Conf('only_swap_once', 1) to
 	 * prevent extraneous glClear and SwapBuffer calls on the server.
@@ -748,8 +767,6 @@ static void DoBinaryswap( WindowInfo *window )
 	GLint super_packAlignment, super_unpackAlignment;
 	GLint child_unpackAlignment;
 	GLint super_viewport[4];
-	GLfloat super_proj_matrix[16];
-	GLfloat super_modl_matrix[16];
 	GLboolean super_blend = GL_FALSE;
 	GLint super_blend_dst = 0, super_blend_src = 0;
 	GLboolean super_color_writemask[4];
@@ -793,8 +810,8 @@ static void DoBinaryswap( WindowInfo *window )
 	/* things we are going to change that we need to put back */
 	/* fix things up for reading and drawing pixels */
 	binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, super_viewport );
-	binaryswap_spu.super.GetFloatv ( GL_PROJECTION_MATRIX, super_proj_matrix);
-	binaryswap_spu.super.GetFloatv ( GL_MODELVIEW_MATRIX, super_modl_matrix);
+	binaryswap_spu.super.GetFloatv ( GL_PROJECTION_MATRIX, binaryswap_spu.proj);
+	binaryswap_spu.super.GetFloatv ( GL_MODELVIEW_MATRIX, binaryswap_spu.modl);
 
 	/* Things alpha compositing mucks with */
 	if(binaryswap_spu.alpha_composite)
@@ -845,9 +862,9 @@ static void DoBinaryswap( WindowInfo *window )
 				       super_viewport[2], 
 				       super_viewport[3] );
 	binaryswap_spu.super.MatrixMode(GL_PROJECTION);
-	binaryswap_spu.super.LoadMatrixf(super_proj_matrix);
+	binaryswap_spu.super.LoadMatrixf(binaryswap_spu.proj);
 	binaryswap_spu.super.MatrixMode(GL_MODELVIEW);
-	binaryswap_spu.super.LoadMatrixf(super_modl_matrix);
+	binaryswap_spu.super.LoadMatrixf(binaryswap_spu.modl);
 
 	if(binaryswap_spu.alpha_composite)
 	{
@@ -1132,7 +1149,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum targ
 		binaryswap_spu.bboxValues.xmax = ((GLfloat *) values)[3];
 		binaryswap_spu.bboxValues.ymax = ((GLfloat *) values)[4];
 		binaryswap_spu.bboxValues.zmax = ((GLfloat *) values)[5];
-		binaryswap_spu.bbox = &(binaryswap_spu.bboxValues);
+		binaryswap_spu.bbox = &(binaryswap_spu.bboxValues);	
 		binaryswap_spu.super.GetFloatv( GL_PROJECTION_MATRIX, binaryswap_spu.proj );
 		binaryswap_spu.super.GetFloatv( GL_MODELVIEW_MATRIX,  binaryswap_spu.modl );
 		break;
