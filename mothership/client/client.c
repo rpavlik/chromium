@@ -227,3 +227,10 @@ int crMothershipGetServerTiles( CRConnection *conn, char *response )
 {
 	return crMothershipSendString( conn, response, "servertiles" );
 }
+
+int crMothershipRequestTileLayout( CRConnection *conn, char *response,
+                             int muralWidth, int muralHeight )
+{
+	return crMothershipSendString( conn, response, "gettilelayout %d %d",
+																 muralWidth, muralHeight );
+}

@@ -39,6 +39,7 @@ int crMothershipGetSPUDir( CRConnection *conn, char *response );
 void crMothershipGetMTU( CRConnection *conn, char *response );
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num );
 int crMothershipGetServerTiles( CRConnection *conn, char *response );
+int crMothershipRequestTileLayout( CRConnection *conn, char *response, int muralWidth, int muralHeight );
 
 #ifdef __cplusplus
 }
