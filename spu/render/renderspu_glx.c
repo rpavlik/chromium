@@ -1287,6 +1287,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 		if (render_spu.render_to_crut_window) {
 			if (render_spu.crut_drawable == 0) {
+				/* We don't know the X drawable ID yet.  Ask mothership for it. */
 
 				conn = crMothershipConnect();
 				if (!conn)
@@ -1377,23 +1378,27 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 	CRASSERT(window->visual);
 	if (window->visual->visAttribs & CR_PBUFFER_BIT)
 	{
+		if (window->width != w || window->height != h) {
 #ifdef CHROMIUM_THREADSAFE
-		ContextInfo *currentContext = (ContextInfo *) crGetTSD(&_RenderTSD);
+			ContextInfo *currentContext = (ContextInfo *) crGetTSD(&_RenderTSD);
 #else
-		ContextInfo *currentContext = render_spu.currentContext;
+			ContextInfo *currentContext = render_spu.currentContext;
 #endif
-		/* Can't resize pbuffers, so destroy it and make a new one */
-		render_spu.ws.glXDestroyPbuffer(window->visual->dpy, window->window);
-		window->width = w;
-		window->height = h;
-		crDebug("Creating new %d x %d PBuffer", w, h);
-		if (!createPBuffer(window->visual, window)) {
-			crWarning("Render SPU: Unable to create the PBuffer!");
-		}
-		else if (currentContext && currentContext->currentWindow == window) {
-			/* Determine if we need to bind the current context to the new pbuffer */
-			render_spu.ws.glXMakeCurrent(window->visual->dpy,
-																	 window->window, currentContext->context );
+			/* Can't resize pbuffers, so destroy it and make a new one */
+			render_spu.ws.glXDestroyPbuffer(window->visual->dpy, window->window);
+			window->width = w;
+			window->height = h;
+			crDebug("Render SPU: Creating new %d x %d PBuffer (id=%d)",
+							w, h, window->id);
+			if (!createPBuffer(window->visual, window)) {
+				crWarning("Render SPU: Unable to create the PBuffer!");
+			}
+			else if (currentContext && currentContext->currentWindow == window) {
+				/* Determine if we need to bind the current context to new pbuffer */
+				render_spu.ws.glXMakeCurrent(window->visual->dpy,
+																		 window->window,
+																		 currentContext->context );
+			}
 		}
 	}
 	else
@@ -1445,8 +1450,15 @@ void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 	}
 	else
 	{
-		XGetGeometry(window->visual->dpy, window->window, &root,
-								 &x, &y, &width, &height, &bw, &d);
+		if ((render_spu.render_to_app_window || render_spu.render_to_crut_window)
+				&& window->nativeWindow) {
+			XGetGeometry(window->visual->dpy, window->nativeWindow, &root,
+									 &x, &y, &width, &height, &bw, &d);
+		}
+		else {
+			XGetGeometry(window->visual->dpy, window->window, &root,
+									 &x, &y, &width, &height, &bw, &d);
+		}
 		*w = (int) width;
 		*h = (int) height;
 	}
