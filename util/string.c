@@ -146,7 +146,7 @@ char *crStrstr( const char *str, const char *pat )
 	int pat_len = crStrlen( pat );
 	const char *end = str + crStrlen(str) - pat_len;
 	char first_char = *pat;
-	for (; str < end ; str++)
+	for (; str <= end ; str++)
 	{
 		if (*str == first_char && !memcmp( str, pat, pat_len ))
 			return (char *) str;
