@@ -21,9 +21,7 @@ typedef int socklen_t;
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
-#ifndef DARWIN
 #include <netinet/tcp.h>
-#endif
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>

@@ -13,6 +13,12 @@
 
 #define GET_CONTEXTINFO(c)  (ContextInfo *) crHashtableSearch( stub.contextTable, (unsigned long) (c) )
 
+#define MakeCurrent(w,c,t)	\
+		( stubMakeCurrent((w), (c), (t)) ? noErr : kCGLBadContext )
+
+#define MakeCurrent_Force(w, c)	\
+		( stubMakeCurrent(stubGetWindowInfo((WindowRef)(w)), (c), DRAW_HAVE) ? noErr : kCGLBadContext )
+
 
 GLuint FindVisualInfo( CGLPixelFormatObj pix )
 {
@@ -72,9 +78,19 @@ CGLError CGLDestroyContext( CGLContextObj ctx )
 
 CGLError CGLSetCurrentContext( CGLContextObj ctx )
 {
-//	crDebug("CGLSetCurrentContext");
+	ContextInfo *context = GET_CONTEXTINFO(ctx);
+	/* This is to make debugging a little bit easier */
+	static int times = 0;
+	if( times < 10 )
+		crDebug("CGLSetCurrentContext");
+	times++;
+
 	stubInit();
-	return ( stubMakeCurrent(NULL, GET_CONTEXTINFO(ctx), GL_FALSE) ? noErr : kCGLBadContext );
+
+	if( crGetenv("CR_FORCE_CHROMIUM") )
+		return MakeCurrent_Force(0, context);
+
+	return MakeCurrent(NULL, context, DRAW_SET_CURRENT);
 }
 
 
@@ -229,7 +245,7 @@ CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFo
 
 CGLContextObj CGLGetCurrentContext( void )
 {
-	crDebug("CGLGetCurrentContext");
+//	crDebug("CGLGetCurrentContext");
 	return (CGLContextObj) ( stub.currentContext ? stub.currentContext->id : NULL );
 }
 
@@ -294,7 +310,11 @@ CGLError CGLSetFullScreen( CGLContextObj ctx ) {
 
 CGLError CGLClearDrawable( CGLContextObj ctx ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLClearDrawable" );
+//	crDebug( "CGLClearDrawable" );
+
+	if( crGetenv("CR_FORCE_CHROMIUM") )
+		return MakeCurrent(NULL, context, DRAW_HAVE);
+
 	return stub.wsInterface.CGLClearDrawable( context->cglc );
 }
 
@@ -316,10 +336,6 @@ CGLError CGLDisable( CGLContextObj ctx, CGLContextEnable pname ) {
 CGLError CGLIsEnabled( CGLContextObj ctx, CGLContextEnable pname, long *enable ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
 	crDebug( "CGLIsEnabled" );
-
-	if( !context )
-		return kCGLBadContext;
-
 	return stub.wsInterface.CGLIsEnabled( context->cglc, pname, enable );
 }
 
@@ -354,7 +370,7 @@ CGLError CGLSetParameter( CGLContextObj ctx, CGLContextParameter pname, const lo
 			ci->client_storage = (unsigned long) *params;
 		}
 	} else {
-		crDebug( "CGLSetParameter (Native) %i %i %i", pname, ctx, params[0] );
+		crDebug( "CGLSetParameter (Native) %i %i %i", ctx, pname, params[0] );
 		retval = stub.wsInterface.CGLSetParameter( ci->cglc, pname, params );
 	}
 
@@ -384,7 +400,7 @@ CGLError CGLGetVirtualScreen(CGLContextObj ctx, long *screen) {
 
 
 CGLError CGLSetOption(CGLGlobalOption pname, long param) {
-	crDebug( "CGLSetOption" );
+	crDebug( "CGLSetOption( %i, %i )", pname, param );
 	if( !stub.wsInterface.CGLSetOption )
 		stubInit();
 	return stub.wsInterface.CGLSetOption( pname, param );
@@ -419,12 +435,19 @@ GLboolean gluCheckExtension( const GLubyte *extName, const GLubyte *extString ) 
 /*
  * I don't know if the parameters for these last functions are right at all
  */
-CGLError CGLSetSurface( CGLContextObj ctx, unsigned long b, unsigned long c, unsigned long d ) {
+CGLError CGLSetSurface( CGLContextObj ctx, unsigned long a, unsigned long b, unsigned long c ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLSetSurface: %i %i %i %i", ctx, b, c, d );
-	if( context->type == UNDECIDED )
-		crDebug("it doesnt know what it wants to be!");
-	return stub.wsInterface.CGLSetSurface( context->cglc, b, c, d );
+	crDebug( "CGLSetSurface: %i %i %i %i", ctx, a, b, c );
+//	if( context->type == UNDECIDED )
+//		crDebug("it doesnt know what it wants to be!");
+	context->surf_a = a;
+	context->surf_b = b;
+	context->surf_c = c;
+
+	if( crGetenv("CR_FORCE_CHROMIUM") )
+		return MakeCurrent_Force(0, context);
+
+	return stub.wsInterface.CGLSetSurface(context->cglc, a, b, c);
 }
 
 
@@ -437,6 +460,9 @@ CGLError CGLGetSurface( CGLContextObj ctx, unsigned long b, unsigned long c, uns
 CGLError CGLUpdateContext( CGLContextObj ctx ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
 	crDebug( "CGLUpdateContext" );
+	if( crGetenv("CR_FORCE_CHROMIUM") )
+		return noErr;
+
 	return stub.wsInterface.CGLUpdateContext( context->cglc );
 }
 

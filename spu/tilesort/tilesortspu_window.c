@@ -126,10 +126,7 @@ chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
   }
 }
 
-#endif /* not WINDOWS */
 
-
-#ifdef USE_DMX
 /**
  * DMX only: for the given WindowInfo, query DMX to get the X window
  * IDs for the corresponding back-end windows.  Create back-end sub
@@ -354,7 +351,7 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 		return;
 	}
 
-#if 1
+#if 0
 	GetWindowBounds( winInfo->window, kWindowContentRgn, &rect );
 #else
 	GetPort( &save );

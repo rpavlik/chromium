@@ -2,8 +2,6 @@ Finish up tilesort glReadPixels pixelstore parameters.
 
 Grep the code for 'XXX' for miscellaneous loose ends.
 
-Convert the last Perl script in scripts/fastdep.pl to Python.
-
 In state_polygon_gen.c in crStatePolygonSwitch() we need a better test
 for updating the polygon stipple.  As-is we're calling diff.PolygonStipple
 all the time.

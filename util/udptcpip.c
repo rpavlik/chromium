@@ -620,9 +620,6 @@ static int crUDPTCPIPDoConnect( CRConnection *conn )
 #else
 	in_port_t port;
 #endif
-#ifdef DARWIN
-	int err;
-#endif
 #ifdef LINUX
 	int err;
 	int opt = IP_PMTUDISC_DO;

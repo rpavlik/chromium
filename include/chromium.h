@@ -55,8 +55,6 @@
 #include <GL/glx.h>
 #include <GL/glu.h>
 #else
-#include <AGL/agl.h>
-#include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #endif

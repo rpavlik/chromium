@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 	GLboolean useBarriers = GL_FALSE;
 	int i;
 
-#ifndef WINDOWS
+#if !( defined(WINDOWS) || defined(DARWIN) )
 	XInitThreads();
 #endif
 

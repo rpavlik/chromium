@@ -29,6 +29,7 @@
 #include "cr_mem.h"
 #include "cr_mothership.h"
 #include "cr_string.h"
+#include "cr_environment.h"
 #include "stub.h"
 
 
@@ -296,6 +297,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 	if (stub.haveNativeOpenGL)
 		stub.desiredVisual |= FindVisualInfo( hdc );
 #elif defined(DARWIN)
+	dpyName[0] = '\0';
 	if( stub.haveNativeOpenGL )
 		stub.desiredVisual |= FindVisualInfo( pix );
 #else
@@ -408,7 +410,7 @@ InstantiateNativeContext( WindowInfo *window, ContextInfo *context )
 			shareCtx = context->cglc;
 	}
 
-	/* We need to get this to work (?) */
+	/* XXX \todo We need to get this to work (?) */
 
 	stubSetPFA( context, attribs, 16, &ind );
 
@@ -420,7 +422,7 @@ InstantiateNativeContext( WindowInfo *window, ContextInfo *context )
 	stub.wsInterface.CGLDestroyPixelFormat( pix );
 
 	if( context->parambits ) {
-/*		crDebug("setting some delayed parameters"); */
+		/* Set the delayed parameters */
 		if( context->parambits & VISBIT_SWAP_RECT )
 			stub.wsInterface.CGLSetParameter( context->cglc, kCGLCPSwapRectangle, context->swap_rect );
 
@@ -566,14 +568,9 @@ stubGetWindowGeometry( const WindowInfo *window, int *x, int *y, unsigned int *w
 	Rect rect;
 
 #if 1
-	GetWindowBounds( window->drawable, kWindowContentRgn, &rect );
+	GetWindowBounds( window->drawable, kWindowStructureRgn, &rect );
 #else
-	GrafPtr port;
-
-	GetPort( &port );
-	SetPortWindowPort( window->drawable );
 	GetWindowPortBounds( window->drawable, &rect );
-	SetPort( port );
 #endif
 
 	*x = rect.left;
@@ -598,16 +595,21 @@ GetWindowTitle( const WindowInfo *window, char *title )
 static void
 GetCursorPosition( const WindowInfo *window, int pos[2] )
 {
-	GrafPtr save;
+	GrafPtr save, port;
 	Point pt;
-	
+	Rect rect = {0,0,0,0};
+
+	WindowRef win = FrontWindow();
+
 	GetPort( &save );
-	SetPortWindowPort( window->drawable );
+	port = GetWindowPort( win );
+	GetPortBounds( port, &rect );
+	SetPort( port );
 	GetMouse( &pt );	// this gets local
 	SetPort( save );
-	
+
 	pos[0] = pt.h;
-	pos[1] = pt.v;
+	pos[1] = (rect.bottom - rect.top) - pt.v;
 }
 
 #else
@@ -712,6 +714,14 @@ stubCheckUseChromium( WindowInfo *window )
 {
 	int x, y;
 	unsigned int w, h;
+
+#ifdef DARWIN
+	if( !window )
+		return GL_FALSE;
+
+	if( !crGetenv("CR_FORCE_CHROMIUM") )
+		return GL_FALSE;
+#endif
 
 	/* If the provided window is CHROMIUM, we're clearly intended
 	 * to create a CHROMIUM context.
@@ -838,20 +848,18 @@ GLboolean
  * 'have_drawable' is a little work-around for CGLSetCurrentContext,
  *  which doesn't come with a drawable
  */
-stubMakeCurrent( WindowInfo *window, ContextInfo *context, GLboolean have_drawable )
+stubMakeCurrent( WindowInfo *window, ContextInfo *context, GLenum drawable_type )
 #else
 stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 #endif
 {
 	GLboolean retVal;
-	
-//	crDebug("stubMakeCurrent");
 
 	/*
 	 * Get WindowInfo and ContextInfo pointers.
 	 */
 #ifdef DARWIN
-	if( !context || (have_drawable && !window) ) {
+	if( !context || (drawable_type==DRAW_HAVE && !window) ) {
 #else
 	if (!context || !window) {
 #endif
@@ -875,7 +883,7 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 #endif
 
 #ifdef DARWIN
-		if( have_drawable && stubCheckUseChromium(window) ) {
+		if( drawable_type==DRAW_HAVE && stubCheckUseChromium(window) ) {
 #else
 		if(stubCheckUseChromium(window)) {
 #endif
@@ -922,14 +930,14 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		 * Native OpenGL MakeCurrent().
 		 */
 #ifdef WINDOWS
-		retVal = (GLboolean) stub.wsInterface.wglMakeCurrent( window->drawable,
-																										context->hglrc );
+		retVal = (GLboolean) stub.wsInterface.wglMakeCurrent( window->drawable, context->hglrc );
 #elif defined(DARWIN)
-		retVal = (stub.wsInterface.CGLSetCurrentContext(context->cglc) == noErr);
+		if( drawable_type == DRAW_SET_CURRENT )
+			retVal = (stub.wsInterface.CGLSetCurrentContext(context->cglc) == noErr);
+		else
+			retVal = (stub.wsInterface.CGLSetSurface(context->cglc, context->surf_a, context->surf_b, context->surf_c) == noErr);
 #else
-		retVal = (GLboolean) stub.wsInterface.glXMakeCurrent( window->dpy,
-																										window->drawable,
-																										context->glxContext );
+		retVal = (GLboolean) stub.wsInterface.glXMakeCurrent( window->dpy, window->drawable, context->glxContext );
 #endif
 	}
 	else {
@@ -951,20 +959,16 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
 
 			if (window->spuWindow != (GLint)window->drawable)
-				 stub.spu->dispatch_table.MakeCurrent( window->spuWindow,
-																							 (GLint) window->drawable,
-																							 context->spuContext );
+				 stub.spu->dispatch_table.MakeCurrent( window->spuWindow, (GLint) window->drawable, context->spuContext );
 			else
-				 stub.spu->dispatch_table.MakeCurrent( window->spuWindow,
-																							 0, /* native window handle */
-																							 context->spuContext );
+				 stub.spu->dispatch_table.MakeCurrent( window->spuWindow, 0, /* native window handle */ context->spuContext );
 
 			retVal = 1;
 		}
 	}
 
 #ifdef DARWIN
-	if( have_drawable )
+	if( drawable_type == DRAW_HAVE )
 #endif
 	window->type = context->type;
 	context->currentDrawable = window;
@@ -989,7 +993,7 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		}
 	}
 #ifdef DARWIN
-	if( have_drawable )
+	if( drawable_type == DRAW_HAVE )
 #endif
 	if (!window->width && window->type == CHROMIUM) {
 		/* Now call Viewport to setup initial parameters */
@@ -1059,8 +1063,10 @@ stubSwapContextBuffers( const ContextInfo *context, GLint flags )
 	if( context->type == NATIVE ) {
 		stub.wsInterface.CGLFlushDrawable( context->cglc );
 	} else if( context->type == CHROMIUM ) {
-		/* I dont know what to do! */
-		crDebug("stubSwapContextBuffers: Not sure what to do with chromium context buffers.");
+		if( context->currentDrawable )
+			stubSwapBuffers( context->currentDrawable, 0 );
+		else
+			crDebug("stubSwapContextBuffers: Not sure what to do with chromium context buffers.");
 	} else {
 		crDebug("Calling SwapContextBuffers on a window we haven't seen before (no-op).");
 	}

@@ -3,17 +3,21 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+# kept getting included twice
+ifndef DARWIN
+
 DARWIN = 1
+INSTALL_DIR = /cr
 
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++ -fno-common
 CC = gcc -fno-common
 
-CXXFLAGS          += -DDARWIN -DDarwin -Wall -Wno-format
+CXXFLAGS          += -DDARWIN -Wall -Wno-format
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
-CFLAGS            += -DDARWIN -DDarwin -Wall -Wno-format
+CFLAGS            += -DDARWIN -Wall -Wno-format
 C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
@@ -79,3 +83,4 @@ ifeq ($(QT),1)
     UIC=$(QTDIR)/bin/uic
 endif
 
+endif

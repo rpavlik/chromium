@@ -58,7 +58,7 @@ endif
 endif
 
 ifeq ($(ARCH), Darwin)
-LDFLAGS += -framework Carbon -framework CoreFoundation
+LDFLAGS += -framework Carbon
 endif
 
 ifeq ($(ARCH), SunOS)

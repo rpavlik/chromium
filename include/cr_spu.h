@@ -16,6 +16,11 @@
 #include "spu_dispatch_table.h"
 #include "cr_net.h"
 
+#ifdef DARWIN
+#include <OpenGL/OpenGL.h>
+#include <AGL/agl.h>
+#endif
+
 #define SPU_ENTRY_POINT_NAME "SPULoad"
 
 #ifdef __cplusplus
@@ -269,7 +274,7 @@ typedef Bool (*glXResetFrameCountNVFunc_t)(Display *dpy, int screen);
 
 
 /**
- * Package up the WGL/GLX function pointers into a struct.  We use
+ * Package up the WGL/AGL/CGL/GLX function pointers into a struct.  We use
  * this in a few different places.
  */
 typedef struct {

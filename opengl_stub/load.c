@@ -38,7 +38,7 @@
 
 
 /* NOTE: 'SPUDispatchTable glim' is declared in NULLfuncs.py now */
-SPUDispatchTable stubThreadsafeDispatch;
+/* NOTE: 'SPUDispatchTable stubThreadsafeDispatch' is declared in tsfuncs.c */
 Stub stub;
 
 

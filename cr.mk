@@ -10,6 +10,11 @@ include $(TOP)/arch.mk
 # LEAVE THESE THINGS ALONE!
 ###########################
 
+# Darwin's dynamic linker works best with absolute paths
+ifdef INSTALL_DIR
+TOP := $(INSTALL_DIR)
+endif
+
 ifdef PROGRAM
 BUILDDIR := $(TOP)/built/$(PROGRAM)
 else

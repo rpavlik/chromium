@@ -163,7 +163,7 @@ void renderspu_SystemDestroyContext( ContextInfo *context )
  */
 void TransitionToDisplayMode( CGDirectDisplayID _display, CFDictionaryRef _dispMode ) {
 	CGDisplayFadeReservationToken   token;
-	CGDisplayFadeInterval			interval = 2.0f;
+	CGDisplayFadeInterval			interval = 0.0f;
 
 	/* fade out */
 	if( interval > 0.0f ) {

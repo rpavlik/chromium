@@ -78,6 +78,7 @@ struct context_info_t
 	long swap_interval;
 	unsigned long client_storage;
 	long	disp_mask;
+	unsigned long surf_a, surf_b, surf_c;
 #else
 	Display *dpy;
 	ContextInfo *share;
@@ -92,6 +93,11 @@ enum {
 	VISBIT_SWAP_RECT,
 	VISBIT_SWAP_INTERVAL,
 	VISBIT_CLIENT_STORAGE
+};
+enum {
+	DRAW_SET_CURRENT = 0,
+	DRAW_HAVE,
+	DRAW_SET_DRAWABLE
 };
 #endif
 
@@ -197,7 +203,7 @@ extern void stubUseXFont( Display *dpy, Font font, int first, int count, int lis
 extern ContextInfo *stubNewContext( const char *dpyName, GLint visBits, ContextType type );
 extern void stubDestroyContext( unsigned long contextId );
 #ifdef DARWIN
-extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context, GLboolean have_drawable );
+extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context, GLenum drawable_type );
 extern void stubSwapContextBuffers( const ContextInfo *context, GLint flags );
 #else
 extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context );

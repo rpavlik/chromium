@@ -17,8 +17,9 @@
 #ifdef DARWIN
 
 #include <Carbon/Carbon.h>
-#include <CoreFoundation/CoreFoundation.h>
 #include <mach-o/dyld.h>
+
+char *__frameworkErr=NULL;
 
 CFBundleRef LoadFramework( const char *frameworkName ) {
 	CFBundleRef bundle;
@@ -27,6 +28,7 @@ CFBundleRef LoadFramework( const char *frameworkName ) {
 
 	if( frameworkName[0] != '/' ) {
 		/* load a system framework */
+		/* XXX \todo should this folder be retrieved from somewhere else? */
 		crStrcpy( fullfile, "/System/Library/Frameworks/" );
 		crStrcat( fullfile, frameworkName );
 	} else {
@@ -36,7 +38,7 @@ CFBundleRef LoadFramework( const char *frameworkName ) {
 
 	bundleURL = CFURLCreateWithString( NULL, CFStringCreateWithCStringNoCopy(NULL, fullfile, CFStringGetSystemEncoding(), NULL), NULL );
 	if( !bundleURL ) {
-		crDebug("Could not create OpenGL Framework bundle URL");
+		__frameworkErr = "Could not create OpenGL Framework bundle URL";
 		return NULL;
 	}
 
@@ -44,22 +46,26 @@ CFBundleRef LoadFramework( const char *frameworkName ) {
 	CFRelease( bundleURL );
 
 	if( !bundle ) {
-		crDebug("Could not create OpenGL Framework bundle");
+		__frameworkErr = "Could not create OpenGL Framework bundle";
 		return NULL;
 	}
 
 	if( !CFBundleLoadExecutable(bundle) ) {
-		crDebug("Could not load MachO executable");
+		__frameworkErr = "Could not load MachO executable";
 		return NULL;
 	}
 
 	return bundle;
 }
 
+char *__bundleErr=NULL;
+
 void *LoadBundle( const char *filename ) {
 	NSObjectFileImage fileImage;
 	NSModule handle = NULL;
 	char _filename[PATH_MAX];
+
+	__bundleErr = NULL;
 
 	if( filename[0] != '/' ) {
 		/* default to a chromium bundle */
@@ -69,12 +75,40 @@ void *LoadBundle( const char *filename ) {
 		crStrcpy( _filename, filename );
 	}
 
-	if( NSCreateObjectFileImageFromFile(_filename, &fileImage) == NSObjectFileImageSuccess )
-	{
-		handle = NSLinkModule( fileImage, filename,
+	switch( NSCreateObjectFileImageFromFile(_filename, &fileImage) ) {
+	default:
+	case NSObjectFileImageFailure:
+		__bundleErr = "NSObjectFileImageFailure: Failure.";
+		break;
+
+	case NSObjectFileImageInappropriateFile:
+		__bundleErr = "NSObjectFileImageInappropriateFile: The specified file is not of a valid type.";
+		break;
+
+	case NSObjectFileImageArch:
+		__bundleErr = "NSObjectFileImageArch: The specified file is for a different CPU architecture.";
+		break;
+
+	case NSObjectFileImageFormat:
+		__bundleErr = "NSObjectFileImageFormat: The specified file does not appear to be a Mach-O file";
+		break;
+
+	case NSObjectFileImageAccess:
+		__bundleErr = "NSObjectFileImageAccess: Permission to create image denied.";
+		break;
+
+	case NSObjectFileImageSuccess:
+		handle = NSLinkModule( fileImage, _filename,
 							   NSLINKMODULE_OPTION_RETURN_ON_ERROR |
 							   NSLINKMODULE_OPTION_PRIVATE );
 		NSDestroyObjectFileImage( fileImage );
+		if( !handle ) {
+			NSLinkEditErrors c;
+			int n;
+			const char *name;
+			NSLinkEditError(&c, &n, &name, (const char**)&__bundleErr);
+		}
+		break;
 	}
 
 	return handle;
@@ -95,7 +129,7 @@ enum {
 	CR_DLL_UNKNOWN
 };
 
-#define NS_ADD 1
+#define NS_ADD 0
 
 int get_dll_type( const char *name ) {
 	if( check_extension(name, ".framework") )
@@ -133,18 +167,19 @@ CRDLL *crDLLOpen( const char *dllname, int resolveGlobal )
 	dll->hinstLib = LoadLibrary( dllname );
 	dll_err = NULL;
 #elif defined(DARWIN)
-
+	/* XXX \todo Get better error handling in here */
 	dll->type = get_dll_type( dllname );
+	dll_err = NULL;
 
 	switch( dll->type ) {
 	case CR_DLL_FRAMEWORK:
 		dll->hinstLib = LoadFramework( dllname );
-		if( !dll->hinstLib )
-			dll_err = "Error loading the framework";
+		dll_err = __frameworkErr;
 		break;
 
 	case CR_DLL_BUNDLE:
 		dll->hinstLib = LoadBundle( dllname );
+		dll_err = __bundleErr;
 		break;
 
 	case CR_DLL_DYLIB:
@@ -155,6 +190,7 @@ CRDLL *crDLLOpen( const char *dllname, int resolveGlobal )
 			dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL );
 		else
 			dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_LOCAL );
+		dll_err = (char*) dlerror();
 #endif
 		break;
 
@@ -163,15 +199,11 @@ CRDLL *crDLLOpen( const char *dllname, int resolveGlobal )
 		dll_err = "Unknown DLL type";
 		break;
 	};
-#elif defined(DARWIN) || defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
 	if (resolveGlobal)
 		dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL );
 	else
-#ifdef DARWIN
-		dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_LOCAL );
-#else
 		dll->hinstLib = dlopen( dllname, RTLD_LAZY );
-#endif
 	dll_err = (char*) dlerror();
 #else
 #error DSO
@@ -220,7 +252,7 @@ CRDLLFunc crDLLGetNoError( CRDLL *dll, const char *symname )
 
 	return (CRDLLFunc) NSAddressOfSymbol( nssym );
 
-#elif defined(DARWIN) || defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
 	return (CRDLLFunc) dlsym( dll->hinstLib, symname );
 #else
 #error CR DLL ARCHITETECTURE

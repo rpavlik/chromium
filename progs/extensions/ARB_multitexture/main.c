@@ -282,8 +282,13 @@ InitSpecial(void)
 		break;
 	}
 
+#ifdef DARWIN
+	glMultiTexCoord2fARB_func = glMultiTexCoord2fARB;
+	glActiveTextureARB_func = glActiveTextureARB;
+#else
 	glMultiTexCoord2fARB_func = (glMultiTexCoord2fARB_t) GET_PROC("glMultiTexCoord2fARB");
 	glActiveTextureARB_func = (glActiveTextureARB_t) GET_PROC("glActiveTextureARB");
+#endif
 	if (!glMultiTexCoord2fARB_func || !glActiveTextureARB_func)
 	{
 		printf("Error trying to link to extensions!\n");
@@ -304,7 +309,7 @@ InitSpecial(void)
 		FILE *file;
 		GLubyte *textureData;
 
-		textureData = malloc(texmapSize);
+		textureData = malloc(texmapSize*sizeof(GLubyte));
 
 		/* Load grass texture. */
 		{

@@ -39,7 +39,7 @@ void APIENTRY crMakeCurrent( GLint window, GLint context )
 		return;
 	}
 #ifdef DARWIN
-	stubMakeCurrent(winInfo, contextInfo, GL_TRUE);
+	stubMakeCurrent(winInfo, contextInfo, DRAW_HAVE);
 #else
 	stubMakeCurrent(winInfo, contextInfo);
 #endif
