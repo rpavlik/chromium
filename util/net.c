@@ -54,6 +54,9 @@ static struct {
 
 NETWORK_TYPE( TCPIP );
 NETWORK_TYPE( Devnull );
+#ifdef GM_SUPPORT
+NETWORK_TYPE( Gm );
+#endif
 
 // Clients call this function to connect to a server.  The "server" argument is 
 // expected to be a URL type specifier "protocol://servername:port", where the port
@@ -104,17 +107,10 @@ CRConnection *crNetConnectToServer( char *server,
 		crDevnullConnection( conn );
 	}
 #ifdef GM_SUPPORT
-	// XXX UNIMPLEMENTED!!!
 	else if ( !strcmp( protocol, "gm" ) )
 	{
-		/* just note that we are trying to setup GM, we'll have to
-			 finish this later... */
-		conn->type = WIREGL_GM;
-		request->please_use_gm = 1;
-
-		wireGLGmInit( wiregl_net.recv, wiregl_net.close );
-		request->gm_node_id = wireGLGmNodeId( );
-		request->gm_port_num = wireGLGmPortNum( );
+		crGmInit( cr_net.recv, cr_net.close );
+		crGmConnection( conn );
 	}
 #endif
 	else if ( !strcmp( protocol, "tcpip" ) )
@@ -162,17 +158,10 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port )
 		crDevnullConnection( conn );
 	}
 #ifdef GM_SUPPORT
-	// XXX UNIMPLEMENTED!!!
 	else if ( !strcmp( protocol, "gm" ) )
 	{
-		/* just note that we are trying to setup GM, we'll have to
-			 finish this later... */
-		conn->type = WIREGL_GM;
-		request->please_use_gm = 1;
-
-		wireGLGmInit( wiregl_net.recv, wiregl_net.close );
-		request->gm_node_id = wireGLGmNodeId( );
-		request->gm_port_num = wireGLGmPortNum( );
+		crGmInit( cr_net.recv, cr_net.close );
+		crGmConnection( conn );
 	}
 #endif
 	else if ( !strcmp( protocol, "tcpip" ) )
@@ -367,240 +356,6 @@ int crNetRecv( void )
 
 	return found_work;
 }
-
-#if 0
-
-#if defined( WINDOWS ) || defined( IRIX ) || defined( IRIX64 )
-typedef int socklen_t;
-#endif
-
-UTIL_DECL void
-wireGLNetAcceptClient( void )
-{
-    WireGLConnection         *conn;
-	WireGLConnectionRequest  *request;
-    WireGLConnectionResponse  response;
-	struct sockaddr           addr;
-	socklen_t                 addr_length;
-	struct hostent           *host;
-	struct in_addr            sin_addr;
-
-	int i;
-
-	conn = (WireGLConnection *) wireGLAlloc( sizeof( *conn ) );
-
-    addr_length = sizeof(addr);
-    conn->tcp_socket = accept( wiregl_net.server.sock,
-                               (struct sockaddr *) &addr,
-                               &addr_length );
-    if ( conn->tcp_socket == -1 )
-    {
-		int err = wireGLTcpipErrno( );
-        wireGLSimpleError( "accept() failed: %s",
-						   wireGLTcpipErrorString( err ) );
-    }
-
-	sin_addr = ((struct sockaddr_in *) &addr)->sin_addr;
-	host = gethostbyaddr( (char *) &sin_addr, sizeof(sin_addr), AF_INET );
-	if ( host == NULL )
-	{
-		char *temp = inet_ntoa( sin_addr );
-		conn->hostname = (char *) wireGLAlloc( strlen(temp) + 1 );
-		strcpy( conn->hostname, temp );
-	}
-	else
-	{
-		char *temp;
-
-		conn->hostname = (char *) wireGLAlloc( strlen( host->h_name ) + 1 );
-		strcpy( conn->hostname, host->h_name );
-
-		/* remove the trailing part of the hostname */
-		temp = conn->hostname;
-		while ( *temp && *temp != '.' )
-			temp++;
-		*temp = '\0';
-	}
-
-	wireGLWarning( WIREGL_WARN_DEBUG, "Accepting connection from \"%s\"",
-				   conn->hostname );
-
-    conn->type         = WIREGL_TCPIP;
-	conn->sender_id    = 0;
-	conn->pending_writebacks = 0;
-	conn->total_bytes  = 0;
-	conn->send_credits = 0;
-	conn->recv_credits = WIREGL_INITIAL_RECV_CREDITS;
-					   
-	conn->Alloc        = NULL;
-	conn->Send         = NULL;
-	conn->Free         = NULL;
-					   
-	conn->gm_node_id   = 0; /* GM_NO_SUCH_NODE_ID */
-
-	request = (WireGLConnectionRequest*) wireGLAlloc( sizeof(*request) );
-	for ( i = 0; ; i++ ) 
-	{
-		wireGLTcpipReadExact( conn->tcp_socket, request+i, sizeof(*request) );
-		if ( !request[i].peer[0] ) break;
-		wireGLRealloc ((void **) &request, sizeof(*request) * ( i + 2 ) );
-	}
-
-    if ( request->magic != WIREGL_CONNECTION_MAGIC )
-    {
-        wireGLSimpleError( "wireGLAcceptClient: connection "
-                           "magic=0x%x, expected 0x%x\n",
-                           request->magic, WIREGL_CONNECTION_MAGIC );
-    }
-
-	if ( request->size != sizeof(*request) )
-	{
-		wireGLSimpleError( "wireGLAcceptClient: client claims "
-						   "request is %u bytes, I expect %u bytes\n",
-						   request->size, sizeof(*request) );
-	}
-
-    if ( __wiregl_max_send == 0 )
-    {
-        __wiregl_max_send = request->max_send;
-        wireGLWarning( WIREGL_WARN_NOTICE, "pipeserver: setting max_send=%d",
-                       __wiregl_max_send );
-    }
-    else
-    {
-        if ( request->max_send > __wiregl_max_send )
-        {
-            wireGLSimpleError( "wireGLAcceptClient: client specified "
-                               "max_send=%d, but server already "
-                               "using %d\n", request->max_send,
-                               __wiregl_max_send );
-        }
-    }
-
-    if ( request->please_use_gm )
-    {
-#ifdef GM_SUPPORT
-        conn->type        = WIREGL_GM;
-		conn->gm_node_id  = request->gm_node_id;
-		conn->gm_port_num = request->gm_port_num;
-#else
-        wireGLSimpleError( "client has requested GM, but we don't "
-						   "support it." );
-#endif
-    }
-
-    conn->sender_id = wiregl_net.num_clients++;
-
-	wiregl_net.server.connect( conn, request );
-
-	wireGLFree( request );
-
-    response.magic       = WIREGL_CONNECTION_MAGIC;
-	response.size        = sizeof(response);
-    response.max_send    = __wiregl_max_send;
-    response.client_id   = conn->sender_id;
-    response.gm_node_id  = 0; /* GM_NO_SUCH_NODE_ID */
-	response.gm_port_num = 0;
-#ifdef GM_SUPPORT
-    if ( conn->type == WIREGL_GM )
-    {
-		wireGLGmInit( wiregl_net.recv, wiregl_net.close );
-		response.gm_node_id  = wireGLGmNodeId( );
-		response.gm_port_num = wireGLGmPortNum( );
-    }
-#endif
-
-	wireGLTcpipWriteExact( conn->tcp_socket, &response, sizeof(response) );
-
-    switch( conn->type )
-    {
-#ifdef GM_SUPPORT
-	  case WIREGL_GM:
-		wireGLTcpipConnection( conn );
-		wireGLGmConnection( conn );
-		wiregl_net.use_gm++;
-		break;
-#endif
-	  case WIREGL_TCPIP:
-		wireGLTcpipConnection( conn );
-		break;
-
-	  default:
-		wireGLSimpleError( "wireGLFinishAcceptClient: "
-						   "unknown conn->type=%u", conn->type );
-		break;
-    }
-}
-
-UTIL_DECL void
-wireGLBecomeServer( unsigned short port, WireGLNetConnectFunc connectFunc )
-{
-	int i;
-
-	wireGLAssert( wiregl_net.initialized );
-	wireGLAssert( connectFunc != NULL );
-	wireGLTcpipInit( wiregl_net.recv, wiregl_net.close );
-
-	wiregl_net.server.sock = socket( AF_INET, SOCK_STREAM, 0 );
-    if ( wiregl_net.server.sock == -1 )
-    {
-		int err = wireGLTcpipErrno( );
-		wireGLSimpleError( "Couldn't create socket: %s", 
-						   wireGLTcpipErrorString( err ) );
-    }
-
-	wireGLFrobSocket( wiregl_net.server.sock );
-
-	for ( i = 0; i < WIREGL_BIND_TRIES; i++ )
-	{
-		int err;
-		struct sockaddr_in addr;
-
-		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = INADDR_ANY;
-		addr.sin_port = htons( port );
-		if ( !bind( wiregl_net.server.sock, (struct sockaddr *) &addr,
-					sizeof(addr) ) )
-			break;
-
-		err = wireGLTcpipErrno( );
-		if ( err == EADDRINUSE )
-		{
-			wireGLWarning( WIREGL_WARN_DEBUG, "Couldn't bind to socket "
-						   "(port=%d): %s", port,
-						   wireGLTcpipErrorString( err ) );
-			port += 100;
-		}
-		else
-		{
-			wireGLSimpleError( "Couldn't bind to socket (port=%d): %s",
-							   port, wireGLTcpipErrorString( err ) );
-		}
-	}
-
-	if ( i == WIREGL_BIND_TRIES )
-	{
-		wireGLSimpleError( "Couldn't find a port to listen on." );
-	}
-
-	if ( i > 0 )
-	{
-		wireGLWarning( WIREGL_WARN_DEBUG, "Bound to alternate port %u",
-					   port );
-	}
-
-    if ( listen( wiregl_net.server.sock, 100 /* max pending connections */ ) )
-	{
-		int err = wireGLTcpipErrno( );
-        wireGLSimpleError( "Couldn't listen on socket: %s",
-						   wireGLTcpipErrorString( err ) );
-	}
-
-	wiregl_net.server.connect = connectFunc;
-
-	wireGLTcpipBecomeServer( wiregl_net.server.sock, wireGLNetAcceptClient );
-}
-#endif
 
 int crGetPID( void )
 {

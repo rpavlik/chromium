@@ -24,6 +24,8 @@ crStrcpy
 crStrncpy
 crStrcat
 crStrToInt
+crBytesToString
+crWordsToString
 crGetHostname
 crGetPID
 crNetSetMTU
