@@ -27,6 +27,7 @@ __setDefaults(void)
 	cr_server.useL2 = 0;
 	cr_server.maxBarrierCount = 0;
 	cr_server.only_swap_once = 0;
+	cr_server.debug_barriers = 0;
 	cr_server.SpuContext = 0;
 }
 
