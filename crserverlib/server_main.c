@@ -14,6 +14,11 @@
 #include "cr_hash.h"
 #include <signal.h>
 #include <stdlib.h>
+#define DEBUG_FP_EXCEPTIONS 0
+#if DEBUG_FP_EXCEPTIONS
+#include <fpu_control.h>
+#include <math.h>
+#endif
 
 CRServer cr_server;
 
@@ -134,6 +139,16 @@ int CRServerMain( int argc, char *argv[] )
 	signal( SIGINT, crServerCleanup );
 #ifndef WINDOWS
 	signal( SIGPIPE, SIG_IGN );
+#endif
+
+#if DEBUG_FP_EXCEPTIONS
+	{
+		fpu_control_t mask;
+		_FPU_GETCW(mask);
+		mask &= ~(_FPU_MASK_IM | _FPU_MASK_DM | _FPU_MASK_ZM
+							| _FPU_MASK_OM | _FPU_MASK_UM);
+		_FPU_SETCW(mask);
+	}
 #endif
 
 	cr_server.firstCallCreateContext = GL_TRUE;
