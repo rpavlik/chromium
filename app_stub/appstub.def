@@ -5,13 +5,10 @@
 DESCRIPTION ""
 EXPORTS
 glBarrierCreateCR
-glBarrierDestroyCR
 glBarrierExecCR
 glSemaphoreCreateCR
-glSemaphoreDestroyCR
 glSemaphoreVCR
 glSemaphorePCR
 crCreateContext
-crDestroyContext
 crMakeCurrent
 crSwapBuffers
