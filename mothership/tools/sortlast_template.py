@@ -82,9 +82,8 @@ for (name, value) in RENDER_OPTIONS:
 serverNode.AddSPU( renderSPU )
 
 if AUTO_START:
-	# XXX this probably doesn't work yet!
-	node.AutoStart( ["/usr/bin/rsh", host,
-							"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
+	serverNode.AutoStart( ["/usr/bin/rsh", COMPOSITE_HOST,
+							"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (COMPOSITE_HOST, crlibdir) ] )
 
 cr.AddNode( serverNode )
 
@@ -108,9 +107,8 @@ for i in range(NUM_APP_NODES):
 
 	if AUTO_START:
 		# XXX this probably doesn't work yet!
-		node.AutoStart( ["/bin/sh", "-c",
-				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
-
+		node.AutoStart( ["/usr/bin/rsh", APP_HOSTS[i],
+				"/bin/sh -c 'CRMOTHERSHIP=%s LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker'" % (COMPOSITE_HOST, crlibdir)] )
 
 	readbackSPU = SPU( 'readback' )
 	for (name, value) in READBACK_OPTIONS:
