@@ -80,6 +80,12 @@ Then, rebuild Chromium by doing <code>make clean</code>
 followed by <code>make</code>.
 </p>
 
+<p>
+If compilation fails, be sure the dmxext.h header is in the right place
+(see above).
+</p>
+
+
 <h2 class="PageSubHeading">Running Manually</h2>
 
 <p>
@@ -113,6 +119,11 @@ On the DMX front-end system:
 <p>
 At this point, your OpenGL application should be running on DMX.
 </p>
+<p>
+If everything's working correctly you should see "GL_CR_dmx" in the list
+of OpenGL extensions listed by the <code>glxinfo</code> program.
+</p>
+
 
 
 <h2 class="PageSubHeading">Running with Auto-start</h2>
@@ -172,20 +183,96 @@ The auto-start feature lets you do just that.
     SPU chain (tilesort).  Then, control returns to the application.
 </ol>
 
-<h3>Disclaimer</h3>
+
+<h3>Troubleshooting autodmx.conf Problems</h3>
 
 <p>
-The auto-start code is a bit rough and may not work reliably at this time.
+First, review the prerequisites above to be sure your
+<code>~/.crsite</code> and <code>~/.crconfigs</code> files are setup
+correctly.
+Then verify that libGL.so and libGL.so.1 resolve to libcrfaker.so by
+running <code>ldd</code> on your application.
+Make sure your DISPLAY environment variable is set to the DMX display.
+</p>
+
+<p>
+To make sure the back-end servers are properly configured:
+</p>
+<ul>
+<li>Make sure the options in dmx.conf are set correctly then start the
+   mothership with that configuration:
+   <pre>
+     python dmx.conf</code>
+   </pre>
+  You should see something like this:
+   <pre>
+     This is Chromium, Version 1.5
+     Start a crserver on cr1
+     Start a crserver on cr2
+     Start a crappfaker on foobar
+   </pre>
+<li>Manually start each of the crservers using rsh, for example:
+   <pre>
+     rsh cr1 crserver
+   </pre>
+   If rsh complians about authorization or prompts for a password, edit
+   the .rhosts file on the servers.
+   <br>
+   <br>
+   If you see "crserver: Command not found." it means that the crserver
+   program is not in your search path.
+   Edit the servers' .cshrc or .bashrc files and add
+   /usr/local/cr/bin/Linux (or thereabouts) to your path variable.
+   <br>
+   <br>
+   If you see "Couldn't connect to the mothership" it means the CRMOTHERSHIP
+   environment variable isn't getting set.  Set it in the servers' .cshrc or
+   .bashrc files to 'foobar'.
+   <br>
+   <br>
+   If you get "crserver: error while loading shared libraries:
+   libspuload.so: cannot open shared object file: No such file
+   or directory" it means your LD_LIBRARY_PATH environment variable isn't
+   set correctly.  Again, edit the servers' .cshrc or .bashrc files.
+   <br>
+   <br>
+   Otherwise, the crserver should be running at that point.
+   Start the remaining crservers.
+   <br>
+   <br>
+
+<li>Now you should be able to start the application and see it running on
+   the DMX display.
+</ul>
+
+<p>
+Now, exit your application and return to autodmx.conf.
+Simply running an OpenGL app should cause it to run on DMX.
+If not, reread this section again or ask for help on the Chromium
+mailing list.
+</p>
+
+
+<h3>NVIDIA Performance Tip</h3>
+<p>
+If you're using NVIDIA's OpenGL drivers and are experiencing poor performance
+on the DMX display it may be because you're using too much VRAM and falling
+back to software rendering.
+This inadvertantly happens because the render SPU may be creating GLX windows
+that are never used.
+A simple solution to this problem is to set the render SPU's default window
+size very small, say 2x2 pixels.
+See the <code>dmx.conf</code> file for details.
 </p>
 
 
 
-
-<h2 class="PageSubHeading">Configuration Details</h2>
+<h2 class="PageSubHeading">Configuration File Details</h2>
 
 <p>
-The dmx.conf file is an example configuration for using Chromium with DMX.
-If you decide to change it or make your own configuration file
+The dmx.conf and autodmx.conf files are example configurations for
+using Chromium with DMX.
+If you decide to change them or make your own configuration file
 there are a few critical settings to be aware of.
 </p>
 
@@ -233,33 +320,6 @@ X servers:
      renderspu.Conf('display_string', HOSTS[n] + ":0")
 </pre>
 
-
-<h2 class="PageSubHeading">Troubleshooting</h2>
-
-<p>
-If compilation fails, be sure the dmxext.h header is in the right place
-(see above).
-</p>
-
-<p>
-If everything's working correctly you should see "GL_CR_dmx" in the list
-of OpenGL extensions listed by the <code>glxinfo</code> program.
-</p>
-
-<p>
-If you're using NVIDIA's OpenGL drivers and are experiencing poor performance
-on the DMX display it may be because you're using too much VRAM and falling
-back to software rendering.
-This inadvertantly happens because the render SPU may be creating GLX windows
-that are never used.
-A simple solution to this problem is to set the render SPU's default window
-size very small, say 2x2 pixels.
-See the <code>dmx.conf</code> file for details.
-</p>
-
-<p>
-More to come...
-</p>
 
 
 <h2 class="PageSubHeading">How Chromium Works with DMX</h2>
