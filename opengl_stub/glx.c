@@ -38,6 +38,7 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 		if ( visual[i].class == TrueColor || visual[i].class == DirectColor )
 		{
 			best = &visual[i];
+			break;
 		}
 	}
 
