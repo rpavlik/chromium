@@ -30,7 +30,6 @@ void crStateListsInit(CRContext *ctx)
 {
 	CRListsState *l = &ctx->lists;
 
-	l->newEnd = GL_FALSE;
 	l->mode = 0;
 	l->idPool = crAllocIdPool();
 	l->hash = crAllocHashtable();
@@ -48,8 +47,15 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 		return;
 	}
 
-	if (l->newEnd)
+	if (list == 0)
 	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glNewList(list=0)");
+		return;
+	}
+
+	if (l->currentIndex)
+	{
+		/* already building a list */
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glNewList called inside display list");
 		return;
 	}
@@ -65,7 +71,6 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 	crIdPoolAllocId(l->idPool, list);
 
 	l->currentIndex = list;
-	l->newEnd = GL_TRUE;
 	l->mode = mode;
 	effect = crCalloc(sizeof(CRListEffect));
 	crHashtableAdd(l->hash, list, effect);
@@ -82,14 +87,13 @@ void STATE_APIENTRY crStateEndList (void)
 		return;
 	}
 
-	if (!l->newEnd)
+	if (!l->currentIndex)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glEndList called outside display list");
 		return;
 	}
 
 	l->currentIndex = 0;
-	l->newEnd = GL_FALSE;
 	l->mode = 0;
 }
 

@@ -467,11 +467,10 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 		crStateTransformUpdateTransform(t);
 	}
 
-	/* we might be broadcasting, *or* we might be 
-	 * defining a display list, which goes to everyone 
-	 * (currently) */
-
-	if (tilesort_spu.bucketMode == BROADCAST || g->lists.newEnd)
+	/* we might be broadcasting, *or* we might be defining a display list,
+	 * which goes to everyone (currently).
+	 */
+	if (tilesort_spu.bucketMode == BROADCAST || g->lists.currentIndex)
 	{
 		bucketInfo->screenMin = neg_vect;
 		bucketInfo->screenMax = one_vect;
@@ -487,8 +486,9 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 	ymax = bucketInfo->objectMax.y;
 	zmax = bucketInfo->objectMax.z;
 
-	if (tilesort_spu.providedBBOX != GL_SCREEN_BBOX_CR)
+	if (tilesort_spu.providedBBOX == GL_OBJECT_BBOX_CR)
 	{
+		/* transform bounding box provided in object coords to window coords */
 		crTransformBBox( xmin, ymin, zmin, xmax, ymax, zmax, m,
 		                 &xmin, &ymin, &zmin, &xmax, &ymax, &zmax );
 	}
