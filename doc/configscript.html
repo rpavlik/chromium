@@ -253,9 +253,9 @@ was run from.</p>
 </table>
 <p>The final 5 lines of the configuration script set everything in motion.&nbsp;
 Line 40 creates a &quot;<code>CR</code>&quot; object, which is the network-aware
-mothership that will respond to queries about the nodes it manages.&nbsp; The
-mothership has a single global parameter, the &quot;<code>MTU</code>&quot;, set
-on line 41.&nbsp; This is the largest buffer size that is allowed to pass
+mothership that will respond to queries about the nodes it manages.&nbsp;
+On line 41 the &quot;<code>MTU</code>&quot; function sets the
+largest buffer size that is allowed to pass
 between a client and a server (in future versions of Chromium, this
 parameter may be specified in a different way).&nbsp; Lines 43 and 44 add the two
 nodes we have created to the mothership.&nbsp; Finally, the &quot;<code>Go</code>&quot;

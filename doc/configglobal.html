@@ -22,7 +22,7 @@ are specified to Chromium as follows:
         cr.Conf( param, values )
 </pre>
 <p>
-where <code>cr</code> is the value returned by <code>CR()</code>.
+where <code>cr</code> is the object returned by <code>CR()</code>.
 </p>
 <p>
 Here are some concrete examples of global configuration options:
@@ -32,6 +32,7 @@ Here are some concrete examples of global configuration options:
         cr.Conf( 'minimum_window_size', [300, 300] )
         cr.Conf( 'match_window_title', 'perfly' )
         cr.Conf( 'show_cursor', 1 )
+        cr.Conf( 'MTU', 10 * 1024 * 1024 )
 </pre>
 
 <table border="1" width="100%">
@@ -39,6 +40,29 @@ Here are some concrete examples of global configuration options:
     <td width="19%">Parameter Name</td>
     <td width="12%">Value Types</td>
     <td width="115%">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">MTU</td>
+    <td width="12%" class="ConfigType">Integer</td>
+    <td width="115%" class="ConfigDesc">
+      This options sets the maximum transmission unit size in bytes.
+      This is the size of network buffer that Chromium allocates for
+      inter-node communication.
+      Setting this options is equivalent to calling <code>cr.MTU(bytes)</code>.
+      The default is one megabyte.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">track_window_size</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+      This option controls whether Chromium monitors the application
+      window for size changes.  When this is enabled and the application
+      window is resized the head SPU's WindowSize() function will be called
+      with the new window dimensions.
+      This is useful for <a href="tilesort.html">dynamic tile sorting</a>.
+      The default is false/0.
+    </td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption">minimum_window_size</td>
