@@ -51,3 +51,4 @@ def AliasMap( func_name ):
 		(aliased_func_name, real_func_name) = aliases[aliased_index]
 		if real_func_name == func_name:
 			return aliased_func_name;
+	return None
