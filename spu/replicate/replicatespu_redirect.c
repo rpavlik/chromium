@@ -141,7 +141,7 @@ static void replicatespuReCreateWindows(unsigned long key, void *data1, void *da
 	if (replicate_spu.swap)
 		window = (GLint) SWAP32(window);
 
-	if (!window)
+	if (window < 0)
 		crError("FAILED REPLICATION WINDOWCREATE\n");
 
 	if (winAtt.map_state == IsUnviewable) 
