@@ -214,8 +214,10 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 #define GL_PERF_DUMP_COUNTERS_CR        0x990F /* unofficial! */
 #define GL_PERF_SET_TOKEN_CR            0x9910 /* unofficial! */
 #define GL_PERF_SET_DUMP_ON_SWAP_CR     0x9911 /* unofficial! */
-#define GL_PERF_START_TIMER_CR          0x9912 /* unofficial! */
-#define GL_PERF_STOP_TIMER_CR           0x9913 /* unofficial! */
+#define GL_PERF_SET_DUMP_ON_FINISH_CR   0x9912 /* unofficial! */
+#define GL_PERF_SET_DUMP_ON_FLUSH_CR    0x9913 /* unofficial! */
+#define GL_PERF_START_TIMER_CR          0x9914 /* unofficial! */
+#define GL_PERF_STOP_TIMER_CR           0x9915 /* unofficial! */
 
 #endif /* GL_CR_performance_info */
 

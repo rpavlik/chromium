@@ -40,6 +40,8 @@ typedef struct {
 	
 	int dump_on_swap_count;
 	int dump_on_clear_count;
+	int dump_on_finish;
+	int dump_on_flush;
 
 	int total_frames;
 	int frame_counter;

@@ -189,9 +189,18 @@ void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
 {
 	char rstr[100];
 
+	/* We need to check the SPU ID, as in GetChromiumParameter(), this
+	 * way we only set the token on the required SPU */
+
 	switch (target) {
 	case GL_PERF_SET_DUMP_ON_SWAP_CR:
 		perf_spu.dump_on_swap_count = value;
+		break;
+	case GL_PERF_SET_DUMP_ON_FINISH_CR:
+		perf_spu.dump_on_finish = value;
+		break;
+	case GL_PERF_SET_DUMP_ON_FLUSH_CR:
+		perf_spu.dump_on_flush = value;
 		break;
 	case GL_PERF_DUMP_COUNTERS_CR:
 		sprintf(rstr, "REQUESTED%s0", perf_spu.separator);
@@ -208,6 +217,9 @@ void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
 
 void PERFSPU_APIENTRY perfspuChromiumParameterfCR(GLenum target, GLfloat value)
 {
+	/* We need to check the SPU ID, as in GetChromiumParameter(), this
+	 * way we only set the token on the required SPU */
+
 	switch (target) {
  	case GL_PERF_START_TIMER_CR:
 		perf_spu.timer_event = value;
@@ -230,6 +242,9 @@ void PERFSPU_APIENTRY perfspuChromiumParameterfCR(GLenum target, GLfloat value)
 
 void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
+	/* We need to check the SPU ID, as in GetChromiumParameter(), this
+	 * way we only set the token on the required SPU */
+
 	switch (target) {
 	case GL_PERF_SET_TOKEN_CR:
 		strncpy(perf_spu.token, (char *)values, strlen((char*)values));
@@ -245,6 +260,14 @@ void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GL
 
 void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
 {
+	/* We use the index value to identify the SPU so that we
+	 * return a pointer to the correct stats */
+
+	if (perf_spu.id != index) {
+		perf_spu.super.GetChromiumParametervCR( target, index, type, count, values);
+		return;
+	}
+
 	switch (target) {
 	case GL_PERF_GET_FRAME_DATA_CR:
 		values = (GLvoid *)&perf_spu.framestats;
@@ -253,12 +276,9 @@ void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index
 		values = (GLvoid *)&perf_spu.timerstats;
 		break;
 	default:
+		perf_spu.super.GetChromiumParametervCR( target, index, type, count, values);
 		break;
 	}
-
- 	/* we always pass this down, as there could be other perfSPU's
-  	 * attached anywhere in the chain */
-	perf_spu.super.GetChromiumParametervCR( target, index, type, count, values);
 }
 
 
@@ -317,6 +337,7 @@ void PERFSPU_APIENTRY perfspuBegin( GLenum mode )
 	/* Make a snapshot of all vertex data, so we can interpret the
 	 * geometric shapes in End() */
 	crMemcpy(&perf_spu.framestats.vertex_snapshot, perf_spu.framestats.cur_vertex, sizeof(PerfVertex));
+
 	if (perf_spu.timer_event)
 		crMemcpy(&perf_spu.timerstats.vertex_snapshot, perf_spu.timerstats.cur_vertex, sizeof(PerfVertex));
 
@@ -616,16 +637,22 @@ void PERFSPU_APIENTRY perfspuClear( GLbitfield mask )
 void PERFSPU_APIENTRY perfspuFinish( )
 {
 	char fstr[100];
-	sprintf(fstr, "FINISH%s0", perf_spu.separator);
-	perfspuDumpCounters(fstr, &perf_spu.old_framestats, &perf_spu.framestats);
+
+	if (perf_spu.dump_on_finish) {
+		sprintf(fstr, "FINISH%s0", perf_spu.separator);
+		perfspuDumpCounters(fstr, &perf_spu.old_framestats, &perf_spu.framestats);
+	}
 	perf_spu.super.Finish( );
 }
 
 void PERFSPU_APIENTRY perfspuFlush( )
 {
 	char fstr[100];
-	sprintf(fstr, "FLUSH%s0", perf_spu.separator);
-	perfspuDumpCounters(fstr, &perf_spu.old_framestats, &perf_spu.framestats);
+
+	if (perf_spu.dump_on_flush) {
+		sprintf(fstr, "FLUSH%s0", perf_spu.separator);
+		perfspuDumpCounters(fstr, &perf_spu.old_framestats, &perf_spu.framestats);
+	}
 	perf_spu.super.Flush( );
 }
 

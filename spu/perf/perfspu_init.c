@@ -93,10 +93,12 @@ int perfSPUCleanup(void)
 	{
 		c = conn[i];
 		if (c) {
-			sprintf(str, "SPUID %d CONNECTION ID %d TOTAL_BYTES RECEIVED %d", perf_spu.id, i, c->total_bytes_recv);
+		    if (c->port != 10000) {
+			sprintf(str, "SPUID %d CONNECTION ID %d PORT %d TOTAL_BYTES RECEIVED %d", perf_spu.id, i, c->port, c->total_bytes_recv);
 			perfspuDump( str );
-			sprintf(str, "SPUID %d CONNECTION ID %d TOTAL_BYTES SENT %d", perf_spu.id, i, c->total_bytes_sent);
+			sprintf(str, "SPUID %d CONNECTION ID %d PORT %d TOTAL_BYTES SENT %d", perf_spu.id, i, c->port, c->total_bytes_sent);
 			perfspuDump( str );
+		    }
 		} else {
 			sprintf(str, "SPUID %d CONNECTION ID %d UNUSED (NULL CRConnection)", perf_spu.id, i);
 			perfspuDump( str );
