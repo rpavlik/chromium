@@ -11,9 +11,6 @@
   This is an example of GL_ARB_multitexture, described
   on page 18 of the NVidia OpenGL Extension Specifications.
 
-  Textures and algorithm ideas, thanks to Tashco Studios:
-	http://www.tashco.com/
-
   Christopher Niederauer, ccn@graphics.stanford.edu, 6/25/2001
 
 */
@@ -154,7 +151,7 @@ void	InitSpecial	( void )
       if(( file = fopen( "brick.raw", "rb" )) == NULL )
 	{
 	  cout << "Error opening file: brick.raw" << endl;
-	  file = NULL;
+	  exit( 0 );
 	}
       else
 	{
@@ -173,7 +170,7 @@ void	InitSpecial	( void )
       if(( file = fopen( "light.raw", "rb" )) == NULL )
 	{
 	  cout << "Error opening file: light.raw" << endl;
-	  file = NULL;
+	  exit( 0 );
 	}
       else
 	{
