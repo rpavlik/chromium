@@ -16,6 +16,7 @@ FILES = packspu \
 	packspu_flush \
 	packspu_init \
 	packspu_net \
+	packspu_swapbuf \
 	packspu_pixel
 
 LIBRARIES = crutil spuload crmothership 

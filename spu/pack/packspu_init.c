@@ -78,6 +78,6 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	*cleanup = packSPUCleanup;
 	*options = packSPUOptions;
 	*flags = (SPU_HAS_PACKER|SPU_IS_TERMINAL|SPU_MAX_SERVERS_ONE);
-	
+
 	return 1;
 }

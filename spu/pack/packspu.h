@@ -30,6 +30,7 @@ struct thread_info_t {
 	CRPackBuffer buffer;
 	ContextInfo *currentContext;
 	CRPackContext *packer;
+	int writeback;
 };
 
 struct context_info_t {
