@@ -52,7 +52,8 @@ class SPUDialog(wxDialog):
 			for opt in optionList.Options():
 				controls = []
 				if opt.Type == "BOOL":
-					labString = opt.Description + " (" + opt.Name + ")"
+					#labString = opt.Description + " (" + opt.Name + ")"
+					labString = opt.Description
 					# XXX support [opt.Count] widgets?
 					assert opt.Count == 1
 					ctrl = wxCheckBox(parent=self, id=100+i, label=labString)

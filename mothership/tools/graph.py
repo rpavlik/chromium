@@ -182,7 +182,7 @@ class GraphFrame(wxFrame):
 		self.nodeMenu.Append(menu_MERGE_NODES,        "Merge")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Node Options...")
-		self.nodeMenu.Append(menu_SERVER_TILES,       "Server Tiles...")
+		self.nodeMenu.Append(menu_SERVER_TILES,       "Server Node Tiles...")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_APP_OPTIONS,        "App Node Options...")
 		self.nodeMenu.AppendSeparator()
