@@ -6,15 +6,15 @@
 TOP = ../..
 
 SHARED = 1
-LIBRARY = templatespu
-FILES = templatespu \
-	templatespu_config \
-	templatespu_init
+LIBRARY = binaryswapspu
+FILES = binaryswapspu \
+	binaryswapspu_config \
+	binaryswapspu_init
 
 LIBRARIES = spuload crutil crmothership
 
 PRECOMP =
 SLOP = $(PRECOMP)
 
-LIB_DEFS += templatespu.def
+LIB_DEFS += binaryswapspu.def
 include ${TOP}/cr.mk
