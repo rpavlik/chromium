@@ -2575,79 +2575,114 @@ static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
 	CRTextureLevel *timg;
 
 	CRASSERT(level >= 0);
+	/* XXX check level */
 
 	(void) texUnit;
 
 	switch (target)
 	{
 		case GL_TEXTURE_1D:
+			if (level >= t->maxLevel)
+				return NULL;
 			tobj = unit->currentTexture1D;
 			timg = tobj->level + level;
 			break;
 
 		case GL_PROXY_TEXTURE_1D:
+			if (level >= t->maxLevel)
+				return NULL;
 			tobj = &(t->proxy1D);
 			timg = tobj->level + level;
 			break;
 
 		case GL_TEXTURE_2D:
+			if (level >= t->maxLevel)
+				return NULL;
 			tobj = unit->currentTexture2D;
 			timg = tobj->level + level;
 			break;
 
 		case GL_PROXY_TEXTURE_2D:
+			if (level >= t->maxLevel)
+				return NULL;
 			tobj = &(t->proxy2D);
 			timg = tobj->level + level;
 			break;
 #ifdef CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_3D:
+			if (level >= t->max3DLevel)
+				return NULL;
 			tobj = unit->currentTexture3D;
 			timg = tobj->level + level;
 			break;
 
 		case GL_PROXY_TEXTURE_3D:
+			if (level >= t->max3DLevel)
+				return NULL;
 			tobj = &(t->proxy3D);
 			timg = tobj->level + level;
 			break;
 #endif
 #ifdef CR_NV_texture_rectangle
 		case GL_TEXTURE_RECTANGLE_NV:
+			if (level >= t->maxRectLevel)
+				return NULL;
 			tobj = unit->currentTextureRect;
+			timg = tobj->level + level;
+			break;
+		case GL_PROXY_TEXTURE_RECTANGLE_NV:
+			if (level >= t->maxRectLevel)
+				return NULL;
+			tobj = &(t->proxyRect);
 			timg = tobj->level + level;
 			break;
 #endif
 #ifdef CR_ARB_texture_cube_map
 		case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+			if (level >= t->maxCubeMapLevel)
+				return NULL;
 			tobj = &(t->proxyCubeMap);
 			timg = tobj->level + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+			if (level >= t->maxCubeMapLevel)
+				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->level + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+			if (level >= t->maxCubeMapLevel)
+				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->negativeXlevel + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+			if (level >= t->maxCubeMapLevel)
+				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->positiveYlevel + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+			if (level >= t->maxCubeMapLevel)
+				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->negativeYlevel + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+			if (level >= t->maxCubeMapLevel)
+				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->positiveZlevel + level;
 			break;
 
 		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+			if (level >= t->maxCubeMapLevel)
+				return NULL;
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->negativeYlevel + level;
 			break;
@@ -2754,8 +2789,8 @@ void STATE_APIENTRY crStateGetTexLevelParameterfv (GLenum target, GLint level,
 	if (!timg)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-			"GetTexLevelParameterfv: invalid target: 0x%x",
-			target);
+			"GetTexLevelParameterfv: invalid target: 0x%x or level %d",
+			target, level);
 		return;
 	}
 
