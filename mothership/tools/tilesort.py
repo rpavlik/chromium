@@ -35,10 +35,9 @@
 
 import string, cPickle, os.path, re
 from wxPython.wx import *
-
 import traceback, types
-
 from spudialog import *
+from crutils import *
 
 
 #----------------------------------------------------------------------------
@@ -115,25 +114,100 @@ GlobalOptions = [
 	("default_app", "string", 1, "", "Default Application Program")
 ]
 
-#----------------------------------------------------------------------------
-def MakeHostname(format, number):
-	# find the hash characters first
-	p = re.search("#+", format)
-	if not p:
-		return format
-	numHashes = p.end() - p.start()
-	numDigits = len(str(number))
-	# start building result string
-	result = format[0:p.start()]
-	# insert padding zeros as needed
-	while numHashes > numDigits:
-		result += "0"
-		numHashes -= 1
-	# append the number
-	result += str(number)
-	# append rest of format string
-	result += format[p.end():]
-	return result
+# This is the guts of the tilesort configuration script.
+# It's simply appended to the file after we write all the configuration options
+ConfigBody = """
+import string
+import sys
+sys.path.append( "../server" )
+sys.path.append( "../tools" )
+from mothership import *
+from crutils import *
+
+# Get program name
+if len(sys.argv) == 1:
+	program = GLOBAL_default_app
+elif len(sys.argv) == 2:
+	program = sys.argv[1]
+else:
+	print "Usage: %s <program>" % sys.argv[0] 
+	sys.exit(-1)
+if program == "":
+	print "No program to run!"
+	sys.exit(-1)
+
+# Determine if tiles are on one server or many
+if string.find(HOSTNAME, "#") == -1:
+	singleServer = 1
+else:
+	singleServer = 0
+
+cr = CR()
+cr.MTU( GLOBAL_MTU )
+
+tilesortspu = SPU('tilesort')
+tilesortspu.Conf('broadcast', TILESORT_broadcast)
+tilesortspu.Conf('optimize_bucket', TILESORT_optimize_bucket)
+tilesortspu.Conf('sync_on_swap', TILESORT_sync_on_swap)
+tilesortspu.Conf('sync_on_finish', TILESORT_sync_on_finish)
+tilesortspu.Conf('draw_bbox', TILESORT_draw_bbox)
+tilesortspu.Conf('bbox_line_width', TILESORT_bbox_line_width)
+#tilesortspu.Conf('fake_window_dims', fixme)
+tilesortspu.Conf('scale_to_mural_size', TILESORT_scale_to_mural_size)
+
+
+clientnode = CRApplicationNode()
+clientnode.AddSPU(tilesortspu)
+
+clientnode.StartDir( crbindir )
+clientnode.SetApplication( os.path.join(crbindir, program) )
+
+for row in range(TILE_ROWS):
+	for col in range(TILE_COLS):
+
+		# layout directions
+		if RIGHT_TO_LEFT:
+			j = TILE_COLS - col - 1
+		else:
+			j = col
+		if BOTTOM_TO_TOP:
+			i = TILE_ROWS - row - 1
+		else:
+			i = row
+
+		# compute index for this tile
+		index = i * TILE_COLS + j
+
+		renderspu = SPU('render')
+		renderspu.Conf('try_direct', RENDER_try_direct)
+		renderspu.Conf('force_direct', RENDER_force_direct)
+		renderspu.Conf('fullscreen', RENDER_fullscreen)
+		renderspu.Conf('title', RENDER_title)
+		renderspu.Conf('system_gl_path', RENDER_system_gl_path)
+
+		if singleServer:
+			renderspu.Conf('window_geometry', 1.1 * col * TILE_WIDTH, 1.1 * row * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
+			node = CRNetworkNode(HOSTNAME)
+		else:
+			renderspu.Conf('window_geometry', 0, 0, TILE_WIDTH, TILE_HEIGHT)
+			host = MakeHostname(HOSTNAME, FIRSTHOST + index)
+			node = CRNetworkNode(host)
+
+		node.AddTile(col * TILE_WIDTH, (TILE_ROWS - row - 1) * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
+
+		node.AddSPU(renderspu)
+		node.Conf('optimize_bucket', SERVER_optimize_bucket)
+
+		cr.AddNode(node)
+		tilesortspu.AddServer(node, protocol='tcpip', port = 7000 + index)
+
+cr.AddNode(clientnode)
+#cr.SetParam('minimum_window_size', fix-me)
+cr.SetParam('match_window_title', GLOBAL_match_window_title)
+#cr.SetParam('show_cursor', GLOBAL_show_cursor)
+cr.Go()
+
+"""
 
 
 #----------------------------------------------------------------------------
@@ -506,16 +580,16 @@ class MainFrame(wxFrame):
 		fileName = os.path.join(os.getcwd(), fileName)
 		os.chdir(curDir)
 
-		title = os.path.basename(fileName)
+		winTitle = WindowTitle + ": " + os.path.basename(fileName)
 
 		if (self.fileName == None) and not self.dirty:
 			# Load contents into current (empty) document.
 			self.fileName = fileName
-			self.SetTitle(WindowTitle + ": " + os.path.basename(fileName))
+			self.SetTitle(winTitle)
 			self.loadConfiguration()
 		else:
 			# Open a new frame for this document.
-			newFrame = MainFrame(None, -1, os.path.basename(fileName),
+			newFrame = MainFrame(None, -1, title=winTitle,
 						fileName=fileName)
 			newFrame.Show(true)
 			_docList.append(newFrame)
@@ -751,6 +825,16 @@ class MainFrame(wxFrame):
 		self.dirty = false
 		self.drawArea.Refresh()
 
+	def writeOptions(self, file, prefix, options, dialog):
+		"""Helper function for writing config file options"""
+		for (name, type, count, default, descrip) in options:
+			if type == "int" or type == "bool":
+				file.write("%s_%s = %d\n" % (prefix, name, int(dialog.GetValue(name))))
+			elif type == "float":
+				file.write("%s_%s = %f\n" % (prefix, name, float(dialog.GetValue(name))))
+			else:
+				file.write("%s_%s = \"%s\"\n" % (prefix, name, dialog.GetValue(name)))
+		# endfor
 
 	def saveConfiguration(self):
 		"""Save the configuration."""
@@ -765,15 +849,12 @@ class MainFrame(wxFrame):
 			f.write("BOTTOM_TO_TOP = %d\n" % self.vLayoutRadio.GetSelection())
 			f.write("HOSTNAME = \"%s\"\n" % self.HostNamePattern)
 			f.write("FIRSTHOST = %d\n" % self.HostNameStartIndex)
-			for (name, type, count, default, descrip) in TilesortOptions:
-				f.write("TILESORT_%s = \"%s\"\n" %(name, self.TilesortDialog.GetValue(name)))
-			for (name, type, count, default, descrip) in RenderOptions:
-				f.write("RENDER_%s = \"%s\"\n" %(name, self.RenderDialog.GetValue(name)))
-			for (name, type, count, default, descrip) in ServerOptions:
-				f.write("SERVER_%s = \"%s\"\n" %(name, self.ServerDialog.GetValue(name)))
-			for (name, type, count, default, descrip) in GlobalOptions:
-				f.write("GLOBAL_%s = \"%s\"\n" %(name, self.GlobalDialog.GetValue(name)))
+			self.writeOptions(f, "TILESORT", TilesortOptions, self.TilesortDialog)
+			self.writeOptions(f, "RENDER", RenderOptions, self.RenderDialog)
+			self.writeOptions(f, "SERVER", ServerOptions, self.ServerDialog)
+			self.writeOptions(f, "GLOBAL", GlobalOptions, self.GlobalDialog)
 			f.write("# end of options\n")
+			f.write(ConfigBody)
 			f.close()
 		self.dirty = false
 
@@ -877,8 +958,9 @@ class TilesortApp(wxApp):
 			for arg in sys.argv[1:]:
 				fileName = os.path.join(os.getcwd(), arg)
 				if os.path.isfile(fileName):
+					winTitle = WindowTitle + ": " + os.path.basename(fileName)
 					frame = MainFrame(None, -1,
-						 os.path.basename(fileName),
+						 title=winTitle,
 						 fileName=fileName)
 					frame.Show(TRUE)
 					_docList.append(frame)
