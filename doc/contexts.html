@@ -1,0 +1,182 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Window and Context Management</h1>
+<p>
+Initially, Chromium did not have any support for multi-window or multi-context
+OpenGL applications.
+Now, Chromium can effectively deal with multi-window and multi-context
+applications, but it's a bit complicated.
+This section describes how things work.
+</p>
+
+<h2 class="PageSubHeading">Definitions</h2>
+
+<p>A <b>context</b> is an OpenGL rendering context; it represents the current
+OpenGL state, including things like polygon mode, blending mode, current
+drawing color, texture settings, transformation matrices, etc.
+</p>
+
+<p>A <b>3D window</b> is considered to be a window in which we render 3D
+graphics with OpenGL.  There may be other (2d) application windows but
+we're not concerned with them.
+</p>
+
+<p>Note: while this section desribes things in terms of the GLX interface,
+everything is equally applicable to the WGL interface.
+</p>
+
+
+<h2 class="PageSubHeading">Basic Operation</h2>
+
+<p>
+When <code>glXMakeCurrent</code> is called we determine if the window
+and/or context identifiers are new.
+If they're new, we must determine if Chromium or the native OpenGL library
+is to be used for rendering.
+The <a href="configapp.html">application node configuration options</a>
+<em>minimum_window_size</em>, <em>maximum_window_size</em>,
+<em>match_window_title</em>, <em>match_window_count</em> and
+<em>ignore_window_list</em> are used to make this determination.
+By default, Chromium is used to handle all contexts and windows.
+</p>
+
+<p>
+At this point, Chromium knows whether context and window handles should
+be processed by Chromium or the native OpenGL library.
+</p>
+
+<p>
+If the native OpenGL library is to be used, we call the native
+<code>glXMakeCurrent</code> function and setup the GL dispatch table to
+point to the native OpenGL functions.
+Thereafter, OpenGL API calls are routed to the native OpenGL library.
+</p>
+
+<p>
+If Chromium is to be used, we first check if the context and/or window
+handles are new.
+If they're new, we call the Chromium <code>crCreateContext</code> and/or
+<code>crWindowCreate</code> functions.
+These functions propogate through the Chromium SPU chains, creating the
+appropriate context and window data structures along the way.
+The GL dispatch table is initialized to point to the functions in the
+first SPU in the SPU chain.
+Thereafter, OpenGL API calls are routed through Chromium's SPUs.
+</p>
+
+<p>
+Once a context is marked as a <em>Chromium</em> context, it can't be used
+to render to a native OpenGL window.
+Similarly, once a window is marked as a <em>Chromium</em> window, it can't
+be renered into by a native OpenGL context.
+Errors will be reported if this is attempted.
+</p>
+
+
+<h2 class="PageSubHeading">Parallel Applications</h2>
+
+<p>
+Parallel applications (like progs/psubmit/psubmit.c) typically don't
+use the GLX or WGL APIs but instead use the direct Chromium
+interface functions:
+
+<pre>
+    GLint crCreateContext(const char *dpyName, GLint visBits);
+
+    void crDestroyContext(GLint context);
+
+    void crMakeCurrent(GLint window, GLint context);
+
+    GLint crGetCurrentContext(void);
+
+    GLint crGetCurrentWindow(void);
+
+    void crSwapBuffers(GLint window, GLint flags);
+
+    GLint crWindowCreate(const char *dpyName, GLint visBits);
+
+    void crWindowDestroy(GLint window);
+
+    void crWindowSize(GLint window, GLint w, GLint h);
+
+    void crWindowPosition(GLint window, GLint x, GLint y);
+</pre>
+
+<p>
+along with the barrier and semapahore extension functions:
+</p>
+
+<pre>
+    void glBarrierCreateCR(GLuint name, GLuint count);
+
+    void glBarrierDestroyCR(GLuint name);
+
+    void glBarrierExecCR(GLuint name);
+
+    void glSemaphoreCreateCR(GLuint name, GLuint count);
+
+    void glSemaphoreDestroyCR(GLuint name);
+
+    void glSemaphorePCR(GLuint name);
+
+    void glSemaphoreVCR(GLuint name);
+</pre>
+
+
+<p>
+A parallel application can use the <code>crCreateContext</code>,
+<code>crWindowCreate</code> and <code>crMakeCurrent</code> functions
+to explicitely manage its window and rendering contexts.
+</p>
+
+<p>
+But if a parallel application only uses one window and rendering context,
+it can rely on the <em>default context</em> and <em>default window</em>.
+</p>
+
+<p>
+Chromium always creates a default window and rendering context.
+They are identified as rendering context 0 and window 0.
+</p>
+
+<p>
+Originally, when Chromium did not support multi-window, multi-context
+applications, it relied on using a single default rendering context and
+window.
+These defaults are still present since they're still useful.
+</p>
+
+<p>
+A specific example is the readback SPU.
+A typical pararallel sort-last configuration will have N application
+nodes, each using a readback SPU.
+Each application instance may issue a <code>crWindowCreate</code> call
+to create a readback SPU window.
+However, the readback SPU <em>does not</em> propogate the
+<code>WindowCreate</code> call to the next SPU (the shared render SPU).
+If we did, we'd wind up with N rendering SPU windows instead of one.
+So, the readback SPU relies on using the render SPU's default window (0).
+That way, all the readback SPUs send their images to the same render
+SPU window (0) on the server/network node.
+</p>
+
+
+
+</body>
+
+</html>
