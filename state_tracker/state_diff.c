@@ -18,7 +18,7 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 
 	if (CHECKDIRTY(sb->transform.dirty, bitID))
 	{
-		crStateTransformDiff (&(sb->transform), bitID,
+		crStateTransformDiff (to->limits.maxTextureUnits, &(sb->transform), bitID,
 							 &(from->transform), &(to->transform));
 	}
 	if (CHECKDIRTY(sb->pixel.dirty, bitID))
@@ -133,7 +133,7 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	}
 	if (CHECKDIRTY(sb->transform.dirty, bitID))
 	{
-		crStateTransformSwitch (&(sb->transform), bitID,
+		crStateTransformSwitch (to->limits.maxTextureUnits, &(sb->transform), bitID,
 							 &(from->transform), &(to->transform));
 	}
 	if (CHECKDIRTY(sb->pixel.dirty, bitID))

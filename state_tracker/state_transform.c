@@ -1089,7 +1089,7 @@ void  STATE_APIENTRY crStateGetClipPlane (GLenum plane, GLdouble *equation)
 	equation[3] = t->clipPlane[i].w;
 }
 
-void crStateTransformSwitch (CRTransformBits *t, GLbitvalue *bitID, 
+void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue *bitID, 
 						 CRTransformState *from, CRTransformState *to) 
 {
 	int i,j;
@@ -1180,7 +1180,7 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue *bitID,
 
 	if (CHECKDIRTY(t->matrix[2], bitID)) 
 	{
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		for (i = 0 ; i < maxTextureUnits ; i++)
 		{
 			if (crMemcmp (from->texture[i]+from->textureDepth[i],
 						to->texture[i]+to->textureDepth[i],
@@ -1226,7 +1226,7 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue *bitID,
 	INVERTDIRTY(t->dirty, nbitID);
 }
 
-void crStateTransformDiff(CRTransformBits *t, GLbitvalue *bitID, 
+void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue *bitID, 
 						 CRTransformState *from, CRTransformState *to) 
 {
 	GLint i,j;
@@ -1316,7 +1316,7 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue *bitID,
 	}
 
 	if (CHECKDIRTY(t->matrix[2], bitID)) {
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < maxTextureUnits ; i++)
 		{
 			if (crMemcmp (from->texture[i]+from->textureDepth[i],
 						to->texture[i]+to->textureDepth[i],
