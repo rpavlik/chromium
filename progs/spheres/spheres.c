@@ -105,6 +105,7 @@ static PFNGLGENBUFFERSARBPROC glGenBuffersARB_ptr;
 static PFNGLBINDBUFFERARBPROC glBindBufferARB_ptr;
 static PFNGLBUFFERDATAARBPROC glBufferDataARB_ptr;
 static PFNGLBUFFERSUBDATAARBPROC glBufferSubDataARB_ptr;
+static PFNGLDRAWRANGEELEMENTSPROC glDrawRangeElements_ptr;
 
 
 #if USE_CHROMIUM
@@ -357,11 +358,11 @@ DrawMesh(const TriangleMesh *mesh, DrawMode drawMode)
 		}
 		glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh->ElementBufferObj);
 		if (mesh->NumIndices <= 65535)
-			glDrawRangeElements(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
-													mesh->NumIndices, GL_UNSIGNED_SHORT, 0);
+			glDrawRangeElements_ptr(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
+															mesh->NumIndices, GL_UNSIGNED_SHORT, 0);
 		else
-			glDrawRangeElements(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
-													mesh->NumIndices, GL_UNSIGNED_INT, 0);
+			glDrawRangeElements_ptr(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
+															mesh->NumIndices, GL_UNSIGNED_INT, 0);
 	}
 	else if (drawMode == DRAW_DISPLAY_LIST) {
 		glCallList(mesh->DisplayList);
@@ -375,8 +376,8 @@ DrawMesh(const TriangleMesh *mesh, DrawMode drawMode)
 		glNormalPointer(GL_BYTE, 0, mesh->Normals);
 		glEnable(GL_VERTEX_ARRAY);
 		glEnable(GL_NORMAL_ARRAY);
-		glDrawRangeElements(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
-												mesh->NumIndices, GL_UNSIGNED_INT, mesh->Indices);
+		glDrawRangeElements_ptr(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
+														mesh->NumIndices, GL_UNSIGNED_INT, mesh->Indices);
 	}
 
 	return mesh->NumTris;
@@ -463,11 +464,19 @@ InitGL(const Options *options)
 	static const GLfloat white[4] = { 1, 1, 1, 1 };
 	static const GLfloat gray[4] = { 0.25, 0.25, 0.25, 1 };
 	static const GLfloat pos[4] = { -1, -1, 10, 0 };
+	const char *extensions;
 
 	glGenBuffersARB_ptr = (PFNGLGENBUFFERSARBPROC) crGetProcAddress("glGenBuffersARB");
 	glBindBufferARB_ptr = (PFNGLBINDBUFFERARBPROC) crGetProcAddress("glBindBufferARB");
 	glBufferDataARB_ptr = (PFNGLBUFFERDATAARBPROC) crGetProcAddress("glBufferDataARB");
 	glBufferSubDataARB_ptr = (PFNGLBUFFERSUBDATAARBPROC) crGetProcAddress("glBufferSubDataARB");
+	glDrawRangeElements_ptr = (PFNGLDRAWRANGEELEMENTSPROC) crGetProcAddress("glDrawRangeElements");
+
+	extensions = glGetString(GL_EXTENSIONS);
+	if (!strstr(extensions, "GL_ARB_vertex_buffer_object")) {
+		printf("Sorry, this program requires GL_ARB_vertex_buffer_object\n");
+		exit(1);
+	}
 
 	glEnable( GL_DEPTH_TEST );
 	glEnable(GL_LIGHTING);
