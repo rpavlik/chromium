@@ -21,7 +21,7 @@ CFLAGS            += -n32 -fullwarn -DIRIX -w2 -woff 1174,3201,1209,1552
 C_RELEASE_FLAGS   += -O2 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
-LDFLAGS           += -n32 -lm
+LDFLAGS           += -n32 -lm -ignore_unresolved
 LD_RELEASE_FLAGS  += 
 LD_DEBUG_FLAGS    +=
 
