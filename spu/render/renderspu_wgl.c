@@ -224,9 +224,6 @@ bSetupPixelFormatNormal( HDC hdc, GLbitfield visAttribs )
 		ppfd->dwFlags |= PFD_DOUBLEBUFFER;
 	if (visAttribs & CR_STEREO_BIT)
 		ppfd->dwFlags |= PFD_STEREO;
-	if (visAttribs & CR_MULTISAMPLE_BIT)
-		ppfd->dwFlags |= PFD_STEREO;
-
 
 	/* 
 	 * We call the wgl functions directly if the SPU was loaded
