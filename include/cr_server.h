@@ -42,8 +42,7 @@ typedef struct {
 	int numExtents;  /* number of tiles */
 	int curExtent;
 	/* coordinates of each tile's rectangle in mural coord space */
-	int x1[CR_MAX_EXTENTS], y1[CR_MAX_EXTENTS];
-	int x2[CR_MAX_EXTENTS], y2[CR_MAX_EXTENTS];
+	GLrecti extents[CR_MAX_EXTENTS];
 	int maxTileHeight; /* the tallest tile's height */
 
 	int useL2;
