@@ -19,13 +19,16 @@ static Display *currentDisplay = NULL;
 static GLXDrawable currentDrawable = 0;
 
 
-/* Define these types here, in case they're not defined in the glx.h or
- * glxext.h headers.  Duplicate, _identical_ typedefs should be OK.
+/*
+ * Set this to 1 if you want to build stub functions for the
+ * GL_SGIX_pbuffer and GLX_SGIX_fbconfig extensions.
+ * We disable this code by default since there are some messy
+ * compilation issues.
  */
-typedef struct __GLXFBConfigRec *GLXFBConfigSGIX;
-typedef XID GLXPbufferSGIX;
+#define GLX_EXTRAS 0
 
 
+#if GLX_EXTRAS
 /*
  * Prototypes, in case they're not in glx.h or glxext.h
  * Unfortunately, there's some inconsistency between the extension
@@ -53,6 +56,8 @@ XVisualInfo *glXGetVisualFromFBConfigSGIX(Display *dpy, GLXFBConfig config);
 GLXContext glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct);
 GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfig config, Pixmap pixmap);
 int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config, int attribute, int *value);
+
+#endif /* GLX_EXTRAS */
 
 
 
@@ -769,6 +774,8 @@ CR_GLXFuncPtr glXGetProcAddress( const GLubyte *name )
 }
 
 
+#if GLX_EXTRAS
+
 GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
 {
 	(void) dpy;
@@ -903,4 +910,7 @@ GLXFBConfigSGIX glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis)
 	crWarning("glXGetFBConfigFromVisualSGIX not implemented by Chromium");
 	return NULL;
 }
+
+
+#endif /* GLX_EXTRAS */
 
