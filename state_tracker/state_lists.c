@@ -273,6 +273,7 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 		GLuint temp = f->max - f->min;
 		if (temp >= (GLuint) (range - 1))
 		{
+			GLuint i;
 			ret = f->min;
 			f->min += range-1;
 			/*
@@ -281,6 +282,14 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 			** so that everything gets cleaned up
 			*/
 			crStateListsBindName(l, f->min);
+			/*
+			** Create empty lists, per the OpenGL spec
+			*/
+			for (i = 0; i < range; i++)
+			{
+				CRListEffect *effect = crCalloc(sizeof(CRListEffect));
+				crHashtableAdd(l->hash, ret + i, effect);
+			}
 			return ret;
 		}
 		f = f->next;
@@ -318,7 +327,6 @@ GLboolean STATE_APIENTRY crStateIsList(GLuint list)
 {
 	CRContext *g = GetCurrentContext();
 	CRListsState *l = &(g->lists);
-	CRListsFreeElem *i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -326,18 +334,11 @@ GLboolean STATE_APIENTRY crStateIsList(GLuint list)
 			"GenLists called in Begin/End");
 		return GL_FALSE;
 	}
-	
-	/* First find which region it fits in */
-	for (i=l->freeList; i && !(i->min <= list && list <= i->max); i=i->next)
-	{
-		/* EMPTY BODY */
-	}
 
-	if (i != NULL) 
-	{
-		return GL_TRUE;
-	}
-	return GL_FALSE;
+	if (crHashtableSearch(l->hash, list))
+		 return GL_TRUE;
+	else
+		 return GL_FALSE;
 }
 	
 void STATE_APIENTRY crStateListBase (GLuint base)
