@@ -269,6 +269,8 @@ typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
 typedef GLXContext (*glXGetCurrentContextFunc_t)( void );
 typedef GLXDrawable (*glXGetCurrentDrawableFunc_t)( void );
 typedef char * (*glXGetClientStringFunc_t)( Display *dpy, int name );
+typedef void (*glXWaitGLFunc_t)(void);
+typedef void (*glXWaitXFunc_t)(void);
 typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
 typedef Bool (*glXJoinSwapGroupNVFunc_t)(Display *dpy, GLXDrawable drawable, GLuint group);
 typedef Bool (*glXBindSwapBarrierNVFunc_t)(Display *dpy, GLuint group, GLuint barrier);
@@ -380,6 +382,8 @@ typedef struct {
 	glXGetCurrentContextFunc_t glXGetCurrentContext;
 	glXGetCurrentDrawableFunc_t glXGetCurrentDrawable;
 	glXGetClientStringFunc_t glXGetClientString;
+	glXWaitGLFunc_t glXWaitGL;
+	glXWaitXFunc_t glXWaitX;
 	/* GLX_NV_swap_group */
 	glXJoinSwapGroupNVFunc_t glXJoinSwapGroupNV;
 	glXBindSwapBarrierNVFunc_t glXBindSwapBarrierNV;
@@ -429,6 +433,16 @@ void crSPUInitDispatchNops(SPUDispatchTable *table);
 int crLoadOpenGL( crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );
 void crUnloadOpenGL( void );
 int crLoadOpenGLExtensions( const crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );
+
+#if defined(GLX)
+XVisualInfo *
+crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
+							 GLboolean directColor, int visBits);
+#else
+int
+crChooseVisual(const crOpenGLInterface *ws, int visBits);
+#endif
+
 
 #ifdef USE_OSMESA
 int crLoadOSMesa( OSMesaContext (**createContext)( GLenum format, OSMesaContext sharelist ), 
