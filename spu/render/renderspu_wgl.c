@@ -153,6 +153,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	window->y = render_spu.defaultY;
 	window->width  = render_spu.defaultWidth;
 	window->height = render_spu.defaultHeight;
+	window->nativeWindow = 0;
 
 	if ( render_spu.use_L2 )
 	{
@@ -360,14 +361,25 @@ void renderspu_SystemDestroyContext( ContextInfo *context )
 	context->hRC = NULL;
 }
 
-void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context )
+void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint nativeWindow, ContextInfo *context )
 {
 	CRASSERT(render_spu.ws.wglMakeCurrent);
 
 	if (context && window) {
 		CRASSERT(context->hRC);
+		if (render_spu.render_to_app_window && nativeWindow)
+		{
+			/* The render_to_app_window option is set and we've got a nativeWindow
+			 * handle, save the handle for later calls to swapbuffers().
+			 */
+			window->nativeWindow = (HDC) nativeWindow;
+			render_spu.ws.wglMakeCurrent( window->nativeWindow, context->hRC );
+		}
+		else
+		{
+			render_spu.ws.wglMakeCurrent( window->visual->device_context, context->hRC );
+		}
 
-		render_spu.ws.wglMakeCurrent( window->visual->device_context, context->hRC );
 	} else if (thread) {
 		render_spu.ws.wglMakeCurrent( 0, 0 );
 	}

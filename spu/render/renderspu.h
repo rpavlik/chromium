@@ -44,6 +44,8 @@ typedef struct {
 #ifndef WINDOWS
 	Window window;
 	Window nativeWindow;  /* for render_to_app_window */
+#else
+	HDC nativeWindow; /* for render_to_app_window */
 #endif
 } WindowInfo;
 
