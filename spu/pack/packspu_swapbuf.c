@@ -42,7 +42,8 @@ void PACKSPU_APIENTRY packspu_SwapBuffers( GLint window, GLint flags )
 	}
 	packspuFlush( (void *) thread );
 
-	if (thread->server.conn->type == CR_FILE) {
+	if (thread->server.conn->type == CR_FILE ||
+			thread->server.conn->type == CR_DROP_PACKETS) {
 		/* no synchronization for file networking */
 		return;
 	}

@@ -77,7 +77,9 @@ ThreadInfo *packspuNewThread( unsigned long id )
 
 GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual )
 {
-	int writeback = pack_spu.thread[0].server.conn->type == CR_DROP_PACKETS ? 0 : 1;
+	int no_server = (pack_spu.thread[0].server.conn->type == CR_DROP_PACKETS ||
+									 pack_spu.thread[0].server.conn->type == CR_FILE) ? 1 : 0;
+	int writeback = 1;
 	GLint serverCtx = (GLint) -1;
 	int slot;
 
@@ -95,7 +97,7 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 
 	/* Flush buffer and get return value */
 	packspuFlush( &(pack_spu.thread[0]) );
-	if (pack_spu.thread[0].server.conn->type == CR_FILE)
+	if (no_server)
 	{
 		/* HUMUNGOUS HACK TO MATCH SERVER NUMBERING
 		 *

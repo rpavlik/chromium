@@ -296,6 +296,7 @@ class SockWrapper:
 	UNKNOWNPARAM = 404
 	UNKNOWNSERVER = 405
 	UNKNOWNPROTOCOL = 406
+	NOAPPLICATION = 407
 
 	def __init__(self, sock):
 		self.sock = sock
@@ -629,6 +630,11 @@ class CR:
 		for node in self.nodes:
 			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
 				if isinstance(node,CRApplicationNode):
+					try:
+						application = node.application
+					except:
+						self.ClientError( sock, SockWrapper.NOAPPLICATION, "Client node has no application!" )
+						return
 					node.spokenfor = 1
 					sock.node = node
 					sock.Success( "%d %s" % (node.id, node.application) )
