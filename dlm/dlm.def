@@ -5,3 +5,18 @@
 	
 DESCRIPTION ""
 EXPORTS
+crDLMNewContext
+crDLMErrorFunction
+crDLMNewDLM
+crDLMSetCurrentState
+crDLMFreeContext
+crdlm_NewList
+crdlm_RestoreDispatch
+crdlm_CallList
+crdlm_EndList
+crdlm_CallLists
+crdlm_ListBase
+crdlm_compile_CallList
+crDLMGetBounds
+crdlm_compile_CallLists
+crdlm_DeleteLists

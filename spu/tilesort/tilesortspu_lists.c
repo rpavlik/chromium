@@ -90,7 +90,7 @@ tilesortspu_EndList(void)
  * tilesortspuLoadStateTable().
  * This function will get called recursively for nested display lists.
  */
-void
+void TILESORTSPU_APIENTRY
 tilesortspuStateCallList(GLuint list)
 {
 	GET_THREAD(thread);
@@ -121,7 +121,7 @@ tilesortspuStateCallList(GLuint list)
 /*
  * As above, but for glCallLists.
  */
-void
+void TILESORTSPU_APIENTRY
 tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
 	GET_THREAD(thread);
@@ -174,12 +174,12 @@ tilesortspu_CallList(GLuint list)
 			if (crDLMGetBounds(tilesort_spu.dlm, list, &bounds) == GL_NO_ERROR
 					&& bounds.xmin != FLT_MAX) {
 				GLfloat bbox[6];
-				bbox[0] = bounds.xmin;
-				bbox[1] = bounds.ymin;
-				bbox[2] = bounds.zmin;
-				bbox[3] = bounds.xmax;
-				bbox[4] = bounds.ymax;
-				bbox[5] = bounds.zmax;
+				bbox[0] = (GLfloat) bounds.xmin;
+				bbox[1] = (GLfloat) bounds.ymin;
+				bbox[2] = (GLfloat) bounds.zmin;
+				bbox[3] = (GLfloat) bounds.xmax;
+				bbox[4] = (GLfloat) bounds.ymax;
+				bbox[5] = (GLfloat) bounds.zmax;
 
 				/*
 				printf("Autobox for list %d:\n", list);

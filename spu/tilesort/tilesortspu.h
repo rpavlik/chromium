@@ -300,8 +300,8 @@ void tilesortspuLoadStateTable(SPUDispatchTable *t);
 void tilesortspuLoadPackTable(SPUDispatchTable *t);
 
 /* tilesortspu_lists.c */
-void tilesortspuStateCallList(GLuint list);
-void tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists);
+void TILESORTSPU_APIENTRY tilesortspuStateCallList(GLuint list);
+void TILESORTSPU_APIENTRY tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists);
 
 /* tilesortspu_pixels.c */
 void TILESORTSPU_APIENTRY

@@ -83,11 +83,9 @@ tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			crWarning("Why is the tilesort SPU getting a message of type 0x%x?",
 								msg->type);
 			*/
-			return 0; /* NOT HANDLED */
+			break;
 	}
-#if !defined(IRIX) && !defined(IRIX64)
-	return 0; /* never get here */
-#endif
+	return 0; /* NOT HANDLED */
 }
 
 void tilesortspuConnectToServers( void )

@@ -171,4 +171,5 @@ crPackFree
 crNetworkPointerWrite
 crPackCanHoldBuffer
 crPackCanHoldOpcode
+crPackErrorFunction
 """

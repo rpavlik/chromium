@@ -57,5 +57,6 @@ crStateRasterPosUpdate
 crStateTextureCheckDirtyImages
 crStateExtensionsInit
 crStateSetExtensionString
+crStateNativePixelPacking
 __currentBits
 """
