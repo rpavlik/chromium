@@ -2668,7 +2668,7 @@ crStateGetTexLevelParameterfv(GLenum target, GLint level,
 	if (level < 0 && level > t->maxLevel)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-			"glGetTexLevelParameterfv: level oob: %d", level);
+			"glGetTexLevelParameterfv: Invalid level: %d", level);
 		return;
 	}
 
@@ -2754,7 +2754,7 @@ crStateGetTexLevelParameteriv(GLenum target, GLint level,
 	if (level < 0 && level > t->maxLevel)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-			"glGetTexLevelParameteriv: level oob: %d", level);
+			"glGetTexLevelParameteriv: Invalid level: %d", level);
 		return;
 	}
 
