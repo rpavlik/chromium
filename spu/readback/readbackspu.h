@@ -56,6 +56,9 @@ typedef struct {
 	int resizable;
 	char *gather_url;
 	int gather_mtu;
+	int readSizeX, readSizeY;
+	int drawOffsetX, drawOffsetY;
+	int drawBboxOutlines;
 	/*@}*/
 
 	CRConnection *gather_conn;

@@ -104,7 +104,12 @@ CheckWindowSize(WindowInfo * window)
 	CRMessage *msg;
 
 	newSize[0] = newSize[1] = 0;
-	if (readback_spu.gather_url || readback_spu.resizable)
+
+	if (readback_spu.readSizeX > 0 && readback_spu.readSizeY > 0) {
+	    newSize[0] = readback_spu.readSizeX;
+	    newSize[1] = readback_spu.readSizeY;
+	}
+	else if (readback_spu.gather_url || readback_spu.resizable)
 	{
 		/* ask downstream SPU (probably render) for its window size */
 		readback_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
@@ -238,9 +243,14 @@ CompositeTile(WindowInfo * window, int w, int h,
 	}
 	else
 	{
+		//readback_spu.super.ReadPixels(readx, ready, w/1.414, h/1.414,
+		//readback_spu.super.ReadPixels(readx, ready, w/2, h/2,
 		readback_spu.super.ReadPixels(readx, ready, w, h,
+		//readback_spu.super.ReadPixels(readx, ready, 2, 2,
 																	window->rgbFormat, GL_UNSIGNED_BYTE,
 																	window->colorBuffer + shift);
+		
+											
 	}
 
 	if (readback_spu.extract_depth)
@@ -317,6 +327,7 @@ CompositeTile(WindowInfo * window, int w, int h,
 		{
 			/* just send color image */
 			readback_spu.child.DrawPixels(w, h,
+			//readback_spu.child.DrawPixels(2, 2,
 																		window->rgbFormat, GL_UNSIGNED_BYTE,
 																		window->colorBuffer + shift);
 		}
@@ -367,14 +378,14 @@ ProcessTiles(WindowInfo * window)
 	}
 	else
 	{
-		/* we're running on the appfaker */
+		/* we're running on the appfaker  */
 		int x1, y1, x2, y2;
 		if (window->bboxUnion.x1 == 0 && window->bboxUnion.x1 == 0) {
 			/* use whole window */
 			x1 = 0;
 			y1 = 0;
 			x2 = window->width;
-			y2 = window->width;
+			y2 = window->height;
 		}
 		else {
 			/* Clamp the screen bbox union to the window dims.
@@ -387,20 +398,27 @@ ProcessTiles(WindowInfo * window)
 			x2 = CLAMP(window->bboxUnion.x2 + border, 0, window->width - 1);
 			y2 = CLAMP(window->bboxUnion.y2 + border, 0, window->height - 1);
 		}
+
 		numExtents = 1;
-		extent0.imagewindow.x1 = x1;
-		extent0.imagewindow.y1 = y1;
-		extent0.imagewindow.x2 = x2;
-		extent0.imagewindow.y2 = y2;
 		extent0.outputwindow.x1 = x1;
 		extent0.outputwindow.y1 = y1;
 		extent0.outputwindow.x2 = x2;
 		extent0.outputwindow.y2 = y2;
+
+		/* In the absence of a mural (say, if we're running on a parallel
+		 * application node instead of on a crserver), we may be configured
+		 * with where to actually draw, instead of always drawing at (0,0).
+		 * If these aren't configured, they'll be set to [0,0] anyway.
+		 */
+		extent0.imagewindow.x1 = x1 + readback_spu.drawOffsetX;
+		extent0.imagewindow.y1 = y1 + readback_spu.drawOffsetY;
+		extent0.imagewindow.x2 = x2 + readback_spu.drawOffsetX;
+		extent0.imagewindow.y2 = y2 + readback_spu.drawOffsetY;
 		extents = &extent0;
 	}
 
 	/* useful debug code - draw bbox outlines */
-	if (0) {
+	if (readback_spu.drawBboxOutlines) {
 		readback_spu.super.PushAttrib(GL_TRANSFORM_BIT);
 		readback_spu.super.MatrixMode(GL_MODELVIEW);
 		readback_spu.super.PushMatrix();

@@ -16,6 +16,12 @@ static void __setDefaults( ReadbackSPU *readback_spu )
 	readback_spu->local_visualization = 0;
 	readback_spu->visualize_depth = 0;
 	readback_spu->resizable = 0;
+	readback_spu->drawBboxOutlines = 0;
+	readback_spu->drawOffsetX = 0;
+	readback_spu->drawOffsetY = 0;
+	readback_spu->readSizeX = 0;
+	readback_spu->readSizeY = 0;
+
 	/* misc */
 	readback_spu->barrierSize = 0;
 }
@@ -53,6 +59,35 @@ static void set_gather_mtu( ReadbackSPU *readback_spu, const char *response )
 	sscanf( response, "%d", &readback_spu->gather_mtu );
 }
 
+static void set_draw_offset( ReadbackSPU *readback_spu, const char *response )
+{
+	int x, y;
+	if (sscanf( response, "[ %d, %d ]", &x, &y) == 2) {
+		readback_spu->drawOffsetX = x;
+		readback_spu->drawOffsetY = y;
+	}
+	else {
+		crWarning("readback SPU: illegal draw offset %s ignored.", response);
+	}
+}
+
+static void set_read_size( ReadbackSPU *readback_spu, const char *response )
+{
+	int x, y;
+	if (sscanf( response, "[ %d, %d ]", &x, &y) == 2) {
+		readback_spu->readSizeX = x;
+		readback_spu->readSizeY = y;
+	}
+	else {
+		crWarning("readback SPU: illegal read size %s ignored.", response);
+	}
+}
+
+static void set_draw_bbox_outlines( ReadbackSPU *readback_spu, const char *response )
+{
+	readback_spu->drawBboxOutlines = crStrToInt( response );
+}
+
 
 /* option, type, nr, default, min, max, title, callback
  */
@@ -77,6 +112,15 @@ SPUOptions readbackSPUOptions[] = {
 
 	{ "gather_mtu", CR_INT, 1, "1048576", "1024", NULL,
 	  "MTU for Gathering", (SPUOptionCB)set_gather_mtu },
+
+	{ "draw_offset", CR_INT, 2, "[0,0]", NULL, NULL,
+	  "DrawPixels offsets", (SPUOptionCB)set_draw_offset },
+
+	{ "read_size", CR_INT, 2, "[0,0]", NULL, NULL,
+	  "ReadPixels size", (SPUOptionCB)set_read_size },
+
+	{ "draw_bbox_outlines", CR_BOOL, 1, "0", NULL, NULL,
+	  "Draw Bounding Box Outlines", (SPUOptionCB)set_draw_bbox_outlines },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
