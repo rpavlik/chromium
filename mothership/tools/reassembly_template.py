@@ -24,6 +24,7 @@ import crtypes, crutils, intdialog, hostdialog, configio
 sys.path.append( "../server" )
 import tilelayout
 import templatebase
+import textdialog
 
 
 class LightningParameters:
@@ -484,6 +485,7 @@ class LightningDialog(wxDialog):
 		id_NumServers  = 5012
 		id_Hostnames   = 5013
 		id_Reassembly  = 5014
+		id_Help        = 5015
 
 		self.HostNamePattern = "host##"
 		self.HostNameStart = 0
@@ -524,7 +526,7 @@ class LightningDialog(wxDialog):
 		toolSizer.Add(self.dynamicRadio, flag=wxEXPAND|wxALL, border=2)
 
 		# Mural width/height (in tiles)
-		box = wxStaticBox(parent=self, id=-1, label="Tiling Size",
+		box = wxStaticBox(parent=self, id=-1, label="Image Tiles",
 						  style=wxDOUBLE_BORDER)
 		muralSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		flexSizer = wxFlexGridSizer(rows=1, cols=4, hgap=4, vgap=4)
@@ -621,16 +623,20 @@ class LightningDialog(wxDialog):
 		EVT_PAINT(self.drawArea, self.__onPaintEvent)
 
 		# Sizer for the OK, Cancel buttons
-		okCancelSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
+		okCancelSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
 		okCancelSizer.Add(self.OkButton, option=0,
 						  flag=wxALIGN_CENTER, border=0)
-		self.CancelButton = wxButton(parent=self, id=id_Cancel,
-									 label="Cancel")
+		self.CancelButton = wxButton(parent=self, id=id_Cancel, label="Cancel")
 		okCancelSizer.Add(self.CancelButton, option=0,
 						  flag=wxALIGN_CENTER, border=0)
+		self.HelpButton = wxButton(parent=self, id=id_Help, label="Help")
+		okCancelSizer.Add(self.HelpButton, option=0,
+						  flag=wxALIGN_CENTER, border=0)
+
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_Cancel, self._onCancel)
+		EVT_BUTTON(self.HelpButton, id_Help, self._onHelp)
 
 		# The toolAndDrawSizer contains the toolpanel and drawing area
 		toolAndDrawSizer = wxBoxSizer(wxHORIZONTAL)
@@ -818,6 +824,17 @@ class LightningDialog(wxDialog):
 		# xxx OK vs cancel updates?
 		self.EndModal(wxID_CANCEL)
 
+	def _onHelp(self, event):
+		"""Called by Help button"""
+		d = textdialog.TextDialog(parent=self, id = -1,
+								  title="Image Reassembly Help")
+		#d.SetPage("Image reassembly help coming soon")
+		d.LoadPage("../../doc/reassembly_template.html")
+		# Hmmm, I want to call d.Show() so this isn't modal/blocking but
+		# that doesn't seem to work.
+		d.ShowModal();
+		d.Destroy()
+
 	def __onPaintEvent(self, event):
 		""" Respond to a request to redraw the contents of our drawing panel.
 		"""
@@ -997,7 +1014,7 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 		hosts = crutils.GetSiteDefault("frontend_hosts")
 		if not hosts:
 			hosts = ["localhost"]
-		reassemblyNode = crtypes.NetworkNode(hosts[0], 1)
+		reassemblyNode = crtypes.NetworkNode([ hosts[0] ], 1)
 		reassemblyNode.SetPosition(420, 80)
 		reassemblyNode.Select()
 		reassemblySPU = crutils.NewSPU('render')
