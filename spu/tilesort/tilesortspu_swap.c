@@ -24,6 +24,19 @@ void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 	/* NOTE: winInfo->server[n].window should be the same for all n! */
 	serverWindow = winInfo->server[0].window;
 
+#if 0
+	/* debug code */
+	{
+		int i;
+		for (i = 1; i < tilesort_spu.num_servers; i++) {
+			 if (winInfo->server[i].window != winInfo->server[0].window) {
+					crDebug("Different window IDs: %d != %d",
+									winInfo->server[i].window, winInfo->server[0].window);
+			 }
+		}
+	}
+#endif
+
 	if (tilesort_spu.swap)
 	{
 		crPackSwapBuffersSWAP( serverWindow, flags );

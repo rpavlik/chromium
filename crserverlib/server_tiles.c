@@ -21,12 +21,13 @@
 static void
 initializeExtents(CRMuralInfo *mural)
 {
+	const int leftMargin = cr_server.useL2 ? 2 : 0;
 	int i;
-	int x, y, w, h, y_max;
+	int x, y, w, h, maxTileHeight;
 
-	x = cr_server.useL2 ? 2 : 0;
+	x = leftMargin;
 	y = 0;
-	y_max = 0;
+	maxTileHeight = 0;
 
 	/* Basically just copy the server's list of tiles to the RunQueue
 	 * and compute some derived tile information.
@@ -79,23 +80,40 @@ initializeExtents(CRMuralInfo *mural)
 			 */
 			if ( x + w > (int) mural->underlyingDisplay[2] )
 			{
-				y += y_max;
-				x = ((cr_server.useL2) ? 2 : 0);
-				y_max = 0;
+				if (x == leftMargin) {
+					crWarning("Ran out of room for tiles in this server's window (%d x %d)!!!",
+										mural->underlyingDisplay[2], mural->underlyingDisplay[3]);
+				}
+				y += maxTileHeight;
+				x = leftMargin;
+				maxTileHeight = 0;
 			}
 
+#if 0
+			/* Allocate space from window in top-to-bottom order.
+			 * This was the original code.
+			 */
 			extent->outputwindow.x1 = x;
 			extent->outputwindow.y1 = ( mural->underlyingDisplay[3] - mural->maxTileHeight - y );
 			extent->outputwindow.x2 = x + w;
 			extent->outputwindow.y2 = ( mural->underlyingDisplay[3] - mural->maxTileHeight - y + h );
+#else
+			/* Allocate space from window in bottom-to-top order.
+			 * This allows multi-level tilesort configurations to work better.
+			 */
+			extent->outputwindow.x1 = x;
+			extent->outputwindow.y1 = y;
+			extent->outputwindow.x2 = x + w;
+			extent->outputwindow.y2 = y + h;
+#endif
 
-			if (extent->outputwindow.y1 < 0)
+			if (extent->outputwindow.y2 > mural->underlyingDisplay[3])
 				crWarning("Ran out of room for tiles in this server's window (%d x %d)!!!", mural->underlyingDisplay[2], mural->underlyingDisplay[3]);
 
-			if ( y_max < h )
-				y_max = h;
+			if (h > maxTileHeight)
+				maxTileHeight = h;
 
-			x += w + ((cr_server.useL2) ? 2 : 0);
+			x += w + leftMargin;
 		} /* useDMX */
 	}
 }
@@ -111,6 +129,7 @@ crServerInitializeTiling(CRMuralInfo *mural)
 	int i;
 
 	/* The imagespace rect is useful in a few places (but redundant) */
+	/* XXX not used anymore??? (grep) */
 	mural->imagespace.x1 = 0;
 	mural->imagespace.y1 = 0;
 	mural->imagespace.x2 = mural->width;

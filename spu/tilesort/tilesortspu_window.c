@@ -561,7 +561,7 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 {
    GET_THREAD(thread);
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
-	static GLint freeWinID = 400;
+	static GLint freeWinID = 1 /*400*/;
 	WindowInfo *winInfo;
 	int i;
 

@@ -262,12 +262,15 @@ void TILESORTSPU_APIENTRY tilesortspu_GetIntegerv( GLenum pname, GLint *params )
 	if (pname == GL_VIEWPORT) {
 		/* undo mural scaling */
 		GET_THREAD(thread);
-		WindowInfo *winInfo = thread->currentContext->currentWindow;
-		CRASSERT(winInfo);
-		params[0] = (GLint) (params[0] / winInfo->widthScale);
-		params[1] = (GLint) (params[1] / winInfo->heightScale);
-		params[2] = (GLint) (params[2] / winInfo->widthScale);
-		params[3] = (GLint) (params[3] / winInfo->heightScale);
+		WindowInfo *winInfo;
+		if (thread->currentContext) {
+			winInfo = thread->currentContext->currentWindow;
+			CRASSERT(winInfo);
+			params[0] = (GLint) (params[0] / winInfo->widthScale);
+			params[1] = (GLint) (params[1] / winInfo->heightScale);
+			params[2] = (GLint) (params[2] / winInfo->widthScale);
+			params[3] = (GLint) (params[3] / winInfo->heightScale);
+		}
 	}
 }
 
