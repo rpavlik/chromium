@@ -255,7 +255,6 @@ static GLboolean getNewTiling(int muralWidth, int muralHeight)
 	tilesort_spu.muralHeight = maxY;
 #endif
 
-	tilesortspuBucketingInit();
 #if 0
 	/* this leads to crashes - investigate */
 	tilesortspuComputeMaxViewport();
@@ -278,31 +277,41 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 	 * Lightning-2) then we'll want to resize all the tiles so that
 	 * the set of tiles matches the app window size.
 	 */
-	/*
-	 * XXX not sure what to do about RANDOM or WARPED_GRID option here.
-	 */
 	if (tilesort_spu.bucketMode == UNIFORM_GRID)
 	{
 		crDebug("Tilesort SPU asked to resize window, "
 						"but bucket_mode is Uniform Grid "
-						"(or optimize_bucketing is enabled.  No resize.");
+						"(or optimize_bucketing is enabled).  No resize.");
 		return;
 	}
-	else if (!getNewTiling(w, h))
+	else if (tilesort_spu.bucketMode == TEST_ALL_TILES ||
+					 tilesort_spu.bucketMode == NON_UNIFORM_GRID)
 	{
 		GLboolean goodGrid;
 
-		defaultNewTiling(w, h);
+		if (!getNewTiling(w, h))
+			defaultNewTiling(w, h);
 
 		/* check if we can use non-uniform grid bucketing */
 		goodGrid = tilesortspuInitGridBucketing();
-		if (goodGrid && (tilesort_spu.bucketMode == NON_UNIFORM_GRID ||
-										 tilesort_spu.bucketMode == TEST_ALL_TILES))
+		if (goodGrid)
 			tilesort_spu.bucketMode = NON_UNIFORM_GRID;
 		else
 			tilesort_spu.bucketMode = TEST_ALL_TILES;
 	}
+	else
+	{
+		CRASSERT(tilesort_spu.bucketMode == BROADCAST ||
+						 tilesort_spu.bucketMode == WARPED_GRID ||
+						 tilesort_spu.bucketMode == RANDOM);
+		/*
+		 * XXX not sure what to do about RANDOM or WARPED_GRID option here.
+		 */
+		if (!getNewTiling(w, h))
+			defaultNewTiling(w, h);
+	}
 
+	/* print new tile information */
 	crDebug("tilesort SPU: Reconfigured tiling:");
 	crDebug("  Mural size: %d x %d",
 					tilesort_spu.muralWidth, tilesort_spu.muralHeight);
