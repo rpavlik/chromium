@@ -685,7 +685,7 @@ class NetworkNode(Node):
 			Option("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], []),
 			Option("only_swap_once", "Only swap once for N clients", "BOOL", 1, [0], [], []),
 			Option("spu_dir", "SPU Directory", "STRING", 1, [""], [], []),
-			Option("debug_barriers", "Debug/log glBarrier/Semaphore calls", "BOOL", 1, [0], [], [])
+			Option("debug_barriers", "Debug/Log Barrier/Semaphore Calls", "BOOL", 1, [0], [], [])
 			] )
 
 	def Clone(self):
