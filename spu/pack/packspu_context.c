@@ -223,6 +223,7 @@ void PACKSPU_APIENTRY packspu_MakeCurrent( GLint window, GLint nativeWindow, GLi
 
 	{
 		GET_THREAD(t);
+		(void) t;
 		CRASSERT(t);
 	}
 }
