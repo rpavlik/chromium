@@ -192,13 +192,13 @@ struct CRConnection {
 	unsigned int ib_node_id;
 	unsigned int ib_port_num;
 
-        /* Quadrics Elan3 (teac) */
-        int teac_id;
-        int teac_rank;
+	/* Quadrics Elan3 (teac) */
+	int teac_id;
+	int teac_rank;
 
-        /* Quadrics Elan3 (tcscomm) */
-        int tcscomm_id;
-        int tcscomm_rank;
+	/* Quadrics Elan3 (tcscomm) */
+	int tcscomm_id;
+	int tcscomm_rank;
 };
 
 CRConnection *crNetConnectToServer( const char *server, unsigned short default_port, int mtu, int broker );
