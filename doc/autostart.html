@@ -76,7 +76,7 @@ You might make, for example, a tilesort configuration.
 Make sure your configuration:
 </p>
 <ul>
-  <li>Sets the <em>Automatically Start Servers</em> option is set (from
+  <li>Sets the <em>Automatically Start Servers</em> option (from
       the Mothership / Options menu).
   <li>Sets the <em>System GL Path</em> option for the render SPUs so that
       the real OpenGL library is found.
@@ -173,7 +173,7 @@ lookup the program name in the .crconfigs file.
 command line arguments).
 <li>The faker will try to spawn (fork/exec) the mothership, specifying the
 configuration and command line arguments.
-<li>The mothership will start and spawn the crserver nodes.  The servers
+<li>The mothership will start and create a thread that will spawn the crserver nodes.  The servers
 will load their SPUs.
 <li>The faker will contact the mothership and load its SPUs.
 <li>Chromium will now be running.

@@ -801,7 +801,8 @@ class Mothership:
 			Option("MTU", "Max Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
 			Option("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], []),
 			Option("auto_start_apps", "Automatically Start Applications", "BOOL", 1, [0], [], []),
-			] )
+			Option("autostart_branches", "Number of Thread Branches", "INT", 1, [0], [0], []),
+			Option("autostart_max_nodes_per_thread", "Max Number of Nodes per Thread", "INT", 1, [1], [1], []) ] )
 
 	def GetOptions(self):
 		"""Get the mothership/global options (an OptionList)"""

@@ -401,6 +401,33 @@ processes for each node (currently limited to sh and rsh on Unix).
 This means you don't have to manually start these processes.
 </p>
 
+<p>
+The <b>Number of Nodes per Thread</b> and 
+<b>Number of Thread Branches</b> options control when
+the mothership will create extra threads when automatically
+spawning crserver and crappfaker processes for each node.
+If the <b>Number of Thread Branches</b> value is zero (the default) 
+or one, all external processes will be sequentially spawned in a single
+thread.  
+</p>
+<p>
+If the <b>Number of Thread Branches</b> value is two or
+more, it specifies how many new subthreads will be created within
+the mothership to help spawn node processes, whenever there are
+more nodes than the number specified in the 
+<b>Max Number of Nodes per Thread</b> option.  If new subthreads
+are created, the node list is evenly partitioned to the new
+subthreads.
+</p>
+<p>
+Note that this process is recursive: if new threads are created,
+but those threads have too many nodes to handle, they will in turn
+create more subthreads to handle the nodes, until each thread is
+handling the number of nodes specified in <b>Max Number of Nodes per Thread</b>
+or fewer.  This can geometrically increase the number of threads
+used in the mothership, but typically only for a very short time
+(i.e. only long enough to create processes).
+</p>
 
 <h2 class="PageSubHeading">Mothership Run / Stop</h2>
 

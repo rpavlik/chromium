@@ -28,7 +28,7 @@ Other internal functions/classes:
     CROutput:       Used to print messages to a logfile.
     Fatal:          Used to print out a debugging messages and exit.
     MakeString:     Converts a Python object to a string.
-    SockWrapper:    Internal convience class for handling sockets
+    SockWrapper:    Internal convenience class for handling sockets
 """
 
 import sys, string, types, traceback, re, threading, os, socket, select, signal
@@ -101,6 +101,37 @@ def SameHost( host1, host2 ):
 			return 1
 		else:
 			return 0;
+
+# This structure will contain a list of all dynamic host indicators
+# found during definition; they will be assigned as servers come in
+# through the AvailableMatchingNode() routine (following).
+dynamicHosts = { }
+
+def AvailableMatchingNode(node, type, hostToMatch):
+	# If this node has already been claimed, or is not a node of
+	# the appropriate type, we don't want it.
+	if node.spokenfor:
+		return 0
+	if not isinstance(node, type):
+		return 0
+	
+	# If the node is specified dynamically, we'll use its
+	# dynamic replacement for its hostname.  Otherwise,
+	# we'll use its hostname as specified.
+	if node.host[0:1] == "#":
+		# A dynamic host.  If we have never assigned a real host
+		# to this dynamic indicator, claim this host.
+		if not dynamicHosts.has_key(node.host):
+			dynamicHosts[node.host] = hostToMatch
+
+		# Now, we must have a real host for this dynamic
+		# indicator.  Pull it out.
+		trueNodeHost = dynamicHosts[node.host]
+	else:
+		# The node is specified by name.  Use the specified name.
+		trueNodeHost = node.host
+
+	return SameHost(string.lower(trueNodeHost), string.lower(hostToMatch))
 
 def __qualifyHostname__( host ):
 	"""__qualifyHostname__(host)
@@ -178,6 +209,12 @@ class SPU:
 		assert self.name == "tilesort"
 		self.layoutFunction = layoutFunc
 
+# This structure will be used just to count how many dynamic host
+# indicators we find while creating our SPU graph.  We'll use
+# it to know when to signal the main application to continue
+# (when all the dynamic hosts have been identified)
+dynamicHostsNeeded = { }
+
 class CRNode:
 	"""Base class that defines a node in the SPU graph
 
@@ -208,6 +245,9 @@ class CRNode:
 		self.host = host
 		if (host == 'localhost'):
 			self.host = socket.getfqdn()
+		elif host[0:1] == "#":
+			# Count how many dynamic nodes have been specified
+			dynamicHostsNeeded[host] = 1
 
 		# unqualify the hostname if it is already that way.
 		# e.g., turn "foo.bar.baz" into "foo"
@@ -494,25 +534,40 @@ class CRSpawner(threading.Thread):
 	Since a new process is created, there is no need for your program
 	to complete before the application finishes.
 	"""
-	def __init__( self, nodes ):
+	def __init__( self, nodes, branches=0, maxnodes=1):
+		self.maxnodes = maxnodes
+		self.branches = branches
 		self.nodes = []
+		self.count = 0
 		for node in nodes:
 			self.nodes.append( node )
+			self.count = self.count + 1
 		threading.Thread.__init__(self)
 	def run( self ):
-		for node in self.nodes:
-			if node.autostart != "":
-				os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
-				CRInfo("Autostart for node %s: %s" % (node.host, str(node.autostart_argv)))
-			else:
-				if isinstance(node, CRNetworkNode):
-					CRInfo("Start a crserver on %s" % node.host)
-				elif isinstance(node, CRUTServerNode):
-					CRInfo("Start a crutserver on %s" % node.host)
-				elif isinstance(node, CRUTProxyNode):
-					CRInfo("Start a crutproxy on %s" % node.host)
+		if self.branches < 2 or self.count <= self.maxnodes:
+			# This thread will sequentially spawn all listed nodes.
+			for node in self.nodes:
+				if node.autostart != "":
+					os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
+					CRInfo("Autostart for node %s: %s" % (node.host, str(node.autostart_argv)))
 				else:
-					CRInfo("Start a crappfaker on %s" % node.host)
+					if isinstance(node, CRNetworkNode):
+						CRInfo("Start a crserver on %s" % node.host)
+					elif isinstance(node, CRUTServerNode):
+						CRInfo("Start a crutserver on %s" % node.host)
+					elif isinstance(node, CRUTProxyNode):
+						CRInfo("Start a crutproxy on %s" % node.host)
+					else:
+						CRInfo("Start a crappfaker on %s" % node.host)
+		else:
+			# We have more nodes than we want to handle in this
+			# thread.  Instead of spawning processes, create new
+			# threads, and have those threads handle pieces of the
+			# nodes.
+			childsize = int((self.count + self.branches - 1)/self.branches)
+			for i in range(0, self.count, childsize):
+				child = CRSpawner(self.nodes[i:i+childsize], self.branches, self.maxnodes)
+				child.start()
 
 class CR:
 	"""Main class that controls the mothership
@@ -575,7 +630,9 @@ class CR:
 			       "high_context" : 35,
 			       "low_node" : "iam0",
 			       "high_node" : "iamvis20",
-			       "comm_key": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
+			       "comm_key": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				   "autostart_branches": 0,
+				   "autostart_max_nodes_per_thread": 1}
 
 	def AddNode( self, node ):
 		"""AddNode(node)
@@ -717,15 +774,26 @@ class CR:
 				#CRDebug( "Mothership ready" );
 				self.all_sockets.append(s)
 
-				# Start spawning processes for each node
 				# Call any callbacks which may have been
 				# set via CRAddStartupCallback()
 				for cb in CR.startupCallbacks:
 					cb(self)
 
-				# that has requested something be started.
-				spawner = CRSpawner( self.nodes ) ;
-				spawner.start() ;
+				# Create a single thread that will then go
+				# spawn nodes (for autostart nodes, this will
+				# actually start the servers or applications
+				# itself; for manual start nodes, a message
+				# will be printed directing the user to start
+				# the appropriate executable).
+				#
+				# This thread will either sequentially handle
+				# all nodes (by default, if autostart_branches=None)
+				# or will create a number of new threads (quite
+				# possibly recursively) to handle subsets of the
+				# nodes (if autostart_branches is greater than 1, 
+				# this will be a tree of threads).
+				spawner = CRSpawner(self.nodes, self.config['autostart_branches'], self.config['autostart_max_nodes_per_thread'])
+				spawner.start()
 
 				# If we're supposed to "phone home" with a signal, do so
 				# with the USR1 signal.  This will happen when we're
@@ -734,14 +802,23 @@ class CR:
 				# make contact.  (The CRSIGNAL envariable should never
 				# be set on Windows, since Windows Python doesn't
 				# seem to support os.kill().)
+				needToSignal = 0
 				if os.environ.has_key('CRSIGNAL'):
-					processString = os.environ['CRSIGNAL']
-					CRInfo("Mothership signalling spawning process %s" % processString)
-					os.kill(int(processString),signal.SIGUSR1)
-				else:
-					CRInfo("Mothership not signalling")
+					needToSignal = 1
 
 				while 1:
+					# We can only safely signal the mothership when all the
+					# dynamic nodes have been resolved; this is because the
+					# main application will ask about what servers are available,
+					# and we don't know the answer until all dynamic nodes are
+					# resolved.  Note that this essentially prevents Windows
+					# users from using dynamic hosts, because they cannot signal.
+					if needToSignal and len(dynamicHosts) == len(dynamicHostsNeeded):
+						process = int(os.environ['CRSIGNAL'])
+						CRInfo("Mothership signalling spawning process %d" % process)
+						os.kill(process,signal.SIGUSR1)
+						needToSignal = 0
+
 					ready = select.select( self.all_sockets, [], [], 0.1 )[0]
 					for sock in ready:
 						if sock == s:
@@ -752,6 +829,7 @@ class CR:
 						else:
 							# process request from established connection
 							self.ProcessRequest( self.wrappers[sock] )
+
 			Fatal( "Couldn't find local TCP port (make sure that another mothership isn't already running)")
 		except KeyboardInterrupt:
 			try:
@@ -932,17 +1010,16 @@ class CR:
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
 		for node in self.nodes:
-			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
-				if isinstance(node,CRApplicationNode):
-					try:
-						application = node.config['application']
-					except:
-						sock.Failure( SockWrapper.NOAPPLICATION, "Client node has no application!" )
-						return
-					node.spokenfor = 1
-					sock.node = node
-					sock.Success( "%d %s" % (node.id, application) )
+			if AvailableMatchingHost(node, CRApplicationNode, args):
+				try:
+					application = node.config['application']
+				except:
+					sock.Failure( SockWrapper.NOAPPLICATION, "Client node has no application!" )
 					return
+				node.spokenfor = 1
+				sock.node = node
+				sock.Success( "%d %s" % (node.id, application) )
+				return
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
 
 	def do_newserver( self, sock, args ):
@@ -955,37 +1032,34 @@ class CR:
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutserver running somewhere."""
 		for node in self.nodes:
-			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
-				if isinstance(node,CRUTProxyNode):
-					node.spokenfor = 1
-					sock.node = node
-					sock.Success( " " )
-					return
+			if AvailableMatchingNode(node,CRUTProxyNode,args):
+				node.spokenfor = 1
+				sock.node = node
+				sock.Success( " " )
+				return
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutproxy host %s" % args )
 		
 	def do_crutserver( self, sock, args ):
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutserver running somewhere."""
 		for node in self.nodes:
-			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
-				if isinstance(node,CRUTServerNode):
-					node.spokenfor = 1
-					sock.node = node
-					sock.Success( " " )
-					return
+			if AvailableMatchingNode(node,CRUTServerNode,args):
+				node.spokenfor = 1
+				sock.node = node
+				sock.Success( " " )
+				return
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutserver host %s" % args )
 
 	def do_crutclient( self, sock, args ):
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutclient running somewhere."""
 		for node in self.nodes:
-			if SameHost(string.lower(node.host), string.lower(args)):
-				if isinstance(node,CRApplicationNode) and not node.crut_spokenfor:
-					if (len(node.crutservers) > 0):
-						node.crut_spokenfor = 1
-						sock.node = node
-						sock.Success( " " )
-						return
+			if AvailableMatchingNode(node,CRApplicationNode,args):
+				if (len(node.crutservers) > 0):
+					node.crut_spokenfor = 1
+					sock.node = node
+					sock.Success( " " )
+					return
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutclient host %s" % args )
 
 	def do_server( self, sock, args ):
@@ -994,17 +1068,16 @@ class CR:
 		nodenames = ""
 		for node in self.nodes:
 			nodenames += node.host+" "
-			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
-				if isinstance(node,CRNetworkNode):
-					node.spokenfor = 1
-					node.spusloaded = 1
-					sock.node = node
+			if AvailableMatchingNode(node,CRNetworkNode,args):
+				node.spokenfor = 1
+				node.spusloaded = 1
+				sock.node = node
 
-					spuchain = "%d" % len(node.SPUs)
-					for spu in node.SPUs:
-						spuchain += " %d %s" % (spu.ID, spu.name)
-					sock.Success( spuchain )
-					return
+				spuchain = "%d" % len(node.SPUs)
+				for spu in node.SPUs:
+					spuchain += " %d %s" % (spu.ID, spu.name)
+				sock.Success( spuchain )
+				return
                 # Wasn't able to find the server.  Figure out what ones
                 # were expected.
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of server host %s.  Expected one of: %s" % (args, nodenames))
@@ -1119,6 +1192,11 @@ class CR:
 		servers = "%d " % len(spu.servers)
 		for i in range(len(spu.servers)):
 			(node, url) = spu.servers[i]
+			# The URL may include a dynamic host reference.  Replace it if it does.
+			match = re.search("://(#[^:]*)", url)
+			if match:
+				# Replace the dynamic spec with its real counterpart
+				url = string.replace(url, match.group(1), dynamicHosts[match.group(1)])
 			servers += "%s" % (url)
 			if i != len(spu.servers) -1:
 				servers += ','
@@ -1398,7 +1476,6 @@ class CR:
 			#sock_wrapper.Failure( SockWrapper.NOTHINGTOSAY, "Request was empty?" )
 			return
 		command = string.lower( words[0] )
-                #CRDebug("command = " + command)
 		try:
 			fn = getattr(self, 'do_%s' % command )
 		except AttributeError:
