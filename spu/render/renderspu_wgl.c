@@ -92,6 +92,10 @@ bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
 	GLbitfield b = 0;
 	int pixelformat;
 
+	renderspuMakeVisString( visAttribs, s );
+
+	crWarning( "Render SPU: WGL wants these visual capabilities: %s", s);
+
 	/* These really come into play with sort-last configs */
 	if (visAttribs & CR_DEPTH_BIT)
 		ppfd->cDepthBits = 24;
@@ -327,21 +331,23 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		return GL_FALSE;
 	}
 
-	crDebug( "Showing the window" );
-	/* NO ERROR CODE FOR SHOWWINDOW */
-	if (showIt)
+	if (showIt) {
+		/* NO ERROR CODE FOR SHOWWINDOW */
+
+		crDebug( "Showing the window" );
+
 		ShowWindow( visual->hWnd, SW_SHOWNORMAL );
+	}
 
 	SetForegroundWindow( visual->hWnd );
 
-	SetWindowPos( visual->hWnd, HWND_TOP, 
-			window->x, window->y,
-			window_plus_caption_width, 
-			window_plus_caption_height,
-			( render_spu.fullscreen ?
-			  (SWP_SHOWWINDOW | SWP_NOSENDCHANGING | 
-			   SWP_NOREDRAW | SWP_NOACTIVATE ) :
-  			  SWP_SHOWWINDOW ) );
+	SetWindowPos( visual->hWnd, HWND_TOP, window->x, window->y,
+		      window_plus_caption_width, window_plus_caption_height,
+		      ( render_spu.fullscreen ? (SWP_SHOWWINDOW |
+			  			 SWP_NOSENDCHANGING | 
+			   			 SWP_NOREDRAW | 
+						 SWP_NOACTIVATE ) :
+  			  			 0 ) );
 
 	if ( render_spu.fullscreen )
 		ShowCursor( FALSE );
