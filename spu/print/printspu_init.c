@@ -51,7 +51,7 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
 {
 	*name = "print";
-	*super = "passthroughspu";
+	*super = "passthrough";
 	*init = SPUInit;
 	*self = SPUSelfDispatch;
 	*cleanup = SPUCleanup;

@@ -105,6 +105,9 @@ void crError( char *format, ... )
 	else
 #endif
 	va_end( args );
+#ifdef WINDOWS
+	DebugBreak();
+#endif
 	exit(1);
 }
 

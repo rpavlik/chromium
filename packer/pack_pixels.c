@@ -17,14 +17,39 @@
 void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height, 
 		GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
 {
-	crError( "Unimplemented crPackDrawPixels" );
+	unsigned char *data_ptr;
+	int packet_length;
 
-	(void) width;
-	(void) height;
-	(void) format;
-	(void) type;
-	(void) pixels;
-	(void) packstate;
+	if (pixels == NULL)
+	{
+		return;
+	}
+
+	if (type == GL_BITMAP)
+	{
+		crPackBitmap( width, height, 0, 0, 0, 0, (const GLubyte *) pixels, packstate );
+	}
+
+	packet_length = 
+		sizeof( width ) +
+		sizeof( height ) +
+		sizeof( format ) +
+		sizeof( type );
+
+	packet_length += crPixelSize( format, type, width, height );
+
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, GLenum, width );
+	WRITE_DATA( 4, GLint, height );
+	WRITE_DATA( 8, GLint, format );
+	WRITE_DATA( 12, GLsizei, type );
+
+	crPixelCopy2D( 
+		(void *)(data_ptr + 16), 
+		pixels, format, type, width, height, packstate );
+
+	crHugePacket( CR_DRAWPIXELS_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width, 

@@ -30,11 +30,11 @@ static char *__findDLL( char *name, char *dir )
 	
 	if (!dir)
 	{
-		sprintf ( path, "%s%s%s", DLL_PREFIX, name, DLL_SUFFIX );
+		sprintf ( path, "%s%sspu%s", DLL_PREFIX, name, DLL_SUFFIX );
 	}
 	else
 	{
-		sprintf ( path, "%s/%s%s%s", dir, DLL_PREFIX, name, DLL_SUFFIX );
+		sprintf ( path, "%s/%s%sspu%s", dir, DLL_PREFIX, name, DLL_SUFFIX );
 	}
 	return path;
 }
@@ -71,7 +71,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 	{
 		if (the_spu->super_name == NULL)
 		{
-			the_spu->super_name = "errorspu";
+			the_spu->super_name = "error";
 		}
 		the_spu->superSPU = crSPULoad( child, id, the_spu->super_name, dir );
 	}

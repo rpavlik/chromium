@@ -513,7 +513,7 @@ class CR:
 					node.spusloaded = 1
 					spuchain = "%d" % len(node.SPUs)
 					for spu in node.SPUs:
-						spuchain += " %d %sspu" % (spu.ID, spu.name)
+						spuchain += " %d %s" % (spu.ID, spu.name)
 					sock.Success( spuchain )
 					sock.node = node
 					return
