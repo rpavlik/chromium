@@ -12,7 +12,7 @@ void PACK_APIENTRY crPackBoundsInfoCR( const CRrecti *bounds, const GLbyte *payl
 {
 	GET_PACKER_CONTEXT(pc);
 	/* Don't get the buffered_ptr here because we've already 
-	 * verified taht there's enough space for everything. */
+	 * verified that there's enough space for everything. */
 
 	unsigned char *data_ptr = pc->buffer.data_current;
 	int len_aligned     = ( len + 0x3 ) & ~0x3;

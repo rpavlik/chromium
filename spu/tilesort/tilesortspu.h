@@ -137,14 +137,18 @@ typedef struct {
 } TileSortSPUPinchState;
 
 struct thread_info_t {
-	int geom_pack_size;
 	CRPackBuffer geometry_pack;
 	CRPackContext *packer;
 	ContextInfo *currentContext;
 	TileSortSPUPinchState pinchState;
 	int state_server_index;           /* only used during __doFlush() */
 
+	/* Array of network connections to the servers */
 	CRNetServer *net;    /* array net[num_servers] */
+
+	/* Array of buffers for packing state changes for servers.
+	 * Usually just used during state differencing.
+	 */
 	CRPackBuffer *pack;  /* array pack[num_servers] */
 };
 
@@ -179,6 +183,8 @@ typedef struct {
 	int swap;  /* byte swapping */
 	unsigned int MTU;
 	unsigned int buffer_size;
+	unsigned int geom_buffer_size;
+	unsigned int geom_buffer_mtu;
 	int num_servers;
 
 	/* WGL/GLX interface for DMX */

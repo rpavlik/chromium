@@ -150,10 +150,12 @@ void STATE_APIENTRY crStateEnd( void )
 	c->inBeginEnd = GL_FALSE;
 }
 
-void crStateCurrentSwitch( GLuint maxTextureUnits,
-						   CRCurrentBits *c, CRbitvalue *bitID,
-						   CRCurrentState *from, CRCurrentState *to )
+void crStateCurrentSwitch( CRCurrentBits *c, CRbitvalue *bitID,
+													 CRContext *fromCtx, CRContext *toCtx )
 {
+	CRCurrentState *from = &(fromCtx->current);
+	CRCurrentState *to = &(toCtx->current);
+	const GLuint maxTextureUnits = fromCtx->limits.maxTextureUnits;
 	unsigned int i,j;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
@@ -252,10 +254,12 @@ void crStateCurrentSwitch( GLuint maxTextureUnits,
 	INVERTDIRTY(c->dirty, nbitID);
 }
 
-void crStateCurrentDiff (CRCurrentBits *c, CRbitvalue *bitID,
-					 CRCurrentState *from, CRCurrentState *to)
+void
+crStateCurrentDiff( CRCurrentBits *c, CRbitvalue *bitID,
+                    CRContext *fromCtx, CRContext *toCtx )
 {
-	CRContext *g = GetCurrentContext();
+	CRCurrentState *from = &(fromCtx->current);
+	CRCurrentState *to= &(toCtx->current);
 	unsigned int i, j;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
@@ -338,7 +342,7 @@ void crStateCurrentDiff (CRCurrentBits *c, CRbitvalue *bitID,
 		INVERTDIRTY(c->normal, nbitID);
 	}
 
-	for ( i = 0 ; i < g->limits.maxTextureUnits ; i++)
+	for ( i = 0 ; i < fromCtx->limits.maxTextureUnits ; i++)
 	{
 		if (CHECKDIRTY(c->texCoord[i], bitID)) {
 			if (COMPARE_TEXCOORD (from->texCoord[i], to->texCoordPre[i])) {

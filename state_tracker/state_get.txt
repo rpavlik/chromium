@@ -2,7 +2,7 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
-GLenum    GL_MATRIX_MODE                  g->transform.mode
+GLenum    GL_MATRIX_MODE                  g->transform.matrixMode
 GLint     GL_MODELVIEW_STACK_DEPTH        g->transform.modelViewDepth+1
 GLint     GL_PROJECTION_STACK_DEPTH       g->transform.projectionDepth+1
 GLint     GL_TEXTURE_STACK_DEPTH g->transform.textureDepth[g->texture.curTextureUnit]+1

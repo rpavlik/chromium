@@ -360,7 +360,7 @@ Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 	window = stubGetWindowInfo(dpy, drawable);
 
 	if (context && context->type == UNDECIDED) {
-  	XSync(dpy, 0); /* sync to force window creation on the server */
+		XSync(dpy, 0); /* sync to force window creation on the server */
 	}
 
 	retVal = stubMakeCurrent(window, context);

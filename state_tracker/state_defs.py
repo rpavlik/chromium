@@ -56,5 +56,6 @@ crStateMergeExtensions
 crStateRasterPosUpdate
 crStateTextureCheckDirtyImages
 crStateExtensionsInit
+crStateSetExtensionString
 __currentBits
 """

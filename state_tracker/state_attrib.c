@@ -319,6 +319,9 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		a->lightingStack[a->lightingStackDepth].lightModelColorControlEXT = g->lighting.lightModelColorControlEXT;
 #endif
 		a->lightingStack[a->lightingStackDepth].lighting = g->lighting.lighting;
+		a->lightingStack[a->lightingStackDepth].colorMaterial = g->lighting.colorMaterial;
+		a->lightingStack[a->lightingStackDepth].colorMaterialMode = g->lighting.colorMaterialMode;
+		a->lightingStack[a->lightingStackDepth].colorMaterialFace = g->lighting.colorMaterialFace;
 		for (i = 0 ; i < g->limits.maxLights; i++)
 		{
 			a->lightingStack[a->lightingStackDepth].light[i].enable = g->lighting.light[i].enable;
@@ -453,7 +456,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		{
 			a->transformStack[a->transformStackDepth].clipPlane = (GLvectord *) crCalloc( g->limits.maxClipPlanes * sizeof( GLvectord ));
 		}
-		a->transformStack[a->transformStackDepth].mode = g->transform.mode;
+		a->transformStack[a->transformStackDepth].matrixMode = g->transform.matrixMode;
 		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
 		{
 			a->transformStack[a->transformStackDepth].clip[i] = g->transform.clip[i];
@@ -820,6 +823,9 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->lighting.lightModelColorControlEXT = a->lightingStack[a->lightingStackDepth].lightModelColorControlEXT;
 #endif
 		g->lighting.lighting = a->lightingStack[a->lightingStackDepth].lighting;
+		g->lighting.colorMaterial = a->lightingStack[a->lightingStackDepth].colorMaterial;
+		g->lighting.colorMaterialMode = a->lightingStack[a->lightingStackDepth].colorMaterialMode;
+		g->lighting.colorMaterialFace = a->lightingStack[a->lightingStackDepth].colorMaterialFace;
 		for (i = 0 ; i < g->limits.maxLights; i++)
 		{
 			g->lighting.light[i].enable = a->lightingStack[a->lightingStackDepth].light[i].enable;
@@ -1072,7 +1078,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			return;
 		}
 		a->transformStackDepth--;
-		g->transform.mode = a->transformStack[a->transformStackDepth].mode;
+		g->transform.matrixMode = a->transformStack[a->transformStackDepth].matrixMode;
 		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
 		{
 			g->transform.clip[i] = a->transformStack[a->transformStackDepth].clip[i];
@@ -1083,7 +1089,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->transform.rescaleNormals = a->transformStack[a->transformStackDepth].rescaleNormals;
 #endif
 		DIRTY(sb->transform.dirty, g->neg_bitid);
-		DIRTY(sb->transform.mode, g->neg_bitid);
+		DIRTY(sb->transform.matrixMode, g->neg_bitid);
 		DIRTY(sb->transform.clipPlane, g->neg_bitid);
 		DIRTY(sb->transform.enable, g->neg_bitid);
 	}
@@ -1109,8 +1115,10 @@ void STATE_APIENTRY crStatePopAttrib(void)
 }
 
 void crStateAttribSwitch( CRAttribBits *bb, CRbitvalue *bitID,
-		CRAttribState *from, CRAttribState *to )
+                          CRContext *fromCtx, CRContext *toCtx )
 {
+	CRAttribState *to = &(toCtx->attrib);
+	CRAttribState *from = &(fromCtx->attrib);
 	if (to->attribStackDepth != 0 || from->attribStackDepth != 0)
 	{
 		crError( "Trying to switch contexts when the attribte stacks weren't zero.  Currently, this is not supported." );

@@ -219,77 +219,6 @@ crServerInitializeBucketing(CRMuralInfo *mural)
 }
 
 
-/*
- * XXX this isn't used yet.  The idea is to compute the clipped image window
- * and baseProjection for all tiles up front and just recompute this info when
- * the viewport or mural changes.
- *
- * Compute ancilliary tiling information which is dependant on the viewport.
- * Also compute the baseProjection matrix for the extents.
- * Input: mural - the mural to compute tiling for
- *        ctx - context to get viewport bounds from
- */
-void
-crServerComputeOutputBounds( CRMuralInfo *mural, CRContext *ctx )
-{
-	int i;
-
-	for ( i = 0; i < mural->numExtents; i++ )
-	{
-		CRExtent *extent = &mural->extents[i];
-		CRrecti clippedImagespace;  /* unused */
-
-		crServerSetViewportBounds( &(ctx->viewport),
-															 &extent->outputwindow,
-															 &mural->imagespace,
-															 &extent->imagewindow,
-															 &clippedImagespace,
-															 &extent->clippedImagewindow );
-
-		crServerRecomputeBaseProjection( &extent->baseProjection,
-																		 ctx->viewport.viewportX,
-																		 ctx->viewport.viewportY,
-																		 ctx->viewport.viewportW,
-																		 ctx->viewport.viewportH );
-	}
-}
-
-
-
-
-
-/*
- * Prepare for rendering a tile.  Setup viewport and base projection.
- * Inputs: ctx - the rendering context (to access the viewport params)
- *         outputWindow - tile bounds in server's rendering window
- *         imagespace - whole mural rectangle
- *         imagewindow - tile bounds within the mural
- */
-void
-crServerSetOutputBounds( CRContext *ctx, 
-												 const CRrecti *outputwindow, 
-												 const CRrecti *imagespace, 
-												 const CRrecti *imagewindow,
-												 CRrecti *clippedImagewindow)
-{
-	CRrecti clippedImagespace;
-
-	crServerSetViewportBounds( &(ctx->viewport),
-														 outputwindow,
-														 imagespace,
-														 imagewindow,
-														 &clippedImagespace,
-														 clippedImagewindow );
-
-	crServerRecomputeBaseProjection( &(cr_server.curClient->baseProjection),
-																	 ctx->viewport.viewportX,
-																	 ctx->viewport.viewportY,
-																	 ctx->viewport.viewportW,
-																	 ctx->viewport.viewportH );
-	crServerApplyBaseProjection();
-}
-
-
 void SERVER_DISPATCH_APIENTRY
 crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 															GLint len, GLint num_opcodes )
@@ -302,6 +231,11 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 
 	bx = BKT_DOWNHASH(bounds->x1, mural->width);
 	by = BKT_DOWNHASH(bounds->y1, mural->height);
+
+	if (!mural->viewportValidated) {
+		crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport),
+																	mural);
+	}
 
 	/* Check for out of bounds, and optimizebucket to enable */
 	if (mural->optimizeBucket && (bx <= HASHRANGE) && (by <= HASHRANGE))
@@ -322,14 +256,9 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 					bounds->y1 < p->extents.y2 &&
 					bounds->y2 >= p->extents.y1 )
 				{
-					CRExtent *extent = &mural->extents[p->id];
 					mural->curExtent = p->id;
 					if (cr_server.run_queue->client->currentCtx) {
-						crServerSetOutputBounds( cr_server.run_queue->client->currentCtx,
-																		 &extent->outputwindow,
-																		 &mural->imagespace,
-																		 &extent->imagewindow,
-																		 &extent->clippedImagewindow);
+						crServerSetOutputBounds( mural, mural->curExtent );
 					}
 					crUnpack( data_ptr, data_ptr-1, num_opcodes, &(cr_server.dispatch) );
 				}
@@ -344,26 +273,18 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 		{
 			CRExtent *extent = &mural->extents[i];
 
-			if ((!cr_server.localTileSpec) &&
-			    ( !( extent->imagewindow.x2 > bounds->x1 &&
-							extent->imagewindow.x1 < bounds->x2 &&
-							extent->imagewindow.y2 > bounds->y1 &&
-							extent->imagewindow.y1 < bounds->y2 ) ))
+			if (cr_server.localTileSpec ||
+			    (extent->imagewindow.x2 > bounds->x1 &&
+					 extent->imagewindow.x1 < bounds->x2 &&
+					 extent->imagewindow.y2 > bounds->y1 &&
+					 extent->imagewindow.y1 < bounds->y2))
 			{
-				continue;
+				mural->curExtent = i;
+				if (cr_server.run_queue->client->currentCtx) {
+					crServerSetOutputBounds( mural, i );
+				}
+				crUnpack( data_ptr, data_ptr-1, num_opcodes, &(cr_server.dispatch) );
 			}
-
-			mural->curExtent = i;
-
-			if (cr_server.run_queue->client->currentCtx) {
-				crServerSetOutputBounds( cr_server.run_queue->client->currentCtx,
-																 &extent->outputwindow,
-																 &mural->imagespace,
-																 &extent->imagewindow,
-																 &extent->clippedImagewindow);
-			}
-
-			crUnpack( data_ptr, data_ptr-1, num_opcodes, &(cr_server.dispatch) );
 		}
 	}
 

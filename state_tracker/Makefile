@@ -121,11 +121,11 @@ state.def: state_defs.py state_special state_select_special state_feedback_speci
 
 state_buffer_gen.c: state_buffer.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Buffer > $@
+	@$(PERL) gendiffcode.pl buffer Buffer > $@
 
 state_client_gen.c: state_client.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Client > $@
+	@$(PERL) gendiffcode.pl client Client > $@
 
 state_current_gen.c: state_current.py convert.py
 	@$(ECHO) Making $@
@@ -133,41 +133,41 @@ state_current_gen.c: state_current.py convert.py
 
 state_fog_gen.c: state_fog.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Fog > $@
+	@$(PERL) gendiffcode.pl fog Fog > $@
 
 state_hint_gen.c: state_hint.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Hint > $@
+	@$(PERL) gendiffcode.pl hint Hint > $@
 
 state_lighting_gen.c: state_lighting.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Lighting > $@
+	@$(PERL) gendiffcode.pl lighting Lighting > $@
 
 state_line_gen.c: state_line.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Line > $@
+	@$(PERL) gendiffcode.pl line Line > $@
 
 state_multisample_gen.c: state_multisample.txt gendiffcode.pl
-	@$(ECHO) Makint $@
-	@$(PERL) gendiffcode.pl Multisample >$@
+	@$(ECHO) Making $@
+	@$(PERL) gendiffcode.pl multisample Multisample >$@
 
 state_point_gen.c: state_point.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Point > $@
+	@$(PERL) gendiffcode.pl point Point > $@
 
 state_polygon_gen.c: state_polygon.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Polygon > $@
+	@$(PERL) gendiffcode.pl polygon Polygon > $@
 
 state_regcombiner_gen.c: state_regcombiner.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl RegCombiner > $@
+	@$(PERL) gendiffcode.pl regcombiner RegCombiner > $@
 
 state_stencil_gen.c: state_stencil.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Stencil > $@
+	@$(PERL) gendiffcode.pl stencil Stencil > $@
 
 state_viewport_gen.c: state_viewport.txt gendiffcode.pl
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Viewport > $@
+	@$(PERL) gendiffcode.pl viewport Viewport > $@
 

@@ -76,9 +76,9 @@ void crStateLightingInit (CRContext *ctx);
 void crStateLightingDestroy (CRContext *ctx);
 
 void crStateLightingDiff(CRLightingBits *bb, CRbitvalue *bitID,
-		CRLightingState *from, CRLightingState *to);
+                         CRContext *fromCtx, CRContext *toCtx);
 void crStateLightingSwitch(CRLightingBits *bb, CRbitvalue *bitID,
-		CRLightingState *from, CRLightingState *to);
+                           CRContext *fromCtx, CRContext *toCtx);
 
 void crStateColorMaterialRecover( void );
 

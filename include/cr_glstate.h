@@ -135,6 +135,8 @@ void crStateUpdateColorBits( void );
 
 void crStateSetCurrentPointers( CRContext *ctx, CRCurrentStatePointers *current );
 
+void crStateSetExtensionString( CRContext *ctx, const GLubyte *extensions );
+
 void crStateDiffContext( CRContext *from, CRContext *to );
 void crStateSwitchContext( CRContext *from, CRContext *to );
 

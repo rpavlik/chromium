@@ -3110,9 +3110,11 @@ GLboolean STATE_APIENTRY crStateIsTexture(GLuint texture)
 }
 
 
-void crStateTextureSwitch(CRContext *g, CRTextureBits *t, CRbitvalue *bitID, 
-						  CRTextureState *from, CRTextureState *to) 
+void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID, 
+													 CRContext *fromCtx, CRContext *toCtx )
 {
+	CRTextureState *from = &(fromCtx->texture);
+	const CRTextureState *to = &(toCtx->texture);
 	unsigned int i,j;
 	glAble able[2];
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
@@ -3122,7 +3124,7 @@ void crStateTextureSwitch(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 	able[0] = diff_api.Disable;
 	able[1] = diff_api.Enable;
 
-	for (i = 0; i < g->limits.maxTextureUnits; i++)
+	for (i = 0; i < fromCtx->limits.maxTextureUnits; i++)
 	{
 		if (CHECKDIRTY(t->enable[i], bitID)) 
 		{
@@ -3148,7 +3150,7 @@ void crStateTextureSwitch(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 			}
 #endif
 #ifdef CR_ARB_texture_cube_map
-			if (g->extensions.ARB_texture_cube_map &&
+			if (fromCtx->extensions.ARB_texture_cube_map &&
 				from->unit[i].enabledCubeMap != to->unit[i].enabledCubeMap)
 			{
 				able[to->unit[i].enabledCubeMap](GL_TEXTURE_CUBE_MAP_ARB);
@@ -3202,7 +3204,7 @@ void crStateTextureSwitch(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 			}
 #endif
 #ifdef CR_ARB_texture_cube_map
-			if (g->extensions.ARB_texture_cube_map &&
+			if (fromCtx->extensions.ARB_texture_cube_map &&
 				from->unit[i].currentTextureCubeMap->name != to->unit[i].currentTextureCubeMap->name) {
 				diff_api.BindTexture(GL_TEXTURE_CUBE_MAP_ARB, to->unit[i].currentTextureCubeMap->name);
 				FILLDIRTY(t->current[i]);
@@ -3273,7 +3275,6 @@ void crStateTextureSwitch(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 		if (CHECKDIRTY(t->eyeGen[i], bitID)) 
 		{
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-
 			diff_api.MatrixMode(GL_MODELVIEW);
 			diff_api.PushMatrix();
 			diff_api.LoadIdentity();
@@ -3563,9 +3564,12 @@ int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target
 	return 0;
 }
 
-void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID, 
-						 CRTextureState *from, CRTextureState *to) 
+void
+crStateTextureDiff( CRTextureBits *t, CRbitvalue *bitID,
+									  CRContext *fromCtx, CRContext *toCtx )
 {
+	CRTextureState *from = &(fromCtx->texture);
+	CRTextureState *to = &(toCtx->texture);
 	CRTextureObj *tobj = NULL;
 	GLuint name=0;
 	GLuint *cname=NULL;
@@ -3579,7 +3583,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 	able[0] = diff_api.Disable;
 	able[1] = diff_api.Enable;
 
-	for (i = 0; i < g->limits.maxTextureUnits; i++)
+	for (i = 0; i < fromCtx->limits.maxTextureUnits; i++)
 	{
 		/* First, try to create the current texture 
 		 * objects before mucking with the individual 
@@ -3608,7 +3612,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 		}
 #endif
 #ifdef CR_ARB_texture_cube_map
-		if (g->extensions.ARB_texture_cube_map && to->unit[i].enabledCubeMap == GL_TRUE)
+		if (fromCtx->extensions.ARB_texture_cube_map && to->unit[i].enabledCubeMap == GL_TRUE)
 		{
 			tobj = to->unit[i].currentTextureCubeMap;
 			name = tobj->name;
@@ -3623,7 +3627,10 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 
 		if (CHECKDIRTY(tobj->dirty, bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			diff_api.BindTexture( tobj->target, name );
 			if (CHECKDIRTY(tobj->paramsBit[i], bitID)) 
 			{
@@ -3642,27 +3649,27 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 #endif
 				diff_api.TexParameterfv(tobj->target, GL_TEXTURE_BORDER_COLOR, (const GLfloat *) f);
 #ifdef CR_EXT_texture_filter_anisotropic
-				if (g->extensions.EXT_texture_filter_anisotropic) {
+				if (fromCtx->extensions.EXT_texture_filter_anisotropic) {
 					diff_api.TexParameterf(tobj->target, GL_TEXTURE_MAX_ANISOTROPY_EXT, tobj->maxAnisotropy);
 				}
 #endif
 #ifdef CR_ARB_depth_texture
-				if (g->extensions.ARB_depth_texture)
+				if (fromCtx->extensions.ARB_depth_texture)
 					diff_api.TexParameteri(tobj->target, GL_DEPTH_TEXTURE_MODE_ARB, tobj->depthMode);
 #endif
 #ifdef CR_ARB_shadow
-				if (g->extensions.ARB_shadow) {
+				if (fromCtx->extensions.ARB_shadow) {
 					diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_MODE_ARB, tobj->compareMode);
 					diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_FUNC_ARB, tobj->compareFunc);
 				}
 #endif
 #ifdef CR_ARB_shadow_ambient
-				if (g->extensions.ARB_shadow_ambient) {
+				if (fromCtx->extensions.ARB_shadow_ambient) {
 					diff_api.TexParameterf(tobj->target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, tobj->compareFailValue);
 				}
 #endif
 #ifdef CR_SGIS_generate_mipmap
-				if (g->extensions.SGIS_generate_mipmap) {
+				if (fromCtx->extensions.SGIS_generate_mipmap) {
 					diff_api.TexParameteri(tobj->target, GL_GENERATE_MIPMAP_SGIS, tobj->generateMipmap);
 				}
 #endif
@@ -3798,11 +3805,14 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 		}
 	}
 
-	for (i = 0; i < g->limits.maxTextureUnits; i++)
+	for (i = 0; i < fromCtx->limits.maxTextureUnits; i++)
 	{
 		if (CHECKDIRTY(t->enable[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			if (from->unit[i].enabled1D != to->unit[i].enabled1D) 
 			{
 				able[to->unit[i].enabled1D](GL_TEXTURE_1D);
@@ -3821,7 +3831,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 			}
 #endif
 #ifdef CR_ARB_texture_cube_map
-			if (g->extensions.ARB_texture_cube_map &&
+			if (fromCtx->extensions.ARB_texture_cube_map &&
 				from->unit[i].enabledCubeMap != to->unit[i].enabledCubeMap)
 			{
 				able[to->unit[i].enabledCubeMap](GL_TEXTURE_CUBE_MAP_ARB);
@@ -3866,7 +3876,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 		}
 #endif
 #ifdef CR_ARB_texture_cube_map
-		if (g->extensions.ARB_texture_cube_map &&
+		if (fromCtx->extensions.ARB_texture_cube_map &&
 			to->unit[i].enabledCubeMap == GL_TRUE)
 		{
 			tobj = to->unit[i].currentTextureCubeMap;
@@ -3885,7 +3895,10 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 		{
 			if (*cname != name) 
 			{
-				diff_api.ActiveTextureARB(i+GL_TEXTURE0_ARB);
+				if (fromCtx->texture.curTextureUnit != i) {
+					diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+					fromCtx->texture.curTextureUnit = i;
+				}
 				diff_api.BindTexture(tobj->target, name);
 				*cname = name;
 			}
@@ -3904,7 +3917,10 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 
 		if (CHECKDIRTY(t->objGen[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			if (from->unit[i].objSCoeff.x != to->unit[i].objSCoeff.x ||
 					from->unit[i].objSCoeff.y != to->unit[i].objSCoeff.y ||
 					from->unit[i].objSCoeff.z != to->unit[i].objSCoeff.z ||
@@ -3961,8 +3977,14 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 		}
 		if (CHECKDIRTY(t->eyeGen[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-			diff_api.MatrixMode(GL_MODELVIEW);
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
+			if (fromCtx->transform.matrixMode != GL_MODELVIEW) {
+				diff_api.MatrixMode(GL_MODELVIEW);
+				fromCtx->transform.matrixMode = GL_MODELVIEW;
+			}
 			diff_api.PushMatrix();
 			diff_api.LoadIdentity();
 			if (from->unit[i].eyeSCoeff.x != to->unit[i].eyeSCoeff.x ||
@@ -4022,7 +4044,10 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 		}
 		if (CHECKDIRTY(t->gen[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			if (from->unit[i].gen.s != to->unit[i].gen.s ||
 					from->unit[i].gen.t != to->unit[i].gen.t ||
 					from->unit[i].gen.r != to->unit[i].gen.r ||
@@ -4151,5 +4176,4 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 			INVERTDIRTY(t->envBit[i], nbitID);
 		}
 	}
-	diff_api.ActiveTextureARB( GL_TEXTURE0_ARB + to->curTextureUnit );
 }

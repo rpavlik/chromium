@@ -61,7 +61,10 @@ void crStateLimitsPrint (const CRLimitsState *l)
 
 void crStateLimitsDestroy(CRLimitsState *l)
 {
-	crFree((void *) l->extensions);
+	if (l->extensions) {
+		crFree((void *) l->extensions);
+		l->extensions = NULL;
+	}
 }
 
 
@@ -182,7 +185,8 @@ static GLboolean hasExtension(const char *haystack, const char *needle)
  * Examine the context's extension string and set the boolean extension
  * flags accordingly.  This is to be called during context initialization.
  */
-void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
+void
+crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
 {
 	/* init all booleans to false */
 	crMemZero(extensions, sizeof(CRExtensionState));
@@ -341,3 +345,20 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 		extensions->version = (const GLubyte *) "1.2 Chromium " CR_VERSION;
 	}
 }
+
+
+/*
+ * Set the GL_EXTENSIONS string for the given context.  We'll make
+ * a copy of the given string.
+ */
+void
+crStateSetExtensionString( CRContext *ctx, const GLubyte *extensions )
+{
+   if (ctx->limits.extensions)
+      crFree((void *) ctx->limits.extensions);
+
+   ctx->limits.extensions = crStrdup(extensions);
+
+   crStateExtensionsInit(&(ctx->limits), &(ctx->extensions));
+}
+

@@ -50,10 +50,10 @@ typedef struct {
 
 void crStateHintInit(CRContext *ctx);
 
-void crStateHintDiff(CRHintBits *bb, CRbitvalue *bitID, 
-		CRHintState *from, CRHintState *to);
+void crStateHintDiff(CRHintBits *bb, CRbitvalue *bitID,
+                     CRContext *fromCtx, CRContext *toCtx);
 void crStateHintSwitch(CRHintBits *bb, CRbitvalue *bitID, 
-		CRHintState *from, CRHintState *to);
+                       CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

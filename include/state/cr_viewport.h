@@ -38,14 +38,6 @@ typedef struct {
 	GLsizei		scissorW;
 	GLsizei		scissorH;
 	GLboolean   scissorValid;
-
-	GLfloat widthScale;
-	GLfloat heightScale;
-	CRrecti outputDims;
-
-	GLint x_offset;
-	GLint y_offset;
-
 } CRViewportState;
 
 void crStateViewportInit(CRContext *ctx);
@@ -53,10 +45,10 @@ void crStateViewportInit(CRContext *ctx);
 void crStateViewportApply( CRViewportState *v, GLvectorf *p );
 void crStateViewportMakeCurrent(CRViewportState *v, CRViewportBits *vb);
 
-void crStateViewportDiff(CRViewportBits *bb, CRbitvalue *bitID, 
-		CRViewportState *from, CRViewportState *to);
+void crStateViewportDiff(CRViewportBits *bb, CRbitvalue *bitID,
+                         CRContext *fromCtx, CRContext *toCtx);
 void crStateViewportSwitch(CRViewportBits *bb, CRbitvalue *bitID, 
-		CRViewportState *from, CRViewportState *to);
+                           CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

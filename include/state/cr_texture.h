@@ -175,7 +175,7 @@ typedef struct {
 	CRTextureObj proxyCubeMap;
 #endif
 
-	GLint		curTextureUnit;
+	GLint		curTextureUnit; /* GL_ACTIVE_TEXTURE */
 
 	GLint		maxLevel;
 	GLint		max3DLevel;
@@ -200,10 +200,10 @@ const GLvoid * crStateTextureGetData(GLenum target, GLenum level);
 
 int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target, int textureUnit);
 
-void crStateTextureDiff(CRContext *g, CRTextureBits *bb, CRbitvalue *bitID, 
-		CRTextureState *from, CRTextureState *to);
-void crStateTextureSwitch(CRContext *g, CRTextureBits *bb, CRbitvalue *bitID, 
-		CRTextureState *from, CRTextureState *to);
+void crStateTextureDiff(CRTextureBits *t, CRbitvalue *bitID,
+                        CRContext *fromCtx, CRContext *toCtx);
+void crStateTextureSwitch(CRTextureBits *t, CRbitvalue *bitID, 
+                          CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

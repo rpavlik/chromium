@@ -57,10 +57,10 @@ typedef struct {
 
 void crStateRegCombinerInit( CRContext *ctx );
 
-void crStateRegCombinerDiff( CRRegCombinerBits *b, CRbitvalue *bitID, 
-		CRRegCombinerState *from, CRRegCombinerState *to );
+void crStateRegCombinerDiff(CRRegCombinerBits *b, CRbitvalue *bitID,
+                            CRContext *fromCtx, CRContext *toCtx);
 void crStateRegCombinerSwitch( CRRegCombinerBits *b, CRbitvalue *bitID, 
-		CRRegCombinerState *from, CRRegCombinerState *to );
+                               CRContext *fromCtx, CRContext *toCtx );
 
 #ifdef __cplusplus
 }

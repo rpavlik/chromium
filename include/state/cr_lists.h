@@ -42,10 +42,10 @@ typedef struct {
 void crStateListsInit(CRContext *ctx);
 void crStateListsDestroy(CRContext *ctx);
 
-void crStateListsDiff(CRListsBits *bb, CRbitvalue *bitID, 
-		CRListsState *from, CRListsState *to);
+void crStateListsDiff(CRListsBits *bb, CRbitvalue *bitID,
+                      CRContext *fromCtx, CRContext *toCtx);
 void crStateListsSwitch(CRListsBits *bb, CRbitvalue *bitID, 
-		CRListsState *from, CRListsState *to);
+                        CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

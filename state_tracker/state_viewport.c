@@ -41,13 +41,9 @@ void crStateViewportInit(CRContext *ctx)
 	v->nearClip = 0.0;
 	RESET(vb->depth, ctx->bitid);
 
-	v->widthScale = v->heightScale = 1.0f;
-	v->x_offset = 0;
-	v->y_offset = 0;
-	/* v->outputdims will be initialized by the caller (I hope). */
-
 	RESET(vb->dirty, ctx->bitid);
 
+	/* XXX why are these here? */
 	RESET(tb->base, ctx->bitid);
 	RESET(tb->dirty, ctx->bitid);
 }
@@ -100,9 +96,9 @@ void STATE_APIENTRY crStateViewport(GLint x, GLint y, GLsizei width,
 
 	DIRTY(vb->v_dims, g->neg_bitid);
 	DIRTY(vb->dirty, g->neg_bitid);
+	/* XXX why are these here? */
 	DIRTY(tb->base, g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
-
 }
 
 void STATE_APIENTRY crStateDepthRange(GLclampd znear, GLclampd zfar) 

@@ -428,7 +428,6 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	
 	if (thread->packer->buffer.size > tilesort_spu.buffer_size )
 	{
-		crDebug( "It was a big packet!" );
 		big_packet_hdr = __applySendBufferHeader( &(thread->packer->buffer), &big_packet_len );
 	}
 
@@ -460,7 +459,6 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	/* Now, we want to let the state tracker extract the "current" state 
 	 * from the collection of pointers that we have in the geometry 
 	 * buffer. */
-
 	crStateCurrentRecover( );
 
 	/* At this point, we invoke the "pincher", which will check if 
@@ -499,12 +497,15 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		}
 	}
 
-	/* Now, we grab the packing state into the globals, since we're 
-	 * going to start packing into other places like crazy but 
-	 * we need to keep these pointers around, both for 
-	 * doing context differencing, and also to restore them 
-	 * at the end of this function. */
-
+	/* At this point, the thread is currently packing into the thread's
+	 * geometry buffer.
+	 * Now we're about to do state differencing and send state change commands
+	 * to the servers.
+	 * Before we do so, we have to save the current packing state back into
+	 * the thread->geometry_pack struct.
+	 * Then, we can call crPackSetBuffer to start packing state change commands
+	 * into the per-server state buffers (thread->pack[i]).
+	 */
 	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
 
 	/* Now, see if we need to do things to each server */
@@ -528,9 +529,10 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 		thread->currentContext->server[i].vertexCount += thread->packer->current.vtx_count;
 
-		/* We're going to do lazy state evaluation now */
-
+		/* Set the destination for packing state difference commands */
 		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+
+		/* We're going to do lazy state evaluation now */
 		if (!broadcast || send_state_anyway)
 		{
 			/*crDebug( "pack buffer before differencing" ); 
@@ -541,6 +543,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			{
 				__drawBBOX( &bucket_info );
 			}
+			/* save the state-change packing info */
 			crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 			/*crDebug( "pack buffer after differencing" ); 
 			 *tilesortspuDebugOpcodes( &(thread->state_server->pack) ); */
@@ -554,10 +557,13 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		{
 			/* The packet was big, so send the state commands 
 			 * by themselves, followed by the big packet. */
-
-			crDebug( "Doing the big packet send thing" );
+			crDebug( "Sending big packet of %d bytes to server %d",
+							 big_packet_len, i );
+			/* Send state-change commands */
 			tilesortspuSendServerBuffer( thread->state_server_index );
-			crNetSend( thread->net[thread->state_server_index].conn, NULL, big_packet_hdr, big_packet_len );
+			/* send geometry */
+			crNetSend( thread->net[thread->state_server_index].conn, NULL,
+								 big_packet_hdr, big_packet_len );
 		}
 		else
 		{
@@ -586,13 +592,14 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			}
 			crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 		}
-	}
+	} /* loop over servers */
 
 	/* We're done with the servers.  Wipe the thread->state_server 
 	 * variable so we know that.  */
 
 	thread->state_server_index = -1;
 
+	/* Not sure what this is all about */
 	for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
 	{
 		if (thread->pack[i].mtu > thread->net[i].conn->mtu)
@@ -600,23 +607,29 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		if (tilesort_spu.MTU > thread->net[i].conn->mtu)
 			tilesort_spu.MTU = thread->net[i].conn->mtu;
 	}
+
 	if ( big_packet_hdr != NULL )
 	{
-		/* Throw away the big packet and make a new, smaller one */
-
+		/* Throw away the big packet and setup a new one using the original
+		 * geometry buffer size.
+		 */
+		void *p = crAlloc( tilesort_spu.geom_buffer_size );
 		crDebug( "Throwing away the big packet" );
 		crFree( thread->geometry_pack.pack );
 		crPackInitBuffer( &(thread->geometry_pack),
-											crAlloc( thread->geom_pack_size ),
-											thread->geom_pack_size,
-											tilesort_spu.MTU - (24+END_FLUFF+8) );
-
-		/* 24 is the size of the bounds info packet */
-		/* and 8 since End and BoundInfo opcodes may indeed take this space */
+											p, 
+											tilesort_spu.geom_buffer_size,
+											tilesort_spu.geom_buffer_mtu );
+#if 1 /* NEW */
+		crPackSetBuffer( thread->packer, &(thread->geometry_pack ) );
+#endif
+		/* No need to call crPackResetPointers, crPackInitBuffer did it */
 	}
 	else
 	{
 		/*crDebug( "Reverting to the old geometry buffer" ); */
+		/* XXX why is this mtu assignment here? */
+		CRASSERT(thread->geometry_pack.mtu >= tilesort_spu.geom_buffer_mtu);
 		thread->geometry_pack.mtu = tilesort_spu.MTU - (24+END_FLUFF+8);
 		crPackSetBuffer( thread->packer, &(thread->geometry_pack ) );
 		crPackResetPointers( thread->packer );
@@ -649,6 +662,7 @@ void tilesortspuFlush_callback( void *arg )
 void tilesortspuFlush( ThreadInfo *thread )
 {
 	CRContext *ctx;
+	int newSize;
 
 	CRPackBuffer old_geometry_pack;
 
@@ -665,12 +679,12 @@ void tilesortspuFlush( ThreadInfo *thread )
 	/* If we're not in a begin/end, or if we're splitting them, go ahead and 
 	 * do the flushing. */
 	
-	if ( tilesort_spu.splitBeginEnd || !(ctx->current.inBeginEnd) )
+	if ( tilesort_spu.splitBeginEnd ||
+			 !(ctx->current.inBeginEnd || ctx->lists.currentIndex) )
 	{
 		__doFlush( ctx, 0, 0 );
 		return;
 	}
-
 
 	/* Otherwise, we need to grow the buffer to make room for more stuff. 
 	 * Since we don't want to do this forever, we mark the context as 
@@ -678,33 +692,40 @@ void tilesortspuFlush( ThreadInfo *thread )
 	 * is called. 
 	 * 
 	 * Note that this can only happen to the geometry buffer, so we 
-	 * assert that. */
-	
-	crDebug( "-=-=-=- Growing the buffer -=-=-=-" );
+	 * assert that.
+	 */
 
 	CRASSERT( ctx == thread->currentContext->State );
 
 	ctx->current.flushOnEnd = 1;
 
-	/* Grab the pack buffer info from the packing library */
-
+	/* Get current packing info, store in old_geometry_pack */
+	CRASSERT(thread->packer->buffer.pack == thread->geometry_pack.pack);
 	crPackGetBuffer( thread->packer, &(old_geometry_pack) );
 
+	newSize = thread->geometry_pack.size * 2;
+	crDebug( "-=-=-=- Growing the buffer to %d -=-=-=-", newSize );
+
 	crPackInitBuffer( &(thread->geometry_pack),
-					  crAlloc( thread->geometry_pack.size << 1 ), 
-					  thread->geometry_pack.size << 1, (thread->geometry_pack.size << 1) - (24+END_FLUFF+8) );
+										crAlloc( newSize ), newSize,
+										newSize - (24+END_FLUFF+8) );
+
 	thread->geometry_pack.geometry_only = GL_TRUE;
 
+	/* Use the new geometry buffer */
 	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+
+	/* Copy the old buffer's contents into the new buffer */
 	crPackAppendBuffer(&(old_geometry_pack));
 
 	/* The location of the geometry buffer has changed, so we need to 
 	 * tell the state tracker to update its "current" pointers. 
 	 * The "offset" computed here does *not* require that the two 
-	 * buffers be contiguous -- in fact they almost certainly won't be. */
+	 * buffers be contiguous -- in fact they almost certainly won't be.
+	 */
+	crPackOffsetCurrentPointers( thread->packer->buffer.data_current -
+															 old_geometry_pack.data_current );
 
-	crPackOffsetCurrentPointers( old_geometry_pack.data_current - 
-															 thread->packer->buffer.data_current );
-
+	/* Discard the old, small buffer */
 	crFree( old_geometry_pack.pack );
 }

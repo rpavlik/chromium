@@ -48,10 +48,10 @@ typedef struct {
 
 void crStateFogInit(CRContext *ctx);
 
-void crStateFogDiff(CRFogBits *bb, CRbitvalue *bitID, 
-		CRFogState *from, CRFogState *to);
+void crStateFogDiff(CRFogBits *bb, CRbitvalue *bitID,
+                    CRContext *fromCtx, CRContext *toCtx);
 void crStateFogSwitch(CRFogBits *bb, CRbitvalue *bitID, 
-		CRFogState *from, CRFogState *to);
+                      CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

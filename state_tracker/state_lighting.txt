@@ -49,12 +49,12 @@
 :attenuation:linearAttenuation:Lightf, GL_LIGHT0+i, GL_LINEAR_ATTENUATION
 :attenuation:quadraticAttenuation:Lightf, GL_LIGHT0+i, GL_QUADRATIC_ATTENUATION
 :attenuation:constantAttenuation:Lightf, GL_LIGHT0+i, GL_CONSTANT_ATTENUATION
-:position:*diff_api.MatrixMode(GL_MODELVIEW);
+:position:*if (fromCtx->transform.matrixMode != GL_MODELVIEW) { diff_api.MatrixMode(GL_MODELVIEW); fromCtx->transform.matrixMode = GL_MODELVIEW; }
 :position:*diff_api.PushMatrix();
 :position:*diff_api.LoadIdentity();
 :position:position|x,y,z,w:Lightfv, GL_LIGHT0+i, GL_POSITION
 :position:*diff_api.PopMatrix();
-:spot:*diff_api.MatrixMode(GL_MODELVIEW);
+:spot:*if (fromCtx->transform.matrixMode != GL_MODELVIEW) { diff_api.MatrixMode(GL_MODELVIEW); fromCtx->transform.matrixMode = GL_MODELVIEW; }
 :spot:*diff_api.PushMatrix();
 :spot:*diff_api.LoadIdentity();
 :spot:spotDirection|x,y,z:Lightfv, GL_LIGHT0+i, GL_SPOT_DIRECTION

@@ -66,54 +66,40 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchNewList( GLuint list, GLenum mode 
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchCallList( GLuint list )
 {
+	CRMuralInfo *mural = cr_server.curClient->currentMural;
+	int i;
+
 	list = TranslateListID( list );
 
+	if (!mural->viewportValidated) {
+		crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport),
+																	mural);
+	}
+
 	/* Loop over the extents (tiles) calling glCallList() */
-	{
-		CRMuralInfo *mural = cr_server.curClient->currentMural;
-		int i;
-		for ( i = 0; i < mural->numExtents; i++ )
-		{
-			CRExtent *extent = &mural->extents[i];
-
-			mural->curExtent = i;
-
-			if (cr_server.run_queue->client->currentCtx) {
-				crServerSetOutputBounds( cr_server.run_queue->client->currentCtx,
-																 &extent->outputwindow,
-																 &mural->imagespace,
-																 &extent->imagewindow,
-																 &extent->clippedImagewindow);
-			}
-
-			cr_server.head_spu->dispatch_table.CallList( list );
-		}
+	for ( i = 0; i < mural->numExtents; i++ )	{
+		if (cr_server.run_queue->client->currentCtx)
+			crServerSetOutputBounds( mural, i );
+		cr_server.head_spu->dispatch_table.CallList( list );
 	}
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchCallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
+	CRMuralInfo *mural = cr_server.curClient->currentMural;
+	int i;
+
 	/* XXX not sure what to do here, in terms of ID translation */
+
+	if (!mural->viewportValidated) {
+		crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport), mural);
+	}
+
 	/* Loop over the extents (tiles) calling glCallList() */
-	{
-		CRMuralInfo *mural = cr_server.curClient->currentMural;
-		int i;
-		for ( i = 0; i < mural->numExtents; i++ )
-		{
-			CRExtent *extent = &mural->extents[i];
-
-			mural->curExtent = i;
-
-			if (cr_server.run_queue->client->currentCtx) {
-				crServerSetOutputBounds( cr_server.run_queue->client->currentCtx,
-																 &extent->outputwindow,
-																 &mural->imagespace,
-																 &extent->imagewindow,
-																 &extent->clippedImagewindow);
-			}
-
-			cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
-		}
+	for ( i = 0; i < mural->numExtents; i++ ) {
+		if (cr_server.run_queue->client->currentCtx)
+				crServerSetOutputBounds( mural, i );
+		cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
 	}
 }
 

@@ -36,6 +36,8 @@ typedef struct {
 	GLboolean holds_BeginEnd;
 	GLboolean in_BeginEnd;
 	GLboolean canBarf;
+	GLboolean holds_List;
+	GLboolean in_List;
 } CRPackBuffer;
 
 typedef void (*CRPackFlushFunc)(void *arg);

@@ -116,17 +116,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 
 	/* check if being made current for first time, update viewport */
 	if (ctx) {
-		if (ctx->viewport.outputDims.x1 == 0 &&
-				ctx->viewport.outputDims.x2 == 0 &&
-				ctx->viewport.outputDims.y1 == 0 &&
-				ctx->viewport.outputDims.y2 == 0) {
-			ctx->viewport.outputDims.x1 = mural->underlyingDisplay[0];
-			ctx->viewport.outputDims.x2 = mural->underlyingDisplay[2];
-			ctx->viewport.outputDims.y1 = mural->underlyingDisplay[1];
-			ctx->viewport.outputDims.y2 = mural->underlyingDisplay[3];
-			/* this requires a GL context */
-			crServerBeginTiling(mural);
-		}
+		/* initialize the viewport */
 		if (ctx->viewport.viewportW == 0) {
 			ctx->viewport.viewportW = mural->width;
 			ctx->viewport.viewportH = mural->height;
@@ -150,5 +140,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 		cr_server.currentWindow = window;
 		cr_server.currentNativeWindow = nativeWindow;
 	}
+
+	/* This is pessimistic - we really don't have to invalidate the viewport
+	 * info every time we MakeCurrent, but play it safe for now.
+	 */
+	mural->viewportValidated = GL_FALSE;
 }
 

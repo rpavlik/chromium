@@ -42,8 +42,8 @@ typedef struct {
    	GLfloat hitMinZ, hitMaxZ;
 } CRSelectionState;
 
-extern void crStateFeedbackDiff(CRFeedbackBits *bb, CRbitvalue *bitID, 
-                                CRFeedbackState *from, CRFeedbackState *to);
+extern void crStateFeedbackDiff(CRFeedbackState *from, CRFeedbackState *to,
+                                CRFeedbackBits *bb, CRbitvalue *bitID);
 extern void crStateFeedbackSwitch(CRFeedbackBits *bb, CRbitvalue *bitID, 
                                   CRFeedbackState *from, CRFeedbackState *to);
 

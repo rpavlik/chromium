@@ -534,7 +534,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	static const CRrecti nullscreen = {0, 0, 0, 0};
 	GET_CONTEXT(g);
 	CRTransformState *t = &(g->transform);
-	CRmatrix *m = &(t->transform);
+	const CRmatrix *m = &(t->transform);
 	float xmin, ymin, xmax, ymax, zmin, zmax;
 	CRrecti ibounds;
 	int i, j;

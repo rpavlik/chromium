@@ -25,10 +25,10 @@ typedef struct {
 	CRrectf bounds;         /* normalized coordinates in [-1,-1] x [1,1] */
 	CRrecti outputwindow;   /* coordinates in server's rendering window */
 	CRrecti clippedImagewindow;  /* imagewindow clipped to current viewport */
-	/* XXX these aren't used yet */
 	CRmatrix baseProjection;  /* pre-multiplied onto projection matrix */
 	CRrecti scissorBox;     /* passed to back-end OpenGL */
 	CRrecti viewport;       /* passed to back-end OpenGL */
+	GLuint serialNo;        /* an optimization */
 } CRExtent;
 
 struct BucketingInfo;
@@ -47,6 +47,8 @@ typedef struct {
 
 	unsigned int underlyingDisplay[4]; /* needed for laying out the extents */
 
+	GLboolean viewportValidated;
+
 } CRMuralInfo;
 
 /*
@@ -60,9 +62,8 @@ typedef struct {
 	CRContext *currentCtx;
 	GLint currentWindow;
 	CRMuralInfo *currentMural;
-
-	CRmatrix baseProjection;  /* really per-mural tile info */
 } CRClient;
+
 
 typedef struct CRPoly_t {
 	int npoints;
@@ -140,6 +141,8 @@ typedef struct {
 	CRHashTable *barriers, *semaphores;
 
 	RunQueue *run_queue;
+
+	GLuint currentSerialNo;
 } CRServer;
 
 

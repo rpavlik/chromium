@@ -165,19 +165,20 @@ void STATE_APIENTRY crStateListBase (GLuint base)
 }
 
 void crStateListsDiff( CRListsBits *b, CRbitvalue *bitID, 
-		CRListsState *from, CRListsState *to )
+		CRContext *fromCtx, CRContext *toCtx )
 {
 	(void) b;
 	(void) bitID;
-	(void) from;
-	(void) to;
+	(void) fromCtx;
+	(void) toCtx;
 }
 
 void crStateListsSwitch( CRListsBits *b, CRbitvalue *bitID, 
-		CRListsState *from, CRListsState *to )
+		CRContext *fromCtx, CRContext *toCtx )
+
 {
 	(void) b;
 	(void) bitID;
-	(void) from;
-	(void) to;
+	(void) fromCtx;
+	(void) toCtx;
 }

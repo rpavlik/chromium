@@ -17,114 +17,94 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 
 	if (CHECKDIRTY(sb->transform.dirty, bitID))
 	{
-		crStateTransformDiff (to->limits.maxTextureUnits, &(sb->transform), bitID,
-							 &(from->transform), &(to->transform));
+		crStateTransformDiff( &(sb->transform), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->pixel.dirty, bitID))
 	{
-		crStatePixelDiff	(&(sb->pixel), bitID,
-							 &(from->pixel), &(to->pixel));
+		crStatePixelDiff( &(sb->pixel), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->viewport.dirty, bitID))
 	{
-		crStateViewportDiff	(&(sb->viewport), bitID,
-								 &(from->viewport), &(to->viewport));
+		crStateViewportDiff( &(sb->viewport), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->fog.dirty, bitID))
 	{
-		crStateFogDiff	(&(sb->fog), bitID,
-							 &(from->fog), &(to->fog));
+		crStateFogDiff( &(sb->fog), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->texture.dirty, bitID))
 	{
-		crStateTextureDiff	(from, &(sb->texture), bitID,
-							 &(from->texture), &(to->texture));
+		crStateTextureDiff( &(sb->texture), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->lists.dirty, bitID))
 	{
-		crStateListsDiff	(&(sb->lists), bitID,
-							 &(from->lists), &(to->lists));
+		crStateListsDiff( &(sb->lists), bitID, from, to );
 	}
 #if 0
 	if (CHECKDIRTY(sb->client.dirty, bitID))
 	{
-		crStateClientDiff	(&(sb->client), bitID,
-							 &(from->client), &(to->client));
+		crStateClientDiff(&(sb->client), bitID, from, to );
 	}
 #endif
 	if (CHECKDIRTY(sb->buffer.dirty, bitID))
 	{
-		crStateBufferDiff	(&(sb->buffer), bitID,
-							 &(from->buffer), &(to->buffer));
+		crStateBufferDiff( &(sb->buffer), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->hint.dirty, bitID))
 	{
-		crStateHintDiff	(&(sb->hint), bitID,
-							 &(from->hint), &(to->hint));
+		crStateHintDiff( &(sb->hint), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->lighting.dirty, bitID))
 	{
-		crStateLightingDiff	(&(sb->lighting), bitID,
-								 &(from->lighting), &(to->lighting));
+		crStateLightingDiff( &(sb->lighting), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->line.dirty, bitID))
 	{
-		crStateLineDiff	(&(sb->line), bitID,
-							 &(from->line), &(to->line));
+		crStateLineDiff( &(sb->line), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->point.dirty, bitID))
 	{
-		crStatePointDiff (&(sb->point), bitID,
-							 &(from->point), &(to->point));
+		crStatePointDiff( &(sb->point), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->polygon.dirty, bitID))
 	{
-		crStatePolygonDiff	(&(sb->polygon), bitID,
-							 &(from->polygon), &(to->polygon));
+		crStatePolygonDiff( &(sb->polygon), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->stencil.dirty, bitID))
 	{
-		crStateStencilDiff	(&(sb->stencil), bitID,
-							 &(from->stencil), &(to->stencil));
+		crStateStencilDiff( &(sb->stencil), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->eval.dirty, bitID))
 	{
-		crStateEvaluatorDiff	(&(sb->eval), bitID,
-							 &(from->eval), &(to->eval));
+		crStateEvaluatorDiff( &(sb->eval), bitID, from, to );
 	}
 #ifdef CR_ARB_imaging
 	if (CHECKDIRTY(sb->imaging.dirty, bitID))
 	{
-		crStateImagingDiff	(&(sb->imaging), bitID,
-							 &(from->imaging), &(to->imaging));
+		crStateImagingDiff( &(sb->imaging), bitID, from, to );
 	}
 #endif
 #if 0
 	if (CHECKDIRTY(sb->selection.dirty, bitID))
 	{
-		crStateSelectionDiff	(&(sb->selection), bitID,
-								 &(from->selection), &(to->selection));
+		crStateSelectionDiff( &(sb->selection), bitID, from, to );
 	}
 #endif
 #ifdef CR_NV_register_combiners
 	if (CHECKDIRTY(sb->regcombiner.dirty, bitID) && to->extensions.NV_register_combiners)
 	{
-		crStateRegCombinerDiff	(&(sb->regcombiner), bitID,
-								 &(from->regcombiner), &(to->regcombiner));
+		crStateRegCombinerDiff( &(sb->regcombiner), bitID, from, to );
 	}
 #endif
 #ifdef CR_ARB_multisample
-	if (CHECKDIRTY(sb->multisample.dirty, bitID))
+	if (CHECKDIRTY(sb->multisample.dirty, bitID) &&
+			from->extensions.ARB_multisample)
 	{
-		crStateMultisampleDiff	(&(sb->multisample), bitID,
-							 &(from->multisample), &(to->multisample));
+		crStateMultisampleDiff( &(sb->multisample), bitID, from, to );
 	}
 #endif
-
 	if (CHECKDIRTY(sb->current.dirty, bitID))
 	{
-		crStateCurrentDiff	(&(sb->current), bitID,
-							 &(from->current), &(to->current));
+		crStateCurrentDiff( &(sb->current), bitID, from, to );
 	}
 }
 
@@ -135,119 +115,98 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 
 	if (CHECKDIRTY(sb->attrib.dirty, bitID))
 	{
-		crStateAttribSwitch (&(sb->attrib), bitID,
-							 &(from->attrib), &(to->attrib));
+		crStateAttribSwitch(&(sb->attrib), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->transform.dirty, bitID))
 	{
-		crStateTransformSwitch (to->limits.maxTextureUnits, &(sb->transform), bitID,
-							 &(from->transform), &(to->transform));
+		crStateTransformSwitch( &(sb->transform), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->pixel.dirty, bitID))
 	{
-		crStatePixelSwitch	(&(sb->pixel), bitID,
-							 &(from->pixel), &(to->pixel));
+		crStatePixelSwitch(&(sb->pixel), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->viewport.dirty, bitID))
 	{
-		crStateViewportSwitch	(&(sb->viewport), bitID,
-								 &(from->viewport), &(to->viewport));
+		crStateViewportSwitch(&(sb->viewport), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->fog.dirty, bitID))
 	{
-		crStateFogSwitch	(&(sb->fog), bitID,
-							 &(from->fog), &(to->fog));
+		crStateFogSwitch(&(sb->fog), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->texture.dirty, bitID))
 	{
-		crStateTextureSwitch	(from, &(sb->texture), bitID,
-							 &(from->texture), &(to->texture));
+		crStateTextureSwitch( &(sb->texture), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->lists.dirty, bitID))
 	{
-		crStateListsSwitch	(&(sb->lists), bitID,
-							 &(from->lists), &(to->lists));
+		crStateListsSwitch(&(sb->lists), bitID, from, to );
 	}
 #if 0
 	if (CHECKDIRTY(sb->client.dirty, bitID))
 	{
-		crStateClientSwitch	(&(sb->client), bitID,
-							 &(from->client), &(to->client));
+		crStateClientSwitch( &(sb->client), bitID, from, to );
 	}
 #endif
 	if (CHECKDIRTY(sb->buffer.dirty, bitID))
 	{
-		crStateBufferSwitch	(&(sb->buffer), bitID,
-							 &(from->buffer), &(to->buffer));
+		crStateBufferSwitch( &(sb->buffer), bitID, from, to );
 	}
 #if 0
 	if (CHECKDIRTY(sb->hint.dirty, bitID))
 	{
-		crStateHintSwitch	(&(sb->hint), bitID,
-							 &(from->hint), &(to->hint));
+		crStateHintSwitch( &(sb->hint), bitID, from, to );
 	}
 #endif
 	if (CHECKDIRTY(sb->lighting.dirty, bitID))
 	{
-		crStateLightingSwitch	(&(sb->lighting), bitID,
-								 &(from->lighting), &(to->lighting));
+		crStateLightingSwitch( &(sb->lighting), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->line.dirty, bitID))
 	{
-		crStateLineSwitch	(&(sb->line), bitID,
-							 &(from->line), &(to->line));
+		crStateLineSwitch( &(sb->line), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->point.dirty, bitID))
 	{
-		crStatePointSwitch	(&(sb->point), bitID,
-							 &(from->point), &(to->point));
+		crStatePointSwitch( &(sb->point), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->polygon.dirty, bitID))
 	{
-		crStatePolygonSwitch	(&(sb->polygon), bitID,
-							 &(from->polygon), &(to->polygon));
+		crStatePolygonSwitch( &(sb->polygon), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->stencil.dirty, bitID))
 	{
-		crStateStencilSwitch	(&(sb->stencil), bitID,
-							 &(from->stencil), &(to->stencil));
+		crStateStencilSwitch( &(sb->stencil), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->eval.dirty, bitID))
 	{
-		crStateEvaluatorSwitch	(&(sb->eval), bitID,
-							 &(from->eval), &(to->eval));
+		crStateEvaluatorSwitch( &(sb->eval), bitID, from, to );
 	}
 #ifdef CR_ARB_imaging
 	if (CHECKDIRTY(sb->imaging.dirty, bitID))
 	{
-		crStateImagingSwitch	(&(sb->imaging), bitID,
-							 &(from->imaging), &(to->imaging));
+		crStateImagingSwitch( &(sb->imaging), bitID, from, to );
 	}
 #endif
 #if 0
 	if (CHECKDIRTY(sb->selection.dirty, bitID))
 	{
-		crStateSelectionSwitch	(&(sb->selection), bitID,
-								 &(from->selection), &(to->selection));
+		crStateSelectionSwitch( &(sb->selection), bitID, from, to );
 	}
 #endif
 #ifdef CR_NV_register_combiners
 	if (CHECKDIRTY(sb->regcombiner.dirty, bitID) && to->extensions.NV_register_combiners)
 	{
-		crStateRegCombinerSwitch	(&(sb->regcombiner), bitID,
-									 &(from->regcombiner), &(to->regcombiner));
+		crStateRegCombinerSwitch( &(sb->regcombiner), bitID, from, to );
 	}
 #endif
 #ifdef CR_ARB_multisample
 	if (CHECKDIRTY(sb->multisample.dirty, bitID))
 	{
-		crStateMultisampleSwitch	(&(sb->multisample), bitID,
-							 &(from->multisample), &(to->multisample));
+		crStateMultisampleSwitch( &(sb->multisample), bitID, from, to );
 	}
 #endif
 	if (CHECKDIRTY(sb->current.dirty, bitID))
 	{
-		crStateCurrentSwitch(to->limits.maxTextureUnits, &(sb->current), bitID,
-							 &(from->current), &(to->current));
+		crStateCurrentSwitch( &(sb->current), bitID, from, to );
 	}
 }

@@ -37,6 +37,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 	{
 		int scissor_on, i;
 
+		if (!mural->viewportValidated) {
+			crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport), mural);
+		}
+
+
 		scissor_on = q->client->currentCtx->viewport.scissorTest;
 
 		if (!scissor_on)
@@ -46,10 +51,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 
 		for ( i = 0; i < mural->numExtents; i++ )
 		{
-			CRExtent *extent = &mural->extents[i];
-			crServerSetOutputBounds( q->client->currentCtx, &extent->outputwindow,
-															 &mural->imagespace, &extent->imagewindow,
-															 &extent->clippedImagewindow);
+			crServerSetOutputBounds( mural, i );
 			cr_server.head_spu->dispatch_table.Clear( mask );
 		}
 		if (!scissor_on)
@@ -93,6 +95,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint f
 		GLenum mm, blendSrc, blendDst;
 		GLcolorf col;
 		CRContext *ctx = crStateGetCurrent();
+		const CRmatrix *baseProj;
 
 		/* 
 		 * I've probably missed some state here, or it
@@ -129,14 +132,16 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint f
 		blend	 = ctx->buffer.blend;
 		blendSrc = ctx->buffer.blendSrcRGB;
 		blendDst = ctx->buffer.blendDstRGB;
-		mm		 = ctx->transform.mode;
+		mm = ctx->transform.matrixMode;
 		crMemcpy(&col, &ctx->current.color, sizeof(GLcolorf));
+
+		baseProj = &(cr_server.curClient->currentMural->extents[0].baseProjection);
 	
 		switch(mm)
 		{
 				case GL_PROJECTION:
 					cr_server.head_spu->dispatch_table.PushMatrix();
-					cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.curClient->baseProjection) );
+					cr_server.head_spu->dispatch_table.LoadMatrixf((GLfloat *) baseProj);
 					cr_server.head_spu->dispatch_table.MultMatrixf(cr_server.unnormalized_alignment_matrix);
 					cr_server.head_spu->dispatch_table.MatrixMode(GL_MODELVIEW);
 					cr_server.head_spu->dispatch_table.PushMatrix();
@@ -152,7 +157,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint f
 					cr_server.head_spu->dispatch_table.LoadIdentity();
 					cr_server.head_spu->dispatch_table.MatrixMode(GL_PROJECTION);
 					cr_server.head_spu->dispatch_table.PushMatrix();
-					cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.curClient->baseProjection) );
+					cr_server.head_spu->dispatch_table.LoadMatrixf((GLfloat *) baseProj);
 					cr_server.head_spu->dispatch_table.MultMatrixf(cr_server.unnormalized_alignment_matrix);
 					break;	
 		}

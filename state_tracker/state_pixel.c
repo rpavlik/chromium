@@ -521,8 +521,10 @@ void STATE_APIENTRY crStateGetPixelMapusv (GLenum map, GLushort * values)
 }
 
 void crStatePixelDiff(CRPixelBits *b, CRbitvalue *bitID,
-	CRPixelState *from, CRPixelState *to)
+                      CRContext *fromCtx, CRContext *toCtx)
 {
+	CRPixelState *from = &(fromCtx->pixel);
+	CRPixelState *to = &(toCtx->pixel);
 	int j, i;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 	for (j=0;j<CR_MAX_BITARRAY;j++)
@@ -642,8 +644,10 @@ void crStatePixelDiff(CRPixelBits *b, CRbitvalue *bitID,
 }
 
 void crStatePixelSwitch(CRPixelBits *b, CRbitvalue *bitID,
-	CRPixelState *from, CRPixelState *to)
+                      CRContext *fromCtx, CRContext *toCtx)
 {
+	CRPixelState *from = &(fromCtx->pixel);
+	CRPixelState *to = &(toCtx->pixel);
 	int j, i;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 	for (j=0;j<CR_MAX_BITARRAY;j++)

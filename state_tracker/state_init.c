@@ -48,7 +48,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
 	crStateLimitsInit( &(ctx->limits) );
 	crStateExtensionsInit( &(ctx->limits), &(ctx->extensions) );
 
-	crStateClientInit( &(ctx->limits), &(ctx->client) );
+	crStateClientInit( &(ctx->client) );
 
 	crStateBufferInit( ctx );
 	crStateCurrentInit( ctx );

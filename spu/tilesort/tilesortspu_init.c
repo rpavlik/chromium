@@ -74,11 +74,22 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 
 	if (tilesort_spu.MTU > thread0->net[0].conn->mtu) {
 		tilesort_spu.MTU = thread0->net[0].conn->mtu;
+	}
 
 	/* get a buffer which can hold one big big opcode (counter computing
-	 * against packer/pack_buffer.c) */
-		tilesort_spu.buffer_size = ((((tilesort_spu.MTU - sizeof(CRMessageOpcodes) ) * 5 + 3) / 4 + 0x3) & ~0x3) + sizeof(CRMessageOpcodes);
-	}
+	 * against packer/pack_buffer.c)
+	 */
+	tilesort_spu.buffer_size = ((((tilesort_spu.MTU - sizeof(CRMessageOpcodes) ) * 5 + 3) / 4 + 0x3) & ~0x3) + sizeof(CRMessageOpcodes);
+
+	tilesort_spu.geom_buffer_size = tilesort_spu.buffer_size;
+
+	/* 24 is the size of the bounds info packet
+	 * END_FLUFF is the size of data of End
+	 * 4 since BoundsInfo opcode may take a whole 4 bytes
+	 * and 4 to let room for extra End's opcode, if needed
+	 */
+	tilesort_spu.geom_buffer_mtu = tilesort_spu.MTU - (24+END_FLUFF+4+4);
+
 	tilesort_spu.swap = thread0->net[0].conn->swap;
 
 	tilesortspuInitThreadPacking( thread0 );

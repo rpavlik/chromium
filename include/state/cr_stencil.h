@@ -37,10 +37,10 @@ typedef struct {
 
 void crStateStencilInit(CRContext *ctx);
 
-void crStateStencilDiff(CRStencilBits *bb, CRbitvalue *bitID, 
-		CRStencilState *from, CRStencilState *to);
+void crStateStencilDiff(CRStencilBits *bb, CRbitvalue *bitID,
+                        CRContext *fromCtx, CRContext *toCtx);
 void crStateStencilSwitch(CRStencilBits *bb, CRbitvalue *bitID, 
-		CRStencilState *from, CRStencilState *to);
+                          CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

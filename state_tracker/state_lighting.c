@@ -166,6 +166,10 @@ void STATE_APIENTRY crStateColorMaterial (GLenum face, GLenum mode)
 
 	l->colorMaterialFace = face;
 	l->colorMaterialMode = mode;
+	/* XXX this could conceivably be needed here (BP) */
+	/*
+	crStateColorMaterialRecover();
+	*/
 	DIRTY(lb->colorMaterial, g->neg_bitid);
 	DIRTY(lb->dirty, g->neg_bitid);
 }
@@ -523,6 +527,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->ambient[0].g = param[1];
 					l->ambient[0].b = param[2];
 					l->ambient[0].a = param[3];
+					/* FALLTHROUGH! */
 				case GL_BACK:
 					l->ambient[1].r = param[0];
 					l->ambient[1].g = param[1];
@@ -548,6 +553,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->ambient[0].g = param[1];
 					l->ambient[0].b = param[2];
 					l->ambient[0].a = param[3];
+					/* FALLTHROUGH! */
 				case GL_BACK:
 					l->ambient[1].r = param[0];
 					l->ambient[1].g = param[1];
@@ -558,6 +564,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
 					return;
 			}
+			/* FALLTHROUGH! */
 		case GL_DIFFUSE :
 			switch (face)
 			{
@@ -572,6 +579,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->diffuse[0].g = param[1];
 					l->diffuse[0].b = param[2];
 					l->diffuse[0].a = param[3];
+					/* FALLTHROUGH! */
 				case GL_BACK:
 					l->diffuse[1].r = param[0];
 					l->diffuse[1].g = param[1];
@@ -597,6 +605,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->specular[0].g = param[1];
 					l->specular[0].b = param[2];
 					l->specular[0].a = param[3];
+					/* FALLTHROUGH! */
 				case GL_BACK:
 					l->specular[1].r = param[0];
 					l->specular[1].g = param[1];
@@ -622,6 +631,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->emission[0].g = param[1];
 					l->emission[0].b = param[2];
 					l->emission[0].a = param[3];
+					/* FALLTHROUGH! */
 				case GL_BACK:
 					l->emission[1].r = param[0];
 					l->emission[1].g = param[1];
@@ -647,6 +657,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					break;
 				case GL_FRONT_AND_BACK:
 					l->shininess[0] = *param;
+					/* FALLTHROUGH! */
 				case GL_BACK:
 					l->shininess[1] = *param;
 					break;
@@ -667,6 +678,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->indexes[0][0] = (GLint) param[0];
 					l->indexes[0][1] = (GLint) param[1];
 					l->indexes[0][2] = (GLint) param[2];
+					/* FALLTHROUGH! */
 				case GL_BACK:
 					l->indexes[1][0] = (GLint) param[0];
 					l->indexes[1][1] = (GLint) param[1];

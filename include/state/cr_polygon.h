@@ -39,10 +39,10 @@ typedef struct {
 
 void crStatePolygonInit(CRContext *ctx);
 
-void crStatePolygonDiff(CRPolygonBits *bb, CRbitvalue *bitID, 
-		CRPolygonState *from, CRPolygonState *to);
+void crStatePolygonDiff(CRPolygonBits *bb, CRbitvalue *bitID,
+                        CRContext *fromCtx, CRContext *toCtx);
 void crStatePolygonSwitch(CRPolygonBits *bb, CRbitvalue *bitID, 
-		CRPolygonState *from, CRPolygonState *to);
+                          CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

@@ -37,7 +37,6 @@ typedef struct {
 void crServerGatherConfiguration(char *mothership);
 void crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural );
 void crServerInitializeTiling(CRMuralInfo *mural);
-void crServerBeginTiling(CRMuralInfo *mural);
 void crServerInitDispatch(void);
 void crServerReturnValue( const void *payload, unsigned int payload_len );
 void crServerWriteback(void);
@@ -45,14 +44,10 @@ int crServerRecv( CRConnection *conn, void *buf, unsigned int len );
 void crServerSerializeRemoteStreams(void);
 void crServerAddToRunQueue( CRClient *client );
 
-void crServerRecomputeBaseProjection(CRmatrix *base, GLint x, GLint y, GLint w, GLint h);
-void crServerApplyBaseProjection(void);
+void crServerApplyBaseProjection( const CRmatrix *baseProj );
+void crServerSetOutputBounds( const CRMuralInfo *mural, int extNum );
+void crServerComputeViewportBounds( CRViewportState *v, CRMuralInfo *mural );
 
-void crServerComputeOutputBounds( CRMuralInfo *mural, CRContext *ctx );
-
-void crServerSetOutputBounds( CRContext *ctx, const CRrecti *outputwindow, const CRrecti *imagespace, const CRrecti *imagewindow, CRrecti *clippedImagewindow );
-void crServerSetViewportBounds( CRViewportState *v, const CRrecti *outputwindow, const CRrecti *imagespace, const CRrecti *imagewindow, CRrecti *p, CRrecti *q );
-void crServerSetTransformBounds( CRTransformState *t, const CRrecti *outputwindow, CRrecti *p, CRrecti *q );
 GLboolean crServerInitializeBucketing(CRMuralInfo *mural);
 
 void crServerNewMuralTiling(CRMuralInfo *mural, int muralWidth, int muralHeight, int numTiles, const int *tileBounds);

@@ -857,9 +857,11 @@ crStateMapGrid2d(GLint un, GLdouble u1, GLdouble u2,
 }
 
 void
-crStateEvaluatorSwitch(CREvaluatorBits * e, CRbitvalue * bitID,
-											 CREvaluatorState * from, CREvaluatorState * to)
+crStateEvaluatorSwitch(CREvaluatorBits *e, CRbitvalue * bitID,
+											 CRContext *fromCtx, CRContext *toCtx)
 {
+	CREvaluatorState *from = &(fromCtx->eval);
+	CREvaluatorState *to = &(toCtx->eval);
 	int i, j;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
@@ -946,9 +948,11 @@ crStateEvaluatorSwitch(CREvaluatorBits * e, CRbitvalue * bitID,
 }
 
 void
-crStateEvaluatorDiff(CREvaluatorBits * e, CRbitvalue * bitID,
-										 CREvaluatorState * from, CREvaluatorState * to)
+crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
+                     CRContext *fromCtx, CRContext *toCtx)
 {
+	CREvaluatorState *from = &(fromCtx->eval);
+	CREvaluatorState *to = &(toCtx->eval);
 	glAble able[2];
 	int i, j;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];

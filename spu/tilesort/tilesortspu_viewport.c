@@ -112,7 +112,7 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 	GLenum oldmode;
 
 	/* save current matrix mode */
-	oldmode = t->mode;
+	oldmode = t->matrixMode;
 	
 	/* save current viewport dims */
 	oldViewportX = v->viewportX;
@@ -146,6 +146,6 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 													 v->scissorW, v->scissorH );
 	}
 
-	if (t->mode != oldmode)
-		crStateMatrixMode(t->mode);
+	if (t->matrixMode != oldmode)
+		crStateMatrixMode(t->matrixMode);
 }

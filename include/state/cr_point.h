@@ -37,10 +37,10 @@ typedef struct {
 
 void crStatePointInit (CRContext *ctx);
 
-void crStatePointDiff(CRPointBits *bb, CRbitvalue *bitID, 
-		CRPointState *from, CRPointState *to);
+void crStatePointDiff(CRPointBits *bb, CRbitvalue *bitID,
+                      CRContext *fromCtx, CRContext *toCtx);
 void crStatePointSwitch(CRPointBits *bb, CRbitvalue *bitID, 
-		CRPointState *from, CRPointState *to);
+                        CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

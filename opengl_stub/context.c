@@ -704,6 +704,27 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		}
 	}
 
+	if (!window->width && window->type == CHROMIUM) {
+		/* Now call Viewport to setup initial parameters */
+		int x, y;
+		unsigned int winW, winH;
+
+		stubGetWindowGeometry( window, &x, &y, &winW, &winH );
+
+		/* If we're not using GLX/WGL (no app window) we'll always get
+		 * a width and height of zero here.  In that case, skip the viewport
+		 * call since we're probably using a tilesort SPU with fake_window_dims
+		 * which the tilesort SPU will use for the viewport.
+		 */
+		if (winW > 0 && winH > 0)
+			stub.spu->dispatch_table.Viewport( 0, 0, winW, winH );
+
+		window->width = winW;
+		window->height = winH;
+		if (stub.trackWindowSize)
+			stub.spuDispatch.WindowSize( window->spuWindow, winW, winH );
+	}
+
 	return retVal;
 }
 

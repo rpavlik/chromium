@@ -13,18 +13,20 @@
 extern "C" {
 #endif
 
+#define NUM_MATRICES 4
+
 typedef struct {
 	CRbitvalue dirty[CR_MAX_BITARRAY];
-	CRbitvalue mode[CR_MAX_BITARRAY];
-	CRbitvalue matrix[4][CR_MAX_BITARRAY];
+	CRbitvalue matrixMode[CR_MAX_BITARRAY];
+	CRbitvalue matrix[NUM_MATRICES][CR_MAX_BITARRAY];
 	CRbitvalue clipPlane[CR_MAX_BITARRAY];
 	CRbitvalue enable[CR_MAX_BITARRAY];
 	CRbitvalue base[CR_MAX_BITARRAY];
 } CRTransformBits;
 
 typedef struct {
-	GLenum    mode;
-	GLint    matrixid;
+	GLenum   matrixMode;
+	GLint    matrixid;    /* 0=modelview, 1=projection, 2=texture, 3=color */
 
 	GLint    maxDepth;		/* Max depth of current matrix stack/mode */
 
@@ -32,7 +34,7 @@ typedef struct {
 	GLint    projectionDepth;
 	GLint    textureDepth[CR_MAX_TEXTURE_UNITS];
 	GLint    colorDepth;
-	GLint    *depth;
+	GLint    *depth;      /* points to one of above depth fields */
 
 	GLvectord  *clipPlane;
 	GLboolean  *clip;
@@ -69,12 +71,11 @@ void crStateTransformXformPointMatrixd(CRmatrix *m, GLvectord *p);
 void crStateTransformInvertTransposeMatrix(CRmatrix *inv, CRmatrix *mat);
 void crStateTransformNormalizedDims(CRrectf *p, CRrecti *r, CRrecti *q);
 
-void crStateTransformDiff(GLuint maxTextureUnits,
-		CRTransformBits *bb, CRbitvalue *bitID, 
-		CRTransformState *from, CRTransformState *to);
-void crStateTransformSwitch(GLuint maxTextureUnits, 
-		CRTransformBits *bb, CRbitvalue *bitID, 
-		CRTransformState *from, CRTransformState *to);
+void crStateTransformDiff(CRTransformBits *t, CRbitvalue *bitID,
+                          CRContext *fromCtx, CRContext *toCtx);
+
+void crStateTransformSwitch(CRTransformBits *bb, CRbitvalue *bitID, 
+                            CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

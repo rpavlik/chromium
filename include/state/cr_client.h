@@ -88,11 +88,11 @@ typedef struct {
 } CRClientState;
 
 void crStateClientInitBits(CRClientBits *c);
-void crStateClientInit (CRLimitsState *limits, CRClientState *c);
-void crStateClientDestroy (CRClientState *c);
+void crStateClientInit(CRClientState *c);
+void crStateClientDestroy(CRClientState *c);
 
-void crStateClientDiff(CRClientBits *bb, CRbitvalue *bitID,
-		CRClientState *from, CRClientState *to);
+void crStateClientDiff(CRClientState *from, CRClientState *to,
+											 CRClientBits *bb, CRbitvalue *bitID);		
 void crStateClientSwitch(CRClientBits *bb, CRbitvalue *bitID,
 		CRClientState *from, CRClientState *to);
 #ifdef __cplusplus

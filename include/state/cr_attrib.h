@@ -124,7 +124,10 @@ typedef struct {
 
 typedef struct {
 	GLboolean	lighting;
+	GLboolean	colorMaterial;
 	GLenum		shadeModel;
+	GLenum		colorMaterialMode;
+	GLenum		colorMaterialFace;
 	GLcolorf	ambient[2];
 	GLcolorf	diffuse[2];
 	GLcolorf	specular[2];
@@ -287,7 +290,7 @@ typedef struct {
 } CRTextureStack;
 
 typedef struct {
-	GLenum    mode;
+	GLenum matrixMode;
 	GLvectord  *clipPlane;
 	GLboolean  *clip;
 	GLboolean normalize;
@@ -374,7 +377,7 @@ void crStateAttribInit(CRAttribState *a);
 
 /* No diff! */
 void crStateAttribSwitch(CRAttribBits *bb, CRbitvalue *bitID, 
-		CRAttribState *from, CRAttribState *to);
+												 CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

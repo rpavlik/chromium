@@ -40,7 +40,7 @@ void crStateClientDestroy(CRClientState *c)
 	crFree( c->list );
 }
 
-void crStateClientInit(CRLimitsState *limits, CRClientState *c) 
+void crStateClientInit(CRClientState *c) 
 {
 	unsigned int i;
 
@@ -100,7 +100,7 @@ void crStateClientInit(CRLimitsState *limits, CRClientState *c)
 	c->n.type = GL_NONE;
 	c->n.stride = 0;
 	c->n.enabled = 0;
-	for (i = 0 ; i < limits->maxTextureUnits ; i++)
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
 		c->t[i].p = NULL;
 		c->t[i].size = 0;

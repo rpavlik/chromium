@@ -64,12 +64,12 @@ void crPackSendHugeFunc( CRPackContext *pc, CRPackSendHugeFunc shf )
 
 void crPackResetPointers( CRPackContext *pc )
 {
-	const GLboolean g = pc->buffer.geometry_only;   /* save this flag */
+	const GLboolean geom_only = pc->buffer.geometry_only;   /* save this flag */
 	const GLboolean holds_BeginEnd = pc->buffer.holds_BeginEnd;
 	const GLboolean in_BeginEnd = pc->buffer.in_BeginEnd;
 	const GLboolean canBarf = pc->buffer.canBarf;
 	crPackInitBuffer( &(pc->buffer), pc->buffer.pack, pc->buffer.size, pc->buffer.mtu );
-	pc->buffer.geometry_only = g;   /* restore the flag */
+	pc->buffer.geometry_only = geom_only;   /* restore the flag */
 	pc->buffer.holds_BeginEnd = holds_BeginEnd;
 	pc->buffer.in_BeginEnd = in_BeginEnd;
 	pc->buffer.canBarf = canBarf;
@@ -78,6 +78,8 @@ void crPackResetPointers( CRPackContext *pc )
 void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int mtu )
 {
 	unsigned int num_opcodes;
+
+	CRASSERT(mtu <= size);
 
 	buf->size = size;
 	buf->mtu  = mtu;
@@ -88,7 +90,7 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int mtu )
 
 	/* Don't forget to add one here, thanks to Ken Moreland for finding this */
 	num_opcodes = (( buf->size - sizeof(CRMessageOpcodes) ) / 5) + 1;
-	num_opcodes = (num_opcodes + 0x3) & (~0x3);
+	num_opcodes = (num_opcodes + 0x3) & (~0x3); /* round up to multiple of 4 */
 
 	buf->data_start    = 
 		(unsigned char *) buf->pack + num_opcodes + sizeof(CRMessageOpcodes);
@@ -154,17 +156,23 @@ void crPackAppendBuffer( const CRPackBuffer *src )
 	pc->buffer.opcode_current -= num_opcode;
 	pc->buffer.holds_BeginEnd |= src->holds_BeginEnd;
 	pc->buffer.in_BeginEnd = src->in_BeginEnd;
+	pc->buffer.holds_List |= src->holds_List;
 }
 
 
 void crPackAppendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 {
 	GET_PACKER_CONTEXT(pc);
-	int length = src->data_current - src->opcode_current - 1;
-	int len_aligned = (length + 3) & ~3;
+	const GLubyte *payload = (const GLubyte *) src->opcode_current + 1;
+	const int num_opcodes = src->opcode_start - src->opcode_current;
+	const int length = src->data_current - src->opcode_current - 1;
+	const int len_aligned = (length + 3) & ~3;
+
+	/*
+	 * payload points to the block of opcodes immediately followed by operands.
+	 */
 
 	/* 24 is the size of the bounds-info packet... */
-	
 	if ( !crPackCanHoldOpcode( 1, len_aligned + 24 ) )
 	{
 		if (src->holds_BeginEnd)
@@ -177,14 +185,13 @@ void crPackAppendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 	}
 
 	if (pc->swapping)
-		crPackBoundsInfoCRSWAP( bounds, (GLbyte *) src->opcode_current + 1,length,
-														src->opcode_start - src->opcode_current );
+		crPackBoundsInfoCRSWAP( bounds, payload, length, num_opcodes );
 	else
-		crPackBoundsInfoCR( bounds, (GLbyte *) src->opcode_current + 1, length,
-												src->opcode_start - src->opcode_current);
+		crPackBoundsInfoCR( bounds, payload, length, num_opcodes );
 
 	pc->buffer.holds_BeginEnd |= src->holds_BeginEnd;
 	pc->buffer.in_BeginEnd = src->in_BeginEnd;
+	pc->buffer.holds_List |= src->holds_List;
 }
 
 void *crPackAlloc( unsigned int size )

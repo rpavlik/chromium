@@ -30,7 +30,6 @@ static int QueueSize( void )
  */
 static void crServerAddNewClient( void )
 {
-	CRMuralInfo *mural = cr_server.curClient->currentMural;
 	CRClient *newClient;
 	int n;
 
@@ -66,9 +65,6 @@ static void crServerAddNewClient( void )
 	newClient->conn = crNetAcceptClient( cr_server.protocol, NULL, cr_server.tcpip_port, cr_server.mtu, 1 );
 
 	crServerAddToRunQueue( newClient );
-	if (mural && mural->numExtents > 0) {
-		 crServerRecomputeBaseProjection( &(newClient->baseProjection), 0, 0, mural->width, mural->height );
-	}
 
 	cr_server.numClients++;
 }
@@ -196,18 +192,13 @@ void crServerSerializeRemoteStreams(void)
 	for (;;)
 	{
 		RunQueue *q = __getNextClient();
-		CRClient *client;
 		CRMessage *msg;
 
 		/* no more clients, quit */
 		if (!q)
 			return;
 
-		client = q->client;
-
-		cr_server.curClient = client;
-
-		crStateMakeCurrent( client->currentCtx );
+		cr_server.curClient = q->client;
 
 		for( ;; )
 		{
@@ -218,13 +209,42 @@ void crServerSerializeRemoteStreams(void)
 			/* Don't use GetMessage, because it pulls stuff off
 			 * the network too quickly */
 			len = crNetPeekMessage( cr_server.curClient->conn, &msg );
-			if (len == 0)
-				break;
+			if (len == 0) {
+				if (cr_server.curClient->currentCtx &&
+						(cr_server.curClient->currentCtx->lists.currentIndex != 0 ||
+						 cr_server.curClient->currentCtx->current.inBeginEnd)) {
+					/* We're between glNewList/EndList or glBegin/End.  We can't
+					 * context switch because that'll screw things up.
+					 */
+					CRASSERT(!q->blocked);
+					continue;
+				}
+				else
+				{
+					/* get next client */
+					break;
+				}
+			}
+			else {
+				/*
+				printf("got %d bytes\n", len);
+				*/
+			}
+
+			CRASSERT(len > 0);
 
 			if (msg->header.type != CR_MESSAGE_OPCODES)
 			{
-				crError( "SPU %d sent me CRAP (type=0x%x)", client->spu_id, msg->header.type );
+				crError( "SPU %d sent me CRAP (type=0x%x)",
+								 cr_server.curClient->spu_id, msg->header.type );
 			}
+
+
+			/* Do the context switch here.  No sense in switching before we
+			 * really have any work to process.  This is a no-op if we're
+			 * not really switching contexts.
+			 */
+			crStateMakeCurrent( cr_server.curClient->currentCtx );
 
 			msg_opcodes = (CRMessageOpcodes *) msg;
 			data_ptr = (char *) msg_opcodes + 

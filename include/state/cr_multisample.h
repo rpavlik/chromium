@@ -33,10 +33,10 @@ typedef struct {
 
 void crStateMultisampleInit(CRContext *ctx);
 
-void crStateMultisampleDiff(CRMultisampleBits *bb, CRbitvalue *bitID, 
-		CRMultisampleState *from, CRMultisampleState *to);
+void crStateMultisampleDiff(CRMultisampleBits *bb, CRbitvalue *bitID,
+                            CRContext *fromCtx, CRContext *toCtx);
 void crStateMultisampleSwitch(CRMultisampleBits *bb, CRbitvalue *bitID, 
-		CRMultisampleState *from, CRMultisampleState *to);
+                              CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

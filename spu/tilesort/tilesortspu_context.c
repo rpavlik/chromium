@@ -19,8 +19,6 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 {
 	int i;
 
-	thread->geom_pack_size = tilesort_spu.buffer_size;
-
 	thread->pinchState.numRestore = 0;
 	thread->pinchState.wind = 0;
 	thread->pinchState.isLoop = 0;
@@ -31,12 +29,10 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 
 	crPackSetContext( thread->packer ); /* sets the packer's per-thread context */
 	crPackInitBuffer( &(thread->geometry_pack),
-										crAlloc( thread->geom_pack_size ), 
-										thread->geom_pack_size, tilesort_spu.MTU-(24+END_FLUFF+4+4));
-	/* 24 is the size of the bounds info packet */
-	/* END_FLUFF is the size of data of End */
-	/* 4 since BoundsInfo opcode may take a whole 4 bytes */
-	/* and 4 to let room for extra End's opcode, if needed */
+										crAlloc( tilesort_spu.geom_buffer_size ),
+										tilesort_spu.geom_buffer_size,
+										tilesort_spu.geom_buffer_mtu );
+
 	thread->geometry_pack.geometry_only = GL_TRUE;
 	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 	crPackFlushFunc( thread->packer, tilesortspuFlush_callback );
@@ -49,8 +45,10 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
-		crPackInitBuffer( &(thread->pack[i]), crNetAlloc( thread->net[i].conn ),
-											thread->net[i].conn->buffer_size, thread->net[i].conn->mtu );
+		crPackInitBuffer( &(thread->pack[i]),
+											crNetAlloc( thread->net[i].conn ),
+											thread->net[i].conn->buffer_size,
+											thread->net[i].conn->mtu );
 		if (thread->net[i].conn->Barf)
 		{
 			thread->pack[i].canBarf = GL_TRUE;
@@ -91,6 +89,7 @@ static ThreadInfo *tilesortspuNewThread( GLint slot )
 		thread->net[i].buffer_size = tilesort_spu.thread[0].net[i].buffer_size;
 		/* Establish new connection to server[i] */
 		crNetNewClient( tilesort_spu.thread[0].net[i].conn, &(thread->net[i]));
+		/* XXX why this code? */
 		if (tilesort_spu.MTU > thread->net[i].conn->mtu)
 			tilesort_spu.MTU = thread->net[i].conn->mtu;
 	}
@@ -389,18 +388,16 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 	if (newCtx && !newCtx->everCurrent) {
 		/* This is the first time the context has been made current.  Query
 		 * the servers' extension strings and update our notion of which
-		 * extensions we have, don't have.
+		 * extensions we have and don't have (for this context and the servers'
+		 * contexts).
 		 */
+		int i;
 		const GLubyte *ext = tilesortspuGetExtensionsString();
-		if (newCtx->State->limits.extensions)
-			crFree((void *) newCtx->State->limits.extensions);
-		newCtx->State->limits.extensions = ext;
-		crStateExtensionsInit(&(newCtx->State->limits),
-													&(newCtx->State->extensions)), 
+		crStateSetExtensionString( newCtx->State, ext );
+		for (i = 0; i < tilesort_spu.num_servers; i++)
+			crStateSetExtensionString(newCtx->server[i].State, ext);
 		newCtx->everCurrent = GL_TRUE;
-		/*
-		crDebug("Have IBM clip? %d", newCtx->State->extensions.IBM_rasterpos_clip);
-		*/
+		crFree((void *) ext);
 	}
 }
 

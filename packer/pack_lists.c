@@ -56,3 +56,28 @@ void PACK_APIENTRY crPackCallLists(GLint n, GLenum type,
 
 	crHugePacket( CR_CALLLISTS_OPCODE, data_ptr );
 }
+
+
+
+void PACK_APIENTRY crPackNewList( GLuint list, GLenum mode )
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	GET_BUFFERED_POINTER( pc, 8 );
+	WRITE_DATA( 0, GLuint, list );
+	WRITE_DATA( 4, GLenum, mode );
+	WRITE_OPCODE( pc, CR_NEWLIST_OPCODE );
+	pc->buffer.in_List = GL_TRUE;
+	pc->buffer.holds_List = GL_TRUE;
+}
+
+
+void PACK_APIENTRY crPackEndList( void )
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	GET_BUFFERED_POINTER_NO_ARGS( pc );
+	WRITE_OPCODE( pc, CR_ENDLIST_OPCODE );
+	pc->buffer.in_List = GL_FALSE;
+}
+

@@ -65,10 +65,10 @@ extern const int gleval_sizes[];
 void crStateEvaluatorInit (CRContext *ctx);
 void crStateEvaluatorDestroy (CRContext *ctx);
 
-void crStateEvaluatorDiff(CREvaluatorBits *bb, CRbitvalue *bitID, 
-		CREvaluatorState *from, CREvaluatorState *to);
-void crStateEvaluatorSwitch(CREvaluatorBits *bb, CRbitvalue *bitID, 
-		CREvaluatorState *from, CREvaluatorState *to);
+void crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
+                          CRContext *fromCtx, CRContext *toCtx);
+void crStateEvaluatorSwitch(CREvaluatorBits *e, CRbitvalue *bitID, 
+                            CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

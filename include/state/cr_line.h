@@ -30,10 +30,10 @@ typedef struct {
 
 void crStateLineInit (CRContext *ctx);
 
-void crStateLineDiff(CRLineBits *bb, CRbitvalue *bitID, 
-		CRLineState *from, CRLineState *to);
+void crStateLineDiff(CRLineBits *bb, CRbitvalue *bitID,
+                     CRContext *fromCtx, CRContext *toCtx);
 void crStateLineSwitch(CRLineBits *bb, CRbitvalue *bitID, 
-		CRLineState *from, CRLineState *to);
+                       CRContext *fromCtx, CRContext *toCtx);
 
 #ifdef __cplusplus
 }

@@ -138,29 +138,6 @@ crServerInitializeTiling(CRMuralInfo *mural)
 
 
 /*
- * After we've received the tile parameters from the mothership
- * we do all the initialization to perform tile sorting.
- * NOTE: we need to have a current rendering context at this point!!!
- */
-void crServerBeginTiling(CRMuralInfo *mural)
-{
-	if (mural->numExtents > 0)
-	{
-		unsigned int j;
-		for ( j = 0 ; j < cr_server.numClients ; j++)
-		{
-			crServerRecomputeBaseProjection( &(cr_server.clients[j].baseProjection),
-																			 0, 0,
-																			 mural->width,
-																			 mural->height );
-		}
-		cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
-		cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.clients[0].baseProjection) );
-	}
-}
-
-
-/*
  * Change the tiling for a mural.
  * The boundaries are specified in mural space.
  * Input: muralWidth/muralHeight - new window/mural size

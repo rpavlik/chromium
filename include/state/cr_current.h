@@ -103,10 +103,15 @@ void crStateCurrentInit( CRContext *ctx );
 void crStateCurrentRecover( void );
 
 void crStateCurrentDiff(CRCurrentBits *bb, CRbitvalue *bitID,
-		CRCurrentState *from, CRCurrentState *to);
-void crStateCurrentSwitch(GLuint maxTexUnits,
-		CRCurrentBits *bb, CRbitvalue *bitID,
-		CRCurrentState *from, CRCurrentState *to);
+                        CRContext *fromCtx, CRContext *toCtx);
+void crStateCurrentSwitch(CRCurrentBits *bb, CRbitvalue *bitID,
+                          CRContext *fromCtx, CRContext *toCtx);
+
+void crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+
+
+void crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+
 
 void crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
