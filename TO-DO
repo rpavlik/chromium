@@ -1,7 +1,5 @@
 Finish up tilesort glReadPixels pixelstore parameters.
 
-Some packed pixel formats still aren't implemented in util/pixel.c
-
 Grep the code for 'XXX' for miscellaneous loose ends.
 
 Convert the last Perl script in scripts/fastdep.pl to Python.
@@ -32,4 +30,10 @@ apiutil.PacketLength() or something similar.
 
 Check unpacker/unpack.c for unfinished special case functions.
 
-GL_EXT_draw_range_elements
+Implement GL_EXT_draw_range_elements extension
+
+In DLM's BindTexture function, record the texture ID with the display
+list info so that we know which textures are bound in a list.  Then, in
+tilesort, before glCallList, flush (state-diff) all those textures to
+be sure the servers' texture are up to date.  We currently flush all
+textures prior to glCallList (but that code's disabled).
