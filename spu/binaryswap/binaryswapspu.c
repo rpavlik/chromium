@@ -308,14 +308,14 @@ static void AllocBuffers( WindowInfo *window )
 static void CheckWindowSize( WindowInfo *window )
 {
 	GLint newSize[2];
-	const GLint w = window->index;
 
 	newSize[0] = newSize[1] = 0;
 	if (binaryswap_spu.resizable)
 	{
 		/* ask downstream SPU (probably render) for its window size */
 		binaryswap_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-							     w, GL_INT, 2, newSize);
+							     window->childWindow, 
+							     GL_INT, 2, newSize);
 		if (newSize[0] == 0 && newSize[1] == 0)
 		{
 			/* something went wrong - recover - try viewport */
@@ -331,7 +331,8 @@ static void CheckWindowSize( WindowInfo *window )
 	{
 		/* not resizable - ask render SPU for its window size */
 		binaryswap_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-							     window->renderWindow, GL_INT, 2, newSize);
+							     window->renderWindow, 
+							     GL_INT, 2, newSize);
 	}
 
 	if (newSize[0] != window->width || newSize[1] != window->height)
@@ -358,7 +359,8 @@ static void CheckWindowSize( WindowInfo *window )
 			/* update super/render SPU window size & viewport */
 			CRASSERT(newSize[0] > 0);
 			CRASSERT(newSize[1] > 0);
-			binaryswap_spu.super.WindowSize( w, newSize[0], newSize[1] );
+			binaryswap_spu.super.WindowSize( window->renderWindow, 
+							 newSize[0], newSize[1] );
 			binaryswap_spu.super.Viewport( 0, 0, newSize[0], newSize[1] );
 			
 			/* set child's viewport too */
@@ -573,7 +575,7 @@ static void CompositeNode( WindowInfo *window,
 				binaryswap_spu.super.Enable( GL_DEPTH_TEST );
 				binaryswap_spu.super.ClearStencil( 0 );
 				binaryswap_spu.super.Clear( GL_STENCIL_BUFFER_BIT );
-				binaryswap_spu.super.DepthFunc( GL_LESS );
+				binaryswap_spu.super.DepthFunc( GL_LEQUAL );
 				binaryswap_spu.super.StencilFunc( GL_ALWAYS, 0x1, 0x1 );
 				binaryswap_spu.super.StencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
 				binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
