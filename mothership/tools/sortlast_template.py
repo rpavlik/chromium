@@ -13,7 +13,7 @@
 import string, cPickle, os.path, re
 from wxPython.wx import *
 import traceback, types
-import intdialog, spudialog, hostdialog
+import intdialog, spudialog, hostdialog, textdialog
 import crutils, crtypes, configio
 import templatebase
 
@@ -193,6 +193,7 @@ class SortlastDialog(wxDialog):
 		id_WindowSize      = 4007
 		id_OK              = 4011
 		id_CANCEL          = 4012
+		id_HELP            = 4013
 
 		# init misc member vars
 		self.__Mothership = 0
@@ -275,8 +276,8 @@ class SortlastDialog(wxDialog):
 #								label="", size=wxSize(10,0))
 #		outerSizer.Add(separator, flag=wxGROW|wxALL, border=4)
 
-		# Sizer for the OK, Cancel buttons
-		okCancelSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
+		# Sizer for the OK, Cancel, Help buttons
+		okCancelSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
 		okCancelSizer.Add(self.OkButton, option=0,
 						  flag=wxALIGN_CENTER, border=0)
@@ -284,8 +285,13 @@ class SortlastDialog(wxDialog):
 									 label="Cancel")
 		okCancelSizer.Add(self.CancelButton, option=0,
 						  flag=wxALIGN_CENTER, border=0)
+		self.HelpButton = wxButton(parent=self, id=id_HELP,
+									 label="Help")
+		okCancelSizer.Add(self.HelpButton, option=0,
+						  flag=wxALIGN_CENTER, border=0)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
+		EVT_BUTTON(self.HelpButton, id_HELP, self._onHelp)
 		outerSizer.Add(okCancelSizer, option=0, flag=wxALL|wxGROW, border=10)
 
 		# Finish-up the dialog
@@ -418,6 +424,16 @@ class SortlastDialog(wxDialog):
 	def _onCancel(self, event):
 		"""Called by Cancel button"""
 		self.EndModal(wxID_CANCEL)
+
+	def _onHelp(self, event):
+		"""Called by Help button"""
+		d = textdialog.TextDialog(parent=self, id = -1,
+								  title="Sort-last Help")
+		d.LoadPage("../../doc/sortlast_template.html")
+		# Hmmm, I want to call d.Show() so this isn't modal/blocking but
+		# that doesn't seem to work.
+		d.ShowModal();
+		d.Destroy()
 
 	def SetMothership(self, mothership):
 		"""Specify the mothership to modify.

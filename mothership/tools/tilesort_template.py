@@ -20,7 +20,7 @@
 import string, cPickle, os.path, re
 from wxPython.wx import *
 import traceback, types
-import intdialog, spudialog, hostdialog
+import intdialog, spudialog, hostdialog, textdialog
 import crutils, crtypes, configio
 import templatebase
 
@@ -302,6 +302,7 @@ class TilesortDialog(wxDialog):
 		id_Hostnames   = 3010
 		id_OK          = 3011
 		id_CANCEL      = 3012
+		id_HELP        = 3013
 
 		# init misc member vars
 		self.__Mothership = 0  # only need this to edit tilesort SPU options
@@ -420,8 +421,8 @@ class TilesortDialog(wxDialog):
 		self.drawArea.SetBackgroundColour(BackgroundColor)
 		EVT_PAINT(self.drawArea, self.__OnPaintEvent)
 
-		# Sizer for the OK, Cancel buttons
-		okCancelSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
+		# Sizer for the OK, Cancel, Help buttons
+		okCancelSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
 		okCancelSizer.Add(self.OkButton, option=0,
 						  flag=wxALIGN_CENTER, border=0)
@@ -429,8 +430,13 @@ class TilesortDialog(wxDialog):
 									 label="Cancel")
 		okCancelSizer.Add(self.CancelButton, option=0,
 						  flag=wxALIGN_CENTER, border=0)
+		self.HelpButton = wxButton(parent=self, id=id_HELP,
+									 label="Help")
+		okCancelSizer.Add(self.HelpButton, option=0,
+						  flag=wxALIGN_CENTER, border=0)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
+		EVT_BUTTON(self.HelpButton, id_HELP, self._onHelp)
 
 		# The toolAndDrawSizer contains the toolpanel and drawing area
 		toolAndDrawSizer = wxBoxSizer(wxHORIZONTAL)
@@ -563,6 +569,16 @@ class TilesortDialog(wxDialog):
 	def _onCancel(self, event):
 		"""Called by Cancel button"""
 		self.EndModal(wxID_CANCEL)
+
+	def _onHelp(self, event):
+		"""Called by Help button"""
+		d = textdialog.TextDialog(parent=self, id = -1,
+								  title="Tile-sort Help")
+		d.LoadPage("../../doc/tilesort_template.html")
+		# Hmmm, I want to call d.Show() so this isn't modal/blocking but
+		# that doesn't seem to work.
+		d.ShowModal();
+		d.Destroy()
 
 	def __OnPaintEvent(self, event):
 		""" Respond to a request to redraw the contents of our drawing panel.
