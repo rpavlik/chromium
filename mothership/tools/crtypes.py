@@ -26,6 +26,7 @@ import crconfig
 class Option:
 	"""Class to describe an SPU/node/mothership option."""
 	def __init__(self, name, description, type, count, default, mins, maxs):
+		"""default, mins and maxs should all be lists."""
 		assert len(default) == count
 		assert len(mins) == count or len(mins) == 0 or type == "ENUM"
 		assert len(maxs) == count or len(maxs) == 0
