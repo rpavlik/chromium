@@ -108,9 +108,10 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
 
 /**
  *  Load the entire chain of SPUs and initialize all of them. 
- * This function returns the first one in the chain */
-
-SPU * crSPULoadChain( int count, int *ids, char **names, char *dir, void *server )
+ * This function returns the first one in the chain.
+ */
+SPU *
+crSPULoadChain( int count, int *ids, char **names, char *dir, void *server )
 {
 	int i;
 	SPU *child_spu = NULL;
@@ -185,3 +186,29 @@ crSPUChangeFunction(SPUDispatchTable *table, unsigned int funcOffset,
 	table->mark = 0;
 }
 #endif
+
+
+
+/**
+ * Call the cleanup() function for each SPU in a chain, close the SPU
+ * DLLs and free the SPU objects.
+ * \param headSPU  pointer to the first SPU in the chain
+ */
+void
+crSPUUnloadChain(SPU *headSPU)
+{
+	SPU *the_spu = headSPU, *next_spu;
+
+	while (the_spu)
+	{
+		crDebug("Cleaning up SPU %s", the_spu->name);
+
+		if (the_spu->cleanup)
+			the_spu->cleanup();
+
+		next_spu = the_spu->superSPU;
+		crDLLClose(the_spu->dll);
+		crFree(the_spu);
+		the_spu = next_spu;
+	}
+}

@@ -45,8 +45,6 @@ static void DeleteBarrierCallback( void *data )
 
 static void crServerTearDown( void )
 {
-	SPU *the_spu = cr_server.head_spu;
-	SPU *next_spu;
 	unsigned int i;
 
 	/* avoid a race condition */
@@ -85,17 +83,7 @@ static void crServerTearDown( void )
 	/* Free vertex programs */
 	crFreeHashtable(cr_server.programTable, crFree);
 
-	while (1) {
-		if (the_spu && the_spu->cleanup) {
-			crInfo("Cleaning up SPU %s",the_spu->name);
-			the_spu->cleanup();
-		} else 
-			break;
-		next_spu = the_spu->superSPU;
-		crDLLClose(the_spu->dll);
-		crFree(the_spu);
-		the_spu = next_spu;
-	}
+	crSPUUnloadChain(cr_server.head_spu);
 	cr_server.head_spu = NULL;
 
 	crUnloadOpenGL();

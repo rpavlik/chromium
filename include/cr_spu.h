@@ -416,6 +416,8 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 
 SPU *crSPULoad( SPU *child, int id, char *name, char *dir, void *server);
 SPU *crSPULoadChain( int count, int *ids, char **names, char *dir, void *server );
+void crSPUUnloadChain(SPU *headSPU);
+
 void crSPUInitDispatchTable( SPUDispatchTable *table );
 void crSPUCopyDispatchTable( SPUDispatchTable *dst, SPUDispatchTable *src );
 void crSPUChangeInterface( SPUDispatchTable *table, void *origFunc, void *newFunc );

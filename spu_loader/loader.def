@@ -5,6 +5,7 @@
 EXPORTS
 crSPULoad
 crSPULoadChain
+crSPUUnloadChain
 crSPUCopyDispatchTable
 crSPUFindFunction
 crSPUChangeInterface

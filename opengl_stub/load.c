@@ -156,23 +156,10 @@ static void stubInitSPUDispatch(SPU *spu)
  */
 static void stubSPUTearDown(void)
 {
-	SPU *the_spu = stub.spu;
-	SPU *next_spu;
-
 	/* shutdown, now trap any calls to a NULL dispatcher */
 	crSPUCopyDispatchTable(&glim, &stubNULLDispatch);
 
-	while (1) {
-		if (the_spu && the_spu->cleanup) {
-			crWarning("Cleaning up SPU %s",the_spu->name);
-			the_spu->cleanup();
-		} else 
-			break;
-		next_spu = the_spu->superSPU;
-		crDLLClose(the_spu->dll);
-		crFree(the_spu);
-		the_spu = next_spu;
-	}
+	crSPUUnloadChain(stub.spu);
 	stub.spu = NULL;
 
 	crUnloadOpenGL();
