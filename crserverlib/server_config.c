@@ -382,7 +382,6 @@ crServerGatherConfiguration(char *mothership)
 	{
 		CRClient *client = &cr_server.clients[i];
 		client->number = i;
-		crDebug("SSSSSSS clientlist[%d] = %s", i, clientlist[i]);
 		sscanf(clientlist[i], "%s %d", cr_server.protocol, &(client->spu_id));
 		client->conn = crNetAcceptClient(cr_server.protocol, NULL,
 																		 cr_server.tcpip_port, cr_server.mtu, 1);
