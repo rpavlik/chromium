@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <memory.h>
 
+#include "cr_environment.h"
 #include "cr_error.h"
 #include "cr_string.h"
 #include "renderspu.h"
@@ -99,10 +100,12 @@ bSetupPixelFormat( HDC hdc )
 	 *pfd.cColorBits = GetDeviceCaps(hdc,BITSPIXEL); */
 	ppfd = &pfd;
 
-	/* calling the wgl functions directly if the SPU was loaded by the 
-	 * application (i.e., if the app didn't create a window and get 
-	 * faked out) seems to not work. */
-	if (getenv( "__CR_LAUNCHED_FROM_APP_FAKER" ) != NULL)
+	/* 
+	 * We call the wgl functions directly if the SPU was loaded
+	 * by our faker library, otherwise we have to call the GDI
+	 * versions.
+	 */
+	if (crGetenv( "CR_WGL_DO_NOT_USE_GDI" ) != NULL)
 	{
 		pixelformat = render_spu.ws.wglChoosePixelFormat( hdc, ppfd );
 		/* doing this twice is normal Win32 magic */

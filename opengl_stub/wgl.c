@@ -6,6 +6,7 @@
 
 #include "cr_error.h"
 #include "cr_spu.h"
+#include "cr_environment.h"
 #include "cr_applications.h"
 #include "stub.h"
 
@@ -19,6 +20,14 @@
 int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd )
 {
 	DWORD okayFlags;
+
+	/* 
+	 * NOTE!!!
+	 * Here we're telling the renderspu not to use the GDI
+	 * equivalent's of ChoosePixelFormat/DescribePixelFormat etc
+	 * There's are subtle differences in the use of these calls.
+	 */
+	crSetenv("CR_WGL_DO_NOT_USE_GDI", "yes");
 
 	if ( pfd->nSize != sizeof(*pfd) || pfd->nVersion != 1 ) {
 		crError( "wglChoosePixelFormat: bad pfd\n" );
