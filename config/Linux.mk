@@ -21,8 +21,13 @@ C_RELEASE_FLAGS   += -O3 -DNDEBUG -fno-strict-aliasing
 C_DEBUG_FLAGS     += -g
 
 ifeq ($(MACHTYPE),x86_64)
+ifeq ($(FORCE_32BIT_ABI),1)
+LDFLAGS           += -m32 -L/usr/X11R6/lib
+CFLAGS            += -m32 -fPIC
+else
 LDFLAGS           += -L/usr/X11R6/lib64
 CFLAGS            += -fPIC
+endif
 else
 LDFLAGS           += -L/usr/X11R6/lib
 endif

@@ -15,6 +15,10 @@ RELEASE=0
 THREADSAFE=0
 
 
+# Set to 1 if you want to force building 32-bit objects on a 64-bit system.
+FORCE_32BIT_ABI=0
+
+
 # Set USE_DMX to 1 if you want to enable DMX support.
 # You'll need the libdmx.a library and dmxext.h header in the usual X
 # directories.  If you don't, set DMX_INCDIR and DMX_LIBDIR here.
