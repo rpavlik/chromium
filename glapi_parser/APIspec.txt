@@ -2344,7 +2344,7 @@ param		format		GLenum
 param		type		GLenum
 param		pixels		GLvoid *
 category	1.0
-props		get
+props		get pixelstore
 chromium	extpack
 
 name		GetTexParameterfv
