@@ -4,6 +4,6 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ..
-SUBDIRS = client reset
+SUBDIRS = client reset server
 
 include $(TOP)/cr.mk

@@ -34,6 +34,10 @@ import sys, string, types, traceback, re
 
 import socket
 import select
+import os
+
+from crconfig import arch, crdir
+crbindir = os.path.join(crdir,'bin',arch)
 
 def CRDebug( str ):
 	"""CRDebug(str)
@@ -552,7 +556,9 @@ class CR:
 	def do_server( self, sock, args ):
 		"""do_server(sock, args)
 		Identifies the server in the graph. """
+                nodenames = ""
 		for node in self.nodes:
+                        nodenames += node.host+" "
 			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
 				if isinstance(node,CRNetworkNode):
 					node.spokenfor = 1
@@ -564,7 +570,9 @@ class CR:
 						spuchain += " %d %s" % (spu.ID, spu.name)
 					sock.Success( spuchain )
 					return
-		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s" % args )
+                # Wasn't able to find the server.  Figure out what ones
+                # were expected.
+		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s.  Expected one of: %s" % (args, nodenames))
 
 	def do_opengldll( self, sock, args ):
 		"""do_opengldll(sock, args)
