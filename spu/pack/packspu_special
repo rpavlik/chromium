@@ -1,3 +1,11 @@
 GetString
 EnableClientState
 DisableClientState
+ColorPointer
+VertexPointer
+NormalPointer
+TexCoordPointer
+EdgeFlagPointer
+ArrayElement
+DrawArrays
+DrawElements

@@ -31,7 +31,17 @@ void PACKSPU_APIENTRY packspu_EdgeFlagPointer( GLsizei stride, const GLvoid *poi
 
 void PACKSPU_APIENTRY packspu_ArrayElement( GLint index )
 {
-	crPackArrayElement( index, &(pack_spu.ctx->client) );
+	crPackArrayElement( index, pack_spu.ctx );
+}
+
+void PACKSPU_APIENTRY packspu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices )
+{
+	crPackDrawElements( mode, count, type, indices, pack_spu.ctx );
+}
+
+void PACKSPU_APIENTRY packspu_DrawArrays( GLenum mode, GLint first, GLsizei count )
+{
+	crPackDrawArrays( mode, first, count, pack_spu.ctx );
 }
 
 void PACKSPU_APIENTRY packspu_EnableClientState( GLenum array )
