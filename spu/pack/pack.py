@@ -39,6 +39,7 @@ for func_name in keys:
 	if (return_type != 'void' or 
 	    stub_common.FindSpecial( "packspu", func_name ) or 
 	    stub_common.FindSpecial( "packspu_pixel", func_name ) or 
+	    stub_common.FindSpecial( "packspu_flush", func_name ) or 
 	    stub_common.FindSpecial( "packspu_client", func_name ) or 
 	    stub_common.FindSpecial( "../../packer/packer_get", func_name )):
 	  pack_specials.append( func_name )

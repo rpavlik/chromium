@@ -55,7 +55,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	crStateMakeCurrent( tilesort_spu.ctx );
 	crStateFlushArg( tilesort_spu.ctx );
 	tilesortspuCreateDiffAPI();
-	crStateSetCurrentPointers( &(cr_packer_globals.current) );
+	crStateSetCurrentPointers( tilesort_spu.ctx, &(cr_packer_globals.current) );
 
 	for (i = 0 ; i < tilesort_spu.num_servers; i++)
 	{

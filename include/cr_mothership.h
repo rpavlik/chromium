@@ -9,7 +9,7 @@ int crMothershipReadResponse( CRConnection *conn, void *buf );
 void crMothershipDisconnect( CRConnection *conn );
 
 void crMothershipIdentifySPU( CRConnection *conn, int spu );
-void crMothershipIdentifyOpenGL( CRConnection *conn, char *response );
+void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_id );
 void crMothershipIdentifyFaker( CRConnection *conn, char *response );
 void crMothershipIdentifyServer( CRConnection *conn, char *response );
 

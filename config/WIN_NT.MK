@@ -39,4 +39,4 @@ PYTHON = python.exe
 JGRAPH = jgraph
 MPI_CC = cl
 MPI_CXX = cl
-MPI_LDFLAGS += mpich_tcp_shmd.lib pmpich_tcp_shmd.lib
+MPI_LDFLAGS += mpichd.lib

@@ -2,6 +2,8 @@
 #include <iostream.h>
 #include <mpi.h>
 #include "cr_applications.h"
+#include "cr_string.h"
+#include "cr_error.h"
 
 float verts[4][6] = {
 	{ 0, 0, 1, 0, 1, 1 },
@@ -23,23 +25,53 @@ static const int MASTER_BARRIER = 1;
 
 int main(int argc, char *argv[])
 {
-	MPI_Init(&argc,&argv);
+	int rank = -1, size=-1;
+	int i;
 
-	int rank, size;
-	MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-	MPI_Comm_size( MPI_COMM_WORLD, &size );
+	if (argc < 5)
+	{
+		crError( "Usage: %s -rank <ID NUMBER> -size <SIZE>", argv[0] );
+	}
 
-	cout << "I am " << rank << " of " << size << endl;
+	for (i = 1 ; i < argc ; i++)
+	{
+		if (!crStrcmp( argv[i], "-rank" ))
+		{
+			if (i == argc - 1)
+			{
+				crError( "-rank requires an argument" );
+			}
+			rank = crStrToInt( argv[i+1] );
+			i++;
+		}
+		if (!crStrcmp( argv[i], "-size" ))
+		{
+			if (i == argc - 1)
+			{
+				crError( "-size requires an argument" );
+			}
+			size = crStrToInt( argv[i+1] );
+			i++;
+		}
+	} 
+	if (rank == -1)
+	{
+		crError( "Rank not specified" );
+	}
+	if (size == -1)
+	{
+		crError( "Size not specified" );
+	}
+	if (rank >= size || rank < 0)
+	{
+		crError( "Bogus rank: %d (size = %d)", rank, size );
+	}
 
 	crCreateContext();
 	crMakeCurrent();
 
-	if (rank == 0)
-	{
-		glBarrierCreate( MASTER_BARRIER, size );
-	}
-
-	MPI_Barrier( MPI_COMM_WORLD );
+	// It's OK for everyone to create this, as long as all the "size"s match
+	glBarrierCreate( MASTER_BARRIER, size );
 
 	for (;;)
 	{
@@ -66,6 +98,5 @@ int main(int argc, char *argv[])
 		}
 
 	}
-	MPI_Finalize();
 	return 0;
 }

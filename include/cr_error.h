@@ -1,6 +1,10 @@
 #ifndef CR_ERROR_H
 #define CR_ERROR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __GNUC__
 #define NORETURN_PRINTF
 #define PRINTF
@@ -18,6 +22,10 @@ void crError( char *format, ... ) NORETURN_PRINTF;
 #define CRASSERT( PRED ) ((PRED)?(void)0:crError( "Assertion failed: %s, file %s, line %d", #PRED, __FILE__, __LINE__))
 #else
 #define CRASSERT( PRED ) ((void)0)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* CR_ERROR_H */

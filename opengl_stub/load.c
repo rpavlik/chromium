@@ -4,6 +4,7 @@
 #include "cr_mem.h"
 #include "cr_string.h"
 #include "cr_mothership.h"
+#include "cr_environment.h"
 
 SPU *stub_spu = NULL;
 extern void FakerInit( SPU *fns );
@@ -23,6 +24,7 @@ void StubInit(void)
 	int *spu_ids;
 	char **spu_names;
 	char *spu_dir;
+	char * app_id;
 	int i;
 
 	static int stub_initialized = 0;
@@ -30,12 +32,19 @@ void StubInit(void)
 		return;
 	stub_initialized = 1;
 	
+	// this is set by the app_faker!
+	app_id = crGetenv( "CR_APPLICATION_ID_NUMBER" );
+
+	if (!app_id)
+	{
+		crError( "How did the faker get loaded without crappfaker?! (CR_APPLICATION_ID_NUMBER not found)" );
+	}
 	conn = crMothershipConnect( );
 	if (!conn)
 	{
 		crError( "Couldn't connect to the mothership -- I have no idea what to do!" ); 
 	}
-	crMothershipIdentifyOpenGL( conn, response );
+	crMothershipIdentifyOpenGL( conn, response, app_id );
 	crDebug( "response = \"%s\"", response );
 	spuchain = crStrSplit( response, " " );
 	num_spus = crStrToInt( spuchain[0] );

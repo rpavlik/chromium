@@ -3,6 +3,7 @@
 
 #include "cr_spu.h"
 #include "cr_net.h"
+#include "cr_hash.h"
 #include "cr_protocol.h"
 #include "cr_glstate.h"
 #include "spu_dispatch_table.h"
@@ -39,6 +40,17 @@ typedef struct {
 } CRServer;
 
 extern CRServer cr_server;
+
+typedef struct __runqueue {
+	CRClient *client;
+	int blocked;
+	struct __runqueue *next;
+	struct __runqueue *prev;
+} RunQueue;
+
+extern RunQueue *run_queue;
+
+extern CRHashTable *cr_barriers, *cr_semaphores;
 
 void crServerGatherConfiguration(char *mothership);
 void crServerInitDispatch(void);

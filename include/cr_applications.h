@@ -29,9 +29,9 @@ WINGDIAPI void APIENTRY glSemaphoreDestroy (GLuint name);
 WINGDIAPI void APIENTRY glSemaphoreP (GLuint name);
 WINGDIAPI void APIENTRY glSemaphoreV (GLuint name);
 
-void crCreateContext(void);
-void crMakeCurrent(void);
-void crSwapBuffers(void);
+void APIENTRY crCreateContext(void);
+void APIENTRY crMakeCurrent(void);
+void APIENTRY crSwapBuffers(void);
 
 #ifdef __cplusplus
 }

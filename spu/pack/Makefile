@@ -7,14 +7,14 @@ FILES = packspu \
 	packspu_config \
 	packspu_get \
 	packspu_getstring \
+	packspu_flush \
 	packspu_init \
 	packspu_net \
-	packspu_pixel \
-	packspu_swap
+	packspu_pixel
 
 LIBRARIES = crutil crmothership crstate crpacker
 
-PRECOMP = packspu.c packspu_get.c packspu_pixel.c 
+PRECOMP = packspu.c packspu_get.c packspu_flush.c packspu_pixel.c 
 SLOP = $(PRECOMP)
 
 LIB_DEFS += pack.def
@@ -27,6 +27,10 @@ packspu.c: pack.py packspu_pixel_special packspu_special packspu_unimplemented_s
 packspu_get.c: packspu_get.py
 	@$(ECHO) Building the Pack SPU Get functions
 	@$(PYTHON) packspu_get.py > $@	
+
+packspu_flush.c: packspu_flush.py packspu_flush_special
+	@$(ECHO) Building the Pack SPU Auto-flushing functions
+	@$(PYTHON) packspu_flush.py > $@
 
 packspu_pixel.c: packspu_pixel.py packspu_pixel_special
 	@$(ECHO) Building the Pack SPU Pixel functions

@@ -687,6 +687,7 @@ int main( int argc, char **argv )
 		// ask what I should do.
 	
 		char response[1024];
+		char **chain;
 
 		if (mothership)
 			crSetenv( "CRMOTHERSHIP", mothership );
@@ -697,7 +698,14 @@ int main( int argc, char **argv )
 		}
 	
 		crMothershipIdentifyFaker( mothership_conn, response );
-		faked_argv = crStrSplit( response, " " );
+		chain = crStrSplitn( response, " ", 1 );
+
+		// the OpenGL faker DLL needs to have a unique ID in case there
+		// are multiple apps running on the same host.
+		crSetenv( "CR_APPLICATION_ID_NUMBER", chain[0] );
+
+		faked_argv = crStrSplit( chain[1], " " );
+
 		crMothershipGetStartdir( mothership_conn, response );
 
 		if (chdir( response ))

@@ -44,10 +44,13 @@ int main( int argc, char *argv[] )
 		cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.clients[0].baseProjection) );
 	}
 	crServerInitDispatch();
+	crStateDiffAPI( &(cr_server.head_spu->dispatch_table) );
 	crStateMakeCurrent( cr_server.clients[0].ctx );
-	crStateSetCurrentPointers( &(cr_server.current) );
 	crUnpackSetReturnPointer( &(cr_server.return_ptr) );
 	crUnpackSetWritebackPointer( &(cr_server.writeback_ptr) );
+
+	cr_barriers = crAllocHashtable();
+	cr_semaphores = crAllocHashtable();
 	crServerSerializeRemoteStreams();
 	return 0;
 }

@@ -1,0 +1,8 @@
+SwapBuffers
+Flush
+Finish
+BarrierCreate
+BarrierExec
+SemaphoreCreate
+SemaphoreP
+SemaphoreV

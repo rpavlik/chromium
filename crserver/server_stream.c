@@ -6,19 +6,14 @@
 #include "cr_error.h"
 #include "cr_mem.h"
 
-typedef struct __runqueue {
-	CRClient *client;
-	int blocked;
-	struct __runqueue *next;
-	struct __runqueue *prev;
-} RunQueue;
-
 RunQueue *run_queue = NULL;
 
 void crServerAddToRunQueue( int index )
 {
 	CRClient *client = cr_server.clients + index;
 	RunQueue *q = (RunQueue *) crAlloc( sizeof( *q ) );
+
+	crDebug( "Adding to the run queue: %d", index );
 	q->client = client;
 	q->blocked = 0;
 	if (!run_queue)
@@ -44,9 +39,11 @@ static RunQueue *__getNextClient(void)
 		if (run_queue)
 		{
 			int all_blocked = 1;
+			int done_something = 0;
 			RunQueue *start = run_queue;
-			while (run_queue->next != start)
+			while (!done_something || run_queue != start)
 			{
+				done_something = 1;
 				if (!run_queue->blocked)
 				{
 					all_blocked = 0;
@@ -58,14 +55,6 @@ static RunQueue *__getNextClient(void)
 				run_queue = run_queue->next;
 			}
 
-			if (!run_queue->blocked)
-			{
-				all_blocked = 0;
-			}
-			if (!run_queue->blocked && run_queue->client->conn->messageList)
-			{
-				return run_queue;
-			}
 			if (all_blocked)
 			{
 				crError( "DEADLOCK!" );
@@ -87,10 +76,11 @@ void crServerSerializeRemoteStreams(void)
 		CRMessage *msg;
 		int len;
 
+		crDebug( "__getNextClient() returned 0x%p", q );
 		cr_server.current_client = client;
-		crStateMakeCurrent( client->ctx ); 
+		crStateMakeCurrent( client->ctx );
 		for( len = crNetGetMessage( cr_server.current_client->conn, &msg );
-				 len;
+				 len && !q->blocked;
 				 len = crNetGetMessage( cr_server.current_client->conn, &msg ) )
 		{
 			CRMessageOpcodes *msg_opcodes;
@@ -105,6 +95,7 @@ void crServerSerializeRemoteStreams(void)
 			crUnpack( data_ptr, data_ptr-1, msg_opcodes->numOpcodes, &(cr_server.dispatch) );
 			crNetFree( cr_server.current_client->conn, msg );
 		}
+		run_queue = run_queue->next;
 	}
 }
 

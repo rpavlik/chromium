@@ -62,3 +62,8 @@ Indexi
 Indexs
 EdgeFlag
 SelectBuffer
+BarrierCreate
+SemaphoreCreate
+SemaphoreV
+SemaphoreP
+BarrierExec

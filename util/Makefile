@@ -11,7 +11,7 @@ endif
 
 SHARED = 1
 LIBRARY = crutil
-FILES = bufpool devnull dll environment error mem net pixel string tcpip url
+FILES = bufpool devnull dll environment error hash mem net pixel string tcpip url
 
 ifeq ($(ARCH),Linux)
 CFLAGS += -DGM_SUPPORT

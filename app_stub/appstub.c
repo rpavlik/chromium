@@ -23,14 +23,13 @@
 
 #define OPENGL_LIBRARY_NAME "libGL.so"
 
-static char *
-map_dll_error( void )
+static char *map_dll_error( void )
 {
-    char *why = dlerror( );
-    if ( why[0] == 'd' && why[1] == 'l' && why[2] == 's' && why[3] == 'y' &&
-         why[4] == 'm' && why[5] == ':' && why[6] == ' ' )
-        why += 7;
-    return why;
+	char *why = dlerror( );
+	if ( why[0] == 'd' && why[1] == 'l' && why[2] == 's' && why[3] == 'y' &&
+			why[4] == 'm' && why[5] == ':' && why[6] == ' ' )
+		why += 7;
+	return why;
 }
 
 #endif
@@ -46,7 +45,7 @@ static struct {
 	Func_V_U_U  glSemaphoreCreate;
 	Func_V_U    glSemaphoreV;
 	Func_V_U    glSemaphoreP;
-	Func_V_U    crCreateContext;
+	Func_V_V    crCreateContext;
 	Func_V_V    crMakeCurrent;
 	Func_V_V    crSwapBuffers;
 	//Func_V_U_Ip wireGLGetIntegerv;
@@ -61,13 +60,13 @@ static struct {
 	void       **pptr;
 } functions[] = {
 	X(glBarrierCreate),
-    X(glBarrierExec),
-    X(glSemaphoreCreate),
-    X(glSemaphoreV),
-    X(glSemaphoreP),
-    X(crCreateContext),
-    X(crMakeCurrent),
-    X(crSwapBuffers),
+	X(glBarrierExec),
+	X(glSemaphoreCreate),
+	X(glSemaphoreV),
+	X(glSemaphoreP),
+	X(crCreateContext),
+	X(crMakeCurrent),
+	X(crSwapBuffers),
 	//X(wireGLGetIntegerv),
 	//X(wireGLSyncWithL2),
 	//X(wireGLUseSystemGL)
@@ -83,8 +82,7 @@ typedef HINSTANCE Library;
 typedef void     *Library;
 #endif
 
-static Library 
-load_library( const char *name )
+static Library load_library( const char *name )
 {
 #if defined(WINDOWS)
 	Library lib;
@@ -92,94 +90,88 @@ load_library( const char *name )
 
 	if ( !GetCurrentDirectory( sizeof(current_dir), current_dir ) )
 	{
-        int err = GetLastError( );
-        fprintf( stderr, "GetCurrentDirectory failed, err=%d\n",
-                 err );
+		int err = GetLastError( );
+		fprintf( stderr, "GetCurrentDirectory failed, err=%d\n",
+				err );
 		exit( 1 );
 	}
 
-	fprintf( stderr, "current directory = \"%s\"\n", 
-			 current_dir );
-
 	if ( !SearchPath( NULL /* DLL search order */, 
-					  name, 
-					  NULL /* extension */,
-					  sizeof(actual_name),
-					  actual_name,
-					  &file_part ) )
+				name, 
+				NULL /* extension */,
+				sizeof(actual_name),
+				actual_name,
+				&file_part ) )
 	{
-        int err = GetLastError( );
-        fprintf( stderr, "SearchPath \"%s\" failed, err=%d\n",
-                 name, err );
+		int err = GetLastError( );
+		fprintf( stderr, "SearchPath \"%s\" failed, err=%d\n",
+				name, err );
 		exit( 1 );
 	}
 
 	fprintf( stderr, "found \"%s\" as \"%s\"\n",
-			 name, actual_name );
+			name, actual_name );
 
 	lib = LoadLibrary( actual_name );
 
-    if ( lib == NULL )
+	if ( lib == NULL )
 	{
-        int err = GetLastError( );
-        fprintf( stderr, "LoadLibrary \"%s\" failed, err=%d\n",
-                 actual_name, err );
+		int err = GetLastError( );
+		fprintf( stderr, "LoadLibrary \"%s\" failed, err=%d\n",
+				actual_name, err );
 		exit( 1 );
-    }
+	}
 #else
-    Library lib = dlopen( name, RTLD_NOW );
+	Library lib = dlopen( name, RTLD_NOW );
 
-    if ( lib == NULL )
+	if ( lib == NULL )
 	{
-        fprintf( stderr, "dlopen \"%s\" failed, err=%s\n",
-                 name, map_dll_error( ) );
-        exit( 1 );
-    }
+		fprintf( stderr, "dlopen \"%s\" failed, err=%s\n",
+				name, map_dll_error( ) );
+		exit( 1 );
+	}
 #endif
 	return lib;
 }
 
-static void *
-find_function( Library lib, const char *name, int must_find )
+static void *find_function( Library lib, const char *name, int must_find )
 {
 #if defined(WINDOWS)
 	FARPROC x = GetProcAddress( lib, name );
-    void *ptr = *((void **) &x);
+	void *ptr = *((void **) &x);
 
-    if ( ptr == NULL && must_find ) {
-        int err = GetLastError( );
-        fprintf( stderr, "%s: function not found, err=%d\n",
-                 name, err );
-        exit( 1 );
-    }
+	if ( ptr == NULL && must_find ) {
+		int err = GetLastError( );
+		fprintf( stderr, "%s: function not found, err=%d\n",
+				name, err );
+		exit( 1 );
+	}
 #else
-    void *ptr = dlsym( lib, name );
+	void *ptr = dlsym( lib, name );
 
-    if ( ptr == NULL && must_find ) {
-        fprintf( stderr, "%s: function not found, err=%s\n",
-                 name, map_dll_error( ) );
-        exit( 1 );
-    }
+	if ( ptr == NULL && must_find ) {
+		fprintf( stderr, "%s: function not found, err=%s\n",
+				name, map_dll_error( ) );
+		exit( 1 );
+	}
 #endif
 	return ptr;
 }
 
-static void
-init_fptable( int must_find )
+static void init_fptable( int must_find )
 {
-    Library lib = load_library( OPENGL_LIBRARY_NAME );
+	Library lib = load_library( OPENGL_LIBRARY_NAME );
 	int i;
 
 	for ( i = 0; i < sizeof(functions)/sizeof(functions[0]); i++ )
 	{
 		*(functions[i].pptr) = find_function( lib, functions[i].name, 
-											  must_find );
+				must_find );
 	}
 	first_call = 0;
 }
 
-void APIENTRY
-glBarrierCreate( GLuint barrier, GLuint count )
+void APIENTRY glBarrierCreate( GLuint barrier, GLuint count )
 {
 	if ( first_call )
 		init_fptable( 1 );
@@ -187,53 +179,47 @@ glBarrierCreate( GLuint barrier, GLuint count )
 	fptable.glBarrierCreate( barrier, count );
 }
 
-void APIENTRY
-glBarrierExec( GLuint barrier )
+void APIENTRY glBarrierExec( GLuint barrier )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-    fptable.glBarrierExec( barrier );
+	fptable.glBarrierExec( barrier );
 }
 
-void APIENTRY
-glSemaphoreCreate( GLuint semaphore, GLuint count )
+void APIENTRY glSemaphoreCreate( GLuint semaphore, GLuint count )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-    fptable.glSemaphoreCreate( semaphore, count );
+	fptable.glSemaphoreCreate( semaphore, count );
 }
 
-void APIENTRY
-glSemaphoreV( GLuint semaphore )
+void APIENTRY glSemaphoreV( GLuint semaphore )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-    fptable.glSemaphoreV( semaphore );
+	fptable.glSemaphoreV( semaphore );
 }
 
-void APIENTRY
-glSemaphoreP( GLuint semaphore )
+void APIENTRY glSemaphoreP( GLuint semaphore )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-    fptable.glSemaphoreP( semaphore );
+	fptable.glSemaphoreP( semaphore );
 }
 
-void APIENTRY
-crCreateContext( void )
+void APIENTRY crCreateContext( void )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-	fptable.crCreateContext( 1 );
+	fptable.crCreateContext( );
 }
 
-void APIENTRY
-crMakeCurrent( void )
+void APIENTRY crMakeCurrent( void )
 {
 	if ( first_call )
 		init_fptable( 1 );
@@ -241,8 +227,7 @@ crMakeCurrent( void )
 	fptable.crMakeCurrent( );
 }
 
-void APIENTRY
-crSwapBuffers( void )
+void APIENTRY crSwapBuffers( void )
 {
 	if ( first_call )
 		init_fptable( 1 );

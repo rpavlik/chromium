@@ -105,7 +105,7 @@ void crStateFlushFunc( CRStateFlushFunc ff );
 void crStateFlushArg( void *arg );
 void crStateDiffAPI( SPUDispatchTable *api );
 
-void crStateSetCurrentPointers( CRCurrentStatePointers *current );
+void crStateSetCurrentPointers( CRContext *ctx, CRCurrentStatePointers *current );
 
 void crStateDiffContext( CRContext *from, CRContext *to );
 void crStateSwitchContext( CRContext *from, CRContext *to );

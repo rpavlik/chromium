@@ -13,6 +13,7 @@ FILES = main \
 	server_getpixelmap \
 	server_getteximage \
 	server_misc \
+	server_papi \
 	server_projmatrix \
 	server_retval \
 	server_simpleget \

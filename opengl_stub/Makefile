@@ -12,7 +12,7 @@ endif
 
 SHARED = 1
 LIBRARY = crfaker
-FILES = api_templates init load
+FILES = api_templates init load stub
 LIBRARIES = crmothership crutil spuload
 
 ifeq ($(ARCH), WIN_NT)

@@ -77,6 +77,13 @@ class CRNetworkNode(CRNode):
 		self.tiles.append( (x,y,w,h) )
 
 class CRApplicationNode(CRNode):
+	AppID = 0
+
+	def __init__(self,name):
+		CRNode.__init__(self,name)
+		self.id = CRApplicationNode.AppID
+		CRApplicationNode.AppID += 1;
+
 	def SetApplication( self, app ):
 		self.application = app
 
@@ -183,7 +190,7 @@ class CR:
 				if isinstance(node,CRApplicationNode):
 					node.spokenfor = 1
 					sock.node = node
-					sock.Success( node.application )
+					sock.Success( "%d %s" % (node.id, node.application) )
 					return
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
 
@@ -221,16 +228,18 @@ class CR:
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s" % args )
 
 	def do_opengldll( self, sock, args ):
+		app_id = int(args)
 		for node in self.nodes:
-			if node.host == args and not node.spusloaded:
-				if isinstance(node,CRApplicationNode):
+			if isinstance(node,CRApplicationNode):
+				if node.id == app_id and not node.spusloaded:
+					node.spusloaded = 1
 					spuchain = "%d" % len(node.SPUs)
 					for spu in node.SPUs:
 						spuchain += " %d %sspu" % (spu.ID, spu.name)
 					sock.Success( spuchain )
 					sock.node = node
 					return
-		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL host %s" % args )
+		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL for application %d" % app_id )
 
 	def do_spu( self, sock, args ):
 		try:

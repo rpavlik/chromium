@@ -1,6 +1,10 @@
 #ifndef CR_STRING_H
 #define CR_STRING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char  *crStrdup( const char *str );
 char  *crStrndup( const char *str, unsigned int len );
 int    crStrlen( const char *str );
@@ -19,5 +23,9 @@ char **crStrSplitn( const char *str, const char *splitstr, int n );
 
 void   crBytesToString( char *string, int nstring, void *data, int ndata );
 void   crWordsToString( char *string, int nstring, void *data, int ndata );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_STRING_H */

@@ -47,3 +47,10 @@ crPixelCopy2D
 crPixelSize
 crGetenv
 crSetenv
+crHashtableAdd
+crHashtableDelete
+crHashtableSearch
+crHashtableReplace
+crHashtableNumElements
+crAllocHashtable
+crFreeHashtable

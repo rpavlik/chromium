@@ -47,10 +47,9 @@ void crStateCurrentInit( CRCurrentState *c )
 #endif
 }
 
-void crStateSetCurrentPointers( CRCurrentStatePointers *current )
+void crStateSetCurrentPointers( CRContext *ctx, CRCurrentStatePointers *current )
 {
-	CRContext *g = GetCurrentContext();
-	CRCurrentState *c = &(g->current);
+	CRCurrentState *c = &(ctx->current);
 	c->current = current;
 }
 
