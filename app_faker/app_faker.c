@@ -625,16 +625,26 @@ static void do_it( char *argv[] )
 	delete_temp_dirs( );
 
 	if ( WIFEXITED(status) ) {
-		debug( "\"%s\" exited, status=%d\n", argv[0], WEXITSTATUS(status) );
-		exit( WEXITSTATUS(status) );
+		int s = WEXITSTATUS(status);
+		if (s != 0) {
+		    crError( "\"%s\" exited with status=%d\n", argv[0], s);
+		}
+		else {
+		    debug( "\"%s\" exited with status=%d\n", argv[0], s);
+		}
+		exit(s);
 	}
 
 	if ( WIFSIGNALED(status) ) {
-		debug( "\"%s\" uncaught signal=%d\n", argv[0], WTERMSIG(status) );
+		int s = WTERMSIG(status);
+#define E(x) s==x?#x
+		crError( "\"%s\" terminated with uncaught signal=%d (%s)\n", argv[0], s,
+		    E(SIGHUP):E(SIGINT):E(SIGQUIT):E(SIGILL):E(SIGABRT):E(SIGFPE):E(SIGSEGV):
+		    E(SIGPIPE):E(SIGALRM):E(SIGTERM):E(SIGCHLD):"unknown");
 		exit( 1 );
 	}
 
-	debug( "\"%s\" exited, not sure why\n", argv[0] );
+	crError( "\"%s\" exited, not sure why\n", argv[0] );
 	exit( 1 );
 }
 
