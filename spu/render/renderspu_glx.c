@@ -22,6 +22,32 @@
 #define WINDOW_NAME render_spu.window_title
 
 
+static Bool WindowExistsFlag;
+
+static int
+WindowExistsErrorHandler( Display *dpy, XErrorEvent *xerr )
+{
+	if (xerr->error_code == BadWindow)
+	{
+		WindowExistsFlag = GL_FALSE;
+	}
+	return 0;
+}
+
+static GLboolean
+WindowExists( Display *dpy, Window w )
+{
+	XWindowAttributes xwa;
+	int (*oldXErrorHandler)(Display *, XErrorEvent *);
+
+	WindowExistsFlag = GL_TRUE;
+	oldXErrorHandler = XSetErrorHandler(WindowExistsErrorHandler);
+	XGetWindowAttributes(dpy, w, &xwa); /* dummy request */
+	XSetErrorHandler(oldXErrorHandler);
+	return WindowExistsFlag;
+}
+
+
 static Colormap 
 GetShareableColormap( Display *dpy, XVisualInfo *vi )
 {
@@ -511,9 +537,19 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			/* The render_to_app_window option is set and we've got a nativeWindow
 			 * handle, save the handle for later calls to swapbuffers().
 			 */
-			window->nativeWindow = (Window) nativeWindow;
-			render_spu.ws.glXMakeCurrent( window->visual->dpy,
+			if (WindowExists(window->visual->dpy, nativeWindow))
+			{
+				 window->nativeWindow = (Window) nativeWindow;
+				 render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																		(Window) nativeWindow, context->context );
+			}
+			else
+			{
+				crWarning("render SPU's render_to_app_window option is set but the appliction window ID 0x%x is invalid on the display named %s", (unsigned int) nativeWindow, DisplayString(window->visual->dpy));
+				CRASSERT(window->window);
+				render_spu.ws.glXMakeCurrent( window->visual->dpy,
+																			window->window, context->context );
+			}
 		}
 		else
 		{
