@@ -144,8 +144,8 @@ void clipCoords (GLfloat *x1, GLfloat *y1, GLfloat *z1,
  **************************************************************/
 void setupBBox()
 {
-  glGetFloatv (GL_MODELVIEW_MATRIX,  modl);
-  glGetFloatv (GL_PROJECTION_MATRIX, proj);
+  binaryswap_spu.super.GetFloatv (GL_MODELVIEW_MATRIX,  modl);
+  binaryswap_spu.super.GetFloatv (GL_PROJECTION_MATRIX, proj);
 }
 
 int getClippedWindow(int *xstart, int* ystart,int* xend, int* yend )
@@ -155,8 +155,8 @@ int getClippedWindow(int *xstart, int* ystart,int* xend, int* yend )
   GLfloat x1, x2, y1, y2, z1, z2;
   int win_height, win_width;
 
-  glGetFloatv (GL_MODELVIEW_MATRIX,  modl);
-  glGetFloatv (GL_PROJECTION_MATRIX, proj);
+  binaryswap_spu.super.GetFloatv (GL_MODELVIEW_MATRIX,  modl);
+  binaryswap_spu.super.GetFloatv (GL_PROJECTION_MATRIX, proj);
 
   if(binaryswap_spu.bounding_box != NULL){
     x1=binaryswap_spu.bounding_box->x1;
