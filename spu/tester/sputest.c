@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 	{
 		spuname = argv[1];
 	}
-	spu = crSPULoad( NULL, 1, spuname, NULL );
+	spu = crSPULoad( NULL, 0, spuname, NULL );
 
 	spu->dispatch_table.ClearColor( 0,0,0,1 );
 	for (;;)

@@ -550,7 +550,7 @@ void renderspuCreateWindow( void )
 		actual_window_y = render_spu.window_y - smCyFixedFrame - smCyCaption;
 	}
 
-	crDebug( "Creating the window" );
+	crDebug( "Creating the window: (%d,%d), (%d,%d)", render_spu.window_x, render_spu.window_y, window_plus_caption_width, window_plus_caption_height );
 	render_spu.hWnd = CreateWindow( WINDOW_NAME, WINDOW_NAME,
 			window_style,
 			actual_window_x, actual_window_y,

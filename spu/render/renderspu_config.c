@@ -36,9 +36,12 @@ void renderspuGatherConfiguration( void )
 
 	if (crMothershipSPUParam( conn, response, "window_geometry" ) )
 	{
-		sscanf( response, "%d %d %d %d", &(render_spu.window_x), 
-				&(render_spu.window_y), &(render_spu.window_width),
-				&(render_spu.window_height) );
+		float x,y,w,h;
+		sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
+		render_spu.window_x = (int)x;
+		render_spu.window_y = (int)y;
+		render_spu.window_width = (int)w;
+		render_spu.window_height = (int)h;
 	}
 
 	crMothershipDisconnect( conn );
