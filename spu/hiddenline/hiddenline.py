@@ -24,7 +24,8 @@ stub_common.CopyrightC()
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
 	if return_type != 'void' and not stub_common.FindSpecial( "hiddenline_ignore", func_name ):
-		print >> sys.stderr, func_name
+		#print >> sys.stderr, func_name
+		pass
 
 print """#include <stdio.h>
 #include "cr_string.h"
