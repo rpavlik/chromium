@@ -457,6 +457,8 @@ int crTCPIPRecv( void )
 		}
 	}
 
+	if (!max_fd)
+		return 0;
 	if ( cr_tcpip.num_conns )
 	{
 		struct timeval timeout;
@@ -645,6 +647,9 @@ void crTCPIPDoDisconnect( CRConnection *conn )
 	crCloseSocket( conn->tcp_socket );
 	conn->tcp_socket = 0;
 	conn->type = CR_NO_CONNECTION;
+	memcpy( cr_tcpip.conns + conn->index, cr_tcpip.conns + conn->index+1, 
+		(cr_tcpip.num_conns - conn->index - 1)*sizeof(*(cr_tcpip.conns)) );
+	cr_tcpip.num_conns--;
 }
 
 void crTCPIPConnection( CRConnection *conn )
@@ -662,6 +667,7 @@ void crTCPIPConnection( CRConnection *conn )
 	conn->Accept = crTCPIPAccept;
 	conn->Connect = crTCPIPDoConnect;
 	conn->Disconnect = crTCPIPDoDisconnect;
+	conn->index = cr_tcpip.num_conns;
 
 	n_bytes = ( cr_tcpip.num_conns + 1 ) * sizeof(*cr_tcpip.conns);
 	crRealloc( (void **) &cr_tcpip.conns, n_bytes );

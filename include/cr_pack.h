@@ -43,7 +43,6 @@ void crPackSendHugeFunc( SendHugeFunc shf );
 #undef CR_UNALIGNED_ACCESS_OKAY
 #endif
 void crWriteUnalignedDouble( void *buffer, double d );
-double crReadUnalignedDouble( void *buffer );
 
 void *crPackAlloc( unsigned int len );
 void crHugePacket( CROpcode op, void *ptr );

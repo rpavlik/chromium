@@ -31,7 +31,7 @@ static char *__findDLL( char *name )
 // Load a single SPU from disk and initialize it.  Is there any reason
 // to export this from the SPU loader library?
 
-SPU *LoadSPU( SPU *child, int id, char *name )
+SPU * crSPULoad( SPU *child, int id, char *name )
 {
 	SPU *the_spu;
 	char *path;
@@ -61,7 +61,7 @@ SPU *LoadSPU( SPU *child, int id, char *name )
 		{
 			the_spu->super_name = "errorspu";
 		}
-		the_spu->superSPU = LoadSPU( child, id, the_spu->super_name );
+		the_spu->superSPU = crSPULoad( child, id, the_spu->super_name );
 	}
 	else
 	{
@@ -77,7 +77,7 @@ SPU *LoadSPU( SPU *child, int id, char *name )
 // Load the entire chain of SPUs and initialize all of them.
 // This function returns the first one in the chain
 
-SPU *LoadSPUChain( int count, int *ids, char **names )
+SPU * crSPULoadChain( int count, int *ids, char **names )
 {
 	int i;
 	SPU *spu = NULL;
@@ -91,7 +91,7 @@ SPU *LoadSPUChain( int count, int *ids, char **names )
 		// This call passes the previous version of spu, which is the SPU's
 		// "child" in this chain.
 
-		spu = LoadSPU( spu, spu_id, spu_name );
+		spu = crSPULoad( spu, spu_id, spu_name );
 	}
 	return spu;
 }

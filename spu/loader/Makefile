@@ -3,9 +3,9 @@ SHARED = 1
 LIBRARY = spuload
 LIBRARIES = crutil
 
-FILES = spuload dispatch
+FILES = spucopy spuload dispatch
 
-PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c
+PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += loader.def
@@ -18,3 +18,7 @@ $(TOP)/include/spu_dispatch_table.h: dispatchheader.py
 dispatch.c: dispatch.py
 	@$(ECHO) Making the SPU dispatch builder
 	@$(PYTHON) dispatch.py > dispatch.c
+
+spucopy.c: spucopy.py
+	@$(ECHO) Making the SPU copyer
+	@$(PYTHON) spucopy.py > spucopy.c

@@ -76,6 +76,7 @@ struct CRConnection {
 
 	/* TCP/IP */
 	CRSocket tcp_socket;
+	int index;
 
 	/* FILE Tracing */
 	char *filename;

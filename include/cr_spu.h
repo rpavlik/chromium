@@ -1,6 +1,12 @@
 #ifndef CR_SPU_H
 #define CR_SPU_H
 
+#ifdef WINDOWS
+#define SPULOAD_APIENTRY __stdcall
+#else
+#define SPULOAD_APIENTRY
+#endif
+
 #include "cr_dll.h"
 #include "spu_dispatch_table.h"
 
@@ -51,7 +57,8 @@ struct _SPUSTRUCT {
 	SPUDispatchTable dispatch_table;
 };
 
-SPU *LoadSPU( SPU *child, int id, char *name );
-SPU *LoadSPUChain( int count, int *ids, char **names );
+SPU *crSPULoad( SPU *child, int id, char *name );
+SPU *crSPULoadChain( int count, int *ids, char **names );
+void crSPUCopyDispatchTable( SPUDispatchTable *dst, SPUDispatchTable *src );
 
 #endif /* CR_SPU_H */

@@ -1,4 +1,5 @@
 DESCRIPTION ""
 EXPORTS
-LoadSPU
-LoadSPUChain
+crSPULoad
+crSPULoadChain
+crSPUCopyDispatchTable

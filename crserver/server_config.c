@@ -42,7 +42,7 @@ void crServerGatherConfiguration(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	cr_server.head_spu = LoadSPUChain( num_spus, spu_ids, spu_names );
+	cr_server.head_spu = crSPULoadChain( num_spus, spu_ids, spu_names );
 
 	crFree( spu_ids );
 	crFree( spu_names );

@@ -44,7 +44,7 @@ void StubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	stub_spu = LoadSPUChain( num_spus, spu_ids, spu_names );
+	stub_spu = crSPULoadChain( num_spus, spu_ids, spu_names );
 
 	crFree( spuchain );
 	crFree( spu_ids );
