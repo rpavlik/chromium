@@ -14,12 +14,7 @@
 #include "exec.h"
 #include "../common/logo.h"
 
-#ifndef WIN32
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glext.h>
-#else
 PFNGLBLENDCOLOREXTPROC glBlendColorEXT;
-#endif
 
 
 /* --- Global Variables ----------------------------------------------------- */
@@ -85,12 +80,14 @@ void	InitSpecial	( void )
 	
 #ifdef WIN32
 	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)wglGetProcAddress( "glBlendColorEXT" );
+#else
+	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendColorEXT" );
+#endif
 	if ( glBlendColorEXT == NULL )
 	{
 		cout << "Error linking to extensions!" << endl;
 		exit( 0 );
 	}
-#endif
 
 	return;
 }

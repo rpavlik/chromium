@@ -14,9 +14,6 @@
 #ifndef EXEC_H
 #define EXEC_H
 
-#ifndef WINDOWS
-#define GL_GLEXT_PROTOTYPES
-#endif
 
 #ifdef WIN32
 #pragma warning( push, 3 )

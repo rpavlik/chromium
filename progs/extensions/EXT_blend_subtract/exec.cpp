@@ -57,7 +57,7 @@ void	InitSpecial	( void )
 #ifdef WIN32
 	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)wglGetProcAddress( "glBlendEquationEXT" );
 #else
-	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)glXGetProcAddressARB( (GLubyte *) "glBlendEquationEXT" );
+	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendEquationEXT" );
 #endif
 	if ( glBlendEquationEXT == NULL )
 	{
