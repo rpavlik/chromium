@@ -47,7 +47,9 @@
 #define I_TRANSFORM(num, m, vx, vy, vz) \
     MTRANSFORM (x[num], y[num], z[num], w[num], m, vx, vy, vz)
 
+#ifndef FLT_MAX
 #define FLT_MAX 3.402823466e+38f
+#endif
 
 BinaryswapSPU binaryswap_spu;
 GLfloat modl[16];

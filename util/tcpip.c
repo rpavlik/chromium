@@ -32,6 +32,9 @@ typedef unsigned int socklen_t;
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#ifdef AIX
+#include <strings.h>
+#endif
 
 #include "cr_error.h"
 #include "cr_mem.h"

@@ -251,9 +251,13 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
  ** glXCopyContext anyway so we'll just
  ** #ifdef out the code.
  */
-
 void
-glXCopyContext( Display *dpy, GLXContext src, GLXContext dst, unsigned long mask )
+glXCopyContext( Display *dpy, GLXContext src, GLXContext dst, 
+#if defined(AIX)
+GLuint mask )
+#else
+unsigned long mask )
+#endif
 {
 	(void) dpy;
 	(void) src;

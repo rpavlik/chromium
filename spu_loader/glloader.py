@@ -33,8 +33,12 @@ print """
 
 #if defined(WINDOWS)
 #define SYSTEM_GL "opengl32.dll"
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(__APPLE__)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(__APPLE__) || defined(AIX)
+#if defined(AIX)
+#define SYSTEM_GL "libGL.o"
+#else
 #define SYSTEM_GL "libGL.so"
+#endif
 typedef void (*glxfuncptr)();
 extern glxfuncptr glxGetProcAddressARB( const GLubyte *name );
 #else

@@ -20,6 +20,9 @@
 #include "exec.h"
 #include <string.h>
 
+#ifndef bool
+#define bool char
+#endif
 
 
 /* --- Function Prototypes -------------------------------------------------- */

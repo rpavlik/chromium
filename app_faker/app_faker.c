@@ -50,7 +50,11 @@ static const char *libgl_names[] = {
 #else /* _WIN32 */
 
 #define DEFAULT_TMP_DIR "/tmp"
+#if defined(AIX)
+#define OPENGL_CLIENT_LIB "libcrfaker.a"
+#else
 #define OPENGL_CLIENT_LIB "libcrfaker.so"
+#endif
 
 #if defined(IRIX) || defined(IRIX64)
 #define SYSTEM_LIB_DIR  "/usr/lib32"
@@ -59,7 +63,11 @@ static const char *libgl_names[] = {
 #endif
 
 static const char *libgl_names[] = {
+#ifdef AIX
+	"libGL.a"
+#else
 	"libGL.so"
+#endif
 };
 
 #endif /* _WIN32 */
@@ -488,6 +496,10 @@ void do_it( char *argv[] )
 			path = crGetenv( "LD_LIBRARY_PATH" );
 #else
 		path = crGetenv( "LD_LIBRARY_PATH" );
+#if defined(AIX)
+		if(!path) path = crGetenv("LIBPATH");
+		fprintf(stderr,"libpath=%s\n",path);
+#endif
 #endif
 		if ( path ) {
 			debug( "searching for client library \"%s\" in \"%s\"\n",
@@ -548,7 +560,11 @@ void do_it( char *argv[] )
 		}
 	}
 
+#ifdef AIX
+	prefix_env_var( tmpdir, "LIBPATH" );
+#else
 	prefix_env_var( tmpdir, "LD_LIBRARY_PATH" );
+#endif
 
 #if defined(IRIX) || defined(IRIX64)
 	/* if these are set then they'll be used by rld, so we have to

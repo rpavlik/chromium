@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "exec.h"
 #include "../common/logo.h"

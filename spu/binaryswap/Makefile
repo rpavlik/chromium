@@ -12,7 +12,7 @@ FILES = binaryswapspu \
 	binaryswapspu_config \
 	binaryswapspu_init
 
-LIBRARIES = spuload crutil crmothership
+LIBRARIES = spuload crutil crmothership 
 
 PRECOMP =
 SLOP = $(PRECOMP)

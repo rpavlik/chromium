@@ -127,6 +127,7 @@ OBJS    := $(addsuffix $(OBJSUFFIX), $(OBJS))
 ifdef LIBRARY
 ifdef SHARED
 	LIBNAME := $(addprefix $(OBJDIR)/, $(LIBPREFIX)$(LIBRARY)$(DLLSUFFIX))
+	AIXDLIBNAME := $(addprefix $(OBJDIR)/, $(LIBPREFIX)$(LIBRARY)$(OBJSUFFIX))
 else
 	LIBNAME := $(addprefix $(OBJDIR)/, $(LIBPREFIX)$(LIBRARY)$(LIBSUFFIX))
 endif
@@ -134,7 +135,7 @@ else
 	LIBNAME := dummy_libname
 endif
 
-TEMPFILES := *~ \\\#*\\\# so_locations *.pyc
+TEMPFILES := *~ \\\#*\\\# so_locations *.pyc tmpAnyDX.a tmpAnyDX.exp load.map shr.o
 
 ifdef PROGRAM
 PROG_TARGET := $(BINDIR)/$(PROGRAM)
@@ -307,7 +308,25 @@ else
 endif #shared
 else
 ifdef SHARED
+ifdef AIXSHAREDLIB
+	@$(ECHO) "AIX shared obj link"
+	@$(ECHO) "Not using LDFLAGS $(LDFLAGS)"
+	rm -f tmpAnyDX.a shr.o
+	rm -f $(AIXDLIBNAME)
+	rm -f $(LIBNAME)
+	ar -ruv tmpAnyDX.a $(OBJS)
+	nm -epC tmpAnyDX.a | awk -f $(TOP)/scripts/exports.awk > tmpAnyDX.exp
+	pwd
+	@$(ECHO) ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
+	ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
+	ar $(ARCREATEFLAGS) $(LIBNAME) shr.o
+	cp shr.o $(AIXDLIBNAME)
+	@$(CP) $(AIXDLIBNAME) $(DSO_DIR)
+	rm -f tmpAnyDX.* shr.o load.map
+	rm -f $(DSO_DIR)/$(LIBPREFIX)$(SHORT_TARGET_NAME)$(DLLSUFFIX)
+else
 	@$(LD) $(SHARED_LDFLAGS) -o $(LIBNAME) $(OBJS) $(LDFLAGS) $(LIBRARIES)
+endif # aix
 else
 	@$(ECHO) How do I make static libraries on $(ARCH)?
 endif #shared
@@ -340,7 +359,23 @@ $(LIB_COPIES):
 ifdef WINDOWS
 	@$(LD) $(SHARED_LDFLAGS) /Fe$(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else
+ifdef AIXSHAREDLIB
+	@$(ECHO) "AIX shared obj link"
+	@$(ECHO) "Not using LDFLAGS $(LDFLAGS)"
+	ar -ruv tmpAnyDX.a $(OBJS)
+	nm -epC tmpAnyDX.a | awk -f $(TOP)/scripts/exports.awk > tmpAnyDX.exp
+	pwd
+	@$(ECHO) ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
+	ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
+	ar $(ARCREATEFLAGS)  $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) shr.o
+	cp shr.o $(AIXDLIBNAME)
+	@$(CP) $(AIXDLIBNAME) $(DSO_DIR)
+	rm -f $(DSO_DIR)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)
+	rm -f tmpAnyDX.* shr.o load.map
+
+else
 	@$(LD) $(SHARED_LDFLAGS) -o $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(OBJS) $(LDFLAGS) $(LIBRARIES)
+endif
 endif
 	@$(CP) $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(DSO_DIR)
 
@@ -350,7 +385,23 @@ $(SPU_COPIES):
 ifdef WINDOWS
 	@$(LD) $(SHARED_LDFLAGS) /Fe$(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else
+ifdef AIXSHAREDLIB
+	@$(ECHO) "AIX shared obj link"
+	@$(ECHO) "Not using LDFLAGS $(LDFLAGS)"
+	ar -ruv tmpAnyDX.a $(OBJS)
+	nm -epC tmpAnyDX.a | awk -f $(TOP)/scripts/exports.awk > tmpAnyDX.exp
+	pwd
+	@$(ECHO) ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
+	ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
+	ar $(ARCREATEFLAGS)  $(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) shr.o
+	cp shr.o $(AIXDLIBNAME)
+	@$(CP) $(AIXDLIBNAME) $(DSO_DIR)
+	rm -f $(DSO_DIR)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)
+	rm -f tmpAnyDX.* shr.o load.map
+
+else
 	@$(LD) $(SHARED_LDFLAGS) -o $(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) $(OBJS) $(LDFLAGS) $(LIBRARIES)
+endif
 endif
 	@$(CP) $(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) $(DSO_DIR)
 
@@ -423,6 +474,7 @@ $(OBJDIR)/%.o: %.C Makefile
 
 $(OBJDIR)/%.o: %.c Makefile
 	@$(ECHO) "Compiling $<"
+	@$(ECHO) "$(CR_CC) -o $@ -c $(CFLAGS) $<"
 	@$(CR_CC) -o $@ -c $(CFLAGS) $<
 
 $(OBJDIR)/%.o: %.s Makefile

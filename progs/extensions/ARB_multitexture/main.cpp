@@ -19,7 +19,11 @@
 
 #include "exec.h"
 #include <string.h>
-
+#ifdef AIX
+#define bool int
+#define true 1
+#define false 0
+#endif /* AIX */
 
 
 /* --- Function Prototypes -------------------------------------------------- */

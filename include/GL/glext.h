@@ -342,7 +342,9 @@ extern "C" {
 #define GL_MINMAX_EXT                     0x802E
 #define GL_MINMAX_FORMAT_EXT              0x802F
 #define GL_MINMAX_SINK_EXT                0x8030
+#ifndef GL_TABLE_TOO_LARGE_EXT
 #define GL_TABLE_TOO_LARGE_EXT            0x8031
+#endif
 #endif
 
 #ifndef GL_EXT_convolution
@@ -1183,7 +1185,9 @@ extern "C" {
 
 #ifndef GL_EXT_texture_filter_anisotropic
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
+#ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+#endif
 #endif
 
 #ifndef GL_EXT_vertex_weighting
@@ -1311,8 +1315,10 @@ extern "C" {
 #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT  0x83F3
 #endif
 
+#ifndef GL_CULL_VERTEX_IBM
 #ifndef GL_IBM_cull_vertex
 #define GL_CULL_VERTEX_IBM                103050
+#endif
 #endif
 
 #ifndef GL_IBM_multimode_draw_arrays

@@ -20,7 +20,7 @@ typedef struct {
 	char *name;
 #if defined(WINDOWS)
 	HINSTANCE hinstLib;
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(__APPLE__)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(__APPLE__) || defined(AIX)
 	void *hinstLib;
 #else
 #error ARCHITECTURE DLL NOT IMPLEMENTED

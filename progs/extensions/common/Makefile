@@ -10,7 +10,7 @@ FILES = logo
 SHARED = 1
 OPENGL = 1
 
-LIBRARIES = crutil
+LIBRARIES = crutil GL
 
 LIB_DEFS = common.def
 include ${TOP}/cr.mk

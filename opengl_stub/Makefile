@@ -59,6 +59,13 @@ ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
 
+ifeq ($(ARCH), AIX)
+OPENGL = 1
+FILES += $(ARCH)_exports glx xfont AIX_edgeflagpointer
+ARCH_EXPORTS_PY = IRIX64_exports.py
+ARCH_EXPORTS = $(ARCH)_exports.c 
+endif
+
 ifeq ($(ARCH), Darwin)
 LDFLAGS += -lX11
 FILES += $(ARCH)_exports glx xfont
