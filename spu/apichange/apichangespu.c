@@ -4,6 +4,14 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+/*
+ * This SPU demonstrates changing a GL function pointer on the fly.
+ * Every few frames we change glVertex3f to alternately point to
+ * halfVertex3f or doubleVertex3f which halves or doubles the X,Y,Z
+ * coordinates.
+ */
+
+
 #include <stdio.h>
 #include "cr_spu.h"
 #include "cr_error.h"
@@ -11,17 +19,17 @@
 
 ApichangeSPU apichange_spu;
 
-void APICHANGESPU_APIENTRY halfVertex3fv( const GLfloat *v )
+static void APICHANGESPU_APIENTRY halfVertex3fv( const GLfloat *v )
 {
 	apichange_spu.child.Vertex3f( v[0]*.5f, v[1]*.5f, v[2]*.5f );
 }
 
-void APICHANGESPU_APIENTRY doubleVertex3fv( const GLfloat *v )
+static void APICHANGESPU_APIENTRY doubleVertex3fv( const GLfloat *v )
 {
 	apichange_spu.child.Vertex3f( v[0]*2, v[1]*2, v[2]*2 );
 }
 
-void APICHANGESPU_APIENTRY apichangeSwapBuffers( GLint window )
+static void APICHANGESPU_APIENTRY apichangeSwapBuffers( GLint window, GLint flags )
 {
 	static int frame_counter = 0;
 	frame_counter++;
@@ -39,7 +47,7 @@ void APICHANGESPU_APIENTRY apichangeSwapBuffers( GLint window )
 			crSPUChangeInterface( &(apichange_spu.self), apichange_spu.self.Vertex3fv, doubleVertex3fv);
 		}
 	}
-	apichange_spu.child.SwapBuffers();
+	apichange_spu.child.SwapBuffers(window, flags);
 }
 
 SPUNamedFunctionTable _cr_apichange_table[] = {

@@ -16,9 +16,9 @@ SPUFunctions apichange_functions = {
 	_cr_apichange_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id,
-		unsigned int num_contexts )
+static SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *self,
+																			 unsigned int context_id,
+																			 unsigned int num_contexts )
 {
 
 	(void) context_id;
@@ -39,13 +39,13 @@ SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *self,
 	return &apichange_functions;
 }
 
-void apichangeSPUSelfDispatch(SPUDispatchTable *self)
+static void apichangeSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(apichange_spu.self) );
 	crSPUCopyDispatchTable( &(apichange_spu.self), self );
 }
 
-int apichangeSPUCleanup(void)
+static int apichangeSPUCleanup(void)
 {
 	return 1;
 }
