@@ -104,7 +104,8 @@ crHullInteriorBox
 crNetSetNodeRange
 crNetSetContextRange
 crNetSetRank
-;crSleep
-;crSpawn
-;crKill
-;crGetProcName
+crSleep
+crSpawn
+crKill
+crGetProcName
+crGetCurrentDir

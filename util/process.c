@@ -119,6 +119,21 @@ void crGetProcName( char *name, int maxLen )
 }
 
 
+/*
+ * Return current directory string.
+ */
+void crGetCurrentDir( char *dir, int maxLen )
+{
+#ifdef WINDOWS
+  /* XXX need Windows solution here */
+  dir[0] = 0;
+#else
+  if (!getcwd(dir, maxLen))
+	dir[0] = 0;
+#endif
+}
+
+
 #if 0
 /* simple test harness */
 int main(int argc, char **argv)

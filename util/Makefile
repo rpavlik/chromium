@@ -26,6 +26,7 @@ FILES = bbox \
 	mem \
 	net \
 	pixel \
+	process \
 	rand \
 	string \
 	threads \
