@@ -99,6 +99,16 @@ from</a>.</p>
     function calls.&nbsp; If the reader is already familiar with <a href="newspu.html">SPU
     inheritance</a>, all SPU's are implicitly a subSPU of the &quot;error&quot;
     SPU.</p></li>
+  <li><p class="ProvidedThing">The &quot;feedback&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will catch all related Feedback &
+    Selection OpenGL calls. This allows the abstraction of this layer
+    away from other SPU's. If you need support for Feedback & Selection
+    then insert this SPU into the chain.</p></li>
+  <li><p class="ProvidedThing">The &quot;perf&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will monitor OpenGL traffic and 
+    display 'interesting' results on what needs to be monitored. See
+    the <a href="performance.html">perfSPU</a> document for more details
+    in it's configuration.</p></li>
   <li><p class="ProvidedThing">The &quot;nop&quot; SPU</p>
   <p class="ProvidedDesc"> This SPU will silently discard all OpenGL calls.&nbsp;
     This SPU is most useful for understanding the performance of applications
