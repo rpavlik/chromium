@@ -342,6 +342,7 @@ class TilesortDialog(wxDialog):
 		self.hostsDialog = hostdialog.HostDialog(parent=NULL, id=-1,
 						title="Chromium Hosts",
 						message="Specify host names for the tile servers")
+		self.hostsDialog.Centre()
 
 		# Hostname button
 		self.hostsButton = wxButton(parent=self, id=id_Hostnames,
@@ -390,6 +391,7 @@ class TilesortDialog(wxDialog):
 		topSizer.Add(separator, flag=wxGROW, border=0)
 		topSizer.Add(okCancelSizer, option=0, flag=wxGROW|wxTOP, border=10)
 
+		# Finish-up the dialog
 		self.SetAutoLayout(true)
 		self.SetSizer(topSizer)
 
@@ -486,7 +488,7 @@ class TilesortDialog(wxDialog):
 		tilesortSPU = FindTilesortSPU(self.__Mothership)
 		(params, opts) = crutils.GetSPUOptions("tilesort")
 		# create the dialog
-		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+		dialog = spudialog.SPUDialog(parent=self, id=-1,
 									 title="Tilesort SPU Options",
 									 options = opts)
 		# set the dialog widget values
@@ -600,11 +602,12 @@ def Create_Tilesort(parentWindow, mothership):
 	else:
 		dialogDefaults = [1, 2, 1]
 
-	dialog = intdialog.IntDialog(NULL, id=-1, title="Tilesort Template",
+	dialog = intdialog.IntDialog(parent=parentWindow, id=-1, title="Tilesort Template",
 								 labels=["Number of application nodes:",
 										 "Mural Columns:",
 										 "Mural Rows:"],
 								 defaultValues=dialogDefaults, maxValue=10000)
+	dialog.Centre()
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()
 		return 0
@@ -693,7 +696,7 @@ def Edit_Tilesort(parentWindow, mothership):
 		print "This is not a tilesort configuration!"
 		return
 
-	d = TilesortDialog()
+	d = TilesortDialog(parent=parentWindow)
 	d.Centre()
 	backupTilesortParams = mothership.Tilesort.Clone()
 	d.SetMothership(mothership)
