@@ -49,7 +49,7 @@ class SPUDialog(wxDialog):
 		
 		if optionList and len(optionList) > 0:
 			i = 0
-			for opt in optionList.Options():
+			for opt in optionList:
 				controls = []
 				if opt.Type == "BOOL":
 					#labString = opt.Description + " (" + opt.Name + ")"
@@ -164,7 +164,7 @@ class SPUDialog(wxDialog):
 	def _onRestore(self, event):
 		"""Called by Restore Defaults button"""
 		# Set all control/widget values to default values
-		for opt in self.__OptionList.Options():
+		for opt in self.__OptionList:
 			self.SetValue(opt.Name, opt.Default)
 
 	def _onOK(self, event):

@@ -32,7 +32,7 @@ class Option:
 		assert len(maxs) == count or len(maxs) == 0
 		self.Name = name
 		self.Description = description
-		self.Type = type        # "BOOL", "INT", "FLOAT", "STRING", "ENUM" or "LABEL"
+		self.Type = type  # "BOOL", "INT", "FLOAT", "STRING", "ENUM" or "LABEL"
 		self.Count = count
 		self.Default = default  # vector[count]
 		self.Mins = mins        # vector[count] (except for ENUM)
@@ -88,16 +88,19 @@ class OptionList:
 		"""Return number of options in the list."""
 		return len(self.__Options)
 
+	def __getitem__(self, key):
+		"""Implements self[key] where key is an integer in [0, len-1]."""
+		if key >= 0 and key < len(self.__Options):
+			return self.__Options[key]
+		else:
+			raise IndexError
+
 	def Clone(self):
 		"""Return a new copy of this OptionList."""
 		newList = []
 		for opt in self.__Options:
 			newList.append(opt.Clone())
 		return OptionList(newList)
-
-	def Options(self):
-		"""Return list of Option objects"""
-		return self.__Options
 
 	def HasOption(self, optName):
 		"""Test if the named option is in this option list."""
@@ -121,7 +124,7 @@ class OptionList:
 		return 0
 
 	def GetValue(self, optName):
-		"""Return value of named option."""
+		"""Return value of named option.  Result is a list!"""
 		for opt in self.__Options:
 			if opt.Name == optName:
 				assert len(opt.Value) == opt.Count
@@ -129,7 +132,7 @@ class OptionList:
 		return None
 
 	def SetValue(self, optName, value):
-		"""Set value of named option.  Value is a list"""
+		"""Set value of named option.  Value must be a list!"""
 		assert type(value) == types.ListType
 		for opt in self.__Options:
 			if opt.Name == optName:
@@ -139,7 +142,7 @@ class OptionList:
 
 	def Conf(self, name, valueTuple):
 		"""Like SetValue(), but take a tuple instead of list."""
-				# Get count and type of expected values
+		# Get count and type of expected values
 		count = self.GetCount(name)
 		if count == 0:
 			print "Bad config option: %s" % name
@@ -148,6 +151,8 @@ class OptionList:
 		assert type != None
 
 		# values is a tuple, we need to convert it to list.
+		# XXX this will be a lot simpler when we finally disallow Conf()
+		# from being called with more than 2 parameters.
 		valueList = []
 		if len(valueTuple) == count:
 			# the tuple size matches the expected length
@@ -226,22 +231,23 @@ class SpuObject:
 	# Note that this class doesn't know anything about specific classes
 	# of SPUs or their capabilities.  That's a good thing.
 	def __init__(self, name, isTerminal=0, maxServers=0):
-		self.__X = 0
-		self.__Y = 0
 		self.__Name = name
-		self.__Width = 0
-		self.__Height = 30
-		self.__IsSelected = 0
 		self.__IsTerminal = isTerminal
 		self.__MaxServers = maxServers
 		self.__ServerPort = 7000
 		self.__ServerProtocol = "tcpip"
 		self.__Servers = []
+		self.__OptionList = None
+		self.__TileLayoutFunction = None
+		# graphics-related
+		self.__X = 0
+		self.__Y = 0
+		self.__Width = 0
+		self.__Height = 30
+		self.__IsSelected = 0
 		self.__OutlinePen = wxPython.wx.wxPen(wxPython.wx.wxColor(0,0,0),
 											  width=1, style=0)
 		self.__FillBrush = wxPython.wx.wxLIGHT_GREY_BRUSH
-		self.__OptionList = None
-		self.__TileLayoutFunction = None
 
 	def Clone(self):
 		"""Return a deep copy/clone of this SpuObject"""
@@ -311,7 +317,7 @@ class SpuObject:
 		return self.__Name
 
 	def GetOptions(self):
-		"""Get the SPU's options (an OptionList)"""
+		"""Return the SPU's options (an OptionList)"""
 		return self.__OptionList
 
 	def SetOptions(self, optionlist):
@@ -320,18 +326,20 @@ class SpuObject:
 		self.__OptionList = optionlist
 
 	def GetOption(self, optName):
-		"""Return current value of a particular SPU option.
-		Result is a list."""
+		"""Return current value of the named SPU option.
+		Result is a list!"""
 		assert self.__OptionList.HasOption(optName)
 		return self.__OptionList.GetValue(optName)
 		
 	def SetOption(self, optName, value):
-		"""Set the value of a particular SPU option"""
+		"""Set the value of a particular SPU option.  Value is a list!"""
 		assert self.__OptionList.HasOption(optName)
+		assert type(value) == types.ListType
 		self.__OptionList.SetValue(optName, value)
 		
 	def Conf(self, var, *values):
 		"""Set an option, via config file"""
+		# XXX Eventually we'll remove the '*' for varargs!
 		self.__OptionList.Conf(var, values)
 
 	def TileLayoutFunction(self, func):
@@ -723,16 +731,13 @@ class Node:
 		"""Set named option"""
 		self._Options.SetValue(name, value)
 
-	def GetOption(self, name):
-		"""Return value of named option"""
-		return self._Options.GetValue(name)
-
 	def GetOptions(self):
 		"""Return the server OptionList."""
 		return self._Options
 
 	def Conf(self, name, *values):
 		"""Set an option, via config file"""
+		# XXX Eventually we'll remove the '*' for varargs!
 		self._Options.Conf(name, values)
 		
 
@@ -851,35 +856,13 @@ class Mothership:
 		self.__TemplateType = ""
 		self.__TemplateVars = {}
 		self.__Options = OptionList( [
-#			Option("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
-#			Option("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
-#			Option("track_window_size", "Track Window Size Changes", "BOOL", 1, [0], [], []),
-#			Option("show_cursor", "Show Virtual Cursor", "BOOL", 1, [0], [], []),
 			Option("MTU", "Max Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
 			Option("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], []),
-#			Option("command_help",
-#				   "Program name and arguments.\n" +
-#				   "   %N will be replaced by the number of application nodes.\n" +
-#				   "   %I (aye) will be replaced by each application node's index.\n" +
-#				   "   %0 (zero) will be replaced by the Zeroth argument on the first" +
-#				   " app node only.\n" +
-#				   "   Example command: 'psubmit -size %N -rank %I -clear %0'\n" +
-#				   "   Zeroth arg: '-swap'",
-#				   "LABEL", 0, [], [], []),
-#			# XXX this should probably be stored in the app nodes
-#			Option("default_app", "Command", "STRING", 1, [""], [], []),
-#			Option("zeroth_arg", "Zeroth arg", "STRING", 1, [""], [], []),
-#			Option("default_dir", "Directory", "STRING", 1, [crconfig.crbindir], [], []),
 			] )
 
 	def GetOptions(self):
 		"""Get the mothership/global options (an OptionList)"""
 		return self.__Options
-
-	def GetOption(self, name):
-		"""Get a global option value (result is a list)."""
-		assert self.__Options.HasOption(name)
-		return self.__Options.GetValue(name)
 
 	def SetOption(self, name, value):
 		"""Set a global option value (value must be a list)"""
@@ -919,6 +902,7 @@ class Mothership:
 
 	def AllSPUConf(self, spuName, var, *values):
 		"""Set var/values for all SPUs that match spuName"""
+		# XXX Eventually we'll remove the '*' for varargs!
 		# needed for loading configs
 		pass
 

@@ -563,7 +563,7 @@ class TilesortDialog(wxDialog):
 		# wait for OK or cancel
 		if dialog.ShowModal() == wxID_OK:
 			# save the new values/options
-			for opt in tilesortSPU.GetOptions().Options():
+			for opt in tilesortSPU.GetOptions():
 				value = dialog.GetValue(opt.Name)
 				tilesortSPU.SetOption(opt.Name, value)
 		return

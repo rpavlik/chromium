@@ -71,7 +71,7 @@ def contains(list, item):
 def WriteConfs(optionList, prefix, file):
 	"""Write a prefix.Conf('param', value) line to the file handle for each of
 	the options in the given OptionList.  Only write non-default options."""
-	for opt in optionList.Options():
+	for opt in optionList:
 		if opt.Value != opt.Default:
 			opt.Write(file, "%s.Conf" % prefix, "")
 	
@@ -79,7 +79,7 @@ def WriteAppConfs(appNode, prefix, file):
 	"""Write the .Conf() lines for an app node.  We need to do a few things
 	special here (like crbindir)."""
 	assert isinstance(appNode, crtypes.ApplicationNode)
-	for opt in appNode.GetOptions().Options():
+	for opt in appNode.GetOptions():
 		if opt.Name == "start_dir":
 			if opt.Value[0] == crbindir:
 				file.write('%s("start_dir", crbindir)\n' % prefix)

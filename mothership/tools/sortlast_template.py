@@ -425,7 +425,7 @@ class SortlastDialog(wxDialog):
 		# wait for OK or cancel
 		if dialog.ShowModal() == wxID_OK:
 			# save the new values/options
-			for opt in readbackSPU.GetOptions().Options():
+			for opt in readbackSPU.GetOptions():
 				value = dialog.GetValue(opt.Name)
 				readbackSPU.SetOption(opt.Name, value)
 		return
@@ -440,7 +440,7 @@ class SortlastDialog(wxDialog):
 		# wait for OK or cancel
 		if dialog.ShowModal() == wxID_OK:
 			# save the new values/options
-			for opt in renderSPU.GetOptions().Options():
+			for opt in renderSPU.GetOptions():
 				value = dialog.GetValue(opt.Name)
 				renderSPU.SetOption(opt.Name, value)
 		return

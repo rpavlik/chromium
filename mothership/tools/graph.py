@@ -1118,7 +1118,7 @@ class GraphFrame(wxFrame):
 								optionList=serverNode.GetOptions())
 		dialog.Centre()
 		if dialog.ShowModal() == wxID_OK:
-			for opt in serverNode.GetOptions().Options():
+			for opt in serverNode.GetOptions():
 				value = dialog.GetValue(opt.Name)
 				for node in self.mothership.SelectedNodes():
 					if node.IsServer():
@@ -1164,7 +1164,7 @@ class GraphFrame(wxFrame):
 								optionList=appNode.GetOptions())
 		dialog.Centre()
 		if dialog.ShowModal() == wxID_OK:
-			for opt in appNode.GetOptions().Options():
+			for opt in appNode.GetOptions():
 				value = dialog.GetValue(opt.Name)
 				for node in self.mothership.SelectedNodes():
 					if node.IsAppNode():
@@ -1246,7 +1246,7 @@ class GraphFrame(wxFrame):
 				if dialog.ShowModal() == wxID_OK:
 					# save the new values/options in all selected SPUs
 					for spu in spuList:
-						for opt in optionlist.Options():
+						for opt in optionlist:
 							value = dialog.GetValue(opt.Name)
 							spu.SetOption(opt.Name, value)
 				else:
@@ -1267,7 +1267,7 @@ class GraphFrame(wxFrame):
 								optionList=self.mothership.GetOptions())
 		dialog.Centre()
 		if dialog.ShowModal() == wxID_OK:
-			for opt in self.mothership.GetOptions().Options():
+			for opt in self.mothership.GetOptions():
 				value = dialog.GetValue(opt.Name)
 				self.mothership.SetOption(opt.Name, value)
 			self.dirty = true
