@@ -54,3 +54,4 @@ crHashtableReplace
 crHashtableNumElements
 crAllocHashtable
 crFreeHashtable
+crDebugOpcodes

@@ -11,7 +11,9 @@ endif
 
 SHARED = 1
 LIBRARY = crutil
-FILES = bufpool devnull dll environment error hash mem net pixel string tcpip url
+FILES = bufpool debug_opcodes devnull dll environment error hash mem net pixel string tcpip url
+PRECOMP = debug_opcodes.c
+SLOP += ${PRECOMP}
 
 ifeq ($(ARCH),Linux)
 CFLAGS += -DGM_SUPPORT
@@ -30,3 +32,7 @@ LDFLAGS += -ldl
 endif
 
 include ${TOP}/cr.mk
+
+debug_opcodes.c: debug_opcodes.py ../packer/opcode_special
+	@$(ECHO) Making the opcode debugger...
+	@$(PYTHON) debug_opcodes.py > $@

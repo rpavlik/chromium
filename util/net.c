@@ -16,6 +16,7 @@
 #include "cr_net.h"
 #include "cr_netserver.h"
 #include "cr_bufpool.h"
+#include "cr_debugopcodes.h"
 
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) // 2MB
 
@@ -392,6 +393,11 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 			crNetRecvFlowControl( conn, &(msg->flowControl), len );
 			break;
 		case CR_MESSAGE_OPCODES:
+			{
+				//CRMessageOpcodes *ops = (CRMessageOpcodes *) msg;
+				//unsigned char *data_ptr = (unsigned char *) ops + sizeof( *ops) + ((ops->numOpcodes + 3 ) & ~0x03);
+				//crDebugOpcodes( stdout, data_ptr-1, ops->numOpcodes );
+			}
 		case CR_MESSAGE_READ_PIXELS:
 		case CR_MESSAGE_WRITEBACK:
 			// do nothing -- just checking that it's OK!
@@ -421,6 +427,7 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 	// just tack it on to the end of the connection's list of 
 	// work blocks.
 	
+	//fprintf( stdout, "Appending buffer 0x%p to connection 0x%p\n", buf, conn );
 	msglist = (CRMessageList *) crBufferPoolPop( &cr_net.message_list_pool );
 	if ( msglist == NULL )
 	{
@@ -442,22 +449,27 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 
 unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 {
-	if (conn->messageList != NULL)
+	for (;;)
 	{
-		CRMessageList *temp;
-		unsigned int len;
-		*message = conn->messageList->mesg;
-		len = conn->messageList->len;
-		temp = conn->messageList;
-		conn->messageList = conn->messageList->next;
-		if (!conn->messageList)
+		if (conn->messageList != NULL)
 		{
-			conn->messageTail = NULL;
+			CRMessageList *temp;
+			unsigned int len;
+			*message = conn->messageList->mesg;
+			len = conn->messageList->len;
+			temp = conn->messageList;
+			conn->messageList = conn->messageList->next;
+			if (!conn->messageList)
+			{
+				conn->messageTail = NULL;
+			}
+			crBufferPoolPush( &(cr_net.message_list_pool), temp );
+			//fprintf( stdout, "Just returned message 0x%p for processing\n", *message );
+			return len;
 		}
-		crBufferPoolPush( &(cr_net.message_list_pool), temp );
-		return len;
+		crNetRecv();
 	}
-	crNetRecv();
+	// NOTREACHED
 	return 0;
 }
 

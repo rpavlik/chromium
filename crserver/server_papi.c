@@ -4,6 +4,7 @@
 #include "cr_mem.h"
 #include "cr_hash.h"
 #include "cr_glstate.h"
+#include "cr_applications.h"
 #include "state/cr_statetypes.h"
 
 typedef struct _wqnode {
@@ -61,13 +62,18 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierDestroy( GLuint name )
 void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExec( GLuint name )
 {
 	CRBarrier *barrier;
+	char debug_buf[4096];
 
-	crDebug( "Queue 0x%p is entering barrier %d", run_queue, name );
 	barrier = (CRBarrier *) crHashtableSearch( cr_barriers, name );
 	if ( barrier == NULL )
 	{
 		crError( "No such barrier: %d", name );
 	}
+	sprintf( debug_buf, "BarrierExec( %d )", name );
+	cr_server.head_spu->dispatch_table.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf );
+	sprintf( debug_buf, "num_waiting = %d", barrier->num_waiting );
+	cr_server.head_spu->dispatch_table.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf );
+
 	barrier->waiting[barrier->num_waiting++] = run_queue;
 	run_queue->blocked = 1;
 	if ( barrier->num_waiting == barrier->count )

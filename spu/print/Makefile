@@ -6,6 +6,7 @@ FILES = printspu \
 		printspu_config \
 		printspu_enums \
 		printspu_get \
+		printspu_hint \
 		printspu_init \
 		printspu_matrices
 
