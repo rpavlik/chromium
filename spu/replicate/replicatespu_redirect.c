@@ -92,7 +92,7 @@ void replicatespuRePositionWindow(WindowInfo *winInfo)
 	/* Check if the window is mapped */
 	if (winAtt.map_state == IsViewable) 
 		winInfo->viewable = GL_TRUE;
-  	else
+	else
 		winInfo->viewable = GL_FALSE;
 
 	XSync(replicate_spu.glx_display, 0);
@@ -334,7 +334,7 @@ void replicatespuReplicateCreateContext(int ipaddress)
 	thread->server.conn = replicate_spu.rserver[0].conn;
 	thread->broadcast = 1;
 
-	crDebug("Finished replicationSPU CreateContext\n");
+	crDebug("Replicate SPU: leaving replicatespuReplicateCreateContext");
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);

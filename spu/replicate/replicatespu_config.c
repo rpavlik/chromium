@@ -11,9 +11,8 @@
 #include "cr_spu.h"
 #include "cr_mem.h"
 
-#include <stdio.h>
-
-static void __setDefaults( void )
+static void
+setDefaults( void )
 {
 	crMemZero(replicate_spu.context, CR_MAX_CONTEXTS * sizeof(ContextInfo));
 	replicate_spu.numContexts = 0;
@@ -22,14 +21,24 @@ static void __setDefaults( void )
 	replicate_spu.numThreads = 0;
 }
 
-/* No SPU options yet. Well.. not really.. 
- */
+
+static void
+render_to_crut_window( ReplicateSPU *replicate_spu, const char *response )
+{
+	sscanf( response, "%d", &(replicate_spu->render_to_crut_window) );
+}
+
+
 SPUOptions replicateSPUOptions[] = {
+	{ "render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
+		"Render to CRUT window", (SPUOptionCB) render_to_crut_window },
+
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 
-void replicatespuGatherConfiguration( const SPU *child_spu )
+void
+replicatespuGatherConfiguration( const SPU *child_spu )
 {
 	CRConnection *conn;
 	char response[8096];
@@ -43,7 +52,7 @@ void replicatespuGatherConfiguration( const SPU *child_spu )
 	}
 	crMothershipIdentifySPU( conn, replicate_spu.id );
 
-	__setDefaults();
+	setDefaults();
 
 	crSPUGetMothershipParams( conn, &replicate_spu, replicateSPUOptions );
 

@@ -79,6 +79,9 @@ typedef struct {
 	Display *glx_display;
 	char dpyName[1000];
 
+	/* Config options */
+	int render_to_crut_window;
+
 	CRNetServer rserver[CR_MAX_REPLICANTS];
 
 	CRHashTable *windowTable;
