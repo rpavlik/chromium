@@ -3762,8 +3762,8 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue *bitID,
 	CRTextureObj *tobj = NULL;
 	GLuint name=0;
 	GLuint *cname=NULL;
-  unsigned int i;
-  int j;
+	unsigned int i;
+	int j;
 	glAble able[2];
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
@@ -4034,6 +4034,8 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue *bitID,
 		if (to->unit[i].enabled1D == GL_TRUE) 
 		{
 			GET_TOBJ(tobj, to, to->unit[i].currentTexture1DName);
+			if (!tobj)
+				tobj = to->currentTexture1D;
 			/*tobj = to->currentTexture1D; */
 			name = to->unit[i].currentTexture1DName;
 			cname = &(from->unit[i].currentTexture1DName);
@@ -4042,6 +4044,8 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue *bitID,
 		if (to->unit[i].enabled2D == GL_TRUE) 
 		{
 			GET_TOBJ(tobj, to, to->unit[i].currentTexture2DName);
+			if (!tobj)
+				tobj = to->currentTexture2D;
 			/*tobj = to->currentTexture2D; */
 			name = to->unit[i].currentTexture2DName;
 			cname = &(from->unit[i].currentTexture2DName);
@@ -4051,6 +4055,8 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue *bitID,
 		if (to->unit[i].enabled3D == GL_TRUE)
 		{
 			GET_TOBJ(tobj, to, to->unit[i].currentTexture3DName);
+			if (!tobj)
+				tobj = to->currentTexture3D;
 			/*tobj = to->currenttexture3D[i]; */
 			name = to->unit[i].currentTexture3DName;
 			cname = &(from->unit[i].currentTexture3DName);
@@ -4061,6 +4067,8 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue *bitID,
 			to->unit[i].enabledCubeMap == GL_TRUE)
 		{
 			GET_TOBJ(tobj, to, to->unit[i].currentTextureCubeMapName);
+			if (!tobj)
+				tobj = to->currentTextureCubeMap;
 			/*tobj = to->currentTextureCubeMap; */
 			name = to->unit[i].currentTextureCubeMapName;
 			cname = &(from->unit[i].currentTextureCubeMapName);
