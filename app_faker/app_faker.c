@@ -274,7 +274,11 @@ void do_it( char *argv[] )
 
 	argv[0] = find_executable_on_path( argv[0], &tail );
 	crStrcpy( argv0, tmpdir );
+#ifdef WINDOWS
 	crStrcat( argv0, "\\" );
+#else
+	crStrcat( argv0, "/" );
+#endif
 	crStrcat( argv0, tail );
 
 	copy_file( argv0, argv[0] );

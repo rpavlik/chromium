@@ -23,8 +23,13 @@ static char *__findDLL( char *name, char *dir )
 	static char path[8092];
 	
 	if (!dir)
-		dir = ".";
-	sprintf ( path, "%s/%s%s%s", dir, DLL_PREFIX, name, DLL_SUFFIX );
+	{
+		sprintf ( path, "%s%s%s", DLL_PREFIX, name, DLL_SUFFIX );
+	}
+	else
+	{
+		sprintf ( path, "%s/%s%s%s", dir, DLL_PREFIX, name, DLL_SUFFIX );
+	}
 	return path;
 }
 

@@ -9,7 +9,7 @@
 void tilesortspuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
-	crWarning( "Getting a writeback??");
+	//crWarning( "Getting a writeback??");
 	memcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
 	(*writeback)--;
 }

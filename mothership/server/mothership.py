@@ -48,7 +48,7 @@ class CRNode:
 		# e.g., turn "foo.bar.baz" into "foo"
 		period = self.host.find( "." )
 		if period != -1:
-			self.host = self.host[:index]
+			self.host = self.host[:period]
 
 		self.SPUs = []
 		self.spokenfor = 0
