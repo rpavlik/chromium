@@ -4,6 +4,8 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_server.h"
+
 /**
  * \mainpage Crserver 
  *
@@ -14,7 +16,6 @@
  * and OpenGL state management.
  *
  */
-extern int CRServerMain( int argc, char *argv[] );
 
 int main( int argc, char *argv[] )
 {

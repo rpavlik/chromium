@@ -35,8 +35,6 @@ CRServer cr_server;
 
 int tearingdown = 0;
 
-int CRServerMain( int argc, char *argv[] );
-
 static void DeleteBarrierCallback( void *data )
 {
 	CRServerBarrier *barrier = (CRServerBarrier *) data;

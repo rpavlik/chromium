@@ -175,6 +175,9 @@ typedef struct {
 } CRServer;
 
 
+extern int CRServerMain( int argc, char *argv[] );
+
+
 #ifdef __cplusplus
 }
 #endif
