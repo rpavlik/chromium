@@ -26,27 +26,27 @@ static void __setDefaults( ReadbackSPU *readback_spu )
 
 void set_extract_depth( ReadbackSPU *readback_spu, const char *response )
 {
-   readback_spu->extract_depth = crStrToInt( response );
+	readback_spu->extract_depth = crStrToInt( response );
 }
 
 void set_extract_alpha( ReadbackSPU *readback_spu, const char *response )
 {
-   readback_spu->extract_alpha = crStrToInt( response );
+	readback_spu->extract_alpha = crStrToInt( response );
 }
 
 void set_local_visualization( ReadbackSPU *readback_spu, const char *response )
 {
-   readback_spu->local_visualization = crStrToInt( response );
+	readback_spu->local_visualization = crStrToInt( response );
 }
 
 void set_visualize_depth( ReadbackSPU *readback_spu, const char *response )
 {
-   readback_spu->visualize_depth = crStrToInt( response );
+	readback_spu->visualize_depth = crStrToInt( response );
 }
 
 void set_drawpixels_pos( ReadbackSPU *readback_spu, const char *response )
 {
-   sscanf( response, "%d %d", &readback_spu->drawX, &readback_spu->drawY );
+	sscanf( response, "%d %d", &readback_spu->drawX, &readback_spu->drawY );
 }
 
 
@@ -54,24 +54,24 @@ void set_drawpixels_pos( ReadbackSPU *readback_spu, const char *response )
  */
 SPUOptions readbackSPUOptions[] = {
 
-   /* Really a multiple choice:  Extract depth or alpha.
-    */
-   { "extract_depth", CR_BOOL, 1, "0", NULL, NULL,
-     "Extract Depth Values", (SPUOptionCB)set_extract_depth },
+	/* Really a multiple choice:  Extract depth or alpha.
+	 */
+	{ "extract_depth", CR_BOOL, 1, "0", NULL, NULL,
+	  "Extract Depth Values", (SPUOptionCB)set_extract_depth },
 
-   { "extract_alpha", CR_BOOL, 1, "0", NULL, NULL,
-     "Extract Alpha Values", (SPUOptionCB)set_extract_alpha },
+	{ "extract_alpha", CR_BOOL, 1, "0", NULL, NULL,
+	  "Extract Alpha Values", (SPUOptionCB)set_extract_alpha },
 
-   { "local_visualization", CR_BOOL, 1, "1", NULL, NULL,
-     "Local Visualization", (SPUOptionCB)set_local_visualization },
+	{ "local_visualization", CR_BOOL, 1, "1", NULL, NULL,
+	  "Local Visualization", (SPUOptionCB)set_local_visualization },
 
-   { "visualize_depth", CR_BOOL, 1, "0", NULL, NULL,
-     "Visualize Depth as Grayscale", (SPUOptionCB)set_visualize_depth },
+	{ "visualize_depth", CR_BOOL, 1, "0", NULL, NULL,
+	  "Visualize Depth as Grayscale", (SPUOptionCB)set_visualize_depth },
 
-   { "drawpixels_pos", CR_INT, 2, "0, 0", "0, 0", NULL,
-     "glDrawPixels Position (x,y)", (SPUOptionCB)set_drawpixels_pos },
+	{ "drawpixels_pos", CR_INT, 2, "0, 0", "0, 0", NULL,
+	  "glDrawPixels Position (x,y)", (SPUOptionCB)set_drawpixels_pos },
 
-   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
 };
 
