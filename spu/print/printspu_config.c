@@ -23,12 +23,12 @@ void printspuGatherConfiguration( const SPU *child_spu )
 
 	__setDefaults();
 
-	// Connect to the mothership and identify ourselves.
+	/* Connect to the mothership and identify ourselves. */
 	
 	conn = crMothershipConnect( );
 	if (!conn)
 	{
-		// defaults are fine.
+		/* defaults are fine. */
 		return;
 	}
 	crMothershipIdentifySPU( conn, print_spu.id );

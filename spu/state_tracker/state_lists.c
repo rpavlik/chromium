@@ -31,7 +31,7 @@ void crStateListsBindName(CRListsState *l, GLuint name)
 	/* First find which region it fits in */
 	for (i=l->freeList; i && !(i->min <= name && name <= i->max); i=i->next)
 	{
-		// EMPTY BODY
+		/* EMPTY BODY */
 	}
 
 	if (!i) 
@@ -101,7 +101,7 @@ void crStateListsUnbindName(CRListsState *l, GLuint name)
 		i && i->next && i->next->min < name;
 		i = i->next)
 	{
-		// EMPTY BODY
+		/* EMPTY BODY */
 	}
 
 	/* j will always be valid */
@@ -314,7 +314,7 @@ GLboolean STATE_APIENTRY crStateIsList(GLuint list)
 	/* First find which region it fits in */
 	for (i=l->freeList; i && !(i->min <= list && list <= i->max); i=i->next)
 	{
-		// EMPTY BODY
+		/* EMPTY BODY */
 	}
 
 	if (i != NULL) 

@@ -119,12 +119,12 @@ typedef struct {
 	CRTextureObj *textures;
 	CRTextureObj *firstFree;
 
-	// FIXME: these should be moved into a shared-context structure
+	/* FIXME: these should be moved into a shared-context structure */
 	CRTextureObj      *mapping[CRTEXTURE_HASHSIZE];
 	CRTextureFreeElem *freeList;
 	CRTextureID       *hwidhash[CRTEXTURE_HASHSIZE];
 
-	// Current texture objects (in terms of glBindTexture and glActiveTexture)
+	/* Current texture objects (in terms of glBindTexture and glActiveTexture) */
 	CRTextureObj *currentTexture1D;
 	CRTextureObj *currentTexture2D;
 	CRTextureObj *currentTexture3D;
@@ -132,7 +132,7 @@ typedef struct {
 	CRTextureObj *currentTextureCubeMap;
 #endif
 
-	// Default texture objects (name = 0)
+	/* Default texture objects (name = 0) */
 	CRTextureObj base1D;
 	CRTextureObj base2D;
 	CRTextureObj base3D;
@@ -140,7 +140,7 @@ typedef struct {
 	CRTextureObj baseCubeMap;
 #endif
 	
-	// Proxy texture objects
+	/* Proxy texture objects */
 	CRTextureObj proxy1D;
 	CRTextureObj proxy2D;
 	CRTextureObj proxy3D;
@@ -156,7 +156,7 @@ typedef struct {
 	
 	GLboolean	broadcastTextures;
 
-	// Per-texture unit state:
+	/* Per-texture unit state: */
 	CRTextureUnit	unit[CR_MAX_TEXTURE_UNITS];
 } CRTextureState;
 

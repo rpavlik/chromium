@@ -211,7 +211,7 @@ typedef struct {
 #ifdef CR_ARB_texture_cube_map
 	GLboolean	enabledCubeMap[CR_MAX_TEXTURE_UNITS];
 #endif
-	GLcolorf borderColor[4];  // 4 = 1D, 2D, 3D and cube map textures
+	GLcolorf borderColor[4];  /* 4 = 1D, 2D, 3D and cube map textures */
 	GLenum minFilter[4];
 	GLenum magFilter[4];
 	GLenum wrapS[4];
@@ -311,7 +311,7 @@ typedef struct {
 
 void crStateAttribInit(CRAttribState *a);
 
-// No diff!
+/* No diff! */
 void crStateAttribSwitch(CRAttribBits *bb, GLbitvalue bitID, 
 		CRAttribState *from, CRAttribState *to);
 

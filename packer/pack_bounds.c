@@ -12,8 +12,8 @@
 
 void PACK_APIENTRY crPackBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len, GLint num_opcodes )
 {
-	// Don't get the buffered_ptr here because we've already
-	// verified taht there's enough space for everything.
+	/* Don't get the buffered_ptr here because we've already 
+	 * verified taht there's enough space for everything. */
 
 	unsigned char *data_ptr = cr_packer_globals.buffer.data_current;
 	int len_aligned     = ( len + 0x3 ) & ~0x3;
@@ -32,9 +32,9 @@ void PACK_APIENTRY crPackBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len
 	/* put in padding opcodes (deliberately bogus) */
 	switch ( len_aligned - len )
 	{
-	  case 3: *data_ptr++ = 0xff; // FALLTHROUGH
-	  case 2: *data_ptr++ = 0xff; // FALLTHROUGH
-	  case 1: *data_ptr++ = 0xff; // FALLTHROUGH
+	  case 3: *data_ptr++ = 0xff; /* FALLTHROUGH */
+	  case 2: *data_ptr++ = 0xff; /* FALLTHROUGH */
+	  case 1: *data_ptr++ = 0xff; /* FALLTHROUGH */
 	  default: break;
 	}
 

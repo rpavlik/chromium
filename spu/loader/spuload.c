@@ -39,8 +39,8 @@ static char *__findDLL( char *name, char *dir )
 	return path;
 }
 
-// Load a single SPU from disk and initialize it.  Is there any reason
-// to export this from the SPU loader library?
+/* Load a single SPU from disk and initialize it.  Is there any reason 
+ * to export this from the SPU loader library? */
 
 SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 {
@@ -49,7 +49,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 
 	CRASSERT( name != NULL );
 
-	the_spu = crAlloc( sizeof( *the_spu ) );
+	the_spu = (SPU*)crAlloc( sizeof( *the_spu ) );
 	the_spu->id = id;
 	path = __findDLL( name, dir );
 	the_spu->dll = crDLLOpen( path );
@@ -89,8 +89,8 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 	return the_spu;
 }
 
-// Load the entire chain of SPUs and initialize all of them.
-// This function returns the first one in the chain
+/* Load the entire chain of SPUs and initialize all of them. 
+ * This function returns the first one in the chain */
 
 SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 {
@@ -104,14 +104,14 @@ SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 		char *spu_name = names[i];
 		SPU *the_spu;
 		
-		// This call passes the previous version of spu, which is the SPU's
-		// "child" in this chain.
+		/* This call passes the previous version of spu, which is the SPU's 
+		 * "child" in this chain. */
 
 		the_spu = crSPULoad( child_spu, spu_id, spu_name, dir );
 		if (child_spu != NULL)
 		{
-			// keep track of this so that people can pass functions through but
-			// still get updated when API's change on the fly.
+			/* keep track of this so that people can pass functions through but 
+			 * still get updated when API's change on the fly. */
 			child_spu->dispatch_table.chain_parent = &(the_spu->dispatch_table);
 		}
 		child_spu = the_spu;

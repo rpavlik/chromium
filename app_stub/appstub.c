@@ -54,9 +54,9 @@ static struct {
 	Func_V_V    crCreateContext;
 	Func_V_V    crMakeCurrent;
 	Func_V_V    crSwapBuffers;
-	//Func_V_U_Ip wireGLGetIntegerv;
-	//Func_V_V    wireGLSyncWithL2;
-	//Func_V_V    wireGLUseSystemGL;
+	/*Func_V_U_Ip wireGLGetIntegerv; 
+	 *Func_V_V    wireGLSyncWithL2; 
+	 *Func_V_V    wireGLUseSystemGL; */
 } fptable;
 
 #define X(a)	{ #a, (void **) &fptable.a }
@@ -73,9 +73,9 @@ static struct {
 	X(crCreateContext),
 	X(crMakeCurrent),
 	X(crSwapBuffers),
-	//X(wireGLGetIntegerv),
-	//X(wireGLSyncWithL2),
-	//X(wireGLUseSystemGL)
+	/*X(wireGLGetIntegerv), 
+	 *X(wireGLSyncWithL2), 
+	 *X(wireGLUseSystemGL) */
 };
 
 #undef X

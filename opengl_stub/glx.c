@@ -35,7 +35,13 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 	best = NULL;
 	for ( i = 0; i < n; i++ )
 	{
-		if ( visual[i].class == TrueColor || visual[i].class == DirectColor )
+#if defined(__cplusplus) || defined(c_plusplus)
+        int localclass = visual[i].c_class;  /* C++ */
+#else
+        int localclass = visual[i].class;
+#endif
+
+		if ( localclass == TrueColor || localclass == DirectColor )
 		{
 			best = &visual[i];
 			break;
@@ -47,8 +53,13 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 		/* okay, select the RGB visual with the most depth */
 		for ( i = 0; i < n; i++ )
 		{
-			if ( ( visual[i].class == TrueColor ||
-						visual[i].class == DirectColor ) &&
+#if defined(__cplusplus) || defined(c_plusplus)
+            int localclass = visual[i].c_class;  /* C++ */
+#else
+            int localclass = visual[i].class;
+#endif
+			if ( ( localclass == TrueColor ||
+						localclass == DirectColor ) &&
 					visual[i].depth > best->depth &&
 					visual[i].bits_per_rgb > best->bits_per_rgb )
 			{
@@ -230,9 +241,9 @@ GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share,
 	(void) share;
 	(void) direct;
 #if 0
-	// This is moving to glXMakeCurrent because the tilesort SPU needs
-	// to know the drawable in order to do something intelligent with
-	// the viewport calls.
+	/* This is moving to glXMakeCurrent because the tilesort SPU needs 
+	 * to know the drawable in order to do something intelligent with 
+	 * the viewport calls. */
 
 	StubInit();
 	stub_spu->dispatch_table.CreateContext();
@@ -385,7 +396,7 @@ Bool glXQueryExtension( Display *dpy, int *errorBase, int *eventBase )
 	(void) dpy;
 	(void) errorBase;
 	(void) eventBase;
-	return 1; // You BET we do...
+	return 1; /* You BET we do... */
 }
 
 Bool glXQueryVersion( Display *dpy, int *major, int *minor )

@@ -27,6 +27,7 @@
 #include <GL/glext.h>
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 

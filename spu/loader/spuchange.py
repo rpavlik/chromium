@@ -40,12 +40,12 @@ for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
 	print '\tif (table->%s == orig_func)' % func_name
 	print '\t{'
-	print '\t\ttable->%s = new_func;' % func_name
+	print '\t\ttable->%s = (%sFunc_t)new_func;' % (func_name, func_name)
 	print '\t\tfor (temp = table->copyList ; temp ; temp = temp->next)'
 	print '\t\t{'
 	print '\t\t\tif (temp->copy->%s == orig_func)' % func_name
 	print' \t\t\t{'
-	print '\t\t\t\ttemp->copy->%s = new_func;' % func_name
+	print '\t\t\t\ttemp->copy->%s = (%sFunc_t)new_func;' % (func_name, func_name)
 	print' \t\t\t}'
 	print '\t\t}'
 	print '\t}'

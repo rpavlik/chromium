@@ -40,7 +40,7 @@ typedef struct {
 	int useL2;
 
 	unsigned int muralWidth, muralHeight;
-	unsigned int underlyingDisplay[4]; // needed for laying out the extents
+	unsigned int underlyingDisplay[4]; /* needed for laying out the extents */
 
 	SPU *head_spu;
 	SPUDispatchTable dispatch;

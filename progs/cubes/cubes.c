@@ -123,7 +123,7 @@ void DrawCube( GLenum mode, int dice )
     int    i, j;
     float *temp = data;
 
-    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    /* glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); */
 
     glColor3f( 1.0, 1.0, 0.0 );
     glBegin( mode );
@@ -135,32 +135,32 @@ void DrawCube( GLenum mode, int dice )
             glVertex3f( temp[2], temp[3], 1 );
             glVertex3f( temp[4], temp[5], 1 );
             glVertex3f( temp[6], temp[7], 1 );
-            //glEnd();
-            //glBegin( GL_TRIANGLE_STRIP );
+            /*glEnd(); 
+             *glBegin( GL_TRIANGLE_STRIP ); */
             glVertex3f( temp[0], temp[1], -1 );
             glVertex3f( temp[2], temp[3], -1 );
             glVertex3f( temp[4], temp[5], -1 );
             glVertex3f( temp[6], temp[7], -1 );
-            //glEnd();
-            //glBegin( GL_TRIANGLE_STRIP );
+            /*glEnd(); 
+             *glBegin( GL_TRIANGLE_STRIP ); */
             glVertex3f( temp[0], 1, temp[1] );
             glVertex3f( temp[2], 1, temp[3] );
             glVertex3f( temp[4], 1, temp[5] );
             glVertex3f( temp[6], 1, temp[7] );
-            //glEnd();
-            //glBegin( GL_TRIANGLE_STRIP );
+            /*glEnd(); 
+             *glBegin( GL_TRIANGLE_STRIP ); */
             glVertex3f( temp[0], -1, temp[1] );
             glVertex3f( temp[2], -1, temp[3] );
             glVertex3f( temp[4], -1, temp[5] );
             glVertex3f( temp[6], -1, temp[7] );
-            //glEnd();
-            //glBegin( GL_TRIANGLE_STRIP );
+            /*glEnd(); 
+             *glBegin( GL_TRIANGLE_STRIP ); */
             glVertex3f( 1, temp[0], temp[1] );
             glVertex3f( 1, temp[2], temp[3] );
             glVertex3f( 1, temp[4], temp[5] );
             glVertex3f( 1, temp[6], temp[7] );
-            //glEnd();
-            //glBegin( GL_TRIANGLE_STRIP );
+            /*glEnd(); 
+             *glBegin( GL_TRIANGLE_STRIP ); */
             glVertex3f( -1, temp[0], temp[1] );
             glVertex3f( -1, temp[2], temp[3] );
             glVertex3f( -1, temp[4], temp[5] );
@@ -237,7 +237,7 @@ void Keyboard( unsigned char key, int x, int y )
 
 void Reshape( int width, int height )
 {
-    // Need this so that GLUT doesn't call ViewPort on us.
+    /* Need this so that GLUT doesn't call ViewPort on us. */
     (void) width;
     (void) height;
 }

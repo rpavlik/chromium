@@ -31,7 +31,7 @@
 #include <GL/glext.h>
 #include <iostream.h>
 
-//#define	CCN_DEBUG
+/*#define	CCN_DEBUG */
 #define	MULTIPLE_VIEWPORTS
 #define	SMOOTH_TEXT
 
@@ -47,8 +47,8 @@
 extern "C"
 {
 #endif
-	// exec.cpp
-	extern GLuint	currentWidth, currentHeight; // Window width/height.
+	/* exec.cpp */
+	extern GLuint	currentWidth, currentHeight; /* Window width/height. */
 #ifdef __cplusplus
 }
 #endif
@@ -56,10 +56,10 @@ extern "C"
 
 /* --- Function Prototypes -------------------------------------------------- */
 
-// main.cpp
+/* main.cpp */
 void	RenderString	( float, float, char* );
 
-// logo.c
+/* logo.c */
 #ifdef __cplusplus
 extern "C"
 {
@@ -69,7 +69,7 @@ extern "C"
 }
 #endif
 
-// exec.cpp
+/* exec.cpp */
 void	InitGL		( void );
 void	InitSpecial	( void );
 void	Idle		( void );

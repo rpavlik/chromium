@@ -27,10 +27,10 @@ void crExtensionsDrawLogo( int currentWidth, int currentHeight )
 
 	if( !inited )
 	{
-		// Create the tile texture.
+		/* Create the tile texture. */
 		glGenTextures( 1, &textureID );
 
-		// Create Billinear Filtered Texture
+		/* Create Billinear Filtered Texture */
 		glBindTexture( GL_TEXTURE_2D, textureID );
 		glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR );
 		glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR );

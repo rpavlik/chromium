@@ -38,12 +38,12 @@ void renderspuGatherConfiguration( void )
 
 	__setDefaults();
 
-	// Connect to the mothership and identify ourselves.
+	/* Connect to the mothership and identify ourselves. */
 	
 	conn = crMothershipConnect( );
 	if (!conn)
 	{
-		// the defaults are (maybe) OK.
+		/* the defaults are (maybe) OK. */
 		return;
 	}
 

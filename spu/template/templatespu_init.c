@@ -11,9 +11,9 @@
 extern SPUNamedFunctionTable template_table[];
 
 SPUFunctions the_functions = {
-	NULL, // CHILD COPY
-	NULL, // DATA
-	template_table // THE ACTUAL FUNCTIONS
+	NULL, /* CHILD COPY */
+	NULL, /* DATA */
+	template_table /* THE ACTUAL FUNCTIONS */
 };
 
 SPUFunctions *SPUInit( int id, SPU *child, SPU *super,

@@ -238,7 +238,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 	FLUSH();
 
 	i = light - GL_LIGHT0;
-	if (i<0 || i>=g->limits.maxLights)
+	if (i>=g->limits.maxLights)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid light specified: %d", light);
 		return;
@@ -638,7 +638,7 @@ void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *para
 	}
 
 	i = light - GL_LIGHT0;
-	if (i<0 || i>=g->limits.maxLights)
+	if (i>=g->limits.maxLights)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 				"glGetLight: invalid light specified: %d", light);
@@ -721,7 +721,7 @@ void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 	}
 
 	i = light - GL_LIGHT0;
-	if (i<0 || i>=g->limits.maxLights)
+	if (i>=g->limits.maxLights)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 				"glGetLight: invalid light specified: %d", light);
@@ -1043,10 +1043,10 @@ void crStateColorMaterialRecover(void)
 	CRLightingState *l = &(g->lighting);
 	CRCurrentState *c = &(g->current);
 
-	// Assuming that the "current" values are up to date,
-	// this function will extract them into the material
-	// values if COLOR_MATERIAL has been enabled on the
-	// client.
+	/* Assuming that the "current" values are up to date, 
+	 * this function will extract them into the material 
+	 * values if COLOR_MATERIAL has been enabled on the 
+	 * client. */
 
 	if (l->colorMaterial)
 	{

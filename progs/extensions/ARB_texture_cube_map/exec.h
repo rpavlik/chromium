@@ -31,7 +31,7 @@
 #include <GL/glext.h>
 #include <iostream.h>
 
-//#define	CCN_DEBUG
+/*#define	CCN_DEBUG */
 #define DISPLAY_LISTS
 #define	MULTIPLE_VIEWPORTS
 #define	SMOOTH_TEXT
@@ -44,10 +44,10 @@
 
 /* --- Function Prototypes -------------------------------------------------- */
 
-// main.cpp
+/* main.cpp */
 void	RenderString	( float, float, char* );
 
-// exec.cpp
+/* exec.cpp */
 void	InitGL		( void );
 void	InitSpecial	( void );
 void	Idle		( void );

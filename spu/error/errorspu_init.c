@@ -10,9 +10,9 @@
 extern SPUNamedFunctionTable error_table[];
 
 SPUFunctions the_functions = {
-	NULL, // CHILD COPY
-	NULL, // DATA
-	error_table // THE ACTUAL FUNCTIONS
+	NULL, /* CHILD COPY */
+	NULL, /* DATA */
+	error_table /* THE ACTUAL FUNCTIONS */
 };
 
 SPUFunctions *SPUInit( int id, SPU *child, SPU *super,

@@ -13,7 +13,7 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 	GLbitvalue update = to->update;
 	CRStateBits *sb = GetCurrentBits();
 
-	//crDebug( "Diffing two contexts!" );
+	/*crDebug( "Diffing two contexts!" ); */
 
 	if (update & GLUPDATE_TRANS && sb->transform.dirty & bitID)
 	{

@@ -33,7 +33,7 @@ void crStateViewportInit(CRViewportState *v)
 	v->widthScale = v->heightScale = 1.0f;
 	v->x_offset = 0;
 	v->y_offset = 0;
-	// v->outputdims will be initialized by the caller (I hope).
+	/* v->outputdims will be initialized by the caller (I hope). */
 }
 
 void crStateViewportApply(CRViewportState *v, GLvectorf *p) 
@@ -65,12 +65,12 @@ void STATE_APIENTRY crStateViewport(GLint x, GLint y, GLsizei width,
 		return;
 	}
 
-	// if (x > v->maxviewportdims_width)	x = v->maxviewportdims_width;
-	// if (x < -v->maxviewportdims_width)	x = -v->maxviewportdims_width;
-	// if (y > v->maxviewportdims_height)	y = v->maxviewportdims_height;
-	// if (y < -v->maxviewportdims_height)	y = -v->maxviewportdims_height;
-	// if (width > v->maxviewportdims_width)	width = v->maxviewportdims_width;
-	//if (height > v->maxviewportdims_height)	height = v->maxviewportdims_height;
+	/* if (x > v->maxviewportdims_width)	x = v->maxviewportdims_width; 
+	 * if (x < -v->maxviewportdims_width)	x = -v->maxviewportdims_width; 
+	 * if (y > v->maxviewportdims_height)	y = v->maxviewportdims_height; 
+	 * if (y < -v->maxviewportdims_height)	y = -v->maxviewportdims_height; 
+	 * if (width > v->maxviewportdims_width)	width = v->maxviewportdims_width; 
+	 *if (height > v->maxviewportdims_height)	height = v->maxviewportdims_height; */
 
 	v->viewportX = (GLint) (x);
 	v->viewportY = (GLint) (y);

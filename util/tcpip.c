@@ -243,11 +243,11 @@ void crTCPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
 	}
 }
 
-//
-// Make sockets do what we want:
-//
-// 1) Change the size of the send/receive buffers to 64K
-// 2) Turn off Nagle's algorithm
+/* 
+ * Make sockets do what we want: 
+ * 
+ * 1) Change the size of the send/receive buffers to 64K 
+ * 2) Turn off Nagle's algorithm */
 
 static void __crSpankSocket( CRSocket sock )
 {
@@ -670,8 +670,8 @@ void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned 
 
 	cr_tcpip.initialized = 1;
 }
-// The function that actually connects.  This should only be called by clients
-// Servers have another way to set up the socket.
+/* The function that actually connects.  This should only be called by clients 
+ * Servers have another way to set up the socket. */
 
 int crTCPIPDoConnect( CRConnection *conn )
 {
@@ -687,10 +687,10 @@ int crTCPIPDoConnect( CRConnection *conn )
 		return 0;
 	}
 
-	// Set up the socket the way *we* want.
+	/* Set up the socket the way *we* want. */
 	__crSpankSocket( conn->tcp_socket );
 
-	// Standard Berkeley sockets mumbo jumbo
+	/* Standard Berkeley sockets mumbo jumbo */
 	hp = gethostbyname( conn->hostname );
 	if ( !hp )
 	{
@@ -735,8 +735,8 @@ int crTCPIPDoConnect( CRConnection *conn )
 		err = crTCPIPErrno( );
 		if ( err == EADDRINUSE || err == ECONNREFUSED )
 		{
-			// Here's where we might try again on another
-			// port -- don't think we'll do that any more.
+			/* Here's where we might try again on another 
+			 * port -- don't think we'll do that any more. */
 			crWarning( "Couldn't connect to %s:%d, %s",
 					conn->hostname, conn->port, crTCPIPErrorString( err ) );
 			return 0;
@@ -795,10 +795,10 @@ void crTCPIPConnection( CRConnection *conn )
 int crGetHostname( char *buf, unsigned int len )
 {
 	int ret = gethostname( buf, len );
-	//if (ret)
-	//{
-		//int err = crTCPIPErrno();
-		//crWarning( "Couldn't get hostname: %s", crTCPIPErrorString( err ) );
-	//}
+	/*if (ret) 
+	 *{ 
+		 *int err = crTCPIPErrno(); 
+		 *crWarning( "Couldn't get hostname: %s", crTCPIPErrorString( err ) ); 
+	 *} */
 	return ret;
 }

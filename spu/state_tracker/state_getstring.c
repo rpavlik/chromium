@@ -13,7 +13,7 @@
 
 const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 {
-   //	CRContext   *g = GetCurrentContext( );
+   /*	CRContext   *g = GetCurrentContext( ); */
 	static const GLubyte *vendor = (const GLubyte *) "Humper";
 	static const GLubyte *renderer = (const GLubyte *) "Chromium";
 #if defined(CR_OPENGL_VERSION_1_3)

@@ -11,7 +11,7 @@
 #include "cr_mem.h"
 #include "state/cr_statetypes.h"
 
-// This code copied from the tilesorter (fooey)
+/* This code copied from the tilesorter (fooey) */
 
 typedef struct BucketRegion *BucketRegion_ptr;
 typedef struct BucketRegion {
@@ -40,7 +40,7 @@ void crServerFillBucketingHash(void)
 
     /* Allocate rlist */
     rlist_alloc = 64*128;
-    //rlist_alloc = GLCONFIG_MAX_PROJECTORS*GLCONFIG_MAX_EXTENTS;
+    /*rlist_alloc = GLCONFIG_MAX_PROJECTORS*GLCONFIG_MAX_EXTENTS; */
     rlist = (BucketRegion *) crAlloc( rlist_alloc * sizeof(*rlist) );
 
     for ( i = 0; i < HASHRANGE; i++ )
@@ -158,9 +158,11 @@ void crServerSetOutputBounds( CRContext *ctx,
 	
 }
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len, GLint num_opcodes )
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
+                            GLint num_opcodes )
 {
-	char *data_ptr = payload + ((num_opcodes + 3 ) & ~0x03);
+	char *data_ptr = (char*)(payload + ((num_opcodes + 3 ) & ~0x03));
 	int i;
 	crUnpackPush();
 	if ( cr_server.optimizeBucket )

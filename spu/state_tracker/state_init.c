@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <memory.h>
 
-// To increase this, we need a more general bitvector representation.
+/* To increase this, we need a more general bitvector representation. */
 #define CR_MAX_CONTEXTS 32
 
 CRContext *__currentContext = NULL;
@@ -43,7 +43,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 
 	crDebug( "Creating a context: %d (0x%x)", ctx->id, (int) ctx->bitid );
 
-	// This has to come first.
+	/* This has to come first. */
 	if (limits) {
 		/* use provided OpenGL limits */
 		crSPUCopyGLLimits( &(ctx->limits), limits);
@@ -69,7 +69,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 	crStateTransformInit( &(ctx->transform) );
 	crStateViewportInit (&(ctx->viewport) );
 	
-	// This has to come last.
+	/* This has to come last. */
 	crStateAttribInit( &(ctx->attrib) );
 
 	return ctx;
@@ -84,13 +84,13 @@ CRContext *crStateCreateContext(const CRLimitsState *limits)
 	{
 		if (id & g_availableContexts)
 		{
-			g_availableContexts ^= id; // it's no longer available
+			g_availableContexts ^= id; /* it's no longer available */
 			return crStateCreateContextId( i, limits );
 		}
 		id <<= 1;
 	}
 	crError( "Out of available contexts in crStateCreateContexts (max %d)", CR_MAX_CONTEXTS );
-	// NOTREACHED
+	/* NOTREACHED */
 	return NULL;
 }
 

@@ -21,8 +21,8 @@ void packspuWriteback( CRMessageWriteback *wb )
 
 void packspuReadback( CRMessageReadback *rb, unsigned int len )
 {
-	// minus the header, the destination pointer,
-	// *and* the implicit writeback pointer at the head.
+	/* minus the header, the destination pointer, 
+	 * *and* the implicit writeback pointer at the head. */
 
 	int payload_len = len - sizeof( *rb );
 	int *writeback;
@@ -47,12 +47,12 @@ int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			packspuReadback( &(msg->readback), len );
 			break;
 		default:
-			//crWarning( "Why is the pack SPU getting a message of type 0x%x?", msg->type );
-			return 0; // NOT HANDLED
+			/*crWarning( "Why is the pack SPU getting a message of type 0x%x?", msg->type ); */
+			return 0; /* NOT HANDLED */
 	}
 	crNetFree( conn, buf );
 	(void) len;	
-	return 1; // HANDLED
+	return 1; /* HANDLED */
 }
 
 static CRMessageOpcodes *
@@ -105,7 +105,7 @@ void packspuFlush( void *arg )
 	crNetSend( pack_spu.server.conn, &(buf->pack), hdr, len );
 	buf->pack = crNetAlloc( pack_spu.server.conn );
 	crPackSetBuffer( buf );
-	crPackResetPointers(0); // don't need extra room like tilesort
+	crPackResetPointers(0); /* don't need extra room like tilesort */
 	(void) arg;
 }
 
@@ -121,7 +121,7 @@ void packspuHuge( CROpcode opcode, void *buf )
 	len = ((unsigned int *) buf)[-1];
 	if (pack_spu.swap)
 	{
-		// It's already been swapped, swap it back.
+		/* It's already been swapped, swap it back. */
 		len = SWAP32(len);
 	}
 	len += 4 + sizeof(CRMessageOpcodes);

@@ -77,7 +77,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 	widthscale = (float) (tilesort_spu.muralWidth) / (float) w;
 	heightscale = (float) (tilesort_spu.muralHeight) / (float) h;
 		
-	//crWarning( "Viewport: %d %d %f %f", w, h, widthscale, heightscale );
+	/*crWarning( "Viewport: %d %d %f %f", w, h, widthscale, heightscale ); */
 	crStateViewport( (int) (x*widthscale + 0.5f), 
 									 (int) (y*heightscale + 0.5f),
 			             (int) (width*widthscale + 0.5f), 

@@ -15,8 +15,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixf( const GLfloat *m )
 	crStateLoadMatrixf( m );
 	if (cr_server.numExtents > 0 && cr_server.curClient->ctx->transform.mode == GL_PROJECTION)
 	{
-		// we're loading a matrix onto the projection stack -- better put the base
-		// projection there first!
+		/* we're loading a matrix onto the projection stack -- better put the base 
+		 * projection there first! */
 
 		crServerApplyBaseProjection();
 	}
@@ -31,8 +31,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixd( const GLdouble *m )
 	crStateLoadMatrixd( m );
 	if (cr_server.numExtents > 0 && cr_server.curClient->ctx->transform.mode == GL_PROJECTION)
 	{
-		// we're loading a matrix onto the projection stack -- better put the base
-		// projection there first!
+		/* we're loading a matrix onto the projection stack -- better put the base 
+		 * projection there first! */
 
 		crServerApplyBaseProjection();
 	}
@@ -47,8 +47,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadIdentity( void )
 	crStateLoadIdentity();
 	if (cr_server.numExtents > 0 && cr_server.curClient->ctx->transform.mode == GL_PROJECTION)
 	{
-		// we're loading a matrix onto the projection stack -- better put the base
-		// projection there first!
+		/* we're loading a matrix onto the projection stack -- better put the base 
+		 * projection there first! */
 
 		crServerApplyBaseProjection();
 	}

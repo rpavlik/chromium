@@ -197,8 +197,8 @@ void crServerRecomputeBaseProjection(GLmatrix *base)
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchViewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
-	// Note -- If there are tiles, this will be overridden in the
-	// process of decoding the BoundsInfo packet, so no worries.
+	/* Note -- If there are tiles, this will be overridden in the 
+	 * process of decoding the BoundsInfo packet, so no worries. */
 	
 	crStateViewport( x, y, width, height );
 	cr_server.head_spu->dispatch_table.Viewport( x, y, width, height );

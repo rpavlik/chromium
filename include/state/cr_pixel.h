@@ -30,7 +30,7 @@ typedef struct {
 	GLint		   imageHeight;
 	GLint		   skipImages;
 	GLboolean	 swapBytes;
-	GLboolean	 psLSBFirst; // don't conflict with crap from Xlib.h
+	GLboolean	 psLSBFirst; /* don't conflict with crap from Xlib.h */
 } CRPackState;
 
 typedef struct {

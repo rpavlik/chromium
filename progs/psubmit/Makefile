@@ -8,6 +8,7 @@ TOP = ../..
 PROGRAM = psubmit
 FILES = psubmit
 OPENGL = 1
+MATH = 1
 
 LIBRARIES = crutil crapp
 

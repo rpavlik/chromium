@@ -342,11 +342,11 @@ void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures,
 	int packet_length;
 
 	packet_length = 
-		sizeof(int) +            // packet length 
-		sizeof( GLenum ) +       // extend-o opcode
-		sizeof( n ) +            // num_textures
-		n*sizeof( *textures ) +  // textures
-		8 + 8 + 8;               // return pointers
+		sizeof(int) +            /* packet length */
+		sizeof( GLenum ) +       /* extend-o opcode */
+		sizeof( n ) +            /* num_textures */
+		n*sizeof( *textures ) +  /* textures */
+		8 + 8 + 8;               /* return pointers */
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, int, packet_length );

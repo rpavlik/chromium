@@ -44,7 +44,7 @@ void __fillBucketingHash (void)
 
 	/* Allocate rlist */
 	rlist_alloc = 64*128;
-	// rlist_alloc = GLCONFIG_MAX_PROJECTORS*GLCONFIG_MAX_EXTENTS;
+	/* rlist_alloc = GLCONFIG_MAX_PROJECTORS*GLCONFIG_MAX_EXTENTS; */
 	rlist = (BucketRegion *) crAlloc (rlist_alloc * sizeof (*rlist));
 
 	for (i=0; i<HASHRANGE; i++) 
@@ -182,13 +182,13 @@ static TileSortBucketInfo *__doBucket( void )
 	/* Check to make sure the transform is valid */
 	if (!t->transformValid)
 	{
-		// I'm pretty sure this is always the case, but I'll leave it.
+		/* I'm pretty sure this is always the case, but I'll leave it. */
 		crStateTransformUpdateTransform(t);
 	}
 
-	// we might be broadcasting, *or* we might be
-	// defining a display list, which goes to everyone
-	// (currently)
+	/* we might be broadcasting, *or* we might be 
+	 * defining a display list, which goes to everyone 
+	 * (currently) */
 
 	if (tilesort_spu.broadcast || g->lists.newEnd)
 	{
@@ -208,7 +208,7 @@ static TileSortBucketInfo *__doBucket( void )
 
 	if (tilesort_spu.providedBBOX != CR_SCREEN_BBOX_HINT)
 	{
-		//Now transform the bounding box points
+		/*Now transform the bounding box points */
 		x[0] = _vmult(&(m->m00), xmin, ymin, zmin);
 		x[1] = _vmult(&(m->m00), xmax, ymin, zmin);
 		x[2] = _vmult(&(m->m00), xmin, ymax, zmin);
@@ -245,8 +245,8 @@ static TileSortBucketInfo *__doBucket( void )
 		w[6] = _vmult(&(m->m03), xmin, ymax, zmax);
 		w[7] = _vmult(&(m->m03), xmax, ymax, zmax);
 
-		// Now, the object-space bbox has been transformed into
-		// clip-space.
+		/* Now, the object-space bbox has been transformed into 
+		 * clip-space. */
 
 		/* Find the 2D bounding box of the 3D bounding box */
 		xmin = ymin = zmin = FLT_MAX;
@@ -395,12 +395,12 @@ static TileSortBucketInfo *__doBucket( void )
 
 TileSortBucketInfo *tilesortspuBucketGeometry(void)
 {
-	// First, call the real bucketer
+	/* First, call the real bucketer */
 	TileSortBucketInfo *ret = __doBucket();
 
-	// Finally, do pinching.  This is unimplemented currently.
+	/* Finally, do pinching.  This is unimplemented currently. */
 
-	// PINCHIT();
+	/* PINCHIT(); */
 
 	return ret;
 }

@@ -61,7 +61,8 @@ void	InitGL	( void )
 
 void	InitSpecial	( void )
 {
-	const int texWidth = 256, texHeight = 256;
+        /* unused */
+	/* const int texWidth = 256, texHeight = 256; */
 
 #ifdef WIN32
 	glSecondaryColorPointerEXT = (PFNGLSECONDARYCOLORPOINTEREXTPROC)wglGetProcAddress( "glSecondaryColorPointerEXT" );

@@ -13,6 +13,6 @@
 
 const GLubyte * PACKSPU_APIENTRY packspu_GetString( GLenum name )
 {
-	// It must be this way.
+	/* It must be this way. */
 	return crStateGetString( name );
 }

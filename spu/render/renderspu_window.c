@@ -33,8 +33,8 @@
 
 #ifndef WINDOWS
 
-// This stuff is from WireGL, and hasn't been changed yet since
-// I'm developing on Windows.
+/* This stuff is from WireGL, and hasn't been changed yet since 
+ * I'm developing on Windows. */
 
 	static Colormap 
 GetShareableColormap( Display *dpy, XVisualInfo *vi )
@@ -44,7 +44,12 @@ GetShareableColormap( Display *dpy, XVisualInfo *vi )
 	Colormap cmap;
 	int i, numCmaps;
 
-	if ( vi->class != TrueColor )
+#if defined(__cplusplus) || defined(c_plusplus)
+    int localclass = vi->c_class; /* C++ */
+#else
+    int localclass = vi->class; /* C */
+#endif
+	if ( localclass != TrueColor )
 	{
 		crError( "No support for non-TrueColor visuals." );
 	}
@@ -93,7 +98,7 @@ static BOOL bSetupPixelFormat( HDC );
 
 #ifndef WINDOWS
 
-// More WireGL holdover until I move this to Linux.
+/* More WireGL holdover until I move this to Linux. */
 	static int
 Attrib( int attrib )
 {
@@ -169,7 +174,7 @@ void renderspuCreateWindow( void )
 	}
 
 #ifndef WINDOWS
-	// WireGL Holdover
+	/* WireGL Holdover */
 	if ( render_spu.display_string == NULL )
 	{
 		render_spu.display_string = ":0.0";
@@ -450,11 +455,11 @@ void renderspuCreateWindow( void )
 
 	if ( !SetThreadDesktop( desktop ) )
 	{
-		// If this function fails, it's probably because
-		// it's already been called (i.e., the render SPU
-		// is bolted to an application?)
+		/* If this function fails, it's probably because 
+		 * it's already been called (i.e., the render SPU 
+		 * is bolted to an application?) */
 
-		//crError( "Couldn't set thread to input desktop" );
+		/*crError( "Couldn't set thread to input desktop" ); */
 	}
 	crDebug( "Set the thread desktop -- this might have failed." );
 
@@ -564,7 +569,7 @@ void renderspuCreateWindow( void )
 	}
 
 	crDebug( "Showing the window" );
-	// NO ERROR CODE FOR SHOWWINDOW
+	/* NO ERROR CODE FOR SHOWWINDOW */
 	ShowWindow( render_spu.hWnd, SW_SHOWNORMAL );
 	SetForegroundWindow( render_spu.hWnd );
 	if ( render_spu.fullscreen )
@@ -603,7 +608,7 @@ void renderspuKillWindow( void )
 {
 #ifdef WINDOWS
 	render_spu.wglMakeCurrent( GetDC( render_spu.hWnd ), NULL );
-	//wglDeleteContext( render_spu.hRC );
+	/*wglDeleteContext( render_spu.hRC ); */
 	DestroyWindow( render_spu.hWnd );
 	render_spu.hWnd = NULL;
 #endif
@@ -614,15 +619,15 @@ void renderspuKillWindow( void )
 	static LONG WINAPI
 MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-	// int w,h;
+	/* int w,h; */
 
 	switch ( uMsg ) {
 
 		case WM_SIZE:
-			// w = LOWORD( lParam );
-			// h = HIWORD( lParam );
+			/* w = LOWORD( lParam ); 
+			 * h = HIWORD( lParam ); */
 
-			// glViewport( 0, 0, w, h );
+			/* glViewport( 0, 0, w, h ); */
 #if 0
 			glViewport( -render_spu.mural_x, -render_spu.mural_y, 
 					render_spu.mural_width, render_spu.mural_height );
@@ -645,37 +650,37 @@ bSetupPixelFormat( HDC hdc )
 {
 	PIXELFORMATDESCRIPTOR *ppfd; 
 	PIXELFORMATDESCRIPTOR pfd = { 
-		sizeof(PIXELFORMATDESCRIPTOR),  //  size of this pfd 
-		1,                              // version number 
-		PFD_DRAW_TO_WINDOW |            // support window 
-			PFD_SUPPORT_OPENGL |            // support OpenGL 
-			PFD_DOUBLEBUFFER,               // double buffered 
-		PFD_TYPE_RGBA,                  // RGBA type 
-		24,                             // 24-bit color depth 
-		0, 0, 0, 0, 0, 0,               // color bits ignored 
-		0,                              // no alpha buffer 
-		0,                              // shift bit ignored 
-		0,                              // no accumulation buffer 
-		0, 0, 0, 0,                     // accum bits ignored 
-		0,                              // set depth buffer	 
-		0,                              // set stencil buffer 
-		0,                              // no auxiliary buffer 
-		PFD_MAIN_PLANE,                 // main layer 
-		0,                              // reserved 
-		0, 0, 0                         // layer masks ignored 
+		sizeof(PIXELFORMATDESCRIPTOR),  /*  size of this pfd */
+		1,                              /* version number */
+		PFD_DRAW_TO_WINDOW |            /* support window */
+			PFD_SUPPORT_OPENGL |            /* support OpenGL */
+			PFD_DOUBLEBUFFER,               /* double buffered */
+		PFD_TYPE_RGBA,                  /* RGBA type */
+		24,                             /* 24-bit color depth */
+		0, 0, 0, 0, 0, 0,               /* color bits ignored */
+		0,                              /* no alpha buffer */
+		0,                              /* shift bit ignored */
+		0,                              /* no accumulation buffer */
+		0, 0, 0, 0,                     /* accum bits ignored */
+		0,                              /* set depth buffer	 */
+		0,                              /* set stencil buffer */
+		0,                              /* no auxiliary buffer */
+		PFD_MAIN_PLANE,                 /* main layer */
+		0,                              /* reserved */
+		0, 0, 0                         /* layer masks ignored */
 	}; 
 	int pixelformat;
 
-	pfd.cDepthBits = (BYTE) render_spu.depth_bits;           // set depth buffer	 
-	pfd.cStencilBits = (BYTE) render_spu.stencil_bits;       // set stencil buffer 
+	pfd.cDepthBits = (BYTE) render_spu.depth_bits;           /* set depth buffer	 */
+	pfd.cStencilBits = (BYTE) render_spu.stencil_bits;       /* set stencil buffer */
 
-	//  Commented out by Ian.
-	//pfd.cColorBits = GetDeviceCaps(hdc,BITSPIXEL);
+	/*  Commented out by Ian. 
+	 *pfd.cColorBits = GetDeviceCaps(hdc,BITSPIXEL); */
 	ppfd = &pfd;
 
-	// calling the wgl functions directly if the SPU was loaded by the
-	// application (i.e., if the app didn't create a window and get
-	// faked out) seems to not work.
+	/* calling the wgl functions directly if the SPU was loaded by the 
+	 * application (i.e., if the app didn't create a window and get 
+	 * faked out) seems to not work. */
 	if (getenv( "__CR_LAUNCHED_FROM_APP_FAKER" ) != NULL)
 	{
 		pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
@@ -692,7 +697,7 @@ bSetupPixelFormat( HDC hdc )
 	}
 	else
 	{
-		// Okay, we were loaded manually.  Call the GDI functions.
+		/* Okay, we were loaded manually.  Call the GDI functions. */
 		pixelformat = ChoosePixelFormat( hdc, ppfd );
 		/* doing this twice is normal Win32 magic */
 		pixelformat = ChoosePixelFormat( hdc, ppfd );

@@ -66,7 +66,7 @@ print """
 	{
 		dst->copy_of = src;
 	}
-	copynode = crAlloc( sizeof( *copynode ) );
+	copynode = (struct _copy_list_node*)crAlloc( sizeof( *copynode ) );
 	copynode->copy = dst;
 	copynode->next = src->copyList;
 	src->copyList = copynode;

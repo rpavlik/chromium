@@ -27,11 +27,11 @@ int crPixelSize (GLenum format, GLenum type, GLsizei width, GLsizei height )
 			pixelbytes *= 2;
 			break;
 		case GL_RGB :
-		//case GL_BGR_EXT:
+		/*case GL_BGR_EXT: */
 			pixelbytes *= 3;
 			break;
 		case GL_RGBA :
-		//case GL_BGRA_EXT :
+		/*case GL_BGRA_EXT : */
 			pixelbytes *= 4;
 			break;
 		default:
@@ -95,11 +95,11 @@ void crPixelCopy2D( GLvoid *dstptr, const GLvoid *srcptr, GLenum format,
 			pixelbytes *= 2;
 			break;
 		case GL_RGB :
-		//case GL_BGR_EXT:
+		/*case GL_BGR_EXT: */
 			pixelbytes *= 3;
 			break;
 		case GL_RGBA :
-		//case GL_BGRA_EXT :
+		/*case GL_BGRA_EXT : */
 			pixelbytes *= 4;
 			break;
 		default:

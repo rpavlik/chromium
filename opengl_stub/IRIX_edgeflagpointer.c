@@ -7,7 +7,7 @@
 #include "cr_glwrapper.h"
 #include "api_templates.h"
 
-// This is necessary because IRIX disagrees with Windows about arg 2.
+/* This is necessary because IRIX disagrees with Windows about arg 2. */
 
 void glEdgeFlagPointer( GLsizei stride, const GLboolean *pointer )
 {

@@ -45,7 +45,7 @@ void crStatePixelInit(CRPixelState *p) {
 
 void STATE_APIENTRY crStatePixelStoref (GLenum pname, GLfloat param) {
 
-	// The GL SPEC says I can do this on page 76.
+	/* The GL SPEC says I can do this on page 76. */
 	switch( pname )
 	{
 		case GL_PACK_SWAP_BYTES:

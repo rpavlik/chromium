@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 	crCreateContext();
 	crMakeCurrent();
 
-	// It's OK for everyone to create this, as long as all the "size"s match
+	/* It's OK for everyone to create this, as long as all the "size"s match */
 	glBarrierCreate( MASTER_BARRIER, size );
 
 	for (;;)
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 			crSwapBuffers();
 		}
 
-		// ARGH -- need to trick out the compiler this sucks.
+		/* ARGH -- need to trick out the compiler this sucks. */
 		if (argv[0] == NULL)
 		{
 			return 0;

@@ -22,18 +22,18 @@ void templatespuGatherConfiguration( void )
 
 	__setDefaults();
 
-	// Connect to the mothership and identify ourselves.
+	/* Connect to the mothership and identify ourselves. */
 	
 	conn = crMothershipConnect( );
 	if (!conn)
 	{
-		// The mothership isn't running.  Some SPU's can recover gracefully, some
-		// should issue an error here.
+		/* The mothership isn't running.  Some SPU's can recover gracefully, some 
+		 * should issue an error here. */
 		return;
 	}
 	crMothershipIdentifySPU( conn, template_spu.id );
 
-	// CONFIGURATION STUFF HERE
+	/* CONFIGURATION STUFF HERE */
 
 	(void) response;
 

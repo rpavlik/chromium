@@ -60,7 +60,7 @@ void crServerGatherConfiguration(char *mothership)
 		crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
 	}
 
-	// The response will tell which SPUs to load
+	/* The response will tell which SPUs to load */
 	crMothershipIdentifyServer( conn, response );
 
 	spuchain = crStrSplit( response, " " );
@@ -85,8 +85,9 @@ void crServerGatherConfiguration(char *mothership)
 
 	cr_server.head_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir );
 
-	// Need to do this as early as possible
-	cr_server.head_spu->dispatch_table.GetIntegerv( GL_VIEWPORT, cr_server.underlyingDisplay );
+	/* Need to do this as early as possible */
+    cr_server.head_spu->dispatch_table.GetIntegerv( GL_VIEWPORT,
+        (GLint*)cr_server.underlyingDisplay );
 
 	/* Get OpenGL limits from first SPU */
 	crSPUQueryGLLimits( conn, spu_ids[0], &limits);
@@ -112,8 +113,8 @@ void crServerGatherConfiguration(char *mothership)
 	crMothershipGetMTU( conn, response );
 	sscanf( response, "%ud", &mtu );
 
-	// The response will tell us what protocols we need to serve
-	// example: "3 tcpip 1,gm 2,via 10"
+	/* The response will tell us what protocols we need to serve 
+	 * example: "3 tcpip 1,gm 2,via 10" */
 
 	crMothershipGetClients( conn, response );
 	
@@ -161,13 +162,13 @@ void crServerGatherConfiguration(char *mothership)
 		crStateSetCurrentPointers( cr_server.clients[i].ctx, &(cr_server.current) );
 	}
 
-	// Sigh -- the servers need to know how big the whole mural is if we're
-	// doing tiling, so they can compute their base projection.  For now,
-	// just have them pretend to be one of their client SPU's, and redo
-	// the configuration step of the tilesort SPU.  Basically this is a dirty
-	// way to figure out who the other servers are.  It *might* matter
-	// which SPU we pick for certain graph configurations, but we'll cross
-	// that bridge later.
+	/* Sigh -- the servers need to know how big the whole mural is if we're 
+	 * doing tiling, so they can compute their base projection.  For now, 
+	 * just have them pretend to be one of their client SPU's, and redo 
+	 * the configuration step of the tilesort SPU.  Basically this is a dirty 
+	 * way to figure out who the other servers are.  It *might* matter 
+	 * which SPU we pick for certain graph configurations, but we'll cross 
+	 * that bridge later. */
 
 	crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
 	crMothershipGetServers( conn, response );

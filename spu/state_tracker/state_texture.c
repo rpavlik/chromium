@@ -88,7 +88,7 @@ void crStateTextureInit(const CRLimitsState *limits, CRTextureState *t)
 
 	t->curTextureUnit = 0;
 
-	// Per-unit initialization
+	/* Per-unit initialization */
 	for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
 		t->unit[i].currentTexture1DName = 0;
@@ -1133,7 +1133,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 			return;
 		}
 	}
-	else // Cube map
+	else /* Cube map */
 	{
 		if (width > (int) g->limits.maxCubeMapTextureSize)
 		{
@@ -1147,7 +1147,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 				     "glTexImage2D height oob: %d", height);
 			return;
 		}
-		// Check that cube map width and height are equal.
+		/* Check that cube map width and height are equal. */
 		if (width != height)
 		{
 			crStateError(__LINE__,__FILE__, GL_INVALID_VALUE,
@@ -2629,7 +2629,7 @@ void STATE_APIENTRY crStateGetTexImage (GLenum target, GLint level, GLenum forma
 static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
 	GLenum target, GLint level)
 {
-	CRTextureState *t = &(g->texture);  // FIXME: active texture unit!
+	CRTextureState *t = &(g->texture);  /* FIXME: active texture unit! */
 	CRTextureObj *tobj;
 	CRTextureLevel *timg;
 
@@ -2717,7 +2717,7 @@ static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
 static CRTextureObj * crStateGetTexObject (CRContext *g, GLuint texUnit,
 	GLenum target)
 {
-	CRTextureState *t = &(g->texture);  // FIXME: active texture unit!
+	CRTextureState *t = &(g->texture);  /* FIXME: active texture unit! */
 	CRTextureObj *tobj;
 
 	(void) texUnit;
@@ -2945,13 +2945,13 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 			params[3] = tobj->borderColor.a;
 			break;
         case GL_TEXTURE_RESIDENT:
-			// XXX todo
+			/* XXX todo */
 #ifdef CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_MIN_LOD:
 		case GL_TEXTURE_MAX_LOD:
 		case GL_TEXTURE_BASE_LEVEL:
 		case GL_TEXTURE_MAX_LEVEL:
-			// XXX todo
+			/* XXX todo */
 #endif
 #ifdef CR_EXT_texture_filter_anisotropic
 		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
@@ -3019,13 +3019,13 @@ void STATE_APIENTRY crStateGetTexParameteriv (GLenum target, GLenum pname, GLint
 			params[3] = (GLint) (tobj->borderColor.a * GL_MAXINT);
 			break;
         case GL_TEXTURE_RESIDENT:
-			// XXX todo
+			/* XXX todo */
 #ifdef CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_MIN_LOD:
 		case GL_TEXTURE_MAX_LOD:
 		case GL_TEXTURE_BASE_LEVEL:
 		case GL_TEXTURE_MAX_LEVEL:
-			// XXX todo
+			/* XXX todo */
 #endif
 #ifdef CR_EXT_texture_filter_anisotropic
 		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
@@ -3046,7 +3046,7 @@ void STATE_APIENTRY crStateGetTexParameteriv (GLenum target, GLenum pname, GLint
 	}
 }
 
-// TODO:
+/* TODO: */
 void STATE_APIENTRY crStatePrioritizeTextures (GLsizei n, const GLuint * textures, const GLclampf * priorities) 
 {
 	UNUSED(n);
@@ -3343,9 +3343,9 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue bitID,
 
 	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
-		// First, try to create the current texture
-		// objects before mucking with the individual 
-		// units.
+		/* First, try to create the current texture 
+		 * objects before mucking with the individual 
+		 * units. */
 
 		if (to->unit[i].enabled1D == GL_TRUE) 
 		{
@@ -3549,7 +3549,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue bitID,
 					default:
 						UNIMPLEMENTED();
 				}	
-			} // if (tobj->imageBit[i] & bitID)
+			} /* if (tobj->imageBit[i] & bitID) */
 			tobj->dirty &= nbitID;
 		}
 	}
@@ -3602,7 +3602,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue bitID,
 		if (to->unit[i].enabled1D == GL_TRUE) 
 		{
 			GET_TOBJ(tobj, to, to->unit[i].currentTexture1DName);
-			//tobj = to->currentTexture1D;
+			/*tobj = to->currentTexture1D; */
 			name = to->unit[i].currentTexture1DName;
 			cname = &(from->unit[i].currentTexture1DName);
 		}
@@ -3610,7 +3610,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue bitID,
 		if (to->unit[i].enabled2D == GL_TRUE) 
 		{
 			GET_TOBJ(tobj, to, to->unit[i].currentTexture2DName);
-			//tobj = to->currentTexture2D;
+			/*tobj = to->currentTexture2D; */
 			name = to->unit[i].currentTexture2DName;
 			cname = &(from->unit[i].currentTexture2DName);
 		}
@@ -3619,7 +3619,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue bitID,
 		if (to->unit[i].enabled3d == GL_TRUE)
 		{
 			GET_TOBJ(tobj, to, to->unit[i].currentTexture3DName);
-			//tobj = to->currenttexture3d[i];
+			/*tobj = to->currenttexture3d[i]; */
 			name = to->unit[i].currenttexture3dname;
 			cname = &(from->unit[i].currenttexture3dname);
 		}
@@ -3629,7 +3629,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue bitID,
 			to->unit[i].enabledCubeMap == GL_TRUE)
 		{
 			GET_TOBJ(tobj, to, to->unit[i].currentTextureCubeMapName);
-			//tobj = to->currentTextureCubeMap;
+			/*tobj = to->currentTextureCubeMap; */
 			name = to->unit[i].currentTextureCubeMapName;
 			cname = &(from->unit[i].currentTextureCubeMapName);
 		}
@@ -3637,7 +3637,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue bitID,
 
 		if (!tobj) 
 		{
-			// texturing is not enabled for this unit
+			/* texturing is not enabled for this unit */
 			continue;
 		}
 

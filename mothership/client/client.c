@@ -101,7 +101,7 @@ int crMothershipGetSPUParam( CRConnection *conn, char *response, char *param, ..
  */
 int crMothershipSetSPUParam( CRConnection *conn, const char *param, const char *value)
 {
-	// Ex: param = "GL_MAX_TEXTURE_SIZE", value = "1024"
+	/* Ex: param = "GL_MAX_TEXTURE_SIZE", value = "1024" */
 	return crMothershipSendString( conn, NULL, "setspuparam %s %s", param, value );
 }
 

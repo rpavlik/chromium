@@ -25,7 +25,7 @@ void SPU_APIENTRY renderspuSwapBuffers( void )
 		crDebug( "The current context is 0x%x", render_spu.wglGetCurrentContext() );
 		crDebug( "The context *I* created is 0x%x", render_spu.hRC );
 	}
-	//render_spu.dispatch->DrawBuffer( GL_FRONT );
+	/*render_spu.dispatch->DrawBuffer( GL_FRONT ); */
 	if (!render_spu.wglSwapBuffers( render_spu.device_context ))
 	{
 		crError( "wglSwapBuffers failed!");

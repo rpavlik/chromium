@@ -8,15 +8,15 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
-//Test glColorMaterial():
-//
-//Draw three frames; use glColorMaterial to change
-//the material color..
-//
-//press any key on the keyboard to switch between
-//the frames
-//
-//June 20, 2001
+/*Test glColorMaterial(): 
+ * 
+ *Draw three frames; use glColorMaterial to change 
+ *the material color.. 
+ * 
+ *press any key on the keyboard to switch between 
+ *the frames 
+ * 
+ *June 20, 2001 */
 
 
 void
@@ -37,7 +37,7 @@ draw(void)
   switch(i){
   case 0:
   case 2:
-     //green triangles
+     /*green triangles */
 
      glColor3f(0.0, 1.0, 0.0);
      glDisable(GL_COLOR_MATERIAL);
@@ -60,7 +60,7 @@ draw(void)
 
 
   case 1:
-    //a red triangle and a blue triangle
+    /*a red triangle and a blue triangle */
     glShadeModel(GL_FLAT);
     glEnable(GL_COLOR_MATERIAL);
     glColor3f(0.0, 1.0, 0.0);
@@ -90,8 +90,8 @@ draw(void)
 
 
   glutSwapBuffers();
-  // sleep(2);
-  // glutPostRedisplay();
+  /* sleep(2); 
+   * glutPostRedisplay(); */
 }
 
 
@@ -99,7 +99,7 @@ draw(void)
 void
 keyboard(unsigned char ch, int x, int y)
 {
-	// modified by Humper to not explode on Windows
+	/* modified by Humper to not explode on Windows */
 	(void) ch;
 	(void) x;
 	(void) y;
@@ -127,8 +127,8 @@ GLUT_MULTISAMPLE);
   glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 20);
   glMatrixMode(GL_MODELVIEW);
 
-  // printf("my pid is %d\n", getpid());
-  //sleep(10);
+  /* printf("my pid is %d\n", getpid()); 
+   *sleep(10); */
 
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);

@@ -363,11 +363,11 @@ void PACK_APIENTRY crPackAreTexturesResidentSWAP( GLsizei n, const GLuint *textu
 	int i;
 
 	packet_length = 
-		sizeof(int) +            // packet length 
-		sizeof( GLenum ) +       // extend-o opcode
-		sizeof( n ) +            // num_textures
-		n*sizeof( *textures ) +  // textures
-		8 + 8 + 8;               // return pointers
+		sizeof(int) +            /* packet length */
+		sizeof( GLenum ) +       /* extend-o opcode */
+		sizeof( n ) +            /* num_textures */
+		n*sizeof( *textures ) +  /* textures */
+		8 + 8 + 8;               /* return pointers */
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, int, SWAP32(packet_length) );

@@ -49,7 +49,7 @@ void tilesortspuPinch (void)
 	unsigned char *normal_ptr = tilesort_spu.ctx->current.current->normal.ptr;
 	unsigned char *texCoord_ptr[CR_MAX_TEXTURE_UNITS];
 	unsigned char *edgeFlag_ptr = tilesort_spu.ctx->current.current->edgeFlag.ptr;
-	// unsigned char *index_ptr = tilesort_spu.ctx->current.current->index.ptr;
+	/* unsigned char *index_ptr = tilesort_spu.ctx->current.current->index.ptr; */
 
 	CRVertex v_current;
 
@@ -191,7 +191,7 @@ void tilesortspuPinch (void)
 
 			do 
 			{
-				data += __cr_packet_length_table[*op]; // generated
+				data += __cr_packet_length_table[*op]; /* generated */
 				op--;
 				ASSERT_BOUNDS(op, data);
 			} while (!IS_VERTEX(*op));
@@ -451,8 +451,8 @@ void __pinchIssueVertex (CRVertex *vtx)
 	}
 }
 
-// This function is called at the end of Flush(), when it becomes necessary to
-// restore the partial triangle that was clipped at the end.
+/* This function is called at the end of Flush(), when it becomes necessary to 
+ * restore the partial triangle that was clipped at the end. */
 
 void tilesortspuPinchRestoreTriangle( void )
 {
@@ -462,7 +462,7 @@ void tilesortspuPinchRestoreTriangle( void )
 
 	if (c->inBeginEnd) 
 	{
-		//crDebug( "Restoring something..." );
+		/*crDebug( "Restoring something..." ); */
 		if (tilesort_spu.swap)
 		{
 			crPackBeginSWAP(c->mode);
@@ -487,7 +487,7 @@ void tilesortspuPinchRestoreTriangle( void )
 				 i < tilesort_spu.pinchState.numRestore; 
 				 i++) 
 		{
-			//crDebug( "issuing a vertex..." );
+			/*crDebug( "issuing a vertex..." ); */
 			__pinchIssueVertex(tilesort_spu.pinchState.vtx + i);
 		}
 

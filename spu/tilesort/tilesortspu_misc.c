@@ -22,5 +22,5 @@ void TILESORTSPU_APIENTRY tilesortspu_CreateContext(void *arg1, void *arg2)
 
 void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent(void)
 {
-	//crDebug( "In tilesortspu_MakeCurrent" );
+	/*crDebug( "In tilesortspu_MakeCurrent" ); */
 }

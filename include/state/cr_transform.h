@@ -27,7 +27,7 @@ typedef struct {
 	GLenum    mode;
 	GLint    matrixid;
 
-	GLint    maxDepth;		// Max depth of current matrix stack/mode
+	GLint    maxDepth;		/* Max depth of current matrix stack/mode */
 
 	GLint    modelViewDepth;
 	GLint    projectionDepth;

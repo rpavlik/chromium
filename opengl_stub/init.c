@@ -7,7 +7,7 @@
 #include "api_templates.h"
 
 #ifdef WINDOWS
-// Let me cast function pointers to data pointers, I know what I'm doing.
+/* Let me cast function pointers to data pointers, I know what I'm doing. */
 #pragma warning( disable: 4054 )
 #endif
 

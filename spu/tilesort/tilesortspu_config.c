@@ -55,7 +55,7 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 
 	__setDefaults();
 
-	// Connect to the mothership and identify ourselves.
+	/* Connect to the mothership and identify ourselves. */
 	
 	conn = crMothershipConnect( );
 	if (!conn)
@@ -112,10 +112,10 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 		tilesort_spu.fakeWindowHeight = (unsigned int) h;
 	}
 
-	// The response to this tells us how many servers and where they are
-	//
-	// For example:  2 tcpip://foo tcpip://bar
-	//
+	/* The response to this tells us how many servers and where they are 
+	 *
+	 * For example:  2 tcpip://foo tcpip://bar 
+     */
 	crMothershipGetServers( conn, response );
 
 	serverchain = crStrSplitn( response, " ", 1 );

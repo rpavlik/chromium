@@ -11,7 +11,7 @@
 extern SPU *stub_spu;
 extern void StubInit(void);
 
-// I *know* most of the parameters are unused, dammit.
+/* I *know* most of the parameters are unused, dammit. */
 #pragma warning( disable: 4100 )
 
 #define WIN32_LEAN_AND_MEAN
@@ -102,12 +102,12 @@ BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 
 HGLRC WINAPI wglGetCurrentContext_prox( void )
 {
-	return (HGLRC) NULL; //__wiregl_globals.context;
+	return (HGLRC) NULL; /*__wiregl_globals.context; */
 }
 
 HDC WINAPI wglGetCurrentDC_prox( void )
 {
-	return (HDC) NULL; //__wiregl_globals.client_hdc;
+	return (HDC) NULL; /*__wiregl_globals.client_hdc; */
 }
 
 int WINAPI wglGetPixelFormat_prox( HDC hdc )
@@ -119,14 +119,14 @@ int WINAPI wglGetPixelFormat_prox( HDC hdc )
 int WINAPI wglDescribePixelFormat_prox( HDC hdc, int pixelFormat, UINT nBytes,
 		LPPIXELFORMATDESCRIPTOR pfd )
 {
-//	if ( pixelFormat != 1 ) {
-//		crError( "wglDescribePixelFormat: pixelFormat=%d?\n", pixelFormat );
-//		return 0;
-//	}
+/*	if ( pixelFormat != 1 ) { 
+ *		crError( "wglDescribePixelFormat: pixelFormat=%d?\n", pixelFormat ); 
+ *		return 0; 
+ *	} */
 
 	if ( nBytes != sizeof(*pfd) ) {
 		crWarning( "wglDescribePixelFormat: nBytes=%u?\n", nBytes );
-		return 1; // There's only one, baby
+		return 1; /* There's only one, baby */
 	}
 
 	pfd->nSize           = sizeof(*pfd);
@@ -172,9 +172,9 @@ BOOL WINAPI wglShareLists_prox( HGLRC hglrc1, HGLRC hglrc2 )
 HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 {
 	static int already_has_a_context = 0;
-	// This should be early enough to initialize everything.
-	// You have to create a context before you can make current
-	// to it, right?
+	/* This should be early enough to initialize everything. 
+	 * You have to create a context before you can make current 
+	 * to it, right? */
 
 	if (!already_has_a_context)
 	{

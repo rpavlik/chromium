@@ -67,7 +67,7 @@ print """
 			crError( "Unknown paramater name in LookupComponents: %d", pname );
 			break;
 	}
-	// NOTREACHED
+	/* NOTREACHED */
 	return 0;
 }
 """

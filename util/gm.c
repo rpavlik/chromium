@@ -16,7 +16,7 @@
 #pragma warning( pop )
 #endif
 #ifndef WINDOWS
-#include <ctype.h> // for tolower
+#include <ctype.h> /* for tolower */
 #endif
 
 #include "cr_error.h"
@@ -348,7 +348,7 @@ static void * cr_gm_dma_malloc( unsigned long length )
 	return buf;
 }
 
-// All the functions that shouldn't get called
+/* All the functions that shouldn't get called */
 
 void crGmSendExact( CRConnection *conn, void *buf, unsigned int len )
 {
@@ -466,7 +466,7 @@ static void crGmConnectionAdd( CRConnection *conn )
 		}
 	}
 
-	gm_conn = crAlloc( sizeof(*gm_conn) );
+	gm_conn = (CRGmConnection*)crAlloc( sizeof(*gm_conn) );
 	gm_conn->node_id   = conn->gm_node_id;
 	gm_conn->port_num  = conn->gm_port_num;
 	gm_conn->conn      = conn;
@@ -508,20 +508,20 @@ void crGmAccept( CRConnection *conn, unsigned short port )
 		crError( "Couldn't determine my own hostname in crGmAccept!" );
 	}
 	
-	// Tell the mothership I'm willing to receive a client, and what my GM info is
+	/* Tell the mothership I'm willing to receive a client, and what my GM info is */
 	if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest gm %s %d %d %d %d", my_hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
 	{
 		crError( "Mothership didn't like my accept request request" );
 	}
 
-	// The response will contain the GM information for the guy who accepted
-	// this connection.  The mothership will sit on the acceptrequest
-	// until someone connects.
+	/* The response will contain the GM information for the guy who accepted 
+	 * this connection.  The mothership will sit on the acceptrequest 
+	 * until someone connects. */
 	
 	sscanf( response, "%d %d", &(conn->gm_node_id), &(conn->gm_port_num) );
 	
-	// NOW, we can add the connection, since we have enough information
-	// to uniquely determine the sender when we get a packet!
+	/* NOW, we can add the connection, since we have enough information 
+	 * to uniquely determine the sender when we get a packet! */
 	crGmConnectionAdd( conn );
 
 	__copy_of_crMothershipDisconnect( mother );
@@ -538,15 +538,15 @@ int crGmDoConnect( CRConnection *conn )
 
 	mother = __copy_of_crMothershipConnect( );
 
-	// Tell the mothership who I want to connect to, and what my GM info is
+	/* Tell the mothership who I want to connect to, and what my GM info is */
 	if (!__copy_of_crMothershipSendString( mother, response, "connectrequest %s %d %d %d %d", conn->hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
 	{
 		crError( "Mothership didn't like my connect request request" );
 	}
 
-	// The response will contain the GM information for the guy who accepted
-	// this connection.  The mothership will sit on the connectrequest
-	// until someone accepts.
+	/* The response will contain the GM information for the guy who accepted 
+	 * this connection.  The mothership will sit on the connectrequest 
+	 * until someone accepts. */
 	
 	sscanf( response, "%d %d %d", &(conn->gm_node_id), &(conn->gm_port_num), &(remote_endianness) );
 
@@ -555,8 +555,8 @@ int crGmDoConnect( CRConnection *conn )
 		conn->swap = 1;
 	}
 
-	// NOW, we can add the connection, since we have enough information
-	// to uniquely determine the sender when we get a packet!
+	/* NOW, we can add the connection, since we have enough information 
+	 * to uniquely determine the sender when we get a packet! */
 	crGmConnectionAdd( conn );
 
 	__copy_of_crMothershipDisconnect( mother );
@@ -670,7 +670,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 			crBufferPoolPop( &cr_gm.unpinned_read_pool );
 		if ( temp == NULL )
 		{
-			temp = crAlloc( sizeof(CRGmBuffer) + gm_conn->conn->mtu );
+			temp = (CRGmBuffer*)crAlloc( sizeof(CRGmBuffer) + gm_conn->conn->mtu );
 			temp->magic = CR_GM_BUFFER_RECV_MAGIC;
 			temp->kind  = CRGmMemoryUnpinned;
 			temp->pad   = 0;
@@ -875,7 +875,7 @@ int crGmRecv( void )
 	}
 
 #if CR_GM_DEBUG
-	// cr_gm_check_recv_event( event );
+	/* cr_gm_check_recv_event( event ); */
 #endif
 
 	switch ( GM_RECV_EVENT_TYPE(event) ) 
@@ -1304,12 +1304,12 @@ unsigned int crGmPortNum( void )
 
 void crGmConnection( CRConnection *conn )
 {
-	// The #if 0'ed out code here did some sanity checking on 
-	// the integrity of the GM network.  This doesn't quite work
-	// any more because we don't have an initial TCPIP handshake
-	// to establish the GM node ID of the other party.  Perhaps
-	// we can do this validation in GmAccept once the mothership
-	// is brokering connections?
+	/* The #if 0'ed out code here did some sanity checking on 
+	 * the integrity of the GM network.  This doesn't quite work 
+	 * any more because we don't have an initial TCPIP handshake 
+	 * to establish the GM node ID of the other party.  Perhaps 
+	 * we can do this validation in GmAccept once the mothership 
+	 * is brokering connections? */
 #if 0
 	char *actual_name;
 #endif

@@ -146,7 +146,7 @@ void crStateClientSetPointer (CRClientPointer *cp, GLint size,
 	cp->p = (unsigned char *) pointer;
 	cp->size = size;
 	cp->type = type;
-	// Calculate the bytes per index for address calculation
+	/* Calculate the bytes per index for address calculation */
 	cp->bytesPerIndex = size;
 	switch (type) 
 	{

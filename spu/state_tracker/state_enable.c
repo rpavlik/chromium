@@ -16,14 +16,14 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 {
 	unsigned int i;
 	i = cap - GL_CLIP_PLANE0;
-	if (i >= 0 && i < g->limits.maxClipPlanes) {
+	if (i < g->limits.maxClipPlanes) {
 		g->transform.clip[i] = val;
 		sb->transform.enable = neg_bitid;
 		sb->transform.dirty = neg_bitid;
 		return;
 	}
 	i = cap - GL_LIGHT0;
-	if (i >= 0 && i < g->limits.maxLights) {
+	if (i < g->limits.maxLights) {
 		g->lighting.light[i].enable = val;
 		sb->lighting.light[i].dirty = neg_bitid;
 		sb->lighting.light[i].enable = neg_bitid;
@@ -50,12 +50,12 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_COLOR_MATERIAL :
 			if (!val)
 			{
-				// We're TURNING OFF color material.  In this case,
-				// we should make sure that the very very latest 
-				// color that was specified gets copied into the
-				// material parameters, since this might be our
-				// last chance (see frame 1 of progs/kirchner
-				// for an example of why).
+				/* We're TURNING OFF color material.  In this case, 
+				 * we should make sure that the very very latest 
+				 * color that was specified gets copied into the 
+				 * material parameters, since this might be our 
+				 * last chance (see frame 1 of progs/kirchner 
+				 * for an example of why). */
 
 				crStateCurrentRecover( );
 				crStateColorMaterialRecover( );

@@ -10,9 +10,9 @@
 #include "cr_spu.h"
 #include "state/cr_statetypes.h"
 
-// Set the flush_func to NULL *before* it's called, so that we can
-// call state functions from within flush without infinite recursion.
-// Yucky, but "necessary" for color material.
+/* Set the flush_func to NULL *before* it's called, so that we can 
+ * call state functions from within flush without infinite recursion. 
+ * Yucky, but "necessary" for color material. */
 
 #define FLUSH() \
 	if (g->flush_func != NULL) \

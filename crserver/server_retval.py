@@ -53,5 +53,5 @@ for func_name in keys:
 		print '\t%s retval;' % return_type
 		print '\tretval = cr_server.head_spu->dispatch_table.%s%s;' % (func_name, stub_common.CallString( names ) );
 		print '\tcrServerReturnValue( &retval, sizeof(retval) );'
-		print '\treturn retval; // WILL PROBABLY BE IGNORED'
+		print '\treturn retval; /* WILL PROBABLY BE IGNORED */'
 		print '}'

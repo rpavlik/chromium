@@ -70,7 +70,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum qu
 			size *= temporder[0];
 			if (dimension)
 				size *= temporder[1];
-			coeffs = crAlloc( size );
+			coeffs = (GLdouble*)crAlloc( size );
 			cr_server.head_spu->dispatch_table.GetMapdv( target, query, coeffs );
 			retptr = coeffs;
 			break;
@@ -143,7 +143,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum qu
 			size *= temporder[0];
 			if (dimension)
 				size *= temporder[1];
-			coeffs = crAlloc( size );
+			coeffs = (GLfloat*)crAlloc( size );
 			cr_server.head_spu->dispatch_table.GetMapfv( target, query, coeffs );
 			retptr = coeffs;
 			break;
@@ -216,7 +216,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum qu
 			size *= temporder[0];
 			if (dimension)
 				size *= temporder[1];
-			coeffs = crAlloc( size );
+			coeffs = (GLint*)crAlloc( size );
 			cr_server.head_spu->dispatch_table.GetMapiv( target, query, coeffs );
 			retptr = coeffs;
 			break;

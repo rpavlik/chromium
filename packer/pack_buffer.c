@@ -75,8 +75,8 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int extra )
 	buf->size = size;
 	buf->pack = pack;
 
-	// Each opcode has at least a 1-word payload, so opcodes can occupy at most
-	// 20% of the space.
+	/* Each opcode has at least a 1-word payload, so opcodes can occupy at most 
+	 * 20% of the space. */
 	num_opcodes = ( buf->size - sizeof(CRMessageOpcodes) ) / 5;
 	num_opcodes = (num_opcodes + 0x3) & (~0x3);
 
@@ -89,7 +89,7 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int extra )
 	buf->opcode_current = buf->opcode_start;
 	buf->opcode_end     = buf->opcode_start - num_opcodes;
 
-	buf->data_end -= extra; // caller may want extra space (sigh)
+	buf->data_end -= extra; /* caller may want extra space (sigh) */
 }
 
 void crPackAppendBuffer( CRPackBuffer *src )
@@ -115,7 +115,7 @@ void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 {
 	int length = src->data_current - ( src->opcode_current + 1 );
 
-	// 24 is the size of the bounds-info packet...
+	/* 24 is the size of the bounds-info packet... */
 	
 	if ( cr_packer_globals.buffer.data_current + length + 24 > cr_packer_globals.buffer.data_end )
 		crError( "crPackAppendBoundedBuffer: overflowed the destination!" );

@@ -47,7 +47,7 @@ static const char *libgl_names[] = {
 	"opengl32.dll"
 };
 
-#else // _WIN32
+#else /* _WIN32 */
 
 #define DEFAULT_TMP_DIR "/tmp"
 #define OPENGL_CLIENT_LIB "libcrfaker.so"
@@ -62,7 +62,7 @@ static const char *libgl_names[] = {
 	"libGL.so"
 };
 
-#endif // _WIN32
+#endif /* _WIN32 */
 
 static const char *progname   = "app_faker";
 static const char *cr_lib     = NULL;
@@ -315,7 +315,7 @@ void do_it( char *argv[] )
 	exit( status ? 1 : 0 );
 }
 
-#else // _WIN32
+#else /* _WIN32 */
 
 char *find_file_on_path( const char *path, const char *basename )
 {
@@ -552,7 +552,7 @@ void do_it( char *argv[] )
 
 #if defined(IRIX) || defined(IRIX64)
 	/* if these are set then they'll be used by rld, so we have to
-		 make sure to modify them. */
+     * make sure to modify them. */
 	if ( crGetenv( "LD_LIBRARYN32_PATH" ) )
 		prefix_env_var( tmpdir, "LD_LIBRARYN32_PATH" );
 
@@ -560,6 +560,7 @@ void do_it( char *argv[] )
 		prefix_env_var( tmpdir, "LD_LIBRARY64_PATH" );
 #endif
 
+    debug( "contacting mothership to determine SPU directory \n");
 	if (crMothershipGetSPUDir( mothership_conn, response ))
 	{
 		crSetenv( "SPU_DIR", response );
@@ -598,7 +599,7 @@ void do_it( char *argv[] )
 	exit( 1 );
 }
 
-#endif // _WIN32
+#endif /* _WIN32 */
 
 	void
 usage( void )
@@ -693,8 +694,8 @@ int main( int argc, char **argv )
 
 	if ( argc < 1 )
 	{
-		// No command specified, contact the configuration server to
-		// ask what I should do.
+		/* No command specified, contact the configuration server to 
+		 * ask what I should do. */
 	
 		char response[1024];
 		char **chain;
@@ -710,8 +711,8 @@ int main( int argc, char **argv )
 		crMothershipIdentifyFaker( mothership_conn, response );
 		chain = crStrSplitn( response, " ", 1 );
 
-		// the OpenGL faker DLL needs to have a unique ID in case there
-		// are multiple apps running on the same host.
+		/* the OpenGL faker DLL needs to have a unique ID in case there 
+		 * are multiple apps running on the same host. */
 		crSetenv( "CR_APPLICATION_ID_NUMBER", chain[0] );
 
 		faked_argv = crStrSplit( chain[1], " " );
@@ -739,7 +740,7 @@ int main( int argc, char **argv )
 		crSetenv( "DISPLAY", ":0.0" );
 	}
 
-	// This will let SPUS do things differently if they want.
+	/* This will let SPUS do things differently if they want. */
 	crSetenv( "__CR_LAUNCHED_FROM_APP_FAKER", "yes" );
 	do_it( faked_argv );
 

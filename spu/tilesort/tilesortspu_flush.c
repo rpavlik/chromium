@@ -93,30 +93,30 @@ static void __appendBuffer( CRPackBuffer *src )
 {
 	int num_data = src->data_current - src->data_start;
 
-	//crWarning( "In __appendBuffer: %d bytes left, packing %d bytes", cr_packer_globals.buffer.data_end - cr_packer_globals.buffer.data_current, num_data );
+	/*crWarning( "In __appendBuffer: %d bytes left, packing %d bytes", cr_packer_globals.buffer.data_end - cr_packer_globals.buffer.data_current, num_data ); */
 
 	if ( cr_packer_globals.buffer.data_current + num_data > 
 			 cr_packer_globals.buffer.data_end )
 	{
-		// No room to append -- send now
+		/* No room to append -- send now */
 
-		//crWarning( "OUT OF ROOM!") ;
+		/*crWarning( "OUT OF ROOM!") ; */
 		__sendServerBuffer( state_server );
 		crPackSetBuffer( &(state_server->pack) );
 	}
 
 	crPackAppendBuffer( src );
-	//crWarning( "Back from crPackAppendBuffer: 0x%x", cr_packer_globals.buffer.data_current );
+	/*crWarning( "Back from crPackAppendBuffer: 0x%x", cr_packer_globals.buffer.data_current ); */
 }
 
 void __appendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 {
-	// 24 is the size of the bounds info packet
+	/* 24 is the size of the bounds info packet */
 	int num_data = src->data_current - src->opcode_current - 1 + 24;
 
 	if (num_data == 24)
 	{
-		// nothing to send.
+		/* nothing to send. */
 
 		return;
 	}
@@ -124,7 +124,7 @@ void __appendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 	if ( cr_packer_globals.buffer.data_current + num_data > 
 			 cr_packer_globals.buffer.data_end )
 	{
-		// No room to append -- send now
+		/* No room to append -- send now */
 		__sendServerBuffer( state_server );
 		crPackSetBuffer( &(state_server->pack) );
 	}
@@ -332,39 +332,39 @@ static void __doFlush( CRContext *ctx, int broadcast )
 	const TileSortBucketInfo * bucket_info = NULL;
 	int i;
 
-	//crDebug( "in __doFlush (broadcast = %d)", broadcast );
+	/*crDebug( "in __doFlush (broadcast = %d)", broadcast ); */
 
 	if (state_server != NULL)
 	{
-		// This means that the context differencer had so much state
-		// to dump that it overflowed the server's network buffer
-		// while doing its difference.  In this case, we just want
-		// to get the buffer out the door so the differencer can 
-		// keep doing what it's doing.
+		/* This means that the context differencer had so much state 
+		 * to dump that it overflowed the server's network buffer 
+		 * while doing its difference.  In this case, we just want 
+		 * to get the buffer out the door so the differencer can 
+		 * keep doing what it's doing. */
 
-		//crDebug( "Overflowed while doing a context difference!" );
+		/*crDebug( "Overflowed while doing a context difference!" ); */
 		CRASSERT( broadcast == 0 );
 		
-		// First, extract the packing state into the server
+		/* First, extract the packing state into the server */
 		crPackGetBuffer( &(state_server->pack) );
 
-		// Now, get the buffer out of here.
+		/* Now, get the buffer out of here. */
 		
 		__sendServerBuffer( state_server );
 		
-		// Finally, restore the packing state so we can continue
-		// This isn't the same as calling crPackResetPointers,
-		// because the state server now has a new pack buffer
-		// from the buffer pool.
+		/* Finally, restore the packing state so we can continue 
+		 * This isn't the same as calling crPackResetPointers, 
+		 * because the state server now has a new pack buffer 
+		 * from the buffer pool. */
 
 		crPackSetBuffer( &(state_server->pack) );
 
 		return;
 	}
 
-	//crDebug( "Looks like it was not a state overflow" );
+	/*crDebug( "Looks like it was not a state overflow" ); */
 
-	// First, test to see if this is a big packet.
+	/* First, test to see if this is a big packet. */
 	
 	if (cr_packer_globals.buffer.size > tilesort_spu.servers[0].net.conn->mtu )
 	{
@@ -372,11 +372,11 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		big_packet_hdr = __applySendBufferHeader( &(cr_packer_globals.buffer), &big_packet_len );
 	}
 
-	// Here's the big part -- call the bucketer!
+	/* Here's the big part -- call the bucketer! */
 
 	if (!broadcast)
 	{
-		//crDebug( "About to bucket the geometry" );
+		/*crDebug( "About to bucket the geometry" ); */
 		bucket_info = tilesortspuBucketGeometry();
 		bounds = bucket_info->pixelBounds;
 		if (tilesort_spu.providedBBOX != CR_OBJECT_BBOX_HINT)
@@ -386,40 +386,40 @@ static void __doFlush( CRContext *ctx, int broadcast )
 	}
 	else
 	{
-		//crDebug( "Broadcasting the geometry!" );
+		/*crDebug( "Broadcasting the geometry!" ); */
 	}
 
-	// Now, we want to let the state tracker extract the "current" state
-	// from the collection of pointers that we have in the geometry 
-	// buffer.
+	/* Now, we want to let the state tracker extract the "current" state 
+	 * from the collection of pointers that we have in the geometry 
+	 * buffer. */
 
 	crStateCurrentRecover( );
 
-	// At this point, we invoke the "pincher", which will check if
-	// the current buffer needs to be stopped mid-triangle (or whatever),
-	// and tuck away the appropriate state so that the triangle can be
-	// re-started once this flush is done.
+	/* At this point, we invoke the "pincher", which will check if 
+	 * the current buffer needs to be stopped mid-triangle (or whatever), 
+	 * and tuck away the appropriate state so that the triangle can be 
+	 * re-started once this flush is done. */
 
 	tilesortspuPinch();
 
-	// If GL_COLOR_MATERIAL is enabled, we need to copy the color values
-	// into the state element for materials so that Gets will work and so
-	// that the material will get sent down.
-	//
-	// We know we can do this now because this function will get called if
-	// glDisable turns off COLOR_MATERIAL, so that would be the very very
-	// latest time we could actually get away with that.
+	/* If GL_COLOR_MATERIAL is enabled, we need to copy the color values 
+	 * into the state element for materials so that Gets will work and so 
+	 * that the material will get sent down. 
+	 * 
+	 * We know we can do this now because this function will get called if 
+	 * glDisable turns off COLOR_MATERIAL, so that would be the very very 
+	 * latest time we could actually get away with that. */
 
 	crStateColorMaterialRecover( );
 
-	// Okay.  Now, we need to un-hide the bonus space for the extra glEnd packet
-	// and try to close off the begin/end if it exists.  This is a pretty
-	// serious hack, but we *did* reserve space in the pack buffer just
-	// for this purpose.
+	/* Okay.  Now, we need to un-hide the bonus space for the extra glEnd packet 
+	 * and try to close off the begin/end if it exists.  This is a pretty 
+	 * serious hack, but we *did* reserve space in the pack buffer just 
+	 * for this purpose. */
 	
 	if ( tilesort_spu.ctx->current.inBeginEnd )
 	{
-		//crDebug( "Closing this Begin/end!!!" );
+		/*crDebug( "Closing this Begin/end!!!" ); */
 		cr_packer_globals.buffer.data_end += END_FLUFF;
 		if (tilesort_spu.swap)
 		{
@@ -431,55 +431,55 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		}
 	}
 
-	// Now, we grab the packing state into the globals, since we're
-	// going to start packing into other places like crazy but
-	// we need to keep these pointers around, both for
-	// doing context differencing, and also to restore them
-	// at the end of this function.
+	/* Now, we grab the packing state into the globals, since we're 
+	 * going to start packing into other places like crazy but 
+	 * we need to keep these pointers around, both for 
+	 * doing context differencing, and also to restore them 
+	 * at the end of this function. */
 
 	crPackGetBuffer( &(tilesort_spu.geometry_pack) );
 
-	// Now, see if we need to do things to each server
+	/* Now, see if we need to do things to each server */
 
 	for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
 	{
-		// Check to see if this server needs geometry from us.
+		/* Check to see if this server needs geometry from us. */
 		if (!broadcast && !(bucket_info->hits & (1 << i)))
 		{
-			//crDebug( "NOT sending to server %d", i );
+			/*crDebug( "NOT sending to server %d", i ); */
 			continue;
 		}
-		//crDebug( "Sending to server %d", i );
+		/*crDebug( "Sending to server %d", i ); */
 
-		// Okay, it does.  
+		/* Okay, it does.  */
 		
 		state_server = tilesort_spu.servers + i;
 
-		// We're going to do lazy state evaluation now
+		/* We're going to do lazy state evaluation now */
 
 		crPackSetBuffer( &(state_server->pack) );
 		if (!broadcast)
 		{
-			//crDebug( "pack buffer before differencing" );
-			//tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) );
+			/*crDebug( "pack buffer before differencing" ); 
+			 *tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) ); */
 			crStateDiffContext( state_server->ctx, ctx );
 			if (tilesort_spu.drawBBOX)
 			{
 				__drawBBOX( bucket_info );
 			}
 			crPackGetBuffer( &(state_server->pack) );
-			//crDebug( "pack buffer after differencing" );
-			//tilesortspuDebugOpcodes( &(state_server->pack) );
+			/*crDebug( "pack buffer after differencing" ); 
+			 *tilesortspuDebugOpcodes( &(state_server->pack) ); */
 		}
 
-		// The state server's buffer now contains the commands 
-		// needed to bring it up to date on the state.  All
-		// that's left to do is to append the geometry.
+		/* The state server's buffer now contains the commands 
+		 * needed to bring it up to date on the state.  All 
+		 * that's left to do is to append the geometry. */
 
 		if ( big_packet_hdr != NULL )
 		{
-			// The packet was big, so send the state commands
-			// by themselves, followed by the big packet.
+			/* The packet was big, so send the state commands 
+			 * by themselves, followed by the big packet. */
 
 			crDebug( "Doing the big packet send thing" );
 			__sendServerBuffer( state_server );
@@ -495,40 +495,40 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		}
 		else
 		{
-			// Now, we have to decide whether or not to append the geometry buffer
-			// as a BOUNDS_INFO packet or just a bag-o-commands.  			
-			//
-			// As it turns out, we *always* send geometry as a BOUNDS_INFO
-			// packet.  All the code lying around to deal with non-bounds-info
-			// geometry was just a red herring.
-			//
-			// Now we see why I tucked away the geometry buffer earlier.
+			/* Now, we have to decide whether or not to append the geometry buffer 
+			 * as a BOUNDS_INFO packet or just a bag-o-commands.  			 
+			 * 
+			 * As it turns out, we *always* send geometry as a BOUNDS_INFO 
+			 * packet.  All the code lying around to deal with non-bounds-info 
+			 * geometry was just a red herring. 
+			 * 
+			 * Now we see why I tucked away the geometry buffer earlier. */
 
 			if ( !broadcast )
 			{
-				//crDebug( "Appending a bounded buffer" );
+				/*crDebug( "Appending a bounded buffer" ); */
 				__appendBoundedBuffer( &(tilesort_spu.geometry_pack), &bounds );
 			}
 			else
 			{
-				//crDebug( "Appending a NON-bounded buffer" );
-				//tilesortspuDebugOpcodes( &(tilesort_spu.geometry_pack) );
-				//tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) );
+				/*crDebug( "Appending a NON-bounded buffer" ); 
+				 *tilesortspuDebugOpcodes( &(tilesort_spu.geometry_pack) ); 
+				 *tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) ); */
 				__appendBuffer( &(tilesort_spu.geometry_pack) );
-				//tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) );
+				/*tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) ); */
 			}
 			crPackGetBuffer( &(state_server->pack) );
 		}
 	}
 
-	// We're done with the servers.  Wipe the global state_server
-	// variable so we know that.  
+	/* We're done with the servers.  Wipe the global state_server 
+	 * variable so we know that.  */
 
 	state_server = NULL;
 
 	if ( big_packet_hdr != NULL )
 	{
-		// Throw away the big packet and make a new, smaller one
+		/* Throw away the big packet and make a new, smaller one */
 
 		crDebug( "Throwing away the big packet" );
 		crFree( tilesort_spu.geometry_pack.pack );
@@ -537,17 +537,17 @@ static void __doFlush( CRContext *ctx, int broadcast )
 	}
 	else
 	{
-		//crDebug( "Reverting to the old geometry buffer" );
+		/*crDebug( "Reverting to the old geometry buffer" ); */
 		crPackSetBuffer( &(tilesort_spu.geometry_pack ) );
 		crPackResetPointers( END_FLUFF );
 	}
 
-	//crDebug( "Resetting the current vertex count and friends" );
+	/*crDebug( "Resetting the current vertex count and friends" ); */
 
 	cr_packer_globals.current.vtx_count = 0;
 	cr_packer_globals.current.vtx_count_begin = 0;
 
-	//crDebug( "Setting all the Current pointers to NULL" );
+	/*crDebug( "Setting all the Current pointers to NULL" ); */
 	crPackNullCurrentPointers();
 
 	tilesortspuPinchRestoreTriangle();
@@ -563,12 +563,12 @@ void tilesortspuFlush( void *arg )
 	CRContext *ctx = (CRContext *) arg;
 	CRPackBuffer old_geometry_pack;
 
-	//crDebug( "In tilesortspuFlush" );
-	//crDebug( "BBOX MIN: (%f %f %f)", cr_packer_globals.bounds_min.x, cr_packer_globals.bounds_min.y, cr_packer_globals.bounds_min.z );
-	//crDebug( "BBOX MAX: (%f %f %f)", cr_packer_globals.bounds_max.x, cr_packer_globals.bounds_max.y, cr_packer_globals.bounds_max.z );
+	/*crDebug( "In tilesortspuFlush" ); 
+	 *crDebug( "BBOX MIN: (%f %f %f)", cr_packer_globals.bounds_min.x, cr_packer_globals.bounds_min.y, cr_packer_globals.bounds_min.z ); 
+	 *crDebug( "BBOX MAX: (%f %f %f)", cr_packer_globals.bounds_max.x, cr_packer_globals.bounds_max.y, cr_packer_globals.bounds_max.z ); */
 
-	// If we're not in a begin/end, or if we're splitting them, go ahead and
-	// do the flushing.
+	/* If we're not in a begin/end, or if we're splitting them, go ahead and 
+	 * do the flushing. */
 	
 	if ( tilesort_spu.splitBeginEnd || !(ctx->current.inBeginEnd) )
 	{
@@ -577,13 +577,13 @@ void tilesortspuFlush( void *arg )
 	}
 
 
-	// Otherwise, we need to grow the buffer to make room for more stuff.
-	// Since we don't want to do this forever, we mark the context as
-	// "Flush on end", which will force a flush the next time glEnd() 
-	// is called.
-	//
-	// Note that this can only happen to the geometry buffer, so we 
-	// assert that.
+	/* Otherwise, we need to grow the buffer to make room for more stuff. 
+	 * Since we don't want to do this forever, we mark the context as 
+	 * "Flush on end", which will force a flush the next time glEnd() 
+	 * is called. 
+	 * 
+	 * Note that this can only happen to the geometry buffer, so we 
+	 * assert that. */
 	
 	crDebug( "-=-=-=- Growing the buffer -=-=-=-" );
 
@@ -591,7 +591,7 @@ void tilesortspuFlush( void *arg )
 
 	ctx->current.flushOnEnd = 1;
 
-	// Grab the pack buffer info from the packing library
+	/* Grab the pack buffer info from the packing library */
 
 	crPackGetBuffer( &(old_geometry_pack) );
 
@@ -600,10 +600,10 @@ void tilesortspuFlush( void *arg )
 	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
 	crPackAppendBuffer(&(old_geometry_pack));
 
-	// The location of the geometry buffer has changed, so we need to
-	// tell the state tracker to update its "current" pointers.
-	// The "offset" computed here does *not* require that the two
-	// buffers be contiguous -- in fact they almost certainly won't be.
+	/* The location of the geometry buffer has changed, so we need to 
+	 * tell the state tracker to update its "current" pointers. 
+	 * The "offset" computed here does *not* require that the two 
+	 * buffers be contiguous -- in fact they almost certainly won't be. */
 
 	crPackOffsetCurrentPointers( old_geometry_pack.data_current - 
 			 										     cr_packer_globals.buffer.data_current );

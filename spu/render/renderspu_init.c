@@ -15,9 +15,9 @@
 extern SPUNamedFunctionTable render_table[];
 
 SPUFunctions the_functions = {
-	NULL, // CHILD COPY
-	NULL, // DATA
-	render_table // THE ACTUAL FUNCTIONS
+	NULL, /* CHILD COPY */
+	NULL, /* DATA */
+	render_table /* THE ACTUAL FUNCTIONS */
 };
 
 RenderSPU render_spu;
@@ -38,8 +38,8 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	renderspuGatherConfiguration();
 	renderspuCreateWindow();
 	
-	// SIGH -- we have to wait until the very bitter end to load the
-	// extensions, because the context has to be created first.
+	/* SIGH -- we have to wait until the very bitter end to load the 
+	 * extensions, because the context has to be created first. */
 
 	renderspuLoadSystemExtensions();
 

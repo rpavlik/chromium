@@ -32,17 +32,17 @@ void TILESORTSPU_APIENTRY tilesortspu_Hint( GLenum target, GLenum mode )
 				cr_packer_globals.bounds_max.y = bbox[5];
 				cr_packer_globals.bounds_max.z = bbox[6];
 				cr_packer_globals.bounds_max.w = bbox[7];
-				//crWarning( "I should really switch to the non-bbox API now, but API switching doesn't work" );
+				/*crWarning( "I should really switch to the non-bbox API now, but API switching doesn't work" ); */
 				cr_packer_globals.updateBBOX = 0;
 				tilesort_spu.providedBBOX = target;
 				return;
 			}
 			mode = 1;
-			// FALLTHROUGH
+			/* FALLTHROUGH */
 		case CR_DEFAULT_BBOX_HINT:
 			cr_packer_globals.bounds_min = maxVector;
 			cr_packer_globals.bounds_max = minVector;
-			//crWarning( "I should really switch to the bbox API now, but API switching doesn't work" );
+			/*crWarning( "I should really switch to the bbox API now, but API switching doesn't work" ); */
 			cr_packer_globals.updateBBOX = 1;
 			tilesort_spu.providedBBOX = CR_DEFAULT_BBOX_HINT;
 			return;

@@ -17,11 +17,11 @@ extern void FakerInit( SPU *fns );
 
 void StubInit(void)
 {
-	// Here is where we contact the mothership to find out what we're supposed to
-	// be doing.  Networking code in a DLL initializer.  I sure hope this
-	// works :)
-	//
-	// HOW can I pass the mothership address to this if I already know it?
+	/* Here is where we contact the mothership to find out what we're supposed to 
+	 * be doing.  Networking code in a DLL initializer.  I sure hope this 
+	 * works :) 
+	 * 
+	 * HOW can I pass the mothership address to this if I already know it? */
 	
 	CRConnection *conn;
 	char response[1024];
@@ -38,7 +38,7 @@ void StubInit(void)
 		return;
 	stub_initialized = 1;
 	
-	// this is set by the app_faker!
+	/* this is set by the app_faker! */
 	app_id = crGetenv( "CR_APPLICATION_ID_NUMBER" );
 
 	if (!app_id)
@@ -86,40 +86,40 @@ void StubInit(void)
 	crFree( spu_names );
 
 
-	// This is unlikely to change -- We still want to initialize our dispatch
-	// table with the functions of the first SPU in the chain.
+	/* This is unlikely to change -- We still want to initialize our dispatch 
+	 * table with the functions of the first SPU in the chain. */
 
 	FakerInit( stub_spu );
 }
 
-// Sigh -- we can't do initialization at load time, since Windows forbids
-// the loading of other libraries from DLLMain.
+/* Sigh -- we can't do initialization at load time, since Windows forbids 
+ * the loading of other libraries from DLLMain. */
 
 #ifdef LINUX
-// GCC crap
-//void (*stub_init_ptr)(void) __attribute__((section(".ctors"))) = __stubInit;
+/* GCC crap 
+ *void (*stub_init_ptr)(void) __attribute__((section(".ctors"))) = __stubInit; */
 #endif
 
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-// Windows crap
+/* Windows crap */
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD fdwReason, LPVOID lpvReserved )
 {
 	(void) lpvReserved;
 	(void) instance;
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
-		//__stubInit();
-		//DebugBreak();
-		//printf ("!!!!!!!!!!!!!!!!!Process attach!\n");
+		/*__stubInit(); 
+		 *DebugBreak(); 
+		 *printf ("!!!!!!!!!!!!!!!!!Process attach!\n"); */
 	}
 	if (fdwReason == DLL_THREAD_ATTACH)
 	{
-		//__stubInit();
-		//DebugBreak();
-		//printf ("!!!!!!!!!!!!!!!!!Thread attach!\n");
+		/*__stubInit(); 
+		 *DebugBreak(); 
+		 *printf ("!!!!!!!!!!!!!!!!!Thread attach!\n"); */
 	}
 	return TRUE;
 }

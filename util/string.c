@@ -23,13 +23,13 @@ char *crStrdup( const char *str )
 	int len;
 	char *ret;
 	
-	// Allow strdup'ing of NULL strings -- this makes the __fillin functions
-	// much cleaner.
+	/* Allow strdup'ing of NULL strings -- this makes the __fillin functions 
+	 * much cleaner. */
 	
 	if (str == NULL) return NULL;
 	
 	len = crStrlen(str);
-	ret = crAlloc( len+1 );
+	ret = (char*)crAlloc( len+1 );
 	memcpy( ret, str, len );
 	ret[len] = '\0';
 	return ret;
@@ -37,7 +37,7 @@ char *crStrdup( const char *str )
 
 char *crStrndup( const char *str, unsigned int len )
 {
-	char *ret = crAlloc( len+1 );
+	char *ret = (char*)crAlloc( len+1 );
 	memcpy( ret, str, len );
 	ret[len] = '\0';
 	return ret;
@@ -175,7 +175,7 @@ char *crStrrchr( const char *str, char c )
 	return NULL;
 }
 
-// These functions are from the old wiregl net.c -- hexdumps?  Not sure quite yet.
+/* These functions are from the old wiregl net.c -- hexdumps?  Not sure quite yet. */
 	
 void crBytesToString( char *string, int nstring, void *data, int ndata )
 {

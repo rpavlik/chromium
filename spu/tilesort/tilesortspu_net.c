@@ -17,15 +17,15 @@
 void tilesortspuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
-	//crWarning( "Getting a writeback??");
+	/*crWarning( "Getting a writeback??"); */
 	memcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
 	(*writeback)--;
 }
 
 void tilesortspuReadback( CRMessageReadback *rb, unsigned int len )
 {
-	// minus the header, the destination pointer,
-	// *and* the implicit writeback pointer at the head.
+	/* minus the header, the destination pointer, 
+	 * *and* the implicit writeback pointer at the head. */
 
 	int payload_len = len - sizeof( *rb );
 	int *writeback;
@@ -50,12 +50,12 @@ int tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			tilesortspuReadback( &(msg->readback), len );
 			break;
 		default:
-			//crWarning( "Why is the tilesort SPU getting a message of type 0x%x?", msg->type );
-			return 0; // NOT HANDLED
+			/*crWarning( "Why is the tilesort SPU getting a message of type 0x%x?", msg->type ); */
+			return 0; /* NOT HANDLED */
 	}
 	crNetFree( conn, buf );
 	(void) len;	
-	return 1;  // HANDLED
+	return 1;  /* HANDLED */
 }
 
 void tilesortspuConnectToServers( void )
@@ -73,10 +73,10 @@ void tilesortspuConnectToServers( void )
 		TileSortSPUServer *server = tilesort_spu.servers + i;
 		crNetServerConnect( &(server->net) );
 		
-		// Tear the URL apart into relevant portions.
-		//
-		// just trying to get at the protocol so we can figure out if
-		// we should override the user's choices for synconswap etc.
+		/* Tear the URL apart into relevant portions. 
+		 * 
+		 * just trying to get at the protocol so we can figure out if 
+		 * we should override the user's choices for synconswap etc. */
 
 		if ( !crParseURL( server->net.name, protocol, hostname, &port, 0 ) )
 		{

@@ -40,11 +40,11 @@ void crDevnullSend( CRConnection *conn, void **bufp,
 	
 	if (bufp)
 	{
-		// We're sending somethnig we've allocated.  It's now ours.
-		// If the callers wants to send something else, he'll allocate
-		// something else.
-		//
-		// ENFORCE IT!
+		/* We're sending somethnig we've allocated.  It's now ours. 
+		 * If the callers wants to send something else, he'll allocate 
+		 * something else. 
+		 * 
+		 * ENFORCE IT! */
 
 		crDevnullFree( conn, *bufp );
 	}

@@ -45,7 +45,7 @@ void crServerAddToRunQueue( int index )
 		extent->imagewindow.x2 = cr_server.x2[i];
 		extent->imagewindow.y2 = cr_server.y2[i];
 
-		// extent->display = find_output_display( extent->imagewindow );
+		/* extent->display = find_output_display( extent->imagewindow ); */
 
 		extent->bounds.x1 = ( (GLfloat) (2*extent->imagewindow.x1) /
 				cr_server.muralHeight - 1.0f );
@@ -123,7 +123,7 @@ static RunQueue *__getNextClient(void)
 				crError( "DEADLOCK!" );
 			}
 		}
-		// no one had any work, get some!
+		/* no one had any work, get some! */
 		crNetRecv();
 	}
 	/* UNREACHED */
@@ -137,11 +137,11 @@ void crServerSerializeRemoteStreams(void)
 		RunQueue *q = __getNextClient();
 		CRClient *client = q->client;
 		CRMessage *msg;
-		//char debug_buf[8096];
+		/*char debug_buf[8096]; */
 
 		cr_server.curClient = client;
-		//sprintf( debug_buf, "     ---- Switching contexts to connection 0x%p ----", client->conn );
-		//cr_server.dispatch.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf );
+		/*sprintf( debug_buf, "     ---- Switching contexts to connection 0x%p ----", client->conn ); 
+		 *cr_server.dispatch.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf ); */
 		crStateMakeCurrent( client->ctx );
 		for( ;; )
 		{
@@ -155,11 +155,11 @@ void crServerSerializeRemoteStreams(void)
 			}
 
 			msg_opcodes = (CRMessageOpcodes *) msg;
-			//if (!q->blocked)
-			//{
-			//sprintf( debug_buf, "     ---- Packet! (0x%p) ! ----", msg_opcodes );
-			//cr_server.dispatch.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf );
-			//}
+			/*if (!q->blocked) 
+			 *{ 
+			 *sprintf( debug_buf, "     ---- Packet! (0x%p) ! ----", msg_opcodes ); 
+			 *cr_server.dispatch.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf ); 
+			 *} */
 			data_ptr = (char *) msg_opcodes + sizeof( *msg_opcodes) + ((msg_opcodes->numOpcodes + 3 ) & ~0x03);
 			crUnpack( data_ptr, data_ptr-1, msg_opcodes->numOpcodes, &(cr_server.dispatch) );
 			crNetFree( cr_server.curClient->conn, msg );
@@ -177,5 +177,5 @@ int crServerRecv( CRConnection *conn, void *buf, unsigned int len )
 	(void) conn;
 	(void) buf;
 	(void) len;
-	return 0; // Never handle anything -- let packets queue up per-client instead.
+	return 0; /* Never handle anything -- let packets queue up per-client instead. */
 }

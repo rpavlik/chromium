@@ -26,8 +26,8 @@ void crStateError( int line, char *file, GLenum err, char *format, ... )
 
 GLenum STATE_APIENTRY crStateGetError(void)
 {
-	// GL errors are fatal in Chromium, 
-	// so we're not getting here any other way.
+	/* GL errors are fatal in Chromium, 
+	 * so we're not getting here any other way. */
 
 	return GL_NO_ERROR;
 }

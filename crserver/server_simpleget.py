@@ -36,7 +36,7 @@ for index in range(len(funcs)):
 	(return_type, arg_names, arg_types) = gl_mapping[func_name]
 	print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s%s' % ( func_name, stub_common.ArgumentString( arg_names, arg_types ))
 	print '{'
-	print '\t%s get_values[16]; // Be safe' % types[index]
+	print '\t%s get_values[16]; /* Be safe */' % types[index]
 	print '\tint num_values;'
 	print '\t(void) params;'
 	print '\tcr_server.head_spu->dispatch_table.%s( pname, get_values );' % func_name

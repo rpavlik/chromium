@@ -23,7 +23,7 @@
 #include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
 
-#define END_FLUFF 4 // space for phantom GLEND opcode for splitting
+#define END_FLUFF 4 /* space for phantom GLEND opcode for splitting */
 
 void tilesortspuCreateFunctions( void );
 void tilesortspuGatherConfiguration( const SPU *child_spu );

@@ -13,8 +13,8 @@ void TILESORTSPU_APIENTRY tilesortspu_Begin( GLenum mode )
 {
 	CRTransformState *t = &(tilesort_spu.ctx->transform);
 	CRCurrentState *c = &(tilesort_spu.ctx->current);
-	// We have to set this every time because a flush from
-	// the state tracker will turn off its flusher.
+	/* We have to set this every time because a flush from 
+	 * the state tracker will turn off its flusher. */
 
 	tilesort_spu.pinchState.beginOp = cr_packer_globals.buffer.opcode_current;
 	tilesort_spu.pinchState.beginData = cr_packer_globals.buffer.data_current;
@@ -33,9 +33,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Begin( GLenum mode )
 	crStateBegin( mode );
 	if (! t->transformValid)
 	{
-		// Make sure that the state tracker has the very very
-		// latest composite modelview + projection matrix
-		// computed, since we're going to need it.
+		/* Make sure that the state tracker has the very very 
+		 * latest composite modelview + projection matrix 
+		 * computed, since we're going to need it. */
 		crStateTransformUpdateTransform( t );
 	}
 	c->current->vtx_count_begin = c->current->vtx_count;

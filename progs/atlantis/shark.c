@@ -1261,7 +1261,7 @@ DrawShark(fishRec * fish)
 
     glTranslatef(0.0, 0.0, -3000.0);
 
-//    glGetFloatv(GL_MODELVIEW_MATRIX, &mat[0][0]);
+/*    glGetFloatv(GL_MODELVIEW_MATRIX, &mat[0][0]); */
     n = 0;
 /*
     if (mat[0][2] >= 0.0) {

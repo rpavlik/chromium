@@ -8,6 +8,7 @@ TOP = ../../..
 PROGRAM = kirchner_material
 OPENGL = 1
 GLUT = 1
+MATH = 1
 
 FILES = bug
 

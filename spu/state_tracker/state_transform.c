@@ -127,7 +127,7 @@ void crStateTransformUpdateTransform (CRTransformState *t)
 	GLmatrix *m1 = &t->projection[t->projectionDepth];
 	GLmatrix *m2 = &t->modelView[t->modelViewDepth];
 	GLmatrix *m = &(t->transform);
-	// I really hate this.
+	/* I really hate this. */
 	const GLdefault lm00 = m1->m00; const GLdefault lm01 = m1->m01;  
 	const GLdefault lm02 = m1->m02;	const GLdefault lm03 = m1->m03;	
 	const GLdefault lm10 = m1->m10;	const GLdefault lm11 = m1->m11;
@@ -819,7 +819,7 @@ void STATE_APIENTRY crStateRotatef(GLfloat ang, GLfloat x, GLfloat y, GLfloat z)
 	GLfloat y_one_minus_c;	
 	GLfloat z_one_minus_c;	
 
-	// Begin/end Checking and flushing will be done by MultMatrix.
+	/* Begin/end Checking and flushing will be done by MultMatrix. */
 
 	if (v_len == 0.0f)
 		return;
@@ -868,7 +868,7 @@ void STATE_APIENTRY crStateRotated(GLdouble ang, GLdouble x, GLdouble y, GLdoubl
 	GLdouble y_one_minus_c;	
 	GLdouble z_one_minus_c;	
 
-	// Begin/end Checking and flushing will be done by MultMatrix.
+	/* Begin/end Checking and flushing will be done by MultMatrix. */
 
 
 	/* Normalize the vector */	
@@ -986,7 +986,7 @@ void STATE_APIENTRY crStateFrustum (	GLdouble left, GLdouble right,
 {
 	GLdouble m[16];
 
-	// Begin/end Checking and flushing will be done by MultMatrix.
+	/* Begin/end Checking and flushing will be done by MultMatrix. */
 
 	/* Build the frustum matrix
 	 ** from pg 163 OGL 1.1 Blue Book
@@ -1021,7 +1021,7 @@ void STATE_APIENTRY crStateOrtho ( GLdouble left, GLdouble right,
 
 	GLdouble m[16];	
 
-	// Begin/end Checking and flushing will be done by MultMatrix.
+	/* Begin/end Checking and flushing will be done by MultMatrix. */
 
 	m[0] = 2.0 / (right - left);
 	m[1] = 0.0;

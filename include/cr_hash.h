@@ -7,6 +7,10 @@
 #ifndef CR_HASH_H
 #define CR_HASH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CR_NUM_BUCKETS 1047
 
 typedef struct CRHashNode {

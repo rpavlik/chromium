@@ -8,17 +8,17 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
-//Test glMaterial()
-//
-// One red triangle and one blue triangle are rendered.
-//
-// ***** Chromium renders two blue triangles *****
-//
-//
-// Press q to quit
-//
-//June 28, 2001
-//
+/*Test glMaterial() 
+ * 
+ * One red triangle and one blue triangle are rendered. 
+ * 
+ * ***** Chromium renders two blue triangles ***** 
+ * 
+ * 
+ * Press q to quit 
+ * 
+ *June 28, 2001 
+ * */
 
 GLfloat Red[] = {1.0, 0.0, 0.0, 1.0};
 GLfloat Blue [] = {0.0, 0.0, 1.0, 1.0};
@@ -35,7 +35,7 @@ draw(void)
 
   glShadeModel(GL_FLAT);
 
-  //a red triangle and a blue triangle
+  /*a red triangle and a blue triangle */
   glBegin(GL_TRIANGLES);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, Red);
   glVertex3f(0.0, 0.0, 0.0);

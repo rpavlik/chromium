@@ -12,9 +12,9 @@ extern SPUNamedFunctionTable passthrough_table[];
 extern void BuildPassthroughTable( SPU *child );
 
 SPUFunctions the_functions = {
-	NULL, // CHILD COPY
-	NULL, // DATA
-	passthrough_table // THE ACTUAL FUNCTIONS
+	NULL, /* CHILD COPY */
+	NULL, /* DATA */
+	passthrough_table /* THE ACTUAL FUNCTIONS */
 };
 
 SPUFunctions *SPUInit( int id, SPU *child, SPU *super,

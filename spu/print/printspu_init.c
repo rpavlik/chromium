@@ -11,9 +11,9 @@
 extern SPUNamedFunctionTable print_table[];
 
 SPUFunctions the_functions = {
-	NULL, // CHILD COPY
-	NULL, // DATA
-	print_table // THE ACTUAL FUNCTIONS
+	NULL, /* CHILD COPY */
+	NULL, /* DATA */
+	print_table /* THE ACTUAL FUNCTIONS */
 };
 
 PrintSpu print_spu;

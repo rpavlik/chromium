@@ -8,6 +8,7 @@ TOP = ../..
 PROGRAM = fonttest
 OPENGL = 1
 GLUT = 1
+MATH = 1
 
 FILES = fonttest
 

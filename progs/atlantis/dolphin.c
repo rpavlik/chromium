@@ -1918,7 +1918,7 @@ DrawDolphin(fishRec * fish)
 	printf("%f %f %f %f ", f[8], f[9], f[10], f[11]);
 	printf("%f %f %f %f\n", f[12], f[13], f[14], f[15]);
 */
-    //glEnable(GL_CULL_FACE);
+    /*glEnable(GL_CULL_FACE); */
     Dolphin014();
     Dolphin010();
     Dolphin009();
@@ -1935,7 +1935,7 @@ DrawDolphin(fishRec * fish)
     Dolphin008();
     Dolphin011();
     Dolphin016();
-    //glDisable(GL_CULL_FACE);
+    /*glDisable(GL_CULL_FACE); */
 
     glPopMatrix();
 }

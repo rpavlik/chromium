@@ -18,18 +18,18 @@ void crStateLineInit (CRLineState *l) {
 	l->width = 1.0f;
 	l->pattern = 0xFFFF;
 	l->repeat = 1;
-	//l->aliasedpointsizerange_min = c->aliasedpointsizerange_min;
-	//l->aliasedpointsizerange_max = c->aliasedpointsizerange_max;
-	//l->aliasedpointsizegranularity = c->aliasedpointsizegranularity;
-	//l->smoothpointsizerange_min = c->smoothpointsizerange_min;
-	//l->smoothpointsizerange_max = c->smoothpointsizerange_max;
-	//l->smoothpointgranularity = c->smoothpointgranularity;
-	//l->aliasedlinewidth_min = c->aliasedlinewidth_min;
-	//l->aliasedlinewidth_max = c->aliasedlinewidth_max;
-	//l->aliasedlinegranularity = c->aliasedlinegranularity;
-	//l->smoothlinewidth_min = c->smoothlinewidth_min;
-	//l->smoothlinewidth_max = c->smoothlinewidth_max;
-	//l->smoothlinegranularity = c->smoothlinegranularity;
+	/*l->aliasedpointsizerange_min = c->aliasedpointsizerange_min; 
+	 *l->aliasedpointsizerange_max = c->aliasedpointsizerange_max; 
+	 *l->aliasedpointsizegranularity = c->aliasedpointsizegranularity; 
+	 *l->smoothpointsizerange_min = c->smoothpointsizerange_min; 
+	 *l->smoothpointsizerange_max = c->smoothpointsizerange_max; 
+	 *l->smoothpointgranularity = c->smoothpointgranularity; 
+	 *l->aliasedlinewidth_min = c->aliasedlinewidth_min; 
+	 *l->aliasedlinewidth_max = c->aliasedlinewidth_max; 
+	 *l->aliasedlinegranularity = c->aliasedlinegranularity; 
+	 *l->smoothlinewidth_min = c->smoothlinewidth_min; 
+	 *l->smoothlinewidth_max = c->smoothlinewidth_max; 
+	 *l->smoothlinegranularity = c->smoothlinegranularity; */
 }
 
 void STATE_APIENTRY crStatePointSize(GLfloat size) 

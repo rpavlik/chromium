@@ -92,7 +92,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		a->colorBufferStack[a->colorBufferStackDepth].dither = g->buffer.dither;
 		a->colorBufferStack[a->colorBufferStackDepth].drawBuffer = g->buffer.drawBuffer;
 		a->colorBufferStack[a->colorBufferStackDepth].logicOp = g->buffer.logicOp;
-		// a->colorBufferStack[a->colorBufferStackDepth].indexLogicOp = g->buffer.indexLogicOp;
+		/* a->colorBufferStack[a->colorBufferStackDepth].indexLogicOp = g->buffer.indexLogicOp; */
 		a->colorBufferStack[a->colorBufferStackDepth].logicOpMode = g->buffer.logicOpMode;
 		a->colorBufferStack[a->colorBufferStackDepth].colorClearValue = g->buffer.colorClearValue;
 		a->colorBufferStack[a->colorBufferStackDepth].indexClearValue = g->buffer.indexClearValue;
@@ -155,7 +155,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		a->enableStack[a->enableStackDepth].lineSmooth = g->line.lineSmooth;
 		a->enableStack[a->enableStackDepth].lineStipple = g->line.lineStipple;
 		a->enableStack[a->enableStackDepth].logicOp = g->buffer.logicOp;
-		// a->enableStack[a->enableStackDepth].indexLogicOp = g->buffer.indexLogicOp;
+		/* a->enableStack[a->enableStackDepth].indexLogicOp = g->buffer.indexLogicOp; */
 		for (i = 0 ; i < GLEVAL_TOT ; i++)
 		{
 			a->enableStack[a->enableStackDepth].map1[i] = g->eval.enable1D[i];
@@ -347,7 +347,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->textureStack[a->textureStackDepth].eyeQCoeff[i] = g->texture.unit[i].eyeQCoeff;
 			a->textureStack[a->textureStackDepth].gen[i] = g->texture.unit[i].gen;
 		}
-		// Is this right?  It sure doesn't seem right.
+		/* Is this right?  It sure doesn't seem right. */
 		a->textureStack[a->textureStackDepth].borderColor[0] = g->texture.currentTexture1D->borderColor;
 		a->textureStack[a->textureStackDepth].minFilter[0] = g->texture.currentTexture1D->minFilter;
 		a->textureStack[a->textureStackDepth].magFilter[0] = g->texture.currentTexture1D->magFilter;
@@ -479,7 +479,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->buffer.dither = a->colorBufferStack[a->colorBufferStackDepth].dither;
 		g->buffer.drawBuffer = a->colorBufferStack[a->colorBufferStackDepth].drawBuffer;
 		g->buffer.logicOp = a->colorBufferStack[a->colorBufferStackDepth].logicOp;
-	 // g->buffer.indexLogicOp = a->colorBufferStack[a->colorBufferStackDepth].indexLogicOp;
+	 /* g->buffer.indexLogicOp = a->colorBufferStack[a->colorBufferStackDepth].indexLogicOp; */
 		g->buffer.logicOpMode = a->colorBufferStack[a->colorBufferStackDepth].logicOpMode;
 		g->buffer.colorClearValue = a->colorBufferStack[a->colorBufferStackDepth].colorClearValue;
 		g->buffer.indexClearValue = a->colorBufferStack[a->colorBufferStackDepth].indexClearValue;
@@ -577,7 +577,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->line.lineSmooth = a->enableStack[a->enableStackDepth].lineSmooth;
 		g->line.lineStipple = a->enableStack[a->enableStackDepth].lineStipple;
 		g->buffer.logicOp = a->enableStack[a->enableStackDepth].logicOp;
-		//g->buffer.indexLogicOp = a->enableStack[a->enableStackDepth].indexLogicOp;
+		/*g->buffer.indexLogicOp = a->enableStack[a->enableStackDepth].indexLogicOp; */
 		for (i = 0 ; i < GLEVAL_TOT ; i++)
 		{
 			g->eval.enable1D[i] = a->enableStack[a->enableStackDepth].map1[i];
@@ -881,7 +881,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->texture.unit[i].eyeQCoeff = a->textureStack[a->textureStackDepth].eyeQCoeff[i];
 			g->texture.unit[i].gen = a->textureStack[a->textureStackDepth].gen[i];
 		}
-		// Is this right?  It sure doesn't seem right.
+		/* Is this right?  It sure doesn't seem right. */
 		g->texture.currentTexture1D->borderColor = a->textureStack[a->textureStackDepth].borderColor[0];
 		g->texture.currentTexture2D->borderColor = a->textureStack[a->textureStackDepth].borderColor[1];
 		g->texture.currentTexture3D->borderColor = a->textureStack[a->textureStackDepth].borderColor[2];

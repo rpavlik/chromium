@@ -148,7 +148,7 @@ SPUDispatchTable *cr_lastDispatch = NULL;
 
 void crUnpackPush(void)
 {
-	DispatchNode *node = crAlloc( sizeof( *node ) );
+	DispatchNode *node = (DispatchNode*)crAlloc( sizeof( *node ) );
 	node->next = unpackStack;
 	unpackStack = node;
 	node->unpackData = cr_unpackData;
