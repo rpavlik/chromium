@@ -14,5 +14,7 @@ void crStateTextureDiffParameterExtensions( CRTextureObj *tobj );
 void crStateFogInitExtensions( CRFogState *f );
 int crStateFogfvExtensions( CRFogState *f, GLenum pname, const GLfloat *params );
 int crStateFogivExtensions( GLenum pname, const GLint *params );
+void crStateFogDiffExtensions( CRFogState *from, CRFogState *to );
+void crStateFogSwitchExtensions( CRFogState *from, CRFogState *to );
 
 #endif /* CR_STATE_EXTENSION_FUNCS_H */

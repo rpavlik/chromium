@@ -7,24 +7,26 @@ print << 'EOF';
 
 #include "cr_glstate.h"
 #include "state_internals.h"
+#include "state_extensionfuncs.h"
 
 EOF
 
 print "void crState".$name."Diff(CR".$name."Bits *b, GLbitvalue bitID,\n";
 print "\tCR".$name."State *from, CR".$name."State *to)\n{\n";
-gendiffcode ("state_".lc($name).".txt", 1, 0);
+gendiffcode ("state_".lc($name).".txt", $name, 1, 0);
 print "}\n\n";
 
 print "void crState".$name."Switch(CR".$name."Bits *b, GLbitvalue bitID,\n";
 print "\tCR".$name."State *from, CR".$name."State *to)\n{\n";
-gendiffcode ("state_".lc($name).".txt", 0, 1);
+gendiffcode ("state_".lc($name).".txt", $name, 0, 1);
 print "}\n\n";
 
 sub gendiffcode {
 
 $fname = $_[0];
-$docopy = $_[1];
-$doinvalid = $_[2];
+$state_name = $_[1];
+$docopy = $_[2];
+$doinvalid = $_[3];
 
 $target = "to";
 $current = "from";
@@ -158,6 +160,7 @@ mainloop: while ($line = <FILE>) {
 	  }
 
 	## Check member values
+	  if ($guardbit ne "extensions") {
 	  print $tab."if (";
 	  $first = 1;
 	  foreach $elem (@elems) {
@@ -169,6 +172,7 @@ mainloop: while ($line = <FILE>) {
 	  }
 	  print ")\n".$tab."{\n";
 	  $tab = $tab."\t";
+	  }
 
 ## Handle text function 
 	if (substr($func, 0, 1) eq "*") {
@@ -179,6 +183,14 @@ mainloop: while ($line = <FILE>) {
 ## Call the glhw function
 			if ($guardbit eq "enable") {
 				print $tab."able[$target->$elems[0]]($func);\n";
+			} elsif ($guardbit eq "extensions") {
+				print $tab."crState$state_name";
+				if ($docopy == 1) {
+					print "Diff";
+				} else {
+					print "Switch";
+				}
+				print "Extensions( from, to );\n";
 			} else {
 				@funcargs = split /,/, $func;
 				$func = shift @funcargs;
@@ -218,7 +230,7 @@ mainloop: while ($line = <FILE>) {
 	}
 
 ## Do the sync if nessesary
-	  if ($docopy) {
+	  if ($docopy and $guardbit ne "extensions") {
 		foreach $elem (@mainelem) {
 		  print $tab."$current->$elem = $target->$elem;\n";
 		}
@@ -233,8 +245,10 @@ mainloop: while ($line = <FILE>) {
 	  }
 
 	## Close the compare
-	  chop ($tab);
-	  print $tab."}\n";
+	  if ($guardbit ne "extensions") {
+		  chop ($tab);
+		  print $tab."}\n";
+	  }
 	}
 }
 

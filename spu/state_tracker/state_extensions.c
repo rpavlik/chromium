@@ -140,3 +140,24 @@ int crStateFogfvExtensions( CRFogState *f, GLenum pname, const GLfloat *params )
 	}
 	return 0;
 }
+
+void crStateFogDiffExtensions( CRFogState *from, CRFogState *to )
+{
+#ifdef GL_NV_fog_distance
+	if (from->extensions.fogDistanceMode != to->extensions.fogDistanceMode)
+	{
+		diff_api.Fogi( GL_FOG_DISTANCE_MODE_NV, to->extensions.fogDistanceMode );
+		from->extensions.fogDistanceMode = to->extensions.fogDistanceMode;
+	}
+#endif
+}
+
+void crStateFogSwitchExtensions( CRFogState *from, CRFogState *to )
+{
+#ifdef GL_NV_fog_distance
+	if (from->extensions.fogDistanceMode != to->extensions.fogDistanceMode)
+	{
+		diff_api.Fogi( GL_FOG_DISTANCE_MODE_NV, to->extensions.fogDistanceMode );
+	}
+#endif
+}

@@ -5,3 +5,4 @@ enable:density:density:Fogf,GL_FOG_DENSITY
 enable:start:start:Fogf,GL_FOG_START
 enable:end:end:Fogf,GL_FOG_END
 enable:mode:mode:Fogi,GL_FOG_MODE
+enable:extensions:foo:bar
