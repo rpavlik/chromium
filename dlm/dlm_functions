@@ -740,3 +740,31 @@ WindowSize		nodl
 WindowPosition		nodl
 WindowShow		nodl
 Writeback		nodl
+
+# PICA stuff
+PicaListCompositors		nodl
+PicaGetCompositorParamiv	nodl
+PicaGetCompositorParamfv	nodl
+PicaGetCompositorParamcv	nodl
+PicaListNodes			nodl
+PicaCreateContext		nodl
+PicaDestroyContext		nodl
+PicaSetContextParami		nodl
+PicaSetContextParamiv		nodl
+PicaSetContextParamf		nodl
+PicaSetContextParamfv		nodl
+PicaSetContextParamv		nodl
+PicaGetContextParamiv		nodl
+PicaGetContextParamfv		nodl
+PicaGetContextParamcv		nodl
+PicaGetContextParamv		nodl
+PicaBindLocalContext		nodl
+PicaDestroyLocalContext		nodl
+PicaStartFrame			nodl
+PicaEndFrame			nodl
+PicaCancelFrame			nodl
+PicaQueryFrame			nodl
+PicaAddGfxFramelet		nodl
+PicaAddMemFramelet		nodl
+PicaReadFrame			nodl
+PicaBar				nodl

@@ -32,6 +32,7 @@ NORMAL_FILES = packer \
 	pack_misc \
 	pack_materials \
 	pack_matrices \
+	pack_pica \
 	pack_pixels \
 	pack_pixelmap \
 	pack_swap_pixelmap \

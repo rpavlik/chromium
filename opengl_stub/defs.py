@@ -427,9 +427,36 @@ for func_name in ( "wglChoosePixelFormat",
   		   "wglGetExtensionsStringEXT" ):
     print "%s@%d = %s_prox" % (func_name,stack_sizes[func_name],func_name)
 
-print """crCreateContext
-crMakeCurrent
-crSwapBuffers
-crGetProcAddress
-crInitDispatchInfo"""
-#print "DllMain"
+print "crCreateContext"
+print "crMakeCurrent"
+print "crSwapBuffers"
+print "crGetProcAddress"
+print "crInitDispatchInfo"
+#PICA STUFF
+print "crPicaListCompositors"
+print "crPicaGetCompositorParamiv"
+print "crPicaGetCompositorParamfv"
+print "crPicaGetCompositorParamcv"
+print "crPicaListNodes"
+print "crPicaCreateContext"
+print "crPicaDestroyContext"
+print "crPicaSetContextParami"
+print "crPicaSetContextParamiv"
+print "crPicaSetContextParamf"
+print "crPicaSetContextParamfv"
+print "crPicaSetContextParamv"
+print "crPicaGetContextParamiv"
+print "crPicaGetContextParamfv"
+print "crPicaGetContextParamcv"
+print "crPicaGetContextParamv"
+print "crPicaBindLocalContext"
+print "crPicaDestroyLocalContext"
+print "crPicaStartFrame"
+print "crPicaEndFrame"
+print "crPicaCancelFrame"
+print "crPicaQueryFrame"
+print "crPicaAddGfxFramelet"
+print "crPicaAddMemFramelet"
+print "crPicaReadFrame"
+print "crPicaBar"
+print "crInitDispatchInfo"

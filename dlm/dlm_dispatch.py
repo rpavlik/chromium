@@ -397,7 +397,7 @@ if whichfile == 'headers':
 			# emit nothing
 			pass
 		else:
-			print '/* %s - what do I do with this?  Edit dlm_functions. */'
+			print '/* %s - what do I do with this?  Edit dlm_functions.*/'
 			assert 0
 
 

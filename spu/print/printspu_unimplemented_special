@@ -2,3 +2,30 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software
+#PICA STUFF
+PicaListCompositors
+PicaGetCompositorParamiv
+PicaGetCompositorParamfv
+PicaGetCompositorParamcv
+PicaListNodes
+PicaCreateContext
+PicaDestroyContext
+PicaSetContextParami
+PicaSetContextParamiv
+PicaSetContextParamf
+PicaSetContextParamfv
+PicaSetContextParamv
+PicaGetContextParamiv
+PicaGetContextParamfv
+PicaGetContextParamcv
+PicaGetContextParamv
+PicaBindLocalContext
+PicaDestroyLocalContext
+PicaStartFrame
+PicaEndFrame
+PicaCancelFrame
+PicaQueryFrame
+PicaAddGfxFramelet
+PicaAddMemFramelet
+PicaReadFrame
+PicaBar
