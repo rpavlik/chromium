@@ -7,15 +7,9 @@
 #define CRUT_APIENTRY
 #endif
 
-#include "cr_environment.h"
-#include "cr_error.h"
-#include "cr_mem.h"
-#include "cr_mothership.h"
 #include "cr_net.h"
 #include "cr_protocol.h"
-#include "cr_string.h"
-#include "cr_url.h"
-#include <string.h>
+
 
 /* Compile-time version tests */
 #define CRUT_MAJOR_VERSION 1

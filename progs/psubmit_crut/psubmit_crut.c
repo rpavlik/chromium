@@ -8,6 +8,9 @@
 #include "chromium.h"
 #include "crut_api.h"
 #include "crut_clientapi.h"
+#include "cr_error.h"
+#include "cr_string.h"
+
 
 float verts[3][3] = {
 	{ -1, 1, -1 },

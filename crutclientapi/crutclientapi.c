@@ -1,6 +1,10 @@
 /* Written by Dale Beermann (beermann@cs.virginia.edu) */
 
 #include "crut_clientapi.h"
+#include "cr_error.h"
+#include "cr_mem.h"
+#include "cr_mothership.h"
+#include "cr_string.h"
 
 CRUTClient crut_client;
 
@@ -43,14 +47,14 @@ __newEventBuffer(void)
 {
     EventBuffer* tmp;
     if (!crut_client.last_buffer)
-	tmp = crut_client.last_buffer = crAlloc(sizeof(EventBuffer));
+	tmp = crut_client.last_buffer = crCalloc(sizeof(EventBuffer));
     else
     {
-	tmp = crut_client.last_buffer->next = crAlloc(sizeof(EventBuffer));
+	tmp = crut_client.last_buffer->next = crCalloc(sizeof(EventBuffer));
 	crut_client.last_buffer = tmp;
     }
  
-    tmp->buffer = tmp->empty = crAlloc(EVENT_BUFFER_SIZE);
+    tmp->buffer = tmp->empty = crCalloc(EVENT_BUFFER_SIZE);
     tmp->buffer_end = (char*)(tmp->buffer+EVENT_BUFFER_SIZE);
 }
 
@@ -208,11 +212,11 @@ __addMenuToList( void (*func) (int val) )
     if (!crut_client.lastMenu)
     {
 	crut_client.lastMenu = crut_client.beginMenuList = 
-	    crAlloc(sizeof(clientMenuList));
+	    crCalloc(sizeof(clientMenuList));
     }
     else
     {
-	crut_client.lastMenu->next = crAlloc(sizeof(clientMenuList));
+	crut_client.lastMenu->next = crCalloc(sizeof(clientMenuList));
 	crut_client.lastMenu = crut_client.lastMenu->next;
     }
     
@@ -240,17 +244,17 @@ __addItemToList( char* name, int value , int menu_type)
     if (!crut_client.lastMenu->lastItem)
     {
 	crut_client.lastMenu->lastItem = crut_client.lastMenu->beginItems = 
-	    crAlloc(sizeof(clientMenuItem));
+	    crCalloc(sizeof(clientMenuItem));
     }
     else
     {
-	crut_client.lastMenu->lastItem->next = crAlloc(sizeof(clientMenuItem));
+	crut_client.lastMenu->lastItem->next = crCalloc(sizeof(clientMenuItem));
 	crut_client.lastMenu->lastItem = crut_client.lastMenu->lastItem->next;
     }
     
-    crut_client.lastMenu->lastItem->name = crAlloc( strlen(name) + 1);
-    memcpy(crut_client.lastMenu->lastItem->name, name, strlen(name));
-    crut_client.lastMenu->lastItem->name[ strlen( name ) ] = '\0';
+    crut_client.lastMenu->lastItem->name = crCalloc( crStrlen(name) + 1);
+    crMemcpy(crut_client.lastMenu->lastItem->name, name, crStrlen(name));
+    crut_client.lastMenu->lastItem->name[ crStrlen( name ) ] = '\0';
     
     crut_client.lastMenu->lastItem->value = value;
     crut_client.lastMenu->lastItem->type = menu_type;
@@ -300,31 +304,31 @@ __createSubMenuXML( int clientMenuID , char* name)
     if ( name == NULL )
     {
 	sprintf( tmpBuf, "<menu id=\"%i\">", clientMenuID ); 
-	strcat( retBuf, tmpBuf );
+	crStrcat( retBuf, tmpBuf );
     }
     else
     {
 	sprintf( tmpBuf, "<menu name=\"%s\" id=\"%i\">", name, clientMenuID ); 
-	strcat( retBuf, tmpBuf );
+	crStrcat( retBuf, tmpBuf );
     }
 
     for( tmpItem = tmpMenu->beginItems; tmpItem; tmpItem = tmpItem->next )
     {
 	if ( tmpItem->type == MENU_ITEM_SUBMENU)
-	    strcat( retBuf, __createSubMenuXML( tmpItem->value , tmpItem->name) );
+	    crStrcat( retBuf, __createSubMenuXML( tmpItem->value , tmpItem->name) );
 	else if ( tmpItem->type == MENU_ITEM_REGULAR )
 	{
 	    
 	    sprintf( tmpBuf, "<item type=\"%i\" name=\"%s\" value=\"%i\"></item>",
 		     tmpItem->type, tmpItem->name, tmpItem->value );
 	    
-	    strcat( retBuf, tmpBuf );
+	    crStrcat( retBuf, tmpBuf );
 	    
 	}
 
     }
 
-    strcat( retBuf, "</menu>" ); 
+    crStrcat( retBuf, "</menu>" ); 
 
     return retBuf;
 
@@ -337,18 +341,18 @@ __createMenuXML(void)
     char buffer[32];
 
     char* header = "<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE CRUTmenu [ <!ELEMENT CRUTmenu (button, menu+)> <!ELEMENT button (#PCDATA)> <!ATTLIST button id CDATA #REQUIRED><!ELEMENT menu (item+, menu?)> <!ATTLIST menu name CDATA #IMPLIED> <!ELEMENT item (#PCDATA)> <!ATTLIST item type CDATA #REQUIRED> <!ATTLIST item name CDATA #REQUIRED> <!ATTLIST item value CDATA #REQUIRED> ]>";
-    strcat( crut_client.menuBuffer, header );
+    crStrcat( crut_client.menuBuffer, header );
 
-    strcat( crut_client.menuBuffer, "<CRUTmenu>" );
+    crStrcat( crut_client.menuBuffer, "<CRUTmenu>" );
 
     
     sprintf( buffer, "<button id=\"%i\" />", crut_client.beginMenuList->att_button );
-    strcat( crut_client.menuBuffer, buffer );
+    crStrcat( crut_client.menuBuffer, buffer );
     
-    strcat( crut_client.menuBuffer, __createSubMenuXML( crut_client.lastMenu->clientMenuID , 
+    crStrcat( crut_client.menuBuffer, __createSubMenuXML( crut_client.lastMenu->clientMenuID , 
 						     NULL ) );
 
-    strcat( crut_client.menuBuffer, "</CRUTmenu>" );
+    crStrcat( crut_client.menuBuffer, "</CRUTmenu>" );
 }
 
 
@@ -436,8 +440,9 @@ crutInitClient(void)
     char **newserver;
     int mtu;
 
+    /* crMemZero( &crut_client, sizeof(crut_client) );  XXX init somewhere! */
     crut_client.num_bytes = sizeof( CRUTMouseMsg );
-    crut_client.msg = crAlloc( crut_client.num_bytes );
+    crut_client.msg = crCalloc( crut_client.num_bytes );
      
     /* create and initialize event buffer */
     __newEventBuffer();

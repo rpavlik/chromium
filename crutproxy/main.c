@@ -1,6 +1,9 @@
 /* Written by Dale Beermann (beermann@cs.virginia.edu) */
 
 #include "crut_api.h"
+#include "cr_error.h"
+#include "cr_mothership.h"
+#include "cr_string.h"
 
 #define DEFAULT_PORT 9000
 

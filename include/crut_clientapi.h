@@ -9,7 +9,7 @@
 
 #include "chromium.h"
 #include "crut_api.h"
-#include <string.h>
+
 
 #define EVENT_BUFFER_SIZE 1024*50 /* 50K, for now */
 

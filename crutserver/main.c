@@ -1,7 +1,10 @@
 /* Written by Dale Beermann (beermann@cs.virginia.edu) */
 
-#include "cr_string.h"
 #include "crutserver.h"
+#include "cr_error.h"
+#include "cr_mem.h"
+#include "cr_mothership.h"
+#include "cr_string.h"
 
 CRUTServer crut_server;
 
@@ -300,6 +303,7 @@ crutInitServer(char *mothership, int argc, char *argv[])
     /* set up GLUT window */
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    printf("******** CRUT w/ STENCIL\n");
     glutInitWindowPosition(crut_api.winX,crut_api.winY);
     glutInitWindowSize(crut_api.winWidth,crut_api.winHeight);
     
