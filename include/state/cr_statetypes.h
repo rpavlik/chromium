@@ -16,10 +16,6 @@ extern "C" {
 typedef GLfloat GLdefault;
 #define GL_DEFAULTTYPE_FLOAT
 
-#ifndef CR_MAX_TEXTURE_UNITS
-#define CR_MAX_TEXTURE_UNITS 2
-#endif
-
 #define GL_MAXBYTE		(GLbyte)	0x7F
 #define GL_MAXUBYTE		(GLubyte)	0xFF
 #define GL_MAXSHORT		(GLshort)	0x7FFF

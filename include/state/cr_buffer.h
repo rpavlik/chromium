@@ -16,11 +16,10 @@ extern "C" {
 
 typedef struct {
 	GLbitvalue	dirty;
-	GLbitvalue  enable;
+	GLbitvalue	enable;
 	GLbitvalue	alphaFunc;
 	GLbitvalue	depthFunc;
 	GLbitvalue	blendFunc;
-	GLbitvalue	blendColor;
 	GLbitvalue	logicOp;
 	GLbitvalue	drawBuffer;
 	GLbitvalue	readBuffer;
@@ -30,8 +29,13 @@ typedef struct {
 	GLbitvalue	clearIndex;
 	GLbitvalue	clearDepth;
 	GLbitvalue	clearAccum;
-	GLbitvalue  depthMask;
-	GLbitvalue  extensions;
+	GLbitvalue	depthMask;
+#ifdef CR_EXT_blend_color
+	GLbitvalue	blendColor;
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+	GLbitvalue	blendEquation;
+#endif
 } CRBufferBits;
 
 typedef struct {
@@ -40,23 +44,28 @@ typedef struct {
 	GLboolean	alphaTest;
 	GLboolean	logicOp;
 	GLboolean	dither;
-	GLboolean depthMask;
+	GLboolean	depthMask;
 
 	GLenum		alphaTestFunc;
 	GLfloat		alphaTestRef;
 	GLenum		depthFunc;
 	GLenum		blendSrc;
 	GLenum		blendDst;
-	GLcolorf	blendColor;	
 	GLenum		logicOpMode;
 	GLenum		drawBuffer;
 	GLenum		readBuffer;
-	GLint     indexWriteMask;
+	GLint		indexWriteMask;
 	GLcolorb	colorWriteMask;
 	GLcolorf	colorClearValue;
 	GLfloat 	indexClearValue;
 	GLdefault	depthClearValue;
 	GLcolorf	accumClearValue;
+#ifdef CR_EXT_blend_color
+	GLcolorf	blendColor;
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+	GLenum		blendEquation;
+#endif
 
 	/* static config state */
 	GLint	auxBuffers;
@@ -75,8 +84,6 @@ typedef struct {
 	GLint	accumgreenBits;
 	GLint	accumblueBits;
 	GLint	accumalphaBits;
-
-	CRBufferStateExtensions extensions;
 } CRBufferState;
 
 void crStateBufferInitBits(CRBufferBits *bb);

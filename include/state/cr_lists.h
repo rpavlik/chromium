@@ -26,7 +26,6 @@ typedef struct {
 } CRListsBits;
 
 typedef struct {
-	GLint	maxListNesting;
 	GLboolean newEnd;
 	CRListsFreeElem *freeList;
 	GLuint base;

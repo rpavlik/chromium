@@ -31,18 +31,6 @@ typedef struct {
 	GLfloat		width;
 	GLushort	pattern;
 	GLint		repeat;
-	//GLfloat	aliasedpointsizerange_min;
-	//GLfloat aliasedpointsizerange_max;
-	//GLfloat	aliasedpointsizegranularity;
-	//GLfloat smoothpointsizerange_min;
-	//GLfloat smoothpointsizerange_max;
-	//GLfloat smoothpointgranularity;
-	//GLfloat aliasedlinewidth_min;
-	//GLfloat aliasedlinewidth_max;
-	//GLfloat aliasedlinegranularity;
-	//GLfloat smoothlinewidth_min;
-	//GLfloat smoothlinewidth_max;
-	//GLfloat smoothlinegranularity;
 } CRLineState;
 
 void crStateLineInitBits (CRLineBits *l);

@@ -27,11 +27,7 @@ typedef struct {
 	GLenum    mode;
 	GLint    matrixid;
 
-	GLint    maxModelViewStackDepth;
-	GLint    maxProjectionStackDepth;
-	GLint    maxTextureStackDepth;
-	GLint    maxColorStackDepth;
-	GLint    maxDepth;
+	GLint    maxDepth;		// Max depth of current matrix stack/mode
 
 	GLint    modelViewDepth;
 	GLint    projectionDepth;
@@ -39,7 +35,6 @@ typedef struct {
 	GLint    colorDepth;
 	GLint    *depth;
 
-	GLint    maxClipPlanes;
 	GLvectord  *clipPlane;
 	GLboolean  *clip;
 

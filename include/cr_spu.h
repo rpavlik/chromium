@@ -15,6 +15,8 @@
 
 #include "cr_dll.h"
 #include "spu_dispatch_table.h"
+#include "state/cr_limits.h"
+#include "cr_net.h"
 
 #define SPU_ENTRY_POINT_NAME "SPULoad"
 
@@ -53,6 +55,7 @@ typedef int (*SPULoadFunction)(char **, char **, void *, void *, void * );
 struct _SPUSTRUCT {
 	char *name;
 	char *super_name;
+	int id;
 	struct _SPUSTRUCT *superSPU;
 	CRDLL *dll;
 	SPULoadFunction entry_point;
@@ -66,5 +69,15 @@ struct _SPUSTRUCT {
 SPU *crSPULoad( SPU *child, int id, char *name, char *dir );
 SPU *crSPULoadChain( int count, int *ids, char **names, char *dir );
 void crSPUCopyDispatchTable( SPUDispatchTable *dst, SPUDispatchTable *src );
+
+SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const char *fname );
+
+void crSPUInitGLLimits( CRLimitsState *limits );
+void crSPUCopyGLLimits( CRLimitsState *dest, const CRLimitsState *src );
+void crSPUQueryGLLimits( CRConnection *conn, int spu_id, CRLimitsState *limits );
+void crSPUReportGLLimits( const CRLimitsState *limits, int spu_id );
+void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits );
+void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merged );
+void crSPUPropogateGLLimits( CRConnection *conn, int spu_id, const SPU *child_spu, CRLimitsState *limitsResult );
 
 #endif /* CR_SPU_H */

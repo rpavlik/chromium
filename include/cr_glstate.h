@@ -7,6 +7,10 @@
 #ifndef CR_GLSTATE_H
 #define CR_GLSTATE_H
 
+/* Forward declaration since some of the state/cr_*.h files need the CRContext type */
+struct CRContext;
+typedef struct CRContext CRContext;
+
 #include "cr_version.h"
 #include "state/cr_extensions.h"
 
@@ -16,6 +20,7 @@
 #include "state/cr_evaluators.h"
 #include "state/cr_fog.h"
 #include "state/cr_lighting.h"
+#include "state/cr_limits.h"
 #include "state/cr_line.h"
 #include "state/cr_lists.h"
 #include "state/cr_pixel.h"
@@ -55,7 +60,7 @@ typedef struct {
 
 typedef void (*CRStateFlushFunc)( void *arg );
 
-typedef struct CRContext {
+struct CRContext {
 	int id;
 	GLbitvalue bitid;
 	GLbitvalue neg_bitid;
@@ -69,8 +74,10 @@ typedef struct CRContext {
 	CRClientState    client;
 	CRCurrentState   current;
 	CREvaluatorState eval;
+	CRExtensionState extensions;
 	CRFogState       fog;
 	CRLightingState  lighting;
+	CRLimitsState    limits;
 	CRLineState      line;
 	CRListsState     lists;
 	CRPixelState     pixel;
@@ -79,7 +86,7 @@ typedef struct CRContext {
 	CRTextureState   texture;
 	CRTransformState transform;
 	CRViewportState  viewport;
-} CRContext;
+};
 
 
 #define GLUPDATE_TRANS		0x00001
@@ -99,7 +106,7 @@ typedef struct CRContext {
 #define GLUPDATE_EVAL		0x04000
 #define GLUPDATE_IMAGING	0x08000
 #define GLUPDATE_SELECTION	0x10000
-#define GLUPDATE_ATTRIB     0x20000 
+#define GLUPDATE_ATTRIB		0x20000 
 
 extern CRContext *__currentContext;
 extern CRStateBits *__currentBits;
@@ -109,7 +116,7 @@ extern SPUDispatchTable diff_api;
 #define GetCurrentBits() __currentBits
 
 void crStateInit(void);
-CRContext *crStateCreateContext(void);
+CRContext *crStateCreateContext(const CRLimitsState *limits);
 void crStateMakeCurrent(CRContext *ctx);
 
 void crStateFlushFunc( CRStateFlushFunc ff );

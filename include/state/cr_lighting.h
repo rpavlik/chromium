@@ -67,7 +67,6 @@ typedef struct {
 	GLboolean	lightModelLocalViewer;
 	GLboolean	lightModelTwoSide;
 	CRLight		*light;
-	GLint		maxLights;
 } CRLightingState;
 
 void crStateLightingInitBits (CRLightingBits *l);

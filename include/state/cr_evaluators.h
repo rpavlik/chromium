@@ -46,8 +46,6 @@ typedef struct {
 	GLboolean  enable2D[GLEVAL_TOT];
 	GLboolean  autoNormal;
 
-	GLint      maxEvalOrder;
-
 	CREvaluator1D   eval1D[GLEVAL_TOT];
 	CREvaluator2D   eval2D[GLEVAL_TOT];
 

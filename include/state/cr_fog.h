@@ -9,7 +9,6 @@
 
 #include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
-#include "state/cr_extensions.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,7 +23,9 @@ typedef struct {
 	GLbitvalue end;
 	GLbitvalue mode;
 	GLbitvalue enable;
-	GLbitvalue extensions;
+#ifdef CR_NV_fog_distance
+	GLbitvalue fogDistanceMode;
+#endif
 } CRFogBits;
 
 typedef struct {
@@ -35,7 +36,9 @@ typedef struct {
 	GLfloat   end;
 	GLint     mode;
 	GLboolean enable;
-	CRFogStateExtensions extensions;
+#ifdef CR_NV_fog_distance
+	GLenum fogDistanceMode;
+#endif
 } CRFogState;
 
 void crStateFogInitBits (CRFogBits *fb);

@@ -10,22 +10,20 @@
 #include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 
+/* Booleans to indicate which OpenGL extensions are supported at runtime */
 typedef struct {
-	// Cube map is inside the normal texture data.
-	GLfloat maxTextureMaxAnisotropy;
-} CRTextureStateExtensions;
+	GLboolean ARB_imaging;
+	GLboolean ARB_multitexture;
+	GLboolean ARB_texture_cube_map; /* or EXT_texture_cube_map */
+	GLboolean EXT_blend_color;
+	GLboolean EXT_blend_minmax;
+	GLboolean EXT_blend_subtract;
+	GLboolean EXT_texture_edge_clamp;
+	GLboolean EXT_texture_filter_anisotropic;
+	GLboolean NV_fog_distance;
+	GLboolean NV_texgen_reflection;
+} CRExtensionState;
 
-typedef struct {
-	GLfloat maxAnisotropy;
-} CRTextureObjExtensions;
-
-typedef struct {
-	GLenum fogDistanceMode;
-} CRFogStateExtensions;
-
-typedef struct {
-	GLcolorf blendColor;
-	GLenum blendEquation;
-} CRBufferStateExtensions;
+void crStateExtensionsInit( CRContext *g );
 
 #endif /* CR_STATE_EXTENSIONS_H */

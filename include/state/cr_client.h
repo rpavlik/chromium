@@ -9,6 +9,7 @@
 
 #include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
+#include "state/cr_limits.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,9 +57,6 @@ typedef struct {
 	int *list;
 	int list_alloc;
 	int list_size;
-
-	GLint	maxElementsIndices;
-	GLint	maxElementsVertices;
 } CRClientState;
 
 void crStateClientInitBits(CRClientBits *c);

@@ -32,8 +32,6 @@ typedef struct {
 	GLclampd farClip;
 	GLboolean viewportValid;
 
-	GLint maxViewportDimsWidth, maxViewportDimsHeight;
-
 	/* Scissor state */
 	GLboolean	scissorTest;
 	GLint		scissorX;

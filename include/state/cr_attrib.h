@@ -8,14 +8,13 @@
 #define CR_STATE_ATTRIB_H 
 
 #include "cr_glwrapper.h"
+#include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_extensions.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define CR_MAX_ATTRIB_STACK_DEPTH 1024
 
 typedef struct {
 	GLbitvalue dirty;
@@ -249,8 +248,6 @@ typedef struct {
 } CRViewportStack;
 
 typedef struct {
-	GLint maxAttribStackDepth;
-
 	GLint attribStackDepth;
 	GLbitvalue pushMaskStack[CR_MAX_ATTRIB_STACK_DEPTH];
 

@@ -47,8 +47,6 @@ typedef struct {
 	GLfloat		  xZoom;
 	GLfloat		  yZoom;
 
-	GLint		    pixelmapmaxsize;
-
 	GLfloat		 *pixelmapitoi;
 	GLfloat		 *pixelmapstos;
 	GLfloat		 *pixelmapitor;

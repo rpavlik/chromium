@@ -7,9 +7,8 @@
 #ifndef CR_STATE_TEXTURE_H
 #define CR_STATE_TEXTURE_H
 
-#include "cr_glstate.h"
 #include "state/cr_statetypes.h"
-#include "state/cr_extensions.h"
+#include "state/cr_limits.h"
 
 #define CRTEXTURE_HASHSIZE 1047
 #define CRTEXTURE_NAMEOFFSET 4
@@ -63,7 +62,9 @@ typedef struct __CRTextureObj {
 	GLbitvalue	           dirty;
 	GLbitvalue             paramsBit[CR_MAX_TEXTURE_UNITS];
 	GLbitvalue             imageBit[CR_MAX_TEXTURE_UNITS];
-	CRTextureObjExtensions extensions;
+#ifdef CR_EXT_texture_filter_anisotropic
+	GLfloat maxAnisotropy;
+#endif
 } CRTextureObj;
 
 typedef struct __CRTextureFreeElem {
@@ -149,10 +150,6 @@ typedef struct {
 
 	GLint		curTextureUnit;
 
-	GLint		maxTextureUnitsARB;
-	GLint		maxTextureSize;
-	GLint		max3DTextureSize;
-	GLint		maxCubeMapTextureSize;
 	GLint		maxLevel;
 	GLint		max3DLevel;
 	GLint		maxCubeMapLevel;
@@ -161,12 +158,10 @@ typedef struct {
 
 	// Per-texture unit state:
 	CRTextureUnit	unit[CR_MAX_TEXTURE_UNITS];
-
-	CRTextureStateExtensions extensions;
 } CRTextureState;
 
 void crStateTextureInitBits (CRTextureBits *t);
-void crStateTextureInit(CRTextureState *t);
+void crStateTextureInit(const CRLimitsState *limits, CRTextureState *t);
 
 void crStateTextureInitTexture(GLuint name);
 CRTextureObj *crStateTextureAllocate(GLuint name);
@@ -175,9 +170,9 @@ CRTextureObj *crStateTextureGet(GLuint textureid);
 int crStateTextureGetSize(GLenum target, GLenum level);
 const GLvoid * crStateTextureGetData(GLenum target, GLenum level);
 
-void crStateTextureDiff(CRTextureBits *bb, GLbitvalue bitID, 
+void crStateTextureDiff(CRContext *g, CRTextureBits *bb, GLbitvalue bitID, 
 		CRTextureState *from, CRTextureState *to);
-void crStateTextureSwitch(CRTextureBits *bb, GLbitvalue bitID, 
+void crStateTextureSwitch(CRContext *g, CRTextureBits *bb, GLbitvalue bitID, 
 		CRTextureState *from, CRTextureState *to);
 
 #ifdef __cplusplus
