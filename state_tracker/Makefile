@@ -3,7 +3,7 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-TOP = ../
+TOP = ..
 
 include $(TOP)/arch.mk
 
@@ -43,6 +43,7 @@ REGULAR_FILES = state_attrib \
 	state_stencil \
 	state_texture \
 	state_teximage \
+	state_texdiff \
 	state_transform \
 	state_viewport
 

@@ -70,27 +70,27 @@ MaxTextureLevel(CRContext *g, GLenum target)
 {
 	CRTextureState *t = &(g->texture);
 	switch (target) {
-	case GL_TEXTURE_1D:
-	case GL_PROXY_TEXTURE_1D:
-	case GL_TEXTURE_2D:
-	case GL_PROXY_TEXTURE_2D:
-		return t->maxLevel;
-	case GL_TEXTURE_3D:
-	case GL_PROXY_TEXTURE_3D:
-		return t->max3DLevel;
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-		return t->maxCubeMapLevel;
-	case GL_TEXTURE_RECTANGLE_NV:
-	case GL_PROXY_TEXTURE_RECTANGLE_NV:
-		return t->maxRectLevel;
-	default:
-		return 0;
+		case GL_TEXTURE_1D:
+		case GL_PROXY_TEXTURE_1D:
+		case GL_TEXTURE_2D:
+		case GL_PROXY_TEXTURE_2D:
+			return t->maxLevel;
+		case GL_TEXTURE_3D:
+		case GL_PROXY_TEXTURE_3D:
+			return t->max3DLevel;
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+		case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+			return t->maxCubeMapLevel;
+		case GL_TEXTURE_RECTANGLE_NV:
+		case GL_PROXY_TEXTURE_RECTANGLE_NV:
+			return t->maxRectLevel;
+		default:
+			return 0;
 	}
 }
 
@@ -163,82 +163,101 @@ generate_mipmap(CRTextureObj *tobj, GLenum target)
  * Given a texture target and level, return pointers to the corresponding
  * texture object and texture image level.
  */
-static void
-GetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
-												 CRTextureObj **obj, CRTextureLevel **img)
+void
+crStateGetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
+																CRTextureObj **obj, CRTextureLevel **img)
 {
 	CRTextureState *t = &(g->texture);
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 
 	switch (texTarget) {
-	case GL_TEXTURE_1D:
-		*obj = unit->currentTexture1D;
-		*img = unit->currentTexture1D->level + level;
-		break;
-	case GL_PROXY_TEXTURE_1D:
-		*obj = &(t->proxy1D);
-		*img = t->proxy1D.level + level;
-		break;
-	case GL_TEXTURE_2D:
-		*obj = unit->currentTexture2D;
-		*img = unit->currentTexture2D->level + level;
-		break;
-	case GL_PROXY_TEXTURE_2D:
-		*obj = &(t->proxy2D);
-		*img = t->proxy2D.level + level;
-		break;
-	case GL_TEXTURE_3D:
-		*obj = unit->currentTexture3D;
-		*img = unit->currentTexture3D->level + level;
-		break;
-	case GL_PROXY_TEXTURE_3D:
-		*obj = &(t->proxy3D);
-		*img = t->proxy3D.level + level;
-		break;
-#ifdef CR_NV_texture_rectangle 
-	case GL_PROXY_TEXTURE_RECTANGLE_NV:
-		*obj = &(t->proxyRect);
-		*img = t->proxyRect.level + level;
-		break;
-	case GL_TEXTURE_RECTANGLE_NV:
-		*obj = unit->currentTextureRect;
-		*img = unit->currentTextureRect->level + level;
-		break;
-#endif
-#ifdef CR_ARB_texture_cube_map
-	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-		*obj = &(t->proxyCubeMap);
-		*img = t->proxyCubeMap.level + level;
-		break;
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-		*obj = unit->currentTextureCubeMap;
-		*img = unit->currentTextureCubeMap->level + level;
-		break;
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-		*obj = unit->currentTextureCubeMap;
-		*img = unit->currentTextureCubeMap->negativeXlevel + level;
-		break;
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-		*obj = unit->currentTextureCubeMap;
-		*img = unit->currentTextureCubeMap->positiveYlevel + level;
-		break;
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-		*obj = unit->currentTextureCubeMap;
-		*img = unit->currentTextureCubeMap->negativeYlevel + level;
-		break;
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-		*obj = unit->currentTextureCubeMap;
-		*img = unit->currentTextureCubeMap->positiveZlevel + level;
-		break;
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-		*obj = unit->currentTextureCubeMap;
-		*img = unit->currentTextureCubeMap->negativeZlevel + level;
-		break;
-#endif
-	default:
-		*obj = NULL;
-		*img = NULL;
+		case GL_TEXTURE_1D:
+			*obj = unit->currentTexture1D;
+			*img = unit->currentTexture1D->level + level;
+			return;
+		case GL_PROXY_TEXTURE_1D:
+			*obj = &(t->proxy1D);
+			*img = t->proxy1D.level + level;
+			return;
+		case GL_TEXTURE_2D:
+			*obj = unit->currentTexture2D;
+			*img = unit->currentTexture2D->level + level;
+			return;
+		case GL_PROXY_TEXTURE_2D:
+			*obj = &(t->proxy2D);
+			*img = t->proxy2D.level + level;
+			return;
+		case GL_TEXTURE_3D:
+			*obj = unit->currentTexture3D;
+			*img = unit->currentTexture3D->level + level;
+			return;
+		case GL_PROXY_TEXTURE_3D:
+			*obj = &(t->proxy3D);
+			*img = t->proxy3D.level + level;
+			return;
+		default:
+			 /* fall-through */
+			 ;
 	}
+
+#ifdef CR_NV_texture_rectangle 
+	if (g->extensions.NV_texture_rectangle) {
+		switch (texTarget) {
+			case GL_PROXY_TEXTURE_RECTANGLE_NV:
+				*obj = &(t->proxyRect);
+				*img = t->proxyRect.level + level;
+				return;
+			case GL_TEXTURE_RECTANGLE_NV:
+				*obj = unit->currentTextureRect;
+				*img = unit->currentTextureRect->level + level;
+				return;
+			default:
+			 /* fall-through */
+			 ;
+		}
+	}
+#endif
+
+#ifdef CR_ARB_texture_cube_map
+	if (g->extensions.ARB_texture_cube_map) {
+		switch (texTarget) {
+			case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+				*obj = &(t->proxyCubeMap);
+				*img = t->proxyCubeMap.level + level;
+				return;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+				*obj = unit->currentTextureCubeMap;
+				*img = unit->currentTextureCubeMap->level + level;
+				return;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+				*obj = unit->currentTextureCubeMap;
+				*img = unit->currentTextureCubeMap->negativeXlevel + level;
+				return;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+				*obj = unit->currentTextureCubeMap;
+				*img = unit->currentTextureCubeMap->positiveYlevel + level;
+				return;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+				*obj = unit->currentTextureCubeMap;
+				*img = unit->currentTextureCubeMap->negativeYlevel + level;
+				return;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+				*obj = unit->currentTextureCubeMap;
+				*img = unit->currentTextureCubeMap->positiveZlevel + level;
+				return;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+				*obj = unit->currentTextureCubeMap;
+				*img = unit->currentTextureCubeMap->negativeZlevel + level;
+				return;
+			default:
+			 /* fall-through */
+			 ;
+		}
+	}
+#endif
+
+	*obj = NULL;
+	*img = NULL;
 }
 
 
@@ -265,59 +284,59 @@ ErrorCheckTexImage(GLuint dims, GLenum target, GLint level,
 	 */
 	switch (target)
 	{
-	case GL_TEXTURE_1D:
-	case GL_PROXY_TEXTURE_1D:
-		if (dims != 1) {
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage(invalid target=0x%x)", target);
-			return GL_TRUE;
-		}
-		break;
-	case GL_TEXTURE_2D:
-	case GL_PROXY_TEXTURE_2D:
-		if (dims != 2) {
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage(invalid target=0x%x)", target);
-			return GL_TRUE;
-		}
-		break;
-	case GL_TEXTURE_3D:
-	case GL_PROXY_TEXTURE_3D:
-		if (dims != 3) {
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage(invalid target=0x%x)", target);
-			return GL_TRUE;
-		}
-		break;
+		case GL_TEXTURE_1D:
+		case GL_PROXY_TEXTURE_1D:
+			if (dims != 1) {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+										 "glTexImage(invalid target=0x%x)", target);
+				return GL_TRUE;
+			}
+			break;
+		case GL_TEXTURE_2D:
+		case GL_PROXY_TEXTURE_2D:
+			if (dims != 2) {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+										 "glTexImage(invalid target=0x%x)", target);
+				return GL_TRUE;
+			}
+			break;
+		case GL_TEXTURE_3D:
+		case GL_PROXY_TEXTURE_3D:
+			if (dims != 3) {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+										 "glTexImage(invalid target=0x%x)", target);
+				return GL_TRUE;
+			}
+			break;
 #ifdef CR_NV_texture_rectangle
-	case GL_TEXTURE_RECTANGLE_NV:
-	case GL_PROXY_TEXTURE_RECTANGLE_NV:
-		if (dims != 2 || !g->extensions.NV_texture_rectangle) {
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage2D(invalid target=0x%x)", target);
-			return GL_TRUE;
-		}
-		break;
+		case GL_TEXTURE_RECTANGLE_NV:
+		case GL_PROXY_TEXTURE_RECTANGLE_NV:
+			if (dims != 2 || !g->extensions.NV_texture_rectangle) {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+										 "glTexImage2D(invalid target=0x%x)", target);
+				return GL_TRUE;
+			}
+			break;
 #endif
 #ifdef CR_ARB_texture_cube_map
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-		if (dims != 2 || !g->extensions.ARB_texture_cube_map) {
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage2D(invalid target=0x%x)", target);
-			return GL_TRUE;
-		}
-		break;
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+		case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+			if (dims != 2 || !g->extensions.ARB_texture_cube_map) {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+										 "glTexImage2D(invalid target=0x%x)", target);
+				return GL_TRUE;
+			}
+			break;
 #endif
-	default:
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexImage%uD(invalid target=0x%x)", dims, target);
-		return GL_TRUE;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexImage%uD(invalid target=0x%x)", dims, target);
+			return GL_TRUE;
 	}
 
 	/*
@@ -462,7 +481,12 @@ ErrorCheckTexSubImage(GLuint dims, GLenum target, GLint level,
 		return GL_TRUE;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	if (!tobj || !tl) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+								 "glTexSubImage%uD(target or level)", dims);
+		return GL_TRUE;
+	}
 
 	/* test x/y/zoffset and size */
 	if (xoffset < -tl->border || xoffset + width > tl->width) {
@@ -516,7 +540,10 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 		return;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	CRASSERT(tobj);
+	CRASSERT(tl);
+
 	if (IsProxyTarget(target))
 		tl->bytes = 0;
 	else
@@ -598,7 +625,10 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 		return;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	CRASSERT(tobj);
+	CRASSERT(tl);
+
 	if (IsProxyTarget(target))
 		tl->bytes = 0;
 	else
@@ -692,7 +722,10 @@ crStateTexImage3D(GLenum target, GLint level,
 		return;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	CRASSERT(tobj);
+	CRASSERT(tl);
+
 	if (IsProxyTarget(target))
 		tl->bytes = 0;
 	else
@@ -816,7 +849,9 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 		return; /* GL error state already set */
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	CRASSERT(tobj);
+	CRASSERT(tl);
 
 	xoffset += tl->border;
 	yoffset += tl->border;
@@ -948,7 +983,10 @@ crStateCompressedTexImage1DARB(GLenum target, GLint level,
 		return;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	CRASSERT(tobj);
+	CRASSERT(tl);
+
 	if (IsProxyTarget(target))
 		tl->bytes = 0;
 	else
@@ -1020,7 +1058,10 @@ crStateCompressedTexImage2DARB(GLenum target, GLint level,
 		return;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	CRASSERT(tobj);
+	CRASSERT(tl);
+
 	if (IsProxyTarget(target))
 		tl->bytes = 0;
 	else
@@ -1093,7 +1134,10 @@ crStateCompressedTexImage3DARB(GLenum target, GLint level,
 		return;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	CRASSERT(tobj);
+	CRASSERT(tl);
+
 	if (IsProxyTarget(target))
 		tl->bytes = 0;
 	else
@@ -1291,7 +1335,7 @@ crStateGetCompressedTexImageARB(GLenum target, GLint level, GLvoid * img)
 		return;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
 	if (!tobj || !tl) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 								 "glGetCompressedTexImage(invalid target or level)");
@@ -1324,7 +1368,7 @@ crStateGetTexImage(GLenum target, GLint level, GLenum format,
 		return;
 	}
 
-	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	crStateGetTextureObjectAndImage(g, target, level, &tobj, &tl);
 	if (!tobj || !tl) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 								 "glGetTexImage(invalid target or level)");
@@ -1335,39 +1379,38 @@ crStateGetTexImage(GLenum target, GLint level, GLenum format,
 		crWarning("glGetTexImage cannot decompress a compressed texture!");
 		return;
 	}
-		
 
 	switch (format)
 	{
-	case GL_RED:
-	case GL_GREEN:
-	case GL_BLUE:
-	case GL_ALPHA:
-	case GL_RGB:
-	case GL_RGBA:
-	case GL_LUMINANCE:
-	case GL_LUMINANCE_ALPHA:
-		break;
-	default:
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glGetTexImage called with bogus format: %d", format);
-		return;
+		case GL_RED:
+		case GL_GREEN:
+		case GL_BLUE:
+		case GL_ALPHA:
+		case GL_RGB:
+		case GL_RGBA:
+		case GL_LUMINANCE:
+		case GL_LUMINANCE_ALPHA:
+			break;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glGetTexImage called with bogus format: %d", format);
+			return;
 	}
 
 	switch (type)
 	{
-	case GL_UNSIGNED_BYTE:
-	case GL_BYTE:
-	case GL_UNSIGNED_SHORT:
-	case GL_SHORT:
-	case GL_UNSIGNED_INT:
-	case GL_INT:
-	case GL_FLOAT:
-		break;
-	default:
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glGetTexImage called with bogus type: %d", type);
-		return;
+		case GL_UNSIGNED_BYTE:
+		case GL_BYTE:
+		case GL_UNSIGNED_SHORT:
+		case GL_SHORT:
+		case GL_UNSIGNED_INT:
+		case GL_INT:
+		case GL_FLOAT:
+			break;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glGetTexImage called with bogus type: %d", type);
+			return;
 	}
 
 #ifdef CR_OPENGL_VERSION_1_2

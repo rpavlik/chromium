@@ -49,4 +49,8 @@ void crStateClientDiff(CRClientBits *cb, CRbitvalue *bitID, CRContext *from, CRC
 void crStateClientSwitch(CRClientBits *cb, CRbitvalue *bitID,	CRContext *from, CRContext *to);
 
 
+void
+crStateGetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
+																CRTextureObj **obj, CRTextureLevel **img);
+
 #endif
