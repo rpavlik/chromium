@@ -1,0 +1,10 @@
+DESCRIPTION ""
+EXPORTS
+glBarrierCreate
+glBarrierExec
+glSemaphoreCreate
+glSemaphoreV
+glSemaphoreP
+crCreateContext
+crMakeCurrent
+crSwapBuffers
