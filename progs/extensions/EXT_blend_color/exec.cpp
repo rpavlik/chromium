@@ -21,6 +21,10 @@
 #include "exec.h"
 #include "../common/logo.h"
 
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+
 typedef void (APIENTRY * GLBLENDCOLOREXTPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 
 GLBLENDCOLOREXTPROC glBlendColor_ext;

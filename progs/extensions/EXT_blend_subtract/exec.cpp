@@ -21,6 +21,10 @@
 #include "exec.h"
 #include "../common/logo.h"
 
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+
 typedef void (APIENTRY * GLBLENDEQUATIONEXTPROC) (GLenum mode);
 
 GLBLENDEQUATIONEXTPROC glBlendEquation_ext;
