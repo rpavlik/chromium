@@ -92,3 +92,10 @@ void crPackFree( void *packet )
 	 * length field or the header */
 	crFree( (unsigned char *) packet - 8 - sizeof(CRMessageOpcodes) );
 }
+
+void crNetworkPointerWrite( CRNetworkPointer *dst, void *src )
+{
+	dst->ptrAlign[0] = 0xDeadBeef;
+	dst->ptrAlign[1] = 0xCafeBabe;
+	memcpy( dst, &src, sizeof(src) );
+}

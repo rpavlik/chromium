@@ -96,7 +96,8 @@ for func_name in keys:
 			if string.find( type, '*' ) != -1:
 				break;
 		else:
-			continue
+			arg_types.append( "%s *" % return_type )
+			arg_names.append( "return_value" )
 	print 'void PACK_APIENTRY ' + stub_common.PackFunction( func_name ),
 	print stub_common.ArgumentString( arg_names, arg_types )
 	print '{'

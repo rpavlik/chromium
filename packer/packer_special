@@ -14,9 +14,6 @@ DrawPixels
 GenTextures
 Fogfv
 Fogiv
-IsEnabled
-IsList
-IsTexture
 Lightfv
 Lightiv
 LightModelfv
