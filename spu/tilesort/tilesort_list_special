@@ -46,3 +46,7 @@ Bitmap
 DrawPixels
 GetBufferPointervARB
 ZPix
+DrawArrays
+DrawElements
+DrawRangeElements
+ArrayElement

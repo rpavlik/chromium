@@ -83,7 +83,7 @@ tilesortspu_diffapi.c: diffapi.py $(APIFILES)
 	@$(ECHO) Building the TileSort Differencing API
 	@$(PYTHON) diffapi.py > $@
 
-tilesortspu_lists_gen.c: tilesort_lists.py tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special $(APIFILES)
+tilesortspu_lists_gen.c: tilesort_lists.py tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special tilesort_list_special $(APIFILES)
 	@$(ECHO) Building the TileSort Display List Manager
 	@$(PYTHON) tilesort_lists.py > $@
 

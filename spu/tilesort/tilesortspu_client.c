@@ -29,19 +29,19 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsi
 
 	if (count < 0)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "tilesortspu_DrawElements(count < 0)");
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "tilesortspu_DrawArrays(count < 0)");
 		return;
 	}
 
 	if (mode > GL_POLYGON)
 	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawElements(mode=%d)", mode);
+		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawArrays(mode=%d)", mode);
 		return;
 	}
 
 	if (ctx->current.inBeginEnd)
 	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION,  "tilesortspu_DrawElements called in a Begin/End" );
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION,  "tilesortspu_DrawArrays called in a Begin/End" );
 		return;
 	}
 
