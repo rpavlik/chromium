@@ -8,7 +8,7 @@ import cPickle;
 import types;
 import string;
 import re;
-
+import alias_exports;
 import stub_common;
 
 parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
@@ -63,6 +63,9 @@ for func_name in keys:
 		print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) stub_%s;' % ( func_name, func_name )
 		continue
 	print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( func_name, func_name )
+	real_func_name = alias_exports.AliasMap( func_name )
+	if real_func_name:
+		print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( real_func_name, func_name )
 
 for func_name in bonus_functions:
 	print '\tif (!crStrcmp( name, "%s" )) return (CR_PROC) %s;' % ( func_name, func_name )
