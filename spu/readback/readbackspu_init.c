@@ -7,7 +7,6 @@
 #include "cr_spu.h"
 #include "cr_mem.h"
 #include "readbackspu.h"
-#include <stdio.h>
 
 extern SPUNamedFunctionTable _cr_readback_table[];
 
@@ -71,7 +70,6 @@ readbackSPUInit( int id, SPU *child, SPU *self,
 													&window->superVisBits);
 	crHashtableAdd(readback_spu.windowTable, 0, window);
 
-	/*crStateInit();*/
 	readback_spu.gather_conn = NULL;
 
 	return &readback_functions;
@@ -108,22 +106,3 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	
 	return 1;
 }
-
-
-
-
-/**
- * This is a function used to test copies of the state
- * tracker.  See the progs/statecopytest/statecopytest.c program for
- * more information.
- *
- * NOTE: if building on Windows remove commented out function in
- *       readbackspu.def
- */
-#if 0
-void * READBACKSPU_APIENTRY readbackspu_state_test(void)
-{
-		extern CRStateBits *__currentBits;
-		return &__currentBits;
-}
-#endif
