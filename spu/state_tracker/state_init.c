@@ -75,10 +75,12 @@ void crStateMakeCurrent( CRContext *ctx )
 	crDebug( "Making current to 0x%p", ctx );
 	__currentContext = ctx;
 
+#if 0
 	if (ctx && !ctx->viewport.viewportValid && !ctx->viewport.scissorValid)
 	{
 		crStateViewportMakeCurrent( &(ctx->viewport), &(__currentBits->viewport) );
 	}
+#endif
 
 	if (__hwcontext && ctx)
 	{
