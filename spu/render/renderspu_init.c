@@ -166,24 +166,22 @@ static int renderSPUCleanup(void)
 {
 	WindowInfo *window;
 	ContextInfo *context;
-	unsigned int i, num_elements;
 
-	num_elements = crHashtableNumElements( render_spu.contextTable );
-	for (i = 0; i < num_elements; i++) {
-		context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, i);
-		renderspu_SystemDestroyContext( context );
-		crHashtableDelete(render_spu.contextTable, i, GL_TRUE);
-	}
-
-	num_elements = crHashtableNumElements( render_spu.windowTable );
-	for (i = 0; i < num_elements; i++) {
-		window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, i);
-		renderspu_SystemDestroyWindow( window );
-		crHashtableDelete(render_spu.windowTable, i, GL_TRUE);
-	}
-
-	crFreeHashtable(render_spu.windowTable);
+	CR_HASHTABLE_WALK( render_spu.contextTable, entry)
+		context = (ContextInfo *) entry->data;
+		CRASSERT(context);
+		crFree(context);
+		entry->data = NULL;
+	CR_HASHTABLE_WALK_END( render_spu.contextTable )
 	crFreeHashtable(render_spu.contextTable);
+
+	CR_HASHTABLE_WALK( render_spu.windowTable, entry)
+		window = (WindowInfo *) entry->data;
+		CRASSERT(window);
+		crFree(window);
+		entry->data = NULL;
+	CR_HASHTABLE_WALK_END( render_spu.windowTable )
+	crFreeHashtable(render_spu.windowTable);
 
 	crFreeHashtable(render_spu.barrierHash);
 
