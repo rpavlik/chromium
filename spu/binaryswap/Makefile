@@ -16,7 +16,7 @@ FILES = binaryswapspu \
 ifdef WINDOWS
 LIBRARIES = spuload crutil crmothership
 else
-LIBRARIES = spuload crutil crmothership crstate
+LIBRARIES = spuload crutil crmothership
 endif
 
 SLOP = $(PRECOMP)

@@ -923,15 +923,9 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuSwapBuffers( GLint win, GLint fl
 	 */
 	binaryswap_spu.child.BarrierExecCR( SWAP_BARRIER );
 
-	/* Only one client application should trigger a real SwapBuffers by NOT
-	 * passing CR_SUPPRESS_SWAP_BIT.
-	 * Otherwise, if we have N clients and do N SwapBuffers per frame we're
-	 * going to screw up.
-	 *
-	 * MCH: What if we just have node 0 be the one to issue the swap?
-	 *      What about parallel apps that set thier own flags?
-	 */
-	binaryswap_spu.child.SwapBuffers( window->childWindow, flags);
+	/* Note: we don't pass the CR_SUPPRESS_SWAP_BIT flag here. */
+	binaryswap_spu.child.SwapBuffers( window->childWindow, 
+					  flags & ~CR_SUPPRESS_SWAP_BIT);
 
 	binaryswap_spu.child.Finish();
 		
