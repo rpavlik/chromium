@@ -44,21 +44,3 @@ for func_name in keys:
 		if return_type != 'void':
 			print '\treturn return_val;'
 		print '}\n'
-
-print """
-
-// How come if I make this variable static the system explodes
-// later in memcpy when it's trying to write the result from the
-// network?
-const GLubyte  GetStringReturn[8096]; // GROSS HACK
-const GLubyte * PACKSPU_APIENTRY packspu_GetString( GLenum name )
-{
-	int writeback = 1;
-	crPackGetString( name, &GetStringReturn[0], &writeback );
-	packspuFlush();
-	while (writeback)
-		crNetRecv();
-	return &(GetStringReturn[0]);
-}
-"""
-

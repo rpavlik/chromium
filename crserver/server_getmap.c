@@ -66,6 +66,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum qu
 			cr_server.head_spu->dispatch_table.GetMapdv( target, query, coeffs );
 			retptr = coeffs;
 			break;
+		default:
+			crError( "Bad query in crServerDispatchGetMapdv: %d", query );
+			break;
 	}
 			
 	crServerReturnValue( retptr, size );
@@ -135,6 +138,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum qu
 			cr_server.head_spu->dispatch_table.GetMapfv( target, query, coeffs );
 			retptr = coeffs;
 			break;
+		default:
+			crError( "Bad query in crServerDispatchGetMapfv: %d", query );
+			break;
 	}
 			
 	crServerReturnValue( retptr, size );
@@ -203,6 +209,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum qu
 			coeffs = crAlloc( size );
 			cr_server.head_spu->dispatch_table.GetMapiv( target, query, coeffs );
 			retptr = coeffs;
+			break;
+		default:
+			crError( "Bad query in crServerDispatchGetMapiv: %d", query );
 			break;
 	}
 			
