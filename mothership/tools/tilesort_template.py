@@ -220,13 +220,14 @@ def FindRenderSPU(mothership):
 	assert renderSPU.Name() == "render"
 	return renderSPU
 
+
 #----------------------------------------------------------------------------
 
 class TilesortDialog(wxDialog):
 	"""Tilesort configuration editor."""
 
 	def __init__(self, parent=NULL, id=-1):
-		""" Construct a TilesortFrame."""
+		""" Construct a TilesortDialog."""
 		wxDialog.__init__(self, parent, id, title="Tilesort Configuration",
 						 style = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 
@@ -468,18 +469,6 @@ class TilesortDialog(wxDialog):
 		self.drawArea.Refresh()
 		self.dirty = true
 
-	def __OnHostNameChange(self, event):
-		"""Called when the host name pattern changes."""
-		self.__UpdateVarsFromWidgets()
-		self.drawArea.Refresh()
-		self.dirty = true
-
-	def __OnHostStartChange(self, event):
-		"""Called when the first host index changes."""
-		self.__UpdateVarsFromWidgets()
-		self.drawArea.Refresh()
-		self.dirty = true
-
 	def __OnHostnames(self, event):
 		"""Called when the hostnames button is pressed."""
 		tilesort = self.__Mothership.Tilesort
@@ -698,14 +687,8 @@ def Edit_Tilesort(parentWindow, mothership):
 	# reuse it in the future.
 	t = Is_Tilesort(mothership)
 	if t:
-		# find the server/render nodes
-		nodes = mothership.Nodes()
-		if nodes[0].IsAppNode():
-			clientNode = nodes[0]
-			serverNode = nodes[1]
-		else:
-			clientNode = nodes[1]
-			serverNode = nodes[0]
+		clientNode = FindClientNode(mothership)
+		serverNode = FindServerNode(mothership)
 	else:
 		print "This is not a tilesort configuration!"
 		return
