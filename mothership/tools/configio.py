@@ -79,10 +79,10 @@ def WriteConfig(mothership, file):
 		nodeNames[node] = "node[%d]" % n
 		if node.IsServer():
 			file.write("node[%d] = crNetworkNode('%s')\n" %
-					   (n, node.GetHost()[0])) # XXX fix hostnames
+					   (n, node.GetHosts()[0])) # XXX fix hostnames
 		else:
 			file.write("node[%d] = crApplicationNode('%s')\n" %
-					   (n, node.GetHost()[0]))
+					   (n, node.GetHosts()[0]))
 		# write the node's SPUs
 		for spu in node.SPUChain():
 			spuNames[spu] = "spu[%d]" % s
