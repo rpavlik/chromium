@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys,os;
 import cPickle;
 import string;
@@ -11,6 +16,8 @@ import stub_common;
 
 keys = gl_mapping.keys()
 keys.sort();
+
+stub_common.CopyrightC()
 
 print """#ifndef SERVER_DISPATCH_HEADER
 #define SERVER_DISPATCH_HEADER

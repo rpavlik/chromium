@@ -1,4 +1,11 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys,string
+
+stub_common.CopyrightC()
 
 print "char lowercase[256] = {"
 

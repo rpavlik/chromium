@@ -1,5 +1,24 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import string;
 import re;
+
+def CopyrightC( ):
+	print """/* Copyright (c) 2001, Stanford University
+	All rights reserved.
+
+	See the file LICENSE.txt for information on redistributing this software. */
+	"""
+
+def CopyrightDef( ):
+	print """; Copyright (c) 2001, Stanford University
+	; All rights reserved.
+	;
+	; See the file LICENSE.txt for information on redistributing this software.
+	"""
 
 def DecoderName( glName ):
 	return "crUnpack" + glName
@@ -33,7 +52,10 @@ def LoadSpecials( filename ):
 		return {}
 	
 	for line in f.readlines():
-		table[string.strip(line)] = 1
+		line = string.strip(line)
+		if line[0] == '#':
+			continue
+		table[line] = 1
 	
 	specials[filename] = table
 	return table

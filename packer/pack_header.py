@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 # This script generates the cr/include/cr_packfunctions.h file from the
 # gl_header.parsed file.
 
@@ -13,6 +18,8 @@ import stub_common;
 
 parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
 gl_mapping = cPickle.load( parsed_file )
+
+stub_common.CopyrightC()
 
 print """#ifndef CR_PACKFUNCTIONS_H
 #define CR_PACKFUNCTIONS_H

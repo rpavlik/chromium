@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 # WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
 #
 # This is probably the most insecure piece of software ever written.  It's a

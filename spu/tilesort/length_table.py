@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys
 
 import cPickle;
@@ -26,6 +31,8 @@ things_pinch_cares_about = [ 'Vertex2d', 'Vertex2f', 'Vertex2i', 'Vertex2s', 'Ve
 	'EvalCoord2d', 'EvalCoord2f', 'EvalPoint1', 'EvalPoint2', 'Materialf', 'Materiali',
 	'Materialfv', 'Materialiv', 'EdgeFlag', 'CallList'
 ]
+
+stub_common.CopyrightC()
 
 print """
 static const int __cr_packet_length_table[] = {

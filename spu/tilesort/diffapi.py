@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys,os;
 import cPickle;
 import string;
@@ -9,6 +14,8 @@ gl_mapping = cPickle.load( parsed_file )
 sys.path.append( "../../opengl_stub" )
 
 import stub_common;
+
+stub_common.CopyrightC()
 
 print """#include "cr_spu.h"
 #include "cr_packfunctions.h"

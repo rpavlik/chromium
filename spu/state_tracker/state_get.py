@@ -1,4 +1,11 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys, re, string
+sys.path.append( "../../opengl_stub" )
+import stub_common;
 
 line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s+(.*)\s*$')
 extensions_line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s(GL_\S+)\s+(.*)\s*$')
@@ -84,6 +91,8 @@ ctypes = {
 	      'Float'   : 'GLfloat',
 	      'Integer' : 'GLint'
 	     }
+
+stub_common.CopyrightC()
 
 print """
 #include <stdlib.h>

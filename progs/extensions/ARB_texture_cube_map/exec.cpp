@@ -1,3 +1,9 @@
+/* Copyright (c) 2001, Stanford University
+ * All rights reserved.
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
+
 /*
 
   exec.cpp
@@ -20,7 +26,7 @@
 /* --- Global Variables ----------------------------------------------------- */
 
 static GLuint	currentWidth, currentHeight;
-static GLenum	envMapMode = GL_REFLECTION_MAP_ARB;
+static GLenum	envMapMode = (GLenum) GL_REFLECTION_MAP_ARB;
 static short	object = 1;
 static GLuint	textureID[1];
 static GLfloat	bgColor[4] = { 0.2, 0.3, 0.8, 0.0 };
@@ -152,17 +158,17 @@ void	InitSpecial	( void )
 		}
 		
 		// Create the Cubemap.
-		glBindTexture( GL_TEXTURE_CUBE_MAP_ARB, textureID[0] );
-		glTexParameteri( GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		glTexParameteri( GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
-		glTexParameteri( GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		glTexParameteri( GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[0] );
-		glTexImage2D( GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[1] );
-		glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[2] );
-		glTexImage2D( GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[3] );
-		glTexImage2D( GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[4] );
-		glTexImage2D( GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[5] );
+		glBindTexture( (GLenum) GL_TEXTURE_CUBE_MAP_ARB, textureID[0] );
+		glTexParameteri( (GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
+		glTexParameteri( (GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
+		glTexParameteri( (GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glTexParameteri( (GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexImage2D( (GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[0] );
+		glTexImage2D( (GLenum) GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[1] );
+		glTexImage2D( (GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[2] );
+		glTexImage2D( (GLenum) GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[3] );
+		glTexImage2D( (GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[4] );
+		glTexImage2D( (GLenum) GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, 0, GL_RGB8, texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[5] );
 	}
 	
 	glEnable( GL_DEPTH_TEST );
@@ -204,8 +210,8 @@ void	Display		( void )
 	glColor3f( 1, 1, 1 );
 	
 	glDisable( GL_TEXTURE_2D );
-	glEnable( GL_TEXTURE_CUBE_MAP_ARB );
-	glBindTexture( GL_TEXTURE_CUBE_MAP_ARB, textureID[0] );
+	glEnable( (GLenum) GL_TEXTURE_CUBE_MAP_ARB );
+	glBindTexture( (GLenum) GL_TEXTURE_CUBE_MAP_ARB, textureID[0] );
 	
 	glPushMatrix();
 	glLoadIdentity();
@@ -262,7 +268,7 @@ void	Display		( void )
 	glDisable( GL_TEXTURE_GEN_R );
 	glDisable( GL_CULL_FACE );
 	
-	glDisable( GL_TEXTURE_CUBE_MAP_ARB );
+	glDisable( (GLenum) GL_TEXTURE_CUBE_MAP_ARB );
 	
 	glMatrixMode( GL_TEXTURE );
 	glPopMatrix();
@@ -299,7 +305,7 @@ void	Keyboard	( unsigned char key, int, int )
 			exit( 0 );
 		case 'E':
 		case 'e':
-			envMapMode = (envMapMode==GL_REFLECTION_MAP_ARB)?GL_NORMAL_MAP_ARB:GL_REFLECTION_MAP_ARB;
+			envMapMode = (envMapMode==(GLenum) GL_REFLECTION_MAP_ARB)?(GLenum) GL_NORMAL_MAP_ARB:(GLenum) GL_REFLECTION_MAP_ARB;
 			break;
 		case ' ':
 			object++;

@@ -1,11 +1,20 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 # This script generates the packer/packer.def file.
 
 import sys,os;
 import cPickle;
 import string;
+sys.path.append( "../opengl_stub" )
+import stub_common;
 
 parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
 gl_mapping = cPickle.load( parsed_file )
+
+stub_common.CopyrightDef()
 
 print "DESCRIPTION \"\""
 print "EXPORTS"

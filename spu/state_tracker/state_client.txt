@@ -1,3 +1,7 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 #:clientPointer:v.size,v.type,v.stride,v.p:VertexPointer
 #:clientPointer:c.size,c.type,c.stride,c.p:ColorPointer
 #:clientPointer:i.type,i.stride,i.p:IndexPointer

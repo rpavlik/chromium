@@ -1,3 +1,9 @@
+/* Copyright (c) 2001, Stanford University
+ * All rights reserved.
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
+
 #ifndef TILESORT_SPU_H
 #define TILESORT_SPU_H
 

@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys,os;
 import cPickle;
 import string;
@@ -7,6 +12,8 @@ import stub_common;
 
 parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
 gl_mapping = cPickle.load( parsed_file )
+
+stub_common.CopyrightC()
 
 print """#include "cr_spu.h"
 #include "api_templates.h"

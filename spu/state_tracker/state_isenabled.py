@@ -1,4 +1,11 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys, re, string
+sys.path.append( "../../opengl_stub" )
+import stub_common
 
 line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s+(.*)\s*$')
 input = open( "state_isenabled.txt", 'r' )
@@ -12,6 +19,8 @@ for line in input.readlines():
 		pname = match.group(2)
 		fields = string.split( match.group(3) )
 		params[pname] = ( type, fields )
+
+stub_common.CopyrightC()
 
 print """
 #include <stdlib.h>

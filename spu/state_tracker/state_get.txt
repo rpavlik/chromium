@@ -1,3 +1,7 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 GLenum    GL_MATRIX_MODE                  g->transform.mode
 GLint     GL_MODELVIEW_STACK_DEPTH        g->transform.modelViewDepth+1
 GLint     GL_PROJECTION_STACK_DEPTH       g->transform.projectionDepth+1

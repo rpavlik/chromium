@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 
 import sys;
 import cPickle;
@@ -12,6 +17,8 @@ gl_mapping = cPickle.load( parsed_file )
 
 keys = gl_mapping.keys()
 keys.sort();
+
+stub_common.CopyrightC()
 
 for func_name in keys:
 	if stub_common.FindSpecial( "noexport", func_name ): continue

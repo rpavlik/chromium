@@ -1,3 +1,7 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 GLboolean GL_ALPHA_TEST               g->buffer.alphaTest
 GLboolean GL_BLEND                    g->buffer.blend
 GLboolean GL_CULL_FACE                g->polygon.cullFace

@@ -1,3 +1,7 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 :unpack:unpack.rowLength:PixelStorei,GL_UNPACK_ROW_LENGTH
 #:unpack:unpack.skipImages:PixelStorei,GL_UNPACK_SKIP_IMAGES
 :unpack:unpack.skipRows:PixelStorei,GL_UNPACK_SKIP_ROWS

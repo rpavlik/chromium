@@ -1,3 +1,7 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 :enable:enable:GL_FOG
 enable:color:color|r,g,b,a:Fogfv,GL_FOG_COLOR
 enable:index:index:Fogi,GL_FOG_INDEX

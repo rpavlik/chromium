@@ -1,3 +1,9 @@
+/* Copyright (c) 2001, Stanford University
+ * All rights reserved
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
+
 #include "state/cr_stateerror.h"
 #include "state/cr_statetypes.h"
 #include "cr_glstate.h"

@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys;
 import cPickle;
 import types;
@@ -12,6 +17,8 @@ parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
 gl_mapping = cPickle.load( parsed_file )
 keys = gl_mapping.keys()
 keys.sort()
+
+stub_common.CopyrightC()
 
 print """#include "unpacker.h"
 #include "cr_opcodes.h"

@@ -1,3 +1,9 @@
+/* Copyright (c) 2001, Stanford University
+ * All rights reserved.
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
+
 /* Chromium sources include this file instead of including
  * the GL/gl.h and GL/glext.h headers directly.
  */
@@ -14,7 +20,6 @@
 #include <GL/glext.h>
 
 #ifndef WINDOWS
-#define GL_GLEXT_PROTOTYPES
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,5 +33,6 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 #endif
 
 #endif
+
 
 #endif /* CR_GLWRAPPER_H */

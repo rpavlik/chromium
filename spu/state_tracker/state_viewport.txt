@@ -1,3 +1,7 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 :enable:scissorTest:GL_SCISSOR_TEST
 :s_dims:scissorX,scissorY,scissorW,scissorH:Scissor
 #+scissorTest:s_dims:*GLrecti p;

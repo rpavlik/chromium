@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++
 CXXFLAGS += -DLINUX -Wall -Werror

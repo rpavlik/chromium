@@ -1,3 +1,7 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 :enable:polygonSmooth:GL_POLYGON_SMOOTH
 :enable:polygonOffset:GL_POLYGON_OFFSET_FILL
 :enable:polygonStipple:GL_POLYGON_STIPPLE

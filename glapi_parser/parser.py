@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 #!/usr/common/bin/python
 
 # This script reads the GL.H and CR_GL.H header files and produces
@@ -12,8 +17,10 @@ output_mapping_file = open("gl_header.parsed", 'wb')
 output_mapping = {}
 
 for line in system_gl.readlines() + chromium_gl.readlines():
-	return_end = string.find( line, "gl" ) - 1
-	return_type = line[:return_end]
+	return_end = string.find( line, "gl" )
+	if return_end == -1:
+		continue
+	return_type = line[:return_end-1]
 
 	func_start = string.find( line, "gl" );
 	func_end = string.find( line, " (", func_start )

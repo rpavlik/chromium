@@ -1,3 +1,8 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
 import sys,os;
 import cPickle;
 import string;
@@ -10,6 +15,8 @@ gl_mapping = cPickle.load( parsed_file )
 
 keys = gl_mapping.keys()
 keys.sort();
+
+stub_common.CopyrightC()
 
 print '#ifndef CR_API_TEMPLATES_H'
 print '#define CR_API_TEMPLATES_H'
