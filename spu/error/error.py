@@ -46,7 +46,7 @@ for func_name in keys:
 		print '\treturn (%s)0;' % return_type
 	print '}'
 
-print 'SPUNamedFunctionTable error_table[] = {'
+print 'SPUNamedFunctionTable _cr_error_table[] = {'
 for index in range(len(keys)):
 	func_name = keys[index]
 	print '\t{ "%s", (SPUGenericFunction) error%s },' % (func_name, func_name )

@@ -7,12 +7,12 @@
 #include "cr_spu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable error_table[];
+extern SPUNamedFunctionTable _cr_error_table[];
 
 SPUFunctions error_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	error_table /* THE ACTUAL FUNCTIONS */
+	_cr_error_table /* THE ACTUAL FUNCTIONS */
 };
 
 SPUFunctions *errorSPUInit( int id, SPU *child, SPU *self,
