@@ -579,7 +579,7 @@ void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits
 	}
 	if (crStrstr((const char*)limits->extensions, "GL_NV_register_combiners"))
 	{
-		(*getIntegerv)(GL_MAX_GENERAL_COMBINERS_NV, &limits->maxGeneralCombiners);
+		(*getIntegerv)(GL_MAX_GENERAL_COMBINERS_NV, (GLint*)&limits->maxGeneralCombiners);
 	}
 	else
 	{

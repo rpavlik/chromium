@@ -110,7 +110,7 @@ __findExtFunction( const crOpenGLInterface *interface, const char *funcName )
 	if (f)
 		return f;
 	else if (interface->glXGetProcAddressARB)
-		return interface->glXGetProcAddressARB( funcName );
+		return interface->glXGetProcAddressARB( (const GLubyte *) funcName );
 	else
 		return NULL;
 #endif
