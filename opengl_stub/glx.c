@@ -208,8 +208,14 @@ GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share,
 	(void) vis;
 	(void) share;
 	(void) direct;
+#if 0
+	// This is moving to glXMakeCurrent because the tilesort SPU needs
+	// to know the drawable in order to do something intelligent with
+	// the viewport calls.
+
 	StubInit();
 	stub_spu->dispatch_table.CreateContext();
+#endif
 	return (GLXContext) "foo";
 }
 
@@ -337,28 +343,18 @@ Bool glXIsDirect( Display *dpy, GLXContext ctx )
 	return 1;
 }
 
-void __glX_WindowGetSize( Display *display, GLXDrawable drawable,
-		unsigned int *width_retval,
-		unsigned int *height_retval )
-{
-	Window       root;
-	int          x, y;
-	unsigned int width, height, border, depth;
-
-	if ( !XGetGeometry( display, drawable, &root, &x, &y,
-				&width, &height, &border, &depth ) )
-		crError( "__glX_WindowGetSize( ): XGetGeometry() failed!" );
-
-	*width_retval  = width;
-	*height_retval = height;
-}
-
-
 Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 {
+	static int first_time = 1;
 	(void) dpy;
 	(void) drawable;
 	(void) ctx;
+	if (first_time)
+	{
+		first_time = 0;
+		StubInit();
+		stub_spu->dispatch_table.CreateContext( (void *) dpy, (void *) drawable );
+	}
 	stub_spu->dispatch_table.MakeCurrent();
 	return True;
 }

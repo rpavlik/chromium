@@ -2,10 +2,22 @@ TOP = ..
 
 SHARED = 1
 LIBRARY = crunpacker
-FILES = unpack unpack_arrays unpack_calllists unpack_clipplane \
-	unpack_drawpixels unpack_feedback unpack_fog unpack_lights \
-	unpack_map unpack_materials unpack_matrices \
-	unpack_pixelmap unpack_readpixels unpack_stipple unpack_texture \
+FILES = unpack \
+	unpack_arrays \
+	unpack_calllists \
+	unpack_clipplane \
+	unpack_context \
+	unpack_drawpixels \
+	unpack_feedback \
+	unpack_fog \
+	unpack_lights \
+	unpack_map \
+	unpack_materials \
+	unpack_matrices \
+	unpack_pixelmap \
+	unpack_readpixels \
+	unpack_stipple \
+	unpack_texture \
 	unpack_writeback
 LIB_DEFS = unpack.def
 

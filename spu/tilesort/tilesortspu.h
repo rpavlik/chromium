@@ -42,6 +42,14 @@ typedef struct {
 	unsigned int MTU;
 	int num_servers;
 	TileSortSPUServer *servers;
+
+#ifdef WINDOWS
+	HDC client_hdc;
+	HWND client_hwnd;
+#else
+	Display *glx_display;
+	Drawable glx_drawable;
+#endif
 } TileSortSPU;
 
 typedef struct {

@@ -49,3 +49,4 @@ TexParameterfv
 TexParameteriv
 TexSubImage1D
 TexSubImage2D
+CreateContext

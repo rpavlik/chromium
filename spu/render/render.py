@@ -62,7 +62,13 @@ static CRDLL *__findSystemGL( void )
 """
 
 for func_name in stub_common.AllSpecials( "render_nop" ):
-	print 'void SPU_APIENTRY __renderNop%s(void) {}' % func_name
+	(return_type, names, types) = gl_mapping[func_name]
+	print 'void SPU_APIENTRY __renderNop%s%s' % (func_name, stub_common.ArgumentString( names, types ) )
+	print '{'
+	for name in names:
+		if name != "":
+			print '\t(void) %s;' % name
+	print '}'
 
 print """
 void renderspuLoadSystemGL( )

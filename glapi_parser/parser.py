@@ -40,6 +40,6 @@ for line in system_gl.readlines():
 
 output_mapping['SwapBuffers'] = ( 'void', [''], ['void'] )
 output_mapping['MakeCurrent'] = ( 'void', [''], ['void'] )
-output_mapping['CreateContext'] = ( 'void', [''], ['void'] )
+output_mapping['CreateContext'] = ( 'void', ['arg1', 'arg2'], ['void *', 'void *'] )
 
 cPickle.dump( output_mapping, output_mapping_file, 1 )

@@ -169,7 +169,7 @@ HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 	// to it, right?
 
 	StubInit();
-	stub_spu->dispatch_table.CreateContext();
+	stub_spu->dispatch_table.CreateContext( (void *) hdc, NULL );
 
 	/* hack hack hack */
 	return (HGLRC) 0x69696969;

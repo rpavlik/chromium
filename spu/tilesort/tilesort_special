@@ -5,3 +5,5 @@ CreateContext
 End
 MakeCurrent
 SwapBuffers
+Viewport
+Scissor

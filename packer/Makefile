@@ -8,6 +8,7 @@ FILES = packer \
 	pack_bounds \
 	pack_buffer \
 	pack_clipplane \
+	pack_context \
 	pack_current \
 	pack_fog \
 	pack_lights \

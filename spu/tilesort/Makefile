@@ -12,7 +12,8 @@ FILES = tilesortspu \
 	tilesortspu_init \
 	tilesortspu_misc \
 	tilesortspu_net \
-	tilesortspu_swap
+	tilesortspu_swap \
+	tilesortspu_viewport
 
 LIBRARIES = crutil crmothership crstate crpacker
 
