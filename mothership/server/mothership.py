@@ -31,9 +31,7 @@ Other internal functions/classes:
 
 import sys, string, types, traceback, re, threading, os, socket, select
 
-from crconfig import arch, crdir
-crbindir = os.path.join(crdir,'bin',arch)
-crlibdir = os.path.join(crdir,'lib',arch)
+from crconfig import arch, crdir, crbindir, crlibdir
 
 # This controls whether debug messages are printed (1=yes, 0=no)
 DebugMode = 1

@@ -13,9 +13,12 @@ include $(TOP)/cr.mk
 
 crconfig.py:
 	@echo Generating crconfig.py
-	@echo "arch = \"${ARCH}\"" > crconfig.py
+	@echo "import os" > crconfig.py
+	@echo "arch = \"${ARCH}\"" >> crconfig.py
 ifdef WINDOWS
 	@echo "crdir = \"$(shell cygpath -w $(shell dirname $(shell dirname $(shell pwd))))\"" >> crconfig.py
 else
 	@echo "crdir = \"$(shell dirname $(shell dirname $(shell pwd)))\"" >> crconfig.py
 endif
+	@echo "crbindir = os.path.join(crdir,'bin',arch)" >> crconfig.py
+	@echo "crlibdir = os.path.join(crdir,'lib',arch)" >> crconfig.py

@@ -103,8 +103,7 @@ def FindSPUNamesInDir(spuDirectory):
 
 def FindSPUNames():
 	"""Return turn list of SPUs found in the "default" directory"""
-	crlibdir = os.path.join(crconfig.crdir, 'lib', crconfig.arch)
-	l = FindSPUNamesInDir(crlibdir)
+	l = FindSPUNamesInDir(crconfig.crlibdir)
 	return l
 
 
@@ -113,7 +112,7 @@ def FindSPUNames():
 def GetSPUOptions(spuName):
 	"""Use the spuoptions program to get the params/options for the SPU.
 	Same result returned as for ParseSPUOptionsFile() above."""
-	program = os.path.join(crconfig.crdir, 'bin', crconfig.arch, 'spuoptions')
+	program = os.path.join(crconfig.crlibdir, 'spuoptions')
 	command = '%s --pythonmode %s' % (program, spuName)
 	f = os.popen(command, 'r')
 	if f:
