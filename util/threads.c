@@ -25,6 +25,7 @@ void crInitTSDF(CRtsd *tsd, void (*destructor)(void *))
 	if (tsd->key == 0xffffffff) {
 		crError("crInitTSD failed!");
 	}
+	(void) destructor;
 #else
 	if (pthread_key_create(&tsd->key, destructor) != 0) {
 		perror(INIT_TSD_ERROR);
