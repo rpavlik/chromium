@@ -12,7 +12,19 @@
 GLint PACKSPU_APIENTRY packspu_CreateContext( void *display, GLint visual )
 {
 	int writeback = pack_spu.server.conn->type == CR_DROP_PACKETS ? 0 : 1;
-	GLint return_val = (GLint) -1;
+	GLint return_val = (GLint) 5000; /* HUMUNGOUS HACK TO MATCH SERVER NUMBERING */
+
+	/* The hack exists solely to make file networking work for now.  This is
+	 * totally gross, but since the server expects the numbers to start from 5000,
+	 * we need to write them out this way.  This would be marginally less gross
+	 * if the numbers (500 and 5000) were maybe some sort of #define'd constants
+	 * somewhere so the client and the server could be aware of how each other
+	 * were numbering things in cases like file networking where they actually
+	 * care. 
+	 *
+	 * 	-Humper 
+	 *
+	 * 	*/
 
 	(void) display;
 	(void) visual;
@@ -25,8 +37,11 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( void *display, GLint visual )
 
 	/* Flush buffer and get return value */
 	packspuFlush(NULL);
-	while (writeback)
-		crNetRecv();
+	if (pack_spu.server.conn->type != CR_FILE)
+	{
+		while (writeback)
+			crNetRecv();
+	}
 
 	if (pack_spu.swap) {
 		return_val = (GLint) SWAP32(return_val);

@@ -32,6 +32,10 @@ void crServerReturnValue( const void *payload, unsigned int payload_len )
 {
 	CRMessageReadback *rb;
 	int msg_len = sizeof( *rb ) + payload_len;
+	if (cr_server.curClient->conn->type == CR_FILE)
+	{
+		return;
+	}
 	rb = (CRMessageReadback *) crAlloc( msg_len );
 
 	rb->header.type = CR_MESSAGE_READBACK;

@@ -189,6 +189,8 @@ void crServerGatherConfiguration(char *mothership)
 	}
 	cr_server.SpuContext = 0;
 
+	if (a_non_file_client != -1)
+	{
 	/* Sigh -- the servers need to know how big the whole mural is if we're 
 	 * doing tiling, so they can compute their base projection.  For now, 
 	 * just have them pretend to be one of their client SPU's, and redo 
@@ -201,24 +203,15 @@ void crServerGatherConfiguration(char *mothership)
 	 * sizes are uniform when optimizeBucket is true.
 	 */
 
-	crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
-	crMothershipGetServers( conn, response );
-
-	/* crMothershipGetServers() response is of the form
-	 * "N protocol://ip:port protocol://ipnumber:port ..."
-	 * For example: "2 tcpip://10.0.0.1:7000 tcpip://10.0.0.2:7000"
-	 */
-
-	serverchain = crStrSplitn( response, " ", 1 );
-	num_servers = crStrToInt( serverchain[0] );
-
-	if (a_non_file_client != -1)
-	{
 		int optTileWidth = 0, optTileHeight = 0;
 
 		crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
 		crMothershipGetServers( conn, response );
 
+	/* crMothershipGetServers() response is of the form
+	 * "N protocol://ip:port protocol://ipnumber:port ..."
+	 * For example: "2 tcpip://10.0.0.1:7000 tcpip://10.0.0.2:7000"
+	 */
 		serverchain = crStrSplitn( response, " ", 1 );
 		num_servers = crStrToInt( serverchain[0] );
 

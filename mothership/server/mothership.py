@@ -778,7 +778,7 @@ class CR:
 				clients += ','
 		for i in range(len(sock.node.file_clients)):
 			fname = sock.node.file_clients[i]
-			clients += fname
+			clients += "%s %d" % (fname, -1)
 			if i-len(sock.node.clients) != total_clients-1:
 				clients += ','
 		sock.Success( clients )
@@ -821,7 +821,7 @@ class CR:
 			line = string.strip(sock_wrapper.readline())
 			print >> sys.stderr, "Processing mothership request: \"%s\"" % line
 		except:
-			CRDebug( "Client blew up?" )
+			CRDebug( "Client quit without saying goodbye?  How rude!" )
 			self.ClientDisconnect( sock_wrapper )
 			return
 		words = string.split( line )
