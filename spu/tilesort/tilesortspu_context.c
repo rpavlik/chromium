@@ -114,7 +114,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 #endif
 
 #ifdef WINDOWS
-	crDebug("Tilesort SPU: HDC = %d\n", atoi(dpyName));
+	crDebug("Tilesort SPU: HDC = 0x%x\n", atoi(dpyName));
 	tilesort_spu.client_hdc = (HDC) atoi(dpyName);
 	tilesort_spu.client_hwnd = NULL;
 #else
