@@ -98,9 +98,12 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 
 	if (dlMode != GL_FALSE) {
 		/* just creating or compiling display lists */
-		if (tilesort_spu.lazySendDLists) crDLMCompileDrawPixels(width, height, format, type, pixels, clientState);
-		else if (tilesort_spu.swap) crPackDrawPixelsSWAP(width, height, format, type, pixels, &(ctx->client.unpack));
-		else crPackDrawPixels(width, height, format, type, pixels, &(ctx->client.unpack));
+		if (tilesort_spu.lazySendDLists)
+			crDLMCompileDrawPixels(width, height, format, type, pixels, clientState);
+		else if (tilesort_spu.swap)
+			crPackDrawPixelsSWAP(width, height, format, type, pixels, &(ctx->client.unpack));
+		else
+			crPackDrawPixels(width, height, format, type, pixels, &(ctx->client.unpack));
 		return;
 	}
 
