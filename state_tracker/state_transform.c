@@ -1066,7 +1066,6 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 				}
 			}
 		}
-
 		/* Since we were mucking with the active texture unit above set it to the
 		 * proper value now.  
 		 */
@@ -1275,17 +1274,20 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 		if (from->textureStack[i].depth != to->textureStack[i].depth)
 			checktex = 1;
 	
-	if ( checktex || CHECKDIRTY(t->textureMatrix, bitID) )
+	if (checktex || CHECKDIRTY(t->textureMatrix, bitID))
 	{
+		if (from->matrixMode != GL_TEXTURE) {
+			diff_api.MatrixMode(GL_TEXTURE);
+			from->matrixMode = GL_TEXTURE;
+		}
 		for (j = 0 ; j < maxTextureUnits; j++)
 		{
-			if (from->matrixMode != GL_TEXTURE) {
-				diff_api.MatrixMode(GL_TEXTURE);
-				from->matrixMode = GL_TEXTURE;
-			}
-
 			if (from->textureStack[j].depth > to->textureStack[j].depth) 
 			{
+				if (textureFrom->curTextureUnit != j) {
+					diff_api.ActiveTextureARB( j + GL_TEXTURE0_ARB );
+					textureFrom->curTextureUnit = j;
+				}
 				for (i = to->textureStack[j].depth; i < from->textureStack[j].depth; i++) 
 				{
 					diff_api.PopMatrix();
@@ -1310,6 +1312,9 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 			from->textureStack[j].depth = to->textureStack[j].depth;
 		}
 		CLEARDIRTY(t->textureMatrix, nbitID);
+
+		/* Restore proper active texture unit */
+		diff_api.ActiveTextureARB(GL_TEXTURE0_ARB + toCtx->texture.curTextureUnit);
 	}
 
 	/* Color matrix */
