@@ -24,7 +24,7 @@ typedef struct CRHashIdPoolRec {
 } CRHashIdPool;
 
 typedef struct CRHashNode {
-        unsigned int key;
+        unsigned long key;
         void *data;
         struct CRHashNode *next;
 } CRHashNode;
@@ -345,12 +345,12 @@ void crHashtableWalk( CRHashTable *hash, CRHashtableWalkCallback walkFunc , void
 	}
 }
 
-static unsigned int crHash( unsigned int key )
+static unsigned int crHash( unsigned long key )
 {
 	return key % CR_NUM_BUCKETS;
 }
 
-void crHashtableAdd( CRHashTable *h, unsigned int key, void *data )
+void crHashtableAdd( CRHashTable *h, unsigned long key, void *data )
 {
 	CRHashNode *node = (CRHashNode *) crCalloc( sizeof( CRHashNode ) );
 	node->key = key;
@@ -372,7 +372,7 @@ GLuint crHashtableAllocKeys( CRHashTable *h,  GLsizei range)
 	return res;
 }
 
-void crHashtableDelete( CRHashTable *h, unsigned int key, CRHashtableCallback deleteFunc )
+void crHashtableDelete( CRHashTable *h, unsigned long key, CRHashtableCallback deleteFunc )
 {
 	unsigned int index = crHash( key );
 	CRHashNode *temp, *beftemp = NULL;
@@ -396,13 +396,13 @@ void crHashtableDelete( CRHashTable *h, unsigned int key, CRHashtableCallback de
 	crFree( temp );
 }
 
-void crHashtableDeleteBlock( CRHashTable *h, unsigned int key, GLsizei range, CRHashtableCallback deleteFunc )
+void crHashtableDeleteBlock( CRHashTable *h, unsigned long key, GLsizei range, CRHashtableCallback deleteFunc )
 {
 	crHashtableDelete( h, key, deleteFunc );
 	crHashIdPoolFreeBlock( h->idPool, key, range);
 }
 
-void *crHashtableSearch( const CRHashTable *h, unsigned int key )
+void *crHashtableSearch( const CRHashTable *h, unsigned long key )
 {
 	unsigned int index = crHash( key );
 	CRHashNode *temp;
@@ -418,7 +418,7 @@ void *crHashtableSearch( const CRHashTable *h, unsigned int key )
 	return temp->data;
 }
 
-void crHashtableReplace( CRHashTable *h, unsigned int key, void *data, int free_mem )
+void crHashtableReplace( CRHashTable *h, unsigned long key, void *data, int free_mem )
 {
 	unsigned int index = crHash( key );
 	CRHashNode *temp;

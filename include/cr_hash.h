@@ -22,12 +22,12 @@ typedef void (*CRHashtableWalkCallback)(void *data1, void *data2);
 
 CRHashTable *crAllocHashtable( void );
 void crFreeHashtable( CRHashTable *hash, CRHashtableCallback deleteCallback );
-void crHashtableAdd( CRHashTable *h, unsigned int key, void *data );
+void crHashtableAdd( CRHashTable *h, unsigned long key, void *data );
 GLuint crHashtableAllocKeys( CRHashTable *h, GLsizei range );
-void crHashtableDelete( CRHashTable *h, unsigned int key, CRHashtableCallback deleteCallback );
-void crHashtableDeleteBlock( CRHashTable *h, unsigned int key, GLsizei range, CRHashtableCallback deleteFunc );
-void *crHashtableSearch( const CRHashTable *h, unsigned int key );
-void crHashtableReplace( CRHashTable *h, unsigned int key, void *data, int free_mem );
+void crHashtableDelete( CRHashTable *h, unsigned long key, CRHashtableCallback deleteCallback );
+void crHashtableDeleteBlock( CRHashTable *h, unsigned long key, GLsizei range, CRHashtableCallback deleteFunc );
+void *crHashtableSearch( const CRHashTable *h, unsigned long key );
+void crHashtableReplace( CRHashTable *h, unsigned long key, void *data, int free_mem );
 unsigned int crHashtableNumElements( const CRHashTable *h) ;
 GLboolean crHashtableIsKeyUsed( const CRHashTable *h, GLuint id );
 void crHashtableWalk( CRHashTable *hash, CRHashtableWalkCallback walkFunc , void *data);
