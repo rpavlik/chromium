@@ -373,18 +373,6 @@ stubGetWindowGeometry( const WindowInfo *window, int *x, int *y,
 }
 
 static void
-GetWindowTitle( const WindowInfo *window, char *title )
-{
-	HWND hwnd;
-	/* XXX - we don't handle recurseUp */
-	hwnd = WindowFromDC( window->drawable );
-	if (hwnd)
-		GetWindowText(hwnd, title, 100);
-	else
-		title[0] = 0;
-}
-
-static void
 GetCursorPosition( const WindowInfo *window, int pos[2] )
 {
 	RECT rect;
@@ -397,6 +385,63 @@ GetCursorPosition( const WindowInfo *window, int pos[2] )
 		pos[1] = point.y - rect.top;
 	}
 	else {
+		pos[0] = 0;
+		pos[1] = 0;
+	}
+}
+
+static void
+GetCursorPosition( const WindowInfo *window, int pos[2] )
+{
+	RECT rect;
+	POINT point;
+	GLint size[2], x, y;
+	unsigned int NativeHeight, NativeWidth, ChromiumHeight, ChromiumWidth;
+	float WidthRatio, HeightRatio;
+	static int DebugFlag = 0;
+	
+	// apparently the "window" parameter passed to this 
+	// function contains the native window information
+	HWND NATIVEhwnd = WindowFromDC( window->drawable );	
+
+	// get the native window's height and width
+	stubGetWindowGeometry(window, &x, &y, &NativeWidth, &NativeHeight);
+
+	// get the spu window's height and width
+	stub.spu->dispatch_table.GetChromiumParametervCR(GL_WINDOW_SIZE_CR, window->spuWindow, GL_INT, 2, size);
+	ChromiumWidth = size[0];
+	ChromiumHeight = size[1];
+
+	// get the ratio of the size of the native window to the cr window
+	WidthRatio = (float)ChromiumWidth / (float)NativeWidth;
+	HeightRatio = (float)ChromiumHeight / (float)NativeHeight;
+	
+	// output some debug information at the beginning
+	if(DebugFlag)
+	{
+		DebugFlag = 0;
+		crDebug("Native Window Handle = %d", NATIVEhwnd);
+		crDebug("Native Width = %i", NativeWidth);
+		crDebug("Native Height = %i", NativeHeight);
+		crDebug("Chromium Width = %i", ChromiumWidth);
+		crDebug("Chromium Height = %i", ChromiumHeight);
+	}
+		
+	if (NATIVEhwnd) 
+	{ 
+		GetClientRect( NATIVEhwnd, &rect );
+		GetCursorPos (&point);
+		
+		// make sure these coordinates are relative to the native window,
+		// not the whole desktop
+		ScreenToClient(NATIVEhwnd, &point);
+
+		// calculate the new position of the virtual cursor
+		pos[0] = (int)(point.x * WidthRatio);
+		pos[1] = (int)((NativeHeight - point.y) * HeightRatio);
+	}
+	else 
+	{
 		pos[0] = 0;
 		pos[1] = 0;
 	}
