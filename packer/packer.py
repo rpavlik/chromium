@@ -89,7 +89,14 @@ def UpdateCurrentPointer( func_name ):
 		print "\tpc->current.c.%s.%s = data_ptr;" % (name,type)
 		return
 
-	# XXX FogCoord and SecondaryColor!!!
+	m = re.match( r"^(FogCoord)(f|d)EXT$", func_name )
+	if m :
+		k = m.group(1)
+		name = 'fogCoord'
+		type = m.group(2) + "1"
+		print "\tpc->current.c.%s.%s = data_ptr;" % (name,type)
+		return
+
 
 	m = re.search( r"^(VertexAttrib)([1234])N?(ub|b|s|f|d)(NV|ARB)$", func_name )
 	if m :
@@ -170,7 +177,7 @@ def PrintFunc( func_name, params, is_swapped, can_have_pointers ):
 	else:
 		counter = 0
 
-	# Now emit, the WRITE_() macros for all parameters
+	# Now emit the WRITE_() macros for all parameters
 	for index in range(0,len(params)):
 		(name, type, vecSize) = params[index]
 		# if we're converting a vector-valued function to a non-vector func:
