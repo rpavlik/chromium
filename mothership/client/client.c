@@ -74,6 +74,15 @@ int crMothershipReadResponse( CRConnection *conn, void *buf )
 	return (code == 200);
 }
 
+
+
+/**********************************************************************
+ * crMothershipIdentify*() functions.
+ * Called by nodes and SPUs to identify themselves to the mothership.
+ * This usually has to be done before any other mothership communications.
+ */
+
+/* Called by SPUs to identify themselves to the mothership */
 void crMothershipIdentifySPU( CRConnection *conn, int spu )
 {
 	if (!crMothershipSendString( conn, NULL, "spu %d", spu ))
@@ -82,61 +91,9 @@ void crMothershipIdentifySPU( CRConnection *conn, int spu )
 	}
 }
 
-int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *param, ... )
-{
-	va_list args;
-	char txt[8096];
-	va_start( args, param );
-	vsprintf( txt, param, args );
-	va_end( args );
-
-	return crMothershipSendString( conn, response, "spuparam %s", txt );
-}
-
-int crMothershipGetCRUTServerParam( CRConnection *conn, char *response, const char *param, ... )
-{
-	va_list args;
-	char txt[8096];
-	va_start( args, param );
-	vsprintf( txt, param, args );
-	va_end( args );
-
-	return crMothershipSendString( conn, response, "crutserverparam %s", txt );
-}
-
-int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param, ... )
-{
-	va_list args;
-	char txt[8096];
-	va_start( args, param );
-	vsprintf( txt, param, args );
-	va_end( args );
-
-	return crMothershipSendString( conn, response, "serverparam %s", txt );
-}
-
-int crMothershipGetFakerParam( CRConnection *conn, char *response, const char *param, ... )
-{
-	va_list args;
-	char txt[8096];
-	va_start( args, param );
-	vsprintf( txt, param, args );
-	va_end( args );
-
-	return crMothershipSendString( conn, response, "fakerparam %s", txt );
-}
-
-
-void crMothershipReset( CRConnection *conn )
-{
-	if (!crMothershipSendString( conn, NULL, "reset" ))
-	{
-		crError( "Couldn't reset the server!" );
-	}
-}
-
 #define INSIST(x) if (!x) crError( "Bad Mothership response: %s", response )
 
+/* Called by app faker nodes to identify themselves to the mothership */
 void crMothershipIdentifyFaker( CRConnection *conn, char *response )
 {
 	char hostname[1024];
@@ -147,6 +104,7 @@ void crMothershipIdentifyFaker( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "faker %s", hostname ));
 }
 
+/* Called by OpenGL faker library to identify itself to the mothership */
 void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_id )
 {
 	char hostname[1024];
@@ -158,6 +116,7 @@ void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_i
 	INSIST( crMothershipSendString( conn, response, "opengldll %s %s", app_id, hostname ));
 }
 
+/* Called by crserver/network nodes to identify themselves to the mothership */
 void crMothershipIdentifyServer( CRConnection *conn, char *response )
 {
 	char hostname[1024];
@@ -168,6 +127,7 @@ void crMothershipIdentifyServer( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "server %s", hostname ));
 }
 
+/* Called by CRUT client nodes to identify themselves to the mothership */
 void crMothershipIdentifyCRUTClient( CRConnection *conn, char *response )
 {
 	char hostname[1024];
@@ -178,6 +138,7 @@ void crMothershipIdentifyCRUTClient( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "crutclient %s", hostname ));
 }
 
+/* Called by CRUT server nodes to identify themselves to the mothership */
 void crMothershipIdentifyCRUTServer( CRConnection *conn, char *response )
 {
 	char hostname[1024];
@@ -188,6 +149,7 @@ void crMothershipIdentifyCRUTServer( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "crutserver %s", hostname ));
 }
 
+/* Called by CRUT proxy nodes to identify themselves to the mothership */
 void crMothershipIdentifyCRUTProxy( CRConnection *conn, char *response )
 {
 	char hostname[1024];
@@ -198,16 +160,36 @@ void crMothershipIdentifyCRUTProxy( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "crutproxy %s", hostname ));
 }
 
+
+
+/**********************************************************************
+ * Mothership functions.
+ */
+
+/* Send reset message to the mothership */
+void crMothershipReset( CRConnection *conn )
+{
+	if (!crMothershipSendString( conn, NULL, "reset" ))
+	{
+		crError( "Couldn't reset the server!" );
+	}
+}
+
+/* Set a mothership configuration parameter */
 void crMothershipSetParam( CRConnection *conn, const char *param, const char *value )
 {
 	(void) crMothershipSendString( conn, NULL, "setparam %s %s", param, value );
 }
 
+/* Get a mothership configuration parameter */
 int crMothershipGetParam( CRConnection *conn, const char *param, char *response )
 {
 	return crMothershipSendString( conn, response, "getparam %s", param );
 }
 
+/* Get the Chromium MTU.
+ * This is just a convenience function.
+ */
 int crMothershipGetMTU( CRConnection *conn )
 {
 	char response[4096];
@@ -217,44 +199,60 @@ int crMothershipGetMTU( CRConnection *conn )
 	return mtu;
 }
 
-int crMothershipGetRank( CRConnection *conn, char *response )
-{
-	return crMothershipSendString( conn, response, "rank" );
-}
 
-void crMothershipGetClients( CRConnection *conn, char *response )
-{
-	INSIST( crMothershipSendString( conn, response, "clients" ));
-}
 
-void crMothershipGetCRUTServer( CRConnection *conn, char *response )
-{
-	INSIST( crMothershipSendString( conn, response, "crutservers" ));
-}
+/**********************************************************************
+ * SPU functions  (i.e. called from SPUs)
+ */
 
-void crMothershipGetCRUTClients( CRConnection *conn, char *response )
-{
-	INSIST( crMothershipSendString( conn, response, "crutclients" ));
-}
-
+/* Called by (terminal) SPUs to get a list of their servers */
 void crMothershipGetServers( CRConnection *conn, char *response )
 {
 	INSIST( crMothershipSendString( conn, response, "servers" ));
 }
 
+/* Called by SPUs to get their config parameters */
+int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *param )
+{
+	return crMothershipSendString( conn, response, "spuparam %s", param );
+}
+
+/* Called by SPUs to get the list of tiles from a specific server */
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num )
 {
 	return crMothershipSendString( conn, response, "tiles %d", server_num );
 }
 
+/* Called by SPUs to get list of displays (for warped tiles) */
 int crMothershipGetDisplays( CRConnection *conn, char *response )
 {
 	return crMothershipSendString( conn, response, "displays");
 }
 
+/* Called by SPUs to get list of tiles for the given server.
+ * Each set of tile parameters is preceeded by a display number.
+ */
 int crMothershipGetDisplayTiles( CRConnection *conn, char *response, int server_num )
 {
 	return crMothershipSendString( conn, response, "display_tiles %d", server_num );
+}
+
+
+
+/**********************************************************************
+ * CRServer/Network node functions  (i.e. called from network nodes)
+ */
+
+/* Called by crserver nodes to get list of its clients */
+void crMothershipGetClients( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "clients" ));
+}
+
+/* Called by crserver nodes to get their config parameters */
+int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param)
+{
+	return crMothershipSendString( conn, response, "serverparam %s", param );
 }
 
 int crMothershipGetServerTiles( CRConnection *conn, char *response )
@@ -272,4 +270,48 @@ int crMothershipRequestTileLayout( CRConnection *conn, char *response,
 {
 	return crMothershipSendString( conn, response, "gettilelayout %d %d",
 																 muralWidth, muralHeight );
+}
+
+
+
+/**********************************************************************
+ * Faker/client node functions.
+ */
+
+/* Called by app nodes to get their config parameters */
+int crMothershipGetFakerParam( CRConnection *conn, char *response, const char *param )
+{
+	return crMothershipSendString( conn, response, "fakerparam %s", param );
+}
+
+
+/**********************************************************************
+ * Server or app node functions.
+ */
+
+/* Called by nodes to get their rank (for Quadrics networking) */
+int crMothershipGetRank( CRConnection *conn, char *response )
+{
+	return crMothershipSendString( conn, response, "rank" );
+}
+
+
+
+/**********************************************************************
+ * CRUT functions
+ */
+
+int crMothershipGetCRUTServerParam( CRConnection *conn, char *response, const char *param )
+{
+	return crMothershipSendString( conn, response, "crutserverparam %s", param );
+}
+
+void crMothershipGetCRUTServer( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "crutservers" ));
+}
+
+void crMothershipGetCRUTClients( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "crutclients" ));
 }

@@ -4,17 +4,14 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
-#include <assert.h>
-
+#include "cr_error.h"
+#include "cr_mothership.h"
+#include "cr_string.h"
+#include "cr_mem.h"
 #ifndef WINDOWS
 #include <unistd.h>
 #endif
 #include "saveframespu.h"
-
-#include "cr_mothership.h"
-#include "cr_string.h"
-#include "cr_mem.h"
 
 static void
 __setDefaults(void)
@@ -81,11 +78,8 @@ static void
 set_geometry(void *foo, const char *response)
 {
 	int x, y, w, h, result;
-	if (response[0] == '[')
-		result = sscanf(response, "[%d, %d, %d, %d]", &x, &y, &w, &h);
-	else
-		result = sscanf(response, "%d, %d, %d, %d", &x, &y, &w, &h);
-
+	CRASSERT(response[0] == '[');
+	result = sscanf(response, "[%d, %d, %d, %d]", &x, &y, &w, &h);
 	saveframe_spu.x = result > 0 ? x : 0;
 	saveframe_spu.y = result > 1 ? y : 0;
 	saveframe_spu.width = result > 2 ? w : -1;
@@ -131,7 +125,7 @@ SPUOptions saveframeSPUOptions[] = {
 	{"binary", CR_BOOL, 1, "1", NULL, NULL,
 	 "Binary PPM format", (SPUOptionCB) set_binary},
 
-	{"geometry", CR_INT, 4, "0, 0, -1, -1", "0, 0, 1, 1", NULL,
+	{"geometry", CR_INT, 4, "[0, 0, -1, -1]", "[0, 0, 1, 1]", NULL,
 	 "Geometry (x, y, w, h)", (SPUOptionCB) set_geometry},
 
 	{"enabled", CR_INT, 1, "1", "1", NULL,

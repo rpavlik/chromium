@@ -6,65 +6,122 @@
 
 #include "cr_error.h"
 #include "unpack_extend.h"
+#include "unpacker.h"
 
-void crUnpackDrawArrays(void)
+void crUnpackExtendVertexPointer(void)
 {
-	crError( "Can't decode DrawArrays" );
+	GLint size = READ_DATA( 8, GLint );
+	GLenum type = READ_DATA( 12, GLenum );
+	GLsizei stride = READ_DATA( 16, GLsizei );
+	GLintptrARB pointer = READ_DATA( 20, GLintptrARB );
+	cr_unpackDispatch.VertexPointer( size, type, stride, (void *) pointer );
 }
 
-void crUnpackArrayElement(void)
+void crUnpackExtendTexCoordPointer(void)
 {
-	crError( "Can't decode ArrayElement" );
+	GLint size = READ_DATA( 8, GLint );
+	GLenum type = READ_DATA( 12, GLenum );
+	GLsizei stride = READ_DATA( 16, GLsizei );
+	GLintptrARB pointer = READ_DATA( 20, GLintptrARB );
+	cr_unpackDispatch.TexCoordPointer( size, type, stride, (void *) pointer );
 }
 
-void crUnpackVertexPointer(void)
+void crUnpackExtendNormalPointer(void)
 {
-	crError( "Can't decode VertexPointer" );
+	GLenum type = READ_DATA( 8, GLenum );
+	GLsizei stride = READ_DATA( 12, GLsizei );
+	GLintptrARB pointer = READ_DATA( 16, GLintptrARB );
+	cr_unpackDispatch.NormalPointer( type, stride, (void *) pointer );
 }
 
-void crUnpackTexCoordPointer(void)
+void crUnpackExtendIndexPointer(void)
 {
-	crError( "Can't decode TexCoordPointer" );
+	GLenum type = READ_DATA( 8, GLenum );
+	GLsizei stride = READ_DATA( 12, GLsizei );
+	GLintptrARB pointer = READ_DATA( 16, GLintptrARB );
+	cr_unpackDispatch.IndexPointer( type, stride, (void *) pointer );
 }
 
-void crUnpackNormalPointer(void)
+void crUnpackExtendEdgeFlagPointer(void)
 {
-	crError( "Can't decode NormalPointer" );
+	GLsizei stride = READ_DATA( 8, GLsizei );
+	GLintptrARB pointer = READ_DATA( 12, GLintptrARB );
+	cr_unpackDispatch.EdgeFlagPointer( stride, (void *) pointer );
 }
 
-void crUnpackIndexPointer(void)
+void crUnpackExtendColorPointer(void)
 {
-	crError( "Can't decode IndexPointer" );
+	GLint size = READ_DATA( 8, GLint );
+	GLenum type = READ_DATA( 12, GLenum );
+	GLsizei stride = READ_DATA( 16, GLsizei );
+	GLintptrARB pointer = READ_DATA( 20, GLintptrARB );
+	cr_unpackDispatch.ColorPointer( size, type, stride, (void *) pointer );
 }
 
-void crUnpackEdgeFlagPointer(void)
+void crUnpackExtendFogCoordPointerEXT(void)
 {
-	crError( "Can't decode EdgeFlagPointer" );
+	GLenum type = READ_DATA( 8, GLenum );
+	GLsizei stride = READ_DATA( 12, GLsizei );
+	GLintptrARB pointer = READ_DATA( 16, GLintptrARB );
+	cr_unpackDispatch.FogCoordPointerEXT( type, stride, (void *) pointer );
 }
 
-void crUnpackColorPointer(void)
+void crUnpackExtendSecondaryColorPointerEXT(void)
 {
-	crError( "Can't decode ColorPointer" );
+	GLint size = READ_DATA( 8, GLint );
+	GLenum type = READ_DATA( 12, GLenum );
+	GLsizei stride = READ_DATA( 16, GLsizei );
+	GLintptrARB pointer = READ_DATA( 20, GLintptrARB );
+	cr_unpackDispatch.SecondaryColorPointerEXT( size, type, stride, (void *) pointer );
 }
 
-void crUnpackDrawElements(void)
+void crUnpackExtendVertexAttribPointerARB(void)
 {
-	crError( "Can't decode DrawElements" );
+	GLuint index = READ_DATA( 8, GLuint);
+	GLint size = READ_DATA( 12, GLint );
+	GLenum type = READ_DATA( 16, GLenum );
+	GLboolean normalized = READ_DATA( 20, GLboolean );
+	GLsizei stride = READ_DATA( 24, GLsizei );
+	GLintptrARB pointer = READ_DATA( 28, GLintptrARB );
+	cr_unpackDispatch.VertexAttribPointerARB( index, size, type, normalized, stride, (void *) pointer );
 }
 
-void crUnpackDrawRangeElements(void)
+void crUnpackExtendVertexAttribPointerNV(void)
 {
-	crError( "Can't decode DrawRangeElements" );
+	GLuint index = READ_DATA( 8, GLuint);
+	GLint size = READ_DATA( 12, GLint );
+	GLenum type = READ_DATA( 16, GLenum );
+	GLsizei stride = READ_DATA( 20, GLsizei );
+	GLintptrARB pointer = READ_DATA( 24, GLintptrARB );
+	cr_unpackDispatch.VertexAttribPointerNV( index, size, type, stride, (void *) pointer );
 }
 
-void crUnpackInterleavedArrays(void)
+void crUnpackExtendInterleavedArrays(void)
 {
-	crError( "Can't decode InterleavedArrays" );
+	GLenum format = READ_DATA( 8, GLenum );
+	GLsizei stride = READ_DATA( 12, GLsizei );
+	GLintptrARB pointer = READ_DATA( 16, GLintptrARB );
+	cr_unpackDispatch.InterleavedArrays( format, stride, (void *) pointer );
 }
 
-void crUnpackSecondaryColorPointerEXT(void)
+void crUnpackExtendDrawElements(void)
 {
-	crError( "Can't decode SecondaryColorPointerEXT" );
+	GLenum mode = READ_DATA( 8, GLenum );
+	GLsizei count = READ_DATA( 12, GLsizei );
+	GLenum type = READ_DATA( 16, GLenum );
+	GLintptrARB indices = READ_DATA( 20, GLintptrARB );
+	cr_unpackDispatch.DrawElements( mode, count, type, (void *) indices);
+}
+
+void crUnpackExtendDrawRangeElements(void)
+{
+	GLenum mode = READ_DATA( 8, GLenum );
+	GLuint start = READ_DATA( 12, GLuint );
+	GLuint end = READ_DATA( 16, GLuint );
+	GLsizei count = READ_DATA( 20, GLsizei );
+	GLenum type = READ_DATA( 24, GLenum );
+	GLintptrARB indices = READ_DATA( 28, GLintptrARB );
+	cr_unpackDispatch.DrawRangeElements( mode, start, end, count, type, (void *) indices);
 }
 
 void crUnpackMultiDrawArraysEXT(void)

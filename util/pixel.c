@@ -9,9 +9,6 @@
 #include "cr_mem.h"
 #include "cr_version.h"
 
-#include <memory.h>
-#include <stdio.h>
-
 /*
  * Return bytes per pixel for the given format/type combination.
  */

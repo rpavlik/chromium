@@ -3,18 +3,14 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
+import cPickle
 
-sys.path.append( "../opengl_stub" )
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../glapi_parser" )
+import apiutil
 
-import stub_common;
 
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """#include "cr_spu.h"
 #include "chromium.h"
@@ -33,8 +29,8 @@ types = [ 'GLint', 'GLfloat', 'GLdouble', 'GLboolean' ]
 
 for index in range(len(funcs)):
 	func_name = funcs[index]
-	(return_type, arg_names, arg_types) = gl_mapping[func_name]
-	print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s%s' % ( func_name, stub_common.ArgumentString( arg_names, arg_types ))
+	params = apiutil.Parameters(func_name)
+	print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s( %s )' % ( func_name, apiutil.MakeDeclarationString(params))
 	print '{'
 	print '\t%s *get_values;' % types[index]
 	print '\tint tablesize = __numValues( pname ) * sizeof(%s);' % types[index]

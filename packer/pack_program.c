@@ -49,20 +49,6 @@ void PACK_APIENTRY crPackProgramParameters4fvNV (GLenum target, GLuint index, GL
 }
 
 
-void PACK_APIENTRY crPackVertexAttribPointerNV( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
-{
-	GET_PACKER_CONTEXT(pc);
-	(void) pc;
-	(void) index;
-	(void) size;
-	(void) type;
-	(void) stride;
-	(void) pointer;
-	crWarning("Unimplemented VertexAttribPointerNV");
-}
-
-
-
 void PACK_APIENTRY crPackVertexAttribs1dvNV( GLuint index, GLsizei n, const GLdouble *v )
 {
 	GLint i;
@@ -215,52 +201,6 @@ void PACK_APIENTRY crPackRequestResidentProgramsNV( GLsizei n, const GLuint *ids
 }
 
 
-void PACK_APIENTRY crPackProgramLocalParameter4dARB (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
-{
-	GET_PACKER_CONTEXT(pc);
-	unsigned char *data_ptr;
-
-	GET_BUFFERED_POINTER(pc, 48);
-	WRITE_DATA(0, int, 48);
-	WRITE_DATA(4, GLenum, CR_PROGRAMLOCALPARAMETER4DARB_EXTEND_OPCODE);
-	WRITE_DATA(8, GLenum, target);
-	WRITE_DATA(12, GLuint, index);
-	WRITE_DOUBLE(16, x);
-	WRITE_DOUBLE(24, y);
-	WRITE_DOUBLE(32, z);
-	WRITE_DOUBLE(40, w);
-	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
-}
-
-void PACK_APIENTRY crPackProgramLocalParameter4dvARB (GLenum target, GLuint index, const GLdouble * params)
-{
-	crPackProgramLocalParameter4dARB(target, index,
-																	 params[0], params[1], params[2], params[3]);
-}
-
-void PACK_APIENTRY crPackProgramLocalParameter4fARB (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
-{
-	GET_PACKER_CONTEXT(pc);
-	unsigned char *data_ptr;
-
-	GET_BUFFERED_POINTER(pc, 32);
-	WRITE_DATA(0, int, 32);
-	WRITE_DATA(4, GLenum, CR_PROGRAMLOCALPARAMETER4FARB_EXTEND_OPCODE);
-	WRITE_DATA(8, GLenum, target);
-	WRITE_DATA(12, GLuint, index);
-	WRITE_DATA(16, GLfloat, x);
-	WRITE_DATA(20, GLfloat, y);
-	WRITE_DATA(24, GLfloat, z);
-	WRITE_DATA(28, GLfloat, w);
-	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
-}
-
-void PACK_APIENTRY crPackProgramLocalParameter4fvARB (GLenum target, GLuint index, const GLfloat * params)
-{
-	crPackProgramLocalParameter4fARB(target, index,
-																	 params[0], params[1], params[2], params[3]);
-}
-
 void PACK_APIENTRY crPackProgramNamedParameter4fNV (GLuint id, GLsizei len, const GLubyte * name, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
 	GET_PACKER_CONTEXT(pc);
@@ -345,19 +285,6 @@ void PACK_APIENTRY crPackGetProgramNamedParameterdvNV( GLuint id, GLsizei len, c
 }
 
 
-void PACK_APIENTRY crPackVertexAttribPointerARB( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer )
-{
-	GET_PACKER_CONTEXT(pc);
-	(void) pc;
-	(void) index;
-	(void) size;
-	(void) type;
-	(void) normalized;
-	(void) stride;
-	(void) pointer;
-	crWarning("Unimplemented VertexAttribPointerARB");
-}
-
 void PACK_APIENTRY crPackDeleteProgramsARB( GLsizei n, const GLuint *ids )
 {
 	GET_PACKER_CONTEXT(pc);
@@ -368,6 +295,8 @@ void PACK_APIENTRY crPackDeleteProgramsARB( GLsizei n, const GLuint *ids )
 	(void) n;
 	(void) ids;
 }
+
+
 void PACK_APIENTRY  crPackProgramStringARB( GLenum target, GLenum format, GLsizei len, const void *string )
 {
 	const int packet_length = 20 + len;
@@ -381,41 +310,6 @@ void PACK_APIENTRY  crPackProgramStringARB( GLenum target, GLenum format, GLsize
 	WRITE_DATA(12, GLuint, format);
 	WRITE_DATA(16, GLsizei, len );
 	crMemcpy( (void *) (data_ptr + 20), string, len );
-	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
-}
-
-
-void PACK_APIENTRY crPackProgramEnvParameter4dvARB( GLenum target, GLuint index, const GLdouble *params ) 
-{
-	GET_PACKER_CONTEXT(pc);
-	unsigned char *data_ptr;
-
-	GET_BUFFERED_POINTER(pc, 48);
-	WRITE_DATA(0, int, 48);
-	WRITE_DATA(4, GLenum, CR_PROGRAMENVPARAMETER4DARB_EXTEND_OPCODE);
-	WRITE_DATA(8, GLenum, target);
-	WRITE_DATA(12, GLuint, index);
-	WRITE_DOUBLE(16, params[0]);
-	WRITE_DOUBLE(24, params[1]);
-	WRITE_DOUBLE(32, params[2]);
-	WRITE_DOUBLE(40, params[3]);
-	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
-}
-
-void PACK_APIENTRY crPackProgramEnvParameter4fvARB( GLenum target, GLuint index, const GLfloat *params ) 
-{
-	GET_PACKER_CONTEXT(pc);
-	unsigned char *data_ptr;
-
-	GET_BUFFERED_POINTER(pc, 32);
-	WRITE_DATA(0, int, 32);
-	WRITE_DATA(4, GLenum, CR_PROGRAMENVPARAMETER4FVARB_EXTEND_OPCODE);
-	WRITE_DATA(8, GLenum, target);
-	WRITE_DATA(12, GLuint, index);
-	WRITE_DATA(16, GLfloat, params[0]);
-	WRITE_DATA(20, GLfloat, params[1]);
-	WRITE_DATA(24, GLfloat, params[2]);
-	WRITE_DATA(28, GLfloat, params[3]);
 	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
 }
 

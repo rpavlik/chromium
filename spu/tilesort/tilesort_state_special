@@ -176,11 +176,6 @@ NormalPointer
 TexCoordPointer
 EdgeFlagPointer
 InterleavedArrays
-GetPointerv
-GetFloatv
-GetIntegerv
-GetBooleanv
-GetDoublev
 ActiveTextureARB
 ClientActiveTextureARB
 CombinerParameterfvNV
@@ -265,3 +260,12 @@ GetFenceivNV
 IsFenceNV
 TestFenceNV
 DeleteFencesNV
+GetBufferParameterivARB
+GetBufferPointervARB
+GenBuffersARB
+BindBufferARB
+GenQueriesARB
+GetQueryivARB
+GetQueryObjectivARB
+GetQueryOjbectuivARB
+IsQueryARB

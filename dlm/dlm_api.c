@@ -37,7 +37,7 @@ crdlm_NewList(GLuint listIdentifier, GLenum mode, SPUDispatchTable * table)
 
 	CRASSERT(table);
 
-	/* crDebug("crdlm_NewList(%d,%d)", listIdentifier, mode); */
+	/*crDebug("crdlm_NewList(%d,%d)", listIdentifier, mode); */
 
 	/* Error checks: 0 is not a valid identifier, and
 	 * we can't call NewList if NewList has been called
@@ -72,7 +72,7 @@ crdlm_NewList(GLuint listIdentifier, GLenum mode, SPUDispatchTable * table)
 			return;
 		}
 
-		listInfo = (DLMListInfo *) crAlloc(sizeof(DLMListInfo));
+		listInfo = (DLMListInfo *) crCalloc(sizeof(DLMListInfo));
 		if (!(listInfo))
 		{
 			char msg[1000];
@@ -97,6 +97,7 @@ crdlm_NewList(GLuint listIdentifier, GLenum mode, SPUDispatchTable * table)
 		listInfo->bbox.ymax = -FLT_MAX;
 		listInfo->bbox.zmin = FLT_MAX;
 		listInfo->bbox.zmax = -FLT_MAX;
+		listInfo->listSent = GL_FALSE;
 
 		listState->currentListInfo = listInfo;
 		listState->currentListIdentifier = listIdentifier;
@@ -196,6 +197,7 @@ crdlm_EndList(void)
 										 listState->currentListInfo, crdlm_free_list);
 	DLM_UNLOCK(listState->dlm);
 
+	
 	/*
 	printf("%s bbox:\n", __FUNCTION__);
 	printf(" X: %f .. %f\n", listState->currentListInfo->bbox.xmin, listState->currentListInfo->bbox.xmax);
@@ -320,6 +322,7 @@ crdlm_CallList(GLuint listIdentifier, SPUDispatchTable * table)
 		return;
 	}
 
+
 	crDLMReplayList(listState->dlm, listIdentifier, table);
 }
 
@@ -376,6 +379,77 @@ crdlm_CallLists(GLsizei n, GLenum type, const GLvoid * lists,
 				crdlm_CallList(base +
 											 256 * (256 * (256 * data[0] + data[1]) + data[2]) +
 											 data[3], table);
+		}
+		break;
+
+	default:
+		crdlm_error(__LINE__, __FILE__, GL_INVALID_ENUM, "CallLists");
+		return;
+	}
+}
+
+void
+crdlm_LazyCallLists(GLsizei n, GLenum type, const GLvoid * lists,
+								SPUDispatchTable *table)
+{
+	register int i;
+	CRDLMContextState *listState = CURRENT_STATE();
+	const GLuint base = listState->listBase;
+
+	/* CallLists will simply expand into a sequence of CallList
+	 * invocations.  The display list really doesn't care, after all...
+	 */
+	switch (type)
+	{
+
+#define EXPAND(typeIndicator, type)\
+	case typeIndicator: { \
+	    type *data = (type *)lists; \
+      /*printf("Calling %d (b=%d)\n", (int)(base + *data), base);*/\
+	    for (i = 0; i < n; i++, data++) crdlm_CallList(base + (GLuint) *data, table); \
+	} \
+	break
+
+	EXPAND(GL_BYTE, GLbyte);
+	EXPAND(GL_UNSIGNED_BYTE, GLubyte);
+	EXPAND(GL_SHORT, GLshort);
+	EXPAND(GL_UNSIGNED_SHORT, GLushort);
+	EXPAND(GL_INT, GLint);
+	EXPAND(GL_UNSIGNED_INT, GLuint);
+	EXPAND(GL_FLOAT, GLfloat);
+
+  case GL_2_BYTES:
+		{
+			GLubyte *data = (GLubyte *) lists;
+			for (i = 0; i < n; i++, data += 2) 
+				if (!crDLMIsListSent(listState->dlm, base + 256 * data[0] + data[1])) {
+					crdlm_CallList(base + 256 * data[0] + data[1], table);
+					crDLMListSent(listState->dlm, base + 256 * data[0] + data[1]);
+				}
+			
+		}
+		break;
+
+	case GL_3_BYTES:
+		{
+			GLubyte *data = (GLubyte *) lists;
+			for (i = 0; i < n; i++, data += 3)
+				if (!crDLMIsListSent(listState->dlm,base + 256 * (256 * data[0] + data[1]) + data[2])) {
+					crdlm_CallList(base + 256 * (256 * data[0] + data[1]) + data[2], table);
+					crDLMListSent(listState->dlm,base + 256 * (256 * data[0] + data[1]) + data[2]);
+				}
+		}
+		break;
+
+	case GL_4_BYTES:
+		{
+			GLubyte *data = (GLubyte *) lists;
+			for (i = 0; i < n; i++, data += 4)
+				if (!crDLMIsListSent(listState->dlm, base +
+					256 * (256 * (256 * data[0] + data[1]) + data[2]) + data[3])) {
+					crdlm_CallList(base + 256 * (256 * (256 * data[0] + data[1]) + data[2]) + data[3], table);
+					crDLMListSent(listState->dlm, base + 256 * (256 * (256 * data[0] + data[1]) + data[2]) + data[3]);
+				}
 		}
 		break;
 

@@ -871,3 +871,81 @@ int crdlm_pointers_CallLists(struct instanceCallLists *instance, GLsizei n, GLen
 	return size;
 }
 
+
+int crdlm_pointers_VertexAttribs1dvNV(struct instanceVertexAttribs1dvNV *instance, GLuint index, GLsizei n, const GLdouble *v)
+{
+   return 1 * n * sizeof(GLdouble);
+}
+
+int crdlm_pointers_VertexAttribs1fvNV(struct instanceVertexAttribs1fvNV *instance, GLuint index, GLsizei n, const GLfloat *v)
+{
+   return 1 * n * sizeof(GLfloat);
+}
+
+int crdlm_pointers_VertexAttribs1svNV(struct instanceVertexAttribs1svNV *instance, GLuint index, GLsizei n, const GLshort *v)
+{
+   return 1 * n * sizeof(GLshort);
+}
+
+int crdlm_pointers_VertexAttribs2dvNV(struct instanceVertexAttribs2dvNV *instance, GLuint index, GLsizei n, const GLdouble *v)
+{
+   return 2 * n * sizeof(GLdouble);
+}
+
+int crdlm_pointers_VertexAttribs2fvNV(struct instanceVertexAttribs2fvNV *instance, GLuint index, GLsizei n, const GLfloat *v)
+{
+   return 2 * n * sizeof(GLfloat);
+}
+
+int crdlm_pointers_VertexAttribs2svNV(struct instanceVertexAttribs2svNV *instance, GLuint index, GLsizei n, const GLshort *v)
+{
+   return 2 * n * sizeof(GLshort);
+}
+
+int crdlm_pointers_VertexAttribs3dvNV(struct instanceVertexAttribs3dvNV *instance, GLuint index, GLsizei n, const GLdouble *v)
+{
+   return 3 * n * sizeof(GLdouble);
+}
+
+int crdlm_pointers_VertexAttribs3fvNV(struct instanceVertexAttribs3fvNV *instance, GLuint index, GLsizei n, const GLfloat *v)
+{
+   return 3 * n * sizeof(GLfloat);
+}
+
+int crdlm_pointers_VertexAttribs3svNV(struct instanceVertexAttribs3svNV *instance, GLuint index, GLsizei n, const GLshort *v)
+{
+   return 3 * n * sizeof(GLshort);
+}
+
+int crdlm_pointers_VertexAttribs4dvNV(struct instanceVertexAttribs4dvNV *instance, GLuint index, GLsizei n, const GLdouble *v)
+{
+   return 4 * n * sizeof(GLdouble);
+}
+
+int crdlm_pointers_VertexAttribs4fvNV(struct instanceVertexAttribs4fvNV *instance, GLuint index, GLsizei n, const GLfloat *v)
+{
+   return 4 * n * sizeof(GLfloat);
+}
+
+int crdlm_pointers_VertexAttribs4svNV(struct instanceVertexAttribs4svNV *instance, GLuint index, GLsizei n, const GLshort *v)
+{
+   return 4 * n * sizeof(GLshort);
+}
+
+int crdlm_pointers_VertexAttribs4ubvNV(struct instanceVertexAttribs4ubvNV *instance, GLuint index, GLsizei n, const GLubyte *v)
+{
+   return 4 * n * sizeof(GLubyte);
+}
+
+int crdlm_pointers_ZPix( struct instanceZPix *instance, GLsizei width, 
+			 GLsizei height, GLenum format, GLenum type, 
+			 GLenum ztype, GLint zparm, GLint length, 
+			 const GLvoid *pixels )
+{
+     unsigned int size = length;
+     if (instance && size > 0) {
+	  crMemcpy(instance->pixels,pixels,length);
+     }
+     
+     return size;
+}

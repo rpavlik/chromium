@@ -1,0 +1,7656 @@
+
+# Adapted from Mesa.
+# Python scripts read this file and generate various C files.
+
+# Possible lines:
+#  name     Name of the function (without "gl" prefix).  Required.
+#
+#  return   Datatype of returned value, or void.  Required.
+#
+#  param    Zero or more of these lines may be present.  Each describes a
+#           function parameter.  Two fields follow: parameter name and the
+#           parameter type (which may be several tokens like "const GLvoid *").
+#
+#  vector   Used to indicate how may elements are referenced by pointer params.
+#           Two fields follow:  the parameter name (previously defined by a
+#           'param' line) and a number indicating how may elements are
+#           referenced by the vector.  If the number is unknown, don't use
+#           a vector line.  Example for glGetClipPlane:
+#                vector  equation  4
+#
+#  category May be 1.x to indicate that the function belongs to OpenGL
+#           version 1.x.  Or may be the name of an extension such as
+#           GL_ARB_multitexture.  Required.
+#
+#  alias    Indicates that this function is just an alias for a previously
+#           defined function.
+#
+#  vectoralias  The function is the vector version of the named function.
+#
+#  props    An optional list of properties for this function.  Possible
+#           properties include:
+#             nolist    - the function is not compiled into dlists.
+#             get       - the function is a state-getter (implies nolist).
+#             setclient - the function sets client-side state (implies nolist).
+#             useclient - the function uses client-side state (implies nolist).
+#             pervertex - the function sets per-vertex state (i.e. Normal,
+#                         Color, Material, EdgeFlag).
+#             render    - the function is a rendering command.
+#             pixelstore - uses glPixelStore settings
+#           In general, functions without any props are state-setters.
+#
+#  chromium An optional list of properties for Chromium.  Possible properties
+#           include:
+#             pack      - this command can be packed/unpacked.
+#             extpack   - this command can be packed/unpacked, extended opcode.
+#             nopack    - this command is not packed. (XXX not needed)
+#             stub      - don't actually implement, just a stub for now.
+#             omit      - totally omit this function.
+#             checklist - function may or may not be compiled into display
+#                         lists, depending on parameter values.
+
+
+# OpenGL 1.0
+
+name		NewList
+return		void
+param		list		GLuint
+param		mode		GLenum
+category	1.0
+props		nolist
+chromium	extpack
+
+name		EndList
+return		void
+category	1.0
+props		nolist
+chromium	extpack
+
+name		CallList
+return		void
+param		list		GLuint
+category	1.0
+chromium	pack
+
+name		CallLists
+return		void
+param		n		GLsizei
+param		type		GLenum
+param		lists		const GLvoid *
+category	1.0
+chromium	pack
+
+name		DeleteLists
+return		void
+param		list		GLuint
+param		range		GLsizei
+category	1.0
+props		nolist
+chromium	extpack
+
+name		GenLists
+return		GLuint
+param		range		GLsizei
+category	1.0
+props		nolist get
+chromium	extpack
+
+name		ListBase
+return		void
+param		base		GLuint
+category	1.0
+chromium	extpack
+
+name		Begin
+return		void
+param		mode		GLenum
+category	1.0
+props		pervertex render
+chromium	pack
+
+name		Bitmap
+return		void
+param		width		GLsizei
+param		height		GLsizei
+param		xorig		GLfloat
+param		yorig		GLfloat
+param		xmove		GLfloat
+param		ymove		GLfloat
+param		bitmap		const GLubyte *
+category	1.0
+props		render pixelstore
+chromium	pack
+
+name		Color3b
+return		void
+param		red		GLbyte
+param		green		GLbyte
+param		blue		GLbyte
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color3bv
+return		void
+param		v		const GLbyte *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Color3b
+
+name		Color3d
+return		void
+param		red		GLdouble
+param		green		GLdouble
+param		blue		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color3dv
+return		void
+param		v		const GLdouble *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Color3d
+
+name		Color3f
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color3fv
+return		void
+param		v		const GLfloat *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Color3f
+
+name		Color3i
+return		void
+param		red		GLint
+param		green		GLint
+param		blue		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color3iv
+return		void
+param		v		const GLint *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Color3i
+
+name		Color3s
+return		void
+param		red		GLshort
+param		green		GLshort
+param		blue		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color3sv
+return		void
+param		v		const GLshort *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Color3s
+
+name		Color3ub
+return		void
+param		red		GLubyte
+param		green		GLubyte
+param		blue		GLubyte
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color3ubv
+return		void
+param		v		const GLubyte *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Color3ub
+
+name		Color3ui
+return		void
+param		red		GLuint
+param		green		GLuint
+param		blue		GLuint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color3uiv
+return		void
+param		v		const GLuint *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Color3ui
+
+name		Color3us
+return		void
+param		red		GLushort
+param		green		GLushort
+param		blue		GLushort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color3usv
+return		void
+param		v		const GLushort *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Color3us
+
+name		Color4b
+return		void
+param		red		GLbyte
+param		green		GLbyte
+param		blue		GLbyte
+param		alpha		GLbyte
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color4bv
+return		void
+param		v		const GLbyte *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Color4b
+
+name		Color4d
+return		void
+param		red		GLdouble
+param		green		GLdouble
+param		blue		GLdouble
+param		alpha		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color4dv
+return		void
+param		v		const GLdouble *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Color4d
+
+name		Color4f
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+param		alpha		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color4fv
+return		void
+param		v		const GLfloat *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Color4f
+
+name		Color4i
+return		void
+param		red		GLint
+param		green		GLint
+param		blue		GLint
+param		alpha		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color4iv
+return		void
+param		v		const GLint *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Color4i
+
+name		Color4s
+return		void
+param		red		GLshort
+param		green		GLshort
+param		blue		GLshort
+param		alpha		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color4sv
+return		void
+param		v		const GLshort *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Color4s
+
+name		Color4ub
+return		void
+param		red		GLubyte
+param		green		GLubyte
+param		blue		GLubyte
+param		alpha		GLubyte
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color4ubv
+return		void
+param		v		const GLubyte *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Color4ub
+
+name		Color4ui
+return		void
+param		red		GLuint
+param		green		GLuint
+param		blue		GLuint
+param		alpha		GLuint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color4uiv
+return		void
+param		v		const GLuint *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Color4ui
+
+name		Color4us
+return		void
+param		red		GLushort
+param		green		GLushort
+param		blue		GLushort
+param		alpha		GLushort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Color4usv
+return		void
+param		v		const GLushort *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Color4us
+
+name		EdgeFlag
+return		void
+param		flag		GLboolean
+category	1.0
+props		pervertex
+chromium	pack
+
+name		EdgeFlagv
+return		void
+param		flag		const GLboolean *
+vector		flag		1
+category	1.0
+props		pervertex
+vectoralias	EdgeFlag
+
+name		End
+return		void
+category	1.0
+props		pervertex render
+chromium	pack
+
+name		Indexd
+return		void
+param		c		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Indexdv
+return		void
+param		c		const GLdouble *
+vector		c		1
+category	1.0
+props		pervertex
+vectoralias	Indexd
+
+name		Indexf
+return		void
+param		c		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Indexfv
+return		void
+param		c		const GLfloat *
+vector		c		1
+category	1.0
+props		pervertex
+vectoralias	Indexf
+
+name		Indexi
+return		void
+param		c		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Indexiv
+return		void
+param		c		const GLint *
+vector		c		1
+category	1.0
+props		pervertex
+vectoralias	Indexi
+
+name		Indexs
+return		void
+param		c		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Indexsv
+return		void
+param		c		const GLshort *
+vector		c		1
+category	1.0
+props		pervertex
+vectoralias	Indexs
+
+name		Normal3b
+return		void
+param		nx		GLbyte
+param		ny		GLbyte
+param		nz		GLbyte
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Normal3bv
+return		void
+param		v		const GLbyte *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Normal3b
+
+name		Normal3d
+return		void
+param		nx		GLdouble
+param		ny		GLdouble
+param		nz		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Normal3dv
+return		void
+param		v		const GLdouble *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Normal3d
+
+name		Normal3f
+return		void
+param		nx		GLfloat
+param		ny		GLfloat
+param		nz		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Normal3fv
+return		void
+param		v		const GLfloat *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Normal3f
+
+name		Normal3i
+return		void
+param		nx		GLint
+param		ny		GLint
+param		nz		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Normal3iv
+return		void
+param		v		const GLint *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Normal3i
+
+name		Normal3s
+return		void
+param		nx		GLshort
+param		ny		GLshort
+param		nz		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Normal3sv
+return		void
+param		v		const GLshort *
+vector		v		3
+category	1.0
+vectoralias	Normal3s
+
+name		RasterPos2d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+category	1.0
+chromium	pack
+
+name		RasterPos2dv
+return		void
+param		v		const GLdouble *
+vector		v		2
+category	1.0
+vectoralias	RasterPos2d
+
+name		RasterPos2f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+category	1.0
+chromium	pack
+
+name		RasterPos2fv
+return		void
+param		v		const GLfloat *
+vector		v		2
+category	1.0
+vectoralias	RasterPos2f
+
+name		RasterPos2i
+return		void
+param		x		GLint
+param		y		GLint
+category	1.0
+chromium	pack
+
+name		RasterPos2iv
+return		void
+param		v		const GLint *
+vector		v		2
+category	1.0
+vectoralias	RasterPos2i
+
+name		RasterPos2s
+return		void
+param		x		GLshort
+param		y		GLshort
+category	1.0
+chromium	pack
+
+name		RasterPos2sv
+return		void
+param		v		const GLshort *
+vector		v		2
+category	1.0
+vectoralias	RasterPos2s
+
+name		RasterPos3d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+chromium	pack
+
+name		RasterPos3dv
+return		void
+param		v		const GLdouble *
+vector		v		3
+category	1.0
+vectoralias	RasterPos3d
+
+name		RasterPos3f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+chromium	pack
+
+name		RasterPos3fv
+return		void
+param		v		const GLfloat *
+vector		v		3
+category	1.0
+vectoralias	RasterPos3f
+
+name		RasterPos3i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+category	1.0
+chromium	pack
+
+name		RasterPos3iv
+return		void
+param		v		const GLint *
+vector		v		3
+category	1.0
+vectoralias	RasterPos3i
+
+name		RasterPos3s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	1.0
+chromium	pack
+
+name		RasterPos3sv
+return		void
+param		v		const GLshort *
+vector		v		3
+category	1.0
+vectoralias	RasterPos3s
+
+name		RasterPos4d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	1.0
+chromium	pack
+
+name		RasterPos4dv
+return		void
+param		v		const GLdouble *
+vector		v		4
+category	1.0
+vectoralias	RasterPos4d
+
+name		RasterPos4f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	1.0
+chromium	pack
+
+name		RasterPos4fv
+return		void
+param		v		const GLfloat *
+vector		v		4
+category	1.0
+vectoralias	RasterPos4f
+
+name		RasterPos4i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+param		w		GLint
+category	1.0
+chromium	pack
+
+name		RasterPos4iv
+return		void
+param		v		const GLint *
+vector		v		4
+category	1.0
+vectoralias	RasterPos4i
+
+name		RasterPos4s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+param		w		GLshort
+category	1.0
+chromium	pack
+
+name		RasterPos4sv
+return		void
+param		v		const GLshort *
+vector		v		4
+category	1.0
+vectoralias	RasterPos4s
+
+name		Rectd
+return		void
+param		x1		GLdouble
+param		y1		GLdouble
+param		x2		GLdouble
+param		y2		GLdouble
+category	1.0
+props		render
+chromium	pack
+
+name		Rectdv
+return		void
+param		v1		const GLdouble *
+param		v2		const GLdouble *
+vector		v1		2
+vector		v2		2
+category	1.0
+props		render
+vectoralias	Rectd
+
+name		Rectf
+return		void
+param		x1		GLfloat
+param		y1		GLfloat
+param		x2		GLfloat
+param		y2		GLfloat
+category	1.0
+props		render
+chromium	pack
+
+name		Rectfv
+return		void
+param		v1		const GLfloat *
+param		v2		const GLfloat *
+vector		v1		2
+vector		v2		2
+category	1.0
+props		render
+vectoralias	Rectf
+
+name		Recti
+return		void
+param		x1		GLint
+param		y1		GLint
+param		x2		GLint
+param		y2		GLint
+category	1.0
+props		render
+chromium	pack
+
+name		Rectiv
+return		void
+param		v1		const GLint *
+param		v2		const GLint *
+vector		v1		2
+vector		v2		2
+category	1.0
+props		render
+vectoralias	Recti
+
+name		Rects
+return		void
+param		x1		GLshort
+param		y1		GLshort
+param		x2		GLshort
+param		y2		GLshort
+category	1.0
+props		render
+chromium	pack
+
+name		Rectsv
+return		void
+param		v1		const GLshort *
+param		v2		const GLshort *
+vector		v1		2
+vector		v2		2
+category	1.0
+props		render
+vectoralias	Rects
+
+name		TexCoord1d
+return		void
+param		s		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord1dv
+return		void
+param		v		const GLdouble *
+vector		v		1
+category	1.0
+props		pervertex
+vectoralias	TexCoord1d
+
+name		TexCoord1f
+return		void
+param		s		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord1fv
+return		void
+param		v		const GLfloat *
+vector		v		1
+category	1.0
+props		pervertex
+vectoralias	TexCoord1f
+
+name		TexCoord1i
+return		void
+param		s		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord1iv
+return		void
+param		v		const GLint *
+vector		v		1
+category	1.0
+props		pervertex
+vectoralias	TexCoord1i
+
+name		TexCoord1s
+return		void
+param		s		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord1sv
+return		void
+param		v		const GLshort *
+vector		v		1
+category	1.0
+props		pervertex
+vectoralias	TexCoord1s
+
+name		TexCoord2d
+return		void
+param		s		GLdouble
+param		t		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord2dv
+return		void
+param		v		const GLdouble *
+vector		v		2
+category	1.0
+props		pervertex
+vectoralias	TexCoord2d
+
+name		TexCoord2f
+return		void
+param		s		GLfloat
+param		t		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord2fv
+return		void
+param		v		const GLfloat *
+vector		v		2
+category	1.0
+props		pervertex
+vectoralias	TexCoord2f
+
+name		TexCoord2i
+return		void
+param		s		GLint
+param		t		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord2iv
+return		void
+param		v		const GLint *
+vector		v		2
+category	1.0
+props		pervertex
+vectoralias	TexCoord2i
+
+name		TexCoord2s
+return		void
+param		s		GLshort
+param		t		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord2sv
+return		void
+param		v		const GLshort *
+vector		v		2
+category	1.0
+props		pervertex
+vectoralias	TexCoord2s
+
+name		TexCoord3d
+return		void
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord3dv
+return		void
+param		v		const GLdouble *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	TexCoord3d
+
+name		TexCoord3f
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord3fv
+return		void
+param		v		const GLfloat *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	TexCoord3f
+
+name		TexCoord3i
+return		void
+param		s		GLint
+param		t		GLint
+param		r		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord3iv
+return		void
+param		v		const GLint *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	TexCoord3i
+
+name		TexCoord3s
+return		void
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord3sv
+return		void
+param		v		const GLshort *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	TexCoord3s
+
+name		TexCoord4d
+return		void
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+param		q		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord4dv
+return		void
+param		v		const GLdouble *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	TexCoord4d
+
+name		TexCoord4f
+return		void
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		q		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord4fv
+return		void
+param		v		const GLfloat *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	TexCoord4f
+
+name		TexCoord4i
+return		void
+param		s		GLint
+param		t		GLint
+param		r		GLint
+param		q		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord4iv
+return		void
+param		v		const GLint *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	TexCoord4i
+
+name		TexCoord4s
+return		void
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+param		q		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		TexCoord4sv
+return		void
+param		v		const GLshort *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	TexCoord4s
+
+name		Vertex2d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex2dv
+return		void
+param		v		const GLdouble *
+vector		v		2
+category	1.0
+props		pervertex
+vectoralias	Vertex2d
+
+name		Vertex2f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex2fv
+return		void
+param		v		const GLfloat *
+vector		v		2
+category	1.0
+props		pervertex
+vectoralias	Vertex2f
+
+name		Vertex2i
+return		void
+param		x		GLint
+param		y		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex2iv
+return		void
+param		v		const GLint *
+vector		v		2
+category	1.0
+props		pervertex
+vectoralias	Vertex2i
+
+name		Vertex2s
+return		void
+param		x		GLshort
+param		y		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex2sv
+return		void
+param		v		const GLshort *
+vector		v		2
+category	1.0
+props		pervertex
+vectoralias	Vertex2s
+
+name		Vertex3d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex3dv
+return		void
+param		v		const GLdouble *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Vertex3d
+
+name		Vertex3f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex3fv
+return		void
+param		v		const GLfloat *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Vertex3f
+
+name		Vertex3i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex3iv
+return		void
+param		v		const GLint *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Vertex3i
+
+name		Vertex3s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex3sv
+return		void
+param		v		const GLshort *
+vector		v		3
+category	1.0
+props		pervertex
+vectoralias	Vertex3s
+
+name		Vertex4d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex4dv
+return		void
+param		v		const GLdouble *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Vertex4d
+
+name		Vertex4f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex4fv
+return		void
+param		v		const GLfloat *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Vertex4f
+
+name		Vertex4i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+param		w		GLint
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex4iv
+return		void
+param		v		const GLint *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Vertex4i
+
+name		Vertex4s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+param		w		GLshort
+category	1.0
+props		pervertex
+chromium	pack
+
+name		Vertex4sv
+return		void
+param		v		const GLshort *
+vector		v		4
+category	1.0
+props		pervertex
+vectoralias	Vertex4s
+
+name		ClipPlane
+return		void
+param		plane		GLenum
+param		equation	const GLdouble *
+vector		equation	4
+category	1.0
+chromium	pack
+
+name		ColorMaterial
+return		void
+param		face		GLenum
+param		mode		GLenum
+category	1.0
+chromium	pack
+
+name		CullFace
+return		void
+param		mode		GLenum
+category	1.0
+chromium	pack
+
+name		Fogf
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+chromium	pack
+
+name		Fogfv
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+chromium	pack
+
+name		Fogi
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.0
+chromium	pack
+
+name		Fogiv
+return		void
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+chromium	pack
+
+name		FrontFace
+return		void
+param		mode		GLenum
+category	1.0
+chromium	pack
+
+name		Hint
+return		void
+param		target		GLenum
+param		mode		GLenum
+category	1.0
+chromium	extpack
+
+name		Lightf
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+chromium	pack
+
+name		Lightfv
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+chromium	pack
+
+name		Lighti
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+chromium	pack
+
+name		Lightiv
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+chromium	pack
+
+name		LightModelf
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+chromium	pack
+
+name		LightModelfv
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+chromium	pack
+
+name		LightModeli
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.0
+chromium	pack
+
+name		LightModeliv
+return		void
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+chromium	pack
+
+name		LineStipple
+return		void
+param		factor		GLint
+param		pattern		GLushort
+category	1.0
+chromium	pack
+
+name		LineWidth
+return		void
+param		width		GLfloat
+category	1.0
+chromium	pack
+
+name		Materialf
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+chromium	pack
+
+name		Materialfv
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+chromium	pack
+
+name		Materiali
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+chromium	pack
+
+name		Materialiv
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+chromium	pack
+
+name		PointSize
+return		void
+param		size		GLfloat
+category	1.0
+chromium	pack
+
+name		PolygonMode
+return		void
+param		face		GLenum
+param		mode		GLenum
+category	1.0
+chromium	pack
+
+name		PolygonStipple
+return		void
+param		mask		const GLubyte *
+vector		mask		128
+category	1.0
+chromium	pack
+
+name		Scissor
+return		void
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.0
+chromium	pack
+
+name		ShadeModel
+return		void
+param		mode		GLenum
+category	1.0
+chromium	pack
+
+name		TexParameterf
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+chromium	nopack
+
+name		TexParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+chromium	pack
+vectoralias	TexParameterf
+
+name		TexParameteri
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+chromium	nopack
+
+name		TexParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+chromium	pack
+vectoralias	TexParameteri
+
+name		TexImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLint
+param		width		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.0
+props		pixelstore
+chromium	pack checklist
+
+name		TexImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLint
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.0
+props		pixelstore
+chromium	pack checklist
+
+name		TexEnvf
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+chromium	nopack
+
+name		TexEnvfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+chromium	pack
+vectoralias	TexEnvf
+
+name		TexEnvi
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+chromium	nopack
+
+name		TexEnviv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+chromium	pack
+vectoralias	TexEnvi
+
+name		TexGend
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		param		GLdouble
+category	1.0
+chromium	nopack
+
+name		TexGendv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		const GLdouble *
+category	1.0
+chromium	pack
+vectoralias	TexGend
+
+name		TexGenf
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+chromium	nopack
+
+name		TexGenfv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.0
+chromium	pack
+vectoralias	TexGenf
+
+name		TexGeni
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		param		GLint
+category	1.0
+chromium	nopack
+
+name		TexGeniv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.0
+chromium	pack
+
+name		FeedbackBuffer
+return		void
+param		size		GLsizei
+param		type		GLenum
+param		buffer		GLfloat *
+category	1.0
+props		nolist
+chromium	pack
+
+name		SelectBuffer
+return		void
+param		size		GLsizei
+param		buffer		GLuint *
+category	1.0
+props		nolist
+chromium	pack
+
+name		RenderMode
+return		GLint
+param		mode		GLenum
+category	1.0
+props		nolist get
+chromium	extpack
+
+name		InitNames
+return		void
+category	1.0
+chromium	pack
+
+name		LoadName
+return		void
+param		name		GLuint
+category	1.0
+chromium	pack
+
+name		PassThrough
+return		void
+param		token		GLfloat
+category	1.0
+chromium	pack
+
+name		PopName
+return		void
+category	1.0
+chromium	pack
+
+name		PushName
+return		void
+param		name		GLuint
+category	1.0
+chromium	pack
+
+name		DrawBuffer
+return		void
+param		mode		GLenum
+category	1.0
+chromium	extpack
+
+name		Clear
+return		void
+param		mask		GLbitfield
+category	1.0
+props		render
+chromium	pack
+
+name		ClearAccum
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+param		alpha		GLfloat
+category	1.0
+chromium	extpack
+
+name		ClearIndex
+return		void
+param		c		GLfloat
+category	1.0
+chromium	extpack
+
+name		ClearColor
+return		void
+param		red		GLclampf
+param		green		GLclampf
+param		blue		GLclampf
+param		alpha		GLclampf
+category	1.0
+chromium	extpack
+
+name		ClearStencil
+return		void
+param		s		GLint
+category	1.0
+chromium	extpack
+
+name		ClearDepth
+return		void
+param		depth		GLclampd
+category	1.0
+chromium	extpack
+
+name		StencilMask
+return		void
+param		mask		GLuint
+category	1.0
+chromium	pack
+
+name		ColorMask
+return		void
+param		red		GLboolean
+param		green		GLboolean
+param		blue		GLboolean
+param		alpha		GLboolean
+category	1.0
+chromium	pack
+
+name		DepthMask
+return		void
+param		flag		GLboolean
+category	1.0
+chromium	pack
+
+name		IndexMask
+return		void
+param		mask		GLuint
+category	1.0
+chromium	pack
+
+name		Accum
+return		void
+param		op		GLenum
+param		value		GLfloat
+category	1.0
+props		render
+chromium	extpack
+
+name		Disable
+return		void
+param		cap		GLenum
+category	1.0
+chromium	pack
+
+name		Enable
+return		void
+param		cap		GLenum
+category	1.0
+chromium	pack
+
+name		Finish
+return		void
+category	1.0
+props		nolist
+chromium	pack
+
+name		Flush
+return		void
+category	1.0
+props		nolist
+chromium	pack
+
+name		PopAttrib
+return		void
+category	1.0
+chromium	extpack
+
+name		PushAttrib
+return		void
+param		mask		GLbitfield
+category	1.0
+chromium	extpack
+
+name		Map1d
+return		void
+param		target		GLenum
+param		u1		GLdouble
+param		u2		GLdouble
+param		stride		GLint
+param		order		GLint
+param		points		const GLdouble *
+category	1.0
+chromium	pack
+
+name		Map1f
+return		void
+param		target		GLenum
+param		u1		GLfloat
+param		u2		GLfloat
+param		stride		GLint
+param		order		GLint
+param		points		const GLfloat *
+category	1.0
+chromium	pack
+
+name		Map2d
+return		void
+param		target		GLenum
+param		u1		GLdouble
+param		u2		GLdouble
+param		ustride		GLint
+param		uorder		GLint
+param		v1		GLdouble
+param		v2		GLdouble
+param		vstride		GLint
+param		vorder		GLint
+param		points		const GLdouble *
+category	1.0
+chromium	pack
+
+name		Map2f
+return		void
+param		target		GLenum
+param		u1		GLfloat
+param		u2		GLfloat
+param		ustride		GLint
+param		uorder		GLint
+param		v1		GLfloat
+param		v2		GLfloat
+param		vstride		GLint
+param		vorder		GLint
+param		points		const GLfloat *
+category	1.0
+chromium	pack
+
+name		MapGrid1d
+return		void
+param		un		GLint
+param		u1		GLdouble
+param		u2		GLdouble
+category	1.0
+chromium	pack
+
+name		MapGrid1f
+return		void
+param		un		GLint
+param		u1		GLfloat
+param		u2		GLfloat
+category	1.0
+chromium	pack
+
+name		MapGrid2d
+return		void
+param		un		GLint
+param		u1		GLdouble
+param		u2		GLdouble
+param		vn		GLint
+param		v1		GLdouble
+param		v2		GLdouble
+category	1.0
+chromium	pack
+
+name		MapGrid2f
+return		void
+param		un		GLint
+param		u1		GLfloat
+param		u2		GLfloat
+param		vn		GLint
+param		v1		GLfloat
+param		v2		GLfloat
+category	1.0
+chromium	pack
+
+name		EvalCoord1d
+return		void
+param		u		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		EvalCoord1dv
+return		void
+param		u		const GLdouble *
+vector		u		1
+category	1.0
+props		pervertex
+vectoralias	EvalCoord1d
+
+name		EvalCoord1f
+return		void
+param		u		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		EvalCoord1fv
+return		void
+param		u		const GLfloat *
+vector		u		1
+category	1.0
+props		pervertex
+vectoralias	EvalCoord1f
+
+name		EvalCoord2d
+return		void
+param		u		GLdouble
+param		v		GLdouble
+category	1.0
+props		pervertex
+chromium	pack
+
+name		EvalCoord2dv
+return		void
+param		u		const GLdouble *
+vector		u		2
+category	1.0
+props		pervertex
+vectoralias	EvalCoord2d
+
+name		EvalCoord2f
+return		void
+param		u		GLfloat
+param		v		GLfloat
+category	1.0
+props		pervertex
+chromium	pack
+
+name		EvalCoord2fv
+return		void
+param		u		const GLfloat *
+vector		u		2
+category	1.0
+props		pervertex
+vectoralias	EvalCoord2f
+
+name		EvalMesh1
+return		void
+param		mode		GLenum
+param		i1		GLint
+param		i2		GLint
+category	1.0
+chromium	pack
+
+name		EvalPoint1
+return		void
+param		i		GLint
+category	1.0
+chromium	pack
+
+name		EvalMesh2
+return		void
+param		mode		GLenum
+param		i1		GLint
+param		i2		GLint
+param		j1		GLint
+param		j2		GLint
+category	1.0
+chromium	pack
+
+name		EvalPoint2
+return		void
+param		i		GLint
+param		j		GLint
+category	1.0
+chromium	pack
+
+name		AlphaFunc
+return		void
+param		func		GLenum
+param		ref		GLclampf
+category	1.0
+chromium	pack
+
+name		BlendFunc
+return		void
+param		sfactor		GLenum
+param		dfactor		GLenum
+category	1.0
+chromium	pack
+
+name		LogicOp
+return		void
+param		opcode		GLenum
+category	1.0
+chromium	extpack
+
+name		StencilFunc
+return		void
+param		func		GLenum
+param		ref		GLint
+param		mask		GLuint
+category	1.0
+chromium	pack
+
+name		StencilOp
+return		void
+param		fail		GLenum
+param		zfail		GLenum
+param		zpass		GLenum
+category	1.0
+chromium	pack
+
+name		DepthFunc
+return		void
+param		func		GLenum
+category	1.0
+chromium	pack
+
+name		PixelZoom
+return		void
+param		xfactor		GLfloat
+param		yfactor		GLfloat
+category	1.0
+chromium	pack
+
+name		PixelTransferf
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+chromium	pack
+
+name		PixelTransferi
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.0
+chromium	pack
+
+name		PixelStoref
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.0
+props		setclient
+chromium	pack
+
+name		PixelStorei
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.0
+props		setclient
+chromium	pack
+
+name		PixelMapfv
+return		void
+param		map		GLenum
+param		mapsize		GLsizei
+param		values		const GLfloat *
+category	1.0
+chromium	pack
+
+name		PixelMapuiv
+return		void
+param		map		GLenum
+param		mapsize		GLsizei
+param		values		const GLuint *
+category	1.0
+chromium	pack
+
+name		PixelMapusv
+return		void
+param		map		GLenum
+param		mapsize		GLsizei
+param		values		const GLushort *
+category	1.0
+chromium	pack
+
+name		ReadBuffer
+return		void
+param		mode		GLenum
+category	1.0
+chromium	extpack
+
+name		CopyPixels
+return		void
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		type		GLenum
+category	1.0
+props		render
+chromium	pack
+
+name		ReadPixels
+return		void
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		GLvoid *
+category	1.0
+chromium	pack
+props		get pixelstore
+# XXX? props		get
+
+name		DrawPixels
+return		void
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.0
+props		render pixelstore
+chromium	pack
+
+name		GetBooleanv
+return		void
+param		pname		GLenum
+param		params		GLboolean *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetClipPlane
+return		void
+param		plane		GLenum
+param		equation	GLdouble *
+vector		equation	4
+category	1.0
+props		get
+chromium	extpack
+
+name		GetDoublev
+return		void
+param		pname		GLenum
+param		params		GLdouble *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetError
+return		GLenum
+category	1.0
+props		get
+chromium	extpack
+
+name		GetFloatv
+return		void
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetIntegerv
+return		void
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetLightfv
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetLightiv
+return		void
+param		light		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetMapdv
+return		void
+param		target		GLenum
+param		query		GLenum
+param		v		GLdouble *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetMapfv
+return		void
+param		target		GLenum
+param		query		GLenum
+param		v		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetMapiv
+return		void
+param		target		GLenum
+param		query		GLenum
+param		v		GLint *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetMaterialfv
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetMaterialiv
+return		void
+param		face		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetPixelMapfv
+return		void
+param		map		GLenum
+param		values		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetPixelMapuiv
+return		void
+param		map		GLenum
+param		values		GLuint *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetPixelMapusv
+return		void
+param		map		GLenum
+param		values		GLushort *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetPolygonStipple
+return		void
+param		mask		GLubyte *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetString
+return		const GLubyte *
+param		name		GLenum
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexEnvfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexEnviv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexGendv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		GLdouble *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexGenfv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexGeniv
+return		void
+param		coord		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexImage
+return		void
+param		target		GLenum
+param		level		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		GLvoid *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexLevelParameterfv
+return		void
+param		target		GLenum
+param		level		GLint
+param		pname		GLenum
+param		params		GLfloat *
+category	1.0
+props		get
+chromium	extpack
+
+name		GetTexLevelParameteriv
+return		void
+param		target		GLenum
+param		level		GLint
+param		pname		GLenum
+param		params		GLint *
+category	1.0
+props		get
+chromium	extpack
+
+name		IsEnabled
+return		GLboolean
+param		cap		GLenum
+category	1.0
+props		get
+chromium	extpack
+
+name		IsList
+return		GLboolean
+param		list		GLuint
+category	1.0
+props		get
+chromium	extpack
+
+name		DepthRange
+return		void
+param		zNear		GLclampd
+param		zFar		GLclampd
+category	1.0
+chromium	pack
+
+name		Frustum
+return		void
+param		left		GLdouble
+param		right		GLdouble
+param		bottom		GLdouble
+param		top		GLdouble
+param		zNear		GLdouble
+param		zFar		GLdouble
+category	1.0
+chromium	pack
+
+name		LoadIdentity
+return		void
+category	1.0
+chromium	pack
+
+name		LoadMatrixf
+return		void
+param		m		const GLfloat *
+vector		m		16
+category	1.0
+chromium	pack
+
+name		LoadMatrixd
+return		void
+param		m		const GLdouble *
+vector		m		16
+category	1.0
+chromium	pack
+
+name		MatrixMode
+return		void
+param		mode		GLenum
+category	1.0
+chromium	pack
+
+name		MultMatrixf
+return		void
+param		m		const GLfloat *
+vector		m		16
+category	1.0
+chromium	pack
+
+name		MultMatrixd
+return		void
+param		m		const GLdouble *
+vector		m		16
+category	1.0
+chromium	pack
+
+name		Ortho
+return		void
+param		left		GLdouble
+param		right		GLdouble
+param		bottom		GLdouble
+param		top		GLdouble
+param		zNear		GLdouble
+param		zFar		GLdouble
+category	1.0
+chromium	pack
+
+name		PopMatrix
+return		void
+category	1.0
+chromium	pack
+
+name		PushMatrix
+return		void
+category	1.0
+chromium	pack
+
+name		Rotated
+return		void
+param		angle		GLdouble
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+chromium	pack
+
+name		Rotatef
+return		void
+param		angle		GLfloat
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+chromium	pack
+
+name		Scaled
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+chromium	pack
+
+name		Scalef
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+chromium	pack
+
+name		Translated
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.0
+chromium	pack
+
+name		Translatef
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.0
+chromium	pack
+
+name		Viewport
+return		void
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.0
+chromium	pack
+
+
+# OpenGL 1.1
+
+name		ArrayElement
+return		void
+param		i		GLint
+category	1.1
+props		useclient
+chromium	pack
+
+name		ColorPointer
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+props		setclient
+chromium	extpack
+
+name		DisableClientState
+return		void
+param		array		GLenum
+category	1.1
+props		setclient
+chromium	pack
+
+name		DrawArrays
+return		void
+param		mode		GLenum
+param		first		GLint
+param		count		GLsizei
+category	1.1
+props		useclient
+chromium	pack
+
+name		DrawElements
+return		void
+param		mode		GLenum
+param		count		GLsizei
+param		type		GLenum
+param		indices		const GLvoid *
+category	1.1
+props		useclient
+chromium	extpack
+
+name		EdgeFlagPointer
+return		void
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+props		setclient
+chromium	extpack
+
+name		EnableClientState
+return		void
+param		array		GLenum
+category	1.1
+props		setclient
+chromium	pack
+
+name		GetPointerv
+return		void
+param		pname		GLenum
+param		params		GLvoid **
+category	1.1
+props		useclient get
+chromium	extpack
+
+name		IndexPointer
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+props		setclient
+chromium	extpack
+
+name		InterleavedArrays
+return		void
+param		format		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+props		setclient
+chromium	extpack
+
+name		NormalPointer
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+props		setclient
+chromium	extpack
+
+name		TexCoordPointer
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+props		setclient
+chromium	extpack
+
+name		VertexPointer
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.1
+props		setclient
+chromium	extpack
+
+name		PolygonOffset
+return		void
+param		factor		GLfloat
+param		units		GLfloat
+category	1.1
+chromium	pack
+
+name		CopyTexImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalFormat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		border		GLint
+category	1.1
+chromium	pack
+
+name		CopyTexImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalFormat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+category	1.1
+chromium	pack
+
+name		CopyTexSubImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	1.1
+chromium	pack
+
+name		CopyTexSubImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.1
+chromium	pack
+
+name		TexSubImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.1
+props		pixelstore
+chromium	pack
+
+name		TexSubImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.1
+props		pixelstore
+chromium	pack
+
+name		AreTexturesResident
+return		GLboolean
+param		n		GLsizei
+param		textures	const GLuint *
+param		residences	GLboolean *
+category	1.1
+props		get
+chromium	extpack
+
+name		BindTexture
+return		void
+param		target		GLenum
+param		texture		GLuint
+category	1.1
+chromium	pack
+
+name		DeleteTextures
+return		void
+param		n		GLsizei
+param		textures	const GLuint *
+category	1.1
+props		nolist
+chromium	pack
+
+name		GenTextures
+return		void
+param		n		GLsizei
+param		textures	GLuint *
+category	1.1
+props		get
+chromium	extpack
+
+name		IsTexture
+return		GLboolean
+param		texture		GLuint
+category	1.1
+props		get
+chromium	extpack
+
+name		PrioritizeTextures
+return		void
+param		n		GLsizei
+param		textures	const GLuint *
+param		priorities	const GLclampf *
+category	1.1
+chromium	pack
+
+name		Indexub
+return		void
+param		c		GLubyte
+category	1.1
+chromium	pack
+
+name		Indexubv
+return		void
+param		c		const GLubyte *
+vector		c		1
+category	1.1
+vectoralias	Indexub
+
+name		PopClientAttrib
+return		void
+category	1.1
+props		setclient
+chromium	extpack
+
+name		PushClientAttrib
+return		void
+param		mask		GLbitfield
+category	1.1
+props		setclient
+chromium	extpack
+
+
+# GL_EXT_blend_color
+
+name		BlendColorEXT
+return		void
+param		red	GLclampf
+param		green	GLclampf
+param		blue	GLclampf
+param		alpha	GLclampf
+category	GL_EXT_blend_color
+chromium	extpack
+
+
+# GL_EXT_blend_minmax
+
+name		BlendEquationEXT
+return		void
+param		mode		GLenum
+category	GL_EXT_blend_minmax
+chromium	extpack
+
+
+# OpenGL 1.2
+
+name		BlendColor
+return		void
+param		red		GLclampf
+param		green		GLclampf
+param		blue		GLclampf
+param		alpha		GLclampf
+category	1.2
+alias		BlendColorEXT
+chromium	nopack
+
+name		BlendEquation
+return		void
+param		mode		GLenum
+category	1.2
+alias		BlendEquationEXT
+chromium	nopack
+
+name		DrawRangeElements
+return		void
+param		mode		GLenum
+param		start		GLuint
+param		end		GLuint
+param		count		GLsizei
+param		type		GLenum
+param		indices		const GLvoid *
+category	1.2
+props		useclient
+chromium	extpack
+
+name		ColorTable
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		table		const GLvoid *
+category	1.2
+chromium	stub checklist
+
+name		ColorTableParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.2
+chromium	stub
+
+name		ColorTableParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.2
+chromium	stub
+
+name		CopyColorTable
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	1.2
+chromium	stub
+
+name		GetColorTable
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		table		GLvoid *
+category	1.2
+props		get
+chromium	stub
+
+name		GetColorTableParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.2
+props		get
+chromium	stub
+
+name		GetColorTableParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.2
+props		get
+chromium	stub
+
+name		ColorSubTable
+return		void
+param		target		GLenum
+param		start		GLsizei
+param		count		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		data		const GLvoid *
+category	1.2
+chromium	stub
+
+name		CopyColorSubTable
+return		void
+param		target		GLenum
+param		start		GLsizei
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	1.2
+chromium	stub
+
+name		ConvolutionFilter1D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		image		const GLvoid *
+category	1.2
+chromium	stub
+
+name		ConvolutionFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		image		const GLvoid *
+category	1.2
+chromium	stub
+
+name		ConvolutionParameterf
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat
+category	1.2
+chromium	stub
+
+name		ConvolutionParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.2
+chromium	stub
+
+name		ConvolutionParameteri
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint
+category	1.2
+chromium	stub
+
+name		ConvolutionParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	1.2
+chromium	stub
+
+name		CopyConvolutionFilter1D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	1.2
+chromium	stub
+
+name		CopyConvolutionFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.2
+chromium	stub
+
+name		GetConvolutionFilter
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		image		GLvoid *
+category	1.2
+props		get
+chromium	stub
+
+name		GetConvolutionParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.2
+props		get
+chromium	stub
+
+name		GetConvolutionParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.2
+props		get
+chromium	stub
+
+name		GetSeparableFilter
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		row		GLvoid *
+param		column		GLvoid *
+param		span		GLvoid *
+category	1.2
+props		get
+chromium	stub
+
+name		SeparableFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		row		const GLvoid *
+param		column		const GLvoid *
+category	1.2
+props		get
+chromium	stub
+
+name		GetHistogram
+return		void
+param		target		GLenum
+param		reset		GLboolean
+param		format		GLenum
+param		type		GLenum
+param		values		GLvoid *
+category	1.2
+props		get
+chromium	stub
+
+name		GetHistogramParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.2
+props		get
+chromium	stub
+
+name		GetHistogramParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.2
+props		get
+chromium	stub
+
+name		GetMinmax
+return		void
+param		target		GLenum
+param		reset		GLboolean
+param		format		GLenum
+param		type		GLenum
+param		values		GLvoid *
+category	1.2
+props		get
+chromium	stub
+
+name		GetMinmaxParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	1.2
+props		get
+chromium	stub
+
+name		GetMinmaxParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.2
+props		get
+chromium	stub
+
+name		Histogram
+return		void
+param		target		GLenum
+param		width		GLsizei
+param		internalformat	GLenum
+param		sink		GLboolean
+category	1.2
+chromium	stub checklist
+
+name		Minmax
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		sink		GLboolean
+category	1.2
+chromium	stub
+
+name		ResetHistogram
+return		void
+param		target		GLenum
+category	1.2
+chromium	stub
+
+name		ResetMinmax
+return		void
+param		target		GLenum
+category	1.2
+chromium	stub
+
+name		TexImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.2
+props		pixelstore
+chromium	pack checklist
+
+name		TexSubImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	1.2
+props		pixelstore
+chromium	pack
+
+name		CopyTexSubImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	1.2
+chromium	pack
+
+
+# GL_ARB_multitexture
+
+name		ActiveTextureARB
+return		void
+param		texture		GLenum
+category	GL_ARB_multitexture
+chromium	extpack
+
+name		ClientActiveTextureARB
+return		void
+param		texture		GLenum
+category	GL_ARB_multitexture
+props		setclient
+chromium	extpack
+
+name		MultiTexCoord1dARB
+return		void
+param		texture		GLenum
+param		s		GLdouble
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord1dvARB
+return		void
+param		texture		GLenum
+param		t		const GLdouble *
+vector		t		1
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord1dARB
+
+name		MultiTexCoord1fARB
+return		void
+param		texture		GLenum
+param		s		GLfloat
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord1fvARB
+return		void
+param		texture		GLenum
+param		t		const GLfloat *
+vector		t		1
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord1fARB
+
+name		MultiTexCoord1iARB
+return		void
+param		texture		GLenum
+param		s		GLint
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord1ivARB
+return		void
+param		texture		GLenum
+param		t		const GLint *
+vector		t		1
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord1iARB
+
+name		MultiTexCoord1sARB
+return		void
+param		texture		GLenum
+param		s		GLshort
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord1svARB
+return		void
+param		texture		GLenum
+param		t		const GLshort *
+vector		t		1
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord1sARB
+
+name		MultiTexCoord2dARB
+return		void
+param		texture		GLenum
+param		s		GLdouble
+param		t		GLdouble
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord2dvARB
+return		void
+param		texture		GLenum
+param		t		const GLdouble *
+vector		t		2
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord2dARB
+
+name		MultiTexCoord2fARB
+return		void
+param		texture		GLenum
+param		s		GLfloat
+param		t		GLfloat
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord2fvARB
+return		void
+param		texture		GLenum
+param		t		const GLfloat *
+vector		t		2
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord2fARB
+
+name		MultiTexCoord2iARB
+return		void
+param		texture		GLenum
+param		s		GLint
+param		t		GLint
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord2ivARB
+return		void
+param		texture		GLenum
+param		t		const GLint *
+vector		t		2
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord2iARB
+
+name		MultiTexCoord2sARB
+return		void
+param		texture		GLenum
+param		s		GLshort
+param		t		GLshort
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord2svARB
+return		void
+param		texture		GLenum
+param		t		const GLshort *
+vector		t		2
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord2sARB
+
+name		MultiTexCoord3dARB
+return		void
+param		texture		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord3dvARB
+return		void
+param		texture		GLenum
+param		t		const GLdouble *
+vector		t		3
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord3dARB
+
+name		MultiTexCoord3fARB
+return		void
+param		texture		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord3fvARB
+return		void
+param		texture		GLenum
+param		t		const GLfloat *
+vector		t		3
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord3fARB
+
+name		MultiTexCoord3iARB
+return		void
+param		texture		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord3ivARB
+return		void
+param		texture		GLenum
+param		t		const GLint *
+vector		t		3
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord3iARB
+
+name		MultiTexCoord3sARB
+return		void
+param		texture		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord3svARB
+return		void
+param		texture		GLenum
+param		t		const GLshort *
+vector		t		3
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord3sARB
+
+name		MultiTexCoord4dARB
+return		void
+param		texture		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+param		q		GLdouble
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord4dvARB
+return		void
+param		texture		GLenum
+param		t		const GLdouble *
+vector		t		4
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord4dARB
+
+name		MultiTexCoord4fARB
+return		void
+param		texture		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		q		GLfloat
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord4fvARB
+return		void
+param		texture		GLenum
+param		t		const GLfloat *
+vector		t		4
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord4fARB
+
+name		MultiTexCoord4iARB
+return		void
+param		texture		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+param		q		GLint
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord4ivARB
+return		void
+param		texture		GLenum
+param		t		const GLint *
+vector		t		4
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord4iARB
+
+name		MultiTexCoord4sARB
+return		void
+param		texture		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+param		q		GLshort
+category	GL_ARB_multitexture
+props		pervertex
+chromium	pack
+
+name		MultiTexCoord4svARB
+return		void
+param		texture		GLenum
+param		t		const GLshort *
+vector		t		4
+category	GL_ARB_multitexture
+props		pervertex
+vectoralias	MultiTexCoord4sARB
+
+
+# GL_ARB_transpose_matrix
+
+name		LoadTransposeMatrixfARB
+return		void
+param		m		const GLfloat *
+vector		m		16
+category	GL_ARB_transpose_matrix
+chromium	extpack
+
+name		LoadTransposeMatrixdARB
+return		void
+param		m		const GLdouble *
+vector		m		16
+category	GL_ARB_transpose_matrix
+chromium	extpack
+
+name		MultTransposeMatrixfARB
+return		void
+param		m		const GLfloat *
+vector		m		16
+category	GL_ARB_transpose_matrix
+chromium	extpack
+
+name		MultTransposeMatrixdARB
+return		void
+param		m		const GLdouble *
+vector		m		16
+category	GL_ARB_transpose_matrix
+chromium	extpack
+
+
+# GL_ARB_multisample
+
+name		SampleCoverageARB
+return		void
+param		value		GLclampf
+param		invert		GLboolean
+category	GL_ARB_multisample
+chromium	extpack
+
+name		__unused413
+return		void
+category	unused
+chromium	omit
+
+
+# GL_ARB_texture_compression
+
+name		CompressedTexImage3DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		imagesize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+chromium	extpack checklist
+
+name		CompressedTexImage2DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+param		imagesize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+chromium	extpack checklist
+
+name		CompressedTexImage1DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		border		GLint
+param		imagesize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+chromium	extpack checklist
+
+name		CompressedTexSubImage3DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		imagesize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+chromium	extpack
+
+name		CompressedTexSubImage2DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		imagesize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+chromium	extpack
+
+name		CompressedTexSubImage1DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		width		GLsizei
+param		format		GLenum
+param		imagesize	GLsizei
+param		data		const GLvoid *
+category	GL_ARB_texture_compression
+chromium	extpack
+
+name		GetCompressedTexImageARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		img		GLvoid *
+category	GL_ARB_texture_compression
+props		get
+chromium	extpack
+
+
+# OpenGL 1.3
+
+name		ActiveTexture
+alias		ActiveTextureARB
+return		void
+param		texture		GLenum
+category	1.3
+chromium	nopack
+
+name		ClientActiveTexture
+alias		ClientActiveTextureARB
+return		void
+param		texture		GLenum
+category	1.3
+props		setclient
+chromium	nopack
+
+name		MultiTexCoord1d
+alias		MultiTexCoord1dARB
+return		void
+param		texture		GLenum
+param		s		GLdouble
+category	1.3
+chromium	nopack
+
+name		MultiTexCoord1dv
+alias		MultiTexCoord1dvARB
+return		void
+param		texture		GLenum
+param		v		const GLdouble *
+category	1.3
+
+name		MultiTexCoord1f
+alias		MultiTexCoord1fARB
+return		void
+param		texture		GLenum
+param		s		GLfloat
+category	1.3
+
+name		MultiTexCoord1fv
+alias		MultiTexCoord1fvARB
+return		void
+param		texture		GLenum
+param		v		const GLfloat *
+category	1.3
+
+name		MultiTexCoord1i
+alias		MultiTexCoord1iARB
+return		void
+param		texture		GLenum
+param		s		GLint
+category	1.3
+
+name		MultiTexCoord1iv
+alias		MultiTexCoord1ivARB
+return		void
+param		texture		GLenum
+param		v		const GLint *
+category	1.3
+
+name		MultiTexCoord1s
+alias		MultiTexCoord1sARB
+return		void
+param		texture		GLenum
+param		s		GLshort
+category	1.3
+
+name		MultiTexCoord1sv
+alias		MultiTexCoord1svARB
+return		void
+param		texture		GLenum
+param		v		const GLshort *
+category	1.3
+
+name		MultiTexCoord2d
+alias		MultiTexCoord2dARB
+return		void
+param		texture		GLenum
+param		s		GLdouble
+param		t		GLdouble
+category	1.3
+
+name		MultiTexCoord2dv
+alias		MultiTexCoord2dvARB
+return		void
+param		texture		GLenum
+param		v		const GLdouble *
+category	1.3
+
+name		MultiTexCoord2f
+alias		MultiTexCoord2fARB
+return		void
+param		texture		GLenum
+param		s		GLfloat
+param		t		GLfloat
+category	1.3
+
+name		MultiTexCoord2fv
+alias		MultiTexCoord2fvARB
+return		void
+param		texture		GLenum
+param		v		const GLfloat *
+category	1.3
+
+name		MultiTexCoord2i
+alias		MultiTexCoord2iARB
+return		void
+param		texture		GLenum
+param		s		GLint
+param		t		GLint
+category	1.3
+
+name		MultiTexCoord2iv
+alias		MultiTexCoord2ivARB
+return		void
+param		texture		GLenum
+param		v		const GLint *
+category	1.3
+
+name		MultiTexCoord2s
+alias		MultiTexCoord2sARB
+return		void
+param		texture		GLenum
+param		s		GLshort
+param		t		GLshort
+category	1.3
+
+name		MultiTexCoord2sv
+alias		MultiTexCoord2svARB
+return		void
+param		texture		GLenum
+param		v		const GLshort *
+category	1.3
+
+name		MultiTexCoord3d
+alias		MultiTexCoord3dARB
+return		void
+param		texture		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+category	1.3
+
+name		MultiTexCoord3dv
+alias		MultiTexCoord3dvARB
+return		void
+param		texture		GLenum
+param		v		const GLdouble *
+category	1.3
+
+name		MultiTexCoord3f
+alias		MultiTexCoord3fARB
+return		void
+param		texture		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+category	1.3
+
+name		MultiTexCoord3fv
+alias		MultiTexCoord3fvARB
+return		void
+param		texture		GLenum
+param		v		const GLfloat *
+category	1.3
+
+name		MultiTexCoord3i
+alias		MultiTexCoord3iARB
+return		void
+param		texture		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+category	1.3
+
+name		MultiTexCoord3iv
+alias		MultiTexCoord3ivARB
+return		void
+param		texture		GLenum
+param		v		const GLint *
+category	1.3
+
+name		MultiTexCoord3s
+alias		MultiTexCoord3sARB
+return		void
+param		texture		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+category	1.3
+
+name		MultiTexCoord3sv
+alias		MultiTexCoord3svARB
+return		void
+param		texture		GLenum
+param		v		const GLshort *
+category	1.3
+
+name		MultiTexCoord4d
+alias		MultiTexCoord4dARB
+return		void
+param		texture		GLenum
+param		s		GLdouble
+param		t		GLdouble
+param		r		GLdouble
+param		q		GLdouble
+category	1.3
+
+name		MultiTexCoord4dv
+alias		MultiTexCoord4dvARB
+return		void
+param		texture		GLenum
+param		v		const GLdouble *
+category	1.3
+
+name		MultiTexCoord4f
+alias		MultiTexCoord4fARB
+return		void
+param		texture		GLenum
+param		s		GLfloat
+param		t		GLfloat
+param		r		GLfloat
+param		q		GLfloat
+category	1.3
+
+name		MultiTexCoord4fv
+alias		MultiTexCoord4fvARB
+return		void
+param		texture		GLenum
+param		v		const GLfloat *
+category	1.3
+
+name		MultiTexCoord4i
+alias		MultiTexCoord4iARB
+return		void
+param		texture		GLenum
+param		s		GLint
+param		t		GLint
+param		r		GLint
+param		q		GLint
+category	1.3
+
+name		MultiTexCoord4iv
+alias		MultiTexCoord4ivARB
+return		void
+param		texture		GLenum
+param		v		const GLint *
+category	1.3
+
+name		MultiTexCoord4s
+alias		MultiTexCoord4sARB
+return		void
+param		texture		GLenum
+param		s		GLshort
+param		t		GLshort
+param		r		GLshort
+param		q		GLshort
+category	1.3
+
+name		MultiTexCoord4sv
+alias		MultiTexCoord4svARB
+return		void
+param		texture		GLenum
+param		v		const GLshort *
+category	1.3
+
+name		LoadTransposeMatrixf
+alias		LoadTransposeMatrixfARB
+return		void
+param		m		const GLfloat *
+category	1.3
+
+name		LoadTransposeMatrixd
+alias		LoadTransposeMatrixdARB
+return		void
+param		m		const GLdouble *
+category	1.3
+
+name		MultTransposeMatrixf
+alias		MultTransposeMatrixfARB
+return		void
+param		m		const GLfloat *
+category	1.3
+
+name		MultTransposeMatrixd
+alias		MultTransposeMatrixdARB
+return		void
+param		m		const GLdouble *
+category	1.3
+
+name		SampleCoverage
+alias		SampleCoverageARB
+return		void
+param		value		GLclampf
+param		invert		GLboolean
+category	1.3
+
+name		CompressedTexImage3D
+alias		CompressedTexImage3DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+chromium	checklist
+
+name		CompressedTexImage2D
+alias		CompressedTexImage2DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+chromium	checklist
+
+name		CompressedTexImage1D
+alias		CompressedTexImage1DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		width		GLsizei
+param		border		GLint
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+chromium	checklist
+
+name		CompressedTexSubImage3D
+alias		CompressedTexSubImage3DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		zoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		CompressedTexSubImage2D
+alias		CompressedTexSubImage2DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		yoffset		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		CompressedTexSubImage1D
+alias		CompressedTexSubImage1DARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset		GLint
+param		width		GLsizei
+param		format		GLenum
+param		imageSize	GLsizei
+param		data		const GLvoid *
+category	1.3
+
+name		GetCompressedTexImage
+alias		GetCompressedTexImageARB
+return		void
+param		target		GLenum
+param		level		GLint
+param		img		GLvoid *
+category	1.3
+props		get
+
+
+# GL_EXT_polygon_offset
+
+name		PolygonOffsetEXT
+return		void
+param		factor		GLfloat
+param		bias		GLfloat
+category	GL_EXT_polygon_offset
+chromium	omit
+
+
+# GL_EXT_texture3D
+
+name		TexImage3DEXT
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalFormat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		border		GLint
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	GL_EXT_texture3D
+props		pixelstore
+chromium	pack checklist
+
+name		TexSubImage3DEXT
+alias		TexSubImage3D
+return		void
+param		target		GLenum
+param		level		GLint
+param		xoffset 	GLint
+param		yoffset 	GLint
+param		zoffset 	GLint
+param		width		GLsizei
+param		height		GLsizei
+param		depth		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		pixels		const GLvoid *
+category	GL_EXT_texture3D
+props		pixelstore
+
+
+# GL_EXT_subtexture
+name		TexSubImage1DEXT
+alias		TexSubImage1D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset	GLint
+param		width	GLsizei
+param		format	GLenum
+param		type	GLenum
+param		pixels	const GLvoid *
+category	GL_EXT_subtexture
+props		pixelstore
+
+name		TexSubImage2DEXT
+alias		TexSubImage2D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset	GLint
+param		yoffset	GLint
+param		width	GLsizei
+param		height	GLsizei
+param		format	GLenum
+param		type	GLenum
+param		pixels	const GLvoid *
+category	GL_EXT_subtexture
+props		pixelstore
+
+name		CopyTexImage1DEXT
+alias		CopyTexImage1D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		border		GLint
+category	GL_EXT_copy_texture
+
+name		CopyTexImage2DEXT
+alias		CopyTexImage2D
+return		void
+param		target		GLenum
+param		level		GLint
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+param		border		GLint
+category	GL_EXT_copy_texture
+
+name		CopyTexSubImage1DEXT
+alias		CopyTexSubImage1D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset	GLint
+param		x	GLint
+param		y	GLint
+param		width	GLsizei
+category	GL_EXT_copy_texture
+
+name		CopyTexSubImage2DEXT
+alias		CopyTexSubImage2D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset	GLint
+param		yoffset	GLint
+param		x	GLint
+param		y	GLint
+param		width	GLsizei
+param		height	GLsizei
+category	GL_EXT_copy_texture
+
+name		CopyTexSubImage3DEXT
+alias		CopyTexSubImage3D
+return		void
+param		target	GLenum
+param		level	GLint
+param		xoffset	GLint
+param		yoffset	GLint
+param		zoffset	GLint
+param		x	GLint
+param		y	GLint
+param		width	GLsizei
+param		height	GLsizei
+category	GL_EXT_copy_texture
+
+
+# GL_EXT_histogram
+
+name		GetHistogramEXT
+return		void
+param		target	GLenum
+param		reset	GLboolean
+param		format	GLenum
+param		type	GLenum
+param		values	GLvoid *
+category	GL_EXT_histogram
+props		get
+chromium	omit
+
+name		GetHistogramParameterfvEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_EXT_histogram
+props		get
+chromium	omit
+
+name		GetHistogramParameterivEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_EXT_histogram
+props		get
+chromium	omit
+
+name		GetMinmaxEXT
+return		void
+param		target	GLenum
+param		reset	GLboolean
+param		format	GLenum
+param		type	GLenum
+param		values	GLvoid *
+category	GL_EXT_histogram
+props		get
+chromium	omit
+
+name		GetMinmaxParameterfvEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_EXT_histogram
+props		get
+chromium	omit
+
+name		GetMinmaxParameterivEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_EXT_histogram
+props		get
+chromium	omit
+
+name		HistogramEXT
+alias		Histogram
+return		void
+param		target		GLenum
+param		width		GLsizei
+param		internalformat	GLenum
+param		sink		GLboolean
+category	GL_EXT_histogram
+chromium	omit checklist
+
+name		MinmaxEXT
+alias		Minmax
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		sink		GLboolean
+category	GL_EXT_histogram
+chromium	omit
+
+name		ResetHistogramEXT
+alias		ResetHistogram
+return		void
+param		target		GLenum
+category	GL_EXT_histogram
+chromium	omit
+
+name		ResetMinmaxEXT
+alias		ResetMinmax
+return		void
+param		target		GLenum
+category	GL_EXT_histogram
+chromium	omit
+
+name		ConvolutionFilter1DEXT
+alias		ConvolutionFilter1D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		image		const GLvoid *
+category	GL_EXT_convolution
+chromium	omit
+
+name		ConvolutionFilter2DEXT
+alias		ConvolutionFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		image		const GLvoid *
+category	GL_EXT_convolution
+chromium	omit
+
+name		ConvolutionParameterfEXT
+alias		ConvolutionParameterf
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat
+category	GL_EXT_convolution
+chromium	omit
+
+name		ConvolutionParameterfvEXT
+alias		ConvolutionParameterfv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_EXT_convolution
+chromium	omit
+
+name		ConvolutionParameteriEXT
+alias		ConvolutionParameteri
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint
+category	GL_EXT_convolution
+chromium	omit
+
+name		ConvolutionParameterivEXT
+alias		ConvolutionParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		const GLint *
+category	GL_EXT_convolution
+chromium	omit
+
+name		CopyConvolutionFilter1DEXT
+alias		CopyConvolutionFilter1D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	GL_EXT_convolution
+chromium	omit
+
+name		CopyConvolutionFilter2DEXT
+alias		CopyConvolutionFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+param		height		GLsizei
+category	GL_EXT_convolution
+chromium	omit
+
+name		GetConvolutionFilterEXT
+return		void
+param		target	GLenum
+param		format	GLenum
+param		type	GLenum
+param		image	GLvoid *
+category	GL_EXT_convolution
+props		get
+chromium	omit
+
+name		GetConvolutionParameterfvEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_EXT_convolution
+props		get
+chromium	omit
+
+name		GetConvolutionParameterivEXT
+return		void
+param		target	GLenum
+param		pname	GLenum
+param		params	GLint *
+category	GL_EXT_convolution
+props		get
+chromium	omit
+
+name		GetSeparableFilterEXT
+return		void
+param		target	GLenum
+param		format	GLenum
+param		type	GLenum
+param		row	GLvoid *
+param		column	GLvoid *
+param		span	GLvoid *
+category	GL_EXT_convolution
+props		get
+chromium	omit
+
+name		SeparableFilter2DEXT
+alias		SeparableFilter2D
+return		void
+param		target		GLenum
+param		internalformat	GLenum
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		row		const GLvoid *
+param		column		const GLvoid *
+category	GL_EXT_convolution
+chromium	omit
+
+
+# GL_EXT_texture_object
+
+name		AreTexturesResidentEXT
+return		GLboolean
+param		n		GLsizei
+param		textures	const GLuint *
+param		residences	GLboolean *
+category	GL_EXT_texture_object
+alias		AreTexturesResident
+props		get
+chromium	nopack
+
+name		BindTextureEXT
+return		void
+param		target		GLenum
+param		texture		GLuint
+category	GL_EXT_texture_object
+alias		BindTexture
+
+name		DeleteTexturesEXT
+return		void
+param		n		GLsizei
+param		textures	const GLuint *
+category	GL_EXT_texture_object
+alias		DeleteTextures
+props		nolist
+
+name		GenTexturesEXT
+return		void
+param		n		GLsizei
+param		textures	GLuint *
+category	GL_EXT_texture_object
+alias		GenTextures
+props		get
+
+name		IsTextureEXT
+return		GLboolean
+param		texture 	GLuint
+category	GL_EXT_texture_object
+alias		IsTexture
+props		get
+
+name		PrioritizeTexturesEXT
+return		void
+param		n		GLsizei
+param		textures	const GLuint *
+param		priorities	const GLclampf *
+category	GL_EXT_texture_object
+alias		PrioritizeTextures
+
+
+# GL_EXT_vertex_array
+
+name		ArrayElementEXT
+return		void
+param		i		GLint
+category	GL_EXT_vertex_array
+alias		ArrayElement
+chromium	omit
+
+name		ColorPointerEXT
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+props		setclient
+chromium	omit
+
+name		DrawArraysEXT
+return		void
+param		mode		GLenum
+param		first		GLint
+param		count		GLsizei
+category	GL_EXT_vertex_array
+alias		DrawArrays
+props		useclient
+chromium	omit
+
+name		EdgeFlagPointerEXT
+return		void
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLboolean *
+category	GL_EXT_vertex_array
+props		setclient
+chromium	omit
+
+name		GetPointervEXT
+return		void
+param		pname		GLenum
+param		params		GLvoid **
+category	GL_EXT_vertex_array
+alias		GetPointerv
+props		useclient get
+chromium	omit
+
+name		IndexPointerEXT
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+props		setclient
+chromium	omit
+
+name		NormalPointerEXT
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+props		setclient
+chromium	omit
+
+name		TexCoordPointerEXT
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+props		setclient
+chromium	omit
+
+name		VertexPointerEXT
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		count		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_vertex_array
+props		setclient
+chromium	omit
+
+
+# GL_ARB_point_parameters
+
+name		PointParameterfARB
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	GL_ARB_point_parameters
+chromium	extpack
+
+name		PointParameterfvARB
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	GL_ARB_point_parameters
+chromium	extpack
+
+
+# GL_EXT_color_subtable
+
+name		ColorSubTableEXT
+return		void
+param		target		GLenum
+param		start		GLsizei
+param		count		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		data		const GLvoid *
+category	GL_EXT_color_subtable
+alias		ColorSubTable
+chromium	omit
+
+name		CopyColorSubTableEXT
+return		void
+param		target		GLenum
+param		start		GLsizei
+param		x		GLint
+param		y		GLint
+param		width		GLsizei
+category	GL_EXT_color_subtable
+alias		CopyColorSubTable
+chromium	omit
+
+
+# GL_EXT_paletted_texture
+
+name		ColorTableEXT
+return		void
+param		target		GLenum
+param		internalFormat	GLenum
+param		width		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		table		const GLvoid *
+category	GL_EXT_paletted_texture
+alias		ColorTable
+chromium	omit checklist
+
+name		GetColorTableEXT
+return		void
+param		target		GLenum
+param		format		GLenum
+param		type		GLenum
+param		data		GLvoid *
+category	GL_EXT_paletted_texture
+props		get
+chromium	omit
+
+name		GetColorTableParameterivEXT
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_EXT_paletted_texture
+props		get
+chromium	omit
+
+name		GetColorTableParameterfvEXT
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLfloat *
+category	GL_EXT_paletted_texture
+props		get
+chromium	omit
+
+
+# GL_EXT_draw_range_elements
+
+name		DrawRangeElementsEXT
+return		void
+param		mode		GLenum
+param		start		GLuint
+param		end		GLuint
+param		count		GLsizei
+param		type		GLenum
+param		indices		const GLvoid *
+category	GL_EXT_draw_range_elements
+alias		DrawRangeElements
+
+
+# GL_EXT_secondary_color
+
+name		SecondaryColor3bEXT
+return		void
+param		red		GLbyte
+param		green		GLbyte
+param		blue		GLbyte
+category	GL_EXT_secondary_color
+chromium	pack
+
+name		SecondaryColor3bvEXT
+return		void
+param		v		const GLbyte *
+vector		v		3
+category	GL_EXT_secondary_color
+vectoralias	SecondaryColor3bEXT
+
+name		SecondaryColor3dEXT
+return		void
+param		red		GLdouble
+param		green		GLdouble
+param		blue		GLdouble
+category	GL_EXT_secondary_color
+chromium	pack
+
+name		SecondaryColor3dvEXT
+return		void
+param		v		const GLdouble *
+vector		v		3
+category	GL_EXT_secondary_color
+vectoralias	SecondaryColor3dEXT
+
+name		SecondaryColor3fEXT
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+category	GL_EXT_secondary_color
+chromium	pack
+
+name		SecondaryColor3fvEXT
+return		void
+param		v		const GLfloat *
+vector		v		3
+category	GL_EXT_secondary_color
+vectoralias	SecondaryColor3fEXT
+
+name		SecondaryColor3iEXT
+return		void
+param		red		GLint
+param		green		GLint
+param		blue		GLint
+category	GL_EXT_secondary_color
+chromium	pack
+
+name		SecondaryColor3ivEXT
+return		void
+param		v		const GLint *
+vector		v		3
+category	GL_EXT_secondary_color
+vectoralias	SecondaryColor3iEXT
+
+name		SecondaryColor3sEXT
+return		void
+param		red		GLshort
+param		green		GLshort
+param		blue		GLshort
+category	GL_EXT_secondary_color
+chromium	pack
+
+name		SecondaryColor3svEXT
+return		void
+param		v		const GLshort *
+vector		v		3
+category	GL_EXT_secondary_color
+vectoralias	SecondaryColor3sEXT
+
+name		SecondaryColor3ubEXT
+return		void
+param		red		GLubyte
+param		green		GLubyte
+param		blue		GLubyte
+category	GL_EXT_secondary_color
+chromium	pack
+
+name		SecondaryColor3ubvEXT
+return		void
+param		v		const GLubyte *
+vector		v		3
+category	GL_EXT_secondary_color
+vectoralias	SecondaryColor3ubEXT
+
+name		SecondaryColor3uiEXT
+return		void
+param		red		GLuint
+param		green		GLuint
+param		blue		GLuint
+category	GL_EXT_secondary_color
+chromium	pack
+
+name		SecondaryColor3uivEXT
+return		void
+param		v		const GLuint *
+vector		v		3
+category	GL_EXT_secondary_color
+vectoralias	SecondaryColor3uiEXT
+
+name		SecondaryColor3usEXT
+return		void
+param		red		GLushort
+param		green		GLushort
+param		blue		GLushort
+category	GL_EXT_secondary_color
+chromium	pack
+
+name		SecondaryColor3usvEXT
+return		void
+param		v		const GLushort *
+vector		v		3
+category	GL_EXT_secondary_color
+vectoralias	SecondaryColor3usEXT
+
+name		SecondaryColorPointerEXT
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer 	const GLvoid *
+category	GL_EXT_secondary_color
+props		setclient
+chromium	extpack
+
+
+
+name		MultiDrawArraysEXT
+return		void
+param		mode		GLenum
+param		first		GLint *
+param		count		GLsizei *
+param		primcount	GLsizei
+category	GL_EXT_multi_draw_arrays
+props		useclient
+chromium	nopack
+
+name		MultiDrawElementsEXT
+return		void
+param		mode		GLenum
+param		count		const GLsizei *
+param		type		GLenum
+param		indices		const GLvoid **
+param		primcount	GLsizei
+category	GL_EXT_multi_draw_arrays
+props		useclient
+chromium	nopack
+
+
+# GL_EXT_fog_coord
+
+name		FogCoordfEXT
+return		void
+param		coord		GLfloat
+category	GL_EXT_fog_coord
+props		pervertex
+chromium	pack
+
+name		FogCoordfvEXT
+return		void
+param		coord		const GLfloat *
+vector		coord		1
+category	GL_EXT_fog_coord
+props		pervertex
+vectoralias	FogCoordfEXT
+
+name		FogCoorddEXT
+return		void
+param		coord		GLdouble
+category	GL_EXT_fog_coord
+props		pervertex
+chromium	pack
+
+name		FogCoorddvEXT
+return		void
+param		coord		const GLdouble *
+vector		coord		1
+category	GL_EXT_fog_coord
+props		pervertex
+vectoralias	FogCoorddEXT
+
+name		FogCoordPointerEXT
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	GL_EXT_fog_coord
+props		setclient
+chromium	extpack
+
+
+# GL_EXT_blend_func_separate
+
+name		BlendFuncSeparateEXT
+return		void
+param		sfactorRGB	GLenum
+param		dfactorRGB	GLenum
+param		sfactorA	GLenum
+param		dfactorA	GLenum
+category	GL_EXT_blend_func_separate
+chromium	extpack
+
+
+# GL_NV_vertex_array_range
+
+name		FlushVertexArrayRangeNV
+return		void
+category	GL_NV_vertex_array_range
+props		setclient
+chromium	extpack
+
+name		VertexArrayRangeNV
+return		void
+param		length		GLsizei
+param		pointer		const GLvoid *
+category	GL_NV_vertex_array_range
+props		setclient
+chromium	extpack
+
+
+# GL_NV_register_combiners
+
+name		CombinerParameterfvNV
+return		void
+param		pname			GLenum
+param		params			const GLfloat *
+category	GL_NV_register_combiners
+chromium	extpack
+
+name		CombinerParameterfNV
+return		void
+param		pname			GLenum
+param		param			GLfloat
+category	GL_NV_register_combiners
+chromium	extpack
+
+name		CombinerParameterivNV
+return		void
+param		pname			GLenum
+param		params			const GLint *
+category	GL_NV_register_combiners
+chromium	extpack
+
+name		CombinerParameteriNV
+return		void
+param		pname			GLenum
+param		param			GLint
+category	GL_NV_register_combiners
+chromium	extpack
+
+name		CombinerInputNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		variable		GLenum
+param		input			GLenum
+param		mapping			GLenum
+param		componentUsage		GLenum
+category	GL_NV_register_combiners
+chromium	extpack
+
+name		CombinerOutputNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		abOutput		GLenum
+param		cdOutput		GLenum
+param		sumOutput		GLenum
+param		scale			GLenum
+param		bias			GLenum
+param		abDotProduct		GLboolean
+param		cdDotProduct		GLboolean
+param		muxSum			GLboolean
+category	GL_NV_register_combiners
+chromium	extpack
+
+name		FinalCombinerInputNV
+return		void
+param		variable		GLenum
+param		input			GLenum
+param		mapping			GLenum
+param		componentUsage		GLenum
+category	GL_NV_register_combiners
+chromium	extpack
+
+name		GetCombinerInputParameterfvNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		variable		GLenum
+param		pname			GLenum
+param		params			GLfloat *
+category	GL_NV_register_combiners
+props		get
+chromium	extpack
+
+name		GetCombinerInputParameterivNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		variable		GLenum
+param		pname			GLenum
+param		params			GLint *
+category	GL_NV_register_combiners
+props		get
+chromium	extpack
+
+name		GetCombinerOutputParameterfvNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		pname			GLenum
+param		params			GLfloat *
+category	GL_NV_register_combiners
+props		get
+chromium	extpack
+
+name		GetCombinerOutputParameterivNV
+return		void
+param		stage			GLenum
+param		portion			GLenum
+param		pname			GLenum
+param		params			GLint *
+category	GL_NV_register_combiners
+props		get
+chromium	extpack
+
+name		GetFinalCombinerInputParameterfvNV
+return		void
+param		variable		GLenum
+param		pname			GLenum
+param		params			GLfloat *
+category	GL_NV_register_combiners
+props		get
+chromium	extpack
+
+name		GetFinalCombinerInputParameterivNV
+return		void
+param		variable		GLenum
+param		pname			GLenum
+param		params			GLint *
+category	GL_NV_register_combiners
+props		get
+chromium	extpack
+
+
+
+
+# GL_EXT_multisample
+
+name		SampleMaskEXT
+return		void
+param		value		GLclampf
+param		invert		GLboolean
+category	GL_EXT_multisample
+chromium	stub
+
+name		SamplePatternEXT
+return		void
+param		pattern		GLenum
+category	GL_EXT_multisample
+chromium	stub
+
+
+# GL_NV_register_combiners2
+
+name		CombinerStageParameterfvNV
+return		void
+param		stage	GLenum
+param		pname	GLenum
+param		params	const GLfloat *
+category	GL_NV_register_combiners2
+chromium	extpack
+
+name		GetCombinerStageParameterfvNV
+return		void
+param		stage	GLenum
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_register_combiners2
+props		get
+chromium	extpack
+
+
+# GL_ARB_window_pos
+
+name		WindowPos2dARB
+return		void
+param		x	GLdouble
+param		y	GLdouble
+category	GL_ARB_window_pos
+chromium	extpack
+
+name		WindowPos2fARB
+return		void
+param		x	GLfloat
+param		y	GLfloat
+category	GL_ARB_window_pos
+chromium	extpack
+
+name		WindowPos2iARB
+return		void
+param		x	GLint
+param		y	GLint
+category	GL_ARB_window_pos
+chromium	extpack
+
+name		WindowPos2sARB
+return		void
+param		x	GLshort
+param		y	GLshort
+category	GL_ARB_window_pos
+chromium	extpack
+
+name		WindowPos2dvARB
+return		void
+param		v	const GLdouble *
+vector		v	2
+category	GL_ARB_window_pos
+chromium	extpack
+vectoralias	WindowPos2dARB
+
+name		WindowPos2fvARB
+return		void
+param		v	const GLfloat *
+vector		v	2
+category	GL_ARB_window_pos
+chromium	extpack
+vectoralias	WindowPos2fARB
+
+name		WindowPos2ivARB
+return		void
+param		v	const GLint *
+vector		v	2
+category	GL_ARB_window_pos
+chromium	extpack
+vectoralias	WindowPos2iARB
+
+name		WindowPos2svARB
+return		void
+param		v	const GLshort *
+vector		v	2
+category	GL_ARB_window_pos
+chromium	extpack
+vectoralias	WindowPos2sARB
+
+name		WindowPos3dARB
+return		void
+param		x	GLdouble
+param		y	GLdouble
+param		z	GLdouble
+category	GL_ARB_window_pos
+chromium	extpack
+
+name		WindowPos3fARB
+return		void
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+category	GL_ARB_window_pos
+chromium	extpack
+
+name		WindowPos3iARB
+return		void
+param		x	GLint
+param		y	GLint
+param		z	GLint
+category	GL_ARB_window_pos
+chromium	extpack
+
+name		WindowPos3sARB
+return		void
+param		x	GLshort
+param		y	GLshort
+param		z	GLshort
+category	GL_ARB_window_pos
+chromium	extpack
+
+name		WindowPos3dvARB
+return		void
+param		v	const GLdouble *
+vector		v	3
+category	GL_ARB_window_pos
+chromium	extpack
+vectoralias	WindowPos3dARB
+
+name		WindowPos3fvARB
+return		void
+param		v	const GLfloat *
+vector		v	3
+category	GL_ARB_window_pos
+chromium	extpack
+vectoralias	WindowPos3fARB
+
+name		WindowPos3ivARB
+return		void
+param		v	const GLint *
+vector		v	3
+category	GL_ARB_window_pos
+chromium	extpack
+vectoralias	WindowPos3iARB
+
+name		WindowPos3svARB
+return		void
+param		v	const GLshort *
+vector		v	3
+category	GL_ARB_window_pos
+chromium	extpack
+vectoralias	WindowPos3sARB
+
+
+# OpenGL 1.4
+
+name		BlendFuncSeparate
+alias		BlendFuncSeparateEXT
+return		void
+param		sfactorRGB	GLenum
+param		dfactorRGB	GLenum
+param		sfactorA	GLenum
+param		dfactorA	GLenum
+category	1.4
+
+name		FogCoordf
+return		void
+param		coord		GLfloat
+category	1.4
+alias		FogCoordfEXT
+
+name		FogCoordfv
+return		void
+param		coord		const GLfloat *
+category	1.4
+alias		FogCoordfvEXT
+
+name		FogCoordd
+return		void
+param		coord		GLdouble
+category	1.4
+alias		FogCoorddEXT
+
+name		FogCoorddv
+return		void
+param		coord		const GLdouble *
+category	1.4
+alias		FogCoorddvEXT
+
+name		FogCoordPointer
+return		void
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.4
+alias		FogCoordPointerEXT
+props		setclient
+chromium	nopack
+
+name		MultiDrawArrays
+return		void
+param		mode		GLenum
+param		first		GLint *
+param		count		GLsizei *
+param		primcount	GLsizei
+category	1.4
+alias		MultiDrawArraysEXT
+props		useclient
+chromium	nopack
+
+name		MultiDrawElements
+return		void
+param		mode		GLenum
+param		count		const GLsizei *
+param		type		GLenum
+param		indices		const GLvoid **
+param		primcount	GLsizei
+category	1.4
+alias		MultiDrawElementsEXT
+props		useclient
+chromium	nopack
+
+name		PointParameterf
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.4
+alias		PointParameterfARB
+
+name		PointParameterfv
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.4
+alias		PointParameterfvARB
+
+name		PointParameteri
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.4
+chromium	extpack
+
+name		PointParameteriv
+return		void
+param		pname		GLenum
+param		param		const GLint *
+category	1.4
+chromium	extpack
+
+name		SecondaryColor3b
+return		void
+param		red		GLbyte
+param		green		GLbyte
+param		blue		GLbyte
+category	1.4
+alias		SecondaryColor3bEXT
+
+name		SecondaryColor3bv
+return		void
+param		v		const GLbyte *
+vector		v		3
+category	1.4
+alias		SecondaryColor3bvEXT
+
+name		SecondaryColor3d
+return		void
+param		red		GLdouble
+param		green		GLdouble
+param		blue		GLdouble
+category	1.4
+alias		SecondaryColor3dEXT
+
+name		SecondaryColor3dv
+return		void
+param		v		const GLdouble *
+vector		v		3
+category	1.4
+alias		SecondaryColor3dvEXT
+
+name		SecondaryColor3f
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+category	1.4
+alias		SecondaryColor3fEXT
+
+name		SecondaryColor3fv
+return		void
+param		v		const GLfloat *
+vector		v		3
+category	1.4
+alias		SecondaryColor3fvEXT
+
+name		SecondaryColor3i
+return		void
+param		red		GLint
+param		green		GLint
+param		blue		GLint
+category	1.4
+alias		SecondaryColor3iEXT
+
+name		SecondaryColor3iv
+return		void
+param		v		const GLint *
+vector		v		3
+category	1.4
+alias		SecondaryColor3ivEXT
+
+name		SecondaryColor3s
+return		void
+param		red		GLshort
+param		green		GLshort
+param		blue		GLshort
+category	1.4
+alias		SecondaryColor3sEXT
+
+name		SecondaryColor3sv
+return		void
+param		v		const GLshort *
+vector		v		3
+category	1.4
+alias		SecondaryColor3svEXT
+
+name		SecondaryColor3ub
+return		void
+param		red		GLubyte
+param		green		GLubyte
+param		blue		GLubyte
+category	1.4
+alias		SecondaryColor3ubEXT
+
+name		SecondaryColor3ubv
+return		void
+param		v		const GLubyte *
+vector		v		3
+category	1.4
+alias		SecondaryColor3ubvEXT
+
+name		SecondaryColor3ui
+return		void
+param		red		GLuint
+param		green		GLuint
+param		blue		GLuint
+category	1.4
+alias		SecondaryColor3uiEXT
+
+name		SecondaryColor3uiv
+return		void
+param		v		const GLuint *
+vector		v		3
+category	1.4
+alias		SecondaryColor3uivEXT
+
+name		SecondaryColor3us
+return		void
+param		red		GLushort
+param		green		GLushort
+param		blue		GLushort
+category	1.4
+alias		SecondaryColor3usEXT
+
+name		SecondaryColor3usv
+return		void
+param		v		const GLushort *
+vector		v		3
+category	1.4
+alias		SecondaryColor3usvEXT
+
+name		SecondaryColorPointer
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	1.4
+alias		SecondaryColorPointerEXT
+props		setclient
+
+name		WindowPos2d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+category	1.4
+alias		WindowPos2dARB
+chromium	nopack
+
+name		WindowPos2dv
+return		void
+param		v		const GLdouble *
+vector		v		2
+category	1.4
+alias		WindowPos2dvARB
+chromium	nopack
+
+name		WindowPos2f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+category	1.4
+alias		WindowPos2fARB
+chromium	nopack
+
+name		WindowPos2fv
+return		void
+param		v		const GLfloat *
+vector		v		2
+category	1.4
+alias		WindowPos2fvARB
+chromium	nopack
+
+name		WindowPos2i
+return		void
+param		x		GLint
+param		y		GLint
+category	1.4
+alias		WindowPos2iARB
+chromium	nopack
+
+name		WindowPos2iv
+return		void
+param		v		const GLint *
+vector		v		2
+category	1.4
+alias		WindowPos2ivARB
+chromium	nopack
+
+name		WindowPos2s
+return		void
+param		x		GLshort
+param		y		GLshort
+category	1.4
+alias		WindowPos2sARB
+chromium	nopack
+
+name		WindowPos2sv
+return		void
+param		v		const GLshort *
+vector		v		2
+category	1.4
+alias		WindowPos2svARB
+chromium	nopack
+
+name		WindowPos3d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.4
+alias		WindowPos3dARB
+chromium	nopack
+
+name		WindowPos3dv
+return		void
+param		v		const GLdouble *
+vector		v		3
+category	1.4
+alias		WindowPos3dvARB
+chromium	nopack
+
+name		WindowPos3f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.4
+alias		WindowPos3fARB
+chromium	nopack
+
+name		WindowPos3fv
+return		void
+param		v		const GLfloat *
+vector		v		3
+category	1.4
+alias		WindowPos3fvARB
+chromium	nopack
+
+name		WindowPos3i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+category	1.4
+alias		WindowPos3iARB
+chromium	nopack
+
+name		WindowPos3iv
+return		void
+param		v		const GLint *
+vector		v		3
+category	1.4
+alias		WindowPos3ivARB
+chromium	nopack
+
+name		WindowPos3s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	1.4
+alias		WindowPos3sARB
+chromium	nopack
+
+name		WindowPos3sv
+return		void
+param		v		const GLshort *
+vector		v		3
+category	1.4
+alias		WindowPos3svARB
+chromium	nopack
+
+
+# GL_NV_point_sprite
+
+name		PointParameteriNV
+return		void
+param		pname		GLenum
+param		params		GLint
+category	GL_NV_point_sprite
+alias		PointParameteri
+chromium	nopack
+
+name		PointParameterivNV
+return		void
+param		pname		GLenum
+param		params		const GLint *
+category	GL_NV_point_sprite
+alias		PointParameteriv
+chromium	nopack
+
+
+# GL_EXT_stencil_two_side
+
+name		ActiveStencilFaceEXT
+return		void
+param		face		GLenum
+category	EXT_stencil_two_side
+chromium	omit
+
+
+# GL_NV_fence
+
+name		DeleteFencesNV
+return		void
+param		n		GLsizei
+param		fences		const GLuint *
+category	GL_NV_fence
+props		nolist
+chromium	extpack
+
+name		GenFencesNV
+return		void
+param		n		GLsizei
+param		fences		GLuint *
+category	GL_NV_fence
+props		get
+chromium	extpack
+
+name		IsFenceNV
+return		GLboolean
+param		fence		GLuint
+category	GL_NV_fence
+props		get
+chromium	extpack
+
+name		TestFenceNV
+return		GLboolean
+param		fence		GLuint
+category	GL_NV_fence
+props		nolist get
+chromium	extpack
+
+name		GetFenceivNV
+return		void
+param		fence		GLuint
+param		pname		GLenum
+param		params		GLint *
+category	GL_NV_fence
+props		get
+chromium	extpack
+
+name		FinishFenceNV
+return		void
+param		fence		GLuint
+category	GL_NV_fence
+chromium	extpack
+
+name		SetFenceNV
+return		void
+param		fence		GLuint
+param		condition	GLenum
+category	GL_NV_fence
+chromium	extpack
+
+
+# GL_ARB_vertex_program
+
+name		VertexAttrib1sARB
+return		void
+param		index		GLuint
+param		x		GLshort
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib1fARB
+return		void
+param		index		GLuint
+param		x		GLfloat
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib1dARB
+return		void
+param		index		GLuint
+param		x		GLdouble
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib2sARB
+return		void
+param		index		GLuint
+param		x		GLshort
+param		y		GLshort
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib2fARB
+return		void
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib2dARB
+return		void
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib3sARB
+return		void
+param		index		GLuint
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib3fARB
+return		void
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib3dARB
+return		void
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4sARB
+return		void
+param		index		GLuint
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+param		w		GLshort
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4fARB
+return		void
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4dARB
+return		void
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4NubARB
+return		void
+param		index		GLuint
+param		x		GLubyte
+param		y		GLubyte
+param		z		GLubyte
+param		w		GLubyte
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib1svARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+vector		v		1
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib1sARB
+
+name		VertexAttrib1fvARB
+return		void
+param		index		GLuint
+param		v		const GLfloat *
+vector		v		1
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib1fARB
+
+name		VertexAttrib1dvARB
+return		void
+param		index		GLuint
+param		v		const GLdouble *
+vector		v		1
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib1dARB
+
+name		VertexAttrib2svARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+vector		v		2
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib2sARB
+
+name		VertexAttrib2fvARB
+return		void
+param		index		GLuint
+param		v		const GLfloat *
+vector		v		2
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib2fARB
+
+name		VertexAttrib2dvARB
+return		void
+param		index		GLuint
+param		v		const GLdouble *
+vector		v		2
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib2dARB
+
+name		VertexAttrib3svARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+vector		v		3
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib3sARB
+
+name		VertexAttrib3fvARB
+return		void
+param		index		GLuint
+param		v		const GLfloat *
+vector		v		3
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib3fARB
+
+name		VertexAttrib3dvARB
+return		void
+param		index		GLuint
+param		v		const GLdouble *
+vector		v		3
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib3dARB
+
+name		VertexAttrib4bvARB
+return		void
+param		index		GLuint
+param		v		const GLbyte *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4svARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib4sARB
+
+name		VertexAttrib4ivARB
+return		void
+param		index		GLuint
+param		v		const GLint *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4ubvARB
+return		void
+param		index		GLuint
+param		v		const GLubyte *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4usvARB
+return		void
+param		index		GLuint
+param		v		const GLushort *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4uivARB
+return		void
+param		index		GLuint
+param		v		const GLuint *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4fvARB
+return		void
+param		index		GLuint
+param		v		const GLfloat *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib4fARB
+
+name		VertexAttrib4dvARB
+return		void
+param		index		GLuint
+param		v		const GLdouble *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+vectoralias	VertexAttrib4dARB
+
+name		VertexAttrib4NbvARB
+return		void
+param		index		GLuint
+param		v		const GLbyte *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4NsvARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4NivARB
+return		void
+param		index		GLuint
+param		v		const GLint *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4NubvARB
+return		void
+param		index		GLuint
+param		v		const GLubyte *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4NusvARB
+return		void
+param		index		GLuint
+param		v		const GLushort *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttrib4NuivARB
+return		void
+param		index		GLuint
+param		v		const GLuint *
+vector		v		4
+category	GL_ARB_vertex_program
+props		pervertex
+chromium	pack
+
+name		VertexAttribPointerARB
+return		void
+param		index		GLuint
+param		size		GLint
+param		type		GLenum
+param		normalized	GLboolean
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	GL_ARB_vertex_program
+props		setclient
+chromium	extpack
+
+name		EnableVertexAttribArrayARB
+return		void
+param		index		GLuint
+category	GL_ARB_vertex_program
+props		setclient
+chromium	extpack
+
+name		DisableVertexAttribArrayARB
+return		void
+param		index		GLuint
+category	GL_ARB_vertex_program
+props		setclient
+chromium	extpack
+
+name		ProgramStringARB
+return		void
+param		target		GLenum
+param		format		GLenum
+param		len		GLsizei
+param		string		const GLvoid *
+category	GL_ARB_vertex_program
+chromium	extpack
+
+name		BindProgramARB
+return		void
+param		target		GLenum
+param		program		GLuint
+category	GL_ARB_vertex_program
+chromium	extpack
+
+name		DeleteProgramsARB
+return		void
+param		n		GLsizei
+param		programs	const GLuint *
+category	GL_ARB_vertex_program
+props		nolist
+chromium	extpack
+
+name		GenProgramsARB
+return		void
+param		n		GLsizei
+param		programs	GLuint *
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		IsProgramARB
+return		GLboolean
+param		program		GLuint
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		ProgramEnvParameter4dARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_ARB_vertex_program
+chromium	extpack
+
+name		ProgramEnvParameter4dvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLdouble *
+vector		params		4
+category	GL_ARB_vertex_program
+chromium	extpack
+vectoralias	ProgramEnvParameter4dARB
+
+name		ProgramEnvParameter4fARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_ARB_vertex_program
+chromium	extpack
+
+name		ProgramEnvParameter4fvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLfloat *
+vector		params		4
+category	GL_ARB_vertex_program
+chromium	extpack
+vectoralias	ProgramEnvParameter4fARB
+
+name		ProgramLocalParameter4dARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_ARB_vertex_program
+chromium	extpack
+
+name		ProgramLocalParameter4dvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLdouble *
+vector		params		4
+category	GL_ARB_vertex_program
+chromium	extpack
+vectoralias	ProgramLocalParameter4dARB
+
+name		ProgramLocalParameter4fARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_ARB_vertex_program
+chromium	extpack
+
+name		ProgramLocalParameter4fvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLfloat *
+vector		params		4
+category	GL_ARB_vertex_program
+chromium	extpack
+vectoralias	ProgramLocalParameter4fARB
+
+name		GetProgramEnvParameterdvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		GLdouble *
+vector		params		4
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramEnvParameterfvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		GLfloat *
+vector		params		4
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramLocalParameterdvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		GLdouble *
+vector		params		4
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramLocalParameterfvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		GLfloat *
+vector		params		4
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramivARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramStringARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		string		GLvoid *
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetVertexAttribdvARB
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		params		GLdouble *
+vector		params		4
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetVertexAttribfvARB
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		params		GLfloat *
+vector		params		4
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetVertexAttribivARB
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		params		GLint *
+vector		params		4
+category	GL_ARB_vertex_program
+props		get
+chromium	extpack
+
+name		GetVertexAttribPointervARB
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		pointer		GLvoid **
+category	GL_ARB_vertex_program
+props		useclient get
+chromium	extpack
+
+
+
+# GL_NV_vertex_program
+
+name		AreProgramsResidentNV
+return		GLboolean
+param		n		GLsizei
+param		ids		const GLuint *
+param		residences	GLboolean *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		BindProgramNV
+return		void
+param		target	GLenum
+param		id	GLuint
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		DeleteProgramsNV
+return		void
+param		n	GLsizei
+param		ids	const GLuint *
+category	GL_NV_vertex_program
+alias		DeleteProgramsARB
+props		nolist
+chromium	nopack
+
+name		ExecuteProgramNV
+return		void
+param		target	GLenum
+param		id	GLuint
+param		params	const GLfloat *
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		GenProgramsNV
+return		void
+param		n	GLsizei
+param		ids	GLuint *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramParameterdvNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		pname	GLenum
+param		params	GLdouble *
+vector		params	4
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramParameterfvNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramivNV
+return		void
+param		id	GLuint
+param		pname	GLenum
+param		params	GLint *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetProgramStringNV
+return		void
+param		id	GLuint
+param		pname	GLenum
+param		program GLubyte *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetTrackMatrixivNV
+return		void
+param		target	GLenum
+param		address GLuint
+param		pname	GLenum
+param		params	GLint *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetVertexAttribdvNV
+return		void
+param		index	GLuint
+param		pname	GLenum
+param		params	GLdouble *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetVertexAttribfvNV
+return		void
+param		index	GLuint
+param		pname	GLenum
+param		params	GLfloat *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetVertexAttribivNV
+return		void
+param		index	GLuint
+param		pname	GLenum
+param		params	GLint *
+category	GL_NV_vertex_program
+props		get
+chromium	extpack
+
+name		GetVertexAttribPointervNV
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		pointer 	GLvoid **
+category	GL_NV_vertex_program
+props		get useclient
+chromium	extpack
+
+name		IsProgramNV
+return		GLboolean
+param		id	GLuint
+category	GL_NV_vertex_program
+props		get
+alias		IsProgramARB
+chromium	nopack
+
+name		LoadProgramNV
+return		void
+param		target		GLenum
+param		id		GLuint
+param		len		GLsizei
+param		program		const GLubyte *
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		ProgramParameter4dNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		x	GLdouble
+param		y	GLdouble
+param		z	GLdouble
+param		w	GLdouble
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		ProgramParameter4dvNV
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLdouble *
+vector		params		4
+category	GL_NV_vertex_program
+chromium	extpack
+vectoralias	ProgramParameter4dNV
+
+name		ProgramParameter4fNV
+return		void
+param		target	GLenum
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+param		w	GLfloat
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		ProgramParameter4fvNV
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLfloat *
+vector		params		4
+category	GL_NV_vertex_program
+chromium	extpack
+vectoralias	ProgramParameter4fNV
+
+name		ProgramParameters4dvNV
+return		void
+param		target		GLenum
+param		index		GLuint
+param		num		GLuint
+param		params		const GLdouble *
+vector		params		4
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		ProgramParameters4fvNV
+return		void
+param		target		GLenum
+param		index		GLuint
+param		num		GLuint
+param		params		const GLfloat *
+vector		params		4
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		RequestResidentProgramsNV
+return		void
+param		n	GLsizei
+param		ids	const GLuint *
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		TrackMatrixNV
+return		void
+param		target		GLenum
+param		address		GLuint
+param		matrix		GLenum
+param		transform	GLenum
+category	GL_NV_vertex_program
+chromium	extpack
+
+name		VertexAttribPointerNV
+return		void
+param		index		GLuint
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer 	const GLvoid *
+category	GL_NV_vertex_program
+props		setclient
+chromium	extpack
+
+name		VertexAttrib1dNV
+return		void
+param		index	GLuint
+param		x	GLdouble
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib1dARB
+
+name		VertexAttrib1dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib1dvARB
+
+name		VertexAttrib1fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib1fARB
+
+name		VertexAttrib1fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib1fvARB
+
+name		VertexAttrib1sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib1sARB
+
+name		VertexAttrib1svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib1svARB
+
+name		VertexAttrib2dNV
+return		void
+param		index	GLuint
+param		x	GLdouble
+param		y	GLdouble
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib2dARB
+
+name		VertexAttrib2dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib2dvARB
+
+name		VertexAttrib2fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib2fARB
+
+name		VertexAttrib2fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib2fvARB
+
+name		VertexAttrib2sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib2sARB
+
+name		VertexAttrib2svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib2svARB
+
+name		VertexAttrib3dNV
+return		void
+param		index	GLuint
+param		x	GLdouble
+param		y	GLdouble
+param		z	GLdouble
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib3dARB
+
+name		VertexAttrib3dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib3dvARB
+
+name		VertexAttrib3fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib3fARB
+
+name		VertexAttrib3fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib3fvARB
+
+name		VertexAttrib3sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+param		z	GLshort
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib3sARB
+
+name		VertexAttrib3svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib3svARB
+
+name		VertexAttrib4dNV
+return		void
+param		index	GLuint
+param		x	GLdouble
+param		y	GLdouble
+param		z	GLdouble
+param		w	GLdouble
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib4dARB
+
+name		VertexAttrib4dvNV
+return		void
+param		index	GLuint
+param		v	const GLdouble *
+vector		v	4
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib4dvARB
+
+name		VertexAttrib4fNV
+return		void
+param		index	GLuint
+param		x	GLfloat
+param		y	GLfloat
+param		z	GLfloat
+param		w	GLfloat
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib4fARB
+
+name		VertexAttrib4fvNV
+return		void
+param		index	GLuint
+param		v	const GLfloat *
+vector		v	4
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib4fvARB
+
+name		VertexAttrib4sNV
+return		void
+param		index	GLuint
+param		x	GLshort
+param		y	GLshort
+param		z	GLshort
+param		w	GLshort
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib4sARB
+
+name		VertexAttrib4svNV
+return		void
+param		index	GLuint
+param		v	const GLshort *
+vector		v	4
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib4svARB
+
+name		VertexAttrib4ubNV
+return		void
+param		index	GLuint
+param		x	GLubyte
+param		y	GLubyte
+param		z	GLubyte
+param		w	GLubyte
+category	GL_NV_vertex_program
+props		pervertex
+alias		VertexAttrib4NubARB
+
+name		VertexAttrib4ubvNV
+return		void
+param		index	GLuint
+param		v	const GLubyte *
+vector		v	4
+category	GL_NV_vertex_program
+alias		VertexAttrib4NubvARB
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs1dvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs1fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs1svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs2dvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs2fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs2svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs3dvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs3fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs3svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs4dvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLdouble *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs4fvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLfloat *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs4svNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLshort *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+name		VertexAttribs4ubvNV
+return		void
+param		index	GLuint
+param		n	GLsizei
+param		v	const GLubyte *
+category	GL_NV_vertex_program
+props		pervertex
+chromium	nopack
+
+
+# GL_NV_fragment_program
+
+name		ProgramNamedParameter4fNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_NV_fragment_program
+chromium	extpack
+
+name		ProgramNamedParameter4dNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_NV_fragment_program
+chromium	extpack
+
+name		ProgramNamedParameter4fvNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		v		const GLfloat *
+category	GL_NV_fragment_program
+chromium	extpack
+
+name		ProgramNamedParameter4dvNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		v		const GLdouble *
+vector		v		4
+category	GL_NV_fragment_program
+chromium	extpack
+
+name		GetProgramNamedParameterfvNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		params		GLfloat *
+vector		params		4
+category	GL_NV_fragment_program
+props		get
+chromium	extpack
+
+name		GetProgramNamedParameterdvNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		params		GLdouble *
+vector		params		4
+category	GL_NV_fragment_program
+props		get
+chromium	extpack
+
+
+# GL_ARB_vertex_buffer_object
+
+name		BindBufferARB
+return		void
+param		target		GLenum
+param		buffer		GLuint
+category	GL_ARB_vertex_buffer_object
+props		nolist
+chromium	extpack
+
+name		BufferDataARB
+return		void
+param		target		GLenum
+param		size		GLsizeiptrARB
+param		data		const GLvoid *
+param		usage		GLenum
+category	GL_ARB_vertex_buffer_object
+props		nolist
+chromium	extpack
+
+name		BufferSubDataARB
+return		void
+param		target		GLenum
+param		offset		GLintptrARB
+param		size		GLsizeiptrARB
+param		data		const GLvoid *
+category	GL_ARB_vertex_buffer_object
+props		nolist
+chromium	extpack
+
+name		DeleteBuffersARB
+return		void
+param		n		GLsizei
+param		buffer		const GLuint *
+category	GL_ARB_vertex_buffer_object
+props		nolist
+chromium	extpack
+
+name		GenBuffersARB
+return		void
+param		n		GLsizei
+param		buffer		GLuint *
+category	GL_ARB_vertex_buffer_object
+props		get
+chromium	extpack
+
+name		GetBufferParameterivARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_vertex_buffer_object
+props		get
+chromium	extpack
+
+name		GetBufferPointervARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLvoid **
+category	GL_ARB_vertex_buffer_object
+props		get useclient
+chromium	nopack
+
+name		GetBufferSubDataARB
+return		void
+param		target		GLenum
+param		offset		GLintptrARB
+param		size		GLsizeiptrARB
+param		data		void *
+category	GL_ARB_vertex_buffer_object
+props		get
+chromium	extpack
+
+name		IsBufferARB
+return		GLboolean
+param		buffer		GLuint
+category	GL_ARB_vertex_buffer_object
+props		get
+chromium	extpack
+
+name		MapBufferARB
+return		void *
+param		target		GLenum
+param		access		GLenum
+category	GL_ARB_vertex_buffer_object
+props		nolist
+chromium	nopack
+
+name		UnmapBufferARB
+return		GLboolean
+param		target		GLenum
+category	GL_ARB_vertex_buffer_object
+props		nolist
+chromium	nopack
+
+
+
+# GL_EXT_depth_bounds_test
+
+name		DepthBoundsEXT
+return		void
+param		zmin		GLclampd
+param		zmax		GLclampd
+category	GL_EXT_depth_bounds_test
+chromium	omit
+
+
+# GL_ARB_occlusion_query
+
+name		GenQueriesARB
+return		void
+param		n		GLsizei
+param		ids		GLuint *
+category	GL_ARB_occlusion_query
+props		get
+chromium	extpack
+
+name		DeleteQueriesARB
+return		void
+param		n		GLsizei
+param		ids		const GLuint *
+category	GL_ARB_occlusion_query
+props		nolist
+chromium	extpack
+
+name		IsQueryARB
+return		GLboolean
+param		id		GLuint
+category	GL_ARB_occlusion_query
+props		get
+chromium	extpack
+
+name		BeginQueryARB
+return		void
+param		target		GLenum
+param		id		GLuint
+category	GL_ARB_occlusion_query
+chromium	extpack
+
+name		EndQueryARB
+return		void
+param		target		GLenum
+category	GL_ARB_occlusion_query
+chromium	extpack
+
+name		GetQueryivARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_occlusion_query
+props		get
+chromium	extpack
+
+name		GetQueryObjectivARB
+return		void
+param		id		GLuint
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_occlusion_query
+props		get
+chromium	extpack
+
+name		GetQueryObjectuivARB
+return		void
+param		id		GLuint
+param		pname		GLenum
+param		params		GLuint *
+category	GL_ARB_occlusion_query
+props		get
+chromium	extpack
+
+
+
+# Chromium
+
+name		CreateContext
+return		GLint
+param		dpyName		const char *
+param		visual		GLint
+category	Chromium
+props		nolist get
+chromium	extpack
+
+name		DestroyContext
+return		void
+param		ctx		GLint
+category	Chromium
+props		nolist
+chromium	extpack
+
+name		MakeCurrent
+return		void
+param		window		GLint
+param		nativeWindow	GLint
+param		ctx		GLint
+category	Chromium
+props		nolist
+chromium	extpack
+
+name		WindowCreate
+return		GLint
+param		dpyName		const char *
+param		visBits		GLint
+category	Chromium
+props		nolist get
+chromium	extpack
+
+name		WindowDestroy
+return		void
+param		window		GLint
+category	Chromium
+props		nolist
+chromium	extpack
+
+name		WindowSize
+return		void
+param		window		GLint
+param		w		GLint
+param		h		GLint
+category	Chromium
+props		nolist
+chromium	extpack
+
+name		WindowPosition
+return		void
+param		window		GLint
+param		x		GLint
+param		y		GLint
+category	Chromium
+props		nolist
+chromium	extpack
+
+name		WindowShow
+return		void
+param		window		GLint
+param		flag		GLint
+category	Chromium
+props		nolist
+chromium	extpack
+
+name		SwapBuffers
+return		void
+param		window		GLint
+param		flags		GLint
+category	Chromium
+props		nolist
+chromium	extpack
+
+name		Writeback
+return		void
+param		writeback	GLint *
+category	Chromium
+props		nolist
+chromium	extpack
+
+name		BarrierCreateCR
+return		void
+param		name		GLuint
+param		count		GLuint
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		BarrierDestroyCR
+return		void
+param		name		GLuint
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		BarrierExecCR
+return		void
+param		name		GLuint
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		SemaphoreCreateCR
+return		void
+param		name		GLuint
+param		count		GLuint
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		SemaphoreDestroyCR
+return		void
+param		name		GLuint
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		SemaphorePCR
+return		void
+param		name		GLuint
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		SemaphoreVCR
+return		void
+param		name		GLuint
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		BoundsInfoCR
+return		void
+param		bounds		const CRrecti *
+param		payload		const GLbyte *
+param		len		GLint
+param		num_opcodes	GLint
+category	GL_chromium
+props		nolist
+chromium	pack
+
+name		ChromiumParameteriCR
+return		void
+param		target		GLenum
+param		value		GLint
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		ChromiumParameterfCR
+return		void
+param		target		GLenum
+param		value		GLfloat
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		ChromiumParametervCR
+return		void
+param		target		GLenum
+param		type		GLenum
+param		count		GLsizei
+param		values		const GLvoid *
+category	GL_chromium
+props		nolist
+chromium	extpack
+
+name		GetChromiumParametervCR
+return		void
+param		target		GLenum
+param		index		GLuint
+param		type		GLenum
+param		count		GLsizei
+param		values		GLvoid *
+category	GL_chromium
+props		get
+chromium	extpack
+
+
+# Mike Houston's PICA functions
+
+name		PicaListCompositors
+return		PICAerror
+param		config		const PICAuint *
+param		numResults	PICAint *
+param		results		PICAcompItem *
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaGetCompositorParamiv
+return		PICAerror
+param		compositor	PICAcompID
+param		pname		PICAparam
+param		params		PICAint *
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaGetCompositorParamfv
+return		PICAerror
+param		compositor	PICAcompID
+param		pname		PICAparam
+param		params		PICAfloat *
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaGetCompositorParamcv
+return		PICAerror
+param		compositor	PICAcompID
+param		pname		PICAparam
+param		params		PICAchar **
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaListNodes
+return		PICAerror
+param		compositor	PICAcompID
+param		num		PICAint *
+param		results		PICAnodeItem *
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaCreateContext
+return		PICAcontextID
+param		config		const PICAuint *
+param		nodes 		const PICAnodeID *
+param		numNodes	PICAuint
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaDestroyContext
+return		PICAerror
+param		ctx		PICAcontextID
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaSetContextParami
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		PICAint
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaSetContextParamiv
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		const PICAint *
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaSetContextParamf
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		PICAfloat
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaSetContextParamfv
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		const PICAfloat *
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaSetContextParamv
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		const PICAvoid *
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaGetContextParamiv
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		PICAint *
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaGetContextParamfv
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		PICAfloat *
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaGetContextParamcv
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		PICAchar **
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaGetContextParamv
+return		PICAerror
+param		ctx		PICAcontextID
+param		pname		PICAparam
+param		param		PICAvoid *
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaBindLocalContext
+return		PICAcontextID
+param		globalCtx	PICAcontextID
+param		node		PICAnodeID
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaDestroyLocalContext
+return		PICAerror
+param		lctx		PICAcontextID
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaStartFrame
+return		PICAerror
+param		lctx		PICAcontextID
+param		frameID		const PICAframeID *
+param		numLocalFramlets	PICAuint
+param		numOrders	PICAuint
+param		orderList	const PICAuint *
+param		srcRectList	const PICArect *
+param		dstList	const	PICApoint *
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaEndFrame
+return		PICAerror
+param		lctx		PICAcontextID
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaCancelFrame
+return		PICAerror
+param		ctx		PICAcontextID
+param		frameID		PICAframeID
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaQueryFrame
+return		PICAstatus
+param		ctx		PICAcontextID
+param		frameID		PICAframeID
+param		nodeID		PICAnodeID
+param		timeout		PICAfloat
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+name		PicaAddGfxFramelet
+return		PICAerror
+param		lctx		PICAcontextID
+param		srcRect		const PICArect *
+param		dstpos		const PICApoint *
+param		order		PICAuint
+param		iVolatile	PICAint
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaAddMemFramelet
+return		PICAerror
+param		lctx		PICAcontextID
+param		colorBuffer	const PICAvoid *
+param		depthBuffer	const PICAvoid *
+param		span_x		PICAuint
+param		srcRect		const PICArect *
+param		dstpos		const PICApoint *
+param		order		PICAuint
+param		iVolatile	PICAint
+category	Chromium
+chromium	omit nopack
+props		nolist
+
+name		PicaReadFrame
+return		PICAerror
+param		lctx		PICAcontextID
+param		frameID		PICAframeID
+param		format		PICAuint
+param		colorbuffer	PICAvoid *
+param		depthbuffer	PICAvoid *
+param		rect		const PICArect *
+category	Chromium
+chromium	omit nopack
+props		nolist get
+
+
+# OpenGL 1.5
+
+name		BindBuffer
+return		void
+param		target		GLenum
+param		buffer		GLuint
+category	1.5
+alias		BindBufferARB
+props		nolist
+chromium	extpack
+
+name		BufferData
+return		void
+param		target		GLenum
+param		size		GLsizeiptrARB
+param		data		const GLvoid *
+param		usage		GLenum
+category	1.5
+alias		BufferDataARB
+props		nolist
+chromium	extpack
+
+name		BufferSubData
+return		void
+param		target		GLenum
+param		offset		GLintptrARB
+param		size		GLsizeiptrARB
+param		data		const GLvoid *
+category	1.5
+alias		BufferSubDataARB
+props		nolist
+chromium	extpack
+
+name		DeleteBuffers
+return		void
+param		n		GLsizei
+param		buffer		const GLuint *
+category	1.5
+alias		DeleteBuffersARB
+props		nolist
+chromium	extpack
+
+name		GenBuffers
+return		void
+param		n		GLsizei
+param		buffer		GLuint *
+category	1.5
+alias		GenBuffersARB
+props		get
+chromium	extpack
+
+name		GetBufferParameteriv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.5
+alias		GetBufferParameterivARB
+props		get
+chromium	extpack
+
+name		GetBufferPointerv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLvoid **
+category	1.5
+alias		GetBufferPointervARB
+props		get useclient
+chromium	nopack
+
+name		GetBufferSubData
+return		void
+param		target		GLenum
+param		offset		GLintptrARB
+param		size		GLsizeiptrARB
+param		data		void *
+category	1.5
+alias		GetBufferSubDataARB
+props		get
+chromium	extpack
+
+name		IsBuffer
+return		GLboolean
+param		buffer		GLuint
+category	1.5
+alias		IsBufferARB
+props		get
+chromium	extpack
+
+name		MapBuffer
+return		void *
+param		target		GLenum
+param		access		GLenum
+category	1.5
+alias		MapBufferARB
+props		nolist
+chromium	nopack
+
+name		UnmapBuffer
+return		GLboolean
+param		target		GLenum
+category	1.5
+alias		UnmapBufferARB
+props		nolist
+chromium	nopack
+
+
+name		GenQueries
+return		void
+param		n		GLsizei
+param		ids		GLuint *
+category	1.5
+alias		GenQueriesARB
+props		get
+chromium	omit
+
+name		DeleteQueries
+return		void
+param		n		GLsizei
+param		ids		const GLuint *
+category	1.5
+alias		DeleteQueriesARB
+props		nolist
+chromium	omit
+
+name		IsQuery
+return		GLboolean
+param		id		GLuint
+category	1.5
+alias		IsQueryARB
+props		get
+chromium	omit
+
+name		BeginQuery
+return		void
+param		target		GLenum
+param		id		GLuint
+category	1.5
+alias		BeginQueryARB
+chromium	omit
+
+name		EndQuery
+return		void
+param		target		GLenum
+category	1.5
+alias		EndQueryARB
+chromium	omit
+
+name		GetQueryiv
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	1.5
+alias		GetQueryivARB
+props		get
+chromium	omit
+
+name		GetQueryObjectiv
+return		void
+param		id		GLuint
+param		pname		GLenum
+param		params		GLint *
+category	1.5
+alias		GetQueryObjectivARB
+props		get
+chromium	omit
+
+name		GetQueryObjectuiv
+return		void
+param		id		GLuint
+param		pname		GLenum
+param		params		GLuint *
+category	1.5
+alias		GetQueryObjectuivARB
+props		get
+chromium	omit
+
+#
+#  Simple-minded pixel compression for Mike Houston
+#
+name		ZPix
+return		void
+param		width		GLsizei
+param		height		GLsizei
+param		format		GLenum
+param		type		GLenum
+param		ztype		GLenum
+param		zparm		GLint
+param		length		GLint
+param		pixels		const GLvoid *
+category	chromium
+props		render pixelstore
+chromium	extpack
+
+# end of file sentinel
+
+name		dummy
+alias		dummyEXT

@@ -36,16 +36,17 @@ void PACKSPU_APIENTRY packspu_ReadPixels( GLint x, GLint y, GLsizei width, GLsiz
 	GET_THREAD(thread);
 	ContextInfo *ctx = thread->currentContext;
 	CRClientState *clientState = &(ctx->clientState->client);
+	int writeback;
 	pack_spu.ReadPixels++;
 	if (pack_spu.swap)
 	{
 		crPackReadPixelsSWAP( x, y, width, height, format, type, pixels,
-							&(clientState->pack) );
+							&(clientState->pack), &writeback );
 	}
 	else
 	{
 		crPackReadPixels( x, y, width, height, format, type, pixels,
-							&(clientState->pack) );
+							&(clientState->pack), &writeback );
 	}
 	packspuFlush( (void *) thread );
 	while (pack_spu.ReadPixels) 
@@ -231,3 +232,19 @@ void PACKSPU_APIENTRY packspu_TexSubImage3D( GLenum target, GLint level, GLint x
         }
 }
 #endif /* CR_OPENGL_VERSION_1_2 */
+
+void PACKSPU_APIENTRY packspu_ZPix( GLsizei width, GLsizei height, GLenum format, GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels )
+{
+	GET_THREAD(thread);
+	ContextInfo *ctx = thread->currentContext;
+	CRClientState *clientState = &(ctx->clientState->client);
+
+	if (pack_spu.swap)
+	{
+		crPackZPixSWAP( width, height, format, type, ztype, zparm, length, pixels, &(clientState->unpack) );
+	}
+	else
+	{
+		crPackZPix( width, height, format, type, ztype, zparm, length, pixels, &(clientState->unpack) );
+	}
+}

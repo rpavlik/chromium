@@ -13,12 +13,11 @@
 #include "cr_environment.h"
 #include "cr_url.h"
 
-#include <stdio.h>
-
 
 static void set_window_geometry( RenderSPU *render_spu, const char *response )
 {
 	float x, y, w, h;
+	/* XXX someday assert(response[0] == '['); */
 	if (response[0] == '[')
 		sscanf( response, "[ %f, %f, %f, %f ]", &x, &y, &w, &h );
 	else if (crStrchr(response, ','))
@@ -217,7 +216,7 @@ SPUOptions renderSPUOptions[] = {
    { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
      "Window Title", (SPUOptionCB)set_title },
 
-   { "window_geometry", CR_INT, 4, "0, 0, 256, 256", "0, 0, 1, 1", NULL, 
+   { "window_geometry", CR_INT, 4, "[0, 0, 256, 256]", "[0, 0, 1, 1]", NULL, 
      "Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
 
    { "default_visual", CR_STRING, 1, "rgb", NULL, NULL,

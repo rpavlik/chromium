@@ -41,8 +41,8 @@ GetTexLevelParameterfv
 GetTexLevelParameteriv
 GetTexParameterfv
 GetTexParameteriv
-GetPointerv
 GetCombinerStageParameterfvNV
 Bitmap
 DrawPixels
-
+GetBufferPointervARB
+ZPix

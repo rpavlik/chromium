@@ -5,18 +5,11 @@
 
 import sys
 
-import cPickle;
-import string;
-import re;
+sys.path.append( "../../glapi_parser" )
+import apiutil
 
-sys.path.append( "../../opengl_stub" )
-parsed_file = open( "../../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 
-import stub_common;
-
-keys = gl_mapping.keys()
-keys.sort();
 
 #this is simply a list of things that can appear legally between a begin and end
 #block.  Note that it *has* to include Begin -- this bug was killing Sean.
@@ -90,22 +83,30 @@ special_sizes = {
 }
 
 
-stub_common.CopyrightC()
+apiutil.CopyrightC()
+
+# Generate a table, indexed by packer opcode, which indicates the size
+# (in bytes) of the packed commands.  We only care about the per-vertex
+# commands like glColor, glNormal, glMaterial, etc.  For functions we
+# don't care about, we set the size to -1.  In the pincher we assert that
+# the size isn't -1.  If any of those assertions fail then an unexpected
+# command is in the geometry buffer.
 
 print """
 static const int __cr_packet_length_table[] = {
 """
+
 for func_name in keys:
-	(return_type, arg_names, arg_types ) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "../../packer/opcode", func_name ) or stub_common.FindSpecial( "../../packer/opcode_extend", func_name ):
-		continue
-	if func_name in things_pinch_cares_about:
-		if func_name in special_sizes.keys():
-			size = special_sizes[func_name]
+	if "pack" in apiutil.ChromiumProps(func_name):
+	
+		if func_name in things_pinch_cares_about:
+			if func_name in special_sizes.keys():
+				size = special_sizes[func_name]
+			else:
+				params = apiutil.Parameters(func_name)
+				size = apiutil.PacketLength( params )
+			print "\t%2d, /* %s */" % (size,  func_name)
 		else:
-			size = stub_common.PacketLength( arg_types )
-		print "\t%2d, /* %s */" % (size,  func_name)
-	else:
-		print '\t-1, /* %s */' % func_name
+			print '\t-1, /* %s */' % func_name
 print '\t0 /* crap */'
 print "};"

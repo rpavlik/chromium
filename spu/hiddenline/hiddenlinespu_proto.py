@@ -3,29 +3,14 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
 
-sys.path.append( "../../opengl_stub" )
-parsed_file = open( "../../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
-
-import stub_common;
-
-keys = gl_mapping.keys()
-keys.sort();
+sys.path.append( "../../glapi_parser" )
+import apiutil
 
 
+apiutil.CopyrightC()
 
-stub_common.CopyrightC()
-
-for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
-	if return_type != 'void' and not stub_common.FindSpecial( "hiddenline_ignore", func_name ):
-		#print >> sys.stderr, func_name
-		pass
 
 print """
 #ifndef HIDDENLINE_SPU_PROTO_H
@@ -33,17 +18,25 @@ print """
 
 """
 
-num_funcs = len(keys) - len( stub_common.AllSpecials( "hiddenline_ignore" ) )
+keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 
+# Determine which functions to ignore
+ignore_functions = []
 for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
+	if ("get" in apiutil.Properties(func_name) or
+		"setclient" in apiutil.Properties(func_name) or
+		"useclient" in apiutil.Properties(func_name) or
+		apiutil.Category(func_name) == "Chromium" or
+		apiutil.Category(func_name) == "GL_chromium"):
+		ignore_functions.append(func_name)
 
-specials = stub_common.AllSpecials( "hiddenline" ) + stub_common.AllSpecials( "hiddenline_pixel" )
+specials = apiutil.AllSpecials( "hiddenline" ) + apiutil.AllSpecials( "hiddenline_pixel" )
 
-for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
-	if func_name in specials:
-		print 'extern %s HIDDENLINESPU_APIENTRY hiddenlinespu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
+# emit prototypes
+for func_name in specials:
+	return_type = apiutil.ReturnType(func_name)
+	params = apiutil.Parameters(func_name)
+	print 'extern %s HIDDENLINESPU_APIENTRY hiddenlinespu_%s(%s);' % (return_type, func_name, apiutil.MakeDeclarationString(params))
 
 
 print """

@@ -54,6 +54,15 @@ static INLINE void CLEARDIRTY( unsigned int *b, const unsigned int *d )
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		b[j] &= d[j];
 }
+
+/* As above, but complement the bits here instead of in the calling code */
+static INLINE void CLEARDIRTY2( unsigned int *b, const unsigned int *d )
+{
+	int j;
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		b[j] &= ~d[j];
+}
+
 static INLINE int CHECKDIRTY( const unsigned int *b, const unsigned int *d )
 {
 	int j;

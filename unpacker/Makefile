@@ -10,6 +10,7 @@ LIBRARY = crunpacker
 FILES = unpack \
 	unpack_arrays \
 	unpack_bounds \
+	unpack_bufferobject \
 	unpack_calllists \
 	unpack_clipplane \
 	unpack_context \
@@ -32,25 +33,20 @@ LIB_DEFS = unpack.def
 
 LIBRARIES = crutil spuload crpacker
 
-PRECOMP = unpack.c ../include/cr_unpackfuncs.h unpack_extend.h
+PRECOMP = unpack.c unpack_extend.h
 SLOP = $(PRECOMP)
 
 LIB_COPIES = crserver \
 	hiddenlinespu \
 	injectorspu \
-	vncviewer \
 	archsplitspu
 
 include $(TOP)/cr.mk
 
-../include/cr_unpackfuncs.h: unpack_header.py 
-	@$(ECHO) Making the Unpack Function header...
-	@$(PYTHON) unpack_header.py > $@
-
-unpack.c: unpack.py ../packer/opcode_special ../packer/opcode_extend_special unpacker_special unpacker_vector_special unpacker_extend_special unpack_extend.h
-	@$(ECHO) Making the UnPacker...
+unpack.c: unpack.py unpacker_special unpack_extend.h ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
+	@$(ECHO) Making the Unpacker...
 	@$(PYTHON) unpack.py > $@
 
-unpack_extend.h: unpacker_special unpacker_extend_special unpack_extend.py
+unpack_extend.h: unpacker_special unpack_extend.py ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 	@$(PYTHON) unpack_extend.py > $@
 

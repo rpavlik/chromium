@@ -3,19 +3,12 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
+sys.path.append( "../glapi_parser" )
+import apiutil
 
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
 
-sys.path.append( "../opengl_stub" )
-
-import stub_common;
-
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """
 
@@ -52,11 +45,8 @@ extern void __buildDispatch( SPU *spu );
 void __buildDispatch( SPU *spu )
 {"""
 
-keys = gl_mapping.keys()
-keys.sort();
-
+keys = apiutil.GetDispatchedFunctions()
 for func_name in keys:
-	(return_type, names, types) = gl_mapping[func_name]
 	print '\tspu->dispatch_table.%s = (%sFunc_t) __findFunc( "%s", spu );' % (func_name,func_name,func_name)
 print '}'
 
@@ -92,11 +82,7 @@ SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const 
 void crSPUInitDispatch( SPUDispatchTable *dispatch, const SPUNamedFunctionTable *table )
 {"""
 
-keys = gl_mapping.keys()
-keys.sort();
-
 for func_name in keys:
-	(return_type, names, types) = gl_mapping[func_name]
 	print '\tdispatch->%s = (%sFunc_t) crSPUFindFunction(table, "%s");' % (func_name, func_name, func_name)
 print '}'
 

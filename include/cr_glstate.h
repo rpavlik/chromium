@@ -14,6 +14,7 @@ typedef struct CRContext CRContext;
 #include "cr_version.h"
 
 #include "state/cr_buffer.h"
+#include "state/cr_bufferobject.h"
 #include "state/cr_client.h"
 #include "state/cr_current.h"
 #include "state/cr_evaluators.h"
@@ -25,6 +26,7 @@ typedef struct CRContext CRContext;
 #include "state/cr_line.h"
 #include "state/cr_lists.h"
 #include "state/cr_multisample.h"
+#include "state/cr_occlude.h"
 #include "state/cr_pixel.h"
 #include "state/cr_point.h"
 #include "state/cr_polygon.h"
@@ -52,6 +54,9 @@ extern "C" {
 typedef struct {
 	CRAttribBits      attrib;
 	CRBufferBits      buffer;
+#ifdef CR_ARB_vertex_buffer_object
+	CRBufferObjectBits bufferobject;
+#endif
 	CRClientBits      client;
 	CRCurrentBits     current;
 	CREvaluatorBits   eval;
@@ -62,6 +67,9 @@ typedef struct {
 	CRLineBits        line;
 	CRListsBits       lists;
 	CRMultisampleBits multisample;
+#if CR_ARB_occlusion_query
+	CROcclusionBits   occlusion;
+#endif
 	CRPixelBits       pixel;
 	CRPointBits	      point;
 	CRPolygonBits     polygon;
@@ -90,6 +98,9 @@ struct CRContext {
 
 	CRAttribState      attrib;
 	CRBufferState      buffer;
+#ifdef CR_ARB_vertex_buffer_object
+	CRBufferObjectState bufferobject;
+#endif
 	CRClientState      client;
 	CRCurrentState     current;
 	CREvaluatorState   eval;
@@ -102,6 +113,9 @@ struct CRContext {
 	CRLineState        line;
 	CRListsState       lists;
 	CRMultisampleState multisample;
+#if CR_ARB_occlusion_query
+	CROcclusionState   occlusion;
+#endif
 	CRPixelState       pixel;
 	CRPointState       point;
 	CRPolygonState     polygon;
@@ -139,6 +153,26 @@ void crStateSetExtensionString( CRContext *ctx, const GLubyte *extensions );
 
 void crStateDiffContext( CRContext *from, CRContext *to );
 void crStateSwitchContext( CRContext *from, CRContext *to );
+
+
+   /* XXX move these! */
+
+void STATE_APIENTRY
+crStateChromiumParameteriCR( GLenum target, GLint value );
+
+void STATE_APIENTRY
+crStateChromiumParameterfCR( GLenum target, GLfloat value );
+
+void STATE_APIENTRY
+crStateChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values );
+
+void STATE_APIENTRY
+crStateGetChromiumParametervCR( GLenum target, GLuint index, GLenum type,
+                                GLsizei count, GLvoid *values );
+
+void STATE_APIENTRY
+crStateReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+                   GLenum format, GLenum type, GLvoid *pixels );
 
 #ifdef __cplusplus
 }

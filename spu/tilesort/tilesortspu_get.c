@@ -353,12 +353,89 @@ tilesortspuGetExtensionsString(void)
 	return ext;
 }
 
+/*
+ * Query all downstream servers for their version strings, find the
+ * minimum.
+ */
+GLfloat
+tilesortspuGetVersionNumber(void)
+{
+	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	GLfloat *versions, minVersion;
+	GLint i;
+
+	versions = (GLfloat *) crCalloc(tilesort_spu.num_servers * sizeof(GLfloat));
+	if (!versions)
+	{
+		crWarning("Out of memory in tilesortspu::GetVersionString");
+		return 0.0;
+	}
+
+	/* release geometry buffer */
+	crPackReleaseBuffer( thread0->packer );
+
+	/*
+	 * loop over servers, issuing the glGet.
+	 * We send it via the zero-th thread's server connections.
+	 */
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+	{
+		int writeback = 1;
+		char version[1000];
+
+		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
+
+		if (tilesort_spu.swap)
+			crPackGetStringSWAP( GL_VERSION, version, &writeback );
+		else
+			crPackGetString( GL_VERSION, version, &writeback );
+
+		/* release server buffer */
+		crPackReleaseBuffer( thread0->packer );
+
+		/* Flush buffer (send to server) */
+		tilesortspuSendServerBuffer( i );
+
+		/* Get return value */
+		while (writeback) {
+			crNetRecv();
+		}
+
+		versions[i] = crStrToFloat(version);
+		CRASSERT(versions[i] > 0.0);
+	}
+
+	/* Restore the default pack buffer */
+	crPackSetBuffer( thread0->packer, &(thread0->geometry_buffer) );
+
+	/* find min */
+	minVersion = versions[0];
+	for (i = 1; i < tilesort_spu.num_servers; i++) {
+		if (versions[i] < minVersion)
+			minVersion = versions[i];
+	}
+
+	crFree((void *) versions);
+
+	minVersion = crStateComputeVersion(minVersion);
+
+	return minVersion;
+}
+
+
 const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 {
 	if (pname == GL_EXTENSIONS)
 	{
 		/* Query all servers for their extensions, return the intersection */
 		return tilesortspuGetExtensionsString();
+	}
+	else if (pname == GL_VERSION) {
+		GLfloat version = tilesortspuGetVersionNumber();
+		GET_THREAD(thread);
+		sprintf(thread->currentContext->glVersion, "%g Chromium %s",
+						version, CR_VERSION_STRING);
+		return thread->currentContext->glVersion;
 	}
 	else
 	{

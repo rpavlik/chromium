@@ -173,5 +173,6 @@ extern void stubInit(void);
 
 extern void APIENTRY stub_GetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values );
 
+extern void APIENTRY glBoundsInfoCR(const CRrecti *, const GLbyte *, GLint, GLint);
 
 #endif /* CR_STUB_H */

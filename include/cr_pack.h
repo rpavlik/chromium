@@ -13,6 +13,7 @@
 #include "cr_endian.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_currentpointers.h"
+#include "state/cr_client.h"
 
 #ifdef WINDOWS
 #ifndef DLLDATA 
@@ -106,7 +107,25 @@ void crHugePacket( CROpcode op, void *ptr );
 void crPackFree( void *ptr );
 void crNetworkPointerWrite( CRNetworkPointer *, void * );
 
-void SanityCheck(void);
+void crPackExpandDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c);
+void crPackExpandDrawArraysSWAP(GLenum mode, GLint first, GLsizei count, CRClientState *c);
+
+void crPackExpandDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c);
+void crPackExpandDrawElementsSWAP(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c);
+
+void crPackExpandDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c);
+void crPackExpandDrawRangeElementsSWAP(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c);
+
+void crPackExpandArrayElement(GLint index, CRClientState *c);
+void crPackExpandArrayElementSWAP(GLint index, CRClientState *c);
+
+void crPackExpandMultiDrawArraysEXT( GLenum mode, GLint *first, GLsizei *count, GLsizei primcount, CRClientState *c );
+void crPackExpandMultiDrawArraysEXTSWAP( GLenum mode, GLint *first, GLsizei *count, GLsizei primcount, CRClientState *c );
+
+void crPackExpandMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount, CRClientState *c );
+void crPackExpandMultiDrawElementsEXTSWAP( GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount, CRClientState *c );
+
+
 
 #define GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len ) \
   THREADASSERT( pc ); \

@@ -38,15 +38,19 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 	{
 		crStateListsDiff( &(sb->lists), bitID, from, to );
 	}
-#if 0
-	if (CHECKDIRTY(sb->client.dirty, bitID))
-	{
-		crStateClientDiff(&(sb->client), bitID, from, to );
-	}
-#endif
 	if (CHECKDIRTY(sb->buffer.dirty, bitID))
 	{
 		crStateBufferDiff( &(sb->buffer), bitID, from, to );
+	}
+#ifdef CR_ARB_vertex_buffer_object
+	if (CHECKDIRTY(sb->bufferobject.dirty, bitID))
+	{
+		crStateBufferObjectDiff( &(sb->bufferobject), bitID, from, to );
+	}
+#endif
+	if (CHECKDIRTY(sb->client.dirty, bitID))
+	{
+		crStateClientDiff(&(sb->client), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->hint.dirty, bitID))
 	{
@@ -59,6 +63,10 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 	if (CHECKDIRTY(sb->line.dirty, bitID))
 	{
 		crStateLineDiff( &(sb->line), bitID, from, to );
+	}
+	if (CHECKDIRTY(sb->occlusion.dirty, bitID))
+	{
+		crStateOcclusionDiff( &(sb->occlusion), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->point.dirty, bitID))
 	{
@@ -144,15 +152,19 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	{
 		crStateListsSwitch(&(sb->lists), bitID, from, to );
 	}
-#if 0
-	if (CHECKDIRTY(sb->client.dirty, bitID))
-	{
-		crStateClientSwitch( &(sb->client), bitID, from, to );
-	}
-#endif
 	if (CHECKDIRTY(sb->buffer.dirty, bitID))
 	{
 		crStateBufferSwitch( &(sb->buffer), bitID, from, to );
+	}
+#ifdef CR_ARB_vertex_buffer_object
+	if (CHECKDIRTY(sb->bufferobject.dirty, bitID))
+	{
+		crStateBufferObjectSwitch( &(sb->bufferobject), bitID, from, to );
+	}
+#endif
+	if (CHECKDIRTY(sb->client.dirty, bitID))
+	{
+		crStateClientSwitch( &(sb->client), bitID, from, to );
 	}
 #if 0
 	if (CHECKDIRTY(sb->hint.dirty, bitID))
@@ -163,6 +175,10 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	if (CHECKDIRTY(sb->lighting.dirty, bitID))
 	{
 		crStateLightingSwitch( &(sb->lighting), bitID, from, to );
+	}
+	if (CHECKDIRTY(sb->occlusion.dirty, bitID))
+	{
+		crStateOcclusionSwitch( &(sb->occlusion), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->line.dirty, bitID))
 	{

@@ -13,6 +13,7 @@ FILES = tilesortspu \
 	tilesortspu_bcast \
 	tilesortspu_beginend \
 	tilesortspu_bucket \
+	tilesortspu_bufferobject \
 	tilesortspu_client \
 	tilesortspu_config \
 	tilesortspu_context \
@@ -26,6 +27,7 @@ FILES = tilesortspu \
 	tilesortspu_lists_gen \
 	tilesortspu_misc \
 	tilesortspu_net \
+	tilesortspu_occlude \
 	tilesortspu_pinch_gen \
 	tilesortspu_pixels \
 	tilesortspu_rasterpos \
@@ -66,29 +68,31 @@ LDFLAGS += -ldmx
 endif
 endif
 
-tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed tilesortspu_proto.h
+APIFILES = ../../glapi_parser/apiutil.py ../../glapi_parser/APIspec.txt
+
+tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special $(APIFILES) tilesortspu_proto.h
 	@$(ECHO) Building the TileSort SPU
 	@$(PYTHON) tilesort.py > $@
 
-tilesortspu_unimplemented.c: tilesort_unimplemented.py tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed
+tilesortspu_unimplemented.c: tilesort_unimplemented.py tilesort_unimplemented_special $(APIFILES)
 	@$(ECHO) Building the TileSort Unimplemented Functions
 	@$(PYTHON) tilesort_unimplemented.py > $@
 
-tilesortspu_diffapi.c: diffapi.py ../../glapi_parser/gl_header.parsed
+tilesortspu_diffapi.c: diffapi.py $(APIFILES)
 	@$(ECHO) Building the TileSort Differencing API
 	@$(PYTHON) diffapi.py > $@
 
-tilesortspu_lists_gen.c: tilesort_lists.py tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special ../../glapi_parser/gl_header.parsed
+tilesortspu_lists_gen.c: tilesort_lists.py tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special $(APIFILES)
 	@$(ECHO) Building the TileSort Display List Manager
 	@$(PYTHON) tilesort_lists.py > $@
 
-tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../../state_tracker/convert.py length_table.py pinch_convert.py ../../glapi_parser/gl_header.parsed
+tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../../state_tracker/convert.py length_table.py pinch_convert.py $(APIFILES)
 	@$(ECHO) Munging the pincher... yuck
 	@$(PYTHON) ../../state_tracker/convert.py > $@
 	@$(PYTHON) pinch_convert.py >> $@
 	@$(PYTHON) length_table.py >> $@
 	@$(CAT) tilesortspu_pinch.c >> $@
 
-tilesortspu_proto.h: tilesortspu_proto.py tilesort_special tilesort_state_special tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed
+tilesortspu_proto.h: tilesortspu_proto.py tilesort_special tilesort_state_special tilesort_unimplemented_special $(APIFILES)
 	@$(ECHO) Building the TileSort SPU prototypes header
 	@$(PYTHON) tilesortspu_proto.py > $@

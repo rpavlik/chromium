@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
@@ -14,9 +13,10 @@ void crStatePointInit (CRContext *ctx)
 	CRPointState *p = &ctx->point;
 	CRStateBits *sb = GetCurrentBits();
 	CRPointBits *pb = &(sb->point);
+	int i;
 
 	p->pointSmooth = GL_FALSE;
-	RESET(pb->enable, ctx->bitid);
+	RESET(pb->enableSmooth, ctx->bitid);
 	p->pointSize = 1.0f;
 	RESET(pb->size, ctx->bitid);
 #ifdef CR_ARB_point_parameters
@@ -31,6 +31,15 @@ void crStatePointInit (CRContext *ctx)
 	p->distanceAttenuation[2] = 0.0f;
 	RESET(pb->distanceAttenuation, ctx->bitid);
 #endif
+#ifdef CR_ARB_point_sprite
+	p->pointSprite = GL_FALSE;
+	RESET(pb->enableSprite, ctx->bitid);
+	for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++) {
+		p->coordReplacement[i] = GL_FALSE;
+		RESET(pb->coordReplacement[i], ctx->bitid);
+	}
+#endif
+
 	RESET(pb->dirty, ctx->bitid);
 
 	/*

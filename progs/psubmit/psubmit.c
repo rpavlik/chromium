@@ -29,14 +29,14 @@ float colors[7][4] = {
 
 static const int MASTER_BARRIER = 100;
 
-crCreateContextProc glCreateContextCR;
-crMakeCurrentProc   glMakeCurrentCR;
-crSwapBuffersProc   glSwapBuffersCR;
+static crCreateContextProc crCreateContext_ptr;
+static crMakeCurrentProc   crMakeCurrent_ptr;
+static crSwapBuffersProc   crSwapBuffers_ptr;
 
-glChromiumParametervCRProc glChromiumParametervCR;
-glGetChromiumParametervCRProc glGetChromiumParametervCR;
-glBarrierCreateCRProc glBarrierCreateCR;
-glBarrierExecCRProc   glBarrierExecCR;
+static glChromiumParametervCRProc glChromiumParametervCR_ptr;
+static glGetChromiumParametervCRProc glGetChromiumParametervCR_ptr;
+static glBarrierCreateCRProc glBarrierCreateCR_ptr;
+static glBarrierExecCRProc   glBarrierExecCR_ptr;
 
 #ifndef M_PI
 # define M_PI		3.14159265358979323846	/* pi */
@@ -146,34 +146,32 @@ int main(int argc, char *argv[])
 		crError( "Bogus rank: %d (size = %d)", rank, size );
 	}
 
-#define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
+#define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
 
-	LOAD( CreateContext );
-	LOAD( MakeCurrent );
-	LOAD( SwapBuffers );
+	LOAD( crCreateContext );
+	LOAD( crMakeCurrent );
+	LOAD( crSwapBuffers );
+	LOAD( glChromiumParametervCR );
+	LOAD( glGetChromiumParametervCR );
+	LOAD( glBarrierCreateCR );
+	LOAD( glBarrierExecCR );
 
-	ctx = glCreateContextCR(dpy, visual);
+	ctx = crCreateContext_ptr(dpy, visual);
 	if (ctx < 0) {
 		crError("glCreateContextCR() call failed!\n");
 		return 0;
 	}
-	glMakeCurrentCR(window, ctx);
-
-#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
-	LOAD2( ChromiumParameterv );
-	LOAD2( GetChromiumParameterv );
-	LOAD2( BarrierCreate );
-	LOAD2( BarrierExec );
+	crMakeCurrent_ptr(window, ctx);
 
 	/* Test getting window size */
 	{
 		GLint winsize[2];
-		glGetChromiumParametervCR(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
+		glGetChromiumParametervCR_ptr(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
 		printf("psubmit using window size: %d x %d\n", winsize[0], winsize[1]);
 	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
-	glBarrierCreateCR( MASTER_BARRIER, size );
+	glBarrierCreateCR_ptr( MASTER_BARRIER, size );
 
 	theta = (float)(360.0 / (float) size);
 
@@ -206,7 +204,7 @@ int main(int argc, char *argv[])
 		if (clearFlag)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		glBarrierExecCR( MASTER_BARRIER );
+		glBarrierExecCR_ptr( MASTER_BARRIER );
 
 		glPushMatrix();
 		glRotatef((GLfloat)frame, 1, 0, 0);
@@ -216,23 +214,23 @@ int main(int argc, char *argv[])
 		glTranslatef(0.5, 0, 0);
 		glRotatef(18, 1, 0, 0);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[rank%7]);
-		/*glChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, boundingBox);*/
+		/*glChromiumParametervCR_ptr(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, boundingBox);*/
 		doughnut((GLfloat).15,(GLfloat)0.7, 15, 30);
 
 		glPopMatrix();
 
-		glBarrierExecCR( MASTER_BARRIER );
+		glBarrierExecCR_ptr( MASTER_BARRIER );
 
 		/* The crserver only executes the SwapBuffers() for the 0th client.
 		 * No need to test for rank==0 as we used to do.
 		 */
 		if (swapFlag) {
 			/* really swap */
-			glSwapBuffersCR( window, 0 );
+			crSwapBuffers_ptr( window, 0 );
 		}
 		else {
 			/* don't really swap, just mark end of frame */
-			glSwapBuffersCR( window, CR_SUPPRESS_SWAP_BIT );
+			crSwapBuffers_ptr( window, CR_SUPPRESS_SWAP_BIT );
 		}
 
 		/* ARGH -- need to trick out the compiler this sucks. */

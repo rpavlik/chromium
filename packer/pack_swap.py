@@ -1,7 +1,13 @@
-import sys, re, string
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 
-sys.path.append( "../opengl_stub" )
-import stub_common
+import sys, string
+
+sys.path.append( "../glapi_parser" )
+import apiutil
+
 
 if len(sys.argv) != 2:
 	print >> sys.stderr, "Usage: %s <filename>" % sys.argv[0]
@@ -34,13 +40,13 @@ for line in file.readlines():
 		rparen_index = line.rfind( ")" )
 		args = map( string.strip, line[lparen_index+1:rparen_index].split( "," ) )
 		indentation = line[:line.find( "WRITE_DATA" )]
-		if stub_common.lengths[args[1]] == 1:
+		if apiutil.sizeof(args[1]) == 1:
 			print "%sWRITE_DATA( %s, %s, %s );" % (indentation, args[0], args[1], args[2])
-		elif stub_common.lengths[args[1]] == 2:
+		elif apiutil.sizeof(args[1]) == 2:
 			print "%sWRITE_DATA( %s, %s, SWAP16(%s) );" % (indentation, args[0], args[1], args[2])
 		elif args[1] == 'GLfloat' or args[1] == 'GLclampf':
 			print "%sWRITE_DATA( %s, GLuint, SWAPFLOAT(%s) );" % (indentation, args[0], args[2])
-		elif stub_common.lengths[args[1]] == 4:
+		elif apiutil.sizeof(args[1]) == 4:
 			print "%sWRITE_DATA( %s, %s, SWAP32(%s) );" % (indentation, args[0], args[1], args[2])
 		else:
 			print >> sys.stderr, "UNKNOWN TYPE FOR WRITE_DATA: %s" % args[1]

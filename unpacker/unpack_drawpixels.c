@@ -50,3 +50,30 @@ void crUnpackBitmap( void )
 
 	INCR_VAR_PTR( );
 }
+/*
+       zPix  - compressed DrawPixels
+*/
+void crUnpackExtendZPix( void )
+{
+	GLsizei width   = READ_DATA(   8, GLsizei );
+	GLsizei height  = READ_DATA(  12, GLsizei );
+	GLenum  format  = READ_DATA(  16, GLenum );
+	GLenum  type    = READ_DATA(  20, GLenum );
+	GLenum  ztype   = READ_DATA(  24, GLenum );
+	GLint   zparm   = READ_DATA(  28, GLuint );
+	GLint   length  = READ_DATA(  32, GLint );
+	GLvoid  *pixels = DATA_POINTER(  36, GLvoid );
+
+/*XXX JAG 
+  crDebug("UnpackZPix: w = %d, h = %d, len = %d",
+                                 width,  height, length);
+*/
+	cr_unpackDispatch.PixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+	cr_unpackDispatch.PixelStorei( GL_UNPACK_SKIP_PIXELS, 0 );
+	cr_unpackDispatch.PixelStorei( GL_UNPACK_SKIP_ROWS, 0 );
+	cr_unpackDispatch.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+
+	cr_unpackDispatch.ZPix( width, height, format, type, ztype, zparm, length, pixels );
+
+        /* Don't call INCR_VAR_PTR(); - it's done in crUnpackExtend() */
+}

@@ -16,22 +16,22 @@ SLOP = $(PRECOMP)
 LIB_DEFS += loader.def
 include ${TOP}/cr.mk
 
-$(TOP)/include/spu_dispatch_table.h: dispatchheader.py ../glapi_parser/gl_header.parsed
+$(TOP)/include/spu_dispatch_table.h: dispatchheader.py ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 	@$(ECHO) Making the SPU dispatch header
 	@$(PYTHON) dispatchheader.py > $(TOP)/include/spu_dispatch_table.h
 
-dispatch.c: dispatch.py ../glapi_parser/gl_header.parsed
+dispatch.c: dispatch.py ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 	@$(ECHO) Making the SPU dispatch builder
 	@$(PYTHON) dispatch.py > dispatch.c
 
-spucopy.c: spucopy.py ../glapi_parser/gl_header.parsed
+spucopy.c: spucopy.py ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 	@$(ECHO) Making the SPU copier
 	@$(PYTHON) spucopy.py > spucopy.c
 
-spuchange.c: spuchange.py ../glapi_parser/gl_header.parsed
+spuchange.c: spuchange.py ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 	@$(ECHO) Making the SPU interface changer
 	@$(PYTHON) spuchange.py > spuchange.c
 
-glloader.c: glloader.py glloader_extensions_special ../glapi_parser/gl_header.parsed
+glloader.c: glloader.py ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 	@$(ECHO) Building the OpenGL API loader
 	@$(PYTHON) glloader.py > glloader.c

@@ -4,73 +4,78 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 
-import sys;
-import cPickle;
-import types;
-import string;
-import re;
-import alias_exports;
-import stub_common;
+import sys
 
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append("../glapi_parser")
+import apiutil
 
-keys = gl_mapping.keys()
-keys.sort();
 
-stub_common.CopyrightC()
+def GenerateEntrypoints():
 
-for index in range(len(keys)):
-	func_name = keys[index]
-	if stub_common.FindSpecial( "noexport", func_name ):
-		continue
-	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
+	apiutil.CopyrightC()
 
-	print "\t.align 4"
-	print ".globl gl%s" % func_name
-	print "\t.type gl%s,@function" % func_name
-	print "gl%s:" % func_name
-	print "\tmovl glim+%d, %%eax" % (4*index)
-	print "\tjmp *%eax"
-	print ""
-	real_func_name = alias_exports.AliasMap(func_name);
-	if real_func_name:
+	# Get sorted list of dispatched functions.
+	# The order is very important - it must match cr_opcodes.h
+	# and spu_dispatch_table.h
+	keys = apiutil.GetDispatchedFunctions("../glapi_parser/APIspec.txt")
+
+	for index in range(len(keys)):
+		func_name = keys[index]
+		if apiutil.Category(func_name) == "Chromium":
+			continue
+
 		print "\t.align 4"
-		print ".globl gl%s" % real_func_name
-		print "\t.type gl%s,@function" % real_func_name
-		print "gl%s:" % real_func_name
+		print ".globl gl%s" % func_name
+		print "\t.type gl%s,@function" % func_name
+		print "gl%s:" % func_name
 		print "\tmovl glim+%d, %%eax" % (4*index)
 		print "\tjmp *%eax"
 		print ""
 
-# Deal with NVIDIA driver lossage.  These functions will never be called, but
-# the symbols need to exist.  Fooey.
 
-nvidia_symbols = 0
+	print '/*'
+	print '* Aliases'
+	print '*/'
 
-if nvidia_symbols:
-	GLcore_crap = [
-		'__glTLSCXIndex',
-		'__glXthreadGlxc',
-		'__glNVTLSIndex',
-		'NvRmConfigGet',
-		'NvRmArchHeap',
-		'NvRmConfigGetEx',
-		'NvRmAllocMemory',
-		'NvRmFree',
-		'NvRmAllocChannelDma',
-		'NvRmAllocRoot',
-		'NvRmAllocDevice',
-		'NvRmAllocContextDma',
-		'NvRmAlloc',
-		'NvRmIoFlush'
-	]
+	# Now loop over all the functions and take care of any aliases
+	allkeys = apiutil.GetAllFunctions("../glapi_parser/APIspec.txt")
+	for func_name in allkeys:
+		if "omit" in apiutil.ChromiumProps(func_name):
+			continue
 
-	for crap in GLcore_crap:
-		print "\t.align 4"
-		print ".globl %s" % crap
-		print "\t.type %s,@function" % crap
-		print "%s:" % crap
-		print "\tret"
-		
+		if func_name in keys:
+			# we already processed this function earlier
+			continue
+
+		# alias is the function we're aliasing
+		alias = apiutil.Alias(func_name)
+		if alias:
+			# this dict lookup should never fail (raise an exception)!
+			index = keys.index(alias)
+			print "\t.align 4"
+			print ".globl gl%s" % func_name
+			print "\t.type gl%s,@function" % func_name
+			print "gl%s:" % func_name
+			print "\tmovl glim+%d, %%eax" % (4*index)
+			print "\tjmp *%eax"
+			print ""
+
+
+	print '/*'
+	print '* No-op stubs'
+	print '*/'
+
+	# Now generate no-op stub functions
+	for func_name in allkeys:
+		if "stub" in apiutil.ChromiumProps(func_name):
+			print "\t.align 4"
+			print ".globl gl%s" % func_name
+			print "\t.type gl%s,@function" % func_name
+			print "gl%s:" % func_name
+			print "\tleave"
+			print "\tret"
+			print ""
+
+
+GenerateEntrypoints()
 

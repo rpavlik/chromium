@@ -4,12 +4,11 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
 #include "cr_mem.h"
-#include "cr_pixeldata.h"
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
+#include "cr_pixeldata.h"
 
 void crStatePolygonInit(CRContext *ctx)
 {

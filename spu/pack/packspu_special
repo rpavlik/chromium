@@ -5,10 +5,14 @@
 GetString
 EnableClientState
 DisableClientState
+Enable
+Disable
 ClientActiveTextureARB
 ColorPointer
 FogCoordPointerEXT
 SecondaryColorPointerEXT
+VertexAttribPointerARB
+VertexAttribPointerNV
 GetPointerv
 VertexPointer
 NormalPointer
@@ -45,3 +49,10 @@ TexSubImage3D
 ChromiumParametervCR
 MultiDrawArraysEXT
 MultiDrawElementsEXT
+GetBufferPointervARB
+GetBufferParameterivARB
+MapBufferARB
+UnmapBufferARB
+BindBufferARB
+BufferDataARB
+ZPix

@@ -328,6 +328,7 @@ void crDLMReplayList(CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable 
 {
     DLMListInfo *listInfo;
 
+
     listInfo = (DLMListInfo *)crHashtableSearch(dlm->displayLists, listIdentifier);
     if (listInfo) {
 	DLMInstanceList *instance = listInfo->first;
@@ -475,6 +476,22 @@ CRDLMError crDLMGetBounds(CRDLM *dlm, unsigned long listIdentifier,
     else {
       return GL_INVALID_OPERATION;
     }
+}
+
+void crDLMListSent(CRDLM *dlm, unsigned long listIdentifier)
+{
+    DLMListInfo *listInfo;
+
+    listInfo = (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
+    listInfo->listSent = GL_TRUE;
+}
+
+GLboolean crDLMIsListSent(CRDLM *dlm, unsigned long listIdentifier)
+{
+    DLMListInfo *listInfo;
+
+    listInfo = (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
+    return listInfo->listSent;
 }
 
 

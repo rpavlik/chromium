@@ -3,18 +3,13 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
 
-sys.path.append( "../opengl_stub" )
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../glapi_parser" )
+import apiutil
 
-import stub_common;
 
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """
 #include "cr_spu.h"
@@ -25,9 +20,6 @@ print """
 #include "server_dispatch.h"
 #include "server.h"
 """
-
-keys = gl_mapping.keys()
-keys.sort()
 
 max_components = {
 	'GetClipPlane': 4,
@@ -73,26 +65,56 @@ max_components = {
 	'GetProgramEnvParameterdvARB': 4,
 	'GetProgramEnvParameterfvARB': 4,
 	'GetProgramivARB': 1,
-
+	'AreProgramsResidentNV': 1,
+	'GetBufferParameterivARB': 1,
+	'GetBufferPointervARB': 1,
+	'GetQueryObjectivARB' : 1,
+	'GetQueryObjectuivARB' : 1,
+	'GetQueryivARB' : 1
 }
 
-no_pnames = [ 'GetClipPlane', 'GetPolygonStipple', 'GetProgramLocalParameterdvARB', 'GetProgramLocalParameterfvARB', 'GetProgramNamedParameterdvNV', 'GetProgramNamedParameterfvNV', 'GetProgramNamedParameterdvNV', 'GetProgramNamedParameterfvNV', 'GetProgramEnvParameterdvARB', 'GetProgramEnvParameterfvARB', 'GetProgramivARB'   ];
+no_pnames = [
+	'GetClipPlane',
+	'GetPolygonStipple',
+	'GetProgramLocalParameterdvARB',
+	'GetProgramLocalParameterfvARB',
+	'GetProgramNamedParameterdvNV',
+	'GetProgramNamedParameterfvNV',
+	'GetProgramNamedParameterdvNV',
+	'GetProgramNamedParameterfvNV',
+	'GetProgramEnvParameterdvARB',
+	'GetProgramEnvParameterfvARB',
+	'GetProgramivARB',
+	'AreProgramsResidentNV'
+];
 
 from get_components import *;
 
+keys = apiutil.GetDispatchedFunctions("../glapi_parser/APIspec.txt")
 for func_name in keys:
-	(return_type, arg_names, arg_types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "../packer/packer_get", func_name ) and not stub_common.FindSpecial( "server", func_name ):
-		print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s%s' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+	#(return_type, arg_names, arg_types) = gl_mapping[func_name]
+	if ("get" in apiutil.Properties(func_name) and
+		apiutil.ReturnType(func_name) == "void" and
+		not apiutil.FindSpecial( "server", func_name )):
+
+		params = apiutil.Parameters(func_name)
+
+		print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s( %s )' % (func_name, apiutil.MakeDeclarationString( params ) )
 		print '{'
-		local_argtype = string.replace( arg_types[len(arg_types)-1], '*', '' )
-		local_argname = 'local_%s' % arg_names[len(arg_names)-1]
+
+		lastParam = params[-1]
+		assert apiutil.IsPointer(lastParam[1])
+		local_argtype = apiutil.PointerType(lastParam[1])
+		local_argname = 'local_%s' % lastParam[0]
+
 		print '\t%s %s[%d];' % ( local_argtype, local_argname, max_components[func_name] )
-		print '\t(void) %s;' % arg_names[len(arg_names)-1]
-		arg_names[len(arg_names)-1] = local_argname
-		print '\tcr_server.head_spu->dispatch_table.%s%s;' % ( func_name, stub_common.CallString(arg_names) )
+		print '\t(void) %s;' % lastParam[0]
+
+		params[-1] = (local_argname, local_argtype, 0)
+
+		print '\tcr_server.head_spu->dispatch_table.%s( %s );' % ( func_name, apiutil.MakeCallString(params) )
 		if func_name in no_pnames:
 			print '\tcrServerReturnValue( &(%s[0]), %d*sizeof(%s) );' % (local_argname, max_components[func_name], local_argtype );
 		else:
-			print '\tcrServerReturnValue( &(%s[0]), __lookupComponents(pname)*sizeof(%s) );' % (local_argname, local_argtype );
+			print '\tcrServerReturnValue( &(%s[0]), lookupComponents(pname)*sizeof(%s) );' % (local_argname, local_argtype );
 		print '}\n'

@@ -3,23 +3,13 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
 
-sys.path.append( "../../opengl_stub" )
-parsed_file = open( "../../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
-
-import stub_common;
-
-keys = gl_mapping.keys()
-keys.sort();
+sys.path.append( "../../glapi_parser" )
+import apiutil
 
 
-
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """#include <stdio.h>
 #include "cr_error.h"
@@ -27,6 +17,9 @@ print """#include <stdio.h>
 #include "cr_spu.h"
 #include "passthroughspu.h"
 """
+
+keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
+
 
 print 'SPUNamedFunctionTable _cr_passthrough_table[%d];' % ( len(keys) + 1 )
 
@@ -39,6 +32,7 @@ static void __fillin( int offset, char *name, SPUGenericFunction func )
 
 void BuildPassthroughTable( SPU *child )
 {"""
+
 for index in range(len(keys)):
 	func_name = keys[index]
 	print '\t__fillin( %3d, "%s", (SPUGenericFunction) child->dispatch_table.%s );' % (index, func_name, func_name )

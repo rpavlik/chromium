@@ -105,3 +105,13 @@ RasterPos4i
 RasterPos4iv
 RasterPos4s
 RasterPos4sv
+MapBufferARB
+UnmapBufferARB
+BufferDataARB
+BufferSubDataARB
+GetBufferSubDataARB
+GetQueryObjectivARB
+GetQueryObjectuivARB
+BeginQueryARB
+EndQueryARB
+ZPix

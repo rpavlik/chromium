@@ -169,6 +169,19 @@ void crStateLimitsInit (CRLimitsState *l)
 
 
 /*
+ * Given the GL version number returned from a real GL renderer,
+ * compute the version number supported by Chromium.
+ */
+GLfloat crStateComputeVersion(float minVersion)
+{
+	const GLfloat crVersion = crStrToFloat(CR_OPENGL_VERSION_STRING);
+	if (crVersion < minVersion)
+		minVersion = crVersion;
+	return minVersion;
+}
+
+
+/*
  * <extenions> is an array [n] of GLubyte pointers which contain lists of
  * OpenGL extensions.
  * Compute the intersection of those strings, then append the Chromium
@@ -228,8 +241,20 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_imaging"))
 		extensions->ARB_imaging = GL_TRUE;
 
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_multisample"))
+		extensions->ARB_multisample = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_multitexture"))
+		extensions->ARB_multitexture = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_occlusion_query"))
+		extensions->ARB_occlusion_query = GL_TRUE;
+
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_point_parameters"))
 		extensions->ARB_point_parameters = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_point_sprite"))
+		extensions->ARB_point_sprite = GL_TRUE;
 
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_shadow"))
 		extensions->ARB_shadow = GL_TRUE;
@@ -240,12 +265,6 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_border_clamp") ||
 		hasExtension((const char*)limits->extensions, "GL_SGIS_texture_border_clamp"))
 		extensions->ARB_texture_border_clamp = GL_TRUE;
-
-	if (hasExtension((const char*)limits->extensions, "GL_ARB_multisample"))
-		extensions->ARB_multisample = GL_TRUE;
-
-	if (hasExtension((const char*)limits->extensions, "GL_ARB_multitexture"))
-		extensions->ARB_multitexture = GL_TRUE;
 
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_compression"))
 		extensions->ARB_texture_compression = GL_TRUE;
@@ -271,8 +290,14 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_mirrored_repeat"))
 		extensions->ARB_texture_mirrored_repeat = GL_TRUE;
 
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_non_power_of_two"))
+		extensions->ARB_texture_non_power_of_two = GL_TRUE;
+
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_transpose_matrix"))
 		extensions->ARB_transpose_matrix = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_vertex_buffer_object"))
+		extensions->ARB_vertex_buffer_object = GL_TRUE;
 
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_vertex_program"))
 		extensions->ARB_vertex_program = GL_TRUE;
@@ -375,6 +400,7 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 	if (extensions->any_vertex_program || extensions->any_fragment_program)
 		extensions->any_program = GL_TRUE;
 
+#if 0
 	/* Now, determine what level of OpenGL we support */
 	if (extensions->ARB_multisample &&
 			extensions->ARB_multitexture &&
@@ -401,7 +427,15 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 				extensions->EXT_shadow_funcs  &&
 				extensions->EXT_stencil_wrap &&
 				extensions->SGIS_generate_mipmap) {
-			extensions->version = (const GLubyte *) "1.4 Chromium " CR_VERSION_STRING;
+			if (extensions->ARB_occlusion_query &&
+					extensions->ARB_vertex_buffer_object &&
+					extensions->ARB_texture_non_power_of_two &&
+					extensions->EXT_shadow_funcs) {
+				extensions->version = (const GLubyte *) "1.5 Chromium " CR_VERSION_STRING;
+			}
+			else {
+				extensions->version = (const GLubyte *) "1.4 Chromium " CR_VERSION_STRING;
+			}
 		}
 		else {
 			extensions->version = (const GLubyte *) "1.3 Chromium " CR_VERSION_STRING;
@@ -410,6 +444,7 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 	else {
 		extensions->version = (const GLubyte *) "1.2 Chromium " CR_VERSION_STRING;
 	}
+#endif
 }
 
 

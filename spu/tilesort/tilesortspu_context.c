@@ -10,6 +10,10 @@
 #include "cr_mem.h"
 #include "cr_packfunctions.h"
 #include "cr_string.h"
+#ifdef USE_DMX
+#include <X11/Xlib.h>
+#include <X11/extensions/dmxext.h>
+#endif
 
 
 /* This function is registered with the DLM and will get called when
@@ -161,6 +165,10 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 #endif
 		return 0;  /* out of memory? */
 	}
+
+#ifdef CR_ARB_vertex_buffer_object
+	contextInfo->State->bufferobject.retainBufferData = GL_TRUE;
+#endif
 
 	/* Initialize viewport & scissor */
 	/* Set to -1 then set them for the first time in MakeCurrent */
@@ -336,7 +344,20 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 		winInfo->client_hwnd = WindowFromDC( newCtx->client_hdc );
 #else
 		winInfo->dpy = newCtx->dpy;
-#endif
+		winInfo->isDMXWindow = GL_FALSE;
+		if (tilesort_spu.useDMX) {
+#if USE_DMX
+			int event_base, error_base;
+			if (DMXQueryExtension(winInfo->dpy, &event_base, &error_base))
+				winInfo->isDMXWindow = GL_TRUE;
+			else
+				crWarning("tilesort SPU: use_dmx is set, but %s doesn't support DMX",
+									DisplayString(winInfo->dpy));
+#else /* USE_DMX */
+			crWarning("tilesort SPU: use_dmx is set, but Chromium wasn't compiled with DMX support");
+#endif /* USE_DMX */
+		}
+#endif /* WINDOWS */
 
 		thread->currentContext = newCtx;
 		thread->currentContext->currentWindow = winInfo;

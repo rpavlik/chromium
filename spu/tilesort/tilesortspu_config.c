@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
 #include "tilesortspu.h"
 
 #include "cr_mothership.h"
@@ -82,10 +81,8 @@ static void
 set_fake_window_dims(TileSortSPU *tilesort_spu, const char *response)
 {
 	float w = 0.0, h = 0.0;
-	if (response[0] == '[')
-		sscanf(response, "[ %f, %f ]", &w, &h);
-	else
-		sscanf(response, "%f %f", &w, &h);
+	CRASSERT(response[0] == '[');
+	sscanf(response, "[ %f, %f ]", &w, &h);
 	tilesort_spu->fakeWindowWidth = (unsigned int) w;
 	tilesort_spu->fakeWindowHeight = (unsigned int) h;
 }
@@ -143,6 +140,13 @@ retile_on_resize(TileSortSPU *tilesort_spu, const char *response)
 }
 
 
+static void
+scale_images(TileSortSPU *tilesort_spu, const char *response)
+{
+	sscanf(response, "%d", &(tilesort_spu->scaleImages));
+}
+
+
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions tilesortSPUOptions[] = {
@@ -172,7 +176,7 @@ SPUOptions tilesortSPUOptions[] = {
          "Send display lists to servers only when needed (lazy)",
          (SPUOptionCB) set_lazy_send_dlists},
 
-	{"fake_window_dims", CR_INT, 2, "0, 0", "0, 0", NULL,
+	{"fake_window_dims", CR_INT, 2, "[0, 0]", "[0, 0]", NULL,
 	 "Fake Window Dimensions (w, h)", (SPUOptionCB) set_fake_window_dims},
 
 	{"scale_to_mural_size", CR_BOOL, 1, "1", NULL, NULL,
@@ -193,6 +197,9 @@ SPUOptions tilesortSPUOptions[] = {
 
 	{"retile_on_resize", CR_BOOL, 1, "1", NULL, NULL,
 	 "Retile when Window Resizes", (SPUOptionCB) retile_on_resize},
+
+	{"scale_images", CR_BOOL, 1, "0", NULL, NULL,
+	 "Scale glDraw/CopyPixels and glBitmap images", (SPUOptionCB) scale_images},
 
 	{NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL},
 };

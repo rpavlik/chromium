@@ -1318,9 +1318,24 @@ void STATE_APIENTRY crStateTexEnvfv (GLenum target, GLenum pname, const GLfloat 
 		}
 		else {
 			t->unit[t->curTextureUnit].lodBias = *param;
+			DIRTY(tb->envBit[t->curTextureUnit], g->neg_bitid);
+			DIRTY(tb->dirty, g->neg_bitid);
 		}
-		DIRTY(tb->envBit[t->curTextureUnit], g->neg_bitid);
-		DIRTY(tb->dirty, g->neg_bitid);
+		return;
+	}
+	else
+#endif
+#if CR_ARB_point_sprite
+	if (target == GL_POINT_SPRITE_ARB) {
+		if (!g->extensions.ARB_point_sprite || pname != GL_COORD_REPLACE_ARB) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexEnv");
+		}
+		else {
+			CRPointBits *pb = &(sb->point);
+			g->point.coordReplacement[t->curTextureUnit] = *param ? GL_TRUE : GL_FALSE;
+			DIRTY(pb->coordReplacement[t->curTextureUnit], g->neg_bitid);
+			DIRTY(pb->dirty, g->neg_bitid);
+		}
 		return;
 	}
 	else
@@ -1563,6 +1578,13 @@ void STATE_APIENTRY crStateTexEnviv (GLenum target, GLenum pname, const GLint *p
 			crStateTexEnvfv( target, pname, &f_param);
 			break;
 #endif
+#ifdef CR_ARB_point_sprite
+		case GL_COORD_REPLACE_ARB:
+			f_param = (GLfloat) *param;
+			crStateTexEnvfv( target, pname, &f_param);
+			break;
+#endif
+
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 						"glTexEnvfv: invalid pname: %d", pname);
@@ -1600,6 +1622,18 @@ void STATE_APIENTRY crStateGetTexEnvfv (GLenum target, GLenum pname, GLfloat *pa
 		}
 		else {
 			*param = t->unit[t->curTextureUnit].lodBias;
+		}
+		return;
+	}
+	else
+#endif
+#if CR_ARB_point_sprite
+	if (target == GL_POINT_SPRITE_ARB) {
+		if (!g->extensions.ARB_point_sprite || pname != GL_COORD_REPLACE_ARB) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glGetTexEnv");
+		}
+		else {
+			*param = (GLfloat) g->point.coordReplacement[t->curTextureUnit];
 		}
 		return;
 	}
@@ -1792,6 +1826,18 @@ void STATE_APIENTRY crStateGetTexEnviv (GLenum target, GLenum pname, GLint *para
 		}
 		else {
 			*param = (GLint) t->unit[t->curTextureUnit].lodBias;
+		}
+		return;
+	}
+	else
+#endif
+#if CR_ARB_point_sprite
+	if (target == GL_POINT_SPRITE_ARB) {
+		if (!g->extensions.ARB_point_sprite || pname != GL_COORD_REPLACE_ARB) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glGetTexEnv");
+		}
+		else {
+			*param = (GLint) g->point.coordReplacement[t->curTextureUnit];
 		}
 		return;
 	}

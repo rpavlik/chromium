@@ -21,6 +21,7 @@
 #include "cr_spu.h"
 #include "cr_threads.h"
 #include "cr_dlm.h"
+#include "cr_mem.h"
 
 #include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
@@ -70,9 +71,11 @@ struct context_info_t {
 	/* Misc per-context tilesort state */
 	GLenum providedBBOX;  /* GL_OBJECT/SCREEN/DEFAULT_BBOX_CR */
 	GLboolean inDrawPixels;
+	GLboolean inZPix;
 	int readPixelsCount;   /* for gathering pieces of glReadPixels image */
 	GLboolean everCurrent; /* has this context ever been bound? */
 	GLboolean validRasterOrigin;
+	char glVersion[50];
 };
 
 /* For DMX */
@@ -122,6 +125,7 @@ struct window_info_t {
 	Display *dpy;
 	GLXDrawable xwin;
 #endif
+	GLboolean isDMXWindow;   /* true if this window is on a DMX display */
 };
 
 struct warp_display_info_t {
@@ -189,6 +193,7 @@ typedef struct {
 	int lazySendDLists;
 	TileSortBucketMode defaultBucketMode;
 	unsigned int fakeWindowWidth, fakeWindowHeight;
+	int scaleImages;
 
 	int swap;  /* byte swapping */
 	unsigned int MTU;
@@ -196,6 +201,8 @@ typedef struct {
 	unsigned int geom_buffer_size;
 	unsigned int geom_buffer_mtu;
 	int num_servers;
+	int replay;
+	CRHashTable *listTable; /* map display list ID to sentFlags for each server */
 
 	/* WGL/GLX interface for DMX */
 	crOpenGLInterface ws;
@@ -281,7 +288,6 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits);
 WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint nativeWindow);
 void tilesortspuFreeWindowInfo(WindowInfo *winInfo);
 void tilesortspuUpdateWindowInfo(WindowInfo *winInfo);
-void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo);
 
 /* tilesortspu_context.c */
 void tilesortspuInitThreadPacking( ThreadInfo *thread );
@@ -291,6 +297,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 
 /* tilesortspu_get.c */
 const GLubyte *tilesortspuGetExtensionsString(void);
+GLfloat tilesortspuGetVersionNumber(void);
 
 /* tilesortspu_list_gen.c */
 void tilesortspuLoadSortTable(SPUDispatchTable *t);
@@ -300,6 +307,10 @@ void tilesortspuLoadPackTable(SPUDispatchTable *t);
 /* tilesortspu_lists.c */
 void TILESORTSPU_APIENTRY tilesortspuStateCallList(GLuint list);
 void TILESORTSPU_APIENTRY tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists);
+void TILESORTSPU_APIENTRY tilesortspuStateNewList(GLuint list, GLuint mode);
+void TILESORTSPU_APIENTRY tilesortspuStateEndList(void);
+
+extern int validate_option( SPUOptions *opt, const char *response );
 
 /* tilesortspu_pixels.c */
 void TILESORTSPU_APIENTRY
@@ -310,6 +321,7 @@ tilesortspu_PackBitmap(GLsizei width, GLsizei height,
 void TILESORTSPU_APIENTRY
 tilesortspu_PackDrawPixels(GLsizei width, GLsizei height, GLenum format,
 													 GLenum type, const GLvoid *pixels);
+
 void TILESORTSPU_APIENTRY
 tilesortspu_PackTexImage1D(GLenum target, GLint level,
 													 GLint internalformat, GLsizei width, GLint border,
@@ -346,4 +358,7 @@ tilesortspu_PackTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 															GLenum type, const GLvoid *pixels);
 
 
+void TILESORTSPU_APIENTRY
+tilesortspu_PackZPix(GLsizei width, GLsizei height, GLenum format,
+		 GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels);
 #endif /* TILESORT_SPU_H */

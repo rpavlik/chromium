@@ -32,6 +32,6 @@ LIB_DEFS += simplequeryspu.def
 
 include ${TOP}/cr.mk
 
-simplequeryspu.c: simplequery.py simplequery_special
+simplequeryspu.c: simplequery.py ../../glapi_parser/APIspec.txt
 	@$(ECHO) Building the Simple Query SPU
 	@$(PYTHON) $< > $@

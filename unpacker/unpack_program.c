@@ -74,9 +74,8 @@ void crUnpackExtendProgramParameters4fvNV(void)
 void crUnpackExtendAreProgramsResidentNV(void)
 {
 	GLsizei n = READ_DATA( 8, GLsizei );
-	crError( "AreProgramsResidentNV needs to be special cased!" );
-	SET_RETURN_PTR( 28 );
-	SET_WRITEBACK_PTR( 36 );
+	GLboolean * residences;
+	crMemcpy( (void *) &(residences), DATA_POINTER( 12 + n*sizeof( GLuint ), void * ), sizeof( GLboolean * ));
 	(void) cr_unpackDispatch.AreProgramsResidentNV( n, NULL, NULL );
 }
 

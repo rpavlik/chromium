@@ -44,11 +44,44 @@ GetExtensions(void)
 }
 
 
+static GLfloat
+GetVersion(void)
+{
+	GLubyte return_value[100];
+	GET_THREAD(thread);
+	int writeback = 1;
+	GLfloat version;
+
+	if (pack_spu.swap)
+		crPackGetStringSWAP( GL_VERSION, return_value, &writeback );
+	else
+		crPackGetString( GL_VERSION, return_value, &writeback );
+	packspuFlush( (void *) thread );
+
+	while (writeback)
+		crNetRecv();
+
+	CRASSERT(crStrlen((char *)return_value) < 100);
+
+	version = crStrToFloat(return_value);
+	version = crStateComputeVersion(version);
+
+	return version;
+}
+
+
 const GLubyte * PACKSPU_APIENTRY packspu_GetString( GLenum name )
 {
+	GET_CONTEXT(ctx);
 	if (name == GL_EXTENSIONS)
 	{
 		return GetExtensions();
+	}
+	else if (name == GL_VERSION)
+	{
+		float version = GetVersion();
+		sprintf(ctx->glVersion, "%g Chromium %s", version, CR_VERSION_STRING);
+		return (const GLubyte *) ctx->glVersion;
 	}
 	else
 	{

@@ -3,23 +3,15 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
 
-sys.path.append( "../../opengl_stub" )
-parsed_file = open( "../../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../../glapi_parser" )
+import apiutil
 
-import stub_common;
 
-keys = gl_mapping.keys()
-keys.sort();
+apiutil.CopyrightC()
 
-stub_common.CopyrightC()
-
-print """#include <stdio.h>
+print """
 #include "hiddenlinespu.h"
 #include "hiddenlinespu_proto.h"
 #include "cr_packfunctions.h"
@@ -38,11 +30,14 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_PixelStorei( GLenum pname, GLint param
 }
 """
 
-for func_name in stub_common.AllSpecials( "hiddenline_pixel" ):
-	(return_type, args, types) = gl_mapping[func_name]
-	print 'void HIDDENLINESPU_APIENTRY hiddenlinespu_%s%s' % ( func_name, stub_common.ArgumentString( args, types ) )
+# Need this since we're down two levels of subdirs
+apiutil.GetAllFunctions("../../glapi_parser/APIspec.txt")
+
+for func_name in apiutil.AllSpecials( "hiddenline_pixel" ):
+	params = apiutil.Parameters(func_name)
+	print 'void HIDDENLINESPU_APIENTRY hiddenlinespu_%s(%s)' % (func_name, apiutil.MakeDeclarationString(params))
 	print '{'
 	print '\tGET_CONTEXT(context);'
-	args.append( '&(context->ctx->client.unpack)' )
-	print '\tcrPack%s%s;' % ( func_name, stub_common.CallString( args ) )
+	args = apiutil.MakeCallString(params) + ', &(context->ctx->client.unpack)'
+	print '\tcrPack%s(%s);' % (func_name, args)
 	print '}'

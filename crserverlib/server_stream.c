@@ -231,9 +231,12 @@ void crServerSerializeRemoteStreams(void)
 				/* new code path */
 				if (cr_server.curClient->currentCtx &&
 						(cr_server.curClient->currentCtx->lists.currentIndex != 0 ||
-						 cr_server.curClient->currentCtx->current.inBeginEnd)) {
-					/* We're between glNewList/EndList or glBegin/End.  We can't
-					 * context switch because that'll screw things up.
+						 cr_server.curClient->currentCtx->current.inBeginEnd ||
+						 cr_server.curClient->currentCtx->occlusion.currentQueryObject))
+				{
+					/* We're between glNewList/EndList or glBegin/End or inside a
+					 * glBeginQuery/EndQuery sequence.
+					 * We can't context switch because that'll screw things up.
 					 */
 					/*
 					printf("currentIndex=%d inBeginEnd=%d\n",

@@ -9,6 +9,7 @@
 
 #include "state/cr_statetypes.h"
 #include "state/cr_limits.h"
+#include "state/cr_bufferobject.h"
 #include "cr_bits.h"
 
 #ifdef __cplusplus
@@ -23,27 +24,17 @@ typedef struct {
 	/* vertex array */
 	CRbitvalue	enableClientState[CR_MAX_BITARRAY];
 	CRbitvalue	clientPointer[CR_MAX_BITARRAY];
-	CRbitvalue	element[CR_MAX_BITARRAY];
 	CRbitvalue	*v; /* vertex */
 	CRbitvalue	*n; /* normal */
 	CRbitvalue	*c; /* color */
 	CRbitvalue	*i; /* index */
-	CRbitvalue	*t; /* texcoord */
+	CRbitvalue	*t[CR_MAX_TEXTURE_UNITS]; /* texcoord */
 	CRbitvalue	*e; /* edgeflag */
 	CRbitvalue	*s; /* secondary color */
 	CRbitvalue	*f; /* fog coord */
 #ifdef CR_NV_vertex_program
 	CRbitvalue	*a[CR_MAX_VERTEX_ATTRIBS]; /* NV_vertex_program */
 #endif
-	int valloc;
-	int nalloc;
-	int calloc;
-	int ialloc;
-	int talloc;
-	int ealloc;
-	int salloc;
-	int falloc;
-	int aalloc;
 } CRClientBits;
 
 typedef struct {
@@ -65,6 +56,9 @@ typedef struct {
 	GLboolean enabled;
 	GLboolean normalized; /* Added with GL_ARB_vertex_program */
 	int bytesPerIndex;
+#ifdef CR_ARB_vertex_buffer_object
+	CRBufferObject *buffer;
+#endif
 } CRClientPointer;
 
 typedef struct {
@@ -96,10 +90,6 @@ typedef struct {
 
 	GLint curClientTextureUnit;
 
-	int *list;
-	int list_alloc;
-	int list_size;
-
 	/* state stacks (glPush/PopClientState) */
 	GLint attribStackDepth;
 	CRbitvalue pushMaskStack[CR_MAX_CLIENT_ATTRIB_STACK_DEPTH];
@@ -118,10 +108,8 @@ void crStateClientInitBits(CRClientBits *c);
 void crStateClientInit(CRClientState *c);
 void crStateClientDestroy(CRClientState *c);
 
-void crStateClientDiff(CRClientState *from, CRClientState *to,
-											 CRClientBits *bb, CRbitvalue *bitID);		
-void crStateClientSwitch(CRClientBits *bb, CRbitvalue *bitID,
-		CRClientState *from, CRClientState *to);
+GLboolean crStateUseServerArrays(void);
+
 #ifdef __cplusplus
 }
 #endif

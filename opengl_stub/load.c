@@ -577,6 +577,9 @@ void stubInit(void)
 	 * table with the functions of the first SPU in the chain. */
 	stubInitSPUDispatch( stub.spu );
 
+	/* we need to plug one special stub function into the dispatch table */
+	glim.GetChromiumParametervCR = stub_GetChromiumParametervCR;
+
 	/* Load pointers to native OpenGL functions into stub.nativeDispatch */
 	stubInitNativeDispatch();
 }

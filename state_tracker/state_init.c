@@ -48,6 +48,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
 	crStateLimitsInit( &(ctx->limits) );
 	crStateExtensionsInit( &(ctx->limits), &(ctx->extensions) );
 
+	crStateBufferObjectInit( ctx ); /* must precede client state init! */
 	crStateClientInit( &(ctx->client) );
 
 	crStateBufferInit( ctx );
@@ -59,6 +60,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
 	crStateLineInit( ctx );
 	crStateListsInit( ctx );
 	crStateMultisampleInit( ctx );
+	crStateOcclusionInit( ctx );
 	crStatePixelInit( ctx );
 	crStatePolygonInit( ctx );
 	crStatePointInit( ctx );
@@ -150,9 +152,11 @@ void crStateInit(void)
 		crStateClientDestroy( &(defaultContext->client) );
 		crStateLimitsDestroy( &(defaultContext->limits) );
 
+		crStateBufferObjectDestroy( defaultContext );
 		crStateEvaluatorDestroy( defaultContext );
 		crStateListsDestroy( defaultContext );
 		crStateLightingDestroy( defaultContext );
+		crStateOcclusionDestroy( defaultContext );
 		crStateProgramDestroy( defaultContext );
 		crStateTextureDestroy( defaultContext );
 		crStateTransformDestroy( defaultContext );
@@ -265,6 +269,7 @@ void crStateDestroyContext( CRContext *ctx )
 
 	crStateClientDestroy( &(ctx->client) );
 	crStateLimitsDestroy( &(ctx->limits) );
+	crStateBufferObjectDestroy( ctx );
 	crStateEvaluatorDestroy( ctx );
 	crStateListsDestroy( ctx );
 	crStateLightingDestroy( ctx );
@@ -345,3 +350,36 @@ void crStateUpdateColorBits(void)
 	FILLDIRTY(sb->current.dirty);
 	FILLDIRTY(sb->current.vertexAttrib[VERT_ATTRIB_COLOR0]);
 }
+
+
+void STATE_APIENTRY
+crStateChromiumParameteriCR( GLenum target, GLint value )
+{
+	/* This no-op function helps smooth code-gen */
+}
+
+void STATE_APIENTRY
+crStateChromiumParameterfCR( GLenum target, GLfloat value )
+{
+	/* This no-op function helps smooth code-gen */
+}
+
+void STATE_APIENTRY
+crStateChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
+{
+	/* This no-op function helps smooth code-gen */
+}
+
+void STATE_APIENTRY
+crStateGetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values )
+{
+	/* This no-op function helps smooth code-gen */
+}
+
+void STATE_APIENTRY
+crStateReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+									 GLenum format, GLenum type, GLvoid *pixels )
+{
+	/* This no-op function helps smooth code-gen */
+}
+

@@ -3,18 +3,17 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+import sys
 
-import sys,os;
-import cPickle;
-import string;
-import stub_common;
+sys.path.append("../glapi_parser")
+import apiutil
 
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+apiutil.CopyrightDef()
 
-stub_common.CopyrightDef()
-
+print "DESCRIPTION \"\""
 print "EXPORTS"
+
+# XXX can't these values be automatically computed by analyzing parameters?
 
 stack_sizes = {
   'Accum': 8,
@@ -386,10 +385,23 @@ stack_sizes = {
   'wglGetExtensionsStringEXT' : 4
 }
 
-keys = gl_mapping.keys()
-keys.sort();
+noexport_special = [
+	"BoundsInfoCR",
+	"CreateContext",
+	"DestroyContext",
+	"MakeCurrent",
+	"WindowCreate",
+	"WindowDestroy",
+	"WindowSize",
+	"WindowPosition",
+	"WindowShow"
+]
+
+
+keys = apiutil.GetDispatchedFunctions("../glapi_parser/APIspec.txt")
+
 for func_name in keys:
-	if stub_common.FindSpecial( 'noexport', func_name ):
+	if func_name in noexport_special:
 		continue
 	try:
 		print "gl%s@%d = cr_gl%s" % (func_name,stack_sizes[func_name],func_name)
@@ -426,35 +438,9 @@ for func_name in ( "wglChoosePixelFormat",
   		   "wglGetExtensionsStringEXT" ):
     print "%s@%d = %s_prox" % (func_name,stack_sizes[func_name],func_name)
 
-print "crCreateContext"
-print "crMakeCurrent"
-print "crSwapBuffers"
-print "crGetProcAddress"
-print "crInitDispatchInfo"
-#PICA STUFF
-print "crPicaListCompositors"
-print "crPicaGetCompositorParamiv"
-print "crPicaGetCompositorParamfv"
-print "crPicaGetCompositorParamcv"
-print "crPicaListNodes"
-print "crPicaCreateContext"
-print "crPicaDestroyContext"
-print "crPicaSetContextParami"
-print "crPicaSetContextParamiv"
-print "crPicaSetContextParamf"
-print "crPicaSetContextParamfv"
-print "crPicaSetContextParamv"
-print "crPicaGetContextParamiv"
-print "crPicaGetContextParamfv"
-print "crPicaGetContextParamcv"
-print "crPicaGetContextParamv"
-print "crPicaBindLocalContext"
-print "crPicaDestroyLocalContext"
-print "crPicaStartFrame"
-print "crPicaEndFrame"
-print "crPicaCancelFrame"
-print "crPicaQueryFrame"
-print "crPicaAddGfxFramelet"
-print "crPicaAddMemFramelet"
-print "crPicaReadFrame"
-
+print """crCreateContext
+crMakeCurrent
+crSwapBuffers
+crGetProcAddress
+crInitDispatchInfo"""
+#print "DllMain"

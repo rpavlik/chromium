@@ -209,7 +209,9 @@ typedef struct {
 	GLboolean ARB_imaging;
 	GLboolean ARB_multisample;
 	GLboolean ARB_multitexture;
+	GLboolean ARB_occlusion_query;
 	GLboolean ARB_point_parameters;
+	GLboolean ARB_point_sprite;
 	GLboolean ARB_shadow;
 	GLboolean ARB_shadow_ambient;
 	GLboolean ARB_texture_border_clamp; /* or SGIS_texture_border_clamp */
@@ -220,7 +222,9 @@ typedef struct {
 	GLboolean ARB_texture_env_crossbar; /* standard in OpenGL 1.4 */
 	GLboolean ARB_texture_env_dot3; /* standard in OpenGL 1.3 */
 	GLboolean ARB_texture_mirrored_repeat;
+	GLboolean ARB_texture_non_power_of_two; /* standard in 1.5 */
 	GLboolean ARB_transpose_matrix;
+	GLboolean ARB_vertex_buffer_object;
 	GLboolean ARB_vertex_program;
 	GLboolean ARB_window_pos;
 	GLboolean EXT_blend_color;
@@ -255,14 +259,14 @@ typedef struct {
 	GLboolean any_vertex_program;    /* NV or ARB */
 	GLboolean any_fragment_program;  /* NV or ARB */
 	GLboolean any_program;  /* vertex or fragment */
-
-	const GLubyte *version;
 } CRExtensionState;
 
 extern void crStateLimitsInit(CRLimitsState *limits);
 extern void crStateLimitsDestroy(CRLimitsState *limits);
 
 extern void crStateLimitsPrint(const CRLimitsState *limits);
+
+extern GLfloat crStateComputeVersion(float minVersion);
 
 extern GLubyte * crStateMergeExtensions(GLuint n, const GLubyte **extensions);
 

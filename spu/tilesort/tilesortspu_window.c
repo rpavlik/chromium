@@ -19,6 +19,11 @@
 #ifdef USE_DMX
 #include <X11/Xlib.h>
 #include <X11/extensions/dmxext.h>
+#ifdef DmxBadXinerama
+#define DMX_API_VERSION 2
+#else
+#define DMX_API_VERSION 1
+#endif
 #endif
 
 
@@ -124,45 +129,69 @@ chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 #endif /* not WINDOWS */
 
 
+#ifdef USE_DMX
 /*
  * DMX only: for the given WindowInfo, query DMX to get the X window
  * IDs for the corresponding back-end windows.  Create back-end sub
  * windows if needed.  Compute new tiling.
  */
-void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
+static void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 {
-#ifdef USE_DMX
 	int numScreens, count, i;
+#if DMX_API_VERSION == 2
+	DMXScreenAttributes *dmxScreenInfo;
+	DMXWindowAttributes *dmxWinInfo;
+#else
 	DMXScreenInformation *dmxScreenInfo;
 	DMXWindowInformation *dmxWinInfo;
+#endif
 
 	CRASSERT(winInfo->dpy);
 	DMXGetScreenCount(winInfo->dpy, &numScreens);
 	CRASSERT(numScreens == tilesort_spu.num_servers);
 
+#if DMX_API_VERSION == 2
+	dmxScreenInfo = (DMXScreenAttributes *) crAlloc(tilesort_spu.num_servers
+																									 * sizeof(*dmxScreenInfo));
+#else
 	dmxScreenInfo = (DMXScreenInformation *) crAlloc(tilesort_spu.num_servers
-																									 * sizeof(DMXScreenInformation));
+																									 * sizeof(*dmxScreenInfo));
+#endif
 	if (!dmxScreenInfo)
 		return;
 
+#if DMX_API_VERSION == 2
+	dmxWinInfo = (DMXWindowAttributes *) crAlloc(tilesort_spu.num_servers
+																						* sizeof(*dmxWinInfo));
+#else
 	dmxWinInfo = (DMXWindowInformation *) crAlloc(tilesort_spu.num_servers
-																						* sizeof(DMXWindowInformation));
+																						* sizeof(*dmxWinInfo));
+#endif
 	if (!dmxWinInfo) {
 		crFree(dmxScreenInfo);
 		return;
 	}
 
 	for (i = 0; i < numScreens; i++) {
-	   if (!DMXGetScreenInformation(winInfo->dpy, i, dmxScreenInfo + i)) {
+#if DMX_API_VERSION == 2
+		if (!DMXGetScreenAttributes(winInfo->dpy, i, dmxScreenInfo + i)) {
+#else
+		if (!DMXGetScreenInformation(winInfo->dpy, i, dmxScreenInfo + i)) {
+#endif
 		  crDebug("Could not get screen information for screen %d\n", i);
 		  crFree(dmxScreenInfo);
 		  crFree(dmxWinInfo);
 		  return;
-	   }
+		}
 	}
 		
+#if DMX_API_VERSION == 2
+	if (!DMXGetWindowAttributes(winInfo->dpy, winInfo->xwin, &count,
+															 tilesort_spu.num_servers, dmxWinInfo)) {
+#else
 	if (!DMXGetWindowInformation(winInfo->dpy, winInfo->xwin, &count,
 															 tilesort_spu.num_servers, dmxWinInfo)) {
+#endif
 		crDebug("Could not get window information for 0x%x\n", (int) winInfo->xwin);
 		crFree(dmxScreenInfo);
 		crFree(dmxWinInfo);
@@ -268,11 +297,8 @@ void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 
 	crFree(dmxWinInfo);
 	crFree(dmxScreenInfo);
-
-#else
-	(void) winInfo;
-#endif
 }
+#endif /* USE_DMX */
 
 
 /*
@@ -336,11 +362,13 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			return;
 	}
 
-	if (tilesort_spu.useDMX &&
+#ifdef USE_DMX
+	if (winInfo->isDMXWindow &&
 			(winInfo->lastX != x || winInfo->lastY != y ||
 			 winInfo->lastWidth != width || winInfo->lastHeight != height)) {
 		tilesortspuGetBackendWindowInfo(winInfo);
 	}
+#endif
 
 	winInfo->lastX = x;
 	winInfo->lastY = y;
@@ -483,7 +511,7 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint newWidth, G
 	winInfo->lastHeight = newHeight;
 
 #ifdef USE_DMX
-	if (tilesort_spu.useDMX && winInfo->xwin) {
+	if (winInfo->isDMXWindow && winInfo->xwin) {
 		tilesortspuGetBackendWindowInfo(winInfo);
 	}
 #endif
@@ -540,13 +568,15 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLin
 {
 	/* we only care about the window position when we're running on DMX */
 #ifdef USE_DMX
-	if (tilesort_spu.useDMX) {
-		WindowInfo *winInfo = tilesortspuGetWindowInfo(window, 0);
-		if (winInfo->xwin)
+	WindowInfo *winInfo = tilesortspuGetWindowInfo(window, 0);
+	if (winInfo->isDMXWindow) {
+		if (winInfo->xwin) /* if window's realized */
 			 tilesortspuGetBackendWindowInfo(winInfo);
 		tilesortspuGetNewTiling(winInfo);
 	}
 #endif
+	(void) x;
+	(void) y;
 }
 
 

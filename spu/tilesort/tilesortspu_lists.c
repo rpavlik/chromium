@@ -12,6 +12,32 @@
 #include "state/cr_stateerror.h"
 
 
+void TILESORTSPU_APIENTRY
+tilesortspuStateNewList(GLuint list, GLuint mode) 
+{
+	/* the state tracker will do error checking and the flush for us. */
+	if (tilesort_spu.replay)
+	{
+		if (tilesort_spu.swap)
+			crPackNewListSWAP(list, mode);
+		else
+			crPackNewList(list, mode);
+		crStateNewList( list, mode );
+	}
+}
+
+void TILESORTSPU_APIENTRY
+tilesortspuStateEndList(void) 
+{
+	if (tilesort_spu.replay) 
+	{
+		if (tilesort_spu.swap)
+			crPackEndListSWAP();
+		else
+			crPackEndList();
+		crStateEndList();
+	}
+}
 
 void TILESORTSPU_APIENTRY
 tilesortspu_NewList(GLuint list, GLuint mode) 
@@ -23,6 +49,8 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 	 * this debug/sanity-check flag.  We can turn it back on in EndList().
 	 */
 	CRPackContext *c = crPackGetContext();
+	int *listSent;
+
 	c->buffer.geometry_only = GL_FALSE;
 
 	/* the state tracker will do error checking and the flush for us. */
@@ -31,17 +59,43 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 	/* GL_COMPILE_AND_EXECUTE confuses the server! */
 	mode = GL_COMPILE;
 
-	/*
-	 * XXX TODO: Implement lazy display list upload.
-	 * Don't send display list to server X, until we actually need to
-	 * execute it there.
-	 */
-	if (tilesort_spu.swap)
-		crPackNewListSWAP(list, mode);
-	else
-		crPackNewList(list, mode);
+	if (tilesort_spu.lazySendDLists)
+	{
 
-	crdlm_NewList(list, mode, &(tilesort_spu.self));
+
+		/*
+		 * Implement lazy display list upload.
+		 * Don't send display list to server X, until we actually need to
+		 * execute it there.
+		 * Cache display list
+		 * Swap to packerDispatch and cache until EndList
+		 */
+		/* the state tracker will do error checking and the flush for us. */
+		if (tilesort_spu.replay)
+		{
+			if (tilesort_spu.swap)
+				crPackNewListSWAP(list, mode);
+			else
+				crPackNewList(list, mode);
+		} else {
+
+			listSent = crCalloc(tilesort_spu.num_servers * sizeof(int));
+			crHashtableAdd(tilesort_spu.listTable, list, listSent);
+
+			crdlm_NewList(list, mode, &(tilesort_spu.self));
+			crdlm_compile_NewList( list, mode );
+		}
+
+	} 
+	else 
+	{
+		if (tilesort_spu.swap)
+			crPackNewListSWAP(list, mode);
+		else
+			crPackNewList(list, mode);
+		crdlm_NewList(list, mode, &(tilesort_spu.self));
+
+	}
 }
 
 
@@ -54,31 +108,73 @@ tilesortspu_EndList(void)
 	const GLuint mode = ctx->lists.mode;
 	const GLuint list = ctx->lists.currentIndex;
 
-	crdlm_EndList();
+
+	/*crDebug("tilesortspu_EndList()"); */
+
+	if (!tilesort_spu.replay) 
+	{
+		if (tilesort_spu.lazySendDLists)
+			crdlm_compile_EndList();
+		crdlm_EndList();
+	}
 	crStateEndList();
 
-	/* now play the list through the packer to send it to the servers */
-	crdlm_CallList(list, &tilesort_spu.packerDispatch);
+	if (tilesort_spu.lazySendDLists)
+	{
+		if (tilesort_spu.replay) 
+		{
+			if (tilesort_spu.swap)
+				crPackEndListSWAP();
+			else
+				crPackEndList();
+		} else {
+			/* restore normal/default dispatch table */
+			crdlm_RestoreDispatch();  /* companion to crdlm_EndList() */
 
-	/* the state tracker will do error checking and the flush for us. */
-	if (tilesort_spu.swap)
-		crPackEndListSWAP();
-	else
-		crPackEndList();
+			/* Turn the geometry_only flag back on.
+			 * See the longer comment above in tilesortspu_NewList().
+			 */
+			c->buffer.geometry_only = GL_TRUE;
 
-	/* restore normal/default dispatch table */
-	crdlm_RestoreDispatch();  /* companion to crdlm_EndList() */
+			if (mode == GL_COMPILE_AND_EXECUTE) 
+			{
+				if (tilesort_spu.swap)
+					crPackEndListSWAP();
+				else
+					crPackEndList();
 
-	tilesortspuBroadcastGeom(0);
+				tilesortspuBroadcastGeom(0);
 
-	/* Turn the geometry_only flag back on.
-	 * See the longer comment above in tilesortspu_NewList().
-	 */
-	c->buffer.geometry_only = GL_TRUE;
+				/* we really used GL_COMPILE mode.  Now, replay/execute the list */
+				tilesortspu_CallList(list);
+			}
+		}
+	} 
+	else {
+		/* now play the list through the packer to send it to the servers */
+		crdlm_CallList(list, &tilesort_spu.packerDispatch);
 
-	if (mode == GL_COMPILE_AND_EXECUTE) {
-		/* we really used GL_COMPILE mode.  Now, replay/execute the list */
-		tilesortspu_CallList(list);
+		/* the state tracker will do error checking and the flush for us. */
+		if (tilesort_spu.swap)
+			crPackEndListSWAP();
+		else
+			crPackEndList();
+
+		/* restore normal/default dispatch table */
+		crdlm_RestoreDispatch();  /* companion to crdlm_EndList() */
+
+		tilesortspuBroadcastGeom(0);
+
+		/* Turn the geometry_only flag back on.
+	 	 * See the longer comment above in tilesortspu_NewList().
+	 	 */
+		c->buffer.geometry_only = GL_TRUE;
+
+		if (mode == GL_COMPILE_AND_EXECUTE) 
+		{
+			/* we really used GL_COMPILE mode.  Now, replay/execute the list */
+			tilesortspu_CallList(list);
+		}
 	}
 }
 
@@ -98,13 +194,19 @@ tilesortspuStateCallList(GLuint list)
 	CRContext *savedContext = crStateGetCurrent();
 	int i;
 
+
+	/*crDebug("tilesortspuStateCallList( %u )", list); */
+
 	/* NOTE: this function may get called recursively when calling a nested
 	 * display list.  Therefore, we have to save the current context when
 	 * we're called and restore it when we leave.
 	 */
 
 	/* update servers' state records */
-	for (i = 0; i < tilesort_spu.num_servers; i++) {
+	for (i = 0; i < tilesort_spu.num_servers; i++) 
+	{
+
+		/*crDebug("tilesortspuStateCallList( server = %d )", i ); */
 		crStateSetCurrent(context->server[i].State);
 		crdlm_CallList(list, &tilesort_spu.stateDispatch);
 	}
@@ -129,13 +231,19 @@ tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists)
 	CRContext *savedContext = crStateGetCurrent();
 	int i;
 
+	/*crDebug("tilesortspuStateCallLists( %d, %d, *lists)", n, type ); */
+
 	/* NOTE: this function may get called recursively when calling a nested
 	 * display list.  Therefore, we have to save the current context when
 	 * we're called and restore it when we leave.
 	 */
 
 	/* update servers' state records */
-	for (i = 0; i < tilesort_spu.num_servers; i++) {
+	for (i = 0; i < tilesort_spu.num_servers; i++) 
+	{
+
+		/*crDebug("tilesortspuStateCallLists( server = %d )", i ); */
+
 		crStateSetCurrent(context->server[i].State);
 		crdlm_ListBase(context->State->lists.base); /* not server[i] state */
 		crdlm_CallLists(n, type, lists, &tilesort_spu.stateDispatch);
@@ -154,14 +262,47 @@ tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists)
 void TILESORTSPU_APIENTRY
 tilesortspu_CallList(GLuint list)
 {
-#if 0
-	GET_CONTEXT(ctx);
-#else
 	GET_THREAD(thread);
-#endif
+        WindowInfo *winInfo = thread->currentContext->currentWindow;
 	GLboolean resetBBox = GL_FALSE;
+        TileSortBucketInfo bucket_info;
+	int i;
+	int *listSent;
 
-	if (thread->currentContext->State->lists.mode == 0) {
+	/*crDebug("tilesortspu_CallList(%u)", list); */
+	listSent = crHashtableSearch(tilesort_spu.listTable, list);
+
+	/*if(listSent == NULL) */
+	/*	crDebug("TILT"); */
+
+	/* if (tilesort_spu.lazySendDLists) */
+	/* 	for(i = 0;i < tilesort_spu.num_servers; i++)  */
+	/* 		crDebug("list = %d listSent[%d] = %d",list, i, listSent[i]); */
+
+	if (thread->currentContext->State->lists.mode == 0) 
+	{
+		/* 
+		 * If lazy then replay display list and send it out now
+		 */
+		if (tilesort_spu.lazySendDLists && ! tilesort_spu.autoDListBBoxes)
+		{
+			if(!crDLMIsListSent(tilesort_spu.dlm, list)) 
+			{
+				/*crDebug("REPLAY LAZY list = %u",list); */
+				/* now play the list through the packer to send it to the servers */
+	
+				tilesortspuFlush( thread );
+
+				tilesort_spu.replay = 1;
+				crDLMListSent(tilesort_spu.dlm, list);
+				crdlm_CallList(list, &tilesort_spu.packerDispatch);
+				tilesort_spu.replay = 0;
+				tilesortspuFlush( thread );
+		
+			}
+
+		}
+
 		/* Execute glCallList */
 
 		/* Try to prefix this display list with a bounding box.
@@ -169,11 +310,16 @@ tilesortspu_CallList(GLuint list)
 		 * the autoDListBBoxes option is turned on.
 		 */
 		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR &&
-				tilesort_spu.autoDListBBoxes) {
+				tilesort_spu.autoDListBBoxes) 
+		{
 			CRDLMBounds bounds;
+
+
 			if (crDLMGetBounds(tilesort_spu.dlm, list, &bounds) == GL_NO_ERROR
-					&& bounds.xmin != FLT_MAX) {
+					&& bounds.xmin != FLT_MAX) 
+			{
 				GLfloat bbox[6];
+
 				bbox[0] = (GLfloat) bounds.xmin;
 				bbox[1] = (GLfloat) bounds.ymin;
 				bbox[2] = (GLfloat) bounds.zmin;
@@ -184,21 +330,58 @@ tilesortspu_CallList(GLuint list)
 				/*
 				printf("Autobox for list %d:\n", list);
 				printf(" %f .. %f\n", bounds.xmin, bounds.xmax);
-			  printf(" %f .. %f\n", bounds.ymin, bounds.ymax);
+				printf(" %f .. %f\n", bounds.ymin, bounds.ymax);
 				printf(" %f .. %f\n", bounds.zmin, bounds.zmax);
 				*/
 
 				/* set the bounding box */
 				tilesortspu_ChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox);
 				resetBBox = GL_TRUE;
+
+				if (tilesort_spu.lazySendDLists)
+				{
+
+					/* now play the list through the packer to send it to the servers */
+		
+					tilesortspuBucketGeometry(winInfo, &bucket_info);
+					/* Now, see if we need to do things to each server */
+
+					for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
+					{
+						int node32 = i >> 5;
+						int node = i & 0x1f;
+
+						/* Check to see if this server needs geometry from us. */
+						if (listSent[i] == 1)
+						{
+							/*crDebug( "listSent NOT sending list %d to server %d", list, i );*/
+							continue;
+						}
+						if (!(bucket_info.hits[node32] & (1 << node)))
+						{
+							/*crDebug( "Bucket NOT sending list %d to server %d", list, i );*/
+							continue;
+						}
+						/*crDebug( "Sending list %d to server %d", list, i ); */
+						tilesortspuFlush( thread );
+
+						tilesort_spu.replay = 1;
+						listSent[i] = 1;
+						crdlm_CallList(list, &tilesort_spu.packerDispatch);
+						tilesort_spu.replay = 0;
+					}
+
+				}
 			}
 		}
 
-		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) {
+		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) 
+		{
 			tilesortspuFlush( thread );
 		}
 	}
-	else {
+	else 
+	{
 		/* we're compiling a glCallList into another display list */
 		crdlm_compile_CallList( list );
 	}
@@ -213,10 +396,10 @@ tilesortspu_CallList(GLuint list)
 		 int i;
 		 crPackReleaseBuffer( thread->packer );
 		 for ( i = 0 ; i < tilesort_spu.num_servers; i++ ) {
-				CRContext *serverState = thread->currentContext->server[i].State;
-				crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
-				crStateDiffAllTextureObjects(ctx, serverState->bitid);
-				crPackReleaseBuffer( thread->packer );
+			CRContext *serverState = thread->currentContext->server[i].State;
+			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
+			crStateDiffAllTextureObjects(ctx, serverState->bitid);
+			crPackReleaseBuffer( thread->packer );
 		 }
 		 crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 	}
@@ -231,10 +414,12 @@ tilesortspu_CallList(GLuint list)
 	else
 	   crPackCallList( list );
 
-	if (thread->currentContext->State->lists.mode == 0) {
+	if (thread->currentContext->State->lists.mode == 0) 
+	{
 		/* Execute glCallList */
 
-		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) {
+		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) 
+		{
 			/* we don't have a bounding box for the geometry in this
 			 * display list, so need to broadcast.
 			 */
@@ -249,9 +434,19 @@ tilesortspu_CallList(GLuint list)
 			tilesortspuFlush( thread );
 		}
 
-		/* XXX only update state on servers if we actually sent the display list!
+		/* only update state on servers if we actually sent the display list!
 		 */
-		tilesortspuStateCallList(list);
+
+		/*crDebug("tilesortspu_CallList(%u) call tilesortspuStateCallList", list); */
+
+		for( i = 0; i < tilesort_spu.num_servers; i++)
+		{
+			if(listSent && listSent[i] == 0) {
+				/*crDebug( "list state sending list %d to server %d", list, i );*/
+				tilesortspuStateCallList(list);
+			} else
+				tilesortspuStateCallList(list);
+		}
 	}
 
 	/* If we used an auto bounding box, turn it off now */
@@ -264,36 +459,66 @@ void TILESORTSPU_APIENTRY
 tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
 	GET_CONTEXT(ctx);
+#if 0
+	ContextInfo *context = thread->currentContext;
+	CRContext *savedContext = crStateGetCurrent();
+#endif
+
+	/*crDebug("tilesortspu_CallLists(%d, %d, *lists)",n, type ); */
 
 	/*
 	 * XXX we have no support for auto bounding boxes here -- someday?
 	 */
 
-	if (thread->currentContext->State->lists.mode == 0) {
+	if (thread->currentContext->State->lists.mode == 0) 
+	{
+		/* 
+		 * If lazy then replay display list and send it out now
+		 */
+		if (tilesort_spu.lazySendDLists)
+		{
+			/*crDebug("REPLAY LAZY Lists n = %u",n); */
+			/* now play the list through the packer to send it to the servers 
+			 * cache testing is done in crdlm_LazyCallLists
+			 */
+
+			tilesort_spu.replay = 1;
+			crdlm_LazyCallLists(n, type, lists, &tilesort_spu.packerDispatch);
+			tilesort_spu.replay = 0;
+		
+		}
+
 		/* Execute glCallList */
-		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) {
+		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) 
+		{
 			tilesortspuFlush( thread );
 		}
 	}
-	else {
+	else 
+	{
 		/* we're compiling glCallLists into another display list */
 		crdlm_compile_CallLists(n, type, lists);
 	}
 
+
 	/* always pack CallLists to send it to servers */
-	if (tilesort_spu.swap) {
+	if (tilesort_spu.swap) 
+	{
 		crPackListBaseSWAP( ctx->lists.base );
 		crPackCallListsSWAP( n, type, lists );
 	}
-	else {
+	else 
+	{
 		crPackListBase( ctx->lists.base );
 		crPackCallLists( n, type, lists );
 	}
 
-	if (thread->currentContext->State->lists.mode == 0) {
+	if (thread->currentContext->State->lists.mode == 0) 
+	{
 		/* Execute glCallLists */
 
-		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) {
+		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) 
+	{
 			/* we don't have a bounding box for the geometry in this
 			 * display list, so need to broadcast.
 			 */
@@ -307,6 +532,9 @@ tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 		}
 
 		crdlm_ListBase(ctx->lists.base);
+
+		/*  only update state on servers if we actually sent the display list!
+		 */
 		tilesortspuStateCallLists(n, type, lists);
 	}
 }
@@ -320,8 +548,23 @@ tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 void TILESORTSPU_APIENTRY
 tilesortspu_DeleteLists(GLuint list, GLsizei range)
 {
+	int i;
+
+	/*crDebug("DeleteLists(%d, %d)",list, range);*/
+	/* always pack DeleteLists to send it to servers */
+	if (tilesort_spu.swap) 
+	{
+		crPackDeleteListsSWAP( list, range );
+	}
+	else 
+	{
+		crPackDeleteLists( list, range );
+	}
 	crStateDeleteLists(list, range);
 	crdlm_DeleteLists(list, range);
+	if (tilesort_spu.lazySendDLists)
+		for( i = list; i <= list + range -1; i++)
+			crHashtableDelete(tilesort_spu.listTable, i, crFree);
 }
 
 
@@ -329,6 +572,14 @@ tilesortspu_DeleteLists(GLuint list, GLsizei range)
 void TILESORTSPU_APIENTRY
 tilesortspu_ListBase(GLuint base)
 {
+	if (tilesort_spu.swap) 
+	{
+		crPackListBaseSWAP( base );
+	}
+	else 
+	{
+		crPackListBase( base );
+	}
 	crStateListBase(base);
 	crdlm_ListBase(base);
 }

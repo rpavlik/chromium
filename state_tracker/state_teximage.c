@@ -31,9 +31,31 @@ bitcount(int value)
 static GLboolean
 IsProxyTarget(GLenum target)
 {
-	return (target == GL_PROXY_TEXTURE_2D ||
+	return (target == GL_PROXY_TEXTURE_1D ||
+					target == GL_PROXY_TEXTURE_2D ||
+					target == GL_PROXY_TEXTURE_3D ||
 					target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
 					target == GL_PROXY_TEXTURE_CUBE_MAP);
+}
+
+
+/*
+ * Test if a texture width, height or depth is legal.
+ * It must be true that 0 <= size <= max.
+ * Furthermore, if the ARB_texture_non_power_of_two extension isn't
+ * present, size must also be a power of two.
+ */
+static GLboolean
+isLegalSize(CRContext *g, GLsizei size, GLsizei max)
+{
+	if (size < 0 || size > max)
+		return GL_FALSE;
+	if (!g->extensions.ARB_texture_non_power_of_two) {
+		/* check for power of two */
+		if (size > 0 && bitcount(size) != 1)
+			return GL_FALSE;
+	}
+	return GL_TRUE;
 }
 
 
@@ -115,7 +137,6 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 	CRTextureLevel *tl;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-	unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -164,41 +185,16 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 		return;
 	}
 
-	/* check the bits in width */
-	i = 1;
-	if (width > 0)
-	{
-		for (i = width - 2 * border; i > 0 && !(i & 0x1); i = i >> 1)
-		{
-			/* EMPTY BODY */
-		}
-	}
-	if (width < 0 || i != 1)
-	{
-		if (target == GL_PROXY_TEXTURE_1D)
-		{
+	if (!isLegalSize(g, width - 2 * border, g->limits.maxTextureSize)) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+								 "glTexImage1D(width)");
+		if (target == GL_PROXY_TEXTURE_1D) {
 			/* clear all the texture object state */
 			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
 		}
-		else
-		{
+		else {
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage1D width is not valid: %d", width);
-		}
-		return;
-	}
-
-	if (width > ((int) g->limits.maxTextureSize + 2))
-	{
-		if (target == GL_PROXY_TEXTURE_1D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
-		}
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage1D width oob: %d", width);
+									 "glTexImage1D(width=%d)", width);
 		}
 		return;
 	}
@@ -369,8 +365,8 @@ ErrorCheckTexImage2D(GLenum target, GLint level, GLsizei width, GLsizei height,
 	 * Test width and height
 	 */
 	if (target == GL_PROXY_TEXTURE_2D || target == GL_TEXTURE_2D) {
-		if (width < 0 || width > (int) g->limits.maxTextureSize ||
-				height < 0 || height > (int) g->limits.maxTextureSize) {
+		if (!isLegalSize(g, width - 2 * border, g->limits.maxTextureSize) ||
+				!isLegalSize(g, height - 2 * border, g->limits.maxTextureSize)) {
 			if (!IsProxyTarget(target))
 				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 										 "glTexImage2D(width=%d, height=%d)", width, height);
@@ -389,9 +385,9 @@ ErrorCheckTexImage2D(GLenum target, GLint level, GLsizei width, GLsizei height,
 	}
 	else {
 		/* cube map */
-		if (width < 0 || width > (int) g->limits.maxCubeMapTextureSize ||
-				height < 0 || height > (int) g->limits.maxCubeMapTextureSize ||
-				bitcount(width) != 1 || width != height) {
+		if (!isLegalSize(g, width - 2*border, g->limits.maxCubeMapTextureSize) ||
+				!isLegalSize(g, height - 2*border, g->limits.maxCubeMapTextureSize) ||
+				width != height) {
 			if (!IsProxyTarget(target))
 				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 										 "glTexImage2D(width=%d, height=%d)", width, height);
@@ -982,7 +978,6 @@ crStateTexImage3D(GLenum target, GLint level,
 	CRTextureLevel *tl = NULL;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-	unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -990,7 +985,6 @@ crStateTexImage3D(GLenum target, GLint level,
 								 "glTexImage3D called in Begin/End");
 		return;
 	}
-
 
 	if (target != GL_TEXTURE_3D && target != GL_PROXY_TEXTURE_3D)
 	{
@@ -1030,93 +1024,30 @@ crStateTexImage3D(GLenum target, GLint level,
 	}
 
 	/* check the bits in width */
-	i = 1;
-	if (width > 0)
-		for (i = width - 2 * border; i > 0 && !(i & 0x1); i = i >> 1);
-	if (width < 0 || i != 1)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexImage3D width is not valid: %d", width);
-		return;
-	}
-
-	/* check the bits in height */
-	i = 1;
-	if (height > 0)
-		for (i = height - 2 * border; i > 0 && !(i & 0x1); i = i >> 1);
-	if (height < 0 || i != 1)
-	{
-		if (target == GL_PROXY_TEXTURE_3D)
-		{
+	if (!isLegalSize(g, width - 2 * border, g->limits.max3DTextureSize) ||
+			!isLegalSize(g, height - 2 * border, g->limits.max3DTextureSize) ||
+			!isLegalSize(g, depth - 2 * border, g->limits.max3DTextureSize)) {
+		if (target == GL_PROXY_TEXTURE_3D) {
 			/* clear all the texture object state */
 			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
 		}
-		else
-		{
+		else {
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage3D height is not valid: %d", height);
-		}
-		return;
-	}
-
-	/* check the bits in depth */
-	i = 1;
-	if (depth > 0)
-		for (i = depth - 2 * border; i > 0 && !(i & 0x1); i = i >> 1);
-	if (depth < 0 || i != 1)
-	{
-		if (target == GL_PROXY_TEXTURE_3D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
-		}
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage3D depth is not valid: %d", depth);
-		}
-		return;
-	}
-
-	if (width > (int) (g->limits.max3DTextureSize + 2))
-	{
-		if (target == GL_PROXY_TEXTURE_3D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
-		}
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage3D width oob: %d", width);
-		}
-		return;
-	}
-
-	if (height > (int) (g->limits.max3DTextureSize + 2))
-	{
-		if (target == GL_PROXY_TEXTURE_3D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
-		}
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage3D height oob: %d", height);
+									 "glTexImage3D(invalide size %d x %d x %d)",
+									 width, height, depth);
 		}
 		return;
 	}
 
 	if (target == GL_TEXTURE_3D)
 	{
-		tobj = unit->currentTexture3D;	/* FIXME: per unit! */
+		tobj = unit->currentTexture3D;
 		tl = tobj->level + level;
 		tl->bytes = crTextureSize(format, type, width, height, depth);
 	}
 	else if (target == GL_PROXY_TEXTURE_3D)
 	{
-		tobj = &(t->proxy3D);				/* FIXME: per unit! */
+		tobj = &(t->proxy3D);
 		tl = tobj->level + level;
 		tl->bytes = 0;
 	}

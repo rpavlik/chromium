@@ -767,3 +767,4 @@ PicaQueryFrame			nodl
 PicaAddGfxFramelet		nodl
 PicaAddMemFramelet		nodl
 PicaReadFrame			nodl
+ZPix				dl pointer=special

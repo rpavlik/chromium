@@ -80,6 +80,10 @@ typedef struct {
 	GLboolean map2[GLEVAL_TOT];
 	GLboolean normalize;
 	GLboolean pointSmooth;
+#ifdef CR_ARB_point_sprite
+	GLboolean pointSprite;
+	GLboolean coordReplacement[CR_MAX_TEXTURE_UNITS];
+#endif
 	GLboolean polygonOffsetLine;
 	GLboolean polygonOffsetFill;
 	GLboolean polygonOffsetPoint;
@@ -196,6 +200,10 @@ typedef struct {
 typedef struct {
 	GLboolean pointSmooth;
 	GLfloat pointSize;
+#if CR_ARB_point_sprite
+	GLboolean pointSprite;
+	GLboolean coordReplacement[CR_MAX_TEXTURE_UNITS];
+#endif
 } CRPointStack;
 
 typedef struct {

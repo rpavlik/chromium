@@ -3,7 +3,6 @@
 
 	See the file LICENSE.txt for information on redistributing this software. */
 	
-#include <stdio.h>
 #include "hiddenlinespu.h"
 #include "hiddenlinespu_proto.h"
 #include "cr_packfunctions.h"

@@ -35,6 +35,7 @@ typedef struct {
 	DLMInstanceList *first, *last;
 	CRHashTable *references; /* display lists that this display list calls */
 	CRDLMBounds bbox;
+	int listSent;		/* 1 if list sent to server */
 } DLMListInfo;
 
 typedef struct {
@@ -192,14 +193,21 @@ void crdlm_EndList(void);
 void crdlm_RestoreDispatch(void);
 void crdlm_CallList(GLuint listIdentifier, SPUDispatchTable * table);
 void crdlm_CallLists(GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *table);
+void crdlm_LazyCallLists(GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *table);
 void crdlm_DeleteLists(GLuint firstListIdentifier, GLsizei range);
 void crdlm_ListBase(GLuint listBase);
 GLuint crdlm_GenLists(GLsizei range);
 GLboolean crdlm_IsList(GLuint list);
+void crDLMListSent(CRDLM *dlm, unsigned long listIdentifier);
+GLboolean crDLMIsListSent(CRDLM *dlm, unsigned long listIdentifier);
+GLint crDLMListSize(CRDLM *dlm, unsigned long listIdentifier);
 
 /* special case export */
 void DLM_APIENTRY crdlm_compile_CallList(GLuint list);
 void DLM_APIENTRY crdlm_compile_CallLists(GLsizei n, GLenum type, const GLvoid *lists);
+void DLM_APIENTRY crdlm_compile_NewList(GLenum op, GLuint value);
+void DLM_APIENTRY crdlm_compile_EndList(void);
+
 
 #ifdef __cplusplus
 }

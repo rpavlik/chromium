@@ -29,8 +29,6 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	GLfloat screen_bbox[8];
 	GLenum hint;
-	/*GLint zoomedWidth = (GLint) (width * ctx->pixel.xZoom + 0.5);
-	  GLint zoomedHeight = (GLint) (height * ctx->pixel.yZoom + 0.5);*/
 	GLint zoomedWidth, zoomedHeight;
 	GLfloat zoomX, zoomY;
 	GLfloat oldZoomX, oldZoomY;
@@ -68,39 +66,41 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 
 	tilesortspuFlush( thread );
 	
-	/* We need to zoom the pixels up to match the output.  If an app 
-	   draws to the full size of it's window, for the output to look
-	   right on a tiled display, we should zoom here as well */
 	oldZoomX = p->xZoom;
 	oldZoomY = p->yZoom;
-	zoomX = oldZoomX * (float)(winInfo->muralWidth)  / (float)(winInfo->lastWidth);
-	zoomY = oldZoomY * (float)(winInfo->muralHeight) / (float)(winInfo->lastHeight);
-	crStatePixelZoom(zoomX, zoomY);
-
-	/* The "+ 0.5" causes a round up when we cast to int */
-	zoomedWidth  = (GLint) (zoomX * width  + 0.5);
-	zoomedHeight = (GLint) (zoomY * height + 0.5);
+	if (tilesort_spu.scaleImages) {
+		 /* Zoom the pixels up to match the output.  If an app draws to
+			* the full size of it's window, for the output to look right on
+			* a tiled display, we should zoom here as well.
+			*/
+		 zoomX = oldZoomX * winInfo->widthScale;
+		 zoomY = oldZoomY * winInfo->heightScale;
+		 crStatePixelZoom(zoomX, zoomY);
+		 /* The "+ 0.5" causes a round up when we cast to int */
+		 zoomedWidth  = (GLint) (zoomX * width  + 0.5);
+		 zoomedHeight = (GLint) (zoomY * height + 0.5);
+	}
+	else {
+		 zoomedWidth = width;
+		 zoomedHeight = height;
+	}
 
 	/* min x, y, z, w */
-	screen_bbox[0] = (c->rasterAttrib[VERT_ATTRIB_POS][0]) / v->viewportW;
-	screen_bbox[1] = (c->rasterAttrib[VERT_ATTRIB_POS][1]) / v->viewportH;
+	screen_bbox[0] = c->rasterAttrib[VERT_ATTRIB_POS][0] / v->viewportW;
+	screen_bbox[1] = c->rasterAttrib[VERT_ATTRIB_POS][1] / v->viewportH;
 	screen_bbox[2] = 0.0;
 	screen_bbox[3] = 1.0;
 	/* max x, y, z, w */
-	screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] + (int)zoomedWidth) / v->viewportW;
-	screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] + (int)zoomedHeight) / v->viewportH;
+	screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] + zoomedWidth) / v->viewportW;
+	screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] + zoomedHeight) / v->viewportH;
 	screen_bbox[6] = 0.0;
 	screen_bbox[7] = 1.0;
 
-	screen_bbox[0] *= 2.0f;
-	screen_bbox[1] *= 2.0f;
-	screen_bbox[4] *= 2.0f;
-	screen_bbox[5] *= 2.0f;
-
-	screen_bbox[0] -= 1.0f;
-	screen_bbox[1] -= 1.0f;
-	screen_bbox[4] -= 1.0f;
-	screen_bbox[5] -= 1.0f;
+	/* compute NDC coords */
+	screen_bbox[0] = screen_bbox[0] * 2.0f - 1.0f;
+	screen_bbox[1] = screen_bbox[1] * 2.0f - 1.0f;
+	screen_bbox[4] = screen_bbox[4] * 2.0f - 1.0f;
+	screen_bbox[5] = screen_bbox[5] * 2.0f - 1.0f;
 
 	hint = thread->currentContext->providedBBOX;
 	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
@@ -162,7 +162,7 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	CRrecti rect, isect;
 	int len = 44 + sizeof(CRNetworkPointer);
 	int offset;
-	int new_width, new_height, new_x, new_y, bytes_per_row;
+	int zoomedWidth, zoomedHeight;
 	GLenum hint;
 
 	if (c->inBeginEnd)
@@ -180,6 +180,19 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	if (!c->rasterValid)
 	{
 		return;
+	}
+
+	if (tilesort_spu.scaleImages) {
+		/* compute adjusted x, y, width, height */
+		zoomedWidth = (int) (width * winInfo->widthScale + 0.5);
+		zoomedHeight = (int) (height * winInfo->heightScale + 0.5);
+		x = (int) (x * winInfo->widthScale + 0.5);
+		y = (int) (y * winInfo->heightScale + 0.5);
+	}
+	else {
+		/* no image rescaling */
+		zoomedWidth = width;
+		zoomedHeight = height;
 	}
 
 	/* min x, y, z, w */
@@ -216,8 +229,8 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 #endif
 	  case GL_UNSIGNED_BYTE:
 	  case GL_BYTE:
-		bytes_per_pixel = 1;
-		break;
+			bytes_per_pixel = 1;
+			break;
 
 #ifdef CR_OPENGL_VERSION_1_2
 	  case GL_UNSIGNED_SHORT_5_6_5:
@@ -229,8 +242,8 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 #endif
 	  case GL_UNSIGNED_SHORT:
 	  case GL_SHORT:
-		bytes_per_pixel = 2;
-		break;
+			bytes_per_pixel = 2;
+			break;
 
 #ifdef CR_OPENGL_VERSION_1_2
 	  case GL_UNSIGNED_INT_8_8_8_8:
@@ -241,11 +254,13 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	  case GL_UNSIGNED_INT:
 	  case GL_INT:
 	  case GL_FLOAT:
-		bytes_per_pixel = 4;
-		break;
+			bytes_per_pixel = 4;
+			break;
 
 	  default:
-		crError( "ReadPixels: type=0x%x", type );
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "ReadPixels(type=0x%x)", type );
+			return;
 	}
 
 	switch ( format )
@@ -272,34 +287,36 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	  case GL_ALPHA:
 	  case GL_INTENSITY:
 	  case GL_LUMINANCE:
-		break;
+			break;
 
 	  case GL_LUMINANCE_ALPHA:
-		bytes_per_pixel *= 2;
-		break;
+			bytes_per_pixel *= 2;
+			break;
 
 	  case GL_RGB:
-		bytes_per_pixel *= 3;
-		break;
+			bytes_per_pixel *= 3;
+			break;
 
 	  case GL_RGBA:
-		bytes_per_pixel *= 4;
-		break;
+			bytes_per_pixel *= 4;
+			break;
 
 	  default:
-		crError( "ReadPixels: format=0x%x", format );
+			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
+										"ReadPixels(format=0x%x)", format );
 	}
 
 	/* Build the rectangle here to save the addition each time */
 	rect.x1 = x;
 	rect.y1 = y;
-	rect.x2 = x + width;
+	rect.x2 = x + width;  /* XXX zoomedWidth, someday */
 	rect.y2 = y + height;
 	stride  = width * bytes_per_pixel;
 
 	thread->currentContext->readPixelsCount = 0;
 	for ( i = 0; i < tilesort_spu.num_servers; i++ )
 	{
+		int new_width, new_height, new_x, new_y, bytes_per_row;
 		CRPackBuffer *buffer = &(thread->buffer[i]);
 
 		/* Grab current server's boundaries */
@@ -378,22 +395,59 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 		crNetRecv( );
 	}
 
+	if (tilesort_spu.scaleImages) {
+		/* rescale image from zoomedWidth X zoomedHeight to width X height */
+
+	}
+
 	thread->currentContext->providedBBOX = hint;
 }
+
 
 void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
 {
 	GET_CONTEXT(ctx);
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	CRCurrentState *c = &(ctx->current);
-	CRViewportState *v = &(ctx->viewport);
-	char *buffer;
-	(void)v;
-	(void)c;
+	void *buffer;
+	CRPixelPackState pack, unpack;
+	GLfloat origZoomX, origZoomY;
 
 	if (!c->rasterValid)
 		return;
 
-	buffer = (char*) crAlloc(width * height * 4);
+	/* save current pixel packing state */
+	pack = ctx->client.pack;
+	unpack = ctx->client.unpack;
+	/* set pixel packing state to defaults */
+	ctx->client.pack.rowLength = 0;
+	ctx->client.pack.skipRows = 0;
+	ctx->client.pack.alignment = 1;
+	ctx->client.pack.swapBytes = 0;
+	ctx->client.unpack.rowLength = 0;
+	ctx->client.unpack.skipRows = 0;
+	ctx->client.unpack.alignment = 1;
+	ctx->client.unpack.swapBytes = 0;
+
+	/* save current pixel zoom values */
+	origZoomX = ctx->pixel.xZoom;
+	origZoomY = ctx->pixel.yZoom;
+
+	if (tilesort_spu.scaleImages) {
+		/* compute adjusted x, y, width, height */
+		width = (int) (width * winInfo->widthScale + 0.5);
+		height = (int) (height * winInfo->heightScale + 0.5);
+		x = (int) (x * winInfo->widthScale + 0.5);
+		y = (int) (y * winInfo->heightScale + 0.5);
+		/* need this scaling adjustment here since tilesortspu_DrawPixels will
+		 * also muck with it.
+		 */
+		ctx->pixel.xZoom /= winInfo->widthScale;
+		ctx->pixel.yZoom /= winInfo->heightScale;
+	}
+
+	/* allocate image buffer */
+	buffer = crAlloc(width * height * 4);
 
 	/*
 	 * XXX this isn't quite good enough.  If any pixel transfer operations
@@ -413,9 +467,16 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 			tilesortspu_DrawPixels(width,height,GL_STENCIL_INDEX,GL_UNSIGNED_BYTE,buffer);
 			return;
 		default:
-			crError("CopyPixels - unknown type\n");
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glCopyPixels(type)");
 			return;
 	}
+
+	/* restore zoom */
+	ctx->pixel.xZoom = origZoomX;
+	ctx->pixel.yZoom = origZoomY;
+	/* restore pixel packing */
+	ctx->client.pack = pack;
+	ctx->client.unpack = unpack;
 
 	crFree(buffer);
 }
@@ -447,8 +508,15 @@ tilesortspu_Bitmap(GLsizei width, GLsizei height,
 
 	tilesortspuFlush( thread );
 
-	xmove *= (float)(winInfo->muralWidth)  / (float)(winInfo->lastWidth);
-	ymove *= (float)(winInfo->muralHeight) / (float)(winInfo->lastHeight);
+	/* For glBitmap-based text strings, we usually don't want to scale the
+	 * bitmap moves by the mural size.  Otherwise we might want scaling.
+	 * Use a config option to control that.
+	 */
+	if (tilesort_spu.scaleImages) {
+		xmove *= winInfo->widthScale;
+		ymove *= winInfo->heightScale;
+	}
+
 	/*
 	 * Compute screen-space bounding box for this bitmap
 	 */
@@ -476,8 +544,8 @@ tilesortspu_Bitmap(GLsizei width, GLsizei height,
 		 ** relevant servers.
 		 **/
 		/* min x, y, z, w */
-		screen_bbox[0] = (c->rasterAttrib[VERT_ATTRIB_POS][0] - xorig)/v->viewportW;
-		screen_bbox[1] = (c->rasterAttrib[VERT_ATTRIB_POS][1] - yorig)/v->viewportH;
+		screen_bbox[0] = (c->rasterAttrib[VERT_ATTRIB_POS][0] - xorig) / v->viewportW;
+		screen_bbox[1] = (c->rasterAttrib[VERT_ATTRIB_POS][1] - yorig) / v->viewportH;
 		screen_bbox[2] = 0.0;
 		screen_bbox[3] = 1.0;
 		/* max x, y, z, w */
@@ -500,16 +568,98 @@ tilesortspu_Bitmap(GLsizei width, GLsizei height,
 	hint = thread->currentContext->providedBBOX;
 	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
 
+	/* The state tracker will take care of relative position updates. */
 	xmove2 = 0;
 	ymove2 = 0;
 
-	if (tilesort_spu.swap)
-	{
-		crPackBitmapSWAP ( width, height, xorig, yorig, xmove2, ymove2, bitmap, &(ctx->client.unpack) );
+	if (tilesort_spu.scaleImages) {
+		/* use glDrawPixels to draw a scaled bitmap */
+		static GLfloat red[2] = { 0, 1 };
+		static GLfloat green[2] = { 0, 1 };
+		static GLfloat blue[2] = { 0, 1 };
+		static GLfloat alpha[2] = { 0, 1 };
+		red[1] = c->rasterAttrib[VERT_ATTRIB_COLOR0][0];
+		green[1] = c->rasterAttrib[VERT_ATTRIB_COLOR0][0];
+		blue[1] = c->rasterAttrib[VERT_ATTRIB_COLOR0][0];
+		if (tilesort_spu.swap) {
+			/* save current state */
+			crPackPushAttribSWAP(GL_PIXEL_MODE_BIT);
+			/* zooming */
+			crPackPixelZoomSWAP(winInfo->widthScale, winInfo->heightScale);
+			/* map 0/1 color indexes to rgba */
+			crPackPixelMapfvSWAP(GL_PIXEL_MAP_I_TO_R, 2, red);
+			crPackPixelMapfvSWAP(GL_PIXEL_MAP_I_TO_G, 2, green);
+			crPackPixelMapfvSWAP(GL_PIXEL_MAP_I_TO_B, 2, blue);
+			crPackPixelMapfvSWAP(GL_PIXEL_MAP_I_TO_A, 2, alpha);
+			crPackPixelTransferiSWAP(GL_MAP_COLOR, GL_TRUE);
+			/* alpha test */
+			crPackEnableSWAP(GL_ALPHA_TEST);
+			crPackAlphaFuncSWAP(GL_NOTEQUAL, 0.0);
+			if (xorig || yorig) {
+				/* adjust raster pos */
+				crPackBitmapSWAP(0, 0, 0, 0,
+												 -xorig * winInfo->widthScale,
+												 -yorig * winInfo->heightScale,
+												 NULL, &(ctx->client.unpack));
+			}
+			/* draw bitmap */
+			crPackDrawPixelsSWAP(width, height, GL_COLOR_INDEX, GL_BITMAP,
+													 bitmap, &(ctx->client.unpack));
+			if (xorig || yorig) {
+				/* undo raster pos adjustment */
+				crPackBitmapSWAP(0, 0, 0, 0,
+												 xorig * winInfo->widthScale,
+												 yorig * winInfo->heightScale,
+												 NULL, &(ctx->client.unpack));
+			}
+			/* restore state */
+			crPackPopAttribSWAP();
+			if (!ctx->buffer.alphaTest)
+				 crPackDisableSWAP(GL_ALPHA_TEST);
+		}
+		else {
+			/* save current state */
+			crPackPushAttrib(GL_PIXEL_MODE_BIT);
+			/* zooming */
+			crPackPixelZoom(winInfo->widthScale, winInfo->heightScale);
+			/* map 0/1 color indexes to rgba */
+			crPackPixelMapfv(GL_PIXEL_MAP_I_TO_R, 2, red);
+			crPackPixelMapfv(GL_PIXEL_MAP_I_TO_G, 2, green);
+			crPackPixelMapfv(GL_PIXEL_MAP_I_TO_B, 2, blue);
+			crPackPixelMapfv(GL_PIXEL_MAP_I_TO_A, 2, alpha);
+			crPackPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+			/* alpha test */
+			crPackEnable(GL_ALPHA_TEST);
+			crPackAlphaFunc(GL_NOTEQUAL, 0.0);
+			if (xorig || yorig) {
+				/* adjust raster pos */
+				crPackBitmap(0, 0, 0, 0,
+										 -xorig * winInfo->widthScale,
+										 -yorig * winInfo->heightScale,
+										 NULL, &(ctx->client.unpack));
+			}
+			/* draw bitmap */
+			crPackDrawPixels(width, height, GL_COLOR_INDEX, GL_BITMAP,
+											 bitmap, &(ctx->client.unpack));
+			if (xorig || yorig) {
+				/* undo raster pos adjustment */
+				crPackBitmap(0, 0, 0, 0,
+										 xorig * winInfo->widthScale,
+										 yorig * winInfo->heightScale,
+										 NULL, &(ctx->client.unpack));
+			}
+			/* restore state */
+			crPackPopAttrib();
+			if (!ctx->buffer.alphaTest)
+				 crPackDisable(GL_ALPHA_TEST);
+		}
 	}
-	else
-	{
-		crPackBitmap ( width, height, xorig, yorig, xmove2, ymove2, bitmap, &(ctx->client.unpack) );
+	else {
+		/* draw bitmap as-is, unscaled */
+		if (tilesort_spu.swap)
+			crPackBitmapSWAP( width, height, xorig, yorig, xmove2, ymove2, bitmap, &(ctx->client.unpack) );
+		else
+			crPackBitmap( width, height, xorig, yorig, xmove2, ymove2, bitmap, &(ctx->client.unpack) );
 	}
 
 	tilesortspuFlush( thread );
@@ -898,3 +1048,131 @@ tilesortspu_PackTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 												&crStateNativePixelPacking);
 }
 
+/*
+ * Execute crZPix().  Immediate mode only.
+ */
+void TILESORTSPU_APIENTRY
+tilesortspu_ZPix(GLsizei width, GLsizei height, GLenum format,
+    GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels)
+{
+	GET_CONTEXT(ctx);
+	CRCurrentState *c = &(ctx->current);
+	CRViewportState *v = &(ctx->viewport);
+	CRPixelState *p = &(ctx->pixel);
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
+	GLfloat screen_bbox[8];
+	GLenum hint;
+	GLint zoomedWidth, zoomedHeight;
+	GLfloat zoomX, zoomY;
+	GLfloat oldZoomX, oldZoomY;
+
+	(void) v;
+
+	CRASSERT(ctx->lists.mode == 0);
+
+	if (c->inBeginEnd)
+	{
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "crZPix" );
+		return;
+	}
+
+	if (width < 0 || height < 0)
+	{
+		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "crZPix" );
+		return;
+	}
+
+	if (!c->rasterValid)
+	{
+		return;
+	}
+
+	if (length
+		+ sizeof(format) + sizeof(type) + sizeof(width) + sizeof(height)
+		> tilesort_spu.MTU ) {
+		crWarning("ZPix called with insufficient MTU size\n"
+			"Needed %d, but currently MTU is set at %d\n", 
+			length, 
+			tilesort_spu.MTU );
+		return;
+	}
+
+	tilesortspuFlush( thread );
+	
+	oldZoomX = p->xZoom;
+	oldZoomY = p->yZoom;
+	if (tilesort_spu.scaleImages) {
+		 /* Zoom the pixels up to match the output.  If an app draws to
+			* the full size of it's window, for the output to look right on
+			* a tiled display, we should zoom here as well.
+			*/
+		 zoomX = oldZoomX * winInfo->widthScale;
+		 zoomY = oldZoomY * winInfo->heightScale;
+		 crStatePixelZoom(zoomX, zoomY);
+		 /* The "+ 0.5" causes a round up when we cast to int */
+		 zoomedWidth  = (GLint) (zoomX * width  + 0.5);
+		 zoomedHeight = (GLint) (zoomY * height + 0.5);
+	}
+	else {
+		 zoomedWidth = width;
+		 zoomedHeight = height;
+	}
+
+	/* min x, y, z, w */
+	screen_bbox[0] = c->rasterAttrib[VERT_ATTRIB_POS][0] / v->viewportW;
+	screen_bbox[1] = c->rasterAttrib[VERT_ATTRIB_POS][1] / v->viewportH;
+	screen_bbox[2] = 0.0;
+	screen_bbox[3] = 1.0;
+	/* max x, y, z, w */
+	screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] + zoomedWidth) / v->viewportW;
+	screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] + zoomedHeight) / v->viewportH;
+	screen_bbox[6] = 0.0;
+	screen_bbox[7] = 1.0;
+
+	/* compute NDC coords */
+	screen_bbox[0] = screen_bbox[0] * 2.0f - 1.0f;
+	screen_bbox[1] = screen_bbox[1] * 2.0f - 1.0f;
+	screen_bbox[4] = screen_bbox[4] * 2.0f - 1.0f;
+	screen_bbox[5] = screen_bbox[5] * 2.0f - 1.0f;
+
+	hint = thread->currentContext->providedBBOX;
+	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
+
+	/* 
+	 * don't do a flush, ZPix understand that it needs to flush,
+	 * and will handle all that for us.  our HugeFunc routine will
+	 * specially handle the ZPix call
+	 */
+
+	thread->currentContext->inZPix = GL_TRUE;
+	if (tilesort_spu.swap)
+	     crPackZPixSWAP(width, height, format, type, ztype, zparm, length, 
+				  pixels, &(ctx->client.unpack));
+	else
+	     crPackZPix(width, height, format, type, ztype, zparm, length,
+			      pixels, &(ctx->client.unpack));
+
+	if (thread->packer->buffer.data_current != thread->packer->buffer.data_start)
+	{
+		tilesortspuFlush( thread );
+	}
+	thread->currentContext->inZPix = GL_FALSE;
+
+	thread->currentContext->providedBBOX = hint;
+	crStatePixelZoom(oldZoomX, oldZoomY);
+}
+
+/*
+ * Wrapper for crPackZPix to provide the unpacking state.
+ */
+void TILESORTSPU_APIENTRY
+tilesortspu_PackZPix(GLsizei width, GLsizei height, GLenum format,
+    GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels)
+{
+	if (tilesort_spu.swap)
+		 crPackZPixSWAP(width, height, format, type, ztype, zparm, length, pixels,
+													&crStateNativePixelPacking);
+	else
+		 crPackZPix(width, height, format, type, ztype, zparm, length, pixels,
+											&crStateNativePixelPacking);
+}

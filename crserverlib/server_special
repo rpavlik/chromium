@@ -2,7 +2,6 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
-#AreTexturesResident
 BoundsInfoCR
 Clear
 GetBooleanv
@@ -149,3 +148,9 @@ BindProgramNV
 ProgramParameter4fNV
 ProgramParameter4dNV
 GetCompressedTexImageARB
+GenBuffersARB
+GetBufferSubDataARB
+GetBufferPointervARB
+MapBufferARB
+UnmapBufferARB
+GenQueriesARB

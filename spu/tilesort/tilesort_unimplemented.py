@@ -3,21 +3,14 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
 
-sys.path.append( "../../opengl_stub" )
-parsed_file = open( "../../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../../glapi_parser" )
+import apiutil
 
-import stub_common;
+keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 
-keys = gl_mapping.keys()
-keys.sort();
-
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """
 #include "tilesortspu.h"
@@ -26,13 +19,13 @@ print """
 """
 
 for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
-		print '%s TILESORTSPU_APIENTRY tilesortspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )	
+	if apiutil.FindSpecial( "tilesort_unimplemented", func_name ):
+		return_type = apiutil.ReturnType(func_name)
+		params = apiutil.Parameters(func_name)
+		print '%s TILESORTSPU_APIENTRY tilesortspu_%s( %s )' % ( return_type, func_name, apiutil.MakeDeclarationString(params) )	
 		print '{'
-		for a in args:
-			if a:
-				print '\t(void)%s;' % a
+		for (name, type, vecSize) in params:
+			print '\t(void) %s;' % name
 		print ''
 		print '\tcrWarning("Unimplemented tilesort function %s\\n");' % func_name
 		if return_type != 'void':

@@ -32,6 +32,6 @@ LIB_DEFS += nop.def
 
 include ${TOP}/cr.mk
 
-nopspu.c: nop.py nop_state_special nop_special
+nopspu.c: nop.py nop_special ../../glapi_parser/APIspec.txt
 	@$(ECHO) Building the NOP SPU
 	@$(PYTHON) $< > $@

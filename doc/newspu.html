@@ -98,7 +98,7 @@ function <code>SPUInit</code>:</p>
 implement</h2>
 <p>Open the file invertspu.c.&nbsp; You will see the following code at the
 bottom of the file:</p>
-<table width="100%"><tr><td class="GrayCodeListing">SPUNamedFunctionTable invert_table[] = {<br>
+<table width="100%"><tr><td class="GrayCodeListing">SPUNamedFunctionTable _cr_invert_table[] = {<br>
 &nbsp; { NULL, NULL }<br>
 };</td></tr></table>
 <p>This table is a NULL-terminated list of&nbsp; <code>{ name, function }&nbsp;</code>
@@ -109,7 +109,7 @@ so for the purposes of this example, we'll only implement a few: <code>glColor3f
 <code>glClearColor</code>, and <code>glMaterialfv</code>.&nbsp; For
 this step, all we have to do is add these function names and pointers to our
 implementation in this list.&nbsp; Change the above code to:</p>
-<table width="100%"><tr><td class="GrayCodeListing">SPUNamedFunctionTable invert_table[] = {<br>
+<table width="100%"><tr><td class="GrayCodeListing">SPUNamedFunctionTable _cr_invert_table[] = {<br>
 &nbsp; { &quot;Color3f&quot;,&nbsp;&nbsp;&nbsp; (SPUGenericFunction)
 invertColor3f },<br>
 &nbsp; { &quot;ClearColor&quot;, (SPUGenericFunction) invertClearColor },<br>

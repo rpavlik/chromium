@@ -99,6 +99,6 @@ endif
 
 include ${TOP}/cr.mk
 
-debug_opcodes.c: debug_opcodes.py ../packer/opcode_special
+debug_opcodes.c: debug_opcodes.py $(TOP)/glapi_parser/APIspec.txt
 	@$(ECHO) Making the opcode debugger...
 	@$(PYTHON) debug_opcodes.py > $@

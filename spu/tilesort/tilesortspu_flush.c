@@ -184,6 +184,13 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 		return;
 	}
 
+	if (thread->currentContext->inZPix)
+	{
+		tilesortspuFlush( thread );
+		return;
+	}
+
+
 	/* packet length is indicated by the variable length field, and
 	   includes an additional word for the opcode (with alignment) and
 	   a header */

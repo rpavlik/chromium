@@ -47,14 +47,16 @@ ifeq ($(ARCH), WIN_NT)
 LDFLAGS += user32.lib
 endif
 
-hiddenlinespu.c: hiddenline.py hiddenline_special hiddenline_pixel_special hiddenline_ignore_special ../../glapi_parser/gl_header.parsed hiddenlinespu_proto.h
+APIFILES = ../../glapi_parser/apiutil.py ../../glapi_parser/APIspec.txt
+
+hiddenlinespu.c: hiddenline.py hiddenline_special hiddenline_pixel_special $(APIFILES) hiddenlinespu_proto.h
 	@$(ECHO) Building the Hidden Line SPU
 	@$(PYTHON) hiddenline.py > $@
 
-hiddenlinespu_pixel.c: hiddenlinespu_pixel.py hiddenline_pixel_special ../../glapi_parser/gl_header.parsed
+hiddenlinespu_pixel.c: hiddenlinespu_pixel.py hiddenline_pixel_special $(APIFILES)
 	@$(ECHO) Building the Pack SPU Pixel functions
 	@$(PYTHON) hiddenlinespu_pixel.py > $@
 
-hiddenlinespu_proto.h: hiddenlinespu_proto.py hiddenline_special hiddenline_pixel_special hiddenline_ignore_special ../../glapi_parser/gl_header.parsed
+hiddenlinespu_proto.h: hiddenlinespu_proto.py hiddenline_special hiddenline_pixel_special $(APIFILES)
 	@$(ECHO) Building the Hidden Line SPU prototypes header
 	@$(PYTHON) hiddenlinespu_proto.py > $@

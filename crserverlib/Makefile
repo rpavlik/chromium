@@ -11,6 +11,7 @@ LIBRARY = crserverlib
 
 FILES = server_main \
 	server_boundsinfo \
+	server_bufferobject \
 	server_clear \
 	server_clip \
 	server_config \
@@ -25,6 +26,7 @@ FILES = server_main \
 	server_getteximage \
 	server_lists \
 	server_misc \
+	server_occlude \
 	server_papi \
 	server_projmatrix \
 	server_readpixels \
@@ -43,22 +45,24 @@ SLOP = ${PRECOMP}
 
 include $(TOP)/cr.mk
 
-server_dispatch.h: server_dispatch_header.py ../packer/packer_get_special server_special
+APIFILES = ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
+
+server_dispatch.h: server_dispatch_header.py server_special $(APIFILES)
 	@$(ECHO) Building the server dispatch header
 	@$(PYTHON) server_dispatch_header.py > $@
 
-server_dispatch.c: server_dispatch.py ../packer/packer_get_special server_special
+server_dispatch.c: server_dispatch.py server_special $(APIFILES)
 	@$(ECHO) Building the server dispatch table
 	@$(PYTHON) server_dispatch.py > $@
 
-server_retval.c: server_retval.py ../packer/packer_get_special server_special
+server_retval.c: server_retval.py server_special $(APIFILES)
 	@$(ECHO) Building the server retval functions
 	@$(PYTHON) server_retval.py > $@
 
-server_get.c: server_get.py ../packer/packer_get_special server_special get_components.py
+server_get.c: server_get.py server_special get_components.py $(APIFILES)
 	@$(ECHO) Building the server get functions
 	@$(PYTHON) server_get.py > $@
 
-server_simpleget.c: server_simpleget.py get_sizes.py
+server_simpleget.c: server_simpleget.py get_sizes.py $(APIFILES)
 	@$(ECHO) Building the simple server get functions
 	@$(PYTHON) server_simpleget.py > $@

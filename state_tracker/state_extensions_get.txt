@@ -125,3 +125,6 @@ GLint GL_SECONDARY_COLOR_ARRAY_SIZE_EXT GL_EXT_secondary_color g->client.array.s
 
 # GL_SGIS_generate_mipmap
 GLint GL_GENERATE_MIPMAP_HINT GL_SGIS_generate_mipmap  g->hint.generateMipmap
+
+# GL_ARB_point_sprite
+GLboolean GL_POINT_SPRITE_ARB GL_ARB_point_sprite g->point.pointSprite

@@ -10,7 +10,7 @@ include $(TOP)/arch.mk
 LIBRARY = crdlm
 LIBRARIES = spuload crutil crmothership
 SHARED = 1
-FILES = dlm dlm_api dlm_dispatch dlm_pointers dlm_client dlm_arrays
+FILES = dlm dlm_api dlm_dispatch dlm_pointers dlm_client dlm_arrays dlm_list
 LIB_DEFS = dlm.def
 
 PRECOMP = dlm_dispatch.c dlm_dispatch.h
@@ -18,9 +18,10 @@ SLOP = $(PRECOMP)
 
 include $(TOP)/cr.mk
 
-dlm_dispatch.h: dlm_dispatch.py dlm_functions ../glapi_parser/gl_header.parsed
+dlm_dispatch.h: dlm_dispatch.py ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 	$(PYTHON) dlm_dispatch.py headers > $@
-dlm_dispatch.c: dlm_dispatch.py dlm_functions ../glapi_parser/gl_header.parsed 
+
+dlm_dispatch.c: dlm_dispatch.py ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 	$(PYTHON) dlm_dispatch.py source > $@
 
 dlm_pointers.o: dlm_dispatch.h

@@ -284,7 +284,7 @@ declare the table.&nbsp; Since we're going to fill it ourselves, we know how big
 it is.&nbsp; Don't forget to leave space at the end for the NULL terminator!</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">print 'SPUNamedFunctionTable
-      seethrough_table[%d];' % ( len(stub_common.AllSpecials( &quot;seethrough&quot;
+      _cr_seethrough_table[%d];' % ( len(stub_common.AllSpecials( &quot;seethrough&quot;
       )) + 1 )</td></tr></table>
 
 <p>I like to use a helper function called &quot;<code>__fillin</code>&quot; for
@@ -750,7 +750,7 @@ First of all, this will make our named function table <i>bigger</i>.&nbsp; Let's
 update the line in <code>seethroughspu.py</code> where the named function table
 declaration is printed.&nbsp; The new line should read:</p>
 
-<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		print 'SPUNamedFunctionTable seethrough_table[%d];' % ( len(stub_common.AllSpecials( "seethrough_state" )) + len(stub_common.AllSpecials( "seethrough" )) + 1 )</td></tr></table>
+<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		print 'SPUNamedFunctionTable _cr_seethrough_table[%d];' % ( len(stub_common.AllSpecials( "seethrough_state" )) + len(stub_common.AllSpecials( "seethrough" )) + 1 )</td></tr></table>
 
 <p>This will allow enough space for all the functions from <i>both</i> <code>_special</code>
 files.&nbsp; Now, just add a second loop to add functions to the table.&nbsp;

@@ -11,18 +11,12 @@
  */
 
 
-#include <stdio.h>
 #include "cr_mem.h"
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_statefuncs.h"
 #include "state_internals.h"
 
-#define GLCLIENT_NUMPOINTERS 6
-#define GLCLIENT_INDEX_ALLOC 1024
-#define GLCLIENT_DATA_ALLOC 1024
-#define GLCLIENT_CACHE_ALLOC 1024
-#define GLCLIENT_LIST_ALLOC 1024
 #define GLCLIENT_BIT_ALLOC 1024
 
 
@@ -42,32 +36,25 @@ void crStateClientInitBits (CRClientBits *c)
 {
 	int i;
 
+	/* XXX why GLCLIENT_BIT_ALLOC? */
 	c->v = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
 	c->n = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
 	c->c = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
 	c->s = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
 	c->i = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
-	c->t = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
+	for ( i = 0; i < CR_MAX_TEXTURE_UNITS; i++ )
+		c->t[i] = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
 	c->e = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
+	c->f = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
 
 #ifdef CR_NV_vertex_program
 	for ( i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++ )
 		c->a[i] = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
 #endif
-
-	c->valloc = GLCLIENT_BIT_ALLOC;
-	c->nalloc = GLCLIENT_BIT_ALLOC;
-	c->calloc = GLCLIENT_BIT_ALLOC;
-	c->salloc = GLCLIENT_BIT_ALLOC;
-	c->ialloc = GLCLIENT_BIT_ALLOC;
-	c->talloc = GLCLIENT_BIT_ALLOC;
-	c->ealloc = GLCLIENT_BIT_ALLOC;
-	c->aalloc = GLCLIENT_BIT_ALLOC;
 }
 
 void crStateClientDestroy(CRClientState *c)
 {
-	crFree( c->list );
 }
 
 void crStateClientInit(CRClientState *c) 
@@ -95,46 +82,77 @@ void crStateClientInit(CRClientState *c)
 	/* ARB multitexture */
 	c->curClientTextureUnit = 0;
 
-	c->list_alloc = GLCLIENT_LIST_ALLOC;
-	c->list_size = 0;
-	c->list = (int *) crCalloc(c->list_alloc * sizeof (int));
-
 	/* vertex array */
 	c->array.v.p = NULL;
 	c->array.v.size = 4;
 	c->array.v.type = GL_FLOAT;
 	c->array.v.stride = 0;
 	c->array.v.enabled = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+	c->array.v.buffer = g->bufferobject.vertexBuffer;
+#endif
+
+	/* color array */
 	c->array.c.p = NULL;
 	c->array.c.size = 4;
 	c->array.c.type = GL_FLOAT;
 	c->array.c.stride = 0;
 	c->array.c.enabled = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+	c->array.c.buffer = g->bufferobject.vertexBuffer;
+#endif
+
+	/* fog array */
 	c->array.f.p = NULL;
 	c->array.f.size = 0;
 	c->array.f.type = GL_FLOAT;
 	c->array.f.stride = 0;
 	c->array.f.enabled = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+	c->array.f.buffer = g->bufferobject.vertexBuffer;
+#endif
+
+	/* secondary color array */
 	c->array.s.p = NULL;
 	c->array.s.size = 3;
 	c->array.s.type = GL_FLOAT;
 	c->array.s.stride = 0;
 	c->array.s.enabled = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+	c->array.s.buffer = g->bufferobject.vertexBuffer;
+#endif
+
+	/* edge flag array */
 	c->array.e.p = NULL;
 	c->array.e.size = 0;
 	c->array.e.type = GL_FLOAT;
 	c->array.e.stride = 0;
 	c->array.e.enabled = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+	c->array.e.buffer = g->bufferobject.vertexBuffer;
+#endif
+
+	/* color index array */
 	c->array.i.p = NULL;
 	c->array.i.size = 0;
 	c->array.i.type = GL_FLOAT;
 	c->array.i.stride = 0;
 	c->array.i.enabled = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+	c->array.i.buffer = g->bufferobject.vertexBuffer;
+#endif
+
+	/* normal array */
 	c->array.n.p = NULL;
 	c->array.n.size = 4;
 	c->array.n.type = GL_FLOAT;
 	c->array.n.stride = 0;
 	c->array.n.enabled = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+	c->array.n.buffer = g->bufferobject.vertexBuffer;
+#endif
+
+	/* texcoord arrays */
 	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
 		c->array.t[i].p = NULL;
@@ -142,13 +160,21 @@ void crStateClientInit(CRClientState *c)
 		c->array.t[i].type = GL_FLOAT;
 		c->array.t[i].stride = 0;
 		c->array.t[i].enabled = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+		c->array.t[i].buffer = g->bufferobject.vertexBuffer;
+#endif
 	}
+
+	/* generic vertex attributes */
 #ifdef CR_NV_vertex_program
 	for (i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++) {
 		c->array.a[i].enabled = GL_FALSE;
 		c->array.a[i].type = 0;
 		c->array.a[i].size = 0;
 		c->array.a[i].stride = 0;
+#ifdef CR_ARB_vertex_buffer_object2
+		c->array.a[i].buffer = g->bufferobject.vertexBuffer;
+#endif
 	}
 #endif
 }
@@ -384,6 +410,11 @@ static void setClientState(CRClientState *c, CRClientBits *cb,
 		case GL_EDGE_FLAG_ARRAY:
 			c->array.e.enabled = state;
 			break;	
+#ifdef CR_EXT_fog_coord
+		case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
+			c->array.f.enabled = state;
+			break;
+#endif
 #ifdef CR_EXT_secondary_color
 		case GL_SECONDARY_COLOR_ARRAY_EXT:
 			if( g->extensions.EXT_secondary_color ){
@@ -500,8 +531,12 @@ void STATE_APIENTRY crStateVertexPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->array.v), size, type, GL_FALSE, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.v.buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->v, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateColorPointer(GLint size, GLenum type, 
@@ -534,8 +569,12 @@ void STATE_APIENTRY crStateColorPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->array.c), size, type, GL_TRUE, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.c.buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->c, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateSecondaryColorPointerEXT(GLint size,
@@ -574,8 +613,12 @@ void STATE_APIENTRY crStateSecondaryColorPointerEXT(GLint size,
 	}
 
 	crStateClientSetPointer(&(c->array.s), size, type, GL_TRUE, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.s.buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->s, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateIndexPointer(GLenum type, GLsizei stride, 
@@ -601,8 +644,12 @@ void STATE_APIENTRY crStateIndexPointer(GLenum type, GLsizei stride,
 	}
 
 	crStateClientSetPointer(&(c->array.i), 1, type, GL_TRUE, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.i.buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->i, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateNormalPointer(GLenum type, GLsizei stride, 
@@ -629,8 +676,12 @@ void STATE_APIENTRY crStateNormalPointer(GLenum type, GLsizei stride,
 	}
 
 	crStateClientSetPointer(&(c->array.n), 3, type, GL_TRUE, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.n.buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->n, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateTexCoordPointer(GLint size, GLenum type, 
@@ -661,8 +712,12 @@ void STATE_APIENTRY crStateTexCoordPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->array.t[c->curClientTextureUnit]), size, type, GL_FALSE, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.t[c->curClientTextureUnit].buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->t[c->curClientTextureUnit], g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateEdgeFlagPointer(GLsizei stride, const GLvoid *p) 
@@ -681,8 +736,12 @@ void STATE_APIENTRY crStateEdgeFlagPointer(GLsizei stride, const GLvoid *p)
 	}
 
 	crStateClientSetPointer(&(c->array.e), 1, GL_UNSIGNED_BYTE, GL_FALSE, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.e.buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->e, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateFogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *p) 
@@ -709,8 +768,12 @@ void STATE_APIENTRY crStateFogCoordPointerEXT(GLenum type, GLsizei stride, const
 	}
 
 	crStateClientSetPointer(&(c->array.f), 1, type, GL_FALSE, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.f.buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->f, g->neg_bitid);
 }
 
 
@@ -762,8 +825,12 @@ void STATE_APIENTRY crStateVertexAttribPointerARB(GLuint index, GLint size, GLen
 	}
 
 	crStateClientSetPointer(&(c->array.a[index]), size, type, normalized, stride, p);
+#ifdef CR_ARB_vertex_buffer_object
+	c->array.a[index].buffer = g->bufferobject.arrayBuffer;
+#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
+	DIRTY(cb->a[index], g->neg_bitid);
 }
 
 
@@ -1297,3 +1364,443 @@ void STATE_APIENTRY crStateFlushVertexArrayRangeNV(void)
 	crWarning("crStateFlushVertexArrayRangeNV not implemented");
 }
 
+
+/*
+ * Determine if the enabled arrays all live on the server
+ * (via GL_ARB_vertex_buffer_object).
+ */
+GLboolean crStateUseServerArrays(void)
+{
+#ifdef CR_ARB_vertex_buffer_object
+	CRContext *g = GetCurrentContext();
+	CRClientState *c = &(g->client);
+	int i;
+
+	if (!c->array.v.enabled)
+		return GL_FALSE;
+
+	if (c->array.v.enabled && (!c->array.v.buffer || !c->array.v.buffer->name))
+		return GL_FALSE;
+
+	if (c->array.n.enabled && (!c->array.n.buffer || !c->array.n.buffer->name))
+		return GL_FALSE;
+
+	if (c->array.c.enabled && (!c->array.c.buffer || !c->array.c.buffer->name))
+		return GL_FALSE;
+
+	if (c->array.i.enabled && (!c->array.i.buffer || !c->array.i.buffer->name))
+		return GL_FALSE;
+
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
+		 if (c->array.t[i].enabled && (!c->array.t[i].buffer || !c->array.t[i].buffer->name))
+				return GL_FALSE;
+
+	if (c->array.e.enabled && (!c->array.e.buffer || !c->array.e.buffer->name))
+		 return GL_FALSE;
+
+	if (c->array.s.enabled && (!c->array.s.buffer || !c->array.s.buffer->name))
+		 return GL_FALSE;
+
+	if (c->array.f.enabled && (!c->array.f.buffer || !c->array.f.buffer->name))
+		 return GL_FALSE;
+
+	for (i = 0; i < g->limits.maxVertexProgramAttribs; i++)
+		 if (c->array.a[i].enabled && (!c->array.a[i].buffer || !c->array.a[i].buffer->name))
+				return GL_FALSE;
+
+	return GL_TRUE;
+#else
+	return GL_FALSE;
+#endif
+}
+
+
+void
+crStateClientDiff(CRClientBits *cb, CRbitvalue *bitID,
+									CRContext *fromCtx, CRContext *toCtx)
+{
+	CRClientState *from = &(fromCtx->client);
+	const CRClientState *to = &(toCtx->client);
+	int i;
+
+	if (CHECKDIRTY(cb->clientPointer, bitID)) {
+		/* one or more vertex pointers is dirty */
+		if (CHECKDIRTY(cb->v, bitID)) {
+			if (from->array.v.size != to->array.v.size ||
+					from->array.v.type != to->array.v.type ||
+					from->array.v.stride != to->array.v.stride ||
+					from->array.v.buffer != to->array.v.buffer) {
+				diff_api.VertexPointer(to->array.v.size, to->array.v.type,
+															 to->array.v.stride, to->array.v.p);
+				from->array.v.size = to->array.v.size;
+				from->array.v.type = to->array.v.type;
+				from->array.v.stride = to->array.v.stride;
+				from->array.v.p = to->array.v.p;
+				from->array.v.buffer = to->array.v.buffer;
+			}
+			CLEARDIRTY2(cb->v, bitID);
+		}
+		/* normal */
+		if (CHECKDIRTY(cb->n, bitID)) {
+			if (from->array.n.type != to->array.n.type ||
+					from->array.n.stride != to->array.n.stride ||
+					from->array.n.buffer != to->array.n.buffer) {
+				diff_api.NormalPointer(to->array.n.type,
+															 to->array.n.stride, to->array.n.p);
+				from->array.n.type = to->array.n.type;
+				from->array.n.stride = to->array.n.stride;
+				from->array.n.p = to->array.n.p;
+				from->array.n.buffer = to->array.n.buffer;
+			}
+			CLEARDIRTY2(cb->n, bitID);
+		}
+		/* color */
+		if (CHECKDIRTY(cb->c, bitID)) {
+			if (from->array.c.size != to->array.c.size ||
+					from->array.c.type != to->array.c.type ||
+					from->array.c.stride != to->array.c.stride ||
+					from->array.c.buffer != to->array.c.buffer) {
+				diff_api.ColorPointer(to->array.c.size, to->array.c.type,
+															to->array.c.stride, to->array.c.p);
+				from->array.c.size = to->array.c.size;
+				from->array.c.type = to->array.c.type;
+				from->array.c.stride = to->array.c.stride;
+				from->array.c.p = to->array.c.p;
+				from->array.c.buffer = to->array.c.buffer;
+			}
+			CLEARDIRTY2(cb->c, bitID);
+		}
+		/* index */
+		if (CHECKDIRTY(cb->i, bitID)) {
+			if (from->array.i.type != to->array.i.type ||
+					from->array.i.stride != to->array.i.stride ||
+					from->array.i.buffer != to->array.i.buffer) {
+				diff_api.IndexPointer(to->array.i.type,
+															to->array.i.stride, to->array.i.p);
+				from->array.i.type = to->array.i.type;
+				from->array.i.stride = to->array.i.stride;
+				from->array.i.p = to->array.i.p;
+				from->array.i.buffer = to->array.i.buffer;
+			}
+			CLEARDIRTY2(cb->i, bitID);
+		}
+		/* texcoords */
+		for (i = 0; i < toCtx->limits.maxTextureUnits; i++) {
+			if (CHECKDIRTY(cb->t[i], bitID)) {
+				if (from->array.t[i].size != to->array.t[i].size ||
+						from->array.t[i].type != to->array.t[i].type ||
+						from->array.t[i].stride != to->array.t[i].stride ||
+						from->array.t[i].buffer != to->array.t[i].buffer) {
+					diff_api.ClientActiveTextureARB(GL_TEXTURE0_ARB + i);
+					diff_api.TexCoordPointer(to->array.t[i].size, to->array.t[i].type,
+																to->array.t[i].stride, to->array.t[i].p);
+					from->array.t[i].size = to->array.t[i].size;
+					from->array.t[i].type = to->array.t[i].type;
+					from->array.t[i].stride = to->array.t[i].stride;
+					from->array.t[i].p = to->array.t[i].p;
+					from->array.t[i].buffer = to->array.t[i].buffer;
+				}
+				CLEARDIRTY2(cb->t[i], bitID);
+			}
+		}
+		/* edge flag */
+		if (CHECKDIRTY(cb->e, bitID)) {
+			if (from->array.e.stride != to->array.e.stride ||
+					from->array.e.buffer != to->array.e.buffer) {
+				diff_api.EdgeFlagPointer(to->array.e.stride, to->array.e.p);
+				from->array.e.stride = to->array.e.stride;
+				from->array.e.p = to->array.e.p;
+				from->array.e.buffer = to->array.e.buffer;
+			}
+			CLEARDIRTY2(cb->e, bitID);
+		}
+		/* secondary color */
+		if (CHECKDIRTY(cb->s, bitID)) {
+			if (from->array.s.size != to->array.s.size ||
+					from->array.s.type != to->array.s.type ||
+					from->array.s.stride != to->array.s.stride ||
+					from->array.s.buffer != to->array.s.buffer) {
+				diff_api.SecondaryColorPointerEXT(to->array.s.size, to->array.s.type,
+																					to->array.s.stride, to->array.s.p);
+				from->array.s.size = to->array.s.size;
+				from->array.s.type = to->array.s.type;
+				from->array.s.stride = to->array.s.stride;
+				from->array.s.p = to->array.s.p;
+				from->array.s.buffer = to->array.s.buffer;
+			}
+			CLEARDIRTY2(cb->s, bitID);
+		}
+		/* fog coord */
+		if (CHECKDIRTY(cb->f, bitID)) {
+			if (from->array.f.type != to->array.f.type ||
+					from->array.f.stride != to->array.f.stride ||
+					from->array.f.buffer != to->array.f.buffer) {
+				diff_api.FogCoordPointerEXT(to->array.f.type,
+																		to->array.f.stride, to->array.f.p);
+				from->array.f.type = to->array.f.type;
+				from->array.f.stride = to->array.f.stride;
+				from->array.f.p = to->array.f.p;
+				from->array.f.buffer = to->array.f.buffer;
+			}
+			CLEARDIRTY2(cb->f, bitID);
+		}
+#if defined(CR_NV_vertex_program) || defined(CR_ARB_vertex_program)
+		/* vertex attributes */
+		for (i = 0; i < toCtx->limits.maxVertexProgramAttribs; i++) {
+			if (CHECKDIRTY(cb->a[i], bitID)) {
+				if (from->array.a[i].size != to->array.a[i].size ||
+						from->array.a[i].type != to->array.a[i].type ||
+						from->array.a[i].stride != to->array.a[i].stride ||
+						from->array.a[i].normalized != to->array.a[i].normalized ||
+						from->array.a[i].buffer != to->array.a[i].buffer) {
+					diff_api.VertexAttribPointerARB(i, to->array.a[i].size,
+																					to->array.a[i].type,
+																					to->array.a[i].normalized,
+																					to->array.a[i].stride,
+																					to->array.a[i].p);
+					from->array.a[i].size = to->array.a[i].size;
+					from->array.a[i].type = to->array.a[i].type;
+					from->array.a[i].stride = to->array.a[i].stride;
+					from->array.a[i].normalized = to->array.a[i].normalized;
+					from->array.a[i].p = to->array.a[i].p;
+					from->array.a[i].buffer = to->array.a[i].buffer;
+				}
+				CLEARDIRTY2(cb->a[i], bitID);
+			}
+		}
+#endif
+	}
+
+	if (CHECKDIRTY(cb->enableClientState, bitID)) {
+		/* update vertex array enable/disable flags */
+		glAble able[2];
+		able[0] = diff_api.Disable;
+		able[1] = diff_api.Enable;
+		if (from->array.v.enabled != to->array.v.enabled) {
+			able[to->array.v.enabled](GL_VERTEX_ARRAY);
+			from->array.v.enabled = to->array.v.enabled;
+		}
+		if (from->array.n.enabled != to->array.n.enabled) {
+			able[to->array.n.enabled](GL_NORMAL_ARRAY);
+			from->array.n.enabled = to->array.n.enabled;
+		}
+		if (from->array.c.enabled != to->array.c.enabled) {
+			able[to->array.c.enabled](GL_COLOR_ARRAY);
+			from->array.c.enabled = to->array.c.enabled;
+		}
+		if (from->array.i.enabled != to->array.i.enabled) {
+			able[to->array.i.enabled](GL_INDEX_ARRAY);
+			from->array.i.enabled = to->array.i.enabled;
+		}
+		for (i = 0; i < toCtx->limits.maxTextureUnits; i++) {
+			if (from->array.t[i].enabled != to->array.t[i].enabled) {
+				diff_api.ClientActiveTextureARB(GL_TEXTURE0_ARB + i);
+				able[to->array.t[i].enabled](GL_TEXTURE_COORD_ARRAY);
+				from->array.t[i].enabled = to->array.t[i].enabled;
+			}
+		}
+		if (from->array.e.enabled != to->array.e.enabled) {
+			able[to->array.e.enabled](GL_EDGE_FLAG_ARRAY);
+			from->array.e.enabled = to->array.e.enabled;
+		}
+		if (from->array.s.enabled != to->array.s.enabled) {
+			able[to->array.s.enabled](GL_SECONDARY_COLOR_ARRAY_EXT);
+			from->array.s.enabled = to->array.s.enabled;
+		}
+		if (from->array.f.enabled != to->array.f.enabled) {
+			able[to->array.f.enabled](GL_FOG_COORDINATE_ARRAY_EXT);
+			from->array.f.enabled = to->array.f.enabled;
+		}
+		for (i = 0; i < toCtx->limits.maxVertexProgramAttribs; i++) {
+			if (from->array.a[i].enabled != to->array.a[i].enabled) {
+				able[to->array.a[i].enabled](GL_VERTEX_ATTRIB_ARRAY0_NV + i);
+				from->array.a[i].enabled = to->array.a[i].enabled;
+			}
+		}
+		CLEARDIRTY2(cb->enableClientState, bitID);
+	}
+}
+
+
+void
+crStateClientSwitch(CRClientBits *cb, CRbitvalue *bitID,
+										CRContext *fromCtx, CRContext *toCtx)
+{
+	const CRClientState *from = &(fromCtx->client);
+	const CRClientState *to = &(toCtx->client);
+	int i;
+
+	if (CHECKDIRTY(cb->clientPointer, bitID)) {
+		/* one or more vertex pointers is dirty */
+		if (CHECKDIRTY(cb->v, bitID)) {
+			if (from->array.v.size != to->array.v.size ||
+					from->array.v.type != to->array.v.type ||
+					from->array.v.stride != to->array.v.stride ||
+					from->array.v.buffer != to->array.v.buffer) {
+				diff_api.VertexPointer(to->array.v.size, to->array.v.type,
+															 to->array.v.stride, to->array.v.p);
+				FILLDIRTY(cb->v);
+				FILLDIRTY(cb->clientPointer);
+			}
+			CLEARDIRTY2(cb->v, bitID);
+		}
+		/* normal */
+		if (CHECKDIRTY(cb->n, bitID)) {
+			if (from->array.n.type != to->array.n.type ||
+					from->array.n.stride != to->array.n.stride ||
+					from->array.n.buffer != to->array.n.buffer) {
+				diff_api.NormalPointer(to->array.n.type,
+															 to->array.n.stride, to->array.n.p);
+				FILLDIRTY(cb->n);
+				FILLDIRTY(cb->clientPointer);
+			}
+			CLEARDIRTY2(cb->n, bitID);
+		}
+		/* color */
+		if (CHECKDIRTY(cb->c, bitID)) {
+			if (from->array.c.size != to->array.c.size ||
+					from->array.c.type != to->array.c.type ||
+					from->array.c.stride != to->array.c.stride ||
+					from->array.c.buffer != to->array.c.buffer) {
+				diff_api.ColorPointer(to->array.c.size, to->array.c.type,
+															to->array.c.stride, to->array.c.p);
+				FILLDIRTY(cb->c);
+				FILLDIRTY(cb->clientPointer);
+			}
+			CLEARDIRTY2(cb->c, bitID);
+		}
+		/* index */
+		if (CHECKDIRTY(cb->i, bitID)) {
+			if (from->array.i.type != to->array.i.type ||
+					from->array.i.stride != to->array.i.stride ||
+					from->array.i.buffer != to->array.i.buffer) {
+				diff_api.IndexPointer(to->array.i.type,
+															to->array.i.stride, to->array.i.p);
+				FILLDIRTY(cb->i);
+				FILLDIRTY(cb->clientPointer);
+			}
+			CLEARDIRTY2(cb->i, bitID);
+		}
+		/* texcoords */
+		for (i = 0; i < toCtx->limits.maxTextureUnits; i++) {
+			if (CHECKDIRTY(cb->t[i], bitID)) {
+				if (from->array.t[i].size != to->array.t[i].size ||
+						from->array.t[i].type != to->array.t[i].type ||
+						from->array.t[i].stride != to->array.t[i].stride ||
+						from->array.t[i].buffer != to->array.t[i].buffer) {
+					diff_api.ClientActiveTextureARB(GL_TEXTURE0_ARB + i);
+					diff_api.TexCoordPointer(to->array.t[i].size, to->array.t[i].type,
+																to->array.t[i].stride, to->array.t[i].p);
+					FILLDIRTY(cb->t[i]);
+					FILLDIRTY(cb->clientPointer);
+				}
+				CLEARDIRTY2(cb->t[i], bitID);
+			}
+		}
+		/* edge flag */
+		if (CHECKDIRTY(cb->e, bitID)) {
+			if (from->array.e.stride != to->array.e.stride ||
+					from->array.e.buffer != to->array.e.buffer) {
+				diff_api.EdgeFlagPointer(to->array.e.stride, to->array.e.p);
+				FILLDIRTY(cb->e);
+				FILLDIRTY(cb->clientPointer);
+			}
+			CLEARDIRTY2(cb->e, bitID);
+		}
+		/* secondary color */
+		if (CHECKDIRTY(cb->s, bitID)) {
+			if (from->array.s.size != to->array.s.size ||
+					from->array.s.type != to->array.s.type ||
+					from->array.s.stride != to->array.s.stride ||
+					from->array.s.buffer != to->array.s.buffer) {
+				diff_api.SecondaryColorPointerEXT(to->array.s.size, to->array.s.type,
+																					to->array.s.stride, to->array.s.p);
+				FILLDIRTY(cb->s);
+				FILLDIRTY(cb->clientPointer);
+			}
+			CLEARDIRTY2(cb->s, bitID);
+		}
+		/* fog coord */
+		if (CHECKDIRTY(cb->f, bitID)) {
+			if (from->array.f.type != to->array.f.type ||
+					from->array.f.stride != to->array.f.stride ||
+					from->array.f.buffer != to->array.f.buffer) {
+				diff_api.FogCoordPointerEXT(to->array.f.type,
+																		to->array.f.stride, to->array.f.p);
+				FILLDIRTY(cb->f);
+				FILLDIRTY(cb->clientPointer);
+			}
+			CLEARDIRTY2(cb->f, bitID);
+		}
+#if defined(CR_NV_vertex_program) || defined(CR_ARB_vertex_program)
+		/* vertex attributes */
+		for (i = 0; i < toCtx->limits.maxVertexProgramAttribs; i++) {
+			if (CHECKDIRTY(cb->a[i], bitID)) {
+				if (from->array.a[i].size != to->array.a[i].size ||
+						from->array.a[i].type != to->array.a[i].type ||
+						from->array.a[i].stride != to->array.a[i].stride ||
+						from->array.a[i].normalized != to->array.a[i].normalized ||
+						from->array.a[i].buffer != to->array.a[i].buffer) {
+					diff_api.VertexAttribPointerARB(i, to->array.a[i].size,
+																					to->array.a[i].type,
+																					to->array.a[i].normalized,
+																					to->array.a[i].stride,
+																					to->array.a[i].p);
+					FILLDIRTY(cb->a[i]);
+					FILLDIRTY(cb->clientPointer);
+				}
+				CLEARDIRTY2(cb->a[i], bitID);
+			}
+		}
+#endif
+	}
+
+	if (CHECKDIRTY(cb->enableClientState, bitID)) {
+		/* update vertex array enable/disable flags */
+		glAble able[2];
+		able[0] = diff_api.Disable;
+		able[1] = diff_api.Enable;
+		if (from->array.v.enabled != to->array.v.enabled) {
+			able[to->array.v.enabled](GL_VERTEX_ARRAY);
+			FILLDIRTY(cb->enableClientState);
+		}
+		if (from->array.n.enabled != to->array.n.enabled) {
+			able[to->array.n.enabled](GL_NORMAL_ARRAY);
+			FILLDIRTY(cb->enableClientState);
+		}
+		if (from->array.c.enabled != to->array.c.enabled) {
+			able[to->array.c.enabled](GL_COLOR_ARRAY);
+			FILLDIRTY(cb->enableClientState);
+		}
+		if (from->array.i.enabled != to->array.i.enabled) {
+			able[to->array.i.enabled](GL_INDEX_ARRAY);
+			FILLDIRTY(cb->enableClientState);
+		}
+		for (i = 0; i < toCtx->limits.maxTextureUnits; i++) {
+			if (from->array.t[i].enabled != to->array.t[i].enabled) {
+				diff_api.ClientActiveTextureARB(GL_TEXTURE0_ARB + i);
+				able[to->array.t[i].enabled](GL_TEXTURE_COORD_ARRAY);
+				FILLDIRTY(cb->enableClientState);
+			}
+		}
+		if (from->array.e.enabled != to->array.e.enabled) {
+			able[to->array.e.enabled](GL_EDGE_FLAG_ARRAY);
+			FILLDIRTY(cb->enableClientState);
+		}
+		if (from->array.s.enabled != to->array.s.enabled) {
+			able[to->array.s.enabled](GL_SECONDARY_COLOR_ARRAY_EXT);
+			FILLDIRTY(cb->enableClientState);
+		}
+		if (from->array.f.enabled != to->array.f.enabled) {
+			able[to->array.f.enabled](GL_FOG_COORDINATE_ARRAY_EXT);
+			FILLDIRTY(cb->enableClientState);
+		}
+		for (i = 0; i < toCtx->limits.maxVertexProgramAttribs; i++) {
+			if (from->array.a[i].enabled != to->array.a[i].enabled) {
+				able[to->array.a[i].enabled](GL_VERTEX_ATTRIB_ARRAY0_NV + i);
+				FILLDIRTY(cb->enableClientState);
+			}
+		}
+		CLEARDIRTY2(cb->enableClientState, bitID);
+	}
+}

@@ -41,14 +41,14 @@ static float colors[7][4] = {
 };
 
 
-static crCreateContextProc   crCreateContextCR;
-static crMakeCurrentProc     crMakeCurrentCR;
-static crSwapBuffersProc     crSwapBuffersCR;
-static crWindowCreateProc    crWindowCreateCR;
-static crWindowPositionProc  crWindowPositionCR;
-static glBarrierCreateCRProc glBarrierCreateCR;
-static glBarrierExecCRProc   glBarrierExecCR;
-static glChromiumParameteriCRProc glChromiumParameteriCR;
+static crCreateContextProc   crCreateContextCR_func;
+static crMakeCurrentProc     crMakeCurrentCR_func;
+static crSwapBuffersProc     crSwapBuffersCR_func;
+static crWindowCreateProc    crWindowCreateCR_func;
+static crWindowPositionProc  crWindowPositionCR_func;
+static glBarrierCreateCRProc glBarrierCreateCR_func;
+static glBarrierExecCRProc   glBarrierExecCR_func;
+static glChromiumParameteriCRProc glChromiumParameteriCR_func;
 
 #define GET_FUNCTION(target, proc, string)       \
 	target = (proc) crGetProcAddress(string);      \
@@ -133,14 +133,14 @@ static void *render_loop( void *threadData )
 
 	rank = context->Rank;
 
-	crMakeCurrentCR(context->Window, context->Context);
+	crMakeCurrentCR_func(context->Window, context->Context);
 
 	/* need to do this after MakeCurrent, unfortunately */
-	GET_FUNCTION(glChromiumParameteriCR, glChromiumParameteriCRProc, "glChromiumParameteriCR");
-	GET_FUNCTION(glBarrierCreateCR, glBarrierCreateCRProc, "glBarrierCreateCR");
-	GET_FUNCTION(glBarrierExecCR, glBarrierExecCRProc, "glBarrierExecCR");
+	GET_FUNCTION(glChromiumParameteriCR_func, glChromiumParameteriCRProc, "glChromiumParameteriCR");
+	GET_FUNCTION(glBarrierCreateCR_func, glBarrierCreateCRProc, "glBarrierCreateCR");
+	GET_FUNCTION(glBarrierExecCR_func, glBarrierExecCRProc, "glBarrierExecCR");
 
-	glBarrierCreateCR( MASTER_BARRIER, NumThreads );
+	glBarrierCreateCR_func( MASTER_BARRIER, NumThreads );
 
 	/* We need to make this call so that the private barriers inside
 	 * of the readback SPU are set to the right size.  See, this demo
@@ -148,7 +148,7 @@ static void *render_loop( void *threadData )
 	 * clients (the main process plus three threads) but we want the
 	 * readback SPU to synchronize on 3 clients, not 4.
 	 */
-	glChromiumParameteriCR( GL_READBACK_BARRIER_SIZE_CR, NumThreads);
+	glChromiumParameteriCR_func( GL_READBACK_BARRIER_SIZE_CR, NumThreads);
 
 	theta = (float) (360.0 / (float) NumThreads);
 
@@ -177,7 +177,7 @@ static void *render_loop( void *threadData )
 		}
 
 		if (context->UseBarriers)
-			glBarrierExecCR( MASTER_BARRIER );
+			glBarrierExecCR_func( MASTER_BARRIER );
 
 		glPushMatrix();
 		glRotatef((GLfloat)frame, 1, 0, 0);
@@ -192,12 +192,12 @@ static void *render_loop( void *threadData )
 		glPopMatrix();
 
 		if (context->UseBarriers)
-			glBarrierExecCR( MASTER_BARRIER );
+			glBarrierExecCR_func( MASTER_BARRIER );
 
 		/* The crserver only executes the SwapBuffers() for the 0th client.
 		 * No need to test for rank==0 as we used to do.
 		 */
-		crSwapBuffersCR(context->Window, context->SwapFlags);
+		crSwapBuffersCR_func(context->Window, context->SwapFlags);
 	}
 
 	ExitFlag = GL_TRUE;
@@ -266,33 +266,33 @@ int main(int argc, char *argv[])
 	/*
 	 * Get extension function pointers.
 	 */
-	GET_FUNCTION(crCreateContextCR, crCreateContextProc, "crCreateContext");
-	GET_FUNCTION(crMakeCurrentCR, crMakeCurrentProc, "crMakeCurrent");
-	GET_FUNCTION(crSwapBuffersCR, crSwapBuffersProc, "crSwapBuffers");
-	GET_FUNCTION(crWindowCreateCR, crWindowCreateProc, "crWindowCreate");
-	GET_FUNCTION(crWindowPositionCR, crWindowPositionProc, "crWindowPosition");
+	GET_FUNCTION(crCreateContextCR_func, crCreateContextProc, "crCreateContext");
+	GET_FUNCTION(crMakeCurrentCR_func, crMakeCurrentProc, "crMakeCurrent");
+	GET_FUNCTION(crSwapBuffersCR_func, crSwapBuffersProc, "crSwapBuffers");
+	GET_FUNCTION(crWindowCreateCR_func, crWindowCreateProc, "crWindowCreate");
+	GET_FUNCTION(crWindowPositionCR_func, crWindowPositionProc, "crWindowPosition");
 
-	Context[0].Window = crWindowCreateCR(dpy, visual);
-	/*	Context[0].Context = crCreateContextCR(dpy, visual);*/
+	Context[0].Window = crWindowCreateCR_func(dpy, visual);
+	/*	Context[0].Context = crCreateContextCR_func(dpy, visual);*/
 	if (Context[0].Window < 0) {
 		 crError("Failed to create 0th window!\n");
 		 return 0;
 	}
 	Context[0].Clear = GL_TRUE;
 	Context[0].SwapFlags = 0;
-	crWindowPositionCR(Context[0].Window, 20, 20);
+	crWindowPositionCR_func(Context[0].Window, 20, 20);
 
 	/* Create a context for each thread */
 	for (i = 0; i < NumThreads; i++) {
 		if (i > 0) {
 			if (multiWindow) {
 				/* a new window */
-				Context[i].Window = crWindowCreateCR(dpy, visual);
+				Context[i].Window = crWindowCreateCR_func(dpy, visual);
 				if (Context[i].Window < 0) {
 					crError("crWindowCreateCR() failed!\n");
 					return 0;
 				}
-				crWindowPositionCR(Context[i].Window, 420*i, 20);
+				crWindowPositionCR_func(Context[i].Window, 420*i, 20);
 				Context[i].Clear = GL_TRUE;
 			}
 			else {
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		Context[i].Rank = i;
-		Context[i].Context = crCreateContextCR(dpy, visual);
+		Context[i].Context = crCreateContextCR_func(dpy, visual);
 		if (Context[i].Context < 0) {
 			crError("crCreateContextCR() call for thread %d failed!\n", i);
 			return 0;

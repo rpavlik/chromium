@@ -1,38 +1,37 @@
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys, cPickle, re
 
-sys.path.append( "../opengl_stub" )
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../glapi_parser" )
+import apiutil
 
-import stub_common;
 
-keys = gl_mapping.keys()
-keys.sort();
+def IsExpandableClientFunction(func_name):
+	"""Some OpenGL client-side functions can be implemented in terms of
+	other non-client functions.  We list them here.
+	XXX express this in APIspec.txt someday???
+	"""
+	if (func_name == "ArrayElement" or
+		func_name == "DrawArrays" or
+		func_name == "DrawElements" or
+		func_name == "DrawRangeElements" or
+		func_name == "MultiDrawArraysEXT" or
+		func_name == "MultiDrawElementsEXT"):
+		return 1
+	else:
+		return 0
+
 
 # This regular expression is used to extract pointer sizes from function names
 extractNumber = re.compile('[0-9]+')
 
 # A routine that can create call strings from instance names
-def InstanceCallString( arg_names ):
+def InstanceCallString( params ):
 	output = ''
-	for index in range(0,len(arg_names)):
+	for index in range(0,len(params)):
 		if index > 0:
 			output += ", "
-		if arg_names[index] != '':
-			output += 'instance->' + arg_names[index]
+		if params[index][0] != '':
+			output += 'instance->' + params[index][0]
 	return output
-
-# This function looks for a class of annotations (e.g. "pointer=special")
-# and returns the desired section (in this case, "special").
-def GetAnnotationClass(functionName, prefix):
-	annotations = stub_common.GetAnnotations("dlm_functions", functionName)
-	for annotation in annotations:
-		if annotation[:len(prefix) + 1] == prefix + "=":
-			return annotation[len(prefix) + 1:]
-	return None
 
 def GetPointerType(basetype):
 	words = basetype.split()
@@ -50,87 +49,89 @@ def GetPointerType(basetype):
 # functions.  The passthrough wrapper just passes the same parameters
 # down to the next layer.
 def wrap_passthrough(functionName):
-	(return_type, args, types) = gl_mapping[func_name]
-	callstring = stub_common.InternalCallString(args)
-	print 'static %s DLM_APIENTRY pass%s%s' % (return_type, func_name, stub_common.ArgumentString(args, types))
+	params = apiutil.Parameters(functionName)
+	callstring = apiutil.MakeCallString(params)
+	return_type = apiutil.ReturnType(functionName)
+	print 'static %s DLM_APIENTRY pass%s(%s)' % (return_type, functionName, apiutil.MakeDeclarationString(params))
 	print '{'
 	print '	CRDLMContextState *state = CURRENT_STATE();'
 	# If this function affects client-side state that will affect the
 	# display list (including pixel storage modes), we need to know about
 	# it first.  Its wrapper should call our own function first.
-	if stub_common.FindAnnotation("dlm_functions", func_name, "setclient"):
+	if "setclient" in apiutil.Properties(functionName):
 		if callstring:
-			print '	crdlm%s(%s, state->clientState);' % (func_name, callstring);
+			print '	crdlm%s(%s, state->clientState);' % (functionName, callstring);
 		else:
-			print '	crdlm%s(state->clientState);' % (func_name);
+			print '	crdlm%s(state->clientState);' % (functionName);
 	if return_type != "void":
-		print '	return state->savedDispatchTable.%s(%s);' % (func_name, callstring)
+		print '	return state->savedDispatchTable.%s(%s);' % (functionName, callstring)
 	else:
-		print '	state->savedDispatchTable.%s(%s);' % (func_name, callstring)
+		print '	state->savedDispatchTable.%s(%s);' % (functionName, callstring)
 	print '}'
 	return
 
-def GetPointerInfo(functionName, args, types):
+def GetPointerInfo(functionName):
 	# We'll keep track of all the parameters that require pointers.
 	# They'll require special handling later.
+	params = apiutil.Parameters(functionName)
 	pointers = []
 	pointername=''
 	pointerarg=''
 	pointertype=''
 	pointersize=0
 	pointercomment=''
-	for index in range(len(args)):
+
+	index = 0
+	for (name, type, vecSize) in params:
 		# Watch out for the word "const" (which should be ignored)
 		# and for types that end in "*" (which are pointers and need
 		# special treatment)
-		words = types[index].split()
+		words = type.split()
 		if words[-1].endswith('*'):
 			pointers.append(index)
+		index += 1
+
 	# If any argument was a pointer, we need a special pointer data
 	# array.  The pointer data will be stored into this array, and
 	# references to the array will be generated as parameters.
 	if len(pointers) == 1:
-		pointername = args[pointers[0]]
+		index = pointers[0]
+		pointername = params[index][0]
 		pointerarg = pointername + 'Data'
-		pointertype = GetPointerType(types[pointers[0]])
-		pointersize = GetAnnotationClass(functionName, "pointer")
-		if pointersize == None:
-			# Try to intuit a pointer size.  If an integer exists in the
-			# function name, that is a good guess for the pointer size.
-			guess = extractNumber.search(functionName)
-			if guess:
-				pointersize=guess.group()
-				pointercomment = ' /* Guessed pointer size %s from name */' % pointersize
+		pointertype = GetPointerType(params[index][1])
+		pointersize = params[index][2]
+		if pointersize == 0:
+			pointersize = "special"
 	elif len(pointers) > 1:
 		pointerarg = 'data';
-		pointertype = GetPointerType(types[pointers[0]])
+		pointertype = GetPointerType(params[pointers[0]][1])
 		for index in range(1,len(pointers)):
-			if GetPointerType(types[pointers[index]]) != pointertype:
+			if GetPointerType(params[pointers[index]][1]) != pointertype:
 				pointertype = 'GLvoid *'
 
 	return (pointers,pointername,pointerarg,pointertype,pointersize,pointercomment)
 
 def wrap_header(functionName):
-	(return_type, args, types) = gl_mapping[functionName]
-	argstring = stub_common.InternalArgumentString(args, types)
+	params = apiutil.Parameters(functionName)
+	argstring = apiutil.MakeDeclarationString(params)
 
 	# We'll keep track of all the parameters that require pointers.
 	# They'll require special handling later.
-	(pointers, pointername, pointerarg, pointertype, pointersize, pointercomment) = GetPointerInfo(functionName, args, types)
+	(pointers, pointername, pointerarg, pointertype, pointersize, pointercomment) = GetPointerInfo(functionName)
 
 	# Start writing the header
 	print 'struct instance%s {' % (functionName)
 	print '	DLMInstanceList *next;'
 	print '	void (DLM_APIENTRY *execute)(DLMInstanceList *instance, SPUDispatchTable *dispatchTable);'
-	for index in range(len(args)):
+	for (name, type, vecSize) in params:
 		# Watch out for the word "const" (which should be ignored)
 		# and for types that end in "*" (which are pointers and need
 		# special treatment)
-		words = types[index].split()
+		words = type.split()
 		if words[0] == 'const':
 			words = words[1:]
 		if words[0] != "void":
-			print '	%s %s;' % (' '.join(words), args[index])
+			print '	%s %s;' % (' '.join(words), name)
 
 	# If any argument was a pointer, we need a special pointer data
 	# array.  The pointer data will be stored into this array, and
@@ -154,20 +155,19 @@ def wrap_header(functionName):
 		
 	# See if the GL function must sometimes allow passthrough even
 	# if the display list is open
-	if stub_common.FindAnnotation("dlm_functions", func_name, "checkpass"):
+	if "checklist" in apiutil.ChromiumProps(functionName):
 		print 'int crdlm_checkpass_%s(%s);' % (functionName, argstring)
 
 	return
 
 def wrap_compile_header(functionName):
-	(return_type, args, types) = gl_mapping[functionName]
-	argstring = stub_common.InternalArgumentString(args, types)
-	print 'void DLM_APIENTRY crdlm_compile_%s(%s);' % (functionName, argstring)
+	params = apiutil.Parameters(functionName)
+	argstring = apiutil.MakeDeclarationString(params)
+	print 'void DLM_APIENTRY crdlm_compile_%s( %s );' % (functionName, argstring)
 
 
 def generate_bbox_code(functionName):
 	assert functionName[0:6] == "Vertex"
-	(return_type, args, types) = gl_mapping[functionName]
 	pattern = "(VertexAttribs|VertexAttrib|Vertex)(1|2|3|4)(N?)(f|d|i|s|b|ub|us|ui)(v?)"
 	m = re.match(pattern, functionName)
 	if m:
@@ -263,8 +263,9 @@ def generate_bbox_code(functionName):
 # element, and adds that element to the end of the display list currently
 # being compiled.
 def wrap_compile(functionName):
-	(return_type, args, types) = gl_mapping[functionName]
-	callstring = stub_common.InternalCallString(args)
+	params = apiutil.Parameters(functionName)
+	callstring = apiutil.MakeCallString(params)
+	return_type = apiutil.ReturnType(functionName)
 	# Make sure the return type is void.  It's nonsensical to compile
 	# an element with any other return type.
 	if return_type != 'void':
@@ -275,30 +276,30 @@ def wrap_compile(functionName):
 	# in include/cr_dlm.h, or everything will break horribly.
 	# Start off by getting all the pointer info we could ever use
 	# from the parameters
-	(pointers, pointername, pointerarg, pointertype, pointersize, pointercomment) = GetPointerInfo(functionName, args, types)
+	(pointers, pointername, pointerarg, pointertype, pointersize, pointercomment) = GetPointerInfo(functionName)
 
 	# Next must come the execute wrapper, as it is is referenced by the
 	# compile wrapper (to install the self-execute function). 
-	executefunc = 'execute%s' % (functionName)
+	executefunc = 'execute' + functionName
 	print 'static void DLM_APIENTRY execute%s(DLMInstanceList *x, SPUDispatchTable *dispatchTable)' % (functionName)
 	print '{'
 	# Don't need the instance pointer if there's no parameters
-	if args[0] != '':
+	if len(params) > 0:
 		print '	struct instance%s *instance = (struct instance%s *)x;' % (functionName, functionName)
-	print '	dispatchTable->%s(%s);' % (functionName, InstanceCallString(args))
+	print '	dispatchTable->%s(%s);' % (functionName, InstanceCallString(params))
 	print '}'
 
 	# Finally, the compile wrapper.  This one will diverge strongly
 	# depending on whether or not there are pointer parameters. 
 	# It might also generate a passthrough on occasion.
-	print 'void DLM_APIENTRY crdlm_compile_%s%s' % (functionName, stub_common.ArgumentString(args, types))
+	print 'void DLM_APIENTRY crdlm_compile_%s( %s )' % (functionName, apiutil.MakeDeclarationString(params))
 	print '{'
 	print '	CRDLMContextState *state = CURRENT_STATE();'
 	print '	struct instance%s *instance;' % (functionName)
 
 	# If the function requires the opportunity to force a passthrough call
 	# (based on its parameters), allow it
-	if stub_common.FindAnnotation("dlm_functions", functionName, "checkpass"):
+	if "checklist" in apiutil.ChromiumProps(functionName):
 		print '	if (crdlm_checkpass_%s(%s)) {' % (functionName, callstring)
 		print '		pass%s(%s);' % (functionName, callstring)
 		print '		return;'
@@ -306,9 +307,9 @@ def wrap_compile(functionName):
 
 	if len(pointers) > 1 or pointersize == 'special':
 		# Pass NULL, to just allocate space
-		print '	instance = crAlloc(sizeof(struct instance%s) + crdlm_pointers_%s(NULL, %s));' % (functionName, functionName, callstring)
+		print '	instance = crCalloc(sizeof(struct instance%s) + crdlm_pointers_%s(NULL, %s));' % (functionName, functionName, callstring)
 	else:
-		print '	instance = crAlloc(sizeof(struct instance%s));' % (functionName)
+		print '	instance = crCalloc(sizeof(struct instance%s));' % (functionName)
 	print '	if (!instance) {'
 	print '		crdlm_error(__LINE__, __FILE__, GL_OUT_OF_MEMORY,'
 	print '			"out of memory adding %s to display list");' % (functionName)
@@ -316,25 +317,26 @@ def wrap_compile(functionName):
 	print '	}'
 	# Put in the fields that must always exist
 	print '	instance->next = NULL;'
-	print '	instance->execute = %s;' % (executefunc)
+	print '	instance->execute = %s;' % executefunc
 
 	# Apply all the simple (i.e. non-pointer) parameters
-	for index in range(len(args)):
-		if index not in pointers and args[index] != '':
-			print '	instance->%s = %s;' % (args[index], args[index])
+	for index in range(len(params)):
+		if index not in pointers:
+			name = params[index][0]
+			print '	instance->%s = %s;' % (name, name)
 
 	# If there's a pointer parameter, apply it.
 	if len(pointers) == 1:
-		print '	if (%s == NULL) {' % (args[pointers[0]])
-		print '		instance->%s = NULL;' % (args[pointers[0]])
+		print '	if (%s == NULL) {' % (params[pointers[0]][0])
+		print '		instance->%s = NULL;' % (params[pointers[0]][0])
 		print '	}'
 		print '	else {'
-		print '		instance->%s = instance->%s;' % (args[pointers[0]], pointerarg)
+		print '		instance->%s = instance->%s;' % (params[pointers[0]][0], pointerarg)
 		print '	}'
 		if pointersize == 'special':
 			print '	(void) crdlm_pointers_%s(instance, %s);' % (functionName, callstring)
 		else:
-			print '	crMemcpy((void *)instance->%s, (void *) %s, %s*sizeof(%s));' % (args[pointers[0]], args[pointers[0]], pointersize, pointertype)
+			print '	crMemcpy((void *)instance->%s, (void *) %s, %s*sizeof(%s));' % (params[pointers[0]][0], params[pointers[0]][0], pointersize, pointertype)
 	elif len(pointers) == 2:
 		# this seems to work
 		print '	(void) crdlm_pointers_%s(instance, %s);' % (functionName, callstring)
@@ -356,53 +358,34 @@ def wrap_compile(functionName):
 
 	print '}'
 
+
 def wrap_compileAndExecute(functionName):
-	return
-	(return_type, args, types) = gl_mapping[functionName]
-	callstring = stub_common.InternalCallString(args)
-	# Add a compile-and-execute function
-	print 'static %s DLM_APIENTRY compileAndExecute%s%s' % (return_type, functionName, stub_common.ArgumentString(args, types))
-	print '{'
-	print '	CRDLMContextState *state = CURRENT_STATE();'
-	print '	crdlm_compile_%s(%s);' % (functionName, callstring)
-	print '	state->savedDispatchTable.%s(%s);' % (functionName, callstring)
-	print '}'
+	"""XXX no used?! """
 	return
 
 
-
-# Choose our output based on which file we're trying to generate.
-whichfile=sys.argv[1]
-if whichfile == 'headers':
+def GenerateHeader():
 	print """#ifndef _DLM_DISPATCH_H
 
 /* DO NOT EDIT.  This file is auto-generated by dlm_dispatch.py. */
 """
 
+	keys = apiutil.GetDispatchedFunctions()
 	for func_name in keys:
 		print "\n/*** %s ***/" % func_name
-		annotations = stub_common.GetAnnotations("dlm_functions", func_name)
-		if "dl" in annotations:
+		if apiutil.CanCompile(func_name):
 			# Auto-generate an appropriate DL function.  First, functions
 			# that go into the display list but that rely on state will
 			# have to have their argument strings expanded, to take pointers
 			# to that appropriate state.
 			wrap_header(func_name)
 			wrap_compile_header(func_name)
-		elif "dlcompile" in annotations:
+		elif IsExpandableClientFunction(func_name):
 			wrap_compile_header(func_name)
-		elif ("setclient" in annotations or
-			  "get" in annotations or
-			  "nodl" in annotations):
-			# emit nothing
-			pass
-		else:
-			print '/* %s - what do I do with this?  Edit dlm_functions.*/'
-			assert 0
-
-
 	print """#endif"""
-else:
+
+
+def GenerateSource():
 	print """#include <stdio.h>
 #include "cr_spu.h"
 #include "cr_dlm.h"
@@ -431,13 +414,10 @@ else:
 
 	print """/* Following are all the auto-generated functions. */
 	"""
+	keys = apiutil.GetDispatchedFunctions()
 	for func_name in keys:
 		print "\n/*** %s ***/" % func_name
-		annotations = stub_common.GetAnnotations("dlm_functions", func_name)
-		if "local" in annotations:
-  			# Not auto-generated
-  			pass
-		elif "dl" in annotations:
+		if apiutil.CanCompile(func_name):
   			# Auto-generate an appropriate DL function.  First, functions
   			# that go into the display list but that rely on state will
   			# have to have their argument strings expanded, to take pointers
@@ -445,7 +425,7 @@ else:
   			wrap_passthrough(func_name)
   			wrap_compile(func_name)
   			wrap_compileAndExecute(func_name)
-  		elif "dlcompile" in annotations:
+  		elif IsExpandableClientFunction(func_name):
   			# Generate and use a passthrough, but we'll need a crdlm_compile_*
   			# function for all other uses.
   			wrap_passthrough(func_name)
@@ -453,63 +433,22 @@ else:
   		else:
   			# All others just pass through
   			wrap_passthrough(func_name)
-
-	# All done with all the wrappers (at least the ones we're going to make).
-	# Time now for the dispatch tables.
-#  	print ''
-#  	print '/********** Dispatch tables following ****************/'
-#  	print ''
-#  	for table in ['pass', 'compile', 'compileAndExecute']:
-#  		print ''
-#  		print 'SPUDispatchTable dlm_dispatch_%s = {' % (table)
-#  		for func_name in keys:
-#  			if stub_common.FindAnnotation("dlm_functions", func_name, "local"):
-#  				# local reference
-#  				print '	crdlm_%s,' % (func_name)
-#  			elif stub_common.FindAnnotation("dlm_functions", func_name, "dl"):
-#  				# autogenerated display list function
-#  				if table == 'compile':
-#  					print '	crdlm_compile_%s,' % (func_name)
-#  				else:
-#  					print '	%s%s,' % (table, func_name)
-#  			elif stub_common.FindAnnotation("dlm_functions", func_name, "dlcompile"):
-#  				if table == 'pass':
-#  					print '	pass%s,' % (func_name)
-#  				elif table == 'compile':
-#  					print '	crdlm_compile_%s,' % (func_name)
-#  				else:
-#  					print '	%s%s,' % (table, func_name)
-#  			else:
-#  				# passthrough
-#  				print '	pass%s,' % (func_name)
-
-#  		print "};"
-
-
-
+			
 	print '/********** Dispatch tables following ****************/'
 	print ''
 	print ''
 	print 'void crdlm_setup_compile_dispatcher(SPUDispatchTable *t)'
 	print "{"
+	keys = apiutil.GetDispatchedFunctions()
 	for func_name in keys:
-		annotations = stub_common.GetAnnotations("dlm_functions", func_name)
-		if "local" in annotations:
-			# local reference
-			print '\tcrSPUChangeInterface(t, (void *) t->%s, crdlm_%s);' % (func_name, func_name)
-		elif "dl" in annotations:
+		if apiutil.CanCompile(func_name):
 			# autogenerated display list function
 			print '\tcrSPUChangeInterface(t, (void *) t->%s, crdlm_compile_%s);' % (func_name, func_name)
-		elif "dlcompile" in annotations:
+		elif IsExpandableClientFunction(func_name):
 			print '\tcrSPUChangeInterface(t, (void *) t->%s, crdlm_compile_%s);' % (func_name, func_name)
-		elif ("get" in annotations or
-			  "nodl" in annotations or
-			  "setclient" in annotations):
+		else:
 			# passthrough
 			print '/*	pass%s,*/' % (func_name)
-		else:
-			print '/* %s - what do I do with this?  Edit dlm_functions. */'
-			assert 0
 
 	print "}"
 
@@ -528,8 +467,19 @@ else:
 	print ''
 	print ''
 	print 'void *crdlm_silence_warnings[] = {'
+	keys = apiutil.GetDispatchedFunctions()
 	for func_name in keys:
 		print '\t(void *) pass%s,' % func_name
 	print '\tNULL'
 	print '};'
 	
+
+	
+
+# Choose our output based on which file we're trying to generate.
+whichfile = sys.argv[1]
+if whichfile == 'headers':
+	GenerateHeader()
+else:
+	assert whichfile == "source"
+	GenerateSource()

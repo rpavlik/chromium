@@ -51,6 +51,8 @@
 #include <GL/osmesa.h>
 #endif
 
+#include <malloc.h>  /* to get ptrdiff_t used below */
+
 #include <GL/glext.h>
 
 #ifdef __cplusplus
@@ -286,6 +288,59 @@ PROC WINAPI wglGetProcAddress_prox( LPCSTR name )
 #endif
 
 
+#ifndef GL_VERSION_1_5
+
+typedef ptrdiff_t GLintptr;
+typedef ptrdiff_t GLsizeiptr;
+
+/* prototype these functions for opengl_stub/getprocaddress.c */
+extern void APIENTRY glGenQueries(GLsizei n, GLuint *ids);
+extern void APIENTRY glDeleteQueries(GLsizei n, const GLuint *ids);
+extern GLboolean APIENTRY glIsQuery(GLuint id);
+extern void APIENTRY glBeginQuery(GLenum target, GLuint id);
+extern void APIENTRY glEndQuery(GLenum target);
+extern void APIENTRY glGetQueryiv(GLenum target, GLenum pname, GLint *params);
+extern void APIENTRY glGetQueryObjectiv(GLuint id, GLenum pname, GLint *params);
+extern void APIENTRY glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint *params);
+extern void APIENTRY glBindBuffer(GLenum, GLuint);
+extern void APIENTRY glDeleteBuffers(GLsizei, const GLuint *);
+extern void APIENTRY glGenBuffers(GLsizei, GLuint *);
+extern GLboolean APIENTRY glIsBuffer(GLuint);
+extern void APIENTRY glBufferData(GLenum, GLsizeiptr, const GLvoid *, GLenum);
+extern void APIENTRY glBufferSubData(GLenum, GLintptr, GLsizeiptr, const GLvoid *);
+extern void APIENTRY glGetBufferSubData(GLenum, GLintptr, GLsizeiptr, GLvoid *);
+extern GLvoid* APIENTRY glMapBuffer(GLenum, GLenum);
+extern GLboolean APIENTRY glUnmapBuffer(GLenum);
+extern void APIENTRY glGetBufferParameteriv(GLenum, GLenum, GLint *);
+extern void APIENTRY glGetBufferPointerv(GLenum, GLenum, GLvoid* *);
+
+#endif
+
+
+/* XXX temporary until glext.h is updated! */
+#ifndef GL_ARB_occlusion_query
+#define GL_ARB_occlusion_query 1
+
+#define GL_SAMPLES_PASSED_ARB         0x8914
+#define GL_QUERY_COUNTER_BITS_ARB     0x8864
+#define GL_CURRENT_QUERY_ARB          0x8865
+#define GL_QUERY_RESULT_ARB           0x8866
+#define GL_QUERY_RESULT_AVAILABLE_ARB 0x8867
+
+#ifdef GL_GLEXT_PROTOTYPES
+extern void APIENTRY glGenQueriesARB(GLsizei n, GLuint *ids);
+extern void APIENTRY glDeleteQueriesARB(GLsizei n, const GLuint *ids);
+extern GLboolean APIENTRY glIsQueryARB(GLuint id);
+extern void APIENTRY glBeginQueryARB(GLenum target, GLuint id);
+extern void APIENTRY glEndQueryARB(GLenum target);
+extern void APIENTRY glGetQueryivARB(GLenum target, GLenum pname, GLint *params);
+extern void APIENTRY glGetQueryObjectivARB(GLuint id, GLenum pname, GLint *params);
+extern void APIENTRY glGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params);
+#endif
+
+#endif /* GL_ARB_occlusion_query */
+
+
 
 /**********************************************************************/
 /*****            Chromium Extensions to OpenGL                   *****/
@@ -303,6 +358,14 @@ typedef void (APIENTRY *glSemaphoreCreateCRProc) (GLuint name, GLuint count);
 typedef void (APIENTRY *glSemaphoreDestroyCRProc) (GLuint name);
 typedef void (APIENTRY *glSemaphorePCRProc) (GLuint name);
 typedef void (APIENTRY *glSemaphoreVCRProc) (GLuint name);
+
+extern void APIENTRY glBarrierCreateCR(GLuint name, GLuint count);
+extern void APIENTRY glBarrierDestroyCR(GLuint name);
+extern void APIENTRY glBarrierExecCR(GLuint name);
+extern void APIENTRY glSemaphoreCreateCR(GLuint name, GLuint count);
+extern void APIENTRY glSemaphoreDestroyCR(GLuint name);
+extern void APIENTRY glSemaphorePCR(GLuint name);
+extern void APIENTRY glSemaphoreVCR(GLuint name);
 
 #endif /* GL_CR_synchronization */
 
@@ -323,6 +386,12 @@ typedef void (APIENTRY *glChromiumParameteriCRProc) (GLenum target, GLint value)
 typedef void (APIENTRY *glChromiumParameterfCRProc) (GLenum target, GLfloat value);
 typedef void (APIENTRY *glChromiumParametervCRProc) (GLenum target, GLenum type, GLsizei count, const GLvoid *values);
 typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values);
+
+extern void APIENTRY glChromiumParameteriCR(GLenum target, GLint value);
+extern void APIENTRY glChromiumParameterfCR(GLenum target, GLfloat value);
+extern void APIENTRY glChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values);
+extern void APIENTRY glGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values);
+
 
 #endif /* GL_CR_state_parameter */
 
@@ -493,6 +562,19 @@ typedef GLint (APIENTRY *crWindowCreateProc)(const char *dpyName, GLint visBits)
 typedef void (APIENTRY *crWindowDestroyProc)(GLint window);
 typedef void (APIENTRY *crWindowSizeProc)(GLint window, GLint w, GLint h);
 typedef void (APIENTRY *crWindowPositionProc)(GLint window, GLint x, GLint y);
+typedef void (APIENTRY *crWindowShowProc)( GLint window, GLint flag );
+
+extern GLint APIENTRY crCreateContext(const char *dpyName, GLint visBits);
+extern void APIENTRY crDestroyContext(GLint context);
+extern void APIENTRY crMakeCurrent(GLint window, GLint context);
+extern GLint APIENTRY crGetCurrentContext(void);
+extern GLint APIENTRY crGetCurrentWindow(void);
+extern void APIENTRY crSwapBuffers(GLint window, GLint flags);
+extern GLint APIENTRY crWindowCreate(const char *dpyName, GLint visBits);
+extern void APIENTRY crWindowDestroy(GLint window);
+extern void APIENTRY crWindowSize(GLint window, GLint w, GLint h);
+extern void APIENTRY crWindowPosition(GLint window, GLint x, GLint y);
+extern void APIENTRY crWindowShow( GLint window, GLint flag );
 
 typedef int (CR_APIENTRY *CR_PROC)();
 CR_PROC APIENTRY crGetProcAddress( const char *name );
@@ -721,6 +803,96 @@ typedef PICAerror (APIENTRY *crPicaReadFrameProc)(PICAcontextID lctx,
 						  PICAvoid *colorbuffer,
 						  PICAvoid *depthbuffer,
 						  const PICArect *rect);
+
+
+extern PICAerror APIENTRY crPicaListCompositors(const PICAuint *config, 
+                                                PICAint *numResults, 
+                                                PICAcompItem *results);
+extern PICAerror APIENTRY crPicaGetCompositorParamiv(PICAcompID compositor,
+                                                     PICAparam pname,
+                                                     PICAint *params);
+extern PICAerror APIENTRY crPicaGetCompositorParamfv(PICAcompID compositor,
+                                                     PICAparam pname,
+                                                     PICAfloat *params);
+extern PICAerror APIENTRY crPicaGetCompositorParamcv(PICAcompID compositor,
+                                                     PICAparam pname,
+                                                     PICAchar **params);
+extern PICAerror APIENTRY crPicaListNodes(PICAcompID compositor, 
+                                          PICAint *num,
+                                          PICAnodeItem *results);
+
+extern PICAcontextID APIENTRY crPicaCreateContext(const PICAuint *config, 
+                                                  const PICAnodeID *nodes, 
+                                                  PICAuint numNodes);
+extern PICAerror APIENTRY crPicaDestroyContext(PICAcontextID ctx);
+
+extern PICAerror APIENTRY crPicaSetContextParami(PICAcontextID ctx,
+                                                 PICAparam pname,
+                                                 PICAint param);
+extern PICAerror APIENTRY crPicaSetContextParamiv(PICAcontextID ctx,
+                                                  PICAparam pname,
+                                                  const PICAint *param);
+extern PICAerror APIENTRY crPicaSetContextParamf(PICAcontextID ctx,
+                                                 PICAparam pname,
+                                                 PICAfloat param);
+extern PICAerror APIENTRY crPicaSetContextParamfv(PICAcontextID ctx,
+                                                  PICAparam pname,
+                                                  const PICAfloat *param);
+extern PICAerror APIENTRY crPicaSetContextParamv(PICAcontextID ctx,
+                                                 PICAparam pname,
+                                                 const PICAvoid *param);
+
+extern PICAerror APIENTRY crPicaGetContextParamiv(PICAcontextID ctx,
+                                                  PICAparam pname,
+                                                  PICAint *param);  
+extern PICAerror APIENTRY crPicaGetContextParamfv(PICAcontextID ctx,
+                                                  PICAparam pname,
+                                                  PICAfloat *param);  
+extern PICAerror APIENTRY crPicaGetContextParamcv(PICAcontextID ctx,
+                                                  PICAparam pname,
+                                                  PICAchar **param);  
+extern PICAerror APIENTRY crPicaGetContextParamv(PICAcontextID ctx,
+                                                 PICAparam pname,
+                                                 PICAvoid *param);  
+
+extern PICAcontextID APIENTRY crPicaBindLocalContext(PICAcontextID globalCtx, 
+                                                     PICAnodeID node);
+extern PICAerror APIENTRY crPicaDestroyLocalContext(PICAcontextID lctx);
+
+extern PICAerror APIENTRY crPicaStartFrame(PICAcontextID lctx,
+                                           const PICAframeID *frameID,
+                                           PICAuint numLocalFramlets,
+                                           PICAuint numOrders,
+                                           const PICAuint *orderList,
+                                           const PICArect *srcRectList,
+                                           const PICApoint *dstList);
+extern PICAerror APIENTRY crPicaEndFrame(PICAcontextID lctx);
+extern PICAerror APIENTRY crPicaCancelFrame(PICAcontextID ctx, 
+                                            PICAframeID frameID);
+extern PICAstatus APIENTRY crPicaQueryFrame(PICAcontextID ctx,
+                                            PICAframeID frameID,
+                                            PICAnodeID nodeID,
+                                            PICAfloat timeout);
+extern PICAerror APIENTRY crPicaAddGfxFramelet(PICAcontextID lctx,
+                                               const PICArect *srcRect,
+                                               const PICApoint *dstpos,
+                                               PICAuint order,
+                                               PICAint iVolatile);
+extern PICAerror APIENTRY crPicaAddMemFramelet(PICAcontextID lctx,
+                                               const PICAvoid *colorBuffer,
+                                               const PICAvoid *depthBuffer,
+                                               PICAuint span_x,
+                                               const PICArect *srcRect,
+                                               const PICApoint *dstpos,
+                                               PICAuint order,
+                                               PICAint iVolatile);
+extern PICAerror APIENTRY crPicaReadFrame(PICAcontextID lctx,
+                                          PICAframeID frameID,
+                                          PICAuint format,
+                                          PICAvoid *colorbuffer,
+                                          PICAvoid *depthbuffer,
+                                          const PICArect *rect);
+
 #endif /* CR_PICA */
 
 #ifdef __cplusplus

@@ -399,16 +399,32 @@ Graphics, Inc. contributed much of the development.</p>
 </ul>
 
 
-<p> 1.5 Release:  month, day, year</p>
+<p>1.5 Release:  month day, 2003</p>
 
 <ul>
 <li>New Features
   <ul>
+  <li>OpenGL 1.5 support
+  <li>GL_ARB_vertex_buffer_object extension
+  <li>GL_ARB_point_sprite extension
+  <li>GL_ARB_texture_non_power_of_two extension
+  <li>GL_ARB_occlusion_query extension
+  <li>New scale_images option for tilesort SPU controls scaling of
+      glDrawPixels, glCopyPixels and glBitmap images.
   <li>Off-screen rendering with OSMesa (sac at pobox.com)
+  <li>ZPix SPU for image compression in conjunction with Readback SPU
+  <li>Further display list improvements in tilesort SPU (only send lists
+      to servers when really needed)
   </ul>
 <li>Bug Fixes
+  <ul>
+  <li>Hiddenline SPU wasn't always working correctly
+  <li>Assorted minor bug fixes since previous release
+  </ul>
+<li>Changes
+  <ul>
+  <li>New Python code generation system
 </ul>
-
 
 </body>
 

@@ -4,32 +4,26 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
 
-sys.path.append( "../opengl_stub" )
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../glapi_parser" )
+import apiutil
 
-import stub_common;
+apiutil.CopyrightDef()
 
-stub_common.CopyrightDef()
-
-print """EXPORTS
+print """DESCRIPTION ""
+EXPORTS
 """
 
-keys = gl_mapping.keys()
-keys.sort();
+keys = apiutil.GetDispatchedFunctions("../glapi_parser/APIspec.txt")
 
-for func_name in stub_common.AllSpecials( 'state' ):
+for func_name in apiutil.AllSpecials( 'state' ):
 	print "crState%s" % func_name
 
-for func_name in stub_common.AllSpecials( 'state_feedback' ):
+for func_name in apiutil.AllSpecials( 'state_feedback' ):
 	print "crStateFeedback%s" % func_name
 
-for func_name in stub_common.AllSpecials( 'state_select' ):
+for func_name in apiutil.AllSpecials( 'state_select' ):
 	print "crStateSelect%s" % func_name
 
 print """crStateInit

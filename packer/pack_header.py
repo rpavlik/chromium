@@ -6,20 +6,14 @@
 # This script generates the cr/include/cr_packfunctions.h file from the
 # gl_header.parsed file.
 
-import sys;
-import cPickle;
-import types;
-import string;
-import re;
+import sys
+import string
 
-sys.path.append( "../opengl_stub" )
+sys.path.append("../glapi_parser")
+import apiutil
 
-import stub_common;
 
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
-
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """#ifndef CR_PACKFUNCTIONS_H
 #define CR_PACKFUNCTIONS_H
@@ -43,115 +37,50 @@ extern "C" {
 #endif
 """
 
-keys = gl_mapping.keys()
-keys.sort()
+keys = apiutil.GetDispatchedFunctions()
 
 
 for func_name in keys:
-	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
-	if return_type != 'void':
-		if string.find( return_type, '*' ) != -1:
-			arg_types.append( "%s" % return_type )
-		else:
-			arg_types.append( "%s *" % return_type )
-		arg_names.append( "return_value" )
-	elif stub_common.FindSpecial( "packer_pixel", func_name ):	
-		arg_types.append( "const CRPixelPackState *" )
-		arg_names.append( "packstate" )
-	elif stub_common.FindSpecial( "packer_client", func_name ):	
-		arg_types.append( "CRClientState *" )
-		arg_names.append( "ctx" )
-	if return_type != 'void' or stub_common.FindSpecial( 'packer_get', func_name ):
-		arg_types.append( "int *" )
-		arg_names.append( "writeback" )
-	print 'void PACK_APIENTRY crPack%s%s;' %( func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-	print 'void PACK_APIENTRY crPack%sSWAP%s;' %( func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+	if ("pack" in apiutil.ChromiumProps(func_name) or
+		"extpack" in apiutil.ChromiumProps(func_name) or
+		apiutil.VectorAlias(func_name) != '' or
+		apiutil.FindSpecial('packer', func_name)):
 
-for n in [2,3,4]:
-	for t in ['d', 'f', 'i', 's']:
-		for v in ['', 'v']:
-			func_name = 'Vertex%d%s%s' % (n,t,v)
-			( return_type, arg_names, arg_types ) = gl_mapping[func_name]
-			print 'void PACK_APIENTRY crPack%sBBOX%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-			print 'void PACK_APIENTRY crPack%sBBOX_COUNT%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-			print 'void PACK_APIENTRY crPack%sBBOXSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-			print 'void PACK_APIENTRY crPack%sBBOX_COUNTSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+		# OK, generate a crPackFooBar() prototype for this function
+		return_type = apiutil.ReturnType(func_name)
+		args = apiutil.Parameters(func_name)
+		if return_type != 'void':
+			if apiutil.IsPointer(return_type):
+				args.append(("return_value", return_type, 0))
+			else:
+				args.append(("return_value", return_type + "*", 0))
+		elif "pixelstore" in apiutil.Properties(func_name):
+			args.append(("packstate", "const CRPixelPackState *", 0))
 
-for n in [1,2,3,4]:
-	for t in ['d', 'f', 's']:
-		for v in ['', 'v']:
-			func_name = 'VertexAttrib%d%s%sARB' % (n,t,v)
-			( return_type, arg_names, arg_types ) = gl_mapping[func_name]
-			print 'void PACK_APIENTRY crPack%sBBOX%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-			print 'void PACK_APIENTRY crPack%sBBOX_COUNT%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-			print 'void PACK_APIENTRY crPack%sBBOXSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-			print 'void PACK_APIENTRY crPack%sBBOX_COUNTSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+		if return_type != 'void' or "get" in apiutil.Properties(func_name):
+			args.append(("writeback", "int *", 0))
 
-# special cases
-print "void PACK_APIENTRY crPackVertexAttrib4ubARBBBOX( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
-print "void PACK_APIENTRY crPackVertexAttrib4ubARBBBOX_COUNT( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
-print "void PACK_APIENTRY crPackVertexAttrib4ubARBBBOXSWAP( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
-print "void PACK_APIENTRY crPackVertexAttrib4ubARBBBOX_COUNTSWAP( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+		print 'void PACK_APIENTRY crPack%s( %s );' % (func_name, apiutil.MakeDeclarationString(args))
+		print 'void PACK_APIENTRY crPack%sSWAP( %s );' % (func_name, apiutil.MakeDeclarationString(args))
 
-print "void PACK_APIENTRY crPackVertexAttrib4ubvARBBBOX( GLuint index, const GLubyte *v );"
-print "void PACK_APIENTRY crPackVertexAttrib4ubvARBBBOX_COUNT( GLuint index, const GLubyte *v );"
-print "void PACK_APIENTRY crPackVertexAttrib4ubvARBBBOXSWAP( GLuint index, const GLubyte *v );"
-print "void PACK_APIENTRY crPackVertexAttrib4ubvARBBBOX_COUNTSWAP( GLuint index, const GLubyte *v );"
 
-print "void PACK_APIENTRY crPackVertexAttrib4NbvARBBBOX(GLuint index, const GLbyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NbvARBBBOX_COUNT(GLuint index, const GLbyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NbvARBBBOXSWAP(GLuint index, const GLbyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NbvARBBBOX_COUNTSWAP(GLuint index, const GLbyte * v);"
 
-print "void PACK_APIENTRY crPackVertexAttrib4bvARBBBOX(GLuint index, const GLbyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4bvARBBBOX_COUNT(GLuint index, const GLbyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4bvARBBBOXSWAP(GLuint index, const GLbyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4bvARBBBOX_COUNTSWAP(GLuint index, const GLbyte * v);"
+# Now generate special BBOX, COUNT, SWAP variations on the glVertex and
+# glVertexAttrib functions.
+for func_name in keys:
+	if (func_name[0:6] == "Vertex" and
+		"pervertex" in apiutil.Properties(func_name) and
+		("pack" in apiutil.ChromiumProps(func_name) or
+		 apiutil.VectorAlias(func_name) != '')):
 
-print "void PACK_APIENTRY crPackVertexAttrib4NivARBBBOX(GLuint index, const GLint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NivARBBBOX_COUNT(GLuint index, const GLint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NivARBBBOXSWAP(GLuint index, const GLint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NivARBBBOX_COUNTSWAP(GLuint index, const GLint * v);"
+		assert apiutil.ReturnType(func_name) == "void"
 
-print "void PACK_APIENTRY crPackVertexAttrib4NuivARBBBOX(GLuint index, const GLuint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NuivARBBBOX_COUNT(GLuint index, const GLuint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NuivARBBBOXSWAP(GLuint index, const GLuint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NuivARBBBOX_COUNTSWAP(GLuint index, const GLuint * v);"
+		args = apiutil.Parameters(func_name)
+		print 'void PACK_APIENTRY crPack%sBBOX(%s);' % (func_name, apiutil.MakeDeclarationString(args))
+		print 'void PACK_APIENTRY crPack%sBBOX_COUNT(%s);' % (func_name, apiutil.MakeDeclarationString(args))
+		print 'void PACK_APIENTRY crPack%sBBOXSWAP(%s);' % (func_name, apiutil.MakeDeclarationString(args))
+		print 'void PACK_APIENTRY crPack%sBBOX_COUNTSWAP(%s);' % (func_name, apiutil.MakeDeclarationString(args))
 
-print "void PACK_APIENTRY crPackVertexAttrib4ivARBBBOX(GLuint index, const GLint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4ivARBBBOX_COUNT(GLuint index, const GLint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4ivARBBBOXSWAP(GLuint index, const GLint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4ivARBBBOX_COUNTSWAP(GLuint index, const GLint * v);"
-
-print "void PACK_APIENTRY crPackVertexAttrib4NubvARBBBOX(GLuint index, const GLubyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NubvARBBBOX_COUNT(GLuint index, const GLubyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NubvARBBBOXSWAP(GLuint index, const GLubyte * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NubvARBBBOX_COUNTSWAP(GLuint index, const GLubyte * v);"
-
-print "void PACK_APIENTRY crPackVertexAttrib4NubARBBBOX( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
-print "void PACK_APIENTRY crPackVertexAttrib4NubARBBBOX_COUNT( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
-print "void PACK_APIENTRY crPackVertexAttrib4NubARBBBOXSWAP( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
-print "void PACK_APIENTRY crPackVertexAttrib4NubARBBBOX_COUNTSWAP( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
-
-print "void PACK_APIENTRY crPackVertexAttrib4NsvARBBBOX(GLuint index, const GLshort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NsvARBBBOX_COUNT(GLuint index, const GLshort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NsvARBBBOXSWAP(GLuint index, const GLshort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NsvARBBBOX_COUNTSWAP(GLuint index, const GLshort * v);"
-
-print "void PACK_APIENTRY crPackVertexAttrib4NusvARBBBOX(GLuint index, const GLushort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NusvARBBBOX_COUNT(GLuint index, const GLushort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NusvARBBBOXSWAP(GLuint index, const GLushort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4NusvARBBBOX_COUNTSWAP(GLuint index, const GLushort * v);"
-
-print "void PACK_APIENTRY crPackVertexAttrib4uivARBBBOX(GLuint index, const GLuint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4uivARBBBOX_COUNT(GLuint index, const GLuint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4uivARBBBOXSWAP(GLuint index, const GLuint * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4uivARBBBOX_COUNTSWAP(GLuint index, const GLuint * v);"
-
-print "void PACK_APIENTRY crPackVertexAttrib4usvARBBBOX(GLuint index, const GLushort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4usvARBBBOX_COUNT(GLuint index, const GLushort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4usvARBBBOXSWAP(GLuint index, const GLushort * v);"
-print "void PACK_APIENTRY crPackVertexAttrib4usvARBBBOX_COUNTSWAP(GLuint index, const GLushort * v);"
 
 print """
 #ifdef __cplusplus

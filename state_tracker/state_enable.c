@@ -127,7 +127,7 @@ static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 			break;
 		case GL_POINT_SMOOTH :
 			g->point.pointSmooth = val;
-			DIRTY(sb->point.enable, neg_bitid);
+			DIRTY(sb->point.enableSmooth, neg_bitid);
 			DIRTY(sb->point.dirty, neg_bitid);
 			break;
 		case GL_POLYGON_OFFSET_FILL:
@@ -299,12 +299,6 @@ static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 			DIRTY(sb->eval.enable2D[cap - GL_MAP2_COLOR_4], neg_bitid);
 			DIRTY(sb->eval.dirty, neg_bitid);
 			break;
-#ifdef CR_OPENGL_VERSION_1_2
-		case GL_VERTEX_ARRAY:
-		case GL_NORMAL_ARRAY:
-			/* todo */
-			break;
-#endif
 #ifdef CR_ARB_multisample
 		case GL_MULTISAMPLE_ARB:
 			g->multisample.enabled = val;
@@ -458,7 +452,50 @@ static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 			break;
 #endif
 
+#ifdef CR_ARB_point_sprite
+		case GL_POINT_SPRITE_ARB:
+			g->point.pointSprite = val;
+			DIRTY(sb->point.enableSprite, neg_bitid);
+			DIRTY(sb->point.dirty, neg_bitid);
+			break;
+#endif
 
+		/* Client-side enables */
+		case GL_VERTEX_ARRAY:
+		case GL_COLOR_ARRAY:
+		case GL_NORMAL_ARRAY:
+		case GL_INDEX_ARRAY:
+		case GL_TEXTURE_COORD_ARRAY:
+		case GL_EDGE_FLAG_ARRAY:
+#ifdef CR_EXT_fog_coord
+		case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
+#endif
+#ifdef CR_EXT_secondary_color
+		case GL_SECONDARY_COLOR_ARRAY_EXT:
+#endif
+#ifdef CR_NV_vertex_program
+		case GL_VERTEX_ATTRIB_ARRAY0_NV:
+		case GL_VERTEX_ATTRIB_ARRAY1_NV:
+		case GL_VERTEX_ATTRIB_ARRAY2_NV:
+		case GL_VERTEX_ATTRIB_ARRAY3_NV:
+		case GL_VERTEX_ATTRIB_ARRAY4_NV:
+		case GL_VERTEX_ATTRIB_ARRAY5_NV:
+		case GL_VERTEX_ATTRIB_ARRAY6_NV:
+		case GL_VERTEX_ATTRIB_ARRAY7_NV:
+		case GL_VERTEX_ATTRIB_ARRAY8_NV:
+		case GL_VERTEX_ATTRIB_ARRAY9_NV:
+		case GL_VERTEX_ATTRIB_ARRAY10_NV:
+		case GL_VERTEX_ATTRIB_ARRAY11_NV:
+		case GL_VERTEX_ATTRIB_ARRAY12_NV:
+		case GL_VERTEX_ATTRIB_ARRAY13_NV:
+		case GL_VERTEX_ATTRIB_ARRAY14_NV:
+		case GL_VERTEX_ATTRIB_ARRAY15_NV:
+#endif
+			if (val)
+				crStateEnableClientState(cap);
+			else
+				crStateDisableClientState(cap);
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable called with bogus cap: 0x%x", cap);
 			return;

@@ -15,225 +15,266 @@ void TILESORTSPU_APIENTRY tilesortspu_ArrayElement( GLint index )
 	GET_CONTEXT(ctx);
 	if (tilesort_spu.swap)
 	{
-		crPackArrayElementSWAP( index, &(ctx->client) );
+		crPackExpandArrayElementSWAP( index, &(ctx->client) );
 	}
 	else
 	{
-		crPackArrayElement( index, &(ctx->client) );
+		crPackExpandArrayElement( index, &(ctx->client) );
 	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsizei count )
 {
 	GET_CONTEXT(ctx);
-	int i;
 
 	if (count < 0)
 	{
-		crError("tilesortspu_DrawElements passed negative count: %d", count);
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "tilesortspu_DrawElements(count < 0)");
+		return;
 	}
 
 	if (mode > GL_POLYGON)
 	{
-		crError("tilesortspu_DrawElements called with invalid mode: %d", mode);
+		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawElements(mode=%d)", mode);
+		return;
 	}
 
 	if (ctx->current.inBeginEnd)
 	{
-		crError( "tilesortspu_DrawElements called in a Begin/End" );
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION,  "tilesortspu_DrawElements called in a Begin/End" );
+		return;
 	}
 
-	tilesort_spu.self.Begin(mode);
-	if (tilesort_spu.swap)
-	{
-		for (i=0; i<count; i++) 
-		{
-			crPackArrayElementSWAP(first++, &(ctx->client));
-		}
+	if (crStateUseServerArrays()) {
+		/* This is like a glBegin, have to flush all preceeding state changes */
+		tilesortspuFlush( thread );
+		crPackDrawArrays( mode, first, count );
+		/* then broadcast the drawing command */
+		tilesortspuBroadcastGeom(1);
 	}
-	else
-	{
-		for (i=0; i<count; i++) 
+	else {
+		/* client-side arrays, expand into simpler commands */
+		int i;
+		tilesort_spu.self.Begin(mode);
+		if (tilesort_spu.swap)
 		{
-			crPackArrayElement(first++, &(ctx->client));
+			for (i=0; i<count; i++) 
+			{
+				crPackExpandArrayElementSWAP(first++, &(ctx->client));
+			}
 		}
+		else
+		{
+			for (i=0; i<count; i++) 
+			{
+				crPackExpandArrayElement(first++, &(ctx->client));
+			}
+		}
+		tilesort_spu.self.End();
 	}
-	tilesort_spu.self.End();
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
 {
 	GET_CONTEXT(ctx);
-	int i;
-	GLubyte *p = (GLubyte *)indices;
 
 	if (count < 0)
 	{
-		crError("tilesortspu_DrawElements passed negative count: %d", count);
+		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "tilesortspu_DrawElements(count=%d)", count);
+		return;
 	}
 
 	if (mode > GL_POLYGON)
 	{
-		crError("tilesortspu_DrawElements called with invalid mode: %d", mode);
+		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawElements(mode=%d)", mode);
+		return;
 	}
 
 	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
 	{
-		crError("tilesortspu_DrawElements called with invalid type: %d", type);
+		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawElements(type=%d)", type);
+		return;
 	}
-	
-	tilesort_spu.self.Begin( mode );
-	switch (type) 
-	{
-	case GL_UNSIGNED_BYTE:
-		if (tilesort_spu.swap)
-		{
-			for (i=0; i<count; i++)
-			{
-				crPackArrayElementSWAP((GLint) *p++, &(ctx->client));
-			}
-		}
-		else
-		{
-			for (i=0; i<count; i++)
-			{
-				crPackArrayElement((GLint) *p++, &(ctx->client));
-			}
-		}
-		break;
-	case GL_UNSIGNED_SHORT:
-		if (tilesort_spu.swap)
-		{
-			for (i=0; i<count; i++) 
-			{
-				crPackArrayElementSWAP((GLint) * (GLushort *) p, &(ctx->client));
-				p+=sizeof (GLushort);
-			}
-		}
-		else
-		{
-			for (i=0; i<count; i++) 
-			{
-				crPackArrayElement((GLint) * (GLushort *) p, &(ctx->client));
-				p+=sizeof (GLushort);
-			}
-		}
-		break;
-	case GL_UNSIGNED_INT:
-		if (tilesort_spu.swap)
-		{
-			for (i=0; i<count; i++) 
-			{
-				crPackArrayElementSWAP((GLint) * (GLuint *) p, &(ctx->client));
-				p+=sizeof (GLuint);
-			}
-		}
-		else
-		{
-			for (i=0; i<count; i++) 
-			{
-				crPackArrayElement((GLint) * (GLuint *) p, &(ctx->client));
-				p+=sizeof (GLuint);
-			}
-		}
-		break;
-	default:
-		crError( "this can't happen: crPackDrawElements" );
-		break;
-	}
-	tilesort_spu.self.End();
 
-	if(ctx->current.inBeginEnd)
+	if (ctx->current.inBeginEnd)
 	{
-		crError( "tilesortspu_DrawElements called in a Begin/End" );
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION,  "tilesortspu_DrawElements called in a Begin/End" );
+		return;
+	}
+
+	if (crStateUseServerArrays()) {
+		/* This is like a glBegin, have to flush all preceeding state changes */
+		tilesortspuFlush( thread );
+		crPackDrawElements( mode, count, type, indices );
+		/* then broadcast the drawing command */
+		tilesortspuBroadcastGeom(1);
+	}
+	else {
+		/* client-side arrays, expand into simpler commands */
+		GLubyte *p = (GLubyte *)indices;
+		int i;
+		tilesort_spu.self.Begin( mode );
+		switch (type) 
+		{
+		case GL_UNSIGNED_BYTE:
+			if (tilesort_spu.swap)
+			{
+				for (i=0; i<count; i++)
+				{
+					crPackExpandArrayElementSWAP((GLint) *p++, &(ctx->client));
+				}
+			}
+			else
+			{
+				for (i=0; i<count; i++)
+				{
+					crPackExpandArrayElement((GLint) *p++, &(ctx->client));
+				}
+			}
+			break;
+		case GL_UNSIGNED_SHORT:
+			if (tilesort_spu.swap)
+			{
+				for (i=0; i<count; i++) 
+				{
+					crPackExpandArrayElementSWAP((GLint) * (GLushort *) p, &(ctx->client));
+					p+=sizeof (GLushort);
+				}
+			}
+			else
+			{
+				for (i=0; i<count; i++) 
+				{
+					crPackExpandArrayElement((GLint) * (GLushort *) p, &(ctx->client));
+					p+=sizeof (GLushort);
+				}
+			}
+			break;
+		case GL_UNSIGNED_INT:
+			if (tilesort_spu.swap)
+			{
+				for (i=0; i<count; i++) 
+				{
+					crPackExpandArrayElementSWAP((GLint) * (GLuint *) p, &(ctx->client));
+					p+=sizeof (GLuint);
+				}
+			}
+			else
+			{
+				for (i=0; i<count; i++) 
+				{
+					crPackExpandArrayElement((GLint) * (GLuint *) p, &(ctx->client));
+					p+=sizeof (GLuint);
+				}
+			}
+			break;
+		default:
+			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawElements(type=0x%s)", type);
+			return;
+		}
+		tilesort_spu.self.End();
 	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
 {
 	GET_CONTEXT(ctx);
-	int i;
-	GLubyte *p = (GLubyte *)indices;
 
 	if (count < 0)
 	{
-		crError("tilesortspu_DrawRangeElements passed negative count: %d", count);
+		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "tilesortspu_DrawRangeElements(count=%d)", count);
+		return;
 	}
 
 	if (mode > GL_POLYGON)
 	{
-		crError("tilesortspu_DrawRangeElements called with invalid mode: %d", mode);
+		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawRangeElements(mode=%d)", mode);
+		return;
 	}
 
 	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
 	{
-		crError("tilesortspu_DrawRangeElements called with invalid type: %d", type);
+		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawRangeElements(type=0x%x)", type);
+		return;
 	}
 	
-	tilesort_spu.self.Begin( mode );
-	switch (type) 
+	if (ctx->current.inBeginEnd)
 	{
-	case GL_UNSIGNED_BYTE:
-		if (tilesort_spu.swap)
-		{
-			for (i=start; i<count; i++)
-			{
-				crPackArrayElementSWAP((GLint) *p++, &(ctx->client));
-			}
-		}
-		else
-		{
-			for (i=start; i<count; i++)
-			{
-				crPackArrayElement((GLint) *p++, &(ctx->client));
-			}
-		}
-		break;
-	case GL_UNSIGNED_SHORT:
-		if (tilesort_spu.swap)
-		{
-			for (i=start; i<count; i++) 
-			{
-				crPackArrayElementSWAP((GLint) * (GLushort *) p, &(ctx->client));
-				p+=sizeof (GLushort);
-			}
-		}
-		else
-		{
-			for (i=start; i<count; i++) 
-			{
-				crPackArrayElement((GLint) * (GLushort *) p, &(ctx->client));
-				p+=sizeof (GLushort);
-			}
-		}
-		break;
-	case GL_UNSIGNED_INT:
-		if (tilesort_spu.swap)
-		{
-			for (i=start; i<count; i++) 
-			{
-				crPackArrayElementSWAP((GLint) * (GLuint *) p, &(ctx->client));
-				p+=sizeof (GLuint);
-			}
-		}
-		else
-		{
-			for (i=start; i<count; i++) 
-			{
-				crPackArrayElement((GLint) * (GLuint *) p, &(ctx->client));
-				p+=sizeof (GLuint);
-			}
-		}
-		break;
-	default:
-		crError( "this can't happen: crPackDrawRangeElements" );
-		break;
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "tilesortspu_DrawRangeElements called in a Begin/End" );
+		return;
 	}
-	tilesort_spu.self.End();
 
-	if(ctx->current.inBeginEnd)
-	{
-		crError( "tilesortspu_DrawRangeElements called in a Begin/End" );
+	if (crStateUseServerArrays()) {
+		/* This is like a glBegin, have to flush all preceeding state changes */
+		tilesortspuFlush( thread );
+		crPackDrawRangeElements( mode, start, end, count, type, indices );
+		/* then broadcast the drawing command */
+		tilesortspuBroadcastGeom(1);
+	}
+	else {
+		/* client-side arrays, expand into simpler commands */
+		GLubyte *p = (GLubyte *)indices;
+		int i;
+		tilesort_spu.self.Begin( mode );
+		switch (type) 
+		{
+		case GL_UNSIGNED_BYTE:
+			if (tilesort_spu.swap)
+			{
+				for (i=start; i<count; i++)
+				{
+					crPackExpandArrayElementSWAP((GLint) *p++, &(ctx->client));
+				}
+			}
+			else
+			{
+				for (i=start; i<count; i++)
+				{
+					crPackExpandArrayElement((GLint) *p++, &(ctx->client));
+				}
+			}
+			break;
+		case GL_UNSIGNED_SHORT:
+			if (tilesort_spu.swap)
+			{
+				for (i=start; i<count; i++) 
+				{
+					crPackExpandArrayElementSWAP((GLint) * (GLushort *) p, &(ctx->client));
+					p+=sizeof (GLushort);
+				}
+			}
+			else
+			{
+				for (i=start; i<count; i++) 
+				{
+					crPackExpandArrayElement((GLint) * (GLushort *) p, &(ctx->client));
+					p+=sizeof (GLushort);
+				}
+			}
+			break;
+		case GL_UNSIGNED_INT:
+			if (tilesort_spu.swap)
+			{
+				for (i=start; i<count; i++) 
+				{
+					crPackExpandArrayElementSWAP((GLint) * (GLuint *) p, &(ctx->client));
+					p+=sizeof (GLuint);
+				}
+			}
+			else
+			{
+				for (i=start; i<count; i++) 
+				{
+					crPackExpandArrayElement((GLint) * (GLuint *) p, &(ctx->client));
+					p+=sizeof (GLuint);
+				}
+			}
+			break;
+		default:
+			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,  "tilesortspu_DrawRangeElements(type=0x%s)", type);
+			return;
+		}
+		tilesort_spu.self.End();
 	}
 }
 
@@ -244,11 +285,11 @@ void TILESORTSPU_APIENTRY tilesortspu_MultiDrawArraysEXT( GLenum mode, GLint *fi
 	CRClientState *clientState = &(ctx->client);
 	if (tilesort_spu.swap)
 	{
-		crPackMultiDrawArraysEXTSWAP( mode, first, count, primcount, clientState );
+		crPackExpandMultiDrawArraysEXTSWAP( mode, first, count, primcount, clientState );
 	}
 	else
 	{
-		crPackMultiDrawArraysEXT( mode, first, count, primcount, clientState );
+		crPackExpandMultiDrawArraysEXT( mode, first, count, primcount, clientState );
 	}
 }
 
@@ -258,11 +299,11 @@ void TILESORTSPU_APIENTRY tilesortspu_MultiDrawElementsEXT( GLenum mode, const G
 	CRClientState *clientState = &(ctx->client);
 	if (tilesort_spu.swap)
 	{
-		crPackMultiDrawElementsEXTSWAP( mode, count, type, indices, primcount, clientState );
+		crPackExpandMultiDrawElementsEXTSWAP( mode, count, type, indices, primcount, clientState );
 	}
 	else
 	{
-		crPackMultiDrawElementsEXT( mode, count, type, indices, primcount, clientState );
+		crPackExpandMultiDrawElementsEXT( mode, count, type, indices, primcount, clientState );
 	}
 }
 #endif

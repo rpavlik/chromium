@@ -96,10 +96,6 @@ void crdlmClientInit(CRClientState *c)
     /* ARB multitexture */
     c->curClientTextureUnit = 0;
 
-    c->list_alloc = GLCLIENT_LIST_ALLOC;
-    c->list_size = 0;
-    c->list = (int *) crCalloc(c->list_alloc * sizeof (int));
-
     /* vertex array */
     c->array.v.p = NULL;
     c->array.v.size = 0;

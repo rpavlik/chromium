@@ -28,4 +28,25 @@ extern CRContext *__currentContext;
 extern void crStateTextureInitTextureObj (CRContext *ctx, CRTextureObj *tobj, GLuint name, GLenum target);
 extern void crStateTextureInitTextureFormat( CRTextureLevel *tl, GLenum internalFormat );
 
+/* Normally these functions would have been in cr_bufferobject.h but
+ * that led to a number of issues.
+ */
+void crStateBufferObjectInit(CRContext *ctx);
+
+void crStateBufferObjectDestroy (CRContext *ctx);
+
+void crStateBufferObjectDiff(CRBufferObjectBits *bb, CRbitvalue *bitID,
+														 CRContext *fromCtx, CRContext *toCtx);
+
+void crStateBufferObjectSwitch(CRBufferObjectBits *bb, CRbitvalue *bitID, 
+															 CRContext *fromCtx, CRContext *toCtx);
+
+
+/* These would normally be in cr_client.h */
+
+void crStateClientDiff(CRClientBits *cb, CRbitvalue *bitID, CRContext *from, CRContext *to);
+											 
+void crStateClientSwitch(CRClientBits *cb, CRbitvalue *bitID,	CRContext *from, CRContext *to);
+
+
 #endif

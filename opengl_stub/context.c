@@ -20,7 +20,6 @@
 #include "cr_mothership.h"
 #include "cr_string.h"
 #include "stub.h"
-#include "api_templates.h"
 
 
 #ifndef WINDOWS

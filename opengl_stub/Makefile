@@ -9,7 +9,7 @@ include ${TOP}/arch.mk
 
 SHARED = 1
 LIBRARY = crfaker
-FILES = getprocaddress load stub context dummyfuncs NULLfuncs
+FILES = getprocaddress load stub context NULLfuncs
 LIBRARIES = crmothership crutil spuload
 
 ifeq ($(THREADSAFE), 1)
@@ -51,7 +51,7 @@ endif
 
 ifeq ($(ARCH), AIX)
 OPENGL = 1
-FILES += $(ARCH)_exports glx xfont AIX_edgeflagpointer
+FILES += $(ARCH)_exports glx xfont
 ARCH_EXPORTS_PY = IRIX64_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
@@ -64,20 +64,20 @@ ARCH_EXPORTS = $(ARCH)_exports.c
 endif
 
 ifeq ($(ARCH), IRIX64)
-FILES += $(ARCH)_exports glx IRIX_edgeflagpointer xfont
+FILES += $(ARCH)_exports glx xfont
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
 
 ifeq ($(ARCH), IRIX)
-FILES += IRIX64_exports glx IRIX_edgeflagpointer xfont
+FILES += IRIX64_exports glx xfont
 ARCH_EXPORTS_PY = IRIX64_exports.py
 ARCH_EXPORTS = IRIX64_exports.c 
 endif
 
 ifeq ($(ARCH), OSF1)
 LDFLAGS += -lX11
-FILES += $(ARCH)_exports glx xfont OSF1_edgeflagpointer
+FILES += $(ARCH)_exports glx OSF1_edgeflagpointer
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
@@ -93,22 +93,24 @@ ifdef WINDOWS
 LDFLAGS += user32.lib ws2_32.lib gdi32.lib
 endif
 
-opengl.def: stub_common.py defs.py
+APIFILES = ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
+
+opengl.def: defs.py $(APIFILES)
 	@$(ECHO) "Creating the defs file..."
 	@$(PYTHON) defs.py > opengl.def
 
-getprocaddress.c: getprocaddress.py getprocaddress_special alias_exports.py
+getprocaddress.c: getprocaddress.py $(APIFILES)
 	@$(ECHO) "Creating crGetProcAddress"
 	@$(PYTHON) getprocaddress.py > getprocaddress.c
 
-$(ARCH_EXPORTS): stub_common.py $(ARCH_EXPORTS_PY) alias_exports.py
+$(ARCH_EXPORTS): $(ARCH_EXPORTS_PY) $(APIFILES) entrypoints.py
 	@$(ECHO) "Creating the OpenGL DLL export functions (for $(ARCH))"
 	@$(PYTHON) $(ARCH_EXPORTS_PY) > $(ARCH_EXPORTS)
 
-NULLfuncs.c: NULLfuncs.py ../glapi_parser/gl_header.parsed
+NULLfuncs.c: NULLfuncs.py $(APIFILES)
 	@$(ECHO) "Creating the NULL dispatch table functions"
 	@$(PYTHON) NULLfuncs.py > NULLfuncs.c
 
-tsfuncs.c: tsfuncs.py ../glapi_parser/gl_header.parsed
+tsfuncs.c: tsfuncs.py $(APIFILES)
 	@$(ECHO) "Building thread-safe dispatch code"
 	@$(PYTHON) tsfuncs.py > tsfuncs.c

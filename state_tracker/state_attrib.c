@@ -209,6 +209,11 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		}
 		a->enableStack[a->enableStackDepth].normalize = g->transform.normalize;
 		a->enableStack[a->enableStackDepth].pointSmooth = g->point.pointSmooth;
+#if CR_ARB_point_sprite
+		a->enableStack[a->enableStackDepth].pointSprite = g->point.pointSprite;
+		for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
+			a->enableStack[a->enableStackDepth].coordReplacement[i] = g->point.coordReplacement[i];
+#endif
 		a->enableStack[a->enableStackDepth].polygonOffsetLine = g->polygon.polygonOffsetLine;
 		a->enableStack[a->enableStackDepth].polygonOffsetFill = g->polygon.polygonOffsetFill;
 		a->enableStack[a->enableStackDepth].polygonOffsetPoint = g->polygon.polygonOffsetPoint;
@@ -378,6 +383,11 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	if (mask & GL_POINT_BIT)
 	{
 		a->pointStack[a->pointStackDepth].pointSmooth = g->point.pointSmooth;
+#if CR_ARB_point_sprite
+		a->pointStack[a->pointStackDepth].pointSprite = g->point.pointSprite;
+		for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
+			a->pointStack[a->enableStackDepth].coordReplacement[i] = g->point.coordReplacement[i];
+#endif
 		a->pointStack[a->pointStackDepth].pointSize = g->point.pointSize;
 		a->pointStackDepth++;
 	}
@@ -647,6 +657,11 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		}
 		g->transform.normalize = a->enableStack[a->enableStackDepth].normalize;
 		g->point.pointSmooth = a->enableStack[a->enableStackDepth].pointSmooth;
+#ifdef CR_ARB_point_sprite
+		g->point.pointSprite = a->enableStack[a->enableStackDepth].pointSprite;
+		for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
+			g->point.coordReplacement[i] = a->enableStack[a->enableStackDepth].coordReplacement[i];
+#endif
 		g->polygon.polygonOffsetLine = a->enableStack[a->enableStackDepth].polygonOffsetLine;
 		g->polygon.polygonOffsetFill = a->enableStack[a->enableStackDepth].polygonOffsetFill;
 		g->polygon.polygonOffsetPoint = a->enableStack[a->enableStackDepth].polygonOffsetPoint;
@@ -925,9 +940,17 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		a->pointStackDepth--;
 		g->point.pointSmooth = a->pointStack[a->pointStackDepth].pointSmooth;
 		g->point.pointSize = a->pointStack[a->pointStackDepth].pointSize;
+#if GL_ARB_point_sprite
+		g->point.pointSprite = a->pointStack[a->pointStackDepth].pointSprite;
+		DIRTY(sb->point.enableSprite, g->neg_bitid);
+		for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++) {
+			g->point.coordReplacement[i] = a->enableStack[a->enableStackDepth].coordReplacement[i];
+			DIRTY(sb->point.coordReplacement[i], g->neg_bitid);
+		}
+#endif
 		DIRTY(sb->point.dirty, g->neg_bitid);
 		DIRTY(sb->point.size, g->neg_bitid);
-		DIRTY(sb->point.enable, g->neg_bitid);
+		DIRTY(sb->point.enableSmooth, g->neg_bitid);
 	}
 	if (mask & GL_POLYGON_BIT)
 	{

@@ -147,7 +147,7 @@ def gendiffcode(fname, state_name, docopy, doinvalid):
 		if current_guard != guardbit and guardbit != "":
 			print tab+"if (CHECKDIRTY(%(bit)s->%(guardbit)s, bitID))\n%(tab)s{"%vars()
 			tab = tab+"\t"
-			if members[0] != "*" and guardbit == "enable":
+			if members[0] != "*" and guardbit[0:6] == "enable":
 				print tab+"glAble able[2];"
 				print tab+"able[0] = diff_api.Disable;"
 				print tab+"able[1] = diff_api.Enable;"
@@ -193,7 +193,7 @@ def gendiffcode(fname, state_name, docopy, doinvalid):
 			else:
 				if func != "":
 ## Call the glhw function
-					if guardbit == "enable":
+					if guardbit[0:6] == "enable":
 						print tab+"able["+target+"->"+elems[0]+"]("+func+");"
 					elif guardbit == "extensions":
 						print tab+"crState$state_name",

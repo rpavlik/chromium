@@ -1,3 +1,4 @@
 CreateContext
 WindowCreate
 GetChromiumParametervCR
+ReadPixels

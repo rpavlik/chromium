@@ -2627,6 +2627,12 @@ extern "C" {
 #endif
 
 
+#ifndef GL_ARB_point_sprite
+#define GL_POINT_SPRITE_ARB                0x8861
+#define GL_COORD_REPLACE_ARB               0x8862
+#endif
+
+
 /*************************************************************/
 
 #ifndef GL_VERSION_1_2
@@ -5537,6 +5543,10 @@ typedef void (APIENTRY * PFNGLGETVERTEXATTRIBARRAYOBJECTFVATIPROC) (GLuint index
 typedef void (APIENTRY * PFNGLGETVERTEXATTRIBARRAYOBJECTIVATIPROC) (GLuint index, GLenum pname, GLint *params);
 #endif
 
+
+#ifndef GL_ARB_point_sprite
+#define GL_ARB_point_sprite 1
+#endif
 
 #ifdef __cplusplus
 }

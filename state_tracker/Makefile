@@ -12,6 +12,7 @@ LIBRARIES = spuload crutil crmothership
 
 REGULAR_FILES = state_attrib \
 	state_buffer \
+	state_bufferobject \
 	state_client \
 	state_current \
 	state_diff \
@@ -32,6 +33,7 @@ REGULAR_FILES = state_attrib \
 	state_line \
 	state_lists \
 	state_multisample \
+	state_occlude \
 	state_pixel \
 	state_point \
 	state_polygon \
@@ -101,19 +103,21 @@ endif
 
 include $(TOP)/cr.mk
 
-state_get.c: state_get.py state_get.txt state_extensions_get.txt
+APIFILES = ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
+
+state_get.c: state_get.py state_get.txt state_extensions_get.txt $(APIFILES)
 	@$(ECHO) Making the Get functions
 	@$(PYTHON) state_get.py > $@
 
-state_isenabled.c: state_isenabled.py state_isenabled.txt state_extensions_isenabled.txt
+state_isenabled.c: state_isenabled.py state_isenabled.txt state_extensions_isenabled.txt $(APIFILES)
 	@$(ECHO) Making the IsEnabled function
 	@$(PYTHON) state_isenabled.py > $@
 
-state.def: state_defs.py state_special state_select_special state_feedback_special
+state.def: state_defs.py state_special state_select_special state_feedback_special $(APIFILES)
 	@$(ECHO) Making state.def
 	@$(PYTHON) state_defs.py > $@
 
-../include/state/cr_statefuncs.h: state_funcs.py state_special state_feedback_special state_select_special
+../include/state/cr_statefuncs.h: state_funcs.py state_special state_feedback_special state_select_special $(APIFILES)
 	@$(ECHO) Making cr_statefuncs.h
 	@$(PYTHON) state_funcs.py > $@
 
@@ -125,7 +129,7 @@ state_client_gen.c: state_client.txt gendiffcode.py
 	@$(ECHO) Making $@
 	@$(PYTHON) gendiffcode.py client Client > $@
 
-state_current_gen.c: state_current.py convert.py
+state_current_gen.c: state_current.py convert.py $(APIFILES)
 	@$(ECHO) Making $@
 	@$(PYTHON) state_current.py > $@
 

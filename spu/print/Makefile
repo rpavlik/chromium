@@ -26,7 +26,7 @@ SPU_COPIES = COPYprintspu
 LIB_DEFS += print.def
 include ${TOP}/cr.mk
 
-printspu.c: print.py printspu_unimplemented_special printspu_special
+printspu.c: print.py printspu_unimplemented_special printspu_special ../../glapi_parser/apiutil.py ../../glapi_parser/APIspec.txt
 	@$(ECHO) Building the Print SPU
 	@$(PYTHON) print.py > $@
 

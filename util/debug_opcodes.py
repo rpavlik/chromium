@@ -8,14 +8,10 @@ import cPickle;
 import string;
 import re;
 
-sys.path.append( "../opengl_stub" )
+sys.path.append("../glapi_parser")
+import apiutil
 
-import stub_common;
-
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
-
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """
 #include "cr_debugopcodes.h"
@@ -31,13 +27,13 @@ print """void crDebugOpcodes( FILE *fp, unsigned char *ptr, unsigned int num_opc
 \t\t{
 """
 
-keys = gl_mapping.keys()
-keys.sort();
+keys = apiutil.GetDispatchedFunctions()
+keys.sort()
 
 for func_name in keys:
-	if not stub_common.FindSpecial( "../packer/opcode", func_name ) and not stub_common.FindSpecial( "../packer/opcode_extend", func_name ):
-		print '\t\tcase %s:' % stub_common.OpcodeName( func_name )
-		print '\t\t\tfprintf( fp, "%s\\n" ); ' % stub_common.OpcodeName( func_name )
+	if "pack" in apiutil.ChromiumProps(func_name):
+		print '\t\tcase %s:' % apiutil.OpcodeName( func_name )
+		print '\t\t\tfprintf( fp, "%s\\n" ); ' % apiutil.OpcodeName( func_name )
 		print '\t\t\tbreak;'
 
 print """

@@ -66,6 +66,7 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	/* Init window, context hash tables */
 	tilesort_spu.windowTable = crAllocHashtable();
 	tilesort_spu.contextTable = crAllocHashtable();
+	tilesort_spu.listTable = crAllocHashtable();
 
 	tilesort_spu.id = id;
 	tilesortspuGatherConfiguration( child );
@@ -89,6 +90,7 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 			tilesort_spu.MTU - sizeof(CRMessageOpcodes) - (24+END_FLUFF+4+4);
 
 	tilesort_spu.swap = thread0->net[0].conn->swap;
+	tilesort_spu.replay = 0;
 
 	tilesortspuInitThreadPacking( thread0 );
 
@@ -98,8 +100,10 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	tilesortspuCreateDiffAPI();
 
         /* special dispatch tables for display lists */
+	crMemZero((void *)&tilesort_spu.packerDispatch, sizeof tilesort_spu.packerDispatch);
         crSPUInitDispatchTable(&tilesort_spu.packerDispatch);
         tilesortspuLoadPackTable(&tilesort_spu.packerDispatch);
+
         crSPUInitDispatchTable(&tilesort_spu.stateDispatch);
         tilesortspuLoadStateTable(&tilesort_spu.stateDispatch);
 
@@ -136,6 +140,12 @@ static void freeWindowCallback(void *data)
 	 tilesortspuFreeWindowInfo(winInfo);
 }
 
+static void freeListCallback(void *data)
+{
+	 int *listSent = (int *) data;
+	 crFree(listSent);
+}
+
 static int
 tilesortSPUCleanup(void)
 {
@@ -143,6 +153,8 @@ tilesortSPUCleanup(void)
 	tilesort_spu.windowTable = NULL;
 	crFreeHashtable(tilesort_spu.contextTable, freeContextCallback);
 	tilesort_spu.contextTable = NULL;
+	crFreeHashtable(tilesort_spu.listTable, freeListCallback);
+	tilesort_spu.listTable = NULL;
 
 	return 1;
 }

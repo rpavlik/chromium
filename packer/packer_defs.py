@@ -5,21 +5,19 @@
 
 # This script generates the packer/packer.def file.
 
-import sys,os;
-import cPickle;
-import string;
-sys.path.append( "../opengl_stub" )
-import stub_common;
+import sys
+import cPickle
 
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../glapi_parser" )
+import apiutil
 
-stub_common.CopyrightDef()
 
+apiutil.CopyrightDef()
+
+print "DESCRIPTION \"\""
 print "EXPORTS"
 
-keys = gl_mapping.keys()
-keys.sort();
+keys = apiutil.GetDispatchedFunctions()
 for func_name in keys:
     print "crPack%s" % func_name
     print "crPack%sSWAP" % func_name

@@ -15,11 +15,7 @@ rasterpos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	/* We can't disable raster pos clipping on the back-end.
 	 * Use the old window-pos/bitmap method.
 	 */
-	GET_THREAD(thread);
-	WindowInfo *winInfo = thread->currentContext->currentWindow;
-	GLfloat zoomedWidth  = x * (float)(winInfo->muralWidth)  / (float)(winInfo->lastWidth);
-	GLfloat zoomedHeight = y * (float)(winInfo->muralHeight) / (float)(winInfo->lastHeight);
-	crStateRasterPos4f(zoomedWidth, zoomedHeight, z, w); /* DO set dirty state */
+	crStateRasterPos4f(x, y, z, w); /* DO set dirty state */
 }
 
 

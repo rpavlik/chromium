@@ -3,52 +3,91 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import types;
-import string;
-import re;
-import alias_exports;
-import stub_common;
 
-parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+import sys
 
-keys = gl_mapping.keys()
-keys.sort();
+sys.path.append("../glapi_parser")
+import apiutil
 
-stub_common.CopyrightC()
 
-print """#include "chromium.h"
-#include "api_templates.h"
+def GenerateEntrypoints():
 
-#define NAKED __declspec(naked)
-#define UNUSED(x) ((void)(x))
-"""
+	apiutil.CopyrightC()
 
-for func_name in keys:
-	if stub_common.FindSpecial( "noexport", func_name ):
-		continue
-	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
+	print '#include "chromium.h"'
+	print ''
+	print '#define NAKED __declspec(naked)'
+	print '#define UNUSED(x) ((void)(x))'
+	print ''
 
-	print "NAKED %s cr_gl%s" % (return_type, func_name),
-	print stub_common.ArgumentString( arg_names, arg_types )
-	print "{"
-	print "\t__asm jmp [glim.%s]" % func_name
-	for arg_name in arg_names:
-		if arg_name: 
-			print "\tUNUSED( %s );" % arg_name
-	print "}"
-	print ""
 
-	real_func_name = alias_exports.AliasMap(func_name);
-	if real_func_name:
-		print "NAKED %s cr_gl%s" % (return_type, real_func_name),
-		print stub_common.ArgumentString( arg_names, arg_types )
+	# Get sorted list of dispatched functions.
+	# The order is very important - it must match cr_opcodes.h
+	# and spu_dispatch_table.h
+	keys = apiutil.GetDispatchedFunctions("../glapi_parser/APIspec.txt")
+
+	for index in range(len(keys)):
+		func_name = keys[index]
+		if apiutil.Category(func_name) == "Chromium":
+			continue
+
+		return_type = apiutil.ReturnType(func_name)
+		params = apiutil.Parameters(func_name)
+
+		print "NAKED %s cr_gl( %s )" % (return_type, func_name),
+		print apiutil.MakeDeclarationString( params )
 		print "{"
 		print "\t__asm jmp [glim.%s]" % func_name
-		for arg_name in arg_names:
-			if arg_name: 
-				print "\tUNUSED( %s );" % arg_name
+		for (name, type, vecSize) in params:
+			print "\tUNUSED( %s );" % name
 		print "}"
 		print ""
+
+	print '/*'
+	print '* Aliases'
+	print '*/'
+
+	# Now loop over all the functions and take care of any aliases
+	allkeys = apiutil.GetAllFunctions("../glapi_parser/APIspec.txt")
+	for func_name in allkeys:
+		if "omit" in apiutil.ChromiumProps(func_name):
+			continue
+
+		if func_name in keys:
+			# we already processed this function earlier
+			continue
+
+		# alias is the function we're aliasing
+		alias = apiutil.Alias(func_name)
+		if alias:
+			return_type = apiutil.ReturnType(func_name)
+			params = apiutil.Parameters(func_name)
+			print "NAKED %s cr_gl( %s )" % (return_type, real_func_name),
+			print apiutil.MakeDeclarationString( params )
+			print "{"
+			print "\t__asm jmp [glim.%s]" % func_name
+			for (name, type, vecSize) in params:
+				print "\tUNUSED( %s );" % name
+			print "}"
+			print ""
+
+
+	print '/*'
+	print '* No-op stubs'
+	print '*/'
+
+	# Now generate no-op stub functions
+	for func_name in allkeys:
+		if "stub" in apiutil.ChromiumProps(func_name):
+			print "%s gl%s( %s )" % (return_type, func_name, apiutil.MakeDeclarationString(params))
+			print "{"
+			if return_type != "void":
+				print "return (%s) 0" % return_type
+			print "}"
+			print ""
+
+
+		
+
+GenerateEntrypoints()
+

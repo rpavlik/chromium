@@ -29,6 +29,7 @@ num_components = {
 	'GL_TEXTURE_BORDER_COLOR' : 4,
 	'GL_TEXTURE_WIDTH': 1,
 	'GL_TEXTURE_HEIGHT': 1,
+	'GL_TEXTURE_DEPTH': 1,
 	# 'GL_TEXTURE_INTERNAL_FORMAT': 1,  THIS CONFLICTS WITH SOMETHING?!
 	'GL_TEXTURE_BORDER': 1,
 	'GL_TEXTURE_RED_SIZE': 1,
@@ -85,10 +86,18 @@ num_extended_components = {
 	'GL_TEXTURE_COMPARE_FAIL_VALUE_ARB': (1, 'CR_ARB_shadow_ambient'),
 	'GL_GENERATE_MIPMAP_SGIS': (1, 'CR_SGIS_generate_mipmap'),
 	'GL_TEXTURE_LOD_BIAS_EXT': (1, 'CR_EXT_texture_lod_bias'),
-	'GL_CURRENT_VERTEX_ATTRIB_ARB': (4, 'CR_any_vertex_program')
+	'GL_CURRENT_VERTEX_ATTRIB_ARB': (4, 'CR_any_vertex_program'),
+	'GL_BUFFER_SIZE_ARB': (1, 'CR_ARB_vertex_buffer_object'),
+	'GL_BUFFER_USAGE_ARB': (1, 'CR_ARB_vertex_buffer_object'),
+	'GL_BUFFER_ACCESS_ARB': (1, 'CR_ARB_vertex_buffer_object'),
+	'GL_BUFFER_MAPPED_ARB': (1, 'CR_ARB_vertex_buffer_object'),
+	'GL_QUERY_COUNTER_BITS_ARB': (1, 'CR_ARB_occlusion_query'),
+	'GL_QUERY_RESULT_AVAILABLE_ARB': (1, 'CR_ARB_occlusion_query'),
+	'GL_QUERY_RESULT_ARB': (1, 'CR_ARB_occlusion_query'),
+	'GL_CURRENT_QUERY_ARB': (1, 'CR_ARB_occlusion_query'),
 }
 
-print """static unsigned int __lookupComponents( GLenum pname )
+print """static unsigned int lookupComponents( GLenum pname )
 {
 	switch( pname )
 	{
@@ -108,7 +117,7 @@ for comp in comps:
 
 print """
 		default:
-			crError( "Unknown parameter name in __lookupComponents: 0x%x", (int) pname );
+			crError( "Unknown parameter name in lookupComponents: %d", pname );
 			break;
 	}
 	/* NOTREACHED */

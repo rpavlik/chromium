@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
 #include "cr_error.h"
 #include "cr_version.h"
 #include "state.h"
@@ -25,7 +24,7 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 		case GL_RENDERER:
 			return (const GLubyte *) CR_RENDERER;
 		case GL_VERSION:
-			return g->extensions.version;
+			return CR_OPENGL_VERSION_STRING "Chromium" CR_VERSION_STRING;
 		case GL_EXTENSIONS:
 			/* This shouldn't normally be queried - the relevant SPU should
 			 * catch this query and do all the extension string merging/mucking.

@@ -24,11 +24,14 @@ void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height,
 		return;
 	}
 
+#if 0
+	/* WHAT IS THIS FOR?  Disabled by Brian on 3 Dec 2003 */
 	if (type == GL_BITMAP)
 	{
 		crPackBitmap( width, height, 0, 0, 0, 0,
 									(const GLubyte *) pixels, unpackstate );
 	}
+#endif
 
 	packet_length = 
 		sizeof( width ) +
@@ -54,7 +57,8 @@ void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height,
 void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width, 
 																		 GLsizei height, GLenum format,
 																		 GLenum type, GLvoid *pixels,
-																		 const CRPixelPackState *packstate )
+																		 const CRPixelPackState *packstate,
+																		 int *writeback)
 {
 	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
@@ -206,4 +210,52 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 	WRITE_DATA( 24, GLuint, isnull );
 
 	crHugePacket( CR_BITMAP_OPCODE, data_ptr );
+}
+/*
+       ZPix - compressed DrawPixels
+*/
+void PACK_APIENTRY crPackZPix( GLsizei width, GLsizei height, 
+        GLenum format, GLenum type,
+        GLenum ztype, GLint zparm, GLint length,
+        const GLvoid *pixels,
+        const CRPixelPackState *unpackstate )
+{
+	unsigned char *data_ptr;
+	int packet_length;
+
+	if (pixels == NULL)
+	{
+		return;
+	}
+
+	packet_length = 
+		sizeof( int ) +  /* packet size */
+		sizeof( GLenum ) +  /* extended opcode */
+		sizeof( width ) +
+		sizeof( height ) +
+		sizeof( format ) +
+		sizeof( type ) +
+		sizeof( ztype ) +
+		sizeof( zparm ) +
+		sizeof( length );
+
+	packet_length += length;
+
+/* XXX JAG
+  crDebug("PackZPix: fb %d x %d, state %d, zlen = %d, plen = %d",
+                               width, height, ztype, length, packet_length);
+*/
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA(  0, GLenum , CR_ZPIX_EXTEND_OPCODE );
+	WRITE_DATA(  4, GLsizei, width );
+	WRITE_DATA(  8, GLsizei, height );
+	WRITE_DATA( 12, GLenum,  format );
+	WRITE_DATA( 16, GLenum,  type );
+	WRITE_DATA( 20, GLenum,  ztype );
+	WRITE_DATA( 24, GLint,   zparm );
+	WRITE_DATA( 28, GLint,   length );
+
+        crMemcpy((void *) (data_ptr+32), pixels, length);
+
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
 }

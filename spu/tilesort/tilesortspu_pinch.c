@@ -56,6 +56,9 @@ void tilesortspuPinch (void)
 	/* unsigned char *index_ptr = ctx->current.current->index.ptr; */
 	CRVertex v_current;
 
+	/* make sure the table is the correct size. */
+	CRASSERT( sizeof(__cr_packet_length_table) / sizeof(int) == CR_EXTEND_OPCODE + 1 );
+
 	/* silence warnings */
 	(void) __convert_b1;
 	(void) __convert_b2;
@@ -276,6 +279,7 @@ void tilesortspuPinch (void)
 			do 
 			{
 				CRASSERT(*op < sizeof(__cr_packet_length_table) / sizeof(int) - 1);
+				CRASSERT(__cr_packet_length_table[*op] > 0);
 				data += __cr_packet_length_table[*op]; /* generated */
 				op--;
 				ASSERT_BOUNDS(op, data);
@@ -287,6 +291,7 @@ void tilesortspuPinch (void)
 			{
 				op++;
 				CRASSERT(*op < sizeof(__cr_packet_length_table) / sizeof(int) - 1);
+				CRASSERT(__cr_packet_length_table[*op] > 0);
 				data -= __cr_packet_length_table[*op];
 				ASSERT_BOUNDS(op, data);
 			} while (!IS_VERTEX(*op));
@@ -311,6 +316,7 @@ void tilesortspuPinch (void)
 				while (op <= thread->packer->buffer.opcode_start && !IS_COLOR(*op)) 
 				{
 					op++;
+					CRASSERT(__cr_packet_length_table[*op] > 0);
 					data -= __cr_packet_length_table[*op];
 				}
 
@@ -333,10 +339,12 @@ void tilesortspuPinch (void)
 			{
 				/* Perform the search */
 				op = vtx_op+1;
+				CRASSERT(__cr_packet_length_table[*(vtx_op+1)] > 0);
 				data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
 				while (op <= thread->packer->buffer.opcode_start && !IS_NORMAL(*op)) 
 				{
 					op++;
+					CRASSERT(__cr_packet_length_table[*op] > 0);
 					data -= __cr_packet_length_table[*op];
 				}
 
@@ -362,10 +370,12 @@ void tilesortspuPinch (void)
 
 					/* Perform the search */
 					op = vtx_op+1;
+					CRASSERT(__cr_packet_length_table[*(vtx_op+1)] > 0);
 					data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
 					while (op <= thread->packer->buffer.opcode_start && !IS_TEXCOORD(*op)) 
 					{
 						op++;
+						CRASSERT(__cr_packet_length_table[*op] > 0);
 						data -= __cr_packet_length_table[*op];
 					}
 
@@ -390,10 +400,12 @@ void tilesortspuPinch (void)
 
 				/* Perform the search */
 				op = vtx_op+1;
+				CRASSERT(__cr_packet_length_table[*(vtx_op+1)] > 0);
 				data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
 				while (op <= thread->packer->buffer.opcode_start && !IS_EDGEFLAG(*op)) 
 				{
 					op++;
+					CRASSERT(__cr_packet_length_table[*op] > 0);
 					data -= __cr_packet_length_table[*op];
 				}
 
@@ -411,7 +423,8 @@ void tilesortspuPinch (void)
 				}
 			}
 
-			/* XXX other vertex attribs */
+			/* XXX other vertex attribs like fog, secondary color, etc. */
+
 		} 
 		else 
 		{

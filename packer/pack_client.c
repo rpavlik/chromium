@@ -8,15 +8,14 @@
 #include "cr_opcodes.h"
 #include "cr_version.h"
 
-void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
+/*
+ * Expand glArrayElement into crPackVertex/Color/Normal/etc.
+ */
+void
+crPackExpandArrayElement(GLint index, CRClientState *c)
 {
 	unsigned char *p;
 	int unit;
-
-#if 0
-	if (index < 0)
-		UNIMPLEMENTED();
-#endif
 
 	if (c->array.e.enabled)
 	{
@@ -222,7 +221,9 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 	}
 }
 
-void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c)
+
+void
+crPackExpandDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c)
 {
 	int i;
 
@@ -241,13 +242,38 @@ void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRC
 	crPackBegin(mode);
 	for (i=0; i<count; i++)
 	{
-		crPackArrayElement(first + i, c);
+		crPackExpandArrayElement(first + i, c);
 	}
 	crPackEnd();
 }
 
-void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
-																			GLenum type, const GLvoid *indices, CRClientState *c)
+
+/*
+ * Really pack glDrawElements (for server-side vertex arrays)
+ * Note: we pack the pointer (which is actually an index into the server-side
+ * vertex buffer) and not the actual indices.
+ */
+void PACK_APIENTRY
+crPackDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
+{
+	unsigned char *data_ptr;
+	int packet_length = sizeof(int) + sizeof(mode) + sizeof(count) + sizeof(type) + sizeof(GLintptrARB);
+	data_ptr = (unsigned char *) crPackAlloc(packet_length);
+	WRITE_DATA( 0, GLenum, CR_DRAWELEMENTS_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, mode );
+	WRITE_DATA( 8, GLsizei, count);
+	WRITE_DATA( 12, GLenum, type);
+	WRITE_DATA( 16, GLsizeiptrARB, (GLsizeiptrARB) indices );
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
+}
+
+
+/*
+ * Expand glDrawElements into crPackBegin/Vertex/End, etc commands.
+ */
+void
+crPackExpandDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c)
 {
 	int i;
 	GLubyte *p = (GLubyte *)indices;
@@ -276,32 +302,62 @@ void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
 	case GL_UNSIGNED_BYTE:
 		for (i=0; i<count; i++)
 		{
-			crPackArrayElement((GLint) *p++, c);
+			crPackExpandArrayElement((GLint) *p++, c);
 		}
 		break;
 	case GL_UNSIGNED_SHORT:
 		for (i=0; i<count; i++)
 		{
-			crPackArrayElement((GLint) * (GLushort *) p, c);
-			p+=sizeof (GLushort);
+			crPackExpandArrayElement((GLint) * (GLushort *) p, c);
+			p += sizeof(GLushort);
 		}
 		break;
 	case GL_UNSIGNED_INT:
 		for (i=0; i<count; i++)
 		{
-			crPackArrayElement((GLint) * (GLuint *) p, c);
-			p+=sizeof (GLuint);
+			crPackExpandArrayElement((GLint) * (GLuint *) p, c);
+			p += sizeof(GLuint);
 		}
 		break;
 	default:
-		crError( "this can't happen: crPackDrawElements" );
+		__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+								 "crPackDrawElements(bad type)");
 		break;
 	}
 	crPackEnd();
 }
 
-void PACK_APIENTRY crPackDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, 
-																			GLenum type, const GLvoid *indices, CRClientState *c)
+
+/*
+ * Really pack glDrawRangeElements (for server-side vertex arrays)
+ * Note: we pack the pointer (which is actually an index into the server-side
+ * vertex buffer) and not the actual indices.
+ */
+void PACK_APIENTRY
+crPackDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
+{
+	unsigned char *data_ptr;
+	int packet_length = sizeof(int) + sizeof(mode) + sizeof(start)
+		+ sizeof(end) + sizeof(count) + sizeof(type) + sizeof(GLintptrARB);
+
+	data_ptr = (unsigned char *) crPackAlloc(packet_length);
+	WRITE_DATA( 0, GLenum, CR_DRAWRANGEELEMENTS_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, mode );
+	WRITE_DATA( 8, GLuint, start );
+	WRITE_DATA( 12, GLuint, end );
+	WRITE_DATA( 16, GLsizei, count );
+	WRITE_DATA( 20, GLenum, type );
+	WRITE_DATA( 24, GLsizeiptrARB, (GLsizeiptr) indices );
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
+}
+
+
+/*
+ * glDrawRangeElements, expanded into crPackBegin/Vertex/End/etc.
+ */
+void
+crPackExpandDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c)
 {
 	int i;
 	GLubyte *p = (GLubyte *)indices;
@@ -332,21 +388,21 @@ void PACK_APIENTRY crPackDrawRangeElements(GLenum mode, GLuint start, GLuint end
 	case GL_UNSIGNED_BYTE:
 		for (i=start; i<count; i++)
 		{
-			crPackArrayElement((GLint) *p++, c);
+			crPackExpandArrayElement((GLint) *p++, c);
 		}
 		break;
 	case GL_UNSIGNED_SHORT:
 		for (i=start; i<count; i++)
 		{
-			crPackArrayElement((GLint) * (GLushort *) p, c);
-			p+=sizeof (GLushort);
+			crPackExpandArrayElement((GLint) * (GLushort *) p, c);
+			p += sizeof(GLushort);
 		}
 		break;
 	case GL_UNSIGNED_INT:
 		for (i=start; i<count; i++)
 		{
-			crPackArrayElement((GLint) * (GLuint *) p, c);
-			p+=sizeof (GLuint);
+			crPackExpandArrayElement((GLint) * (GLuint *) p, c);
+			p += sizeof(GLuint);
 		}
 		break;
 	default:
@@ -356,28 +412,68 @@ void PACK_APIENTRY crPackDrawRangeElements(GLenum mode, GLuint start, GLuint end
 	crPackEnd();
 }
 
+
 #ifdef CR_EXT_multi_draw_arrays
-void PACK_APIENTRY crPackMultiDrawArraysEXT( GLenum mode, GLint *first,
-                          GLsizei *count, GLsizei primcount, CRClientState *c )
+/*
+ * Pack real DrawArrays commands.
+ */
+void PACK_APIENTRY
+crPackMultiDrawArraysEXT( GLenum mode, GLint *first, GLsizei *count,
+													GLsizei primcount )
 {
    GLint i;
-
    for (i = 0; i < primcount; i++) {
       if (count[i] > 0) {
-         crPackDrawArrays(mode, first[i], count[i], c);
+         crPackDrawArrays(mode, first[i], count[i]);
       }
    }
 }
 
 
-void PACK_APIENTRY crPackMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
-                            const GLvoid **indices, GLsizei primcount, CRClientState *c )
+/*
+ * Pack with crPackBegin/Vertex/End/etc.
+ */
+void
+crPackExpandMultiDrawArraysEXT( GLenum mode, GLint *first, GLsizei *count,
+																GLsizei primcount, CRClientState *c )
 {
    GLint i;
-
    for (i = 0; i < primcount; i++) {
       if (count[i] > 0) {
-         crPackDrawElements(mode, count[i], type, indices[i], c);
+         crPackExpandDrawArrays(mode, first[i], count[i], c);
+      }
+   }
+}
+
+
+/*
+ * Pack real DrawElements commands.
+ */
+void PACK_APIENTRY
+crPackMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
+                            const GLvoid **indices, GLsizei primcount )
+{
+   GLint i;
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+         crPackDrawElements(mode, count[i], type, indices[i]);
+      }
+   }
+}
+
+
+/*
+ * Pack with crPackBegin/Vertex/End/etc.
+ */
+void
+crPackExpandMultiDrawElementsEXT( GLenum mode, const GLsizei *count,
+																	GLenum type, const GLvoid **indices,
+																	GLsizei primcount, CRClientState *c )
+{
+   GLint i;
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+         crPackExpandDrawElements(mode, count[i], type, indices[i], c);
       }
    }
 }

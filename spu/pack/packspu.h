@@ -36,9 +36,17 @@ struct thread_info_t {
 	int writeback;
 };
 
+struct buffer_object_t {
+	GLvoid *mappedBuffer;
+	GLuint mappedSize;
+	GLenum access;
+	GLenum usage;
+};
+
 struct context_info_t {
 	CRContext *clientState;  /* used to store client-side GL state */
 	GLint serverCtx;         /* context ID returned by server */
+	char glVersion[100];     /* GL_VERSION string */
 };
 
 typedef struct {

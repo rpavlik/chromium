@@ -13,6 +13,7 @@ NORMAL_FILES = packer \
 	pack_beginend \
 	pack_bounds \
 	pack_buffer \
+	pack_bufferobject \
 	pack_client \
 	pack_clipplane \
 	pack_context \
@@ -32,12 +33,10 @@ NORMAL_FILES = packer \
 	pack_misc \
 	pack_materials \
 	pack_matrices \
-	pack_pica \
 	pack_pixels \
 	pack_pixelmap \
 	pack_swap_pixelmap \
 	pack_program \
-	pack_rect \
 	pack_regcombiner \
 	pack_stipple \
 	pack_texture \
@@ -48,6 +47,7 @@ LIBRARIES = crutil
 
 SWAP_FILES = pack_arrays \
 	pack_bounds \
+	pack_bufferobject \
 	pack_client \
 	pack_clipplane \
 	pack_fog \
@@ -59,14 +59,13 @@ SWAP_FILES = pack_arrays \
 	pack_point \
 	pack_program \
 	pack_regcombiner \
-	pack_rect \
 	pack_stipple
 NAMED_SWAP_FILES = $(addsuffix _swap, $(SWAP_FILES))
 SWAP_C_FILES = $(addsuffix .c, $(NAMED_SWAP_FILES))
 
 FILES = $(NAMED_SWAP_FILES) $(NORMAL_FILES)
 
-PRECOMP = packer.def ../include/cr_packfunctions.h ../include/cr_opcodes.h ../include/state/cr_currentpointers.h pack_bbox.c pack_current.c packer.c $(SWAP_C_FILES)
+PRECOMP = packer.def $(TOP)/include/cr_packfunctions.h $(TOP)/include/cr_opcodes.h $(TOP)/include/state/cr_currentpointers.h pack_bbox.c pack_current.c packer.c $(SWAP_C_FILES)
 SLOP = $(PRECOMP)
 
 LIB_COPIES = packspu \
@@ -77,23 +76,25 @@ LIB_COPIES = packspu \
 
 include $(TOP)/cr.mk
 
-packer.def: packer_defs.py ../glapi_parser/gl_header.parsed
+APIFILES = $(TOP)/glapi_parser/apiutil.py $(TOP)/glapi_parser/APIspec.txt
+
+packer.def: packer_defs.py $(APIFILES)
 	@$(ECHO) Making the packer def file
 	@$(PYTHON) $< > $@
 
-../include/cr_packfunctions.h: pack_header.py packer_get_special packer_pixel_special packer_client_special ../glapi_parser/gl_header.parsed
+$(TOP)/include/cr_packfunctions.h: pack_header.py packer_special $(API_FILES)
 	@$(ECHO) Making the pack functions header..
 	@$(PYTHON) pack_header.py > $@
 
-../include/cr_opcodes.h: opcodes.py opcode_special packer_get_special opcode_extend_special ../glapi_parser/gl_header.parsed
+$(TOP)/include/cr_opcodes.h: opcodes.py $(APIFILES)
 	@$(ECHO) Making the opcode header...
-	@$(PYTHON) opcodes.py > $@
+	$(PYTHON) opcodes.py > $@
 
-../include/state/cr_currentpointers.h: pack_currentheader.py pack_currenttypes.py
+$(TOP)/include/state/cr_currentpointers.h: pack_currentheader.py pack_currenttypes.py
 	@$(ECHO) Making cr_currentpointers.h
 	@$(PYTHON) pack_currentheader.py > $@
 
-packer.c: packer.py packer_special packer_pixel_special packer_client_special packer_get_special opcode_extend_special ../glapi_parser/gl_header.parsed
+packer.c: packer.py packer_special $(APIFILES)
 	@$(ECHO) Making the Packer...
 	@$(PYTHON) packer.py > $@
 

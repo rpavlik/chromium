@@ -3,18 +3,18 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys;
+import sys
 
 # Two different paths to the packer and opengl_stub directories since this
 # script will be called from both cr/state_tracker/ and cr/spu/tilesort/.
 sys.path.append( '../packer' )
 sys.path.append( '../../packer' )
-sys.path.append( '../opengl_stub' )
-sys.path.append( '../../opengl_stub' )
-from pack_currenttypes import *;
-import stub_common
+sys.path.append( '../glapi_parser' )
+sys.path.append( '../../glapi_parser' )
+from pack_currenttypes import *
+import apiutil
 
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print '''
 #include "state/cr_statetypes.h"

@@ -3,21 +3,13 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
 
-sys.path.append( "../../opengl_stub" )
-parsed_file = open( "../../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../../glapi_parser" )
+import apiutil
 
-import stub_common;
 
-keys = gl_mapping.keys()
-keys.sort();
-
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """
 #include "cr_server.h"
@@ -25,13 +17,15 @@ print """
 #include "feedbackspu_proto.h"
 """
 
+keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
+
 for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "feedback_state", func_name ):
-		print '%s FEEDBACKSPU_APIENTRY feedbackspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
+	if apiutil.FindSpecial( "feedback_state", func_name ):
+		return_type = apiutil.ReturnType(func_name)
+		params = apiutil.Parameters(func_name)
+		print '%s FEEDBACKSPU_APIENTRY feedbackspu_%s( %s )' % (return_type, func_name, apiutil.MakeDeclarationString(params))
 		print '{'
-		print '\tcrState%s%s;' % ( func_name, stub_common.CallString( args ) )
+		print '\tcrState%s( %s );' % (func_name, apiutil.MakeCallString(params))
 		print ''
-		print '\tfeedback_spu.super.%s%s;' % ( func_name, stub_common.CallString( args ) )
-			
+		print '\tfeedback_spu.super.%s( %s );' % (func_name, apiutil.MakeCallString(params))
 		print '}'

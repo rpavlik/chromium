@@ -3,14 +3,14 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys;
+import sys
 
 sys.path.append( '../packer' )
-sys.path.append( '../opengl_stub' )
-from pack_currenttypes import *;
-import stub_common;
+sys.path.append( '../glapi_parser' )
+from pack_currenttypes import *
+import apiutil
 
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print '''
 #include "state/cr_currentpointers.h"

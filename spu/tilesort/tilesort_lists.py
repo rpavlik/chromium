@@ -3,21 +3,15 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys,os;
-import cPickle;
-import string;
-import re;
+import sys
 
-sys.path.append( "../../opengl_stub" )
-parsed_file = open( "../../glapi_parser/gl_header.parsed", "rb" )
-gl_mapping = cPickle.load( parsed_file )
+sys.path.append( "../../glapi_parser" )
+import apiutil
 
-import stub_common;
 
-keys = gl_mapping.keys()
-keys.sort();
+keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 
-stub_common.CopyrightC()
+apiutil.CopyrightC()
 
 print """#include <stdio.h>
 #include "cr_spu.h"
@@ -41,19 +35,17 @@ static int TILESORTSPU_APIENTRY tilesortspu_nop(void)
 print "void tilesortspuLoadSortTable(SPUDispatchTable *t)"
 print "{"
 # XXX NOTE: this should basically be identical to the tilesort.py code.
-for index in range(len(keys)):
-	func_name = keys[index]
-	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "tilesort", func_name ):
-		print '\tCHANGE( %s, tilesortspu_%s );' % (func_name, func_name )
-	elif stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
-		print '\tCHANGE( %s, tilesortspu_%s );' % (func_name, func_name )
-	elif stub_common.FindSpecial( "tilesort_state", func_name ):
-		print '\tCHANGE( %s, crState%s );' % (func_name, func_name )
-	elif stub_common.FindSpecial( "tilesort_bbox", func_name ):
-		print '\tCHANGE( %s, (tilesort_spu.swap ? crPack%sBBOX_COUNTSWAP : crPack%sBBOX_COUNT) );' % (func_name, func_name, func_name )
+for func_name in keys:
+	if apiutil.FindSpecial( "tilesort_replay", func_name ):
+		print '\tt->%s = tilesortspu_%s;' % (func_name, func_name)
+	elif apiutil.FindSpecial( "tilesort_unimplemented", func_name ):
+		print '\tt->%s = (%sFunc_t) tilesortspu_nop;' % (func_name, func_name)
+	elif apiutil.FindSpecial( "tilesort_state", func_name ):
+		print '\tt->%s = (%sFunc_t) crState%s;' % (func_name, func_name, func_name)
+	elif apiutil.FindSpecial( "tilesort_bbox", func_name ):
+		print '\tt->%s = (%sFunc_t)(tilesort_spu.swap ? crPack%sBBOX_COUNTSWAP : crPack%sBBOX_COUNT);' % (func_name, func_name, func_name, func_name)
 	else:
-		print '\tCHANGE( %s, (tilesort_spu.swap ? crPack%sSWAP : crPack%s) );' % (func_name, func_name, func_name )
+		print '\tt->%s = (%sFunc_t)(tilesort_spu.swap ? crPack%sSWAP : crPack%s);' % (func_name, func_name, func_name, func_name)
 
 print "}"
 
@@ -63,19 +55,22 @@ print ""
 print "/* Used when playing back display lists locally to update state */"
 print "void tilesortspuLoadStateTable(SPUDispatchTable *t)"
 print "{"
-for index in range(len(keys)):
-	func_name = keys[index]
-	(return_type, args, types) = gl_mapping[func_name]
-	annotations = stub_common.GetAnnotations("../../dlm/dlm_functions", func_name)
+for func_name in keys:
+	props = apiutil.Properties(func_name)
+
 	if (func_name == "CallList" or
 		func_name == "CallLists"):
 		print '\tt->%s = tilesortspuState%s;' % (func_name, func_name)
 	elif func_name == "Bitmap":
 		print '\tt->%s = crState%s;' % (func_name, func_name)
+	elif func_name == "NewList":
+		print '\tt->%s = tilesortspuState%s;' % (func_name, func_name)
+	elif func_name == "EndList":
+		print '\tt->%s = tilesortspuState%s;' % (func_name, func_name)
 	elif func_name == "PopAttrib":
 		print '\tt->%s = tilesortspu_%s;' % (func_name, func_name)
-	elif ("get" in annotations or
-		  "nodl" in annotations or
+	elif ("get" in props or
+		  "nolist" in props or
 		  func_name == "NewList" or
 		  func_name == "EndList" or
 		  func_name == "IsList" or
@@ -92,13 +87,13 @@ for index in range(len(keys)):
 		# do nothing - these'll never be in a display list anyway.
 		pass
 	else:
-		if stub_common.FindSpecial( "tilesort", func_name ):
+		if apiutil.FindSpecial( "tilesort", func_name ):
 			print '\tt->%s = (%sFunc_t) tilesortspu_nop;' % (func_name, func_name)
-		elif stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
+		elif apiutil.FindSpecial( "tilesort_unimplemented", func_name ):
 			print '\tt->%s = (%sFunc_t) tilesortspu_nop;' % (func_name, func_name)
-		elif stub_common.FindSpecial( "tilesort_state", func_name ):
+		elif apiutil.FindSpecial( "tilesort_state", func_name ):
 			print '\tt->%s = crState%s;' % (func_name, func_name)
-		elif stub_common.FindSpecial( "tilesort_bbox", func_name ):
+		elif apiutil.FindSpecial( "tilesort_bbox", func_name ):
 			print '\tt->%s = (%sFunc_t) tilesortspu_nop;' % (func_name, func_name)
 		else:
 			print '\tt->%s = (%sFunc_t) tilesortspu_nop;' % (func_name, func_name)
@@ -110,10 +105,9 @@ print ""
 print "/* Used to send display lists to servers */"
 print "void tilesortspuLoadPackTable( SPUDispatchTable *t )"
 print "{"
-for index in range(len(keys)):
-	func_name = keys[index]
-	(return_type, args, types) = gl_mapping[func_name]
-	annotations = stub_common.GetAnnotations("../../dlm/dlm_functions", func_name)
+for func_name in keys:
+	props = apiutil.Properties(func_name)
+	
 	if (func_name == "CallList" or
 		func_name == "CallLists" or
 		func_name == "Clear" or
@@ -125,6 +119,7 @@ for index in range(len(keys)):
 		print '\tt->%s = tilesort_spu.swap ? crPack%sSWAP : crPack%s;' % (func_name, func_name, func_name)
 	elif (func_name == "Bitmap" or
 		  func_name == "DrawPixels" or
+		  func_name == "ZPix" or
 		  func_name == "TexImage1D" or
 		  func_name == "TexImage2D" or
 		  func_name == "TexImage3D" or
@@ -133,12 +128,13 @@ for index in range(len(keys)):
 		  func_name == "TexSubImage2D" or
 		  func_name == "TexSubImage3D"):
 		print '\tt->%s = tilesortspu_Pack%s;' % (func_name, func_name)
-	elif stub_common.FindSpecial("tilesort", func_name):
+	elif apiutil.FindSpecial("tilesort", func_name):
 		print '\tt->%s = tilesortspu_%s;' % (func_name, func_name)
-	elif ("dl" in annotations or "dlcompile" in annotations):
-		print '\tt->%s = tilesort_spu.swap ? crPack%sSWAP : crPack%s;' % (func_name, func_name, func_name)
-	elif ("setclient" in annotations or "get" in annotations):
+	elif (("setclient" in props or "get" in props) and
+		  func_name != "RenderMode"):
 		print '\tt->%s = crState%s;' % (func_name, func_name)
+	elif not "nolist" in props:
+		print '\tt->%s = tilesort_spu.swap ? crPack%sSWAP : crPack%s;' % (func_name, func_name, func_name)
 	else:
 		print '\tt->%s = (%sFunc_t) tilesortspu_nop;' % (func_name, func_name)
 print "}"

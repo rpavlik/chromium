@@ -33,8 +33,14 @@ static const char *crExtensions =
 #ifdef CR_ARB_multitexture
 	"GL_ARB_multitexture "
 #endif
+#ifdef CR_ARB_occlusion_query
+	"GL_ARB_occlusion_query "
+#endif
 #ifdef CR_ARB_point_parameters
 	"GL_ARB_point_parameters "
+#endif
+#ifdef CR_ARB_point_sprite
+	"GL_ARB_point_sprite "
 #endif
 #ifdef CR_ARB_shadow
 	"GL_ARB_shadow "
@@ -66,8 +72,14 @@ static const char *crExtensions =
 #ifdef CR_ARB_texture_mirrored_repeat
 	"GL_ARB_texture_mirrored_repeat "
 #endif
+#ifdef CR_ARB_texture_non_power_of_two
+	"GL_ARB_texture_non_power_of_two "
+#endif
 #ifdef CR_ARB_transpose_matrix
 	"GL_ARB_transpose_matrix "
+#endif
+#ifdef CR_ARB_vertex_buffer_object
+	"GL_ARB_vertex_buffer_object "
 #endif
 #ifdef CR_ARB_vertex_program
 	"GL_ARB_vertex_program "
@@ -179,7 +191,6 @@ static const char *crExtensions =
  * on the app node (no packing/unpacking/state-tracking support).
  */
 static const char *crAppOnlyExtensions =
-  "GL_EXT_texture_env_combine " \
   "GL_NV_fence " \
   "GL_NV_texture_env_combine4 " \
   "GL_NV_texture_shader " \

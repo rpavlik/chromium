@@ -12,10 +12,10 @@
  * Alpha Release = 0.1.0, Beta Release = 0.2.0
  */
 #define CR_MAJOR_VERSION 1
-#define CR_MINOR_VERSION 4
+#define CR_MINOR_VERSION 5
 #define CR_PATCH_VERSION 0
 
-#define CR_VERSION_STRING "1.4"   /* Chromium version, not OpenGL version */
+#define CR_VERSION_STRING "1.5"   /* Chromium version, not OpenGL version */
 
 
 /* These define the OpenGL version that Chromium supports.
@@ -28,6 +28,10 @@
 #define CR_OPENGL_VERSION_1_2_1 1
 #define CR_OPENGL_VERSION_1_3 1
 #define CR_OPENGL_VERSION_1_4 1
+#define CR_OPENGL_VERSION_1_5 1
+
+/* Version (string) of OpenGL functionality suported by Chromium */
+#define CR_OPENGL_VERSION_STRING "1.5"
 
 
 /* These define the OpenGL extensions that Chromium supports.
@@ -42,7 +46,9 @@
 #define CR_ARB_fragment_program 1
 #define CR_ARB_multitexture 1
 #define CR_ARB_multisample 1
+#define CR_ARB_occlusion_query 1
 #define CR_ARB_point_parameters 1
+#define CR_ARB_point_sprite 1
 #define CR_ARB_shadow 1
 #define CR_ARB_shadow_ambient 1
 #define CR_ARB_texture_border_clamp 1
@@ -53,7 +59,9 @@
 #define CR_ARB_texture_env_crossbar 1
 #define CR_ARB_texture_env_dot3 1
 #define CR_ARB_texture_mirrored_repeat 1
+#define CR_ARB_texture_non_power_of_two 1
 #define CR_ARB_transpose_matrix 1
+#define CR_ARB_vertex_buffer_object 1
 #define CR_ARB_vertex_program 1
 #define CR_ARB_window_pos 1
 
