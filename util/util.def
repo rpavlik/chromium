@@ -80,7 +80,6 @@ crFreeHashtable
 crDetermineEndianness
 SWAPDOUBLE
 crBufferPoolInit
-crBufferPoolLoad
 crBufferPoolPush
 crBufferPoolPop
 crTimerNewTimer
