@@ -33,6 +33,7 @@ typedef enum {
 	CR_UDPTCPIP,
 	CR_FILE,
 	CR_GM,
+	CR_IB,
 	CR_TEAC,
 	CR_TCSCOMM,
 	CR_DROP_PACKETS
@@ -173,6 +174,10 @@ struct CRConnection {
 	/* Myrinet GM */
 	unsigned int gm_node_id;
 	unsigned int gm_port_num;
+
+	/* Mellanox IB */
+	unsigned int ib_node_id;
+	unsigned int ib_port_num;
 
         /* Quadrics Elan3 (teac) */
         int teac_id;
