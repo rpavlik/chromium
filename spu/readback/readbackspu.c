@@ -89,11 +89,8 @@ static void AllocBuffers( WindowInfo *window )
 static void CheckWindowSize( WindowInfo *window )
 {
 	GLint newSize[2];
-	GLint w = window - readback_spu.windows; /* pointer hack */
+	const GLint w = window->index;
 	CRMessage *msg;
-
-	CRASSERT(w >= 0);
-	CRASSERT(w < MAX_WINDOWS);
 
 	/* XXX this code seems rather redundant with what's immediately below */
 	if (readback_spu.gather_url)
@@ -132,7 +129,7 @@ static void CheckWindowSize( WindowInfo *window )
 	{
 		/* not resizable - ask render SPU for its window size */
 		readback_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-					readback_spu.windows[0].renderWindow, GL_INT, 2, newSize);
+					window->renderWindow, GL_INT, 2, newSize);
 	}
 
 	if (newSize[0] != window->width || newSize[1] != window->height)
@@ -326,15 +323,15 @@ static void read_and_send_tiles( WindowInfo *window )
 
 		if (readback_spu.gather_url)
 		{
-			msg = (CRMessage *)window->colorBuffer;
-	 		msg->gather.offset = window->cppColor*(drawy * window->childWidth + drawx);
+			msg = (CRMessage *) window->colorBuffer;
+	 		msg->gather.offset = window->cppColor * (drawy * window->childWidth + drawx);
 
- 			msg->gather.len    = window->cppColor*(w*h);
+ 			msg->gather.len = window->cppColor*(w*h);
 			if (readback_spu.extract_depth)
 			{
-				msg = (CRMessage *)window->depthBuffer;
-		 		msg->gather.offset = window->cppDepth*(drawx * window->childWidth + drawx);
- 				msg->gather.len    = window->cppDepth*(w*h);
+				msg = (CRMessage *) window->depthBuffer;
+		 		msg->gather.offset = window->cppDepth * (drawx * window->childWidth + drawx);
+ 				msg->gather.len = window->cppDepth*(w*h);
 			}
 		}
 		
@@ -421,7 +418,8 @@ static void read_and_send_tiles( WindowInfo *window )
 			readback_spu.child.StencilOp( GL_ZERO, GL_ZERO, GL_ZERO );
 			readback_spu.child.StencilFunc( GL_EQUAL, 1, ~0 );
 			readback_spu.child.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-			if (readback_spu.visualize_depth) {
+			if (readback_spu.visualize_depth)
+			{
 				/* draw depth as grayscale image */
 				readback_spu.child.PixelTransferf(GL_RED_BIAS, 1.0);
 				readback_spu.child.PixelTransferf(GL_GREEN_BIAS, 1.0);
@@ -441,7 +439,8 @@ static void read_and_send_tiles( WindowInfo *window )
 			}
 			readback_spu.child.Disable(GL_STENCIL_TEST);
 		}
-		else if (readback_spu.extract_alpha) {
+		else if (readback_spu.extract_alpha)
+		{
 			/* alpha compositing */
 			readback_spu.child.BlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
 			readback_spu.child.Enable( GL_BLEND );
@@ -466,25 +465,6 @@ static void read_and_send_tiles( WindowInfo *window )
 	 */
 	readback_spu.child.SemaphoreV( MUTEX_SEMAPHORE );
 }
-
-
-/*
- * Allocate a new ThreadInfo structure and bind this to the calling thread
- * with crSetTSD().
- */
-#ifdef CHROMIUM_THREADSAFE
-static ThreadInfo *readbackspuNewThread( unsigned long id )
-{
-	ThreadInfo *thread = crCalloc(sizeof(ThreadInfo));
-	if (thread) {
-		crSetTSD(&_ReadbackTSD, thread);
-		thread->id = id;
-		thread->currentContext = -1;
-		thread->currentWindow = -1;
-	}
-	return thread;
-}
-#endif
 
 
 static void DoReadback( WindowInfo *window )
@@ -536,14 +516,12 @@ static void DoReadback( WindowInfo *window )
 
 static void READBACKSPU_APIENTRY readbackspuFlush( void )
 {
-	/* find current context's window */
 	WindowInfo *window;
-	GET_THREAD(thread);
-	if (!thread || thread->currentWindow < 0)
-		return;  /* invalid window */
-	window = &(readback_spu.windows[thread->currentWindow]);
-	if (!window->inUse)
-		return;  /* invalid window */
+	GET_CONTEXT(context);
+	CRASSERT(context); /* we shouldn't be flushing without a context */
+	window = context->currentWindow;
+	if (!window)
+			return;
 
 	DoReadback( window );
 
@@ -555,8 +533,9 @@ static void READBACKSPU_APIENTRY readbackspuFlush( void )
 
 
 
-static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint flags )
+static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint win, GLint flags )
 {
+	WindowInfo *window;
 	unsigned short port = 3000;
 	char url[4098];
 	
@@ -569,11 +548,14 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint fla
 		{
 			crParseURL(readback_spu.gather_url, url, url, &port, 3000);
 
-			readback_spu.child.ChromiumParametervCR(GL_GATHER_CONNECT_CR, GL_INT, 1, &port);
+			readback_spu.child.ChromiumParametervCR(GL_GATHER_CONNECT_CR,
+																							GL_INT, 1, &port);
 			readback_spu.child.Flush();
 
-			readback_spu.gather_conn = crNetConnectToServer(readback_spu.gather_url, port, 
-							readback_spu.gather_mtu, 1);
+			readback_spu.gather_conn = crNetConnectToServer(readback_spu.gather_url,
+																											port,
+																											readback_spu.gather_mtu,
+																											1);
 
 			if (!readback_spu.gather_conn)
 			{
@@ -582,7 +564,9 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint fla
 		}
 	}
 	
-	DoReadback( &(readback_spu.windows[window]) );
+	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
+	CRASSERT(window);
+	DoReadback( window );
 
 	/*
 	 * Everyone syncs up here before calling SwapBuffers().
@@ -592,32 +576,30 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint fla
 	if (!readback_spu.gather_url)
 	{
 		/* Note: we don't pass the CR_SUPPRESS_SWAP_BIT flag here. */
-		readback_spu.child.SwapBuffers( readback_spu.windows[window].childWindow,
+		readback_spu.child.SwapBuffers( window->childWindow,
 																		flags & ~CR_SUPPRESS_SWAP_BIT );
 		readback_spu.child.Finish();
 	}
 
 	if (readback_spu.local_visualization)
 	{
-		readback_spu.super.SwapBuffers( readback_spu.windows[window].renderWindow, 0 );
+		readback_spu.super.SwapBuffers( window->renderWindow, 0 );
 	}
 }
 
 
 static GLint READBACKSPU_APIENTRY readbackspuCreateContext( const char *dpyName, GLint visual)
 {
+	static GLint freeID = 0;
+	ContextInfo *context;
 	GLint childVisual = visual;
-	int i;
 
 	CRASSERT(readback_spu.child.BarrierCreate);
 
-	/* find empty slot in contexts[] array */
-	for (i = 0; i < MAX_CONTEXTS; i++) {
-		if (!readback_spu.contexts[i].inUse)
-			break;
-	}
-	if (i == MAX_CONTEXTS) {
-		crWarning("ran out of contexts in readbackspuCreateContext");
+	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
+	if (!context)
+	{
+		crWarning("readback SPU: create context failed.");
 		return -1;
 	}
 
@@ -627,51 +609,51 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateContext( const char *dpyName,
 	if (readback_spu.extract_alpha)
 		childVisual |= CR_ALPHA_BIT;
 
-	readback_spu.contexts[i].inUse = GL_TRUE;
-	readback_spu.contexts[i].renderContext = readback_spu.super.CreateContext(dpyName, visual);
-	readback_spu.contexts[i].childContext = readback_spu.child.CreateContext(dpyName, childVisual);
+	context->renderContext = readback_spu.super.CreateContext(dpyName, visual);
+	context->childContext = readback_spu.child.CreateContext(dpyName, childVisual);
 
 	/* create a state tracker (to record matrix operations) for this context */
-	readback_spu.contexts[i].tracker = crStateCreateContext( NULL );
+	context->tracker = crStateCreateContext( NULL );
 
-	return i;
+	/* put into hash table */
+	crHashtableAdd(readback_spu.contextTable, freeID, context);
+	freeID++;
+	return freeID - 1;
 }
 
 
 static void READBACKSPU_APIENTRY readbackspuDestroyContext( GLint ctx )
 {
-	/*	readback_spu.child.BarrierCreate( DESTROY_CONTEXT_BARRIER, 0 );*/
-	CRASSERT(ctx >= 0);
-	CRASSERT(ctx < MAX_CONTEXTS);
-	readback_spu.super.DestroyContext(readback_spu.contexts[ctx].renderContext);
-	readback_spu.contexts[ctx].inUse = GL_FALSE;
-	crStateDestroyContext( readback_spu.contexts[ctx].tracker );
+	ContextInfo *context;
+	context = (ContextInfo *) crHashtableSearch(readback_spu.contextTable, ctx);
+	CRASSERT(context);
+	readback_spu.super.DestroyContext(context->renderContext);
+	crStateDestroyContext( context->tracker );
+	crHashtableDelete(readback_spu.contextTable, ctx);
 }
 
 
-static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint window, GLint nativeWindow, GLint ctx)
+static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 {
-	GET_THREAD(thread);
+	ContextInfo *context;
+	WindowInfo *window;
 
+	context = (ContextInfo *) crHashtableSearch(readback_spu.contextTable, ctx);
+	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
+
+	if (context && window)
+	{
 #ifdef CHROMIUM_THREADSAFE
-	if (!thread) {
-		thread = readbackspuNewThread( crThreadID() );
-	}
+		crSetTSD(&_ReadbackTSD, context);
+#else
+		readback_spu.currentContext = context;
 #endif
-
-	CRASSERT(thread);
-
-	if (window >= 0 && ctx >= 0) {
-		thread->currentWindow = window;
-		thread->currentContext = ctx;
-		CRASSERT(readback_spu.windows[window].inUse);
-		CRASSERT(readback_spu.contexts[ctx].inUse);
-		readback_spu.super.MakeCurrent(readback_spu.windows[window].renderWindow,
-				nativeWindow,
-				readback_spu.contexts[ctx].renderContext);
-		readback_spu.child.MakeCurrent(readback_spu.windows[window].childWindow,
-				nativeWindow,
-				readback_spu.contexts[ctx].childContext);
+		CRASSERT(window);
+		context->currentWindow = window;
+		readback_spu.super.MakeCurrent(window->renderWindow,
+																	 nativeWindow, context->renderContext);
+		readback_spu.child.MakeCurrent(window->childWindow,
+																	 nativeWindow, context->childContext);
 
 		/* Initialize child's projection matrix so that glRasterPos2i(0,0)
 		 * corresponds to window coordinate (0,0).
@@ -681,29 +663,23 @@ static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint window, GLint nati
 		readback_spu.child.Ortho( 0.0, 1.0, 0.0, 1.0, -1.0, 1.0 );
 
 		/* state tracker (for matrices) */
-		crStateMakeCurrent( readback_spu.contexts[ctx].tracker );
+		crStateMakeCurrent( context->tracker );
 	}
 	else {
-		thread->currentWindow = -1;
-		thread->currentContext = -1;
+#ifdef CHROMIUM_THREADSAFE
+		crSetTSD(&_ReadbackTSD, NULL);
+#else
+		readback_spu.currentContext = NULL;
+#endif
 	}
 }
 
 
 static GLint READBACKSPU_APIENTRY readbackspuCreateWindow( const char *dpyName, GLint visBits )
 {
+	WindowInfo *window;
 	GLint childVisual = visBits;
-	int i;
-
-	/* find empty slot in windows[] array */
-	for (i = 0; i < MAX_WINDOWS; i++) {
-		if (!readback_spu.windows[i].inUse)
-			break;
-	}
-	if (i == MAX_WINDOWS) {
-		crWarning("Ran out of windows in readbackspuCreateWindow");
-		return -1;
-	}
+	static GLint freeID = 1;  /* skip default window 0 */
 
 	/* If doing z-compositing, need stencil buffer */
 	if (readback_spu.extract_depth)
@@ -711,30 +687,46 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateWindow( const char *dpyName, 
 	if (readback_spu.extract_alpha)
 		childVisual |= CR_ALPHA_BIT;
 
-	readback_spu.windows[i].inUse = GL_TRUE;
-	readback_spu.windows[i].renderWindow = readback_spu.super.crCreateWindow( dpyName, visBits );
-	readback_spu.windows[i].childWindow = 0;
-	readback_spu.windows[i].width = -1; /* unknown */
-	readback_spu.windows[i].height = -1; /* unknown */
-	readback_spu.windows[i].colorBuffer = NULL;
-	readback_spu.windows[i].depthBuffer = NULL;
+	/* allocate window */
+	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
+	if (!window)
+	{
+		crWarning("readback SPU: unable to allocate window.");
+		return -1;
+	}
 
-	return i;
+	/* init window */
+	window->index = freeID;
+	window->renderWindow = readback_spu.super.crCreateWindow(dpyName, visBits);
+	window->childWindow = 0;
+	window->width = -1; /* unknown */
+	window->height = -1; /* unknown */
+	window->colorBuffer = NULL;
+	window->depthBuffer = NULL;
+
+	/* put into hash table */
+	crHashtableAdd(readback_spu.windowTable, window->index, window);
+	freeID++;
+
+	return freeID - 1;
 }
 
-static void READBACKSPU_APIENTRY readbackspuDestroyWindow( GLint window )
+static void READBACKSPU_APIENTRY readbackspuDestroyWindow( GLint win )
 {
-	CRASSERT(window >= 0);
-	CRASSERT(window < MAX_WINDOWS);
-	readback_spu.super.DestroyWindow( readback_spu.windows[window].renderWindow );
-	readback_spu.windows[window].inUse = GL_FALSE;
+	WindowInfo *window;
+	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
+	CRASSERT(window);
+	readback_spu.super.DestroyWindow(window->renderWindow);
+	crHashtableDelete(readback_spu.windowTable, win);
 }
 
-static void READBACKSPU_APIENTRY readbackspuWindowSize( GLint window, GLint w, GLint h )
+static void READBACKSPU_APIENTRY readbackspuWindowSize( GLint win, GLint w, GLint h )
 {
-	CRASSERT(window == readback_spu.renderWindow);
-	readback_spu.super.WindowSize( readback_spu.renderWindow, w, h );
-	readback_spu.child.WindowSize( readback_spu.childWindow, w, h );
+	WindowInfo *window;
+	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
+	CRASSERT(window);
+	readback_spu.super.WindowSize( window->renderWindow, w, h );
+	readback_spu.child.WindowSize( window->childWindow, w, h );
 }
 
 /* don't implement WindowPosition() */
@@ -880,16 +872,19 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParameteriCR(GLenum target, 
 					GLint draw_parm[7];
 					CRMessage *msg;
 					static int first_time = 1;
-
+					WindowInfo *window = (WindowInfo *)
+						crHashtableSearch(readback_spu.windowTable, value);
 					GLrecti *outputwindow = readback_spu.server->outputwindow;
 					int w = outputwindow[0].x2 - outputwindow[0].x1;
 					int h = outputwindow[0].y2 - outputwindow[0].y1;
 
+					CRASSERT(window);
+
 					/* only swap 1 tiled-rgb ATM */
 					draw_parm[0] = 0;
 					draw_parm[1] = 0;
-					draw_parm[2] = readback_spu.windows[value].childWidth;
-					draw_parm[3] = readback_spu.windows[value].childHeight;
+					draw_parm[2] = window->childWidth;
+					draw_parm[3] = window->childHeight;
 					draw_parm[4] = GL_RGB;
 					draw_parm[5] = GL_UNSIGNED_BYTE;
 					draw_parm[6] = value;
@@ -905,11 +900,12 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParameteriCR(GLenum target, 
 						first_time = 0;
 	
 					/* send the framebuffer */
-					crNetSend(readback_spu.gather_conn, NULL, readback_spu.windows[value].colorBuffer, 
-							sizeof(CRMessageGather)+readback_spu.windows[value].cppColor*w*h);
+					crNetSend(readback_spu.gather_conn, NULL, window->colorBuffer, 
+										sizeof(CRMessageGather) + window->cppColor * w * h);
 
 					/* inform the child that their is a frame on the way */
-					readback_spu.child.ChromiumParametervCR(GL_GATHER_DRAWPIXELS_CR, GL_INT, 7, draw_parm);
+					readback_spu.child.ChromiumParametervCR(GL_GATHER_DRAWPIXELS_CR,
+																									GL_INT, 7, draw_parm);
 					readback_spu.child.Flush();
 				}
 				break;

@@ -13,31 +13,20 @@
 #define READBACKSPU_APIENTRY
 #endif
 
+#include "cr_hash.h"
 #include "cr_spu.h"
 #include "cr_server.h"
 #include "cr_threads.h"
 
-#define MAX_WINDOWS 32
-#define MAX_CONTEXTS 32
-
 typedef struct {
-	unsigned long id;
-	int currentContext;
-	int currentWindow;
-#ifndef WINDOWS
-	Display *dpy;
-#endif
-} ThreadInfo;
-
-typedef struct {
-	GLboolean inUse;
-	GLint renderWindow;
-	GLint childWindow;
+	GLint index;         /* my window number */
+	GLint renderWindow;  /* the super (render SPU) window */
+	GLint childWindow;   /* the child SPU's window handle */
 	GLint width, height;
 	GLint childWidth, childHeight;
 	GLubyte *colorBuffer;
 	GLvoid *depthBuffer;
-	GLint cppColor, cppDepth;
+	GLint cppColor, cppDepth;  /* bytes per pixel */
 	GLenum depthType;  /* GL_UNSIGNED_SHORT or GL_FLOAT */
 	GLenum rgbaFormat; /* GL_RGBA or GL_BGRA */
 	GLenum rgbFormat;  /* GL_RGB or GL_BGR */
@@ -48,6 +37,7 @@ typedef struct {
 	GLint renderContext;
 	GLint childContext;
 	CRContext *tracker;  /* for tracking matrix state */
+	WindowInfo *currentWindow;
 } ContextInfo;
 
 typedef struct {
@@ -62,25 +52,21 @@ typedef struct {
 	int local_visualization;
 	int visualize_depth;
 	int resizable;
-
 	char *gather_url;
 	int gather_mtu;
+
 	CRConnection *gather_conn;
 
-	WindowInfo windows[MAX_WINDOWS];
-	ContextInfo contexts[MAX_CONTEXTS];
+	CRHashTable *contextTable;
+	CRHashTable *windowTable;
 
 #ifndef CHROMIUM_THREADSAFE
-	ThreadInfo singleThread;
+	ContextInfo *currentContext;
 #endif
-
-	GLint renderWindow;
-	GLint renderContext;
-	GLint childWindow;
-	GLint childContext;
 
 	GLint barrierSize;
 
+	/* XXX Are these per-context or per-window variables? */
 	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
 	struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;
 
@@ -94,9 +80,9 @@ extern ReadbackSPU readback_spu;
 
 #ifdef CHROMIUM_THREADSAFE
 extern CRtsd _ReadbackTSD;
-#define GET_THREAD(T)  ThreadInfo *T = crGetTSD(&_ReadbackTSD)
+#define GET_CONTEXT(T)  ContextInfo *T = crGetTSD(&_ReadbackTSD)
 #else
-#define GET_THREAD(T)  ThreadInfo *T = &(readback_spu.singleThread)
+#define GET_CONTEXT(T)  ContextInfo *T = readback_spu.currentContext
 #endif
 
 

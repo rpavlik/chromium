@@ -27,6 +27,7 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
+	WindowInfo *window;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -54,6 +55,17 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 	crSPUInitDispatchTable( &(readback_spu.super) );
 	crSPUCopyDispatchTable( &(readback_spu.super), &(self->superSPU->dispatch_table) );
 	readbackspuGatherConfiguration( &readback_spu );
+
+	readback_spu.contextTable = crAllocHashtable();
+	readback_spu.windowTable = crAllocHashtable();
+
+	/* create my default window (window number 0) */
+	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
+	CRASSERT(window);
+	window->index = 0;
+	window->renderWindow = 0; /* default render SPU window */
+	window->childWindow = 0;  /* default child SPU window */
+	crHashtableAdd(readback_spu.windowTable, 0, window);
 
 	crStateInit();
 	readback_spu.gather_conn = NULL;
