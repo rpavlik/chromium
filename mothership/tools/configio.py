@@ -8,7 +8,7 @@
 
 """Functions for reading and writing Chromium config files."""
 
-import re
+import re, string
 import crutils
 
 
@@ -16,9 +16,7 @@ __ConfigFileHeader = """
 import string
 import sys
 sys.path.append( "../server" )
-sys.path.append( "../tools" )
 from mothership import *
-from crutils import *
 
 cr = CR()
 
@@ -64,6 +62,24 @@ def WriteSPUOptions(spu, prefix, file):
 		values = spu.GetOption(name)
 		__WriteOption(prefix + "_" + name, type, values, file)
 
+def WriteSPUConfs(spu, lvalue, file):
+	"""Write a spu.Conf() line to the file handle for all SPU options."""
+	(params, options) = crutils.GetSPUOptions(spu.Name())
+	values = {}
+	for (name, description, type, count, default, mins, maxs) in options:
+		values = spu.GetOption(name)
+		if values != default:
+			if type == "STRING":
+				assert count == 1
+				file.write("%s('%s', '%s')\n" % (lvalue, name, values[0]))
+			else:
+				valueStr = ""
+				for val in values:
+					valueStr += "%s " % str(val)
+				# remove last space
+				valueStr = valueStr[:-1]
+				file.write("%s('%s', '%s')\n" % (lvalue, name, valueStr))
+	
 
 
 def WriteConfig(mothership, file):
@@ -72,44 +88,72 @@ def WriteConfig(mothership, file):
 	file.write("# Chromium configuration produced by graph.py\n")
 	file.write(__ConfigFileHeader)
 
-	# write the nodes and SPUs
-	nodeNames = {}
-	spuNames = {}
-	n = 0
-	s = 0
+	# Assign an index to each node (needed for AddServer)
+	numNodes = 0
 	for node in mothership.Nodes():
-		nodeNames[node] = "node[%d]" % n
+		node.index = numNodes
+		numNodes += node.GetCount()
+
+	# "declare" the nodes array
+	file.write("nodes = range(%d)\n" % numNodes)
+
+	# write the code to allocate the nodes
+	i = 0
+	for node in mothership.Nodes():
 		if node.IsServer():
-			file.write("node[%d] = crNetworkNode('%s')\n" %
-					   (n, node.GetHosts()[0])) # XXX fix hostnames
+			type = "crNetworkNode"
 		else:
-			file.write("node[%d] = crApplicationNode('%s')\n" %
-					   (n, node.GetHosts()[0]))
-		# write the node's SPUs
-		for spu in node.SPUChain():
-			spuNames[spu] = "spu[%d]" % s
-			file.write("spu[%d] = SPU('%s')\n" % (s, spu.Name()))
-			file.write("node[%d].AddSPU(spu[%d])\n" % (n, s))
-			file.write("#write spu options here\n")
-			s += 1
-		n += 1
-		file.write("\n")
+			type = "crApplicationNode"
+		# emit N nodes
+		for j in range(node.GetCount()):
+			file.write("nodes[%d] = %s('%s')\n" %
+					   (i, type, node.GetHosts()[j]))
+			file.write("cr.AddNode(nodes[%d])\n" % i)
+			i += 1
+		#endif
+	#endfor
+	file.write("\n")
 
-	# add servers to tilesort/packer SPUs
+	# write the SPUs for each node
 	for node in mothership.Nodes():
-		lastSPU = node.LastSPU()
-		if lastSPU:
-			for server in lastSPU.GetServers():
-				file.write("%s.AddServer(%s)\n" % (spuNames[lastSPU],
-												   nodeNames[server]))
+		for j in range(node.GetCount()):
+			numSPUs = len(node.SPUChain())
+			if numSPUs > 0:
+				if node.IsServer():
+					type = "crNetworkNode"
+				else:
+					type = "crApplicationNode"
+				file.write("# %s nodes[%d]\n" % (type, node.index + j))
+				file.write("spus = range(%d)\n" % numSPUs)
+				k = 0
+				for spu in node.SPUChain():
+					file.write("spus[%d] = SPU('%s')\n" % (k, spu.Name()))
+					WriteSPUConfs(spu, "spus[%d].Conf" % k, file)
+					if k + 1 == numSPUs:
+						# last SPU, add servers, if any
+						for server in node.GetServers():
+							file.write("spus[%d].AddServer(nodes[%d])\n" %
+									   (k, server.index))
+					file.write("nodes[%d].AddSPU(spu[%d])\n" %
+							   (node.index + j, k))
+					k += 1
+				file.write("\n")
+			#endif
+		#endfor
+		if node.IsServer():
+			# write the tiles information
+			for j in range(node.GetCount()):
+				# XXX fix this
+				#file.write("nodes[%d].AddTile(x, y, width, height)\n" %
+				#		   node.index + j)
+				pass
+		#endif
+	#endfor
 
-	f.write("\n")
-	# add nodes to mothership
-	for node in self.mothership.Nodes():
-		f.write("cr.AddNode(%s)\n" % nodeNames[node])
+	file.write("\n")
 
 	# tail of file
-	f.write(__ConfigFileTail)
+	file.write(__ConfigFileTail)
 
 
 #----------------------------------------------------------------------
