@@ -34,27 +34,31 @@
 #define GL_GLEXT_PROTOTYPES
 #endif
 
-#ifndef GLX_GLXEXT_PROTOTYPES
-#define GLX_GLXEXT_PROTOTYPES
-#endif
-
 #if defined(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #define WGL_APIENTRY __stdcall
 #define CR_APIENTRY __stdcall
 #include <windows.h>
+#elif defined(DARWIN)
+/* nothing */
+#else
+#define GLX
 #endif
 
 #include <GL/gl.h>
 
 #ifndef WINDOWS
 #define CR_APIENTRY
-#ifndef DARWIN
-#include <GL/glx.h>
-#endif
 #include <GL/glu.h>
 #endif
 
+
+#ifdef GLX
+#ifndef GLX_GLXEXT_PROTOTYPES
+#define GLX_GLXEXT_PROTOTYPES
+#endif
+#include <GL/glx.h>
+#endif
 
 #ifdef USE_OSMESA
 #include <GL/osmesa.h>
