@@ -15,7 +15,6 @@ typedef struct {
 	GLbitvalue clipPlane;
 	GLbitvalue enable;
 	GLbitvalue base;
-	GLbitvalue compress;
 } CRTransformBits;
 
 typedef struct {

@@ -179,3 +179,8 @@ int crMothershipGetSPUDir( CRConnection *conn, char *response )
 {
 	return crMothershipSendString( conn, response, "SPUdir" );
 }
+
+int crMothershipGetTiles( CRConnection *conn, char *response, int server_num )
+{
+	return crMothershipSendString( conn, response, "tiles %d", server_num );
+}

@@ -21,5 +21,6 @@ void crMothershipGetServers( CRConnection *conn, char *response );
 int crMothershipGetClientDLL( CRConnection *conn, char *response );
 int crMothershipGetSPUDir( CRConnection *conn, char *response );
 void crMothershipGetMTU( CRConnection *conn, char *response );
+int crMothershipGetTiles( CRConnection *conn, char *response, int server_num );
 
 #endif /* CR_MOTHERSHIP_H */

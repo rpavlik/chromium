@@ -199,7 +199,7 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		// Check to see if this server needs geometry from us.
 		if (!broadcast && !(bucket_info->hits & (1 << i)))
 		{
-			crDebug( "NOT sending to server %d", i );
+			//crDebug( "NOT sending to server %d", i );
 			continue;
 		}
 		//crDebug( "Sending to server %d", i );

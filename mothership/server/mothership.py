@@ -32,6 +32,7 @@ class SPU:
 		self.servers.append( (node, url) )
 
 	def AddServer( self, node, protocol='tcpip', port=7000 ):
+		node.Conf( 'port', port )
 		self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
 		node.AddClient( self, protocol )
 
@@ -64,12 +65,16 @@ class CRNetworkNode(CRNode):
 		else:
 			self.ipaddr = host
 		self.clients = []
+		self.tiles = []
 
 	def Conf( self, key, *values ):
 		Conf( self.config, key, *values )
 
 	def AddClient( self, node, protocol ):
 		self.clients.append( (node,protocol) )
+
+	def AddTile( self, x, y, w, h ):
+		self.tiles.append( (x,y,w,h) )
 
 class CRApplicationNode(CRNode):
 	def SetApplication( self, app ):
@@ -271,10 +276,33 @@ class CR:
 		servers = "%d " % len(spu.servers)
 		for i in range(len(spu.servers)):
 			(node, url) = spu.servers[i]
-			servers += "%d %s" % (node.SPUs[0].ID, url)
+			servers += "%s" % (url)
 			if i != len(spu.servers) -1:
 				servers += ','
 		sock.Success( servers )
+
+	def do_tiles( self, sock, args ):
+		if sock.SPUid == -1:
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
+			return
+		spu = allSPUs[sock.SPUid]
+		if len(spu.servers) == 0:
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
+			return
+		server_num = int(args)
+		if server_num < 0 or server_num >= len(spu.servers):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "SPU %d doesn't have a server numbered %d" % (sock.SPUid, server_num) )
+		(node, url) = spu.servers[server_num]
+		if len(node.tiles) == 0:
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d's server #%d doesn't have tiles!" % (sock.SPUid, server_num) )
+			return
+		tiles = "%d " % len(node.tiles)
+		for i in range(len(node.tiles)):
+			tile = node.tiles[i]
+			tiles += "%d %d %d %d" % tile
+			if i != len(node.tiles) - 1:
+				tiles += ","
+		sock.Success( tiles )
 
 	def do_clients( self, sock, args ):
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):

@@ -36,7 +36,7 @@ void tilesortspuGatherConfiguration( void )
 
 	char **serverchain, **serverlist;
 	int num_servers;
-	int i, tile;
+	int i;
 
 	__setDefaults();
 
@@ -93,31 +93,26 @@ void tilesortspuGatherConfiguration( void )
 	for (i = 0 ; i < num_servers ; i++)
 	{
 		char server_url[1024];
-		char response[1024];
-		int server_spuid;
 		TileSortSPUServer *server = tilesort_spu.servers + i;
-	
-		sscanf( serverlist[i], "%d %s", &server_spuid, server_url );
+		char **tilechain, **tilelist;
+		int tile;
 
-		crDebug( "Server %d: (%d) %s", i+1, server_spuid, server_url );
+		sscanf( serverlist[i], "%s", server_url );
+
+		crDebug( "Server %d: %s", i+1, server_url );
 		server->net.name = crStrdup( server_url );
 		server->net.buffer_size = tilesort_spu.MTU;
 
-		// Now, we want to query the mothership about the tile information,
-		// which is stored with the server's head render SPU.  This is
-		// a little gross, but no other assignment of tiling information made
-		// more sense.
-
-		crMothershipIdentifySPU( conn, server_spuid );
-
-		if (!crMothershipSPUParam( conn, response, "num_tiles" ))
+		if (!crMothershipGetTiles( conn, response, i ))
 		{
-			server->num_extents = 1;
+			crError( "No tile information for server %d!  I can't continue!" );
 		}
-		else
-		{
-			sscanf( response, "%d", &(server->num_extents) );
-		}
+
+		tilechain = crStrSplitn( response, " ", 1 );
+		server->num_extents = crStrToInt( tilechain[0] );
+
+		tilelist = crStrSplit( tilechain[1], "," );
+
 		if (server->num_extents > 1)
 		{
 			tilesort_spu.apply_viewtransform = 1;
@@ -125,13 +120,7 @@ void tilesortspuGatherConfiguration( void )
 		for (tile = 0; tile < server->num_extents ; tile++)
 		{
 			int w,h;
-			if (!crMothershipSPUParam( conn, response, "tile%d", tile+1 ))
-			{
-				crWarning( "No extent information for tile %d, defaulting", tile );
-				crWarning( "To 0,0,640,480" );
-				crStrcpy( response, "0 0 640 480" );
-			}
-			sscanf( response, "%d %d %d %d", &(server->x1[tile]), 
+			sscanf( tilelist[tile], "%d %d %d %d", &(server->x1[tile]), 
 					&(server->y1[tile]), &w, &h );
 
 			server->x2[tile] = server->x1[tile] + w;

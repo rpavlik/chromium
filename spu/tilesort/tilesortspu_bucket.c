@@ -8,7 +8,7 @@
 
 static float _vmult(float *m, float x, float y, float z) 
 {
-	return m[0]*x + m[1]*y + m[2]*z + m[3];
+	return m[0]*x + m[4]*y + m[8]*z + m[12];
 }
 
 typedef struct BucketRegion *BucketRegion_ptr;

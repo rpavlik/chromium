@@ -86,7 +86,6 @@ void STATE_APIENTRY crStateViewport(GLint x, GLint y, GLsizei width,
 	vb->v_dims = g->neg_bitid;
 	vb->dirty = g->neg_bitid;
 	tb->base = g->neg_bitid;
-	tb->compress = g->neg_bitid;
 	tb->dirty = g->neg_bitid;
 
 }
