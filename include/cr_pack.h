@@ -67,7 +67,6 @@ void crPackFree( void *ptr );
 void crNetworkPointerWrite( CRNetworkPointer *, void * );
 
 #define GET_BUFFERED_POINTER( len ) \
-	crDebug( "%d bytes requested, %d left!", len, cr_packer_globals.buffer.data_end - cr_packer_globals.buffer.data_current ); \
   data_ptr = cr_packer_globals.buffer.data_current; \
   if (data_ptr + (len) > cr_packer_globals.buffer.data_end ) \
   { \
@@ -78,7 +77,6 @@ void crNetworkPointerWrite( CRNetworkPointer *, void * );
   cr_packer_globals.buffer.data_current += (len)
 
 #define GET_BUFFERED_COUNT_POINTER( len ) \
-	crDebug( "%d (counted) bytes requested, %d left!", len, cr_packer_globals.buffer.data_end - cr_packer_globals.buffer.data_current ); \
   data_ptr = cr_packer_globals.buffer.data_current; \
   if (data_ptr + (len) > cr_packer_globals.buffer.data_end ) \
   { \
