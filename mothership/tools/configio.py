@@ -25,9 +25,20 @@ import sys
 sys.path.append( "../server" )
 from mothership import *
 
+# Look for some special mothership params
+for (name, value) in MOTHERSHIP_OPTIONS:
+	if name == "zeroth_arg":
+		ZEROTH_ARG = value
+	elif name == "default_dir":
+		DEFAULT_DIR = value
+	elif name == "auto_start":
+		AUTO_START = value
+	elif name == "default_app":
+		DEFAULT_APP = value
+
 # Get program name
 if len(sys.argv) == 1:
-	program = GLOBAL_default_app
+	program = DEFAULT_APP
 elif len(sys.argv) == 2:
 	program = sys.argv[1]
 else:
@@ -39,14 +50,13 @@ if program == "":
 
 
 cr = CR()
-cr.MTU( GLOBAL_MTU )
 
 """
 
 __ConfigFileTail = """
-cr.Conf('minimum_window_size', GLOBAL_minimum_window_size)
-cr.Conf('match_window_title', GLOBAL_match_window_title)
-cr.Conf('show_cursor', GLOBAL_show_cursor)
+# Set mothership params
+for (name, value) in MOTHERSHIP_OPTIONS:
+	cr.Conf(name, value)
 cr.Go()
 """
 
@@ -94,7 +104,7 @@ def WriteAutoStart(nodeName, isServer, hostName, file):
 		argList += ' ]'
 
 	# Now, write the code to the file
-	file.write("if GLOBAL_auto_start:\n")
+	file.write("if AUTO_START:\n")
 	file.write("\t%s.AutoStart( %s )\n" % (nodeName, argList))
 
 
@@ -103,7 +113,8 @@ def WriteConfig(mothership, file):
 
 	file.write("# Chromium configuration produced by graph.py\n")
 	# write mothership/global options
-	WriteGlobalOptions(mothership, file)
+	mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
+
 	file.write("\n")
 	# boilerplate
 	file.write(__ConfigFileHeader)
@@ -131,7 +142,7 @@ def WriteConfig(mothership, file):
 				# application node
 				file.write("nodes[%d] = CRApplicationNode('%s')\n" %
 						   (i, node.GetHosts()[j]))
-				file.write("nodes[%d].StartDir( GLOBAL_default_dir )\n" % i)
+				file.write("nodes[%d].StartDir( DEFAULT_DIR )\n" % i)
 				file.write("nodes[%d].SetApplication( program )\n" % i)
 			(x, y) = node.GetPosition()
 			file.write("nodes[%d].SetPosition(%d, %d)\n" % (i, x, y))
