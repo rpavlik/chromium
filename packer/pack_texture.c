@@ -261,12 +261,11 @@ void PACK_APIENTRY
 crPackDeleteTextures(GLsizei n, const GLuint * textures)
 {
 	unsigned char *data_ptr;
-	int packet_length = sizeof(int) + sizeof(n) + n * sizeof(*textures);
+	int packet_length = sizeof(n) + n * sizeof(*textures);
 
 	data_ptr = (unsigned char *) crPackAlloc(packet_length);
-	WRITE_DATA(0, int, packet_length);
-	WRITE_DATA(sizeof(int) + 0, GLsizei, n);
-	crMemcpy(data_ptr + sizeof(int) + 4, textures, n * sizeof(*textures));
+	WRITE_DATA(0, GLsizei, n);
+	crMemcpy(data_ptr + 4, textures, n * sizeof(*textures));
 	crHugePacket(CR_DELETETEXTURES_OPCODE, data_ptr);
 }
 
