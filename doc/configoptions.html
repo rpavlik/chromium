@@ -14,10 +14,11 @@
 
 <body bgcolor="#FFFFFF">
 
-<h1 class="PageHeading">Configuring the Provided SPU's</h1>
-<p>This page provides a complete list of all the configuration parameters
-supported by all SPU's shipped with Chromium, arranged by SPU.&nbsp; If a
-SPU has <i>no</i> configuration options, it is not listed here.</p>
+<h1 class="PageHeading">Provided SPU's</h1>
+<p>This page describes the Stream Processing Units (SPUs) provided with
+Chromium, including all their options.
+</p>
+
 <p>Example of setting SPU parameters are:</p>
 <code>
 spu = SPU('render')<br>
@@ -30,7 +31,18 @@ spu = SPU('tilesort')<br>
 spu.Conf('bucket_mode', 'Uniform Grid')
 </code>
 
+<p>
+Users should examine the sample Chromium configuration files to see how
+some of these SPUs are used.
+</p>
+
+
 <h2 class="PageSubHeading">Print SPU </h2>
+<p>
+The Print SPU prints each OpenGL command to stderr or a file.
+It's useful for debugging Chromium and inspecting the OpenGL commands
+issued by applications
+</p>
 <table border="1" width="100%">
   <tr class="ConfigTableHeader">
     <td width="19%">Parameter Name</td>
@@ -40,17 +52,23 @@ spu.Conf('bucket_mode', 'Uniform Grid')
   <tr>
     <td width="19%" class="ConfigOption">log_file</td>
     <td width="12%" class="ConfigType">String</td>
-    <td width="115%" class="ConfigDesc">Name of log file to generate.&nbsp; If this parameter is not
-      specified, the Print SPU will send its output to standard error.  
+    <td width="115%" class="ConfigDesc">Name of log file to generate.&nbsp;
+          If this parameter is not specified, the Print SPU will send
+          its output to standard error.  
 	  If this is a relative path, the file will be created relative
 	  to the current directory, which will usually be either the directory
 	  that the server was launched from, or the start directory specified
 	  for the application node.  If no start directory was specified, the
-	  client log file will appear in the directory that <code>crappfaker</code>
-	  was run from.</td>
+	  client log file will appear in the directory that
+	  <code>crappfaker</code> was run from.</td>
   </tr>
 </table>
+
 <h2 class="PageSubHeading">Render SPU</h2>
+<p>
+The Render SPU renders OpenGL commands into a window.  Virtually every
+Chromium configuration uses this SPU.
+</p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -209,7 +227,22 @@ spu.Conf('bucket_mode', 'Uniform Grid')
 
 </table>
 
+
+<h2 class="PageSubHeading">Pack SPU</h2>
+<p>
+The Pack SPU simply packs all the OpenGL commands into buffer which are
+sent to the downstream server.  The Pack SPU has no configuration options.
+</p>
+
+
 <h2 class="PageSubHeading">Readback SPU</h2>
+<p>
+The Readback SPU is very similar to the Render SPU.  It's special in
+that when SwapBuffers is called, the Readback SPU uses glReadPixels to
+read the contents of the color/depth buffer(s) and sends them to the
+next SPU in the chain with glDrawPixels.
+This SPU is commonly used to implement sort-last rendering configurations.
+</p>
 <p>
 Since the readback SPU is derived from the render SPU, it accepts all
 configuration options that the render SPU accepts, plus a few more:
@@ -253,7 +286,13 @@ configuration options that the render SPU accepts, plus a few more:
 </table>
 
 <h2 class="PageSubHeading">Tilesort SPU</h2>
-
+<p>
+The Tilesort SPU is used to divide the framebuffer into tiles which are
+rendered by separate render servers.
+The tilesort SPU is usually used to drive tiled, cluster displays (murals).
+The tilesort SPU must be the last SPU in the chain and be connected to
+one or more downstream servers.
+</p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -408,7 +447,64 @@ configuration options that the render SPU accepts, plus a few more:
   </tr>
 </table>
 
+<h2 class="PageSubHeading">Binaryswap SPU</h2>
+<p>
+The Binaryswap SPU implements the well known <i>binary swap</i> method
+of image compositing.  It works similar to the Readback SPU.
+Since the Binaryswap SPU is derived from the Render SPU, all the Render
+SPU options are applicable to the Binaryswap SPU.
+</p>
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="20">peers</td>
+    <td width="12%" class="ConfigType" height="20">String</td>
+    <td width="115%" class="ConfigDesc" height="20">
+    List of peer nodes.  XXX more?
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="20">node_number</td>
+    <td width="12%" class="ConfigType" height="20">String</td>
+    <td width="115%" class="ConfigDesc" height="20">
+    XXX ???
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="20">local_visualization</td>
+    <td width="12%" class="ConfigType" height="20">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="20">
+    If true, intermediate rendering will be displayed in the binary swap
+    SPU's window.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="20">type</td>
+    <td width="12%" class="ConfigType" height="20">Enum</td>
+    <td width="115%" class="ConfigDesc" height="20">
+      Controls whether depth or alpha buffers are used to composite images.
+      Possible value are <b>depth</b> and <b>alpha</b>.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="20">swapmtu</td>
+    <td width="12%" class="ConfigType" height="20">Integer</td>
+    <td width="115%" class="ConfigDesc" height="20">
+    Specifies the MTU size when swapping images between peers.
+    </td>
+  </tr>
+</table>
+
+
 <h2 class="PageSubHeading">Saveframe SPU</h2>
+<p>
+The Savefame SPU saves the image from the colorbuffer to a file whenever
+SwapBuffers is called.  It's useful for "screengrabs".
+</p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -501,6 +597,10 @@ configuration options that the render SPU accepts, plus a few more:
 </table>
 
 <h2 class="PageSubHeading">Motionblur SPU</h2>
+<p>
+The Motionblur SPU uses the accumulation buffer to simulate motion blur of
+moving objects.
+</p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -519,6 +619,9 @@ configuration options that the render SPU accepts, plus a few more:
 </table>
 
 <h2 class="PageSubHeading">Hiddenline SPU</h2>
+<p>
+The Hiddenline SPU draws objects in hidden-line mode.
+</p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -583,6 +686,9 @@ configuration options that the render SPU accepts, plus a few more:
 
 
 <h2 class="PageSubHeading">Wet SPU</h2>
+<p>
+The Wet SPU causes the image to appear wavy, as if viewed through water.
+</p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -646,6 +752,10 @@ configuration options that the render SPU accepts, plus a few more:
 </table>
 
 <h2 class="PageSubHeading">Perf SPU</h2>
+<p>
+The Perf SPU is used to collect performance statistics while running
+Chromium.
+</p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -701,7 +811,19 @@ configuration options that the render SPU accepts, plus a few more:
   </tr>
 </table>
 
+<h2 class="PageSubHeading">Array SPU</h2>
+<p>
+The Array SPU implement's OpenGL's vertex arrays.  If your application uses
+vertex arrays, the array SPU should be the first one in the SPU chain.
+The Array SPU has no configuration options.
+</p>
+
 <h2 class="PageSubHeading">Feedback SPU</h2>
+<p>
+The Feedback SPU implement's OpenGL's selection and feedback features.
+If your application needs either of these features, you should use the
+Feedback SPU in your configuration.
+</p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -721,6 +843,30 @@ configuration options that the render SPU accepts, plus a few more:
 </table>
 </table>
 </table>
+
+<h2 class="PageSubHeading">Expando SPU</h2>
+<p>
+The Expando SPU records the contents of display lists, then replays the
+commands when glCallList is called.  The Expando SPU has no options.
+</p>
+
+<h2 class="PageSubHeading">Injector SPU</h2>
+<p>
+XXX no description?
+</p>
+
+<h2 class="PageSubHeading">Replicate SPU</h2>
+<p>
+XXX no description?
+</p>
+
+
+<h2 class="PageSubHeading">Simplequery SPU</h2>
+<p>
+The Simplequery SPU intercepts all OpenGL glGet*() functions and returns
+simple default values.  This is useful when using <i>file networking</i>
+which records command streams to files.
+</p>
 
 
 <br>
