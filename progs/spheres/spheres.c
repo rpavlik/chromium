@@ -52,6 +52,7 @@ typedef struct
 	int numTris;
 	int maxFrames;
 	int useVBO;
+	int useBBox;
 
 	/* derived */
 	float theta, zPos, radius;
@@ -71,6 +72,7 @@ typedef struct
 	GLuint VertexBufferObj;
 	GLuint ElementBufferObj;
 	GLuint DisplayList;
+	GLfloat Xmin, Ymin, Zmin, Xmax, Ymax, Zmax;
 } TriangleMesh;
 
 
@@ -281,6 +283,10 @@ MakeSphere(GLfloat radius, GLuint slices, GLuint stacks)
 	glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 #endif
 
+	/* set bounds */
+	mesh->Xmin = mesh->Ymin = mesh->Zmin = -radius;
+	mesh->Xmax = mesh->Ymax = mesh->Zmax = +radius;
+
 	return mesh;
 }
 
@@ -358,8 +364,8 @@ DrawMesh(const TriangleMesh *mesh, DrawMode drawMode)
 			glEnable(GL_VERTEX_ARRAY);
 			glEnable(GL_NORMAL_ARRAY);
 			first = 0;
+			glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh->ElementBufferObj);
 		}
-		glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh->ElementBufferObj);
 		if (mesh->NumIndices <= 65535)
 			glDrawRangeElements_ptr(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
 															mesh->NumIndices, GL_UNSIGNED_SHORT, 0);
@@ -384,6 +390,35 @@ DrawMesh(const TriangleMesh *mesh, DrawMode drawMode)
 	}
 
 	return mesh->NumTris;
+}
+
+
+static void
+DrawMeshBBox(const TriangleMesh *mesh)
+{
+	glColor3f(1.0F, 1.0F, 1.0F);
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(mesh->Xmin, mesh->Ymin, mesh->Zmin);
+	glVertex3f(mesh->Xmax, mesh->Ymin, mesh->Zmin);
+	glVertex3f(mesh->Xmax, mesh->Ymax, mesh->Zmin);
+	glVertex3f(mesh->Xmin, mesh->Ymax, mesh->Zmin);
+	glEnd();
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(mesh->Xmin, mesh->Ymin, mesh->Zmax);
+	glVertex3f(mesh->Xmax, mesh->Ymin, mesh->Zmax);
+	glVertex3f(mesh->Xmax, mesh->Ymax, mesh->Zmax);
+	glVertex3f(mesh->Xmin, mesh->Ymax, mesh->Zmax);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(mesh->Xmin, mesh->Ymin, mesh->Zmin);
+	glVertex3f(mesh->Xmin, mesh->Ymin, mesh->Zmax);
+	glVertex3f(mesh->Xmax, mesh->Ymin, mesh->Zmin);
+	glVertex3f(mesh->Xmax, mesh->Ymin, mesh->Zmax);
+	glVertex3f(mesh->Xmax, mesh->Ymax, mesh->Zmin);
+	glVertex3f(mesh->Xmax, mesh->Ymax, mesh->Zmax);
+	glVertex3f(mesh->Xmin, mesh->Ymax, mesh->Zmin);
+	glVertex3f(mesh->Xmin, mesh->Ymax, mesh->Zmax);
+	glEnd();
 }
 
 
@@ -435,6 +470,19 @@ DrawFrame(const TriangleMesh *mesh, const Options *options, int frame,
 			glPushMatrix();
 				glRotatef(i * options->theta, 0.0f, 0.0f, 1.0f);
 				glTranslatef(0.65f, 0.0f, options->zPos);
+#if USE_CHROMIUM
+				if (options->useBBox) {
+					GLfloat bbox[6];
+					bbox[0] = mesh->Xmin;
+					bbox[1] = mesh->Ymin;
+					bbox[2] = mesh->Zmin;
+					bbox[3] = mesh->Xmax;
+					bbox[4] = mesh->Ymax;
+					bbox[5] = mesh->Zmax;
+					glChromiumParametervCR_ptr(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox);
+					DrawMeshBBox(mesh);
+				}
+#endif
 				tris += DrawMesh(mesh, mode);
 			glPopMatrix();
 		}
@@ -532,6 +580,7 @@ ParseOptions(int argc, char *argv[], Options *options)
 	options->numTris = 12000;
 	options->maxFrames = 1000/* * 1000 * 1000*/;
 	options->useVBO = 1;
+	options->useBBox = 0;
 
 	for (i = 1 ; i < argc ; i++)
 	{
@@ -610,6 +659,10 @@ ParseOptions(int argc, char *argv[], Options *options)
 		else if (!strcmp( argv[i], "-d" ))
 		{
 			DrawingMode = DRAW_DISPLAY_LIST;
+		}
+		else if (!strcmp( argv[i], "-bbox" ))
+		{
+			options->useBBox = 1;
 		}
 		else if (!strcmp( argv[i], "-h" ) || !strcmp(argv[i], "--help"))
 		{
