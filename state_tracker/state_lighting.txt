@@ -35,6 +35,7 @@
 %target=tl
 %current=cl
 %bit=lb
+%extrabit=b
 :enable:enable:GL_LIGHT0+i
 %flush
 +>if (!tl->enable) {
@@ -66,3 +67,4 @@
 %target=to
 %current=from
 %bit=b
+%extrabit=

@@ -34,6 +34,7 @@ $doinvalid = $_[3];
 $target = "to";
 $current = "from";
 $bit = "b";
+$extrabit = "";
 $tab = "\t";
 $current_guard = "";
 $current_dependancy = "";
@@ -90,6 +91,7 @@ mainloop: while ($line = <FILE>) {
 	$target = $1 if ($line =~ /%target=(\w*)/);
 	$current = $1 if ($line =~ /%current=(\w*)/);
 	$bit = $1 if ($line =~ /%bit=(\w*)/);
+	$extrabit = $1 if ($line =~ /%extrabit=(\w*)/);
 
 	if ($line =~ /%flush/) {
 		if (($current_guard ne "")) {
@@ -259,6 +261,9 @@ mainloop: while ($line = <FILE>) {
 			print $tab."FILLDIRTY($bit->$guardbit);\n";
 		}
 		print $tab."FILLDIRTY($bit->dirty);\n";
+		if ($extrabit ne "") {
+			print $tab."FILLDIRTY($extrabit->dirty);\n";
+		}
 	  }
 
 	## Close the compare
