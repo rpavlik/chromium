@@ -14,6 +14,7 @@ import crutils
 import intdialog
 import tilesort_template
 import sortlast_template
+import lightning2_template
 
 
 def __Create_BinarySwap(parentWindow, mothership):
@@ -100,11 +101,11 @@ __Templates = {
 					   sortlast_template.Edit_Sortlast,
 					   sortlast_template.Read_Sortlast,
 					   sortlast_template.Write_Sortlast ),
-	"Binary-swap"  : ( __Create_BinarySwap,
-					   __Is_BinarySwap,
-					   __Edit_BinarySwap,
-					   __Read_BinarySwap,
-					   __Write_BinarySwap ),
+	"Lighting-2"   : ( lightning2_template.Create_Lightning2,
+					   lightning2_template.Is_Lightning2,
+					   lightning2_template.Edit_Lightning2,
+					   lightning2_template.Read_Lightning2,
+					   lightning2_template.Write_Lightning2 ),
 }
 
 def GetTemplateList():
