@@ -425,8 +425,8 @@ defaultNewTiling( WindowInfo *winInfo )
 		crError("Zero servers in defaultNewTiling!\n");
 		return;
 	case 1:
-		tileCols = 0;
-		tileRows = 0;
+		tileCols = 1;
+		tileRows = 1;
 		break;
 	case 2:
 		tileCols = 2;
