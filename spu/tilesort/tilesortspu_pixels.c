@@ -36,13 +36,15 @@ ComputeSubImage(GLint *x, GLint *y, GLsizei *width, GLsizei *height,
 	GLint w, h;
 
 	if (xZoom != 1.0F || yZoom != 1.0F) {
-		 /* scale up the image to zoomed size, for sake of clipping */
-		 w = (GLint) (*width  * xZoom + 0.5F);
-		 h = (GLint) (*height * yZoom + 0.5F);
+		/* scale up the image to zoomed size, for sake of clipping */
+		w = (GLint) (*width  * xZoom + 0.5F);
+		h = (GLint) (*height * yZoom + 0.5F);
+		*skipPixels = (GLint) (*skipPixels * xZoom); /* don't round up */
+		*skipRows   = (GLint) (*skipRows   * yZoom);
 	}
 	else {
-		 w = *width;
-		 h = *height;
+		w = *width;
+		h = *height;
 	}
 
 	if (*x + w <= scissor->x1 ||
