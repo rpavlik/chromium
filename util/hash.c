@@ -16,7 +16,7 @@ CRHashTable *crAllocHashtable( void )
 	hash->num_elements = 0;
 	for (i = 0 ; i < CR_NUM_BUCKETS ; i++)
 	{
-		hash->buckets[i] = NULL;;
+		hash->buckets[i] = NULL;
 	}
 	return hash;
 }
