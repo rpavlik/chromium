@@ -264,7 +264,6 @@ void crStateDestroyContext( CRContext *ctx )
 		/* ensure matrix state is also current */
 		crStateMatrixMode(defaultContext->transform.matrixMode);
 	}
-	crDebug( "Destroying a context (id=%d addr=%p)", ctx->id, (void *)ctx);
 	g_availableContexts[ctx->id] = 0;
 
 	crStateClientDestroy( &(ctx->client) );
