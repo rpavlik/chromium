@@ -5,10 +5,12 @@
  */
 
 #include "replicatespu.h"
+#include "cr_environment.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_string.h"
 #include "cr_packfunctions.h"
+#include "cr_url.h"
 
 #include <arpa/inet.h>
 #include <X11/Xmd.h>
@@ -200,8 +202,20 @@ void replicatespuReplicateCreateContext(int ipaddress)
 		return;
 	}
 
-	if (replicate_spu.vncAvailable)
-		XVncChromiumStart(replicate_spu.glx_display, ipaddress, CHROMIUM_START_PORT + r_slot);
+	if (replicate_spu.vncAvailable) {
+		/* Find the mothership port that we're using and pass it to
+		 * along to the VNC server.  The VNC server will, in turn, pass it
+		 * on to the VNC viewer and chromium module.
+		 */
+		char protocol[100], hostname[1000];
+		const char *mothershipURL;
+		unsigned short mothershipPort;
+		mothershipURL = crGetenv("CRMOTHERSHIP");
+		crParseURL(mothershipURL, protocol, hostname, &mothershipPort,
+							 DEFAULT_MOTHERSHIP_PORT);
+		XVncChromiumStart(replicate_spu.glx_display, ipaddress,
+											CHROMIUM_START_PORT + r_slot, mothershipPort);
+	}
 
 	thread->broadcast = 0;
 
@@ -315,7 +329,6 @@ void replicatespuReplicateCreateContext(int ipaddress)
 
 /* MakeCurrent, the current context */
 	if (thread->currentContext) {
-
 		if (replicate_spu.swap)
 			crPackMakeCurrentSWAP( thread->currentContext->currentWindow, 0, thread->currentContext->rserverCtx[r_slot] );
 	 	else
