@@ -18,11 +18,37 @@ import string, os.path, types, re, random, copy
 from wxPython.wx import *
 
 import crtypes, crutils
-import templates, configio
+import configio
 import spudialog, intdialog, hostdialog, tiledialog
+import tilesort_template
+import sortlast_template
+import reassembly_template
 
-
+# Global vars
 App = None
+
+
+#----------------------------------------------------------------------
+# Templates
+
+# Map template name strings to classes
+__Templates = {
+	"Tilesort"         : tilesort_template.TilesortTemplate,
+	"Sort-last"        : sortlast_template.SortlastTemplate,
+	"Image Reassembly" : reassembly_template.ReassemblyTemplate,
+}
+
+def GetTemplateList():
+	"""Return list of names of known templates."""
+	return __Templates.keys()
+
+def InstantiateTemplate(templateName):
+	"""Return a new instance of the named template class."""
+	tClass = __Templates[templateName]
+	if tClass:
+		return tClass()
+	else:
+		return None
 
 
 #----------------------------------------------------------------------
@@ -55,9 +81,6 @@ menu_SPU_OPTIONS          = 304
 menu_SPU_TYPES            = 320
 
 menu_LAYOUT_NODES       = 400
-menu_GRAPH              = 401
-menu_TILESORT           = 402
-menu_LIGHTNING2         = 403
 
 menu_APP_OPTIONS        = 500
 menu_APP_RUN            = 501
@@ -245,7 +268,7 @@ class GraphFrame(wxFrame):
 #									 label=" Template:")
 #		toolSizer.Add(templateLabel, flag=wxALIGN_CENTRE)
 
-		templateNames = [ "New Template" ] + templates.GetTemplateList()
+		templateNames = [ "New Template" ] + GetTemplateList()
 		self.newTemplateChoice = wxChoice(parent=self.topPanel,
 										  id=id_NewTemplate,
 										  choices=templateNames)
@@ -568,26 +591,21 @@ class GraphFrame(wxFrame):
 		self.SaveState()
 		t = self.newTemplateChoice.GetSelection()
 		if t > 0:
-			templateName = templates.GetTemplateList()[t - 1]
+			templateName = GetTemplateList()[t - 1]
 			assert templateName != ""
-			templates.CreateTemplate(templateName, self, self.mothership)
-#		if t == 1:
-#			templates.CreateTilesort(self, self.mothership)
-#		elif t == 2:
-#			templates.CreateSortlast(self, self.mothership)
-#		elif t == 3:
-#			templates.CreateNClientTilesort(self, self.mothership)
-#		elif t == 4:
-#			templates.CreateBinarySwap(self, self.mothership)
+			t = InstantiateTemplate(templateName)
+			assert t
+			if t.Create(self, self.mothership):
+				self.mothership.SetTemplateType(t)
 		self.newTemplateChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 		self.dirty = true
 
 	def onTemplateEdit(self, event):
-		templateName = self.mothership.GetTemplateType()
-		if templateName != "":
-			templates.EditTemplate(templateName, self, self.mothership)
+		t = self.mothership.GetTemplateType()
+		if t:
+			t.Edit(self, self.mothership)
 		else:
 			self.Notify("This configuration doesn't match any template.")
 		self.drawArea.Refresh()
@@ -789,12 +807,12 @@ class GraphFrame(wxFrame):
 	def doExit(self, event):
 		""" Respond to the "Quit" menu command.
 		"""
-		for doc in App.DocList:
-			if not doc.dirty:
-				continue
-			doc.Raise()
-			if not doc.askIfUserWantsToSave("quitting"):
-				return
+		docs = App.DocList[:]  # make a copy since we call remove() in the loop
+		for doc in docs:
+			if doc.dirty:
+				doc.Raise()
+				if not doc.askIfUserWantsToSave("quitting"):
+					return
 			App.DocList.remove(doc)
 			doc.Destroy()
 
@@ -1201,8 +1219,8 @@ class GraphFrame(wxFrame):
 
 			name = spuList[0].Name()
 			spuClasses = crutils.FindSPUNames()
-			if name in spuClasses:  ###SPUInfo.keys():
-				(params, optionlist) = crutils.GetSPUOptions(name) ##SPUInfo[name]
+			if name in spuClasses:
+				(params, optionlist) = crutils.GetSPUOptions(name)
 				# create the dialog
 				dialog = spudialog.SPUDialog(parent=self, id=-1,
 											 title=name + " SPU Options",
@@ -1416,9 +1434,10 @@ class GraphFrame(wxFrame):
 	# File I/O
 
 	def loadConfig(self, fileName):
-		"""Load a graph from the file named self.fileName"""
+		"""Load a graph from the named file.
+		Return 1 for success, 0 for error."""
 		f = open(fileName, "r")
-		r = 0  # result
+		result = 0
 		if f:
 			# read first line to check for template
 			l = f.readline()
@@ -1426,42 +1445,48 @@ class GraphFrame(wxFrame):
 				return
 			v = re.search("^TEMPLATE = \"?([^\"]*)\"?", l)
 			if v:
-				template = v.group(1)
-				if templates.ReadTemplate(template, self.mothership, f):
-					r = 1
+				# We're reading a configuration made with a template
+				templateName = v.group(1)
+				t = InstantiateTemplate(templateName)
+				if t.Read(self.mothership, f):
+					self.mothership.SetTemplateType(t)
+					result = 1
 				else:
-					r = configio.ReadConfig(self.mothership, f, fileName)
+					self.mothership.SetTemplateType(None)
+					result = configio.ReadConfig(self.mothership, f, fileName)
 			else:
-				r = configio.ReadConfig(self.mothership, f, fileName)
-			#print "Done reading config file, retVal = %d" % r
+				# A generic (non-template) configuration
+				result = configio.ReadConfig(self.mothership, f, fileName)
 			f.close()
-			self.dirty = false
-			self.fileName = fileName
+			if result:
+				self.dirty = false
+				self.fileName = fileName
 		else:
 			self.Notify("Problem opening " + fileName)
 		self.drawArea.Refresh()
-		return r
+		return result
 
 	def saveConfig(self):
 		"""Save the Chromium configuration to a file."""
 		assert self.fileName != None
 		# XXX may need to catch exceptions for open()
+		result = 0
 		f = open(self.fileName, "w")
 		if f:
 			template = self.mothership.GetTemplateType()
-			if (template != "" and
-				templates.ValidateTemplate(template, self.mothership)):
+			if (template and template.Validate(self.mothership)):
 				# write as templatized config
-				templates.WriteTemplate(template, self.mothership, f)
+				result = template.Write(self.mothership, f)
 			else:
 				# write as generic config
-				configio.WriteConfig(self.mothership, f)
+				result = configio.WriteConfig(self.mothership, f)
 			f.close()
+		if result:
+			self.dirty = false
 		else:
 			response = wxMessageBox("Couldn't open %s for writing."
 									% self.fileName,
 									"Error", wxOK, self)
-		self.dirty = false
 
 
 	def askIfUserWantsToSave(self, action):
