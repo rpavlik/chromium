@@ -10,7 +10,7 @@
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #pragma warning( push, 3 ) /* shut up about warnings in YOUR OWN HEADER FILES!!! */
-#include <winsock2.h>
+#include <winsock.h>
 #endif
 
 #include <stdio.h>
