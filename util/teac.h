@@ -125,6 +125,27 @@ extern "C" {
   extern SBuffer* teac_getSendBuffer( Tcomm* tcomm, long size  );
   
   /*
+    - teac_getUnreadySendBuffer returns a one-use buffer to be used for an
+    outgoing message.  This call will never block, but the resulting buffer
+    must be passed through teac_makeSendBufferReady() before it can be passed
+    to teac_Send().  This routine will return NULL in case of errors, for
+    example being out of Elan virtual memory.
+  */
+  extern SBuffer* teac_getUnreadySendBuffer( Tcomm* tcomm, long size  );
+
+  /*
+    - teac_makeSendBufferReady prepares an SBuffer for sending.  If the
+    buffer was produced by teac_getSendBuffer(), it is already ready;
+    returns the input buffer immediately.  It it was produced by
+    teac_getUnreadySendBuffer() it is made ready for sending.  In the
+    latter case this routine will block if no sendable buffers are 
+    available. Use teac_sendBufferAvailable() to see if sendable
+    buffers exist.  If the input buffer was unready, it is freed
+    when the (ready) output buffer is created.
+  */
+  extern SBuffer* teac_makeSendBufferReady( Tcomm* tcomm, SBuffer* buf );
+  
+  /*
     - teac_Send sends the given buffer to all the listed connections.
     Once the buffer is sent, the calling program is not allowed to
     touch it again!  

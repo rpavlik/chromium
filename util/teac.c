@@ -245,6 +245,7 @@ crTeacSendCredits( CRConnection *conn )
   sbuf->validSize += sizeof( CRMessageFlowControl );
   conn->send_credits -= sbuf->validSize;
 
+  sbuf= teac_makeSendBufferReady( cr_teac.teac_conn, sbuf );
   teac_Send( cr_teac.teac_conn, &(conn->teac_id), 1, sbuf, buf );
 
   conn->recv_credits = 0;
@@ -308,11 +309,12 @@ crTeacConnectionLookup( int teac_id )
 void *
 crTeacAlloc( CRConnection *conn )
 {
-  SBuffer *sbuf = teac_getSendBuffer( cr_teac.teac_conn,
-				      CR_TEAC_BUFFER_PAD + conn->mtu );
+  SBuffer *sbuf = NULL;
   char *buf  = NULL;
   char *payload = NULL;
 
+  sbuf= teac_getUnreadySendBuffer( cr_teac.teac_conn,
+				   CR_TEAC_BUFFER_PAD + conn->mtu );
   buf = (char *) sbuf->buf;
   payload = buf + CR_TEAC_BUFFER_PAD; 
   *((SBuffer **) buf ) = sbuf;
@@ -367,6 +369,7 @@ crTeacSend( CRConnection *conn, void **bufp,
     sbuf->validSize += len; 
     conn->send_credits -= sbuf->validSize;
 
+    sbuf= teac_makeSendBufferReady( cr_teac.teac_conn, sbuf );
     teac_Send( cr_teac.teac_conn, &(conn->teac_id), 1, sbuf, buf );
 
     return;
@@ -379,6 +382,7 @@ crTeacSend( CRConnection *conn, void **bufp,
   sbuf->validSize += len;
   conn->send_credits -= sbuf->validSize;
 
+  sbuf= teac_makeSendBufferReady( cr_teac.teac_conn, sbuf );
   teac_Send( cr_teac.teac_conn, &(conn->teac_id), 1, sbuf,
 	     (void *)((char *) start - CR_TEAC_BUFFER_PAD ) );
 }

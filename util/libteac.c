@@ -9,6 +9,7 @@
 #ifdef CHROMIUM
 #include <cr_string.h>
 #include <cr_mem.h>
+#include <cr_error.h>
 #else
 #define crAlloc(sz) malloc(sz)
 #define crStrncpy(out,in,sz) strncpy(out,in,sz)
@@ -20,6 +21,11 @@
     abort(); \
   } \
 }
+#include <stdarg.h>
+static void crDebug( const char* fmt, ... ) { 
+  va_list ap;
+  vfprintf(stderr, fmt, ap); 
+}
 #endif
 
 #define EADDR_ALLOC_ELAN            0x200000
@@ -29,8 +35,8 @@
 
 /* Notes-
  * -I really need a better user key in the capability.
- * -Do I need an event to act as a spin lock after initialization?
- * -Why is elan3_fini dropping core?
+ * -Why is elan3_fini dropping core?  It's intermittent, and seems to
+ *  depend on relative timing of multiple calls.
  */
 
 /* In the future we will use the bitwise AND of the rail masks */
@@ -42,7 +48,8 @@
 
 #define INITIAL_HOST_TABLE_SIZE 256
 
-static host_t* hosts= NULL;
+static host_t* hosts= NULL; /* this one ends up sorted by host name */
+static int* hostsIndex= NULL; /* this is sorted by node ID */
 static sdramaddr_t* sdramAddrBase= NULL;
 static E3_Addr* elanAddrBase= NULL;
 
@@ -147,7 +154,7 @@ static int read_node_map()
     }
 
 #if 0
-    fprintf(stderr,"line %d: %d: got <%s> %d %d 0x%x 0x%x\n",
+    crDebug("line %d: %d: got <%s> %d %d 0x%x 0x%x\n",
 	    iLine, i, hosts[i].name, hosts[i].railMask, hosts[i].id, 
 	    hosts[i].sdramAddrBase, hosts[i].elanAddrBase);
 #endif
@@ -183,7 +190,7 @@ static void initialize_node_tables()
     int nodeRange;
     int i;
 
-    fprintf(stderr,"Loading Quadrics network map from <%s>\n",HOST_TABLE_FILENAME);
+    crDebug("Loading Quadrics network map from <%s>\n",HOST_TABLE_FILENAME);
 
     /* Load information about Quadrics network */
     nodeCount= read_node_map();
@@ -191,6 +198,7 @@ static void initialize_node_tables()
       fprintf(stderr,
 	      "libteac: initialize_node_tables: no valid nodes in %s!\n",
 	      HOST_TABLE_FILENAME);
+      abort();
     }
 
     /* 
@@ -227,6 +235,15 @@ static void initialize_node_tables()
     /* Sort the host table alphabetically by host name for faster lookup */
     qsort( hosts, nodeCount, sizeof(host_t), hostnameCompare );
 
+    /* Build an ordered index into the hosts table */
+    if (hostsIndex) crFree(hostsIndex);
+    if (!(hostsIndex= (int*)crAlloc(nodeCount*sizeof(int)))) {
+      fprintf(stderr,"libteac: read_node_map: unable to allocate %d bytes!\n",
+	      nodeCount*sizeof(int));
+      abort();
+    }
+    for (i=0; i<nodeCount; i++) hostsIndex[hosts[i].id]= i;
+
     nodeTablesInitialized= 1;
   }
 }
@@ -246,8 +263,10 @@ static int trans_host(const char *hn)  {
 
   h=(host_t*)bsearch(hn, hosts, nodeCount, sizeof(host_t), hostnameLookup);
 #if 0
-  if (h) fprintf(stderr,"Lookup <%s> got <%s> <%d> <%x> <%x>\n",
-		 hn,h->name,h->id,(int)h->sdramAddrBase,(int)h->elanAddrBase);
+  if (h) {
+    crDebug("Lookup <%s> got <%s> <%d> <%x> <%x>\n",
+	    hn,h->name,h->id,(int)h->sdramAddrBase,(int)h->elanAddrBase);
+  }
   else fprintf(stderr,"Lookup <%s> returned NULL!\n",hn);
 #endif
   if (h) return h->id;
@@ -261,13 +280,13 @@ static E3_Addr teac_main2elan( ELAN3_CTX *ctx, void* main_addr )
 {
   E3_Addr result= elan3_main2elan(ctx,main_addr);
   /*
-  fprintf(stderr,"mapping %0lx -> %d; addressable %d\n",
+  crDebug("mapping %0lx -> %d; addressable %d\n",
 	  main_addr,result,elan3_addressable(ctx,main_addr,64));
   */
   if (result==ELAN_BAD_ADDR) {
     fprintf(stderr,"Address translation error: %0x has no elan equivalent\n",
 	    (int)main_addr);
-    exit(-1);
+    abort();
   }
   return result;
 }
@@ -283,10 +302,8 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
   int b;
   char buf[256];
   char* here;
-#ifdef __linux__
-#ifdef ELAN_PRE_KITE
+#if ( (! __linux__) || ELAN_PRE_KITE )
   void* control;
-#endif
 #endif
 #if 0
 static char junkString[256];
@@ -349,11 +366,10 @@ static char junkString[256];
   }
   elan3_block_inputter (result->ctx, 1);
   
-#ifdef __linux__
-#ifdef ELAN_PRE_KITE
+#if ( (! __linux__) || ELAN_PRE_KITE )
   if ((control = elan3_control_open (RAIL)) != NULL)  {
     if (elan3_create(control, &(result->cap)))  {
-      fprintf(stderr, "elan3_create failed with <%s>, but that's OK!\n",
+      crDebug("elan3_create failed with <%s>, but that's OK!\n",
 	      strerror(errno));
       errno= 0;
     }
@@ -365,47 +381,28 @@ static char junkString[256];
   }                                                                       
 #else
   if (elan3_create(result->ctx, &(result->cap)))  {
-    fprintf(stderr, "elan3_create failed with <%s>, but that's OK!\n",
-	    strerror(errno));
-    errno= 0;
-  }
-#endif
-#else
-  if (elan3_create(result->ctx, &(result->cap)))  {
-    fprintf(stderr, "elan3_create failed with <%s>, but that's OK!\n",
+    crDebug("elan3_create failed with <%s>, but that's OK!\n",
 	    strerror(errno));
     errno= 0;
   }
 #endif
 
   elan3_devinfo(0, &info);
-  /*
-    The above call for rail '0' yields the following info:
-    - info.NodeId
-    - info.NumLevels
-    - info.NodeLevel
-  */
+
+#if ( (! __linux__) || ELAN_PRE_KITE )
+  crDebug("NodeId: %d, NumLevels: %d, NodeLevel: %d\n",
+	  info.NodeId, info.NumLevels, info.NodeLevel);
+#else
+  crDebug("NodeId: %d, NumNodes: %d, NumLevels: %d, NodeLevel: %d\n",
+	  info.Position.NodeId, info.Position.NumNodes, 
+	  info.Position.NumLevels, info.Position.NodeLevel);
+#endif
 
 #if 0
-#ifdef __linux__
-#ifdef ELAN_PRE_KITE
-  fprintf(stdout, "NodeId: %d, NumLevels: %d, NodeLevel: %d\n",
-	  info.NodeId, info.NumLevels, info.NodeLevel);
-#else
-  fprintf(stdout, "NodeId: %d, NumLevels: %d, NodeLevel: %d\n",
-	  info.Position.NodeId, info.Position.NumLevels, 
-	  info.Position.NodeLevel);
-#endif
-#else
-  fprintf(stdout, "NodeId: %d, NumLevels: %d, NodeLevel: %d\n",
-	  info.NodeId, info.NumLevels, info.NodeLevel);
-#endif
-
-  fprintf(stderr,"Capability: <%s>\n",
+  crDebug("Capability: <%s>\n",
           elan3_capability_string(&(result->cap),junkString));
-  fprintf(stderr,"railmask is %d\n",result->cap.RailMask);
-  fprintf(stderr,"bitmap is %x\n",result->cap.Bitmap[0]);
-
+  crDebug("railmask is %d\n",result->cap.RailMask);
+  crDebug("bitmap is %x\n",result->cap.Bitmap[0]);
 #endif
 
   /* Reality check. */
@@ -415,11 +412,10 @@ static char junkString[256];
     return NULL;
   }
   if ((here= crStrchr(buf,'.')) != NULL) *here= '\0';
-#ifdef __linux__
-#ifdef ELAN_PRE_KITE
+#if ( (! __linux__) || ELAN_PRE_KITE )
   if (trans_host(buf) != info.NodeId) {
     fprintf(stderr,
- "teac_Init: compiled-in Quadrics port id %d does not match real value %d!\n",
+ "teac_Init: Expected Quadrics port id %d does not match real value %d!\n",
 	    trans_host(buf), info.NodeId);
     teac_Close(result);
     return NULL;
@@ -427,17 +423,8 @@ static char junkString[256];
 #else
   if (trans_host(buf) != info.Position.NodeId) {
     fprintf(stderr,
- "teac_Init: compiled-in Quadrics port id %d does not match real value %d!\n",
+ "teac_Init: Expected Quadrics port id %d does not match real value %d!\n",
 	    trans_host(buf), info.Position.NodeId);
-    teac_Close(result);
-    return NULL;
-  }
-#endif
-#else
-  if (trans_host(buf) != info.NodeId) {
-    fprintf(stderr,
- "teac_Init: compiled-in Quadrics port id %d does not match real value %d!\n",
-	    trans_host(buf), info.NodeId);
     teac_Close(result);
     return NULL;
   }
@@ -496,7 +483,7 @@ static char junkString[256];
 	result->r_event[j][0] + i*sizeof(E3_BlockCopyEvent);
     }
 #if 0
-  fprintf(stderr,"r_event[0][0] is %x\n",(int)result->r_event[0][0]);
+  crDebug("r_event[0][0] is %x\n",(int)result->r_event[0][0]);
 #endif
 
   if (!(result->m_rcv= 
@@ -516,7 +503,7 @@ static char junkString[256];
   for (i=1; i<cap->Entries; i++)
     result->m_rcv[i]= result->m_rcv[0] + i*NUM_SEND_BUFFERS;
 #if 0
-  fprintf(stderr,"Base of m_rcv is %lx -> %lx\n",
+  crDebug("Base of m_rcv is %lx -> %lx\n",
 	  (long)(result->m_rcv[0]),
 	  (long)teac_main2elan(result->ctx,(void*)(result->m_rcv[0])));
 #endif
@@ -537,7 +524,7 @@ static char junkString[256];
   for (i=1; i<cap->Entries; i++)
     result->mbuff[i]= result->mbuff[0] + i*NUM_SEND_BUFFERS;
 #if 0
-  fprintf(stderr,"Base of mbuff is %lx -> %lx\n",
+  crDebug("Base of mbuff is %lx -> %lx\n",
 	  (long)(result->mbuff[0]), 
 	  (long)teac_main2elan(result->ctx,result->mbuff[0]));
 #endif
@@ -565,7 +552,7 @@ static char junkString[256];
     return(NULL);
   }
 #if 0
-  fprintf(stderr,"s_event is %x\n",(int)result->s_event);
+  crDebug("s_event is %x\n",(int)result->s_event);
 #endif
   
   if (!(result->sbuf_pull_event[0]= 
@@ -691,7 +678,7 @@ void teac_Close(Tcomm *tcomm)
 	elan3_waitevent_word(tcomm->ctx, tcomm->sbuf_pull_event[i],
 			     tcomm->sbuf_ready[i], 10);
       }
-      fprintf(stderr,"All TEAC messages have reported home!\n");
+      crDebug("All TEAC messages have reported home!\n");
     }
     elan3_block_inputter (tcomm->ctx, 1);
 
@@ -733,7 +720,6 @@ void teac_Close(Tcomm *tcomm)
     }
 #if 0
     elan3_detach(tcomm->ctx);
-    fprintf(stderr,"tcomm string: <%s>\n",teac_getTcommString(tcomm,buf,256));
     elan3_fini(tcomm->ctx);
 #endif
   }
@@ -791,7 +777,7 @@ SBuffer* teac_getSendBuffer( Tcomm* tcomm, long size )
   }
   /* We will use this buffer! */
 #if 0
-  fprintf(stderr,"Allocated message buffer %d\n",i);
+  crDebug("Allocated message buffer %d\n",i);
 #endif
   *(tcomm->sbuf_ready[i])= 0; /* mark it busy */
 
@@ -811,12 +797,72 @@ SBuffer* teac_getSendBuffer( Tcomm* tcomm, long size )
   return tcomm->sendWrappers[i];
 }
 
+SBuffer* teac_getUnreadySendBuffer( Tcomm* tcomm, long size )
+{
+  SBuffer* result= NULL;
+  if (!(result= (SBuffer*)crAlloc(sizeof(SBuffer)))) {
+    fprintf(stderr,"libteac: read_node_map: unable to allocate %d bytes!\n",
+	    sizeof(SBuffer));
+    abort();
+  }
+  result->bufId= -1; /* this marks it unready */
+#if 0
+  crDebug("Allocated an unready message buffer!\n");
+#endif
+  
+  /* Allocate some DMA-able memory */
+  if (!(result->buf= (char*)elan3_allocMain(tcomm->ctx, 8, size))) {
+    perror("teac_getUnreadySendBuffer: failed to allocate elan3 memory");
+    exit(-1);
+  }
+  result->totSize= size;
+  result->validSize= 0;
+  return result;
+}
+
+SBuffer* teac_makeSendBufferReady( Tcomm* tcomm, SBuffer* buf )
+{
+  /* If the input buffer is already ready, just return it */
+  if (buf->bufId >= 0 && buf->bufId<NUM_SEND_BUFFERS) return buf;
+
+  /* Find a free send buffer.  We'll busy wait in this poll loop
+   * if necessary.
+   */
+  int i= 0;
+  while (1) {
+    if (elan3_pollevent_word(tcomm->ctx, tcomm->sbuf_ready[i],
+			     1)) break;
+    if (++i == NUM_SEND_BUFFERS) i= 0;
+  }
+  /* We will use this buffer! */
+#if 0
+  crDebug("Allocated message buffer %d in makeSendBufferReady\n",i);
+#endif
+  *(tcomm->sbuf_ready[i])= 0; /* mark it busy */
+
+  /* Substitute the unready payload for the old payload */
+  elan3_free( tcomm->ctx, tcomm->sendWrappers[i]->buf );
+  tcomm->sendWrappers[i]->buf= buf->buf;
+  
+  tcomm->sendWrappers[i]->totSize= buf->totSize;
+  tcomm->sendWrappers[i]->validSize= buf->validSize;
+  crFree(buf);
+  return tcomm->sendWrappers[i];
+  
+}
+
 int teac_Send( Tcomm* tcomm, int* ids, int num_ids, SBuffer* buf, void *start )
 {
   int	vp = tcomm->vp;
   int	iBuf;
   int   iDest;
   teacMsg *msg;
+
+  /* Complain loudly if this is an unready buffer */
+  if (buf->bufId==-1) {
+    fprintf(stderr,"teac_Send: tried to send an unready buffer!\n");
+    return 0;
+  }
 
   /* Reality check: is this one of my buffers? */
   if (buf->bufId<0 || buf->bufId>=NUM_SEND_BUFFERS) {
@@ -870,20 +916,20 @@ int teac_Send( Tcomm* tcomm, int* ids, int num_ids, SBuffer* buf, void *start )
     *(tcomm->m_snd)= 0;
     elan3_putdma_main(tcomm->ctx, tcomm->dma, tcomm->e_dma);
 #if 0
-    fprintf(stderr,"DMA dest event %x, dest mem %lx\n",
+    crDebug("DMA dest event %x, dest mem %lx\n",
 	    tcomm->dma->dma_destEvent, 
 	    (long)tcomm->dma->dma_dest);
-    fprintf(stderr,"Mem shifts are %x %x based on %d %d\n",
+    crDebug("Mem shifts are %x %x based on %d %d\n",
 	    elanAddrBase[(ids[iDest]/NUM_SEND_BUFFERS) + tcomm->lhost],
 	    elanAddrBase[(vp/NUM_SEND_BUFFERS) + tcomm->lhost],
 	    ids[iDest],vp);
-    fprintf(stderr,"Send msg %d in buffer %d to %d (list index %d)...",
+    crDebug("Send msg %d in buffer %d to %d (list index %d)...",
 	    msg->msgnum,iBuf, ids[iDest],iDest);
 #endif
     elan3_waitevent_word(tcomm->ctx,
 			 tcomm->s_event, tcomm->m_snd, ELAN_WAIT_EVENT);
 #if 0
-    fprintf(stderr,"message away!\n");
+    crDebug("message away!\n");
 #endif
   }
   return 1;
@@ -909,7 +955,7 @@ RBuffer* teac_Recv(Tcomm* tcomm, int id)
   lowestMsgnum= -1;
   for (i=0; i<NUM_SEND_BUFFERS; i++) {
 #if 0
-    fprintf(stderr,"Testing for new msg at %lx -> %lx\n",
+    crDebug("Testing for new msg at %lx -> %lx\n",
 	    (long)&(tcomm->mbuff[id][i]), 
 	    (long)teac_main2elan(tcomm->ctx,(void*)(&tcomm->mbuff[id][i])));
 #endif
@@ -930,7 +976,7 @@ RBuffer* teac_Recv(Tcomm* tcomm, int id)
   tcomm->m_rcv[id][iBuf]= 0;
   elan3_primeevent(tcomm->ctx, tcomm->r_event[id][iBuf],1);
 #if 0
-  fprintf(stderr,"got msg %d in buffer %d from %d!\n",
+  crDebug("got msg %d in buffer %d from %d!\n",
 	  tcomm->mbuff[id][iBuf].msgnum, iBuf, id);
 #endif
 
@@ -1002,8 +1048,12 @@ char* teac_getConnString(Tcomm *c, int id, char* buf, int buflen)
 {
   int rel_rank= id%4;
   int node= ((id-rel_rank)/4) + c->lhost;
-  snprintf(buf,buflen-1,"vp %d, <%s>:%d",id,hosts[node].name,rel_rank);
+  snprintf(buf,buflen-1,"vp %d, <%s>:%d",id,
+	   hosts[hostsIndex[node]].name,rel_rank);
   buf[buflen-1]= '\0';
+#if 0
+  crDebug("getConnString: lookup id %d -> %d %d -> %s\n",id,rel_rank,node,buf);
+#endif
   return buf;
 }
 
@@ -1011,7 +1061,7 @@ int teac_getConnId(Tcomm *c, const char* host, int rank)
 {
   int node= trans_host(host);
 #if 0
-  fprintf(stderr,"getConnId: <%s> %d %d maps to %d %d\n",
+  crDebug("getConnId: <%s> %d %d maps to %d %d\n",
 	  host, rank, c->lhost, node, (4*(node - c->lhost) + (rank%4)));
 #endif
   return (4*(node - c->lhost) + (rank%4));
@@ -1032,14 +1082,10 @@ int teac_getHostInfo(Tcomm *c, char* host, const int hostLength,
   if ((here= crStrchr(host,'.')) != NULL) *here= '\0';
 
   elan3_devinfo(0, &info);
-#ifdef __linux__
-#ifdef ELAN_PRE_KITE
+#if ( (! __linux__) || ELAN_PRE_KITE )
   *nodeId= info.NodeId;
 #else
   *nodeId= info.Position.NodeId;
-#endif
-#else
-  *nodeId= info.NodeId;
 #endif
   *railMask= c->cap.RailMask;
 
