@@ -356,7 +356,7 @@ int OGLwin_QTest(void)
 
 OGL_DEVICE OGLwin_Qread(int *val)
 {
-    OGL_DEVICE dev;
+    OGL_DEVICE dev = 0;
     char buf[100];
 
     XIfEvent(Dsp, &event, CheckForWindowEvent, (XPointer) XWindow);
