@@ -10,6 +10,7 @@
 #include "cr_error.h"
 #include "cr_spu.h"
 #include "cr_mothership.h"
+#include "cr_string.h"
 #include "stub.h"
 
 #define MULTISAMPLE 1
@@ -202,17 +203,18 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 
 /**
  * Query the GLX attributes for the given visual and return a bitmask of
- * the CR_*_BIT flags which describes the visual's capbilities.
+ * the CR_*_BIT flags which describes the visual's capabilities.
  */
-GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
+GLuint
+FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 {
-	int desiredVisual = 0;
+	int visBits = 0;
 	GLint doubleBuffer = 0, stereo = 0;
 	GLint alphaSize = 0, depthSize = 0, stencilSize = 0;
 	GLint accumRedSize = 0, accumGreenSize = 0, accumBlueSize = 0;
 	GLint sampleBuffers = 0, samples = 0, level = 0;
-	/* Should check more ??? */
 
+	/* Should we check more attributes? */
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_DOUBLEBUFFER, &doubleBuffer);
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_STEREO, &stereo);
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ALPHA_SIZE, &alphaSize);
@@ -225,39 +227,50 @@ GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_SAMPLES_SGIS, &samples);
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_LEVEL, &level);
 
-	desiredVisual |= CR_RGB_BIT;	/* assuming we always want this... */
+	visBits |= CR_RGB_BIT;	/* assuming we always want this... */
 
 	if (alphaSize > 0)
-		desiredVisual |= CR_ALPHA_BIT;
+		visBits |= CR_ALPHA_BIT;
 	if (depthSize > 0)
-		desiredVisual |= CR_DEPTH_BIT;
+		visBits |= CR_DEPTH_BIT;
 	if (stencilSize > 0)
-		desiredVisual |= CR_STENCIL_BIT;
+		visBits |= CR_STENCIL_BIT;
 	if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0)
-		desiredVisual |= CR_ACCUM_BIT;
+		visBits |= CR_ACCUM_BIT;
 	if (doubleBuffer)
-		desiredVisual |= CR_DOUBLE_BIT;
+		visBits |= CR_DOUBLE_BIT;
 	if (stereo)
-		desiredVisual |= CR_STEREO_BIT;
+		visBits |= CR_STEREO_BIT;
 #if MULTISAMPLE
 	if (sampleBuffers > 0 && samples > 0)
-		desiredVisual |= CR_MULTISAMPLE_BIT;
+		visBits |= CR_MULTISAMPLE_BIT;
 #endif
 	if (level > 0)
-		desiredVisual |= CR_OVERLAY_BIT;
+		visBits |= CR_OVERLAY_BIT;
 
-	/* Should we be checking more ... ??? */
+#if 0
+	/* Pack the visual ID number in the high 16 bits of the bitfield */
+	visBits |= ((int) vInfo->visual->visualid) << CR_NATIVE_VISUAL_SHIFT;
 
-	return desiredVisual;
+	/* Make sure there's no overlapping use of the bits */
+	CRASSERT((CR_NATIVE_VISUAL_MASK & CR_ALL_VISUAL_BITS) == 0);
+#endif
+
+	return visBits;
 }
 
-XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
+
+XVisualInfo *
+glXChooseVisual( Display *dpy, int screen, int *attribList )
 {
 	XVisualInfo *vis;
 	int *attrib, wants_rgb = 0, attribCopy[1000], copy = 0;
 	int foo, bar;
+	int visBits;
 
 	stubInit();
+
+	visBits = stub.desiredVisual;
 
 	for (attrib = attribList; *attrib != None; attrib++)
 	{
@@ -279,22 +292,22 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 
 			case GLX_LEVEL:
 				if (attrib[1] > 0)
-					stub.desiredVisual |= CR_OVERLAY_BIT;
+					visBits |= CR_OVERLAY_BIT;
 				attrib++;
 				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_RGBA:
-				stub.desiredVisual |= CR_RGB_BIT;
+				visBits |= CR_RGB_BIT;
 				wants_rgb = 1;
 				break;
 
 			case GLX_DOUBLEBUFFER:
-				stub.desiredVisual |= CR_DOUBLE_BIT;
+				visBits |= CR_DOUBLE_BIT;
 				break;
 
 			case GLX_STEREO:
-				stub.desiredVisual |= CR_STEREO_BIT;
+				visBits |= CR_STEREO_BIT;
 				/*
 				crWarning( "glXChooseVisual: stereo unsupported" );
 				return NULL;
@@ -319,28 +332,28 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			case GLX_GREEN_SIZE:
 			case GLX_BLUE_SIZE:
 				if (attrib[1] > 0)
-					stub.desiredVisual |= CR_RGB_BIT;
+					visBits |= CR_RGB_BIT;
 				attrib++;
 				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_ALPHA_SIZE:
 				if (attrib[1] > 0)
-					stub.desiredVisual |= CR_ALPHA_BIT;
+					visBits |= CR_ALPHA_BIT;
 				attrib++;
 				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_DEPTH_SIZE:
 				if (attrib[1] > 0)
-					stub.desiredVisual |= CR_DEPTH_BIT;
+					visBits |= CR_DEPTH_BIT;
 				attrib++;
 				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_STENCIL_SIZE:
 				if (attrib[1] > 0)
-					stub.desiredVisual |= CR_STENCIL_BIT;
+					visBits |= CR_STENCIL_BIT;
 				attrib++;
 				attribCopy[copy++] = *attrib;
 				break;
@@ -350,7 +363,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			case GLX_ACCUM_BLUE_SIZE:
 			case GLX_ACCUM_ALPHA_SIZE:
 				if (attrib[1] > 0)
-					stub.desiredVisual |= CR_ACCUM_BIT;
+					visBits |= CR_ACCUM_BIT;
 				attrib++;
 				attribCopy[copy++] = *attrib;
 				break;
@@ -358,7 +371,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			case GLX_SAMPLE_BUFFERS_SGIS: /* aka GLX_SAMPLES_ARB */
 #if MULTISAMPLE
 				if (attrib[1] > 0)
-					stub.desiredVisual |= CR_MULTISAMPLE_BIT;
+					visBits |= CR_MULTISAMPLE_BIT;
 				attrib++;
 				attribCopy[copy++] = *attrib;
 				break;
@@ -376,6 +389,8 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				return NULL;
 		}
 	}
+
+	stub.desiredVisual |= visBits;
 
 	attribCopy[copy++] = None;
 
@@ -426,6 +441,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 		}
 	}
 
+	/*crDebug("glXChooseVisual returning 0x%x", (int) vis->visual->visualid);*/
 	return vis;
 }
 
@@ -457,14 +473,75 @@ unsigned long mask )
 }
 
 
-
 /**
- * For now we're ignoring all the parameters.
+ * Get the display string for the given display pointer.
+ * Never return just ":0.0".  In that case, prefix with our host name.
  */
-GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct )
+static void
+stubGetDisplayString( Display *dpy, char *nameResult, int maxResult )
 {
+	const char *dpyName = DisplayString(dpy);
+	char host[1000];
+#if 0
+	if (dpyName[0] == ':')
+	{
+		crGetHostname(host, 1000);
+	}
+	else
+#endif
+	{
+	  host[0] = 0;
+	}
+	if (crStrlen(host) + crStrlen(dpyName) >= maxResult - 1)
+	{
+		/* return null string */
+		crWarning("Very long host / display name string in stubDisplayString!");
+		nameResult[0] = 0;
+	}
+	else
+	{
+		/* return host concatenated with dpyName */
+		crStrcpy(nameResult, host);
+		crStrcat(nameResult, dpyName);
+	}
+}
+
+
+
+GLXContext
+glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
+{
+	char dpyName[MAX_DPY_NAME];
+	ContextInfo *context;
+
 	stubInit();
-	return stubCreateContext( dpy, vis, share, direct);
+
+	CRASSERT(stub.contextTable);
+
+	stubGetDisplayString(dpy, dpyName, MAX_DPY_NAME);
+	if (stub.haveNativeOpenGL) {
+		int foo, bar;
+		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) {
+			int visBits = FindVisualInfo( dpy, vis );
+			crDebug("FindVisualInfo(0x%x) = 0x%x", (int)vis->visual->visualid, visBits);
+			stub.desiredVisual |= visBits;
+			if (stub.force_pbuffers) {
+				crInfo("App faker: Forcing use of Pbuffers");
+				stub.desiredVisual |= CR_PBUFFER_BIT;
+			}
+		}
+	}
+
+	context = stubNewContext(dpyName, stub.desiredVisual, UNDECIDED);
+	if (!context)
+		return 0;
+
+	context->dpy = dpy;
+	context->visual = vis;
+	context->direct = direct;
+	context->share = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) share);
+
+	return (GLXContext) context->id;
 }
 
 
@@ -480,6 +557,8 @@ Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 	ContextInfo *context;
 	WindowInfo *window;
 	Bool retVal;
+
+	/*crDebug("glXMakeCurrent(%p, 0x%x, 0x%x)", (void *) dpy, (int) drawable, (int) ctx);*/
 
 	context = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) ctx);
 	window = stubGetWindowInfo(dpy, drawable);
@@ -516,6 +595,7 @@ void glXDestroyGLXPixmap( Display *dpy, GLXPixmap pix )
 
 int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 {
+	int visBits = stub.desiredVisual;
 	(void) dpy;
 	(void) vis;
 
@@ -539,6 +619,12 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 		}
 	}
 
+	/*
+	 * If the GLX application chooses its visual via a bunch of calls to
+	 * glXGetConfig, instead of by calling glXChooseVisual, we need to keep
+	 * track of which attributes are queried to help satisfy context creation
+	 * later.
+	 */
 	switch ( attrib ) {
 
 		case GLX_USE_GL:
@@ -550,7 +636,7 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_LEVEL:
-			*value = (stub.desiredVisual & CR_OVERLAY_BIT) ? 1 : 0;
+			*value = (visBits & CR_OVERLAY_BIT) ? 1 : 0;
 			break;
 
 		case GLX_RGBA:
@@ -582,7 +668,7 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_ALPHA_SIZE:
-			*value = (stub.desiredVisual & CR_ALPHA_BIT) ? 8 : 0;
+			*value = (visBits & CR_ALPHA_BIT) ? 8 : 0;
 			break;
 
 		case GLX_DEPTH_SIZE:
@@ -590,40 +676,40 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_STENCIL_SIZE:
-			stub.desiredVisual |= CR_STENCIL_BIT;
+			visBits |= CR_STENCIL_BIT;
 			*value = 8;
 			break;
 
 		case GLX_ACCUM_RED_SIZE:
-			stub.desiredVisual |= CR_ACCUM_BIT;
+			visBits |= CR_ACCUM_BIT;
 			*value = 16;
 			break;
 
 		case GLX_ACCUM_GREEN_SIZE:
-			stub.desiredVisual |= CR_ACCUM_BIT;
+			visBits |= CR_ACCUM_BIT;
 			*value = 16;
 			break;
 
 		case GLX_ACCUM_BLUE_SIZE:
-			stub.desiredVisual |= CR_ACCUM_BIT;
+			visBits |= CR_ACCUM_BIT;
 			*value = 16;
 			break;
 
 		case GLX_ACCUM_ALPHA_SIZE:
-			stub.desiredVisual |= CR_ACCUM_BIT;
+			visBits |= CR_ACCUM_BIT;
 			*value = 16;
 			break;
 
 		case GLX_SAMPLE_BUFFERS_SGIS:
 #if MULTISAMPLE
-			stub.desiredVisual |= CR_MULTISAMPLE_BIT;
+			visBits |= CR_MULTISAMPLE_BIT;
 			*value = 0;  /* fix someday */
 			break;
 #endif
 
 		case GLX_SAMPLES_SGIS:
 #if MULTISAMPLE
-			stub.desiredVisual |= CR_MULTISAMPLE_BIT;
+			visBits |= CR_MULTISAMPLE_BIT;
 			*value = 0;  /* fix someday */
 			break;
 #endif
@@ -665,6 +751,8 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			return GLX_BAD_ATTRIBUTE;
 		
 	}
+
+	stub.desiredVisual |= visBits;
 
 	return 0;
 }

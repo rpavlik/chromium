@@ -81,11 +81,37 @@ void stubSwapContextBuffers( const ContextInfo *context, GLint flags )
 }
 
 
-CGLError CGLCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
+static CGLError
+stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
 {
+}
+
+
+CGLError
+CGLCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
+{
+	ContextInfo *context;
+
 	DEBUG_FUNCTION(CGLCreateContext);
 	stubInit();
-	return stubCreateContext( pix, share, ctx );
+
+	CRASSERT(stub.contextTable);
+
+	if( stub.haveNativeOpenGL )
+		stub.desiredVisual |= FindVisualInfo( pix );
+
+	context = stubNewContext("", stub.desiredVisual, UNDECIDED);
+	if (!context)
+		return 0;
+
+	context->share = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) share);
+
+	// Store extra info
+	if( stub.haveNativeOpenGL )
+		stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFADisplayMask, &context->disp_mask );
+
+	*ctx = (CGLContextObj) context->id;
+	return noErr;
 }
 
 

@@ -33,42 +33,6 @@
 #include "stub.h"
 
 
-#ifdef GLX
-/**
- * Get the display string for the given display pointer.
- * Never return just ":0.0".  In that case, prefix with our host name.
- */
-static void
-stubGetDisplayString( Display *dpy, char *nameResult, int maxResult )
-{
-	const char *dpyName = DisplayString(dpy);
-	char host[1000];
-#if 0
-	if (dpyName[0] == ':')
-	{
-		crGetHostname(host, 1000);
-	}
-	else
-#endif
-	{
-	  host[0] = 0;
-	}
-	if (crStrlen(host) + crStrlen(dpyName) >= maxResult - 1)
-	{
-		/* return null string */
-		crWarning("Very long host / display name string in stubDisplayString!");
-		nameResult[0] = 0;
-	}
-	else
-	{
-		/* return host concatenated with dpyName */
-		crStrcpy(nameResult, host);
-		crStrcat(nameResult, dpyName);
-	}
-}
-#endif
-
-
 /**
  * This function should be called from MakeCurrent().  It'll detect if
  * we're in a multi-thread situation, and do the right thing for dispatch.
@@ -273,91 +237,6 @@ stubNewContext( const char *dpyName, GLint visBits, ContextType type )
 	crHashtableAdd(stub.contextTable, context->id, (void *) context);
 
 	return context;
-}
-
-
-/**
- * Called via glXCreateCurrent() , wglCreateCurrent() or CGLCreatContext().
- * Allocate a ContextInfo object and initialize its type to UNDECIDED.
- * Later, in MakeCurrent, we'll decide (by examining the window size and
- * title) whether to use a Chromium context or native GLX/WGL/CGL context.
- */
-#ifdef WINDOWS
-HGLRC
-stubCreateContext( HDC hdc )
-#elif defined(Darwin)
-CGLError
-stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
-#elif defined(GLX)
-GLXContext
-stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct )
-#endif
-{
-	char dpyName[MAX_DPY_NAME];
-	ContextInfo *context;
-
-	CRASSERT(stub.contextTable);
-
-	/* 
-	 * Pull apart the context's requested visual information
-	 * and select the correct CR_*_BIT's. The RenderSPU
-	 * will do the right thing and select the appropriate
-	 * visual at its node.
-	 *
-	 * NOTE: We OR just in case an application has called
-	 * glXChooseVisual to select its desiredflags, and we honour 
-	 * them!
-	 *
-	 * NOTE: We can only.... do this with a native renderer...
-	 */
-	
-#ifdef WINDOWS
-	sprintf(dpyName, "%d", hdc);
-	if (stub.haveNativeOpenGL)
-		stub.desiredVisual |= FindVisualInfo( hdc );
-#elif defined(Darwin)
-	dpyName[0] = '\0';
-	if( stub.haveNativeOpenGL )
-		stub.desiredVisual |= FindVisualInfo( pix );
-#elif defined(GLX)
-	stubGetDisplayString(dpy, dpyName, MAX_DPY_NAME);
-	if (stub.haveNativeOpenGL) {
-		int foo, bar;
-		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) {
-			stub.desiredVisual |= FindVisualInfo( dpy, vis );
-			if (stub.force_pbuffers) {
-				crInfo("App faker: Forcing use of Pbuffers");
-				stub.desiredVisual |= CR_PBUFFER_BIT;
-			}
-		}
-	}
-#endif
-
-	context = stubNewContext(dpyName, stub.desiredVisual, UNDECIDED);
-	if (!context)
-		return 0;
-
-#ifdef GLX
-	context->dpy = dpy;
-	context->visual = vis;
-	context->direct = direct;
-#endif
-#if defined(GLX) || defined(Darwin)
-	context->share = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) share);
-#endif
-
-#ifdef WINDOWS
-	return (HGLRC) context->id;
-#elif defined(Darwin)
-	// Store extra info
-	if( stub.haveNativeOpenGL )
-		stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFADisplayMask, &context->disp_mask );
-
-	*ctx = (CGLContextObj) context->id;
-	return noErr;
-#elif defined(GLX)
-	return (GLXContext) context->id;
-#endif
 }
 
 

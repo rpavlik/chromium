@@ -178,7 +178,6 @@ extern SPUDispatchTable stubNULLDispatch;
 #ifdef WINDOWS
 
 /* WGL versions */
-extern HGLRC stubCreateContext( HDC hdc );
 extern WindowInfo *stubGetWindowInfo( HDC drawable );
 extern GLuint FindVisualInfo( HDC hdc );
 
@@ -192,14 +191,12 @@ extern OSStatus CGSSetWindowAlpha( const CGSConnectionID cid, CGSWindowID wid, f
 extern void glPointParameteri( GLenum pname, GLint param );
 extern void glPointParameteriv( GLenum pname, const GLint * param );
 
-extern CGLError stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx );
 extern WindowInfo *stubGetWindowInfo( CGSWindowID drawable );
 extern GLuint FindVisualInfo( CGLPixelFormatObj pix );
 
 #elif defined(GLX)
 
 /* GLX versions */
-extern GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct );
 extern WindowInfo *stubGetWindowInfo( Display *dpy, GLXDrawable drawable );
 extern GLuint FindVisualInfo( Display *dpy, XVisualInfo *vis);
 extern void stubUseXFont( Display *dpy, Font font, int first, int count, int listbase );

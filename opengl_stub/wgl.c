@@ -235,10 +235,25 @@ BOOL WINAPI wglShareLists_prox( HGLRC hglrc1, HGLRC hglrc2 )
 	return 0;
 }
 
+
 HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 {
+	char dpyName[MAX_DPY_NAME];
+	ContextInfo *context;
+
 	stubInit();
-	return stubCreateContext( hdc );
+
+	CRASSERT(stub.contextTable);
+
+	sprintf(dpyName, "%d", hdc);
+	if (stub.haveNativeOpenGL)
+		stub.desiredVisual |= FindVisualInfo( hdc );
+
+	context = stubNewContext(dpyName, stub.desiredVisual, UNDECIDED);
+	if (!context)
+		return 0;
+
+	return (HGLRC) context->id;
 }
 
 BOOL WINAPI
