@@ -167,16 +167,16 @@ Init(void)
 {
 	/* Get chromium extension function pointers */
 	glChromiumParametervCR_ptr =
-		(glChromiumParametervCRProc) crGetProcAddress("glChromiumParametervCR");
+		(glChromiumParametervCRProc) GET_PROC("glChromiumParametervCR");
 	assert(glChromiumParametervCR_ptr);
 
 	glChromiumParameteriCR_ptr =
-		(glChromiumParameteriCRProc) crGetProcAddress("glChromiumParameteriCR");
+		(glChromiumParameteriCRProc) GET_PROC("glChromiumParameteriCR");
 	assert(glChromiumParameteriCR_ptr);
 
 	glGetChromiumParametervCR_ptr =
 		(glGetChromiumParametervCRProc)
-		crGetProcAddress("glGetChromiumParametervCR");
+		GET_PROC("glGetChromiumParametervCR");
 	assert(glGetChromiumParametervCR_ptr);
 
 	/* setup lighting, etc */
