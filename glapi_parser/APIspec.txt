@@ -6294,6 +6294,22 @@ alias		MultiDrawElementsEXT
 props		useclient
 chromium	nopack
 
+name		PointParameterfEXT
+return		void
+param		pname		GLenum
+paramprop	pname		GL_POINT_SIZE_MIN_ARB GL_POINT_SIZE_MAX_ARB GL_POINT_FADE_THRESHOLD_SIZE_ARB
+param		param		GLfloat
+category	GL_EXT_point_parameters
+alias		PointParameterfARB
+
+name		PointParameterfvEXT
+return		void
+param		pname		GLenum
+paramprop	pname		GL_POINT_SIZE_MIN_ARB GL_POINT_SIZE_MAX_ARB GL_POINT_FADE_THRESHOLD_SIZE_ARB GL_POINT_DISTANCE_ATTENUATION_ARB
+param		params		const GLfloat *
+category	GL_EXT_point_parameters
+alias		PointParameterfvARB
+
 name		PointParameterf
 return		void
 param		pname		GLenum
