@@ -140,6 +140,9 @@ stubNewWindow( const char *dpyName, GLint visBits )
 
 	winInfo->type = CHROMIUM;
 
+	if (!dpyName)
+		dpyName = "";
+
 	crStrncpy(winInfo->dpyName, dpyName, MAX_DPY_NAME);
 	winInfo->dpyName[MAX_DPY_NAME-1] = 0;
 
