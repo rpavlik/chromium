@@ -38,6 +38,7 @@ import os
 
 from crconfig import arch, crdir
 crbindir = os.path.join(crdir,'bin',arch)
+crlibdir = os.path.join(crdir,'lib',arch)
 
 def CRDebug( str ):
 	"""CRDebug(str)
