@@ -39,7 +39,5 @@ void simplequeryspuGatherConfiguration( void )
 
 	crSPUGetMothershipParams( conn, &simplequery_spu, simplequerySPUOptions );
 
-	(void) response;
-
 	crMothershipDisconnect( conn );
 }

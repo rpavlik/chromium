@@ -65,9 +65,9 @@ NETWORK_TYPE( Gm );
 /* Clients call this function to connect to a server.  The "server" argument is
  * expected to be a URL type specifier "protocol://servername:port", where the port 
  * specifier is optional, and if the protocol is missing it is assumed to be 
- * "tcpip".  
- * 
- * Not sure if the MTU argument should be here -- maybe in crNetInit()? */
+ * "tcpip".  */
+
+#define CR_MINIMUM_MTU 1024
 
 CRConnection *crNetConnectToServer( char *server, 
 		unsigned short default_port, int mtu, int broker )
@@ -76,7 +76,13 @@ CRConnection *crNetConnectToServer( char *server,
 	unsigned short port;
 	CRConnection *conn;
 
+	crDebug( "calling crNetConnectToServer( \"%s\", %d, %d, %d )", server, default_port, mtu, broker );
+
 	CRASSERT( cr_net.initialized );
+	if (mtu < CR_MINIMUM_MTU)
+	{
+		crError( "You tried to connect to server \"%s\" with an mtu of %d, but the minimum MTU is %d", server, mtu, CR_MINIMUM_MTU );
+	}
 
 	/* Tear the URL apart into relevant portions. */
 	if ( !crParseURL( server, protocol, hostname, &port, default_port ) )

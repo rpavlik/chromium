@@ -879,7 +879,6 @@ crGmSendCredits( CRConnection *conn )
 	CRASSERT( gm_buffer );
 
 	msg = (CRMessageFlowControl *) ( gm_buffer + 1 );
-
 	msg->header.type    = CR_MESSAGE_FLOW_CONTROL;
 	msg->header.conn_id = conn->id;
 	msg->credits = conn->recv_credits;
