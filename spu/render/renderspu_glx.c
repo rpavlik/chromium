@@ -426,27 +426,31 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		crWarning( "Render SPU: unable to create window" );
 		return GL_FALSE;
 	}
-
+    
+    /* Make a clear cursor to get rid of the monitor cursor */
 	if ( render_spu.fullscreen )
 	{
-		/* Make a clear cursor to get rid of the monitor cursor */
-		Pixmap pixmap;
-		Cursor cursor;
-		XColor color;
-		char   clear_bits[32];
-
-		memset( clear_bits, 0, sizeof(clear_bits) );
-
-		pixmap = XCreatePixmapFromBitmapData( dpy, 
-				window->window,
-				clear_bits, 16, 16, 1, 0, 1 );
-		cursor = XCreatePixmapCursor( dpy, pixmap, pixmap,
-				&color, &color, 8, 8 );
-		XDefineCursor( dpy, window->window, cursor );
-
-		XFreePixmap( dpy, pixmap );
+        Pixmap pixmap;
+        Cursor cursor;
+        XColor colour;
+        char clearByte = 0;
+        
+        /* AdB - Only bother to create a 1x1 cursor (byte) */
+        pixmap = XCreatePixmapFromBitmapData(dpy, window->window, &clearByte, 1, 1, 1, 0, 1);
+	    if(!pixmap){
+		    crWarning("Unable to create clear cursor pixmap");
+		    return GL_FALSE;
+	    }
+        
+	    cursor = XCreatePixmapCursor(dpy, pixmap, pixmap, &colour, &colour, 0, 0);
+	    if(!cursor){
+		    crWarning("Unable to create clear cursor from zero byte pixmap");
+		    return GL_FALSE;
+	    }
+	    XDefineCursor(dpy, window->window, cursor);
+        XFreePixmap(dpy, pixmap);
 	}
-
+    
 	crDebug( "Render SPU: Created the window on display %s",
 			 visual->displayName ? visual->displayName : "(default)" );
 	hints.x = window->x;
