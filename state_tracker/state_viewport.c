@@ -43,6 +43,7 @@ void crStateViewportApply(CRViewportState *v, GLvectorf *p)
 {
 	p->x = (p->x+1.0f)*(v->viewportW / 2.0f) + v->viewportX;
 	p->y = (p->y+1.0f)*(v->viewportH / 2.0f) + v->viewportY;
+   	p->z = (p->z+1.0f)*((v->farClip - v->nearClip) / 2.0f) + v->nearClip;
 }
 
 void STATE_APIENTRY crStateViewport(GLint x, GLint y, GLsizei width, 
