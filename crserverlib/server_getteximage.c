@@ -35,7 +35,9 @@ crServerDispatchGetTexImage(GLenum target, GLint level, GLenum format,
 		crFree(buffer);
 	}
 	else {
-		crServerReturnValue( buffer, 0 );
+		/* need to return _something_ to avoid blowing up */
+		GLuint dummy = 0;
+		crServerReturnValue( (GLvoid *) &dummy, sizeof(dummy) );
 	}
 }
 
@@ -59,7 +61,9 @@ crServerDispatchGetCompressedTexImageARB(GLenum target, GLint level,
 		crFree(buffer);
 	}
 	else {
-		crServerReturnValue( buffer, 0 );
+		/* need to return _something_ to avoid blowing up */
+		GLuint dummy = 0;
+		crServerReturnValue( (GLvoid *) &dummy, sizeof(dummy) );
 	}
 }
 
