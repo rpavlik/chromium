@@ -36,7 +36,7 @@ import sys, string, types, traceback, re, threading, os, socket, select, signal,
 from crconfig import arch, crdir, crbindir, crlibdir
 
 # Version string
-Version = "1.6"
+Version = "1.7"
 
 # This controls whether debug messages are printed (1=yes, 0=no)
 DebugMode = 0
