@@ -46,7 +46,7 @@ typedef struct {
 
 	unsigned int fake_window_width, fake_window_height;
 
-	int syncOnSwap;
+	int syncOnFinish, syncOnSwap;
 
 	float viewportCenterX, viewportCenterY;
 	float halfViewportWidth, halfViewportHeight;

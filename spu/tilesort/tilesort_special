@@ -7,3 +7,5 @@ MakeCurrent
 SwapBuffers
 Viewport
 Scissor
+Finish
+Flush

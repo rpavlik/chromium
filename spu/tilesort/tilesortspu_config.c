@@ -20,6 +20,7 @@ static void __setDefaults( void )
 	tilesort_spu.drawBBOX = 0;
 	tilesort_spu.bboxLineWidth = 5;
 
+	tilesort_spu.syncOnFinish = 1;
 	tilesort_spu.syncOnSwap = 1;
 
 	tilesort_spu.fakeWindowWidth = 0;
@@ -76,6 +77,11 @@ void tilesortspuGatherConfiguration( void )
 	if (crMothershipSPUParam( conn, response, "sync_on_swap") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.syncOnSwap) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "sync_on_finish") )
+	{
+		sscanf( response, "%d", &(tilesort_spu.syncOnFinish) );
 	}
 
 	if (crMothershipSPUParam( conn, response, "draw_bbox") )

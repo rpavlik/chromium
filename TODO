@@ -1,5 +1,4 @@
 Before Alpha release:
-	tilesort glFlush/glFinish
 	tilesort DrawPixels/RasterPos
 	tilesort Viewport testing
 	tilesort Pinching
