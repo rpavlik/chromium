@@ -4,7 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <GL/gl.h>
+#include "chromium.h"
 #include "cr_calllists.h"
 
 #define EXPAND(typeEnum, typeCast, increment, value)     \
