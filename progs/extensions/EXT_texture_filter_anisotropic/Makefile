@@ -9,7 +9,7 @@ PROGRAM = EXT_texture_filter_anisotropic
 OPENGL = 1
 GLUT = 1
 
-FILES = exec main
+FILES = main
 LIBRARIES = crutil crextensionscommon
 
 include ${TOP}/cr.mk

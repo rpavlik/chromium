@@ -11,6 +11,6 @@ GLUT = 1
 
 LIBRARIES = crutil crextensionscommon
 
-FILES = exec main
+FILES = main
 
 include ${TOP}/cr.mk
