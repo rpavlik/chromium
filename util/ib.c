@@ -18,11 +18,11 @@
  * and addresses are supported; asking to connect to port xyz on a 128-bit
  * (IPv6) address makes sense.
  *
- * As of December 2, 2003, connection managers have been a bit of 
+ * As of December 2, 2003, connection managers have been a bit of
  * an anomaly in our IB fabric. Since it may well be non-existent middleware
  * in other environments as well, this version of IB connects through TCP/IP,
  * transfers a little bit of control information, and then opens a parallel
- * connection in Infiniband. The normal TCP/IP infrastructure is therefore 
+ * connection in Infiniband. The normal TCP/IP infrastructure is therefore
  * in place; hosts are referenced by their IP address, and have ports, etc.
  *
  * As part of the TCP connection process, immediately upon connection,
@@ -91,19 +91,19 @@ typedef enum {
 
 #define CR_IB_BUFFER_MAGIC 0x89134533
 /* size of buffer. This needs to be checked against an mtu which exists
- * elsewhere in Chromium; just setting it to say 131K will cause 
+ * elsewhere in Chromium; just setting it to say 131K will cause
  * protection errors. */
 #define BUFMAX 256*1024
 
 /*max number on queue. Must be at least 2, not sure it needs to be more*/
 #define K 64
 
-/* max number of open connections. Presumably this needs to be as big as 
+/* max number of open connections. Presumably this needs to be as big as
  * the node count. */
 #define MK 1024
 
 /* Size of ack package. Since the data is not used yet, it can be any size
- * greater than zero. Eventually it may be nice to generate these only 
+ * greater than zero. Eventually it may be nice to generate these only
  * for every Kth transmission, in which case there will likely be content.*/
 #define ACKSZ 1
 
@@ -120,9 +120,9 @@ enum ibstate {ibnull, /*baseline state*/
 	 /*Send states*/
          ibsdposted,  /*a send has been posted*/
 	 ibsdsent,    /*a send has been sent; IB says it is finished*/
-	 ibsdacked,   /*a send has been acknowledged, the other side is 
+	 ibsdacked,   /*a send has been acknowledged, the other side is
 			finished reading, a buffer is now available again*/
-     
+
 	 /*Ack Send States*/
 	 ibasdposted, /*a received data acknowledgement has been posted*/
 	 ibasdsent,   /*a received data ack has been sent*/
@@ -148,7 +148,7 @@ struct bufib {
 
 struct ibmem {
         /* This is the holder for all of the buffers for a given IB
-	 * connection. All buffers for each connection will be locked down 
+	 * connection. All buffers for each connection will be locked down
 	 * together and given one set of l/r keys.*/
 	VAPI_mr_hndl_t		mhndl;	/*Memory handle*/
 	VAPI_lkey_t		lkey;
@@ -165,7 +165,7 @@ struct ibmem {
 	VAPI_psn_t sqpsn,remotesqpsn;	/*local and remote sq psn initial values.
 					  rq will be that of remote sq.*/
 
-	struct bufib 
+	struct bufib
 	    r[K],	/*data receive buffers*/
 	    w[K],	/*data transmit buffers*/
 	    ra,		/*ack receive buffer*/
@@ -175,7 +175,7 @@ struct ibmem {
 	int idcounter;	/*used for forming session unique id's for this queue pair*/
 	int readsposted;/*non-ack reads*/
 	int sendsposted;/*non-ack sends*/
-}; 
+};
 
 typedef struct CRIBBuffer {
 	unsigned int          magic;
@@ -199,7 +199,7 @@ int crIBErrno( void )
 char *crIBErrorString( int err )
 {
 	static char buf[512], *temp;
-	
+
 	temp = strerror( err );
 	if ( temp )
 	{
@@ -248,7 +248,7 @@ struct {
 } cr_ib;
 
 static int getid(CRConnection *conn){
-    /* get a unique identifier. Read and write requests are 
+    /* get a unique identifier. Read and write requests are
      * given session-unique identifiers.*/
     return conn->ib->idcounter++;
 }
@@ -281,7 +281,7 @@ static int csum(unsigned char *x, int len){
 	    if (ans & 0x8000) {
 		ans <<= 1;
 		ans ^= 4129;
-	    } else 
+	    } else
 		ans <<= 1;
 	}
 	crc = ans;
@@ -442,7 +442,7 @@ static void waitforsend(CRConnection *conn){
 }
 #endif
 static void initibmem(CRConnection *conn){
-    int i; 
+    int i;
     VAPI_ret_t ret;
     conn->ib->curread = -1;
     for (i = 0; i < K; i++){
@@ -458,7 +458,7 @@ static void initibmem(CRConnection *conn){
 	conn->ib->r[i].state = ibrdposted;
     }
 }
-static int 
+static int
 ibhca ( CRConnection *conn )
 {
     /*find an hca and set conn->hndl */
@@ -502,7 +502,7 @@ ibhca ( CRConnection *conn )
     return 1;
 }
 
-static int 
+static int
 ibpd ( CRConnection *conn )
 {
     /*get a protection domain and set conn->pdhndl */
@@ -515,7 +515,7 @@ ibpd ( CRConnection *conn )
     return 0;
 }
 
-static int 
+static int
 ibcqs ( CRConnection *conn )
 {
     /*get a couple of completion queues, and set conn->scqhndl/rcqhndl */
@@ -641,7 +641,7 @@ ibconn ( CRConnection *conn)
 	return 1;
     }
     conn->ib->qpn = prop.qp_num;
-    conn->ib->sqpsn = psnstart++; 
+    conn->ib->sqpsn = psnstart++;
 
     /*Convert from reset to init state*/
     QP_ATTR_MASK_CLR_ALL(attr_mask);
@@ -730,7 +730,7 @@ static void setupmb(CRConnection *conn)
     initibmem(conn);
 }
 
-static int 
+static int
 ibconnect ( CRConnection *conn )
 {
     conn->ib->transidcounter = 77;
@@ -745,10 +745,10 @@ ibconnect ( CRConnection *conn )
     return 0;
 }
 
-static int 
+static int
 ibconnect2 ( CRConnection *conn )
 {
-    /*do that stuff which can only be done when we have some info 
+    /*do that stuff which can only be done when we have some info
      * from the other side*/
     /*Convert from INIT to RTR state*/
     VAPI_ret_t ret;
@@ -801,7 +801,7 @@ ibconnect2 ( CRConnection *conn )
     QP_ATTR_MASK_SET(attr_mask,QP_ATTR_QP_STATE);
     attr.timeout = 18;	/*CHECKED*/
     QP_ATTR_MASK_SET(attr_mask,QP_ATTR_TIMEOUT);
-    attr.sq_psn = conn->ib->sqpsn;	
+    attr.sq_psn = conn->ib->sqpsn;
     QP_ATTR_MASK_SET(attr_mask,QP_ATTR_SQ_PSN);
     attr.retry_count = 200;	/*CHECKED*/ /*and then changed from 6*/
     QP_ATTR_MASK_SET(attr_mask,QP_ATTR_RETRY_COUNT);
@@ -1043,7 +1043,7 @@ static void processrcompletion(CRConnection *conn,int id, int immdata, int len){
 	    conn->ib->r[i].transid = immdata;
 	    dumptrans(conn,i,&(conn->ib->r[i]),"normal data read");
 	    if (conn->ib->curread == -1){
-		conn->ib->curread = i; 
+		conn->ib->curread = i;
 	    } else {
 		int k = conn->ib->curread;
 		int emergencypull = 0;
@@ -1140,7 +1140,7 @@ static void checkreads(CRConnection *conn){
 	processrcompletion(conn,(int)cd.id,(int)cd.imm_data,(int)cd.byte_len);
     }
     /*Check to see if there are any readqueue entries.*/
-    /*These could be acks, which will move a send buffer from ibsdsent to 
+    /*These could be acks, which will move a send buffer from ibsdsent to
      * ibsdsent to ibsdacked and then ibsdnull*/
     /*an ack comes with a number, move that number the appropriate state*/
 }
@@ -1181,8 +1181,8 @@ static void ibwriteexact(CRConnection *conn, void *buf, unsigned int len)
     memcpy(x->buf,buf,len);
     x->len = len;
     (int)x->sr.id = x->id = getid(conn);
-    x->sr.imm_data = x->transid = gettransid(conn); 
-    x->sr.sg_lst_p->len = x->len; 
+    x->sr.imm_data = x->transid = gettransid(conn);
+    x->sr.sg_lst_p->len = x->len;
     dumptrans(conn,i,x,"normal data post");
     ret = VAPI_post_sr(conn->ib->hndl,conn->ib->qphndl,&x->sr);
     conn->ib->sendsposted++;
@@ -1227,8 +1227,8 @@ static void sendack(CRConnection *conn, struct bufib *x)
 				conn->tcp_socket,i,usecs());
     conn->ib->w[i].state = ibasdposted;
     (int)conn->ib->w[i].sr.id = conn->ib->w[i].id = getid(conn);
-    conn->ib->w[i].sr.imm_data = conn->ib->w[i].transid = x->transid|0x10000; 
-    conn->ib->w[i].sr.sg_lst_p->len = conn->ib->w[i].len = ACKSZ; 
+    conn->ib->w[i].sr.imm_data = conn->ib->w[i].transid = x->transid|0x10000;
+    conn->ib->w[i].sr.sg_lst_p->len = conn->ib->w[i].len = ACKSZ;
     for (z = 0 ; z < ACKSZ; z++) {conn->ib->w[i].buf[z] = 0xff;}
     dumptrans(conn,i,&(conn->ib->w[i]),"normal ack post");
     if (0 && IBDEBUGLEVEL)
@@ -1239,7 +1239,7 @@ static void sendack(CRConnection *conn, struct bufib *x)
     if (IBDEBUGLEVEL)
     crWarning("socket(%d) read buf(%d)(==%d) state change from ibrdready to ibrdacked to ibnull to ibrdposted on sendack %f",
 				conn->tcp_socket,x-conn->ib->r,conn->ib->curread,usecs());
-    x->state = ibrdacked; 
+    x->state = ibrdacked;
     x->id = 0;
     x->transid = 0;
     IBASSERT(conn->ib->curread != -1);
@@ -1276,7 +1276,7 @@ static int findcurrent(CRConnection *conn){
 
 static void pureibreadexact(CRConnection *conn, void *buf, unsigned int len)
 {
-    /*this is a higher level routine. Normally, being chromium, it will 
+    /*this is a higher level routine. Normally, being chromium, it will
      * ask for amounts that are a part of a single buffer. But we don't know
      * that. So find a buffer which is read ready and pos > 0, the active one.
      * Or else find the one with the lowest transaction id which is ready,
@@ -1340,8 +1340,8 @@ int
 __ib_read_exact( CRSocket sock, CRConnection *conn, void *buf, unsigned int len )
 {
 	unsigned int iblen = len;
-	/* 
-	 * Shouldn't write to a non-existent socket, ie when 
+	/*
+	 * Shouldn't write to a non-existent socket, ie when
 	 * crIBDoDisconnect has removed it from the pool
 	 */
 	if ( sock <= 0 )
@@ -1367,8 +1367,8 @@ __ib_write_exact(CRConnection *conn, CRSocket sock, void *buf, unsigned int len 
 {
 	unsigned int iblen = len;
 
-	/* 
-	 * Shouldn't write to a non-existent socket, ie when 
+	/*
+	 * Shouldn't write to a non-existent socket, ie when
 	 * crIBDoDisconnect has removed it from the pool
 	 */
 	if ( sock <= 0 )
@@ -1388,10 +1388,10 @@ crIBWriteExact( CRConnection *conn, void *buf, unsigned int len )
 
 }
 
-/* 
- * Make sockets do what we want: 
- * 
- * 1) Change the size of the send/receive buffers to 64K 
+/*
+ * Make sockets do what we want:
+ *
+ * 1) Change the size of the send/receive buffers to 64K
  * 2) Turn off Nagle's algorithm */
 
 static void
@@ -1404,13 +1404,13 @@ __crSpankSocket( CRSocket sock )
 	int sndbuf = 1*1024*1024;
 #else
 	int sndbuf = 64*1024;
-#endif	
+#endif
 
 	int rcvbuf = sndbuf;
 	int so_reuseaddr = 1;
 	int tcp_nodelay = 1;
 
-	if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, 
+	if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF,
 				(char *) &sndbuf, sizeof(sndbuf) ) )
 	{
 		int err = crIBErrno( );
@@ -1426,7 +1426,7 @@ __crSpankSocket( CRSocket sock )
 				rcvbuf, crIBErrorString( err ) );
 	}
 
-	
+
 	if ( setsockopt( sock, SOL_SOCKET, SO_REUSEADDR,
 				(char *) &so_reuseaddr, sizeof(so_reuseaddr) ) )
 	{
@@ -1461,7 +1461,7 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
 #endif
 	if (port != last_port)
 	{
-		/* with the new OOB stuff, we can have multiple ports being 
+		/* with the new OOB stuff, we can have multiple ports being
 		 * accepted on, so we need to redo the server socket every time.
 		 */
 #ifndef ADDRINFO
@@ -1619,12 +1619,12 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
 		*temp = '\0';
 	}
 
-#ifdef RECV_BAIL_OUT 
+#ifdef RECV_BAIL_OUT
 	err = sizeof(unsigned int);
 	if ( getsockopt( conn->tcp_socket, SOL_SOCKET, SO_RCVBUF,
 			(char *) &conn->krecv_buf_size, &err ) )
 	{
-		conn->krecv_buf_size = 0;	
+		conn->krecv_buf_size = 0;
 	}
 #endif
 	crDebug( "Accepted connection from \"%s\".", conn->hostname );
@@ -1658,12 +1658,12 @@ crIBAlloc( CRConnection *conn )
 
 	if ( buf == NULL )
 	{
-		crDebug( "Buffer pool %p was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
+		crDebug( "Buffer pool %p was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p",
 						 cr_ib.bufpool,
 			(unsigned int)sizeof(CRIBBuffer) + conn->buffer_size, &cr_ib.bufpool );
 		crDebug("sizeof(CRIBBuffer): %d", (unsigned int)sizeof(CRIBBuffer));
 		crDebug("sizeof(conn->buffer_size): %d", conn->buffer_size);
-		buf = (CRIBBuffer *) 
+		buf = (CRIBBuffer *)
 			crAlloc( sizeof(CRIBBuffer) + conn->buffer_size );
 		buf->magic = CR_IB_BUFFER_MAGIC;
 		buf->kind  = CRIBMemory;
@@ -1754,7 +1754,7 @@ __ib_dead_connection( CRConnection *conn )
 {
 	crDebug( "Dead connection (sock=%d, host=%s), removing from pool",
   				   conn->tcp_socket, conn->hostname );
-  
+
 	/* remove from connection pool */
 	crIBDoDisconnect( conn );
 }
@@ -1762,8 +1762,8 @@ __ib_dead_connection( CRConnection *conn )
 int
 __crIBSelect( int n, fd_set *readfds, int sec, int usec )
 {
-	for ( ; ; ) 
-	{ 
+	for ( ; ; )
+	{
 		int err, num_ready;
 
 		if (sec || usec)
@@ -1776,7 +1776,7 @@ __crIBSelect( int n, fd_set *readfds, int sec, int usec )
 			timeout.tv_sec = sec;
 			timeout.tv_usec = usec;
 			num_ready = select( n, readfds, NULL, NULL, &timeout );
-		} 
+		}
 		else
 			num_ready = select( n, readfds, NULL, NULL, NULL );
 
@@ -1826,7 +1826,7 @@ void crIBFree( CRConnection *conn, void *buf )
 	}
 }
 
-/* returns the amt of pending data which was handled */ 
+/* returns the amt of pending data which was handled */
 static int
 crIBUserbufRecv(CRConnection *conn, CRMessage *msg)
 {
@@ -1962,7 +1962,7 @@ crIBRecv( void )
 		}
 		else
 		{
-			ib_buffer = (CRIBBuffer *) 
+			ib_buffer = (CRIBBuffer *)
 				crAlloc( sizeof(*ib_buffer) + len );
 
 			ib_buffer->magic = CR_IB_BUFFER_MAGIC;
@@ -1973,7 +1973,7 @@ crIBRecv( void )
 
 		ib_buffer->len = len;
 
-		/* if we have set a userbuf, and there is room in it, we probably 
+		/* if we have set a userbuf, and there is room in it, we probably
 		 * want to stick the message into that, instead of our allocated
 		 * buffer.  */
 		leftover = 0;
@@ -1991,7 +1991,7 @@ crIBRecv( void )
 			i--;
 			continue;
 		}
-		
+
 		conn->recv_credits -= total;
 		conn->total_bytes_recv +=  total;
 
@@ -2002,7 +2002,7 @@ crIBRecv( void )
 			msg->header.type = (CRMessageType) SWAP32( msg->header.type );
 			msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
 		}
-	
+
 		/* if there is still data pending, it should go into the user buffer */
 		if (leftover)
 		{
@@ -2021,12 +2021,12 @@ crIBRecv( void )
 					continue;
 				}
 			}
-			
+
 			conn->recv_credits -= handled;
 			conn->total_bytes_recv +=  handled;
 		}
 
-		
+
 		crNetDispatchMessage( cr_ib.recv_list, conn, ib_buffer + 1, len );
 #if 0
 		crLogRead( len );
@@ -2034,15 +2034,15 @@ crIBRecv( void )
 
 
 		/* CR_MESSAGE_OPCODES is freed in
-		 * crserverlib/server_stream.c 
+		 * crserverlib/server_stream.c
 		 *
 		 * OOB messages are the programmer's problem.  -- Humper 12/17/01 */
 		if (cached_type != CR_MESSAGE_OPCODES && cached_type != CR_MESSAGE_OOB
-		    &&	cached_type != CR_MESSAGE_GATHER) 
+		    &&	cached_type != CR_MESSAGE_GATHER)
 		{
 			crIBFree( conn, ib_buffer + 1 );
 		}
-		
+
 	}
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_ib.recvmutex);
@@ -2091,7 +2091,7 @@ crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 
 	cr_ib.num_conns = 0;
 	cr_ib.conns     = NULL;
-	
+
 	cr_ib.server_sock    = -1;
 
 #ifdef CHROMIUM_THREADSAFE
@@ -2103,7 +2103,7 @@ crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 	cr_ib.initialized = 1;
 }
 
-/* The function that actually connects.  This should only be called by clients 
+/* The function that actually connects.  This should only be called by clients
  * Servers have another way to set up the socket. */
 
 int
@@ -2194,12 +2194,12 @@ crIBDoConnect( CRConnection *conn )
 	{
 #ifndef ADDRINFO
 
-#ifdef RECV_BAIL_OUT		
+#ifdef RECV_BAIL_OUT
 		err = sizeof(unsigned int);
 		if ( getsockopt( conn->tcp_socket, SOL_SOCKET, SO_RCVBUF,
 				(char *) &conn->krecv_buf_size, &err ) )
 		{
-			conn->krecv_buf_size = 0;	
+			conn->krecv_buf_size = 0;
 		}
 #endif
 		if ( !connect( conn->tcp_socket, (struct sockaddr *) &servaddr,
@@ -2239,12 +2239,12 @@ crIBDoConnect( CRConnection *conn )
 		/* Set up the socket the way *we* want. */
 		__crSpankSocket( conn->tcp_socket );
 
-#if RECV_BAIL_OUT		
+#if RECV_BAIL_OUT
 		err = sizeof(unsigned int);
 		if ( getsockopt( conn->tcp_socket, SOL_SOCKET, SO_RCVBUF,
 				(char *) &conn->krecv_buf_size, &err ) )
 		{
-			conn->krecv_buf_size = 0;	
+			conn->krecv_buf_size = 0;
 		}
 #endif
 
@@ -2308,7 +2308,7 @@ crIBDoDisconnect( CRConnection *conn )
 	conn->type = CR_NO_CONNECTION;
 	cr_ib.conns[conn->index] = NULL;
 
-	for (i = 0; i < num_conns; i++) 
+	for (i = 0; i < num_conns; i++)
 	{
 		if ( cr_ib.conns[i] && cr_ib.conns[i]->type != CR_NO_CONNECTION )
 			none_left = 0; /* found a live connection */
@@ -2380,7 +2380,7 @@ crIBConnection( CRConnection *conn )
 			break;
 		}
 	}
-	
+
 	/* Realloc connection stack if we couldn't find a free slot */
 	if (found == 0) {
 		n_bytes = ( cr_ib.num_conns + 1 ) * sizeof(*cr_ib.conns);
@@ -2398,7 +2398,7 @@ int crIBGetHostname( char *buf, unsigned int len )
 	if (override)
 	{
 		crStrncpy(buf, override, len);
-		ret = 0;	
+		ret = 0;
 	}
 	else
 		ret = gethostname( buf, len );
