@@ -1,0 +1,18 @@
+; Copyright (c) 2001, Stanford University
+; All rights reserved.
+;
+; See the file LICENSE.txt for information on redistributing this software.
+DESCRIPTION ""
+EXPORTS
+crutInitAPI
+crutGetWindowParams
+crutGetMenuXML
+crutSetWindowID
+crutConnectToClients
+crutSendMouseEvent
+crutSendKeyboardEvent
+crutSendReshapeEvent
+crutSendMotionEvent
+crutSendPassiveMotionEvent
+crutSendMenuEvent
+crut_api
