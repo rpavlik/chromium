@@ -25,5 +25,12 @@ void crStateFlushArg( void *arg )
 
 void crStateDiffAPI( SPUDispatchTable *api )
 {
+	static int first_time = 1;
+	if (first_time)
+	{
+		first_time = 0;
+		crDebug( "CALLING INIT ON %p", &(diff_api) );
+		crSPUInitDispatchTable( &(diff_api) );
+	}
 	crSPUCopyDispatchTable( &(diff_api), api );
 }

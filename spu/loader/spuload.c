@@ -81,9 +81,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 	}
 	the_spu->function_table = the_spu->init( id, child, the_spu->superSPU, 0, 1 );
 	__buildDispatch( the_spu );
-	the_spu->dispatch_table.copyList = NULL;
-	the_spu->dispatch_table.copy_of = NULL;
-	the_spu->dispatch_table.chain_parent = NULL;
+	crSPUInitDispatchTable( &(the_spu->dispatch_table) );
 	the_spu->self( &(the_spu->dispatch_table) );
 
 	return the_spu;
@@ -102,7 +100,7 @@ SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 	{
 		int spu_id = ids[i];
 		char *spu_name = names[i];
-		SPU *the_spu;
+		SPU *the_spu, *temp;
 		
 		/* This call passes the previous version of spu, which is the SPU's 
 		 * "child" in this chain. */
@@ -112,11 +110,16 @@ SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 		{
 			/* keep track of this so that people can pass functions through but 
 			 * still get updated when API's change on the fly. */
-			child_spu->dispatch_table.chain_parent = &(the_spu->dispatch_table);
+			for (temp = the_spu ; temp ; temp = temp->superSPU )
+			{
+				struct _copy_list_node *node = (struct _copy_list_node *) crAlloc( sizeof( *node ) );
+				node->copy = &(temp->dispatch_table);
+				node->next = child_spu->dispatch_table.copyList;
+				child_spu->dispatch_table.copyList = node;
+			}
 		}
 		child_spu = the_spu;
 	}
-	child_spu->dispatch_table.chain_parent = NULL;
 	return child_spu;
 }
 

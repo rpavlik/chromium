@@ -81,6 +81,7 @@ for func_name in keys:
 print """
 void crServerInitDispatch(void)
 {
+	crSPUInitDispatchTable( &(cr_server.dispatch) );
 	crSPUCopyDispatchTable( &(cr_server.dispatch), &(cr_server.head_spu->dispatch_table ) );
 """
 

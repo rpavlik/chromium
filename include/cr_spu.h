@@ -68,6 +68,7 @@ struct _SPUSTRUCT {
 
 SPU *crSPULoad( SPU *child, int id, char *name, char *dir );
 SPU *crSPULoadChain( int count, int *ids, char **names, char *dir );
+void crSPUInitDispatchTable( SPUDispatchTable *table );
 void crSPUCopyDispatchTable( SPUDispatchTable *dst, SPUDispatchTable *src );
 void crSPUChangeInterface( SPUDispatchTable *table, void *origFunc, void *newFunc );
 

@@ -17,6 +17,7 @@ FILES = tilesortspu \
 	tilesortspu_flush \
 	tilesortspu_hint \
 	tilesortspu_init \
+	tilesortspu_lists \
 	tilesortspu_material \
 	tilesortspu_misc \
 	tilesortspu_net \
@@ -29,7 +30,7 @@ FILES = tilesortspu \
 LIBRARIES = crutil crmothership crpacker spuload
 TRACKS_STATE = 1
 
-PRECOMP = tilesortspu.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c
+PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += tilesort.def
@@ -48,6 +49,10 @@ tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unim
 tilesortspu_diffapi.c: diffapi.py
 	@$(ECHO) Building the TileSort Differencing API
 	@$(PYTHON) diffapi.py > $@
+
+tilesortspu_lists.c: tilesort_lists.py tilesort_list_special
+	@$(ECHO) Building the TileSort Display List Manager
+	@$(PYTHON) tilesort_lists.py > $@
 
 tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../state_tracker/convert.py length_table.py pinch_convert.py
 	@$(ECHO) Munging the pincher... yuck

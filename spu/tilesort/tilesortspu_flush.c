@@ -324,7 +324,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 }
 
 
-static void __doFlush( CRContext *ctx, int broadcast )
+static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 {
 	CRMessageOpcodes *big_packet_hdr = NULL;
 	unsigned int big_packet_len = 0;
@@ -458,7 +458,7 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		/* We're going to do lazy state evaluation now */
 
 		crPackSetBuffer( &(state_server->pack) );
-		if (!broadcast)
+		if (!broadcast || send_state_anyway)
 		{
 			/*crDebug( "pack buffer before differencing" ); 
 			 *tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) ); */
@@ -553,9 +553,9 @@ static void __doFlush( CRContext *ctx, int broadcast )
 	tilesortspuPinchRestoreTriangle();
 }
 
-void tilesortspuBroadcastGeom( void )
+void tilesortspuBroadcastGeom( int send_state_anyway )
 {
-	__doFlush( tilesort_spu.ctx, 1 );
+	__doFlush( tilesort_spu.ctx, 1, send_state_anyway );
 }
 
 void tilesortspuFlush( void *arg )
@@ -572,7 +572,7 @@ void tilesortspuFlush( void *arg )
 	
 	if ( tilesort_spu.splitBeginEnd || !(ctx->current.inBeginEnd) )
 	{
-		__doFlush( ctx, 0 );
+		__doFlush( ctx, 0, 0 );
 		return;
 	}
 

@@ -55,7 +55,7 @@ for i in range(len(keys)):
 print """
     struct _copy_list_node *copyList;
     struct _spu_dispatch_table *copy_of;
-    struct _spu_dispatch_table *chain_parent;
+		int mark;
 } SPUDispatchTable;
 
 struct _copy_list_node {

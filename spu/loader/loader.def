@@ -16,3 +16,4 @@ crSPUGetGLLimits
 crSPUMergeGLLimits
 crSPUPropogateGLLimits
 crSPUChangeInterface
+crSPUInitDispatchTable

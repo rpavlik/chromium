@@ -105,7 +105,7 @@ extern TileSortSPU tilesort_spu;
 
 void tilesortspuHuge( CROpcode opcode, void *buf );
 void tilesortspuFlush( void *arg );
-void tilesortspuBroadcastGeom( void );
+void tilesortspuBroadcastGeom( int send_state_anyway );
 void tilesortspuShipBuffers( void );
 void tilesortspuCreateDiffAPI( void );
 void tilesortspuSetBucketingBounds( int x, int y, unsigned int w, unsigned int h );

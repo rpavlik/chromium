@@ -93,6 +93,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 
 void SPUSelfDispatch(SPUDispatchTable *self)
 {
+	crSPUInitDispatchTable( &(tilesort_spu.self) );
 	crSPUCopyDispatchTable( &(tilesort_spu.self), self );
 }
 

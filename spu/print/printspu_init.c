@@ -5,6 +5,7 @@
  */
 
 #include "cr_spu.h"
+#include "cr_error.h"
 #include "printspu.h"
 #include <stdio.h>
 
@@ -30,7 +31,9 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	print_spu.id = id;
 	printspuGatherConfiguration( child );
 
+	crSPUInitDispatchTable( &(print_spu.passthrough) );
 	crSPUCopyDispatchTable( &(print_spu.passthrough), &(super->dispatch_table) );
+	crDebug( "print_spu.passthrough = %p, super->dispatch_table = %p", &(print_spu.passthrough), &(super->dispatch_table) );
 	return &the_functions;
 }
 

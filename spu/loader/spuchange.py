@@ -29,11 +29,15 @@ print """
 void crSPUChangeInterface( SPUDispatchTable *table, void *orig_func, void *new_func )
 {
 	struct _copy_list_node *temp;
-	if (table->copy_of != NULL)
+	if (table->mark == 1)
 	{
-		crSPUChangeInterface( table->copy_of, orig_func, new_func );
 		return;
 	}
+	if (orig_func == new_func) 
+	{
+		return;
+	}
+	table->mark = 1;
 """
 
 for func_name in keys:
@@ -43,15 +47,19 @@ for func_name in keys:
 	print '\t\ttable->%s = (%sFunc_t)new_func;' % (func_name, func_name)
 	print '\t\tfor (temp = table->copyList ; temp ; temp = temp->next)'
 	print '\t\t{'
-	print '\t\t\tif (temp->copy->%s == orig_func)' % func_name
-	print' \t\t\t{'
-	print '\t\t\t\ttemp->copy->%s = (%sFunc_t)new_func;' % (func_name, func_name)
-	print' \t\t\t}'
+	print '\t\t\tcrSPUChangeInterface( temp->copy, orig_func, new_func );'
 	print '\t\t}'
 	print '\t}'
 
-print '\tif (table->chain_parent != NULL)'
-print '\t{'
-print '\t\tcrSPUChangeInterface( table->chain_parent, orig_func, new_func );'
-print '\t}'
+print """
+	if (table->copy_of != NULL)
+	{
+		crSPUChangeInterface( table->copy_of, orig_func, new_func );
+	}
+	for (temp = table->copyList ; temp ; temp = temp->next)
+	{
+		crSPUChangeInterface( temp->copy, orig_func, new_func );
+	}
+	table->mark = 0;
+"""
 print '}'

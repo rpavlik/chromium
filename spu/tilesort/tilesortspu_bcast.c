@@ -19,7 +19,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 	{
 		crPackAccum( op, value );
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(1);
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
@@ -33,7 +33,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 	{
 		crPackClear( mask );
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(1);
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
@@ -59,7 +59,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 			crPackWriteback( &writeback );
 		}
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 	if (tilesort_spu.syncOnFinish)
 	{
@@ -81,7 +81,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 	{
 		crPackFlush();
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
@@ -96,7 +96,7 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierCreate(GLuint name, GLuint count)
 	{
 		crPackBarrierCreate(name,count);
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
@@ -111,7 +111,7 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroy(GLuint name)
 	{
 		crPackBarrierDestroy(name);
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
@@ -126,7 +126,7 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierExec(GLuint name)
 	{
 		crPackBarrierExec(name);
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
@@ -141,7 +141,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreate(GLuint name, GLuint count)
 	{
 		crPackSemaphoreCreate(name,count);
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
@@ -156,7 +156,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroy(GLuint name)
 	{
 		crPackSemaphoreDestroy(name);
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
@@ -171,7 +171,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreP(GLuint name)
 	{
 		crPackSemaphoreP(name);
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
@@ -186,7 +186,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreV(GLuint name)
 	{
 		crPackSemaphoreV(name);
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
@@ -201,7 +201,7 @@ void TILESORTSPU_APIENTRY tilesortspu_CallList( GLuint list )
 	{
 		crPackCallList( list );
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(1);
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
@@ -223,5 +223,5 @@ void TILESORTSPU_APIENTRY tilesortspu_CallLists( GLsizei n, GLenum type, const G
 	{
 		crPackCallLists( n, type, lists );
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(1);
 }

@@ -36,7 +36,9 @@ void crStateListsBindName(CRListsState *l, GLuint name)
 
 	if (!i) 
 	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "Couldn't bind list number %d", name );
+		/* Where did this come from? */
+		/* crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "Couldn't bind list number %d", name ); */
+		return;
 	}
 
 	/* (name, name) */

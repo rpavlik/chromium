@@ -15,5 +15,6 @@ SPUDispatchTable glim;
 
 void FakerInit( SPU *spu )
 {
+	crSPUInitDispatchTable( &glim );
 	crSPUCopyDispatchTable( &glim, &(spu->dispatch_table) );
 }

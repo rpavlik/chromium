@@ -13,8 +13,8 @@
 int main(int argc, char *argv[])
 {
 	SPU *spu;
-	int ids[] = { 0, 1 };
-	char *spunames[] = { "apichangespu", "renderspu" };
+	int ids[] = { 3 };
+	char *spunames[] = { "tilesortspu" };
 	float angle = 0;
 	GLfloat v1[3] = { .25, .25, 0 }; 
 	GLfloat v2[3] = { .25, .5, 0 }; 
@@ -25,7 +25,22 @@ int main(int argc, char *argv[])
 
 	spu = crSPULoadChain( sizeof(spunames)/sizeof(spunames[0]), ids, spunames, NULL );
 
-	spu->dispatch_table.Viewport( 0, 0, 256, 256 );
+	spu->dispatch_table.NewList( 1, GL_COMPILE );
+		spu->dispatch_table.Color3f( 1,1,0 );
+		spu->dispatch_table.Begin( GL_TRIANGLES );
+		spu->dispatch_table.Vertex3fv( v1 );
+		spu->dispatch_table.Vertex3fv( v2 );
+		spu->dispatch_table.Vertex3fv( v3 );
+		spu->dispatch_table.End( );
+		spu->dispatch_table.Rotatef( 30, 0, 1, 0 );
+		spu->dispatch_table.Color3f( 1,0,0 );
+		spu->dispatch_table.Begin( GL_TRIANGLES );
+		spu->dispatch_table.Vertex3fv( v1 );
+		spu->dispatch_table.Vertex3fv( v2 );
+		spu->dispatch_table.Vertex3fv( v3 );
+		spu->dispatch_table.End( );
+	spu->dispatch_table.EndList( );
+	/* spu->dispatch_table.Viewport( 0, 0, 256, 256 ); */
 	spu->dispatch_table.ClearColor( 0,0,0,1 );
 	for (;;)
 	{
@@ -34,11 +49,7 @@ int main(int argc, char *argv[])
 		spu->dispatch_table.MatrixMode( GL_MODELVIEW );
 		spu->dispatch_table.LoadIdentity();
 		spu->dispatch_table.Rotatef( angle, 0, 0, 1 );
-		spu->dispatch_table.Begin( GL_TRIANGLES );
-		spu->dispatch_table.Vertex3fv( v1 );
-		spu->dispatch_table.Vertex3fv( v2 );
-		spu->dispatch_table.Vertex3fv( v3 );
-		spu->dispatch_table.End( );
+		spu->dispatch_table.CallList( 1 );
 		spu->dispatch_table.SwapBuffers();
 	}
 }

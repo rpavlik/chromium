@@ -32,7 +32,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers(void)
 			crPackWriteback( &writeback );
 		}
 	}
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 	if (tilesort_spu.syncOnSwap)
 	{

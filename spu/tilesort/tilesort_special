@@ -26,6 +26,8 @@ Rects
 Rectsv
 Bitmap
 Hint
+NewList
+EndList
 CallList
 CallLists
 Materialf

@@ -29,9 +29,11 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	template_spu.has_child = 0;
 	if (child)
 	{
+		crSPUInitDispatchTable( &(template_spu.child) );
 		crSPUCopyDispatchTable( &(template_spu.child), &(child->dispatch_table) );
 		template_spu.has_child = 1;
 	}
+	crSPUInitDispatchTable( &(template_spu.super) );
 	crSPUCopyDispatchTable( &(template_spu.super), &(super->dispatch_table) );
 	templatespuGatherConfiguration();
 
@@ -40,6 +42,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 
 void SPUSelfDispatch(SPUDispatchTable *self)
 {
+	crSPUInitDispatchTable( &(template_spu.self) );
 	crSPUCopyDispatchTable( &(template_spu.self), self );
 }
 
