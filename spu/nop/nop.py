@@ -76,6 +76,12 @@ static void NOP_APIENTRY nopGetChromiumParametervCR( GLenum target, GLuint index
 		case GL_HEAD_SPU_NAME_CR:
 			crMemcpy((char*)values,"nop",3);
 			return;
+		case GL_WINDOW_SIZE_CR:
+			{
+				int *size = (int *) values;
+				size[0] = size[1] = 1;
+			}
+			break;
 		default:
 			break;
 	}
