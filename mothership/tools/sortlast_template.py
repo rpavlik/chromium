@@ -194,6 +194,7 @@ class SortlastDialog(wxDialog):
 		id_Hostnames       = 4005
 		id_Command         = 4006
 		id_WindowSize      = 4007
+		id_WindowResize    = 4008
 		id_OK              = 4011
 		id_CANCEL          = 4012
 		id_HELP            = 4013
@@ -206,7 +207,7 @@ class SortlastDialog(wxDialog):
 		outerSizer = wxBoxSizer(wxVERTICAL)
 
 		# Window width/height (in pixels)
-		box = wxStaticBox(parent=self, id=-1, label="Window Size",
+		box = wxStaticBox(parent=self, id=-1, label="Initial Window Size",
 						  style=wxDOUBLE_BORDER)
 		windowSizeSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
 		widthLabel = wxStaticText(parent=self, id=-1, label="Width:")
@@ -237,6 +238,16 @@ class SortlastDialog(wxDialog):
 		windowSizeSizer.Add(self.sizeChoice,
 							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=2)
 		outerSizer.Add(windowSizeSizer, flag=wxALL|wxGROW, border=4)
+
+		# Resizable window option
+		box = wxStaticBox(parent=self, id=-1, label="Window Resizing",
+						  style=wxDOUBLE_BORDER)
+		windowResizeSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
+		self.resizableButton = wxCheckBox(parent=self, id=id_WindowResize,
+									 label="Resizable Window")
+		EVT_CHECKBOX(self.resizableButton, id_WindowResize, self.__OnResizable)
+		windowResizeSizer.Add(self.resizableButton)
+		outerSizer.Add(windowResizeSizer, flag=wxALL|wxGROW, border=4)
 
 		# Number of app nodes
 		box = wxStaticBox(parent=self, id=-1, label="Application Nodes",
@@ -337,6 +348,9 @@ class SortlastDialog(wxDialog):
 		geom[2] = self.widthControl.GetValue()
 		geom[3] = self.heightControl.GetValue()
 		renderSPU.SetOption("window_geometry", geom)
+		resizable = self.resizableButton.GetValue()
+		renderSPU.SetOption("resizable", [resizable])
+		readbackSPU.SetOption("resizable", [resizable])
 
 	def __UpdateWidgetsFromVars(self):
 		"""Set widget values to the tilesort parameters."""
@@ -351,6 +365,8 @@ class SortlastDialog(wxDialog):
 		self.widthControl.SetValue(geom[2])
 		self.heightControl.SetValue(geom[3])
 		self.__UpdateSizeWidgets()
+		resizable = renderSPU.GetOption("resizable")
+		self.resizableButton.SetValue(resizable[0])
 
 
 	# ----------------------------------------------------------------------
@@ -372,6 +388,16 @@ class SortlastDialog(wxDialog):
 		else:
 			self.__UpdateSizeWidgets()
 		self.__UpdateVarsFromWidgets()
+		self.dirty = true
+
+	def __OnResizable(self, event):
+		"""Called when window resizable checkbox changes."""
+		# Update the SPU's resizable option to match checkbox state
+		resizable = self.resizableButton.GetValue()
+		renderSPU = FindRenderSPU(self.__Mothership)
+		readbackSPU = FindReadbackSPU(self.__Mothership)
+		renderSPU.SetOption("resizable", [resizable])
+		readbackSPU.SetOption("resizable", [resizable])
 		self.dirty = true
 
 	def __OnNumAppsChange(self, event):
