@@ -1,3 +1,4 @@
+# Used for making AIX shared libs
 {
         if ((($2 == "T") || ($2 == "D") || ($2 == "B")) \
                 && ( substr($1,1,1) != ".")) {
