@@ -37,14 +37,14 @@ endif
 
 PACKS = 1
 
-PRECOMP = packspu.c packspu_get.c packspu_flush.c packspu_pixel.c 
+PRECOMP = packspu.c packspu_get.c packspu_flush.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += pack.def
 
 include ${TOP}/cr.mk
 
-packspu.c: pack.py packspu_pixel_special packspu_special packspu_unimplemented_special
+packspu.c: pack.py packspu_special packspu_unimplemented_special
 	@$(ECHO) Building the Pack SPU
 	@$(PYTHON) pack.py > $@
 
@@ -55,10 +55,6 @@ packspu_get.c: packspu_get.py packspu_special ../../crserver/get_sizes.py
 packspu_flush.c: packspu_flush.py packspu_flush_special
 	@$(ECHO) Building the Pack SPU Auto-flushing functions
 	@$(PYTHON) packspu_flush.py > $@
-
-packspu_pixel.c: packspu_pixel.py packspu_pixel_special
-	@$(ECHO) Building the Pack SPU Pixel functions
-	@$(PYTHON) packspu_pixel.py > $@
 
 packspu_beginend.c: packspu_beginend.py packspu_vertex_special
 	@$(ECHO) Building the Pack SPU Vertex functions

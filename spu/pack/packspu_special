@@ -21,6 +21,7 @@ InterleavedArrays
 ReadPixels
 DrawPixels
 CopyPixels
+Bitmap
 SwapBuffers
 Flush
 Finish
@@ -32,3 +33,8 @@ MakeCurrent
 DestroyContext
 Begin
 End
+GetTexImage
+TexImage1D
+TexSubImage1D
+TexImage2D
+TexSubImage2D

@@ -35,8 +35,7 @@ from get_components import *;
 easy_swaps = { 
 	'GenTextures': '(unsigned int) n',
 	'GetClipPlane': '4',
-	'GetPolygonStipple': '0',
-	'GetTexImage': '0' 
+	'GetPolygonStipple': '0'
 }
 	
 simple_funcs = [ 'GetIntegerv', 'GetFloatv', 'GetDoublev', 'GetBooleanv' ]
