@@ -17,7 +17,7 @@ in the mothership.
 
 
 import wxPython
-import string, sys
+import re, string, sys
 sys.path.append("../server")
 import crconfig
 
@@ -144,6 +144,45 @@ class OptionList:
 		for opt in self.__Options:
 			print "%s = %s" % (opt.Name, str(opt.Value))
 		
+	def Write(self, file, name):
+		"""Write the list of options to the given file handle."""
+		file.write("%s = [\n" % name)
+		for opt in self.__Options:
+			if opt.Count == 1:
+				valueStr = str(opt.Value[0])
+			else:
+				valueStr = str(opt.Value)
+			if opt.Type == "INT" or opt.Type == "BOOL":
+				file.write('\t("' + opt.Name + '", ' + valueStr + '),\n')
+			elif opt.Type == "FLOAT":
+				file.write('\t("' + opt.Name + '", ' + valueStr + '),\n')
+			elif opt.Type == "STRING":
+				# XXX replace " chars with ' chars
+				file.write('\t("' + opt.Name + '", "' + valueStr + '"),\n')
+			else:
+				assert opt.Type == "LABEL"
+				pass
+		file.write("]\n")
+
+	def Read(self, file):
+		"""Read/parse lines of the form ("name", value) from file until
+		we find a line with just a closing brace."""
+		while 1:
+			line = file.readline()
+			if not line:
+				return
+			if re.match("\s*\]\s*$", line): 
+				# a line with just a ]
+				return
+			if line[-2:] == ",\n":
+				line = line[0:-2]  # strip comma and newline
+			(name, value) = eval(line)
+			#print "Got option: _%s_ = _%s_" % (name, value)
+			assert self.HasOption(name)
+			if self.GetCount(name) == 1:
+				value = [ value ]
+			self.SetValue(name, value)
+		return
 
 
 # ----------------------------------------------------------------------
@@ -769,6 +808,7 @@ class Mothership:
 		self.__Options = OptionList( [
 			Option("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
 			Option("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
+			Option("track_window_size", "Track Window Size Changes", "BOOL", 1, [0], [], []),
 			Option("show_cursor", "Show Virtual Cursor", "BOOL", 1, [0], [], []),
 			Option("MTU", "Max Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
 			Option("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], []),
