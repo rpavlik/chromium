@@ -1096,6 +1096,8 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue *bitID,
 			FILLDIRTY(t->enable);
 			FILLDIRTY(t->dirty);
 		}
+#else
+		(void) able;
 #endif
 		INVERTDIRTY(t->enable, nbitID);
 	}
@@ -1229,6 +1231,8 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue *bitID,
 			able[to->rescaleNormals](GL_RESCALE_NORMAL);
 			from->rescaleNormals = to->rescaleNormals;
 		}
+#else
+		(void) able;
 #endif
 		INVERTDIRTY(t->enable, nbitID);
 	}

@@ -489,7 +489,7 @@ void STATE_APIENTRY crStateCombinerStageParameterfvNV( GLenum stage, GLenum pnam
 	CRRegCombinerBits *rb = &(sb->regcombiner);
 	
 	stage -= GL_COMBINER0_NV;
-	if( stage < 0 || stage >= g->limits.maxGeneralCombiners )
+	if( stage >= g->limits.maxGeneralCombiners )
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "CombinerStageParameterfvNV passed bogus stage: 0x%x", stage+GL_COMBINER0_NV );
 		return;
@@ -525,7 +525,7 @@ void STATE_APIENTRY crStateGetCombinerStageParameterfvNV( GLenum stage, GLenum p
 	CRRegCombinerState *r = &(g->regcombiner);
 
 	stage -= GL_COMBINER0_NV;
-	if( stage < 0 || stage >= g->limits.maxGeneralCombiners )
+	if( stage >= g->limits.maxGeneralCombiners )
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "GetCombinerStageParameterfvNV passed bogus stage: 0x%x", stage+GL_COMBINER0_NV );
 		return;
