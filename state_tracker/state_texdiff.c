@@ -658,7 +658,6 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 #ifdef CR_SGIS_generate_mipmap
 		if (fromCtx->extensions.SGIS_generate_mipmap) {
 			diff_api.TexParameteri(tobj->target, GL_GENERATE_MIPMAP_SGIS, tobj->generateMipmap);
-			printf("GENERATE diff %p = %d\n", (void *) tobj, tobj->generateMipmap);
 		}
 #endif
 		if (!alwaysDirty)
