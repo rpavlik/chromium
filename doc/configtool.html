@@ -41,6 +41,17 @@ On a Windows system, (finish this).
 </p>
 
 
+<h2 class="PageSubHeading">Running the Config Tool</h2>
+
+<p>The config tool is in the <code>cr/mothership/tools/</code> directory.
+Run it by typing <code>python graph.py</code>
+</p>
+
+<p>You may optionally specify a Chromium configuration file to read
+immediately.<br>
+For example: <code>python graph.py ../configs/crdemo.conf</code></p>
+
+
 <h2 class="PageSubHeading">Nodes</h2>
 
 <p>Application nodes are represented by green boxes and network/server
@@ -62,6 +73,7 @@ You can toggle the selection status of a node by <em>control-clicking</em>.
 
 <p>The <b>Node</b> menu has commands that apply to the currently
 selected nodes.
+Most are self-explanatory, some are described in more detail below.
 </p>
 
 <p><em>Compound nodes</em> are a compact way to represent a set of many
@@ -80,6 +92,33 @@ nodes with the <b>Node / Split</b> menu item.
 A set of similar, individual nodes may be combined into a compound node
 with the <b>Node / Merge</b> menu item.
 </p>
+
+<p>Nodes have hostnames to indicate the computer on which they run.
+The hostname can be set for the selected nodes with the
+<b>Node / Host Name</b> menu item.  The following dialog will appear:</p>
+
+<p align="center"><img border="0" src="hostname_dialog.gif"></p>
+
+<p>There are two sections to the dialog:</p>
+<ol>
+<li><em>Generate Host Names</em> - this section lets you easily generate
+    a sequence of numbered hostnames.
+    If the pattern string contains a # symbol, the # will be replaced by
+    an index.
+    The first index and number of names to generate are set wit the
+    <em>First Index</em> and <em>Count</em> controls.
+    Click on <em>Generate</em> to generate the hostnames.</p>
+<li><em>Edit Host Names</em> - in this section you can select a host name,
+    move it up or down in the list, delete it or rename it using the
+    buttons in the upper-right corner of the list.
+</ol>
+
+<p>When finished, choose <b>OK</b> or <b>Cancel</b>.
+
+<p>The <b>Edit</b> menu has <b>Cut</b>, <b>Copy</b>, and
+<b>Paste</b> commands.  These are useful for moving parts of
+configuration graphs between two projects.</p>
+
 
 
 <h2 class="PageSubHeading">SPUs</h2>
@@ -101,8 +140,25 @@ with the mouse.  The <em>shift</em> and <em>control</em> keys may be used
 while clicking to extend and toggle selection status, respectively.</p>
 
 <p>The <b>SPU</b> menu has commands that apply to the currently selected SPUs.
-The <b>SPU / Options</b> menu item will open a dialog which allows you to
-configure the selected SPUs.</p>
+</p>
+
+<p>The <b>SPU / Options</b> menu item will open a dialog which allows you to
+configure the selected SPUs.
+If more than one SPU is selected, all selected SPUs must be of the same type.
+The new SPU settings will be applied to all selected SPUs.
+</p>
+
+<p>Here are the options for the render SPU:</p>
+
+<p align="center"><img border="0" src="renderspu_options.gif"></p>
+
+<p>The <em>Restore Defaults</em> button will reset all options to their
+default values</p>
+
+<p>Documentation for SPU options can be found in the section
+<a href="configoptions.html" target="_self">Configuration Options for provided SPUs</a>.
+</p>
+
 
 
 <h2 class="PageSubHeading">Client / Server Connections</h2>
@@ -128,6 +184,62 @@ the <b>Node / Disconnect</b> menu item.<p>
 
 
 
+<h2 class="PageSubHeading">Application Options</h2>
+
+<p>Under the <b>Application</b> menu is an <b>Options</b> item.
+When you chose it, the following dialog appears:</p>
+
+<p align="center"><img border="0" src="appoptions_dialog.gif"></p>
+
+<p>This dialog allows you to set global and application-related options.</p>
+
+<p>The <b>Minimum Chromium App Window Size</b> and <b>Match App Window
+Title</b> controls are useful for multi-context/window applications.
+They're described in <a href="configglobal.html" target="_self">
+Global configuration options</a>, as is the <b>Show Virtual Cursor</b>
+option.</p>
+
+<p>The <b>Automatically Start Servers</b> option, when enabled, will
+cause the mothership to automatically spawn crserver and crappfaker
+processes for each node (currently limited to rsh on Unix).</p>
+
+<p>The remaining three fields, <b>Command</b>, <b>Zeroth arg</b>, and
+<b>Directory</b> control execution of the application program.</p>
+
+<p>
+<b>Command</b> specifies the the default program and command line
+arguments to run with this configuration.
+There are three special substitutions that may be made:
+<ul>
+<li>%N will be replaced by the number of application nodes.
+<li>%I will be replaced by the index of the application node, starting
+    with zero.
+<li>%0 will be replaced by a the <b>Zeroth arg</b>, if specified.
+</ul>
+<p>
+These substitutions are useful for multi-client configurations.
+Suppose, for example, that you're using a sort-last configuration
+with 4 application/rendering nodes and want to run the psubmit demo
+program.</p>
+
+<p>The command would be "<code>psubmit -size %N -rank %I -clear %0</code>"
+and the zeroth argument would be "<code>-swap</code>".</p>
+
+<p>As a result, the four instances of the application nodes would be
+run with the following command lines:<p>
+<ul>
+<li>App node 0:  <code>psubmit -size 4 -rank 0 -clear -swap</code>
+<li>App node 1:  <code>psubmit -size 4 -rank 1 -clear</code>
+<li>App node 2:  <code>psubmit -size 4 -rank 2 -clear</code>
+<li>App node 3:  <code>psubmit -size 4 -rank 3 -clear</code>
+</ul>
+
+<p>Finally, the <b>Directory</b> parameter specifies the directory in
+which the crappfaker should be started.  This will be the application's
+current working directory.</p>
+
+
+
 <h2 class="PageSubHeading">Templates</h2>
 
 <p>Templates allow one to quickly create common Chromium configurations
@@ -137,7 +249,7 @@ To instantiate a template, choose the desired template from the
 
 <p>When you instantiate a template you'll often be prompted for a few
 parameters such as number of application nodes, mural rows and columns, etc.
-The configuration will be generated when you click on <b>OK</b> button.
+The configuration will be generated when you click on the <b>OK</b> button.
 </p>
 
 <p>Templates may be edited with special, easy-to-use dialogs.
@@ -151,18 +263,92 @@ configurations.
 
 <h2 class="PageSubHeading">Tilesort Template</h2>
 
-<p>(to do...)</p>
+<p>When you create tilesort template you'll be prompted to enter the
+number of application nodes (usually 1) and the mural size in rows
+and columns.
+When you click on <em>OK</em> the tilesort configuration will be created.</p>
+
+<p>Clicking on the <em>Edit Template</em> button will open the tilesort
+editor, shown here:</p>
+
+<p align="center"><img border="0" src="tilesort_template.gif"></p>
+
+<p>The editor is mostly self-explanatory.</p>
+
+<p>The overall mural size is a function of the number of tiles (screens)
+and the size of the tiles.  When the number of rows, columns or tile
+size changes the total size is recomputed and displayed.</p>
+
+<p>By default, the rendering node hosts are numbered from from left to
+right, top to bottom.  The <em>Horizontal Layout</em> and 
+<em>Vertical Layout</em> controls can be used to set right-to-left and
+bottom-to-top if desired.</p>
+
+<p>The names for the rendering node hosts can be set with the
+<em>Tile Host Names</em> button.</p>
+
+<p>Options for the tilesort SPU can be set with the
+<em>Tilesort SPU Options</em> button.</p>
 
 
 <h2 class="PageSubHeading">Sort-last Template</h2>
 
-<p>(to do...)</p>
+<p>When you create a sort-last template you'll be prompted to enter
+the number of application (rendering) nodes and the desired window
+size (width and height in pixels).<p>
+
+<p>Clicking on the <em>Edit Template</em> button will open the sort-last
+editor, shown here:</p>
+
+<p align="center"><img border="0" src="sortlast_template.gif"></p>
+
+<p>The dialog lets you specify the window size, the number and names of
+the rendering nodes and set the readback and render SPU options</p>
+
 
 
 <h2 class="PageSubHeading">Lightning-2 Template</h2>
 
-<p>(to do...)</p>
+<p>The Lightning-2 template is used to setup a configuration suitable for
+the Lightning-2 hardware image assembler (a specialized piece of equipment).
+</p>
 
+<p>When you create a Lightning-2 template you'll be prompted to enter
+the number of application nodes, number of rendering nodes and the size
+of the display (width and height in tiles).</p>
+
+<p>Clicking on the <em>Edit Template</em> button will open the sort-last
+editor, shown here:</p>
+
+<p align="center"><img border="0" src="lightning2_template.gif"></p>
+
+<p>The editor is similar to the tilesort editor described above, and
+has many of the same controls.</p>
+
+<p>The mural is depicted as colored tiles.  The tiles are labeled and
+colored to indicate the host node for each tile.</p>
+
+<p>Good load balancing is essential for this configuration.
+By observing the colors of the tiles one can get a feel for how well the
+image space is subdivided among the servers.
+That is, you want to have an even, unclustered arrangement of servers.
+</p>
+
+<p>By adjusting the number of servers, the tile size and the tile layout
+you can tune the load balancing.
+The <em>Tile Layout</em> control currently has three layout options.
+Try them all to see how they work.
+More layouts can be easily added to the program.
+</p>
+
+
+
+<h2 class="PageSubHeading">Future Templates</h2>
+
+<p>The Chromium configuration tool may be extended with new types of
+templates (it's a modular interface).</p>
+
+<p>A template for binary-swap image composition is likely.</p>
 
 
 </body>
