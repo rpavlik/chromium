@@ -166,6 +166,7 @@ static int renderSPUCleanup(void)
 {
 	WindowInfo *window;
 	ContextInfo *context;
+	Barrier *barrier;
 
 	CR_HASHTABLE_WALK( render_spu.contextTable, entry)
 		context = (ContextInfo *) entry->data;
@@ -185,6 +186,12 @@ static int renderSPUCleanup(void)
 	CR_HASHTABLE_WALK_END( render_spu.windowTable )
 	crFreeHashtable(render_spu.windowTable);
 
+	CR_HASHTABLE_WALK( render_spu.barrierHash, entry)
+		barrier = (Barrier *) entry->data;
+		CRASSERT(barrier);
+		crFree(barrier);
+		entry->data = NULL;
+	CR_HASHTABLE_WALK_END( render_spu.barrierHash )
 	crFreeHashtable(render_spu.barrierHash);
 
 	return 1;

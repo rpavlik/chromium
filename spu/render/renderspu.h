@@ -58,6 +58,11 @@ typedef struct {
 } ContextInfo;
 
 typedef struct {
+	CRbarrier barrier;
+	GLuint count;
+} Barrier;
+
+typedef struct {
 	SPUDispatchTable self;
 	int id;
 

@@ -437,12 +437,6 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
  * functions to synchronize them.
  */
 
-typedef struct {
-	CRbarrier barrier;
-	GLuint count;
-} Barrier;
-
-
 static void RENDER_APIENTRY renderspuBarrierCreateCR( GLuint name, GLuint count )
 {
 	Barrier *b = (Barrier *) crHashtableSearch( render_spu.barrierHash, name );
