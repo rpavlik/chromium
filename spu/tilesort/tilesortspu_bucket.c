@@ -65,7 +65,7 @@ void __fillBucketingHash (void)
 		{
 			BucketRegion *r = &rlist[id++];
 			for (k=0;k<CR_MAX_BITARRAY;k++)
-	     			r->id[k] = 0;
+				r->id[k] = 0;
 			r->id[node32] = (1 << node);
 			r->extents.x1 = tilesort_spu.servers[i].x1[j];
 			r->extents.x2 = tilesort_spu.servers[i].x2[j];
@@ -399,7 +399,8 @@ static TileSortBucketInfo *__doBucket( void )
 		}
 	}
 
-	crMemcpy((char*)bucketInfo.hits,(char*)retval,sizeof(*retval));
+	crMemcpy((char*)bucketInfo.hits, (char*)retval,
+				sizeof(GLbitvalue) * CR_MAX_BITARRAY);
 
 	return &bucketInfo;
 }
