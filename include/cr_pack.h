@@ -62,8 +62,9 @@ CRPackContext *crPackNewContext(int swapping);
 void crPackSetContext( CRPackContext *pc );
 CRPackContext *crPackGetContext( void );
 
-void crPackSetBuffer( CRPackContext *pc, CRPackBuffer *buffer );
-void crPackGetBuffer( CRPackContext *pc, CRPackBuffer *buffer );
+/* XXX add these const keywords??? */
+void crPackSetBuffer( CRPackContext *pc, /*const */CRPackBuffer *buffer );
+void crPackGetBuffer( /*const */CRPackContext *pc, CRPackBuffer *buffer );
 void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int mtu );
 void crPackResetPointers( CRPackContext *pc );
 void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff );

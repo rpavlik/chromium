@@ -55,6 +55,7 @@ void crNetSetContextRange( int low_context, int high_context );
 void crNetSetNodeRange( const char *low_node, const char *high_node );
 
 typedef void (*CRVoidFunc)( void );
+/* XXX make void *buf const??? */
 typedef int (*CRNetReceiveFunc)( CRConnection *conn, void *buf, unsigned int len );
 typedef int (*CRNetConnectFunc)( CRConnection *conn );
 typedef void (*CRNetCloseFunc)( unsigned int sender_id );
