@@ -553,7 +553,7 @@ TestTileSorting(const mural_t *m, GLboolean usePerspective,
 	if (usePerspective)
 		glTranslatef(0, 0, -8);
 
-	glMaterialfv(GL_AMBIENT_AND_DIFFUSE, GL_FRONT_AND_BACK, white);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, white);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_DEPTH_TEST);
