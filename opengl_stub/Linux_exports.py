@@ -32,6 +32,17 @@ for func_name in keys:
 		continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
+	print "%s gl%s%s;" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+	real_func_name = alias_exports.AliasMap(func_name);
+	if real_func_name:
+		print "%s gl%s%s;" % (return_type, real_func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+
+
+for func_name in keys:
+	if stub_common.FindSpecial( "noexport", func_name ):
+		continue
+	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
+
 	print "%s gl%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 	print "{"
 	print "\t",
