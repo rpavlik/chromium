@@ -1,4 +1,5 @@
 TOP = ../../
+SHARED = 1
 LIBRARY = spuload
 LIBRARIES = crutil
 

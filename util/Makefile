@@ -1,6 +1,7 @@
 TOP = ..
+SHARED = 1
 LIBRARY = crutil
-FILES = bufpool dll error mem net string tcpip url
+FILES = bufpool dll error mem net pixel string tcpip url
 
 LIB_DEFS = util.def
 

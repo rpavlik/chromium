@@ -6,6 +6,7 @@ ARCH=$(shell uname | sed -e 's/-//g')
 endif
 endif
 
+SHARED = 1
 LIBRARY = crfaker
 FILES = api_templates init load
 LIBRARIES = crmothership crutil spuload

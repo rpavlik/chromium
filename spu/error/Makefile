@@ -1,5 +1,6 @@
 TOP = ../..
 
+SHARED = 1
 LIBRARY = errorspu
 FILES = errorspu errorspu_init
 

@@ -1,5 +1,6 @@
 TOP = ../..
 
+SHARED = 1
 LIBRARY = crmothership
 LIBRARIES = crutil
 FILES = client

@@ -1,5 +1,6 @@
 TOP = ../..
 
+SHARED = 1
 LIBRARY = renderspu
 FILES = renderspu renderspu_config renderspu_init renderspu_swap renderspu_window
 

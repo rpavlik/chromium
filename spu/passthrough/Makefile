@@ -1,5 +1,6 @@
 TOP = ../..
 
+SHARED = 1
 LIBRARY = passthroughspu
 FILES = passthroughspu passthroughspu_init
 

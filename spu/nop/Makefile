@@ -1,5 +1,6 @@
 TOP = ../..
 
+SHARED = 1
 LIBRARY = nopspu
 FILES = nopspu nopspu_init
 

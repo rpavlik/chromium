@@ -2,19 +2,16 @@ import string;
 import re;
 
 def DecoderName( glName ):
-	return "__decode" + glName
-
-def PacketName( glName ):
-	return "WireGL" + glName + "Packet"
+	return "crUnpack" + glName
 
 def OpcodeName( glName ):
-	return "WIREGL_" + string.upper( glName ) + "_OPCODE"
+	return "CR_" + string.upper( glName ) + "_OPCODE"
+
+def ExtendedOpcodeName( glName ):
+	return "CR_" + string.upper( glName ) + "_EXTEND_OPCODE"
 
 def PackFunction( glName ):
-	return "WIREGL_PACK_FUNCTION( " + glName + " )"
-
-def PackFunctionMapping():
-	return '#define WIREGL_PACK_FUNCTION( x ) __glpack_##x'
+	return "crPack" + glName
 
 def DoPackFunctionMapping( glName ):
 	return "__glpack_" + glName
@@ -114,13 +111,17 @@ def FixAlignment( pos, alignment ):
 def WordAlign( pos ):
 	return FixAlignment( pos, 4 )
 
+def PointerSize():
+	return 8 # Leave room for a 64 bit pointer
+
 def PacketLength( arg_types ):
 	len = 0
 	for arg in arg_types:
 		if string.find( arg, '*') != -1:
-			return -1;
-		temp_arg = re.sub("const ", "", arg)
-		size = lengths[temp_arg]
+			size = PointerSize()
+		else:
+			temp_arg = re.sub("const ", "", arg)
+			size = lengths[temp_arg]
 		len = FixAlignment( len, size ) + size
 	len = WordAlign( len )
 	return len

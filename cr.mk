@@ -98,7 +98,11 @@ DEPS    := $(addsuffix .depend, $(DEPS))
 OBJS    := $(addprefix $(OBJDIR)/, $(FILES))
 OBJS    := $(addsuffix $(OBJSUFFIX), $(OBJS))
 ifdef LIBRARY
+ifdef SHARED
 LIBNAME := $(addprefix $(OBJDIR)/, $(LIBPREFIX)$(LIBRARY)$(DLLSUFFIX))
+else
+LIBNAME := $(addprefix $(OBJDIR)/, $(LIBPREFIX)$(LIBRARY)$(LIBSUFFIX))
+endif
 else
 LIBNAME := dummy_libname
 endif
@@ -113,7 +117,11 @@ PROG_TARGET := dummy_prog_target
 endif
 
 ifdef LIBRARY
+ifdef SHARED
 TARGET := $(LIBPREFIX)$(LIBRARY)$(DLLSUFFIX)
+else
+TARGET := $(LIBPREFIX)$(LIBRARY)$(LIBSUFFIX)
+endif
 endif
 
 ifndef TARGET
@@ -211,8 +219,8 @@ endif
 
 ifdef WINDOWS
 
-LIBRARIES := $(foreach lib,$(LIBRARIES),$(TOP)/built/$(lib)/$(ARCH)/$(LIBPREFIX)$(lib)$(DLLSUFFIX))
-LIBRARIES := $(LIBRARIES:$(DLLSUFFIX)=$(LIBSUFFIX))
+LIBRARIES := $(foreach lib,$(LIBRARIES),$(TOP)/built/$(lib)/$(ARCH)/$(LIBPREFIX)$(lib)$(LIBSUFFIX))
+#LIBRARIES := $(LIBRARIES:$(DLLSUFFIX)=$(LIBSUFFIX))
 
 else
 
@@ -241,10 +249,19 @@ $(LIBNAME): $(OBJS) $(LIB_DEFS)
 ifdef LIBRARY
 	@$(ECHO) "Linking $@"
 ifdef WINDOWS
+ifdef SHARED
 	@$(LD) $(SHARED_LDFLAGS) /Fe$(LIBNAME) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else
+	@$(LD) $(OBJS) $(LIBRARIES) $(LDFLAGS)
+endif #shared
+else
+ifdef SHARED
 	@$(LD) $(SHARED_LDFLAGS) -o $(LIBNAME) $(OBJS) $(LDFLAGS) $(LIBRARIES)
+else
+	@$(ECHO) How do I make static libraries on $(ARCH)?
+endif #shared
 endif
+
 ifndef DONT_COPY_DLL
 	@$(CP) $(LIBNAME) $(DSO_DIR)
 endif
@@ -333,7 +350,7 @@ ifdef SUBDIRS
 	@for i in $(SUBDIRS); do $(MAKE) -C $$i clean; done
 else
 ifdef LIBRARY
-	@$(ECHO) "Removing all $(ARCH) object files for $(LIBPREFIX)$(LIBRARY)$(LIBSUFFIX)."
+	@$(ECHO) "Removing all $(ARCH) object files for $(TARGET)."
 else
 ifdef PROGRAM
 	@$(ECHO) "Removing all $(ARCH) object files for $(PROGRAM)."
@@ -353,7 +370,7 @@ clobber:
 else
 clobber: clean
 ifdef LIBRARY
-	@$(ECHO) "Removing $(LIBPREFIX)$(LIBRARY)$(LIBSUFFIX) for $(ARCH)."
+	@$(ECHO) "Removing $(LIBNAME) for $(ARCH)."
 	@$(RM) $(LIBNAME)
 else
 ifdef PROGRAM
