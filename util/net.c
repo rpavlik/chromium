@@ -80,19 +80,19 @@ InitConnection(CRConnection *conn, const char *protocol, unsigned int mtu)
 	}
 	else if (!crStrcmp(protocol, "file") ||
 					 !crStrcmp(protocol, "swapfile"))
-	{	
+	{
 		cr_net.use_file++;
 		crFileInit(cr_net.recv_list, cr_net.close_list, mtu);
 		crFileConnection(conn);
 	}
 	else if (!crStrcmp(protocol, "tcpip"))
-	{	
+	{
 		cr_net.use_tcpip++;
 		crTCPIPInit(cr_net.recv_list, cr_net.close_list, mtu);
 		crTCPIPConnection(conn);
 	}
 	else if (!crStrcmp(protocol, "udptcpip"))
-	{	
+	{
 		cr_net.use_udp++;
 		crUDPTCPIPInit(cr_net.recv_list, cr_net.close_list, mtu);
 		crUDPTCPIPConnection(conn);
@@ -123,7 +123,7 @@ InitConnection(CRConnection *conn, const char *protocol, unsigned int mtu)
 #endif
 #ifdef SDP_SUPPORT
 	else if (!crStrcmp(protocol, "sdp"))
-	{	
+	{
 		cr_net.use_sdp++;
 		crSDPInit(cr_net.recv_list, cr_net.close_list, mtu);
 		crSDPConnection(conn);
@@ -131,7 +131,7 @@ InitConnection(CRConnection *conn, const char *protocol, unsigned int mtu)
 #endif
 #ifdef IB_SUPPORT
 	else if (!crStrcmp(protocol, "ib"))
-	{	
+	{
 		cr_net.use_ib++;
 		crDebug("Calling crIBInit()");
 		crIBInit(cr_net.recv_list, cr_net.close_list, mtu);
@@ -141,7 +141,7 @@ InitConnection(CRConnection *conn, const char *protocol, unsigned int mtu)
 #endif
 #ifdef HP_MULTICAST_SUPPORT
 	else if (!crStrcmp(protocol, "hpmc"))
-	{	
+	{
 		cr_net.use_hpmc++;
 		crHPMCInit(cr_net.recv_list, cr_net.close_list, mtu);
 		crHPMCConnection(conn);
@@ -596,8 +596,8 @@ void crNetServerConnect( CRNetServer *ns )
 
 
 /**
- * Actually do the connection implied by the argument.
- * Aparently, this is only called from the crNetConnectToServer function.
+ * Actually set up the specified connection.
+ * Apparently, this is only called from the crNetConnectToServer function.
  */
 int crNetConnect( CRConnection *conn )
 {
@@ -617,7 +617,8 @@ void crNetDisconnect( CRConnection *conn )
 
 
 /**
- * Aparently, only called from crNetAcceptClient().
+ * Actually set up the specified connection.
+ * Apparently, this is only called from the crNetConnectToServer function.
  */
 void crNetAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
