@@ -573,7 +573,64 @@ configuration options that the render SPU accepts, plus a few more:
           Default is 1.2.
         </td>
   </tr>
+</table>
 
+<h2 class="PageSubHeading">Perf SPU</h2>
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">log_file</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Path to a log file for performance data. Default is stderr.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">token</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Mark 'interesting' performance data with tokens. Default is 'tab'.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">log_separator</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Field separator for logged data. Default is 'tab'.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">dump_on_swap_count</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Trigger when data is to be 'dumped' on hitting this amount of SwapBuffer calls. Default 0.
+        </td>
+  </tr>
+    <td width="19%" class="ConfigOption" height="38">mothership_log</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Send performance data to a mothership log file. Set CR_PERF_MOTHERSHIP_LOGFILE to a file on the mothership for data collection. This allows for gathering of data from multiple nodes. Default 0.
+        </td>
+  </tr>
+    <td width="19%" class="ConfigOption" height="38">dump_on_flush</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Will cause performance data to be 'dumped' when glFlush is called. Useful if SwapBuffers is not used. Default 0.
+        </td>
+  </tr>
+  </tr>
+    <td width="19%" class="ConfigOption" height="38">dump_on_finish</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Will cause performance data to be 'dumped' when glFinish is called. Useful if SwapBuffers is not used. Default 0.
+        </td>
+  </tr>
+</table>
+</table>
 </table>
 
 

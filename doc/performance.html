@@ -42,30 +42,30 @@ on every fifth second. The second will dump the statistics on every
 stderr, stdout or a log file specified through the startup python
 script. Some examples:</p>
 
-<li>clientperfspu.Conf( 'perf_log_file', '/tmp/%H_perf.log' )</li>
-<li>clientperfspu.Conf( 'perf_log_file', 'stdout' )</li>
+<li>clientperfspu.Conf( 'log_file', '/tmp/%H_perf.log' )</li>
+<li>clientperfspu.Conf( 'log_file', 'stdout' )</li>
 
 <p>The %H is expanded into the hostname of the running node. This
 approach doesn't allow a unified logfile in which to output these
 statistics, so instead - we can use the mothership in which to
 dump data back to which collates all perfSPU data.</p>
 
-<li>clientperfspu.Conf( 'perf_set_mothership_log', '1' )</li>
+<li>clientperfspu.Conf( 'mothership_log', '1' )</li>
 
 <p>In addition to setting the above, you must also set the logfile
 in which the mothership should 'append' data. This is defined through
 an environment variable - CR_PERF_MOTHERSHIP_LOGFILE, which should
 define the full path and logfile to output all incoming data.</p>
 
-<p>NOTE: Using the mothership logging facility will disable the 'perf_log_file'
+<p>NOTE: Using the mothership logging facility will disable the 'log_file'
 ability.</p>
 
 <p>Additional helper functions for use with the performance SPU are:</p>
 
-<li>clientperfspu.Conf( 'perf_set_dump_on_swap_count', '1000' )</li>
-<li>clientperfspu.Conf( 'perf_set_dump_on_finish', '1' )</li>
-<li>clientperfspu.Conf( 'perf_set_dump_on_flush', '1' )</li>
-<li>clientperfspu.Conf( 'perf_set_token', '1' )</li>
+<li>clientperfspu.Conf( 'dump_on_swap_count', '1000' )</li>
+<li>clientperfspu.Conf( 'dump_on_finish', '1' )</li>
+<li>clientperfspu.Conf( 'dump_on_flush', '1' )</li>
+<li>clientperfspu.Conf( 'token', '1' )</li>
 
 <p>Equivalent functions (from above) that are accessible to applications:</p>
 
@@ -74,7 +74,7 @@ ability.</p>
 <li>glChromiumParameteriCR(GL_PERF_SET_DUMP_ON_FLUSH_CR, 0);</li>
 <li>glChromiumParametervCR(GL_PERF_SET_TOKEN_CR, "HeadSPU");</li>
 
-<p>The last one of these above - set_token, gives the ability to attach
+<p>The last one of these above - token, gives the ability to attach
 an extra string to each line of the output. This is useful to identify
 certain statistics that are defined as 'interesting'.</p>
 
