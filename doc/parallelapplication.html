@@ -58,7 +58,7 @@ to be rendered.&nbsp; Each process renders its portion pretty much as if it were
 the only process in the world.&nbsp; The differences come up when you have
 requirements about the <i>ordering</i> of command execution.</p>
 <p>OpenGL provides <i>ordered semantics</i>.&nbsp; That means that if function A
-is called after function B, the resulting image should look as if A happened
+is called before function B, the resulting image should look as if A happened
 before B.&nbsp; With parallel programs, it's no longer clear which function is
 getting called first.&nbsp; Therefore, if you aren't using the depth test (for
 example), and you draw two overlapping triangles in parallel, you don't know
