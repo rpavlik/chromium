@@ -257,11 +257,15 @@ void crWordsToString( char *string, int nstring, void *data, int ndata )
 
 int crStrToInt( const char *str )
 {
+	if (!str) return 0;
+
 	return atoi(str);
 }
 
 float crStrToFloat( const char *str )
 {
+	if (!str) return 0.0f;
+
 	return (float) atof(str);
 }
 
