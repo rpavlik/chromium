@@ -22,6 +22,7 @@ BlendEquationEXT
 #MultiTexCoord4iARB
 #MultiTexCoord4sARB
 ActiveTextureARB
+AreTexturesResident
 ClientActiveTextureARB
 CombinerParameterfvNV
 CombinerParameterivNV
