@@ -135,6 +135,7 @@ def GetSPUOptions(spuName):
 	of the form (name, description, type, count, default, mins, maxs).
 	Run 'spuoptions --pythonmode tilesort' to see an example.
 	"""
+	global __InfoCache
 	# first check if we've cached this SPU's options
 	if spuName in __InfoCache:
 		return __InfoCache[spuName]
@@ -186,3 +187,53 @@ def NewSPU(spuName):
 		values[name] = default
 	spu.SetOptions(values)
 	return spu
+
+#----------------------------------------------------------------------
+
+__DefaultSiteFile = "chromium.crsite"
+__SiteCache = 0
+
+def SetDefaultSiteFile(filename):
+	"""Set the name of the file to read to get the site defaults."""
+	global __DefaultSiteFile
+	__DefaultSiteFile = filename
+
+def GetSiteDefault(var):
+	"""Get the value of a Chomium site default.  For example, var may
+	be 'mural_size' and that might return (4, 3)"""
+	# try cache first
+	global __DefaultSiteFile
+	global __SiteCache
+	if not __SiteCache:
+		# read site file
+		f = open(__DefaultSiteFile, "r")
+		if f:
+			contents = f.read(-1)
+			# XXX probably want an exception handler here
+			__SiteCache = eval(contents)
+			f.close()
+		else:
+			# no site file
+			__SiteCache = {}
+	if var in __SiteCache.keys():
+		return __SiteCache[var]
+	else:
+		return 0
+
+
+#----------------------------------------------------------------------
+
+def NewNetworkNode(count = 1):
+	"""Return a new NetworkNode, initialized using the site-defaults"""
+	hosts = GetSiteDefault("server_hosts")
+	if not hosts:
+		hosts = ["localhost"]
+	return crtypes.NetworkNode(hosts, count)
+
+def NewApplicationNode(count = 1):
+	"""Return a new ApplicationNode, initialized using the site-defaults"""
+	hosts = GetSiteDefault("client_hosts")
+	if not hosts:
+		hosts = ["localhost"]
+	return crtypes.ApplicationNode(hosts, count)
+
