@@ -30,12 +30,13 @@
 #include <windows.h>
 #endif
 
-#ifndef WINDOWS
-#define CR_APIENTRY
-#endif
-
 #ifndef DARWIN
 #include <GL/gl.h>
+#endif
+
+#ifndef WINDOWS
+#define CR_APIENTRY
+#ifndef DARWIN
 #include <GL/glx.h>
 #include <GL/glu.h>
 #else
@@ -43,6 +44,8 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #endif
+#endif
+
 
 #ifdef USE_OSMESA
 #include <GL/osmesa.h>
