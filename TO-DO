@@ -10,6 +10,3 @@ state_tracker/gendiffcode.pl to Python.
 In state_polygon_gen.c in crStatePolygonSwitch() we need a better test
 for updating the polygon stipple.  As-is we're calling diff.PolygonStipple
 all the time.
-
-Too many glActiveTexture calls are made during state differencing.  Put a
-print SPU on a server attached to a tilesorter and look.
