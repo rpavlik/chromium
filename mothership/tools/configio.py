@@ -268,7 +268,7 @@ def ReadConfig(mothership, file, filename=""):
 		dialog = wxTextEntryDialog(parent=NULL, message=
 					"The configuration you're about to load uses the " +
 					"sys.argv argument vector.\n" +
-					"Please provide suitable arguments now.\n" +
+					"You may have to provide suitable arguments now.\n" +
 					"Example: %s atlantis tilesort" % name,
 					caption="Configuration File Arugments",
 					defaultValue=name + " ")
