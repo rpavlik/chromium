@@ -122,7 +122,7 @@ void StubInit(void)
 	if (conn && crMothershipGetParam( conn, "minimum_window_size", response )
 		&& response[0]) {
 		int w, h;
-		sscanf( response, "%d %d", &w, &h );
+		sscanf( response, "[%d, %d]", &w, &h );
 		crDebug( "minimum_window_size: %d x %d", w, h );
 		stub.minChromiumWindowWidth = w;
 		stub.minChromiumWindowHeight = h;

@@ -25,11 +25,13 @@ are specified to Chromium as follows:
 where <code>cr</code> is the value returned by <code>CR()</code>.
 </p>
 <p>
-Here's a concrete example of a global configuration option:
+Here are some concrete examples of global configuration options:
 </p>
 <pre>
         cr = CR()
-        cr.SetParam( 'minimum_window_size', '300 300' )
+        cr.SetParam( 'minimum_window_size', [300, 300] )
+        cr.SetParam( 'match_window_title', 'perfly' )
+        cr.SetParam( 'show_cursor', 1 )
 </pre>
 
 <table border="1" width="100%">
