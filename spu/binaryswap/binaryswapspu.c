@@ -192,7 +192,9 @@ getClippedWindow(int *xstart, int* ystart,
 static void BuildSwapLimits( WindowInfo *window )
 {
 	int i = 0;
-	int other_x, other_y, other_width, other_height;
+	int other_x = 0, other_y = 0;
+	int other_width = window->width, other_height = window->height;
+
 	/* clean up old data structures */
 	if(window->read_x)
 		crFree(window->read_x);
