@@ -254,8 +254,8 @@ int main(int argc, char *argv[])
 
 	for (frame = 0; ; frame++)
 	{
-		const GLfloat innerRadius = 0.15;
-		const GLfloat outerRadius = 0.70;
+		const GLfloat innerRadius = 0.15f;
+		const GLfloat outerRadius = 0.70f;
 		GLfloat bbox[6];
 
 		if (clearFlag)
