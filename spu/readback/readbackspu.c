@@ -77,8 +77,8 @@ static void CheckWindowSize( WindowInfo *window )
 		/* no sense in reading the whole window if the tile 
 		 * only convers part of it..
 		 */
-		geometry[2] = readback_spu.server->x2[0] - readback_spu.server->x1[0];
-		geometry[3] = readback_spu.server->y2[0] - readback_spu.server->y1[0];
+		geometry[2] = readback_spu.server->extents[0].x2 - readback_spu.server->extents[0].x1;
+		geometry[3] = readback_spu.server->extents[0].y2 - readback_spu.server->extents[0].y1;
 	}
 	else
 	{
