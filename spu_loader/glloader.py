@@ -24,10 +24,14 @@ print """
 
 
 #if defined(WINDOWS)
+#include <windows.h>
+#include <process.h>
+#include <direct.h>
 #define SYSTEM_GL "opengl32.dll"
 #elif defined (DARWIN)
 #define SYSTEM_GL "libdl.dylib"
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
+#include <sys/stat.h>
 #if defined(AIX)
 #define SYSTEM_GL "libGL.o"
 #else
@@ -54,6 +58,23 @@ fillin( SPUNamedFunctionTable *entry, const char *funcName, SPUGenericFunction f
 		return 1;
 	}
 	return 0;
+}
+
+static int FileExists(char *directory, char *filename)
+{
+	struct stat stat_buf;
+	char fullFilename[8096];
+
+	crStrcpy(fullFilename, directory);
+	crStrcat(fullFilename, "/");
+	crStrcat(fullFilename, filename);
+
+	if (stat(fullFilename, &stat_buf) == 0) {
+	    return 1;
+	}
+	else {
+	    return 0;
+	}
 }
 
 
@@ -83,7 +104,20 @@ __findSystemLib( char *provided_system_path, char *lib )
 #elif defined(PLAYSTATION2)
 		crStrcpy( system_path, "/usr/X11R6/lib" );
 #else
-		crStrcpy( system_path, "/usr/lib" ); 
+		/* On RedHat 9, the correct default system directory
+		 * is /usr/lib/tls/ (and if /usr/lib/ is used,
+		 * the dynamic loader will generate a floating point
+		 * exception SIGFPE).  On other systems, including
+		 * earlier versions of RedHat, the OpenGL library
+		 * lives in /usr/lib.   We'll use the /usr/lib/tls/
+		 * version if it exists; otherwise, we'll use /usr/lib.
+		 */
+		if (FileExists("/usr/lib/tls", lib)) {
+		    crStrcpy( system_path, "/usr/lib/tls" ); 
+		}
+		else {
+		    crStrcpy( system_path, "/usr/lib" ); 
+		}
 #endif
 	}
 	crStrcat( system_path, "/" );
@@ -98,7 +132,6 @@ __findSystemGL( char *provided_system_path )
 {
 	return __findSystemLib( provided_system_path, SYSTEM_GL );
 }
-
 
 static SPUGenericFunction
 findExtFunction( const crOpenGLInterface *interface, const char *funcName )
