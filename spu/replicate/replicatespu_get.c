@@ -71,6 +71,40 @@ void REPLICATESPU_APIENTRY replicatespu_GenProgramsNV( GLsizei n, GLuint *ids )
 		crNetRecv();
 }
 
+void REPLICATESPU_APIENTRY replicatespu_GenProgramsARB( GLsizei n, GLuint *programs )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGenProgramsARBSWAP( n, programs, &writeback );
+	}
+	else
+	{
+		crPackGenProgramsARB( n, programs, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetCompressedTexImageARB( GLenum target, GLint level, GLvoid *img )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetCompressedTexImageARBSWAP( target, level, img, &writeback );
+	}
+	else
+	{
+		crPackGetCompressedTexImageARB( target, level, img, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
 void REPLICATESPU_APIENTRY replicatespu_GetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values )
 {
 	GET_THREAD(thread);
@@ -224,6 +258,109 @@ void REPLICATESPU_APIENTRY replicatespu_GetFinalCombinerInputParameterivNV( GLen
 		crNetRecv();
 }
 
+void REPLICATESPU_APIENTRY replicatespu_GetProgramEnvParameterdvARB( GLenum target, GLuint index, GLdouble *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetProgramEnvParameterdvARBSWAP( target, index, params, &writeback );
+	}
+	else
+	{
+		crPackGetProgramEnvParameterdvARB( target, index, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetProgramEnvParameterfvARB( GLenum target, GLuint index, GLfloat *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetProgramEnvParameterfvARBSWAP( target, index, params, &writeback );
+	}
+	else
+	{
+		crPackGetProgramEnvParameterfvARB( target, index, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetProgramLocalParameterdvARB( GLenum target, GLuint index, GLdouble *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetProgramLocalParameterdvARBSWAP( target, index, params, &writeback );
+	}
+	else
+	{
+		crPackGetProgramLocalParameterdvARB( target, index, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetProgramLocalParameterfvARB( GLenum target, GLuint index, GLfloat *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetProgramLocalParameterfvARBSWAP( target, index, params, &writeback );
+	}
+	else
+	{
+		crPackGetProgramLocalParameterfvARB( target, index, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetProgramNamedParameterdvNV( GLuint id, GLsizei len, const GLubyte *name, GLdouble *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetProgramNamedParameterdvNVSWAP( id, len, name, params, &writeback );
+	}
+	else
+	{
+		crPackGetProgramNamedParameterdvNV( id, len, name, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetProgramNamedParameterfvNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetProgramNamedParameterfvNVSWAP( id, len, name, params, &writeback );
+	}
+	else
+	{
+		crPackGetProgramNamedParameterfvNV( id, len, name, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+
 void REPLICATESPU_APIENTRY replicatespu_GetProgramParameterdvNV( GLenum target, GLuint index, GLenum pname, GLdouble *params )
 {
 	GET_THREAD(thread);
@@ -258,6 +395,23 @@ void REPLICATESPU_APIENTRY replicatespu_GetProgramParameterfvNV( GLenum target, 
 		crNetRecv();
 }
 
+void REPLICATESPU_APIENTRY replicatespu_GetProgramStringARB( GLenum target, GLenum pname, GLvoid *string )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetProgramStringARBSWAP( target, pname, string, &writeback );
+	}
+	else
+	{
+		crPackGetProgramStringARB( target, pname, string, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
 void REPLICATESPU_APIENTRY replicatespu_GetProgramStringNV( GLuint id, GLenum pname, GLubyte *program )
 {
 	GET_THREAD(thread);
@@ -269,6 +423,23 @@ void REPLICATESPU_APIENTRY replicatespu_GetProgramStringNV( GLuint id, GLenum pn
 	else
 	{
 		crPackGetProgramStringNV( id, pname, program, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetProgramivARB( GLenum target, GLenum pname, GLint *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetProgramivARBSWAP( target, pname, params, &writeback );
+	}
+	else
+	{
+		crPackGetProgramivARB( target, pname, params, &writeback );
 	}
 	replicatespuFlush( (void *) thread );
 	while (writeback)
@@ -444,4 +615,72 @@ GLboolean REPLICATESPU_APIENTRY replicatespu_TestFenceNV( GLuint fence )
 		return_val = (GLboolean) SWAP32(return_val);
 	}
 	return return_val;
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetVertexAttribPointervARB( GLuint index, GLenum pname, GLvoid **pointer )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetVertexAttribPointervARBSWAP( index, pname, pointer, &writeback );
+	}
+	else
+	{
+		crPackGetVertexAttribPointervARB( index, pname, pointer, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetVertexAttribdvARB( GLuint index, GLenum pname, GLdouble *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetVertexAttribdvARBSWAP( index, pname, params, &writeback );
+	}
+	else
+	{
+		crPackGetVertexAttribdvARB( index, pname, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetVertexAttribfvARB( GLuint index, GLenum pname, GLfloat *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetVertexAttribfvARBSWAP( index, pname, params, &writeback );
+	}
+	else
+	{
+		crPackGetVertexAttribfvARB( index, pname, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetVertexAttribivARB( GLuint index, GLenum pname, GLint *params )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetVertexAttribivARBSWAP( index, pname, params, &writeback );
+	}
+	else
+	{
+		crPackGetVertexAttribivARB( index, pname, params, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
 }

@@ -180,7 +180,7 @@ void replicatespuReplicateCreateContext(int ipaddress)
 
 	replicatespuFlush( (void *)thread );
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #endif
 
@@ -328,7 +328,7 @@ void replicatespuReplicateCreateContext(int ipaddress)
 
 	crDebug("Finished replicationSPU CreateContext\n");
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 }

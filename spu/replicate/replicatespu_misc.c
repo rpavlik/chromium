@@ -107,7 +107,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_WindowCreate( const char *dpyName, GLin
 	replicatespuFlush( (void *) thread );
 	crPackSetContext( thread->packer );
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #endif
 
@@ -155,7 +155,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_WindowCreate( const char *dpyName, GLin
 	thread->broadcast = 1;
 	thread->server.conn = replicate_spu.rserver[0].conn;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 

@@ -26,7 +26,7 @@ SPUFunctions replicate_functions = {
 
 ReplicateSPU replicate_spu;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 CRtsd _ReplicateTSD;
 CRmutex _ReplicateMutex;
 #endif
@@ -43,7 +43,7 @@ replicateSPUInit( int id, SPU *child, SPU *self,
 	(void) child;
 	(void) self;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crInitMutex(&_ReplicateMutex);
 #endif
 

@@ -35,7 +35,7 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 {
 	ThreadInfo *thread;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #else
 	CRASSERT(replicate_spu.numThreads == 0);
@@ -76,13 +76,13 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 	crPackSendHugeFunc( thread->packer, replicatespuHuge );
 	crPackSetContext( thread->packer );
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crSetTSD(&_ReplicateTSD, thread);
 #endif
 
 	replicate_spu.numThreads++;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 	return thread;
@@ -96,11 +96,11 @@ static void replicatespuStartVnc( )
 	struct in_addr addr;
 	int maj, min;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #endif
 	if (StartedVnc) {
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 		crUnlockMutex(&_ReplicateMutex);
 #endif
 		return;
@@ -108,7 +108,7 @@ static void replicatespuStartVnc( )
 
 	StartedVnc = 1;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 
@@ -154,7 +154,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 
 	replicatespuFlush( &(replicate_spu.thread[0]) );
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #endif
 	if (!replicate_spu.glx_display)
@@ -194,7 +194,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 		serverCtx = (GLint) SWAP32(serverCtx);
 	}
 	if (serverCtx < 0) {
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 		crUnlockMutex(&_ReplicateMutex);
 #endif
 		crWarning("Failure in replicatespu_CreateContext");
@@ -305,7 +305,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 			}
 
 			if (rserverCtx < 0) {
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 				crUnlockMutex(&_ReplicateMutex);
 #endif
 				crError("Failure in replicatespu_CreateContext");
@@ -326,7 +326,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 	else
 		NOP = 1;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 

@@ -92,7 +92,7 @@ typedef struct {
 
 extern ReplicateSPU replicate_spu;
 
-#ifdef CHROMIUM_THREADSAFE
+#ifdef CHROMIUM_THREADSAFE_notyet
 extern CRmutex _ReplicateMutex;
 extern CRtsd _ReplicateTSD;
 #define GET_THREAD(T)  ThreadInfo *T = crGetTSD(&_ReplicateTSD)
