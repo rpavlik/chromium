@@ -94,6 +94,17 @@ for the Chromium application node/faker.</p>
     </td>
   </tr>
   <tr>
+    <td width="19%" class="ConfigOption">maximum_window_size</td>
+    <td width="12%" class="ConfigType">2 Integers</td>
+    <td width="115%" class="ConfigDesc">
+      This option is useful for running multi-context, multi-window OpenGL
+      applications.  It specifies the maximum window size (width and height)
+      that Chromium should be allowed to render into. NOTE: This must be
+      used alongside the minimum_window_size parameter above.
+      This allows to Chromium to clamp a certain window size.
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption">match_window_title</td>
     <td width="12%" class="ConfigType">String</td>
     <td width="115%" class="ConfigDesc">

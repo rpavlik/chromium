@@ -427,15 +427,28 @@ static GLboolean UseChromium( Display *dpy, GLXDrawable drawable )
 	}
 
 	/* If the user's specified a minimum window size for Chromium, see if
-	 * this window satisfies that criterium.
+	 * this window satisfies that criterium. 
 	 */
-	if (stub.minChromiumWindowWidth > 0 && stub.minChromiumWindowHeight > 0) {
+	if (stub.minChromiumWindowWidth > 0 && 
+	    stub.minChromiumWindowHeight > 0) {
 #ifdef WINDOWS
 		GetWindowSize( drawable, &w, &h );
 #else
 		GetWindowSize( dpy, drawable, &w, &h );
 #endif
-		if (w >= stub.minChromiumWindowWidth && h >= stub.minChromiumWindowHeight) {
+		if (w >= stub.minChromiumWindowWidth && 
+		    h >= stub.minChromiumWindowHeight) {
+
+			/* Check for maximum sized window now too */
+			if (stub.maxChromiumWindowWidth && 
+			    stub.maxChromiumWindowHeight) {
+				if (w < stub.maxChromiumWindowWidth &&
+				    h < stub.maxChromiumWindowHeight)
+					return GL_TRUE;
+				else 
+					return GL_FALSE;
+			}
+
 			return GL_TRUE;
 		}
 		crDebug("Using native GL, app window doesn't meet minimum_window_size");

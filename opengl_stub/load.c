@@ -172,6 +172,8 @@ static void stubInitVars(void)
 	stub.appDrawCursor = 0;
 	stub.minChromiumWindowWidth = 0;
 	stub.minChromiumWindowHeight = 0;
+	stub.maxChromiumWindowWidth = 0;
+	stub.maxChromiumWindowHeight = 0;
 	stub.matchWindowTitle = NULL;
 	stub.threadSafe = GL_FALSE;
 	stub.spuWindowWidth = 0;
@@ -371,6 +373,15 @@ void StubInit(void)
 		crDebug( "minimum_window_size: %d x %d", w, h );
 		stub.minChromiumWindowWidth = w;
 		stub.minChromiumWindowHeight = h;
+	}
+
+	if (conn && crMothershipGetFakerParam( conn, response, "maximum_window_size" )
+		&& response[0]) {
+		int w, h;
+		sscanf( response, "[%d, %d]", &w, &h );
+		crDebug( "maximum_window_size: %d x %d", w, h );
+		stub.maxChromiumWindowWidth = w;
+		stub.maxChromiumWindowHeight = h;
 	}
 
 	if (conn && crMothershipGetFakerParam( conn, response, "match_window_title" )

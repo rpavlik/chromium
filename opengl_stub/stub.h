@@ -63,6 +63,8 @@ typedef struct {
 	int appDrawCursor;
 	GLuint minChromiumWindowWidth;
 	GLuint minChromiumWindowHeight;
+	GLuint maxChromiumWindowWidth;
+	GLuint maxChromiumWindowHeight;
 	char *matchWindowTitle;
 	int trackWindowSize;
 
