@@ -686,7 +686,7 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 		 * the __stateExtensionsString, __stateAppOnlyExtensions and
 		 * __stateChromiumExtensions string.
 		 */
-		nativeExt = render_spu.ws.glGetString(GL_EXTENSIONS);
+		nativeExt = (const char *) render_spu.ws.glGetString(GL_EXTENSIONS);
 		crExt = crStrjoin3(__stateExtensionString, " ", __stateAppOnlyExtensions);
 		s1 = crStrIntersect(nativeExt, crExt);
 		remove_trailing_space(s1);
@@ -694,7 +694,7 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 		remove_trailing_space(s2);
 		crFree(crExt);
 		crFree(s1);
-		return s2;  /* leak - this never gets freed! */
+		return (const GLubyte *) s2;  /* leak - this never gets freed! */
 	}
 	else if (pname == GL_VENDOR)
 		return CR_VENDOR;
