@@ -547,7 +547,7 @@ tilesortspuGetTileInformation(CRConnection * conn)
 					else if ((x % optTileWidth) != 0 || (y % optTileHeight) != 0)
 					{
 						/* (x,y) should be an integer multiple of the tile size */
-						crWarning("Tild %d on server %d is not positioned correctly!",
+						crWarning("Tile %d on server %d is not positioned correctly!",
 											i, tile);
 						crWarning("Position (%d, %d) is not an integer multiple of the tile size (%d x %d)", x, y, optTileWidth, optTileHeight);
 						crWarning("Changing bucket mode to 'Test All Tiles'");
