@@ -38,10 +38,6 @@ class TilesortParameters:
 		self.TileHeight = 1024
 		self.RightToLeft = 0
 		self.BottomToTop = 0
-#		self.Hostname = "host##"
-#		self.FirstHost = 1
-#		self.Hosts = crutils.MakeHostnames(self.Hostname, self.FirstHost,
-#										   rows * cols)
 
 	def Clone(self):
 		"""Return a clone of this object."""
@@ -53,9 +49,6 @@ class TilesortParameters:
 		p.TileHeight = self.TileHeight
 		p.RightToLeft = self.RightToLeft
 		p.BottomToTop = self.BottomToTop
-#		p.HostName = self.Hostname
-#		p.FirstHost = self.FirstHost
-#		p.Hosts = self.Hosts  # XXX does this copy???
 		return p
 
 
@@ -71,13 +64,13 @@ CommonTileSizes = [ [128, 128],
 BackgroundColor = wxColor(70, 170, 130)
 
 
+#----------------------------------------------------------------------------
+
 # This is the guts of the tilesort configuration script.
 # It's simply appended to the file after we write all the configuration options
 __ConfigBody = """
-import string
-import sys
+import string, sys
 sys.path.append( "../server" )
-sys.path.append( "../tools" )
 from mothership import *
 
 # Get program name
@@ -124,6 +117,7 @@ for i in range(NUM_CLIENTS):
 
 	clientnode.StartDir( crbindir )
 	clientnode.SetApplication( os.path.join(crbindir, program) )
+	clientnode.StartDir( GLOBAL_default_dir )
 	if GLOBAL_auto_start:
 		clientnode.AutoStart( ["/bin/sh", "-c",
 				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
@@ -343,30 +337,6 @@ class TilesortDialog(wxDialog):
 		EVT_RADIOBOX(self.hLayoutRadio, id_hLayout, self.__OnLayoutChange)
 		EVT_RADIOBOX(self.vLayoutRadio, id_vLayout, self.__OnLayoutChange)
 
-		# Host naming
-#		box = wxStaticBox(parent=self, id=-1, label="Host Names",
-#						  style=wxDOUBLE_BORDER)
-#		hostSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		# XXX should probably use a wxComboBox here so we can keep a small
-		# history of frequently used hostname pattern strings.
-#		self.hostText = wxTextCtrl(parent=self, id=id_HostText, value="")
-#		EVT_TEXT(self.hostText, id_HostText, self.__OnHostNameChange)
-#		hostSizer.Add(self.hostText, flag=wxEXPAND)
-
-#		spinSizer = wxBoxSizer(wxHORIZONTAL)
-#		firstLabel = wxStaticText(parent=self, id=-1,
-#								  label="First index: ")
-#		spinSizer.Add(firstLabel, flag=wxALIGN_CENTER_VERTICAL)
-#		self.hostSpin = wxSpinCtrl(parent=self, id=id_HostIndex,
-#								   value="0", min=0,
-#								   size=wxSize(60,25))
-#		EVT_SPINCTRL(self.hostSpin, id_HostIndex, self.__OnHostStartChange)
-#		spinSizer.Add(self.hostSpin)
-
-#		hostSizer.Add(spinSizer, border=4, flag=wxTOP)
-#		toolSizer.Add(hostSizer, flag=wxEXPAND)
-
-
 		# Hostname dialog
 		self.hostsDialog = hostdialog.HostDialog(parent=NULL, id=-1,
 						title="Chromium Hosts",
@@ -375,7 +345,8 @@ class TilesortDialog(wxDialog):
 		# Hostname button
 		self.hostsButton = wxButton(parent=self, id=id_Hostnames,
 									label=" Tile Host Names... ")
-		toolSizer.Add(self.hostsButton, flag=wxALL|wxALIGN_CENTRE_HORIZONTAL, border=2)
+		toolSizer.Add(self.hostsButton, flag=wxALL|wxALIGN_CENTRE_HORIZONTAL,
+					  border=2)
 		EVT_BUTTON(self.hostsButton, id_Hostnames, self.__OnHostnames)
 
 		# Tilesort SPU option button
@@ -428,8 +399,6 @@ class TilesortDialog(wxDialog):
 		self.SetSize(minSize)
 
 		self.__RecomputeTotalSize()
-		# end of dialog construction
-
 	# end of __init__()
 
 	def __RecomputeTotalSize(self):
@@ -458,8 +427,6 @@ class TilesortDialog(wxDialog):
 		tilesort.TileHeight = self.tileHeightControl.GetValue()
 		tilesort.RightToLeft = self.hLayoutRadio.GetSelection()
 		tilesort.BottomToTop = self.vLayoutRadio.GetSelection()
-#		tilesort.Hostname = self.hostText.GetValue()
-#		tilesort.FirstHost = self.hostSpin.GetValue()
 
 	def __UpdateWidgetsFromVars(self):
 		"""Set widget values to the tilesort parameters."""
@@ -470,8 +437,6 @@ class TilesortDialog(wxDialog):
 		self.tileHeightControl.SetValue(tilesort.TileHeight)
 		self.hLayoutRadio.SetSelection(tilesort.RightToLeft)
 		self.vLayoutRadio.SetSelection(tilesort.BottomToTop)
-#		self.hostSpin.SetValue(tilesort.FirstHost)
-#		self.hostText.SetValue(tilesort.Hostname) # must be last!!!
 
 	# ----------------------------------------------------------------------
 	# Event handling
@@ -616,8 +581,6 @@ class TilesortDialog(wxDialog):
 				else:
 					jj = cols - j - 1
 				k = ii * cols + jj
-				#s = crutils.MakeHostname(self.__Mothership.Tilesort.Hostname,
-				#					 self.__Mothership.Tilesort.FirstHost + k)
 				if k < len(hosts):
 					s = hosts[k]
 				else:
@@ -673,8 +636,6 @@ def Create_Tilesort(parentWindow, mothership):
 	numServers = rows * cols
 	mothership.DeselectAllNodes()
 	# Create the <numClients> app nodes
-	#	appNode = crtypes.ApplicationNode()
-	#	appNode.SetCount(numClients)
 	appNode = crutils.NewApplicationNode(numClients)
 	appNode.SetPosition(50, 50)
 	appNode.Select()
@@ -682,7 +643,6 @@ def Create_Tilesort(parentWindow, mothership):
 	appNode.AddSPU(tilesortSPU)
 	mothership.AddNode(appNode)
 	# Create the <numServers> server nodes
-	#serverNode = crtypes.NetworkNode(count=numServers)
 	serverNode = crutils.NewNetworkNode(numServers)
 	serverNode.SetPosition(350, 50)
 	serverNode.Select()
@@ -746,8 +706,6 @@ def Edit_Tilesort(parentWindow, mothership):
 		else:
 			clientNode = nodes[1]
 			serverNode = nodes[0]
-#		mothership.Tilesort.Hostname = serverNode.GetHosts()[0]
-#		mothership.Tilesort.FirstHost = serverNode.GetFirstHost()
 	else:
 		print "This is not a tilesort configuration!"
 		return
@@ -764,33 +722,6 @@ def Edit_Tilesort(parentWindow, mothership):
 		# update mothership with new values
 		tiles = mothership.Tilesort.Rows * mothership.Tilesort.Columns
 		serverNode.SetCount(tiles)
-#		serverNode.SetHost(mothership.Tilesort.Hostname)
-#		serverNode.SetFirstHost(mothership.Tilesort.FirstHost)
-
-
-def __ParseOption(s, prefix):
-	"""Parsing helper function"""
-	# s will be a string like:  RENDER_system_gl_path = "/usr/lib"
-	# We'll return a (name, value) tuple like ("system_gl_path", ["/usr/lib"])
-	# The name is a string and the value is a list.
-
-	# extract the option name and value
-	# parentheses in the regexp define groups
-	# \"? is an optional double-quote character
-	# [^\"] is any character but double-quote
-	pattern = "^" + prefix + "_([a-zA-Z0-9\_]+) = (\"?[^\"]*\"?)"
-	v = re.search(pattern, s)
-	if v:
-		name = v.group(1)
-		value = v.group(2)
-		if value[0] != '[':
-			value = '[' + value + ']'
-		values = eval(value)
-		return (name, values)
-	else:
-		print "PROBLEM: " + pattern
-		print "LINE: " + s
-		return 0
 
 
 def Read_Tilesort(mothership, fileHandle):
@@ -848,19 +779,19 @@ def Read_Tilesort(mothership, fileHandle):
 			numClients = int(l[v.start() : v.end()])
 		elif re.match("^TILESORT_", l):
 			# A tilesort SPU option
-			(name, values) = __ParseOption(l, "TILESORT")
+			(name, values) = configio.ParseOption(l, "TILESORT")
 			tilesortSPU.SetOption(name, values)
 		elif re.match("^RENDER_", l):
 			# A render SPU option
-			(name, values) = __ParseOption(l, "RENDER")
+			(name, values) = configio.ParseOption(l, "RENDER")
 			renderSPU.SetOption(name, values)
 		elif re.match("^SERVER_", l):
 			# A server option
-			(name, values) = __ParseOption(l, "SERVER")
+			(name, values) = configio.ParseOption(l, "SERVER")
 			mothership.SetServerOption(name, values)
 		elif re.match("^GLOBAL_", l):
 			# A global option
-			(name, values) = __ParseOption(l, "GLOBAL")
+			(name, values) = configio.ParseOption(l, "GLOBAL")
 			mothership.SetGlobalOption(name, values)
 		elif re.match("^# end of options", l):
 			# that's the end of the variables
