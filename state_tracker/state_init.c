@@ -142,16 +142,17 @@ void crStateInit(void)
 		g_availableContexts[i] = 0;
 
 	if (defaultContext) {
-		/* Free the default/NULL context */
-		crFree( defaultContext->transform.modelView );
-		crFree( defaultContext->transform.projection );
-		for (i = 0 ; i < defaultContext->limits.maxTextureUnits ; i++)
-			crFree( defaultContext->transform.texture[i] );
-		crFree( defaultContext->transform.color );
-		crFree( defaultContext->transform.clipPlane );
-		crFree( defaultContext->transform.clip );
-		crFree( defaultContext->client.list );
-		crFree( defaultContext->lighting.light );
+		/* Free the default/NULL context.
+		 * Ensures context bits are reset */
+		crStateClientDestroy( &(defaultContext->client) );
+		crStateLimitsDestroy( &(defaultContext->limits) );
+
+		crStateEvaluatorDestroy( defaultContext );
+		crStateListsDestroy( defaultContext );
+		crStateLightingDestroy( defaultContext );
+		crStateTextureDestroy( defaultContext );
+		crStateTransformDestroy( defaultContext );
+
 		crFree( defaultContext );
 	}
 
@@ -163,8 +164,7 @@ void crStateInit(void)
 #ifdef CHROMIUM_THREADSAFE
 	crSetTSD(&__contextTSD, defaultContext);
 #else
-	if (!__currentContext)
-		__currentContext = defaultContext;
+	__currentContext = defaultContext;
 #endif
 }
 
