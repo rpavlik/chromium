@@ -1040,6 +1040,8 @@ class CR:
 					sock.Success("%d %d" % (self.conn_id, server_endianness))
 					# reply to the waiting server
 					server_sock.Success( "%d" % self.conn_id )
+					# we don't want to re-use this info!!
+					server_sock.tcpip_accept_wait = None
 					self.conn_id += 1
 					return
 				else:
@@ -1066,6 +1068,8 @@ class CR:
 				if SameHost(server_hostname, hostname) and server_port == port:
 					sock.Success("%d %d" % (self.conn_id, server_endianness))
 					server_sock.Success( "%d" % self.conn_id )
+					# we don't want to re-use this info!!
+					server_sock.sdp_accept_wait = None
 					self.conn_id += 1
 					return
 				else:
@@ -1088,6 +1092,8 @@ class CR:
 				if SameHost(server_hostname, hostname) and server_port == port:
 					sock.Success( "%d %d %d %s %s %s" % (self.conn_id, server_node_id, server_endianness, server_lid1, server_qp_ous, server_qp ) )
 					server_sock.Success( "%d %d %s %s %s" % (self.conn_id, node_id, lid1, qp_ous, qp ) )
+					# we don't want to re-use this info!!
+					server_sock.ib_accept_wait = None
 					self.conn_id += 1
 					return
 				else:
@@ -1196,6 +1202,8 @@ class CR:
 					sock.Success( "%d" % self.conn_id )
 					# reply to the waiting client
 					client_sock.Success("%d %d" % (self.conn_id, endianness))
+					# we don't want to re-use this info!!
+					client_sock.tcpip_connect_wait = None
 					self.conn_id += 1
 					return
 				else:
@@ -1221,6 +1229,8 @@ class CR:
 				if SameHost(client_hostname, hostname) and client_port == port:
 					sock.Success( "%d" % self.conn_id )
 					client_sock.Success("%d %d" % (self.conn_id, endianness))
+					# we don't want to re-use this info!!
+					client_sock.sdp_connect_wait = None
 					self.conn_id += 1
 					return
 				else:
@@ -1245,6 +1255,8 @@ class CR:
 				if SameHost(client_hostname, hostname) and client_port == port:
 					sock.Success( "%d %d %s %s %s" % (self.conn_id, client_node_id, client_lid1, client_qp_ous, client_qp ) )
 					client_sock.Success( "%d %d %d %s %s %s" % (self.conn_id, node_id, endianness, lid1, qp_ous, qp ) )
+					# we don't want to re-use this info!!
+					client_sock.ib_connect_wait = None
 					self.conn_id += 1
 					return
 				else:
