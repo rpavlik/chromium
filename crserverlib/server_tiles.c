@@ -166,8 +166,8 @@ crServerInitializeTiling(CRMuralInfo *mural)
  */
 void
 crServerNewMuralTiling(CRMuralInfo *mural,
-											 int muralWidth, int muralHeight,
-											 int numTiles, const int *tileBounds)
+											 GLint muralWidth, GLint muralHeight,
+											 GLint numTiles, const GLint *tileBounds)
 {
 	int i;
 
@@ -190,10 +190,10 @@ crServerNewMuralTiling(CRMuralInfo *mural,
 	mural->numExtents = numTiles;
 	for (i = 0; i < numTiles; i++)
 	{
-		const int x = tileBounds[i * 4 + 0];
-		const int y = tileBounds[i * 4 + 1];
-		const int w = tileBounds[i * 4 + 2];
-		const int h = tileBounds[i * 4 + 3];
+		const GLint x = tileBounds[i * 4 + 0];
+		const GLint y = tileBounds[i * 4 + 1];
+		const GLint w = tileBounds[i * 4 + 2];
+		const GLint h = tileBounds[i * 4 + 3];
 		mural->extents[i].imagewindow.x1 = x;
 		mural->extents[i].imagewindow.y1 = y;
 		mural->extents[i].imagewindow.x2 = x + w;
