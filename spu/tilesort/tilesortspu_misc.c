@@ -466,6 +466,29 @@ void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLu
 			}
 		}
 		break;
+	case GL_MAX_WINDOW_SIZE_CR:
+		CRASSERT(type == GL_INT);
+		CRASSERT(count == 2);
+		{
+			GLint *maxSize = (GLint *) values;
+#ifdef GLX
+			Display *dpy;
+			dpy = XOpenDisplay(tilesort_spu.displayString);
+			if (dpy) {
+				int scrn = DefaultScreen(dpy);
+				maxSize[0] = DisplayWidth(dpy, scrn);
+				maxSize[1] = DisplayHeight(dpy, scrn);
+				XCloseDisplay(dpy);
+			}
+			else
+#endif
+			{
+				/* XXX fix me! */
+				maxSize[0] = 16 * 1024;
+				maxSize[1] = 16 * 1024;
+			}
+		}
+		break;
 	default:
 		/* release geom buffer */
 		crPackReleaseBuffer( thread->packer );
