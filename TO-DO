@@ -7,7 +7,9 @@ Grep the code for 'XXX' for miscellaneous loose ends.
 Convert the last two Perl scripts in scripts/fastdep.pl and
 state_tracker/gendiffcode.pl to Python. 
 
-Pass a callback function to crHashtableFree and crHashtableDelete to be
-called to deallocate table entries.  This would fix the ambiguity in whether
-or not (and how) hash tables entries should be deallocated.  (Brian)
+In state_polygon_gen.c in crStatePolygonSwitch() we need a better test
+for updating the polygon stipple.  As-is we're calling diff.PolygonStipple
+all the time.
 
+Too many glActiveTexture calls are made during state differencing.  Put a
+print SPU on a server attached to a tilesorter and look.
