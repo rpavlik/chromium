@@ -774,6 +774,7 @@ class ApplicationNode(Node):
 			Option("track_window_size", "Track App Window Size Changes", "BOOL", 1, [0], [], []),
 			Option("track_window_Position", "Track App Window Position Changes", "BOOL", 1, [0], [], []),
 			Option("show_cursor", "Show Virtual Cursor", "BOOL", 1, [0], [], []),
+			Option("ignore_freeglut_menus", "Ignore freeglut's menus", "BOOL", 1, [1], [], []),
 			] )
 
 	def Clone(self):
