@@ -1,3 +1,11 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+#
+# Authors:
+#   Brian Paul
+
 """ graph.py
 
     Tool for making arbitrary Chromium configuration graphs.
@@ -22,30 +30,19 @@ menu_DELETE        = 10003
 menu_CONNECT       = 10004
 menu_DISCONNECT    = 10005
 menu_SET_HOST      = 10006
-
-menu_HELP          = 2001 # Help menu items.
-menu_ABOUT         = 2002 # Help menu items.
+menu_SPU_OPTIONS   = 10007
+menu_HELP          = 10008
+menu_ABOUT         = 10009
 
 # Widget IDs
-id_MuralWidth  = 3000
-id_MuralHeight = 3001
-id_TileChoice  = 3002
-id_TileWidth   = 3003
-id_TileHeight  = 3004
-id_NewServerNode  = 3008
-id_NewAppNode     = 3009
-id_NewSpu         = 3010
+id_NewServerNode  = 3000
+id_NewAppNode     = 3001
+id_NewSpu         = 3002
+id_NewTemplate    = 3003
 
 # Size of the drawing page, in pixels.
 PAGE_WIDTH  = 1000
 PAGE_HEIGHT = 1000
-
-CommonTileSizes = [ [128, 128],
-					[256, 256],
-					[512, 512],
-					[1024, 1024],
-					[1280, 1024],
-					[1600, 1200] ]
 
 SpuClasses = [ "New SPU", "Pack", "Render", "Readback", "Tilesort", "Wet", "Hiddenline" ]
 
@@ -55,26 +52,47 @@ PackingSPUs = [ "Pack", "Tilesort" ]
 # SPUs which must be at the end of a chain, other than packers
 TerminalSPUs = [ "Render" ]
 
+Templates = [ "New Template", "Tilesort", "Sort-last" ]
+
 
 AppNodeBrush = wxBrush(wxColor(55, 160, 55))
 ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
 BackgroundColor = wxColor(90, 150, 190)
 
 #----------------------------------------------------------------------------
+# Utility functions
 
-class DrawingFrame(wxFrame):
+class HostGenerator:
+	"""Utility class for generating a sequence of numbered hostnames."""
+	_letterPattern = "[a-zA-Z0-9_\.\-]*"
+	_hashPattern = "#*"
+	_fullPattern = "^" + _letterPattern + _hashPattern + _letterPattern + "$"
+
+	def ValidateFormatString(format):
+		if re.match(_fullPattern, format):
+			return 1
+		else:
+			return 0
+
+	def MakeHostname(format, number):
+		# find the hash characters first
+		p = re.match(_hashPattern, format)
+		len = len(p.string)
+		print "len = %s" % len
+		return "host05"
+
+
+
+
+#----------------------------------------------------------------------------
+# Main window frame class
+
+class MainFrame(wxFrame):
 	""" A frame showing the contents of a single document. """
 
-	# ==========================================
-	# == Initialisation and Window Management ==
-	# ==========================================
-
 	def __init__(self, parent, id, title, fileName=None):
-		""" Standard constructor.
-
-			'parent', 'id' and 'title' are all passed to the standard wxFrame
-			constructor.  'fileName' is the name and path of a saved file to
-			load into this frame, if any.
+		"""parent, id, title are the usual wxFrame parameters.
+		fileName is the name and path of a config file to load, if any.
 		"""
 		wxFrame.__init__(self, parent, id, title,
 				 style = wxDEFAULT_FRAME_STYLE | wxWANTS_CHARS |
@@ -113,11 +131,13 @@ class DrawingFrame(wxFrame):
 		self.editMenu.Append(menu_CONNECT,       "Connect Nodes")
 		self.editMenu.Append(menu_DISCONNECT,    "Disconnect Nodes")
 		self.editMenu.Append(menu_SET_HOST,      "Set Host...")
+		self.editMenu.Append(menu_SPU_OPTIONS,   "SPU Options...")
 		EVT_MENU(self, menu_DELETE, self.doDelete)
 		EVT_MENU(self, menu_SELECT_ALL, self.doSelectAll)
 		EVT_MENU(self, menu_CONNECT, self.doConnect)
 		EVT_MENU(self, menu_DISCONNECT, self.doDisconnect)
 		EVT_MENU(self, menu_SET_HOST, self.doSetHost)
+		EVT_MENU(self, menu_SPU_OPTIONS, self.doSpuOptions)
 		menuBar.Append(self.editMenu, "Edit")
 
 		# Help menu
@@ -144,31 +164,38 @@ class DrawingFrame(wxFrame):
 		toolSizer = wxBoxSizer(wxHORIZONTAL)
 
 		# New app node button
-		appChoices = ["New App Node(s)", "1 App node", "2 App nodes", "3 App nodes", "4 App nodes"]
+		appChoices = ["New App Node(s)", "1 App node", "2 App nodes",
+					  "3 App nodes", "4 App nodes"]
 		self.newAppChoice = wxChoice(parent=self.topPanel, id=id_NewAppNode,
 									  choices=appChoices)
 		EVT_CHOICE(self.newAppChoice, id_NewAppNode, self.onNewAppNode)
 		toolSizer.Add(self.newAppChoice, flag=wxEXPAND+wxALL, border=4)
+
 		# New server node button
-		serverChoices = ["New Server Node(s)", "1 Server node", "2 Server nodes", "3 Server nodes", "4 Server nodes"]
+		serverChoices = ["New Server Node(s)", "1 Server node", "2 Server nodes",
+						 "3 Server nodes", "4 Server nodes"]
 		self.newServerChoice = wxChoice(parent=self.topPanel, id=id_NewServerNode,
 									  choices=serverChoices)
 		EVT_CHOICE(self.newServerChoice, id_NewServerNode, self.onNewServerNode)
 		toolSizer.Add(self.newServerChoice, flag=wxEXPAND+wxALL, border=4)
+
 		# New SPU button
-		self.newSpuChoice = wxChoice(parent=self.topPanel, id=id_NewSpu, choices=SpuClasses)
+		self.newSpuChoice = wxChoice(parent=self.topPanel, id=id_NewSpu,
+									 choices=SpuClasses)
 		EVT_CHOICE(self.newSpuChoice, id_NewSpu, self.onNewSpu)
 		toolSizer.Add(self.newSpuChoice, flag=wxEXPAND+wxALL, border=4)
-#		newSpuButton = wxButton(parent=self.topPanel, id=id_NewSpu, label="New SPU")
-#		EVT_BUTTON(newSpuButton, id_NewSpu, self.onNewSpu)
-#		toolSizer.Add(newSpuButton)
+
+		# New Template button
+		self.newTemplateChoice = wxChoice(parent=self.topPanel, id=id_NewTemplate,
+									 choices=Templates)
+		EVT_CHOICE(self.newTemplateChoice, id_NewTemplate, self.onNewTemplate)
+		toolSizer.Add(self.newTemplateChoice, flag=wxEXPAND+wxALL, border=4)
 
 		# Setup the main drawing area.
 		self.drawArea = wxScrolledWindow(self.topPanel, -1,
 										 style=wxSUNKEN_BORDER)
 		self.drawArea.EnableScrolling(true, true)
 		self.drawArea.SetScrollbars(20, 20, PAGE_WIDTH / 20, PAGE_HEIGHT / 20)
-#		self.drawArea = wxPanel(self.topPanel, id=-1, style=wxSUNKEN_BORDER)
 		self.drawArea.SetBackgroundColour(BackgroundColor)
 		EVT_PAINT(self.drawArea, self.onPaintEvent)
 
@@ -219,14 +246,81 @@ class DrawingFrame(wxFrame):
 			if fromNode == targetNode or toNode == targetNode:
 				self.Connections.remove(c)
 
+	#----------------------------------------------------------------------
+	# Template functions
 
-	# ============================
-	# == Event Handling Methods ==
-	# ============================
+	def CreateTilesort(self):
+		"""Create a tilesort configuration"""
+		# XXX need an integer dialog here!!!!
+		dialog = wxTextEntryDialog(self, message="Enter number of server/render nodes")
+		dialog.SetTitle("Create Tilesort (sort-first) configuration")
+		if dialog.ShowModal() == wxID_OK:
+			numServers = int(dialog.GetValue())
+			hostname = "localhost"
+			self.DeselectAll()
+			# Create the app node
+			xPos = 5
+			yPos = numServers * 70 / 2 - 20
+			appNode = NodeObject(host=hostname, x=xPos, y=yPos, isServer=0)
+			appNode.Select()
+			tilesortSPU = SpuObject("Tilesort", packer=1)
+			appNode.AddSPU(tilesortSPU)
+			self.Objects.append(appNode)
+			# Create the server nodes
+			xPos = 300
+			yPos = 5
+			for i in range(0, numServers):
+				serverNode = NodeObject(host=hostname, x=xPos, y=yPos, isServer=1)
+				serverNode.Select()
+				renderSPU = SpuObject("Render", packer=0)
+				serverNode.AddSPU(renderSPU)
+				self.Objects.append(serverNode)
+				self.AddConnection(appNode, serverNode)
+				yPos += 70
+			
+		dialog.Destroy()
+		return
+
+	def CreateSortlast(self):
+		"""Create a sort-last configuration"""
+		# XXX need an integer dialog here!!!!
+		dialog = wxTextEntryDialog(self, message="Enter number of application nodes")
+		dialog.SetTitle("Create Sort-last configuration")
+		if dialog.ShowModal() == wxID_OK:
+			numClients = int(dialog.GetValue())
+			hostname = "client##"
+			self.DeselectAll()
+			# Create the server/render node
+			xPos = 300
+			yPos = numClients * 70 / 2 - 20
+			serverNode = NodeObject(host="foobar", x=xPos, y=yPos, isServer=1)
+			serverNode.Select()
+			renderSPU = SpuObject("Render")
+			serverNode.AddSPU(renderSPU)
+			self.Objects.append(serverNode)
+			# Create the client/app nodes
+			xPos = 5
+			yPos = 5
+			for i in range(0, numClients):
+				appNode = NodeObject(host=hostname, x=xPos, y=yPos, isServer=0)
+				appNode.Select()
+				readbackSPU = SpuObject("Readback", packer=0)
+				appNode.AddSPU(readbackSPU)
+				packSPU = SpuObject("Pack", packer=1)
+				appNode.AddSPU(packSPU)
+				self.Objects.append(appNode)
+				self.AddConnection(appNode, serverNode)
+				yPos += 70
+			
+		dialog.Destroy()
+		return
+
+
+    #----------------------------------------------------------------------
+	# Event handlers / callbacks
 
 	def onPaintEvent(self, event):
-		""" Respond to a request to redraw the contents of our drawing panel.
-		"""
+		"""Drawing area repaint callback"""
 		dc = wxPaintDC(self.drawArea)
 		self.drawArea.PrepareDC(dc)  # only for scrolled windows
 		dc.BeginDrawing()
@@ -272,8 +366,8 @@ class DrawingFrame(wxFrame):
 		self.newServerChoice.SetSelection(0)
 		self.drawArea.Refresh()
 
-	# called when New SPU button is pressed
 	def onNewSpu(self, event):
+		"""New SPU button callback"""
 		# add a new SPU to all selected nodes
 		i = self.newSpuChoice.GetSelection()
 		if i > 0:
@@ -288,6 +382,17 @@ class DrawingFrame(wxFrame):
 						obj.AddSPU(s)
 			self.drawArea.Refresh()
 			self.newSpuChoice.SetSelection(0)
+
+	def onNewTemplate(self, event):
+		"""New Template button callback"""
+		t = self.newTemplateChoice.GetSelection()
+		if t == 1:
+			self.CreateTilesort()
+		elif t == 2:
+			self.CreateSortlast()
+		self.newTemplateChoice.SetSelection(0)
+		self.drawArea.Refresh()
+		return
 
 	# Called when the left mouse button is pressed or released.
 	def onMouseEvent(self, event):
@@ -375,22 +480,19 @@ class DrawingFrame(wxFrame):
 			if anySelected:
 				self.drawArea.Refresh()
 
-	# ==========================
-	# == Menu Command Methods ==
-	# ==========================
+	#----------------------------------------------------------------------
+	# Menu callbacks
 
 	def doNew(self, event):
-		""" Respond to the "New" menu command.
-		"""
+		"""File / New callback"""
 		global _docList
-		newFrame = DrawingFrame(None, -1, "Chromium Configuration Tool")
+		newFrame = MainFrame(None, -1, "Chromium Configuration Tool")
 		newFrame.Show(TRUE)
 		_docList.append(newFrame)
 
 
 	def doOpen(self, event):
-		""" Respond to the "Open" menu command.
-		"""
+		"""File / Open callback"""
 		global _docList
 
 		curDir = os.getcwd()
@@ -409,15 +511,14 @@ class DrawingFrame(wxFrame):
 			self.loadContents()
 		else:
 			# Open a new frame for this document.
-			newFrame = DrawingFrame(None, -1, os.path.basename(fileName),
+			newFrame = MainFrame(None, -1, os.path.basename(fileName),
 						fileName=fileName)
 			newFrame.Show(true)
 			_docList.append(newFrame)
 
 
 	def doClose(self, event):
-		""" Respond to the "Close" menu command.
-		"""
+		"""File / Close callback"""
 		global _docList
 
 		if self.dirty:
@@ -428,15 +529,13 @@ class DrawingFrame(wxFrame):
 
 
 	def doSave(self, event):
-		""" Respond to the "Save" menu command.
-		"""
+		"""File / Save callback"""
 		if self.fileName != None:
 			self.saveContents()
 
 
 	def doSaveAs(self, event):
-		""" Respond to the "Save As" menu command.
-		"""
+		"""File / Save As callback"""
 		if self.fileName == None:
 			default = ""
 		else:
@@ -484,8 +583,8 @@ class DrawingFrame(wxFrame):
 		_app.ExitMainLoop()
 
 
-	# Called by Delete menu item
 	def doDelete(self, event):
+		"""Edit / Delete callback"""
 		# Ugh, I can't find a Python counterpart to the C++ STL's remove_if()
 		# function.
 		# Have to make a temporary list of the objects to delete so we don't
@@ -499,14 +598,14 @@ class DrawingFrame(wxFrame):
 			 self.Objects.remove(obj)
 		self.drawArea.Refresh()
 
-	# Called by Select All menu item
 	def doSelectAll(self, event):
+		"""Edit / Select All callback"""
 		for obj in self.Objects:
 			obj.Select()
 		self.drawArea.Refresh()
 
-	# Called by the Connect menu item
 	def doConnect(self, event):
+		"""Edit / Connect callback"""
 		for obj in self.Objects:
 			if obj.IsSelected():
 				if not obj.IsServer() and obj.HasPacker():
@@ -517,9 +616,8 @@ class DrawingFrame(wxFrame):
 							
 		self.drawArea.Refresh()
 
-	# Called by the Disconnect menu item
 	def doDisconnect(self, event):
-		# Make list of connections to remove
+		"""Edit / Disconnect callback"""
 		removeList = []
 		for conn in self.Connections:
 			(fromNode, toNode) = conn
@@ -532,9 +630,10 @@ class DrawingFrame(wxFrame):
 			self.Connections.remove(conn)
 		self.drawArea.Refresh()
 
-	# Called by the Edit/SetHost menu item
 	def doSetHost(self, event):
-		dialog = wxTextEntryDialog(self, "Enter the hostname for the selected nodes")
+		"""Edit / Set Host callback"""
+		dialog = wxTextEntryDialog(self, message="Enter the hostname for the selected nodes")
+		dialog.SetTitle("Chromium host")
 		if dialog.ShowModal() == wxID_OK:
 			for obj in self.Objects:
 				if obj.IsSelected():
@@ -542,10 +641,12 @@ class DrawingFrame(wxFrame):
 		dialog.Destroy()
 		self.drawArea.Refresh()
 
-	# Called by the Help/Introdunction menu item
+	def doSpuOptions(self, event):
+		"""Edit / SPU Options callback"""
+		return
+		
 	def doShowIntro(self, event):
-		""" Respond to the "Introduction" menu command.
-		"""
+		"""Help / Introduction callback"""
 		dialog = wxDialog(self, -1, "Introduction") # ,
 				  #style=wxDIALOG_MODAL | wxSTAY_ON_TOP)
 		dialog.SetBackgroundColour(wxWHITE)
@@ -587,8 +688,7 @@ class DrawingFrame(wxFrame):
 
 
 	def doShowAbout(self, event):
-		""" Respond to the "About" menu command.
-		"""
+		"""Help / About callback"""
 		dialog = wxDialog(self, -1, "About") # ,
 				  #style=wxDIALOG_MODAL | wxSTAY_ON_TOP)
 		dialog.SetBackgroundColour(wxWHITE)
@@ -637,13 +737,13 @@ class DrawingFrame(wxFrame):
 
 	# Display a dialog with a message and OK button.
 	def Notify(self, msg):
-		dialog = wxMessageDialog(parent=self, message=msg, caption="Hey!", style=wxOK)
+		dialog = wxMessageDialog(parent=self, message=msg,
+								 caption="Hey!", style=wxOK)
 		dialog.ShowModal()
 
 
-	# ======================
-	# == File I/O Methods ==
-	# ======================
+	#----------------------------------------------------------------------
+	# File I/O
 
 	def loadContents(self):
 		""" Load the contents of our document into memory.
@@ -959,7 +1059,7 @@ class ConfigApp(wxApp):
 		if len(sys.argv) == 1:
 			# No file name was specified on the command line -> start with a
 			# blank document.
-			frame = DrawingFrame(None, -1, "Chromium Configuration Tool")
+			frame = MainFrame(None, -1, "Chromium Configuration Tool")
 			frame.Centre()
 			frame.Show(TRUE)
 			_docList.append(frame)
@@ -968,7 +1068,7 @@ class ConfigApp(wxApp):
 			for arg in sys.argv[1:]:
 				fileName = os.path.join(os.getcwd(), arg)
 				if os.path.isfile(fileName):
-					frame = DrawingFrame(None, -1,
+					frame = MainFrame(None, -1,
 						 os.path.basename(fileName),
 						 fileName=fileName)
 					frame.Show(TRUE)
