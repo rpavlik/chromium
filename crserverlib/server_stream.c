@@ -210,13 +210,21 @@ void crServerSerializeRemoteStreams(void)
 			 * the network too quickly */
 			len = crNetPeekMessage( cr_server.curClient->conn, &msg );
 			if (len == 0) {
+#if 1
+				/* new code path */
 				if (cr_server.curClient->currentCtx &&
 						(cr_server.curClient->currentCtx->lists.currentIndex != 0 ||
 						 cr_server.curClient->currentCtx->current.inBeginEnd)) {
 					/* We're between glNewList/EndList or glBegin/End.  We can't
 					 * context switch because that'll screw things up.
 					 */
+					/*
+					printf("currentIndex=%d inBeginEnd=%d\n",
+								 cr_server.curClient->currentCtx->lists.currentIndex,
+								 cr_server.curClient->currentCtx->current.inBeginEnd);
+					*/
 					CRASSERT(!q->blocked);
+					crNetRecv();
 					continue;
 				}
 				else
@@ -224,6 +232,10 @@ void crServerSerializeRemoteStreams(void)
 					/* get next client */
 					break;
 				}
+#else
+				/* old code path */
+				break;
+#endif
 			}
 			else {
 				/*
