@@ -317,9 +317,12 @@ chooseFBConfig( Display *dpy, int screen, GLbitfield visAttribs )
 		attribs[attrCount++] = 1;
 	}
 
+	attribs[attrCount++] = GLX_DOUBLEBUFFER;
 	if (visAttribs & CR_DOUBLE_BIT) {
-		attribs[attrCount++] = GLX_DOUBLEBUFFER;
 		attribs[attrCount++] = True;
+	}
+	else {
+		attribs[attrCount++] = False;
 	}
 
 	if (visAttribs & CR_STENCIL_BIT) {
@@ -460,7 +463,8 @@ renderspu_SystemInitVisual( VisualInfo *visual )
 		int id;
 		render_spu.ws.glXGetFBConfigAttrib(visual->dpy, visual->fbconfig,
 																			 GLX_FBCONFIG_ID, &id);
-		crDebug("Render SPU: Chose FBConfig 0x%x", id);
+		crDebug("Render SPU: Chose FBConfig 0x%x, visBits=0x%x",
+						id, visual->visAttribs);
 	}
 
 	return GL_TRUE;
