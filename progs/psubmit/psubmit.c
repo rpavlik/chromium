@@ -159,6 +159,7 @@ int main(int argc, char *argv[])
 	glMakeCurrentCR(window, ctx);
 
 #define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
+	LOAD2( ChromiumParameterv );
 	LOAD2( BarrierCreate );
 	LOAD2( BarrierExec );
 
@@ -188,6 +189,9 @@ int main(int argc, char *argv[])
 
 	for (frame = 0; ; frame++)
 	{
+		static const GLfloat boundingBox[6] = {
+			-0.85, 0.85, -0.85, 0.85, -0.7, 0.7
+		};
 		if (clearFlag)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -201,6 +205,7 @@ int main(int argc, char *argv[])
 		glTranslatef(0.5, 0, 0);
 		glRotatef(18, 1, 0, 0);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[rank%7]);
+		/*glChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, boundingBox);*/
 		doughnut((GLfloat).15,(GLfloat)0.7, 15, 30);
 
 		glPopMatrix();
