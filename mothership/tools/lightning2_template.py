@@ -6,18 +6,21 @@
 # Authors:
 #   Brian Paul
 
-""" lightning_template.py
-    Template for setting up Lightning-2 configurations.
+""" lightning2_template.py
+    Template for setting up Lightning-2 (tile-reassembly) configurations.
 """
 
 import string, cPickle, os.path, re
 from wxPython.wx import *
-import crutils, intdialog, hostdialog
+import crutils, intdialog, hostdialog, configio
 
 
 class LightningParameters:
-	"""C-style struct describing a lightning-2 configuration"""
-	# This is where we set all the default parameters.
+	"""This class describes the parameters of a Lightning-2 configuration.
+	When we begin editing a Lightning-2 config we init these values from
+	the mothership (number of servers, etc) and/or the initial create-
+	lightning-2 dialog.
+	When we finish editing, we update the mothership."""
 	def __init__(self, rows=1, cols=2):
 		assert rows >= 1
 		assert cols >= 1
@@ -28,6 +31,8 @@ class LightningParameters:
 		self.Rows = rows
 		self.TileWidth = 256
 		self.TileHeight = 256
+		self.ScreenWidth = 1280  # server screen
+		self.ScreenHeight = 1024
 		self.Layout = 0
 
 	def Clone(self):
@@ -41,6 +46,8 @@ class LightningParameters:
 		p.Rows = self.Rows
 		p.TileWidth = self.TileWidth
 		p.TileHeight = self.TileHeight
+		p.ScreenWidth = self.ScreenWidth
+		p.ScreenHeight = self.ScreenHeight
 		p.Layout = self.Layout
 		return p
 
@@ -56,6 +63,144 @@ class LightningParameters:
 		#self.TileHeight = ??
 		#self.Layout = ??
 		
+	def __AllocTile(self, server, row, col):
+		"""Allocate a tile for mural position (row, col) on the nth server.
+		Return 1 for success, 0 if we run out of room on the server."""
+		# XXX we're assuming all tiles are the same size here
+		assert server >= 0
+		assert server < self.NumServers
+		assert self.NumServers == len(self.ServerTiles)
+		assert len(self.ServerTiles) == len(self.NextTile)
+		# Check if tile of size (TileWidth, TileHeight) will fit on this server
+		# We allocate tiles in raster order, as in the crserver.
+		(x, y) = self.NextTile[server] # (x,y) position on server's screen
+		if y + self.TileHeight > self.ScreenHeight:
+			# ran out of room on this server!!!
+			return 0
+		elif x + self.TileWidth > self.ScreenWidth:
+			# to to next row
+			x = 0
+			y += self.TileHeight
+			if y + self.TileHeight > self.ScreenHeight:
+				# ran out of room on this server!!!
+				return 0
+		# It'll fit, save it
+		mx = col * self.TileWidth   # mural X coord
+		my = row * self.TileHeight  # mural Y coord
+		muralTile = (mx, my, self.TileWidth, self.TileHeight)
+		self.ServerTiles[server].append( muralTile )
+		self.Tiles.append( (row, col, server) )
+		# Update NextTile position for this server
+		x += self.TileWidth
+		self.NextTile[server] = (x, y)
+		return 1
+
+	def PrintTiles(self):
+		# for debug only
+		for i in range(len(self.ServerTiles)):
+			print "server %d" % i
+			for tile in self.ServerTiles[i]:
+				print "  (%d, %d, %d, %d)" % tile
+
+	def LayoutTiles(self):
+		"""Compute locations and hosts for the tiles."""
+
+		# initialize tile lists
+		self.ServerTiles = []
+		self.Tiles = []  # tuples (row, col, server)
+		self.NextTile = []  # array [server] of array (row,col)
+		for i in range(self.NumServers):
+			self.ServerTiles.append( [] )
+			self.NextTile.append( (0, 0) )
+
+		# begin layout
+		if self.Layout == 0:
+			# Simple raster order layout
+			for i in range(self.Rows):
+				for j in range(self.Columns):
+					server = (i * self.Columns + j) % self.NumServers
+					self.__AllocTile(server, i, j)
+			#endfor
+		elif self.Layout == 1:
+			# Slightly different raster order layout
+			for i in range(self.Rows):
+				for j in range(self.Columns):
+					if i % 2 == 1:
+						# odd row
+						server = (i * self.Columns + (self.Columns - j - 1)) % self.NumServers
+					else:
+						# even row
+						server = (i * self.Columns + j) % self.NumServers
+					self.__AllocTile(server, i, j)
+			#endfor
+		else:
+			# Spiral outward from the center (this is a little tricky)
+			assert self.Layout == 2
+			curRow = (self.Rows - 1) / 2
+			curCol = (self.Columns - 1) / 2
+			radius = 0
+			march = 0
+			colStep = 0
+			rowStep = -1
+			serv = 0
+			while 1:
+				assert ((rowStep == 0 and colStep != 0) or
+						(rowStep != 0 and colStep == 0))
+				if (curRow >= 0 and curRow < self.Rows and
+					curCol >= 0 and	curCol < self.Columns):
+					# save this tile location
+					#server = len(self.Tiles) % self.NumServers
+					server = serv % self.NumServers
+					assert (curRow, curCol, server) not in self.Tiles
+					if not self.__AllocTile(server, curRow, curCol):
+						outOfSpace = 1
+					else:
+						outOfSpace = 0
+					# check if we're done
+					if ((len(self.Tiles) >= self.Rows * self.Columns) or
+						outOfSpace):
+						# all done
+						break
+				serv += 1
+				# advance to next space
+				march += 1
+				if march < radius:
+					# step in current direction
+					curRow += rowStep
+					curCol += colStep
+					pass
+				else:
+					# change direction
+					if colStep == 1 and rowStep == 0:
+						# transition right -> down
+						colStep = 0
+						rowStep = 1
+					elif colStep == 0 and rowStep == 1:
+						# transition down -> left
+						colStep = -1
+						rowStep = 0
+						radius += 1
+					elif colStep == -1 and rowStep == 0:
+						# transition left -> up
+						colStep = 0
+						rowStep = -1
+					else:
+						# transition up -> right
+						assert colStep == 0
+						assert rowStep == -1
+						colStep = 1
+						rowStep = 0
+						radius += 1
+					#endif
+					march = 0
+					curRow += rowStep
+					curCol += colStep
+				#endif
+			#endwhile
+		#endif
+	#enddef
+
+
 
 # Predefined tile sizes shown in the wxChoice widget (feel free to change)
 CommonTileSizes = [ [32, 32],
@@ -88,12 +233,120 @@ ServerColors = [
 
 #----------------------------------------------------------------------------
 
-# This is the guts of the tilesort configuration script.
+# This is the guts of the configuration script.
 # It's simply appended to the file after we write all the configuration options
 __ConfigBody = """
 import string, sys
 sys.path.append( "../server" )
 from mothership import *
+
+# Check for program name/args on command line
+if len(sys.argv) == 1:
+	program = GLOBAL_default_app
+else:
+	program = string.join(sys.argv[1:])
+if program == "":
+	print "No program to run!"
+	sys.exit(-1)
+
+# Determine if tiles are on one server or many
+if (len(SERVER_HOSTS) >= 2) and (SERVER_HOSTS[0] != SERVER_HOSTS[1]):
+	singleServer = 0
+else:
+	singleServer = 1
+
+localHostname = os.uname()[1]
+
+cr = CR()
+cr.MTU( GLOBAL_MTU )
+
+
+tilesortSPUs = []
+clientNodes = []
+
+for i in range(NUM_APP_NODES):
+	tilesortspu = SPU('tilesort')
+	tilesortspu.Conf('broadcast', TILESORT_broadcast)
+	tilesortspu.Conf('optimize_bucket', TILESORT_optimize_bucket)
+	tilesortspu.Conf('sync_on_swap', TILESORT_sync_on_swap)
+	tilesortspu.Conf('sync_on_finish', TILESORT_sync_on_finish)
+	tilesortspu.Conf('draw_bbox', TILESORT_draw_bbox)
+	tilesortspu.Conf('bbox_line_width', TILESORT_bbox_line_width)
+	#tilesortspu.Conf('fake_window_dims', fixme)
+	tilesortspu.Conf('scale_to_mural_size', TILESORT_scale_to_mural_size)
+	tilesortSPUs.append(tilesortspu)
+
+	clientnode = CRApplicationNode()
+	clientnode.AddSPU(tilesortspu)
+
+	# argument substitutions
+	if i == 0 and GLOBAL_zeroth_arg != "":
+		app_string = string.replace( program, '%0', GLOBAL_zeroth_arg)
+	else:
+		app_string = string.replace( program, '%0', '' )
+	app_string = string.replace( app_string, '%I', str(i) )
+	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
+	clientnode.SetApplication( app_string )
+	clientnode.StartDir( GLOBAL_default_dir )
+
+	if GLOBAL_auto_start:
+		clientnode.AutoStart( ["/bin/sh", "-c",
+				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
+
+	clientNodes.append(clientnode)
+
+
+NumServers = len(TILES)
+SCREEN_HEIGHT = 1280
+SCREEN_WIDTH = 1024
+
+# Loop over servers
+for serverIndex in range(NumServers):
+
+	# Create this server's render SPU
+	renderspu = SPU('render')
+	renderspu.Conf('try_direct', RENDER_try_direct)
+	renderspu.Conf('force_direct', RENDER_force_direct)
+	renderspu.Conf('fullscreen', RENDER_fullscreen)
+	renderspu.Conf('title', RENDER_title)
+	renderspu.Conf('system_gl_path', RENDER_system_gl_path)
+
+	# Setup render SPU's window geometry
+	if singleServer:
+		renderspu.Conf('window_geometry', 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+		host = SERVER_HOSTS[0]
+	else:
+		renderspu.Conf('window_geometry', 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+		host = SERVER_HOSTS[serverIndex]
+	servernode = CRNetworkNode(host)
+
+	# Add the tiles
+	serverTiles = TILES[serverIndex]
+	for tile in serverTiles:
+		servernode.AddTile(tile[0], tile[1], tile[2], tile[3])
+
+	# Add SPU to node, node to mothership
+	servernode.AddSPU(renderspu)
+	servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
+	cr.AddNode(servernode)
+
+	# connect app nodes to server
+	for i in range(NUM_APP_NODES):
+		tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port = 7000 + serverIndex)
+
+	# auto-start
+	if GLOBAL_auto_start:
+		servernode.AutoStart( ["/usr/bin/rsh", host,
+								"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
+
+
+for i in range(NUM_APP_NODES):
+	cr.AddNode(clientNodes[i])
+cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
+cr.SetParam('match_window_title', GLOBAL_match_window_title)
+cr.SetParam('show_cursor', GLOBAL_show_cursor)
+cr.Go()
+
 """
 
 
@@ -134,121 +387,6 @@ def FindRenderSPU(mothership):
 	return renderSPU
 
 
-
-#----------------------------------------------------------------------------
-
-# This is the guts of the configuration script.
-# It's simply appended to the file after we write all the configuration options
-ConfigBody = """
-import string
-import sys
-sys.path.append( "../server" )
-sys.path.append( "../tools" )
-from mothership import *
-from crutils import *
-
-# Get program name
-if len(sys.argv) == 1:
-	program = GLOBAL_default_app
-elif len(sys.argv) == 2:
-	program = sys.argv[1]
-else:
-	print "Usage: %s <program>" % sys.argv[0] 
-	sys.exit(-1)
-if program == "":
-	print "No program to run!"
-	sys.exit(-1)
-
-# Determine if tiles are on one server or many
-if string.find(HOSTNAME, '#') == -1:
-	singleServer = 1
-else:
-	singleServer = 0
-
-localHostname = os.uname()[1]
-
-cr = CR()
-cr.MTU( GLOBAL_MTU )
-
-tilesortspu = SPU('tilesort')
-tilesortspu.Conf('broadcast', TILESORT_broadcast)
-tilesortspu.Conf('optimize_bucket', TILESORT_optimize_bucket)
-tilesortspu.Conf('sync_on_swap', TILESORT_sync_on_swap)
-tilesortspu.Conf('sync_on_finish', TILESORT_sync_on_finish)
-tilesortspu.Conf('draw_bbox', TILESORT_draw_bbox)
-tilesortspu.Conf('bbox_line_width', TILESORT_bbox_line_width)
-#tilesortspu.Conf('fake_window_dims', fixme)
-tilesortspu.Conf('scale_to_mural_size', TILESORT_scale_to_mural_size)
-
-
-clientnode = CRApplicationNode()
-clientnode.AddSPU(tilesortspu)
-
-clientnode.StartDir( crbindir )
-clientnode.SetApplication( os.path.join(crbindir, program) )
-if GLOBAL_auto_start:
-	clientnode.AutoStart( ["/bin/sh", "-c",
-		"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
-
-
-for row in range(TILE_ROWS):
-	for col in range(TILE_COLS):
-
-		# layout directions
-		if RIGHT_TO_LEFT:
-			j = TILE_COLS - col - 1
-		else:
-			j = col
-		if BOTTOM_TO_TOP:
-			i = TILE_ROWS - row - 1
-		else:
-			i = row
-
-		# compute index for this tile
-		index = i * TILE_COLS + j
-
-		renderspu = SPU('render')
-		renderspu.Conf('try_direct', RENDER_try_direct)
-		renderspu.Conf('force_direct', RENDER_force_direct)
-		renderspu.Conf('fullscreen', RENDER_fullscreen)
-		renderspu.Conf('title', RENDER_title)
-		renderspu.Conf('system_gl_path', RENDER_system_gl_path)
-
-		if singleServer:
-			renderspu.Conf('window_geometry',
-						   int(1.1 * col * TILE_WIDTH),
-						   int(1.1 * row * TILE_HEIGHT),
-						   TILE_WIDTH, TILE_HEIGHT)
-			host = HOSTNAME
-		else:
-			renderspu.Conf('window_geometry', 0, 0, TILE_WIDTH, TILE_HEIGHT)
-			host = MakeHostname(HOSTNAME, HOSTSTART + index)
-		servernode = CRNetworkNode(host)
-
-		servernode.AddTile(col * TILE_WIDTH,
-						   (TILE_ROWS - row - 1) * TILE_HEIGHT,
-						   TILE_WIDTH, TILE_HEIGHT)
-
-		servernode.AddSPU(renderspu)
-		servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
-
-		cr.AddNode(servernode)
-		tilesortspu.AddServer(servernode, protocol='tcpip', port = 7000 + index)
-
-		if GLOBAL_auto_start:
-			servernode.AutoStart( ["/usr/bin/rsh", host,
-									"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
-
-
-cr.AddNode(clientnode)
-cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
-cr.SetParam('match_window_title', GLOBAL_match_window_title)
-cr.SetParam('show_cursor', GLOBAL_show_cursor)
-cr.Go()
-
-"""
-
-
 #----------------------------------------------------------------------------
 
 class LightningDialog(wxDialog):
@@ -277,9 +415,8 @@ class LightningDialog(wxDialog):
 		self.HostNamePattern = "host##"
 		self.HostNameStart = 0
 		self.HostNameCount = 4
-		self.Tiles = []
 
-		# this sizer holds all the tilesort control widgets
+		# this sizer holds all the control widgets
 		toolSizer = wxBoxSizer(wxVERTICAL)
 
 		# Server hosts
@@ -319,8 +456,8 @@ class LightningDialog(wxDialog):
 										id=id_MuralHeight,
 										value="4", min=1, max=16,
 										size=wxSize(50,25))
-		EVT_SPINCTRL(self.columnsControl, id_MuralWidth, self.onSizeChange)
-		EVT_SPINCTRL(self.rowsControl, id_MuralHeight, self.onSizeChange)
+		EVT_SPINCTRL(self.columnsControl, id_MuralWidth, self.__onSizeChange)
+		EVT_SPINCTRL(self.rowsControl, id_MuralHeight, self.__onSizeChange)
 		flexSizer.Add(columnsLabel, flag=wxALIGN_CENTER_VERTICAL)
 		flexSizer.Add(self.columnsControl)
 		flexSizer.Add(rowsLabel, flag=wxALIGN_CENTER_VERTICAL)
@@ -352,9 +489,9 @@ class LightningDialog(wxDialog):
 											id=id_TileHeight,
 											value="256", min=8, max=2048,
 											size=wxSize(80,25))
-		EVT_SPINCTRL(self.tileWidthControl, id_TileWidth, self.onSizeChange)
-		EVT_SPINCTRL(self.tileHeightControl, id_TileHeight, self.onSizeChange)
-		EVT_CHOICE(self.tileChoice, id_TileChoice, self.onTileChoice)
+		EVT_SPINCTRL(self.tileWidthControl, id_TileWidth, self.__onSizeChange)
+		EVT_SPINCTRL(self.tileHeightControl, id_TileHeight, self.__onSizeChange)
+		EVT_CHOICE(self.tileChoice, id_TileChoice, self.__onTileChoice)
 		flexSizer.Add(self.tileWidthLabel, flag=wxALIGN_CENTER_VERTICAL)
 		flexSizer.Add(self.tileWidthControl)
 		flexSizer.Add(self.tileHeightLabel, flag=wxALIGN_CENTER_VERTICAL)
@@ -381,12 +518,12 @@ class LightningDialog(wxDialog):
 									  majorDimension=1,
 									  style=wxRA_SPECIFY_COLS )
 		toolSizer.Add(self.layoutRadio, flag=wxEXPAND)
-		EVT_RADIOBOX(self.layoutRadio, id_Layout, self.onLayoutChange)
+		EVT_RADIOBOX(self.layoutRadio, id_Layout, self.__onLayoutChange)
 
 		# Setup the drawing area
 		self.drawArea = wxPanel(self, id=-1, style=wxSUNKEN_BORDER)
 		self.drawArea.SetBackgroundColour(BackgroundColor)
-		EVT_PAINT(self.drawArea, self.onPaintEvent)
+		EVT_PAINT(self.drawArea, self.__onPaintEvent)
 
 		# Sizer for the OK, Cancel buttons
 		okCancelSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
@@ -469,93 +606,6 @@ class LightningDialog(wxDialog):
 		self.Template.TileHeight = self.tileHeightControl.GetValue()
 		self.Template.Layout = self.layoutRadio.GetSelection()
 
-	def __LayoutTiles(self):
-		"""Compute location and host number for the tiles."""
-		cols = self.Template.Columns
-		rows = self.Template.Rows
-		numServers = self.Template.NumServers
-		layoutOrder = self.Template.Layout
-		self.Tiles = []  # list of (row, tile, server) tuples
-		if layoutOrder == 0:
-			# Simple raster order layout
-			for i in range(rows):
-				for j in range(cols):
-					server = (i * cols + j) % numServers
-					self.Tiles.append((i, j, server))
-		elif layoutOrder == 1:
-			# Slightly different raster order layout
-			for i in range(rows):
-				for j in range(cols):
-					if i % 2 == 1:
-						# odd row
-						server = (i * cols + (cols - j - 1)) % numServers
-					else:
-						# even row
-						server = (i * cols + j) % numServers
-					self.Tiles.append((i, j, server))
-		else:
-			# Spiral outward from the center (this is a little tricky)
-			assert layoutOrder == 2
-			curRow = (rows - 1) / 2
-			curCol = (cols - 1) / 2
-			radius = 0
-			march = 0
-			colStep = 0
-			rowStep = -1
-			serv = 0
-			while 1:
-				assert ((rowStep == 0 and colStep != 0) or
-						(rowStep != 0 and colStep == 0))
-				if (curRow >= 0 and curRow < rows and
-					curCol >= 0 and	curCol < cols):
-					# save this tile location
-					#server = len(self.Tiles) % numServers
-					server = serv % numServers
-					assert (curRow, curCol, server) not in self.Tiles
-					self.Tiles.append((curRow, curCol, server))
-					# check if we're done
-					if len(self.Tiles) >= rows * cols:
-						# all done
-						break
-				serv += 1
-				# advance to next space
-				march += 1
-				if march < radius:
-					# step in current direction
-					curRow += rowStep
-					curCol += colStep
-					pass
-				else:
-					# change direction
-					if colStep == 1 and rowStep == 0:
-						# transition right -> down
-						colStep = 0
-						rowStep = 1
-					elif colStep == 0 and rowStep == 1:
-						# transition down -> left
-						colStep = -1
-						rowStep = 0
-						radius += 1
-					elif colStep == -1 and rowStep == 0:
-						# transition left -> up
-						colStep = 0
-						rowStep = -1
-					else:
-						# transition up -> right
-						assert colStep == 0
-						assert rowStep == -1
-						colStep = 1
-						rowStep = 0
-						radius += 1
-					#endif
-					march = 0
-					curRow += rowStep
-					curCol += colStep
-				#endif
-			#endwhile
-		#endif
-	#enddef
-
 		
 	#----------------------------------------------------------------------
 	# Widget callback functions
@@ -571,7 +621,7 @@ class LightningDialog(wxDialog):
 			newHosts = crutils.MakeHostnames(self.Template.ServerPattern[0],
 											 start, n)
 			self.Template.ServerHosts += newHosts
-		self.__LayoutTiles()
+		self.Template.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -587,15 +637,15 @@ class LightningDialog(wxDialog):
 		self.drawArea.Refresh()
 		self.dirty = true
 
-	def onSizeChange(self, event):
+	def __onSizeChange(self, event):
 		"""Called when tile size changes with spin controls."""
 		self.__UpdateVarsFromWidgets()
 		self.__UpdateDependentWidgets()
-		self.__LayoutTiles()
+		self.Template.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
-	def onTileChoice(self, event):
+	def __onTileChoice(self, event):
 		"""Called when tile size changes with combo-box control."""
 		i = self.tileChoice.GetSelection()
 		if i < len(CommonTileSizes):
@@ -605,14 +655,14 @@ class LightningDialog(wxDialog):
 			self.tileHeightControl.SetValue(h)
 		self.__UpdateVarsFromWidgets()
 		self.__UpdateDependentWidgets()
-		self.__LayoutTiles()
+		self.Template.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
-	def onLayoutChange(self, event):
+	def __onLayoutChange(self, event):
 		"""Called when Layout order changes."""
 		self.__UpdateVarsFromWidgets()
-		self.__LayoutTiles()
+		self.Template.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -625,7 +675,7 @@ class LightningDialog(wxDialog):
 		"""Called by Cancel button"""
 		self.EndModal(wxID_CANCEL)
 
-	def onPaintEvent(self, event):
+	def __onPaintEvent(self, event):
 		""" Respond to a request to redraw the contents of our drawing panel.
 		"""
 		# border around the window and space between the tiles
@@ -670,7 +720,7 @@ class LightningDialog(wxDialog):
 		hosts = self.Template.ServerHosts
 		numColors = len(ServerColors)
 		numServers = self.Template.NumServers
-		for (row, col, server) in self.Tiles:
+		for (row, col, server) in self.Template.Tiles:
 			x = col * (w + space) + border
 			y = row * (h + space) + border
 			color = server % numColors
@@ -710,7 +760,7 @@ class LightningDialog(wxDialog):
 		self.Template.UpdateFromMothership(mothership)
 		self.__UpdateWidgetsFromVars()
 		self.__UpdateDependentWidgets()
-		self.__LayoutTiles()
+		self.Template.LayoutTiles()
 		# show the dialog
 		retVal = wxDialog.ShowModal(self)
 		if retVal == wxID_OK:
@@ -725,7 +775,7 @@ class LightningDialog(wxDialog):
 
 
 def Create_Lightning2(parentWindow, mothership):
-	"""Create a tilesort configuration"""
+	"""Create a Lightning2- configuration"""
 	defaultMuralSize = crutils.GetSiteDefault("mural_size")
 	if defaultMuralSize:
 		dialogDefaults = [ 1, defaultMuralSize[0], defaultMuralSize[1] ]
@@ -745,7 +795,7 @@ def Create_Lightning2(parentWindow, mothership):
 		dialog.Destroy()
 		return 0
 
-	# Init tilesort parameters
+	# Init parameters
 	values = dialog.GetValues()
 	numClients = values[0]
 	numServers = values[1]
@@ -758,8 +808,14 @@ def Create_Lightning2(parentWindow, mothership):
 		mothership.Template.ServerHosts = hosts
 	tileSize = crutils.GetSiteDefault("tile_size")
 	if tileSize:
-		mothership.TemplateTileWidth = tileSize[0]
-		mothership.TemplateTileHeight = tileSize[1]
+		mothership.Template.TileWidth = tileSize[0]
+		mothership.Template.TileHeight = tileSize[1]
+	screenSize = crutils.GetSiteDefault("screen_size")
+	if screenSize:
+		mothership.Template.ScreenWidth = screenSize[0]
+		mothership.Template.ScreenHeight = screenSize[1]
+
+	mothership.Template.LayoutTiles()  # initial tile layout
 
 	# build the graph
 	mothership.DeselectAllNodes()
@@ -826,7 +882,7 @@ def Edit_Lightning2(parentWindow, mothership):
 	# reuse it in the future.
 	t = Is_Lightning2(mothership)
 	if not t:
-		print "This is not a tilesort configuration!"
+		print "This is not a Lightning-2 configuration!"
 		return
 
 	print "Edit lightning-2"
@@ -839,14 +895,44 @@ def Edit_Lightning2(parentWindow, mothership):
 
 
 def Read_Lightning2(mothership, fileHandle):
-	"""Read a tilesort config from the given file handle."""
+	"""Read a Lightning-2 config from the given file handle."""
 	pass
 
 
 def Write_Lightning2(mothership, file):
-	"""Write a tilesort config to the given file handle."""
+	"""Write a Lightning-2 config to the given file handle."""
 	assert Is_Lightning2(mothership)
-	assert mothership.GetTemplateType() == "Lightning2"
+	assert mothership.GetTemplateType() == "Lightning-2"
 
-	print "Writing tilesort config"
+	print "Writing Lightning-2 config"
 
+	template = mothership.Template
+	clientNode = FindClientNode(mothership)
+	serverNode = FindServerNode(mothership)
+
+	file.write('TEMPLATE = "Lightning-2"\n')
+	file.write("NUM_SERVERS = %d\n" % template.NumServers)
+	file.write("TILE_ROWS = %d\n" % template.Rows)
+	file.write("TILE_COLS = %d\n" % template.Columns)
+	file.write("TILE_WIDTH = %d\n" % template.TileWidth)
+	file.write("TILE_HEIGHT = %d\n" % template.TileHeight)
+	file.write("LAYOUT = %d\n" % template.Layout)
+	file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
+	file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
+	file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
+	file.write("TILES = %s\n" % str(template.ServerTiles))
+
+	# write tilesort SPU options
+	tilesortSPU = FindTilesortSPU(mothership)
+	configio.WriteSPUOptions(tilesortSPU, "TILESORT", file)
+
+	# write render SPU options
+	renderSPU = FindRenderSPU(mothership)
+	configio.WriteSPUOptions(renderSPU, "RENDER", file)
+
+	# write server and global options
+	configio.WriteServerOptions(mothership, file)
+	configio.WriteGlobalOptions(mothership, file)
+
+	file.write("# end of options, the rest is boilerplate\n")
+	file.write(__ConfigBody)
