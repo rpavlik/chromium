@@ -33,22 +33,29 @@ static const CRPixelPackState defaultPacking = {
 
 keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 
+for func_name in keys:
+	props = apiutil.Properties(func_name)
+	if "pixelstore" in props and "get" not in props:
+	    return_type = apiutil.ReturnType(func_name)
+	    params = apiutil.Parameters(func_name)
+	    print 'static %s TILESORTSPU_APIENTRY tilesortspuDiff%s( %s )' % (return_type, func_name, apiutil.MakeDeclarationString( params ) )
+	    print '{'
+	    params.append( ('&defaultPacking', 'foo', 0) )
+	    print '\tif (tilesort_spu.swap)'
+	    print '\t{'
+	    print '\t\tcrPack%sSWAP( %s );' % (func_name, apiutil.MakeCallString( params ) )
+	    print '\t}'
+	    print '\telse'
+	    print '\t{'
+	    print '\t\tcrPack%s( %s );' % (func_name, apiutil.MakeCallString( params ) )
+	    print '\t}'
+	    print '}'
 
-for func_name in apiutil.AllSpecials( "tilesort_pixel" ):
-	return_type = apiutil.ReturnType(func_name)
-	params = apiutil.Parameters(func_name)
-	print 'static %s TILESORTSPU_APIENTRY tilesortspuDiff%s( %s )' % (return_type, func_name, apiutil.MakeDeclarationString( params ) )
-	print '{'
-	params.append( ('&defaultPacking', 'foo', 0) )
-	print '\tif (tilesort_spu.swap)'
-	print '\t{'
-	print '\t\tcrPack%sSWAP( %s );' % (func_name, apiutil.MakeCallString( params ) )
-	print '\t}'
-	print '\telse'
-	print '\t{'
-	print '\t\tcrPack%s( %s );' % (func_name, apiutil.MakeCallString( params ) )
-	print '\t}'
-	print '}'
+print """
+static void nop(void)
+{
+}
+"""
 
 print """
 void tilesortspuCreateDiffAPI( void )
@@ -63,13 +70,18 @@ void tilesortspuCreateDiffAPI( void )
 """
 
 for func_name in keys:
+	props = apiutil.Properties(func_name)
 
 	if not apiutil.CanPack(func_name):
 		continue
 
-	if "get" in apiutil.Properties(func_name):
+	if func_name in ['ActiveTextureARB', 'TexEnviv']:
+		print '\tdiff.%s = (%sFunc_t) nop;' % (func_name, func_name)
+		continue
+
+	if "get" in props:
 		print '\tdiff.%s = NULL;' % func_name
-	elif apiutil.FindSpecial( "tilesort_pixel", func_name ):
+	elif "pixelstore" in props:
 		print '\tdiff.%s = tilesortspuDiff%s;' % (func_name, func_name)
 	else:
 		print '\tdiff.%s = tilesort_spu.swap ? crPack%sSWAP : crPack%s;' % (func_name, func_name, func_name)

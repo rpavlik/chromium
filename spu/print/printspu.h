@@ -46,6 +46,12 @@ extern void PRINT_APIENTRY printMultMatrixd( const GLdouble *m );
 
 extern void PRINT_APIENTRY printChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values);
 extern void PRINT_APIENTRY printChromiumParameteriCR(GLenum target, GLint value);
+extern void PRINT_APIENTRY printGenTextures( GLsizei n, GLuint * textures );
+
+extern void PRINT_APIENTRY printTexEnvf( GLenum target, GLenum pname, GLfloat param );
+extern void PRINT_APIENTRY printTexEnvfv( GLenum target, GLenum pname, const GLfloat * params );
+extern void PRINT_APIENTRY printTexEnvi( GLenum target, GLenum pname, GLint param );
+extern void PRINT_APIENTRY printTexEnviv( GLenum target, GLenum pname, const GLint * params );
 
 
 

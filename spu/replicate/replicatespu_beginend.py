@@ -27,6 +27,9 @@ void REPLICATESPU_APIENTRY replicatespu_Begin( GLenum mode )
 
 	CRASSERT( mode >= GL_POINTS && mode <= GL_POLYGON );
 
+	if (thread->currentContext->displayListMode != GL_FALSE) {
+		crDLMCompileBegin(mode);
+	}
 	if (replicate_spu.swap)
 	{
 		crPackBeginSWAP( mode );
@@ -78,6 +81,9 @@ void REPLICATESPU_APIENTRY replicatespu_End( void )
 		buf->pack = NULL;
 	}
 
+	if (thread->currentContext->displayListMode != GL_FALSE) {
+		crDLMCompileEnd();
+	}
 	if (replicate_spu.swap)
 	{
 		crPackEndSWAP();
@@ -148,15 +154,20 @@ static void RunState( void )
 for func_name in apiutil.AllSpecials( "replicatespu_vertex" ):
 	return_type = apiutil.ReturnType(func_name)
 	params = apiutil.Parameters(func_name)
+	callstring = apiutil.MakeCallString(params)
 	print 'void REPLICATESPU_APIENTRY replicatespu_%s( %s )' % ( func_name, apiutil.MakeDeclarationString( params ) )
 	print '{'
+	print '\tGET_THREAD(thread);'
+	print '\tif (thread->currentContext->displayListMode != GL_FALSE) {'
+	print '\t\tcrDLMCompile%s(%s);' % (func_name, callstring)
+	print '\t}'
 	print '\tif (replicate_spu.swap)'
 	print '\t{'
-	print '\t\tcrPack%sSWAP( %s );' % ( func_name, apiutil.MakeCallString( params ) )
+	print '\t\tcrPack%sSWAP( %s );' % ( func_name, callstring )
 	print '\t}'
 	print '\telse'
 	print '\t{'
-	print '\t\tcrPack%s( %s );' % ( func_name, apiutil.MakeCallString( params ) )
+	print '\t\tcrPack%s( %s );' % ( func_name, callstring)
 	print '\t}'
 	print '\tRunState();'
 	print '}'

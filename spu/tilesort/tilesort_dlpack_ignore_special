@@ -1,0 +1,8 @@
+# These never actually appear in a display list, because they
+# are compiled into other elements.  
+ArrayElement
+DrawArrays
+DrawElements
+DrawRangeElements
+MultiDrawArraysEXT
+MultiDrawElementsEXT

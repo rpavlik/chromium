@@ -70,6 +70,7 @@ replicateSPUInit( int id, SPU *child, SPU *self,
 	replicatespuCreateFunctions();
 	crStateInit();
 	replicatespuCreateDiffAPI();
+	replicatespuCreateStateAPI();
 
 	return &replicate_functions;
 }

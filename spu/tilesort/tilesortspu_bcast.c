@@ -5,7 +5,7 @@
  */
 
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 #include "cr_packfunctions.h"
 #include "cr_error.h"
 #include "state/cr_stateerror.h"
@@ -19,6 +19,13 @@
 void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 {
 	GET_THREAD(thread);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    if (tilesort_spu.lazySendDLists) crDLMCompileAccum(op, value);
+	    else if (tilesort_spu.swap) crPackAccumSWAP( op, value );
+	    else crPackAccum( op, value );
+	    return;
+	}
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -31,7 +38,6 @@ void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 	tilesortspuBroadcastGeom(GL_TRUE);
 }
 
-
 /**
  * Implementation of glClean for tilesorter
  * \param mask
@@ -39,7 +45,16 @@ void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 {
 	GET_THREAD(thread);
+	GLenum dlMode = thread->currentContext->displayListMode;
 	const WindowInfo *winInfo = thread->currentContext->currentWindow;
+
+	if (dlMode != GL_FALSE) {
+	    /* just creating and/or compiling display lists */
+	    if (tilesort_spu.lazySendDLists) crDLMCompileClear(mask);
+	    else if (tilesort_spu.swap) crPackClearSWAP(mask);
+	    else crPackClear(mask);
+	    return;
+	}
 
 	if (winInfo->passiveStereo) {
 		/* only send Clear to left/right servers */
@@ -152,8 +167,13 @@ void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
-
-	/* XXX \todo check if we're compiling a display list, if so, error! */
+	GLenum dlMode = thread->currentContext->displayListMode;
+	/* check if we're compiling a display list, if so, error! */
+	if (dlMode != GL_FALSE) {
+	    crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+		"tilesortspu_BarrierCreateCR called during DL compilation");
+	    return;
+	}
 
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
@@ -175,7 +195,13 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX \todo check if we're compiling a display list, if so, error! */
+	GLenum dlMode = thread->currentContext->displayListMode;
+	/* check if we're compiling a display list, if so, error! */
+	if (dlMode != GL_FALSE) {
+	    crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+		"tilesortspu_BarrierDestroyCR called during DL compilation");
+	    return;
+	}
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -198,7 +224,13 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX \todo check if we're compiling a display list, if so, error! */
+	GLenum dlMode = thread->currentContext->displayListMode;
+	/* check if we're compiling a display list, if so, error! */
+	if (dlMode != GL_FALSE) {
+	    crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+		"tilesortspu_BarrierExecCR called during DL compilation");
+	    return;
+	}
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -223,7 +255,13 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
-	/* XXX \todo check if we're compiling a display list, if so, error! */
+	GLenum dlMode = thread->currentContext->displayListMode;
+	/* check if we're compiling a display list, if so, error! */
+	if (dlMode != GL_FALSE) {
+	    crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+		"tilesortspu_SemaphoreCreateCR called during DL compilation");
+	    return;
+	}
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -244,7 +282,13 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreateCR(GLuint name, GLuint coun
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX \todo check if we're compiling a display list, if so, error! */
+	GLenum dlMode = thread->currentContext->displayListMode;
+	/* check if we're compiling a display list, if so, error! */
+	if (dlMode != GL_FALSE) {
+	    crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+		"tilesortspu_SemaphoreDestroyCR called during DL compilation");
+	    return;
+	}
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -266,7 +310,13 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroyCR(GLuint name)
 void TILESORTSPU_APIENTRY tilesortspu_SemaphorePCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX \todo check if we're compiling a display list, if so, error! */
+	GLenum dlMode = thread->currentContext->displayListMode;
+	/* check if we're compiling a display list, if so, error! */
+	if (dlMode != GL_FALSE) {
+	    crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+		"tilesortspu_SemaphorePCR called during DL compilation");
+	    return;
+	}
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -288,7 +338,13 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphorePCR(GLuint name)
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreVCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX \todo check if we're compiling a display list, if so, error! */
+	GLenum dlMode = thread->currentContext->displayListMode;
+	/* check if we're compiling a display list, if so, error! */
+	if (dlMode != GL_FALSE) {
+	    crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+		"tilesortspu_SemaphoreVCR called during DL compilation");
+	    return;
+	}
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -366,4 +422,3 @@ tilesortspu_DeleteBuffersARB(GLsizei n, const GLuint *buffers)
 	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
-

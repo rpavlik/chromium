@@ -11,7 +11,7 @@
 #include "cr_mem.h"
 #include "cr_string.h"
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 #include "cr_warp.h"
 #include "cr_hull.h"
 

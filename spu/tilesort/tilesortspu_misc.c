@@ -7,7 +7,7 @@
 #include "cr_packfunctions.h"
 #include "cr_error.h"
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 
 #include <float.h>
 

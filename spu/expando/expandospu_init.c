@@ -42,7 +42,10 @@ expandoSPUInit( int id, SPU *child, SPU *self,
 	expandospuGatherConfiguration();
 
 	/* Expando-specific initialization */
-  expando_spu.contextTable = crAllocHashtable();
+	expando_spu.contextTable = crAllocHashtable();
+
+	/* We'll be using the state tracker for each context */
+	crStateInit();
 
 	return &expando_functions;
 }
@@ -56,17 +59,11 @@ expandoSPUSelfDispatch(SPUDispatchTable *self)
 	expando_spu.server = (CRServer *)(self->server);
 }
 
-void expando_free_dlm_context(void *data)
-{
-		CRDLMContextState *dlmContext = (CRDLMContextState *)data;
-
-		crDLMFreeContext(dlmContext);
-}
 
 static int
 expandoSPUCleanup(void)
 {
-  crFreeHashtable(expando_spu.contextTable, expando_free_dlm_context);
+  crFreeHashtable(expando_spu.contextTable, expando_free_context_state);
 	return 1;
 }
 

@@ -11,6 +11,9 @@ SUBDIRS = tester options
 SUBDIRS += error nop pack passthrough print readback render template tilesort
 SUBDIRS += saveframe comm array binaryswap hiddenline fps wet perf dist_texture
 SUBDIRS += feedback simplequery motionblur injector expando matte grabber
+#SUBDIRS += broadcast
+SUBDIRS += grey16
+SUBDIRS += tgrb
 
 ifeq ($(USE_VNC), 1)
 ifeq ($(THREADSAFE), 1)

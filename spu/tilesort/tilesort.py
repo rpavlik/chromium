@@ -21,7 +21,7 @@ print """
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 """
 
 num_funcs = len(keys)

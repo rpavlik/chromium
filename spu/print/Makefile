@@ -15,7 +15,8 @@ FILES = printspu \
 	printspu_init \
 	printspu_lighting \
 	printspu_matrices \
-	printspu_misc
+	printspu_misc \
+	printspu_tex
 
 LIBRARIES = crutil crmothership spuload
 

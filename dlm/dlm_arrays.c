@@ -9,23 +9,20 @@
 #include "chromium.h"
 #include "cr_dlm.h"
 #include "dlm.h"
-#include "dlm_dispatch.h"
 
-/**
- * XXX \todo this code is awefully similar to the code in arrayspu.c
+/*
+ * XXX this code is awfully similar to the code in arrayspu.c
  * We should try to write something reusable.
  */
 
-void DLM_APIENTRY crdlm_compile_ArrayElement (GLint index)
+void DLM_APIENTRY crDLMCompileArrayElement (GLint index, CRClientState *c)
 {
   unsigned char *p;
   int unit;
-  CRDLMContextState *state = CURRENT_STATE();
-  CRClientState *c = state->clientState;
 
   if (c->array.e.enabled)
   {
-    crdlm_compile_EdgeFlagv(c->array.e.p + index*c->array.e.stride);
+    crDLMCompileEdgeFlagv(c->array.e.p + index*c->array.e.stride);
   }
   for (unit = 0; unit < CR_MAX_TEXTURE_UNITS; unit++)
   {
@@ -37,37 +34,37 @@ void DLM_APIENTRY crdlm_compile_ArrayElement (GLint index)
         case GL_SHORT:
           switch (c->array.t[c->curClientTextureUnit].size)
           {
-            case 1: crdlm_compile_MultiTexCoord1svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
-            case 2: crdlm_compile_MultiTexCoord2svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
-            case 3: crdlm_compile_MultiTexCoord3svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
-            case 4: crdlm_compile_MultiTexCoord4svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
+            case 1: crDLMCompileMultiTexCoord1svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
+            case 2: crDLMCompileMultiTexCoord2svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
+            case 3: crDLMCompileMultiTexCoord3svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
+            case 4: crDLMCompileMultiTexCoord4svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
           }
           break;
         case GL_INT:
           switch (c->array.t[c->curClientTextureUnit].size)
           {
-            case 1: crdlm_compile_MultiTexCoord1ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
-            case 2: crdlm_compile_MultiTexCoord2ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
-            case 3: crdlm_compile_MultiTexCoord3ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
-            case 4: crdlm_compile_MultiTexCoord4ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
+            case 1: crDLMCompileMultiTexCoord1ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
+            case 2: crDLMCompileMultiTexCoord2ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
+            case 3: crDLMCompileMultiTexCoord3ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
+            case 4: crDLMCompileMultiTexCoord4ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
           }
           break;
         case GL_FLOAT:
           switch (c->array.t[c->curClientTextureUnit].size)
           {
-            case 1: crdlm_compile_MultiTexCoord1fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
-            case 2: crdlm_compile_MultiTexCoord2fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
-            case 3: crdlm_compile_MultiTexCoord3fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
-            case 4: crdlm_compile_MultiTexCoord4fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
+            case 1: crDLMCompileMultiTexCoord1fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
+            case 2: crDLMCompileMultiTexCoord2fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
+            case 3: crDLMCompileMultiTexCoord3fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
+            case 4: crDLMCompileMultiTexCoord4fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
           }
           break;
         case GL_DOUBLE:
           switch (c->array.t[c->curClientTextureUnit].size)
           {
-            case 1: crdlm_compile_MultiTexCoord1dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
-            case 2: crdlm_compile_MultiTexCoord2dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
-            case 3: crdlm_compile_MultiTexCoord3dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
-            case 4: crdlm_compile_MultiTexCoord4dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
+            case 1: crDLMCompileMultiTexCoord1dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
+            case 2: crDLMCompileMultiTexCoord2dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
+            case 3: crDLMCompileMultiTexCoord3dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
+            case 4: crDLMCompileMultiTexCoord4dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
           }
           break;
       }
@@ -79,10 +76,10 @@ void DLM_APIENTRY crdlm_compile_ArrayElement (GLint index)
     p = c->array.i.p + index*c->array.i.stride;
     switch (c->array.i.type)
     {
-      case GL_SHORT: crdlm_compile_Indexsv((GLshort *)p); break;
-      case GL_INT: crdlm_compile_Indexiv((GLint *)p); break;
-      case GL_FLOAT: crdlm_compile_Indexfv((GLfloat *)p); break;
-      case GL_DOUBLE: crdlm_compile_Indexdv((GLdouble *)p); break;
+      case GL_SHORT: crDLMCompileIndexsv((GLshort *)p); break;
+      case GL_INT: crDLMCompileIndexiv((GLint *)p); break;
+      case GL_FLOAT: crDLMCompileIndexfv((GLfloat *)p); break;
+      case GL_DOUBLE: crDLMCompileIndexdv((GLdouble *)p); break;
     }
   }
   if (c->array.c.enabled)
@@ -93,57 +90,57 @@ void DLM_APIENTRY crdlm_compile_ArrayElement (GLint index)
       case GL_BYTE:
         switch (c->array.c.size)
         {
-          case 3: crdlm_compile_Color3bv((GLbyte *)p); break;
-          case 4: crdlm_compile_Color4bv((GLbyte *)p); break;
+          case 3: crDLMCompileColor3bv((GLbyte *)p); break;
+          case 4: crDLMCompileColor4bv((GLbyte *)p); break;
         }
         break;
       case GL_UNSIGNED_BYTE:
         switch (c->array.c.size)
         {
-          case 3: crdlm_compile_Color3ubv((GLubyte *)p); break;
-          case 4: crdlm_compile_Color4ubv((GLubyte *)p); break;
+          case 3: crDLMCompileColor3ubv((GLubyte *)p); break;
+          case 4: crDLMCompileColor4ubv((GLubyte *)p); break;
         }
         break;
       case GL_SHORT:
         switch (c->array.c.size)
         {
-          case 3: crdlm_compile_Color3sv((GLshort *)p); break;
-          case 4: crdlm_compile_Color4sv((GLshort *)p); break;
+          case 3: crDLMCompileColor3sv((GLshort *)p); break;
+          case 4: crDLMCompileColor4sv((GLshort *)p); break;
         }
         break;
       case GL_UNSIGNED_SHORT:
         switch (c->array.c.size)
         {
-          case 3: crdlm_compile_Color3usv((GLushort *)p); break;
-          case 4: crdlm_compile_Color4usv((GLushort *)p); break;
+          case 3: crDLMCompileColor3usv((GLushort *)p); break;
+          case 4: crDLMCompileColor4usv((GLushort *)p); break;
         }
         break;
       case GL_INT:
         switch (c->array.c.size)
         {
-          case 3: crdlm_compile_Color3iv((GLint *)p); break;
-          case 4: crdlm_compile_Color4iv((GLint *)p); break;
+          case 3: crDLMCompileColor3iv((GLint *)p); break;
+          case 4: crDLMCompileColor4iv((GLint *)p); break;
         }
         break;
       case GL_UNSIGNED_INT:
         switch (c->array.c.size)
         {
-          case 3: crdlm_compile_Color3uiv((GLuint *)p); break;
-          case 4: crdlm_compile_Color4uiv((GLuint *)p); break;
+          case 3: crDLMCompileColor3uiv((GLuint *)p); break;
+          case 4: crDLMCompileColor4uiv((GLuint *)p); break;
         }
         break;
       case GL_FLOAT:
         switch (c->array.c.size)
         {
-          case 3: crdlm_compile_Color3fv((GLfloat *)p); break;
-          case 4: crdlm_compile_Color4fv((GLfloat *)p); break;
+          case 3: crDLMCompileColor3fv((GLfloat *)p); break;
+          case 4: crDLMCompileColor4fv((GLfloat *)p); break;
         }
         break;
       case GL_DOUBLE:
         switch (c->array.c.size)
         {
-          case 3: crdlm_compile_Color3dv((GLdouble *)p); break;
-          case 4: crdlm_compile_Color4dv((GLdouble *)p); break;
+          case 3: crDLMCompileColor3dv((GLdouble *)p); break;
+          case 4: crDLMCompileColor4dv((GLdouble *)p); break;
         }
         break;
     }
@@ -153,11 +150,11 @@ void DLM_APIENTRY crdlm_compile_ArrayElement (GLint index)
     p = c->array.n.p + index*c->array.n.stride;
     switch (c->array.n.type)
     {
-      case GL_BYTE: crdlm_compile_Normal3bv((GLbyte *)p); break;
-      case GL_SHORT: crdlm_compile_Normal3sv((GLshort *)p); break;
-      case GL_INT: crdlm_compile_Normal3iv((GLint *)p); break;
-      case GL_FLOAT: crdlm_compile_Normal3fv((GLfloat *)p); break;
-      case GL_DOUBLE: crdlm_compile_Normal3dv((GLdouble *)p); break;
+      case GL_BYTE: crDLMCompileNormal3bv((GLbyte *)p); break;
+      case GL_SHORT: crDLMCompileNormal3sv((GLshort *)p); break;
+      case GL_INT: crDLMCompileNormal3iv((GLint *)p); break;
+      case GL_FLOAT: crDLMCompileNormal3fv((GLfloat *)p); break;
+      case GL_DOUBLE: crDLMCompileNormal3dv((GLdouble *)p); break;
     }
   }
 #ifdef CR_EXT_secondary_color
@@ -167,21 +164,21 @@ void DLM_APIENTRY crdlm_compile_ArrayElement (GLint index)
     switch (c->array.s.type)
     {
       case GL_BYTE:
-        crdlm_compile_SecondaryColor3bvEXT((GLbyte *)p); break;
+        crDLMCompileSecondaryColor3bvEXT((GLbyte *)p); break;
       case GL_UNSIGNED_BYTE:
-        crdlm_compile_SecondaryColor3ubvEXT((GLubyte *)p); break;
+        crDLMCompileSecondaryColor3ubvEXT((GLubyte *)p); break;
       case GL_SHORT:
-        crdlm_compile_SecondaryColor3svEXT((GLshort *)p); break;
+        crDLMCompileSecondaryColor3svEXT((GLshort *)p); break;
       case GL_UNSIGNED_SHORT:
-        crdlm_compile_SecondaryColor3usvEXT((GLushort *)p); break;
+        crDLMCompileSecondaryColor3usvEXT((GLushort *)p); break;
       case GL_INT:
-        crdlm_compile_SecondaryColor3ivEXT((GLint *)p); break;
+        crDLMCompileSecondaryColor3ivEXT((GLint *)p); break;
       case GL_UNSIGNED_INT:
-        crdlm_compile_SecondaryColor3uivEXT((GLuint *)p); break;
+        crDLMCompileSecondaryColor3uivEXT((GLuint *)p); break;
       case GL_FLOAT:
-        crdlm_compile_SecondaryColor3fvEXT((GLfloat *)p); break;
+        crDLMCompileSecondaryColor3fvEXT((GLfloat *)p); break;
       case GL_DOUBLE:
-        crdlm_compile_SecondaryColor3dvEXT((GLdouble *)p); break;
+        crDLMCompileSecondaryColor3dvEXT((GLdouble *)p); break;
     }
   }
 #endif
@@ -194,40 +191,40 @@ void DLM_APIENTRY crdlm_compile_ArrayElement (GLint index)
       case GL_SHORT:
         switch (c->array.v.size)
         {
-          case 2: crdlm_compile_Vertex2sv((GLshort *)p); break;
-          case 3: crdlm_compile_Vertex3sv((GLshort *)p); break;
-          case 4: crdlm_compile_Vertex4sv((GLshort *)p); break;
+          case 2: crDLMCompileVertex2sv((GLshort *)p); break;
+          case 3: crDLMCompileVertex3sv((GLshort *)p); break;
+          case 4: crDLMCompileVertex4sv((GLshort *)p); break;
         }
         break;
       case GL_INT:
         switch (c->array.v.size)
         {
-          case 2: crdlm_compile_Vertex2iv((GLint *)p); break;
-          case 3: crdlm_compile_Vertex3iv((GLint *)p); break;
-          case 4: crdlm_compile_Vertex4iv((GLint *)p); break;
+          case 2: crDLMCompileVertex2iv((GLint *)p); break;
+          case 3: crDLMCompileVertex3iv((GLint *)p); break;
+          case 4: crDLMCompileVertex4iv((GLint *)p); break;
         }
         break;
       case GL_FLOAT:
         switch (c->array.v.size)
         {
-          case 2: crdlm_compile_Vertex2fv((GLfloat *)p); break;
-          case 3: crdlm_compile_Vertex3fv((GLfloat *)p); break;
-          case 4: crdlm_compile_Vertex4fv((GLfloat *)p); break;
+          case 2: crDLMCompileVertex2fv((GLfloat *)p); break;
+          case 3: crDLMCompileVertex3fv((GLfloat *)p); break;
+          case 4: crDLMCompileVertex4fv((GLfloat *)p); break;
         }
         break;
       case GL_DOUBLE:
         switch (c->array.v.size)
         {
-          case 2: crdlm_compile_Vertex2dv((GLdouble *)p); break;
-          case 3: crdlm_compile_Vertex3dv((GLdouble *)p); break;
-          case 4: crdlm_compile_Vertex4dv((GLdouble *)p); break;
+          case 2: crDLMCompileVertex2dv((GLdouble *)p); break;
+          case 3: crDLMCompileVertex3dv((GLdouble *)p); break;
+          case 4: crDLMCompileVertex4dv((GLdouble *)p); break;
         }
         break;
     }
   }
 }
 
-void APIENTRY crdlm_compile_DrawArrays(GLenum mode, GLint first, GLsizei count)
+void DLM_APIENTRY crDLMCompileDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c)
 {
   int i;
 
@@ -243,16 +240,16 @@ void APIENTRY crdlm_compile_DrawArrays(GLenum mode, GLint first, GLsizei count)
     return;
   }
 
-  crdlm_compile_Begin(mode);
+  crDLMCompileBegin(mode);
   for (i=0; i<count; i++)
   {
-    crdlm_compile_ArrayElement(first + i);
+    crDLMCompileArrayElement(first + i, c);
   }
-  crdlm_compile_End();
+  crDLMCompileEnd();
 }
 
-void APIENTRY crdlm_compile_DrawElements(GLenum mode, GLsizei count,
-                                      GLenum type, const GLvoid *indices)
+void DLM_APIENTRY crDLMCompileDrawElements(GLenum mode, GLsizei count,
+                                      GLenum type, const GLvoid *indices, CRClientState *c)
 {
   int i;
   GLubyte *p = (GLubyte *)indices;
@@ -275,26 +272,26 @@ void APIENTRY crdlm_compile_DrawElements(GLenum mode, GLsizei count,
     return;
   }
 
-  crdlm_compile_Begin(mode);
+  crDLMCompileBegin(mode);
   switch (type)
   {
   case GL_UNSIGNED_BYTE:
     for (i=0; i<count; i++)
     {
-      crdlm_compile_ArrayElement((GLint) *p++);
+      crDLMCompileArrayElement((GLint) *p++, c);
     }
     break;
   case GL_UNSIGNED_SHORT:
     for (i=0; i<count; i++)
     {
-      crdlm_compile_ArrayElement((GLint) * (GLushort *) p);
+      crDLMCompileArrayElement((GLint) * (GLushort *) p, c);
       p+=sizeof (GLushort);
     }
     break;
   case GL_UNSIGNED_INT:
     for (i=0; i<count; i++)
     {
-      crdlm_compile_ArrayElement((GLint) * (GLuint *) p);
+      crDLMCompileArrayElement((GLint) * (GLuint *) p, c);
       p+=sizeof (GLuint);
     }
     break;
@@ -302,11 +299,11 @@ void APIENTRY crdlm_compile_DrawElements(GLenum mode, GLsizei count,
     crError( "this can't happen: DLM DrawElements" );
     break;
   }
-  crdlm_compile_End();
+  crDLMCompileEnd();
 }
 
-void APIENTRY crdlm_compile_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, 
-                                      GLenum type, const GLvoid *indices)
+void DLM_APIENTRY crDLMCompileDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, 
+                                      GLenum type, const GLvoid *indices, CRClientState *c)
 {
   int i;
   GLubyte *p = (GLubyte *)indices;
@@ -331,26 +328,26 @@ void APIENTRY crdlm_compile_DrawRangeElements(GLenum mode, GLuint start, GLuint 
     return;
   }
 
-  crdlm_compile_Begin(mode);
+  crDLMCompileBegin(mode);
   switch (type)
   {
   case GL_UNSIGNED_BYTE:
     for (i=start; i<count; i++)
     {
-      crdlm_compile_ArrayElement((GLint) *p++);
+      crDLMCompileArrayElement((GLint) *p++, c);
     }
     break;
   case GL_UNSIGNED_SHORT:
     for (i=start; i<count; i++)
     {
-      crdlm_compile_ArrayElement((GLint) * (GLushort *) p);
+      crDLMCompileArrayElement((GLint) * (GLushort *) p, c);
       p+=sizeof (GLushort);
     }
     break;
   case GL_UNSIGNED_INT:
     for (i=start; i<count; i++)
     {
-      crdlm_compile_ArrayElement((GLint) * (GLuint *) p);
+      crDLMCompileArrayElement((GLint) * (GLuint *) p, c);
       p+=sizeof (GLuint);
     }
     break;
@@ -358,31 +355,31 @@ void APIENTRY crdlm_compile_DrawRangeElements(GLenum mode, GLuint start, GLuint 
     crError( "this can't happen: DLM DrawRangeElements" );
     break;
   }
-  crdlm_compile_End();
+  crDLMCompileEnd();
 }
 
 #ifdef CR_EXT_multi_draw_arrays
-void APIENTRY crdlm_compile_MultiDrawArraysEXT( GLenum mode, GLint *first,
-                          GLsizei *count, GLsizei primcount)
+void DLM_APIENTRY crDLMCompileMultiDrawArraysEXT( GLenum mode, GLint *first,
+                          GLsizei *count, GLsizei primcount, CRClientState *c)
 {
    GLint i;
 
    for (i = 0; i < primcount; i++) {
       if (count[i] > 0) {
-         crdlm_compile_DrawArrays(mode, first[i], count[i]);
+         crDLMCompileDrawArrays(mode, first[i], count[i], c);
       }
    }
 }
 
 
-void APIENTRY crdlm_compile_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
-                            const GLvoid **indices, GLsizei primcount)
+void DLM_APIENTRY crDLMCompileMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
+                            const GLvoid **indices, GLsizei primcount, CRClientState *c)
 {
    GLint i;
 
    for (i = 0; i < primcount; i++) {
       if (count[i] > 0) {
-         crdlm_compile_DrawElements(mode, count[i], type, indices[i]);
+         crDLMCompileDrawElements(mode, count[i], type, indices[i], c);
       }
    }
 }

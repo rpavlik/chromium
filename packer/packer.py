@@ -225,7 +225,7 @@ for func_name in keys:
 	if apiutil.FindSpecial( "packer", func_name ):
 		continue
 
-	if not apiutil.CanPack(func_name):
+	if not apiutil.HasPackOpcode(func_name):
 		continue
 
 	pointers_ok = 0

@@ -20,24 +20,25 @@ FILES = tilesortspu \
 	tilesortspu_context \
 	tilesortspu_copytex \
 	tilesortspu_diffapi \
+	tilesortspu_dlpack_gen \
+	tilesortspu_dlpacker_gen \
+	tilesortspu_dlstate_gen \
 	tilesortspu_eval \
 	tilesortspu_flush \
+	tilesortspu_gen \
 	tilesortspu_get \
 	tilesortspu_init \
 	tilesortspu_lists \
-	tilesortspu_lists_gen \
 	tilesortspu_misc \
 	tilesortspu_material \
 	tilesortspu_net \
 	tilesortspu_occlude \
 	tilesortspu_pinch_gen \
 	tilesortspu_pixels \
-	tilesortspu_rasterpos \
 	tilesortspu_rect \
 	tilesortspu_stereo \
 	tilesortspu_swap \
 	tilesortspu_tiles \
-	tilesortspu_unimplemented \
 	tilesortspu_viewport \
 	tilesortspu_window
 
@@ -55,7 +56,8 @@ endif
 
 PACKS = 1
 
-PRECOMP = tilesortspu.c tilesortspu_lists_gen.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_unimplemented.c tilesortspu_proto.h
+PRECOMP = tilesortspu_gen.h tilesortspu_gen.c tilesortspu.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_dlpack_gen.c tilesortspu_dlpack_gen.h tilesortspu_dlstate_gen.c tilesortspu_dlstate_gen.h
+
 SLOP = $(PRECOMP)
 
 LIB_DEFS += tilesort.def
@@ -83,21 +85,42 @@ endif
 
 APIFILES = ../../glapi_parser/apiutil.py ../../glapi_parser/APIspec.txt
 
-tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special $(APIFILES) tilesortspu_proto.h
+tilesortspu.c: generator.py tilesort_special tilesort_unimplemented_special $(APIFILES) tilesortspu_gen.h
 	@$(ECHO) Building the TileSort SPU
-	@$(PYTHON) tilesort.py > $@
+	@$(PYTHON) generator.py table > $@
 
-tilesortspu_unimplemented.c: tilesort_unimplemented.py tilesort_unimplemented_special $(APIFILES)
-	@$(ECHO) Building the TileSort Unimplemented Functions
-	@$(PYTHON) tilesort_unimplemented.py > $@
+tilesortspu_gen.h: generator.py tilesort_special tilesort_unimplemented_special $(APIFILES)
+	@$(ECHO) Building the TileSort Generated Prototypes
+	@$(PYTHON) generator.py header > $@
+
+tilesortspu_gen.c: generator.py tilesort_special tilesort_unimplemented_special $(APIFILES) tilesortspu_gen.h
+	@$(ECHO) Building the TileSort Generated Functions
+	@$(PYTHON) generator.py source > $@
+
+tilesortspu_dlpack_gen.c: dlpack_generator.py tilesort_dlpack_ignore_special tilesortspu_dlpack_gen.h $(APIFILES)
+	@$(ECHO) Building the TileSort DL Packer Generated Functions
+	@$(PYTHON) dlpack_generator.py source > $@
+
+tilesortspu_dlpacker_gen.c: dlpack_generator.py tilesort_dlpack_ignore_special tilesortspu_dlpack_gen.h $(APIFILES)
+	@$(ECHO) Building the TileSort DL Packer Loader
+	@$(PYTHON) dlpack_generator.py table > $@
+
+tilesortspu_dlpack_gen.h: dlpack_generator.py tilesort_dlpack_ignore_special $(APIFILES)
+	@$(ECHO) Building the TileSort DL Packer Header
+	@$(PYTHON) dlpack_generator.py header > $@
+
+tilesortspu_dlstate_gen.c: dlstate_generator.py tilesortspu_dlstate_gen.h $(APIFILES)
+	@$(ECHO) Building the TileSort DL State Loader
+	@$(PYTHON) dlstate_generator.py table > $@
+
+tilesortspu_dlstate_gen.h: dlstate_generator.py $(APIFILES)
+	@$(ECHO) Building the TileSort DL State Header
+	@$(PYTHON) dlstate_generator.py header > $@
+
 
 tilesortspu_diffapi.c: diffapi.py $(APIFILES)
 	@$(ECHO) Building the TileSort Differencing API
 	@$(PYTHON) diffapi.py > $@
-
-tilesortspu_lists_gen.c: tilesort_lists.py tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special tilesort_list_special $(APIFILES)
-	@$(ECHO) Building the TileSort Display List Manager
-	@$(PYTHON) tilesort_lists.py > $@
 
 tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../../state_tracker/convert.py length_table.py pinch_convert.py $(APIFILES)
 	@$(ECHO) Munging the pincher... yuck
@@ -105,7 +128,3 @@ tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../../state_tracker/convert.py leng
 	@$(PYTHON) pinch_convert.py >> $@
 	@$(PYTHON) length_table.py >> $@
 	@$(CAT) tilesortspu_pinch.c >> $@
-
-tilesortspu_proto.h: tilesortspu_proto.py tilesort_special tilesort_state_special tilesort_unimplemented_special $(APIFILES)
-	@$(ECHO) Building the TileSort SPU prototypes header
-	@$(PYTHON) tilesortspu_proto.py > $@

@@ -9,60 +9,22 @@
 #include "cr_glstate.h"
 #include "replicatespu_proto.h"
 
-void REPLICATESPU_APIENTRY replicatespu_FogCoordPointerEXT( GLenum type, GLsizei stride, const GLvoid *pointer )
-{
-	crStateFogCoordPointerEXT( type, stride, pointer );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_ColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
-{
-	crStateColorPointer( size, type, stride, pointer );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_SecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
-{
-	crStateSecondaryColorPointerEXT( size, type, stride, pointer );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_VertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
-{
-	crStateVertexPointer( size, type, stride, pointer );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_TexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
-{
-	crStateTexCoordPointer( size, type, stride, pointer );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_NormalPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
-{
-	crStateNormalPointer( type, stride, pointer );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_EdgeFlagPointer( GLsizei stride, const GLvoid *pointer )
-{
-	crStateEdgeFlagPointer( stride, pointer );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_GetPointerv( GLenum pname, GLvoid **params )
-{
-	crStateGetPointerv( pname, params );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_InterleavedArrays( GLenum format, GLsizei stride, const GLvoid *pointer )
-{
-	crStateInterleavedArrays( format, stride, pointer );
-}
-
 void REPLICATESPU_APIENTRY replicatespu_ArrayElement( GLint index )
 {
+	GET_THREAD(thread);
+	ContextInfo *ctx = thread->currentContext;
+	CRClientState *clientState = &(ctx->State->client);
 	GLboolean serverArrays = GL_FALSE;
 
 #if CR_ARB_vertex_buffer_object
-	GET_CONTEXT(ctx);
 	if (ctx->State->extensions.ARB_vertex_buffer_object)
 		serverArrays = crStateUseServerArrays();
 #endif
+
+	/* Need this to operate correctly with the display list */
+	if (thread->currentContext->displayListMode != GL_FALSE) {
+	    crDLMCompileArrayElement(index, clientState);
+	}
 
 	if (serverArrays) {
 		/* Send the DrawArrays command over the wire */
@@ -73,8 +35,6 @@ void REPLICATESPU_APIENTRY replicatespu_ArrayElement( GLint index )
 	}
 	else {
 		/* evaluate locally */
-		GET_CONTEXT(ctx);
-		CRClientState *clientState = &(ctx->State->client);
 		if (replicate_spu.swap)
 			crPackExpandArrayElementSWAP( index, clientState );
 		else
@@ -84,13 +44,20 @@ void REPLICATESPU_APIENTRY replicatespu_ArrayElement( GLint index )
 
 void REPLICATESPU_APIENTRY replicatespu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices )
 {
+	GET_THREAD(thread);
+	ContextInfo *ctx = thread->currentContext;
+	CRClientState *clientState = &(ctx->State->client);
 	GLboolean serverArrays = GL_FALSE;
 
 #if CR_ARB_vertex_buffer_object
-	GET_CONTEXT(ctx);
 	if (ctx->State->extensions.ARB_vertex_buffer_object)
 		serverArrays = crStateUseServerArrays();
 #endif
+
+	/* Need this to operate correctly with the display list */
+	if (thread->currentContext->displayListMode != GL_FALSE) {
+	    crDLMCompileDrawElements(mode, count, type, indices, clientState);
+	}
 
 	if (serverArrays) {
 		/* Send the DrawArrays command over the wire */
@@ -101,8 +68,6 @@ void REPLICATESPU_APIENTRY replicatespu_DrawElements( GLenum mode, GLsizei count
 	}
 	else {
 		/* evaluate locally */
-		GET_CONTEXT(ctx);
-		CRClientState *clientState = &(ctx->State->client);
 		if (replicate_spu.swap)
 			crPackExpandDrawElementsSWAP( mode, count, type, indices, clientState );
 		else
@@ -112,13 +77,20 @@ void REPLICATESPU_APIENTRY replicatespu_DrawElements( GLenum mode, GLsizei count
 
 void REPLICATESPU_APIENTRY replicatespu_DrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices )
 {
+	GET_THREAD(thread);
+	ContextInfo *ctx = thread->currentContext;
+	CRClientState *clientState = &(ctx->State->client);
 	GLboolean serverArrays = GL_FALSE;
 
 #if CR_ARB_vertex_buffer_object
-	GET_CONTEXT(ctx);
 	if (ctx->State->extensions.ARB_vertex_buffer_object)
 		 serverArrays = crStateUseServerArrays();
 #endif
+
+	/* Need this to operate correctly with the display list */
+	if (thread->currentContext->displayListMode != GL_FALSE) {
+	    crDLMCompileDrawRangeElements(mode, start, end, count, type, indices, clientState);
+	}
 
 	if (serverArrays) {
 		/* Send the DrawRangeElements command over the wire */
@@ -129,8 +101,6 @@ void REPLICATESPU_APIENTRY replicatespu_DrawRangeElements( GLenum mode, GLuint s
 	}
 	else {
 		/* evaluate locally */
-		GET_CONTEXT(ctx);
-		CRClientState *clientState = &(ctx->State->client);
 		if (replicate_spu.swap)
 			crPackExpandDrawRangeElementsSWAP( mode, start, end, count, type, indices, clientState );
 		else
@@ -140,13 +110,20 @@ void REPLICATESPU_APIENTRY replicatespu_DrawRangeElements( GLenum mode, GLuint s
 
 void REPLICATESPU_APIENTRY replicatespu_DrawArrays( GLenum mode, GLint first, GLsizei count )
 {
+	GET_THREAD(thread);
+	ContextInfo *ctx = thread->currentContext;
+	CRClientState *clientState = &(ctx->State->client);
 	GLboolean serverArrays = GL_FALSE;
 
 #if CR_ARB_vertex_buffer_object
-	GET_CONTEXT(ctx);
 	if (ctx->State->extensions.ARB_vertex_buffer_object)
 		 serverArrays = crStateUseServerArrays();
 #endif
+
+	/* Need this to operate correctly with the display list */
+	if (thread->currentContext->displayListMode != GL_FALSE) {
+	    crDLMCompileDrawArrays(mode, first, count, clientState);
+	}
 
 	if (serverArrays) {
 		/* Send the DrawArrays command over the wire */
@@ -157,28 +134,11 @@ void REPLICATESPU_APIENTRY replicatespu_DrawArrays( GLenum mode, GLint first, GL
 	}
 	else {
 		/* evaluate locally */
-		GET_CONTEXT(ctx);
-		CRClientState *clientState = &(ctx->State->client);
 		if (replicate_spu.swap)
 			crPackExpandDrawArraysSWAP( mode, first, count, clientState );
 		else
 			crPackExpandDrawArrays( mode, first, count, clientState );
 	}
-}
-
-void REPLICATESPU_APIENTRY replicatespu_EnableClientState( GLenum array )
-{
-	crStateEnableClientState( array );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_DisableClientState( GLenum array )
-{
-	crStateDisableClientState( array );
-}
-
-void REPLICATESPU_APIENTRY replicatespu_ClientActiveTextureARB( GLenum texUnit )
-{
-	crStateClientActiveTextureARB( texUnit );
 }
 
 #ifdef CR_EXT_multi_draw_arrays

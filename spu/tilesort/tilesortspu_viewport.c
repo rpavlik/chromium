@@ -5,15 +5,28 @@
  */
 
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 #include "cr_glstate.h"
 #include "cr_error.h"
+#include "cr_packfunctions.h"
 
 void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
 	GET_THREAD(thread);
 	CRCurrentState *c = &(thread->currentContext->State->current);
 	WindowInfo *winInfo;
+	GLenum dlMode = thread->currentContext->displayListMode;
+
+	if (dlMode != GL_FALSE) {
+	    /* just compiling and/or creating display lists */
+	    if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) {
+		crDLMCompileViewport(x, y, width, height);
+		if (tilesort_spu.lazySendDLists) return;
+	    }
+	    if (tilesort_spu.swap) crPackViewportSWAP(x, y, width, height);
+	    else crPackViewport(x, y, width, height);
+	    return;
+	}
 
 	if (c->inBeginEnd)
 	{
@@ -87,6 +100,17 @@ void TILESORTSPU_APIENTRY tilesortspu_Scissor( GLint x, GLint y, GLsizei width, 
 {
 	GET_THREAD(thread);
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just compiling and/or creating display lists */
+	    if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) {
+		crDLMCompileScissor(x, y, width, height);
+		if (tilesort_spu.lazySendDLists) return;
+	    }
+	    if (tilesort_spu.swap) crPackScissorSWAP(x, y, width, height);
+	    else crPackScissor(x, y, width, height);
+	    return;
+	}
 
 	if (tilesort_spu.scaleToMuralSize) {
 		GLint newX = (GLint) (x * winInfo->widthScale + 0.5F);
@@ -108,6 +132,18 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 	GLint oldViewportX, oldViewportY, oldViewportW, oldViewportH;
 	GLint oldScissorX, oldScissorY, oldScissorW, oldScissorH;
 	GLenum oldmode;
+	GLenum dlMode = thread->currentContext->displayListMode;
+
+	if (dlMode != GL_FALSE) {
+	    /* just compiling and/or creating display lists */
+	    if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) {
+		crDLMCompilePopAttrib();
+		if (tilesort_spu.lazySendDLists) return;
+	    }
+	    if (tilesort_spu.swap) crPackPopAttribSWAP();
+	    else crPackPopAttrib();
+	    return;
+	}
 
 	/* save current matrix mode */
 	oldmode = t->matrixMode;

@@ -6,10 +6,8 @@
 	
 #include "cr_mem.h"
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
-
-
-
+#include "tilesortspu_gen.h"
+#include "cr_packfunctions.h"
 
 /*
  * glCopyTex{Sub}Image[12]D()
@@ -102,7 +100,15 @@ static GLenum baseFormat(GLint intFormat)
 
 void TILESORTSPU_APIENTRY tilesortspu_CopyTexImage1D( GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLint border )
 {
-	GLubyte *buffer = crAlloc(width * sizeof(GLubyte) * 4);
+	GET_THREAD(thread);
+	GLubyte *buffer;
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE && tilesort_spu.lazySendDLists) {
+		crDLMCompileCopyTexImage1D(target, level, internalFormat, x, y, width, border);
+		return;
+	}
+
+	buffer = crAlloc(width * sizeof(GLubyte) * 4);
 	if (buffer)
 	{
 		const GLenum format = baseFormat( internalFormat );
@@ -124,7 +130,18 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexImage1D( GLenum target, GLint level
 
 void TILESORTSPU_APIENTRY tilesortspu_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border )
 {
-	GLubyte *buffer = crAlloc(width * height * sizeof(GLubyte) * 4);
+	GET_THREAD(thread);
+	GLubyte *buffer;
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just creating or compiling display lists */
+	    if (tilesort_spu.lazySendDLists) crDLMCompileCopyTexImage2D(target, level, internalFormat, x, y, width, height, border);
+	    else if (tilesort_spu.swap) crPackCopyTexImage2DSWAP(target, level, internalFormat, x, y, width, height, border);
+	    else crPackCopyTexImage2D(target, level, internalFormat, x, y, width, height, border);
+	    return;
+	}
+
+	buffer = crAlloc(width * height * sizeof(GLubyte) * 4);
 	if (buffer)
 	{
 		const GLenum format = baseFormat( internalFormat );
@@ -143,12 +160,21 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexImage2D( GLenum target, GLint level
 	}
 }
 
-
 void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
 {
+	GET_THREAD(thread);
 	GLenum format, type;
 	GLint intFormat;
 	void *buffer;
+
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just creating or compiling display lists */
+	    if (tilesort_spu.lazySendDLists) crDLMCompileCopyTexSubImage1D(target, level, xoffset, x, y, width);
+	    else if (tilesort_spu.swap) crPackCopyTexSubImage1DSWAP(target, level, xoffset, x, y, width);
+	    else crPackCopyTexSubImage1D(target, level, xoffset, x, y, width);
+	    return;
+	}
 
 	crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
 																 &intFormat );
@@ -183,9 +209,19 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage1D( GLenum target, GLint le
 
 void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
 {
+	GET_THREAD(thread);
 	GLenum format, type;
 	GLint intFormat;
 	void *buffer;
+
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just compiling or creating display lists */
+	    if (tilesort_spu.lazySendDLists) crDLMCompileCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height);
+	    else if (tilesort_spu.swap) crPackCopyTexSubImage2DSWAP(target, level, xoffset, yoffset, x, y, width, height);
+	    else crPackCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height);
+	    return;
+	}
 
 	crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
 																 &intFormat );
@@ -220,9 +256,18 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage2D( GLenum target, GLint le
 #if defined(CR_OPENGL_VERSION_1_2)
 void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
 {
+	GET_THREAD(thread);
 	GLenum format, type;
 	GLint intFormat;
 	void *buffer;
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just creating or compiling display lists */
+	    if (tilesort_spu.lazySendDLists) crDLMCompileCopyTexSubImage3D(target, level, xoffset, yoffset, zoffset, x, y, width, height);
+	    else if (tilesort_spu.swap) crPackCopyTexSubImage3DSWAP(target, level, xoffset, yoffset, zoffset, x, y, width, height);
+	    else crPackCopyTexSubImage3D(target, level, xoffset, yoffset, zoffset, x, y, width, height);
+	    return;
+	}
 
 	crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
 																 &intFormat );

@@ -5,7 +5,7 @@
  */
 
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 #include "cr_pack.h"
 #include "cr_net.h"
 #include "cr_protocol.h"

@@ -10,7 +10,7 @@
  */
 
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
 #include <math.h>
@@ -790,6 +790,14 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalCoord1f( GLfloat u )
    GLfloat normal[4], texcoord[CR_MAX_TEXTURE_UNITS][4], color[4];
    GLfloat index;
    GLint i;
+   GLenum dlMode = thread->currentContext->displayListMode;
+   if (dlMode != GL_FALSE) {
+	/* just creating or compiling display lists */
+	if (tilesort_spu.lazySendDLists) crDLMCompileEvalCoord1f(u);
+	else if (tilesort_spu.swap) crPackEvalCoord1fSWAP(u);
+	else crPackEvalCoord1f(u);
+	return;
+   }
 
    CRASSERT(CR_MAX_TEXTURE_UNITS >= ctx->limits.maxTextureUnits);
 
@@ -817,6 +825,12 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalCoord2f( GLfloat u, GLfloat v )
    GLfloat normal[4], texcoord[CR_MAX_TEXTURE_UNITS][4], color[4];
    GLfloat index;
    GLint i;
+   GLenum dlMode = thread->currentContext->displayListMode;
+   if (dlMode != GL_FALSE) {
+	if (tilesort_spu.lazySendDLists) crDLMCompileEvalCoord2f(u, v);
+	else if (tilesort_spu.swap) crPackEvalCoord2fSWAP(u, v);
+	else crPackEvalCoord2f(u, v);
+   }
 
    CRASSERT(CR_MAX_TEXTURE_UNITS >= ctx->limits.maxTextureUnits);
 
@@ -900,6 +914,14 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalMesh1( GLenum mode, GLint i1, GLint i2
    GLint i;
    GLfloat u, du;
    GLenum prim;
+   GLenum dlMode = thread->currentContext->displayListMode;
+   if (dlMode != GL_FALSE) {
+	/* just creating or compiling display lists */
+	if (tilesort_spu.lazySendDLists) crDLMCompileEvalMesh1(mode, i1, i2);
+	else if (tilesort_spu.swap) crPackEvalMesh1SWAP(mode, i1, i2);
+	else crPackEvalMesh1(mode, i1, i2);
+	    return;
+   }
 
    switch (mode) {
       case GL_POINT:
@@ -935,6 +957,15 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalMesh2( GLenum mode, GLint i1, GLint i2
    CREvaluatorState *e = &(ctx->eval);
    GLint i, j;
    GLfloat u, du, v, dv, v1, u1;
+
+   GLenum dlMode = thread->currentContext->displayListMode;
+   if (dlMode != GL_FALSE) {
+	/* just creating or compiling display lists */
+	if (tilesort_spu.lazySendDLists) crDLMCompileEvalMesh2(mode, i1, i2, j1, j2);
+	else if (tilesort_spu.swap) crPackEvalMesh2SWAP(mode, i1, i2, j1, j2);
+	else crPackEvalMesh2(mode, i1, i2, j1, j2);
+	return;
+   }
 
    /* No effect if vertex maps disabled.
     */

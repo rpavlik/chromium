@@ -62,6 +62,8 @@ struct context_info_t {
 	GLint rserverCtx[CR_MAX_REPLICANTS];
 	CRDLM *displayListManager;
 	CRDLMContextState *dlmState;
+	GLenum displayListMode;
+	GLuint displayListIdentifier;
 };
 
 typedef struct {
@@ -73,6 +75,7 @@ typedef struct {
 	int VncEventsBase;
 	SPUDispatchTable self;
 	SPUDispatchTable diff_dispatch;
+	SPUDispatchTable state_dispatch;
 	Display *glx_display;
 	char dpyName[1000];
 
@@ -116,11 +119,14 @@ extern void replicatespuHuge( CROpcode opcode, void *buf );
 extern void replicatespuReplicateCreateContext( int ipaddress );
 extern void replicatespuRePositionWindow(WindowInfo *winInfo);
 extern void replicatespuCreateDiffAPI( void );
+extern void replicatespuCreateStateAPI( void );
 
 extern ThreadInfo *replicatespuNewThread( unsigned long id );
 
 extern GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLint visual );
 extern void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx );
+extern void REPLICATESPU_APIENTRY replicatespu_StateCallList( GLuint list );
+extern void REPLICATESPU_APIENTRY replicatespu_StateCallLists( GLsizei n, GLenum type, const GLvoid * lists );
 
 
 #endif /* CR_REPLICATESPU_H */

@@ -8,7 +8,7 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 
 
 void TILESORTSPU_APIENTRY
@@ -88,8 +88,20 @@ tilesortspu_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 void TILESORTSPU_APIENTRY
 tilesortspu_BeginQueryARB(GLenum target, GLuint id)
 {
-	 /* Need to broadcast this */
 	GET_THREAD(thread);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just creating or compiling display lists */
+	    if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) {
+		crDLMCompileBeginQueryARB(target, id);
+		if (tilesort_spu.lazySendDLists) return;
+	    }
+	    if (tilesort_spu.swap) crPackBeginQueryARBSWAP(target, id);
+	    else crPackBeginQueryARB(target, id);
+	    return;
+	}
+
+	 /* Need to broadcast this */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 		crPackBeginQueryARBSWAP(target, id);
@@ -104,6 +116,18 @@ tilesortspu_EndQueryARB(GLenum target)
 {
 	/* Need to broadcast this */
 	GET_THREAD(thread);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just creating or compiling display lists */
+	    if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) {
+		crDLMCompileEndQueryARB(target);
+		if (tilesort_spu.lazySendDLists) return;
+	    }
+	    if (tilesort_spu.swap) crPackEndQueryARBSWAP(target);
+	    else crPackEndQueryARB(target);
+	    return;
+	}
+
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 		crPackEndQueryARBSWAP(target);

@@ -8,3 +8,4 @@ BarrierExecCR
 SemaphoreCreateCR
 SemaphorePCR
 SemaphoreVCR
+CopyPixels

@@ -1248,7 +1248,7 @@ def PrintDynProto(func_name,f):
                 return
 
 	if not allfuncs:
-        	if not apiutil.CanPack(func_name):
+        	if not apiutil.HasPackOpcode(func_name):
                 	return
 
         pointers_ok = 0
@@ -1274,7 +1274,7 @@ def PrintProto(func_name,f,no_special):
                 	return
 
 	if not allfuncs:
-        	if not apiutil.CanPack(func_name):
+        	if not apiutil.HasPackOpcode(func_name):
                 	return
 
         pointers_ok = 0
@@ -1313,7 +1313,7 @@ def PrintBodies(func_name,f,no_special, gentables):
                 	return
 
 	if not allfuncs:
-        	if not apiutil.CanPack(func_name):
+        	if not apiutil.HasPackOpcode(func_name):
                 	return
 
         pointers_ok = 0
@@ -1510,7 +1510,7 @@ def GenCalls(func_name,f,no_special):
                 	return
 
 	if not allfuncs:
-        	if not apiutil.CanPack(func_name):
+        	if not apiutil.HasPackOpcode(func_name):
                 	return
 
         pointers_ok = 0

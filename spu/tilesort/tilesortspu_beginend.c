@@ -14,6 +14,15 @@ void TILESORTSPU_APIENTRY tilesortspu_Begin( GLenum mode )
 	GET_CONTEXT(ctx);
 	CRTransformState *t = &(ctx->transform);
 	CRCurrentState *c = &(ctx->current);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* Just compiling or creating display lists */
+	    if (tilesort_spu.lazySendDLists) crDLMCompileBegin(mode);
+	    else if (tilesort_spu.swap) crPackBeginSWAP(mode);
+	    else crPackBegin(mode);
+	    return;
+	}
+
 	/* We have to set this every time because a flush from 
 	 * the state tracker will turn off its flusher. */
 
@@ -46,6 +55,15 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 {
 	GET_CONTEXT(ctx);
 	CRLimitsState *limits = &(ctx->limits);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just creating and/or compiling display lists */
+	    if (tilesort_spu.lazySendDLists) crDLMCompileEnd();
+	    else if (tilesort_spu.swap) crPackEndSWAP();
+	    else crPackEnd();
+	    return;
+	}
+
 	if (thread->pinchState.isLoop)
 	{
 		unsigned int i;

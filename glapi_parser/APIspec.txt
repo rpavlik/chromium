@@ -32,7 +32,7 @@
 #             nolist    - the function is not compiled into dlists.
 #             get       - the function is a state-getter (implies nolist).
 #             setclient - the function sets client-side state (implies nolist).
-#             useclient - the function uses client-side state (implies nolist).
+#             useclient - the function uses client-side state.
 #             pervertex - the function sets per-vertex state (i.e. Normal,
 #                         Color, Material, EdgeFlag).
 #             render    - the function is a rendering command.
@@ -43,11 +43,20 @@
 #           include:
 #             pack      - this command can be packed/unpacked.
 #             extpack   - this command can be packed/unpacked, extended opcode.
+#             expandpack - this command can be packed (i.e. a packer function
+#                         exists), but has no opcode of its own: it is
+#                         expanded into other opcodes when packed.
 #             nopack    - this command is not packed. (XXX not needed)
 #             stub      - don't actually implement, just a stub for now.
 #             omit      - totally omit this function.
 #             checklist - function may or may not be compiled into display
 #                         lists, depending on parameter values.
+#	      serverdependent - the function sets or queries state whose
+#                         ultimate value is known only by the server;
+#                         queries typically require pack/writeback to
+#                         be correct (although crState simulations may
+#                         suffice), and state-changing functions cannot
+#                         effectively cache the state locally
 #
 # Chromium packertest properties:
 #
@@ -171,8 +180,8 @@ name		GenLists
 return		GLuint
 param		range		GLsizei
 category	1.0
-props		nolist get
-chromium	extpack
+props		get
+chromium	extpack serverdependent
 
 name		ListBase
 return		void
@@ -3293,7 +3302,7 @@ param		textures	const GLuint *
 param		residences	GLboolean *
 category	1.1
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		BindTexture
 return		void
@@ -3319,7 +3328,7 @@ param		n		GLsizei
 param		textures	GLuint *
 category	1.1
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		IsTexture
 return		GLboolean
@@ -4464,7 +4473,7 @@ param		img		GLvoid *
 paramaction	img		pixelStore
 category	GL_ARB_texture_compression
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 
 # OpenGL 1.3
@@ -5381,7 +5390,7 @@ param		residences	GLboolean *
 category	GL_EXT_texture_object
 alias		AreTexturesResident
 props		get
-chromium	nopack
+chromium	nopack serverdependent
 
 name		BindTextureEXT
 return		void
@@ -5813,7 +5822,7 @@ param		count		GLsizei *
 param		primcount	GLsizei
 category	GL_EXT_multi_draw_arrays
 props		useclient
-chromium	nopack
+chromium	expandpack	
 
 name		MultiDrawElementsEXT
 return		void
@@ -5826,7 +5835,7 @@ param		indices		const GLvoid **
 param		primcount	GLsizei
 category	GL_EXT_multi_draw_arrays
 props		useclient
-chromium	nopack
+chromium	expandpack
 
 
 # GL_EXT_fog_coord
@@ -5897,7 +5906,7 @@ chromium	extpack
 name		FlushVertexArrayRangeNV
 return		void
 category	GL_NV_vertex_array_range
-props		setclient
+props		setclient nolist
 chromium	extpack
 
 name		VertexArrayRangeNV
@@ -5905,7 +5914,7 @@ return		void
 param		length		GLsizei
 param		pointer		const GLvoid *
 category	GL_NV_vertex_array_range
-props		setclient
+props		setclient nolist
 chromium	extpack
 
 
@@ -6313,7 +6322,7 @@ param		primcount	GLsizei
 category	1.4
 alias		MultiDrawArraysEXT
 props		useclient
-chromium	nopack
+chromium	expandpack
 
 name		MultiDrawElements
 return		void
@@ -6327,7 +6336,7 @@ param		primcount	GLsizei
 category	1.4
 alias		MultiDrawElementsEXT
 props		useclient
-chromium	nopack
+chromium	expandpack
 
 name          PointParameterfEXT
 return                void
@@ -6714,21 +6723,21 @@ param		n		GLsizei
 param		fences		GLuint *
 category	GL_NV_fence
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		IsFenceNV
 return		GLboolean
 param		fence		GLuint
 category	GL_NV_fence
-props		get
-chromium	extpack
+props		get 
+chromium	extpack serverdependent
 
 name		TestFenceNV
 return		GLboolean
 param		fence		GLuint
 category	GL_NV_fence
-props		nolist get
-chromium	extpack
+props		get
+chromium	extpack serverdependent
 
 name		GetFenceivNV
 return		void
@@ -6738,12 +6747,13 @@ paramprop	pname		GL_FENCE_STATUS_NV GL_FENCE_CONDITION_NV
 param		params		GLint *
 category	GL_NV_fence
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		FinishFenceNV
 return		void
 param		fence		GLuint
 category	GL_NV_fence
+props		nolist
 chromium	extpack
 
 name		SetFenceNV
@@ -7199,7 +7209,7 @@ param		n		GLsizei
 param		programs	GLuint *
 category	GL_ARB_vertex_program
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		IsProgramARB
 return		GLboolean
@@ -7352,7 +7362,7 @@ param		pname		GLenum
 param		params		GLint *
 category	GL_ARB_vertex_program
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		GetProgramStringARB
 return		void
@@ -7426,7 +7436,7 @@ param		ids		const GLuint *
 param		residences	GLboolean *
 category	GL_NV_vertex_program
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		BindProgramNV
 return		void
@@ -7460,7 +7470,7 @@ param		n	GLsizei
 param		ids	GLuint *
 category	GL_NV_vertex_program
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		GetProgramParameterdvNV
 return		void
@@ -7495,7 +7505,7 @@ paramprop	target	GL_PROGRAM_PARAMETER_NV
 param		params	GLint *
 category	GL_NV_vertex_program
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		GetProgramStringNV
 return		void
@@ -7919,7 +7929,7 @@ param		n	GLsizei
 param		v	const GLdouble *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs1fvNV
 return		void
@@ -7928,7 +7938,7 @@ param		n	GLsizei
 param		v	const GLfloat *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs1svNV
 return		void
@@ -7937,7 +7947,7 @@ param		n	GLsizei
 param		v	const GLshort *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs2dvNV
 return		void
@@ -7946,7 +7956,7 @@ param		n	GLsizei
 param		v	const GLdouble *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs2fvNV
 return		void
@@ -7955,7 +7965,7 @@ param		n	GLsizei
 param		v	const GLfloat *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs2svNV
 return		void
@@ -7964,7 +7974,7 @@ param		n	GLsizei
 param		v	const GLshort *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs3dvNV
 return		void
@@ -7973,7 +7983,7 @@ param		n	GLsizei
 param		v	const GLdouble *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs3fvNV
 return		void
@@ -7982,7 +7992,7 @@ param		n	GLsizei
 param		v	const GLfloat *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs3svNV
 return		void
@@ -7991,7 +8001,7 @@ param		n	GLsizei
 param		v	const GLshort *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs4dvNV
 return		void
@@ -8000,7 +8010,7 @@ param		n	GLsizei
 param		v	const GLdouble *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs4fvNV
 return		void
@@ -8009,7 +8019,7 @@ param		n	GLsizei
 param		v	const GLfloat *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs4svNV
 return		void
@@ -8018,7 +8028,7 @@ param		n	GLsizei
 param		v	const GLshort *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 name		VertexAttribs4ubvNV
 return		void
@@ -8027,7 +8037,7 @@ param		n	GLsizei
 param		v	const GLubyte *
 category	GL_NV_vertex_program
 props		pervertex
-chromium	nopack
+chromium	expandpack
 
 
 # GL_NV_fragment_program
@@ -8146,7 +8156,7 @@ param		n		GLsizei
 param		buffer		GLuint *
 category	GL_ARB_vertex_buffer_object
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		GetBufferParameterivARB
 return		void
@@ -8227,7 +8237,7 @@ param		n		GLsizei
 param		ids		GLuint *
 category	GL_ARB_occlusion_query
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		DeleteQueriesARB
 return		void
@@ -8268,7 +8278,7 @@ paramprop	pname		GL_QUERY_COUNTER_BITS_ARB GL_CURRENT_QUERY_ARB
 param		params		GLint *
 category	GL_ARB_occlusion_query
 props		get
-chromium	extpack
+chromium	extpack serverdpendent
 
 name		GetQueryObjectivARB
 return		void
@@ -8278,7 +8288,7 @@ paramprop	pname		GL_QUERY_RESULT_ARB GL_QUERY_RESULT_AVAILABLE_ARB
 param		params		GLint *
 category	GL_ARB_occlusion_query
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		GetQueryObjectuivARB
 return		void
@@ -8288,7 +8298,7 @@ paramprop	pname		GL_QUERY_RESULT_ARB GL_QUERY_RESULT_AVAILABLE_ARB
 param		params		GLuint *
 category	GL_ARB_occlusion_query
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 
 
@@ -8463,7 +8473,7 @@ param		count		GLsizei
 param		values		const GLvoid *
 category	GL_chromium
 props		nolist
-chromium	extpack
+chromium	extpack serverdependent
 
 name		GetChromiumParametervCR
 return		void
@@ -8770,7 +8780,7 @@ param		buffer		GLuint *
 category	1.5
 alias		GenBuffersARB
 props		get
-chromium	extpack
+chromium	extpack serverdependent
 
 name		GetBufferParameteriv
 return		void
@@ -8846,7 +8856,7 @@ param		ids		GLuint *
 category	1.5
 alias		GenQueriesARB
 props		get
-chromium	omit
+chromium	omit 
 
 name		DeleteQueries
 return		void

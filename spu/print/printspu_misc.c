@@ -74,3 +74,16 @@ void PRINT_APIENTRY printChromiumParameteriCR(GLenum target, GLint value)
 	}
 	print_spu.passthrough.ChromiumParameteriCR( target, value ) ;
 }
+
+void PRINT_APIENTRY printGenTextures( GLsizei n, GLuint * textures )
+{
+	int i;
+	fprintf( print_spu.fp, "GenTextures( %u, %p )\n", (unsigned) n, (void *)textures );
+	print_spu.passthrough.GenTextures( n, textures );
+	fprintf(print_spu.fp, "= [");
+	for (i = 0; i < n; i++) {
+	    fprintf(print_spu.fp, "%s%d", i==0?"":", ", textures[i]);
+	}
+	fprintf(print_spu.fp, "]\n");
+	fflush(print_spu.fp);
+}

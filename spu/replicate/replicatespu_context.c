@@ -212,22 +212,8 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 	 * behaviors.
 	 */
 	if (slot == 0) {
-		CRDLMConfig dlmConfig = {
-			CRDLM_DEFAULT_BUFFERSIZE,
-
-			/* The DLM will store all display lists, but will
-			 * also pass the display lists down the pipe to
-			 * the SPU (and beyond)
-			 */
-			CRDLM_HANDLE_ALL,
-
-			/* All references (outside of creation) will be
-			 * passed directly to the SPU for processing.
-			 */
-			CRDLM_HANDLE_SPU,
-		};
 		replicate_spu.context[slot].displayListManager = 
-			crDLMNewDLM(sizeof(dlmConfig), &dlmConfig);
+			crDLMNewDLM(0, NULL);
 		if (!replicate_spu.context[slot].displayListManager) {
 			crWarning("replicatespu_CreateContext: could not initialize DLM");
 		}
@@ -249,7 +235,9 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 	replicate_spu.context[slot].visBits = visual;
 	replicate_spu.context[slot].currentWindow = 0; /* not bound */
 	replicate_spu.context[slot].dlmState = crDLMNewContext(
-			replicate_spu.context[slot].displayListManager, &replicate_spu.context[slot].State->client);
+			replicate_spu.context[slot].displayListManager);
+	replicate_spu.context[slot].displayListMode = GL_FALSE; /* not compiling */
+	replicate_spu.context[slot].displayListIdentifier = 0;
 
 #if 0
 	/* Set the Current pointers now.... */

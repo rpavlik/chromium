@@ -62,12 +62,10 @@ void replicatespuCreateDiffAPI( void )
 
 for func_name in keys:
 	if apiutil.FindSpecial( "replicatespu_diff", func_name ):
-		#print '\treplicate_spu.diff_dispatch.%s = (%sFunc_t) crState%s;' % (func_name,func_name,func_name)
-		print '\treplicate_spu.diff_dispatch.%s = (%sFunc_t) NULL;' % (func_name, func_name)
+		print '\treplicate_spu.diff_dispatch.%s = (%sFunc_t) crState%s;' % (func_name,func_name,func_name)
+	elif apiutil.FindSpecial( "replicatespu_pixel", func_name ):
+		print '\treplicate_spu.diff_dispatch.%s = (%sFunc_t) replicatespu_Diff%s;' % (func_name,func_name,func_name)
 	else:
-		if apiutil.FindSpecial( "replicatespu_pixel", func_name ):
-			print '\treplicate_spu.diff_dispatch.%s = (%sFunc_t) replicatespu_Diff%s;' % (func_name,func_name,func_name)
-		else:
-			print '\treplicate_spu.diff_dispatch.%s = (%sFunc_t) (replicate_spu.swap ? crPack%sSWAP : crPack%s);' % (func_name, func_name,func_name,func_name)
+		print '\treplicate_spu.diff_dispatch.%s = (%sFunc_t) (replicate_spu.swap ? crPack%sSWAP : crPack%s);' % (func_name, func_name,func_name,func_name)
 print '\tcrStateDiffAPI( &replicate_spu.diff_dispatch );'
 print '}'

@@ -57,8 +57,9 @@ for func_name in keys:
 	dlmCallString = basicCallString
 
 	# Queries can either be handled by a pack/writeback, or by
-	# a crState call.
-	if apiutil.FindSpecial("replicatespu_writeback", func_name):
+	# a crState call, depending on whether the query is
+	# server-dependent or not.
+	if "serverdependent" in chromiumProps:
 	    needPack = 1
 	    needWriteback = 1
 	    needFlush = 1

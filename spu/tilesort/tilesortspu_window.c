@@ -10,7 +10,7 @@
 #endif
 
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_packfunctions.h"

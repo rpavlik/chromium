@@ -16,3 +16,8 @@ Lightfv
 Lightiv
 ChromiumParameteriCR
 ChromiumParametervCR
+GenTextures
+TexEnvf
+TexEnvi
+TexEnvfv
+TexEnviv

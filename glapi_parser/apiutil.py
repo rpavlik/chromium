@@ -5,7 +5,7 @@
 # This file defines a bunch of utility functions for OpenGL API code
 # generation.
 
-import sys, string
+import sys, string, re
 
 
 #======================================================================
@@ -237,7 +237,6 @@ def GetDispatchedFunctions(specFile = ""):
 	funcs.sort()
 	return funcs
 
-
 #======================================================================
 
 def ReturnType(funcName):
@@ -277,12 +276,18 @@ def Properties(funcName):
 	d = GetFunctionDict()
 	return d[funcName].props
 
+def AllWithProperty(property):
+	"""Return list of functions that have the named property."""
+	funcs = []
+	for funcName in GetDispatchedFunctions():
+	    if property in Properties(funcName):
+		funcs.append(funcName)
+	return funcs
 
 def Category(funcName):
 	"""Return the category of the named GL function."""
 	d = GetFunctionDict()
 	return d[funcName].category
-
 
 def ChromiumProps(funcName):
 	"""Return list of Chromium-specific properties of the named GL function."""
@@ -352,37 +357,121 @@ def GetCategoryWrapper(func_name):
 
 def CanCompile(funcName):
 	"""Return 1 if the function can be compiled into display lists, else 0."""
-	d = GetFunctionDict()
 	props = Properties(funcName)
 	if ("nolist" in props or
 		"get" in props or
-		"setclient" in props or
-		"useclient" in props):
+		"setclient" in props):
 		return 0
 	else:
 		return 1
 
-
-def CanPack(funcName):
-	"""Return 1 if the function can be packed, else 0."""
-	d = GetFunctionDict()
-	props = ChromiumProps(funcName)
-	if ("pack" in props) or ("extpack" in props):
-		return 1
-	# check for packable alias
-	alias = NonVectorFunction(funcName)
-	if alias:
-		props = ChromiumProps(alias)
-		if ("pack" in props) or ("extpack" in props):
-			return 1
-	# check for vector version of packing function
-	alias = VectorFunction(funcName)
-	if alias:
-		props = ChromiumProps(alias)
-		if ("pack" in props) or ("extpack" in props):
+def HasChromiumProperty(funcName, propertyList):
+	"""Return 1 if the function or any alias has any property in the
+	propertyList"""
+	for funcAlias in [funcName, NonVectorFunction(funcName), VectorFunction(funcName)]:
+	    if funcAlias:
+		props = ChromiumProps(funcAlias)
+		for p in propertyList:
+		    if p in props:
 			return 1
 	return 0
 
+def CanPack(funcName):
+	"""Return 1 if the function can be packed, else 0."""
+	return HasChromiumProperty(funcName, ['pack', 'extpack', 'expandpack'])
+
+def HasPackOpcode(funcName):
+	"""Return 1 if the function has a true pack opcode"""
+	return HasChromiumProperty(funcName, ['pack', 'extpack'])
+
+def SetsState(funcName):
+	"""Return 1 if the function sets server-side state, else 0."""
+	props = Properties(funcName)
+
+	# Exceptions.  The first set of these functions *do* have 
+	# server-side state-changing  effects, but will be missed 
+	# by the general query, because they either render (e.g. 
+	# Bitmap) or do not compile into display lists (e.g. all the others).
+	# 
+	# The second set do *not* have server-side state-changing
+	# effects, despite the fact that they do not render
+	# and can be compiled.  They are control functions
+	# that are not trackable via state.
+	if funcName in ['Bitmap', 'DeleteTextures', 'FeedbackBuffer', 
+	    'RenderMode', 'BindBufferARB', 'DeleteFencesNV']:
+	    return 1
+	elif funcName in ['ExecuteProgramNV']:
+	    return 0
+
+	# All compilable functions that do not render and that do
+	# not set or use client-side state (e.g. DrawArrays, et al.), set
+	# server-side state.
+	if CanCompile(funcName) and "render" not in props and "useclient" not in props and "setclient" not in props:
+	    return 1
+
+	# All others don't set server-side state.
+	return 0
+
+def SetsClientState(funcName):
+	"""Return 1 if the function sets client-side state, else 0."""
+	props = Properties(funcName)
+	if "setclient" in props:
+	    return 1
+	return 0
+
+def SetsTrackedState(funcName):
+	"""Return 1 if the function sets state that is tracked by
+	the state tracker, else 0."""
+	# These functions set state, but aren't tracked by the state
+	# tracker for various reasons: 
+	# - because the state tracker doesn't manage display lists
+	#   (e.g. CallList and CallLists)
+	# - because the client doesn't have information about what
+	#   the server supports, so the function has to go to the
+	#   server (e.g. CompressedTexImage calls)
+	# - because they require a round-trip to the server (e.g.
+	#   the CopyTexImage calls, SetFenceNV, TrackMatrixNV)
+	if funcName in [
+	    'CopyTexImage1D', 'CopyTexImage2D',
+	    'CopyTexSubImage1D', 'CopyTexSubImage2D', 'CopyTexSubImage3D',
+	    'CallList', 'CallLists',
+	    'CompressedTexImage1DARB', 'CompressedTexSubImage1DARB',
+	    'CompressedTexImage2DARB', 'CompressedTexSubImage2DARB',
+	    'CompressedTexImage3DARB', 'CompressedTexSubImage3DARB',
+	    'SetFenceNV'
+	    ]:
+	    return 0
+
+	# Anything else that affects client-side state is trackable.
+	if SetsClientState(funcName):
+	    return 1
+
+	# Anything else that doesn't set state at all is certainly
+	# not trackable.
+	if not SetsState(funcName):
+	    return 0
+
+	# Per-vertex state isn't tracked the way other state is
+	# tracked, so it is specifically excluded.
+	if "pervertex" in Properties(funcName):
+	    return 0
+
+	# Everything else is fine
+	return 1
+
+def UsesClientState(funcName):
+	"""Return 1 if the function uses client-side state, else 0."""
+	props = Properties(funcName)
+	if "pixelstore" in props or "useclient" in props:
+	    return 1
+	return 0
+
+def IsQuery(funcName):
+	"""Return 1 if the function returns information to the user, else 0."""
+	props = Properties(funcName)
+	if "get" in props:
+	    return 1
+	return 0
 
 def FuncGetsState(funcName):
 	"""Return 1 if the function gets GL state, else 0."""

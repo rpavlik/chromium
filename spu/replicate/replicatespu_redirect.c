@@ -299,9 +299,10 @@ void replicatespuReplicateCreateContext(int ipaddress)
 		 * context should have all the client information needed, so that
 		 * we can restore correct client state after we're done.
 		 */
-		crDLMSendAllLists(replicate_spu.context[slot].displayListManager, 
-			&temp_c->client,
+		crDLMSetupClientState(&replicate_spu.diff_dispatch);
+		crDLMSendAllDLMLists(replicate_spu.context[slot].displayListManager, 
 			&replicate_spu.diff_dispatch);
+		crDLMRestoreClientState(&temp_c->client, &replicate_spu.diff_dispatch);
 
 		replicatespuFlush( (void *)thread );
 

@@ -4,7 +4,6 @@
 #include "cr_mem.h"
 #include "cr_unpack.h"
 #include "dlm.h"
-#include "dlm_client.h"
 /**
  * \mainpage Dlm 
  *
@@ -26,7 +25,7 @@ CRtsd CRDLMTSDKey;
 CRDLMContextState *CRDLMCurrentState = NULL;
 #endif
 
-#define MIN2(a,b) ((a)<(b)?(a):(b))
+#define MIN(a,b) ((a)<(b)?(a):(b))
 
 
 /*************************************************************************/
@@ -65,7 +64,7 @@ static void threadDestructor(void *tsd)
  * is passed in to allow the utilities to muck with the table
  * to gain functional control when GL calls are made.
  */
-CRDLM *crDLMNewDLM(unsigned int userConfigSize, const CRDLMConfig *userConfig)
+CRDLM DLM_APIENTRY *crDLMNewDLM(unsigned int userConfigSize, const CRDLMConfig *userConfig)
 {
     CRDLM *dlm;
 
@@ -74,8 +73,6 @@ CRDLM *crDLMNewDLM(unsigned int userConfigSize, const CRDLMConfig *userConfig)
      */
     CRDLMConfig config = {
 	CRDLM_DEFAULT_BUFFERSIZE,
-	CRDLM_DEFAULT_HANDLECREATION,
-	CRDLM_DEFAULT_HANDLEREFERENCE,
     };
 
     dlm = crAlloc(sizeof(*dlm));
@@ -87,8 +84,7 @@ CRDLM *crDLMNewDLM(unsigned int userConfigSize, const CRDLMConfig *userConfig)
      * memory allocation, so we can free up all the memory if there's
      * a problem.
      */
-    dlm->displayLists = crAllocHashtable();
-    if (!(dlm->displayLists)) {
+    if (!(dlm->displayLists = crAllocHashtable())) {
 	crFree(dlm);
 	return NULL;
     }
@@ -125,17 +121,15 @@ CRDLM *crDLMNewDLM(unsigned int userConfigSize, const CRDLMConfig *userConfig)
 	 * section of the structure that they know about.
 	 */
 	crMemcpy((void *)&config, (void *) userConfig, 
-		MIN2(userConfigSize, sizeof(config)));
+		MIN(userConfigSize, sizeof(config)));
     }
     dlm->bufferSize = config.bufferSize;
-    dlm->handleCreation = config.handleCreation;
-    dlm->handleReference = config.handleReference;
 
     /* Return the pointer to the newly-allocated display list manager */
     return dlm;
 }
 
-void crDLMUseDLM(CRDLM *dlm)
+void DLM_APIENTRY crDLMUseDLM(CRDLM *dlm)
 {
     DLM_LOCK(dlm);
     dlm->userCount++;
@@ -147,10 +141,10 @@ void crDLMUseDLM(CRDLM *dlm)
  * It maintains an internal count of users, and will only actually destroy
  * itself when no one is still using the DLM.
  */
-void crDLMFreeDLM(CRDLM *dlm)
+void DLM_APIENTRY crDLMFreeDLM(CRDLM *dlm)
 {
     /* We're about to change the displayLists hash; lock it first */
-    DLM_LOCK(dlm);
+    DLM_LOCK(dlm)
 
     /* Decrement the user count.  If the user count has gone to
      * 0, then free the rest of the DLM.  Otherwise, other
@@ -169,7 +163,7 @@ void crDLMFreeDLM(CRDLM *dlm)
 	dlm->displayLists = NULL;
 
 	/* Must unlock before freeing the mutex */
-	DLM_UNLOCK(dlm);
+	DLM_UNLOCK(dlm)
 
 #ifdef CHROMIUM_THREADSAFE
 	/* We release the mutex here; we really should delete the
@@ -207,7 +201,7 @@ void crDLMFreeDLM(CRDLM *dlm)
 	/* We're keeping the DLM around for other users.  Unlock it,
 	 * but retain its memory and display lists.
 	 */
-        DLM_UNLOCK(dlm);
+	DLM_UNLOCK(dlm)
     }
 }
 
@@ -221,7 +215,7 @@ void crDLMFreeDLM(CRDLM *dlm)
  * context-specific information.
  */
 
-CRDLMContextState *crDLMNewContext(CRDLM *dlm, CRClientState *clientState)
+CRDLMContextState DLM_APIENTRY *crDLMNewContext(CRDLM *dlm)
 {
 	CRDLMContextState *state;
 
@@ -231,19 +225,12 @@ CRDLMContextState *crDLMNewContext(CRDLM *dlm, CRClientState *clientState)
 		return NULL;
 	}
 
-	if (!clientState) {
-		 clientState = (CRClientState *) crCalloc(sizeof(CRClientState));
-	}
-
 	state->dlm = dlm;
 	state->currentListIdentifier = 0;
 	state->currentListInfo = NULL;
-	state->currentListMode = GL_COMPILE;
-	crSPUInitDispatchTable(&(state->savedDispatchTable));
+	state->currentListMode = GL_FALSE;
 	state->listBase = 0;
-	state->clientState = clientState;
-
-	crdlmClientInit(state->clientState);
+	state->replayState = CRDLM_IMMEDIATE;
 	
 	/* Increment the use count of the DLM provided.  This guarantees that
 	 * the DLM won't be released until all the contexts have released it.
@@ -260,7 +247,7 @@ CRDLMContextState *crDLMNewContext(CRDLM *dlm, CRClientState *clientState)
  * environment) appropriately; this in turn changes the behavior of
  * the installed DLM API functions.
  */
-void crDLMSetCurrentState(CRDLMContextState *state)
+void DLM_APIENTRY crDLMSetCurrentState(CRDLMContextState *state)
 {
 	CRDLMContextState *currentState = CURRENT_STATE();
 	if (currentState != state) {
@@ -268,7 +255,7 @@ void crDLMSetCurrentState(CRDLMContextState *state)
 	}
 }
 
-CRDLMContextState *crDLMGetCurrentState(void)
+CRDLMContextState DLM_APIENTRY *crDLMGetCurrentState(void)
 {
 	return CURRENT_STATE();
 }
@@ -278,7 +265,7 @@ CRDLMContextState *crDLMGetCurrentState(void)
  * is no longer going to be used.
  */
 
-void crDLMFreeContext(CRDLMContextState *state)
+void DLM_APIENTRY crDLMFreeContext(CRDLMContextState *state)
 {
 	CRDLMContextState *listState = CURRENT_STATE();
 
@@ -317,14 +304,13 @@ void crDLMFreeContext(CRDLMContextState *state)
  * that need them.  After all servers have the display list, the SPU
  * may wish to release the resources used to manage the content.
  */
-CRDLMError crDLMDeleteListContent(CRDLM *dlm, unsigned long listIdentifier)
+CRDLMError DLM_APIENTRY crDLMDeleteListContent(CRDLM *dlm, unsigned long listIdentifier)
 {
     DLMListInfo *listInfo;
     DLMInstanceList *instance;
 
     listInfo = (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
-    if (listInfo) {
-        instance = listInfo->first;
+    if (listInfo && (instance = listInfo->first)) {
 	while (instance) {
 	    DLMInstanceList *nextInstance;
 	    nextInstance = instance->next;
@@ -336,6 +322,22 @@ CRDLMError crDLMDeleteListContent(CRDLM *dlm, unsigned long listIdentifier)
     return GL_NO_ERROR;
 }
 
+/* Return whether the current thread is involved in playback.
+ * This is useful for some routines to selectively choose their
+ * unpack state, for example (as replayed DLM functions must be
+ * unpacked with crStateNativePixelPacking instead of the 
+ * normal unpack state, for example.
+ */
+CRDLMReplayState DLM_APIENTRY crDLMGetReplayState(void)
+{
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	return listState->replayState;
+    }
+    else {
+	return CRDLM_IMMEDIATE;
+    }
+}
 
 /**
  *
@@ -344,10 +346,9 @@ CRDLMError crDLMDeleteListContent(CRDLM *dlm, unsigned long listIdentifier)
  * listIdentifier - the display list ID (as specified by app) to playback
  * dispatchTable - the GL dispatch table to jump through as we execute commands
  */
-void crDLMReplayList(CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable)
+void DLM_APIENTRY crDLMReplayDLMList(CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable)
 {
     DLMListInfo *listInfo;
-
 
     listInfo = (DLMListInfo *)crHashtableSearch(dlm->displayLists, listIdentifier);
     if (listInfo) {
@@ -361,20 +362,144 @@ void crDLMReplayList(CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable 
     }
 }
 
-/**
- * When we compiled the display list, we packed all pixel data
+/* Playback/execute a list in the current DLM */
+void DLM_APIENTRY crDLMReplayList(unsigned long listIdentifier, SPUDispatchTable *dispatchTable)
+{
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	CRDLMReplayState oldReplayState = listState->replayState;
+	listState->replayState = CRDLM_REPLAY_ALL_FUNCTIONS;
+	crDLMReplayDLMList(listState->dlm, listIdentifier, dispatchTable);
+	listState->replayState = oldReplayState;
+    }
+}
+
+/*
+ * Playback/execute the state changing portions of a list.
+ * dlm - the display list manager context
+ * listIdentifier - the display list ID (as specified by app) to playback
+ * dispatchTable - the GL dispatch table to jump through as we execute commands
+ */
+void DLM_APIENTRY crDLMReplayDLMListState(CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable)
+{
+    DLMListInfo *listInfo;
+
+    listInfo = (DLMListInfo *)crHashtableSearch(dlm->displayLists, listIdentifier);
+    if (listInfo) {
+	DLMInstanceList *instance = listInfo->stateFirst;
+	while (instance) {
+	    /* mutex, to make sure another thread doesn't change the list? */
+	    /* For now, leave it alone. */
+	    (*instance->execute)(instance, dispatchTable);
+	    instance = instance->stateNext;
+	}
+    }
+}
+
+void DLM_APIENTRY crDLMReplayListState(unsigned long listIdentifier, SPUDispatchTable *dispatchTable)
+{
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	CRDLMReplayState oldReplayState = listState->replayState;
+	listState->replayState = CRDLM_REPLAY_STATE_FUNCTIONS;
+	crDLMReplayDLMListState(listState->dlm, listIdentifier, dispatchTable);
+	listState->replayState = oldReplayState;
+    }
+}
+
+/* This is a switch statement that lists every "type" value valid for a
+ * glCallLists() function call, with code for decoding the subsequent
+ * values correctly.  It uses the current value of the EXPAND() macro,
+ * which must expand into an appropriate action to be taken.
+ * Its codification here allows for multiple uses.
+ */
+#define CALL_LISTS_SWITCH(type, defaultAction) \
+    switch (type) {\
+	EXPAND(GL_BYTE, GLbyte *, *p, p++)\
+	EXPAND(GL_UNSIGNED_BYTE, GLubyte *, *p, p++)\
+	EXPAND(GL_SHORT, GLshort *, *p, p++)\
+	EXPAND(GL_UNSIGNED_SHORT, GLushort *, *p, p++)\
+	EXPAND(GL_INT, GLint *, *p, p++)\
+	EXPAND(GL_FLOAT, GLfloat *, *p, p++)\
+	EXPAND(GL_2_BYTES, unsigned char *, 256*p[0] + p[1], p += 2)\
+	EXPAND(GL_3_BYTES, unsigned char *, 65536*p[0] + 256*p[1] + p[2], p += 3)\
+	EXPAND(GL_4_BYTES, unsigned char *, 16777216*p[0] + 65536*p[1] + 256*p[2] + p[3], p += 4)\
+	default:\
+	    defaultAction;\
+    }
+
+void DLM_APIENTRY crDLMReplayDLMLists(CRDLM *dlm, GLsizei n, GLenum type, const GLvoid * lists, SPUDispatchTable *dispatchTable)
+{
+    unsigned long listId;
+    CRDLMContextState *listState = CURRENT_STATE();
+
+#define EXPAND(TYPENAME, TYPE, REFERENCE, INCREMENT) \
+    case TYPENAME: {\
+	TYPE p = (TYPE)lists;\
+	while (n--) {\
+	    listId = listState->listBase + (unsigned long) (REFERENCE);\
+	    crDLMReplayDLMList(dlm, listId, dispatchTable);\
+	    INCREMENT;\
+	}\
+	break;\
+    }
+
+    CALL_LISTS_SWITCH(type, break)
+#undef EXPAND
+
+}
+
+void DLM_APIENTRY crDLMReplayLists(GLsizei n, GLenum type, const GLvoid * lists, SPUDispatchTable *dispatchTable)
+{
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	crDLMReplayDLMLists(listState->dlm, n, type, lists, dispatchTable);
+    }
+}
+
+void DLM_APIENTRY crDLMReplayDLMListsState(CRDLM *dlm, GLsizei n, GLenum type, const GLvoid * lists, SPUDispatchTable *dispatchTable)
+{
+    unsigned long listId;
+    CRDLMContextState *listState = CURRENT_STATE();
+
+#define EXPAND(TYPENAME, TYPE, REFERENCE, INCREMENT) \
+    case TYPENAME: {\
+	TYPE p = (TYPE)lists;\
+	while (n--) {\
+	    listId = listState->listBase + (unsigned long) (REFERENCE);\
+	    crDLMReplayDLMListState(dlm, listId, dispatchTable);\
+	    INCREMENT;\
+	}\
+	break;\
+    }
+
+    CALL_LISTS_SWITCH(type, break)
+#undef EXPAND
+
+}
+
+void DLM_APIENTRY crDLMReplayListsState(GLsizei n, GLenum type, const GLvoid * lists, SPUDispatchTable *dispatchTable)
+{
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	crDLMReplayDLMListsState(listState->dlm, n, type, lists, dispatchTable);
+    }
+}
+
+/* When we compiled the display list, we packed all pixel data
  * tightly.  When we execute the display list, we have to make
  * sure that the client state reflects that the pixel data is
  * tightly packed, or it will be interpreted incorrectly.
  */
-static void setup_client_state(SPUDispatchTable *dispatchTable)
+void DLM_APIENTRY crDLMSetupClientState(SPUDispatchTable *dispatchTable)
 {
     dispatchTable->PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     dispatchTable->PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
     dispatchTable->PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
     dispatchTable->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
-static void restore_client_state(CRClientState *clientState, SPUDispatchTable *dispatchTable)
+
+void DLM_APIENTRY crDLMRestoreClientState(CRClientState *clientState, SPUDispatchTable *dispatchTable)
 {
     if (clientState) {
 	dispatchTable->PixelStorei(GL_UNPACK_ROW_LENGTH, clientState->unpack.rowLength);
@@ -384,22 +509,20 @@ static void restore_client_state(CRClientState *clientState, SPUDispatchTable *d
     }
 }
 
-/** Send a single list down the pipe */
-static void send_one_list(CRDLM *dlm, unsigned long listIdentifier,
+void DLM_APIENTRY crDLMSendDLMList(CRDLM *dlm, unsigned long listIdentifier,
 	SPUDispatchTable *dispatchTable)
 {
     dispatchTable->NewList(listIdentifier, GL_COMPILE);
-    crDLMReplayList(dlm, listIdentifier, dispatchTable);
+    crDLMReplayDLMList(dlm, listIdentifier, dispatchTable);
     dispatchTable->EndList();
 }
 
-/** API routine to do the same - this one makes sure client state is set up first */
-void crDLMSendList(CRDLM *dlm, unsigned long listIdentifier,
-	CRClientState *restoreClientState, SPUDispatchTable *dispatchTable)
+void DLM_APIENTRY crDLMSendList(unsigned long listIdentifier, SPUDispatchTable *dispatchTable)
 {
-    setup_client_state(dispatchTable);
-    send_one_list(dlm, listIdentifier, dispatchTable);
-    restore_client_state(restoreClientState, dispatchTable);
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	crDLMSendDLMList(listState->dlm, listIdentifier, dispatchTable);
+    }
 }
 
 struct sendListsCallbackParms {
@@ -411,11 +534,10 @@ static void sendListsCallback(unsigned long key, void *data, void *dataPtr2)
 {
     struct sendListsCallbackParms *parms = (struct sendListsCallbackParms *)dataPtr2;
 
-    send_one_list(parms->dlm, key, parms->dispatchTable);
+    crDLMSendDLMList(parms->dlm, key, parms->dispatchTable);
 }
 
-void crDLMSendAllLists(CRDLM *dlm, CRClientState *restoreClientState, 
-	SPUDispatchTable *dispatchTable)
+void DLM_APIENTRY crDLMSendAllDLMLists(CRDLM *dlm, SPUDispatchTable *dispatchTable)
 {
     struct sendListsCallbackParms parms;
 
@@ -425,11 +547,15 @@ void crDLMSendAllLists(CRDLM *dlm, CRClientState *restoreClientState,
     parms.dlm = dlm;
     parms.dispatchTable = dispatchTable;
 
-    setup_client_state(dispatchTable);
-
     crHashtableWalk(dlm->displayLists, sendListsCallback, (void *)&parms);
+}
 
-    restore_client_state(restoreClientState, dispatchTable);
+void DLM_APIENTRY crDLMSendAllLists(SPUDispatchTable *dispatchTable)
+{
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	crDLMSendAllDLMLists(listState->dlm, dispatchTable);
+    }
 }
 
 /** Another clever callback arrangement to get the desired data. */
@@ -460,7 +586,7 @@ static void getRefsCallback(unsigned long key, void *data, void *dataPtr2)
     }
 }
 
-int crDLMGetReferences(CRDLM *dlm, unsigned long listIdentifier,
+int DLM_APIENTRY crDLMGetReferences(CRDLM *dlm, unsigned long listIdentifier,
     int firstIndex, int sizeofBuffer, unsigned int *buffer)
 {
     DLMListInfo *listInfo;
@@ -484,8 +610,7 @@ int crDLMGetReferences(CRDLM *dlm, unsigned long listIdentifier,
     }
 }
 
-CRDLMError
-crDLMGetBounds(CRDLM *dlm, unsigned long listIdentifier, CRDLMBounds *bounds)
+CRDLMError DLM_APIENTRY crDLMGetDLMBounds(CRDLM *dlm, unsigned long listIdentifier, CRDLMBounds *bounds)
 {
 	DLMListInfo *listInfo
 		= (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
@@ -498,11 +623,22 @@ crDLMGetBounds(CRDLM *dlm, unsigned long listIdentifier, CRDLMBounds *bounds)
 	}
 }
 
+CRDLMError DLM_APIENTRY crDLMGetBounds(unsigned long listIdentifier, CRDLMBounds *bounds)
+{
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	return crDLMGetDLMBounds(listState->dlm, listIdentifier, bounds);
+    }
+    else {
+	return CRDLM_ERROR_STATE;
+    }
+}
+
+
 /**
  * Set the bounding box for a display list.
  */
-void
-crDLMSetBounds(CRDLM *dlm, unsigned long listIdentifier,
+void DLM_APIENTRY crDLMSetDLMBounds(CRDLM *dlm, unsigned long listIdentifier,
                double xmin, double ymin, double zmin,
                double xmax, double ymax, double zmax)
 {
@@ -525,11 +661,21 @@ crDLMSetBounds(CRDLM *dlm, unsigned long listIdentifier,
 	}
 }
 
+void DLM_APIENTRY crDLMSetBounds(unsigned long listIdentifier,
+               double xmin, double ymin, double zmin,
+               double xmax, double ymax, double zmax)
+{
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	crDLMSetDLMBounds(listState->dlm, listIdentifier,
+	    xmin, ymin, zmin, xmax, ymax, zmax);
+    }
+}
+
 /**
  * Return GL_TRUE if the given list has a valid bounding box
  */
-GLboolean
-crDLMListHasBounds(CRDLM *dlm, unsigned long listIdentifier)
+GLboolean DLM_APIENTRY crDLMListHasDLMBounds(CRDLM *dlm, unsigned long listIdentifier)
 {
 	DLMListInfo *listInfo
 		= (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
@@ -539,39 +685,32 @@ crDLMListHasBounds(CRDLM *dlm, unsigned long listIdentifier)
 		return GL_FALSE;
 }
 
-
-void crDLMListSent(CRDLM *dlm, unsigned long listIdentifier)
+GLboolean DLM_APIENTRY crDLMListHasBounds(unsigned long listIdentifier)
 {
-    DLMListInfo *listInfo;
-
-    listInfo = (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
-    listInfo->listSent = GL_TRUE;
+    CRDLMContextState *listState = CURRENT_STATE();
+    if (listState) {
+	return crDLMListHasDLMBounds(listState->dlm, listIdentifier);
+    }
+    return 0;
 }
 
-GLboolean crDLMIsListSent(CRDLM *dlm, unsigned long listIdentifier)
-{
-    DLMListInfo *listInfo;
-
-    listInfo = (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
-    return listInfo->listSent;
-}
-
-
-/**
- * Return id of list currently being compiled.  Only valid between
- * calls to crdlm_NewList() and crdlm_EndList.
+/*
+ * Return id of list currently being compiled.  Returns 0 of there's no
+ * current DLM state, or if no list is being compiled. 
  */
-GLuint crDLMGetCurrentList(void)
+GLuint DLM_APIENTRY crDLMGetCurrentList(void)
 {
 	CRDLMContextState *listState = CURRENT_STATE();
 	return listState ? listState->currentListIdentifier : 0;
 }
 
-/**
- * Return mode of list currently being compiled.  Only valid between
- * calls to crdlm_NewList() and crdlm_EndList.
+/*
+ * Return mode of list currently being compiled.  Should be 
+ * GL_FALSE if no list is being compiled, or GL_COMPILE if a
+ * list is being compiled but not executed, or GL_COMPILE_AND_EXECUTE
+ * if a list is being compiled and executed.
  */
-GLenum crDLMGetCurrentMode(void)
+GLenum DLM_APIENTRY crDLMGetCurrentMode(void)
 {
 	CRDLMContextState *listState = CURRENT_STATE();
 	return listState ? listState->currentListMode : 0;
@@ -580,7 +719,7 @@ GLenum crDLMGetCurrentMode(void)
 
 static CRDLMErrorCallback ErrorCallback = NULL;
 
-void crDLMErrorFunction(CRDLMErrorCallback callback)
+void DLM_APIENTRY crDLMErrorFunction(CRDLMErrorCallback callback)
 {
 	ErrorCallback = callback;
 }

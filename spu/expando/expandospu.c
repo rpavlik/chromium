@@ -7,25 +7,21 @@
 #include <stdio.h>
 #include "cr_spu.h"
 #include "cr_dlm.h"
+#include "cr_mem.h"
 #include "expandospu.h"
 
-static GLint EXPANDOSPU_APIENTRY
-CreateContext(const char *displayName, GLint visBits)
+extern GLint EXPANDOSPU_APIENTRY
+expandoCreateContext(const char *displayName, GLint visBits)
 {
-	CRDLM *dlm;
-	CRDLMContextState *dlmContext;
+	ExpandoContextState *contextState;
 	GLint contextId;
 
-	/* Our configuration for the DLM we're going to create.
-	 * It says that we want the DLM to handle everything
-	 * itself, making display lists transparent to 
-	 * the host SPU.
-	 */
-	CRDLMConfig dlmConfig = {
-		CRDLM_DEFAULT_BUFFERSIZE,	/* bufferSize */
-		CRDLM_HANDLE_DLM,		/* handleCreation */
-		CRDLM_HANDLE_DLM,		/* handleReference */
-	};
+	/* Allocate our own per-context record */
+	contextState = crCalloc(sizeof(ExpandoContextState));
+	if (contextState == NULL) {
+	    crError("expando: couldn't allocate per-context state");
+	    return 0;
+	}
 
 	/* Get an official context ID from our super */
 	contextId = expando_spu.super.CreateContext(displayName, visBits);
@@ -35,123 +31,125 @@ CreateContext(const char *displayName, GLint visBits)
 	 * for sharing DLMs.  We don't currently get that information, so for now
 	 * give each context its own DLM.
 	 */
-	dlm = crDLMNewDLM(sizeof(dlmConfig), &dlmConfig);
-	if (!dlm) {
-		crDebug("expando: couldn't get DLM!");
+	contextState->dlm = crDLMNewDLM(0, NULL);
+	if (!contextState->dlm) {
+		crError("expando: couldn't get DLM!");
 	}
 
-	dlmContext = crDLMNewContext(dlm, NULL);
-	if (!dlmContext) {
-		crDebug("expando: couldn't get dlmContext");
+	contextState->dlmContext = crDLMNewContext(contextState->dlm);
+	if (!contextState->dlmContext) {
+		crError("expando: couldn't get dlmContext");
 	}
 
-	/* We're not going to hold onto the dlm ourselves, so we can
-	 * free it.  It won't be actually freed until all the structures
-	 * that refer to it (like our dlmContext) are freed.
+	/* The DLM needs us to use the state tracker to track client
+	 * state, so we can compile client-state-using functions correctly.
 	 */
-	crDLMFreeDLM(dlm);
-    
-	/* The DLM context should be associated with the user context */
-	crHashtableAdd(expando_spu.contextTable, contextId,
-								 (void *)dlmContext);
+	contextState->State = crStateCreateContext(NULL, visBits);
+
+	/* Associate the Expando context with the user context. */
+	crHashtableAdd(expando_spu.contextTable, contextId, (void *)contextState);
 
 	return contextId;
 }
 
-static void EXPANDOSPU_APIENTRY
-DestroyContext(GLint contextId)
+void expando_free_context_state(void *data)
+{
+    ExpandoContextState *expandoContextState = (ExpandoContextState *)data;
+
+    crDLMFreeContext(expandoContextState->dlmContext);
+    crDLMFreeDLM(expandoContextState->dlm);
+    crStateDestroyContext(expandoContextState->State);
+    crFree(expandoContextState);
+}
+
+extern void EXPANDOSPU_APIENTRY
+expandoDestroyContext(GLint contextId)
 {
 	/* Destroy our context information */
 	crHashtableDelete(expando_spu.contextTable, contextId, 
-										expando_free_dlm_context);
+				expando_free_context_state);
 
 	/* Pass along the destruction to our super. */
 	expando_spu.super.DestroyContext(contextId);
 }
 
-static void EXPANDOSPU_APIENTRY
-MakeCurrent(GLint crWindow, GLint nativeWindow, GLint contextId)
+extern void EXPANDOSPU_APIENTRY
+expandoMakeCurrent(GLint crWindow, GLint nativeWindow, GLint contextId)
 {
-	CRDLMContextState *dlmContext;
+	ExpandoContextState *expandoContextState;
 
 	expando_spu.super.MakeCurrent(crWindow, nativeWindow, contextId);
 
-	dlmContext = crHashtableSearch(expando_spu.contextTable, contextId);
-	crDLMSetCurrentState(dlmContext);
+	expandoContextState = crHashtableSearch(expando_spu.contextTable, contextId);
+	if (expandoContextState) {
+	    crDLMSetCurrentState(expandoContextState->dlmContext);
+	    crStateMakeCurrent(expandoContextState->State);
+	}
+	else {
+	    crDLMSetCurrentState(NULL);
+	    crStateMakeCurrent(NULL);
+	}
 }
 
-
-/*
- * NOTE: we don't really need these wrapper functions (could plug the
- * crdlm_* functions directly into _cr_expando_table but this makes
- * things a big easier to debug for now.
- */
-
-static void EXPANDOSPU_APIENTRY
-NewList(GLuint list, GLenum mode)
+extern void EXPANDOSPU_APIENTRY
+expandoNewList(GLuint list, GLenum mode)
 {
-	crdlm_NewList(list, mode, &(expando_spu.self));
+	crDLMNewList(list, mode);
 }
 
-static void EXPANDOSPU_APIENTRY
-EndList(void)
+extern void EXPANDOSPU_APIENTRY
+expandoEndList(void)
 {
-	const GLenum list = crDLMGetCurrentList();
-	const GLenum mode = crDLMGetCurrentMode();
-	crdlm_EndList();
-	crdlm_RestoreDispatch();  /* companion to crdlm_EndList() */
-	if (mode == GL_COMPILE_AND_EXECUTE)
-		crdlm_CallList(list, &expando_spu.self);
+	crDLMEndList();
 }
 
-static void EXPANDOSPU_APIENTRY
-CallList(GLuint list)
+extern void EXPANDOSPU_APIENTRY
+expandoDeleteLists(GLuint first, GLsizei range)
 {
-	crdlm_CallList(list, &expando_spu.self);
+	crDLMDeleteLists(first, range);
 }
 
-static void EXPANDOSPU_APIENTRY
-CallLists(GLsizei n, GLenum type, const GLvoid *lists)
+extern GLuint EXPANDOSPU_APIENTRY
+expandoGenLists(GLsizei range)
 {
-	crdlm_CallLists(n, type, lists, &expando_spu.self);
+	 return crDLMGenLists(range);
 }
 
-static void EXPANDOSPU_APIENTRY
-DeleteLists(GLuint first, GLsizei range)
+extern GLboolean EXPANDOSPU_APIENTRY
+expandoIsList(GLuint list)
 {
-	crdlm_DeleteLists(first, range);
+	 return crDLMIsList(list);
 }
 
-static GLuint EXPANDOSPU_APIENTRY
-GenLists(GLsizei range)
+extern void EXPANDOSPU_APIENTRY
+expandoCallList(GLuint list)
 {
-	 return crdlm_GenLists(range);
+	GLenum mode = crDLMGetCurrentMode();
+	if (mode != GL_FALSE) {
+		crDLMCompileCallList(list);
+		if (mode == GL_COMPILE) return;
+	}
+
+	/* Instead of passing through the CallList,
+	 * expand it into its components.  This will cause
+	 * a recursion if there are any compiled CallList
+	 * elements within the display list.
+	 */
+	crDLMReplayList(list, &expando_spu.self);
 }
 
-static GLboolean EXPANDOSPU_APIENTRY
-IsList(GLuint list)
+extern void EXPANDOSPU_APIENTRY
+expandoCallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
-	 return crdlm_IsList(list);
+	GLenum mode = crDLMGetCurrentMode();
+	if (mode != GL_FALSE) {
+		crDLMCompileCallLists(n, type, lists);
+		if (mode == GL_COMPILE) return;
+	}
+	/* Instead of passing through the CallLists,
+	 * expand it into its components.  This will cause
+	 * a recursion if there are any compiled CallLists
+	 * elements within the display list.
+	 */
+	crDLMReplayLists(n, type, lists, &expando_spu.self);
 }
-
-static void EXPANDOSPU_APIENTRY
-ListBase(GLuint base)
-{
-	 crdlm_ListBase(base);
-}
-
-
-SPUNamedFunctionTable _cr_expando_table[] = {
-	{ "CreateContext", (SPUGenericFunction) CreateContext },
-	{ "DestroyContext", (SPUGenericFunction) DestroyContext },
-	{ "MakeCurrent", (SPUGenericFunction) MakeCurrent },
-	{ "NewList", (SPUGenericFunction) NewList },
-	{ "EndList", (SPUGenericFunction) EndList },
-	{ "CallList", (SPUGenericFunction) CallList },
-	{ "CallLists", (SPUGenericFunction) CallLists },
-	{ "DeleteLists", (SPUGenericFunction) DeleteLists },
-	{ "GenLists", (SPUGenericFunction) GenLists },
-	{ "ListBase", (SPUGenericFunction) ListBase },
-	{ "IsList", (SPUGenericFunction) IsList },
-	{ NULL, NULL }
-};

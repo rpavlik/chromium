@@ -5,13 +5,22 @@
  */
 
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 #include "cr_packfunctions.h"
 #include "cr_error.h"
 
 void TILESORTSPU_APIENTRY tilesortspu_Rectf (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) 
 {
 	GET_CONTEXT(ctx);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE) {
+	    /* just creating or compiling display lists */
+	    if (tilesort_spu.lazySendDLists) crDLMCompileRectf(x1, y1, x2, y2);
+	    else if (tilesort_spu.swap) crPackRectfSWAP(x1, y1, x2, y2);
+	    else crPackRectf(x1, y1, x2, y2);
+	    return;
+	}
+
 	if (ctx->current.inBeginEnd)
 	{
 			crError( "tilesortspu_Rect?? called in Begin/End");

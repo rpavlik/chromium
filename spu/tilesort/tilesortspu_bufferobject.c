@@ -8,7 +8,7 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 
 
 void * TILESORTSPU_APIENTRY

@@ -8,24 +8,36 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 
 void TILESORTSPU_APIENTRY tilesortspu_ArrayElement( GLint index )
 {
-	GET_CONTEXT(ctx);
+	GET_THREAD(thread);
+	CRClientState *clientState = &(thread->currentContext->State->client);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE && tilesort_spu.lazySendDLists) {
+		crDLMCompileArrayElement(index, clientState);
+		return;
+	}
 	if (tilesort_spu.swap)
 	{
-		crPackExpandArrayElementSWAP( index, &(ctx->client) );
+		crPackExpandArrayElementSWAP( index, clientState );
 	}
 	else
 	{
-		crPackExpandArrayElement( index, &(ctx->client) );
+		crPackExpandArrayElement( index, clientState );
 	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsizei count )
 {
 	GET_CONTEXT(ctx);
+	CRClientState *clientState = &(thread->currentContext->State->client);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE && tilesort_spu.lazySendDLists) {
+		crDLMCompileDrawArrays(mode, first, count, clientState);
+		return;
+	}
 
 	if (count < 0)
 	{
@@ -60,14 +72,14 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsi
 		{
 			for (i=0; i<count; i++) 
 			{
-				crPackExpandArrayElementSWAP(first++, &(ctx->client));
+				crPackExpandArrayElementSWAP(first++, clientState);
 			}
 		}
 		else
 		{
 			for (i=0; i<count; i++) 
 			{
-				crPackExpandArrayElement(first++, &(ctx->client));
+				crPackExpandArrayElement(first++, clientState);
 			}
 		}
 		tilesort_spu.self.End();
@@ -77,6 +89,12 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsi
 void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
 {
 	GET_CONTEXT(ctx);
+	CRClientState *clientState = &(thread->currentContext->State->client);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE && tilesort_spu.lazySendDLists) {
+		crDLMCompileDrawElements(mode, count, type, indices, clientState);
+		return;
+	}
 
 	if (count < 0)
 	{
@@ -121,14 +139,14 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 			{
 				for (i=0; i<count; i++)
 				{
-					crPackExpandArrayElementSWAP((GLint) *p++, &(ctx->client));
+					crPackExpandArrayElementSWAP((GLint) *p++, clientState);
 				}
 			}
 			else
 			{
 				for (i=0; i<count; i++)
 				{
-					crPackExpandArrayElement((GLint) *p++, &(ctx->client));
+					crPackExpandArrayElement((GLint) *p++, clientState);
 				}
 			}
 			break;
@@ -137,7 +155,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 			{
 				for (i=0; i<count; i++) 
 				{
-					crPackExpandArrayElementSWAP((GLint) * (GLushort *) p, &(ctx->client));
+					crPackExpandArrayElementSWAP((GLint) * (GLushort *) p, clientState);
 					p+=sizeof (GLushort);
 				}
 			}
@@ -145,7 +163,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 			{
 				for (i=0; i<count; i++) 
 				{
-					crPackExpandArrayElement((GLint) * (GLushort *) p, &(ctx->client));
+					crPackExpandArrayElement((GLint) * (GLushort *) p, clientState);
 					p+=sizeof (GLushort);
 				}
 			}
@@ -155,7 +173,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 			{
 				for (i=0; i<count; i++) 
 				{
-					crPackExpandArrayElementSWAP((GLint) * (GLuint *) p, &(ctx->client));
+					crPackExpandArrayElementSWAP((GLint) * (GLuint *) p, clientState);
 					p+=sizeof (GLuint);
 				}
 			}
@@ -163,7 +181,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 			{
 				for (i=0; i<count; i++) 
 				{
-					crPackExpandArrayElement((GLint) * (GLuint *) p, &(ctx->client));
+					crPackExpandArrayElement((GLint) * (GLuint *) p, clientState);
 					p+=sizeof (GLuint);
 				}
 			}
@@ -179,6 +197,12 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
 {
 	GET_CONTEXT(ctx);
+	CRClientState *clientState = &(thread->currentContext->State->client);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE && tilesort_spu.lazySendDLists) {
+		crDLMCompileDrawRangeElements(mode, start, end, count, type, indices, clientState);
+		return;
+	}
 
 	if (count < 0)
 	{
@@ -223,14 +247,14 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 			{
 				for (i=start; i<count; i++)
 				{
-					crPackExpandArrayElementSWAP((GLint) *p++, &(ctx->client));
+					crPackExpandArrayElementSWAP((GLint) *p++, clientState);
 				}
 			}
 			else
 			{
 				for (i=start; i<count; i++)
 				{
-					crPackExpandArrayElement((GLint) *p++, &(ctx->client));
+					crPackExpandArrayElement((GLint) *p++, clientState);
 				}
 			}
 			break;
@@ -239,7 +263,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 			{
 				for (i=start; i<count; i++) 
 				{
-					crPackExpandArrayElementSWAP((GLint) * (GLushort *) p, &(ctx->client));
+					crPackExpandArrayElementSWAP((GLint) * (GLushort *) p, clientState);
 					p+=sizeof (GLushort);
 				}
 			}
@@ -247,7 +271,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 			{
 				for (i=start; i<count; i++) 
 				{
-					crPackExpandArrayElement((GLint) * (GLushort *) p, &(ctx->client));
+					crPackExpandArrayElement((GLint) * (GLushort *) p, clientState);
 					p+=sizeof (GLushort);
 				}
 			}
@@ -257,7 +281,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 			{
 				for (i=start; i<count; i++) 
 				{
-					crPackExpandArrayElementSWAP((GLint) * (GLuint *) p, &(ctx->client));
+					crPackExpandArrayElementSWAP((GLint) * (GLuint *) p, clientState);
 					p+=sizeof (GLuint);
 				}
 			}
@@ -265,7 +289,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 			{
 				for (i=start; i<count; i++) 
 				{
-					crPackExpandArrayElement((GLint) * (GLuint *) p, &(ctx->client));
+					crPackExpandArrayElement((GLint) * (GLuint *) p, clientState);
 					p+=sizeof (GLuint);
 				}
 			}
@@ -281,8 +305,13 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 #ifdef CR_EXT_multi_draw_arrays
 void TILESORTSPU_APIENTRY tilesortspu_MultiDrawArraysEXT( GLenum mode, GLint *first, GLsizei *count, GLsizei primcount )
 {
-	GET_CONTEXT(ctx);
-	CRClientState *clientState = &(ctx->client);
+	GET_THREAD(thread);
+	CRClientState *clientState = &(thread->currentContext->State->client);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE && tilesort_spu.lazySendDLists) {
+		crDLMCompileMultiDrawArraysEXT(mode, first, count, primcount, clientState);
+		return;
+	}
 	if (tilesort_spu.swap)
 	{
 		crPackExpandMultiDrawArraysEXTSWAP( mode, first, count, primcount, clientState );
@@ -295,8 +324,13 @@ void TILESORTSPU_APIENTRY tilesortspu_MultiDrawArraysEXT( GLenum mode, GLint *fi
 
 void TILESORTSPU_APIENTRY tilesortspu_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount )
 {
-	GET_CONTEXT(ctx);
-	CRClientState *clientState = &(ctx->client);
+	GET_THREAD(thread);
+	CRClientState *clientState = &(thread->currentContext->State->client);
+	GLenum dlMode = thread->currentContext->displayListMode;
+	if (dlMode != GL_FALSE && tilesort_spu.lazySendDLists) {
+		crDLMCompileMultiDrawElementsEXT(mode, count, type, indices, primcount, clientState);
+		return;
+	}
 	if (tilesort_spu.swap)
 	{
 		crPackExpandMultiDrawElementsEXTSWAP( mode, count, type, indices, primcount, clientState );

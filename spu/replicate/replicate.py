@@ -36,30 +36,24 @@ static void __fillin( int offset, char *name, SPUGenericFunction func )
 
 pack_specials = []
 
+# The selection mechanism here must match the selection
+# mechanisms used in replicatespu_proto.py and 
+# replicatespu_generate.py.
 for func_name in keys:
-	return_type = apiutil.ReturnType(func_name)
-	if (return_type != 'void' or 
-	    apiutil.FindSpecial( "replicatespu", func_name ) or 
-	    apiutil.FindSpecial( "replicatespu_state", func_name ) or 
-	    apiutil.FindSpecial( "replicatespu_get", func_name ) or 
-	    apiutil.FindSpecial( "replicatespu_flush", func_name ) or 
-	    apiutil.FindSpecial( "replicatespu_writeback", func_name ) or 
-	    apiutil.FindSpecial( "replicatespu_vertex", func_name )):
-	  pack_specials.append( func_name )
-
-for func_name in keys:
-	if func_name in pack_specials:
-		return_type = apiutil.ReturnType(func_name)
-		params = apiutil.Parameters(func_name)
-		print 'extern %s REPLICATESPU_APIENTRY replicatespu_%s( %s );' % ( return_type, func_name, apiutil.MakeDeclarationString(params) )
+    if (
+	apiutil.FindSpecial("replicate", func_name) or
+	apiutil.IsQuery(func_name) or
+	apiutil.CanCompile(func_name) or
+	apiutil.FindSpecial("replicatespu_flush", func_name) or
+	apiutil.SetsTrackedState(func_name)
+    ):
+	pack_specials.append( func_name )
 
 print '\nvoid replicatespuCreateFunctions( void )'
 print '{'
 print '\tint i = 0;'
-for index in range(len(keys)):
+for index in range(num_funcs):
 	func_name = keys[index]
-	if apiutil.FindSpecial( "replicatespu_unimplemented", func_name ):
-		continue
 	if func_name in pack_specials:
 		print '\t__fillin( i++, "%s", (SPUGenericFunction) replicatespu_%s );' % (func_name, func_name )
 	else:

@@ -103,7 +103,9 @@ struct context_info_t {
 	CRContext *State;
 	GLint serverContext;   /**< returned by server's CreateContext() */
 	WindowInfo *currentWindow;
-	CRDLMContextState *dlmContext; /**< display list manager state */
+	CRDLMContextState *dlmContext; /* display list manager state */
+	GLenum displayListMode;
+	GLuint displayListIdentifier;
 #ifdef WINDOWS
 	HDC client_hdc;
 #elif defined(DARWIN)
@@ -457,13 +459,6 @@ void tilesortspuLoadListTable(void);
 void tilesortspuLoadSortTable(void);
 void tilesortspuLoadStateTable(SPUDispatchTable *t);
 void tilesortspuLoadPackTable(SPUDispatchTable *t);
-
-/* tilesortspu_lists.c */
-void TILESORTSPU_APIENTRY tilesortspuStateCallList(GLuint list);
-void TILESORTSPU_APIENTRY tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists);
-void TILESORTSPU_APIENTRY tilesortspuStateNewList(GLuint list, GLuint mode);
-void TILESORTSPU_APIENTRY tilesortspuStateEndList(void);
-
 
 /* tilesortspu_pixels.c */
 void TILESORTSPU_APIENTRY

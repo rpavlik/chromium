@@ -3,7 +3,7 @@
 #include "cr_pixeldata.h"
 #include "cr_string.h"
 #include "dlm.h"
-#include "dlm_dispatch.h"
+#include "dlm_pointers.h"
 
 /**
  * These helper functions are used for GL functions that take a pointers,
@@ -33,7 +33,7 @@
  *
  */
 
-int crdlm_pointers_Bitmap( struct instanceBitmap *instance, GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap )
+int crdlm_pointers_Bitmap( struct instanceBitmap *instance, GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap, CRClientState *c)
 {
     unsigned int size = ((int)((width + 7) / 8)) * height;
     /* glBitmap can be called with a NULL size 0 bitmap, say for
@@ -45,23 +45,21 @@ int crdlm_pointers_Bitmap( struct instanceBitmap *instance, GLsizei width, GLsiz
      * use the utility.
      */
     if (instance && size > 0) {
-	CRDLMContextState *state = CURRENT_STATE();
 	crBitmapCopy(width, height, instance->bitmap, bitmap,
-		&state->clientState->unpack);
+		&c->unpack);
     }
 
     return size;
 }
 
-int crdlm_pointers_DrawPixels( struct instanceDrawPixels *instance, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+int crdlm_pointers_DrawPixels( struct instanceDrawPixels *instance, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels, CRClientState *c )
 {
     unsigned int size = crImageSize(format, type, width, height);
 
     if (instance && size > 0) {
-	CRDLMContextState *state = CURRENT_STATE();
 	crPixelCopy2D(width, height, 
 		instance->pixels, format, type, NULL,
-		pixels, format, type, &state->clientState->unpack);
+		pixels, format, type, &c->unpack);
     }
 
     return size;
@@ -377,44 +375,16 @@ int crdlm_pointers_TexGeniv( struct instanceTexGeniv *instance, GLenum coord, GL
     if (instance) crMemcpy(instance->params, params, size);
     return size;
 }
-int crdlm_checkpass_TexImage1D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
-{
-    /* This function is called before we allocate memory and insert the instance into
-     * the display list.  If it returns TRUE (1), the function is instead passed back
-     * to the passthrough function, and never enters the display list.  If it returns
-     * 0, normal display list processing continues.
-     */
-    return (target == GL_PROXY_TEXTURE_1D);
-}
-int crdlm_pointers_TexImage1D( struct instanceTexImage1D *instance, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
+int crdlm_pointers_TexImage1D( struct instanceTexImage1D *instance, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels, CRClientState *c )
 {
     unsigned int size = crImageSize(format, type, width, 1);
 
     if (instance && size > 0) {
-	CRDLMContextState *state = CURRENT_STATE();
 	crPixelCopy1D(instance->pixels, format, type,
-		pixels, format, type, width, &state->clientState->unpack);
+		pixels, format, type, width, &c->unpack);
     }
 
     return size;
-}
-int crdlm_checkpass_CompressedTexImage1DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imagesize, const GLvoid *data)
-{
-    /* This function is called before we allocate memory and insert the instance into
-     * the display list.  If it returns TRUE (1), the function is instead passed back
-     * to the passthrough function, and never enters the display list.  If it returns
-     * 0, normal display list processing continues.
-     */
-    return (target == GL_PROXY_TEXTURE_1D);
-}
-int crdlm_checkpass_TexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
-{
-    /* This function is called before we allocate memory and insert the instance into
-     * the display list.  If it returns TRUE (1), the function is instead passed back
-     * to the passthrough function, and never enters the display list.  If it returns
-     * 0, normal display list processing continues.
-     */
-    return (target == GL_PROXY_TEXTURE_2D);
 }
 int crdlm_pointers_CompressedTexImage1DARB(struct instanceCompressedTexImage1DARB *instance, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imagesize, const GLvoid *data)
 {
@@ -427,27 +397,17 @@ int crdlm_pointers_CompressedTexImage1DARB(struct instanceCompressedTexImage1DAR
     return size;
 }
 
-int crdlm_pointers_TexImage2D( struct instanceTexImage2D *instance, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
+int crdlm_pointers_TexImage2D( struct instanceTexImage2D *instance, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels, CRClientState *c )
 {
     unsigned int size = crImageSize(format, type, width, height);
 
     if (instance && size > 0) {
-	CRDLMContextState *state = CURRENT_STATE();
 	crPixelCopy2D(width, height, 
 		instance->pixels, format, type, NULL,
-		pixels, format, type, &state->clientState->unpack);
+		pixels, format, type, &c->unpack);
     }
 
     return size;
-}
-int crdlm_checkpass_CompressedTexImage2DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imagesize, const GLvoid *data)
-{
-    /* This function is called before we allocate memory and insert the instance into
-     * the display list.  If it returns TRUE (1), the function is instead passed back
-     * to the passthrough function, and never enters the display list.  If it returns
-     * 0, normal display list processing continues.
-     */
-    return (target == GL_PROXY_TEXTURE_2D);
 }
 int crdlm_pointers_CompressedTexImage2DARB(struct instanceCompressedTexImage2DARB *instance, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imagesize, const GLvoid *data)
 {
@@ -460,16 +420,7 @@ int crdlm_pointers_CompressedTexImage2DARB(struct instanceCompressedTexImage2DAR
     return size;
 }
 
-int crdlm_checkpass_TexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
-{
-    /* This function is called before we allocate memory and insert the instance into
-     * the display list.  If it returns TRUE (1), the function is instead passed back
-     * to the passthrough function, and never enters the display list.  If it returns
-     * 0, normal display list processing continues.
-     */
-    return (target == GL_PROXY_TEXTURE_3D);
-}
-int crdlm_pointers_TexImage3D( struct instanceTexImage3D *instance, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
+int crdlm_pointers_TexImage3D( struct instanceTexImage3D *instance, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels, CRClientState *c )
 {
     unsigned int size;
     int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
@@ -489,25 +440,15 @@ int crdlm_pointers_TexImage3D( struct instanceTexImage3D *instance, GLenum targe
 	    crMemcpy(instance->pixels, pixels, size);
 	}
 	else {
-	    CRDLMContextState *state = CURRENT_STATE();
 	    crPixelCopy3D(width, height, depth,
 		instance->pixels, format, type, NULL,
-		pixels, format, type, &state->clientState->unpack);
+		pixels, format, type, &c->unpack);
 	}
     }
 
     return size;
 }
-int crdlm_checkpass_TexImage3DEXT(GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
-{
-    /* This function is called before we allocate memory and insert the instance into
-     * the display list.  If it returns TRUE (1), the function is instead passed back
-     * to the passthrough function, and never enters the display list.  If it returns
-     * 0, normal display list processing continues.
-     */
-    return (target == GL_PROXY_TEXTURE_3D);
-}
-int crdlm_pointers_TexImage3DEXT( struct instanceTexImage3DEXT *instance, GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
+int crdlm_pointers_TexImage3DEXT( struct instanceTexImage3DEXT *instance, GLenum target, GLint level, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels, CRClientState *c )
 {
     unsigned int size;
     int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
@@ -527,25 +468,15 @@ int crdlm_pointers_TexImage3DEXT( struct instanceTexImage3DEXT *instance, GLenum
 	    crMemcpy(instance->pixels, pixels, size);
 	}
 	else {
-	    CRDLMContextState *state = CURRENT_STATE();
 	    crPixelCopy3D(width, height, depth,
 		instance->pixels, format, type, NULL,
-		pixels, format, type, &state->clientState->unpack);
+		pixels, format, type, &c->unpack);
 	}
     }
 
     return size;
 }
 
-int crdlm_checkpass_CompressedTexImage3DARB(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imagesize, const GLvoid *data)
-{
-    /* This function is called before we allocate memory and insert the instance into
-     * the display list.  If it returns TRUE (1), the function is instead passed back
-     * to the passthrough function, and never enters the display list.  If it returns
-     * 0, normal display list processing continues.
-     */
-    return (target == GL_PROXY_TEXTURE_3D);
-}
 int crdlm_pointers_CompressedTexImage3DARB(struct instanceCompressedTexImage3DARB *instance, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imagesize, const GLvoid *data)
 {
     unsigned int size = imagesize;
@@ -569,32 +500,30 @@ int crdlm_pointers_TexParameteriv( struct instanceTexParameteriv *instance, GLen
     if (instance) crMemcpy(instance->params, params, size);
     return size;
 }
-int crdlm_pointers_TexSubImage1D( struct instanceTexSubImage1D *instance, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels )
+int crdlm_pointers_TexSubImage1D( struct instanceTexSubImage1D *instance, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels, CRClientState *c )
 {
     unsigned int size = crImageSize(format, type, width, 1);
 
     if (instance && size > 0) {
-	CRDLMContextState *state = CURRENT_STATE();
 	crPixelCopy1D(instance->pixels, format, type,
-		pixels, format, type, width, &state->clientState->unpack);
+		pixels, format, type, width, &c->unpack);
     }
 
     return size;
 }
-int crdlm_pointers_TexSubImage2D( struct instanceTexSubImage2D *instance, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+int crdlm_pointers_TexSubImage2D( struct instanceTexSubImage2D *instance, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels, CRClientState *c )
 {
     unsigned int size = crImageSize(format, type, width, height);
 
     if (instance && size > 0) {
-	CRDLMContextState *state = CURRENT_STATE();
 	crPixelCopy2D(width, height, 
 		instance->pixels, format, type, NULL,
-		pixels, format, type, &state->clientState->unpack);
+		pixels, format, type, &c->unpack);
     }
 
     return size;
 }
-int crdlm_pointers_TexSubImage3D( struct instanceTexSubImage3D *instance, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels )
+int crdlm_pointers_TexSubImage3D( struct instanceTexSubImage3D *instance, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels, CRClientState *c )
 {
     unsigned int size;
     int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
@@ -614,10 +543,9 @@ int crdlm_pointers_TexSubImage3D( struct instanceTexSubImage3D *instance, GLenum
 	    crMemcpy(instance->pixels, pixels, size);
 	}
 	else {
-	    CRDLMContextState *state = CURRENT_STATE();
 	    crPixelCopy3D(width, height, depth,
 		instance->pixels, format, type, NULL,
-		pixels, format, type, &state->clientState->unpack);
+		pixels, format, type, &c->unpack);
 	}
     }
 
@@ -940,7 +868,7 @@ int crdlm_pointers_VertexAttribs4ubvNV(struct instanceVertexAttribs4ubvNV *insta
 int crdlm_pointers_ZPixCR( struct instanceZPixCR *instance, GLsizei width, 
 			 GLsizei height, GLenum format, GLenum type, 
 			 GLenum ztype, GLint zparm, GLint length, 
-			 const GLvoid *pixels )
+			 const GLvoid *pixels, CRClientState *c)
 {
      unsigned int size = length;
      if (instance && size > 0) {

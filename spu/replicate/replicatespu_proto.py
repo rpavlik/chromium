@@ -28,22 +28,23 @@ pack_specials = []
 
 keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 
-# make list of special functions
+# Create prototypes for every function that we either implement
+# or generate.  The ones we implement are easy: they're all in
+# the file "replicate_special".  The others are harder; this
+# code must be equivalent to the selection algorithm used in
+# replicatespu_generate.py and in replicate.py.
 for func_name in keys:
-	if ("get" in apiutil.Properties(func_name) or
-	    apiutil.FindSpecial( "replicatespu", func_name ) or 
-	    apiutil.FindSpecial( "replicatespu_flush", func_name ) or 
-		apiutil.FindSpecial( "replicatespu_vertex", func_name )):
-	  pack_specials.append( func_name )
-
-for func_name in keys:
-	if apiutil.FindSpecial( "replicatespu_unimplemented", func_name ):
-		continue
-	if func_name in pack_specials:
-		return_type = apiutil.ReturnType(func_name)
-		params = apiutil.Parameters(func_name)
-		print 'extern %s REPLICATESPU_APIENTRY replicatespu_%s( %s );' % ( return_type, func_name, apiutil.MakeDeclarationString(params) )
-
+    if (
+	apiutil.FindSpecial("replicate", func_name) or
+	apiutil.IsQuery(func_name) or
+	apiutil.CanCompile(func_name) or
+	apiutil.FindSpecial("replicatespu_flush", func_name) or
+	apiutil.SetsTrackedState(func_name)
+    ):
+	return_type = apiutil.ReturnType(func_name)
+	props = apiutil.Properties(func_name)
+	params = apiutil.Parameters(func_name)
+	print 'extern %s REPLICATESPU_APIENTRY replicatespu_%s( %s );' % ( return_type, func_name, apiutil.MakeDeclarationString(params) )
 
 print """
 #endif

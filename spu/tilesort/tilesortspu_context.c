@@ -5,7 +5,7 @@
  */
 
 #include "tilesortspu.h"
-#include "tilesortspu_proto.h"
+#include "tilesortspu_gen.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_packfunctions.h"
@@ -294,8 +294,6 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		 */
 		CRDLMConfig dlmConfig = {
 			CRDLM_DEFAULT_BUFFERSIZE,	/* bufferSize */
-			CRDLM_HANDLE_DLM,		/* handleCreation */
-			CRDLM_HANDLE_SPU		/* handleReference */
 		};
 
 		/* Supplement that with our DLM.  In a more correct situation, we should
@@ -309,11 +307,10 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 			if (!tilesort_spu.dlm) {
 				crDebug("tilesort: couldn't get DLM!");
 			}
-			crDLMErrorFunction(ErrorCallback);
+			//crDLMErrorFunction(ErrorCallback);
 		}
 
-		contextInfo->dlmContext = crDLMNewContext(tilesort_spu.dlm,
-																							&contextInfo->State->client);
+		contextInfo->dlmContext = crDLMNewContext(tilesort_spu.dlm);
 		if (!contextInfo->dlmContext) {
 			crDebug("tilesort: couldn't get dlmContext");
 			/** XXX \todo need graceful error handling here */
@@ -326,6 +323,9 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		/*
 		crDLMFreeDLM(dlm);
 		*/
+
+		contextInfo->displayListMode = GL_FALSE;
+		contextInfo->displayListIdentifier = 0;
 	}
 
 	return freeContextID++;
