@@ -20,16 +20,23 @@
  * really wasn't good for anything since we always grew the buffer pool
  * if we pushed a new buffer that would cause use to exceed the limit.
  * That's gone now.
+ *
+ * We're just using a simple linked list here.  Since we seldom have
+ * more than about 10-15 buffers in the pool, that's OK.  A binary tree
+ * would be nicer though.
  */
+
 
 #ifndef NULL
 #define NULL  ((void *) 0)
 #endif
 
-typedef struct buffer {
-	 void *address;
-	 unsigned int size;
-	 struct buffer *next;
+
+typedef struct buffer
+{
+	void *address;
+	unsigned int size;
+	struct buffer *next;
 } Buffer;
 
 
@@ -64,7 +71,6 @@ crBufferPoolFree( CRBufferPool *pool )
 		crFree(b);
 	}
 }
-
 
 void
 crBufferPoolPush( CRBufferPool *pool, void *buf, unsigned int bytes )
