@@ -393,7 +393,7 @@ static void CompositeNode( WindowInfo *window,
 	BinarySwapMsg *render_info = NULL;
 	int draw_x = 0, draw_y = 0;
 	int draw_width = 0, draw_height = 0;
-	float other_depth = 0.0;   
+	double other_depth = 0.0;   
 
 	int recalc_end_x = 0, recalc_end_y = 0;
 	int recalc_start_x = 0, recalc_start_y = 0;
