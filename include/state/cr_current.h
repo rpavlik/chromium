@@ -109,13 +109,6 @@ void crStateCurrentSwitch(CRCurrentBits *bb, CRbitvalue *bitID,
 
 void crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
-
-void crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-
-
-void crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-
-
 #ifdef __cplusplus
 }
 #endif
