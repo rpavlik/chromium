@@ -143,8 +143,6 @@ static ThreadInfo *readbackspuNewThread( unsigned long id )
 		thread->id = id;
 		thread->currentContext = -1;
 		thread->currentWindow = -1;
-		thread->colorBuffer = NULL;
-		thread->depthBuffer = NULL;
 	}
 	return thread;
 }
