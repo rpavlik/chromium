@@ -169,6 +169,17 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		window = &(render_spu.windows[crWindow]);
 		context = &(render_spu.contexts[ctx]);
 
+		if (!window->inUse)
+		{
+			crDebug("renderspuMakeCurrent: invalid window id: %d", crWindow);
+			return;
+		}
+		if (!context->inUse)
+		{
+			crDebug("renderspuMakeCurrent: invalid context id: %d", ctx);
+			return;
+		}
+
 		renderspu_SystemMakeCurrent( thread, window, nativeWindow, context );
 		if (!context->everCurrent) {
 			/* print OpenGL info */
@@ -382,6 +393,19 @@ static void DrawCursor( GLint x, GLint y )
 
 void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 {
+	WindowInfo *w;
+	if (window < 0 || window >= MAX_WINDOWS)
+	{
+		crDebug("renderspuSwapBuffers: window id %d out of range", window);
+		return;
+	}
+	w = &(render_spu.windows[window]);
+	if (!w->inUse)
+	{
+		crDebug("renderspuSwapBuffers: invalid window id: %d", window);
+		return;
+	}
+
 	if (flags & CR_SUPPRESS_SWAP_BIT)
 	  return;
 
