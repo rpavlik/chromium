@@ -4,4 +4,3 @@
 ; See the file LICENSE.txt for information on redistributing this software.
 EXPORTS
 SPULoad
-;readbackspu_state_test
