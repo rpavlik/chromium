@@ -263,7 +263,7 @@ void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index
 	/* We use the index value to identify the SPU so that we
 	 * return a pointer to the correct stats */
 
-	if (perf_spu.id != index) {
+	if (perf_spu.id != (GLint) index) {
 		perf_spu.super.GetChromiumParametervCR( target, index, type, count, values);
 		return;
 	}
