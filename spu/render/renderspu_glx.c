@@ -485,7 +485,7 @@ void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint 
 			 * But for now we destroy the current window
 			 * and re-create it with the context's visual abilities
 			 */
-                 #ifndef SOLARIS_9_X_BUG
+#ifndef SOLARIS_9_X_BUG
 		  /*
 		    I'm having some really weird issues if I destroy this window 
 		    when I'm using the version of sunX that comes with Solaris 9.
@@ -497,7 +497,7 @@ void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint 
 		    -- jw
 		  */
 			renderspu_SystemDestroyWindow( window );
-                 #endif 
+#endif 
 			renderspu_SystemCreateWindow( context->visual, GL_FALSE, window );
 			/*
 			crError("In renderspu_SystemMakeCurrent() window and context"
