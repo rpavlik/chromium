@@ -746,7 +746,7 @@ AccumulateFullWindow(void)
  * update the window's bounding box union.
  */
 static void
-AccumulateBBox(const GLfloat *bbox)
+AccumulateObjectBBox(const GLfloat *bbox)
 {
 	GLfloat proj[16], modl[16], viewport[4];
 	GLfloat x1, y1, z1, x2, y2, z2;
@@ -781,6 +781,33 @@ AccumulateBBox(const GLfloat *bbox)
 	winBox.y1 = (int) ((y1 + 1.0f) * (viewport[3] * 0.5F) + viewport[1]);
 	winBox.x2 = (int) ((x2 + 1.0f) * (viewport[2] * 0.5F) + viewport[0]);
 	winBox.y2 = (int) ((y2 + 1.0f) * (viewport[3] * 0.5F) + viewport[1]);
+
+	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
+		/* this is the first box */
+		window->bboxUnion = winBox;
+	}
+	else {
+		/* compute union of current screen bbox and this one */
+		crRectiUnion(&window->bboxUnion, &window->bboxUnion, &winBox);
+	}
+}
+
+
+static void
+AccumulateScreenBBox(const GLfloat *bbox)
+{
+	CRrecti winBox;
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+	GLfloat z2 = bbox[6];
+
+	winBox.x1 = bbox[0];
+	winBox.y1 = bbox[1];
+	winBox.x2 = bbox[4];
+	winBox.y2 = bbox[5];
+
+	/* adjust depth for alpha composite */
+	binaryswap_spu.depth = z2;
 
 	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
 		/* this is the first box */
@@ -1027,7 +1054,12 @@ binaryswapspuChromiumParametervCR(GLenum target, GLenum type,
 	case GL_OBJECT_BBOX_CR:
 		CRASSERT(type == GL_FLOAT);
 		CRASSERT(count == 6);
-		AccumulateBBox((GLfloat *) values);
+		AccumulateObjectBBox((GLfloat *) values);
+		break;
+	case GL_SCREEN_BBOX_CR:
+		CRASSERT(type == GL_FLOAT);
+		CRASSERT(count == 8);
+		AccumulateScreenBBox((GLfloat *) values);
 		break;
 	case GL_DEFAULT_BBOX_CR:
 		CRASSERT(count == 0);

@@ -382,7 +382,6 @@ ProcessTiles(WindowInfo * window)
 			y1 = CLAMP(window->bboxUnion.y1, 0, window->height - 1);
 			x2 = CLAMP(window->bboxUnion.x2, 0, window->width - 1);
 			y2 = CLAMP(window->bboxUnion.y2, 0, window->height - 1);
-			printf("union: %d, %d .. %d, %d\n", x1, y1, x2, y2);
 		}
 		numExtents = 1;
 		extent0.imagewindow.x1 = x1;
@@ -580,7 +579,7 @@ AccumulateFullWindow(void)
  * update the window's bounding box union.
  */
 static void
-AccumulateBBox(const GLfloat *bbox)
+AccumulateObjectBBox(const GLfloat *bbox)
 {
 	GLfloat proj[16], modl[16], viewport[4];
 	GLfloat x1, y1, z1, x2, y2, z2;
@@ -612,6 +611,29 @@ AccumulateBBox(const GLfloat *bbox)
 	winBox.y1 = (int) ((y1 + 1.0f) * (viewport[3] * 0.5F) + viewport[1]);
 	winBox.x2 = (int) ((x2 + 1.0f) * (viewport[2] * 0.5F) + viewport[0]);
 	winBox.y2 = (int) ((y2 + 1.0f) * (viewport[3] * 0.5F) + viewport[1]);
+
+	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
+		/* this is the first box */
+		window->bboxUnion = winBox;
+	}
+	else {
+		/* compute union of current screen bbox and this one */
+		crRectiUnion(&window->bboxUnion, &window->bboxUnion, &winBox);
+	}
+}
+
+
+static void
+AccumulateScreenBBox(const GLfloat *bbox)
+{
+	CRrecti winBox;
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+
+	winBox.x1 = bbox[0];
+	winBox.y1 = bbox[1];
+	winBox.x2 = bbox[4];
+	winBox.y2 = bbox[5];
 
 	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
 		/* this is the first box */
@@ -863,7 +885,12 @@ readbackspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
 	case GL_OBJECT_BBOX_CR:
 		CRASSERT(type == GL_FLOAT);
 		CRASSERT(count == 6);
-		AccumulateBBox((GLfloat *) values);
+		AccumulateObjectBBox((GLfloat *) values);
+		break;
+	case GL_SCREEN_BBOX_CR:
+		CRASSERT(type == GL_FLOAT);
+		CRASSERT(count == 8);
+		AccumulateScreenBBox((GLfloat *) values);
 		break;
 	case GL_DEFAULT_BBOX_CR:
 		/* We don't know the extents of the subsequent geometry, so we'll
