@@ -16,14 +16,13 @@
 #pragma warning( disable: 4706 )
 #endif
 
-
 static void
 setDefaults(void)
 {
 	unsigned int i;
 
 	if (!cr_server.tcpip_port)
-		cr_server.tcpip_port = 7000;
+		cr_server.tcpip_port = DEFAULT_SERVER_PORT;
 	cr_server.run_queue = NULL;
 	cr_server.optimizeBucket = 1;
 	cr_server.useL2 = 0;
