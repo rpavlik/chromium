@@ -1,0 +1,6 @@
+; Copyright (c) 2004, Tungsten Graphics, Inc.
+; All rights reserved.
+;
+; See the file LICENSE.txt for information on redistributing this software.
+EXPORTS
+SPULoad
