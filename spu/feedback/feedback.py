@@ -179,33 +179,45 @@ void FEEDBACKSPU_APIENTRY feedbackspu_DrawPixels( GLsizei width, GLsizei height,
 void FEEDBACKSPU_APIENTRY feedbackspu_GetBooleanv( GLenum pname, GLboolean *params )
 
 {
-	crStateFeedbackGetBooleanv( pname, params );
-
-	feedback_spu.super.GetBooleanv( pname, params );
+	if (pname == GL_FEEDBACK_BUFFER_SIZE ||
+	    pname == GL_FEEDBACK_BUFFER_TYPE ||
+	    pname == GL_SELECTION_BUFFER_SIZE)
+		crStateFeedbackGetBooleanv( pname, params );
+	else
+		feedback_spu.super.GetBooleanv( pname, params );
 }
 
 void FEEDBACKSPU_APIENTRY feedbackspu_GetDoublev( GLenum pname, GLdouble *params )
 
 {
-	crStateFeedbackGetDoublev( pname, params );
-
-	feedback_spu.super.GetDoublev( pname, params );
+	if (pname == GL_FEEDBACK_BUFFER_SIZE ||
+	    pname == GL_FEEDBACK_BUFFER_TYPE ||
+	    pname == GL_SELECTION_BUFFER_SIZE)
+		crStateFeedbackGetDoublev( pname, params );
+	else
+		feedback_spu.super.GetDoublev( pname, params );
 }
 
 void FEEDBACKSPU_APIENTRY feedbackspu_GetFloatv( GLenum pname, GLfloat *params )
 
 {
-	crStateFeedbackGetFloatv( pname, params );
-
-	feedback_spu.super.GetFloatv( pname, params );
+	if (pname == GL_FEEDBACK_BUFFER_SIZE ||
+	    pname == GL_FEEDBACK_BUFFER_TYPE ||
+	    pname == GL_SELECTION_BUFFER_SIZE)
+		crStateFeedbackGetFloatv( pname, params );
+	else
+		feedback_spu.super.GetFloatv( pname, params );
 }
 
 void FEEDBACKSPU_APIENTRY feedbackspu_GetIntegerv( GLenum pname, GLint *params )
 
 {
-	crStateFeedbackGetIntegerv( pname, params );
-
-	feedback_spu.super.GetIntegerv( pname, params );
+	if (pname == GL_FEEDBACK_BUFFER_SIZE ||
+	    pname == GL_FEEDBACK_BUFFER_TYPE ||
+	    pname == GL_SELECTION_BUFFER_SIZE)
+		crStateFeedbackGetIntegerv( pname, params );
+	else
+		feedback_spu.super.GetIntegerv( pname, params );
 }
 
 SPUNamedFunctionTable feedback_table[] = {
