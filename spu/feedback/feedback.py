@@ -130,7 +130,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_Begin ( GLenum mode )
 {
 	crStateBegin( mode );
 
-	if (feedback_spu.render_mode != GL_RENDER)
+	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackBegin( mode );
 	else
 		feedback_spu.super.Begin( mode );
@@ -140,7 +140,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_End ( void )
 {
 	crStateEnd( );
 
-	if (feedback_spu.render_mode != GL_RENDER)
+	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackEnd( );
 	else
 		feedback_spu.super.End( );
@@ -150,7 +150,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_Bitmap ( GLsizei width, GLsizei height, GL
 {
 	crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 
-	if (feedback_spu.render_mode != GL_RENDER)
+	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 	else
 		feedback_spu.super.Bitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
@@ -158,7 +158,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_Bitmap ( GLsizei width, GLsizei height, GL
 
 void FEEDBACKSPU_APIENTRY feedbackspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
 {
-	if (feedback_spu.render_mode != GL_RENDER)
+	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackCopyPixels( x, y, width, height, type );
 	else
 		feedback_spu.super.CopyPixels( x, y, width, height, type );
@@ -166,7 +166,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_CopyPixels( GLint x, GLint y, GLsizei widt
 
 void FEEDBACKSPU_APIENTRY feedbackspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
-	if (feedback_spu.render_mode != GL_RENDER)
+	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackDrawPixels( width, height, format, type, pixels );
 	else
 		feedback_spu.super.DrawPixels( width, height, format, type, pixels );
