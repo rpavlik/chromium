@@ -244,7 +244,7 @@ class SortlastDialog(wxDialog):
 						  style=wxDOUBLE_BORDER)
 		appSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
 		numberLabel = wxStaticText(parent=self, id=-1, label="Number:")
-		self.numberControl = wxSpinCtrl(parent=self, id=id_Width,
+		self.numberControl = wxSpinCtrl(parent=self, id=id_NumApps,
 										value="1", min=1, max=10000,
 										size=wxSize(70,25))
 		EVT_SPINCTRL(self.numberControl, id_NumApps, self.__OnNumAppsChange)
@@ -555,12 +555,7 @@ def Is_Sortlast(mothership):
 def Edit_Sortlast(parentWindow, mothership):
 	"""Edit parameters for a sort-last template"""
 	t = Is_Sortlast(mothership)
-	if t:
-		clientNode = FindClientNode(mothership)
-		# find the server/render nodes
-		clientNode = FindClientNode(mothership)
-		serverNode = FindServerNode(mothership)
-	else:
+	if not t:
 		print "This is not a sortlast configuration!"
 		return
 
@@ -574,9 +569,8 @@ def Edit_Sortlast(parentWindow, mothership):
 		mothership.Sortlast = backupSortlastParams
 	else:
 		# update mothership with new values
+		# already done in __UpdateVarsFromWidgets()
 		pass
-
-	pass
 
 
 def Read_Sortlast(mothership, file):
