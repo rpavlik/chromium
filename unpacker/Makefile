@@ -32,7 +32,7 @@ LIB_DEFS = unpack.def
 
 LIBRARIES = crutil spuload crpacker
 
-PRECOMP = unpack.c ../include/cr_unpackfuncs.h
+PRECOMP = unpack.c ../include/cr_unpackfuncs.h unpack_extend.h
 SLOP = $(PRECOMP)
 
 LIB_COPIES = crserver \

@@ -110,6 +110,8 @@ static struct {
 	unsigned int          num_outstanding_sends;
 	unsigned int          num_send_tokens;
 	unsigned int          inside_recv;
+	CRNetReceiveFuncList  *recv_list;
+	CRNetCloseFuncList    *close_list;
 } cr_gm;
 
 #define CR_GM_PINNED_READ_MEMORY_SIZE   ( 8 << 20 )
