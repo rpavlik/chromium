@@ -45,6 +45,42 @@ bottom-to-top if desired.</p>
 <em>Tilesort SPU Options</em> button.</p>
 
 
+<h2 class="PageSubHeading">Runtime Options</h2>
+
+<p>When you save your tilesort configuration to a file (such as
+<code>mytilesortconfig.conf</code>) you'll have a stand-alone
+configuration script that you can run as follows:</p>
+
+<pre>
+   python mytilesortconfig.conf
+</pre>
+
+<p>This configuration script will also accept the following optional
+command-line arguments:</p>
+
+<ul>
+<li><code>-c cols</code>  specifies the number of tile columns
+<li><code>-r rows</code>  specifies the number of tile rows
+<li><code>-w width</code>  specifies the tile width in pixels
+<li><code>-h height</code>  specifies the tile height in pixels
+<li><code>-s servers</code>  a comma-separated list of hosts for
+    the tile servers
+</ul>
+
+<p>You can also specify the name of the program to run as the last
+argument.
+</p>
+
+<p>For example:</p>
+
+<pre>
+   python mytilesortconfig.conf -c 2 -r 2 -s "cr1,cr2,cr3,cr4" atlantis
+</pre>
+
+<p>Will run atlantis on a 2 column by 2 row mural using the servers
+cr1, cr2, cr3 and cr4.</p>
+
+
 </body>
 
 </html>
