@@ -895,7 +895,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
-	GLint childVisBits = visBits;
+	GLint childVisBits;
 
 	CRASSERT(binaryswap_spu.child.BarrierCreateCR);
 
@@ -914,11 +914,12 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 
 	/* If doing z-compositing, need stencil buffer */
 	if (binaryswap_spu.depth_composite)
-		childVisBits |= CR_STENCIL_BIT;
+		visBits |= CR_STENCIL_BIT;
 	else if (binaryswap_spu.alpha_composite)
-		childVisBits |= CR_ALPHA_BIT;
+		visBits |= CR_ALPHA_BIT;
+
 	/* final display window should probably be visible */
-	childVisBits &= ~CR_PBUFFER_BIT;
+	childVisBits = visBits & ~CR_PBUFFER_BIT;
 
 	context->renderContext = binaryswap_spu.super.CreateContext(dpyName, visBits);
 	context->childContext = binaryswap_spu.child.CreateContext(dpyName, childVisBits);
@@ -975,7 +976,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyNa
 {
 	WindowInfo *window;
 	static GLint freeID = 1;  /* skip default window 0 */
-	GLint childVisBits = visBits;
+	GLint childVisBits;
 
 	/* Error out on second window */
 	if(freeID != 1)
@@ -986,11 +987,12 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyNa
 
 	/* If doing z-compositing, need stencil buffer */
 	if (binaryswap_spu.depth_composite)
-		childVisBits |= CR_STENCIL_BIT;
+		visBits |= CR_STENCIL_BIT;
 	else if (binaryswap_spu.alpha_composite)
-		childVisBits |= CR_ALPHA_BIT;
+		visBits |= CR_ALPHA_BIT;
+
 	/* final display window should probably be visible */
-	childVisBits &= ~CR_PBUFFER_BIT;
+	childVisBits = visBits & ~CR_PBUFFER_BIT;
 
 	/* allocate window */
 	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
