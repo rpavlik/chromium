@@ -16,7 +16,6 @@
 #include "cr_net.h"
 #include "cr_netserver.h"
 #include "cr_bufpool.h"
-#include "cr_debugopcodes.h"
 
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) // 2MB
 
