@@ -462,6 +462,7 @@ extern void APIENTRY glGetChromiumParametervCR(GLenum target, GLuint index, GLen
 /* To communicate window size changes */
 
 #define GL_WINDOW_SIZE_CR               0x8B06
+#define GL_MAX_WINDOW_SIZE_CR           0x8B24  /* new */
 
 #endif /* GL_CR_window_size */
 

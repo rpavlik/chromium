@@ -203,6 +203,7 @@ extern GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean sho
 extern void renderspu_SystemDestroyWindow( WindowInfo *window );
 extern void renderspu_SystemWindowSize( WindowInfo *window, int w, int h );
 extern void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int *w, int *h );
+extern void renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h );
 extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
 extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
 extern void renderspu_SystemMakeCurrent( WindowInfo *window, GLint windowInfor, ContextInfo *context );

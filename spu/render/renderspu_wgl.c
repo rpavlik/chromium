@@ -632,6 +632,15 @@ void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int 
 }
 
 
+void renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h )
+{
+	/* XXX fix this */
+	(void) window;
+	*w = 1600;
+	*h = 1200;
+}
+
+
 void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 {
 	int winprop;

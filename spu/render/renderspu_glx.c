@@ -1313,6 +1313,28 @@ renderspu_SystemGetWindowGeometry( WindowInfo *window,
 
 
 void
+renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h )
+{
+	 int scrn;
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) {
+		*w = 2048;
+		*h = 2048;
+		return;
+	}
+#endif
+
+	CRASSERT(window);
+	CRASSERT(window->visual);
+	CRASSERT(window->window);
+
+	scrn = DefaultScreen(window->visual->dpy);
+	*w = DisplayWidth(window->visual->dpy, scrn);
+	*h = DisplayHeight(window->visual->dpy, scrn);
+}
+
+
+void
 renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 {
 #ifdef USE_OSMESA

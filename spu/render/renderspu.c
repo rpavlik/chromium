@@ -813,6 +813,20 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 			}
 		}
 		break;
+	case GL_MAX_WINDOW_SIZE_CR:
+		{
+			GLint *maxSize = (GLint *) values;
+			WindowInfo *window;
+			CRASSERT(type == GL_INT);
+			CRASSERT(count == 2);
+			CRASSERT(values);
+			window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, index);
+			if (window)
+			{
+				renderspu_SystemGetMaxWindowSize(window, maxSize + 0, maxSize + 1);
+			}
+		}
+		break;
 	default:
 		; /* nothing - silence compiler */
 	}
