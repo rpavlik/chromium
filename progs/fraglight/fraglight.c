@@ -39,6 +39,10 @@ typedef void (APIENTRY * glBindProgramNV_t) (GLenum target, GLuint id);
 typedef void (APIENTRY * glTrackMatrixNV_t) (GLenum target, GLuint address, GLenum matrix, GLenum transform);
 typedef GLboolean (APIENTRY * glIsProgramNV_t) (GLuint id);
 typedef void (APIENTRY * glVertexAttrib3fNV_t) (GLuint index, GLfloat x, GLfloat y, GLfloat z);
+typedef void (APIENTRY * glGetProgramNamedParameterdvNV_t) (GLuint id, GLsizei len, const GLubyte *name, GLdouble *params);
+typedef void (APIENTRY * glProgramLocalParameter4dARB_t) (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+typedef void (APIENTRY * glGetProgramLocalParameterdvARB_t) (GLenum target, GLuint index, GLdouble *params);
+
 
 
 static glProgramNamedParameter4fvNV_t glProgramNamedParameter4fvNV_func;
@@ -48,6 +52,9 @@ static glBindProgramNV_t glBindProgramNV_func;
 static glTrackMatrixNV_t glTrackMatrixNV_func;
 static glIsProgramNV_t glIsProgramNV_func;
 static glVertexAttrib3fNV_t glVertexAttrib3fNV_func;
+static glGetProgramNamedParameterdvNV_t glGetProgramNamedParameterdvNV_func;
+static glProgramLocalParameter4dARB_t glProgramLocalParameter4dARB_func;
+static glGetProgramLocalParameterdvARB_t glGetProgramLocalParameterdvARB_func;
 
 
 #define NAMED_PARAMETER4FV(prog, name, v)        \
@@ -349,6 +356,15 @@ static void Init( void )
    glVertexAttrib3fNV_func = (glVertexAttrib3fNV_t) crGetProcAddress("glVertexAttrib3fNV");
    assert(glVertexAttrib3fNV_func);
 
+   glGetProgramNamedParameterdvNV_func = (glGetProgramNamedParameterdvNV_t) crGetProcAddress("glGetProgramNamedParameterdvNV");
+   assert(glGetProgramNamedParameterdvNV_func);
+
+   glProgramLocalParameter4dARB_func = (glProgramLocalParameter4dARB_t) crGetProcAddress("glProgramLocalParameter4dARB");
+   assert(glProgramLocalParameter4dARB_func);
+
+   glGetProgramLocalParameterdvARB_func = (glGetProgramLocalParameterdvARB_t) crGetProcAddress("glGetProgramLocalParameterdvARB");
+   assert(glGetProgramLocalParameterdvARB_func);
+
 
    glGenProgramsNV_func(1, &FragProg);
    assert(FragProg > 0);
@@ -372,14 +388,14 @@ static void Init( void )
     */
    {
       GLdouble v[4];
-      glProgramLocalParameter4dARB(GL_FRAGMENT_PROGRAM_NV, 1,
+      glProgramLocalParameter4dARB_func(GL_FRAGMENT_PROGRAM_NV, 1,
                                    10.0, 20.0, 30.0, 40.0);
-      glGetProgramLocalParameterdvARB(GL_FRAGMENT_PROGRAM_NV, 1, v);
+      glGetProgramLocalParameterdvARB_func(GL_FRAGMENT_PROGRAM_NV, 1, v);
       assert(v[0] == 10.0);
       assert(v[1] == 20.0);
       assert(v[2] == 30.0);
       assert(v[3] == 40.0);
-      glGetProgramNamedParameterdvNV(FragProg, 7, "Diffuse", v);
+      glGetProgramNamedParameterdvNV_func(FragProg, 7, "Diffuse", v);
       assert(v[0] == Diffuse[0]);
       assert(v[1] == Diffuse[1]);
       assert(v[2] == Diffuse[2]);
