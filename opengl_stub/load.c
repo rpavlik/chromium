@@ -253,7 +253,11 @@ static void stubInitVars(void)
 }
 
 
-static char **LookupMothershipConfig(const char *procName)
+/**
+ * Try to determine which mothership configuration to use for this program.
+ */
+static char **
+LookupMothershipConfig(const char *procName)
 {
 	const int procNameLen = crStrlen(procName);
 	FILE *f;
@@ -303,11 +307,133 @@ static char **LookupMothershipConfig(const char *procName)
 	return NULL;
 }
 
+
 static int Mothership_Awake = 0;
-static void MothershipPhoneHome(int signo)
+
+
+/**
+ * Signal handler to determine when mothership is ready.
+ */
+static void
+MothershipPhoneHome(int signo)
 {
 	crDebug("Got signal %d: mothership is awake!", signo);
 	Mothership_Awake = 1;
+}
+
+
+
+/**
+ * Try starting the mothership now.  We'll determine the appropriate
+ * mothership config file from the CR_CONFIG env var or the ~/.crconfigs
+ * file.
+ * \return 0 if failure, 1 if we think we're successful
+ */
+static int
+StartMothership(void)
+{
+	int mothershipPort = DEFAULT_MOTHERSHIP_PORT;
+	char *argv[1000];
+	int i, arg;
+	char procName[1000], currentDir[1000], **args;
+
+	crGetProcName(procName, 999);
+	crGetCurrentDir(currentDir, 999);
+
+	args = LookupMothershipConfig(procName);
+	if (!args)
+	{
+		/* try default */
+		args = LookupMothershipConfig("*");
+		if (!args) {
+			crDebug("Unable to determine configuration file for mothership!");
+			return 0;
+		}
+	}
+
+	/* Build the argument vector */
+	arg = 0;
+	argv[arg++] = PYTHON_EXE;
+	argv[arg++] = "-E"; /* Ignores any program-set PYTHONPATH or PYTHONHOME */
+
+	for (i = 0; args[i]; i++)
+	{
+		if (crStrcmp(args[i], "%p") == 0)
+			argv[arg++] = procName;
+		else if (crStrcmp(args[i], "%d") == 0)
+			argv[arg++] = currentDir;
+		else if (crStrcmp(args[i], "%m") == 0) {
+			/* generate random port for mothership */
+			char portString[10];
+			crRandAutoSeed();
+			mothershipPort = crRandInt(10001, 10100);
+			sprintf(portString, "%d", mothershipPort);
+			argv[arg++] = portString;
+		}
+		else
+			argv[arg++] = args[i];
+	}
+	argv[arg++] = NULL;
+
+	if (mothershipPort != DEFAULT_MOTHERSHIP_PORT) {
+		char localHost[1000], mothershipStr[1010];
+		crGetHostname(localHost, 1000);
+		sprintf(mothershipStr, "%s:%d", localHost, mothershipPort);
+		crSetenv("CRMOTHERSHIP", mothershipStr);
+	}
+
+	crDebug("Spawning mothership with argv:");
+	for (i = 0; argv[i]; i++) {
+		crDebug("argv[%d] = '%s'", i, argv[i]);
+	}
+
+#ifndef WINDOWS
+	/* We need to spawn the mothership and then wait patiently
+	 * until it comes up.  We'll do this by asking the mothership
+	 * to signal us when it is ready (via the -S option we supplied
+	 * above).  We don't try to do this in Windows because it seems
+	 * Windows Python doesn't support os.kill(), which is what
+	 * the mothership will use to signal us back.
+	 */
+	{
+		void (*oldHandler)(int);
+		char processId[100];
+		int attempts = 5;
+
+		sprintf(processId, "%d", getpid());
+		crSetenv("CRSIGNAL", processId);
+
+		oldHandler = signal(SIGUSR1, MothershipPhoneHome);
+		Mothership_Awake = 0;
+		stub.mothershipPID = crSpawn(PYTHON_EXE, (const char **) argv );
+		while (--attempts) {
+			if (Mothership_Awake) {
+				crDebug("Mothership is awake!");
+				break;
+			}
+			crSleep(10);
+		}
+
+		/* Restore the older handler, in case it was being used */
+		(void) signal(SIGUSR1, oldHandler);
+		if (!Mothership_Awake) {
+			crWarning("Mothership never woke up!");
+			return 0;
+		}
+	}
+#else
+	/* This is the old code; the above won't work in a Windows environment
+	 * because the Windows Python implementation doesn't include os.kill(),
+	 * which the mothership will attempt to use if CRSIGNAL is set in the
+	 * environment.
+	 */
+	stub.mothershipPID = crSpawn(PYTHON_EXE, (const char **) argv );
+	crSleep(1);
+#endif
+
+	crFreeStrings(args);
+
+	return 1;
 }
 
 
@@ -490,8 +616,13 @@ getConfigurationOptions(CRConnection *conn)
 }
 
 
-
-void stubInit(void)
+/**
+ * Do one-time initializations for the faker.
+ * This includes contacting the mothership to get the SPU chain and
+ * assorted configuration options.
+ */
+void
+stubInit(void)
 {
 	/* Here is where we contact the mothership to find out what we're supposed
 	 * to  be doing.  Networking code in a DLL initializer.  I sure hope this 
@@ -529,133 +660,34 @@ void stubInit(void)
 		app_id = "-1";
 	}
 
-	/* contact mothership and get my spu chain */
-	conn = crMothershipConnect( );
-	if (conn)
-	{
-		/* response will be the client's SPU chain */
+	/* contact mothership to get my spu chain */
+	conn = crMothershipConnect();
+	if (!conn) {
+		/* No mothership running.  Try spawning it ourselves now */
+		if (StartMothership()) {
+			conn = crMothershipConnect();
+			if (!conn) {
+				crDebug("Unable to connect to spawned mothership.  Exiting.");
+				exit(0);
+			}
+		}
+		else {
+			/* Can't connect to mothership and can't start it */
+			const char *defaultSPU = crGetenv("CR_DEFAULT_SPU");
+			if (!defaultSPU)
+				defaultSPU = "render";
+			crWarning( "Couldn't connect to the mothership -- I have no idea what to do!(1)" ); 
+			crWarning( "For the purposes of this demonstration, I'm loading the %s SPU!", defaultSPU );
+			sprintf( response, "1 0 %s", defaultSPU );
+		}
+	}
+
+	if (conn) {
+		/* Identify myself to mothership - response will be client's SPU chain */
 		crMothershipIdentifyOpenGL( conn, response, app_id );
 	}
-	else
-	{
-		/* No mothership running.  Try spawning it ourselves with a config
-		 * file that we'll get from an env var or the ~/.crconfig file.
-		 */
-		char procName[1000], currentDir[1000], **args;
 
-		crGetProcName(procName, 999);
-		crGetCurrentDir(currentDir, 999);
 
-		args = LookupMothershipConfig(procName);
-		if (!args)
-		{
-			/* try default */
-			args = LookupMothershipConfig("*");
-		}
-
-		if (args) {
-			/* Build the argument vector and try spawning the mothership! */
-			int mothershipPort = DEFAULT_MOTHERSHIP_PORT;
-			char *argv[1000];
-			int arg = 0;
-
-			argv[arg++] = PYTHON_EXE;
-			argv[arg++] = "-E"; /* Ignores any program-set PYTHONPATH or PYTHONHOME */
-
-			for (i = 0; args[i]; i++)
-			{
-				if (crStrcmp(args[i], "%p") == 0)
-					argv[arg++] = procName;
-				else if (crStrcmp(args[i], "%d") == 0)
-					argv[arg++] = currentDir;
-				else if (crStrcmp(args[i], "%m") == 0) {
-					/* generate random port for mothership */
-					char portString[10];
-					crRandAutoSeed();
-					mothershipPort = crRandInt(10001, 10100);
-					sprintf(portString, "%d", mothershipPort);
-					argv[arg++] = portString;
-				}
-				else
-					argv[arg++] = args[i];
-			}
-			argv[arg++] = NULL;
-
-			if (mothershipPort != DEFAULT_MOTHERSHIP_PORT) {
-				char localHost[1000], mothershipStr[1010];
-				crGetHostname(localHost, 1000);
-				sprintf(mothershipStr, "%s:%d", localHost, mothershipPort);
-				crSetenv("CRMOTHERSHIP", mothershipStr);
-			}
-
-			crDebug("Spawning mothership with argv:");
-			for (i = 0; argv[i]; i++) {
-					crDebug("argv[%d] = '%s'", i, argv[i]);
-			}
-
-#ifndef WINDOWS
-			/* We need to spawn the mothership and then wait patiently
-			 * until it comes up.  We'll do this by asking the mothership
-			 * to signal us when it is ready (via the -S option we supplied
-			 * above).  We don't try to do this in Windows because it seems
-			 * Windows Python doesn't support os.kill(), which is what
-			 * the mothership will use to signal us back.
-			 */
-			{
-				void (*oldHandler)(int);
-				char processId[100];
-				int attempts = 5;
-
-				sprintf(processId, "%d", getpid());
-				crSetenv("CRSIGNAL", processId);
-
-				oldHandler = signal(SIGUSR1, MothershipPhoneHome);
-				Mothership_Awake = 0;
-				stub.mothershipPID = crSpawn(PYTHON_EXE, (const char **) argv );
-				while (--attempts) {
-					if (Mothership_Awake) {
-						crDebug("Mothership is awake!");
-						break;
-					}
-					crSleep(10);
-				}
-
-				/* Restore the older handler, in case it was being used */
-				(void) signal(SIGUSR1, oldHandler);
-				if (!Mothership_Awake) {
-					crWarning("Mothership never woke up!");
-				}
-			}
-#else
-			/* This is the old code; the above won't work in a Windows environment
-			 * because the Windows Python implementation doesn't include os.kill(),
-			 * which the mothership will attempt to use if CRSIGNAL is set in the
-			 * environment.
-			 */
-			stub.mothershipPID = crSpawn(PYTHON_EXE, (const char **) argv );
-			crSleep(1);
-#endif
-
-			crFreeStrings(args);
-			conn = crMothershipConnect( );
-			if (conn)
-			{
-				crMothershipIdentifyOpenGL( conn, response, app_id );
-			}
-		}
-	}
-
-	if (!conn)
-	{
-		const char *defaultSPU = crGetenv("CR_DEFAULT_SPU");
-		if (!defaultSPU)
-			defaultSPU = "render";
-		crWarning( "Couldn't connect to the mothership -- I have no idea what to do!(1)" ); 
-		crWarning( "For the purposes of this demonstration, I'm loading the %s SPU!", defaultSPU );
-		sprintf( response, "1 0 %s", defaultSPU );
-	}
-
-	/*crDebug( "response = \"%s\"", response );*/
 	spuchain = crStrSplit( response, " " );
 	num_spus = crStrToInt( spuchain[0] );
 	spu_ids = (int *) crAlloc( num_spus * sizeof( *spu_ids ) );
@@ -671,12 +703,6 @@ void stubInit(void)
 		getConfigurationOptions(conn);
 		crMothershipDisconnect( conn );
 	}
-
-	/*
-	 * NOTICE:
-	 * if you add new app node config options, please add them to the
-	 * configuration options list in mothership/tools/crtypes.py
-	 */
 
 	stub.spu = crSPULoadChain( num_spus, spu_ids, spu_names, stub.spu_dir, NULL );
 
