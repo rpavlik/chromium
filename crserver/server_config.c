@@ -130,7 +130,7 @@ void crServerGatherConfiguration(char *mothership)
 		char protocol[1024];
 
 		sscanf( clientlist[i], "%s %d", protocol, &(cr_server.clients[i].spu_id) );
-		cr_server.clients[i].conn = crNetAcceptClient( protocol, cr_server.tcpip_port, mtu );
+		cr_server.clients[i].conn = crNetAcceptClient( protocol, cr_server.tcpip_port, mtu, 1 );
 		cr_server.clients[i].ctx = crStateCreateContext();
 		crStateSetCurrentPointers( cr_server.clients[i].ctx, &(cr_server.current) );
 		crServerAddToRunQueue( i );

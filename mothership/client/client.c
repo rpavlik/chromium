@@ -33,7 +33,7 @@ CRConnection *crMothershipConnect( void )
 
 	sprintf( mother_url, "%s:%d", mother_server, mother_port );
 
-	return crNetConnectToServer( mother_server, 10000, 8096 );
+	return crNetConnectToServer( mother_server, 10000, 8096, 0 );
 }
 
 void crMothershipDisconnect( CRConnection *conn )

@@ -23,6 +23,9 @@
 #include "cr_net.h"
 #include "cr_netserver.h"
 #include "cr_bufpool.h"
+#include "cr_environment.h"
+#include "cr_endian.h"
+#include "net_internals.h"
 
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) // 2MB
 
@@ -61,7 +64,7 @@ NETWORK_TYPE( Gm );
 // Not sure if the MTU argument should be here -- maybe in crNetInit()?
 
 CRConnection *crNetConnectToServer( char *server, 
-		unsigned short default_port, int mtu )
+		unsigned short default_port, int mtu, int broker )
 {
 	char hostname[4096], protocol[4096];
 	unsigned short port;
@@ -93,6 +96,9 @@ CRConnection *crNetConnectToServer( char *server,
 	conn->tcp_socket         = 0;
 	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
+	conn->broker             = broker;
+	conn->swap               = 0;
+	conn->endianness         = crDetermineEndianness();
 
 	conn->multi.len = 0;
 	conn->multi.max = 0;
@@ -137,7 +143,7 @@ CRConnection *crNetConnectToServer( char *server,
 
 // Accept a client on various interfaces.
 
-CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned int mtu )
+CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned int mtu, int broker )
 {
 	CRConnection *conn;
 
@@ -157,6 +163,9 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned i
 	conn->tcp_socket         = 0;
 	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
+	conn->broker             = broker;
+	conn->swap               = 0;
+	conn->endianness         = crDetermineEndianness();
 
 	conn->multi.len = 0;
 	conn->multi.max = 0;
@@ -532,5 +541,75 @@ int crGetPID( void )
 
 void crNetServerConnect( CRNetServer *ns )
 {
-	ns->conn = crNetConnectToServer( ns->name, 7000, ns->buffer_size );
+	ns->conn = crNetConnectToServer( ns->name, 7000, ns->buffer_size, 1 );
 }
+
+// The fact that I've copied this function makes me ill.
+// GM connections need to be brokered through the mothership,
+// so I need to connect to the mothership, but I can't use the
+// client library because it links against *this* library.
+// Shoot me now.  No wonder academics have such a terrible
+// reputation in industry.
+//
+//      --Humper
+
+#define MOTHERPORT 10000
+
+CRConnection *__copy_of_crMothershipConnect( void )
+{
+	char *mother_server = NULL;
+	int   mother_port = MOTHERPORT;
+	char mother_url[1024];
+
+	crNetInit( NULL, NULL );
+
+	mother_server = crGetenv( "CRMOTHERSHIP" );
+	if (!mother_server)
+	{
+		crWarning( "Couldn't find the CRMOTHERSHIP environment variable, defaulting to localhost" );
+		mother_server = "localhost";
+	}
+
+	sprintf( mother_url, "%s:%d", mother_server, mother_port );
+
+	return crNetConnectToServer( mother_server, 10000, 8096, 0 );
+}
+
+// More code-copying lossage.  I sure hope no one ever sees this code.  Ever.
+
+int __copy_of_crMothershipReadResponse( CRConnection *conn, void *buf )
+{
+	char codestr[4];
+	int code;
+
+	crNetSingleRecv( conn, codestr, 4 );
+	crNetReadline( conn, buf );
+
+	code = crStrToInt( codestr );
+	return (code == 200);
+}
+
+// And, the final insult.
+
+int __copy_of_crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... )
+{
+	va_list args;
+	static char txt[8092];
+
+	va_start(args, str);
+	vsprintf( txt, str, args );
+	va_end(args);
+
+	crStrcat( txt, "\n" );
+	crNetSendExact( conn, txt, crStrlen(txt) );
+	if (response_buf)
+	{
+		return __copy_of_crMothershipReadResponse( conn, response_buf );
+	}
+	else
+	{
+		char devnull[1024];
+		return __copy_of_crMothershipReadResponse( conn, devnull );
+	}
+}
+

@@ -34,6 +34,8 @@ typedef int ssize_t;
 #include "cr_string.h"
 #include "cr_bufpool.h"
 #include "cr_net.h"
+#include "cr_endian.h"
+#include "net_internals.h"
 
 #ifdef WINDOWS
 #define EADDRINUSE   WSAEADDRINUSE
@@ -316,6 +318,25 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 		{
 			err = crTCPIPErrno( );
 			crError( "Couldn't listen on socket: %s", crTCPIPErrorString( err ) );
+		}
+	}
+
+	if (conn->broker)
+	{
+		CRConnection *mother;
+		char response[8096];
+		char my_hostname[256];
+
+		mother = __copy_of_crMothershipConnect( );
+
+		if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
+		{
+			crError( "Couldn't determine my own hostname in crTCPIPAccept!" );
+		}
+	
+		if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest tcpip %s %d %d", my_hostname, conn->port, conn->endianness ) )
+		{
+			crError( "Mothership didn't like my accept request request" );
 		}
 	}
 
@@ -649,6 +670,26 @@ int crTCPIPDoConnect( CRConnection *conn )
 
 	memcpy( (char *) &servaddr.sin_addr, hp->h_addr,
 			sizeof(servaddr.sin_addr) );
+
+	if (conn->broker)
+	{
+		CRConnection *mother;
+		char response[8096];
+		int remote_endianness;
+		mother = __copy_of_crMothershipConnect( );
+
+		if (!__copy_of_crMothershipSendString( mother, response, "connectrequest tcpip %s %d %d", conn->hostname, conn->port, conn->endianness) )
+		{
+			crError( "Mothership didn't like my connect request request" );
+		}
+
+		sscanf( response, "%d", &(remote_endianness) );
+
+		if (conn->endianness != remote_endianness)
+		{
+			conn->swap = 1;
+		}
+	}
 	for (;;)
 	{
 		if ( !connect( conn->tcp_socket, (struct sockaddr *) &servaddr,

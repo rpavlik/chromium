@@ -26,7 +26,7 @@
 #include "cr_net.h"
 #include "cr_protocol.h"
 #include "cr_string.h"
-#include "cr_environment.h"
+#include "net_internals.h"
 
 #define CR_GM_USE_CREDITS 1
 #define CR_GM_SEND_CREDITS_THRESHOLD ( 1 << 18 )
@@ -493,76 +493,6 @@ static void crGmConnectionAdd( CRConnection *conn )
 	crGmCreditIncrease( gm_conn );
 }
 
-// The fact that I've copied this function makes me ill.
-// GM connections need to be brokered through the mothership,
-// so I need to connect to the mothership, but I can't use the
-// client library because it links against *this* library.
-// Shoot me now.  No wonder academics have such a terrible
-// reputation in industry.
-//
-//      --Humper
-
-#define MOTHERPORT 10000
-
-static CRConnection *__copy_of_crMothershipConnect( void )
-{
-	char *mother_server = NULL;
-	int   mother_port = MOTHERPORT;
-	char mother_url[1024];
-
-	crNetInit( NULL, NULL );
-
-	mother_server = crGetenv( "CRMOTHERSHIP" );
-	if (!mother_server)
-	{
-		crWarning( "Couldn't find the CRMOTHERSHIP environment variable, defaulting to localhost" );
-		mother_server = "localhost";
-	}
-
-	sprintf( mother_url, "%s:%d", mother_server, mother_port );
-
-	return crNetConnectToServer( mother_server, 10000, 8096 );
-}
-
-// More code-copying lossage.  I sure hope no one ever sees this code.  Ever.
-
-
-static int __copy_of_crMothershipReadResponse( CRConnection *conn, void *buf )
-{
-	char codestr[4];
-	int code;
-
-	crNetSingleRecv( conn, codestr, 4 );
-	crNetReadline( conn, buf );
-
-	code = crStrToInt( codestr );
-	return (code == 200);
-}
-
-// And, the final insult.
-
-static int __copy_of_crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... )
-{
-	va_list args;
-	static char txt[8092];
-
-	va_start(args, str);
-	vsprintf( txt, str, args );
-	va_end(args);
-
-	crStrcat( txt, "\n" );
-	crNetSendExact( conn, txt, crStrlen(txt) );
-	if (response_buf)
-	{
-		return __copy_of_crMothershipReadResponse( conn, response_buf );
-	}
-	else
-	{
-		char devnull[1024];
-		return __copy_of_crMothershipReadResponse( conn, devnull );
-	}
-}
-
 
 void crGmAccept( CRConnection *conn, unsigned short port )
 {
@@ -579,7 +509,7 @@ void crGmAccept( CRConnection *conn, unsigned short port )
 	}
 	
 	// Tell the mothership I'm willing to receive a client, and what my GM info is
-	if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest %s %d %d %d", my_hostname, conn->port, cr_gm.node_id, cr_gm.port_num ) )
+	if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest gm %s %d %d %d %d", my_hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
 	{
 		crError( "Mothership didn't like my accept request request" );
 	}
@@ -604,12 +534,13 @@ int crGmDoConnect( CRConnection *conn )
 {
 	CRConnection *mother;
 	char response[8096];
+	int remote_endianness;
 	crWarning( "crGmDoConnect is being called -- brokering the connection through the mothership!." );
 
 	mother = __copy_of_crMothershipConnect( );
 
 	// Tell the mothership who I want to connect to, and what my GM info is
-	if (!__copy_of_crMothershipSendString( mother, response, "connectrequest %s %d %d %d", conn->hostname, conn->port, cr_gm.node_id, cr_gm.port_num ) )
+	if (!__copy_of_crMothershipSendString( mother, response, "connectrequest %s %d %d %d %d", conn->hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
 	{
 		crError( "Mothership didn't like my connect request request" );
 	}
@@ -618,7 +549,12 @@ int crGmDoConnect( CRConnection *conn )
 	// this connection.  The mothership will sit on the connectrequest
 	// until someone accepts.
 	
-	sscanf( response, "%d %d", &(conn->gm_node_id), &(conn->gm_port_num) );
+	sscanf( response, "%d %d %d", &(conn->gm_node_id), &(conn->gm_port_num), &(remote_endianness) );
+
+	if (remote_endianness != conn->endianness)
+	{
+		conn->swap = 1;
+	}
 
 	// NOW, we can add the connection, since we have enough information
 	// to uniquely determine the sender when we get a packet!

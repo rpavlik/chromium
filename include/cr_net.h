@@ -80,6 +80,10 @@ struct CRConnection {
 
 	unsigned int mtu;
 
+	int broker;
+
+	int endianness, swap;
+
 	char *hostname;
 	int port;
 
@@ -116,8 +120,8 @@ struct CRConnection {
 	unsigned int gm_port_num;
 };
 
-CRConnection *crNetConnectToServer( char *server, unsigned short default_port, int mtu );
-CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned int mtu );
+CRConnection *crNetConnectToServer( char *server, unsigned short default_port, int mtu, int broker );
+CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned int mtu, int broker );
 
 
 #endif /* CR_NET_H */

@@ -118,6 +118,7 @@ class SockWrapper:
 	UNKNOWNSPU = 403
 	UNKNOWNPARAM = 404
 	UNKNOWNSERVER = 405
+	UNKNOWNPROTOCOL = 406
 
 	def __init__(self, sock):
 		self.sock = sock
@@ -222,33 +223,68 @@ class CR:
 
 	def do_connectrequest( self, sock, args ):
 		connect_info = args.split( " " )
-		(hostname, port_str, node_id_str, port_num_str) = connect_info
-		port = int(port_str)
-		node_id = int(node_id_str)
-		port_num = int(port_num_str)
-		for server_sock in self.wrappers.values():
-			if server_sock.accept_wait != None:
-				(server_hostname, server_port, server_node_id, server_port_num) = server_sock.accept_wait
-				if server_hostname == hostname:
-					sock.Success( "%d %d" % (server_node_id, server_port_num) )
-					server_sock.Success( "%d %d" % (node_id, port_num) )
-					return
-		sock.connect_wait = (hostname, port, node_id, port_num)
+		protocol = connect_info[0]
+		if (protocol == 'tcpip'):
+			(p, hostname, port_str, endianness_str) = connect_info
+			port = int(port_str)
+			endianness = int(endianness_str)
+			for server_sock in self.wrappers.values():
+				if server_sock.accept_wait != None:
+						(server_hostname, server_port, server_endianness) = server_sock.accept_wait
+						if server_hostname == hostname:
+							sock.Success( "%d" % server_endianness )
+							server_sock.Success( "" )
+							return
+			sock.connect_wait = (hostname, port, endianness)
+		elif (protocol == 'gm'):
+			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = connect_info
+			port = int(port_str)
+			node_id = int(node_id_str)
+			port_num = int(port_num_str)
+			endianness = int(endianness_str)
+			for server_sock in self.wrappers.values():
+				if server_sock.accept_wait != None:
+						(server_hostname, server_port, server_node_id, server_port_num, server_endianness) = server_sock.accept_wait
+						if server_hostname == hostname:
+							sock.Success( "%d %d %d" % (server_node_id, server_port_num, server_endianness) )
+							server_sock.Success( "%d %d" % (node_id, port_num) )
+							return
+			sock.connect_wait = (hostname, port, node_id, port_num, endianness)
+		else:
+			self.ClientError( sock, SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
 	def do_acceptrequest( self, sock, args ):
 		accept_info = args.split( " " )
-		(hostname, port_str, node_id_str, port_num_str) = accept_info
-		port = int(port_str)
-		node_id = int(node_id_str)
-		port_num = int(port_num_str)
-		for client_sock in self.wrappers.values():
-			if client_sock.connect_wait != None:
-				(client_hostname, client_port, client_node_id, client_port_num) = client_sock.connect_wait
-				if client_hostname == hostname:
-					sock.Success( "%d %d" % (client_node_id, server_port_num) )
-					client_sock.Success( "%d %d" % (node_id, port_num) )
-					return
-		sock.accept_wait = (hostname, port, node_id, port_num)
+		protocol = accept_info[0]
+		if protocol == 'tcpip':
+			(p, hostname, port_str, endianness_str) = accept_info
+			hostname = gethostbyname(hostname)
+			port = int(port_str)
+			endianness = int(endianness_str)
+			for client_sock in self.wrappers.values():
+				if client_sock.connect_wait != None:
+					(client_hostname, client_port, client_endianness) = client_sock.connect_wait
+					if client_hostname == hostname:
+						sock.Success( "" )
+						client_sock.Success( "%d" % endianness ) 
+						return
+			sock.accept_wait = (hostname, port, endianness)
+		elif protocol == 'gm':
+			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = accept_info
+			port = int(port_str)
+			node_id = int(node_id_str)
+			port_num = int(port_num_str)
+			endianness = int(endianness_str)
+			for client_sock in self.wrappers.values():
+				if client_sock.connect_wait != None:
+					(client_hostname, client_port, client_node_id, client_port_num, client_endianness) = client_sock.connect_wait
+					if client_hostname == hostname:
+						sock.Success( "%d %d" % (client_node_id, server_port_num) )
+						client_sock.Success( "%d %d %d" % (node_id, port_num, endianness) )
+						return
+			sock.accept_wait = (hostname, port, node_id, port_num, endianness)
+		else:
+			self.ClientError( sock, SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
 	def do_faker( self, sock, args ):
 		for node in self.nodes:
