@@ -41,6 +41,7 @@ typedef struct {
 	GLboolean inUse;
 	GLint renderContext;
 	GLint childContext;
+	CRContext *tracker;  /* for tracking matrix state */
 } ContextInfo;
 
 typedef struct {
@@ -71,7 +72,6 @@ typedef struct {
 
 	GLint barrierCount;
 
-	CRContext *ctx;
 	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
 	int cleared_this_frame;
 	struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;

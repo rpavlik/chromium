@@ -98,7 +98,8 @@ static void DoFlush( void )
 
 	if (readback_spu.bbox != NULL)
 	{
-		CRTransformState *t = &(readback_spu.ctx->transform);
+		CRContext *ctx = crStateGetCurrent();
+		CRTransformState *t = &(ctx->transform);
 		GLmatrix *m = &(t->transform);
 		if (readback_spu.bbox->xmin == readback_spu.bbox->xmax)
 		{
@@ -320,6 +321,9 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateContext( const char *dpyName,
 	readback_spu.contexts[i].renderContext = readback_spu.super.CreateContext(dpyName, visual);
 	readback_spu.contexts[i].childContext = readback_spu.child.CreateContext(dpyName, childVisual);
 
+	/* create a state tracker (to record matrix operations) for this context */
+	readback_spu.contexts[i].tracker = crStateCreateContext( NULL );
+
 	/*
 		 printf("%s return %d\n", __FUNCTION__, i);
 	 */
@@ -335,6 +339,7 @@ static void READBACKSPU_APIENTRY readbackspuDestroyContext( GLint ctx )
 	CRASSERT(ctx < MAX_CONTEXTS);
 	readback_spu.super.DestroyContext(readback_spu.contexts[ctx].renderContext);
 	readback_spu.contexts[ctx].inUse = GL_FALSE;
+	crStateDestroyContext( readback_spu.contexts[ctx].tracker );
 }
 
 
@@ -365,6 +370,9 @@ static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint window, GLint nati
 		readback_spu.child.MakeCurrent(readback_spu.windows[window].childWindow,
 				nativeWindow,
 				readback_spu.contexts[ctx].childContext);
+
+		/* state tracker (for matrices) */
+		crStateMakeCurrent( readback_spu.contexts[ctx].tracker );
 	}
 	else {
 		thread->currentWindow = -1;
