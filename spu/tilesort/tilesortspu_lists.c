@@ -548,7 +548,7 @@ tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 void TILESORTSPU_APIENTRY
 tilesortspu_DeleteLists(GLuint list, GLsizei range)
 {
-	int i;
+	GLuint i;
 
 	/*crDebug("DeleteLists(%d, %d)",list, range);*/
 	/* always pack DeleteLists to send it to servers */
