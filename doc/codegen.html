@@ -611,5 +611,439 @@ turned off.&nbsp; So if a wall is drawn after a transparent water surface, the
 wall will have the same transparency as the water.&nbsp; Also, Quake III does
 extremely agressive visibility culling, so you can see elements appearing and
 disappearing all the time.</p>
-<p>In order to actually play what I call &quot;GlassQuake&quot;, we need to
+<p>One other thing that seems wrong is that backface culling could be turned
+on.&nbsp; We certainly don't want that, so we'll add it to the list of things
+that's prohibited in <code>seethroughEnable</code> in <code>seethroughspu_misc.c</code>:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		else if (cap ==
+      GL_CULL_FACE)<br>
+	{<br>
+      &nbsp;&nbsp;&nbsp; crWarning( &quot;SeeThroughSPU: Ignoring enable of face culling!" );<br>
+	}</td></tr></table>
+
+<p>And we disable it in <code>SPUInit</code> in <code>seethroughspu_init.c</code>:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		seethrough_spu.super.Disable( GL_CULL_FACE );</td></tr></table>
+
+<p>In order to actually play what I call &quot;GlassQuake&quot;, we still need to
 implement vertex arrays in our SPU.</p>
+<h2 class="PageSubHeading">Step 13: Bring in the state tracker</h2>
+<p>To get vertex arrays to work, we will need the assistance of the state
+tracker.&nbsp; The state tracker will keep track of the location of all of the
+vertex array pointers, which ones are enabled, and what format they're in.</p>
+<p>First, let's make sure that we are linking against the state tracker.&nbsp;
+Add the string &quot;crstate&quot; to the <code>LIBRARIES</code> variable in the
+<code>Makefile</code>.&nbsp; The resulting line should look like:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		LIBRARIES = spuload crutil crmothership crstate</td></tr></table>
+
+<p>While we're in the Makefile, let's create a new file for our array
+implementations.&nbsp; Add a file called &quot;seethroughspu_arrays&quot; to the
+FILES variable.&nbsp; The resulting list should look like:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		FILES = seethroughspu \<br>
+      &nbsp;&nbsp; seethroughspu_arrays \<br>
+      &nbsp;&nbsp; seethroughspu_config \<br>
+      &nbsp;&nbsp; seethroughspu_init \<br>
+      &nbsp;&nbsp; seethroughspu_misc</td></tr></table>
+
+<p>Before we start implementing functions, let's figure out what it is we want
+to do.&nbsp; We will need to use the state tracker's implementation of
+glEnableClientState, glDisableClientState, glVertexPointer, glColorPointer,
+glIndexPointer, glNormalPointer, glTexCoordPointer, glEdgeFlagPointer, and
+glInterleavedArrays.&nbsp; For each of these functions, we will want to call the
+state tracker's implementation, and then also dispatch to our SuperSPU.&nbsp;
+Because this is a very simple task and highly repetitive, we'll add it to the
+auto-generating code in seethrough.py.&nbsp;&nbsp;</p>
+<p>First, let's add the 9 functions listed above to a new file called <code>seethrough_state_special</code>.&nbsp;
+We'll update the auto-generating code so that anything found in this file will
+automatically dispatch to the state tracker as well as our SuperSPU.&nbsp; The
+file should look like:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		EnableClientState<br>
+      DisableClientState<br>
+      VertexPointer<br>
+      ColorPointer<br>
+      IndexPointer<br>
+      NormalPointer<br>
+      TexCoordPointer<br>
+      EdgeFlagPointer<br>
+      InterleavedArrays</td></tr></table>
+
+<p>Now, let's go back to the <code>seethrough.py</code> script.&nbsp; Right
+after the code for generating the <code>seethroughColor</code> functions, add
+the following code:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		for func_name in
+      stub_common.AllSpecials( &quot;seethrough_state&quot; ):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (return_type, arg_names,
+      arg_types) = gl_mapping[func_name]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print 'void
+      SEETHROUGHSPU_APIENTRY seethrough%s%s' % (func_name,
+      stub_common.ArgumentString( arg_names, arg_types ) )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '{'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\tcrState%s%s;' % (func_name,
+      stub_common.CallString( arg_names ) )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\tseethrough_spu.super.%s%s;' %
+      (func_name, stub_common.CallString( arg_names ) )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '}'</td></tr></table>
+
+<p>This will generate functions that look like:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		void SEETHROUGH_APIENTRY
+      seethroughEdgeFlagPointer( GLsizei stride, const GLvoid *pointer )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp; crStateEdgeFlagPointer( stride, pointer );<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.super.EdgeFlagPointer( stride, pointer );<br>
+      }</td></tr></table>
+
+<p>Which is exactly what we want.&nbsp; Because we're going to be using state
+tracking functions or data in multiple files, let's include the state tracker's
+header file at the top of <code>seethroughspu.h</code>:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		#include &quot;cr_glstate.h&quot;</td></tr></table>
+
+<p>To get the function declarations for all the state_tracking functions.</p>
+<h2 class="PageSubHeading">Step 14: Initialize the state tracker</h2>
+<p>The state tracker needs a &quot;context&quot; into which to track all of the
+OpenGL state (or in our case, the subset we care about).&nbsp; Let's add a
+&quot;<code>CRContext</code>&quot; structure to the <code>SeethroughSPU</code>
+structure in <code>seethroughspu.h</code>:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		CRContext *ctx;</td></tr></table>
+
+<p>Now that the variable exists, we can initialize it in <code>SPUInit</code> in
+<code>seethroughspu_init.c</code>:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		crStateInit();<br>
+	seethrough_spu.ctx = crStateCreateContext();<br>
+	crStateMakeCurrent( seethrough_spu.ctx );</td></tr></table>
+
+<p>That's it!&nbsp; You're tracking state!</p>
+<h2 class="PageSubHeading">Step 15:&nbsp; Handle vertex array drawing calls</h2>
+<p>This is by far the most complex part of this SPU.&nbsp; What we're going to
+do is take calls to <code>glArrayElement</code>, <code>glDrawArrays</code>, and <code>glDrawElements</code>,
+and pull them apart into individual calls to the non-vertex array equivalents,
+based on which arrays are enabled.&nbsp; Although this is a complicated thing to
+get right, the logic to do it already exists in the Chromium packer!&nbsp; We're
+going to copy functions out of <code>cr/packer/pack_client.c</code> and rework
+them for our own needs.&nbsp;&nbsp;</p>
+<p>Go ahead and add those three functions to the file <code>seethrough_special</code>.
+(<i><b>RESULTS NOT SHOWN</b>)</i></p>
+<p>Before we tackle <code>seethroughArrayElement</code> (by far the most complex
+function), let's write the other two functions in terms of it.&nbsp; Create the
+file <code>seethroughspu_arrays.c</code> (remember, this was added to the
+Makefile back in step 13), and write the following two functions.&nbsp; They are
+shown here without much comment, except to point out that they do a bit of error
+checking.&nbsp; Chromium tends to consider OpenGL errors to be fatal, rather
+than setting a flag to be checked later.&nbsp; This is a design decision, and
+one of the ways in which using Chromium can be slightly different from using
+vanilla OpenGL.</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		void SEETHROUGHSPU_APIENTRY seethroughDrawArrays(GLenum mode, GLint first, GLsizei count)&nbsp;<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp; int i;<br>
+      <br>
+      &nbsp;&nbsp;&nbsp; if (count &lt; 0)<br>
+      &nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crError("seethroughDrawArrays passed negative count: %d", count);<br>
+      &nbsp;&nbsp;&nbsp; }<br>
+      <br>
+      &nbsp;&nbsp;&nbsp; if (mode > GL_POLYGON)<br>
+      &nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crError("seethroughDrawArrays called with invalid mode: %d", mode);<br>
+      &nbsp;&nbsp;&nbsp; }<br>
+      <br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.super.Begin (mode);<br>
+      &nbsp;&nbsp;&nbsp; for (i=0; i&lt;count; i++)&nbsp;<br>
+      &nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; seethroughArrayElement(first++);<br>
+      &nbsp;&nbsp;&nbsp; }<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.super.End();<br>
+      }</td></tr></table>
+
+<p>The implementation of <code>glDrawElements</code> is similar:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		void SEETHROUGHSPU_APIENTRY seethroughDrawElements(GLenum mode, GLsizei count,&nbsp;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLenum type, const GLvoid *indices)&nbsp;<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp; int i;<br>
+      &nbsp;&nbsp;&nbsp; GLubyte *p = (GLubyte *)indices;<br>
+      <br>
+      &nbsp;&nbsp;&nbsp; if (count &lt; 0)<br>
+      &nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crError("seethroughDrawElements passed negative count: %d", count);<br>
+      &nbsp;&nbsp;&nbsp; }<br>
+      <br>
+      &nbsp;&nbsp;&nbsp; if (mode > GL_POLYGON)<br>
+      &nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crError("seethroughDrawElements called with invalid mode: %d", mode);<br>
+      &nbsp;&nbsp;&nbsp; }<br>
+      <br>
+      &nbsp;&nbsp;&nbsp; if (type != GL_UNSIGNED_BYTE &amp;&amp; type != GL_UNSIGNED_SHORT &amp;&amp; type != GL_UNSIGNED_INT)<br>
+      &nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crError("seethroughDrawElements called with invalid type: %d", type);<br>
+      &nbsp;&nbsp;&nbsp; }<br>
+      <br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.super.Begin (mode);<br>
+      &nbsp;&nbsp;&nbsp; switch (type)&nbsp;<br>
+      &nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp; case GL_UNSIGNED_BYTE:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for (i=0; i&lt;count; i++)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      seethroughArrayElement((GLint) *p++);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; break;<br>
+      &nbsp;&nbsp;&nbsp; case GL_UNSIGNED_SHORT:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for (i=0; i&lt;count; i++)&nbsp;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      seethroughArrayElement((GLint) * (GLushort *) p);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; p+=sizeof (GLushort);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; break;<br>
+      &nbsp;&nbsp;&nbsp; case GL_UNSIGNED_INT:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for (i=0; i&lt;count; i++)&nbsp;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      seethroughArrayElement((GLint) * (GLuint *) p);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; p+=sizeof (GLuint);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; break;<br>
+      &nbsp;&nbsp;&nbsp; default:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crError( "this can't happen!" );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; break;<br>
+      &nbsp;&nbsp;&nbsp; }<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.super.End();<br>
+      }</td></tr></table>
+
+<p>Okay, now we're down to the <i>final</i> function: <code>glArrayElement</code>.&nbsp;
+Basically what this function is going to do is use the <code>CRClientState</code>
+structure to figure out which arrays are enabled, and for each enabled array,
+generate the appropriate function calls corresponding to that array ( <code>glColor</code>,
+<code>glTexCoord</code>, etc).&nbsp; This function is <i>big</i>, but it's not
+complicated.&nbsp; Notice that we call <code>seethroughColor</code> instead of <code>seethrough_spu.super.Color</code>,
+because that's where the transparency transformation happens.&nbsp; Since those
+functions aren't in any header file, we declare them <code>extern</code> here.</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		extern void SEETHROUGHSPU_APIENTRY seethroughColor3bv(GLbyte *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor4bv(GLbyte *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor3ubv(GLubyte *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor4ubv(GLubyte *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor3sv(GLshort *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor4sv(GLshort *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor3usv(GLushort *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor4usv(GLushort *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor3iv(GLint *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor4iv(GLint *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor3uiv(GLuint *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor4uiv(GLuint *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor3fv(GLfloat *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor4fv(GLfloat *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor3dv(GLdouble *p);<br>
+      extern void SEETHROUGHSPU_APIENTRY seethroughColor4dv(GLdouble *p);<br>
+      <br>
+      void SEETHROUGHSPU_APIENTRY seethroughArrayElement (GLint index)&nbsp;<br>
+			{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;CRClientState *c = &amp;(seethrough_spu.ctx->client);<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;unsigned char *p;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;if (index &lt; 0)<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crError( "seethroughArrayElement called with a negative index: %d", index );<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;if (c->e.enabled)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.EdgeFlagv(c->e.p + index*c->e.stride);<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;if (c->t.enabled)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p = c->t.p + index*c->t.stride;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->t.type)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_SHORT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->t.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 1: seethrough_spu.super.TexCoord1sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 2: seethrough_spu.super.TexCoord2sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethrough_spu.super.TexCoord3sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethrough_spu.super.TexCoord4sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_INT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->t.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 1: seethrough_spu.super.TexCoord1iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 2: seethrough_spu.super.TexCoord2iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethrough_spu.super.TexCoord3iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethrough_spu.super.TexCoord4iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_FLOAT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->t.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 1: seethrough_spu.super.TexCoord1fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 2: seethrough_spu.super.TexCoord2fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethrough_spu.super.TexCoord3fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethrough_spu.super.TexCoord4fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_DOUBLE:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->t.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 1: seethrough_spu.super.TexCoord1dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 2: seethrough_spu.super.TexCoord2dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethrough_spu.super.TexCoord3dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethrough_spu.super.TexCoord4dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;if (c->i.enabled)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p = c->i.p + index*c->i.stride;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->i.type)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_SHORT: seethrough_spu.super.Indexsv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_INT: seethrough_spu.super.Indexiv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_FLOAT: seethrough_spu.super.Indexfv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_DOUBLE: seethrough_spu.super.Indexdv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;if (c->c.enabled)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p = c->c.p + index*c->c.stride;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.type)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_BYTE:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethroughColor3bv((GLbyte *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethroughColor4bv((GLbyte *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_UNSIGNED_BYTE:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethroughColor3ubv((GLubyte *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethroughColor4ubv((GLubyte *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_SHORT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethroughColor3sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethroughColor4sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_UNSIGNED_SHORT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethroughColor3usv((GLushort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethroughColor4usv((GLushort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_INT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethroughColor3iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethroughColor4iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_UNSIGNED_INT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethroughColor3uiv((GLuint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethroughColor4uiv((GLuint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_FLOAT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethroughColor3fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethroughColor4fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_DOUBLE:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->c.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethroughColor3dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethroughColor4dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;if (c->n.enabled)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p = c->n.p + index*c->n.stride;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->n.type)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_BYTE: seethrough_spu.super.Normal3bv((GLbyte *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_SHORT: seethrough_spu.super.Normal3sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_INT: seethrough_spu.super.Normal3iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_FLOAT: seethrough_spu.super.Normal3fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_DOUBLE: seethrough_spu.super.Normal3dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;if (c->v.enabled)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p = c->v.p + (index*c->v.stride);<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->v.type)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_SHORT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->v.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 2: seethrough_spu.super.Vertex2sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethrough_spu.super.Vertex3sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethrough_spu.super.Vertex4sv((GLshort *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_INT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->v.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 2: seethrough_spu.super.Vertex2iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethrough_spu.super.Vertex3iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethrough_spu.super.Vertex4iv((GLint *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_FLOAT:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->v.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 2: seethrough_spu.super.Vertex2fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethrough_spu.super.Vertex3fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethrough_spu.super.Vertex4fv((GLfloat *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case GL_DOUBLE:<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch (c->v.size)&nbsp;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 2: seethrough_spu.super.Vertex2dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 3: seethrough_spu.super.Vertex3dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 4: seethrough_spu.super.Vertex4dv((GLdouble *)p); break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+			}
+			</td></tr></table>
+
+<h2 class="PageSubHeading">Step 16: Enjoy even more</h2>
+
+<table border="1" width="100%">
+	<tr>
+		<td align="center">
+			<img src="glassquake.jpg">
+		</td>
+	</tr>
+	<tr>
+		<td align="center">
+			GlassQuake, with <code> BlendFunc( GL_SRC_ALPHA, GL_ONE )</code>
+		</td>
+	</tr>
+</table>
+<p><a href="glassquake.html">Here are a few more screenshots of GlassQuake in
+various blending modes</a>.</p>
