@@ -109,6 +109,7 @@ crRandInt
 crRandSeed
 crRandAutoSeed
 crTransformBBox
+crProjectBBox
 crWarpPoint
 crHullInteriorBox
 crNetSetNodeRange

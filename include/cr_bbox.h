@@ -13,11 +13,18 @@
 extern "C" {
 #endif
 
-void crTransformBBox( float xmin, float ymin, float zmin,
-											float xmax, float ymax, float zmax,
-											const CRmatrix *m,
-											float *out_xmin, float *out_ymin, float *out_zmin,
-											float *out_xmax, float *out_ymax, float *out_zmax );
+extern void
+crTransformBBox(float xmin, float ymin, float zmin,
+								float xmax, float ymax, float zmax,
+								const CRmatrix *m,
+								float *out_xmin, float *out_ymin, float *out_zmin,
+								float *out_xmax, float *out_ymax, float *out_zmax);
+
+extern void
+crProjectBBox(const GLfloat modl[16], const GLfloat proj[16], 
+							GLfloat *x1, GLfloat *y1, GLfloat *z1,
+							GLfloat *x2, GLfloat *y2, GLfloat *z2);
+
 
 #ifdef __cplusplus
 }
