@@ -44,6 +44,8 @@ static crMakeCurrentProc     crMakeCurrentCR;
 static crSwapBuffersProc     crSwapBuffersCR;
 static crCreateWindowProc    crCreateWindowCR;
 static crWindowPositionProc  crWindowPositionCR;
+static glBarrierCreateCRProc glBarrierCreateCR;
+static glBarrierExecCRProc   glBarrierExecCR;
 static glChromiumParameteriCRProc glChromiumParameteriCR;
 
 #define GET_FUNCTION(target, proc, string)         \
@@ -53,6 +55,7 @@ static glChromiumParameteriCRProc glChromiumParameteriCR;
 		crError("%s function not found! %d", string,__LINE__); \
 	}
 
+#define MASTER_BARRIER 42
 
 #define MAXIMUM_THREADS 10
 
@@ -62,6 +65,7 @@ struct context_t {
 	int Rank;
 	GLboolean Clear;
 	GLint SwapFlags;
+	GLboolean UseBarriers;
 };
 
 static int NumThreads = 1;
@@ -132,6 +136,10 @@ static void *render_loop( void *threadData )
 
 	/* need to do this after MakeCurrent, unfortunately */
 	GET_FUNCTION(glChromiumParameteriCR, glChromiumParameteriCRProc, "glChromiumParameteriCR");
+	GET_FUNCTION(glBarrierCreateCR, glBarrierCreateCRProc, "glBarrierCreate");
+	GET_FUNCTION(glBarrierExecCR, glBarrierExecCRProc, "glBarrierExec");
+
+	glBarrierCreateCR( MASTER_BARRIER, NumThreads );
 
 	/* We need to make this call so that the private barriers inside
 	 * of the readback SPU are set to the right size.  See, this demo
@@ -167,6 +175,9 @@ static void *render_loop( void *threadData )
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		}
 
+		if (context->UseBarriers)
+			glBarrierExecCR( MASTER_BARRIER );
+
 		glPushMatrix();
 		glRotatef((GLfloat)frame, 1, 0, 0);
 		glRotatef((GLfloat)(-2 * frame), 0, 1, 0);
@@ -178,6 +189,9 @@ static void *render_loop( void *threadData )
 		doughnut((GLfloat).15,(GLfloat)0.7, 15, 30);
 
 		glPopMatrix();
+
+		if (context->UseBarriers)
+			glBarrierExecCR( MASTER_BARRIER );
 
 		/* The crserver only executes the SwapBuffers() for the 0th client.
 		 * No need to test for rank==0 as we used to do.
@@ -198,6 +212,7 @@ int main(int argc, char *argv[])
 	void *dpy = NULL;
 	GLboolean multiWindow = GL_FALSE;
 	GLboolean swapSingle = GL_FALSE;
+	GLboolean useBarriers = GL_FALSE;
 	int i;
 
 #ifndef WINDOWS
@@ -206,7 +221,13 @@ int main(int argc, char *argv[])
 
 	if (argc < 3)
 	{
-		crError( "Usage: %s [-t <num threads>] [-w] [-s1]", argv[0] );
+		printf("Usage: %s [-t <num threads>] [-w] [-s1] [-b]", argv[0] );
+		printf("Where:\n");
+		printf("  -t N  sets number of threads to create\n");
+		printf("  -w    create N windows instead of one\n");
+		printf("  -w1   only swap one of N threads\n");
+		printf("  -b    use barriers\n");
+		return 0;
 	}
 
 	for (i = 1 ; i < argc ; i++)
@@ -227,6 +248,10 @@ int main(int argc, char *argv[])
 		else if (!crStrcmp( argv[i], "-s1" ))
 		{
 			swapSingle = GL_TRUE;
+		}
+		else if (!crStrcmp( argv[i], "-b" ))
+		{
+			useBarriers = GL_TRUE;
 		}
 	}
 
@@ -288,6 +313,7 @@ int main(int argc, char *argv[])
 			crError("crCreateContextCR() call for thread %d failed!\n", i);
 			return 0;
 		}
+		Context[i].UseBarriers = useBarriers;
 	}
 
 	printf("------- thread test ---------\n");
