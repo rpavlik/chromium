@@ -18,10 +18,10 @@
 <p>This page provides a complete list of all the configuration parameters
 for the Chromium server.</p>
 <p>An example of setting a server parameter is:</p>
-<code>
-node = CRNetworkNode()<br>
-node.Conf('optimize_bucket', 0)<br>
-</code>
+<pre>
+	node = CRNetworkNode()
+	node.Conf('optimize_bucket', 0)
+</pre>
 <br>
 
 <table border="1" width="100%">
@@ -61,6 +61,15 @@ node.Conf('optimize_bucket', 0)<br>
 	sort-first or sort-last architectures.  When using sort-first,
 	this option should be used in conjunction with the <code>auto_barrier</code>
 	option in the <code>tilesort</code> SPU.  The default is <code>false</code>.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">spu_dir</td>
+    <td width="12%" class="ConfigType">String</td>
+    <td width="115%" class="ConfigDesc">
+      This options specifies the directory to search for Chromium SPU DLLs.
+      Setting this option is equivalent to calling the
+      <code>appNode.SPUDir()</code> function.
+    </td>
   </tr>
 </table>
 </body>
