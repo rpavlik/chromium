@@ -669,8 +669,10 @@ crTeacSetContextRange( int low_context, int high_context )
 void
 crTeacSetNodeRange( const char *low_node, const char *high_node )
 {
-  cr_teac.low_node  = strtok( low_node, "'" );
-  cr_teac.high_node = strtok( high_node, "'" );
+  char* low= crStrdup( low_node );
+  char* high= crStrdup( high_node );
+  cr_teac.low_node  = strtok( low, "'" );
+  cr_teac.high_node = strtok( high, "'" );  
   crDebug( "crTeacSetNodeRange:  low node=%s, high node=%s",
 	   cr_teac.low_node, cr_teac.high_node );
 }

@@ -756,8 +756,10 @@ crTcscommSetContextRange( int low_context, int high_context )
 void
 crTcscommSetNodeRange( const char *low_node, const char *high_node )
 {
-  cr_tcscomm.low_node  = strtok( low_node, "'" );
-  cr_tcscomm.high_node = strtok( high_node, "'" );
+  char* low= crStrdup( low_node );
+  char* high= crStrdup( high_node );
+  cr_tcscomm.low_node  = strtok( low, "'" );
+  cr_tcscomm.high_node = strtok( high, "'" );
   crDebug( "crTcscommSetNodeRange:  low node=%s, high node=%s",
 	   cr_tcscomm.low_node, cr_tcscomm.high_node );
 }
