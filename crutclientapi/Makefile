@@ -5,6 +5,6 @@ FILES = crutclientapi
 
 SHARED = 1
 LIBRARY = crutclientapi
-LIBRARIES = crutapi
+LIBRARIES = crutapi crfaker crmothership crutil
 
 include $(TOP)/cr.mk

@@ -17,6 +17,7 @@ crMothershipIdentifyServer
 crMothershipGetClients
 crMothershipGetServers
 crMothershipGetParam
+crMothershipSetParam
 crMothershipGetMTU
 crMothershipGetFakerParam
 crMothershipGetTiles
@@ -26,3 +27,7 @@ crMothershipGetDisplayTiles
 crMothershipGetDisplays
 crMothershipGetRank
 crMothershipGetServerDisplayTiles
+crMothershipGetCRUTServerParam
+crMothershipGetCRUTClients
+crMothershipGetCRUTServer
+crMothershipIdentifyCRUTClient

@@ -7,7 +7,8 @@ CRUTClient crut_client;
 static int
 __getCRUTMessageSize(CRUTMessage* msg)
 {
-    int msg_size;
+    int msg_size = 0;
+
     switch( msg->msg_type )
     {
     case CRUT_MOUSE_EVENT:
