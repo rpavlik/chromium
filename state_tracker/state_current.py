@@ -93,6 +93,40 @@ void crStateCurrentRecover( void )
 	unsigned int i;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
+	/* silence warnings */
+	(void) __convert_b1;
+	(void) __convert_b2;
+	(void) __convert_b3;
+	(void) __convert_b4;
+	(void) __convert_ui1;
+	(void) __convert_ui2;
+	(void) __convert_ui3;
+	(void) __convert_ui4;
+	(void) __convert_l1;
+	(void) __convert_l2;
+	(void) __convert_l3;
+	(void) __convert_l4;
+	(void) __convert_us1;
+	(void) __convert_us2;
+	(void) __convert_us3;
+	(void) __convert_us4;
+	(void) __convert_ub1;
+	(void) __convert_ub2;
+	(void) __convert_ub3;
+	(void) __convert_ub4;
+	(void) __convert_rescale_s1;
+	(void) __convert_rescale_s2;
+	(void) __convert_rescale_b1;
+	(void) __convert_rescale_b2;
+	(void) __convert_rescale_ui1;
+	(void) __convert_rescale_ui2;
+	(void) __convert_rescale_i1;
+	(void) __convert_rescale_i2;
+	(void) __convert_rescale_us1;
+	(void) __convert_rescale_us2;
+	(void) __convert_rescale_ub1;
+	(void) __convert_rescale_ub2;
+
 	DIRTY(nbitID, g->neg_bitid);
 
 	/* Save pre state */

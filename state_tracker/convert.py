@@ -32,7 +32,7 @@ static double __read_double( void *src )
 
 for k in gltypes.keys():
 	for i in range(1,5):
-		print 'void __convert_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k]['type'])
+		print 'static void __convert_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k]['type'])
 		if k == 'd':
 		  for j in range(i-1):
 		    print '\t*dst++ = (GLfloat) __read_double(src++);'
@@ -57,7 +57,7 @@ scale = {
 for k in gltypes.keys():
 	if k != 'f' and k != 'd' and k != 'l':
 		for i in range(1,5):
-			print 'void __convert_rescale_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k]['type'])
+			print 'static void __convert_rescale_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k]['type'])
 			for j in range(i-1):
 				print '\t*dst++ = ((GLfloat) *src++) / %s;' % scale[k]
 			print '\t*dst = ((GLfloat) *src) / %s;' % scale[k]
@@ -65,7 +65,7 @@ for k in gltypes.keys():
 
 print '''
 
-void __convert_boolean (GLboolean *dst, GLboolean *src) {
+static void __convert_boolean (GLboolean *dst, GLboolean *src) {
 	*dst = *src;
 }
 '''
