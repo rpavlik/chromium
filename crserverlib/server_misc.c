@@ -82,6 +82,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 			CRASSERT(tiles == numTiles);
 			tileBounds += 4; /* skip over header values */
 			crServerNewMuralTiling(mural, muralWidth, muralHeight, numTiles, tileBounds);
+			mural->viewportValidated = GL_FALSE;
 		}
 		break;
 
