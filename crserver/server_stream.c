@@ -14,7 +14,6 @@
 #include <stdlib.h>
 
 RunQueue *run_queue = NULL;
-static int added = 0;
 
 #if 0
 static int QueueSize( void )
@@ -79,18 +78,15 @@ void crServerAddNewClient( void )
 }
 
 
-void crServerAddToRunQueue( CRClient *client )
+/*
+ * Each client has an entry in the run queue (a RunQueue object).
+ * This function initialized the per-client tiling information
+ * for the client's queue entry.
+ */
+void crServerInitializeQueueExtents(RunQueue *q)
 {
-	RunQueue *q = (RunQueue *) crAlloc( sizeof( *q ) );
 	int i;
 	int x, y, w, h, y_max;
-
-	added++;
-
-	crDebug( "Adding to the run queue: client=%p number=%d count=%d", client, client->number, added );
-	q->number = client->number;
-	q->client = client;
-	q->blocked = 0;
 
 	x = cr_server.useL2 ? 2 : 0;
 	y = 0;
@@ -145,6 +141,23 @@ void crServerAddToRunQueue( CRClient *client )
 
 		x += w + ((cr_server.useL2) ? 2 : 0);
 	}
+}
+
+
+void crServerAddToRunQueue( CRClient *client )
+{
+	RunQueue *q = (RunQueue *) crAlloc( sizeof( *q ) );
+	static int added = 0;
+
+	added++;
+	crDebug( "Adding to the run queue: client=%p number=%d count=%d",
+					 client, client->number, added );
+
+	q->number = client->number;
+	q->client = client;
+	q->blocked = 0;
+
+	crServerInitializeQueueExtents(q);
 
 	if (!run_queue)
 	{

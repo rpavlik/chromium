@@ -24,7 +24,7 @@ extern CRServer cr_server;
 typedef struct {
 	GLrecti outputwindow;   /* coordinates in mural space */
 	GLrecti imagewindow;    /* coordinates in render window */
-	GLrectf bounds;         /* coordinates in [-1,11] x [1,1], I think */
+	GLrectf bounds;         /* coordinates in [-1,-1] x [1,1], I think */
 	int     display;        /* not used (historical?) */
 } CRRunQueueExtent;
 
@@ -45,12 +45,14 @@ extern CRHashTable *cr_barriers, *cr_semaphores;
 
 void crServerGatherConfiguration(char *mothership);
 void crServerGetTileInfo( CRConnection *conn, int nonFileClient );
+void crServerInitializeTiling(void);
 void crServerInitDispatch(void);
 void crServerReturnValue( const void *payload, unsigned int payload_len );
 void crServerWriteback(void);
 int crServerRecv( CRConnection *conn, void *buf, unsigned int len );
 void crServerSerializeRemoteStreams(void);
 void crServerAddToRunQueue( CRClient *client );
+void crServerInitializeQueueExtents(RunQueue *q);
 
 void crServerRecomputeBaseProjection(GLmatrix *base, GLint x, GLint y, GLint w, GLint h);
 void crServerApplyBaseProjection(void);
@@ -59,5 +61,7 @@ void crServerSetOutputBounds( CRContext *ctx, const GLrecti *outputwindow, const
 void crServerSetViewportBounds( CRViewportState *v, const GLrecti *outputwindow, const GLrecti *imagespace, const GLrecti *imagewindow, GLrecti *p, GLrecti *q );
 void crServerSetTransformBounds( CRTransformState *t, const GLrecti *outputwindow, GLrecti *p, GLrecti *q );
 void crServerFillBucketingHash(void);
+
+void crServerNewTiles(int muralWidth, int muralHeight, int numTiles, const int *tileBounds);
 
 #endif /* CR_SERVER_H */
