@@ -187,9 +187,12 @@ void crStateTextureInit(CRContext *ctx)
 
 
 /* This is called for each entry in the texture object hash table */
-static void DeleteTextureCallback( unsigned long key, void *texObj , void *texState)
+static void
+DeleteTextureCallback(unsigned long key, void *texObj, void *texState)
 {
-    crStateTextureDelete_t( (CRTextureState *) texState, (CRTextureObj *) texObj, !UPDATE_HASH );
+	crStateTextureDelete_t((CRTextureState *) texState,
+												 (CRTextureObj *) texObj, !UPDATE_HASH);
+	crFree(texObj);
 }
 
 
@@ -563,7 +566,7 @@ CRTextureObj * crStateTextureGet(GLenum target, GLuint name)
  * Allocate a new texture object with the given name
  */
 static CRTextureObj *
-crStateTextureAllocate_t (CRContext *ctx, GLuint name) 
+crStateTextureAllocate_t(CRContext *ctx, GLuint name) 
 {
 	CRTextureState *t = &(ctx->texture);
 	CRTextureObj *tobj;
@@ -583,10 +586,16 @@ crStateTextureAllocate_t (CRContext *ctx, GLuint name)
 }
 
 
+/**
+ * Delete all the data that hangs off a CRTextureObj, but don't
+ * delete the texture object itself, since it may not have been
+ * dynamically allocated.
+ */
 static void
 crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash) 
 {
 	int k;
+	int face;
 
 	CRASSERT(t);
 	CRASSERT(tobj);
@@ -596,30 +605,47 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash)
 		crHashtableDelete( t->idHash, tobj->name, NULL ); /* null callback */
 	}
 
-	/* Free the images */
-	for (k = 0; k < t->maxLevel; k++) 
-	{
-		CRTextureLevel *tl = tobj->level + k;
-		if (tl->img) 
-		{
-			crFree(tl->img);
-			tl->img = NULL;
-			tl->bytes = 0;
-		}
+	/* Free the texture images */
+	for (face = 0; face < 6; face++) {
+		CRTextureLevel *levels;
+		 switch (face) {
+		 case 0:
+			 levels = tobj->level;
+			 break;
+		 case 1:
+			 levels = tobj->negativeXlevel;
+			 break;
+		 case 2:
+			 levels = tobj->positiveYlevel;
+			 break;
+		 case 3:
+			 levels = tobj->negativeYlevel;
+			 break;
+		 case 4:
+			 levels = tobj->positiveZlevel;
+			 break;
+		 case 5:
+			 levels = tobj->negativeZlevel;
+			 break;
+		 }
+		 if (levels) {
+			 /* free all mipmap levels for this face */
+			 for (k = 0; k < t->maxLevel; k++) {
+				 CRTextureLevel *tl = levels + k;
+				 if (tl->img) {
+					 crFree(tl->img);
+					 tl->img = NULL;
+					 tl->bytes = 0;
+				 }
+			 }
+			 crFree(levels);
+		 }
 	}
-#ifdef CR_ARB_texture_cube_map
-	crFree(tobj->negativeXlevel);
 	tobj->negativeXlevel = NULL;
-	crFree(tobj->positiveYlevel);
 	tobj->positiveYlevel = NULL;
-	crFree(tobj->negativeYlevel);
 	tobj->negativeYlevel = NULL;
-	crFree(tobj->positiveZlevel);
 	tobj->positiveZlevel = NULL;
-	crFree(tobj->negativeZlevel);
 	tobj->negativeZlevel = NULL;
-#endif
-	crFree(tobj->level);
 	tobj->level = NULL;
 }
 
@@ -724,6 +750,7 @@ void STATE_APIENTRY crStateDeleteTextures(GLsizei n, const GLuint *textures)
 				}
 #endif
 			}
+			crFree(tObj);
 		}
 	}
 
