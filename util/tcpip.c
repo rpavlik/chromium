@@ -647,16 +647,7 @@ __crSelect( int n, fd_set *readfds, int sec, int usec )
 	{ 
 		int err, num_ready;
 
-/*
- * Mike, I added this #ifdef to fix the performance hit.
- * The #else clause is the original code.
- * You should probably take a closer look at this. -Brian
- */
-#ifdef IB_SUPPORT
-		if (sec >= 0 || usec >= 0)
-#else
 		if (sec || usec)
-#endif
 		{
 			/* We re-init everytime for Linux, as it corrupts
 			 * the timeout structure, but other OS's
@@ -880,13 +871,12 @@ crTCPIPRecv( void )
 
 	if ( num_conns )
 	{
-		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
+		num_ready = __crSelect( max_fd, &read_fds, 0, 500 );
 	}
 	else
 	{
 		crWarning( "Waiting for first connection..." );
-		/* force blocking */
-		num_ready = __crSelect( max_fd, &read_fds, -1, -1 );
+		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
 	}
 
 	if ( num_ready == 0 ) {
