@@ -261,3 +261,20 @@ crProjectBBox(const GLfloat modl[16], const GLfloat proj[16],
 	*y2 = ymax;
 	*z2 = zmax;
 }
+
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+
+/**
+ * Compute union of a and b and put in result.
+ */
+void
+crRectiUnion(CRrecti *result, const CRrecti *a, const CRrecti *b)
+{
+	result->x1 = MIN(a->x1, b->x1);
+	result->x2 = MAX(a->x2, b->x2);
+	result->y1 = MIN(a->y1, b->y1);
+	result->y2 = MAX(a->y2, b->y2);
+}

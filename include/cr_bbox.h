@@ -26,6 +26,10 @@ crProjectBBox(const GLfloat modl[16], const GLfloat proj[16],
 							GLfloat *x2, GLfloat *y2, GLfloat *z2);
 
 
+extern void
+crRectiUnion(CRrecti *result, const CRrecti *a, const CRrecti *b);
+
+
 #ifdef __cplusplus
 }
 #endif
