@@ -243,16 +243,28 @@ static void GetWindowSize( HDC drawable, unsigned int *w, unsigned int *h )
 	HWND hwnd;
 
 	hwnd = WindowFromDC( drawable );
-	GetClientRect( hwnd, &rect );
 
-	*w = rect.right - rect.left;
-	*h = rect.bottom - rect.top;
+	if (!hwnd) {
+		*w = 0;
+		*h = 0;
+	} else {
+		GetClientRect( hwnd, &rect );
+
+		*w = rect.right - rect.left;
+		*h = rect.bottom - rect.top;
+	}
 }
 
-static char *GetWindowTitle( HDC drawable, GLboolean recurseUp )
+static void GetWindowTitle( HDC drawable, GLboolean recurseUp, char *title )
 {
-	/* XXX to do */
-	return NULL;
+	HWND hwnd;
+
+	/* XXX - we don't handle recurseUp */
+
+	hwnd = WindowFromDC( drawable );
+
+	if (hwnd)
+		GetWindowText(hwnd, title, 100);
 }
 
 static void GetCursorPosition( HDC drawable, int pos[2] )
@@ -262,12 +274,17 @@ static void GetCursorPosition( HDC drawable, int pos[2] )
 	POINT point;
 
 	hwnd = WindowFromDC( drawable );
-  	GetClientRect( hwnd, &rect );
-  
-  	GetCursorPos (&point);
 
-	pos[0] = point.x - rect.left;
-	pos[1] = point.y - rect.top;
+	if (!hwnd) { 
+		pos[0] = 0;
+		pos[1] = 0;
+	} else {
+  		GetClientRect( hwnd, &rect );
+  		GetCursorPos (&point);
+
+		pos[0] = point.x - rect.left;
+		pos[1] = point.y - rect.top;
+	}
 }
 
 #else
@@ -383,7 +400,12 @@ static GLboolean UseChromium( Display *dpy, GLXDrawable drawable )
 		 * window satisfies that criterium.
 		 */
 		GLboolean wildcard = GL_FALSE;
-		char *titlePattern, *title;
+#ifdef WINDOWS
+		char title[100];
+#else
+		char *title;
+#endif
+		char *titlePattern;
 		int len;
 		/* check for leading '*' wildcard */
 		if (stub.matchWindowTitle[0] == '*') {
@@ -401,7 +423,8 @@ static GLboolean UseChromium( Display *dpy, GLXDrawable drawable )
 		}
 
 #ifdef WINDOWS
-		title = GetWindowTitle( drawable, GL_TRUE );
+		crMemZero( title, 100 );
+		GetWindowTitle( drawable, GL_TRUE, title );
 #else
 		title = GetWindowTitle( dpy, drawable, GL_TRUE );
 #endif
