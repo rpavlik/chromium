@@ -217,6 +217,7 @@ class SPU:
 		TileLayoutFunction:  Registers a function to call when this SPU is
                              asked for a new tile layout.
 	"""
+
 	def __init__( self, name ):
 		"""Creates a SPU with the given name."""
 		self.name = name
@@ -226,8 +227,9 @@ class SPU:
 		self.layoutFunction = None
 		self.displays = []
 
+
 	def Conf( self, key, *values ):
-		"""Set a configuration option."""
+		"""Set a SPU configuration option."""
 		# XXX we'll eventually force values to be a single value or a list!
 		if type(values) == types.TupleType and len(values) > 1:
 			print "***WARNING: Obsolete syntax detected in Conf('%s', ...)!" % key
@@ -274,6 +276,7 @@ class SPU:
 		# Set the tile layout function for a tilesort SPU
 		assert self.name == "tilesort"
 		self.layoutFunction = layoutFunc
+
 
 class CRNode:
 	"""Base class that defines a node in the SPU graph
@@ -373,6 +376,7 @@ class CRNode:
 			dynamicHostsNeeded[self.host] = 1
 		self.constraints.append( (constraint, arg) )
 
+
 class CRNetworkNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
 	handles incoming and outgoing network traffic.
@@ -421,6 +425,16 @@ class CRNetworkNode(CRNode):
 		"""
 		self.tiles_on_displays.append( (display_id,x,y,w,h) )
 
+
+class CRVNCServerNode(CRNode):
+	"""This class is used for VNC/Replicate SPU configurations.
+	The config file should create one of these - it'll be shared by all
+	vncviewers that might be run."""
+	def __init__(self):
+		"""Create a new CR VNC Server node."""
+		CRNode.__init__(self, host="anyhost")
+
+
 class CRUTServerNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
 	handles outgoing network traffic for events.
@@ -446,6 +460,7 @@ class CRUTServerNode(CRNode):
 		Tells a crutserver node where to find a client."""
 		self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
 		
+
 class CRUTProxyNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
 	handles incoming and outgoing network traffic for events.
@@ -478,6 +493,7 @@ class CRUTProxyNode(CRNode):
 		self.__add_crut_server( node, "%s://%s:%d" % (protocol,node.host,port) )
 		if node != None:
 			node.AddCRUTClient( self, protocol, port)
+
 
 class CRApplicationNode(CRNode):
 	"""Sub class of CRNode that defines the start of the the SPU graph.
@@ -660,6 +676,21 @@ def ServerClaim(node, sock):
 		sock.Success( spuchain )
 NodeTypes["server"] = (ServerValidNode, ServerClaim)
 
+def VNCServerValidNode(node):
+	return isinstance(node, CRVNCServerNode)
+def VNCServerClaim(node, sock):
+	# all servers can match one VNC server node
+	node.spusloaded = 1
+	if sock != None:
+		sock.node = node
+		spuchain = "%d" % len(node.SPUs)
+		for spu in node.SPUs:
+			spuchain += " %d %s" % (spu.ID, spu.name)
+		sock.Success( spuchain )
+		CRDebug("ServerClaim returning %s" % spuchain);
+NodeTypes["vncserver"] = (VNCServerValidNode, VNCServerClaim)
+
+
 
 class CRSpawner(threading.Thread):
 	"""A class used to start processes on nodes.
@@ -746,7 +777,7 @@ class CR:
 	    do_disconnect: 	Disconnects from clients.
 	    do_reset: 		Resets the mothership to its initial state.
 	    do_server:		Identifies the server in the graph.
-	    do_newserver:	Identifies a new server for replication.
+	    do_vncserver:	Identifies a new server for VNC replication.
 	    do_serverids:	Sends the list of server IDs.
 	    do_serverparam:	Sends the given server parameter.
 	    do_fakerparam:	Sends the given app faker parameter.
@@ -788,9 +819,8 @@ class CR:
 		self.pendingResolution = [ ]
 
 	def AddNode( self, node ):
-		"""AddNode(node)
-		Adds a node to the SPU graph."""
-		node.nodeIndex = len(self.nodes)
+		"""Adds a node to the Mothership."""
+		node.nodeIndex = len(self.nodes)  # assign the node's ID now
 		self.nodes.append( node )
 	
 	def Conf( self, key, value ):
@@ -1407,10 +1437,12 @@ class CR:
 		Maps the incoming "faker" app to a previously-defined node."""
 		self.MatchNode( "faker", sock, args)
 
-	def do_newserver( self, sock, args ):
+	def do_vncserver( self, sock, args ):
 		"""do_newserver(sock, args)
-		Identifies a new server for replication. """
-		sock.Success( "1 1 render" )
+		Called by a crserver to identify itself as a VNC/replication server."""
+		# One CRVNCServerNode instance will match any number of crservers.
+		# NOTE: we ignore args (the hostname)
+		self.MatchNode("vncserver", sock, "anyhost")
 
 	def do_crutproxy( self, sock, args ):
 		CRDebug ( " Seeing if we have a crutproxy." )
@@ -1430,7 +1462,7 @@ class CR:
 
 	def do_server( self, sock, args ):
 		"""do_server(sock, args)
-		Identifies the server in the graph. """
+		Servers send this message to identify themselves to the mothership."""
 		self.MatchNode("server", sock, args)
 
 	def do_match(self, sock, args):
@@ -1503,7 +1535,7 @@ class CR:
 
 	def do_spu( self, sock, args ):
 		"""do_spu(sock, args)
-		Identifies a SPU."""
+		SPUs send this message to the mothership to identify themselves."""
 		try:
 			spuid = int(args)
 		except:
@@ -1555,7 +1587,7 @@ class CR:
 	def do_serverparam( self, sock, args ):
 		"""do_serverparam(sock, args)
 		Sends the given server parameter."""
-		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
+		if sock.node == None or not (isinstance(sock.node,CRNetworkNode) or isinstance(sock.node, CRVNCServerNode)):
 			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for server parameters without telling me what server you are!" )
 			return
 		if not sock.node.config.has_key( args ):
@@ -1794,14 +1826,28 @@ class CR:
 				tiles += ","
 		sock.Success( tiles )
 
-	def do_newclients( self, sock, args ):
+	def do_getvncclient( self, sock, args ):
 		"""do_clients(sock, args)
-		Sends the list of new clients to a server."""
-		sock.Success( "1 tcpip 0" )
+		Like do_clients, return list of clients of this server, but this
+		function is for vnc only."""
+		# NOTE: we ignore args (the hostname)
+		if sock.node == None or not isinstance(sock.node, CRVNCServerNode):
+			sock.Failure( SockWrapper.UNKNOWNSERVER,
+						  "You can't ask for vnc clients without telling " +
+						  "me which VNC server node you are!" )
+			return
+		for node in self.nodes:
+			if isinstance(node, CRApplicationNode):
+				tailSPU = node.SPUs[-1]
+				sock.Success("1 tcpip %d" % tailSPU.ID);
+				return
+		sock.Failure(SockWrapper.NOTHINGTOSAY,
+					 "getvncclient: Didn't find VNC ApplicationNode and SPU")
 
 	def do_clients( self, sock, args ):
-		"""do_clients(sock, args)
-		Sends the list of clients to a server."""
+		"""Returns a list of the clients who talk to this server.
+		Example: '2 tcpip 4, ib 5' means there are two clients.  The first
+		is SPU #4 using TCP/IP, the second is SPU #5 using Infiniband."""
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
 			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for clients without telling me what server you are!" )
 			return

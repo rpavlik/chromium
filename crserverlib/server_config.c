@@ -75,7 +75,7 @@ crServerGatherConfiguration(char *mothership)
 	char *high_node = "none";
 	const char *newserver;
 	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
+	char hostname[1024];
 	char **clientchain, **clientlist;
 	int numClients;
 
@@ -90,28 +90,37 @@ crServerGatherConfiguration(char *mothership)
 	}
 
 	conn = crMothershipConnect();
-
 	if (!conn)
 	{
-		crError
-			("Couldn't connect to the mothership -- I have no idea what to do!");
+		crError("Couldn't connect to the mothership, I have no idea what to do!");
 	}
 
+	/*
+	 * Get my hostname
+	 */
+	if (crGetHostname(hostname, sizeof(hostname)))
+	{
+		crError("CRServer: Couldn't get my own hostname?");
+	}
+
+
+	/* The VNC viewer would set this env var if we (this crserver) is
+	 * starting up in response to starting a new 3D app.
+	 */
 	newserver = crGetenv("CRNEWSERVER");
 
-	/* The response will tell which SPUs to load */
+	/* Identify ourselves to the mothership */
 	if (newserver) {
-		char hostname[1024];
-		if ( crGetHostname( hostname, sizeof(hostname) ) )
-		{
-			crError( "Couldn't get my own hostname?" );
-		}
-		if (!crMothershipSendString( conn, response, "newserver %s", hostname ))
+		if (!crMothershipSendString( conn, response, "vncserver %s", hostname ))
 			crError( "Bad Mothership response: %s", response );
-	} else {
+	}
+	else {
 		crMothershipIdentifyServer(conn, response);
 	}
 
+	/* response will describe the SPU chain.
+	 * Example "2 5 wet 6 render"
+	 */
 	spuchain = crStrSplit(response, " ");
 	num_spus = crStrToInt(spuchain[0]);
 	spu_ids = (int *) crAlloc(num_spus * sizeof(*spu_ids));
@@ -316,14 +325,6 @@ crServerGatherConfiguration(char *mothership)
 	}
 
 
-
-	/*
-	crMatrixPrint("Left view", &cr_server.viewMatrix[0]);
-	crMatrixPrint("right view", &cr_server.viewMatrix[1]);
-	crMatrixPrint("Left projection", &cr_server.projectionMatrix[0]);
-	crMatrixPrint("right projection", &cr_server.projectionMatrix[1]);
-	*/
-
 	/*
 	 * Load the SPUs
 	 */
@@ -342,28 +343,25 @@ crServerGatherConfiguration(char *mothership)
 	if (spu_dir)
 		crFree(spu_dir);
 
-	/*
-	 * NOTICE:
-	 * if you add new network node config options, please add them to the
-	 * configuration options list in mothership/tools/crtypes.py
-	 */
-
 	cr_server.mtu = crMothershipGetMTU( conn );
 
-	/* The response will tell us what protocols we need to serve 
-	 * example: "3 tcpip 1,gm 2,via 10" */
-
+	/*
+	 * Get a list of all the clients talking to me.
+	 */
 	if (newserver) {
-		char hostname[1024];
-		if ( crGetHostname( hostname, sizeof(hostname) ) )
-		{
-			crError( "Couldn't get my own hostname?" );
-		}
-		if (!crMothershipSendString( conn, response, "newclients %s", hostname ))
+		if (!crMothershipSendString( conn, response, "getvncclient %s", hostname ))
 			crError( "Bad Mothership response: %s", response );
-	} else
+	}
+	else {
 		crMothershipGetClients(conn, response);
+	}
 
+	/*
+	 * 'response' will now contain a number indicating the number of clients
+	 * of this server, followed by a comma-separated list of protocol/SPU ID
+	 * pairs.
+	 * Example: "3 tcpip 1,gm 2,via 10"
+	 */
 	clientchain = crStrSplitn(response, " ", 1);
 	numClients = crStrToInt(clientchain[0]);
 	if (numClients == 0)
@@ -384,12 +382,13 @@ crServerGatherConfiguration(char *mothership)
 	{
 		CRClient *client = &cr_server.clients[i];
 		client->number = i;
+		crDebug("SSSSSSS clientlist[%d] = %s", i, clientlist[i]);
 		sscanf(clientlist[i], "%s %d", cr_server.protocol, &(client->spu_id));
 		client->conn = crNetAcceptClient(cr_server.protocol, NULL,
 																		 cr_server.tcpip_port, cr_server.mtu, 1);
 	}
 
-	/* default client and mural */
+	/* set default client and mural */
 	cr_server.curClient = &cr_server.clients[0];
 	cr_server.curClient->currentMural = defaultMural;
 
