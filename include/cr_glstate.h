@@ -19,6 +19,8 @@
 #include "state/cr_statefuncs.h"
 #include "state/cr_stateerror.h"
 
+#include "spu_dispatch_table.h"
+
 typedef struct {
 	CRBufferBits    buffer;
 	CRClientBits    client;
@@ -36,10 +38,15 @@ typedef struct {
 	CRViewportBits  viewport;
 } CRStateBits;
 
+typedef void (*CRStateFlushFunc)( void );
+
 typedef struct {
 	int id;
 	GLbitvalue bitid;
 	GLbitvalue neg_bitid;
+
+	CRStateFlushFunc flush_func;
+	SPUDispatchTable flush_api;
 
 	CRBufferState    buffer;
 	CRClientState    client;

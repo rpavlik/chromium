@@ -9,7 +9,7 @@ LIB_DEFS = packer.def
 
 LIBRARIES = crutil
 
-PRECOMP = packer.def ../include/cr_packfunctions.h ../include/cr_opcodes.h packer.c
+PRECOMP = packer.def ../include/cr_packfunctions.h ../include/cr_opcodes.h ../include/state/cr_currentpointers.h packer.c
 SLOP = $(PRECOMP)
 
 include $(TOP)/cr.mk
@@ -25,6 +25,10 @@ packer.def: packer_defs.py
 ../include/cr_opcodes.h: opcodes.py opcode_special packer_get_special
 	@$(ECHO) Making the opcode header...
 	@$(PYTHON) opcodes.py > $@
+
+../include/state/cr_currentpointers.h: pack_currentheader.py
+	@$(ECHO) Making cr_currentpointers.h
+	@$(PYTHON) pack_currentheader.py > $@
 
 packer.c: packer.py packer_special packer_get_special
 	@$(ECHO) Making the Packer...
