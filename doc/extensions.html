@@ -1,0 +1,84 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">OpenGL Extensions</h1>
+<p>In order to use particular OpenGL extensions in your OpenGL application,
+Chromium must explicitly implement those extensions.  This page describes
+how OpenGL extensions are implemented in Chromium and how to add new ones.</p>
+
+<h2 class="PageSubHeading">Compile-time extension support</h2>
+<p>The <code>include/cr_versions.h</code> file defines a preprocessor
+token for each extension Chromium supports.  For example:</p>
+<pre>
+#define CR_ARB_multitexture 1
+#define CR_ARB_texture_cube_map 1
+#define CR_EXT_blend_color 1
+#define CR_EXT_blend_minmax 1
+#define CR_EXT_blend_subtract 1
+</pre>
+<p>Most Chromium client programs are ordinary OpenGL applications and should
+use the <code>GL_</code>-prefixed tokens to test for extensions.
+However, Chromium-specific applications may use these tokens if needed.</p>
+
+<p>Internally, Chromium uses these tokens to determine which OpenGL extensions
+should be enabled.  If one wants to disable a particular extension in
+Chromium you can simply comment-out the appropriate <code>#define</code>.</p>
+
+<p>When addeing a new extension to chromium you should surround all the new
+code for that extension with <code>#ifdef CR_(extension name)</code> and
+<code>#endif</code>.</p>
+
+
+<h2 class="PageSubHeading">Run-time extension support</h2>
+<p>At runtime, Chromium clients should use <code>glGetString(GL_EXTENSIONS)</code>
+to determine if extensions are supported.</p>
+<p>Internally, Chromium will compute the extension string by examining the
+extensions supported by each back-end OpenGL implementation, finding the
+intersection, and propogating the list up through the SPU DAG to be sure
+the extensions are supported by all the Chromium SPUs.</p>
+<p>Extension strings and OpenGL limits like maximum texture size and
+number of light sources for each SPU are stored in the mothership.  When
+each SPU is initialized it reports its OpenGL extensions and limits to
+the mothership.  Some SPUs, like the tilesort SPU, will query the mothership
+for its children/server SPU limits in order to determine its own limits.</p>
+
+<h2 class="PageSubHeading">Adding new extensions</h2>
+<p>Here are the steps for adding a new extension to Chromium:</p>
+<ol>
+  <li>Add a new <code>CR_</code>* token to <code>include/cr_versions.h</code>.
+  <li>Add the new extension string in <code>spu/loader/limits.c</code>.
+  <li>Add a new GLboolean field to the <code>CRExtensionState</code> structure
+      in the <code>include/state_cr_extensions.h</code> file.
+  <li>Add new code in <code>crStateExtensionsInit()</code>
+      in <code>spu/state_tracker/state_extensions.c</code> to initialize the
+      new boolean.
+  <li>Implement the new code for the extension as needed throughout Chromium.
+      Functions which correspond to OpenGL entry points, such as
+      <code>glEnable()</code>, should test the boolean extension flag created
+      in step 3 and signal an OpenGL error if the extension is not enabled.
+      The code for new extensions should be surrounded by
+      <code>#ifdef CR_(extension_name)</code> and <code>#endif</code> so that
+      it can be disabled if desired.
+      See the <code>GL_TEXTURE_CUBE_MAP_ARB</code> clause in
+      <code>__enableSet()</code> in <code>spu/state_tracker/state_enable.c</code>
+      for an example.
+</ol>
+
+
+</body>
+
+</html>
