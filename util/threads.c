@@ -146,12 +146,64 @@ void crUnlockMutex(CRmutex *mutex)
 }
 
 
+void crInitCondition(CRcondition *cond)
+{
+#ifdef WINDOWS
+	/* XXX fix me */
+	(void) cond;
+#else
+	int err = pthread_cond_init(cond, NULL);
+	if (err) {
+		crError("crInitCondition failed");
+	}
+#endif
+}
+
+
+void crFreeCondition(CRcondition *cond)
+{
+#ifdef WINDOWS
+	/* XXX fix me */
+	(void) cond;
+#else
+	int err = pthread_cond_destroy(cond);
+	if (err) {
+		crError("crFreeCondition error (threads waiting on the condition?)");
+	}
+#endif
+}
+
+/**
+ * We're basically just wrapping the pthread condition var interface.
+ * See the man page for pthread_cond_wait to learn about the mutex parameter.
+ */
+void crWaitCondition(CRcondition *cond, CRmutex *mutex)
+{
+#ifdef WINDOWS
+	/* XXX fix me */
+	(void) cond;
+	(void) mutex;
+#else
+	pthread_cond_wait(cond, mutex);
+#endif
+}
+
+
+void crSignalCondition(CRcondition *cond)
+{
+#ifdef WINDOWS
+	/* XXX fix me */
+	(void) cond;
+#else
+	pthread_cond_signal(cond);
+#endif
+}
+
 
 void crInitBarrier(CRbarrier *b, unsigned int count)
 {
 #ifdef WINDOWS
 	unsigned int i;
-
 	for (i = 0; i < count; i++)
 		b->hEvents[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
 #else
@@ -163,12 +215,17 @@ void crInitBarrier(CRbarrier *b, unsigned int count)
 }
 
 
+void crFreeBarrier(CRbarrier *b)
+{
+	/* XXX anything to do? */
+}
+
+
 void crWaitBarrier(CRbarrier *b)
 {
 #ifdef WINDOWS
-	DWORD dwEvent;
-
-	dwEvent = WaitForMultipleObjects( b->count, b->hEvents, FALSE, INFINITE );
+	DWORD dwEvent
+		= WaitForMultipleObjects( b->count, b->hEvents, FALSE, INFINITE );
 #else
 	pthread_mutex_lock( &(b->mutex) );
 	b->waiting++;

@@ -1,7 +1,8 @@
 /* Copyright (c) 2001, Stanford University
-	All rights reserved.
-
-	See the file LICENSE.txt for information on redistributing this software. */
+ * All rights reserved.
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
 	
 #ifndef CR_THREADS_H
 #define CR_THREADS_H
@@ -57,6 +58,19 @@ extern void crLockMutex(CRmutex *mutex);
 extern void crUnlockMutex(CRmutex *mutex);
 
 
+/* Condition variable datatype */
+#ifdef WINDOWS
+typedef int CRcondition;
+#else
+typedef pthread_cond_t CRcondition;
+#endif
+
+extern void crInitCondition(CRcondition *cond);
+extern void crFreeCondition(CRcondition *cond);
+extern void crWaitCondition(CRcondition *cond, CRmutex *mutex);
+extern void crSignalCondition(CRcondition *cond);
+
+
 /* Barrier datatype */
 typedef struct {
 	unsigned int count;
@@ -70,6 +84,7 @@ typedef struct {
 } CRbarrier;
 
 extern void crInitBarrier(CRbarrier *b, unsigned int count);
+extern void crFreeBarrier(CRbarrier *b);
 extern void crWaitBarrier(CRbarrier *b);
 
 
