@@ -184,7 +184,7 @@ SPUOptions renderSPUOptions[] = {
    { "lut8", CR_STRING, 1, "", NULL, NULL,
      "8 bit RGB LUT", (SPUOptionCB)set_lut8},
 
-   { "swap_master_url", CR_STRING, 1, NULL, NULL, NULL,
+   { "swap_master_url", CR_STRING, 1, "", NULL, NULL,
      "The URL to the master swapper", (SPUOptionCB)set_master_url },
 
    { "is_swap_master", CR_BOOL, 1, "0", NULL, NULL,
