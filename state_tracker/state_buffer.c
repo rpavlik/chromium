@@ -245,6 +245,7 @@ void STATE_APIENTRY crStateBlendColorEXT( GLclampf red, GLclampf green, GLclampf
 	DIRTY(bb->dirty, g->neg_bitid);
 }
 
+#ifdef CR_EXT_blend_func_separate
 void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorA, GLenum dfactorA )
 {
 	CRContext *g = GetCurrentContext();
@@ -365,6 +366,7 @@ void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfact
 	DIRTY(bb->dirty, g->neg_bitid);
 	DIRTY(bb->blendFuncSeparate, g->neg_bitid);
 }
+#endif
 
 void STATE_APIENTRY crStateBlendEquationEXT( GLenum mode )
 {
