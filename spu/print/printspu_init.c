@@ -33,7 +33,6 @@ printSPUInit( int id, SPU *child, SPU *self,
 
 	crSPUInitDispatchTable( &(print_spu.passthrough) );
 	crSPUCopyDispatchTable( &(print_spu.passthrough), &(self->superSPU->dispatch_table) );
-	crDebug( "print_spu.passthrough = %p, super->dispatch_table = %p", (void *)&(print_spu.passthrough), (void *)&(self->superSPU->dispatch_table) );
 	return &print_functions;
 }
 
