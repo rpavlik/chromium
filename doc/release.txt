@@ -27,6 +27,7 @@ cd Chromium-1.8
 cvs -z3 -d:ext:YOURNAME@cvs.sf.net:/cvsroot/chromium co .
 cp -r cr cr-1.8
 find cr-1.8 -name CVS -exec rm -rf '{}' \;
+find cr-1.8 -name .cvsignore -exec rm -rf '{}' \;
 rm -f cr-1.8/mothership/server/crconfig.py
 Edit cr-1.8/options.mk and set RELEASE=1
 tar cf cr-1.8.tar cr-1.8
