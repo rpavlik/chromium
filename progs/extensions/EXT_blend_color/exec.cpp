@@ -31,14 +31,7 @@ static GLfloat	bgColor[4] = { 0.2, 0.3, 0.8, 0.0 };
 
 //typedef void (APIENTRY *PFNGLBLENDCOLOREXTPROC)( GLclampf, GLclampf, GLclampf, GLclampf );
 
-PFNGLBLENDCOLOREXTPROC BlendColorEXTptr = NULL;
-
-inline void glBlendColorEXT ( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha );
-inline void glBlendColorEXT ( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
-{
-	(*BlendColorEXTptr)( red, green, blue, alpha );
-}
-
+PFNGLBLENDCOLOREXTPROC glBlendColorEXT;
 
 /* --- Function Definitions ------------------------------------------------- */
 
@@ -94,11 +87,11 @@ void	InitSpecial	( void )
 	gluBuild2DMipmaps( GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData );
 	
 #ifdef WIN32
-	BlendColorEXTptr = (PFNGLBLENDCOLOREXTPROC)wglGetProcAddress( "glBlendColorEXT" );
+	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)wglGetProcAddress( "glBlendColorEXT" );
 #else
-	BlendColorEXTptr = (PFNGLBLENDCOLOREXTPROC)glXGetProcAddressARB( "glBlendColorEXT" );
+	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)glXGetProcAddressARB( "glBlendColorEXT" );
 #endif
-	if ( BlendColorEXTptr == NULL )
+	if ( glBlendColorEXT == NULL )
 	{
 		cout << "Error linking to extensions!" << endl;
 		exit( 0 );
