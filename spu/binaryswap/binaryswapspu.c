@@ -174,7 +174,7 @@ float eyeDist (GLfloat x1, GLfloat y1, GLfloat z1,
  * also do a screen bounding box to lighten network traffic.
  *
  **************************************************************/
-void setupBBox()
+void setupBBox(void)
 {
   glGetFloatv (GL_MODELVIEW_MATRIX,  modl);
   glGetFloatv (GL_PROJECTION_MATRIX, proj);
