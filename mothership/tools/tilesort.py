@@ -1,3 +1,11 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+#
+# Authors:
+#   Brian Paul
+
 """ Tilesort.py
 
     Tool for making Chromium tilesort configurations.
@@ -138,11 +146,11 @@ class MainFrame(wxFrame):
 
 		# Options menu
 		self.optionsMenu = wxMenu()
-		self.optionsMenu.Append(menu_TILESORT, "Tilesort SPU ...")
-		self.optionsMenu.Append(menu_RENDER,   "Render SPU ...")
+		self.optionsMenu.Append(menu_TILESORT, "Tilesort...")
+		self.optionsMenu.Append(menu_RENDER,   "Render...")
 		EVT_MENU(self, menu_TILESORT,  self.doTilesort)
 		EVT_MENU(self, menu_RENDER, self.doRender)
-		menuBar.Append(self.optionsMenu, "Options")
+		menuBar.Append(self.optionsMenu, "SPU Options")
 
 		# Help menu
 		self.helpMenu = wxMenu()
@@ -288,6 +296,36 @@ class MainFrame(wxFrame):
 
 		self.recomputeTotalSize()
 		
+		# Make the Tilesort SPU options dialog
+		# XXX eventually automatically query these parameters from the SPU
+		opts = [
+			("broadcast", "bool", 1, false, "Broadcast Primitives"),
+			("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
+			("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
+			("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()"),
+			("sync_on_finish", "bool", 1, false, "Sync on glFinish()"),
+			("draw_bbox", "bool", 1, true, "Draw Bounding Box"),
+			("bbox_line_width", "float", 1, "5.0", "Bounding Box Line Width"),
+			("fake_window_dims", "int", 2, "", "Fake Window Dimensions (w, h)"),
+			("scale_to_mural_size", "bool", 1, true, "Scale to Mural Size")
+			]
+		self.TilesortDialog = SPUDialog(parent=NULL, id=-1,
+										title="Tilesort SPU Options", options=opts)
+
+		# Make the render SPU options dialog
+		# XXX eventually automatically query these parameters from the SPU
+		opts = [
+			("try_direct", "bool", 1, true, "Try Direct Rendering"),
+			("force_direct", "bool", 1, true, "Force Direct Rendering"),
+			("fullscreen", "bool", 1, false, "Full-screen Window"),
+			("on_top", "bool", 1, false, "Display on top"),
+			("title", "string", 1, "Chromium Render SPU", "Window Title"),
+			("window_geometry", "float", 4, "", "Window Geometry (x,y,w,h)"),
+			("system_gl_path", "string", 1, "/usr/lib/", "System GL Path"),
+			]
+		self.RenderDialog = SPUDialog(parent=NULL, id=-1,
+									  title="Render SPU Options", options=opts)
+
 		if self.fileName != None:
 			self.loadConfiguration()
 
@@ -417,8 +455,7 @@ class MainFrame(wxFrame):
 	# ==========================
 
 	def doNew(self, event):
-		""" Respond to the "New" menu command.
-		"""
+		"""File / New callback"""
 		global _docList
 		newFrame = MainFrame(None, -1, "Chromium Tilesort Configuration")
 		newFrame.Show(TRUE)
@@ -426,8 +463,7 @@ class MainFrame(wxFrame):
 
 
 	def doOpen(self, event):
-		""" Respond to the "Open" menu command.
-		"""
+		"""File / Open callback"""
 		global _docList
 
 		curDir = os.getcwd()
@@ -453,8 +489,7 @@ class MainFrame(wxFrame):
 
 
 	def doClose(self, event):
-		""" Respond to the "Close" menu command.
-		"""
+		"""File / Close callback"""
 		global _docList
 
 		if self.dirty:
@@ -466,8 +501,7 @@ class MainFrame(wxFrame):
 
 
 	def doSave(self, event):
-		""" Respond to the "Save" menu command.
-		"""
+		"""File / Save callback"""
 		if self.fileName == None:
 			self.doSaveAs(event)
 		else:
@@ -475,8 +509,7 @@ class MainFrame(wxFrame):
 
 
 	def doSaveAs(self, event):
-		""" Respond to the "Save As" menu command.
-		"""
+		"""File / Save As callback """
 		if self.fileName == None:
 			default = ""
 		else:
@@ -501,8 +534,7 @@ class MainFrame(wxFrame):
 
 
 	def doRevert(self, event):
-		""" Respond to the "Revert" menu command.
-		"""
+		"""File / Revert callback"""
 		if not self.dirty:
 			return
 
@@ -513,8 +545,7 @@ class MainFrame(wxFrame):
 
 
 	def doExit(self, event):
-		""" Respond to the "Quit" menu command.
-		"""
+		"""File / Exit callback"""
 		global _docList, _app
 		for doc in _docList:
 			if not doc.dirty:
@@ -529,41 +560,16 @@ class MainFrame(wxFrame):
 
 	def doTilesort(self, event):
 		"""Options / Tilesort menu callback"""
-		# XXX eventually automatically query these parameters from the SPU
-		opts = [
-			("broadcast", "bool", 1, false, "Broadcast Primitives"),
-			("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
-			("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
-			("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()"),
-			("sync_on_finish", "bool", 1, false, "Sync on glFinish()"),
-			("draw_bbox", "bool", 1, true, "Draw Bounding Box"),
-			("bbox_line_width", "float", 1, "5.0", "Bounding Box Line Width"),
-			("fake_window_dims", "float", 2, "", "Fake Window Dimensions"),
-			("scale_to_mural_size", "bool", 1, true, "Scale to Mural Size")
-			]
-		d = SPUDialog(parent=NULL, id=-1, title="Tilesort SPU Options", options=opts)
-		v = d.ShowModal()
+		v = self.TilesortDialog.ShowModal()
 		return
 
 	def doRender(self, event):
 		"""Options / Render menu callback"""
-		# XXX eventually automatically query these parameters from the SPU
-		opts = [
-			("try_direct", "bool", 1, true, "Try Direct Rendering"),
-			("force_direct", "bool", 1, true, "Force Direct Rendering"),
-			("fullscreen", "bool", 1, false, "Full-screen Window"),
-			("on_top", "bool", 1, false, "Display on top"),
-			("title", "string", 1, "Chromium Render SPU", "Window Title"),
-			("window_geometry", "string", 1, "", "Window Geometry"),
-			("system_gl_path", "string", 1, "/usr/lib/", "System GL Path"),
-			]
-		d = SPUDialog(parent=NULL, id=-1, title="Render SPU Options", options=opts)
-		v = d.ShowModal()
+		v = self.RenderDialog.ShowModal()
 		return
 
 	def doShowAbout(self, event):
-		""" Respond to the "About" menu command.
-		"""
+		"""Help / About menu callback"""
 		dialog = wxDialog(self, -1, "About") # ,
 				  #style=wxDIALOG_MODAL | wxSTAY_ON_TOP)
 		dialog.SetBackgroundColour(wxWHITE)
