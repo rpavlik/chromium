@@ -108,7 +108,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'texCoord'
 		type = m.group(3) + m.group(2)
-		print "\tpc->current.%s.%s[texture-GL_TEXTURE0_ARB] = data_ptr;" % (name,type)
+		print "\tpc->current.%s.%s[texture-GL_TEXTURE0_ARB] = data_ptr + 4;" % (name,type)
 		return
 
 	m = re.match( r"^(Index)(ub|b|us|s|ui|i|f|d)$", func_name )
