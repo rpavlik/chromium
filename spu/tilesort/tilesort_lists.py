@@ -108,7 +108,7 @@ void TILESORTSPU_APIENTRY tilesortspu_EndList (void)
 	crStateEndList();
 
 	__loadSortAPI();
-	tilesortspuBroadcastGeom();
+	tilesortspuBroadcastGeom(0);
 
 }
 """
