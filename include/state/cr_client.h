@@ -82,7 +82,7 @@ typedef struct {
 } CRClientState;
 
 void crStateClientInitBits(CRClientBits *c);
-void crStateClientInit (CRClientState *c);
+void crStateClientInit (CRLimitsState *limits, CRClientState *c);
 
 void crStateClientDiff(CRClientBits *bb, GLbitvalue *bitID,
 		CRClientState *from, CRClientState *to);

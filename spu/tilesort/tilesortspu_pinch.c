@@ -8,6 +8,7 @@
 #include "cr_error.h"
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
+#include "cr_mem.h"
 
 #define vmin(a,b) ((a)<(b)?(a):(b))
 
@@ -49,9 +50,7 @@ void tilesortspuPinch (void)
 	unsigned char *texCoord_ptr[CR_MAX_TEXTURE_UNITS];
 	unsigned char *edgeFlag_ptr = tilesort_spu.currentContext->current.current->edgeFlag.ptr;
 	/* unsigned char *index_ptr = tilesort_spu.currentContext->current.current->index.ptr; */
-
 	CRVertex v_current;
-
 
 	v_current.pos = vdefault;
 	v_current.color = c->color;
@@ -388,6 +387,8 @@ void tilesortspuPinch (void)
 	 */
 	tilesort_spu.pinchState.numRestore = numRestore;
 	tilesort_spu.pinchState.wind = wind;
+
+	crFree(texCoord_ptr);
 }
 
 void __pinchIssueParams (CRVertex *vtx) 

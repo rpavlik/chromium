@@ -72,8 +72,8 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 	}
 
 	crStateBufferInit( &(ctx->buffer) );
-	crStateClientInit (&(ctx->client) );
-	crStateCurrentInit( &(ctx->current) );
+	crStateClientInit (&(ctx->limits), &(ctx->client) );
+	crStateCurrentInit( &(ctx->limits), &(ctx->current) );
 	crStateEvaluatorInit( &(ctx->eval) );
 	crStateExtensionsInit( ctx );
 	crStateFogInit( &(ctx->fog) );
@@ -86,7 +86,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 	crStateRegCombinerInit (&(ctx->regcombiner) );
 	crStateStencilInit( &(ctx->stencil) );
 	crStateTextureInit( (&ctx->limits), &(ctx->texture) );
-	crStateTransformInit( &(ctx->transform) );
+	crStateTransformInit( &(ctx->limits), &(ctx->transform) );
 	crStateViewportInit (&(ctx->viewport) );
 	
 	/* This has to come last. */

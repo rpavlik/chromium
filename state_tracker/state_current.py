@@ -99,7 +99,7 @@ void crStateCurrentRecover( void )
 	c->normalPre = c->normal;
 	c->colorPre = c->color;
 	c->secondaryColorPre = c->secondaryColor;
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 	{
 		c->texCoordPre[i] = c->texCoord[i];
 	}

@@ -787,6 +787,8 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalCoord1f( GLfloat u )
    GLfloat index;
    GLint i;
 
+   CRASSERT(CR_MAX_TEXTURE_UNITS > tilesort_spu.currentContext->limits.maxTextureUnits);
+
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
 	   memcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
 

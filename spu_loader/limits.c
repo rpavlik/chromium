@@ -555,6 +555,8 @@ void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits
 		limits->maxTextureUnits = 1;
 	}
 
+	CRASSERT(CR_MAX_TEXTURE_UNITS >= limits->maxTextureUnits);
+
 	(*getIntegerv)(GL_MAX_TEXTURE_SIZE, (GLint*)&limits->maxTextureSize);
 	(*getIntegerv)(GL_MAX_3D_TEXTURE_SIZE, (GLint*)&limits->max3DTextureSize);
 

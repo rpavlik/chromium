@@ -57,7 +57,7 @@ void crStateTransformSetOutputBounds (CRTransformState *t,
 		GLrecti *imagespace,
 		GLrecti *imagewindow);
 
-void crStateTransformInit (CRTransformState *);
+void crStateTransformInit (CRLimitsState *limits, CRTransformState *t);
 void crStateTransformUpdateTransform(CRTransformState *t);
 void crStateTransformXformPoint  (CRTransformState *t, GLvectorf *p);
 void crStateTransformXformPointMatrixf(GLmatrix *m, GLvectorf *p);

@@ -90,7 +90,7 @@ void crStateTextureInit(const CRLimitsState *limits, CRTextureState *t)
 	t->curTextureUnit = 0;
 
 	/* Per-unit initialization */
-	for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0; i < limits->maxTextureUnits; i++)
 	{
 		t->unit[i].currentTexture1DName = 0;
 		t->unit[i].currentTexture2DName = 0;
@@ -170,7 +170,7 @@ void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint 
 		tl->format        = GL_RGBA;								\
 		tl->type          = GL_UNSIGNED_BYTE;						\
 		crStateTextureInitTextureFormat( tl, tl->internalFormat );				\
-		for (j = 0 ; j < CR_MAX_TEXTURE_UNITS; j++)					\
+		for (j = 0; j < CR_MAX_TEXTURE_UNITS; j++)					\
 		{															\
 			for (k = 0; k < CR_MAX_BITARRAY; k++) \
 				tl->dirty[j][k]     = 0;  /* By default this level is ignored.*/	\
@@ -193,7 +193,7 @@ void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint 
 
 	/* UGh. Should be neg_bitid */
 	FILLDIRTY(tobj->dirty);
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
 	{
 		FILLDIRTY(tobj->paramsBit[i]);
 		FILLDIRTY(tobj->imageBit[i]);
@@ -886,9 +886,9 @@ void STATE_APIENTRY crStateClientActiveTextureARB( GLenum texture )
 		return;
 	}
 
-	if ( texture < GL_TEXTURE0_ARB || texture >= GL_TEXTURE0_ARB + CR_MAX_TEXTURE_UNITS)
+	if ( texture < GL_TEXTURE0_ARB || texture >= GL_TEXTURE0_ARB + g->limits.maxTextureUnits)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Bad texture unit passed to crStateClientActiveTexture: %d (max is %d)", texture, CR_MAX_TEXTURE_UNITS );
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Bad texture unit passed to crStateClientActiveTexture: %d (max is %d)", texture, g->limits.maxTextureUnits );
 		return;
 	}
 
@@ -913,9 +913,9 @@ void STATE_APIENTRY crStateActiveTextureARB( GLenum texture )
 		return;
 	}
 
-	if ( texture < GL_TEXTURE0_ARB || texture >= GL_TEXTURE0_ARB + CR_MAX_TEXTURE_UNITS)
+	if ( texture < GL_TEXTURE0_ARB || texture >= GL_TEXTURE0_ARB + g->limits.maxTextureUnits)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Bad texture unit passed to crStateActiveTexture: %d (max is %d)", texture, CR_MAX_TEXTURE_UNITS );
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Bad texture unit passed to crStateActiveTexture: %d (max is %d)", texture, g->limits.maxTextureUnits );
 		return;
 	}
 
@@ -1178,7 +1178,7 @@ void STATE_APIENTRY crStateTexImage1D (GLenum target, GLint level, GLint interna
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		DIRTY(tl->dirty[i], g->neg_bitid);
 		DIRTY(tobj->imageBit[i], g->neg_bitid);
@@ -1479,7 +1479,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		DIRTY(tl->dirty[i], g->neg_bitid);
 		DIRTY(tobj->imageBit[i], g->neg_bitid);
@@ -1540,7 +1540,7 @@ void STATE_APIENTRY crStateTexSubImage1D (GLenum target, GLint level, GLint xoff
 								pixels, format, type, width, &(c->unpack) );
 
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		DIRTY(tl->dirty[i], g->neg_bitid);
 		DIRTY(tobj->imageBit[i], g->neg_bitid);
@@ -1661,7 +1661,7 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 	crFree (subimg);
 
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		DIRTY(tobj->imageBit[i], g->neg_bitid);
 		DIRTY(tl->dirty[i], g->neg_bitid);
@@ -1856,7 +1856,7 @@ void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level, GLint interna
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		DIRTY(tl->dirty[i], g->neg_bitid);
 		DIRTY(tobj->imageBit[i], g->neg_bitid);
@@ -2073,7 +2073,7 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 	}
 
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		DIRTY(tobj->paramsBit[i], g->neg_bitid);
 	}
@@ -3745,7 +3745,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue *bitID,
 	able[0] = diff_api.Disable;
 	able[1] = diff_api.Enable;
 
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		/* First, try to create the current texture 
 		 * objects before mucking with the individual 
@@ -3959,7 +3959,7 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue *bitID,
 		}
 	}
 
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		if (CHECKDIRTY(t->enable[i], bitID)) 
 		{

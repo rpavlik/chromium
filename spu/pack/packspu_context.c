@@ -41,7 +41,7 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( void *display, GLint visual )
 	 * hack solves that problem (reset client-side state whenever we
 	 * create a new context).
 	 */
-	crStateClientInit( &(pack_spu.currentCtx->client) );
+	crStateClientInit( &(pack_spu.currentCtx->limits), &(pack_spu.currentCtx->client) );
 
 	if (return_val > 0)
 		return return_val;

@@ -22,7 +22,7 @@ void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 	{
 		array_spu.self.EdgeFlagv(c->e.p + index*c->e.stride);
 	}
-	for (unit = 0 ; unit < CR_MAX_TEXTURE_UNITS ; unit++)
+	for (unit = 0 ; unit < array_spu.ctx->limits.maxTextureUnits ; unit++)
 	{
 		if (c->t[unit].enabled)
 		{

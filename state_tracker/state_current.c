@@ -10,7 +10,7 @@
 #include "cr_glwrapper.h"
 #include "state_internals.h"
 
-void crStateCurrentInit( CRCurrentState *c )
+void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 {
 	GLvectorf	default_normal     = {0.0f, 0.0f, 1.0f, 1.0f};
 	GLcolorf	default_color	     = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -22,7 +22,7 @@ void crStateCurrentInit( CRCurrentState *c )
 	c->color	= default_color;
 	c->secondaryColor = default_secondaryColor;
 	c->index	= 1.0f;
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0 ; i < limits->maxTextureUnits ; i++)
 	{
 		c->texCoord[i] = default_texcoord;
 	}
@@ -233,6 +233,7 @@ void crStateCurrentSwitch( GLuint maxTextureUnits,
 void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue *bitID,
 					 CRCurrentState *from, CRCurrentState *to)
 {
+	CRContext *g = GetCurrentContext();
 	int i,j;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
@@ -308,7 +309,7 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue *bitID,
 		INVERTDIRTY(c->normal, nbitID);
 	}
 
-	for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for ( i = 0 ; i < g->limits.maxTextureUnits ; i++)
 	{
 		if (CHECKDIRTY(c->texCoord[i], bitID)) {
 			if (COMPARE_TEXCOORD (from->texCoord[i], to->texCoordPre[i])) {

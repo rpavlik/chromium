@@ -74,7 +74,7 @@ typedef struct {
 
 } CRCurrentState;
 
-void crStateCurrentInit( CRCurrentState *current );
+void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *current );
 void crStateCurrentInitBits( CRCurrentBits *currentbits );
 
 void crStateCurrentRecover( void );

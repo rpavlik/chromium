@@ -104,7 +104,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		a->currentStack[a->currentStackDepth].color = g->current.color;
 		a->currentStack[a->currentStackDepth].index = g->current.index;
 		a->currentStack[a->currentStackDepth].normal = g->current.normal;
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
 			a->currentStack[a->currentStackDepth].texCoord[i] = g->current.texCoord[i];
 		}
@@ -172,7 +172,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 #endif
 		a->enableStack[a->enableStackDepth].scissorTest = g->viewport.scissorTest;
 		a->enableStack[a->enableStackDepth].stencilTest = g->stencil.stencilTest;
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits; i++)
 		{
 			a->enableStack[a->enableStackDepth].texture1D[i] = g->texture.unit[i].enabled1D;
 			a->enableStack[a->enableStackDepth].texture2D[i] = g->texture.unit[i].enabled2D;
@@ -374,7 +374,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	if (mask & GL_TEXTURE_BIT)
 	{
 		a->textureStack[a->textureStackDepth].curTextureUnit = g->texture.curTextureUnit;
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
 			a->textureStack[a->textureStackDepth].enabled1D[i] = g->texture.unit[i].enabled1D;
 			a->textureStack[a->textureStackDepth].enabled2D[i] = g->texture.unit[i].enabled2D;
@@ -583,7 +583,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->current.color = a->currentStack[a->currentStackDepth].color;
 		g->current.index = a->currentStack[a->currentStackDepth].index;
 		g->current.normal = a->currentStack[a->currentStackDepth].normal;
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
 			g->current.texCoord[i] = a->currentStack[a->currentStackDepth].texCoord[i];
 		}
@@ -596,7 +596,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		DIRTY(sb->current.dirty, g->neg_bitid);
 		DIRTY(sb->current.color, g->neg_bitid);
 		DIRTY(sb->current.index, g->neg_bitid);
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
 			DIRTY(sb->current.texCoord[i], g->neg_bitid);
 		}
@@ -666,7 +666,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 #endif
 		g->viewport.scissorTest = a->enableStack[a->enableStackDepth].scissorTest;
 		g->stencil.stencilTest = a->enableStack[a->enableStackDepth].stencilTest;
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits; i++)
 		{
 			g->texture.unit[i].enabled1D = a->enableStack[a->enableStackDepth].texture1D[i];
 			g->texture.unit[i].enabled2D = a->enableStack[a->enableStackDepth].texture2D[i];
@@ -701,7 +701,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		DIRTY(sb->polygon.enable, g->neg_bitid);
 		DIRTY(sb->viewport.enable, g->neg_bitid);
 		DIRTY(sb->stencil.enable, g->neg_bitid);
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
 			DIRTY(sb->texture.enable[i], g->neg_bitid);
 		}
@@ -1007,7 +1007,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		}
 		a->textureStackDepth--;
 		g->texture.curTextureUnit = a->textureStack[a->textureStackDepth].curTextureUnit;
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
 			g->texture.unit[i].enabled1D = a->textureStack[a->textureStackDepth].enabled1D[i];
 			g->texture.unit[i].enabled2D = a->textureStack[a->textureStackDepth].enabled2D[i];
@@ -1090,7 +1090,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->texture.currentTextureCubeMap->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[3];
 #endif
 		DIRTY(sb->texture.dirty, g->neg_bitid);
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
 			DIRTY(sb->texture.enable[i], g->neg_bitid);
 			DIRTY(sb->texture.current[i], g->neg_bitid);
@@ -1104,7 +1104,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		DIRTY(g->texture.currentTexture2D->dirty, g->neg_bitid);
 		DIRTY(g->texture.currentTexture3D->dirty, g->neg_bitid);
 
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 		{
 			DIRTY(g->texture.currentTexture1D->dirty, g->neg_bitid);
 			DIRTY(g->texture.currentTexture2D->dirty, g->neg_bitid);

@@ -64,7 +64,7 @@ void crStateTransformInitBits (CRTransformBits *t)
 	FILLDIRTY(t->matrix[1]);
 }
 
-void crStateTransformInit(CRTransformState *t) 
+void crStateTransformInit(CRLimitsState *limits, CRTransformState *t) 
 {
 	int i;
 
@@ -81,7 +81,7 @@ void crStateTransformInit(CRTransformState *t)
 
 	t->modelView = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_MODELVIEW_STACK_DEPTH);
 	t->projection = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_PROJECTION_STACK_DEPTH);
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0 ; i < limits->maxTextureUnits ; i++)
 	{
 		t->texture[i] = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_TEXTURE_STACK_DEPTH);
 	}
@@ -89,7 +89,7 @@ void crStateTransformInit(CRTransformState *t)
 
 	t->modelView[0] = identity_matrix;
 	t->projection[0] = identity_matrix;
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0 ; i < limits->maxTextureUnits; i++)
 	{
 		t->texture[i][0] = identity_matrix;
 	}
@@ -98,7 +98,7 @@ void crStateTransformInit(CRTransformState *t)
 
 	t->modelViewDepth = 0;
 	t->projectionDepth = 0;
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	for (i = 0 ; i < limits->maxTextureUnits; i++)
 	{
 		t->textureDepth[i] = 0;
 	}

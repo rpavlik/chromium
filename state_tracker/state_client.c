@@ -43,7 +43,7 @@ void crStateClientInitBits (CRClientBits *c)
 	c->ealloc = GLCLIENT_BIT_ALLOC;
 }
 
-void crStateClientInit(CRClientState *c) 
+void crStateClientInit(CRLimitsState *limits, CRClientState *c) 
 {
 	int i;
 
@@ -103,7 +103,7 @@ void crStateClientInit(CRClientState *c)
 	c->n.type = GL_NONE;
 	c->n.stride = 0;
 	c->n.enabled = 0;
-	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0 ; i < limits->maxTextureUnits ; i++)
 	{
 		c->t[i].p = NULL;
 		c->t[i].size = 0;
