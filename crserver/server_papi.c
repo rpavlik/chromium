@@ -95,6 +95,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreateCR( GLuint name, GLui
 						 "exists with count=%u", name, count, barrier->count );
 		}
 	}
+
+	if (cr_server.debug_barriers)
+		crDebug("crserver: BarrierCreate(id=%d, count=%d)", name, barrier->count);
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierDestroyCR( GLuint name )
@@ -130,12 +133,18 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExecCR( GLuint name )
 	{
 		GLuint i;
 
+		if (cr_server.debug_barriers)
+			crDebug("crserver: BarrierExec(id=%d, num_waiting=%d/%d) - release.", name, barrier->num_waiting, barrier->count);
+
 		for ( i = 0; i < barrier->count; i++ )
 		{
 			barrier->waiting[i]->blocked = 0;
 		}
 		barrier->num_waiting = 0;
 	}
+	else if (cr_server.debug_barriers)
+		crDebug("crserver: BarrierExec(id=%d, num_waiting=%d/%d) - block", name, barrier->num_waiting, barrier->count);
+
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GLuint count )
@@ -146,6 +155,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GL
 	crHashtableAdd( cr_semaphores, name, sema );
 	sema->count = count;
 	sema->waiting = sema->tail = NULL;
+	if (cr_server.debug_barriers)
+		crDebug("crserver: SemaphoreCreate(id=%d, count=%d)", name, count);
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreDestroyCR( GLuint name )
@@ -166,12 +177,18 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 	if (sema->count)
 	{
 		/* go */
+		if (cr_server.debug_barriers)
+			crDebug("crserver: SemaphoreP(id=%d, count=%d) decrement to %d",
+					name, sema->count, sema->count - 1);
 		sema->count--;
 	}
 	else
 	{
 		/* block */
 		wqnode *node;
+		if (cr_server.debug_barriers)
+			crDebug("crserver: SemaphoreP(id=%d, count=%d) - block.",
+					name, sema->count);
 		run_queue->blocked = 1;
 		node = (wqnode *) crAlloc( sizeof( *node ) );
 		node->q = run_queue;
@@ -200,8 +217,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreVCR( GLuint name )
 	}
 	if (sema->waiting)
 	{
-		/* unblock one waiter */
 		wqnode *temp = sema->waiting;
+		if (cr_server.debug_barriers)
+			crDebug("crserver: SemaphoreV(id=%d, count=%d) - unblock.",
+					name, sema->count);
+		/* unblock one waiter */
 		temp->q->blocked = 0;
 		sema->waiting = temp->next;
 		crFree( temp );
@@ -213,6 +233,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreVCR( GLuint name )
 	else
 	{
 		/* nobody's waiting */
+		if (cr_server.debug_barriers)
+			crDebug("crserver: SemaphoreV(id=%d, count=%d) - increment to %d",
+					name, sema->count, sema->count + 1);
 		sema->count++;
 	}
 }

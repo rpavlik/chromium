@@ -154,6 +154,10 @@ crServerGatherConfiguration(char *mothership)
 	{
 		cr_server.only_swap_once = crStrToInt(response);
 	}
+	if (crMothershipGetServerParam(conn, response, "debug_barriers"))
+	{
+		cr_server.debug_barriers = crStrToInt(response);
+	}
 
 	cr_server.mtu = crMothershipGetMTU( conn );
 

@@ -70,6 +70,7 @@ typedef struct {
 	unsigned int maxBarrierCount;
 	unsigned int clearCount;
 	int only_swap_once;
+	int debug_barriers;
 	int localTileSpec;
 	GLfloat alignment_matrix[16];
 } CRServer;
