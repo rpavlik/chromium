@@ -246,6 +246,17 @@ of OpenGL extensions listed by the <code>glxinfo</code> program.
 </p>
 
 <p>
+If you're using NVIDIA's OpenGL drivers and are experiencing poor performance
+on the DMX display it may be because you're using too much VRAM and falling
+back to software rendering.
+This inadvertantly happens because the render SPU may be creating GLX windows
+that are never used.
+A simple solution to this problem is to set the render SPU's default window
+size very small, say 2x2 pixels.
+See the <code>dmx.conf</code> file for details.
+</p>
+
+<p>
 More to come...
 </p>
 
