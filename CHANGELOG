@@ -4,3 +4,11 @@
 7/13/01: Added endianness determining code
 7/13/01: Added missing double read/write code (!)
 7/13-17/01: Added swapping packer.  Still need to swap packet headers
+7/18/01: Added cr_version.h file (BrianP)
+7/19/01: Added proxy texture support (BrianP)
+7/19/01: New CRTextureUnit struct in cr_texture.h (BrianP)
+7/19/01: Fixed cube map state problems (BrianP)
+7/19/01: Added missing glGet*() cases for texture state (BrianP)
+7/19/01: Make use of CR_OPENGL_VERSION_1_2, CR_ARB_texture_cube_map, etc. (BrianP)
+7/19/01: Fixed assorted texture state bugs and error checks. (BrianP)
+
