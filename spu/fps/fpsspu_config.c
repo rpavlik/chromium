@@ -29,7 +29,7 @@ static void report_at_end(FpsSPU *spu, const char *response )
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions fpsSPUOptions[] = {
-   { "report_frames", CR_INT, 1, "100", "0", NULL, "How many frames between reports", (SPUOptionCB)report_frames},
+   { "report_frames", CR_INT, 1, "0", "0", NULL, "How many frames between reports", (SPUOptionCB)report_frames},
    { "report_seconds", CR_FLOAT, 1, "10.0", "0", NULL, "How many seconds between reports", (SPUOptionCB)report_seconds},
    { "report_at_end", CR_BOOL, 1, "0", NULL, NULL, "Provide a summary report at the end", (SPUOptionCB)report_at_end},
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
