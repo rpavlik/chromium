@@ -65,7 +65,7 @@ struct building
 #define WALL_HEIGHT 256
 #define WALL_BYTES_PER_PIXEL 4
 
-#define MAX_BUILDINGS 300
+#define MAX_BUILDINGS 200
 
 static struct building Buildings[MAX_BUILDINGS];
 static GLuint NumBuildings = 150;
@@ -190,6 +190,7 @@ static void
 GenerateBuildings(void)
 {
 	int i;
+	printf("Generating new buildings...\n");
 	for (i = 0; i < MAX_BUILDINGS; i++)
 	{
 		struct building *b = Buildings + i;
@@ -218,7 +219,6 @@ GenerateBuildings(void)
 		b->color[3] = 1.0;
 
 		/* make display list*/
-		b->dlist = glGenLists(1);
 		glNewList(b->dlist, GL_COMPILE);
 		DrawBuilding(b);
 		glEndList();
@@ -583,7 +583,7 @@ ResetView(void)
 	}
 	else
 	{
-		Xrot = 20.0;
+		Xrot = 21.0;
 		EyeDist = 50.0;
 		EyeHeight = 0.0;
 	}
@@ -723,6 +723,8 @@ Init(void)
 {
 	GLfloat one[4] = { 1, 1, 1, 1 };
 	GLfloat amb[4] = { 0.4f, 0.4f, 0.4f, 1.0f };
+	GLuint i;
+	GLuint firstList;
 
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_DEPTH_TEST);
@@ -758,6 +760,11 @@ Init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, roof.width, roof.height, 0, GL_RGB,
 							 GL_UNSIGNED_BYTE, roof.pixel_data);
+
+	/* allocat display list IDs for buildings */
+	firstList = glGenLists(MAX_BUILDINGS);
+	for (i = 0; i < MAX_BUILDINGS; i++)
+		Buildings[i].dlist = firstList + i;
 
 	GenerateBuildings();
 
