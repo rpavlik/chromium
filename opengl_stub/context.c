@@ -54,7 +54,7 @@ static void stubCheckMultithread( void )
 	else if (knownID != crThreadID()) {
 		/* going thread-safe now! */
 		stub.threadSafe = GL_TRUE;
-		memcpy(&glim, &stubThreadsafeDispatch, sizeof(SPUDispatchTable));
+		crSPUCopyDispatchTable(&glim, &stubThreadsafeDispatch);
 	}
 }
 #endif
@@ -63,7 +63,7 @@ static void stubCheckMultithread( void )
 /*
  * Install the given dispatch table as the table used for all gl* calls.
  */
-void stubSetDispatch( const SPUDispatchTable *table )
+static void stubSetDispatch( SPUDispatchTable *table )
 {
 	CRASSERT(table);
 
@@ -79,7 +79,12 @@ void stubSetDispatch( const SPUDispatchTable *table )
 #endif
 	{
 		/* Single thread mode - just install the caller's dispatch table */
-		memcpy(&glim, table, sizeof(SPUDispatchTable));
+		/* This conditional is an optimization to try to avoid unnecessary
+		 * copying.  It seems to work with atlantis, multiwin, etc. but
+		 * _could_ be a problem. (Brian)
+		 */
+		if (glim.copy_of != table->copy_of)
+			crSPUCopyDispatchTable(&glim, table);
 	}
 }
 
@@ -576,22 +581,14 @@ Bool stubMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext context )
 			/*
 			printf("  Switching to native API\n");
 			*/
-#if 0
-			memcpy(&glim, &stub.nativeDispatch, sizeof(SPUDispatchTable));
-#else
 			stubSetDispatch(&stub.nativeDispatch);
-#endif
 		}
 		else if (stub.Context[i].type == CHROMIUM /*&& glim.Accum != stub.spuDispatch.Accum*/) {
 			/* Switch to stub (SPU) API */
 			/*
 			printf("  Switching to spu API\n");
 			*/
-#if 0
-			memcpy(&glim, &stub.spuDispatch, sizeof(SPUDispatchTable));
-#else
 			stubSetDispatch(&stub.spuDispatch);
-#endif
 		}
 		else {
 			/* no API switch needed */

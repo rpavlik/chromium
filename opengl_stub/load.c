@@ -35,6 +35,7 @@ static void stubInitNativeDispatch( void )
 
 	CRASSERT(numFuncs < MAX_FUNCS);
 
+	crSPUInitDispatchTable( &stub.nativeDispatch );
 	crSPUInitDispatch( &stub.nativeDispatch, gl_funcs );
 	crSPUInitDispatchNops( &stub.nativeDispatch );
 #undef MAX_FUNCS
@@ -92,8 +93,7 @@ static void stubInitSPUDispatch(SPU *spu)
 {
 	crSPUInitDispatchTable( &stub.spuDispatch );
 	crSPUCopyDispatchTable( &stub.spuDispatch, &(spu->dispatch_table) );
-
-	memcpy(&glim, &stub.spuDispatch, sizeof(SPUDispatchTable));
+	crSPUCopyDispatchTable( &glim, &stub.spuDispatch );
 
 	if (stub.trackWindowSize) {
 		/* patch-in special glClear/Viewport function to track window sizing */
@@ -256,6 +256,7 @@ void StubInit(void)
 	crFree( spu_ids );
 	crFree( spu_names );
 
+	crSPUInitDispatchTable( &glim );
 
 	/* This is unlikely to change -- We still want to initialize our dispatch 
 	 * table with the functions of the first SPU in the chain. */
