@@ -290,7 +290,7 @@ typedef int socklen_t;
 #endif
 
 void
-crSDPAccept( CRConnection *conn, char *hostname, unsigned short port )
+crSDPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
 	int err;
 	socklen_t		addr_length;
