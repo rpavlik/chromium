@@ -412,6 +412,15 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 	/*
 	 * Create the window
+	 *
+	 * POSSIBLE OPTIMIZATION:
+	 * If we're using the render_to_app_window or render_to_crut_window option
+	 * (or DMX) we may never actually use this X window.  So we could perhaps
+	 * delay its creation until glXMakeCurrent is called.  With NVIDIA's OpenGL
+	 * driver, creating a lot of GLX windows can eat up a lot of VRAM and lead
+	 * to slow, software-fallback rendering.  Apps that use render_to_app_window,
+	 * etc should set the default window size very small to avoid this.
+	 * See dmx.conf for example.
 	 */
 	swa.colormap     = cmap;
 	swa.border_pixel = 0;
@@ -486,14 +495,14 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 			WINDOW_NAME, WINDOW_NAME,
 			None, NULL, 0, &hints );
 
-#if 1
 	/* New item!  This is needed so that the sgimouse server can find
 	 * the crDebug window. 
 	 */
 	name = WINDOW_NAME;
 	XStringListToTextProperty( &name, 1, &text_prop );
 	XSetWMName( dpy, window->window, &text_prop );
-#endif
+
+	/* Set window name, resource class */
 	class_hints = XAllocClassHint( );
 	class_hints->res_name = crStrdup( "foo" );
 	class_hints->res_class = crStrdup( "Chromium" );
@@ -508,36 +517,6 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 							(char *) window->window );
 	}
 	window->visible = showIt;
-
-#if 0
-	/* Note: There is a nasty bug somewhere in glXMakeCurrent() for
-		 the 0.9.5 version of the NVIDIA OpenGL drivers, and has been
-		 observed under both RedHat 6.2 (running a 2.2.16-3 kernel) and
-		 RedHat 7.0 (running the stock 2.2.16-22 kernel).  The bug
-		 manifests itself as a kernel wedge requiring the machine to be
-		 power-cycled (hard reset).  In both cases we had built the
-		 NVIDIA kernel module from source, because there was no
-		 appropriate binary release. */
-	crDebug( "*** You are screwed, this will "
-			"almost certainly wedge the machine." );
-#endif
-
-#if 0
-	if ( !render_spu.ws.glXMakeCurrent( dpy, window->window, 
-				window->context ) )
-	{
-		crError( "Error making current" );
-		return GL_FALSE;
-	}
-	crDebug( "Made current to the context" );
-#endif
-
-#if 0
-	CRASSERT(render_spu.ws.glGetString);
-	crDebug( "GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
-	crDebug( "GL_RENDERER: %s", render_spu.ws.glGetString( GL_RENDERER ) );
-	crDebug( "GL_VERSION:  %s", render_spu.ws.glGetString( GL_VERSION ) );
-#endif
 
 	/*
 	 * End GLX code
@@ -782,6 +761,7 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 
 
 #if 0
+/* for debugging rasterpos problems */
 void RENDER_APIENTRY renderspuBitmap(GLint w, GLint h, GLfloat xo, GLfloat yo, GLfloat xm, GLfloat ym, const GLubyte *b)
 {
 	crDebug("%s %d x %d move %f, %f  %p", __FUNCTION__, w, h,
