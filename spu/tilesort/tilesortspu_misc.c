@@ -80,7 +80,7 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 	 * Lightning-2) then we'll want to resize all the tiles so that
 	 * the set of tiles matches the app window size.
 	 */
-	printf("%s w=%d %d x %d\n", __FUNCTION__, window, w, h);
+	printf("tilesortspu_WindowSize w=%d %d x %d\n", window, w, h);
 }
 
 
