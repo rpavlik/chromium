@@ -147,7 +147,9 @@ def NewSPU(spuName):
 	# Set the SPU's option list
 	(params, optionlist) = GetSPUOptions(spuName)
 	assert isinstance(optionlist, crtypes.OptionList)
-	spu.SetOptions(optionlist)
+	# NOTE: Clone the option list since GetSPUOptions() basically returns
+	# a template.  Cloning it effectively instantiates it.
+	spu.SetOptions(optionlist.Clone())
 	return spu
 
 #----------------------------------------------------------------------

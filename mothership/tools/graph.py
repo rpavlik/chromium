@@ -1326,7 +1326,9 @@ class GraphFrame(wxFrame):
 			name = spuList[0].Name()
 			spuClasses = crutils.FindSPUNames()
 			if name in spuClasses:
-				(params, optionlist) = crutils.GetSPUOptions(name)
+				# NOTE: we use the 0th SPU's option list to initialize
+				# the options in the dialog.
+				optionlist = spuList[0].GetOptions()
 				# create the dialog
 				dialog = spudialog.SPUDialog(parent=self, id=-1,
 											 title=name + " SPU Options",
