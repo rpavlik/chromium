@@ -331,6 +331,14 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 	winInfo->lastHeight = r.bottom - r.top;
 	winInfo->lastX = r.left;  /** XXX \todo are these screen coords? */
 	winInfo->lastY = r.top;
+
+	/* These lines provided by Ricky Uy (19 July 2004) */
+	if (winInfo->lastWidth == 0 || winInfo->lastHeight == 0) {
+		if (tilesort_spu.fakeWindowWidth != 0) {
+			winInfo->lastWidth = tilesort_spu.fakeWindowWidth;
+			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
+		}
+	}
 #else
 	int x, y;
 	unsigned int width, height, borderWidth, depth;
