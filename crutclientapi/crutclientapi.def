@@ -7,6 +7,7 @@ crutReceiveEventType
 crutMouseFunc
 crutKeyboardFunc
 crutReshapeFunc
+crutVisibilityFunc
 crutMotionFunc
 crutPassiveMotionFunc
 crutPostRedisplay

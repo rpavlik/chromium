@@ -34,6 +34,9 @@ __getCRUTMessageSize(int type)
     case CRUT_MENU_EVENT:
 	msg_size = sizeof( CRUTMenuMsg );
 	break;
+    case CRUT_VISIBILITY_EVENT:
+	msg_size = sizeof( CRUTVisibilityMsg );
+	break;
     default:
 	crError("Getting message size for unknown type!");
 	break;
@@ -107,6 +110,13 @@ __crutSetPassiveMotionParam(void)
     crut_client.callbacks.passivemotion_param = 1;
 }
 
+
+static void 
+__crutSetVisibilityParam(void)
+{
+    crut_client.callbacks.visibility_param = 1;
+}
+
 /* Tells the library what events it wants */
 void 
 CRUT_CLIENT_APIENTRY 
@@ -122,6 +132,8 @@ crutReceiveEventType(int type)
 	__crutSetMotionParam();
     else if (type == CRUT_PASSIVE_MOTION_EVENT)
 	__crutSetPassiveMotionParam();
+    else if (type == CRUT_VISIBILITY_EVENT)
+	__crutSetVisibilityParam();
     /* do we need to add menu events here? */
     else
 	crError("Telling mothership we want to receive an unknown event type!");
@@ -165,6 +177,14 @@ crutPassiveMotionFunc( void (*func) (int x, int y) )
 {
     crut_client.callbacks.passivemotion = func;
     __crutSetPassiveMotionParam();
+}
+
+void 
+CRUT_CLIENT_APIENTRY 
+crutVisibilityFunc( void (*func) (int state) )
+{
+    crut_client.callbacks.visibility = func;
+    __crutSetVisibilityParam();
 }
 
 void 
@@ -497,7 +517,10 @@ crutInitClient(void)
 	crMothershipSetParam( crut_api.mothershipConn, "crut_callbacks_motion", "1" );
 
     if (crut_client.callbacks.passivemotion_param) 
-	crMothershipSetParam( crut_api.mothershipConn, "crut_callbacks_passivemotion", "1" );
+	crMothershipSetParam( crut_api.mothershipConn, "crut_callbacks_passivemotion", "1" );    
+    
+    if (crut_client.callbacks.visibility_param) 
+	crMothershipSetParam( crut_api.mothershipConn, "crut_callbacks_visibility", "1" );
 
     if (crut_client.callbacks.reshape_param) 
 	crMothershipSetParam( crut_api.mothershipConn, "crut_callbacks_reshape", "1" );
@@ -565,6 +588,13 @@ crutMainLoop( )
 	        CRUTReshapeMsg *msg = (CRUTReshapeMsg*) crut_client.msg;
 		crutSendReshapeEvent( &crut_api, msg->width, msg->height);
 		crut_client.callbacks.reshape(msg->width,msg->height);
+	    }  
+
+	    else if (crut_client.msg->msg_type == CRUT_VISIBILITY_EVENT && crut_client.callbacks.visibility) 
+	    {
+	        CRUTVisibilityMsg *msg = (CRUTVisibilityMsg*) crut_client.msg;
+		crutSendVisibilityEvent( &crut_api, msg->state);
+		crut_client.callbacks.visibility(msg->state);
 	    }
 	  
 	    else if (crut_client.msg->msg_type == CRUT_KEYBOARD_EVENT && crut_client.callbacks.keyboard) 

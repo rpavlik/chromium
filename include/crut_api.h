@@ -42,6 +42,10 @@ extern "C" {
 #define CRUT_DOWN			0
 #define CRUT_UP				1
 
+/* Visibility  state. */
+#define CRUT_NOT_VISIBLE		0
+#define CRUT_VISIBLE			1
+
 /* function keys */
 #define CRUT_KEY_F1			1
 #define CRUT_KEY_F2			2
@@ -74,6 +78,7 @@ extern "C" {
 #define CRUT_MOTION_EVENT               4
 #define CRUT_PASSIVE_MOTION_EVENT       5
 #define CRUT_MENU_EVENT                 6
+#define CRUT_VISIBILITY_EVENT           7
 
 #define DEFAULT_PORT 9000
 
@@ -108,6 +113,14 @@ typedef struct
     int height;
 
 } CRUTReshapeMsg;
+
+typedef struct
+{
+	CRMessageHeader header;
+	int msg_type;
+	int state;
+	
+} CRUTVisibilityMsg;
 
 typedef struct
 {
@@ -183,6 +196,7 @@ void crutSendEvent( CRUTAPI *crut_api, void *msg, int size );
 void CRUT_APIENTRY crutSendMouseEvent( CRUTAPI *crut_api, int button, int state, int x, int y );
 void CRUT_APIENTRY crutSendKeyboardEvent( CRUTAPI *crut_api, int key, int x, int y );
 void CRUT_APIENTRY crutSendReshapeEvent( CRUTAPI *crut_api, int width, int height );
+void CRUT_APIENTRY crutSendVisibilityEvent( CRUTAPI *crut_api, int state );
 void CRUT_APIENTRY crutSendMotionEvent( CRUTAPI *crut_api, int x, int y );
 void CRUT_APIENTRY crutSendPassiveMotionEvent( CRUTAPI *crut_api, int x, int y );
 void CRUT_APIENTRY crutSendMenuEvent( CRUTAPI *crut_api, int menuID, int value );

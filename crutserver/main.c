@@ -308,7 +308,6 @@ crutInitServer(char *mothership, int argc, char *argv[])
     /* set up GLUT window */
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-    printf("******** CRUT w/ STENCIL\n");
     glutInitWindowPosition( crut_api.winX,crut_api.winY );
     glutInitWindowSize( crut_api.winWidth,crut_api.winHeight );
     
@@ -341,6 +340,9 @@ crutInitServer(char *mothership, int argc, char *argv[])
 
     crMothershipGetParam( crut_api.mothershipConn, "crut_callbacks_reshape", response );
     crut_server.callbacks.reshape = crStrToInt(response);
+
+    crMothershipGetParam( crut_api.mothershipConn, "crut_callbacks_visibility", response );
+    crut_server.callbacks.visibility = crStrToInt(response);
 
     crMothershipGetParam( crut_api.mothershipConn, "crut_callbacks_menu", response );
     crut_server.callbacks.menu = crStrToInt(response);
@@ -383,6 +385,12 @@ handlePassiveMotion(int x, int y)
     crutSendPassiveMotionEvent( &crut_api, x, y );
 }
 
+static void 
+handleVisibility(int state)
+{
+    crutSendVisibilityEvent( &crut_api, state );
+}
+
 int 
 main( int argc, char *argv[] )
 {
@@ -418,6 +426,9 @@ main( int argc, char *argv[] )
   
     if (crut_server.callbacks.passivemotion)
         glutPassiveMotionFunc(handlePassiveMotion);
+
+    if (crut_server.callbacks.visibility)
+        glutVisibilityFunc(handleVisibility);
 
     if (crut_server.callbacks.reshape)
         glutReshapeFunc(handleReshape);

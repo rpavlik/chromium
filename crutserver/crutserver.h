@@ -63,6 +63,7 @@ typedef struct
     int motion;
     int passivemotion;
     int reshape;
+    int visibility;
     int menu;
 } CRUTServerCallback;
 

@@ -11,6 +11,7 @@ crutConnectToClients
 crutSendMouseEvent
 crutSendKeyboardEvent
 crutSendReshapeEvent
+crutSendVisibilityEvent
 crutSendMotionEvent
 crutSendPassiveMotionEvent
 crutSendMenuEvent

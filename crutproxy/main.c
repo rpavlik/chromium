@@ -40,6 +40,12 @@ crutProxyRecv( CRConnection *conn, void *buf, unsigned int len )
 		crutSendReshapeEvent( &crut_api, msg->width, msg->height);
 	    } 
 
+	    else if ( crut_proxy.msg->msg_type == CRUT_VISIBILITY_EVENT ) 
+	    {
+		 CRUTVisibilityMsg *msg = (CRUTVisibilityMsg*) buf;
+		 crutSendVisibilityEvent( &crut_api, msg->state);
+	    } 
+
 	    else if ( crut_proxy.msg->msg_type == CRUT_KEYBOARD_EVENT ) 
 	    {
 	        CRUTKeyboardMsg *msg = (CRUTKeyboardMsg*) buf;

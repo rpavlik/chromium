@@ -45,6 +45,8 @@ typedef struct
     int mouse_param;
     void (*reshape)(int width, int height);
     int reshape_param;
+    void (*visibility)(int state);
+    int visibility_param;
     void (*keyboard)(unsigned char key, int x, int y);
     int keyboard_param;
     void (*motion)(int x, int y);
@@ -99,6 +101,7 @@ void CRUT_CLIENT_APIENTRY crutReceiveEventType(int type);
 void CRUT_CLIENT_APIENTRY crutMouseFunc( void (*func)(int button, int state, int x, int y) );
 void CRUT_CLIENT_APIENTRY crutKeyboardFunc( void (*func) (unsigned char key, int x, int y) );
 void CRUT_CLIENT_APIENTRY crutReshapeFunc( void (*func) (int width, int height) );
+void CRUT_CLIENT_APIENTRY crutVisibilityFunc( void (*func) (int state) );
 void CRUT_CLIENT_APIENTRY crutMotionFunc( void (*func) (int x, int y) );
 void CRUT_CLIENT_APIENTRY crutPassiveMotionFunc( void (*func) (int x, int y) );
 void CRUT_CLIENT_APIENTRY crutIdleFunc( void (*func)(void));

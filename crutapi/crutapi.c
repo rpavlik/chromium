@@ -1,4 +1,5 @@
 /* Written by Dale Beermann (beermann@cs.virginia.edu) */
+/* Modified by Mike Houston (mhouston@graphics.stanford.edu) */
 
 #include "crut_api.h"
 #include "cr_environment.h"
@@ -230,6 +231,21 @@ crutSendMenuEvent( CRUTAPI *crut_api, int menuID, int value )
     msg->value = value;
 
     crutSendEvent( crut_api, msg, sizeof(CRUTMenuMsg) );
+
+    crFree(msg);
+}
+
+
+void
+CRUT_APIENTRY
+crutSendVisibilityEvent( CRUTAPI *crut_api, int state )
+{
+    CRUTVisibilityMsg *msg = crAlloc(sizeof(CRUTVisibilityMsg));
+    msg->header.type = CR_MESSAGE_CRUT;
+    msg->msg_type = CRUT_VISIBILITY_EVENT;
+    msg->state = state;
+
+    crutSendEvent( crut_api, msg, sizeof(CRUTVisibilityMsg) );
 
     crFree(msg);
 }
