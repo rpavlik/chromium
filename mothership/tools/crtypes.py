@@ -68,7 +68,8 @@ class SpuObject:
 		newSpu.__ServerPort = self.__ServerPort
 		newSpu.__ServerProtocol = self.__ServerProtocol
 		newSpu.__IsSelected = self.__IsSelected
-		newSpu.__Servers = self.__Servers
+		newSpu.__Servers = self.__Servers[:]  # [:] is list copy
+		newSpu.__Options = self.__Options  # XXX copy of dict?
 		return newSpu
 
 	def IsTerminal(self):
@@ -500,19 +501,29 @@ class NetworkNode(Node):
 	def __init__(self, hostnames=["localhost"], count=1):
 		Node.__init__(self, hostnames, 1, count,
 					  color=wxPython.wx.wxColor(210,105,135))
-		self.__Tiles = []
+		# __Tiles is an array[nodeIndex] of arrays of (x,y,w,h) tuples
+		self.__Tiles = [ [] ]
 
-	def AddTile(self, x, y, width, height):
-		"""Add a tile to this server (for tilesort only)"""
-		self.__Tiles.append((x, y, width, height))
+	def AddTile(self, x, y, width, height, nodeIndex=0):
+		"""Add a tile to nth server (for tilesort only)"""
+		# lengthen the tiles list if needed
+		while nodeIndex > len(self.__Tiles) - 1:
+			self.__Tiles.append( [] )
+		assert nodeIndex < len(self.__Tiles)
+		# save the tile
+		self.__Tiles[nodeIndex].append((x, y, width, height))
 
-	def GetTiles(self):
-		"""Return this server's list of tiles."""
-		return self.__Tiles
+	def SetTiles(self, tileList, nodeIndex=0):
+		"""Set the tile list for the nth server."""
+		self.__Tiles[nodeIndex] = tileList
+
+	def GetTiles(self, nodeIndex=0):
+		"""Return the nth server's list of tiles."""
+		return self.__Tiles[nodeIndex]
 
 	def DeleteTiles(self):
 		"""Delete all tiles on this server."""
-		self.__Tiles = []
+		self.__Tiles = [ [] ]
 
 class ApplicationNode(Node):
 	"""A CRApplicationNode object"""
