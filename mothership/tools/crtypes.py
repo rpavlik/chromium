@@ -494,11 +494,25 @@ class Node:
 		else:
 			return 0
 
+
 class NetworkNode(Node):
 	"""A CRNetworkNode object"""
 	def __init__(self, hostnames=["localhost"], count=1):
 		Node.__init__(self, hostnames, 1, count,
 					  color=wxPython.wx.wxColor(210,105,135))
+		self.__Tiles = []
+
+	def AddTile(self, x, y, width, height):
+		"""Add a tile to this server (for tilesort only)"""
+		self.__Tiles.append((x, y, width, height))
+
+	def GetTiles(self):
+		"""Return this server's list of tiles."""
+		return self.__Tiles
+
+	def DeleteTiles(self):
+		"""Delete all tiles on this server."""
+		self.__Tiles = []
 
 class ApplicationNode(Node):
 	"""A CRApplicationNode object"""
