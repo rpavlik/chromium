@@ -5,11 +5,25 @@
 
 TOP = ..
 
+ifneq ($(ARCH), WIN_NT)
+ifneq ($(ARCH), WIN_98)
+ARCH=$(shell uname | sed -e 's/-//g')
+endif
+endif
+
+ifeq ($(ARCH), CYGWIN_NT5.0)
+ARCH=WIN_NT
+endif
+
 # The loader has to come first because it builds 
 # the dispatch table header.  I know that sucks.
 
 SUBDIRS = tester
 SUBDIRS += error nop pack passthrough print readback render template tilesort
-SUBDIRS += saveframe comm array binaryswap counter hiddenline dist_texture
+SUBDIRS += saveframe comm array binaryswap counter hiddenline
+
+ifneq ($(ARCH), WIN_NT)
+SUBDIRS += dist_texture
+endif
 
 include ${TOP}/cr.mk
