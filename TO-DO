@@ -11,13 +11,5 @@ state_tracker/gendiffcode.pl to Python.
 
 state-diffing for PointParameters is incomplete (state_point.txt)
 
-
-For the 1.0 release:
-	- fix lighting bug
-	- fix Christiaan's crCanHoldOpcode() bug   DONE
-	- merge in ext-1 branch  DONE
-	- binaryswap SPU (Mike Houston)
-	- make sure ordinary apps can be run sort-last (sync/swap/clear) DONE
-	- make sure docs are up to date
-	- testing!!!
-	- windows / conf testing
+In the SPUs, rename "passthrough_table", etc to something more obscure,
+like "_cr_passthrough_spu_table" to avoid symbol conflicts with apps.
