@@ -41,6 +41,8 @@ class CRNode:
 
 	def __init__( self, host ):
 		self.host = host
+		if (host == 'localhost'):
+			self.host = gethostname()
 		self.SPUs = []
 		self.spokenfor = 0
 		self.spusloaded = 0
@@ -58,7 +60,7 @@ class CRNode:
 		self.config['SPUdir'] = dir
 
 class CRNetworkNode(CRNode):
-	def __init__( self, host, ipaddr=None ):
+	def __init__( self, host='localhost', ipaddr=None ):
 		CRNode.__init__(self,host)
 		if ipaddr:
 			self.ipaddr = ipaddr
@@ -79,8 +81,8 @@ class CRNetworkNode(CRNode):
 class CRApplicationNode(CRNode):
 	AppID = 0
 
-	def __init__(self,name):
-		CRNode.__init__(self,name)
+	def __init__(self,host='localhost'):
+		CRNode.__init__(self,host)
 		self.id = CRApplicationNode.AppID
 		CRApplicationNode.AppID += 1;
 
