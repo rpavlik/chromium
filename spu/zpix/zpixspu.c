@@ -188,7 +188,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
         if (zpix_spu.zbLen[FBtype] < zlen)
           {
            if (zpix_spu.zBuf[FBtype]) crFree(zpix_spu.zBuf[FBtype]);
-           zpix_spu.zbLen[FBtype] = zlen;
+           zpix_spu.zbLen[FBtype] = (GLsizei) zlen; /* XXX check cast */
            zpix_spu.zBuf[FBtype] = crAlloc(zlen);
           }
 
@@ -299,7 +299,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
                                   type,
                                   ztype,
                                   zparm,
-                                  zlen,
+                                  (int) zlen, /* XXX check cast */
                                   zpix_spu.zBuf[FBtype]);
              break;
 
@@ -313,7 +313,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
         case ZPLE: 
 
              p_plebuf = (PLEbuf *) zpix_spu.zBuf[FBtype];
-             p_plebuf->len     = zlen;
+             p_plebuf->len     = (int) zlen;  /* XXX check casting */
              p_plebuf->n       = bufw;
              p_plebuf->beg     = (bufw + sizeof(PLEbuf) + 3) & -sizeof(uint) ;
              p_plebuf->prefval = prefv;
@@ -438,7 +438,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              pletmp.beg = (uint) p_data - (uint) p_plebuf;
              
              zlen = (ulong) p_val - (ulong) p_plebuf;
-             pletmp.len = (int) zlen;
+             pletmp.len = (int) zlen; /* XXX check cast */
 
              *p_plebuf = pletmp;
 
@@ -464,7 +464,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
                                   type,
                                   ztype,
                                   zparm,
-                                  zlen,
+                                  (int) zlen, /* XXX check cast */
                                   p_plebuf);
              break;
  
@@ -525,7 +525,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
 
         pixsize = crPixelSize(format, type);
         plen =  pixsize * width * height;
-        zpix_spu.ztype = ztype;
+        zpix_spu.ztype = (ZTYPE) ztype; /* XXX check cast */
 
         if (zpix_spu.rXold != zpix_spu.rXnew ||
             zpix_spu.rYold != zpix_spu.rYnew ||
