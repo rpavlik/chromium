@@ -17,7 +17,7 @@ typedef struct {
 #endif
 } CRDLL;
 
-typedef void (*CRDLLFunc)();
+typedef void (*CRDLLFunc)(void);
 CRDLL *CRDLLOpen( const char *dllname );
 CRDLLFunc CRDLLGetNoError( CRDLL *dll, const char *symname );
 CRDLLFunc CRDLLGet( CRDLL *dll, const char *symname );

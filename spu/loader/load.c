@@ -51,9 +51,17 @@ SPU *LoadSPU( char *name )
 	{
 		CRError( "I found the SPU \"%s\", but loading it failed!", name );
 	}
-	if (the_spu->super_name != NULL)
+	if (CRStrcmp(the_spu->name,"error"))
 	{
+		if (the_spu->super_name == NULL)
+		{
+			the_spu->super_name = "errorspu";
+		}
 		the_spu->superSPU = LoadSPU( the_spu->super_name );
+	}
+	else
+	{
+		the_spu->superSPU = NULL;
 	}
 	the_spu->function_table = the_spu->init( NULL, 0, 0, 1, 0, NULL, NULL );
 	__buildDispatch( the_spu );

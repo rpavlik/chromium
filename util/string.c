@@ -72,3 +72,15 @@ int CRStrcasecmp( char *str1, char *str2 )
 	}
 	return (lowercase[*str1] - lowercase[*str2]);
 }
+
+void CRStrcpy( char *dest, char *src )
+{
+	int len = strlen(src);
+	memcpy( dest, src, len );
+	dest[len] = '\0';
+}
+
+void CRStrcat( char *dest, char *src )
+{
+	CRStrcpy( dest + strlen(dest), src );
+}

@@ -14,7 +14,7 @@ static void __stubInit(void)
 	// In the future, we need a mechanism for loading and initializing a
 	// chain of SPU's, but we're not there yet.
 	
-	stub_spu = LoadSPU( "errorspu" );
+	stub_spu = LoadSPU( "renderspu" );
 	
 	// This is unlikely to change -- We still want to initialize our dispatch
 	// table with the functions of the first SPU in the chain.
@@ -34,6 +34,8 @@ void (*stub_init_ptr)(void) __attribute__((section(".ctors"))) = __stubInit;
 // Windows crap
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD fdwReason, LPVOID lpvReserved )
 {
+	(void) lpvReserved;
+	(void) instance;
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
 		__stubInit();

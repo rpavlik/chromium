@@ -1,18 +1,18 @@
 TOP = ../..
 
 LIBRARY = errorspu
-FILES = error init
+FILES = errorspu errorspu_init
 
 LIBRARIES = crutil
 
-PRECOMP = error.c
+PRECOMP = errorspu.c
 SLOP = $(PRECOMP)
 
 include ${TOP}/cr.mk
 
-error.c: error.py
+errorspu.c: error.py
 	@$(ECHO) Building the Error SPU
-	@$(PYTHON) error.py > error.c
+	@$(PYTHON) error.py > errorspu.c
 
 ifeq ($(ARCH), WIN_NT)
 LIB_DEFS += error.def

@@ -15,6 +15,12 @@ print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_spu.h"
 
+#if defined(WINDOWS)
+#define ERROR_APIENTRY __stdcall
+#else
+#define ERROR_APIENTRY
+#endif
+
 #define ERROR_UNUSED(x) ((void)x)"""
 
 keys = gl_mapping.keys()
@@ -22,7 +28,7 @@ keys.sort();
 
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
-	print '\n%s error%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
+	print '\n%s ERROR_APIENTRY error%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
 	print '{'
 	print '\tCRError( "Unsupported function gl%s called!" );' % func_name
 	for name in names:

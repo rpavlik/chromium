@@ -301,7 +301,7 @@ void make_tmpdir( char *retval )
 {
 	char *name;
 
-	name = _tempnam( DEFAULT_TMP_DIR, "wgl" );
+	name = _tempnam( DEFAULT_TMP_DIR, "cr" );
 	if ( name == NULL )
 		fatal( "cannot create a unique directory name\n" );
 
@@ -444,7 +444,7 @@ void make_tmpdir( char *name )
 	if ( !tmp )
 		tmp = DEFAULT_TMP_DIR;
 
-	sprintf( name, "%s/wgl%d", tmp, (int) getpid( ) );
+	sprintf( name, "%s/cr%d", tmp, (int) getpid( ) );
 
 	index = 0;
 	while ( mkdir( name, 0777 ) )
@@ -456,7 +456,7 @@ void make_tmpdir( char *name )
 		if ( errno != EEXIST )
 			exit( 1 );
 
-		sprintf( name, "%s/wgl%d.%d", tmp, (int) getpid( ), index );
+		sprintf( name, "%s/cr%d.%d", tmp, (int) getpid( ), index );
 	}
 
 	debug( "tmpdir=\"%s\"\n", name );

@@ -13,9 +13,13 @@ import stub_common;
 print """#include "cr_spu.h"
 #include "cr_string.h"
 
+#include <stdio.h>
+
 static SPUGenericFunction __findFunc( char *name, SPU *spu )
 {
 	SPUNamedFunctionTable *temp;
+
+	printf ("Finding %s\\n", name);
 
 	if (spu == NULL)
 		return NULL;
@@ -27,6 +31,7 @@ static SPUGenericFunction __findFunc( char *name, SPU *spu )
 			return temp->fn;
 		}
 	}
+	printf ("Looking for %s in parent!\\n", name );
 	return __findFunc( name, spu->superSPU );
 }
 

@@ -10,3 +10,5 @@ CRFree
 CRStrdup
 CRStrcmp
 CRStrcasecmp
+CRStrcpy
+CRStrcat

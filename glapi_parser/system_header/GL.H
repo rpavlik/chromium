@@ -1500,9 +1500,6 @@ WINGDIAPI void APIENTRY glSemaphoreDestroy (GLuint name);
 WINGDIAPI void APIENTRY glSemaphoreP (GLuint name);
 WINGDIAPI void APIENTRY glSemaphoreV (GLuint name);
 
-/* For L2 Syncronization */
-WINGDIAPI void APIENTRY glSyncL2 (GLuint phase);
-
 /* EXT_vertex_array */
 typedef void (APIENTRY * PFNGLARRAYELEMENTEXTPROC) (GLint i);
 typedef void (APIENTRY * PFNGLDRAWARRAYSEXTPROC) (GLenum mode, GLint first, GLsizei count);
