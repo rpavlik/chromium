@@ -518,7 +518,7 @@ static void CompositeNode( WindowInfo *window,
 			other_depth = render_info->depth;
 			
 			/* get incoming fb */
-			if(draw_width > 0 && draw_width > 0){
+			if(draw_width > 0 && draw_height > 0){
 				incoming_color = (GLubyte*)((GLubyte*)incoming_msg + binaryswap_spu.offset);
 				/* figure out blend function based on z */
 				binaryswap_spu.super.Enable(GL_BLEND);
@@ -589,7 +589,7 @@ static void CompositeNode( WindowInfo *window,
 			draw_width  = render_info->clipped_width;
 			draw_height = render_info->clipped_height;
 			
-			if(draw_width > 0 && draw_width > 0){
+			if(draw_width > 0 && draw_height > 0){
 				/* get incoming fb */
 				incoming_color = (GLubyte*)((GLubyte*)incoming_msg + binaryswap_spu.offset);
 				incoming_depth = (GLfloat*)(incoming_color + draw_width*draw_height*3);
