@@ -50,7 +50,10 @@ def FindSPUNamesInDir(spuDirectory):
 	"""Return list of SPUs in the given directory."""
 	# filenames to match:
 	if os.name == "posix":
-		matchPattern = "lib([a-zA-Z0-9\_]+)spu\.so|([a-zA-Z0-9\_]+)spu\.bundle" #addition for Darwin
+		if sys.platform[:6] == 'darwin':
+			matchPattern = "([a-zA-Z0-9\_]+)spu\.bundle"
+		else:
+			matchPattern = "lib([a-zA-Z0-9\_]+)spu\.so"
 	elif os.name == "nt":
 		matchPattern = "([a-zA-Z0-9\_]+)spu\.dll"
 	else:
