@@ -16,7 +16,7 @@ void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 {
 	unsigned char *p;
 	CRClientState *c = &(array_spu.ctx->client);
-	int unit;
+  unsigned int unit;
 
 	if (c->e.enabled)
 	{

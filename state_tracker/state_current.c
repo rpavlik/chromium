@@ -17,7 +17,7 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 	GLcolorf	default_secondaryColor = {0.0f, 0.0f, 0.0f, 0.0f};
 	GLtexcoordf default_texcoord = {0.0f, 0.0f, 0.0f, 1.0f};
 	GLvectorf default_rasterpos  = {0.0f, 0.0f, 0.0f, 1.0f};
-	int i;
+  unsigned int i;
 
 	c->color	= default_color;
 	c->secondaryColor = default_secondaryColor;
@@ -234,7 +234,7 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue *bitID,
 					 CRCurrentState *from, CRCurrentState *to)
 {
 	CRContext *g = GetCurrentContext();
-	int i,j;
+  unsigned int i,j;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)

@@ -45,7 +45,7 @@ void crStateClientInitBits (CRClientBits *c)
 
 void crStateClientInit(CRLimitsState *limits, CRClientState *c) 
 {
-	int i;
+  unsigned int i;
 
 	/* pixel pack/unpack */
 	c->unpack.rowLength   = 0;

@@ -28,7 +28,7 @@ void crStateTextureDelete_t(CRTextureState *t, GLuint name);
 
 void crStateTextureInit(const CRLimitsState *limits, CRTextureState *t) 
 {
-	int i, h;
+  unsigned int i, h;
 	unsigned int a;
 	GLvectorf zero_vector = {0.0f, 0.0f, 0.0f, 0.0f};
 	GLcolorf zero_color = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -1046,7 +1046,7 @@ void STATE_APIENTRY crStateTexImage1D (GLenum target, GLint level, GLint interna
 	CRTextureLevel *tl;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-	int i;
+  unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -1197,7 +1197,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 	CRTextureLevel *tl = NULL;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-	int i;
+  unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -1498,7 +1498,7 @@ void STATE_APIENTRY crStateTexSubImage1D (GLenum target, GLint level, GLint xoff
 	CRTextureBits *tb = &(sb->texture);
 	CRTextureObj *tobj = t->currentTexture1D;
 	CRTextureLevel *tl = tobj->level + level;
-	int i;
+  unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -1661,11 +1661,14 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 	crFree (subimg);
 
 	DIRTY(tobj->dirty, g->neg_bitid);
+  {
+    unsigned int i;
 	for (i = 0; i < g->limits.maxTextureUnits; i++)
 	{
 		DIRTY(tobj->imageBit[i], g->neg_bitid);
 		DIRTY(tl->dirty[i], g->neg_bitid);
 	}
+  }
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -1680,7 +1683,7 @@ void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level, GLint interna
 	CRTextureLevel *tl;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-	int i;
+  unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -1884,7 +1887,7 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 	GLenum e = (GLenum) *param;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-	int i;
+  unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -3736,7 +3739,8 @@ void crStateTextureDiff(CRContext *g, CRTextureBits *t, GLbitvalue *bitID,
 	CRTextureObj *tobj = NULL;
 	GLuint name=0;
 	GLuint *cname=NULL;
-	int i,j;
+  unsigned int i;
+  int j;
 	glAble able[2];
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 

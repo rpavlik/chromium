@@ -66,7 +66,7 @@ void crStateTransformInitBits (CRTransformBits *t)
 
 void crStateTransformInit(CRLimitsState *limits, CRTransformState *t) 
 {
-	int i;
+  unsigned int i;
 
 	t->mode = GL_MODELVIEW;
 	t->matrixid = 0;
