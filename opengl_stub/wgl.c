@@ -49,6 +49,8 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 {
 	DWORD okayFlags;
 
+	StubInit();
+
 	/* 
 	 * NOTE!!!
 	 * Here we're telling the renderspu not to use the GDI
@@ -56,8 +58,6 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 	 * There are subtle differences in the use of these calls.
 	 */
 	crSetenv("CR_WGL_DO_NOT_USE_GDI", "yes");
-
-	StubInit();
 
 	if ( pfd->nSize != sizeof(*pfd) || pfd->nVersion != 1 ) {
 		crError( "wglChoosePixelFormat: bad pfd\n" );
