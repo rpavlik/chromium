@@ -12,14 +12,16 @@
 #include <stdio.h>
 
 
-void set_buffer_size( void *foo, const char *response )
+static void set_buffer_size( void *spu, const char *response )
 {
+	(void) spu;
 	sscanf( response, "%d", &(hiddenline_spu.buffer_size) );
 }
 
-void set_poly_color( void *foo, const char *response )
+static void set_poly_color( void *spu, const char *response )
 {
 	float r, g, b;
+	(void) spu;
 	if( response[0] == '[' )
 		sscanf( response, "[ %f, %f, %f ]", &r, &g, &b );
 	else if( crStrchr( response, ',' ))
@@ -31,9 +33,10 @@ void set_poly_color( void *foo, const char *response )
 	hiddenline_spu.poly_b = b;
 }
 
-void set_line_color( void *foo, const char *response )
+static void set_line_color( void *spu, const char *response )
 {
 	float r, g, b;
+	(void) spu;
 	if( response[0] == '[' )
 		sscanf( response, "[ %f, %f, %f ]", &r, &g, &b );
 	else if( crStrchr( response, ',' ))
@@ -45,11 +48,17 @@ void set_line_color( void *foo, const char *response )
 	hiddenline_spu.line_b = b;
 }
 
-void set_line_width( void *foo, const char *response )
+static void set_line_width( void *spu, const char *response )
 {
+	(void) spu;
 	sscanf( response, "%f", &(hiddenline_spu.line_width) );
 }
 
+static void set_single_clear( void *spu, const char *response )
+{
+	(void) spu;
+	sscanf( response, "%d", &(hiddenline_spu.single_clear) );
+}
 
 /* option, type, nr, default, min, max, title, callback
  */
@@ -67,6 +76,9 @@ SPUOptions hiddenlineSPUOptions[] = {
 	{ "line_width", CR_FLOAT, 1, "1", "0", "20", 
 	  "Line Width", (SPUOptionCB)set_line_width },
 
+	{ "single_clear", CR_BOOL, 1, "1", NULL, NULL,
+	  "Single glClear per Frame", (SPUOptionCB)set_single_clear },
+
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -74,18 +86,13 @@ void hiddenlinespuGatherConfiguration( SPU *child )
 {
 	CRConnection *conn;
 
-	hiddenline_spu.clear_r = 
-		hiddenline_spu.clear_g = 
-		hiddenline_spu.clear_b = 0.0f;
-
 	/* Connect to the mothership and identify ourselves. */
-	
 	conn = crMothershipConnect( );
 	if (!conn)
 	{
 		/* The mothership isn't running.  Some SPU's can recover gracefully, some 
 		 * should issue an error here. */
-         	crSPUSetDefaultParams( &hiddenline_spu, hiddenlineSPUOptions );
+		crSPUSetDefaultParams( &hiddenline_spu, hiddenlineSPUOptions );
 		return;
 	}
 	crMothershipIdentifySPU( conn, hiddenline_spu.id );

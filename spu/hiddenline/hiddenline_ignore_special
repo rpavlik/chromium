@@ -1,4 +1,3 @@
-CreateContext
 ArrayElement
 DrawArrays
 DrawElements
@@ -46,3 +45,16 @@ IsEnabled
 IsList 
 IsTexture 
 AreTexturesResident
+RenderMode
+GenLists
+crCreateWindow
+DestroyWindow
+WindowPosition
+WindowSize
+BarrierCreate
+BarrierDestroy
+BarrierExec
+SemaphoreCreate
+SemaphoreDestroy
+SemaphoreP
+SemaphoreV

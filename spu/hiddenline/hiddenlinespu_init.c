@@ -11,6 +11,10 @@
 extern SPUNamedFunctionTable hiddenline_table[];
 HiddenlineSPU hiddenline_spu;
 
+#ifdef CHROMIUM_THREADSAFE
+CRtsd _HiddenlineTSD;
+#endif
+
 SPUFunctions hiddenline_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
@@ -25,6 +29,10 @@ SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *self,
 	(void) context_id;
 	(void) num_contexts;
 
+#ifdef CHROMIUM_THREADSAFE
+	crDebug("Hiddenline SPU: thread-safe");
+#endif
+
 	hiddenline_spu.id = id;
 	hiddenline_spu.has_child = 0;
 	if (child)
@@ -37,20 +45,16 @@ SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *self,
 	crSPUCopyDispatchTable( &(hiddenline_spu.super), &(self->superSPU->dispatch_table) );
 	hiddenlinespuGatherConfiguration( child );
 
-	hiddenline_spu.frame_head = hiddenline_spu.frame_tail = NULL;
-
-	hiddenline_spu.packer = crPackNewContext( 0 ); /* Certainly don't want to swap bytes */
-	crPackSetContext( hiddenline_spu.packer );
-	hiddenlineProvidePackBuffer();
-	crPackFlushFunc( hiddenline_spu.packer, hiddenlineFlush );
-	crPackSendHugeFunc( hiddenline_spu.packer, hiddenlineHuge );
-
 	/* We need to track state so that the packer can deal with pixel data */
 	crStateInit();
-	hiddenline_spu.ctx = crStateCreateContext( &hiddenline_spu.limits );	
-	crStateMakeCurrent( hiddenline_spu.ctx );
 
 	hiddenlinespuCreateFunctions();
+
+	hiddenline_spu.contextTable = crAllocHashtable();
+#ifndef CHROMIUM_THREADSAFE
+	hiddenline_spu.currentContext = NULL;
+#endif
+	crInitMutex(&(hiddenline_spu.mutex));
 
 	return &hiddenline_functions;
 }
@@ -63,6 +67,7 @@ void hiddenlineSPUSelfDispatch(SPUDispatchTable *self)
 
 int hiddenlineSPUCleanup(void)
 {
+	crFreeHashtable(hiddenline_spu.contextTable);
 	return 1;
 }
 

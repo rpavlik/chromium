@@ -7,9 +7,16 @@
 static void hiddenPlayback( SPUDispatchTable *table )
 {
 	BufList *temp;
-	for (temp = hiddenline_spu.frame_head ; temp ; temp = temp->next )
+	GET_CONTEXT(context);
+	for (temp = context->frame_head ; temp ; temp = temp->next )
 	{
+		/* The Chromium unpacker isn't thread-safe!
+		 * It's normally only used in the crserver (which only has
+		 * one thread).  Just use a mutex here.
+		 */
+		crLockMutex(&(hiddenline_spu.mutex));
 		crUnpack( temp->data, temp->opcodes, temp->num_opcodes, table );
+		crUnlockMutex(&(hiddenline_spu.mutex));
 	}
 }
 
@@ -44,6 +51,7 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 	BufList *temp, *next;
 	static int frame_counter = 1;
 	static int do_hiddenline = 1;
+	GET_CONTEXT(context);
 
 #ifdef WINDOWS
 #define PRESSED( key ) (GetAsyncKeyState( key ) & (1<<15))
@@ -56,6 +64,7 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 
 	if (frame_counter == 1)
 	{
+		/* one-time init */
 		crSPUInitDispatchTable( &(hacked_child_dispatch) );
 		crSPUCopyDispatchTable( &(hacked_child_dispatch), &(hiddenline_spu.child) );
 
@@ -85,7 +94,9 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 
 	hiddenlineFlush( NULL );
 
-	hiddenline_spu.super.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	if (hiddenline_spu.single_clear)
+		hiddenline_spu.super.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
 	if (do_hiddenline)
 	{
 		hiddenline_spu.super.PushAttrib( GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT | GL_LINE_BIT );
@@ -126,12 +137,13 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 	/* Release the resources needed to record the past frame so we
 	 * can record the next one */
 
-	for (temp = hiddenline_spu.frame_head ; temp ; temp = next )
+	for (temp = context->frame_head ; temp ; temp = next )
 	{
 		hiddenlineReclaimPackBuffer( temp );
 		next = temp->next;
 		crFree( temp );
 	}
-	hiddenline_spu.frame_head = hiddenline_spu.frame_tail = NULL;
+	context->frame_head = context->frame_tail = NULL;
+
 	frame_counter++;
 }

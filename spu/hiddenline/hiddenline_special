@@ -5,3 +5,6 @@ PixelStorei
 Disable
 DepthMask
 Clear
+MakeCurrent
+CreateContext
+DestroyContext

@@ -1,8 +1,5 @@
 #include "hiddenlinespu.h"
-#include "cr_bufpool.h"
 #include "cr_mem.h"
-
-static CRBufferPool bufpool;
 
 /*
  * Get an empty packing buffer from the buffer pool, or allocate a new one.
@@ -10,21 +7,18 @@ static CRBufferPool bufpool;
  */
 void hiddenlineProvidePackBuffer(void)
 {
-	static int first_time = 1;
 	void *buf;
-	if (first_time)
-	{
-		first_time = 0;
-		crBufferPoolInit( &bufpool, 16 );
-	}
+	GET_CONTEXT(context);
 
-	buf = crBufferPoolPop( &bufpool );
+	CRASSERT(context);
+
+	buf = crBufferPoolPop( &(context->bufpool) );
 	if (!buf)
 	{
 		buf = crAlloc( hiddenline_spu.buffer_size );
 	}
-	crPackInitBuffer( &(hiddenline_spu.pack_buffer), buf, hiddenline_spu.buffer_size, hiddenline_spu.buffer_size );
-	crPackSetBuffer( hiddenline_spu.packer, &(hiddenline_spu.pack_buffer) );
+	crPackInitBuffer( &(context->pack_buffer), buf, hiddenline_spu.buffer_size, hiddenline_spu.buffer_size );
+	crPackSetBuffer( context->packer, &(context->pack_buffer) );
 }
 
 /*
@@ -35,7 +29,8 @@ void hiddenlineReclaimPackBuffer( BufList *bl )
 {
 	if (bl->can_reclaim)
 	{
-		crBufferPoolPush( &bufpool, bl->buf );
+		GET_CONTEXT(context);
+		crBufferPoolPush( &(context->bufpool), bl->buf );
 	}
 	else
 	{
@@ -52,6 +47,7 @@ void hiddenlineReclaimPackBuffer( BufList *bl )
  */
 static void hiddenlineRecord( void *buf, void *data, void *opcodes, unsigned int num_opcodes, int can_reclaim )
 {
+	GET_CONTEXT(context);
 	BufList *bl;
 	bl = (BufList *) crAlloc( sizeof( *bl ) );
 	bl->buf = buf;
@@ -61,15 +57,16 @@ static void hiddenlineRecord( void *buf, void *data, void *opcodes, unsigned int
 	bl->can_reclaim = can_reclaim;
 	bl->next = NULL;
 
-	if (hiddenline_spu.frame_tail == NULL)
+	CRASSERT(context);
+	if (context->frame_tail == NULL)
 	{
-		hiddenline_spu.frame_head = bl;
+		context->frame_head = bl;
 	}
 	else
 	{
-		hiddenline_spu.frame_tail->next = bl;
+		context->frame_tail->next = bl;
 	}
-	hiddenline_spu.frame_tail = bl;
+	context->frame_tail = bl;
 }
 
 /*
@@ -79,8 +76,12 @@ static void hiddenlineRecord( void *buf, void *data, void *opcodes, unsigned int
  */
 void hiddenlineFlush( void *arg )
 {
-	CRPackBuffer *buf = &(hiddenline_spu.pack_buffer);
-	crPackGetBuffer( hiddenline_spu.packer, buf );
+	GET_CONTEXT(context);
+	CRPackBuffer *buf;
+
+	CRASSERT(context);
+	buf = &(context->pack_buffer);
+	crPackGetBuffer( context->packer, buf );
 
 	hiddenlineRecord( buf->pack, buf->data_start, buf->opcode_start, buf->opcode_start - buf->opcode_current , 1 );
 

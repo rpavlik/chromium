@@ -14,6 +14,7 @@ FILES = hiddenlinespu \
 	hiddenlinespu_clear \
 	hiddenlinespu_clearcolor \
 	hiddenlinespu_config \
+	hiddenlinespu_context \
 	hiddenlinespu_depthmask \
 	hiddenlinespu_disable \
 	hiddenlinespu_init \
