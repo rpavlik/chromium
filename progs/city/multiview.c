@@ -55,6 +55,7 @@ MultiviewLoadIdentity(GLenum target, int numServers)
 		glChromiumParametervCR_ptr(target, GL_FLOAT, 17, v);
 #endif
 	}
+	(void)target;
 }
 
 
