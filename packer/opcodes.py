@@ -37,6 +37,18 @@ for func_name in keys:
 	if not stub_common.FindSpecial( "opcode", func_name ) and not stub_common.FindSpecial( "opcode_extend", func_name ):
 		print "\t%s = %d," % ( stub_common.OpcodeName( func_name ), enum_index )
 		enum_index = enum_index + 1
+if enum_index > 255:
+	# This would have saved Mike some grief if it had been here earlier.
+	print >> sys.stderr, "You have more than 255 opcodes!  You've been adding functions to"
+	print >> sys.stderr, "glapi_parser/system_header/CR_GL.H!  Each new function you add"
+	print >> sys.stderr, "gets an opcode assigned to it.  Fortunately for you, we have"
+	print >> sys.stderr, "an ``extend'' opcode.  Please add your functions to"
+	print >> sys.stderr, "packer/opcode_extend_special so as to keep the main opcode pool"
+	print >> sys.stderr, "less than 255!  THIS IS A CATASTROPHIC FAILURE, and I WILL NOT CONTINUE!"
+	print >> sys.stderr, "I'm putting an error in the generated header file so you won't miss"
+	print >> sys.stderr, "this even if you're doing a 'make -k.'"
+	print "#error -- more than 255 opcodes!  put things in packer/opcode_extend_special please!"
+	sys.exit(-1)
 print "\tCR_EXTEND_OPCODE=%d" % enum_index
 print "} CROpcode;\n"
 
