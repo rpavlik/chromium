@@ -2,6 +2,13 @@
 * All rights reserved
 *
 * See the file LICENSE.txt for information on redistributing this software.
+*/
+
+/*
+ * TODO: 
+ * 1) Need to support resizable windows once we get CRUT
+ * 2) Can we use BBox util library, or is this way faster? 
+ *
  */
 
 #include <stdio.h>
@@ -49,53 +56,53 @@ void clipCoords (GLfloat *x1, GLfloat *y1, GLfloat *z1,
   GLfloat xmin=FLT_MAX, ymin=FLT_MAX, zmin=FLT_MAX;
   GLfloat xmax=-FLT_MAX, ymax=-FLT_MAX, zmax=-FLT_MAX;
   
-  m[0] =  proj[0]*modl[0]  + proj[4]*modl[1]  + 
-    proj[8]*modl[2]   + proj[12]*modl[3];	
+  m[0] =  proj[0] * modl[0] + proj[4]  * modl[1]  + 
+          proj[8] * modl[2] + proj[12] * modl[3];	
 
-  m[1] =  proj[1]*modl[0]  + proj[5]*modl[1]  + 
-    proj[9]*modl[2]   + proj[13]*modl[3];	
+  m[1] =  proj[1] * modl[0] + proj[5]  * modl[1]  + 
+          proj[9] * modl[2] + proj[13] * modl[3];	
 
-  m[2] =  proj[2]*modl[0]  + proj[6]*modl[1]  + 
-    proj[10]*modl[2]  + proj[14]*modl[3];	
+  m[2] =  proj[2]  * modl[0] + proj[6]  * modl[1]  + 
+          proj[10] * modl[2] + proj[14] * modl[3];	
 
-  m[3] =  proj[3]*modl[0]  + proj[7]*modl[1]  + 
-    proj[11]*modl[2]  + proj[15]*modl[3];	
+  m[3] =  proj[3]  * modl[0] + proj[7]  * modl[1]  + 
+          proj[11] * modl[2] + proj[15] * modl[3];	
 
-  m[4] =  proj[0]*modl[4]  + proj[4]*modl[5]  + 
-    proj[8]*modl[6]   + proj[12]*modl[7];	
+  m[4] =  proj[0] * modl[4] + proj[4]  * modl[5]  + 
+          proj[8] * modl[6] + proj[12] * modl[7];	
 
-  m[5] =  proj[1]*modl[4]  + proj[5]*modl[5]  + 
-    proj[9]*modl[6]   + proj[13]*modl[7];	
+  m[5] =  proj[1] * modl[4] + proj[5]  * modl[5]  + 
+          proj[9] * modl[6] + proj[13] * modl[7];	
 
-  m[6] =  proj[2]*modl[4]  + proj[6]*modl[5]  + 
-    proj[10]*modl[6]  + proj[14]*modl[7];	
+  m[6] =  proj[2]  * modl[4] + proj[6]  * modl[5]  + 
+          proj[10] * modl[6] + proj[14] * modl[7];	
 
-  m[7] =  proj[3]*modl[4]  + proj[7]*modl[5]  + 
-    proj[11]*modl[6]  + proj[15]*modl[7];	
+  m[7] =  proj[3]  * modl[4] + proj[7]  * modl[5]  + 
+          proj[11] * modl[6] + proj[15] * modl[7];	
 
-  m[8] =  proj[0]*modl[8]  + proj[4]*modl[9]  + 
-    proj[8]*modl[10]  + proj[12]*modl[11];	
+  m[8] =  proj[0] * modl[8]  + proj[4]  * modl[9]  + 
+          proj[8] * modl[10] + proj[12] * modl[11];	
 
-  m[9] =  proj[1]*modl[8]  + proj[5]*modl[9]  + 
-    proj[9]*modl[10]  + proj[13]*modl[11];
+  m[9] =  proj[1] * modl[8]  + proj[5]  * modl[9]  + 
+          proj[9] * modl[10] + proj[13] * modl[11];
 	
-  m[10] = proj[2]*modl[8]  + proj[6]*modl[9]  + 
-    proj[10]*modl[10] + proj[14]*modl[11];	
+  m[10] = proj[2]  * modl[8]  + proj[6]  * modl[9]  + 
+          proj[10] * modl[10] + proj[14] * modl[11];	
 
-  m[11] = proj[3]*modl[8]  + proj[7]*modl[9]  + 
-    proj[11]*modl[10] + proj[15]*modl[11];	
+  m[11] = proj[3]  * modl[8]  + proj[7]   * modl[9]  + 
+          proj[11] * modl[10] + proj[15] * modl[11];	
 
-  m[12] = proj[0]*modl[12] + proj[4]*modl[13] + 
-    proj[8]*modl[14]  + proj[12]*modl[15];	
+  m[12] = proj[0] * modl[12]  + proj[4]  * modl[13] + 
+          proj[8] * modl[14]  + proj[12] * modl[15];	
 
-  m[13] = proj[1]*modl[12] + proj[5]*modl[13] + 
-    proj[9]*modl[14]  + proj[13]*modl[15];	
+  m[13] = proj[1] * modl[12]  + proj[5]  * modl[13] + 
+          proj[9] * modl[14]  + proj[13] * modl[15];	
 
-  m[14] = proj[2]*modl[12] + proj[6]*modl[13] + 
-    proj[10]*modl[14] + proj[14]*modl[15];	
+  m[14] = proj[2]  * modl[12] + proj[6]  * modl[13] + 
+          proj[10] * modl[14] + proj[14] * modl[15];	
 
-  m[15] = proj[3]*modl[12] + proj[7]*modl[13] + 
-    proj[11]*modl[14] + proj[15]*modl[15]; 
+  m[15] = proj[3] *  modl[12] + proj[7]  * modl[13] + 
+          proj[11] * modl[14] + proj[15] * modl[15]; 
       
   /* Tranform the point by m */
   vx1 = *x1;
@@ -136,27 +143,12 @@ void clipCoords (GLfloat *x1, GLfloat *y1, GLfloat *z1,
   binaryswap_spu.depth = zmax;
 }
 
-/**************************************************************
- *
- * For now, this just strips the depth out of the box.  We should
- * also do a screen bounding box to lighten network traffic.
- *
- **************************************************************/
-void setupBBox()
-{
-  binaryswap_spu.super.GetFloatv (GL_MODELVIEW_MATRIX,  modl);
-  binaryswap_spu.super.GetFloatv (GL_PROJECTION_MATRIX, proj);
-}
-
 int getClippedWindow(int *xstart, int* ystart,int* xend, int* yend )
 {
   GLfloat viewport[4];
   GLint   window_dim[4];
   GLfloat x1, x2, y1, y2, z1, z2;
   int win_height, win_width;
-
-  binaryswap_spu.super.GetFloatv (GL_MODELVIEW_MATRIX,  modl);
-  binaryswap_spu.super.GetFloatv (GL_PROJECTION_MATRIX, proj);
 
   if(binaryswap_spu.bounding_box != NULL){
     x1=binaryswap_spu.bounding_box->x1;
@@ -170,18 +162,25 @@ int getClippedWindow(int *xstart, int* ystart,int* xend, int* yend )
     return 0;
   }
 
+  /* get current matrices for clipping */
+  binaryswap_spu.super.GetFloatv(GL_MODELVIEW_MATRIX,  modl);
+  binaryswap_spu.super.GetFloatv(GL_PROJECTION_MATRIX, proj);
+
   clipCoords(&x1, &y1, &z1, &x2, &y2, &z2);
   /* Sanity check... */
   if( x2 < x1 || y2 < y1 || z2 < z1){
     crWarning( "Damnit!!!!, we screwed up the clipping somehow..." );
     return 0;
   }
+  
+  /* can we remove this get to speed things up? */
   binaryswap_spu.super.GetFloatv( GL_VIEWPORT, viewport );
   (*xstart) = (int)((x1+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
   (*ystart) = (int)((y1+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
   (*xend)   = (int)((x2+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
   (*yend)   = (int)((y2+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
-  
+
+  /* can we remove this get to speed things up? */
   binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, window_dim );
   win_width  = window_dim[2];
   win_height = window_dim[3];
@@ -196,7 +195,7 @@ int getClippedWindow(int *xstart, int* ystart,int* xend, int* yend )
 /**************************************************************************
  *
  * Right now this is the only nice way to generically pass information into
- * Chromium.  Yes this is hacky...
+ * Chromium without linking to Chromium.  Yes this is hacky...
  *
  **************************************************************************/
 void BINARYSWAPSPU_APIENTRY binaryswapspuHint( GLenum target,
@@ -210,8 +209,6 @@ void BINARYSWAPSPU_APIENTRY binaryswapspuHint( GLenum target,
   if( target == 0x4201 ){
     /* mode is really a pointer, cast it and grab info */
     binaryswap_spu.bounding_box = (BBox*)mode;
-    /* figure out all of the info we need */
-    setupBBox();
   }
   /* Pass on all other hints to child */
   else{
@@ -261,6 +258,7 @@ static void DoFlush( WindowInfo *window )
   GLfloat* incoming_depth;
   CRMessage *incoming_msg;
   BinarySwapMsg *render_info;
+  GLint packAlignment;
   
   if (first_time){
     binaryswap_spu.child.BarrierCreate( BINARYSWAP_CLEARBARRIER, 0 );
@@ -273,11 +271,16 @@ static void DoFlush( WindowInfo *window )
 
     binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, geometry );
     if(binaryswap_spu.alpha_composite){
-      binaryswap_spu.outgoing_msg = (GLubyte *) crAlloc( (geometry[2] * geometry[3] * 4) + sizeof(BinarySwapMsg));
+      binaryswap_spu.outgoing_msg = 
+	(GLubyte *) crAlloc( sizeof(BinarySwapMsg) + 
+			     (geometry[2] * geometry[3] * 
+			      (4 * sizeof(GLubyte))));
     }
     else{
       binaryswap_spu.outgoing_msg = 
-	(GLubyte *) crAlloc( sizeof(BinarySwapMsg) + (geometry[2] * geometry[3] * (3 * sizeof(GLubyte) + sizeof(GLfloat)))); 
+	(GLubyte *) crAlloc( sizeof(BinarySwapMsg) + 
+			     (geometry[2] * geometry[3] * 
+			      (3 * sizeof(GLubyte) + sizeof(GLfloat)))); 
     }
     
     binaryswap_spu.offset = sizeof( BinarySwapMsg );
@@ -354,8 +357,7 @@ static void DoFlush( WindowInfo *window )
 			 &end_clipped_x, &end_clipped_y )){
       crWarning("Bounding box was null, I'll no longer attempt to clip");
       binaryswap_spu.clipped_window = !binaryswap_spu.clipped_window;
-    }
-    
+    }    
   }
   
   /* setup positions so we can do a draw pixels correctly! */
@@ -366,9 +368,8 @@ static void DoFlush( WindowInfo *window )
   binaryswap_spu.super.MatrixMode(GL_MODELVIEW);
   binaryswap_spu.super.LoadIdentity();  
   
-  /************ need to restore this after drawing.... ******************/
   /* fix pixel alignment */
-  binaryswap_spu.super.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+  binaryswap_spu.super.GetIntegerv( GL_PACK_ALIGNMENT, &packAlignment );
   binaryswap_spu.super.PixelStorei( GL_PACK_ALIGNMENT, 1 );
 
   /* blend other guy's stuff with ours */
@@ -650,7 +651,6 @@ static void DoFlush( WindowInfo *window )
 				   binaryswap_spu.offset ); 
   binaryswap_spu.child.Clear( GL_COLOR_BUFFER_BIT );
   binaryswap_spu.child.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-  binaryswap_spu.child.PixelStorei( GL_PACK_ALIGNMENT, 1 );
   
   /* 
    * Make sure everyone has issued a clear to the child,
@@ -673,6 +673,7 @@ static void DoFlush( WindowInfo *window )
 				     binaryswap_spu.offset );
   }  
   binaryswap_spu.child.SemaphoreV( MUTEX_SEMAPHORE );
+  binaryswap_spu.super.PixelStorei(GL_PACK_ALIGNMENT, packAlignment);
 }
 
 
@@ -776,7 +777,6 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuMakeCurrent(GLint window,
 static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateWindow( const char *dpyName, 
 							       GLint visBits )
 {
-  //GLint childVisual = visBits;
   int i;
   
   /* find empty slot in windows[] array */
