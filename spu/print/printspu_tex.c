@@ -7,7 +7,8 @@ void PRINT_APIENTRY printTexEnvf( GLenum target, GLenum pname, GLfloat param )
 {
 	switch(pname) {
 	    case GL_TEXTURE_ENV_MODE:
-		fprintf( print_spu.fp, "TexEnvf( %s, GL_TEXTURE_ENV_MODE, %s )\n", printspuEnumToStr( target ), printspuEnumToStr( param ));
+        // MCH: This cast is needed to prevent warnings but might not be the right thing...    
+		fprintf( print_spu.fp, "TexEnvf( %s, GL_TEXTURE_ENV_MODE, %s )\n", printspuEnumToStr( target ), printspuEnumToStr( (GLenum) param ));
 		break;
 	    default:
 		fprintf( print_spu.fp, "TexEnvf( %s, %s, %f )\n", printspuEnumToStr( target ), printspuEnumToStr( pname ), param);
@@ -21,7 +22,8 @@ void PRINT_APIENTRY printTexEnvfv( GLenum target, GLenum pname, const GLfloat * 
 {
 	switch(pname) {
 	    case GL_TEXTURE_ENV_MODE:
-		fprintf( print_spu.fp, "TexEnvfv( %s, GL_TEXTURE_ENV_MODE, [%s] )\n", printspuEnumToStr( target ), printspuEnumToStr( params[0] ));
+        // MCH: This cast is needed to prevent warnings but might not be the right thing...    
+		fprintf( print_spu.fp, "TexEnvfv( %s, GL_TEXTURE_ENV_MODE, [%s] )\n", printspuEnumToStr( target ), printspuEnumToStr( (GLenum) params[0] ));
 		break;
 	    case GL_TEXTURE_ENV_COLOR:
 		fprintf( print_spu.fp, "TexEnvfv( %s, GL_TEXTURE_ENV_COLOR, [%f, %f, %f, %f] )\n", printspuEnumToStr( target ), params[0], params[1], params[2], params[3] );

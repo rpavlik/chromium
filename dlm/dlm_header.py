@@ -49,9 +49,9 @@ additionalFunctions = [
     ('GLboolean DLM_APIENTRY', 'crDLMIsList', 'GLuint list'),
     ('GLuint DLM_APIENTRY', 'crDLMGenLists', 'GLsizei range'),
     ('void DLM_APIENTRY', 'crDLMListBase', 'GLuint base'),
-    ('void DLM_APIENTRY', 'crDLMListSent', 'CRDLM *dlm, unsigned long listIdentifier'),
-    ('GLboolean DLM_APIENTRY', 'crDLMIsListSent', 'CRDLM *dlm, unsigned long listIdentifier'),
-    ('GLint DLM_APIENTRY', 'crDLMListSize', 'CRDLM *dlm, unsigned long listIdentifier'),
+    #('void DLM_APIENTRY', 'crDLMListSent', 'CRDLM *dlm, unsigned long listIdentifier'),
+    #('GLboolean DLM_APIENTRY', 'crDLMIsListSent', 'CRDLM *dlm, unsigned long listIdentifier'),
+    #('GLint DLM_APIENTRY', 'crDLMListSize', 'CRDLM *dlm, unsigned long listIdentifier'),
 ]
 
 if mode == 'header':
@@ -61,7 +61,7 @@ if mode == 'header':
 #define CR_DLM_H
 
 #if defined(WINDOWS)
-#define DLM_APIENTRY __stdcall
+#define DLM_APIENTRY
 #else
 #define DLM_APIENTRY
 #endif

@@ -196,8 +196,8 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 			 */
 			for (j = 0; j < winInfo->server[i].num_extents; j++) {
 				CRPixelPackState unpacking = ctx->client.unpack;
-				int newX = c->rasterAttrib[VERT_ATTRIB_POS][0];
-				int newY = c->rasterAttrib[VERT_ATTRIB_POS][1];
+				int newX = (int)c->rasterAttrib[VERT_ATTRIB_POS][0];
+				int newY = (int)c->rasterAttrib[VERT_ATTRIB_POS][1];
 				int newWidth = zoomedWidth;
 				int newHeight = zoomedHeight;
 				if (ComputeSubImage(&newX, &newY, &newWidth, &newHeight,

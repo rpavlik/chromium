@@ -16,6 +16,8 @@
 void TILESORTSPU_APIENTRY
 tilesortspu_NewList(GLuint list, GLuint mode) 
 {
+    CRPackContext *c;
+    
 	GET_THREAD(thread);
 
 	/* No matter how we're configured (i.e. compiling all functions locally,
@@ -55,7 +57,7 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 	 * change commands get put into the main pack buffer.  So, turn off
 	 * this debug/sanity-check flag.  We can turn it back on in EndList().
 	 */
-	CRPackContext *c = crPackGetContext();
+	c = crPackGetContext();
 
 	c->buffer.geometry_only = GL_FALSE;
 
@@ -379,9 +381,12 @@ tilesortspu_CallList(GLuint list)
 void TILESORTSPU_APIENTRY
 tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
+    
+	GLint i;
 	GET_THREAD(thread);
 	GLenum dlMode = thread->currentContext->displayListMode;
 	ContextInfo *context = thread->currentContext;
+    const GLuint base = context->State->lists.base;
 
 	if (dlMode != GL_FALSE) {
 	    if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) crDLMCompileCallLists(n, type, lists);
@@ -390,8 +395,6 @@ tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 	    return;
 	}
 
-	const GLuint base = context->State->lists.base;
-	GLint i;
 
 #define EXPAND(typeEnum, typeCast)                       \
     case typeEnum:                                       \

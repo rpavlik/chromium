@@ -77,7 +77,7 @@ DrawObject1(void)
 static void
 DrawObject2(void)
 {
-   glColor3f(1, 0.2, 0.2);
+   glColor3f(1.0f, 0.2f, 0.2f);
    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
    glLineWidth(4);
    glutSolidCube(2.0);
