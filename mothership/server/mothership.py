@@ -1156,7 +1156,6 @@ class CR:
 		"""do_displays(sock, args)
 		Send the displays associated with a SPU"""
 		n_displays = 0;
-		print len(allSPUs)
 		for spu in range(len(allSPUs)):
 			n_displays += len(allSPUs[spu].displays)
 		displays = "%d " % n_displays
