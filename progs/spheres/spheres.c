@@ -184,12 +184,12 @@ MakeSphere(GLfloat radius, GLuint slices, GLuint stacks)
 
 	/* intermediate vertices */
 	for (iPhi = 1; iPhi < stacks; iPhi++) {
-		GLfloat phi = M_PI * (GLfloat) iPhi / (GLfloat) stacks;
+		GLfloat phi = (GLfloat) M_PI * (GLfloat) iPhi / (GLfloat) stacks;
 		for (iTheta = 0; iTheta < slices; iTheta++) {
-			GLfloat theta = 2.0 * M_PI * (GLfloat) iTheta / (GLfloat) slices;
-			GLfloat nx = sin(phi) * cos(theta);
-			GLfloat ny = sin(phi) * sin(theta);
-			GLfloat nz = cos(phi);
+			GLfloat theta = (GLfloat) (2.0 * M_PI * iTheta / (GLfloat) slices);
+			GLfloat nx = (GLfloat) (sin(phi) * cos(theta));
+			GLfloat ny = (GLfloat) (sin(phi) * sin(theta));
+			GLfloat nz = (GLfloat) cos(phi);
 			GLfloat vx = radius * nx;
 			GLfloat vy = radius * ny;
 			GLfloat vz = radius * nz;
@@ -387,7 +387,7 @@ static TriangleMesh *
 MakeDemoMesh(const Options *options)
 {
 	/* compute sphere parameters to approximate requested triangles/sphere */
-	float k = sqrt(options->numTris * 0.5);
+	float k = (float) sqrt(options->numTris * 0.5);
 	int slices = (int) (k * 1.5);
 	int stacks = slices / 2;
 	TriangleMesh *mesh = NULL;
@@ -429,8 +429,8 @@ DrawFrame(const TriangleMesh *mesh, const Options *options, int frame,
 		/* draw a ring of spheres */
 		for (i = 0; i < options->numSpheres; i++) {
 			glPushMatrix();
-				glRotatef(i * options->theta, 0, 0, 1);
-				glTranslatef(0.65, 0, options->zPos);
+				glRotatef(i * options->theta, 0.0f, 0.0f, 1.0f);
+				glTranslatef(0.65f, 0.0f, options->zPos);
 				tris += DrawMesh(mesh, mode);
 			glPopMatrix();
 		}
@@ -596,12 +596,12 @@ ParseOptions(int argc, char *argv[], Options *options)
 		options->clearFlag = 1;
 	}
 
-	options->theta = 360.0 / (float) options->numSpheres;
-	options->radius = options->theta * 0.005;
-	if (options->radius > 0.3)
-		options->radius = 0.3;
-	options->zPos = 1.0 * (2.0 * options->rank * options->radius
-												 - (options->size * options->radius));
+	options->theta = 360.0f / (float) options->numSpheres;
+	options->radius = options->theta * 0.005f;
+	if (options->radius > 0.3f)
+		options->radius = 0.3f;
+	options->zPos = 1.0f * (2.0f * options->rank * options->radius
+													- (options->size * options->radius));
 }
 
 
