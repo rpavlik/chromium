@@ -8,8 +8,14 @@
 
 """Functions for reading and writing Chromium config files."""
 
-import re, string
-import crutils
+import re, string, sys
+sys.path.append("../server")
+import crtypes, crutils
+from crconfig import *
+
+
+#----------------------------------------------------------------------
+# Config file writing
 
 
 __ConfigFileHeader = """
@@ -211,8 +217,72 @@ def ParseOption(s, prefix):
 		return 0
 
 
+#----------------------------------------------------------------------
+# Config file writing
+
+TargetMothership = 0
+
+# The following functions emulate class instantiation while reading
+# Chromium conf files.  Eventually we'll probably merge the classes
+# in crtypes.py with the mothership.py classes.
+
+def CR():
+	"""Create a mothership."""
+	global TargetMothership
+	assert TargetMothership != 0
+	return TargetMothership
+
+def CRApplicationNode(host="localhost"):
+	"""Create an application node."""
+	n = crtypes.ApplicationNode(hostnames=[host], count=1)
+	return n
+
+def CRNetworkNode(host="localhost"):
+	"""Create a network/server node."""
+	n = crtypes.NetworkNode(hostnames=[host], count=1)
+	return n
+
+def SPU(name):
+	s = crutils.NewSPU(name)
+	return s
+
+
 def ReadConfig(mothership, file):
 	"""Read a mothership config from file handle."""
-	pass
+	global TargetMothership
+	TargetMothership = mothership
+	print "Begin reading config file..."
+
+	# read entire file into a string
+	contents = file.read(-1)
+
+	# Remove some lines which cause trouble
+	skipPatterns = [ "^sys\.path\.append.*$",
+					 "^from mothership import.*$" ]
+	for pat in skipPatterns:
+		v = re.search(pat, contents, flags=re.MULTILINE)
+		if v:
+			print "Ignoring line: %s" % contents[v.start() : v.end()]
+			# cut out the offending line
+			contents = contents[0 : v.start()] + contents[v.end()+1 : ]
+			
+	# XXX need a way to diagnose/report errors here
+	if 1:
+		# catch exceptions
+		try:
+			exec contents
+		except:
+			result = "Error"
+		else:
+			result = "OK"
+	else:
+		# don't catch exceptions - for debugging
+		exec contents
+		result = "OK"
+
+	print "Done reading config file: %s" % result
+
+	mothership.LayoutNodes()
+	return result
 
 
