@@ -17,9 +17,7 @@ typedef int ssize_t;
 #define write(a,b,c) send(a,b,c,0)
 #else
 #include <sys/types.h>
-#ifdef DARWIN
-typedef unsigned int socklen_t;
-#elif defined(OSF1)
+#if defined(OSF1)
 typedef int socklen_t;
 #endif
 #include <sys/socket.h>
