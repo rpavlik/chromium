@@ -633,9 +633,8 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 															context->dpyName, context->visBits );
 			context->type = CHROMIUM;
 
-			if (window->spuWindow == -1)
-				window->spuWindow = stub.spu->dispatch_table.WindowCreate(
-													 window->dpyName, context->visBits );
+			if (window->spuWindow == -1) 
+				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
 		}
 		else {
 			/*
@@ -676,15 +675,20 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		CRASSERT(context->type == CHROMIUM);
 		CRASSERT(context->spuContext >= 0);
 
-		if (context->currentDrawable && context->currentDrawable != window) {
-			crWarning("Can't rebind context %p to a different window", context);
-			retVal = 0;
-		}
-		else {
+		if (context->currentDrawable && context->currentDrawable != window)
+			crWarning("Rebinding context %p to a different window", context);
+
+		if (stubCheckUseChromium(window)) {
+			if (window->spuWindow == -1) 
+				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
+
 			stub.spu->dispatch_table.MakeCurrent( window->spuWindow,
-																						(GLint) window->drawable,
-																						context->spuContext );
+				(GLint) window->drawable, context->spuContext );
+
 			retVal = 1;
+		} else {
+			crWarning("Can't rebind a chromium context to a native window\n");
+			retVal = 0;
 		}
 	}
 
