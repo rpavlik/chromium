@@ -12,6 +12,7 @@
 
 void PACK_APIENTRY crPackChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
+	GET_PACKER_CONTEXT(pc);
 	unsigned int header_length = 2 * sizeof(int) + sizeof(target) + sizeof(type) + sizeof(count);
 	unsigned int packet_length;
 	unsigned int params_length = 0;
@@ -47,13 +48,13 @@ void PACK_APIENTRY crPackChromiumParametervCR(GLenum target, GLenum type, GLsize
 
 	packet_length = header_length + params_length;
 
-	GET_BUFFERED_POINTER( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length );
 	WRITE_DATA( 0, GLint, packet_length );
 	WRITE_DATA( 4, GLenum, CR_CHROMIUMPARAMETERVCR_EXTEND_OPCODE );
 	WRITE_DATA( 8, GLenum, target );
 	WRITE_DATA( 12, GLenum, type );
 	WRITE_DATA( 16, GLsizei, count );
-	WRITE_OPCODE( CR_EXTEND_OPCODE );
+	WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
 
 	pos = header_length;
 

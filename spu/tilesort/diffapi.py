@@ -30,7 +30,8 @@ for func_name in stub_common.AllSpecials( "../../packer/packer_pixel" ):
 	(return_type, names, types) = gl_mapping[func_name]
 	print '%s TILESORTSPU_APIENTRY tilesortspuDiff%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ) )
 	print '{'
-	names.append( '&(tilesort_spu.currentContext->client.unpack)' )
+	print '\tGET_CONTEXT(ctx);'
+	names.append( '&(ctx->client.unpack)' )
 	print '\tif (tilesort_spu.swap)'
 	print '\t{'
 	print '\t\tcrPack%sSWAP%s;' % (func_name, stub_common.CallString( names ) )

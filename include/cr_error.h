@@ -26,8 +26,10 @@ void crError( char *format, ... ) NORETURN_PRINTF;
 
 #ifndef NDEBUG
 #define CRASSERT( PRED ) ((PRED)?(void)0:crError( "Assertion failed: %s, file %s, line %d", #PRED, __FILE__, __LINE__))
+#define THREADASSERT( PRED ) ((PRED)?(void)0:crError( "Are you trying to run a threaded app ?\nBuild with 'make threadsafe'\nAssertion failed: %s, file %s, line %d", #PRED, __FILE__, __LINE__))
 #else
 #define CRASSERT( PRED ) ((void)0)
+#define THREADASSERT( PRED ) ((void)0)
 #endif
 
 #ifdef __cplusplus

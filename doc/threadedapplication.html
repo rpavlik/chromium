@@ -1,0 +1,95 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Writing a Threaded Application</h1>
+
+<p>If you have a multiprocessor system, a multi-threaded application may
+be a good way to leverage your computing power.</p>
+
+<p>The previous section described how one can implement parallel rendering
+for a cluster of PCs.
+It's often the case that applications are more easily parallelized on a
+shared memory symetric multiprocessor (SMP) system than a distributed
+memory system (a PC cluster).
+Also, some types of visualization tasks may make better use of memory if
+the dataset is shared by N threads within one process, rather than replicated
+across N systems in a cluster.</p>
+
+<p>As a concrete example, suppose we have a 4-pipe SGI Onyx system.
+If we create four rendering threads we can render part of the scene with
+each of the four pipes and display a sort-last-composited image on the
+user's screen.</p>
+
+<h2 class="PageSubHeading">The Threadtest demo</h2>
+
+<p>In <code>progs/threadtest/threadtest.c</code> you'll find an example
+of a threaded Chromium application.
+It's actually very similar to the psubmit demo.</p>
+
+<p>The threadtest program accepts the following command line arguments:</p>
+<ul>
+<li><code>-t numThreads</code> indicates how many threads to create.
+The default is one.
+<li><code>-w</code> specifies that a separate window should be created for
+each thread.  The default is for all threads to render into one window.
+<li><code>-s1</code> specifies that only one thread should issue SwapBuffers
+commands.  The default is for all threads to swap their windows.
+</ul>
+
+<p>The <code>threadtest.c</code> program is very similar to the
+<code>psubmit.c</code> program.
+The major difference is the addition of code to create the N rendering
+threads (using Windows threads or pthreads).
+Like <code>psubmit.c</code>, barriers are used after glClear and before
+SwapBuffers in order to provide synchronization.</p>
+
+<p><code>mothership/configs/threadtest.conf</code> is a sample configuration
+file for running the threadtest demo.
+This configuration file will pass the appropriate command line arguments to
+the threadtest program.
+It has several options to demonstrate various multi-threaded configurations.
+Look near the top of the file for these options:</p>
+<ul>
+<li><code>NumThreads</code> indicates the number of threads to create
+<li><code>Config</code> can take one of four values: LOCAL_ONE_WINDOW,
+LOCAL_N_WINDOWS, REMOTE_ONE_WINDOW or SORT_LAST.  These demonstrate
+different types of parallelismg.
+</ul>
+
+<p>The LOCAL_ONE_WINDOW option will create one window which all N threads
+will render into in parallel.
+glClear and SwapBuffers are synchronized with barriers.
+There is no server node; just run the mothership and crappfaker.</p>
+
+<p>The LOCAL_N_WINDOWS option will create one window which all N threads
+will render into in parallel.
+There is no server node; just run the mothership and crappfaker.</p>
+
+<p>The REMOTE_ONE_WINDOW option uses a pack SPU to send N streams of
+rendering commands to a render SPU running on a server node.
+Run the mothership, a crserver and crappfaker.</p>
+
+<p>The SORT_LAST option uses a readback SPU to render N partial images
+which are sent to render SPU on a downstream server.
+Run the mothership, a crserver and crappfaker.</p>
+
+<p>Threaded sort-first rendering with the tilesort SPU is also possible
+but is not implemented in the configuration script.</p>
+
+</body>
+
+</html>

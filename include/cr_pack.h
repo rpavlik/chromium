@@ -31,6 +31,7 @@ typedef struct {
 	unsigned int   size;
 	unsigned char *data_start, *data_current, *data_end;
 	unsigned char *opcode_start, *opcode_current, *opcode_end;
+	GLboolean geometry_only;  /* just used for debugging */
 } CRPackBuffer;
 
 typedef void (*CRPackFlushFunc)(void *arg);
@@ -47,23 +48,23 @@ typedef struct {
 	CRBBOXPoint bounds_min, bounds_max;
 	int updateBBOX;
 	int swapping;
-} CRPackGlobals;
+} CRPackContext;
 
-extern DLLDATA CRPackGlobals cr_packer_globals;
+CRPackContext *crPackNewContext(int swapping);
+void crPackSetContext( CRPackContext *pc );
+CRPackContext *crPackGetContext( void );
 
-void crPackInit( int swapping );
-
-void crPackSetBuffer( CRPackBuffer *buffer );
-void crPackGetBuffer( CRPackBuffer *buffer );
+void crPackSetBuffer( CRPackContext *pc, CRPackBuffer *buffer );
+void crPackGetBuffer( CRPackContext *pc, CRPackBuffer *buffer );
 void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int extra );
-void crPackResetPointers( int extra );
-void crPackFlushFunc( CRPackFlushFunc ff );
-void crPackFlushArg( void *flush_arg );
-void crPackSendHugeFunc( CRPackSendHugeFunc shf );
+void crPackResetPointers( CRPackContext *pc, int extra );
+void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff );
+void crPackFlushArg( CRPackContext *pc, void *flush_arg );
+void crPackSendHugeFunc( CRPackContext *pc, CRPackSendHugeFunc shf );
 void crPackOffsetCurrentPointers( int offset );
 void crPackNullCurrentPointers( void );
 
-void crPackResetBBOX(void);
+void crPackResetBBOX( CRPackContext *pc );
 
 void crPackAppendBuffer( CRPackBuffer *buffer );
 void crPackAppendBoundedBuffer( CRPackBuffer *buffer, GLrecti *bounds );
@@ -83,29 +84,30 @@ void crNetworkPointerWrite( CRNetworkPointer *, void * );
 
 void SanityCheck(void);
 
-#define GET_BUFFERED_POINTER( len ) \
-  data_ptr = cr_packer_globals.buffer.data_current; \
-  if (data_ptr + (len) > cr_packer_globals.buffer.data_end ) \
+#define GET_BUFFERED_POINTER( pc, len ) \
+  THREADASSERT( pc ); \
+  data_ptr = pc->buffer.data_current; \
+  if (data_ptr + (len) > pc->buffer.data_end ) \
   { \
-    cr_packer_globals.Flush( cr_packer_globals.flush_arg ); \
-    data_ptr = cr_packer_globals.buffer.data_current; \
-    CRASSERT( data_ptr + (len) <= cr_packer_globals.buffer.data_end ); \
+    pc->Flush( pc->flush_arg ); \
+    data_ptr = pc->buffer.data_current; \
+    CRASSERT( data_ptr + (len) <= pc->buffer.data_end ); \
   } \
-  cr_packer_globals.buffer.data_current += (len)
+  pc->buffer.data_current += (len)
 
-#define GET_BUFFERED_COUNT_POINTER( len ) \
-  data_ptr = cr_packer_globals.buffer.data_current; \
-  if (data_ptr + (len) > cr_packer_globals.buffer.data_end ) \
+#define GET_BUFFERED_COUNT_POINTER( pc, len ) \
+  data_ptr = pc->buffer.data_current; \
+  if (data_ptr + (len) > pc->buffer.data_end ) \
   { \
-    cr_packer_globals.Flush( cr_packer_globals.flush_arg ); \
-    data_ptr = cr_packer_globals.buffer.data_current; \
-    CRASSERT( data_ptr + (len) <= cr_packer_globals.buffer.data_end ); \
+    pc->Flush( pc->flush_arg ); \
+    data_ptr = pc->buffer.data_current; \
+    CRASSERT( data_ptr + (len) <= pc->buffer.data_end ); \
   } \
-  cr_packer_globals.current.vtx_count++; \
-  cr_packer_globals.buffer.data_current += (len)
+  pc->current.vtx_count++; \
+  pc->buffer.data_current += (len)
 
-#define GET_BUFFERED_POINTER_NO_ARGS( ) \
-  GET_BUFFERED_POINTER( 4 );  \
+#define GET_BUFFERED_POINTER_NO_ARGS( pc ) \
+  GET_BUFFERED_POINTER( pc, 4 );  \
   WRITE_DATA( 0, GLuint, 0xdeadbeef )
 
 #define WRITE_DATA( offset, type, data ) \
@@ -122,8 +124,8 @@ void SanityCheck(void);
 #define WRITE_SWAPPED_DOUBLE( offset, data ) \
 	crWriteSwappedDouble( data_ptr + (offset), (data) )
 
-#define WRITE_OPCODE( opcode )  \
-  *(cr_packer_globals.buffer.opcode_current--) = (unsigned char) opcode
+#define WRITE_OPCODE( pc, opcode )  \
+  *(pc->buffer.opcode_current--) = (unsigned char) opcode
 
 #define WRITE_NETWORK_POINTER( offset, data ) \
   crNetworkPointerWrite( (CRNetworkPointer *) ( data_ptr + (offset) ), (data) )

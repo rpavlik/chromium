@@ -50,7 +50,7 @@ GLboolean GL_MAP2_VERTEX_3            g->eval.enable2D[GL_MAP2_VERTEX_3-GL_MAP2_
 GLboolean GL_MAP2_VERTEX_4            g->eval.enable2D[GL_MAP2_VERTEX_4-GL_MAP2_COLOR_4]
 GLboolean GL_PACK_SWAP_BYTES          g->client.pack.swapBytes
 GLboolean GL_PACK_LSB_FIRST           g->client.pack.psLSBFirst
-GLboolean GL_POINT_SMOOTH             g->line.pointSmooth
+GLboolean GL_POINT_SMOOTH             g->point.pointSmooth
 GLboolean GL_POLYGON_SMOOTH           g->polygon.polygonSmooth
 GLboolean GL_POLYGON_STIPPLE          g->polygon.polygonStipple
 GLboolean GL_POLYGON_OFFSET_POINT     g->polygon.polygonOffsetPoint

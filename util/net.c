@@ -23,9 +23,10 @@
 #include "cr_url.h"
 #include "cr_net.h"
 #include "cr_netserver.h"
-#include "cr_bufpool.h"
 #include "cr_environment.h"
 #include "cr_endian.h"
+#include "cr_bufpool.h"
+#include "cr_threads.h"
 #include "net_internals.h"
 
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) /* 2MB */
@@ -37,6 +38,9 @@ static struct {
 	int                  use_gm;      /* count the number of people using GM */
 	int                  num_clients; /* count the number of total clients (unused?) */
 	CRBufferPool         message_list_pool;
+#ifdef CHROMIUM_THREADSAFE
+	CRmutex		     mutex;
+#endif
 } cr_net;
 
 /* This the common interface that every networking type should export in order 
@@ -74,7 +78,6 @@ CRConnection *crNetConnectToServer( char *server,
 
 	CRASSERT( cr_net.initialized );
 
-
 	/* Tear the URL apart into relevant portions. */
 	if ( !crParseURL( server, protocol, hostname, &port, default_port ) )
 	{
@@ -83,7 +86,9 @@ CRConnection *crNetConnectToServer( char *server,
 	crDebug( "Connecting to server %s on port %d, with protocol %s", 
 			hostname, port, protocol );
 
-	conn = (CRConnection *) crAlloc( sizeof(*conn) );
+	conn = (CRConnection *) crCalloc( sizeof(*conn) );
+	if (!conn)
+		return NULL;
 
 	conn->type               = CR_NO_CONNECTION; /* we don't know yet */
 	conn->id                 = 0;                /* Each connection has an id */
@@ -153,25 +158,46 @@ CRConnection *crNetConnectToServer( char *server,
 	return conn;
 }
 
+/* Create a new client */
+void crNetNewClient( CRConnection *conn, CRNetServer *ns )
+{
+	unsigned int len = sizeof(CRMessageNewClient*);
+	CRMessageNewClient msg;
+        
+	CRASSERT( conn );
+
+	if (conn->swap)
+		msg.header.type = (CRMessageType) SWAP32(CR_MESSAGE_NEWCLIENT);
+	else
+		msg.header.type = CR_MESSAGE_NEWCLIENT;
+
+	crNetSend( conn, NULL, &msg, len );
+	crNetServerConnect( ns );
+}
+
+
 /* Accept a client on various interfaces. */
 
-CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned int mtu, int broker )
+CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsigned int mtu, int broker )
 {
 	CRConnection *conn;
 
 	CRASSERT( cr_net.initialized );
 
-	conn = (CRConnection *) crAlloc( sizeof( *conn ) );
+	conn = (CRConnection *) crCalloc( sizeof( *conn ) );
+	if (!conn)
+		return NULL;
+
 	conn->type               = CR_NO_CONNECTION; /* we don't know yet */
 	conn->id                 = 0;                /* Each connection has an id */
-	conn->total_bytes        = 0;                    /* how many bytes have we sent? */
+	conn->total_bytes        = 0;              /* how many bytes have we sent? */
 	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
 	/*conn->hostname           = crStrdup( hostname ); */
 	conn->port               = port;
-	conn->Alloc              = NULL;                 /* How do we allocate buffers to send? */
-	conn->Send               = NULL;                 /* How do we send things? */
-	conn->Free               = NULL;                 /* How do we receive things? */
+	conn->Alloc              = NULL;    /* How do we allocate buffers to send? */
+	conn->Send               = NULL;    /* How do we send things? */
+	conn->Free               = NULL;    /* How do we receive things? */
 	conn->tcp_socket         = 0;
 	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
@@ -272,6 +298,9 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 		cr_net.close       = closeFunc;
 		cr_net.use_gm      = 0;
 		cr_net.num_clients = 0;
+#ifdef CHROMIUM_THREADSAFE
+		crInitMutex(&cr_net.mutex);
+#endif
 		crBufferPoolInit( &cr_net.message_list_pool, 16 );
 
 		cr_net.initialized = 1;
@@ -509,11 +538,17 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 	 * just tack it on to the end of the connection's list of 
 	 * work blocks. */
 	
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&cr_net.mutex);
+#endif
 	msglist = (CRMessageList *) crBufferPoolPop( &cr_net.message_list_pool );
 	if ( msglist == NULL )
 	{
 		msglist = (CRMessageList *) crAlloc( sizeof( *msglist ) );
 	}
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&cr_net.mutex);
+#endif
 	msglist->mesg = (CRMessage*)buf;
 	msglist->len = len;
 	msglist->next = NULL;
@@ -530,6 +565,7 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 
 unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 {
+	/* spin until we're out of work to do */
 	for (;;)
 	{
 		if (conn->messageList != NULL)
@@ -544,13 +580,24 @@ unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 			{
 				conn->messageTail = NULL;
 			}
+#ifdef CHROMIUM_THREADSAFE
+			crLockMutex(&cr_net.mutex);
+#endif
 			crBufferPoolPush( &(cr_net.message_list_pool), temp );
+#ifdef CHROMIUM_THREADSAFE
+			crUnlockMutex(&cr_net.mutex);
+#endif
 			return len;
 		}
-		crNetRecv();
+		/* No work left in the queue, return */
+		if ( !crNetRecv() )
+			return 0;
 	}
-	/* NOTREACHED 
-	 * return 0; */
+
+#ifndef WINDOWS
+	/* silence compiler */
+	return 0;
+#endif
 }
 
 /* Read a line from a socket.  Useful for reading from the mothership. */
@@ -662,6 +709,7 @@ int __copy_of_crMothershipSendString( CRConnection *conn, char *response_buf, ch
 
 	crStrcat( txt, "\n" );
 	crNetSendExact( conn, txt, crStrlen(txt) );
+
 	if (response_buf)
 	{
 		return __copy_of_crMothershipReadResponse( conn, response_buf );

@@ -11,17 +11,60 @@
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_applications.h"
+#include <stdlib.h>
 
 RunQueue *run_queue = NULL;
 
-void crServerAddToRunQueue( int index )
+#if 0
+static int QueueSize( void )
 {
-	CRClient *client = cr_server.clients + index;
+		RunQueue *q = run_queue;
+		RunQueue *qStart = run_queue;
+		int count = 0;
+
+		do {
+				count++;
+				q = q->next;
+		} while (q != qStart);
+		return count;
+}
+#endif
+
+/*
+ * Add another client to the server's list.
+ * XXX remove similar, redundant code in server_config.c
+ */
+void crServerAddNewClient( void )
+{
+	CRClient *newClient = &(cr_server.clients[cr_server.numClients]);
+
+	CRASSERT(cr_server.numClients < MAX_CLIENTS);
+
+	crMemZero(newClient, sizeof(CRClient));
+
+	newClient->number = cr_server.numClients;
+	newClient->spu_id = cr_server.clients[0].spu_id;
+	newClient->conn = crNetAcceptClient( cr_server.protocol, cr_server.tcpip_port, cr_server.mtu, 1 );
+
+	crServerAddToRunQueue( newClient );
+	if (cr_server.numExtents > 0)	{
+		 crServerRecomputeBaseProjection( &(newClient->baseProjection), 0, 0, cr_server.muralWidth, cr_server.muralHeight );
+	}
+
+	cr_server.numClients++;
+}
+
+static int added = 0;
+
+void crServerAddToRunQueue( CRClient *client )
+{
 	RunQueue *q = (RunQueue *) crAlloc( sizeof( *q ) );
 	int i;
 	int x, y, w, h, y_max;
 
-	crDebug( "Adding to the run queue: %d", index );
+	added++;
+
+	crDebug( "Adding to the run queue: client=%p number=%d count=%d", client, client->number, added );
 	q->client = client;
 	q->blocked = 0;
 
@@ -120,7 +163,16 @@ static RunQueue *__getNextClient(void)
 
 			if (all_blocked)
 			{
-				crError( "DEADLOCK!" );
+				crError( "DEADLOCK! (numClients=%d)\n", cr_server.numClients );
+				if (cr_server.numClients < cr_server.maxBarrierCount) {
+					crError("Waiting for more clients!!!\n");
+					while (cr_server.numClients < cr_server.maxBarrierCount) {
+						crNetRecv();
+					}
+				}
+				/*
+				crError( "DEADLOCK! (numClients=%d qSize=%d)", cr_server.numClients, QueueSize() );
+				*/
 			}
 		}
 		/* no one had any work, get some! */
@@ -142,18 +194,19 @@ void crServerSerializeRemoteStreams(void)
 		cr_server.curClient = client;
 		/*sprintf( debug_buf, "     ---- Switching contexts to connection 0x%p ----", client->conn ); 
 		 *cr_server.dispatch.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf ); */
-#if 00
-		crStateMakeCurrent( client->ctx );
-#else
-		if (client->currentCtx)
-			crStateMakeCurrent( client->currentCtx );
-#endif
+
+		crStateMakeCurrent( client->currentCtx );
+
 		for( ;; )
 		{
 			CRMessageOpcodes *msg_opcodes;
 			char *data_ptr;
+			unsigned int len;
 
-			(void) crNetGetMessage( cr_server.curClient->conn, &msg );
+			len = crNetGetMessage( cr_server.curClient->conn, &msg );
+			if (len == 0)
+				break;
+
 			if (msg->header.type != CR_MESSAGE_OPCODES)
 			{
 				crError( "SPU %d sent me CRAP (type=0x%x)", client->spu_id, msg->header.type );
@@ -179,8 +232,18 @@ void crServerSerializeRemoteStreams(void)
 
 int crServerRecv( CRConnection *conn, void *buf, unsigned int len )
 {
-	(void) conn;
-	(void) buf;
-	(void) len;
-	return 0; /* Never handle anything -- let packets queue up per-client instead. */
+	CRMessage *msg = (CRMessage *) buf;
+
+	switch( msg->header.type )
+	{
+		/* Called when using multiple threads */
+		case CR_MESSAGE_NEWCLIENT:
+			crServerAddNewClient();
+			break;
+		default:
+			/*crWarning( "Why is the crserverr getting a message of type 0x%x?", msg->type ); */
+			return 0; /* NOT HANDLED */
+	}
+	(void) len;	
+	return 1; /* HANDLED */
 }

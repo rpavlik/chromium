@@ -42,6 +42,7 @@ crNetInit
 crNetAlloc
 crNetSend
 crNetSendExact
+crNetNewClient
 crNetRecv
 crNetSingleRecv
 crNetReadline
@@ -75,3 +76,15 @@ crStartTimer
 crStopTimer
 crResetTimer
 crTimerTime
+crMemcpy
+crMemcmp
+crMemZero
+crCalloc
+crSetTSD
+crGetTSD
+crInitMutex
+crLockMutex
+crUnlockMutex
+crThreadID
+crInitBarrier
+crWaitBarrier

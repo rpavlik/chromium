@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 	GLfloat v1[3] = { .25, .25, 0 }; 
 	GLfloat v2[3] = { .25, .5, 0 }; 
 	GLfloat v3[3] = { .5, .25, 0 }; 
-	GLint ctx;
+	GLint ctx, win;
 
 	(void) argc;
 	(void) argv;
@@ -32,7 +32,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "CreateContext() failed!\n");
 		exit(1);
 	}
-	spu->dispatch_table.MakeCurrent( NULL, 0, ctx );
+
+	win = spu->dispatch_table.crCreateWindow( NULL, CR_RGB_BIT | CR_DOUBLE_BIT);
+	spu->dispatch_table.MakeCurrent( win, 0, ctx );
 
 	spu->dispatch_table.NewList( 1, GL_COMPILE );
 		spu->dispatch_table.Color3f( 1,1,0 );
@@ -59,6 +61,6 @@ int main(int argc, char *argv[])
 		spu->dispatch_table.LoadIdentity();
 		spu->dispatch_table.Rotatef( angle, 0, 0, 1 );
 		spu->dispatch_table.CallList( 1 );
-		spu->dispatch_table.SwapBuffers();
+		spu->dispatch_table.SwapBuffers( win, 0 );
 	}
 }

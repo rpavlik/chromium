@@ -13,14 +13,13 @@
 #define SET_TSD_ERROR "InitTSD: thread failed to set thread specific data"
 #define GET_TSD_ERROR "InitTSD: failed to get thread specific data"
 
-/* Magic number to determine if a TSDhandle has been initialized */
+/* Magic number to determine if a CRtsd has been initialized */
 #define INIT_MAGIC 0xff8adc98
 
 
-/* Initialize a TSDhandle */
-void crInitTSD(TSDhandle *tsd)
+/* Initialize a CRtsd */
+void crInitTSD(CRtsd *tsd)
 {
-#if 0
 #ifdef WINDOWS
 	tsd->key = TlsAlloc();
 	if (tsd->key == 0xffffffff) {
@@ -32,19 +31,17 @@ void crInitTSD(TSDhandle *tsd)
 		crError("crInitTSD failed!");
 	}
 #endif
-#endif
 	tsd->initMagic = INIT_MAGIC;
 }
 
 
 /* Set thread-specific data */
-void crSetTSD(TSDhandle *tsd, void *ptr)
+void crSetTSD(CRtsd *tsd, void *ptr)
 {
 	if (tsd->initMagic != (int) INIT_MAGIC) {
-		/* initialize this TSDhandle */
+		/* initialize this CRtsd */
 		crInitTSD(tsd);
 	}
-#if 0
 #ifdef WINDOWS
 	if (TlsSetValue(tsd->key, ptr) == 0) {
 		crError("crSetTSD failed!");
@@ -54,24 +51,20 @@ void crSetTSD(TSDhandle *tsd, void *ptr)
 		crError("crSetTSD failed!");
 	}
 #endif
-#endif
 }
 
 
 /* Get thread-specific data */
-void *crGetTSD(TSDhandle *tsd)
+void *crGetTSD(CRtsd *tsd)
 {
 	if (tsd->initMagic != (int) INIT_MAGIC) {
 		crInitTSD(tsd);
 	}
-#if 0
 #ifdef WINDOWS
 	return TlsGetValue(tsd->key);
 #else
 	return pthread_getspecific(tsd->key);
 #endif
-#endif
-	return 0;
 }
 
 
@@ -79,14 +72,86 @@ void *crGetTSD(TSDhandle *tsd)
 /* Return ID of calling thread */
 unsigned long crThreadID(void)
 {
-#if 0
 #ifdef WINDOWS
-	/* XXX return calling thread's ID */
-	return 0;
+	return (unsigned long) GetCurrentThreadId();
 #else
 	return (unsigned long) pthread_self();
 #endif
-#endif
-	return 0;
 }
 
+
+
+#ifdef WINDOWS
+void crInitMutex(CRITICAL_SECTION *mutex)
+{
+	InitializeCriticalSection(mutex);
+}
+#else
+void crInitMutex(CRmutex *mutex)
+{
+	pthread_mutex_init(mutex, NULL);
+}
+#endif
+
+
+#ifdef WINDOWS
+void crLockMutex(CRITICAL_SECTION *mutex)
+{
+	EnterCriticalSection(mutex);
+}
+#else
+void crLockMutex(CRmutex *mutex)
+{
+	pthread_mutex_lock(mutex);
+}
+#endif
+
+
+#ifdef WINDOWS
+void crUnlockMutex(CRITICAL_SECTION *mutex)
+{
+	LeaveCriticalSection(mutex);
+}
+#else
+void crUnlockMutex(CRmutex *mutex)
+{
+	pthread_mutex_unlock(mutex);
+}
+#endif
+
+
+
+void crInitBarrier(CRbarrier *b, unsigned int count)
+{
+#ifdef WINDOWS
+	unsigned int i;
+
+	for (i = 0; i < count; i++)
+		b->hEvents[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
+#else
+	b->count = count;
+	b->waiting = 0;
+	pthread_cond_init( &(b->cond), NULL );
+	pthread_mutex_init( &(b->mutex), NULL );
+#endif
+}
+
+void crWaitBarrier(CRbarrier *b)
+{
+#ifdef WINDOWS
+	DWORD dwEvent;
+
+	dwEvent = WaitForMultipleObjects( b->count, b->hEvents, FALSE, INFINITE );
+#else
+	pthread_mutex_lock( &(b->mutex) );
+	b->waiting++;
+	if (b->waiting < b->count) {
+		pthread_cond_wait( &(b->cond), &(b->mutex) );
+	}
+	else {
+		pthread_cond_broadcast( &(b->cond) );
+		b->waiting = 0;
+	}
+	pthread_mutex_unlock( &(b->mutex) );
+#endif
+}

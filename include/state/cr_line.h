@@ -16,7 +16,6 @@ extern "C" {
 
 typedef struct {
 	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue size[CR_MAX_BITARRAY];
 	GLbitvalue width[CR_MAX_BITARRAY];
 	GLbitvalue stipple[CR_MAX_BITARRAY];
 	GLbitvalue dirty[CR_MAX_BITARRAY];
@@ -25,9 +24,6 @@ typedef struct {
 typedef struct {
 	GLboolean	lineSmooth;
 	GLboolean	lineStipple;
-	GLboolean	pointSmooth;
-
-	GLfloat		pointSize;
 	GLfloat		width;
 	GLushort	pattern;
 	GLint		repeat;

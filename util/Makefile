@@ -28,6 +28,7 @@ FILES = bufpool \
 	net \
 	pixel \
 	string \
+	threads \
 	tcpip \
 	timer \
 	url
@@ -51,9 +52,9 @@ endif
 LDFLAGS += user32.lib ws2_32.lib
 else
 ifeq ($(ARCH),FreeBSD)
-LDFLAGS +=
+LDFLAGS += -lpthread
 else
-LDFLAGS += -ldl
+LDFLAGS += -ldl -lpthread
 endif
 endif
 

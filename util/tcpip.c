@@ -42,6 +42,7 @@ typedef unsigned int socklen_t;
 #include "cr_bufpool.h"
 #include "cr_net.h"
 #include "cr_endian.h"
+#include "cr_threads.h"
 #include "net_internals.h"
 
 #ifdef WINDOWS
@@ -168,6 +169,10 @@ static struct {
 	int                  num_conns;
 	CRConnection         **conns;
 	CRBufferPool         bufpool;
+#ifdef CHROMIUM_THREADSAFE
+	CRmutex              mutex;
+	CRmutex              recvmutex;
+#endif
 	CRNetReceiveFunc     recv;
 	CRNetCloseFunc       close;
 	CRSocket             server_sock;
@@ -411,7 +416,14 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 
 void *crTCPIPAlloc( CRConnection *conn )
 {
-	CRTCPIPBuffer *buf = (CRTCPIPBuffer *) crBufferPoolPop( &cr_tcpip.bufpool );
+	CRTCPIPBuffer *buf;
+
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&cr_tcpip.mutex);
+#endif
+
+	buf = (CRTCPIPBuffer *) crBufferPoolPop( &cr_tcpip.bufpool );
+
 	if ( buf == NULL )
 	{
 		crDebug( "Buffer pool was empty, so I allocated %d bytes", 
@@ -423,6 +435,11 @@ void *crTCPIPAlloc( CRConnection *conn )
 		buf->pad   = 0;
 		buf->allocated = conn->mtu;
 	}
+
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&cr_tcpip.mutex);
+#endif
+
 	return (void *)( buf + 1 );
 }
 
@@ -477,7 +494,13 @@ void crTCPIPSend( CRConnection *conn, void **bufp,
 
 	/* reclaim this pointer for reuse and try to keep the client from
 		 accidentally reusing it directly */
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&cr_tcpip.mutex);
+#endif
 	crBufferPoolPush( &cr_tcpip.bufpool, tcpip_buffer );
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&cr_tcpip.mutex);
+#endif
 	*bufp = NULL;
 }
 
@@ -523,7 +546,13 @@ void crTCPIPFree( CRConnection *conn, void *buf )
 	switch ( tcpip_buffer->kind )
 	{
 		case CRTCPIPMemory:
+#ifdef CHROMIUM_THREADSAFE
+			crLockMutex(&cr_tcpip.mutex);
+#endif
 			crBufferPoolPush( &cr_tcpip.bufpool, tcpip_buffer );
+#ifdef CHROMIUM_THREADSAFE
+			crUnlockMutex(&cr_tcpip.mutex);
+#endif
 			break;
 
 		case CRTCPIPMemoryBig:
@@ -542,29 +571,86 @@ int crTCPIPRecv( void )
 	int    num_ready, max_fd;
 	fd_set read_fds;
 	int i;
+	int msock = -1; /* assumed mothership socket */
+	/* ensure we don't get caught with a new thread connecting */
+	int num_conns = cr_tcpip.num_conns;
+
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&cr_tcpip.recvmutex);
+#endif
 
 	max_fd = 0;
 	FD_ZERO( &read_fds );
-	for ( i = 0; i < cr_tcpip.num_conns; i++ )
+	for ( i = 0; i < num_conns; i++ )
 	{
 		CRConnection *conn = cr_tcpip.conns[i];
+		if (!conn) continue;
 		if ( conn->recv_credits > 0 || conn->type != CR_TCPIP )
 		{
-			/* NOTE: may want to always put the FD in the descriptor
-               set so we'll notice broken connections.  Down in the
-               loop that iterates over the ready sockets only peek
-               (MSG_PEEK flag to recv()?) if the connection isn't
-               enabled. */
+			/* 
+			 * NOTE: may want to always put the FD in the descriptor
+               		 * set so we'll notice broken connections.  Down in the
+               		 * loop that iterates over the ready sockets only peek
+               		 * (MSG_PEEK flag to recv()?) if the connection isn't
+               		 * enabled. 
+			 */
+			struct sockaddr s;
+			socklen_t slen;
+			fd_set only_fd; /* testing single fd */
 			CRSocket sock = conn->tcp_socket;
+
 			if ( (int) sock + 1 > max_fd )
 				max_fd = (int) sock + 1;
 			FD_SET( sock, &read_fds );
+
+			/* KLUDGE CITY......
+			 *
+			 * With threads there's a race condition between
+			 * TCPIPRecv and TCPIPSingleRecv when new
+			 * clients are connecting, thus new mothership
+			 * connections are also being established.
+			 * This code below is to check that we're not
+			 * in a state of accepting the socket without
+			 * connecting to it otherwise we fail with
+			 * ENOTCONN later. But, this is really a side
+			 * effect of this routine catching a motherships
+			 * socket connection and reading data that wasn't
+			 * really meant for us. It was really meant for
+			 * TCPIPSingleRecv. So, if we detect an
+			 * in-progress connection we set the msock id
+			 * so that we can assume the motherships socket
+			 * and skip over them.
+			 */
+			
+			FD_ZERO(&only_fd);
+			FD_SET( sock, &only_fd );
+			slen = sizeof( s );
+			/* Check that the socket is REALLY connected */
+			if (getpeername(sock, &s, &slen) < 0) {
+				FD_CLR(sock, &read_fds);
+				msock = sock;
+			}
+			/* 
+			 * Nope, that last socket we've just caught in
+			 * the connecting phase. We've probably found
+			 * a mothership connection here, and we shouldn't
+			 * process it 
+			 */
+			if ((int)sock == msock+1){
+				printf("CLEARING %d\n",sock);
+				FD_CLR(sock, &read_fds);
+			}
 		}
 	}
 
-	if (!max_fd)
+	if (!max_fd) {
+#ifdef CHROMIUM_THREADSAFE
+		crUnlockMutex(&cr_tcpip.recvmutex);
+#endif
 		return 0;
-	if ( cr_tcpip.num_conns )
+	}
+
+	if ( num_conns )
 	{
 		struct timeval timeout;
 		timeout.tv_sec = 0;
@@ -577,16 +663,24 @@ int crTCPIPRecv( void )
 		num_ready = __crSelect( max_fd, &read_fds, NULL );
 	}
 
-	if ( num_ready == 0 )
+	if ( num_ready == 0 ) {
+#ifdef CHROMIUM_THREADSAFE
+		crUnlockMutex(&cr_tcpip.recvmutex);
+#endif
 		return 0;
+	}
 
-	for ( i = 0; i < cr_tcpip.num_conns; i++ )
+	for ( i = 0; i < num_conns; i++ )
 	{
 		CRTCPIPBuffer *tcpip_buffer;
 		unsigned int   len;
 		int            read_ret;
 		CRConnection  *conn = cr_tcpip.conns[i];
-		CRSocket       sock = conn->tcp_socket;
+		CRSocket       sock;
+
+		if (!conn) continue;
+
+		sock = conn->tcp_socket;
 
 		if ( !FD_ISSET( sock, &read_fds ) )
 			continue;
@@ -659,6 +753,10 @@ int crTCPIPRecv( void )
 		}
 	}
 
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&cr_tcpip.recvmutex);
+#endif
+
 	return 1;
 }
 
@@ -707,6 +805,10 @@ void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned 
 	
 	cr_tcpip.server_sock    = -1;
 
+#ifdef CHROMIUM_THREADSAFE
+	crInitMutex(&cr_tcpip.mutex);
+	crInitMutex(&cr_tcpip.recvmutex);
+#endif
 	crBufferPoolInit( &cr_tcpip.bufpool, 16 );
 
 	cr_tcpip.recv = recvFunc;
@@ -805,13 +907,12 @@ void crTCPIPDoDisconnect( CRConnection *conn )
 	crCloseSocket( conn->tcp_socket );
 	conn->tcp_socket = 0;
 	conn->type = CR_NO_CONNECTION;
-	memcpy( cr_tcpip.conns + conn->index, cr_tcpip.conns + conn->index+1, 
-		(cr_tcpip.num_conns - conn->index - 1)*sizeof(*(cr_tcpip.conns)) );
-	cr_tcpip.num_conns--;
+	cr_tcpip.conns[conn->index] = NULL;
 }
 
 void crTCPIPConnection( CRConnection *conn )
 {
+	int i, found = 0;
 	int n_bytes;
 
 	CRASSERT( cr_tcpip.initialized );
@@ -830,10 +931,22 @@ void crTCPIPConnection( CRConnection *conn )
 	conn->index = cr_tcpip.num_conns;
 	conn->sizeof_buffer_header = sizeof( CRTCPIPBuffer );
 
-	n_bytes = ( cr_tcpip.num_conns + 1 ) * sizeof(*cr_tcpip.conns);
-	crRealloc( (void **) &cr_tcpip.conns, n_bytes );
-
-	cr_tcpip.conns[cr_tcpip.num_conns++] = conn;
+	/* Find a free slot */
+	for (i = 0; i < cr_tcpip.num_conns; i++) {
+		if (cr_tcpip.conns[i] == NULL) {
+			conn->index = i;
+			cr_tcpip.conns[i] = conn;
+			found = 1;
+			break;
+		}
+	}
+	
+	/* Realloc connection stack if we couldn't find a free slot */
+	if (found == 0) {
+		n_bytes = ( cr_tcpip.num_conns + 1 ) * sizeof(*cr_tcpip.conns);
+		crRealloc( (void **) &cr_tcpip.conns, n_bytes );
+		cr_tcpip.conns[cr_tcpip.num_conns++] = conn;
+	}
 }
 
 int crGetHostname( char *buf, unsigned int len )

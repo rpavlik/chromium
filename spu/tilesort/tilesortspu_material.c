@@ -10,8 +10,9 @@
 
 void TILESORTSPU_APIENTRY tilesortspu_Materiali(GLenum face, GLenum mode, GLint param)
 {
+	GET_CONTEXT(ctx);
 	crStateMateriali( face, mode, param );
-	if (tilesort_spu.currentContext->current.inBeginEnd)
+	if (ctx->current.inBeginEnd)
 	{
 		if (tilesort_spu.swap)
 		{
@@ -26,8 +27,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Materiali(GLenum face, GLenum mode, GLint 
 
 void TILESORTSPU_APIENTRY tilesortspu_Materialf(GLenum face, GLenum mode, GLfloat param)
 {
+	GET_CONTEXT(ctx);
 	crStateMaterialf( face, mode, param );
-	if (tilesort_spu.currentContext->current.inBeginEnd)
+	if (ctx->current.inBeginEnd)
 	{
 		if (tilesort_spu.swap)
 		{
@@ -42,8 +44,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Materialf(GLenum face, GLenum mode, GLfloa
 
 void TILESORTSPU_APIENTRY tilesortspu_Materialiv(GLenum face, GLenum mode, const GLint *param)
 {
+	GET_CONTEXT(ctx);
 	crStateMaterialiv( face, mode, param );
-	if (tilesort_spu.currentContext->current.inBeginEnd)
+	if (ctx->current.inBeginEnd)
 	{
 		if (tilesort_spu.swap)
 		{
@@ -58,8 +61,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Materialiv(GLenum face, GLenum mode, const
 
 void TILESORTSPU_APIENTRY tilesortspu_Materialfv(GLenum face, GLenum mode, const GLfloat *param)
 {
+	GET_CONTEXT(ctx);
 	crStateMaterialfv( face, mode, param );
-	if (tilesort_spu.currentContext->current.inBeginEnd)
+	if (ctx->current.inBeginEnd)
 	{
 		if (tilesort_spu.swap)
 		{

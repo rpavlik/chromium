@@ -23,6 +23,7 @@ void crServerClose( unsigned int id )
 int main( int argc, char *argv[] )
 {
 	int i;
+	unsigned int j;
 	char *mothership = NULL;
 	for (i = 1 ; i < argc ; i++)
 	{
@@ -40,15 +41,15 @@ int main( int argc, char *argv[] )
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
 	crServerGatherConfiguration(mothership);
-	for (i = 0 ; i < cr_server.numClients ; i++)
+	for (j = 0 ; j < cr_server.numClients ; j++)
 	{
-		crServerAddToRunQueue( i );
+		crServerAddToRunQueue( &cr_server.clients[j] );
 	}
 	if (cr_server.numExtents > 0)
 	{
-		for ( i = 0 ; i < cr_server.numClients ; i++)
+		for ( j = 0 ; j < cr_server.numClients ; j++)
 		{
-			crServerRecomputeBaseProjection( &(cr_server.clients[i].baseProjection), 0, 0, cr_server.muralWidth, cr_server.muralHeight );
+			crServerRecomputeBaseProjection( &(cr_server.clients[j].baseProjection), 0, 0, cr_server.muralWidth, cr_server.muralHeight );
 		}
 		cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
 		cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.clients[0].baseProjection) );

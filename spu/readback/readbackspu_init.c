@@ -5,6 +5,7 @@
  */
 
 #include "cr_spu.h"
+#include "cr_mem.h"
 #include "readbackspu.h"
 #include <stdio.h>
 
@@ -16,15 +17,25 @@ SPUFunctions readback_functions = {
 	readback_table /* THE ACTUAL FUNCTIONS */
 };
 
+ReadbackSPU readback_spu;
+
+#ifdef CHROMIUM_THREADSAFE
+CRtsd _ReadbackTSD;
+#endif
+
 SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
-
 	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
+#ifdef CHROMIUM_THREADSAFE
+	crDebug("Readback SPU: thread-safe");
+#endif
+
+	crMemZero(&readback_spu, sizeof(readback_spu));
 	readback_spu.id = id;
 	readback_spu.has_child = 0;
 	if (child)
@@ -35,7 +46,7 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *super,
 	}
 	crSPUInitDispatchTable( &(readback_spu.super) );
 	crSPUCopyDispatchTable( &(readback_spu.super), &(super->dispatch_table) );
-	readbackspuGatherConfiguration();
+	readbackspuGatherConfiguration( &readback_spu );
 
 	return &readback_functions;
 }

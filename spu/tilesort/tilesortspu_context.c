@@ -9,99 +9,183 @@
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_packfunctions.h"
+#include "cr_string.h"
 
+#define MAGIC_OFFSET 8000
 
-
-GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( void *display, GLint visual )
+/*
+ * Initialize per-thread data.
+ */
+void tilesortspuInitThreadPacking( ThreadInfo *thread )
 {
-	static GLboolean firstCall = GL_TRUE;
-	int i, ctxPos = -1;
+	int i;
 
-	crDebug( "In tilesortspu_CreateContext" );
-	/*
-	printf("***** %s @ %p(%p, %d)\n", __FUNCTION__, &tilesortspu_CreateContext, display, visual);
-	*/
+	/* We need to mess with the pack size of the geometry buffer, since we 
+	 * may be using BoundsInfo packes, etc, etc.  This is yucky. */
+	thread->geom_pack_size = tilesort_spu.MTU;
+	thread->geom_pack_size -= sizeof( CRMessageOpcodes );
+	thread->geom_pack_size -= 4;
+	
+	/* We need to shrink everything to fit in the DATA part of the server's send 
+	 * buffer since we're going to always send geometry as a BOUNDS_INFO 
+	 * packet. */
+	thread->geom_pack_size = (thread->geom_pack_size * 4) / 5;
+	thread->geom_pack_size -= (24 + 1); /* 24 is the size of the BoundsInfo packet */
 
-#ifdef WINDOWS
-	tilesort_spu.client_hdc = (HDC) display;
-	tilesort_spu.client_hwnd = NULL;
-#else
-	tilesort_spu.glx_display = (Display *) display;
-        /*
-	tilesort_spu.glx_drawable = (Drawable) visual;
-	tilesort_spu.glx_drawable = 0;
-        */
+	thread->pinchState.numRestore = 0;
+	thread->pinchState.wind = 0;
+	thread->pinchState.isLoop = 0;
+
+	thread->packer = crPackNewContext( tilesort_spu.swap );
+	if (!thread->packer)
+		crError("tilesortspuInitThread failed!");
+
+	crPackSetContext( thread->packer ); /* sets the packer's per-thread context */
+	crPackInitBuffer( &(thread->geometry_pack),
+										crAlloc( thread->geom_pack_size ), 
+										thread->geom_pack_size, END_FLUFF );
+	thread->geometry_pack.geometry_only = GL_TRUE;
+	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+	crPackFlushFunc( thread->packer, tilesortspuFlush_callback );
+	crPackFlushArg( thread->packer, (void *) thread );
+	crPackSendHugeFunc( thread->packer, tilesortspuHuge );
+	crPackResetBBOX( thread->packer );
+
+	CRASSERT(thread->net[0].conn);
+	CRASSERT(tilesort_spu.num_servers > 0);
+
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+		crPackInitBuffer( &(thread->pack[i]), crNetAlloc( thread->net[i].conn ),
+											thread->net[i].buffer_size, 0 );
+
+
+	thread->currentContext = NULL;
+	thread->currentContextIndex = -1;
+}
+
+/*
+ * Allocate a new ThreadInfo structure, setup a connection to the
+ * server, allocate/init a packer context, bind this ThreadInfo to
+ * the calling thread with crSetTSD().
+ */
+#ifdef CHROMIUM_THREADSAFE
+ThreadInfo *tilesortspuNewThread( GLint slot )
+{
+	ThreadInfo *thread;
+	int i;
+
+	crLockMutex(&_TileSortMutex);
+
+	CRASSERT(tilesort_spu.numThreads > 0);
+	CRASSERT(tilesort_spu.numThreads < MAX_THREADS);
+	thread = &(tilesort_spu.thread[tilesort_spu.numThreads]);
+	tilesort_spu.numThreads++;
+
+	thread->net = (CRNetServer *) crCalloc( tilesort_spu.num_servers * sizeof(CRNetServer) );
+	thread->pack = (CRPackBuffer *) crCalloc( tilesort_spu.num_servers * sizeof(CRPackBuffer) );
+
+	for (i = 0; i < tilesort_spu.num_servers; i++) {
+		thread->net[i].name = crStrdup( tilesort_spu.thread[0].net[i].name );
+		thread->net[i].buffer_size = tilesort_spu.MTU;
+		/* Establish new connection to server[i] */
+		crNetNewClient( tilesort_spu.thread[0].net[i].conn, &(thread->net[i]));
+	}
+
+	tilesortspuInitThreadPacking( thread );
+
+	crSetTSD(&_ThreadTSD, thread);
+
+	crUnlockMutex(&_TileSortMutex);
+
+	return thread;
+}
 #endif
 
+
+GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint visual )
+{
+	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	int i, slot;
+
+	crDebug( "In tilesortspu_CreateContext" );
+
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&_TileSortMutex);
+#endif
+
+#ifdef WINDOWS
+	crDebug("Tilesort SPU: HDC = %d\n", atoi(dpyName));
+	tilesort_spu.client_hdc = (HDC) atoi(dpyName);
+	tilesort_spu.client_hwnd = NULL;
+#else
+	crDebug("Tilesort SPU: Displayname = %s\n", dpyName);
+	tilesort_spu.glx_display = XOpenDisplay(dpyName);
+#endif
 
 	/*
 	 * Find empty position in context[] array
 	 */
-	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
-		if (tilesort_spu.context[i] == NULL) {
-			ctxPos = i;
+	for (slot = 0; slot < CR_MAX_CONTEXTS; slot++) {
+		if (tilesort_spu.context[slot].State == NULL) {
 			break;
 		}
 	}
-	if (ctxPos < 0) {
-		crWarning( "tilesortspuCreateContext: No free contexts\n");
-		return 0;  /* Ran out of contexts */
+	if (slot == CR_MAX_CONTEXTS) {
+#ifdef CHROMIUM_THREADSAFE
+		crUnlockMutex(&_TileSortMutex);
+#endif
+		return 0;  /* too many contexts */
+	}
+	if (slot == tilesort_spu.numContexts) {
+		tilesort_spu.numContexts++;
 	}
 
-
-	/* The GL limits were computed in tilesortspuGatherConfiguration() */
-	tilesort_spu.context[ctxPos] = crStateCreateContext(&tilesort_spu.limits);
-
-	if (!tilesort_spu.context[ctxPos]) {
+	/*
+	 * Allocate the state tracker state for this context.
+	 * The GL limits were computed in tilesortspuGatherConfiguration().
+	 */
+	tilesort_spu.context[slot].State = crStateCreateContext( &tilesort_spu.limits );
+	if (!tilesort_spu.context[slot].State) {
 		crWarning( "tilesortspuCreateContext: crStateCreateContext() failed\n");
+#ifdef CHROMIUM_THREADSAFE
+		crUnlockMutex(&_TileSortMutex);
+#endif
 		return 0;  /* out of memory? */
 	}
 
-	/* Fix up viewport & scissor */
-	tilesort_spu.context[ctxPos]->viewport.viewportW = tilesort_spu.muralWidth;
-	tilesort_spu.context[ctxPos]->viewport.viewportH = tilesort_spu.muralHeight;
-	tilesort_spu.context[ctxPos]->viewport.scissorW = tilesort_spu.muralWidth;
-	tilesort_spu.context[ctxPos]->viewport.scissorH = tilesort_spu.muralHeight;
+	/* Initialize viewport & scissor */
+	tilesort_spu.context[slot].State->viewport.viewportW = tilesort_spu.muralWidth;
+	tilesort_spu.context[slot].State->viewport.viewportH = tilesort_spu.muralHeight;
+	tilesort_spu.context[slot].State->viewport.scissorW = tilesort_spu.muralWidth;
+	tilesort_spu.context[slot].State->viewport.scissorH = tilesort_spu.muralHeight;
 
-	if (firstCall) {
-		crPackInit( tilesort_spu.swap );
-		crPackInitBuffer( &(tilesort_spu.geometry_pack),
-						  crAlloc( tilesort_spu.geom_pack_size ), 
-						  tilesort_spu.geom_pack_size, END_FLUFF );
-	}
-	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
-	crPackFlushFunc( tilesortspuFlush );
-	crPackFlushArg( tilesort_spu.context[ctxPos] );
-	crPackSendHugeFunc( tilesortspuHuge );
-	crPackResetBBOX();  /* XXX move into MakeCurrent() ? */
+	/* Set the Current pointers now...., then reset vtx_count below... */
+	crStateSetCurrentPointers( tilesort_spu.context[slot].State,
+						 &(thread0->packer->current) );
 
-	crStateSetCurrentPointers( tilesort_spu.context[ctxPos],
-							   &(cr_packer_globals.current) );
-	if (tilesort_spu.context[ctxPos]->current.current)
-		tilesort_spu.context[ctxPos]->current.current->vtx_count = 0;
-
+	/* Set the vtx_count to nil, this MUST come after the
+	 * crStateSetCurrentPointers above... */
+	tilesort_spu.context[slot].State->current.current->vtx_count = 0;
 
 	/*
-	 * Allocate a crStateContext for each server and initialize its buffer.
+	 * Allocate a CRContext for each server and initialize its buffer.
 	 * This was originally in tilesortSPUInit()
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
-		server->context[ctxPos] = crStateCreateContext( &tilesort_spu.limits );
-		server->context[ctxPos]->current.rasterPos.x =
-			server->context[ctxPos]->current.rasterPosPre.x =
+		server->context[slot] = crStateCreateContext( &tilesort_spu.limits );
+		server->context[slot]->current.rasterPos.x =
+			server->context[slot]->current.rasterPosPre.x =
 			(float) server->x1[0];
-		server->context[ctxPos]->current.rasterPos.y =
-			server->context[ctxPos]->current.rasterPosPre.y =
+		server->context[slot]->current.rasterPos.y =
+			server->context[slot]->current.rasterPosPre.y =
 			(float) server->y1[0];
-		if (firstCall)
-			crPackInitBuffer( &(server->pack), crNetAlloc( server->net.conn ),
-						  server->net.buffer_size, 0 );
 	}
 
 	/*
-	 * Send a CreateContext msg to each server
+	 * Send a CreateContext msg to each server.
+	 * We send it via the zero-th thread's server connections.
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
@@ -109,17 +193,17 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( void *display, GLint visua
 		int writeback = tilesort_spu.num_servers ? 1 : 0;
 		GLint return_val = 0;
 
-		crPackSetBuffer( &(server->pack) );
+		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
 
 		if (tilesort_spu.swap)
-			crPackCreateContextSWAP( display, visual, &return_val, &writeback);
+			crPackCreateContextSWAP( dpyName, visual, &return_val, &writeback);
 		else
-			crPackCreateContext( display, visual, &return_val, &writeback );
+			crPackCreateContext( dpyName, visual, &return_val, &writeback );
 
-		crPackGetBuffer( &(server->pack) );
+		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
 
 		/* Flush buffer (send to server) */
-		tilesortspuSendServerBuffer( server );
+		tilesortspuSendServerBuffer( i );
 
 		/* Get return value */
 		while (writeback) {
@@ -132,131 +216,172 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( void *display, GLint visua
 		if (!return_val)
 			return 0;  /* something went wrong on the server */
 
-		server->serverCtx[ctxPos] = return_val;
+		server->serverCtx[slot] = return_val;
 	}
 
 	/*
-	printf("***** %s() returned %d\n", __FUNCTION__, 8000 + ctxPos);
+	printf("***** %s() returned %d\n", __FUNCTION__, MAGIC_OFFSET + ctxPos);
 	*/
 
-	firstCall = GL_FALSE;
-
 	/* The default pack buffer */
-	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
+	crPackSetBuffer( thread0->packer, &(thread0->geometry_pack) );
 
-	return 8000 + ctxPos;   /* magic number */
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&_TileSortMutex);
+#endif
+
+	return MAGIC_OFFSET + slot;
 }
 
 
 
-void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( void *display, GLint drawable, GLint ctx )
+void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 {
-	int i, ctxPos = ctx - 8000;   /* see magic number above */
-
-	CRASSERT(ctxPos >= 0);
-	CRASSERT(ctxPos < CR_MAX_CONTEXTS);
-	CRASSERT(tilesort_spu.context[ctxPos]);
+	GET_THREAD(thread);
+	ContextInfo *newCtx;
+	int i, ctxPos = ctx - MAGIC_OFFSET;
 
 	/*
 	printf("***** %s @ %p(%p, %d, %d)  ctxPos=%d\n", __FUNCTION__, &tilesortspu_MakeCurrent, display, drawable, ctx, ctxPos);
 	*/
 
-#ifdef WINDOWS
-	/* XXX FIX */
-#else
-	tilesort_spu.glx_drawable = (Drawable) drawable;
+#ifdef CHROMIUM_THREADSAFE
+	if (!thread)
+		thread = tilesortspuNewThread( ctxPos );
+#endif
+	CRASSERT(thread);
+
+#ifndef WINDOWS
+	tilesort_spu.glx_drawable = (Drawable) nativeWindow;
 #endif
 
-	if (tilesort_spu.currentContext)
-		tilesortspuFlush( tilesort_spu.currentContext );
+	if (thread->currentContext)
+		tilesortspuFlush( thread );
 
-	/* The default buffer */
-	crPackGetBuffer( &(tilesort_spu.geometry_pack) );
+	if (ctx) {
+		CRASSERT(ctxPos >= 0);
+		CRASSERT(ctxPos < tilesort_spu.numContexts);
+		CRASSERT(tilesort_spu.context[ctxPos].State);
 
+		newCtx = &tilesort_spu.context[ctxPos];
 
-	crStateMakeCurrent( tilesort_spu.context[ctxPos] );
-	crStateFlushArg( tilesort_spu.context[ctxPos] );
+		thread->currentContext = newCtx;
+		thread->currentContextIndex = ctxPos;
 
-	/* set tilesort spu current context */
-	tilesort_spu.currentContext = tilesort_spu.context[ctxPos];
+		crStateSetCurrentPointers( tilesort_spu.context[ctxPos].State,
+															 &(thread->packer->current) );
+	}
+	else {
+		thread->currentContext = NULL;
+		thread->currentContextIndex = -1;
+	}
+
+	/* Get the default buffer */
+	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+
+	if (ctx) {
+		crStateSetCurrent( tilesort_spu.context[ctxPos].State );
+		crStateFlushArg( (void *) thread );
+	}
+	else {
+		crStateSetCurrent( NULL );
+		crStateFlushArg( NULL );
+	}
 
 	/*
-	 * Send MakeCurrent msg to each server
+	 * Send MakeCurrent msg to each server using thread 0's server connections.
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
 		int serverCtx;
 
-		/* set local currentContext pointer */
-		CRASSERT(server->context[ctxPos]);
-		CRASSERT(server->serverCtx[ctxPos]);
-		server->currentContext = server->context[ctxPos];
-
 		/* Now send MakeCurrent to the i-th server */
-		crPackSetBuffer( &(server->pack) );
+		crPackSetBuffer( thread->packer, &(thread->pack[i]) );
 
-		serverCtx = server->serverCtx[ctxPos];
-		if (tilesort_spu.swap)
-			crPackMakeCurrentSWAP( display, drawable, serverCtx );
-		else
-			crPackMakeCurrent( display, drawable, serverCtx );
+		if (ctx) {
+			 CRASSERT(server->context[ctxPos]);
+			 CRASSERT(server->serverCtx[ctxPos]);
 
-		crPackGetBuffer( &(server->pack) );
+			 serverCtx = server->serverCtx[ctxPos];
 
+			 if (tilesort_spu.swap)
+				 crPackMakeCurrentSWAP( window, nativeWindow, serverCtx );
+			 else
+				 crPackMakeCurrent( window, nativeWindow, serverCtx );
+		}
+		else {
+			if (tilesort_spu.swap)
+				crPackMakeCurrentSWAP( -1, 0, -1 );
+			else
+				crPackMakeCurrent( -1, 0, -1 );
+		}
+
+		crPackGetBuffer( thread->packer, &(thread->pack[i]) );
 	}
 
-	/* The default buffer */
-	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
+	/* Restore the default buffer */
+	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 }
 
 
 
-void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( void *display, GLint ctx )
+void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 {
-	int i, ctxPos = ctx - 8000;  /* see magic number above */
+	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	GET_THREAD(thread);
+	int i, ctxPos = ctx - MAGIC_OFFSET;
 
 	CRASSERT(ctxPos >= 0);
 	CRASSERT(ctxPos < CR_MAX_CONTEXTS);
 
-
-	if (!tilesort_spu.context[ctxPos])
+	if (!tilesort_spu.context[ctxPos].State)
 		return;
 
-	/* The default buffer */
-	crPackGetBuffer( &(tilesort_spu.geometry_pack) );
+	if (thread->currentContext == &(tilesort_spu.context[ctxPos])) {
+		/* flush the current context */
+		tilesortspuFlush(thread);
+		/* unbind */
+		crStateSetCurrent(NULL);
+	}
 
-	/* set tilesort spu current context */
-	if (tilesort_spu.currentContext == tilesort_spu.context[ctxPos])
-		tilesort_spu.currentContext = NULL;
+	/* The default buffer */
+	crPackGetBuffer( thread0->packer, &(thread0->geometry_pack) );
 
 	/*
-	 * Send DestroyCurrent msg to each server
+	 * Send DestroyCurrent msg to each server using zero-th thread's connection.
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
 		int serverCtx;
 
-		crPackSetBuffer( &(server->pack) );
+		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
 
 		serverCtx = server->serverCtx[ctxPos];
 		if (tilesort_spu.swap)
-			crPackDestroyContextSWAP( display, serverCtx );
+			crPackDestroyContextSWAP( serverCtx );
 		else
-			crPackDestroyContext( display, serverCtx );
+			crPackDestroyContext( serverCtx );
 
-		crPackGetBuffer( &(server->pack) );
+		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
 
 		server->serverCtx[ctxPos] = 0;
 		crStateDestroyContext(server->context[ctxPos]);
 		server->context[ctxPos] = NULL;
 	}
 
+	/* Check if we're deleting the currently bound context */
+	if (thread->currentContext == &(tilesort_spu.context[ctxPos])) {
+		/* unbind */
+		thread->currentContext = NULL;
+		thread->currentContextIndex = -1;
+	}
+
 	/* Destroy the tilesort state context */
-	crStateDestroyContext( tilesort_spu.context[ctxPos] );
-	tilesort_spu.context[ctxPos] = NULL;
+	crStateDestroyContext( tilesort_spu.context[ctxPos].State );
+	tilesort_spu.context[ctxPos].State = NULL;
 
 	/* The default buffer */
-	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
+	crPackSetBuffer( thread0->packer, &(thread->geometry_pack) );
 }

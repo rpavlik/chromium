@@ -181,9 +181,23 @@ void crServerRecomputeBaseProjection(GLmatrix *base, GLint x, GLint y, GLint w, 
 	 * full muralsize of 0, 0, muralWidth, muralHeight
 	 */
 	p.x1 = ((GLfloat) (cr_server.x1[cr_server.curExtent]) - x) / (w);
-	p.x2 = ((GLfloat) (cr_server.x2[cr_server.curExtent]) - x) / (w);
 	p.y1 = ((GLfloat) (cr_server.y1[cr_server.curExtent]) - y) / (h);
+	p.x2 = ((GLfloat) (cr_server.x2[cr_server.curExtent]) - x) / (w);
 	p.y2 = ((GLfloat) (cr_server.y2[cr_server.curExtent]) - y) / (h);
+
+	/* XXX This gets real kludgy.
+	 * It's tricky when viewport's cross server boundaries
+	 * and we can only hope for the best.
+	 */
+	if (p.x1 < 0.0) { 
+		p.x1 = 0.0;
+		if (p.x2 > 1.0) p.x2 = 1.0;
+	}
+
+	if (p.y1 < 0.0) {
+		p.y1 = 0.0; 
+		if (p.y2 > 1.0) p.y2 = 1.0;
+	}
 
 	/* Rescale [0,1] -> [-1,1] */
 	p.x1 = p.x1*2.0f - 1.0f;

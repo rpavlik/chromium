@@ -11,18 +11,20 @@
 
 void TILESORTSPU_APIENTRY tilesortspu_ArrayElement( GLint index )
 {
+	GET_CONTEXT(ctx);
 	if (tilesort_spu.swap)
 	{
-		crPackArrayElementSWAP( index, &(tilesort_spu.currentContext->client) );
+		crPackArrayElementSWAP( index, &(ctx->client) );
 	}
 	else
 	{
-		crPackArrayElement( index, &(tilesort_spu.currentContext->client) );
+		crPackArrayElement( index, &(ctx->client) );
 	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsizei count )
 {
+	GET_CONTEXT(ctx);
 	int i;
 
 	if (count < 0)
@@ -35,7 +37,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsi
 		crError("tilesortspu_DrawElements called with invalid mode: %d", mode);
 	}
 
-	if (tilesort_spu.currentContext->current.inBeginEnd)
+	if (ctx->current.inBeginEnd)
 	{
 		crError( "tilesortspu_DrawElements called in a Begin/End" );
 	}
@@ -45,14 +47,14 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsi
 	{
 		for (i=0; i<count; i++) 
 		{
-			crPackArrayElementSWAP(first++, &(tilesort_spu.currentContext->client));
+			crPackArrayElementSWAP(first++, &(ctx->client));
 		}
 	}
 	else
 	{
 		for (i=0; i<count; i++) 
 		{
-			crPackArrayElement(first++, &(tilesort_spu.currentContext->client));
+			crPackArrayElement(first++, &(ctx->client));
 		}
 	}
 	tilesort_spu.self.End();
@@ -60,6 +62,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsi
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
 {
+	GET_CONTEXT(ctx);
 	int i;
 	GLubyte *p = (GLubyte *)indices;
 
@@ -86,14 +89,14 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 		{
 			for (i=0; i<count; i++)
 			{
-				crPackArrayElementSWAP((GLint) *p++, &(tilesort_spu.currentContext->client));
+				crPackArrayElementSWAP((GLint) *p++, &(ctx->client));
 			}
 		}
 		else
 		{
 			for (i=0; i<count; i++)
 			{
-				crPackArrayElement((GLint) *p++, &(tilesort_spu.currentContext->client));
+				crPackArrayElement((GLint) *p++, &(ctx->client));
 			}
 		}
 		break;
@@ -102,7 +105,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 		{
 			for (i=0; i<count; i++) 
 			{
-				crPackArrayElementSWAP((GLint) * (GLushort *) p, &(tilesort_spu.currentContext->client));
+				crPackArrayElementSWAP((GLint) * (GLushort *) p, &(ctx->client));
 				p+=sizeof (GLushort);
 			}
 		}
@@ -110,7 +113,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 		{
 			for (i=0; i<count; i++) 
 			{
-				crPackArrayElement((GLint) * (GLushort *) p, &(tilesort_spu.currentContext->client));
+				crPackArrayElement((GLint) * (GLushort *) p, &(ctx->client));
 				p+=sizeof (GLushort);
 			}
 		}
@@ -120,7 +123,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 		{
 			for (i=0; i<count; i++) 
 			{
-				crPackArrayElementSWAP((GLint) * (GLuint *) p, &(tilesort_spu.currentContext->client));
+				crPackArrayElementSWAP((GLint) * (GLuint *) p, &(ctx->client));
 				p+=sizeof (GLuint);
 			}
 		}
@@ -128,7 +131,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 		{
 			for (i=0; i<count; i++) 
 			{
-				crPackArrayElement((GLint) * (GLuint *) p, &(tilesort_spu.currentContext->client));
+				crPackArrayElement((GLint) * (GLuint *) p, &(ctx->client));
 				p+=sizeof (GLuint);
 			}
 		}
@@ -139,7 +142,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 	}
 	tilesort_spu.self.End();
 
-	if(tilesort_spu.currentContext->current.inBeginEnd)
+	if(ctx->current.inBeginEnd)
 	{
 		crError( "tilesortspu_DrawElements called in a Begin/End" );
 	}
@@ -147,6 +150,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
 {
+	GET_CONTEXT(ctx);
 	int i;
 	GLubyte *p = (GLubyte *)indices;
 
@@ -173,14 +177,14 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 		{
 			for (i=start; i<count; i++)
 			{
-				crPackArrayElementSWAP((GLint) *p++, &(tilesort_spu.currentContext->client));
+				crPackArrayElementSWAP((GLint) *p++, &(ctx->client));
 			}
 		}
 		else
 		{
 			for (i=start; i<count; i++)
 			{
-				crPackArrayElement((GLint) *p++, &(tilesort_spu.currentContext->client));
+				crPackArrayElement((GLint) *p++, &(ctx->client));
 			}
 		}
 		break;
@@ -189,7 +193,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 		{
 			for (i=start; i<count; i++) 
 			{
-				crPackArrayElementSWAP((GLint) * (GLushort *) p, &(tilesort_spu.currentContext->client));
+				crPackArrayElementSWAP((GLint) * (GLushort *) p, &(ctx->client));
 				p+=sizeof (GLushort);
 			}
 		}
@@ -197,7 +201,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 		{
 			for (i=start; i<count; i++) 
 			{
-				crPackArrayElement((GLint) * (GLushort *) p, &(tilesort_spu.currentContext->client));
+				crPackArrayElement((GLint) * (GLushort *) p, &(ctx->client));
 				p+=sizeof (GLushort);
 			}
 		}
@@ -207,7 +211,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 		{
 			for (i=start; i<count; i++) 
 			{
-				crPackArrayElementSWAP((GLint) * (GLuint *) p, &(tilesort_spu.currentContext->client));
+				crPackArrayElementSWAP((GLint) * (GLuint *) p, &(ctx->client));
 				p+=sizeof (GLuint);
 			}
 		}
@@ -215,7 +219,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 		{
 			for (i=start; i<count; i++) 
 			{
-				crPackArrayElement((GLint) * (GLuint *) p, &(tilesort_spu.currentContext->client));
+				crPackArrayElement((GLint) * (GLuint *) p, &(ctx->client));
 				p+=sizeof (GLuint);
 			}
 		}
@@ -226,7 +230,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 	}
 	tilesort_spu.self.End();
 
-	if(tilesort_spu.currentContext->current.inBeginEnd)
+	if(ctx->current.inBeginEnd)
 	{
 		crError( "tilesortspu_DrawRangeElements called in a Begin/End" );
 	}

@@ -48,9 +48,9 @@ void crServerReturnValue( const void *payload, unsigned int payload_len );
 void crServerWriteback(void);
 int crServerRecv( CRConnection *conn, void *buf, unsigned int len );
 void crServerSerializeRemoteStreams(void);
-void crServerAddToRunQueue( int index );
+void crServerAddToRunQueue( CRClient *client );
 
-void crServerRecomputeBaseProjection(GLmatrix *base, int x, int y, int w, int h);
+void crServerRecomputeBaseProjection(GLmatrix *base, GLint x, GLint y, GLint w, GLint h);
 void crServerApplyBaseProjection(void);
 
 void crServerSetOutputBounds( CRContext *ctx, const GLrecti *outputwindow, const GLrecti *imagespace, const GLrecti *imagewindow );

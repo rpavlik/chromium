@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include "cr_error.h"
 #include "cr_version.h"
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 
 

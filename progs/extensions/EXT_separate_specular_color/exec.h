@@ -30,7 +30,8 @@
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include <stdio.h>
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 
 #ifndef GLX_ARB_get_proc_address
 #ifdef __cplusplus

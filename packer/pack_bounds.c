@@ -12,10 +12,11 @@
 
 void PACK_APIENTRY crPackBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len, GLint num_opcodes )
 {
+	GET_PACKER_CONTEXT(pc);
 	/* Don't get the buffered_ptr here because we've already 
 	 * verified taht there's enough space for everything. */
 
-	unsigned char *data_ptr = cr_packer_globals.buffer.data_current;
+	unsigned char *data_ptr = pc->buffer.data_current;
 	int len_aligned     = ( len + 0x3 ) & ~0x3;
 	int total_len = 24 + len_aligned;
 
@@ -40,6 +41,6 @@ void PACK_APIENTRY crPackBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len
 
 	memcpy( data_ptr, payload, len );
 
-	WRITE_OPCODE( CR_BOUNDSINFO_OPCODE );
-	cr_packer_globals.buffer.data_current += 24 + len_aligned;
+	WRITE_OPCODE( pc, CR_BOUNDSINFO_OPCODE );
+	pc->buffer.data_current += 24 + len_aligned;
 }

@@ -94,7 +94,7 @@ Render(Display *dpy, Window win, int numCtx, GLXContext context[],
 
       }
       glXSwapBuffers(dpy, win);
-      sleep(1);
+      sleep(1);  /* just slow things down a bit */
 
 #if 0  /* just for testing */
       if (frame == 10) {

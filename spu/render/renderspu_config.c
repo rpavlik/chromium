@@ -15,58 +15,46 @@
 #include <stdio.h>
 
 
-static void __setDefaults( void )
+static void __setDefaults( RenderSPU *render_spu )
 {
 	/* init in (nearly) the same order as declared in the struct */
-	render_spu.window_title = crStrdup( "Chromium Render SPU" );
-	render_spu.window_x = render_spu.window_y = 0;
-	render_spu.window_width = render_spu.window_height = 256;
-	render_spu.actual_window_width = 0;
-	render_spu.actual_window_height = 0;
-	render_spu.use_L2 = 0;
-	render_spu.fullscreen = 0;
-	render_spu.ontop = 0;
+	render_spu->window_title = crStrdup( "Chromium Render SPU" );
+	render_spu->defaultX = render_spu->defaultY = 0;
+	render_spu->defaultWidth = render_spu->defaultHeight = 256;
+	render_spu->use_L2 = 0;
+	render_spu->fullscreen = 0;
+	render_spu->ontop = 0;
 
-	render_spu.drawCursor = GL_FALSE;
-	render_spu.cursorX = 0;
-	render_spu.cursorY = 0;
-
-#if 0
-	render_spu.alpha_bits = 0;
-	render_spu.accum_bits = 0;
-#endif
-	render_spu.visAttribs = CR_RGB_BIT | CR_DOUBLE_BIT | CR_DEPTH_BIT | CR_STENCIL_BIT;
+	render_spu->drawCursor = GL_FALSE;
+	render_spu->cursorX = 0;
+	render_spu->cursorY = 0;
 
 #ifdef WINDOWS
 	/*
-	render_spu.depth_bits = 24;
-	render_spu.stencil_bits = 0;
+	render_spu->depth_bits = 24;
+	render_spu->stencil_bits = 0;
+	render_spu->hWnd = 0;
+	render_spu->hRC = 0;
+	render_spu->device_context = 0;
 	*/
-	render_spu.hWnd = 0;
-	render_spu.hRC = 0;
-	render_spu.device_context = 0;
 #else
 	/*
-	render_spu.depth_bits = 8;
-	render_spu.stencil_bits = 0;
+	render_spu->depth_bits = 8;
+	render_spu->stencil_bits = 0;
 	*/
-	render_spu.dpy = NULL;
-	render_spu.visual = NULL;
-	render_spu.context = 0;
-	render_spu.window = 0;
-	render_spu.display_string = NULL;
-	render_spu.force_direct = 0;
-	render_spu.try_direct = 1;
-	render_spu.sync = 0;
+	render_spu->display_string = NULL;
+	render_spu->force_direct = 0;
+	render_spu->try_direct = 1;
+	render_spu->sync = 0;
 #endif 
 }
 
-void renderspuGatherConfiguration( void )
+void renderspuGatherConfiguration( RenderSPU *render_spu )
 {
 	CRConnection *conn;
 	char response[8096];
 
-	__setDefaults();
+	__setDefaults( render_spu );
 
 	/* Connect to the mothership and identify ourselves. */
 	
@@ -77,7 +65,7 @@ void renderspuGatherConfiguration( void )
 		return;
 	}
 
-	crMothershipIdentifySPU( conn, render_spu.id );
+	crMothershipIdentifySPU( conn, render_spu->id );
 
 	if (crMothershipGetSPUParam( conn, response, "window_geometry" ) )
 	{
@@ -90,44 +78,44 @@ void renderspuGatherConfiguration( void )
 			if (h < 1)
 				h = 1;
 		}
-		render_spu.window_x = (int)x;
-		render_spu.window_y = (int)y;
-		render_spu.window_width = (int)w;
-		render_spu.window_height = (int)h;
+		render_spu->defaultX = (int)x;
+		render_spu->defaultY = (int)y;
+		render_spu->defaultWidth = (int)w;
+		render_spu->defaultHeight = (int)h;
 	}
 
 	if (crMothershipGetSPUParam( conn, response, "fullscreen" ) )
 	{
-		sscanf( response, "%d", &(render_spu.fullscreen) );
+		sscanf( response, "%d", &(render_spu->fullscreen) );
 	}
 
 	if (crMothershipGetSPUParam( conn, response, "ontop" ) )
 	{
-		sscanf( response, "%d", &(render_spu.ontop) );
+		sscanf( response, "%d", &(render_spu->ontop) );
 	}
 
 #if 0
 	/* XXX this will be going away... */
 	if (crMothershipGetSPUParam( conn, response, "alpha_bits" ) )
 	{
-		sscanf( response, "%d", &(render_spu.alpha_bits) );
+		sscanf( response, "%d", &(render_spu->alpha_bits) );
 	}
 
 	if (crMothershipGetSPUParam( conn, response, "stencil_bits" ) )
 	{
-		sscanf( response, "%d", &(render_spu.stencil_bits) );
+		sscanf( response, "%d", &(render_spu->stencil_bits) );
 	}
 
 	if (crMothershipGetSPUParam( conn, response, "accum_bits" ) )
 	{
-		sscanf( response, "%d", &(render_spu.accum_bits) );
+		sscanf( response, "%d", &(render_spu->accum_bits) );
 	}
 #endif
 
 	if (crMothershipGetSPUParam( conn, response, "window_title" ) )
 	{
-		crFree( render_spu.window_title );
-		render_spu.window_title = crStrdup( response );
+		crFree( render_spu->window_title );
+		render_spu->window_title = crStrdup( response );
 	}
 
 	if (crMothershipGetSPUParam( conn, response, "system_gl_path" ) )
@@ -138,12 +126,12 @@ void renderspuGatherConfiguration( void )
 #ifndef WINDOWS
 	if (crMothershipGetSPUParam( conn, response, "try_direct" ) )
 	{
-		sscanf( response, "%d", &(render_spu.try_direct) );
+		sscanf( response, "%d", &(render_spu->try_direct) );
 	}
 
 	if (crMothershipGetSPUParam( conn, response, "force_direct" ) )
 	{
-		sscanf( response, "%d", &(render_spu.force_direct) );
+		sscanf( response, "%d", &(render_spu->force_direct) );
 	}
 #endif
 
@@ -155,7 +143,7 @@ void renderspuGatherConfiguration( void )
 	{
 		int show_cursor;
 		sscanf( response, "%d", &show_cursor );
-		render_spu.drawCursor = show_cursor ? GL_TRUE : GL_FALSE;
+		render_spu->drawCursor = show_cursor ? GL_TRUE : GL_FALSE;
 		crDebug("show_cursor = %d", show_cursor);
 	}
 	else {

@@ -17,66 +17,55 @@ static int __getWindowSize( int *width_return, int *height_return )
 {
 #ifdef WINDOWS
 	RECT r;
-#else
-	Window       root;
-	int          x, y;
-	unsigned int width, height, border, depth;
-#endif
 
-
-#ifdef WINDOWS
-	if (!tilesort_spu.client_hwnd)
-	{
+	if (!tilesort_spu.client_hwnd) {
 		tilesort_spu.client_hwnd = WindowFromDC( tilesort_spu.client_hdc );
 	}
-	if (!tilesort_spu.client_hwnd)
-	{
-		goto try_fake;
+	if (!tilesort_spu.client_hwnd) {
+		if (tilesort_spu.fakeWindowWidth != 0) {
+			*width_return = tilesort_spu.fakeWindowWidth;
+			*height_return = tilesort_spu.fakeWindowHeight;
+			return 1;
+		}
+		return 0;
 	}
+
 	GetClientRect( tilesort_spu.client_hwnd, &r );
 	*width_return = r.right - r.left;
 	*height_return = r.bottom - r.top;
 
-#else
+#else /* X11 */
+	Window root;
+	int x, y;
+	unsigned int width, height, border, depth;
 
-	/*
-	printf("*** In %s() accessing glx_display=%p drawable=%d\n", __FUNCTION__, tilesort_spu.glx_display, (int) tilesort_spu.glx_drawable);
-	*/
-
-	if (!tilesort_spu.glx_display)
-	{
-		goto try_fake;
+	if (!tilesort_spu.glx_display || !tilesort_spu.glx_drawable) {
+		if (tilesort_spu.fakeWindowWidth != 0) {
+			*width_return = tilesort_spu.fakeWindowWidth;
+			*height_return = tilesort_spu.fakeWindowHeight;
+			return 1;
+		}
+		return 0;
 	}
 
-	/*
-	printf("XGetGeometry %p, %d\n", (void *) tilesort_spu.glx_display, 
-				 (int) tilesort_spu.glx_drawable);
-	*/
-
-	if ( !XGetGeometry( (Display *) tilesort_spu.glx_display, 
-						(Drawable) tilesort_spu.glx_drawable,
-						&root, &x, &y, &width, &height, &border, &depth ) )
-	{
+	if (!XGetGeometry( tilesort_spu.glx_display, 
+										 tilesort_spu.glx_drawable,
+										 &root, &x, &y, &width, &height, &border, &depth )) {
 		crError( "XGetGeometry failed" );
 	}
 
 	*width_return  = width;
 	*height_return = height;
+
 #endif
+
 	return 1;
-try_fake:
-	if (tilesort_spu.fakeWindowWidth != 0)
-	{
-		*width_return = tilesort_spu.fakeWindowWidth;
-		*height_return = tilesort_spu.fakeWindowHeight;
-		return 1;
-	}
-	return 0;
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
-	CRCurrentState *c = &(tilesort_spu.currentContext->current);
+	GET_CONTEXT(ctx);
+	CRCurrentState *c = &(ctx->current);
 	int w, h;
 
 	if (c->inBeginEnd)
@@ -116,12 +105,11 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 	printf("%s() %d, %d, %d, %d   muralWidth=%d muralHeight=%d  wScale=%f hScale=%f\n", __FUNCTION__, x, y, width, height, tilesort_spu.muralWidth, tilesort_spu.muralHeight, tilesort_spu.widthScale, tilesort_spu.heightScale);
 	*/
 
-	/*crWarning( "Viewport: %d %d %f %f", w, h, widthscale, heightscale ); */
 	crStateViewport( (int) (x*tilesort_spu.widthScale + 0.5f), 
 			 (int) (y*tilesort_spu.heightScale + 0.5f),
 			 (int) (width*tilesort_spu.widthScale + 0.5f), 
 			 (int) (height*tilesort_spu.heightScale + 0.5f) );
-	tilesortspuSetBucketingBounds( (int) (x*tilesort_spu.widthScale + 0.5f), 
+	tilesortspuSetBucketingBounds( (int) (x*tilesort_spu.widthScale + 0.5f),
 			               (int) (y*tilesort_spu.heightScale + 0.5f),
 			               (int) (width*tilesort_spu.widthScale + 0.5f), 
 			               (int) (height*tilesort_spu.heightScale + 0.5f) );
@@ -131,20 +119,21 @@ void TILESORTSPU_APIENTRY tilesortspu_Scissor( GLint x, GLint y, GLsizei width, 
 {
 	if (tilesort_spu.scaleToMuralSize) {
 		GLint newX = (GLint) (x * tilesort_spu.widthScale + 0.5F);
-		GLint newY = (GLint) (y * tilesort_spu.widthScale + 0.5F);
+		GLint newY = (GLint) (y * tilesort_spu.heightScale + 0.5F);
 		GLint newW = (GLint) (width * tilesort_spu.widthScale + 0.5F);
 		GLint newH = (GLint) (height * tilesort_spu.heightScale + 0.5F);
-    crStateScissor(newX, newY, newW, newH);
+		crStateScissor(newX, newY, newW, newH);
 	}
 	else {
-    crStateScissor(x, y, width, height);
+    		crStateScissor(x, y, width, height);
 	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 {
-	CRViewportState *v = &(tilesort_spu.currentContext->viewport);
-	CRTransformState *t = &(tilesort_spu.currentContext->transform);
+	GET_CONTEXT(ctx);
+	CRViewportState *v = &(ctx->viewport);
+	CRTransformState *t = &(ctx->transform);
 	GLint oldViewportX, oldViewportY, oldViewportW, oldViewportH;
 	GLint oldScissorX, oldScissorY, oldScissorW, oldScissorH;
 	GLenum oldmode;

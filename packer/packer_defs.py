@@ -91,7 +91,9 @@ crPackBoundsInfo
 crPackResetBBOX
 crPackOffsetCurrentPointers
 crPackNullCurrentPointers
-crPackInit
+crPackNewContext
+crPackGetContext
+crPackSetContext
 crPackFree
 crNetworkPointerWrite
 """

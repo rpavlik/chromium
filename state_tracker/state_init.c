@@ -4,19 +4,23 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_glstate.h"
+#include "state.h"
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_spu.h"
 #include <stdio.h>
-#include <memory.h>
 
+#ifdef CHROMIUM_THREADSAFE
+CRtsd __contextTSD;
+#else
 CRContext *__currentContext = NULL;
-CRStateBits *__currentBits = NULL;
+#endif
 
+CRStateBits *__currentBits = NULL;
 GLboolean g_availableContexts[CR_MAX_CONTEXTS];
 
 static CRContext *defaultContext = NULL;
+
 
 
 /*
@@ -26,9 +30,8 @@ static CRContext *defaultContext = NULL;
 void crStateInit(void)
 {
 	int j;
-	__currentBits = (CRStateBits *) crAlloc( sizeof( *__currentBits) );
-	memset( __currentBits, 0, sizeof( *__currentBits ) );
 
+	__currentBits = (CRStateBits *) crCalloc( sizeof(CRStateBits) );
 	crStateClientInitBits( &(__currentBits->client) );
 	crStateLightingInitBits( &(__currentBits->lighting) );
 	crStateTransformInitBits( &(__currentBits->transform) );
@@ -83,6 +86,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 	crStateListsInit (&(ctx->lists) );
 	crStatePixelInit( &(ctx->pixel) );
 	crStatePolygonInit (&(ctx->polygon) );
+	crStatePointInit (&(ctx->point) );
 	crStateRegCombinerInit (&(ctx->regcombiner) );
 	crStateStencilInit( &(ctx->stencil) );
 	crStateTextureInit( (&ctx->limits), &(ctx->texture) );
@@ -159,19 +163,25 @@ CRContext *crStateCreateContext(const CRLimitsState *limits)
 		}
 	}
 	crError( "Out of available contexts in crStateCreateContexts (max %d)",
-			 CR_MAX_CONTEXTS );
-	/* NOT REACHED */
+					 CR_MAX_CONTEXTS );
+	/* never get here */
 	return NULL;
 }
 
 
 void crStateDestroyContext( CRContext *ctx )
 {
-	if (__currentContext == ctx) {
+	CRContext *current = GetCurrentContext();
+
+	if (current == ctx) {
 		/* destroying the current context - have to be careful here */
 		CRASSERT(defaultContext);
-		crStateSwitchContext(__currentContext, defaultContext);
+		crStateSwitchContext(current, defaultContext);
+#ifdef CHROMIUM_THREADSAFE
+		crSetTSD(&__contextTSD, defaultContext);
+#else
 		__currentContext = defaultContext;
+#endif
 	}
 	g_availableContexts[ctx->id] = 0;
 	crFree( ctx );
@@ -180,24 +190,53 @@ void crStateDestroyContext( CRContext *ctx )
 
 void crStateMakeCurrent( CRContext *ctx )
 {
+	CRContext *current = GetCurrentContext();
+
 	if (ctx == NULL)
 		ctx = defaultContext;
 
-	if (__currentContext == ctx)
+	if (current == ctx)
 		return; /* no-op */
 
 	CRASSERT(ctx);
 
-	if (__currentContext)
-		crStateSwitchContext( __currentContext, ctx );
+	if (current)
+		crStateSwitchContext( current, ctx );
 
+#ifdef CHROMIUM_THREADSAFE
+	crSetTSD(&__contextTSD, ctx);
+#else
 	__currentContext = ctx;
+#endif
 }
+
+
+/*
+ * As above, but don't call crStateSwitchContext().
+ */
+void crStateSetCurrent( CRContext *ctx )
+{
+	CRContext *current = GetCurrentContext();
+
+	if (ctx == NULL)
+		ctx = defaultContext;
+
+	if (current == ctx)
+		return; /* no-op */
+
+	CRASSERT(ctx);
+
+#ifdef CHROMIUM_THREADSAFE
+	crSetTSD(&__contextTSD, ctx);
+#else
+	__currentContext = ctx;
+#endif
+}
+
 
 void crStateUpdateColorBits(void)
 {
 	/* This is a hack to force updating the 'current' attribs */
-
 	CRStateBits *sb = GetCurrentBits();
 	FILLDIRTY(sb->current.dirty);
 	FILLDIRTY(sb->current.color);

@@ -17,6 +17,8 @@
 
 static void __setDefaults( void )
 {
+	tilesort_spu.numThreads = 1;
+
 	tilesort_spu.num_servers = 0;
 	tilesort_spu.servers = NULL;
 	tilesort_spu.splitBeginEnd = 1;
@@ -52,6 +54,7 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 {
 	CRConnection *conn;
 	char response[8096];
+	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 
 	char **serverchain, **serverlist;
 	int num_servers;
@@ -139,7 +142,10 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 	serverlist = crStrSplit( serverchain[1], "," );
 
 	tilesort_spu.num_servers = num_servers;
-	tilesort_spu.servers = (TileSortSPUServer *) crAlloc( num_servers * sizeof( *(tilesort_spu.servers) ) );
+	tilesort_spu.servers = (TileSortSPUServer *) crCalloc( num_servers * sizeof( *(tilesort_spu.servers) ) );
+
+	tilesort_spu.thread[0].net = (CRNetServer *) crCalloc( num_servers * sizeof(CRNetServer) );
+	tilesort_spu.thread[0].pack = (CRPackBuffer *) crCalloc( num_servers * sizeof(CRPackBuffer) );
 
 	crDebug( "Got %d servers!", num_servers );
 
@@ -157,8 +163,8 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 		sscanf( serverlist[i], "%s", server_url );
 
 		crDebug( "Server %d: %s", i+1, server_url );
-		server->net.name = crStrdup( server_url );
-		server->net.buffer_size = tilesort_spu.MTU;
+		thread0->net[i].name = crStrdup( server_url );
+		thread0->net[i].buffer_size = tilesort_spu.MTU;
 
 		if (!crMothershipGetTiles( conn, response, i ))
 		{

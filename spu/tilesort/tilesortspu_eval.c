@@ -459,7 +459,8 @@ _math_init_eval(void)
 
 static void do_EvalCoord1f(GLfloat u)
 {
-   CREvaluatorState *e = &(tilesort_spu.currentContext->eval);
+   GET_CONTEXT(ctx);
+   CREvaluatorState *e = &(ctx->eval);
 
 
    /** Color Index **/
@@ -598,7 +599,8 @@ static void do_EvalCoord1f(GLfloat u)
 
 static void do_EvalCoord2f( GLfloat u, GLfloat v )
 {   
-   CREvaluatorState *e = &(tilesort_spu.currentContext->eval);
+   GET_CONTEXT(ctx);
+   CREvaluatorState *e = &(ctx->eval);
 
    /** Color Index **/
    if (e->enable2D[GL_MAP2_INDEX - GL_MAP2_COLOR_4])
@@ -782,12 +784,13 @@ static void do_EvalCoord2f( GLfloat u, GLfloat v )
 
 void TILESORTSPU_APIENTRY tilesortspu_EvalCoord1f( GLfloat u )
 {
-   CRCurrentState *c = &(tilesort_spu.currentContext->current);
+   GET_CONTEXT(ctx);
+   CRCurrentState *c = &(ctx->current);
    GLfloat normal[3], texcoord[CR_MAX_TEXTURE_UNITS][4], color[4];
    GLfloat index;
    GLint i;
 
-   CRASSERT(CR_MAX_TEXTURE_UNITS > tilesort_spu.currentContext->limits.maxTextureUnits);
+   CRASSERT(CR_MAX_TEXTURE_UNITS >= ctx->limits.maxTextureUnits);
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
 	   memcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
@@ -808,10 +811,13 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalCoord1f( GLfloat u )
 
 void TILESORTSPU_APIENTRY tilesortspu_EvalCoord2f( GLfloat u, GLfloat v )
 {
-   CRCurrentState *c = &(tilesort_spu.currentContext->current);
+   GET_CONTEXT(ctx);
+   CRCurrentState *c = &(ctx->current);
    GLfloat normal[3], texcoord[CR_MAX_TEXTURE_UNITS][4], color[4];
    GLfloat index;
    GLint i;
+
+   CRASSERT(CR_MAX_TEXTURE_UNITS >= ctx->limits.maxTextureUnits);
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
 	   memcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
@@ -862,7 +868,8 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalCoord1d( GLdouble u )
 
 void TILESORTSPU_APIENTRY tilesortspu_EvalPoint1( GLint i )
 {
-   CREvaluatorState *e = &(tilesort_spu.currentContext->eval);
+   GET_CONTEXT(ctx);
+   CREvaluatorState *e = &(ctx->eval);
    GLfloat du = ((e->u21D - e->u11D) /
 		 (GLfloat) e->un1D);
    GLfloat u = i * du + e->u11D;
@@ -873,7 +880,8 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalPoint1( GLint i )
 
 void TILESORTSPU_APIENTRY tilesortspu_EvalPoint2( GLint i, GLint j )
 {
-   CREvaluatorState *e = &(tilesort_spu.currentContext->eval);
+   GET_CONTEXT(ctx);
+   CREvaluatorState *e = &(ctx->eval);
    GLfloat du = ((e->u22D - e->u12D) / 
 		 (GLfloat) e->un2D);
    GLfloat dv = ((e->v22D - e->v12D) / 
@@ -886,7 +894,8 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalPoint2( GLint i, GLint j )
 
 void TILESORTSPU_APIENTRY tilesortspu_EvalMesh1( GLenum mode, GLint i1, GLint i2)
 {
-   CREvaluatorState *e = &(tilesort_spu.currentContext->eval);
+   GET_CONTEXT(ctx);
+   CREvaluatorState *e = &(ctx->eval);
    GLint i;
    GLfloat u, du;
    GLenum prim;
@@ -921,7 +930,8 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalMesh1( GLenum mode, GLint i1, GLint i2
 
 void TILESORTSPU_APIENTRY tilesortspu_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2)
 {
-   CREvaluatorState *e = &(tilesort_spu.currentContext->eval);
+   GET_CONTEXT(ctx);
+   CREvaluatorState *e = &(ctx->eval);
    GLint i, j;
    GLfloat u, du, v, dv, v1, u1;
 

@@ -102,7 +102,7 @@ print """
 #include <stdio.h>
 #include <math.h>
 
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 
 static GLint __clampd_to_int( GLdouble d )
@@ -128,7 +128,7 @@ static GLint __clampf_to_int( GLfloat f )
 
 header = """
 {
-	CRContext   *g = GetCurrentContext( );
+	CRContext *g = GetCurrentContext();
 
 	if (g->current.inBeginEnd)
 	{
@@ -145,7 +145,6 @@ header = """
 		crStateError(__LINE__,__FILE__, GL_INVALID_OPERATION,
 			"Unimplemented glGet of a 'current' value" );
 #else
-		/*CRStateBits *sb = GetCurrentBits( );*/
 		crStateCurrentRecover();/* &g->current, &sb->current, g->bitID );*/
 		
 #endif

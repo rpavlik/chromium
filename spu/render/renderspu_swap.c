@@ -10,6 +10,7 @@
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_glwrapper.h"
+#include "cr_applications.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -257,28 +258,40 @@ void CubeDisplay( void )
 	angle++;
 }
 
-void RENDER_APIENTRY renderspuSwapBuffers( void )
+void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 {
-#ifdef WINDOWS
-	static int first = 1;
-	int return_value;
-#endif
+	if (flags & CR_SUPPRESS_SWAP_BIT)
+	  return;
 
 	if (render_spu.drawCursor)
 		DrawCursor( render_spu.cursorX, render_spu.cursorY );
 
 #ifdef WINDOWS
-	return_value=render_spu.ws.wglSwapBuffers( render_spu.device_context );
-	if (!return_value)
-	{
-		/* GOD DAMN IT.  The latest versions of the NVIDIA drivers
-		 * return failure from wglSwapBuffers, but it works just fine.
-		 * WHAT THE HELL?! */
+	if (window >= 0) {
+		int return_value;
+		WindowInfo *w;
+		CRASSERT(window >= 0);
+		CRASSERT(window < MAX_WINDOWS);
+		w = &(render_spu.windows[window]);
+		return_value = render_spu.ws.wglSwapBuffers( w->device_context );
+		if (!return_value)
+		{
+			/* GOD DAMN IT.  The latest versions of the NVIDIA drivers
+		 	* return failure from wglSwapBuffers, but it works just fine.
+		 	* WHAT THE HELL?! */
 
-		crWarning( "wglSwapBuffers failed: return value of %d!", return_value);
+			crWarning( "wglSwapBuffers failed: return value of %d!", return_value);
+		}
 	}
-	first = 0;
 #else
-	render_spu.ws.glXSwapBuffers( render_spu.dpy, render_spu.window );
+	if (window >= 0) {
+		WindowInfo *w;
+		CRASSERT(window >= 0);
+		CRASSERT(window < MAX_WINDOWS);
+		w = &(render_spu.windows[window]);
+		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
+	}
+	else
+		crWarning("renderspu_SwapBuffers(NULL window)");
 #endif
 }

@@ -14,8 +14,30 @@
 #include "stub.h"
 
 
-SPU *stub_spu = NULL;
-int crAppDrawCursor = 0;
+static void InitVars(void)
+{
+	stub.haveNativeOpenGL = GL_FALSE;
+
+	/*
+	 * If the application queries a visual's stencil size, etc we assume
+	 * that the application wants that feature.  This gets propogated down
+	 * to the render SPU so that it chooses an appropriate visual.
+	 * This bitmask of CR_ flags indicates what the user (probably) wants.
+	 */
+	stub.desiredVisual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
+
+#ifdef CHROMIUM_THREADSAFE
+	crInitMutex(&stub.mutex);
+#endif
+
+	stub.spu = NULL;
+	stub.appDrawCursor = 0;
+	stub.minChromiumWindowWidth = 0;
+	stub.minChromiumWindowHeight = 0;
+	stub.matchWindowTitle = NULL;
+	stub.threadSafe = GL_FALSE;
+}
+
 
 void StubInit(void)
 {
@@ -41,6 +63,8 @@ void StubInit(void)
 		return;
 	stub_initialized = 1;
 	
+	InitVars();
+
 	/* this is set by the app_faker! */
 	app_id = crGetenv( "CR_APPLICATION_ID_NUMBER" );
 
@@ -77,31 +101,25 @@ void StubInit(void)
 	}
 
 	if (conn && crMothershipGetParam( conn, "show_cursor", response ) )
-		sscanf( response, "%d", &crAppDrawCursor );
+		sscanf( response, "%d", &stub.appDrawCursor );
 	else
-		crAppDrawCursor = 0;
-	crDebug( "show_cursor = %d\n", crAppDrawCursor );
+		stub.appDrawCursor = 0;
+	crDebug( "show_cursor = %d\n", stub.appDrawCursor );
 
 	if (conn && crMothershipGetParam( conn, "minimum_window_size", response )
 		&& response[0]) {
 		int w, h;
 		sscanf( response, "%d %d", &w, &h );
 		crDebug( "minimum_window_size: %d x %d", w, h );
-		stubMinimumChromiumWindowSize( w, h );
-	}
-	else {
-		int minX, minY;
-		minX = minY = 0;
+		stub.minChromiumWindowWidth = w;
+		stub.minChromiumWindowHeight = h;
 	}
 
 	if (conn && crMothershipGetParam( conn, "match_window_title", response )
 		&& response[0]) {
 		crDebug("match_window_title: %s\n", response );
-		stubMatchWindowTitle( response );
+		stub.matchWindowTitle = crStrdup( response );
 	}
-	else {
-	}
-
 
 	if (conn && crMothershipGetSPUDir( conn, response ))
 	{
@@ -117,7 +135,7 @@ void StubInit(void)
 		crMothershipDisconnect( conn );
 	}
 
-	stub_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir, NULL );
+	stub.spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir, NULL );
 
 	crFree( spuchain );
 	crFree( spu_ids );
@@ -127,7 +145,7 @@ void StubInit(void)
 	/* This is unlikely to change -- We still want to initialize our dispatch 
 	 * table with the functions of the first SPU in the chain. */
 
-	FakerInit( stub_spu );
+	stubFakerInit( stub.spu );
 }
 
 /* Sigh -- we can't do initialization at load time, since Windows forbids 

@@ -72,7 +72,8 @@ GLboolean GL_LIGHTING                 g->lighting.lighting
 GLboolean GL_LINE_SMOOTH              g->line.lineSmooth
 GLboolean GL_LINE_STIPPLE             g->line.lineStipple
 GLint     GL_LOGIC_OP_MODE            g->buffer.logicOpMode
-GLboolean GL_POINT_SMOOTH             g->line.pointSmooth
+GLboolean GL_POINT_SMOOTH             g->point.pointSmooth
+GLfloat   GL_POINT_SIZE               g->point.pointSize
 GLboolean GL_NORMALIZE                g->current.normalize
 
 GLboolean GL_TEXTURE_GEN_S g->texture.unit[g->texture.curTextureUnit].textureGen.s
@@ -83,7 +84,6 @@ GLboolean GL_TEXTURE_1D g->texture.unit[g->texture.curTextureUnit].enabled1D
 GLboolean GL_TEXTURE_2D g->texture.unit[g->texture.curTextureUnit].enabled2D
 GLboolean GL_TEXTURE_3D g->texture.unit[g->texture.curTextureUnit].enabled3D
 
-GLfloat   GL_POINT_SIZE               g->line.pointSize
 GLfloat   GL_LINE_WIDTH               g->line.width
 GLint     GL_LINE_STIPPLE_PATTERN     g->line.pattern
 GLint     GL_LINE_STIPPLE_REPEAT      g->line.repeat

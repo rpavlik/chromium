@@ -21,10 +21,12 @@ void APICHANGESPU_APIENTRY doubleVertex3fv( const GLfloat *v )
 	apichange_spu.child.Vertex3f( v[0]*2, v[1]*2, v[2]*2 );
 }
 
-void APICHANGESPU_APIENTRY apichangeSwapBuffers( void )
+void APICHANGESPU_APIENTRY apichangeSwapBuffers( GLint window )
 {
 	static int frame_counter = 0;
 	frame_counter++;
+
+	(void) window;
 
 	if (!(frame_counter % apichange_spu.changeFrequency))
 	{

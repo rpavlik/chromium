@@ -12,7 +12,6 @@ CallLists
 ClipPlane
 ColorPointer
 DeleteTextures
-DestroyContext
 DrawArrays
 DrawElements
 DrawRangeElements
@@ -29,7 +28,6 @@ LightModelfv
 LightModeliv
 LoadMatrixf
 LoadMatrixd
-MakeCurrent
 Map1d
 Map1f
 Map2d

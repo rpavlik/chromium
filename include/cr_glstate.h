@@ -25,6 +25,7 @@ typedef struct CRContext CRContext;
 #include "state/cr_line.h"
 #include "state/cr_lists.h"
 #include "state/cr_pixel.h"
+#include "state/cr_point.h"
 #include "state/cr_polygon.h"
 #include "state/cr_regcombiner.h"
 #include "state/cr_stencil.h"
@@ -58,6 +59,7 @@ typedef struct {
 	CRLineBits      line;
 	CRListsBits     lists;
 	CRPixelBits     pixel;
+	CRPointBits	point;
 	CRPolygonBits   polygon;
 	CRRegCombinerBits regcombiner;
 	CRStencilBits   stencil;
@@ -91,6 +93,7 @@ struct CRContext {
 	CRLineState      line;
 	CRListsState     lists;
 	CRPixelState     pixel;
+	CRPointState	 point;
 	CRPolygonState   polygon;
 	CRRegCombinerState regcombiner;
 	CRStencilState   stencil;
@@ -120,17 +123,10 @@ struct CRContext {
 #define GLUPDATE_ATTRIB		0x20000
 #define GLUPDATE_REGCOMBINER	0x40000
 
-
-extern CRContext *__currentContext;
-extern CRStateBits *__currentBits;
-extern SPUDispatchTable diff_api;
-
-#define GetCurrentContext() __currentContext
-#define GetCurrentBits() __currentBits
-
 void crStateInit(void);
 CRContext *crStateCreateContext(const CRLimitsState *limits);
 void crStateMakeCurrent(CRContext *ctx);
+void crStateSetCurrent(CRContext *ctx);
 void crStateDestroyContext(CRContext *ctx);
 
 void crStateFlushFunc( CRStateFlushFunc ff );

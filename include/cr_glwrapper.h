@@ -210,15 +210,6 @@ extern void glGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, 
 #endif /* GL_CR_tilesort_info */
 
 
-#ifndef GL_CR_client_clear_control
-#define GL_CR_client_clear_control 1
-
-#define GL_SINGLE_CLIENT_BIT_CR  0x10000000
-
-#endif /*  GL_CR_client_clear_control */
-
-
-
 /*
  * These are the OpenGL / window system interface functions
  */
@@ -287,6 +278,8 @@ typedef struct {
 
 #define CR_MAX_CONTEXTS      512
 #define CR_MAX_BITARRAY      (CR_MAX_CONTEXTS / 32) /* 32 contexts per uint */
+
+#define MAX_THREADS		32	/* max threads per spu */
 
 /* These might belong elsewhere */
 #define MAX_MURAL_WIDTH  (1280*8)

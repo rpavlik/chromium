@@ -9,11 +9,13 @@
 #include "fpsspu.h"
 #include "cr_error.h"
 
-void FPSSPU_APIENTRY fpsSwapBuffers( void )
+void FPSSPU_APIENTRY fpsSwapBuffers( GLint window )
 {
 	static int frame_counter = 0;
 	float elapsed = (float) crTimerTime( fps_spu.timer );
 	static float elapsed_base = 0;
+
+	(void) window;
 
 	frame_counter++;
 	if (frame_counter == 10)

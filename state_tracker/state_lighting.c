@@ -6,16 +6,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
-#include "cr_glstate.h"
+#include "state.h"
 #include "cr_mem.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
 void crStateLightingInitBits (CRLightingBits *l)
 {
-	l->light = (CRLightBits *) crAlloc (sizeof(*(l->light)) * CR_NUM_LIGHTS );
-	memset (l->light, 0, sizeof(*(l->light)) * CR_NUM_LIGHTS );
+	l->light = (CRLightBits *) crCalloc (sizeof(*(l->light)) * CR_NUM_LIGHTS );
 }
 
 void crStateLightingInit (CRLightingState *l)
@@ -60,8 +58,7 @@ void crStateLightingInit (CRLightingState *l)
 #if defined(CR_EXT_secondary_color)
 	l->colorSumEXT = GL_FALSE;
 #endif
-	l->light = (CRLight *) crAlloc (sizeof (*(l->light)) * CR_MAX_LIGHTS);
-	memset ((void *) l->light, 0, sizeof (*(l->light)) * CR_MAX_LIGHTS);
+	l->light = (CRLight *) crCalloc (sizeof (*(l->light)) * CR_MAX_LIGHTS);
 
 	for (i=0; i<CR_MAX_LIGHTS; i++)
 	{

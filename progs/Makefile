@@ -17,10 +17,10 @@ endif
 
 SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit tiletest
 
-ifneq ($(ARCH), WIN_NT)
-SUBDIRS += glx
-else
+ifeq ($(ARCH), WIN_NT)
 SUBDIRS += wgl
+else
+SUBDIRS += glx threadtest
 endif
 
 include ${TOP}/cr.mk

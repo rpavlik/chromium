@@ -3,3 +3,10 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 BoundsInfo
+CreateContext
+DestroyContext
+MakeCurrent
+CreateWindow
+DestroyWindow
+WindowSize
+WindowPosition

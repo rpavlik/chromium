@@ -42,6 +42,14 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreate( GLuint name, GLuint
 		count = cr_server.numClients;
 	}
 
+	/* we use maxBarrierCount in Clear() and SwapBuffers() and also use it
+	 * in __getNextClient() for deadlock detection.  The issue is that all
+	 * the existing clients may be blocked, but we might soon get another
+	 * client connection to break the apparent deadlock.
+	 */
+	if (count > cr_server.maxBarrierCount)
+		cr_server.maxBarrierCount = count;
+
 	if ( barrier == NULL )
 	{
 		barrier = (CRBarrier *) crAlloc( sizeof(*barrier) );
@@ -91,11 +99,13 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExec( GLuint name )
 #endif
 
 	barrier->waiting[barrier->num_waiting++] = run_queue;
+
 	run_queue->blocked = 1;
 
 	if ( barrier->num_waiting == barrier->count )
 	{
 		GLuint i;
+
 		for ( i = 0; i < barrier->count; i++ )
 		{
 			barrier->waiting[i]->blocked = 0;

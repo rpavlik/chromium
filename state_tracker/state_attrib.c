@@ -6,8 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 #include "cr_error.h"
@@ -161,7 +160,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->enableStack[a->enableStackDepth].map2[i] = g->eval.enable2D[i];
 		}
 		a->enableStack[a->enableStackDepth].normalize = g->current.normalize;
-		a->enableStack[a->enableStackDepth].pointSmooth = g->line.pointSmooth;
+		a->enableStack[a->enableStackDepth].pointSmooth = g->point.pointSmooth;
 		a->enableStack[a->enableStackDepth].polygonOffsetLine = g->polygon.polygonOffsetLine;
 		a->enableStack[a->enableStackDepth].polygonOffsetFill = g->polygon.polygonOffsetFill;
 		a->enableStack[a->enableStackDepth].polygonOffsetPoint = g->polygon.polygonOffsetPoint;
@@ -203,7 +202,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->evalStack[a->evalStackDepth].eval1D[i].u2 = g->eval.eval1D[i].u2;
 			a->evalStack[a->evalStackDepth].eval1D[i].order = g->eval.eval1D[i].order;
 			a->evalStack[a->evalStackDepth].eval1D[i].coeff = (GLfloat*)crAlloc(size1);
-			memcpy(a->evalStack[a->evalStackDepth].eval1D[i].coeff, g->eval.eval1D[i].coeff, size1);
+			crMemcpy(a->evalStack[a->evalStackDepth].eval1D[i].coeff, g->eval.eval1D[i].coeff, size1);
 			a->evalStack[a->evalStackDepth].eval2D[i].u1 = g->eval.eval2D[i].u1;
 			a->evalStack[a->evalStackDepth].eval2D[i].u2 = g->eval.eval2D[i].u2;
 			a->evalStack[a->evalStackDepth].eval2D[i].v1 = g->eval.eval2D[i].v1;
@@ -211,7 +210,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->evalStack[a->evalStackDepth].eval2D[i].uorder = g->eval.eval2D[i].uorder;
 			a->evalStack[a->evalStackDepth].eval2D[i].vorder = g->eval.eval2D[i].vorder;
 			a->evalStack[a->evalStackDepth].eval2D[i].coeff = (GLfloat*)crAlloc(size2);
-			memcpy(a->evalStack[a->evalStackDepth].eval2D[i].coeff, g->eval.eval2D[i].coeff, size2);
+			crMemcpy(a->evalStack[a->evalStackDepth].eval2D[i].coeff, g->eval.eval2D[i].coeff, size2);
 		}
 		a->evalStack[a->evalStackDepth].autoNormal = g->eval.autoNormal;
 		a->evalStack[a->evalStackDepth].un1D = g->eval.un1D;
@@ -324,8 +323,8 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	}
 	if (mask & GL_POINT_BIT)
 	{
-		a->pointStack[a->pointStackDepth].pointSmooth = g->line.pointSmooth;
-		a->pointStack[a->pointStackDepth].pointSize = g->line.pointSize;
+		a->pointStack[a->pointStackDepth].pointSmooth = g->point.pointSmooth;
+		a->pointStack[a->pointStackDepth].pointSize = g->point.pointSize;
 		a->pointStackDepth++;
 	}
 	if (mask & GL_POLYGON_BIT)
@@ -346,7 +345,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	}
 	if (mask & GL_POLYGON_STIPPLE_BIT)
 	{
-		memcpy( a->polygonStippleStack[a->polygonStippleStackDepth].pattern, g->polygon.stipple, 32*sizeof(GLint) );
+		crMemcpy( a->polygonStippleStack[a->polygonStippleStackDepth].pattern, g->polygon.stipple, 32*sizeof(GLint) );
 		a->polygonStippleStackDepth++;
 	}
 	if (mask & GL_SCISSOR_BIT)
@@ -655,7 +654,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->eval.enable2D[i] = a->enableStack[a->enableStackDepth].map2[i];
 		}
 		g->current.normalize = a->enableStack[a->enableStackDepth].normalize;
-		g->line.pointSmooth = a->enableStack[a->enableStackDepth].pointSmooth;
+		g->point.pointSmooth = a->enableStack[a->enableStackDepth].pointSmooth;
 		g->polygon.polygonOffsetLine = a->enableStack[a->enableStackDepth].polygonOffsetLine;
 		g->polygon.polygonOffsetFill = a->enableStack[a->enableStackDepth].polygonOffsetFill;
 		g->polygon.polygonOffsetPoint = a->enableStack[a->enableStackDepth].polygonOffsetPoint;
@@ -722,7 +721,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->eval.eval1D[i].u1 = a->evalStack[a->evalStackDepth].eval1D[i].u1;
 			g->eval.eval1D[i].u2 = a->evalStack[a->evalStackDepth].eval1D[i].u2;
 			g->eval.eval1D[i].order = a->evalStack[a->evalStackDepth].eval1D[i].order;
-			memcpy((char*)g->eval.eval1D[i].coeff, a->evalStack[a->evalStackDepth].eval1D[i].coeff, size1);
+			crMemcpy((char*)g->eval.eval1D[i].coeff, a->evalStack[a->evalStackDepth].eval1D[i].coeff, size1);
 			crFree(a->evalStack[a->evalStackDepth].eval1D[i].coeff);
 			g->eval.eval2D[i].u1 = a->evalStack[a->evalStackDepth].eval2D[i].u1;
 			g->eval.eval2D[i].u2 = a->evalStack[a->evalStackDepth].eval2D[i].u2;
@@ -730,7 +729,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->eval.eval2D[i].v2 = a->evalStack[a->evalStackDepth].eval2D[i].v2;
 			g->eval.eval2D[i].uorder = a->evalStack[a->evalStackDepth].eval2D[i].uorder;
 			g->eval.eval2D[i].vorder = a->evalStack[a->evalStackDepth].eval2D[i].vorder;
-			memcpy((char*)g->eval.eval2D[i].coeff, a->evalStack[a->evalStackDepth].eval2D[i].coeff, size2);
+			crMemcpy((char*)g->eval.eval2D[i].coeff, a->evalStack[a->evalStackDepth].eval2D[i].coeff, size2);
 			crFree(a->evalStack[a->evalStackDepth].eval2D[i].coeff);
 		}
 		g->eval.autoNormal = a->evalStack[a->evalStackDepth].autoNormal;
@@ -918,11 +917,11 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty point stack!" );
 		}
 		a->pointStackDepth--;
-		g->line.pointSmooth = a->pointStack[a->pointStackDepth].pointSmooth;
-		g->line.pointSize = a->pointStack[a->pointStackDepth].pointSize;
-		DIRTY(sb->line.dirty, g->neg_bitid);
-		DIRTY(sb->line.size, g->neg_bitid);
-		DIRTY(sb->line.enable, g->neg_bitid);
+		g->point.pointSmooth = a->pointStack[a->pointStackDepth].pointSmooth;
+		g->point.pointSize = a->pointStack[a->pointStackDepth].pointSize;
+		DIRTY(sb->point.dirty, g->neg_bitid);
+		DIRTY(sb->point.size, g->neg_bitid);
+		DIRTY(sb->point.enable, g->neg_bitid);
 	}
 	if (mask & GL_POLYGON_BIT)
 	{
@@ -956,7 +955,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty polygon stipple stack!" );
 		}
 		a->polygonStippleStackDepth--;
-		memcpy( g->polygon.stipple, a->polygonStippleStack[a->polygonStippleStackDepth].pattern, 32*sizeof(GLint) );
+		crMemcpy( g->polygon.stipple, a->polygonStippleStack[a->polygonStippleStackDepth].pattern, 32*sizeof(GLint) );
 		DIRTY(sb->polygon.dirty, g->neg_bitid);
 		DIRTY(sb->polygon.stipple, g->neg_bitid);
 	}

@@ -9,17 +9,18 @@
 #include "cr_net.h"
 #include "tilesortspu.h"
 
-void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers(void)
+void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 {
+	GET_THREAD(thread);
 	int writeback = tilesort_spu.num_servers;
-	tilesortspuFlush( tilesort_spu.currentContext );
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackSwapBuffersSWAP( );
+		crPackSwapBuffersSWAP( window, flags );
 	}
 	else
 	{
-		crPackSwapBuffers( );
+		crPackSwapBuffers( window, flags );
 	}
 	if (tilesort_spu.syncOnSwap)
 	{

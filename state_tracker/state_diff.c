@@ -4,7 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_glstate.h"
+#include "state.h"
 #include "cr_error.h"
 #include <stdio.h>
 
@@ -72,6 +72,11 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 	{
 		crStateLineDiff	(&(sb->line), bitID,
 							 &(from->line), &(to->line));
+	}
+	if (CHECKDIRTY(sb->point.dirty, bitID))
+	{
+		crStatePointDiff (&(sb->point), bitID,
+							 &(from->point), &(to->point));
 	}
 	if (CHECKDIRTY(sb->polygon.dirty, bitID))
 	{
@@ -184,6 +189,11 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	{
 		crStateLineSwitch	(&(sb->line), bitID,
 							 &(from->line), &(to->line));
+	}
+	if (CHECKDIRTY(sb->point.dirty, bitID))
+	{
+		crStatePointSwitch	(&(sb->point), bitID,
+							 &(from->point), &(to->point));
 	}
 	if (CHECKDIRTY(sb->polygon.dirty, bitID))
 	{

@@ -14,7 +14,7 @@ stub_common.CopyrightC()
 
 print '''
 #include "state/cr_currentpointers.h"
-#include "cr_glstate.h"
+#include "state.h"
 
 #include <stdio.h>
 
@@ -76,8 +76,8 @@ void crStateCurrentRecover( void )
 	convert_func convert=NULL;
 	CRContext *g = GetCurrentContext();
 	CRCurrentState *c = &(g->current);
-	CRStateBits *b = GetCurrentBits();
-	CRCurrentBits *cb = &(b->current);
+	CRStateBits *sb = GetCurrentBits();
+	CRCurrentBits *cb = &(sb->current);
 	static const GLcolorf color_default			= {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLcolorf secondaryColor_default= {0.0f, 0.0f, 0.0f, 0.0f};
 	static const GLtexcoordf texCoord_default	= {0.0f, 0.0f, 0.0f, 1.0f};

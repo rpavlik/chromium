@@ -8,12 +8,26 @@
 #include "cr_error.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 void *crAlloc( unsigned int nbytes )
 {
 	void *ret = malloc( nbytes );
-	if (!ret)
+	if (!ret) {
 		crError( "Out of memory trying to allocate %d bytes!", nbytes );
+		abort();
+	}
+	return ret;
+}
+
+void *crCalloc( unsigned int nbytes )
+{
+	void *ret = malloc( nbytes );
+	if (!ret) {
+		crError( "Out of memory trying to (c)allocate %d bytes!", nbytes );
+		abort();
+	}
+	memset( ret, 0, nbytes );
 	return ret;
 }
 
@@ -35,4 +49,30 @@ void crFree( void *ptr )
 {
 	if (ptr)
 		free(ptr);
+}
+
+void crMemcpy( void *dst, const void *src, unsigned int bytes )
+{
+	CRASSERT(dst);
+	CRASSERT(src);
+	(void) memcpy( dst, src, bytes );
+}
+
+void crMemset( void *ptr, int value, unsigned int bytes )
+{
+	CRASSERT(ptr);
+	memset( ptr, value, bytes );
+}
+
+void crMemZero( void *ptr, unsigned int bytes )
+{
+	CRASSERT(ptr);
+	memset( ptr, 0, bytes );
+}
+
+int crMemcmp( const void *p1, const void *p2, unsigned int bytes )
+{
+	CRASSERT(p1);
+	CRASSERT(p2);
+	return memcmp( p1, p2, bytes );
 }

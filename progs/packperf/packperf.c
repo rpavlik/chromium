@@ -6,6 +6,8 @@
 
 #define UNUSED( x ) ((void) (x))
 
+CRPackContext *pack_context;
+
 void do_nothing( CROpcode opcode, void *buf )
 {
 	UNUSED( opcode );
@@ -14,7 +16,7 @@ void do_nothing( CROpcode opcode, void *buf )
 
 void reset_buffer( void *arg )
 {
-	crPackResetPointers( 0 );
+	crPackResetPointers( pack_context, 0 );
 	UNUSED(arg);
 }
 
@@ -49,12 +51,13 @@ void MeasurePerformance( void )
 int main( int argc, char *argv[] )
 {
 	CRPackBuffer pack_buffer;
-	crPackInit( 0 ); /* Don't swap bytes, for God's sake */
+	pack_context = crPackNewContext( 0 ); /* Don't swap bytes, for God's sake */
+	crPackSetContext( pack_context );
 	crPackInitBuffer( &pack_buffer, crAlloc( 1024*1024 ), 1024*1024, 0 );
-	crPackSetBuffer( &pack_buffer );
+	crPackSetBuffer( pack_context, &pack_buffer );
 
-	crPackFlushFunc( reset_buffer );
-	crPackSendHugeFunc( do_nothing );
+	crPackFlushFunc( pack_context, reset_buffer );
+	crPackSendHugeFunc( pack_context, do_nothing );
 
 	MeasurePerformance();
 

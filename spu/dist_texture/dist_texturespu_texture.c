@@ -52,11 +52,22 @@ static void calc_padded_size( int w, int h, int* pw, int* ph )
 	*ph = next_power_of_two( h ) ;
 }
 
+#ifdef WINDOWS
+static int check_match( HFILE file, char* compare )
+#else
 static int check_match( int file, char* compare )
+#endif
 {
+#ifdef WINDOWS
+	int _readbytes;
+#endif
 	char c ;
 	while (*compare) {
+#ifdef WINDOWS
+		ReadFile( (HANDLE) file, &c, 1, &_readbytes, NULL );
+#else
 		read( file, &c, 1 ) ;
+#endif
 		if ( c != *compare ) {
 			crWarning( "File is not a PPM" ) ;
 			return 0 ;
@@ -66,22 +77,43 @@ static int check_match( int file, char* compare )
 	return 1 ;
 }
 
+#ifdef WINDOWS
+static void skip_line( HFILE file )
+#else
 static void skip_line( int file )
+#endif
 {
+#ifdef WINDOWS
+	int _readbytes;
+	char c ;
+	while ( (ReadFile( (HANDLE) file, &c, 1, &_readbytes, NULL ) == 1) &&
+#else
 	char c ;
 	while ( (read(file, &c, 1 ) == 1) &&
+#endif
 		(c != '\n') ) 
 		;
 	return ;
 }
 
+#ifdef WINDOWS
+static int read_int( HFILE file, int* number )
+#else
 static int read_int( int file, int* number )
+#endif
 {
+#ifdef WINDOWS
+	int _readbytes;
+#endif
 	char c ;
 	int digit = -1 ;
 	int n = 0 ;
 	do {
+#ifdef WINDOWS
+		if ( ReadFile( (HANDLE) file, &c, 1, &_readbytes, NULL ) != 1) {
+#else
 		if ( read( file, &c, 1 ) != 1 ) {
+#endif
 			crWarning( "Read failed trying to get ASCII integer" ) ;
 			return -1 ;
 		}
@@ -113,11 +145,22 @@ static void pad_buffer_texture( GLubyte* dst, const GLubyte* src, int w, int h, 
 		memcpy( (void*) &dst[ 3*i*pw ], (void*) &src[ 3*i*w ], 3*w ) ;
 }
 
+#ifdef WINDOWS
+static void pad_file_texture( GLubyte* dst, HFILE file, int w, int h, int pw, int ph)
+#else
 static void pad_file_texture( GLubyte* dst, int file, int w, int h, int pw, int ph )
+#endif
 {
+#ifdef WINDOWS
+	int _readbytes;
+#endif
 	int i ;
 	for (i=0; i<h; i++)
+#ifdef WINDOWS
+		ReadFile( (HANDLE) file, (void*) &dst[pw*3*i], w*3, &_readbytes, NULL );
+#else
 		read( file, (void*) &dst[pw*3*i], w*3 ) ;
+#endif
 }
 
 #if 0
@@ -146,29 +189,48 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 						  type, pixels ) ;
 		return ;
 	} else {
+#ifdef WINDOWS
+		int writing = (type == GL_TRUE) ?
+				( OF_WRITE | OF_CREATE) :
+				OF_READ ;
+		HFILE f;
+		LPOFSTRUCT OpenBuff = NULL;
+		int _writebytes;
+#else
 		int writing = (type == GL_TRUE) ?
 				( O_WRONLY | O_CREAT | O_TRUNC | O_NDELAY ) :
 				O_RDONLY ;
-		int filenameLength ;
 		int f ;
+#endif
+		int filenameLength ;
 		int i ;
-		int tmp ;
-		int paddedWidth ;
-		int paddedHeight ;
+		int tmp = 0;
+		int paddedWidth = 0;
+		int paddedHeight = 0;
 
 		assert( pixels ) ;
 
 		filenameLength = strlen( pixels ) ;
+#ifdef WINDOWS
+		f = OpenFile( pixels, OpenBuff, writing );
+		if ( f == HFILE_ERROR ) {
+#else 
 		f = open( pixels, writing, S_IRUSR|S_IWUSR ) ;
 		if ( f < 0 ) {
+#endif
 			crWarning( "Could not open file <%s>", (char*)pixels ) ;
 			return ;
 		}
 		switch (type) {
 			case GL_TRUE:
 				i=sprintf( ppmHeader, ppmHeaderTempl, width, height );
+#ifdef WINDOWS
+				WriteFile( (HANDLE) f, ppmHeader, i, &_writebytes, NULL ) ;
+				WriteFile( (HANDLE) f, (char*) pixels + filenameLength + 1, width*height*3, &_writebytes, NULL ) ;
+#else
 				write( f, ppmHeader, i ) ;
 				write( f, (char*) pixels + filenameLength + 1, width*height*3 ) ;
+#endif
 				/* Create padded texture */
 				calc_padded_size( width, height, &paddedWidth, &paddedHeight ) ;
 				if ( (paddedWidth == width) && (paddedHeight == height) ) {
@@ -188,6 +250,17 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 						width, height, paddedWidth, paddedHeight ) ;
 				break ;
 			case GL_FALSE:
+#ifdef WINDOWS
+				if ( ! check_match( f, "P6" ) ) { CloseHandle( (HANDLE) f ) ; return ; }
+				if ( read_int( f, &width ) ) { CloseHandle( (HANDLE) f ) ; return ; }
+				if ( read_int( f, &height ) ) { CloseHandle( (HANDLE) f ) ; return ; }
+				if ( read_int( f, &tmp ) ) { CloseHandle( (HANDLE) f ) ; return ; }
+				if ( tmp != 255 ) {
+					crWarning( "PPM file isn't GL_UNSIGNED_BYTE format" ) ;
+					CloseHandle( (HANDLE) f ) ;
+					return ;
+				}
+#else
 				if ( ! check_match( f, "P6" ) ) { close( f ) ; return ; }
 				if ( read_int( f, &width ) ) { close( f ) ; return ; }
 				if ( read_int( f, &height ) ) { close( f ) ; return ; }
@@ -197,6 +270,7 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 					close( f ) ;
 					return ;
 				}
+#endif
 				calc_padded_size( width, height, &paddedWidth, &paddedHeight ) ;
 				i = paddedWidth*paddedHeight*3 ;
 				if ( ! buffer ) {
@@ -211,7 +285,11 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 			default:
 				crError( "Can't touch this." ) ;
 		}
+#ifdef WINDOWS
+		CloseHandle( (HANDLE) f );
+#else
 		close( f ) ;
+#endif
 
 		if ( (type == GL_TRUE) && tmp )
 			/* no need to generate padded texture, since width & height are powers of 2 */

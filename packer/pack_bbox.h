@@ -9,111 +9,111 @@
 
 #include "cr_pack.h"
 
-#ifdef WINDOWS
+#if defined(WINDOWS) && !defined(CHROMIUM_THREADSAFE)
 #define UPDATE_2D_BBOX() \
 __asm {\
 	__asm fld fx\
-	__asm fld cr_packer_globals.bounds_min.x\
+	__asm fld pc->bounds_min.x\
 	__asm fcomi st, st(1)\
 	__asm fcmovnb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_min.x\
-	__asm fld cr_packer_globals.bounds_max.x\
+	__asm fstp pc->bounds_min.x\
+	__asm fld pc->bounds_max.x\
 	__asm fcomi st, st(1)\
 	__asm fcmovb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_max.x\
+	__asm fstp pc->bounds_max.x\
 	__asm fstp fx\
 	\
 	__asm fld fy\
-	__asm fld cr_packer_globals.bounds_min.y\
+	__asm fld pc->bounds_min.y\
 	__asm fcomi st, st(1)\
 	__asm fcmovnb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_min.y\
-	__asm fld cr_packer_globals.bounds_max.y\
+	__asm fstp pc->bounds_min.y\
+	__asm fld pc->bounds_max.y\
 	__asm fcomi st, st(1)\
 	__asm fcmovb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_max.y\
+	__asm fstp pc->bounds_max.y\
 	__asm fstp fy\
 } \
-	if (cr_packer_globals.bounds_min.z > 0.0f)  cr_packer_globals.bounds_min.z = 0.0f;\
-	if (cr_packer_globals.bounds_max.z < 0.0f)  cr_packer_globals.bounds_max.z = 0.0f
+	if (pc->bounds_min.z > 0.0f)  pc->bounds_min.z = 0.0f;\
+	if (pc->bounds_max.z < 0.0f)  pc->bounds_max.z = 0.0f
 #else
 #define UPDATE_2D_BBOX() \
-if (cr_packer_globals.bounds_min.x > fx)    cr_packer_globals.bounds_min.x = fx;\
-if (cr_packer_globals.bounds_min.y > fy)    cr_packer_globals.bounds_min.y = fy;\
-if (cr_packer_globals.bounds_min.z > 0.0f)  cr_packer_globals.bounds_min.z = 0.0f;\
-if (cr_packer_globals.bounds_max.x < fx)    cr_packer_globals.bounds_max.x = fx;\
-if (cr_packer_globals.bounds_max.y < fy)    cr_packer_globals.bounds_max.y = fy;\
-if (cr_packer_globals.bounds_max.z < 0.0f)  cr_packer_globals.bounds_max.z = 0.0f
+if (pc->bounds_min.x > fx)    pc->bounds_min.x = fx;\
+if (pc->bounds_min.y > fy)    pc->bounds_min.y = fy;\
+if (pc->bounds_min.z > 0.0f)  pc->bounds_min.z = 0.0f;\
+if (pc->bounds_max.x < fx)    pc->bounds_max.x = fx;\
+if (pc->bounds_max.y < fy)    pc->bounds_max.y = fy;\
+if (pc->bounds_max.z < 0.0f)  pc->bounds_max.z = 0.0f
 #endif
 
-#ifdef WINDOWS
+#if defined(WINDOWS) && !defined(CHROMIUM_THREADSAFE)
 #define UPDATE_3D_BBOX() \
 __asm {\
 	__asm fld fx\
-	__asm fld cr_packer_globals.bounds_min.x\
+	__asm fld pc->bounds_min.x\
 	__asm fcomi st, st(1)\
 	__asm fcmovnb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_min.x\
-	__asm fld cr_packer_globals.bounds_max.x\
+	__asm fstp pc->bounds_min.x\
+	__asm fld pc->bounds_max.x\
 	__asm fcomi st, st(1)\
 	__asm fcmovb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_max.x\
+	__asm fstp pc->bounds_max.x\
 	__asm fstp fx\
 	\
 	__asm fld fy\
-	__asm fld cr_packer_globals.bounds_min.y\
+	__asm fld pc->bounds_min.y\
 	__asm fcomi st, st(1)\
 	__asm fcmovnb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_min.y\
-	__asm fld cr_packer_globals.bounds_max.y\
+	__asm fstp pc->bounds_min.y\
+	__asm fld pc->bounds_max.y\
 	__asm fcomi st, st(1)\
 	__asm fcmovb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_max.y\
+	__asm fstp pc->bounds_max.y\
 	__asm fstp fy\
 	\
 	__asm fld fz\
-	__asm fld cr_packer_globals.bounds_min.z\
+	__asm fld pc->bounds_min.z\
 	__asm fcomi st, st(1)\
 	__asm fcmovnb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_min.z\
-	__asm fld cr_packer_globals.bounds_max.z\
+	__asm fstp pc->bounds_min.z\
+	__asm fld pc->bounds_max.z\
 	__asm fcomi st, st(1)\
 	__asm fcmovb st(0), st(1)\
-	__asm fstp cr_packer_globals.bounds_max.z\
+	__asm fstp pc->bounds_max.z\
 	__asm fstp fz\
 	\
 }
 #else
 #define UPDATE_3D_BBOX() \
-if (cr_packer_globals.bounds_min.x > fx)    cr_packer_globals.bounds_min.x = fx; \
-if (cr_packer_globals.bounds_min.y > fy)    cr_packer_globals.bounds_min.y = fy; \
-if (cr_packer_globals.bounds_min.z > fz)    cr_packer_globals.bounds_min.z = fz; \
-if (cr_packer_globals.bounds_max.x < fx)    cr_packer_globals.bounds_max.x = fx; \
-if (cr_packer_globals.bounds_max.y < fy)    cr_packer_globals.bounds_max.y = fy; \
-if (cr_packer_globals.bounds_max.z < fz)    cr_packer_globals.bounds_max.z = fz
+if (pc->bounds_min.x > fx)    pc->bounds_min.x = fx; \
+if (pc->bounds_min.y > fy)    pc->bounds_min.y = fy; \
+if (pc->bounds_min.z > fz)    pc->bounds_min.z = fz; \
+if (pc->bounds_max.x < fx)    pc->bounds_max.x = fx; \
+if (pc->bounds_max.y < fy)    pc->bounds_max.y = fy; \
+if (pc->bounds_max.z < fz)    pc->bounds_max.z = fz
 #endif
 
 #ifdef SIMD
 #define UPDATE_3D_BBOX_SIMD() \
 __asm {\
 	__asm movups xmm0, fx\
-	__asm movaps xmm1, cr_packer_globals.bounds_min.x\
-	__asm movaps xmm2, cr_packer_globals.bounds_max.x\
+	__asm movaps xmm1, pc->bounds_min.x\
+	__asm movaps xmm2, pc->bounds_max.x\
 	__asm minps xmm1, xmm0\
 	__asm maxps xmm2, xmm0\
-	__asm movaps cr_packer_globals.bounds_min.x, xmm1\
-	__asm movaps cr_packer_globals.bounds_max.x, xmm2\
+	__asm movaps pc->bounds_min.x, xmm1\
+	__asm movaps pc->bounds_max.x, xmm2\
 }
 #define UPDATE_3D_BBOX_SIMD_PACK() \
 __asm {\
 	__asm mov ecx, [data_ptr]\
 	__asm movups xmm0, fx\
-	__asm movaps xmm1, cr_packer_globals.bounds_min.x\
-	__asm movaps xmm2, cr_packer_globals.bounds_max.x\
+	__asm movaps xmm1, pc->bounds_min.x\
+	__asm movaps xmm2, pc->bounds_max.x\
 	__asm minps xmm1, xmm0\
 	__asm maxps xmm2, xmm0\
-	__asm movaps cr_packer_globals.bounds_min.x, xmm1\
-	__asm movaps cr_packer_globals.bounds_max.x, xmm2\
+	__asm movaps pc->bounds_min.x, xmm1\
+	__asm movaps pc->bounds_max.x, xmm2\
 	__asm movups [ecx], xmm0\
 }
 #define UPDATE_3DV_BBOX_SIMD() \
@@ -121,12 +121,12 @@ __asm {\
 	__asm mov eax, [v]\
 	__asm mov ecx, [data_ptr]\
 	__asm movups xmm0, [eax]\
-	__asm movaps xmm1, cr_packer_globals.bounds_min.x\
-	__asm movaps xmm2, cr_packer_globals.bounds_max.x\
+	__asm movaps xmm1, pc->bounds_min.x\
+	__asm movaps xmm2, pc->bounds_max.x\
 	__asm minps xmm1, xmm0\
 	__asm maxps xmm2, xmm0\
-	__asm movaps cr_packer_globals.bounds_min.x, xmm1\
-	__asm movaps cr_packer_globals.bounds_max.x, xmm2\
+	__asm movaps pc->bounds_min.x, xmm1\
+	__asm movaps pc->bounds_max.x, xmm2\
 	__asm movups [ecx], xmm0\
 }
 #else

@@ -34,15 +34,15 @@ print """
 
 #include <float.h>
 
-void crPackResetBBOX(void)
+void crPackResetBBOX( CRPackContext *pc )
 {
-	cr_packer_globals.bounds_min.x =  FLT_MAX;
-	cr_packer_globals.bounds_min.y =  FLT_MAX;
-	cr_packer_globals.bounds_min.z =  FLT_MAX;
-	cr_packer_globals.bounds_max.x = -FLT_MAX;
-	cr_packer_globals.bounds_max.y = -FLT_MAX;
-	cr_packer_globals.bounds_max.z = -FLT_MAX;
-	cr_packer_globals.updateBBOX = 1;
+	pc->bounds_min.x =  FLT_MAX;
+	pc->bounds_min.y =  FLT_MAX;
+	pc->bounds_min.z =  FLT_MAX;
+	pc->bounds_max.x = -FLT_MAX;
+	pc->bounds_max.y = -FLT_MAX;
+	pc->bounds_max.z = -FLT_MAX;
+	pc->updateBBOX = 1;
 }
 """
 
@@ -84,11 +84,12 @@ for num_coords in [2,3,4]:
 			print '{'
 			packet_length = stub_common.PacketLength( arg_types )
 
+			print "\tGET_PACKER_CONTEXT(pc);"
 			print "\tunsigned char *data_ptr;"
 			print "\tCREATE_%dD_FLOATS();" % num_coords
 
-			print "\tGET_BUFFERED_POINTER( %d );" % packet_length
-			print "\tif (cr_packer_globals.updateBBOX)"
+			print "\tGET_BUFFERED_POINTER( pc, %d );" % packet_length
+			print "\tif (pc->updateBBOX)"
 			print "\t{"
 			if num_coords < 4:
 				print "\t\tUPDATE_%dD_BBOX();" % num_coords
@@ -100,7 +101,7 @@ for num_coords in [2,3,4]:
 			for index in range(0,len(arg_names)):
 				print WriteData( counter, arg_types[index], arg_names[index], is_swapped )
 				counter += stub_common.lengths[arg_types[index]]
-			print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name )
+			print "\tWRITE_OPCODE( pc, %s );" % stub_common.OpcodeName( func_name )
 			print '}\n'
 
 			if is_swapped:
@@ -110,11 +111,12 @@ for num_coords in [2,3,4]:
 			print '{'
 			packet_length = stub_common.PacketLength( arg_types )
 
+			print "\tGET_PACKER_CONTEXT(pc);"
 			print "\tunsigned char *data_ptr;"
 			print "\tCREATE_%dD_FLOATS();" % num_coords
 
-			print "\tGET_BUFFERED_COUNT_POINTER( %d );" % packet_length
-			print "\tif (cr_packer_globals.updateBBOX)"
+			print "\tGET_BUFFERED_COUNT_POINTER( pc, %d );" % packet_length
+			print "\tif (pc->updateBBOX)"
 			print "\t{"
 			if num_coords < 4:
 				print "\t\tUPDATE_%dD_BBOX();" % num_coords
@@ -126,7 +128,7 @@ for num_coords in [2,3,4]:
 			for index in range(0,len(arg_names)):
 				print WriteData( counter, arg_types[index], arg_names[index], is_swapped )
 				counter += stub_common.lengths[arg_types[index]]
-			print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name )
+			print "\tWRITE_OPCODE( pc, %s );" % stub_common.OpcodeName( func_name )
 			print '}\n'
 
 			func_name = 'Vertex%d%sv' % (num_coords,argtype)
@@ -144,11 +146,12 @@ for num_coords in [2,3,4]:
 			if packet_length % 4 != 0:
 				packet_length += 2
 
+			print "\tGET_PACKER_CONTEXT(pc);"
 			print "\tunsigned char *data_ptr;"
 			print "\tCREATE_%dD_VFLOATS();" % num_coords
 
-			print "\tGET_BUFFERED_POINTER( %d );" % packet_length
-			print "\tif (cr_packer_globals.updateBBOX)"
+			print "\tGET_BUFFERED_POINTER( pc, %d );" % packet_length
+			print "\tif (pc->updateBBOX)"
 			print "\t{"
 			if num_coords < 4:
 				print "\t\tUPDATE_%dD_BBOX();" % num_coords
@@ -160,7 +163,7 @@ for num_coords in [2,3,4]:
 			for index in range(num_coords):
 				print WriteData( counter, vector_type, "%s[%d]" % (arg_names[0], index), is_swapped )
 				counter += stub_common.lengths[vector_type]
-			print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name[:-1] )
+			print "\tWRITE_OPCODE( pc, %s );" % stub_common.OpcodeName( func_name[:-1] )
 			print '}\n'
 
 			if is_swapped:
@@ -172,11 +175,12 @@ for num_coords in [2,3,4]:
 			if packet_length % 4 != 0:
 				packet_length += 2
 
+			print "\tGET_PACKER_CONTEXT(pc);"
 			print "\tunsigned char *data_ptr;"
 			print "\tCREATE_%dD_VFLOATS();" % num_coords
 
-			print "\tGET_BUFFERED_COUNT_POINTER( %d );" % packet_length
-			print "\tif (cr_packer_globals.updateBBOX)"
+			print "\tGET_BUFFERED_COUNT_POINTER( pc, %d );" % packet_length
+			print "\tif (pc->updateBBOX)"
 			print "\t{"
 			if num_coords < 4:
 				print "\t\tUPDATE_%dD_BBOX();" % num_coords
@@ -188,7 +192,7 @@ for num_coords in [2,3,4]:
 			for index in range(num_coords):
 				print WriteData( counter, vector_type, "%s[%d]" % (arg_names[0], index), is_swapped )
 				counter += stub_common.lengths[vector_type]
-			print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name[:-1] )
+			print "\tWRITE_OPCODE( pc, %s );" % stub_common.OpcodeName( func_name[:-1] )
 			print '}\n'
 		PrintFunction( func_name, return_type, arg_names, arg_types, num_coords, argtype, 0 )
 		PrintFunction( func_name, return_type, arg_names, arg_types, num_coords, argtype, 1 )

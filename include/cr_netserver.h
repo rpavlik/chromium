@@ -20,6 +20,7 @@ typedef struct {
 } CRNetServer;
 
 void crNetServerConnect( CRNetServer *ns );
+void crNetNewClient( CRConnection *conn, CRNetServer *ns );
 
 #ifdef __cplusplus
 }

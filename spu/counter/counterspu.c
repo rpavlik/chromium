@@ -27,13 +27,13 @@
  * -Brian
  */
 
-void COUNTERSPU_APIENTRY counterspuSwapBuffers( )
+void COUNTERSPU_APIENTRY counterspuSwapBuffers( GLint window, GLint flags )
 {
 	printf("Counter: (glSwapBuffers) Vertex3fv calls %d\n", counter_spu.v3fv);
 
 	counter_spu.v3fv = 0; /* reset it */
 
-	counter_spu.super.SwapBuffers();
+	counter_spu.super.SwapBuffers( window, flags );
 }
 
 void COUNTERSPU_APIENTRY counterspuVertex3fv( GLfloat *v0)

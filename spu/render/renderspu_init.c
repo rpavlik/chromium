@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_mem.h"
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_string.h"
@@ -21,19 +22,32 @@ SPUFunctions render_functions = {
 
 RenderSPU render_spu;
 
+#ifdef CHROMIUM_THREADSAFE
+CRtsd _RenderTSD;
+#endif
+
 SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id, unsigned int num_contexts )
 {
 	CRLimitsState limits[3];
 	int numFuncs, numSpecial;
+	GLint defaultWin, defaultCtx;
+	/* Don't ask for ALPHA, if we don't have it, we fail immediately */
+	const GLuint visualBits = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT | CR_STENCIL_BIT /*| CR_ALPHA_BIT*/;
 
 	(void) child;
 	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
+#ifdef CHROMIUM_THREADSAFE
+	crDebug("Render SPU: thread-safe");
+#endif
+
+	crMemZero(&render_spu, sizeof(render_spu));
+
 	render_spu.id = id;
-	renderspuGatherConfiguration();
+	renderspuGatherConfiguration(&render_spu);
 
 	/* Get our special functions. */
 	numSpecial = renderspuCreateFunctions( render_table );
@@ -45,16 +59,19 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 		return NULL;
 	}
 
-	/* Get pointer to the real OpenGL glClear function */
-	render_spu.ClearFunc = (ClearFunc_t)
-		 crSPUFindFunction(render_table + numSpecial, "Clear");
-	CRASSERT(render_spu.ClearFunc);
-
 	numFuncs += numSpecial;
 
-	/* Need to create the window and call glX/wglMakeCurrent here */
-	(void) renderspuCreateWindow( render_spu.visAttribs, GL_FALSE );
-	
+	/*
+	 * Create the default window and context.  Their indexes are zero and
+	 * a client can use them without calling CreateContext or CreateWindow.
+	 */
+	defaultWin = renderspuCreateWindow( NULL, visualBits );
+	defaultCtx = renderspuCreateContext( NULL, visualBits );
+	CRASSERT(defaultWin == 0);
+	CRASSERT(defaultCtx == 0);
+	renderspuMakeCurrent( defaultWin, 0, defaultCtx );
+	render_spu.windows[defaultWin].mapPending = GL_TRUE;
+
 	/*
 	 * Get the OpenGL extension functions.
 	 * SIGH -- we have to wait until the very bitter end to load the 
@@ -74,6 +91,8 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 	crSPUInitGLLimits( &limits[1] );               /* Chromium */
 	crSPUMergeGLLimits( 2, limits, &limits[2] );   /* intersection */
 	crSPUReportGLLimits( &limits[2], render_spu.id );
+
+	render_spu.barrierHash = crAllocHashtable();
 
 	return &render_functions;
 }

@@ -25,10 +25,6 @@
 #define WINDOW_NAME render_spu.window_title
 
 
-
-/* This stuff is from WireGL, and hasn't been changed yet since 
- * I'm developing on Windows. */
-
 static Colormap 
 GetShareableColormap( Display *dpy, XVisualInfo *vi )
 {
@@ -85,15 +81,16 @@ WaitForMapNotify( Display *display, XEvent *event, char *arg )
 
 
 static int
-Attrib( int attrib )
+Attrib( const VisualInfo *visual, int attrib )
 {
 	int value = 0;
-	render_spu.ws.glXGetConfig( render_spu.dpy, render_spu.visual, attrib, &value );
+	render_spu.ws.glXGetConfig( visual->dpy, visual->visual, attrib, &value );
 	return value;
 }
 
 
-static XVisualInfo *chooseVisual( Display *dpy, GLbitfield visAttribs )
+static XVisualInfo *
+chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 {
 	XVisualInfo *vis;
 	int attribList[100];
@@ -130,7 +127,7 @@ static XVisualInfo *chooseVisual( Display *dpy, GLbitfield visAttribs )
 	if (visAttribs & CR_STENCIL_BIT)
 	{
 		attribList[i++] = GLX_STENCIL_SIZE;
-		attribList[i++] = 8;  /* XXX also try 1-bit stencil */
+		attribList[i++] = 1;
 	}
 
 	if (visAttribs & CR_ACCUM_BIT)
@@ -152,20 +149,73 @@ static XVisualInfo *chooseVisual( Display *dpy, GLbitfield visAttribs )
 
 	attribList[i++] = None;
 
-	vis = render_spu.ws.glXChooseVisual( dpy, DefaultScreen(dpy), attribList );
+	vis = render_spu.ws.glXChooseVisual( dpy, screen, attribList );
 	return vis;
 }
 
 
-
-/*
- * VERY IMPORTANT: this function may be called more than once
- * (twice, actually) in order to get a window with different visual
- * attributes the second time around.  Make sure we don't re-open the
- * display or anything silly like that.
- */
-GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
+GLboolean renderspu_InitVisual( VisualInfo *visual )
 {
+	int screen;
+
+	CRASSERT(visual);
+	if (visual->displayName[0] == 0)
+		visual->dpy = XOpenDisplay(NULL);
+	else
+		visual->dpy = XOpenDisplay(visual->displayName);
+
+	if (!visual->dpy)
+		return GL_FALSE;
+
+	screen = DefaultScreen(visual->dpy);
+	visual->visual = chooseVisual(visual->dpy, screen, visual->visAttribs);
+	if (!visual->visual) {
+		char s[1000];
+		renderspuMakeVisString( visual->visAttribs, s );
+		crError( "Render SPU: Display %s doesn't have the necessary visual: %s",
+						 render_spu.display_string, s );
+		XCloseDisplay(visual->dpy);
+		return GL_FALSE;
+	}
+
+	if ( render_spu.sync )
+	{
+		crDebug( "Render SPU: Turning on XSynchronize" );
+		XSynchronize( visual->dpy, True );
+	}
+
+	if ( !render_spu.ws.glXQueryExtension( visual->dpy, NULL, NULL ) )
+	{
+		crError( "Render SPU: Display %s doesn't support GLX", visual->displayName );
+		return GL_FALSE;
+	}
+
+	crDebug( "Render SPU: Looks like we have GLX" );
+
+	crDebug( "Render SPU: Chose visual id=%ld: RGBA=(%d,%d,%d,%d) Z=%d stencil=%d"
+					 " double=%d stereo=%d accum=(%d,%d,%d,%d)",
+					 visual->visual->visualid,
+					 Attrib( visual, GLX_RED_SIZE ),
+					 Attrib( visual, GLX_GREEN_SIZE ),
+					 Attrib( visual, GLX_BLUE_SIZE ),
+					 Attrib( visual, GLX_ALPHA_SIZE ),
+					 Attrib( visual, GLX_DEPTH_SIZE ),
+					 Attrib( visual, GLX_STENCIL_SIZE ),
+					 Attrib( visual, GLX_DOUBLEBUFFER ),
+					 Attrib( visual, GLX_STEREO ),
+					 Attrib( visual, GLX_ACCUM_RED_SIZE ),
+					 Attrib( visual, GLX_ACCUM_GREEN_SIZE ),
+					 Attrib( visual, GLX_ACCUM_BLUE_SIZE ),
+					 Attrib( visual, GLX_ACCUM_ALPHA_SIZE )
+					 );
+
+	return GL_TRUE;
+}
+
+
+GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
+{
+	Display             *dpy;
 	Colormap             cmap;
 	XSetWindowAttributes swa;
 	XSizeHints           hints = {0};
@@ -173,55 +223,26 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 	XTextProperty        text_prop;
 	XClassHint          *class_hints = NULL;
 	char                *name;
-	Bool                 is_direct;
 	unsigned long        flags;
 
-	int actual_window_x = render_spu.window_x;
-	int actual_window_y = render_spu.window_y;
+	CRASSERT(visual);
+	window->visual = visual;
+	window->x = render_spu.defaultX;
+	window->y = render_spu.defaultY;
+	window->width  = render_spu.defaultWidth;
+	window->height = render_spu.defaultHeight;
 
-	render_spu.actual_window_width  = render_spu.window_width;
-	render_spu.actual_window_height = render_spu.window_height;
+	dpy = visual->dpy;
 
 	if ( render_spu.use_L2 )
 	{
-		crWarning( "Going fullscreen because we think we're using Lightning-2." );
+		crWarning( "Render SPU: Going fullscreen because we think we're using Lightning-2." );
 		render_spu.fullscreen = 1;
 	}
 
 	/*
 	 * Open the display, check for GLX support
 	 */
-	if ( !render_spu.dpy )
-	{
-		render_spu.dpy = XOpenDisplay( render_spu.display_string );
-		if ( !render_spu.dpy )
-		{
-			crError( "Couldn't open display \"%s\"", 
-							 XDisplayName( render_spu.display_string ) );
-			return GL_FALSE;
-		}
-
-		render_spu.display_string = 
-			XDisplayName( DisplayString( render_spu.dpy ) );
-
-		crDebug( "Opened the display: %s", 
-						 render_spu.display_string );
-
-		if ( render_spu.sync )
-		{
-			crDebug( "Turning on XSynchronize" );
-			XSynchronize( render_spu.dpy, True );
-		}
-
-		if ( !render_spu.ws.glXQueryExtension( render_spu.dpy, NULL, NULL ) )
-		{
-			crError( "Display %s doesn't support GLX", 
-							 render_spu.display_string );
-			return GL_FALSE;
-		}
-
-		crDebug( "Looks like we have GLX" );
-	}
 
 	/*
 	 * Query screen size if we're going full-screen
@@ -232,88 +253,30 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 		Window root_window;
 
 		/* disable the screensaver */
-		XSetScreenSaver( render_spu.dpy, 0, 0, PreferBlanking,
+		XSetScreenSaver( dpy, 0, 0, PreferBlanking,
 				AllowExposures );
-		crDebug( "Just turned off the screensaver" );
+		crDebug( "Render SPU: Just turned off the screensaver" );
 
 		/* Figure out how big the screen is, and make the window that size */
 
-		root_window = DefaultRootWindow( render_spu.dpy );
-		XGetWindowAttributes( render_spu.dpy, root_window, &xwa );
+		root_window = DefaultRootWindow( dpy );
+		XGetWindowAttributes( dpy, root_window, &xwa );
 
-		render_spu.actual_window_width  = xwa.width;
-		render_spu.actual_window_height = xwa.height;
+		crDebug( "Render SPU: root window=%dx%d",
+						 xwa.width, xwa.height );
 
-		crDebug( "root window=%dx%d",	xwa.width, xwa.height );
-
-		actual_window_x = 0;
-		actual_window_y = 0;
+		window->x = 0;
+		window->y = 0;
+		window->width  = xwa.width;
+		window->height = xwa.height;
 	}
-
-	/*
-	 * Get the GLX visual.
-	 */
-	if ( render_spu.visual )
-	{
-		XFree( render_spu.visual );
-		render_spu.visual = NULL;
-	}
-	render_spu.visual = chooseVisual( render_spu.dpy, visAttribs );
-	if ( !render_spu.visual )
-	{
-		char s[1000];
-		renderspuMakeVisString( visAttribs, s );
-		crError( "Display %s doesn't have the necessary visual: %s",
-						 render_spu.display_string, s );
-		return GL_FALSE;
-	}
-
-	crDebug( "Chose visual id=%ld: RGBA=(%d,%d,%d,%d) Z=%d stencil=%d double=%d"
-					 " stereo=%d accum=(%d,%d,%d,%d)",
-					 render_spu.visual->visualid,
-					 Attrib( GLX_RED_SIZE ), Attrib( GLX_GREEN_SIZE ),
-					 Attrib( GLX_BLUE_SIZE ), Attrib( GLX_ALPHA_SIZE ),
-					 Attrib( GLX_DEPTH_SIZE ), Attrib( GLX_STENCIL_SIZE ),
-					 Attrib( GLX_DOUBLEBUFFER ), Attrib( GLX_STEREO ),
-					 Attrib( GLX_ACCUM_RED_SIZE ), Attrib( GLX_ACCUM_GREEN_SIZE ),
-					 Attrib( GLX_ACCUM_BLUE_SIZE ), Attrib( GLX_ACCUM_ALPHA_SIZE )
-					 );
 
 	/*
 	 * Get a colormap.
 	 */
-	cmap = GetShareableColormap( render_spu.dpy, render_spu.visual );
+	cmap = GetShareableColormap( dpy, visual->visual );
 	if ( !cmap ) {
-		crError( "Unable to get a colormap!" );
-		return GL_FALSE;
-	}
-
-	/*
-	 * Create the GLX rendering context
-	 */
-	if ( render_spu.context )
-	{
-		/* free old context */
-		render_spu.ws.glXDestroyContext( render_spu.dpy, render_spu.context );
-	}
-
-	render_spu.context = render_spu.ws.glXCreateContext( render_spu.dpy, 
-			render_spu.visual,
-			NULL, render_spu.try_direct );
-
-	if ( render_spu.context == NULL ) {
-		crError( "Couldn't create rendering context" ); 
-		return GL_FALSE;
-	}
-
-	is_direct = render_spu.ws.glXIsDirect( render_spu.dpy, render_spu.context );
-
-	crDebug( "Created a context (%s)",
-			is_direct ? "direct" : "indirect" );
-
-	if ( render_spu.force_direct && !is_direct )
-	{
-		crError( "Direct rendering not possible." );
+		crError( "Render SPU: Unable to get a colormap!" );
 		return GL_FALSE;
 	}
 
@@ -332,30 +295,26 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 		flags |= CWOverrideRedirect;
 	}
 
-	if ( render_spu.window )
-	{
+	if ( window->window ) {
 		/* destroy the old one */
-		XDestroyWindow( render_spu.dpy, render_spu.window );
+		XDestroyWindow( dpy, window->window );
 	}
-	render_spu.window = 
-		XCreateWindow( render_spu.dpy,
-				RootWindow( render_spu.dpy, 
-					render_spu.visual->screen ),
-				actual_window_x,
-				actual_window_y,
-				render_spu.actual_window_width, 
-				render_spu.actual_window_height,
-				0, render_spu.visual->depth, InputOutput,
-				render_spu.visual->visual,
-				flags, &swa );
+	window->window = XCreateWindow( dpy,
+																	RootWindow( dpy, 
+																							visual->visual->screen ),
+																	window->x,
+																	window->y,
+																	window->width,
+																	window->height,
+																	0, visual->visual->depth,
+																	InputOutput,
+																	visual->visual->visual,
+																	flags, &swa );
 
-	if (!render_spu.window) {
-		crWarning( "renderspu: unable to create window" );
+	if (!window->window) {
+		crWarning( "Render SPU: unable to create window" );
 		return GL_FALSE;
 	}
-
-	crDebug( "actual_window_x,y: %d, %d", actual_window_x, actual_window_y);
-
 
 	if ( render_spu.fullscreen )
 	{
@@ -367,27 +326,28 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 
 		memset( clear_bits, 0, sizeof(clear_bits) );
 
-		pixmap = XCreatePixmapFromBitmapData( render_spu.dpy, 
-				render_spu.window,
+		pixmap = XCreatePixmapFromBitmapData( dpy, 
+				window->window,
 				clear_bits, 16, 16, 1, 0, 1 );
-		cursor = XCreatePixmapCursor( render_spu.dpy, pixmap, pixmap,
+		cursor = XCreatePixmapCursor( dpy, pixmap, pixmap,
 				&color, &color, 8, 8 );
-		XDefineCursor( render_spu.dpy, render_spu.window, cursor );
+		XDefineCursor( dpy, window->window, cursor );
 
-		XFreePixmap( render_spu.dpy, pixmap );
+		XFreePixmap( dpy, pixmap );
 	}
 
-	crDebug( "Created the window" );
-	hints.x = actual_window_x;
-	hints.y = actual_window_y;
-	hints.width = render_spu.actual_window_width;
-	hints.height = render_spu.actual_window_height;
+	crDebug( "Render SPU: Created the window on display %s",
+			 visual->displayName ? visual->displayName : "(default)" );
+	hints.x = window->x;
+	hints.y = window->y;
+	hints.width = window->width;
+	hints.height = window->height;
 	hints.min_width = hints.width;
 	hints.min_height = hints.height;
 	hints.max_width = hints.width;
 	hints.max_height = hints.height;
 	hints.flags = USPosition | USSize | PMinSize | PMaxSize;
-	XSetStandardProperties( render_spu.dpy, render_spu.window,
+	XSetStandardProperties( dpy, window->window,
 			WINDOW_NAME, WINDOW_NAME,
 			None, NULL, 0, &hints );
 #if 1
@@ -396,26 +356,26 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 	 */
 	name = WINDOW_NAME;
 	XStringListToTextProperty( &name, 1, &text_prop );
-	XSetWMName( render_spu.dpy, render_spu.window, &text_prop );
+	XSetWMName( dpy, window->window, &text_prop );
 #endif
 	class_hints = XAllocClassHint( );
 	class_hints->res_name = crStrdup( "foo" );
 	class_hints->res_class = crStrdup( "Chromium" );
-	XSetClassHint( render_spu.dpy, render_spu.window, class_hints );
+	XSetClassHint( dpy, window->window, class_hints );
 	free( class_hints->res_name );
 	free( class_hints->res_class );
 	XFree( class_hints );
 
-	crDebug( "About to make current to the context" );
+	crDebug( "Render SPU: About to make current to the context" );
 
 	if (showIt) {
-		XMapWindow( render_spu.dpy, render_spu.window );
-		XIfEvent( render_spu.dpy, &event, WaitForMapNotify, 
-							(char *) render_spu.window );
+		XMapWindow( dpy, window->window );
+		XIfEvent( dpy, &event, WaitForMapNotify, 
+							(char *) window->window );
 	}
 
 #if 0
-	/* Note: There is a nasty bug somewhere in render_spu.ws.glXMakeCurrent() for
+	/* Note: There is a nasty bug somewhere in glXMakeCurrent() for
 		 the 0.9.5 version of the NVIDIA OpenGL drivers, and has been
 		 observed under both RedHat 6.2 (running a 2.2.16-3 kernel) and
 		 RedHat 7.0 (running the stock 2.2.16-22 kernel).  The bug
@@ -427,16 +387,18 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 			"almost certainly wedge the machine." );
 #endif
 
-	if ( !render_spu.ws.glXMakeCurrent( render_spu.dpy, render_spu.window, 
-				render_spu.context ) )
+#if 0
+	if ( !render_spu.ws.glXMakeCurrent( dpy, window->window, 
+				window->context ) )
 	{
 		crError( "Error making current" );
 		return GL_FALSE;
 	}
 	crDebug( "Made current to the context" );
+#endif
 
-#if 1
-        CRASSERT(render_spu.ws.glGetString);
+#if 0
+	CRASSERT(render_spu.ws.glGetString);
 	crDebug( "GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
 	crDebug( "GL_RENDERER: %s", render_spu.ws.glGetString( GL_RENDERER ) );
 	crDebug( "GL_VERSION:  %s", render_spu.ws.glGetString( GL_VERSION ) );
@@ -446,32 +408,130 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 	 * End GLX code
 	 */
 
-	crDebug( "actual_window_width, height = %d, %d\n",
-			 render_spu.actual_window_width, render_spu.actual_window_height);
-	crDebug( "window_x, y, width, height = %d, %d, %d, %d\n",
-			 render_spu.window_x, render_spu.window_y,
-			 render_spu.window_width, render_spu.window_height);
+	crDebug( "Render SPU: actual window x, y, width, height: %d, %d, %d, %d",
+					 window->x, window->y, window->width, window->height );
 
 	return GL_TRUE;
 }
 
 
+void renderspu_DestroyWindow( WindowInfo *window )
+{
+	CRASSERT(window);
+	CRASSERT(window->visual);
+	XDestroyWindow(window->visual->dpy, window->window);
+	window->visual = NULL;
+	window->window = 0;
+	window->width = window->height = 0;
+}
+
+
+GLboolean renderspu_CreateContext( VisualInfo *visual, ContextInfo *context )
+{
+	Bool is_direct;
+
+	CRASSERT(visual);
+	CRASSERT(context);
+
+	context->visual = visual;
+
+	context->context = render_spu.ws.glXCreateContext( visual->dpy, 
+																										 visual->visual,
+																										 NULL,
+																										 render_spu.try_direct );
+	if (!context->context) {
+		crError( "Render SPU: Couldn't create rendering context" ); 
+		return GL_FALSE;
+	}
+
+	is_direct = render_spu.ws.glXIsDirect( visual->dpy, context->context );
+	crDebug( "Render SPU: Created a context (%s)",
+			is_direct ? "direct" : "indirect" );
+
+	if ( render_spu.force_direct && !is_direct )
+	{
+		crError( "Render SPU: Direct rendering not possible." );
+		return GL_FALSE;
+	}
+
+	return GL_TRUE;
+}
+
+
+void renderspu_DestroyContext( ContextInfo *context )
+{
+	render_spu.ws.glXDestroyContext( context->visual->dpy, context->context );
+	context->visual = NULL;
+	context->context = 0;
+}
+
+
+void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context )
+{
+	CRASSERT(render_spu.ws.glXMakeCurrent);
+
+	if (window && context) {
+		if (window->visual != context->visual) {
+			/*
+			 * XXX have to revisit this issue!!!
+			 *
+			 * But for now we destroy the current window
+			 * and re-create it with the context's visual abilities
+			 */
+			renderspu_DestroyWindow( window );
+			renderspu_CreateWindow( context->visual, GL_FALSE, window );
+			/*
+			crError("In renderspu_MakeCurrent() window and context"
+							" weren't created with same visual!");
+			*/
+		}
+
+		CRASSERT(window->window);
+		CRASSERT(context->context);
+
+		if (thread)
+			thread->dpy = window->visual->dpy;
+
+		render_spu.ws.glXMakeCurrent( window->visual->dpy,
+					window->window, context->context );
+	
+	} else if (thread && thread->dpy) {
+		render_spu.ws.glXMakeCurrent( thread->dpy, 0, 0 );
+	}
+}
+
+
+void renderspu_WindowSize( WindowInfo *window, int w, int h )
+{
+	CRASSERT(window);
+	CRASSERT(window->visual);
+	XResizeWindow(window->visual->dpy, window->window, w, h);
+}
+
+
+void renderspu_WindowPosition( WindowInfo *window, int x, int y )
+{
+	CRASSERT(window);
+	CRASSERT(window->visual);
+	XMoveWindow(window->visual->dpy, window->window, x, y);
+}
+
 
 /* Either show or hide the render SPU's window. */
-void renderspuShowWindow( GLboolean showIt )
+void renderspu_ShowWindow( WindowInfo *window, GLboolean showIt )
 {
-	if ( render_spu.dpy && render_spu.window )
+	if ( window->visual->dpy && window->window )
 	{
 		if (showIt)
 		{
 			XEvent event;
-			XMapWindow( render_spu.dpy, render_spu.window );
-			XIfEvent( render_spu.dpy, &event, WaitForMapNotify, 
-								(char *) render_spu.window );
+			XMapWindow( window->visual->dpy, window->window );
+			XIfEvent( window->visual->dpy, &event, WaitForMapNotify, 
+								(char *) window->window );
 		}
 		else
 		{
-			XUnmapWindow( render_spu.dpy, render_spu.window );
+			XUnmapWindow( window->visual->dpy, window->window );
 		}
 	}
 }

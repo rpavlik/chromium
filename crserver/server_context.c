@@ -13,7 +13,11 @@
 #include "server.h"
 
 
-GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( void *arg1, GLint arg2 )
+/* This makes context numbers more readable during debugging */
+#define MAGIC_OFFSET 5000
+
+
+GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyName, GLint visualBits )
 {
 	static GLboolean firstCall = GL_TRUE;
 	GLint i, retVal = 0, ctxPos = -1;
@@ -25,17 +29,17 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( void *arg1, GLint 
 	 */
 	if (firstCall) {
 		cr_server.SpuContext
-			= cr_server.head_spu->dispatch_table.CreateContext( arg1, arg2 );
-		if (cr_server.SpuContext <= 0) {
+			= cr_server.head_spu->dispatch_table.CreateContext( dpyName, visualBits );
+		if (cr_server.SpuContext < 0) {
 			crWarning("headSpu.CreateContext failed in crServerDispatchCreateContext()");
-			return 0;
+			return -1;
 		}
 		firstCall = GL_FALSE;
 	}
 
 	/* find an empty position in the context[] array */
 	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
-		if (cr_server.curClient->context[i] == NULL) {
+		if (cr_server.context[i] == NULL) {
 			ctxPos = i;
 			break;
 		}
@@ -47,9 +51,16 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( void *arg1, GLint 
 		 */
 		newCtx = crStateCreateContext( &cr_server.limits );
 		if (newCtx) {
-			cr_server.curClient->context[ctxPos] = newCtx;
+			cr_server.context[ctxPos] = newCtx;
 			crStateSetCurrentPointers( newCtx, &(cr_server.current) );
-			retVal = 5000 + ctxPos; /* magic number */
+			retVal = MAGIC_OFFSET + ctxPos;
+
+			/* Fix up viewport & scissor */
+			cr_server.context[ctxPos]->viewport.viewportW = cr_server.muralWidth;
+			cr_server.context[ctxPos]->viewport.viewportH = cr_server.muralHeight;
+			cr_server.context[ctxPos]->viewport.scissorW = cr_server.muralWidth;
+			cr_server.context[ctxPos]->viewport.scissorH = cr_server.muralHeight;
+
 		}
 	}
 
@@ -58,33 +69,44 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( void *arg1, GLint 
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( void *dpy, GLint ctx )
+void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 {
-	const int ctxPos = ctx - 5000;  /* See magic number above */
+	const int ctxPos = ctx - MAGIC_OFFSET;
 	CRContext *crCtx;
 
 	CRASSERT(ctxPos >= 0);
 
-	crCtx = cr_server.curClient->context[ctxPos];
+	crCtx = cr_server.context[ctxPos];
 	if (crCtx) {
 		crStateDestroyContext( crCtx );
-		cr_server.curClient->context[ctxPos] = NULL;
+		cr_server.context[ctxPos] = NULL;
 	}
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( void *arg1, GLint arg2, GLint arg3 )
+void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint nativeWindow, GLint context )
 {
 	static GLboolean firstCall = GL_TRUE;
-	int ctxPos = arg3 - 5000; /* See magic number above */
+	int ctxPos;
 	CRContext *ctx;
 
-	CRASSERT(ctxPos >= 0);
-	CRASSERT(ctxPos < CR_MAX_CONTEXTS);
+	if (context >= 0 && window >= 0) {
+		ctxPos = context - MAGIC_OFFSET;
+		CRASSERT(ctxPos >= 0);
+		CRASSERT(ctxPos < CR_MAX_CONTEXTS);
 
-	/* Update the state tracker's current context */
-	ctx = cr_server.curClient->context[ctxPos];
+		/* Update the state tracker's current context */
+		ctx = cr_server.context[ctxPos];
+
+		crStateSetCurrentPointers( ctx, &(cr_server.current) );
+	}
+	else {
+		ctx = NULL;
+		window = -1;
+	}
+
 	cr_server.curClient->currentCtx = ctx;
+	cr_server.curClient->currentWindow = window;
 
 	/* This is a hack to force updating the 'current' attribs */
 	crStateUpdateColorBits();
@@ -95,7 +117,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( void *arg1, GLint arg
 	crStateMakeCurrent( ctx );
 
 	/* check if being made current for first time, update viewport */
-	if (ctx->viewport.outputDims.x1 == 0 &&
+	if (ctx &&
+		ctx->viewport.outputDims.x1 == 0 &&
 		ctx->viewport.outputDims.x2 == 0 &&
 		ctx->viewport.outputDims.y1 == 0 &&
 		ctx->viewport.outputDims.y2 == 0) {
@@ -110,8 +133,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( void *arg1, GLint arg
 		 * one output stream of GL commands, we only need to call the head
 		 * SPU's MakeCurrent() function once.
 		 */
-		cr_server.head_spu->dispatch_table.MakeCurrent( arg1, arg2,
-																										cr_server.SpuContext );
+		cr_server.head_spu->dispatch_table.MakeCurrent( window, nativeWindow, cr_server.SpuContext );
 		firstCall = GL_FALSE;
 	}
 }

@@ -10,9 +10,10 @@
 
 void PACK_APIENTRY crPackMultMatrixd( const GLdouble *m )
 {
+	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 	int packet_length = 16*sizeof( *m );
-	GET_BUFFERED_POINTER( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length );
 	WRITE_DOUBLE( 0*sizeof(double), m[ 0] );
 	WRITE_DOUBLE( 1*sizeof(double), m[ 1] );
 	WRITE_DOUBLE( 2*sizeof(double), m[ 2] );
@@ -29,14 +30,15 @@ void PACK_APIENTRY crPackMultMatrixd( const GLdouble *m )
 	WRITE_DOUBLE( 13*sizeof(double), m[13] );
 	WRITE_DOUBLE( 14*sizeof(double), m[14] );
 	WRITE_DOUBLE( 15*sizeof(double), m[15] );
-	WRITE_OPCODE( CR_MULTMATRIXD_OPCODE );
+	WRITE_OPCODE( pc, CR_MULTMATRIXD_OPCODE );
 }
 
 void PACK_APIENTRY crPackMultMatrixf( const GLfloat *m )
 {
+	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 	int packet_length = 16*sizeof( *m );
-	GET_BUFFERED_POINTER( packet_length ); 
+	GET_BUFFERED_POINTER(pc, packet_length ); 
 	WRITE_DATA( 0*sizeof(GLfloat), GLfloat, m[ 0] );
 	WRITE_DATA( 1*sizeof(GLfloat), GLfloat, m[ 1] );
 	WRITE_DATA( 2*sizeof(GLfloat), GLfloat, m[ 2] );
@@ -53,14 +55,15 @@ void PACK_APIENTRY crPackMultMatrixf( const GLfloat *m )
 	WRITE_DATA( 13*sizeof(GLfloat), GLfloat, m[13] );
 	WRITE_DATA( 14*sizeof(GLfloat), GLfloat, m[14] );
 	WRITE_DATA( 15*sizeof(GLfloat), GLfloat, m[15] );
-	WRITE_OPCODE( CR_MULTMATRIXF_OPCODE );
+	WRITE_OPCODE( pc, CR_MULTMATRIXF_OPCODE );
 }
 
 void PACK_APIENTRY crPackLoadMatrixd( const GLdouble *m )
 {
+	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 	int packet_length = 16*sizeof( *m );
-	GET_BUFFERED_POINTER( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length );
 	WRITE_DOUBLE( 0*sizeof(double), m[ 0] );
 	WRITE_DOUBLE( 1*sizeof(double), m[ 1] );
 	WRITE_DOUBLE( 2*sizeof(double), m[ 2] );
@@ -77,14 +80,15 @@ void PACK_APIENTRY crPackLoadMatrixd( const GLdouble *m )
 	WRITE_DOUBLE( 13*sizeof(double), m[13] );
 	WRITE_DOUBLE( 14*sizeof(double), m[14] );
 	WRITE_DOUBLE( 15*sizeof(double), m[15] );
-	WRITE_OPCODE( CR_LOADMATRIXD_OPCODE );
+	WRITE_OPCODE( pc, CR_LOADMATRIXD_OPCODE );
 }
 
 void PACK_APIENTRY crPackLoadMatrixf( const GLfloat *m )
 {
+	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 	int packet_length = 16*sizeof( *m );
-	GET_BUFFERED_POINTER( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length );
 	WRITE_DATA( 0*sizeof(GLfloat), GLfloat, m[ 0] );
 	WRITE_DATA( 1*sizeof(GLfloat), GLfloat, m[ 1] );
 	WRITE_DATA( 2*sizeof(GLfloat), GLfloat, m[ 2] );
@@ -101,5 +105,5 @@ void PACK_APIENTRY crPackLoadMatrixf( const GLfloat *m )
 	WRITE_DATA( 13*sizeof(GLfloat), GLfloat, m[13] );
 	WRITE_DATA( 14*sizeof(GLfloat), GLfloat, m[14] );
 	WRITE_DATA( 15*sizeof(GLfloat), GLfloat, m[15] );
-	WRITE_OPCODE( CR_LOADMATRIXF_OPCODE );
+	WRITE_OPCODE( pc, CR_LOADMATRIXF_OPCODE );
 }

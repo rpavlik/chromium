@@ -58,6 +58,7 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 																		 GLenum type, GLvoid *pixels,
 																		 const CRPixelPackState *packstate )
 {
+	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 	GLint stride = 0;
 	GLint bytes_per_row;
@@ -127,7 +128,7 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 				stride = bytes_per_row + (packstate->alignment - remainder);
 	}
 
-	GET_BUFFERED_POINTER( 44 + sizeof(CRNetworkPointer) );
+	GET_BUFFERED_POINTER(pc, 44 + sizeof(CRNetworkPointer) );
 	WRITE_DATA( 0,  GLint,  x );
 	WRITE_DATA( 4,  GLint,  y );
 	WRITE_DATA( 8,  GLsizei,  width );
@@ -140,7 +141,7 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 	WRITE_DATA( 36, GLint, packstate->skipPixels );
 	WRITE_DATA( 40, GLint,  bytes_per_row );
 	WRITE_NETWORK_POINTER( 44, (char *) pixels );
-	WRITE_OPCODE( CR_READPIXELS_OPCODE );
+	WRITE_OPCODE( pc, CR_READPIXELS_OPCODE );
 }
 
 void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height, 

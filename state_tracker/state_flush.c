@@ -4,7 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_glstate.h"
+#include "state.h"
 #include "cr_spu.h"
 
 SPUDispatchTable diff_api;

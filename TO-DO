@@ -29,3 +29,6 @@ this.
 Convert the last two Perl scripts in scripts/fastdep.pl and
 state_tracker/gendiffcode.pl to Python. (Alan Hourihane)
 
+Revisit the swap parameter to crPackInit() in tilesortSPUInit().
+
+Move the GL_NORMALIZE state out of "current" group into "transform" group.

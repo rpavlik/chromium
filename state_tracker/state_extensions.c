@@ -6,9 +6,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
 #include <string.h>
-#include "cr_glstate.h"
+#include "state.h"
+#include "cr_mem.h"
 #include "cr_string.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
@@ -40,7 +40,7 @@ void crStateExtensionsInit( CRContext *g )
 	*/
 
 	/* init all booleans to false */
-	memset(&(g->extensions), 0, sizeof(g->extensions));
+	crMemZero(&(g->extensions), sizeof(g->extensions));
 
 	if (hasExtension((const char*)g->limits.extensions, "GL_ARB_imaging"))
 		g->extensions.ARB_imaging = GL_TRUE;

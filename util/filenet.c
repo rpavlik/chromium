@@ -20,6 +20,7 @@
 #include "cr_bufpool.h"
 #include "cr_net.h"
 #include "cr_endian.h"
+#include "cr_threads.h"
 #include "net_internals.h"
 
 typedef enum {
@@ -46,6 +47,9 @@ static struct {
 	int                  num_conns;
 	CRConnection         **conns;
 	CRBufferPool         bufpool;
+#ifdef CHROMIUM_THREADSAFE
+	CRmutex              mutex;
+#endif
 	CRNetReceiveFunc     recv;
 	CRNetCloseFunc       close;
 } cr_file;
@@ -94,7 +98,14 @@ void crFileAccept( CRConnection *conn, unsigned short port )
 
 void *crFileAlloc( CRConnection *conn )
 {
-	CRFileBuffer *buf = (CRFileBuffer *) crBufferPoolPop( &cr_file.bufpool );
+	CRFileBuffer *buf;
+
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&cr_file.mutex);
+#endif
+
+	buf  = (CRFileBuffer *) crBufferPoolPop( &cr_file.bufpool );
+
 	if ( buf == NULL )
 	{
 		crDebug( "Buffer pool was empty, so I allocated %d bytes", 
@@ -106,6 +117,11 @@ void *crFileAlloc( CRConnection *conn )
 		buf->pad   = 0;
 		buf->allocated = conn->mtu;
 	}
+
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&cr_file.mutex);
+#endif
+
 	return (void *)( buf + 1 );
 }
 
@@ -148,7 +164,13 @@ void crFileSend( CRConnection *conn, void **bufp, void *start, unsigned int len 
 
 	/* reclaim this pointer for reuse and try to keep the client from
 		 accidentally reusing it directly */
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&cr_file.mutex);
+#endif
 	crBufferPoolPush( &cr_file.bufpool, file_buffer );
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&cr_file.mutex);
+#endif
 	*bufp = NULL;
 }
 
@@ -162,7 +184,13 @@ void crFileFree( CRConnection *conn, void *buf )
 	switch ( file_buffer->kind )
 	{
 		case CRFileMemory:
+#ifdef CHROMIUM_THREADSAFE
+			crLockMutex(&cr_file.mutex);
+#endif
 			crBufferPoolPush( &cr_file.bufpool, file_buffer );
+#ifdef CHROMIUM_THREADSAFE
+			crUnlockMutex(&cr_file.mutex);
+#endif
 			break;
 
 		case CRFileMemoryBig:
@@ -274,6 +302,9 @@ void crFileInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned i
 	cr_file.num_conns = 0;
 	cr_file.conns     = NULL;
 	
+#ifdef CHROMIUM_THREADSAFE
+	crInitMutex(&cr_file.mutex);
+#endif
 	crBufferPoolInit( &cr_file.bufpool, 16 );
 
 	cr_file.recv = recvFunc;

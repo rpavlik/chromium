@@ -4,7 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 
 

@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-int crParseURL( char *url, char *protocol, char *hostname,
+int crParseURL( const char *url, char *protocol, char *hostname,
 				unsigned short *port, unsigned short default_port );
 
 #ifdef __cplusplus

@@ -6,7 +6,7 @@
 
 #include "state/cr_stateerror.h"
 #include "state/cr_statetypes.h"
-#include "cr_glstate.h"
+#include "state.h"
 #include "cr_error.h"
 #include "cr_environment.h"
 #include <stdarg.h>

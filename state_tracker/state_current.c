@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "cr_glstate.h"
+#include "state.h"
 #include "cr_glwrapper.h"
 #include "state_internals.h"
 
@@ -17,7 +17,7 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 	GLcolorf	default_secondaryColor = {0.0f, 0.0f, 0.0f, 0.0f};
 	GLtexcoordf default_texcoord = {0.0f, 0.0f, 0.0f, 1.0f};
 	GLvectorf default_rasterpos  = {0.0f, 0.0f, 0.0f, 1.0f};
-  unsigned int i;
+  	unsigned int i;
 
 	c->color	= default_color;
 	c->secondaryColor = default_secondaryColor;
@@ -49,9 +49,7 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 	c->mode = 0x10; /* Undefined Mode */
 	c->flushOnEnd = 0;
 
-#if 0
-	c->current = cfg->current;
-#endif
+	c->current = 0; /* picked up by crStateSetCurrentPointers() */
 }
 
 void STATE_APIENTRY crStateColor3f( GLfloat r, GLfloat g, GLfloat b )
@@ -73,13 +71,13 @@ void STATE_APIENTRY crStateColor4f( GLfloat red, GLfloat green, GLfloat blue, GL
 
 	FLUSH();
 
-        c->color.r = red;
-        c->color.g = green;
-        c->color.b = blue;
-        c->color.a = alpha;
+	c->color.r = red;
+	c->color.g = green;
+	c->color.b = blue;
+	c->color.a = alpha;
 
-        DIRTY(cb->dirty, g->neg_bitid);
-        DIRTY(cb->color, g->neg_bitid);
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->color, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateColor4fv( const GLfloat *color )
@@ -234,7 +232,7 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue *bitID,
 					 CRCurrentState *from, CRCurrentState *to)
 {
 	CRContext *g = GetCurrentContext();
-  unsigned int i,j;
+	unsigned int i, j;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)

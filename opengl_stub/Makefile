@@ -33,6 +33,10 @@ LIBRARY = crfaker
 FILES = getprocaddress init load stub context dummyfuncs
 LIBRARIES = crmothership crutil spuload
 
+ifdef THREADSAFE
+FILES += tsfuncs
+endif
+
 ifeq ($(ARCH), WIN_NT)
 FILES += windows_exports wgl
 ARCH_EXPORTS_PY = windows_exports.py
@@ -107,6 +111,6 @@ $(ARCH_EXPORTS): stub_common.py $(ARCH_EXPORTS_PY)
 	@$(ECHO) "Creating the OpenGL DLL export functions (for $(ARCH))"
 	@$(PYTHON) $(ARCH_EXPORTS_PY) > $(ARCH_EXPORTS)
 
-tsfuncs.c: tsfuncs.py
+tsfuncs.c: tsfuncs.py ../glapi_parser/gl_header.parsed
 	@$(ECHO) "Building thread-safe dispatch code"
 	@$(PYTHON) tsfuncs.py > tsfuncs.c

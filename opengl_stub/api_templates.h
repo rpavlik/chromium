@@ -6,13 +6,17 @@
 #ifndef CR_API_TEMPLATES_H
 #define CR_API_TEMPLATES_H
 
-#include "cr_spu.h"
-
+#include "cr_spu.h" 
 extern SPUDispatchTable glim;
 
-extern GLint APIENTRY crCreateContext(void *display, GLint visBits);
-extern void APIENTRY crDestroyContext(void *display, GLint context);
-extern void APIENTRY crMakeCurrent(void *display, GLint drawable, GLint context);
-extern void APIENTRY crSwapBuffers(void *display, GLint drawable);
+extern GLint APIENTRY crCreateContext(const char *dpyName, GLint visBits);
+extern void APIENTRY crDestroyContext(GLint context);
+extern void APIENTRY crMakeCurrent(GLint drawable, GLint context);
+extern void APIENTRY crSwapBuffers(GLint drawable, GLint flags);
+
+extern GLint APIENTRY crCreateWindow(const char *dpyName, GLint visBits);
+extern void APIENTRY crDestroyWindow(GLint window);
+extern void APIENTRY crWindowSize(GLint window, GLint w, GLint h);
+extern void APIENTRY crWindowPosition(GLint window, GLint x, GLint y);
 
 #endif /* CR_API_TEMPLATES_H */

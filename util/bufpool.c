@@ -12,9 +12,9 @@
 void
 crBufferPoolInit( CRBufferPool *pool, unsigned int max )
 {
-    pool->num = 0;
-    pool->max = max;
-    pool->buf = (void **) crAlloc( pool->max * sizeof(pool->buf[0]) );
+	pool->num = 0;
+	pool->max = max;
+	pool->buf = (void **) crAlloc( pool->max * sizeof(pool->buf[0]) );
 }
 
 static void
@@ -50,10 +50,10 @@ crBufferPoolLoad( CRBufferPool *pool, void *mem, unsigned int stride,
 void
 crBufferPoolPush( CRBufferPool *pool, void *buf )
 {
-    if ( pool->num == pool->max )
+	if ( pool->num == pool->max )
 		crBufferPoolGrow( pool, pool->num + 1 );
 
-    pool->buf[ pool->num++ ] = buf;
+	pool->buf[ pool->num++ ] = buf;
 }
 
 void *
@@ -61,8 +61,8 @@ crBufferPoolPop( CRBufferPool *pool )
 {
 	void *buf = NULL;
 
-    if ( pool->num )
-        buf = pool->buf[ --pool->num ];
+	if ( pool->num )
+		buf = pool->buf[ --pool->num ];
 
 	return buf;
 }

@@ -10,7 +10,8 @@
 
 void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 {
-	tilesortspuFlush( tilesort_spu.currentContext );
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackAccumSWAP( op, value );
@@ -24,7 +25,8 @@ void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 
 void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 {
-	tilesortspuFlush( tilesort_spu.currentContext );
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackClearSWAP( mask );
@@ -38,8 +40,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 
 void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 {
+	GET_THREAD(thread);
 	int writeback = tilesort_spu.num_servers;
-	tilesortspuFlush( tilesort_spu.currentContext );
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackFinishSWAP( );
@@ -72,7 +75,8 @@ void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 
 void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 {
-	tilesortspuFlush(tilesort_spu.currentContext);
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackFlushSWAP();
@@ -87,7 +91,8 @@ void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 
 void TILESORTSPU_APIENTRY tilesortspu_BarrierCreate(GLuint name, GLuint count)
 {
-	tilesortspuFlush(tilesort_spu.currentContext);
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackBarrierCreateSWAP(name,count);
@@ -102,7 +107,8 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierCreate(GLuint name, GLuint count)
 
 void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroy(GLuint name)
 {
-	tilesortspuFlush(tilesort_spu.currentContext);
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackBarrierDestroySWAP(name);
@@ -117,7 +123,8 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroy(GLuint name)
 
 void TILESORTSPU_APIENTRY tilesortspu_BarrierExec(GLuint name)
 {
-	tilesortspuFlush(tilesort_spu.currentContext);
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackBarrierExecSWAP(name);
@@ -132,7 +139,8 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierExec(GLuint name)
 
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreate(GLuint name, GLuint count)
 {
-	tilesortspuFlush(tilesort_spu.currentContext);
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackSemaphoreCreateSWAP(name,count);
@@ -147,7 +155,8 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreate(GLuint name, GLuint count)
 
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroy(GLuint name)
 {
-	tilesortspuFlush(tilesort_spu.currentContext);
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackSemaphoreDestroySWAP(name);
@@ -162,7 +171,8 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroy(GLuint name)
 
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreP(GLuint name)
 {
-	tilesortspuFlush(tilesort_spu.currentContext);
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackSemaphorePSWAP(name);
@@ -177,7 +187,8 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreP(GLuint name)
 
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreV(GLuint name)
 {
-	tilesortspuFlush(tilesort_spu.currentContext);
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackSemaphoreVSWAP(name);
@@ -192,7 +203,8 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreV(GLuint name)
 
 void TILESORTSPU_APIENTRY tilesortspu_CallList( GLuint list )
 {
-	tilesortspuFlush( tilesort_spu.currentContext );
+	GET_THREAD(thread);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
 		crPackCallListSWAP( list );
@@ -206,14 +218,15 @@ void TILESORTSPU_APIENTRY tilesortspu_CallList( GLuint list )
 
 void TILESORTSPU_APIENTRY tilesortspu_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
-	tilesortspuFlush( tilesort_spu.currentContext );
+	GET_CONTEXT(ctx);
+	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackListBaseSWAP( tilesort_spu.currentContext->lists.base );
+		crPackListBaseSWAP( ctx->lists.base );
 	}
 	else
 	{
-		crPackListBase( tilesort_spu.currentContext->lists.base );
+		crPackListBase( ctx->lists.base );
 	}
 	if (tilesort_spu.swap)
 	{

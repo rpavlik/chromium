@@ -6,11 +6,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
 #include <assert.h>
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "cr_pixeldata.h"
+#include "cr_string.h"
 #include "cr_mem.h"
 #include "state_internals.h"
 
@@ -1398,7 +1398,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 		tl = tobj->level+level;
 		if ( is_distrib )
 		{
-			tl->bytes = strlen(pixels) + 1 +
+			tl->bytes = crStrlen(pixels) + 1 +
 				( type == GL_TRUE ? width*height*3 : 0 ) ;
 		}
 		else
@@ -1471,7 +1471,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint interna
 		{
 			if ( is_distrib )
 			{
-				memcpy( (void*)tl->img, (void*)pixels, tl->bytes ) ;
+				crMemcpy( (void*)tl->img, (void*)pixels, tl->bytes ) ;
 			}
 			else
 			{
@@ -1676,7 +1676,7 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 	/* Copy the data into the texture */
 	for (i=0; i<height; i++) 
 	{
-		memcpy (img, src, tl->bytesPerPixel * width);
+		crMemcpy (img, src, tl->bytesPerPixel * width);
 		img += tl->width * tl->bytesPerPixel;
 		src += width * tl->bytesPerPixel;
 	}

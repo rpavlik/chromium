@@ -6,30 +6,40 @@
 
 #include "unpacker.h"
 #include "cr_glwrapper.h"
+#include "cr_mem.h"
 
-#include <stdio.h>
+#define DISPLAY_NAME_LEN 256
+
+#define READ_BYTES( dest, offset, len ) \
+    crMemcpy( dest, (cr_unpackData + (offset)), len )
 
 void crUnpackExtendCreateContext( void )
 {
-	GLint visual = READ_DATA( 8, GLint );
+	char dpyName[DISPLAY_NAME_LEN];
+	GLint visual = READ_DATA( DISPLAY_NAME_LEN + 8, GLint );
 	GLint retVal;
-	SET_RETURN_PTR( 12 );
-	SET_WRITEBACK_PTR( 20 );
-	retVal = cr_unpackDispatch.CreateContext( NULL, visual );
+
+	READ_BYTES( dpyName, 8, DISPLAY_NAME_LEN );
+	dpyName[DISPLAY_NAME_LEN - 1] = 0; /* NULL-terminate, just in case */
+
+	SET_RETURN_PTR( DISPLAY_NAME_LEN + 12 );
+	SET_WRITEBACK_PTR( DISPLAY_NAME_LEN + 20 );
+	retVal = cr_unpackDispatch.CreateContext( dpyName, visual );
 	(void) retVal;
 }
 
-void crUnpackDestroyContext( void )
+void crUnpackExtendcrCreateWindow(void)
 {
-	GLint visual = READ_DATA( 8, GLint );
-	cr_unpackDispatch.DestroyContext( NULL, visual );
-	INCR_DATA_PTR( 12 );
+	char dpyName[DISPLAY_NAME_LEN];
+	GLint visBits = READ_DATA( DISPLAY_NAME_LEN + 8, GLint );
+	GLint retVal;
+
+	READ_BYTES( dpyName, 8, DISPLAY_NAME_LEN );
+	dpyName[DISPLAY_NAME_LEN - 1] = 0; /* NULL-terminate, just in case */
+
+	SET_RETURN_PTR( DISPLAY_NAME_LEN + 12 );
+	SET_WRITEBACK_PTR( DISPLAY_NAME_LEN + 20 );
+	retVal = cr_unpackDispatch.crCreateWindow( dpyName, visBits );
+	(void) retVal;
 }
 
-void crUnpackMakeCurrent( void )
-{
-	GLint drawable = READ_DATA( 8, GLint );
-	GLint ctx = READ_DATA( 12, GLint );
-	cr_unpackDispatch.MakeCurrent( NULL, drawable, ctx );
-	INCR_DATA_PTR( 16 );
-}

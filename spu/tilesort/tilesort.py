@@ -48,7 +48,7 @@ for func_name in keys:
 	if stub_common.FindSpecial( "tilesort", func_name ):
 		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
-print '\nvoid tilesortspuCreateFunctions( )'
+print '\nvoid tilesortspuCreateFunctions( void )'
 print '{'
 table_index = 0
 for index in range(len(keys)):

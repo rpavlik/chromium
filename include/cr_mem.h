@@ -12,8 +12,13 @@ extern "C" {
 #endif
 
 void *crAlloc( unsigned int nbytes );
+void *crCalloc( unsigned int nbytes );
 void crRealloc( void **ptr, unsigned int bytes );
 void crFree( void *ptr );
+void crMemcpy( void *dst, const void *src, unsigned int bytes );
+void crMemset( void *ptr, int value, unsigned int bytes );
+void crMemZero( void *ptr, unsigned int bytes );
+int  crMemcmp( const void *p1, const void *p2, unsigned int bytes );
 
 #ifdef __cplusplus
 }

@@ -31,7 +31,6 @@ print """
 #include "packer.h"
 #include "cr_opcodes.h"
 
-DLLDATA CRPackGlobals cr_packer_globals;
 """
 
 keys = gl_mapping.keys()
@@ -86,7 +85,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = '%s%s' % (k[:1].lower(),k[1:])
 		type = m.group(3) + m.group(2)
-		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
+		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.search( r"^(SecondaryColor)(3)(ub|b|us|s|ui|i|f|d)EXT$", func_name )
@@ -94,7 +93,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'secondaryColor'
 		type = m.group(3) + m.group(2)
-		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
+		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.search( r"^(TexCoord)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
@@ -102,7 +101,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'texCoord'
 		type = m.group(3) + m.group(2)
-		print "\tcr_packer_globals.current.%s.%s[0] = data_ptr;" % (name,type)
+		print "\tpc->current.%s.%s[0] = data_ptr;" % (name,type)
 		return
 
 	m = re.search( r"^(MultiTexCoord)([1234])(ub|b|us|s|ui|i|f|d)ARB$", func_name )
@@ -110,7 +109,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'texCoord'
 		type = m.group(3) + m.group(2)
-		print "\tcr_packer_globals.current.%s.%s[texture-GL_TEXTURE0_ARB] = data_ptr;" % (name,type)
+		print "\tpc->current.%s.%s[texture-GL_TEXTURE0_ARB] = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(Index)(ub|b|us|s|ui|i|f|d)$", func_name )
@@ -118,7 +117,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'index'
 		type = m.group(2) + "1"
-		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
+		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(EdgeFlag)$", func_name )
@@ -126,7 +125,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'edgeFlag'
 		type = "l1"
-		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
+		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(Begin)$", func_name )
@@ -134,8 +133,8 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = '%s%s' % (k[:1].lower(),k[1:])
 		type = ""
-		print "\tcr_packer_globals.current.%s_data = data_ptr;" % name
-		print "\tcr_packer_globals.current.%s_op = cr_packer_globals.buffer.opcode_current;" % name
+		print "\tpc->current.%s_data = data_ptr;" % name
+		print "\tpc->current.%s_op = pc->buffer.opcode_current;" % name
 		return
 
 for func_name in keys:
@@ -160,6 +159,8 @@ for func_name in keys:
 		else:
 			print 'void PACK_APIENTRY crPack%s%s' % ( func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 		print '{'
+		print '\tGET_PACKER_CONTEXT(pc);'
+		
 		orig_func_name = func_name[:] #make copy
 		vector_arg_type = ""
 		vector_nelem = stub_common.IsVector( func_name )
@@ -181,16 +182,21 @@ for func_name in keys:
 
 		if packet_length == -1:
 			print '\tcrError ( "%s needs to be special cased!");' % orig_func_name
+			print '\t(void) pc;'
+
 			for arg in arg_names:
 				print "\t(void) %s;" % arg
 		else:
 			print "\tunsigned char *data_ptr;"
+			print '\t(void) pc;'
+			if func_name == "Enable" or func_name == "Disable":
+				print "\tCRASSERT(!pc->buffer.geometry_only); /* sanity check */"
 			if packet_length == 0:
-				print "\tGET_BUFFERED_POINTER_NO_ARGS( );"
+				print "\tGET_BUFFERED_POINTER_NO_ARGS( pc );"
 			else:
 				if is_extended:
 					packet_length += 8
-				print "\tGET_BUFFERED_POINTER( %d );" % packet_length
+				print "\tGET_BUFFERED_POINTER( pc, %d );" % packet_length
 
 			UpdateCurrentPointer( func_name )
 
@@ -210,9 +216,9 @@ for func_name in keys:
 					else:
 						counter += stub_common.lengths[arg_types[index]]
 			if is_extended:
-				print "\tWRITE_OPCODE( CR_EXTEND_OPCODE );"
+				print "\tWRITE_OPCODE( pc, CR_EXTEND_OPCODE );"
 			else:
-				print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name )
+				print "\tWRITE_OPCODE( pc, %s );" % stub_common.OpcodeName( func_name )
 		print '}\n'
 
 	PrintFunc( func_name, arg_names, arg_types, is_extended, 0 )

@@ -10,8 +10,6 @@
 #include "cr_protocol.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
 
 void crWriteUnalignedDouble( void *buffer, double d )
 {
@@ -36,36 +34,38 @@ double crReadUnalignedDouble( void *buffer )
 	return d;
 }
 
-void crPackSetBuffer( CRPackBuffer *buffer )
+void crPackSetBuffer( CRPackContext *pc, CRPackBuffer *buffer )
 {
 	CRASSERT( buffer != NULL );
-	memcpy( &(cr_packer_globals.buffer), buffer, sizeof(*buffer) );
+	crMemcpy( &(pc->buffer), buffer, sizeof(*buffer) );
 }
 
-void crPackGetBuffer( CRPackBuffer *buffer )
+void crPackGetBuffer( CRPackContext *pc, CRPackBuffer *buffer )
 {
 	CRASSERT( buffer != NULL );
-	memcpy( buffer, &(cr_packer_globals.buffer), sizeof(*buffer) );
+	crMemcpy( buffer, &(pc->buffer), sizeof(*buffer) );
 }
 
-void crPackFlushFunc( CRPackFlushFunc ff )
+void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff )
 {
-	cr_packer_globals.Flush = ff;
+	pc->Flush = ff;
 }
 
-void crPackFlushArg( void *flush_arg )
+void crPackFlushArg( CRPackContext *pc, void *flush_arg )
 {
-	cr_packer_globals.flush_arg = flush_arg;
+	pc->flush_arg = flush_arg;
 }
 
-void crPackSendHugeFunc( CRPackSendHugeFunc shf )
+void crPackSendHugeFunc( CRPackContext *pc, CRPackSendHugeFunc shf )
 {
-	cr_packer_globals.SendHuge = shf;
+	pc->SendHuge = shf;
 }
 
-void crPackResetPointers( int extra )
+void crPackResetPointers( CRPackContext *pc, int extra )
 {
-	crPackInitBuffer( &(cr_packer_globals.buffer), cr_packer_globals.buffer.pack, cr_packer_globals.buffer.size, extra );
+	const GLboolean g = pc->buffer.geometry_only;   /* save this flag */
+	crPackInitBuffer( &(pc->buffer), pc->buffer.pack, pc->buffer.size, extra );
+	pc->buffer.geometry_only = g;   /* restore the flag */
 }
 
 void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int extra )
@@ -92,34 +92,37 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int extra )
 	buf->opcode_end     = buf->opcode_start - num_opcodes;
 
 	buf->data_end -= extra; /* caller may want extra space (sigh) */
+
+	buf->geometry_only = GL_FALSE;
 }
 
 void crPackAppendBuffer( CRPackBuffer *src )
 {
+	GET_PACKER_CONTEXT(pc);
 	int num_data = src->data_current - src->data_start;
 	int num_opcode;
 
-
-	if ( cr_packer_globals.buffer.data_current + num_data > cr_packer_globals.buffer.data_end )
+	if ( pc->buffer.data_current + num_data > pc->buffer.data_end )
 		crError( "crPackAppendBuffer: overflowed the destination!" );
-	memcpy( cr_packer_globals.buffer.data_current, src->data_start, num_data );
-	cr_packer_globals.buffer.data_current += num_data;
+	crMemcpy( pc->buffer.data_current, src->data_start, num_data );
+	pc->buffer.data_current += num_data;
 
 	num_opcode = src->opcode_start - src->opcode_current;
-	CRASSERT( cr_packer_globals.buffer.opcode_current - num_opcode >= cr_packer_globals.buffer.opcode_end );
-	memcpy( cr_packer_globals.buffer.opcode_current + 1 - num_opcode, src->opcode_current + 1,
+	CRASSERT( pc->buffer.opcode_current - num_opcode >= pc->buffer.opcode_end );
+	crMemcpy( pc->buffer.opcode_current + 1 - num_opcode, src->opcode_current + 1,
 			num_opcode );
-	cr_packer_globals.buffer.opcode_current -= num_opcode;
+	pc->buffer.opcode_current -= num_opcode;
 }
 
 
 void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 {
+	GET_PACKER_CONTEXT(pc);
 	int length = src->data_current - ( src->opcode_current + 1 );
 
 	/* 24 is the size of the bounds-info packet... */
 	
-	if ( cr_packer_globals.buffer.data_current + length + 24 > cr_packer_globals.buffer.data_end )
+	if ( pc->buffer.data_current + length + 24 > pc->buffer.data_end )
 		crError( "crPackAppendBoundedBuffer: overflowed the destination!" );
 
 	crPackBoundsInfo( bounds, (GLbyte *) src->opcode_current + 1, length,
@@ -128,24 +131,24 @@ void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 
 void *crPackAlloc( unsigned int size )
 {
-	CRPackGlobals *g = &cr_packer_globals;
+	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 
 	/* include space for the length and make the payload word-aligned */
 	size = ( size + sizeof(unsigned int) + 0x3 ) & ~0x3;
 
-	if ( g->buffer.data_current + size <= g->buffer.data_end )
+	if ( pc->buffer.data_current + size <= pc->buffer.data_end )
 	{
 		/* we can just put it in the current buffer */
-		GET_BUFFERED_POINTER( size );
+		GET_BUFFERED_POINTER(pc, size );
 	}
 	else 
 	{
 		/* Okay, it didn't fit.  Maybe it will after we flush. */
-		cr_packer_globals.Flush( cr_packer_globals.flush_arg );
-		if ( g->buffer.data_current + size <= g->buffer.data_end )
+		pc->Flush( pc->flush_arg );
+		if ( pc->buffer.data_current + size <= pc->buffer.data_end )
 		{
-			GET_BUFFERED_POINTER( size );
+			GET_BUFFERED_POINTER(pc, size );
 		}
 		else
 		{
@@ -160,7 +163,7 @@ void *crPackAlloc( unsigned int size )
 		}
 	}
 
-	if (cr_packer_globals.swapping)
+	if (pc->swapping)
 	{
 		*((unsigned int *) data_ptr) = SWAP32(size);
 		crDebug( "Just swapped the length, putting %d on the wire!", *((unsigned int *) data_ptr));
@@ -173,19 +176,21 @@ void *crPackAlloc( unsigned int size )
 }
 
 #define IS_BUFFERED( packet ) \
-    ((unsigned char *) (packet) >= cr_packer_globals.buffer.data_start && \
-	 (unsigned char *) (packet) < cr_packer_globals.buffer.data_end)
+    ((unsigned char *) (packet) >= pc->buffer.data_start && \
+	 (unsigned char *) (packet) < pc->buffer.data_end)
 
 void crHugePacket( CROpcode opcode, void *packet )
 {
+	GET_PACKER_CONTEXT(pc);
 	if ( IS_BUFFERED( packet ) )
-		WRITE_OPCODE( opcode );
+		WRITE_OPCODE( pc, opcode );
 	else
-		cr_packer_globals.SendHuge( opcode, packet );
+		pc->SendHuge( opcode, packet );
 }
 
 void crPackFree( void *packet )
 {
+	GET_PACKER_CONTEXT(pc);
 	if ( IS_BUFFERED( packet ) )
 		return;
 	
@@ -199,5 +204,5 @@ void crNetworkPointerWrite( CRNetworkPointer *dst, void *src )
 {
 	dst->ptrAlign[0] = 0xDeadBeef;
 	dst->ptrAlign[1] = 0xCafeBabe;
-	memcpy( dst, &src, sizeof(src) );
+	crMemcpy( dst, &src, sizeof(src) );
 }

@@ -63,7 +63,8 @@ for func_name in keys:
 	if return_type != 'void' or stub_common.FindSpecial( "../../packer/packer_get", func_name):
 		print '%s PACKSPU_APIENTRY packspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 		print '{'
-		print '\tint writeback = pack_spu.server.conn->type == CR_DROP_PACKETS ? 0 : 1;'
+		print '\tGET_THREAD(thread);'
+		print '\tint writeback = pack_spu.thread[0].server.conn->type == CR_DROP_PACKETS ? 0 : 1;'
 		if return_type != 'void':
 			print '\t%s return_val = (%s) 0;' % (return_type, return_type)
 			args.append( "&return_val" )
@@ -96,7 +97,7 @@ for func_name in keys:
 		print '\t{'
 		print '\t\tcrPack%s%s;' % (func_name, stub_common.CallString( args ) )
 		print '\t}'
-		print '\tpackspuFlush(NULL);'
+		print '\tpackspuFlush( (void *) thread );'
 		print '\twhile (writeback)'
 		print '\t\tcrNetRecv();'
 		if return_type != 'void':

@@ -125,7 +125,7 @@ struct CRConnection {
 };
 
 CRConnection *crNetConnectToServer( char *server, unsigned short default_port, int mtu, int broker );
-CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned int mtu, int broker );
+CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsigned int mtu, int broker );
 
 #ifdef __cplusplus
 }

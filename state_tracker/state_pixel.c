@@ -6,8 +6,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
-#include "cr_glstate.h"
+#include "cr_mem.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
@@ -49,14 +49,16 @@ void crStatePixelInit(CRPixelState *p) {
 	p->mapAtoAsize   = 1;
 }
 
-void STATE_APIENTRY crStatePixelTransferi (GLenum pname, GLint param) {
+void STATE_APIENTRY crStatePixelTransferi (GLenum pname, GLint param)
+{
 	crStatePixelTransferf( pname, (GLfloat) param );
 }
 
-void STATE_APIENTRY crStatePixelTransferf (GLenum pname, GLfloat param) {
-	CRContext *g    = GetCurrentContext();
-	CRStateBits *sb = GetCurrentBits();
+void STATE_APIENTRY crStatePixelTransferf (GLenum pname, GLfloat param)
+{
+	CRContext *g = GetCurrentContext();
 	CRPixelState *p = &(g->pixel);
+	CRStateBits *sb = GetCurrentBits();
 	CRPixelBits *pb = &(sb->pixel);
 
 	if (g->current.inBeginEnd)
@@ -121,9 +123,9 @@ void STATE_APIENTRY crStatePixelTransferf (GLenum pname, GLfloat param) {
 
 void STATE_APIENTRY crStatePixelZoom (GLfloat xfactor, GLfloat yfactor) 
 {
-	CRContext *g    = GetCurrentContext();
-	CRStateBits *sb = GetCurrentBits();
+	CRContext *g = GetCurrentContext();
 	CRPixelState *p = &(g->pixel);
+	CRStateBits *sb = GetCurrentBits();
 	CRPixelBits *pb = &(sb->pixel);
 
 	if (g->current.inBeginEnd)
@@ -147,8 +149,8 @@ void STATE_APIENTRY crStateBitmap( GLsizei width, GLsizei height,
 {
 	CRContext *g = GetCurrentContext();
 	CRCurrentState *c = &(g->current);
-	CRStateBits *s = GetCurrentBits();
-	CRCurrentBits *cb = &(s->current);
+	CRStateBits *sb = GetCurrentBits();
+	CRCurrentBits *cb = &(sb->current);
 
 	(void) xorig;
 	(void) yorig;
@@ -190,8 +192,8 @@ void STATE_APIENTRY crStateBitmap( GLsizei width, GLsizei height,
 void STATE_APIENTRY crStatePixelMapfv (GLenum map, GLint mapsize, const GLfloat * values)
 {
 	CRContext *g = GetCurrentContext();
-	CRStateBits *sb = GetCurrentBits();
 	CRPixelState *p = &(g->pixel);
+	CRStateBits *sb = GetCurrentBits();
 	CRPixelBits *pb = &(sb->pixel);
 	GLint i;
 
@@ -344,28 +346,28 @@ void STATE_APIENTRY crStateGetPixelMapfv (GLenum map, GLfloat * values)
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_R:
-		memcpy(values, p->mapItoR, p->mapItoRsize * sizeof(GLfloat));
+		crMemcpy(values, p->mapItoR, p->mapItoRsize * sizeof(GLfloat));
 		break;
 	case GL_PIXEL_MAP_I_TO_G:
-		memcpy(values, p->mapItoG, p->mapItoGsize * sizeof(GLfloat));
+		crMemcpy(values, p->mapItoG, p->mapItoGsize * sizeof(GLfloat));
 		break;
 	case GL_PIXEL_MAP_I_TO_B:
-		memcpy(values, p->mapItoB, p->mapItoBsize * sizeof(GLfloat));
+		crMemcpy(values, p->mapItoB, p->mapItoBsize * sizeof(GLfloat));
 		break;
 	case GL_PIXEL_MAP_I_TO_A:
-		memcpy(values, p->mapItoA, p->mapItoAsize * sizeof(GLfloat));
+		crMemcpy(values, p->mapItoA, p->mapItoAsize * sizeof(GLfloat));
 		break;
 	case GL_PIXEL_MAP_R_TO_R:
-		memcpy(values, p->mapRtoR, p->mapRtoRsize * sizeof(GLfloat));
+		crMemcpy(values, p->mapRtoR, p->mapRtoRsize * sizeof(GLfloat));
 		break;
 	case GL_PIXEL_MAP_G_TO_G:
-		memcpy(values, p->mapGtoG, p->mapGtoGsize * sizeof(GLfloat));
+		crMemcpy(values, p->mapGtoG, p->mapGtoGsize * sizeof(GLfloat));
 		break;
 	case GL_PIXEL_MAP_B_TO_B:
-		memcpy(values, p->mapBtoB, p->mapBtoBsize * sizeof(GLfloat));
+		crMemcpy(values, p->mapBtoB, p->mapBtoBsize * sizeof(GLfloat));
 		break;
 	case GL_PIXEL_MAP_A_TO_A:
-		memcpy(values, p->mapAtoA, p->mapAtoAsize * sizeof(GLfloat));
+		crMemcpy(values, p->mapAtoA, p->mapAtoAsize * sizeof(GLfloat));
 		break;
 	default:
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "GetPixelMap(map)");
@@ -375,8 +377,8 @@ void STATE_APIENTRY crStateGetPixelMapfv (GLenum map, GLfloat * values)
  
 void STATE_APIENTRY crStateGetPixelMapuiv (GLenum map, GLuint * values)
 {
-	const GLfloat maxUint = 4294967295.0F;
 	CRContext *g = GetCurrentContext();
+	const GLfloat maxUint = 4294967295.0F;
 	CRPixelState *p = &(g->pixel);
 	GLint i;
 
@@ -445,8 +447,8 @@ void STATE_APIENTRY crStateGetPixelMapuiv (GLenum map, GLuint * values)
  
 void STATE_APIENTRY crStateGetPixelMapusv (GLenum map, GLushort * values)
 {
-	const GLfloat maxUshort = 65535.0F;
 	CRContext *g = GetCurrentContext();
+	const GLfloat maxUshort = 65535.0F;
 	CRPixelState *p = &(g->pixel);
 	GLint i;
 

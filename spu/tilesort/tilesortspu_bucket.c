@@ -62,7 +62,7 @@ void __fillBucketingHash (void)
 	{
 		int node32 = i >> 5;
 		int node = i & 0x1f;
-		for (j=0; j<tilesort_spu.servers[i].num_extents; j++) 
+		for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
 		{
 			BucketRegion *r = &rlist[id++];
 			for (k=0;k<CR_MAX_BITARRAY;k++)
@@ -134,8 +134,8 @@ void __fillBucketingHash (void)
 
 static TileSortBucketInfo *__doBucket( void )
 {
+	GET_CONTEXT(g);
 	static TileSortBucketInfo bucketInfo;
-	CRContext *g = tilesort_spu.currentContext;
 	CRTransformState *t = &(g->transform);
 	GLmatrix *m = &(t->transform);
 
@@ -177,8 +177,8 @@ static TileSortBucketInfo *__doBucket( void )
 	};
 
 	/* Init bucketInfo */
-	bucketInfo.objectMin = cr_packer_globals.bounds_min;
-	bucketInfo.objectMax = cr_packer_globals.bounds_max;
+	bucketInfo.objectMin = thread->packer->bounds_min;
+	bucketInfo.objectMax = thread->packer->bounds_max;
 	bucketInfo.screenMin = zero_vect;
 	bucketInfo.screenMax = zero_vect;
 	bucketInfo.pixelBounds = nullscreen;
@@ -365,7 +365,7 @@ static TileSortBucketInfo *__doBucket( void )
 			for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
 			{
 				if (ibounds.x1 < tilesort_spu.servers[i].x2[j] && 
-			  	    ibounds.x2 >= tilesort_spu.servers[i].x1[j] &&
+				    ibounds.x2 >= tilesort_spu.servers[i].x1[j] &&
 				    ibounds.y1 < tilesort_spu.servers[i].y2[j] &&
 				    ibounds.y2 >= tilesort_spu.servers[i].y1[j]) 
 				{

@@ -29,6 +29,7 @@ REGULAR_FILES = state_attrib \
 	state_line \
 	state_lists \
 	state_pixel \
+	state_point \
 	state_polygon \
 	state_rasterpos \
 	state_regcombiner \
@@ -44,6 +45,7 @@ DIFF_FILES = buffer \
 	lighting \
 	line \
 	pixel \
+	point \
 	polygon \
 	regcombiner \
 	stencil \
@@ -119,6 +121,10 @@ state_line_gen.c: state_line.txt gendiffcode.pl
 state_pixel_gen.c: state_pixel.txt gendiffcode.pl
 	@$(ECHO) Making $@
 	@$(PERL) gendiffcode.pl Pixel > $@
+
+state_point_gen.c: state_point.txt gendiffcode.pl
+	@$(ECHO) Making $@
+	@$(PERL) gendiffcode.pl Point > $@
 
 state_polygon_gen.c: state_polygon.txt gendiffcode.pl
 	@$(ECHO) Making $@

@@ -16,17 +16,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 {
 	const RunQueue *q = run_queue;
 
-	/* If the GL_SINGLE_CLIENT_BIT_CR bit is present we'll only execute
-	 * this glClear() for the 0th client.
-	 */
-	if ((mask & GL_SINGLE_CLIENT_BIT_CR) && q->client->number != 0)
-		return;
-
-	/* We don't really have to strip off this bit here since the render
-	 * SPU will do it.  But play it safe.
-	 */
-	mask &= ~GL_SINGLE_CLIENT_BIT_CR;
-
 	if (cr_server.numExtents == 0)
 	{
 		cr_server.head_spu->dispatch_table.Clear( mask );
@@ -57,13 +46,15 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( void )
+void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint flags )
 {
-	const RunQueue *q = run_queue;
-
 	/* We only do SwapBuffers for the 0th client */
-	if (q->client->number != 0)
+#if 0
+	/* No, it should be the client's responsibility to do just one swap */
+	cr_server.swapCount++;
+	if (cr_server.swapCount < cr_server.maxBarrierCount)
 		return;
-
-	cr_server.head_spu->dispatch_table.SwapBuffers();
+	cr_server.swapCount = 0;
+#endif
+	cr_server.head_spu->dispatch_table.SwapBuffers( window, flags );
 }

@@ -9,26 +9,46 @@
 #include "stub.h"
 
 
-int APIENTRY crCreateContext( void *display, GLint visBits )
+int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 {
 	StubInit();
-	return stub_spu->dispatch_table.CreateContext( display, visBits );
+	return stub.spu->dispatch_table.CreateContext( dpyName, visBits );
 }
 
-void APIENTRY crDestroyContext( void *display, GLint context )
+void APIENTRY crDestroyContext( GLint context )
 {
-	stub_spu->dispatch_table.DestroyContext( display, context );
+	stub.spu->dispatch_table.DestroyContext( context );
 }
 
-void APIENTRY crMakeCurrent( void *display, GLint drawable, GLint context )
+void APIENTRY crMakeCurrent( GLint window, GLint context )
 {
-	stub_spu->dispatch_table.MakeCurrent( display, drawable, context );
+	const GLint nativeWindow = 0;
+	stub.spu->dispatch_table.MakeCurrent( window, nativeWindow, context );
 }
 
-void APIENTRY crSwapBuffers( void *display, GLint drawable )
+void APIENTRY crSwapBuffers( GLint window, GLint flags )
 {
-	(void) display;
-	(void) drawable;
-	/* XXX these should get passed through */
-	stub_spu->dispatch_table.SwapBuffers( );
+	stub.spu->dispatch_table.SwapBuffers( window, flags );
 }
+
+GLint APIENTRY crCreateWindow( const char *dpyName, GLint visBits )
+{
+	StubInit();
+	return stub.spu->dispatch_table.crCreateWindow( dpyName, visBits );
+}
+
+void APIENTRY crDestroyWindow( GLint window )
+{
+	stub.spu->dispatch_table.DestroyWindow( window );
+}
+
+void APIENTRY crWindowSize( GLint window, GLint w, GLint h )
+{
+	stub.spu->dispatch_table.WindowSize( window, w, h );
+}
+
+void APIENTRY crWindowPosition( GLint window, GLint x, GLint y )
+{
+	stub.spu->dispatch_table.WindowPosition( window, x, y );
+}
+

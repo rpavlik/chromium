@@ -40,12 +40,12 @@ print """
 #include <stdio.h>
 #include <math.h>
 
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 
 GLboolean STATE_APIENTRY crStateIsEnabled( GLenum pname )
 {
-    CRContext   *g = GetCurrentContext( );
+	CRContext *g = GetCurrentContext();
 
 	if (g->current.inBeginEnd)
 	{

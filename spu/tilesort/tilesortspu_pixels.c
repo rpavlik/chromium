@@ -17,8 +17,9 @@
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
-	CRCurrentState *c = &(tilesort_spu.currentContext->current);
-	CRViewportState *v = &(tilesort_spu.currentContext->viewport);
+	GET_CONTEXT(ctx);
+	CRCurrentState *c = &(ctx->current);
+	CRViewportState *v = &(ctx->viewport);
 	GLfloat screen_bbox[8];
 	GLenum hint;
 
@@ -41,16 +42,15 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height,
 		return;
 	}
 
-	if (crImageSize(format, type, width, height) >
-				tilesort_spu.servers[0].net.conn->mtu ) {
+	if (crImageSize(format, type, width, height) > thread->net[0].conn->mtu ) {
 		crError("DrawPixels called with insufficient MTU size\n"
 			"Needed %d, but currently MTU is set at %d\n", 
 			crImageSize(format, type, width, height), 
-			tilesort_spu.servers[0].net.conn->mtu );
+			thread->net[0].conn->mtu );
 		return;
 	}
 
-	tilesortspuFlush( tilesort_spu.currentContext );
+	tilesortspuFlush( thread );
 
 	screen_bbox[0] = (c->rasterPos.x)/v->viewportW;
 	screen_bbox[1] = (c->rasterPos.y)/v->viewportH;
@@ -77,11 +77,11 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height,
 	 */
 
 	tilesort_spu.inDrawPixels = 1;
-	crPackDrawPixels (width, height, format, type, pixels, &(tilesort_spu.currentContext->client.unpack));
+	crPackDrawPixels (width, height, format, type, pixels, &(ctx->client.unpack));
 
-	if (cr_packer_globals.buffer.data_current != cr_packer_globals.buffer.data_start)
+	if (thread->packer->buffer.data_current != thread->packer->buffer.data_start)
 	{
-		tilesortspuFlush( tilesort_spu.currentContext );
+		tilesortspuFlush( thread );
 	}
 	tilesort_spu.inDrawPixels = 0;
 
@@ -90,16 +90,19 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height,
 
 void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
 {
-	CRContext *ctx = tilesort_spu.currentContext;
-	CRCurrentState *c = &(tilesort_spu.currentContext->current);
-	CRPixelPackState *p = &(tilesort_spu.currentContext->client.pack);
+	GET_CONTEXT(ctx);
+	CRCurrentState *c = &(ctx->current);
+	CRPixelPackState *p = &(ctx->client.pack);
+	CRViewportState *v = &(ctx->viewport);
 	unsigned char *data_ptr;
+	GLfloat screen_bbox[8];
 	int i, rect[4], stride;
 	int bytes_per_pixel = 0;
 	int isect[4];
 	int len = 44 + sizeof(CRNetworkPointer);
 	int offset;
 	int new_width, new_height, new_x, new_y, bytes_per_row;
+	GLenum hint;
 
 	if (c->inBeginEnd)
 	{
@@ -118,7 +121,25 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 		return;
 	}
 
-	tilesortspuFlush( tilesort_spu.currentContext );
+	tilesortspuFlush( thread );
+
+	screen_bbox[0] = (c->rasterPos.x)/v->viewportW;
+	screen_bbox[1] = (c->rasterPos.y)/v->viewportH;
+	screen_bbox[4] = (c->rasterPos.x + width)/v->viewportW;
+	screen_bbox[5] = (c->rasterPos.y + height)/v->viewportH;
+
+	screen_bbox[0] *= 2.0f;
+	screen_bbox[1] *= 2.0f;
+	screen_bbox[4] *= 2.0f;
+	screen_bbox[5] *= 2.0f;
+
+	screen_bbox[0] -= 1.0f;
+	screen_bbox[1] -= 1.0f;
+	screen_bbox[4] -= 1.0f;
+	screen_bbox[5] -= 1.0f;
+
+	hint = tilesort_spu.providedBBOX;
+	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
 
 	switch ( type )
 	{
@@ -212,6 +233,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	for ( i = 0; i < tilesort_spu.num_servers; i++ )
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
+		CRPackBuffer *pack = &(thread->pack[i]);
 
 		/* Grab current server's boundaries */
 		isect[0] = server->x1[0];
@@ -258,14 +280,14 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 		offset += ((isect[1] - y) * stride);
 
 		/* Munge the per server packing structures */
-  		data_ptr = server->pack.data_current; 
-  		if (data_ptr + len > server->pack.data_end ) 
-  		{ 
-			tilesortspuFlush( tilesort_spu.currentContext );
-    			data_ptr = server->pack.data_current; 
-    			CRASSERT( data_ptr + len <= server->pack.data_end ); 
-  		} 
-  		server->pack.data_current += len;
+		data_ptr = pack->data_current; 
+		if (data_ptr + len > pack->data_end ) 
+ 		{ 
+			tilesortspuFlush( thread );
+			data_ptr = pack->data_current; 
+			CRASSERT( data_ptr + len <= pack->data_end ); 
+		}
+		pack->data_current += len;
 		WRITE_DATA( 0,  GLint,  new_x );
 		WRITE_DATA( 4,  GLint,  new_y );
 		WRITE_DATA( 8,  GLsizei,  new_width );
@@ -278,26 +300,28 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 		WRITE_DATA( 36, GLint, p->skipPixels );
 		WRITE_DATA( 40, GLint,  bytes_per_row );
 		WRITE_NETWORK_POINTER( 44, (char *) pixels + offset );
-  		*(server->pack.opcode_current--) = 
-					(unsigned char) CR_READPIXELS_OPCODE;
+		*(pack->opcode_current--) = (unsigned char) CR_READPIXELS_OPCODE;
 
-		tilesortspuSendServerBuffer( server );
+		tilesortspuSendServerBuffer( i );
 	}
 
 	/* Ensure all readpixel buffers are on the way !! */
-	tilesortspuFlush( tilesort_spu.currentContext );
+	tilesortspuFlush( thread );
 
 	/* We need to receive them all back before continuing */
 	while ( tilesort_spu.ReadPixels > 0 )
 	{
 		crNetRecv( );
 	}
+
+	tilesort_spu.providedBBOX = hint;
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
 {
-	CRCurrentState *c = &(tilesort_spu.currentContext->current);
-	CRViewportState *v = &(tilesort_spu.currentContext->viewport);
+	GET_CONTEXT(ctx);
+	CRCurrentState *c = &(ctx->current);
+	CRViewportState *v = &(ctx->viewport);
 	char *buffer;
 	(void)v;
 	(void)c;
@@ -331,8 +355,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 		GLfloat xmove, GLfloat ymove,
 		const GLubyte * bitmap) 
 {
-	CRCurrentState *c = &(tilesort_spu.currentContext->current);
-	CRViewportState *v = &(tilesort_spu.currentContext->viewport);
+	GET_CONTEXT(ctx);
+	CRCurrentState *c = &(ctx->current);
+	CRViewportState *v = &(ctx->viewport);
 	GLfloat screen_bbox[8];
 	GLenum hint;
 
@@ -341,16 +366,16 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 		return;
 	}
 
-	tilesortspuFlush( tilesort_spu.currentContext );
+	tilesortspuFlush( thread );
 
 	crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 	if (tilesort_spu.swap)
 	{
-		crPackBitmapSWAP ( width, height, xorig, yorig, xmove, ymove, bitmap, &(tilesort_spu.currentContext->client.unpack) );
+		crPackBitmapSWAP ( width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack) );
 	}
 	else
 	{
-		crPackBitmap ( width, height, xorig, yorig, xmove, ymove, bitmap, &(tilesort_spu.currentContext->client.unpack) );
+		crPackBitmap ( width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack) );
 	}
 
 	screen_bbox[0] = (c->rasterPos.x - xorig)/v->viewportW;
@@ -374,7 +399,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 	c->rasterPosPre.x -= xmove;
 	c->rasterPosPre.y -= ymove;
 
-	tilesortspuFlush( tilesort_spu.currentContext );
+	tilesortspuFlush( thread );
 
 	c->rasterPosPre.x += xmove;
 	c->rasterPosPre.y += ymove;

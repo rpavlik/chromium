@@ -12,9 +12,10 @@
 
 void PACK_APIENTRY crPackPolygonStipple( const GLubyte *mask )
 {
+	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 	int packet_length = 32*32/8;
-	GET_BUFFERED_POINTER( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length );
 	memcpy( data_ptr, mask, 32*32/8 );
-	WRITE_OPCODE( CR_POLYGONSTIPPLE_OPCODE );
+	WRITE_OPCODE( pc, CR_POLYGONSTIPPLE_OPCODE );
 }

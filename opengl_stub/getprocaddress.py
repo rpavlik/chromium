@@ -41,7 +41,11 @@ bonus_functions = [
 	"crCreateContext",
 	"crDestroyContext",
 	"crMakeCurrent",
-	"crSwapBuffers"
+	"crSwapBuffers",
+	"crCreateWindow",
+	"crDestroyWindow",
+	"crWindowSize",
+	"crWindowPosition"
 ]
 
 for func_name in keys:

@@ -47,6 +47,8 @@ typedef struct {
 
 	CRLimitsState limits;
 	BufList *frame_head, *frame_tail;
+
+	CRPackContext *packer;
 } HiddenlineSPU;
 
 extern HiddenlineSPU hiddenline_spu;

@@ -72,3 +72,4 @@ CombinerParameterfvNV
 CombinerParameterivNV
 CombinerStageParameterfvNV
 ChromiumParametervCR
+crCreateWindow

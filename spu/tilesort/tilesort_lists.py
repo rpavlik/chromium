@@ -38,7 +38,7 @@ print """
 #define CHANGE( name, func ) crSPUChangeInterface( &(tilesort_spu.self), tilesort_spu.self.name, (SPUGenericFunction) func )
 #define CHANGESWAP( name, swapfunc, regfunc ) crSPUChangeInterface( &(tilesort_spu.self), tilesort_spu.self.name, (SPUGenericFunction) (tilesort_spu.swap ? swapfunc: regfunc ) )
 
-static void __loadListAPI(void)
+static void __loadListAPI( void )
 {
 """
 for index in range(len(keys)):
@@ -55,7 +55,7 @@ for index in range(len(keys)):
 print """
 }
 
-static void __loadSortAPI(void)
+static void __loadSortAPI( void )
 {
 """
 
@@ -91,7 +91,7 @@ void TILESORTSPU_APIENTRY tilesortspu_NewList (GLuint list, GLuint mode)
 		crPackNewList( list, mode );
 	}
 
-	__loadListAPI();
+	__loadListAPI( );
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_EndList (void) 
@@ -107,7 +107,7 @@ void TILESORTSPU_APIENTRY tilesortspu_EndList (void)
 	}
 	crStateEndList();
 
-	__loadSortAPI();
+	__loadSortAPI( );
 	tilesortspuBroadcastGeom(0);
 
 }

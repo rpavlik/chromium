@@ -6,10 +6,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
-#include "cr_glstate.h"
-#include "state/cr_statetypes.h"
+#include "cr_mem.h"
 #include "cr_pixeldata.h"
+#include "state.h"
+#include "state/cr_statetypes.h"
 #include "state_internals.h"
 
 void crStatePolygonInit(CRPolygonState *p) 
@@ -36,7 +36,7 @@ void STATE_APIENTRY crStateCullFace(GLenum mode)
 {
 	CRContext *g = GetCurrentContext();
 	CRPolygonState *p = &(g->polygon);
-	CRStateBits *sb = GetCurrentBits();
+        CRStateBits *sb = GetCurrentBits();
 	CRPolygonBits *pb = &(sb->polygon);
 
 	if (g->current.inBeginEnd) 
@@ -64,7 +64,7 @@ void STATE_APIENTRY crStateFrontFace (GLenum mode)
 {
 	CRContext *g = GetCurrentContext();
 	CRPolygonState *p = &(g->polygon);
-	CRStateBits *sb = GetCurrentBits();
+        CRStateBits *sb = GetCurrentBits();
 	CRPolygonBits *pb = &(sb->polygon);
 
 	if (g->current.inBeginEnd) 
@@ -92,7 +92,7 @@ void  STATE_APIENTRY crStatePolygonMode (GLenum face, GLenum mode)
 {
 	CRContext *g = GetCurrentContext();
 	CRPolygonState *p = &(g->polygon);
-	CRStateBits *sb = GetCurrentBits();
+        CRStateBits *sb = GetCurrentBits();
 	CRPolygonBits *pb = &(sb->polygon);
 
 	if (g->current.inBeginEnd) 
@@ -133,7 +133,7 @@ void STATE_APIENTRY crStatePolygonOffset (GLfloat factor, GLfloat units)
 {
 	CRContext *g = GetCurrentContext();
 	CRPolygonState *p = &(g->polygon);
-	CRStateBits *sb = GetCurrentBits();
+        CRStateBits *sb = GetCurrentBits();
 	CRPolygonBits *pb = &(sb->polygon);
 
 	if (g->current.inBeginEnd) 
@@ -156,7 +156,7 @@ void STATE_APIENTRY crStatePolygonStipple (const GLubyte *p)
 {
 	CRContext *g = GetCurrentContext();
 	CRPolygonState *poly = &(g->polygon);
-	CRStateBits *sb = GetCurrentBits();
+        CRStateBits *sb = GetCurrentBits();
 	CRPolygonBits *pb = &(sb->polygon);
 
 	if (g->current.inBeginEnd) 
@@ -175,7 +175,7 @@ void STATE_APIENTRY crStatePolygonStipple (const GLubyte *p)
 		return;
 	}
 
-	memcpy((char*)poly->stipple, (char*)p, 128);
+	crMemcpy((char*)poly->stipple, (char*)p, 128);
 
 	DIRTY(pb->dirty, g->neg_bitid);
 	DIRTY(pb->stipple, g->neg_bitid);
@@ -193,5 +193,5 @@ void STATE_APIENTRY crStateGetPolygonStipple( GLubyte *b )
 		return;
 	}
 
-	memcpy((char*)b, (char*)poly->stipple, 128);
+	crMemcpy((char*)b, (char*)poly->stipple, 128);
 }

@@ -76,27 +76,31 @@ int tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 
 void tilesortspuConnectToServers( void )
 {
+	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 	int i;
 	char hostname[4096], protocol[4096];
 	unsigned short port;
 
 	int some_net_traffic = 0;
 
+	CRASSERT(thread0->net);
+	CRASSERT(thread0->pack);
+
 	crNetInit( tilesortspuReceiveData, NULL );
 
 	for (i = 0 ; i < tilesort_spu.num_servers; i++)
 	{
-		TileSortSPUServer *server = tilesort_spu.servers + i;
-		crNetServerConnect( &(server->net) );
+		CRNetServer *net = &(thread0->net[i]);
+		crNetServerConnect( net );
 		
 		/* Tear the URL apart into relevant portions. 
 		 * 
 		 * just trying to get at the protocol so we can figure out if 
 		 * we should override the user's choices for synconswap etc. */
 
-		if ( !crParseURL( server->net.name, protocol, hostname, &port, 0 ) )
+		if ( !crParseURL( net->name, protocol, hostname, &port, 0 ) )
 		{
-			crError( "Malformed URL: \"%s\"", server->net.name );
+			crError( "Malformed URL: \"%s\"", net->name );
 		}
 
 		if (!crStrcmp( protocol, "tcpip" ) ||

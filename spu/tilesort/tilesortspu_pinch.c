@@ -25,16 +25,17 @@
 #define IS_EDGEFLAG(a)	((a) == CR_EDGEFLAG_OPCODE)
 
 #define ASSERT_BOUNDS(op, data) \
-				CRASSERT(op <= cr_packer_globals.buffer.opcode_start); \
-				CRASSERT(op > cr_packer_globals.buffer.opcode_end); \
-				CRASSERT(data >= cr_packer_globals.buffer.data_start); \
-				CRASSERT(data < cr_packer_globals.buffer.data_end)
+				CRASSERT(op <= thread->packer->buffer.opcode_start); \
+				CRASSERT(op > thread->packer->buffer.opcode_end); \
+				CRASSERT(data >= thread->packer->buffer.data_start); \
+				CRASSERT(data < thread->packer->buffer.data_end)
 
 static const GLvectorf vdefault = {0.0f, 0.0f, 0.0f, 1.0f};
 
 void tilesortspuPinch (void) 
 {
-	CRCurrentState *c = &(tilesort_spu.currentContext->current);
+	GET_CONTEXT(ctx);
+	CRCurrentState *c = &(ctx->current);
 	int vtx_count = c->current->vtx_count - c->current->vtx_count_begin;
 	int numRestore;
 	int loop = 0;
@@ -45,19 +46,19 @@ void tilesortspuPinch (void)
 	unsigned char * vtx_op;
 	unsigned char * vtx_data;
 
-	unsigned char *color_ptr = tilesort_spu.currentContext->current.current->color.ptr;
-	unsigned char *normal_ptr = tilesort_spu.currentContext->current.current->normal.ptr;
+	unsigned char *color_ptr = ctx->current.current->color.ptr;
+	unsigned char *normal_ptr = ctx->current.current->normal.ptr;
 	unsigned char *texCoord_ptr[CR_MAX_TEXTURE_UNITS];
-	unsigned char *edgeFlag_ptr = tilesort_spu.currentContext->current.current->edgeFlag.ptr;
-	/* unsigned char *index_ptr = tilesort_spu.currentContext->current.current->index.ptr; */
+	unsigned char *edgeFlag_ptr = ctx->current.current->edgeFlag.ptr;
+	/* unsigned char *index_ptr = ctx->current.current->index.ptr; */
 	CRVertex v_current;
 
 	v_current.pos = vdefault;
 	v_current.color = c->color;
 	v_current.normal = c->normal;
-	for (i = 0 ; i < tilesort_spu.currentContext->limits.maxTextureUnits ; i++)
+	for (i = 0 ; i < ctx->limits.maxTextureUnits ; i++)
 	{
-		texCoord_ptr[i] = tilesort_spu.currentContext->current.current->texCoord.ptr[i];
+		texCoord_ptr[i] = ctx->current.current->texCoord.ptr[i];
 		v_current.texCoord[i] = c->texCoord[i];
 	}
 	v_current.edgeFlag = c->edgeFlag;
@@ -69,7 +70,7 @@ void tilesortspuPinch (void)
 	 */
 	if (!c->inBeginEnd || vtx_count == 0) 
 	{
-		tilesort_spu.pinchState.numRestore = 0;
+		thread->pinchState.numRestore = 0;
 		return;
 	}
 	switch (c->mode) 
@@ -87,7 +88,7 @@ void tilesortspuPinch (void)
 			 ** If so, we need to recover the first 
 			 ** vertex and the last one.
 			 */
-			if (tilesort_spu.pinchState.isLoop) 
+			if (thread->pinchState.isLoop) 
 			{
 				numRestore = 2;
 				loop = 1;
@@ -141,12 +142,12 @@ void tilesortspuPinch (void)
 			return;
 	}
 
-	vtx_op = cr_packer_globals.buffer.opcode_current;
-	vtx_data = cr_packer_globals.buffer.data_current;
+	vtx_op = thread->packer->buffer.opcode_current;
+	vtx_data = thread->packer->buffer.data_current;
 
 	for (i = numRestore; i != 0 ; i--) 
 	{
-		CRVertex *vtx = tilesort_spu.pinchState.vtx + i - 1;
+		CRVertex *vtx = thread->pinchState.vtx + i - 1;
 
 		op = vtx_op;
 		data = vtx_data;
@@ -158,7 +159,7 @@ void tilesortspuPinch (void)
 		 ** and preserve that value.  It will
 		 ** be issued at glEnd.
 		 */
-		if (i==1 && tilesort_spu.pinchState.isLoop) 
+		if (i==1 && thread->pinchState.isLoop) 
 		{
 			break;
 		}
@@ -173,8 +174,8 @@ void tilesortspuPinch (void)
 		 */
 		if ( i==1 && loop )
 		{
-			op = tilesort_spu.pinchState.beginOp;
-			data = tilesort_spu.pinchState.beginData;
+			op = thread->pinchState.beginOp;
+			data = thread->pinchState.beginData;
 
 			/* Perform the line loop to line strip 
 			 ** conversion. Set the isloop flag so 
@@ -182,7 +183,7 @@ void tilesortspuPinch (void)
 			 */
 			if (c->mode == GL_LINE_LOOP) 
 			{
-				tilesort_spu.pinchState.isLoop = GL_TRUE;
+				thread->pinchState.isLoop = GL_TRUE;
 				c->mode = GL_LINE_STRIP;
 				*((GLenum *)data) = GL_LINE_STRIP;
 			}
@@ -211,7 +212,7 @@ void tilesortspuPinch (void)
 
 		/* Lets search for the parameters */
 		/* The following code should be auto-generated but oh well... */
-		if (vtx_op < cr_packer_globals.buffer.opcode_start) 
+		if (vtx_op < thread->packer->buffer.opcode_start) 
 		{
 			/* Is the color pointer after my vertex? */
 			if (color_ptr > vtx_data) 
@@ -220,14 +221,14 @@ void tilesortspuPinch (void)
 				/* Perform the search */
 				op = vtx_op+1;
 				data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
-				while (op <= cr_packer_globals.buffer.opcode_start && !IS_COLOR(*op)) 
+				while (op <= thread->packer->buffer.opcode_start && !IS_COLOR(*op)) 
 				{
 					op++;
 					data -= __cr_packet_length_table[*op];
 				}
 
 				/* Did I hit the begining of the buffer? */
-				if (op > cr_packer_globals.buffer.opcode_start) 
+				if (op > thread->packer->buffer.opcode_start) 
 				{
 					v_current.color = c->colorPre;
 					color_ptr = NULL;
@@ -246,14 +247,14 @@ void tilesortspuPinch (void)
 				/* Perform the search */
 				op = vtx_op+1;
 				data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
-				while (op <= cr_packer_globals.buffer.opcode_start && !IS_NORMAL(*op)) 
+				while (op <= thread->packer->buffer.opcode_start && !IS_NORMAL(*op)) 
 				{
 					op++;
 					data -= __cr_packet_length_table[*op];
 				}
 
 				/* Did I hit the begining of the buffer? */
-				if (op > cr_packer_globals.buffer.opcode_start) 
+				if (op > thread->packer->buffer.opcode_start) 
 				{
 					v_current.normal = c->normalPre;
 					normal_ptr = NULL;
@@ -267,7 +268,7 @@ void tilesortspuPinch (void)
 			}
 
 			/* Is the texture pointer after my vertex? */
-			for (j = 0 ; j < tilesort_spu.currentContext->limits.maxTextureUnits ; j++)
+			for (j = 0 ; j < ctx->limits.maxTextureUnits ; j++)
 			{
 				if (texCoord_ptr[j] > vtx_data) 
 				{
@@ -275,14 +276,14 @@ void tilesortspuPinch (void)
 					/* Perform the search */
 					op = vtx_op+1;
 					data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
-					while (op <= cr_packer_globals.buffer.opcode_start && !IS_TEXCOORD(*op)) 
+					while (op <= thread->packer->buffer.opcode_start && !IS_TEXCOORD(*op)) 
 					{
 						op++;
 						data -= __cr_packet_length_table[*op];
 					}
 
 					/* Did I hit the begining of the buffer? */
-					if (op > cr_packer_globals.buffer.opcode_start) 
+					if (op > thread->packer->buffer.opcode_start) 
 					{
 						v_current.texCoord[j] = c->texCoordPre[j];
 						texCoord_ptr[j] = NULL;
@@ -303,14 +304,14 @@ void tilesortspuPinch (void)
 				/* Perform the search */
 				op = vtx_op+1;
 				data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
-				while (op <= cr_packer_globals.buffer.opcode_start && !IS_EDGEFLAG(*op)) 
+				while (op <= thread->packer->buffer.opcode_start && !IS_EDGEFLAG(*op)) 
 				{
 					op++;
 					data -= __cr_packet_length_table[*op];
 				}
 
 				/* Did I hit the begining of the buffer? */
-				if (op > cr_packer_globals.buffer.opcode_start) 
+				if (op > thread->packer->buffer.opcode_start) 
 				{
 					v_current.edgeFlag = c->edgeFlagPre;
 					edgeFlag_ptr = NULL;
@@ -327,7 +328,7 @@ void tilesortspuPinch (void)
 		{
 			v_current.color = c->colorPre;
 			v_current.normal = c->normalPre;
-			for (j = 0 ; j < tilesort_spu.currentContext->limits.maxTextureUnits; j++)
+			for (j = 0 ; j < ctx->limits.maxTextureUnits; j++)
 			{
 				v_current.texCoord[j] = c->texCoordPre[j];
 			}
@@ -385,16 +386,17 @@ void tilesortspuPinch (void)
 	/* record the number of vtx to restore
 	 ** and the winding info before we quit 
 	 */
-	tilesort_spu.pinchState.numRestore = numRestore;
-	tilesort_spu.pinchState.wind = wind;
+	thread->pinchState.numRestore = numRestore;
+	thread->pinchState.wind = wind;
 }
 
 void __pinchIssueParams (CRVertex *vtx) 
 {
+	GET_CONTEXT(ctx);
 	GLfloat val[4];
 	unsigned int i;
 
-	for (i = 0 ; i < tilesort_spu.currentContext->limits.maxTextureUnits ; i++)
+	for (i = 0 ; i < ctx->limits.maxTextureUnits ; i++)
 	{
 		val[0] = vtx->texCoord[i].s; val[1] = vtx->texCoord[i].t;
 		val[2] = vtx->texCoord[i].r; val[3] = vtx->texCoord[i].q;
@@ -468,7 +470,8 @@ void __pinchIssueVertex (CRVertex *vtx)
 
 void tilesortspuPinchRestoreTriangle( void )
 {
-	CRCurrentState *c = &(tilesort_spu.currentContext->current);
+	GET_CONTEXT(ctx);
+	CRCurrentState *c = &(ctx->current);
 	int i;
 	unsigned int j;
 	CRVertex v;
@@ -490,22 +493,22 @@ void tilesortspuPinchRestoreTriangle( void )
 		 * vertex number.  To fix, we issue the
 		 * first vertex twice to resolve the ordering
 		 */
-		if (tilesort_spu.pinchState.wind)
+		if (thread->pinchState.wind)
 		{
 			/*crDebug( "Winding..." );*/
-			__pinchIssueVertex(tilesort_spu.pinchState.vtx);
+			__pinchIssueVertex(thread->pinchState.vtx);
 		}
 
-		for (i = tilesort_spu.pinchState.isLoop ? 1:0; 
-				 i < tilesort_spu.pinchState.numRestore; 
+		for (i = thread->pinchState.isLoop ? 1:0; 
+				 i < thread->pinchState.numRestore; 
 				 i++) 
 		{
 			/*crDebug( "issuing a vertex..." ); */
-			__pinchIssueVertex(tilesort_spu.pinchState.vtx + i);
+			__pinchIssueVertex(thread->pinchState.vtx + i);
 		}
 
 		/* Setup values for next vertex */
-		for (j = 0 ; j < tilesort_spu.currentContext->limits.maxTextureUnits; j++)
+		for (j = 0 ; j < ctx->limits.maxTextureUnits; j++)
 		{
 			v.texCoord[j] = c->texCoord[j];
 		}

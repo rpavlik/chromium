@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "cr_string.h"
 #include "cr_spu.h"

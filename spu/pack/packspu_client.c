@@ -52,49 +52,57 @@ void PACKSPU_APIENTRY packspu_InterleavedArrays( GLenum format, GLsizei stride, 
 
 void PACKSPU_APIENTRY packspu_ArrayElement( GLint index )
 {
+        GET_CONTEXT(ctx);
+	CRClientState *clientState = &(ctx->clientState->client);
 	if (pack_spu.swap)
 	{
-		crPackArrayElementSWAP( index, &(pack_spu.currentCtx->client) );
+		crPackArrayElementSWAP( index, clientState );
 	}
 	else
 	{
-		crPackArrayElement( index, &(pack_spu.currentCtx->client) );
+		crPackArrayElement( index, clientState );
 	}
 }
 
 void PACKSPU_APIENTRY packspu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices )
 {
+        GET_CONTEXT(ctx);
+	CRClientState *clientState = &(ctx->clientState->client);
 	if (pack_spu.swap)
 	{
-		crPackDrawElementsSWAP( mode, count, type, indices, &(pack_spu.currentCtx->client) );
+		crPackDrawElementsSWAP( mode, count, type, indices, clientState );
 	}
 	else
 	{
-		crPackDrawElements( mode, count, type, indices, &(pack_spu.currentCtx->client) );
+		crPackDrawElements( mode, count, type, indices, clientState );
 	}
 }
 
 void PACKSPU_APIENTRY packspu_DrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices )
 {
+        GET_CONTEXT(ctx);
+	CRClientState *clientState = &(ctx->clientState->client);
 	if (pack_spu.swap)
 	{
-		crPackDrawRangeElementsSWAP( mode, start, end, count, type, indices, &(pack_spu.currentCtx->client) );
+		crPackDrawRangeElementsSWAP( mode, start, end, count, type, indices, clientState );
 	}
 	else
 	{
-		crPackDrawRangeElements( mode, start, end, count, type, indices, &(pack_spu.currentCtx->client) );
+		crPackDrawRangeElements( mode, start, end, count, type, indices, clientState );
 	}
 }
 
 void PACKSPU_APIENTRY packspu_DrawArrays( GLenum mode, GLint first, GLsizei count )
 {
+        GET_CONTEXT(ctx);
+	CRClientState *clientState = &(ctx->clientState->client);
 	if (pack_spu.swap)
 	{
-		crPackDrawArraysSWAP( mode, first, count, &(pack_spu.currentCtx->client) );
+		crPackDrawArraysSWAP( mode, first, count, clientState );
 	}
 	else
 	{
-		crPackDrawArrays( mode, first, count, &(pack_spu.currentCtx->client) );
+		crPackDrawArrays( mode, first, count, clientState );
 	}
 }
 

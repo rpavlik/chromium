@@ -27,10 +27,10 @@ static int is_digit_string( const char *s )
 	return ( *s == 0 );
 }
 
-int crParseURL( char *url, char *protocol, char *hostname,
+int crParseURL( const char *url, char *protocol, char *hostname,
 				unsigned short *port, unsigned short default_port )
 {
-	char *temp, *temp2;
+	const char *temp, *temp2;
 
 	/* pull off the protocol */
 	temp = crStrstr( url, "://" );
@@ -70,7 +70,6 @@ int crParseURL( char *url, char *protocol, char *hostname,
 			crStrncpy( hostname, temp, len );
 			hostname[len] = 0;
 		}
-
 		temp2++;
 		if ( !is_digit_string( temp2 ) )
 			goto bad_url;

@@ -16,10 +16,11 @@ static const GLvectorf minVector = {-FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX};
 
 static void PropogateCursorPosition(const GLint pos[2])
 {
+	GET_THREAD(thread);
 	int i;
 
 	/* The default buffer */
-	crPackGetBuffer( &(tilesort_spu.geometry_pack) );
+	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
 
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
@@ -39,28 +40,50 @@ static void PropogateCursorPosition(const GLint pos[2])
 		tilePos[0] = (GLint) (pos[0] * tilesort_spu.widthScale) - server->x1[0];
 		tilePos[1] = (GLint) (pos[1] * tilesort_spu.heightScale) - server->y1[0];
 
-		crPackSetBuffer( &(server->pack) );
+		crPackSetBuffer( thread->packer, &(thread->pack[i]) );
 
 		if (tilesort_spu.swap)
 			crPackChromiumParametervCRSWAP(GL_CURSOR_POSITION_CR, GL_INT, 2, tilePos);
 		else
 			crPackChromiumParametervCR(GL_CURSOR_POSITION_CR, GL_INT, 2, tilePos);
 
-		crPackGetBuffer( &(server->pack) );
+		crPackGetBuffer( thread->packer, &(thread->pack[i]) );
 	}
 
 	/* The default buffer */
-	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
+	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 }
 
 
 static void resetVertexCounters(void)
 {
+	/*GET_THREAD(thread);*/
 	int i;
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 		tilesort_spu.servers[i].vertexCount = 0;
 }
 
+void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLint y)
+{
+	/* do nothing ??? */
+}
+
+GLint TILESORTSPU_APIENTRY tilesortspu_crCreateWindow(void *dpy, GLint visBits)
+{
+	int i;
+
+	/* find an empty slot in windows[] array */
+	for (i = 0; i < MAX_WINDOWS; i++) {
+		if (tilesort_spu.windows_inuse[i] == 0)
+			break;
+	}
+	if (i == MAX_WINDOWS)
+		return -1;
+
+	tilesort_spu.windows_inuse[i] = 1; /* used */
+
+	return i;
+}
 
 void TILESORTSPU_APIENTRY tilesortspu_ChromiumParameteriCR(GLenum target, GLint value)
 {
@@ -92,6 +115,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParameterfCR(GLenum target, GLfloa
 
 void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
+	GET_THREAD(thread);
 	switch (target) {
 	case GL_CURSOR_POSITION_CR:  /* GL_CR_cursor_position */
 		PropogateCursorPosition((GLint *) values);
@@ -99,24 +123,25 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 	case GL_SCREEN_BBOX_CR:  /* GL_CR_bounding_box */
 		if (values) {
 			GLfloat *bbox = (GLfloat *)values;
-			cr_packer_globals.bounds_min.x = bbox[0];
-			cr_packer_globals.bounds_min.y = bbox[1];
-			cr_packer_globals.bounds_min.z = bbox[2];
-			cr_packer_globals.bounds_min.w = bbox[3];
-			cr_packer_globals.bounds_max.x = bbox[4];
-			cr_packer_globals.bounds_max.y = bbox[5];
-			cr_packer_globals.bounds_max.z = bbox[6];
-			cr_packer_globals.bounds_max.w = bbox[7];
+			thread->packer->bounds_min.x = bbox[0];
+			thread->packer->bounds_min.y = bbox[1];
+			thread->packer->bounds_min.z = bbox[2];
+			thread->packer->bounds_min.w = bbox[3];
+			thread->packer->bounds_max.x = bbox[4];
+			thread->packer->bounds_max.y = bbox[5];
+			thread->packer->bounds_max.z = bbox[6];
+			thread->packer->bounds_max.w = bbox[7];
 			/*crWarning( "I should really switch to the non-bbox API now, but API switching doesn't work" ); */
-			cr_packer_globals.updateBBOX = 0;
+			thread->packer->updateBBOX = 0;
 			tilesort_spu.providedBBOX = target;
+			return;
 		}
 		/* fallthrough */
 	case GL_DEFAULT_BBOX_CR:  /* GL_CR_bounding_box */
-		cr_packer_globals.bounds_min = maxVector;
-		cr_packer_globals.bounds_max = minVector;
+		thread->packer->bounds_min = maxVector;
+		thread->packer->bounds_max = minVector;
 		/*crWarning( "I should really switch to the bbox API now, but API switching doesn't work" ); */
-		cr_packer_globals.updateBBOX = 1;
+		thread->packer->updateBBOX = 1;
 		tilesort_spu.providedBBOX = GL_DEFAULT_BBOX_CR;
 		break;
 	default:

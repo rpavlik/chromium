@@ -40,10 +40,10 @@ SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *super,
 
 	hiddenline_spu.frame_head = hiddenline_spu.frame_tail = NULL;
 
-	crPackInit( 0 ); /* Certainly don't want to swap bytes */
+	hiddenline_spu.packer = crPackNewContext( 0 ); /* Certainly don't want to swap bytes */
 	hiddenlineProvidePackBuffer();
-	crPackFlushFunc( hiddenlineFlush );
-	crPackSendHugeFunc( hiddenlineHuge );
+	crPackFlushFunc( hiddenline_spu.packer, hiddenlineFlush );
+	crPackSendHugeFunc( hiddenline_spu.packer, hiddenlineHuge );
 
 	/* We need to track state so that the packer can deal with pixel data */
 	crStateInit();

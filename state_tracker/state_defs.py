@@ -33,6 +33,7 @@ crStateDestroyContext
 crStateDiffContext
 crStateSwitchContext
 crStateMakeCurrent
+crStateSetCurrent
 crStateFlushFunc
 crStateFlushArg
 crStateDiffAPI

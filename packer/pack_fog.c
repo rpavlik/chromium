@@ -10,6 +10,7 @@
 
 static GLboolean __handleFogData( GLenum pname, const GLfloat *params )
 {
+	GET_PACKER_CONTEXT(pc);
 	int params_length = 0;
 	int packet_length = sizeof( int ) + sizeof( pname );
 	unsigned char *data_ptr;
@@ -37,7 +38,7 @@ static GLboolean __handleFogData( GLenum pname, const GLfloat *params )
 	}
 	packet_length += params_length;
 
-	GET_BUFFERED_POINTER( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length );
 	WRITE_DATA( 0, int, packet_length );
 	WRITE_DATA( 4, GLenum, pname );
 	WRITE_DATA( 8, GLfloat, params[0] );
@@ -52,13 +53,15 @@ static GLboolean __handleFogData( GLenum pname, const GLfloat *params )
 
 void PACK_APIENTRY crPackFogfv(GLenum pname, const GLfloat *params)
 {
+	GET_PACKER_CONTEXT(pc);
 	if (__handleFogData( pname, params ))
-		WRITE_OPCODE( CR_FOGFV_OPCODE );
+		WRITE_OPCODE( pc, CR_FOGFV_OPCODE );
 }
 
 void PACK_APIENTRY crPackFogiv(GLenum pname, const GLint *params)
 {
+	GET_PACKER_CONTEXT(pc);
 	/* floats and ints are the same size, so the packing should be the same */
 	if (__handleFogData( pname, (const GLfloat *) params ))
-		WRITE_OPCODE( CR_FOGIV_OPCODE );
+		WRITE_OPCODE( pc, CR_FOGIV_OPCODE );
 }

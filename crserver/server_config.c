@@ -21,6 +21,9 @@ static void __setDefaults( void )
 	cr_server.muralHeight = 0;
 	cr_server.optimizeBucket = 1;
 	cr_server.useL2 = 0;
+	cr_server.maxBarrierCount = 0;
+	cr_server.clearCount = 0;
+	cr_server.swapCount = 0;
 }
 
 void crServerGatherConfiguration(char *mothership)
@@ -33,7 +36,6 @@ void crServerGatherConfiguration(char *mothership)
 	int *spu_ids;
 	char **spu_names;
 	char *spu_dir;
-	unsigned int mtu;
 	int i;
 
 	char **clientchain, **clientlist;
@@ -118,7 +120,7 @@ void crServerGatherConfiguration(char *mothership)
 	}
 
 	crMothershipGetMTU( conn, response );
-	sscanf( response, "%ud", &mtu );
+	sscanf( response, "%ud", &cr_server.mtu );
 
 	/* The response will tell us what protocols we need to serve 
 	 * example: "3 tcpip 1,gm 2,via 10" */
@@ -134,7 +136,6 @@ void crServerGatherConfiguration(char *mothership)
 	clientlist = crStrSplit( clientchain[1], "," );
 
 	cr_server.numClients = numClients;
-	cr_server.clients = (CRClient *) crAlloc( numClients * sizeof( *(cr_server.clients) ) );
 
 	if (!crMothershipGetServerTiles( conn, response ))
 	{
@@ -169,24 +170,21 @@ void crServerGatherConfiguration(char *mothership)
 	a_non_file_client = -1;
 	for (i = 0 ; i < numClients ; i++)
 	{
-		char protocol[1024];
-		int j;
+		CRClient *client = &cr_server.clients[i];
 
-		sscanf( clientlist[i], "%s %d", protocol, &(cr_server.clients[i].spu_id) );
-		cr_server.clients[i].conn = crNetAcceptClient( protocol, cr_server.tcpip_port, mtu, 1 );
-
-		/* Init all context-related variables */
-		for (j = 0; j < CR_MAX_CONTEXTS; j++)
-			cr_server.clients[i].context[j] = NULL;
-		cr_server.clients[i].currentCtx = NULL;
+		crMemZero(client, sizeof(CRClient));
 
 		cr_server.clients[i].number = i;
 
-		if (crStrncmp(protocol,"file",crStrlen("file")))
+		sscanf( clientlist[i], "%s %d", cr_server.protocol, &(client->spu_id) );
+		client->conn = crNetAcceptClient( cr_server.protocol, cr_server.tcpip_port, cr_server.mtu, 1 );
+
+		if (crStrncmp(cr_server.protocol,"file",crStrlen("file")))
 		{
 			a_non_file_client = i;
 		}
 	}
+
 	cr_server.SpuContext = 0;
 
 	if (a_non_file_client != -1)

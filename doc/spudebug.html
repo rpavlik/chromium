@@ -78,8 +78,9 @@ in your <code>SPUInit</code> function.</p>
 <h2 class="PageSubHeading">Technique 4: Attach a debugger to a running process</h2>
 <p>Many systems will allow you to attach a debugger to a running process without
 interrupting it.&nbsp; In Windows, you can do this simply by right clicking on
-the process name in the Task Manager, in Linux there's some option at the GDB
-prompt (can you tell where I do all my development?).&nbsp; This way, if you
+the process name in the Task Manager.
+With Linux start gdb with <code>gdb</code> <em>program</em> <em>processID</em>.
+&nbsp; This way, if you
 want to emulate the <code>DebugBreak</code> functionality without using it
 explicitly, you can do something like:</p>
 <table width="100%"><tr><td class="GrayCodeListing">volatile int i = 10; // so

@@ -91,11 +91,15 @@ int main(int argc, char *argv[])
 	static const GLfloat pos[4] = { -1, -1, 10, 0 };
 	int rank = -1, size=-1;
 	int i, ctx, frame;
+	int window = 0;  /* default window */
 	float theta;
+	int swapFlag = 0, clearFlag = 0;
+	const char *dpy = NULL;
+	int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
 
 	if (argc < 5)
 	{
-		crError( "Usage: %s -rank <ID NUMBER> -size <SIZE>", argv[0] );
+		crError( "Usage: %s -rank <ID NUMBER> -size <SIZE> [-swap]", argv[0] );
 	}
 
 	for (i = 1 ; i < argc ; i++)
@@ -109,7 +113,7 @@ int main(int argc, char *argv[])
 			rank = crStrToInt( argv[i+1] );
 			i++;
 		}
-		if (!crStrcmp( argv[i], "-size" ))
+		else if (!crStrcmp( argv[i], "-size" ))
 		{
 			if (i == argc - 1)
 			{
@@ -117,6 +121,14 @@ int main(int argc, char *argv[])
 			}
 			size = crStrToInt( argv[i+1] );
 			i++;
+		}
+		else if (!crStrcmp( argv[i], "-swap" ))
+		{
+			swapFlag = 1;
+		}
+		else if (!crStrcmp( argv[i], "-clear" ))
+		{
+			clearFlag = 1;
 		}
 	} 
 	if (rank == -1)
@@ -138,12 +150,12 @@ int main(int argc, char *argv[])
 	LOAD( crMakeCurrent );
 	LOAD( crSwapBuffers );
 
-	ctx = crCreateContextCR(0, CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT);
-	if (ctx <= 0) {
+	ctx = crCreateContextCR(dpy, visual);
+	if (ctx < 0) {
 		crError("crCreateContextCR() call failed!\n");
 		return 0;
 	}
-	crMakeCurrentCR(0, 0, ctx);
+	crMakeCurrentCR(window, ctx);
 
 	LOAD( glBarrierCreate );
 	LOAD( glBarrierExec );
@@ -174,12 +186,8 @@ int main(int argc, char *argv[])
 
 	for (frame = 0; ; frame++)
 	{
-		/* The GL_SINGLE_CLIENT_BIT_CR bit indicates that the glClear() should
-		 * only be executed by the server for the 0th client.
-		 * This really only matters for a sort-last configuration.
-		 */
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
-						 | GL_SINGLE_CLIENT_BIT_CR );
+		if (clearFlag)
+			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		glBarrierExecCR( MASTER_BARRIER );
 
@@ -187,20 +195,12 @@ int main(int argc, char *argv[])
 		glRotatef((GLfloat)frame, 1, 0, 0);
 		glRotatef((GLfloat)(-2 * frame), 0, 1, 0);
 		glRotatef((GLfloat)(frame + rank * theta), 0, 0, 1);
-#if 0
-		/* old code */
-		glBegin( GL_TRIANGLES );
-		glColor3fv(colors[rank%7]);
-		glVertex3fv(verts[0]);
-		glVertex3fv(verts[1]);
-		glVertex3fv(verts[2]);
-		glEnd();
-#else
+
 		glTranslatef(0.5, 0, 0);
 		glRotatef(18, 1, 0, 0);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[rank%7]);
 		doughnut((GLfloat).15,(GLfloat)0.7, 15, 30);
-#endif
+
 		glPopMatrix();
 
 		glBarrierExecCR( MASTER_BARRIER );
@@ -208,7 +208,14 @@ int main(int argc, char *argv[])
 		/* The crserver only executes the SwapBuffers() for the 0th client.
 		 * No need to test for rank==0 as we used to do.
 		 */
-		crSwapBuffersCR(0, 0);
+		if (swapFlag) {
+			/* really swap */
+			crSwapBuffersCR( window, 0 );
+		}
+		else {
+			/* don't really swap, just mark end of frame */
+			crSwapBuffersCR( window, CR_SUPPRESS_SWAP_BIT );
+		}
 
 		/* ARGH -- need to trick out the compiler this sucks. */
 		if (argv[0] == NULL)

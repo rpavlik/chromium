@@ -11,15 +11,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
 #include "cr_mem.h"
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
 /* Initialize a 1-D evaluator map */
 static void
-init_1d_map( CREvaluatorState *e, GLenum map, int n, const float *initial )
+init_1d_map(CREvaluatorState * e, GLenum map, int n, const float *initial)
 {
 	GLint i;
 	const GLint k = map - GL_MAP1_COLOR_4;
@@ -37,7 +36,7 @@ init_1d_map( CREvaluatorState *e, GLenum map, int n, const float *initial )
 
 /* Initialize a 2-D evaluator map */
 static void
-init_2d_map( CREvaluatorState *e, GLenum map, int n, const float *initial )
+init_2d_map(CREvaluatorState * e, GLenum map, int n, const float *initial)
 {
 	GLint i;
 	const GLint k = map - GL_MAP2_COLOR_4;
@@ -56,7 +55,8 @@ init_2d_map( CREvaluatorState *e, GLenum map, int n, const float *initial )
 		e->eval2D[k].coeff[i] = initial[i];
 }
 
-void crStateEvaluatorInit(CREvaluatorState *e) 
+void
+crStateEvaluatorInit(CREvaluatorState * e)
 {
 	static GLfloat vertex[4] = { 0.0, 0.0, 0.0, 1.0 };
 	static GLfloat normal[3] = { 0.0, 0.0, 1.0 };
@@ -87,7 +87,7 @@ void crStateEvaluatorInit(CREvaluatorState *e)
 	init_2d_map(e, GL_MAP2_TEXTURE_COORD_4, 4, texcoord);
 
 	e->un1D = 1;
-	e->u11D = 0.0; 
+	e->u11D = 0.0;
 	e->u21D = 1.0;
 
 	e->un2D = 1;
@@ -98,7 +98,7 @@ void crStateEvaluatorInit(CREvaluatorState *e)
 	e->v22D = 1.0;
 }
 
-const int gleval_sizes[] = {4, 1, 3, 1, 2, 3, 4, 3, 4};
+const int gleval_sizes[] = { 4, 1, 3, 1, 2, 3, 4, 3, 4 };
 
 /**********************************************************************/
 /***            Copy and deallocate control points                  ***/
@@ -112,24 +112,25 @@ const int gleval_sizes[] = {4, 1, 3, 1, 2, 3, 4, 3, 4};
  * Return:  pointer to buffer of contiguous control points or NULL if out
  *          of memory.
  */
-GLfloat *_copy_map_points1f( GLint size, GLint ustride, GLint uorder,
-                               const GLfloat *points )
+GLfloat *
+_copy_map_points1f(GLint size, GLint ustride, GLint uorder,
+									 const GLfloat * points)
 {
-   GLfloat *buffer, *p;
-   GLint i, k;
+	GLfloat *buffer, *p;
+	GLint i, k;
 
-   if (!points || size==0) {
-      return NULL;
-   }
+	if (!points || size == 0) {
+		return NULL;
+	}
 
-   buffer = (GLfloat *) crAlloc(uorder * size * sizeof(GLfloat));
+	buffer = (GLfloat *) crAlloc(uorder * size * sizeof(GLfloat));
 
-   if(buffer)
-      for(i=0, p=buffer; i<uorder; i++, points+=ustride)
-	for(k=0; k<size; k++)
-	  *p++ = points[k];
+	if (buffer)
+		for (i = 0, p = buffer; i < uorder; i++, points += ustride)
+			for (k = 0; k < size; k++)
+				*p++ = points[k];
 
-   return buffer;
+	return buffer;
 }
 
 
@@ -137,24 +138,25 @@ GLfloat *_copy_map_points1f( GLint size, GLint ustride, GLint uorder,
 /*
  * Same as above but convert doubles to floats.
  */
-GLfloat *_copy_map_points1d( GLint size, GLint ustride, GLint uorder,
-                               const GLdouble *points )
+GLfloat *
+_copy_map_points1d(GLint size, GLint ustride, GLint uorder,
+									 const GLdouble * points)
 {
-   GLfloat *buffer, *p;
-   GLint i, k;
+	GLfloat *buffer, *p;
+	GLint i, k;
 
-   if (!points || size==0) {
-      return NULL;
-   }
+	if (!points || size == 0) {
+		return NULL;
+	}
 
-   buffer = (GLfloat *) crAlloc(uorder * size * sizeof(GLfloat));
+	buffer = (GLfloat *) crAlloc(uorder * size * sizeof(GLfloat));
 
-   if(buffer)
-      for(i=0, p=buffer; i<uorder; i++, points+=ustride)
-	for(k=0; k<size; k++)
-	  *p++ = (GLfloat) points[k];
+	if (buffer)
+		for (i = 0, p = buffer; i < uorder; i++, points += ustride)
+			for (k = 0; k < size; k++)
+				*p++ = (GLfloat) points[k];
 
-   return buffer;
+	return buffer;
 }
 
 
@@ -169,40 +171,42 @@ GLfloat *_copy_map_points1d( GLint size, GLint ustride, GLint uorder,
  * Return:  pointer to buffer of contiguous control points or NULL if out
  *          of memory.
  */
-GLfloat *_copy_map_points2f( GLint size,
-                               GLint ustride, GLint uorder,
-                               GLint vstride, GLint vorder,
-                               const GLfloat *points )
+GLfloat *
+_copy_map_points2f(GLint size,
+									 GLint ustride, GLint uorder,
+									 GLint vstride, GLint vorder, const GLfloat * points)
 {
-   GLfloat *buffer, *p;
-   GLint i, j, k, dsize, hsize;
-   GLint uinc;
+	GLfloat *buffer, *p;
+	GLint i, j, k, dsize, hsize;
+	GLint uinc;
 
-   if (!points || size==0) {
-      return NULL;
-   }
+	if (!points || size == 0) {
+		return NULL;
+	}
 
-   /* max(uorder, vorder) additional points are used in      */
-   /* horner evaluation and uorder*vorder additional */
-   /* values are needed for de Casteljau                     */
-   dsize = (uorder == 2 && vorder == 2)? 0 : uorder*vorder;
-   hsize = (uorder > vorder ? uorder : vorder)*size;
+	/* max(uorder, vorder) additional points are used in      */
+	/* horner evaluation and uorder*vorder additional */
+	/* values are needed for de Casteljau                     */
+	dsize = (uorder == 2 && vorder == 2) ? 0 : uorder * vorder;
+	hsize = (uorder > vorder ? uorder : vorder) * size;
 
-   if(hsize>dsize)
-     buffer = (GLfloat *) crAlloc((uorder*vorder*size+hsize)*sizeof(GLfloat));
-   else
-     buffer = (GLfloat *) crAlloc((uorder*vorder*size+dsize)*sizeof(GLfloat));
+	if (hsize > dsize)
+		buffer =
+			(GLfloat *) crAlloc((uorder * vorder * size + hsize) * sizeof(GLfloat));
+	else
+		buffer =
+			(GLfloat *) crAlloc((uorder * vorder * size + dsize) * sizeof(GLfloat));
 
-   /* compute the increment value for the u-loop */
-   uinc = ustride - vorder*vstride;
+	/* compute the increment value for the u-loop */
+	uinc = ustride - vorder * vstride;
 
-   if (buffer)
-      for (i=0, p=buffer; i<uorder; i++, points += uinc)
-	 for (j=0; j<vorder; j++, points += vstride)
-	    for (k=0; k<size; k++)
-	       *p++ = points[k];
+	if (buffer)
+		for (i = 0, p = buffer; i < uorder; i++, points += uinc)
+			for (j = 0; j < vorder; j++, points += vstride)
+				for (k = 0; k < size; k++)
+					*p++ = points[k];
 
-   return buffer;
+	return buffer;
 }
 
 
@@ -210,40 +214,42 @@ GLfloat *_copy_map_points2f( GLint size,
 /*
  * Same as above but convert doubles to floats.
  */
-GLfloat *_copy_map_points2d(GLint size,
-                              GLint ustride, GLint uorder,
-                              GLint vstride, GLint vorder,
-                              const GLdouble *points )
+GLfloat *
+_copy_map_points2d(GLint size,
+									 GLint ustride, GLint uorder,
+									 GLint vstride, GLint vorder, const GLdouble * points)
 {
-   GLfloat *buffer, *p;
-   GLint i, j, k, hsize, dsize;
-   GLint uinc;
+	GLfloat *buffer, *p;
+	GLint i, j, k, hsize, dsize;
+	GLint uinc;
 
-   if (!points || size==0) {
-      return NULL;
-   }
+	if (!points || size == 0) {
+		return NULL;
+	}
 
-   /* max(uorder, vorder) additional points are used in      */
-   /* horner evaluation and uorder*vorder additional */
-   /* values are needed for de Casteljau                     */
-   dsize = (uorder == 2 && vorder == 2)? 0 : uorder*vorder;
-   hsize = (uorder > vorder ? uorder : vorder)*size;
+	/* max(uorder, vorder) additional points are used in      */
+	/* horner evaluation and uorder*vorder additional */
+	/* values are needed for de Casteljau                     */
+	dsize = (uorder == 2 && vorder == 2) ? 0 : uorder * vorder;
+	hsize = (uorder > vorder ? uorder : vorder) * size;
 
-   if(hsize>dsize)
-     buffer = (GLfloat *) crAlloc((uorder*vorder*size+hsize)*sizeof(GLfloat));
-   else
-     buffer = (GLfloat *) crAlloc((uorder*vorder*size+dsize)*sizeof(GLfloat));
+	if (hsize > dsize)
+		buffer =
+			(GLfloat *) crAlloc((uorder * vorder * size + hsize) * sizeof(GLfloat));
+	else
+		buffer =
+			(GLfloat *) crAlloc((uorder * vorder * size + dsize) * sizeof(GLfloat));
 
-   /* compute the increment value for the u-loop */
-   uinc = ustride - vorder*vstride;
+	/* compute the increment value for the u-loop */
+	uinc = ustride - vorder * vstride;
 
-   if (buffer)
-      for (i=0, p=buffer; i<uorder; i++, points += uinc)
-	 for (j=0; j<vorder; j++, points += vstride)
-	    for (k=0; k<size; k++)
-	       *p++ = (GLfloat) points[k];
+	if (buffer)
+		for (i = 0, p = buffer; i < uorder; i++, points += uinc)
+			for (j = 0; j < vorder; j++, points += vstride)
+				for (k = 0; k < size; k++)
+					*p++ = (GLfloat) points[k];
 
-   return buffer;
+	return buffer;
 }
 
 
@@ -259,268 +265,269 @@ GLfloat *_copy_map_points2d(GLint size,
  */
 static void
 map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
-     GLint uorder, const GLvoid *points, GLenum type )
+		 GLint uorder, const GLvoid * points, GLenum type)
 {
-   CRContext *g = GetCurrentContext();
-   CREvaluatorState *e = &(g->eval);
-   CRStateBits *sb = GetCurrentBits();
-   CREvaluatorBits *eb = &(sb->eval);
-   CRTextureState *t = &(g->texture);
-   GLint i;
-   GLint k;
-   GLfloat *pnts;
+	CRContext *g = GetCurrentContext();
+	CRStateBits *sb = GetCurrentBits();
+	CREvaluatorState *e = &(g->eval);
+	CREvaluatorBits *eb = &(sb->eval);
+	CRTextureState *t = &(g->texture);
+	GLint i;
+	GLint k;
+	GLfloat *pnts;
 
-   if (g->current.inBeginEnd)
-   {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Map1d called in begin/end");
-	return;
-   }
-
-   FLUSH();
-
-   CRASSERT(type == GL_FLOAT || type == GL_DOUBLE);
-
-   if (u1 == u2) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap1d(u1==u2)" );
-      return;
-   }
-   if (uorder < 1 || uorder > MAX_EVAL_ORDER) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap1d(bad uorder)" );
-      return;
-   }
-   if (!points) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap1d(null points)" );
-      return;
-   }
-
-   i = target - GL_MAP1_COLOR_4;
-
-   k = gleval_sizes[i];
-
-   if (k == 0) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "glMap1d(k=0)" );
-   }
-
-   if (ustride < k) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap1d(bad ustride" );
-      return;
-   }
-
-   if (t->curTextureUnit != 0) {
-      /* See OpenGL 1.2.1 spec, section F.2.13 */
-      crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION,
-                    "glMap1d(current texture unit must be zero)" );
-      return;
-   }
-
-   switch (target) {
-      case GL_MAP1_VERTEX_3:
-      case GL_MAP1_VERTEX_4:
-      case GL_MAP1_INDEX:
-      case GL_MAP1_COLOR_4:
-      case GL_MAP1_NORMAL:
-      case GL_MAP1_TEXTURE_COORD_1:
-      case GL_MAP1_TEXTURE_COORD_2:
-      case GL_MAP1_TEXTURE_COORD_3:
-      case GL_MAP1_TEXTURE_COORD_4:
-	 break;
-      default:
-      	 crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
-                       "glMap1d(bad target)" );
-	 return;
-   }
-
-   /* make copy of the control points */
-   if (type == GL_FLOAT)
-      pnts = _copy_map_points1f(k, ustride, uorder, (GLfloat*) points);
-   else
-      pnts = _copy_map_points1d(k, ustride, uorder, (GLdouble*) points);
-
-   e->eval1D[i].order = uorder;
-   e->eval1D[i].u1 = u1;
-   e->eval1D[i].u2 = u2;
-   e->eval1D[i].du = 1.0f / (u2 - u1);
-   if (e->eval1D[i].coeff)
-      crFree( e->eval1D[i].coeff );
-   e->eval1D[i].coeff = pnts;
-
-   DIRTY(eb->dirty, g->neg_bitid);
-   DIRTY(eb->eval1D[i], g->neg_bitid);
-}
-
-
-
-void STATE_APIENTRY crStateMap1f (GLenum target, GLfloat u1, GLfloat u2,
-             		GLint stride, GLint order, const GLfloat *points )
-{
-   map1(target, u1, u2, stride, order, points, GL_FLOAT);
-}
-
-void STATE_APIENTRY crStateMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
-             GLint order, const GLdouble *points )
-{
-   map1(target, (GLfloat) u1, (GLfloat) u2, stride, order, points, GL_DOUBLE);
-}
-
-static void
-map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
-      GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
-      const GLvoid *points, GLenum type )
-{
-   CRContext *g = GetCurrentContext();
-   CREvaluatorState *e = &(g->eval);
-   CRStateBits *sb = GetCurrentBits();
-   CREvaluatorBits *eb = &(sb->eval);
-   CRTextureState *t = &(g->texture);
-   GLint i;
-   GLint k;
-   GLfloat *pnts;
-
-   if (g->current.inBeginEnd)
-   {
-      	crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glMap2d()" );
-	return;
-   }
-
-   FLUSH();
-
-   if (u1==u2) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()" );
-      return;
-   }
-
-   if (v1==v2) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()" );
-      return;
-   }
-
-   if (uorder<1 || uorder> MAX_EVAL_ORDER) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()" );
-      return;
-   }
-
-   if (vorder<1 || vorder> MAX_EVAL_ORDER) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()" );
-      return;
-   }
-
-   i = target - GL_MAP2_COLOR_4;
-
-   k = gleval_sizes[i];
-
-   if (k==0) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "glMap2d()" );
-   }
-
-   if (ustride < k) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()" );
-      return;
-   }
-   if (vstride < k) {
-      crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()" );
-      return;
-   }
-
-   if (t->curTextureUnit != 0) {
-      /* See OpenGL 1.2.1 spec, section F.2.13 */
-      crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glMap2d()" );
-      return;
-   }
-
-   switch (target) {
-      case GL_MAP2_VERTEX_3:
-      case GL_MAP2_VERTEX_4:
-      case GL_MAP2_INDEX:
-      case GL_MAP2_COLOR_4:
-      case GL_MAP2_NORMAL:
-      case GL_MAP2_TEXTURE_COORD_1:
-      case GL_MAP2_TEXTURE_COORD_2:
-      case GL_MAP2_TEXTURE_COORD_3:
-      case GL_MAP2_TEXTURE_COORD_4:
-	 break;
-      default:
-      	 crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "glMap2d()" );
-	 return;
-   }
-
-   /* make copy of the control points */
-   if (type == GL_FLOAT)
-      pnts = _copy_map_points2f(k, ustride, uorder,
-                                  vstride, vorder, (GLfloat*) points);
-   else
-      pnts = _copy_map_points2d(k, ustride, uorder,
-                                  vstride, vorder, (GLdouble*) points);
-
-   e->eval2D[i].uorder = uorder;
-   e->eval2D[i].u1 = u1;
-   e->eval2D[i].u2 = u2;
-   e->eval2D[i].du = 1.0f / (u2 - u1);
-   e->eval2D[i].vorder = vorder;
-   e->eval2D[i].v1 = v1;
-   e->eval2D[i].v2 = v2;
-   e->eval2D[i].dv = 1.0f / (v2 - v1);
-   if (e->eval2D[i].coeff)
-      crFree( e->eval2D[i].coeff );
-   e->eval2D[i].coeff = pnts;
-
-   DIRTY(eb->dirty, g->neg_bitid);
-   DIRTY(eb->eval2D[i], g->neg_bitid);
-}
-
-void STATE_APIENTRY crStateMap2f (GLenum target, GLfloat u1, GLfloat u2,
-             		GLint ustride, GLint uorder, 
-			GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
-			const GLfloat *points )
-{
-   map2(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder,
-        points, GL_FLOAT);
-}
-
-
-void STATE_APIENTRY crStateMap2d (GLenum target, GLdouble u1, GLdouble u2,
-             		GLint ustride, GLint uorder, 
-			GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
-			const GLdouble *points )
-{
-   map2(target, (GLfloat) u1, (GLfloat) u2, ustride, uorder, 
-	(GLfloat) v1, (GLfloat) v2, vstride, vorder, points, GL_DOUBLE);
-}
-
-void STATE_APIENTRY crStateGetMapdv( GLenum target, GLenum query, GLdouble *v )
-{
-   CRContext *g = GetCurrentContext();
-   CREvaluatorState *e = &(g->eval);
-   GLint size;
-   GLint i, j;
-
-   if (g->current.inBeginEnd)
-   {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Map1d called in begin/end");
-	return;
-   }
-
-   FLUSH();
-
-   i = target-GL_MAP1_COLOR_4;
-
-   if (i < 0 || i >= GLEVAL_TOT) 
-   {
-	i = target-GL_MAP2_COLOR_4;
-
-	if (i < 0 || i >= GLEVAL_TOT) 
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"GetMapdv: invalid target: %d", target);
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+								 "Map1d called in begin/end");
 		return;
 	}
 
-	switch (query) 
-	{
+	FLUSH();
+
+	CRASSERT(type == GL_FLOAT || type == GL_DOUBLE);
+
+	if (u1 == u2) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap1d(u1==u2)");
+		return;
+	}
+	if (uorder < 1 || uorder > MAX_EVAL_ORDER) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap1d(bad uorder)");
+		return;
+	}
+	if (!points) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+								 "glMap1d(null points)");
+		return;
+	}
+
+	i = target - GL_MAP1_COLOR_4;
+
+	k = gleval_sizes[i];
+
+	if (k == 0) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMap1d(k=0)");
+	}
+
+	if (ustride < k) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap1d(bad ustride");
+		return;
+	}
+
+	if (t->curTextureUnit != 0) {
+		/* See OpenGL 1.2.1 spec, section F.2.13 */
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+								 "glMap1d(current texture unit must be zero)");
+		return;
+	}
+
+	switch (target) {
+	case GL_MAP1_VERTEX_3:
+	case GL_MAP1_VERTEX_4:
+	case GL_MAP1_INDEX:
+	case GL_MAP1_COLOR_4:
+	case GL_MAP1_NORMAL:
+	case GL_MAP1_TEXTURE_COORD_1:
+	case GL_MAP1_TEXTURE_COORD_2:
+	case GL_MAP1_TEXTURE_COORD_3:
+	case GL_MAP1_TEXTURE_COORD_4:
+		break;
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMap1d(bad target)");
+		return;
+	}
+
+	/* make copy of the control points */
+	if (type == GL_FLOAT)
+		pnts = _copy_map_points1f(k, ustride, uorder, (GLfloat *) points);
+	else
+		pnts = _copy_map_points1d(k, ustride, uorder, (GLdouble *) points);
+
+	e->eval1D[i].order = uorder;
+	e->eval1D[i].u1 = u1;
+	e->eval1D[i].u2 = u2;
+	e->eval1D[i].du = 1.0f / (u2 - u1);
+	if (e->eval1D[i].coeff)
+		crFree(e->eval1D[i].coeff);
+	e->eval1D[i].coeff = pnts;
+
+	DIRTY(eb->dirty, g->neg_bitid);
+	DIRTY(eb->eval1D[i], g->neg_bitid);
+}
+
+
+
+void STATE_APIENTRY
+crStateMap1f(GLenum target, GLfloat u1, GLfloat u2,
+						 GLint stride, GLint order, const GLfloat * points)
+{
+	map1(target, u1, u2, stride, order, points, GL_FLOAT);
+}
+
+void STATE_APIENTRY
+crStateMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
+						 GLint order, const GLdouble * points)
+{
+	map1(target, (GLfloat) u1, (GLfloat) u2, stride, order, points, GL_DOUBLE);
+}
+
+static void
+map2(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
+		 GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
+		 const GLvoid * points, GLenum type)
+{
+	CRContext *g = GetCurrentContext();
+	CRStateBits *sb = GetCurrentBits();
+	CREvaluatorState *e = &(g->eval);
+	CREvaluatorBits *eb = &(sb->eval);
+	CRTextureState *t = &(g->texture);
+	GLint i;
+	GLint k;
+	GLfloat *pnts;
+
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glMap2d()");
+		return;
+	}
+
+	FLUSH();
+
+	if (u1 == u2) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()");
+		return;
+	}
+
+	if (v1 == v2) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()");
+		return;
+	}
+
+	if (uorder < 1 || uorder > MAX_EVAL_ORDER) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()");
+		return;
+	}
+
+	if (vorder < 1 || vorder > MAX_EVAL_ORDER) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()");
+		return;
+	}
+
+	i = target - GL_MAP2_COLOR_4;
+
+	k = gleval_sizes[i];
+
+	if (k == 0) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMap2d()");
+	}
+
+	if (ustride < k) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()");
+		return;
+	}
+	if (vstride < k) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMap2d()");
+		return;
+	}
+
+	if (t->curTextureUnit != 0) {
+		/* See OpenGL 1.2.1 spec, section F.2.13 */
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glMap2d()");
+		return;
+	}
+
+	switch (target) {
+	case GL_MAP2_VERTEX_3:
+	case GL_MAP2_VERTEX_4:
+	case GL_MAP2_INDEX:
+	case GL_MAP2_COLOR_4:
+	case GL_MAP2_NORMAL:
+	case GL_MAP2_TEXTURE_COORD_1:
+	case GL_MAP2_TEXTURE_COORD_2:
+	case GL_MAP2_TEXTURE_COORD_3:
+	case GL_MAP2_TEXTURE_COORD_4:
+		break;
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMap2d()");
+		return;
+	}
+
+	/* make copy of the control points */
+	if (type == GL_FLOAT)
+		pnts = _copy_map_points2f(k, ustride, uorder,
+															vstride, vorder, (GLfloat *) points);
+	else
+		pnts = _copy_map_points2d(k, ustride, uorder,
+															vstride, vorder, (GLdouble *) points);
+
+	e->eval2D[i].uorder = uorder;
+	e->eval2D[i].u1 = u1;
+	e->eval2D[i].u2 = u2;
+	e->eval2D[i].du = 1.0f / (u2 - u1);
+	e->eval2D[i].vorder = vorder;
+	e->eval2D[i].v1 = v1;
+	e->eval2D[i].v2 = v2;
+	e->eval2D[i].dv = 1.0f / (v2 - v1);
+	if (e->eval2D[i].coeff)
+		crFree(e->eval2D[i].coeff);
+	e->eval2D[i].coeff = pnts;
+
+	DIRTY(eb->dirty, g->neg_bitid);
+	DIRTY(eb->eval2D[i], g->neg_bitid);
+}
+
+void STATE_APIENTRY
+crStateMap2f(GLenum target, GLfloat u1, GLfloat u2,
+						 GLint ustride, GLint uorder,
+						 GLfloat v1, GLfloat v2,
+						 GLint vstride, GLint vorder, const GLfloat * points)
+{
+	map2(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder,
+			 points, GL_FLOAT);
+}
+
+
+void STATE_APIENTRY
+crStateMap2d(GLenum target, GLdouble u1, GLdouble u2,
+						 GLint ustride, GLint uorder,
+						 GLdouble v1, GLdouble v2,
+						 GLint vstride, GLint vorder, const GLdouble * points)
+{
+	map2(target, (GLfloat) u1, (GLfloat) u2, ustride, uorder,
+			 (GLfloat) v1, (GLfloat) v2, vstride, vorder, points, GL_DOUBLE);
+}
+
+void STATE_APIENTRY
+crStateGetMapdv(GLenum target, GLenum query, GLdouble * v)
+{
+	CRContext *g = GetCurrentContext();
+	CRStateBits *sb = GetCurrentBits();
+	CREvaluatorState *e = &(g->eval);
+	GLint size;
+	GLint i, j;
+	(void) sb;
+
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+								 "Map1d called in begin/end");
+		return;
+	}
+
+	FLUSH();
+
+	i = target - GL_MAP1_COLOR_4;
+
+	if (i < 0 || i >= GLEVAL_TOT) {
+		i = target - GL_MAP2_COLOR_4;
+
+		if (i < 0 || i >= GLEVAL_TOT) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "GetMapdv: invalid target: %d", target);
+			return;
+		}
+
+		switch (query) {
 		case GL_COEFF:
-         		size = gleval_sizes[i] *
-				   e->eval2D[i].uorder * e->eval2D[i].vorder;
-			for (j=0; j<size; j++)
-			{
+			size = gleval_sizes[i] * e->eval2D[i].uorder * e->eval2D[i].vorder;
+			for (j = 0; j < size; j++) {
 				v[j] = e->eval2D[i].coeff[j];
 			}
 			break;
@@ -536,18 +543,15 @@ void STATE_APIENTRY crStateGetMapdv( GLenum target, GLenum query, GLdouble *v )
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"GetMapdv: invalid target: %d", target);
+									 "GetMapdv: invalid target: %d", target);
 			return;
+		}
 	}
-   } 
-   else 
-   {
-	switch (query) 
-	{
+	else {
+		switch (query) {
 		case GL_COEFF:
-         		size = gleval_sizes[i] * e->eval1D[i].order;
-			for (j=0; j<size; j++)
-			{
+			size = gleval_sizes[i] * e->eval1D[i].order;
+			for (j = 0; j < size; j++) {
 				v[j] = e->eval1D[i].coeff[j];
 			}
 			break;
@@ -560,21 +564,23 @@ void STATE_APIENTRY crStateGetMapdv( GLenum target, GLenum query, GLdouble *v )
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"GetMapdv: invalid target: %d", target);
+									 "GetMapdv: invalid target: %d", target);
 			return;
+		}
 	}
-   }
 }
 
-void STATE_APIENTRY crStateGetMapfv( GLenum target, GLenum query, GLfloat *v )
+void STATE_APIENTRY
+crStateGetMapfv(GLenum target, GLenum query, GLfloat * v)
 {
 	CRContext *g = GetCurrentContext();
+	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorState *e = &(g->eval);
 	GLint size;
 	GLint i, j;
+	(void) sb;
 
-	if (g->current.inBeginEnd)
-	{
+	if (g->current.inBeginEnd) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 								 "Map1d called in begin/end");
 		return;
@@ -582,23 +588,18 @@ void STATE_APIENTRY crStateGetMapfv( GLenum target, GLenum query, GLfloat *v )
 
 	FLUSH();
 
-	i = target-GL_MAP1_COLOR_4;
-	if (i < 0 || i >= GLEVAL_TOT) 
-	{
-		i = target-GL_MAP2_COLOR_4;
-		if (i < 0 || i >= GLEVAL_TOT) 
-		{
+	i = target - GL_MAP1_COLOR_4;
+	if (i < 0 || i >= GLEVAL_TOT) {
+		i = target - GL_MAP2_COLOR_4;
+		if (i < 0 || i >= GLEVAL_TOT) {
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 									 "GetMapfv: invalid target: %d", target);
 			return;
 		}
-		switch (query) 
-		{
+		switch (query) {
 		case GL_COEFF:
-			size = gleval_sizes[i] *
-				e->eval2D[i].uorder * e->eval2D[i].vorder;
-			for (j=0; j<size; j++)
-			{
+			size = gleval_sizes[i] * e->eval2D[i].uorder * e->eval2D[i].vorder;
+			for (j = 0; j < size; j++) {
 				v[j] = (GLfloat) e->eval2D[i].coeff[j];
 			}
 			break;
@@ -618,14 +619,11 @@ void STATE_APIENTRY crStateGetMapfv( GLenum target, GLenum query, GLfloat *v )
 			return;
 		}
 	}
-	else 
-	{
-		switch (query) 
-		{
+	else {
+		switch (query) {
 		case GL_COEFF:
 			size = gleval_sizes[i] * e->eval1D[i].order;
-			for (j=0; j<size; j++)
-			{
+			for (j = 0; j < size; j++) {
 				v[j] = (GLfloat) e->eval1D[i].coeff[j];
 			}
 			break;
@@ -644,38 +642,36 @@ void STATE_APIENTRY crStateGetMapfv( GLenum target, GLenum query, GLfloat *v )
 	}
 }
 
-void STATE_APIENTRY crStateGetMapiv( GLenum target, GLenum query, GLint *v )
+void STATE_APIENTRY
+crStateGetMapiv(GLenum target, GLenum query, GLint * v)
 {
 	CRContext *g = GetCurrentContext();
+	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorState *e = &(g->eval);
 	GLint size;
 	GLint i, j;
+	(void) sb;
 
-	if (g->current.inBeginEnd)
-	{
-  	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Map1d called in begin/end");
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+								 "Map1d called in begin/end");
 		return;
 	}
 
 	FLUSH();
 
-	i = target-GL_MAP1_COLOR_4;
-	if (i < 0 || i >= GLEVAL_TOT) 
-	{
-		i = target-GL_MAP2_COLOR_4;
-		if (i < 0 || i >= GLEVAL_TOT) 
-		{
+	i = target - GL_MAP1_COLOR_4;
+	if (i < 0 || i >= GLEVAL_TOT) {
+		i = target - GL_MAP2_COLOR_4;
+		if (i < 0 || i >= GLEVAL_TOT) {
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 									 "GetMapiv: invalid target: %d", target);
 			return;
 		}
-		switch (query) 
-		{
+		switch (query) {
 		case GL_COEFF:
-			size = gleval_sizes[i] *
-				e->eval2D[i].uorder * e->eval2D[i].vorder;
-			for (j=0; j<size; j++)
-			{
+			size = gleval_sizes[i] * e->eval2D[i].uorder * e->eval2D[i].vorder;
+			for (j = 0; j < size; j++) {
 				v[j] = (GLint) e->eval2D[i].coeff[j];
 			}
 			break;
@@ -695,14 +691,11 @@ void STATE_APIENTRY crStateGetMapiv( GLenum target, GLenum query, GLint *v )
 			return;
 		}
 	}
-	else 
-	{
-		switch (query) 
-		{
+	else {
+		switch (query) {
 		case GL_COEFF:
 			size = gleval_sizes[i] * e->eval1D[i].order;
-			for (j=0; j<size; j++)
-			{
+			for (j = 0; j < size; j++) {
 				v[j] = (GLint) e->eval1D[i].coeff[j];
 			}
 			break;
@@ -721,15 +714,15 @@ void STATE_APIENTRY crStateGetMapiv( GLenum target, GLenum query, GLint *v )
 	}
 }
 
-void STATE_APIENTRY crStateMapGrid1f (GLint un, GLfloat u1, GLfloat u2) 
+void STATE_APIENTRY
+crStateMapGrid1f(GLint un, GLfloat u1, GLfloat u2)
 {
 	CRContext *g = GetCurrentContext();
-	CREvaluatorState *e = &(g->eval);
 	CRStateBits *sb = GetCurrentBits();
+	CREvaluatorState *e = &(g->eval);
 	CREvaluatorBits *eb = &(sb->eval);
 
-	if (g->current.inBeginEnd)
-	{
+	if (g->current.inBeginEnd) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 								 "Map1d called in begin/end");
 		return;
@@ -737,9 +730,8 @@ void STATE_APIENTRY crStateMapGrid1f (GLint un, GLfloat u1, GLfloat u2)
 
 	FLUSH();
 
-	if (un<1) {
-		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE,
-									"glMapGrid1f(bad un)" );
+	if (un < 1) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMapGrid1f(bad un)");
 		return;
 	}
 
@@ -751,22 +743,23 @@ void STATE_APIENTRY crStateMapGrid1f (GLint un, GLfloat u1, GLfloat u2)
 	DIRTY(eb->grid1D, g->neg_bitid);
 }
 
-void STATE_APIENTRY crStateMapGrid1d (GLint un, GLdouble u1, GLdouble u2) 
+void STATE_APIENTRY
+crStateMapGrid1d(GLint un, GLdouble u1, GLdouble u2)
 {
-	crStateMapGrid1f( un, (GLfloat) u1, (GLfloat) u2 );
+	crStateMapGrid1f(un, (GLfloat) u1, (GLfloat) u2);
 }
 
 
-void STATE_APIENTRY crStateMapGrid2f (GLint un, GLfloat u1, GLfloat u2,
-                 		      GLint vn, GLfloat v1, GLfloat v2 )
+void STATE_APIENTRY
+crStateMapGrid2f(GLint un, GLfloat u1, GLfloat u2,
+								 GLint vn, GLfloat v1, GLfloat v2)
 {
 	CRContext *g = GetCurrentContext();
-	CREvaluatorState *e = &(g->eval);
 	CRStateBits *sb = GetCurrentBits();
+	CREvaluatorState *e = &(g->eval);
 	CREvaluatorBits *eb = &(sb->eval);
 
-	if (g->current.inBeginEnd)
-	{
+	if (g->current.inBeginEnd) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 								 "Map1d called in begin/end");
 		return;
@@ -774,12 +767,12 @@ void STATE_APIENTRY crStateMapGrid2f (GLint un, GLfloat u1, GLfloat u2,
 
 	FLUSH();
 
-	if (un<1) {
-		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMapGrid2f(bad un)" );
+	if (un < 1) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMapGrid2f(bad un)");
 		return;
 	}
-	if (vn<1) {
-		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glMapGrid2f(bad vn)" );
+	if (vn < 1) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glMapGrid2f(bad vn)");
 		return;
 	}
 
@@ -794,20 +787,22 @@ void STATE_APIENTRY crStateMapGrid2f (GLint un, GLfloat u1, GLfloat u2,
 	DIRTY(eb->grid2D, g->neg_bitid);
 }
 
-void STATE_APIENTRY crStateMapGrid2d (GLint un, GLdouble u1, GLdouble u2,
-                 		      GLint vn, GLdouble v1, GLdouble v2 )
+void STATE_APIENTRY
+crStateMapGrid2d(GLint un, GLdouble u1, GLdouble u2,
+								 GLint vn, GLdouble v1, GLdouble v2)
 {
-   crStateMapGrid2f( un, (GLfloat) u1, (GLfloat) u2, 
-		    vn, (GLfloat) v1, (GLfloat) v2 );
+	crStateMapGrid2f(un, (GLfloat) u1, (GLfloat) u2,
+									 vn, (GLfloat) v1, (GLfloat) v2);
 }
 
-void crStateEvaluatorSwitch(CREvaluatorBits *e, GLbitvalue *bitID,
-				  CREvaluatorState *from, CREvaluatorState *to) 
+void
+crStateEvaluatorSwitch(CREvaluatorBits * e, GLbitvalue * bitID,
+											 CREvaluatorState * from, CREvaluatorState * to)
 {
-	int i,j;
+	int i, j;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
-	for (j=0;j<CR_MAX_BITARRAY;j++)
+	for (j = 0; j < CR_MAX_BITARRAY; j++)
 		nbitID[j] = ~bitID[j];
 
 	if (CHECKDIRTY(e->enable, bitID)) {
@@ -815,23 +810,24 @@ void crStateEvaluatorSwitch(CREvaluatorBits *e, GLbitvalue *bitID,
 			glAble able[2];
 			able[0] = diff_api.Disable;
 			able[1] = diff_api.Enable;
-			able[to->autoNormal](GL_AUTO_NORMAL);
+			able[to->autoNormal] (GL_AUTO_NORMAL);
 			FILLDIRTY(e->enable);
 			FILLDIRTY(e->dirty);
 		}
 		INVERTDIRTY(e->enable, nbitID);
 	}
-	for (i=0; i<GLEVAL_TOT; i++) {
+	for (i = 0; i < GLEVAL_TOT; i++) {
 		if (CHECKDIRTY(e->eval1D[i], bitID)) {
-			int size = from->eval1D[i].order * gleval_sizes[i] * 
-						sizeof (*from->eval1D[i].coeff);
+			int size = from->eval1D[i].order * gleval_sizes[i] *
+				sizeof(*from->eval1D[i].coeff);
 			if (from->eval1D[i].order != to->eval1D[i].order ||
-				from->eval1D[i].u1 != from->eval1D[i].u1 ||
-				from->eval1D[i].u2 != from->eval1D[i].u2 ||
-				memcmp ((const void *) from->eval1D[i].coeff,
-						(const void *) to->eval1D[i].coeff, size)) {
-				diff_api.Map1f(i+GL_MAP1_COLOR_4, to->eval1D[i].u1, to->eval1D[i].u2,
-							 gleval_sizes[i], to->eval1D[i].order, to->eval1D[i].coeff);
+					from->eval1D[i].u1 != from->eval1D[i].u1 ||
+					from->eval1D[i].u2 != from->eval1D[i].u2 ||
+					crMemcmp((const void *) from->eval1D[i].coeff,
+									 (const void *) to->eval1D[i].coeff, size)) {
+				diff_api.Map1f(i + GL_MAP1_COLOR_4, to->eval1D[i].u1,
+											 to->eval1D[i].u2, gleval_sizes[i], to->eval1D[i].order,
+											 to->eval1D[i].coeff);
 				FILLDIRTY(e->dirty);
 				FILLDIRTY(e->eval1D[i]);
 			}
@@ -839,24 +835,24 @@ void crStateEvaluatorSwitch(CREvaluatorBits *e, GLbitvalue *bitID,
 		}
 	}
 
-	for (i=0; i<GLEVAL_TOT; i++) {
+	for (i = 0; i < GLEVAL_TOT; i++) {
 		if (CHECKDIRTY(e->eval2D[i], bitID)) {
 			int size = from->eval2D[i].uorder * from->eval2D[i].vorder *
-						gleval_sizes[i] * sizeof (*from->eval2D[i].coeff);
+				gleval_sizes[i] * sizeof(*from->eval2D[i].coeff);
 			if (from->eval2D[i].uorder != to->eval2D[i].uorder ||
-				from->eval2D[i].vorder != to->eval2D[i].vorder ||
-				from->eval2D[i].u1 != from->eval2D[i].u1 ||
-				from->eval2D[i].u2 != from->eval2D[i].u2 ||
-				from->eval2D[i].v1 != from->eval2D[i].v1 ||
-				from->eval2D[i].v2 != from->eval2D[i].v2 ||
-				memcmp ((const void *) from->eval2D[i].coeff,
-						(const void *) to->eval2D[i].coeff, size)) {
-				diff_api.Map2f(i+GL_MAP2_COLOR_4,
-							 to->eval2D[i].u1, to->eval2D[i].u2,
-							 gleval_sizes[i], to->eval2D[i].uorder,
-							 to->eval2D[i].v1, to->eval2D[i].v2,
-							 gleval_sizes[i], to->eval2D[i].vorder,
-							 to->eval2D[i].coeff);
+					from->eval2D[i].vorder != to->eval2D[i].vorder ||
+					from->eval2D[i].u1 != from->eval2D[i].u1 ||
+					from->eval2D[i].u2 != from->eval2D[i].u2 ||
+					from->eval2D[i].v1 != from->eval2D[i].v1 ||
+					from->eval2D[i].v2 != from->eval2D[i].v2 ||
+					crMemcmp((const void *) from->eval2D[i].coeff,
+									 (const void *) to->eval2D[i].coeff, size)) {
+				diff_api.Map2f(i + GL_MAP2_COLOR_4,
+											 to->eval2D[i].u1, to->eval2D[i].u2,
+											 gleval_sizes[i], to->eval2D[i].uorder,
+											 to->eval2D[i].v1, to->eval2D[i].v2,
+											 gleval_sizes[i], to->eval2D[i].vorder,
+											 to->eval2D[i].coeff);
 				FILLDIRTY(e->dirty);
 				FILLDIRTY(e->eval2D[i]);
 			}
@@ -865,23 +861,21 @@ void crStateEvaluatorSwitch(CREvaluatorBits *e, GLbitvalue *bitID,
 	}
 	if (CHECKDIRTY(e->grid1D, bitID)) {
 		if (from->u11D != to->u11D ||
-			from->u21D != to->u21D ||
-			from->un1D != to->un1D) {
-			diff_api.MapGrid1d (to->un1D, to->u11D, to->u21D);
+				from->u21D != to->u21D || from->un1D != to->un1D) {
+			diff_api.MapGrid1d(to->un1D, to->u11D, to->u21D);
 			FILLDIRTY(e->dirty);
 			FILLDIRTY(e->grid1D);
 		}
 		INVERTDIRTY(e->grid1D, nbitID);
-	}		
+	}
 	if (CHECKDIRTY(e->grid2D, bitID)) {
 		if (from->u12D != to->u12D ||
-			from->u22D != to->u22D ||
-			from->un2D != to->un2D ||
-			from->v12D != to->v12D ||
-			from->v22D != to->v22D ||
-			from->vn2D != to->vn2D) {
-			diff_api.MapGrid2d (to->un2D, to->u12D, to->u22D,
-							  to->vn2D, to->v12D, to->v22D);
+				from->u22D != to->u22D ||
+				from->un2D != to->un2D ||
+				from->v12D != to->v12D ||
+				from->v22D != to->v22D || from->vn2D != to->vn2D) {
+			diff_api.MapGrid2d(to->un2D, to->u12D, to->u22D,
+												 to->vn2D, to->v12D, to->v22D);
 			FILLDIRTY(e->dirty);
 			FILLDIRTY(e->grid1D);
 		}
@@ -890,14 +884,15 @@ void crStateEvaluatorSwitch(CREvaluatorBits *e, GLbitvalue *bitID,
 	INVERTDIRTY(e->dirty, nbitID);
 }
 
-void crStateEvaluatorDiff(CREvaluatorBits *e, GLbitvalue *bitID,
-				 CREvaluatorState *from, CREvaluatorState *to) 
+void
+crStateEvaluatorDiff(CREvaluatorBits * e, GLbitvalue * bitID,
+										 CREvaluatorState * from, CREvaluatorState * to)
 {
 	glAble able[2];
-	int i,j;
+	int i, j;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
-	for (j=0;j<CR_MAX_BITARRAY;j++)
+	for (j = 0; j < CR_MAX_BITARRAY; j++)
 		nbitID[j] = ~bitID[j];
 
 	able[0] = diff_api.Disable;
@@ -905,96 +900,95 @@ void crStateEvaluatorDiff(CREvaluatorBits *e, GLbitvalue *bitID,
 
 	if (CHECKDIRTY(e->enable, bitID)) {
 		if (from->autoNormal != to->autoNormal) {
-			able[to->autoNormal](GL_AUTO_NORMAL);
+			able[to->autoNormal] (GL_AUTO_NORMAL);
 			from->autoNormal = to->autoNormal;
 		}
 		INVERTDIRTY(e->enable, nbitID);
 	}
-	for (i=0; i<GLEVAL_TOT; i++) {
+	for (i = 0; i < GLEVAL_TOT; i++) {
 		if (CHECKDIRTY(e->enable1D[i], bitID)) {
 			if (from->enable1D[i] != to->enable1D[i]) {
-				able[to->enable1D[i]](i+GL_MAP1_COLOR_4);
+				able[to->enable1D[i]] (i + GL_MAP1_COLOR_4);
 				from->enable1D[i] = to->enable1D[i];
 			}
 			INVERTDIRTY(e->enable1D[i], nbitID);
 		}
 		if (to->enable1D[i] && CHECKDIRTY(e->eval1D[i], bitID)) {
-			int size = from->eval1D[i].order * gleval_sizes[i] * 
-						sizeof (*from->eval1D[i].coeff);
+			int size = from->eval1D[i].order * gleval_sizes[i] *
+				sizeof(*from->eval1D[i].coeff);
 			if (from->eval1D[i].order != to->eval1D[i].order ||
-				from->eval1D[i].u1 != from->eval1D[i].u1 ||
-				from->eval1D[i].u2 != from->eval1D[i].u2 ||
-				memcmp ((const void *) from->eval1D[i].coeff,
-						(const void *) to->eval1D[i].coeff, size)) {
-				diff_api.Map1f(i+GL_MAP1_COLOR_4, to->eval1D[i].u1, to->eval1D[i].u2,
-							 gleval_sizes[i], to->eval1D[i].order, to->eval1D[i].coeff);
+					from->eval1D[i].u1 != from->eval1D[i].u1 ||
+					from->eval1D[i].u2 != from->eval1D[i].u2 ||
+					crMemcmp((const void *) from->eval1D[i].coeff,
+									 (const void *) to->eval1D[i].coeff, size)) {
+				diff_api.Map1f(i + GL_MAP1_COLOR_4, to->eval1D[i].u1,
+											 to->eval1D[i].u2, gleval_sizes[i], to->eval1D[i].order,
+											 to->eval1D[i].coeff);
 				from->eval1D[i].order = to->eval1D[i].order;
 				from->eval1D[i].u1 = from->eval1D[i].u1;
 				from->eval1D[i].u2 = from->eval1D[i].u2;
-				memcpy ((void *) from->eval1D[i].coeff,
-						(const void *) to->eval1D[i].coeff, size);
+				crMemcpy((void *) from->eval1D[i].coeff,
+								 (const void *) to->eval1D[i].coeff, size);
 			}
 			INVERTDIRTY(e->eval1D[i], nbitID);
 		}
 	}
 
-	for (i=0; i<GLEVAL_TOT; i++) {
+	for (i = 0; i < GLEVAL_TOT; i++) {
 		if (CHECKDIRTY(e->enable2D[i], bitID)) {
 			if (from->enable2D[i] != to->enable2D[i]) {
-				able[to->enable2D[i]](i+GL_MAP2_COLOR_4);
+				able[to->enable2D[i]] (i + GL_MAP2_COLOR_4);
 				from->enable2D[i] = to->enable2D[i];
 			}
 			INVERTDIRTY(e->enable2D[i], nbitID);
 		}
 		if (to->enable2D[i] && CHECKDIRTY(e->eval2D[i], bitID)) {
 			int size = from->eval2D[i].uorder * from->eval2D[i].vorder *
-						gleval_sizes[i] * sizeof (*from->eval2D[i].coeff);
+				gleval_sizes[i] * sizeof(*from->eval2D[i].coeff);
 			if (from->eval2D[i].uorder != to->eval2D[i].uorder ||
-				from->eval2D[i].vorder != to->eval2D[i].vorder ||
-				from->eval2D[i].u1 != from->eval2D[i].u1 ||
-				from->eval2D[i].u2 != from->eval2D[i].u2 ||
-				from->eval2D[i].v1 != from->eval2D[i].v1 ||
-				from->eval2D[i].v2 != from->eval2D[i].v2 ||
-				memcmp ((const void *) from->eval2D[i].coeff,
-						(const void *) to->eval2D[i].coeff, size)) {
-				diff_api.Map2f(i+GL_MAP2_COLOR_4,
-							 to->eval2D[i].u1, to->eval2D[i].u2,
-							 gleval_sizes[i], to->eval2D[i].uorder,
-							 to->eval2D[i].v1, to->eval2D[i].v2,
-							 gleval_sizes[i], to->eval2D[i].vorder,
-							 to->eval2D[i].coeff);
+					from->eval2D[i].vorder != to->eval2D[i].vorder ||
+					from->eval2D[i].u1 != from->eval2D[i].u1 ||
+					from->eval2D[i].u2 != from->eval2D[i].u2 ||
+					from->eval2D[i].v1 != from->eval2D[i].v1 ||
+					from->eval2D[i].v2 != from->eval2D[i].v2 ||
+					crMemcmp((const void *) from->eval2D[i].coeff,
+									 (const void *) to->eval2D[i].coeff, size)) {
+				diff_api.Map2f(i + GL_MAP2_COLOR_4,
+											 to->eval2D[i].u1, to->eval2D[i].u2,
+											 gleval_sizes[i], to->eval2D[i].uorder,
+											 to->eval2D[i].v1, to->eval2D[i].v2,
+											 gleval_sizes[i], to->eval2D[i].vorder,
+											 to->eval2D[i].coeff);
 				from->eval2D[i].uorder = to->eval2D[i].uorder;
 				from->eval2D[i].vorder = to->eval2D[i].vorder;
 				from->eval2D[i].u1 = from->eval2D[i].u1;
 				from->eval2D[i].u2 = from->eval2D[i].u2;
 				from->eval2D[i].v1 = from->eval2D[i].v1;
 				from->eval2D[i].v2 = from->eval2D[i].v2;
-				memcpy ((void *) from->eval2D[i].coeff,
-						(const void *) to->eval2D[i].coeff, size);
+				crMemcpy((void *) from->eval2D[i].coeff,
+								 (const void *) to->eval2D[i].coeff, size);
 			}
 			INVERTDIRTY(e->eval2D[i], nbitID);
 		}
 	}
 	if (CHECKDIRTY(e->grid1D, bitID)) {
 		if (from->u11D != to->u11D ||
-			from->u21D != to->u21D ||
-			from->un1D != to->un1D) {
-			diff_api.MapGrid1d (to->un1D, to->u11D, to->u21D);
+				from->u21D != to->u21D || from->un1D != to->un1D) {
+			diff_api.MapGrid1d(to->un1D, to->u11D, to->u21D);
 			from->u11D = to->u11D;
 			from->u21D = to->u21D;
 			from->un1D = to->un1D;
 		}
 		INVERTDIRTY(e->grid1D, nbitID);
-	}		
+	}
 	if (CHECKDIRTY(e->grid2D, bitID)) {
 		if (from->u12D != to->u12D ||
-			from->u22D != to->u22D ||
-			from->un2D != to->un2D ||
-			from->v12D != to->v12D ||
-			from->v22D != to->v22D ||
-			from->vn2D != to->vn2D) {
-			diff_api.MapGrid2d (to->un2D, to->u12D, to->u22D,
-							  to->vn2D, to->v12D, to->v22D);
+				from->u22D != to->u22D ||
+				from->un2D != to->un2D ||
+				from->v12D != to->v12D ||
+				from->v22D != to->v22D || from->vn2D != to->vn2D) {
+			diff_api.MapGrid2d(to->un2D, to->u12D, to->u22D,
+												 to->vn2D, to->v12D, to->v22D);
 			from->u12D = to->u12D;
 			from->u22D = to->u22D;
 			from->un2D = to->un2D;

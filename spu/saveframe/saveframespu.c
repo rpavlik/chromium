@@ -17,7 +17,7 @@ static int RGBA_to_PPM(char *basename, int width, int height, GLubyte *buffer);
 SaveFrameSPU saveframe_spu;
 
 void SAVEFRAMESPU_APIENTRY
-swapBuffers()
+swapBuffers(GLint window, GLint flags)
 {
     int saveThisFrame = 0;
 
@@ -57,7 +57,7 @@ swapBuffers()
 
     saveframe_spu.framenum++;
 
-    saveframe_spu.child.SwapBuffers();
+    saveframe_spu.child.SwapBuffers( window, flags );
 }
 
 void SAVEFRAMESPU_APIENTRY

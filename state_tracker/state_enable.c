@@ -6,8 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
@@ -128,7 +127,7 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue *neg_bitid,
 			DIRTY(sb->current.dirty, neg_bitid);
 			break;
 		case GL_POINT_SMOOTH :
-			g->line.pointSmooth = val;
+			g->point.pointSmooth = val;
 			DIRTY(sb->line.enable, neg_bitid);
 			DIRTY(sb->line.dirty, neg_bitid);
 			break;
@@ -298,7 +297,8 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue *neg_bitid,
 }
 
 
-void STATE_APIENTRY crStateEnable (GLenum cap) {
+void STATE_APIENTRY crStateEnable (GLenum cap)
+{
 	CRContext *g = GetCurrentContext();
 	CRStateBits *sb = GetCurrentBits();
 
@@ -311,11 +311,11 @@ void STATE_APIENTRY crStateEnable (GLenum cap) {
 	FLUSH();
 
 	__enableSet(g, sb, g->neg_bitid, cap, GL_TRUE);
-
 }
 
 
-void STATE_APIENTRY crStateDisable (GLenum cap) {
+void STATE_APIENTRY crStateDisable (GLenum cap)
+{
 	CRContext *g = GetCurrentContext();
 	CRStateBits *sb = GetCurrentBits();
 

@@ -27,15 +27,16 @@ typedef struct {
 	CRConnection *conn;
 
 	CRContext *currentCtx;
-	CRContext *context[CR_MAX_CONTEXTS];
+	GLint currentWindow;
 } CRClient;
 
+#define MAX_CLIENTS 20  /* XXX temporary */
 
 typedef struct {
 	unsigned short tcpip_port;
 
-	int numClients;
-	CRClient *clients;
+	unsigned int numClients;
+	CRClient clients[MAX_CLIENTS];
 	CRClient *curClient;
 	CRCurrentStatePointers current;
 
@@ -48,6 +49,8 @@ typedef struct {
 	int maxTileHeight; /* the tallest tile's height */
 
 	int useL2;
+	int mtu;
+	char protocol[1024];
 
 	unsigned int muralWidth, muralHeight;
 	unsigned int underlyingDisplay[4]; /* needed for laying out the extents */
@@ -61,6 +64,12 @@ typedef struct {
 	CRLimitsState limits; /* GL limits for any contexts we create */
 
 	int SpuContext; /* Rendering context for the head SPU */
+
+	CRContext *context[CR_MAX_CONTEXTS];
+
+	unsigned int maxBarrierCount;
+	unsigned int clearCount;
+	unsigned int swapCount;
 } CRServer;
 
 

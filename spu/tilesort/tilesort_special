@@ -73,3 +73,5 @@ CopyTexImage2D
 CopyTexSubImage1D
 CopyTexSubImage2D
 Scissor
+crCreateWindow
+WindowPosition

@@ -30,23 +30,48 @@ extern void stubUseXFont( Display *dpy, Font font, int first, int count, int lis
 
 #endif
 
-extern void stubMinimumChromiumWindowSize( int w, int h );
 extern void stubMatchWindowTitle( const char *title );
 
-extern void FakerInit( SPU *fns );
+extern void stubFakerInit( SPU *fns );
 extern void StubInit(void);
 
-extern int crAppDrawCursor;
-extern SPU *stub_spu;
+extern void stubCheckMultithread( void );
+extern void stubSetDispatch( const SPUDispatchTable *table );
 
-extern crOpenGLInterface glinterface;
+
 extern SPUDispatchTable glim;
-extern SPUDispatchTable glstub;
-extern SPUDispatchTable glnative;
+extern SPUDispatchTable stubThreadsafeDispatch;
 
-extern SPUDispatchTable __ThreadsafeDispatch;
-extern TSDhandle __DispatchTSD;
 
-extern GLuint DesiredVisual;  /* Bitwise-or of VIS_* flags */
+/* "Global" variables for the stub library */
+typedef struct {
+	int appDrawCursor;
+	SPU *spu;
+
+	crOpenGLInterface wsInterface;
+	SPUDispatchTable glim;
+	SPUDispatchTable spuDispatch;
+	SPUDispatchTable nativeDispatch;
+
+	GLboolean haveNativeOpenGL;
+
+#ifdef CHROMIUM_THREADSAFE
+	CRtsd dispatchTSD;
+
+	CRmutex mutex;
+#endif
+
+	GLuint desiredVisual;  /* Bitwise-or of CR_*_BIT flags */
+	GLuint minChromiumWindowWidth;
+	GLuint minChromiumWindowHeight;
+	char *matchWindowTitle;
+
+	GLint spuWindow;  /* returned by dispatch->CreateWindow() */
+
+	GLboolean threadSafe;
+} Stub;
+
+extern Stub stub;
+
 
 #endif /* CR_STUB_H */

@@ -17,18 +17,23 @@
 #include "cr_error.h"
 #include "cr_string.h"
 #include "renderspu.h"
+#include "cr_mem.h"
 
 #define WINDOW_NAME render_spu.window_title
 
-
-void renderspuKillWindow( void )
+GLboolean renderspu_InitVisual( VisualInfo *visual )
 {
-	render_spu.ws.wglMakeCurrent( GetDC( render_spu.hWnd ), NULL );
-	/*wglDeleteContext( render_spu.hRC ); */
-	DestroyWindow( render_spu.hWnd );
-	render_spu.hWnd = NULL;
+	return TRUE;
 }
 
+void renderspu_DestroyWindow( WindowInfo *window )
+{
+	CRASSERT(window);
+	DestroyWindow( window->visual->hWnd );
+	window->visual->hWnd = NULL;
+	window->visual = NULL;
+	window->width = window->height = 0;
+}
 
 static LONG WINAPI
 MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
@@ -131,15 +136,7 @@ bSetupPixelFormat( HDC hdc )
 	return TRUE;
 }
 
-
-/*
- * VERY IMPORTANT: this function may be called more than once
- * (twice, actually) in order to get a window with different visual
- * attributes the second time around.  Make sure we don't re-open the
- * display or anything silly like that.
- * XXX this needs updating!!! (ask Brian)
- */
-GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
+GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 {
 	HDESK     desktop;
 	HINSTANCE hinstance;
@@ -148,11 +145,11 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 	int       window_plus_caption_width;
 	int       window_plus_caption_height;
 
-	int actual_window_x = render_spu.window_x;
-	int actual_window_y = render_spu.window_y;
-
-	render_spu.actual_window_width  = render_spu.window_width;
-	render_spu.actual_window_height = render_spu.window_height;
+	window->visual = visual;
+	window->x = render_spu.defaultX;
+	window->y = render_spu.defaultY;
+	window->width  = render_spu.defaultWidth;
+	window->height = render_spu.defaultHeight;
 
 	if ( render_spu.use_L2 )
 	{
@@ -241,31 +238,27 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 		int smCyFixedFrame = GetSystemMetrics( SM_CXFIXEDFRAME ) + 1;
 		int smCyCaption = GetSystemMetrics( SM_CYCAPTION );
 
-		render_spu.actual_window_width = GetSystemMetrics( SM_CXSCREEN ) ;
-		render_spu.actual_window_height = GetSystemMetrics( SM_CYSCREEN ) ;
+		window->width = GetSystemMetrics( SM_CXSCREEN ) ;
+		window->height = GetSystemMetrics( SM_CYSCREEN ) ;
 
-		crDebug( "Window Dims: %d, %d\n", 
-				render_spu.actual_window_width,
-				render_spu.actual_window_height);
+		crDebug( "Window Dims: %d, %d\n", window->width, window->height );
 
-		actual_window_x = render_spu.window_x - smCxFixedFrame - 1;
-		actual_window_y = render_spu.window_y - smCyFixedFrame - smCyCaption;
+		window->x = render_spu->defaultX - smCxFixedFrame - 1;
+		window->y = render_spu->defaultY - smCyFixedFrame - smCyCaption;
 
-		window_plus_caption_width = render_spu.actual_window_width +
-			2 * smCxFixedFrame;
-		window_plus_caption_height = render_spu.actual_window_height + 
-			2 * smCyFixedFrame + smCyCaption;
+		window_plus_caption_width = window->width + 2 * smCxFixedFrame;
+		window_plus_caption_height = window->height + 2 * smCyFixedFrame + smCyCaption;
 
 #else
 		/* Since it's undecorated, we don't have to do anything fancy
 		 * with these parameters. */
 
-		render_spu.actual_window_width = GetSystemMetrics( SM_CXSCREEN ) ;
-		render_spu.actual_window_height = GetSystemMetrics( SM_CYSCREEN ) ;
-		actual_window_x = 0;
-		actual_window_y = 0;
-		window_plus_caption_width = render_spu.actual_window_width;
-		window_plus_caption_height = render_spu.actual_window_height;
+		window->width = GetSystemMetrics( SM_CXSCREEN ) ;
+		window->height = GetSystemMetrics( SM_CYSCREEN ) ;
+		window->x = 0;
+		window->y = 0;
+		window_plus_caption_width = window->width;
+		window_plus_caption_height = window->height;
 
 #endif
 	}
@@ -282,24 +275,22 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 		smCyCaption = GetSystemMetrics( SM_CYCAPTION );
 		crDebug( "Got the Caption " );
 
-		window_plus_caption_width = render_spu.actual_window_width +
-			2 * smCxFixedFrame;
-		window_plus_caption_height = render_spu.actual_window_height + 
-			2 * smCyFixedFrame + smCyCaption;
+		window_plus_caption_width = window->width +	2 * smCxFixedFrame;
+		window_plus_caption_height = window->height + 2 * smCyFixedFrame + smCyCaption;
 
-		actual_window_x = render_spu.window_x - smCxFixedFrame;
-		actual_window_y = render_spu.window_y - smCyFixedFrame - smCyCaption;
+		window->x = render_spu.defaultX - smCxFixedFrame;
+		window->y = render_spu.defaultY - smCyFixedFrame - smCyCaption;
 	}
 
-	crDebug( "Creating the window: (%d,%d), (%d,%d)", render_spu.window_x, render_spu.window_y, window_plus_caption_width, window_plus_caption_height );
-	render_spu.hWnd = CreateWindow( WINDOW_NAME, WINDOW_NAME,
+	crDebug( "Creating the window: (%d,%d), (%d,%d)", render_spu.defaultX, render_spu.defaultY, window_plus_caption_width, window_plus_caption_height );
+	visual->hWnd = CreateWindow( WINDOW_NAME, WINDOW_NAME,
 			window_style,
-			actual_window_x, actual_window_y,
+			window->x, window->y,
 			window_plus_caption_width,
 			window_plus_caption_height,
 			NULL, NULL, hinstance, &render_spu );
 
-	if ( !render_spu.hWnd )
+	if ( !visual->hWnd )
 	{
 		crError( "Create Window failed!  That's almost certainly terrible." );
 		return GL_FALSE;
@@ -308,60 +299,98 @@ GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 	crDebug( "Showing the window" );
 	/* NO ERROR CODE FOR SHOWWINDOW */
 	if (showIt)
-		ShowWindow( render_spu.hWnd, SW_SHOWNORMAL );
+		ShowWindow( visual->hWnd, SW_SHOWNORMAL );
 
-	SetForegroundWindow( render_spu.hWnd );
+	SetForegroundWindow( visual->hWnd );
 	if ( render_spu.fullscreen )
 	{
-		SetWindowPos( render_spu.hWnd, HWND_TOPMOST, 
-				actual_window_x, actual_window_y,
+		SetWindowPos( visual->hWnd, HWND_TOPMOST, 
+				window->x, window->y,
 				window_plus_caption_width, 
 				window_plus_caption_height,
 				SWP_SHOWWINDOW | SWP_NOSENDCHANGING | 
 				SWP_NOREDRAW | SWP_NOACTIVATE );
 		ShowCursor( FALSE );
 	}
-	render_spu.device_context = GetDC( render_spu.hWnd );
-	crDebug( " Got the DC: 0x%x", render_spu.device_context );
-	if ( !bSetupPixelFormat( render_spu.device_context ) )
+
+	visual->device_context = GetDC( visual->hWnd );
+
+	/* XXX we should really fix this properly for Windows */
+	window->device_context = visual->device_context;
+
+	crDebug( " Got the DC: 0x%x", visual->device_context );
+
+	if ( !bSetupPixelFormat( visual->device_context ) )
 	{
 		crError( "Couldn't set up the device context!  Yikes!" );
 		return GL_FALSE;
 	}
 
-	render_spu.hRC = render_spu.ws.wglCreateContext( render_spu.device_context );
-	if (!render_spu.hRC)
-	{
-		crError( "Couldn't create the context for the window!" );
-		return GL_FALSE;
-	}
-	crDebug( "Created the context: 0x%x", render_spu.hRC );
-	if (!render_spu.ws.wglMakeCurrent( render_spu.device_context, render_spu.hRC ))
-	{
-		crError( "Couldn't make current to the context!" );
-		return GL_FALSE;
-	}
-	crDebug( "Made Current" );
-
-	/*
-	 * End Windows / WGL code
-	 */
-
-	crDebug( "actual_window_width, height = %d, %d\n",
-			 render_spu.actual_window_width, render_spu.actual_window_height);
-	crDebug( "window_x, y, width, height = %d, %d, %d, %d\n",
-			 render_spu.window_x, render_spu.window_y,
-			 render_spu.window_width, render_spu.window_height);
-
-		return GL_TRUE;
+	return GL_TRUE;
 }
 
 
 /* Either show or hide the render SPU's window. */
-void renderspuShowWindow( GLboolean showIt )
+void renderspu_ShowWindow( WindowInfo *window, GLboolean showIt )
 {
 	if (showIt)
-		ShowWindow( render_spu.hWnd, SW_SHOWNORMAL );
+		ShowWindow( window->visual->hWnd, SW_SHOWNORMAL );
 	else
-		; /* XXX to do */
+		ShowWindow( window->visual->hWnd, SW_HIDE );
+}
+
+GLboolean renderspu_CreateContext( VisualInfo *visual, ContextInfo *context )
+{
+	crDebug( " Using the DC: 0x%x", visual->device_context );
+	context->hRC = render_spu.ws.wglCreateContext( visual->device_context );
+	if (!context->hRC)
+	{
+		crError( "Couldn't create the context for the window!" );
+		return GL_FALSE;
+	}
+
+	return GL_TRUE;
+}
+
+void renderspu_DestroyContext( ContextInfo *context )
+{
+	render_spu.ws.wglDeleteContext( context->hRC );
+	context->hRC = NULL;
+}
+
+void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context )
+{
+	CRASSERT(render_spu.ws.wglMakeCurrent);
+
+	if (context && window) {
+		CRASSERT(context->hRC);
+
+		render_spu.ws.wglMakeCurrent( window->device_context, context->hRC );
+	} else if (thread) {
+		render_spu.ws.wglMakeCurrent( 0, 0 );
+	}
+}
+
+void renderspu_WindowSize( WindowInfo *window, int w, int h )
+{
+	CRASSERT(window);
+	CRASSERT(window->visual);
+	SetWindowPos( window->visual->hWnd, HWND_TOPMOST, 
+			window->x, window->y,
+			w, h,
+			SWP_SHOWWINDOW | SWP_NOSENDCHANGING | 
+			SWP_NOREDRAW | SWP_NOACTIVATE );
+}
+
+
+void renderspu_WindowPosition( WindowInfo *window, int x, int y )
+{
+	CRASSERT(window);
+	CRASSERT(window->visual);
+	SetWindowPos( window->visual->hWnd, HWND_TOPMOST, 
+			x, y,
+			window->width,
+			window->height,
+			SWP_SHOWWINDOW | SWP_NOSENDCHANGING | 
+			SWP_NOREDRAW | SWP_NOACTIVATE );
 }

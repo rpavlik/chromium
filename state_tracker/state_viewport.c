@@ -6,8 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
-#include "cr_glstate.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
@@ -125,8 +124,8 @@ void STATE_APIENTRY crStateScissor (GLint x, GLint y,
 {
 	CRContext *g = GetCurrentContext();
 	CRViewportState *v = &(g->viewport);
-	CRStateBits *stateb = GetCurrentBits();
-	CRViewportBits *vb = &(stateb->viewport);
+	CRStateBits *sb = GetCurrentBits();
+	CRViewportBits *vb = &(sb->viewport);
 
 	if (g->current.inBeginEnd) 
 	{

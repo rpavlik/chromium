@@ -12,7 +12,7 @@
 
 CommSPU comm_spu;
 
-void COMMSPU_APIENTRY commSwapBuffers( void )
+void COMMSPU_APIENTRY commSwapBuffers( GLint window, GLint flags )
 {
 	static unsigned int frame_counter = 0;
 	CRMessage *incoming_msg;
@@ -34,7 +34,7 @@ void COMMSPU_APIENTRY commSwapBuffers( void )
 	crDebug( "COMM SPU Got pinged with frame counter %d!", ping->frame_counter );
 	crNetFree( comm_spu.peer_recv, incoming_msg );
 
-	comm_spu.super.SwapBuffers();
+	comm_spu.super.SwapBuffers( window, flags );
 }
 
 SPUNamedFunctionTable comm_table[] = {

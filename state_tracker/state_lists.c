@@ -6,8 +6,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
-#include "cr_glstate.h"
+#include "cr_mem.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
@@ -15,7 +15,7 @@ void crStateListsInit(CRListsState *l)
 {
 	l->newEnd = GL_FALSE;
 	l->mode = 0;
-	l->freeList = (CRListsFreeElem*) malloc (sizeof(*(l->freeList)));
+	l->freeList = (CRListsFreeElem*) crCalloc (sizeof(*(l->freeList)));
 	l->freeList->min = 1;
 	l->freeList->max = GL_MAXUINT;
 	l->freeList->next = NULL;
@@ -76,7 +76,7 @@ void crStateListsBindName(CRListsState *l, GLuint name)
 
 	/* (<name, >name) change to        */
 	/* (<name, name-1) (name+1, >name) */
-	newelem = (CRListsFreeElem *) malloc (sizeof(CRListsFreeElem));
+	newelem = (CRListsFreeElem *) crCalloc (sizeof(CRListsFreeElem));
 	newelem->min = name+1;
 	newelem->max = i->max;
 	i->max = name-1;
@@ -162,7 +162,7 @@ void crStateListsUnbindName(CRListsState *l, GLuint name)
 		return;
 	}
 
-	newelem = (CRListsFreeElem *) malloc (sizeof (CRListsFreeElem));
+	newelem = (CRListsFreeElem *) crCalloc (sizeof (CRListsFreeElem));
 	newelem->min = name;
 	newelem->max = name;
 

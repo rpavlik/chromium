@@ -181,8 +181,9 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 					bounds->y1 < p->extents.y2 &&
 					bounds->y2 >= p->extents.y1 )
 				{
-					int c;
 					cr_server.curExtent = p->id;
+#if 0
+					int c;
 					for (c = 0; c < CR_MAX_CONTEXTS; c++)
 					{
 						if (run_queue->client->context[c])
@@ -193,6 +194,14 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 													 &run_queue->extent[p->id].imagewindow );
 						}
 					}
+#else
+					if (run_queue->client->currentCtx) {
+						crServerSetOutputBounds( run_queue->client->currentCtx,
+																		 &run_queue->extent[p->id].outputwindow,
+																		 &run_queue->imagespace,
+																		 &run_queue->extent[p->id].imagewindow );
+					}
+#endif
 					crUnpack( data_ptr, data_ptr-1, num_opcodes, &(cr_server.dispatch) );
 				}
 			}
@@ -203,7 +212,7 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 		for ( i = 0; i < run_queue->numExtents; i++ )
 		{
 			CRRunQueueExtent *extent = &run_queue->extent[i];
-			int c;
+			/*			int c;*/
 
 			if ( !( extent->imagewindow.x2 > bounds->x1 &&
 				extent->imagewindow.x1 < bounds->x2 &&
@@ -214,6 +223,7 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 			}
 
 			cr_server.curExtent = i;
+#if 0
 			for (c = 0; c < CR_MAX_CONTEXTS; c++)
 			{
 				if (run_queue->client->context[c])
@@ -224,6 +234,14 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 											 &extent->imagewindow );
 				}
 			}
+#else
+			if (run_queue->client->currentCtx) {
+				crServerSetOutputBounds( run_queue->client->currentCtx,
+																 &extent->outputwindow,
+																 &run_queue->imagespace,
+																 &extent->imagewindow );
+			}
+#endif
 
 			crUnpack( data_ptr, data_ptr-1, num_opcodes, &(cr_server.dispatch) );
 		}

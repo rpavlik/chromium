@@ -30,9 +30,9 @@ for func_name in keys:
 	#if stub_common.FindSpecial( "noexport", func_name ): continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
-	print "static %s ts_%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+	print "static %s SPULOAD_APIENTRY ts_%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 	print "{"
-	print "\tSPUDispatchTable *tab = (SPUDispatchTable *) crGetTSD(&__DispatchTSD);"
+	print "\tSPUDispatchTable *tab = (SPUDispatchTable *) crGetTSD(&stub.dispatchTSD);"
 
 	if return_type != "void":
 		print "\treturn ",
@@ -42,7 +42,7 @@ for func_name in keys:
 	print ""
 
 
-print "SPUDispatchTable __ThreadsafeDispatch = {"
+print "SPUDispatchTable stubThreadsafeDispatch = {"
 
 for func_name in keys:
 	#if stub_common.FindSpecial( "noexport", func_name ): continue

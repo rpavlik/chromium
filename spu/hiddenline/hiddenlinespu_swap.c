@@ -38,7 +38,7 @@ void HIDDENLINESPU_APIENTRY hlHandleColor4ubv (const GLubyte *v)  {}
 void HIDDENLINESPU_APIENTRY hlHandleColor4uiv (const GLuint *v)   {}
 void HIDDENLINESPU_APIENTRY hlHandleColor4usv (const GLushort *v) {}
 
-void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( void )
+void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags )
 {
 	static SPUDispatchTable hacked_child_dispatch;
 	BufList *temp, *next;
@@ -121,7 +121,7 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( void )
 		hiddenPlayback( &(hiddenline_spu.child) );
 	}
 
-	hiddenline_spu.super.SwapBuffers();
+	hiddenline_spu.super.SwapBuffers( window, flags );
 	
 	/* Release the resources needed to record the past frame so we
 	 * can record the next one */

@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_mem.h"
 #include "cr_spu.h"
 #include "cr_glstate.h"
 #include "packspu.h"
@@ -11,7 +12,6 @@
 #include <stdio.h>
 
 extern SPUNamedFunctionTable pack_table[];
-PackSPU pack_spu;
 
 SPUFunctions pack_functions = {
 	NULL, /* CHILD COPY */
@@ -19,35 +19,38 @@ SPUFunctions pack_functions = {
 	pack_table /* THE ACTUAL FUNCTIONS */
 };
 
+PackSPU pack_spu;
+
+#ifdef CHROMIUM_THREADSAFE
+CRtsd _PackTSD;
+CRmutex _PackMutex;
+#endif
+
 SPUFunctions *packSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
+	ThreadInfo *thread;
+
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
 	(void) super;
 
+#ifdef CHROMIUM_THREADSAFE
+	crInitMutex(&_PackMutex);
+#endif
+
 	pack_spu.id = id;
+
 	packspuGatherConfiguration( child );
-	packspuConnectToServer();
 
-	crPackInit( pack_spu.server.conn->swap );
-	crPackInitBuffer( &(pack_spu.buffer), crNetAlloc( pack_spu.server.conn ), pack_spu.server.buffer_size, 0 );
-	crPackSetBuffer( &pack_spu.buffer );
-	crPackFlushFunc( packspuFlush );
-	crPackSendHugeFunc( packspuHuge );
+	/* This connects to the server, sets up the packer, etc. */
+	thread = packspuNewThread( crThreadID() );
+	CRASSERT( thread == &(pack_spu.thread[0]) );
 
-	pack_spu.swap = pack_spu.server.conn->swap;
 	packspuCreateFunctions();
 	crStateInit();
-
-	/* We really onlu use the state tracker context to maintain the
-	 * client-side GL state such as vertex array and pixek pack/unpack
-	 * parameters.
-	 */
-	pack_spu.currentCtx = crStateCreateContext( &pack_spu.limits );
-	crStateMakeCurrent(pack_spu.currentCtx);
 
 	return &pack_functions;
 }

@@ -31,9 +31,9 @@
 	</tr>
 </table>
 <p>The Chromium server can serialize multiple incoming streams from a
-distributed OpenGL application.&nbsp; Here we will build a trivial parallel
-application using Chromium.&nbsp; The application that we will be considering is
-called psubmit, and can be found in the directory <code>cr/progs/psumit</code>.</p>
+distributed OpenGL application.&nbsp; Here we describe a trivial parallel
+application using Chromium.&nbsp; The application that we will be considering
+is called psubmit, and can be found in the directory <code>cr/progs/psumit</code>.</p>
 <h2 class="PageSubHeading">The Basic Idea</h2>
 <p>Writing a parallel OpenGL application is pretty simple.&nbsp; You have a
 bunch of processes, each one of which is responsible for a portion of the model
@@ -63,8 +63,8 @@ synchronization and would get this information from, say, MPI.</p>
 <p>Once the rank and size of the program are determined, the following two lines
 appear:</p>
 
-<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		context = crCreateContextCR(NULL, CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT);<br>
-	crMakeCurrentCR(NULL, 0, context);</td></tr></table>
+<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		context = crCreateContextCR(dpy, visual);<br>
+	crMakeCurrentCR(window, context);</td></tr></table>
 
 <p>crCreateContextCR and crMakeCurrentCR are actually function pointers
 initialized via crGetProcAddress.
@@ -78,10 +78,8 @@ all over the cluster.&nbsp; This also means that the client nodes in the
 cluster do not have to have a graphical environment running just to house
 a blank faked-out window.</p>
 
-<p>The <code>NULL</code> parameters are pointers which aren't used at
-this time (they'll be used to specify the X display in the future).
-The 0 parameter to <code>crMakeCurrentCR</code> is the window ID.
-Zero indicates that the default window should be used.</p>
+<p>The <code>dpy</code>, <code>visual</code> and <code>window</code>
+parameters are initialied earlier in the function.</p>
 
 <p>The next thing that the application does is create a GL barrier:</p>
 
@@ -94,26 +92,44 @@ display list or texture object (except that the namespace is shared between
 clients by default).</p>
 
 <p>After some GL initialization code comes the main drawing loop.&nbsp;
-This application follows the basic
-format of all simple parallel OpenGL applications:</p>
+This application follows the basic format of all simple parallel OpenGL
+applications.  The basic structure of the code is:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">		for (;;)<br>
-      {<br>
-      &nbsp;&nbsp;&nbsp; if (clearAndSwap) glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );<br>
-      &nbsp;&nbsp;&nbsp; glBarrierExec( MASTER_BARRIER );<br>
-      <br>
-      &nbsp;&nbsp;&nbsp; // Drawing code here<br>
-      <br>
-      &nbsp;&nbsp;&nbsp; glBarrierExec( MASTER_BARRIER );<br>
-      &nbsp;&nbsp;&nbsp; if (clearAndSwap) crSwapBuffers();<br>
-      }</td></tr></table>
+<table width="100%"><tr><td class="GrayCodeListing">
+<pre>
+for (frame = 0; ; frame++)
+{
+	if (clearFlag)
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-<p>A few things to note about this drawing method:</p>
+	glBarrierExecCR( MASTER_BARRIER );
+
+	draw the scene here
+
+	glBarrierExecCR( MASTER_BARRIER );
+
+	if (swapFlag)
+		crSwapBuffersCR( window, 0 );
+	else
+		crSwapBuffersCR( window, CR_SUPPRESS_SWAP_BIT );
+}
+</pre>
+</td></tr></table>
+
+<p>A few things to note about this code:</p>
 <ul>
-  <li>In a sort-last configuration <code>clearAndSwap</code> be true
-    for all processes.
-  <li>In a sort-first configuration <code>clearAndSwap</code> be true
-    only for the first (0th) process.
+  <li>The <code>clearFlag</code> is set by the <code>-clear</code> command
+    line option.
+  <li>The <code>swapFlag</code> is set by the <code>-swap</code> command line
+    option.
+  <li>The <code>CR_SUPPRESS_SWAP_BIT</code> flag is used in sort-last
+    configurations to mark the end of the frame without actually swapping the
+    buffer.
+  <li>In a sort-last configuration <code>clearFlag</code> is set by
+    all clients and <code>swapFlag</code> will be set only for the zeroth
+    client.
+  <li>In a sort-first configuration <code>clearFlag</code> and
+    <code>swapFlag</code> will be set only for the zeroth client.
   <li><code>glBarrierExec</code> (also declared in <code>cr_applications.h</code>)
     is the call to enter a barrier.</li>
   <li>The barrier following the clear ensures that the clear has happened before
@@ -127,11 +143,28 @@ format of all simple parallel OpenGL applications:</p>
 </ul>
 
 <p>
-To run the psubmit demo you'll need to issue the following commands, probably
-from four separate shell windows:
+There are two sample parallel submission configuration scripts included
+with Chromium.
+psubmit_first.conf demonstrates sort-first rendering with the tilesort SPU.
+psubmit_last.conf demonstrates sort-last rendering with the readback SPU.
+</p>
+
+<p>To run the psubmit_first demo you'll need to issue the following commands,
+probably from five separate shell windows:</p>
 </p>
 <ul>
-<li><code>cd mothership/configs ; python psubmit.conf</code>
+<li><code>cd mothership/configs ; python psubmit_first.conf</code>
+<li><code>crserver</code>
+<li><code>crserver</code>
+<li><code>crappfaker</code>
+<li><code>crappfaker</code>
+</ul>
+
+<p>To run the psubmit_last demo you'll need to issue the following commands,
+probably from four separate shell windows:</p>
+</p>
+<ul>
+<li><code>cd mothership/configs ; python psubmit_last.conf</code>
 <li><code>crserver</code>
 <li><code>crappfaker</code>
 <li><code>crappfaker</code>

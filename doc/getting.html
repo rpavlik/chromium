@@ -92,6 +92,14 @@ before building.&nbsp; There are instructions in that file.</p>
 
 </ul>
 
+<p>If you want to enable thread safety, compile with
+<code>make threadsafe</code>.
+This introduces a slight performance penalty but allows applications to
+create multiple Chromium rendering threads.
+See the <code>progs/threadtest/threadtest.c</code> program for an example.
+</p>
+
+
 </body>
 
 </html>

@@ -17,12 +17,7 @@
 #include <memory.h>
 #include <math.h>
 #include <stdlib.h>
-
-static TileSortSPUServer *state_server = NULL;
-
-#ifdef WINDOWS
-extern __declspec( dllimport ) CRPackGlobals cr_packer_globals;
-#endif
+#include <float.h>
 
 static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned int *len )
 {
@@ -66,9 +61,11 @@ void tilesortspuDebugOpcodes( CRPackBuffer *pack )
 	crDebug( "\n" );
 }
 
-void tilesortspuSendServerBuffer( TileSortSPUServer *server )
+void tilesortspuSendServerBuffer( int server_index /*TileSortSPUServer *server*/ )
 {
-	CRPackBuffer *pack = &server->pack;
+	GET_THREAD(thread);
+	CRPackBuffer *pack = &(thread->pack[server_index]);
+	CRNetServer *net = &(thread->net[server_index]);
 	unsigned int len;
 	CRMessageOpcodes *hdr;
 
@@ -77,32 +74,33 @@ void tilesortspuSendServerBuffer( TileSortSPUServer *server )
 
 	hdr = __applySendBufferHeader( pack, &len );
 
-	crNetSend( server->net.conn, &pack->pack, hdr, len );
-	crPackInitBuffer( pack, crNetAlloc( server->net.conn ), pack->size, END_FLUFF );
+	crNetSend( net->conn, &pack->pack, hdr, len );
+	crPackInitBuffer( pack, crNetAlloc( net->conn ), pack->size, END_FLUFF );
 }
 
 static void __appendBuffer( CRPackBuffer *src )
 {
+	GET_THREAD(thread);
 	int num_data = src->data_current - src->data_start;
 
-	/*crWarning( "In __appendBuffer: %d bytes left, packing %d bytes", cr_packer_globals.buffer.data_end - cr_packer_globals.buffer.data_current, num_data ); */
+	/*crWarning( "In __appendBuffer: %d bytes left, packing %d bytes", thread->packer->buffer.data_end - thread->packer->buffer.data_current, num_data ); */
 
-	if ( cr_packer_globals.buffer.data_current + num_data > 
-			 cr_packer_globals.buffer.data_end )
+	if ( thread->packer->buffer.data_current + num_data > thread->packer->buffer.data_end )
 	{
 		/* No room to append -- send now */
 
 		/*crWarning( "OUT OF ROOM!") ; */
-		tilesortspuSendServerBuffer( state_server );
-		crPackSetBuffer( &(state_server->pack) );
+		tilesortspuSendServerBuffer( thread->state_server_index );
+		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 	}
 
 	crPackAppendBuffer( src );
-	/*crWarning( "Back from crPackAppendBuffer: 0x%x", cr_packer_globals.buffer.data_current ); */
+	/*crWarning( "Back from crPackAppendBuffer: 0x%x", thread->packer->buffer.data_current ); */
 }
 
 void __appendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 {
+	GET_THREAD(thread);
 	/* 24 is the size of the bounds info packet */
 	int num_data = src->data_current - src->opcode_current - 1 + 24;
 
@@ -113,12 +111,11 @@ void __appendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 		return;
 	}
 
-	if ( cr_packer_globals.buffer.data_current + num_data > 
-			 cr_packer_globals.buffer.data_end )
+	if ( thread->packer->buffer.data_current + num_data > thread->packer->buffer.data_end )
 	{
 		/* No room to append -- send now */
-		tilesortspuSendServerBuffer( state_server );
-		crPackSetBuffer( &(state_server->pack) );
+		tilesortspuSendServerBuffer( thread->state_server_index );
+		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 	}
 
 	crPackAppendBoundedBuffer( src, bounds );
@@ -129,20 +126,20 @@ void tilesortspuShipBuffers( void )
 	int i;
 	for (i = 0 ; i < tilesort_spu.num_servers; i++)
 	{
-		TileSortSPUServer *server = tilesort_spu.servers + i;
-		tilesortspuSendServerBuffer( server );
+		tilesortspuSendServerBuffer( i );
 	}
 }
 
 void tilesortspuHuge( CROpcode opcode, void *buf )
 {
+	GET_THREAD(thread);
 	unsigned int          len;
 	unsigned char        *src;
 	CRMessageOpcodes *msg;
 
 	if (tilesort_spu.inDrawPixels)
 	{
-		tilesortspuFlush( tilesort_spu.currentContext );
+		tilesortspuFlush( thread );
 		return;
 	}
 
@@ -173,8 +170,8 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 
 	/* the pipeserver's buffer might have data in it, and that should
        go across the wire before this big packet */
-	tilesortspuSendServerBuffer( state_server );
-	crNetSend( state_server->net.conn, NULL, src, len );
+	tilesortspuSendServerBuffer( thread->state_server_index );
+	crNetSend( thread->net[thread->state_server_index].conn, NULL, src, len );
 	crPackFree( buf );
 }
 
@@ -317,6 +314,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 
 static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 {
+	GET_THREAD(thread);
 	CRMessageOpcodes *big_packet_hdr = NULL;
 	unsigned int big_packet_len = 0;
 	GLrecti bounds;
@@ -325,7 +323,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 	/*crDebug( "in __doFlush (broadcast = %d)", broadcast ); */
 
-	if (state_server != NULL)
+	if (thread->state_server != NULL)
 	{
 		/* This means that the context differencer had so much state 
 		 * to dump that it overflowed the server's network buffer 
@@ -337,18 +335,18 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		CRASSERT( broadcast == 0 );
 		
 		/* First, extract the packing state into the server */
-		crPackGetBuffer( &(state_server->pack) );
+		crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 
 		/* Now, get the buffer out of here. */
 		
-		tilesortspuSendServerBuffer( state_server );
+		tilesortspuSendServerBuffer( thread->state_server_index );
 		
 		/* Finally, restore the packing state so we can continue 
 		 * This isn't the same as calling crPackResetPointers, 
 		 * because the state server now has a new pack buffer 
 		 * from the buffer pool. */
 
-		crPackSetBuffer( &(state_server->pack) );
+		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 
 		return;
 	}
@@ -357,22 +355,32 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 	/* First, test to see if this is a big packet. */
 	
-	if (cr_packer_globals.buffer.size > tilesort_spu.servers[0].net.conn->mtu )
+	if (thread->packer->buffer.size > thread->net[0].conn->mtu )
 	{
 		crDebug( "It was a big packet!" );
-		big_packet_hdr = __applySendBufferHeader( &(cr_packer_globals.buffer), &big_packet_len );
+		big_packet_hdr = __applySendBufferHeader( &(thread->packer->buffer), &big_packet_len );
 	}
 
 	/* Here's the big part -- call the bucketer! */
 
 	if (!broadcast)
 	{
+		/* We've called the flush routine when no vertices
+		 * have been sent. Call off the flush until next time...
+		 */
+		if (thread->packer->bounds_min.x == FLT_MAX &&
+		    thread->packer->bounds_max.x == -FLT_MAX) {
+			/*
+			crDebug("OOOF, no vertices during this flush\n");
+			*/
+		    return;
+		}
 		/*crDebug( "About to bucket the geometry" ); */
 		bucket_info = tilesortspuBucketGeometry();
 		bounds = bucket_info->pixelBounds;
 		if (tilesort_spu.providedBBOX != GL_OBJECT_BBOX_CR)
 		{
-			crPackResetBBOX();
+			crPackResetBBOX( thread->packer );
 		}
 	}
 	else
@@ -408,10 +416,10 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	 * serious hack, but we *did* reserve space in the pack buffer just 
 	 * for this purpose. */
 	
-	if ( tilesort_spu.currentContext->current.inBeginEnd )
+	if ( thread->currentContext->State->current.inBeginEnd )
 	{
 		/*crDebug( "Closing this Begin/end!!!" ); */
-		cr_packer_globals.buffer.data_end += END_FLUFF;
+		thread->packer->buffer.data_end += END_FLUFF;
 		if (tilesort_spu.swap)
 		{
 			crPackEndSWAP();
@@ -428,7 +436,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	 * doing context differencing, and also to restore them 
 	 * at the end of this function. */
 
-	crPackGetBuffer( &(tilesort_spu.geometry_pack) );
+	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
 
 	/* Now, see if we need to do things to each server */
 
@@ -437,7 +445,8 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		int node32 = i >> 5;
 		int node = i & 0x1f;
 
-		state_server = tilesort_spu.servers + i;
+		thread->state_server = tilesort_spu.servers + i;
+		thread->state_server_index = i;
 
 		/* Check to see if this server needs geometry from us. */
 		if (!broadcast && !(bucket_info->hits[node32] & (1 << node)))
@@ -449,23 +458,24 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 		/* Okay, it does.  */
 
-		state_server->vertexCount += cr_packer_globals.current.vtx_count;
+		thread->state_server->vertexCount += thread->packer->current.vtx_count;
 
 		/* We're going to do lazy state evaluation now */
 
-		crPackSetBuffer( &(state_server->pack) );
+		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 		if (!broadcast || send_state_anyway)
 		{
 			/*crDebug( "pack buffer before differencing" ); 
-			 *tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) ); */
-			crStateDiffContext( state_server->currentContext, ctx );
+			 *tilesortspuDebugOpcodes( &(thread->packer->buffer) ); */
+			CRContext *serverContext = thread->state_server->context[thread->currentContextIndex];
+			crStateDiffContext( serverContext, ctx );
 			if (tilesort_spu.drawBBOX && !broadcast)
 			{
 				__drawBBOX( bucket_info );
 			}
-			crPackGetBuffer( &(state_server->pack) );
+			crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 			/*crDebug( "pack buffer after differencing" ); 
-			 *tilesortspuDebugOpcodes( &(state_server->pack) ); */
+			 *tilesortspuDebugOpcodes( &(thread->state_server->pack) ); */
 		}
 
 		/* The state server's buffer now contains the commands 
@@ -478,8 +488,8 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			 * by themselves, followed by the big packet. */
 
 			crDebug( "Doing the big packet send thing" );
-			tilesortspuSendServerBuffer( state_server );
-			crNetSend( state_server->net.conn, NULL, big_packet_hdr, big_packet_len );
+			tilesortspuSendServerBuffer( thread->state_server_index );
+			crNetSend( thread->net[thread->state_server_index].conn, NULL, big_packet_hdr, big_packet_len );
 		}
 		else
 		{
@@ -495,45 +505,46 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			if ( !broadcast )
 			{
 				/*crDebug( "Appending a bounded buffer" ); */
-				__appendBoundedBuffer( &(tilesort_spu.geometry_pack), &bounds );
+				__appendBoundedBuffer( &(thread->geometry_pack), &bounds );
 			}
 			else
 			{
 				/*crDebug( "Appending a NON-bounded buffer" ); 
-				 *tilesortspuDebugOpcodes( &(tilesort_spu.geometry_pack) ); 
-				 *tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) ); */
-				__appendBuffer( &(tilesort_spu.geometry_pack) );
-				/*tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) ); */
+				 *tilesortspuDebugOpcodes( &(thread->geometry_pack) ); 
+				 *tilesortspuDebugOpcodes( &(thread->packer->buffer) ); */
+				__appendBuffer( &(thread->geometry_pack) );
+				/*tilesortspuDebugOpcodes( &(thread->packer->buffer) ); */
 			}
-			crPackGetBuffer( &(state_server->pack) );
+			crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 		}
 	}
 
-	/* We're done with the servers.  Wipe the global state_server 
+	/* We're done with the servers.  Wipe the thread->state_server 
 	 * variable so we know that.  */
 
-	state_server = NULL;
+	thread->state_server = NULL;
+	thread->state_server_index = -1;
 
 	if ( big_packet_hdr != NULL )
 	{
 		/* Throw away the big packet and make a new, smaller one */
 
 		crDebug( "Throwing away the big packet" );
-		crFree( tilesort_spu.geometry_pack.pack );
-	  crPackInitBuffer( &(tilesort_spu.geometry_pack), crAlloc( tilesort_spu.geom_pack_size ), 
-			              tilesort_spu.geom_pack_size, END_FLUFF );
+		crFree( thread->geometry_pack.pack );
+		crPackInitBuffer( &(thread->geometry_pack), crAlloc( thread->geom_pack_size ), 
+											thread->geom_pack_size, END_FLUFF );
 	}
 	else
 	{
 		/*crDebug( "Reverting to the old geometry buffer" ); */
-		crPackSetBuffer( &(tilesort_spu.geometry_pack ) );
-		crPackResetPointers( END_FLUFF );
+		crPackSetBuffer( thread->packer, &(thread->geometry_pack ) );
+		crPackResetPointers( thread->packer, END_FLUFF );
 	}
 
 	/*crDebug( "Resetting the current vertex count and friends" ); */
 
-	cr_packer_globals.current.vtx_count = 0;
-	cr_packer_globals.current.vtx_count_begin = 0;
+	thread->packer->current.vtx_count = 0;
+	thread->packer->current.vtx_count_begin = 0;
 
 	/*crDebug( "Setting all the Current pointers to NULL" ); */
 	crPackNullCurrentPointers();
@@ -543,19 +554,32 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 void tilesortspuBroadcastGeom( int send_state_anyway )
 {
-	__doFlush( tilesort_spu.currentContext, 1, send_state_anyway );
+	GET_THREAD(thread);
+	__doFlush( thread->currentContext->State, 1, send_state_anyway );
 }
 
-void tilesortspuFlush( void *arg )
+
+void tilesortspuFlush_callback( void *arg )
 {
-	CRContext *ctx = (CRContext *) arg;
+	tilesortspuFlush( (ThreadInfo *) arg );
+}
+
+
+void tilesortspuFlush( ThreadInfo *thread )
+{
+	CRContext *ctx;
+
 	CRPackBuffer old_geometry_pack;
 
-	assert(ctx);
+	assert(thread);
+	assert(thread->currentContext);
+	assert(thread->currentContext->State);
+
+	ctx = thread->currentContext->State;
 
 	/*crDebug( "In tilesortspuFlush" ); 
-	 *crDebug( "BBOX MIN: (%f %f %f)", cr_packer_globals.bounds_min.x, cr_packer_globals.bounds_min.y, cr_packer_globals.bounds_min.z ); 
-	 *crDebug( "BBOX MAX: (%f %f %f)", cr_packer_globals.bounds_max.x, cr_packer_globals.bounds_max.y, cr_packer_globals.bounds_max.z ); */
+	 *crDebug( "BBOX MIN: (%f %f %f)", thread->packer->bounds_min.x, thread->packer->bounds_min.y, thread->packer->bounds_min.z ); 
+	 *crDebug( "BBOX MAX: (%f %f %f)", thread->packer->bounds_max.x, thread->packer->bounds_max.y, thread->packer->bounds_max.z ); */
 
 	/* If we're not in a begin/end, or if we're splitting them, go ahead and 
 	 * do the flushing. */
@@ -577,18 +601,20 @@ void tilesortspuFlush( void *arg )
 	
 	crDebug( "-=-=-=- Growing the buffer -=-=-=-" );
 
-	CRASSERT( ctx == tilesort_spu.currentContext );
+	CRASSERT( ctx == thread->currentContext->State );
 
 	ctx->current.flushOnEnd = 1;
 
 	/* Grab the pack buffer info from the packing library */
 
-	crPackGetBuffer( &(old_geometry_pack) );
+	crPackGetBuffer( thread->packer, &(old_geometry_pack) );
 
-	crPackInitBuffer( &(tilesort_spu.geometry_pack),
-					  crAlloc( tilesort_spu.geometry_pack.size << 1 ), 
-					  tilesort_spu.geometry_pack.size << 1, END_FLUFF );
-	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
+	crPackInitBuffer( &(thread->geometry_pack),
+					  crAlloc( thread->geometry_pack.size << 1 ), 
+					  thread->geometry_pack.size << 1, END_FLUFF );
+	thread->geometry_pack.geometry_only = GL_TRUE;
+
+	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 	crPackAppendBuffer(&(old_geometry_pack));
 
 	/* The location of the geometry buffer has changed, so we need to 
@@ -597,7 +623,7 @@ void tilesortspuFlush( void *arg )
 	 * buffers be contiguous -- in fact they almost certainly won't be. */
 
 	crPackOffsetCurrentPointers( old_geometry_pack.data_current - 
-								 cr_packer_globals.buffer.data_current );
+															 thread->packer->buffer.data_current );
 
 	crFree( old_geometry_pack.pack );
 }

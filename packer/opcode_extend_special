@@ -43,3 +43,7 @@ ChromiumParameterfCR
 ChromiumParametervCR
 GetChromiumParametervCR
 CreateContext
+crCreateWindow
+DestroyWindow
+WindowSize
+WindowPosition

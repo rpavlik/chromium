@@ -212,7 +212,7 @@ void BINARYSWAPSPU_APIENTRY binaryswapChromiumParameterfCR(GLenum target, GLfloa
  * The meat of the spu.
  *
  ********************************************************/
-void BINARYSWAPSPU_APIENTRY binaryswapSwapBuffers( void )
+void BINARYSWAPSPU_APIENTRY binaryswapSwapBuffers( GLint window, GLint flags )
 {
   /* Things we setup once since the setup is expensive */
   static int geometry[4];
@@ -492,12 +492,14 @@ void BINARYSWAPSPU_APIENTRY binaryswapSwapBuffers( void )
   /* Make sure everyone has drawn their pixels before we swap buffers */
   binaryswap_spu.child.BarrierExec( BSWAP_BARRIER );
   
+  /* XXX these window parameters might need tweaking!!! */
+
   /* actually do the swap buffers */
   if(binaryswap_spu.node_num == 0){
-    binaryswap_spu.child.SwapBuffers();
+    binaryswap_spu.child.SwapBuffers( window, flags );
   }
   
-  binaryswap_spu.super.SwapBuffers();
+  binaryswap_spu.super.SwapBuffers( window, flags );
 }
 
 /**************************************************************

@@ -19,9 +19,12 @@
 #include "cr_netserver.h"
 #include "cr_pack.h"
 #include "cr_spu.h"
+#include "cr_threads.h"
 
 #include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
+
+#define MAX_WINDOWS 1
 
 #define END_FLUFF 4 /* space for phantom GLEND opcode for splitting */
 
@@ -30,13 +33,10 @@ void tilesortspuGatherConfiguration( const SPU *child_spu );
 void tilesortspuConnectToServers( void );
 
 typedef struct {
-	CRNetServer net;
-	CRPackBuffer pack;
 	int num_extents;
 	int x1[CR_MAX_EXTENTS], y1[CR_MAX_EXTENTS];
 	int x2[CR_MAX_EXTENTS], y2[CR_MAX_EXTENTS];
 
-	CRContext *currentContext;
 	CRContext *context[CR_MAX_CONTEXTS];
 	GLint serverCtx[CR_MAX_CONTEXTS];
 
@@ -51,16 +51,39 @@ typedef struct {
 	unsigned char *beginOp, *beginData;
 } TileSortSPUPinchState;
 
+
+typedef struct thread_info_t ThreadInfo;
+typedef struct context_info_t ContextInfo;
+
+struct thread_info_t {
+	int geom_pack_size;
+	CRPackBuffer geometry_pack;
+	CRPackContext *packer;
+	ContextInfo *currentContext;
+	int currentContextIndex;
+	TileSortSPUPinchState pinchState;
+	TileSortSPUServer *state_server;  /* only used during __doFlush() */
+	int state_server_index;           /* only used during __doFlush() */
+
+	CRNetServer *net;    /* array net[num_servers] */
+	CRPackBuffer *pack;  /* array pack[num_servers] */
+};
+
+struct context_info_t {
+	CRContext *State;
+};
+
 typedef struct {
 	int id;
 
-	int geom_pack_size;
-	CRPackBuffer geometry_pack;
+	int numThreads;
+	ThreadInfo thread[MAX_THREADS];
 
-	CRContext *context[CR_MAX_CONTEXTS];
-	CRContext *currentContext;
+	int numContexts;
+	ContextInfo context[CR_MAX_CONTEXTS];
 
-	TileSortSPUPinchState pinchState;
+	GLboolean windows_inuse[MAX_WINDOWS];
+
 	SPUDispatchTable self;
 
 	/* config options */
@@ -111,12 +134,30 @@ typedef struct {
 	GLrecti    pixelBounds;
 } TileSortBucketInfo;
 
+
+#ifdef CHROMIUM_THREADSAFE
+extern CRmutex _TileSortMutex;
+extern CRtsd _ThreadTSD;
+#define GET_THREAD(T) ThreadInfo *T = crGetTSD(&_ThreadTSD)
+#else
+#define GET_THREAD(T) ThreadInfo *T = &(tilesort_spu.thread[0])
+#endif
+
+#define GET_CONTEXT(C)			\
+	GET_THREAD(thread);		\
+	CRContext *C = thread->currentContext->State
+
+
+
+
 extern TileSortBucketInfo *tilesortspuBucketGeometry(void);
 
 extern TileSortSPU tilesort_spu;
 
+void tilesortspuInitThreadPacking( ThreadInfo *thread );
 void tilesortspuHuge( CROpcode opcode, void *buf );
-void tilesortspuFlush( void *arg );
+void tilesortspuFlush( ThreadInfo *thread );
+void tilesortspuFlush_callback( void *arg );
 void tilesortspuBroadcastGeom( int send_state_anyway );
 void tilesortspuShipBuffers( void );
 void tilesortspuCreateDiffAPI( void );
@@ -131,6 +172,6 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 void TILESORTSPU_APIENTRY tilesortspu_Begin(GLenum prim);
 void TILESORTSPU_APIENTRY tilesortspu_End(void);
 
-void tilesortspuSendServerBuffer( TileSortSPUServer *server );
+void tilesortspuSendServerBuffer( int server_index );
 
 #endif /* TILESORT_SPU_H */

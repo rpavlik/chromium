@@ -10,14 +10,15 @@
 
 void TILESORTSPU_APIENTRY tilesortspu_Rectf (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) 
 {
-	if (tilesort_spu.currentContext->current.inBeginEnd)
+	GET_CONTEXT(ctx);
+	if (ctx->current.inBeginEnd)
 	{
 			crError( "tilesortspu_Rect?? called in Begin/End");
 	}
 
-	tilesortspuFlush( tilesort_spu.currentContext );
+	tilesortspuFlush( thread );
 
-	crStateFlushFunc( tilesortspuFlush );
+	crStateFlushFunc( tilesortspuFlush_callback );
 	if (tilesort_spu.swap)
 	{
 		crPackRectfSWAP (x1, y1, x2, y2);
@@ -27,18 +28,18 @@ void TILESORTSPU_APIENTRY tilesortspu_Rectf (GLfloat x1, GLfloat y1, GLfloat x2,
 		crPackRectf (x1, y1, x2, y2);
 	}
 
-	if (cr_packer_globals.bounds_min.x > x1) cr_packer_globals.bounds_min.x = x1;
-	if (cr_packer_globals.bounds_min.y > y1) cr_packer_globals.bounds_min.y = y1;
-	if (cr_packer_globals.bounds_max.x < x1) cr_packer_globals.bounds_max.x = x1;
-	if (cr_packer_globals.bounds_max.y < y1) cr_packer_globals.bounds_max.y = y1;
+	if (thread->packer->bounds_min.x > x1) thread->packer->bounds_min.x = x1;
+	if (thread->packer->bounds_min.y > y1) thread->packer->bounds_min.y = y1;
+	if (thread->packer->bounds_max.x < x1) thread->packer->bounds_max.x = x1;
+	if (thread->packer->bounds_max.y < y1) thread->packer->bounds_max.y = y1;
 
-	if (cr_packer_globals.bounds_min.x > x2) cr_packer_globals.bounds_min.x = x2;
-	if (cr_packer_globals.bounds_min.y > y2) cr_packer_globals.bounds_min.y = y2;
-	if (cr_packer_globals.bounds_max.x < x2) cr_packer_globals.bounds_max.x = x2;
-	if (cr_packer_globals.bounds_max.y < y2) cr_packer_globals.bounds_max.y = y2;
+	if (thread->packer->bounds_min.x > x2) thread->packer->bounds_min.x = x2;
+	if (thread->packer->bounds_min.y > y2) thread->packer->bounds_min.y = y2;
+	if (thread->packer->bounds_max.x < x2) thread->packer->bounds_max.x = x2;
+	if (thread->packer->bounds_max.y < y2) thread->packer->bounds_max.y = y2;
 
-	if (cr_packer_globals.bounds_min.z > 0.0f) cr_packer_globals.bounds_min.z = 0.0f;
-	if (cr_packer_globals.bounds_max.z < 0.0f) cr_packer_globals.bounds_max.z = 0.0f;
+	if (thread->packer->bounds_min.z > 0.0f) thread->packer->bounds_min.z = 0.0f;
+	if (thread->packer->bounds_max.z < 0.0f) thread->packer->bounds_max.z = 0.0f;
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Rectfv (const GLfloat *v1, const GLfloat *v2) 

@@ -6,8 +6,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
-#include "cr_glstate.h"
+#include "cr_mem.h"
+#include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
@@ -20,20 +20,13 @@
 
 void crStateClientInitBits (CRClientBits *c) 
 {
-	c->v = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->n = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->c = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->s = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->i = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->t = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->e = (GLbitvalue *) malloc (GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	memset(c->v, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	memset(c->n, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	memset(c->c, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	memset(c->s, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	memset(c->i, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	memset(c->t, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	memset(c->e, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->v = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->n = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->c = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->s = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->i = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->t = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->e = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	c->valloc = GLCLIENT_BIT_ALLOC;
 	c->nalloc = GLCLIENT_BIT_ALLOC;
 	c->calloc = GLCLIENT_BIT_ALLOC;
@@ -70,7 +63,7 @@ void crStateClientInit(CRLimitsState *limits, CRClientState *c)
 
 	c->list_alloc = GLCLIENT_LIST_ALLOC;
 	c->list_size = 0;
-	c->list = (int *) malloc (c->list_alloc * sizeof (int));
+	c->list = (int *) crCalloc(c->list_alloc * sizeof (int));
 
 	/* vertex array */
 	c->v.p = NULL;
@@ -119,7 +112,8 @@ void crStateClientInit(CRLimitsState *limits, CRClientState *c)
  * is client-side state, like vertex arrays.
  */
 
-void STATE_APIENTRY crStatePixelStoref (GLenum pname, GLfloat param) {
+void STATE_APIENTRY crStatePixelStoref (GLenum pname, GLfloat param)
+{
 
 	/* The GL SPEC says I can do this on page 76. */
 	switch( pname )
@@ -136,7 +130,8 @@ void STATE_APIENTRY crStatePixelStoref (GLenum pname, GLfloat param) {
 	}
 }
 
-void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param) {
+void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param)
+{
 	CRContext *g    = GetCurrentContext();
 	CRStateBits *sb = GetCurrentBits();
 	CRClientState *c = &(g->client);

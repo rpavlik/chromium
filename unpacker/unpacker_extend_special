@@ -11,3 +11,4 @@ CombinerParameterivNV
 CombinerStageParameterfvNV
 ChromiumParametervCR
 CreateContext
+crCreateWindow

@@ -6,16 +6,15 @@
 
 #include "packspu.h"
 #include "cr_pack.h"
+#include "cr_mem.h"
 #include "cr_net.h"
 #include "cr_protocol.h"
 #include "cr_error.h"
 
-#include <memory.h>
-
 void packspuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
-	memcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
+	crMemcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
 	*writeback = 0;
 }
 
@@ -27,27 +26,27 @@ void packspuReadback( CRMessageReadback *rb, unsigned int len )
 	int payload_len = len - sizeof( *rb );
 	int *writeback;
 	void *dest_ptr; 
-	memcpy( &writeback, &(rb->writeback_ptr), sizeof( writeback ) );
-	memcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
+	crMemcpy( &writeback, &(rb->writeback_ptr), sizeof( writeback ) );
+	crMemcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
 
 	*writeback = 0;
-	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
+	crMemcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
-void packspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
+static void packspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 {
 	int payload_len = len - sizeof( *rp );
 	char *dest_ptr;
 	const char *src_ptr = (char *) rp + sizeof(*rp);
 
-	memcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
+	crMemcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
 
 	if (rp->alignment == 1 &&
 		rp->skipRows == 0 &&
 		rp->skipPixels == 0 &&
 		rp->stride == rp->bytes_per_row) {
 		/* no special packing is needed */
-		memcpy ( dest_ptr, ((char *)rp) + sizeof(*rp), payload_len );
+		crMemcpy ( dest_ptr, ((char *)rp) + sizeof(*rp), payload_len );
 	}
 	else {
 		/* need special packing */
@@ -67,7 +66,7 @@ void packspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 #else
 		GLuint row;
 		for (row = 0; row < rp->rows; row++) {
-		   memcpy( dest_ptr, src_ptr, rp->bytes_per_row );
+		   crMemcpy( dest_ptr, src_ptr, rp->bytes_per_row );
 		   src_ptr += rp->bytes_per_row;
 		   dest_ptr += rp->stride;
 		}
@@ -106,6 +105,7 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
 	int num_opcodes;
 	CRMessageOpcodes *hdr;
 
+	CRASSERT( buf );
 	CRASSERT( buf->opcode_current < buf->opcode_start );
 	CRASSERT( buf->opcode_current >= buf->opcode_end );
 	CRASSERT( buf->data_current > buf->data_start );
@@ -133,30 +133,65 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
 	return hdr;
 }
 
-void packspuFlush( void *arg )
+
+/*
+ * This is called from either the Pack SPU and the packer library whenever
+ * we need to send a data buffer to the server.
+ */
+void packspuFlush(void *arg )
 {
+	ThreadInfo *thread = (ThreadInfo *) arg;
+	ContextInfo *ctx;
 	unsigned int len;
 	CRMessageOpcodes *hdr;
-	CRPackBuffer *buf = &(pack_spu.buffer);
-	crPackGetBuffer( buf );
+	CRPackBuffer *buf;
 
-	if ( buf->opcode_current == buf->opcode_start )
-		return;
+	/* we should _always_ pass a valid <arg> value */
+	CRASSERT(thread);
+	ctx = thread->currentContext;
+	buf = &(thread->buffer);
+	CRASSERT(buf);
+
+	crPackGetBuffer( thread->packer, buf );
+
+	/*
+	printf("%s thread=%p thread->id = %d thread->pc=%p t2->id=%d t2->pc=%p packbuf=%p packbuf=%p\n",
+		   __FUNCTION__, (void*) thread, (int) thread->id, thread->packer,
+		   (int) t2->id, t2->packer,
+		   buf->pack, thread->packer->buffer.pack);
+	*/
+
+	if ( buf->opcode_current == buf->opcode_start ) {
+           /*
+           printf("%s early return\n", __FUNCTION__);
+           */
+           /* XXX these calls seem to help, but might be appropriate */
+           crPackSetBuffer( thread->packer, buf );
+           crPackResetPointers(thread->packer, 0);
+           return;
+	}
 
 	hdr = __prependHeader( buf, &len, 0 );
 
-	crNetSend( pack_spu.server.conn, &(buf->pack), hdr, len );
-	buf->pack = crNetAlloc( pack_spu.server.conn );
-	crPackSetBuffer( buf );
-	crPackResetPointers(0); /* don't need extra room like tilesort */
+	CRASSERT( thread->server.conn );
+
+	crNetSend( thread->server.conn, &(buf->pack), hdr, len );
+
+	buf->pack = crNetAlloc( thread->server.conn );
+
+	crPackSetBuffer( thread->packer, buf );
+	crPackResetPointers(thread->packer, 0); /* don't need extra room like tilesort */
 	(void) arg;
 }
 
 void packspuHuge( CROpcode opcode, void *buf )
 {
+	GET_THREAD(thread);
 	unsigned int          len;
 	unsigned char        *src;
 	CRMessageOpcodes *msg;
+
+	CRASSERT(thread);
 
 	/* packet length is indicated by the variable length field, and
 	   includes an additional word for the opcode (with alignment) and
@@ -189,14 +224,13 @@ void packspuHuge( CROpcode opcode, void *buf )
 		msg->numOpcodes  = 1;
 	}
 
-	crNetSend( pack_spu.server.conn, NULL, src, len );
+	CRASSERT( thread->server.conn );
+	crNetSend( thread->server.conn, NULL, src, len );
 	crPackFree( buf );
 }
 
-void packspuConnectToServer( void )
+void packspuConnectToServer( CRNetServer *server )
 {
 	crNetInit( packspuReceiveData, NULL );
-
-	crNetServerConnect( &(pack_spu.server) );
-
+	crNetServerConnect( server );
 }

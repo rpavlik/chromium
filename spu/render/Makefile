@@ -16,9 +16,9 @@ endif
 
 SHARED = 1
 LIBRARY = renderspu
-FILES = renderspu_config \
+FILES = renderspu \
+	renderspu_config \
 	renderspu_init \
-	renderspu_misc \
 	renderspu_swap
 
 ifeq ($(ARCH), WIN_NT)

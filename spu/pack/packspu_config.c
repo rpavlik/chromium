@@ -9,11 +9,17 @@
 #include "cr_error.h"
 #include "cr_mothership.h"
 #include "cr_spu.h"
+#include "cr_mem.h"
 
 #include <stdio.h>
 
 static void __setDefaults( void )
 {
+	crMemZero(pack_spu.context, CR_MAX_CONTEXTS * sizeof(ContextInfo));
+	pack_spu.numContexts = 0;
+
+	crMemZero(pack_spu.thread, MAX_THREADS * sizeof(ThreadInfo));
+	pack_spu.numThreads = 0;
 }
 
 void packspuGatherConfiguration( const SPU *child_spu )
@@ -38,7 +44,7 @@ void packspuGatherConfiguration( const SPU *child_spu )
 
 	if (num_servers == 1)
 	{
-		pack_spu.server.name = crStrdup( servername );
+		pack_spu.name = crStrdup( servername );
 	}
 	else
 	{
@@ -46,7 +52,7 @@ void packspuGatherConfiguration( const SPU *child_spu )
 	}
 
 	crMothershipGetMTU( conn, response );
-	sscanf( response, "%d", &(pack_spu.server.buffer_size) );
+	sscanf( response, "%d", &(pack_spu.buffer_size) );
 
 	crSPUPropogateGLLimits( conn, pack_spu.id, child_spu, &pack_spu.limits );
 

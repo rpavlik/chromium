@@ -44,10 +44,14 @@ for line in system_gl.readlines() + chromium_gl.readlines():
 
 	output_mapping[func_name] = ( return_type, arg_names, arg_types )
 
-output_mapping['SwapBuffers'] = ( 'void', [''], ['void'] )
-output_mapping['MakeCurrent'] = ( 'void', ['dpy', 'drawable', 'ctx'], ['void *', 'GLint', 'GLint'] )
-output_mapping['CreateContext'] = ( 'GLint', ['dpy', 'visual'], ['void *', 'GLint'] )
-output_mapping['DestroyContext'] = ( 'void', ['dpy', 'ctx'], ['void *', 'GLint'] )
+output_mapping['CreateContext'] = ( 'GLint', ['dpyName', 'visual'], ['const char *', 'GLint'] )
+output_mapping['DestroyContext'] = ( 'void', ['ctx'], ['GLint'] )
+output_mapping['MakeCurrent'] = ( 'void', ['window', 'nativeWindow', 'ctx'], ['GLint', 'GLint', 'GLint'] )
+output_mapping['crCreateWindow'] = ( 'GLint', ['dpyName', 'visBits'], ['const char *', 'GLint'] )
+output_mapping['DestroyWindow'] = ( 'void', ['window'], ['GLint'] )
+output_mapping['WindowSize'] = ( 'void', ['window', 'x', 'y'], ['GLint', 'GLint', 'GLint'] )
+output_mapping['WindowPosition'] = ( 'void', ['window', 'w', 'h'], ['GLint', 'GLint', 'GLint'] )
+output_mapping['SwapBuffers'] = ( 'void', ['window', 'flags'], ['GLint', 'GLint'] )
 output_mapping['Writeback'] = ( 'void', ['writeback'], ['GLint *'] )
 
 cPickle.dump( output_mapping, output_mapping_file, 1 )

@@ -20,7 +20,7 @@ void hiddenlineProvidePackBuffer(void)
 		buf = crAlloc( hiddenline_spu.buffer_size );
 	}
 	crPackInitBuffer( &(hiddenline_spu.pack_buffer), buf, hiddenline_spu.buffer_size, 0 );
-	crPackSetBuffer( &(hiddenline_spu.pack_buffer) );
+	crPackSetBuffer( hiddenline_spu.packer, &(hiddenline_spu.pack_buffer) );
 }
 
 void hiddenlineReclaimPackBuffer( BufList *bl )
@@ -60,7 +60,7 @@ static void hiddenlineRecord( void *buf, void *data, void *opcodes, unsigned int
 void hiddenlineFlush( void *arg )
 {
 	CRPackBuffer *buf = &(hiddenline_spu.pack_buffer);
-	crPackGetBuffer( buf );
+	crPackGetBuffer( hiddenline_spu.packer, buf );
 
 	hiddenlineRecord( buf->pack, buf->data_start, buf->opcode_start, buf->opcode_start - buf->opcode_current , 1 );
 

@@ -150,17 +150,17 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				break;
 
 			case GLX_RGBA:
-				DesiredVisual |= CR_RGB_BIT;
+				stub.desiredVisual |= CR_RGB_BIT;
 				wants_rgb = 1;
 				break;
 
 			case GLX_DOUBLEBUFFER:
-				DesiredVisual |= CR_DOUBLE_BIT;
+				stub.desiredVisual |= CR_DOUBLE_BIT;
 				/* wants_doublebuffer = 1; */
 				break;
 
 			case GLX_STEREO:
-				DesiredVisual |= CR_STEREO_BIT;
+				stub.desiredVisual |= CR_STEREO_BIT;
 				crWarning( "glXChooseVisual: stereo unsupported" );
 				return NULL;
 
@@ -181,25 +181,25 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			case GLX_GREEN_SIZE:
 			case GLX_BLUE_SIZE:
 				if (attrib[1] > 0)
-					DesiredVisual |= CR_RGB_BIT;
+					stub.desiredVisual |= CR_RGB_BIT;
 				attrib++;
 				break;
 
 			case GLX_ALPHA_SIZE:
 				if (attrib[1] > 0)
-					DesiredVisual |= CR_ALPHA_BIT;
+					stub.desiredVisual |= CR_ALPHA_BIT;
 				attrib++;
 				break;
 
 			case GLX_DEPTH_SIZE:
 				if (attrib[1] > 0)
-					DesiredVisual |= CR_DEPTH_BIT;
+					stub.desiredVisual |= CR_DEPTH_BIT;
 				attrib++;
 				break;
 
 			case GLX_STENCIL_SIZE:
 				if (attrib[1] > 0)
-					DesiredVisual |= CR_STENCIL_BIT;
+					stub.desiredVisual |= CR_STENCIL_BIT;
 				attrib++;
 				break;
 
@@ -208,7 +208,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			case GLX_ACCUM_BLUE_SIZE:
 			case GLX_ACCUM_ALPHA_SIZE:
 				if (attrib[1] > 0)
-					DesiredVisual |= CR_ACCUM_BIT;
+					stub.desiredVisual |= CR_ACCUM_BIT;
 				attrib++;
 				break;
 
@@ -216,7 +216,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				if (attrib[1] > 0) {
 					return NULL;  /* don't handle multisample yet */
 					/* eventually... */
-					/*DesiredVisual |= CR_MULTISAMPLE_BIT;*/
+					/*stub.desiredVisual |= CR_MULTISAMPLE_BIT;*/
 				}
 				attrib++;
 				break;
@@ -224,7 +224,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				if (attrib[1] > 0) {
 					return NULL;  /* don't handle multisample yet */
 					/* eventually... */
-					/*DesiredVisual |= CR_MULTISAMPLE_BIT;*/
+					/*stub.desiredVisual |= CR_MULTISAMPLE_BIT;*/
 				}
 				attrib++;
 				break;
@@ -289,10 +289,6 @@ void glXDestroyContext( Display *dpy, GLXContext ctx )
 Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 {
 	Bool retVal;
-
-	/*
-	printf("glXMakeCurrent(%p, %d, %d)\n", dpy, (int) drawable, (int) ctx);
-	*/
 
 	if (drawable == 0 && ctx == 0) {
 		/* Glean is one app that calls glXMakeCurrent(dpy, 0, 0).
@@ -385,7 +381,7 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_ALPHA_SIZE:
-			*value = (DesiredVisual & CR_ALPHA_BIT) ? 8 : 0;
+			*value = (stub.desiredVisual & CR_ALPHA_BIT) ? 8 : 0;
 			break;
 
 		case GLX_DEPTH_SIZE:
@@ -393,37 +389,37 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_STENCIL_SIZE:
-			DesiredVisual |= CR_STENCIL_BIT;
+			stub.desiredVisual |= CR_STENCIL_BIT;
 			*value = 8;
 			break;
 
 		case GLX_ACCUM_RED_SIZE:
-			DesiredVisual |= CR_ACCUM_BIT;
+			stub.desiredVisual |= CR_ACCUM_BIT;
 			*value = 16;
 			break;
 
 		case GLX_ACCUM_GREEN_SIZE:
-			DesiredVisual |= CR_ACCUM_BIT;
+			stub.desiredVisual |= CR_ACCUM_BIT;
 			*value = 16;
 			break;
 
 		case GLX_ACCUM_BLUE_SIZE:
-			DesiredVisual |= CR_ACCUM_BIT;
+			stub.desiredVisual |= CR_ACCUM_BIT;
 			*value = 16;
 			break;
 
 		case GLX_ACCUM_ALPHA_SIZE:
-			DesiredVisual |= CR_ACCUM_BIT;
+			stub.desiredVisual |= CR_ACCUM_BIT;
 			*value = 16;
 			break;
 
 		case GLX_SAMPLE_BUFFERS_SGIS:
-			DesiredVisual |= CR_MULTISAMPLE_BIT;
+			stub.desiredVisual |= CR_MULTISAMPLE_BIT;
 			*value = 0;  /* fix someday */
 			break;
 
 		case GLX_SAMPLES_SGIS:
-			DesiredVisual |= CR_MULTISAMPLE_BIT;
+			stub.desiredVisual |= CR_MULTISAMPLE_BIT;
 			*value = 0;  /* fix someday */
 			break;
 
@@ -481,7 +477,7 @@ void glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 
 void glXUseXFont( Font font, int first, int count, int listBase )
 {
-	Display *dpy = glinterface.glXGetCurrentDisplay();
+	Display *dpy = stub.wsInterface.glXGetCurrentDisplay();
 	if (dpy) {
 		stubUseXFont( dpy, font, first, count, listBase );
 	}

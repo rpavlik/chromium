@@ -10,6 +10,7 @@
 
 static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *params, GLenum extended_opcode )
 {
+	GET_PACKER_CONTEXT(pc);
 	int params_length = 0;
 	int packet_length = sizeof( int ) + sizeof( extended_opcode ) + sizeof( pname );
 	unsigned char *data_ptr;
@@ -30,7 +31,7 @@ static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *par
 			return GL_FALSE;
 	}
 	packet_length += params_length;
-	GET_BUFFERED_POINTER( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length );
 	WRITE_DATA( 0, int, packet_length );
 	WRITE_DATA( sizeof( int ) + 0, GLenum, extended_opcode );
 	WRITE_DATA( sizeof( int ) + 4, GLenum, pname );
@@ -46,22 +47,25 @@ static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *par
 
 void PACK_APIENTRY crPackCombinerParameterfvNV( GLenum pname, const GLfloat *params )
 {
+	GET_PACKER_CONTEXT(pc);
 	if (__handleCombinerParameterData( pname, params, CR_COMBINERPARAMETERFVNV_EXTEND_OPCODE ))
-		WRITE_OPCODE( CR_EXTEND_OPCODE );
+		WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
 }
 
 void PACK_APIENTRY crPackCombinerParameterivNV( GLenum pname, const GLint *params )
 {
 	/* floats and ints are the same size, so the packing should be the same */
+	GET_PACKER_CONTEXT(pc);
 	if (__handleCombinerParameterData( pname, (const GLfloat *) params, CR_COMBINERPARAMETERIVNV_EXTEND_OPCODE ))
-		WRITE_OPCODE( CR_EXTEND_OPCODE );
+		WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
 }
 
 void PACK_APIENTRY crPackCombinerStageParameterfvNV( GLenum stage, GLenum pname, const GLfloat *params )
 {
+	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 
-	GET_BUFFERED_POINTER( 28 );
+	GET_BUFFERED_POINTER(pc, 28 );
 	WRITE_DATA( 0, int, 28 );
 	WRITE_DATA( sizeof( int ) + 0, GLenum, CR_COMBINERSTAGEPARAMETERFVNV_EXTEND_OPCODE );
 	WRITE_DATA( sizeof( int ) + 4, GLenum, stage );
@@ -70,5 +74,5 @@ void PACK_APIENTRY crPackCombinerStageParameterfvNV( GLenum stage, GLenum pname,
 	WRITE_DATA( sizeof( int ) + 16, GLfloat, params[1] );
 	WRITE_DATA( sizeof( int ) + 20, GLfloat, params[2] );
 	WRITE_DATA( sizeof( int ) + 24, GLfloat, params[3] );
-	WRITE_OPCODE( CR_EXTEND_OPCODE );
+	WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
 }
