@@ -39,15 +39,23 @@ void set_log_file( void *foo, const char *response )
    char hostname[100];
    char *tmp;
 
-   strncpy( filename, response, strlen( response ));
+   if (crStrcmp( response, "stderr" ) == 0) {
+      perf_spu.log_file = stderr;
+   } 
+   else if (crStrcmp( response, "stdout" ) == 0) {
+      perf_spu.log_file = stdout;
+   }
+   else {
+      strncpy( filename, response, strlen( response ));
 
-   /* break up the string with our specialized tokens.
-    *
-    * %H - hostname
-    * .....
-    * .... more to come.....
-    */
-   while ( 1 ) {
+      /* break up the string with our specialized tokens.
+       *
+       * %H - hostname
+       * .....
+       * .... more to come.....
+       */
+
+      while ( 1 ) {
 
 	tmp = strpbrk(filename, "%");
 	if (!tmp) break;
@@ -66,27 +74,11 @@ void set_log_file( void *foo, const char *response )
 	
 	}
    	strcpy(filename, ffilename);
-   }
-
-   perf_spu.log_filename = (char *) crAlloc( crStrlen(ffilename) + 1 );
-   strcpy(perf_spu.log_filename, ffilename);
-
-   if (crStrcmp( response, "stderr" ) == 0) {
-      perf_spu.log_file = stderr;
-   } 
-   else if (crStrcmp( response, "stdout" ) == 0) {
-      perf_spu.log_file = stdout;
-   }
-#if 0 /* moved to perfspu_init.c */
-   else if (ffilename) {
-      perf_spu.log_file = fopen( ffilename, "w" );
-      if (perf_spu.log_file == NULL) {
-	 crError( "Couldn't open perf SPU log file %s", ffilename );
       }
+
+      perf_spu.log_filename = (char *) crAlloc( crStrlen(ffilename) + 1 );
+      strcpy(perf_spu.log_filename, ffilename);
    }
-#endif
-   else
-      perf_spu.log_file = stderr;
 }
 
 void set_token( void *foo, const char *response )
