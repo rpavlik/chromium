@@ -170,6 +170,11 @@
     <li><b>exit_on_escape</b> - if the value is non-zero, the CRUT Server will
         exit when the escape key is pressed.
     </li>
+    <li><b>composite_mode</b> - if the CRUT server is being used for image
+        compositing, this option can be set to 'alpha' or 'depth' to indicate
+        which kind of compositing is being done.
+        This helps to choose the right kind of visual for the CRUT window.
+    </li>
     </ul>
 
     <p>
@@ -179,6 +184,7 @@
        crutserver = CRUTServerNode()
        crutserver.Conf('window_geometry', [0, 0, 640, 480])
        crutserver.Conf('exit_on_esc', 1)
+       crutserver.Conf('composite_mode', 'depth')
     </pre>
 
   </body>
