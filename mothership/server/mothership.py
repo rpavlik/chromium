@@ -49,6 +49,8 @@ class CRNode:
 		self.host = host
 		if (host == 'localhost'):
 			self.host = gethostname()
+			print >> sys.stderr, "Resetting a localhost to %s" % self.host
+		self.ipaddr = gethostbyname(self.host)
 
 		# unqualify the hostname if it is already that way.
 		# e.g., turn "foo.bar.baz" into "foo"
@@ -75,12 +77,8 @@ class CRNode:
 		self.config['SPUdir'] = dir
 
 class CRNetworkNode(CRNode):
-	def __init__( self, host='localhost', ipaddr=None ):
+	def __init__( self, host='localhost' ):
 		CRNode.__init__(self,host)
-		if ipaddr:
-			self.ipaddr = ipaddr
-		else:
-			self.ipaddr = host
 		self.clients = []
 		self.tiles = []
 
