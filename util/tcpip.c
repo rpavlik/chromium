@@ -453,6 +453,9 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 		else
 			crStrcpy(my_hostname, hostname);
 		
+		/* We'll block on this call until the corresponding client-side
+		 * connectrequest is received by the mothership.
+		 */
 		if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest tcpip %s %d %d", my_hostname, conn->port, conn->endianness ) )
 		{
 			crError( "Mothership didn't like my accept request" );
@@ -1145,6 +1148,9 @@ crTCPIPDoConnect( CRConnection *conn )
 		int remote_endianness;
 		mother = __copy_of_crMothershipConnect( );
 
+		/* We'll block on this call until the corresponding server-side
+		 * acceptrequest is received by the mothership.
+		 */
 		if (!__copy_of_crMothershipSendString( mother, response, "connectrequest tcpip %s %d %d", 
 						       conn->hostname, conn->port, conn->endianness) )
 		{

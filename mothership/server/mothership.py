@@ -1027,6 +1027,7 @@ class CR:
 	def ConnectTCPIP( self, sock, connect_info ):
 		"""Connect routine for TCP/IP (see do_connectrequest())"""
 		(p, hostname, port_str, endianness_str) = connect_info
+		assert p == "tcpip"
 		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
 		port = int(port_str)
 		endianness = int(endianness_str)
@@ -1038,6 +1039,7 @@ class CR:
 				(server_hostname, server_port, server_endianness) = server_sock.tcpip_accept_wait
 				if SameHost(server_hostname, hostname) and server_port == port:
 					sock.Success("%d %d" % (self.conn_id, server_endianness))
+					# reply to the waiting server
 					server_sock.Success( "%d" % self.conn_id )
 					self.conn_id += 1
 					return
@@ -1049,6 +1051,7 @@ class CR:
 		# If we get here, the other end of the connection hasn't contacted
 		# the mothership yet.  So, save this request's hostname, port and
 		# endianness for when the matching "acceptrequest" message comes in.
+		# When we get it, we'll finally reply on the saved client socket.
 		sock.tcpip_connect_wait = (hostname, port, endianness)
 		return
 
@@ -1180,6 +1183,7 @@ class CR:
 	def AcceptTCPIP( self, sock, accept_info ):
 		"""Accept routine for TCP/IP (see do_acceptrequest())"""
 		(p, hostname, port_str, endianness_str) = accept_info
+		assert p == "tcpip"
 		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
 		port = int(port_str)
 		endianness = int(endianness_str)
@@ -1191,6 +1195,7 @@ class CR:
 				(client_hostname, client_port, client_endianness) = client_sock.tcpip_connect_wait
 				if SameHost(client_hostname, hostname) and client_port == port:
 					sock.Success( "%d" % self.conn_id )
+					# reply to the waiting client
 					client_sock.Success("%d %d" % (self.conn_id, endianness))
 					self.conn_id += 1
 					return
@@ -1201,6 +1206,7 @@ class CR:
 		# If we get here, the other end of the connection hasn't contacted
 		# the mothership yet.  So, save this request's hostname, port and
 		# endianness for when the matching "connectrequest" message comes in.
+		# When we get it, we'll finally reply on the saved server socket.
 		sock.tcpip_accept_wait = (hostname, port, endianness)
 		return
 
