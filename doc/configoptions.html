@@ -389,6 +389,10 @@ one or more downstream servers.
       <li><B>'Warped Grid'</B> - the grid tiles do not form a uniform grid of
          any sort.  Test primitive's bounding boxes against all tiles, without
          trivial rejection (slow).
+      <li><b>'Frustum'</B> - intended for use with
+          <a href="nonplanar.html">non-planar tilesort</a>.
+          Geometry is tested for intersection with each server's viewing
+          frustum.
       </ul>
   </tr>
 
