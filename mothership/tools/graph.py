@@ -503,7 +503,7 @@ class MainFrame(wxFrame):
 							(SpuClasses[i], pred.Name()))
 				break
 			# check if it's legal to put this SPU before another
-			if pos >= 0 and SPUIsTerminal(SpuClasses[i]):
+			if pos >= 0 and crutils.SPUIsTerminal(SpuClasses[i]):
 				self.Notify("You can't insert a %s SPU before a %s SPU." %
 							(SpuClasses[i], node.GetSPU(pos).Name()))
 				break
