@@ -381,7 +381,7 @@ tilesortspuGetVersionNumber(void)
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		int writeback = 1;
-		char version[1000];
+		GLubyte version[1000];
 
 		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
 
@@ -401,7 +401,7 @@ tilesortspuGetVersionNumber(void)
 			crNetRecv();
 		}
 
-		versions[i] = crStrToFloat(version);
+		versions[i] = crStrToFloat((char *) version);
 		CRASSERT(versions[i] > 0.0);
 	}
 
@@ -435,7 +435,7 @@ const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 		GET_THREAD(thread);
 		sprintf(thread->currentContext->glVersion, "%g Chromium %s",
 						version, CR_VERSION_STRING);
-		return thread->currentContext->glVersion;
+		return (const GLubyte *) thread->currentContext->glVersion;
 	}
 	else
 	{
