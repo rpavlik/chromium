@@ -54,6 +54,7 @@ crNetDisconnect
 crNetServerConnect
 crNetGetMessage
 crNetPeekMessage
+crNetDump
 crPixelCopy1D
 crPixelCopy2D
 crPixelSize
