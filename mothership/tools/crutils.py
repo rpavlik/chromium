@@ -199,19 +199,24 @@ def SplitNode(node, mothership):
 	(x, y) = node.GetPosition()
 	names = node.GetHosts()[:]
 	# build list of all tile lists in the node
-	tileList = []
-	for i in range(node.GetCount()):
-		tileList.append( node.GetTiles(i) )
+	if node.IsServer():
+		tileList = []
+		for i in range(node.GetCount()):
+			tileList.append( node.GetTiles(i) )
 	# make count-1 new nodes
 	for i in range(node.GetCount() - 1):
 		newNode = node.Clone()
 		newNode.SetCount(1)
 		y += 70
 		newNode.SetPosition(x, y)
-		newNode.SetHosts( names[i+1 : i+2] )  # name[i+1]
-		newNode.DeleteTiles()
-		if i + 1 < len(tileList):
-			newNode.SetTiles(tileList[i+1], 0)
+		if i + 1 < len(names):
+			newNode.SetHosts( names[i+1 : i+2] )  # name[i+1]
+		else:
+			newNode.SetHosts( names[-1] )
+		if newNode.IsServer():
+			newNode.DeleteTiles()
+			if i + 1 < len(tileList):
+				newNode.SetTiles(tileList[i+1], 0)
 		mothership.AddNode(newNode)
 		# connect clients to the new node
 		for c in clients:
@@ -220,8 +225,10 @@ def SplitNode(node, mothership):
 	# fix up the original node
 	node.SetCount(1)
 	node.SetHosts( names[0:1] )
-	node.DeleteTiles()
-	node.SetTiles(tileList[0], 0)
+	if node.IsServer():
+		node.DeleteTiles()
+		node.SetTiles(tileList[0], 0)
+
 
 def MergeNodes(nodes, mothership):
 	"""Merge a list of nodes into a single node.
@@ -257,6 +264,7 @@ def MergeNodes(nodes, mothership):
 	# Set total count on first node
 	first.SetCount(totalCount)
 	first.SetHosts(names)
-	for i in range(totalCount):
-		first.SetTiles(tiles[i], i)
+	if first.IsServer():
+		for i in range(totalCount):
+			first.SetTiles(tiles[i], i)
 	return 1
