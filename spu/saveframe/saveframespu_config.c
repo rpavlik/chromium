@@ -64,14 +64,7 @@ void saveframespuGatherConfiguration( void )
     }
 
     if ((saveframe_spu.width != -1) && (saveframe_spu.height != -1))
-    {
-        if (saveframe_spu.buffer != NULL)
-            free(saveframe_spu.buffer);
-
-        saveframe_spu.buffer =
-            (GLubyte *) malloc(sizeof(GLubyte) * saveframe_spu.width *
-                               saveframe_spu.height * 4);
-    }
+        ResizeBuffer();
 
     (void)response;
 

@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "cr_error.h"
 #include "cr_string.h"
 #include "cr_spu.h"
 #include "saveframespu.h"
@@ -27,7 +28,17 @@ swapBuffers()
         saveThisFrame = 1;
 
     if (saveframe_spu.width == -1)
-        saveThisFrame = 0;
+    {
+        /* We've never been given a size.  Try to get one from OpenGL. */
+        GLint geom[4];
+        saveframe_spu.child.GetIntegerv(GL_VIEWPORT, geom);
+        saveframe_spu.x = geom[0];
+        saveframe_spu.y = geom[1];
+        saveframe_spu.width = geom[2];
+        saveframe_spu.height = geom[3];
+
+        ResizeBuffer();
+    }
 
     if (saveThisFrame)
     {
@@ -35,9 +46,13 @@ swapBuffers()
         sprintf(filename,"%s%04ld",saveframe_spu.basename,saveframe_spu.framenum);
 
         saveframe_spu.child.ReadBuffer(GL_BACK);
-        saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width, saveframe_spu.height,
-                                  GL_RGBA, GL_UNSIGNED_BYTE, saveframe_spu.buffer);
-        RGBA_to_PPM(filename, saveframe_spu.width, saveframe_spu.height, saveframe_spu.buffer);
+        saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
+                                       saveframe_spu.height, GL_RGBA,
+                                       GL_UNSIGNED_BYTE,
+                                       saveframe_spu.buffer);
+
+        RGBA_to_PPM(filename, saveframe_spu.width, saveframe_spu.height,
+                    saveframe_spu.buffer);
     }
 
     saveframe_spu.framenum++;
@@ -53,11 +68,7 @@ viewport(GLint x, GLint y, GLsizei width, GLsizei height)
     saveframe_spu.x = x;
     saveframe_spu.y = y;
 
-    if (saveframe_spu.buffer != NULL)
-        free(saveframe_spu.buffer);
-
-    saveframe_spu.buffer = (GLubyte*)malloc(sizeof(GLubyte)*height*width*4);
-
+    ResizeBuffer();
     saveframe_spu.child.Viewport(x, y, width, height);
 }
 
@@ -65,6 +76,17 @@ SPUNamedFunctionTable saveframe_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) swapBuffers },
 	{ "Viewport", (SPUGenericFunction) viewport }
 };
+
+void
+ResizeBuffer(void)
+{
+    if (saveframe_spu.buffer != NULL)
+        free(saveframe_spu.buffer);
+
+    saveframe_spu.buffer =
+        (GLubyte *) malloc(sizeof(GLubyte) * saveframe_spu.height *
+                           saveframe_spu.width * 4);
+}
 
 static int
 RGBA_to_PPM(char *basename, int width, int height, GLubyte *buffer)

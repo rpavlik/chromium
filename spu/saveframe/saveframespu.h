@@ -16,6 +16,7 @@
 #include "cr_spu.h"
 
 void saveframespuGatherConfiguration( void );
+void ResizeBuffer(void);
 
 typedef struct {
 	int id;
