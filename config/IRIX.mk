@@ -3,15 +3,21 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+# Disabled warnings:
+# 1174: The function "f" was declared but never referenced.
+# 3201: The parameter "i" was never referenced.
+# 1209: The controlling expression is constant.
+# 1552: The variable "i" is set but never used.
+
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = CC
 CC = cc
 
-CXXFLAGS          += -n32
+CXXFLAGS          += -n32 -DIRIX -woff 1174,3201,1209,1552
 CXX_RELEASE_FLAGS += -O2 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
-CFLAGS            += -n32
+CFLAGS            += -n32 -DIRIX -woff 1174,3201,1209,1552
 C_RELEASE_FLAGS   += -O2 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
