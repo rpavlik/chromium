@@ -22,7 +22,7 @@ void SPU_APIENTRY renderspuSwapBuffers( void )
 	//render_spu.dispatch->DrawBuffer( GL_FRONT );
 	if (!render_spu.wglSwapBuffers( render_spu.device_context ))
 	{
-		crError( "wglSwapBuffers failed: %s!", buf );
+		crError( "wglSwapBuffers failed!");
 	}
 #else
 #endif
