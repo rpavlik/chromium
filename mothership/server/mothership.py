@@ -1167,7 +1167,7 @@ class CR:
 			return
 		words = string.split( line )
 		if len(words) == 0: 
-			sock.Failure( SockWrapper.NOTHINGTOSAY, "Request was empty?" )
+			sock_wrapper.Failure( SockWrapper.NOTHINGTOSAY, "Request was empty?" )
 			return
 		command = string.lower( words[0] )
                 #CRDebug("command = " + command)
