@@ -410,17 +410,11 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		/* destroy the old one */
 		XDestroyWindow( dpy, window->window );
 	}
-	window->window = XCreateWindow( dpy,
-																	RootWindow( dpy, 
-																							visual->visual->screen ),
-																	window->x,
-																	window->y,
-																	window->width,
-																	window->height,
-																	0, visual->visual->depth,
-																	InputOutput,
-																	visual->visual->visual,
-																	flags, &swa );
+	window->window =
+        XCreateWindow( dpy, RootWindow( dpy, visual->visual->screen ),
+                       window->x, window->y, window->width, window->height,
+                       0, visual->visual->depth, InputOutput,
+                       visual->visual->visual, flags, &swa);
 
 	if (!window->window) {
 		crWarning( "Render SPU: unable to create window" );
