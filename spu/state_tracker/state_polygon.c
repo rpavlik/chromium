@@ -176,7 +176,7 @@ void STATE_APIENTRY crStatePolygonStipple (const GLubyte *p)
 	}
 
 	crPixelCopy2D ( (void *) poly->stipple, p,
-			32, 32, GL_COLOR_INDEX, GL_BITMAP, 
+			GL_COLOR_INDEX, GL_BITMAP, 32, 32,
 			&(pix->pack));
 
 	pb->dirty = g->neg_bitid;
