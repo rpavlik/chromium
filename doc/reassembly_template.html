@@ -1,0 +1,157 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="new_window">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+
+
+<h2 class="PageSubHeading">Image Reassembly Template</h2>
+
+<p>The image reassembly template is used to setup a configuration in which
+the tilesort SPU generates N tiles which are reassembled into a downstream
+window.
+This template can also be used to configure hardware image assembly
+(such as with Lightning-2).
+</p>
+
+<p>When you create an image reassembly template you'll be prompted to enter
+the number of application nodes, number of rendering nodes and the size
+of the display (width and height in tiles).</p>
+
+<p>Clicking on the <em>Edit Template</em> button will open the
+image reassembly editor, shown here:</p>
+
+<p align="center"><img border="0" src="lightning2_template.gif"></p>
+
+<p>The editor is similar to the tilesort editor and
+has many of the same controls.</p>
+
+<p>The mural is depicted as colored tiles.  The tiles are labeled and
+colored to indicate the host node for each tile's server.</p>
+
+<p>Good load balancing is essential for this configuration.
+By observing the colors of the tiles one can get a feel for how well the
+image space is subdivided among the servers.
+You want to have an even spatial distribution of servers for good load
+balancing.
+</p>
+
+
+
+<h2>Using the image reassembly template</h2>
+
+
+<h3>Step 1: Specify the rendering servers</h3>
+
+<p>
+Specify the number and names of the rendering servers in your cluster.
+Do this with the controls in the upper-left corner of the window.
+</p>
+
+
+<h3>Step 2: Fixed or Variable Image Size?</h3>
+
+<p>
+The <b>Fixed or Variable Size Image</b> radio buttons control whether
+the recombined image will be of a fixed size or variable size.
+If it's a variable size you can choose to either fix the number of
+rows and columns or the tile size.
+If the rows and columns are fixed then tile tiles size will be free to change.
+Conversely, if the tile size is fixed, then the number of rows and columns
+will be free to change.
+</p>
+
+<p>
+The total image size will be displayed below only if you choose the fixed
+size option.
+</p>
+
+
+<h3>Step 3: Image and Tile Size</h3>
+
+<p>
+The <b>Image Tiles</b> controls set the number of rows and columns of
+tiles in the image mural.
+This control will be disabled if you chose the variable tile size above.
+</p>
+<p>
+The <b>Tile Size</b> controls set the individual tile size.
+You can choose a predefined tile size or enter any custom size.
+This control will be disabled if you chose the variable tile size option
+above.
+</p>
+
+
+<h3>Step 4: Tile Layout</h3>
+
+<p>
+The <b>Tile Layout</b> control determines how the tiles within the mural are
+laid out.
+<br>
+Raster order uses a simple top-to-bottom, left-to-right ordering.
+<br>
+Zig-zag order is like raster order except the left-to-right and
+right-to-left order is used for the even and odd rows, respectively.
+<br>
+Spiral order starts laying out tiles in the center of the mural, and
+grows in an outward, clockwise spiral.
+</p>
+<p>
+As mentioned above, it's important to choose a good tile layout for
+the sake of load balancing.
+</p>
+
+
+<h3>Step 5: Final Image Reassembly</h3>
+
+<p>
+There are three options for final image reassembly:
+</p>
+<ul>
+<li><b>No reassembly</b> - you'd probably use this if you have a hardware
+image compositor (such as Lightning-2) available.
+The tiles are rendered by each server and stay there.
+<li><b>Reassemble into render SPU window</b> - the image tiles on each
+server will be sent downstream (via readback SPU) to a downstream
+node which hosts a render SPU.
+The reassembled image will appear in the render SPU's window.
+<li><b>Reassemble into application window</b> - again, a downstream
+node with a render SPU will collect the image tiles.
+However, instead of displaying the reassembled image in the render SPU's
+window it will be shown in the original application window.
+</ul>
+
+
+<h3>Other options</h3>
+
+<p>
+Here are some other things which you'll probably want to pay
+attention to.
+</p>
+
+<p>
+Readback SPU window geometry:
+You'll typically want to set the <b>fullscreen</b> option so that each
+server has maximum window space for its tiles.
+</p>
+
+<p>
+Note that other SPU options, such as <b>resizable</b> will be set
+automatically when you use the controls described above in steps 1 - 5.
+</p>
+
+
+</body>
+</html>
