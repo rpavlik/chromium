@@ -41,6 +41,7 @@ static void crServerTearDown( void )
 		}
 	}
 
+	cr_server.curClient = NULL;
 	crFree( cr_server.clients );
 	crFree( cr_server.overlap_intens );
 
