@@ -55,6 +55,7 @@ typedef struct {
 	int local_visualization;
 	int visualize_depth;
 	int drawX, drawY;
+	int resX, resY;
 	GLenum depthType;
 
 	WindowInfo windows[MAX_WINDOWS];

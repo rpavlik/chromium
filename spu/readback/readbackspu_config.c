@@ -49,6 +49,12 @@ void set_drawpixels_pos( ReadbackSPU *readback_spu, const char *response )
 }
 
 
+void set_display_resolution( ReadbackSPU *readback_spu, const char *response )
+{
+   sscanf( response, "%d %d", &readback_spu->resX, &readback_spu->resY );
+}
+
+
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions readbackSPUOptions[] = {
@@ -69,6 +75,9 @@ SPUOptions readbackSPUOptions[] = {
 
    { "drawpixels_pos", CR_INT, 2, "0, 0", "0, 0", NULL,
      "glDrawPixels Position (x,y)", (SPUOptionCB)set_drawpixels_pos },
+
+   { "display_resolution", CR_INT, 2, "0", "0", NULL,
+     "resolution of the output device (x,y)", (SPUOptionCB)set_display_resolution },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 

@@ -40,10 +40,11 @@ static void DoFlush( void )
 {
 	GET_THREAD(thread);
 	static int first_time = 1;
-	static int geometry[4];
+	static int geometry[4], child_geometry[4];
 	GLfloat xmax = 0, xmin = 0, ymax = 0, ymin = 0;
 	int x, y, w, h;
-
+	int readx, ready, drawx, drawy;
+	
 	if (first_time)
 	{
 		GLint zBits;
@@ -79,7 +80,17 @@ static void DoFlush( void )
 			readback_spu.depthType = GL_FLOAT;
 
 		 readback_spu.child.BarrierCreate( READBACK_BARRIER, 0 );
-		 readback_spu.child.Ortho( 0, geometry[2]-1, 0, geometry[3]-1, -10000, 10000);
+		 readback_spu.child.GetIntegerv( GL_VIEWPORT, child_geometry );
+
+		 /* needed since swap_only_once has gone to the child */
+		 readback_spu.child.LoadIdentity();
+
+		 /*
+		  * off by 1? 
+		 readback_spu.child.Ortho( 0, child_geometry[2]-1, 0, child_geometry[3]-1, -10000, 10000);
+		 */
+		 readback_spu.child.Ortho(0, child_geometry[2], 0, child_geometry[3], -10000, 10000);
+
 	}
 
 	/* Create storage space for the buffers */
@@ -146,18 +157,37 @@ static void DoFlush( void )
 			readback_spu.viewportCenterX = readback_spu.halfViewportWidth;
 			readback_spu.viewportCenterY = readback_spu.halfViewportHeight;
 		}
-		x = (int) (readback_spu.halfViewportWidth*xmin + readback_spu.viewportCenterX);
+		readx = drawx = x = (int) (readback_spu.halfViewportWidth*xmin + readback_spu.viewportCenterX);
 		w = (int) (readback_spu.halfViewportWidth*xmax + readback_spu.viewportCenterX) - x;
-		y = (int) (readback_spu.halfViewportHeight*ymin + readback_spu.viewportCenterY);
+		ready = drawy = y = (int) (readback_spu.halfViewportHeight*ymin + readback_spu.viewportCenterY);
 		h = (int) (readback_spu.halfViewportHeight*ymax + readback_spu.viewportCenterY) - y;
 	}
 	else
 	{
-		x = 0;
-		y = 0;
 		w = geometry[2];
 		h = geometry[3];
+
+		/* presumably our tile starts at 0, 0 */
+		readx = ready = 0;
+
+		if (readback_spu.server)
+		{
+			drawx = readback_spu.server->x1[0];
+			drawy = readback_spu.server->y1[0];
+
+			if ((readback_spu.resX) && (readback_spu.resY))
+			{
+				drawx = drawx % readback_spu.resX;
+				drawy = drawy % readback_spu.resY;
+			}
+		}
+		else
+		{
+			/* readback on the app node */	
+			drawx = drawy = 0;
+		}
 	}
+
 
 	if (w < 0 || h < 0)
 	{
@@ -176,20 +206,20 @@ static void DoFlush( void )
 	/* Read RGB image, possibly alpha, possibly depth */
 	if (readback_spu.extract_alpha)
 	{
-		readback_spu.super.ReadPixels( x, y, w, h,
+		readback_spu.super.ReadPixels( readx, ready, w, h,
 				GL_RGBA, GL_UNSIGNED_BYTE,
 				thread->colorBuffer );
 	}
 	else 
 	{
-		readback_spu.super.ReadPixels( x, y, w, h, 
+		readback_spu.super.ReadPixels( readx, ready, w, h, 
 				GL_RGB, GL_UNSIGNED_BYTE,
 				thread->colorBuffer );
 	}
 
 	if (readback_spu.extract_depth)
 	{
-		readback_spu.super.ReadPixels( x, y, w, h,
+		readback_spu.super.ReadPixels( readx, ready, w, h,
 				GL_DEPTH_COMPONENT, readback_spu.depthType,
 				thread->depthBuffer );
 	}
@@ -208,7 +238,7 @@ static void DoFlush( void )
 		readback_spu.cleared_this_frame = 1;
 	}
 
-	readback_spu.child.RasterPos2i(x, y);
+	readback_spu.child.RasterPos2i(drawx, drawy);
 
 	if (readback_spu.extract_depth)
 	{
