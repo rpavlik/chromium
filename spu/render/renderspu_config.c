@@ -247,7 +247,7 @@ SPUOptions renderSPUOptions[] = {
 		"Gatherer URL", (SPUOptionCB)gather_url},
 
 	{ "gather_userbuf_size", CR_INT, 1, "0", NULL, NULL,
-		"Size of Buffer to Allocate for Gathering",	(SPUOptionCB)gather_userbuf},
+		"Size of Buffer to Allocate for Gathering", (SPUOptionCB)gather_userbuf},
 
 	{ "lut8", CR_STRING, 1, "", NULL, NULL,
 		"8 bit RGB LUT", (SPUOptionCB)set_lut8},
