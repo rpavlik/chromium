@@ -76,14 +76,15 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 		 zoomX = oldZoomX * winInfo->widthScale;
 		 zoomY = oldZoomY * winInfo->heightScale;
 		 crStatePixelZoom(zoomX, zoomY);
-		 /* The "+ 0.5" causes a round up when we cast to int */
-		 zoomedWidth  = (GLint) (zoomX * width  + 0.5);
-		 zoomedHeight = (GLint) (zoomY * height + 0.5);
 	}
 	else {
-		 zoomedWidth = width;
-		 zoomedHeight = height;
+		 zoomX = oldZoomX;
+		 zoomY = oldZoomY;
 	}
+
+	/* The "+ 0.5" causes a round up when we cast to int */
+	zoomedWidth  = (GLint) (zoomX * width  + 0.5);
+	zoomedHeight = (GLint) (zoomY * height + 0.5);
 
 	/* min x, y, z, w */
 	screen_bbox[0] = c->rasterAttrib[VERT_ATTRIB_POS][0] / v->viewportW;
