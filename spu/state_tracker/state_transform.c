@@ -4,6 +4,7 @@
 #include "cr_glstate.h"
 #include "cr_mem.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 #include <math.h>
 #include <assert.h>
@@ -312,6 +313,8 @@ void STATE_APIENTRY crStateClipPlane (GLenum plane, const GLdouble *equation) {
 		return;
 	}
 
+	FLUSH();
+
 	i = plane - GL_CLIP_PLANE0;
 	if (i >= t->maxClipPlanes)
 	{
@@ -338,6 +341,8 @@ void STATE_APIENTRY crStateMatrixMode(GLenum e)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "MatrixMode called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	switch (e) 
 	{
@@ -390,6 +395,8 @@ void STATE_APIENTRY crStateLoadIdentity()
 		return;
 	}
 
+	FLUSH();
+
 	*(t->m) = identity_matrix;
 	t->transformValid = 0;
 
@@ -411,6 +418,8 @@ void STATE_APIENTRY crStatePopMatrix()
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "PopMatrix called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (*(t->depth) == 0)
 	{
@@ -445,6 +454,8 @@ void STATE_APIENTRY crStatePushMatrix()
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "PushMatrix called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (*(t->depth)+1 == t->maxDepth)
 	{
@@ -485,6 +496,8 @@ void STATE_APIENTRY crStateLoadMatrixf(const GLfloat *m1)
 		return;
 	}
 
+	FLUSH();
+
 	m = t->m;
 	m->m00 = (GLdefault) m1[0];	
 	m->m01 = (GLdefault) m1[1];		
@@ -524,6 +537,8 @@ void STATE_APIENTRY crStateLoadMatrixd(const GLdouble *m1)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "LoadMatrixd called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	m = t->m;
 	m->m00 = (GLdefault) m1[0];	
@@ -603,6 +618,8 @@ void STATE_APIENTRY crStateMultMatrixf(const GLfloat *m1)
 		return;
 	}
 
+	FLUSH();
+
 	m->m00 = lm00*rm00 + lm10*rm01 + lm20*rm02 + lm30*rm03;	
 	m->m01 = lm01*rm00 + lm11*rm01 + lm21*rm02 + lm31*rm03;	
 	m->m02 = lm02*rm00 + lm12*rm01 + lm22*rm02 + lm32*rm03;	
@@ -673,6 +690,8 @@ void STATE_APIENTRY crStateMultMatrixd(const GLdouble *m1)
 		return;
 	}
 
+	FLUSH();
+
 	m->m00 = lm00*rm00 + lm10*rm01 + lm20*rm02 + lm30*rm03;	
 	m->m01 = lm01*rm00 + lm11*rm01 + lm21*rm02 + lm31*rm03;	
 	m->m02 = lm02*rm00 + lm12*rm01 + lm22*rm02 + lm32*rm03;	
@@ -714,6 +733,8 @@ void STATE_APIENTRY crStateTranslatef(GLfloat x_arg, GLfloat y_arg, GLfloat z_ar
 		return;
 	}
 
+	FLUSH();
+
 	m->m30 = m->m00*x + m->m10*y + m->m20*z + m->m30;
 	m->m31 = m->m01*x + m->m11*y + m->m21*z + m->m31;
 	m->m32 = m->m02*x + m->m12*y + m->m22*z + m->m32;
@@ -744,6 +765,8 @@ void STATE_APIENTRY crStateTranslated(GLdouble x_arg, GLdouble y_arg, GLdouble z
 		return;
 	}
 
+	FLUSH();
+
 	m->m30 = m->m00*x + m->m10*y + m->m20*z + m->m30;
 	m->m31 = m->m01*x + m->m11*y + m->m21*z + m->m31;
 	m->m32 = m->m02*x + m->m12*y + m->m22*z + m->m32;
@@ -770,6 +793,8 @@ void STATE_APIENTRY crStateRotatef(GLfloat ang, GLfloat x, GLfloat y, GLfloat z)
 	GLfloat x_one_minus_c;	
 	GLfloat y_one_minus_c;	
 	GLfloat z_one_minus_c;	
+
+	// Begin/end Checking and flushing will be done by MultMatrix.
 
 	if (v_len == 0.0f)
 		return;
@@ -817,6 +842,9 @@ void STATE_APIENTRY crStateRotated(GLdouble ang, GLdouble x, GLdouble y, GLdoubl
 	GLdouble x_one_minus_c;	
 	GLdouble y_one_minus_c;	
 	GLdouble z_one_minus_c;	
+
+	// Begin/end Checking and flushing will be done by MultMatrix.
+
 
 	/* Normalize the vector */	
 	if (v_len != 1.0f) {	
@@ -868,6 +896,8 @@ void STATE_APIENTRY crStateScalef (GLfloat x_arg, GLfloat y_arg, GLfloat z_arg)
 		return;
 	}
 
+	FLUSH();
+
 	m->m00 *= x;	
 	m->m01 *= x;	
 	m->m02 *= x;		
@@ -905,6 +935,8 @@ void STATE_APIENTRY crStateScaled (GLdouble x_arg, GLdouble y_arg, GLdouble z_ar
 		return;
 	}
 
+	FLUSH();
+
 	m->m00 *= x;	
 	m->m01 *= x;	
 	m->m02 *= x;		
@@ -930,6 +962,8 @@ void STATE_APIENTRY crStateFrustum (	GLdouble left, GLdouble right,
 		GLdouble zNear, GLdouble zFar) 
 {
 	GLdouble m[16];
+
+	// Begin/end Checking and flushing will be done by MultMatrix.
 
 	/* Build the frustum matrix
 	 ** from pg 163 OGL 1.1 Blue Book
@@ -963,6 +997,8 @@ void STATE_APIENTRY crStateOrtho ( GLdouble left, GLdouble right,
 {
 
 	GLdouble m[16];	
+
+	// Begin/end Checking and flushing will be done by MultMatrix.
 
 	m[0] = 2.0 / (right - left);
 	m[1] = 0.0;

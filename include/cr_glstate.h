@@ -38,15 +38,17 @@ typedef struct {
 	CRViewportBits  viewport;
 } CRStateBits;
 
-typedef void (*CRStateFlushFunc)( void );
+struct CRContext;
 
-typedef struct {
+typedef void (*CRStateFlushFunc)( struct CRContext *ctx );
+
+typedef struct CRContext {
 	int id;
 	GLbitvalue bitid;
 	GLbitvalue neg_bitid;
 
 	CRStateFlushFunc flush_func;
-	SPUDispatchTable flush_api;
+	SPUDispatchTable diff_api;
 
 	CRBufferState    buffer;
 	CRClientState    client;

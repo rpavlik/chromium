@@ -3,6 +3,7 @@
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "cr_pixeldata.h"
+#include "state_internals.h"
 
 void crStatePolygonInit(CRPolygonState *p) 
 {
@@ -36,6 +37,8 @@ void STATE_APIENTRY crStateCullFace(GLenum mode)
 		return;
 	}
 
+	FLUSH();
+
 	if (mode != GL_FRONT && mode != GL_BACK)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -62,6 +65,8 @@ void STATE_APIENTRY crStateFrontFace (GLenum mode)
 		return;
 	}
 
+	FLUSH();
+
 	if (mode != GL_CW && mode != GL_CCW)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -87,6 +92,8 @@ void  STATE_APIENTRY crStatePolygonMode (GLenum face, GLenum mode)
 				"glPolygonMode called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (mode != GL_POINT && mode != GL_LINE && mode != GL_FILL)
 	{
@@ -123,9 +130,11 @@ void STATE_APIENTRY crStatePolygonOffset (GLfloat factor, GLfloat units)
 	if (g->current.inBeginEnd) 
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-				"glPolygonMode called in begin/end");
+				"glPolygonOffset called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	p->offsetFactor = factor;
 	p->offsetUnits = units;
@@ -145,9 +154,11 @@ void STATE_APIENTRY crStatePolygonStipple (const GLubyte *p)
 	if (g->current.inBeginEnd) 
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-				"glPolygonMode called in begin/end");
+				"glPolygonStipple called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (!p)
 	{

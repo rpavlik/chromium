@@ -2,7 +2,7 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = tilesortspu
-FILES = tilesortspu tilesortspu_init
+FILES = tilesortspu tilesortspu_config tilesortspu_init
 
 LIBRARIES = crutil crmothership crstate crpacker
 

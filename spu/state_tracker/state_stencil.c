@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 void crStateStencilInit(CRStencilState *s) 
 {
@@ -29,6 +30,8 @@ void STATE_APIENTRY crStateStencilFunc(GLenum func, GLint ref, GLuint mask)
 			"glStencilFunc called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (func != GL_NEVER &&
 		func != GL_LESS &&
@@ -65,6 +68,8 @@ void STATE_APIENTRY crStateStencilOp (GLenum fail, GLenum zfail, GLenum zpass)
 			"glStencilOp called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (fail != GL_KEEP &&
 		fail != GL_ZERO &&
@@ -125,6 +130,8 @@ void STATE_APIENTRY crStateClearStencil (GLint c)
 		return;
 	}
 
+	FLUSH();
+
 
 	s->clearValue = c;
 	
@@ -146,6 +153,7 @@ void STATE_APIENTRY crStateStencilMask (GLuint mask)
 		return;
 	}
 
+	FLUSH();
 
 	s->mask = mask;
 

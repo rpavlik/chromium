@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 void crStateRasterPosUpdate(CRContext *g,
 							  GLfloat x, GLfloat y, GLfloat z, GLfloat w) 
@@ -57,6 +58,8 @@ void STATE_APIENTRY crStateRasterPos2d(GLdouble x, GLdouble y)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 
 	cb->dirty = g->neg_bitid;
@@ -74,6 +77,8 @@ void STATE_APIENTRY crStateRasterPos2f(GLfloat x, GLfloat y)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,x, y, 0.0f, 1.0f);
 
@@ -93,6 +98,8 @@ void STATE_APIENTRY crStateRasterPos2i(GLint x, GLint y)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 
 	cb->dirty = g->neg_bitid;
@@ -110,6 +117,8 @@ void STATE_APIENTRY crStateRasterPos2s(GLshort x, GLshort y)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 
@@ -129,6 +138,8 @@ void STATE_APIENTRY crStateRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 
 	cb->dirty = g->neg_bitid;
@@ -146,6 +157,8 @@ void STATE_APIENTRY crStateRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,x, y, z, 1.0f);
 
@@ -165,6 +178,8 @@ void STATE_APIENTRY crStateRasterPos3i(GLint x, GLint y, GLint z)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 
 	cb->dirty = g->neg_bitid;
@@ -182,6 +197,8 @@ void STATE_APIENTRY crStateRasterPos3s(GLshort x, GLshort y, GLshort z)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 
@@ -201,6 +218,8 @@ void STATE_APIENTRY crStateRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdou
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 
 	cb->dirty = g->neg_bitid;
@@ -218,6 +237,8 @@ void STATE_APIENTRY crStateRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat 
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,x, y, z, w);
 
@@ -237,6 +258,8 @@ void STATE_APIENTRY crStateRasterPos4i(GLint x, GLint y, GLint z, GLint w)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 
 	cb->dirty = g->neg_bitid;
@@ -254,6 +277,8 @@ void STATE_APIENTRY crStateRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort 
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 
@@ -273,6 +298,8 @@ void STATE_APIENTRY crStateRasterPos2dv(const GLdouble *v)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 
 	cb->dirty = g->neg_bitid;
@@ -290,6 +317,8 @@ void STATE_APIENTRY crStateRasterPos2fv(const GLfloat *v)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,v[0], v[1], 0.0f, 1.0f);
 
@@ -309,6 +338,8 @@ void STATE_APIENTRY crStateRasterPos2iv(const GLint *v)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 
 	cb->dirty = g->neg_bitid;
@@ -326,6 +357,8 @@ void STATE_APIENTRY crStateRasterPos2sv(const GLshort *v)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 
@@ -345,6 +378,8 @@ void STATE_APIENTRY crStateRasterPos3dv(const GLdouble *v)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 
 	cb->dirty = g->neg_bitid;
@@ -362,6 +397,8 @@ void STATE_APIENTRY crStateRasterPos3fv(const GLfloat *v)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,v[0], v[1], v[2], 1.0f);
 
@@ -381,6 +418,8 @@ void STATE_APIENTRY crStateRasterPos3iv(const GLint *v)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 
 	cb->dirty = g->neg_bitid;
@@ -398,6 +437,8 @@ void STATE_APIENTRY crStateRasterPos3sv(const GLshort *v)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 
@@ -417,6 +458,8 @@ void STATE_APIENTRY crStateRasterPos4dv(const GLdouble *v)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 
 	cb->dirty = g->neg_bitid;
@@ -434,6 +477,8 @@ void STATE_APIENTRY crStateRasterPos4fv(const GLfloat *v)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,v[0], v[1], v[2], v[3]);
 
@@ -453,6 +498,8 @@ void STATE_APIENTRY crStateRasterPos4iv(const GLint *v)
 		return;
 	}
 
+	FLUSH();
+
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 
 	cb->dirty = g->neg_bitid;
@@ -470,6 +517,8 @@ void STATE_APIENTRY crStateRasterPos4sv(const GLshort *v)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 

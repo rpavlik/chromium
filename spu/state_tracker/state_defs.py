@@ -24,5 +24,5 @@ print """crStateInit
 crStateCreateContext
 crStateMakeCurrent
 crStateFlushFunc
-crStateFlushAPI
+crStateDiffAPI
 """

@@ -3,8 +3,7 @@
 #include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
-
-
+#include "state_internals.h"
 
 void crStateViewportInit(CRViewportState *v) 
 {
@@ -61,6 +60,8 @@ void STATE_APIENTRY crStateViewport(GLint x, GLint y, GLsizei width,
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glViewport called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 	
 	if (width < 0 || height < 0)
 	{
@@ -104,6 +105,8 @@ void STATE_APIENTRY crStateDepthRange(GLclampd znear, GLclampd zfar)
 		return;
 	}
 
+	FLUSH();
+
 	v->near = znear;
 	v->far = zfar;
 	if (v->near < 0.0) v->near = 0.0;
@@ -131,6 +134,8 @@ void STATE_APIENTRY crStateScissor (GLint x, GLint y,
 			"glScissor called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (width < 0 || height < 0)
 	{

@@ -8,6 +8,10 @@ def CRDebug( str ):
 
 allSPUs = {}
 
+def Fatal( str ):
+	print >> sys.stderr, str
+	sys.exit(-1)
+
 def Conf( config, key, *values ):
 	def makestr( x ):
 		if type(x) == types.StringType: return x
@@ -19,12 +23,16 @@ class SPU:
 		self.name = name
 		self.config = {}
 		self.clientargs = []
+		self.servers = []
 
 	def Conf( self, key, *values ):
 		Conf( self.config, key, *values )
 
-	def Server( self, node, protocol='tcpip', port=7000 ):
-		self.Conf( 'server', "%s://%s:%d" % (protocol,node.ipaddr,port) )
+	def __add_server( self, node, url ):
+		self.servers.append( (node, url) )
+
+	def AddServer( self, node, protocol='tcpip', port=7000 ):
+		self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
 		node.AddClient( self, protocol )
 
 class CRNode:
@@ -117,13 +125,23 @@ class CR:
 	def MTU( self, mtu ):
 		self.mtu = mtu;
 
-	def Go( self ):
+	def Go( self, PORT=10000 ):
 		try:
 			HOST = ""
-			PORT = 10000
-			s = socket( AF_INET, SOCK_STREAM )
-			s.bind( (HOST, PORT) )
-			s.listen(100)
+			try:
+				s = socket( AF_INET, SOCK_STREAM )
+			except:
+				Fatal( "Couldn't create socket" );
+				
+			try:
+				s.bind( (HOST, PORT) )
+			except:
+				Fatal( "Couldn't bind to port %d" % PORT );
+
+			try:
+				s.listen(100)
+			except:
+				Fatal( "Couldn't listen!" );
 	
 			self.all_sockets.append(s)
 	
@@ -136,7 +154,7 @@ class CR:
 						self.all_sockets.append( conn )
 					else:
 						self.ProcessRequest( self.wrappers[sock] )
-		except:
+		except KeyboardInterrupt:
 			try:
 				s.shutdown( 2 )
 			except:
@@ -209,7 +227,11 @@ class CR:
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL host %s" % args )
 
 	def do_spu( self, sock, args ):
-		spuid = int(args)
+		try:
+			spuid = int(args)
+		except:
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "Bogus SPU name: %s" % args )
+			return
 		if not allSPUs.has_key( spuid ):
 			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "Never heard of SPU %d" % spuid )
 			return
@@ -235,6 +257,23 @@ class CR:
 			sock.Reply( SockWrapper.UNKNOWNPARAM, "Server doesn't have param %s" % (args) )
 			return
 		sock.Success( string.join( sock.node.config[args], " " ) )	
+
+	def do_servers( self, sock, args ):
+		if sock.SPUid == -1:
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
+			return
+		spu = allSPUs[sock.SPUid]
+		if len(spu.servers) == 0:
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
+			return
+
+		servers = "%d " % len(spu.servers)
+		for i in range(len(spu.servers)):
+			(node, url) = spu.servers[i]
+			servers += "%d %s" % (node.SPUs[0].ID, url)
+			if i != len(spu.servers) -1:
+				servers += ','
+		sock.Success( servers )
 
 	def do_clients( self, sock, args ):
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):

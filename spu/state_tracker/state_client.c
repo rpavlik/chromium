@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 #define GLCLIENT_NUMPOINTERS 6
 #define GLCLIENT_INDEX_ALLOC 1024
@@ -102,6 +103,8 @@ void STATE_APIENTRY crStateEnableClientState (GLenum array)
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
 
+	FLUSH();
+
 	crStateClientSetClientState(c, cb, g->neg_bitid, array, GL_TRUE);
 }
 
@@ -111,6 +114,7 @@ void STATE_APIENTRY crStateDisableClientState (GLenum array)
 	CRClientState *c = &(g->client);
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
+	FLUSH();
 
 	crStateClientSetClientState(c, cb, g->neg_bitid, array, GL_TRUE);
 }
@@ -164,6 +168,8 @@ void STATE_APIENTRY crStateVertexPointer(GLint size, GLenum type,
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
 
+	FLUSH();
+
 	if (size != 2 && size != 3 && size != 4)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glVertexPointer: invalid size: %d", size);
@@ -193,6 +199,8 @@ void STATE_APIENTRY crStateColorPointer(GLint size, GLenum type,
 	CRClientState *c = &(g->client);
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
+
+	FLUSH();
 
 	if (size != 3 && size != 4)
 	{
@@ -226,6 +234,8 @@ void STATE_APIENTRY crStateIndexPointer(GLenum type, GLsizei stride,
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
 
+	FLUSH();
+
 	if (type != GL_SHORT && type != GL_INT &&
 			type != GL_FLOAT && type != GL_DOUBLE)
 	{
@@ -250,6 +260,8 @@ void STATE_APIENTRY crStateNormalPointer(GLenum type, GLsizei stride,
 	CRClientState *c = &(g->client);
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
+
+	FLUSH();
 
 	if (type != GL_BYTE && type != GL_SHORT &&
 			type != GL_INT && type != GL_FLOAT &&
@@ -276,6 +288,8 @@ void STATE_APIENTRY crStateTexCoordPointer(GLint size, GLenum type,
 	CRClientState *c = &(g->client);
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
+
+	FLUSH();
 
 	if (size != 1 && size != 2 && size != 3 && size != 4)
 	{
@@ -305,6 +319,8 @@ void STATE_APIENTRY crStateEdgeFlagPointer(GLsizei stride, const GLvoid *p)
 	CRClientState *c = &(g->client);
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
+
+	FLUSH();
 
 	if (stride < 0) 
 	{

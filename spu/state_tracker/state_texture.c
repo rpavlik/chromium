@@ -6,6 +6,7 @@
 #include "state/cr_statetypes.h"
 #include "cr_pixeldata.h"
 #include "cr_mem.h"
+#include "state_internals.h"
 
 #define UNIMPLEMENTED() crStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented something or other" )
 #define UNUSED(x) ((void) (x))
@@ -607,6 +608,8 @@ void STATE_APIENTRY crStateGenTextures(GLsizei n, GLuint *textures)
 		return;
 	}
 
+	FLUSH();
+
 	if (n < 0)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative n passed to glGenTextures: %d", n);
@@ -642,6 +645,7 @@ void STATE_APIENTRY crStateDeleteTextures(GLsizei n, const GLuint *textures)
 		return;
 	}
 
+	FLUSH();
 
 	if (n < 0)
 	{
@@ -696,6 +700,7 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 		return;
 	}
 
+	FLUSH();
 
 	/* Special Case name = 0 */
 	if (!texture) 
@@ -795,6 +800,8 @@ void STATE_APIENTRY crStateTexImage1D (GLenum target, GLint level, GLint compone
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glTexImage1D called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	if (target != GL_TEXTURE_1D)
 	{
@@ -904,6 +911,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 		return;
 	}
 
+	FLUSH();
 
 	if (target != GL_TEXTURE_2D)
 	{
@@ -1026,6 +1034,7 @@ void STATE_APIENTRY crStateTexSubImage1D (GLenum target, GLint level, GLint xoff
 		return;
 	}
 
+	FLUSH();
 
 	if (target != GL_TEXTURE_1D)
 	{
@@ -1108,6 +1117,7 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 		return;
 	}
 
+	FLUSH();
 
 	if (target != GL_TEXTURE_2D)
 	{
@@ -1318,6 +1328,7 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 		return;
 	}
 
+	FLUSH();
 
 	switch (target) 
 	{
@@ -1460,6 +1471,8 @@ void STATE_APIENTRY crStateTexEnvfv (GLenum target, GLenum pname, const GLfloat 
 					"glTexEnvfv called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (target != GL_TEXTURE_ENV)
 	{
@@ -1633,6 +1646,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 		return;
 	}
 
+	FLUSH();
 
 	switch (coord) 
 	{

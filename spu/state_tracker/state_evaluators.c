@@ -4,6 +4,7 @@
 #include "cr_mem.h"
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 /*  Here are the order of the enums */
 /*      GL_MAP1_VERTEX_3 */
@@ -89,6 +90,8 @@ void STATE_APIENTRY crStateMap1d (GLenum target, GLdouble u1, GLdouble u2,
 		return;
 	}
 
+	FLUSH();
+
 	if (u1 == u2)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map1d: u1 == u2: %lf", u1);
@@ -150,6 +153,8 @@ void STATE_APIENTRY crStateMap1f (GLenum target, GLfloat u1, GLfloat u2,
 		return;
 	}
 
+	FLUSH();
+
 	if (u1 == u2)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map1f: u1 == u2: %f", u1);
@@ -210,6 +215,8 @@ void STATE_APIENTRY crStateMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint us
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Map2f called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (u1 == u2)
 	{
@@ -297,6 +304,8 @@ void STATE_APIENTRY crStateMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint 
 		return;
 	}
 
+	FLUSH();
+
 	if (u1 == u2)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map2d: u1 == u2: %lf", u1);
@@ -378,6 +387,8 @@ void STATE_APIENTRY crStateMapGrid1d (GLint un, GLdouble u1, GLdouble u2)
 		return;
 	}
 
+	FLUSH();
+
 	if (un < 0)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "MapGrid1d: un < 0: %d", un);
@@ -405,6 +416,8 @@ void STATE_APIENTRY crStateMapGrid1f (GLint un, GLfloat u1, GLfloat u2)
 		return;
 	}
 
+	FLUSH();
+
 	if (un < 0)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "MapGrid1d: un < 0: %d", un);
@@ -431,6 +444,8 @@ void STATE_APIENTRY crStateMapGrid2d (GLint un, GLdouble u1, GLdouble u2, GLint 
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "MapGrid2d called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (un < 0)
 	{
@@ -467,6 +482,8 @@ void STATE_APIENTRY crStateMapGrid2f (GLint un, GLfloat u1, GLfloat u2, GLint vn
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "MapGrid2f called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (un < 0)
 	{

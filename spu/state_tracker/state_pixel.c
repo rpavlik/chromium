@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 void crStatePixelInit(CRPixelState *p) { 
 	GLcolorf zero_color = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -64,6 +65,8 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "PixelStore{if} called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 
 	switch(pname) {
@@ -187,6 +190,8 @@ void STATE_APIENTRY crStatePixelTransferf (GLenum pname, GLfloat param) {
 		return;
 	}
 
+	FLUSH();
+
 	switch( pname )
 	{
 		case GL_MAP_COLOR:
@@ -251,6 +256,8 @@ void STATE_APIENTRY crStatePixelZoom (GLfloat xfactor, GLfloat yfactor)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "PixelZoom called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	p->xZoom = xfactor;
 	p->yZoom = yfactor;

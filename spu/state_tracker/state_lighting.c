@@ -4,6 +4,7 @@
 #include "cr_glstate.h"
 #include "cr_mem.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 void crStateLightingInitBits (CRLightingBits *l) 
 {
@@ -83,6 +84,8 @@ void STATE_APIENTRY crStateShadeModel (GLenum mode)
 		return;
 	}
 
+	FLUSH();
+
 	if (mode != GL_SMOOTH &&
 			mode != GL_FLAT)
 	{
@@ -107,6 +110,8 @@ void STATE_APIENTRY crStateColorMaterial (GLenum face, GLenum mode)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "ColorMaterial called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (face != GL_FRONT &&
 			face != GL_BACK &&
@@ -147,6 +152,8 @@ void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "LightModelfv called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	switch (pname) 
 	{
@@ -225,6 +232,8 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glLightfv called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	i = light - GL_LIGHT0;
 	if (i<0 || i>=l->maxLights)
@@ -406,6 +415,11 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 	CRLightingState *l = &(g->lighting);
 	CRStateBits *sb = GetCurrentBits();
 	CRLightingBits *lb = &(sb->lighting);
+
+	if (!g->current.inBeginEnd)
+	{
+		FLUSH();
+	}
 
 	switch (pname) 
 	{

@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 void crStateBufferInit (CRBufferState *b) 
 {
@@ -48,6 +49,8 @@ void STATE_APIENTRY crStateAlphaFunc (GLenum func, GLclampf ref)
 		return;
 	}
 
+	FLUSH();
+
 	switch (func) 
 	{
 		case GL_NEVER:
@@ -86,6 +89,8 @@ void STATE_APIENTRY crStateDepthFunc (GLenum func)
 		return;
 	}
 
+	FLUSH();
+
 	switch (func) 
 	{
 		case GL_NEVER:
@@ -120,6 +125,8 @@ void STATE_APIENTRY crStateBlendFunc (GLenum sfactor, GLenum dfactor)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glBlendFunc called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	switch (sfactor) 
 	{
@@ -174,6 +181,8 @@ void STATE_APIENTRY crStateLogicOp (GLenum opcode)
 		return;
 	}
 
+	FLUSH();
+
 	switch (opcode) 
 	{
 		case GL_CLEAR:
@@ -216,6 +225,8 @@ void STATE_APIENTRY crStateDrawBuffer (GLenum mode)
 		return;
 	}
 
+	FLUSH();
+
 	switch (mode) 
 	{
 		case GL_NONE:
@@ -251,6 +262,8 @@ void STATE_APIENTRY crStateReadBuffer (GLenum mode)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glReadBuffer called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	switch (mode) 
 	{
@@ -288,6 +301,8 @@ void STATE_APIENTRY crStateIndexMask (GLuint mask)
 		return;
 	}
 
+	FLUSH();
+
 	b->indexWriteMask = mask;
 	bb->dirty = g->neg_bitid;
 	bb->indexMask = g->neg_bitid;
@@ -305,6 +320,8 @@ void STATE_APIENTRY crStateColorMask (GLboolean red, GLboolean green, GLboolean 
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glReadBuffer called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	b->colorWriteMask.r = red;
 	b->colorWriteMask.g = green;
@@ -326,6 +343,8 @@ void STATE_APIENTRY crStateClearColor (GLclampf red, GLclampf green, GLclampf bl
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glClearColor called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (red < 0.0f) red = 0.0f;
 	if (red > 1.0f) red = 1.0f;
@@ -375,6 +394,8 @@ void STATE_APIENTRY crStateClearDepth (GLclampd depth)
 		return;
 	}
 
+	FLUSH();
+
 	if (depth < 0.0) depth = 0.0;
 	if (depth > 1.0) depth = 1.0;
 
@@ -395,6 +416,8 @@ void STATE_APIENTRY crStateClearAccum (GLclampf red, GLclampf green, GLclampf bl
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glClearAccum called in begin/end");
 		return;
 	}
+	
+	FLUSH();
 
 	if (red < -1.0f) red = 0.0f;
 	if (red > 1.0f) red = 1.0f;
@@ -425,6 +448,8 @@ void STATE_APIENTRY crStateDepthMask (GLboolean b)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "DepthMask called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	bs->depthMask = b;
 	bb->dirty = g->neg_bitid;

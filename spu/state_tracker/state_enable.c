@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 				GLenum cap, GLboolean val) 
@@ -260,6 +261,8 @@ void STATE_APIENTRY crStateEnable (GLenum cap) {
 		return;
 	}
 
+	FLUSH();
+
 	__enableSet(g, sb, g->neg_bitid, cap, GL_TRUE);
 
 }
@@ -274,6 +277,8 @@ void STATE_APIENTRY crStateDisable (GLenum cap) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glDisable called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	__enableSet(g, sb, g->neg_bitid, cap, GL_FALSE);
 }

@@ -8,9 +8,9 @@ void crStateFlushFunc( CRStateFlushFunc func )
 	g->flush_func = func;
 }
 
-void crStateFlushAPI( SPUDispatchTable *api )
+void crStateDiffAPI( SPUDispatchTable *api )
 {
 	CRContext *g = GetCurrentContext();
 
-	crSPUCopyDispatchTable( &(g->flush_api), api );
+	crSPUCopyDispatchTable( &(g->diff_api), api );
 }

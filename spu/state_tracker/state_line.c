@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 void crStateLineInit (CRLineState *l) {
 	l->lineSmooth = GL_FALSE;
@@ -38,6 +39,8 @@ void STATE_APIENTRY crStatePointSize(GLfloat size)
 		return;
 	}
 
+	FLUSH();
+
 	if (size <= 0.0f) 
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glPointSize called with size <= 0.0: %f", size);
@@ -61,6 +64,8 @@ void STATE_APIENTRY crStateLineWidth(GLfloat width)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glLineWidth called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (width <= 0.0f) 
 	{
@@ -86,6 +91,8 @@ void STATE_APIENTRY crStateLineStipple(GLint factor, GLushort pattern)
 			"glLineStipple called in begin/end");
 		return;
 	}
+
+	FLUSH();
 
 	if (factor < 1) factor = 1;
 	if (factor > 256) factor = 256;

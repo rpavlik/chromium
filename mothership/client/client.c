@@ -165,6 +165,11 @@ void crMothershipGetClients( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "clients" ));
 }
 
+void crMothershipGetServers( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "servers" ));
+}
+
 int crMothershipGetClientDLL( CRConnection *conn, char *response )
 {
 	return crMothershipSendString( conn, response, "clientDLL" );

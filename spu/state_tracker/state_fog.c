@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 void crStateFogInit (CRFogState *f) 
 {
@@ -67,6 +68,8 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glFogfv called in Begin/End");
 		return;
 	}
+
+	FLUSH();
 
 	switch (pname) 
 	{
