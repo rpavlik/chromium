@@ -15,6 +15,7 @@
 
 #include "cr_spu.h"
 #include "cr_server.h"
+#include "cr_threads.h"
 
 /* All information that has to be saved for each context. */
 typedef struct {
