@@ -94,8 +94,10 @@ class LightningParameters:
 			serverNode.SetTiles(self.MuralTiles[i], i)
 		if self.DynamicSize:
 			mothership.Conf('track_window_size', 1)
+			renderSPU.Conf('resizable', 1)
 		else:
 			mothership.Conf('track_window_size', 0)
+			renderSPU.Conf('resizable', 0)
 		if self.Reassembly == 2:
 			renderSPU.Conf('render_to_app_window', 1)
 		else:
@@ -985,13 +987,17 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 		serverNode.Select()
 		readbackSPU = crutils.NewSPU("readback")
 		readbackSPU.SetOption('window_geometry', [0, 0, 400, 400])  # XXX fix me
+		readbackSPU.SetOption('title', ["Chromium Readback SPU"])
 		packSPU = crutils.NewSPU("pack")
 		serverNode.AddSPU(readbackSPU)
 		serverNode.AddSPU(packSPU)
 		mothership.AddNode(serverNode)
 		tilesortSPU.AddServer(serverNode)
 		# Create the tile reassembly node
-		reassemblyNode = crutils.NewNetworkNode(1)
+		hosts = crutils.GetSiteDefault("frontend_hosts")
+		if not hosts:
+			hosts = ["localhost"]
+		reassemblyNode = crtypes.NetworkNode(hosts[0], 1)
 		reassemblyNode.SetPosition(420, 80)
 		reassemblyNode.Select()
 		reassemblySPU = crutils.NewSPU('render')
