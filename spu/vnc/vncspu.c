@@ -70,6 +70,11 @@ vncspuGetDirtyRegions(RegionPtr dirtyRegion)
 }
 
 
+/*
+ * Read back the image from the OpenGL window and store in the screen buffer
+ * (i.e. vnc_spu.screen_buffer) at the given x/y position.
+ * Then, update the dirty rectangle info.
+ */
 static void
 DoReadback(int x, int y, int width, int height)
 {
