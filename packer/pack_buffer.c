@@ -225,6 +225,13 @@ int crPackCanHoldBuffer( const CRPackBuffer *src )
 	return crPackCanHoldOpcode( num_opcode, num_data );
 }
 
+int crPackCanHoldBoundedBuffer( const CRPackBuffer *src )
+{
+	const int len_aligned = (src->data_current - src->opcode_current - 1 + 3) & ~3;
+	/* 24 is the size of the bounds-info packet... */
+	return crPackCanHoldOpcode( 1, len_aligned + 24 );
+}
+
 void crPackAppendBuffer( const CRPackBuffer *src )
 {
 	GET_PACKER_CONTEXT(pc);
@@ -270,7 +277,6 @@ void crPackAppendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 	const GLbyte *payload = (const GLbyte *) src->opcode_current + 1;
 	const int num_opcodes = src->opcode_start - src->opcode_current;
 	const int length = src->data_current - src->opcode_current - 1;
-	const int len_aligned = (length + 3) & ~3;
 
 	CRASSERT(pc);
 	CRASSERT(pc->currentBuffer);
@@ -280,8 +286,7 @@ void crPackAppendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 	 * payload points to the block of opcodes immediately followed by operands.
 	 */
 
-	/* 24 is the size of the bounds-info packet... */
-	if ( !crPackCanHoldOpcode( 1, len_aligned + 24 ) )
+	if ( !crPackCanHoldBoundedBuffer( src ) )
 	{
 		if (src->holds_BeginEnd)
 		{

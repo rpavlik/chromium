@@ -91,6 +91,7 @@ void crPackAppendBuffer( const CRPackBuffer *buffer );
 void crPackAppendBoundedBuffer( const CRPackBuffer *buffer, const CRrecti *bounds );
 int crPackCanHoldOpcode( int num_opcode, int num_data );
 int crPackCanHoldBuffer( const CRPackBuffer *buffer );
+int crPackCanHoldBoundedBuffer( const CRPackBuffer *buffer );
 
 #if defined(LINUX) || defined(WINDOWS)
 #define CR_UNALIGNED_ACCESS_OKAY

@@ -141,7 +141,7 @@ static void __appendBuffer( const CRPackBuffer *src )
 static void __appendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 {
 	GET_THREAD(thread);
-	int length = ((src->data_current - src->opcode_current - 1) + 3) & ~3;
+	int length = src->data_current - src->opcode_current - 1;
 
 	if (length == 0)
 	{
@@ -149,15 +149,14 @@ static void __appendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bound
 		return;
 	}
 
-	/* 24 is the size of the bounds info packet */
-	if ( !crPackCanHoldOpcode( 1, length + 24 )
+	if ( !crPackCanHoldBoundedBuffer( src )
 		|| thread->packer->buffer.holds_BeginEnd ^ src->holds_BeginEnd)
 	{
 		/* No room to append -- send now */
 		crPackReleaseBuffer( thread->packer );
 		tilesortspuSendServerBuffer( thread->state_server_index );
 		crPackSetBuffer( thread->packer, &(thread->buffer[thread->state_server_index]) );
-		CRASSERT(crPackCanHoldOpcode( 1, length + 24 ) || src->holds_BeginEnd );
+		CRASSERT(crPackCanHoldBoundedBuffer( src ) || src->holds_BeginEnd );
 	}
 
 	crPackAppendBoundedBuffer( src, bounds );
