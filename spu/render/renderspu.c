@@ -201,7 +201,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 			context->everCurrent = GL_TRUE;
 		}
 		if (crWindow == 0 && window->mapPending &&
-				!render_spu.render_to_app_window) {
+				!render_spu.render_to_app_window && !render_spu.render_to_crut_window) {
 			/* Window[0] is special, it's the default window and normally hidden.
 			 * If the mapPending flag is set, then we should now make the window
 			 * visible.
@@ -255,7 +255,7 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	render_spu.window_id++;
 
 	/* Have GLX/WGL/AGL create the window */
-	if (render_spu.render_to_app_window && !crGetenv("CRNEWSERVER"))
+	if ((render_spu.render_to_app_window || render_spu.render_to_crut_window) && !crGetenv("CRNEWSERVER"))
 		showIt = 0;
 	else
 		showIt = window->id > 0;

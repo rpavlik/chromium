@@ -4,10 +4,10 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 #if 00 /*TEMPORARY*/
-#include <unistd.h>
 #include "cr_rand.h"
 #endif
 
+#include <unistd.h>
 #include <GL/glx.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -1099,23 +1099,29 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		CRASSERT(context->context);
 
 		if (render_spu.render_to_crut_window) {
+		    if (render_spu.crut_drawable == 0) {
 
-		  conn = crMothershipConnect();
-		  if (!conn)
-		  {
-		    crError("Couldn't connect to the mothership to get CRUT drawable-- I have no idea what to do!");
-		  }
+		      conn = crMothershipConnect();
+		      if (!conn)
+		      {
+			crError("Couldn't connect to the mothership to get CRUT drawable-- I have no idea what to do!");
+		      }
 
-		  crMothershipGetParam( conn, "crut_drawable", response );
-		  render_spu.crut_drawable = crStrToInt(response);
-		  crMothershipDisconnect(conn);
+		      crMothershipGetParam( conn, "crut_drawable", response );
+		      render_spu.crut_drawable = crStrToInt(response);
+		      crMothershipDisconnect(conn);
 
-		  crDebug("Received a drawable: %i", render_spu.crut_drawable);
-		  if (!render_spu.crut_drawable)
-		    crError("Crut drawable is invalid\n");
+		      crDebug("Received a drawable: %i", render_spu.crut_drawable);
+		      if (!render_spu.crut_drawable) {
+			crDebug("Crut drawable is invalid\n");
+			/* Continue with nativeWindow = 0; we should render to the
+			 * little window instead
+			 */
+		      }
+		    }
 
-			nativeWindow = render_spu.crut_drawable;
-			window->nativeWindow = render_spu.crut_drawable;
+		  nativeWindow = render_spu.crut_drawable;
+		  window->nativeWindow = render_spu.crut_drawable;
 
 		}
 
