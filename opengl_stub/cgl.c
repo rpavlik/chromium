@@ -25,7 +25,11 @@
 static GLuint desiredVisual = CR_RGB_BIT;
 
 
-static GLuint FindVisualInfo( CGLPixelFormatObj pix )
+/**
+ * Compute a mask of CR_*_BIT flags which reflects the attributes of
+ * the given pixel format.
+ */
+static GLuint ComputeVisBits( CGLPixelFormatObj pix )
 {
 	GLuint b = 0;
 	long val = 0;
@@ -101,7 +105,7 @@ CGLCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx
 	CRASSERT(stub.contextTable);
 
 	if( stub.haveNativeOpenGL )
-		desiredVisual |= FindVisualInfo( pix );
+		desiredVisual |= ComputeVisBits( pix );
 
 	context = stubNewContext("", desiredVisual, UNDECIDED);
 	if (!context)
@@ -268,7 +272,7 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 	if( stub.haveNativeOpenGL ) {
 		stub.wsInterface.CGLChoosePixelFormat( attribList, pix, npix );
 		if( *pix )
-			desiredVisual = FindVisualInfo( *pix );
+			desiredVisual = ComputeVisBits( *pix );
 		else
 			crDebug("Couldnt choose pixel format?");
 	}

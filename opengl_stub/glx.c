@@ -208,7 +208,7 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
  * the CR_*_BIT flags which describes the visual's capabilities.
  */
 static GLuint
-FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
+ComputeVisBits( Display *dpy, XVisualInfo *vInfo )
 {
 	int visBits = 0;
 	GLint doubleBuffer = 0, stereo = 0;
@@ -392,16 +392,16 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 		}
 	}
 
-	desiredVisual |= visBits;
-
 	attribCopy[copy++] = None;
 
-	if ( !wants_rgb && !(desiredVisual & CR_OVERLAY_BIT) )
+	if ((visBits & CR_RGB_BIT) == 0 && (visBits & CR_OVERLAY_BIT) == 0)
 	{
 		/* normal layer, color index mode not supported */
 		crWarning( "glXChooseVisual: didn't request RGB visual?" );
 		return NULL;
 	}
+
+	desiredVisual |= visBits; /* default */
 
 	/* try to satisfy this request with the native glXChooseVisual() */
 	if (stub.haveNativeOpenGL &&
@@ -412,8 +412,10 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 		{
 			crDebug("faker native glXChooseVisual returning visual 0x%x",
 							(int) vis->visualid);
-			/* successful glXChooseVisual, so clear ours */
-			desiredVisual = FindVisualInfo(dpy, vis);
+			/* Since we have a real GLX, compute the visBits mask directly
+			 * from the GLX attributes, instead of guessing.
+			 */
+			desiredVisual = ComputeVisBits(dpy, vis);
 		}
 		else if (desiredVisual & CR_STEREO_BIT) {
 			/* Try getting a monoscopic visual instead of stereo */
@@ -515,6 +517,7 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 {
 	char dpyName[MAX_DPY_NAME];
 	ContextInfo *context;
+	int visBits = desiredVisual;  /* default value */
 
 	stubInit();
 
@@ -524,17 +527,19 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 	if (stub.haveNativeOpenGL) {
 		int foo, bar;
 		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) {
-			int visBits = FindVisualInfo( dpy, vis );
-			crDebug("FindVisualInfo(0x%x) = 0x%x", (int)vis->visual->visualid, visBits);
-			desiredVisual |= visBits;
+			/* If we have real GLX, compute the Chromium visual bitmask now.
+			 * otherwise, we'll use the default desiredVisual bitmask.
+			 */
+			visBits = ComputeVisBits( dpy, vis );
+			/*crDebug("ComputeVisBits(0x%x) = 0x%x", (int)vis->visual->visualid, visBits);*/
 			if (stub.force_pbuffers) {
 				crInfo("App faker: Forcing use of Pbuffers");
-				desiredVisual |= CR_PBUFFER_BIT;
+				visBits |= CR_PBUFFER_BIT;
 			}
 		}
 	}
 
-	context = stubNewContext(dpyName, desiredVisual, UNDECIDED);
+	context = stubNewContext(dpyName, visBits, UNDECIDED);
 	if (!context)
 		return 0;
 

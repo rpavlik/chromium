@@ -19,7 +19,11 @@
 static GLuint desiredVisual = CR_RGB_BIT;
 
 
-static GLuint FindVisualInfo( HDC hdc )
+/**
+ * Compute a mask of CR_*_BIT flags which reflects the attributes of
+ * the pixel format of the given hdc.
+ */
+static GLuint ComputeVisBits( HDC hdc )
 {
 	PIXELFORMATDESCRIPTOR pfd; 
 	int iPixelFormat;
@@ -250,7 +254,7 @@ HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 
 	sprintf(dpyName, "%d", hdc);
 	if (stub.haveNativeOpenGL)
-		desiredVisual |= FindVisualInfo( hdc );
+		desiredVisual |= ComputeVisBits( hdc );
 
 	context = stubNewContext(dpyName, desiredVisual, UNDECIDED);
 	if (!context)
