@@ -98,6 +98,9 @@ GLuint crIdPoolAllocBlock( CRIdPool *pool, GLuint count )
 
 			return ret;
 		}
+		else {
+			f = f->next;
+		}
 	}
 
 	/* failed to find free block */
