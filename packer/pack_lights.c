@@ -45,7 +45,7 @@ static void __handleLightData( GLenum light, GLenum pname, const GLfloat *params
 		WRITE_DATA( sizeof( int ) + 12, GLfloat, params[1] );
 		WRITE_DATA( sizeof( int ) + 16, GLfloat, params[2] );
 	}
-	if (packet_length > 3*sizeof( *params )) 
+	if (params_length > 3*sizeof( *params )) 
 	{
 		WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
 	}
