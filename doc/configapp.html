@@ -96,6 +96,20 @@ for the Chromium application node/faker.</p>
     </td>
   </tr>
   <tr>
+    <td width="19%" class="ConfigOption">track_window_visibility</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+      This option controls whether Chromium monitors the application
+      window for visibility.  When this is enabled and the application
+      window is hidden or displayed (aka mapped/unmapped) the head SPU's
+      WindowShow() function will be called with the new visibility state.
+      This is useful for <a href="dmx.html">Performer</a> which creates a
+      log of temporary windows during start-up that otherwise just clutter
+      the screen.
+      The default is false/0.
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption">minimum_window_size</td>
     <td width="12%" class="ConfigType">2 Integers</td>
     <td width="115%" class="ConfigDesc">
