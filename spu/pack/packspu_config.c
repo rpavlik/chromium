@@ -7,7 +7,6 @@
 
 static void __setDefaults( void )
 {
-	pack_spu.buffer_size = 1024*1024;
 }
 
 void packspuGatherConfiguration( void )
@@ -29,10 +28,8 @@ void packspuGatherConfiguration( void )
 		crError( "No server specified for Pack SPU %d", pack_spu.id );
 	}
 
-	if (crMothershipSPUParam( conn, response, "buffer_size" ))
-	{
-		sscanf( response, "%d", &(pack_spu.buffer_size) );
-	}
+	crMothershipGetMTU( conn, response );
+	sscanf( response, "%d", &(pack_spu.buffer_size) );
 
 	crMothershipDisconnect( conn );
 }

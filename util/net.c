@@ -27,6 +27,11 @@ unsigned int crNetMTU( void )
 	return __cr_MTU;
 }
 
+void crNetSetMTU( unsigned int mtu )
+{
+	__cr_MTU = mtu;
+}
+
 static struct {
 	int                  initialized; // flag
 	CRNetReceiveFunc     recv;        // what to do with arriving packets

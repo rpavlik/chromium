@@ -19,6 +19,7 @@ void crServerGatherConfiguration(void)
 	int num_spus;
 	int *spu_ids;
 	char **spu_names;
+	unsigned int mtu;
 	int i;
 
 	char **clientchain, **clientlist;
@@ -52,6 +53,10 @@ void crServerGatherConfiguration(void)
 	{
 		cr_server.tcpip_port = crStrToInt( response );
 	}
+
+	crMothershipGetMTU( conn, response );
+	sscanf( response, "%ud", &mtu );
+	crNetSetMTU( mtu );
 
 	// The response will tell us what protocols we need to serve
 	// example: "3 tcpip 1,gm 2,via 10"

@@ -47,6 +47,7 @@ void crNetConnect( CRConnection *conn );
 void crNetDisconnect( CRConnection *conn );
 void crCloseSocket( CRSocket sock );
 unsigned int crNetMTU( void );
+void crNetSetMTU( unsigned int mtu );
 
 struct CRConnection {
 	CRConnectionType type;
@@ -86,5 +87,6 @@ struct CRConnection {
 
 CRConnection *crNetConnectToServer( char *server, unsigned short default_port, int mtu );
 CRConnection *crNetAcceptClient( char *protocol, unsigned short port );
+
 
 #endif /* CR_NET_H */

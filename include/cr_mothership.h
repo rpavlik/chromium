@@ -19,5 +19,6 @@ int crMothershipSPUParam( CRConnection *conn, char *response, char *param, ...);
 void crMothershipGetClients( CRConnection *conn, char *response );
 int crMothershipGetClientDLL( CRConnection *conn, char *response );
 int crMothershipGetSPUDir( CRConnection *conn, char *response );
+void crMothershipGetMTU( CRConnection *conn, char *response );
 
 #endif /* CR_MOTHERSHIP_H */

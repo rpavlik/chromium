@@ -150,6 +150,11 @@ void crMothershipIdentifyServer( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "server %s", hostname ));
 }
 
+void crMothershipGetMTU( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "mtu" ) );
+}
+
 void crMothershipGetStartdir( CRConnection *conn, char *response )
 {
 	INSIST( crMothershipSendString( conn, response, "startdir" ));

@@ -24,7 +24,7 @@ class SPU:
 		Conf( self.config, key, *values )
 
 	def Server( self, node, protocol='tcpip', port=7000 ):
-		self.Conf( 'server', "%s://%s:%d" % (protocol,node.host,port) )
+		self.Conf( 'server', "%s://%s:%d" % (protocol,node.ipaddr,port) )
 		node.AddClient( self, protocol )
 
 class CRNode:
@@ -46,8 +46,12 @@ class CRNode:
 		allSPUs[spu.ID] = spu
 
 class CRNetworkNode(CRNode):
-	def __init__( self, host ):
+	def __init__( self, host, ipaddr=None ):
 		CRNode.__init__(self,host)
+		if ipaddr:
+			self.ipaddr = ipaddr
+		else:
+			self.ipaddr = host
 		self.clients = []
 
 	def Conf( self, key, *values ):
@@ -105,9 +109,13 @@ class CR:
 		self.nodes = []
 		self.all_sockets = []
 		self.wrappers = {}
+		self.mtu = 1024*1024
 
 	def AddNode( self, node ):
 		self.nodes.append( node )
+	
+	def MTU( self, mtu ):
+		self.mtu = mtu;
 
 	def Go( self ):
 		try:
@@ -245,6 +253,9 @@ class CR:
 			node.spokenfor = 0
 			node.spusloaded = 0
 		sock.Success( "Server Reset" );
+
+	def do_mtu( self, sock, args ):
+		sock.Success( `self.mtu` )
 
 	def do_quit( self, sock, args ):
 		sock.Success( "Bye" )

@@ -14,3 +14,4 @@ crMothershipGetStartdir
 crMothershipGetClients
 crMothershipGetClientDLL
 crMothershipGetSPUDir
+crMothershipGetMTU
