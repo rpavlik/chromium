@@ -271,6 +271,47 @@ void STATE_APIENTRY crStatePixelMapfv (GLenum map, GLint mapsize, const GLfloat 
 	UNUSED(values);
 	crStateError( __LINE__, __FILE__, GL_NO_ERROR, "Unimplemented Call: PixelMapfv" );
 }
+
+void STATE_APIENTRY crStateBitmap( GLsizei width, GLsizei height, 
+		GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, 
+		const GLubyte *bitmap)
+{
+	CRContext *g = GetCurrentContext();
+	CRCurrentState *c = &(g->current);
+	CRStateBits *s = GetCurrentBits();
+	CRCurrentBits *cb = &(s->current);
+
+	(void) xorig;
+	(void) yorig;
+	(void) bitmap;
+	
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, 
+			"Bitmap called in begin/end");
+		return;
+	}
+
+	if (width < 0 || height < 0)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+			"Bitmap called with neg dims: %dx%d", width, height);
+		return;
+	}
+
+	if (!c->rasterValid)
+	{
+		return;
+	}
+
+	c->rasterPos.x += xmove;
+	c->rasterPos.y += ymove;
+	cb->raster = g->neg_bitid;
+	cb->dirty = g->neg_bitid;
+
+	c->rasterPosPre.x += xmove;
+	c->rasterPosPre.y += ymove;
+}
  
 void STATE_APIENTRY crStatePixelMapuiv (GLenum map, GLint mapsize, const GLuint * values) {
 	UNUSED(map);

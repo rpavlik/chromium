@@ -12,3 +12,5 @@ DrawElements
 SwapBuffers
 Flush
 Finish
+PixelStorei
+PixelStoref

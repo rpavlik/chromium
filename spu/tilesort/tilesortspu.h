@@ -51,6 +51,8 @@ typedef struct {
 	float viewportCenterX, viewportCenterY;
 	float halfViewportWidth, halfViewportHeight;
 
+	GLenum providedBBOX;
+
 	unsigned int muralWidth, muralHeight;
 
 	unsigned int MTU;
@@ -89,5 +91,7 @@ void tilesortspuSetBucketingBounds( int x, int y, unsigned int w, unsigned int h
 void tilesortspuBucketingInit( void );
 
 void tilesortspuDebugOpcodes( CRPackBuffer *pack );
+
+void TILESORTSPU_APIENTRY tilesortspu_Hint( GLenum target, GLenum mode );
 
 #endif /* TILESORT_SPU_H */

@@ -5,6 +5,8 @@
 #include "cr_protocol.h"
 #include "cr_error.h"
 #include "cr_packfunctions.h"
+#include "cr_applications.h"
+
 #include <memory.h>
 #include <math.h>
 #include <stdlib.h>
@@ -294,7 +296,10 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		//crDebug( "About to bucket the geometry" );
 		bucket_info = tilesortspuBucketGeometry();
 		bounds = bucket_info->pixelBounds;
-		crPackResetBBOX();
+		if (tilesort_spu.providedBBOX != CR_OBJECT_BBOX_HINT)
+		{
+			crPackResetBBOX();
+		}
 	}
 	else
 	{

@@ -10,7 +10,7 @@ void crStateRasterPosUpdate(CRContext *g,
 {
 	CRCurrentState *c = &(g->current);
 	CRTransformState *t = &(g->transform);
-	// CRViewportState *v = &(g->viewport);
+	CRViewportState *v = &(g->viewport);
 	GLvectorf p;
 
 	p.x = x;
@@ -32,7 +32,7 @@ void crStateRasterPosUpdate(CRContext *g,
 	p.z /= p.w;
 	p.w = 1.0f;
 
-	// __glviewport_ApplyViewport(v, &p);
+	crStateViewportApply(v, &p);
 
 	c->rasterValid = GL_TRUE;
 	c->rasterPos = p;

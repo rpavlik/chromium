@@ -34,12 +34,15 @@ int main( int argc, char *argv[] )
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
 	crServerGatherConfiguration(mothership);
-	for ( i = 0 ; i < cr_server.num_clients ; i++)
+	if (cr_server.num_extents > 0)
 	{
-		crServerRecomputeBaseProjection( &(cr_server.clients[i].baseProjection) );
+		for ( i = 0 ; i < cr_server.num_clients ; i++)
+		{
+			crServerRecomputeBaseProjection( &(cr_server.clients[i].baseProjection) );
+		}
+		cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
+		cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.clients[0].baseProjection) );
 	}
-	cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
-	cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.clients[0].baseProjection) );
 	crServerInitDispatch();
 	crStateMakeCurrent( cr_server.clients[0].ctx );
 	crStateSetCurrentPointers( &(cr_server.current) );

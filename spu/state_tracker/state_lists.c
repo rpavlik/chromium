@@ -20,6 +20,8 @@ void crStateListsBindName(CRListsState *l, GLuint name)
 {
 	CRListsFreeElem *i;
 	CRListsFreeElem *newelem;
+
+	crDebug( "Binding list %d", name );
 	
 	/* First find which region it fits in */
 	for (i=l->freeList; i && !(i->min <= name && name <= i->max); i=i->next)

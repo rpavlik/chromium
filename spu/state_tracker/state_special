@@ -189,3 +189,4 @@ InterleavedArrays
 GetPointerv
 PushAttrib
 PopAttrib
+Bitmap

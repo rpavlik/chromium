@@ -39,6 +39,7 @@ typedef struct {
 
 void crStateViewportInit(CRViewportState *);
 
+void crStateViewportApply( CRViewportState *v, GLvectorf *p );
 void crStateViewportMakeCurrent(CRViewportState *v, CRViewportBits *vb);
 
 void crStateViewportDiff(CRViewportBits *bb, GLbitvalue bitID, 

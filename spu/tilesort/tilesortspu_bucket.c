@@ -1,7 +1,9 @@
 #include "tilesortspu.h"
 #include "cr_glstate.h"
-#include "cr_pack.h" // the bbox is here
+#include "cr_pack.h"
 #include "cr_mem.h"
+
+#include "cr_applications.h"
 
 #include <limits.h>
 #include <float.h>
@@ -198,85 +200,101 @@ static TileSortBucketInfo *__doBucket( void )
 	ymax = bucketInfo.objectMax.y;
 	zmax = bucketInfo.objectMax.z;
 
-	//Now transform the bounding box points
-	x[0] = _vmult(&(m->m00), xmin, ymin, zmin);
-	x[1] = _vmult(&(m->m00), xmax, ymin, zmin);
-	x[2] = _vmult(&(m->m00), xmin, ymax, zmin);
-	x[3] = _vmult(&(m->m00), xmax, ymax, zmin);
-	x[4] = _vmult(&(m->m00), xmin, ymin, zmax);
-	x[5] = _vmult(&(m->m00), xmax, ymin, zmax);
-	x[6] = _vmult(&(m->m00), xmin, ymax, zmax);
-	x[7] = _vmult(&(m->m00), xmax, ymax, zmax);
-
-	y[0] = _vmult(&(m->m01), xmin, ymin, zmin);
-	y[1] = _vmult(&(m->m01), xmax, ymin, zmin);
-	y[2] = _vmult(&(m->m01), xmin, ymax, zmin);
-	y[3] = _vmult(&(m->m01), xmax, ymax, zmin);
-	y[4] = _vmult(&(m->m01), xmin, ymin, zmax);
-	y[5] = _vmult(&(m->m01), xmax, ymin, zmax);
-	y[6] = _vmult(&(m->m01), xmin, ymax, zmax);
-	y[7] = _vmult(&(m->m01), xmax, ymax, zmax);
-
-	z[0] = _vmult(&(m->m02), xmin, ymin, zmin);
-	z[1] = _vmult(&(m->m02), xmax, ymin, zmin);
-	z[2] = _vmult(&(m->m02), xmin, ymax, zmin);
-	z[3] = _vmult(&(m->m02), xmax, ymax, zmin);
-	z[4] = _vmult(&(m->m02), xmin, ymin, zmax);
-	z[5] = _vmult(&(m->m02), xmax, ymin, zmax);
-	z[6] = _vmult(&(m->m02), xmin, ymax, zmax);
-	z[7] = _vmult(&(m->m02), xmax, ymax, zmax);
-
-	w[0] = _vmult(&(m->m03), xmin, ymin, zmin);
-	w[1] = _vmult(&(m->m03), xmax, ymin, zmin);
-	w[2] = _vmult(&(m->m03), xmin, ymax, zmin);
-	w[3] = _vmult(&(m->m03), xmax, ymax, zmin);
-	w[4] = _vmult(&(m->m03), xmin, ymin, zmax);
-	w[5] = _vmult(&(m->m03), xmax, ymin, zmax);
-	w[6] = _vmult(&(m->m03), xmin, ymax, zmax);
-	w[7] = _vmult(&(m->m03), xmax, ymax, zmax);
-
-	// Now, the object-space bbox has been transformed into
-	// clip-space.
-
-	/* Find the 2D bounding box of the 3D bounding box */
-	xmin = ymin = zmin = FLT_MAX;
-	xmax = ymax = zmax = -FLT_MAX;
-
-	for (i=0; i<8; i++) 
+	if (tilesort_spu.providedBBOX != CR_SCREEN_BBOX_HINT)
 	{
-		float xp = x[i];
-		float yp = y[i];
-		float zp = z[i];
-		float wp = w[i];
+		//Now transform the bounding box points
+		x[0] = _vmult(&(m->m00), xmin, ymin, zmin);
+		x[1] = _vmult(&(m->m00), xmax, ymin, zmin);
+		x[2] = _vmult(&(m->m00), xmin, ymax, zmin);
+		x[3] = _vmult(&(m->m00), xmax, ymax, zmin);
+		x[4] = _vmult(&(m->m00), xmin, ymin, zmax);
+		x[5] = _vmult(&(m->m00), xmax, ymin, zmax);
+		x[6] = _vmult(&(m->m00), xmin, ymax, zmax);
+		x[7] = _vmult(&(m->m00), xmax, ymax, zmax);
 
-		/* If corner is to be clipped... */
-		if (zp < -wp) 
+		y[0] = _vmult(&(m->m01), xmin, ymin, zmin);
+		y[1] = _vmult(&(m->m01), xmax, ymin, zmin);
+		y[2] = _vmult(&(m->m01), xmin, ymax, zmin);
+		y[3] = _vmult(&(m->m01), xmax, ymax, zmin);
+		y[4] = _vmult(&(m->m01), xmin, ymin, zmax);
+		y[5] = _vmult(&(m->m01), xmax, ymin, zmax);
+		y[6] = _vmult(&(m->m01), xmin, ymax, zmax);
+		y[7] = _vmult(&(m->m01), xmax, ymax, zmax);
+
+		z[0] = _vmult(&(m->m02), xmin, ymin, zmin);
+		z[1] = _vmult(&(m->m02), xmax, ymin, zmin);
+		z[2] = _vmult(&(m->m02), xmin, ymax, zmin);
+		z[3] = _vmult(&(m->m02), xmax, ymax, zmin);
+		z[4] = _vmult(&(m->m02), xmin, ymin, zmax);
+		z[5] = _vmult(&(m->m02), xmax, ymin, zmax);
+		z[6] = _vmult(&(m->m02), xmin, ymax, zmax);
+		z[7] = _vmult(&(m->m02), xmax, ymax, zmax);
+
+		w[0] = _vmult(&(m->m03), xmin, ymin, zmin);
+		w[1] = _vmult(&(m->m03), xmax, ymin, zmin);
+		w[2] = _vmult(&(m->m03), xmin, ymax, zmin);
+		w[3] = _vmult(&(m->m03), xmax, ymax, zmin);
+		w[4] = _vmult(&(m->m03), xmin, ymin, zmax);
+		w[5] = _vmult(&(m->m03), xmax, ymin, zmax);
+		w[6] = _vmult(&(m->m03), xmin, ymax, zmax);
+		w[7] = _vmult(&(m->m03), xmax, ymax, zmax);
+
+		// Now, the object-space bbox has been transformed into
+		// clip-space.
+
+		/* Find the 2D bounding box of the 3D bounding box */
+		xmin = ymin = zmin = FLT_MAX;
+		xmax = ymax = zmax = -FLT_MAX;
+
+		for (i=0; i<8; i++) 
 		{
+			float xp = x[i];
+			float yp = y[i];
+			float zp = z[i];
+			float wp = w[i];
 
-			/* Point has three edges */
-			for (j=0; j<3; j++) 
+			/* If corner is to be clipped... */
+			if (zp < -wp) 
 			{
-				/* Handle the clipping... */
-				int k = c[i][j];
-				float xk = x[k];
-				float yk = y[k];
-				float zk = z[k];
-				float wk = w[k];
-				float t = (wp + zp) / (zp+wp-zk-wk);
 
-				if (t < 0.0f || t > 1.0f)
+				/* Point has three edges */
+				for (j=0; j<3; j++) 
 				{
-					continue;
-				}
-				wp = wp + (wk-wp) * t;
-				xp = xp + (xk-xp) * t;
-				yp = yp + (yk-yp) * t;
-				zp = -wp;
+					/* Handle the clipping... */
+					int k = c[i][j];
+					float xk = x[k];
+					float yk = y[k];
+					float zk = z[k];
+					float wk = w[k];
+					float t = (wp + zp) / (zp+wp-zk-wk);
 
+					if (t < 0.0f || t > 1.0f)
+					{
+						continue;
+					}
+					wp = wp + (wk-wp) * t;
+					xp = xp + (xk-xp) * t;
+					yp = yp + (yk-yp) * t;
+					zp = -wp;
+
+					xp /= wp;
+					yp /= wp;
+					zp /= wp;
+
+					if (xp < xmin) xmin = xp;
+					if (xp > xmax) xmax = xp;
+					if (yp < ymin) ymin = yp;
+					if (yp > ymax) ymax = yp;
+					if (zp < zmin) zmin = zp;
+					if (zp > zmax) zmax = zp;
+				}
+			} 
+			else 
+			{
+				/* corner was not clipped.. */
 				xp /= wp;
 				yp /= wp;
 				zp /= wp;
-
 				if (xp < xmin) xmin = xp;
 				if (xp > xmax) xmax = xp;
 				if (yp < ymin) ymin = yp;
@@ -284,19 +302,6 @@ static TileSortBucketInfo *__doBucket( void )
 				if (zp < zmin) zmin = zp;
 				if (zp > zmax) zmax = zp;
 			}
-		} 
-		else 
-		{
-			/* corner was not clipped.. */
-			xp /= wp;
-			yp /= wp;
-			zp /= wp;
-			if (xp < xmin) xmin = xp;
-			if (xp > xmax) xmax = xp;
-			if (yp < ymin) ymin = yp;
-			if (yp > ymax) ymax = yp;
-			if (zp < zmin) zmin = zp;
-			if (zp > zmax) zmax = zp;
 		}
 	}
 

@@ -27,6 +27,7 @@ void crPackResetBBOX(void)
 	cr_packer_globals.bounds_max.x = -FLT_MAX;
 	cr_packer_globals.bounds_max.y = -FLT_MAX;
 	cr_packer_globals.bounds_max.z = -FLT_MAX;
+	cr_packer_globals.updateBBOX = 1;
 }
 """
 
@@ -56,10 +57,13 @@ for num_coords in [2,3,4]:
 			print "\tCREATE_%dD_FLOATS();" % num_coords
 
 		print "\tGET_BUFFERED_POINTER( %d );" % packet_length
+		print "\tif (cr_packer_globals.updateBBOX)"
+		print "\t{"
 		if num_coords < 4:
-			print "\tUPDATE_%dD_BBOX();" % num_coords
+			print "\t\tUPDATE_%dD_BBOX();" % num_coords
 		else:
-			print "\tUPDATE_3D_BBOX();"
+			print "\t\tUPDATE_3D_BBOX();"
+		print "\t}"
 
 		counter = 0
 		for index in range(0,len(arg_names)):
@@ -86,10 +90,13 @@ for num_coords in [2,3,4]:
 			print "\tCREATE_%dD_VFLOATS();" % num_coords
 
 		print "\tGET_BUFFERED_POINTER( %d );" % packet_length
+		print "\tif (cr_packer_globals.updateBBOX)"
+		print "\t{"
 		if num_coords < 4:
-			print "\tUPDATE_%dD_BBOX();" % num_coords
+			print "\t\tUPDATE_%dD_BBOX();" % num_coords
 		else:
-			print "\tUPDATE_3D_BBOX();"
+			print "\t\tUPDATE_3D_BBOX();"
+		print "\t}"
 
 		counter = 0
 		for index in range(num_coords):

@@ -20,7 +20,6 @@ typedef struct {
 	GLint maxAttribStackDepth;
 
 	GLbitvalue pushMaskStack[CR_MAX_ATTRIB_STACK_DEPTH];
-	GLint      pushMaskDepth;
 } CRAttribState;
 
 void crStateAttribInit(CRAttribState *a);

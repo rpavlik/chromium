@@ -11,8 +11,6 @@ void crStateAttribInit (CRAttribState *a)
 {
 	a->attribStackDepth = 0;
 	a->maxAttribStackDepth = CR_MAX_ATTRIB_STACK_DEPTH; // XXX
-
-	a->pushMaskDepth = 0;
 }
 
 void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
@@ -34,7 +32,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	}
 	crDebug( "pushAttrib called with value 0x%x", (unsigned int) mask );
 
-	a->pushMaskStack[a->pushMaskDepth++] = mask;
+	a->pushMaskStack[a->attribStackDepth++] = mask;
 
 	ab->dirty = g->neg_bitid;
 }
@@ -59,7 +57,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty stack!" );
 	}
 
-	mask = a->pushMaskStack[a->pushMaskDepth--];
+	mask = a->pushMaskStack[--a->attribStackDepth];
 
 	crDebug( "PopAttrib was called, the mask on the top of the stack was 0x%x", (unsigned int) mask );
 

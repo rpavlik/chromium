@@ -34,6 +34,7 @@ typedef struct {
 	CRPackSendHugeFunc SendHuge;
 	CRCurrentStatePointers current;
 	CRBBOXPoint bounds_min, bounds_max;
+	int updateBBOX;
 } CRPackGlobals;
 
 extern DLLDATA CRPackGlobals cr_packer_globals;

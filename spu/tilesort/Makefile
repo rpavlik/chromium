@@ -9,7 +9,9 @@ FILES = tilesortspu \
 	tilesortspu_client \
 	tilesortspu_config \
 	tilesortspu_diffapi \
+	tilesortspu_pixels \
 	tilesortspu_flush \
+	tilesortspu_hint \
 	tilesortspu_init \
 	tilesortspu_misc \
 	tilesortspu_net \

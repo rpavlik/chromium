@@ -89,6 +89,9 @@ for func_name in keys:
 					argstr += '%s ? "true" : "false"' % name
 				else:
 					argstr += name
+			elif type.find( "*" ):
+				printfstr += "0x%x"
+				argstr += name
 			else:
 				argstr = ""
 				printfstr = "???"

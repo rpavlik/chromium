@@ -4,6 +4,7 @@
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_mem.h"
+#include "cr_applications.h"
 
 #include <stdio.h>
 
@@ -19,6 +20,8 @@ static void __setDefaults( void )
 	tilesort_spu.muralHeight = 0;
 	tilesort_spu.drawBBOX = 0;
 	tilesort_spu.bboxLineWidth = 5;
+
+	tilesort_spu.providedBBOX = CR_DEFAULT_BBOX_HINT;
 
 	tilesort_spu.syncOnFinish = 1;
 	tilesort_spu.syncOnSwap = 1;

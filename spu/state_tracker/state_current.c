@@ -18,22 +18,12 @@ void crStateCurrentInit( CRCurrentState *c )
 	c->wind = 0;
 	c->isLoop = 0;
 
-#if 0
-    /* Compute the raster pos */
-	if (cfg->id >= 0 && cfg->id < cfg->numprojectors) {
-		GLrecti *b;
-		b = &cfg->bounds[cfg->id][0];
-		c->rasterPos.x = (GLfloat) b->x1;
-		c->rasterPos.y = (GLfloat) b->y1;
-	} else {
-		c->rasterPos.x = 0.0f;
-		c->rasterPos.y = 0.0f;
-	}
+	c->rasterPos.x = 0.0f;
+	c->rasterPos.y = 0.0f;
 	c->rasterPos.z = 0.0f;
 	c->rasterPos.w = 1.0f;
 
 	c->rasterPosPre = c->rasterPos;
-#endif
 
 	c->rasterDistance = 0.0f;
 	c->rasterColor = one_color;

@@ -34,6 +34,7 @@ static CRContext *crStateCreateContextId(int i)
 	ctx->update = GLBITS_ONES;
 
 	crDebug( "Creating a context: %d (0x%x)", ctx->id, (int)ctx->bitid );
+	crStateAttribInit( &(ctx->attrib) );
 	crStateBufferInit( &(ctx->buffer) );
 	crStateClientInit (&(ctx->client) );
 	crStateCurrentInit( &(ctx->current) );

@@ -2,3 +2,7 @@ LoadMatrixd
 LoadMatrixf
 MultMatrixd
 MultMatrixf
+GetBooleanv
+GetDoublev
+GetFloatv
+GetIntegerv
