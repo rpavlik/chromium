@@ -187,10 +187,12 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		if (!context->everCurrent) {
 			/* print OpenGL info */
 			const char *extString = (const char *) render_spu.ws.glGetString( GL_EXTENSIONS );
+			/*
 			crDebug( "Render SPU: GL_EXTENSIONS:   %s", render_spu.ws.glGetString( GL_EXTENSIONS ) );
+			*/
 			crDebug( "Render SPU: GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
 			crDebug( "Render SPU: GL_RENDERER: %s", render_spu.ws.glGetString( GL_RENDERER ) );
-			crDebug( "Render SPU: GL_VERSION: %s", render_spu.ws.glGetString( GL_VERSION ) );
+			crDebug( "Render SPU: GL_VERSION:  %s", render_spu.ws.glGetString( GL_VERSION ) );
 			if (crStrstr(extString, "GL_ARB_window_pos"))
 				context->haveWindowPosARB = GL_TRUE;
 			else
