@@ -65,7 +65,7 @@ void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level,
 	int packet_length;
 	int isnull = (pixels == NULL);
 	int is_distrib = ( (type == GL_TRUE) || (type == GL_FALSE) ) ;
-	int distrib_buf_len ;
+	int distrib_buf_len = 0;
 
 	packet_length = 
 		sizeof( target ) +
