@@ -15,7 +15,7 @@
 void crUnpackExtendCreateContext( void )
 {
 	char dpyName[DISPLAY_NAME_LEN];
-	GLint visual = READ_DATA( DISPLAY_NAME_LEN + 8, GLint );
+	GLint visBits = READ_DATA( DISPLAY_NAME_LEN + 8, GLint );
 	GLint retVal;
 
 	READ_BYTES( dpyName, 8, DISPLAY_NAME_LEN );
@@ -23,7 +23,7 @@ void crUnpackExtendCreateContext( void )
 
 	SET_RETURN_PTR( DISPLAY_NAME_LEN + 12 );
 	SET_WRITEBACK_PTR( DISPLAY_NAME_LEN + 20 );
-	retVal = cr_unpackDispatch.CreateContext( dpyName, visual );
+	retVal = cr_unpackDispatch.CreateContext( dpyName, visBits );
 	(void) retVal;
 }
 
