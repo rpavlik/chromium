@@ -141,6 +141,35 @@ renderSPUInit( int id, SPU *child, SPU *self,
 	numFuncs += crLoadOpenGLExtensions( &render_spu.ws, _cr_render_table + numFuncs );
 	CRASSERT(numFuncs < 1000);
 
+#ifdef WINDOWS
+	/*
+	 * Same problem as above, these are extensions so we need to
+	 * load them after a context has been bound. As they're WGL
+	 * extensions too, we can't simply tag them into the spu_loader.
+	 * So we do them here for now.
+	 * Grrr, NVIDIA driver uses EXT for GetExtensionsStringEXT,
+	 * but ARB for others. Need furthur testing here....
+	 */
+	render_spu.ws.wglGetExtensionsStringEXT = 
+		(wglGetExtensionsStringEXTFunc_t) 
+		render_spu.ws.wglGetProcAddress( "wglGetExtensionsStringEXT" );
+	render_spu.ws.wglChoosePixelFormatEXT = 
+		(wglChoosePixelFormatEXTFunc_t)
+		render_spu.ws.wglGetProcAddress( "wglChoosePixelFormatARB" );
+	render_spu.ws.wglGetPixelFormatAttribivEXT = 
+		(wglGetPixelFormatAttribivEXTFunc_t)
+		render_spu.ws.wglGetProcAddress( "wglGetPixelFormatAttribivARB" );
+	render_spu.ws.wglGetPixelFormatAttribfvEXT = 
+		(wglGetPixelFormatAttribfvEXTFunc_t)
+		render_spu.ws.wglGetProcAddress( "wglGetPixelFormatAttribfvARB" );
+	if (render_spu.ws.wglGetExtensionsStringEXT) {
+		crDebug("WGL - found wglGetExtensionsStringEXT\n");
+	}
+	if (render_spu.ws.wglChoosePixelFormatEXT) {
+		crDebug("WGL - found wglChoosePixelFormatEXT\n");
+	}
+#endif
+
 	render_spu.barrierHash = crAllocHashtable();
 
 	render_spu.cursorX = 0;

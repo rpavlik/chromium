@@ -66,8 +66,9 @@ MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 static BOOL
 bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 {
-	int rattribList[100];
+	int pixelFormat[100];
 	int attribList[100];
+	float fattribList[] = { 0.0, 0.0 };
 	int numFormats;
 	int i = 0;
 	BOOL vis;
@@ -76,7 +77,12 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 
 	crWarning("Using WGL_EXT_pixel_format to select visual ID.\n");
 
-	attribList[i++] = WGL_TYPE_RGBA_EXT;
+	attribList[i++] = WGL_DRAW_TO_WINDOW_EXT;
+	attribList[i++] = GL_TRUE;
+	attribList[i++] = WGL_ACCELERATION_EXT;
+	attribList[i++] = WGL_FULL_ACCELERATION_EXT;
+	attribList[i++] = WGL_COLOR_BITS_EXT;
+	attribList[i++] = 24;
 	attribList[i++] = WGL_RED_BITS_EXT;
 	attribList[i++] = 1;
 	attribList[i++] = WGL_GREEN_BITS_EXT;
@@ -90,11 +96,15 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 		attribList[i++] = 1;
 	}
 
-	if (visAttribs & CR_DOUBLE_BIT)
+	if (visAttribs & CR_DOUBLE_BIT) {
 		attribList[i++] = WGL_DOUBLE_BUFFER_EXT;
+		attribList[i++] = GL_TRUE;
+	}
 
-	if (visAttribs & CR_STEREO_BIT)
+	if (visAttribs & CR_STEREO_BIT) {
 		attribList[i++] = WGL_STEREO_EXT;
+		attribList[i++] = GL_TRUE;
+	}
 
 	if (visAttribs & CR_DEPTH_BIT)
 	{
@@ -133,8 +143,11 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 
 	/* End the list */
 	attribList[i++] = 0;
+	attribList[i++] = 0;
 
-	vis = render_spu.ws.wglChoosePixelFormatEXT( hdc, attribList, NULL, 1, rattribList, &numFormats);
+	vis = render_spu.ws.wglChoosePixelFormatEXT( hdc, attribList, fattribList, 1, pixelFormat, &numFormats);
+
+	crDebug("wglChoosePixelFormatEXT - said 0x%x 0x%x 0x%x\n",vis,GetLastError(),pixelFormat[0]);
 
 	return vis;
 }
