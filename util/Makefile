@@ -7,19 +7,6 @@ TOP = ..
 
 include ${TOP}/arch.mk
 
-# Uncomment for Quadrics Elan3 interface support
-#
-# Pick only one of the following; they're two different implementations of
-# Quadrics communication.
-#TEAC_SUPPORT = 1
-#TCSCOMM_SUPPORT = 1
-
-# Uncomment for Myrinet Support
-#GM_SUPPORT = 1
-
-# Uncomment for InfiniBand Support
-#IB_SUPPORT = 1
-
 SHARED = 1
 LIBRARY = crutil
 FILES = bbox \

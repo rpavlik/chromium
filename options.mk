@@ -24,8 +24,21 @@ USE_DMX=0
 # You'll need the libVncExt.so.2.0 library and vncstr.h & vnc.h headers in
 # the usual X directories. This will build the replicateSPU.
 # Note: you'll probably want to turn on threadsafety too (see below).
-USE_VNC=0
+USE_VNC=1
 
 
 # Set USE_OSMESA to 1 if you want to enable off screen rendering using Mesa.
 USE_OSMESA=0
+
+
+# Quadrics Elan3 interface support.  Set only one of the following; they're
+# two different implementations of Quadrics communication.
+TEAC_SUPPORT=0
+TCSCOMM_SUPPORT=0
+
+# Set to 1 to enable Myrinet support
+GM_SUPPORT=0
+
+# Set to 1 to enable InfiniBand Support
+IB_SUPPORT=0
+

@@ -72,24 +72,25 @@ You'll need GLUT installed so that the demonstration programs will compile.
 <h2 class="PageSubHeading">Compiling the source</h2>
 
 <p>
+All of Chromium lives under a directory called &quot;<code>cr-X.Y</code>&quot;
+(where X.Y is the version).&nbsp; Change
+to that directory.
+</p>
+
+<p>
 There are a few compile-time options that can be specified in the
 <code>options.mk</code> file.  DMX support and threadsafety options are
 specified in this file, for example.
+If you have Myrinet or Quadrics network hardware, you can enable those
+interfaces here.
 At least initially, you shouldn't have to change anything in this file.
 </p>
 
 <p>
-If you have <a href="http://www.myri.com/scs/index.html" target="_parent">
-Myrinet GM libraries</a>, you can turn on GM support in the file
-<code>cr-X.Y/util/Makefile</code> before building.
-There are instructions in that file.
+To start compilation, just type &quot;<code>make</code>&quot;
+(or <code>gmake</code> on some systems).
 </p>
 
-<p>
-All of Chromium lives under a directory called &quot;<code>cr-X.Y</code>&quot;
-(where X.Y is the version).&nbsp; Change
-to that directory, and type &quot;<code>make</code>&quot;.&nbsp;
-</p>
 <p>
 Binaries are put in <code> cr-X.Y/bin/&lt;ARCH&gt;</code>, where
 <code>&lt;ARCH&gt;</code>
@@ -98,7 +99,7 @@ returned by the &quot;<code>uname</code>&quot; command.&nbsp; Except on
 Windows, where <a href="http://cygwin.com/" target="_parent">cygwin's</a>
 &quot;<code>uname</code>&quot; returns something long and silly, so it gets
 re-written to &quot;<code>WIN_NT</code>&quot;.).&nbsp; You should add this
-directory to your <code>PATH</code>.</p>
+directory to your <code>PATH</code> environment variable.</p>
 
 
 
