@@ -101,8 +101,14 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 		 * Pull apart the context's requested visual information
 		 * and select the correct CR_*_BIT's. The RenderSPU
 		 * will do the right thing and select the appropriate
-	  	 * visual at it's node */
-		stub.desiredVisual = FindVisualInfo( dpy, vis );
+	  	 * visual at it's node.
+		 *
+		 * NOTE: We only do this, when no desiredVisual has
+		 * already been set. An application may call glXChooseVisual
+		 * to select it's desiredflags, and we honour that!
+		 */
+		if (!stub.desiredVisual)
+			stub.desiredVisual = FindVisualInfo( dpy, vis );
 
 		stub.spuWindow = crCreateWindow( dpyName, stub.desiredVisual );
 #endif

@@ -159,6 +159,8 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 	XVisualInfo *vis;
 	int *attrib, wants_rgb;
 
+	StubInit();
+
 	wants_rgb = 0;
 
 	for ( attrib = attribList; *attrib != None; attrib++ )
@@ -374,6 +376,8 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 {
 	(void) dpy;
 	(void) vis;
+
+	StubInit();
 
 	switch ( attrib ) {
 
