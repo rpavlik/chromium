@@ -101,12 +101,19 @@ void crError( char *format, ... )
 	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
 #ifdef WINDOWS
 	if (getenv( "CR_GUI_ERROR" ) != NULL)
+	{
 		MessageBox( NULL, txt, "Chromium Error", MB_OK );
+	}
 	else
+	{	
 #endif
-	va_end( args );
+		va_end( args );
 #ifdef WINDOWS
-	DebugBreak();
+	}
+	if (getenv( "CR_DEBUG_ON_ERROR" ) != NULL)
+	{
+		DebugBreak();
+	}
 #endif
 	exit(1);
 }
