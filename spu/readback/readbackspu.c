@@ -16,64 +16,9 @@
 #define CONTEXT_MAGIC 8000
 
 
-#define CLAMP(a, b, c) \
-    if (a < b) a = b; if (a > c) a = c
+#define CLAMP(a, min, max) \
+    ( ((a) < (min)) ? (min) : (((a) > (max)) ? (max) : (a)) )
 
-
-/**
- * Transform the current bounding box to screen space and return
- * the results in the xstart, ystart, xend, yend variables.
- * \param modl  the modelview matrix
- * \param proj  the projection matrix
- * \return  1 for success or 0 for failure (no bounding box)
- */
-static int
-getClippedWindow(const GLfloat modl[16], const GLfloat proj[16],
-								 int *xstart, int *ystart, int *xend, int *yend)
-{
-	GLfloat viewport[4];
-	GLfloat x1, x2, y1, y2, z1, z2;
-	int win_height, win_width;
-
-	if (readback_spu.bbox != NULL)
-	{
-		x1 = readback_spu.bbox->xmin;
-		y1 = readback_spu.bbox->ymin;
-		z1 = readback_spu.bbox->zmin;
-		x2 = readback_spu.bbox->xmax;
-		y2 = readback_spu.bbox->ymax;
-		z2 = readback_spu.bbox->zmax;
-	}
-	else
-	{															/* no bounding box defined */
-		crDebug("No BBox");
-		return 0;
-	}
-
-	crProjectBBox(modl, proj, &x1, &y1, &z1, &x2, &y2, &z2);
-	/* Sanity check... */
-	if (x2 < x1 || y2 < y1 || z2 < z1)
-	{
-		crWarning("Damnit!!!!, we screwed up the clipping somehow...");
-		return 0;
-	}
-
-	/* can we remove this get to speed things up? */
-	readback_spu.super.GetFloatv(GL_VIEWPORT, viewport);
-	(*xstart) = (int) ((x1 + 1.0f) * (viewport[2] / 2.0f) + viewport[0]);
-	(*ystart) = (int) ((y1 + 1.0f) * (viewport[3] / 2.0f) + viewport[1]);
-	(*xend) = (int) ((x2 + 1.0f) * (viewport[2] / 2.0f) + viewport[0]);
-	(*yend) = (int) ((y2 + 1.0f) * (viewport[3] / 2.0f) + viewport[1]);
-
-	win_width = (int) viewport[2];
-	win_height = (int) viewport[3];
-
-	CLAMP((*xstart), 0, win_width);
-	CLAMP((*xend), 0, win_width);
-	CLAMP((*ystart), 0, win_height);
-	CLAMP((*yend), 0, win_height);
-	return 1;
-}
 
 /**
  * Allocate the color and depth buffers needed for the glDraw/ReadPixels
@@ -423,46 +368,61 @@ ProcessTiles(WindowInfo * window)
 	else
 	{
 		/* we're running on the appfaker */
-		/* default to no bounding box - read/draw whole window */
-		/* the != NULL check will override this later... */
-		int x = 0, y = 0;
-		int w = window->width;
-		int h = window->height;
-
-		numExtents = 1;							/* this may get set to zero below! */
-
-		/*
-		 * Do bounding box cull check
-		 */
-		if (readback_spu.bbox != NULL)
-		{
-			if (readback_spu.bbox->xmin == readback_spu.bbox->xmax)
-			{
-				/* client can tell us to do nothing */
-				numExtents = 0;					/* used to return here */
-			}
-			else
-			{
-				int read_start_x, read_start_y, read_end_x, read_end_y;
-				getClippedWindow(readback_spu.modl, readback_spu.proj,
-												 &read_start_x, &read_start_y,
-												 &read_end_x, &read_end_y);
-				x = read_start_x;
-				y = read_start_y;
-				w = read_end_x - read_start_x;
-				h = read_end_y - read_start_y;
-			}
+		int x1, y1, x2, y2;
+		if (window->bboxUnion.x1 == 0 && window->bboxUnion.x1 == 0) {
+			/* use whole window */
+			x1 = 0;
+			y1 = 0;
+			x2 = window->width;
+			y2 = window->width;
 		}
-
-		extent0.imagewindow.x1 = x;
-		extent0.imagewindow.y1 = y;
-		extent0.imagewindow.x2 = x + w;
-		extent0.imagewindow.y2 = y + h;
-		extent0.outputwindow.x1 = x;
-		extent0.outputwindow.y1 = y;
-		extent0.outputwindow.x2 = x + w;
-		extent0.outputwindow.y2 = y + h;
+		else {
+			/* clamp the screen bbox union to the window dims */
+			x1 = CLAMP(window->bboxUnion.x1, 0, window->width - 1);
+			y1 = CLAMP(window->bboxUnion.y1, 0, window->height - 1);
+			x2 = CLAMP(window->bboxUnion.x2, 0, window->width - 1);
+			y2 = CLAMP(window->bboxUnion.y2, 0, window->height - 1);
+			printf("union: %d, %d .. %d, %d\n", x1, y1, x2, y2);
+		}
+		numExtents = 1;
+		extent0.imagewindow.x1 = x1;
+		extent0.imagewindow.y1 = y1;
+		extent0.imagewindow.x2 = x2;
+		extent0.imagewindow.y2 = y2;
+		extent0.outputwindow.x1 = x1;
+		extent0.outputwindow.y1 = y1;
+		extent0.outputwindow.x2 = x2;
+		extent0.outputwindow.y2 = y2;
 		extents = &extent0;
+	}
+
+	/* useful debug code - draw bbox outlines */
+	if (0) {
+		readback_spu.super.PushAttrib(GL_TRANSFORM_BIT);
+		readback_spu.super.MatrixMode(GL_MODELVIEW);
+		readback_spu.super.PushMatrix();
+		readback_spu.super.LoadIdentity();
+		readback_spu.super.MatrixMode(GL_PROJECTION);
+		readback_spu.super.PushMatrix();
+		readback_spu.super.LoadIdentity();
+		readback_spu.super.Ortho(0, window->width, 0, window->height, -1, 1);
+		readback_spu.super.Color3f(1.0F, 1.0F, 1.0F);
+		for (i = 0; i < numExtents; i++) {
+			readback_spu.super.Begin(GL_LINE_LOOP);
+			readback_spu.super.Vertex2i(extents[i].outputwindow.x1,
+																	extents[i].outputwindow.y1);
+			readback_spu.super.Vertex2i(extents[i].outputwindow.x2,
+																	extents[i].outputwindow.y1);
+			readback_spu.super.Vertex2i(extents[i].outputwindow.x2,
+																	extents[i].outputwindow.y2);
+			readback_spu.super.Vertex2i(extents[i].outputwindow.x1,
+																	extents[i].outputwindow.y2);
+			readback_spu.super.End();	
+		}
+		readback_spu.super.PopMatrix();
+		readback_spu.super.MatrixMode(GL_MODELVIEW);
+		readback_spu.super.PopMatrix();
+		readback_spu.super.PopAttrib();
 	}
 
 	/*
@@ -508,6 +468,9 @@ ProcessTiles(WindowInfo * window)
 		const int drawy = extents[i].imagewindow.y1;
 		const int w = extents[i].outputwindow.x2 - extents[i].outputwindow.x1;
 		const int h = extents[i].outputwindow.y2 - extents[i].outputwindow.y1;
+		CRASSERT(i == 0);
+		CRASSERT(w >= 1);
+		CRASSERT(h >= 1);
 		CompositeTile(window, w, h, readx, ready, drawx, drawy);
 	}
 
@@ -588,12 +551,85 @@ DoReadback(WindowInfo * window)
 }
 
 
+static void
+ResetAccumulatedBBox(void)
+{
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+	window->bboxUnion.x1 = 0;
+	window->bboxUnion.x2 = 0;
+	window->bboxUnion.y1 = 0;
+	window->bboxUnion.y2 = 0;
+}
+
+
+static void
+AccumulateFullWindow(void)
+{
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+	window->bboxUnion.x1 = 0;
+	window->bboxUnion.y1 = 0;
+	window->bboxUnion.x2 = 100*1000;
+	window->bboxUnion.y2 = 100*1000;
+}
+
+
+/**
+ * Transform the given object-space bounds to window coordinates and
+ * update the window's bounding box union.
+ */
+static void
+AccumulateBBox(const GLfloat *bbox)
+{
+	GLfloat proj[16], modl[16], viewport[4];
+	GLfloat x1, y1, z1, x2, y2, z2;
+	CRrecti winBox;
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+
+	x1 = bbox[0];
+	y1 = bbox[1];
+	z1 = bbox[2];
+	x2 = bbox[3];
+	y2 = bbox[4];
+	z2 = bbox[5];
+
+	/* transform by modelview and projection */
+	readback_spu.super.GetFloatv(GL_PROJECTION_MATRIX, proj);
+	readback_spu.super.GetFloatv(GL_MODELVIEW_MATRIX, modl);
+	crProjectBBox(modl, proj,	&x1, &y1, &z1, &x2, &y2, &z2);
+
+	/* Sanity check... */
+	if (x2 < x1 || y2 < y1 || z2 < z1) {
+		crWarning("Damnit!!!!, we screwed up the clipping somehow...");
+		return;
+	}
+
+	/* map to window coords */
+	readback_spu.super.GetFloatv(GL_VIEWPORT, viewport);
+	winBox.x1 = (int) ((x1 + 1.0f) * (viewport[2] * 0.5F) + viewport[0]);
+	winBox.y1 = (int) ((y1 + 1.0f) * (viewport[3] * 0.5F) + viewport[1]);
+	winBox.x2 = (int) ((x2 + 1.0f) * (viewport[2] * 0.5F) + viewport[0]);
+	winBox.y2 = (int) ((y2 + 1.0f) * (viewport[3] * 0.5F) + viewport[1]);
+
+	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
+		/* this is the first box */
+		window->bboxUnion = winBox;
+	}
+	else {
+		/* compute union of current screen bbox and this one */
+		crRectiUnion(&window->bboxUnion, &window->bboxUnion, &winBox);
+	}
+}
+
+
 static void READBACKSPU_APIENTRY
 readbackspuFlush(void)
 {
 	WindowInfo *window;
 	GET_CONTEXT(context);
-	CRASSERT(context);						/* we shouldn't be flushing without a context */
+	CRASSERT(context);					/* we shouldn't be flushing without a context */
 	window = context->currentWindow;
 	if (!window)
 		return;
@@ -605,7 +641,6 @@ readbackspuFlush(void)
 	 */
 	readback_spu.child.BarrierExecCR(SWAP_BARRIER);
 }
-
 
 
 static void READBACKSPU_APIENTRY
@@ -633,6 +668,8 @@ readbackspuSwapBuffers(GLint win, GLint flags)
 	{
 		readback_spu.super.SwapBuffers(window->renderWindow, 0);
 	}
+
+	ResetAccumulatedBBox();
 }
 
 
@@ -814,11 +851,8 @@ static void READBACKSPU_APIENTRY
 readbackspuViewport(GLint x, GLint y, GLint w, GLint h)
 {
 	readback_spu.super.Viewport(x, y, w, h);
-	readback_spu.halfViewportWidth = 0.5F * w;
-	readback_spu.halfViewportHeight = 0.5F * h;
-	readback_spu.viewportCenterX = x + readback_spu.halfViewportWidth;
-	readback_spu.viewportCenterY = y + readback_spu.halfViewportHeight;
 }
+
 
 static void READBACKSPU_APIENTRY
 readbackspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
@@ -829,21 +863,14 @@ readbackspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
 	case GL_OBJECT_BBOX_CR:
 		CRASSERT(type == GL_FLOAT);
 		CRASSERT(count == 6);
-		/* make copy of values! */
-		readback_spu.bboxValues.xmin = ((GLfloat *) values)[0];
-		readback_spu.bboxValues.ymin = ((GLfloat *) values)[1];
-		readback_spu.bboxValues.zmin = ((GLfloat *) values)[2];
-		readback_spu.bboxValues.xmax = ((GLfloat *) values)[3];
-		readback_spu.bboxValues.ymax = ((GLfloat *) values)[4];
-		readback_spu.bboxValues.zmax = ((GLfloat *) values)[5];
-		readback_spu.bbox = &(readback_spu.bboxValues);
-		readback_spu.super.GetFloatv(GL_PROJECTION_MATRIX, readback_spu.proj);
-		readback_spu.super.GetFloatv(GL_MODELVIEW_MATRIX, readback_spu.modl);
+		AccumulateBBox((GLfloat *) values);
 		break;
 	case GL_DEFAULT_BBOX_CR:
-		/* reset / no bounding box */
+		/* We don't know the extents of the subsequent geometry, so we'll
+		 * have to readback the whole window.
+		 */
 		CRASSERT(count == 0);
-		readback_spu.bbox = NULL;
+		AccumulateFullWindow();
 		break;
 	default:
 		readback_spu.child.ChromiumParametervCR(target, type, count, values);

@@ -10,19 +10,14 @@
 
 static void __setDefaults( ReadbackSPU *readback_spu )
 {
-	/* This will make the viewport be computed later */
-	readback_spu->halfViewportWidth = 0;
-
-	/* misc */
-	readback_spu->barrierSize = 0;
-	readback_spu->bbox = NULL;
-
 	/* config options */
 	readback_spu->extract_depth = 0;
 	readback_spu->extract_alpha = 0;
 	readback_spu->local_visualization = 0;
 	readback_spu->visualize_depth = 0;
 	readback_spu->resizable = 0;
+	/* misc */
+	readback_spu->barrierSize = 0;
 }
 
 static void set_extract_depth( ReadbackSPU *readback_spu, const char *response )

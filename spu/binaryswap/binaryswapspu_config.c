@@ -89,7 +89,6 @@ static void __setDefaults( Binaryswapspu *binaryswap_spu )
 {
 	/* misc */
 	binaryswap_spu->barrierSize = 0;
-	binaryswap_spu->bbox = NULL;
 	
 	/* config options */
 	binaryswap_spu->resizable = 0;

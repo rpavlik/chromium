@@ -30,6 +30,7 @@ typedef struct {
 	GLenum depthType;  /**< GL_UNSIGNED_SHORT or GL_FLOAT */
 	GLenum rgbaFormat; /**< GL_RGBA or GL_BGRA */
 	GLenum rgbFormat;  /**< GL_RGB or GL_BGR */
+	CRrecti bboxUnion; /**< window-space union of all bounding boxes */
 } WindowInfo;
 
 typedef struct {
@@ -39,8 +40,6 @@ typedef struct {
 	CRContext *tracker;  /**< for tracking matrix state */
 	WindowInfo *currentWindow;
 } ContextInfo;
-
-typedef struct { float xmin, ymin, zmin, xmax, ymax, zmax; } BBox;
 
 typedef struct {
 	int id;
@@ -69,12 +68,6 @@ typedef struct {
 #endif
 
 	GLint barrierSize;
-
-	/* XXX \todo Are these per-context or per-window variables? */
-	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
-	BBox *bbox;  /* Either NULL or points to bboxValues */
-	BBox bboxValues;
-	GLfloat modl[16], proj[16];
 
 } ReadbackSPU;
 

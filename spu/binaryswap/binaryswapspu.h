@@ -27,8 +27,6 @@
 #define DESTROY_CONTEXT_BARRIER 6
 #define MUTEX_SEMAPHORE         7
 
-typedef struct { float xmin, ymin, zmin, xmax, ymax, zmax; } BBox;
-
 typedef struct {
 	GLint index;         /**< my window number */
 	GLint renderWindow;  /**< the super (render SPU) window */
@@ -43,6 +41,9 @@ typedef struct {
 	int* read_y;
 	int* read_width;
 	int* read_height;
+
+	/**< window-space union of all bounding boxes */
+	CRrecti bboxUnion;
 } WindowInfo;
 
 /** Message header */
@@ -121,12 +122,6 @@ typedef struct {
 	/**< What is the depth of the frame buffer */
 	float depth;
 	
-	/**< Stores the bounding box if used */
-	BBox *bbox;  /**< Either NULL or points to bboxValues */
-	BBox bboxValues;
-
-	/**< Store model and projection matix for clip */
-	GLfloat modl[16], proj[16];	
 } Binaryswapspu;
 
 extern Binaryswapspu binaryswap_spu;

@@ -12,64 +12,8 @@
 #include "binaryswapspu.h"
 
 
-#define CLAMP(a, b, c) \
-    if (a < b) a = b; if (a > c) a = c
-
-/*******************************************************
- * Get the clipped window based on the projection and 
- * model matrices and the bounding box supplied by the
- * application.
- *******************************************************/
-static int
-getClippedWindow(int *xstart, int* ystart,
-								 int* xend, int* yend )
-{
-	GLfloat viewport[4];
-	GLfloat x1, x2, y1, y2, z1, z2;
-	int win_height, win_width;
-	
-	if(binaryswap_spu.bbox != NULL){
-		x1=binaryswap_spu.bbox->xmin;
-		y1=binaryswap_spu.bbox->ymin;
-		z1=binaryswap_spu.bbox->zmin;
-		x2=binaryswap_spu.bbox->xmax; 
-		y2=binaryswap_spu.bbox->ymax;
-		z2=binaryswap_spu.bbox->zmax;
-	}
-	else {
-		/* no bounding box defined */
-		/*crDebug("binaryswap SPU: No BBox");*/
-		return 0;
-	}
-	
-	crProjectBBox(binaryswap_spu.modl, binaryswap_spu.proj,
-								&x1, &y1, &z1, &x2, &y2, &z2);
-
-	/* Sanity check... */
-	if( x2 < x1 || y2 < y1 || z2 < z1){
-		crWarning( "Damnit!!!!, we screwed up the clipping somehow..." );
-		return 0;
-	}
-	
-	/* adjust depth for alpha composite */
-	binaryswap_spu.depth = z2;
-
-	/* can we remove this get to speed things up? */
-	binaryswap_spu.super.GetFloatv( GL_VIEWPORT, viewport );
-	(*xstart) = (int)((x1+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
-	(*ystart) = (int)((y1+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
-	(*xend)   = (int)((x2+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
-	(*yend)   = (int)((y2+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
-	
-	win_width  = (int)viewport[2];
-	win_height = (int)viewport[3];
-	
-	CLAMP ((*xstart), 0, win_width);
-	CLAMP ((*xend),   0, win_width);
-	CLAMP ((*ystart), 0, win_height);
-	CLAMP ((*yend),   0, win_height);
-	return 1;
-}
+#define CLAMP(a, min, max) \
+    ( ((a) < (min)) ? (min) : (((a) > (max)) ? (max) : (a)) )
 
 
 /**
@@ -619,15 +563,24 @@ static void CompositeNode( WindowInfo *window,
  */
 static void ProcessNode( WindowInfo *window )
 {
-	int read_start_x = 0;
-	int read_start_y = 0;	
-	int read_end_x = window->width;
-	int read_end_y = window->height;
+	int x1, y1, x2, y2;
 
-	/* deal with clipping */
-	getClippedWindow( &read_start_x, &read_start_y, 
-										&read_end_x, &read_end_y);
-	
+	/* compute region to process */
+	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x1 == 0) {
+			/* use whole window */
+		x1 = 0;
+		y1 = 0;
+		x2 = window->width;
+		y2 = window->width;
+	}
+	else {
+		/* clamp the screen bbox union to the window dims */
+		x1 = CLAMP(window->bboxUnion.x1, 0, window->width - 1);
+		y1 = CLAMP(window->bboxUnion.y1, 0, window->height - 1);
+		x2 = CLAMP(window->bboxUnion.x2, 0, window->width - 1);
+		y2 = CLAMP(window->bboxUnion.y2, 0, window->height - 1);
+	}
+
 	/* One will typically use serverNode.Conf('only_swap_once', 1) to
 	 * prevent extraneous glClear and SwapBuffer calls on the server.
 	 */
@@ -639,7 +592,7 @@ static void ProcessNode( WindowInfo *window )
 	/* wait for everyone to finish clearing */
 	binaryswap_spu.child.BarrierExecCR( CLEAR_BARRIER );
 
-	CompositeNode(window, read_start_x, read_start_y, read_end_x, read_end_y);
+	CompositeNode(window, x1, y1, x2, y2);
 }
 
 /**
@@ -763,12 +716,84 @@ static void DoBinaryswap( WindowInfo *window )
 	}
 }
 
+
+static void
+ResetAccumulatedBBox(void)
+{
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+	window->bboxUnion.x1 = 0;
+	window->bboxUnion.x2 = 0;
+	window->bboxUnion.y1 = 0;
+	window->bboxUnion.y2 = 0;
+}
+
+
+static void
+AccumulateFullWindow(void)
+{
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+	window->bboxUnion.x1 = 0;
+	window->bboxUnion.y1 = 0;
+	window->bboxUnion.x2 = 100*1000;
+	window->bboxUnion.y2 = 100*1000;
+}
+
+
+/**
+ * Transform the given object-space bounds to window coordinates and
+ * update the window's bounding box union.
+ */
+static void
+AccumulateBBox(const GLfloat *bbox)
+{
+	GLfloat proj[16], modl[16], viewport[4];
+	GLfloat x1, y1, z1, x2, y2, z2;
+	CRrecti winBox;
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+
+	x1 = bbox[0];
+	y1 = bbox[1];
+	z1 = bbox[2];
+	x2 = bbox[3];
+	y2 = bbox[4];
+	z2 = bbox[5];
+
+	/* transform by modelview and projection */
+	binaryswap_spu.super.GetFloatv(GL_PROJECTION_MATRIX, proj);
+	binaryswap_spu.super.GetFloatv(GL_MODELVIEW_MATRIX, modl);
+	crProjectBBox(modl, proj,	&x1, &y1, &z1, &x2, &y2, &z2);
+
+	/* Sanity check... */
+	if (x2 < x1 || y2 < y1 || z2 < z1) {
+		crWarning("Damnit!!!!, we screwed up the clipping somehow...");
+		return;
+	}
+
+	/* map to window coords */
+	binaryswap_spu.super.GetFloatv(GL_VIEWPORT, viewport);
+	winBox.x1 = (int) ((x1 + 1.0f) * (viewport[2] * 0.5F) + viewport[0]);
+	winBox.y1 = (int) ((y1 + 1.0f) * (viewport[3] * 0.5F) + viewport[1]);
+	winBox.x2 = (int) ((x2 + 1.0f) * (viewport[2] * 0.5F) + viewport[0]);
+	winBox.y2 = (int) ((y2 + 1.0f) * (viewport[3] * 0.5F) + viewport[1]);
+
+	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
+		/* this is the first box */
+		window->bboxUnion = winBox;
+	}
+	else {
+		/* compute union of current screen bbox and this one */
+		crRectiUnion(&window->bboxUnion, &window->bboxUnion, &winBox);
+	}
+}
+
+
 static void BINARYSWAPSPU_APIENTRY binaryswapspuFlush( void )
 {
-	WindowInfo *window;
 	GET_CONTEXT(context);
-	CRASSERT(context); /* we shouldn't be flushing without a context */
-	window = context->currentWindow;
+	WindowInfo *window = context->currentWindow;
 	if (!window)
 			return;
 
@@ -809,6 +834,8 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuSwapBuffers( GLint win, GLint fl
 	 * a glClear from the next frame could sneak in before we swap.
 	 */
 	binaryswap_spu.child.BarrierExecCR( POST_SWAP_BARRIER );
+
+	ResetAccumulatedBBox();
 }
 
 static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyName, GLint visBits)
@@ -988,30 +1015,20 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuViewport( GLint x,
 	binaryswap_spu.super.Viewport( x, y, w, h );
 }
 
-static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum target, 
-								     GLenum type, 
-								     GLsizei count, 
-								     const GLvoid *values)
+static void BINARYSWAPSPU_APIENTRY
+binaryswapspuChromiumParametervCR(GLenum target, GLenum type, 
+																	GLsizei count, const GLvoid *values)
 {
 	switch( target )
 	{
 	case GL_OBJECT_BBOX_CR:
 		CRASSERT(type == GL_FLOAT);
 		CRASSERT(count == 6);
-		/* make copy of values! */
-		binaryswap_spu.bboxValues.xmin = ((GLfloat *) values)[0];
-		binaryswap_spu.bboxValues.ymin = ((GLfloat *) values)[1];
-		binaryswap_spu.bboxValues.zmin = ((GLfloat *) values)[2];
-		binaryswap_spu.bboxValues.xmax = ((GLfloat *) values)[3];
-		binaryswap_spu.bboxValues.ymax = ((GLfloat *) values)[4];
-		binaryswap_spu.bboxValues.zmax = ((GLfloat *) values)[5];
-		binaryswap_spu.bbox = &(binaryswap_spu.bboxValues);	
-		binaryswap_spu.super.GetFloatv( GL_PROJECTION_MATRIX, binaryswap_spu.proj );
-		binaryswap_spu.super.GetFloatv( GL_MODELVIEW_MATRIX,  binaryswap_spu.modl );
+		AccumulateBBox((GLfloat *) values);
 		break;
 	case GL_DEFAULT_BBOX_CR:
 		CRASSERT(count == 0);
-		binaryswap_spu.bbox = NULL;
+		AccumulateFullWindow();
 		break;
 	default:
 		binaryswap_spu.child.ChromiumParametervCR( target, type, count, values );
