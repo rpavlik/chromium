@@ -390,7 +390,8 @@ def FuncGetsState(funcName):
 	props = Properties(funcName)
 	if "get" in props:
 		return 1
-
+	else:
+		return 0
 
 def IsPointer(dataType):
 	"""Determine if the datatype is a pointer.  Return 1 or 0."""
