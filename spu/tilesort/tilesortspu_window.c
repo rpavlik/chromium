@@ -379,9 +379,6 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 
 	winInfo->id = window;
 	winInfo->visBits = visBits;
-#ifdef USE_DMX
-	winInfo->xwin = 0;
-#endif
 	winInfo->bucketMode = tilesort_spu.defaultBucketMode;
 	winInfo->lastX = winInfo->lastY = -1;
 	winInfo->lastWidth = 0;
@@ -423,10 +420,8 @@ WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint xwindowID)
 		return NULL;
 
 #ifdef WINDOWS
-	/* XXX double-check this on Windows
 	if (!winInfo->client_hwnd)
-		winInfo->client_hwnd = xwindowID;
-	*/
+		winInfo->client_hwnd = (HWND) xwindowID;
 #else
 	if (!winInfo->xwin)
 		winInfo->xwin = xwindowID;

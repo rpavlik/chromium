@@ -331,10 +331,11 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 
 			if (winInfo) {
 #ifdef USE_DMX
-				/* translate nativeWindow to a back-end child window ID */
-				nativeWindow = (GLint) winInfo->backendWindows[i].xsubwin;
+				if (tilesort_spu.useDMX) {
+					/* translate nativeWindow to a back-end child window ID */
+					nativeWindow = (GLint) winInfo->backendWindows[i].xsubwin;
+				}
 #endif
-
 				/* translate Cr window number to server window number */
 				serverWindow = winInfo->server[i].window;
 			}
