@@ -8,13 +8,13 @@
 
 CRPackContext *pack_context;
 
-void do_nothing( CROpcode opcode, void *buf )
+static void do_nothing( CROpcode opcode, void *buf )
 {
 	UNUSED( opcode );
 	UNUSED( buf );
 }
 
-void reset_buffer( void *arg )
+static void reset_buffer( void *arg )
 {
 	crPackResetPointers( pack_context );
 	UNUSED(arg);
@@ -22,7 +22,7 @@ void reset_buffer( void *arg )
 
 #define GRANULARITY 20000000
 
-void MeasurePerformance( void )
+static void MeasurePerformance( void )
 {
 	CRTimer *timer = crTimerNewTimer();
 	int i;
@@ -51,6 +51,9 @@ void MeasurePerformance( void )
 int main( int argc, char *argv[] )
 {
 	CRPackBuffer pack_buffer;
+
+	crMemZero(&pack_buffer, sizeof(pack_buffer));
+
 	pack_context = crPackNewContext( 0 ); /* Don't swap bytes, for God's sake */
 	crPackSetContext( pack_context );
 	crPackInitBuffer( &pack_buffer, crAlloc( 1024*1024 ), 1024*1024, 1024*1024 );
