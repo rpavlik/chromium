@@ -120,22 +120,39 @@ static const char *type_string[] = {
 static void print_option( SPUOptions *opt, int pythonMode )
 {
 	if (pythonMode) {
+		const char *lb = "", *rb = "";
 		printf("  crtypes.Option('%s', '%s', '%s', %d, ",
 			   opt->option,
 			   opt->description,
 			   type_string[(int)opt->type],
 			   opt->numValues);
+
+		/* If there's only one value for the option, it won't have
+		 * brackets around it yet.  So, set lb=[ and rb=] so that we
+		 * do end up with brackets.
+		 * All defaults, mins and maxes are python lists!
+		 */
+		if (opt->numValues == 1) {
+			lb = "[";
+			rb = "]";
+		}
+		else {
+			CRASSERT(opt->deflt[0] == '[');
+		}
+
 		if (opt->type == CR_STRING || opt->type == CR_ENUM)
-		   printf("['%s']", opt->deflt);
+		   printf("%s'%s'%s", lb, opt->deflt, rb);
 		else
-		   printf("[%s]", opt->deflt);
+		   printf("%s%s%s", lb, opt->deflt, rb);
 
 		if (opt->min) {
-			printf(", [%s]", opt->min);
-			if (opt->max)
-				printf(", [%s]", opt->max);
-			else
+			printf(", %s%s%s", lb, opt->min, rb);
+			if (opt->max) {
+				printf(", %s%s%s", lb, opt->max, rb);
+			}
+			else {
 				printf(", []");
+			}
 		}
 		else {
 			printf(", [], []");
