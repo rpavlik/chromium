@@ -444,9 +444,7 @@ ProcessTiles(WindowInfo * window)
 			else
 			{
 				int read_start_x, read_start_y, read_end_x, read_end_y;
-				const GLfloat *proj = readback_spu.proj;
-				const GLfloat *modl = readback_spu.modl;
-				getClippedWindow(modl, proj,
+				getClippedWindow(readback_spu.modl, readback_spu.proj,
 												 &read_start_x, &read_start_y,
 												 &read_end_x, &read_end_y);
 				x = read_start_x;
@@ -824,7 +822,7 @@ readbackspuViewport(GLint x, GLint y, GLint w, GLint h)
 
 static void READBACKSPU_APIENTRY
 readbackspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
-																GLvoid * values)
+																const GLvoid * values)
 {
 	switch (target)
 	{
