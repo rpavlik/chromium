@@ -78,6 +78,12 @@ static int validate_one_option( const SPUOptions *opt,
 	}
 }
 
+
+/*
+ * Make sure the response matches the opt's parameters (right number
+ * and type of values, etc.)
+ * Return 1 if OK, 0 if error.
+ */
 static int validate_option( const SPUOptions *opt, const char *response )
 {
 	const char *min = opt->min;
@@ -88,14 +94,27 @@ static int validate_option( const SPUOptions *opt, const char *response )
 	if (opt->type == CR_STRING)
 		return 1;
    
-	if (opt->numValues == 0)
-		return 1;
+	CRASSERT(opt->numValues > 0);
+
+	/* skip leading [ for multi-value options */
+	if (opt->numValues > 1) {
+		/* multi-valued options must be enclosed in brackets */
+		if (*response != '[')
+			return 0;
+		response++; /* skip [ */
+		/* make sure min and max are bracketed as well */
+		if (min) {
+			CRASSERT(*min == '[');  /* error in <foo>spu_config.c code!!! */
+			min++;
+		}
+		if (max) {
+			CRASSERT(*max == '[');  /* error in <foo>spu_config.c code!!! */
+			max++;
+		}
+	}
 
 	for (;;)
 	{
-		/* skip leading [ for multi-value options */
-		if (opt->numValues > 1 && *response == '[')
-			response++;
 		if (!validate_one_option( opt, response, min, max ))
 		{
 			retval = 0;
@@ -103,9 +122,10 @@ static int validate_option( const SPUOptions *opt, const char *response )
 		}
 		if (++i == opt->numValues)
 		{
-			retval = 1;
+			retval = 1; /* all done! */
 			break;
 		}
+		/* advance pointers to next item */
 		if (min)
 		{
 			while (*min != ' ' && *min)
