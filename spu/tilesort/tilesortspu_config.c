@@ -23,6 +23,8 @@ static void __setDefaults( void )
 	tilesort_spu.servers = NULL;
 	tilesort_spu.muralWidth = 0;
 	tilesort_spu.muralHeight = 0;
+	tilesort_spu.muralColumns = 0;
+	tilesort_spu.muralRows = 0;
 
 	tilesort_spu.providedBBOX = GL_DEFAULT_BBOX_CR;
 	tilesort_spu.inDrawPixels = 0;
@@ -155,6 +157,7 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 	crDebug( "Got the MTU as %d", tilesort_spu.MTU );
 
 	tilesortspuGetTileInformation(conn);
+	tilesortspuComputeRowsColumns();
 
 	crWarning( "Total output dimensions = (%d, %d)", tilesort_spu.muralWidth, tilesort_spu.muralHeight );
 
@@ -274,3 +277,44 @@ void tilesortspuGetTileInformation(CRConnection *conn)
 	crFreeStrings( serverlist );
 }
 
+
+/*
+ * Examine the tilesort extents to try to compute the number of
+ * tile rows and columns.
+ */
+void tilesortspuComputeRowsColumns(void)
+{
+	int i;
+
+	tilesort_spu.muralColumns = 0;
+	tilesort_spu.muralRows = 0;
+
+	/*
+	 * This is a bit simple-minded, but usually works.
+	 * We look for the number of tiles with x1=0, that's the number of rows.
+	 * Then look for number of tiles with y1==0, that's the number of columns.
+	 */
+	for (i = 0 ; i < tilesort_spu.num_servers ; i++)
+	{
+		TileSortSPUServer *server = tilesort_spu.servers + i;
+		int j;
+
+		for (j = 0; j < server->num_extents ; j++)
+		{
+			if (server->x1[j] == 0)
+				tilesort_spu.muralRows++;
+			if (server->y1[j] == 0)
+				tilesort_spu.muralColumns++;
+		}
+	}
+
+	/* Set rows/columns to zero if there's any doubt. */
+	if (tilesort_spu.muralColumns == 0 || tilesort_spu.muralRows == 0)
+	{
+		tilesort_spu.muralColumns = 0;
+		tilesort_spu.muralRows = 0;
+	}
+
+	crDebug("Tilesort size: %d columns x %d rows\n",
+					tilesort_spu.muralColumns, tilesort_spu.muralRows);
+}

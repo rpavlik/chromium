@@ -63,15 +63,169 @@ static void resetVertexCounters(void)
 		tilesort_spu.servers[i].vertexCount = 0;
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLint y)
+
+/*
+ * Send the current tilesort tile info to all the servers.
+ */
+static void sendTileInfoToServers(void)
 {
-	/* do nothing */
+	GET_THREAD(thread);
+	int i;
+
+	/* Save default buffer */
+	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+
+	/* loop over servers */
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+	{
+		TileSortSPUServer *server = tilesort_spu.servers + i;
+		int tileInfo[4 + 4 * CR_MAX_EXTENTS], arraySize;
+		int j;
+
+		/* build tileInfo array */
+		tileInfo[0] = i;
+		tileInfo[1] = tilesort_spu.muralWidth;
+		tileInfo[2] = tilesort_spu.muralHeight;
+		tileInfo[3] = server->num_extents;
+		for (j = 0; j < server->num_extents; j++)
+		{
+			tileInfo[4 + j * 4 + 0] = server->x1[j];
+			tileInfo[4 + j * 4 + 1] = server->y1[j];
+			tileInfo[4 + j * 4 + 2] = server->x2[j];
+			tileInfo[4 + j * 4 + 3] = server->y2[j];
+		}
+		arraySize = 4 + 4 * server->num_extents;
+
+		/* pack/send to server[i] */
+		crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+
+		if (tilesort_spu.swap)
+			crPackChromiumParametervCRSWAP(GL_TILE_INFO_CR, GL_INT,
+										   arraySize, tileInfo);
+		else
+			crPackChromiumParametervCR(GL_TILE_INFO_CR, GL_INT,
+									   arraySize, tileInfo);
+
+		crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+	}
+
+	/* Restore default buffer */
+	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 }
+
+
+#if 0
+	/* This is a temporary hack! */
+static void recomputeTiling(int width, int height)
+{
+	CRASSERT(tilesort_spu.num_servers == 2);
+
+	tilesort_spu.muralWidth = width;
+	tilesort_spu.muralHeight = height;
+
+	tilesort_spu.servers[0].num_extents = 1;
+	tilesort_spu.servers[0].x1[0] = 0;
+	tilesort_spu.servers[0].y1[0] = 0;
+	tilesort_spu.servers[0].x2[0] = width / 2;
+	tilesort_spu.servers[0].y2[0] = height;
+
+	tilesort_spu.servers[1].num_extents = 1;
+	tilesort_spu.servers[1].x1[0] = width / 2;
+	tilesort_spu.servers[1].y1[0] = 0;
+	tilesort_spu.servers[1].x2[0] = width;
+	tilesort_spu.servers[1].y2[0] = height;
+
+	tilesortspuBucketingInit();
+#if 0
+	/* this leads to crashes - investigate */
+	tilesortspuComputeMaxViewport();
+#endif
+	sendTileInfoToServers();
+}
+#endif
+
+
+/*
+ * This is just one possible algorithm for dynamic reconfiguration...
+ */
+static void recomputeTiling(int muralWidth, int muralHeight)
+{
+	int tileCols, tileRows, tileWidth, tileHeight, numServers, server;
+	int i, j, tile, t;
+
+	if (tilesort_spu.muralColumns == 0 || tilesort_spu.muralRows == 0)
+	{
+		crDebug("Can't auto-recompute tiling (unknown rows/columns)");
+		return;
+	}
+
+	tilesort_spu.muralWidth = muralWidth;
+	tilesort_spu.muralHeight = muralHeight;
+
+	numServers = tilesort_spu.num_servers;
+
+	/* compute approx tile size */
+	tileCols = tilesort_spu.muralColumns;
+	tileRows = tilesort_spu.muralRows;
+	tileWidth = muralWidth / tileCols;
+	tileHeight = muralHeight / tileRows;
+
+	/* reset per-server tile count */
+	for (server = 0; server < numServers; server++)
+		tilesort_spu.servers[server].num_extents = 0;
+
+	/* use raster-order layout */
+	tile = 0;
+	for (i = 0; i < tileRows; i++) {
+		int height, y;
+		if (i == tileRows - 1)
+			height = muralHeight - tileHeight * (tileRows - 1);
+		else
+			height = tileHeight;
+		y = i * tileHeight;
+		CRASSERT(height > 0);
+
+		for (j = 0; j < tileCols; j++) {
+			int width, x;
+			if (j == tileCols - 1)
+				width = muralWidth - tileWidth * (tileCols - 1);
+			else
+				width = tileWidth;
+			x = j * tileWidth;
+			CRASSERT(width > 0);
+
+			/* save this tile's info */
+			server = tile % numServers;
+
+			t = tilesort_spu.servers[server].num_extents;
+			tilesort_spu.servers[server].x1[t] = x;
+			tilesort_spu.servers[server].y1[t] = y;
+			tilesort_spu.servers[server].x2[t] = x + width;
+			tilesort_spu.servers[server].y2[t] = y + height;
+			tilesort_spu.servers[server].num_extents = t + 1;
+
+			tile++;
+		}
+	}
+
+	crDebug("tilesort SPU: Reconfigured tiling:");
+	crDebug("  Mural size: %d x %d", muralWidth, muralHeight);
+	for (server = 0; server < numServers; server++)
+		crDebug("  Server %d: %d tiles",
+						server, tilesort_spu.servers[server].num_extents);
+
+	tilesortspuBucketingInit();
+#if 0
+	/* this leads to crashes - investigate */
+	tilesortspuComputeMaxViewport();
+#endif
+	sendTileInfoToServers();
+}
+
 
 void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 {
-	/* Ugh - this is going to be some work!!!
-	 *
+	/*
 	 * If we're driving a large mural, we probably don't want to
 	 * resize the mural in response to the app window size changing
 	 * (except maybe to preserve aspect ratio?).
@@ -80,7 +234,13 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 	 * Lightning-2) then we'll want to resize all the tiles so that
 	 * the set of tiles matches the app window size.
 	 */
-	printf("tilesortspu_WindowSize w=%d %d x %d\n", window, w, h);
+	recomputeTiling(w, h);
+}
+
+
+void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLint y)
+{
+	/* do nothing */
 }
 
 
@@ -202,8 +362,18 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 		thread->packer->updateBBOX = 1;
 		tilesort_spu.providedBBOX = GL_DEFAULT_BBOX_CR;
 		break;
+
+	case GL_TILE_INFO_CR:  /* GL_CR_tile_info */
+		/* save info and forward to the servers */
+
+		/* XXX to do */
+
+		break;
+
 	default:
-		/* The default buffer */
+		/* Propogate the data to the servers */
+
+		/* Save default buffer */
 		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
 
 		for (i = 0; i < tilesort_spu.num_servers; i++)
@@ -218,7 +388,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
 		}
 
-		/* The default buffer */
+		/* Restore default buffer */
 		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 		break;
 	}

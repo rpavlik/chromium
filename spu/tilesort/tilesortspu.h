@@ -101,6 +101,7 @@ typedef struct {
 	int ReadPixels;
 
 	unsigned int muralWidth, muralHeight;
+	unsigned int muralColumns, muralRows;
 
 	float widthScale, heightScale; /* muralSize / windowSize */
 
@@ -152,6 +153,7 @@ void tilesortspuCreateFunctions( void );
 void tilesortspuGatherConfiguration( const SPU *child_spu );
 void tilesortspuConnectToServers( void );
 void tilesortspuGetTileInformation(CRConnection *conn);
+void tilesortspuComputeRowsColumns(void);
 
 void tilesortspuComputeMaxViewport( void );
 void tilesortspuInitThreadPacking( ThreadInfo *thread );
