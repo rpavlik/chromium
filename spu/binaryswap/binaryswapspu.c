@@ -1109,9 +1109,22 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum targ
 	switch( target )
 	{
 	case GL_OBJECT_BBOX_CR:
-		binaryswap_spu.bbox = values;
+		CRASSERT(type == GL_FLOAT);
+		CRASSERT(count == 6);
+		/* make copy of values! */
+		binaryswap_spu.bboxValues.xmin = ((GLfloat *) values)[0];
+		binaryswap_spu.bboxValues.ymin = ((GLfloat *) values)[1];
+		binaryswap_spu.bboxValues.zmin = ((GLfloat *) values)[2];
+		binaryswap_spu.bboxValues.xmax = ((GLfloat *) values)[3];
+		binaryswap_spu.bboxValues.ymax = ((GLfloat *) values)[4];
+		binaryswap_spu.bboxValues.zmax = ((GLfloat *) values)[5];
+		binaryswap_spu.bbox = &(binaryswap_spu.bboxValues);
 		binaryswap_spu.super.GetDoublev( GL_PROJECTION_MATRIX, binaryswap_spu.proj );
 		binaryswap_spu.super.GetDoublev( GL_MODELVIEW_MATRIX,  binaryswap_spu.modl );
+		break;
+	case GL_DEFAULT_BBOX_CR:
+		CRASSERT(count == 0);
+		binaryswap_spu.bbox = NULL;
 		break;
 	default:
 		binaryswap_spu.child.ChromiumParametervCR( target, type, count, values );

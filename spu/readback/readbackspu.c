@@ -882,7 +882,14 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParametervCR(GLenum target, 
 		case GL_OBJECT_BBOX_CR:
 			CRASSERT(type == GL_FLOAT);
 			CRASSERT(count == 6);
-			readback_spu.bbox = values;
+			/* make copy of values! */
+			readback_spu.bboxValues.xmin = ((GLfloat *) values)[0];
+			readback_spu.bboxValues.ymin = ((GLfloat *) values)[1];
+			readback_spu.bboxValues.zmin = ((GLfloat *) values)[2];
+			readback_spu.bboxValues.xmax = ((GLfloat *) values)[3];
+			readback_spu.bboxValues.ymax = ((GLfloat *) values)[4];
+			readback_spu.bboxValues.zmax = ((GLfloat *) values)[5];
+			readback_spu.bbox = &(readback_spu.bboxValues);
 			readback_spu.super.GetDoublev( GL_PROJECTION_MATRIX, readback_spu.proj );
 			readback_spu.super.GetDoublev( GL_MODELVIEW_MATRIX,  readback_spu.modl );
 			break;

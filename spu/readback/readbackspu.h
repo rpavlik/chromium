@@ -70,8 +70,9 @@ typedef struct {
 
 	/* XXX Are these per-context or per-window variables? */
 	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
-     BBox *bbox;
-     GLdouble modl[16], proj[16];
+	BBox *bbox;  /* Either NULL or points to bboxValues */
+	BBox bboxValues;
+	GLdouble modl[16], proj[16];
 
 } ReadbackSPU;
 
