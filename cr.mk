@@ -94,10 +94,6 @@ define MAKE_DSODIR
 	if test ! -d $(DSO_DIR); then $(MKDIR) $(DSO_DIR); fi
 endef
 
-define MAKE_DSODIR
-	if test ! -d $(STATE_DIR); then $(MKDIR) $(STATE_DIR); fi
-endef
-
 ifdef TEST
 FILES := $(TEST)
 endif
