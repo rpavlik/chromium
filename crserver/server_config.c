@@ -190,17 +190,17 @@ void crServerGetTileInfo( CRConnection *conn, int nonFileClient )
 		{
 			float x, y, w, h;
 			sscanf( tilelist[i], "%f %f %f %f", &x, &y, &w, &h );
-			cr_server.x1[i] = (int) x;
-			cr_server.y1[i] = (int) y;
-			cr_server.x2[i] = cr_server.x1[i] + (int) w;
-			cr_server.y2[i] = cr_server.y1[i] + (int) h;
+			cr_server.extents[i].x1 = (int) x;
+			cr_server.extents[i].y1 = (int) y;
+			cr_server.extents[i].x2 = (int) x + (int) w;
+			cr_server.extents[i].y2 = (int) y + (int) h;
 			if (h > cr_server.maxTileHeight)
 			{
 				cr_server.maxTileHeight = (int) h;
 			}
 			crDebug( "Added tile: %d %d %d %d",
-							 cr_server.x1[i], cr_server.y1[i],
-							 cr_server.x2[i], cr_server.y2[i] );
+							 cr_server.extents[i].x1, cr_server.extents[i].y1,
+							 cr_server.extents[i].x2, cr_server.extents[i].y2 );
 		}
 		crFreeStrings(tilechain);
 		crFreeStrings(tilelist);

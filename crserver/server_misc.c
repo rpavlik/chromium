@@ -109,7 +109,8 @@ void crServerNewTiles(int muralWidth, int muralHeight,
 
 	crDebug("Reconfiguring tiles in crServerNewTiles:");
 	crDebug("  New mural size: %d x %d", muralWidth, muralHeight);
-	for (i = 0; i < numTiles; i++) {
+	for (i = 0; i < numTiles; i++)
+	{
 		crDebug("  Tile %d: %d, %d .. %d, %d", i,
 						tileBounds[i*4], tileBounds[i*4+1],
 						tileBounds[i*4+2], tileBounds[i*4+3]);
@@ -127,11 +128,11 @@ void crServerNewTiles(int muralWidth, int muralHeight,
 	for (i = 0; i < numTiles; i++)
 	{
 		int h;
-		cr_server.x1[i] = tileBounds[i * 4 + 0];
-		cr_server.y1[i] = tileBounds[i * 4 + 1];
-		cr_server.x2[i] = tileBounds[i * 4 + 2];
-		cr_server.y2[i] = tileBounds[i * 4 + 3];
-		h = cr_server.y2[i] - cr_server.y1[i];
+		cr_server.extents[i].x1 = tileBounds[i * 4 + 0];
+		cr_server.extents[i].y1 = tileBounds[i * 4 + 1];
+		cr_server.extents[i].x2 = tileBounds[i * 4 + 2];
+		cr_server.extents[i].y2 = tileBounds[i * 4 + 3];
+		h = cr_server.extents[i].y2 - cr_server.extents[i].y1;
 		if (h > cr_server.maxTileHeight)
 			cr_server.maxTileHeight = h;
 	}

@@ -137,8 +137,8 @@ void crServerSetViewportBounds (CRViewportState *v,
 void crServerClampViewport( int x, int y, unsigned int width, unsigned int height,
 		int *server_x, int *server_y, unsigned int *server_width, unsigned int *server_height, int extent )
 {
-	*server_x = x - cr_server.x1[extent];
-	*server_y = y - cr_server.y1[extent];
+	*server_x = x - cr_server.extents[extent].x1;
+	*server_y = y - cr_server.extents[extent].y1;
 	*server_width = width;
 	*server_height = height;
 	if (*server_x < 0)
@@ -149,13 +149,13 @@ void crServerClampViewport( int x, int y, unsigned int width, unsigned int heigh
 	{
 		*server_y = 0;
 	}
-	if (*server_x + width > (unsigned int) (cr_server.x2[extent] - cr_server.x1[extent]))
+	if (*server_x + width > (unsigned int) (cr_server.extents[extent].x2 - cr_server.extents[extent].x1))
 	{
-		*server_width = cr_server.x2[extent] - cr_server.x1[extent] - *server_x;
+		*server_width = cr_server.extents[extent].x2 - cr_server.extents[extent].x1 - *server_x;
 	}
-	if (*server_y + height > (unsigned int) (cr_server.y2[extent] - cr_server.y1[extent]))
+	if (*server_y + height > (unsigned int) (cr_server.extents[extent].y2 - cr_server.extents[extent].y1))
 	{
-		*server_height = cr_server.y2[extent] - cr_server.y1[extent] - *server_y;
+		*server_height = cr_server.extents[extent].y2 - cr_server.extents[extent].y1 - *server_y;
 	}
 }
 
@@ -195,10 +195,10 @@ void crServerRecomputeBaseProjection(GLmatrix *base, GLint x, GLint y, GLint w, 
  	 * In the default case (from main.c) we pass the the
 	 * full muralsize of 0, 0, muralWidth, muralHeight
 	 */
-	p.x1 = ((GLfloat) (cr_server.x1[cr_server.curExtent]) - x) / (w);
-	p.y1 = ((GLfloat) (cr_server.y1[cr_server.curExtent]) - y) / (h);
-	p.x2 = ((GLfloat) (cr_server.x2[cr_server.curExtent]) - x) / (w);
-	p.y2 = ((GLfloat) (cr_server.y2[cr_server.curExtent]) - y) / (h);
+	p.x1 = ((GLfloat) (cr_server.extents[cr_server.curExtent].x1) - x) / (w);
+	p.y1 = ((GLfloat) (cr_server.extents[cr_server.curExtent].y1) - y) / (h);
+	p.x2 = ((GLfloat) (cr_server.extents[cr_server.curExtent].x2) - x) / (w);
+	p.y2 = ((GLfloat) (cr_server.extents[cr_server.curExtent].y2) - y) / (h);
 
 	/* XXX This gets real kludgy.
 	 * It's tricky when viewport's cross server boundaries

@@ -49,8 +49,8 @@ void crServerFillBucketingHash(void)
 	}
 
 	/* Fill the rlist */
-	xinc = cr_server.x2[0] - cr_server.x1[0];
-	yinc = cr_server.y2[0] - cr_server.y1[0];
+	xinc = cr_server.extents[0].x2 - cr_server.extents[0].x1;
+	yinc = cr_server.extents[0].y2 - cr_server.extents[0].y1;
 
 	rptr = rlist;
 	for (i=0; i < (int) cr_server.muralWidth; i+=xinc) 
@@ -59,12 +59,9 @@ void crServerFillBucketingHash(void)
 		{
 			for (k=0; k < cr_server.numExtents; k++) 
 			{
-				if (cr_server.x1[k] == i && cr_server.y1[k] == j) 
+				if (cr_server.extents[k].x1 == i && cr_server.extents[k].y1 == j) 
 				{
-					rptr->extents.x1 = cr_server.x1[k];
-					rptr->extents.x2 = cr_server.x2[k];
-					rptr->extents.y1 = cr_server.y1[k];
-					rptr->extents.y2 = cr_server.y2[k];
+					rptr->extents = cr_server.extents[k]; /* x1,y1,x2,y2 */
 					rptr->id = k;
 					break;
 				}
@@ -73,8 +70,8 @@ void crServerFillBucketingHash(void)
 			{
 				rptr->extents.x1 = i;
 				rptr->extents.y1 = j;
-				rptr->extents.x2 = i+xinc;
-				rptr->extents.y2 = j+yinc;
+				rptr->extents.x2 = i + xinc;
+				rptr->extents.y2 = j + yinc;
 				rptr->id = -1;
 			}
 			rptr++;

@@ -60,9 +60,12 @@ int main( int argc, char *argv[] )
 #ifndef WINDOWS
 	signal( SIGPIPE, crServerCleanup );
 #endif
+
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
+
 	crServerGatherConfiguration(mothership);
+
 	for (j = 0 ; j < cr_server.numClients ; j++)
 	{
 		crServerAddToRunQueue( &cr_server.clients[j] );

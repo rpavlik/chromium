@@ -103,10 +103,7 @@ void crServerInitializeQueueExtents(RunQueue *q)
 	{
 		CRRunQueueExtent *extent = &q->extent[i];
 
-		extent->imagewindow.x1 = cr_server.x1[i];
-		extent->imagewindow.y1 = cr_server.y1[i];
-		extent->imagewindow.x2 = cr_server.x2[i];
-		extent->imagewindow.y2 = cr_server.y2[i];
+		extent->imagewindow = cr_server.extents[i]; /* x1,y1,x2,y2 */
 
 		/* extent->display = find_output_display( extent->imagewindow ); */
 
@@ -119,8 +116,8 @@ void crServerInitializeQueueExtents(RunQueue *q)
 		extent->bounds.y2 = ( (GLfloat) (2*extent->imagewindow.y2) /
 				cr_server.muralHeight - 1.0f );
 
-		w = cr_server.x2[i] - cr_server.x1[i];
-		h = cr_server.y2[i] - cr_server.y1[i];
+		w = cr_server.extents[i].x2 - cr_server.extents[i].x1;
+		h = cr_server.extents[i].y2 - cr_server.extents[i].y1;
 
 		if ( x + w > (int) cr_server.underlyingDisplay[2] )
 		{
