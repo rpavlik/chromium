@@ -30,11 +30,7 @@ Other internal functions/classes:
     SockWrapper:    Internal convience class for handling sockets
 """
 
-import sys, string, types, traceback, re
-
-import socket
-import select
-import os
+import sys, string, types, traceback, re, threading, os, socket, select
 
 from crconfig import arch, crdir
 crbindir = os.path.join(crdir,'bin',arch)
@@ -110,6 +106,13 @@ class CRNode:
 
 	    AddSPU:	Adds a SPU to the front of the SPU chain.
 	    SPUDir:	Sets the directory SPUs start in.
+	    SetAutostart: Set the name of a program to start the process
+	    		of this CRNode remotely from the mothership.
+	    SetAutostartArgv: Set the argument list of the program that
+	    		will remotely start this CRNode's process. These
+			member functions must be called before CR.Go() is
+			called to have any effect. They are run only once.
+			See the CRSpawner documentation for more information.
 	"""
 	SPUIndex = 0
 
@@ -136,6 +139,8 @@ class CRNode:
 		self.gm_accept_wait = None
 		self.gm_connect_wait = None
 		self.alias = host
+		self.autostart = "" ;
+		self.autostart_argv = [] ;
 
 	def Alias( self, name ):
 		self.alias = name
@@ -154,6 +159,12 @@ class CRNode:
 	    	"""SPUDir(dir)
 		Sets the directory that SPUs start in."""
 		self.config['SPUdir'] = dir
+
+	def SetAutostart( self, program ):
+		self.autostart = program
+
+	def SetAutostartArgv( self, arglist ):
+		self.autostart_argv = arglist
 
 class CRNetworkNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
@@ -267,6 +278,39 @@ class SockWrapper:
 
 	def Success( self, msg ):
 		self.Reply( SockWrapper.NOERROR, msg )
+
+class CRSpawner(threading.Thread):
+	"""A class used to start processes on nodes.
+
+	Since the mothership knows what should be running on each node, it
+	can start these processes if you tell it how to start a job remotely.
+	Each CRNode now has members named autostart and autostart_argv. If
+	you set these to non-null strings, the spawner will call os.spawnv()
+	with these values when the spawner's run() member is called.
+
+	The autostart member should be a string containing the full path
+	to an executable program to be run, i.e. "/usr/bin/ssh". The
+	autostart_argv member should be a vector containing the argument
+	list for the program, i.e.,
+		( "ssh", "mynode.mydotcom.com", "/usr/local/bin/crserver" )
+	NOTE: Yes, the program name should be the zeroth item in the list
+	of arguments, which means it is repeated.
+
+	Since a new process is created, there is no need for your program
+	to complete before the application finishes.
+	"""
+	def __init__( self, nodes ):
+		self.nodes = []
+		for node in nodes:
+			self.nodes.append( node )
+		threading.Thread.__init__(self)
+	def run( self ):
+		for node in self.nodes:
+			if node.autostart != "":
+				os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
+				print >> sys.stderr, "Starting %s on %s" % (node.autostart, node.host)
+			else:
+				print >> sys.stderr, "Nothing to start on %s" % node.host
 
 class CR:
 	"""Main class that controls the mothership
@@ -397,7 +441,12 @@ class CR:
 				Fatal( "Couldn't listen!" );
 	
 			self.all_sockets.append(s)
-	
+
+			# Start spawning processes for each node
+			# that has requested something be started.
+			spawner = CRSpawner( self.nodes ) ;
+			spawner.start() ;
+
 			while 1:
 				ready = select.select( self.all_sockets, [], [], 0.1 )[0]
 				for sock in ready:
