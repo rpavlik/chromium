@@ -27,7 +27,6 @@ print """
 """
 
 for func_name in keys:
-	#if stub_common.FindSpecial( "noexport", func_name ): continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
 	print "static %s SPULOAD_APIENTRY ts_%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
@@ -45,7 +44,6 @@ for func_name in keys:
 print "SPUDispatchTable stubThreadsafeDispatch = {"
 
 for func_name in keys:
-	#if stub_common.FindSpecial( "noexport", func_name ): continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
 	print "\tts_%s," % (func_name)

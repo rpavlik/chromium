@@ -27,7 +27,8 @@ print """#include "chromium.h"
 """
 
 for func_name in keys:
-	if stub_common.FindSpecial( "noexport", func_name ): continue
+	if stub_common.FindSpecial( "noexport", func_name ):
+		continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
 	print "NAKED %s cr_gl%s" % (return_type, func_name),
@@ -39,8 +40,9 @@ for func_name in keys:
 			print "\tUNUSED( %s );" % arg_name
 	print "}"
 	print ""
-    	real_func_name = alias_exports.AliasMap(func_name);
-    	if real_func_name:
+
+	real_func_name = alias_exports.AliasMap(func_name);
+	if real_func_name:
 		print "NAKED %s cr_gl%s" % (return_type, real_func_name),
 		print stub_common.ArgumentString( arg_names, arg_types )
 		print "{"

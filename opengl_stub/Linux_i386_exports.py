@@ -22,7 +22,8 @@ stub_common.CopyrightC()
 
 for index in range(len(keys)):
 	func_name = keys[index]
-	if stub_common.FindSpecial( "noexport", func_name ): continue
+	if stub_common.FindSpecial( "noexport", func_name ):
+		continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
 	print "\t.align 4"
@@ -32,8 +33,8 @@ for index in range(len(keys)):
 	print "\tmovl glim+%d, %%eax" % (4*index)
 	print "\tjmp *%eax"
 	print ""
-    	real_func_name = alias_exports.AliasMap(func_name);
-    	if real_func_name:
+	real_func_name = alias_exports.AliasMap(func_name);
+	if real_func_name:
 		print "\t.align 4"
 		print ".globl gl%s" % real_func_name
 		print "\t.type gl%s,@function" % real_func_name

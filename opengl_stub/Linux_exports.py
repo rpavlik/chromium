@@ -28,28 +28,27 @@ print """#include <stdio.h>
 """
 
 for func_name in keys:
-    if stub_common.FindSpecial( "noexport", func_name ): continue
-    ( return_type, arg_names, arg_types ) = gl_mapping[func_name]
+	if stub_common.FindSpecial( "noexport", func_name ):
+		continue
+	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
-    print "%s gl%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-    print "{"
-    print "\t",
+	print "%s gl%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+	print "{"
+	print "\t",
 
-    if return_type != "void":
-	print "return ",
-    print "glim.%s%s;" % (func_name, stub_common.CallString( arg_names ))
-
-    print "}"
-    print ""
-    real_func_name = alias_exports.AliasMap(func_name);
-    if real_func_name:
-   	print "%s gl%s%s" % (return_type, real_func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-    	print "{"
-    	print "\t",
-
-   	if return_type != "void":
+	if return_type != "void":
 		print "return ",
-    	print "glim.%s%s;" % (func_name, stub_common.CallString( arg_names ))
-
+	print "glim.%s%s;" % (func_name, stub_common.CallString( arg_names ))
 	print "}"
-  	print ""
+	print ""
+
+	real_func_name = alias_exports.AliasMap(func_name);
+	if real_func_name:
+		print "%s gl%s%s" % (return_type, real_func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+		print "{"
+		print "\t",
+		if return_type != "void":
+			print "return ",
+		print "glim.%s%s;" % (func_name, stub_common.CallString( arg_names ))
+		print "}"
+		print ""
