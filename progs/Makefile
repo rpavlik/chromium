@@ -10,7 +10,7 @@ include ${TOP}/arch.mk
 SUBDIRS = arbfraglight atlantis cubes fonttest kirchner extensions \
 	psubmit retile \
 	statecopytest tiletest city psubmit_crut bboxtest viewports \
-	fraglight stereocube
+	fraglight stereocube packperf
 
 ifeq ($(THREADSAFE), 1)
 SUBDIRS += threadtest
