@@ -2,6 +2,7 @@
 #include "cr_spu.h"
 
 extern SPU *stub_spu;
+extern void StubInit(void);
 
 // I *know* most of the parameters are unused, dammit.
 #pragma warning( disable: 4100 )
@@ -87,7 +88,6 @@ BOOL WINAPI wglDeleteContext_prox( HGLRC hglrc )
 
 BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 {
-	//wireGLMakeCurrent( );
 	stub_spu->dispatch_table.MakeCurrent();
 
 	return 1;
@@ -112,10 +112,10 @@ int WINAPI wglGetPixelFormat_prox( HDC hdc )
 int WINAPI wglDescribePixelFormat_prox( HDC hdc, int pixelFormat, UINT nBytes,
 		LPPIXELFORMATDESCRIPTOR pfd )
 {
-	if ( pixelFormat != 1 ) {
-		crError( "wglDescribePixelFormat: pixelFormat=%d?\n", pixelFormat );
-		return 0;
-	}
+//	if ( pixelFormat != 1 ) {
+//		crError( "wglDescribePixelFormat: pixelFormat=%d?\n", pixelFormat );
+//		return 0;
+//	}
 
 	if ( nBytes != sizeof(*pfd) ) {
 		crError( "wglDescribePixelFormat: nBytes=%u?\n", nBytes );
@@ -164,13 +164,15 @@ BOOL WINAPI wglShareLists_prox( HGLRC hglrc1, HGLRC hglrc2 )
 
 HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 {
-	//__wiregl_globals.client_hdc = hdc;
-	//__wiregl_globals.client_hwnd = WindowFromDC( hdc );
+	// This should be early enough to initialize everything.
+	// You have to create a context before you can make current
+	// to it, right?
 
+	StubInit();
 	stub_spu->dispatch_table.CreateContext();
 
 	/* hack hack hack */
-	return (HGLRC) 0x10000;
+	return (HGLRC) 0x69696969;
 }
 
 BOOL WINAPI

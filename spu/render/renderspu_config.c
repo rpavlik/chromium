@@ -29,6 +29,7 @@ void renderspuGatherConfiguration( void )
 
 	// Connect to the mothership and identify ourselves.
 	
+	crNetInit( NULL, NULL );
 	conn = crMothershipConnect( NULL );
 	if (!crMothershipSendString( conn, NULL, "spu %d", render_spu.id ))
 	{

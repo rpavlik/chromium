@@ -625,7 +625,7 @@ int crGetHostname( char *buf, unsigned int len )
 	if (ret)
 	{
 		int err = crTCPIPErrno();
-		crWarning( "Couldn't get hostname: %s", crTCPIPErrorString( err ) );
+		//crWarning( "Couldn't get hostname: %s", crTCPIPErrorString( err ) );
 	}
 	return ret;
 }

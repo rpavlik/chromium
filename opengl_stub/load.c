@@ -8,7 +8,7 @@
 SPU *stub_spu = NULL;
 extern void FakerInit( SPU *fns );
 
-static void __stubInit(void)
+void StubInit(void)
 {
 	// Here is where we contact the mothership to find out what we're supposed to
 	// be doing.  Networking code in a DLL initializer.  I sure hope this
@@ -24,6 +24,11 @@ static void __stubInit(void)
 	int *spu_ids;
 	char **spu_names;
 	int i;
+
+	static int stub_initialized = 0;
+	if (stub_initialized)
+		return;
+	stub_initialized = 1;
 	
 	crNetInit( NULL, NULL );
 	conn = crMothershipConnect( NULL );
@@ -56,6 +61,9 @@ static void __stubInit(void)
 	FakerInit( stub_spu );
 }
 
+// Sigh -- we can't do initialization at load time, since Windows forbids
+// the loading of other libraries from DLLMain.
+
 #ifdef LINUX
 // GCC crap
 void (*stub_init_ptr)(void) __attribute__((section(".ctors"))) = __stubInit;
@@ -72,7 +80,15 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD fdwReason, LPVOID lpvReserved )
 	(void) instance;
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
-		__stubInit();
+		//__stubInit();
+		//DebugBreak();
+		printf ("!!!!!!!!!!!!!!!!!Process attach!\n");
+	}
+	if (fdwReason == DLL_THREAD_ATTACH)
+	{
+		//__stubInit();
+		//DebugBreak();
+		printf ("!!!!!!!!!!!!!!!!!Thread attach!\n");
 	}
 	return TRUE;
 }

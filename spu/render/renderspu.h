@@ -20,6 +20,9 @@ void RENDER_APIENTRY renderspuSwapBuffers( void );
 typedef HGLRC (RENDER_APIENTRY *wglCreateContextFunc_t)(HDC);
 typedef BOOL (RENDER_APIENTRY *wglMakeCurrentFunc_t)(HDC,HGLRC);
 typedef BOOL (RENDER_APIENTRY *wglSwapBuffersFunc_t)(HDC);
+typedef int (RENDER_APIENTRY *wglChoosePixelFormatFunc_t)(HDC, CONST PIXELFORMATDESCRIPTOR *);
+typedef int (RENDER_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
+typedef HGLRC (RENDER_APIENTRY *wglGetCurrentContextFunc_t)();
 #else
 #error FOO
 #endif
@@ -40,6 +43,9 @@ typedef struct {
 	wglCreateContextFunc_t wglCreateContext;
 	wglMakeCurrentFunc_t wglMakeCurrent;
 	wglSwapBuffersFunc_t wglSwapBuffers;
+	wglGetCurrentContextFunc_t wglGetCurrentContext;
+	wglChoosePixelFormatFunc_t wglChoosePixelFormat;
+	wglSetPixelFormatFunc_t wglSetPixelFormat;
 #else
 	Display     *dpy;
 	XVisualInfo *visual;

@@ -2,7 +2,7 @@ TOP = ../../
 LIBRARY = spuload
 LIBRARIES = crutil
 
-FILES = load dispatch
+FILES = spuload dispatch
 
 PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c
 SLOP = $(PRECOMP)

@@ -26,6 +26,7 @@ SPUFunctions *SPUInit( int id, SPU *child,
 	printf ("Render SPU %d being initialized: %d %d %d %d!\n", id, num_children, context_id, num_contexts, num_args);
 	LoadSystemGL( render_table );
 	render_spu.id = id;
+	render_spu.dispatch = NULL;
 	renderspuGatherConfiguration();
 	renderspuCreateWindow();
 	return &the_functions;

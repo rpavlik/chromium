@@ -431,6 +431,11 @@ void renderspuCreateWindow( void )
 
 #else
 	hinstance = GetModuleHandle( NULL );
+	if (!hinstance)
+	{
+		crError( "Couldn't get a handle to my module." );
+	}
+	crDebug( "Got the module handle: 0x%x", hinstance );
 
 	/* If we were launched from a service, telnet, or rsh, we need to
 	 * get the input desktop.  */
@@ -445,11 +450,17 @@ void renderspuCreateWindow( void )
 	{
 		crError( "Couldn't aquire input desktop" );
 	}
+	crDebug( "Got the desktop: 0x%x", desktop );
 
 	if ( !SetThreadDesktop( desktop ) )
 	{
-		crError( "Couldn't set thread to input desktop" );
+		// If this function fails, it's probably because
+		// it's already been called (i.e., the render SPU
+		// is bolted to an application?)
+
+		//crError( "Couldn't set thread to input desktop" );
 	}
+	crDebug( "Set the thread desktop -- this might have failed." );
 
 	if ( !GetClassInfo(hinstance, WINDOW_NAME, &wc) ) 
 	{
@@ -471,7 +482,9 @@ void renderspuCreateWindow( void )
 					"This error message is from 1997 and probably doesn't make"
 					"any sense any more, but it's nostalgic for Humper." );
 		}
+		crDebug( "Registered the class" );
 	}
+	crDebug( "Got the class information" );
 
 	/* Full screen window should be a popup (undecorated) window */
 #if 1
@@ -524,9 +537,13 @@ void renderspuCreateWindow( void )
 		/* CreateWindow takes the size of the entire window, so we add
 		 * in the size necessary for the frame and the caption. */
 
-		int smCxFixedFrame = GetSystemMetrics( SM_CXFIXEDFRAME );
-		int smCyFixedFrame = GetSystemMetrics( SM_CYFIXEDFRAME );
-		int smCyCaption = GetSystemMetrics( SM_CYCAPTION );
+		int smCxFixedFrame, smCyFixedFrame, smCyCaption;
+		smCxFixedFrame = GetSystemMetrics( SM_CXFIXEDFRAME );
+		crDebug( "Got the X fixed frame" );
+		smCyFixedFrame = GetSystemMetrics( SM_CYFIXEDFRAME );
+		crDebug( "Got the Y fixed frame" );
+		smCyCaption = GetSystemMetrics( SM_CYCAPTION );
+		crDebug( "Got the Caption " );
 
 		window_plus_caption_width = render_spu.actual_window_width +
 			2 * smCxFixedFrame;
@@ -551,6 +568,7 @@ void renderspuCreateWindow( void )
 	}
 
 	crDebug( "Showing the window" );
+	// NO ERROR CODE FOR SHOWWINDOW
 	ShowWindow( render_spu.hWnd, SW_SHOWNORMAL );
 	SetForegroundWindow( render_spu.hWnd );
 	if ( render_spu.fullscreen )
@@ -564,27 +582,36 @@ void renderspuCreateWindow( void )
 		ShowCursor( FALSE );
 	}
 	render_spu.device_context = GetDC( render_spu.hWnd );
+	crDebug( " Got the DC: 0x%x", render_spu.device_context );
 	if ( !bSetupPixelFormat( render_spu.device_context ) )
 	{
 		crError( "Couldn't set up the device context!  Yikes!" );
 	}
-	crDebug( "Creating the context (CreateContext = 0x%p)", render_spu.wglCreateContext );
+	//DebugBreak();
 	render_spu.hRC = render_spu.wglCreateContext( render_spu.device_context );
-	crDebug( "Making current" );
-	render_spu.wglMakeCurrent( render_spu.device_context, render_spu.hRC );
+	if (!render_spu.hRC)
+	{
+		crError( "Couldn't create the context for the window!" );
+	}
+	crDebug( "Created the context: 0x%x", render_spu.hRC );
+	if (!render_spu.wglMakeCurrent( render_spu.device_context, render_spu.hRC ))
+	{
+		crError( "Couldn't make current to the context!" );
+	}
+	crDebug( "Made Current" );
 
 #endif
 
 #if 1
 	// Ye olde hacke
-	crDebug( "Setting the clear color" );
+	//crDebug( "Setting the clear color" );
 	//render_spu.dispatch->ClearColor( 1.0f, 1.0f, 0.0f, 1.0f );
-	crDebug( "clearing" );
+	//crDebug( "clearing" );
 	//render_spu.dispatch->Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	crDebug( "swapping buffers" );
+	//crDebug( "swapping buffers" );
 
-	renderspuSwapBuffers( );
-	crDebug( "DONE!" );
+	//renderspuSwapBuffers( );
+	//crDebug( "DONE!" );
 #endif
 
 #if WIREGL_TRACK_DEPTH_COMPLEXITY
@@ -670,17 +697,17 @@ bSetupPixelFormat( HDC hdc )
 	//  Commented out by Ian.
 	//pfd.cColorBits = GetDeviceCaps(hdc,BITSPIXEL);
 	ppfd = &pfd;
-	pixelformat = ChoosePixelFormat( hdc, ppfd );
+	pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
 	/* doing this twice is normal Win32 magic */
-	pixelformat = ChoosePixelFormat( hdc, ppfd );
+	pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
 	if ( pixelformat == 0 ) 
 	{
-		MessageBox( NULL, "ChoosePixelFormat failed", "Error", MB_OK ); 
+		MessageBox( NULL, "render_spu.wglChoosePixelFormat failed", "Error", MB_OK ); 
 		return FALSE; 
 	}
-	if ( !SetPixelFormat( hdc, pixelformat, ppfd ) ) 
+	if ( !render_spu.wglSetPixelFormat( hdc, pixelformat, ppfd ) ) 
 	{
-		MessageBox( NULL, "SetPixelFormat failed", "Error", MB_OK ); 
+		MessageBox( NULL, "render_spu.wglSetPixelFormat failed", "Error", MB_OK ); 
 		return FALSE;
 	}
 

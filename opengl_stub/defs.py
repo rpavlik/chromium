@@ -41,4 +41,4 @@ for func_name in ( "wglChoosePixelFormat",
 		   "wglChoosePixelFormat" ):
     print func_name + " = " + func_name + "_prox";
 
-print "DllMain"
+#print "DllMain"

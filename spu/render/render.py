@@ -79,11 +79,19 @@ for func_name in keys:
 	else:
 		print '\t__fillin( table + %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
 	index += 1
-print """#ifdef WINDOWS
-	render_spu.wglMakeCurrent = (wglMakeCurrentFunc_t) crDLLGet( dll, "wglMakeCurrent" );
-	render_spu.wglSwapBuffers = (wglSwapBuffersFunc_t) crDLLGet( dll, "wglSwapBuffers" );
-	render_spu.wglCreateContext = (wglCreateContextFunc_t) crDLLGet( dll, "wglCreateContext" );
-#else
+
+useful_wgl_functions = [
+	"MakeCurrent",
+	"SwapBuffers",
+	"CreateContext",
+	"GetCurrentContext",
+	"ChoosePixelFormat",
+	"SetPixelFormat"
+]
+print '#ifdef WINDOWS'
+for fun in useful_wgl_functions:
+	print 'render_spu.wgl%s = (wgl%sFunc_t) crDLLGet( dll, "wgl%s" );' % (fun,fun,fun)
+print """#else
 #error WORK ON IT
 #endif
 }"""

@@ -306,7 +306,7 @@ void do_it( char *argv[] )
 	if ( status == -1 )
 		crError( "Couldn't spawn \"%s\".", argv[0] );
 	else if ( status > 0 )
-		crError( "\"%s\": exited with status=%d\n", argv[0], status );
+		crWarning( "\"%s\": exited with status=%d\n", argv[0], status );
 
 	delete_temp_files( );
 	delete_temp_dirs( );
