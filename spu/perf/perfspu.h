@@ -18,7 +18,9 @@
 
 /* This is very fine grained.... Don't know whether we want this
  * kind of detail yet. But we maintain a linked list of rendering
- * modes and the calls made inbetween the Begin/End calls */
+ * modes and the calls made inbetween the Begin/End calls.
+ * 29/5/2002 - it's getting a little out of date this code....
+ */
 #define CR_PERF_PER_INSTANCE_COUNTERS 0
 
 void perfspuGatherConfiguration( void );
@@ -27,8 +29,17 @@ typedef struct {
 	int 	count;
 
 	int 	v2d, v2f, v2i, v2s;
+	int 	v2dv, v2fv, v2iv, v2sv;
 	int 	v3d, v3f, v3i, v3s;
+	int 	v3dv, v3fv, v3iv, v3sv;
 	int 	v4d, v4f, v4i, v4s;
+	int 	v4dv, v4fv, v4iv, v4sv;
+
+	int	ipoints;	/* Interpreted points */
+	int	ilines; 	/* Interpreted lines */
+	int	itris;		/* Interpreted tris */
+	int	iquads; 	/* Interpreted quads */
+	int	ipolygons; 	/* Interpreted polygons */
 } PerfVertex;
 
 typedef struct __perf_prim {
@@ -63,6 +74,8 @@ typedef struct {
 	FILE *log_file;
 	char token[100];
 	char separator[100];
+
+	int mode;
 	
 	int swapdumpcount;
 	int cleardumpcount;
@@ -75,6 +88,8 @@ typedef struct {
 	int draw_pixels;
 	int old_read_pixels;
 	int read_pixels;
+
+	PerfVertex snapshot;
 
 	PerfPrim framestats;
 	PerfPrim old_framestats;

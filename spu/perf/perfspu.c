@@ -45,40 +45,95 @@ void perfspuDumpVertices(char *pstring, PerfVertex *old, PerfVertex *new)
 	sprintf(output, "%s%s%s%s%s%s", perf_spu.token, perf_spu.separator, perf_spu.hostname, perf_spu.separator, pstring, perf_spu.separator);
 
 	if (old->v2d < new->v2d)
-		fprintf( perf_spu.log_file, "%sglVertex2d(v)%s%d%s%d\n", output, perf_spu.separator, new->v2d, perf_spu.separator, new->v2d - old->v2d);
+		fprintf( perf_spu.log_file, "%sglVertex2d%s%d%s%d\n", output, perf_spu.separator, new->v2d, perf_spu.separator, new->v2d - old->v2d);
 
 	if (old->v2f < new->v2f)
-		fprintf( perf_spu.log_file, "%sglVertex2f(v)%s%d%s%d\n", output, perf_spu.separator, new->v2f, perf_spu.separator, new->v2f - old->v2f);
+		fprintf( perf_spu.log_file, "%sglVertex2f%s%d%s%d\n", output, perf_spu.separator, new->v2f, perf_spu.separator, new->v2f - old->v2f);
 
 	if (old->v2i < new->v2i)
-		fprintf( perf_spu.log_file, "%sglVertex2i(v)%s%d%s%d\n", output, perf_spu.separator, new->v2i, perf_spu.separator, new->v2i - old->v2i);
+		fprintf( perf_spu.log_file, "%sglVertex2i%s%d%s%d\n", output, perf_spu.separator, new->v2i, perf_spu.separator, new->v2i - old->v2i);
 
 	if (old->v2s < new->v2s)
-		fprintf( perf_spu.log_file, "%sglVertex2s(v)%s%d%s%d\n", output, perf_spu.separator, new->v2s, perf_spu.separator, new->v2s - old->v2s);
+		fprintf( perf_spu.log_file, "%sglVertex2s%s%d%s%d\n", output, perf_spu.separator, new->v2s, perf_spu.separator, new->v2s - old->v2s);
+
+	if (old->v2dv < new->v2dv)
+		fprintf( perf_spu.log_file, "%sglVertex2dv%s%d%s%d\n", output, perf_spu.separator, new->v2dv, perf_spu.separator, new->v2dv - old->v2dv);
+
+	if (old->v2fv < new->v2fv)
+		fprintf( perf_spu.log_file, "%sglVertex2fv%s%d%s%d\n", output, perf_spu.separator, new->v2fv, perf_spu.separator, new->v2fv - old->v2fv);
+
+	if (old->v2iv < new->v2iv)
+		fprintf( perf_spu.log_file, "%sglVertex2iv%s%d%s%d\n", output, perf_spu.separator, new->v2iv, perf_spu.separator, new->v2iv - old->v2iv);
+
+	if (old->v2sv < new->v2sv)
+		fprintf( perf_spu.log_file, "%sglVertex2sv%s%d%s%d\n", output, perf_spu.separator, new->v2sv, perf_spu.separator, new->v2sv - old->v2sv);
 
 	if (old->v3d < new->v3d)
-		fprintf( perf_spu.log_file, "%sglVertex3d(v)%s%d%s%d\n", output, perf_spu.separator, new->v3d, perf_spu.separator, new->v3d - old->v3d);
+		fprintf( perf_spu.log_file, "%sglVertex3d%s%d%s%d\n", output, perf_spu.separator, new->v3d, perf_spu.separator, new->v3d - old->v3d);
 
 	if (old->v3f < new->v3f)
-		fprintf( perf_spu.log_file, "%sglVertex3f(v)%s%d%s%d\n", output, perf_spu.separator, new->v3f, perf_spu.separator, new->v3f - old->v3f);
+		fprintf( perf_spu.log_file, "%sglVertex3f%s%d%s%d\n", output, perf_spu.separator, new->v3f, perf_spu.separator, new->v3f - old->v3f);
 
 	if (old->v3i < new->v3i)
-		fprintf( perf_spu.log_file, "%sglVertex3i(v)%s%d%s%d\n", output, perf_spu.separator, new->v3i, perf_spu.separator, new->v3i - old->v3i);
+		fprintf( perf_spu.log_file, "%sglVertex3i%s%d%s%d\n", output, perf_spu.separator, new->v3i, perf_spu.separator, new->v3i - old->v3i);
 
 	if (old->v3s < new->v3s)
-		fprintf( perf_spu.log_file, "%sglVertex3s(v)%s%d%s%d\n", output, perf_spu.separator, new->v3s, perf_spu.separator, new->v3s - old->v3s);
+		fprintf( perf_spu.log_file, "%sglVertex3s%s%d%s%d\n", output, perf_spu.separator, new->v3s, perf_spu.separator, new->v3s - old->v3s);
+
+	if (old->v3dv < new->v3dv)
+		fprintf( perf_spu.log_file, "%sglVertex3dv%s%d%s%d\n", output, perf_spu.separator, new->v3dv, perf_spu.separator, new->v3dv - old->v3dv);
+
+	if (old->v3fv < new->v3fv)
+		fprintf( perf_spu.log_file, "%sglVertex3fv%s%d%s%d\n", output, perf_spu.separator, new->v3fv, perf_spu.separator, new->v3fv - old->v3fv);
+
+	if (old->v3iv < new->v3iv)
+		fprintf( perf_spu.log_file, "%sglVertex3iv%s%d%s%d\n", output, perf_spu.separator, new->v3iv, perf_spu.separator, new->v3iv - old->v3iv);
+
+	if (old->v3sv < new->v3sv)
+		fprintf( perf_spu.log_file, "%sglVertex3sv%s%d%s%d\n", output, perf_spu.separator, new->v3sv, perf_spu.separator, new->v3sv - old->v3sv);
 
 	if (old->v4d < new->v4d)
-		fprintf( perf_spu.log_file, "%sglVertex4d(v)%s%d%s%d\n", output, perf_spu.separator, new->v4d, perf_spu.separator, new->v4d - old->v4d);
+		fprintf( perf_spu.log_file, "%sglVertex4d%s%d%s%d\n", output, perf_spu.separator, new->v4d, perf_spu.separator, new->v4d - old->v4d);
 
 	if (old->v4f < new->v4f)
-		fprintf( perf_spu.log_file, "%sglVertex4f(v)%s%d%s%d\n", output, perf_spu.separator, new->v4f, perf_spu.separator, new->v4f - old->v4f);
+		fprintf( perf_spu.log_file, "%sglVertex4f%s%d%s%d\n", output, perf_spu.separator, new->v4f, perf_spu.separator, new->v4f - old->v4f);
 
 	if (old->v4i < new->v4i)
-		fprintf( perf_spu.log_file, "%sglVertex4i(v)%s%d%s%d\n", output, perf_spu.separator, new->v4i, perf_spu.separator, new->v4i - old->v4i);
+		fprintf( perf_spu.log_file, "%sglVertex4i%s%d%s%d\n", output, perf_spu.separator, new->v4i, perf_spu.separator, new->v4i - old->v4i);
 
 	if (old->v4s < new->v4s)
-		fprintf( perf_spu.log_file, "%sglVertex4s(v)%s%d%s%d\n", output, perf_spu.separator, new->v4s, perf_spu.separator, new->v4s - old->v4s);
+		fprintf( perf_spu.log_file, "%sglVertex4s%s%d%s%d\n", output, perf_spu.separator, new->v4s, perf_spu.separator, new->v4s - old->v4s);
+
+	if (old->v4dv < new->v4dv)
+		fprintf( perf_spu.log_file, "%sglVertex4dv%s%d%s%d\n", output, perf_spu.separator, new->v4dv, perf_spu.separator, new->v4dv - old->v4dv);
+
+	if (old->v4fv < new->v4fv)
+		fprintf( perf_spu.log_file, "%sglVertex4fv%s%d%s%d\n", output, perf_spu.separator, new->v4fv, perf_spu.separator, new->v4fv - old->v4fv);
+
+	if (old->v4iv < new->v4iv)
+		fprintf( perf_spu.log_file, "%sglVertex4iv%s%d%s%d\n", output, perf_spu.separator, new->v4iv, perf_spu.separator, new->v4iv - old->v4iv);
+
+	if (old->v4sv < new->v4sv)
+		fprintf( perf_spu.log_file, "%sglVertex4sv%s%d%s%d\n", output, perf_spu.separator, new->v4sv, perf_spu.separator, new->v4sv - old->v4sv);
+
+	if (old->ipoints < new->ipoints)
+		fprintf( perf_spu.log_file, "%sINTERP_POINTS%s%d%s%d\n", output, perf_spu.separator, new->ipoints, perf_spu.separator, new->ipoints - old->ipoints);
+
+	if (old->ilines < new->ilines)
+		fprintf( perf_spu.log_file, "%sINTERP_LINES%s%d%s%d\n", output, perf_spu.separator, new->ilines, perf_spu.separator, new->ilines - old->ilines);
+
+	if (old->itris < new->itris)
+		fprintf( perf_spu.log_file, "%sINTERP_TRIS%s%d%s%d\n", output, perf_spu.separator, new->itris, perf_spu.separator, new->itris - old->itris);
+
+	if (old->iquads < new->iquads)
+		fprintf( perf_spu.log_file, "%sINTERP_QUADS%s%d%s%d\n", output, perf_spu.separator, new->iquads, perf_spu.separator, new->iquads - old->iquads);
+
+	if (old->ipolygons < new->ipolygons)
+		fprintf( perf_spu.log_file, "%sINTERP_POLYGONS%s%d%s%d\n", output, perf_spu.separator, new->ipolygons, perf_spu.separator, new->ipolygons - old->ipolygons);
+
+
+	/* Break up for the next dump */
+	fprintf( perf_spu.log_file, "\n");
 
 	crFree(output);
 }
@@ -217,9 +272,20 @@ void perfspuDumpCounters(char *pstring, PerfPrim *old, PerfPrim *new)
 	
 #endif
 
-	/* Break up for the next dump */
-	fprintf( perf_spu.log_file, "\n");
 	fflush( perf_spu.log_file );
+}
+
+void perfspuInterpretVertexData( int old, int new )
+{
+	int diff = new - old;
+
+	if (diff) {
+		if (diff == 1) perf_spu.cur_framestats->ipoints++;
+		if (diff == 2) perf_spu.cur_framestats->ilines++;
+		if (diff == 3) perf_spu.cur_framestats->itris++;
+		if (diff == 4) perf_spu.cur_framestats->iquads++;
+		if (diff > 4)  perf_spu.cur_framestats->ipolygons++;
+	}
 }
 
 void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
@@ -391,16 +457,47 @@ void PERFSPU_APIENTRY perfspuBegin( GLenum mode )
 			break;
 	}
 
+	/* Make a snapshot of all vertex data, so we can interpret the
+	 * geometric shapes in End() */
+	crMemcpy(&perf_spu.snapshot, perf_spu.cur_framestats, sizeof(PerfVertex));
+
 	perf_spu.cur_framestats->count++;
 
 	if (perf_spu.timer_event)
 		perf_spu.cur_timerstats->count++;
+
+	perf_spu.mode = mode;
 
 	perf_spu.super.Begin( mode );
 }
 
 void PERFSPU_APIENTRY perfspuEnd( )
 {
+	perfspuInterpretVertexData(perf_spu.snapshot.v2d, perf_spu.cur_framestats->v2d);
+	perfspuInterpretVertexData(perf_spu.snapshot.v2f, perf_spu.cur_framestats->v2f);
+	perfspuInterpretVertexData(perf_spu.snapshot.v2i, perf_spu.cur_framestats->v2i);
+	perfspuInterpretVertexData(perf_spu.snapshot.v2s, perf_spu.cur_framestats->v2s);
+	perfspuInterpretVertexData(perf_spu.snapshot.v2dv, perf_spu.cur_framestats->v2dv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v2fv, perf_spu.cur_framestats->v2fv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v2iv, perf_spu.cur_framestats->v2iv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v2sv, perf_spu.cur_framestats->v2sv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v3d, perf_spu.cur_framestats->v3d);
+	perfspuInterpretVertexData(perf_spu.snapshot.v3f, perf_spu.cur_framestats->v3f);
+	perfspuInterpretVertexData(perf_spu.snapshot.v3i, perf_spu.cur_framestats->v3i);
+	perfspuInterpretVertexData(perf_spu.snapshot.v3s, perf_spu.cur_framestats->v3s);
+	perfspuInterpretVertexData(perf_spu.snapshot.v3dv, perf_spu.cur_framestats->v3dv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v3fv, perf_spu.cur_framestats->v3fv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v3iv, perf_spu.cur_framestats->v3iv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v3sv, perf_spu.cur_framestats->v3sv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v4d, perf_spu.cur_framestats->v4d);
+	perfspuInterpretVertexData(perf_spu.snapshot.v4f, perf_spu.cur_framestats->v4f);
+	perfspuInterpretVertexData(perf_spu.snapshot.v4i, perf_spu.cur_framestats->v4i);
+	perfspuInterpretVertexData(perf_spu.snapshot.v4s, perf_spu.cur_framestats->v4s);
+	perfspuInterpretVertexData(perf_spu.snapshot.v4dv, perf_spu.cur_framestats->v4dv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v4fv, perf_spu.cur_framestats->v4fv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v4iv, perf_spu.cur_framestats->v4iv);
+	perfspuInterpretVertexData(perf_spu.snapshot.v4sv, perf_spu.cur_framestats->v4sv);
+
 	perf_spu.super.End( );
 }
 
@@ -431,9 +528,9 @@ void PERFSPU_APIENTRY perfspuVertex2d( GLdouble v0, GLdouble v1 )
 void PERFSPU_APIENTRY perfspuVertex2dv( GLdouble *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v2d++;
+		perf_spu.cur_timerstats->v2dv++;
 
-	perf_spu.cur_framestats->v2d++;
+	perf_spu.cur_framestats->v2dv++;
 
 	perf_spu.super.Vertex2dv( v0 );
 }
@@ -451,9 +548,9 @@ void PERFSPU_APIENTRY perfspuVertex2f( GLfloat v0, GLfloat v1 )
 void PERFSPU_APIENTRY perfspuVertex2fv( GLfloat *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v2f++;
+		perf_spu.cur_timerstats->v2fv++;
 
-	perf_spu.cur_framestats->v2f++;
+	perf_spu.cur_framestats->v2fv++;
 
 	perf_spu.super.Vertex2fv( v0 );
 }
@@ -471,9 +568,9 @@ void PERFSPU_APIENTRY perfspuVertex2i( GLint v0, GLint v1 )
 void PERFSPU_APIENTRY perfspuVertex2iv( GLint *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v2i++;
+		perf_spu.cur_timerstats->v2iv++;
 
-	perf_spu.cur_framestats->v2i++;
+	perf_spu.cur_framestats->v2iv++;
 
 	perf_spu.super.Vertex2iv( v0 );
 }
@@ -491,9 +588,9 @@ void PERFSPU_APIENTRY perfspuVertex2s( GLshort v0, GLshort v1 )
 void PERFSPU_APIENTRY perfspuVertex2sv( GLshort *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v2s++;
+		perf_spu.cur_timerstats->v2sv++;
 
-	perf_spu.cur_framestats->v2s++;
+	perf_spu.cur_framestats->v2sv++;
 
 	perf_spu.super.Vertex2sv( v0 );
 }
@@ -511,9 +608,9 @@ void PERFSPU_APIENTRY perfspuVertex3d( GLdouble v0, GLdouble v1, GLdouble v2)
 void PERFSPU_APIENTRY perfspuVertex3dv( GLdouble *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v3d++;
+		perf_spu.cur_timerstats->v3dv++;
 
-	perf_spu.cur_framestats->v3d++;
+	perf_spu.cur_framestats->v3dv++;
 
 	perf_spu.super.Vertex3dv( v0 );
 }
@@ -521,9 +618,9 @@ void PERFSPU_APIENTRY perfspuVertex3dv( GLdouble *v0 )
 void PERFSPU_APIENTRY perfspuVertex3f( GLfloat v0, GLfloat v1, GLfloat v2 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v3f++;
+		perf_spu.cur_timerstats->v3fv++;
 
-	perf_spu.cur_framestats->v3f++;
+	perf_spu.cur_framestats->v3fv++;
 
 	perf_spu.super.Vertex3f( v0, v1, v2 );
 }
@@ -551,9 +648,9 @@ void PERFSPU_APIENTRY perfspuVertex3i( GLint v0, GLint v1, GLint v2 )
 void PERFSPU_APIENTRY perfspuVertex3iv( GLint *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v3i++;
+		perf_spu.cur_timerstats->v3iv++;
 
-	perf_spu.cur_framestats->v3i++;
+	perf_spu.cur_framestats->v3iv++;
 
 	perf_spu.super.Vertex3iv( v0 );
 }
@@ -571,9 +668,9 @@ void PERFSPU_APIENTRY perfspuVertex3s( GLshort v0, GLshort v1, GLshort v2 )
 void PERFSPU_APIENTRY perfspuVertex3sv( GLshort *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v3s++;
+		perf_spu.cur_timerstats->v3sv++;
 
-	perf_spu.cur_framestats->v3s++;
+	perf_spu.cur_framestats->v3sv++;
 
 	perf_spu.super.Vertex3sv( v0 );
 }
@@ -591,9 +688,9 @@ void PERFSPU_APIENTRY perfspuVertex4d( GLdouble v0, GLdouble v1, GLdouble v2, GL
 void PERFSPU_APIENTRY perfspuVertex4dv( GLdouble *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v4d++;
+		perf_spu.cur_timerstats->v4dv++;
 
-	perf_spu.cur_framestats->v4d++;
+	perf_spu.cur_framestats->v4dv++;
 
 	perf_spu.super.Vertex4dv( v0 );
 }
@@ -611,9 +708,9 @@ void PERFSPU_APIENTRY perfspuVertex4f( GLfloat v0, GLfloat v1, GLfloat v2, GLflo
 void PERFSPU_APIENTRY perfspuVertex4fv( GLfloat *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v4f++;
+		perf_spu.cur_timerstats->v4fv++;
 
-	perf_spu.cur_framestats->v4f++;
+	perf_spu.cur_framestats->v4fv++;
 
 	perf_spu.super.Vertex4fv( v0 );
 }
@@ -631,9 +728,9 @@ void PERFSPU_APIENTRY perfspuVertex4i( GLint v0, GLint v1, GLint v2, GLint v3 )
 void PERFSPU_APIENTRY perfspuVertex4iv( GLint *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v4i++;
+		perf_spu.cur_timerstats->v4iv++;
 
-	perf_spu.cur_framestats->v4i++;
+	perf_spu.cur_framestats->v4iv++;
 
 	perf_spu.super.Vertex4iv( v0 );
 }
@@ -651,9 +748,9 @@ void PERFSPU_APIENTRY perfspuVertex4s( GLshort v0, GLshort v1, GLshort v2, GLsho
 void PERFSPU_APIENTRY perfspuVertex4sv( GLshort *v0 )
 {
 	if (perf_spu.timer_event)
-		perf_spu.cur_timerstats->v4s++;
+		perf_spu.cur_timerstats->v4sv++;
 
-	perf_spu.cur_framestats->v4s++;
+	perf_spu.cur_framestats->v4sv++;
 
 	perf_spu.super.Vertex4sv( v0 );
 }
@@ -714,8 +811,13 @@ void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 		float fps = perf_spu.frame_counter / elapsed;
 		elapsed_base = total_elapsed;
 		perf_spu.frame_counter = 0;
-		printf( "ALAN FPS: %f\n", fps );
+
+		/* Put the FPS to the screen */
+		printf( "FPS: %f\n", fps );
+
+		/* And the timerstats to the log file */
 		sprintf(sstr, "TIMERSTATS %2.2f", perf_spu.timer_event);
+
 		perfspuDumpCounters(sstr, &perf_spu.old_timerstats, &perf_spu.timerstats);
 		dumped = 1;
 	}
