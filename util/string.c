@@ -232,6 +232,11 @@ int crStrToInt( const char *str )
 	return atoi(str);
 }
 
+double crStrToFloat( const char *str )
+{
+	return atof(str);
+}
+
 static int __numOccurrences( const char *str, const char *substr )
 {
 	int ret = 0;
