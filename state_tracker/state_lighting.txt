@@ -7,15 +7,15 @@
 :enable:colorMaterial:GL_COLOR_MATERIAL
 :enable:colorSumEXT:GL_COLOR_SUM_EXT
 :shadeModel:shadeModel:ShadeModel
+:lightModel:lightModelAmbient|r,g,b,a:LightModelfv,GL_LIGHT_MODEL_AMBIENT
+:lightModel:lightModelLocalViewer:*diff_api.LightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, to->lightModelLocalViewer==GL_TRUE);
+:lightModel:lightModelTwoSide:*diff_api.LightModeli(GL_LIGHT_MODEL_TWO_SIDE, to->lightModelTwoSide==GL_TRUE);
+:lightModel:lightModelColorControlEXT:*diff_api.LightModeli(GL_LIGHT_MODEL_COLOR_CONTROL_EXT, to->lightModelColorControlEXT);
 %flush
 +>if (!to->lighting) {
 +>INVERTDIRTY(b->dirty, nbitID);
 +>return;
 +>}
-:lightModel:lightModelAmbient|r,g,b,a:LightModelfv,GL_LIGHT_MODEL_AMBIENT
-:lightModel:lightModelLocalViewer:*diff_api.LightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, to->lightModelLocalViewer==GL_TRUE);
-:lightModel:lightModelTwoSide:*diff_api.LightModeli(GL_LIGHT_MODEL_TWO_SIDE, to->lightModelTwoSide==GL_TRUE);
-:lightModel:lightModelColorControlEXT:*diff_api.LightModeli(GL_LIGHT_MODEL_COLOR_CONTROL_EXT, to->lightModelColorControlEXT);
 :material:ambient[0]|r,g,b,a:Materialfv, GL_FRONT, GL_AMBIENT
 :material:ambient[1]|r,g,b,a:Materialfv, GL_BACK, GL_AMBIENT
 :material:diffuse[0]|r,g,b,a:Materialfv, GL_FRONT, GL_DIFFUSE
