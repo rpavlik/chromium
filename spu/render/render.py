@@ -49,6 +49,8 @@ static CRDLL *__findSystemGL( void )
 	char system_path[8096];
 #if defined(WINDOWS)
 	GetSystemDirectory(system_path, MAX_PATH);
+#elif defined(IRIX) || defined(IRIX64)
+	crStrcpy( system_path, "/usr/lib32" );
 #else
 	crStrcpy( system_path, "/usr/lib" );
 #endif
