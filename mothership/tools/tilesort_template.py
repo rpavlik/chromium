@@ -169,12 +169,13 @@ if len(args) > 0:
 if PROGRAM == "":
 	Usage()
 
-print "-- Tilesort Template --"
+print "--- Tilesort Template ---"
 print "Mural size: %d cols x %d rows" % (TILE_COLS, TILE_ROWS)
 print "Tile size: %d x %d" % (TILE_WIDTH, TILE_HEIGHT)
 print "Total size: %d x %d" % (TILE_WIDTH * TILE_COLS, TILE_HEIGHT * TILE_ROWS)
 print "Servers: %s" % SERVER_HOSTS
 print "Program: %s" % PROGRAM
+print "-------------------------"
 
 
 # Determine if tiles are on one server or many
