@@ -488,7 +488,6 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 	 * just tack it on to the end of the connection's list of 
 	 * work blocks. */
 	
-	/*fprintf( stdout, "Appending buffer 0x%p to connection 0x%p\n", buf, conn ); */
 	msglist = (CRMessageList *) crBufferPoolPop( &cr_net.message_list_pool );
 	if ( msglist == NULL )
 	{
@@ -525,7 +524,6 @@ unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 				conn->messageTail = NULL;
 			}
 			crBufferPoolPush( &(cr_net.message_list_pool), temp );
-			/*fprintf( stdout, "Just returned message 0x%p for processing\n", *message ); */
 			return len;
 		}
 		crNetRecv();
