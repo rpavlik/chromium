@@ -121,21 +121,16 @@ renderSPUInit( int id, SPU *child, SPU *self,
 	 * Create the default window and context.  Their indexes are zero and
 	 * a client can use them without calling CreateContext or WindowCreate.
 	 */
-	crDebug("Render SPU: Creating default window (visBits=0x%x, id=0)", render_spu.default_visual);
+	crDebug("Render SPU: Creating default window (visBits=0x%x, id=0)",
+					render_spu.default_visual);
 	defaultWin = renderspuWindowCreate( NULL, render_spu.default_visual );
-	if (defaultWin < 0) {
-		/* If we failed to get a default single buffered visual,
-		 * let's try a double buffered one
-		 */
-		crDebug( "WindowCreate returned %d, trying CR_DOUBLE_BIT", defaultWin );
-		render_spu.default_visual = CR_RGB_BIT | CR_DOUBLE_BIT;
-		defaultWin = renderspuWindowCreate( NULL, render_spu.default_visual );
+	if (defaultWin != 0) {
+		crError("Render SPU: Couldn't get a double-buffered, RGB visual with Z!");
 	}
 	crDebug( "Render SPU: WindowCreate returned %d (0=normal)", defaultWin );
-	if (defaultWin != 0) {
-		crError("Render SPU unable to create default window (check DISPLAY settings)");
-	}
 
+	crDebug("Render SPU: Creating default context, visBits=0x%x",
+					render_spu.default_visual );
 	defaultCtx = renderspuCreateContext( NULL, render_spu.default_visual );
 	CRASSERT(defaultCtx == 0);
 

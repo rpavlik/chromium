@@ -234,7 +234,7 @@ SPUOptions renderSPUOptions[] = {
 	{ "borderless", CR_BOOL, 1, "0", NULL, NULL,
 		"Borderless Window", (SPUOptionCB) set_borderless },
 
-	{ "default_visual", CR_STRING, 1, "rgb", NULL, NULL,
+	{ "default_visual", CR_STRING, 1, "rgb, double, depth", NULL, NULL,
 		"Default GL Visual", (SPUOptionCB) set_default_visual },
 
 #if defined(GLX)
