@@ -12,6 +12,6 @@ FILES = main
 
 UNPACKS = 1
 
-LIBRARIES = crserverlib spuload crutil crmothership crstate crpacker
+LIBRARIES = crserverlib spuload crmothership crstate crpacker crutil
 
 include $(TOP)/cr.mk
