@@ -151,6 +151,7 @@ def WriteConfig(mothership, file):
 	file.write("nodes = range(%d)\n\n" % numNodes)
 
 	# write the code to allocate the nodes
+	# XXX implement grouping/compound nodes!!!!!!
 	i = 0
 	for node in mothership.Nodes():
 		# emit N nodes
@@ -329,8 +330,6 @@ def ReadConfig(mothership, file, filename=""):
 		newArgv = string.split(newArgv)
 		sys.argv = newArgv
 		dialog.Destroy()
-
-	exec contents
 
 	# Try to execute the config file
 	try:
