@@ -424,7 +424,7 @@ ret_val_t create_common_resources(params_tx *params)
      /********************** SEND MR **********************/
      for(i=0; i<MAX_BUFS; i++){
 	     real_send_buf = VMALLOC(size+2*sizeof(CRIBBuffer)+PAGE_SIZE_ALIGN);
-	     send_buf = (void *) MT_UP_ALIGNX_VIRT((int)real_send_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
+	     send_buf = (void *) MT_UP_ALIGNX_VIRT((long int)real_send_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
 	     
 	     COND_PRINTF3(("IB: real=%p after=%p\n",real_send_buf,send_buf));
 	     
@@ -460,7 +460,7 @@ ret_val_t create_common_resources(params_tx *params)
      /**********************  RECV MR  **********************/
      for(i=0; i<MAX_BUFS; i++){
 	     real_recv_buf = VMALLOC(size+2*sizeof(CRIBBuffer)+PAGE_SIZE_ALIGN);
-	     recv_buf = (void *) MT_UP_ALIGNX_VIRT((int)real_recv_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
+	     recv_buf = (void *) MT_UP_ALIGNX_VIRT((long int)real_recv_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
 
 	     COND_PRINTF(("IB: real=%p after=%p\n",real_recv_buf,recv_buf));
 	     
