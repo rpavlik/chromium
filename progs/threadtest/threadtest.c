@@ -48,11 +48,10 @@ static glBarrierCreateCRProc glBarrierCreateCR;
 static glBarrierExecCRProc   glBarrierExecCR;
 static glChromiumParameteriCRProc glChromiumParameteriCR;
 
-#define GET_FUNCTION(target, proc, string)         \
+#define GET_FUNCTION(target, proc, string)       \
 	target = (proc) crGetProcAddress(string);      \
-    printf("target = %p\n", (void*) target);\
 	if (!target) {                                 \
-		crError("%s function not found! %d", string,__LINE__); \
+		crError("%s function not found!", string);   \
 	}
 
 #define MASTER_BARRIER 42
