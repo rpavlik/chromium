@@ -8,7 +8,9 @@
 #define CR_STUB_H
 
 #include "cr_glwrapper.h"
-
+#include "cr_spu.h"
+#include "cr_threads.h"
+#include "spu_dispatch_table.h"
 
 #ifdef WINDOWS
 
@@ -41,6 +43,9 @@ extern crOpenGLInterface glinterface;
 extern SPUDispatchTable glim;
 extern SPUDispatchTable glstub;
 extern SPUDispatchTable glnative;
+
+extern SPUDispatchTable __ThreadsafeDispatch;
+extern TSDhandle __DispatchTSD;
 
 extern GLuint DesiredVisual;  /* Bitwise-or of VIS_* flags */
 

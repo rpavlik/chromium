@@ -30,7 +30,7 @@ endif
 
 SHARED = 1
 LIBRARY = crfaker
-FILES = getprocaddress init load stub context dummyfuncs
+FILES = getprocaddress init load stub context dummyfuncs tsfuncs
 LIBRARIES = crmothership crutil spuload
 
 ifeq ($(ARCH), WIN_NT)
@@ -99,3 +99,7 @@ getprocaddress.c: getprocaddress.py
 $(ARCH_EXPORTS): stub_common.py $(ARCH_EXPORTS_PY)
 	@$(ECHO) "Creating the OpenGL DLL export functions (for $(ARCH))"
 	@$(PYTHON) $(ARCH_EXPORTS_PY) > $(ARCH_EXPORTS)
+
+tsfuncs.c: tsfuncs.py
+	@$(ECHO) "Building thread-safe dispatch code"
+	@$(PYTHON) tsfuncs.py > tsfuncs.c

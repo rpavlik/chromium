@@ -19,11 +19,12 @@ int crAppDrawCursor = 0;
 
 void StubInit(void)
 {
-	/* Here is where we contact the mothership to find out what we're supposed to 
-	 * be doing.  Networking code in a DLL initializer.  I sure hope this 
+	/* Here is where we contact the mothership to find out what we're supposed
+	 * to  be doing.  Networking code in a DLL initializer.  I sure hope this 
 	 * works :) 
 	 * 
-	 * HOW can I pass the mothership address to this if I already know it? */
+	 * HOW can I pass the mothership address to this if I already know it?
+	 */
 	
 	CRConnection *conn;
 	char response[1024];
