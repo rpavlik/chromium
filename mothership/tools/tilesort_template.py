@@ -10,13 +10,6 @@
     Tilesort template module.
 """
 
-# The bulk of this module is GUI code.  There are three public entrypoints
-# to this code:
-#   Create_Tilesort() - instantiate a tilesort template
-#   Is_Tilesort() - test if the mothership config is a tilesort config
-#   Edit_Tilesort() - specialized editor for tilesort configs
-
-
 
 import string, cPickle, os.path, re
 from wxPython.wx import *
@@ -27,8 +20,7 @@ import crutils, crtypes, configio
 
 
 class TilesortParameters:
-	"""C-style struct describing a tilesort configuration"""
-	# This is where we set all the default tilesort parameters.
+	"""This class describes the parameters of a tilesort configuration."""
 	def __init__(self, rows=1, cols=2):
 		assert rows >= 1
 		assert cols >= 1
@@ -38,7 +30,11 @@ class TilesortParameters:
 		self.TileHeight = 1024
 		self.RightToLeft = 0
 		self.BottomToTop = 0
-
+		self.ServerHosts = ["localhost"]
+		self.ServerPattern = ("localhost", 1)
+		self.Tiles = []
+		self.ServerTiles = [ [] ]
+		
 	def Clone(self):
 		"""Return a clone of this object."""
 		# We're not using the copy.copy() function since it's flakey
@@ -49,8 +45,53 @@ class TilesortParameters:
 		p.TileHeight = self.TileHeight
 		p.RightToLeft = self.RightToLeft
 		p.BottomToTop = self.BottomToTop
+		p.ServerHosts = self.ServerHosts[:]
+		p.ServerPattern = self.ServerPattern
+		p.Tiles = self.Tiles[:]
+		p.ServerTiles = self.ServerTiles[:]
 		return p
 
+	def UpdateFromMothership(self, mothership):
+		serverNode = FindServerNode(mothership)
+		clientNode = FindClientNode(mothership)
+		#self.Columns = ??
+		#self.Rows = ??
+		#self.TileWidth = ??
+		#self.TileHeight = ??
+		#self.RightToLeft = ??
+		#self.BottomToTop = ??
+		self.ServerHosts = serverNode.GetHosts()[:] # [:] makes a copy
+		self.ServerPattern = serverNode.GetHostNamePattern()
+
+	def LayoutTiles(self):
+		"""Compute locations and hosts for the tiles."""
+		self.Tiles = []  # tuples (row, col, server) for drawing
+		self.ServerTiles = [ [] ] # array [server] of array of (x,y,w,h)
+		for i in range(self.Rows):
+			for j in range(self.Columns):
+				if self.BottomToTop == 0:
+					row = i
+				else:
+					row = self.Rows - i - 1
+				if self.RightToLeft == 0:
+					col = j
+				else:
+					col = self.Columns - j - 1
+				# compute mural tile geometry
+				mx = col * self.TileWidth
+				my = row * self.TileHeight
+				muralTile = (mx, my, self.TileWidth, self.TileHeight)
+				# compute server index
+				server = row * self.Columns + col
+				if server >= len(self.ServerHosts):
+					server = len(self.ServerHosts) - 1
+				# save tile
+				self.Tiles.append( (row, col, server) )
+				# save per-server mural tile
+				while len(self.ServerTiles) - 1 < server:
+					self.ServerTiles.append( [] )
+				self.ServerTiles[server].append( muralTile )
+		return
 
 
 # Predefined tile sizes shown in the wxChoice widget (feel free to change)
@@ -251,7 +292,7 @@ class TilesortDialog(wxDialog):
 		id_CANCEL      = 3012
 
 		# init misc member vars
-		self.__Mothership = 0
+		self.__Mothership = 0  # only need this to edit tilesort SPU options
 		self.dirty = false
 
 		# this sizer holds all the tilesort control widgets
@@ -405,10 +446,10 @@ class TilesortDialog(wxDialog):
 		self.SetSizeHints(minW=400, minH=minSize[1])
 		self.SetSize(minSize)
 
-		self.__RecomputeTotalSize()
+		#self.__UpdateDependentWidgets()
 	# end of __init__()
 
-	def __RecomputeTotalSize(self):
+	def __UpdateDependentWidgets(self):
 		"""Called whenever the mural width/height or tile width/height changes.
 		Recompute the total mural size in pixels and update the widgets."""
 		tileW = self.tileWidthControl.GetValue()
@@ -426,23 +467,21 @@ class TilesortDialog(wxDialog):
 
 	def __UpdateVarsFromWidgets(self):
 		"""Get current widget values and update the tilesort parameters."""
-		tilesort = self.__Mothership.Tilesort
-		tilesort.Columns = self.columnsControl.GetValue()
-		tilesort.Rows = self.rowsControl.GetValue()
-		tilesort.TileWidth = self.tileWidthControl.GetValue()
-		tilesort.TileHeight = self.tileHeightControl.GetValue()
-		tilesort.RightToLeft = self.hLayoutRadio.GetSelection()
-		tilesort.BottomToTop = self.vLayoutRadio.GetSelection()
+		self.Template.Columns = self.columnsControl.GetValue()
+		self.Template.Rows = self.rowsControl.GetValue()
+		self.Template.TileWidth = self.tileWidthControl.GetValue()
+		self.Template.TileHeight = self.tileHeightControl.GetValue()
+		self.Template.RightToLeft = self.hLayoutRadio.GetSelection()
+		self.Template.BottomToTop = self.vLayoutRadio.GetSelection()
 
 	def __UpdateWidgetsFromVars(self):
 		"""Set widget values to the tilesort parameters."""
-		tilesort = self.__Mothership.Tilesort
-		self.columnsControl.SetValue(tilesort.Columns)
-		self.rowsControl.SetValue(tilesort.Rows)
-		self.tileWidthControl.SetValue(tilesort.TileWidth)
-		self.tileHeightControl.SetValue(tilesort.TileHeight)
-		self.hLayoutRadio.SetSelection(tilesort.RightToLeft)
-		self.vLayoutRadio.SetSelection(tilesort.BottomToTop)
+		self.columnsControl.SetValue(self.Template.Columns)
+		self.rowsControl.SetValue(self.Template.Rows)
+		self.tileWidthControl.SetValue(self.Template.TileWidth)
+		self.tileHeightControl.SetValue(self.Template.TileHeight)
+		self.hLayoutRadio.SetSelection(self.Template.RightToLeft)
+		self.vLayoutRadio.SetSelection(self.Template.BottomToTop)
 
 	# ----------------------------------------------------------------------
 	# Event handling
@@ -450,14 +489,16 @@ class TilesortDialog(wxDialog):
 	def __OnSizeChange(self, event):
 		"""Called when tile size changes with spin controls."""
 		self.__UpdateVarsFromWidgets()
-		self.__RecomputeTotalSize()
+		self.__UpdateDependentWidgets()
+		self.Template.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
 	def __OnLayoutChange(self, event):
 		"""Called when left/right top/bottom layout changes."""
 		self.__UpdateVarsFromWidgets()
-		self.__RecomputeTotalSize()
+		self.__UpdateDependentWidgets()
+		self.Template.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -470,20 +511,19 @@ class TilesortDialog(wxDialog):
 			self.tileWidthControl.SetValue(w)
 			self.tileHeightControl.SetValue(h)
 		self.__UpdateVarsFromWidgets()
-		self.__RecomputeTotalSize()
+		self.__UpdateDependentWidgets()
+		self.Template.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
 	def __OnHostnames(self, event):
 		"""Called when the hostnames button is pressed."""
-		tilesort = self.__Mothership.Tilesort
-		serverNode = FindServerNode(self.__Mothership)
-		self.hostsDialog.SetHostPattern(serverNode.GetHostNamePattern())
-		self.hostsDialog.SetCount(tilesort.Rows * tilesort.Columns)
-		self.hostsDialog.SetHosts(serverNode.GetHosts())
+		self.hostsDialog.SetHostPattern(self.Template.ServerPattern)
+		self.hostsDialog.SetHosts(self.Template.ServerHosts)
+		self.hostsDialog.SetCount(self.Template.Rows * self.Template.Columns)
 		if self.hostsDialog.ShowModal() == wxID_OK:
-			serverNode.SetHostNamePattern(self.hostsDialog.GetHostPattern())
-			serverNode.SetHosts(self.hostsDialog.GetHosts())
+			self.Template.ServerHosts = self.hostsDialog.GetHosts()
+			self.Template.ServerPattern = self.hostsDialog.GetHostPattern()
 		self.drawArea.Refresh()
 
 	def __OnTilesortOptions(self, event):
@@ -494,15 +534,13 @@ class TilesortDialog(wxDialog):
 		dialog = spudialog.SPUDialog(parent=self, id=-1,
 									 title="Tilesort SPU Options",
 									 options = opts)
+		dialog.Centre()
 		# set the dialog widget values
 		dialog.SetValues(tilesortSPU.GetOptions())
 		# wait for OK or cancel
 		if dialog.ShowModal() == wxID_OK:
 			# save the new values/options
 			tilesortSPU.SetOptions(dialog.GetValues())
-		else:
-			# user cancelled, do nothing, new values are ignored
-			pass
 
 	def _onOK(self, event):
 		"""Called by OK button"""
@@ -556,40 +594,45 @@ class TilesortDialog(wxDialog):
 			# all the tiles will fit at 1/10 scale factor
 			scale = 0.1
 
-		# draw the tiles as boxes
+		# compute tile size (in pixels)
 		w = tileWidth * scale
 		h = tileHeight * scale
-		serverNode = FindServerNode(self.__Mothership)
-		hosts = serverNode.GetHosts()
-		for i in range(rows):
-			for j in range(cols):
-				x = j * (w + space) + border
-				y = i * (h + space) + border
-				dc.DrawRectangle(x, y, w, h)
-				if (tToB == 0):
-					ii = i
-				else:
-					ii = rows - i - 1
-				if (lToR == 0):
-					jj = j
-				else:
-					jj = cols - j - 1
-				k = ii * cols + jj
-				if k < len(hosts):
-					s = hosts[k]
-				else:
-					s = hosts[-1]
-				dc.DrawText(s, x+3, y+3)
+
+		# draw the tiles as boxes
+		for (row, col, server) in self.Template.Tiles:
+			x = col * (w + space) + border
+			y = row * (h + space) + border
+			dc.DrawRectangle(x, y, w, h)
+			s = self.Template.ServerHosts[server]
+			dc.DrawText(s, x+3, y+3)
 		dc.EndDrawing()
 
-	def SetMothership(self, mothership):
-		"""Specify the mothership to modify.
-		mothership is a Mothership object.
-		"""
+	def ShowModal(self, mothership):
+		"""Show the dialog and block until OK or Cancel is chosen."""
+		# Load the template values
 		self.__Mothership = mothership
-		# update all the widgets to the template's values
+		self.Template = mothership.Template.Clone()
+		self.Template.UpdateFromMothership(mothership)
 		self.__UpdateWidgetsFromVars()
-		self.__RecomputeTotalSize()
+		self.Template.LayoutTiles()
+		# show the dialog
+		retVal = wxDialog.ShowModal(self)
+		if retVal == wxID_OK:
+			# update the template vars and mothership
+			self.__UpdateVarsFromWidgets()
+			mothership.Template = self.Template
+			clientNode = FindClientNode(mothership)
+			serverNode = FindServerNode(mothership)
+			serverNode.SetCount(mothership.Template.Rows *
+								mothership.Template.Columns)
+			serverNode.SetHostNamePattern(mothership.Template.ServerPattern)
+			serverNode.SetHosts(mothership.Template.ServerHosts)
+			i = 0
+			for tileList in mothership.Template.ServerTiles:
+				serverNode.SetTiles(tileList, i)
+				i += 1
+		return retVal
+
 
 
 #----------------------------------------------------------------------
@@ -621,12 +664,14 @@ def Create_Tilesort(parentWindow, mothership):
 	numClients = values[0]
 	cols = values[1]
 	rows = values[2]
-	mothership.Tilesort = TilesortParameters(rows, cols)
+	mothership.Template = TilesortParameters(rows, cols)
 
 	defaultScreenSize = crutils.GetSiteDefault("screen_size")
 	if defaultScreenSize:
-		mothership.Tilesort.TileWidth = defaultScreenSize[0]
-		mothership.Tilesort.TileHeight = defaultScreenSize[1]
+		mothership.Template.TileWidth = defaultScreenSize[0]
+		mothership.Template.TileHeight = defaultScreenSize[1]
+
+	mothership.Template.LayoutTiles()  # initial tile layout
 
 	# build the graph
 	numServers = rows * cols
@@ -646,6 +691,10 @@ def Create_Tilesort(parentWindow, mothership):
 	serverNode.AddSPU(renderSPU)
 	mothership.AddNode(serverNode)
 	tilesortSPU.AddServer(serverNode)
+	i = 0
+	for tileList in mothership.Template.ServerTiles:
+		serverNode.SetTiles(tileList, i)
+		i += 1
 	# done with the dialog
 	dialog.Destroy()
 	return 1
@@ -697,25 +746,17 @@ def Edit_Tilesort(parentWindow, mothership):
 		print "This is not a tilesort configuration!"
 		return
 
-	d = TilesortDialog(parent=parentWindow)
-	d.Centre()
-	backupTilesortParams = mothership.Tilesort.Clone()
-	d.SetMothership(mothership)
-
-	if d.ShowModal() == wxID_CANCEL:
-		# restore original values
-		mothership.Tilesort = backupTilesortParams
-	else:
-		# update mothership with new values
-		tiles = mothership.Tilesort.Rows * mothership.Tilesort.Columns
-		serverNode = FindServerNode(mothership)
-		serverNode.SetCount(tiles)
+	dialog = TilesortDialog(parent=parentWindow)
+	dialog.Centre()
+	retVal = dialog.ShowModal(mothership)
+	dialog.Destroy()
+	return retVal
 
 
 def Read_Tilesort(mothership, fileHandle):
 	"""Read a tilesort config from the given file handle."""
 
-	mothership.Tilesort = TilesortParameters()
+	mothership.Template = TilesortParameters()
 
 	serverNode = crtypes.NetworkNode()
 	renderSPU = crutils.NewSPU("render")
@@ -745,22 +786,22 @@ def Read_Tilesort(mothership, fileHandle):
 			l = l[:-1]
 		if re.match("^TILE_ROWS = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
-			mothership.Tilesort.Rows = int(l[v.start() : v.end()])
+			mothership.Template.Rows = int(l[v.start() : v.end()])
 		elif re.match("^TILE_COLS = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
-			mothership.Tilesort.Columns = int(l[v.start() : v.end()])
+			mothership.Template.Columns = int(l[v.start() : v.end()])
 		elif re.match("^TILE_WIDTH = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
-			mothership.Tilesort.TileWidth = int(l[v.start() : v.end()])
+			mothership.Template.TileWidth = int(l[v.start() : v.end()])
 		elif re.match("^TILE_HEIGHT = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
-			mothership.Tilesort.TileHeight = int(l[v.start() : v.end()])
+			mothership.Template.TileHeight = int(l[v.start() : v.end()])
 		elif re.match("^BOTTOM_TO_TOP = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
-			mothership.Tilesort.BottomToTop = int(l[v.start() : v.end()])
+			mothership.Template.BottomToTop = int(l[v.start() : v.end()])
 		elif re.match("^RIGHT_TO_LEFT = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
-			mothership.Tilesort.RightToLeft = int(l[v.start() : v.end()])
+			mothership.Template.RightToLeft = int(l[v.start() : v.end()])
 		elif re.match("^SERVER_HOSTS = ", l):
 			v = re.search(listPat + "$", l)
 			hosts = eval(l[v.start() : v.end()])
@@ -797,7 +838,7 @@ def Read_Tilesort(mothership, fileHandle):
 	# endwhile
 
 	clientNode.SetCount(numClients)
-	serverNode.SetCount(mothership.Tilesort.Rows * mothership.Tilesort.Columns)
+	serverNode.SetCount(mothership.Template.Rows * mothership.Template.Columns)
 	mothership.LayoutNodes()
 	return 1
 
@@ -808,17 +849,17 @@ def Write_Tilesort(mothership, file):
 	assert mothership.GetTemplateType() == "Tilesort"
 
 	print "Writing tilesort config"
-	tilesort = mothership.Tilesort
+	template = mothership.Template
 	clientNode = FindClientNode(mothership)
 	serverNode = FindServerNode(mothership)
 
 	file.write('TEMPLATE = "Tilesort"\n')
-	file.write("TILE_ROWS = %d\n" % tilesort.Rows)
-	file.write("TILE_COLS = %d\n" % tilesort.Columns)
-	file.write("TILE_WIDTH = %d\n" % tilesort.TileWidth)
-	file.write("TILE_HEIGHT = %d\n" % tilesort.TileHeight)
-	file.write("RIGHT_TO_LEFT = %d\n" % tilesort.RightToLeft)
-	file.write("BOTTOM_TO_TOP = %d\n" % tilesort.BottomToTop)
+	file.write("TILE_ROWS = %d\n" % template.Rows)
+	file.write("TILE_COLS = %d\n" % template.Columns)
+	file.write("TILE_WIDTH = %d\n" % template.TileWidth)
+	file.write("TILE_HEIGHT = %d\n" % template.TileHeight)
+	file.write("RIGHT_TO_LEFT = %d\n" % template.RightToLeft)
+	file.write("BOTTOM_TO_TOP = %d\n" % template.BottomToTop)
 	file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
 	file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
 	file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
