@@ -44,6 +44,7 @@ void crStateTextureDestroy(CRContext *ctx)
 #ifdef CR_ARB_texture_cube_map
 	crStateTextureDelete_t(t, &(t->proxyCubeMap));
 #endif
+	crStateTextureFree( t );
 }
 
 void crStateTextureInit(CRContext *ctx)
