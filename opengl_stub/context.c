@@ -239,18 +239,23 @@ static GLboolean InstantiateNativeContext( Display *dpy, int i )
 
 static void GetWindowSize( HDC drawable, unsigned int *w, unsigned int *h )
 {
-	/* XXX to do */
-	*w = *h = 0;
+	RECT rect;
+	HWND hwnd;
+
+	hwnd = WindowFromDC( drawable );
+	GetClientRect( hwnd, &rect );
+
+	*w = rect.right - rect.left;
+	*h = rect.bottom - rect.top;
 }
 
-/* free the result with crFree(). */
-static char *GetWindowTitle( HDC window, GLboolean recurseUp )
+static char *GetWindowTitle( HDC drawable, GLboolean recurseUp )
 {
 	/* XXX to do */
 	return NULL;
 }
 
-static void GetCursorPosition( HDC window, int pos[2] )
+static void GetCursorPosition( HDC drawable, int pos[2] )
 {
 	/* XXX to do */
 	pos[0] = pos[1] = 0;
