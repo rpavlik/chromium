@@ -295,7 +295,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis,
 	context->dpy = dpy;
 	context->visual = vis;
 	context->direct = direct;
-	context->share = (ContextInfo *) crHashtableSearch(stub.contextTable, (int) share);
+	context->share = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) share);
 #endif
 
 #ifdef WINDOWS
@@ -739,7 +739,7 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 
 
 void
-stubDestroyContext( GLint contextId )
+stubDestroyContext( unsigned long contextId )
 {
 	ContextInfo *context;
 

@@ -63,7 +63,7 @@ struct context_info_t
 	char dpyName[MAX_DPY_NAME];
 	GLint spuContext;  /* returned by head SPU's CreateContext() */
 	ContextType type;  /* CHROMIUM, NATIVE or UNDECIDED */
-	GLint id;          /* the client-visible handle */
+	unsigned long id;          /* the client-visible handle */
 	GLint visBits;
 	WindowInfo *currentDrawable;
 #ifdef WINDOWS
@@ -161,7 +161,7 @@ extern void stubUseXFont( Display *dpy, Font font, int first, int count, int lis
 
 
 extern ContextInfo *stubNewContext( const char *dpyName, GLint visBits, ContextType type );
-extern void stubDestroyContext( GLint contextId );
+extern void stubDestroyContext( unsigned long contextId );
 extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context );
 extern GLint stubNewWindow( const char *dpyName, GLint visBits );
 extern void stubSwapBuffers( const WindowInfo *window, GLint flags );

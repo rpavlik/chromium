@@ -344,7 +344,7 @@ GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, B
 void glXDestroyContext( Display *dpy, GLXContext ctx )
 {
 	(void) dpy;
-	stubDestroyContext( (GLint) ctx );
+	stubDestroyContext( (unsigned long) ctx );
 }
 
 
@@ -354,7 +354,7 @@ Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 	WindowInfo *window;
 	Bool retVal;
 
-	context = (ContextInfo *) crHashtableSearch(stub.contextTable, (int) ctx);
+	context = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) ctx);
 	window = stubGetWindowInfo(dpy, drawable);
 
 	if (context && context->type == UNDECIDED) {

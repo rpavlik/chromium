@@ -144,7 +144,7 @@ BOOL WINAPI wglSetPixelFormat_prox( HDC hdc, int pixelFormat,
 
 BOOL WINAPI wglDeleteContext_prox( HGLRC hglrc )
 {
-	stubDestroyContext( (GLint) hglrc );
+	stubDestroyContext( (unsigned long) hglrc );
 	return 1;
 }
 
@@ -153,7 +153,7 @@ BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 	ContextInfo *context;
 	WindowInfo *window;
 
-	context = (ContextInfo *) crHashtableSearch(stub.contextTable, (int) hglrc);
+	context = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) hglrc);
 	window = stubGetWindowInfo(hdc);
 
 	return stubMakeCurrent( window, context );
