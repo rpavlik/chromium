@@ -262,7 +262,6 @@ static void get_row(const char *src, GLenum srcFormat, GLenum srcType,
 					default:
 						crError("unexpected type in get_row in pixel.c");
 				}
-				break;
 			}
 			break;
 		case GL_LUMINANCE:
@@ -767,7 +766,6 @@ static void put_row(char *dst, GLenum dstFormat, GLenum dstType,
 					default:
 						crError("unexpected type in put_row in pixel.c");
 				}
-				break;
 			}
 			break;
 		case GL_LUMINANCE_ALPHA:

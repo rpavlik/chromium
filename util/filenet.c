@@ -89,6 +89,7 @@ void crFileAccept( CRConnection *conn, unsigned short port )
 	{
 		crError( "Couldn't open %s for reading!", conn->filename );
 	}
+	(void) port;
 }
 
 void *crFileAlloc( CRConnection *conn )
