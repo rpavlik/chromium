@@ -20,7 +20,7 @@ static void __setDefaults( void )
 #ifndef WINDOWS
 	render_spu.depth_bits = 8;
 	render_spu.stencil_bits = 0;
-	render_spu.force_direct = 1;
+	render_spu.force_direct = 0;
 	render_spu.try_direct = 1;
 #else
 	render_spu.depth_bits = 24;

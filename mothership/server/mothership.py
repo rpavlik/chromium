@@ -169,7 +169,12 @@ class CR:
 				s = socket( AF_INET, SOCK_STREAM )
 			except:
 				Fatal( "Couldn't create socket" );
-				
+
+ 			try:
+				s.setsockopt( SOL_SOCKET, SO_REUSEADDR, 1 )
+			except:
+				Fatal( "Couldn't set the SO_REUSEADDR option on the socket!" )
+
 			try:
 				s.bind( (HOST, PORT) )
 			except:

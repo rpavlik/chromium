@@ -253,6 +253,7 @@ static void __crSpankSocket( CRSocket sock )
 {
 	int sndbuf = 64*1024;
 	int rcvbuf = sndbuf;
+	int so_reuseaddr = 1;
 	int tcp_nodelay = 1;
 
 	if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, 
@@ -269,6 +270,14 @@ static void __crSpankSocket( CRSocket sock )
 		int err = crTCPIPErrno( );
 		crWarning( "setsockopt( SO_RCVBUF=%d ) : %s",
 				rcvbuf, crTCPIPErrorString( err ) );
+	}
+
+	if ( setsockopt( sock, SOL_SOCKET, SO_REUSEADDR,
+				(char *) &so_reuseaddr, sizeof(so_reuseaddr) ) )
+	{
+		int err = crTCPIPErrno( );
+		crWarning( "setsockopt( SO_REUSEADDR=%d ) : %s",
+				so_reuseaddr, crTCPIPErrorString( err ) );
 	}
 
 	if ( setsockopt( sock, IPPROTO_TCP, TCP_NODELAY,
