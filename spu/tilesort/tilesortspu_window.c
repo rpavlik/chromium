@@ -583,13 +583,6 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 		}
 
 		winInfo->server[i].window = return_val;
-		if (i > 0) {
-			if (return_val != winInfo->server[0].window) {
-				printf("return_val=%d [0].window=%d i=%d\n",
-							 return_val, winInfo->server[0].window, i);
-			}
-			CRASSERT(return_val == winInfo->server[0].window);
-		}
 	}
 
 	/* The default pack buffer */

@@ -269,14 +269,24 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
 {
 	GET_THREAD(thread);
-	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	int writeback = tilesort_spu.num_servers ? 1 : 0;
 	int i;
 
 	switch (target) {
+	case GL_WINDOW_SIZE_CR:
+		if (type != GL_INT || count != 2) {
+			crError("glGetChromiumParametervCR(GL_WINDOW_SIZE_CR, type!=GL_INT or count !=2");
+		}
+		else if (!thread->currentContext) {
+			((GLint *) values)[0] = tilesort_spu.fakeWindowWidth;
+			((GLint *) values)[1] = tilesort_spu.fakeWindowHeight;
+			break;
+		}
+		/* FALL-THROUGH -return mural size */
 	case GL_MURAL_SIZE_CR:		 /* GL_CR_tilesort_info */
 		if (type == GL_INT && count == 2)
 		{
+			WindowInfo *winInfo = thread->currentContext->currentWindow;
 			((GLint *) values)[0] = winInfo->lastWidth;
 			((GLint *) values)[1] = winInfo->lastHeight;
 		}
@@ -288,13 +298,16 @@ void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLu
 			*((GLint *) values) = 0;
 		break;
   case GL_NUM_TILES_CR:
-		if (type == GL_INT && count == 1 && index < (GLuint) tilesort_spu.num_servers)
+		if (type == GL_INT && count == 1 && index < (GLuint) tilesort_spu.num_servers) {
+			WindowInfo *winInfo = thread->currentContext->currentWindow;
 			*((GLint *) values) = winInfo->server[index].num_extents;
+		}
 		break;
 	case GL_TILE_BOUNDS_CR:
 		if (type == GL_INT && count == 4)
 		{
 			GLint *ivalues = (GLint *) values;
+			WindowInfo *winInfo = thread->currentContext->currentWindow;
 			int server = index >> 16;
 			int tile = index & 0xffff;
 			if (server < tilesort_spu.num_servers &&

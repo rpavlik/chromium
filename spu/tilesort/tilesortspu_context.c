@@ -234,10 +234,6 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		}
 
 		contextInfo->server[i].serverContext = return_val;
-		if (i > 0) {
-			/* all server should return the same value */
-			CRASSERT(return_val == contextInfo->server[0].serverContext);
-		}
 	}
 
 	/* The default pack buffer */
