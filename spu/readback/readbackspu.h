@@ -43,6 +43,8 @@ typedef struct {
 	WindowInfo *currentWindow;
 	GLint childVisBits;     /**< Visual for downstream context */
 	GLint superVisBits;     /**< Visual for parent/render SPU context */
+	GLenum drawBuffer;      /**< current value of GL_DRAW_BUFFER */
+	GLboolean drawFront;    /**< Any drawing to front color buffer/ */
 } ContextInfo;
 
 typedef struct {

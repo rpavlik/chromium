@@ -689,23 +689,39 @@ readbackspuFlush(void)
 {
 	WindowInfo *window;
 	GET_CONTEXT(context);
+
 	CRASSERT(context);					/* we shouldn't be flushing without a context */
 	window = context->currentWindow;
 	if (!window)
 		return;
 
-	if ((window->childVisBits & CR_DOUBLE_BIT) == 0) {
-		/* if the child window isn't double-buffered, do readback now */
+	/* We need to be careful about how we handle Flush because some apps
+	 * call it more than they should and that could make us run really slow.
+	 */
+	if (((window->childVisBits & CR_DOUBLE_BIT) == 0)
+			|| context->drawFront) {
+		/* If the child window isn't double-buffered or the front color buffer
+		 * has been rendered into, do readback now.
+		 */
 		DoReadback(window);
 		/*
 		 * XXX \todo I'm not sure we need to sync on glFlush,
 		 * but let's be safe for now.
 		 */
 		readback_spu.child.BarrierExecCR(SWAP_BARRIER);
+
+		/* We always render into the child's back buffer (if he has one) so make
+		 * the composited image appear now.
+		 */
+		if (window->childVisBits & CR_DOUBLE_BIT)
+			readback_spu.child.SwapBuffers(window->childWindow, 0);
 	}
 	else {
 		readback_spu.super.Flush();
 	}
+
+	/* clear this "dirty" flag */
+	context->drawFront = GL_FALSE;
 }
 
 
@@ -961,6 +977,23 @@ readbackspuClearColor(GLclampf red,
 	readback_spu.child.ClearColor(red, green, blue, alpha);
 }
 
+
+static void READBACKSPU_APIENTRY
+readbackspuClear(GLbitfield mask)
+{
+	GET_CONTEXT(context);
+	/* Check if we're rendering into the front color buffer.  If glFlush
+	 * gets called, we'll need to do compositing out of the front color buffer.
+	 */
+	if (context->drawBuffer == GL_FRONT)
+		context->drawFront = GL_TRUE;
+
+	/* pass it on */
+	readback_spu.super.Clear(mask);
+}
+
+
+/* XXX why do we need this function? */
 static void READBACKSPU_APIENTRY
 readbackspuViewport(GLint x, GLint y, GLint w, GLint h)
 {
@@ -972,19 +1005,40 @@ static void READBACKSPU_APIENTRY
 readbackspuDrawBuffer(GLenum buffer)
 {
 	GET_CONTEXT(context);
-	WindowInfo *window;
-
-	window = context->currentWindow;
+	WindowInfo *window = context->currentWindow;
 	CRASSERT(window);
 
-	if (window->superVisBits & CR_PBUFFER_BIT) {
-		/* we only have a front color buffer see TweakVisBits() above */
+	/* Save this value */
+	context->drawBuffer = buffer;
+
+	if ((window->superVisBits & CR_PBUFFER_BIT)
+			&& (window->superVisBits & CR_DOUBLE_BIT) == 0) {
+		/* we only have a single-buffered pbuffer (see TweakVisBits()) */
 		if (buffer != GL_FRONT) {
-			crWarning("Readback SPU: bad glDrawBuffer(0x%x)", buffer);
 			buffer = GL_FRONT;
 		}
-		readback_spu.super.DrawBuffer(buffer);
 	}
+
+	readback_spu.super.DrawBuffer(buffer);
+}
+
+
+static void READBACKSPU_APIENTRY
+readbackspuReadBuffer(GLenum buffer)
+{
+	GET_CONTEXT(context);
+	WindowInfo *window = context->currentWindow;
+	CRASSERT(window);
+
+	if ((window->superVisBits & CR_PBUFFER_BIT) 
+			&& (window->superVisBits & CR_DOUBLE_BIT) == 0) {
+		/* we only have a single-buffered pbuffer (see TweakVisBits()) */
+		if (buffer != GL_FRONT) {
+			buffer = GL_FRONT;
+		}
+	}
+
+	readback_spu.super.ReadBuffer(buffer);
 }
 
 
@@ -1103,8 +1157,10 @@ SPUNamedFunctionTable _cr_readback_table[] = {
 	{"Viewport", (SPUGenericFunction) readbackspuViewport},
 	{"Flush", (SPUGenericFunction) readbackspuFlush},
 	{"ClearColor", (SPUGenericFunction) readbackspuClearColor},
+	{"Clear", (SPUGenericFunction) readbackspuClear},
 	{"ChromiumParametervCR", (SPUGenericFunction) readbackspuChromiumParametervCR},
 	{"ChromiumParameteriCR", (SPUGenericFunction) readbackspuChromiumParameteriCR},
 	{"DrawBuffer", (SPUGenericFunction) readbackspuDrawBuffer},
+	{"ReadBuffer", (SPUGenericFunction) readbackspuReadBuffer},
 	{NULL, NULL}
 };
