@@ -151,6 +151,10 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 #define GL_BLEND_COLOR				0x8005
 #endif
 
+#ifndef GL_PER_STAGE_CONSTANTS_NV
+#define GL_PER_STAGE_CONSTANTS_NV 		0x8535
+#endif
+
 
 /*
  * Chromium extensions
