@@ -72,6 +72,8 @@ typedef struct {
 	CRmutex mutex;
 #endif
 
+	unsigned long mothershipPID;
+
 	/* visual/context/window management */
 	GLuint desiredVisual;  /* Bitwise-or of CR_*_BIT flags */
 	GLint spuWindow;       /* returned by dispatch->WindowCreate() */

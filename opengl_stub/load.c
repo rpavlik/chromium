@@ -11,9 +11,13 @@
 #include "cr_string.h"
 #include "cr_mothership.h"
 #include "cr_environment.h"
+#include "cr_process.h"
 #include "stub.h"
 #include <stdlib.h>
 #include <signal.h>
+
+
+#define CONFIG_LOOKUP_FILE ".crconfigs"
 
 
 SPUDispatchTable glim;
@@ -107,10 +111,10 @@ static void stubInitSPUDispatch(SPU *spu)
 
 
 /*
- * This is called by the SIGTERM signal handler when we exit.
+ * This is called when we exit.
  * We call the all the SPU's cleanup functions.
  */
-static void stubCleanup(int signo)
+static void stubExitHandler(void)
 {
 	SPU *the_spu = stub.spu;
 
@@ -123,7 +127,19 @@ static void stubCleanup(int signo)
 		the_spu = the_spu->superSPU;
 	}
 
-	exit(0);
+	/* kill the mothership we spawned earlier */
+	if (stub.mothershipPID)
+		crKill(stub.mothershipPID);
+}
+
+
+/*
+ * Called when we receive a SIGTERM signal.
+ */
+static void stubSignalHandler(int signo)
+{
+	(void) signo;
+	exit(0);  /* this causes stubExitHandler() to be called */
 }
 
 
@@ -148,12 +164,59 @@ static void stubInitVars(void)
 	stub.spuWindowWidth = 0;
 	stub.spuWindowHeight = 0;
 	stub.trackWindowSize = 0;
+	stub.mothershipPID = 0;
 
-#if 0
-	signal(SIGTERM, stubCleanup);
+#if 1
+	atexit(stubExitHandler);
+	signal(SIGTERM, stubSignalHandler);
 #else
-        (void) stubCleanup;
+	(void) stubExitHandler;
+	(void) stubSignalHandler;
 #endif
+}
+
+
+static char **LookupMothershipConfig(const char *procName)
+{
+	const int procNameLen = crStrlen(procName);
+	FILE *f;
+	char *home, configPath[1000];
+
+	/* first, check if the CR_CONFIG env var is set */
+	{
+		const char *conf = crGetenv("CR_CONFIG");
+		if (conf)
+			return crStrSplit(conf, " ");
+	}
+
+	/* second, look up config name from config file */
+	home = crGetenv("HOME");
+	if (home)
+		sprintf(configPath, "%s/%s", home, CONFIG_LOOKUP_FILE);
+	else
+		crStrcpy(configPath, CONFIG_LOOKUP_FILE); /* from current dir */
+
+	f = fopen(configPath, "r");
+	if (!f) {
+		return NULL;
+	}
+
+	while (!feof(f)) {
+		char line[1000];
+		char **args;
+		fgets(line, 999, f);
+		line[crStrlen(line) - 1] = 0; /* remove trailing newline */
+		if (crStrncmp(line, procName, procNameLen) == 0 &&
+			(line[procNameLen] == ' ' || line[procNameLen] == '\t')) 
+		{
+			crWarning("Using Chromium configuration for %s from %s",
+								procName, configPath);
+			args = crStrSplit(line + procNameLen + 1, " ");
+			return args;
+		}
+	}
+	fclose(f);
+	return NULL;
 }
 
 
@@ -201,17 +264,72 @@ void StubInit(void)
 			   "variable to the right thing (see opengl_stub/load.c)" );
 		app_id = "-1";
 	}
+
+	/* contact mothership and get my spu chain */
 	conn = crMothershipConnect( );
-	if (!conn)
+	if (conn)
 	{
-		crWarning( "Couldn't connect to the mothership -- I have no idea what to do!" ); 
-		crWarning( "For the purposes of this demonstration, I'm loading the RENDER SPU!" );
-		crStrcpy( response, "1 0 render" );
+		/* response will be the client's SPU chain */
+		crMothershipIdentifyOpenGL( conn, response, app_id );
 	}
 	else
 	{
-		crMothershipIdentifyOpenGL( conn, response, app_id );
+		/* No mothership running.  Try swapning it ourselves with a config
+		 * file that we'll get from an env var or the ~/.crconfig file.
+		 */
+		char procName[1000], currentDir[1000], **args;
+
+		crGetProcName(procName, 999);
+		crGetCurrentDir(currentDir, 999);
+		args = LookupMothershipConfig(procName);
+		if (!args)
+		{
+			/* try default */
+			args = LookupMothershipConfig("*");
+		}
+
+		if (args) {
+			/* Build the argument vector and try spawning the mothership! */
+			char *argv[1000];
+
+			argv[0] = "python";
+			for (i = 0; args[i]; i++)
+			{
+				if (crStrcmp(args[i], "%p") == 0)
+					argv[1 + i] = procName;
+				else if (crStrcmp(args[i], "%d") == 0)
+					argv[1 + i] = currentDir;
+				else
+					argv[1 + i] = args[i];
+			}
+			i++;
+			argv[i++] = NULL;
+
+			crDebug("Spawning mothership with argv:");
+			for (i = 0; argv[i]; i++) {
+					crDebug("argv[%d] = '%s'", i, argv[i]);
+			}
+
+			stub.mothershipPID = crSpawn("python", (const char **) argv);
+			crSleep(1);
+
+			crFreeStrings(args);
+
+			conn = crMothershipConnect( );
+			if (conn)
+			{
+				crMothershipIdentifyOpenGL( conn, response, app_id );
+			}
+		}
 	}
+
+	if (!conn)
+	{
+		crWarning( "Couldn't connect to the mothership -- I have no idea what to do!(1)" ); 
+		crWarning( "For the purposes of this demonstration, I'm loading the RENDER SPU!" );
+		crStrcpy( response, "1 0 render" );
+	}
+
 	crDebug( "response = \"%s\"", response );
 	spuchain = crStrSplit( response, " " );
 	num_spus = crStrToInt( spuchain[0] );
@@ -224,7 +342,7 @@ void StubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	if (conn && crMothershipGetFakerParam( conn, response, "show_cur2sor" ) ) {
+	if (conn && crMothershipGetFakerParam( conn, response, "show_cursor" ) ) {
 		sscanf( response, "%d", &stub.appDrawCursor );
 	}
 
@@ -261,33 +379,33 @@ void StubInit(void)
 		spu_dir = NULL;
 	}
 
-       if (conn && crMothershipGetRank( conn, response ))
-        {
-                my_rank = crStrToInt( response );
-        }
-        crNetSetRank( my_rank );
+	if (conn && crMothershipGetRank( conn, response ))
+	{
+		my_rank = crStrToInt( response );
+	}
+	crNetSetRank( my_rank );
 
-        if (conn && crMothershipGetParam( conn, "low_context", response ))
-          {
-            low_context = crStrToInt( response );
-          }
+	if (conn && crMothershipGetParam( conn, "low_context", response ))
+	{
+		low_context = crStrToInt( response );
+	}
 
-        if (conn && crMothershipGetParam( conn, "high_context", response ))
-          {
-            high_context = crStrToInt( response );
-          }
-        crNetSetContextRange( low_context, high_context );
+	if (conn && crMothershipGetParam( conn, "high_context", response ))
+	{
+		high_context = crStrToInt( response );
+	}
+	crNetSetContextRange( low_context, high_context );
 
-        if (conn && crMothershipGetParam( conn, "low_node", response ))
-          {
-            low_node = crStrdup( response );
-          }
+	if (conn && crMothershipGetParam( conn, "low_node", response ))
+	{
+		low_node = crStrdup( response );
+	}
 
-        if (conn && crMothershipGetParam( conn, "high_node", response ))
-          {
-            high_node = crStrdup( response );
-          }
-        crNetSetNodeRange( low_node, high_node );
+	if (conn && crMothershipGetParam( conn, "high_node", response ))
+	{
+		high_node = crStrdup( response );
+	}
+	crNetSetNodeRange( low_node, high_node );
 
 	if (conn)
 	{
@@ -304,7 +422,8 @@ void StubInit(void)
 
 	crFree( spuchain );
 	crFree( spu_ids );
-	for(i=0;i<num_spus;++i) crFree(spu_names[i]);
+	for (i = 0; i < num_spus; ++i)
+		crFree(spu_names[i]);
 	crFree(spu_dir);
 	crFree( spu_names );
 
