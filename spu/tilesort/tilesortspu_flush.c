@@ -463,7 +463,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			/*crDebug( "pack buffer before differencing" ); 
 			 *tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) ); */
 			crStateDiffContext( state_server->ctx, ctx );
-			if (tilesort_spu.drawBBOX)
+			if (tilesort_spu.drawBBOX && !broadcast)
 			{
 				__drawBBOX( bucket_info );
 			}
