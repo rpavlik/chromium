@@ -8,14 +8,24 @@
 #include "cr_spu.h"
 #include "templatespu.h"
 
+/** Template SPU descriptor */ 
 TemplateSPU template_spu;
 
+/** SPU functions */
 static SPUFunctions template_functions = {
-	NULL, /* CHILD COPY */
-	NULL, /* DATA */
-	_cr_template_table /* THE ACTUAL FUNCTIONS */
+	NULL, /**< CHILD COPY */
+	NULL, /**< DATA */
+	_cr_template_table /**< THE ACTUAL FUNCTIONS - pointer to NamedFunction table */
 };
 
+/**
+ * Template spu init function
+ * \param id
+ * \param child
+ * \param self
+ * \param context_id
+ * \param num_contexts
+ */
 static SPUFunctions *
 templateSPUInit( int id, SPU *child, SPU *self,
 								 unsigned int context_id,

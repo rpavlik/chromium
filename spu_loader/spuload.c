@@ -43,7 +43,8 @@ static char *__findDLL( char *name, char *dir )
 	return path;
 }
 
-/* Load a single SPU from disk and initialize it.  Is there any reason 
+/**
+ *  Load a single SPU from disk and initialize it.  Is there any reason 
  * to export this from the SPU loader library? */
 
 SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
@@ -101,7 +102,8 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
 	return the_spu;
 }
 
-/* Load the entire chain of SPUs and initialize all of them. 
+/**
+ *  Load the entire chain of SPUs and initialize all of them. 
  * This function returns the first one in the chain */
 
 SPU * crSPULoadChain( int count, int *ids, char **names, char *dir, void *server )

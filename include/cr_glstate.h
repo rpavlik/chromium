@@ -51,6 +51,9 @@ typedef struct CRContext CRContext;
 extern "C" {
 #endif
 
+/**
+ * Bit vectors describing GL state
+ */
 typedef struct {
 	CRAttribBits      attrib;
 	CRBufferBits      buffer;
@@ -71,7 +74,7 @@ typedef struct {
 	CROcclusionBits   occlusion;
 #endif
 	CRPixelBits       pixel;
-	CRPointBits	      point;
+	CRPointBits	  point;
 	CRPolygonBits     polygon;
 	CRProgramBits     program;
 	CRRegCombinerBits regcombiner;
@@ -84,6 +87,9 @@ typedef struct {
 
 typedef void (*CRStateFlushFunc)( void *arg );
 
+/**
+ * Chromium version of the state variables in OpenGL
+ */
 struct CRContext {
 	int id;
 	CRbitvalue bitid[CR_MAX_BITARRAY];
@@ -127,11 +133,13 @@ struct CRContext {
 	CRTransformState   transform;
 	CRViewportState    viewport;
 
-	/* For buffering vertices for selection/feedback */
+	/** For buffering vertices for selection/feedback */
+	/*@{*/
 	GLuint    vCount;
 	CRVertex  vBuffer[4];
 	GLboolean lineReset;
 	GLboolean lineLoop;
+	/*@}*/
 };
 
 

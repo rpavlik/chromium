@@ -19,24 +19,24 @@
 #include "cr_threads.h"
 
 typedef struct {
-	GLint index;         /* my window number */
-	GLint renderWindow;  /* the super (render SPU) window */
-	GLint childWindow;   /* the child SPU's window handle */
+	GLint index;         /**< my window number */
+	GLint renderWindow;  /**< the super (render SPU) window */
+	GLint childWindow;   /**< the child SPU's window handle */
 	GLint width, height;
 	GLint childWidth, childHeight;
 	GLubyte *colorBuffer;
 	GLvoid *depthBuffer;
-	GLint bytesPerColor, bytesPerDepth;  /* bytes per pixel */
-	GLenum depthType;  /* GL_UNSIGNED_SHORT or GL_FLOAT */
-	GLenum rgbaFormat; /* GL_RGBA or GL_BGRA */
-	GLenum rgbFormat;  /* GL_RGB or GL_BGR */
+	GLint bytesPerColor, bytesPerDepth;  /**< bytes per pixel */
+	GLenum depthType;  /**< GL_UNSIGNED_SHORT or GL_FLOAT */
+	GLenum rgbaFormat; /**< GL_RGBA or GL_BGRA */
+	GLenum rgbFormat;  /**< GL_RGB or GL_BGR */
 } WindowInfo;
 
 typedef struct {
 	GLboolean inUse;
 	GLint renderContext;
 	GLint childContext;
-	CRContext *tracker;  /* for tracking matrix state */
+	CRContext *tracker;  /**< for tracking matrix state */
 	WindowInfo *currentWindow;
 } ContextInfo;
 
@@ -48,7 +48,8 @@ typedef struct {
 	SPUDispatchTable self, child, super;
 	CRServer *server;
 
-	/* config options */
+	/** config options */
+	/*@{*/
 	int extract_depth;
 	int extract_alpha;
 	int local_visualization;
@@ -56,6 +57,7 @@ typedef struct {
 	int resizable;
 	char *gather_url;
 	int gather_mtu;
+	/*@}*/
 
 	CRConnection *gather_conn;
 
@@ -68,7 +70,7 @@ typedef struct {
 
 	GLint barrierSize;
 
-	/* XXX Are these per-context or per-window variables? */
+	/* XXX \todo Are these per-context or per-window variables? */
 	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
 	BBox *bbox;  /* Either NULL or points to bboxValues */
 	BBox bboxValues;

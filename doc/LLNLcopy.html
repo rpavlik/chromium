@@ -1,0 +1,2847 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head>
+  <meta name="generator" content="HTML Tidy for Linux/x86 (vers 1st June 2004), see www.w3.org">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=us-ascii"><title>An Overview of Chromium</title>
+
+  
+  <meta name="GENERATOR" content="OpenOffice.org 1.1.0 (Linux)">
+  <meta name="AUTHOR" content="rjfrank">
+  <meta name="CREATED" content="20040209;20040000">
+  <meta name="CHANGEDBY" content="Alan Matsuoka">
+  <meta name="CHANGED" content="20040623;15582600">
+  <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+  <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+  <meta name="ProgId" content="FrontPage.Editor.Document">
+  <base target="_self">
+  <link rel="stylesheet" type="text/css" href="chromium.css">
+  <meta name="author" content="Randall Frank"></head><body>
+  <h1><a name="mozTocId833436" class="mozTocH1" id="mozTocId833436"></a><font size="5"><font size="6">Chromium:
+  Parallel, Distributed OpenGL Rendering On Commodity
+  Clusters</font></font></h1>
+
+  <p lang="en-US" class="western"><font size="4">Lawrence Livermore
+  National Laboratory, Stanford University, University of Virginia
+  and Tungsten Graphics, Inc.<br></font><font size="2">This work
+  was performed under the auspices of the U.S. Department of Energy
+  by University of California, Lawrence Livermore National
+  Laboratory under Contract W-7405-Eng-48.
+  UCRL-MI-202411</font><br></p><br>
+
+  <p lang="en-US" class="western" align="center" style="border: medium none ; padding: 0in; text-indent: 0.5in; margin-bottom: 0in;">
+  <a name="Frame1" id="Frame1"></a> <img src="LLNLcopy_html_mc38dedb.png" name="Graphic1" align="middle" hspace="12" style="border: 0px solid ; width: 702px; height: 468px;" alt="VisIt interactive parallel visualization application" id="Graphic1"></p>
+
+  <p lang="en-US" class="western"><br>
+  <br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;"><br></p><br>
+  <b><span style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  VisIt interactive parallel visualization application run on a
+  commodity cluster and displaying to a tiled display using
+  Chromium</span></b><br clear="all">
+
+  <p lang="en-US" class="western">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Over the past few years, progress in consumer graphics card
+  capabilities and desktop CPU performance, coupled with advances
+  in high-performance networks, have enabled a new generation of
+  super-computer: the commodity cluster. These new clusters, built
+  from collections of off-the-shelf PCs outfitted with consumer
+  graphics cards, offer nearly limitless power for the rendering
+  and display of 3D graphics. However, the application programming
+  interface (API) to these systems was not designed for large,
+  parallel clusters. Chromium provides a common parallel graphics
+  programming interface to support such clusters. In addition, it
+  allows most existing applications to run without modification,
+  and enables creation of powerful new parallel graphics
+  applications capable of fully exploiting the power of these
+  clusters.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Chromium provides a
+  number of key capabilities, uniquely combined into a single
+  package:</p>
+
+  <ul>
+    <li>
+      <p lang="en-US" class="western" style="margin-bottom: 0in;">
+      Novel method for synchronizing parallel graphics commands</p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western" style="margin-bottom: 0in;">
+      &#8220;Streaming&#8221; graphics pipeline based on the
+      industry standard OpenGL API</p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western" style="margin-bottom: 0in;">
+      Support for multiple physical display devices clustered
+      together, such as &#8220;powerwall&#8221; displays</p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western" style="margin-bottom: 0in;">
+      Support for aggregation of the output of multiple graphics
+      cards to drive a single display at higher levels of
+      performance/capability</p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western" style="margin-bottom: 0in;">
+      Application-transparent plug-in mechanism supporting custom
+      graphics pipelines</p>
+    </li>
+  </ul>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The Chromium
+  infrastructure has been adopted by a large number of users and is
+  rapidly forming the basis of a great deal of clustering research.
+  Chromium&#8217;s capabilities have not only proven to be useful
+  on graphics clusters, but the technologies are also useful on the
+  single desktop PC.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">While distributed
+  processing using clusters of off-the-shelf PCs has become a key
+  technology for high-performance computing and has been used for
+  many kinds of computational problems, graphics and visualization
+  applications have not been able to fully take advantage of this
+  new technology. Chromium provides a way for interactive two and
+  three dimensional graphics applications to take full advantage of
+  powerful distributed, graphics-enabled clusters of off-the-shelf
+  (commodity) PCs. It provides a mechanism that allows applications
+  to draw computer graphics imagery on such clusters with a high
+  degree of scalability, and offers unique capabilities not
+  previously available, even on traditional desktop computer
+  workstations,</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h2><a name="mozTocId394498" class="mozTocH2" id="mozTocId394498"></a> Enables visualization applications to use
+  cluster technology</h2>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in; page-break-after: avoid;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Although several
+  software technologies had emerged to allow general-purpose
+  computing applications to harness the capabilities of commodity
+  clusters, none had been available for graphics processing.
+  Chromium creates a way for any program using the OpenGL standard,
+  even older ones, to take advantage of cluster technology.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h2><a name="mozTocId362882" class="mozTocH2" id="mozTocId362882"></a> Highly scalable</h2>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in; page-break-after: avoid;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Chromium provides
+  graphics scalability on three fundamental axes: quantity of data,
+  rendering capability, and display capability.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Chromium&#8217;s
+  <b>data scalability</b> means it has the ability to handle
+  increasingly larger datasets on increasingly larger clusters.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;"><b>Rendering
+  scalability</b> is the ability to increase rendering performance
+  or its capacity (for example, rendering more triangles per second
+  or more pixels per second). Rendering capability can be increased
+  by aggregating together multiple commodity graphics cards (in the
+  form of multiple PCs) to draw one image.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;"><b>Display
+  scalability</b> is the ability to use increases in rendering
+  capabilities to generate larger output images. This could take
+  the form of tiled displays made up of multiple individual
+  displays or projectors, or it could take the form of a single
+  display much larger than could be driven at acceptable rates by a
+  single graphics card. Chromium provides graphics applications
+  with software mechanisms for parallel processing that provide
+  simultaneous scaling in all three axes.</p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_2dac1e60.gif" name="Object1" align="bottom" width="351" height="187" border="0" id="Object1"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in;"><b>Chromium allows an unmodified graphics
+  application<br>
+  (MeshTV) to render to a tiled display device.</b></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h2><a name="mozTocId217020" class="mozTocH2" id="mozTocId217020"></a> Unique new capabilitie<b>s</b></h2>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in; page-break-after: avoid;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">In addition to allowing
+  graphics programs to run on distributed-memory graphics clusters,
+  Chromium&#8217;s application programming interface (API) also
+  provides a way for existing and new programs to effectively
+  exploit these capabilities in unique ways. Because it dynamically
+  replaces a system&#8217;s native OpenGL libraries with a Chromium
+  library when the application is executed, Chromium can be used by
+  any existing OpenGL application without modification. This allows
+  new parallel applications to be written that use the OpenGL
+  extensions Chromium provides to facilitate even greater levels of
+  system scaling.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Chromium greatly
+  simplifies the development of new parallel applications by
+  providing a utility library (CRUT), modeled after the GL utility
+  library (GLUT). Chromium&#8217;s library allows essentially
+  unmodified GLUT-based applications to be automatically converted
+  to run as parallel applications.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">In
+  short, Chromium provides a beginning-to-end software architecture
+  that enables the execution of scalable rendering and graphics
+  applications on distributed-memory graphics clusters, integrated
+  with scalable and remote-display technologies.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <img src="LLNLcopy_html_357d6fa6.gif" name="Object2" align="left" hspace="12" width="103" height="52" border="0" id="Object2"><br></p>
+
+  <p lang="en-US" class="western">How does it do it?</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h2><a name="mozTocId471515" class="mozTocH2" id="mozTocId471515"></a> History</h2>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in; page-break-after: avoid;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The past few years have
+  witnessed a revolution in computer graphics solutions for PCs,
+  driven largely by the demands of computer gaming. The Chromium
+  project was started with the aim of harnessing this revolution in
+  the form of scalable commodity clusters by making this dramatic
+  leap in graphics performance accessible to parallel applications.
+  The name Chromium was derived from the phrase: &#8220;Clustered
+  Rendering&#8221; or CR for short. CR happens to be the atomic
+  symbol for element Chromium; hence the project name. Chromium is
+  a collection of a number of core technologies. Several were
+  prototyped in a project at Stanford known as WireGL. Chromium
+  began as a follow-on project to WireGL and it includes a number
+  of the core WireGL features. Several papers that refer to the
+  WireGL project and describe these technologies are included in
+  this entry. We ask that reviewers consider that these core WireGL
+  technologies have been entirely incorporated, and in several
+  cases extended, in the Chromium project.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Since its public
+  release, the Chromium system has proven to be an extremely
+  popular infrastructure. There have been over 18,000 downloads of
+  the software. Major applications vendors (e.g. CEI) have
+  demonstrated prototypes of their commercial software packages
+  with specific modifications to exploit the parallel rendering
+  capabilities of the system and it has been put into production
+  use at national laboratories and a number of research
+  institutions. Recently, Chromium was singled out in a list of
+  influential open source graphics tools by LinuxWorld magazine.
+  Perhaps the most telling examples of its widespread adoption have
+  been the involvement of major computer systems vendors in the
+  project. IBM has supported the work through their Deep View
+  research efforts, SGI has announced plans to support and
+  contribute to the project and several smaller vendors (e.g. Graph
+  Stream) distribute and support Chromium on their cluster
+  offerings.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h2><a name="mozTocId774117" class="mozTocH2" id="mozTocId774117"></a> Overview</h2>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in; page-break-after: avoid;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.25in; margin-bottom: 0in;">Chromium&#8217;s
+  strength stems from its seamless integration of several pieces of
+  novel technology. These include</p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;">&#8226; an OpenGL API
+  interception mechanism</p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;">&#8226; <font size="3">an efficient stream processing model based on
+  OpenGL</font></p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;">&#8226; an optimizing
+  state tracking mechanism</p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;">&#8226; a method for
+  extending OpenGL</p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;">&#8226; a programmable
+  pipeline realization system (the &#8220;mothership&#8221;).</p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;">Chromium can be used
+  with or without DMX&nbsp; or with other components as needed.
+  Chromium is part of an&nbsp; <a href="http://www.llnl.gov/icc/sdd/img/infrastructures.shtml">Open
+  Source software stack</a> that can be scaled to large parallel
+  systems and provides a series of conceptual abstraction layers.
+  The basic software stack is illustrated below:</p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;"><img src="ScalableSWStack.png" name="Graphic2" alt="Software stack" align="middle" hspace="50" width="543" height="140" border="0" id="Graphic2"></p>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="left"><font size="3">Parallel applications may or may not sit on top of higher
+  level toolkits such as VTK.</font></p>
+
+  <p lang="en-US" class="western" align="left"><font size="3">Other
+  layers include:</font></p>
+
+  <ul>
+    <li>
+      <p lang="en-US" class="western"><font size="3">Chromium
+      provides an OpenGL abstraction which includes a parallel
+      interface and a generalized stream processing
+      layer.</font></p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western"><font size="3"><a href="http://dmx.sourceforge.net/">Distributed Multi-headed X
+      (DMX)</a> provides a distributed X11 server implementation
+      that aggregates a number of X11 servers into a single X11
+      server.</font></p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western"><font size="3"><a href="http://www.llnl.gov/icc/sdd/img/images/pdf/IEEE_Viz_2002_rjf.pdf">
+      Parallel Image Compositing API (PICA)</a> provides a standard
+      API abstraction for hardware and software compositing
+      systems.</font></p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western"><font size="3"><a href="http://www.llnl.gov/icc/sdd/img/midas.shtml">MIDAS</a>
+      provides indirect rendering and digital image delivery
+      mechanisms that allow for the separation of 3D rendering from
+      image delivery.</font></p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western"><font size="3"><a href="http://www.llnl.gov/icc/sdd/img/merlot.shtml">Merlot</a>
+      provides a flexible image transport service that allows
+      distributed applications to leverage existing image
+      compression and delivery technologies.</font></p>
+    </li>
+
+    <li>
+      <p lang="en-US" class="western"><font size="3"><a href="http://www.llnl.gov/icc/sdd/img/images/pdf/Frank_telepath.pdf">
+      Telepath</a> provides visualization scheduling, session and
+      resource control.</font></p>
+    </li>
+  </ul>
+
+  <p lang="en-US" class="western" style="margin-left: 0.25in; margin-bottom: 0in;">For more information
+  <a href="http://www.llnl.gov/icc/sdd/img/viz.shtml">see
+  .</a><br></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <a name="OLE_LINK1" id="OLE_LINK1"></a><br></p>
+
+  <h2><a name="mozTocId112331" class="mozTocH2" id="mozTocId112331"></a> Interception of the OpenGL API</h2><br>
+
+  
+<p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Chromium is based on
+  the industry-standard OpenGL applications programming interface.
+  OpenGL applications must dynamically link to this library in
+  order to support a variety of graphics cards. Chromium exploits
+  this dependency by using its own interception library to
+  masquerade as the system&#8217;s OpenGL library.. <i>A side
+  effect of this is that Chromium is entirely transparent to a
+  running application.</i> Through this mechanism, Chromium takes
+  control of all three-dimensional graphics rendering by the
+  application The design of this interception library is such that
+  it allows for Chromium to use the computer system&#8217;s native
+  OpenGL implementation, ensuring access to the computer&#8217;s
+  high-performance, hardware-accelerated rendering functions. The
+  Chromium OpenGL programming interface includes all of standard
+  OpenGL through version 1.5, including many of the most common and
+  innovative graphics extensions available, such as vertex and
+  fragment programs.</p>
+<br>
+
+  <h2><a name="mozTocId639647" class="mozTocH2" id="mozTocId639647"></a> Stream Processing Model</h2><br>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Once Chromium has
+  control of all rendering done by an application, all OpenGL
+  graphics commands are converted into a stream of partially
+  ordered graphics commands. Because the Chromium stream is based
+  on the industry standard OpenGL API, existing applications can be
+  easily interfaced to the system and the system can exploit
+  graphics cards with high-performance OpenGL interfaces. It is
+  important to note that this stream is largely conceptual rather
+  than literal, and that it is only physically realized as a
+  network stream when it becomes necessary for graphics commands to
+  move from one computer in the cluster to another.</p><br>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">This stream basis
+  allows Chromium to naturally extend from a single computer to
+  distributed-memory clusters, using an extremely efficient network
+  abstraction layer. The network subsystem is more efficient than
+  other options (e.g., the GLX protocol), and organizes the
+  encoding in such a way as to increase the overall network
+  utilization. This is a critical point when operating on modern,
+  high-performance interconnects.</p><br>
+
+  <h2><a name="mozTocId276858" class="mozTocH2" id="mozTocId276858"></a> The Stream Processing Unit (SPU)</h2><br>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">A novel aspect of
+  Chromium is how these graphics streams are represented in the
+  system. While a stream can take the form of encoded bytes on a
+  network, this form is only used when physically moving between
+  cluster nodes. Within a node, the stream takes the form of OpenGL
+  function calls. Chromium provides a construct referred to as the
+  stream processing unit, or SPU (pronounced &#8220;spew&#8221;). A
+  SPU provides a data structure through which the Chromium
+  rendering stream is passed in the form of OpenGL function calls.
+  The SPU provides all the potential function calls of an OpenGL
+  implementation. This construct results in a fixed interface that
+  makes possible the concept of a SPU chain, a collection of SPUs
+  linked together transparently without the need for network
+  transport of the stream.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  One unique feature of the SPU system design is that a SPU need
+  not implement the entire OpenGL API. Chromium allows a SPU to
+  inherit from other SPUs. By default, a SPU inherits from a
+  &#8220;passthrough&#8221; SPU, which allows an upstream SPU to
+  directly call a downstream SPU, bypassing all the SPUs in between
+  that are not needed for a given OpenGL function call. Thus,
+  Chromium&#8217;s SPU chains can avoid introducing any unnecessary
+  performance overhead for deep collections of SPUs. It also has
+  the side effect of keeping SPU development simple, which allows
+  for all types of extensions to be developed by others outside of
+  the Chromium core software layer.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  The Chromium system combines a collection of specially designed
+  SPUs, and a mechanism for realizing them at application
+  invocation, transparently with network encoding, transport and
+  decoding mechanisms. Chromium provides application scalability
+  through the Tile-Sort SPU, parallel API and various other
+  rendering SPUs.</p><br>
+
+  <h2><a name="mozTocId265952" class="mozTocH2" id="mozTocId265952"></a> State-Tracking Mechanism</h2><br>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">A key feature of this
+  network stream processing system is its ability to track the
+  OpenGL state. OpenGL has a very complex system state that
+  includes elements like colors, textures, rendering modes, etc.
+  Most notably, it can be expensive to change the OpenGL state
+  because it interrupts pipelined rendering operation. Chromium has
+  the ability to efficient track the OpenGL state and to issue the
+  minimum number of graphics commands necessary to transform the
+  current OpenGL state to any given target state. This feature,
+  referred to as &#8220;state tracking,&#8221; allows Chromium to
+  ignore redundant OpenGL calls and further streamline any
+  resulting rendering stream.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Chromium uses this
+  state-tracking system in conjunction with a Tile-Sort SPU to
+  provide a mechanism for converting a single incoming stream into
+  a set of parallel streams that are spatially bounded. An example
+  would be taking a single incoming stream and rendering it in
+  multiple streams to &#8220;tiles&#8221; in a powerwall display,
+  where each output stream corresponds to one output projector or
+  tile of an aggregate display.</p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_7363b06.gif" name="Graphic2" align="bottom" width="515" height="344" border="0" id="Graphic2"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in;"><b>An example of output to multiple
+  projectors in a powerwall display.</b></p><br>
+
+  <h2><a name="mozTocId175935" class="mozTocH2" id="mozTocId175935"></a> Extending/Enhancing OpenGL</h2><br>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">In providing a solution
+  to allow graphics processing to take advantage of commodity
+  clusters, Chromium also became a highly flexible, extensible
+  system that can be used by developers in ways not originally
+  envisioned. Chromium makes it possible to extend and enhance the
+  OpenGL API to drive devices that couldn&#8217;t have been
+  considered before. It has also enabled other, novel uses, such as
+  using Chromium for the debugging of graphics applications and as
+  a custom acceleration mechanism for desktop applications.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">There are a number of
+  other common types of Chromium SPU extensions based on
+  abstraction of the &#8220;rendering&#8221; operation. These types
+  of SPUs can be used to change the &#8220;look&#8221; of rendering
+  (such as making all rendering have a &#8220;blueprint&#8221;
+  look) or perform render scaling via the conversion of geometry to
+  images. The OpenGL API supports both classical geometry (e.g.,
+  lines and polygons) as well as rectangles of color or depth
+  pixels. This allows Chromium to seamlessly model the conversion
+  of geometry into pixels via a &#8220;rendering&#8221; operation
+  that uses the local graphics hardware on a given cluster node.
+  Various SPU developers have used this to perform
+  &#8220;remote&#8221; rendering operations such as to PDAs from
+  clusters, and to drive large, network-attached displays (for
+  example, the IBM T221 display via the Scalable Graphics Engine
+  network frame buffer shown below).</p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_68cf448c.gif" name="Object3" align="bottom" width="466" height="292" border="0" id="Object3"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in; margin-bottom: 0in;"><b>Example of the Catia
+  application rendering to a network-attached<br>
+  9-million-pixel (T221) display via the IBM Scalable Graphics
+  Engine SPU.<br>
+  This illustrates parallel rendering to a unique, network-based,
+  high-resolution device via Chromium&#8217;s extension
+  mechanism.</b></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_m60ab1153.gif" name="Graphic3" align="bottom" width="420" height="207" border="0" id="Graphic3"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in; margin-bottom: 0in;"><b>The SPU chains used
+  for the IBM T221/SGE rendering example.</b></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Perhaps the most
+  important use of Chromium&#8217;s extension capability is in
+  rendering aggregation &#8212; providing scalability for large,
+  decomposed datasets via the &#8220;binary-swap&#8221;
+  image-compositing SPU. This allows for all the rendering to occur
+  locally on the nodes with the application data, while a final
+  image is generated by pushing augmented images into the rest of a
+  Chromium SPU pipeline. This allows a number of nodes of a cluster
+  to be used to generate a single image or drive an individual
+  display.</p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_m65c72b6e.gif" name="Object4" align="bottom" width="284" height="171" border="0" id="Object4"></p>
+
+  <p lang="en-US" class="western" align="center"><b>Example of
+  rendering aggregation, with outputs from several nodes composited
+  together to produce a single image, in this case a medical volume
+  rendering.</b></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <h2><a name="mozTocId900110" class="mozTocH2" id="mozTocId900110"></a> Parallel API</h2><br>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">One very important way
+  in which Chromium differs from OpenGL is that Chromium supports
+  parallelism. OpenGL itself is a serial API that guarantees that
+  commands are executed in the order they are made by the serial
+  source. This mode of operation is not feasible in parallel
+  clusters, because it would imply communication among all the
+  nodes in a cluster with every function call to ensure global
+  ordering. The approach taken in Chromium is to exploit the fact
+  that, for most applications, a strict ordering is not necessary.
+  Most applications only require that collections of commands be
+  executed before or after each other, so the addition of basic
+  parallel barriers and semaphores suffice to ensure proper
+  primitive rendering order. We introduce a set of three such
+  synchronization primitives (<font face="Courier New, monospace">glBarrierExec()</font>, <font face="Courier New, monospace">glSemaphoreP()</font> and <font face="Courier New, monospace">glSemaphoreV()</font>) that are not
+  immediately executed; rather they are encoded directly into the
+  rendering stream, avoiding expensive global communication. These
+  primitives are resolved at any network collection point in the
+  stream (any point in the SPU pipeline that supports the merging
+  of multiple streams). Normally, this is performed late in the
+  pipeline, which avoids system overhead in the application nodes
+  and much of the potential resource contention.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h2><a name="mozTocId438472" class="mozTocH2" id="mozTocId438472"></a> Starting Up Chromium: the
+  &#8220;Mothership&#8221;</h2><br>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The Chromium system is
+  instantiated through a system referred to as the
+  &#8220;Mothership.&#8221; The mothership sets up and manages
+  Chromium&#8217;s processes by dynamically reconfiguring system
+  components. The mothership also deploys all the incoming and
+  outgoing resources, and is responsible for ensuring that all the
+  SPU chains and network connections are made on application
+  demand. The mothership system provides resource allocation and
+  negotiation and can be queried and hinted by an application. For
+  example, an application can check to see if it is running under
+  Chromium and if so, inform the mothership that it intends to
+  perform parallel volume rendering.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The mothership design
+  is also unique in that it is not based on classical static
+  configuration files like other systems. The Chromium mothership
+  is based on &#8220;executable&#8221; configuration scripts
+  written in Python. These scripts can negotiate a dynamic
+  rendering configuration with both system resource handlers (e.g.,
+  a cluster node allocator) and other configuration scripts. This
+  allows for more general configurations than static configurations
+  can support and allows Chromium to adapt to the dynamically
+  changing environments often encountered in commodity graphics
+  clusters. The resulting system has been used to realize a broad
+  spectrum of rendering configurations customized for specific
+  application requirements and cluster capabilities.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Some example
+  configurations illustrating various types of parallel processing
+  and various rendering targets are included here. Of these, the
+  first two can be found in both Chromium and other systems, but
+  the last three are unique to Chromium. Only Chromium is capable
+  of all five of the illustrated configurations. In these diagrams,
+  red lines represent geometry and green lines represent images
+  transported over the cluster network and in general, a list of
+  SPUs is included in labels.</p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_m44071084.gif" name="Graphic4" align="bottom" width="301" height="226" border="0" id="Graphic4"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in;"><b>Classical &#8220;sort-first&#8221;
+  configuration for serial applications<br>
+  driving tiled displays. This is a fundamental configuration<br>
+  that other systems are also capable of.</b></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_223d20a8.gif" name="Graphic5" align="bottom" width="456" height="237" border="0" id="Graphic5"></p>
+
+  <p lang="en-US" class="western" align="center"><b>Classical
+  &#8220;sort-last&#8221; configuration for a parallel application
+  driving a single output. This is a fundamental configuration also
+  found in other systems.</b></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_2198257b.gif" name="Graphic6" align="bottom" width="468" height="266" border="0" id="Graphic6"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in; margin-bottom: 0in; page-break-before: auto; page-break-after: auto;">
+  &#8220;<b>Visualization server&#8221; configuration combining
+  characteristics of<br>
+  both &#8220;sort-first&#8221; and &#8220;sort-last&#8221;
+  configurations, resulting in multidimensional performance
+  scaling. This type of configuration is unique to
+  Chromium.</b></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_mec574f7.gif" name="Graphic7" align="bottom" width="396" height="233" border="0" id="Graphic7"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in; margin-bottom: 0in; page-break-before: auto; page-break-after: auto;">
+  <b>A &#8220;remote rendering&#8221; configuration designed to
+  render to a remote tiled display wall from a serial application.
+  This is unique to Chromium.</b></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_1da510b9.gif" name="Graphic8" align="bottom" width="552" height="298" border="0" id="Graphic8"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in; margin-bottom: 0in;"><b>A &#8220;render and
+  forward&#8221; configuration that could be used for temporal
+  rendering acceleration, collaborative environments or to
+  exploit<br>
+  particular network configurations. This is unique to
+  Chromium.</b></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h2><a name="mozTocId273970" class="mozTocH2" id="mozTocId273970"></a> A Note on Performance</h2>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The Chromium system has
+  been demonstrated to provide scalable performance in a number of
+  different configurations. The parallel OpenGL API has been used
+  to demonstrate input scalability, the tile-sort SPU has been used
+  to demonstrate output scalability and the binary-swap SPU has
+  been used to demonstrate rendering/data scalability. The details
+  of these tests are included in the various published papers
+  included on the accompanying CDROM. Chromium is the only system
+  to be able to demonstrate scaling along all three axes, and it
+  can do so simultaneously.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;"><br></p>
+
+  <h2><a name="mozTocId22907" class="mozTocH2" id="mozTocId22907"></a>&nbsp;Product's competitors by
+  manufacturer:</h2>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">There are a number of
+  products with feature sets that overlap those of Chromium at some
+  level. To the best of our knowledge, there is no competitor that
+  covers the full array of features that Chromium does.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <b>SGI, Multipipe SDK,</b> <a href="http://www.sgi.com/software/multipipe/sdk"><b><u><font color="#0000ff">http://www.sgi.com/software/multipipe/sdk</font></u></b></a></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">The
+  SGI Multipipe SDK is an API designed for use on SGI
+  shared-memory, multiple-CPU systems. The SDK is designed to
+  simplify the use of multiple, full-screen, graphics pipelines in
+  shared-memory parallel applications. The system replaces some of
+  the OpenGL API with helper functions that call the SDK. It is
+  intended for new application development. Applications must be
+  modified to use this system.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <b>VRCO, Cavelib,</b> <a href="http://www.vrco.com/products/cavelib/cavelib.html"><b><u><font color="#0000ff">
+  http://www.vrco.com/products/cavelib/cavelib.html</font></u></b></a></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  Cavelib is a parallel graphics library optimized for use in
+  virtual reality applications. It provides an abstraction of
+  multiple, full-screen graphics pipelines for both shared- and
+  distributed-memory parallel applications. Cavelib controls both
+  the display and the input to the application program. For
+  parallel applications, it requires that a complete copy of the
+  application run on all systems and that each copy drive one
+  display. Applications must be modified to use this system.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <b>RedHat, Distributed Multiheaded X11/GLX Proxy,</b> <a href="http://dmx.sourceforge.net/"><b><u><font color="#0000ff">http://dmx.sourceforge.net</font></u></b></a></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">The
+  Distributed Multiheaded X11 <b>(</b>DMX) project provides an
+  interface called GLX Proxy. GLX proxy allows an unmodified OpenGL
+  application to render to multiple tiles of a powerwall. The
+  system is based on the GLX network protocol for OpenGL and only
+  supports non-parallel applications. It operates by broadcasting
+  all the OpenGL commands to all the tiles, limiting its ability to
+  scale with large datasets.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <b>Distributed scene graph: OpenSG,</b> <a href="http://www.opensg.org/"><b><u><font color="#0000ff">http://www.opensg.org</font></u></b></a></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">Here
+  we use the OpenSG scene graph as a proxy for a number of similar
+  systems (e.g., Distributed Open Inventor, &#8230;). These systems
+  are based on the scene graph rendering abstraction interface.
+  Application data is placed into a scene graph and mechanisms in
+  the graph are used to provide parallel semantics. Generally, the
+  entire graph is broadcast to all the display nodes. Applications
+  must be written specifically for these graph class structures to
+  access these abstractions.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <b>ModViz, Renderizer,</b> <a href="http://www.modviz.com/products/renderizer.htm"><b><u><font color="#0000ff">
+  http://www.modviz.com/products/renderizer.htm</font></u></b></a></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  Renderizer is a commercial tool that provides a distributed graph
+  library. It provides an interface that can be used to transport
+  and render geometry on various nodes of a distributed graphics
+  cluster. While it is possible to write applications directly on
+  top of this library, generally the library is used to support
+  other scene graph-based applications whose scene graph systems
+  have been ported to Renderizer.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><b>HP
+  sv6/sv7,</b> <a href="http://www.hp.com/workstations/risc/visualization/overview.html">
+  <b><u><font color="#0000ff">http://www.hp.com/workstations/risc/visualization/overview.html</font></u></b></a></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">The
+  HP sv6 &amp; sv7 systems provide a unique hardware and software
+  package that allows unmodified X11 and OpenGL applications to run
+  on large, tiled displays. The system runs on HP
+  distributed-graphics clusters. Applications OpenGL calls are
+  intercepted and intelligently broadcast to all the tile nodes.
+  Various configurations of video tiles allow sv6/7 applications to
+  be able to scale rendering performance as well as display size.
+  The system does not support explicitly parallel applications,
+  although it will allow synchronized copies of applications to run
+  on all nodes.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <b>SGI, VizServer,</b> <a href="http://www.sgi.com/software/vizserver"><b><u><font color="#0000ff">http://www.sgi.com/software/vizserver</font></u></b></a></p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The VizServer product
+  is designed specifically to support remote and collaborative
+  rendering. It allows an unmodified OpenGL-based application to
+  render on one system and display the resulting imagery on
+  another, remote system. We include VizServer here due to its
+  ability to convert a stream of OpenGL geometry into a custom
+  stream of imagery. VizServer is only available on SGI
+  shared-memory systems.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">We compared these
+  systems in five basic areas. The types of rendering they support
+  along with how they interface to applications is one key element
+  in determining where and when a given system could be used. The
+  type of node and display aggregation that a given system supports
+  is another system differentiator. These include the nature of
+  parallel sources and displays, which outline the level and types
+  of scaling that are supported by a system. We include a
+  comparison of virtual reality capabilities for which some of the
+  systems were specifically designed. Finally, we complete the
+  comparisons with an examination of network efficiency and system
+  availability/accessibility.</p>
+
+  <div id="Section4" dir="ltr">
+    <p lang="en-US" class="western"><br>
+    <br></p>
+  </div>
+
+  <h2><a name="mozTocId965075" class="mozTocH2" id="mozTocId965075"></a>&nbsp;Comparison matrix to competing
+  approaches:</h2>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <table width="926" border="1" bordercolor="#000000" cellpadding="7" cellspacing="0" rules="groups">
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="3">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><b>Capability</b></font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>Chromium
+          Advantages</b></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>Chromium</b></font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>Multipipe SDK</b></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>Cavelib</b></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>DMX/GLX
+          Proxy</b></font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Rendering</i></font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Legacy application
+          transparency</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Standard</font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Rendering
+          API</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Standard</font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">OpenGL</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">OpenGL</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">OpenGL</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">OpenGL</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Parallel OpenGL
+          API</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(0, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Unique capability</span></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(0, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Yes</span></font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Parallel rendering to
+          a window</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(255, 255, 0) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Nearly unique</span></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes, DMX
+          extension</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Custom OpenGL stream
+          filters</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(0, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Unique capability</span></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(0, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Yes</span></font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Aggregation
+          support</i></font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Serial app, multiple
+          displays</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(255, 255, 0) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          All three modes</span></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes
+          (threaded)</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes
+          (threaded)</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Parallel app, single
+          display</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(255, 255, 0) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          supported</span></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes
+          (w/compositor)</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Parallel app, multiple
+          displays</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <span style="background: rgb(255, 255, 0) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          &nbsp;<font size="2"><font face="Arial, sans-serif">Nearly
+          Unique</font></font></span></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes
+          (threaded)</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Other parallel
+          rendering models</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(0, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Unique capability</span></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><font face="Arial, sans-serif"><font size="2">Render &amp;
+          forward</font></font></p>
+
+          <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><font face="Arial, sans-serif"><font size="2">Time
+          multiplexed</font></font></p>
+
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Several
+          others</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Time
+          multiplexed</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">-</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">-</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Virtual Reality
+          Support</i></font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Stereo</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Standard</font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Virtual reality input
+          mechanisms</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Not
+          supported</font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Non-planar
+          surfaces</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Standard</font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Efficient network
+          transport</i></font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Geometry to image
+          transform</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(255, 255, 0) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Nearly unique</span></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Geometry caching
+          support</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Standard</font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Server+Client</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Server
+          (display list)</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Server
+          (display list)</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Server
+          (display list)</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Encoding of geometry
+          and state</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(0, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Unique capability</span></font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><span style="background: rgb(0, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial;">
+          Yes</span></font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Partial</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Target
+          Platform</i></font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Available as Open
+          Source</font></font></p>
+        </td>
+
+        <td width="135">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Freely
+          available</font></font></p>
+        </td>
+
+        <td width="125">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="130">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Limited to
+          Irix</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="214" height="21">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Specific OS
+          Support</font></font></p>
+        </td>
+
+        <td width="135" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Common
+          platforms</font></font></p>
+        </td>
+
+        <td width="125" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Linux,
+          Irix, Windows, MacOS</font></font></p>
+        </td>
+
+        <td width="130" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Irix</font></font></p>
+        </td>
+
+        <td width="118" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Irix, HPUX,
+          Solaris, Windows, Linux</font></font></p>
+        </td>
+
+        <td width="118" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Irix,
+          Linux, AIX, HPUX, Solaris</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in; page-break-before: always;"><br></p>
+
+  <table width="758" border="1" bordercolor="#000000" cellpadding="7" cellspacing="0" rules="cols">
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="3">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><b>Capability</b></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>OpenSG</b></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>Renderizer</b></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>sv6/sv7</b></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2"><b>VizServer</b></font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Rendering</i></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Legacy application
+          transparency</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Rendering
+          API</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Scene
+          Graph<sup>&#8224;</sup></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Scene
+          Graph<sup>&#8224;</sup></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">OpenGL</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">OpenGL</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Parallel OpenGL
+          API</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Parallel rendering to
+          a window</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Custom OpenGL stream
+          filters</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Aggregation
+          support</i></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Serial app, multiple
+          displays</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes<sup>&#8225;</sup></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes<sup>&#8225;</sup></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Same
+          image</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Parallel app, single
+          display</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Parallel app, multiple
+          displays</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Other parallel
+          rendering models</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">-</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">-</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">-</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Time
+          multiplexed</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Virtual Reality
+          Support</i></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Stereo</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Virtual reality input
+          mechanisms</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Non-planar
+          surfaces</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Efficient network
+          transport</i></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Geometry to image
+          transform</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Geometry caching
+          support</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Server+Client</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Server+Client</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Unknown</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Server
+          (display list)</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Encoding of geometry
+          and state</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">State
+          only</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">State
+          only</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Unknown</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2"><i>Target
+          Platform</i></font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">&nbsp;</p>
+        </td>
+      </tr>
+
+      <tr valign="bottom">
+        <td width="214" height="4">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Available as Open
+          Source</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Yes</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+
+        <td width="118">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">No</font></font></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td width="214" height="21">
+          <p lang="en-US" class="western" align="left"><font face="Arial, sans-serif"><font size="2">Specific OS
+          Support</font></font></p>
+        </td>
+
+        <td width="118" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Irix,
+          Linux, Windows</font></font></p>
+        </td>
+
+        <td width="118" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Linux,
+          Windows</font></font></p>
+        </td>
+
+        <td width="118" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">HPUX</font></font></p>
+        </td>
+
+        <td width="118" valign="bottom">
+          <p lang="en-US" class="western" align="center">
+          <font face="Arial, sans-serif"><font size="2">Irix</font></font></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <sup>&#8224;</sup>Scene graph subclasses generally allow raw
+  OpenGL geometry calls.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  <sup>&#8225;</sup>Serial applications display to tiles by copying
+  the scene graph to all the tile nodes and broadcasting graph
+  &#8220;events.</p>
+
+  <p><br></p>
+
+  <h2><a name="mozTocId140098" class="mozTocH2" id="mozTocId140098"></a>Advantages to using Chromium<br>
+</h2>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">There are a number of
+  areas where Chromium&#8217;s features represent a major
+  improvement over competitive products. In some cases, Chromium
+  offers unique features found in no other product. Perhaps most
+  important is that Chromium offers all these benefits in a single
+  package easily adoptable by applications developers.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h3><a name="mozTocId87481" class="mozTocH2" id="mozTocId87481"></a> Flexible Application Integration</h3>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Chromium essentially replaces a system&#8217;s OpenGL, allowing
+  applications to use Chromium without any modification.
+  Chromium&#8217;s application-transparent operation mode allows an
+  application to run directly on a desktop workstation without
+  Chromium, while the same unmodified application runs more
+  efficiently on a Chromium-enabled workstation or at scale on a
+  cluster. This application-transparent mode is a particularly
+  important feature because it allows even commercial applications,
+  for which source code modifications are not practical, to be used
+  with the system. Chromium expands on this capability by allowing
+  applications to send hints and commands to the rendering system
+  that allow the rendering stream to be dynamically optimized by
+  Chromium. This Chromium-aware application mode is provided
+  through the standard OpenGL extension mechanism, allowing an
+  application to choose its optimal mode of operation when it is
+  launched.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h3><a name="mozTocId965014" class="mozTocH2" id="mozTocId965014"></a> Parallel OpenGL API</h3>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Chromium is the only system that provides a true parallel OpenGL
+  programming interface. This API allows an application to
+  specifically insert parallel rendering control primitives into
+  the rendering stream. This extended OpenGL interface is uniquely
+  designed not to require any global network communication, and
+  allows for a whole new class of parallel graphics applications to
+  be written that combine parallel computation together with
+  parallel rendering.</p><br>
+
+  <h3><a name="mozTocId469804" class="mozTocH2" id="mozTocId469804"></a> Flexible parallel application model
+  support</h3><br>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Application models for parallelism have been notoriously
+  difficult to standardize on, particularly in the visualization
+  space, because there are so many models of parallelism to choose
+  among: processes, message passing interface (MPI), threads,
+  sockets, etc. Many systems require an application to adopt a
+  specific parallel model either explicitly (e.g., the shared
+  memory threads model) or implicitly (e.g., a library that
+  wrappers remote application execution entirely like Cavelib).
+  Chromium places no such restrictions on applications. The
+  application developer is free to choose the parallel model that
+  is most appropriate for the application and its target platforms.
+  This is particularly advantageous when porting existing parallel
+  applications to graphics clusters, as there is no need to rewrite
+  the core communication model.</p><br>
+
+  <h3><a name="mozTocId870305" class="mozTocH2" id="mozTocId870305"></a> Stream transforms via Stream Processing
+  Units (SPUs)</h3>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+  Chromium is the only system based on a stream-processing model.
+  The implementation of this model, as the OpenGL API, is a novel
+  mechanism, allowing for the rendering platform itself to modify
+  an application&#8217;s rendering style. Perhaps more importantly,
+  it allows for innovative rendering systems (such as graphic
+  compositing hardware, network display devices, etc.) to be
+  seamlessly and dynamically integrated with applications without
+  their knowledge or modification. This results in more portable
+  applications and greater acceptance of unique rendering systems
+  and devices.</p><br>
+
+  <h3><a name="mozTocId479067" class="mozTocH2" id="mozTocId479067"></a> Flexible rendering pipelines</h3>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  One unique feature of Chromium is its ability to support nearly
+  any rendering pipeline topology. The basis of Chromium on a
+  graphics streaming model, which explicitly integrates geometry
+  and imagery (the OpenGL API), allows Chromium to realize not only
+  the fundamental sort-first (distributing geometry to the right
+  renderer/displays) and sort-last (distributing rendered images to
+  the right displays) configurations, but also many other
+  configurations. Examples include a render-and-forward scheme,
+  where each node taps the graphics stream, or a &#8220;tee&#8221;
+  rendering system where the stream is sent to two different
+  locations (perhaps in different forms) for collaborative viewing.
+  Chromium can change among these different models without the
+  application&#8217;s knowledge. In fact, the same application code
+  can be used for both sort-first and sort-last rendering, a truly
+  innovative feature of Chromium.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h2><a name="mozTocId340822" class="mozTocH2" id="mozTocId340822"></a>Principal applications of Chromium</h2>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The principal
+  application of Chromium is to provide a portable, scalable,
+  parallel-graphics API for use with graphics-enabled distributed
+  memory clusters. As a result, it encourages the development of
+  unique applications that are only possible due to the scale of
+  computational and graphics computing power available in such
+  clusters or that exploit extremely large-scale collaborative
+  displays.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">A key aspect of
+  Chromium in this mode is that it provides scalability to
+  applications using it. Chromium supports scaling along multiple
+  axes: dataset size (up to 23-Terabyte datasets and
+  500-million-triangle surfaces have been rendered under Chromium),
+  number of rendering nodes, and number of output displays (over
+  60-million-pixel displays have been demonstrated). It provides
+  this all from the same API, and in fact can scale applications
+  along all three axes using the same rendering structure in a
+  single application.</p>
+
+  <h2><a name="mozTocId935466" class="mozTocH2" id="mozTocId935466"></a>Other applications for which Chromium can be
+  used</h2>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The design of the
+  Chromium system has allowed it to be applied to a number of other
+  unique applications. Some examples are included in the paper
+  references (see Appendix B) and several of them are outlined
+  here.</p><br>
+
+  <h3><a name="mozTocId258245" class="mozTocH2" id="mozTocId258245"></a>Remote rendering</h3>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  There are many examples where applications must run remote from a
+  physical display device. Chromium&#8217;s network graphics model
+  maps easily to this situation. It allows large applications to
+  run remotely on clusters, exploiting the graphics-rendering
+  capacity of those systems, but routing the resulting imagery to a
+  simpler, remote display device. Chromium has been used in this
+  mode to provide rendering services for PDA devices. It could also
+  be used to remotely generate dynamic imagery for applications
+  such as web services. For example, a web service could use
+  Chromium to generate dynamic 3D imagery for real-estate
+  walkthroughs or automotive option reviews. Taken to its extreme,
+  it is possible for Chromium to provide this imagery
+  simultaneously to multiple clients, enabling collaborative
+  web-based data-exploration tools.</p><br>
+
+  <h3><a name="mozTocId182710" class="mozTocH2" id="mozTocId182710"></a>Alternative rendering styles</h3>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Chromium makes it possible to extend and enhance OpenGL. Because
+  the graphics pipeline in Chromium is entirely programmable, it is
+  possible to create a plug-in module to provide a custom rendering
+  style, without having to modify an application. By simply
+  replacing some rendering calls with others in the pipeline, it is
+  possible to simulate other stylistic looks. An example is the
+  &#8221;hidden-line&#8221; SPU included in the Chromium
+  distribution, which allows a display generated by an unmodified
+  application to be rendered with a blueprint look.</p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_7b0aab3a.png" name="Graphic9" align="bottom" width="240" height="188" border="0" id="Graphic9"> <img src="LLNLcopy_html_4fc0a516.png" name="Graphic10" align="bottom" width="240" height="189" border="0" id="Graphic10"></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-top: 0.08in; page-break-before: auto; page-break-after: auto;">
+  <b>The Chromium hidden line SPU. The original application<br>
+  display is on the left and the same application, unmodified,<br>
+  rendered through the hidden line SPU on the right.</b></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Another example of Chromium&#8217;s ability to extend OpenGL is
+  the &#8220;Archsplit&#8221; SPU, which dynamically analyzes the
+  graphics primitive stream and breaks up the scene into floors,
+  providing an architectural-walkthrough rendering style. Again,
+  Chromium can provide this capability to any application without
+  the need for modification using its ability to insert custom
+  transformations into the graphics-rendering stream.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in;"><br></p>
+
+  <p lang="en-US" class="western" align="center" style="margin-bottom: 0in; page-break-after: avoid;"><img src="LLNLcopy_html_m7ff3ab8b.png" name="Graphic11" align="bottom" width="551" height="276" border="0" id="Graphic11"></p>
+
+  <p lang="en-US" class="western" align="center"><b>Archsplit
+  display of a Quake level as an architectural walkthrough. The
+  original display is on the left and the Chromium exploded levels
+  are displayed on the right.</b></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h3><a name="mozTocId403481" class="mozTocH2" id="mozTocId403481"></a>Adaptive/novel graphics API exploration</h3>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  The Chromium stream filtering mechanism can also be used to
+  explore other forms of graphics manipulation. For example,
+  Chromium has been proposed as a mechanism for the automatic
+  generation of geometric level of detail. This would make it
+  possible for the graphics API to dynamically adapt to application
+  demands and delivered graphics card performance. In general, this
+  mechanism can be used to prototype and test extensions to the
+  OpenGL API itself to explore novel concepts in both parallel
+  graphics system design and non-parallel desktop applications.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <h3><a name="mozTocId894736" class="mozTocH2" id="mozTocId894736"></a>Application debugging/performance
+  tuning</h3>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Chromium has even been used to help debug and profile application
+  performance. The stream representation in Chromium can be
+  directly written to disk in a human-readable format. This makes
+  it possible for a developer to save the set of rendering commands
+  and analyze them externally. In fact, at least one major
+  application was found to run faster under Chromium than without
+  when running on a single desktop workstation. After analysis of
+  the captured stream data it was found that the application made a
+  large number of redundant OpenGL calls which the Chromium
+  state-tracker suppressed, yielding the performance gain. This
+  information made it possible to then patch the application to
+  address these findings. Chromium also provides a SPU that
+  collects various network and primitive statistics. Again, this
+  information is not normally available to application developers
+  and it can be used to address various performance tuning issues.
+  In one case, the analysis resulted in the development of a custom
+  application acceleration SPU that identified specific patterns in
+  an application&#8217;s graphics calls and replaced them with
+  simpler, more rapidly executing calls.</p><br>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  These are samples of the types of additional applications to
+  which Chromium has been applied. As developers, we have been
+  continually surprised with the innovative new applications for
+  which other people have adapted and extended Chromium.</p>
+
+  <h2><a name="mozTocId476606" class="mozTocH2" id="mozTocId476606"></a>&nbsp;Summary</h2><br>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Chromium is a unique
+  technology package that addresses a number of pressing issues in
+  the graphics and visualization communities. It comes at a
+  critical point in time in the evolution of scalable graphics and
+  display systems, namely the transition to distributed clusters of
+  commodity (PC-based) graphics systems. This transition represents
+  a major shift in the visualization and graphics application
+  programming environments. By reducing the barriers to
+  applications development on these platforms, Chromium enables a
+  whole new class of graphics applications with access to nearly
+  unlimited graphics processing capacity. This capacity comes at a
+  point when datasets, both measured and computational, are
+  increasing in size extremely rapidly, pushing the limits of
+  graphics systems scalability to the extreme. Chromium provides a
+  common, portable environment for application development that has
+  demonstrated acceptance by developers and system vendors . This
+  stems both from basing Chromium on known standards (OpenGL) and
+  its provision of utilities to help ease the porting of
+  applications to the cluster environment (the Chromium utility
+  library, CRUT), as well as from its open-source, cross-platform
+  availability. Chromium is simply more technologically advanced
+  and readily adoptable by application developers than other
+  solutions.</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Beyond its primary
+  importance as a tool for the simple and transparent aggregation
+  of graphics and display resources, Chromium&#8217;s basic
+  architecture has demonstrated the ability to be used in unique
+  and novel applications; for example, playing a critical role in
+  the development of remote, scalable image generation. The
+  potential list of application spaces for which Chromium can and
+  has been applied is impressive and vast.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Based on feedback provided by numerous system suppliers and
+  application developers, we believe the Chromium infrastructure
+  has significantly advanced the commercial adoption, acceptance,
+  and ultimately exploitation of an entirely new class of scalable
+  systems architecture: the distributed, graphics
+  super-cluster.<br></p>
+  <hr width="100%">
+
+  <h2><a name="Reading_List" id="Reading_List"></a>Reading
+  List</h2><br>
+  <br>
+
+  <h3>Chromium Core</h3>
+
+  <ul>
+    <li>Humphreys G, Houston M, Ng R, Frank R, Ahern S, Kirchner
+    PD, Klosowski JT.&nbsp; <a href="http://graphics.stanford.edu/papers/cr/">
+    Chromium: A Stream Processing Framework for Interactive
+    Rendering on Clusters.</a> In Proceedings of SIGGRAPH 2002, pp.
+    693&#8211;702, 2002.</li>
+  </ul>
+  <hr width="100%">
+  <br>
+
+  <h3>Chromium technologies<br></h3><br>
+
+  <ul>
+    <li>Buck I,&nbsp; Humphreys G, Hanrahan P. <a href="http://graphics.stanford.edu/papers/state_tracking/state_tracking.pdf">
+    Tracking graphics state for networked rendering.</a>
+    Proceedings of SIGGRAPH/Eurographics Workshop on Graphics
+    Hardware, pages 87&#8211;95, 2000.</li>
+
+    <li>Humphreys G, Buck I, Eldridge M, Hanrahan P. <a href="http://graphics.stanford.edu/papers/clust_render/clust_render.pdf">
+    Distributed rendering for scalable displays</a>. IEEE
+    Supercomputing 2000, 2000.</li>
+
+    <li>Humphreys G, Eldridge M, Buck I, Stoll G, Everett M,
+    Hanrahan P. <a href="http://graphics.stanford.edu/papers/wiregl/">
+    WireGL: A scalable graphics system for clusters.</a>
+    Proceedings of SIGGRAPH 2001, pages 129&#8211;140, 2001.</li>
+
+    <li>Igehy H, Stoll G, Hanrahan P. <a href="http://graphics.stanford.edu/papers/parallel_api/">
+    The design of a parallel graphics interface</a>. Proceedings of
+    SIGGRAPH 1998, pages 141&#8211;150, 1998.</li>
+  </ul>
+  <hr width="100%">
+  <br>
+
+  <h3>Presentations</h3>
+
+  <ul>
+    <li>
+    Practical Systems for Scalable Rendering on Clusters, Greg
+    Humphreys</li>
+
+    <li>
+    Production Cluster Visualization: Experiences and
+    Challenges, Randall Frank</li>
+
+    <li>
+    Chromium: A Stream Processing Framework for Interactive
+    Rendering on Clusters, Greg Humphreys</li>
+
+    <li><a href="http://graphics.stanford.edu/%7Emhouston/VisWorkshop03/Dale.html">
+    Event Distribution and Image Delivery for Cluster-based Remote
+    Visualization</a>, Dale Beerman</li>
+
+    <li>
+    Chromium: An Open-source Cluster Rendering System, Greg
+    Humphreys</li>
+
+    <li>
+    Chromium status, Mike Houston (and the Chromium
+    community)</li>
+
+    <li><a href="http://chromium.sourceforge.net/presentations/SantaFe-BrianPaul/">
+    What's New in Chromium?</a> - Brian Paul's slides from the
+    Chromium User Group meeting on April 28, 2004 in Santa Fe,
+    NM.</li>
+  </ul>
+
+  <h2><br></h2>
+  <hr width="100%">
+  <br>
+
+  <h3>Video Clips</h3><a name="Videos" id="Videos"></a>Several
+  video clips documenting Chromium and various applictions (MPEG
+  format).&nbsp; Movie folder<br>
+
+  <ul>
+    <li>Example
+    of a Chromium driven PowerWall (tiled) display (larger
+    version)</li>
+
+    <li>Dynamic
+    display reconfiguration</li>
+
+    <li>Chromium
+    interface to IBM SGE and T221</li>
+
+    <li>
+    Chromium parallel rendering and remote image delivery
+    
+    (larger version)</li>
+
+    <li><a href="http://www.cs.virginia.edu/%7Egfx/pubs/archsplit/archsplit.mov">Archsplit
+    application demonstration</a></li>
+
+    <li>
+    Catia running on Chromium</li>
+
+    <li>
+    SGI Performer runnng under Chromium</li>
+
+    <li>Chromium
+    flight simulator</li>
+  </ul>
+  <hr width="100%">
+
+  <h3><a name="Applications" class="mozTocH2" id="Applications"></a> Applications:</h3>
+
+  <ul>
+    <li>Lamberti F, Zunino C, Sanna A, Flume A, Maniezzo M.
+    <a href="http://sanna.polito.it/Versioni_Postscript/WEB3D_2003.pdf">
+    <u><font color="#0000ff">An accelerated remote graphics
+    architecture for PDAs</font></u>.</a> <i>Proceeding of the
+    eighth international conference on 3D web technology</i>, pp
+    55- , 2003.</li>
+
+    <li>Brown MS, Seales WB. <a href="http://www.cs.ust.hk/%7Ebrown/tr/tr-01-02.pdf"><u><font color="#0000ff">Low-Cost and Easily Constructed Large Format Display
+    System</font></u>.</a> <i>University of Kentucky Tech
+    Report,</i> HKUST TR-CS-01-02.</li>
+
+    <li>Bethel EW, Humphreys G, Paul B, Brederson JD. <a href="http://www.cs.virginia.edu/%7Egfx/pubs/CRopenRM/"><u><font color="#0000ff">
+    Sort-First Distributed Memory Parallel Visualization and
+    Rendering</font></u>.</a> <i>Proceedings of</i> <i>IEEE
+    Symposium on Parallel and Large-Data Visualization and Graphics
+    2003,</i> pp. 41-50, 2003.</li>
+
+    <li>Bethel EW, <a href="http://www.r3vis.com/Downloads/OpenRM-Chromium-WhitePaper-July2003.pdf">
+    <u><font color="#0000ff">White Paper: Sort-First Distributed
+    Memory Parallel Visualization and Rendering with OpenRM Scene
+    Graph and Chromium</font></u>,</a> July 2003.</li>
+
+    <li>Niederauer C, Houston M, Agrawala M, Humphreys G. <a href="http://graphics.stanford.edu/papers/archsplit/archsplit_lowq.pdf">
+    <u><font color="#0000ff">Non-Invasive Interactive Visualization
+    of Dynamic Architectural Environments</font></u>.</a>
+    <i>Proceedings of ACM Symposium on Interactive 3D Graphics
+    2003</i>, 2003.</li>
+
+    <li>Reitmayr G, Billinghurst M, Schmalstieg D. <a href="http://www.ims.tuwien.ac.at/media/documents/publications/wirear2003.pdf">
+    <u><font color="#0000ff">WireAR - Legacy Applications in
+    Augmented Reality</font></u></a>, <i>Demonstration at the 2nd
+    IEEE/ACM Symposium on Mixed and Augmented Reality (ISMAR
+    2003)</i>, Tokyo, Japan, October 2003.</li>
+
+    <li>Duca N, Kirchner PD, Klosowski JT, <a href="http://duca.acm.jhu.edu/papers/Caching-1.pdf"><u><font color="#0000ff">Stream Caching: Optimizing Data Flow within Commodity
+    Visualization Clusters</font></u></a>.</li>
+
+    <li>Tomov S, Bennett R, McGuigan M, Peskin A, Smith G, Spiletic
+    J. <a href="http://www.ccd.bnl.gov/%7Etomov/InventorArticleCG.pdf"><u><font color="#0000ff">
+    Application of Interactive Parallel Visualization for
+    Commodity-based Clusters Using Visualization
+    APIs&nbsp;</font></u></a>, Computers &amp; Graphics, vol. 28/2,
+    12 (2003).</li>
+
+    <li>Thibault S, Cavin X, Festor O, Fleury E. <a href="http://www.cs.utah.edu/%7Exavier/Papers/ccviz02_utpcbodv.pdf"><u>
+    <font color="#0000ff">Unreliable Transport Protocol for
+    Commodity-Based OpenGL Distributed
+    Visualization</font></u></a>, Workshop on Commodity-Based
+    Visualization Clusters, IEEE Visualization 2002<br></li>
+
+    <li><a href="http://brighton.ncsa.uiuc.edu/%7Eprajlich/wall/tsb.html">NCSA
+    TerraServer Blaster</a></li>
+  </ul>
+  <hr width="100%">
+  <br>
+
+  <h3><a name="mozTocId735310" class="mozTocH2" id="mozTocId735310"></a> Miscellaneous articles and press
+  releases:</h3>
+
+  <ul>
+    <li>Hayhurst, S. <a href="http://www.linuxworld.com/story/39214.htm?DE=1"><u><font color="#0000ff">
+    Open Source 3D Tools</font></u>.</a> <i>LinuxWorld</i>, vol. 2
+    (2), pp 40&#8211;46, Feb, 2004.</li>
+
+    <li>SGI Chromium Support Press Release: <a href="http://www.sgi.com/newsroom/press_releases/2004/january/initiative.html">
+    <u><font color="#0000ff">SGI Launches Initiative to
+    Dramatically Improve Linux Visualization
+    Capabilities</font></u></a>, Jan 20, 2004.<br></li>
+  </ul>
+  <hr width="100%">
+
+  <h3><a name="mozTocId947431" class="mozTocH2" id="mozTocId947431"></a><font size="4">Chromium On The
+  Web</font></h3>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">The Chromium project
+  has spawned a large number of projects at various companies and
+  universities. A number of these projects are listed here to give
+  a flavor of the spectrum of applications for which Chromium
+  technology has been applied.</p>
+
+  <ul>
+    <li><a href="http://chromium.sourceforge.net/">Chromium home
+    page</a><a href="http://chromium.sourceforge.net/"></a></li>
+
+    <li><a href="http://chromium.sourceforge.net/doc/index.html">Chromium
+    documentation pages</a><br></li>
+
+    <li><a href="http://www.research.ibm.com/deepview/index.html">The IBM Deep
+    View Visualization project</a><a href="http://www.research.ibm.com/deepview/index.html"></a></li>
+
+    <li><a href="http://opendx.watson.ibm.com/cr/dv/index.htm">Deep
+    View Presentation</a><a href="http://opendx.watson.ibm.com/cr/dv/index.htm"></a></li>
+
+    <li><a href="http://www.r3vis.com/RM/Chromium/">Chromium
+    integration with OpenRM Scene Graph</a><a href="http://www.r3vis.com/RM/Chromium/"></a></li>
+
+    <li><a href="http://scv.bu.edu/Wall/">The Boston University
+    Deep Vision Display Wall</a><a href="http://scv.bu.edu/Wall/"></a></li>
+
+    <li><a href="http://www.ncsa.uiuc.edu/Projects/AllProjects/Projects83.html">
+    The NCSA Display Wall-In-A-Box (DWiB) Software which includes
+    Chromium</a><br></li>
+
+    <li><a href="http://dmn.netlab.uky.edu/%7Ejesus/calibration.html">The
+    University of Kentucky powerwall auto-calibration
+    software</a></li>
+
+    <li><a href="http://www.cs.indiana.edu/%7Ecmoad/work/chromium/">Indiana
+    University Cluster Rendering, Chromium overview</a><a href="http://www.cs.indiana.edu/%7Ecmoad/work/chromium/"></a></li>
+
+    <li><a href="http://www.trnmag.com/Stories/2003/081303/Viewer_explodes_virtual_buildings_081303.html">
+    TRN Magazine coverage of the Chromium &#8220;Archsplit&#8221;
+    automated architectural visualization application</a><a href="http://www.trnmag.com/Stories/2003/081303/Viewer_explodes_virtual_buildings_081303.html">
+    </a></li>
+
+    <li><a href="http://www.visbox.com/">VisBox: a turn-key
+    projection-based VR system with head tracking and stereo built
+    around Chromium</a><a href="http://www.visbox.com/"></a></li>
+
+    <li><a href="http://gears.aset.psu.edu/viz/facilities/displaywall/">Remote
+    rendering of the OpenInventor scene graph using Chromium</a> 
+    <!--<li><a href="http://opendx.watson.ibm.com/cr/dv/index.htm">
+IBM's Deep View Visualization Cluster using Chromium</a>
+--></li>
+
+    <li><a href="http://www.cs.indiana.edu/%7Ecmoad/work/chromium/">Cluster
+    rendering at Indiana University</a> and <a href="http://www.avl.iu.edu/technology/cluster_display/">Cluster
+    hardware</a></li>
+
+    <li><a href="http://www.ncsa.uiuc.edu/Projects/AllProjects/Projects83.html">
+    Display Wall-in-a-Box</a> at NCSA</li>
+
+    <li><a href="http://www.llnl.gov/icc/sdd/img/infrastructures.shtml">ASCI
+    VIEWS - Scalable Rendering</a></li>
+
+    <li><a href="http://www.r3vis.com/RM/Chromium/index.html">R3vis
+    Corporation's OpenRM Scene Graph and Chromium: Parallel
+    Sort-First Rendering</a></li>
+
+    <li><a href="http://www.cs.princeton.edu/%7Erudro/cluster-rendering/">Cluster
+    Rendering at Princeton University</a></li>
+  </ul>
+  <hr width="100%">
+  <br>
+
+  <h3>Commercial Sites</h3><br>
+
+  <ul>
+    <li><a href="http://www.tungstengraphics.com/">Tungsten
+    Graphics, Inc.</a> - Offers custom Chromium development
+    services.</li>
+
+    <li><a href="http://www.graphstream.com/">GraphStream,
+    Inc.,</a> - Offers high-performance computing solutions,
+    including Chromium.</li>
+
+    <li><a href="http://www.visbox.com/">Visbox, Inc.</a> - Offers
+    the <a href="http://www.visbox.com/wallMain.html">VisWall(tm)</a><a>high
+    resolution display wall which uses Chromium.</a></li>
+  </ul><br>
+  <hr width="100%">
+
+  <h3>Cluster Rendering Hardware</h3>
+
+  <ul>
+    <li><a href="http://graphics.stanford.edu/%7Emhouston/Research.htm">Information/experiences
+    with Stanford's graphics cluster</a></li>
+  </ul>
+
+  <h2><br></h2><br>
+  <hr width="100%">
+
+  <h2><a name="mozTocId199576" class="mozTocH2" id="mozTocId199576"></a><font size="4">Acknowledgement<b>s</b></font></h2>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">The
+  Chromium project is the result of the contributions of a large
+  number of people and organizations. We would like to recognize
+  them for their help and efforts, without which Chromium would not
+  have been as successful as it has been.</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  Organizations:</p>
+
+  <p lang="en-US" class="western" style="text-indent: 0.5in; margin-bottom: 0in;">Los Alamos National
+  Laboratory<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  Sandia National Laboratory<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  United States Department of Energy, ASCI VIEWS program</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;"><br>
+  </p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  Individuals:</p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dale Beerman<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Wes Bethel<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ian Buck<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Nat Duca<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Matthew Eldridge<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Pat Hanrahan<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Peter Kirchner<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; James Klosowski<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Chris Niederauer<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Terri Quinn<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Samuel Thibault<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; David Thompson<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Joel Welling<br></p>
+
+  <p lang="en-US" class="western" style="margin-bottom: 0in;">And
+  many others, too numerous to list here&#8230;</p>
+
+  <p lang="en-US" class="western"><br>
+  <br></p>
+
+  <div type="FOOTER">
+    <p lang="en-US" class="western" align="center" style="margin-top: 0.3in; margin-bottom: 0in;"><font size="2">This
+    work was performed under the auspices of the U.S. Department of
+    Energy by University of California, Lawrence Livermore National
+    Laboratory under Contract W-7405-Eng-48.
+    UCRL-MI-202411</font></p>
+  </div>
+</body></html>

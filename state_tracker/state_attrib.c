@@ -11,6 +11,17 @@
 #include "cr_error.h"
 #include "cr_mem.h"
 
+/**
+ * \mainpage state_tracker 
+ *
+ * \section StateTrackerIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The state_tracker module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
+ *
+ */
 void crStateAttribInit (CRAttribState *a) 
 {
 	int i;

@@ -30,7 +30,7 @@ do {						\
    }						\
 } while(0)
 
-/*
+/**
  * eval.c was written by
  * Bernd Barsuhn (bdbarsuh@cip.informatik.uni-erlangen.de) and
  * Volker Weiss (vrweiss@cip.informatik.uni-erlangen.de).
@@ -42,7 +42,7 @@ do {						\
  * Thanks guys!
  */
 
-/*
+/**
  * Horner scheme for Bezier curves
  *
  * Bezier curves can be computed via a Horner scheme.
@@ -97,7 +97,7 @@ _math_horner_bezier_curve(const GLfloat * cp, GLfloat * out, GLfloat t,
    }
 }
 
-/*
+/**
  * Tensor product Bezier surfaces
  *
  * Again the Horner scheme is used to compute a point on a
@@ -174,7 +174,7 @@ _math_horner_bezier_surf(GLfloat * cn, GLfloat * out, GLfloat u, GLfloat v,
    }
 }
 
-/*
+/**
  * The direct de Casteljau algorithm is used when a point on the
  * surface and the tangent directions spanning the tangent plane
  * should be computed (this is needed to compute normals to the
@@ -442,7 +442,7 @@ _math_de_casteljau_surf(GLfloat * cn, GLfloat * out, GLfloat * du,
 #undef CN
 }
 
-/*
+/**
  * Do one-time initialization for evaluators.
  */
 void

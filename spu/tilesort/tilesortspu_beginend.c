@@ -50,7 +50,7 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 	{
 		unsigned int i;
 
-		/* XXX vertex attribs */
+		/* XXX \todo vertex attribs */
 
 		for (i = 0 ; i < limits->maxTextureUnits; i++)
 		{

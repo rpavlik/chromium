@@ -92,76 +92,6 @@ of the SPU's are intended to be used directly in a configuration graph, and othe
 useful as starting points for new SPU's, or SPU's to <a href="newspu.html">inherit
 from</a>.</p>
 <ul>
-  <li><p class="ProvidedThing">The &quot;error&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU will issue a fatal error on any OpenGL
-    call.&nbsp; The error message will contain the name of the function
-    called.&nbsp; This SPU is useful for handling &quot;impossible&quot;
-    function calls.&nbsp; If the reader is already familiar with <a href="newspu.html">SPU
-    inheritance</a>, all SPU's are implicitly a subSPU of the &quot;error&quot;
-    SPU.</p></li>
-  <li><p class="ProvidedThing">The &quot;feedback&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU will catch all related Feedback &
-    Selection OpenGL calls. This allows the abstraction of this layer
-    away from other SPU's. If you need support for Feedback & Selection
-    then insert this SPU into the chain.</p></li>
-  <li><p class="ProvidedThing">The &quot;perf&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU will monitor OpenGL traffic and 
-    display 'interesting' results on what needs to be monitored. See
-    the <a href="performance.html">perfSPU</a> document for more details
-    in it's configuration.</p></li>
-  <li><p class="ProvidedThing">The &quot;nop&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU will silently discard all OpenGL calls.&nbsp;
-    This SPU is most useful for understanding the performance of applications
-    and cluster configurations.&nbsp; By replacing the &quot;render&quot; SPU
-    with the &quot;nop&quot; SPU, time spent actually executing OpenGL commands
-    can be eliminated.&nbsp; Similarly, the &quot;nop&quot; SPU can be used on
-    the client to make all OpenGL calls &quot;free&quot;.&nbsp; This helps
-    establish a baseline for performance.</p></li>
-  <li><p class="ProvidedThing">The &quot;passthrough&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU will pass all calls to the next SPU in a
-    chain.&nbsp; Note that it can therefore never appear as the last SPU in a
-    chain (this is a checked, fatal error).&nbsp; This SPU is not useful by
-    itself, but it is a very useful SPU to inherit from in order to implement a
-    subset of the OpenGL API.&nbsp; An example of such a SPU is shown in the
-    &quot;<a href="newspu.html">Writing a new SPU</a>&quot; section.</p></li>
-  <li><p class="ProvidedThing">The &quot;print&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU was mentioned in the &quot;<a href="configscripts.html">Configuration
-    scripts</a>&quot; section.&nbsp; It produces a human-readable dump of all
-    OpenGL calls, either to standard output (default), or to a file.&nbsp; This
-    is an invaluable tool for debugging, although it does have a fairly serious
-    impact on performance.&nbsp; Some attempt is also made to turn <code>GLenum</code>
-    types back into human-readable strings (thanks to <a href="http://graphics.stanford.edu/~kekoa" target="new_window">Kekoa
-    Proudfoot</a> for this code).</p></li>
-  <li><p class="ProvidedThing">The &quot;template&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU actually implements no functions (it is
-    therefore exactly equivalent to the &quot;error&quot; SPU, due to the
-    implicit inheritance).&nbsp; However, a script is provided to rename all
-    files and update the source code to create a new SPU of a given name.&nbsp;
-    Therefore, when creating a new SPU, a copy should be made of the <code>cr/spu/template</code>
-    directory, and this script should be run.&nbsp; This is the approach used in
-    the &quot;<a href="newspu.html">Writing a new SPU</a>&quot; section.</p></li>
-  <li><p class="ProvidedThing">The &quot;tilesort&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU uses the techniques described in our <a href="http://graphics.stanford.edu/papers/clust_render/" target="new_window">SuperComputing
-    2000 paper</a> to drive a tiled display efficiently from a single serial
-    stream of OpenGL commands.&nbsp; One-third of the logic of WireGL can be
-    found in this library (the other thirds being in the server, and the state
-    tracker, listed below).</p></li>
-  <li><p class="ProvidedThing">The &quot;readback&quot; SPU</p>
-  <p class="ProvidedDesc"> The readback SPU is derived from the render SPU.
-    As such it accepts a stream of OpenGL commands and renders them into
-    its window.  When SwapBuffers is called, however, the color buffer image
-    is sent to the child SPU via glDrawPixels.  Optionally, the depth (Z)
-    buffer image is also sent to the child SPU.  By sending the color and
-    depth images from several readback SPUs to one render SPU, one can
-    implement a sort-last (Z-compositing) architecture.
-    </p></li>
-  <li><p class="ProvidedThing">The &quot;saveframe&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU saves the current frame to a JPEG or PPM
-    file.  Just like the print SPU, this SPU can be very useful for
-    debugging streams.  It uses its downstream child to do a ReadPixels,
-    so this SPU can never be the last one in the chain.  (It also might
-    require a render SPU in the same node, though this hasn't been tested.)
-    </p></li>
   <li><p class="ProvidedThing">The &quot;dist_texture&quot; SPU</p>
   <p class="ProvidedDesc"> The distributed texture SPU allows you to
     have texture images saved to disk on nodes running crserver processes.
@@ -192,9 +122,79 @@ from</a>.</p>
     don't bug him about this version; all the bugs are due to
     <a href="dcthomp@sandia.gov">David Thompson</a>.
     </p></li>
+  <li><p class="ProvidedThing">The &quot;error&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will issue a fatal error on any OpenGL
+    call.&nbsp; The error message will contain the name of the function
+    called.&nbsp; This SPU is useful for handling &quot;impossible&quot;
+    function calls.&nbsp; If the reader is already familiar with <a href="newspu.html">SPU
+    inheritance</a>, all SPU's are implicitly a subSPU of the &quot;error&quot;
+    SPU.</p></li>
+  <li><p class="ProvidedThing">The &quot;feedback&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will catch all related Feedback &
+    Selection OpenGL calls. This allows the abstraction of this layer
+    away from other SPU's. If you need support for Feedback & Selection
+    then insert this SPU into the chain.</p></li>
   <li><p class="ProvidedThing">The &quot;motion blur&quot; SPU</p>
   <p class="ProvidedDesc"> The motion blur SPU uses the OpenGL accumulation
     buffer to simulate motion blur in a dynamic (animated) scene.</p></li>
+  <li><p class="ProvidedThing">The &quot;nop&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will silently discard all OpenGL calls.&nbsp;
+    This SPU is most useful for understanding the performance of applications
+    and cluster configurations.&nbsp; By replacing the &quot;render&quot; SPU
+    with the &quot;nop&quot; SPU, time spent actually executing OpenGL commands
+    can be eliminated.&nbsp; Similarly, the &quot;nop&quot; SPU can be used on
+    the client to make all OpenGL calls &quot;free&quot;.&nbsp; This helps
+    establish a baseline for performance.</p></li>
+  <li><p class="ProvidedThing">The &quot;passthrough&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will pass all calls to the next SPU in a
+    chain.&nbsp; Note that it can therefore never appear as the last SPU in a
+    chain (this is a checked, fatal error).&nbsp; This SPU is not useful by
+    itself, but it is a very useful SPU to inherit from in order to implement a
+    subset of the OpenGL API.&nbsp; An example of such a SPU is shown in the
+    &quot;<a href="newspu.html">Writing a new SPU</a>&quot; section.</p></li>
+  <li><p class="ProvidedThing">The &quot;perf&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU will monitor OpenGL traffic and 
+    display 'interesting' results on what needs to be monitored. See
+    the <a href="performance.html">perfSPU</a> document for more details
+    in it's configuration.</p></li>
+  <li><p class="ProvidedThing">The &quot;print&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU was mentioned in the &quot;<a href="configscripts.html">Configuration
+    scripts</a>&quot; section.&nbsp; It produces a human-readable dump of all
+    OpenGL calls, either to standard output (default), or to a file.&nbsp; This
+    is an invaluable tool for debugging, although it does have a fairly serious
+    impact on performance.&nbsp; Some attempt is also made to turn <code>GLenum</code>
+    types back into human-readable strings (thanks to <a href="http://graphics.stanford.edu/~kekoa" target="new_window">Kekoa
+    Proudfoot</a> for this code).</p></li>
+  <li><p class="ProvidedThing">The &quot;readback&quot; SPU</p>
+  <p class="ProvidedDesc"> The readback SPU is derived from the render SPU.
+    As such it accepts a stream of OpenGL commands and renders them into
+    its window.  When SwapBuffers is called, however, the color buffer image
+    is sent to the child SPU via glDrawPixels.  Optionally, the depth (Z)
+    buffer image is also sent to the child SPU.  By sending the color and
+    depth images from several readback SPUs to one render SPU, one can
+    implement a sort-last (Z-compositing) architecture.
+    </p></li>
+  <li><p class="ProvidedThing">The &quot;saveframe&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU saves the current frame to a JPEG or PPM
+    file.  Just like the print SPU, this SPU can be very useful for
+    debugging streams.  It uses its downstream child to do a ReadPixels,
+    so this SPU can never be the last one in the chain.  (It also might
+    require a render SPU in the same node, though this hasn't been tested.)
+    </p></li>
+  <li><p class="ProvidedThing">The &quot;template&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU actually implements no functions (it is
+    therefore exactly equivalent to the &quot;error&quot; SPU, due to the
+    implicit inheritance).&nbsp; However, a script is provided to rename all
+    files and update the source code to create a new SPU of a given name.&nbsp;
+    Therefore, when creating a new SPU, a copy should be made of the <code>cr/spu/template</code>
+    directory, and this script should be run.&nbsp; This is the approach used in
+    the &quot;<a href="newspu.html">Writing a new SPU</a>&quot; section.</p></li>
+  <li><p class="ProvidedThing">The &quot;tilesort&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU uses the techniques described in our <a href="http://graphics.stanford.edu/papers/clust_render/" target="new_window">SuperComputing
+    2000 paper</a> to drive a tiled display efficiently from a single serial
+    stream of OpenGL commands.&nbsp; One-third of the logic of WireGL can be
+    found in this library (the other thirds being in the server, and the state
+    tracker, listed below).</p></li>
   <li><p class="ProvidedThing">The &quot;wet&quot; SPU</p>
   <p class="ProvidedDesc"> The wet SPU warps and distorts the rendered
     image to simulate a watery surface.</p></li>

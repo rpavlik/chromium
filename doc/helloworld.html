@@ -1,173 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
 	 See the file LICENSE.txt for information on redistributing this software.  -->
-<html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<link rel="stylesheet" type="text/css" href="chromium.css">
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=windows-1252">
+  <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+  <meta name="ProgId" content="FrontPage.Editor.Document">
+  <title>New Page 1</title>
+  <link rel="stylesheet" type="text/css" href="chromium.css">
 </head>
-
-<body bgcolor="#FFFFFF">
-
+<body bgcolor="#ffffff">
 <h1 class="PageHeading">Your First Chromium Run</h1>
-<p>Your first Chromium run will be something quite simple.&nbsp; One of the
-programs built during the compile of the Chromium system is called &quot;<code>fonttest</code>&quot; -
-you can go ahead and run it now.&nbsp; If everything is OK, you should see a
-window appear with a text message in it.&nbsp; This window is using the system's
-OpenGL - nothing Chromium-related has happened yet.&nbsp; To run this program
-using Chromium, you will need to follow these four steps (you'll need three
+<p>Your first Chromium run will be something quite simple.&nbsp; One of
+the
+programs built during the compile of the Chromium system is called "<code>fonttest</code>"
+-
+you can go ahead and run it now.&nbsp; If everything is OK, you should
+see a
+window appear with a text message in it.&nbsp; This window is using the
+system's
+OpenGL - nothing Chromium-related has happened yet.&nbsp; To run this
+program
+using Chromium, you will need to follow these four steps (you'll need
+three
 shell windows open):</p>
 <ol>
   <li>Set up your search path.<br>
     <br>
-    The Chromium executable programs are located in
-    <code>cr/bin/<em>ARCH</em>/</code>.
-    On Linux, for example, it'll be <code>cr/bin/Linux/</code>.
-    If you're using Unix you should edit your <code>.cshrc</code> or
-    <code>.bash</code> or similar shell start-up file and add
-    <code>cr/bin/<em>ARCH</em>/</code> to the search path.<br>
+The Chromium executable programs are located in <code>cr/bin/<em>ARCH</em>/</code>.
+On Linux, for example, it'll be <code>cr/bin/Linux/</code>. If you're
+using Unix you should edit your <code>.cshrc</code> or <code>.bash</code>
+or similar shell start-up file and add <code>cr/bin/<em>ARCH</em>/</code>
+to the search path.<br>
     <br>
-    If you don't do this you'll have to provide the full path to the
-    crserver and crappfaker programs below.<br>
+If you don't do this you'll have to provide the full path to the
+crserver and crappfaker programs below.<br>
     <br>
-    
+  </li>
   <li>Start the mothership.<br>
     <br>
-    Components of any Chromium run will need to know what they are supposed to be
-    doing.&nbsp; They get this information from the <i>configuration mothership</i>.&nbsp;
-    The mothership is controlled by scripts written in the <a href="http://www.python.org" target="_blank">Python</a>
-    programming language.&nbsp; One such script is located in <code> cr/mothership/configs/crdemo.conf</code>.&nbsp;&nbsp;<br>
+Components of any Chromium run will need to know what they are supposed
+to be doing.&nbsp; They get this information from the <i>configuration
+mothership</i>.&nbsp; The mothership is controlled by scripts written
+in the <a href="http://www.python.org" target="_blank">Python</a>
+programming language.&nbsp; One such script is located in <code>
+cr/mothership/configs/crdemo.conf</code>.&nbsp;&nbsp;<br>
     <br>
-    Change to the <code> cr/mothership/configs</code> directory, and type:<br>
+Change to the <code> cr/mothership/configs</code> directory, and type:<br>
     <br>
     <code>python crdemo.conf fonttest</code><br>
     <br>
-    The mothership will now be running, and you should see a message to that
-    effect.<br><br>
+The mothership will now be running, and you should see a message to
+that effect.<br>
+    <br>
   </li>
   <li>Start a Chromium server.<br>
-    <br>In another window run<br>
+    <br>
+In another window run<br>
     <br>
     <code>crserver</code><br>
     <br>
-    That's all there is to it.&nbsp; The Chromium server will configure itself
-    by asking questions to the mothership that you ran in step 1.&nbsp;
-    The server will dispatch the incoming stream of commands to the first
-    SPU hosted by the server (the Render SPU in this case).
-    Note: previous versions of Chromium would open a window at this point.<br>
+That's all there is to it.&nbsp; The Chromium server will configure
+itself by asking questions to the mothership that you ran in step
+1.&nbsp; The server will dispatch the incoming stream of commands to
+the first SPU hosted by the server (the Render SPU in this case). Note:
+previous versions of Chromium would open a window at this point.<br>
     <br>
   </li>
   <li>Start the application.<br>
     <br>
-    In a third window, start the Chromium &quot;application
-    faker&quot;.&nbsp; This is a loader program that will start another
-    unmodified application and make sure that it finds the Chromium
-    OpenGL shared library instead of the system's.&nbsp; Run<br>
+In a third window, start the Chromium "application faker".&nbsp; This
+is a loader program that will start another unmodified application and
+make sure that it finds the Chromium OpenGL shared library instead of
+the system's.&nbsp; Run<br>
     <br>
     <code>crappfaker</code><br>
     <br>
-    Again, the faker (and the OpenGL DLL, and the SPU's loaded by the OpenGL
-    DLL) will all configure themselves by asking questions of the mothership
-    started in step 1.</li>
+Again, the faker (and the OpenGL DLL, and the SPU's loaded by the
+OpenGL DLL) will all configure themselves by asking questions of the
+mothership started in step 1.</li>
 </ol>
-
-<p>Once application starts you should see two windows appear: the Render SPU
+<p>Once application starts you should see two windows appear: the
+Render SPU
 window and the application window.
 The application window belongs to the <code>fonttest</code>
 program started by the application faker.&nbsp; As far as
 <code>fonttest</code> knows, it is rendering to that window.&nbsp;
-The Chromium OpenGL DLL intercepts all of <code>fonttest</code>'s calls to OpenGL and sends
-them over the network (in this case, a TCP/IP connection to your local machine)
-to the Chromium server, where they are dispatched to the system.</p> <p>The
+The Chromium OpenGL DLL intercepts all of <code>fonttest</code>'s
+calls to OpenGL and sends
+them over the network (in this case, a TCP/IP connection to your local
+machine)
+to the Chromium server, where they are dispatched to the system.</p>
+<p>The
 Chromium run you have just done corresponds to the following graph of
 nodes:</p>
-<p align="center"><img border="0" src="helloworld.gif" width="662" height="193"></p>
-
-
+<p align="center"><img border="0" src="helloworld.gif" width="662"
+ height="193"></p>
 <h1 class="PageHeading">Other Sample Configurations</h1>
-
 <p>
-The Chromium distribution includes many sample configurations to demonstrate
+The Chromium distribution includes many sample configurations to
+demonstrate
 the capabilities of Chromium.
 Here's a summary.
 The scripts are found in mothership/configs/.
 </p>
-
 <ul>
-<li><p><b>crdemo.conf</b> - this is the configuration described above.
+  <li>
+    <p><b>autodmx.conf</b> - a demonstration of Chromium and DMX in
+autostart mode.<br>
+    </p>
+  </li>
+  <li>
+    <p><b>blur.conf</b> - another example of OpenGL command filtering.
+This one demontrates the motion blur SPU.</p>
+  </li>
+  <li>
+    <p><b>cavetest[12].conf</b> - demonstrations of
+    <a href="nonplanar.html">non-planar tilesorting</a>.
+See the comments in each file for details.</p>
+  </li>
+  <li>
+    <p><b>crdemo.conf</b> - this is the configuration described above.
 One application node is connected (via a pack or tilesort SPU) to one
 crserver node which has a render SPU.</p>
-
-<li><p><b>local.conf</b> - this configuration demonstrates OpenGL command
+  </li>
+  <li>
+    <p><b>crut_*.conf</b> - demonstrations of <a href="crut.html">CRUT</a>
+    </p>
+  </li>
+  <li>
+    <p><b>dmx.conf</b> - a simple demonstration of <a href="dmx.html">DMX</a>
+support.</p>
+  </li>
+  <li>
+    <p><b>dump.conf</b> - a simple demonstration of XXX support.</p>
+  </li>
+  <li>
+    <p><b>filetest.conf</b> - a simple demonstration of XXX support.</p>
+  </li>
+  <li>
+    <p><b>local.conf</b> - this configuration demonstrates OpenGL
+command
 filtering.
 A single application node has a hiddenline SPU and a render SPU.
 The hiddenline SPU manipulates the OpenGL command stream to render the
 demo program's geometry in an outline mode.</p>
-
-<li><p><b>blur.conf</b> - another example of OpenGL command filtering.
-This one demontrates the motion blur SPU.</p>
-
-<li><p><b>simplemural.conf</b> - this configuration demonstrates a two-tile
-tilesort configuration.
-The application node has a tilesort SPU which sends commands to two
-crserver nodes, each with a render SPU.</p>
-
-<li><p><b>reassemble.conf</b> - this configuration demonstrates the tilesort
+  </li>
+  <li>
+    <p><b>multitilesort.conf</b> - demonstration of a two-level
+tilesort configuration.</p>
+  </li>
+  <li>
+    <p><b>muralreadback_full.conf</b> - a simple demonstration of XXX
+support.</p>
+  </li>
+  <li>
+    <p><b>noop.conf</b> - a simple demonstration of noop SPU support.</p>
+  </li>
+  <li>
+    <p><b>playback.conf</b> - a simple demonstration of file&nbsp;
+support in crservers.</p>
+  </li>
+  <li>
+    <p><b>psl_cmp.conf</b> - a simple demonstration of parallel
+submission with sort-last rendering and <a
+ href="configoptions.html#zpix">zPix</a> compression using the Zlib
+compression method.</p>
+  </li>
+  <li>
+    <p><b>psl_ple.conf</b> - a simple demonstration of parallel
+submission with sort-last rendering and <a
+ href="configoptions.html#zpix">zPix</a> compression using the PLE
+compression method.</p>
+  </li>
+  <li>
+    <p><b>psubmit_last.conf</b> - a demonstration of sort-last parallel
+rendering. Two application nodes, each with a read back SPU, render
+part
+of the scene. The partial renderings are sent by pack SPUs to the final
+crserver node's render SPU where the images are Z-composited together.
+The demo can be modified to use more than two application instances.</p>
+  </li>
+  <li>
+    <p><b>psubmit_first.conf</b> - demonstration of combining tilesort
+(sort-first) with sort-last rendering.
+The two application nodes each render half the scene and use the
+tilesort
+SPU to send rendering commands to two crserver nodes.</p>
+  </li>
+  <li>
+    <p><b>psubmit_bswap.conf</b> - demonstration of sort-last rendering
+with the binary swap SPU.</p>
+  </li>
+  <li>
+    <p><b>psubmitn.conf</b> - XXX
+with the binary swap SPU.</p>
+  </li>
+  <li>
+    <p><b>rbcmp.conf</b> - a simple demonstration of XXX support.</p>
+  </li>
+  <li>
+    <p><b>rb.conf</b> - a simple demonstration of XXX support.</p>
+  </li>
+  <li>
+    <p><b>reassemble.conf</b> - this configuration demonstrates the
+tilesort
 SPU and the render SPU's ability to render back into the application's
-window (on X only; not Windows). 
-The application node uses a tilesort SPU to talk to two crservers.
+window (on X only; not Windows). The application node uses a tilesort
+SPU to talk to two crservers.
 Each crserver has a readback SPU.
 The readback SPUs render into the original application window, rather
 than separate windows.</p>
-<p>This configuration also demonstrates dynamic retiling.  When the application
+    <p>This configuration also demonstrates dynamic retiling. When the
+application
 window is resized, the tilesort SPU's tiling is changed.</p>
-
-<li><p><b>psubmit_last.conf</b> - a demonstration of sort-last parallel
-rendering.  Two application nodes, each with a read back SPU, render part
-of the scene.  The partial renderings are sent by pack SPUs to the final
-crserver node's render SPU where the images are Z-composited together.
-The demo can be modified to use more than two application instances.</p>
-
-<li><p><b>psubmit_first.conf</b> - demonstration of combining tilesort
-(sort-first) with sort-last rendering.
-The two application nodes each render half the scene and use the tilesort
-SPU to send rendering commands to two crserver nodes.</p>
-
-<li><p><b>psubmit_bswap.conf</b> - demonstration of sort-last rendering
-with the binary swap SPU.</p>
-
-<li><p><b>multitilesort.conf</b> - demonstration of a two-level tilesort
-configuration.</p>
-
-<li><p><b>stereo[1234].conf</b> - demontrations of various
-<a href="stereo.html">stereo rendering</a>
-solutions.  See the comments in each file for details.</p>
-
-<li><p><b>cavetest[12].conf</b> - demonstrations of
-<a href="nonplanar.html">non-planar tilesorting</a>.
-See the comments in each file for details.</p>
-
-<li><p><b>crut_*.conf</b> - demonstrations of <a href="crut.html">CRUT</a>
-
-<li><p><b>threadtest.conf</b> - demonstration of several multi-threaded
-rendering methods.  See the file's comments for details.</p>
-
-<li><p><b>dmx.conf</b> - a simple demonstration of <a href="dmx.html">DMX</a>
+  </li>
+  <li>
+    <p><b>rbple.conf</b> - a simple demonstration of zPix&nbsp; support
+with PLE a Chromium inspired RLE compression method.</p>
+  </li>
+  <li>
+    <p><b>readbacktest.conf</b> - a simple demonstration of readback
+SPU&nbsp; support.</p>
+  </li>
+  <li>
+    <p><b>retile.conf</b> - a simple demonstration of <a
+ href="tilesort.html">dynamic tile layout</a>&nbsp; support.</p>
+  </li>
+  <li>
+    <p><b>saveframe.conf</b> - a simple demonstration of saveframe SPU
 support.</p>
-
+  </li>
+  <li>
+    <p><b>simplemural.conf</b> - this configuration demonstrates a
+two-tile
+tilesort configuration.
+The application node has a tilesort SPU which sends commands to two
+crserver nodes, each with a render SPU.</p>
+  </li>
+  <li>
+    <p><b>stereo[1234].conf</b> - demontrations of various
+    <a href="stereo.html">stereo rendering</a>
+solutions. See the comments in each file for details.</p>
+  </li>
+  <li>
+    <p><b>swapsync.conf</b> - a simple demonstration of using the
+render SPU swapbuffer synchronization feature.</p>
+  </li>
+  <li>
+    <p><b>threadtest.conf</b> - demonstration of several multi-threaded
+rendering methods. See the file's comments for details.</p>
+  </li>
+  <li>
+    <p><b>tiledump.conf</b> - a simple demonstration of XXX support.</p>
+  </li>
+  <li>
+    <p><b>warp_demo.conf</b> - a simple demonstration of <a
+ href="warped_tile.html">warped </a>tile support in the tilesorter.<br>
+    </p>
+  </li>
 </ul>
-
 <p>
 There are lots of other samples to look at in the same directory.
 </p>
-
-
-
 </body>
-
 </html>

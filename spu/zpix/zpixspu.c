@@ -379,7 +379,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              bufi = 0;
              while ( bufi < bufw ) 
              {  
-               int rt;                       /* debugging: run type */
+               int rt = 0;                       /* debugging: run type */
                p_plebuf->nruns++;            /*XXXX debugging run counts */
                zpix_spu.sum_runs++;
                r = -1;                       /* in case last input word */

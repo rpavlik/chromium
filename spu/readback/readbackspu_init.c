@@ -109,7 +109,7 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 
 
 
-/*
+/**
  * This is a function used to test copies of the state
  * tracker.  See the progs/statecopytest/statecopytest.c program for
  * more information.

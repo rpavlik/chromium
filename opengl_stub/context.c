@@ -4,8 +4,18 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+/**
+ * \mainpage OpenGL_stub 
+ *
+ * \section OpenGL_stubIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The OpenGL_stub module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
+ */
 
-/*
+/**
  * This file manages OpenGL rendering contexts in the faker library.
  * The big issue is switching between Chromium and native GL context
  * management.  This is where we support multiple client OpenGL
@@ -24,7 +34,7 @@
 
 #ifndef WINDOWS
 
-/*
+/**
  * Get the display string for the given display pointer.
  * Never return just ":0.0".  In that case, prefix with our host name.
  */
@@ -59,7 +69,7 @@ stubGetDisplayString( Display *dpy, char *nameResult, int maxResult )
 #endif
 
 
-/*
+/**
  * This function should be called from MakeCurrent().  It'll detect if
  * we're in a multi-thread situation, and do the right thing for dispatch.
  */
@@ -86,7 +96,7 @@ stubCheckMultithread( void )
 #endif
 
 
-/*
+/**
  * Install the given dispatch table as the table used for all gl* calls.
  */
 static void
@@ -116,7 +126,7 @@ stubSetDispatch( SPUDispatchTable *table )
 }
 
 
-/*
+/**
  * Create a new _Chromium_ window, not GLX or WGL.
  */
 GLint
@@ -169,7 +179,7 @@ stubNewWindow( const char *dpyName, GLint visBits )
 }
 
 
-/*
+/**
  * Given a Windows HDC or GLX Drawable, return the corresponding
  * WindowInfo structure.  Create a new one if needed.
  */
@@ -202,7 +212,7 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 }
 
 
-/*
+/**
  * Allocate a new ContextInfo object, initialize it, put it into the
  * context hash table.  If type==CHROMIUM, call the head SPU's
  * CreateContext() function too.
@@ -242,7 +252,7 @@ stubNewContext( const char *dpyName, GLint visBits, ContextType type )
 }
 
 
-/*
+/**
  * Called via glXCreateCurrent() or wglCreateCurrent().
  * Allocate a ContextInfo object and initialize its type to UNDECIDED.
  * Later, in glXMakeCurrent, we'll decide (by examining the window size and
@@ -308,7 +318,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis,
 }
 
 
-/*
+/**
  * This creates a native GLX/WGL context.
  */
 static GLboolean
@@ -340,7 +350,7 @@ InstantiateNativeContext( WindowInfo *window, ContextInfo *context )
 }
 
 
-/*
+/**
  * Utility functions to get window size and titlebar text.
  */
 #ifdef WINDOWS
@@ -505,7 +515,7 @@ GetWindowTitle( const WindowInfo *window, char *title )
 }
 
 
-/*
+/**
  *Return current cursor position in local window coords.
  */
 static void

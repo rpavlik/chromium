@@ -5,8 +5,19 @@
 #include "cr_unpack.h"
 #include "dlm.h"
 #include "dlm_client.h"
+/**
+ * \mainpage Dlm 
+ *
+ * \section DlmIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The dlm module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
+ */
 
-/* Module globals: the current DLM state, bound either to each thread, or
+/**
+ * Module globals: the current DLM state, bound either to each thread, or
  * to a global.
  */
 #ifdef CHROMIUM_THREADSAFE
@@ -21,7 +32,8 @@ CRDLMContextState *CRDLMCurrentState = NULL;
 /*************************************************************************/
 
 #ifdef CHROMIUM_THREADSAFE
-/* This is the thread-specific destructor function for the 
+/**
+ * This is the thread-specific destructor function for the 
  * data used in the DLM.  It's very simple: if a thread exits
  * that has DLM-specific data, the data represents the listState
  * for the thread.  All data and buffers associated with the list
@@ -46,7 +58,8 @@ static void threadDestructor(void *tsd)
 }
 #endif
 
-/* This function creates and initializes a new display list
+/**
+ * This function creates and initializes a new display list
  * manager.  It returns a pointer to the manager, or NULL in
  * the case of insufficient memory.  The dispatch table pointer
  * is passed in to allow the utilities to muck with the table
@@ -129,7 +142,8 @@ void crDLMUseDLM(CRDLM *dlm)
     DLM_UNLOCK(dlm);
 }
 
-/* This routine is called when a context or thread is done with a DLM.
+/**
+ * This routine is called when a context or thread is done with a DLM.
  * It maintains an internal count of users, and will only actually destroy
  * itself when no one is still using the DLM.
  */
@@ -197,7 +211,8 @@ void crDLMFreeDLM(CRDLM *dlm)
     }
 }
 
-/* The actual run-time state of a DLM is bound to a context
+/**
+ * The actual run-time state of a DLM is bound to a context
  * (because each context can be used by at most one thread at
  * a time, and a thread can only use one context at a time,
  * while multiple contexts can use the same DLM).
@@ -239,7 +254,8 @@ CRDLMContextState *crDLMNewContext(CRDLM *dlm, CRClientState *clientState)
 }
 
 
-/* This routine should be called when a MakeCurrent changes the current
+/**
+ * This routine should be called when a MakeCurrent changes the current
  * context.  It sets the thread data (or global data, in an unthreaded
  * environment) appropriately; this in turn changes the behavior of
  * the installed DLM API functions.
@@ -257,7 +273,8 @@ CRDLMContextState *crDLMGetCurrentState(void)
 	return CURRENT_STATE();
 }
 
-/* This routine, of course, is used to release a DLM context when it
+/**
+ * This routine, of course, is used to release a DLM context when it
  * is no longer going to be used.
  */
 
@@ -290,7 +307,8 @@ void crDLMFreeContext(CRDLMContextState *state)
 }
 
 
-/* This function can be used if the caller wishes to free up the
+/**
+ * This function can be used if the caller wishes to free up the
  * potentially considerable resources used to store the display list
  * content, without losing the rest of the display list management.
  * For one example, consider an SPU that conditionally sends its 
@@ -319,7 +337,8 @@ CRDLMError crDLMDeleteListContent(CRDLM *dlm, unsigned long listIdentifier)
 }
 
 
-/*
+/**
+ *
  * Playback/execute a list.
  * dlm - the display list manager context
  * listIdentifier - the display list ID (as specified by app) to playback
@@ -342,7 +361,8 @@ void crDLMReplayList(CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable 
     }
 }
 
-/* When we compiled the display list, we packed all pixel data
+/**
+ * When we compiled the display list, we packed all pixel data
  * tightly.  When we execute the display list, we have to make
  * sure that the client state reflects that the pixel data is
  * tightly packed, or it will be interpreted incorrectly.
@@ -364,7 +384,7 @@ static void restore_client_state(CRClientState *clientState, SPUDispatchTable *d
     }
 }
 
-/* Send a single list down the pipe */
+/** Send a single list down the pipe */
 static void send_one_list(CRDLM *dlm, unsigned long listIdentifier,
 	SPUDispatchTable *dispatchTable)
 {
@@ -373,7 +393,7 @@ static void send_one_list(CRDLM *dlm, unsigned long listIdentifier,
     dispatchTable->EndList();
 }
 
-/* API routine to do the same - this one makes sure client state is set up first */
+/** API routine to do the same - this one makes sure client state is set up first */
 void crDLMSendList(CRDLM *dlm, unsigned long listIdentifier,
 	CRClientState *restoreClientState, SPUDispatchTable *dispatchTable)
 {
@@ -412,7 +432,7 @@ void crDLMSendAllLists(CRDLM *dlm, CRClientState *restoreClientState,
     restore_client_state(restoreClientState, dispatchTable);
 }
 
-/* Another clever callback arrangement to get the desired data. */
+/** Another clever callback arrangement to get the desired data. */
 struct getRefsCallbackParms {
     int remainingOffset;
     int remainingCount;
@@ -537,7 +557,7 @@ GLboolean crDLMIsListSent(CRDLM *dlm, unsigned long listIdentifier)
 }
 
 
-/*
+/**
  * Return id of list currently being compiled.  Only valid between
  * calls to crdlm_NewList() and crdlm_EndList.
  */
@@ -547,7 +567,7 @@ GLuint crDLMGetCurrentList(void)
 	return listState ? listState->currentListIdentifier : 0;
 }
 
-/*
+/**
  * Return mode of list currently being compiled.  Only valid between
  * calls to crdlm_NewList() and crdlm_EndList.
  */

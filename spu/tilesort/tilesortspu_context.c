@@ -21,7 +21,8 @@
 static ThreadInfo *tilesortspuNewThread(void);
 #endif
 
-/* This function is registered with the DLM and will get called when
+/**
+ * This function is registered with the DLM and will get called when
  * the DLM detects any OpeNGL errors.
  */
 static void
@@ -31,7 +32,7 @@ ErrorCallback(int line, const char *file, GLenum error, const char *info)
 }
 
 
-/*
+/**
  * Initialize per-thread data.
  */
 void tilesortspuInitThreadPacking( ThreadInfo *thread )
@@ -83,7 +84,7 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 	thread->currentContext = NULL;
 }
 
-/*
+/**
  * Allocate a new ThreadInfo structure, setup a connection to the
  * server, allocate/init a packer context, bind this ThreadInfo to
  * the calling thread with crSetTSD().
@@ -309,7 +310,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 																							&contextInfo->State->client);
 		if (!contextInfo->dlmContext) {
 			crDebug("tilesort: couldn't get dlmContext");
-			/* XXX need graceful error handling here */
+			/** XXX \todo need graceful error handling here */
 		}
 
 		/* We're not going to hold onto the dlm ourselves, so we can
@@ -381,7 +382,7 @@ fprintf(stderr,"MakeCurrent thread = %p\n",thread);
 		}
 #endif
 
-		/* XXX this might be excessive to do here */
+		/** XXX \todo this might be excessive to do here */
 		/* have to do it at least once for new windows to get back-end info */
 		tilesortspuUpdateWindowInfo(winInfo);
 	}

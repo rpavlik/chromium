@@ -12,6 +12,12 @@
 #include "tilesortspu_proto.h"
 
 
+/**
+ * Implementation of SwapBuffers for tilesorter
+ *
+ * \param window
+ * \param flags
+ */
 void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 {
 	GET_THREAD(thread);
@@ -45,9 +51,9 @@ void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 			 * the app to trick it into redrawing.
 			 */
 #ifdef WINDOWS
-			/* XXX is there a Window equivalent here??? */
+			/** XXX \todo is there a Window equivalent here??? */
 #elif defined(DARWIN)
-			/* XXX is there a Darwin equivalent here??? */
+			/** XXX \todo is there a Darwin equivalent here??? */
 #else
 			CRASSERT(winInfo->dpy);
 			CRASSERT(winInfo->xwin);

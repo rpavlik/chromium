@@ -15,7 +15,7 @@
 #include "cr_dlm.h"
 
 
-/*
+/**
  * Execute glDrawPixels().  Immediate mode only.
  */
 void TILESORTSPU_APIENTRY
@@ -130,7 +130,7 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 }
 
 
-/*
+/**
  * Wrapper for crPackDrawPixels to provide the unpacking state.
  */
 void TILESORTSPU_APIENTRY
@@ -309,7 +309,7 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	/* Build the rectangle here to save the addition each time */
 	rect.x1 = x;
 	rect.y1 = y;
-	rect.x2 = x + width;  /* XXX zoomedWidth, someday */
+	rect.x2 = x + width;  /** XXX \todo zoomedWidth, someday */
 	rect.y2 = y + height;
 	stride  = width * bytes_per_pixel;
 
@@ -449,8 +449,8 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 	/* allocate image buffer */
 	buffer = crAlloc(width * height * 4);
 
-	/*
-	 * XXX this isn't quite good enough.  If any pixel transfer operations
+	/**
+	 * XXX \todo this isn't quite good enough.  If any pixel transfer operations
 	 * are enabled, they'll be applied twice: during readback and drawing.
 	 */
 	switch (type) {
@@ -482,7 +482,7 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 }
 
 
-/*
+/**
  * Execute glBitmap.  Immediate mode only.
  */
 void TILESORTSPU_APIENTRY
@@ -674,7 +674,7 @@ tilesortspu_Bitmap(GLsizei width, GLsizei height,
 }
 
 
-/*
+/**
  * Wrapper for crPackBitmap in order to provide the unpacking state.
  * This will be called by the DLM when we're sending a display list
  * to the server.  Note that pixel unpacking will have already occured
@@ -695,7 +695,7 @@ tilesortspu_PackBitmap(GLsizei width, GLsizei height,
 }
 
 
-/* 
+/** 
  * Here we want to flush texture state before we call PixelTransfer*().
  * This will ensure that situations such as:
  *
@@ -943,7 +943,7 @@ void TILESORTSPU_APIENTRY tilesortspu_PixelMapusv (GLenum map, GLint mapsize, co
 }
 
 
-/*
+/**
  * Wrappers for crPackTexImage?D to provide the unpack parameter.
  * Note, this is called from the DLM which has already-unpacked images.
  */
@@ -1051,7 +1051,7 @@ tilesortspu_PackTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 												&crStateNativePixelPacking);
 }
 
-/*
+/**
  * Execute crZPixCR().  Immediate mode only.
  */
 void TILESORTSPU_APIENTRY
@@ -1165,7 +1165,7 @@ tilesortspu_ZPixCR(GLsizei width, GLsizei height, GLenum format,
 	crStatePixelZoom(oldZoomX, oldZoomY);
 }
 
-/*
+/**
  * Wrapper for crPackZPix to provide the unpacking state.
  */
 void TILESORTSPU_APIENTRY

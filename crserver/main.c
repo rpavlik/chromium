@@ -4,6 +4,16 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+/**
+ * \mainpage Crserver 
+ *
+ * \section CrserverIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The crserver module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
+ */
 extern int CRServerMain( int argc, char *argv[] );
 
 int main( int argc, char *argv[] )

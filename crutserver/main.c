@@ -6,6 +6,12 @@
 #include "cr_mothership.h"
 #include "cr_string.h"
 
+/**
+ * \mainpage CrutServer 
+ *
+ * \section CrutServerIntroduction Introduction
+ *
+ */
 CRUTServer crut_server;
 CRUTAPI crut_api;
 

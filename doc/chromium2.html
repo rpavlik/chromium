@@ -1,0 +1,897 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head>
+  <meta name="generator" content="HTML Tidy for Linux/x86 (vers 1st June 2004), see www.w3.org"><!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+         See the file LICENSE.txt for information on redistributing this software.  -->
+  
+  <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+  <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+  <meta name="ProgId" content="FrontPage.Editor.Document"><title>New Page 1</title>
+
+  
+  <base target="_self">
+  <link rel="stylesheet" type="text/css" href="chromium.css"></head><body bgcolor="#ffffff">
+  <h1><a name="mozTocId772466" class="mozTocH1" id="mozTocId772466"></a>A Beginner's Guide to Chromium</h1><br>
+
+  <ol id="mozToc">
+    <!--mozToc h1 1 h2 2 h3 3 h4 4 h5 5 h6 6-->
+
+    <li>
+      <a href="#mozTocId772466">A Beginner's Guide to Chromium</a>
+
+      <ol>
+        <li><a href="#mozTocId912388">How to Install and Configure
+        Chromium by Sean Ahern</a></li>
+
+        <li><a href="#mozTocId75584">Introduction to
+        Chromium</a></li>
+
+        <li><a href="#mozTocId485886">The Language of
+        Chromium</a></li>
+
+        <li>
+          <a href="#mozTocId936465">Getting Chromium</a>
+
+          <ol>
+            <li><a href="#mozTocId842372">Obtaining source
+            code</a></li>
+
+            <li><a href="#mozTocId55264">Prerequisites</a></li>
+
+            <li><a href="#mozTocId483731">Compiling the
+            source</a></li>
+
+            <li>
+              <a href="#mozTocId518358">Special Notes</a>
+
+              <ol>
+                <li><a href="#mozTocId424298">NVIDIA drivers with
+                Red Hat Linux</a></li>
+
+                <li><a href="#mozTocId34273">Additional Compiler
+                Optimizations</a></li>
+              </ol>
+            </li>
+          </ol>
+        </li>
+
+        <li><a href="#mozTocId651901">Compiling Chromium</a></li>
+
+        <li>
+          <a href="#mozTocId916679">Mothership configuration
+          files</a>
+
+          <ol>
+            <li><a href="#mozTocId98932">Listing One -- A simple
+            configuration file</a></li>
+          </ol>
+        </li>
+
+        <li><a href="#mozTocId997188">The Graphical Configuration
+        File Editor</a></li>
+
+        <li><a href="#mozTocId913616">Rendering to a Tiled
+        Display</a></li>
+
+        <li><a href="#mozTocId487023">DMX</a></li>
+
+        <li><a href="#mozTocId214849">What if it's not
+        working.</a></li>
+
+        <li><a href="#Bio">Bio</a></li>
+
+        <li><a href="#Resources">Resources</a></li>
+      </ol>
+    </li>
+  </ol><br>
+  
+<hr style="width: 100%; height: 2px;"><br>
+
+  <h2><a name="mozTocId912388" class="mozTocH2" id="mozTocId912388"></a>How to Install and Configure Chromium by
+  Sean Ahern</h2>
+
+  <p><br></p><img src="sean.png" alt="A Chromium Powerwall" style="width: 702px; height: 468px;" align="middle"><br>
+  <br>
+  <br>
+  <br>
+
+  <h2><a name="mozTocId75584" class="mozTocH2" id="mozTocId75584"></a><a name="Introduction_to_Chromium_" id="Introduction_to_Chromium_"></a>Introduction to Chromium<br></h2>
+
+  <p>Over the past few years, progress in consumer graphics card
+  capabilities and desktop CPU performance, coupled with advances
+  in high-performance networks, have enabled a new generation of
+  supercomputer: the commodity graphics cluster. These new
+  clusters, built from collections of off-the-shelf Pcs outfitted
+  with consumer graphics cards, offer unprecedented power for the
+  rendering and display of 3D graphics. However, the application
+  programming interface to these systems was not designed for
+  parallel clusters. Chromium provides a common parallel graphics
+  programming interface to support such clusters. In addition, it
+  allows most existing serial applications to run without
+  modification, and enables creation of powerful new parallel
+  graphics applications capable of fully exploiting the power of
+  these clusters.</p>
+
+  <p>Chromium provides a number of key capabilities, uniquely
+  combined into a single package</p>
+
+  <ul>
+    <li>Streaming graphics pipeline based on the industry standard
+    OpenGL API</li>
+
+    <li>Support for multiple physical display devices clustered
+    together, such as"powerwall" displays</li>
+
+    <li>Support for aggregation of the output of multiple graphics
+    cards to drive a single display at higher levels of
+    performance/capability</li>
+  </ul>
+
+  <p>The Chromium infrastructure has been adopted by a large number
+  of users and is rapidly forming the basis of a great deal of
+  clustering research. Chromium's capabilities have not only proven
+  to be useful on graphics clusters, but the technologies are also
+  useful on the single desktop PC.</p>
+
+  <p>This article demonstrates the process of setting up Chromium
+  on a cluster and configuring it for use on a tiled display. We
+  discuss the important components of the Chromium system and how
+  you can configure it for other uses.</p>
+
+  <h2><a name="mozTocId485886" class="mozTocH2" id="mozTocId485886"></a>The Language of Chromium</h2>
+
+  <p>To understand Chromium and how to set it up, you first have to
+  understand some basic terminology:</p>
+
+  <ul>
+    <li>A <i>chromium network</i> is a set of <i>nodes</i> arranged
+    in a directed acyclic graph (DAG), connected by a network
+    interconnect. Most people use TCP/IP, though a number of other
+    interconnect APIs are supported.</li>
+
+    <li>A <i>Chromium node is</i> a process that either issues or
+    responds to OpenGL commands. It does so by loading a chain of
+    <i>spus.</i></li>
+
+    <li><i>spu</i> stands for <i>stream processing unit</i>. It is
+    the part of a node that intercepts OpenGL calls and performs
+    actions on the OpenGL stream. SPUs are implemented as dynamic
+    shared libraries, and generally only implement the smallest
+    subset of the OpenGL API required to do useful work.
+    Unimplemented calls are passed down the line unmodified. SPUs
+    respect an inheritance system, whereby they can inherit and
+    override the behaviors of their parents. This makes creating
+    new functionality by subclassing existing SPUs very simple.
+    Chromium comes with development tools to help template new SPUs
+    quickly.</li>
+
+    <li>The "root" of the DAG is called the "app" node. It is where
+    OpenGL calls originate. Chromium supports parallel OpenGL
+    submission by multiple app nodes, though for space
+    considerations, this article will not discuss Chromium
+    semaphores and barriers. If you would like to learn more, see
+    <a href="http://chromium.sourceforge.net/doc/index.html"><b>doc</b></a>.</li>
+
+    <li>Nodes of the graph that are not app nodes are called
+    <span style="font-style: italic;">crservers</span> or just
+    servers in Chromium parlance.</li>
+
+    <li>The <span style="font-style: italic;">mothership</span> is
+    a Python process that maintains the "map" and configuration of
+    the Chromium network. All of the nodes contact the mothership
+    for marching orders.</li>
+
+    <li style="list-style-type: none; list-style-position: outside; list-style-image: none;">
+    <br></li>
+  </ul>
+
+  <h2><a name="mozTocId936465" class="mozTocH2" id="mozTocId936465"></a>Getting Chromium</h2>
+
+  <p>Chromium is maintained at <a href="http://www.sourceforge.net/projects/chromium" target="_parent">SourceForge</a>.&nbsp; In addition to the source code,
+  you'll also find a bug tracking system and three mailing
+  lists.&nbsp; Even if you're not a developer, you may wish to
+  subscribe to chromium-announce to receive information about
+  updated releases.</p>
+
+  <h3><a name="mozTocId842372" class="mozTocH3" id="mozTocId842372"></a>Obtaining source code</h3>
+
+  <p>To get the source code, you do <i>not</i> have to be a
+  registered SourceForge user.&nbsp; You can get the source in one
+  of two ways:</p>
+
+  <p>First, you can download the latest release, which is available
+  from the <a href="http://www.sourceforge.net/projects/chromium" target="_parent">main project page</a>, under <b>Latest File
+  Releases</b>. This will be a gzip'ed tar file of the entire
+  source tree on the release date, along with a copy of this
+  documentation.&nbsp; Simply extract the archive and you've got
+  everything. For example:</p>
+  <pre>      tar zxvf cr-1.7.tar.gz<br>
+</pre>or
+  <pre>      gzcat cr-1.7.tar.gz | tar xvf -<br>
+</pre>
+
+  <p>Alternately, you can check out the top-of-tree source code
+  from the CVS repository, if you want to live on the bleeding
+  edge. To check out the source code, just follow the instructions
+  on the <a href="http://sourceforge.net/cvs/?group_id=16529" target="_parent">CVS repository page</a>. If you're unfamiliar
+  with CVS, useful documentation is available in <i><a href="http://cvsbook.red-bean.com/cvsbook.html" target="_parent">Open
+  Source Development with CVS</a></i>. If you want to track the CVS
+  sources you should subscribe to the developers and CVS check-in
+  <a href="http://sourceforge.net/mail/?group_id=16529" target="_parent">mailing lists</a>. That's where new development is
+  discussed.</p>
+
+  <h3><a name="mozTocId55264" class="mozTocH3" id="mozTocId55264"></a>Prerequisites</h3>
+
+  <p>You will need <a href="http://www.python.org" target="_parent">Python 2.2</a> or later, and <a href="http://www.perl.org" target="_parent">Perl 5.0</a> or later to
+  build on any platform.</p>
+
+  <p>You'll need GLUT installed so that the demonstration programs
+  will compile.</p>
+
+  <h3><a name="mozTocId483731" class="mozTocH3" id="mozTocId483731"></a>Compiling the source</h3>
+
+  <p>All of Chromium lives under a directory called
+  "<code>cr-X.Y</code>" (where X.Y is the version). Change to that
+  directory.</p>
+
+  <p>There are a few compile-time options that can be specified in
+  the <code>options.mk</code> file. DMX support and threadsafety
+  options are specified in this file, for example. If you have
+  Myrinet or Quadrics network hardware, you can enable those
+  interfaces here. At least initially, you shouldn't have to change
+  anything in this file.</p>
+
+  <p>To start compilation, just type "<code>make</code>" (or
+  <code>gmake</code> on some systems).</p>
+
+  <p>Binaries are put in <code>cr-X.Y/bin/&lt;ARCH&gt;</code>,
+  where <code>&lt;ARCH&gt;</code> is the name of your architecture
+  (Actually, it's what's returned by the "<code>uname</code>"
+  command. Except on Windows, where <a href="http://cygwin.com/" target="_parent">cygwin's</a> "<code>uname</code>" returns
+  something long and silly, so it gets re-written to
+  "<code>WIN_NT</code>".). You should add this directory to your
+  <code>PATH</code> environment variable.</p>
+
+  <p>Platform specific notes:</p>
+
+  <ul>
+    <li><b>Any UNIX</b>: Shared libraries will be put in the
+    directory <code>cr-X.Y/lib/&lt;ARCH&gt;</code>. You will need
+    to add this directory to your <code style="font-weight: bold;">LD_LIBRARY_PATH</code><span style="font-weight: bold;">
+    </span>environment variable. Chromium builds a <i>lot</i> of shared
+    libraries, so you can't skip this step.</li>
+
+    <li style="list-style-type: none; list-style-position: outside; list-style-image: none;">
+    <br></li>
+
+    <li><b>Windows</b>: You will also need to install the <a href="http://cygwin.com/" target="_parent">cygwin tools</a> to build
+    Chromium. If you're building from the Windows shell (as opposed
+    to the cygwin bash implementation), you will need to set the
+    environment variable <span style="font-weight: bold;">"</span><code style="font-weight: bold;">MAKE_MODE</code><span style="font-weight: bold;">"</span> to the string
+    "<code>unix</code>". This lets <code>gmake</code> use
+    <code>bash</code> as its subshell instead of the Windows shell,
+    which is required. Shared libraries on Windows get put in
+    <code>cr-X.Y/bin/WIN_NT</code>, which (since it's on your path,
+    right?) will be searched automatically, so there's no
+    <code style="font-weight: bold;">LD_LIBRARY_PATH</code><span style="font-weight: bold;"> </span>silliness.</li>
+
+    <li style="list-style-type: none; list-style-position: outside; list-style-image: none;">
+    <br></li>
+
+    <li><b>IRIX</b>: GNU make is required. Build Chromium by typing
+    <code>gmake</code> instead of <code>make</code>.</li>
+
+    <li style="list-style-type: none; list-style-position: outside; list-style-image: none;">
+    <br></li>
+
+    <li><b>AIX</b>: Shared libraries are somewhat different on this
+    platform. For Cr clients and servers to run, a dlopen-able
+    system GL is needed. At present, do this (once) manually (ar -x
+    /usr/lib/libGL.a &amp;&amp; mv shr.o libGL.o ) . Set
+    <span style="font-weight: bold;">CR_SYSTEM_GL_PATH</span> to the directory with libGL.o for AIX clients
+    and servers.<br>
+    The exec loader will continue to look for .a's (rather, shared
+    objects in ar archives) and .so's. So to run clients without
+    the app_faker, prepend <span style="font-weight: bold;">LIBPATH</span> with a dir that has a link
+    libGL.a -&gt; lib/AIX/libcrfaker.a . As with other platforms,
+    you also need to set the <span style="font-weight: bold;">CR_APPLICATION_ID_NUMBER.</span></li>
+
+    <li style="list-style-type: none; list-style-position: outside; list-style-image: none;">
+    <br></li>
+
+    <li><b>SunOS</b>: OpenGL apps must be compiled with
+    <span style="font-weight: bold;">SUN_OGL_NO_VERTEX_MACROS</span> defined so that macros aren't used for
+    OpenGL API functions. This also means that Sun's stock GLUT and
+    GLU libraries won't work with Chromium. After you've produced
+    new GLUT and GLU libraries you may have to edit SunOS.mk and
+    modify your <span style="font-weight: bold;">LD_LIBRARY_PATH</span> to select the new libraries.<br>
+    There seems to be a bug in the version of Xsun that comes with
+    Solaris 9. To go around it set <span style="font-weight: bold;">SOLARIS_9_X_BUG.</span> Even if you're
+    compiling say the Linux version but are using a sun for the
+    display you should set this.</li>
+
+    <li style="list-style-type: none; list-style-position: outside; list-style-image: none;">
+    <br></li>
+
+    <li><b>Darwin</b>: Support for this operating system is not
+    complete.</li>
+  </ul><br>
+
+  <h3><a name="mozTocId518358" class="mozTocH3" id="mozTocId518358"></a>Special Notes</h3>
+
+  <h4><a name="mozTocId424298" class="mozTocH4" id="mozTocId424298"></a>NVIDIA drivers with Red Hat Linux</h4>
+
+  <p>Firstly, NVIDIA's OpenGL header files (gl.h and glext.h) are
+  somewhat broken. Just don't use them! If you accidentally install
+  NVIDIA's header files in /usr/include/GL you should replace them
+  with the stock XFree86 OpenGL headers or the headers included
+  with Mesa.</p>
+
+  <p>If you're using RedHat Linux 9.0 (or later?) with NVIDIA
+  hardware/drivers you'll probably have to set the
+  <span style="font-weight: bold;">CR_SYSTEM_GL_PATH</span> environment variable to
+  <code>/usr/lib/tls</code></p>
+
+  <p>This causes Chromium to use the libGL.so library found in
+  /usr/lib/tls/ instead of /usr/lib/, thus avoiding some
+  thread-related problems.</p>
+
+  <h4><a name="mozTocId34273" class="mozTocH4" id="mozTocId34273"></a>Additional Compiler Optimizations</h4>
+
+  <p>Look at the <code>cr-X.Y/config/Linux.mk</code> for some
+  additional gcc compiler flags that can increase performance on
+  x86 Linux systems.</p><br>
+
+  <div style="margin-left: 2em;">
+    <br>
+  </div>
+
+  <h2><a name="mozTocId651901" class="mozTocH2" id="mozTocId651901"></a>Compiling Chromium</h2>Once you download and
+  uncompress the Chromium tarball, you'll want to explore the
+  documentation. All documentation for Chromium lives in the
+  <a href="http://chromium.sourceforge.net/doc/index.html"><b>doc</b></a>
+  directory. Load up <a href="#Introduction_to_Chromium_"><b>doc</b></a> in a web browser and
+  wander around. Some pages that you'll find useful later on while
+  configuring motherships are <a href="http://chromium.sourceforge.net/doc/configoptions.html">Provided
+  SPUs and configuration options</a> , <a href="http://chromium.sourceforge.net/doc/configserver.html">Configuration
+  options for server nodes</a>, and <a href="http://chromium.sourceforge.net/doc/configapp.html">Configuration
+  options for app nodes</a>. More on these options later.<br>
+
+  <p>Chromium's build system is entirely GNU make based. Thus, all
+  that's generally required is a <b>make</b>. No <b>configure</b>
+  needed. The build system works under Cygwin as well, though
+  Windows is less supported and tested than Linux. The build
+  doesn't take too long (just over 5 minutes on a 2Ghz Xeon).<br>
+  Some build options are specified in <b>options.mk</b>. The most
+  important one is <b>RELEASE</b> Set that to 0 if you want to turn
+  on debugging symbols and turn off optimization. You definitely
+  should do this if there's something going wrong.<br>
+  <br>
+  Support for different network interconnects can be found in util.
+  (These options have been moved into <b style="font-weight: bold;">options.mk</b> in Chromium releases after
+  1.7.) Set <b>TEAC_SUPPORT</b> to compile in Quadrics support,
+  <b>GM_SUPPORT</b> if you have a Myrinet interconnect, and
+  <span style="font-weight: bold;">IB_SUPPORT</span> if you have
+  Infiniband. For SDP support set<span style="font-weight: bold;"> SDP_SUPPORT</span> to 1. No matter what you set in <b>util</b>, TCP/IP support
+  is always included.<br>
+  <br>
+  Some miscellaneous options in <b>options.mk</b> that might also
+  be useful are <b>USE_DMX</b> and <b>USE_OSMESA</b>.
+  <b>USE_DMX</b> turns on support for automatic detection and use
+  of the Distributed Multihead X Server. See the "DMX" sidebar for
+  more information. <b>USE_OSMESA</b> compiles Chromium to do
+  off-screen rendering with the software-based Mesa 3D graphics
+  library. <span style="font-weight: bold;">THREADSAFE </span>may be set to 1 if you want thread safety for parallel applications.</p>
+<p>If you have doxygen and want to generate doxygen'ed source code documentation you can set <span style="font-weight: bold;">DOXYGEN</span> to 1.</p>
+<p>
+  Before you <b>make</b>, be sure you have the required
+  dependencies. Chromium requires Python version 2.2 or greater. It
+  also expects to find an OpenGL installation and the GLUT toolkit
+  in the standard places. If you want to run the optional graphical
+  configuration tool (more on this later), you'll also need
+  wxPython installed. To test that your build succeeded and
+  everything is working, let's run a simple Chromium network.
+  First, familiarize yourself with where the build system placed
+  everything:</p>
+
+
+  <ul>
+    <li><b style="font-family: monospace;">lib/&lt;os&gt;</b>: All
+    libraries and SPUs are placed in here.</li>
+
+    <li><b style="font-family: monospace;">bin/&lt;os&gt;</b> All
+    executables live here. This is useful to place in your
+    <b>&lt;path&gt;</b>. (The rest of this article assumes it's in
+    your <b>&lt;path&gt;</b> for brevity.)</li>
+
+    <li><b style="font-family: monospace;">build</b>: This is a
+    temporary directory only used during the build process.</li>
+  </ul>
+
+  <p>Chromium provides a number of test programs for various
+  purposes. These can be very useful to run when starting out, or
+  when debugging a recalcitrant Chromium network. Their source
+  (found in the <b>progs</b> directory) is also invaluable as
+  reference when writing applications that use Chromium. Some
+  important programs are:</p>
+
+  <ul>
+    <li><span style="font-family: monospace;">city</span>: Good for
+    testing display lists and textures</li>
+
+    <li><span style="font-family: monospace;">atlantis</span>: An
+    extremely simple program that has sharks and whales swimming
+    around.</li>
+
+    <li><span style="font-family: monospace;">spheres</span>: This
+    one is good for characterizing triangle rendering
+    performance</li>
+
+    <li><span style="font-family: monospace;">psubmit</span>: An
+    example of parallel OpenGL geometry submission.</li>
+  </ul>
+
+  <p>We're going to run atlantis with the simple <b style="font-style: italic;">crdemo</b>, found with the pre-packaged
+  configuration files. Head over to the <b style="font-style: italic;">mothership</b> directory and run a
+  mothership along with two Chromium nodes:<br></p>
+
+  <p><span style="font-family: monospace;">1: % cd
+  mothership/config</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">2: % python crdemo.conf
+  atlantis &amp;</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">3: % crserver
+  &amp;</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">4: % crappfaker<br>
+  <br></span> You should get two windows, one blank, one with fish.
+  Congratulations, you've run your first Chromium network!
+  Everything else is downhill from here.</p>
+
+  <p>Let's go through those commands, line by line, to understand
+  what's going on. First, we head into the <b style="font-style: italic;">mothership</b>directory where all the
+  configuration files are stored. Line 2 runs a mothership
+  configured by the code in <b>crdemo.conf</b>. The network has two
+  nodes, an app node and a server node. The app node merely
+  forwards requests on to the server. The server opens its own
+  render window and renders all requests into it. The mothership
+  listens on port 10000 and waits for the nodes to contact it. Line
+  3 launches a Chromium server. It contacts the mothership and
+  learns its place in the network. Line 4 launches Chromium's
+  <i style="font-weight: bold;">appfaker</i>, which "tricks" the
+  runtime loader into loading Chromium instead of the system's
+  OpenGL library. When atlantis is launched, Chromium intercepts
+  all of its OpenGL commands and packs them onto the network. The
+  server receives the commands, unpacks them, and renders them to
+  its own window. It is important to note that Chromium dynamically
+  replaces a system's native OpenGL library with its own library
+  when the application is executed. Because of this, Chromium can
+  be used by almost any existing OpenGL application without
+  modification.</p>
+
+  <h2><a name="mozTocId916679" class="mozTocH2" id="mozTocId916679"></a> Mothership configuration files</h2>If you
+  want to start doing something more complicated (and who
+  wouldn't?), the place to start exploring is the mothership
+  configuration file. Chromium comes with a wealth of existing
+  configuration files in the <b style="font-style: italic;">mothership</b> directory. Many times, you
+  can accomplish what you want by copying and modifying one of
+  these existing files.
+
+  <p>Each Chromium network has one configuration file. This file
+  describes everything that is associated with a given Chromium
+  run: DAG nodes and edges; what SPUs are loaded by what servers;
+  what options are specified for the servers, SPUs, app nodes; what
+  type of network should be used; what view frustum each server
+  should use; etc.</p>
+
+  <p>All configuration files are actually Python scripts. This
+  provides an immense amount of power, since Chromium
+  configurations can adapt themselves to changing requirements. All
+  Python constructs are allowed, providing a wealth of options to
+  the Chromium user.</p>
+
+  <p>Chromium networks are defined by instantiating Python classes
+  that correspond to the various elements of the Chromium system,
+  app nodes, server nodes, and SPUs. They are connected to each
+  other through method calls, and joined together at the end into
+  one system.</p><br>
+  <span style="font-family: monospace;">1: import
+  sys</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">2:
+  sys.path.append('../server')</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">3: from mothership import
+  *</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">4:</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">5: render_spu =
+  SPU('render')</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">6:
+  render_spu.Conf('window_geometry',</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">7: [0, 0, 512,
+  192])</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">8:</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">9: hiddenline_spu =
+  SPU('hiddenline')</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">10:
+  hiddenline_spu.Conf('line_width', 1)</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">11:</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">12: app_node =
+  CRApplicationNode()</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">13:
+  app_node.AddSPU(hiddenline_spu)</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">14:
+  app_node.AddSPU(render_spu)</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">15:
+  app_node.SetApplication(</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">16: crbindir+"atlantis -s
+  100" )</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">17:</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">18: cr =
+  CR()</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">19:
+  cr.AddNode(app_node)</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">20:
+  cr.Go()</span><br style="font-family: monospace;">
+  <br>
+
+  <h3><a name="mozTocId98932" class="mozTocH3" id="mozTocId98932"></a>Listing One -- A simple configuration
+  file</h3><br>
+  Listing 1 shows a simple, yet useful, configuration file.<br>
+  Lines 1-3 are there so that Python knows where to find the Python
+  classes for the mothership.<br>
+
+  <p>Things start getting interesting at line 5, where the
+  <i>render</i> SPU is instantiated. This is the SPU that takes all
+  OpenGL commands and feeds them to the graphics card. It generally
+  opens up its own window. Most times, you want at least one of
+  these at the end of your DAG, though there are other uses. Lines
+  6-7 show how you configure something. All Chromium classes have
+  the same <span style="font-weight: bold;">Conf</span> member
+  function to set configuration parameters. Here, we're telling the
+  <i>render</i> SPU to resize its window to 512 by 192 pixels and
+  locate it in the upper left corner of the screen. At line 9 we
+  instantiate another SPU, the <i>hiddenline</i> SPU, which causes
+  all polygons to be drawn in a solid color, with their edges drawn
+  in black.</p>
+
+  <p>The default line width of 3 is a little thick, so at line 10
+  we reduce it down to 1 pixel wide.</p>
+
+  <p>Now that we have the SPUs created and configured, on line 12
+  we create a <b>CRApplicationNode</b>. We add the SPUs to the node
+  in order on lines 13 and 14, then tell the app node what
+  application to run on lines 15-16. In this case, we want it to
+  run the stock <span style="font-family: monospace;">atlantis</span> application with 100
+  sharks. <b>CRApplicationNode.</b></p>
+
+  <p>Finally, we create the master <b>cr</b> object on line 18.
+  Only one of these can exist, since it contains the entire
+  Chromium network. We add the one and only node on line 19, and
+  set the mothership <b>go</b>ing on line 20.</p><br>
+  <img src="hiddenline.jpg" alt="Figure One - Hiddenline Fish" style="width: 512px; height: 192px;"><br>
+  <br>
+  <img src="normal.jpg" alt="Figure Two - Normal Fish" style="width: 512px; height: 192px;" align="middle"><br>
+  <br>
+
+  <p>A screen shot of this network in action can be seen in Figure
+  1. Note how the fish look in comparison to those in Figure 2,
+  which was run with the same configuration but without the
+  <i>hiddenline</i> SPU.</p>
+
+  <h2><a name="mozTocId997188" class="mozTocH2" id="mozTocId997188"></a> The Graphical Configuration File
+  Editor</h2>Understanding that these configuration files can
+  sometimes be difficult to write, especially if one is unfamiliar
+  with Chromium configuration file syntax, or through inexperience
+  with Python, one of the Chromium developers provided a GUI for
+  creating, viewing, and editing the configuration files.
+
+  <p>You can find it at <b style="font-style: italic;">mothership</b>. As mentioned above, it
+  requires wxPython be installed.</p><br>
+  <a href="configtool.tiff"><img src="configtool.jpg" alt="Figure Three - Graphical Configuration File Editor" style="border: 0px solid ; width: 707px; height: 236px;" align="middle"></a><br>
+
+  <p>A screenshot of the Config Tool can be seen in Figure 3,
+  displaying the <b>crdemo</b> file that we first ran. The Chromium
+  network is displayed from left to right, each node displayed as a
+  box connected to other nodes, as appropriate. App nodes are
+  green, server nodes are red. SPUs are shown as gray boxes inside
+  of the nodes. While we won't get into detail about this editor
+  here, know that you can edit all options of the nodes, the SPUs,
+  and the Chromium system as a whole from inside the editor. In
+  addition,there are templates for common operations like
+  "sort-first" and "sort-last" rendering. For more advanced use of
+  the Config tool, see the <a href="configtool.html">Graphical
+  Config tool</a> page.<br></p>
+
+  <h2><a name="mozTocId913616" class="mozTocH2" id="mozTocId913616"></a> Rendering to a Tiled Display</h2>Many
+  applications of Chromium are to leverage a "powerwall", or tiled
+  display. In this setup, multiple monitors or projectors are
+  stacked to form a larger "virtual" display. This discussion
+  specifically excludes CAVE-style systems, though Chromium is
+  capable of rendering to these with additional configuration
+  options.<br>
+  <br>
+  Chromium comes with a bevy of useful SPUs, "plugins" that let you
+  manipulate the OpenGL stream in various ways.<br>
+  <a name="Here_are_some_of_the_most_useful_SPUs:" id="Here_are_some_of_the_most_useful_SPUs:"></a>Here are some of the
+  most useful SPUs:
+
+  <ul>
+    <li><i style="font-family: monospace;">render</i>: Sends all
+    geometry to the system's OpenGL library for rendering. This is
+    one of the major workhorses of Chromium.</li>
+
+    <li><i style="font-family: monospace;">print</i>: Writes an
+    ASCII version of all OpenGL calls to a file. Extremely useful
+    for debugging an OpenGL application.</li>
+
+    <li><i style="font-family: monospace;">tilesort</i><span style="font-family: monospace;">:</span> Does a "sort-first"
+    partition of the geometry and sends it to multiple downstream
+    servers, each of which occupies some subset of the total
+    "virtual" screen space. The <i style="font-family: monospace;">tilesort</i> SPU calculates the
+    projected bounding box of each group of geometry, determines
+    which servers the bounding box overlaps, and only sends the
+    necessary pieces downstream.</li>
+
+    <li><i style="font-family: monospace;">readback</i>: A subclass
+    of the <i style="font-family: monospace;">render</i> SPU which
+    reads the frame buffer and/or depth buffer back into memory and
+    sends them downstream by way of <b>glDrawPixels</b> In
+    essence, the <i style="font-family: monospace;">readback</i>
+    SPU converts an OpenGL stream of geometry into a stream of
+    imagery.</li>
+
+    <li><i style="font-family: monospace;">binaryswap</i>: Does a
+    "sort-last" composite. This is a subclass of the <i style="font-family: monospace;">render</i> SPU, that does out of band
+    communication of the resultant imagery to implement the
+    well-known <i>binary swap</i> method of depth compositing.</li>
+
+    <li><i style="font-family: monospace;">perf</i>: Collects
+    performance statistics. There is a separate documentation page
+    about this SPU found in <a href="http://chromium.sourceforge.net/doc/index.html"><b>doc</b></a>.</li>
+  </ul>
+
+  <p>In the most basic configuration, a Chromium server is started
+  on each node connected to a "tile" of the tiled display. One app
+  node is connected to all of the servers through the <i style="font-family: monospace;">tilesort</i> SPU. (<a href="#Here_are_some_of_the_most_useful_SPUs:">See Useful SPUs</a>) As
+  geometry is fed from the app node to the <i style="font-family: monospace;">tilesort</i>SPU, the SPU determines
+  what geometry overlaps each tile. Each set of geometry is sent
+  only to the tiles it overlaps, making for efficient transfer of
+  the scene.</p>
+
+  <p>For brevity, only the section setting up the <span style="font-family: monospace;">tilesort</span> and the nodes is
+  shown.</p>1: TILE_WIDTH = 1280<br>
+  2: TILE_HEIGHT = 1024<br>
+  3:<br>
+  4: appnode = CRApplicationNode('machine0')<br>
+  5: tilesortspu = SPU('tilesort')<br>
+  6: appnode.AddSPU(tilesortspu)<br>
+  7: cr = CR() 8: cr.AddNode(appnode)<br>
+  9:<br>
+  10: for col in range(2): # 2x1 layout<br>
+  11: renderspu = SPU('render')<br>
+  12: renderspu.Conf('fullscreen', 1)<br>
+  13:<br>
+  14: node = CRNetworkNode('machine%d'%(col+1))<br>
+  15: node.AddTile(col*TILE_WIDTH, 0,<br>
+  16: TILE_WIDTH, TILE_HEIGHT)<br>
+  17: node.AddSPU(renderspu)<br>
+  18:<br>
+  19: tilesortspu.AddServer(node,<br>
+  20: protocol='tcpip',<br>
+  21: port=7000 + col)<br>
+  22:<br>
+  23: cr.AddNode(node)<br>
+  <br>
+  <a name="mozTocId501322" class="mozTocH3" id="mozTocId501322"></a>Listing Two -- Tiled display configuration
+  file
+
+  <p>Listing 2 shows a mothership configuration file that describes
+  a tiled display in a 2x1 configuration of uniformly-sized tiles.
+  Other similar configuration files are <b>mural.conf</b> and
+  <b>wall.conf</b>. Let's walk through this listing.</p>
+
+  <p>Lines 1-2 describes how big each individual tile is. Here
+  we're assuming a tile size of 1280x1024, a common screen
+  size.</p>
+
+  <p>Lines 4-8 set up the app node. Note the parameter to the
+  <b>CRApplicationNode</b> call: the is the name of the machine on
+  which the node will run. This lets you lay out the Chromium
+  network to correspond to your cluster.</p>
+
+  <p>The <i>tilesort</i> SPU is instantiated and added to the app
+  node.</p>
+
+  <p>Now comes the interesting part.</p>
+
+  <p>Line 10 iterates over both tiles.</p>
+
+  <p>Lines 11-12 create a <i>render</i> SPU and set it to run
+  fullscreen. Since each node drives a separate tile, this is
+  exactly what we want to fully use the tiled display.</p>
+
+  <p>Lines 14 creates the server node. Again, note the parameter
+  that names the machine on which the node lives. Lines 15-16 tell
+  Chromium where in virtual screen space this particular node
+  lies.</p>
+
+  <p>And line 17 adds the <i>render</i> SPU to the server node.</p>
+
+  <p>Lines 19-21 tell the <i>tilesort</i> SPU how to contact the
+  server. Each node listens on a separate TCP/IP port. While this
+  isn't necessary when all nodes live on different machines, as
+  this example shows, it is important if you have more than one
+  node on a single processor. Finally, line 23 adds the node to the
+  Chromium system. With a mothership in place with this
+  configuration, all that's needed is to start <b>crserver</b>s on
+  both back-end nodes, and start the application with
+  <b>crappfaker</b>. The <b>crserver</b>s should be pointed to the
+  location of the mothership. If we started the mothership on
+  <i>machine0</i>, say, then a <b>crserver</b> should be launched
+  with: <b>crserver -mothership= machine0:10000</b>, specifying
+  both the machine and the port number of the mothership.
+  Alternately, the <span style="font-weight: bold;">CRMOTHERSHIP </span>environment variable can be
+  used for the same purpose.</p>
+
+  <p>This can get tedious if there are a lot of tiles in the tiled
+  display and many server need to be launched. Fortunately,
+  Chromium has the ability to start the <b>crserver</b>s
+  automatically, though ssh, rsh, or other mechanisms. See the
+  description of the <b>autostart</b> command at the bottom of
+  <a href="http://chromium.sourceforge.net/doc/index.html"><b>doc</b></a>.</p>
+
+  <p>Another option for tiled displays is running the <i style="font-weight: bold;">distributed multihead x11</i> (DMX) system.
+  See the "<a href="#DMX">DMX"</a> for more information. Chromium
+  can be compiled to automatically detect and use <a href="#DMX">DMX</a> capabilities, automatically launching <b style="font-style: italic;">crserver</b>s on the back-end nodes,
+  providing for a seamless and scalable tiled display experience
+  for end users. We at LLNL have found this to be an ideal union of
+  technologies.</p>
+
+  <p>In some cases, using <b>crappfaker</b> to launch your OpenGL
+  application can be cumbersome due to application launching
+  constraints. In this case, you need to replicate manually what
+  <b>crappfaker</b> does for you. Execute the following commands
+  (Linux illustrated here):</p>
+
+  <p>% cd lib/Linux<br>
+  % ln -s libcrfaker.so libGL.so.1<br>
+  % setenv LD_LIBRARY_PATH <b>chromium</b>/lib/Linux<br>
+  <br>
+  On Linux, the standard system OpenGL is named <b>libgl.so.1</b>.
+  Other Oses have different, but similar, names. The Chromium
+  library that resolves the OpenGL API and starts the ball rolling
+  is its "faker" library, <b>libcrfaker.so</b>. Placing the
+  Chromium <b>lib/os</b> directory in the <b>LD_LIBRARY_PATH</b>
+  causes the runtime linker to find the Chromium faker library
+  instead of the System's OpenGL. The <span style="font-weight: bold;">LD_PRELOAD</span> environment variable can
+  also be useful for this purpose. With this setup, you can launch
+  your OpenGL application normally. Many people use this launch
+  method exclusively, relying on <b>crappfaker</b> in only rare
+  circumstances.<br>
+  <br></p>
+
+  <h2><a name="mozTocId487023" class="mozTocH2" id="mozTocId487023"></a> DMX<a name="DMX" id="DMX"></a></h2><img src="frontal_small.jpg" alt="DMX Distributed X11 Server Providing a Single, Continuous Desktop Over Six XFree86 Servers" style="width: 600px; height: 330px;" align="middle">
+
+  <p><b>DMX Distributed X11 Server Providing a Single, Continuous
+  Desktop Over Six XFree86 Servers</b><br clear="all">
+<br clear="all">
+<br>
+DMX is a proxy X server that controls multiple back-end X servers
+  that make up a tiled display. To an application, DMX appears as a
+  normal X server. All X11 requests are directed to the appropriate
+  back-end X server for resolution.DMX contains a GLX
+  implementation called GLXProxy. This implementation is a
+  broadcast-only system, meaning that all OpenGL requests are sent
+  to all back-end servers. While this is not scalable to large
+  numbers of back-end servers, it does provide capability and
+  usefulness for smaller tiled displays.</p>
+
+  <p>Chromium bridges the gap to larger displays. It detects DMX
+  and queries the name and location of the back-end X servers. It
+  then sets up the <i>tilesort</i> SPU to communicate with the
+  back-end servers directly, bypassing DMX. Using <b>autostart</b>,
+  Chromium can also be set up to automatically spawn a mothership
+  and the back-end <b>crserver</b>s on the nodes. As the DMX window
+  is moved and resized, Chromium recomputes the tile layout for the
+  <i>tilesort</i>er and the servers. A movie showing a tiled
+  display running in this mode is available at the URL shown at the
+  bottom of the <a href="#Resources">Resources section</a>.<br>
+  For more information in running DMX, see <a href="http://dmx.sourceforge.net/dmx-start.html">Getting started with
+  DMX.</a><br></p>
+
+  <h2><a name="mozTocId214849" class="mozTocH2" id="mozTocId214849"></a>What if it's not working ?<br></h2>Chromium
+  works with a large number of applications, clusters, and network
+  configurations, but it's not foolproof. Sometimes an application
+  that works just fine outside of Chromium will display strange
+  results when Chromium is added to the mix. Other times, the
+  introduction of a tiled display can reveal artifacts. This
+  section is a laundry list of things to try when Chromium isn't
+  acting the way you expect.
+
+  <p>First, try out some of the test applications that come with
+  Chromium. Use your Chromium network, but run <i>atlantis</i> or
+  <i>city</i> instead. If your application is parallel, you might
+  try the <i>psubmit</i> application. If a test application works,
+  then the problem probably has to do with the way your application
+  makes OpenGL calls.</p>
+
+  <p>Chromium has primarily been developed and debugged on Linux
+  and other UNIX platforms. While it does work on Windows, there
+  are known problems. Most notably, display lists are problematic.
+  If at all possible, try using Linux instead.</p>
+
+  <p>If you're experiencing trouble, be sure to compile Chromium
+  with the <b>RELEASE</b> option in <b style="font-weight: bold;">options</b><span style="font-weight: bold;">.mk</span> turned off. This will enable
+  extra debugging information that can be useful in times of
+  trouble. Chromium can be extremely verbose in this mode, but
+  sometimes the warning messages will tell you something helpful.
+  Additionally, setting the <b>CR_DEBUG</b> environment variable
+  causes some extra warnings to be printed to standard error.</p>
+
+  <p>If your application uses OpenGL selection or feedback, you
+  have be sure to add the <i>feedback</i> SPU to your network. This
+  SPU implements those features.</p>
+
+  <p>Try inserting the <i>print</i> SPU into your network at
+  various points. As mentioned in the "Useful SPUs" sidebar, the
+  <i>print</i> SPU writes a human-readable version of the OpenGL
+  stream to a file. This can be valuable if you aren't entirely
+  sure what's in the stream. More than one <i>print</i> SPU can
+  help determine how the stream is being processed through the
+  pipeline.</p>
+
+  <p>The problem might have to do with interaction with your
+  vendor's OpenGL driver. Try using Mesa instead of the system's
+  OpenGL, and set the <b>MESA_DEBUG</b> environment variable to
+  print warnings to standard error. Try increasing the size of the
+  global Chromium MTU. This has implications for the network layers
+  of Chromium. The optimum setting is dependent on your switch
+  fabric, though this is a bit of black magic. Sometimes this can
+  "magically" fix problems with <i>tilesort</i>.<br></p>
+
+  <p><span style="font-family: monospace;">cr =
+  CR()</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">cr.MTU(1024*1024)</span><br></p>
+
+  <p>If you're having problems with the <i>tilesort</i>er, try
+  setting it to "broadcast" mode. In this mode, all geometry is
+  sent to all tiles, regardless of layout:<br></p>
+
+  <p><span style="font-family: monospace;">tilesort =
+  SPU("tilesort")</span><br style="font-family: monospace;">
+  <span style="font-family: monospace;">tilesort.Conf("bucket_mode",
+  "broadcast")<br></span></p>
+
+  <p><span style="font-family: monospace;">For other problems try
+  the <a href="FAQ.html">FAQ.</a><br></span></p>
+
+  <p>If all else fails, try the mailing lists. Chromium developers
+  are generally pretty good about helping people. The Chromium
+  User's list is <a href="mailto:chromium-users@lists.sourceforge.net"><b>chromium-users@lists.sourceforge.net</b></a>
+  and the Chromium Developer's list is <a href="mailto:chromium-dev@lists.sourceforge.net"><b>chromium-dev@lists.sourceforge.net</b></a>.
+  Be sure to have tried some simple apps like atlantis and city
+  first. You should also include your mothership configuration file
+  so that people can understand how your network is laid
+  out.<br></p>
+
+  <p>If you are having problems with DMX, then see the <a href="http://dmx.sourceforge.net/FAQ">DMX FAQ</a>.<br></p>
+
+  <h2><a name="Bio" id="Bio"></a>Bio</h2>Sean Ahern is a Computer
+  Scientist at Lawrence Livermore National Laboratory doing
+  research in distributed visualization. He can be reached at
+  <a href="mailto:seanahearn@llnl.gov"><b>seanahern@llnl.gov</b></a>. This
+  work was performed under the auspices of the U.S. Department of
+  Energy by University of California, Lawrence Livermore National
+  Laboratory under Contract W-7405-Eng-48. UCRL-JRNL-204299<br>
+
+  <h2><a name="Resources" id="Resources"></a>Resources</h2>Chromium
+  home page: <a href="http://chromium.sourceforge.net"><b>http://chromium.sourceforge.net/</b></a><br>
+
+  What's new in version 1.7: <a href="http://chromium.sourceforge.net/presentations/SantaFe-BrianPaul/siframes.html">
+  <b>http://chromium.sourceforge.net/presentations/SantaFe-BrianPaul/siframes.html</b></a>
+  <a><br>
+  Original Chromium paper:</a> <a href="http://graphics.stanford.edu/papers/cr/"><b>http://graphics.stanford.edu/papers/cr/</b></a><br>
+
+  Distributed Multihead X11: <a href="http://dmx.sourceforge.net/"><b>http://dmx.sourceforge.net/</b></a><br>
+
+  Using Chromium with DMX on a Tiled Display (movie): <a href="http://www.llnl.gov/icc/sdd/img/images/Cr_Tiled_Small.mpg"><b>http://www.llnl.gov/icc/sdd/img/images/Cr_Tiled_Small.mpg</b></a><br>
+
+  <br>
+</body></html>

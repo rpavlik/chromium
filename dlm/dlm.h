@@ -18,20 +18,21 @@ extern CRDLMContextState *CRDLMCurrentState;
 #define CURRENT_STATE() (CRDLMCurrentState)
 #endif
 
-/* These are the dispatch tables built using dlm_dispatch.py. */
+/** These are the dispatch tables built using dlm_dispatch.py. */
 #if 000
 extern SPUDispatchTable dlm_dispatch_pass,
     dlm_dispatch_compile,
     dlm_dispatch_compileAndExecute;
 #endif
 
-/* These are API functions that we'll use */
+/** These are API functions that we'll use */
 /* Declarations for API-level functions, installed with the dispatch table */
 /***void DLM_APIENTRY crdlm_ListBase(GLuint listBase);***/
 void DLM_APIENTRY crdlm_EnableClientState(GLenum array);
 void DLM_APIENTRY crdlm_DisableClientState(GLenum array);
 
-/* These routines are intended to be used within the DLM library, across
+/**
+ * These routines are intended to be used within the DLM library, across
  * the modules therein, but not as an API into the DLM library from
  * outside.
  */

@@ -18,14 +18,14 @@
  * image out of the framebuffer and glTexImage to redefine the texture.
  */
 
-/*
- * XXX to do
+/**
+ * XXX \todo
  * Make sure that pixel pack/unpacking are set correctly for the
  * ReadPixels and glTexImage calls.
  */
 
 
-/*
+/**
  * Return the basic format of a texture internal format.
  */
 static GLenum baseFormat(GLint intFormat)

@@ -3,6 +3,16 @@
  *
  * See the file LICENSE.txt for information on redistributing this software.
  */
+/**
+ * \mainpage MothershipClient 
+ *
+ * \section MothershipClientIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The mothership client module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
+ */
 
 #include "cr_string.h"
 #include "cr_error.h"

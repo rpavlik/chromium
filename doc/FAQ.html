@@ -1,0 +1,844 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html><head>
+  
+  
+  <meta name="generator" content="HTML Tidy for Linux/x86 (vers 1st June 2004), see www.w3.org">
+
+
+  
+  
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=us-ascii">
+  <title></title>
+
+  
+
+
+  
+  
+  
+  <meta name="GENERATOR" content="OpenOffice.org 1.1.0 (Linux)">
+
+
+  
+  
+  <meta name="CREATED" content="20040623;12470600">
+
+
+  
+  
+  <meta name="CHANGEDBY" content="Alan Matsuoka">
+
+
+  
+  
+  <meta name="CHANGED" content="20040623;12481900">
+
+
+  
+  <style type="text/css">
+        <!--
+                @page { size: 8.5in 11in; margin-left: 1.25in; margin-right: 1.25in; margin-top: 1in; margin-bottom: 1in }
+                P { margin-bottom: 0.08in }
+        -->
+  </style></head><body lang="en-CA" dir="ltr">
+  
+<h1><a name="mozTocId762367" class="mozTocH1" id="mozTocId762367"></a>Frequently Asked Questions</h1>
+
+<p>The following questions and their corresponding answers were gleaned
+from the chromium-devel and chromium-user mailing lists over the last
+couple of years.<br>
+</p>
+
+
+
+  
+<ol id="mozToc">
+
+
+    <!--mozToc h1 1 h2 2 h3 3 h4 4 h5 5 h6 6-->&nbsp;<a href="#mozTocId762367"></a>
+
+      <ol>
+        <li><a href="#mozTocId480292">What if it's not
+        working?</a></li><li><a href="#migrate1">I've had problems migrating from 1.6 to 1.7</a></li>
+
+
+        
+
+        <li><a href="#mozTocId872811">NV 5336 drivers and
+        RH9.0</a></li><li><a href="#mozTocId872811">I'm using the latest NVIDIA
+        driver and my app segfaults.</a></li>
+
+
+        <li><a href="#mozTocId628236">We are trying to get the
+        muralreadback running on a linux cluster</a></li>
+
+        <li><a href="#mozTocId782449">My application dumps core on
+        textures (Textures too large).</a></li>
+
+        <li><a href="#mozTocId72468">How do I profile Chromium
+        ?</a></li>
+
+        <li><a href="#mozTocId989985">I get multiple renderspu
+        windows when running with freeglut.</a></li>
+
+        <li><a href="#mozTocId62008">chromium really doesn't like
+        closing through myrinet</a></li>
+
+        <li><a href="#mozTocId865713">32 - 64 Bit
+        interoperability</a></li>
+
+        <li><a href="#mozTocId62798">Opteron Fedora Core 2</a></li>
+
+        <li><a href="#mozTocId482738">I'm having problems running
+        Chromium with the Cg extensions</a></li><li><a href="#cg2">I'm&nbsp; running Chromium and tilesort with
+  the Cg extensions and I'm see two of everything</a><br>
+      </li>
+
+
+        <li><a href="#mozTocId603185">Chromium with NVIDIA under RH
+        9?</a></li>
+
+        <li><a href="#mozTocId168375">Chromium on SGI Altix</a></li>
+
+        <li><a href="#mozTocId723944">Chromium on Mac OS X</a></li>
+
+        <li><a href="#mozTocId162825">The frames are out of sync.
+        How can I get then synchronized ?</a></li></ol>
+    
+  
+</ol>
+
+<br>
+
+
+<hr style="width: 100%; height: 2px;">
+
+  
+<h2><a name="mozTocId480292" class="mozTocH2" id="mozTocId480292"></a>Q:What if it's not working ?<br>
+</h2>
+
+<br>
+
+
+<p><span style="font-weight: bold;">A: </span>Chromium has primarily been developed and debugged on Linux and
+other UNIX platforms. While it does work on Windows, there are known
+problems.</p>
+
+
+<p>Most notably, display lists are problematic. If at all possible, try using Linux instead. <br>
+</p>
+
+
+<p>If you're experiencing trouble, be sure to compile Chromium with the
+RELEASE option in options.mk turned off.This will enable extra
+debugging information that can be useful in times of trouble. Chromium
+can be extremely verbose in this mode, but sometimes the warning
+messages will tell you something helpful. Additionally, setting the
+CR_DEBUG environment variable causes some extra warnings to be printed
+to standard error.</p>
+
+
+<p>If your application uses OpenGL selection or feedback, you have be
+sure to add the feedback SPU to your network. This SPU implements those
+features.<br>
+</p>
+
+
+<p>Try inserting the print SPU into your network at various points. As
+mentioned in the "Useful SPUs" section the print SPU writes a
+human-readable version of the OpenGL stream to a file. This can be
+valuable if you aren't entirely sure what's in the stream. More than
+one print SPU can help determine how the stream is being processed
+through the pipeline.<br>
+</p>
+
+
+<p>
+The problem might have to do with interaction with your vendor's OpenGL driver. <br>
+</p>
+
+
+<p>Try using Mesa instead of the system's OpenGL, and set the
+MESA_DEBUG environment variable to print warnings to standard error.
+Try increasing the size of the global Chromium MTU. his has
+implications for the network layers of Chromium. The optimum setting is
+dependent&nbsp; on your switch fabric, though this is a bit of black
+magic. Sometimes this can "magically" fix problems with tilesort.</p>
+
+
+
+
+<pre> cr = CR()<br> cr.MTU(1024*1024)<br><br></pre>
+
+
+<p>If you're having problems with the tilesorter, try setting it to
+"broadcast" mode.&nbsp; In this mode, all geometry is sent to all
+tiles, regardless of layout:</p>
+
+
+
+<pre><br>tilesort = SPU("tilesort")<br>tilesort.Conf("bucket_mode", "broadcast") <br></pre>
+<br>
+
+<hr style="width: 100%; height: 2px;">
+<h2><a name="migrate1"></a>Q: I've had problems migrating from 1.6 to 1.7</h2>
+
+<span style="font-weight: bold;">A:</span> You may have to set the display_string parameter for render spu in your config file.<br>
+
+<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<h2><a name="mozTocId733445" class="mozTocH2" id="mozTocId733445"></a>Q: NV 5336 drivers and RH9.0</h2>
+
+
+  
+<p>Was it ever established that the 5336 drivers worked with Cr-1.5 </p>
+
+
+<p>Was it ever established that the 5336 drivers worked with Cr-1.5 or
+1.6 under RH9 with e.g. the NV 980XGL or 3000's? I'm seeing nearly
+immediate segfaults (floating point exception), booted either SMP
+or&nbsp; uni. Cr is fine with the 4496 drivers.<br>
+
+<br><span style="font-weight: bold;">
+
+A: </span>The problem depends on which driver you have installed.<br>
+
+<br>
+I found that the 53.xx drivers always crashed when a render (or
+readback) SPU was used on an application node (ala sort-last). But the
+driver worked fine when the render SPU was on a network node (ala
+sort-first). Others report crashes no matter which configuration they
+used.<br>
+
+<br>
+The thread local storage issue (RH9) is another dimension to the
+problem. I'm still on RH8 and haven't seen it first hand, but setting
+CR_SYSTEM_GL_PATH to /usr/lib/tls/ fixes some problems on RH9.<br>
+
+NVIDIA's aware of the problem and it should be fixed in a future driver.<br></p>
+
+<br>
+
+
+<h2><span style="font-weight: bold;">or 1.6<span style="font-weight: bold;"> </span>under RH9 with e.g. the NV 980XGL or 3000's?</span></h2>
+
+<p><span style="font-weight: bold;">&nbsp;<br>
+</span>I'm seeing nearly immediate segfaults (floating point exception), booted either SMP or uni. Cr is fine with the 4496 drivers.</p>
+
+
+<p><span style="font-weight: bold;">
+A: </span>The problem depends on which driver you have installed.<br>
+
+<br>
+I found that the 53.xx drivers always crashed when a render (or
+readback) SPU was used on an application node (ala sort-last). But the
+driver worked fine when the render SPU was on a network node (ala <br>
+
+sort-first).<br>
+
+<br>
+
+Others report crashes no matter which configuration they used.<br>
+
+<br>
+The thread local storage issue (RH9) is another dimension to the
+problem. I'm still on RH8 and haven't seen it first hand, but setting
+CR_SYSTEM_GL_PATH to /usr/lib/tls/ fixes some problems on RH9. NVIDIA's
+aware of the problem and it should be fixed in a future driver.&nbsp;</p>
+
+
+<br>
+
+
+<hr style="width: 100%; height: 2px;">
+<h2><a name="mozTocId872811" class="mozTocH2" id="mozTocId872811"></a>Q: I'm using the latest NVIDIA driver and my
+  app segfaults.</h2>
+
+
+  
+<p><br>
+<span style="font-weight: bold;">
+A:</span> It appears that any
+configuration that uses the render SPU on a crappfaker node leads to a
+segfault inside the NVIDIA glXMakeCurrent function. In particular,
+sort-last configurations aren't working. <br>
+
+<br>
+I've been digging into this today but I still haven't figured out the
+root of the problem. I'd like to try to narrow down the problem a bit
+further before reporting it to NVIDIA. In the mean time, it might be
+best to stick with the 44.96 drivers. <br>
+</p>
+
+
+<hr style="width: 100%; height: 2px;">
+<p><br>
+
+<br>
+
+</p>
+
+
+
+
+  
+<h2><a name="mozTocId628236" class="mozTocH2" id="mozTocId628236"></a>Q: We are trying to get the muralreadback
+  running on a linux cluster</h2>
+
+
+  
+<p> (gigabit-eth, nvidia) , but there ist seems to be a performance
+problem. All applications we tested result in an framerate of 3-6 fps.
+There have been ails in this list regarding this problem but no
+solution was replied. Can anyone give me a hint how to solve this
+performace problem ?<br>
+
+<br>
+<span style="font-weight: bold;">
+A:</span> There are LOTS of
+dependencies here. If you are reading back in RGB mode, Nvidia and ATI
+boards will only get you ~150MB/s. RGBA is a little faster on Nvidia
+boards and is a LOT faster on ATI boards (600+MB/s). Depth readback on
+both boards is very slow, ~80MB/s. Now, the network transmit doesn't
+overlap the readback, so things start to get really slow. Basically, if
+you are doing RGB readback and transmit of 1024x1024 images over GigE,
+you will only get ~20fps in the best case. This assumes that rendering
+in your application is free. However, if your app runs at ~20fps, then
+the total cost of rendering + readback + network transmit will yield
+about 10fps. And I'm of course discounting the drawpixels cost I'm
+assuming you are doing on each frame, but this tends to be fast.<br>
+
+<br>
+Faster readback, by switching to RGBA readback and avoiding depth
+readback, or using different hardware will help. A faster network will
+also help. I've yet to see PCI Express boards that deliver better
+readback performance, but it is promised from both vendors. <br>
+
+<br>
+The readback SPU also supports bounding box reads if you can
+supply&nbsp; them. I believe it can do both object space as well as
+screen space bounding boxes. This can help limit the cost of readbacks
+to only the pixels that actually matter.<br>
+
+<br>
+
+    Here is the list of things to try:<br></p>
+
+<ol>
+
+  <li>use RGBA readback even if you don't need alpha</li>
+  <li>don't use depth readback, or try to use the extensions that can copy depth to color and issue a color readback</li>
+  <li>define screen space or object space bounding boxes when possible to only readback the pixels you REALLY need</li>
+  <li>get a faster network/switch graphics boards (if on ATI run the 3.2.8
+drivers which provide the faster readback rates by far)</li>
+  <li>try to get the vendors to support async readback so that you can
+overlap render and readback from different buffers (I've had talks with
+both about this)</li>
+  <li>try compressing the framebuffers for network transmit using the zpix
+SPU in PLE/RLE mode or role your own fast compression.</li>
+</ol>
+
+<p>
+
+<br>
+
+<br>
+</p>
+
+
+
+<hr style="width: 100%; height: 2px;"><br>
+
+
+<h2><a name="mozTocId782449" class="mozTocH2" id="mozTocId782449"></a>Q: My application dumps core on
+  textures (Textures too large).</h2>
+
+
+  
+<p>Q: I'm getting a: "An operation on socket was not performed because
+system lacks sufficient buffer space or a queue was full" "Bad juju: 0
+... on sock 728"<br>
+
+<br>
+I am getting this on the crserver side, when try to run an application
+through chromium using crdemo.conf. I start the appfaker, the
+application tries to execute (it's initial window appears), then it
+crashes with the above message.<br>
+
+<br>
+I attempted to make the MTU smaller &amp; larger, but this did not
+affect the results. I believe it is an MTU size issue. Is that right?
+or are there other things which would cause this error?&nbsp;</p>
+
+
+<p> One thing I do not understand is that the same application, running
+with crdemo.conf, works fine on a machine with an old nVidia card. My
+problems occur when running on a different machine with an ATI card, as
+well as with a 3000G card. I am running Windows on each of these
+machines.<br>
+
+<br>
+The application I am trying to run is a simple texture map of a single
+bitmap. I have 2 different bitmaps, one is 28.6 MB, the other is 151 MB.<br>
+
+<br>
+I can run the application using my 28.6 MB .bmp through Chromium just
+fine. The 151 MB .bmp is the one that bails out. Both cases run fine
+without Chromium. Thus, I believe it must be an issue with Chromium's
+handling of such a large image. <br>
+
+<br>
+
+It is not a video card issue, as I first thought. The large image doesn't run through Chromium on either of my setups.<br>
+&nbsp;<br>
+</p>
+
+
+<p>
+      Is there a known limit to image sizes Chromium can handle? I am also wondering if it has to do with the Windows OS?</p>
+
+
+<p><span style="font-weight: bold;">
+A</span>:      gluBuild2DMipmaps() will scale your image down to the max supported<br>
+
+ texture size. Otherwise, passing images that are too large to glTexImage2D will generate a GL error.<br>
+
+<br>
+
+<br></p>
+
+<hr style="width: 100%; height: 2px;">
+<p><br>
+
+</p>
+
+
+
+
+  
+<h2><a name="mozTocId72468" class="mozTocH2" id="mozTocId72468"></a>Q: How do I profile Chromium ?</h2>
+<span style="font-weight: bold;">A: </span>The best way to profile Chromium is to use oprofile (see <a href="http://oprofile.sourceforge.net">http://oprofile.sourceforge.net</a>)&nbsp;
+Read the docs carefully before proceeding.&nbsp; Will&nbsp; Cohen
+at&nbsp; Red Hat has very kindly put up copies of his OProfile
+tutorials at <a href="http://people.redhat.com/wcohen/">http://people.redhat.com/wcohen/. </a><br>
+
+<br>
+
+There are several things to remember when using oprofile (from Will's FAQ):
+<br>
+
+<br>
+
+<ol>
+
+  <li>
+OProfile does not work with every kernel. The OProfile RPMs do not contain the oprofile device drivers for the kernel.
+The RH kernel must have the oprofile driver for OProfile to work. So far, only the RH 8.x
+kernel and newer distributions of RH Linux have the required OProfile
+device drivers in the kernel. <br>
+    <ul>
+      <li>The 2.5.46 Linux kernel has incorporated
+OProfile; this is incompatible with the OProfile RPMs for initial 8.0
+distribution. </li>
+      <li>The Linux 2.4.20 kernels used in RH 9 has a back port of the
+2.5.46 Linux kernel mechanism.&nbsp; <span style="font-weight: bold;">DO NOT MIX&nbsp;</span> the RH 8.0 and RH 9 RPMs for
+the kernel and OProfile. </li>
+      <li>The RHEL kernels use the 2.5 mechanism also. OProfile is also available for Fedora.</li>
+    </ul>
+  </li>
+  <li>
+For the Pentium 4 processors, the initial release of the RH 8.0 RPMs
+used an older version of the software and only provide OProfile support
+throught the RTC. To use OProfile on a Pentium 4 with RH Linux 8.0 you
+will need include the <span style="font-weight: bold;">"nortc" </span>option as a kernel option in the grub.conf
+or lilo.conf file. Without this kernel option, the RTC module takes
+over the RTC hardware and OProfile will be unable to use the hardware
+to collect measurements. The newer OProfile rpms (oprofile-0.4-xxx and
+oprofile-0.5.1-xxx), Linux 2.4.20 in RH Linux 9, and RHEL kernels support
+Pentium 4 processors (including processors with Hyper-Threading).
+
+  </li>
+  <li>Although OProfile is designed to collect data on SMP machines,
+there is nothing to prevent the use of OProfile on uniprocessor
+machines. If you are running a Red Hat supplied kernel,&nbsp; the only
+kernels that have OProfile support enabled are&nbsp; the
+Symmetric&nbsp; Multi-Processor (SMP) kernels. The uniprocessor kernels
+do not have OProfile support enabled because some laptops have problems
+with OProfile. However, if the SMP kernel will run on your laptop, you
+can use OProfile as you would on any other system.<br>
+ OProfile
+sets up the performance monitoring hardware on each processor using the
+same configuration for each event being monitored, e.g. processor clock cycles and
+the interval between samples. Each processor will collect samples
+locally. The OProfile sample data does not include information about
+which processor the sample was taken on. 
+
+    <br>
+The RTC mechanism (used when the processor's performance monitoring
+hardware is unsupported) operates differently than the performance
+monitoring hardware driver. The RTC mechanism does not do a very good
+job
+collecting data on SMP machines because the RTC interrupt only
+interrupts
+one of the processors. On a multiprocessor machine, only one processor
+gets sampled for each RTC interrupt and there is no guarantee as to
+which
+processor gets sampled. This RTC mechanism was only used on the initial
+RHL
+8.0 distribution. The TIMER_INT mechanism used on RHL 9 and RHEL,
+(which is a fall-back mechanism on newer kernels) works on SMP machines
+and will collect data on all of the processors.<br>
+  </li>
+  <li>To start OProfile, you must have root privileges to start the OProfile
+data collection.<br>
+  There is a GUI interface, <span style="font-weight: bold;">oprof_start</span> and a command line
+interface, <span style="font-weight: bold;">op_start</span> (RH 8.0) and <span style="font-weight: bold;">opcontrol</span> (RH 9 and RHEL). <span style="font-weight: bold;">oprof_start
+    </span>is a bit simpler to use. Note that you should&nbsp; flush the data
+with "<span style="font-weight: bold;">op_dump</span>" to be able to analyze it.</li>
+  <li>
+
+As a first pass, most people are interested in finding out where their
+program spends its time.&nbsp;</li>
+  <ul>
+    <li>For Pentium Pro, Pentium II, and Pentium III: Measure CPU_CLK_UNHALTED event. <br>
+    </li>
+    <li>For the AMD processors:  
+	Measure CPU_CLK_UNHALTED.  The RTC support is time based, 
+	so just set it for a power of two HZ, e.g. 512 to 
+	get time based measurements. <br>
+    </li>
+    <li>For  Pentium 4 processors: Measture GLOBAL_POWER_EVENTS. <br>
+    </li>
+    <li>For ia64: Measure CPU_CYCLES. With the TIMER_INT
+	mechanism there is no choice, only time based samples are taken.
+
+    </li>
+  </ul>
+  <li>
+If you want to get a better understanding why it is spending time in
+specific regions of code, you can look at other events such as
+instruction or data cache misses, conditional branch mispredictions,
+pipeline flushes, and instructions retired. A listing of the available
+events can be obtained from the <span style="font-weight: bold;">op_help</span> command. To get a look at the collected data&nbsp; you can get a summary of executables run on the machine by using&nbsp; the <span style="font-weight: bold;">op_time</span> command. For more detailed analysis of a specific executable see <span style="font-weight: bold;">oprofpp</span> or <span style="font-weight: bold;">op_to_source</span>.</li>
+</ol>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<h2><a name="mozTocId989985" class="mozTocH2" id="mozTocId989985"></a>Q: I get multiple renderspu windows when running with freeglut .</h2>
+
+
+
+When I run crdemo.conf on a Fedora Core 2 system running Xorg,
+the&nbsp; default crdemo.conf puts up two render spu windows + the app
+window. Under Fedora Core 1 running XFree, the normal app window + one
+single render spu window comes up. If I run the appfaker on the FC1
+system and the server on the FC2 system, I get the app window on the
+FC1 system and&nbsp; a single renderspu window on the FC2 system.
+However, if I run the appfaker on the FC2 system and the server on the
+FC1 system, I get the app window on the FC2 system and two renderspu
+windows on the FC1 machine. This gets really funky with tilesort spus
+and multiple hosts, so I though I would start with the simple case.<br>
+
+
+
+<br>
+
+
+
+Has anyone else seen this behavior?  Any ideas on how to fix it?  I'm 
+currently running ATI boards with 3.7.6 drivers on all systems involved.<br>
+
+&nbsp;<br>
+
+<span style="font-weight: bold;">A: </span>Say NO to FreeGLUT!
+Everything is working again with RH9's glut package. What the heck is
+wrong with how freeglut works?... grumble, grumble.<br>
+
+
+<br>
+
+Looks like the second window/context comes from the freeglut menu code.
+The original GLUT used Xlib to draw its pop-up menus but freeglut uses
+OpenGL. A fix was applied on June 27/2004.<br>
+
+
+<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+
+
+
+
+  
+<h2><a name="mozTocId62008" class="mozTocH2" id="mozTocId62008"></a>Q: Chromium really doesn't like closing
+  through myrinet</h2>
+
+
+The next problem i've come into now is that chromium really doesn't
+like closing through myrinet. Whenever I try exiting a program (which
+have only been the bundled test programs so far) all the cluster
+machines freeze&nbsp; and I have to manually ssh to each of them and
+kill all user tasks. At&nbsp; one point there were 2 computers that I
+couldn't even log into and had&nbsp; to reboot them manually. In
+TCP/IP, all I did to close the program was use the command through the
+gui, or a simple ctrl+c on the python script and the app faker and all
+was well. Is there something i'm doing wrong when closing the program?
+Surely using the simple "exit" command from the program itself
+shouldn't be causing this big a problem. It's getting to be a pain to
+manually go in each server and end all tasks every time I do a test
+run. What could be going wrong?<br>
+
+<br>
+<span style="font-weight: bold;">
+A</span>: Alas, this is "normal behavior". The main issue here is that GM
+layer&nbsp; can't figure out for sure when a connection has been
+dropped like TCPIP does. GM is a "connectionless" layer. Eventually,
+the boards will timeout on receives and the apps will exit, at least
+they do on my cluster after about 15 seconds. There is not a clean way
+that I have found to handle bailing out. The problem is that all the
+nodes end up waiting, blocked or spinning, on a receive. There is no
+easy way to send a tcpip packet to them and get them to bail out. One
+easy fix is to setup autostart in the conf file as well as an autokill
+with the mothership goes way. This is how we kill things off on our
+cluster. <br>
+
+<br>
+
+There are several options if you want to move away from the GM layer.
+You can run IP over GM using the IP support in the driver and then use
+the tcpip layer. Or, you can try running the new SDP layer with Sockets
+GM, which is also in the (new?) driver.<br>
+
+<br>
+
+The main issue with the GM layer is that very few people currently use
+it and the documentation from Myricom on their hardware is really bad.
+There are a few people trying to work out MPI layers for Chromium, so
+that might solve our problems in general with highspeed layers as
+theytend to ship with solid MPI support.<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<h2><a name="mozTocId865713" class="mozTocH2" id="mozTocId865713"></a>Q: 32 - 64 Bit interoperability</h2>
+
+
+  
+<p>The head done of our Chromium cluster (display wall) is a node
+inside a Beowulf cluster. This way we can run code and visualize it at
+the same time. We just upgraded our Beowulf cluster from Athlons to
+Opterons. The Chromium cluster, except for the head node, is still
+running P4s. I compiled Chromium 1.7 on the Opteron box, running Fedora
+Core 2 for X86_64, and tried to run the demos on the Chromium cluster
+to some interesting results. The "X" that represents the mouse on the
+X-displays of the cluster disappears once I run Atlantis but no image
+is displayed on the wall. On the head node I see the Atlantis demo
+running and I get stats on fsp from Atlantis.<br>
+</p>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; I'm wondering if it might just be that
+the head node, being 64 bit, is not playing nice with the 32 bit
+cluster behind it. Any suggestions of fixes that I might be able to
+make?<br>
+
+<br>
+
+<span style="font-weight: bold;">A:&nbsp;</span> We had to change our python script with Chromium 1.7.  We have something like the following:
+<pre><br><br><br>      render_spu = SPU ('render')<br>      render_spu.Conf ('display_string', 'catacomb00:0')<br>      render_spu.Conf ('window_geometry', [0, 0, 1600, 2400])<br>      render_spu.Conf ('system_gl_path', '/usr/lib/tls')</pre>
+
+Are you setting the display string with each render spu?<br>
+
+<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<h2><a name="mozTocId62798" class="mozTocH2" id="mozTocId62798"></a>Q: Opteron Fedora Core 2</h2>
+
+
+Has anyone been able to compile Chromium under Fedora Core 2 on an
+Opteron box? I think the problem might be that gcc is trying to link
+against the 32 bit libraries instead of the 64 bit ones.<br>
+
+<br>
+
+<span style="font-weight: bold;">A: </span>Yep. Worked for me once I
+installed freeglut and set the CR_SYSTEM_GL_PATH environment variable
+to /usr/lib64/tls. I've had strange problems with Fedora 2 and the
+nVidia drivers, though... after installing the NVIDIA patches from
+minion.de, I get hardware accelerated 3D (i.e., NVIDIA reported as the
+vendor by glxinfo and reasonable speeds for OpenGL applications) but
+horrible 2D performance. The only exception seems to be Chromium, which
+is as slow as most 2D apps (14 fps on atlantis). I guess I'll have to
+wait for nVidia's next driver release because they don't officially
+support 2.6 kernels on the AMD64 yet. But if anyone has suggestions...<br>
+
+<br>
+
+<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<h2><a name="mozTocId482738" class="mozTocH2" id="mozTocId482738"></a>Q: I'm having problems running Chromium with
+  the Cg extensions.</h2>
+
+
+  Hi. I have just installed Chromium 1.6 (due to segmentation faults
+with 1.7) and am attempting to run an OpenGL application with a simple
+vertex shader across a mural. My experience with Chromium is inimal, so
+please excuse my naiveness.<br>
+
+<br>
+
+<span style="font-weight: bold;">A: </span>Try running glxinfo. Are you sure the right extensions are available on your cluster ? <br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Erm... You're right. The cluster machines don't support any
+vertex_program extensions. (I'm sorry to not have known this.) This
+makes sense -- I've been compiling on a machine that does
+support&nbsp;&nbsp;&nbsp;&nbsp; vertex programs, but when the program
+is propagated by the mothership out to the cluster, it's just rendering
+normally. That is, without the vertex shader.<br>
+
+<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<h2><a name="cg2" class="mozTocH2" id="mozTocId482738"></a>Q: I'm&nbsp; running Chromium and tilesort with
+  the Cg extensions and I'm see two of everything<br>
+</h2>
+
+<span style="font-weight: bold;">A: </span>Look at <a href="../mothership/configs/simplemural.conf">simplemural.conf</a>&nbsp; make&nbsp; sure that you have <br>
+
+<br>
+
+node.Conf('vertprog_projection_param', 'ModelViewProj') <br>
+
+<br>
+
+enabled.<br>
+
+
+<hr style="width: 100%; height: 2px;">
+<h2><a name="mozTocId603185" class="mozTocH2" id="mozTocId603185"></a>Q: Chromium with NVIDIA under RH 9?</h2>
+
+
+   I'm trying to bring up Chromium on a RedHat 9 system, and
+apparently they have gone from glibc version 2.2 to 2.3 in this
+transition. Apparently thread level storage (TLS) is handled
+differently at the new revision, and this is causing serious confusion
+for the fit between Chromium and libGLcore for NVIDIA support. I've
+appended a chunk of the NVIDIA README text on the subject.&nbsp; Has
+anyone successfully run Chromium with NVIDIA drivers under RH 9?<br>
+
+<br>
+
+<span style="font-weight: bold;">A: </span>Set your CR_SYSTEM_GL_PATH to /usr/lib/tls.<br>
+
+<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<br>
+
+
+
+  
+<h2><a name="mozTocId168375" class="mozTocH2" id="mozTocId168375"></a>Q: Chromium on SGI Altix</h2>
+
+
+  Has anybody any experience compiling and using Chromium on an SGI
+Altix? I am here trying to do so now on SGI ProPack Linux 3 [Red Hat
+Advanced Server 2.1] and am getting the following problems: <br>
+
+<br>
+
+ Linking ../built/crunpacker/Linux/libcrunpacker.so<br>
+
+   /usr/bin/ld: ../built/crunpacker/Linux/unpack.o: @gprel relocationagainst dynamic symbol cr_unpackData<br>
+
+<br>
+
+<span style="font-weight: bold;">A:</span> The only system that this appears on is on an IA64.<br>
+
+<br>
+
+It usually means that an object not compiled with -fPIC is linked into a shared library.<br>
+
+<br>
+
+Richard Henderson's rationale for this is as follows:<br>
+
+"Such relocations cannot be resolved by the dynamic linker,since it
+doesn't know what the GP base value is. Also, there is the implicit
+intent that the symbol was _supposed_ to be resolved locally."<br>
+
+<br>
+
+Add an -fPIC to CFLAGS in config/Linux.mk and see if that works.<br>
+
+<br>
+
+<hr style="width: 100%; height: 2px;">
+<h2><a name="mozTocId723944" class="mozTocH2" id="mozTocId723944"></a>Q: Chromium&nbsp; on Mac OS X</h2>
+
+So before I plunge into trying to port Chromium over to Mac OS X, I
+thought it would be prudent to ask if anyone has done this already. Or
+maybe the Chromium team has plans to release a Mac OS X version?<br>
+
+<br>
+<span style="font-weight: bold;">
+A:</span> It's on the list of things to do.  Much of the port has already been done.<br>
+
+--<br>
+
+<br>
+
+Greg Humphreys, Assistant Professor<br>
+
+Department of Computer Science, University of Virginia<br>
+
+http://www.cs.virginia.edu/~humper/<br>
+
+<br>
+
+<hr style="width: 100%; height: 2px;"><br>
+
+<br>
+
+<h2><a name="mozTocId162825" class="mozTocH2" id="mozTocId162825"></a>Q: I'm getting a flickering problem. What can I do ?<br></h2>
+
+
+
+  <br>
+
+I was wondering if anyone can help, I have been experimenting with a
+number of different configurations and on some I get a strange&nbsp;
+flickering when my image gets rebuilt.&nbsp; I have created a sort last
+config and it would seem that every other frame is white so the image
+flickers. I hacked about with reassemble.conf to mirror my config and
+the same happens there. <br>
+
+<br>
+
+<span style="font-weight: bold;">A:</span><br>
+
+<ol>
+
+  <li>Use Barriers to synchronize the application instances.  See progs/psubmit/psubmit.c</li>
+  <li>If you are trying to use sort-last under windows, this is a known
+problem. Something fishy happens with the SwapBuffers call under
+windows, so Chromium tries to composite twice. This behavior
+happens&nbsp; with the readback SPU and binary swap. If you run a
+'Chromium' app like psubmit, everything seems fine. The issue appears
+to be related to the application using putting up a window as well as
+the render SPU. Nobody&nbsp; has really tracked this bug down since
+people mostly use Linux.&nbsp; Under Linux, everything should be fine
+since we run a volume renderer on&nbsp; a regular basis in this setup.
+It is an unmodified glut app at themoment. Atlantis works for me as
+well.
+  </li>
+</ol>
+
+
+</body></html>

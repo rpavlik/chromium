@@ -6,8 +6,9 @@
 #include <math.h>
 
 
-/*
+/**
 ** Make m an identity matrix
+*  \param m matrix set to identity
 */
 static void tilesortMakeIdentityf(GLfloat m[16])
 {
@@ -30,9 +31,10 @@ static void tilesortMakeIdentityf(GLfloat m[16])
 }
 
 
-/*
+/**
  * When in passive stereo mode, calls to glDrawBuffer() control
  * whether we render to the right or left (or both) crservers.
+ * \param buffer buffer mode
  */
 static void
 setup_passive(GLenum buffer)
@@ -82,13 +84,13 @@ setup_passive(GLenum buffer)
 }
 
 
-/*
+/**
  * Send either the left or right stereo view/projection matrices to
  * _all_ the servers.
  * NOTE: This would not be used for a passive stereo config since in
  * that situation, the servers are designated as either being left or right.
  *
- * Input: eye - bitmask of EYE_LEFT and EYE_RIGHT
+ * \param eye - bitmask of EYE_LEFT and EYE_RIGHT
  */
 static void
 send_matrices(int eye)
@@ -163,8 +165,8 @@ send_matrices(int eye)
 			CRASSERT(eye == (EYE_LEFT | EYE_RIGHT));
 
 			if (winInfo->matrixSource == MATRIX_SOURCE_SERVERS) {
-				/* XXX should tell server to use identity matrix */
-				/* XXX this whole business is kind of broken anyway - that is,
+				/** XXX \todo should tell server to use identity matrix */
+				/** XXX \todo this whole business is kind of broken anyway - that is,
 				 * glDrawBuffer(GL_LEFT_AND_RIGHT) is really hard to deal with
 				 */
 #if 0
@@ -211,12 +213,13 @@ send_matrices(int eye)
 }
 
 
-/*
+/**
  * When running in CRYSTAL-Eyes stereo mode, do whatever's needed in response
  * to a call to glDrawBuffer().
  * This would typically only be called when force_quad_buffering is true.
  * An OpenGL app that's already quad-buffered aware (i.e. active stereo)
  * wouldn't have to set 'stereo_mode'="CrystalEyes".
+ * \param buffer buffer mode
  */
 static void
 setup_crystal(GLenum buffer)
@@ -237,6 +240,14 @@ setup_crystal(GLenum buffer)
 
 
 
+/**
+ * When running in ANAGLYPH-Eyes stereo mode, do whatever's needed in response
+ * to a call to glDrawBuffer().
+ * This would typically only be called when force_quad_buffering is true.
+ * An OpenGL app that's already quad-buffered aware (i.e. active stereo)
+ * wouldn't have to set 'stereo_mode'="Anaglyph".
+ * \param buffer buffer mode
+ */
 static void
 setup_anaglyph(GLenum buffer)
 {
@@ -285,9 +296,10 @@ setup_anaglyph(GLenum buffer)
 
 
 
-/*
+/**
  * Left half of window gets left eye's view, right half of window gets
  * right eye's view.
+ * \param buffer buffer mode
  */
 static void
 setup_side_by_side(GLenum buffer)
@@ -329,6 +341,10 @@ setup_side_by_side(GLenum buffer)
 
 
 
+/**
+ * Setup stereo buffers 
+ * \param buffer buffer to be initialized
+ */
 void
 tilesortspuSetupStereo(GLenum buffer)
 {
@@ -355,9 +371,10 @@ tilesortspuSetupStereo(GLenum buffer)
 
 
 
-/*
+/**
  * Called by applications, as well as by SwapBuffers when
  * 'force_quad_buffering' is set.
+ * \param buffer which buffer to draw
  */
 void TILESORTSPU_APIENTRY
 tilesortspu_DrawBuffer(GLenum buffer)
@@ -402,9 +419,10 @@ tilesortspu_DrawBuffer(GLenum buffer)
 
 
 
-/*
+/**
  * This is called the first time a rendering context is make current
  * in case any special setup is need for stereo.
+ * \param ctx pointer to Cr context
  */
 void
 tilesortspuStereoContextInit(ContextInfo *ctx)

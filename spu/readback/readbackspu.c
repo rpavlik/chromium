@@ -203,7 +203,7 @@ getClippedWindow(const GLfloat modl[16], const GLfloat proj[16],
 	return 1;
 }
 
-/*
+/**
  * Allocate the color and depth buffers needed for the glDraw/ReadPixels
  * commands for the given window.
  */
@@ -226,7 +226,7 @@ AllocBuffers(WindowInfo * window)
 		window->colorBuffer = (GLubyte *) crAlloc(window->width * window->height
 																							* 4 * sizeof(GLubyte));
 
-	/* XXX we might try GL_ABGR on NVIDIA - it might be a faster path */
+	/* XXX \todo we might try GL_ABGR on NVIDIA - it might be a faster path */
 	window->rgbaFormat = GL_RGBA;
 	window->rgbFormat = GL_RGB;
 	colorBytes = readback_spu.extract_alpha ? 4 : 3;
@@ -275,7 +275,7 @@ AllocBuffers(WindowInfo * window)
 
 
 
-/*
+/**
  * Determine the size of the given readback SPU window.
  * We may either have to query the super or child SPU window dims.
  * Reallocate the glReadPixels RGBA/depth buffers if the size changes.
@@ -357,7 +357,7 @@ CheckWindowSize(WindowInfo * window)
 }
 
 
-/*
+/**
  * This is the guts of the readback operation.  Here, we call glReadPixels
  * to read a region of the color and depth buffers from the parent (render
  * SPU) window.  Then, we call glDrawPixels (and some other GL functions)
@@ -507,7 +507,7 @@ CompositeTile(WindowInfo * window, int w, int h,
 }
 
 
-/*
+/**
  * Get the mural information for the given window.
  */
 static const CRMuralInfo *
@@ -521,7 +521,7 @@ getMuralInfo(int window)
 }
 
 
-/*
+/**
  * Do readback/composite for a window.
  * This involves:
  *   - computing the image regions (tiles) to process
@@ -539,7 +539,7 @@ ProcessTiles(WindowInfo * window)
 	int numExtents;
 	int i;
 
-	/* XXX DMX verify window->renderWindow is correct! */
+	/* XXX \todo DMX verify window->renderWindow is correct! */
 	mural = getMuralInfo(window->renderWindow);
 
 	if (mural && mural->numExtents > 0)
@@ -731,7 +731,7 @@ readbackspuFlush(void)
 	DoReadback(window);
 
 	/*
-	 * XXX I'm not sure we need to sync on glFlush, but let's be safe for now.
+	 * XXX \todo I'm not sure we need to sync on glFlush, but let's be safe for now.
 	 */
 	readback_spu.child.BarrierExecCR(SWAP_BARRIER);
 }
@@ -904,7 +904,7 @@ readbackspuWindowSize(GLint win, GLint w, GLint h)
 /* don't implement WindowPosition() */
 
 
-/*
+/**
  * The render SPU implements barriers for the case of multi-threaded
  * rendering.  We don't want to block on barriers when using Readback.
  * The Readback SPU has its own barriers.
@@ -1006,7 +1006,7 @@ readbackspuChromiumParameteriCR(GLenum target, GLint value)
 			CRASSERT(window);
 
 			/* get mural information, if running on a server node */
-			/* XXX DMX verify window->renderWindow is correct! */
+			/* XXX \todo DMX verify window->renderWindow is correct! */
 			mural = getMuralInfo(window->renderWindow);
 
 			if (!mural || mural->numExtents < 0)

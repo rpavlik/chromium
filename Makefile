@@ -9,7 +9,10 @@ include $(TOP)/arch.mk
 
 SUBDIRS = util mothership spu_loader packer state_tracker \
 	unpacker dlm spu app_faker opengl_stub crserverlib crserver \
-	crutapi crutclientapi crutproxy crutserver progs
+	crutapi crutclientapi crutproxy crutserver progs 
+ifeq ($(DOXYGEN), 1)
+SUBDIRS += doxygen
+endif
 
 include ${TOP}/cr.mk
 

@@ -16,11 +16,11 @@
 #include "cr_hull.h"
 
 
-/*
+/**
  * Examine the server tile boundaries to compute the overall max
  * viewport dims.  Then send those dims to the servers.
  *
- * XXX This isn't used!?!
+ * XXX \todo This isn't used!?!
  */
 void
 tilesortspuComputeMaxViewport(WindowInfo *winInfo)
@@ -71,7 +71,7 @@ tilesortspuComputeMaxViewport(WindowInfo *winInfo)
 }
 
 
-/*
+/**
  * Send the current tilesort tile info to all the servers.
  */
 void
@@ -125,7 +125,7 @@ tilesortspuSendTileInfoToServers( WindowInfo *winInfo )
 }
 
 
-/*
+/**
  * Get the tile information (count, extents, etc) from the servers
  * and build our corresponding data structures.
  * Input: conn - mothership connection
@@ -156,7 +156,7 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 	tilesort_spu.thread[0].buffer =
 		(CRPackBuffer *) crCalloc(num_servers * sizeof(CRPackBuffer));
 
-	/* XXX: there is lots of overlap between these cases. merge! */
+	/** XXX: \todo there is lots of overlap between these cases. merge! */
 	if (tilesort_spu.localTileSpec)
 	{
 		char **displaylist, **displaychain;
@@ -346,7 +346,7 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 				}
 
 
-				/* XXX: check that the tile fits w/i the display it is on */
+				/** XXX: \todo check that the tile fits w/i the display it is on */
 			}
 			crFreeStrings(tilechain);
 			crFreeStrings(tilelist);
@@ -451,7 +451,7 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 			 */
 			if (crMothershipGetServerParamFromSPU( conn, i,
 																			 "projection_matrix", response)) {
-				/* XXX projection_matrix is obsolete, keep for a while though */
+				/** XXX \todo projection_matrix is obsolete, keep for a while though */
 				crMatrixInitFromString(&servWinInfo->projectionMatrix[0], response);
 				if (!crMatrixIsIdentity(&servWinInfo->projectionMatrix[0]))
 					winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
@@ -477,7 +477,7 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 
 
 
-/*
+/**
  * Default algorithm for tile layout.  We use this when we need to get a
  * new tile layout and no other method is available (mothership query,
  * DMX query, etc).
@@ -581,7 +581,7 @@ defaultNewTiling( WindowInfo *winInfo )
 }
 
 
-/*
+/**
  * Ask the mothership for a new tile layout.
  * Return: GL_TRUE if successfull, GL_FALSE otherwise.
  */
@@ -638,7 +638,7 @@ getTilingFromMothership( WindowInfo *winInfo )
 }
 
 
-/*
+/**
  * Get new tiling for DMX.
  */
 #ifdef USE_DMX
@@ -680,7 +680,7 @@ getTilingFromDMX( WindowInfo *winInfo )
 }
 #endif
 
-/*
+/**
  * When the window is resized or moved and we need to get a new tile
  * layout, we call this function.  It'll either get the new tile layout
  * from the mothership, from DMX or from the default layout function.

@@ -9,7 +9,7 @@
 #include "cr_mem.h" 
 #include "stub.h"
 
-/*
+/**
  * Returns -1 on error
  */
 int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
@@ -67,7 +67,7 @@ void APIENTRY crSwapBuffers( GLint window, GLint flags )
 		stubSwapBuffers(winInfo, flags);
 }
 
-/*
+/**
  * Returns -1 on error
  */
 GLint APIENTRY crWindowCreate( const char *dpyName, GLint visBits )

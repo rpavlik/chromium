@@ -10,17 +10,24 @@
 #include "cr_string.h"
 
 
+/**
+ * Set default options for SPU
+ */
 static void setDefaults( void )
 {
 }
-
-/* option, type, nr, default, min, max, title, callback
+/** 
+ * SPU options
+ * option, type, nr, default, min, max, title, callback
  */
 SPUOptions templateSPUOptions[] = {
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 
+/**
+ * Gather the config info for the SPU
+ */
 void templatespuGatherConfiguration( void )
 {
 	CRConnection *conn;

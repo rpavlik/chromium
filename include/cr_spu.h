@@ -23,47 +23,67 @@
 extern "C" {
 #endif
 
-#define MAX_THREADS               32      /* max threads per spu */
+#define MAX_THREADS               32      /**< max threads per spu */
 
 typedef struct _SPUSTRUCT SPU;
 
 typedef void (*SPUGenericFunction)(void);
 
+/**
+ * SPU Named function descriptor
+ */
 typedef struct {
 	char *name;
 	SPUGenericFunction fn;
 } SPUNamedFunctionTable;
 
+/**
+ * SPU function table descriptor
+ */
 typedef struct {
 	SPUDispatchTable *childCopy;
 	void *data;
 	SPUNamedFunctionTable *table;
 } SPUFunctions;
 
+/** 
+ * SPU Option callback
+ * \param spu
+ * \param response
+ */
 typedef void (*SPUOptionCB)( void *spu, const char *response );
 
 typedef enum { CR_BOOL, CR_INT, CR_FLOAT, CR_STRING, CR_ENUM } cr_type;
 
+/**
+ * SPU Options table
+ */
 typedef struct {
-	const char *option;
-	cr_type type; 
-	int numValues;  /* usually 1 */
-	const char *deflt;  /* comma-separated string of [numValues] defaults */
-	const char *min;    /* comma-separated string of [numValues] minimums */
-	const char *max;    /* comma-separated string of [numValues] maximums */
-	const char *description;
-	SPUOptionCB cb;
+	const char *option;	/**< Name of the option */
+	cr_type type; 		/**< Type of option */
+	int numValues;  /**< usually 1 */
+	const char *deflt;  /**< comma-separated string of [numValues] defaults */
+	const char *min;    /**< comma-separated string of [numValues] minimums */
+	const char *max;    /**< comma-separated string of [numValues] maximums */
+	const char *description; /**< Textual description of the option */
+	SPUOptionCB cb;		/**< Callback function */
 } SPUOptions, *SPUOptionsPtr;
 
 
+/** Init spu */
 typedef SPUFunctions *(*SPUInitFuncPtr)(int id, SPU *child,
 		SPU *super, unsigned int, unsigned int );
 typedef void (*SPUSelfDispatchFuncPtr)(SPUDispatchTable *);
+/** Cleanup spu */
 typedef int (*SPUCleanupFuncPtr)(void);
+/** Load spu */
 typedef int (*SPULoadFunction)(char **, char **, void *, void *, void *,
 			       SPUOptionsPtr *, int *);
 
 
+/**
+ * masks for spu_flags 
+ */
 #define SPU_PACKER_MASK           0x1
 #define SPU_NO_PACKER             0x0
 #define SPU_HAS_PACKER            0x1
@@ -76,31 +96,35 @@ typedef int (*SPULoadFunction)(char **, char **, void *, void *, void *,
 #define SPU_MAX_SERVERS_UNLIMITED 0x8
 
 
+/**
+ * SPU descriptor
+ */
 struct _SPUSTRUCT {
-	char *name;
-	char *super_name;
-	int id;
-        int spu_flags;
-	struct _SPUSTRUCT *superSPU;
-	CRDLL *dll;
-	SPULoadFunction entry_point;
-	SPUInitFuncPtr init;
-	SPUSelfDispatchFuncPtr self;
-	SPUCleanupFuncPtr cleanup;
-	SPUFunctions *function_table;
-	SPUOptions *options;
+	char *name;			/**< Name of the spu */
+	char *super_name;		/**< Name of the super class of the spu */
+	int id;				/**< Id num of the spu */
+        int spu_flags;			/**< options fags for the SPU */
+	struct _SPUSTRUCT *superSPU;	/**< Pointer to the descriptor for the super class */
+	CRDLL *dll;			/**< pointer to shared lib for spu */
+	SPULoadFunction entry_point;	/**< SPU's entry point (SPULoad()) */
+	SPUInitFuncPtr init;		/**< SPU init function */
+	SPUSelfDispatchFuncPtr self;	/**< */
+	SPUCleanupFuncPtr cleanup;	/**< SPU cleanup func */
+	SPUFunctions *function_table;	/**< Function table for spu */
+	SPUOptions *options;		/**< Options table */
 	SPUDispatchTable dispatch_table;
-	void *privatePtr;  /* pointer to SPU-private data */
+	void *privatePtr;  		/**< pointer to SPU-private data */
 };
 
 
-/*
+/**
  * These are the OpenGL / window system interface functions
  */
 #if defined(WINDOWS)
-/*
+/**
  * Windows/WGL
  */
+/*@{*/
 typedef HGLRC (WGL_APIENTRY *wglCreateContextFunc_t)(HDC);
 typedef void (WGL_APIENTRY *wglDeleteContextFunc_t)(HGLRC);
 typedef BOOL (WGL_APIENTRY *wglMakeCurrentFunc_t)(HDC,HGLRC);
@@ -115,10 +139,12 @@ typedef BOOL (WGL_APIENTRY *wglGetPixelFormatAttribivEXTFunc_t)(HDC, int, int, U
 typedef BOOL (WGL_APIENTRY *wglGetPixelFormatAttribfvEXTFunc_t)(HDC, int, int, UINT, int *, int *);
 typedef const GLubyte *(WGL_APIENTRY *glGetStringFunc_t)( GLenum );
 typedef const GLubyte *(WGL_APIENTRY *wglGetExtensionsStringEXTFunc_t)( HDC );
+/*@}*/
 #elif defined(DARWIN)
-/*
+/**
  * Apple/AGL
  */
+/*@{*/
 typedef AGLPixelFormat (*aglChoosePixelFormatFunc_t) (const AGLDevice *, GLint, const GLint *);
 // typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
 typedef AGLContext (*aglCreateContextFunc_t)( AGLPixelFormat, AGLContext );
@@ -129,10 +155,12 @@ typedef void (*aglSwapBuffersFunc_t)( AGLContext );
 // typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
 // typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
 typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
+/*@}*/
 #else
-/*
+/**
  * X11/GLX
  */
+/*@{*/
 typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
 typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
 typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
@@ -152,10 +180,11 @@ typedef Bool (*glXQuerySwapGroupNVFunc_t)(Display *dpy, GLXDrawable drawable, GL
 typedef Bool (*glXQueryMaxSwapGroupsNVFunc_t)(Display *dpy, int screen, GLuint *maxGroups, GLuint *maxBarriers);
 typedef Bool (*glXQueryFrameCountNVFunc_t)(Display *dpy, int screen, GLuint *count);
 typedef Bool (*glXResetFrameCountNVFunc_t)(Display *dpy, int screen);
+/*@}*/
 #endif
 
 
-/*
+/**
  * Package up the WGL/GLX function pointers into a struct.  We use
  * this in a few different places.
  */
@@ -205,7 +234,7 @@ typedef struct {
 } crOpenGLInterface;
 
 
-/* This is the one required function in _all_ SPUs */
+/** This is the one required function in _all_ SPUs */
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
 	     SPUOptionsPtr *options, int *flags );

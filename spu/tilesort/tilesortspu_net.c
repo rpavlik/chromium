@@ -63,7 +63,7 @@ tilesortspuReadPixels( const CRMessageReadPixels *rp, unsigned int len )
 	CRASSERT(thread->currentContext->readPixelsCount >= 0);
 }
 
-/*
+/**
  * This is a callback function that's called from the crNet receiver
  * code in util/net.c.  We're interested in handling CR_MESSAGE_READ_PIXELS
  * messages (i.e. the return of pixel data) only.

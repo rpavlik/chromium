@@ -9,6 +9,16 @@
 #include "cr_error.h"
 
 #define UNUSED(x) ((void)(x))
+/**
+ * \mainpage Packer 
+ *
+ * \section PackerIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The packer module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
+ */
 
 void PACK_APIENTRY crPackVertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {

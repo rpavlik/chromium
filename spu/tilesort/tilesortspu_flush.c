@@ -16,7 +16,7 @@
 #include "cr_packfunctions.h"
 #include "cr_rand.h"
 
-/*
+/**
  * The message header lies at the start of the packing buffer, just before
  * the actual operand data.  In preparation for transmission, fill in the
  * message header fields (type and numOpcodes).
@@ -66,7 +66,7 @@ void tilesortspuDebugOpcodes( CRPackBuffer *buffer )
 	crDebug( "\n" );
 }
 
-/*
+/**
  * Send this thread's packing buffer to the named server using a
  * specific thread's packer.
  */
@@ -99,7 +99,7 @@ void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 	pack->canBarf = netServer->conn->Barf ? GL_TRUE : GL_FALSE;
 }
 
-/*
+/**
  * As above, but use the calling thread.
  */
 void tilesortspuSendServerBuffer( int server_index )
@@ -109,7 +109,7 @@ void tilesortspuSendServerBuffer( int server_index )
 }
 
 
-/*
+/**
  * Append the given buffer onto the current packing buffer.
  */
 static void __appendBuffer( const CRPackBuffer *src )
@@ -137,7 +137,7 @@ static void __appendBuffer( const CRPackBuffer *src )
 	/*crWarning( "Back from crPackAppendBuffer: 0x%x", thread->packer->buffer.data_current ); */
 }
 
-/*
+/**
  * As above, but with bounding box info.
  */
 static void __appendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
@@ -174,7 +174,7 @@ void tilesortspuShipBuffers( void )
 }
 
 
-/*
+/**
  * This function is called by the packer when it's got to pack a command
  * that's too large to fit in a normal buffer (such as a big glTexImage2D
  * call).
@@ -732,7 +732,7 @@ void tilesortspuBroadcastGeom( GLboolean send_state_anyway )
 }
 
 
-/*
+/**
  * This callback function gets called by the state tracker (when a state
  * change happens) and the packer (when a buffer is filled).
  */
@@ -742,7 +742,7 @@ void tilesortspuFlush_callback( void *arg )
 }
 
 
-/*
+/**
  * Like the tilesortspuFlush() routine below, but only send buffered data
  * to the servers indicated by the bucket_info->hit[] arrays.
  */

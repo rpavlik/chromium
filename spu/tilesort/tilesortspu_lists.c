@@ -226,7 +226,7 @@ tilesortspu_EndList(void)
 }
 
 
-/*
+/**
  * This gets called after glCallList.  It replays the display lists' state
  * change commands in order to update the servers' CRContext records.
  * Called via tilesortspu_CallList() and via the state table built by
@@ -560,8 +560,8 @@ tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 
 	/*crDebug("tilesortspu_CallLists(%d, %d, *lists)",n, type ); */
 
-	/*
-	 * XXX we have no support for auto bounding boxes here -- someday?
+	/**
+	 * XXX \todo we have no support for auto bounding boxes here -- someday?
 	 */
 
 	if (thread->currentContext->State->lists.mode == 0) 
@@ -696,7 +696,7 @@ tilesortspu_GenLists(GLsizei range)
 	return return_value;
 }
 
-/*
+/**
  * Delete list info both from our state tracker and the DLM context.
  * NOTE: we're using the crStateGenLists and crStateIsList functions
  * otherwise.
@@ -727,7 +727,7 @@ tilesortspu_DeleteLists(GLuint list, GLsizei range)
 }
 
 
-/* XXX fix and plug into dispatcher */
+/** XXX \todo fix and plug into dispatcher */
 void TILESORTSPU_APIENTRY
 tilesortspu_ListBase(GLuint base)
 {

@@ -1,4 +1,5 @@
-/* Stolen without ceremony from state_tracker/state_client.c and other related files.
+/**
+ * Stolen without ceremony from state_tracker/state_client.c and other related files.
  * These versions of the state tracking files do nothing more than update the client
  * state, all of which is passed in by reference.  This allows a utility (like the
  * display list manager) to keep track of important client state required for
@@ -66,8 +67,8 @@ void crdlmWarning( int line, char *file, GLenum error, char *format, ... )
     }
 }
 
-/*
- * XXX this is identical to code in state_client.c
+/**
+ * XXX \todo this is identical to code in state_client.c
  * Try to reuse it.
  */
 
@@ -146,7 +147,7 @@ void crdlmClientInit(CRClientState *c)
 }
 
 
-/*
+/**
  * PixelStore functions are here, not in state_pixel.c because this
  * is client-side state, like vertex arrays.
  */
@@ -561,7 +562,7 @@ void  crdlmClientActiveTextureARB(GLenum texture, CRClientState *c)
 
 
 
-/* 
+/** 
 ** Currently I treat Interleaved Arrays as if the 
 ** user uses them as separate arrays.
 ** Certainly not the most efficient method but it 

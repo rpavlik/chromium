@@ -10,6 +10,12 @@
 #include "cr_error.h"
 #include "state/cr_stateerror.h"
 
+/**
+ * Implementation of glAccum for tilesorter
+ * \param op
+ * \param value
+*/
+
 void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 {
 	GET_THREAD(thread);
@@ -26,6 +32,10 @@ void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 }
 
 
+/**
+ * Implementation of glClean for tilesorter
+ * \param mask
+*/
 void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 {
 	GET_THREAD(thread);
@@ -75,6 +85,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 }
 
 
+/**
+ * Implementation of glFinish for tilesorter
+*/
 void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 {
 	GET_THREAD(thread);
@@ -110,6 +123,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 	}
 }
 
+/**
+ * Implementation of glFlush for tilesorter
+*/
 void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 {
 	GET_THREAD(thread);
@@ -126,11 +142,18 @@ void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 	tilesortspuShipBuffers();
 }
 
+/**
+ * Create a barrier with the given name and count.  The count indicates
+ * how many clients must meet at the barrier before it is released.
+ * If count is zero, the crserver will automatically set count to the number
+ * of clients currently connected to the server.
+*/
+
 void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
 
-	/* XXX check if we're compiling a display list, if so, error! */
+	/* XXX \todo check if we're compiling a display list, if so, error! */
 
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
@@ -145,10 +168,14 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 	tilesortspuShipBuffers();
 }
 
+/**
+ * Destroys the named barrier.
+ * \param name barrier name
+*/
 void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX check if we're compiling a display list, if so, error! */
+	/* XXX \todo check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -162,10 +189,16 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 	tilesortspuShipBuffers();
 }
 
+/**
+ * Causes the caller to wait on the barrier until all peers meet the
+ * barrier.
+ * \param name
+*/
+
 void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX check if we're compiling a display list, if so, error! */
+	/* XXX \todo check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -179,10 +212,18 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 	tilesortspuShipBuffers();
 }
 
+/**
+ * Creates a semaphore with the given name and value.  Value indicates
+ * the initial semaphore value.
+ * \param name
+ * \param count
+ */
+
+
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
-	/* XXX check if we're compiling a display list, if so, error! */
+	/* XXX \todo check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -196,10 +237,14 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreateCR(GLuint name, GLuint coun
 	tilesortspuShipBuffers();
 }
 
+/**
+ * Destroys the named semaphore.
+ * \param name
+ */
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX check if we're compiling a display list, if so, error! */
+	/* XXX \todo check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -213,10 +258,15 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroyCR(GLuint name)
 	tilesortspuShipBuffers();
 }
 
+
+/**
+ * Decrements the named semaphore.  This is the <em>wait</em> operation.
+ * \param name
+ */
 void TILESORTSPU_APIENTRY tilesortspu_SemaphorePCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX check if we're compiling a display list, if so, error! */
+	/* XXX \todo check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -230,10 +280,15 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphorePCR(GLuint name)
 	tilesortspuShipBuffers();
 }
 
+
+/**
+ * Increments the named semaphore.  This is the <em>signal</em> operation.
+ * \param name
+ */
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreVCR(GLuint name)
 {
 	GET_THREAD(thread);
-	/* XXX check if we're compiling a display list, if so, error! */
+	/* XXX \todo check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -250,9 +305,11 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreVCR(GLuint name)
 
 
 
-/*
+/**
  * Need to delete local textures and textures on servers.
- * XXX this function should probably go elsewhere.
+ * XXX \todo this function should probably go elsewhere.
+ * \param n
+ * \param textures
  */
 void TILESORTSPU_APIENTRY
 tilesortspu_DeleteTextures(GLsizei n, const GLuint *textures)
@@ -269,9 +326,11 @@ tilesortspu_DeleteTextures(GLsizei n, const GLuint *textures)
 }
 
 
-/*
+/**
  * Need to delete local programs and programs on servers.
- * XXX this function should probably go elsewhere.
+ * XXX \todo this function should probably go elsewhere.
+ * \param n
+ * \param programs
  */
 void TILESORTSPU_APIENTRY
 tilesortspu_DeleteProgramsARB(GLsizei n, const GLuint *programs)
@@ -288,9 +347,11 @@ tilesortspu_DeleteProgramsARB(GLsizei n, const GLuint *programs)
 }
 
 
-/*
+/**
  * Need to delete local buffers and buffers on servers.
- * XXX this function should probably go elsewhere.
+ * XXX \todo this function should probably go elsewhere.
+ * \param n
+ * \param buffers
  */
 void TILESORTSPU_APIENTRY
 tilesortspu_DeleteBuffersARB(GLsizei n, const GLuint *buffers)

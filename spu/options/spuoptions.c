@@ -45,7 +45,8 @@ static char *__findDLL( const char *name, const char *dir )
 }
 
 
-/* This is a cut-down version of crSPULoad() from spuload.c.  It just
+/**
+ * This is a cut-down version of crSPULoad() from spuload.c.  It just
  * does enough to retreive the options list from the spu, but doesn't
  * call any initialization functions from which the spu might try to
  * connect to the mothership, etc.  

@@ -7,6 +7,16 @@
 #include <float.h>
 #include "cr_bbox.h"
 
+/**
+ * \mainpage Util 
+ *
+ * \section UtilIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The util module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
+ */
 static float _vmult(const float *m, float x, float y, float z) 
 {
 	return m[0]*x + m[4]*y + m[8]*z + m[12];

@@ -51,3 +51,6 @@ IB_SUPPORT=0
 
 # Set to 1 to enable SDP Support
 SDP_SUPPORT=0
+
+# Set to 1 to enable DOXYGEN generation
+DOXYGEN=1

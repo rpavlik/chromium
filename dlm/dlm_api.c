@@ -7,7 +7,8 @@
 
 
 
-/* This file defines the display list functions such as NewList, EndList,
+/**
+ * This file defines the display list functions such as NewList, EndList,
  * CallList, CallLists, IsList, DeleteLists, etc.
  * Generally, SPUs will call these as needed to implement dislay lists.
  * See the expando and tilesort SPUs for examples.
@@ -23,7 +24,7 @@
  */
 
 
-/*
+/**
  * Begin compiling a list.
  * table - points to an SPUDispatchTable (typically the SPU's self table)
  *         which will get loaded with display list compilation functions
@@ -114,7 +115,8 @@ crdlm_NewList(GLuint listIdentifier, GLenum mode, SPUDispatchTable * table)
 }
 
 
-/* This small utility routine is used to traverse a buffer
+/**
+ * This small utility routine is used to traverse a buffer
  * list, freeing each buffer.  It is used to free the buffer
  * list in the DLMListInfo structure, both when freeing the
  * entire structure and when freeing just the retained content.
@@ -130,7 +132,8 @@ free_instance_list(DLMInstanceList * instance)
 	}
 }
 
-/* This utility routine frees a DLMListInfo structure and all
+/**
+ * This utility routine frees a DLMListInfo structure and all
  * of its components.  It is used directly, when deleting a
  * single list; it is also used as a callback function for
  * hash tree operations (Free and Replace).
@@ -211,7 +214,7 @@ crdlm_EndList(void)
 }
 
 
-/*
+/**
  * This should be called in conjunction with crdlm_EndList().  It restores
  * the dispatch table that was passed into crdlm_NewList() to its original
  * state.  Ideally, this function would be part of crdlm_EndList() but we
@@ -460,7 +463,7 @@ crdlm_LazyCallLists(GLsizei n, GLenum type, const GLvoid * lists,
 }
 
 
-/*
+/**
  * If the DLM client has a Cr state tracker, it should proably use
  * crStateGenLists.  But if the DLM client doesn't have a state tracker
  * it can use crdlm_GenLists.
@@ -496,7 +499,7 @@ crdlm_GenLists(GLsizei range)
 }
 
 
-/*
+/**
  * See comment for crdlm_GenLists.  Same story here.
  */
 GLboolean

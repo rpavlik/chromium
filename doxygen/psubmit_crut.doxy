@@ -1,0 +1,48 @@
+# Doxyfile 0.1
+
+@INCLUDE               = common.doxy
+
+#---------------------------------------------------------------------------
+# General configuration options
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "psubmit_crut"
+#---------------------------------------------------------------------------
+# configuration options related to the input files
+#---------------------------------------------------------------------------
+INPUT                  = ../progs/psubmit_crut/
+FILE_PATTERNS          = *.c \
+                         *.h \
+			 *.py
+RECURSIVE              = YES
+EXCLUDE                = 
+EXCLUDE_PATTERNS       = 
+EXAMPLE_PATH           = 
+EXAMPLE_PATTERNS       = 
+EXAMPLE_RECURSIVE      = NO
+IMAGE_PATH             = 
+FILTER_SOURCE_FILES    = NO
+#---------------------------------------------------------------------------
+# configuration options related to the HTML output
+#---------------------------------------------------------------------------
+HTML_OUTPUT            = progs/psubmit_crut
+#---------------------------------------------------------------------------
+# Configuration options related to the preprocessor   
+#---------------------------------------------------------------------------
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+SEARCH_INCLUDES        = YES
+INCLUDE_PATH           = ../include/
+INCLUDE_FILE_PATTERNS  = 
+PREDEFINED             = LINUX=1
+EXPAND_AS_DEFINED      = 
+SKIP_FUNCTION_MACROS   = YES
+#---------------------------------------------------------------------------
+# Configuration::addtions related to external references   
+#---------------------------------------------------------------------------
+TAGFILES               = include.tag=../../include/ \
+			  util.tag=../../util/ \
+			mothership.tag=../../mothership/ \
+			spu_loader.tag=../../spu_load/ \
+			opengl_stub.tag=../../opengl_stub/
+GENERATE_TAGFILE       = psubmit_crut.tag

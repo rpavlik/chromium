@@ -14,12 +14,12 @@
 
 #define MULTISAMPLE 1
 
-/* For optimizing glXMakeCurrent */
+/** For optimizing glXMakeCurrent */
 static Display *currentDisplay = NULL;
 static GLXDrawable currentDrawable = 0;
 
 
-/*
+/**
  * Set this to 1 if you want to build stub functions for the
  * GL_SGIX_pbuffer and GLX_SGIX_fbconfig extensions.
  * We disable this code by default since there are some messy
@@ -29,7 +29,7 @@ static GLXDrawable currentDrawable = 0;
 
 
 #if GLX_EXTRAS
-/*
+/**
  * Prototypes, in case they're not in glx.h or glxext.h
  * Unfortunately, there's some inconsistency between the extension
  * specs, and the SGI, NVIDIA, XFree86 and common glxext.h header
@@ -85,7 +85,7 @@ void glXSelectEvent(Display *dpy, GLXDrawable draw, unsigned long event_mask);
 
 
 
-/*
+/**
  * Return string for a GLX error code
  */
 static const char *glx_error_string(int err)
@@ -111,7 +111,7 @@ static const char *glx_error_string(int err)
 }
 
 
-/*
+/**
  * This function is used to satisfy an application's calls to glXChooseVisual
  * when the display server many not even support GLX.
  */
@@ -200,7 +200,7 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 	return visual;
 }
 
-/*
+/**
  * Query the GLX attributes for the given visual and return a bitmask of
  * the CR_*_BIT flags which describes the visual's capbilities.
  */
@@ -429,7 +429,8 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 	return vis;
 }
 
-/* There is a problem with glXCopyContext.
+/**
+ **  There is a problem with glXCopyContext.
  ** IRIX and Mesa both define glXCopyContext
  ** to have the mask argument being a 
  ** GLuint.  XFree 4 and oss.sgi.com
@@ -457,7 +458,7 @@ unsigned long mask )
 
 
 
-/*
+/**
  * For now we're ignoring all the parameters.
  */
 GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct )

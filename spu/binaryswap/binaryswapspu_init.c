@@ -37,7 +37,8 @@ binaryswapspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 }
 
 
-/*******************************************************************
+/**
+ *******************************************************************
  *
  * Set up connections for OOB
  *

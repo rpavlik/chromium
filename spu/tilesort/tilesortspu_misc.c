@@ -308,7 +308,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 				/* send new frustum to <server> */
 				crPackSetBuffer( thread->packer, &(thread->buffer[server]) );
 
-				/* XXX Perhaps it should be the application's responsibility to
+				/** XXX \todo Perhaps it should be the application's responsibility to
 				 * set the matrix mode, load the identity matrix, etc?
 				 */
 				if (tilesort_spu.swap) {

@@ -10,6 +10,16 @@
 #include "cr_string.h"
 #include <stdio.h>
 
+/**
+ * \mainpage spu_loader 
+ *
+ * \section Spu_loaderIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The spu_loader module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
+ */
 void crSPUInitDispatchTable( SPUDispatchTable *table )
 {
 	table->copyList = NULL;
@@ -79,7 +89,7 @@ static int validate_one_option( const SPUOptions *opt,
 }
 
 
-/*
+/**
  * Make sure the response matches the opt's parameters (right number
  * and type of values, etc.)
  * Return 1 if OK, 0 if error.
@@ -152,7 +162,7 @@ static int validate_option( const SPUOptions *opt, const char *response )
 	return retval;
 }
 
-/* Query the mothership, else use the default value for each option:
+/** Query the mothership, else use the default value for each option:
  */
 void crSPUGetMothershipParams( CRConnection *conn,
 			       void *spu, 
@@ -181,7 +191,7 @@ void crSPUGetMothershipParams( CRConnection *conn,
 	}
 }
 
-/* Use the default values for all the options:
+/** Use the default values for all the options:
  */
 void crSPUSetDefaultParams( void *spu, SPUOptions *options )
 {

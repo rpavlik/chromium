@@ -4,8 +4,18 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-/* Public Chromium exports.
+/** Public Chromium exports.
  * Applications are free to include this header file.
+ */
+/**
+ * \mainpage Include 
+ *
+ * \section IncludeIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The core module basically takes care of API dispatch,
+ * and OpenGL state management.
+ *
  */
 
 #ifndef __CHROMIUM_H__

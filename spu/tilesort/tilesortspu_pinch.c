@@ -12,7 +12,7 @@
 
 #define vmin(a,b) ((a)<(b)?(a):(b))
 
-/* Ok.  So these might be major hacks 
+/** Ok.  So these might be major hacks 
 ** but the alternative is a huge switch statement
 ** and our protocol generator sorts the opcodes,
 ** so why not just do greater than less than?
@@ -486,6 +486,8 @@ void tilesortspuPinch(void)
 				}
 			}
 
+			/** XXX \todo other vertex attribs like fog, secondary color, etc. */
+
 		} 
 		else 
 		{
@@ -672,7 +674,7 @@ static void __pinchIssueVertex(const CRVertex *vtx)
 		crPackVertex4fvBBOX_COUNT(vtx->attrib[VERT_ATTRIB_POS]);
 }
 
-/* This function is called at the end of Flush(), when it becomes necessary to 
+/** This function is called at the end of Flush(), when it becomes necessary to 
  * restore the partial triangle that was clipped at the end. */
 
 void tilesortspuPinchRestoreTriangle( void )

@@ -5,7 +5,7 @@
 #include "dlm.h"
 #include "dlm_dispatch.h"
 
-/*****************************************************************************
+/**
  * These helper functions are used for GL functions that take a pointers,
  * if the size of the arrays that the pointers refer to is not constant.
  * These helper functions will determine, on a case-by-case basis,

@@ -22,6 +22,9 @@
 
 #define MAX_VISUALS 32
 
+/**
+ * Visual info
+ */
 typedef struct {
 	GLbitfield visAttribs;
 	const char *displayName;
@@ -34,31 +37,37 @@ typedef struct {
 #endif
 } VisualInfo;
 
+/**
+ * Window info 
+ */
 typedef struct {
 	int x, y;
 	int width, height;
-	int id; /* integer window ID */
+	int id; /**< integer window ID */
 	VisualInfo *visual;
 	GLboolean mapPending;
 	GLboolean visible;
-	GLboolean everCurrent; /* has this window ever been bound? */
+	GLboolean everCurrent; /**< has this window ever been bound? */
 #ifndef WINDOWS
 	Window window;
-	Window nativeWindow;  /* for render_to_app_window */
-	Window appWindow;       /* Same as nativeWindow but for garbage collections purposes */
+	Window nativeWindow;  /**< for render_to_app_window */
+	Window appWindow;       /**< Same as nativeWindow but for garbage collections purposes */
 #else
-	HDC nativeWindow; /* for render_to_app_window */
+	HDC nativeWindow; /**< for render_to_app_window */
 #endif
 	int nvSwapGroup;
 
 #ifdef USE_OSMESA
-	GLubyte *buffer;   	/* for rendering to off screen buffer.  */
+	GLubyte *buffer;   	/**< for rendering to off screen buffer.  */
 	int in_buffer_width;
 	int in_buffer_height;
 #endif
 
 } WindowInfo;
 
+/**
+ * Context Info
+ */
 typedef struct {
 	VisualInfo *visual;
 	GLboolean everCurrent;
@@ -70,11 +79,17 @@ typedef struct {
 #endif
 } ContextInfo;
 
+/**
+ * Barrier info
+ */
 typedef struct {
 	CRbarrier barrier;
 	GLuint count;
 } Barrier;
 
+/**
+ * Renderspu state info
+ */
 typedef struct {
 	SPUDispatchTable self;
 	int id;
@@ -82,7 +97,8 @@ typedef struct {
 	unsigned int window_id;
 	unsigned int context_id;
 
-	/* config options */
+	/** config options */
+	/*@{*/
 	char *window_title;
 	int defaultX, defaultY;
 	unsigned int defaultWidth, defaultHeight;
@@ -102,6 +118,7 @@ typedef struct {
 	int use_lut8, lut8[3][256];
 	int borderless;
 	int nvSwapGroup;
+	/*@}*/
 
 	CRServer *server;
 	int gather_port;
@@ -121,7 +138,7 @@ typedef struct {
 	ContextInfo *currentContext;
 #endif
 
-	crOpenGLInterface ws;  /* Window System interface */
+	crOpenGLInterface ws;  /**< Window System interface */
 
 	CRHashTable *barrierHash;
 
@@ -131,7 +148,7 @@ typedef struct {
 	CRConnection **swap_conns;
 	
 #ifdef USE_OSMESA	
-        /* Off screen rendering hooks.  */
+        /** Off screen rendering hooks.  */
 	int use_osmesa;
 
 	OSMesaContext (*OSMesaCreateContext)( GLenum format, OSMesaContext sharelist );

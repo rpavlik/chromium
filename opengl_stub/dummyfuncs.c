@@ -4,7 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-/*
+/**
  * When functions can be aliased (like glBindTexture and glBindTextureEXT)
  * we can express that here.
  *

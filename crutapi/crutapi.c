@@ -9,6 +9,12 @@
 #include "cr_string.h"
 #include "cr_url.h"
 
+/**
+ * \mainpage CrutApi 
+ *
+ * \section CrutApiIntroduction Introduction
+ *
+ */
 /*CRUTAPI crut_api;*/
 
 void 

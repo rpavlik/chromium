@@ -4,6 +4,12 @@
 #include "cr_error.h"
 #include "cr_mothership.h"
 #include "cr_string.h"
+/**
+ * \mainpage CrutProxy 
+ *
+ * \section CrutProxyIntroduction Introduction
+ *
+ */
 
 #define DEFAULT_PORT 9000
 

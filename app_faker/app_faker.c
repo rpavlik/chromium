@@ -4,7 +4,40 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-/* 
+/**
+ * \mainpage AppFaker 
+ *
+ * \section AppFakerIntroduction Introduction
+ *
+ * Chromium consists of all the top-level files in the cr
+ * directory.  The app_faker module ...
+ *
+ * \section AboutDoxygen About Doxygen
+ *
+ * If you're viewing this information as Doxygen-generated HTML you'll
+ * see the documentation index at the top of this page.
+ *
+ * The first line lists the Mesa source code modules.
+ * The second line lists the indexes available for viewing the documentation
+ * for each module.
+ *
+ * Selecting the <b>Main page</b> link will display a summary of the module
+ * (this page).
+ *
+ * Selecting <b>Data Structures</b> will list all C structures.
+ *
+ * Selecting the <b>File List</b> link will list all the source files in
+ * the module.
+ * Selecting a filename will show a list of all functions defined in that file.
+ *
+ * Selecting the <b>Data Fields</b> link will display a list of all
+ * documented structure members.
+ *
+ * Selecting the <b>Globals</b> link will display a list
+ * of all functions, structures, global variables and macros in the module.
+ *
+ */
+/** 
  * This program fakes an application into using the Chromium client library.
  * It's mostly based on the 'wgl' application from WireGL, which in turn was
  * based on the 'pomgl' application, written by Matthew Eldridge for

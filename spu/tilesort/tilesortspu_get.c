@@ -17,11 +17,14 @@
 #endif
 
 
-/*
+/**
  * If the given <pname> is an OpenGL limit query, query all downstream
  * servers for their limits, find the minimum, return it in <results>
  * and return GL_TRUE.
  * If pname is not a limit, return GL_FALSE.
+ * \param pname 
+ * \param type
+ * \param results
  */
 static GLboolean
 GetLimit(GLenum pname, GLenum type, void *results)
@@ -286,7 +289,7 @@ void TILESORTSPU_APIENTRY tilesortspu_GetBooleanv( GLenum pname, GLboolean *para
 }
 
 
-/*
+/**
  * Query all downstream servers for their extension strings, merge them,
  * intersect with Chromium's known extensions, and append the Chromium-
  * specific extensions.
@@ -353,7 +356,7 @@ tilesortspuGetExtensionsString(void)
 	return ext;
 }
 
-/*
+/**
  * Query all downstream servers for their version strings, find the
  * minimum.
  */
@@ -439,7 +442,7 @@ const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 	}
 	else
 	{
-		/* XXX for GL_PROGRAM_ERROR_STRING_NV it would be nice to get the
+		/** XXX \todo for GL_PROGRAM_ERROR_STRING_NV it would be nice to get the
 		 * real error string from the servers.
 		 */
 		return crStateGetString(pname);

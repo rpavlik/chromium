@@ -371,7 +371,7 @@ SPUOptions tilesortSPUOptions[] = {
 	 "'RedBlue', 'RedGreen', 'RedCyan', 'BlueRed', 'GreenRed', 'CyanRed'", NULL, 
 	 "Anaglyph Glasses Colors (Left/Right)", (SPUOptionCB) set_glasses_type },
 
-	/* XXX perhaps this should be a string option which names window titles
+	/** XXX \todo perhaps this should be a string option which names window titles
 	 * for the windows to force into stereo mode???
 	 */
 	{"force_quad_buffering", CR_BOOL, 1, "0", NULL, NULL,
@@ -443,7 +443,7 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	crWarning("Total output dimensions = (%d, %d)",
 						winInfo->muralWidth, winInfo->muralHeight);
 
-	/* XXX we should really query all the servers to compute the limits! */
+	/** XXX \todo we should really query all the servers to compute the limits! */
 	crStateLimitsInit(&tilesort_spu.limits);
 }
 

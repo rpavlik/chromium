@@ -11,8 +11,8 @@
 #include "dlm.h"
 #include "dlm_dispatch.h"
 
-/*
- * XXX this code is awefully similar to the code in arrayspu.c
+/**
+ * XXX \todo this code is awefully similar to the code in arrayspu.c
  * We should try to write something reusable.
  */
 

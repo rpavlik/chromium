@@ -46,13 +46,16 @@ extern "C" {
 
 typedef struct CRPackContext_t CRPackContext;
 
+/**
+ * Packer buffer
+ */
 typedef struct {
-	void          *pack;  /* the actual storage space/buffer */
-	unsigned int   size;  /* size of pack[] buffer */
+	void          *pack;  /**< the actual storage space/buffer */
+	unsigned int   size;  /**< size of pack[] buffer */
 	unsigned int   mtu;
 	unsigned char *data_start, *data_current, *data_end;
 	unsigned char *opcode_start, *opcode_current, *opcode_end;
-	GLboolean geometry_only;  /* just used for debugging */
+	GLboolean geometry_only;  /**< just used for debugging */
 	GLboolean holds_BeginEnd;
 	GLboolean in_BeginEnd;
 	GLboolean canBarf;
@@ -67,8 +70,11 @@ typedef void (*CRPackErrorHandlerFunc)(int line, const char *file, GLenum error,
 
 typedef GLvectorf CRBBOXPoint;
 
+/**
+ * Packer context
+ */
 struct CRPackContext_t{
-	CRPackBuffer buffer;   /* not a pointer, see comments in pack_buffer.c */
+	CRPackBuffer buffer;   /**< not a pointer, see comments in pack_buffer.c */
 	CRPackFlushFunc Flush;
 	void *flush_arg;
 	CRPackSendHugeFunc SendHuge;
@@ -78,8 +84,8 @@ struct CRPackContext_t{
 	int updateBBOX;
 	int swapping;
 	CRPackBuffer *currentBuffer;
-	char *file;  /* for debugging only */
-	int line;    /* for debugging only */
+	char *file;  /**< for debugging only */
+	int line;    /**< for debugging only */
 };
 
 

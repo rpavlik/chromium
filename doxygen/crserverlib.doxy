@@ -1,0 +1,49 @@
+# Doxyfile 0.1
+
+@INCLUDE               = common.doxy
+
+#---------------------------------------------------------------------------
+# General configuration options
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "crserverlib"
+#---------------------------------------------------------------------------
+# configuration options related to the input files
+#---------------------------------------------------------------------------
+INPUT                  = ../crserverlib/
+FILE_PATTERNS          = *.c \
+                         *.h \
+			 *.py
+RECURSIVE              = YES
+EXCLUDE                = 
+EXCLUDE_PATTERNS       = 
+EXAMPLE_PATH           = 
+EXAMPLE_PATTERNS       = 
+EXAMPLE_RECURSIVE      = NO
+IMAGE_PATH             = 
+FILTER_SOURCE_FILES    = NO
+#---------------------------------------------------------------------------
+# configuration options related to the HTML output
+#---------------------------------------------------------------------------
+HTML_OUTPUT            = crserverlib
+#---------------------------------------------------------------------------
+# Configuration options related to the preprocessor   
+#---------------------------------------------------------------------------
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+SEARCH_INCLUDES        = YES
+INCLUDE_PATH           = ../include/
+INCLUDE_FILE_PATTERNS  = 
+PREDEFINED             = 
+EXPAND_AS_DEFINED      = 
+SKIP_FUNCTION_MACROS   = YES
+#---------------------------------------------------------------------------
+# Configuration::addtions related to external references   
+#---------------------------------------------------------------------------
+TAGFILES               = util.tag=../util \
+			 include.tag=../include \
+			 mothership.tag=../mothership \
+			state_tracker.tag=../state_tracker \
+                         glapi_parser.tag=../glapi_parser \
+			unpacker.tag=../unpacker
+GENERATE_TAGFILE       = crserverlib.tag

@@ -28,8 +28,8 @@
 
 
 #ifdef USE_DMX
-/*
- * XXX taken from renderspu_glx.c, share somehow?
+/**
+ * XXX \todo taken from renderspu_glx.c, share somehow?
  *
  * Find suitable GLX visual for a back-end child window.
  */
@@ -130,7 +130,7 @@ chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 
 
 #ifdef USE_DMX
-/*
+/**
  * DMX only: for the given WindowInfo, query DMX to get the X window
  * IDs for the corresponding back-end windows.  Create back-end sub
  * windows if needed.  Compute new tiling.
@@ -301,7 +301,7 @@ static void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 #endif /* USE_DMX */
 
 
-/*
+/**
  * Update winInfo->lastWidth/Height/X/Y by looking at the native Win32
  * or X11 window.
  * Use the fake_window_dims if there is no native window.
@@ -310,7 +310,7 @@ static void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 {
 #ifdef WINDOWS
-	/* XXX this used to be in __getWindowSize() - hope it still works */
+	/** XXX \todo this used to be in __getWindowSize() - hope it still works */
 	RECT r;
 
 	if (!winInfo->client_hwnd) {
@@ -329,7 +329,7 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 	GetClientRect( winInfo->client_hwnd, &r );
 	winInfo->lastWidth = r.right - r.left;
 	winInfo->lastHeight = r.bottom - r.top;
-	winInfo->lastX = r.left;  /* XXX are these screen coords? */
+	winInfo->lastX = r.left;  /** XXX \todo are these screen coords? */
 	winInfo->lastY = r.top;
 #else
 	int x, y;
@@ -378,7 +378,7 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 }
 
 
-/*
+/**
  * Allocate a new WindowInfo object.
  * The initial tiling info is copied from the default window, which was
  * initialized according to the configuration script.
@@ -413,7 +413,7 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 	winInfo->lastX = winInfo->lastY = -1;
 	winInfo->lastWidth = 0;
 	winInfo->lastHeight = 0;
-	/* XXX maybe examine window title and match strings to set this flag */
+	/** XXX \todo maybe examine window title and match strings to set this flag */
 	winInfo->forceQuadBuffering = tilesort_spu.forceQuadBuffering;
 	/* Check if we have local stereo matrix info */
 	if (!crMatrixIsIdentity(&tilesort_spu.stereoViewMatrices[0]) ||
@@ -459,7 +459,7 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 }
 
 
-/*
+/**
  * Lookup the WindowInfo object for the given integer window ID.
  * Also, set the window's native window handle to xwindowID if it's
  * non-zero.
@@ -485,7 +485,7 @@ WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint xwindowID)
 }
 
 
-/*
+/**
  * Free a WindowInfo object.  The caller is responsible for removing
  * the object from the hash table if needed.
  */
@@ -516,7 +516,7 @@ void tilesortspuFreeWindowInfo(WindowInfo *winInfo)
 }
 
 
-/*
+/**
  * API function: set the size of the named window.
  * We'll try to find a new tiling for the new window size either by
  * contacting the mothership, DMX, etc.
@@ -581,7 +581,7 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint newWidth, G
 }
 
 
-/*
+/**
  * API function: set the position of the named window.
  * If running DMX, we need to get a new tiling too.
  */
@@ -601,7 +601,7 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLin
 }
 
 
-/*
+/**
  * API function: create a new window.
  * Input:  dpyName - display name for the window (X only)
  *         visBits - desired visual
@@ -652,7 +652,7 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 
 		if (!thread0->netServer[0].conn->actual_network)
 		{
-			/* XXX Revisit for DMX!!! */
+			/** XXX \todo Revisit for DMX!!! */
 
 			/* HUMUNGOUS HACK TO MATCH SERVER NUMBERING (from packspu_context.c)
 			 *
@@ -696,7 +696,7 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 }
 
 
-/*
+/**
  * API function: destroy the named window
  * Input: window - id of window to delete
  */

@@ -23,7 +23,7 @@
 #endif
 
 
-/*
+/**
  * If you change this, see the comments in tilesortspu_context.c
  */
 #define MAGIC_CONTEXT_BASE 500
@@ -64,7 +64,7 @@ static void stubInitNativeDispatch( void )
 }
 
 
-/* Pointer to the SPU's real glClear and glViewport functions */
+/** Pointer to the SPU's real glClear and glViewport functions */
 static ClearFunc_t origClear;
 static ViewportFunc_t origViewport;
 
@@ -105,7 +105,8 @@ static void stubCheckWindowSize(void)
 }
 
 
-/* Override the head SPU's glClear function.
+/**
+ * Override the head SPU's glClear function.
  * We're basically trapping this function so that we can poll the
  * application window size at a regular interval.
  */
@@ -116,7 +117,7 @@ static void SPU_APIENTRY trapClear(GLbitfield mask)
 	origClear(mask);
 }
 
-/*
+/**
  * As above, but for glViewport.  Most apps call glViewport before
  * glClear when a window is resized.
  */
@@ -128,7 +129,7 @@ static void SPU_APIENTRY trapViewport(GLint x, GLint y, GLsizei w, GLsizei h)
 }
 
 
-/*
+/**
  * Use the GL function pointers in <spu> to initialize the static glim
  * dispatch table.
  */
@@ -149,7 +150,7 @@ static void stubInitSPUDispatch(SPU *spu)
 }
 
 
-/*
+/**
  * This is called when we exit.
  * We call all the SPU's cleanup functions.
  */
@@ -186,7 +187,7 @@ static void stubExitHandler(void)
 	stubSPUTearDown();
 }
 
-/*
+/**
  * Called when we receive a SIGTERM signal.
  */
 static void stubSignalHandler(int signo)
@@ -197,7 +198,7 @@ static void stubSignalHandler(int signo)
 }
 
 
-/*
+/**
  * Init variables in the stub structure, install signal handler.
  */
 static void stubInitVars(void)

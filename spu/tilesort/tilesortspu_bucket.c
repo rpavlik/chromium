@@ -16,7 +16,7 @@
 #include "cr_rand.h"
 
 
-/* XXX may need to conditionally define this macro for various platforms */
+/* XXX \todo may need to conditionally define this macro for various platforms */
 #ifdef WINDOWS
 #define FINITE(X) _finite(X)
 #else
@@ -24,7 +24,7 @@
 #endif
 
 
-/*
+/**
  * Data structures for hash-based bucketing algorithm.
  * All tiles must be the same size!
  *
@@ -51,7 +51,7 @@ typedef struct hash_info {
 
 
 
-/*
+/**
  * Data structures for non-uniform grid bucketing algorithm.
  * The idea is we have a 2-D grid of rows and columns but the
  * width and height of the columns and rows isn't uniform.
@@ -117,12 +117,18 @@ static float _fabs(float a)
 }
 
 
-/*==================================================
+/**
  * convex quad-box overlap test, based on the separating
  * axis therom. see Moller, JGT 6(1), 2001 for
  * derivation of the tri case.
  * 
- * return 0 ==> no overlap 
+ * \param quad
+ * \param xmin
+ * \param ymin
+ * \param xmax
+ * \param ymax
+ *
+ * \return 0 ==> no overlap 
  *        1 ==> overlap
  */
 static int
@@ -149,7 +155,7 @@ quad_overlap(float *quad, float xmin, float ymin, float xmax, float ymax)
 	v[3][0] = quad[6] - c[0];
 	v[3][1] = quad[7] - c[1];
 	
-	/* XXX: this should be pre-computed */
+	/* XXX: \todo this should be pre-computed */
 	for (a=0; a<2; a++)
 	{		
 		f[0][a] = v[1][a] - v[0][a];
@@ -205,9 +211,10 @@ quad_overlap(float *quad, float xmin, float ymin, float xmax, float ymax)
 }
 
 
-/*
+/**
  * Initialize the hash table used for optimized UNIFORM_GRID bucketing.
- * Return: GL_FALSE - invalid tile size(s) or position(s)
+ * \param  winInfo - which window/mural
+ * \return  GL_FALSE - invalid tile size(s) or position(s)
  *         GL_TRUE - success!
  */
 static GLboolean
@@ -354,9 +361,10 @@ initHashBucketing(WindowInfo *winInfo)
 }
 
 
-/*
+/**
  * Initialize GridInfo data for the non-uniform grid case.
- * Return: GL_TRUE - the server's tiles form a non-uniform grid
+ * \param  winInfo - which window/mural
+ * \return  GL_TRUE - the server's tiles form a non-uniform grid
  *         GL_FALSE - the tiles don't form a non-uniform grid - give it up.
  */
 static GLboolean
@@ -530,15 +538,15 @@ initGridBucketing(WindowInfo *winInfo)
 }
 
 
-/*
+/**
  * Transform a bounding box from object space to NDC space.
  * This routine is used by most of the bucketing algorithms.
- * Input: winInfo - which window/mural
- *        server - which server (usually not needed)
- *        objMin, objMax - bounds in object space
- * Output: xmin, ymin, zmin, xmax, ymax, zmax - bounds in NDC
- *         ibounds - bounds in screen coords
- * Return: GL_TRUE if the resulting screen-space NDC bbox is visible,
+ * \param  winInfo - which window/mural
+ * \param      server - which server (usually not needed)
+ * \param      objMin, objMax - bounds in object space
+ * \param xmin, ymin, zmin, xmax, ymax, zmax - bounds in NDC
+ * \param      ibounds - bounds in screen coords
+ * \return  GL_TRUE if the resulting screen-space NDC bbox is visible,
  *         GL_FALSE if the resulting screen-space NDC bbox is not visible.
  */
 static GLboolean
@@ -567,7 +575,7 @@ TransformBBox(const WindowInfo *winInfo, int server,
 		CRmatrix pv, pvm;
 		int eye = (thread->currentContext->stereoDestFlags & EYE_RIGHT) ? 1:0;
 
-		/* XXX we could multiply this earlier! */
+		/* XXX \todo we could multiply this earlier! */
 		/* pv = proj matrix * view matrix */
 		crMatrixMultiply(&pv, &servWinInfo->projectionMatrix[eye],
 														&servWinInfo->viewMatrix[eye]);
@@ -587,7 +595,7 @@ TransformBBox(const WindowInfo *winInfo, int server,
 
 		CRASSERT(curEye == 0 || curEye == 1);
 
-		/* XXX we could multiply this earlier! */
+		/* XXX \todo we could multiply this earlier! */
 		/* pv = proj matrix * view matrix */
 		crMatrixMultiply(&pv, &tilesort_spu.stereoProjMatrices[curEye],
 														&tilesort_spu.stereoViewMatrices[curEye]);
@@ -641,10 +649,11 @@ TransformBBox(const WindowInfo *winInfo, int server,
 }
 
 
-/*
+/**
  * Compute bounding box/tile intersections.
- * Output:  bucketInfo - results of intersection tests
- * XXX someday break this function into a bunch of subroutines, one for
+ * \param  winInfo - which window/mural
+ * \param  bucketInfo - results of intersection tests
+ * \todo XXX someday break this function into a bunch of subroutines, one for
  * each bucketing mode.
  */
 static void
@@ -788,7 +797,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				{
 					continue;
 				}
-				/* XXX what about stereo eye selection? */
+				/* XXX \todo what about stereo eye selection? */
 				if (ibounds.x1 < q->extents.x2 && ibounds.x2 >= q->extents.x1 &&
 		 		    ibounds.y1 < q->extents.y2 && ibounds.y2 >= q->extents.y1) 
 				{
@@ -946,7 +955,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				/* Compute matrix m = projection * view * modelview. */
 				if (winInfo->matrixSource == MATRIX_SOURCE_SERVERS) {
 					/* Use projection and view matrices obtained from servers */
-					/* XXX use pre-multiplied matrix here */
+					/* XXX \todo use pre-multiplied matrix here */
 					crMatrixMultiply(&m, &servWinInfo->projectionMatrix[eye],
 																	&servWinInfo->viewMatrix[eye]);
 				}
@@ -955,7 +964,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 					/* Use the left or right eye stereo projection/view matrices */
 					const int curEye = thread->currentContext->stereoDestFlags - 1;
 					CRASSERT(curEye == 0 || curEye == 1);
-					/* XXX use pre-multiplied matrix here */
+					/* XXX \todo use pre-multiplied matrix here */
 					crMatrixMultiply(&m, &tilesort_spu.stereoProjMatrices[curEye],
 																	&tilesort_spu.stereoViewMatrices[curEye]);
 				}
@@ -1008,7 +1017,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 					const int node32 = i >> 5;
 					const int node = i & 0x1f;
 					bucketInfo->hits[node32] |= (1 << node);
-					/* XXX The following fancy bounding box code doesn't work.
+					/** XXX \todo The following fancy bounding box code doesn't work.
 					 * The problem is we need to have separate bucketInfo->pixelBounds
 					 * data for each server so that when we send the BoundsInfo
 					 * function/payload to the servers we actually send the correct
@@ -1063,7 +1072,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	else if (winInfo->bucketMode == RANDOM)
 	{
 		/* Randomly select a server */
-		/* XXX what about stereo eye selection? */
+		/* XXX \todo what about stereo eye selection? */
 		float xmin, ymin, xmax, ymax, zmin, zmax;
 		CRrecti ibounds;
 		const int server = crRandInt(0, tilesort_spu.num_servers - 1);
@@ -1093,6 +1102,8 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
  * receive a batch of geometry.
  * info's objectMin and objectMax fields should be initialized by the caller!
  * The results of bucketing will be in the info hits[] and pixelBounds fields.
+ * \param winInfo - which window/mural
+ * \param info - tile bucket info
  */
 void tilesortspuBucketGeometry(WindowInfo *winInfo, TileSortBucketInfo *info)
 {
@@ -1103,6 +1114,14 @@ void tilesortspuBucketGeometry(WindowInfo *winInfo, TileSortBucketInfo *info)
 }
 
 
+/**
+ * Set bucketing bounds
+ * \param  winInfo - which window/mural
+ * \param x
+ * \param y
+ * \param w
+ * \param h
+ */
 void tilesortspuSetBucketingBounds( WindowInfo *winInfo, int x, int y, unsigned int w, unsigned int h )
 {
 	winInfo->halfViewportWidth = w / 2.0f;
@@ -1117,6 +1136,7 @@ void tilesortspuSetBucketingBounds( WindowInfo *winInfo, int x, int y, unsigned 
  *  - upon initialising the default window
  *  - when changing the bucketing mode
  *  - when the tile layout changes
+ * \param  winInfo - which window/mural
  */
 void tilesortspuBucketingInit( WindowInfo *winInfo )
 {
@@ -1124,7 +1144,7 @@ void tilesortspuBucketingInit( WindowInfo *winInfo )
 																 winInfo->muralWidth, winInfo->muralHeight);
 
 	if (winInfo->bucketInfo) {
-		/* XXX probably need something better here */
+		/* XXX \todo probably need something better here */
 		if (winInfo->bucketMode == UNIFORM_GRID) {
 			HashInfo *hash = (HashInfo *) winInfo->bucketInfo;
 			crFree(hash->rlist);

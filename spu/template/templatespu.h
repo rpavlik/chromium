@@ -16,17 +16,23 @@
 #include "cr_spu.h"
 #include "cr_server.h"
 
+/**
+ * Template SPU descriptor
+ */
 typedef struct {
-	int id;
-	int has_child;
-	SPUDispatchTable self, child, super;
-	CRServer *server;
+	int id; /**< Spu id */
+	int has_child; 	/**< Spu has a child  Not used */
+	SPUDispatchTable self, child, super;	/**< SPUDispatchTable self for this SPU, child spu and super spu */
+	CRServer *server;	/**< crserver descriptor */
 } TemplateSPU;
 
+/** Template state descriptor */
 extern TemplateSPU template_spu;
 
+/** Named SPU functions */
 extern SPUNamedFunctionTable _cr_template_table[];
 
+/** Option table for SPU */
 extern SPUOptions templateSPUOptions[];
 
 extern void templatespuGatherConfiguration( void );

@@ -30,16 +30,22 @@ for the Chromium server.</p>
     <td width="12%">Value Types</td>
     <td width="115%">Description</td>
   </tr>
-  <tr>
-    <td width="19%" class="ConfigOption">optimize_bucket</td>
+    <td width="19%" class="ConfigOption">debug_barriers</td>
     <td width="12%" class="ConfigType">Boolean</td>
-    <td width="115%" class="ConfigDesc">If this flag is set, use a 
-	more complex algorithm to compute the set of intersected tiles when
-	a bounds_info packet arrives.  This is the same optimized algorithm
-	that is used by the tilesort SPU to determine tile overlaps.  This
-	algorithm <i>requires</i> that the tiles all be the same size.  The
-	default is 1.</td>
+    <td width="115%" class="ConfigDesc">
+       When set, this option prints debugging information related to barriers.
+       The default is 0.
+    </td>
   </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">ignore_papi</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       If set, make all barrier and semaphore operations into no-ops.
+    </td>
+  </tr>
+
   <tr>
     <td width="19%" class="ConfigOption">lightning2</td>
     <td width="12%" class="ConfigType">Boolean</td>
@@ -50,6 +56,15 @@ for the Chromium server.</p>
 	their swapping.  Currently, this option is mostly unimplemented (only
 	the gaps are left).</td>
   </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">local_tile_spec</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       For warped tile sort.  XXX more info needed.
+    </td>
+  </tr>
+
   <tr>
     <td width="19%" class="ConfigOption">only_swap_once</td>
     <td width="12%" class="ConfigType">Boolean</td>
@@ -62,14 +77,16 @@ for the Chromium server.</p>
 	this option should be used in conjunction with the <code>auto_barrier</code>
 	option in the <code>tilesort</code> SPU.  The default is <code>false</code>.</td>
   </tr>
+
   <tr>
-    <td width="19%" class="ConfigOption">spu_dir</td>
-    <td width="12%" class="ConfigType">String</td>
-    <td width="115%" class="ConfigDesc">
-      This option specifies the directory to search for Chromium SPU DLLs.
-      Setting this option is equivalent to calling the
-      <code>appNode.SPUDir()</code> function.
-    </td>
+    <td width="19%" class="ConfigOption">optimize_bucket</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">If this flag is set, use a 
+	more complex algorithm to compute the set of intersected tiles when
+	a bounds_info packet arrives.  This is the same optimized algorithm
+	that is used by the tilesort SPU to determine tile overlaps.  This
+	algorithm <i>requires</i> that the tiles all be the same size.  The
+	default is 1.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption">overlap_blending</td>
@@ -101,12 +118,54 @@ for the Chromium server.</p>
   </tr>
 
   <tr>
+    <td width="19%" class="ConfigOption">projection_matrix</td>
+    <td width="12%" class="ConfigType">List of 16 Floats</td>
+    <td width="115%" class="ConfigDesc">
+    Specifies a projection matrix to use instead of the normal OpenGL
+    projection matrix (for left view if in stereo mode).
+    Used for <a href="nonplanar.html">non-planar tilesort</a>.
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">right_projection_matrix</td>
+    <td width="12%" class="ConfigType">List of 16 Floats</td>
+    <td width="115%" class="ConfigDesc">
+    Specifies a projection matrix to use instead of the normal OpenGL
+    projection matrix for right stereo views.
+    Used for <a href="nonplanar.html">non-planar tilesort</a>.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">right_view_matrix</td>
+    <td width="12%" class="ConfigType">List of 16 Floats</td>
+    <td width="115%" class="ConfigDesc">
+    Specifies a viewing matrix to premultiply onto the normal OpenGL
+    modelview matrix for right stereo views.
+    Used for <a href="nonplanar.html">non-planar tilesort</a>.
+    </td>
+  </tr>
+
+
+  <tr>
     <td width="19%" class="ConfigOption">shared_display_lists</td>
     <td width="12%" class="ConfigType">Boolean</td>
     <td width="115%" class="ConfigDesc">
        If zero, all clients connected to the server will get a private pool
        of display list IDs.  If one, all clients connected to the server
        will share a common pool of display list IDs.
+       The default is one (a shared pool of IDs).
+    </td>
+  </tr>
+
+
+  <tr>
+    <td width="19%" class="ConfigOption">shared_programs</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       If zero, all clients connected to the server will get a private pool
+       of program IDs.  If one, all clients connected to the server
+       will share a common pool of program IDs.
        The default is one (a shared pool of IDs).
     </td>
   </tr>
@@ -123,13 +182,12 @@ for the Chromium server.</p>
   </tr>
 
   <tr>
-    <td width="19%" class="ConfigOption">shared_programs</td>
-    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="19%" class="ConfigOption">spu_dir</td>
+    <td width="12%" class="ConfigType">String</td>
     <td width="115%" class="ConfigDesc">
-       If zero, all clients connected to the server will get a private pool
-       of program IDs.  If one, all clients connected to the server
-       will share a common pool of program IDs.
-       The default is one (a shared pool of IDs).
+      This option specifies the directory to search for Chromium SPU DLLs.
+      Setting this option is equivalent to calling the
+      <code>appNode.SPUDir()</code> function.
     </td>
   </tr>
 
@@ -138,15 +196,6 @@ for the Chromium server.</p>
     <td width="12%" class="ConfigType">Boolean</td>
     <td width="115%" class="ConfigDesc">
        This should be set to 1 when using DMX.  The default is 0.
-    </td>
-  </tr>
-
-  <tr>
-    <td width="19%" class="ConfigOption">debug_barriers</td>
-    <td width="12%" class="ConfigType">Boolean</td>
-    <td width="115%" class="ConfigDesc">
-       When set, this option prints debugging information related to barriers.
-       The default is 0.
     </td>
   </tr>
 
@@ -175,37 +224,6 @@ for the Chromium server.</p>
        projection matrix is usually named "ModelViewProj".
        <p>
     </td>
-
-  <tr>
-    <td width="19%" class="ConfigOption">local_tile_spec</td>
-    <td width="12%" class="ConfigType">Boolean</td>
-    <td width="115%" class="ConfigDesc">
-       For warped tile sort.  XXX more info needed.
-    </td>
-  </tr>
-
-  <tr>
-    <td width="19%" class="ConfigOption">ignore_papi</td>
-    <td width="12%" class="ConfigType">Boolean</td>
-    <td width="115%" class="ConfigDesc">
-       If set, make all barrier and semaphore operations into no-ops.
-    </td>
-  </tr>
-
-  <tr>
-    <td width="19%" class="ConfigOption">overlap_blending</td>
-    <td width="12%" class="ConfigType">Boolean</td>
-    <td width="115%" class="ConfigDesc">
-    XXX description
-    </td>
-  </tr>
-
-  <tr>
-    <td width="19%" class="ConfigOption">overlap_levels</td>
-    <td width="12%" class="ConfigType">Integer</td>
-    <td width="115%" class="ConfigDesc">
-    XXX description
-    </td>
   </tr>
 
   <tr>
@@ -218,38 +236,6 @@ for the Chromium server.</p>
     </td>
   </tr>
 
-  <tr>
-    <td width="19%" class="ConfigOption">right_view_matrix</td>
-    <td width="12%" class="ConfigType">List of 16 Floats</td>
-    <td width="115%" class="ConfigDesc">
-    Specifies a viewing matrix to premultiply onto the normal OpenGL
-    modelview matrix for right stereo views.
-    Used for <a href="nonplanar.html">non-planar tilesort</a>.
-    </td>
-  </tr>
-
-  <tr>
-    <td width="19%" class="ConfigOption">projection_matrix</td>
-    <td width="12%" class="ConfigType">List of 16 Floats</td>
-    <td width="115%" class="ConfigDesc">
-    Specifies a projection matrix to use instead of the normal OpenGL
-    projection matrix (for left view if in stereo mode).
-    Used for <a href="nonplanar.html">non-planar tilesort</a>.
-    </td>
-  </tr>
-
-  <tr>
-    <td width="19%" class="ConfigOption">right_projection_matrix</td>
-    <td width="12%" class="ConfigType">List of 16 Floats</td>
-    <td width="115%" class="ConfigDesc">
-    Specifies a projection matrix to use instead of the normal OpenGL
-    projection matrix for right stereo views.
-    Used for <a href="nonplanar.html">non-planar tilesort</a>.
-    </td>
-  </tr>
-
-
-  </tr>
 
 </table>
 </body>

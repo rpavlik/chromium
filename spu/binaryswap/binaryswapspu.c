@@ -186,7 +186,7 @@ getClippedWindow(int *xstart, int* ystart,
 }
 
 
-/*
+/**
  * Build swap arrays
  */
 static void BuildSwapLimits( WindowInfo *window )
@@ -305,7 +305,7 @@ static void BuildSwapLimits( WindowInfo *window )
 }
 
 
-/*
+/**
  * Allocate the color and depth buffers needed for the glDraw/ReadPixels
  * commands for the given window.
  */
@@ -328,7 +328,7 @@ static void AllocBuffers( WindowInfo *window )
 
 
 
-/*
+/**
  * Determine the size of the given binaryswap SPU window.
  * We may either have to query the super or child SPU window dims.
  * Reallocate the glReadPixels RGBA/depth buffers if the size changes.
@@ -400,7 +400,7 @@ static void CheckWindowSize( WindowInfo *window )
 }
 
 
-/*
+/**
  * This is the guts of the binaryswap operation.  Here, we call glReadPixels
  * to read a region of the color and depth buffers from the parent (render
  * SPU) window.	 We then begin the process of composition using binary swap.
@@ -723,7 +723,7 @@ static void CompositeNode( WindowInfo *window,
 }
 
 
-/*
+/**
  * Do binaryswap/composite for a window.
  * This involves:
  *   - computing the image regions (tiles) to process
@@ -756,7 +756,8 @@ static void ProcessNode( WindowInfo *window )
 	CompositeNode(window, read_start_x, read_start_y, read_end_x, read_end_y);
 }
 
-/************************************************************
+/**
+ ************************************************************
  * Deals with putting back settings we muck with and checking
  * for possible window resize.
  ************************************************************/ 
@@ -892,7 +893,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuFlush( void )
 	DoBinaryswap( window );
 
 	/*
-	 * XXX I'm not sure we need to sync on glFlush, but let's be safe for now.
+	 * XXX \todo I'm not sure we need to sync on glFlush, but let's be safe for now.
 	 */
 	binaryswap_spu.child.BarrierExecCR( SWAP_BARRIER );
 }

@@ -30,14 +30,14 @@
 typedef struct { float xmin, ymin, zmin, xmax, ymax, zmax; } BBox;
 
 typedef struct {
-	GLint index;         /* my window number */
-	GLint renderWindow;  /* the super (render SPU) window */
-	GLint childWindow;   /* the child SPU's window handle */
+	GLint index;         /**< my window number */
+	GLint renderWindow;  /**< the super (render SPU) window */
+	GLint childWindow;   /**< the child SPU's window handle */
 	GLint width, height;
 	GLint childWidth, childHeight;
 	GLubyte *msgBuffer;
-	GLint bytesPerColor, bytesPerDepth;  /* bytes per pixel */
-	GLenum depthType;  /* GL_UNSIGNED_SHORT or GL_FLOAT */
+	GLint bytesPerColor, bytesPerDepth;  /**< bytes per pixel */
+	GLenum depthType;  /**< GL_UNSIGNED_SHORT or GL_FLOAT */
 	
 	int* read_x;
 	int* read_y;
@@ -45,7 +45,7 @@ typedef struct {
 	int* read_height;
 } WindowInfo;
 
-/* Message header */
+/** Message header */
 typedef struct {
 	CRMessageHeader header;
 	float depth;
@@ -68,9 +68,11 @@ typedef struct {
 	SPUDispatchTable self, child, super;
 	CRServer *server;
 
-	/* config options */
+	/** config options */
+	/*@{*/
 	int resizable;
 	int local_visualization;
+	/*@}*/
 
 	CRHashTable *contextTable;
 	CRHashTable *windowTable;
@@ -81,49 +83,49 @@ typedef struct {
 
 	GLint barrierSize;
 
-	/* Store a list of all nodes in our swap network */
+	/**< Store a list of all nodes in our swap network */
 	char ** peer_names;
 	
-	/* Stor a list of all nodes we will be swapping with */
+	/**< Stor a list of all nodes we will be swapping with */
 	char ** swap_partners;
 		
-	/* What is our number in the network. Used to find swap partners
+	/**< What is our number in the network. Used to find swap partners
 	   from network list */
 	int node_num;
 	
-	/* What type of compositing will we be doing? */
+	/**< What type of compositing will we be doing? */
 	int alpha_composite;
 	int depth_composite;
 	
-	/* Are we attempting to clip window? */
+	/**< Are we attempting to clip window? */
 	int clipped_window;
 	
-	/* How many peers do we have? */
+	/**< How many peers do we have? */
 	int num_peers;
 	
-	/* What MTU do we use? */
+	/**< What MTU do we use? */
 	unsigned int mtu;
 	
-	/* Used to store connections for swapping */
+	/**< Used to store connections for swapping */
 	CRConnection **peer_send, **peer_recv;
 		
-	/* The offset for the header of the message */
+	/**< The offset for the header of the message */
 	int offset;
 	
-	/* How many times do we swap? */
+	/**< How many times do we swap? */
 	int stages;
 	
-	/* Store if we are the top/bottom or left/right of swap */
+	/**< Store if we are the top/bottom or left/right of swap */
 	int *highlow;
 	
-	/* What is the depth of the frame buffer */
+	/**< What is the depth of the frame buffer */
 	float depth;
 	
-	/* Stores the bounding box if used */
-	BBox *bbox;  /* Either NULL or points to bboxValues */
+	/**< Stores the bounding box if used */
+	BBox *bbox;  /**< Either NULL or points to bboxValues */
 	BBox bboxValues;
 
-	/* Store model and projection matix for clip */
+	/**< Store model and projection matix for clip */
 	GLfloat modl[16], proj[16];	
 } Binaryswapspu;
 

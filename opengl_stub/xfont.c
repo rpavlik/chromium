@@ -9,10 +9,10 @@
 #include "cr_mem.h"
 #include "stub.h"
 
-/* code borrowed from Mesa */
+/** code borrowed from Mesa */
 
 
-/* Fill a BITMAP with a character C from thew current font
+/** Fill a BITMAP with a character C from thew current font
    in the graphics context GC.  WIDTH is the width in bytes
    and HEIGHT is the height in bits.
 
@@ -33,7 +33,7 @@
 */
 
 
-/*
+/**
  * Generate OpenGL-compatible bitmap.
  */
 static void

@@ -574,3 +574,6 @@ tarball: clean
 #	make tarball and zip file
 	cd .. ; tar cvf $(CRNAME).tar $(CRNAME) ; gzip $(CRNAME).tar
 	cd .. ; zip -r $(CRNAME).zip $(CRNAME)
+
+docs:
+	cd doxygen; make
