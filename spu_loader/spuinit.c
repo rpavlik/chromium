@@ -12,9 +12,10 @@
 
 void crSPUInitDispatchTable( SPUDispatchTable *table )
 {
-	table->copy_of = NULL;
 	table->copyList = NULL;
+	table->copy_of = NULL;
 	table->mark = 0;
+	table->server = NULL;
 }
 
 static int validate_int( const char *response, 
