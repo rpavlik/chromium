@@ -87,8 +87,7 @@ class SPUDialog(wxDialog):
 						controls.append(ctrl)
 						i += 1
 					innerSizer.Add(rowSizer, flag=wxALL, border=4)
-				else:
-					assert type == "STRING"
+				elif type == "STRING":
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
 					labString = description + ": "
 					label = wxStaticText(parent=self, id=-1, label=labString)
@@ -99,6 +98,11 @@ class SPUDialog(wxDialog):
 					rowSizer.Add(ctrl, option=1, flag=wxEXPAND)
 					innerSizer.Add(rowSizer, flag=wxALL|wxEXPAND, border=4)
 					controls.append(ctrl)
+				else:
+					assert type == "LABEL"
+					# just label text
+					label = wxStaticText(parent=self, id=-1, label=description)
+					innerSizer.Add(label, flag=wxALL|wxEXPAND, border=4)
 
 				# Save this option
 				value = default  # a vector
@@ -115,7 +119,7 @@ class SPUDialog(wxDialog):
 
 		rowSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
 		self.RestoreButton = wxButton(parent=self, id=id_RESTORE,
-									  label="Restore Defaults")
+									  label=" Restore Defaults ")
 		rowSizer.Add(self.RestoreButton, option=0, flag=wxALIGN_CENTER)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
 		rowSizer.Add(self.OkButton, option=0, flag=wxALIGN_CENTER)
@@ -156,32 +160,36 @@ class SPUDialog(wxDialog):
 		"""Set a control's value (a vector of values)"""
 		assert name in self.__Controls.keys()
 		ctrls = self.__Controls[name]
-		count = len(ctrls)
-		if len(newValue) != count:
-			print "bad newValue %s = --%s--" % (name, newValue)
-			print "len = %d  count = %d" % (len(newValue), count)
-		assert len(newValue) == count
-		if (isinstance(ctrls[0], wxSpinCtrl) or
-			isinstance(ctrls[0], wxCheckBox)):
-			for i in range(count):
-				ival = int(newValue[i])
-				ctrls[i].SetValue(ival)
-		else:
-			# must be (a) text or float box(es)
-			assert isinstance(ctrls[0], wxTextCtrl)
-			for i in range(count):
-				ctrls[i].SetValue(str(newValue[i]))
+		if ctrls:
+			count = len(ctrls)
+			if len(newValue) != count:
+				print "bad newValue %s = --%s--" % (name, newValue)
+				print "len = %d  count = %d" % (len(newValue), count)
+			assert len(newValue) == count
+			if (isinstance(ctrls[0], wxSpinCtrl) or
+				isinstance(ctrls[0], wxCheckBox)):
+				for i in range(count):
+					ival = int(newValue[i])
+					ctrls[i].SetValue(ival)
+			else:
+				# must be (a) text or float box(es)
+				assert isinstance(ctrls[0], wxTextCtrl)
+				for i in range(count):
+					ctrls[i].SetValue(str(newValue[i]))
 
 	# name is an SPU option like bbox_line_width
 	def GetValue(self, name):
 		"""Return current value (vector) of the named control"""
 		assert name in self.__Controls.keys()
 		ctrls = self.__Controls[name]
-		result = []
-		count = len(ctrls)
-		for i in range(count):
-			result.append(ctrls[i].GetValue())
-		return result
+		if ctrls:
+			result = []
+			count = len(ctrls)
+			for i in range(count):
+				result.append(ctrls[i].GetValue())
+			return result
+		else:
+			return [] # empty list
 
 	def SetValues(self, values):
 		"""Set all SPU Options.  values is a dictionary."""

@@ -38,9 +38,11 @@ def __WriteOption(name, type, values, file):
 		file.write("%s = %s\n" % (name, valueStr))
 	elif type == "FLOAT":
 		file.write("%s = %s\n" % (pname, valueStr))
-	else:
+	elif type == "STRING":
 		file.write("%s = \"%s\"\n" % (name, valueStr))
-	
+	else:
+		assert type == "LABEL"
+		pass
 
 def WriteGlobalOptions(mothership, file):
 	for (name, description, type, count, default, mins, maxs) in mothership.GlobalOptions:
