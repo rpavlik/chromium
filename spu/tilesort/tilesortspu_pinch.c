@@ -286,7 +286,7 @@ void tilesortspuPinch (void)
 					else 
 					{
 						ASSERT_BOUNDS (op, data);
-						VPINCH_CONVERT_TEXCOORD (*op, data, v_current.texCoord[i])
+						VPINCH_CONVERT_TEXCOORD (*op, data, v_current.texCoord[j])
 							texCoord_ptr[j] = data;
 					}
 				}

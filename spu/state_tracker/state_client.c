@@ -135,9 +135,10 @@ void STATE_APIENTRY crStateDisableClientState (GLenum array)
 	CRClientState *c = &(g->client);
 	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
+
 	FLUSH();
 
-	crStateClientSetClientState(c, cb, g->neg_bitid, array, GL_TRUE);
+	crStateClientSetClientState(c, cb, g->neg_bitid, array, GL_FALSE);
 }
 
 void crStateClientSetPointer (CRClientPointer *cp, GLint size, 
