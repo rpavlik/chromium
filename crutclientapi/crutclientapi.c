@@ -235,8 +235,6 @@ crutCreateContext(unsigned int visual)
 	crError("crCreateContext_ptr() call failed!\n");
     }
     
-    crMakeCurrent_ptr(0, ctx); /* XXX what does this do? */
-    
     return ctx;
 }
 
