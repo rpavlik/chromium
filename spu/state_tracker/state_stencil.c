@@ -24,6 +24,7 @@ void STATE_APIENTRY crStateStencilFunc(GLenum func, GLint ref, GLuint mask)
 	CRStateBits *stateb = GetCurrentBits();
 	CRStencilBits *sb = &(stateb->stencil);
 
+
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, 

@@ -45,6 +45,7 @@ typedef struct {
 	CRPackBuffer geometry_pack;
 	CRContext *ctx;
 	TileSortSPUPinchState pinchState;
+	SPUDispatchTable self;
 
 	int sendBounds;
 	int splitBeginEnd;

@@ -80,9 +80,9 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *parent)
+void SPUSelfDispatch(SPUDispatchTable *self)
 {
-	(void)parent;
+	crSPUCopyDispatchTable( &(tilesort_spu.self), self );
 }
 
 int SPUCleanup(void)

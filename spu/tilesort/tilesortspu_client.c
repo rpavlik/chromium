@@ -27,14 +27,12 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsi
 		crError( "tilesortspu_DrawElements called in a Begin/End" );
 	}
 
-	crStateBegin( mode );
-	crPackBegin (mode);
+	tilesort_spu.self.Begin(mode);
 	for (i=0; i<count; i++) 
 	{
 		crPackArrayElement(first++, &(tilesort_spu.ctx->client));
 	}
-	crPackEnd();
-	crStateEnd();
+	tilesort_spu.self.End();
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
@@ -57,8 +55,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 		crError("tilesortspu_DrawElements called with invalid type: %d", type);
 	}
 	
-	crStateBegin( mode );
-	crPackBegin (mode);
+	tilesort_spu.self.Begin( mode );
 	switch (type) 
 	{
 	case GL_UNSIGNED_BYTE:
@@ -85,8 +82,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, 
 		crError( "this can't happen: crPackDrawElements" );
 		break;
 	}
-	crPackEnd();
-	crStateEnd();
+	tilesort_spu.self.End();
 
 	if(tilesort_spu.ctx->current.inBeginEnd)
 	{
