@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_bits.h"
 #include "cr_mem.h"
 #include "state.h"
 #include "state/cr_statetypes.h"
@@ -13,15 +14,26 @@
 #pragma warning( disable : 4514 )  
 #endif
 
-
-#define LOADMATRIX(a) \
-{ \
-GLfloat f[16]; \
-f[0] = (a)->m00; f[1] = (a)->m01; f[2] = (a)->m02; f[3] = (a)->m03; \
-f[4] = (a)->m10; f[5] = (a)->m11; f[6] = (a)->m12; f[7] = (a)->m13; \
-f[8] = (a)->m20; f[9] = (a)->m21; f[10] = (a)->m22; f[11] = (a)->m23; \
-f[12] = (a)->m30; f[13] = (a)->m31; f[14] = (a)->m32; f[15] = (a)->m33; \
-diff_api.LoadMatrixf((const GLfloat *) f); \
+/*
+ * This used to be a macro.
+ */
+static INLINE void
+LOADMATRIX( const CRmatrix *a )
+{
+	if (a->m00 == 1.0F && a->m01 == 0.0F && a->m02 == 0.0F && a->m03 == 0.0F &&
+			a->m10 == 0.0F && a->m11 == 1.0F && a->m12 == 0.0F && a->m13 == 0.0F &&
+			a->m20 == 0.0F && a->m21 == 0.0F && a->m22 == 1.0F && a->m23 == 0.0F &&
+			a->m30 == 0.0F && a->m31 == 0.0F && a->m32 == 0.0F && a->m33 == 1.0F) {
+		diff_api.LoadIdentity();
+	}
+	else {
+		GLfloat f[16];
+		f[0] = a->m00;  f[1] = a->m01;  f[2] = a->m02;  f[3] = a->m03;
+		f[4] = a->m10;  f[5] = a->m11;  f[6] = a->m12;  f[7] = a->m13;
+		f[8] = a->m20;  f[9] = a->m21;  f[10] = a->m22; f[11] = a->m23;
+		f[12] = a->m30; f[13] = a->m31; f[14] = a->m32; f[15] = a->m33;
+		diff_api.LoadMatrixf(f);
+	}
 }
 
 
