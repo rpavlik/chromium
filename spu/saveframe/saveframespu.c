@@ -15,14 +15,101 @@
 
 #define MAX_FILENAME_LENGTH 511
 
-static int RGBA_to_PPM(char *filename, int width, int height,
-											 GLubyte * buffer, int binary);
-#ifdef JPEG
-static int RGB_to_JPG(char *filename, int width, int height,
-											GLubyte * buffer);
-#endif
-
 SaveFrameSPU saveframe_spu;
+
+
+static void
+RGBA_to_PPM(char *filename, int width, int height, const GLubyte * buffer,
+	    int binary)
+{
+	FILE *file;
+	int i, j;
+
+	file = fopen(filename, "wb");
+
+	if (file == NULL)
+	{
+		crWarning("Unable to create file %s.\n", filename);
+		return;
+	}
+
+	if (binary)
+	{
+		const GLubyte *row;
+
+		fprintf(file, "P6\n%d %d\n255\n", width, height);
+
+		for (i = height - 1; i >= 0; i--)
+		{
+			row = &buffer[i * width * 4];
+			for (j = 0; j < width; j++)
+			{
+				fwrite(row, 3, 1, file);
+				row += 4;
+			}
+		}
+	}
+	else
+	{
+		fprintf(file, "P3\n%d %d\n255\n", width, height);
+		for (i = height - 1; i >= 0; i--)
+		{
+			for (j = 0; j < width; j++)
+			{
+				fprintf(file, "%d %d %d \n",
+					buffer[i * width * 4 + j * 4 + 0],
+					buffer[i * width * 4 + j * 4 + 1],
+					buffer[i * width * 4 + j * 4 + 2]);
+			}
+			fprintf(file, "\n");
+		}
+	}
+
+	fclose(file);
+}
+
+
+#ifdef JPEG
+static void
+RGB_to_JPG(char *filename, int width, int height, const GLubyte * buffer)
+{
+	FILE *file;
+	int row_stride;
+	JSAMPROW row_pointer[1];
+
+	file = fopen(filename, "wb");
+
+	if (file == NULL)
+	{
+		crWarning("Unable to create file %s.\n", filename);
+		return;
+	}
+
+	/* Write image to file */
+	jpeg_stdio_dest(&saveframe_spu.cinfo, file);
+	saveframe_spu.cinfo.image_width = width;
+	saveframe_spu.cinfo.image_height = height;
+	saveframe_spu.cinfo.input_components = 3;
+	saveframe_spu.cinfo.in_color_space = JCS_RGB;
+
+	jpeg_set_defaults(&saveframe_spu.cinfo);
+	saveframe_spu.cinfo.dct_method = JDCT_FLOAT;
+	jpeg_set_quality(&saveframe_spu.cinfo, 100, TRUE);
+
+	jpeg_start_compress(&saveframe_spu.cinfo, TRUE);
+	row_stride = width * 3;
+	while (saveframe_spu.cinfo.next_scanline < saveframe_spu.cinfo.image_height)
+	{
+		row_pointer[0] = (JSAMPROW) ((buffer + (height - 1) * row_stride)
+					     - saveframe_spu.cinfo.next_scanline * row_stride);
+		jpeg_write_scanlines(&saveframe_spu.cinfo, row_pointer, 1);
+	}
+	jpeg_finish_compress(&saveframe_spu.cinfo);
+
+	fclose(file);
+}
+#endif /* JPEG */
+
 
 static void SAVEFRAMESPU_APIENTRY
 swapBuffers(GLint window, GLint flags)
@@ -72,6 +159,7 @@ swapBuffers(GLint window, GLint flags)
 				if (!crStrcmp(saveframe_spu.format, "ppm"))
 				{
 					saveframe_spu.child.ReadBuffer(GL_BACK);
+					saveframe_spu.child.PixelStorei(GL_PACK_ALIGNMENT, 1);
 					saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
 								       saveframe_spu.height, GL_RGBA,
 								       GL_UNSIGNED_BYTE,
@@ -83,41 +171,32 @@ swapBuffers(GLint window, GLint flags)
 #ifdef JPEG
 				else if (!crStrcmp(saveframe_spu.format, "jpeg"))
 				{
-				    GLubyte* in;
-				    GLubyte* out;
-				    saveframe_spu.child.ReadBuffer(GL_BACK);
-				    saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
-								   saveframe_spu.height, GL_RGBA,
-								   GL_UNSIGNED_BYTE,
-								   saveframe_spu.buffer);
-				    /* Work around an apparent but in the NVIDIA OpenGL driver */
-				    in= out= saveframe_spu.buffer;
-				    while (in<saveframe_spu.buffer+4*saveframe_spu.height*saveframe_spu.width) {
-					*out++= *in++; /* R */
-					*out++= *in++; /* G */
-					*out++= *in++; /* B */
-					in++; /* skip A */
-				    }
-				    
-				    RGB_to_JPG(filename, saveframe_spu.width, saveframe_spu.height,
-					       saveframe_spu.buffer);
+					saveframe_spu.child.ReadBuffer(GL_BACK);
+					saveframe_spu.child.PixelStorei(GL_PACK_ALIGNMENT, 1);
+					saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
+																				 saveframe_spu.height, GL_RGB,
+																				 GL_UNSIGNED_BYTE,
+																				 saveframe_spu.buffer);
+					RGB_to_JPG(filename, saveframe_spu.width, saveframe_spu.height,
+										 saveframe_spu.buffer);
 				}
 #endif
 				else {
-				  crWarning("Invalid value for saveframe_spu.format: %s",
-					    saveframe_spu.format);
+					crWarning("Invalid value for saveframe_spu.format: %s",
+							  saveframe_spu.format);
 				}
 			}
 			else
 			{
-			    crWarning
-			      ("saveframespu: Filename longer than %d characters isn't allowed. Skipping frame %d.",
-			       MAX_FILENAME_LENGTH, saveframe_spu.framenum);
+				crWarning
+					("saveframespu: Filename longer than %d characters isn't allowed. Skipping frame %d.",
+					 MAX_FILENAME_LENGTH, saveframe_spu.framenum);
 			}
 		}
 	}
 
-	if (!(flags & CR_SUPPRESS_SWAP_BIT)) saveframe_spu.framenum++;
+	if (!(flags & CR_SUPPRESS_SWAP_BIT))
+		saveframe_spu.framenum++;
 
 	saveframe_spu.child.SwapBuffers(window, flags);
 }
@@ -225,98 +304,3 @@ ResizeBuffer(void)
 		(GLubyte *) crAlloc(sizeof(GLubyte) * saveframe_spu.height *
 											 saveframe_spu.width * 4);
 }
-
-static int
-RGBA_to_PPM(char *filename, int width, int height, GLubyte * buffer,
-	    int binary)
-{
-	FILE *file;
-	int i, j;
-
-	file = fopen(filename, "wb");
-
-	if (file == NULL)
-	{
-		crError("Unable to create file %s.\n", filename);
-		return 1;
-	}
-
-	if (binary)
-	{
-		GLubyte *row;
-
-		fprintf(file, "P6\n%d %d\n255\n", width, height);
-
-		for (i = height - 1; i >= 0; i--)
-		{
-			row = &buffer[i * width * 4];
-			for (j = 0; j < width; j++)
-			{
-				fwrite(row, 3, 1, file);
-				row += 4;
-			}
-		}
-	}
-	else
-	{
-		fprintf(file, "P3\n%d %d\n255\n", width, height);
-		for (i = height - 1; i >= 0; i--)
-		{
-			for (j = 0; j < width; j++)
-			{
-				fprintf(file, "%d %d %d \n",
-					buffer[i * width * 4 + j * 4 + 0],
-					buffer[i * width * 4 + j * 4 + 1],
-					buffer[i * width * 4 + j * 4 + 2]);
-			}
-			fprintf(file, "\n");
-		}
-	}
-
-	fclose(file);
-
-	return 0;
-}
-
-#ifdef JPEG
-static int
-RGB_to_JPG(char *filename, int width, int height, GLubyte * buffer)
-{
-	FILE *file;
-	int row_stride;
-	JSAMPROW row_pointer[1];
-
-	file = fopen(filename, "wb");
-
-	if (file == NULL)
-	{
-		crError("Unable to create file %s.\n", filename);
-		return 1;
-	}
-
-	/* Write image to file */
-	jpeg_stdio_dest(&saveframe_spu.cinfo, file);
-	saveframe_spu.cinfo.image_width = width;
-	saveframe_spu.cinfo.image_height = height;
-	saveframe_spu.cinfo.input_components = 3;
-	saveframe_spu.cinfo.in_color_space = JCS_RGB;
-
-	jpeg_set_defaults(&saveframe_spu.cinfo);
-	saveframe_spu.cinfo.dct_method = JDCT_FLOAT;
-	jpeg_set_quality(&saveframe_spu.cinfo, 100, TRUE);
-
-	jpeg_start_compress(&saveframe_spu.cinfo, TRUE);
-	row_stride = width * 3;
-	while (saveframe_spu.cinfo.next_scanline < saveframe_spu.cinfo.image_height)
-	{
-		row_pointer[0] = (JSAMPROW) ((buffer + (height - 1) * row_stride)
-					     - saveframe_spu.cinfo.next_scanline * row_stride);
-		jpeg_write_scanlines(&saveframe_spu.cinfo, row_pointer, 1);
-	}
-	jpeg_finish_compress(&saveframe_spu.cinfo);
-
-	fclose(file);
-
-	return 0;
-}
-#endif /* JPEG */
