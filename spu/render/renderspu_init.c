@@ -91,6 +91,9 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 	numFuncs += crLoadOpenGLExtensions( &render_spu.ws, render_table + numFuncs );
 	CRASSERT(numFuncs < 1000);
 
+	/* we only need the state tracker for crStateGetString() */
+	crStateInit();
+
 	render_spu.barrierHash = crAllocHashtable();
 
 	render_spu.cursorX = 0;
