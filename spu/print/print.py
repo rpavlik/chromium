@@ -90,7 +90,7 @@ for func_name in keys:
 				else:
 					argstr += name
 			elif type.find( "*" ):
-				printfstr += "0x%x"
+				printfstr += "0x%p"
 				argstr += name
 			else:
 				argstr = ""
