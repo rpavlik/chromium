@@ -387,14 +387,14 @@ it!&nbsp; Replace the &quot;<code>CONFIGURATION STUFF HERE</code>&quot; comment
 (and, if you want, the cast of &quot;<code>response</code>&quot; immediately
 below it, since we're going to use <code>response</code> now) with this:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">	if (crMothershipSPUParam( conn, response, "opacity" ))<br>
+<table width="100%"><tr><td class="GrayCodeListing">	if (crMothershipGetSPUParam( conn, response, "opacity" ))<br>
 	{<br>
       &nbsp;&nbsp;&nbsp; GLfloat opacity;<br>
       &nbsp;&nbsp;&nbsp; sscanf( response, "%f", &amp;opacity );<br>
       &nbsp;&nbsp;&nbsp; setOpacity( opacity );<br>
 	}</td></tr></table>
 
-<p>crMothershipSPUParam will return a positive value if the SPU has such a named
+<p>crMothershipGetSPUParam will return a positive value if the SPU has such a named
 parameter, and the value will be placed in the &quot;<code>response</code>&quot;
 buffer.</p>
 <p>We're done with this for now, although we will return to configuration in a
@@ -517,11 +517,11 @@ value.&nbsp; In <code>__setDefaults</code>, add the code:</p>
 <p>Now that everything has reasonable defaults, let's get values from the
 mothership.&nbsp; After the configuration step for the opacity, add this code:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">	if (crMothershipSPUParam( conn, response, "sfactor" ))<br>
+<table width="100%"><tr><td class="GrayCodeListing">	if (crMothershipGetSPUParam( conn, response, "sfactor" ))<br>
 	{<br>
       &nbsp;&nbsp;&nbsp; setBlendFuncFactor( response, &amp;(seethrough_spu.sfactor) );<br>
 	}<br>
-	if (crMothershipSPUParam( conn, response, "dfactor" ))<br>
+	if (crMothershipGetSPUParam( conn, response, "dfactor" ))<br>
 	{<br>
       &nbsp;&nbsp;&nbsp; setBlendFuncFactor( response, &amp;(seethrough_spu.dfactor) );<br>
 	}</td></tr></table>
