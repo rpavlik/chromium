@@ -7,6 +7,14 @@
 # This file lets one set various compile-time options.
 
 
+# Set RELEASE to 1 to compile with optimizations and without debug info.
+RELEASE=0
+
+
+# Set THREADSAFE to 1 if you want thread safety for parallel applications.
+THREADSAFE=0
+
+
 # Set USE_DMX to 1 if you want to enable DMX support.
 # You'll need the libdmx.a library and dmxext.h header in the usual X
 # directories.
@@ -19,14 +27,5 @@ USE_DMX=0
 USE_VNC=0
 
 
-# Set THREADSAFE to 1 if you want thread safety for parallel applications.
-THREADSAFE=0
-
-
-# Set RELEASE to 1 to compile with optimizations and without debug info.
-#RELEASE=1
-
-
-# define USE_OSMESA if you want to enable off screen rendering using Mesa.
-#USE_OSMESA=1
-
+# Set USE_OSMESA to 1 if you want to enable off screen rendering using Mesa.
+USE_OSMESA=0

@@ -30,7 +30,7 @@ CR_CC = $(CC)
 CR_CXX = $(CXX)
 endif
 
-ifdef USE_OSMESA 
+ifeq ($(USE_OSMESA), 1)
 CFLAGS +=-DUSE_OSMESA
 CXXFLAGS +=-DUSE_OSMESA
 endif
@@ -176,7 +176,7 @@ else
 CFLAGS += $(FULLWARN)
 endif
 
-ifdef RELEASE
+ifeq ($(RELEASE), 1)
 CFLAGS += $(C_RELEASE_FLAGS)
 CXXFLAGS += $(CXX_RELEASE_FLAGS)
 LDFLAGS += $(LD_RELEASE_FLAGS)
@@ -205,7 +205,7 @@ endif
 ifdef WINDOWS
 LDFLAGS += /incremental:no 
 #LDFLAGS += /pdb:none
-ifndef RELEASE
+ifeq ($(RELEASE), 0)
 LDFLAGS += /debug
 endif
 LDFLAGS := /link $(LDFLAGS)
