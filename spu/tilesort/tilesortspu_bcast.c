@@ -14,8 +14,7 @@
  * Implementation of glAccum for tilesorter
  * \param op
  * \param value
-*/
-
+ */
 void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 {
 	GET_THREAD(thread);
@@ -41,7 +40,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 /**
  * Implementation of glClean for tilesorter
  * \param mask
-*/
+ */
 void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 {
 	GET_THREAD(thread);
@@ -102,7 +101,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 
 /**
  * Implementation of glFinish for tilesorter
-*/
+ */
 void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 {
 	GET_THREAD(thread);
@@ -140,7 +139,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 
 /**
  * Implementation of glFlush for tilesorter
-*/
+ */
 void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 {
 	GET_THREAD(thread);
@@ -162,8 +161,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
  * how many clients must meet at the barrier before it is released.
  * If count is zero, the crserver will automatically set count to the number
  * of clients currently connected to the server.
-*/
-
+ */
 void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
@@ -191,7 +189,7 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 /**
  * Destroys the named barrier.
  * \param name barrier name
-*/
+ */
 void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
@@ -218,9 +216,8 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 /**
  * Causes the caller to wait on the barrier until all peers meet the
  * barrier.
- * \param name
-*/
-
+ * \param name  the semaphore ID
+ */
 void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 {
 	GET_THREAD(thread);
@@ -247,11 +244,9 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 /**
  * Creates a semaphore with the given name and value.  Value indicates
  * the initial semaphore value.
- * \param name
- * \param count
+ * \param name  the semaphore ID
+ * \param count  the initial semaphore count
  */
-
-
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
