@@ -528,9 +528,9 @@ static void CompositeNode( WindowInfo *window,
 				binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, 
 								 read_width, read_height, 
 								 GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 
-								 (GLubyte*)window->msgBuffer + // base address
-								 (read_width * read_height * 3) + // color information
-								 binaryswap_spu.offset );  // message header
+								 (GLubyte*)window->msgBuffer + /* base address */
+								 (read_width * read_height * 3) + /* color information */
+								 binaryswap_spu.offset );  /* message header */
 			}
 			
 			/* lower of pair => recv,send */
