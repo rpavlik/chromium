@@ -10,6 +10,7 @@
 
 #define E_BUFFER_INITIAL_SIZE 	0x200000
 #define NUM_SEND_BUFFERS 4
+#define TEAC_KEY_SIZE sizeof(ELAN_USERKEY)
 
 #define	EQUE_PAD	16 - 6
 /* pad data size to 64 boundary */
@@ -82,9 +83,11 @@ extern "C" {
     - lctx == the low context number for each node
     - hctx == the high context number for each node
     - myrank == the rank number of the process on the node (0-N)
+    - key == a 16-byte key shared by all users of this Tcomm
     Returns an elan connection pointer on good connection, NULL on failure.
   */
-  Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank);
+  Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank,
+		   const unsigned char key[TEAC_KEY_SIZE]);
   
   /*
     - teac_Close closes and destroys the given communication context.

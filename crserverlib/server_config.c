@@ -68,6 +68,7 @@ crServerGatherConfiguration(char *mothership)
 	char *low_node = "none";
 	char *high_node = "none";
 	char *newserver = NULL;
+	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	char **clientchain, **clientlist;
 	int numClients;
@@ -155,6 +156,29 @@ crServerGatherConfiguration(char *mothership)
 		crFree(low_node);
 	if (high_node)
 		crFree(high_node);
+	if (crMothershipGetParam(conn, "comm_key", response))
+	{
+	  int a;
+	  char **words, *found;
+	  
+	  /* remove the silly []'s */
+	  while ((found = crStrchr(response, '[')))
+	    *found = ' ';
+	  while ((found = crStrchr(response, ']')))
+	    *found = ' ';
+	  
+	  words = crStrSplit(response, ",");
+	  
+	  a = 0;
+	  while (words[a] != NULL && a<sizeof(key))
+	    {
+	      key[a]= crStrToInt(words[a]);
+	      a++;
+	    }
+	  
+	  crFreeStrings(words);
+	}
+	crNetSetKey(key,sizeof(key));
 
 	if (crMothershipGetServerParam(conn, response, "port"))
 	{

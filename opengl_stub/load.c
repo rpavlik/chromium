@@ -311,6 +311,7 @@ void stubInit(void)
 	char **spu_names;
 	char *spu_dir;
 	char * app_id;
+	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	int i;
 
 	static int stub_initialized = 0;
@@ -545,6 +546,30 @@ void stubInit(void)
 		high_node = crStrdup( response );
 	}
 	crNetSetNodeRange( low_node, high_node );
+
+	if (conn && crMothershipGetParam(conn, "comm_key", response))
+	{
+	  int a;
+	  char **words, *found;
+	  
+	  /* remove the silly []'s */
+	  while ((found = crStrchr(response, '[')))
+	    *found = ' ';
+	  while ((found = crStrchr(response, ']')))
+	    *found = ' ';
+	  
+	  words = crStrSplit(response, ",");
+	  
+	  a = 0;
+	  while (words[a] != NULL && a<sizeof(key))
+	    {
+	      key[a]= crStrToInt(words[a]);
+	      a++;
+	    }
+	  
+	  crFreeStrings(words);
+	}
+	crNetSetKey(key,sizeof(key));
 
 	if (conn && crMothershipGetFakerParam( conn, response, "system_gl_path" ))
 	{

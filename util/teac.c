@@ -63,6 +63,7 @@ static struct {
   int                  high_context;
   char                 *low_node;
   char                 *high_node;
+  unsigned char        key[TEAC_KEY_SIZE];
 } cr_teac;
 
 /* Forward declarations */
@@ -81,9 +82,6 @@ void crTeacHandleNewMessage( CRConnection *conn, CRMessage *msg,
 			     unsigned int len );
 void crTeacSingleRecv( CRConnection *conn, void *buf, unsigned int len );
 void crTeacSendExact( CRConnection *conn, void *buf, unsigned int len );
-void crTeacSetRank( int rank );
-void crTeacSetContextRange( int low_context, int high_context );
-void crTeacSetNodeRange( const char *low_node, const char *high_node );
 
 
 int
@@ -466,6 +464,8 @@ void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
   (void) mtu;
   cr_teac.recv_list = rfl;
   cr_teac.close_list = cfl;
+  int i;
+  long key_sum= 0;
 
   if ( cr_teac.initialized )
     {
@@ -483,9 +483,14 @@ void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
       crError( "crTeacInit: node range is not set!" );
     }    
 
+  key_sum= 0;
+  for (i=0; i<sizeof(cr_teac.key); i++) key_sum += cr_teac.key[i];
+  if (key_sum==0) /* key not initialized */
+    crStrncpy((char*)&(cr_teac.key), "This is pretty random!", 
+	      sizeof(cr_teac.key));
   cr_teac.teac_conn = teac_Init( cr_teac.low_node, cr_teac.high_node,
 				 cr_teac.low_context, cr_teac.high_context,
-				 cr_teac.my_rank );
+				 cr_teac.my_rank, cr_teac.key );
   if ( !cr_teac.teac_conn )
     crError( "crTeacInit:  teac_Init( %d, %d, %d ) failed",
 	     cr_teac.low_context, cr_teac.high_context,
@@ -688,4 +693,20 @@ crTeacSetNodeRange( const char *low_node, const char *high_node )
   cr_teac.high_node = strtok( high, "'" );  
   crDebug( "crTeacSetNodeRange:  low node=%s, high node=%s",
 	   cr_teac.low_node, cr_teac.high_node );
+}
+
+void 
+crTeacSetKey( const unsigned char* key, const int keyLength )
+{
+  int i;
+  char msgbuf[3*TEAC_KEY_SIZE+1];
+  char* runner= msgbuf;
+  int bytesToCopy= (keyLength<TEAC_KEY_SIZE)?keyLength:TEAC_KEY_SIZE;
+  crMemcpy(&(cr_teac.key),key,bytesToCopy);
+  for (i=0; i<TEAC_KEY_SIZE; i++) { 
+    sprintf(runner,"%02x,",cr_teac.key[i]);
+    runner += 3;
+  }
+  *runner= '\0';
+  crDebug( "crTeacSetKey: Teac key is [%s]", msgbuf );
 }

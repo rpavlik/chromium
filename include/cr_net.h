@@ -53,6 +53,7 @@ int crGetPID(void);
 void crNetSetRank( int my_rank );
 void crNetSetContextRange( int low_context, int high_context );
 void crNetSetNodeRange( const char *low_node, const char *high_node );
+void crNetSetKey( const unsigned char* key, const int keyLength );
 
 typedef void (*CRVoidFunc)( void );
 /* XXX make void *buf const??? */

@@ -19,6 +19,8 @@ Public functions and classes:
     CRApplicationNode:
                     Sub class of CRNode that defines the start of the the
                     SPU graph.
+    CRAddStartupCallback:
+                    Add a callback to be called on cr.Go()
 
 Other internal functions/classes:
     CRNode:         Base class that defines a node in the SPU graph
@@ -35,6 +37,9 @@ from crconfig import arch, crdir, crbindir, crlibdir
 
 # This controls whether debug messages are printed (1=yes, 0=no)
 DebugMode = 0
+
+# Some help in figuring out the domains of some non-qualified hostnames
+__hostPrefixPairs__= [ ('iam','.psc.edu'), ('tg-v','.uc.teragrid.org') ]
 
 def CRInfo( str ):
 	"""CRInfo(str)
@@ -60,6 +65,11 @@ def CROutput( str ):
 			CRDebug("Unable to open performance monitoring log file %s\n" % file)
 	else:
 		CRDebug("NO Performance Logfile set, check CR_PERF_MOTHERSHIP_LOGFILE")
+
+def CRAddStartupCallback( cb ):
+	"""CRAddStartupCallback( cb )
+	Causes cb(thisCR) to be called from thisCR.Go()."""
+	CR.startupCallbacks.append(cb)
 
 allSPUs = {}
 
@@ -91,6 +101,17 @@ def SameHost( host1, host2 ):
 			return 1
 		else:
 			return 0;
+
+def __qualifyHostname__( host ):
+	"""__qualifyHostname__(host)
+	Converts host to a fully qualified domain name """
+	if string.find(host,'.')>=0:
+		return host
+	else:
+		for (prefix, domain) in __hostPrefixPairs__:
+			if string.find(host,prefix)==0:
+				return "%s%s"%(host,domain)
+		return socket.getfqdn(host)
 
 
 class SPU:
@@ -157,7 +178,6 @@ class SPU:
 		assert self.name == "tilesort"
 		self.layoutFunction = layoutFunc
 
-
 class CRNode:
 	"""Base class that defines a node in the SPU graph
 
@@ -187,7 +207,7 @@ class CRNode:
 		Creates a node on the given "host"."""
 		self.host = host
 		if (host == 'localhost'):
-			self.host = socket.gethostname()
+			self.host = socket.getfqdn()
 
 		# unqualify the hostname if it is already that way.
 		# e.g., turn "foo.bar.baz" into "foo"
@@ -508,8 +528,9 @@ class CR:
 	    AllSPUConf: Adds the key/values list to all SPUs' configuration.
 	    Conf: Set a mothership parameter
 	    GetConf: Return value of a mothership parameter
-        ContextRange: Sets the Quadrics context range.
-        NodeRange: Sets the Quadrics node range.
+	    ContextRange: Sets the Quadrics context range.
+	    NodeRange: Sets the Quadrics node range.
+	    CommKey: Sets the Quadrics communication key
 
 	internal functions:
             ProcessRequest:     Handles an incoming request, mapping it to
@@ -540,6 +561,9 @@ class CR:
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
 	"""
+
+	startupCallbacks = []
+	
 	def __init__( self ):
 		self.nodes = []
 		self.all_sockets = []
@@ -547,10 +571,11 @@ class CR:
 		self.allSPUConf = []
 		self.conn_id = 1
 		self.config = {"MTU" : 1024 * 1024,
-					   "low_context" : 32,
-					   "high_context" : 35,
-					   "low_node" : "mini-t0",
-					   "high_node" : "vis2"}
+			       "low_context" : 32,
+			       "high_context" : 35,
+			       "low_node" : "iam0",
+			       "high_node" : "iamvis20",
+			       "comm_key": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
 
 	def AddNode( self, node ):
 		"""AddNode(node)
@@ -593,11 +618,17 @@ class CR:
 			high_node = high_node[:period]
 		self.config["high_node"] = high_node;
 
+	def CommKey( self, byteList ):
+		"""CommKey( [byte0, byte1, ..., byte15] )
+		Sets the user key to use with Elan."""
+		self.config["comm_key"]= byteList
+		CRDebug("Setting comm key to %s"%str(byteList))
+
 	def AllSPUConf( self, regex, key, *values ):
 		"""AllSPUConf(regex, key, *values)
 		Adds the key/values list to the global SPU configuration."""
 		self.allSPUConf.append( (regex, key, map( MakeString, values) ) )
-		
+
 	# XXX obsolete; use Conf('MTU', value) instead
 	def MTU( self, mtu ):
 		"""MTU(size)
@@ -630,60 +661,83 @@ class CR:
 			response = str(self.config[key])
 		sock.Success( response )
 		return
-		
-	def Go( self, PORT=10000 ):
+
+	def Go( self, PORT = -1 ):
 		"""Go(PORT=10000)
 		Starts the ball rolling.
 		This starts the mothership's event loop."""
 		CRInfo("This is Chromium, Version 1.5")
 		try:
-			for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
-				(af, socktype, proto, canonname, sa) = res
+			if PORT == -1:
+				# Port was not specified.  Get it from
+				# CRMOTHERSHIP environment variable if possible..
+				if os.environ.has_key('CRMOTHERSHIP'):
+					motherString = os.environ['CRMOTHERSHIP']
+					loc = string.find(motherString,':')
+					if loc >= 0:
+						try:
+							PORT = int(motherString[loc+1:])
+							CRDebug("Using PORT %d"%PORT)
+						except Exception, val:
+							CRInfo("Could not parse port number from <%s>: %s"%(motherString,val))
+							CRInfo("Using default PORT!")
+							PORT = 10000
+					else:
+						PORT = 10000 # default value
+				else:
+					PORT = 10000  # default value
+				for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
+					(af, socktype, proto, canonname, sa) = res
 
-				try:
-					s = socket.socket( af, socktype )
-				except:
-					CRDebug( "Couldn't create socket of family %u, trying another one" % af );
-					continue
+					try:
+						s = socket.socket( af, socktype )
+					except:
+						CRDebug( "Couldn't create socket of family %u, trying another one" % af );
+						continue
 
-				try:
-					s.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
-				except:
-					CRDebug( "Couldn't set the SO_REUSEADDR option on the socket!" )
-					continue
+					try:
+						s.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
+					except:
+						CRDebug( "Couldn't set the SO_REUSEADDR option on the socket!" )
+						continue
 
-				try:
-					s.bind( sa )
-				except:
-					CRDebug( "Couldn't bind to port %d" % PORT );
-					continue
+					try:
+						s.bind( sa )
+					except:
+						CRDebug( "Couldn't bind to port %d" % PORT );
+						continue
 
-				try:
-					s.listen(100)
-				except:
-					CRDebug( "Couldn't listen!" );
-					continue
+					try:
+						s.listen(100)
+					except:
+						CRDebug( "Couldn't listen!" );
+						continue
 
-				#CRDebug( "Mothership ready" );
-				self.all_sockets.append(s)
+					#CRDebug( "Mothership ready" );
+					self.all_sockets.append(s)
 
-				# Start spawning processes for each node
-				# that has requested something be started.
-				spawner = CRSpawner( self.nodes ) ;
-				spawner.start() ;
+					# Start spawning processes for each node
+					# Call any callbacks which may have been
+					# set via CRAddStartupCallback()
+					for cb in CR.startupCallbacks:
+						cb(self)
 
-				while 1:
-					ready = select.select( self.all_sockets, [], [], 0.1 )[0]
-					for sock in ready:
-						if sock == s:
-							# accept a new connection
-							conn, addr = s.accept()
-							self.wrappers[conn] = SockWrapper(conn)
-							self.all_sockets.append( conn )
-						else:
-							# process request from established connection
-							self.ProcessRequest( self.wrappers[sock] )
-			Fatal( "Couldn't find local TCP port (make sure that another mothership isn't already running)")
+					# that has requested something be started.
+					spawner = CRSpawner( self.nodes ) ;
+					spawner.start() ;
+
+					while 1:
+						ready = select.select( self.all_sockets, [], [], 0.1 )[0]
+						for sock in ready:
+							if sock == s:
+								# accept a new connection
+								conn, addr = s.accept()
+								self.wrappers[conn] = SockWrapper(conn)
+								self.all_sockets.append( conn )
+							else:
+								# process request from established connection
+								self.ProcessRequest( self.wrappers[sock] )
+				Fatal( "Couldn't find local TCP port (make sure that another mothership isn't already running)")
 		except KeyboardInterrupt:
 			try:
 				for sock in self.all_sockets:
@@ -725,7 +779,7 @@ class CR:
 		protocol = connect_info[0]
 		if (protocol == 'tcpip' or protocol == 'udptcpip'):
 			(p, hostname, port_str, endianness_str) = connect_info
-			hostname = socket.gethostbyname(hostname)
+			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
 			port = int(port_str)
 			endianness = int(endianness_str)
 			for server_sock in self.wrappers.values():
@@ -795,7 +849,7 @@ class CR:
 		protocol = accept_info[0]
 		if protocol == 'tcpip' or protocol == 'udptcpip':
 			(p, hostname, port_str, endianness_str) = accept_info
-			hostname = socket.gethostbyname(hostname)
+			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
 			port = int(port_str)
 			endianness = int(endianness_str)
 			for client_sock in self.wrappers.values():

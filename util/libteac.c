@@ -13,6 +13,7 @@
 #else
 #define crAlloc(sz) malloc(sz)
 #define crStrncpy(out,in,sz) strncpy(out,in,sz)
+#define crMemcpy(out,in,bytes) memcpy(out,in,bytes)
 #define crStrchr(instr,inchr) strchr(instr,inchr)
 #define crFree(ptr) free(ptr)
 #define crRealloc( pp, size ) { \
@@ -24,7 +25,9 @@
 #include <stdarg.h>
 static void crDebug( const char* fmt, ... ) { 
   va_list ap;
+  va_start(ap,fmt);
   vfprintf(stderr, fmt, ap); 
+  va_end(ap);
 }
 #endif
 
@@ -34,7 +37,6 @@ static void crDebug( const char* fmt, ... ) {
 #define ALLOC_MAIN_SIZE	            0x2000000
 
 /* Notes-
- * -I really need a better user key in the capability.
  * -Why is elan3_fini dropping core?  It's intermittent, and seems to
  *  depend on relative timing of multiple calls.
  */
@@ -291,7 +293,8 @@ static E3_Addr teac_main2elan( ELAN3_CTX *ctx, void* main_addr )
   return result;
 }
 
-Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
+Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank, 
+		 const unsigned char key[TEAC_KEY_SIZE])
 {
   ELAN3_DEVINFO	info;
   ELAN_CAPABILITY *cap;
@@ -346,9 +349,8 @@ static char junkString[256];
   cap = &(result->cap);
   elan3_nullcap(cap);
   
-  /* Initialize the UserKey to a random number */
-  crStrncpy((char*)&(cap->UserKey), "This is pretty random!", 
-	  sizeof(ELAN_USERKEY));
+  /* Initialize the UserKey to the given value */
+  crMemcpy((void*)&(cap->UserKey),key,TEAC_KEY_SIZE);
   cap->LowContext = lctx;
   cap->MyContext = lctx + (myrank%4);
   cap->HighContext = hctx;
@@ -1060,9 +1062,9 @@ char* teac_getConnString(Tcomm *c, int id, char* buf, int buflen)
 int teac_getConnId(Tcomm *c, const char* host, int rank)
 {
   int node= trans_host(host);
-#if 0
   crDebug("getConnId: <%s> %d %d maps to %d %d\n",
 	  host, rank, c->lhost, node, (4*(node - c->lhost) + (rank%4)));
+#if 0
 #endif
   return (4*(node - c->lhost) + (rank%4));
 }

@@ -74,9 +74,6 @@ NETWORK_TYPE( Gm );
 #endif
 #ifdef TEAC_SUPPORT
 NETWORK_TYPE( Teac );
-extern void crTeacSetRank( int );
-extern void crTeacSetContextRange( int, int );
-extern void crTeacSetNodeRange( const char *, const char * );
 #endif
 #ifdef TCSCOMM_SUPPORT
 NETWORK_TYPE( Tcscomm );
@@ -934,6 +931,14 @@ crNetSetNodeRange( const char *low_node, const char *high_node )
 #endif
 #ifdef TCSCOMM_SUPPORT
 	crTcscommSetNodeRange( low_node, high_node );
+#endif
+}
+
+void
+crNetSetKey( const unsigned char* key, const int keyLength )
+{
+#ifdef TEAC_SUPPORT
+	crTeacSetKey( key, keyLength );
 #endif
 }
 
