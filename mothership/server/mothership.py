@@ -106,13 +106,19 @@ class CRNode:
 
 	    AddSPU:	Adds a SPU to the front of the SPU chain.
 	    SPUDir:	Sets the directory SPUs start in.
-	    SetAutostart: Set the name of a program to start the process
-	    		of this CRNode remotely from the mothership.
-	    SetAutostartArgv: Set the argument list of the program that
-	    		will remotely start this CRNode's process. These
-			member functions must be called before CR.Go() is
-			called to have any effect. They are run only once.
-			See the CRSpawner documentation for more information.
+	    AutoStart:	Pass this method a string to start the process
+	    		associated with this CRNode from the mothership.
+			You can pass a list of strings as the argument
+			for use in os.spawnv() or a single string which
+			will be split into a list. Make sure the first
+			thing you pass is the full path to the executable.
+
+			Examples:
+			CRNode dummy( 'jimbobsbox' )
+			dummy.AutoStart( "/usr/bin/ssh jimbobsbox crserver" )
+
+			CRNode dummy( 'matilda' )
+			dummy.AutoStart( ["/usr/bin/ssh", "matilda", "setenv FILE /Poorly Named/Data.1 ; crserver "] )
 	"""
 	SPUIndex = 0
 
@@ -160,11 +166,13 @@ class CRNode:
 		Sets the directory that SPUs start in."""
 		self.config['SPUdir'] = dir
 
-	def SetAutostart( self, program ):
-		self.autostart = program
-
-	def SetAutostartArgv( self, arglist ):
-		self.autostart_argv = arglist
+	def AutoStart( self, program ):
+		if type( program ) == types.StringType:
+			self.autostart_argv = string.split( program )
+			self.autostart = self.autostart_argv[0]
+		else:
+			self.autostart_argv = program
+			self.autostart = program[0]
 
 class CRNetworkNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
@@ -308,9 +316,9 @@ class CRSpawner(threading.Thread):
 		for node in self.nodes:
 			if node.autostart != "":
 				os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
-				print >> sys.stderr, "Starting %s on %s" % (node.autostart, node.host)
+				print >> sys.stderr, "Autostart for node %s: %s" % (node.host, str(node.autostart_argv))
 			else:
-				print >> sys.stderr, "Nothing to start on %s" % node.host
+				print >> sys.stderr, "Nothing to start for node %s" % node.host
 
 class CR:
 	"""Main class that controls the mothership
