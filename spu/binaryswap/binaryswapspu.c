@@ -478,8 +478,6 @@ static void CompositeNode( WindowInfo *window,
 				
 				crNetSend( binaryswap_spu.peer_send[i], NULL, window->msgBuffer, 
 					   (read_width * read_height * 4) + binaryswap_spu.offset);
-				if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
-					binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 			}
 			/* higher of pair => send,recv */
 			else
@@ -487,10 +485,10 @@ static void CompositeNode( WindowInfo *window,
 				
 				crNetSend( binaryswap_spu.peer_send[i], NULL, window->msgBuffer, 
 					   (read_width * read_height * 4) + binaryswap_spu.offset);
-				if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
-					binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 				crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
 			}
+			if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
+				binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 			
 			/* get render info from other node */
 			render_info = (BinarySwapMsg*)incoming_msg;
@@ -551,18 +549,16 @@ static void CompositeNode( WindowInfo *window,
 				crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
 				crNetSend( binaryswap_spu.peer_send[i], NULL, window->msgBuffer,  
 					   read_width*read_height*(3+4) + binaryswap_spu.offset);
-				if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
-					binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 			}
 			/* higher of pair => send,recv */
 			else
 			{
 				crNetSend( binaryswap_spu.peer_send[i], NULL, window->msgBuffer, 
 					   read_width*read_height*(3+4) + binaryswap_spu.offset);
-				if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
-				     binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 				crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
 			}
+			if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
+			     binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 			
 			/* get render info from other node */
 			render_info = (BinarySwapMsg*)incoming_msg;

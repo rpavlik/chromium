@@ -184,8 +184,8 @@ void packspuFlush(void *arg )
 
 	buf->pack = crNetAlloc( thread->server.conn );
 
-	if ( buf->mtu > thread->server.conn->mtu )
-		buf->mtu = thread->server.conn->mtu;
+	/* The network may have found a new mtu */
+	buf->mtu = thread->server.conn->mtu;
 
 	crPackSetBuffer( thread->packer, buf );
 

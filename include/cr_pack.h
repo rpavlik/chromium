@@ -74,6 +74,8 @@ void crPackSetBufferDEBUG( const char *file, int line,
 													 CRPackContext *pc, CRPackBuffer *buffer );
 void crPackReleaseBuffer( CRPackContext *pc );
 
+int crPackNumOpcodes( int buffer_size );
+int crPackNumData( int buffer_size );
 void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int mtu );
 void crPackResetPointers( CRPackContext *pc );
 void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff );

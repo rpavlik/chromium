@@ -68,7 +68,7 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 	thread->packer = crPackNewContext( replicate_spu.swap );
 	CRASSERT(thread->packer);
 	crPackInitBuffer( &(thread->buffer), crNetAlloc(thread->server.conn),
-										thread->server.buffer_size, thread->server.conn->mtu );
+				thread->server.conn->buffer_size, thread->server.conn->mtu );
 	thread->buffer.canBarf = thread->server.conn->Barf ? GL_TRUE : GL_FALSE;
 	crPackSetBuffer( thread->packer, &thread->buffer );
 	crPackFlushFunc( thread->packer, replicatespuFlush );

@@ -254,7 +254,7 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 
 			crDebug("Server %d: %s", i + 1, server_url);
 			thread0->net[i].name = crStrdup(server_url);
-			thread0->net[i].buffer_size = tilesort_spu.MTU;
+			thread0->net[i].buffer_size = tilesort_spu.buffer_size;
 
 			/* response is just like regular GetTiles, but each tile
 			 * is preceeded by a display id */

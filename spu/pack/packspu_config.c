@@ -71,9 +71,5 @@ void packspuGatherConfiguration( const SPU *child_spu )
 
 	pack_spu.buffer_size = crMothershipGetMTU( conn );
 
-	/* get a buffer which can hold one big big opcode (counter computing
-	 * against packer/pack_buffer.c) */
-	/*pack_spu.buffer_size = ((((pack_spu.buffer_size - sizeof(CRMessageOpcodes)) * 5 + 3) / 4 + 0x03) & ~0x03) + sizeof(CRMessageOpcodes);*/
-
 	crMothershipDisconnect( conn );
 }

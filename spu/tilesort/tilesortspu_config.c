@@ -239,20 +239,13 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	/* Process SPU config options */
 	crSPUGetMothershipParams(conn, (void *) &tilesort_spu, tilesortSPUOptions);
 
-	tilesort_spu.MTU = crMothershipGetMTU(conn);
+	tilesort_spu.buffer_size = crMothershipGetMTU(conn);
+	tilesort_spu.MTU = tilesort_spu.buffer_size;
 	crDebug("Got the MTU as %d", tilesort_spu.MTU);
 
 	/* Need to get this, before we create initial window! */
 	tilesort_spu.num_servers = tilesortspuGetNumServers(conn);
 	crDebug("Got %d servers!", tilesort_spu.num_servers);
-
-	/* get a buffer which can hold one big big opcode (counter computing
-	 * against packer/pack_buffer.c)
-	 */
-	/*tilesort_spu.buffer_size =
-		((((tilesort_spu.MTU - sizeof(CRMessageOpcodes)) * 5 + 3) / 4 +
-		0x3) & ~0x3) + sizeof(CRMessageOpcodes);*/
-	tilesort_spu.buffer_size = tilesort_spu.MTU;
 
 	/* Create initial/default window (id=0) */
 	winInfo = tilesortspuCreateWindowInfo(0,

@@ -101,9 +101,6 @@ static ThreadInfo *tilesortspuNewThread( GLint slot )
 		thread->net[i].buffer_size = tilesort_spu.thread[0].net[i].buffer_size;
 		/* Establish new connection to server[i] */
 		crNetNewClient( tilesort_spu.thread[0].net[i].conn, &(thread->net[i]));
-		/* XXX why this code? */
-		if (tilesort_spu.MTU > thread->net[i].conn->mtu)
-			tilesort_spu.MTU = thread->net[i].conn->mtu;
 	}
 
 	tilesortspuInitThreadPacking( thread );

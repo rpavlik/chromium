@@ -147,6 +147,19 @@ void crPackResetPointers( CRPackContext *pc )
 	pc->buffer.canBarf = canBarf;
 }
 
+/* Each opcode has at least a 1-word payload, so opcodes can occupy at most 
+ * 20% of the space. */
+int crPackNumOpcodes( int buffer_size ) {
+	/* Don't forget to add one here
+	 * in case the buffer size is not divisible by 4
+	 * thanks to Ken Moreland for finding this */
+	return ((( buffer_size - sizeof(CRMessageOpcodes) ) / 5) + 1 + 0x3)&(~0x3);
+												/* round up to multiple of 4 */
+}
+int crPackNumData( int buffer_size ) {
+	return buffer_size - sizeof(CRMessageOpcodes)
+		- crPackNumOpcodes(buffer_size);
+}
 
 /*
  * Initialize the given buffer.
@@ -162,12 +175,7 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int mtu )
 	buf->mtu  = mtu;
 	buf->pack = pack;
 
-	/* Each opcode has at least a 1-word payload, so opcodes can occupy at most 
-	 * 20% of the space. */
-
-	/* Don't forget to add one here, thanks to Ken Moreland for finding this */
-	num_opcodes = (( buf->size - sizeof(CRMessageOpcodes) ) / 5) + 1;
-	num_opcodes = (num_opcodes + 0x3) & (~0x3); /* round up to multiple of 4 */
+	num_opcodes = crPackNumOpcodes( buf->size );
 
 	buf->data_start    = 
 		(unsigned char *) buf->pack + num_opcodes + sizeof(CRMessageOpcodes);

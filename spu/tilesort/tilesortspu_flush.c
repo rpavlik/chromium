@@ -626,14 +626,27 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 	thread->state_server_index = -1;
 
-	/* Not sure what this is all about */
+	/* In case the network detected a smaller mtu,
+	 * shrink buffer's and tilesortspu's mtu */
 	for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
 	{
 		if (thread->buffer[i].mtu > thread->net[i].conn->mtu)
 			thread->buffer[i].mtu = thread->net[i].conn->mtu;
-		if (tilesort_spu.MTU > thread->net[i].conn->mtu)
+		if (tilesort_spu.MTU > thread->net[i].conn->mtu) {
 			tilesort_spu.MTU = thread->net[i].conn->mtu;
+		}
 	}
+	/* the geometry must also fit in the mtu */
+	/* 24 is the size of the bounds info packet
+	 * END_FLUFF is the size of data of the extra End opcode if needed
+	 * 4 since BoundsInfo opcode may take a whole 4 bytes
+	 * and 4 to let room for extra End's opcode, if needed
+	 */
+	if (tilesort_spu.geom_buffer_mtu >
+		tilesort_spu.MTU - sizeof(CRMessageOpcodes) - (24+END_FLUFF+4+4))
+		tilesort_spu.geom_buffer_mtu =
+			tilesort_spu.MTU - sizeof(CRMessageOpcodes) - (24+END_FLUFF+4+4);
+	thread->geometry_buffer.mtu = tilesort_spu.geom_buffer_mtu;
 
 	if ( big_packet_hdr != NULL )
 	{
@@ -654,9 +667,6 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	else
 	{
 		/*crDebug( "Reverting to the old geometry buffer" ); */
-		/* XXX why is this mtu assignment here? */
-		CRASSERT(thread->geometry_buffer.mtu >= tilesort_spu.geom_buffer_mtu);
-		thread->geometry_buffer.mtu = tilesort_spu.MTU - (24+END_FLUFF+8);
 		crPackSetBuffer( thread->packer, &(thread->geometry_buffer ) );
 		crPackResetPointers( thread->packer );
 	}

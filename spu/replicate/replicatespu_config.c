@@ -62,9 +62,5 @@ void replicatespuGatherConfiguration( const SPU *child_spu )
 
 	replicate_spu.buffer_size = crMothershipGetMTU( conn );
 
-	/* get a buffer which can hold one big big opcode (counter computing
-	 * against packer/pack_buffer.c) */
-	replicate_spu.buffer_size = ((((replicate_spu.buffer_size - sizeof(CRMessageOpcodes)) * 5 + 3) / 4 + 0x03) & ~0x03) + sizeof(CRMessageOpcodes);
-
 	crMothershipDisconnect( conn );
 }

@@ -122,8 +122,8 @@ void packerFlushTheToiletFirstThingInTheMorning( void* arg )
 
 	pBuf->pack = crNetAlloc( conn );
 
-	if ( pBuf->mtu > conn->mtu )
-		pBuf->mtu = conn->mtu;
+	/* the network may have found a new mtu */
+	pBuf->mtu = conn->mtu;
 
 	crPackSetBuffer( packCon, pBuf );
 
@@ -149,7 +149,7 @@ int main( int argc, char** argv )
 	crPackFlushFunc( packCon, (CRPackFlushFunc) packerFlushTheToiletFirstThingInTheMorning ) ;
 	crPackFlushArg( packCon, conn ) ;
 
-	crPackInitBuffer( &packBuf, buf, conn->mtu /*server buffer size*/, conn->mtu ) ;
+	crPackInitBuffer( &packBuf, buf, conn->buffer_size /*server buffer size*/, conn->mtu ) ;
 	CRASSERT( packBuf.data_end ) ;
 	CRASSERT( packBuf.data_start < packBuf.data_end ) ;
 	CRASSERT( packBuf.opcode_end ) ;
