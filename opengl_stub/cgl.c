@@ -280,6 +280,8 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 
 CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFormatAttribute attrib, long *value )
 {
+	int visBits = 0;
+
 	stubInit();
 
 	if( stub.haveNativeOpenGL )
@@ -288,7 +290,7 @@ CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFo
 	// TODO -- this needs to be filled out properly
 	switch( attrib ) {
 		case kCGLPFAAllRenderers:
-			*values = 0;
+			*value = 0;
 			break;
 
 		case kCGLPFADoubleBuffer:
@@ -358,18 +360,6 @@ CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFo
 			*value = 0;
 			break;
 
-		case kCGLPFAMultisample:
-			*value = 0;
-			break;
-
-		case kCGLPFASupersample:
-			*value = 0;
-			break;
-
-		case kCGLPFASampleAlpha:
-			*value = 0;
-			break;
-
 		case kCGLPFARendererID:
 			*value = 0;
 			break;
@@ -422,14 +412,12 @@ CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFo
 			*value = 0;
 			break;
 
-		case kCGLPFARemotePBuffer:
-			*value = 0;
-			break;
-
 		case kCGLPFAVirtualScreenCount:
 			*value = 1;
 			break;
 	}
+
+	return noErr;
 }
 
 
