@@ -41,6 +41,14 @@ typedef struct {
 	GLsizei		scissorW;
 	GLsizei		scissorH;
 	GLboolean   scissorValid;
+
+	GLfloat widthScale;
+	GLfloat heightScale;
+	GLrecti outputDims;
+
+	GLint x_offset;
+	GLint y_offset;
+
 } CRViewportState;
 
 void crStateViewportInit(CRViewportState *);

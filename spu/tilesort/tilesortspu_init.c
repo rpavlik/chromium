@@ -44,13 +44,12 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	tilesort_spu.geom_pack_size = tilesort_spu.MTU;
 	tilesort_spu.geom_pack_size -= sizeof( CRMessageOpcodes );
 	tilesort_spu.geom_pack_size -= 4;
-	if (tilesort_spu.sendBounds)
-	{
-		// Some server has multiple tiles, so we need to shrink everything
-		// to fit in the DATA part of the server's send buffer.  Yuck.
-		tilesort_spu.geom_pack_size = (tilesort_spu.geom_pack_size * 4) / 5;
-		tilesort_spu.geom_pack_size -= (24 + 1); // 24 is the size of the BoundsInfo packet
-	}
+	
+	// We need to shrink everything to fit in the DATA part of the server's send
+	// buffer since we're going to always send geometry as a BOUNDS_INFO
+	// packet.
+	tilesort_spu.geom_pack_size = (tilesort_spu.geom_pack_size * 4) / 5;
+	tilesort_spu.geom_pack_size -= (24 + 1); // 24 is the size of the BoundsInfo packet
 
 	// need to have the ctx first so we can give it as an argument o
 	// crPackFlushArg.

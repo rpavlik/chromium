@@ -22,10 +22,13 @@
 
 extern DLLDATA unsigned char *cr_unpackData;
 extern SPUDispatchTable cr_unpackDispatch;
+extern SPUDispatchTable *lastDispatch;
 
 void crUnpackSetReturnPointer( CRNetworkPointer *ptr );
 void crUnpackSetWritebackPointer( CRNetworkPointer *ptr );
 void crUnpack( void *data, void *opcodes, unsigned int num_opcodes, SPUDispatchTable *table );
+void crUnpackPush(void);
+void crUnpackPop(void);
 
 extern CRNetworkPointer *return_ptr, *writeback_ptr;
 

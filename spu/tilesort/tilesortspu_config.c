@@ -18,7 +18,6 @@ static void __setDefaults( void )
 {
 	tilesort_spu.num_servers = 0;
 	tilesort_spu.servers = NULL;
-	tilesort_spu.sendBounds = 0;
 	tilesort_spu.splitBeginEnd = 1;
 	tilesort_spu.broadcast = 0;
 	tilesort_spu.optimizeBucketing = 1;
@@ -159,10 +158,6 @@ void tilesortspuGatherConfiguration( void )
 
 		tilelist = crStrSplit( tilechain[1], "," );
 
-		if (server->num_extents > 1)
-		{
-			tilesort_spu.sendBounds = 1;
-		}
 		for (tile = 0; tile < server->num_extents ; tile++)
 		{
 			int w,h;

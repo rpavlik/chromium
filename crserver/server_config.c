@@ -15,10 +15,12 @@
 static void __setDefaults( void )
 {
 	cr_server.tcpip_port = 7000;
-	cr_server.num_extents = 0;
-	cr_server.current_extent = 0;
+	cr_server.numExtents = 0;
+	cr_server.curExtent = 0;
 	cr_server.muralWidth = 0;
 	cr_server.muralHeight = 0;
+	cr_server.optimizeBucket = 1;
+	cr_server.useL2 = 0;
 }
 
 void crServerGatherConfiguration(char *mothership)
@@ -35,7 +37,7 @@ void crServerGatherConfiguration(char *mothership)
 	int i;
 
 	char **clientchain, **clientlist;
-	int num_clients;
+	int numClients;
 	char **tilechain, **tilelist;
 	int num_servers;
 
@@ -80,13 +82,25 @@ void crServerGatherConfiguration(char *mothership)
 
 	cr_server.head_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir );
 
+	// Need to do this as early as possible
+	cr_server.head_spu->dispatch_table.GetIntegerv( GL_VIEWPORT, cr_server.underlyingDisplay );
+
 	crFree( spu_ids );
 	crFree( spu_names );
 	crFree( spuchain );
 
+
 	if (crMothershipServerParam( conn, response, "port" ))
 	{
 		cr_server.tcpip_port = crStrToInt( response );
+	}
+	if (crMothershipServerParam( conn, response, "optimize_bucket" ))
+	{
+		cr_server.optimizeBucket = crStrToInt( response );
+	}
+	if (crMothershipServerParam( conn, response, "lightning2" ))
+	{
+		cr_server.useL2 = crStrToInt( response );
 	}
 
 	crMothershipGetMTU( conn, response );
@@ -98,11 +112,11 @@ void crServerGatherConfiguration(char *mothership)
 	crMothershipGetClients( conn, response );
 	
 	clientchain = crStrSplitn( response, " ", 1 );
-	num_clients = crStrToInt( clientchain[0] );
+	numClients = crStrToInt( clientchain[0] );
 	clientlist = crStrSplit( clientchain[1], "," );
 
-	cr_server.num_clients = num_clients;
-	cr_server.clients = (CRClient *) crAlloc( num_clients * sizeof( *(cr_server.clients) ) );
+	cr_server.numClients = numClients;
+	cr_server.clients = (CRClient *) crAlloc( numClients * sizeof( *(cr_server.clients) ) );
 
 	if (!crMothershipGetServerTiles( conn, response ))
 	{
@@ -111,9 +125,10 @@ void crServerGatherConfiguration(char *mothership)
 	else
 	{
 		tilechain = crStrSplitn( response, " ", 1 );
-		cr_server.num_extents = crStrToInt( tilechain[0] );
+		cr_server.numExtents = crStrToInt( tilechain[0] );
+		cr_server.maxTileHeight = 0;
 		tilelist = crStrSplit( tilechain[1], "," );
-		for (i = 0 ; i < cr_server.num_extents; i++)
+		for (i = 0 ; i < cr_server.numExtents; i++)
 		{
 			float x, y, w, h;
 			sscanf( tilelist[i], "%f %f %f %f", &x, &y, &w, &h );
@@ -121,11 +136,15 @@ void crServerGatherConfiguration(char *mothership)
 			cr_server.y1[i] = (int) y;
 			cr_server.x2[i] = cr_server.x1[i] + (int) w;
 			cr_server.y2[i] = cr_server.y1[i] + (int) h;
+			if (h > cr_server.maxTileHeight)
+			{
+				cr_server.maxTileHeight = (int) h;
+			}
 			crDebug( "Added tile: %d %d %d %d", cr_server.x1[i], cr_server.y1[i], cr_server.x2[i], cr_server.y2[i] );
 		}
 	}
 
-	for (i = 0 ; i < num_clients ; i++)
+	for (i = 0 ; i < numClients ; i++)
 	{
 		char protocol[1024];
 
@@ -133,7 +152,6 @@ void crServerGatherConfiguration(char *mothership)
 		cr_server.clients[i].conn = crNetAcceptClient( protocol, cr_server.tcpip_port, mtu, 1 );
 		cr_server.clients[i].ctx = crStateCreateContext();
 		crStateSetCurrentPointers( cr_server.clients[i].ctx, &(cr_server.current) );
-		crServerAddToRunQueue( i );
 	}
 
 	// Sigh -- the servers need to know how big the whole mural is if we're
@@ -159,7 +177,7 @@ void crServerGatherConfiguration(char *mothership)
 
 	for (i = 0 ; i < num_servers ; i++)
 	{
-		int num_extents;
+		int numExtents;
 		int tile;
 		if (!crMothershipGetTiles( conn, response, i ))
 		{
@@ -167,11 +185,11 @@ void crServerGatherConfiguration(char *mothership)
 		}
 
 		tilechain = crStrSplitn( response, " ", 1 );
-		num_extents = crStrToInt( tilechain[0] );
+		numExtents = crStrToInt( tilechain[0] );
 
 		tilelist = crStrSplit( tilechain[1], "," );
 
-		for (tile = 0; tile < num_extents ; tile++)
+		for (tile = 0; tile < numExtents ; tile++)
 		{
 			int w,h;
 			int x1, y1;
@@ -192,6 +210,7 @@ void crServerGatherConfiguration(char *mothership)
 		}
 	}
 	crWarning( "Total output dimensions = (%d, %d)", cr_server.muralWidth, cr_server.muralHeight );
+
 
 	crMothershipDisconnect( conn );
 }

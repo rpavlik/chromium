@@ -5,5 +5,7 @@
 DESCRIPTION ""
 EXPORTS
 crUnpack
+crUnpackPush
+crUnpackPop
 crUnpackSetReturnPointer
 crUnpackSetWritebackPointer

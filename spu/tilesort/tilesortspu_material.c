@@ -11,51 +11,63 @@
 void TILESORTSPU_APIENTRY tilesortspu_Materiali(GLenum face, GLenum mode, GLint param)
 {
 	crStateMateriali( face, mode, param );
-	if (tilesort_spu.swap)
+	if (tilesort_spu.ctx->current.inBeginEnd)
 	{
-		crPackMaterialiSWAP( face, mode, param );
-	}
-	else
-	{
-		crPackMateriali( face, mode, param );
+		if (tilesort_spu.swap)
+		{
+			crPackMaterialiSWAP( face, mode, param );
+		}
+		else
+		{
+			crPackMateriali( face, mode, param );
+		}
 	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Materialf(GLenum face, GLenum mode, GLfloat param)
 {
 	crStateMaterialf( face, mode, param );
-	if (tilesort_spu.swap)
+	if (tilesort_spu.ctx->current.inBeginEnd)
 	{
-		crPackMaterialfSWAP( face, mode, param );
+		if (tilesort_spu.swap)
+		{
+			crPackMaterialfSWAP( face, mode, param );
+		}
+		else
+		{
+			crPackMaterialf( face, mode, param );
+		}	
 	}
-	else
-	{
-		crPackMaterialf( face, mode, param );
-	}	
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Materialiv(GLenum face, GLenum mode, const GLint *param)
 {
 	crStateMaterialiv( face, mode, param );
-	if (tilesort_spu.swap)
+	if (tilesort_spu.ctx->current.inBeginEnd)
 	{
-		crPackMaterialivSWAP( face, mode, param );
-	}
-	else
-	{
-		crPackMaterialiv( face, mode, param );
+		if (tilesort_spu.swap)
+		{
+			crPackMaterialivSWAP( face, mode, param );
+		}
+		else
+		{
+			crPackMaterialiv( face, mode, param );
+		}
 	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Materialfv(GLenum face, GLenum mode, const GLfloat *param)
 {
 	crStateMaterialfv( face, mode, param );
-	if (tilesort_spu.swap)
+	if (tilesort_spu.ctx->current.inBeginEnd)
 	{
-		crPackMaterialfvSWAP( face, mode, param );
-	}
-	else
-	{
-		crPackMaterialfv( face, mode, param );
+		if (tilesort_spu.swap)
+		{
+			crPackMaterialfvSWAP( face, mode, param );
+		}
+		else
+		{
+			crPackMaterialfv( face, mode, param );
+		}
 	}
 }

@@ -9,6 +9,7 @@ SHARED = 1
 LIBRARY = crunpacker
 FILES = unpack \
 	unpack_arrays \
+	unpack_bounds \
 	unpack_calllists \
 	unpack_clipplane \
 	unpack_context \

@@ -8,6 +8,7 @@ TOP = ..
 PROGRAM = crserver
 FILES = main \
 	server_boundsinfo \
+	server_clear \
 	server_config \
 	server_dispatch \
 	server_gentextures \

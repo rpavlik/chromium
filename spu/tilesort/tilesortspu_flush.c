@@ -114,6 +114,13 @@ void __appendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 	// 24 is the size of the bounds info packet
 	int num_data = src->data_current - src->opcode_current - 1 + 24;
 
+	if (num_data == 24)
+	{
+		// nothing to send.
+
+		return;
+	}
+
 	if ( cr_packer_globals.buffer.data_current + num_data > 
 			 cr_packer_globals.buffer.data_end )
 	{
@@ -489,16 +496,17 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		else
 		{
 			// Now, we have to decide whether or not to append the geometry buffer
-			// as a BOUNDS_INFO packet or just a bag-o-commands.  This is
-			// controlled by the sendBounds flag, which basically tells
-			// us whether or not any servers are managing multiple tiles.  Should
-			// this be done on a per-server basis?
-			
+			// as a BOUNDS_INFO packet or just a bag-o-commands.  			
+			//
+			// As it turns out, we *always* send geometry as a BOUNDS_INFO
+			// packet.  All the code lying around to deal with non-bounds-info
+			// geometry was just a red herring.
+			//
 			// Now we see why I tucked away the geometry buffer earlier.
 
-			if ( tilesort_spu.sendBounds && !broadcast )
+			if ( !broadcast )
 			{
-				crDebug( "Appending a bounded buffer" );
+				//crDebug( "Appending a bounded buffer" );
 				__appendBoundedBuffer( &(tilesort_spu.geometry_pack), &bounds );
 			}
 			else

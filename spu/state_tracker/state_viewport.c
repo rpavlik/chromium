@@ -29,27 +29,13 @@ void crStateViewportInit(CRViewportState *v)
 	v->scissorW = 640;
 	v->scissorH = 480;
 
-	/*
-	v->viewportValid = c->viewport_valid;
-	v->v_x = c->viewport.x1;
-	v->v_y = c->viewport.y1;
-	v->v_w = c->viewport.x2 - c->viewport.x1;
-	v->v_h = c->viewport.y2 - c->viewport.y1;
-
-	v->s_valid = c->viewport_valid;
-	v->s_x = c->viewport.x1;
-	v->s_y = c->viewport.y1;
-	v->s_w = c->viewport.x2 - c->viewport.x1;
-	v->s_h = c->viewport.y2 - c->viewport.y1;
-	*/
-
-	/*
-	v->getwindowsize = c->getwindowsize;
-	*/
-
 	v->farClip = 1.0;
 	v->nearClip = 0.0;
 
+	v->widthScale = v->heightScale = 1.0f;
+	v->x_offset = 0;
+	v->y_offset = 0;
+	// v->outputdims will be initialized by the caller (I hope).
 }
 
 void crStateViewportApply(CRViewportState *v, GLvectorf *p) 

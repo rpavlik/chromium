@@ -53,7 +53,6 @@ typedef struct {
 	TileSortSPUPinchState pinchState;
 	SPUDispatchTable self;
 
-	int sendBounds;
 	int splitBeginEnd;
 	int broadcast;
 	int optimizeBucketing;

@@ -25,6 +25,7 @@ print """#include "unpacker.h"
 #include "cr_unpackfuncs.h"
 #include "cr_glwrapper.h"
 #include "cr_error.h"
+#include "cr_mem.h"
 #include "cr_spu.h"
 #include <stdio.h>
 #include <memory.h>
@@ -136,12 +137,46 @@ for func_name in keys:
 	print "}\n"
 
 print """ 
+typedef struct __dispatchNode {
+	unsigned char *unpackData;
+	struct __dispatchNode *next;
+} DispatchNode;
+
+DispatchNode *unpackStack = NULL;
+
+SPUDispatchTable *cr_lastDispatch = NULL;
+
+void crUnpackPush(void)
+{
+	DispatchNode *node = crAlloc( sizeof( *node ) );
+	node->next = unpackStack;
+	unpackStack = node;
+	node->unpackData = cr_unpackData;
+}
+
+void crUnpackPop(void)
+{
+	DispatchNode *node = unpackStack;
+
+	if (!node)
+	{
+		crError( "crUnpackPop called with an empty stack!" );
+	}
+	unpackStack = node->next;
+	cr_unpackData = node->unpackData;
+	crFree( node );
+}
+
 void crUnpack( void *data, void *opcodes, 
 		unsigned int num_opcodes, SPUDispatchTable *table )
 {
 	unsigned int i;
 	unsigned char *unpack_opcodes;
-	crSPUCopyDispatchTable( &cr_unpackDispatch, table );
+	if (table != cr_lastDispatch)
+	{
+		crSPUCopyDispatchTable( &cr_unpackDispatch, table );
+		cr_lastDispatch = table;
+	}
 
 	unpack_opcodes = (unsigned char *)opcodes;
 	cr_unpackData = (unsigned char *)data;
