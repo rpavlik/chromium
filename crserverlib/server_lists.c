@@ -76,11 +76,17 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchCallList( GLuint list )
 																	mural);
 	}
 
-	/* Loop over the extents (tiles) calling glCallList() */
-	for ( i = 0; i < mural->numExtents; i++ )	{
-		if (cr_server.run_queue->client->currentCtx)
-			crServerSetOutputBounds( mural, i );
+	if (mural->numExtents == 0) {
+		/* Issue the list as-is */
 		cr_server.head_spu->dispatch_table.CallList( list );
+	}
+	else {
+		/* Loop over the extents (tiles) calling glCallList() */
+		for ( i = 0; i < mural->numExtents; i++ )	{
+			if (cr_server.run_queue->client->currentCtx)
+				crServerSetOutputBounds( mural, i );
+			cr_server.head_spu->dispatch_table.CallList( list );
+		}
 	}
 }
 
@@ -95,11 +101,17 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchCallLists( GLsizei n, GLenum type,
 		crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport), mural);
 	}
 
-	/* Loop over the extents (tiles) calling glCallList() */
-	for ( i = 0; i < mural->numExtents; i++ ) {
-		if (cr_server.run_queue->client->currentCtx)
-				crServerSetOutputBounds( mural, i );
+	if (mural->numExtents == 0) {
+		/* Issue the list as-is */
 		cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
+	}
+	else {
+		/* Loop over the extents (tiles) calling glCallList() */
+		for ( i = 0; i < mural->numExtents; i++ ) {
+			if (cr_server.run_queue->client->currentCtx)
+				crServerSetOutputBounds( mural, i );
+			cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
+		}
 	}
 }
 
