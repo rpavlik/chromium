@@ -762,6 +762,11 @@ void STATE_APIENTRY crStateActiveTextureARB( GLenum texture )
 	}
 
 	t->curTextureUnit = texture - GL_TEXTURE0_ARB;
+
+	/* update the current matrix pointer, etc. */
+	if (g->transform.matrixMode == GL_TEXTURE) {
+		crStateMatrixMode(GL_TEXTURE);
+	}
 }
 
 void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture) 
