@@ -19,12 +19,13 @@
 #include "cr_threads.h"
 
 #define BINARYSWAP_SPU_PORT	8192
-#define CLEAR_BARRIER 1
-#define SWAP_BARRIER	2
-#define CREATE_CONTEXT_BARRIER	3
-#define MAKE_CURRENT_BARRIER	4
-#define DESTROY_CONTEXT_BARRIER 5
-#define MUTEX_SEMAPHORE		6
+#define CLEAR_BARRIER           1
+#define SWAP_BARRIER            2
+#define POST_SWAP_BARRIER       3
+#define CREATE_CONTEXT_BARRIER  4
+#define MAKE_CURRENT_BARRIER    5
+#define DESTROY_CONTEXT_BARRIER 6
+#define MUTEX_SEMAPHORE         7
 
 typedef struct { float xmin, ymin, zmin, xmax, ymax, zmax; } BBox;
 

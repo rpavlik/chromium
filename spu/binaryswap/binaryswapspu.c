@@ -155,7 +155,9 @@ getClippedWindow(GLdouble modl[16], GLdouble proj[16],
 		z2=binaryswap_spu.bbox->zmax;
 	}
 	else{ /* no bounding box defined */
-		crDebug("No BBox");
+		/*
+		crDebug("binaryswap SPU: No BBox");
+		*/
 		return 0;
 	}
 		
@@ -774,6 +776,7 @@ static void DoBinaryswap( WindowInfo *window )
 		/* one-time initializations */
 		binaryswap_spu.child.BarrierCreateCR(CLEAR_BARRIER, 0);
 		binaryswap_spu.child.BarrierCreateCR(SWAP_BARRIER, 0);
+		binaryswap_spu.child.BarrierCreateCR(POST_SWAP_BARRIER, 0);
 		binaryswap_spu.child.SemaphoreCreateCR(MUTEX_SEMAPHORE, 1);
 		((BinarySwapMsg*) window->msgBuffer)->header.type = CR_MESSAGE_OOB;
 		binaryswap_spu.offset = sizeof( BinarySwapMsg );
@@ -922,15 +925,24 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuSwapBuffers( GLint win, GLint fl
 	 */
 	binaryswap_spu.child.BarrierExecCR( SWAP_BARRIER );
 
+	/* Only one client application should trigger a real SwapBuffers by NOT
+	 * passing CR_SUPPRESS_SWAP_BIT.
+	 * Otherwise, if we have N clients and do N SwapBuffers per frame we're
+	 * going to screw up.
+	 */
+	binaryswap_spu.child.SwapBuffers( window->childWindow, flags);
 
-	binaryswap_spu.child.SwapBuffers( window->childWindow, 
-					  flags & ~CR_SUPPRESS_SWAP_BIT );
 	binaryswap_spu.child.Finish();
 		
 	if (binaryswap_spu.local_visualization)
 	{
 		binaryswap_spu.super.SwapBuffers( window->renderWindow, 0 );
 	}
+
+	/* Wait for all swaps are done before starting next frame.  Otherwise
+	 * a glClear from the next frame could sneak in before we swap.
+	 */
+	binaryswap_spu.child.BarrierExecCR( POST_SWAP_BARRIER );
 }
 
 static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyName, GLint visBits)
