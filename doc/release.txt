@@ -11,6 +11,9 @@ Update include/cr_version.h with new version numbers.
 
 Update mothership/server/mothership.py and update "Version".
 
+Bump version in mothership/tools/graph.py if the graphical config tool
+has been updated since last release.
+
 
 
 Make the tarballs

@@ -1417,8 +1417,7 @@ class GraphFrame(wxFrame):
 		panelSizer = wxBoxSizer(wxVERTICAL)
 
 		text = wxStaticText(parent=panel, id=-1, label=
-					"Chromium graphical configuration tool\n" +
-					"Version 1.0\n" )
+					"Chromium 1.6 graphical configuration tool\n")
 
 		btnOK = wxButton(panel, wxID_OK, "OK")
 
