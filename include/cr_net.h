@@ -105,7 +105,8 @@ struct CRConnection {
 	unsigned int sizeof_buffer_header;
 
 	/* logging */
-	int total_bytes;
+	int total_bytes_sent;
+	int total_bytes_recv;
 
 	/* credits for flow control */
 	int send_credits;

@@ -92,7 +92,8 @@ CRConnection *crNetConnectToServer( char *server,
 
 	conn->type               = CR_NO_CONNECTION; /* we don't know yet */
 	conn->id                 = 0;                /* Each connection has an id */
-	conn->total_bytes        = 0;                    /* how many bytes have we sent? */
+	conn->total_bytes_sent   = 0;                /* how many bytes have we sent? */
+	conn->total_bytes_recv   = 0;                /* how many bytes have we recv? */
 	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
 	conn->hostname           = crStrdup( hostname ); 
@@ -190,7 +191,8 @@ CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsi
 
 	conn->type               = CR_NO_CONNECTION; /* we don't know yet */
 	conn->id                 = 0;                /* Each connection has an id */
-	conn->total_bytes        = 0;              /* how many bytes have we sent? */
+	conn->total_bytes_sent   = 0;              /* how many bytes have we sent? */
+	conn->total_bytes_recv   = 0;              /* how many bytes have we recv? */
 	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
 	/*conn->hostname           = crStrdup( hostname ); */
@@ -343,7 +345,7 @@ void crNetSend( CRConnection *conn, void **bufp,
 	}
 #endif
 
-	conn->total_bytes += len;
+	conn->total_bytes_sent += len;
 
 	msg->header.conn_id = conn->id;
 	conn->Send( conn, bufp, start, len );
