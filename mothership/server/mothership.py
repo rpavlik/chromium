@@ -102,6 +102,29 @@ def SameHost( host1, host2 ):
 		else:
 			return 0;
 
+# Return true if the specified hostname fulfills the specified
+# constraint.  The constraint is of the form "test:predicate".
+# Right now we only implement a single test (a name match), but
+# there is room for others.
+reportedConstraintWarnings = { }
+def ConstraintMatches(constraint, hostname):
+	pieces = string.split(constraint, ":", 1)
+	test = pieces[0]
+	try:
+		predicate=pieces[1]
+	except:
+		predicate=None
+
+	if test == "name":
+		# The predicate is a pattern that the hostname should match.
+		return re.search(predicate, hostname)
+	elif not reportedConstraintWarnings.has_key(test):
+		print "***WARNING: Unknown constraint test '%s'" % test
+		reportedConstraintWarnings[test] = 1
+		return 0
+	else:
+		return 0
+
 # This structure will contain a list of all dynamic host indicators
 # found during definition; they will be assigned as servers come in
 # through the AvailableMatchingNode() routine (following).
@@ -114,24 +137,45 @@ def AvailableMatchingNode(node, type, hostToMatch):
 		return 0
 	if not isinstance(node, type):
 		return 0
+
+	hostspec = node.host
 	
 	# If the node is specified dynamically, we'll use its
 	# dynamic replacement for its hostname.  Otherwise,
 	# we'll use its hostname as specified.
-	if node.host[0:1] == "#":
-		# A dynamic host.  If we have never assigned a real host
-		# to this dynamic indicator, claim this host.
-		if not dynamicHosts.has_key(node.host):
-			dynamicHosts[node.host] = hostToMatch
+	if hostspec[0:1] == "#":
+		# This node is dynamic; it may or may not have already
+		# been resolved to a hostname.  See whether it has.
+		if dynamicHosts.has_key(hostspec):
+			actualHost = dynamicHosts[hostspec]
+		else:
+			# It hasn't yet been resolved.  See whether
+			# there are any other constraints on the match.
+			# Any failed constraint means the match fails.
+			if node.config.has_key('dynamic_constraints'):
+				constraints = node.config['dynamic_constraints']
+				# A single fix-up: if the node only has a single
+				# string for a constraint, treat it as a one-item
+				# list.  In all other cases, constraints are treated
+				# as a list.
+				if isinstance(constraints, str):
+					constraints = [constraints]
+				for constraint in constraints:
+					if not ConstraintMatches(constraint, hostToMatch):
+						return 0
 
-		# Now, we must have a real host for this dynamic
-		# indicator.  Pull it out.
-		trueNodeHost = dynamicHosts[node.host]
+			# If we get here, we have a full match on
+			# the unresolved dynamic host name, and a
+			# host name for it.  Resolve the host name,
+			# and report the match.
+			dynamicHosts[hostspec] = hostToMatch
+			return 1
 	else:
 		# The node is specified by name.  Use the specified name.
-		trueNodeHost = node.host
+		actualHost = hostspec
 
-	return SameHost(string.lower(trueNodeHost), string.lower(hostToMatch))
+	# This will report whether the two hosts actually match.
+	return SameHost(string.lower(actualHost), string.lower(hostToMatch))
 
 def __qualifyHostname__( host ):
 	"""__qualifyHostname__(host)
@@ -246,7 +290,7 @@ class CRNode:
 		if (host == 'localhost'):
 			self.host = socket.getfqdn()
 		elif host[0:1] == "#":
-			# Count how many dynamic nodes have been specified
+			# Count how many dynamic nodes have been specified.
 			dynamicHostsNeeded[host] = 1
 
 		# unqualify the hostname if it is already that way.
