@@ -30,10 +30,16 @@ void APIENTRY glDrawRangeElements( GLenum mode, GLuint start, GLuint end,
 	crWarning("glDrawRangeElements not implemented by Chromium");
 }
 
-void APIENTRY glTexImage3D( GLenum target, GLint level, GLint internalFormat,
-									 GLsizei width, GLsizei height, GLsizei depth,
-									 GLint border, GLenum format, GLenum type,
-									 const GLvoid *pixels )
+void APIENTRY glTexImage3D( GLenum target, GLint level,
+#if defined(IRIX) || defined(IRIX64)
+                            GLenum internalFormat,
+#else
+                            GLint internalFormat,
+#endif
+                            GLsizei width,
+                            GLsizei height, GLsizei depth, GLint border,
+                            GLenum format, GLenum type,
+                            const GLvoid *pixels )
 {
 	(void) target;
 	(void) level;
