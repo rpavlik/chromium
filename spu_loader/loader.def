@@ -16,4 +16,4 @@ crSPUGetMothershipParams
 crSPUSetDefaultParams
 crLoadOpenGLExtensions
 crLoadOpenGL
-
+crUnloadOpenGL
