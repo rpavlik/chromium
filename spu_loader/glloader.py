@@ -179,14 +179,15 @@ crLoadOpenGL( crOpenGLInterface *interface, SPUNamedFunctionTable table[] )
 """
 
 useful_wgl_functions = [
-	"GetProcAddress",
-	"MakeCurrent",
-	"SwapBuffers",
-	"CreateContext",
-	"DeleteContext",
-	"GetCurrentContext",
-	"ChoosePixelFormat",
-	"SetPixelFormat"
+	"wglGetProcAddress",
+	"wglMakeCurrent",
+	"wglSwapBuffers",
+	"wglCreateContext",
+	"wglDeleteContext",
+	"wglGetCurrentContext",
+	"wglChoosePixelFormat",
+	"wglSetPixelFormat",
+	"glGetString"
 ]
 useful_glx_functions = [
 	"glXGetConfig",
@@ -206,7 +207,7 @@ possibly_useful_glx_functions = [
 
 print '#ifdef WINDOWS'
 for fun in useful_wgl_functions:
-	print '\tinterface->wgl%s = (wgl%sFunc_t) crDLLGetNoError( glDll, "wgl%s" );' % (fun,fun,fun)
+	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun,fun,fun)
 print '#else'
 for fun in useful_glx_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun, fun, fun)

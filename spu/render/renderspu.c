@@ -173,14 +173,10 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		context = &(render_spu.contexts[ctx]);
 		renderspu_SystemMakeCurrent( thread, window, context );
 		if (!context->everCurrent) {
-#ifdef WINDOWS
-			/* XXX */
-#else
 			/* print OpenGL info */
 			crDebug( "Render SPU: GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
 			crDebug( "Render SPU: GL_RENDERER: %s", render_spu.ws.glGetString( GL_RENDERER ) );
 			crDebug( "Render SPU: GL_VERSION:  %s", render_spu.ws.glGetString( GL_VERSION ) );
-#endif
 			context->everCurrent = GL_TRUE;
 		}
 		if (crWindow == 0 && window->mapPending) {

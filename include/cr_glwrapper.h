@@ -234,6 +234,7 @@ typedef int (WGL_APIENTRY *wglChoosePixelFormatFunc_t)(HDC, CONST PIXELFORMATDES
 typedef int (WGL_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
 typedef HGLRC (WGL_APIENTRY *wglGetCurrentContextFunc_t)();
 typedef PROC (WGL_APIENTRY *wglGetProcAddressFunc_t)();
+typedef const GLubyte *(WGL_APIENTRY *glGetStringFunc_t)( GLenum );
 #else
 typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
 typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
@@ -242,10 +243,10 @@ typedef GLXContext (*glXCreateContextFunc_t)( Display *, XVisualInfo *, GLXConte
 typedef void (*glXDestroyContextFunc_t)( Display *, GLXContext );
 typedef Bool (*glXIsDirectFunc_t)( Display *, GLXContext );
 typedef Bool (*glXMakeCurrentFunc_t)( Display *, GLXDrawable, GLXContext );
-typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
 typedef void (*glXSwapBuffersFunc_t)( Display *, GLXDrawable );
 typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
 typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
+typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
 #endif
 
 /*
@@ -270,11 +271,11 @@ typedef struct {
 	glXDestroyContextFunc_t glXDestroyContext;
 	glXIsDirectFunc_t glXIsDirect;
 	glXMakeCurrentFunc_t glXMakeCurrent;
-	glGetStringFunc_t glGetString;
 	glXSwapBuffersFunc_t glXSwapBuffers;
 	glXGetProcAddressARBFunc_t glXGetProcAddressARB;
 	glXGetCurrentDisplayFunc_t glXGetCurrentDisplay;
 #endif
+	glGetStringFunc_t glGetString;
 } crOpenGLInterface;
 
 
