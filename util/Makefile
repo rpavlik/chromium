@@ -29,6 +29,7 @@ FILES = bbox \
 	filenet \
 	hash \
 	hull \
+	list \
 	mem \
 	net \
 	pixel \
