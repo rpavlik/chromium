@@ -21,7 +21,7 @@ GLuint FindVisualInfo( HDC hdc )
 {
 	PIXELFORMATDESCRIPTOR pfd; 
 	int iPixelFormat;
-	GLuint b;
+	GLuint b = 0;
 
 	iPixelFormat = GetPixelFormat( hdc );
 
