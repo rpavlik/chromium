@@ -188,6 +188,11 @@ ifdef PLAYSTATION2
 INCLUDE_DIRS += -I/usr/X11R6/include
 endif
 
+ifdef IB_SUPPORT
+INCLUDE_DIRS += -I/usr/local/topspin/include/vapi
+LDFLAGS += -L/usr/local/topspin/lib
+endif
+
 PRINT_COMMAND := lpr
 
 ifeq ($(HUMPER_AT_STANFORD),1)
