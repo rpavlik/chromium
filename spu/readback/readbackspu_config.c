@@ -80,7 +80,7 @@ SPUOptions readbackSPUOptions[] = {
 	{ "gather_url", CR_STRING, 1, "", NULL, NULL,
 	  "URL to Connect to for Gathering", (SPUOptionCB)set_gather_url },
 
-	{ "gather_mtu", CR_INT, 1, "1048576", NULL, NULL,
+	{ "gather_mtu", CR_INT, 1, "1048576", "1024", NULL,
 	  "MTU for Gathering", (SPUOptionCB)set_gather_mtu },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },

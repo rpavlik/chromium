@@ -885,7 +885,7 @@ readbackspuWindowCreate(const char *dpyName, GLint visBits)
 	/* init window */
 	window->index = freeID;
 	window->renderWindow = readback_spu.super.WindowCreate(dpyName, visBits);
-	window->childWindow = 0;
+	window->childWindow = 0;      /* use the default window! */
 	window->width = -1;						/* unknown */
 	window->height = -1;					/* unknown */
 	window->colorBuffer = NULL;
