@@ -15,6 +15,12 @@
 
 #include <stdio.h>
 
+#include <sys/socket.h>
+#ifdef AF_INET6
+/* getaddrinfo & co appeared with ipv6 */
+#define ADDRINFO
+#endif
+
 #ifndef WINDOWS
 #include <netinet/in.h>
 #endif
