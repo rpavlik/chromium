@@ -70,8 +70,8 @@ menu_SET_COUNT          = 209
 menu_SPLIT_NODES        = 210
 menu_MERGE_NODES        = 211
 menu_SERVER_OPTIONS     = 212
-menu_SERVER_TILES       = 213
-menu_SPU_DIR            = 214
+menu_APP_OPTIONS        = 213
+menu_SERVER_TILES       = 214
 
 menu_SELECT_ALL_SPUS      = 300
 menu_SELECT_ALL_SPUS_TYPE = 301
@@ -80,11 +80,11 @@ menu_DELETE_SPU           = 303
 menu_SPU_OPTIONS          = 304
 menu_SPU_TYPES            = 320
 
-menu_LAYOUT_NODES       = 400
+menu_LAYOUT_NODES         = 400
 
-menu_APP_OPTIONS        = 500
-menu_APP_RUN            = 501
-menu_APP_STOP           = 502
+menu_MOTHERSHIP_OPTIONS   = 500
+menu_APP_RUN              = 501
+menu_APP_STOP             = 502
 
 menu_ABOUT              = 600
 menu_DOCS               = 601
@@ -181,10 +181,10 @@ class GraphFrame(wxFrame):
 		self.nodeMenu.Append(menu_SPLIT_NODES,        "Split")
 		self.nodeMenu.Append(menu_MERGE_NODES,        "Merge")
 		self.nodeMenu.AppendSeparator()
-		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Options...")
+		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Node Options...")
 		self.nodeMenu.Append(menu_SERVER_TILES,       "Server Tiles...")
 		self.nodeMenu.AppendSeparator()
-		self.nodeMenu.Append(menu_SPU_DIR,            "SPU Directory...")
+		self.nodeMenu.Append(menu_APP_OPTIONS,        "App Node Options...")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_LAYOUT_NODES,       "Layout Nodes")
 		EVT_MENU(self, menu_SELECT_ALL_NODES, self.doSelectAllNodes)
@@ -198,7 +198,7 @@ class GraphFrame(wxFrame):
 		EVT_MENU(self, menu_MERGE_NODES, self.doMergeNodes)
 		EVT_MENU(self, menu_SERVER_OPTIONS, self.doServerOptions)
 		EVT_MENU(self, menu_SERVER_TILES, self.doServerTiles)
-		EVT_MENU(self, menu_SPU_DIR, self.doSPUDirectory)
+		EVT_MENU(self, menu_APP_OPTIONS, self.doAppOptions)
 		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		menuBar.Append(self.nodeMenu, "Node")
 
@@ -232,13 +232,13 @@ class GraphFrame(wxFrame):
 
 		# Application menu
 		self.systemMenu = wxMenu()
-		self.systemMenu.Append(menu_APP_OPTIONS, "Options...")
+		self.systemMenu.Append(menu_MOTHERSHIP_OPTIONS, "Options...")
 		self.systemMenu.Append(menu_APP_RUN, "Run...")
 		self.systemMenu.Append(menu_APP_STOP, "Stop...")
-		EVT_MENU(self, menu_APP_OPTIONS, self.doAppOptions)
+		EVT_MENU(self, menu_MOTHERSHIP_OPTIONS, self.doMothershipOptions)
 		EVT_MENU(self, menu_APP_RUN, self.doRunApp)
 		EVT_MENU(self, menu_APP_STOP, self.doStopApp)
-		menuBar.Append(self.systemMenu, "Application")
+		menuBar.Append(self.systemMenu, "Mothership")
 
 		# Help menu
 		self.helpMenu = wxMenu()
@@ -565,6 +565,16 @@ class GraphFrame(wxFrame):
 		i -= 1
 		spuClasses = crutils.FindSPUNames()
 		for node in self.mothership.SelectedNodes():
+			# first check that this kind of SPU isn't already in the chain
+			dup = 0
+			for spu in node.SPUChain():
+				if spu.Name() == spuClasses[i]:
+					self.Notify("Only one %s SPU is allowed per node." %
+								spuClasses[i])
+					dup = 1
+					break
+			if dup:
+				continue
 			# we'll insert before the first selected SPU, or at the
 			# end if no SPUs are selected
 			pos = node.GetFirstSelectedSPUPos()
@@ -1104,7 +1114,7 @@ class GraphFrame(wxFrame):
 				break
 		assert serverNode
 		dialog = spudialog.SPUDialog(parent=self, id=-1,
-								title="Server Options",
+								title="Server Node Options",
 								optionList=serverNode.GetOptions())
 		dialog.Centre()
 		if dialog.ShowModal() == wxID_OK:
@@ -1141,27 +1151,27 @@ class GraphFrame(wxFrame):
 				server.SetTiles( tileLists[i], i )
 			self.dirty = true
 
-	def doSPUDirectory(self, event):
-		"""Node / SPU Directory callback"""
-		# find a non-null directory among selected nodes, if any
-		dir = ""
+	def doAppOptions(self, event):
+		"""Node / App Options callback"""
+		appNode = 0
 		for node in self.mothership.SelectedNodes():
-			d = node.GetSPUDir()
-			if d != "":
-				dir = d
+			if node.IsAppNode():
+				appNode = node
 				break
-		dialog = wxTextEntryDialog(parent=self, message=
-								   "Enter SPU directory for selected node(s).",
-								   caption="SPU Directory",
-								   defaultValue=dir)
+		assert appNode
+		dialog = spudialog.SPUDialog(parent=self, id=-1,
+								title="Application Node Options",
+								optionList=appNode.GetOptions())
 		dialog.Centre()
-		if dialog.ShowModal() == wxID_CANCEL:
-			return
-		dir = dialog.GetValue()
-		for node in self.mothership.SelectedNodes():
-			node.SPUDir(dir)
-		dialog.Destroy()
-		self.dirty = true
+		if dialog.ShowModal() == wxID_OK:
+			for opt in appNode.GetOptions().Options():
+				value = dialog.GetValue(opt.Name)
+				for node in self.mothership.SelectedNodes():
+					if node.IsAppNode():
+						node.SetOption(opt.Name, value)
+			#endfor
+			self.dirty = true
+
 
 	# ----------------------------------------------------------------------
 	# SPU menu callbacks
@@ -1248,12 +1258,12 @@ class GraphFrame(wxFrame):
 		return
 		
 	# ----------------------------------------------------------------------
-	# System menu callbacks
+	# Mothership menu callbacks
 	
-	def doAppOptions(self, event):
-		"""Application / Options callback"""
+	def doMothershipOptions(self, event):
+		"""Mothership / Options callback"""
 		dialog = spudialog.SPUDialog(parent=self, id=-1,
-								title="Application / Mothership Options",
+								title="Mothership Options",
 								optionList=self.mothership.GetOptions())
 		dialog.Centre()
 		if dialog.ShowModal() == wxID_OK:
@@ -1289,8 +1299,7 @@ class GraphFrame(wxFrame):
 
 		text = wxStaticText(parent=panel, id=-1, label=
 					"Chromium configuration tool\n" +
-					"Version 0.0\n" +
-					"Please see the Chromium documentation for instructions.")
+					"Version 0.0\n" )
 
 		btnOK = wxButton(panel, wxID_OK, "OK")
 
@@ -1334,7 +1343,6 @@ class GraphFrame(wxFrame):
 				self.nodeMenu.Enable(menu_MERGE_NODES, 0)
 				self.nodeMenu.Enable(menu_CONNECT, 0)
 			self.newSpuChoice.Enable(1)
-			self.nodeMenu.Enable(menu_SPU_DIR, 1)
 		else:
 			self.nodeMenu.Enable(menu_DELETE_NODE, 0)
 			self.nodeMenu.Enable(menu_CONNECT, 0)
@@ -1344,7 +1352,6 @@ class GraphFrame(wxFrame):
 			self.nodeMenu.Enable(menu_SPLIT_NODES, 0)
 			self.nodeMenu.Enable(menu_MERGE_NODES, 0)
 			self.newSpuChoice.Enable(0)
-			self.nodeMenu.Enable(menu_SPU_DIR, 0)
 		# Node menu / servers
 		if self.mothership.NumSelectedServers() > 0:
 			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 1)
@@ -1352,6 +1359,11 @@ class GraphFrame(wxFrame):
 		else:
 			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 0)
 			self.nodeMenu.Enable(menu_SERVER_TILES, 0)
+		if self.mothership.NumSelectedAppNodes() > 0:
+			self.nodeMenu.Enable(menu_APP_OPTIONS, 1)
+		else:
+			self.nodeMenu.Enable(menu_APP_OPTIONS, 0)
+			
 		if len(self.mothership.Nodes()) > 0:
 			self.nodeMenu.Enable(menu_SELECT_ALL_NODES, 1)
 			self.nodeMenu.Enable(menu_DESELECT_ALL_NODES, 1)

@@ -140,8 +140,6 @@ class SPUDialog(wxDialog):
 								 label="No options for this SPU class.")
 			innerSizer.Add(label, flag=wxALIGN_CENTER|wxALL, border=4)
 
-		# XXX still need to write the callbacks for each control
-
 		rowSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
 		self.RestoreButton = wxButton(parent=self, id=id_RESTORE,
 									  label=" Restore Defaults ")

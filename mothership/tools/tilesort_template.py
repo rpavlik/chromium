@@ -17,12 +17,14 @@
 # 3. Need to support arbitrary SPUs on client/server nodes.
 
 
-import string, cPickle, os.path, re
+import string, cPickle, os.path, re, sys
 from wxPython.wx import *
 import traceback, types
 import intdialog, spudialog, hostdialog, textdialog
 import crutils, crtypes, configio
 import templatebase
+sys.path.append("../server")
+import crconfig
 
 
 class TilesortParameters:
@@ -113,23 +115,25 @@ BackgroundColor = wxColor(70, 170, 130)
 
 #----------------------------------------------------------------------------
 
-# This is the guts of the tilesort configuration script.
-# It's simply appended to the file after we write all the configuration options
-_ConfigBody = """
+_ImportsSection = """
 import string, sys
 sys.path.append( "../server" )
 from mothership import *
 
+"""
+
+# This is the guts of the tilesort configuration script.
+# It's simply appended to the file after we write all the configuration options
+_ConfigBody = """
 # Look for some special mothership params
-for (name, value) in MOTHERSHIP_OPTIONS:
-	if name == "zeroth_arg":
-		ZEROTH_ARG = value
-	elif name == "default_dir":
-		DEFAULT_DIR = value
-	elif name == "auto_start":
-		AUTO_START = value
-	elif name == "default_app":
+for (name, value) in APP_OPTIONS:
+	if name == "application":
 		DEFAULT_APP = value
+	elif name == "zeroth_arg":
+		ZEROTH_ARG = value
+for (name, value) in MOTHERSHIP_OPTIONS:
+	if name == "auto_start":
+		AUTO_START = value
 
 # Check for program name/args on command line
 if len(sys.argv) == 1:
@@ -153,7 +157,7 @@ cr = CR()
 
 
 tilesortSPUs = []
-clientNodes = []
+appNodes = []
 
 for i in range(NUM_APP_NODES):
 	tilesortspu = SPU('tilesort')
@@ -161,8 +165,11 @@ for i in range(NUM_APP_NODES):
 		tilesortspu.Conf(name, value)
 	tilesortSPUs.append(tilesortspu)
 
-	clientnode = CRApplicationNode()
-	clientnode.AddSPU(tilesortspu)
+	appnode = CRApplicationNode()
+	for (name, value) in APP_OPTIONS:
+		appnode.Conf(name, value)
+
+	appnode.AddSPU(tilesortspu)
 
 	# argument substitutions
 	if i == 0 and ZEROTH_ARG != "":
@@ -171,14 +178,13 @@ for i in range(NUM_APP_NODES):
 		app_string = string.replace( program, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
-	clientnode.SetApplication( app_string )
-	clientnode.StartDir( DEFAULT_DIR )
+	appnode.Conf('application', app_string )
 
 	if AUTO_START:
-		clientnode.AutoStart( ["/bin/sh", "-c",
+		appnode.AutoStart( ["/bin/sh", "-c",
 				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
 
-	clientNodes.append(clientnode)
+	appNodes.append(appnode)
 
 
 for row in range(TILE_ROWS):
@@ -231,7 +237,7 @@ for row in range(TILE_ROWS):
 
 # Add nodes to mothership
 for i in range(NUM_APP_NODES):
-	cr.AddNode(clientNodes[i])
+	cr.AddNode(appNodes[i])
 
 # Set mothership params
 for (name, value) in MOTHERSHIP_OPTIONS:
@@ -818,7 +824,13 @@ class TilesortTemplate(templatebase.TemplateBase):
 			# remove trailing newline character
 			if l[-1:] == '\n':
 				l = l[:-1]
-			if re.match("^TILE_ROWS = " + integerPat + "$", l):
+			if re.match("^import", l):
+				pass  # ignore
+			elif re.match("^sys.path.append", l):
+				pass  # ignore
+			elif re.match("from mothership import", l):
+				pass  # ignore
+			elif re.match("^TILE_ROWS = " + integerPat + "$", l):
 				v = re.search(integerPat, l)
 				mothership.Template.Rows = int(l[v.start() : v.end()])
 			elif re.match("^TILE_COLS = " + integerPat + "$", l):
@@ -853,11 +865,14 @@ class TilesortTemplate(templatebase.TemplateBase):
 				renderSPU.GetOptions().Read(fileHandle)
 			elif re.match("^SERVER_OPTIONS = \[", l):
 				serverNode.GetOptions().Read(fileHandle)
+			elif re.match("^APP_OPTIONS = \[", l):
+				# replace found occurances of 'crbindir' with the real directory
+				substitutions = [ ("crbindir", "'%s'" % crconfig.crbindir) ]
+				clientNode.GetOptions().Read(fileHandle, substitutions)
 			elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
 				mothership.GetOptions().Read(fileHandle)
 			elif re.match("^# end of options", l):
 				# that's the end of the variables
-				# save the rest of the file....
 				break
 			elif (l != "") and (not re.match("\s*#", l)):
 				print "unrecognized line: %s" % l
@@ -874,13 +889,13 @@ class TilesortTemplate(templatebase.TemplateBase):
 			print "Writing - This is not a tilesort config!!!!"
 			return 0
 
-		print "Writing tilesort config"
 		template = mothership.Template
 		clientNode = FindClientNode(mothership)
 		serverNode = FindServerNode(mothership)
 
 		file = fileHandle
 		file.write('TEMPLATE = "%s"\n' % self.Name())
+		file.write(_ImportsSection)
 		file.write("TILE_ROWS = %d\n" % template.Rows)
 		file.write("TILE_COLS = %d\n" % template.Columns)
 		file.write("TILE_WIDTH = %d\n" % template.TileWidth)
@@ -899,11 +914,17 @@ class TilesortTemplate(templatebase.TemplateBase):
 		renderSPU = FindRenderSPU(mothership)
 		renderSPU.GetOptions().Write(file, "RENDER_OPTIONS")
 
-		# write server and mothership options
+		# write server options
 		serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
+
+		# write app node options
+		substitutions = [ (crconfig.crbindir, 'crbindir') ]
+		clientNode.GetOptions().Write(file, "APP_OPTIONS", substitutions)
+
+		# write mothership options
 		mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
 
-		file.write("# end of options, the rest is boilerplate\n")
+		file.write("# end of options, the rest is boilerplate (do not remove this line!)\n")
 		file.write(_ConfigBody)
 		return 1
 

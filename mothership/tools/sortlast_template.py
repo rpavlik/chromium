@@ -16,6 +16,8 @@ import traceback, types
 import intdialog, spudialog, hostdialog, textdialog
 import crutils, crtypes, configio
 import templatebase
+sys.path.append("../server")
+import crconfig
 
 
 class SortlastParameters:
@@ -43,23 +45,25 @@ CommonWindowSizes = [ [128, 128],
 
 #----------------------------------------------------------------------
 
-# This is the guts of the sortlast configuration script.
-# It's simply appended to the file after we write all the configuration options
-_ConfigBody = """
+_ImportsSection = """
 import string, sys
 sys.path.append( "../server" )
 from mothership import *
 
-# Look for some special mothership params
-for (name, value) in MOTHERSHIP_OPTIONS:
-	if name == "zeroth_arg":
-		ZEROTH_ARG = value
-	elif name == "default_dir":
-		DEFAULT_DIR = value
-	elif name == "auto_start":
-		AUTO_START = value
-	elif name == "default_app":
+"""
+
+# This is the guts of the sortlast configuration script.
+# It's simply appended to the file after we write all the configuration options
+_ConfigBody = """
+# Look for some special options
+for (name, value) in APP_OPTIONS:
+	if name == "application":
 		DEFAULT_APP = value
+	elif name == "zeroth_arg":
+		ZEROTH_ARG = value
+for (name, value) in MOTHERSHIP_OPTIONS:
+	if name == "auto_start":
+		AUTO_START = value
 
 # Check for program name/args on command line
 if len(sys.argv) == 1:
@@ -94,6 +98,8 @@ appNodes = []
 
 for i in range(NUM_APP_NODES):
 	node = CRApplicationNode( APP_HOSTS[i] )
+	for (name, value) in APP_OPTIONS:
+		node.Conf(name, value)
 
 	# argument substitutions
 	if i == 0 and ZEROTH_ARG != "":
@@ -102,8 +108,7 @@ for i in range(NUM_APP_NODES):
 		app_string = string.replace( program, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
-	node.SetApplication( app_string )
-	node.StartDir( DEFAULT_DIR )
+	node.Conf( 'application', app_string )
 
 	if AUTO_START:
 		# XXX this probably doesn't work yet!
@@ -442,79 +447,6 @@ class SortlastDialog(wxDialog):
 		self.__UpdateWidgetsFromVars()
 
 
-def Create_Sortlast0(parentWindow, mothership):
-	"""Create a sort-last configuration"""
-	
-	# Yes, client/server are transposed here
-	appHosts = crutils.GetSiteDefault("cluster_hosts")
-	if not appHosts:
-		appHosts = ["localhost"]
-
-	serverHosts = crutils.GetSiteDefault("frontend_hosts")
-	if not serverHosts:
-		serverHosts = ["localhost"]
-
-	defaultNodes = len(appHosts)
-	(defaultWidth, defaultHeight) = crutils.GetSiteDefault("screen_size")
-	if defaultWidth < 128:
-		defaultWidth = 128
-	if defaultHeight < 128:
-		defaultHeight = 128
-
-	dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
-							 title="Sort-last Template",
-							 labels=["Number of application nodes:",
-									 "Window Width:",
-									 "Window Height:"],
-							 defaultValues=[defaultNodes,
-											defaultWidth, defaultHeight],
-							 minValue=1, maxValue=10000)
-	dialog.Centre()
-	if dialog.ShowModal() == wxID_CANCEL:
-		dialog.Destroy()
-		return 0
-	numApps = dialog.GetValues()[0]
-	width = dialog.GetValues()[1]
-	height = dialog.GetValues()[2]
-
-	mothership.Sortlast = SortlastParameters()
-
-	mothership.DeselectAllNodes()
-
-	# Create the server/render node
-	xPos = 300
-	yPos = 5
-	serverNode = crtypes.NetworkNode(serverHosts, 1)
-	serverNode.SetPosition(xPos, yPos)
-	serverNode.Select()
-	renderSPU = crutils.NewSPU("render")
-	renderSPU.SetOption("window_geometry", [0, 0, width, height])
-	serverNode.AddSPU(renderSPU)
-	serverNode.SetOption( "only_swap_once", [1] )
-	mothership.AddNode(serverNode)
-
-	# Create the client/app nodes
-	xPos = 5
-	yPos = 5
-	appNode = crtypes.ApplicationNode(appHosts, numApps)
-	cluster_pattern = crutils.GetSiteDefault("cluster_pattern")
-	if cluster_pattern:
-		appNode.SetHostNamePattern(cluster_pattern);
-	appNode.SetPosition(xPos, yPos)
-	appNode.Select()
-	readbackSPU = crutils.NewSPU("readback")
-	readbackSPU.SetOption("title", ["Chromium Readback SPU"])
-	readbackSPU.SetOption("window_geometry", [0, 0, width, height])
-	readbackSPU.SetOption("extract_depth", [1])
-	readbackSPU.Conf("extract_depth", 1)
-	appNode.AddSPU(readbackSPU)
-	packSPU = crutils.NewSPU("pack")
-	appNode.AddSPU(packSPU)
-	mothership.AddNode(appNode)
-	packSPU.AddServer(serverNode)
-	dialog.Destroy()
-	return 1
-
 
 #----------------------------------------------------------------------
 
@@ -550,8 +482,8 @@ class SortlastTemplate(templatebase.TemplateBase):
 		dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
 								 title="Sort-last Template",
 								 labels=["Number of application nodes:",
-										 "Window Width:",
-										 "Window Height:"],
+										 "Initial Window Width:",
+										 "Initial Window Height:"],
 								 defaultValues=[defaultNodes,
 												defaultWidth, defaultHeight],
 								 minValue=1, maxValue=10000)
@@ -685,7 +617,7 @@ class SortlastTemplate(templatebase.TemplateBase):
 		integerPat = "[0-9]+"
 		listPat = "\[.+\]"
 		tuplePat = "\(.+\)"
-		quotedStringPat = '\".+\"'
+		quotedStringPat = '\"(.*)\"'
 
 		while true:
 			l = fileHandle.readline()
@@ -694,9 +626,15 @@ class SortlastTemplate(templatebase.TemplateBase):
 			# remove trailing newline character
 			if l[-1:] == '\n':
 				l = l[:-1]
-			if re.match("^COMPOSITE_HOST = ", l):
+			if re.match("^import", l):
+				pass  # ignore
+			elif re.match("^sys.path.append", l):
+				pass  # ignore
+			elif re.match("from mothership import", l):
+				pass  # ignore
+			elif re.match("^COMPOSITE_HOST = ", l):
 				v = re.search(quotedStringPat + "$", l)
-				host = eval(l[v.start() : v.end()])
+				host = l[v.start(1) : v.end(1)]
 				serverNode.SetHosts( [ host ] )
 			elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
 				v = re.search(integerPat, l)
@@ -715,6 +653,9 @@ class SortlastTemplate(templatebase.TemplateBase):
 				renderSPU.GetOptions().Read(fileHandle)
 			elif re.match("^SERVER_OPTIONS = \[", l):
 				serverNode.GetOptions().Read(fileHandle)
+			elif re.match("^APP_OPTIONS = \[", l):
+				substitutions = [ ("crbindir", "'%s'" % crconfig.crbindir) ]
+				clientNode.GetOptions().Read(fileHandle, substitutions)
 			elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
 				mothership.GetOptions().Read(fileHandle)
 			elif re.match("^# end of options", l):
@@ -728,36 +669,42 @@ class SortlastTemplate(templatebase.TemplateBase):
 		mothership.LayoutNodes()
 		return 1  # OK
 
-	def Write(self, mothership, fileHandle):
+	def Write(self, mothership, file):
 		"""Write a sort-last config to the file handle."""
 		if not self.Validate(mothership):
 			print "Write: this isn't a sort-last config!"
 			return 0
 
-		print "Writing sort-last config"
 		sortlast = mothership.Sortlast
 		clientNode = FindClientNode(mothership)
 		serverNode = FindServerNode(mothership)
 
-		fileHandle.write('TEMPLATE = "%s"\n' % self.Name())
-		fileHandle.write('COMPOSITE_HOST = "%s"\n' % serverNode.GetHosts()[0])
-		fileHandle.write('NUM_APP_NODES = %d\n' % clientNode.GetCount())
-		fileHandle.write('APP_HOSTS = %s\n' % str(clientNode.GetHosts()))
-		fileHandle.write('APP_PATTERN = %s\n' % str(clientNode.GetHostNamePattern()))
+		file.write('TEMPLATE = "%s"\n' % self.Name())
+		file.write(_ImportsSection)
+		file.write('COMPOSITE_HOST = "%s"\n' % serverNode.GetHosts()[0])
+		file.write('NUM_APP_NODES = %d\n' % clientNode.GetCount())
+		file.write('APP_HOSTS = %s\n' % str(clientNode.GetHosts()))
+		file.write('APP_PATTERN = %s\n' % str(clientNode.GetHostNamePattern()))
 
 		# write render SPU options
 		renderSPU = FindRenderSPU(mothership)
-		renderSPU.GetOptions().Write(fileHandle, "RENDER_OPTIONS")
+		renderSPU.GetOptions().Write(file, "RENDER_OPTIONS")
 
 		# write readback SPU options
 		readbackSPU = FindReadbackSPU(mothership)
-		readbackSPU.GetOptions().Write(fileHandle, "READBACK_OPTIONS")
+		readbackSPU.GetOptions().Write(file, "READBACK_OPTIONS")
 
-		# write server and mothership options
-		serverNode.GetOptions().Write(fileHandle, "SERVER_OPTIONS")
-		mothership.GetOptions().Write(fileHandle, "MOTHERSHIP_OPTIONS")
+		# write server options
+		serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
 
-		fileHandle.write("# end of options, the rest is boilerplate\n")
-		fileHandle.write(_ConfigBody)
+		# write app node options
+		substitutions = [ (crconfig.crbindir, 'crbindir') ]
+		clientNode.GetOptions().Write(file, "APP_OPTIONS", substitutions)
+
+		# write mothership options
+		mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
+
+		file.write("# end of options, the rest is boilerplate (do not remove this line!)\n")
+		file.write(_ConfigBody)
 		return 1  # OK
 

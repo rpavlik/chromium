@@ -25,6 +25,8 @@ sys.path.append( "../server" )
 import tilelayout
 import templatebase
 import textdialog
+sys.path.append("../server")
+import crconfig
 
 
 class LightningParameters:
@@ -94,10 +96,10 @@ class LightningParameters:
 		for i in range(serverNode.GetCount()):
 			serverNode.SetTiles(self.MuralTiles[i], i)
 		if self.DynamicSize:
-			mothership.Conf('track_window_size', 1)
+			clientNode.Conf('track_window_size', 1)
 			renderSPU.Conf('resizable', 1)
 		else:
-			mothership.Conf('track_window_size', 0)
+			clientNode.Conf('track_window_size', 0)
 			renderSPU.Conf('resizable', 0)
 		if self.Reassembly == 2:
 			renderSPU.Conf('render_to_app_window', 1)
@@ -171,7 +173,7 @@ class LightningParameters:
 											self.TileWidth, self.TileHeight,
 											self.Rows, self.Columns)
 		elif self.Layout == 1:
-			# Slightly different raster order layout
+			# Zig-zag raster order layout
 			muralWidth = self.TileWidth * self.Columns
 			muralHeight = self.TileHeight * self.Rows
 			tiles = tilelayout.LayoutZigZag(muralWidth, muralHeight,
@@ -179,9 +181,8 @@ class LightningParameters:
 											self.TileWidth, self.TileHeight,
 											self.Rows, self.Columns)
 		else:
-			# Spiral outward from the center (this is a little tricky)
 			assert self.Layout == 2
-
+			# Spiral outward from the center
 			muralWidth = self.TileWidth * self.Columns
 			muralHeight = self.TileHeight * self.Rows
 			tiles = tilelayout.LayoutSpiral(muralWidth, muralHeight,
@@ -224,24 +225,26 @@ ServerColors = [
 
 #----------------------------------------------------------------------------
 
-# This is the guts of the configuration script.
-# It's simply appended to the file after we write all the configuration options
-_ConfigBody = """
+_ImportsSection = """
 import string, sys
 sys.path.append( "../server" )
 from mothership import *
 import tilelayout
 
-# Look for some special mothership params
-for (name, value) in MOTHERSHIP_OPTIONS:
-	if name == "zeroth_arg":
-		ZEROTH_ARG = value
-	elif name == "default_dir":
-		DEFAULT_DIR = value
-	elif name == "auto_start":
-		AUTO_START = value
-	elif name == "default_app":
+"""
+
+# This is the guts of the configuration script.
+# It's simply appended to the file after we write all the configuration options
+_ConfigBody = """
+# Look for some special options
+for (name, value) in APP_OPTIONS:
+	if name == "application":
 		DEFAULT_APP = value
+	elif name == "zeroth_arg":
+		ZEROTH_ARG = value
+for (name, value) in MOTHERSHIP_OPTIONS:
+	if name == "auto_start":
+		AUTO_START = value
 
 # Check for program name/args on command line
 if len(sys.argv) == 1:
@@ -314,6 +317,8 @@ for i in range(NUM_APP_NODES):
 
 	clientnode = CRApplicationNode()
 	clientnode.AddSPU(tilesortspu)
+	for (name, value) in APP_OPTIONS:
+		clientnode.Conf(name, value)
 
 	# argument substitutions
 	if i == 0 and ZEROTH_ARG != "":
@@ -322,8 +327,7 @@ for i in range(NUM_APP_NODES):
 		app_string = string.replace( program, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
-	clientnode.SetApplication( app_string )
-	clientnode.StartDir( DEFAULT_DIR )
+	clientnode.Conf( 'application', app_string )
 
 	if AUTO_START:
 		clientnode.AutoStart( ["/bin/sh", "-c",
@@ -1102,11 +1106,13 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 		numClients = 1
 		numServers = 1
 		reassembly = 0
+		reassembleHost = ""
 
 		# useful regex patterns
 		integerPat = "[0-9]+"
 		listPat = "\[.+\]"
 		tuplePat = "\(.+\)"
+		quotedStringPat = '\"(.*)\"'
 
 		while true:
 			l = fileHandle.readline()
@@ -1115,7 +1121,13 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 			# remove trailing newline character
 			if l[-1:] == '\n':
 				l = l[:-1]
-			if re.match("^NUM_SERVERS = " + integerPat + "$", l):
+			if re.match("^import", l):
+				pass  # ignore
+			elif re.match("^sys.path.append", l):
+				pass  # ignore
+			elif re.match("from mothership import", l):
+				pass  # ignore
+			elif re.match("^NUM_SERVERS = " + integerPat + "$", l):
 				v = re.search(integerPat, l)
 				numServers = int(l[v.start() : v.end()])
 			elif re.match("^TILE_ROWS = " + integerPat + "$", l):
@@ -1150,6 +1162,9 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 			elif re.match("^DYNAMIC_SIZE = " + integerPat + "$", l):
 				v = re.search(integerPat, l)
 				mothership.Template.DynamicSize = int(l[v.start() : v.end()])
+			elif re.match("^REASSEMBLE_HOST = " + quotedStringPat + "$", l):
+				v = re.search(quotedStringPat, l)
+				reassembleHost = l[v.start(1) : v.end(1)]
 			elif re.match("^TILESORT_OPTIONS = \[", l):
 				tilesortSPU.GetOptions().Read(fileHandle)
 			elif re.match("^REASSEMBLE_OPTIONS = \[", l):
@@ -1158,6 +1173,9 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 				readbackSPU.GetOptions().Read(fileHandle)
 			elif re.match("^SERVER_OPTIONS = \[", l):
 				serverNode.GetOptions().Read(fileHandle)
+			elif re.match("^APP_OPTIONS = \[", l):
+				substitutions = [ ("crbindir", "'%s'" % crconfig.crbindir) ]
+				clientNode.GetOptions().Read(fileHandle, substitutions)
 			elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
 				mothership.GetOptions().Read(fileHandle)
 			elif re.match("^# end of options", l):
@@ -1170,6 +1188,7 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 
 		clientNode.SetCount(numClients)
 		serverNode.SetCount(numServers)
+		reassembleNode.SetHosts( [ reassembleHost ] )
 
 		#if reassembly:
 		#	reassemblyNode = crtypes.NetworkNode('localhost')  # XXX host OK?
@@ -1179,7 +1198,7 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 		mothership.LayoutNodes()
 		return 1
 
-	def Write(self, mothership, fileHandle):
+	def Write(self, mothership, file):
 		"""Write a image reassembly config to the given file handle."""
 		if not self.Validate(mothership):
 			return 0
@@ -1192,8 +1211,8 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 		serverNode = FindServerNode(mothership)
 		reassembleNode = FindReassemblyNode(mothership)
 
-		file = fileHandle
 		file.write('TEMPLATE = "%s"\n' % self.Name())
+		file.write(_ImportsSection)
 		file.write("NUM_SERVERS = %d\n" % template.NumServers)
 		file.write("TILE_ROWS = %d\n" % template.Rows)
 		file.write("TILE_COLS = %d\n" % template.Columns)
@@ -1223,12 +1242,17 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 		reassemblySPU = FindReassemblySPU(mothership)
 		reassemblySPU.GetOptions().Write(file, "REASSEMBLE_OPTIONS")
 
-
-		# write server and global options
+		# write server options
 		serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
+
+		# write app node options
+		substitutions = [ (crconfig.crbindir, 'crbindir') ]
+		clientNode.GetOptions().Write(file, "APP_OPTIONS", substitutions)
+
+		# write mothership options
 		mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
 
-		file.write("# end of options, the rest is boilerplate\n")
+		file.write("# end of options, the rest is boilerplate (do not remove this line!)\n")
 
 		# The tiles will be recomputed when we reload the config file so
 		# we can put this info after the parameter sectino.

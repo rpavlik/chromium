@@ -17,7 +17,7 @@ in the mothership.
 
 
 import wxPython
-import re, string, sys
+import re, string, sys, types
 sys.path.append("../server")
 import crconfig
 
@@ -32,10 +32,10 @@ class Option:
 		assert len(maxs) == count or len(maxs) == 0
 		self.Name = name
 		self.Description = description
-		self.Type = type        # "BOOL", "INT", "FLOAT", "STRING" or "LABEL"
+		self.Type = type        # "BOOL", "INT", "FLOAT", "STRING", "ENUM" or "LABEL"
 		self.Count = count
 		self.Default = default  # vector[count]
-		self.Mins = mins        # vector[count]
+		self.Mins = mins        # vector[count] (except for ENUM)
 		self.Maxs = maxs        # vector[count]
 		self.Value = default    # vector[count]
 
@@ -45,6 +45,37 @@ class Option:
 					 self.Default, self.Mins, self.Maxs)
 		new.Value = self.Value[:]
 		return new
+
+	def Write(self, file, prefixStr="", suffixStr="", subst=[]):
+		"""Write the option to the file as
+		<prefix>("name" = "value")<suffix>."""
+		if self.Count == 1:
+			valueStr = str(self.Value[0])
+		else:
+			valueStr = str(self.Value)
+		# do value substitutions (crbindir)
+		replaced = 0
+		for (old, new) in subst:
+			if valueStr == old:
+				valueStr = new
+				replaced = 1
+				break
+		# write the option
+		if self.Type == "INT" or self.Type == "BOOL":
+			file.write(prefixStr + '("' + self.Name + '", ' + valueStr + ')' + suffixStr + '\n')
+		elif self.Type == "FLOAT":
+			file.write(prefixStr + '("' + self.Name + '", ' + valueStr + ')' + suffixStr + '\n')
+		elif self.Type == "STRING":
+			# XXX replace " chars with ' chars
+			if replaced:
+				file.write(prefixStr + '("' + self.Name + '", ' + valueStr + ')' + suffixStr + '\n')
+			else:
+				file.write(prefixStr + '("' + self.Name + '", "' + valueStr + '")' + suffixStr + '\n')
+		elif self.Type == "ENUM":
+			file.write(prefixStr + '("' + self.Name + '", "' + valueStr + '")' + suffixStr + '\n')
+		else:
+			assert self.Type == "LABEL"
+			pass
 
 class OptionList:
 	"""Container for a group of Option objects."""
@@ -99,6 +130,7 @@ class OptionList:
 
 	def SetValue(self, optName, value):
 		"""Set value of named option.  Value is a list"""
+		assert type(value) == types.ListType
 		for opt in self.__Options:
 			if opt.Name == optName:
 				assert len(value) == opt.Count
@@ -126,9 +158,17 @@ class OptionList:
 					valueList.append(float(valueTuple[i]))
 				else:
 					valueList.append(valueTuple[i])
+		elif len(valueTuple[0]) == count:
+			argList = valueTuple[0]
+			for i in range(count):
+				if type == "INT" or type == "BOOL":
+					valueList.append(int(argList[i]))
+				elif type == "FLOAT":
+					valueList.append(float(argList[i]))
+				else:
+					valueList.append(argList[i])
 		else:
 			assert len(valueTuple) == 1
-			valueString = valueTuple[0]
 			stringList = string.split(valueString)
 			for i in range(count):
 				if type == "INT" or type == "BOOL":
@@ -148,29 +188,14 @@ class OptionList:
 		for opt in self.__Options:
 			print "%s = %s" % (opt.Name, str(opt.Value))
 		
-	def Write(self, file, name):
+	def Write(self, file, name, substitutions=[]):
 		"""Write the list of options to the given file handle."""
 		file.write("%s = [\n" % name)
 		for opt in self.__Options:
-			if opt.Count == 1:
-				valueStr = str(opt.Value[0])
-			else:
-				valueStr = str(opt.Value)
-			if opt.Type == "INT" or opt.Type == "BOOL":
-				file.write('\t("' + opt.Name + '", ' + valueStr + '),\n')
-			elif opt.Type == "FLOAT":
-				file.write('\t("' + opt.Name + '", ' + valueStr + '),\n')
-			elif opt.Type == "STRING":
-				# XXX replace " chars with ' chars
-				file.write('\t("' + opt.Name + '", "' + valueStr + '"),\n')
-			elif opt.Type == "ENUM":
-				file.write('\t("' + opt.Name + '", "' + valueStr + '"),\n')
-			else:
-				assert opt.Type == "LABEL"
-				pass
+			opt.Write(file, '\t', ',', substitutions)
 		file.write("]\n")
 
-	def Read(self, file):
+	def Read(self, file, substitutions=[]):
 		"""Read/parse lines of the form ("name", value) from file until
 		we find a line with just a closing brace."""
 		while 1:
@@ -182,6 +207,9 @@ class OptionList:
 				return
 			if line[-2:] == ",\n":
 				line = line[0:-2]  # strip comma and newline
+			# do substitutions
+			for (old, new) in substitutions:
+				line = string.replace(line, old, new)
 			(name, value) = eval(line)
 			#print "Got option: _%s_ = _%s_" % (name, value)
 			assert self.HasOption(name)
@@ -691,6 +719,22 @@ class Node:
 		"""Return autostart parameters."""
 		return self.__AutoStart
 
+	def SetOption(self, name, value):
+		"""Set named option"""
+		self._Options.SetValue(name, value)
+
+	def GetOption(self, name):
+		"""Return value of named option"""
+		return self._Options.GetValue(name)
+
+	def GetOptions(self):
+		"""Return the server OptionList."""
+		return self._Options
+
+	def Conf(self, name, *values):
+		"""Set an option, via config file"""
+		self._Options.Conf(name, values)
+		
 
 class NetworkNode(Node):
 	"""A CRNetworkNode object"""
@@ -700,10 +744,11 @@ class NetworkNode(Node):
 		# __Tiles is an array[nodeIndex] of arrays of (x,y,w,h) tuples
 		self.__Tiles = [ [] ]
 		# Server node options, defined just like SPU options
-		self.__Options = OptionList( [
+		self._Options = OptionList( [
 			Option("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
 			Option("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], []),
-			Option("only_swap_once", "Only swap once for N clients", "BOOL", 1, [0], [], [])
+			Option("only_swap_once", "Only swap once for N clients", "BOOL", 1, [0], [], []),
+			Option("spu_dir", "SPU Directory", "STRING", 1, [""], [], [])
 			] )
 
 	def Clone(self):
@@ -718,7 +763,7 @@ class NetworkNode(Node):
 			newNode.Select()
 		newNode.SetHostNamePattern( self.GetHostNamePattern() )
 		newNode.__Tiles = self.__Tiles[:]
-		newNode.__Options = self.__Options.Clone()
+		newNode._Options = self._Options.Clone()
 		assert isinstance(newNode, NetworkNode)
 		return newNode
 		
@@ -748,30 +793,32 @@ class NetworkNode(Node):
 		"""Delete all tiles on this server."""
 		self.__Tiles = [ [] ]
 
-	def SetOption(self, name, value):
-		"""Set named option"""
-		self.__Options.SetValue(name, value)
-
-	def GetOption(self, name):
-		"""Return value of named option"""
-		return self.__Options.GetValue(name)
-
-	def GetOptions(self):
-		"""Return the server OptionList."""
-		return self.__Options
-
-	def Conf(self, name, *values):
-		"""Set an option, via config file"""
-		self.__Options.Conf(name, values)
-		
-
 class ApplicationNode(Node):
 	"""A CRApplicationNode object"""
 	def __init__(self, hostnames=["localhost"], count=1):
 		Node.__init__(self, hostnames, 0, count,
 					  color=wxPython.wx.wxColor(55,160,55))
-		self.__StartDir = ""
-		self.__Application = ""
+		# Application node options, defined just like SPU options
+		self._Options = OptionList( [
+			Option("command_help",
+				   "Program name and arguments.\n" +
+				   "   %N will be replaced by the number of application nodes.\n" +
+				   "   %I (eye) will be replaced by each application node's index.\n" +
+				   "   %0 (zero) will be replaced by the Zeroth argument on the first" +
+				   " app node only.\n" +
+				   "   Example command: 'psubmit -size %N -rank %I -clear %0'\n" +
+				   "   Zeroth arg: '-swap'",
+				   "LABEL", 0, [], [], []),
+			Option("application", "Command", "STRING", 1, [""], [], []),
+			Option("zeroth_arg", "Zeroth arg", "STRING", 1, [""], [], []),
+			Option("start_dir", "Start Directory", "STRING", 1, [crconfig.crbindir], [], []),
+			Option("client_dll", "Client DLL", "STRING", 1, [""], [], []),
+			Option("spu_dir", "SPU Directory", "STRING", 1, [""], [], []),
+			Option("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
+			Option("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
+			Option("track_window_size", "Track App Window Size Changes", "BOOL", 1, [0], [], []),
+			Option("show_cursor", "Show Virtual Cursor", "BOOL", 1, [0], [], []),
+			] )
 
 	def Clone(self):
 		"""Return a deep copy of this ApplicationNode."""
@@ -784,23 +831,15 @@ class ApplicationNode(Node):
 		if self.IsSelected():
 			newNode.Select()
 		newNode.SetHostNamePattern( self.GetHostNamePattern() )
-		newNode.__StartDir = self.__StartDir
-		newNode.__Application = self.__Application
 		assert isinstance(newNode, ApplicationNode)
 		return newNode
 
 	def StartDir(self, dir):
-		self.__StartDir = dir
-
-	def GetStartDir(self):
-		return self.__StartDir
+		self._Options.SetValue('start_dir', [dir])
 
 	def SetApplication(self, app):
-		self.__Application = app
+		self._Options.SetValue('application', [app])
 		
-	def GetApplication(self):
-		return self.__Application
-
 
 # ----------------------------------------------------------------------
 
@@ -812,25 +851,25 @@ class Mothership:
 		self.__TemplateType = ""
 		self.__TemplateVars = {}
 		self.__Options = OptionList( [
-			Option("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
-			Option("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
-			Option("track_window_size", "Track Window Size Changes", "BOOL", 1, [0], [], []),
-			Option("show_cursor", "Show Virtual Cursor", "BOOL", 1, [0], [], []),
+#			Option("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
+#			Option("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
+#			Option("track_window_size", "Track Window Size Changes", "BOOL", 1, [0], [], []),
+#			Option("show_cursor", "Show Virtual Cursor", "BOOL", 1, [0], [], []),
 			Option("MTU", "Max Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
 			Option("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], []),
-			Option("command_help",
-				   "Program name and arguments.\n" +
-				   "   %N will be replaced by the number of application nodes.\n" +
-				   "   %I (aye) will be replaced by each application node's index.\n" +
-				   "   %0 (zero) will be replaced by the Zeroth argument on the first" +
-				   " app node only.\n" +
-				   "   Example command: 'psubmit -size %N -rank %I -clear %0'\n" +
-				   "   Zeroth arg: '-swap'",
-				   "LABEL", 0, [], [], []),
-			# XXX this should probably be stored in the app nodes
-			Option("default_app", "Command", "STRING", 1, [""], [], []),
-			Option("zeroth_arg", "Zeroth arg", "STRING", 1, [""], [], []),
-			Option("default_dir", "Directory", "STRING", 1, [crconfig.crbindir], [], []),
+#			Option("command_help",
+#				   "Program name and arguments.\n" +
+#				   "   %N will be replaced by the number of application nodes.\n" +
+#				   "   %I (aye) will be replaced by each application node's index.\n" +
+#				   "   %0 (zero) will be replaced by the Zeroth argument on the first" +
+#				   " app node only.\n" +
+#				   "   Example command: 'psubmit -size %N -rank %I -clear %0'\n" +
+#				   "   Zeroth arg: '-swap'",
+#				   "LABEL", 0, [], [], []),
+#			# XXX this should probably be stored in the app nodes
+#			Option("default_app", "Command", "STRING", 1, [""], [], []),
+#			Option("zeroth_arg", "Zeroth arg", "STRING", 1, [""], [], []),
+#			Option("default_dir", "Directory", "STRING", 1, [crconfig.crbindir], [], []),
 			] )
 
 	def GetOptions(self):
@@ -874,18 +913,9 @@ class Mothership:
 			valList = value
 		self.SetOption(paramName, valList)
 
-	# XXX obsolete - remove someday
-	def SetParam(self, paramName, value):
-		self.Conf(paramName, value)
-
 	def MTU(self, bytes):
 		"""Set the MTU size (in bytes)."""
 		self.SetOption("MTU", [ bytes ])
-
-	def GetMTU(self):
-		"""Return MTU size (in bytes)."""
-		valList = self.GetOption("MTU")
-		return int(valList[0])
 
 	def AllSPUConf(self, spuName, var, *values):
 		"""Set var/values for all SPUs that match spuName"""
@@ -948,6 +978,14 @@ class Mothership:
 		n = 0
 		for node in self.__Nodes:
 			if node.IsServer() and node.IsSelected():
+				n += 1
+		return n
+
+	def NumSelectedAppNodes(self):
+		"""Return number of selected application nodes."""
+		n = 0
+		for node in self.__Nodes:
+			if node.IsAppNode() and node.IsSelected():
 				n += 1
 		return n
 

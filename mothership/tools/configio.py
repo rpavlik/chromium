@@ -19,22 +19,20 @@ from crconfig import *
 # Config file writing
 
 
-__ConfigFileHeader = """
+__ConfigFileImports = """# Chromium configuration produced by configtool.py
 import string
 import sys
 sys.path.append( "../server" )
 from mothership import *
 
-# Look for some special mothership params
+"""
+
+__ConfigFileHeader = """
+
+# Look for autostart option
 for (name, value) in MOTHERSHIP_OPTIONS:
-	if name == "zeroth_arg":
-		ZEROTH_ARG = value
-	elif name == "default_dir":
-		DEFAULT_DIR = value
-	elif name == "auto_start":
+	if name == "auto_start":
 		AUTO_START = value
-	elif name == "default_app":
-		DEFAULT_APP = value
 
 # Get program name
 if len(sys.argv) == 1:
@@ -60,22 +58,40 @@ for (name, value) in MOTHERSHIP_OPTIONS:
 cr.Go()
 """
 
-def WriteSPUConfs(spu, spuName, file):
-	"""Write a spu.Conf() line to the file handle for all SPU options."""
-	for opt in spu.GetOptions().Options():
-		values = spu.GetOption(opt.Name)
-		if values != opt.Default:
-			if opt.Type == "STRING":
-				assert opt.Count == 1
-				file.write("%s('%s', '%s')\n" % (spuName, opt.Name, values[0]))
-			else:
-				valueStr = ""
-				for val in values:
-					valueStr += "%s " % str(val)
-				# remove last space
-				valueStr = valueStr[:-1]
-				file.write("%s('%s', '%s')\n" % (spuName, opt.Name, valueStr))
+def contains(list, item):
+	"""Return 1 if item is in list, 0 otherwise."""
+	try:
+		i = list.index(item)
+	except:
+		return 0
+	else:
+		return 1
+
+
+def WriteConfs(optionList, prefix, file):
+	"""Write a prefix.Conf('param', value) line to the file handle for each of
+	the options in the given OptionList.  Only write non-default options."""
+	for opt in optionList.Options():
+		if opt.Value != opt.Default:
+			opt.Write(file, "%s.Conf" % prefix, "")
 	
+def WriteAppConfs(appNode, prefix, file):
+	"""Write the .Conf() lines for an app node.  We need to do a few things
+	special here (like crbindir)."""
+	assert isinstance(appNode, crtypes.ApplicationNode)
+	for opt in appNode.GetOptions().Options():
+		if opt.Name == "start_dir":
+			if opt.Value[0] == crbindir:
+				file.write('%s("start_dir", crbindir)\n' % prefix)
+			else:
+				file.write('%s("start_dir", "%s")\n' % (prefix, opt.Value[0]))
+		elif opt.Name == "application":
+			file.write('%s("application", DEFAULT_APP)\n' % prefix)
+		elif opt.Value != opt.Default:
+			opt.Write(file, prefix, "")
+
+
+
 def WriteAutoStart(nodeName, isServer, hostName, file):
 	"""Write the tricky autostart code for the given node on given host"""
 	# XXX this needs more work:
@@ -111,11 +127,23 @@ def WriteAutoStart(nodeName, isServer, hostName, file):
 def WriteConfig(mothership, file):
 	"""Write the mothership config to file handle."""
 
-	file.write("# Chromium configuration produced by graph.py\n")
+	#boilerplate
+	file.write(__ConfigFileImports)
+
 	# write mothership/global options
 	mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
 
-	file.write("\n")
+	# look for default application to run
+	application = ""
+	for node in mothership.Nodes():
+		if node.IsAppNode():
+			app = node.GetOption('application')
+			assert len(app) > 0  # app is a list!
+			if app[0] != "":
+				application = app[0]
+				break
+	file.write('DEFAULT_APP = "%s"' % application)
+
 	# boilerplate
 	file.write(__ConfigFileHeader)
 
@@ -137,13 +165,14 @@ def WriteConfig(mothership, file):
 			if node.IsServer():
 				file.write("nodes[%d] = CRNetworkNode('%s')\n" %
 						   (i, node.GetHosts()[j]))
-				#XXX to do: WriteServerOptions(node, file)
+				WriteConfs(node.GetOptions(), "nodes[%d]" % i, file)
 			else:
 				# application node
 				file.write("nodes[%d] = CRApplicationNode('%s')\n" %
 						   (i, node.GetHosts()[j]))
-				file.write("nodes[%d].StartDir( DEFAULT_DIR )\n" % i)
-				file.write("nodes[%d].SetApplication( program )\n" % i)
+				WriteAppConfs(node, "nodes[%d].Conf" % i, file)
+
+
 			(x, y) = node.GetPosition()
 			file.write("nodes[%d].SetPosition(%d, %d)\n" % (i, x, y))
 			dir = node.GetSPUDir()
@@ -176,7 +205,7 @@ def WriteConfig(mothership, file):
 				k = 0
 				for spu in node.SPUChain():
 					file.write("spus[%d] = SPU('%s')\n" % (k, spu.Name()))
-					WriteSPUConfs(spu, "spus[%d].Conf" % k, file)
+					WriteConfs(spu.GetOptions(), "spus[%d]" % k, file)
 					if k + 1 == numSPUs:
 						# last SPU, add servers, if any
 						for server in node.GetServers():
@@ -325,19 +354,5 @@ def ReadConfig(mothership, file, filename=""):
 
 	# restore original sys.argv list
 	sys.argv = origArgv
-
-	# Now scan the graph to extract the global and app config parameters
-	# which we store in the mothership.
-	for node in mothership.Nodes():
-		if node.IsAppNode():
-			app = node.GetApplication()
-			if app != "":
-				mothership.SetOption("default_app", [app])
-			dir = node.GetStartDir()
-			if dir != "":
-				mothership.SetOption("default_dir", [dir])
-		autoStart = node.GetAutoStart()
-		if autoStart != None:
-			mothership.SetOption("auto_start", [1])
 
 	return retValue

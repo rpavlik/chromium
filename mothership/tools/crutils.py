@@ -68,6 +68,9 @@ def FindSPUNamesInDir(spuDirectory):
 			spuName = m.group(1)
 			if not re.match(ignorePattern, spuName):
 				spus.append(spuName)
+
+	# sort the list
+	spus.sort()
 	return spus
 
 
