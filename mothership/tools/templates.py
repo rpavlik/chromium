@@ -101,7 +101,7 @@ __Templates = {
 					   sortlast_template.Edit_Sortlast,
 					   sortlast_template.Read_Sortlast,
 					   sortlast_template.Write_Sortlast ),
-	"Lighting-2"   : ( lightning2_template.Create_Lightning2,
+	"Lightning-2"  : ( lightning2_template.Create_Lightning2,
 					   lightning2_template.Is_Lightning2,
 					   lightning2_template.Edit_Lightning2,
 					   lightning2_template.Read_Lightning2,
