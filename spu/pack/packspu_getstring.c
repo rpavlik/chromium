@@ -45,7 +45,7 @@ GetExtensions(void)
 
 
 static GLfloat
-GetVersion(void)
+GetVersionString(void)
 {
 	GLubyte return_value[100];
 	GET_THREAD(thread);
@@ -79,7 +79,7 @@ const GLubyte * PACKSPU_APIENTRY packspu_GetString( GLenum name )
 	}
 	else if (name == GL_VERSION)
 	{
-		float version = GetVersion();
+		float version = GetVersionString();
 		sprintf(ctx->glVersion, "%g Chromium %s", version, CR_VERSION_STRING);
 		return (const GLubyte *) ctx->glVersion;
 	}
