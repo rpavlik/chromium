@@ -145,10 +145,11 @@ if program == "":
 	sys.exit(-1)
 
 # Determine if tiles are on one server or many
-if (len(SERVER_HOSTS) >= 2) and (SERVER_HOSTS[0] != SERVER_HOSTS[1]):
-	singleServer = 0
-else:
-	singleServer = 1
+singleServer = 1
+for i in range(1, len(SERVER_HOSTS)):
+	if SERVER_HOSTS[i] != SERVER_HOSTS[0]:
+		singleServer = 0
+		break
 
 localHostname = os.uname()[1]
 

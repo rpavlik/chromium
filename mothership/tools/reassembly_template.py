@@ -101,6 +101,11 @@ class LightningParameters:
 		else:
 			clientNode.Conf('track_window_size', 0)
 			renderSPU.Conf('resizable', 0)
+			geom = renderSPU.GetOption('window_geometry')
+			assert len(geom) == 4
+			geom[2] = self.TileWidth * self.Columns
+			geom[3] = self.TileHeight * self.Rows
+			renderSPU.Conf('window_geometry', geom)
 		if self.Reassembly == 2:
 			renderSPU.Conf('render_to_app_window', 1)
 		else:
@@ -255,15 +260,8 @@ if program == "":
 	print "No program to run!"
 	sys.exit(-1)
 
-# Determine if tiles are on one server or many
-if (len(SERVER_HOSTS) >= 2) and (SERVER_HOSTS[0] != SERVER_HOSTS[1]):
-	singleServer = 0
-else:
-	singleServer = 1
-
 localHostname = os.uname()[1]
 
-NumServers = len(TILES) # XXX fix this?
 
 
 def LayoutTiles(muralWidth, muralHeight):
@@ -283,17 +281,17 @@ def LayoutTiles(muralWidth, muralHeight):
 
 	if LAYOUT == 0:
 		tiles = tilelayout.LayoutRaster(muralWidth, muralHeight,
-										NumServers,
+										NUM_SERVERS,
 										tileWidth, tileHeight,
 										rows, cols)
 	elif LAYOUT == 1:
 		tiles = tilelayout.LayoutZigZag(muralWidth, muralHeight,
-										NumServers,
+										NUM_SERVERS,
 										tileWidth, tileHeight,
 										rows, cols)
 	else:
 		tiles = tilelayout.LayoutSpiral(muralWidth, muralHeight,
-										NumServers,
+										NUM_SERVERS,
 										tileWidth, tileHeight,
 										rows, cols)
 	return tiles
@@ -348,7 +346,11 @@ if REASSEMBLY:
 								"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (REASSEMBLE_HOST, crlibdir) ] )
 
 # Loop over servers
-for serverIndex in range(NumServers):
+for serverIndex in range(NUM_SERVERS):
+
+	serverTiles = TILES[serverIndex]
+	if len(serverTiles) == 0:
+		continue
 
 	# Create this server's readback/render SPU
 	if REASSEMBLY:
@@ -359,14 +361,13 @@ for serverIndex in range(NumServers):
 		renderspu.Conf(name, value)
 
 	# Create network node
-	if singleServer:
-		host = SERVER_HOSTS[0]
-	else:
+	if serverIndex < len(SERVER_HOSTS):
 		host = SERVER_HOSTS[serverIndex]
+	else:
+		host = SERVER_HOSTS[-1]  # use last server
 	servernode = CRNetworkNode(host)
 
 	# Add the tiles
-	serverTiles = TILES[serverIndex]
 	for tile in serverTiles:
 		servernode.AddTile(tile[0], tile[1], tile[2], tile[3])
 
