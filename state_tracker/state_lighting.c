@@ -122,7 +122,7 @@ void STATE_APIENTRY crStateShadeModel (GLenum mode)
 	if (mode != GL_SMOOTH &&
 			mode != GL_FLAT)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "ShadeModel: Bogus mode %d", mode);
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "ShadeModel: Bogus mode 0x%x", mode);
 		return;
 	}
 
@@ -239,7 +239,7 @@ void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 #endif
 #endif
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModelfv: Invalid pname: %d", pname);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModelfv: Invalid pname: 0x%x", pname);
 			return;
 	}
 	DIRTY(lb->lightModel, g->neg_bitid);
@@ -287,7 +287,7 @@ void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 #endif
 #endif
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModeliv: Invalid pname: %d", pname);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModeliv: Invalid pname: 0x%x", pname);
 			return;
 	}
 }
@@ -328,7 +328,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 	i = light - GL_LIGHT0;
 	if (i>=g->limits.maxLights)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid light specified: %d", light);
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid light specified: 0x%x", light);
 		return;
 	}
 
@@ -443,7 +443,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 			DIRTY(ltb->attenuation, g->neg_bitid);
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid pname: %d", pname);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid pname: 0x%x", pname);
 			return;
 	}
 	DIRTY(ltb->dirty, g->neg_bitid);
@@ -484,7 +484,7 @@ void STATE_APIENTRY crStateLightiv (GLenum light, GLenum pname, const GLint *par
 			crStateLightfv( light, pname, &f_param );
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid pname: %d", pname);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid pname: 0x%x", pname);
 			return;
 	}
 }
@@ -536,7 +536,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->ambient[1].a = param[3];
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -562,7 +562,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->ambient[1].a = param[3];
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			/* FALLTHROUGH! */
@@ -588,7 +588,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->diffuse[1].a = param[3];
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -614,7 +614,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->specular[1].a = param[3];
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -640,7 +640,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->emission[1].a = param[3];
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -663,7 +663,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->shininess[1] = *param;
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -686,12 +686,12 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					l->indexes[1][2] = (GLint) param[2];
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad pname: %d", pname);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad pname: 0x%x", pname);
 			return;
 	}
 	DIRTY(lb->material, g->neg_bitid);
@@ -725,7 +725,7 @@ void STATE_APIENTRY crStateMaterialiv (GLenum face, GLenum pname, const GLint *p
 			crStateMaterialfv( face, pname, (GLfloat *) &f_param );
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialiv: bad pname: %d", pname);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialiv: bad pname: 0x%x", pname);
 			return;
 	}
 }
@@ -759,7 +759,7 @@ void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *para
 	if (i>=g->limits.maxLights)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-				"glGetLight: invalid light specified: %d", light);
+				"glGetLight: invalid light specified: 0x%x", light);
 		return;
 	}
 
@@ -819,7 +819,7 @@ void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *para
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"glGetLight: invalid pname: %d", param);
+					"glGetLight: invalid pname: 0x%x", pname);
 			return;
 	}
 }
@@ -842,7 +842,7 @@ void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 	if (i>=g->limits.maxLights)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-				"glGetLight: invalid light specified: %d", light);
+				"glGetLight: invalid light specified: 0x%x", light);
 		return;
 	}
 
@@ -902,7 +902,7 @@ void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"glGetLight: invalid pname: %d", param);
+					"glGetLight: invalid pname: 0x%x", pname);
 			return;
 	}
 }
@@ -938,7 +938,7 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -959,7 +959,7 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -980,7 +980,7 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -1001,7 +1001,7 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -1016,7 +1016,7 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -1035,13 +1035,13 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialfv: bad face: %d", face);
+							"glGetMaterialfv: bad face: 0x%x", face);
 					return;
 			}
 			return;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"glGetMaterialfv: bad pname: %d", pname);
+					"glGetMaterialfv: bad pname: 0x%x", pname);
 			return;
 	}
 }
@@ -1078,7 +1078,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialiv: bad face: %d", face);
+							"glGetMaterialiv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -1099,7 +1099,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialiv: bad face: %d", face);
+							"glGetMaterialiv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -1120,7 +1120,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialiv: bad face: %d", face);
+							"glGetMaterialiv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -1141,7 +1141,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialiv: bad face: %d", face);
+							"glGetMaterialiv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -1155,7 +1155,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialiv: bad face: %d", face);
+							"glGetMaterialiv: bad face: 0x%x", face);
 					return;
 			}
 			break;
@@ -1174,13 +1174,13 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glGetMaterialiv: bad face: %d", face);
+							"glGetMaterialiv: bad face: 0x%x", face);
 					return;
 			}
 			return;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"glGetMaterialiv: bad pname: %d", pname);
+					"glGetMaterialiv: bad pname: 0x%x", pname);
 			return;
 	}
 }
