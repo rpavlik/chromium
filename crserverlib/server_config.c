@@ -22,7 +22,8 @@ __setDefaults(void)
 {
 	unsigned int i;
 
-	cr_server.tcpip_port = 7000;
+	if (!cr_server.tcpip_port)
+		cr_server.tcpip_port = 7000;
 	cr_server.optimizeBucket = 1;
 	cr_server.useL2 = 0;
 	cr_server.maxBarrierCount = 0;
@@ -263,12 +264,10 @@ crServerGatherConfiguration(char *mothership)
 	 * Call crNetAcceptClient() for each client.
 	 * Also, look for a client that's _not_ using the file: protocol.
 	 */
-	cr_server.clients = (CRClient *) crAlloc(sizeof(CRClient) * numClients);
+	cr_server.clients = (CRClient *) crCalloc(sizeof(CRClient) * numClients);
 	for (i = 0; i < numClients; i++)
 	{
 		CRClient *client = &cr_server.clients[i];
-
-		crMemZero(client, sizeof(CRClient));
 
 		cr_server.clients[i].number = i;
 

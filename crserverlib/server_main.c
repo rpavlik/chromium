@@ -91,6 +91,15 @@ int CRServerMain( int argc, char *argv[] )
 			mothership = argv[i+1];
 			i++;
 		}
+		if (!crStrcmp( argv[i], "-port" ))
+		{
+			if (i == argc - 1)
+			{
+				crError( "-port requires an argument" );
+			}
+			cr_server.tcpip_port = crStrToInt(argv[i+1]);
+			i++;
+		}
 	}
 
 	signal( SIGTERM, crServerCleanup );
