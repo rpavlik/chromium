@@ -42,6 +42,8 @@ int crStateTexParameterfvExtensions( CRTextureState *t, CRTextureObj *tobj, GLen
 			}
 			return 1;
 #endif
+		default:
+			break;
 	}
 	return 0;
 }
@@ -57,6 +59,8 @@ int crStateTexParameterivExtensions( GLenum target, GLenum pname, const GLint *p
 			f_param = (GLfloat) (*param);
 			crStateTexParameterfv( target, pname, &(f_param) );
 			return 1;
+		default:
+			break;
 	}
 	return 0;
 }
@@ -70,6 +74,8 @@ int crStateGetTexParameterfvExtensions( CRTextureObj *tobj, GLenum pname, GLfloa
 			*params = (GLfloat) tobj->extensions.maxAnisotropy;
 			return 1;
 #endif
+		default:
+			break;
 	}
 	return 0;
 }
@@ -83,6 +89,8 @@ int crStateGetTexParameterivExtensions( CRTextureObj *tobj, GLenum pname, GLint 
 			*params = (GLint) tobj->extensions.maxAnisotropy;
 			return 1;
 #endif
+		default:
+			break;
 	}
 	return 0;
 }

@@ -11,6 +11,8 @@ int crPackTexParameterParamsLength( GLenum param )
 		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
 			return one_param;
 #endif
+		default:
+			break;
 	}
 	return 0;
 }
