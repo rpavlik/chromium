@@ -1,4 +1,4 @@
-/* Copyright (c) 2003, Stanford University
+/*
  * All rights reserved.
  *
  * See the file LICENSE.txt for information on redistributing this software.
@@ -37,8 +37,27 @@ typedef enum {
         FBNUM = 3
 } FBTYPE;
 
+/*
+    shadow buffers (each client has one set
+                       a server could have many 
+
+   XXX Note: It really isn't necessary to have
+             more than one global difference buffer,
+             as long as one tracked the maximum
+             observed need, but the code evolved from
+             a place which made this simpler.
+*/
+typedef struct {
+        GLsizei  fbWidth[FBNUM], fbHeight[FBNUM];
+        int      fbLen[FBNUM];             /* allocated size */
+
+        GLvoid  *fBuf[FBNUM];             /* currently visible */ 
+        GLvoid  *dBuf[FBNUM];             /* transmitted differences */
+
+} SBUFS;
+
 /* 
-     ple buffer layout
+     buffer layout for PLE Compression
 
          Like RLE, there are length and data fields but
          unlike RLE the lengths are stored in a vector
@@ -88,11 +107,12 @@ typedef struct {
 	CRServer *server;
  
         /* config options */
-        int verbose;     /* 0 = quiet; 1 = chatty */
-        int debug;       /* 0 = normal; 1 = debug */
-        int no_diff;     /* 0 = difference; 1 = suppress  */ 
-        ZTYPE ztype;       /* compression type - See ZStateType enum */
-        int zparm;       /* parameter for ztype */
+        int    client_id;   /* client identification index */
+        int    verbose;     /* 0 = quiet; 1 = chatty */
+        int    debug;       /* 0 = normal; 1 = debug */
+        int    no_diff;     /* 0 = difference; 1 = suppress  */ 
+        ZTYPE  ztype;       /* compression type - See ZStateType enum */
+        int    ztype_parm;  /* parameter for ztype */
  
         /* instance data */
 
@@ -100,21 +120,23 @@ typedef struct {
         GLint   rXold, rYold;
         GLint   rXnew, rYnew;
 
-        /* allocated frame buffers */
+        /* shadow buffers */
 
-        GLsizei fbWidth[FBNUM], fbHeight[FBNUM];
+        SBUFS   b;            /* currently active buffer set */
 
-        GLsizei fbLen[FBNUM];
-        GLvoid  *fBuf[FBNUM];             /* currently visible */ 
-        GLvoid  *dBuf[FBNUM];             /* transmitted differences */
+        /* servers may have multipe shadow buffers */
+        int     n_sb;        /* highest current index */
+        SBUFS  *sb;
 
-        GLsizei zbLen[FBNUM];
-        GLvoid  *zBuf[FBNUM];             /* client-side compress */
+        /* clients have a work area buffer to compress in */
+        int      zbLen[FBNUM];
+        GLvoid  *zBuf[FBNUM];             
+
 
         /* statistics */
         long n;
-        long sum_bytes, sum_zbytes;
-        long sum_runs, sum_prefv;
+        long sum_runs;
+        double sum_bytes, sum_zbytes, sum_prefv;
 
 } ZpixSPU;
 

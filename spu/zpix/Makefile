@@ -7,9 +7,9 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = zpixspu
-FILES = zpixspu \
-	zpixspu_config \
-	zpixspu_init
+FILES =	zpixspu_config \
+	zpixspu_init \
+	zpixspu
 
 LIBRARIES = spuload crutil crmothership
 LDFLAGS =  -lz

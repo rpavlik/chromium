@@ -22,10 +22,12 @@ zpixSPUInit( int id, SPU *child, SPU *self,
 								 unsigned int context_id,
 								 unsigned int num_contexts )
 {
-        int i;
+        int i = 0;
 	(void) self;
 	(void) context_id;
 	(void) num_contexts;
+
+        self->privatePtr = (void *) &zpix_spu;
 
         crMemZero(&zpix_spu,sizeof(zpix_spu));
 
@@ -46,13 +48,31 @@ zpixSPUInit( int id, SPU *child, SPU *self,
         crDebug("Zpix SPU - verbose = %d",zpix_spu.verbose);
         zpix_spu.rXold = -1;
         zpix_spu.rYold = -1;
+        
+        /* set up shadow buffers */
         for (i = 0; i < FBNUM; i++)
         {  
-          zpix_spu.fbWidth[i] = -1;
-          zpix_spu.fbHeight[i] = -1;
-          zpix_spu.fBuf[i] = NULL;
-          zpix_spu.dBuf[i] = NULL;
+          zpix_spu.b.fbWidth[i] = -1;
+          zpix_spu.b.fbHeight[i] = -1;
+          zpix_spu.b.fbLen[i] = 0;
+          zpix_spu.b.fBuf[i] = NULL;
+          zpix_spu.b.dBuf[i] = NULL;
           zpix_spu.zBuf[i] = NULL;
+        }
+
+        /* allocate some initial server shadows */
+
+     /*XXX this is just a convenience since storage amount is trivial */       
+#define DEFAULT_NUMBER_SERVER_SHADOWS 8
+
+        zpix_spu.n_sb = DEFAULT_NUMBER_SERVER_SHADOWS - 1;
+        zpix_spu.sb = (SBUFS *) crAlloc((zpix_spu.n_sb+1)*sizeof(SBUFS));
+
+        /* set highest valid index */
+
+        for (i = 0; i < zpix_spu.n_sb; i++)
+        {  
+          zpix_spu.sb[i] = zpix_spu.b;
         }
         
 	return &zpix_functions;
@@ -73,7 +93,8 @@ zpixSPUCleanup(void)
         double avg_b, avg_zb;
         double avg_runs, avg_prefv;
         double pcz, pcprefv;
-        int    i;
+        int    i = 0;
+        int    n = 0;
         
         if ( 0 < zpix_spu.n)
         {
@@ -82,8 +103,8 @@ zpixSPUCleanup(void)
            avg_zb =  zpix_spu.sum_zbytes / zpix_spu.n;
            pcz    =  100*(1.0 - ( avg_zb /  avg_b ));
         
-           crDebug("Zpix calls %ld, ztype = %d, zparm = %d, no_diff = %d",
-                     zpix_spu.n, zpix_spu.ztype, zpix_spu.zparm,
+           crDebug("Zpix calls %ld, ztype = %d parm = %d, no_diff = %d",
+                     zpix_spu.n, zpix_spu.ztype, zpix_spu.ztype_parm,
                      zpix_spu.no_diff);
            crDebug("Zpix compression %7.2f %% - avg_b %.0f avg_zb %.0f",
                      pcz, avg_b, avg_zb);
@@ -97,24 +118,31 @@ zpixSPUCleanup(void)
         }
 
         /*
-             Return buffers
+             Return server shadow buffers
         */
+        for (n = 0; n < zpix_spu.n_sb; n++ )
+        {
+          SBUFS *tsb;
+          tsb = &zpix_spu.sb[n];
+          for (i = 0; i < FBNUM; i++)
+          {
+            if (tsb->fBuf[i]) crFree(tsb->fBuf[i]);
+            if (tsb->dBuf[i]) crFree(tsb->dBuf[i]);
+          }
+        }
+        crFree(zpix_spu.sb);
+
+        /* client compress buffers */
         for (i = 0; i < FBNUM; i++)
         {
-          crDebug("Zpix buf# %d: %d bytes f @ %p  d @ %p, z %d bytes @ %p",
-                   i,zpix_spu.fbLen[i], zpix_spu.fBuf[i], zpix_spu.dBuf[i],
-                     zpix_spu.zbLen[i], zpix_spu.zBuf[i]);
-
-          if (zpix_spu.fBuf[i]) crFree(zpix_spu.fBuf[i]);
-          zpix_spu.fBuf[i] = NULL;
-          if (zpix_spu.dBuf[i]) crFree(zpix_spu.dBuf[i]);
-          zpix_spu.dBuf[i] = NULL;
-          zpix_spu.fbLen[i] = 0;
           if (zpix_spu.zBuf[i]) crFree(zpix_spu.zBuf[i]);
+          /* mindless neatness */
+          zpix_spu.b.fBuf[i] = NULL;
+          zpix_spu.b.fbLen[i] = 0;
+          zpix_spu.b.dBuf[i] = NULL;
           zpix_spu.zBuf[i] = NULL;
           zpix_spu.zbLen[i] = 0;
         }
-
 	return 1;
 }
 
