@@ -22,18 +22,15 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
-#ifndef WINDOWS
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
+#ifndef WINDOWS
+
 typedef void (*CR_GLXFuncPtr)();
 CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 
@@ -333,5 +330,11 @@ static INLINE int CHECKDIRTY( const unsigned int *b, const unsigned int *d )
 
 	return 0;
 }
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* CR_GLWRAPPER_H */
