@@ -52,7 +52,7 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	}
 
 	if (crImageSize(format, type, width, height) > tilesort_spu.MTU ) {
-		crError("DrawPixels called with insufficient MTU size\n"
+		crWarning("DrawPixels called with insufficient MTU size\n"
 			"Needed %d, but currently MTU is set at %d\n", 
 			crImageSize(format, type, width, height), 
 			tilesort_spu.MTU );
