@@ -743,6 +743,13 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD fdwReason, LPVOID lpvReserved )
 		 *DebugBreak(); 
 		 *printf ("!!!!!!!!!!!!!!!!!Thread attach!\n"); */
 	}
+
+	/* These two lines contributed by Jon Marbach to prevent crashes when
+	 * GL functions are called before a context is bound.
+	 */
+	crSPUInitDispatchTable(&glim);
+	crSPUCopyDispatchTable(&glim, &stubNULLDispatch);
+
 	return TRUE;
 }
 #endif
