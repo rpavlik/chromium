@@ -410,6 +410,11 @@ void
 tilesortspuStereoContextInit(ContextInfo *ctx)
 {
 	if (tilesort_spu.stereoMode == ANAGLYPH) {
+		/* first, clear color buffer to default color w/out masking */
+		crStateColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		crPackClear( GL_COLOR_BUFFER_BIT );
+		tilesortspuBroadcastGeom(GL_TRUE);
+		/* now, setup color masking */
 		setup_anaglyph(GL_LEFT);
 	}
 	else if (tilesort_spu.stereoMode == SIDE_BY_SIDE) {
