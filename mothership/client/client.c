@@ -141,6 +141,7 @@ void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_i
 	{
 		crError( "Couldn't get my own hostname?" );
 	}
+	/* This returns the client's SPU chain, if nothing goes wrong */
 	INSIST( crMothershipSendString( conn, response, "opengldll %s %s", app_id, hostname ));
 }
 
