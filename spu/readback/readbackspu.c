@@ -133,7 +133,6 @@ static void CheckWindowSize( WindowInfo *window )
 		/* not resizable - ask render SPU for its window size */
 		readback_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
 					readback_spu.windows[0].renderWindow, GL_INT, 2, newSize);
-
 	}
 
 	if (newSize[0] != window->width || newSize[1] != window->height)
@@ -145,6 +144,8 @@ static void CheckWindowSize( WindowInfo *window )
 		if (readback_spu.resizable)
 		{
 			/* update super/render SPU window size & viewport */
+			CRASSERT(newSize[0] > 0);
+			CRASSERT(newSize[1] > 0);
 			readback_spu.super.WindowSize( w, newSize[0], newSize[1] );
 			readback_spu.super.Viewport( 0, 0, newSize[0], newSize[1] );
 			
@@ -356,6 +357,8 @@ static void read_and_send_tiles( WindowInfo *window )
 		 * about getting the origin right.  glDrawPixels, glClear, etc don't
 		 * care what the viewport size is.  (BrianP)
 		 */
+		CRASSERT(window->width > 0);
+		CRASSERT(window->height > 0);
 		readback_spu.child.Viewport( 0, 0, window->width, window->height );
 
 		/* Send glClear to child (downstream SPU) */
@@ -470,10 +473,12 @@ static void DoFlush( WindowInfo *window )
 	static int first_time = 1;
 	GLint packAlignment, unpackAlignment;
 
-	if (first_time)
+	if (first_time || window->width < 1 || window->height < 1)
 	{
 		CheckWindowSize( window );
-
+	}
+	if (first_time)
+	{
 		readback_spu.child.BarrierCreate( READBACK_BARRIER, 0 );
 		readback_spu.child.LoadIdentity();
 		readback_spu.child.Ortho( 0, window->width,
