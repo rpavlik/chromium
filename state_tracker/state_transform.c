@@ -572,12 +572,6 @@ void STATE_APIENTRY crStatePopMatrix()
 		return;
 	}
 
-	if (t->currentStack->depth < 0 ||
-		 t->currentStack->depth >= t->currentStack->maxDepth ) 
-	{
-		crError( "Invalid depth in PopMatrix: %d", t->currentStack->depth );
-	}
-
 	t->currentStack->depth--;
 	t->currentStack->top = t->currentStack->stack + t->currentStack->depth;
 

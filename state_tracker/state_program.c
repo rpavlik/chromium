@@ -458,12 +458,12 @@ void STATE_APIENTRY crStateLoadProgramNV(GLenum target, GLuint id, GLsizei len,
 			crStateError(__LINE__, __FILE__, GL_OUT_OF_MEMORY, "glLoadProgramNV");
 			return;
 	}
-	if (crStrncmp(program,"!!FP1.0", 7) != 0
-	 && crStrncmp(program,"!!FCP1.0", 8) != 0
-	 && crStrncmp(program,"!!VP1.0", 7) != 0
-	 && crStrncmp(program,"!!VP1.1", 7) != 0
-	 && crStrncmp(program,"!!VP2.0", 7) != 0
-	 && crStrncmp(program,"!!VSP1.0", 8) != 0) {
+	if (crStrncmp((const char *) program,"!!FP1.0", 7) != 0
+	 && crStrncmp((const char *) program,"!!FCP1.0", 8) != 0
+	 && crStrncmp((const char *) program,"!!VP1.0", 7) != 0
+	 && crStrncmp((const char *) program,"!!VP1.1", 7) != 0
+	 && crStrncmp((const char *) program,"!!VP2.0", 7) != 0
+	 && crStrncmp((const char *) program,"!!VSP1.0", 8) != 0) {
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glLoadProgramNV");
 			crDebug("program = (%s)\n",program);
 			return;

@@ -1298,7 +1298,7 @@ void STATE_APIENTRY crStateTexEnvfv (GLenum target, GLenum pname, const GLfloat 
 	CRTextureBits *tb = &(sb->texture);
 	GLenum e;
 	GLcolorf c;
-	GLuint stage;
+	GLuint stage = 0;
 
 	(void) stage;
 
@@ -1411,7 +1411,7 @@ void STATE_APIENTRY crStateTexEnvfv (GLenum target, GLenum pname, const GLfloat 
 		case GL_SOURCE1_RGB_ARB:
 		case GL_SOURCE2_RGB_ARB:
 			e = (GLenum) *param;
-	    stage = pname - GL_SOURCE0_RGB_ARB;
+			stage = pname - GL_SOURCE0_RGB_ARB;
 			if (g->extensions.ARB_texture_env_combine &&
 					(e == GL_TEXTURE ||
 					 e == GL_CONSTANT_ARB ||
@@ -1432,8 +1432,8 @@ void STATE_APIENTRY crStateTexEnvfv (GLenum target, GLenum pname, const GLfloat 
 		case GL_SOURCE0_ALPHA_ARB:
 		case GL_SOURCE1_ALPHA_ARB:
 		case GL_SOURCE2_ALPHA_ARB:
-	    e = (GLenum) *param;
-	    stage = pname - GL_SOURCE0_ALPHA_ARB;
+			e = (GLenum) *param;
+			stage = pname - GL_SOURCE0_ALPHA_ARB;
 			if (g->extensions.ARB_texture_env_combine &&
 					(e == GL_TEXTURE ||
 					 e == GL_CONSTANT_ARB ||
