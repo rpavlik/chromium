@@ -87,7 +87,7 @@ crPackGetBuffer
 crPackFlushFunc
 crPackFlushArg
 crPackSendHugeFunc
-crPackBoundsInfo
+crPackBoundsInfoCR
 crPackResetBBOX
 crPackOffsetCurrentPointers
 crPackNullCurrentPointers
