@@ -94,24 +94,6 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 		sscanf( response, "%d", &(render_spu->ontop) );
 	}
 
-#if 0
-	/* XXX this will be going away... */
-	if (crMothershipGetSPUParam( conn, response, "alpha_bits" ) )
-	{
-		sscanf( response, "%d", &(render_spu->alpha_bits) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "stencil_bits" ) )
-	{
-		sscanf( response, "%d", &(render_spu->stencil_bits) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "accum_bits" ) )
-	{
-		sscanf( response, "%d", &(render_spu->accum_bits) );
-	}
-#endif
-
 	if (crMothershipGetSPUParam( conn, response, "window_title" ) )
 	{
 		crFree( render_spu->window_title );
