@@ -1242,7 +1242,7 @@ crTCPIPDoConnect( CRConnection *conn )
 	}
 #ifdef ADDRINFO
 	freeaddrinfo(res);
-	crWarning( "Couln't find any suitable way to connect to %s", conn->hostname );
+	crWarning( "Couldn't find any suitable way to connect to %s", conn->hostname );
 #endif
 	cr_tcpip.conns[conn->index] = NULL; /* remove from table */
 	return 0;
