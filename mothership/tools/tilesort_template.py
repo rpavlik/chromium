@@ -264,20 +264,20 @@ class TilesortDialog(wxDialog):
 		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
 		columnsLabel = wxStaticText(parent=self, id=-1,
 									label="Columns:")
-		self.widthControl = wxSpinCtrl(parent=self, id=id_MuralWidth,
+		self.columnsControl = wxSpinCtrl(parent=self, id=id_MuralWidth,
 									   value="1", min=1, max=16,
 									   size=wxSize(50,25))
 		rowsLabel = wxStaticText(parent=self, id=-1, label="Rows:")
-		self.heightControl = wxSpinCtrl(parent=self,
+		self.rowsControl = wxSpinCtrl(parent=self,
 										id=id_MuralHeight,
 										value="1", min=1, max=16,
 										size=wxSize(50,25))
-		EVT_SPINCTRL(self.widthControl, id_MuralWidth, self.__OnSizeChange)
-		EVT_SPINCTRL(self.heightControl, id_MuralHeight, self.__OnSizeChange)
+		EVT_SPINCTRL(self.columnsControl, id_MuralWidth, self.__OnSizeChange)
+		EVT_SPINCTRL(self.rowsControl, id_MuralHeight, self.__OnSizeChange)
 		flexSizer.Add(columnsLabel, flag=wxALIGN_CENTER_VERTICAL)
-		flexSizer.Add(self.widthControl)
+		flexSizer.Add(self.columnsControl)
 		flexSizer.Add(rowsLabel, flag=wxALIGN_CENTER_VERTICAL)
-		flexSizer.Add(self.heightControl)
+		flexSizer.Add(self.rowsControl)
 		muralSizer.Add(flexSizer)
 		toolSizer.Add(muralSizer, flag=wxEXPAND)
 
@@ -391,9 +391,9 @@ class TilesortDialog(wxDialog):
 
 		# The topsizer contains the toolAndDrawSizer and the okCancelSizer
 		topSizer = wxBoxSizer(wxVERTICAL)
-		topSizer.Add(toolAndDrawSizer, flag=wxGROW, border=0)
+		topSizer.Add(toolAndDrawSizer, option=1, flag=wxGROW, border=0)
 		topSizer.Add(separator, flag=wxGROW, border=0)
-		topSizer.Add(okCancelSizer, option=0, flag=wxGROW|wxTOP, border=10)
+		topSizer.Add(okCancelSizer, option=0, flag=wxGROW|wxALL, border=10)
 
 		# Finish-up the dialog
 		self.SetAutoLayout(true)
@@ -413,10 +413,9 @@ class TilesortDialog(wxDialog):
 		Recompute the total mural size in pixels and update the widgets."""
 		tileW = self.tileWidthControl.GetValue()
 		tileH = self.tileHeightControl.GetValue()
-		totalW = self.widthControl.GetValue() * tileW
-		totalH = self.heightControl.GetValue() * tileH
+		totalW = self.columnsControl.GetValue() * tileW
+		totalH = self.rowsControl.GetValue() * tileH
 		self.totalSizeLabel.SetLabel(str("%d x %d" % (totalW, totalH)))
-		custom = 1
 		for i in range(0, len(CommonTileSizes)):
 			if (tileW == CommonTileSizes[i][0] and
 				tileH == CommonTileSizes[i][1]):
@@ -428,8 +427,8 @@ class TilesortDialog(wxDialog):
 	def __UpdateVarsFromWidgets(self):
 		"""Get current widget values and update the tilesort parameters."""
 		tilesort = self.__Mothership.Tilesort
-		tilesort.Columns = self.widthControl.GetValue()
-		tilesort.Rows = self.heightControl.GetValue()
+		tilesort.Columns = self.columnsControl.GetValue()
+		tilesort.Rows = self.rowsControl.GetValue()
 		tilesort.TileWidth = self.tileWidthControl.GetValue()
 		tilesort.TileHeight = self.tileHeightControl.GetValue()
 		tilesort.RightToLeft = self.hLayoutRadio.GetSelection()
@@ -438,8 +437,8 @@ class TilesortDialog(wxDialog):
 	def __UpdateWidgetsFromVars(self):
 		"""Set widget values to the tilesort parameters."""
 		tilesort = self.__Mothership.Tilesort
-		self.widthControl.SetValue(tilesort.Columns)
-		self.heightControl.SetValue(tilesort.Rows)
+		self.columnsControl.SetValue(tilesort.Columns)
+		self.rowsControl.SetValue(tilesort.Rows)
 		self.tileWidthControl.SetValue(tilesort.TileWidth)
 		self.tileHeightControl.SetValue(tilesort.TileHeight)
 		self.hLayoutRadio.SetSelection(tilesort.RightToLeft)
@@ -528,8 +527,8 @@ class TilesortDialog(wxDialog):
 		
 		# Get current settings
 		size = self.drawArea.GetSize()
-		cols = self.widthControl.GetValue()
-		rows = self.heightControl.GetValue()
+		cols = self.columnsControl.GetValue()
+		rows = self.rowsControl.GetValue()
 		tileWidth = self.tileWidthControl.GetValue()
 		tileHeight = self.tileHeightControl.GetValue()
 		lToR = self.hLayoutRadio.GetSelection()
@@ -606,7 +605,8 @@ def Create_Tilesort(parentWindow, mothership):
 	else:
 		dialogDefaults = [1, 2, 1]
 
-	dialog = intdialog.IntDialog(parent=parentWindow, id=-1, title="Tilesort Template",
+	dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
+								 title="Tilesort Template",
 								 labels=["Number of application nodes:",
 										 "Mural Columns:",
 										 "Mural Rows:"],
@@ -693,10 +693,7 @@ def Edit_Tilesort(parentWindow, mothership):
 	# XXX we only need to create one instance of the TilesortFrame() and
 	# reuse it in the future.
 	t = Is_Tilesort(mothership)
-	if t:
-		clientNode = FindClientNode(mothership)
-		serverNode = FindServerNode(mothership)
-	else:
+	if not t:
 		print "This is not a tilesort configuration!"
 		return
 
@@ -711,6 +708,7 @@ def Edit_Tilesort(parentWindow, mothership):
 	else:
 		# update mothership with new values
 		tiles = mothership.Tilesort.Rows * mothership.Tilesort.Columns
+		serverNode = FindServerNode(mothership)
 		serverNode.SetCount(tiles)
 
 
