@@ -21,7 +21,9 @@
 #include "exec.h"
 #include "../common/logo.h"
 
-PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
+typedef void (APIENTRY * GLBLENDEQUATIONEXTPROC) (GLenum mode);
+
+GLBLENDEQUATIONEXTPROC glBlendEquation_ext;
 
 
 /* --- Global Variables ----------------------------------------------------- */
@@ -62,11 +64,11 @@ void	InitGL	( void )
 void	InitSpecial	( void )
 {
 #ifdef WIN32
-	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)wglGetProcAddress( "glBlendEquationEXT" );
+	glBlendEquation_ext = (GLBLENDEQUATIONEXTPROC)wglGetProcAddress( "glBlendEquationEXT" );
 #else
-	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendEquationEXT" );
+	glBlendEquation_ext = (GLBLENDEQUATIONEXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendEquationEXT" );
 #endif
-	if ( glBlendEquationEXT == NULL )
+	if ( glBlendEquation_ext == NULL )
 	{
 		cout << "Error linking to extensions!" << endl;
 		exit( 0 );
@@ -113,7 +115,7 @@ void	Display		( void )
 	
 	glEnable( GL_POLYGON_OFFSET_FILL );
 	glPolygonOffset( 0, -1 );
-	glBlendEquationEXT( GL_MIN_EXT );
+	glBlendEquation_ext( GL_MIN_EXT );
 	glEnable( GL_BLEND );
 	glBegin( GL_QUADS );
 		glColor3f( 0, 0, 0 );
@@ -126,7 +128,7 @@ void	Display		( void )
 	glEnd();
 	glDisable( GL_BLEND );
 	glDisable( GL_POLYGON_OFFSET_FILL );
-	glBlendEquationEXT( GL_FUNC_ADD_EXT );
+	glBlendEquation_ext( GL_FUNC_ADD_EXT );
 	
 	glColor3f( 1, 1, 1 );
 	glPushMatrix();glLoadIdentity();
@@ -146,7 +148,7 @@ void	Display		( void )
 	
 	glEnable( GL_POLYGON_OFFSET_FILL );
 	glPolygonOffset( 0, -1 );
-	glBlendEquationEXT( GL_MAX_EXT );
+	glBlendEquation_ext( GL_MAX_EXT );
 	glEnable( GL_BLEND );
 	glBegin( GL_QUADS );
 		glColor3f( 0, 0, 0 );
@@ -159,7 +161,7 @@ void	Display		( void )
 	glEnd();
 	glDisable( GL_BLEND );
 	glDisable( GL_POLYGON_OFFSET_FILL );
-	glBlendEquationEXT( GL_FUNC_ADD_EXT );
+	glBlendEquation_ext( GL_FUNC_ADD_EXT );
 	
 	glColor3f( 1, 1, 1 );
 	glPushMatrix();glLoadIdentity();

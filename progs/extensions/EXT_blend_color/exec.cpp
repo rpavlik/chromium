@@ -21,7 +21,9 @@
 #include "exec.h"
 #include "../common/logo.h"
 
-PFNGLBLENDCOLOREXTPROC glBlendColorEXT;
+typedef void (APIENTRY * GLBLENDCOLOREXTPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+
+GLBLENDCOLOREXTPROC glBlendColor_ext;
 
 
 /* --- Global Variables ----------------------------------------------------- */
@@ -86,11 +88,11 @@ void	InitSpecial	( void )
 	gluBuild2DMipmaps( GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData );
 	
 #ifdef WIN32
-	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)wglGetProcAddress( "glBlendColorEXT" );
+	glBlendColor_ext = (GLBLENDCOLOREXTPROC)wglGetProcAddress( "glBlendColorEXT" );
 #else
-	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendColorEXT" );
+	glBlendColor_ext = (GLBLENDCOLOREXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendColorEXT" );
 #endif
-	if ( glBlendColorEXT == NULL )
+	if ( glBlendColor_ext == NULL )
 	{
 		cout << "Error linking to extensions!" << endl;
 		exit( 0 );
@@ -147,7 +149,7 @@ void	Display		( void )
 	glViewport( currentWidth >> 1, 0, currentWidth >> 1, currentHeight );
 #endif
 	glEnable( GL_BLEND );
-	glBlendColorEXT( 1.0, 1.0, 0.0, 0.0 );
+	glBlendColor_ext( 1.0, 1.0, 0.0, 0.0 );
 	glBlendFunc( GL_CONSTANT_COLOR_EXT, GL_ZERO );
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, texture[0] );

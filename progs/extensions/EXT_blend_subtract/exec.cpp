@@ -21,7 +21,9 @@
 #include "exec.h"
 #include "../common/logo.h"
 
-PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
+typedef void (APIENTRY * GLBLENDEQUATIONEXTPROC) (GLenum mode);
+
+GLBLENDEQUATIONEXTPROC glBlendEquation_ext;
 
 
 /* --- Global Variables ----------------------------------------------------- */
@@ -62,11 +64,11 @@ void	InitGL	( void )
 void	InitSpecial	( void )
 {
 #ifdef WIN32
-	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)wglGetProcAddress( "glBlendEquationEXT" );
+	glBlendEquation_ext = (GLBLENDEQUATIONEXTPROC)wglGetProcAddress( "glBlendEquationEXT" );
 #else
-	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendEquationEXT" );
+	glBlendEquation_ext = (GLBLENDEQUATIONEXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendEquationEXT" );
 #endif
-	if ( glBlendEquationEXT == NULL )
+	if ( glBlendEquation_ext == NULL )
 	{
 		cout << "Error linking to extensions!" << endl;
 		exit( 0 );
@@ -119,7 +121,7 @@ void	Display		( void )
 	
 	glEnable( GL_POLYGON_OFFSET_FILL );
 	glPolygonOffset( 0, -1 );
-	glBlendEquationEXT( GL_FUNC_SUBTRACT_EXT );
+	glBlendEquation_ext( GL_FUNC_SUBTRACT_EXT );
 	glBlendFunc( GL_ONE, GL_ONE );
 	glEnable( GL_BLEND );
 	glBegin( GL_QUADS );
@@ -133,7 +135,7 @@ void	Display		( void )
 	glEnd();
 	glDisable( GL_BLEND );
 	glDisable( GL_POLYGON_OFFSET_FILL );
-	glBlendEquationEXT( GL_FUNC_ADD_EXT );
+	glBlendEquation_ext( GL_FUNC_ADD_EXT );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	
 	glColor3f( 1, 1, 1 );
@@ -160,7 +162,7 @@ void	Display		( void )
 	
 	glEnable( GL_POLYGON_OFFSET_FILL );
 	glPolygonOffset( 0, -1 );
-	glBlendEquationEXT( GL_FUNC_REVERSE_SUBTRACT_EXT );
+	glBlendEquation_ext( GL_FUNC_REVERSE_SUBTRACT_EXT );
 	glBlendFunc( GL_ONE, GL_ONE );
 	glEnable( GL_BLEND );
 	glBegin( GL_QUADS );
@@ -174,7 +176,7 @@ void	Display		( void )
 	glEnd();
 	glDisable( GL_BLEND );
 	glDisable( GL_POLYGON_OFFSET_FILL );
-	glBlendEquationEXT( GL_FUNC_ADD_EXT );
+	glBlendEquation_ext( GL_FUNC_ADD_EXT );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	
 	glColor3f( 1, 1, 1 );
