@@ -744,6 +744,7 @@ crStateFeedbackVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 		}
 		break;		
 	case GL_POLYGON:
+		/* XXX need to observe polygon mode for the above TRI/QUAD prims */
 		switch (p->frontMode) {
 		case GL_POINT:
 			CRASSERT(g->vCount == 0);
@@ -1424,8 +1425,8 @@ crStateFeedbackRectf(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1)
    crStateFeedbackBegin(GL_QUADS);
    crStateFeedbackVertex2f(x0, y0);
    crStateFeedbackVertex2f(x0, y1);
-   crStateFeedbackVertex2f(x1, y0);
    crStateFeedbackVertex2f(x1, y1);
+   crStateFeedbackVertex2f(x1, y0);
    crStateFeedbackEnd();
 }
 
@@ -1763,7 +1764,6 @@ crStateSelectVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
 	CRContext *g = GetCurrentContext();
 	CRTransformState *t = &(g->transform);
-	CRPolygonState *p = &(g->polygon);
 	CRVertex *v = g->vBuffer + g->vCount;
 
 	/* store the vertex */
@@ -1905,48 +1905,17 @@ crStateSelectVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 		}
 		break;		
 	case GL_POLYGON:
-		switch (p->frontMode) {
-		case GL_POINT:
-			CRASSERT(g->vCount == 0);
-			select_point(v);
-			break;
-		case GL_LINE:
-			if (g->vCount == 0)
-			{
-				g->vCount = 1;
-				g->lineLoop = GL_FALSE;
-			}
-			else if (g->vCount == 1)
-			{
-				select_line(g->vBuffer + 0, g->vBuffer + 1);
-				g->lineLoop = GL_TRUE;
-				g->vCount = 2;
-			}
-			else
-			{
-				CRASSERT(g->vCount == 2);
-				g->lineLoop = GL_FALSE;
-				select_line(g->vBuffer + 1, g->vBuffer + 2);
-				g->vBuffer[1] = g->vBuffer[2];
-				/* leave g->vCount at 2 */
-			}
-			break;
-		case GL_FILL:
-			/* draw as a tri-fan */
-			if (g->vCount == 0 || g->vCount == 1)
-			{
-				g->vCount++;
-			}
-			else
-			{
-				CRASSERT(g->vCount == 2);
-				select_triangle(g->vBuffer + 0, g->vBuffer + 1, g->vBuffer + 2);
-				g->vBuffer[1] = g->vBuffer[2];
-				/* leave g->vCount = 2 */
-			}
-			break;
-		default:
-			; /* impossible */
+		/* draw as a tri-fan */
+		if (g->vCount == 0 || g->vCount == 1)
+		{
+			g->vCount++;
+		}
+		else
+		{
+			CRASSERT(g->vCount == 2);
+			select_triangle(g->vBuffer + 0, g->vBuffer + 1, g->vBuffer + 2);
+			g->vBuffer[1] = g->vBuffer[2];
+			/* leave g->vCount = 2 */
 		}
 		break;
 	default:
@@ -1980,15 +1949,10 @@ crStateSelectEnd(void)
 {
 	CRContext *g = GetCurrentContext();
 
-	if ( (g->current.mode == GL_LINE_LOOP ||
-	     (g->current.mode == GL_POLYGON && g->polygon.frontMode == GL_LINE))
-	     && g->vCount == 2 )
+	if (g->current.mode == GL_LINE_LOOP && g->vCount == 2)
 	{
 		/* draw the last line segment */
-		if (g->lineLoop)
-			select_line(g->vBuffer + 1, g->vBuffer + 0);
-		else
-			select_line(g->vBuffer + 2, g->vBuffer + 0);
+		select_line(g->vBuffer + 1, g->vBuffer + 0);
 	}
 
 	crStateEnd();
@@ -2276,8 +2240,8 @@ crStateSelectRectf(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1)
    crStateSelectBegin(GL_QUADS);
    crStateSelectVertex2f(x0, y0);
    crStateSelectVertex2f(x0, y1);
-   crStateSelectVertex2f(x1, y0);
    crStateSelectVertex2f(x1, y1);
+   crStateSelectVertex2f(x1, y0);
    crStateSelectEnd();
 }
 
