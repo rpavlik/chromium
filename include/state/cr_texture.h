@@ -31,7 +31,7 @@ struct CRTextureFormat {
 typedef struct {
 	GLubyte *img;
 	int bytes;
-	GLint width;
+	GLint width;  /* width, height, depth includes the border */
 	GLint height;
 	GLint depth;
 	GLint internalFormat;
