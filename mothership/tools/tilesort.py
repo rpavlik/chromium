@@ -30,16 +30,18 @@ from wxPython.wx import *
 
 import traceback, types
 
+from spudialog import *
+
+
 #----------------------------------------------------------------------------
 #                            System Constants
 #----------------------------------------------------------------------------
 
 # Our menu item IDs:
 
-menu_UNDO          = 10001 # Edit menu items.
-menu_SELECT_ALL    = 10002
-
-menu_ABOUT         = 10205 # Help menu items.
+menu_TILESORT      = 100
+menu_RENDER        = 101
+menu_ABOUT         = 102
 
 # Widget IDs
 id_MuralWidth  = 3000
@@ -133,6 +135,14 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, wxID_REVERT, self.doRevert)
 		EVT_MENU(self, wxID_EXIT,   self.doExit)
 		menuBar.Append(self.fileMenu, "File")
+
+		# Options menu
+		self.optionsMenu = wxMenu()
+		self.optionsMenu.Append(menu_TILESORT, "Tilesort SPU ...")
+		self.optionsMenu.Append(menu_RENDER,   "Render SPU ...")
+		EVT_MENU(self, menu_TILESORT,  self.doTilesort)
+		EVT_MENU(self, menu_RENDER, self.doRender)
+		menuBar.Append(self.optionsMenu, "Options")
 
 		# Help menu
 		self.helpMenu = wxMenu()
@@ -517,6 +527,39 @@ class MainFrame(wxFrame):
 
 		_app.ExitMainLoop()
 
+	def doTilesort(self, event):
+		"""Options / Tilesort menu callback"""
+		# XXX eventually automatically query these parameters from the SPU
+		opts = [
+			("broadcast", "bool", 1, false, "Broadcast Primitives"),
+			("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
+			("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
+			("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()"),
+			("sync_on_finish", "bool", 1, false, "Sync on glFinish()"),
+			("draw_bbox", "bool", 1, true, "Draw Bounding Box"),
+			("bbox_line_width", "float", 1, "5.0", "Bounding Box Line Width"),
+			("fake_window_dims", "float", 2, "", "Fake Window Dimensions"),
+			("scale_to_mural_size", "bool", 1, true, "Scale to Mural Size")
+			]
+		d = SPUDialog(parent=NULL, id=-1, title="Tilesort SPU Options", options=opts)
+		v = d.ShowModal()
+		return
+
+	def doRender(self, event):
+		"""Options / Render menu callback"""
+		# XXX eventually automatically query these parameters from the SPU
+		opts = [
+			("try_direct", "bool", 1, true, "Try Direct Rendering"),
+			("force_direct", "bool", 1, true, "Force Direct Rendering"),
+			("fullscreen", "bool", 1, false, "Full-screen Window"),
+			("on_top", "bool", 1, false, "Display on top"),
+			("title", "string", 1, "Chromium Render SPU", "Window Title"),
+			("window_geometry", "string", 1, "", "Window Geometry"),
+			("system_gl_path", "string", 1, "/usr/lib/", "System GL Path"),
+			]
+		d = SPUDialog(parent=NULL, id=-1, title="Render SPU Options", options=opts)
+		v = d.ShowModal()
+		return
 
 	def doShowAbout(self, event):
 		""" Respond to the "About" menu command.
