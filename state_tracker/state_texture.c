@@ -167,15 +167,16 @@ void crStateTextureInit(CRContext *ctx)
  */
 void crStateTextureFree( CRTextureState *t ) 
 {
-	/* walk hash table, freeing texture objects */
-	CR_HASHTABLE_WALK(t->idHash, entry)
-
+  	/* walk hash table, freeing texture objects */
+	CR_HASHTABLE_WALK_MANUAL_STEP(t->idHash, entry)
 		CRTextureObj *tobj = (CRTextureObj *) entry->data;
-		crStateTextureDelete_t(t, tobj);
+
 		entry->data = NULL;
 
+		CR_HASHTABLE_STEP(entry);
+		crStateTextureDelete_t(t, tobj);
 	CR_HASHTABLE_WALK_END(t->idHash);
-
+	 
 	crFreeIdPool(t->idPool);
 	crFreeHashtable(t->idHash);
 }

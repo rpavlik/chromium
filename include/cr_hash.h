@@ -39,6 +39,16 @@ unsigned int crHashtableNumElements( CRHashTable *h) ;
     for (_ = 0; _ < CR_NUM_BUCKETS ; _++) {       \
       for (t = h->buckets[_] ; t; t = t->next) {
 
+#define CR_HASHTABLE_WALK_MANUAL_STEP( h, t ) {   \
+  CRHashNode *t;                                  \
+  int _;                                          \
+  if (h) {                                        \
+    for (_ = 0; _ < CR_NUM_BUCKETS ; _++) {       \
+		t = h->buckets[_];                          \
+		while (t) {                                 \
+
+#define CR_HASHTABLE_STEP(t)                      \
+			t = t->next; 
 
 #define CR_HASHTABLE_WALK_END( h )                \
       }	                                          \
