@@ -202,13 +202,13 @@ for row in range(TILE_ROWS):
 			renderspu.Conf(name, value)
 
 		if singleServer:
-			renderspu.Conf('window_geometry',
+			renderspu.Conf('window_geometry', [
 						   int(1.1 * j * TILE_WIDTH),
 						   int(1.1 * i * TILE_HEIGHT),
-						   TILE_WIDTH, TILE_HEIGHT)
+						   TILE_WIDTH, TILE_HEIGHT ] )
 			host = SERVER_HOSTS[0]
 		else:
-			renderspu.Conf('window_geometry', 0, 0, TILE_WIDTH, TILE_HEIGHT)
+			renderspu.Conf('window_geometry', [0, 0, TILE_WIDTH, TILE_HEIGHT])
 			host = SERVER_HOSTS[index]
 		servernode = CRNetworkNode(host)
 
