@@ -28,6 +28,9 @@ bitcount(int value)
 }
 
 
+/**
+ * Return 1 if the target is a proxy target, 0 otherwise.
+ */
 static GLboolean
 IsProxyTarget(GLenum target)
 {
@@ -39,7 +42,7 @@ IsProxyTarget(GLenum target)
 }
 
 
-/*
+/**
  * Test if a texture width, height or depth is legal.
  * It must be true that 0 <= size <= max.
  * Furthermore, if the ARB_texture_non_power_of_two extension isn't
@@ -59,8 +62,40 @@ isLegalSize(CRContext *g, GLsizei size, GLsizei max)
 }
 
 
+/**
+ * Return the max legal texture level parameter for the given target.
+ */
+static GLint
+MaxTextureLevel(CRContext *g, GLenum target)
+{
+	CRTextureState *t = &(g->texture);
+	switch (target) {
+	case GL_TEXTURE_1D:
+	case GL_PROXY_TEXTURE_1D:
+	case GL_TEXTURE_2D:
+	case GL_PROXY_TEXTURE_2D:
+		return t->maxLevel;
+	case GL_TEXTURE_3D:
+	case GL_PROXY_TEXTURE_3D:
+		return t->max3DLevel;
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+		return t->maxCubeMapLevel;
+	case GL_TEXTURE_RECTANGLE_NV:
+	case GL_PROXY_TEXTURE_RECTANGLE_NV:
+		return t->maxRectLevel;
+	default:
+		return 0;
+	}
+}
 
-/*
+
+/**
  * If GL_GENERATE_MIPMAP_SGIS is true and we modify the base level texture
  * image we have to finish the mipmap.
  * All we really have to do is fill in the width/height/format/etc for the
@@ -207,8 +242,9 @@ GetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
 }
 
 
-/*
+/**
  * Do parameter error checking for glTexImagexD functions.
+ * We'll call crStateError if we detect any errors, unless it's a proxy target.
  * Return GL_TRUE if any errors, GL_FALSE if no errors.
  */
 static GLboolean
@@ -216,7 +252,13 @@ ErrorCheckTexImage(GLuint dims, GLenum target, GLint level,
 									 GLsizei width, GLsizei height, GLsizei depth, GLint border)
 {
 	CRContext *g = GetCurrentContext();
-	CRTextureState *t = &(g->texture);
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+								 "glTexImage%uD called in Begin/End", dims);
+		return GL_TRUE;
+	}
 
 	/*
 	 * Test target
@@ -225,25 +267,34 @@ ErrorCheckTexImage(GLuint dims, GLenum target, GLint level,
 	{
 	case GL_TEXTURE_1D:
 	case GL_PROXY_TEXTURE_1D:
-		if (dims != 1)
+		if (dims != 1) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexImage(invalid target=0x%x)", target);
 			return GL_TRUE;
+		}
 		break;
 	case GL_TEXTURE_2D:
 	case GL_PROXY_TEXTURE_2D:
-		if (dims != 2)
+		if (dims != 2) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexImage(invalid target=0x%x)", target);
 			return GL_TRUE;
+		}
 		break;
 	case GL_TEXTURE_3D:
 	case GL_PROXY_TEXTURE_3D:
-		if (dims != 3)
+		if (dims != 3) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexImage(invalid target=0x%x)", target);
 			return GL_TRUE;
+		}
 		break;
 #ifdef CR_NV_texture_rectangle
 	case GL_TEXTURE_RECTANGLE_NV:
 	case GL_PROXY_TEXTURE_RECTANGLE_NV:
 		if (dims != 2 || !g->extensions.NV_texture_rectangle) {
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage2D invalid target: 0x%x", target);
+									 "glTexImage2D(invalid target=0x%x)", target);
 			return GL_TRUE;
 		}
 		break;
@@ -258,67 +309,26 @@ ErrorCheckTexImage(GLuint dims, GLenum target, GLint level,
 	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
 		if (dims != 2 || !g->extensions.ARB_texture_cube_map) {
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage2D invalid target: 0x%x", target);
+									 "glTexImage2D(invalid target=0x%x)", target);
 			return GL_TRUE;
 		}
 		break;
 #endif
 	default:
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexImage%uD invalid target: 0x%x", dims, target);
+								 "glTexImage%uD(invalid target=0x%x)", dims, target);
 		return GL_TRUE;
 	}
 
 	/*
 	 * Test level
 	 */
-	if (level < 0) {
+	if (level < 0 || level > MaxTextureLevel(g, target)) {
 		if (!IsProxyTarget(target))
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 									 "glTexImage%uD(level=%d)", dims, level);
 		return GL_TRUE;
 	}
-
-	if ((target == GL_TEXTURE_1D || target == GL_PROXY_TEXTURE_1D ||
-			 target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D)
-			&& level > t->maxLevel) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage%uD(level=%d)", dims, level);
-		return GL_TRUE;
-	}
-	else if ((target == GL_TEXTURE_3D || target == GL_PROXY_TEXTURE_3D)
-					 && level > t->max3DLevel) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage3D(level=%d)", level);
-		return GL_TRUE;
-	}
-#ifdef CR_ARB_texture_cube_map
-	else if ((target == GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
-						target == GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB ||
-						target == GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB ||
-						target == GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB ||
-						target == GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB ||
-						target == GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB ||
-						target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
-					 && level > t->maxCubeMapLevel) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D(level=%d)", level);
-		return GL_TRUE;
-	}
-#endif
-#ifdef CR_NV_texture_rectangle
-	else if ((target == GL_TEXTURE_RECTANGLE_NV ||
-						target == GL_PROXY_TEXTURE_RECTANGLE_NV)
-					 && level > t->maxRectLevel) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D(level=%d)", level);
-		return GL_TRUE;
-	}
-#endif
 
 	/*
 	 * Test border
@@ -396,6 +406,90 @@ ErrorCheckTexImage(GLuint dims, GLenum target, GLint level,
 }
 
 
+/**
+ * Do error check for glTexSubImage() functions.
+ * We'll call crStateError if we detect any errors.
+ * Return GL_TRUE if any errors, GL_FALSE if no errors.
+ */
+static GLboolean
+ErrorCheckTexSubImage(GLuint dims, GLenum target, GLint level,
+											GLint xoffset, GLint yoffset, GLint zoffset,
+											GLsizei width, GLsizei height, GLsizei depth)
+{
+	CRContext *g = GetCurrentContext();
+	CRTextureObj *tobj;
+	CRTextureLevel *tl;
+
+	if (g->current.inBeginEnd) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+								 "glTexSubImage%uD called in Begin/End", dims);
+		return GL_TRUE;
+	}
+
+	if (dims == 1) {
+		if (target != GL_TEXTURE_1D) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexSubImage1D(target=0x%x)", target);
+			return GL_TRUE;
+		}
+	}
+	else if (dims == 2) {
+		if (target != GL_TEXTURE_2D &&
+				target != GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+				target != GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB &&
+				target != GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB &&
+				target != GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB &&
+				target != GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB &&
+				target != GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB &&
+				target != GL_TEXTURE_RECTANGLE_NV) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexSubImage2D(target=0x%x)", target);
+			return GL_TRUE;
+		}
+	}
+	else if (dims == 3) {
+		if (target != GL_TEXTURE_3D) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexSubImage3D(target=0x%x)", target);
+			return GL_TRUE;
+		}
+	}
+
+	/* test level */
+	if (level < 0 || level > MaxTextureLevel(g, target)) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+								 "glTexSubImage%uD(level=%d)", dims, level);
+		return GL_TRUE;
+	}
+
+	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+
+	/* test x/y/zoffset and size */
+	if (xoffset < -tl->border || xoffset + width > tl->width) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+								 "glTexSubImage%uD(xoffset=%d and/or width=%d)",
+								 dims, xoffset, width);
+		return GL_TRUE;
+	}
+	if (dims > 1 && (yoffset < -tl->border || yoffset + height > tl->height)) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+								 "glTexSubImage%uD(yoffset=%d and/or height=%d)",
+								 dims, yoffset, height);
+		return GL_TRUE;
+	}
+	if (dims > 2 && (zoffset < -tl->border || zoffset + depth > tl->depth)) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+								 "glTexSubImage%uD(zoffset=%d and/or depth=%d)",
+								 dims, zoffset, depth);
+		return GL_TRUE;
+	}
+
+	/* OK, no errors */
+	return GL_FALSE;
+}
+
+
+
 void STATE_APIENTRY
 crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 									GLsizei width, GLint border, GLenum format,
@@ -410,21 +504,6 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 	CRTextureBits *tb = &(sb->texture);
 
 	FLUSH();
-
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-								 "glTexImage1D called in Begin/End");
-		return;
-	}
-
-	if (target != GL_TEXTURE_1D && target != GL_PROXY_TEXTURE_1D)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexImage1D target != (GL_TEXTURE_1D | GL_PROXY_TEXTURE_1D): 0x%x",
-								 target);
-		return;
-	}
 
 	if (ErrorCheckTexImage(1, target, level, width, 1, 1, border)) {
 		if (IsProxyTarget(target)) {
@@ -503,13 +582,6 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	const int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
 
 	FLUSH();
-
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-								 "glTexImage2D called in Begin/End");
-		return;
-	}
 
 	/* NOTE: we skip parameter error checking if this is a distributed
 	 * texture!  The user better provide correct parameters!!!
@@ -609,20 +681,6 @@ crStateTexImage3D(GLenum target, GLint level,
 
 	FLUSH();
 
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-								 "glTexImage3D called in Begin/End");
-		return;
-	}
-
-	if (target != GL_TEXTURE_3D && target != GL_PROXY_TEXTURE_3D)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexImage3D invalid target: 0x%x", target);
-		return;
-	}
-
 	if (ErrorCheckTexImage(3, target, level, width, height, depth, border)) {
 		if (IsProxyTarget(target)) {
 			/* clear all state, but don't generate error */
@@ -709,41 +767,11 @@ crStateTexSubImage1D(GLenum target, GLint level, GLint xoffset,
 	CRTextureObj *tobj = unit->currentTexture1D;
 	CRTextureLevel *tl = tobj->level + level;
 
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-								 "glTexSubImage1D called in Begin/End");
-		return;
-	}
-
 	FLUSH();
 
-	if (target != GL_TEXTURE_1D)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexSubImage1D target != GL_TEXTURE_1D: %d", target);
-		return;
-	}
-
-	if (level < 0 || level > t->maxLevel)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage1D level oob: %d", level);
-		return;
-	}
-
-	if (width > ((int) g->limits.maxTextureSize + 2))
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage1D width oob: %d", width);
-		return;
-	}
-
-	if (width + xoffset > tl->width)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage1D(bad width or xoffset)");
-		return;
+	if (ErrorCheckTexSubImage(1, target, level, xoffset, 0, 0,
+														width, 1, 1)) {
+		return; /* GL error state already set */
 	}
 
 	xoffset += tl->border;
@@ -771,7 +799,6 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 										 GLenum format, GLenum type, const GLvoid * pixels)
 {
 	CRContext *g = GetCurrentContext();
-	CRTextureState *t = &(g->texture);
 	CRClientState *c = &(g->client);
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
@@ -784,106 +811,12 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 
 	FLUSH();
 
-	/* Error checking */
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-								 "glTexSubImage2D called in Begin/End");
-		return;
-	}
-
-	if (target == GL_TEXTURE_2D)
-	{
-		if (level < 0 || level > t->maxLevel)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D level oob: %d", level);
-			return;
-		}
-		if (width < 0 || width > ((int) g->limits.maxTextureSize + 2))
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D width oob: %d", width);
-			return;
-		}
-		if (height < 0 || height > ((int) g->limits.maxTextureSize + 2))
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D height oob: %d", height);
-			return;
-		}
-	}
-#ifdef CR_NV_texture_rectangle
-	else if (target == GL_TEXTURE_RECTANGLE_NV
-					 && g->extensions.NV_texture_rectangle)
-	{
-		if (level < 0 || level > t->maxRectLevel)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D level oob: %d", level);
-			return;
-		}
-		if (width < 0 || width > (int) g->limits.maxRectTextureSize)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D width oob: %d", width);
-			return;
-		}
-		if (height < 0 || height > (int) g->limits.maxRectTextureSize)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D height oob: %d", height);
-			return;
-		}
-	}
-#endif
-#ifdef CR_ARB_texture_cube_map
-	else if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB
-					 && target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB
-					 && g->extensions.ARB_texture_cube_map)
-	{
-		if (level < 0 || level > t->maxCubeMapLevel)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D level oob: %d", level);
-			return;
-		}
-		if (width < 0 || width > (int) g->limits.maxCubeMapTextureSize)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D width oob: %d", width);
-			return;
-		}
-		if (height < 0 || height > (int) g->limits.maxCubeMapTextureSize)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexSubImage2D height oob: %d", height);
-			return;
-		}
-	}
-#endif /* CR_ARB_texture_cube_map */
-	else
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexSubImage2D target != GL_TEXTURE_2D: %d", target);
-		return;
+	if (ErrorCheckTexSubImage(2, target, level, xoffset, yoffset, 0,
+														width, height, 1)) {
+		return; /* GL error state already set */
 	}
 
 	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
-
-	if (width + xoffset > tl->width)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage2D(width %d + xoffset %d > %d)",
-								 width, xoffset, tl->width);
-		return;
-	}
-	if (height + yoffset > tl->height)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage2D(bad heigh or yoffset)");
-		return;
-	}
 
 	xoffset += tl->border;
 	yoffset += tl->border;
@@ -936,69 +869,16 @@ crStateTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 	CRTextureObj *tobj = unit->currentTexture3D;
 	CRTextureLevel *tl = tobj->level + level;
-	int i;
-
 	GLubyte *subimg = NULL;
 	GLubyte *img = NULL;
 	GLubyte *src;
-
-	if (g->current.inBeginEnd)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-								 "glTexSubImage3D called in Begin/End");
-		return;
-	}
+	int i;
 
 	FLUSH();
 
-	if (target != GL_TEXTURE_3D)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexSubImage3D target != GL_TEXTURE_3D: %d", target);
-		return;
-	}
-	if (level < 0 || level > t->maxLevel)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage3D level oob: %d", level);
-		return;
-	}
-	if (width < 0 || width > ((int) g->limits.maxTextureSize + 2))
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage3D width oob: %d", width);
-		return;
-	}
-	if (height < 0 || height > ((int) g->limits.maxTextureSize + 2))
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage3D height oob: %d", height);
-		return;
-	}
-	if (depth < 0 || depth > ((int) g->limits.maxTextureSize + 2))
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage3D depth oob: %d", depth);
-		return;
-	}
-
-	if (width + xoffset > tl->width)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage3D(bad width or xoffset)");
-		return;
-	}
-	if (height + yoffset > tl->height)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage3D(bad height or yoffset)");
-		return;
-	}
-	if (depth + zoffset > tl->depth)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage3D(bad depth or zoffset)");
-		return;
+	if (ErrorCheckTexSubImage(3, target, level, xoffset, yoffset, zoffset,
+														width, height, depth)) {
+		return; /* GL error state already set */
 	}
 
 	xoffset += tl->border;
@@ -1044,34 +924,219 @@ crStateTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 
 void STATE_APIENTRY
 crStateCompressedTexImage1DARB(GLenum target, GLint level,
-															 GLenum internalformat, GLsizei width,
+															 GLenum internalFormat, GLsizei width,
 															 GLint border, GLsizei imageSize,
 															 const GLvoid * data)
 {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-							 "glCompressedTexImage1DARB - no compression formats supported");
+	CRContext *g = GetCurrentContext();
+	CRTextureState *t = &(g->texture);
+	CRTextureObj *tobj;
+	CRTextureLevel *tl;
+	CRStateBits *sb = GetCurrentBits();
+	CRTextureBits *tb = &(sb->texture);
+
+	FLUSH();
+
+	if (ErrorCheckTexImage(1, target, level, width, 1, 1, border)) {
+		if (IsProxyTarget(target)) {
+			/* clear all state, but don't generate error */
+			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
+		}
+		else {
+			/* error was already recorded */
+		}
+		return;
+	}
+
+	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	if (IsProxyTarget(target))
+		tl->bytes = 0;
+	else
+		tl->bytes = imageSize;
+
+	if (tl->bytes)
+	{
+		/* this is not a proxy texture target so alloc storage */
+		if (tl->img)
+			crFree(tl->img);
+		tl->img = (GLubyte *) crAlloc(tl->bytes);
+		if (!tl->img)
+		{
+			crStateError(__LINE__, __FILE__, GL_OUT_OF_MEMORY,
+									 "glTexImage1D out of memory");
+			return;
+		}
+		if (data)
+			crMemcpy(tl->img, data, imageSize);
+	}
+
+	tl->width = width;
+	tl->height = 1;
+	tl->depth = 1;
+	tl->border = border;
+	tl->format = GL_NONE;
+	tl->type = GL_NONE;
+	tl->internalFormat = internalFormat;
+	crStateTextureInitTextureFormat(tl, internalFormat);
+	tl->compressed = GL_TRUE;
+	tl->bytesPerPixel = 0; /* n/a */
+
+#ifdef CR_SGIS_generate_mipmap
+	if (level == tobj->baseLevel && tobj->generateMipmap) {
+		generate_mipmap(tobj, target);
+	}
+#endif
+
+	DIRTY(tobj->dirty, g->neg_bitid);
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 
 void STATE_APIENTRY
 crStateCompressedTexImage2DARB(GLenum target, GLint level,
-															 GLenum internalformat, GLsizei width,
+															 GLenum internalFormat, GLsizei width,
 															 GLsizei height, GLint border,
 															 GLsizei imageSize, const GLvoid * data)
 {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-							 "glCompressedTexImage2DARB - no compression formats supported");
+	CRContext *g = GetCurrentContext();
+	CRTextureState *t = &(g->texture);
+	CRTextureObj *tobj = NULL;
+	CRTextureLevel *tl = NULL;
+	CRStateBits *sb = GetCurrentBits();
+	CRTextureBits *tb = &(sb->texture);
+
+	FLUSH();
+
+	if (ErrorCheckTexImage(2, target, level, width, height, 1, border)) {
+		if (IsProxyTarget(target)) {
+			/* clear all state, but don't generate error */
+			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
+		}
+		else {
+			/* error was already recorded */
+		}
+		return;
+	}
+
+	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	if (IsProxyTarget(target))
+		tl->bytes = 0;
+	else
+		tl->bytes = imageSize;
+
+	if (tl->bytes)
+	{
+		/* this is not a proxy texture target so alloc storage */
+		if (tl->img)
+			crFree(tl->img);
+		tl->img = (GLubyte *) crAlloc(tl->bytes);
+		if (!tl->img)
+		{
+			crStateError(__LINE__, __FILE__, GL_OUT_OF_MEMORY,
+									 "glTexImage2D out of memory");
+			return;
+		}
+		if (data)
+			crMemcpy(tl->img, data, imageSize);
+	}
+
+	tl->width = width;
+	tl->height = height;
+	tl->depth = 1;
+	tl->border = border;
+	tl->format = GL_NONE;
+	tl->type = GL_NONE;
+	tl->internalFormat = internalFormat;
+	crStateTextureInitTextureFormat(tl, internalFormat);
+	tl->compressed = GL_TRUE;
+	tl->bytesPerPixel = 0; /* n/a */
+
+#ifdef CR_SGIS_generate_mipmap
+	if (level == tobj->baseLevel && tobj->generateMipmap) {
+		generate_mipmap(tobj, target);
+	}
+#endif
+
+	/* XXX may need to do some fine-tuning here for proxy textures */
+	DIRTY(tobj->dirty, g->neg_bitid);
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 
 void STATE_APIENTRY
 crStateCompressedTexImage3DARB(GLenum target, GLint level,
-															 GLenum internalformat, GLsizei width,
+															 GLenum internalFormat, GLsizei width,
 															 GLsizei height, GLsizei depth, GLint border,
 															 GLsizei imageSize, const GLvoid * data)
 {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-							 "glCompressedTexImage3DARB - no compression formats supported");
+	CRContext *g = GetCurrentContext();
+	CRTextureState *t = &(g->texture);
+	CRTextureObj *tobj = NULL;
+	CRTextureLevel *tl = NULL;
+	CRStateBits *sb = GetCurrentBits();
+	CRTextureBits *tb = &(sb->texture);
+
+	FLUSH();
+
+	if (ErrorCheckTexImage(3, target, level, width, height, depth, border)) {
+		if (IsProxyTarget(target)) {
+			/* clear all state, but don't generate error */
+			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
+		}
+		else {
+			/* error was already recorded */
+		}
+		return;
+	}
+
+	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	if (IsProxyTarget(target))
+		tl->bytes = 0;
+	else
+		tl->bytes = imageSize;
+
+	if (tl->bytes)
+	{
+		/* this is not a proxy texture target so alloc storage */
+		if (tl->img)
+			crFree(tl->img);
+		tl->img = (GLubyte *) crAlloc(tl->bytes);
+		if (!tl->img)
+		{
+			crStateError(__LINE__, __FILE__, GL_OUT_OF_MEMORY,
+									 "glCompressedTexImage3D out of memory");
+			return;
+		}
+		if (data)
+			crMemcpy(tl->img, data, imageSize);
+	}
+
+	tl->width = width;
+	tl->height = height;
+	tl->depth = depth;
+	tl->border = border;
+	tl->format = GL_NONE;
+	tl->type = GL_NONE;
+	tl->internalFormat = internalFormat;
+	crStateTextureInitTextureFormat(tl, internalFormat);
+	tl->compressed = GL_TRUE;
+	tl->bytesPerPixel = 0; /* n/a */
+
+#ifdef CR_SGIS_generate_mipmap
+	if (level == tobj->baseLevel && tobj->generateMipmap) {
+		generate_mipmap(tobj, target);
+	}
+#endif
+
+	/* XXX may need to do some fine-tuning here for proxy textures */
+	DIRTY(tobj->dirty, g->neg_bitid);
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 
@@ -1080,8 +1145,40 @@ crStateCompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
 																	GLsizei width, GLenum format,
 																	GLsizei imageSize, const GLvoid * data)
 {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-							 "glCompressedTexSubImage1DARB - no compression formats supported");
+	CRContext *g = GetCurrentContext();
+	CRTextureState *t = &(g->texture);
+	CRStateBits *sb = GetCurrentBits();
+	CRTextureBits *tb = &(sb->texture);
+	CRTextureUnit *unit = t->unit + t->curTextureUnit;
+	CRTextureObj *tobj = unit->currentTexture1D;
+	CRTextureLevel *tl = tobj->level + level;
+
+	FLUSH();
+
+	if (ErrorCheckTexSubImage(1, target, level, xoffset, 0, 0, width, 1, 1)) {
+		return; /* GL error state already set */
+	}
+
+	xoffset += tl->border;
+
+	if (xoffset == 0 && width == tl->width) {
+		/* just memcpy */
+		crMemcpy(tl->img, data, imageSize);
+	}
+	else {
+		/* XXX this depends on the exact compression method */
+	}
+
+#ifdef CR_SGIS_generate_mipmap
+	if (level == tobj->baseLevel && tobj->generateMipmap) {
+		generate_mipmap(tobj, target);
+	}
+#endif
+
+	DIRTY(tobj->dirty, g->neg_bitid);
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 
@@ -1091,8 +1188,43 @@ crStateCompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
 																	GLsizei height, GLenum format,
 																	GLsizei imageSize, const GLvoid * data)
 {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-							 "glCompressedTexSubImage2DARB - no compression formats supported");
+	CRContext *g = GetCurrentContext();
+	CRTextureState *t = &(g->texture);
+	CRStateBits *sb = GetCurrentBits();
+	CRTextureBits *tb = &(sb->texture);
+	CRTextureUnit *unit = t->unit + t->curTextureUnit;
+	CRTextureObj *tobj = unit->currentTexture1D;
+	CRTextureLevel *tl = tobj->level + level;
+
+	FLUSH();
+
+	if (ErrorCheckTexSubImage(2, target, level, xoffset, yoffset, 0,
+														width, height, 1)) {
+		return; /* GL error state already set */
+	}
+
+	xoffset += tl->border;
+	yoffset += tl->border;
+
+	if (xoffset == 0 && width == tl->width &&
+			yoffset == 0 && height == tl->height) {
+		/* just memcpy */
+		crMemcpy(tl->img, data, imageSize);
+	}
+	else {
+		/* XXX this depends on the exact compression method */
+	}
+
+#ifdef CR_SGIS_generate_mipmap
+	if (level == tobj->baseLevel && tobj->generateMipmap) {
+		generate_mipmap(tobj, target);
+	}
+#endif
+
+	DIRTY(tobj->dirty, g->neg_bitid);
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 
@@ -1103,19 +1235,77 @@ crStateCompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 																	GLenum format, GLsizei imageSize,
 																	const GLvoid * data)
 {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-							 "glCompressedTexSubImage3DARB - no compression formats supported");
+	CRContext *g = GetCurrentContext();
+	CRTextureState *t = &(g->texture);
+	CRStateBits *sb = GetCurrentBits();
+	CRTextureBits *tb = &(sb->texture);
+	CRTextureUnit *unit = t->unit + t->curTextureUnit;
+	CRTextureObj *tobj = unit->currentTexture1D;
+	CRTextureLevel *tl = tobj->level + level;
+
+	FLUSH();
+
+	if (ErrorCheckTexSubImage(3, target, level, xoffset, yoffset, zoffset,
+														width, height, depth)) {
+		return; /* GL error state already set */
+	}
+
+	xoffset += tl->border;
+	yoffset += tl->border;
+	zoffset += tl->border;
+
+	if (xoffset == 0 && width == tl->width &&
+			yoffset == 0 && height == tl->height &&
+			zoffset == 0 && depth == tl->depth) {
+		/* just memcpy */
+		crMemcpy(tl->img, data, imageSize);
+	}
+	else {
+		/* XXX this depends on the exact compression method */
+	}
+
+#ifdef CR_SGIS_generate_mipmap
+	if (level == tobj->baseLevel && tobj->generateMipmap) {
+		generate_mipmap(tobj, target);
+	}
+#endif
+
+	DIRTY(tobj->dirty, g->neg_bitid);
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 
 void STATE_APIENTRY
 crStateGetCompressedTexImageARB(GLenum target, GLint level, GLvoid * img)
 {
-	crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-							 "glGetCompressedTexImageARB - no compression formats supported");
+	CRContext *g = GetCurrentContext();
+	CRTextureObj *tobj;
+	CRTextureLevel *tl;
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+								 "glGetCompressedTexImage called in begin/end");
+		return;
+	}
+
+	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	if (!tobj || !tl) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								 "glGetCompressedTexImage(invalid target or level)");
+		return;
+	}
+
+	if (!tl->compressed) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+								 "glGetCompressedTexImage(not a compressed texture)");
+		return;
+	}
+
+	crMemcpy(img, tl->img, tl->bytes);
 }
-
-
 
 
 void STATE_APIENTRY
@@ -1123,11 +1313,9 @@ crStateGetTexImage(GLenum target, GLint level, GLenum format,
 									 GLenum type, GLvoid * pixels)
 {
 	CRContext *g = GetCurrentContext();
-	CRTextureState *t = &(g->texture);
-	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 	CRClientState *c = &(g->client);
-	CRTextureObj *tobj = NULL;
-	CRTextureLevel *tl = NULL;
+	CRTextureObj *tobj;
+	CRTextureLevel *tl;
 
 	if (g->current.inBeginEnd)
 	{
@@ -1136,68 +1324,18 @@ crStateGetTexImage(GLenum target, GLint level, GLenum format,
 		return;
 	}
 
-	if (target == GL_TEXTURE_2D)
-	{
-		tobj = unit->currentTexture2D;
-		tl = tobj->level + level;
-	}
-	else if (target == GL_TEXTURE_1D)
-	{
-		tobj = unit->currentTexture1D;
-		tl = tobj->level + level;
-	}
-#ifdef CR_OPENGL_VERSION_1_2
-	else if (target == GL_TEXTURE_3D)
-	{
-		tobj = unit->currentTexture3D;
-		tl = tobj->level + level;
-	}
-#endif
-#ifdef CR_NV_texture_rectangle 
-	else if (target == GL_TEXTURE_RECTANGLE_NV)
-	{
-		tobj = unit->currentTextureRect;
-		tl = tobj->level + level;
-	}
-#endif
-#ifdef CR_ARB_texture_cube_map
-	else if (target == GL_TEXTURE_CUBE_MAP_POSITIVE_X)
-	{
-		tobj = unit->currentTextureCubeMap;
-		tl = tobj->level + level;
-	}
-	else if (target == GL_TEXTURE_CUBE_MAP_NEGATIVE_X)
-	{
-		tobj = unit->currentTextureCubeMap;
-		tl = tobj->negativeXlevel + level;
-	}
-	else if (target == GL_TEXTURE_CUBE_MAP_POSITIVE_Y)
-	{
-		tobj = unit->currentTextureCubeMap;
-		tl = tobj->positiveYlevel + level;
-	}
-	else if (target == GL_TEXTURE_CUBE_MAP_NEGATIVE_Y)
-	{
-		tobj = unit->currentTextureCubeMap;
-		tl = tobj->negativeYlevel + level;
-	}
-	else if (target == GL_TEXTURE_CUBE_MAP_POSITIVE_Z)
-	{
-		tobj = unit->currentTextureCubeMap;
-		tl = tobj->positiveZlevel + level;
-	}
-	else if (target == GL_TEXTURE_CUBE_MAP_NEGATIVE_Z)
-	{
-		tobj = unit->currentTextureCubeMap;
-		tl = tobj->negativeZlevel + level;
-	}
-#endif
-	else
-	{
+	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
+	if (!tobj || !tl) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glGetTexImage called with bogus target: %d", target);
+								 "glGetTexImage(invalid target or level)");
 		return;
 	}
+
+	if (tl->compressed) {
+		crWarning("glGetTexImage cannot decompress a compressed texture!");
+		return;
+	}
+		
 
 	switch (format)
 	{
