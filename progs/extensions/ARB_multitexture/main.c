@@ -8,8 +8,8 @@
 
   main.cpp
 
-  This is an example of GL_EXT_texture_filter_anisotropic, described
-  on page 185 of the NVidia OpenGL Extension Specifications.
+  This is an example of GL_ARB_multitexture, described on
+  page 18 of the NVidia OpenGL Extension Specifications.
 
   Christopher Niederauer, ccn@graphics.stanford.edu, 5/30/2001
 
@@ -64,7 +64,7 @@ PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
 PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
 #endif
 
-#ifdef IRIX											/* IRIX work-around */
+#ifdef IRIX  /* IRIX work-around */
 void
 glActiveTextureARB(GLenum texture)
 {
@@ -141,7 +141,7 @@ Display(void)
 
 	/* Right viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth - (currentWidth >> 1),
-						 currentHeight);
+		   currentHeight);
 #endif /* MULTIPLE_VIEWPORTS */
 
 	glEnable(GL_FOG);
@@ -247,11 +247,11 @@ InitSpecial(void)
 	glEnable(GL_BLEND);
 
 	glPolygonOffset(0, -1);
-	/*  glCallList( 2 ); */
+/* 	glCallList( 2 ); */
 
 	glPolygonOffset(0, -2);
 	glDisable(GL_TEXTURE_2D);
-	/*  glCallList( 3 ); */
+/* 	glCallList( 3 ); */
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
 	glEnable(GL_DEPTH_TEST);
@@ -267,8 +267,7 @@ InitSpecial(void)
 	printf("MAX_TEXTURE_UNITS_ARB = %d\n", numTexUnits);
 	if (numTexUnits < 3)
 	{
-		printf
-			("Sorry, this program requires at least three texture units to work properly.\n");
+		printf("Sorry, this program requires at least three texture units to work properly.\n");
 		exit(0);
 	}
 	switch (currentActiveUnit)
@@ -306,10 +305,9 @@ InitSpecial(void)
 	 *  - TexEnv calls
 	 *  - Get CURRENT_TEXTURE_COORDS
 	 */
-	/* Create the tile texture. */
-	glGenTextures(2, textureID);
 
 	/* Load the textures. */
+	glGenTextures(2, textureID);
 	{
 		const int texmapX = 128,
 			texmapY = 128, texmapSize = texmapX * texmapY * 3;
@@ -331,9 +329,9 @@ InitSpecial(void)
 				glBindTexture(GL_TEXTURE_2D, textureID[eGrassTex]);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-												GL_LINEAR_MIPMAP_LINEAR);
+						GL_LINEAR_MIPMAP_LINEAR);
 				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB8, texmapX, texmapY, GL_RGB,
-													GL_UNSIGNED_BYTE, textureData);
+						  GL_UNSIGNED_BYTE, textureData);
 			}
 		}
 		/* Load sand texture. */
@@ -352,9 +350,9 @@ InitSpecial(void)
 				glBindTexture(GL_TEXTURE_2D, textureID[eSandTex]);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-												GL_LINEAR_MIPMAP_LINEAR);
+						GL_LINEAR_MIPMAP_LINEAR);
 				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB8, texmapX, texmapY, GL_RGB,
-													GL_UNSIGNED_BYTE, textureData);
+						  GL_UNSIGNED_BYTE, textureData);
 			}
 		}
 	}
@@ -395,12 +393,12 @@ InitSpecial(void)
 
 				vec1[0] = size * 2;
 				vec1[1] = sizeV * (height[y * heightmapX + (x + 1)] -
-													 height[y * heightmapX + (x - 1)]);
+						   height[y * heightmapX + (x - 1)]);
 				vec1[2] = 0;
 
 				vec2[0] = 0;
 				vec2[1] = sizeV * (height[(y + 1) * heightmapX + x] -
-													 height[(y - 1) * heightmapX + x]);
+						   height[(y - 1) * heightmapX + x]);
 				vec2[2] = size * 2;
 
 				i = -vec1[1] * vec2[2] + vec2[1] * vec1[2];
@@ -422,13 +420,13 @@ InitSpecial(void)
 			{
 				glTexCoord2f(x * texScale, y * texScale);
 				glVertex3f(size * (x - (heightmapX >> 1)),
-									 sizeV * height[y * heightmapX + x] + offsetV,
-									 size * (y - (heightmapY >> 1)));
+					   sizeV * height[y * heightmapX + x] + offsetV,
+					   size * (y - (heightmapY >> 1)));
 
 				glTexCoord2f(x * texScale, (y + 1) * texScale);
 				glVertex3f(size * (x - (heightmapX >> 1)),
-									 sizeV * height[(y + 1) * heightmapX + x] + offsetV,
-									 size * (y + 1 - (heightmapY >> 1)));
+					   sizeV * height[(y + 1) * heightmapX + x] + offsetV,
+					   size * (y + 1 - (heightmapY >> 1)));
 			}
 			glEnd();
 		}
@@ -445,20 +443,20 @@ InitSpecial(void)
 					(normals[(y + 1) * heightNormRow + x * 3 + 1] - 0.5) * 1.8;
 
 				glColor4f(1, 1, 1,
-									1.0 - (normalThreshold1 > 1.0 ? 1 : normalThreshold1 <
-												 0 ? 0 : normalThreshold1));
+					  1.0 - (normalThreshold1 > 1.0 ? 1 :
+						 normalThreshold1 < 0 ? 0 : normalThreshold1));
 				glTexCoord2f(x * texScale, y * texScale);
 				glVertex3f(size * (x - (heightmapX >> 1)),
-									 sizeV * height[y * heightmapX + x] + offsetV,
-									 size * (y - (heightmapY >> 1)));
+					   sizeV * height[y * heightmapX + x] + offsetV,
+					   size * (y - (heightmapY >> 1)));
 
 				glColor4f(1, 1, 1,
-									1.0 - (normalThreshold2 > 1.0 ? 1 : normalThreshold2 <
-												 0 ? 0 : normalThreshold2));
+					  1.0 - (normalThreshold2 > 1.0 ? 1 :
+						 normalThreshold2 < 0 ? 0 : normalThreshold2));
 				glTexCoord2f(x * texScale, (y + 1) * texScale);
 				glVertex3f(size * (x - (heightmapX >> 1)),
-									 sizeV * height[(y + 1) * heightmapX + x] + offsetV,
-									 size * (y + 1 - (heightmapY >> 1)));
+					   sizeV * height[(y + 1) * heightmapX + x] + offsetV,
+					   size * (y + 1 - (heightmapY >> 1)));
 			}
 			glEnd();
 		}
@@ -471,13 +469,13 @@ InitSpecial(void)
 			{
 				glColor4f(0, 0, 0, (normals[y * heightNormRow + x * 3 + 2]));
 				glVertex3f(size * (x - (heightmapX >> 1)),
-									 sizeV * height[y * heightmapX + x] + offsetV,
-									 size * (y - (heightmapY >> 1)));
+					   sizeV * height[y * heightmapX + x] + offsetV,
+					   size * (y - (heightmapY >> 1)));
 
 				glColor4f(0, 0, 0, (normals[(y + 1) * heightNormRow + x * 3 + 2]));
 				glVertex3f(size * (x - (heightmapX >> 1)),
-									 sizeV * height[(y + 1) * heightmapX + x] + offsetV,
-									 size * (y + 1 - (heightmapY >> 1)));
+					   sizeV * height[(y + 1) * heightmapX + x] + offsetV,
+					   size * (y + 1 - (heightmapY >> 1)));
 			}
 			glEnd();
 		}
@@ -509,20 +507,20 @@ InitSpecial(void)
 				glColor4f(shade, shade, shade, sandAlpha);
 				glMultiTexCoord2fARB(GL_TEXTURE0_ARB, x * texScale, y * texScale);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB, x * texScale, y * texScale);
-				/*glMultiTexCoord2fARB( GL_TEXTURE2_ARB, x*texScale, y*texScale ); */
+/* 				glMultiTexCoord2fARB( GL_TEXTURE2_ARB, x*texScale, y*texScale ); */
 				glVertex3f(size * (x - (heightmapX >> 1)),
-									 sizeV * height[y * heightmapX + x] + offsetV,
-									 size * (y - (heightmapY >> 1)));
+					   sizeV * height[y * heightmapX + x] + offsetV,
+					   size * (y - (heightmapY >> 1)));
 
 				glColor4f(shade, shade, shade, sandAlpha);
 				glMultiTexCoord2fARB(GL_TEXTURE0_ARB, x * texScale,
-														 (y + 1) * texScale);
+						     (y + 1) * texScale);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB, x * texScale,
-														 (y + 1) * texScale);
-				/*glMultiTexCoord2fARB( GL_TEXTURE2_ARB, x*texScale, (y+1)*texScale ); */
+						     (y + 1) * texScale);
+/* 				glMultiTexCoord2fARB( GL_TEXTURE2_ARB, x*texScale, (y+1)*texScale ); */
 				glVertex3f(size * (x - (heightmapX >> 1)),
-									 sizeV * height[(y + 1) * heightmapX + x] + offsetV,
-									 size * (y + 1 - (heightmapY >> 1)));
+					   sizeV * height[(y + 1) * heightmapX + x] + offsetV,
+					   size * (y + 1 - (heightmapY >> 1)));
 			}
 			glEnd();
 		}
@@ -541,9 +539,7 @@ InitSpecial(void)
 int
 main(int argc, char *argv[])
 {
-#ifndef macintosh
 	glutInit(&argc, argv);
-#endif
 
 	printf("Written by Christopher Niederauer\n");
 	printf("ccn@graphics.stanford.edu\n");
