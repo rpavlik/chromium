@@ -332,12 +332,14 @@ tilesortspu_CallList(GLuint list)
 			crPackReleaseBuffer( thread->packer );
 			for ( i = 0 ; i < tilesort_spu.num_servers; i++ ) {
 				CRContext *serverState = thread->currentContext->server[i].State;
+				thread->state_server_index = i;
 				crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 				crStateDiffAllTextureObjects(thread->currentContext->State,
 																		 serverState->bitid);
 				crPackReleaseBuffer( thread->packer );
 			}
-		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
+			crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
+			thread->state_server_index = -1;
 		}
 #endif
 
