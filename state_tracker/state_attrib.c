@@ -1083,6 +1083,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		}
 		a->transformStackDepth--;
 		g->transform.matrixMode = a->transformStack[a->transformStackDepth].matrixMode;
+		crStateMatrixMode(g->transform.matrixMode);
 		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
 		{
 			g->transform.clip[i] = a->transformStack[a->transformStackDepth].clip[i];
