@@ -833,7 +833,7 @@ unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 		crNetRecv();
 	}
 
-#ifndef WINDOWS
+#if !defined(WINDOWS) && !defined(IRIX) && !defined(IRIX64)
 	/* silence compiler */
 	return 0;
 #endif
