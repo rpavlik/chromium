@@ -4,6 +4,8 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <math.h>
+#include <float.h>
 #include "tilesortspu.h"
 #include "cr_pack.h"
 #include "cr_net.h"
@@ -11,11 +13,16 @@
 #include "cr_protocol.h"
 #include "cr_error.h"
 #include "cr_packfunctions.h"
+#include "cr_rand.h"
 
-#include <math.h>
-#include <stdlib.h>
-#include <float.h>
-
+/*
+ * The message header lies at the start of the packing buffer, just before
+ * the actual operand data.  In preparation for transmission, fill in the
+ * message header fields (type and numOpcodes).
+ * Input: the packing buffer
+ * Output: len - number of bytes to send, including the header.
+ * Return: pointer to the header info.
+ */
 static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned int *len )
 {
 	int num_opcodes;
@@ -58,7 +65,10 @@ void tilesortspuDebugOpcodes( CRPackBuffer *pack )
 	crDebug( "\n" );
 }
 
-void tilesortspuSendServerBuffer( int server_index /*TileSortSPUServer *server*/ )
+/*
+ * Send this thread's packing buffer to the named server.
+ */
+void tilesortspuSendServerBuffer( int server_index )
 {
 	GET_THREAD(thread);
 	CRPackBuffer *pack = &(thread->pack[server_index]);
@@ -66,21 +76,25 @@ void tilesortspuSendServerBuffer( int server_index /*TileSortSPUServer *server*/
 	unsigned int len;
 	CRMessageOpcodes *hdr;
 
-	if ( pack->opcode_current == pack->opcode_start )
+	if ( pack->opcode_current == pack->opcode_start ) {
+		/* buffer is empty */
 		return;
+	}
 
 	hdr = __applySendBufferHeader( pack, &len );
 
-	if ( pack->holds_BeginEnd && pack->canBarf )
+	if ( pack->holds_BeginEnd && pack->canBarf ) {
 		crNetBarf( net->conn, &pack->pack, hdr, len );
+	}
 	else
 		crNetSend( net->conn, &pack->pack, hdr, len );
 
-	crPackInitBuffer( pack, crNetAlloc( net->conn ), net->conn->buffer_size, net->conn->mtu );
+	crPackInitBuffer( pack, crNetAlloc( net->conn ),
+										net->conn->buffer_size, net->conn->mtu );
 	pack->canBarf = net->conn->Barf ? GL_TRUE : GL_FALSE;
 }
 
-static void __appendBuffer( CRPackBuffer *src )
+static void __appendBuffer( const CRPackBuffer *src )
 {
 	GET_THREAD(thread);
 
@@ -91,7 +105,7 @@ static void __appendBuffer( CRPackBuffer *src )
 	{
 		/* No room to append -- send now */
 
-		/*crWarning( "OUT OF ROOM!") ; */
+		/*crWarning( "OUT OF ROOM!");*/
 		tilesortspuSendServerBuffer( thread->state_server_index );
 		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 		CRASSERT(crPackCanHoldBuffer( src ));
@@ -101,7 +115,10 @@ static void __appendBuffer( CRPackBuffer *src )
 	/*crWarning( "Back from crPackAppendBuffer: 0x%x", thread->packer->buffer.data_current ); */
 }
 
-static void __appendBoundedBuffer( CRPackBuffer *src, CRrecti *bounds )
+/*
+ * As above, but with bounding box info.
+ */
+static void __appendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 {
 	GET_THREAD(thread);
 	int length = ((src->data_current - src->opcode_current - 1) + 3) & ~3;
@@ -109,7 +126,6 @@ static void __appendBoundedBuffer( CRPackBuffer *src, CRrecti *bounds )
 	if (length == 0)
 	{
 		/* nothing to send. */
-
 		return;
 	}
 
@@ -200,11 +216,12 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 
 	if (!init) 
 	{
+		/* pick random colors for bounding boxes */
 		for (i=0; i<DRAW_BBOX_MAX_SERVERS; i++) 
 		{
-			c[i][0] = (GLfloat) rand();
-			c[i][1] = (GLfloat) rand();
-			c[i][2] = (GLfloat) rand();
+			c[i][0] = crRandFloat(0.0, 100.0);
+			c[i][1] = crRandFloat(0.0, 100.0);
+			c[i][2] = crRandFloat(0.0, 100.0);
 			tot = (GLfloat) sqrt (c[i][0]*c[i][0] + c[i][1]*c[i][1] + c[i][2]*c[i][2]);
 			c[i][0] /= tot;
 			c[i][1] /= tot;
@@ -213,6 +230,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 		init = 1;
 	}		
 
+	/* find average of colors for dirty/hit servers */
 	tot = 0.0f;
 	for (i=0, a=1; i<DRAW_BBOX_MAX_SERVERS; i++, a <<= 1)
 	{
@@ -588,11 +606,13 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 		crDebug( "Throwing away the big packet" );
 		crFree( thread->geometry_pack.pack );
-		crPackInitBuffer( &(thread->geometry_pack), crAlloc( thread->geom_pack_size ),
-											thread->geom_pack_size, tilesort_spu.MTU - (24+END_FLUFF+8) );
+		crPackInitBuffer( &(thread->geometry_pack),
+											crAlloc( thread->geom_pack_size ),
+											thread->geom_pack_size,
+											tilesort_spu.MTU - (24+END_FLUFF+8) );
 
-	/* 24 is the size of the bounds info packet */
-	/* and 8 since End and BoundInfo opcodes may indeed take this space */
+		/* 24 is the size of the bounds info packet */
+		/* and 8 since End and BoundInfo opcodes may indeed take this space */
 	}
 	else
 	{
