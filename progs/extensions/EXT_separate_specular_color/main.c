@@ -186,7 +186,7 @@ InitSpecial(void)
 	GLfloat position[4] = { 1, 1, 0, 1 };
 	GLfloat specular[4] = {	1, 1, 1, 1 };
 	GLubyte textureData[16 * 16];
-	GLUquadric *q;
+	GLUquadricObj *q;
 	int x, y;
 
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40);
