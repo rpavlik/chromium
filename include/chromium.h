@@ -191,6 +191,8 @@ PROC WINAPI wglGetProcAddress_prox( LPCSTR name )
 
 /**********************************************************************/
 /*****            Chromium Extensions to OpenGL                   *****/
+/*****                                                            *****/
+/***** Chromium owns the OpenGL enum range 0x8AF0-0x8B2F          *****/
 /**********************************************************************/
 
 #ifndef GL_CR_synchronization
@@ -209,6 +211,7 @@ typedef void (APIENTRY *glSemaphoreVCRProc) (GLuint name);
 
 #ifndef GL_CR_bounds_info
 #define GL_CR_bounds_info 1
+/* Private, internal Chromium function */
 /*
 typedef void (APIENTRY *glBoundsInfoCRProc)(const GLrecti *, const GLbyte *, GLint, GLint);
 */
@@ -230,7 +233,7 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define GL_CR_cursor_position 1
 /* For virtual cursor feature (show_cursor) */
 
-#define GL_CURSOR_POSITION_CR  0x9900  /* unofficial! */
+#define GL_CURSOR_POSITION_CR  0x8AF0
 
 #endif /* GL_CR_cursor_position */
 
@@ -239,9 +242,9 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define GL_CR_bounding_box 1
 /* To set bounding box from client app */
 
-#define GL_DEFAULT_BBOX_CR	0x9901 /* unofficial! */
-#define GL_SCREEN_BBOX_CR	0x9902 /* unofficial! */
-#define GL_OBJECT_BBOX_CR	0x9903 /* unofficial! */
+#define GL_DEFAULT_BBOX_CR	0x8AF1
+#define GL_SCREEN_BBOX_CR	0x8AF2
+#define GL_OBJECT_BBOX_CR	0x8AF3
 
 #endif /* GL_CR_bounding_box */
 
@@ -249,7 +252,7 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #ifndef GL_CR_print_string
 #define GL_CR_print_string 1
 /* To print a string to stdout */
-#define GL_PRINT_STRING_CR	0x9904 /* unofficial! */
+#define GL_PRINT_STRING_CR	0x8AF4
 
 #endif /* GL_CR_print_string */
 
@@ -258,13 +261,13 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define GL_CR_tilesort_info 1
 /* To query tilesort information */
 
-#define GL_MURAL_SIZE_CR             0x9905 /* unofficial! */
-#define GL_NUM_SERVERS_CR            0x9906 /* unofficial! */
-#define GL_NUM_TILES_CR              0x9907 /* unofficial! */
-#define GL_TILE_BOUNDS_CR            0x9908 /* unofficial! */
-#define GL_VERTEX_COUNTS_CR          0x9909 /* unofficial! */
-#define GL_RESET_VERTEX_COUNTERS_CR  0x990A /* unofficial! */
-#define GL_SET_MAX_VIEWPORT_CR       0x990B /* unofficial! */
+#define GL_MURAL_SIZE_CR             0x8AF5
+#define GL_NUM_SERVERS_CR            0x8AF6
+#define GL_NUM_TILES_CR              0x8AF7
+#define GL_TILE_BOUNDS_CR            0x8AF8
+#define GL_VERTEX_COUNTS_CR          0x8AF9
+#define GL_RESET_VERTEX_COUNTERS_CR  0x8AFA
+#define GL_SET_MAX_VIEWPORT_CR       0x8AFB
 
 #endif /* GL_CR_tilesort_info */
 
@@ -273,7 +276,7 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define GL_CR_head_spu_name 1
 /* To fetch name of first SPU on a node */
 
-#define GL_HEAD_SPU_NAME_CR 0x990C /* unofficial! */
+#define GL_HEAD_SPU_NAME_CR         0x8AFC
 
 #endif /* GL_CR_head_spu_name */
 
@@ -282,15 +285,15 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define GL_CR_performance_info 1
 /* For gathering performance metrics */
 
-#define GL_PERF_GET_FRAME_DATA_CR       0x990D /* unofficial! */
-#define GL_PERF_GET_TIMER_DATA_CR       0x990E /* unofficial! */
-#define GL_PERF_DUMP_COUNTERS_CR        0x990F /* unofficial! */
-#define GL_PERF_SET_TOKEN_CR            0x9910 /* unofficial! */
-#define GL_PERF_SET_DUMP_ON_SWAP_CR     0x9911 /* unofficial! */
-#define GL_PERF_SET_DUMP_ON_FINISH_CR   0x9912 /* unofficial! */
-#define GL_PERF_SET_DUMP_ON_FLUSH_CR    0x9913 /* unofficial! */
-#define GL_PERF_START_TIMER_CR          0x9914 /* unofficial! */
-#define GL_PERF_STOP_TIMER_CR           0x9915 /* unofficial! */
+#define GL_PERF_GET_FRAME_DATA_CR       0x8AFD
+#define GL_PERF_GET_TIMER_DATA_CR       0x8AFE
+#define GL_PERF_DUMP_COUNTERS_CR        0x8AFF
+#define GL_PERF_SET_TOKEN_CR            0x8B00
+#define GL_PERF_SET_DUMP_ON_SWAP_CR     0x8B01
+#define GL_PERF_SET_DUMP_ON_FINISH_CR   0x8B02
+#define GL_PERF_SET_DUMP_ON_FLUSH_CR    0x8B03
+#define GL_PERF_START_TIMER_CR          0x8B04
+#define GL_PERF_STOP_TIMER_CR           0x8B05
 
 #endif /* GL_CR_performance_info */
 
@@ -299,7 +302,7 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define GL_CR_window_size 1
 /* To communicate window size changes */
 
-#define GL_WINDOW_SIZE_CR               0x9920 /* unofficial! */
+#define GL_WINDOW_SIZE_CR               0x8B06
 
 #endif /* GL_CR_window_size */
 
@@ -308,7 +311,7 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define GL_CR_tile_info 1
 /* To send new tile information to a server */
 
-#define GL_TILE_INFO_CR                 0x9921 /* unofficial! */
+#define GL_TILE_INFO_CR                 0x8B07
 
 #endif /* GL_CR_tile_info */
 
@@ -317,21 +320,22 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define GL_CR_gather 1
 /* For aggregate transfers  */
 
-#define GL_GATHER_DRAWPIXELS_CR         0x9922 /* unofficial! */
-#define GL_GATHER_PACK_CR               0x9923 /* unofficial! */
-#define GL_GATHER_CONNECT_CR            0x9924 /* unofficial! */
-#define GL_GATHER_POST_SWAPBUFFERS_CR   0x9925 /* unofficial! */
+#define GL_GATHER_DRAWPIXELS_CR         0x8B08
+#define GL_GATHER_PACK_CR               0x8B09
+#define GL_GATHER_CONNECT_CR            0x8B0A
+#define GL_GATHER_POST_SWAPBUFFERS_CR   0x8B0B
+
 #endif /* GL_CR_gather */
 
 
 #ifndef GL_CR_saveframe
 #define GL_CR_saveframe 1
 
-#define GL_SAVEFRAME_ENABLED_CR  0x9926 /* unofficial! */
-#define GL_SAVEFRAME_FRAMENUM_CR 0x9927 /* unofficial! */
-#define GL_SAVEFRAME_STRIDE_CR   0x9928 /* unofficial! */
-#define GL_SAVEFRAME_SINGLE_CR   0x9929 /* unofficial! */
-#define GL_SAVEFRAME_FILESPEC_CR 0x992A /* unofficial! */
+#define GL_SAVEFRAME_ENABLED_CR         0x8B0C
+#define GL_SAVEFRAME_FRAMENUM_CR        0x8B0D
+#define GL_SAVEFRAME_STRIDE_CR          0x8B0E
+#define GL_SAVEFRAME_SINGLE_CR          0x8B0F
+#define GL_SAVEFRAME_FILESPEC_CR        0x8B10
 
 #endif /* GL_CR_saveframe */
 
@@ -339,7 +343,7 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #ifndef GL_CR_readback_barrier_size
 #define GL_CR_readback_barrier_size 1
 
-#define GL_READBACK_BARRIER_SIZE_CR 0x992B /* unofficial! */
+#define GL_READBACK_BARRIER_SIZE_CR     0x8B11
 
 #endif /* GL_CR_readback_barrier_size */
 
