@@ -63,9 +63,17 @@ void PACKSPU_APIENTRY packspu_Finish( void )
 GLint PACKSPU_APIENTRY packspu_WindowCreate( const char *dpyName, GLint visBits )
 {
 	static int num_calls = 0;
-	GET_THREAD(thread);
 	int writeback = pack_spu.thread[0].server.conn->actual_network;
 	GLint return_val = (GLint) 0;
+
+	/* WindowCreate is special - just like CreateContext.
+	 * GET_THREAD(thread) doesn't work as the thread won't have called
+	 * MakeCurrent yet, so we've got to use the first thread's packer
+	 * buffer.
+	 */
+
+	crPackSetContext( pack_spu.thread[0].packer );
+
 	if (pack_spu.swap)
 	{
 		crPackWindowCreateSWAP( dpyName, visBits, &return_val, &writeback );
@@ -74,7 +82,7 @@ GLint PACKSPU_APIENTRY packspu_WindowCreate( const char *dpyName, GLint visBits 
 	{
 		crPackWindowCreate( dpyName, visBits, &return_val, &writeback );
 	}
-	packspuFlush( (void *) thread );
+	packspuFlush( &pack_spu.thread[0] );
 	if (!(pack_spu.thread[0].server.conn->actual_network))
 	{
 		return num_calls++;
