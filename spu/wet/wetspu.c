@@ -9,9 +9,11 @@
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_mem.h"
-#include "cr_logo.h"
 #include "cr_rand.h"
 #include "wetspu.h"
+
+#define MAX( a, b ) ((a) > (b) ? (a) : (b))
+#define MIN( a, b ) ((a) < (b) ? (a) : (b))
 
 static void wetMeshSetup( void )
 {
@@ -86,10 +88,10 @@ static void UpdateMesh( void )
 	for (drop = wet_spu.drops ; drop ; before_drop = drop, drop = nextdrop)
 	{
 		float elapsed = (wet_spu.frame_counter - drop->drop_frame) * wet_spu.time_scale;
-		xmin = max( 0, drop->x - wet_spu.raininess );
-		xmax = min( wet_spu.mesh_width, drop->x + wet_spu.raininess );
-		ymin = max( 0, drop->y - wet_spu.raininess );
-		ymax = min( wet_spu.mesh_height, drop->y + wet_spu.raininess );
+		xmin = MAX( 0, drop->x - wet_spu.raininess );
+		xmax = MIN( wet_spu.mesh_width, drop->x + wet_spu.raininess );
+		ymin = MAX( 0, drop->y - wet_spu.raininess );
+		ymax = MIN( wet_spu.mesh_height, drop->y + wet_spu.raininess );
 		for (x = xmin ; x < xmax ; x++)
 		{
 			for (y = ymin ; y < ymax ; y++)
