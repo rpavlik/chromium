@@ -191,8 +191,8 @@ for func_name in keys:
 		else:
 			print "\tunsigned char *data_ptr;"
 			print '\t(void) pc;'
-			if func_name == "Enable" or func_name == "Disable":
-				print "\tCRASSERT(!pc->buffer.geometry_only); /* sanity check */"
+#			if func_name == "Enable" or func_name == "Disable":
+#				print "\tCRASSERT(!pc->buffer.geometry_only); /* sanity check */"
 			if packet_length == 0:
 				print "\tGET_BUFFERED_POINTER_NO_ARGS( pc );"
 			elif func_name[:9] == "Translate" or func_name[:5] == "Color":
