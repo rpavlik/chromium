@@ -908,12 +908,18 @@ binaryswapspuFlush(void)
 	if (!window)
 		return;
 
-	DoBinaryswap(window);
-
-	/*
-	 * XXX \todo I'm not sure we need to sync on glFlush, but let's be safe for now.
-	 */
-	binaryswap_spu.child.BarrierExecCR(SWAP_BARRIER);
+	if ((window->childVisBits & CR_DOUBLE_BIT) == 0) {
+		/* if the child window isn't double-buffered, do readback now */
+		DoBinaryswap(window);
+		/*
+		 * XXX \todo I'm not sure we need to sync on glFlush,
+		 * but let's be safe for now.
+		 */
+		binaryswap_spu.child.BarrierExecCR(SWAP_BARRIER);
+	}
+	else {
+		binaryswap_spu.super.Flush();
+	}
 }
 
 

@@ -694,12 +694,18 @@ readbackspuFlush(void)
 	if (!window)
 		return;
 
-	DoReadback(window);
-
-	/*
-	 * XXX \todo I'm not sure we need to sync on glFlush, but let's be safe for now.
-	 */
-	readback_spu.child.BarrierExecCR(SWAP_BARRIER);
+	if ((window->childVisBits & CR_DOUBLE_BIT) == 0) {
+		/* if the child window isn't double-buffered, do readback now */
+		DoReadback(window);
+		/*
+		 * XXX \todo I'm not sure we need to sync on glFlush,
+		 * but let's be safe for now.
+		 */
+		readback_spu.child.BarrierExecCR(SWAP_BARRIER);
+	}
+	else {
+		readback_spu.super.Flush();
+	}
 }
 
 
