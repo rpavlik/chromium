@@ -195,6 +195,8 @@ for row in range(TILE_ROWS):
 		renderspu.Conf('try_direct', RENDER_try_direct)
 		renderspu.Conf('force_direct', RENDER_force_direct)
 		renderspu.Conf('fullscreen', RENDER_fullscreen)
+		renderspu.Conf('resizable', RENDER_resizable)
+		renderspu.Conf('render_to_app_winodw', RENDER_render_to_app_window)
 		renderspu.Conf('title', RENDER_title)
 		renderspu.Conf('system_gl_path', RENDER_system_gl_path)
 
@@ -215,6 +217,7 @@ for row in range(TILE_ROWS):
 
 		servernode.AddSPU(renderspu)
 		servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
+		servernode.Conf('only_swap_once', SERVER_only_swap_once)
 
 		cr.AddNode(servernode)
 		for i in range(NUM_APP_NODES):

@@ -437,11 +437,11 @@ def Create_Sortlast(parentWindow, mothership):
 	"""Create a sort-last configuration"""
 	
 	# Yes, client/server are transposed here
-	appHosts = crutils.GetSiteDefault("server_hosts")
+	appHosts = crutils.GetSiteDefault("cluster_hosts")
 	if not appHosts:
 		appHosts = ["localhost"]
 
-	serverHosts = crutils.GetSiteDefault("client_hosts")
+	serverHosts = crutils.GetSiteDefault("frontend_hosts")
 	if not serverHosts:
 		serverHosts = ["localhost"]
 
@@ -488,6 +488,9 @@ def Create_Sortlast(parentWindow, mothership):
 	xPos = 5
 	yPos = 5
 	appNode = crtypes.ApplicationNode(appHosts, numApps)
+	cluster_pattern = crutils.GetSiteDefault("cluster_pattern")
+	if cluster_pattern:
+		appNode.SetHostNamePattern(cluster_pattern);
 	appNode.SetPosition(xPos, yPos)
 	appNode.Select()
 	readbackSPU = crutils.NewSPU("readback")

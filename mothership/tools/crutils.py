@@ -175,14 +175,18 @@ def GetSiteDefault(var):
 
 def NewNetworkNode(count = 1):
 	"""Return a new NetworkNode, initialized using the site-defaults"""
-	hosts = GetSiteDefault("server_hosts")
+	hosts = GetSiteDefault("cluster_hosts")
 	if not hosts:
 		hosts = ["localhost"]
-	return crtypes.NetworkNode(hosts, count)
+	node = crtypes.NetworkNode(hosts, count)
+	pattern = GetSiteDefault("cluster_pattern")
+	if pattern:
+		node.SetHostNamePattern(pattern)
+	return node
 
 def NewApplicationNode(count = 1):
 	"""Return a new ApplicationNode, initialized using the site-defaults"""
-	hosts = GetSiteDefault("client_hosts")
+	hosts = GetSiteDefault("frontend_hosts")
 	if not hosts:
 		hosts = ["localhost"]
 	return crtypes.ApplicationNode(hosts, count)

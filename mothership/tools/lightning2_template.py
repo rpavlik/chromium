@@ -814,7 +814,7 @@ def Create_Lightning2(parentWindow, mothership):
 	rows = values[3]
 	mothership.Template = LightningParameters(rows, cols)
 
-	hosts = crutils.GetSiteDefault("server_hosts")
+	hosts = crutils.GetSiteDefault("cluster_hosts")
 	if hosts:
 		mothership.Template.ServerHosts = hosts
 	tileSize = crutils.GetSiteDefault("tile_size")
