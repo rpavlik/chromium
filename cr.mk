@@ -71,6 +71,8 @@ endif
 ifdef GLUT
 ifdef WINDOWS
 LDFLAGS += glut32.lib
+CFLAGS += -DGLUT_DISABLE_ATEXIT_HACK
+CXXFLAGS += -DGLUT_DISABLE_ATEXIT_HACK
 else
 LDFLAGS += -L/usr/X11R6/lib -lglut
 endif
