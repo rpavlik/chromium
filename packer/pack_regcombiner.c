@@ -1,0 +1,71 @@
+/* Copyright (c) 2001, Stanford University
+ * All rights reserved
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
+
+#include "packer.h"
+#include "cr_opcodes.h"
+#include "cr_glwrapper.h"
+
+static void __handleCombinerParameterData( GLenum pname, const GLfloat *params, GLenum extended_opcode )
+{
+	int params_length = 0;
+	int packet_length = sizeof( int ) + sizeof( extended_opcode ) + sizeof( pname );
+	unsigned char *data_ptr;
+
+	switch( pname )
+	{
+		case GL_CONSTANT_COLOR0_NV:
+		case GL_CONSTANT_COLOR1_NV:
+			params_length = 4*sizeof( *params );
+			break;
+		case GL_NUM_GENERAL_COMBINERS_NV:
+		case GL_COLOR_SUM_CLAMP_NV:
+			params_length = sizeof( *params );
+			break;
+		default:
+			crError( "Invalid pname in CombinerParameter: 0x%x", pname );
+	}
+	packet_length += params_length;
+	GET_BUFFERED_POINTER( packet_length );
+	WRITE_DATA( 0, int, packet_length );
+	WRITE_DATA( sizeof( int ) + 0, GLenum, extended_opcode );
+	WRITE_DATA( sizeof( int ) + 4, GLenum, pname );
+	WRITE_DATA( sizeof( int ) + 8, GLfloat, params[0] );
+	if (params_length > sizeof( *params ))
+	{
+		WRITE_DATA( sizeof( int ) + 12, GLfloat, params[1] );
+		WRITE_DATA( sizeof( int ) + 16, GLfloat, params[2] );
+		WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
+	}
+}
+
+void PACK_APIENTRY crPackCombinerParameterfvNV( GLenum pname, const GLfloat *params )
+{
+	__handleCombinerParameterData( pname, params, CR_COMBINERPARAMETERFVNV_EXTEND_OPCODE );
+	WRITE_OPCODE( CR_EXTEND_OPCODE );
+}
+
+void PACK_APIENTRY crPackCombinerParameterivNV( GLenum pname, const GLint *params )
+{
+	/* floats and ints are the same size, so the packing should be the same */
+	__handleCombinerParameterData( pname, (const GLfloat *) params, CR_COMBINERPARAMETERIVNV_EXTEND_OPCODE );
+	WRITE_OPCODE( CR_EXTEND_OPCODE );
+}
+
+void PACK_APIENTRY crPackCombinerStageParameterfvNV( GLenum stage, GLenum pname, const GLfloat *params )
+{
+	unsigned char *data_ptr;
+
+	GET_BUFFERED_POINTER( 28 );
+	WRITE_DATA( 0, int, 28 );
+	WRITE_DATA( sizeof( int ) + 0, GLenum, CR_COMBINERSTAGEPARAMETERFVNV_EXTEND_OPCODE );
+	WRITE_DATA( sizeof( int ) + 4, GLenum, stage );
+	WRITE_DATA( sizeof( int ) + 8, GLenum, pname );
+	WRITE_DATA( sizeof( int ) + 12, GLfloat, params[0] );
+	WRITE_DATA( sizeof( int ) + 16, GLfloat, params[1] );
+	WRITE_DATA( sizeof( int ) + 20, GLfloat, params[2] );
+	WRITE_DATA( sizeof( int ) + 24, GLfloat, params[3] );
+	WRITE_OPCODE( CR_EXTEND_OPCODE );
+}
