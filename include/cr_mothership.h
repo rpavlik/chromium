@@ -22,10 +22,15 @@ void crMothershipIdentifySPU( CRConnection *conn, int spu );
 void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_id );
 void crMothershipIdentifyFaker( CRConnection *conn, char *response );
 void crMothershipIdentifyServer( CRConnection *conn, char *response );
+void crMothershipIdentifyCRUTServer( CRConnection *conn, char *response );
+void crMothershipIdentifyCRUTClient( CRConnection *conn, char *response );
+void crMothershipIdentifyCRUTProxy( CRConnection *conn, char *response );
+void crMothershipGetCRUTServer( CRConnection *conn, char *response );
+void crMothershipGetCRUTClients( CRConnection *conn, char *response );
 
 void crMothershipSetParam( CRConnection *conn, const char *param, const char *value );
 int crMothershipGetParam( CRConnection *conn, const char *param, char *value );
-
+int crMothershipGetCRUTServerParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipGetFakerParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *param, ...);
