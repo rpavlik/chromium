@@ -57,7 +57,7 @@ int crPixelSize (GLenum format, GLenum type, GLsizei width, GLsizei height )
 			pixelbytes *= 4;
 			break;
 		default: 
-			crError( "Unknown pixel type in crPixelSize: %d", format );
+			crError( "Unknown pixel type in crPixelSize: 0x%x", type );
 	}
 
 	return pixelbytes;
