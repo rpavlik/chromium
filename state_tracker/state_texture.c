@@ -162,9 +162,9 @@ void crStateTextureInit(CRContext *ctx)
 
 
 /* This is called for each entry in the texture object hash table */
-static void DeleteTextureCallback( void *data )
+static void DeleteTextureCallback( void *data1 , void *data2)
 {
-    crStateTextureDelete_t( NULL, (CRTextureObj *) data );
+    crStateTextureDelete_t( (CRTextureState *) data1, (CRTextureObj *) data2 );
 }
 
 
@@ -173,7 +173,7 @@ static void DeleteTextureCallback( void *data )
  */
 void crStateTextureFree( CRTextureState *t ) 
 {
-	crFreeHashtable(t->idHash, DeleteTextureCallback);
+	crHashtableWalk(t->idHash, DeleteTextureCallback, (void *)t);
 }
 
 
@@ -549,7 +549,6 @@ crStateTextureAllocate_t (CRTextureState *t, GLuint name)
 	if (!tobj)
 		return NULL;
 
-	/* reserve the ID and insert into hash table */
 	crHashtableAdd( t->idHash, name, (void *) tobj );
 
 	crStateTextureInitTextureObj(t, tobj, name, GL_NONE);
@@ -567,7 +566,9 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj)
 	CRASSERT(tobj);
 
 	/* remove from hash table */
-	crHashtableDelete( t->idHash, tobj->name, NULL );
+	if (t) {
+		crHashtableDeleteBlock( t->idHash, tobj->name, 1, NULL ); /* null callback */
+	}
 
 	/* Free the images */
 	for (k = 0; k < t->maxLevel; k++) 
