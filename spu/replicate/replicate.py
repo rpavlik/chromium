@@ -24,7 +24,7 @@ print """
 #include "replicatespu_proto.h"
 """
 
-num_funcs = len(keys) - len(apiutil.AllSpecials('replicatespu_unimplemented'))
+num_funcs = len(keys)
 print 'SPUNamedFunctionTable _cr_replicate_table[%d];' % (num_funcs+1)
 
 print """
@@ -54,13 +54,15 @@ for func_name in keys:
 
 print '\nvoid replicatespuCreateFunctions( void )'
 print '{'
+print '\tint i = 0;'
 for index in range(len(keys)):
 	func_name = keys[index]
 	if apiutil.FindSpecial( "replicatespu_unimplemented", func_name ):
 		continue
 	if func_name in pack_specials:
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) replicatespu_%s );' % (index, func_name, func_name )
+		print '\t__fillin( i++, "%s", (SPUGenericFunction) replicatespu_%s );' % (func_name, func_name )
 	else:
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) (replicate_spu.swap ? crPack%sSWAP : crPack%s) );' % (index, func_name, func_name, func_name )
-print '\t__fillin( %3d, NULL, NULL );' % num_funcs
+		print '\t__fillin( i++, "%s", (SPUGenericFunction) (replicate_spu.swap ? crPack%sSWAP : crPack%s) );' % (func_name, func_name, func_name )
+print '\t__fillin( i++, NULL, NULL );'
+print '\tCRASSERT(i < %d);' % num_funcs
 print '}'
