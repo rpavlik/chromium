@@ -21,6 +21,9 @@
 #ifndef GLX_SAMPLES_SGIS
 #define GLX_SAMPLES_SGIS           0x186a1 /*100001*/
 #endif
+#ifndef GLX_VISUAL_CAVEAT_EXT
+#define GLX_VISUAL_CAVEAT_EXT       0x20  /* visual_rating extension type */
+#endif
 
 
 /* For optimizing glXMakeCurrent */
@@ -423,6 +426,7 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			DesiredVisual |= CR_MULTISAMPLE_BIT;
 			*value = 0;  /* fix someday */
 			break;
+
 
 		case GLX_VISUAL_CAVEAT_EXT:
 			*value = GLX_NONE_EXT;
