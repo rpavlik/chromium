@@ -899,7 +899,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			}
 			else
 			{
-				crWarning("render SPU's render_to_app_window option is set but the appliction window ID 0x%x is invalid on the display named %s", (unsigned int) nativeWindow, DisplayString(window->visual->dpy));
+				crWarning("render SPU's render_to_app_window option is set but the application window ID 0x%x is invalid on the display named %s", (unsigned int) nativeWindow, DisplayString(window->visual->dpy));
 				CRASSERT(window->window);
 				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																			window->window, context->context );

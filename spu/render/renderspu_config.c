@@ -17,13 +17,8 @@
 static void set_window_geometry( RenderSPU *render_spu, const char *response )
 {
 	float x, y, w, h;
-	/* XXX someday assert(response[0] == '['); */
-	if (response[0] == '[')
-		sscanf( response, "[ %f, %f, %f, %f ]", &x, &y, &w, &h );
-	else if (crStrchr(response, ','))
-		sscanf( response, "%f, %f, %f, %f", &x, &y, &w, &h );
-	else
-		sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
+	CRASSERT(response[0] == '[');
+	sscanf( response, "[ %f, %f, %f, %f ]", &x, &y, &w, &h );
 	render_spu->defaultX = (int) x;
 	render_spu->defaultY = (int) y;
 	render_spu->defaultWidth = (int) w;
@@ -197,76 +192,75 @@ static void set_nv_swap_group( RenderSPU *render_spu, char *response )
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions renderSPUOptions[] = {
-   { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
-     "Window Title", (SPUOptionCB)set_title },
+	{ "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
+		"Window Title", (SPUOptionCB)set_title },
 
-   { "window_geometry", CR_INT, 4, "[0, 0, 256, 256]", "[0, 0, 1, 1]", NULL, 
-     "Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
+	{ "window_geometry", CR_INT, 4, "[0, 0, 256, 256]", "[0, 0, 1, 1]", NULL, 
+		"Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
 
-   { "fullscreen", CR_BOOL, 1, "0", NULL, NULL, 
-     "Full-screen Window", (SPUOptionCB)set_fullscreen },
+	{ "fullscreen", CR_BOOL, 1, "0", NULL, NULL, 
+		"Full-screen Window", (SPUOptionCB)set_fullscreen },
 
-   { "resizable", CR_BOOL, 1, "0", NULL, NULL,
-     "Resizable Window", (SPUOptionCB)resizable },
+	{ "resizable", CR_BOOL, 1, "0", NULL, NULL,
+		"Resizable Window", (SPUOptionCB)resizable },
 
-   { "on_top", CR_BOOL, 1, "0", NULL, NULL, 
-     "Display on Top", (SPUOptionCB)set_on_top },
+	{ "on_top", CR_BOOL, 1, "0", NULL, NULL, 
+		"Display on Top", (SPUOptionCB)set_on_top },
 
-   { "borderless", CR_BOOL, 1, "0", NULL, NULL,
-     "Borderless Window", (SPUOptionCB) set_borderless },
+	{ "borderless", CR_BOOL, 1, "0", NULL, NULL,
+		"Borderless Window", (SPUOptionCB) set_borderless },
 
-   { "default_visual", CR_STRING, 1, "rgb", NULL, NULL,
-     "Default GL Visual", (SPUOptionCB) set_default_visual },
+	{ "default_visual", CR_STRING, 1, "rgb", NULL, NULL,
+		"Default GL Visual", (SPUOptionCB) set_default_visual },
 
 #ifndef WINDOWS
-   { "try_direct", CR_BOOL, 1, "1", NULL, NULL, 
-     "Try Direct Rendering", (SPUOptionCB)set_try_direct  },
+	{ "try_direct", CR_BOOL, 1, "1", NULL, NULL, 
+		"Try Direct Rendering", (SPUOptionCB)set_try_direct  },
 
-   { "force_direct", CR_BOOL, 1, "0", NULL, NULL, 
-     "Force Direct Rendering", (SPUOptionCB)set_force_direct },
+	{ "force_direct", CR_BOOL, 1, "0", NULL, NULL, 
+		"Force Direct Rendering", (SPUOptionCB)set_force_direct },
 #endif
 
-   { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
-     "Render to Application window", (SPUOptionCB)render_to_app_window },
+	{ "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
+		"Render to Application window", (SPUOptionCB)render_to_app_window },
 
-   { "render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
-     "Render to CRUT window", (SPUOptionCB)render_to_crut_window },
+	{ "render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
+		"Render to CRUT window", (SPUOptionCB)render_to_crut_window },
 
-   { "show_cursor", CR_BOOL, 1, "0", NULL, NULL,
-     "Show Software Cursor", (SPUOptionCB) set_cursor },
+	{ "show_cursor", CR_BOOL, 1, "0", NULL, NULL,
+		"Show Software Cursor", (SPUOptionCB) set_cursor },
 
-   { "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
-     "System GL Path", (SPUOptionCB)set_system_gl_path },
+	{ "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
+		"System GL Path", (SPUOptionCB)set_system_gl_path },
 
-   { "display_string", CR_STRING, 1, ":0.0", NULL, NULL, 
-     "X Display String", (SPUOptionCB)set_display_string },
+	{ "display_string", CR_STRING, 1, ":0.0", NULL, NULL, 
+		"X Display String", (SPUOptionCB)set_display_string },
 
-   { "gather_url", CR_STRING, 1, "", NULL, NULL,
-     "Gatherer URL", (SPUOptionCB)gather_url},
+	{ "gather_url", CR_STRING, 1, "", NULL, NULL,
+		"Gatherer URL", (SPUOptionCB)gather_url},
 
-   { "gather_userbuf_size", CR_INT, 1, "0", NULL, NULL,
-     "Size of Buffer to Allocate for Gathering",
-     (SPUOptionCB)gather_userbuf},
+	{ "gather_userbuf_size", CR_INT, 1, "0", NULL, NULL,
+		"Size of Buffer to Allocate for Gathering",	(SPUOptionCB)gather_userbuf},
 
-   { "lut8", CR_STRING, 1, "", NULL, NULL,
-     "8 bit RGB LUT", (SPUOptionCB)set_lut8},
+	{ "lut8", CR_STRING, 1, "", NULL, NULL,
+		"8 bit RGB LUT", (SPUOptionCB)set_lut8},
 
-   { "swap_master_url", CR_STRING, 1, "", NULL, NULL,
-     "The URL to the master swapper", (SPUOptionCB)set_master_url },
+	{ "swap_master_url", CR_STRING, 1, "", NULL, NULL,
+		"The URL to the master swapper", (SPUOptionCB)set_master_url },
 
-   { "is_swap_master", CR_BOOL, 1, "0", NULL, NULL,
-     "Is this the swap master", (SPUOptionCB)set_is_master },
+	{ "is_swap_master", CR_BOOL, 1, "0", NULL, NULL,
+		"Is this the swap master", (SPUOptionCB)set_is_master },
 
-   { "num_swap_clients", CR_INT, 1, "1", NULL, NULL,
-     "How many swaps to wait on", (SPUOptionCB)set_num_clients },
+	{ "num_swap_clients", CR_INT, 1, "1", NULL, NULL,
+		"How many swaps to wait on", (SPUOptionCB)set_num_clients },
 
-   { "use_osmesa", CR_BOOL, 1, "0", NULL, NULL,
-     "Use offscreen rendering with Mesa", (SPUOptionCB)set_use_osmesa },
+	{ "use_osmesa", CR_BOOL, 1, "0", NULL, NULL,
+		"Use offscreen rendering with Mesa", (SPUOptionCB)set_use_osmesa },
      
-   { "nv_swap_group", CR_INT, 1, "0", NULL, NULL,
-     "NVIDIA Swap Group Number", (SPUOptionCB) set_nv_swap_group },
+	{ "nv_swap_group", CR_INT, 1, "0", NULL, NULL,
+		"NVIDIA Swap Group Number", (SPUOptionCB) set_nv_swap_group },
 
-   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -286,10 +280,7 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 	conn = crMothershipConnect( );
 	if (conn) {
 		crMothershipIdentifySPU( conn, render_spu->id );
-		crSPUGetMothershipParams( conn, 
-					  (void *)render_spu,
-					  renderSPUOptions );
-		
+		crSPUGetMothershipParams( conn, (void *)render_spu, renderSPUOptions );
 		render_spu->swap_mtu = crMothershipGetMTU( conn );
 		crMothershipDisconnect( conn );
 	}

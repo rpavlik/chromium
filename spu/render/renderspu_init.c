@@ -68,7 +68,6 @@ renderSPUInit( int id, SPU *child, SPU *self,
 {
 	int numFuncs, numSpecial;
 	GLint defaultWin, defaultCtx;
-	/* Don't ask for ALPHA, if we don't have it, we fail immediately */
 	WindowInfo *windowInfo;
 
 	(void) child;
