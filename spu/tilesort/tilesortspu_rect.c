@@ -18,7 +18,14 @@ void TILESORTSPU_APIENTRY tilesortspu_Rectf (GLfloat x1, GLfloat y1, GLfloat x2,
 	tilesortspuFlush( tilesort_spu.ctx );
 
 	crStateFlushFunc( tilesortspuFlush );
-	crPackRectf (x1, y1, x2, y2);
+	if (tilesort_spu.swap)
+	{
+		crPackRectfSWAP (x1, y1, x2, y2);
+	}
+	else
+	{
+		crPackRectf (x1, y1, x2, y2);
+	}
 
 	if (cr_packer_globals.bounds_min.x > x1) cr_packer_globals.bounds_min.x = x1;
 	if (cr_packer_globals.bounds_min.y > y1) cr_packer_globals.bounds_min.y = y1;

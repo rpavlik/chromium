@@ -23,3 +23,10 @@ char crDetermineEndianness( void )
 	}
 	return CR_LITTLE_ENDIAN;
 }  
+
+double SWAPDOUBLE( double d )
+{
+	CR64BitType *ptr = (CR64BitType *) (&d);
+	CR64BitType swapped = SWAP64( *ptr );
+	return *((double *) (&swapped));
+}

@@ -138,6 +138,11 @@ CRConnection *crNetConnectToServer( char *server,
 		crFree( conn );
 		return NULL;
 	}
+
+	if (conn->swap)
+	{
+		crWarning( "Creating a byte-swapped connection!" );
+	}
 	crDebug( "Done connecting to server." );
 	return conn;
 }
@@ -393,7 +398,14 @@ static void crNetRecvFlowControl( CRConnection *conn,
 	CRASSERT( len == sizeof(CRMessageFlowControl) );
 
 	//crWarning ("Getting %d credits!", msg->credits);
-	conn->send_credits += msg->credits;
+	if (conn->swap)
+	{
+		conn->send_credits += SWAP32(msg->credits);
+	}
+	else
+	{
+		conn->send_credits += msg->credits;
+	}
 
 	conn->InstantReclaim( conn, (CRMessage *) msg );
 }

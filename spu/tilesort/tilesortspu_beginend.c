@@ -15,14 +15,21 @@ void TILESORTSPU_APIENTRY tilesortspu_Begin( GLenum mode )
 	CRCurrentState *c = &(tilesort_spu.ctx->current);
 	// We have to set this every time because a flush from
 	// the state tracker will turn off its flusher.
-	
+
 	tilesort_spu.pinchState.beginOp = cr_packer_globals.buffer.opcode_current;
 	tilesort_spu.pinchState.beginData = cr_packer_globals.buffer.data_current;
 	tilesort_spu.pinchState.wind = 0;
 	tilesort_spu.pinchState.isLoop = 0;
 
 	crStateFlushFunc( tilesortspuFlush );
-	crPackBegin( mode );
+	if (tilesort_spu.swap)
+	{
+		crPackBeginSWAP( mode );
+	}
+	else
+	{
+		crPackBegin( mode );
+	}
 	crStateBegin( mode );
 	if (! t->transformValid)
 	{
@@ -42,15 +49,57 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
 		{
-			crPackMultiTexCoord4fvARB ( i + GL_TEXTURE0_ARB, (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+			if (tilesort_spu.swap)
+			{
+				crPackMultiTexCoord4fvARBSWAP ( i + GL_TEXTURE0_ARB, (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+			}
+			else
+			{
+				crPackMultiTexCoord4fvARB ( i + GL_TEXTURE0_ARB, (GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord[i].s));
+			}
 		}
-		crPackNormal3fv((GLfloat *) &(tilesort_spu.pinchState.vtx->normal.x));
-		crPackEdgeFlag(tilesort_spu.pinchState.vtx->edgeFlag);
-		crPackColor4fv((GLfloat *) &(tilesort_spu.pinchState.vtx->color.r));
-		crPackVertex4fvBBOX_COUNT((GLfloat *) &(tilesort_spu.pinchState.vtx->pos.x));
+		if (tilesort_spu.swap)
+		{
+			crPackNormal3fvSWAP((GLfloat *) &(tilesort_spu.pinchState.vtx->normal.x));
+		}
+		else
+		{
+			crPackNormal3fv((GLfloat *) &(tilesort_spu.pinchState.vtx->normal.x));
+		}
+		if (tilesort_spu.swap)
+		{
+			crPackEdgeFlagSWAP(tilesort_spu.pinchState.vtx->edgeFlag);
+		}
+		else
+		{
+			crPackEdgeFlag(tilesort_spu.pinchState.vtx->edgeFlag);
+		}
+		if (tilesort_spu.swap)
+		{
+			crPackColor4fvSWAP((GLfloat *) &(tilesort_spu.pinchState.vtx->color.r));
+		}
+		else
+		{
+			crPackColor4fv((GLfloat *) &(tilesort_spu.pinchState.vtx->color.r));
+		}
+		if (tilesort_spu.swap)
+		{
+			crPackVertex4fvBBOX_COUNTSWAP((GLfloat *) &(tilesort_spu.pinchState.vtx->pos.x));
+		}
+		else
+		{
+			crPackVertex4fvBBOX_COUNT((GLfloat *) &(tilesort_spu.pinchState.vtx->pos.x));
+		}
 
 		tilesort_spu.pinchState.isLoop = 0;
 	}
-	crPackEnd();
+	if (tilesort_spu.swap)
+	{
+		crPackEndSWAP();
+	}
+	else
+	{
+		crPackEnd();
+	}
 	crStateEnd();
 }

@@ -35,19 +35,45 @@ void PACKSPU_APIENTRY packspu_EdgeFlagPointer( GLsizei stride, const GLvoid *poi
 	crStateEdgeFlagPointer( stride, pointer );
 }
 
+void PACKSPU_APIENTRY packspu_GetPointerv( GLenum pname, GLvoid **params )
+{
+	crStateGetPointerv( pname, params );
+}
+
 void PACKSPU_APIENTRY packspu_ArrayElement( GLint index )
 {
-	crPackArrayElement( index, &(pack_spu.ctx->client) );
+	if (pack_spu.swap)
+	{
+		crPackArrayElementSWAP( index, &(pack_spu.ctx->client) );
+	}
+	else
+	{
+		crPackArrayElement( index, &(pack_spu.ctx->client) );
+	}
 }
 
 void PACKSPU_APIENTRY packspu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices )
 {
-	crPackDrawElements( mode, count, type, indices, &(pack_spu.ctx->client) );
+	if (pack_spu.swap)
+	{
+		crPackDrawElementsSWAP( mode, count, type, indices, &(pack_spu.ctx->client) );
+	}
+	else
+	{
+		crPackDrawElements( mode, count, type, indices, &(pack_spu.ctx->client) );
+	}
 }
 
 void PACKSPU_APIENTRY packspu_DrawArrays( GLenum mode, GLint first, GLsizei count )
 {
-	crPackDrawArrays( mode, first, count, &(pack_spu.ctx->client) );
+	if (pack_spu.swap)
+	{
+		crPackDrawArraysSWAP( mode, first, count, &(pack_spu.ctx->client) );
+	}
+	else
+	{
+		crPackDrawArrays( mode, first, count, &(pack_spu.ctx->client) );
+	}
 }
 
 void PACKSPU_APIENTRY packspu_EnableClientState( GLenum array )

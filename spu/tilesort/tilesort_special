@@ -32,3 +32,10 @@ Materialf
 Materiali
 Materialfv
 Materialiv
+BarrierCreate
+BarrierExec
+BarrierDestroy
+SemaphoreCreate
+SemaphoreDestroy
+SemaphoreP
+SemaphoreV

@@ -7,6 +7,7 @@
 #include "cr_spu.h"
 #include "cr_glstate.h"
 #include "packspu.h"
+#include "cr_packfunctions.h"
 #include <stdio.h>
 
 extern SPUNamedFunctionTable pack_table[];
@@ -28,9 +29,17 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	(void) super;
 
 	pack_spu.id = id;
-	packspuCreateFunctions();
 	packspuGatherConfiguration();
 	packspuConnectToServer();
+
+	crPackInit( pack_spu.server.conn->swap );
+	crPackInitBuffer( &(pack_spu.buffer), crNetAlloc( pack_spu.server.conn ), pack_spu.server.buffer_size, 0 );
+	crPackSetBuffer( &pack_spu.buffer );
+	crPackFlushFunc( packspuFlush );
+	crPackSendHugeFunc( packspuHuge );
+
+	pack_spu.swap = pack_spu.server.conn->swap;
+	packspuCreateFunctions();
 	crStateInit();
 	pack_spu.ctx = crStateCreateContext();
 	crStateMakeCurrent( pack_spu.ctx );

@@ -86,4 +86,5 @@ crPackBoundsInfo
 crPackResetBBOX
 crPackOffsetCurrentPointers
 crPackNullCurrentPointers
+crPackInit
 """

@@ -6,6 +6,7 @@ GetString
 EnableClientState
 DisableClientState
 ColorPointer
+GetPointerv
 VertexPointer
 NormalPointer
 TexCoordPointer

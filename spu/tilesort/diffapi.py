@@ -29,7 +29,14 @@ for func_name in stub_common.AllSpecials( "../../packer/packer_pixel" ):
 	print '%s TILESORTSPU_APIENTRY tilesortspuDiff%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ) )
 	print '{'
 	names.append( '&(tilesort_spu.ctx->pixel.unpack)' )
-	print '\tcrPack%s%s;' % (func_name, stub_common.CallString( names ) )
+	print '\tif (tilesort_spu.swap)'
+	print '\t{'
+	print '\t\tcrPack%sSWAP%s;' % (func_name, stub_common.CallString( names ) )
+	print '\t}'
+	print '\telse'
+	print '\t{'
+	print '\t\tcrPack%s%s;' % (func_name, stub_common.CallString( names ) )
+	print '\t}'
 	print '}'
 
 print """
@@ -46,6 +53,6 @@ for func_name in keys:
 	if stub_common.FindSpecial( "../../packer/packer_pixel", func_name ):
 		print '\ttable.%s = (%sFunc_t) tilesortspuDiff%s;' % (func_name,func_name,func_name)
 	else:
-		print '\ttable.%s = (%sFunc_t) crPack%s;' % (func_name,func_name,func_name)
+		print '\ttable.%s = (%sFunc_t) (tilesort_spu.swap ? crPack%sSWAP : crPack%s);' % (func_name, func_name,func_name,func_name)
 print '\tcrStateDiffAPI( &table );'
 print '}'

@@ -400,6 +400,10 @@ void crTCPIPSend( CRConnection *conn, void **bufp,
 		/* we are doing synchronous sends from user memory, so no need
 		 * to get fancy.  Simply write the length & the payload and
 		 * return. */
+		if (conn->swap)
+		{
+			len = SWAP32(len);
+		}
 		crTCPIPWriteExact( conn, &len, sizeof(len) );
 		crTCPIPWriteExact( conn, start, len );
 		return;
@@ -414,7 +418,14 @@ void crTCPIPSend( CRConnection *conn, void **bufp,
 	 * length field, to insure that we always have a place to write
 	 * the length field, even when start == *bufp. */
 	lenp = (unsigned int *) start - 1;
-	*lenp = len;
+	if (conn->swap)
+	{
+		*lenp = SWAP32(len);
+	}
+	else
+	{
+		*lenp = len;
+	}
 
 	if ( __write_exact( conn->tcp_socket, lenp, len + sizeof(int) ) < 0 )
 	{
@@ -462,6 +473,7 @@ static int __crSelect( int n, fd_set *readfds, struct timeval *timeout )
 
 int crTCPIPRecv( void )
 {
+	CRMessage *msg;
 	int    num_ready, max_fd;
 	fd_set read_fds;
 	int i;
@@ -522,6 +534,11 @@ int crTCPIPRecv( void )
 			continue;
 		}
 
+		if (conn->swap)
+		{
+			len = SWAP32(len);
+		}
+
 		CRASSERT( len > 0 );
 
 		if ( len <= conn->mtu )
@@ -553,6 +570,12 @@ int crTCPIPRecv( void )
 #endif
 
 		conn->recv_credits -= len;
+
+		if (conn->swap)
+		{
+			msg = (CRMessage *) (tcpip_buffer + 1);
+			msg->type = (CRMessageType) SWAP32( msg->type );
+		}
 		if (!cr_tcpip.recv( conn, tcpip_buffer + 1, len ))
 		{
 			crNetDefaultRecv( conn, tcpip_buffer + 1, len );

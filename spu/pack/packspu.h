@@ -21,12 +21,15 @@ void packspuCreateFunctions( void );
 void packspuGatherConfiguration( void );
 void packspuConnectToServer( void );
 void packspuFlush( void *arg );
+void packspuHuge( CROpcode opcode, void *buf );
 
 typedef struct {
 	int id;
 
 	CRNetServer server;
 	CRPackBuffer buffer;
+
+	int swap;
 
 	CRContext *ctx;
 } PackSPU;

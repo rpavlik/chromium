@@ -140,12 +140,12 @@ void PACK_APIENTRY crPackMap2fSWAP(GLenum target, GLfloat u1,
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 
 	WRITE_DATA( 0, GLenum, SWAP32(target) );
-	WRITE_DATA( 4, GLfloat, SWAPFLOAT(u1) );
-	WRITE_DATA( 8, GLfloat, SWAPFLOAT(u2) );
+	WRITE_DATA( 4, GLuint, SWAPFLOAT(u1) );
+	WRITE_DATA( 8, GLuint, SWAPFLOAT(u2) );
 	WRITE_DATA( 12, GLint, SWAP32(num_components) );
 	WRITE_DATA( 16, GLint, SWAP32(uorder) );
-	WRITE_DATA( 20, GLfloat, SWAPFLOAT(v1) );
-	WRITE_DATA( 24, GLfloat, SWAPFLOAT(v2) );
+	WRITE_DATA( 20, GLuint, SWAPFLOAT(v1) );
+	WRITE_DATA( 24, GLuint, SWAPFLOAT(v2) );
 	WRITE_DATA( 28, GLint, SWAP32(num_components*uorder) );
 	WRITE_DATA( 32, GLint, SWAP32(vorder) );
 
@@ -157,7 +157,7 @@ void PACK_APIENTRY crPackMap2fSWAP(GLenum target, GLfloat u1,
 		{
 			for (comp = 0 ; comp < num_components ; comp++)
 			{
-				WRITE_DATA( (unsigned char *) dest_data + comp*sizeof(*points) - data_ptr, GLfloat, SWAPFLOAT( *(src_data + comp) ) );
+				WRITE_DATA( (unsigned char *) dest_data + comp*sizeof(*points) - data_ptr, GLuint, SWAPFLOAT( *(src_data + comp) ) );
 			}
 			dest_data += num_components;
 			src_data += ustride;
@@ -232,8 +232,8 @@ void PACK_APIENTRY crPackMap1fSWAP( GLenum target, GLfloat u1,
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 
 	WRITE_DATA( 0, GLenum, SWAP32(target) );
-	WRITE_DATA( 4, GLfloat, SWAPFLOAT(u1) );
-	WRITE_DATA( 8, GLfloat, SWAPFLOAT(u2) );
+	WRITE_DATA( 4, GLuint, SWAPFLOAT(u1) );
+	WRITE_DATA( 8, GLuint, SWAPFLOAT(u2) );
 	WRITE_DATA( 12, GLint, SWAP32(num_components) );
 	WRITE_DATA( 16, GLint, SWAP32(order) );
 
@@ -243,7 +243,7 @@ void PACK_APIENTRY crPackMap1fSWAP( GLenum target, GLfloat u1,
 	{
 		for (comp = 0 ; comp < num_components ; comp++)
 		{
-			WRITE_DATA( (unsigned char *) dest_data + comp*sizeof(*points) - data_ptr, GLfloat, SWAPFLOAT( *(src_data + comp) ) );
+			WRITE_DATA( (unsigned char *) dest_data + comp*sizeof(*points) - data_ptr, GLuint, SWAPFLOAT( *(src_data + comp) ) );
 		}
 		dest_data += num_components;
 		src_data += stride;

@@ -10,6 +10,7 @@
 #include "cr_error.h"
 #include "cr_protocol.h"
 #include "cr_opcodes.h"
+#include "cr_endian.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_currentpointers.h"
 
@@ -41,6 +42,7 @@ typedef struct {
 	CRCurrentStatePointers current;
 	CRBBOXPoint bounds_min, bounds_max;
 	int updateBBOX;
+	int swapping;
 } CRPackGlobals;
 
 extern DLLDATA CRPackGlobals cr_packer_globals;

@@ -30,7 +30,7 @@ packspu.c: pack.py packspu_pixel_special packspu_special packspu_unimplemented_s
 	@$(ECHO) Building the Pack SPU
 	@$(PYTHON) pack.py > $@
 	
-packspu_get.c: packspu_get.py
+packspu_get.c: packspu_get.py packspu_special ../../crserver/get_sizes.py
 	@$(ECHO) Building the Pack SPU Get functions
 	@$(PYTHON) packspu_get.py > $@	
 

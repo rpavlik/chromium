@@ -59,6 +59,7 @@ typedef struct {
 	int optimizeBucketing;
 	int drawBBOX;
 	float bboxLineWidth;
+	int swap;
 
 	unsigned int fake_window_width, fake_window_height;
 

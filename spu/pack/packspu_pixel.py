@@ -28,13 +28,27 @@ print """#include <stdio.h>
 void PACKSPU_APIENTRY packspu_PixelStoref( GLenum pname, GLfloat param )
 {
 	crStatePixelStoref( pname, param );
-	crPackPixelStoref( pname, param );
+	if (pack_spu.swap)
+	{
+		crPackPixelStorefSWAP( pname, param );
+	}
+	else
+	{
+		crPackPixelStoref( pname, param );
+	}
 }
 
 void PACKSPU_APIENTRY packspu_PixelStorei( GLenum pname, GLint param )
 {
 	crStatePixelStorei( pname, param );
-	crPackPixelStorei( pname, param );
+	if (pack_spu.swap)
+	{
+		crPackPixelStoreiSWAP( pname, param );
+	}
+	else
+	{
+		crPackPixelStorei( pname, param );
+	}
 }
 """
 
@@ -43,5 +57,12 @@ for func_name in stub_common.AllSpecials( "packspu_pixel" ):
 	print 'void PACKSPU_APIENTRY packspu_%s%s' % ( func_name, stub_common.ArgumentString( args, types ) )
 	print '{'
 	args.append( '&(pack_spu.ctx->pixel.unpack)' )
-	print '\tcrPack%s%s;' % ( func_name, stub_common.CallString( args ) )
+	print '\tif (pack_spu.swap)'
+	print '\t{'
+	print '\t\tcrPack%sSWAP%s;' % ( func_name, stub_common.CallString( args ) )
+	print '\t}'
+	print '\telse'
+	print '\t{'
+	print '\t\tcrPack%s%s;' % ( func_name, stub_common.CallString( args ) )
+	print '\t}'
 	print '}'

@@ -158,7 +158,15 @@ void *crPackAlloc( unsigned int size )
 		}
 	}
 
-	*((unsigned int *) data_ptr) = size;
+	if (cr_packer_globals.swapping)
+	{
+		*((unsigned int *) data_ptr) = SWAP32(size);
+		crDebug( "Just swapped the length, putting %d on the wire!", *((unsigned int *) data_ptr));
+	}
+	else
+	{
+		*((unsigned int *) data_ptr) = size;
+	}
 	return ( data_ptr + 4 );
 }
 

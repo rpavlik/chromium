@@ -50,6 +50,6 @@ server_get.c: server_get.py ../packer/packer_get_special server_special
 	@$(ECHO) Building the server get functions
 	@$(PYTHON) server_get.py > $@
 
-server_simpleget.c: server_simpleget.py
+server_simpleget.c: server_simpleget.py get_sizes.py
 	@$(ECHO) Building the simple server get functions
 	@$(PYTHON) server_simpleget.py > $@

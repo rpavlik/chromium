@@ -147,7 +147,7 @@ static void __handleTexEnvData( GLenum target, GLenum pname, const GLfloat *para
 	WRITE_DATA( sizeof( int ) + 4, GLenum, SWAP32(pname) );
 	for ( i = 0 ; i < num_params ; i++)
 	{
-		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLfloat, SWAPFLOAT( params[i] ) );
+		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLuint, SWAPFLOAT( params[i] ) );
 	}
 }
 
@@ -189,7 +189,7 @@ void PACK_APIENTRY crPackPrioritizeTexturesSWAP( GLsizei n,
 	for ( i = 0 ; i < n ; i++)
 	{
 		WRITE_DATA( (i+1)*sizeof( int ) + 4 + n*sizeof( *textures ),
-				GLclampf, SWAPFLOAT(priorities[i]));
+				GLuint, SWAPFLOAT(priorities[i]));
 	}
 
 	crHugePacket( CR_PRIORITIZETEXTURES_OPCODE, data_ptr );
@@ -275,7 +275,7 @@ static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat
 	WRITE_DATA( sizeof( int ) + 4, GLenum, SWAP32(pname) );
 	for ( i = 0 ; i < num_params ; i++)
 	{
-		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLfloat, SWAPFLOAT(params[i]) );
+		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLuint, SWAPFLOAT(params[i]) );
 	}
 }
 

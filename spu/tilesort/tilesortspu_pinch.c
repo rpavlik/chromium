@@ -400,15 +400,37 @@ void __pinchIssueParams (CRVertex *vtx)
 	{
 		val[0] = vtx->texCoord[i].s; val[1] = vtx->texCoord[i].t;
 		val[2] = vtx->texCoord[i].r; val[3] = vtx->texCoord[i].q;
-		crPackMultiTexCoord4fvARB( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
+		if (tilesort_spu.swap)
+		{
+			crPackMultiTexCoord4fvARBSWAP( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
+		}
+		else
+		{
+			crPackMultiTexCoord4fvARB( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
+		}
 	}
 	val[0] = vtx->normal.x; val[1] = vtx->normal.y;
 	val[2] = vtx->normal.z;
-	crPackNormal3fv((const GLfloat *) val);
-	crPackEdgeFlag(vtx->edgeFlag);
+	if (tilesort_spu.swap)
+	{
+		crPackNormal3fvSWAP((const GLfloat *) val);
+		crPackEdgeFlagSWAP(vtx->edgeFlag);
+	}
+	else
+	{
+		crPackNormal3fv((const GLfloat *) val);
+		crPackEdgeFlag(vtx->edgeFlag);
+	}
 	val[0] = vtx->color.r; val[1] = vtx->color.g;
 	val[2] = vtx->color.b; val[3] = vtx->color.a;
-	crPackColor4fv((const GLfloat *) val);
+	if (tilesort_spu.swap)
+	{
+		crPackColor4fvSWAP((const GLfloat *) val);
+	}
+	else
+	{
+		crPackColor4fv((const GLfloat *) val);
+	}
 }
 
 void __pinchIssueVertex (CRVertex *vtx) 
@@ -419,7 +441,14 @@ void __pinchIssueVertex (CRVertex *vtx)
 
 	val[0] = vtx->pos.x; val[1] = vtx->pos.y;
 	val[2] = vtx->pos.z; val[3] = vtx->pos.w;
-	crPackVertex4fvBBOX_COUNT((const GLfloat *) val);
+	if (tilesort_spu.swap)
+	{
+		crPackVertex4fvBBOX_COUNTSWAP((const GLfloat *) val);
+	}
+	else
+	{
+		crPackVertex4fvBBOX_COUNT((const GLfloat *) val);
+	}
 }
 
 // This function is called at the end of Flush(), when it becomes necessary to
@@ -434,7 +463,14 @@ void tilesortspuPinchRestoreTriangle( void )
 	if (c->inBeginEnd) 
 	{
 		//crDebug( "Restoring something..." );
-		crPackBegin(c->mode);
+		if (tilesort_spu.swap)
+		{
+			crPackBeginSWAP(c->mode);
+		}
+		else
+		{
+			crPackBegin(c->mode);
+		}
 
 		/* If the winding flag is set, it means
 		 * that the strip was broken on an odd

@@ -6,6 +6,7 @@
 
 #include "cr_spu.h"
 #include "cr_mem.h"
+#include "cr_packfunctions.h"
 #include "tilesortspu.h"
 #include <stdio.h>
 
@@ -31,9 +32,11 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 
 
 	tilesort_spu.id = id;
-	tilesortspuCreateFunctions();
 	tilesortspuGatherConfiguration();
 	tilesortspuConnectToServers();
+
+	tilesort_spu.swap = tilesort_spu.servers[0].net.conn->swap;
+	tilesortspuCreateFunctions();
 
 	// We need to mess with the pack size of the geometry buffer, since we
 	// may be using BoundsInfo packes, etc, etc.  This is yucky.
@@ -54,6 +57,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	crStateInit();
 	tilesort_spu.ctx = crStateCreateContext();
 
+	crPackInit( tilesort_spu.swap );
 	crPackInitBuffer( &(tilesort_spu.geometry_pack), crAlloc( tilesort_spu.geom_pack_size ), 
 			              tilesort_spu.geom_pack_size, END_FLUFF );
 	crPackSetBuffer( &(tilesort_spu.geometry_pack) );

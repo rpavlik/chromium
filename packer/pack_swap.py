@@ -39,7 +39,7 @@ for line in file.readlines():
 		elif stub_common.lengths[args[1]] == 2:
 			print "%sWRITE_DATA( %s, %s, SWAP16(%s) );" % (indentation, args[0], args[1], args[2])
 		elif args[1] == 'GLfloat' or args[1] == 'GLclampf':
-			print "%sWRITE_DATA( %s, %s, SWAPFLOAT(%s) );" % (indentation, args[0], args[1], args[2])
+			print "%sWRITE_DATA( %s, GLuint, SWAPFLOAT(%s) );" % (indentation, args[0], args[2])
 		elif stub_common.lengths[args[1]] == 4:
 			print "%sWRITE_DATA( %s, %s, SWAP32(%s) );" % (indentation, args[0], args[1], args[2])
 		else:

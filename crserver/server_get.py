@@ -44,68 +44,12 @@ max_components = {
 	'GetTexLevelParameterfv': 1,
 	'GetTexLevelParameteriv': 1,
 	'GetTexParameterfv': 4,
-	'GetTexParameteriv': 4,
+	'GetTexParameteriv': 4
 }
 
-no_pnames = [ 'GetClipPlane', 'GetPolygonStipple', 'GetTexLevelParameterfv', 'GetTexLevelParameteriv' ];
+no_pnames = [ 'GetClipPlane', 'GetPolygonStipple' ];
 
-num_components = {
-	'GL_AMBIENT' : 4, 
-	'GL_DIFFUSE' : 4,
-	'GL_SPECULAR' : 4,
-	'GL_POSITION' : 4,
-	'GL_SPOT_DIRECTION' : 3,
-	'GL_SPOT_EXPONENT' : 1, 
-	'GL_SPOT_CUTOFF' : 1, 
-	'GL_CONSTANT_ATTENUATION' : 1, 
-	'GL_LINEAR_ATTENUATION' : 1, 
-	'GL_QUADRATIC_ATTENUATION' : 1, 
-	'GL_EMISSION' : 4, 
-	'GL_SHININESS' : 1, 
-	'GL_COLOR_INDEXES' : 3, 
-	'GL_TEXTURE_ENV_MODE' : 1,
-	'GL_TEXTURE_ENV_COLOR' : 4, 
-	'GL_TEXTURE_GEN_MODE' : 1, 
-	'GL_OBJECT_PLANE' : 4, 
-	'GL_EYE_PLANE' : 4, 
-	'GL_TEXTURE_MAG_FILTER' : 1,
-	'GL_TEXTURE_MIN_FILTER' : 1, 
-	'GL_TEXTURE_WRAP_S' : 1, 
-	'GL_TEXTURE_WRAP_T' : 1, 
-	'GL_TEXTURE_BORDER_COLOR' : 4
-}
-
-num_extended_components = {
-	'GL_TEXTURE_MAX_ANISOTROPY_EXT': ( 1, 'GL_EXT_texture_filter_anisotropic' )
-}
-
-print """unsigned int LookupComponents( GLenum pname )
-{
-	switch( pname )
-	{
-"""
-comps = num_components.keys();
-comps.sort();
-for comp in comps:
-	print '\t\t\tcase %s: return %d;' % (comp,num_components[comp])
-
-comps = num_extended_components.keys();
-comps.sort();
-for comp in comps:
-	(nc, ifdef) = num_extended_components[comp]
-	print '#ifdef %s' % ifdef
-	print '\t\t\tcase %s: return %d;' % (comp,nc)
-	print '#endif /* %s */' % ifdef
-
-print """
-		default:
-			crError( "Unknown paramater name in LookupComponents: %d", pname );
-			break;
-	}
-	// NOTREACHED
-	return 0;
-}
-"""
+from get_components import *;
 
 for func_name in keys:
 	(return_type, arg_names, arg_types) = gl_mapping[func_name]
@@ -121,5 +65,5 @@ for func_name in keys:
 		if func_name in no_pnames:
 			print '\tcrServerReturnValue( &(%s[0]), %d*sizeof(%s) );' % (local_argname, max_components[func_name], local_argtype );
 		else:
-			print '\tcrServerReturnValue( &(%s[0]), LookupComponents(pname)*sizeof(%s) );' % (local_argname, local_argtype );
+			print '\tcrServerReturnValue( &(%s[0]), __lookupComponents(pname)*sizeof(%s) );' % (local_argname, local_argtype );
 		print '}\n'

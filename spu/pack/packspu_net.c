@@ -72,9 +72,18 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
 
 	CRASSERT( (void *) hdr >= buf->pack );
 
-	hdr->type       = CR_MESSAGE_OPCODES;
-	hdr->senderId   = senderID;
-	hdr->numOpcodes = num_opcodes;
+	if (pack_spu.swap)
+	{
+		hdr->type       = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
+		hdr->senderId   = SWAP32(senderID);
+		hdr->numOpcodes = SWAP32(num_opcodes);
+	}
+	else
+	{
+		hdr->type       = CR_MESSAGE_OPCODES;
+		hdr->senderId   = senderID;
+		hdr->numOpcodes = num_opcodes;
+	}
 
 	*len = buf->data_current - (unsigned char *) hdr;
 
@@ -109,7 +118,13 @@ void packspuHuge( CROpcode opcode, void *buf )
 	/* packet length is indicated by the variable length field, and
 	   includes an additional word for the opcode (with alignment) and
 	   a header */
-	len = ((unsigned int *) buf)[-1] + 4 + sizeof(CRMessageOpcodes);
+	len = ((unsigned int *) buf)[-1];
+	if (pack_spu.swap)
+	{
+		// It's already been swapped, swap it back.
+		len = SWAP32(len);
+	}
+	len += 4 + sizeof(CRMessageOpcodes);
 
 	/* write the opcode in just before the length */
 	((unsigned char *) buf)[-5] = (unsigned char) opcode;
@@ -120,9 +135,18 @@ void packspuHuge( CROpcode opcode, void *buf )
 
 	msg = (CRMessageOpcodes *) src;
 
-	msg->type       = CR_MESSAGE_OPCODES;
-	msg->senderId   = pack_spu.server.conn->sender_id;
-	msg->numOpcodes = 1;
+	if (pack_spu.swap)
+	{
+		msg->type       = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
+		msg->senderId   = SWAP32(pack_spu.server.conn->sender_id);
+		msg->numOpcodes = SWAP32(1);
+	}
+	else
+	{
+		msg->type       = CR_MESSAGE_OPCODES;
+		msg->senderId   = pack_spu.server.conn->sender_id;
+		msg->numOpcodes = 1;
+	}
 
 	crNetSend( pack_spu.server.conn, NULL, src, len );
 }
@@ -133,8 +157,4 @@ void packspuConnectToServer( void )
 
 	crNetServerConnect( &(pack_spu.server) );
 
-	crPackInitBuffer( &(pack_spu.buffer), crNetAlloc( pack_spu.server.conn ), pack_spu.server.buffer_size, 0 );
-	crPackSetBuffer( &pack_spu.buffer );
-	crPackFlushFunc( packspuFlush );
-	crPackSendHugeFunc( packspuHuge );
 }

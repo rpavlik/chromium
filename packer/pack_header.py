@@ -38,6 +38,8 @@ print """#ifndef CR_PACKFUNCTIONS_H
 #else
 #define PACK_APIENTRY
 #endif
+
+void crPackInit(int swapping);
 """
 
 keys = gl_mapping.keys()

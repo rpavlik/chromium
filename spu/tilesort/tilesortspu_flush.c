@@ -39,9 +39,17 @@ static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned i
 
 	CRASSERT( (void *) hdr >= pack->pack );
 
-	hdr->type       = CR_MESSAGE_OPCODES;
+	if (tilesort_spu.swap)
+	{
+		hdr->type       = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
+		hdr->numOpcodes = SWAP32(num_opcodes);
+	}
+	else
+	{
+		hdr->type       = CR_MESSAGE_OPCODES;
+		hdr->numOpcodes = num_opcodes;
+	}
 	hdr->senderId   = (unsigned int) ~0;  /* to be initialized by caller */
-	hdr->numOpcodes = num_opcodes;
 
 	*len = pack->data_current - (unsigned char *) hdr;
 
@@ -68,7 +76,14 @@ static void __sendServerBuffer( TileSortSPUServer *server )
 		return;
 
 	hdr = __applySendBufferHeader( pack, &len );
-	hdr->senderId = server->net.conn->sender_id;
+	if (tilesort_spu.swap)
+	{
+		hdr->senderId = SWAP32(server->net.conn->sender_id);
+	}
+	else
+	{
+		hdr->senderId = server->net.conn->sender_id;
+	}
 
 	crNetSend( server->net.conn, &pack->pack, hdr, len );
 	crPackInitBuffer( pack, crNetAlloc( server->net.conn ), pack->size, END_FLUFF );
@@ -141,9 +156,18 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 
 	msg = (CRMessageOpcodes *) src;
 
-	msg->type       = CR_MESSAGE_OPCODES;
-	msg->senderId   = state_server->net.conn->sender_id;
-	msg->numOpcodes = 1;
+	if (tilesort_spu.swap)
+	{
+		msg->type       = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
+		msg->senderId   = SWAP32(state_server->net.conn->sender_id);
+		msg->numOpcodes = SWAP32(1);
+	}
+	else
+	{
+		msg->type       = CR_MESSAGE_OPCODES;
+		msg->senderId   = state_server->net.conn->sender_id;
+		msg->numOpcodes = 1;
+	}
 
 	/* the pipeserver's buffer might have data in it, and that should
        go across the wire before this big packet */
@@ -204,46 +228,92 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 	outcolor[1] /= tot;
 	outcolor[2] /= tot;
 
-	crPackPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
-	crPackDisable(GL_TEXTURE_2D);
-	crPackDisable(GL_TEXTURE_1D);
-	crPackDisable(GL_LIGHTING);
-	crPackDisable(GL_BLEND);
-	crPackDisable(GL_ALPHA_TEST);
-	crPackDisable(GL_DEPTH_TEST);
-	crPackDisable(GL_FOG);
-	crPackDisable(GL_STENCIL_TEST);
-	crPackDisable(GL_SCISSOR_TEST);
-	crPackDisable(GL_LOGIC_OP);
+	if (tilesort_spu.swap)
+	{
+		crPackPushAttribSWAP(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
+		crPackDisableSWAP(GL_TEXTURE_2D);
+		crPackDisableSWAP(GL_TEXTURE_1D);
+		crPackDisableSWAP(GL_LIGHTING);
+		crPackDisableSWAP(GL_BLEND);
+		crPackDisableSWAP(GL_ALPHA_TEST);
+		crPackDisableSWAP(GL_DEPTH_TEST);
+		crPackDisableSWAP(GL_FOG);
+		crPackDisableSWAP(GL_STENCIL_TEST);
+		crPackDisableSWAP(GL_SCISSOR_TEST);
+		crPackDisableSWAP(GL_LOGIC_OP);
 
-	crPackLineWidth(tilesort_spu.bboxLineWidth);
-	crPackColor3fv(outcolor);
-	crPackBegin(GL_LINE_LOOP);
-	crPackVertex3f(xmin, ymin, zmin);
-	crPackVertex3f(xmin, ymin, zmax);
-	crPackVertex3f(xmin, ymax, zmax);
-	crPackVertex3f(xmin, ymax, zmin);
-	crPackEnd();
-	crPackBegin(GL_LINE_LOOP);
-	crPackVertex3f(xmax, ymin, zmin);
-	crPackVertex3f(xmax, ymin, zmax);
-	crPackVertex3f(xmax, ymax, zmax);
-	crPackVertex3f(xmax, ymax, zmin);
-	crPackEnd();
-	crPackBegin(GL_LINE_LOOP);
-	crPackVertex3f(xmin, ymin, zmin);
-	crPackVertex3f(xmax, ymin, zmin);
-	crPackVertex3f(xmax, ymax, zmin);
-	crPackVertex3f(xmin, ymax, zmin);
-	crPackEnd();
-	crPackBegin(GL_LINE_LOOP);
-	crPackVertex3f(xmin, ymin, zmax);
-	crPackVertex3f(xmax, ymin, zmax);
-	crPackVertex3f(xmax, ymax, zmax);
-	crPackVertex3f(xmin, ymax, zmax);
-	crPackEnd();
+		crPackLineWidthSWAP(tilesort_spu.bboxLineWidth);
+		crPackColor3fvSWAP(outcolor);
+		crPackBeginSWAP(GL_LINE_LOOP);
+		crPackVertex3fSWAP(xmin, ymin, zmin);
+		crPackVertex3fSWAP(xmin, ymin, zmax);
+		crPackVertex3fSWAP(xmin, ymax, zmax);
+		crPackVertex3fSWAP(xmin, ymax, zmin);
+		crPackEndSWAP();
+		crPackBeginSWAP(GL_LINE_LOOP);
+		crPackVertex3fSWAP(xmax, ymin, zmin);
+		crPackVertex3fSWAP(xmax, ymin, zmax);
+		crPackVertex3fSWAP(xmax, ymax, zmax);
+		crPackVertex3fSWAP(xmax, ymax, zmin);
+		crPackEndSWAP();
+		crPackBeginSWAP(GL_LINE_LOOP);
+		crPackVertex3fSWAP(xmin, ymin, zmin);
+		crPackVertex3fSWAP(xmax, ymin, zmin);
+		crPackVertex3fSWAP(xmax, ymax, zmin);
+		crPackVertex3fSWAP(xmin, ymax, zmin);
+		crPackEndSWAP();
+		crPackBeginSWAP(GL_LINE_LOOP);
+		crPackVertex3fSWAP(xmin, ymin, zmax);
+		crPackVertex3fSWAP(xmax, ymin, zmax);
+		crPackVertex3fSWAP(xmax, ymax, zmax);
+		crPackVertex3fSWAP(xmin, ymax, zmax);
+		crPackEndSWAP();
 
-	crPackPopAttrib();
+		crPackPopAttribSWAP();
+	}
+	else
+	{
+		crPackPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
+		crPackDisable(GL_TEXTURE_2D);
+		crPackDisable(GL_TEXTURE_1D);
+		crPackDisable(GL_LIGHTING);
+		crPackDisable(GL_BLEND);
+		crPackDisable(GL_ALPHA_TEST);
+		crPackDisable(GL_DEPTH_TEST);
+		crPackDisable(GL_FOG);
+		crPackDisable(GL_STENCIL_TEST);
+		crPackDisable(GL_SCISSOR_TEST);
+		crPackDisable(GL_LOGIC_OP);
+
+		crPackLineWidth(tilesort_spu.bboxLineWidth);
+		crPackColor3fv(outcolor);
+		crPackBegin(GL_LINE_LOOP);
+		crPackVertex3f(xmin, ymin, zmin);
+		crPackVertex3f(xmin, ymin, zmax);
+		crPackVertex3f(xmin, ymax, zmax);
+		crPackVertex3f(xmin, ymax, zmin);
+		crPackEnd();
+		crPackBegin(GL_LINE_LOOP);
+		crPackVertex3f(xmax, ymin, zmin);
+		crPackVertex3f(xmax, ymin, zmax);
+		crPackVertex3f(xmax, ymax, zmax);
+		crPackVertex3f(xmax, ymax, zmin);
+		crPackEnd();
+		crPackBegin(GL_LINE_LOOP);
+		crPackVertex3f(xmin, ymin, zmin);
+		crPackVertex3f(xmax, ymin, zmin);
+		crPackVertex3f(xmax, ymax, zmin);
+		crPackVertex3f(xmin, ymax, zmin);
+		crPackEnd();
+		crPackBegin(GL_LINE_LOOP);
+		crPackVertex3f(xmin, ymin, zmax);
+		crPackVertex3f(xmax, ymin, zmax);
+		crPackVertex3f(xmax, ymax, zmax);
+		crPackVertex3f(xmin, ymax, zmax);
+		crPackEnd();
+
+		crPackPopAttrib();
+	}
 }
 
 
@@ -344,7 +414,14 @@ static void __doFlush( CRContext *ctx, int broadcast )
 	{
 		//crDebug( "Closing this Begin/end!!!" );
 		cr_packer_globals.buffer.data_end += END_FLUFF;
-		crPackEnd();
+		if (tilesort_spu.swap)
+		{
+			crPackEndSWAP();
+		}
+		else
+		{
+			crPackEnd();
+		}
 	}
 
 	// Now, we grab the packing state into the globals, since we're
@@ -399,7 +476,14 @@ static void __doFlush( CRContext *ctx, int broadcast )
 
 			crDebug( "Doing the big packet send thing" );
 			__sendServerBuffer( state_server );
-			big_packet_hdr->senderId = state_server->net.conn->sender_id;
+			if (tilesort_spu.swap)
+			{
+				big_packet_hdr->senderId = SWAP32(state_server->net.conn->sender_id);
+			}
+			else
+			{
+				big_packet_hdr->senderId = state_server->net.conn->sender_id;
+			}
 			crNetSend( state_server->net.conn, NULL, big_packet_hdr, big_packet_len );
 		}
 		else

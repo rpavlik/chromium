@@ -58,7 +58,7 @@ def WriteData( offset, arg_type, arg_name, is_swapped ):
 	else:	
 		if is_swapped:
 			if arg_type == "GLfloat" or arg_type == "GLclampf":
-				retval = "\tWRITE_DATA( %d, %s, SWAPFLOAT(%s) );" % (offset, arg_type, arg_name)
+				retval = "\tWRITE_DATA( %d, GLuint, SWAPFLOAT(%s) );" % (offset, arg_name)
 			elif arg_type == "GLdouble" or arg_type == "GLclampd":
 				retval = "\tWRITE_SWAPPED_DOUBLE( %d, %s );" % (offset, arg_name)
 			elif stub_common.lengths[arg_type] == 1:
