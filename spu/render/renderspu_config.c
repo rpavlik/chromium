@@ -11,6 +11,7 @@
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_environment.h"
+#include "cr_url.h"
 
 #include <stdio.h>
 
@@ -79,6 +80,26 @@ static void resizable( RenderSPU *render_spu, const char *response )
 	sscanf( response, "%d", &(render_spu->resizable) );
 }
 
+static void gather_url( RenderSPU *render_spu, const char *response )
+{
+	char protocol[4096], hostname[4096];
+	unsigned short port;
+	
+	if (!crParseURL(response, protocol, hostname, &port, 0))
+	{
+		crError( "Malformed URL: \"%s\"", response );
+	}
+
+	render_spu->gather_port = port;
+}
+
+static void gather_userbuf( RenderSPU *render_spu, const char *response )
+{
+	sscanf( response, "%d", &(render_spu->gather_userbuf_size) );
+}
+
+
+
 
 
 /* option, type, nr, default, min, max, title, callback
@@ -115,6 +136,12 @@ SPUOptions renderSPUOptions[] = {
 
    { "display_string", CR_STRING, 1, "", NULL, NULL, 
      "X Display String", (SPUOptionCB)set_display_string },
+
+   { "gather_url", CR_STRING, 1, "", NULL, NULL,
+     "Gatherer Net Config", (SPUOptionCB)gather_url},
+
+   { "gather_userbuf_size", CR_INT, 1, "0", NULL, NULL,
+     "Private Buffer to allocate for Gathering", (SPUOptionCB)gather_userbuf},
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

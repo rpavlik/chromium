@@ -167,7 +167,7 @@ void packspuFlush(void *arg )
            */
            /* XXX these calls seem to help, but might be appropriate */
            crPackSetBuffer( thread->packer, buf );
-           crPackResetPointers(thread->packer, 0);
+           crPackResetPointers(thread->packer);
            return;
 	}
 
@@ -175,12 +175,19 @@ void packspuFlush(void *arg )
 
 	CRASSERT( thread->server.conn );
 
-	crNetSend( thread->server.conn, &(buf->pack), hdr, len );
+	if ( buf->holds_BeginEnd )
+		crNetBarf( thread->server.conn, &(buf->pack), hdr, len );
+	else
+		crNetSend( thread->server.conn, &(buf->pack), hdr, len );
 
 	buf->pack = crNetAlloc( thread->server.conn );
 
+	if ( buf->mtu > thread->server.conn->mtu )
+		buf->mtu = thread->server.conn->mtu;
+
 	crPackSetBuffer( thread->packer, buf );
-	crPackResetPointers(thread->packer, 0); /* don't need extra room like tilesort */
+
+	crPackResetPointers(thread->packer);
 	(void) arg;
 }
 

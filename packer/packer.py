@@ -128,15 +128,6 @@ def UpdateCurrentPointer( func_name ):
 		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
 		return
 
-	m = re.match( r"^(Begin)$", func_name )
-	if m :
-		k = m.group(1)
-		name = '%s%s' % (k[:1].lower(),k[1:])
-		type = ""
-		print "\tpc->current.%s_data = data_ptr;" % name
-		print "\tpc->current.%s_op = pc->buffer.opcode_current;" % name
-		return
-
 for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "packer", func_name ): continue
@@ -197,11 +188,14 @@ for func_name in keys:
 				print "\tCRASSERT(!pc->buffer.geometry_only); /* sanity check */"
 			if packet_length == 0:
 				print "\tGET_BUFFERED_POINTER_NO_ARGS( pc );"
+			elif func_name[:9] == "Translate" or func_name[:5] == "Color":
+				if is_extended:
+					packet_length += 8
+				print "\tGET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, %d );" % packet_length
 			else:
 				if is_extended:
 					packet_length += 8
 				print "\tGET_BUFFERED_POINTER( pc, %d );" % packet_length
-
 			UpdateCurrentPointer( func_name )
 
 			counter = 0

@@ -28,7 +28,8 @@
 				CRASSERT(op <= thread->packer->buffer.opcode_start); \
 				CRASSERT(op > thread->packer->buffer.opcode_end); \
 				CRASSERT(data >= thread->packer->buffer.data_start); \
-				CRASSERT(data < thread->packer->buffer.data_end)
+				CRASSERT(data < thread->packer->buffer.data_end); \
+				CRASSERT(((data - op + 0x3) & ~0x3) + sizeof(CRMessageOpcodes) <= thread->packer->buffer.mtu)
 
 static const GLvectorf vdefault = {0.0f, 0.0f, 0.0f, 1.0f};
 

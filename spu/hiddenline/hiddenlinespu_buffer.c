@@ -19,7 +19,7 @@ void hiddenlineProvidePackBuffer(void)
 	{
 		buf = crAlloc( hiddenline_spu.buffer_size );
 	}
-	crPackInitBuffer( &(hiddenline_spu.pack_buffer), buf, hiddenline_spu.buffer_size, 0 );
+	crPackInitBuffer( &(hiddenline_spu.pack_buffer), buf, hiddenline_spu.buffer_size, hiddenline_spu.buffer_size );
 	crPackSetBuffer( hiddenline_spu.packer, &(hiddenline_spu.pack_buffer) );
 }
 

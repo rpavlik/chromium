@@ -113,11 +113,19 @@ for func_name in keys:
 	print '%s )\\n"%s );' % ( printfstr, argstr )
 	print '\tfflush( print_spu.fp );'
 
-	if return_type != "void":
-		print '\treturn',
+	if return_type == "GLint":
+		print '\t{'
+		print '\t\tint res =',
 	else:
-		print '\t',
+		if return_type != "void":
+			print '\treturn',
+		else:
+			print '\t',
 	print 'print_spu.passthrough.%s%s;' % ( func_name, stub_common.CallString( names ) )
+	if return_type == "GLint":
+		print '\t\tfprintf( print_spu.fp, "= %d\\n", res);'
+		print '\t\treturn res;'
+		print '\t}'
 	print '}'
 
 print 'SPUNamedFunctionTable print_table[] = {'

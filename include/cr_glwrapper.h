@@ -246,6 +246,26 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 
 #endif /* GL_CR_tile_info */
 
+#ifndef GL_CR_gather
+#define GL_CR_gather 1
+/* For aggregate transfers  */
+
+#define GL_GATHER_DRAWPIXELS_CR          0x9922 /* unofficial! */
+#define GL_GATHER_PACK_CR         	 	0x9923 /* unofficial! */
+#define GL_GATHER_CONNECT_CR       	 	0x9924 /* unofficial! */
+#define GL_GATHER_POST_SWAPBUFFERS_CR   0x9925 /* unofficial! */
+#endif /* GL_CR_gather */
+
+#ifndef GL_CR_saveframe
+#define GL_CR_saveframe 1
+
+#define GL_SAVEFRAME_ENABLED_CR  0x9926 /* unofficial! */
+#define GL_SAVEFRAME_FRAMENUM_CR 0x9927 /* unofficial! */
+#define GL_SAVEFRAME_STRIDE_CR   0x9928 /* unofficial! */
+#define GL_SAVEFRAME_SINGLE_CR   0x9929 /* unofficial! */
+#define GL_SAVEFRAME_FILESPEC_CR 0x992A /* unofficial! */
+
+#endif /* GL_CR_saveframe */
 
 
 /*

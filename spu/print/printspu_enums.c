@@ -14,7 +14,7 @@ typedef struct {
 } GLT_enum_tab_ent;
 
 static GLT_enum_tab_ent __enum_tab_ents[256] = {
-    {0, 2},{2, 5},{7, 8},{15, 9},{24, 13},{37, 6},{43, 5},{48, 8},{56, 2},
+    {1442, 10},{2, 5},{7, 8},{15, 9},{24, 13},{37, 6},{43, 5},{48, 8},{56, 2},
     {58, 2},{60, 3},{63, 243},{306, 246},{552, 245},{-1, -1},{-1, -1},
     {797, 6},{803, 3},{806, 10},{816, 2},{818, 11},{829, 16},{845, 4},
     {849, 3},{852, 3},{855, 11},{866, 1},{867, 3},{870, 3},{873, 2},{875, 4},
@@ -1494,6 +1494,16 @@ static char *__enum_str_tab[] = {
     "GL_OBJECT_POINT_SGIS",                   /* 0x81f5 */
     "GL_EYE_LINE_SGIS",                       /* 0x81f6 */
     "GL_OBJECT_LINE_SGIS",                    /* 0x81f7 */
+    "GL_POINTS",                              /* 0x0000 */
+    "GL_LINES",                               /* 0x0001 */
+    "GL_LINE_LOOP",                           /* 0x0002 */
+    "GL_LINE_STRIP",                          /* 0x0003 */
+    "GL_TRIANGLES",                           /* 0x0004 */
+    "GL_TRIANGLE_STRIP",                      /* 0x0005 */
+    "GL_TRIANGLE_FAN",                        /* 0x0006 */
+    "GL_QUADS",                               /* 0x0007 */
+    "GL_QUAD_STRIP",                          /* 0x0008 */
+    "GL_POLYGON",                             /* 0x0009 */
 };
 
 char * printspuEnumToStr(GLenum value)

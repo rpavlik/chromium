@@ -12,19 +12,24 @@ endif
 endif
 
 SUBDIRS = common \
-	ARB_multitexture \
 	ARB_multitexture2 \
 	ARB_texture_cube_map \
 	EXT_blend_color \
 	EXT_blend_minmax \
 	EXT_blend_subtract \
 	EXT_separate_specular_color \
-	EXT_texture_edge_clamp \
 	EXT_texture_filter_anisotropic \
 	NV_fog_distance
 
 ifneq ($(ARCH), AIX)
+ifneq ($(ARCH), OSF1)
 SUBDIRS+=       EXT_secondary_color
+endif
+endif
+
+ifneq ($(ARCH), OSF1)
+SUBDIRS += ARB_multitexture \
+	EXT_texture_edge_clamp
 endif
 
 include ${TOP}/cr.mk

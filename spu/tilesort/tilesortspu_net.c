@@ -103,6 +103,7 @@ void tilesortspuConnectToServers( void )
 		}
 
 		if (!crStrcmp( protocol, "tcpip" ) ||
+		    !crStrcmp( protocol, "udptcpip" ) ||
 		    !crStrcmp( protocol, "gm" ) ) 
 		{
 			some_net_traffic = 1;

@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = saveframespu
 FILES = saveframespu \
@@ -16,4 +18,10 @@ LIBRARIES = spuload crutil crmothership
 SLOP = $(PRECOMP)
 
 LIB_DEFS += saveframespu.def
+
+ifeq ($(ARCH),Linux)
+CFLAGS += -DJPEG
+LIBRARIES += jpeg
+endif
+
 include ${TOP}/cr.mk

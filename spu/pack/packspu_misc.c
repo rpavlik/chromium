@@ -8,6 +8,38 @@
 #include "cr_packfunctions.h"
 #include "packspu.h"
 
+void PACKSPU_APIENTRY packspu_ChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
+{
+
+	CRMessage msg;
+	int len;
+	
+	GET_THREAD(thread);
+
+	
+	switch(target)
+	{
+		case GL_GATHER_PACK_CR:
+			/* flush the current pack buffer */
+			packspuFlush( (void *) thread );
+
+			/* the connection is thread->server.conn */
+			msg.header.type = CR_MESSAGE_GATHER;
+			msg.gather.offset = 69;
+			len = sizeof(CRMessageGather);
+			crNetSend(thread->server.conn, NULL, &msg, len);
+			break;
+			
+		default:
+			if (pack_spu.swap)
+				crPackChromiumParametervCRSWAP(target, type, count, values);
+			else
+				crPackChromiumParametervCR(target, type, count, values);
+	}
+
+
+}
+
 void PACKSPU_APIENTRY packspu_Finish( void )
 {
 	GET_THREAD(thread);

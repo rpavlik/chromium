@@ -278,24 +278,29 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 	 * Lightning-2) then we'll want to resize all the tiles so that
 	 * the set of tiles matches the app window size.
 	 */
-	if (tilesort_spu.optimizeBucketing == 1)
+	/*
+	 * XXX not sure what to do about RANDOM or WARPED_GRID option here.
+	 */
+	if (tilesort_spu.bucketMode == UNIFORM_GRID)
 	{
 		crDebug("Tilesort SPU asked to resize window, "
-						"but optimize_bucketing is enabled.  No resize.");
+						"but bucket_mode is Uniform Grid "
+						"(or optimize_bucketing is enabled.  No resize.");
 		return;
 	}
 	else if (!getNewTiling(w, h))
 	{
-		GLboolean b;
+		GLboolean goodGrid;
 
 		defaultNewTiling(w, h);
 
 		/* check if we can use non-uniform grid bucketing */
-		b = tilesortspuInitGridBucketing();
-		if (b)
-			tilesort_spu.optimizeBucketing = 2;
+		goodGrid = tilesortspuInitGridBucketing();
+		if (goodGrid && (tilesort_spu.bucketMode == NON_UNIFORM_GRID ||
+										 tilesort_spu.bucketMode == TEST_ALL_TILES))
+			tilesort_spu.bucketMode = NON_UNIFORM_GRID;
 		else
-			tilesort_spu.optimizeBucketing = 0;
+			tilesort_spu.bucketMode = TEST_ALL_TILES;
 	}
 
 	crDebug("tilesort SPU: Reconfigured tiling:");

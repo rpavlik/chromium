@@ -75,3 +75,5 @@ ChromiumParametervCR
 crCreateWindow
 FeedbackBuffer
 SelectBuffer
+Begin
+End

@@ -400,6 +400,7 @@ static void DrawCursor( GLint x, GLint y )
 void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 {
 	WindowInfo *w;
+
 	if (window < 0 || window >= MAX_WINDOWS)
 	{
 		crDebug("renderspuSwapBuffers: window id %d out of range", window);
@@ -508,12 +509,15 @@ static void RENDER_APIENTRY renderspuChromiumParameteriCR(GLenum target, GLint v
 {
 	(void) target;
 	(void) value;
+
 #if 0
-	switch (target) {
-	default:
-		crWarning("Unhandled target in renderspuChromiumParameteriCR()");
-		break;
+	switch (target) 
+	{
+		default:
+			crWarning("Unhandled target in renderspuChromiumParameteriCR()");
+			break;
 	}
+
 #endif
 }
 
@@ -521,6 +525,7 @@ static void RENDER_APIENTRY renderspuChromiumParameterfCR(GLenum target, GLfloat
 {
 	(void) target;
 	(void) value;
+
 #if 0
 	switch (target) {
 	default:
@@ -530,9 +535,69 @@ static void RENDER_APIENTRY renderspuChromiumParameterfCR(GLenum target, GLfloat
 #endif
 }
 
+
 static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
+	unsigned int client_num;
+	unsigned short port;
+	CRMessage *msg, pingback;
+	unsigned char *privbuf = NULL;
+
 	switch (target) {
+
+		case GL_GATHER_CONNECT_CR:
+			if (render_spu.gather_userbuf_size)
+				privbuf = (unsigned char *)malloc(1024*768*4);
+		
+			port = ((GLint *) values)[0];
+
+			if (render_spu.gather_conns == NULL)
+				render_spu.gather_conns = crAlloc(render_spu.server->numClients*sizeof(CRConnection *));
+			else
+			{
+				crError("Oh bother! duplicate GL_GATHER_CONNECT_CR getting through");
+			}
+
+			for (client_num=0; client_num< render_spu.server->numClients; client_num++)
+			{
+				switch (render_spu.server->clients[client_num].conn->type)
+				{
+					case CR_TCPIP:
+						crDebug("AcceptClient from %s on %d", 
+							render_spu.server->clients[client_num].conn->hostname, render_spu.gather_port);
+						render_spu.gather_conns[client_num] = 
+								crNetAcceptClient("tcpip", port, 1024*1024,  1);
+						break;
+					
+					case CR_GM:
+						render_spu.gather_conns[client_num] = 
+								crNetAcceptClient("gm", port, 1024*1024,  1);
+						break;
+						
+					default:
+						crError("Unknown Network Type to Open Gather Connection");
+				}
+
+		
+				if (render_spu.gather_userbuf_size)
+				{
+					render_spu.gather_conns[client_num]->userbuf = privbuf;
+					render_spu.gather_conns[client_num]->userbuf_len = render_spu.gather_userbuf_size;
+				}
+				else
+				{
+					render_spu.gather_conns[client_num]->userbuf = NULL;
+					render_spu.gather_conns[client_num]->userbuf_len = 0;
+				}
+
+				if (render_spu.gather_conns[client_num])
+				{
+					crDebug("success! from %s", render_spu.gather_conns[client_num]->hostname);
+				}
+			}
+
+			break;
+
 	case GL_CURSOR_POSITION_CR:
 		if (type == GL_INT && count == 2) {
 			render_spu.cursorX = ((GLint *) values)[0];
@@ -542,6 +607,36 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 			crWarning("Bad type or count for ChromiumParametervCR(GL_CURSOR_POSITION_CR)");
 		}
 		break;
+
+
+	case GL_GATHER_DRAWPIXELS_CR:
+		pingback.header.type = CR_MESSAGE_OOB;
+
+		for (client_num=0; client_num< render_spu.server->numClients; client_num++)
+		{
+			crNetGetMessage(render_spu.gather_conns[client_num], &msg); 
+			if (msg->header.type == CR_MESSAGE_GATHER)
+			{
+				crNetFree(render_spu.gather_conns[client_num], msg);
+				crNetSend(render_spu.gather_conns[client_num], NULL, &pingback,
+										sizeof(CRMessageHeader));
+			}
+			else
+			{
+				crError("expecting MESSAGE_GATHER. got crap! (%d of %d)", client_num, 
+								render_spu.server->numClients-1);
+			}
+		}
+
+		render_spu.self.RasterPos2i(((GLint *)values)[0], ((GLint *)values)[1]);
+		render_spu.self.DrawPixels(  ((GLint *)values)[2], ((GLint *)values)[3], 
+										((GLint *)values)[4], ((GLint *)values)[5], 
+									render_spu.gather_conns[0]->userbuf);
+
+		render_spu.self.SwapBuffers(((GLint *)values)[6], 0);
+		break;
+		
+
 	default:
 #if 0
 		crWarning("Unhandled target in renderspuChromiumParametervCR(0x%x)", (int) target);
@@ -560,7 +655,7 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 			CRASSERT(count == 2);
 			CRASSERT(values);
 			size[0] = size[1] = 0;  /* default */
-			if (index >= 0 && index < MAX_WINDOWS)
+			if (index < MAX_WINDOWS)
 			{
 				WindowInfo *window = &(render_spu.windows[index]);
 				if (window->inUse)

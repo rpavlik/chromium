@@ -10,6 +10,7 @@ include ${TOP}/arch.mk
 SHARED = 1
 LIBRARY = packspu
 FILES = packspu \
+	packspu_beginend \
 	packspu_client \
 	packspu_config \
 	packspu_context \
@@ -53,3 +54,7 @@ packspu_flush.c: packspu_flush.py packspu_flush_special
 packspu_pixel.c: packspu_pixel.py packspu_pixel_special
 	@$(ECHO) Building the Pack SPU Pixel functions
 	@$(PYTHON) packspu_pixel.py > $@
+
+packspu_beginend.c: packspu_beginend.py packspu_vertex_special
+	@$(ECHO) Building the Pack SPU Vertex functions
+	@$(PYTHON) packspu_beginend.py > $@

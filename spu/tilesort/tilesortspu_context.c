@@ -20,17 +20,7 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 {
 	int i;
 
-	/* We need to mess with the pack size of the geometry buffer, since we 
-	 * may be using BoundsInfo packes, etc, etc.  This is yucky. */
-	thread->geom_pack_size = tilesort_spu.MTU;
-	thread->geom_pack_size -= sizeof( CRMessageOpcodes );
-	thread->geom_pack_size -= 4;
-	
-	/* We need to shrink everything to fit in the DATA part of the server's send 
-	 * buffer since we're going to always send geometry as a BOUNDS_INFO 
-	 * packet. */
-	thread->geom_pack_size = (thread->geom_pack_size * 4) / 5;
-	thread->geom_pack_size -= (24 + 1); /* 24 is the size of the BoundsInfo packet */
+	thread->geom_pack_size = tilesort_spu.buffer_size;
 
 	thread->pinchState.numRestore = 0;
 	thread->pinchState.wind = 0;
@@ -43,7 +33,11 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 	crPackSetContext( thread->packer ); /* sets the packer's per-thread context */
 	crPackInitBuffer( &(thread->geometry_pack),
 										crAlloc( thread->geom_pack_size ), 
-										thread->geom_pack_size, END_FLUFF );
+										thread->geom_pack_size, tilesort_spu.MTU-(24+END_FLUFF+4+4));
+	/* 24 is the size of the bounds info packet */
+	/* END_FLUFF is the size of data of End */
+	/* 4 since BoundsInfo opcode may take a whole 4 bytes */
+	/* and 4 to let room for extra End's opcode, if needed */
 	thread->geometry_pack.geometry_only = GL_TRUE;
 	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 	crPackFlushFunc( thread->packer, tilesortspuFlush_callback );
@@ -55,8 +49,16 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 	CRASSERT(tilesort_spu.num_servers > 0);
 
 	for (i = 0; i < tilesort_spu.num_servers; i++)
+	{
 		crPackInitBuffer( &(thread->pack[i]), crNetAlloc( thread->net[i].conn ),
-											thread->net[i].buffer_size, 0 );
+											thread->net[i].conn->buffer_size, thread->net[i].conn->mtu );
+		if (thread->net[i].conn->Barf)
+		{
+			thread->pack[i].canBarf = GL_TRUE;
+			thread->packer->buffer.canBarf = GL_TRUE;
+			thread->geometry_pack.canBarf = GL_TRUE;
+		}
+	}
 
 
 	thread->currentContext = NULL;
@@ -86,9 +88,11 @@ ThreadInfo *tilesortspuNewThread( GLint slot )
 
 	for (i = 0; i < tilesort_spu.num_servers; i++) {
 		thread->net[i].name = crStrdup( tilesort_spu.thread[0].net[i].name );
-		thread->net[i].buffer_size = tilesort_spu.MTU;
+		thread->net[i].buffer_size = tilesort_spu.thread[0].net[i].buffer_size;
 		/* Establish new connection to server[i] */
 		crNetNewClient( tilesort_spu.thread[0].net[i].conn, &(thread->net[i]));
+		if (tilesort_spu.MTU > thread->net[i].conn->mtu)
+			tilesort_spu.MTU = thread->net[i].conn->mtu;
 	}
 
 	tilesortspuInitThreadPacking( thread );

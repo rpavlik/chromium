@@ -1,0 +1,31 @@
+The injector is a SPU for inserting arbitrary OpenGL commands into an existing application's
+stream. Right now, the stream is always inserted whenever the original stream calls SwapBuffers().
+Here's a diagram of what happens:
+
+ InjectorApplication LegacyOpenGLApplication
+               \           /
+ fake GL stream \      some SPU(s)
+                 \       /
+ Network xport => WWW   / OpenGL stream
+                     \ /
+                      Y = injectorSPU (unpacks fakeGL stream and sends both streams to "some more SPU(s)"
+        	      |
+        	      |
+        	   some more SPU(s)
+        	      |
+
+The ground rules:
+- There are lots of things the InjectorApplication shouldn't pack up and send to the injector spu:
+  DON'Ts
+	- No calls to glGetParameter() or glChromiumGetParametervCR()
+	- No selection/feedback
+	- No ReadPixels
+	- No glFlush() or glSync()
+	- No glBarrierExecCR() or semaphores.
+	- No network writeback commands.
+	- No anything else that needs to pack stuff up and send it back to the other end of the injector's net connection.
+  DOs
+	- Call SwapBuffers() to tell the injector to stop processing the "injected" stream and go back to work on
+	  the "main" stream.
+
+

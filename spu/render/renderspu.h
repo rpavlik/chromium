@@ -18,6 +18,7 @@
 #include "cr_threads.h"
 #include "cr_spu.h"
 #include "cr_hash.h"
+#include "cr_server.h"
 
 #define MAX_VISUALS 32
 #define MAX_WINDOWS 32
@@ -87,6 +88,11 @@ typedef struct {
 #endif
 	int render_to_app_window;
 	int resizable;
+	
+	CRServer *server;
+	int gather_port;
+	int gather_userbuf_size;
+	CRConnection **gather_conns;
 
 	GLboolean drawCursor;
 	GLint cursorX, cursorY;

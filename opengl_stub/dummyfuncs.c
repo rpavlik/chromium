@@ -18,7 +18,7 @@
 #include "cr_error.h"
 
 void glTexImage3D( GLenum target, GLint level,
-#if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS)
+#if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS) || defined(OSF1)
 									 GLenum internalFormat,
 #else
 									 GLint internalFormat,

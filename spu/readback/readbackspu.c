@@ -10,11 +10,12 @@
 #include "cr_error.h"
 #include "cr_bbox.h"
 #include "cr_applications.h"
+#include "cr_url.h"
+
 #include "readbackspu.h"
 
 #define WINDOW_MAGIC 7000
 #define CONTEXT_MAGIC 8000
-
 
 /*
  * Allocate the color and depth buffers needed for the glDraw/ReadPixels
@@ -28,7 +29,13 @@ static void AllocBuffers( WindowInfo *window )
 
 	if (window->colorBuffer)
 		crFree(window->colorBuffer);
-	window->colorBuffer = (GLubyte *) crAlloc( window->width * window->height
+	
+	if (readback_spu.gather_url)
+		window->colorBuffer = (GLubyte *) crAlloc( window->width * window->height
+																						 * 4 * sizeof(GLubyte) 
+																						 + sizeof(CRMessageGather));
+	else
+		window->colorBuffer = (GLubyte *) crAlloc( window->width * window->height
 																						 * 4 * sizeof(GLubyte) );
 	if (readback_spu.extract_depth)
 	{
@@ -58,7 +65,12 @@ static void AllocBuffers( WindowInfo *window )
 			depthBytes = sizeof(GLfloat);
 		}
 
-		window->depthBuffer = (GLfloat *) crAlloc( window->width * window->height
+		if (readback_spu.gather_url)
+			window->depthBuffer = (GLfloat *) crAlloc( window->width * window->height
+																							 * depthBytes
+																							 + sizeof(CRMessageGather));
+		else
+			window->depthBuffer = (GLfloat *) crAlloc( window->width * window->height
 																							 * depthBytes );
 	}
 }
@@ -73,12 +85,30 @@ static void CheckWindowSize( WindowInfo *window )
 {
 	GLint newSize[2];
 	GLint w = window - readback_spu.windows; /* pointer hack */
+	CRMessage *msg;
 
 	CRASSERT(w >= 0);
 	CRASSERT(w < MAX_WINDOWS);
 
-	newSize[0] = newSize[1] = 0;
+	/* XXX this code seems rather redundant with what's immediately below */
+	if (readback_spu.gather_url)
+	{
+		/* ask downstream SPU (probably render) for its window size */
+		readback_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																							 w, GL_INT, 2, newSize);
+		if (newSize[0] == 0 && newSize[1] == 0)
+		{
+			/* something went wrong - recover - try viewport */
+			GLint geometry[4];
+			readback_spu.child.GetIntegerv( GL_VIEWPORT, geometry );
+			newSize[0] = geometry[2];
+			newSize[1] = geometry[3];
+		}
+		window->childWidth = newSize[0];
+		window->childHeight = newSize[1];
+	}
 
+	newSize[0] = newSize[1] = 0;
 	if (readback_spu.resizable)
 	{
 		/* ask downstream SPU (probably render) for its window size */
@@ -98,6 +128,7 @@ static void CheckWindowSize( WindowInfo *window )
 		/* not resizable - ask render SPU for its window size */
 		readback_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
 					readback_spu.windows[0].renderWindow, GL_INT, 2, newSize);
+
 	}
 
 	if (newSize[0] != window->width || newSize[1] != window->height)
@@ -115,6 +146,21 @@ static void CheckWindowSize( WindowInfo *window )
 			/* set child's viewport too */
 			readback_spu.child.Viewport( 0, 0, newSize[0], newSize[1] );
 		}
+
+ 		window->cppColor = 3;
+ 		if (readback_spu.extract_alpha)
+ 			window->cppColor++;
+
+		msg = (CRMessage *)window->colorBuffer; 
+		msg->header.type = CR_MESSAGE_GATHER;
+		
+ 		if (readback_spu.extract_depth)
+ 		{
+ 			readback_spu.super.GetIntegerv( GL_DEPTH_BITS, &window->cppDepth );
+ 			window->cppDepth /= 8;
+ 			msg = (CRMessage *)window->depthBuffer; 
+ 			msg->header.type = CR_MESSAGE_GATHER;
+ 		}
 	}
 }
 
@@ -227,6 +273,9 @@ static void read_and_send_tiles( WindowInfo *window )
 		outputwindow = &outputwindow0;
 	}
 
+	/*
+	 * loop over extents (image regions)
+	 */
 	for (i = 0; i < numExtents; i++)
 	{
 		const int readx = outputwindow[i].x1;
@@ -235,7 +284,23 @@ static void read_and_send_tiles( WindowInfo *window )
 		const int drawy = extents[i].y1;
 		int w = outputwindow[i].x2 - outputwindow[i].x1;
 		int h = outputwindow[i].y2 - outputwindow[i].y1;
+		unsigned int shift;
+		CRMessage *msg;
 
+		if (readback_spu.gather_url)
+		{
+			msg = (CRMessage *)window->colorBuffer;
+	 		msg->gather.offset = window->cppColor*(drawy * window->childWidth + drawx);
+
+ 			msg->gather.len    = window->cppColor*(w*h);
+			if (readback_spu.extract_depth)
+			{
+				msg = (CRMessage *)window->depthBuffer;
+		 		msg->gather.offset = window->cppDepth*(drawx * window->childWidth + drawx);
+ 				msg->gather.len    = window->cppDepth*(w*h);
+			}
+		}
+		
 		/* Clamp the image width and height to the readback SPU window's width
 		 * and height.  We do this because there's nothing preventing someone
 		 * from creating a tile larger than the rendering window.
@@ -252,25 +317,28 @@ static void read_and_send_tiles( WindowInfo *window )
 						readx, ready, drawx, drawy, w, h);
 		*/
 
+		/* Karl's gather code */
+		shift = readback_spu.gather_url ? sizeof(CRMessageGather) : 0;
+
 		/* Read RGB image, possibly alpha, possibly depth from framebuffer */
 		if (readback_spu.extract_alpha)
 		{
 			readback_spu.super.ReadPixels( readx, ready, w, h,
 					GL_RGBA, GL_UNSIGNED_BYTE,
-					window->colorBuffer );
+					window->colorBuffer + shift );
 		}
 		else 
 		{
 			readback_spu.super.ReadPixels( readx, ready, w, h, 
 					GL_RGB, GL_UNSIGNED_BYTE,
-					window->colorBuffer );
+					window->colorBuffer + shift );
 		}
 
 		if (readback_spu.extract_depth)
 		{
 			readback_spu.super.ReadPixels( readx, ready, w, h,
 																		 GL_DEPTH_COMPONENT, window->depthType,
-																		 window->depthBuffer );
+																		 (GLubyte *) window->depthBuffer + shift);
 		}
 
 		/*
@@ -296,7 +364,8 @@ static void read_and_send_tiles( WindowInfo *window )
 			{
 				readback_spu.child.Clear( GL_COLOR_BUFFER_BIT );
 			}
-			readback_spu.child.BarrierExec( READBACK_BARRIER );
+			if (!readback_spu.gather_url)
+				readback_spu.child.BarrierExec( READBACK_BARRIER );
 			readback_spu.cleared_this_frame = 1;
 		}
 
@@ -322,7 +391,7 @@ static void read_and_send_tiles( WindowInfo *window )
 			readback_spu.child.DepthFunc( GL_LESS );
 			readback_spu.child.DrawPixels( w, h,
 																		 GL_DEPTH_COMPONENT, window->depthType,
-																		 window->depthBuffer );
+																		 (GLubyte *) window->depthBuffer + shift );
 
 			/* Now draw the RGBA image, only where the stencil is one, reset stencil
 			 * to zero as we go (to avoid calling glClear(STENCIL_BUFFER_BIT)).
@@ -338,9 +407,9 @@ static void read_and_send_tiles( WindowInfo *window )
 				readback_spu.child.PixelTransferf(GL_RED_SCALE, -1.0);
 				readback_spu.child.PixelTransferf(GL_GREEN_SCALE, -1.0);
 				readback_spu.child.PixelTransferf(GL_BLUE_SCALE, -1.0);
-				readback_spu.child.DrawPixels( w, h, 
-						GL_LUMINANCE, window->depthType,
-						window->depthBuffer );
+				readback_spu.child.DrawPixels(w, h, 
+																			GL_LUMINANCE, window->depthType,
+																			(GLubyte *) window->depthBuffer + shift);
 			}
 			else {
 				/* the usual case */
@@ -355,15 +424,18 @@ static void read_and_send_tiles( WindowInfo *window )
 			readback_spu.child.BlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
 			readback_spu.child.Enable( GL_BLEND );
 			readback_spu.child.DrawPixels( w, h,
-					GL_RGBA, GL_UNSIGNED_BYTE,
-					window->colorBuffer );
+																		 GL_RGBA, GL_UNSIGNED_BYTE,
+																		 window->colorBuffer + shift );
 		}
 		else
 		{
-			/* just send color image */
-			readback_spu.child.DrawPixels( w, h,
-					GL_RGB, GL_UNSIGNED_BYTE,
-					window->colorBuffer );
+			if (!readback_spu.gather_url)
+			{
+				/* just send color image */
+				readback_spu.child.DrawPixels( w, h,
+																			 GL_RGB, GL_UNSIGNED_BYTE,
+																			 window->colorBuffer + shift );
+			}
 		}
 	}
 }
@@ -444,17 +516,45 @@ static void READBACKSPU_APIENTRY readbackspuFlush( void )
 	DoFlush( window );
 }
 
+
+
 static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint flags )
 {
+	unsigned short port = 3000;
+	char url[4098];
+	
+	/* setup OOB gather connections, if necessary */
+	if (readback_spu.gather_url)
+	{
+		if (readback_spu.gather_conn == NULL)
+		{
+			crParseURL(readback_spu.gather_url, url, url, &port, 3000);
+
+			readback_spu.child.ChromiumParametervCR(GL_GATHER_CONNECT_CR, GL_INT, 1, &port);
+			readback_spu.child.Flush();
+
+			readback_spu.gather_conn = crNetConnectToServer(readback_spu.gather_url, port, 
+							readback_spu.gather_mtu, 1);
+
+			if (!readback_spu.gather_conn)
+			{
+				crError("Problem setting up gather connection");
+			}
+		}
+	}
+	
 	/* DoFlush will do the clear and the first barrier
 	 * if necessary. */
 
 	DoFlush( &(readback_spu.windows[window]) );
 
 	readback_spu.child.BarrierExec( READBACK_BARRIER );
-
-	readback_spu.child.SwapBuffers( readback_spu.windows[window].childWindow, 0 );
-	readback_spu.child.Finish();
+	
+	if (!readback_spu.gather_url)
+	{
+		readback_spu.child.SwapBuffers( readback_spu.windows[window].childWindow, 0 );
+		readback_spu.child.Finish();
+	}
 
 	if (readback_spu.local_visualization)
 	{
@@ -601,9 +701,9 @@ static void READBACKSPU_APIENTRY readbackspuBarrierCreate( GLuint name, GLuint c
 	/* We'll propogate this value downstream to the server when we create
 	* private readback SPU barriers.
 	 */
-	// readback_spu.barrierCount = count;
+	/* readback_spu.barrierCount = count;*/
 
-	// this is totally wrong -- the barrierCount should be zero.
+	/* this is totally wrong -- the barrierCount should be zero.*/
 }
 
 static void READBACKSPU_APIENTRY readbackspuBarrierDestroy( GLuint name )
@@ -721,6 +821,62 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParametervCR(GLenum target, 
 	}
 }
 
+
+static void READBACKSPU_APIENTRY readbackspuChromiumParameteriCR(GLenum target,  GLint value)
+{
+	
+	switch( target )
+	{
+		case GL_GATHER_POST_SWAPBUFFERS_CR:
+				if ((!readback_spu.server) || (readback_spu.server->numExtents < 0))
+					crError("bleh! trying to do GATHER on appfaker.");	
+
+				if (readback_spu.gather_url)
+				{
+					GLint draw_parm[7];
+					CRMessage *msg;
+					static int first_time = 1;
+
+					GLrecti *outputwindow = readback_spu.server->outputwindow;
+					int w = outputwindow[0].x2 - outputwindow[0].x1;
+					int h = outputwindow[0].y2 - outputwindow[0].y1;
+
+					/* only swap 1 tiled-rgb ATM */
+					draw_parm[0] = 0;
+					draw_parm[1] = 0;
+					draw_parm[2] = readback_spu.windows[value].childWidth;
+					draw_parm[3] = readback_spu.windows[value].childHeight;
+					draw_parm[4] = GL_RGB;
+					draw_parm[5] = GL_UNSIGNED_BYTE;
+					draw_parm[6] = value;
+
+					if (!first_time)
+					{
+						crNetGetMessage(readback_spu.gather_conn, &msg);
+						if (msg->header.type != CR_MESSAGE_OOB)
+							crError("Expecting MESSAGE_OOB for sync after gather");
+						crNetFree(readback_spu.gather_conn, msg);
+					}
+					else
+						first_time = 0;
+	
+					/* send the framebuffer */
+					crNetSend(readback_spu.gather_conn, NULL, readback_spu.windows[value].colorBuffer, 
+							sizeof(CRMessageGather)+readback_spu.windows[value].cppColor*w*h);
+
+					/* inform the child that their is a frame on the way */
+					readback_spu.child.ChromiumParametervCR(GL_GATHER_DRAWPIXELS_CR, GL_INT, 7, draw_parm);
+					readback_spu.child.Flush();
+				}
+				break;
+
+		default:
+			readback_spu.child.ChromiumParameteriCR( target, value );
+			break;
+	}
+}
+
+
 SPUNamedFunctionTable readback_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) readbackspuSwapBuffers },
 	{ "CreateContext", (SPUGenericFunction) readbackspuCreateContext },
@@ -747,6 +903,8 @@ SPUNamedFunctionTable readback_table[] = {
 	{ "Frustum", (SPUGenericFunction) readbackspuFrustum },
 	{ "Viewport", (SPUGenericFunction) readbackspuViewport },
 	{ "Flush", (SPUGenericFunction) readbackspuFlush },
+	
 	{ "ChromiumParametervCR", (SPUGenericFunction) readbackspuChromiumParametervCR },
+	{ "ChromiumParameteriCR", (SPUGenericFunction) readbackspuChromiumParameteriCR },
 	{ NULL, NULL }
 };

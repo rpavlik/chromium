@@ -61,18 +61,25 @@ void crPackSendHugeFunc( CRPackContext *pc, CRPackSendHugeFunc shf )
 	pc->SendHuge = shf;
 }
 
-void crPackResetPointers( CRPackContext *pc, int extra )
+void crPackResetPointers( CRPackContext *pc )
 {
 	const GLboolean g = pc->buffer.geometry_only;   /* save this flag */
-	crPackInitBuffer( &(pc->buffer), pc->buffer.pack, pc->buffer.size, extra );
+	const GLboolean holds_BeginEnd = pc->buffer.holds_BeginEnd;
+	const GLboolean in_BeginEnd = pc->buffer.in_BeginEnd;
+	const GLboolean canBarf = pc->buffer.canBarf;
+	crPackInitBuffer( &(pc->buffer), pc->buffer.pack, pc->buffer.size, pc->buffer.mtu );
 	pc->buffer.geometry_only = g;   /* restore the flag */
+	pc->buffer.holds_BeginEnd = holds_BeginEnd;
+	pc->buffer.in_BeginEnd = in_BeginEnd;
+	pc->buffer.canBarf = canBarf;
 }
 
-void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int extra )
+void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int mtu )
 {
 	unsigned int num_opcodes;
 
 	buf->size = size;
+	buf->mtu  = mtu;
 	buf->pack = pack;
 
 	/* Each opcode has at least a 1-word payload, so opcodes can occupy at most 
@@ -91,42 +98,81 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int extra )
 	buf->opcode_current = buf->opcode_start;
 	buf->opcode_end     = buf->opcode_start - num_opcodes;
 
-	buf->data_end -= extra; /* caller may want extra space (sigh) */
-
 	buf->geometry_only = GL_FALSE;
+	buf->holds_BeginEnd = 0;
+	buf->in_BeginEnd = 0;
+	buf->canBarf = 0;
+}
+
+int crPackCanHoldOpcode( int num_opcode, int num_data )
+{
+	GET_PACKER_CONTEXT(pc);
+	return (((pc->buffer.data_current - pc->buffer.opcode_current - 1
+			+ num_opcode + num_data
+			+ 0x3 ) & ~0x3) + sizeof(CRMessageOpcodes)
+			<= pc->buffer.mtu
+		&& pc->buffer.opcode_current - num_opcode >= pc->buffer.opcode_end
+		&& pc->buffer.data_current + num_data <= pc->buffer.data_end );
+}
+
+int crPackCanHoldBuffer( CRPackBuffer *src )
+{
+	int num_data = src->data_current - src->data_start;
+	int num_opcode = src->opcode_start - src->opcode_current;
+	return crPackCanHoldOpcode( num_opcode, num_data );
 }
 
 void crPackAppendBuffer( CRPackBuffer *src )
 {
 	GET_PACKER_CONTEXT(pc);
 	int num_data = src->data_current - src->data_start;
-	int num_opcode;
+	int num_opcode = src->opcode_start - src->opcode_current;
 
-	if ( pc->buffer.data_current + num_data > pc->buffer.data_end )
-		crError( "crPackAppendBuffer: overflowed the destination!" );
+	if (!crPackCanHoldBuffer(src))
+	{
+		if (src->holds_BeginEnd)
+		{
+			crWarning( "crPackAppendBuffer: overflowed the destination!" );
+			return;
+		}
+		else
+			crError( "crPackAppendBuffer: overflowed the destination!" );
+	}
+
 	crMemcpy( pc->buffer.data_current, src->data_start, num_data );
 	pc->buffer.data_current += num_data;
 
-	num_opcode = src->opcode_start - src->opcode_current;
 	CRASSERT( pc->buffer.opcode_current - num_opcode >= pc->buffer.opcode_end );
 	crMemcpy( pc->buffer.opcode_current + 1 - num_opcode, src->opcode_current + 1,
 			num_opcode );
 	pc->buffer.opcode_current -= num_opcode;
+	pc->buffer.holds_BeginEnd |= src->holds_BeginEnd;
+	pc->buffer.in_BeginEnd = src->in_BeginEnd;
 }
 
 
 void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 {
 	GET_PACKER_CONTEXT(pc);
-	int length = src->data_current - ( src->opcode_current + 1 );
+	int length = src->data_current - src->opcode_current - 1;
+	int len_aligned = (length + 3) & ~3;
 
 	/* 24 is the size of the bounds-info packet... */
 	
-	if ( pc->buffer.data_current + length + 24 > pc->buffer.data_end )
-		crError( "crPackAppendBoundedBuffer: overflowed the destination!" );
+	if ( !crPackCanHoldOpcode( 1, len_aligned + 24 ) )
+	{
+		if (src->holds_BeginEnd) {
+			crWarning( "crPackAppendBoundedBuffer: overflowed the destination!" );
+			return;
+		}
+		else
+			crError( "crPackAppendBoundedBuffer: overflowed the destination!" );
+	}
 
 	crPackBoundsInfo( bounds, (GLbyte *) src->opcode_current + 1, length,
 					src->opcode_start - src->opcode_current );
+	pc->buffer.holds_BeginEnd |= src->holds_BeginEnd;
+	pc->buffer.in_BeginEnd = src->in_BeginEnd;
 }
 
 void *crPackAlloc( unsigned int size )
@@ -137,7 +183,7 @@ void *crPackAlloc( unsigned int size )
 	/* include space for the length and make the payload word-aligned */
 	size = ( size + sizeof(unsigned int) + 0x3 ) & ~0x3;
 
-	if ( pc->buffer.data_current + size <= pc->buffer.data_end )
+	if ( crPackCanHoldOpcode( 1, size ) )
 	{
 		/* we can just put it in the current buffer */
 		GET_BUFFERED_POINTER(pc, size );
@@ -146,7 +192,7 @@ void *crPackAlloc( unsigned int size )
 	{
 		/* Okay, it didn't fit.  Maybe it will after we flush. */
 		pc->Flush( pc->flush_arg );
-		if ( pc->buffer.data_current + size <= pc->buffer.data_end )
+		if ( crPackCanHoldOpcode( 1, size ) )
 		{
 			GET_BUFFERED_POINTER(pc, size );
 		}

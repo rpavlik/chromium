@@ -33,7 +33,7 @@ print """
 
 #if defined(WINDOWS)
 #define SYSTEM_GL "opengl32.dll"
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(DARWIN) || defined(AIX) || defined(SunOS)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(DARWIN) || defined(AIX) || defined(SunOS) || defined(OSF1)
 #if defined(AIX)
 #define SYSTEM_GL "libGL.o"
 #else

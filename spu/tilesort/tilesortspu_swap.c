@@ -41,5 +41,15 @@ void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 		{
 			crNetRecv();
 		}
+
+	}
+
+	/* want to emit a parameteri here */
+	if (tilesort_spu.emit_GATHER_POST_SWAPBUFFERS)
+	{
+		if (tilesort_spu.swap)
+			crPackChromiumParameteriCRSWAP(GL_GATHER_POST_SWAPBUFFERS_CR, window);
+		else
+			crPackChromiumParameteriCR(GL_GATHER_POST_SWAPBUFFERS_CR, window);
 	}
 }

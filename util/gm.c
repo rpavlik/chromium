@@ -712,7 +712,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 #endif
 		if ( temp == NULL )
 		{
-			temp = (CRGmBuffer*)crAlloc( sizeof(CRGmBuffer) + gm_conn->conn->mtu );
+			temp = (CRGmBuffer*)crAlloc( sizeof(CRGmBuffer) + gm_conn->conn->buffer_size );
 			temp->magic = CR_GM_BUFFER_RECV_MAGIC;
 			temp->kind  = CRGmMemoryUnpinned;
 			temp->pad   = 0;
@@ -1016,7 +1016,7 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 	unsigned char *src;
 	CRASSERT( buf != NULL && len > 0 );
 
-	if ( len <= conn->mtu )
+	if ( len <= conn->buffer_size )
 	{
 		/* the user is doing a send from memory not allocated by the
 		 * network layer, but it does fit within a single message, so
@@ -1043,11 +1043,11 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 		CRMessageMulti *msg = (CRMessageMulti *) crGmAlloc( conn );
 		unsigned int        n_bytes;
 
-		if ( len + sizeof(*msg) > conn->mtu )
+		if ( len + sizeof(*msg) > conn->buffer_size )
 		{
 			msg->header.type = CR_MESSAGE_MULTI_BODY;
 			msg->header.conn_id = conn->id;
-			n_bytes   = conn->mtu - sizeof(*msg);
+			n_bytes   = conn->buffer_size - sizeof(*msg);
 		}
 		else
 		{

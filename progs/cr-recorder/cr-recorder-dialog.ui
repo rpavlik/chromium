@@ -1,0 +1,519 @@
+<!DOCTYPE UI><UI>
+<class>crRecorderDialog</class>
+<comment>A dialog to control the Chromium saveframe SPU.</comment>
+<author>David Thompson</author>
+<widget>
+    <class>QDialog</class>
+    <property stdset="1">
+        <name>name</name>
+        <cstring>crRecorderDialog</cstring>
+    </property>
+    <property stdset="1">
+        <name>geometry</name>
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>473</width>
+            <height>134</height>
+        </rect>
+    </property>
+    <property stdset="1">
+        <name>caption</name>
+        <string>Cr Recorder Dialog</string>
+    </property>
+    <property stdset="1">
+        <name>iconText</name>
+        <string>Chromium Recorder</string>
+    </property>
+    <property>
+        <name>layoutMargin</name>
+    </property>
+    <property>
+        <name>layoutSpacing</name>
+    </property>
+    <vbox>
+        <property stdset="1">
+            <name>margin</name>
+            <number>11</number>
+        </property>
+        <property stdset="1">
+            <name>spacing</name>
+            <number>6</number>
+        </property>
+        <widget>
+            <class>QLayoutWidget</class>
+            <property stdset="1">
+                <name>name</name>
+                <cstring>titleLayout</cstring>
+            </property>
+            <hbox>
+                <property stdset="1">
+                    <name>margin</name>
+                    <number>0</number>
+                </property>
+                <property stdset="1">
+                    <name>spacing</name>
+                    <number>6</number>
+                </property>
+                <widget>
+                    <class>QLabel</class>
+                    <property stdset="1">
+                        <name>name</name>
+                        <cstring>titleLabel</cstring>
+                    </property>
+                    <property stdset="1">
+                        <name>sizePolicy</name>
+                        <sizepolicy>
+                            <hsizetype>5</hsizetype>
+                            <vsizetype>1</vsizetype>
+                        </sizepolicy>
+                    </property>
+                    <property stdset="1">
+                        <name>font</name>
+                        <font>
+                            <family>LuciduxSans</family>
+                            <pointsize>24</pointsize>
+                            <italic>1</italic>
+                        </font>
+                    </property>
+                    <property stdset="1">
+                        <name>text</name>
+                        <string>Chromium Movie Recorder</string>
+                    </property>
+                    <property stdset="1">
+                        <name>textFormat</name>
+                        <enum>AutoText</enum>
+                    </property>
+                </widget>
+                <spacer>
+                    <property>
+                        <name>name</name>
+                        <cstring>framenumSpacer</cstring>
+                    </property>
+                    <property stdset="1">
+                        <name>orientation</name>
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property stdset="1">
+                        <name>sizeType</name>
+                        <enum>Expanding</enum>
+                    </property>
+                    <property>
+                        <name>sizeHint</name>
+                        <size>
+                            <width>20</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget>
+                    <class>QLabel</class>
+                    <property stdset="1">
+                        <name>name</name>
+                        <cstring>currentFrameLabel</cstring>
+                    </property>
+                    <property stdset="1">
+                        <name>font</name>
+                        <font>
+                            <family>Lucida Sans</family>
+                            <pointsize>14</pointsize>
+                        </font>
+                    </property>
+                    <property stdset="1">
+                        <name>text</name>
+                        <string>0000</string>
+                    </property>
+                    <property stdset="1">
+                        <name>alignment</name>
+                        <set>AlignBottom|AlignRight</set>
+                    </property>
+                    <property>
+                        <name>hAlign</name>
+                    </property>
+                    <property>
+                        <name>vAlign</name>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
+        <widget>
+            <class>QLayoutWidget</class>
+            <property stdset="1">
+                <name>name</name>
+                <cstring>controlHLayout</cstring>
+            </property>
+            <hbox>
+                <property stdset="1">
+                    <name>margin</name>
+                    <number>0</number>
+                </property>
+                <property stdset="1">
+                    <name>spacing</name>
+                    <number>6</number>
+                </property>
+                <widget>
+                    <class>QPushButton</class>
+                    <property stdset="1">
+                        <name>name</name>
+                        <cstring>exitButton</cstring>
+                    </property>
+                    <property stdset="1">
+                        <name>sizePolicy</name>
+                        <sizepolicy>
+                            <hsizetype>1</hsizetype>
+                            <vsizetype>1</vsizetype>
+                        </sizepolicy>
+                    </property>
+                    <property stdset="1">
+                        <name>maximumSize</name>
+                        <size>
+                            <width>64</width>
+                            <height>64</height>
+                        </size>
+                    </property>
+                    <property stdset="1">
+                        <name>font</name>
+                        <font>
+                            <family>Lucida Sans</family>
+                            <pointsize>14</pointsize>
+                        </font>
+                    </property>
+                    <property stdset="1">
+                        <name>text</name>
+                        <string></string>
+                    </property>
+                    <property stdset="1">
+                        <name>pixmap</name>
+                        <pixmap>image0</pixmap>
+                    </property>
+                    <property stdset="1">
+                        <name>flat</name>
+                        <bool>true</bool>
+                    </property>
+                    <property>
+                        <name>toolTip</name>
+                        <string>A red dot indicates the recorder is active. Two black bars indicate the recorder is paused.</string>
+                    </property>
+                </widget>
+                <widget>
+                    <class>QPushButton</class>
+                    <property stdset="1">
+                        <name>name</name>
+                        <cstring>saveEnabledButton</cstring>
+                    </property>
+                    <property stdset="1">
+                        <name>sizePolicy</name>
+                        <sizepolicy>
+                            <hsizetype>1</hsizetype>
+                            <vsizetype>1</vsizetype>
+                        </sizepolicy>
+                    </property>
+                    <property stdset="1">
+                        <name>minimumSize</name>
+                        <size>
+                            <width>48</width>
+                            <height>64</height>
+                        </size>
+                    </property>
+                    <property stdset="1">
+                        <name>maximumSize</name>
+                        <size>
+                            <width>64</width>
+                            <height>64</height>
+                        </size>
+                    </property>
+                    <property stdset="1">
+                        <name>font</name>
+                        <font>
+                            <family>Lucida Sans</family>
+                            <pointsize>14</pointsize>
+                        </font>
+                    </property>
+                    <property stdset="1">
+                        <name>text</name>
+                        <string></string>
+                    </property>
+                    <property stdset="1">
+                        <name>pixmap</name>
+                        <pixmap>image1</pixmap>
+                    </property>
+                    <property stdset="1">
+                        <name>toggleButton</name>
+                        <bool>true</bool>
+                    </property>
+                    <property stdset="1">
+                        <name>on</name>
+                        <bool>true</bool>
+                    </property>
+                    <property stdset="1">
+                        <name>toggleButton</name>
+                        <bool>true</bool>
+                    </property>
+                    <property stdset="1">
+                        <name>on</name>
+                        <bool>true</bool>
+                    </property>
+                    <property stdset="1">
+                        <name>flat</name>
+                        <bool>true</bool>
+                    </property>
+                    <property>
+                        <name>toolTip</name>
+                        <string>A red dot indicates the recorder is active. Two black bars indicate the recorder is paused.</string>
+                    </property>
+                </widget>
+                <widget>
+                    <class>QLayoutWidget</class>
+                    <property stdset="1">
+                        <name>name</name>
+                        <cstring>paramVLayout</cstring>
+                    </property>
+                    <vbox>
+                        <property stdset="1">
+                            <name>margin</name>
+                            <number>0</number>
+                        </property>
+                        <property stdset="1">
+                            <name>spacing</name>
+                            <number>6</number>
+                        </property>
+                        <widget>
+                            <class>QLayoutWidget</class>
+                            <property stdset="1">
+                                <name>name</name>
+                                <cstring>spinnerHLayout</cstring>
+                            </property>
+                            <hbox>
+                                <property stdset="1">
+                                    <name>margin</name>
+                                    <number>0</number>
+                                </property>
+                                <property stdset="1">
+                                    <name>spacing</name>
+                                    <number>6</number>
+                                </property>
+                                <widget>
+                                    <class>QLabel</class>
+                                    <property stdset="1">
+                                        <name>name</name>
+                                        <cstring>framenumLabel</cstring>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>font</name>
+                                        <font>
+                                            <family>Lucida Sans</family>
+                                            <pointsize>14</pointsize>
+                                        </font>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>text</name>
+                                        <string>Frame number</string>
+                                    </property>
+                                </widget>
+                                <widget>
+                                    <class>QSpinBox</class>
+                                    <property stdset="1">
+                                        <name>name</name>
+                                        <cstring>frameNumSpinner</cstring>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>enabled</name>
+                                        <bool>false</bool>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>font</name>
+                                        <font>
+                                            <family>Lucida Sans</family>
+                                            <pointsize>14</pointsize>
+                                        </font>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>maxValue</name>
+                                        <number>999999999</number>
+                                    </property>
+                                    <property>
+                                        <name>toolTip</name>
+                                        <string>The frame number may be set to a new starting value when the recorder is paused.</string>
+                                    </property>
+                                </widget>
+                                <widget>
+                                    <class>QLabel</class>
+                                    <property stdset="1">
+                                        <name>name</name>
+                                        <cstring>strideLabel</cstring>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>font</name>
+                                        <font>
+                                            <family>Lucida Sans</family>
+                                            <pointsize>14</pointsize>
+                                        </font>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>text</name>
+                                        <string>Stride</string>
+                                    </property>
+                                </widget>
+                                <widget>
+                                    <class>QSpinBox</class>
+                                    <property stdset="1">
+                                        <name>name</name>
+                                        <cstring>strideSpinner</cstring>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>enabled</name>
+                                        <bool>false</bool>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>font</name>
+                                        <font>
+                                            <family>Lucida Sans</family>
+                                            <pointsize>14</pointsize>
+                                        </font>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>maxValue</name>
+                                        <number>100</number>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>minValue</name>
+                                        <number>1</number>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>value</name>
+                                        <number>1</number>
+                                    </property>
+                                    <property>
+                                        <name>toolTip</name>
+                                        <string>A stride of &lt;i&gt;n&lt;/i&gt; means every &lt;i&gt;n&lt;/i&gt;th frame is saved.</string>
+                                    </property>
+                                </widget>
+                            </hbox>
+                        </widget>
+                        <widget>
+                            <class>QLayoutWidget</class>
+                            <property stdset="1">
+                                <name>name</name>
+                                <cstring>specEntryHLayout</cstring>
+                            </property>
+                            <hbox>
+                                <property stdset="1">
+                                    <name>margin</name>
+                                    <number>0</number>
+                                </property>
+                                <property stdset="1">
+                                    <name>spacing</name>
+                                    <number>6</number>
+                                </property>
+                                <widget>
+                                    <class>QLabel</class>
+                                    <property stdset="1">
+                                        <name>name</name>
+                                        <cstring>specLabel</cstring>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>font</name>
+                                        <font>
+                                            <family>Lucida Sans</family>
+                                            <pointsize>14</pointsize>
+                                        </font>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>text</name>
+                                        <string>Frame filename spec</string>
+                                    </property>
+                                </widget>
+                                <widget>
+                                    <class>QLineEdit</class>
+                                    <property stdset="1">
+                                        <name>name</name>
+                                        <cstring>specLineEdit</cstring>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>enabled</name>
+                                        <bool>false</bool>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>font</name>
+                                        <font>
+                                            <family>Lucida Sans</family>
+                                            <pointsize>14</pointsize>
+                                        </font>
+                                    </property>
+                                    <property stdset="1">
+                                        <name>text</name>
+                                        <string></string>
+                                    </property>
+                                    <property>
+                                        <name>toolTip</name>
+                                        <string>The file specification describes where movie frames will be saved.</string>
+                                    </property>
+                                </widget>
+                            </hbox>
+                        </widget>
+                    </vbox>
+                </widget>
+            </hbox>
+        </widget>
+    </vbox>
+</widget>
+<images>
+    <image>
+        <name>image0</name>
+        <data format="XPM.GZ" length="1241">789ccdd3bd0ac2301000e03d4f71f4b622a93f8883f8088aa3200e471574a882d641c477d73469924b223aa8782dcde5fae5681b5ae4b0984f212fc4a9a67a5742b9a523e4eb73555d96abc95564833ea8137a594764124a981df61b95e323c76e136a4a6a3a1aaaa3912fe28b06117f6090194c1973930fdc20eab2bdb6c8195245b2c64e7d6317bac134b2c695bc5167cc04ef1e1a7a62c8338e4896e11f9b77decb6f24799bd477f60937114aec977e22e424dc775dd57532b90c4d8b5cc8d8d8e5ae616c582b578cfe1de23d9226111f33b7b1b803627ad44e</data>
+    </image>
+    <image>
+        <name>image1</name>
+        <data format="XPM.GZ" length="1802">789cd3d7528808f055d0d2e72a2e492cc94c5648ce482c52d04a29cdcdad8c8eb5ade65232365230b15030523054d2e152d2534856f0cbcf4b05b195816ce5b4340320004b1100a36a46d510ad461902f0a85186039c6a9491017635ca24ab51c6a64699466a94a9a4865cf710e377a2c29098b8202a4ef588491b58c1a89a513538d5d45a7301002a913433</data>
+    </image>
+</images>
+<connections>
+    <connection>
+        <sender>saveEnabledButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>crRecorderDialog</receiver>
+        <slot>setRecording(bool)</slot>
+    </connection>
+    <connection>
+        <sender>exitButton</sender>
+        <signal>clicked()</signal>
+        <receiver>crRecorderDialog</receiver>
+        <slot>accept()</slot>
+    </connection>
+    <connection>
+        <sender>frameNumSpinner</sender>
+        <signal>valueChanged(int)</signal>
+        <receiver>crRecorderDialog</receiver>
+        <slot>changeFrameNum(int)</slot>
+    </connection>
+    <connection>
+        <sender>strideSpinner</sender>
+        <signal>valueChanged(int)</signal>
+        <receiver>crRecorderDialog</receiver>
+        <slot>changeFrameStride(int)</slot>
+    </connection>
+    <connection>
+        <sender>strideSpinner</sender>
+        <signal>valueChanged(int)</signal>
+        <receiver>crRecorderDialog</receiver>
+        <slot>changeFrameStride(int)</slot>
+    </connection>
+    <connection>
+        <sender>specLineEdit</sender>
+        <signal>textChanged(const QString&amp;)</signal>
+        <receiver>crRecorderDialog</receiver>
+        <slot>changeFrameSpec(const QString&amp;)</slot>
+    </connection>
+    <slot access="public">changeFrameNum(int)</slot>
+    <slot access="public">changeFrameSpec(const QString&amp;)</slot>
+    <slot access="public">changeFrameStride(int)</slot>
+    <slot access="public">setRecording(bool)</slot>
+</connections>
+<tabstops>
+    <tabstop>saveEnabledButton</tabstop>
+    <tabstop>frameNumSpinner</tabstop>
+    <tabstop>strideSpinner</tabstop>
+    <tabstop>specLineEdit</tabstop>
+    <tabstop>exitButton</tabstop>
+</tabstops>
+</UI>

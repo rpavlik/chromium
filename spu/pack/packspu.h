@@ -28,6 +28,10 @@ struct thread_info_t {
 	unsigned long id;
 	CRNetServer server;
 	CRPackBuffer buffer;
+	CRPackBuffer normBuffer;
+	CRPackBuffer BeginEndBuffer;
+	GLenum BeginEndMode;
+	int BeginEndState;
 	ContextInfo *currentContext;
 	CRPackContext *packer;
 	int writeback;
@@ -41,6 +45,7 @@ struct context_info_t {
 typedef struct {
 	int id;
 	int swap;
+	int emit_GATHER_POST_SWAPBUFFERS;
 	int ReadPixels;
 
 	char *name;

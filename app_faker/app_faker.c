@@ -579,6 +579,25 @@ void do_it( char *argv[] )
 	if ( crGetenv( "LD_LIBRARY64_PATH" ) )
 		prefix_env_var( tmpdir, "LD_LIBRARY64_PATH" );
 #endif
+#if defined(OSF1)
+          if (crGetenv( "_RLD_LIST" ) ) {
+                      unsigned long len = crStrlen( tmpdir ) + 9;
+                          char *buf = (char *) crAlloc( len );
+                              sprintf( buf, "%s/libGL.so", tmpdir );
+                                  prefix_env_var( buf, "_RLD_LIST" );
+                                      crFree( buf );
+                                        }
+            else {
+                        unsigned long len = crStrlen( tmpdir ) + 18;
+                            char *buf = (char *) crAlloc( len );
+                                sprintf( buf, "%s/libGL.so:DEFAULT", tmpdir );
+                                    crSetenv( "_RLD_LIST", buf );
+                                        crFree( buf );
+                                        
+                                          }
+
+              debug( "_RLD_LIST=\"%s\"\n", crGetenv( "_RLD_LIST" ) );
+#endif
 
     debug( "contacting mothership to determine SPU directory \n");
 	if (crMothershipGetFakerParam( mothership_conn, response, "spu_dir" ) && crStrlen(response) > 0)

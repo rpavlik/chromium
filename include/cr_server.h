@@ -49,6 +49,7 @@ typedef struct {
 
 	int useL2;
 	int mtu;
+	int buffer_size;
 	char protocol[1024];
 
 	unsigned int muralWidth, muralHeight;
@@ -69,6 +70,8 @@ typedef struct {
 	unsigned int maxBarrierCount;
 	unsigned int clearCount;
 	int only_swap_once;
+	int localTileSpec;
+	GLfloat alignment_matrix[16];
 } CRServer;
 
 

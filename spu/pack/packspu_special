@@ -30,3 +30,5 @@ CreateContext
 crCreateWindow
 MakeCurrent
 DestroyContext
+Begin
+End

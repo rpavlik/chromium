@@ -17,7 +17,7 @@ void crDevnullWriteExact( CRConnection *conn, void *buf, unsigned int len )
 
 void *crDevnullAlloc( CRConnection *conn )
 {
-	return crAlloc( conn->mtu );
+	return crAlloc( conn->buffer_size );
 }
 
 void crDevnullSingleRecv( CRConnection *conn, void *buf, unsigned int len )

@@ -202,7 +202,6 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreV(GLuint name)
 	tilesortspuShipBuffers();
 }
 
-
 static GLuint
 translate_id(const GLvoid *lists, GLenum type, GLuint i)
 {

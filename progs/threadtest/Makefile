@@ -17,4 +17,8 @@ ifeq ($(ARCH), SunOS)
 LDFLAGS += -lX11
 endif
 
+ifeq ($(ARCH), OSF1)
+LDFLAGS += -lX11 -lpthread
+endif
+
 include ${TOP}/cr.mk

@@ -102,6 +102,8 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 	render_spu.cursorY = 0;
 	render_spu.use_L2 = 0;
 
+	render_spu.gather_conns = NULL;
+
 	return &render_functions;
 }
 
@@ -109,6 +111,8 @@ void renderSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(render_spu.self) );
 	crSPUCopyDispatchTable( &(render_spu.self), self );
+
+	render_spu.server = (CRServer *)(self->server);
 }
 
 int renderSPUCleanup(void)

@@ -1,0 +1,4 @@
+recorderdialog.h
+recorderdialog.cxx
+moc_recorderdialog.cxx
+moc_recorderdialogimpl.cxx

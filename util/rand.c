@@ -71,3 +71,10 @@ float crRandFloat(float min, float max)
 	double t = genrand();
 	return (float) (t*min + (1-t)*max);
 }
+
+/* return a random integer in [min, max] (inclusive). */
+int crRandInt(int min, int max)
+{
+	double t = genrand();
+	return min + (int) (t * (max - min + 1));
+}

@@ -23,9 +23,17 @@ static void __setDefaults( void )
 }
 
 
-/* No SPU options yet.
+void set_emit( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(pack_spu.emit_GATHER_POST_SWAPBUFFERS) );
+}
+
+/* No SPU options yet. Well.. not really.. 
  */
 SPUOptions packSPUOptions[] = {
+  { "emit_GATHER_POST_SWAPBUFFERS", CR_BOOL, 1, "0", NULL, NULL, 
+     "Emit a parameteri after SwapBuffers", (SPUOptionCB)set_emit },
+
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
@@ -62,6 +70,10 @@ void packspuGatherConfiguration( const SPU *child_spu )
 	}
 
 	pack_spu.buffer_size = crMothershipGetMTU( conn );
+
+	/* get a buffer which can hold one big big opcode (counter computing
+	 * against packer/pack_buffer.c) */
+	pack_spu.buffer_size = ((((pack_spu.buffer_size - sizeof(CRMessageOpcodes)) * 5 + 3) / 4 + 0x03) & ~0x03) + sizeof(CRMessageOpcodes);
 
 	crSPUPropogateGLLimits( conn, pack_spu.id, child_spu, &pack_spu.limits );
 

@@ -88,6 +88,15 @@ void PACKSPU_APIENTRY packspu_SwapBuffers( GLint window, GLint flags )
 		}
 		break;
 	}
+
+	/* want to emit a parameteri here */
+	if (pack_spu.emit_GATHER_POST_SWAPBUFFERS)
+	{
+		if (pack_spu.swap)
+			crPackChromiumParameteriCRSWAP(GL_GATHER_POST_SWAPBUFFERS_CR, 1);
+		else
+			crPackChromiumParameteriCR(GL_GATHER_POST_SWAPBUFFERS_CR, 1);
+	}
 }
 
 #endif

@@ -4,7 +4,10 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
+
 #ifndef WINDOWS
 #include <unistd.h>
 #endif
@@ -12,46 +15,87 @@
 
 #include "cr_mothership.h"
 #include "cr_string.h"
+#include "cr_mem.h"
 
-#include <stdio.h>
-
-static void __setDefaults( void )
+static void
+__setDefaults(void)
 {
-    saveframe_spu.framenum = 0;
-    saveframe_spu.buffer = NULL;
+	saveframe_spu.framenum = 0;
+	saveframe_spu.buffer = NULL;
+	saveframe_spu.spec = NULL;
+
+#ifdef JPEG
+	saveframe_spu.cinfo.err = jpeg_std_error(&saveframe_spu.jerr);
+	jpeg_create_compress(&saveframe_spu.cinfo);
+#endif
 }
 
-void set_stride( void *foo, const char *response ) 
+void
+set_stride(void *foo, const char *response)
 {
-   sscanf(response, "%d", &saveframe_spu.stride);
+	sscanf(response, "%d", &saveframe_spu.stride);
 }
 
-void set_binary( void *foo, const char *response ) 
+void
+set_binary(void *foo, const char *response)
 {
-   sscanf(response, "%d", &saveframe_spu.binary);
+	sscanf(response, "%d", &saveframe_spu.binary);
 }
 
-void set_basename( void *foo, const char *response ) 
+void
+set_spec(void *foo, const char *response)
 {
-   saveframe_spu.basename = crStrdup(response);
+	if (saveframe_spu.spec && (!crStrcmp(response, "frame%d.ppm")))
+		return;											/* Specified basename and only default spec. */
+
+	if (saveframe_spu.spec)
+		crFree(saveframe_spu.spec);
+
+	saveframe_spu.spec = crStrdup(response);
 }
 
-void set_single( void *foo, const char *response ) 
+void
+set_basename(void *foo, const char *response)
 {
-   sscanf(response, "%ld", &saveframe_spu.single);
+	int rl = crStrlen(response);
+	if (rl)
+	{
+		saveframe_spu.spec = crAlloc(rl + 7);
+		/* This relies on saveframe_spu.format being initialized first! */
+		sprintf(saveframe_spu.spec, "%s%%d.%s", response, saveframe_spu.format);
+	}
 }
 
-void set_geometry( void *foo, const char *response ) 
+void
+set_format(void *foo, const char *response)
 {
-   int x,y,w,h;
-   sscanf( response, "%d %d %d %d", &x, &y, &w, &h );
-   saveframe_spu.x = x;
-   saveframe_spu.y = y;
-   saveframe_spu.width = w;
-   saveframe_spu.height = h;
+	saveframe_spu.format = crStrdup(response);
+}
 
-   if ((saveframe_spu.width != -1) && (saveframe_spu.height != -1))
-      ResizeBuffer();
+void
+set_single(void *foo, const char *response)
+{
+	sscanf(response, "%d", &saveframe_spu.single);
+}
+
+void
+set_geometry(void *foo, const char *response)
+{
+	int x, y, w, h, result;
+	result = sscanf(response, "%d, %d, %d, %d", &x, &y, &w, &h);
+	saveframe_spu.x = result > 0 ? x : 0;
+	saveframe_spu.y = result > 1 ? y : 0;
+	saveframe_spu.width = result > 2 ? w : -1;
+	saveframe_spu.height = result > 3 ? h : -1;
+
+	if ((saveframe_spu.width != -1) && (saveframe_spu.height != -1))
+		ResizeBuffer();
+}
+
+void
+set_enabled(void *foo, const char *response)
+{
+	sscanf(response, "%d", &saveframe_spu.enabled);
 }
 
 
@@ -59,45 +103,60 @@ void set_geometry( void *foo, const char *response )
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions saveframeSPUOptions[] = {
+	{"stride", CR_INT, 1, "1", "1", NULL,
+	 "Filename Number Stride", (SPUOptionCB) set_stride},
 
-   { "basename", CR_STRING, 1, "frame", NULL, NULL, 
-     "Filename Basename", (SPUOptionCB)set_basename },
+	/* Do not move "format" below "basename"... set_basename uses format */
+	{"format", CR_ENUM, 1, "ppm",
+#ifdef JPEG
+	 "'ppm', 'jpeg'",
+#else
+	 "'ppm'",
+#endif
+	 NULL,
+	 "Image Format", (SPUOptionCB) set_format},
 
-   { "stride", CR_INT, 1, "1", "1", NULL, 
-     "Filename Number Stride", (SPUOptionCB)set_stride },
+	{"basename", CR_STRING, 1, "", NULL, NULL,
+	 "File Basename (obsolete, use spec)", (SPUOptionCB) set_basename},
 
-   { "single", CR_INT, 1, "-1", "-1", NULL, 
-     "Single Frame Number", (SPUOptionCB)set_single },
+	{"spec", CR_STRING, 1, "frame%d.ppm", NULL, NULL,
+	 "Filename Specification", (SPUOptionCB) set_spec},
 
-   { "binary", CR_BOOL, 1, "1", NULL, NULL,
-     "Binary PPM format", (SPUOptionCB)set_binary },
+	{"single", CR_INT, 1, "-1", "-1", NULL,
+	 "Single Frame Number", (SPUOptionCB) set_single},
 
-   { "geometry", CR_INT, 4, "0, 0, 100, 100", "0, 0, 1, 1", NULL,
-     "Geometry (x, y, w, h)", (SPUOptionCB)set_geometry },
+	{"binary", CR_BOOL, 1, "1", NULL, NULL,
+	 "Binary PPM format", (SPUOptionCB) set_binary},
 
-   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+	{"geometry", CR_INT, 4, "0, 0, -1, -1", "0, 0, 1, 1", NULL,
+	 "Geometry (x, y, w, h)", (SPUOptionCB) set_geometry},
 
+	{"enabled", CR_INT, 1, "1", "1", NULL,
+	 "Start Enabled", (SPUOptionCB) set_enabled},
+
+	{NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL},
 };
 
-void saveframespuGatherConfiguration( void )
+void
+saveframespuGatherConfiguration(void)
 {
-    CRConnection *conn;
+	CRConnection *conn;
 
-    __setDefaults();
+	__setDefaults();
 
-    /* Connect to the mothership and identify ourselves. */
+	/* Connect to the mothership and identify ourselves. */
 
-    conn = crMothershipConnect();
-    if (!conn)
-    {
-        /* The mothership isn't running.  Some SPU's can recover gracefully,
-         * some should issue an error here. */
-         	crSPUSetDefaultParams( &saveframe_spu, saveframeSPUOptions );
-        return;
-    }
-    crMothershipIdentifySPU(conn, saveframe_spu.id);
+	conn = crMothershipConnect();
+	if (!conn)
+	{
+		/* The mothership isn't running.  Some SPU's can recover gracefully,
+		 * some should issue an error here. */
+		crSPUSetDefaultParams(&saveframe_spu, saveframeSPUOptions);
+		return;
+	}
+	crMothershipIdentifySPU(conn, saveframe_spu.id);
 
-    crSPUGetMothershipParams( conn, &saveframe_spu, saveframeSPUOptions );
+	crSPUGetMothershipParams(conn, &saveframe_spu, saveframeSPUOptions);
 
-    crMothershipDisconnect(conn);
+	crMothershipDisconnect(conn);
 }

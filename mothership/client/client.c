@@ -19,8 +19,6 @@
 CRConnection *crMothershipConnect( void )
 {
 	char *mother_server = NULL;
-	int   mother_port = MOTHERPORT;
-	char mother_url[1024];
 
 	crNetInit( NULL, NULL );
 
@@ -31,9 +29,7 @@ CRConnection *crMothershipConnect( void )
 		mother_server = "localhost";
 	}
 
-	sprintf( mother_url, "%s:%d", mother_server, mother_port );
-
-	return crNetConnectToServer( mother_server, 10000, 8096, 0 );
+	return crNetConnectToServer( mother_server, MOTHERPORT, 8096, 0 );
 }
 
 void crMothershipDisconnect( CRConnection *conn )
@@ -152,53 +148,43 @@ void crMothershipReset( CRConnection *conn )
 void crMothershipIdentifyFaker( CRConnection *conn, char *response )
 {
 	char hostname[1024];
-	char *temp;
 	if ( crGetHostname( hostname, sizeof(hostname) ) )
 	{
 		crError( "Couldn't get my own hostname?" );
 	}
-	temp = crStrchr( hostname, '.' );
-	if (temp) *temp = '\0';
 	INSIST( crMothershipSendString( conn, response, "faker %s", hostname ));
 }
 
 void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_id )
 {
 	char hostname[1024];
-	char *temp;
 	if ( crGetHostname( hostname, sizeof(hostname) ) )
 	{
 		crError( "Couldn't get my own hostname?" );
 	}
-	temp = crStrchr( hostname, '.' );
-	if (temp) *temp = '\0';
 	INSIST( crMothershipSendString( conn, response, "opengldll %s %s", app_id, hostname ));
 }
 
 void crMothershipIdentifyServer( CRConnection *conn, char *response )
 {
 	char hostname[1024];
-	char *temp;
 	if ( crGetHostname( hostname, sizeof(hostname) ) )
 	{
 		crError( "Couldn't get my own hostname?" );
 	}
-	temp = crStrchr( hostname, '.' );
-	if (temp) *temp = '\0';
 	INSIST( crMothershipSendString( conn, response, "server %s", hostname ));
 }
 
 
 void crMothershipSetParam( CRConnection *conn, const char *param, const char *value )
 {
-	(void) crMothershipSendString( conn, NULL, "SetParam %s %s", param, value );
+	(void) crMothershipSendString( conn, NULL, "setparam %s %s", param, value );
 }
 
 int crMothershipGetParam( CRConnection *conn, const char *param, char *response )
 {
-	return crMothershipSendString( conn, response, "GetParam %s", param );
+	return crMothershipSendString( conn, response, "getparam %s", param );
 }
-
 
 int crMothershipGetMTU( CRConnection *conn )
 {
@@ -207,6 +193,11 @@ int crMothershipGetMTU( CRConnection *conn )
 	INSIST( crMothershipGetParam( conn, "MTU", response ) );
 	sscanf( response, "%d", &mtu );
 	return mtu;
+}
+
+int crMothershipGetRank( CRConnection *conn, char *response )
+{
+	return crMothershipSendString( conn, response, "rank" );
 }
 
 void crMothershipGetClients( CRConnection *conn, char *response )
@@ -224,9 +215,24 @@ int crMothershipGetTiles( CRConnection *conn, char *response, int server_num )
 	return crMothershipSendString( conn, response, "tiles %d", server_num );
 }
 
+int crMothershipGetDisplays( CRConnection *conn, char *response )
+{
+	return crMothershipSendString( conn, response, "displays");
+}
+
+int crMothershipGetDisplayTiles( CRConnection *conn, char *response, int server_num )
+{
+	return crMothershipSendString( conn, response, "display_tiles %d", server_num );
+}
+
 int crMothershipGetServerTiles( CRConnection *conn, char *response )
 {
 	return crMothershipSendString( conn, response, "servertiles" );
+}
+
+int crMothershipGetServerDisplayTiles( CRConnection *conn, char *response )
+{
+	return crMothershipSendString( conn, response, "serverdisplaytiles" );
 }
 
 int crMothershipRequestTileLayout( CRConnection *conn, char *response,

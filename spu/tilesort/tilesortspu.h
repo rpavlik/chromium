@@ -30,6 +30,8 @@
 
 typedef struct {
 	int num_extents;
+	int display_ndx[CR_MAX_EXTENTS];
+	GLfloat world_extents[CR_MAX_EXTENTS][8]; /* x1, y1, x2, y2, x3, y3, ... */
 	GLrecti extents[CR_MAX_EXTENTS];
 	CRContext *context[CR_MAX_CONTEXTS];
 	GLint serverCtx[CR_MAX_CONTEXTS];
@@ -45,6 +47,14 @@ typedef struct {
 	unsigned char *beginOp, *beginData;
 } TileSortSPUPinchState;
 
+typedef enum {
+	BROADCAST,       /* send all geometry to all servers */
+	TEST_ALL_TILES,  /* test bounding box against all tiles */
+	UNIFORM_GRID,    /* all columns are equal width, all rows are equal height */
+	NON_UNIFORM_GRID,/* columns and rows are of varying width, height */
+	RANDOM,          /* randomly bucket geometry */
+	WARPED_GRID      /* warped tiles (Karl Rasche) */
+} TileSortBucketMode;
 
 typedef struct thread_info_t ThreadInfo;
 typedef struct context_info_t ContextInfo;
@@ -67,6 +77,15 @@ struct context_info_t {
 	CRContext *State;
 };
 
+typedef struct
+{
+	GLint id, width, height;
+	GLint num_tiles;
+	
+	GLfloat correct[9];		
+	GLfloat correct_inv[9];
+} display_t;
+
 typedef struct {
 	int id;
 
@@ -83,13 +102,17 @@ typedef struct {
 	/* config options */
 	int splitBeginEnd;
 	int broadcast;
-	int optimizeBucketing;
 	int drawBBOX;
 	float bboxLineWidth;
 	int syncOnFinish, syncOnSwap;
 	int scaleToMuralSize;
+	int localTileSpec;
+	int emit_GATHER_POST_SWAPBUFFERS;
+	int optimizeBucketing;
 
-	int swap;
+	int swap;  /* byte swapping */
+
+	TileSortBucketMode bucketMode;
 
 	float viewportCenterX, viewportCenterY;
 	float halfViewportWidth, halfViewportHeight;
@@ -104,8 +127,11 @@ typedef struct {
 	float widthScale, heightScale; /* muralSize / windowSize */
 
 	unsigned int MTU;
+	unsigned int buffer_size;
 	int num_servers;
 	TileSortSPUServer *servers;
+	display_t *displays;
+	double world_bbox[4];
 
 #ifdef WINDOWS
 	HDC client_hdc;

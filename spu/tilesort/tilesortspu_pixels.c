@@ -43,11 +43,11 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 		return;
 	}
 
-	if (crImageSize(format, type, width, height) > thread->net[0].conn->mtu ) {
+	if (crImageSize(format, type, width, height) > tilesort_spu.MTU ) {
 		crError("DrawPixels called with insufficient MTU size\n"
 			"Needed %d, but currently MTU is set at %d\n", 
 			crImageSize(format, type, width, height), 
-			thread->net[0].conn->mtu );
+			tilesort_spu.MTU );
 		return;
 	}
 
@@ -310,11 +310,11 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 
 		/* Munge the per server packing structures */
 		data_ptr = pack->data_current; 
-		if (data_ptr + len > pack->data_end ) 
+		if (!crPackCanHoldOpcode( 1, len ) )
  		{ 
 			tilesortspuFlush( thread );
 			data_ptr = pack->data_current; 
-			CRASSERT( data_ptr + len <= pack->data_end ); 
+			CRASSERT( crPackCanHoldOpcode( 1, len ) );
 		}
 		pack->data_current += len;
 		WRITE_DATA( 0,  GLint,  new_x );

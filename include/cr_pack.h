@@ -29,9 +29,13 @@ extern "C" {
 typedef struct {
 	void          *pack;
 	unsigned int   size;
+	unsigned int   mtu;
 	unsigned char *data_start, *data_current, *data_end;
 	unsigned char *opcode_start, *opcode_current, *opcode_end;
 	GLboolean geometry_only;  /* just used for debugging */
+	GLboolean holds_BeginEnd;
+	GLboolean in_BeginEnd;
+	GLboolean canBarf;
 } CRPackBuffer;
 
 typedef void (*CRPackFlushFunc)(void *arg);
@@ -58,8 +62,8 @@ CRPackContext *crPackGetContext( void );
 
 void crPackSetBuffer( CRPackContext *pc, CRPackBuffer *buffer );
 void crPackGetBuffer( CRPackContext *pc, CRPackBuffer *buffer );
-void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int extra );
-void crPackResetPointers( CRPackContext *pc, int extra );
+void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int mtu );
+void crPackResetPointers( CRPackContext *pc );
 void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff );
 void crPackFlushArg( CRPackContext *pc, void *flush_arg );
 void crPackSendHugeFunc( CRPackContext *pc, CRPackSendHugeFunc shf );
@@ -71,6 +75,8 @@ void crPackResetBBOX( CRPackContext *pc );
 
 void crPackAppendBuffer( CRPackBuffer *buffer );
 void crPackAppendBoundedBuffer( CRPackBuffer *buffer, GLrecti *bounds );
+int crPackCanHoldOpcode( int num_opcode, int num_data );
+int crPackCanHoldBuffer( CRPackBuffer *buffer );
 
 #if defined(LINUX) || defined(WINDOWS)
 #define CR_UNALIGNED_ACCESS_OKAY
@@ -87,24 +93,31 @@ void crNetworkPointerWrite( CRNetworkPointer *, void * );
 
 void SanityCheck(void);
 
-#define GET_BUFFERED_POINTER( pc, len ) \
+#define GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len ) \
   THREADASSERT( pc ); \
   data_ptr = pc->buffer.data_current; \
-  if (data_ptr + (len) > pc->buffer.data_end ) \
+  if ( !crPackCanHoldOpcode( 1, (len) ) ) \
   { \
     pc->Flush( pc->flush_arg ); \
     data_ptr = pc->buffer.data_current; \
-    CRASSERT( data_ptr + (len) <= pc->buffer.data_end ); \
+    CRASSERT(crPackCanHoldOpcode( 1, (len) ) ); \
   } \
   pc->buffer.data_current += (len)
 
+#define GET_BUFFERED_POINTER( pc, len ) \
+  if ( pc->buffer.holds_BeginEnd && ! pc->buffer.in_BeginEnd ) { \
+	pc->Flush( pc->flush_arg ); \
+	pc->buffer.holds_BeginEnd = 0; \
+  } \
+  GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len )
+
 #define GET_BUFFERED_COUNT_POINTER( pc, len ) \
   data_ptr = pc->buffer.data_current; \
-  if (data_ptr + (len) > pc->buffer.data_end ) \
+  if ( !crPackCanHoldOpcode( 1, (len) ) ) \
   { \
     pc->Flush( pc->flush_arg ); \
     data_ptr = pc->buffer.data_current; \
-    CRASSERT( data_ptr + (len) <= pc->buffer.data_end ); \
+    CRASSERT( crPackCanHoldOpcode( 1, (len) ) ); \
   } \
   pc->current.vtx_count++; \
   pc->buffer.data_current += (len)

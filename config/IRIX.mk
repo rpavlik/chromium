@@ -21,7 +21,7 @@ CFLAGS            += -n32 -DIRIX -woff 1174,3201,1209,1552
 C_RELEASE_FLAGS   += -O2 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
-LDFLAGS           += -n32 -lm -ignore_unresolved
+LDFLAGS           += -n32 -ignore_unresolved
 LD_RELEASE_FLAGS  +=
 LD_DEBUG_FLAGS    +=
 
@@ -61,3 +61,11 @@ MPI_CC = cc
 MPI_CXX = CC
 MPI_LDFLAGS = -lmpi
 SLOP += so_locations
+
+QT=0
+ifeq ($(QT),1)
+    QTDIR=/insert/path/to/qt/here/qt-2.3.1
+    MOC=$(QTDIR)/bin/moc
+    UIC=$(QTDIR)/bin/uic
+endif
+

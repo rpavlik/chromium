@@ -33,8 +33,14 @@ int crMothershipSetSPUParam( CRConnection *conn, const char *param, const char *
 int crMothershipGetNamedSPUParam( CRConnection *conn, int spu_id, const char *param, char *response);
 void crMothershipGetClients( CRConnection *conn, char *response );
 void crMothershipGetServers( CRConnection *conn, char *response );
+int crMothershipGetRank( CRConnection *conn, char *response );
 int crMothershipGetMTU( CRConnection *conn );
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num );
+
+int crMothershipGetDisplays( CRConnection *conn, char *response );
+int crMothershipGetDisplayTiles( CRConnection *conn, char *response, int server_num );
+int crMothershipGetServerDisplayTiles( CRConnection *conn, char *response );
+
 int crMothershipGetServerTiles( CRConnection *conn, char *response );
 int crMothershipRequestTileLayout( CRConnection *conn, char *response, int muralWidth, int muralHeight );
 

@@ -11,6 +11,7 @@
 #include "cr_error.h"
 #include "cr_glstate.h"
 #include "cr_string.h"
+#include "cr_mem.h"
 #include <signal.h>
 #include <stdlib.h>
 
@@ -64,6 +65,13 @@ int main( int argc, char *argv[] )
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
 
+	/* default alignment is the identity */
+	crMemset(cr_server.alignment_matrix, 0, 16*sizeof(GLfloat));
+	cr_server.alignment_matrix[0]  = 1;
+	cr_server.alignment_matrix[5]  = 1;
+	cr_server.alignment_matrix[10] = 1;
+	cr_server.alignment_matrix[15] = 1;
+
 	crServerGatherConfiguration(mothership);
 
 	for (j = 0 ; j < cr_server.numClients ; j++)
@@ -92,6 +100,7 @@ int main( int argc, char *argv[] )
  */
 void crServerInitializeTiling(void)
 {
+
 	if (cr_server.numExtents > 0)
 	{
 		unsigned int j;
@@ -101,6 +110,7 @@ void crServerInitializeTiling(void)
 		}
 		cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
 		cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.clients[0].baseProjection) );
+		
 		if (cr_server.optimizeBucket)
 		{
 			crServerFillBucketingHash();

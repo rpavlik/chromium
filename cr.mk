@@ -68,6 +68,14 @@ LDFLAGS += -lm
 endif
 endif
 
+ifdef QT
+moc_%.o: moc_%.cxx
+moc_%.cxx: %.h
+	@echo "Generating $@ from $<"
+	@$(MOC) $< -o $@
+endif
+
+
 OBJDIR := $(BUILDDIR)/$(ARCH)
 DEPDIR := $(BUILDDIR)/$(ARCH)/dependencies
 BINDIR := $(TOP)/bin/$(ARCH)

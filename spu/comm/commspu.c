@@ -23,6 +23,8 @@ void COMMSPU_APIENTRY commSwapBuffers( GLint window, GLint flags )
 	comm_spu.msg->header.type = CR_MESSAGE_OOB;
 	comm_spu.msg->frame_counter = frame_counter;
 	crNetSend( comm_spu.peer_send, NULL, comm_spu.msg, comm_spu.num_bytes );
+	if (comm_spu.mtu > comm_spu.peer_send->mtu)
+		comm_spu.mtu = comm_spu.peer_send->mtu;
 
 	crNetGetMessage( comm_spu.peer_recv, &incoming_msg );
 	ping = (CommSPUPing *) incoming_msg;

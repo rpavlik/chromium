@@ -31,16 +31,25 @@
 
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) /* 2MB */
 
+/* Allow up to four processes per node. . . */
+#define CR_QUADRICS_LOWEST_RANK  0
+#define CR_QUADRICS_HIGHEST_RANK 3
+
 static struct {
 	int                  initialized; /* flag */
 	CRNetReceiveFunc     recv;        /* what to do with arriving packets */
 	CRNetCloseFunc       close;       /* what to do when a client goes down */
 	int                  use_gm;      /* count the number of people using GM */
+  int                  use_teac;    /* count the number of people using teac */
+  int                  use_tcscomm; /* count the number of people using tcscomm 
+*/
+
 	int                  num_clients; /* count the number of total clients (unused?) */
 	CRBufferPool         message_list_pool;
 #ifdef CHROMIUM_THREADSAFE
 	CRmutex		     mutex;
 #endif
+  int                  my_rank;
 } cr_net;
 
 /* This the common interface that every networking type should export in order 
@@ -56,10 +65,23 @@ static struct {
  * networking types here. */
 
 NETWORK_TYPE( TCPIP );
+NETWORK_TYPE( UDPTCPIP );
 NETWORK_TYPE( Devnull );
 NETWORK_TYPE( File );
 #ifdef GM_SUPPORT
 NETWORK_TYPE( Gm );
+#endif
+#ifdef TEAC_SUPPORT
+NETWORK_TYPE( Teac );
+extern void crTeacSetRank( int );
+extern void crTeacSetContextRange( int, int );
+extern void crTeacSetNodeRange( const char *, const char * );
+#endif
+#ifdef TCSCOMM_SUPPORT
+NETWORK_TYPE( Tcscomm );
+extern void crTcscommSetRank( int );
+extern void crTcscommSetContextRange( int, int );
+extern void crTcscommSetNodeRange( const char *, const char * );
 #endif
 
 /* Clients call this function to connect to a server.  The "server" argument is
@@ -86,11 +108,25 @@ CRConnection *crNetConnectToServer( char *server,
 
 	/* Tear the URL apart into relevant portions. */
 	if ( !crParseURL( server, protocol, hostname, &port, default_port ) )
-	{
-		crError( "Malformed URL: \"%s\"", server );
+	  {
+	    crError( "Malformed URL: \"%s\"", server );
+	  }
+	
+	if ( !crStrcmp( protocol, "quadrics" ) ||
+	     !crStrcmp( protocol, "quadrics-tcscomm" ) ) {
+	  /* For Quadrics protocols, treat "port" as "rank" */
+	  if ( port < CR_QUADRICS_HIGHEST_RANK ) {
+	    crWarning( "Invalid crserver rank, %d, defaulting to %d\n",
+		       port, CR_QUADRICS_LOWEST_RANK );
+	    port = CR_QUADRICS_LOWEST_RANK;
+	  }
+	  crDebug( "Connecting to server %s:%d via Quadrics",
+		   hostname, port );
 	}
-	crDebug( "Connecting to server %s on port %d, with protocol %s", 
-			hostname, port, protocol );
+	else {
+	  crDebug( "Connecting to server %s on port %d, with protocol %s", 
+		   hostname, port, protocol );
+	}
 
 	conn = (CRConnection *) crCalloc( sizeof(*conn) );
 	if (!conn)
@@ -106,14 +142,22 @@ CRConnection *crNetConnectToServer( char *server,
 	conn->port               = port;
 	conn->Alloc              = NULL;                 /* How do we allocate buffers to send? */
 	conn->Send               = NULL;                 /* How do we send things? */
+	conn->Barf               = NULL;                 /* How do we barf things? */
 	conn->Free               = NULL;                 /* How do we free things? */
 	conn->tcp_socket         = 0;
+	conn->udp_socket         = 0;
+	crMemset(&conn->remoteaddr, 0, sizeof(conn->remoteaddr));
 	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
+	conn->buffer_size        = mtu;
 	conn->broker             = broker;
 	conn->swap               = 0;
 	conn->endianness         = crDetermineEndianness();
 	conn->actual_network     = 0;
+	conn->teac_id            = -1;
+	conn->teac_rank          = port;
+	conn->tcscomm_id         = -1;
+	conn->tcscomm_rank       = port;
 
 	conn->multi.len = 0;
 	conn->multi.max = 0;
@@ -121,6 +165,9 @@ CRConnection *crNetConnectToServer( char *server,
 
 	conn->messageList        = NULL;
 	conn->messageTail        = NULL;
+
+	conn->userbuf            = NULL;
+	conn->userbuf_len        = 0;
 
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
 	
@@ -148,10 +195,31 @@ CRConnection *crNetConnectToServer( char *server,
 		crGmConnection( conn );
 	}
 #endif
+#ifdef TEAC_SUPPORT
+  else if ( !crStrcmp( protocol, "quadrics" ) )
+    {
+      cr_net.use_teac++;
+      crTeacInit( cr_net.recv, cr_net.close, mtu );
+      crTeacConnection( conn );
+    }
+#endif
+#ifdef TCSCOMM_SUPPORT
+  else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
+    {
+      cr_net.use_tcscomm++;
+      crTcscommInit( cr_net.recv, cr_net.close, mtu );
+      crTcscommConnection( conn );
+    }
+#endif
 	else if ( !crStrcmp( protocol, "tcpip" ) )
 	{
 		crTCPIPInit( cr_net.recv, cr_net.close, mtu );
 		crTCPIPConnection( conn );
+	}
+	else if ( !crStrcmp( protocol, "udptcpip" ) )
+	{
+		crUDPTCPIPInit( cr_net.recv, cr_net.close, mtu );
+		crUDPTCPIPConnection( conn );
 	}
 	else
 	{
@@ -212,14 +280,22 @@ CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsi
 	conn->port               = port;
 	conn->Alloc              = NULL;    /* How do we allocate buffers to send? */
 	conn->Send               = NULL;    /* How do we send things? */
+	conn->Barf               = NULL;    /* How do we barf things? */
 	conn->Free               = NULL;    /* How do we receive things? */
 	conn->tcp_socket         = 0;
+	conn->udp_socket         = 0;
+	crMemset(&conn->remoteaddr, 0, sizeof(conn->remoteaddr));
 	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
+	conn->buffer_size        = mtu;
 	conn->broker             = broker;
 	conn->swap               = 0;
 	conn->endianness         = crDetermineEndianness();
 	conn->actual_network     = 0;
+	conn->teac_id            = -1;
+	conn->teac_rank          = -1;
+	conn->tcscomm_id         = -1;
+	conn->tcscomm_rank       = -1;
 
 	conn->multi.len = 0;
 	conn->multi.max = 0;
@@ -227,6 +303,10 @@ CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsi
 
 	conn->messageList        = NULL;
 	conn->messageTail        = NULL;
+	
+	conn->userbuf            = NULL;
+	conn->userbuf_len        = 0;
+	
 
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
 	
@@ -255,10 +335,31 @@ CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsi
 		crGmConnection( conn );
 	}
 #endif
+#ifdef TEAC_SUPPORT
+  else if ( !crStrcmp( protocol, "quadrics" ) )
+    {
+      cr_net.use_teac++;
+      crTeacInit( cr_net.recv, cr_net.close, mtu );
+      crTeacConnection( conn );
+    }
+#endif
+#ifdef TCSCOMM_SUPPORT
+  else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
+    {
+      cr_net.use_tcscomm++;
+      crTcscommInit( cr_net.recv, cr_net.close, mtu );
+      crTcscommConnection( conn );
+    }
+#endif
 	else if ( !crStrcmp( protocol, "tcpip" ) )
 	{
 		crTCPIPInit( cr_net.recv, cr_net.close, mtu );
 		crTCPIPConnection( conn );
+	}
+	else if ( !crStrcmp( protocol, "udptcpip" ) )
+	{
+		crUDPTCPIPInit( cr_net.recv, cr_net.close, mtu );
+		crUDPTCPIPConnection( conn );
 	}
 	else
 	{
@@ -378,7 +479,7 @@ void crNetSend( CRConnection *conn, void **bufp,
 	if ( bufp ) {
 		CRASSERT( start >= *bufp );
 		CRASSERT( (unsigned char *) start + len <= 
-				(unsigned char *) *bufp + conn->mtu );
+				(unsigned char *) *bufp + conn->buffer_size );
 	}
 
 #ifndef NDEBUG
@@ -394,6 +495,38 @@ void crNetSend( CRConnection *conn, void **bufp,
 
 	msg->header.conn_id = conn->id;
 	conn->Send( conn, bufp, start, len );
+}
+
+/* Barf a set of commands on a connection.  Pretty straightforward, just 
+ * error checking, byte counting, and a dispatch to the protocol's 
+ * "barf" implementation. */
+
+void crNetBarf( CRConnection *conn, void **bufp, 
+		            void *start, unsigned int len )
+{
+	CRMessage *msg = (CRMessage *) start;
+	CRASSERT( conn );
+	CRASSERT( len > 0 );
+	CRASSERT( conn->Barf );
+	if ( bufp ) {
+		CRASSERT( start >= *bufp );
+		CRASSERT( (unsigned char *) start + len <= 
+				(unsigned char *) *bufp + conn->buffer_size );
+	}
+
+#ifndef NDEBUG
+	if ( conn->send_credits > CR_INITIAL_RECV_CREDITS )
+	{
+		crError( "crNetBarf: send_credits=%u, looks like there is a "
+				"leak (max=%u)", conn->send_credits,
+				CR_INITIAL_RECV_CREDITS );
+	}
+#endif
+
+	conn->total_bytes_sent += len;  /* XXX was 'total_bytes' */
+
+	msg->header.conn_id = conn->id;
+	conn->Barf( conn, bufp, start, len );
 }
 
 /* Send something exact on a connection without the message length 
@@ -443,6 +576,7 @@ void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 	}
 	conn->Recv( conn, buf, len );
 }
+
 
 static void crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
 {
@@ -536,6 +670,8 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 
 	switch( msg->header.type )
 	{
+		case CR_MESSAGE_GATHER:
+			break;	
 		case CR_MESSAGE_MULTI_BODY:
 		case CR_MESSAGE_MULTI_TAIL:
 			crNetRecvMulti( conn, &(msg->multi), len );
@@ -684,11 +820,21 @@ int crNetRecv( void )
 	int found_work = 0;
 
 	found_work += crTCPIPRecv( );
+	found_work += crUDPTCPIPRecv( );
 	found_work += crFileRecv( );
 #ifdef GM_SUPPORT
 	if ( cr_net.use_gm )
 		found_work += crGmRecv( );
 #endif
+#ifdef TEAC_SUPPORT
+  if ( cr_net.use_teac )
+    found_work += crTeacRecv( );
+#endif
+#ifdef TCSCOMM_SUPPORT
+  if ( cr_net.use_tcscomm )
+    found_work += crTcscommRecv( );
+#endif
+
 
 	return found_work;
 }
@@ -696,6 +842,41 @@ int crNetRecv( void )
 int crGetPID( void )
 {
 	return (int) getpid();
+}
+
+void
+crNetSetRank( int my_rank )
+{
+	cr_net.my_rank = my_rank;
+	crDebug( "crNetSetRank:  set my_rank to %d", cr_net.my_rank );
+#ifdef TEAC_SUPPORT
+	crTeacSetRank( cr_net.my_rank );      
+#endif
+#ifdef TCSCOMM_SUPPORT
+	crTcscommSetRank( cr_net.my_rank );
+#endif
+}
+
+void
+crNetSetContextRange( int low_context, int high_context )
+{
+#ifdef TEAC_SUPPORT
+	crTeacSetContextRange( low_context, high_context );
+#endif
+#ifdef TCSCOMM_SUPPORT
+	crTcscommSetContextRange( low_context, high_context );
+#endif
+}
+
+void
+crNetSetNodeRange( const char *low_node, const char *high_node )
+{
+#ifdef TEAC_SUPPORT
+	crTeacSetNodeRange( low_node, high_node );
+#endif
+#ifdef TCSCOMM_SUPPORT
+	crTcscommSetNodeRange( low_node, high_node );
+#endif
 }
 
 void crNetServerConnect( CRNetServer *ns )
@@ -717,8 +898,6 @@ void crNetServerConnect( CRNetServer *ns )
 CRConnection *__copy_of_crMothershipConnect( void )
 {
 	char *mother_server = NULL;
-	int   mother_port = MOTHERPORT;
-	char mother_url[1024];
 
 	crNetInit( NULL, NULL );
 
@@ -729,9 +908,7 @@ CRConnection *__copy_of_crMothershipConnect( void )
 		mother_server = "localhost";
 	}
 
-	sprintf( mother_url, "%s:%d", mother_server, mother_port );
-
-	return crNetConnectToServer( mother_server, 10000, 8096, 0 );
+	return crNetConnectToServer( mother_server, MOTHERPORT, 8096, 0 );
 }
 
 /* More code-copying lossage.  I sure hope no one ever sees this code.  Ever. */

@@ -55,7 +55,8 @@ ThreadInfo *packspuNewThread( unsigned long id )
 	thread->packer = crPackNewContext( pack_spu.swap );
 	CRASSERT(thread->packer);
 	crPackInitBuffer( &(thread->buffer), crNetAlloc(thread->server.conn),
-										thread->server.buffer_size, 0 );
+										thread->server.buffer_size, thread->server.conn->mtu );
+	thread->buffer.canBarf = thread->server.conn->Barf ? GL_TRUE : GL_FALSE;
 	crPackSetBuffer( thread->packer, &thread->buffer );
 	crPackFlushFunc( thread->packer, packspuFlush );
 	crPackFlushArg( thread->packer, (void *) thread );

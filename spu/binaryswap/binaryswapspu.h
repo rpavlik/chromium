@@ -114,7 +114,7 @@ typedef struct {
   int num_peers;
 
   /* What MTU do we use? */
-  int mtu;
+  unsigned int mtu;
 
   /* Used to store connections for swapping */
   CRConnection **peer_send, **peer_recv;

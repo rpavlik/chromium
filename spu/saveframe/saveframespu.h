@@ -13,6 +13,13 @@
 #define SAVEFRAMESPU_APIENTRY
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#ifdef JPEG
+#include <jpeglib.h>
+#endif
+
 #include "cr_spu.h"
 
 void saveframespuGatherConfiguration( void );
@@ -25,9 +32,17 @@ typedef struct {
 
     int stride;
     int binary;
-    long framenum;
-    long single;
-    char *basename;
+    int framenum;
+    int single;
+    char *spec;
+    char *format;
+    int enabled;
+
+#ifdef JPEG
+    struct jpeg_compress_struct cinfo;     /* jpeg compression information */
+    struct jpeg_error_mgr       jerr;      /* jpeg compression error handler */
+#endif
+
     GLsizei width, height;
     GLint x, y;
     GLubyte *buffer;

@@ -71,3 +71,11 @@ PS2PDF = ps2pdf
 MPI_CC = mpicc
 MPI_CXX = mpiCC
 MPI_LDFLAGS =
+
+QT=0
+ifeq ($(QT),1)
+    QTDIR=/insert/path/to/qt/here/qt-2.3.1
+    MOC=$(QTDIR)/bin/moc
+    UIC=$(QTDIR)/bin/uic
+endif
+

@@ -10,6 +10,10 @@ include ${TOP}/arch.mk
 SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit retile \
 	statecopytest tiletest
 
+ifeq ($(QT), 1)
+SUBDIRS += cr-recorder
+endif
+
 ifeq ($(ARCH), WIN_NT)
 SUBDIRS += wgl
 else

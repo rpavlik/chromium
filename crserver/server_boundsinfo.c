@@ -206,7 +206,6 @@ void crServerSetOutputBounds( CRContext *ctx,
 																	 ctx->viewport.viewportW,
 																	 ctx->viewport.viewportH );
 	crServerApplyBaseProjection();
-	
 }
 
 void SERVER_DISPATCH_APIENTRY
@@ -253,10 +252,11 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 		{
 			const CRRunQueueExtent *extent = &run_queue->extent[i];
 
-			if ( !( extent->imagewindow.x2 > bounds->x1 &&
+			if ((!cr_server.localTileSpec) &&
+			    ( !( extent->imagewindow.x2 > bounds->x1 &&
 							extent->imagewindow.x1 < bounds->x2 &&
 							extent->imagewindow.y2 > bounds->y1 &&
-							extent->imagewindow.y1 < bounds->y2 ) )
+							extent->imagewindow.y1 < bounds->y2 ) ))
 			{
 				continue;
 			}
@@ -264,6 +264,7 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 			cr_server.curExtent = i;
 
 			if (run_queue->client->currentCtx) {
+
 				crServerSetOutputBounds( run_queue->client->currentCtx,
 																 &extent->outputwindow,
 																 &run_queue->imagespace,

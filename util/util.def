@@ -55,6 +55,7 @@ crNetServerConnect
 crNetGetMessage
 crNetPeekMessage
 crNetDump
+crNetBarf
 crPixelCopy1D
 crPixelCopy2D
 crPixelSize
@@ -93,5 +94,11 @@ crThreadID
 crInitBarrier
 crWaitBarrier
 crRandFloat
+crRandInt
 crRandSeed
 crTransformBBox
+crWarpPoint
+crHullInteriorBox
+crNetSetNodeRange
+crNetSetContextRange
+crNetSetRank

@@ -38,6 +38,10 @@ print """#ifndef CR_PACKFUNCTIONS_H
 #else
 #define PACK_APIENTRY
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 """
 
 keys = gl_mapping.keys()
@@ -74,4 +78,10 @@ for n in [2,3,4]:
 			print 'void PACK_APIENTRY crPack%sBBOXSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 			print 'void PACK_APIENTRY crPack%sBBOX_COUNTSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 
-print '\n#endif /* CR_PACKFUNCTIONS_H */'
+print """
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CR_PACKFUNCTIONS_H */
+"""

@@ -77,6 +77,14 @@ def MakeString( x ):
 	else:
 		return repr(x)
 
+def SameHost( host1, host2 ):
+	"""Return 1 if host1 and host2 name the same host.	Return 0 otherwise.
+	For example, if host1='foo' and host2='foo.bar.com' we'll return 1.
+	"""
+	if socket.gethostbyname(host1) == socket.gethostbyname(host2):
+		return 1
+	else:
+		return 0
 
 
 class SPU:
@@ -86,6 +94,8 @@ class SPU:
 
 	    Conf:	Sets a key/value list in this SPU's configuration
 	    AddServer:  Tells a client node where to find its server.
+		AddDisplay: Adds a 'display' to the list of displays (for tilesort)
+
 	"""
 	def __init__( self, name ):
 		"""Creates a SPU with the given name."""
@@ -94,6 +104,7 @@ class SPU:
 		self.clientargs = []
 		self.servers = []
 		self.layoutFunction = None
+		self.displays = []
 
 	def Conf( self, key, *values ):
 		"""Set a configuration option."""
@@ -113,15 +124,26 @@ class SPU:
         	"""AddServer(node, protocol='tcpip', port=7000)
                 Tells a client node where to find its server."""
 		node.Conf( 'port', port )
-		if protocol == 'tcpip':
-			self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
-		elif (protocol.startswith('file') or protocol.startswith('swapfile')):
+#		if protocol == 'tcpip':
+#			self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
+#		elif (protocol.startswith('file') or protocol.startswith('swapfile')):
+		if (protocol.startswith('file') or protocol.startswith('swapfile')):
 			self.__add_server( node, "%s" % protocol )
 			# Don't tell the server "node" about this.
 			return
 		else:
+			# XXX use node.host or node.ipaddr here??? (BP)
 			self.__add_server( node, "%s://%s:%d" % (protocol,node.host,port) )
-		node.AddClient( self, protocol )
+			# use this for tcp/ip : send hostname rather than ip
+			# (waiting for getaddrinfo, for probing which one is
+			#  available)
+ 		node.AddClient( self, protocol )
+
+	def AddDisplay(self, display_id, w, h, align_matrix, align_matrix_inv):
+		"""AddDisplay(display_id, w, h, align_matrix, align_matrix_inv)
+		Adds a display with a given id and size to spu, for the 
+		tilesort SPU"""
+		self.displays.append( (display_id, w, h, align_matrix, align_matrix_inv) )
 
 	def TileLayoutFunction( self, layoutFunc ):
 		"""Set the tile layout callback function for a tilesort SPU."""
@@ -135,6 +157,7 @@ class CRNode:
 
 	public functions:
 
+	    Rank:   Sets the node's rank.
 	    AddSPU:	Adds a SPU to the front of the SPU chain.
 	    SPUDir:	Sets the directory SPUs start in.
 	    AutoStart:	Pass this method a string to start the process
@@ -159,14 +182,13 @@ class CRNode:
 		self.host = host
 		if (host == 'localhost'):
 			self.host = socket.gethostname()
-		self.ipaddr = socket.gethostbyname(self.host)
-		self.ipaddr = self.host
 
 		# unqualify the hostname if it is already that way.
 		# e.g., turn "foo.bar.baz" into "foo"
-		period = self.host.find( "." )
-		if period != -1:
-			self.host = self.host[:period]
+		# Disabled by Brian.
+		#period = self.host.find( "." )
+		#if period != -1:
+		#	self.host = self.host[:period]
 
 		self.SPUs = []
 		self.spokenfor = 0
@@ -176,6 +198,10 @@ class CRNode:
 		self.tcpip_connect_wait = None
 		self.gm_accept_wait = None
 		self.gm_connect_wait = None
+		self.teac_accept_wait = None
+		self.teac_connect_wait = None
+		self.tcscomm_accept_wait = None
+		self.tcscomm_connect_wait = None
 		self.alias = host
 		self.autostart = "" ;
 		self.autostart_argv = [] ;
@@ -183,6 +209,11 @@ class CRNode:
 	def Alias( self, name ):
 		self.alias = name
 	
+	def Rank( self, rank ):
+		"""Rank(rank)
+		Sets the node's rank."""
+		self.config['rank'] = str( rank )
+
 	def AddSPU( self, spu ):
 	    	"""AddSPU(spu)
 		Adds the given SPU to the front of the SPU chain."""
@@ -224,6 +255,8 @@ class CRNetworkNode(CRNode):
 	    AddClient:	Adds a client to the list of clients.
 		FileClient: Add a file-readback client
 	    AddTile:	Adds a tile to the list of tiles
+		AddTileToDisplay: Adds a tile to a specified collection of tiles (a display)
+
 	"""
 	def __init__( self, host='localhost' ):
 	    	"""CRNetworkNode(host='localhost')
@@ -232,6 +265,7 @@ class CRNetworkNode(CRNode):
 		self.clients = []
 		self.file_clients = []
 		self.tiles = []
+		self.tiles_on_displays = []
 
 	def AddClient( self, node, protocol ):
 		"""AddClient(node, protocol)
@@ -250,6 +284,14 @@ class CRNetworkNode(CRNode):
 		tilesort SPU.
 		"""
 		self.tiles.append( (x,y,w,h) )
+
+	def AddTileToDisplay( self, display_id, x, y, w, h ):
+		"""AddTileToDisplay(display_id, x, y, w, h)
+		Similar to AddTile, but for use with specifing displays.
+		Note that (x, y) are relative to the origin of the 
+		display, not the mural!
+		"""
+		self.tiles_on_displays.append( (display_id,x,y,w,h) )
 
 class CRApplicationNode(CRNode):
 	"""Sub class of CRNode that defines the start of the the SPU graph.
@@ -305,10 +347,14 @@ class SockWrapper:
 		self.tcpip_connect_wait = None
 		self.gm_accept_wait = None
 		self.gm_connect_wait = None
+		self.teac_accept_wait = None
+		self.teac_connect_wait = None
+		self.tcscomm_accept_wait = None
+		self.tcscomm_connect_wait = None
 
 	def readline( self ):
 		return self.file.readline()
-	
+
 	def Send(self, str):
 		self.sock.send( str + "\n" )
 
@@ -366,11 +412,14 @@ class CR:
         strings.  The do_* functions handle this communication language.
 
 	public functions:
-	    AddNode:	Adds a node to the SPU graph.
-	    MTU: 	Sets the maximum communication buffer size.
-	    Go:		Starts the ball rolling.
+	    AddNode: Adds a node to the SPU graph.
+	    MTU: Sets the maximum communication buffer size.
+	    Go: Starts the ball rolling.
 	    AllSPUConf: Adds the key/values list to all SPUs' configuration.
-	    Conf:   Set a mothership parameter
+	    Conf: Set a mothership parameter
+	    GetConf: Return value of a mothership parameter
+        ContextRange: Sets the Quadrics context range.
+        NodeRange: Sets the Quadrics node range.
 
 	internal functions:
             ProcessRequest:     Handles an incoming request, mapping it to
@@ -381,6 +430,7 @@ class CR:
 	    do_faker:		Maps a faker app to an ApplicationNode.
 	    do_namedspuparam:   Sends the given SPU parameter.
 	    do_opengldll:	Identifies the application node in the graph.
+		do_rank:        Sends the node's rank down.
 	    do_quit: 		Disconnects from clients.
 	    do_reset: 		Resets the mothership to its initial state.
 	    do_server:		Identifies the server in the graph.
@@ -407,8 +457,12 @@ class CR:
 		self.all_sockets = []
 		self.wrappers = {}
 		self.allSPUConf = []
-		self.config = {"MTU": 1024*1024}
 		self.conn_id = 1
+		self.config = {"MTU" : 1024 * 1024,
+					   "low_context" : 32,
+					   "high_context" : 35,
+					   "low_node" : "mini-t0",
+					   "high_node" : "vis2"}
 
 	def AddNode( self, node ):
 		"""AddNode(node)
@@ -432,6 +486,24 @@ class CR:
 			for node in self.nodes:
 				if isinstance(node, CRApplicationNode):
 					node.Conf(key, value)
+
+	def ContextRange( self, low_context, high_context ):
+		"""ContextRange( low_context, high_context )
+		Sets the context range to use with Elan."""
+		self.low_context  = low_context;
+		self.high_context = high_context;
+
+	def NodeRange( self, low_node, high_node ):
+		"""NodeRange( low_node, high_node )
+		Sets the node range to use with Elan."""
+		period = low_node.find( "." )
+		if period != -1:
+			low_node = low_node[:period]
+		self.low_node  = low_node;
+		period = high_node.find( "." )
+		if period != -1:
+			high_node = high_node[:period]
+			self.high_node = high_node;
 
 	def AllSPUConf( self, regex, key, *values ):
 		"""AllSPUConf(regex, key, *values)
@@ -478,43 +550,51 @@ class CR:
 		This starts the mothership's event loop."""
 		CRInfo("This is Chromium, Version BETA")
 		try:
-			HOST = ""
-			try:
-				s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-			except:
-				Fatal( "Couldn't create socket" );
+			for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
+				(af, socktype, proto, canonname, sa) = res
 
- 			try:
-				s.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
-			except:
-				Fatal( "Couldn't set the SO_REUSEADDR option on the socket!" )
+				try:
+					s = socket.socket( af, socktype )
+				except:
+					CRDebug( "Couldn't create socket of family %u, trying another one" % af );
+					continue
 
-			try:
-				s.bind( (HOST, PORT) )
-			except:
-				Fatal( "Couldn't bind to port %d" % PORT );
+				try:
+					s.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
+				except:
+					CRDebug( "Couldn't set the SO_REUSEADDR option on the socket!" )
+					continue
 
-			try:
-				s.listen(100)
-			except:
-				Fatal( "Couldn't listen!" );
-	
-			self.all_sockets.append(s)
+				try:
+					s.bind( sa )
+				except:
+					CRDebug( "Couldn't bind to port %d" % PORT );
+					continue
 
-			# Start spawning processes for each node
-			# that has requested something be started.
-			spawner = CRSpawner( self.nodes ) ;
-			spawner.start() ;
+				try:
+					s.listen(100)
+				except:
+					CRDebug( "Couldn't listen!" );
+					continue
 
-			while 1:
-				ready = select.select( self.all_sockets, [], [], 0.1 )[0]
-				for sock in ready:
-					if sock == s:
-						conn, addr = s.accept()
-						self.wrappers[conn] = SockWrapper(conn)
-						self.all_sockets.append( conn )
-					else:
-						self.ProcessRequest( self.wrappers[sock] )
+				#CRDebug( "Mothership ready" );
+				self.all_sockets.append(s)
+
+				# Start spawning processes for each node
+				# that has requested something be started.
+				spawner = CRSpawner( self.nodes ) ;
+				spawner.start() ;
+
+				while 1:
+					ready = select.select( self.all_sockets, [], [], 0.1 )[0]
+					for sock in ready:
+						if sock == s:
+							conn, addr = s.accept()
+							self.wrappers[conn] = SockWrapper(conn)
+							self.all_sockets.append( conn )
+						else:
+							self.ProcessRequest( self.wrappers[sock] )
+			Fatal( "Couldn't find local TCP port")
 		except KeyboardInterrupt:
 			try:
 				for sock in self.all_sockets:
@@ -554,7 +634,7 @@ class CR:
 		Connects the given socket."""
 		connect_info = args.split( " " )
 		protocol = connect_info[0]
-		if (protocol == 'tcpip'):
+		if (protocol == 'tcpip' or protocol == 'udptcpip'):
 			(p, hostname, port_str, endianness_str) = connect_info
 			hostname = socket.gethostbyname(hostname)
 			port = int(port_str)
@@ -562,7 +642,7 @@ class CR:
 			for server_sock in self.wrappers.values():
 				if server_sock.tcpip_accept_wait != None:
 					(server_hostname, server_port, server_endianness) = server_sock.tcpip_accept_wait
-					if server_hostname == hostname and server_port == port:
+					if SameHost(server_hostname, hostname) and server_port == port:
 						sock.Success( "%d %d" % (self.conn_id, server_endianness ) )
 						server_sock.Success( "%d" % self.conn_id )
 						self.conn_id += 1
@@ -579,12 +659,40 @@ class CR:
 			for server_sock in self.wrappers.values():
 				if server_sock.gm_accept_wait != None:
 						(server_hostname, server_port, server_node_id, server_port_num, server_endianness) = server_sock.gm_accept_wait
-						if server_hostname == hostname and server_port == port:
+						if SameHost(server_hostname, hostname) and server_port == port:
 							sock.Success( "%d %d %d %d" % (self.conn_id, server_node_id, server_port_num, server_endianness) )
 							server_sock.Success( "%d %d %d" % (self.conn_id, node_id, port_num) )
 							self.conn_id += 1
 							return
 			sock.gm_connect_wait = (hostname, port, node_id, port_num, endianness)
+		elif (protocol == 'quadrics'):
+			(p, remote_hostname, remote_rank_str, my_hostname, my_rank_str, my_endianness_str) = connect_info
+			remote_rank = int(remote_rank_str)
+			my_rank = int(my_rank_str)
+			my_endianness = int(my_endianness_str)
+			for server_sock in self.wrappers.values():
+				if server_sock.teac_accept_wait != None:
+					(server_hostname, server_rank, server_endianness) = server_sock.teac_accept_wait
+					if SameHost(server_hostname, remote_hostname) and server_rank == remote_rank:
+						sock.Success( "%d %d" % (self.conn_id, server_endianness) )
+						server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
+						self.conn_id += 1
+						return
+			sock.teac_connect_wait = (my_hostname, my_rank, my_endianness)
+		elif (protocol == 'quadrics-tcscomm'):
+			(p, remote_hostname, remote_rank_str, my_hostname, my_rank_str, my_endianness_str) = connect_info
+			remote_rank = int(remote_rank_str)
+			my_rank = int(my_rank_str)
+			my_endianness = int(my_endianness_str)
+			for server_sock in self.wrappers.values():
+				if server_sock.tcscomm_accept_wait != None:
+					(server_hostname, server_rank, server_endianness) = server_sock.tcscomm_accept_wait
+					if SameHost(server_hostname, remote_hostname) and server_rank == remote_rank:
+						sock.Success( "%d %d" % (self.conn_id, server_endianness) )
+						server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
+						self.conn_id += 1
+						return
+			sock.tcscomm_connect_wait = (my_hostname, my_rank, my_endianness)
 		else:
 			self.ClientError( sock, SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
@@ -593,7 +701,7 @@ class CR:
 		Accepts the given socket."""
 		accept_info = args.split( " " )
 		protocol = accept_info[0]
-		if protocol == 'tcpip':
+		if protocol == 'tcpip' or protocol == 'udptcpip':
 			(p, hostname, port_str, endianness_str) = accept_info
 			hostname = socket.gethostbyname(hostname)
 			port = int(port_str)
@@ -601,13 +709,13 @@ class CR:
 			for client_sock in self.wrappers.values():
 				if client_sock.tcpip_connect_wait != None:
 					(client_hostname, client_port, client_endianness) = client_sock.tcpip_connect_wait
-					if client_hostname == hostname and client_port == port:
+					if SameHost(client_hostname, hostname) and client_port == port:
 						sock.Success( "%d" % self.conn_id )
 						client_sock.Success( "%d %d" % (self.conn_id, endianness )  )
 						self.conn_id += 1
 						return
 					else:
-						CRDebug( "not accepting from \"%s\" (!= \"%s\")" % (client_hostname, hostname ) )
+						CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
 						
 			sock.tcpip_accept_wait = (hostname, port, endianness)
 		elif protocol == 'gm':
@@ -619,20 +727,47 @@ class CR:
 			for client_sock in self.wrappers.values():
 				if client_sock.gm_connect_wait != None:
 					(client_hostname, client_port, client_node_id, client_port_num, client_endianness) = client_sock.gm_connect_wait
-					if client_hostname == hostname and client_port == port:
+					if SameHost(client_hostname, hostname) and client_port == port:
 						sock.Success( "%d %d %d" % (self.conn_id, client_node_id, client_port_num) )
 						client_sock.Success( "%d %d %d %d" % (self.conn_id, node_id, port_num, endianness) )
 						self.conn_id += 1
 						return
 			sock.gm_accept_wait = (hostname, port, node_id, port_num, endianness)
+		elif protocol == 'quadrics':
+			(p, hostname, rank_str, endianness_str) = accept_info
+			rank = int(rank_str)
+			endianness = int(endianness_str)
+			for client_sock in self.wrappers.values():
+				if client_sock.teac_connect_wait != None:
+					(remote_hostname, remote_rank, remote_endianness) = client_sock.teac_connect_wait
+					if SameHost(remote_hostname, hostname) and remote_rank == rank:
+						sock.Success( "%d %s %d %d" % (self.conn_id, remote_hostname, remote_rank, remote_endianness) )
+						client_sock.Success( "%d %d" % (self.conn_id, my_endianness) )
+						self.conn_id += 1
+						return
+			sock.teac_accept_wait = (hostname, rank, endianness)
+		elif protocol == 'quadrics-tcscomm':
+			(p, hostname, rank_str, endianness_str) = accept_info
+			rank = int(rank_str)
+			endianness = int(endianness_str)
+			for client_sock in self.wrappers.values():
+				if client_sock.tcscomm_connect_wait != None:
+					(remote_hostname, remote_rank, remote_endianness) = client_sock.tcscomm_connect_wait
+					if SameHost(remote_hostname, hostname) and remote_rank == rank:
+						sock.Success( "%d %s %d %d" % (self.conn_id, remote_hostname, remote_rank, remote_endianness) )
+						client_sock.Success( "%d %d" % (self.conn_id, my_endianness) )
+						self.conn_id += 1
+						return
+			sock.tcscomm_accept_wait = (hostname, rank, endianness)
 		else:
 			self.ClientError( sock, SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
 	def do_faker( self, sock, args ):
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
+		print "********* args=%s" % args
 		for node in self.nodes:
-			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
+			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
 				if isinstance(node,CRApplicationNode):
 					try:
 						application = node.config['application']
@@ -651,7 +786,7 @@ class CR:
 		nodenames = ""
 		for node in self.nodes:
 			nodenames += node.host+" "
-			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
+			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
 				if isinstance(node,CRNetworkNode):
 					node.spokenfor = 1
 					node.spusloaded = 1
@@ -674,7 +809,7 @@ class CR:
 		app_id = int(id_string)
 		for node in self.nodes:
 			if isinstance(node,CRApplicationNode):
-				if ((app_id == -1 and hostname == node.host) or node.id == app_id) and not node.spusloaded:
+				if ((app_id == -1 and SameHost(hostname, node.host)) or node.id == app_id) and not node.spusloaded:
 					node.spusloaded = 1
 					spuchain = "%d" % len(node.SPUs)
 					for spu in node.SPUs:
@@ -860,6 +995,82 @@ class CR:
 				tiles += ","
 		sock.Success( tiles )
 
+	def do_serverdisplaytiles( self, sock, args ):
+		"""do_servertiles(sock, args)
+		Sends the defined tiles for a server."""
+		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for tiles without telling me what server you are!" )
+			return
+		self.displaytileReply( sock, sock.node )
+
+	def displaytileReply( self, sock, node ):
+		"""tileReply(sock, node)
+		Packages up a tile message for socket communication.
+		"""
+		if len(node.tiles_on_displays) == 0:
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "server doesn't have tiles!" )
+			return
+		tiles = "%d " % len(node.tiles_on_displays)
+		for i in range(len(node.tiles_on_displays)):
+			tile = node.tiles_on_displays[i]
+			tiles += "%d %d %d %d %d" % tile
+			if i != len(node.tiles) - 1:
+				tiles += ","
+		sock.Success( tiles )
+
+	def do_displays( self, sock, args ):
+		"""do_displays(sock, args)
+		Send the displays associated with a SPU"""
+		n_displays = 0;
+		print len(allSPUs)
+		for spu in range(len(allSPUs)):
+			n_displays += len(allSPUs[spu].displays)
+		displays = "%d " % n_displays
+
+		for spu in range(len(allSPUs)):
+			for i in range(len(allSPUs[spu].displays)):
+				display = allSPUs[spu].displays[i]
+				
+				tmp_display = "%d %d %d %s %s" % display
+
+				reggie = re.compile('\]|\[|,')
+				displays += "%s" % reggie.sub(' ', tmp_display)
+				
+				if i != len(allSPUs[spu].displays) - 1:
+					displays += ","
+		sock.Success( displays )
+		
+	def do_display_tiles( self, sock, args ):
+		"""do_tiles(sock, args)
+		Sends the defined tiles for a SPU."""
+		if sock.SPUid == -1:
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for tiles without telling me what SPU id you are!" )
+			return
+		spu = allSPUs[sock.SPUid]
+		if len(spu.servers) == 0:
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
+			return
+		server_num = int(args)
+		if server_num < 0 or server_num >= len(spu.servers):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "SPU %d doesn't have a server numbered %d" % (sock.SPUid, server_num) )
+		(node, url) = spu.servers[server_num]
+		self.displayTileReply( sock, node )
+
+	def displayTileReply( self, sock, node ):
+		"""displayTileReply(sock, node)
+		Packages up a tile message for socket communication.
+		"""
+		if len(node.tiles_on_displays) == 0:
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "server doesn't have display tiles!" )
+			return
+		tiles = "%d " % len(node.tiles_on_displays)
+		for i in range(len(node.tiles_on_displays)):
+			tile = node.tiles_on_displays[i]
+			tiles += "%d %d %d %d %d" % tile
+			if i != len(node.tiles_on_displays) - 1:
+				tiles += ","
+		sock.Success( tiles )
+
 	def do_clients( self, sock, args ):
 		"""do_clients(sock, args)
 		Sends the list of clients to a server."""
@@ -887,6 +1098,17 @@ class CR:
 			node.spokenfor = 0
 			node.spusloaded = 0
 		sock.Success( "Server Reset" );
+
+	def do_rank( self, sock, args ):
+		"""do_rank( sock, args )
+		Retrieves the node's rank and sends it on the socket."""
+		if sock.node == None:
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "Identify yourself!" )
+			return
+		if not sock.node.config.has_key( 'rank' ):
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "Node didn't say what it's rank is." )
+			return
+		sock.Success( sock.node.config['rank'] )
 
 	def do_quit( self, sock, args ):
 		"""do_quit(sock, args)

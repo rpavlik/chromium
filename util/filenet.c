@@ -109,13 +109,13 @@ void *crFileAlloc( CRConnection *conn )
 	if ( buf == NULL )
 	{
 		crDebug( "Buffer pool was empty, so I allocated %d bytes", 
-			(int)(sizeof(CRFileBuffer) + conn->mtu) );
+			(int)(sizeof(CRFileBuffer) + conn->buffer_size) );
 		buf = (CRFileBuffer *) 
-			crAlloc( sizeof(CRFileBuffer) + conn->mtu );
+			crAlloc( sizeof(CRFileBuffer) + conn->buffer_size );
 		buf->magic = CR_FILE_BUFFER_MAGIC;
 		buf->kind  = CRFileMemory;
 		buf->pad   = 0;
-		buf->allocated = conn->mtu;
+		buf->allocated = conn->buffer_size;
 	}
 
 #ifdef CHROMIUM_THREADSAFE
@@ -221,7 +221,7 @@ int crFileRecv( void )
 
 		CRASSERT( len > 0 );
 
-		if ( len <= conn->mtu )
+		if ( len <= conn->buffer_size )
 		{
 			file_buffer = (CRFileBuffer *) crFileAlloc( conn ) - 1;
 		}

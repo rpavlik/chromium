@@ -179,7 +179,11 @@ void crServerApplyBaseProjection(void)
 {
 	cr_server.head_spu->dispatch_table.PushAttrib( GL_TRANSFORM_BIT );
 	cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
+
 	cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.curClient->baseProjection) );
+#if 1
+	cr_server.head_spu->dispatch_table.MultMatrixf(cr_server.alignment_matrix);
+#endif	
 	cr_server.head_spu->dispatch_table.MultMatrixf( (GLfloat *) (cr_server.curClient->currentCtx->transform.projection + cr_server.curClient->currentCtx->transform.projectionDepth) );
 	cr_server.head_spu->dispatch_table.PopAttrib( );
 }

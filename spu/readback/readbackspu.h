@@ -34,8 +34,10 @@ typedef struct {
 	GLint renderWindow;
 	GLint childWindow;
 	GLint width, height;
+	GLint childWidth, childHeight;
 	GLubyte *colorBuffer;
 	GLvoid *depthBuffer;
+	GLint cppColor, cppDepth;
 	GLenum depthType;  /* GL_UNSIGNED_SHORT or GL_FLOAT */
 } WindowInfo;
 
@@ -52,13 +54,18 @@ typedef struct {
 	SPUDispatchTable self, child, super;
 	CRServer *server;
 
+	/* config options */
 	int extract_depth;
 	int extract_alpha;
 	int local_visualization;
 	int visualize_depth;
 	int resizable;
-	WindowInfo windows[MAX_WINDOWS];
 
+	char *gather_url;
+	int gather_mtu;
+	CRConnection *gather_conn;
+
+	WindowInfo windows[MAX_WINDOWS];
 	ContextInfo contexts[MAX_CONTEXTS];
 
 #ifndef CHROMIUM_THREADSAFE
@@ -75,6 +82,7 @@ typedef struct {
 	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
 	int cleared_this_frame;
 	struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;
+
 } ReadbackSPU;
 
 #define READBACK_BARRIER        1

@@ -53,3 +53,11 @@ SHARED_LDFLAGS = -L $(TOP)/lib/$(ARCH) -lX11 -lXmu -lpthread
 ifdef OPENGL
     SHARED_LDFLAGS += -lGL
 endif
+
+QT=0
+ifeq ($(QT),1)
+    QTDIR=/insert/path/to/qt/here/qt-2.3.1
+    MOC=$(QTDIR)/bin/moc
+    UIC=$(QTDIR)/bin/uic
+endif
+

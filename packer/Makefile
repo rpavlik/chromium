@@ -10,6 +10,7 @@ LIBRARY = crpacker
 NORMAL_FILES = packer \
 	pack_arrays \
 	pack_bbox \
+	pack_beginend \
 	pack_bounds \
 	pack_buffer \
 	pack_client \

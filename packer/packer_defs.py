@@ -96,4 +96,6 @@ crPackGetContext
 crPackSetContext
 crPackFree
 crNetworkPointerWrite
+crPackCanHoldBuffer
+crPackCanHoldOpcode
 """

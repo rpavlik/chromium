@@ -10,11 +10,8 @@
 #include "cr_pack.h"
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
-
+#include "cr_rand.h"
 #include "cr_applications.h"
-
-#include <limits.h>
-#include <float.h>
 
 /*
  * Data structures for hash-based bucketing algorithm.
@@ -51,6 +48,139 @@ typedef struct grid_info {
 } GridInfo;
 
 static GridInfo Grid;  /* XXX move into tilesort_spu struct? */
+
+
+float _min3f(float a, float b, float c)
+{
+	if ((a < b) && (a < c))
+		return a;
+	else
+	if ((b < a) && (b < c))
+		return b;
+	else 
+		return c;
+}
+
+float _max3f(float a, float b, float c)
+{
+	if ((a > b) && (a > c))
+		return a;
+	else
+	if ((b > a) && (b > c))
+		return b;
+	else 
+		return c;
+}
+
+float _min2f(float a, float b)
+{
+	if (a < b)
+		return a;
+	else
+		return b;
+}
+
+float _max2f(float a, float b)
+{
+	if (a > b)
+		return a;
+	else
+		return b;
+}
+
+float _fabs(float a)
+{
+	if (a < 0) return -a;
+
+	return a;
+}
+
+/*==================================================
+ * convex quad-box overlap test, based on the separating
+ * axis therom. see Moller, JGT 6(1), 2001 for
+ * derivation of the tri case.
+ * 
+ * return 0 ==> no overlap 
+ *        1 ==> overlap
+ */
+int quad_overlap(float *quad, 
+				float xmin, float ymin, float xmax, float ymax)
+{
+	int a;
+	float v[4][2], f[4][2], c[2], h[2];
+	float p0, p1, p2, r;
+	
+	/* find the center */
+	c[0] = (xmin + xmax) * (GLfloat).5;
+	c[1] = (ymin + ymax) * (GLfloat).5;
+
+	h[0] = xmax - c[0];
+	h[1] = ymax - c[1];
+	
+	/* translate everything to be at the origin */
+	v[0][0] = quad[0] - c[0];
+	v[0][1] = quad[1] - c[1];
+	v[1][0] = quad[2] - c[0];
+	v[1][1] = quad[3] - c[1];
+	v[2][0] = quad[4] - c[0];
+	v[2][1] = quad[5] - c[1];
+	v[3][0] = quad[6] - c[0];
+	v[3][1] = quad[7] - c[1];
+	
+	/* XXX: this should be pre-computed */
+	for (a=0; a<2; a++)
+	{		
+		f[0][a] = v[1][a] - v[0][a];
+		f[1][a] = v[2][a] - v[1][a];
+		f[2][a] = v[3][a] - v[2][a];
+		f[3][a] = v[0][a] - v[3][a];
+	}
+	
+	/* now, test the x & y axes (e0 & e1) */
+	if ((_max2f(_max2f(v[0][0], v[1][0]), _max2f(v[2][0], v[3][0])) < -h[0]) ||
+		(_min2f(_min2f(v[0][0], v[1][0]), _min2f(v[2][0], v[3][0])) > h[0]))
+		return 0;
+
+	if ((_max2f(_max2f(v[0][1], v[1][1]), _max2f(v[2][1], v[3][1])) < -h[1]) ||
+		(_min2f(_min2f(v[0][1], v[1][1]), _min2f(v[2][1], v[3][1])) > h[1]))
+		return 0;
+	
+	/* a0* and a1* reduce to e2, so no bother */
+
+	/* a20 = (-f0y, f0x, 0) */
+	p0 = v[1][0]*v[0][1] - v[0][0]*v[1][1];
+	p1 = v[2][1]*f[0][0] - v[2][0]*f[0][1];
+	p2 = v[3][1]*f[0][0] - v[3][1]*f[0][1];
+	
+	r  = h[0]*_fabs(f[0][1]) + h[1]*_fabs(f[0][0]);
+	if ((_min3f(p0, p1, p2) > r) || (_max3f(p0, p1, p2) < -r)) return 0;
+		
+	/* a21 = (-f1y, f1x, 0) */
+	p0 = v[2][0]*v[1][1] - v[1][0]*v[2][1];
+	p1 = v[0][1]*f[1][0] - v[0][0]*f[1][1];
+	p2 = v[3][1]*f[1][0] - v[3][0]*f[1][1];
+	
+	r  = h[0]*_fabs(f[1][1]) + h[1]*_fabs(f[1][0]);
+	if ((_min3f(p0, p1, p2) > r) || (_max3f(p0, p1, p2) < -r)) return 0;
+
+	/* a22 = (-f2y, f2x, 0) */
+	p0 = v[3][0]*v[2][1] - v[2][0]*v[3][1];
+	p1 = v[0][1]*f[2][0] - v[0][0]*f[2][1];
+	p2 = v[1][1]*f[2][0] - v[1][0]*f[2][1];
+	
+	r  = h[0]*_fabs(f[2][1]) + h[1]*_fabs(f[2][0]);
+	if ((_min3f(p0, p1, p2) > r) || (_max3f(p0, p1, p2) < -r)) return 0;
+	
+	/* a23 = (-f3y, f3x, 0) */
+	p0 = v[0][0]*v[3][1] - v[3][0]*v[0][1];
+	p1 = v[1][1]*f[3][0] - v[1][0]*f[3][1];
+	p2 = v[2][1]*f[3][0] - v[2][0]*f[3][1];
+	
+	r  = h[0]*_fabs(f[3][1]) + h[1]*_fabs(f[3][0]);
+	if ((_min3f(p0, p1, p2) > r) || (_max3f(p0, p1, p2) < -r)) return 0;
+
+	return 1;
+}
 
 
 /*
@@ -151,7 +281,7 @@ static void fillBucketingHash(void)
 
 /*
  * Initialize GridInfo data for the non-uniform grid case.
- * If this succeeds, we'll set optimizeBucketing = 2 (but not here).
+ * If this succeeds, we'll set bucketMode = NON_UNIFORM_GRID (but not here).
  * Return: GL_TRUE - the server's tiles form a non-uniform grid
  *         GL_FALSE - the tiles don't form a non-uniform grid - give it up.
  */
@@ -340,7 +470,7 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 	 * defining a display list, which goes to everyone 
 	 * (currently) */
 
-	if (tilesort_spu.broadcast || g->lists.newEnd)
+	if (tilesort_spu.bucketMode == BROADCAST || g->lists.newEnd)
 	{
 		bucketInfo->screenMin = neg_vect;
 		bucketInfo->screenMax = one_vect;
@@ -370,20 +500,23 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 	bucketInfo->screenMax.y = ymax;
 	bucketInfo->screenMax.z = zmax;
 
-	/* triv reject */
-	if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
+	if (tilesort_spu.bucketMode != WARPED_GRID)
 	{
-		for (j=0;j<CR_MAX_BITARRAY;j++)
-	     		bucketInfo->hits[j] = 0;
-		return;
+		/* triv reject */
+		if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
+		{
+			for (j=0;j<CR_MAX_BITARRAY;j++)
+	     			bucketInfo->hits[j] = 0;
+			return;
+		}
+
+		/* clamp */
+		if (xmin < -1.0f) xmin = -1.0f;
+		if (ymin < -1.0f) ymin = -1.0f;
+		if (xmax > 1.0f) xmax = 1.0f;
+		if (ymax > 1.0f) ymax = 1.0f;
+
 	}
-
-	/* clamp */
-	if (xmin < -1.0f) xmin = -1.0f;
-	if (ymin < -1.0f) ymin = -1.0f;
-	if (xmax > 1.0f) xmax = 1.0f;
-	if (ymax > 1.0f) ymax = 1.0f;
-
 	ibounds.x1 = (int) (tilesort_spu.halfViewportWidth*xmin + tilesort_spu.viewportCenterX);
 	ibounds.x2 = (int) (tilesort_spu.halfViewportWidth*xmax + tilesort_spu.viewportCenterX);
 	ibounds.y1 = (int) (tilesort_spu.halfViewportHeight*ymin + tilesort_spu.viewportCenterY);
@@ -396,10 +529,11 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 	for (j = 0; j < CR_MAX_BITARRAY; j++)
 	     retval[j] = 0;
 
+
 	/* Compute the retval bitvector values.
 	 * Bit [i] is set if the bounding box intersects any tile on server [i].
 	 */
-	if (tilesort_spu.optimizeBucketing == 0) 
+	if (tilesort_spu.bucketMode == TEST_ALL_TILES)
 	{
 		/* Explicitly test the bounding box (ibounds) against all tiles on
 		 * all servers.
@@ -422,7 +556,7 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 			}
 		}
 	} 
-	else if (tilesort_spu.optimizeBucketing == 1)
+	else if (tilesort_spu.bucketMode == UNIFORM_GRID)
 	{
 		/* Use optimized hash table solution to determine
 		 * bounding box / server intersections.
@@ -449,7 +583,7 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 			}
 		}
 	}
-	else
+	else if (tilesort_spu.bucketMode == NON_UNIFORM_GRID)
 	{
 		/* Non-uniform grid bucketing (dynamic tile resize)
 		 * Algorithm: we basically march over the tile columns in from the left
@@ -458,8 +592,6 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 		 * Then we loop over the intersecting tiles and flag those servers.
 		 */
 		int bottom, top, left, right;
-
-		CRASSERT(tilesort_spu.optimizeBucketing == 2);
 
 		/* march from bottom to top */
 		bottom = Grid.rows - 1;
@@ -519,6 +651,49 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 		printf("bucket result: %d %d\n", retval[0] & 1, (retval[0] >> 1) & 1);
 		*/
 	}
+	else if (tilesort_spu.bucketMode == WARPED_GRID)
+	{
+		bucketInfo->screenMin = neg_vect;
+		bucketInfo->screenMax = one_vect;
+		bucketInfo->pixelBounds = fullscreen;
+
+		/* uber-slow overlap testing mode */
+		for (i=0; i < tilesort_spu.num_servers; i++) 
+		{
+			/* 32 bits (flags) per element in retval */
+			const int node32 = i >> 5;
+			const int node = i & 0x1f;
+
+#if 1
+			for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
+			{
+				if (quad_overlap(tilesort_spu.servers[i].world_extents[j],
+										xmin, ymin, xmax, ymax))
+				{
+					retval[node32] |= (1 << node);
+					break;
+				}
+			}
+
+#else
+			/* XXX: just broadcast now, for debugging */
+			retval[node32] |= (1 << node);
+#endif			
+		}
+	}
+	else if (tilesort_spu.bucketMode == RANDOM)
+	{
+		/* Randomly select a server */
+		const int server = crRandInt(0, tilesort_spu.num_servers - 1);
+		const int node32 = server >> 5;
+		const int node = server & 0x1f;
+
+		retval[node32] |= (1 << node);
+	}
+	else
+	{
+		crError("Invalid value for tilesort_spu.bucketMode");
+	}
 
 	/* XXX why use retval at all?  Why not just use bucketInfo->hits? */
 	crMemcpy((char*)bucketInfo->hits, (char*)retval,
@@ -547,7 +722,7 @@ void tilesortspuBucketingInit( void )
 {
 	tilesortspuSetBucketingBounds( 0, 0, tilesort_spu.muralWidth, tilesort_spu.muralHeight );
 
-	if (tilesort_spu.optimizeBucketing == 1)
+	if (tilesort_spu.bucketMode == UNIFORM_GRID)
 	{
 		fillBucketingHash();
 	}

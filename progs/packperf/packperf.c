@@ -16,7 +16,7 @@ void do_nothing( CROpcode opcode, void *buf )
 
 void reset_buffer( void *arg )
 {
-	crPackResetPointers( pack_context, 0 );
+	crPackResetPointers( pack_context );
 	UNUSED(arg);
 }
 
@@ -53,7 +53,7 @@ int main( int argc, char *argv[] )
 	CRPackBuffer pack_buffer;
 	pack_context = crPackNewContext( 0 ); /* Don't swap bytes, for God's sake */
 	crPackSetContext( pack_context );
-	crPackInitBuffer( &pack_buffer, crAlloc( 1024*1024 ), 1024*1024, 0 );
+	crPackInitBuffer( &pack_buffer, crAlloc( 1024*1024 ), 1024*1024, 1024*1024 );
 	crPackSetBuffer( pack_context, &pack_buffer );
 
 	crPackFlushFunc( pack_context, reset_buffer );

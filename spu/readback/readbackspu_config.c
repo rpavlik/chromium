@@ -49,6 +49,16 @@ void set_visualize_depth( ReadbackSPU *readback_spu, const char *response )
 	readback_spu->visualize_depth = crStrToInt( response );
 }
 
+void set_gather_url( ReadbackSPU *readback_spu, const char *response )
+{
+	readback_spu->gather_url = crStrdup( response ); 
+}
+
+void set_gather_mtu( ReadbackSPU *readback_spu, const char *response )
+{
+	sscanf( response, "%d", &readback_spu->gather_mtu );
+}
+
 
 /* option, type, nr, default, min, max, title, callback
  */
@@ -67,6 +77,12 @@ SPUOptions readbackSPUOptions[] = {
 
 	{ "visualize_depth", CR_BOOL, 1, "0", NULL, NULL,
 	  "Visualize Depth as Grayscale", (SPUOptionCB)set_visualize_depth },
+
+	{ "gather_url", CR_STRING, 1, NULL, NULL, NULL,
+	  "URL to connect to for gathering", (SPUOptionCB)set_gather_url },
+
+	{ "gather_mtu", CR_INT, 1, "1048576", NULL, NULL,
+	  "MTU to connect to for gathering", (SPUOptionCB)set_gather_mtu },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

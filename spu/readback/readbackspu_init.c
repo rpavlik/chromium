@@ -62,6 +62,7 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 	readbackspuGatherConfiguration( &readback_spu );
 
 	crStateInit();
+	readback_spu.gather_conn = NULL;
 
 	return &readback_functions;
 }

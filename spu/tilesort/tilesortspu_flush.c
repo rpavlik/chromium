@@ -73,24 +73,30 @@ void tilesortspuSendServerBuffer( int server_index /*TileSortSPUServer *server*/
 
 	hdr = __applySendBufferHeader( pack, &len );
 
-	crNetSend( net->conn, &pack->pack, hdr, len );
-	crPackInitBuffer( pack, crNetAlloc( net->conn ), pack->size, END_FLUFF );
+	if ( pack->holds_BeginEnd && pack->canBarf )
+		crNetBarf( net->conn, &pack->pack, hdr, len );
+	else
+		crNetSend( net->conn, &pack->pack, hdr, len );
+
+	crPackInitBuffer( pack, crNetAlloc( net->conn ), net->conn->buffer_size, net->conn->mtu );
+	pack->canBarf = net->conn->Barf ? GL_TRUE : GL_FALSE;
 }
 
 static void __appendBuffer( CRPackBuffer *src )
 {
 	GET_THREAD(thread);
-	int num_data = src->data_current - src->data_start;
 
 	/*crWarning( "In __appendBuffer: %d bytes left, packing %d bytes", thread->packer->buffer.data_end - thread->packer->buffer.data_current, num_data ); */
 
-	if ( thread->packer->buffer.data_current + num_data > thread->packer->buffer.data_end )
+	if ( !crPackCanHoldBuffer(src)
+		|| thread->packer->buffer.holds_BeginEnd ^ src->holds_BeginEnd)
 	{
 		/* No room to append -- send now */
 
 		/*crWarning( "OUT OF ROOM!") ; */
 		tilesortspuSendServerBuffer( thread->state_server_index );
 		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+		CRASSERT(crPackCanHoldBuffer( src ));
 	}
 
 	crPackAppendBuffer( src );
@@ -100,21 +106,23 @@ static void __appendBuffer( CRPackBuffer *src )
 void __appendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 {
 	GET_THREAD(thread);
-	/* 24 is the size of the bounds info packet */
-	int num_data = src->data_current - src->opcode_current - 1 + 24;
+	int length = ((src->data_current - src->opcode_current - 1) + 3) & ~3;
 
-	if (num_data == 24)
+	if (length == 0)
 	{
 		/* nothing to send. */
 
 		return;
 	}
 
-	if ( thread->packer->buffer.data_current + num_data > thread->packer->buffer.data_end )
+	/* 24 is the size of the bounds info packet */
+	if ( !crPackCanHoldOpcode( 1, length + 24 )
+		|| thread->packer->buffer.holds_BeginEnd ^ src->holds_BeginEnd)
 	{
 		/* No room to append -- send now */
 		tilesortspuSendServerBuffer( thread->state_server_index );
 		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+		CRASSERT(crPackCanHoldOpcode( 1, length + 24 ) || src->holds_BeginEnd );
 	}
 
 	crPackAppendBoundedBuffer( src, bounds );
@@ -353,7 +361,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 	/* First, test to see if this is a big packet. */
 	
-	if (thread->packer->buffer.size > thread->net[0].conn->mtu )
+	if (thread->packer->buffer.size > tilesort_spu.buffer_size )
 	{
 		crDebug( "It was a big packet!" );
 		big_packet_hdr = __applySendBufferHeader( &(thread->packer->buffer), &big_packet_len );
@@ -416,7 +424,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	if ( thread->currentContext->State->current.inBeginEnd )
 	{
 		/*crDebug( "Closing this Begin/end!!!" ); */
-		thread->packer->buffer.data_end += END_FLUFF;
+		thread->packer->buffer.mtu += END_FLUFF + 4; /* 4 for opcode */
 		if (tilesort_spu.swap)
 		{
 			crPackEndSWAP();
@@ -523,20 +531,31 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	thread->state_server = NULL;
 	thread->state_server_index = -1;
 
+	for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
+	{
+		if (thread->pack[i].mtu > thread->net[i].conn->mtu)
+			thread->pack[i].mtu = thread->net[i].conn->mtu;
+		if (tilesort_spu.MTU > thread->net[i].conn->mtu)
+			tilesort_spu.MTU = thread->net[i].conn->mtu;
+	}
 	if ( big_packet_hdr != NULL )
 	{
 		/* Throw away the big packet and make a new, smaller one */
 
 		crDebug( "Throwing away the big packet" );
 		crFree( thread->geometry_pack.pack );
-		crPackInitBuffer( &(thread->geometry_pack), crAlloc( thread->geom_pack_size ), 
-											thread->geom_pack_size, END_FLUFF );
+		crPackInitBuffer( &(thread->geometry_pack), crAlloc( thread->geom_pack_size ),
+											thread->geom_pack_size, tilesort_spu.MTU - (24+END_FLUFF+8) );
+
+	/* 24 is the size of the bounds info packet */
+	/* and 8 since End and BoundInfo opcodes may indeed take this space */
 	}
 	else
 	{
 		/*crDebug( "Reverting to the old geometry buffer" ); */
+		thread->geometry_pack.mtu = tilesort_spu.MTU - (24+END_FLUFF+8);
 		crPackSetBuffer( thread->packer, &(thread->geometry_pack ) );
-		crPackResetPointers( thread->packer, END_FLUFF );
+		crPackResetPointers( thread->packer );
 	}
 
 	/*crDebug( "Resetting the current vertex count and friends" ); */
@@ -609,7 +628,7 @@ void tilesortspuFlush( ThreadInfo *thread )
 
 	crPackInitBuffer( &(thread->geometry_pack),
 					  crAlloc( thread->geometry_pack.size << 1 ), 
-					  thread->geometry_pack.size << 1, END_FLUFF );
+					  thread->geometry_pack.size << 1, (thread->geometry_pack.size << 1) - (24+END_FLUFF+8) );
 	thread->geometry_pack.geometry_only = GL_TRUE;
 
 	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );

@@ -73,3 +73,11 @@ MPI_CC = cc
 MPI_CXX = CC
 MPI_LDFLAGS = -lmpi
 SLOP += so_locations
+
+QT=0
+ifeq ($(QT),1)
+    QTDIR=/insert/path/to/qt/here/qt-2.3.1
+    MOC=$(QTDIR)/bin/moc
+    UIC=$(QTDIR)/bin/uic
+endif
+

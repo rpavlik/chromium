@@ -4,9 +4,12 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+
 #include "cr_spu.h"
 #include "saveframespu.h"
-#include <stdio.h>
 
 extern SPUNamedFunctionTable saveframe_table[];
 

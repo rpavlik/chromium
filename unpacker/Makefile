@@ -34,7 +34,8 @@ PRECOMP = unpack.c ../include/cr_unpackfuncs.h
 SLOP = $(PRECOMP)
 
 LIB_COPIES = crserver \
-	hiddenlinespu
+	hiddenlinespu \
+	injectorspu
 
 include $(TOP)/cr.mk
 

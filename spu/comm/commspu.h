@@ -31,7 +31,7 @@ typedef struct {
 	SPUDispatchTable self, child, super;
 	char *peer_name;
 	int i_am_the_server;
-	int mtu;
+	unsigned int mtu;
 	CRConnection *peer_send, *peer_recv;
 	CommSPUPing *msg;
 	int num_bytes;

@@ -24,6 +24,10 @@ spu = SPU('render')<br>
 spu.Conf('window_geometry', [0, 0, 512, 512])<br>
 spu.Conf('window_title', 'my window')<br>
 spu.Conf('resizable', 1)<br>
+<BR>
+<code>
+spu = SPU('tilesort')<br>
+spu.Conf('bucket_mode', 'Uniform Grid')
 </code>
 
 <h2 class="PageSubHeading">Print SPU </h2>
@@ -199,16 +203,44 @@ configuration options that the render SPU accepts, plus a few more:
       buffer beyond the MTU.&nbsp; The default is 1.</td>
   </tr>
   <tr>
+    <td width="19%" class="ConfigOption" height="38">bucket_mode</td>
+    <td width="12%" class="ConfigType" height="38">Enum</td>
+    <td width="115%" class="ConfigDesc" height="38">
+      This option controls how primitives are bucketed or sorted among the
+      render servers.
+      Possible values are:
+      <ul>
+      <li><B>'Broadcast'</B> - send all primitives to all servers.
+      <li><B>'Test All Tiles'</B> - test each primitive's bounding box against
+         all tile's bounds.  This is the default value.
+      <li><B>'Uniform Grid'</B> - the tiles form a regular grid with uniform
+         column widths and row heights.  Use a specially optimized bucketing
+         algorithm.
+      <li><B>'Non-Uniform Grid'</B> - the tiles form a regular grid but the
+         columns and rows don't all have the same width or height.  An
+         optimized bucketing algorithm will be used, but it's not as efficient
+         as the Uniform Grid option.
+      <li><B>'Random'</B> - primitives are sent to a randomly-chosen server.
+      <li><B>'Warped Grid'</B> - the grid tiles do not form a uniform grid of
+         any sort.  Test primitive's bounding boxes against all tiles, without
+         trivial rejection (slow).
+      </ul>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">broadcast</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
-    <td width="115%" class="ConfigDesc" height="38">If this flag is set, the
+    <td width="115%" class="ConfigDesc" height="38">
+      <B>(This option is obsolete, use bucket_mode instead)</B>
+      If this flag is set, the
       bucketing algorithm will be disabled, and all geometry will be broadcast
       to all servers.&nbsp; The default is 0.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">optimize_bucket</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
-    <td width="115%" class="ConfigDesc" height="38">If this flag is set, a more
+    <td width="115%" class="ConfigDesc" height="38">
+      <B>(This option is obsolete, use bucket_mode instead)</B>
+      If this flag is set, a more
       sophisticated algorithm will be used to compute the intersection between
       the screen-space bounding box and the set of tiles.&nbsp; However, this
       algorithm <i>only</i> works if the tiling is completely regular; i.e.,
@@ -296,13 +328,42 @@ configuration options that the render SPU accepts, plus a few more:
     </td>
   </tr>
   <tr>
+    <td width="19%" class="ConfigOption" height="38">spec</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">
+      A full specification of the filename to which to save frames. This
+      should include a path (absolute or relative to the working directory
+      of the crserver) and a filename. The filename should have <code>%d</code>
+      in it to indicate where the frame number should be inserted.
+      <b>Note</b>: In Python strings, the percent sign is interpreted, so
+      you must insert a percent sign with <code>%%</code> instead of <code>%</code>.
+      For example, <code>saveframespu.Conf( "spec", "myMovie/frame%%d.ppm" )</code>
+      would save frames in the <code>myMovie</code> directory (assumed to be
+      present in the working directory where crserver is started). Frames
+      would be named <code>frame1.ppm</code>, <code>frame2.ppm</code>, 
+      <code>frame3.ppm</code>, ...  <code>frame<i>n</i>.ppm</code>. 
+      The default is "<code>frame%04d.ppm</code>".
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">basename</td>
     <td width="12%" class="ConfigType" height="38">String</td>
     <td width="115%" class="ConfigDesc" height="38">
+      <b>Note</b>: This option is obsolete. Use the <code>spec</code> option instead.
       Base of the filename to which to save files.  All files will have a
       four-digit frame number and <code>.ppm</code> appended to them.  Example:
       <code>frame0000.ppm</code>.  This parameter allows you to modify the
-      filename.  The default is "<code>frame</code>".
+      filename.  There is no default. If both a basename and spec option are
+      given, the spec option overrides the basename.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">format</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">
+      The format option specifies the file format used to save frames.
+      Currently, it must be "<code>ppm</code>" or "<code>jpg</code>".
+      The default is "<code>ppm</code>".
     </td>
   </tr>
   <tr>

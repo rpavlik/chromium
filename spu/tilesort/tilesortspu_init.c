@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_rand.h"
 #include "cr_spu.h"
 #include "cr_mem.h"
 #include "tilesortspu.h"
@@ -41,6 +42,8 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *self,
 	(void) child;
 	(void) self;
 
+	crRandSeed(id);
+
 	crMemZero( &tilesort_spu, sizeof(TileSortSPU) );
 
 #ifdef CHROMIUM_THREADSAFE
@@ -54,6 +57,13 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *self,
 	tilesortspuGatherConfiguration( child );
 	tilesortspuConnectToServers(); /* set up thread0's server connection */
 
+	if (tilesort_spu.MTU > thread0->net[0].conn->mtu) {
+		tilesort_spu.MTU = thread0->net[0].conn->mtu;
+
+	/* get a buffer which can hold one big big opcode (counter computing
+	 * against packer/pack_buffer.c) */
+		tilesort_spu.buffer_size = ((((tilesort_spu.MTU - sizeof(CRMessageOpcodes) ) * 5 + 3) / 4 + 0x3) & ~0x3) + sizeof(CRMessageOpcodes);
+	}
 	tilesort_spu.swap = thread0->net[0].conn->swap;
 
 	tilesortspuInitThreadPacking( thread0 );

@@ -23,6 +23,7 @@ typedef enum {
 	CR_MESSAGE_FLOW_CONTROL,
 	CR_MESSAGE_OOB,
 	CR_MESSAGE_NEWCLIENT,
+	CR_MESSAGE_GATHER,
 	CR_MESSAGE_ERROR
 } CRMessageType;
 
@@ -85,6 +86,12 @@ typedef struct CRMessageNewClient {
 	CRMessageHeader	       header;
 } CRMessageNewClient;
 
+typedef struct CRMessageGather {
+	CRMessageHeader	       header;
+	unsigned long			offset;
+	unsigned long			len;
+} CRMessageGather;
+
 typedef union {
 	CRMessageHeader      header;
 	CRMessageOpcodes     opcodes;
@@ -94,6 +101,7 @@ typedef union {
 	CRMessageMulti       multi;
 	CRMessageFlowControl flowControl;
 	CRMessageNewClient   newclient;
+	CRMessageGather		 gather;
 } CRMessage;
 
 void crNetworkPointerWrite( CRNetworkPointer *dst, void *src );

@@ -14,7 +14,7 @@
 #elif defined( _WIN32 )
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#elif defined( Linux ) || defined( FreeBSD ) || defined(AIX) || defined(SunOS)
+#elif defined( Linux ) || defined( FreeBSD ) || defined(AIX) || defined(SunOS) || defined(OSF1)
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -49,7 +49,7 @@ static struct {
 	int           initialized;
 } __timer;
 
-#elif defined( Linux ) || defined( FreeBSD ) || defined(AIX) || defined (SunOS)
+#elif defined( Linux ) || defined( FreeBSD ) || defined(AIX) || defined (SunOS) || defined(OSF1)
 
 static struct {
 	int initialized;
@@ -140,7 +140,7 @@ TimerGetTime( void )
 
 	QueryPerformanceCounter( &counter );
 	return (double) counter.QuadPart * __timer.scale;
-#elif defined( Linux ) || defined( FreeBSD ) || defined(AIX) || defined(SunOS)
+#elif defined( Linux ) || defined( FreeBSD ) || defined(AIX) || defined(SunOS) || defined(OSF1)
 	struct timeval timeofday;
 
 	if ( !__timer.initialized )

@@ -13,6 +13,7 @@ extern "C" {
 
 void crRandSeed( unsigned long seed );
 float crRandFloat( float min, float max );
+int crRandInt( int min, int max );
 
 #ifdef __cplusplus
 } /* extern "C" */
