@@ -104,6 +104,36 @@ def WriteSPUConfs(spu, lvalue, file):
 				valueStr = valueStr[:-1]
 				file.write("%s('%s', '%s')\n" % (lvalue, name, valueStr))
 	
+def WriteAutoStart(nodeName, isServer, hostName, file):
+	"""Write the tricky autostart code for the given node on given host"""
+	# XXX this needs more work:
+	# 1. support ssh for remote hosts
+	# 2. support Windows, how?
+	
+	# build the AutoStart() argument list
+	argList = '[ '
+	if hostName == "localhost" or hostName == "":
+		# spawn on local host
+		argList += '"/bin/sh", "-c", '
+		argList += '"LD_LIBRARY_PATH=%s MOTHERSHIP=localhost '
+		if isServer:
+			argList += '%s/crserver" % (crlibdir, crbindir)'
+		else:
+			argList += '%s/crappfaker" % (crlibdir, crbindir)'
+		argList += ' ]'
+	else:
+		# span on remote host
+		argList += '"/usr/bin/rsh", '
+		argList += '"' + hostName + '"'
+		if isServer:
+			argList += """ "/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=localhost  LD_LIBRARY_PATH=%s  %s/crserver'" % (crlibdir, crbindir)"""
+		else:
+			argList += """ "/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=localhost  LD_LIBRARY_PATH=%s  %s/crappfaker'" % (crlibdir, crbindir)"""
+		argList += ' ]'
+
+	# Now, write the code to the file
+	file.write("if GLOBAL_auto_start:\n")
+	file.write("\t%s.AutoStart( %s )\n" % (nodeName, argList))
 
 
 def WriteConfig(mothership, file):
@@ -124,7 +154,7 @@ def WriteConfig(mothership, file):
 		numNodes += node.GetCount()
 
 	# "declare" the nodes array
-	file.write("nodes = range(%d)\n" % numNodes)
+	file.write("nodes = range(%d)\n\n" % numNodes)
 
 	# write the code to allocate the nodes
 	i = 0
@@ -146,8 +176,15 @@ def WriteConfig(mothership, file):
 			if dir != "":
 				file.write("nodes[%d].SPUDir('%s')\n" % (i, dir))
 			file.write("cr.AddNode(nodes[%d])\n" % i)
+
+			WriteAutoStart("nodes[%d]" % i,
+						   node.IsServer(),
+						   node.GetHosts()[j],
+						   file)
+
+			file.write("\n")
 			i += 1
-		#endif
+		#endfor
 	#endfor
 	file.write("\n")
 
@@ -340,6 +377,18 @@ def ReadConfig(mothership, file, filename=""):
 	# restore original sys.argv list
 	sys.argv = origArgv
 
+	# Now scan the graph to extract the global and app config parameters
+	# which we store in the mothership.
+	for node in mothership.Nodes():
+		if node.IsAppNode():
+			app = node.GetApplication()
+			if app != "":
+				mothership.SetGlobalOption("default_app", [app])
+			dir = node.GetStartDir()
+			if dir != "":
+				mothership.SetGlobalOption("default_dir", [dir])
+		autoStart = node.GetAutoStart()
+		if autoStart != None:
+			mothership.SetGlobalOption("auto_start", [1])
+
 	return retValue
-
-

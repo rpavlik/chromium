@@ -24,8 +24,8 @@ import crconfig
 
 # ----------------------------------------------------------------------
 
-class SpuOption:
-	"""Class to describe an SPU option."""
+class Option:
+	"""Class to describe an SPU/node/mothership option."""
 	# XXX not used yet!  But we need to.
 	def __init__(self, name, description, type, count, default, mins, maxs):
 		assert len(default) == count
@@ -41,8 +41,8 @@ class SpuOption:
 		self.Value = default    # vector[count]
 
 
-class SpuOptionList:
-	"""Container for a group of SpuOption objects"""
+class OptionList:
+	"""Container for a group of Option objects"""
 	def __init__(self, options=[]):
 		self.__Options = []
 		for opt in options:
@@ -280,6 +280,7 @@ class Node:
 		self.__HostPattern = (hostnames[0], 1)
 		self.__SPUdir = ""
 		self.__FontHeight = 0
+		self.__AutoStart = None
 
 	def Clone(self):
 		"""Return a deep copy/clone of this Node object"""
@@ -566,6 +567,15 @@ class Node:
 		"""Needed for reading config files."""
 		pass
 
+	def AutoStart(self, program):
+		"""Needed for reading config files."""
+		self.__AutoStart = program
+		pass
+
+	def GetAutoStart(self):
+		"""Return autostart parameters."""
+		return self.__AutoStart
+
 
 class NetworkNode(Node):
 	"""A CRNetworkNode object"""
@@ -663,7 +673,7 @@ class Mothership:
 		("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
 		("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
 		("show_cursor", "Show Virtual cursor", "BOOL", 1, [0], [], []),
-		("MTU", "Mean Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
+		("MTU", "Max Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
 		("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], []),
 		("command_help",
 		 "Program name and arguments.\n" +
@@ -689,7 +699,6 @@ class Mothership:
 
 	def __init__(self):
 		self.__Nodes = []
-		self.__MTU = 1024 * 1024  # XXX verify
 		self.__TemplateType = ""
 		self.__TemplateVars = {}
 		# build __GlobalOptions dictionary
@@ -706,7 +715,7 @@ class Mothership:
 		return self.__GlobalOptions
 
 	def GetGlobalOption(self, name):
-		"""Get a global option value"""
+		"""Get a global option value (result is a list)."""
 		assert name in self.__GlobalOptions.keys()
 		return self.__GlobalOptions[name]
 
@@ -764,7 +773,12 @@ class Mothership:
 
 	def MTU(self, bytes):
 		"""Set the MTU size (in bytes)."""
-		self.__MTU = bytes
+		self.SetGlobalOption("MTU", [ bytes ])
+
+	def GetMTU(self):
+		"""Return MTU size (in bytes)."""
+		valList = self.GetGlobalOption("MTU")
+		return int(valList[0])
 
 	def AllSPUConf(self, spuName, var, *values):
 		"""Set var/values for all SPUs that match spuName"""
