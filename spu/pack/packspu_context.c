@@ -102,6 +102,8 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 	crLockMutex(&_PackMutex);
 #endif
 
+	crPackSetContext( pack_spu.thread[0].packer );
+
 	/* Pack the command */
 	if (pack_spu.swap)
 		crPackCreateContextSWAP( dpyName, visual, &serverCtx, &writeback );
@@ -173,7 +175,6 @@ void PACKSPU_APIENTRY packspu_DestroyContext( GLint ctx )
 
 	if (thread->currentContext == context) {
 		thread->currentContext = NULL;
-		crPackSetContext( NULL );
 		crStateMakeCurrent( NULL );
 	}
 }
@@ -208,7 +209,6 @@ void PACKSPU_APIENTRY packspu_MakeCurrent( GLint window, GLint nativeWindow, GLi
 	}
 	else {
 		thread->currentContext = NULL;
-		crPackSetContext( NULL );
 		crStateMakeCurrent( NULL );
 		newCtx = NULL;
 		serverCtx = 0;
@@ -230,23 +230,19 @@ extern void PACKSPU_APIENTRY packspu_GetIntegerv( GLenum pname, GLint *params );
 
 void PACKSPU_APIENTRY packspu_Finish( void )
 {
-#if 0
 	GET_THREAD(thread);
+	int writeback = pack_spu.thread[0].server.conn->type == CR_DROP_PACKETS ? 0 : 1;
 	if (pack_spu.swap)
 	{
 		crPackFinishSWAP(  );
+		crPackWritebackSWAP( &writeback );
 	}
 	else
 	{
 		crPackFinish(  );
+		crPackWriteback( &writeback );
 	}
-	packspuFlush( pack_spu, (void *) thread );
-#else
-	/* Finish should not return until the pipeline has been flushed and
-	 * rendering is completed.  Accomplish this with a round-trip command
-	 * such as glGetIntegerv.
-	 */
-	GLint k;
-	packspu_GetIntegerv(GL_BLEND, &k);
-#endif
+	packspuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
 }

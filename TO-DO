@@ -1,7 +1,5 @@
 
 
-Clean-up the glFinish/glCopyPixels implementation (don't use glGetInteger)
-
 Finish up tilesort glReadPixels pixelstore parameters.
 
 Implement an error callback facility in packer/pack_error.c so that

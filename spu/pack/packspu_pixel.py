@@ -47,8 +47,6 @@ void PACKSPU_APIENTRY packspu_ReadPixels( GLint x, GLint y, GLsizei width, GLsiz
 		crNetRecv();
 }
 
-extern void PACKSPU_APIENTRY packspu_GetIntegerv( GLenum pname, GLint *params );
-
 void PACKSPU_APIENTRY packspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
 {
 	GET_THREAD(thread);
@@ -61,15 +59,6 @@ void PACKSPU_APIENTRY packspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsiz
 		crPackCopyPixels( x, y, width, height, type );
 	}
 	packspuFlush( (void *) thread );
-
-	/* CopyPixels should not return until the pipeline has been flushed and
-	 * rendering is completed.  Accomplish this with a round-trip command
-	 * such as glGetIntegerv.
-	 */
-	{
-		GLint k;
-		packspu_GetIntegerv(GL_BLEND, &k);
-	}
 }
 
 void PACKSPU_APIENTRY packspu_PixelStoref( GLenum pname, GLfloat param )

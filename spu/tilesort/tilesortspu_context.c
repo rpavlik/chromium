@@ -140,6 +140,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		tilesort_spu.numContexts++;
 	}
 
+	crPackSetContext( thread0->packer );
 	/*
 	 * Allocate the state tracker state for this context.
 	 * The GL limits were computed in tilesortspuGatherConfiguration().
@@ -280,6 +281,7 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
 
 	if (ctx) {
+		crPackSetContext( thread->packer );
 		crStateSetCurrent( tilesort_spu.context[ctxPos].State );
 		crStateFlushArg( (void *) thread );
 	}
@@ -344,6 +346,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 		/* unbind */
 		crStateSetCurrent(NULL);
 	}
+
 
 	/* The default buffer */
 	crPackGetBuffer( thread0->packer, &(thread0->geometry_pack) );
