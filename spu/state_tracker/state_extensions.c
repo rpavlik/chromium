@@ -13,9 +13,6 @@
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-#include <GL/glext.h>  /* XXX what's this doing here? */
-
-
 
 static GLboolean hasExtension(const char *haystack, const char *needle)
 {
@@ -47,6 +44,10 @@ void crStateExtensionsInit( CRContext *g )
 
 	if (hasExtension((const char*)g->limits.extensions, "GL_ARB_imaging"))
 		g->extensions.ARB_imaging = GL_TRUE;
+
+	if (hasExtension((const char*)g->limits.extensions, "GL_ARB_texture_border_clamp") ||
+		hasExtension((const char*)g->limits.extensions, "GL_SGIS_texture_border_clamp"))
+		g->extensions.ARB_texture_border_clamp = GL_TRUE;
 
 	if (hasExtension((const char*)g->limits.extensions, "GL_ARB_multitexture"))
 		g->extensions.ARB_multitexture = GL_TRUE;

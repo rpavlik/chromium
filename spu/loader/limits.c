@@ -82,6 +82,9 @@ static char *crExtensionString =
 #ifdef CR_ARB_multitexture
 	"GL_ARB_multitexture "
 #endif
+#ifdef CR_ARB_texture_border_clamp
+	"GL_ARB_texture_border_clamp "
+#endif
 #ifdef CR_ARB_texture_cube_map
 	"GL_ARB_texture_cube_map "
 #endif
@@ -119,7 +122,10 @@ static char *crExtensionString =
 	"GL_NV_register_combiners2 "
 #endif
 #ifdef CR_NV_texgen_reflection
-	"GL_NV_texgen_reflection"
+	"GL_NV_texgen_reflection "
+#endif
+#ifdef CR_SGIS_texture_border_clamp
+	"GL_SGIS_texture_border_clamp "
 #endif
 #ifdef CR_SGIS_texture_edge_clamp
 	"GL_SGIS_texture_edge_clamp"
