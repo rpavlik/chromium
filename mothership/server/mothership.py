@@ -677,10 +677,12 @@ class CR:
 					ready = select.select( self.all_sockets, [], [], 0.1 )[0]
 					for sock in ready:
 						if sock == s:
+							# accept a new connection
 							conn, addr = s.accept()
 							self.wrappers[conn] = SockWrapper(conn)
 							self.all_sockets.append( conn )
 						else:
+							# process request from established connection
 							self.ProcessRequest( self.wrappers[sock] )
 			Fatal( "Couldn't find local TCP port (make sure that another mothership isn't already running)")
 		except KeyboardInterrupt:
