@@ -273,6 +273,36 @@ void crServerSerializeRemoteStreams(void)
 			/* Do the context switch here.  No sense in switching before we
 			 * really have any work to process.  This is a no-op if we're
 			 * not really switching contexts.
+			 *
+			 * XXX This isn't entirely sound.  The crStateMakeCurrent() call
+			 * will compute the state difference and dispatch it using
+			 * the head SPU's dispatch table.
+			 *
+			 * This is a problem if this is the first buffer coming in,
+			 * and the head SPU hasn't had a chance to do a MakeCurrent()
+			 * yet (likely because the MakeCurrent() command is in the
+			 * buffer itself).
+			 *
+			 * At best, in this case, the functions are no-ops, and
+			 * are essentially ignored by the SPU.  In the typical
+			 * case, things aren't too bad; if the SPU just calls
+			 * crState*() functions to update local state, everything
+			 * will work just fine.
+			 *
+			 * In the worst (but unusual) case where a nontrivial
+			 * SPU is at the head of a crserver's SPU chain (say,
+			 * in a multiple-tiered "tilesort" arrangement, as
+			 * seen in the "multitilesort.conf" configuration), the
+			 * SPU may rely on state set during the MakeCurrent() that
+			 * may not be present yet, because no MakeCurrent() has
+			 * yet been dispatched.
+			 *
+			 * This headache will have to be revisited in the future;
+			 * for now, SPUs that could head a crserver's SPU chain
+			 * will have to detect the case that their functions are
+			 * being called outside of a MakeCurrent(), and will have
+			 * to handle the situation gracefully.  (This is currently
+			 * the case with the "tilesort" SPU.)
 			 */
 			crStateMakeCurrent( cr_server.curClient->currentCtx );
 

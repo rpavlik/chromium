@@ -213,7 +213,24 @@ for func_name in keys:
     # as a compile (without execution) followed by a call.  This 
     # allows lazy DL distribution to work.
     if needDL:
-	conditional = "thread->currentContext->displayListMode != GL_FALSE"
+	# XXX The current crserver code can create a situation where SPU functions
+	# may be called before the SPU's MakeCurrent() routine is called.  (This
+	# occurs whena buffer comes in for a new context, and the crserver tries
+	# to do a state difference operation to bring its master context to the
+	# appropriate state; it does the difference by calling the head SPU's
+	# dispatch table through the state differencing API.)
+	#
+	# This is bad for SPUs that rely on state set in the MakeCurrent() call.
+	# (But the only known failure at this point is a segmentation fault in the
+	# multitilesort.conf configuration.)
+	#
+	# For now, don't do anything drastic (i.e. anything outside a crState*()
+	# function call) if there is no real thread information or no real 
+	# current context.
+	# 
+	# This should eventually be fixed.  Here's the old conditional:
+	# conditional = "thread->currentContext->displayListMode != GL_FALSE"
+	conditional = "thread && thread->currentContext && thread->currentContext->displayListMode != GL_FALSE"
 	if "checklist" in chromiumProps:
 	    # "checklist" means that this is an unusual function that
 	    # sometimes can be compiled, and sometimes cannot, based
