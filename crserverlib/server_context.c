@@ -3,11 +3,9 @@
 
 	See the file LICENSE.txt for information on redistributing this software. */
 	
-#include <stdio.h>
 #include "cr_spu.h"
 #include "chromium.h"
 #include "cr_error.h"
-#include "cr_mem.h"
 #include "cr_net.h"
 #include "server_dispatch.h"
 #include "server.h"
@@ -16,20 +14,38 @@
 GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyName, GLint visualBits )
 {
 	GLint i, retVal = 0, ctxPos = -1;
-	CRContext *newCtx;
 
 	/* Since the Cr server serialized all incoming clients/contexts into
 	 * one outgoing GL stream, we only need to create one context for the
 	 * head SPU.  We'll only have to make it current once too, below.
 	 */
 	if (cr_server.firstCallCreateContext) {
-		cr_server.SpuContext
-			= cr_server.head_spu->dispatch_table.CreateContext( dpyName, visualBits );
+		cr_server.SpuContextVisBits = visualBits;
+		cr_server.SpuContext = cr_server.head_spu->dispatch_table.
+			CreateContext(dpyName, cr_server.SpuContextVisBits);
 		if (cr_server.SpuContext < 0) {
-			crWarning("headSpu.CreateContext failed in crServerDispatchCreateContext()");
+			crWarning("crServerDispatchCreateContext() failed.");
 			return -1;
 		}
 		cr_server.firstCallCreateContext = GL_FALSE;
+	}
+	else {
+		/* second or third or ... context */
+		if ((visualBits & cr_server.SpuContextVisBits) != visualBits) {
+			/* the new context needs new visual attributes */
+			cr_server.SpuContextVisBits |= visualBits;
+			crDebug("crServerDispatchCreateContext requires new visual (0x%x).",
+							cr_server.SpuContextVisBits);
+			/* destroy old rendering context */
+			cr_server.head_spu->dispatch_table.DestroyContext(cr_server.SpuContext);
+			/* create new rendering context with suitable visual */
+			cr_server.SpuContext = cr_server.head_spu->dispatch_table.
+				CreateContext(dpyName, cr_server.SpuContextVisBits);
+			if (cr_server.SpuContext < 0) {
+				crWarning("crServerDispatchCreateContext() failed.");
+				return -1;
+			}
+		}
 	}
 
 	/* find an empty position in the context[] array */
@@ -44,7 +60,7 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyNam
 		/* Now create a new state-tracker context and initialize the
 		 * dispatch function pointers.
 		 */
-		newCtx = crStateCreateContext( &cr_server.limits, visualBits );
+		CRContext *newCtx = crStateCreateContext( &cr_server.limits, visualBits );
 		if (newCtx) {
 			cr_server.context[ctxPos] = newCtx;
 			crStateSetCurrentPointers( newCtx, &(cr_server.current) );

@@ -111,6 +111,7 @@ typedef struct {
 	CRLimitsState limits; /* GL limits for any contexts we create */
 
 	int SpuContext; /* Rendering context for the head SPU */
+	int SpuContextVisBits; /* Context's visual attributes */
 
 	CRContext *context[CR_MAX_CONTEXTS];
 
