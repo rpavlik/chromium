@@ -446,6 +446,11 @@ GLXDrawable glXGetCurrentDrawable( void )
 	return currentDrawable;
 }
 
+Display *glXGetCurrentDisplay( void )
+{
+	return currentDisplay;
+}
+
 Bool glXIsDirect( Display *dpy, GLXContext ctx )
 {
 	(void) dpy;
