@@ -54,28 +54,42 @@ for func_name in keys:
 
 	printfstr = ""
 	argstr = ", "
-	for i in range(len(names)):
-		name = names[i]
-		type = types[i]
 
-		if printf_mapping.has_key( type ):
-			escape_char = printf_mapping[type];
-			printfstr += "%s" % escape_char
-			if type == 'GLenum':
-				argstr += 'printspuEnumToStr( %s )' % name
-			elif type == 'GLboolean':
-				argstr += '%s ? "true" : "false"' % name
+	vector_nelem = stub_common.IsVector( func_name )
+	if vector_nelem != 0:
+		printfstr += '['
+		vector_arg_type = re.sub( r'\*', '', types[0] )
+		vector_arg_type = re.sub( r'const ', '', vector_arg_type )
+		vector_arg_type = string.strip( vector_arg_type );
+		for index in range( vector_nelem ):
+			if printf_mapping.has_key( vector_arg_type ):
+				printfstr += printf_mapping[vector_arg_type]
+				argstr += '%s[%d]' % (names[0], index)
+			if index != vector_nelem - 1:
+				printfstr += ", "
+				argstr += ", "
+		printfstr += ']'
+	else:
+		for i in range(len(names)):
+			name = names[i]
+			type = types[i]
+
+			if printf_mapping.has_key( type ):
+				printfstr += printf_mapping[type];
+				if type == 'GLenum':
+					argstr += 'printspuEnumToStr( %s )' % name
+				elif type == 'GLboolean':
+					argstr += '%s ? "true" : "false"' % name
+				else:
+					argstr += name
 			else:
-				argstr += name
+				argstr = ""
+				printfstr = ""
+				break;
+			if i != len(names) - 1:
+				printfstr += ", "
+				argstr += ", "
 				
-		else:
-			argstr = ""
-			printfstr = ""
-			break;
-		if i != len(names) - 1:
-			printfstr += ", "
-			argstr += ", "
-			
 	print '%s )\\n"%s );' % ( printfstr, argstr )
 
 	if return_type != "void":
