@@ -334,11 +334,14 @@ for i in range(NUM_APP_NODES):
 
 
 if REASSEMBLY:
-	reassembleNode = CRNetworkNode()  # xxx host?
+	reassembleNode = CRNetworkNode(REASSEMBLE_HOST)
 	reassembleSPU = SPU('render')
 	reassembleNode.AddSPU(reassembleSPU)
 	for (name, value) in REASSEMBLE_OPTIONS:
 		reassembleSPU.Conf( name, value )
+	if AUTO_START:
+		reassembleNode.AutoStart( ["/usr/bin/rsh", REASSEMBLE_HOST,
+								"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (REASSEMBLE_HOST, crlibdir) ] )
 
 # Loop over servers
 for serverIndex in range(NumServers):
@@ -368,7 +371,7 @@ for serverIndex in range(NumServers):
 	if REASSEMBLY:
 		packspu = SPU('pack')
 		servernode.AddSPU(packspu)
-		packspu.AddServer( reassembleNode, protocol='tcpip', port=7777 )
+		packspu.AddServer( reassembleNode, protocol='tcpip' )
 
 	for (name, value) in SERVER_OPTIONS:
 		servernode.Conf(name, value)
@@ -376,7 +379,7 @@ for serverIndex in range(NumServers):
 
 	# connect app nodes to server
 	for i in range(NUM_APP_NODES):
-		tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port=7000+serverIndex)
+		tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port=7001+serverIndex)
 
 	# auto-start
 	if AUTO_START:
@@ -1187,6 +1190,7 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 
 		clientNode = FindClientNode(mothership)
 		serverNode = FindServerNode(mothership)
+		reassembleNode = FindReassemblyNode(mothership)
 
 		file = fileHandle
 		file.write('TEMPLATE = "%s"\n' % self.Name())
@@ -1201,6 +1205,11 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 		file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
 		file.write("DYNAMIC_SIZE = %d\n" % template.DynamicSize)
 		file.write("REASSEMBLY = %d\n" % template.Reassembly)
+		if reassembleNode:
+			host = reassembleNode.GetHosts()[0]
+		else:
+			host = "localhost"
+		file.write('REASSEMBLE_HOST = "%s"\n' % host)
 
 		# write tilesort SPU options
 		tilesortSPU = FindTilesortSPU(mothership)
