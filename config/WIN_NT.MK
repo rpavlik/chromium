@@ -13,7 +13,7 @@ CXX_RELEASE_FLAGS += /MD /Ox /DNDEBUG
 # This is just not working for me on VC++ 7 --> CXX_DEBUG_FLAGS   += /GZ
 CXX_DEBUG_FLAGS   += /MDd /Yd /Z7
 
-CFLAGS          += /nologo /DWIN32 /DWINDOWS /W4 /WX /TC /GX /QIfist
+CFLAGS          += /nologo /DWIN32 /DWINDOWS /W4 /WX /TC /GX /QIfist /Zm1024
 C_RELEASE_FLAGS += /MD /Ox /DNDEBUG
 # This is just not working for me on VC++ 7 --> C_DEBUG_FLAGS   += /GZ
 C_DEBUG_FLAGS   += /MDd /Yd /Z7
