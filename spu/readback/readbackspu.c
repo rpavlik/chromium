@@ -47,12 +47,16 @@ void READBACKSPU_APIENTRY rbSwapBuffers( void )
 	readback_spu.child.BarrierExec( READBACK_BARRIER );
 	if (readback_spu.extract_depth)
 	{
-		crError( "Depth compositing not yet supported" );
+		readback_spu.child.Clear( GL_STENCIL_BUFFER_BIT );
+		readback_spu.child.ColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+		readback_spu.child.StencilFunc( GL_ALWAYS, 1, 1 );
+		readback_spu.child.Enable( GL_DEPTH_TEST );
+		readback_spu.child.DepthFunc( GL_LESS );
+		readback_spu.child.DrawPixels( geometry[2], geometry[3], GL_DEPTH_COMPONENT, GL_FLOAT, depth_buffer );
+		readback_spu.child.StencilFunc( GL_EQUAL, 1, 1 );
+		readback_spu.child.Disable( GL_DEPTH_TEST );
 	}
-	else
-	{
-		readback_spu.child.DrawPixels( geometry[2], geometry[3], GL_RGB, GL_UNSIGNED_BYTE, color_buffer );
-	}
+	readback_spu.child.DrawPixels( geometry[2], geometry[3], GL_RGB, GL_UNSIGNED_BYTE, color_buffer );
 	readback_spu.child.BarrierExec( READBACK_BARRIER );
 
 	readback_spu.child.SwapBuffers();

@@ -9,11 +9,11 @@
 #include "cr_string.h"
 #include "cr_error.h"
 
-float verts[4][6] = {
-	{ 0, 0, 1, 0, 1, 1 },
-	{ 0, 0, -1, 0, -1, 1 },
-	{ 0, 0, -1, 0, -1, -1 },
-	{ 0, 0, 1, 0, 1, -1 }
+float verts[4][9] = {
+	{ -1, 1, -1,       -1, -1, 0,      .5, 0, 1 },
+	{ -1, -1, -1,       1, -1, 0,      0, .5, 1 },
+	{ 1, -1, -1,        1, 1, 0,       -.5, 0, 1 },
+	{ -1, 1, -1,       1, 1, 0,      0, -.5, 1 }
 };
 float colors[7][3] = {
 	{0,0,1},
@@ -76,12 +76,13 @@ int main(int argc, char *argv[])
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
 	glBarrierCreate( MASTER_BARRIER, size );
+	glEnable( GL_DEPTH_TEST );
 
 	for (;;)
 	{
 		if (rank == 0)
 		{
-			glClear( GL_COLOR_BUFFER_BIT );
+			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		}
 
 		glBarrierExec( MASTER_BARRIER );
@@ -89,9 +90,9 @@ int main(int argc, char *argv[])
 		glRotatef(1,0,0,1);
 		glBegin( GL_TRIANGLES );
 		glColor3fv(colors[rank%7]);
-		glVertex2f(verts[rank%4][0], verts[rank%4][1]);
-		glVertex2f(verts[rank%4][2], verts[rank%4][3]);
-		glVertex2f(verts[rank%4][4], verts[rank%4][5]);
+		glVertex3f(verts[rank%4][0], verts[rank%4][1], verts[rank%4][2]);
+		glVertex3f(verts[rank%4][3], verts[rank%4][4], verts[rank%4][5]);
+		glVertex3f(verts[rank%4][6], verts[rank%4][7], verts[rank%4][8]);
 		glEnd();
 
 		glBarrierExec( MASTER_BARRIER );
