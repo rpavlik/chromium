@@ -23,7 +23,7 @@ for func_name in keys:
 		print "crPack%s" % func_name
 		print "crPack%sSWAP" % func_name
 
-for func_name in [
+functions = [
 	'crPackVertexAttrib1dARBBBOX',
 	'crPackVertexAttrib1dvARBBBOX',
 	'crPackVertexAttrib1fARBBBOX',
@@ -143,9 +143,25 @@ for func_name in [
 	'crPackVertex4iBBOX_COUNT',
 	'crPackVertex4ivBBOX_COUNT',
 	'crPackVertex4sBBOX_COUNT',
-	'crPackVertex4svBBOX_COUNT' ]:
+	'crPackVertex4svBBOX_COUNT',
+	'crPackVertexAttribs1dvNV',
+	'crPackVertexAttribs1fvNV',
+	'crPackVertexAttribs1svNV',
+	'crPackVertexAttribs2dvNV',
+	'crPackVertexAttribs2fvNV',
+	'crPackVertexAttribs2svNV',
+	'crPackVertexAttribs3dvNV',
+	'crPackVertexAttribs3fvNV',
+	'crPackVertexAttribs3svNV',
+	'crPackVertexAttribs4dvNV',
+	'crPackVertexAttribs4fvNV',
+	'crPackVertexAttribs4svNV',
+	'crPackVertexAttribs4ubvNV' ]
+
+for func_name in functions:
     print "%s" % func_name
     print "%sSWAP" % func_name
+
 
 print """
 crPackInitBuffer
