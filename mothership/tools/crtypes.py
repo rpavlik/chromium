@@ -17,6 +17,9 @@ in the mothership.
 
 
 import wxPython
+import sys
+sys.path.append("../server")
+import crconfig
 
 
 # ----------------------------------------------------------------------
@@ -515,8 +518,18 @@ class Mothership:
 		("show_cursor", "Show Virtual cursor", "BOOL", 1, [0], [], []),
 		("MTU", "Mean Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
 		("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], []),
-		("default_app", "Default Application Program", "STRING", 1, [""], [], []),
-		("default_dir", "Default Application Directory", "STRING", 1, [""], [], []),
+		("command_help",
+		 "Program name and arguments.\n" +
+		 "   %N will be replaced by the number of application nodes.\n" +
+		 "   %I (aye) will be replaced by each application node's index.\n" +
+		 "   %0 (zero) will be replaced by the Zeroth argument on the first" +
+		 " app node only.\n" +
+		 "   Example command: 'psubmit -size %N -rank %I -clear %0'\n" +
+		 "   Zeroth arg: '-swap'",
+		 "LABEL", 0, [], [], []),
+		("default_app", "Command", "STRING", 1, [""], [], []),
+		("zeroth_arg", "Zeroth arg", "STRING", 1, [""], [], []),
+		("default_dir", "Directory", "STRING", 1, [crconfig.crbindir], [], []),
 	]
 
 	# Server node options, defined just like SPU options
