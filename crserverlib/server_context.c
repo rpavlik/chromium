@@ -167,6 +167,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 			GLint x = -mural->extents[0].imagewindow.x1;
 			GLint y = -mural->extents[0].imagewindow.y1;
 			cr_server.head_spu->dispatch_table.WindowPos2iARB(x, y);
+			/* This MakeCurrent is a bit redundant (we do it again below)
+			 * but it's only done the first time we activate a context.
+			 */
+			crStateMakeCurrent(ctx);
+			crStateWindowPos2iARB(x, y);
 		}
 	}
 

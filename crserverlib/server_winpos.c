@@ -20,9 +20,9 @@
 static void crServerWindowPos( GLfloat x, GLfloat y, GLfloat z )
 {
 	CRMuralInfo *mural = cr_server.curClient->currentMural;
-	crStateWindowPos3fARB(x, y, z);
 	x -= (float) mural->extents[mural->curExtent].imagewindow.x1;
 	y -= (float) mural->extents[mural->curExtent].imagewindow.y1;
+	crStateWindowPos3fARB(x, y, z);
 	cr_server.head_spu->dispatch_table.WindowPos3fARB(x, y, z);
 }
 
