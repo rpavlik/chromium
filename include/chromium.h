@@ -378,8 +378,8 @@ typedef void (APIENTRY *crDestroyContextProc)(GLint context);
 typedef void (APIENTRY *crMakeCurrentProc)(GLint window, GLint context);
 typedef void (APIENTRY *crSwapBuffersProc)(GLint window, GLint flags);
 
-typedef GLint (APIENTRY *crCreateWindowProc)(const char *dpyName, GLint visBits);
-typedef void (APIENTRY *crDestroyWindowProc)(GLint window);
+typedef GLint (APIENTRY *crWindowCreateProc)(const char *dpyName, GLint visBits);
+typedef void (APIENTRY *crWindowDestroyProc)(GLint window);
 typedef void (APIENTRY *crWindowSizeProc)(GLint window, GLint w, GLint h);
 typedef void (APIENTRY *crWindowPositionProc)(GLint window, GLint x, GLint y);
 
