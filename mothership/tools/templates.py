@@ -8,56 +8,7 @@ from tilesort_template import *
 
 
 # Eventually we'll move these into separate files in a special directory.
-# There'll be separate functions/interfaces for instantiating and editing
-# these templates/assemblies.
-
-def __Create_Tilesort(parentWindow, mothership):
-	"""Create a tilesort configuration"""
-	# XXX need a widget for the hostnames???
-	dialog = intdialog.IntDialog(NULL, id=-1,
-								 title="Tilesort Template",
-								 labels=["Number of client/application nodes:",
-										 "Number of server/render nodes:"],
-								 defaultValues=[1, 4], maxValue=10000)
-	if dialog.ShowModal() == wxID_CANCEL:
-		dialog.Destroy()
-		return 0
-	values = dialog.GetValues()
-	numClients = values[0]
-	numServers = values[1]
-	m = max(numClients, numServers)
-	hostname = "localhost"
-	mothership.DeselectAllNodes()
-	# Create the <numClients> app nodes
-	appNode = crtypes.ApplicationNode(host=hostname)
-	appNode.SetPosition(50, 50)
-	appNode.SetCount(numClients)
-	appNode.Select()
-	tilesortSPU = crutils.NewSPU("tilesort")
-	appNode.AddSPU(tilesortSPU)
-	mothership.AddNode(appNode)
-	# Create the <numServers> server nodes
-	serverNode = crtypes.NetworkNode(host=hostname)
-	serverNode.SetPosition(350, 50)
-	serverNode.SetCount(numServers)
-	serverNode.Select()
-	renderSPU = crutils.NewSPU("render")
-	serverNode.AddSPU(renderSPU)
-	mothership.AddNode(serverNode)
-	tilesortSPU.AddServer(serverNode)
-	# All done
-	dialog.Destroy()
-	return 1
-
-
-def __Edit_Tilesort(parentWindow, mothership):
-	"""Edit parameters for a Tilesort template"""
-	d = TilesortFrame()
-	d.Centre()
-	d.Show(TRUE)
-	print "Edit tilesort..."
-	pass
-
+# We've only done this for the tilesort template (tilesort_template.py) so far.
 
 def __Create_Sortlast(parentWindow, mothership):
 	"""Create a sort-last configuration"""
@@ -185,7 +136,7 @@ def __Edit_BinarySwap(parentWindow, mothership):
 # XXX also specify functions for editing options, saving, validation, etc.
 
 __Templates = {
-	"Tilesort"     : (__Create_Tilesort, __Edit_Tilesort),
+	"Tilesort"     : (Create_Tilesort, Edit_Tilesort),
 	"Sort-last"    : (__Create_Sortlast, __Edit_Sortlast),
 	"Binary-swap"  : (__Create_BinarySwap, __Edit_BinarySwap),
 #	"Lightning-2"  : (__Create_Lightning2, __Edit_Lightning2)

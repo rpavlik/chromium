@@ -186,7 +186,7 @@ class Node:
 		return not self.__IsServer
 
 	def IsServer(self):
-		"""Return true if this is a server, false otherwise."""
+		"""Return true if this is a server node, false otherwise."""
 		return self.__IsServer
 
 	def HasAvailablePacker(self):
@@ -449,6 +449,7 @@ class Mothership:
 		self.__Nodes = []
 		self.__MTU = 1024 * 1024  # XXX verify
 		self.__TemplateType = ""
+		self.__TemplateVars = {}
 		pass
 
 	def MTU(self, bytes):
