@@ -8,6 +8,10 @@ G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++
 CC = gcc
 
+# Mike Houston reports 20-30% speed-ups with these compiler flags on
+# P4/Xeon systems:
+#-O3 -DNDEBUG -fno-strict-aliasing -fomit-frame-pointer -fexpensive-optimizations -falign-functions=4 -funroll-loops -malign-double -fprefetch-loop-arrays -march=pentium4 -mcpu=pentium4 -msse2 -mfpmath=sse 
+
 CXXFLAGS          += -DLINUX -Wall -Werror
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG -fno-strict-aliasing
 CXX_DEBUG_FLAGS   += -g

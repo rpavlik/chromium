@@ -147,6 +147,7 @@ thread safety, debug vs release, DMX support, etc.
 
 <h2 class="PageSubHeading">Special Notes</h2>
 
+<h3>NVIDIA drivers with Red Hat Linux</h3>
 <p>
 If you're using RedHat Linux 9.0 (or later?) with NVIDIA hardware/drivers
 you'll probably have to set the CR_SYSTEM_GL_PATH environment variable
@@ -156,6 +157,15 @@ to <code>/usr/lib/tls</code>
 This causes Chromium to use the libGL.so library found in /usr/lib/tls/
 instead of /usr/lib/, thus avoiding some thread-related problems.
 </p>
+
+<h3>Additional Compiler Optimizations</h3>
+
+<p>
+Look at the <code>cr/config/Linux.mk</code> for some additional gcc
+compiler flags that can increase performance on x86 Linux systems.
+</p>
+
+
 
 </body>
 
