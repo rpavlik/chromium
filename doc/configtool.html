@@ -63,7 +63,8 @@ to run the program directly, without invoking python directly.
 <p>The config tool reads and writes Python-based configuration files
 like the examples given in <code>cr/mothership/configs/</code>.</p>
 
-<p>Chromium is usually started with a configuration file as follows:</p>
+<p>After you've made a configuration file, you can try it out with
+Chromium as follows:</p>
 
 <pre>
    python configfile.conf [program]
@@ -74,7 +75,8 @@ like the examples given in <code>cr/mothership/configs/</code>.</p>
 <p>The <a href="#templates" target="_self">templates section</a> has more
 information about command-line options for configuration files.</p>
 
-<p>The config tool is useful for visualizing arbitrary configuration files.
+<p>The config tool is also very useful for visualizing arbitrary configuration
+files.
 Chromium configurations can be complicated and rather difficult to understand.
 You may find that loading configuration files into the config tool
 will help you to quickly understand how they work.
@@ -86,8 +88,9 @@ will help you to quickly understand how they work.
 <h2 class="PageSubHeading">Overview</h2>
 
 <p>
-A Chromium configuration is usually a directed acyclic graph (DAG).
-The graph's nodes are displayed as boxes and the edges are drawn as lines.
+A Chromium configuration is basically a directed acyclic graph (DAG).
+The graph's nodes are displayed as boxes and the edges (network connections)
+are drawn as lines.
 With the graphical configuration tool you can add, remove and edit nodes
 and edges with a graphical interface, instead of editing the text-based
 Python configuration file.
