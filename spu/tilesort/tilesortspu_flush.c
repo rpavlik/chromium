@@ -537,7 +537,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		/* Check to see if this server needs geometry from us. */
 		if (!broadcast && !(bucket_info.hits[node32] & (1 << node)))
 		{
-			/*crDebug( "NOT sending to server %d", i ); */
+		     /*crDebug( "NOT sending to server %d", i );*/
 			continue;
 		}
 		/*crDebug( "Sending to server %d", i ); */

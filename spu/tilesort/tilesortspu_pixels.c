@@ -20,15 +20,20 @@
  */
 void TILESORTSPU_APIENTRY
 tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
-											 GLenum type, const GLvoid *pixels)
+		       GLenum type, const GLvoid *pixels)
 {
 	GET_CONTEXT(ctx);
 	CRCurrentState *c = &(ctx->current);
 	CRViewportState *v = &(ctx->viewport);
+	CRPixelState *p = &(ctx->pixel);
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	GLfloat screen_bbox[8];
 	GLenum hint;
-	GLint zoomedWidth = (GLint) (width * ctx->pixel.xZoom + 0.5);
-	GLint zoomedHeight = (GLint) (height * ctx->pixel.yZoom + 0.5);
+	/*GLint zoomedWidth = (GLint) (width * ctx->pixel.xZoom + 0.5);
+	  GLint zoomedHeight = (GLint) (height * ctx->pixel.yZoom + 0.5);*/
+	GLint zoomedWidth, zoomedHeight;
+	GLfloat zoomX, zoomY;
+	GLfloat oldZoomX, oldZoomY;
 
 	(void) v;
 
@@ -60,6 +65,19 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	}
 
 	tilesortspuFlush( thread );
+	
+	/* We need to zoom the pixels up to match the output.  If an app 
+	   draws to the full size of it's window, for the output to look
+	   right on a tiled display, we should zoom here as well */
+	oldZoomX = p->xZoom;
+	oldZoomY = p->yZoom;
+	zoomX = oldZoomX * (float)(winInfo->muralWidth)  / (float)(winInfo->lastWidth);
+	zoomY = oldZoomY * (float)(winInfo->muralHeight) / (float)(winInfo->lastHeight);
+	crStatePixelZoom(zoomX, zoomY);
+
+	/* The "+ 0.5" causes a round up when we cast to int */
+	zoomedWidth  = (GLint) (zoomX * width  + 0.5);
+	zoomedHeight = (GLint) (zoomY * height + 0.5);
 
 	/* min x, y, z, w */
 	screen_bbox[0] = (c->rasterAttrib[VERT_ATTRIB_POS][0]) / v->viewportW;
@@ -67,8 +85,8 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	screen_bbox[2] = 0.0;
 	screen_bbox[3] = 1.0;
 	/* max x, y, z, w */
-	screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] + zoomedWidth) / v->viewportW;
-	screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] + zoomedHeight) / v->viewportH;
+	screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] + (int)zoomedWidth) / v->viewportW;
+	screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] + (int)zoomedHeight) / v->viewportH;
 	screen_bbox[6] = 0.0;
 	screen_bbox[7] = 1.0;
 
@@ -93,9 +111,11 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 
 	thread->currentContext->inDrawPixels = GL_TRUE;
 	if (tilesort_spu.swap)
-		 crPackDrawPixelsSWAP(width, height, format, type, pixels, &(ctx->client.unpack));
+	     crPackDrawPixelsSWAP(width, height, format, type, 
+				  pixels, &(ctx->client.unpack));
 	else
-	crPackDrawPixels(width, height, format, type, pixels, &(ctx->client.unpack));
+	     crPackDrawPixels(width, height, format, type, 
+			      pixels, &(ctx->client.unpack));
 
 	if (thread->packer->buffer.data_current != thread->packer->buffer.data_start)
 	{
@@ -104,6 +124,7 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	thread->currentContext->inDrawPixels = GL_FALSE;
 
 	thread->currentContext->providedBBOX = hint;
+	crStatePixelZoom(oldZoomX, oldZoomY);
 }
 
 
@@ -403,9 +424,9 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
  */
 void TILESORTSPU_APIENTRY
 tilesortspu_Bitmap(GLsizei width, GLsizei height,
-									 GLfloat xorig, GLfloat yorig,
-									 GLfloat xmove, GLfloat ymove,
-									 const GLubyte * bitmap)
+		   GLfloat xorig, GLfloat yorig,
+		   GLfloat xmove, GLfloat ymove,
+		   const GLubyte * bitmap)
 {
 	GET_CONTEXT(ctx);
 	CRCurrentState *c = &(ctx->current);
@@ -413,6 +434,7 @@ tilesortspu_Bitmap(GLsizei width, GLsizei height,
 	GLfloat screen_bbox[8];
 	GLenum hint;
 	GLfloat xmove2, ymove2;
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
 
 	CRASSERT(ctx->lists.mode == 0);
 
@@ -423,6 +445,8 @@ tilesortspu_Bitmap(GLsizei width, GLsizei height,
 
 	tilesortspuFlush( thread );
 
+	xmove *= (float)(winInfo->muralWidth)  / (float)(winInfo->lastWidth);
+	ymove *= (float)(winInfo->muralHeight) / (float)(winInfo->lastHeight);
 	/*
 	 * Compute screen-space bounding box for this bitmap
 	 */

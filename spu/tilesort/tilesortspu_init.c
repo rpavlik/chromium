@@ -78,8 +78,9 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	/* get a buffer which can hold one big big opcode (counter computing
 	 * against packer/pack_buffer.c)
 	 */
-	tilesort_spu.buffer_size = ((((tilesort_spu.MTU - sizeof(CRMessageOpcodes) ) * 5 + 3) / 4 + 0x3) & ~0x3) + sizeof(CRMessageOpcodes);
+	/*tilesort_spu.buffer_size = ((((tilesort_spu.MTU - sizeof(CRMessageOpcodes) ) * 5 + 3) / 4 + 0x3) & ~0x3) + sizeof(CRMessageOpcodes);*/
 
+	tilesort_spu.buffer_size = tilesort_spu.MTU;
 	tilesort_spu.geom_buffer_size = tilesort_spu.buffer_size;
 
 	/* 24 is the size of the bounds info packet

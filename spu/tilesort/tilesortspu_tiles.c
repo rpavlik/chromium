@@ -669,12 +669,12 @@ tilesortspuGetNewTiling(WindowInfo *winInfo)
 	 * the new windows (because the user might not call glXMakeCurrent).
 	 */
 	if (tilesort_spu.useDMX &&
-			thread->currentContext &&
-			thread->currentContext->currentWindow &&
-			thread->currentContext->currentWindow->newBackendWindows) {
+	    thread->currentContext &&
+	    thread->currentContext->currentWindow &&
+	    thread->currentContext->currentWindow->newBackendWindows) {
 		tilesortspu_MakeCurrent(thread->currentContext->currentWindow->id,
-													(GLint) thread->currentContext->currentWindow->xwin,
-														thread->currentContext->id);
+					(GLint) thread->currentContext->currentWindow->xwin,
+					thread->currentContext->id);
 		thread->currentContext->currentWindow->newBackendWindows = GL_FALSE;
 	}
 #endif
@@ -688,14 +688,14 @@ tilesortspuGetNewTiling(WindowInfo *winInfo)
 		for (server = 0; server < tilesort_spu.num_servers; server++)
 		{
 			crDebug("  Server %d: %d tiles",
-							server, winInfo->server[server].num_extents);
+				server, winInfo->server[server].num_extents);
 			for (i = 0; i < winInfo->server[server].num_extents; i++)
 			{
 				crDebug("    Tile %d: %d, %d .. %d, %d", i,
-								winInfo->server[server].extents[i].x1,
-								winInfo->server[server].extents[i].y1,
-								winInfo->server[server].extents[i].x2,
-								winInfo->server[server].extents[i].y2);
+					winInfo->server[server].extents[i].x1,
+					winInfo->server[server].extents[i].y1,
+					winInfo->server[server].extents[i].x2,
+					winInfo->server[server].extents[i].y2);
 			}
 		}
 	}

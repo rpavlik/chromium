@@ -249,9 +249,10 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	/* get a buffer which can hold one big big opcode (counter computing
 	 * against packer/pack_buffer.c)
 	 */
-	tilesort_spu.buffer_size =
+	/*tilesort_spu.buffer_size =
 		((((tilesort_spu.MTU - sizeof(CRMessageOpcodes)) * 5 + 3) / 4 +
-			0x3) & ~0x3) + sizeof(CRMessageOpcodes);
+		0x3) & ~0x3) + sizeof(CRMessageOpcodes);*/
+	tilesort_spu.buffer_size = tilesort_spu.MTU;
 
 	/* Create initial/default window (id=0) */
 	winInfo = tilesortspuCreateWindowInfo(0,
