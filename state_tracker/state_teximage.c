@@ -207,6 +207,195 @@ GetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
 }
 
 
+/*
+ * Do parameter error checking for glTexImagexD functions.
+ * Return GL_TRUE if any errors, GL_FALSE if no errors.
+ */
+static GLboolean
+ErrorCheckTexImage(GLuint dims, GLenum target, GLint level,
+									 GLsizei width, GLsizei height, GLsizei depth, GLint border)
+{
+	CRContext *g = GetCurrentContext();
+	CRTextureState *t = &(g->texture);
+
+	/*
+	 * Test target
+	 */
+	switch (target)
+	{
+	case GL_TEXTURE_1D:
+	case GL_PROXY_TEXTURE_1D:
+		if (dims != 1)
+			return GL_TRUE;
+		break;
+	case GL_TEXTURE_2D:
+	case GL_PROXY_TEXTURE_2D:
+		if (dims != 2)
+			return GL_TRUE;
+		break;
+	case GL_TEXTURE_3D:
+	case GL_PROXY_TEXTURE_3D:
+		if (dims != 3)
+			return GL_TRUE;
+		break;
+#ifdef CR_NV_texture_rectangle
+	case GL_TEXTURE_RECTANGLE_NV:
+	case GL_PROXY_TEXTURE_RECTANGLE_NV:
+		if (dims != 2 || !g->extensions.NV_texture_rectangle) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexImage2D invalid target: 0x%x", target);
+			return GL_TRUE;
+		}
+		break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+		if (dims != 2 || !g->extensions.ARB_texture_cube_map) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexImage2D invalid target: 0x%x", target);
+			return GL_TRUE;
+		}
+		break;
+#endif
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								 "glTexImage%uD invalid target: 0x%x", dims, target);
+		return GL_TRUE;
+	}
+
+	/*
+	 * Test level
+	 */
+	if (level < 0) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage%uD(level=%d)", dims, level);
+		return GL_TRUE;
+	}
+
+	if ((target == GL_TEXTURE_1D || target == GL_PROXY_TEXTURE_1D ||
+			 target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D)
+			&& level > t->maxLevel) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage%uD(level=%d)", dims, level);
+		return GL_TRUE;
+	}
+	else if ((target == GL_TEXTURE_3D || target == GL_PROXY_TEXTURE_3D)
+					 && level > t->max3DLevel) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage3D(level=%d)", level);
+		return GL_TRUE;
+	}
+#ifdef CR_ARB_texture_cube_map
+	else if ((target == GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
+						target == GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB ||
+						target == GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB ||
+						target == GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB ||
+						target == GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB ||
+						target == GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB ||
+						target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
+					 && level > t->maxCubeMapLevel) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(level=%d)", level);
+		return GL_TRUE;
+	}
+#endif
+#ifdef CR_NV_texture_rectangle
+	else if ((target == GL_TEXTURE_RECTANGLE_NV ||
+						target == GL_PROXY_TEXTURE_RECTANGLE_NV)
+					 && level > t->maxRectLevel) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(level=%d)", level);
+		return GL_TRUE;
+	}
+#endif
+
+	/*
+	 * Test border
+	 */
+	if (border != 0 && border != 1) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage%uD(border=%d)", dims, border);
+		return GL_TRUE;
+	}
+
+	if ((target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
+			 target == GL_TEXTURE_RECTANGLE_NV) && border != 0) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(border=%d)", border);
+		return GL_TRUE;
+	}
+
+	/*
+	 * Test width, height, depth
+	 */
+	if (target == GL_PROXY_TEXTURE_1D || target == GL_TEXTURE_1D) {
+		if (!isLegalSize(g, width - 2 * border, g->limits.maxTextureSize)) {
+			if (!IsProxyTarget(target))
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+										 "glTexImage1D(width=%d)", width);
+			return GL_TRUE;
+		}
+	}
+	else if (target == GL_PROXY_TEXTURE_2D || target == GL_TEXTURE_2D) {
+		if (!isLegalSize(g, width - 2 * border, g->limits.maxTextureSize) ||
+				!isLegalSize(g, height - 2 * border, g->limits.maxTextureSize)) {
+			if (!IsProxyTarget(target))
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+										 "glTexImage2D(width=%d, height=%d)", width, height);
+			return GL_TRUE;
+		}
+	}
+	else if (target == GL_PROXY_TEXTURE_3D || target == GL_TEXTURE_3D) {
+		if (!isLegalSize(g, width - 2 * border, g->limits.max3DTextureSize) ||
+				!isLegalSize(g, height - 2 * border, g->limits.max3DTextureSize) ||
+				!isLegalSize(g, depth - 2 * border, g->limits.max3DTextureSize)) {
+			if (!IsProxyTarget(target))
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+										 "glTexImage3D(width=%d, height=%d, depth=%d)",
+										 width, height, depth);
+			return GL_TRUE;
+		}
+	}
+	else if (target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
+					 target == GL_TEXTURE_RECTANGLE_NV) {
+		if (width < 0 || width > (int) g->limits.maxRectTextureSize ||
+				height < 0 || height > (int) g->limits.maxRectTextureSize) {
+			if (!IsProxyTarget(target))
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+										 "glTexImage2D(width=%d, height=%d)", width, height);
+			return GL_TRUE;
+		}
+	}
+	else {
+		/* cube map */
+		if (!isLegalSize(g, width - 2*border, g->limits.maxCubeMapTextureSize) ||
+				!isLegalSize(g, height - 2*border, g->limits.maxCubeMapTextureSize) ||
+				width != height) {
+			if (!IsProxyTarget(target))
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+										 "glTexImage2D(width=%d, height=%d)", width, height);
+			return GL_TRUE;
+		}
+	}
+
+	/* OK, no errors */
+	return GL_FALSE;
+}
+
+
 void STATE_APIENTRY
 crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 									GLsizei width, GLint border, GLenum format,
@@ -220,14 +409,14 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
 
+	FLUSH();
+
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 								 "glTexImage1D called in Begin/End");
 		return;
 	}
-
-	FLUSH();
 
 	if (target != GL_TEXTURE_1D && target != GL_PROXY_TEXTURE_1D)
 	{
@@ -237,46 +426,13 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 		return;
 	}
 
-	if (level < 0 || level > t->maxLevel)
-	{
-		if (target == GL_PROXY_TEXTURE_1D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
-		}
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage1D level oob: %d", level);
-		}
-		return;
-	}
-
-	if (border != 0 && border != 1)
-	{
-		if (target == GL_PROXY_TEXTURE_1D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
-		}
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage1D border oob: %d", border);
-		}
-		return;
-	}
-
-	if (!isLegalSize(g, width - 2 * border, g->limits.maxTextureSize)) {
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexImage1D(width)");
-		if (target == GL_PROXY_TEXTURE_1D) {
-			/* clear all the texture object state */
+	if (ErrorCheckTexImage(1, target, level, width, 1, 1, border)) {
+		if (IsProxyTarget(target)) {
+			/* clear all state, but don't generate error */
 			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
 		}
 		else {
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage1D(width=%d)", width);
+			/* error was already recorded */
 		}
 		return;
 	}
@@ -332,148 +488,6 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 }
 
 
-/*
- * Do parameter error checking for glTexImage2D
- * Return GL_TRUE if any errors, GL_FALSE if no errors.
- */
-static GLboolean
-ErrorCheckTexImage2D(GLenum target, GLint level, GLsizei width, GLsizei height,
-										 GLint border)
-{
-	CRContext *g = GetCurrentContext();
-	CRTextureState *t = &(g->texture);
-
-	/*
-	 * Test target
-	 */
-	switch (target)
-	{
-	case GL_TEXTURE_2D:
-	case GL_PROXY_TEXTURE_2D:
-		break;											/* legal */
-#ifdef CR_NV_texture_rectangle
-	case GL_TEXTURE_RECTANGLE_NV:
-	case GL_PROXY_TEXTURE_RECTANGLE_NV:
-		if (!g->extensions.NV_texture_rectangle) {
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage2D invalid target: 0x%x", target);
-			return GL_TRUE;
-		}
-		break;
-#endif
-#ifdef CR_ARB_texture_cube_map
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-		if (!g->extensions.ARB_texture_cube_map) {
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTexImage2D invalid target: 0x%x", target);
-			return GL_TRUE;
-		}
-		break;
-#endif
-	default:
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexImage2D invalid target: 0x%x", target);
-		return GL_TRUE;
-	}
-
-	/*
-	 * Test level
-	 */
-	if (level < 0) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D(level=%d)", level);
-		return GL_TRUE;
-	}
-	if ((target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D)
-			&& level > t->maxLevel) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D(level=%d)", level);
-		return GL_TRUE;
-	}
-#ifdef CR_ARB_texture_cube_map
-	else if ((target != GL_TEXTURE_2D && target != GL_PROXY_TEXTURE_2D)
-					 && level > t->maxCubeMapLevel) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D(level=%d)", level);
-		return GL_TRUE;
-	}
-#endif
-#ifdef CR_NV_texture_rectangle
-	else if ((target != GL_TEXTURE_2D && target != GL_PROXY_TEXTURE_2D)
-					 && level > t->maxRectLevel) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D(level=%d)", level);
-		return GL_TRUE;
-	}
-#endif
-
-	/*
-	 * Test border
-	 */
-	if (border != 0 && border != 1) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D(border=%d)", border);
-		return GL_TRUE;
-	}
-
-	if ((target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
-			 target == GL_TEXTURE_RECTANGLE_NV) && border != 0) {
-		if (!IsProxyTarget(target))
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D(border=%d)", border);
-		return GL_TRUE;
-	}
-
-	/*
-	 * Test width and height
-	 */
-	if (target == GL_PROXY_TEXTURE_2D || target == GL_TEXTURE_2D) {
-		if (!isLegalSize(g, width - 2 * border, g->limits.maxTextureSize) ||
-				!isLegalSize(g, height - 2 * border, g->limits.maxTextureSize)) {
-			if (!IsProxyTarget(target))
-				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-										 "glTexImage2D(width=%d, height=%d)", width, height);
-			return GL_TRUE;
-		}
-	}
-	else if (target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
-					 target == GL_TEXTURE_RECTANGLE_NV) {
-		if (width < 0 || width > (int) g->limits.maxRectTextureSize ||
-				height < 0 || height > (int) g->limits.maxRectTextureSize) {
-			if (!IsProxyTarget(target))
-				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-										 "glTexImage2D(width=%d, height=%d)", width, height);
-			return GL_TRUE;
-		}
-	}
-	else {
-		/* cube map */
-		if (!isLegalSize(g, width - 2*border, g->limits.maxCubeMapTextureSize) ||
-				!isLegalSize(g, height - 2*border, g->limits.maxCubeMapTextureSize) ||
-				width != height) {
-			if (!IsProxyTarget(target))
-				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-										 "glTexImage2D(width=%d, height=%d)", width, height);
-			return GL_TRUE;
-		}
-	}
-
-	/* OK, no errors */
-	return GL_FALSE;
-}
-
-
 void STATE_APIENTRY
 crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 									GLsizei width, GLsizei height, GLint border,
@@ -501,7 +515,7 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	 * texture!  The user better provide correct parameters!!!
 	 */
 	if (!is_distrib
-			&& ErrorCheckTexImage2D(target, level, width, height, border)) {
+			&& ErrorCheckTexImage(2, target, level, width, height, 1, border)) {
 		if (IsProxyTarget(target)) {
 			/* clear all state, but don't generate error */
 			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
@@ -593,6 +607,8 @@ crStateTexImage3D(GLenum target, GLint level,
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
 
+	FLUSH();
+
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
@@ -607,72 +623,22 @@ crStateTexImage3D(GLenum target, GLint level,
 		return;
 	}
 
-	if (level < 0 || level > t->max3DLevel)
-	{
-		if (target == GL_PROXY_TEXTURE_3D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
-		}
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage3D level oob: %d", level);
-		}
-		return;
-	}
-
-	if (border != 0 && border != 1)
-	{
-		if (target == GL_PROXY_TEXTURE_3D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
-		}
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage3D border oob: %d", border);
-		}
-		return;
-	}
-
-	/* check the bits in width */
-	if (!isLegalSize(g, width - 2 * border, g->limits.max3DTextureSize) ||
-			!isLegalSize(g, height - 2 * border, g->limits.max3DTextureSize) ||
-			!isLegalSize(g, depth - 2 * border, g->limits.max3DTextureSize)) {
-		if (target == GL_PROXY_TEXTURE_3D) {
-			/* clear all the texture object state */
+	if (ErrorCheckTexImage(3, target, level, width, height, depth, border)) {
+		if (IsProxyTarget(target)) {
+			/* clear all state, but don't generate error */
 			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
 		}
 		else {
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage3D(invalide size %d x %d x %d)",
-									 width, height, depth);
+			/* error was already recorded */
 		}
 		return;
 	}
 
-#if 0
-	if (target == GL_TEXTURE_3D)
-	{
-		tobj = unit->currentTexture3D;
-		tl = tobj->level + level;
-		tl->bytes = crTextureSize(format, type, width, height, depth);
-	}
-	else if (target == GL_PROXY_TEXTURE_3D)
-	{
-		tobj = &(t->proxy3D);
-		tl = tobj->level + level;
-		tl->bytes = 0;
-	}
-#else
 	GetTextureObjectAndImage(g, target, level, &tobj, &tl);
 	if (IsProxyTarget(target))
 		tl->bytes = 0;
 	else
 		tl->bytes = crTextureSize(format, type, width, height, depth);
-#endif
 
 	if (tl->bytes)
 	{
