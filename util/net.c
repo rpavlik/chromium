@@ -820,21 +820,27 @@ int crNetRecv( void )
 	int found_work = 0;
 
 	found_work += crTCPIPRecv( );
+
+#if 0 /* causing some problems currently.... */
 	found_work += crUDPTCPIPRecv( );
+#endif
+
 	found_work += crFileRecv( );
+
 #ifdef GM_SUPPORT
 	if ( cr_net.use_gm )
 		found_work += crGmRecv( );
 #endif
+
 #ifdef TEAC_SUPPORT
-  if ( cr_net.use_teac )
-    found_work += crTeacRecv( );
-#endif
-#ifdef TCSCOMM_SUPPORT
-  if ( cr_net.use_tcscomm )
-    found_work += crTcscommRecv( );
+  	if ( cr_net.use_teac )
+    		found_work += crTeacRecv( );
 #endif
 
+#ifdef TCSCOMM_SUPPORT
+  	if ( cr_net.use_tcscomm )
+    		found_work += crTcscommRecv( );
+#endif
 
 	return found_work;
 }
