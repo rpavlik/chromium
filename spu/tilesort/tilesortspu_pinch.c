@@ -20,8 +20,10 @@
 #define IS_VERTEX(a)	(((a) >= CR_VERTEX2D_OPCODE && (a) <= CR_VERTEX4S_OPCODE) \
 											 || ((a) >= CR_VERTEXATTRIB1DARB_OPCODE && (a) <= CR_VERTEXATTRIB4USVARB_OPCODE))
 #define IS_COLOR(a)		((a) >= CR_COLOR3B_OPCODE && (a) <= CR_COLOR4US_OPCODE)
+#define IS_SECONDARYCOLOR(a)		((a) >= CR_SECONDARYCOLOR3BEXT_OPCODE && (a) <= CR_SECONDARYCOLOR3USEXT_OPCODE)
+#define IS_FOGCOORD(a) ((a) >= CR_FOGCOORDDEXT_OPCODE && (a) <= CR_FOGCOORDFEXT_OPCODE)
 #define IS_NORMAL(a)	((a) >= CR_NORMAL3B_OPCODE && (a) <= CR_NORMAL3S_OPCODE)
-#define IS_INDEX(a)		((a) >= CR_INDEXD_OPCODE && (a) <= CR_INDEXS_OPCODE)
+#define IS_INDEX(a)		((a) >= CR_INDEXD_OPCODE && (a) <= CR_INDEXUB_OPCODE)
 #define IS_TEXCOORD(a)	(((a) >= CR_TEXCOORD1D_OPCODE && (a) <= CR_TEXCOORD4S_OPCODE) || (((a) >= CR_MULTITEXCOORD1DARB_OPCODE) && ((a) <= CR_MULTITEXCOORD4SARB_OPCODE)))
 #define IS_EDGEFLAG(a)	((a) == CR_EDGEFLAG_OPCODE)
 #define IS_VERTEX_ATTRIB(a)	((a) >= CR_VERTEXATTRIB1DARB_OPCODE && (a) <= CR_VERTEXATTRIB4USVARB_OPCODE)
@@ -35,7 +37,7 @@
 
 static const GLvectorf vdefault = {0.0f, 0.0f, 0.0f, 1.0f};
 
-void tilesortspuPinch (void) 
+void tilesortspuPinch(void) 
 {
 	GET_CONTEXT(ctx);
 	CRCurrentState *c = &(ctx->current);
@@ -50,6 +52,8 @@ void tilesortspuPinch (void)
 	unsigned char * vtx_data;
 
 	const unsigned char *color_ptr = ctx->current.current->c.color.ptr;
+	const unsigned char *secondarycolor_ptr = ctx->current.current->c.secondaryColor.ptr;
+	const unsigned char *fogcoord_ptr = ctx->current.current->c.fogCoord.ptr;
 	const unsigned char *normal_ptr = ctx->current.current->c.normal.ptr;
 	const unsigned char *texCoord_ptr[CR_MAX_TEXTURE_UNITS];
 	const unsigned char *edgeFlag_ptr = ctx->current.current->c.edgeFlag.ptr;
@@ -58,6 +62,16 @@ void tilesortspuPinch (void)
 
 	/* make sure the table is the correct size. */
 	CRASSERT( sizeof(__cr_packet_length_table) / sizeof(int) == CR_EXTEND_OPCODE + 1 );
+
+	/* First lets figure out how many vertices
+	 * we need to recover.  Note to self --
+	 * "vertexes" is NOT A WORD.
+	 */
+	if (!c->inBeginEnd || vtx_count == 0) 
+	{
+		thread->pinchState.numRestore = 0;
+		return;
+	}
 
 	/* silence warnings */
 	(void) __convert_b1;
@@ -142,7 +156,9 @@ void tilesortspuPinch (void)
 	(void) __convert_rescale_Nub3;
 	(void) __convert_rescale_Nub4;
 
-	for (i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++) {
+	/* Initialize the v_current structure */
+	for (i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++)
+	{
 		 COPY_4V(v_current.attrib[i], c->vertexAttrib[i]);
 	}
 	for (i = 0 ; i < ctx->limits.maxTextureUnits ; i++)
@@ -152,15 +168,6 @@ void tilesortspuPinch (void)
 	v_current.edgeFlag = c->edgeFlag;
 	v_current.colorIndex = c->colorIndex;
 
-	/* First lets figure out how many vertices
-	 * we need to recover.  Note to self --
-	 * "vertexes" is NOT A WORD.
-	 */
-	if (!c->inBeginEnd || vtx_count == 0) 
-	{
-		thread->pinchState.numRestore = 0;
-		return;
-	}
 	switch (c->mode) 
 	{
 		case GL_POINTS:
@@ -334,6 +341,62 @@ void tilesortspuPinch (void)
 				}
 			}
 
+			/* Is the secondary color pointer after my vertex? */
+			if (secondarycolor_ptr > vtx_data) 
+			{
+
+				/* Perform the search */
+				op = vtx_op+1;
+				data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
+				while (op <= thread->packer->buffer.opcode_start && !IS_SECONDARYCOLOR(*op)) 
+				{
+					op++;
+					CRASSERT(__cr_packet_length_table[*op] > 0);
+					data -= __cr_packet_length_table[*op];
+				}
+
+				/* Did I hit the begining of the buffer? */
+				if (op > thread->packer->buffer.opcode_start) 
+				{
+					COPY_4V(v_current.attrib[VERT_ATTRIB_COLOR1], c->vertexAttrib[VERT_ATTRIB_COLOR1]);
+					secondarycolor_ptr = NULL;
+				} 
+				else 
+				{
+					ASSERT_BOUNDS (op, data);
+					VPINCH_CONVERT_SECONDARYCOLOR (*op, data, v_current.attrib[VERT_ATTRIB_COLOR1]);
+					secondarycolor_ptr = data;
+				}
+			}
+
+			/* Is the fog coord pointer after my vertex? */
+			if (fogcoord_ptr > vtx_data) 
+			{
+
+				/* Perform the search */
+				op = vtx_op+1;
+				data = vtx_data - __cr_packet_length_table[*(vtx_op+1)];
+				while (op <= thread->packer->buffer.opcode_start && !IS_FOGCOORD(*op)) 
+				{
+					op++;
+					CRASSERT(__cr_packet_length_table[*op] > 0);
+					data -= __cr_packet_length_table[*op];
+				}
+
+				/* Did I hit the begining of the buffer? */
+				if (op > thread->packer->buffer.opcode_start) 
+				{
+					COPY_4V(v_current.attrib[VERT_ATTRIB_FOG], c->vertexAttrib[VERT_ATTRIB_FOG]);
+					fogcoord_ptr = NULL;
+				} 
+				else 
+				{
+					ASSERT_BOUNDS (op, data);
+					VPINCH_CONVERT_FOGCOORD (*op, data, v_current.attrib[VERT_ATTRIB_FOG]);
+					fogcoord_ptr = data;
+				}
+			}
+
 			/* Is the normal pointer after my vertex? */
 			if (normal_ptr > vtx_data) 
 			{
@@ -422,8 +485,6 @@ void tilesortspuPinch (void)
 						edgeFlag_ptr = data;
 				}
 			}
-
-			/* XXX other vertex attribs like fog, secondary color, etc. */
 
 		} 
 		else 
@@ -565,82 +626,50 @@ void tilesortspuPinch (void)
 static void __pinchIssueParams(const CRVertex *vtx) 
 {
 	GET_CONTEXT(ctx);
-	GLfloat val[4];
 	unsigned int i;
 
-	for (i = 0 ; i < ctx->limits.maxTextureUnits ; i++)
-	{
-		COPY_4V(val, vtx->attrib[VERT_ATTRIB_TEX0 + i]);
-		if (i == 0)
-		{
-			if (tilesort_spu.swap)
-			{
-				crPackTexCoord4fvSWAP( (const GLfloat *) val);
-			}
-			else
-			{
-				crPackTexCoord4fv( (const GLfloat *) val);
-			}
-		}
-		else
-		{
-			if (tilesort_spu.swap)
-			{
-				crPackMultiTexCoord4fvARBSWAP( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
-			}
-			else
-			{
-				crPackMultiTexCoord4fvARB( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
-			}
-		}
-	}
-	COPY_4V(val, vtx->attrib[VERT_ATTRIB_NORMAL]);
 	if (tilesort_spu.swap)
 	{
-		crPackNormal3fvSWAP((const GLfloat *) val);
+		crPackNormal3fvSWAP(vtx->attrib[VERT_ATTRIB_NORMAL]);
+		crPackColor4fvSWAP(vtx->attrib[VERT_ATTRIB_COLOR0]);
+		crPackSecondaryColor3fvEXTSWAP(vtx->attrib[VERT_ATTRIB_COLOR1]);
 		crPackEdgeFlagSWAP(vtx->edgeFlag);
+		crPackFogCoordfvEXTSWAP(vtx->attrib[VERT_ATTRIB_FOG]);
+		for (i = 0; i < ctx->limits.maxTextureUnits; i++) {
+			 if (i == 0)
+					crPackTexCoord4fvSWAP(vtx->attrib[VERT_ATTRIB_TEX0 + i]);
+			 else
+					crPackMultiTexCoord4fvARBSWAP(i + GL_TEXTURE0_ARB,
+																				vtx->attrib[VERT_ATTRIB_TEX0 + i]);
+		}
+		/* XXX all vertex attribs */
 	}
 	else
 	{
-		crPackNormal3fv((const GLfloat *) val);
+		crPackNormal3fv(vtx->attrib[VERT_ATTRIB_NORMAL]);
+		crPackColor4fv(vtx->attrib[VERT_ATTRIB_COLOR0]);
+		crPackSecondaryColor3fvEXT(vtx->attrib[VERT_ATTRIB_COLOR1]);
 		crPackEdgeFlag(vtx->edgeFlag);
+		crPackFogCoordfvEXT(vtx->attrib[VERT_ATTRIB_FOG]);
+		for (i = 0; i < ctx->limits.maxTextureUnits; i++) {
+			 if (i == 0)
+					crPackTexCoord4fv(vtx->attrib[VERT_ATTRIB_TEX0 + i]);
+			 else
+					crPackMultiTexCoord4fvARB(i + GL_TEXTURE0_ARB,
+																		vtx->attrib[VERT_ATTRIB_TEX0 + i]);
+		}
+		/* XXX all vertex attribs */
 	}
-	COPY_4V(val, vtx->attrib[VERT_ATTRIB_COLOR0]);
-	if (tilesort_spu.swap)
-	{
-		crPackColor4fvSWAP((const GLfloat *) val);
-	}
-	else
-	{
-		crPackColor4fv((const GLfloat *) val);
-	}
-	COPY_4V(val, vtx->attrib[VERT_ATTRIB_COLOR1]);
-	if (tilesort_spu.swap)
-	{
-		crPackSecondaryColor3fvEXTSWAP((const GLfloat *) val);
-	}
-	else
-	{
-		crPackSecondaryColor3fvEXT((const GLfloat *) val);
-	}
-	/* XXX do other attribs */
 }
 
 static void __pinchIssueVertex(const CRVertex *vtx) 
 {
-	GLfloat val[4];
-
 	__pinchIssueParams(vtx);
 
-	COPY_4V(val, vtx->attrib[VERT_ATTRIB_POS]);
 	if (tilesort_spu.swap)
-	{
-		crPackVertex4fvBBOX_COUNTSWAP((const GLfloat *) val);
-	}
+		crPackVertex4fvBBOX_COUNTSWAP(vtx->attrib[VERT_ATTRIB_POS]);
 	else
-	{
-		crPackVertex4fvBBOX_COUNT((const GLfloat *) val);
-	}
+		crPackVertex4fvBBOX_COUNT(vtx->attrib[VERT_ATTRIB_POS]);
 }
 
 /* This function is called at the end of Flush(), when it becomes necessary to 

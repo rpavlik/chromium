@@ -33,12 +33,16 @@ for k in current_fns.keys():
 			uctype = type.upper()
 			if ucname == 'EDGEFLAG':
 				print '\tcase CR_%s_OPCODE: \\' % ucname
+			elif ucname == 'SECONDARYCOLOR':
+				print '\tcase CR_%s%d%sEXT_OPCODE: \\' % (ucname,size,uctype)
+			elif ucname == 'FOGCOORD':
+				print '\tcase CR_%s%sEXT_OPCODE: \\' % (ucname,uctype)
 			else:
 				print '\tcase CR_%s%d%s_OPCODE: \\' % (ucname,size,uctype)
 				if ucname == 'TEXCOORD':
 					print '\tcase CR_MULTI%s%d%sARB_OPCODE: \\' % (ucname,size,uctype)
 			
-			if (ucname == 'COLOR' or ucname == 'NORMAL') and type != 'f' and type != 'd':
+			if (ucname == 'COLOR' or ucname == 'SECONDARYCOLOR' or ucname == 'NORMAL') and type != 'f' and type != 'd':
 				print '\t\t__convert_rescale_%s%d (vdata, (%s *) (data)); \\' % (type,size,gltypes[type]['type'])
 			else:
 				print '\t\t__convert_%s%d (vdata, (%s *) (data)); \\' % (type,size,gltypes[type]['type'])
