@@ -113,6 +113,7 @@ CRConnection *crNetConnectToServer( char *server,
 	conn->broker             = broker;
 	conn->swap               = 0;
 	conn->endianness         = crDetermineEndianness();
+	conn->actual_network     = 0;
 
 	conn->multi.len = 0;
 	conn->multi.max = 0;
@@ -218,6 +219,7 @@ CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsi
 	conn->broker             = broker;
 	conn->swap               = 0;
 	conn->endianness         = crDetermineEndianness();
+	conn->actual_network     = 0;
 
 	conn->multi.len = 0;
 	conn->multi.max = 0;

@@ -96,6 +96,7 @@ void crDevnullConnection( CRConnection *conn )
 	conn->Accept = crDevnullAccept;
 	conn->Connect = crDevnullDoConnect;
 	conn->Disconnect = crDevnullDoDisconnect;
+	conn->actual_network = 0;
 }
 
 CRConnection** crDevnullDump( int * num )

@@ -1448,6 +1448,7 @@ void crGmConnection( CRConnection *conn )
 	conn->Connect = crGmDoConnect;
 	conn->Disconnect = crGmDoDisconnect;
 	conn->sizeof_buffer_header = sizeof( CRGmBuffer );
+	conn->actual_network = 1;
 
 #if 0
 	crWarning( "GM: accepted connection from "

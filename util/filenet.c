@@ -353,6 +353,7 @@ void crFileConnection( CRConnection *conn )
 	conn->HandleNewMessage = crFileHandleNewMessage;
 	conn->index = cr_file.num_conns;
 	conn->sizeof_buffer_header = sizeof( CRFileBuffer );
+	conn->actual_network = 0;
 
 	conn->filename = strdup( conn->hostname );
 

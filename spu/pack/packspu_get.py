@@ -65,12 +65,16 @@ for func_name in keys:
 		print '%s PACKSPU_APIENTRY packspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 		print '{'
 		print '\tGET_THREAD(thread);'
-		print '\tint writeback = pack_spu.thread[0].server.conn->type == CR_DROP_PACKETS ? 0 : 1;'
+		print '\tint writeback = 1;'
 		if return_type != 'void':
 			print '\t%s return_val = (%s) 0;' % (return_type, return_type)
 			args.append( "&return_val" )
 		if (func_name in easy_swaps.keys() and easy_swaps[func_name] != '0') or func_name in simple_funcs or func_name in hard_funcs.keys():
 			print '\tunsigned int i;'
+		print '\tif (!(pack_spu.thread[0].server.conn->actual_network))'
+		print '\t{'
+		print '\t\tcrError( "packspu_%s doesn\'t work when there\'s no actual network involved!\\nTry using the simplequery SPU in your chain!" );'
+		print '\t}'
 		if func_name in simple_funcs:
 			print '\tif (pname == GL_UNPACK_ALIGNMENT ||'
 			print '\t\tpname == GL_UNPACK_ROW_LENGTH ||'

@@ -936,6 +936,7 @@ void crTCPIPConnection( CRConnection *conn )
 	conn->HandleNewMessage = crTCPIPHandleNewMessage;
 	conn->index = cr_tcpip.num_conns;
 	conn->sizeof_buffer_header = sizeof( CRTCPIPBuffer );
+	conn->actual_network = 1;
 
 	/* Find a free slot */
 	for (i = 0; i < cr_tcpip.num_conns; i++) {

@@ -87,6 +87,7 @@ struct CRConnection {
 	int broker;
 
 	int endianness, swap;
+	int actual_network;
 
 	char *hostname;
 	int port;

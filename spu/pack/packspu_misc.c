@@ -11,7 +11,7 @@
 void PACKSPU_APIENTRY packspu_Finish( void )
 {
 	GET_THREAD(thread);
-	int writeback = pack_spu.thread[0].server.conn->type == CR_DROP_PACKETS ? 0 : 1;
+	int writeback = pack_spu.thread[0].server.conn->actual_network;
 	if (pack_spu.swap)
 	{
 		crPackFinishSWAP(  );
@@ -30,8 +30,9 @@ void PACKSPU_APIENTRY packspu_Finish( void )
 
 GLint PACKSPU_APIENTRY packspu_crCreateWindow( const char *dpyName, GLint visBits )
 {
+	static int num_calls = 0;
 	GET_THREAD(thread);
-	int writeback = pack_spu.thread[0].server.conn->type == CR_DROP_PACKETS ? 0 : 1;
+	int writeback = pack_spu.thread[0].server.conn->actual_network;
 	GLint return_val = (GLint) 0;
 	if (pack_spu.swap)
 	{
@@ -42,8 +43,9 @@ GLint PACKSPU_APIENTRY packspu_crCreateWindow( const char *dpyName, GLint visBit
 		crPackcrCreateWindow( dpyName, visBits, &return_val, &writeback );
 	}
 	packspuFlush( (void *) thread );
-	if (pack_spu.thread[0].server.conn->type == CR_FILE) {
-		return 0;
+	if (!(pack_spu.thread[0].server.conn->actual_network))
+	{
+		return num_calls++;
 	}
 	else
 	{
@@ -56,4 +58,3 @@ GLint PACKSPU_APIENTRY packspu_crCreateWindow( const char *dpyName, GLint visBit
 		return return_val;
 	}
 }
-
