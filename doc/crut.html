@@ -155,5 +155,31 @@
       "File">libGL.so.1</span> to <span class="File">libcrfaker</span> you'll
       have to remove those symlinks in order for CRUT to work.
     </p>
+
+    <h3>
+      CRUT Server Configuration Options
+    </h3>
+
+    <p>
+    The following configuration options are accepted by the CRUT server.
+    </p>
+    <ul>
+    <li><b>window_geometry</b> - a 4-element list [x, y, width, height] which
+        indicates the initial window position and size.
+    </li>
+    <li><b>exit_on_escape</b> - if the value is non-zero, the CRUT Server will
+        exit when the escape key is pressed.
+    </li>
+    </ul>
+
+    <p>
+    Example code:
+    </p>
+    <pre>
+       crutserver = CRUTServerNode()
+       crutserver.Conf('window_geometry', [0, 0, 640, 480])
+       crutserver.Conf('exit_on_esc', 1)
+    </pre>
+
   </body>
 </html>
