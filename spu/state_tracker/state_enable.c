@@ -179,7 +179,7 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_MAP1_TEXTURE_COORD_4 :
 		case GL_MAP1_VERTEX_3 :
 		case GL_MAP1_VERTEX_4 :
-			if (g->texture.curTextureUnit != GL_TEXTURE0_ARB)
+			if (g->texture.curTextureUnit != 0)
 			{
 				crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "Map stuff was enabled while the current texture unit was not GL_TEXTURE0_ARB!" );
 				return;
@@ -197,7 +197,7 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_MAP2_TEXTURE_COORD_4 :
 		case GL_MAP2_VERTEX_3 :
 		case GL_MAP2_VERTEX_4 :
-			if (g->texture.curTextureUnit != GL_TEXTURE0_ARB)
+			if (g->texture.curTextureUnit != 0)
 			{
 				crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "Map stuff was enabled while the current texture unit was not GL_TEXTURE0_ARB!" );
 				return;
