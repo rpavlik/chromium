@@ -22,127 +22,127 @@ typedef struct BucketRegion {
 } BucketRegion;
 
 #define HASHRANGE 256
-BucketRegion *rhash[HASHRANGE][HASHRANGE];
-BucketRegion *rlist;
-int rlist_alloc = 0;
+static BucketRegion *rhash[HASHRANGE][HASHRANGE];
 
 #define BKT_DOWNHASH(a, range) ((a)*HASHRANGE/(range))
 #define BKT_UPHASH(a, range) ((a)*HASHRANGE/(range) + ((a)*HASHRANGE%(range)?1:0))
 
 void crServerFillBucketingHash(void) 
 {
-    int i, j, k, m;
-    int r_len=0;
-    int xinc, yinc;
+	int i, j, k, m;
+	int r_len = 0;
+	int xinc, yinc;
+	int rlist_alloc = 64 * 128;
 
-    BucketRegion *rlist;
-    BucketRegion *rptr;
+	BucketRegion *rlist;
+	BucketRegion *rptr;
 
-    /* Allocate rlist */
-    rlist_alloc = 64*128;
-    /*rlist_alloc = GLCONFIG_MAX_PROJECTORS*GLCONFIG_MAX_EXTENTS; */
-    rlist = (BucketRegion *) crAlloc( rlist_alloc * sizeof(*rlist) );
+	/* Allocate rlist (don't free it!!!) */
+	rlist = (BucketRegion *) crAlloc( rlist_alloc * sizeof(*rlist) );
 
-    for ( i = 0; i < HASHRANGE; i++ )
-    {
-        for ( j = 0; j < HASHRANGE; j++ )
-        {
-            rhash[i][j] = NULL;
-        }
-    }
-
-    /* Fill the rlist */
-    xinc = cr_server.x2[0] - cr_server.x1[0];
-    yinc = cr_server.y2[0] - cr_server.y1[0];
-
-    rptr = rlist;
-    for (i=0; i < (int) cr_server.muralWidth; i+=xinc) 
+	for ( i = 0; i < HASHRANGE; i++ )
+	{
+		for ( j = 0; j < HASHRANGE; j++ )
 		{
-        for (j=0; j < (int) cr_server.muralHeight; j+=yinc) 
-				{
-            for (k=0; k < cr_server.numExtents; k++) 
-						{
-                if (cr_server.x1[k] == i && cr_server.y1[k] == j) 
-								{
-                    rptr->extents.x1 = cr_server.x1[k];
-                    rptr->extents.x2 = cr_server.x2[k];
-                    rptr->extents.y1 = cr_server.y1[k];
-                    rptr->extents.y2 = cr_server.y2[k];
-                    rptr->id = k;
-                    break;
-                }
-            }
-            if (k == cr_server.numExtents) 
-						{
-                rptr->extents.x1 = i;
-                rptr->extents.y1 = j;
-                rptr->extents.x2 = i+xinc;
-                rptr->extents.y2 = j+yinc;
-                rptr->id = -1;
-            }
-            rptr++;
-        }
-    }
-    r_len = rptr - rlist;
+			rhash[i][j] = NULL;
+		}
+	}
 
-    /* Fill hash table */
-    for ( i = 0; i < r_len; i++ )
-    {
-        BucketRegion *r = &rlist[i];
+	/* Fill the rlist */
+	xinc = cr_server.x2[0] - cr_server.x1[0];
+	yinc = cr_server.y2[0] - cr_server.y1[0];
 
-        for (k=BKT_DOWNHASH(r->extents.x1, (int)cr_server.muralWidth);
-             k<=BKT_UPHASH(r->extents.x2, (int)cr_server.muralWidth) &&
-                 k < HASHRANGE;
-             k++) 
-				{
-            for (m=BKT_DOWNHASH(r->extents.y1, (int)cr_server.muralHeight);
-                 m<=BKT_UPHASH(r->extents.y2, (int)cr_server.muralHeight) &&
-                     m < HASHRANGE;
-                 m++) 
-						{
-                if ( rhash[m][k] == NULL ||
-                    (rhash[m][k]->extents.x1 > r->extents.x1 &&
-                     rhash[m][k]->extents.y1 > r->extents.y1)) {
-                     rhash[m][k] = r;
-                }
-            }
-        }
-    }
-
-    /* Initialize links */
-    for (i=0; i<r_len; i++) 
+	rptr = rlist;
+	for (i=0; i < (int) cr_server.muralWidth; i+=xinc) 
+	{
+		for (j=0; j < (int) cr_server.muralHeight; j+=yinc) 
 		{
-        BucketRegion *r = &rlist[i];
-        r->right = NULL;
-        r->up    = NULL;
-    }
-
-    /* Build links */
-    for (i=0; i<r_len; i++) 
-		{
-        BucketRegion *r = &rlist[i];
-        for (j=0; j<r_len; j++) 
+			for (k=0; k < cr_server.numExtents; k++) 
+			{
+				if (cr_server.x1[k] == i && cr_server.y1[k] == j) 
 				{
-            BucketRegion *q = &rlist[j];
-            if (r==q) continue;
+					rptr->extents.x1 = cr_server.x1[k];
+					rptr->extents.x2 = cr_server.x2[k];
+					rptr->extents.y1 = cr_server.y1[k];
+					rptr->extents.y2 = cr_server.y2[k];
+					rptr->id = k;
+					break;
+				}
+			}
+			if (k == cr_server.numExtents) 
+			{
+				rptr->extents.x1 = i;
+				rptr->extents.y1 = j;
+				rptr->extents.x2 = i+xinc;
+				rptr->extents.y2 = j+yinc;
+				rptr->id = -1;
+			}
+			rptr++;
+		}
+	}
+	r_len = rptr - rlist;
 
-            /* Right Edge */
-            if (r->extents.x2 == q->extents.x1 &&
-                r->extents.y1 == q->extents.y1 &&
-                r->extents.y2 == q->extents.y2) 
-						{
-                r->right = q;
-            }
+	/* Fill hash table */
+	for (i = 0; i < r_len; i++)
+	{
+		BucketRegion *r = &rlist[i];
 
-            /* Upper Edge */
-            if (r->extents.y2 == q->extents.y1 &&
-                r->extents.x1 == q->extents.x1 &&
-                r->extents.x2 == q->extents.x2) 
-						{
-                r->up = q;
-            }
-        }
-    }
+		for (k=BKT_DOWNHASH(r->extents.x1, (int)cr_server.muralWidth);
+		     k<=BKT_UPHASH(r->extents.x2, (int)cr_server.muralWidth) &&
+			     k < HASHRANGE;
+		     k++) 
+		{
+			for (m=BKT_DOWNHASH(r->extents.y1, (int)cr_server.muralHeight);
+			     m<=BKT_UPHASH(r->extents.y2, (int)cr_server.muralHeight) &&
+				     m < HASHRANGE;
+			     m++) 
+			{
+				if ( rhash[m][k] == NULL ||
+				     (rhash[m][k]->extents.x1 > r->extents.x1 &&
+				      rhash[m][k]->extents.y1 > r->extents.y1))
+				{
+					rhash[m][k] = r;
+				}
+			}
+		}
+	}
+
+	/* Initialize links */
+	for (i=0; i<r_len; i++) 
+	{
+		BucketRegion *r = &rlist[i];
+		r->right = NULL;
+		r->up    = NULL;
+	}
+
+	/* Build links */
+	for (i=0; i<r_len; i++) 
+	{
+		BucketRegion *r = &rlist[i];
+		for (j=0; j<r_len; j++) 
+		{
+			BucketRegion *q = &rlist[j];
+			if (r==q)
+				continue;
+
+			/* Right Edge */
+			if (r->extents.x2 == q->extents.x1 &&
+			    r->extents.y1 == q->extents.y1 &&
+			    r->extents.y2 == q->extents.y2) 
+			{
+				r->right = q;
+			}
+
+			/* Upper Edge */
+			if (r->extents.y2 == q->extents.y1 &&
+			    r->extents.x1 == q->extents.x1 &&
+			    r->extents.x2 == q->extents.x2) 
+			{
+				r->up = q;
+			}
+		}
+	}
+
 }
 
 void crServerSetOutputBounds( CRContext *ctx, 
@@ -152,8 +152,13 @@ void crServerSetOutputBounds( CRContext *ctx,
 {
 	GLrecti p,q;
 
-	crServerSetViewportBounds( &(ctx->viewport), outputwindow, imagespace, imagewindow, &p, &q );
-	crServerRecomputeBaseProjection( &(cr_server.curClient->baseProjection), ctx->viewport.viewportX, ctx->viewport.viewportY, ctx->viewport.viewportW, ctx->viewport.viewportH );
+	crServerSetViewportBounds( &(ctx->viewport), outputwindow,
+														 imagespace, imagewindow, &p, &q );
+	crServerRecomputeBaseProjection( &(cr_server.curClient->baseProjection),
+																	 ctx->viewport.viewportX,
+																	 ctx->viewport.viewportY,
+																	 ctx->viewport.viewportW,
+																	 ctx->viewport.viewportH );
 	crServerApplyBaseProjection();
 	
 }
@@ -215,9 +220,9 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 			/*			int c;*/
 
 			if ( !( extent->imagewindow.x2 > bounds->x1 &&
-				extent->imagewindow.x1 < bounds->x2 &&
-				extent->imagewindow.y2 > bounds->y1 &&
-				extent->imagewindow.y1 < bounds->y2 ) )
+							extent->imagewindow.x1 < bounds->x2 &&
+							extent->imagewindow.y2 > bounds->y1 &&
+							extent->imagewindow.y1 < bounds->y2 ) )
 			{
 				continue;
 			}

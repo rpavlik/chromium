@@ -44,6 +44,7 @@ extern RunQueue *run_queue;
 extern CRHashTable *cr_barriers, *cr_semaphores;
 
 void crServerGatherConfiguration(char *mothership);
+void crServerGetTileInfo( CRConnection *conn, int nonFileClient );
 void crServerInitDispatch(void);
 void crServerReturnValue( const void *payload, unsigned int payload_len );
 void crServerWriteback(void);

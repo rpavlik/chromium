@@ -159,6 +159,12 @@ void crServerClampViewport( int x, int y, unsigned int width, unsigned int heigh
 	}
 }
 
+
+/*
+ * Pre-multiply the current projection matrix with the current client's
+ * base projection.  I.e.  P' = b * P.  Note that OpenGL's glMultMatrix
+ * POST-multiplies.
+ */
 void crServerApplyBaseProjection(void)
 {
 	cr_server.head_spu->dispatch_table.PushAttrib( GL_TRANSFORM_BIT );
@@ -168,6 +174,15 @@ void crServerApplyBaseProjection(void)
 	cr_server.head_spu->dispatch_table.PopAttrib( );
 }
 
+
+/*
+ * Recompute the "base projection" matrix.  We examine the server extent
+ * specified by cr_server.curExtent.  I think the base projection matrix
+ * maps the extent space into the mural space (a scale and translate).
+ * Input: x, y - mural origin (always 0,0?)
+ * Input: w, h - mural width, height
+ * Output: base - base projection matrix.
+ */
 void crServerRecomputeBaseProjection(GLmatrix *base, GLint x, GLint y, GLint w, GLint h)
 {
 	GLfloat xscale, yscale;

@@ -12,6 +12,7 @@
 
 #include "server.h"
 
+
 static void __setDefaults( void )
 {
 	cr_server.tcpip_port = 7000;
@@ -23,6 +24,7 @@ static void __setDefaults( void )
 	cr_server.useL2 = 0;
 	cr_server.maxBarrierCount = 0;
 	cr_server.only_swap_once = 0;
+	cr_server.SpuContext = 0;
 }
 
 void crServerGatherConfiguration(char *mothership)
@@ -39,11 +41,7 @@ void crServerGatherConfiguration(char *mothership)
 
 	char **clientchain, **clientlist;
 	int numClients;
-	char **tilechain, **tilelist;
-	int num_servers;
 	int a_non_file_client;
-
-	char **serverchain;
 
 	__setDefaults();
 
@@ -131,6 +129,47 @@ void crServerGatherConfiguration(char *mothership)
 
 	cr_server.numClients = numClients;
 
+	/*
+	 * Allocate and initialize the cr_server.clients[] array.
+	 * Call crNetAcceptClient() for each client.
+	 * Also, look for a client that's _not_ using the file: protocol.
+	 */
+	a_non_file_client = -1;
+	cr_server.clients = (CRClient *) crAlloc(sizeof(CRClient) * numClients);
+	for (i = 0 ; i < numClients ; i++)
+	{
+		CRClient *client = &cr_server.clients[i];
+
+		crMemZero(client, sizeof(CRClient));
+
+		cr_server.clients[i].number = i;
+
+		sscanf( clientlist[i], "%s %d", cr_server.protocol, &(client->spu_id) );
+		client->conn = crNetAcceptClient( cr_server.protocol,
+																			cr_server.tcpip_port, cr_server.mtu, 1 );
+
+		if (crStrncmp(cr_server.protocol,"file",crStrlen("file")))
+		{
+			a_non_file_client = i;
+		}
+	}
+
+	/* Ask the mothership for the tile info */
+	crServerGetTileInfo( conn, a_non_file_client );
+
+	crMothershipDisconnect( conn );
+}
+
+
+/*
+ * Ask the mothership for our tile information.
+ * Also, pose as one of the tilesort SPUs and query all servers for their
+ * tile info in order to compute the total mural size.
+ */
+void crServerGetTileInfo( CRConnection *conn, int nonFileClient )
+{
+	char response[8096];
+
 	if (!crMothershipGetServerTiles( conn, response ))
 	{
 		crDebug( "No tiling information for server!" );
@@ -141,6 +180,8 @@ void crServerGatherConfiguration(char *mothership)
 		 * where N is the number of tiles and each set of 'x y w h'
 		 * values describes the tile location and size.
 		 */
+		char **tilechain, **tilelist;
+		int i;
 		tilechain = crStrSplitn( response, " ", 1 );
 		cr_server.numExtents = crStrToInt( tilechain[0] );
 		cr_server.maxTileHeight = 0;
@@ -157,70 +198,58 @@ void crServerGatherConfiguration(char *mothership)
 			{
 				cr_server.maxTileHeight = (int) h;
 			}
-			crDebug( "Added tile: %d %d %d %d", cr_server.x1[i], cr_server.y1[i], cr_server.x2[i], cr_server.y2[i] );
+			crDebug( "Added tile: %d %d %d %d",
+							 cr_server.x1[i], cr_server.y1[i],
+							 cr_server.x2[i], cr_server.y2[i] );
 		}
+		crFreeStrings(tilechain);
+		crFreeStrings(tilelist);
 	}
 
-	a_non_file_client = -1;
 
-	cr_server.clients = (CRClient *) crAlloc(sizeof(CRClient) * numClients);
-
-	for (i = 0 ; i < numClients ; i++)
+	if (nonFileClient != -1)
 	{
-		CRClient *client = &cr_server.clients[i];
-
-		crMemZero(client, sizeof(CRClient));
-
-		cr_server.clients[i].number = i;
-
-		sscanf( clientlist[i], "%s %d", cr_server.protocol, &(client->spu_id) );
-		client->conn = crNetAcceptClient( cr_server.protocol, cr_server.tcpip_port, cr_server.mtu, 1 );
-
-		if (crStrncmp(cr_server.protocol,"file",crStrlen("file")))
-		{
-			a_non_file_client = i;
-		}
-	}
-
-	cr_server.SpuContext = 0;
-
-	if (a_non_file_client != -1)
-	{
-	/* Sigh -- the servers need to know how big the whole mural is if we're 
-	 * doing tiling, so they can compute their base projection.  For now, 
-	 * just have them pretend to be one of their client SPU's, and redo 
-	 * the configuration step of the tilesort SPU.  Basically this is a dirty 
-	 * way to figure out who the other servers are.  It *might* matter 
-	 * which SPU we pick for certain graph configurations, but we'll cross 
-	 * that bridge later.
-	 *
-	 * As long as we're at it, we're going to verify that all the tile
-	 * sizes are uniform when optimizeBucket is true.
-	 */
+		/* Sigh -- the servers need to know how big the whole mural is if we're 
+		 * doing tiling, so they can compute their base projection.  For now, 
+		 * just have them pretend to be one of their client SPU's, and redo 
+		 * the configuration step of the tilesort SPU.  Basically this is a dirty 
+		 * way to figure out who the other servers are.  It *might* matter 
+		 * which SPU we pick for certain graph configurations, but we'll cross 
+		 * that bridge later.
+		 *
+		 * As long as we're at it, we're going to verify that all the tile
+		 * sizes are uniform when optimizeBucket is true.
+		 */
 
 		int optTileWidth = 0, optTileHeight = 0;
+		int num_servers;
+		int i;
+		char **serverchain;
 
-		crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
+		crMothershipIdentifySPU( conn, cr_server.clients[nonFileClient].spu_id );
 		crMothershipGetServers( conn, response );
 
-	/* crMothershipGetServers() response is of the form
-	 * "N protocol://ip:port protocol://ipnumber:port ..."
-	 * For example: "2 tcpip://10.0.0.1:7000 tcpip://10.0.0.2:7000"
-	 */
+		/* crMothershipGetServers() response is of the form
+		 * "N protocol://ip:port protocol://ipnumber:port ..."
+		 * For example: "2 tcpip://10.0.0.1:7000 tcpip://10.0.0.2:7000"
+		 */
 		serverchain = crStrSplitn( response, " ", 1 );
 		num_servers = crStrToInt( serverchain[0] );
 
 		if (num_servers == 0)
 		{
-			crError( "No servers specified for SPU %d?!", cr_server.clients[0].spu_id );
+			crError( "No servers specified for SPU %d?!",
+							 cr_server.clients[nonFileClient].spu_id );
 		}
 
 		num_servers = num_servers;
 
 		for (i = 0 ; i < num_servers ; i++)
 		{
+			char **tilechain, **tilelist;
 			int numExtents;
 			int tile;
+
 			if (!crMothershipGetTiles( conn, response, i ))
 			{
 				break;
@@ -233,7 +262,7 @@ void crServerGatherConfiguration(char *mothership)
 
 			for (tile = 0; tile < numExtents ; tile++)
 			{
-				int w,h;
+				int w, h;
 				int x1, y1;
 				int x2, y2;
 				sscanf( tilelist[tile], "%d %d %d %d", &x1, &y1, &w, &h );
@@ -242,13 +271,10 @@ void crServerGatherConfiguration(char *mothership)
 				y2 = y1 + h;
 
 				if (x2 > (int) cr_server.muralWidth )
-				{
 					cr_server.muralWidth = x2;
-				}
+
 				if (y2 > (int) cr_server.muralHeight )
-				{
 					cr_server.muralHeight = y2;
-				}
 
 				if (cr_server.optimizeBucket) {
 					if (optTileWidth == 0 && optTileHeight == 0) {
@@ -268,14 +294,16 @@ void crServerGatherConfiguration(char *mothership)
 					}
 				}
 			}
+			crFreeStrings(tilechain);
+			crFreeStrings(tilelist);
 		}
-		crWarning( "Total output dimensions = (%d, %d)", cr_server.muralWidth, cr_server.muralHeight );
+		crFreeStrings(serverchain);
+		crWarning( "Total output dimensions = (%d, %d)",
+							 cr_server.muralWidth, cr_server.muralHeight );
 	}
 	else
 	{
 		crWarning( "It looks like there are nothing but file clients.  That suits me just fine." );
 	}
 
-
-	crMothershipDisconnect( conn );
 }
