@@ -34,7 +34,7 @@ crutServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
     default:
 	return 0; /* NOT HANDLED */
     }
-#if !( defined(WINDOWS) || defined(DARWIN) )
+#ifdef GLX
   return 0; /* HANDLED */
 #endif
 }

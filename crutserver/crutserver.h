@@ -8,7 +8,7 @@
 
 #include <GL/gl.h>
 
-#if !( defined(WINDOWS) || defined(DARWIN) )
+#ifdef GLX
 #include <GL/glx.h>
 #endif
 
