@@ -72,7 +72,7 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 
 	if ( visual == NULL || n != 1 )
 	{
-		crError( "glXChooseVisual: XGetVisualInfo( visualid=%d ) failed!",
+		crError( "glXChooseVisual: XGetVisualInfo( visualid=%ld ) failed!",
 				vis_template.visualid );
 		return NULL;
 	}

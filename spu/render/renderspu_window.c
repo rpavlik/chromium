@@ -287,8 +287,7 @@ void renderspuCreateWindow( void )
 				1 );
 	}
 
-	crDebug( "Chose a visual (id=%d)",
-			render_spu.visual->visualid );
+	crDebug( "Chose a visual (id=%ld)", render_spu.visual->visualid );
 	crDebug( "Visual: RGBA=<%d,%d,%d,%d> "
 			"Z=%d stencil=%d double=%d", Attrib( GLX_RED_SIZE ),
 			Attrib( GLX_GREEN_SIZE ), Attrib( GLX_BLUE_SIZE ),
