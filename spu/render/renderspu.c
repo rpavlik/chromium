@@ -320,13 +320,15 @@ static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
 
 static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y )
 {
-	WindowInfo *window;
-	CRASSERT(win >= 0);
-	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
-	if (window) {
-		renderspu_SystemWindowPosition( window, x, y );
-		window->x = x;
-		window->y = y;
+	if (!render_spu.ignore_window_moves) {
+		WindowInfo *window;
+		CRASSERT(win >= 0);
+		window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
+		if (window) {
+			renderspu_SystemWindowPosition( window, x, y );
+			window->x = x;
+			window->y = y;
+		}
 	}
 }
 

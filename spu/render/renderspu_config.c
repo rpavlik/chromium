@@ -207,6 +207,11 @@ static void set_ignore_papi( RenderSPU *render_spu, char *response )
 	render_spu->ignore_papi = crStrToInt( response );
 }
 
+static void set_ignore_window_moves( RenderSPU *render_spu, char *response )
+{
+	render_spu->ignore_window_moves = crStrToInt( response );
+}
+
 
 /* option, type, nr, default, min, max, title, callback
  */
@@ -281,6 +286,9 @@ SPUOptions renderSPUOptions[] = {
 
 	{ "ignore_papi", CR_BOOL, 1, "0", NULL, NULL,
 		"Ignore Barrier and Semaphore calls", (SPUOptionCB) set_ignore_papi },
+
+	{ "ignore_window_moves", CR_BOOL, 1, "0", NULL, NULL,
+		"Ignore crWindowPosition calls", (SPUOptionCB) set_ignore_window_moves },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

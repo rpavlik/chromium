@@ -137,6 +137,7 @@ typedef struct {
 	int borderless;
 	int nvSwapGroup;
 	int ignore_papi;
+	int ignore_window_moves;
 	/*@}*/
 
 	CRServer *server;
