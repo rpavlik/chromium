@@ -183,7 +183,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 			return;
 		}
 
-		renderspu_SystemMakeCurrent( /*thread,*/ window, nativeWindow, context );
+		renderspu_SystemMakeCurrent( window, nativeWindow, context );
 		if (!context->everCurrent) {
 			/* print OpenGL info */
 			const char *extString = (const char *) render_spu.ws.glGetString( GL_EXTENSIONS );

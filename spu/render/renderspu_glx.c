@@ -267,23 +267,23 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 static XVisualInfo *
 chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 {
-  while (1) {
-	XVisualInfo *vis = chooseVisual(dpy, screen, visAttribs);
-	if (vis)
-	  return vis;
+	while (1) {
+		XVisualInfo *vis = chooseVisual(dpy, screen, visAttribs);
+		if (vis)
+			return vis;
 
-	if (visAttribs & CR_MULTISAMPLE_BIT)
-	  visAttribs &= ~CR_MULTISAMPLE_BIT;
-	else if (visAttribs & CR_OVERLAY_BIT)
-	  visAttribs &= ~CR_OVERLAY_BIT;
-	else if (visAttribs & CR_STEREO_BIT)
-	  visAttribs &= ~CR_STEREO_BIT;
-	else if (visAttribs & CR_ACCUM_BIT)
-	  visAttribs &= ~CR_ACCUM_BIT;
-	else if (visAttribs & CR_ALPHA_BIT)
-	  visAttribs &= ~CR_ALPHA_BIT;
-	else
-	  return NULL;
+		if (visAttribs & CR_MULTISAMPLE_BIT)
+			visAttribs &= ~CR_MULTISAMPLE_BIT;
+		else if (visAttribs & CR_OVERLAY_BIT)
+			visAttribs &= ~CR_OVERLAY_BIT;
+		else if (visAttribs & CR_STEREO_BIT)
+			visAttribs &= ~CR_STEREO_BIT;
+		else if (visAttribs & CR_ACCUM_BIT)
+			visAttribs &= ~CR_ACCUM_BIT;
+		else if (visAttribs & CR_ALPHA_BIT)
+			visAttribs &= ~CR_ALPHA_BIT;
+		else
+			return NULL;
   }
 }
 
