@@ -16,6 +16,68 @@
 
 
 /**
+ * Given the position (x, y) and size (width, height) of a glDrawPixels
+ * command, the UNPACK_SKIP_PIXELS and UNPACK_SKIP_ROWS values and a scissor
+ * box, return modified x, y, width, height, skipPixels and skipRows
+ * values so that drawing the image will result in only the pixels inside
+ * the scissor box being drawn.
+ * \return GL_TRUE if there's something to draw, otherwise GL_FALSE if
+ * there's nothing left to draw.
+ */
+static GLboolean
+ComputeSubImage(GLint *x, GLint *y, GLsizei *width, GLsizei *height,
+								GLint *skipPixels, GLint *skipRows,
+								const CRrecti *scissor)
+{
+	GLint clip; /* number of clipped pixels */
+
+	if (*x + *width <= scissor->x1 ||
+			*x >= scissor->x2 ||
+			*y + *height <= scissor->y1 ||
+			*y >= scissor->y2) {
+		/* totally clipped */
+		return GL_FALSE;
+	}
+
+	if (*x < scissor->x1) {
+		/* image crosses left edge of scissor box */
+		CRASSERT(*x + *width > scissor->x1);
+		clip = scissor->x1 - *x;
+		CRASSERT(clip > 0);
+		*x = scissor->x1;
+		*skipPixels += clip;
+		*width -= clip;
+	}
+	if (*y < scissor->y1) {
+		/* image crosses bottom edge of scissor box */
+		CRASSERT(*y + *height > scissor->y1);
+		clip = scissor->y1 - *y;
+		CRASSERT(clip > 0);
+		*y = scissor->y1;
+		*skipRows += clip;
+		*height -= clip;
+	}
+	if (*x + *width > scissor->x2) {
+		/* image crossed right edge of scissor box */
+		CRASSERT(*x <= scissor->x2);
+		clip = *x + *width - scissor->x2;
+		CRASSERT(clip > 0);
+		*width -= clip;
+	}
+	if (*y + *height > scissor->y2) {
+		/* image crossed top edge of scissor box */
+		CRASSERT(*y <= scissor->y2);
+		clip = *y + *height - scissor->y2;
+		CRASSERT(clip > 0);
+		*height -= clip;
+	}
+
+	return GL_TRUE;
+}
+
+
+
+/**
  * Execute glDrawPixels().  Immediate mode only.
  */
 void TILESORTSPU_APIENTRY
@@ -28,12 +90,9 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	CRPixelState *p = &(ctx->pixel);
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	GLfloat screen_bbox[8];
-	GLenum hint;
 	GLint zoomedWidth, zoomedHeight;
 	GLfloat zoomX, zoomY;
 	GLfloat oldZoomX, oldZoomY;
-
-	(void) v;
 
 	CRASSERT(ctx->lists.mode == 0);
 
@@ -103,30 +162,92 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	screen_bbox[4] = screen_bbox[4] * 2.0f - 1.0f;
 	screen_bbox[5] = screen_bbox[5] * 2.0f - 1.0f;
 
-	hint = thread->currentContext->providedBBOX;
-	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
-
-	/* 
-	 * don't do a flush, DrawPixels understand that it needs to flush,
-	 * and will handle all that for us.  our HugeFunc routine will
-	 * specially handle the DrawPixels call
-	 */
-
 	thread->currentContext->inDrawPixels = GL_TRUE;
-	if (tilesort_spu.swap)
-	     crPackDrawPixelsSWAP(width, height, format, type, 
-				  pixels, &(ctx->client.unpack));
-	else
-	     crPackDrawPixels(width, height, format, type, 
-			      pixels, &(ctx->client.unpack));
 
-	if (thread->packer->buffer.data_current != thread->packer->buffer.data_start)
-	{
-		tilesortspuFlush( thread );
+	if (winInfo->bucketMode != BROADCAST && oldZoomX == 1.0 && oldZoomY == 1.0) {
+		/* Test glDrawPixels image bounds against all tile extents and only
+		 * send sub-images instead of full-size images.
+		 */
+		int i;
+
+		/* release current geometry buffer */
+		crPackReleaseBuffer(thread->packer);
+
+		for (i = 0; i < tilesort_spu.num_servers; i++)
+		{
+			int j;
+
+			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
+
+			/* Determine if the DrawPixel destination region overlaps any
+			 * tile extents of this server
+			 */
+			for (j = 0; j < winInfo->server[i].num_extents; j++) {
+				CRPixelPackState unpacking = ctx->client.unpack;
+				int newX = c->rasterAttrib[VERT_ATTRIB_POS][0];
+				int newY = c->rasterAttrib[VERT_ATTRIB_POS][1];
+				int newWidth = zoomedWidth;
+				int newHeight = zoomedHeight;
+				if (ComputeSubImage(&newX, &newY, &newWidth, &newHeight,
+														&unpacking.skipPixels, &unpacking.skipRows,
+														&winInfo->server[i].extents[j])) {
+					/*
+					printf("clipped: %d, %d  %d x %d  skip %d, %d\n",
+								 newX, newY, newWidth, newHeight,
+								 unpacking.skipPixels, unpacking.skipRows);
+					*/
+					if (tilesort_spu.swap) {
+						 crPackWindowPos2iARBSWAP(newX, newY);
+						 crPackDrawPixelsSWAP(newWidth, newHeight, format, type, pixels,
+																	&unpacking);
+					}
+					else {
+						 crPackWindowPos2iARB(newX, newY);
+						 crPackDrawPixels(newWidth, newHeight, format, type, pixels,
+															&unpacking);
+					}
+				}
+			}
+
+			/* release server buffer */
+			crPackReleaseBuffer(thread->packer);
+
+			/* Flush buffer (send to server) */
+			tilesortspuSendServerBuffer(i);
+		}
+
+		/* Restore the default geometry pack buffer */
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 	}
-	thread->currentContext->inDrawPixels = GL_FALSE;
+	else {
+		/*
+		 * Send the whole image to all servers chosen by bucketing
+		 */
+		GLenum hint = thread->currentContext->providedBBOX;
+		tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
 
-	thread->currentContext->providedBBOX = hint;
+		/* 
+		 * don't do a flush, DrawPixels understand that it needs to flush,
+		 * and will handle all that for us.  our HugeFunc routine will
+		 * specially handle the DrawPixels call
+		 */
+
+		if (tilesort_spu.swap)
+			crPackDrawPixelsSWAP(width, height, format, type, 
+													 pixels, &(ctx->client.unpack));
+		else
+			crPackDrawPixels(width, height, format, type, 
+											 pixels, &(ctx->client.unpack));
+
+		if (thread->packer->buffer.data_current != thread->packer->buffer.data_start)
+		{
+			tilesortspuFlush( thread );
+		}
+
+		thread->currentContext->providedBBOX = hint;
+	}
+
+	thread->currentContext->inDrawPixels = GL_FALSE;
 	crStatePixelZoom(oldZoomX, oldZoomY);
 }
 
