@@ -427,6 +427,9 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 		crStateSetCurrent(NULL);
 	}
 
+	/* release geometry buffer */
+	crPackReleaseBuffer( thread0->packer );
+
 	/*
 	 * Send DestroyCurrent msg to each server using zero-th thread's connection.
 	 */
