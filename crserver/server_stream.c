@@ -104,6 +104,9 @@ void crServerInitializeQueueExtents(RunQueue *q)
 
 	q->numExtents = cr_server.numExtents;
 
+	/* Basically just copy the server's list of tiles to the RunQueue
+	 * and compute some derived tile information.
+	 */
 	for ( i = 0; i < q->numExtents; i++ )
 	{
 		CRRunQueueExtent *extent = &q->extent[i];
@@ -112,8 +115,9 @@ void crServerInitializeQueueExtents(RunQueue *q)
 
 		/* extent->display = find_output_display( extent->imagewindow ); */
 
-		/* Compute normalized mural bounds.
-		 * That is, x1, y1, x2, y2 will be in the range [-1, 1].
+		/* Compute normalized tile bounds.
+		 * That is, x1, y1, x2, y2 will be in the range [-1, 1] where
+		 * x1=-1, y1=-1, x2=1, y2=1 corresponds to the whole mural.
 		 */
 		extent->bounds.x1 = ( (GLfloat) (2*extent->imagewindow.x1) /
 				cr_server.muralWidth - 1.0f );
@@ -139,6 +143,8 @@ void crServerInitializeQueueExtents(RunQueue *q)
 		extent->outputwindow.y1 = ( cr_server.underlyingDisplay[3] - cr_server.maxTileHeight - y );
 		extent->outputwindow.x2 = x + w;
 		extent->outputwindow.y2 = ( cr_server.underlyingDisplay[3] - cr_server.maxTileHeight - y + h );
+
+		cr_server.outputwindow[i] = extent->outputwindow; /* x1,y1,x2,y2 */
 
 		if ( y_max < h )
 		{
@@ -283,7 +289,7 @@ int crServerRecv( CRConnection *conn, void *buf, unsigned int len )
 			crServerAddNewClient();
 			break;
 		default:
-			/*crWarning( "Why is the crserverr getting a message of type 0x%x?", msg->type ); */
+			/*crWarning( "Why is the crserverr getting a message of type 0x%x?", msg->header.type ); */
 			return 0; /* NOT HANDLED */
 	}
 	(void) len;	
