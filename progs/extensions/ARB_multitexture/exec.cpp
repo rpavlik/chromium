@@ -229,7 +229,7 @@ void	InitSpecial	( void )
     file = fopen( "height.raw", "rb" );
     if( file == NULL )
       {
-	cout << "Error openeing file: height.raw!  Exiting." << endl;
+	cout << "Error opening file: height.raw!  Exiting." << endl;
 	exit( 0 );
       }
     fread( height, heightmapX*heightmapY, 1, file );
