@@ -151,6 +151,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GL
 {
 	CRSemaphore *sema;
 
+	sema = crHashtableSearch(cr_semaphores, name);
+	if (sema)
+	   return; /* already created */
+
 	sema = (CRSemaphore *) crAlloc( sizeof( *sema ) );
 	crHashtableAdd( cr_semaphores, name, sema );
 	sema->count = count;
