@@ -44,6 +44,8 @@ void printSPUSelfDispatch(SPUDispatchTable *parent)
 
 int printSPUCleanup(void)
 {
+	if (print_spu.fp != stderr || print_spu.fp != stdout)
+		fclose(print_spu.fp);
 	return 1;
 }
 
