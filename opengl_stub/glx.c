@@ -419,7 +419,7 @@ void glXWaitGL( void )
 
 	if ( first_call )
 	{
-		crDebug( "Ignoriing unsupported GLX call: glXWaitGL()" );
+		crDebug( "Ignoring unsupported GLX call: glXWaitGL()" );
 		first_call = 0;
 	}
 }
@@ -430,7 +430,7 @@ void glXWaitX( void )
 
 	if ( first_call )
 	{
-		crDebug( "Ignoriing unsupported GLX call: glXWaitX()" );
+		crDebug( "Ignoring unsupported GLX call: glXWaitX()" );
 		first_call = 0;
 	}
 }
