@@ -1,0 +1,170 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="new_window">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Chromium Graphical Configuration Tool</h1>
+<p>The Chromium graphical configuration tool (hereafter called the config
+tool) allows one to build a Chromium configuration with a GUI-based
+interface, instead of writing Python configuration files.</p>
+
+<p>Here's a screenshot showing a simple tile-sort configuration:</p>
+
+<p align="center"><img border="0" src="configtool.gif"></p>
+
+
+<h2 class="PageSubHeading">Setup</h2>
+
+<p>The config tool is written in Python and uses the wxWindows GUI
+toolkit.</p>
+
+<p>
+On a Linux system, you'll need the wxGTK and wxPython libraries.
+If you're using Red Hat Linux the <code>wxGTK-2.3.2-1</code> and
+<code>wxPython-2.3.2.1-1</code> RPMs are known to work.
+</p>
+
+<p>
+On a Windows system, (finish this).
+</p>
+
+
+<h2 class="PageSubHeading">Nodes</h2>
+
+<p>Application nodes are represented by green boxes and network/server
+nodes are represented by red boxes.
+Each node icon may contain an SPU chain, shown as a sequence of gray boxes.
+Nodes and SPUs are labeled accordingly.
+</p>
+
+<p>Application and network/server nodes may be created with the
+<b>New App Node(s)</b> and <b>New Server Node(s)</b> buttons.
+You can create 1, 2, 3, 4 or N instances of either type of node.
+</p>
+
+<p>Nodes may be selected and moved using the mouse.
+Selected nodes have a thick black outline.
+You may extend the selection by <em>shift-clicking</em>.
+You can toggle the selection status of a node by <em>control-clicking</em>.
+</p>
+
+<p>The <b>Node</b> menu has commands that apply to the currently
+selected nodes.
+</p>
+
+<p><em>Compound nodes</em> are a compact way to represent a set of many
+similar nodes.
+For example, if your configuration has 8 rendering nodes, you may represent
+them using a single compound node, rather than 8 individual nodes.
+A compound node looks like this:
+</p>
+<p align="center"><img border="0" src="compoundnode.gif"></p>
+
+<p>The compound node displays a count which indicates how may nodes are
+represented by the icon.
+You can change the count with the <b>Node / Node Count</b> menu item.
+Compount nodes may be split into a set of individual, non-compound
+nodes with the <b>Node / Split</b> menu item.
+A set of similar, individual nodes may be combined into a compound node
+with the <b>Node / Merge</b> menu item.
+</p>
+
+
+<h2 class="PageSubHeading">SPUs</h2>
+
+<p>Nodes contain SPU chains.  SPU chains are seen as one or more gray,
+labeled boxes inside node icons.
+</p>
+
+<p>To add a new SPU to a node, first select the node, then choose the
+SPU type from the <b>New SPU</b> button.
+If no SPUs are currently selected in the node, the new SPU will be added
+to the end of the SPU chain.
+If one or more SPUs are currently selected in the node, the new SPU will
+be added in front of the selected SPU.
+</p>
+
+<p>As with nodes, SPUs may be selected and deselected by clicking on them
+with the mouse.  The <em>shift</em> and <em>control</em> keys may be used
+while clicking to extend and toggle selection status, respectively.</p>
+
+<p>The <b>SPU</b> menu has commands that apply to the currently selected SPUs.
+The <b>SPU / Options</b> menu item will open a dialog which allows you to
+configure the selected SPUs.</p>
+
+
+<h2 class="PageSubHeading">Client / Server Connections</h2>
+
+<p>Some SPUs (such as pack and tilesort) have a packer which allows them
+to be connected to downstream servers.
+Such SPUs have a black, rectangular <em>socket</em> on their right edge.
+Similarly, servers have a black, rectangular <em>socket</em> on their
+left edge.
+Connections between packing SPUs and servers are drawn as blue lines.</p>
+
+<p>To connect nodes (i.e. connect a packing SPU to a server node) use the
+<b>Node / Connect</b> menu item.
+You must have at least two nodes selected, one must be a server and
+the other must have an SPU chain that ends with a packing SPU.</p>
+
+<p>If more than two SPUs are selected, the configuration tool will do
+its best to determine the desired connection topology, but it may make
+mistakes.</p>
+
+<p>Two nodes may be disconnected by selecting the nodes and choosing
+the <b>Node / Disconnect</b> menu item.<p>
+
+
+
+<h2 class="PageSubHeading">Templates</h2>
+
+<p>Templates allow one to quickly create common Chromium configurations
+without having to create individual nodes, SPUs and connections.
+To instantiate a template, choose the desired template from the
+<b>New Template</b> button.</p>
+
+<p>When you instantiate a template you'll often be prompted for a few
+parameters such as number of application nodes, mural rows and columns, etc.
+The configuration will be generated when you click on <b>OK</b> button.
+</p>
+
+<p>Templates may be edited with special, easy-to-use dialogs.
+Click on the <b>Edit Template</b> button to open the editor, if supported.
+</p>
+
+<p>Currently, there are templates for tile-sort, sort-last and Lightning-2
+configurations.
+</p>
+
+
+<h2 class="PageSubHeading">Tilesort Template</h2>
+
+<p>(to do...)</p>
+
+
+<h2 class="PageSubHeading">Sort-last Template</h2>
+
+<p>(to do...)</p>
+
+
+<h2 class="PageSubHeading">Lightning-2 Template</h2>
+
+<p>(to do...)</p>
+
+
+
+</body>
+
+</html>
