@@ -11,7 +11,7 @@ crDLMSetCurrentState
 crDLMFreeContext
 crDLMGetBounds
 crDLMSetBounds
-crDLMHasBounds
+crDLMListHasBounds
 crDLMFreeDLM
 crDLMGetCurrentMode
 crDLMGetCurrentList
