@@ -6,10 +6,12 @@ code.BuildOption { font-weight: bold }
 hr { width: 100%; height: 2px }
 img.noborder { border: 0px solid }
 li.empty { list-style-type: none; list-style-position: outside; list-style-image: none; }
-p.Center { text-align: center }
-p.Quote { margin: 0em 5em }
+
+.Center { text-align: center }
+.Quote { margin: 0em 5em }
 .Indent { margin-left: 1em }
-.IndentMore { margin-left: 2em }
+.IndentMore { padding-left: 2em }
+.LeadingIndent { text-indent: 2em }
 
 table.CodeFrame { background-color: #E6E6E6; font-family: Courier New; font-size: 12pt }
 table.CodeFrame td.LineNumbers { text-align: right; color: #000000; width: 7% }
@@ -18,6 +20,7 @@ table.CodeFrame td.CodeListing { white-space: nowrap; color: #DD0000; width: 93%
 .BannerElement { text-align: center }
 
 .PageHeading { font-weight: normal; text-align: Center; font-size: 36pt }
+.Footer { font-size: 80%; margin-top: 0.3in; text-align: center }
 .GrayCodeListing { white-space: nowrap; font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt }
 .GrayCodeListing2 { font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt }
 .GrayBackground { background-color: #E6E6E6 }
@@ -45,3 +48,11 @@ table.CodeFrame td.CodeListing { white-space: nowrap; color: #DD0000; width: 93%
 .MenuItem { font-weight: bold }
 .DialogItem { font-style: italic }
 
+.yellowbg { background-color: #FFFF00 }
+.tealbg { background-color: #00FFFF }
+
+.Competitor { font-weight: bold }
+table.CompList { font-family: Arial, sans-serif; font-size: 80%; text-align: center; border: thin solid black }
+.CompHeader { font-weight: bold }
+.CompSubHeader { font-style: italic }
+.CompItem { text-align: center }
