@@ -4,7 +4,6 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ../
-SHARED = 1
 LIBRARY = crstate
 LIBRARIES = spuload crutil crmothership
 
@@ -51,8 +50,6 @@ DIFF_FILES = buffer \
 	stencil \
 	viewport
 
-	#client \
-
 DIFF_FILES1 = $(addprefix state_, $(DIFF_FILES))
 DIFF_FILES2 = $(addsuffix _gen, $(DIFF_FILES1))
 
@@ -64,6 +61,8 @@ PRECOMP = state_get.c state_isenabled.c state.def ../include/state/cr_statefuncs
 PRECOMP += $(addsuffix .c, $(DIFF_FILES2)) 
 SLOP = $(PRECOMP)
 
+ifdef WINDOWS
+SHARED = 1
 LIB_COPIES = crserver \
 	packspu \
 	tilesortspu \
@@ -74,6 +73,10 @@ LIB_COPIES = crserver \
 	binaryswapspu \
 	readbackspu \
 	statecopytest
+else
+# make static libcrstate.a library on everything else
+endif
+
 
 include $(TOP)/cr.mk
 
