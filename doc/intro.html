@@ -443,6 +443,9 @@ Graphics, Inc. contributed much of the development.</p>
   <li>Fixed a few compilation issues on Windows
   <li>Fixed intermittent tilesort bug when using multiple app nodes
   <li>Tilesort SPU had some thread safety bugs
+  <li>Calls to glTexGeni() could blow up in the tilesort SPU
+  <li>The render SPU's fake/virtual cursor was polluting the current
+      raster position
   </ul>
 <li>Changes
   <ul>
