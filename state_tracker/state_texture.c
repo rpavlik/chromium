@@ -1989,9 +1989,11 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 				tobj->wrapS = e;
 			}
 #endif
+#ifdef GL_CLAMP_TO_BORDER_SGIS
 			else if (e == GL_CLAMP_TO_BORDER_SGIS && g->extensions.ARB_texture_border_clamp) {
 				tobj->wrapS = e;
 			}
+#endif
 			else {
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 					"TexParameterfv: GL_TEXTURE_WRAP_S invalid param: 0x%x", e);
@@ -2012,9 +2014,11 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 				tobj->wrapT = e;
 			}
 #endif
+#ifdef GL_CLAMP_TO_BORDER_SGIS
 			else if (e == GL_CLAMP_TO_BORDER_SGIS && g->extensions.ARB_texture_border_clamp) {
 				tobj->wrapT = e;
 			}
+#endif
 			else {
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 					"TexParameterfv: GL_TEXTURE_WRAP_T invalid param: 0x%x", e);
@@ -2029,12 +2033,16 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 			else if (e == GL_CLAMP_TO_EDGE) {
 				tobj->wrapR = e;
 			}
+#ifdef GL_CLAMP_TO_EDGE_EXT
 			else if (e == GL_CLAMP_TO_EDGE_EXT && g->extensions.EXT_texture_edge_clamp) {
 				tobj->wrapR = e;
 			}
+#endif
+#ifdef GL_CLAMP_TO_BORDER_SGIS
 			else if (e == GL_CLAMP_TO_BORDER_SGIS && g->extensions.ARB_texture_border_clamp) {
 				tobj->wrapR = e;
 			}
+#endif
 			else {
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 					"TexParameterfv: GL_TEXTURE_WRAP_R invalid param: 0x%x", e);
