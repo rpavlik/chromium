@@ -8,7 +8,8 @@
 
 """Functions for reading and writing Chromium config files."""
 
-import re, string, sys
+from wxPython.wx import *
+import os, re, string, sys, traceback
 sys.path.append("../server")
 import crtypes, crutils
 from crconfig import *
@@ -138,7 +139,12 @@ def WriteConfig(mothership, file):
 				file.write("nodes[%d] = CRApplicationNode('%s')\n" %
 						   (i, node.GetHosts()[j]))
 				file.write("nodes[%d].StartDir( GLOBAL_default_dir )\n" % i)
-				file.write("nodes[%d].SetApplication( program )\n" %i)
+				file.write("nodes[%d].SetApplication( program )\n" % i)
+			(x, y) = node.GetPosition()
+			file.write("nodes[%d].SetPosition(%d, %d)\n" % (i, x, y))
+			dir = node.GetSPUDir()
+			if dir != "":
+				file.write("nodes[%d].SPUDir('%s')\n" % (i, dir))
 			file.write("cr.AddNode(nodes[%d])\n" % i)
 			i += 1
 		#endif
@@ -246,14 +252,17 @@ def SPU(name):
 	s = crutils.NewSPU(name)
 	return s
 
+def GetArgv():
+	# prompt the user for an argument list???
+	return ["config.py", "atlantis"]
 
-def ReadConfig(mothership, file):
+def ReadConfig(mothership, file, filename=""):
 	"""Read a mothership config from file handle."""
 	global TargetMothership
 	TargetMothership = mothership
-	print "Begin reading config file..."
 
 	# read entire file into a string
+	file.seek(0, 0)
 	contents = file.read(-1)
 
 	# Remove some lines which cause trouble
@@ -262,27 +271,75 @@ def ReadConfig(mothership, file):
 	for pat in skipPatterns:
 		v = re.search(pat, contents, flags=re.MULTILINE)
 		if v:
-			print "Ignoring line: %s" % contents[v.start() : v.end()]
-			# cut out the offending line
-			contents = contents[0 : v.start()] + contents[v.end()+1 : ]
-			
-	# XXX need a way to diagnose/report errors here
-	if 1:
-		# catch exceptions
-		try:
-			exec contents
-		except:
-			result = "Error"
-		else:
-			result = "OK"
-	else:
-		# don't catch exceptions - for debugging
+			#print "Ignoring line: %s" % contents[v.start() : v.end()]
+			# comment-out the offending line (preserves line numbering)
+			contents = contents[0 : v.start()] + "#" + contents[v.start() : ]
+
+	# save copy of original sys.argv list
+	origArgv = sys.argv[:]
+
+	(directory, name) = os.path.split(filename)
+
+	# check if sys.argv is referenced
+	if re.search("sys\.argv", contents):
+		dialog = wxTextEntryDialog(parent=NULL, message=
+					"The configuration you're about to load uses the " +
+					"sys.argv argument vector.\n" +
+					"Please provide suitable arguments now.\n" +
+					"Example: %s atlantis tilesort" % name,
+					caption="Configuration File Arugments",
+					defaultValue=name + " ")
+		if dialog.ShowModal() == wxID_CANCEL:
+			return
+
+		# Set new argument vector
+		newArgv = dialog.GetValue()
+		newArgv = string.split(newArgv)
+		sys.argv = newArgv
+		dialog.Destroy()
+
+	# Try to execute the config file
+	try:
 		exec contents
-		result = "OK"
+	except:
+		# get exception info
+		(type, value, callStack) = sys.exc_info()
+		# extract traceback information
+		callList = traceback.extract_tb(callStack)
+		# we only care about the top-most record on call stack
+		callList = [ callList[-1] ]
+		assert len(callList) == 1
+		# convert to a string representation
+		strList = traceback.format_list(callList)
+		assert len(strList) == 1
+		# find line number in strList[0]
+		v = re.search("line (\d+)", strList[0])
+		if v:
+			line = int(strList[0][v.start(1) : v.end(1)])
+		else:
+			line = 0
+		dialog = wxMessageDialog(parent=NULL,
+			message = "There was a problem while reading the config file.\n" +
+			('"%s" on line %d of %s' % (str(type), line, name)),
+			caption="File Parsing Problem",
+			style=wxOK|wxCENTRE|wxICON_EXCLAMATION)
+		dialog.ShowModal()
+		
+		retValue = 0  # error
+	else:
+		# success!
+		# determine if we need layout
+		for node in mothership.Nodes():
+			(x, y) = node.GetPosition()
+			if x == 0 and y == 0:
+				mothership.LayoutNodes()
+				break
+		#endfor
+		retValue = 1  # OK
 
-	print "Done reading config file: %s" % result
+	# restore original sys.argv list
+	sys.argv = origArgv
 
-	mothership.LayoutNodes()
-	return result
+	return retValue
 
 

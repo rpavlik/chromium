@@ -268,3 +268,67 @@ def MergeNodes(nodes, mothership):
 		for i in range(totalCount):
 			first.SetTiles(tiles[i], i)
 	return 1
+
+
+#----------------------------------------------------------------------
+
+def CloneNodeList(nodeList):
+	"""Return a clone of the given nodeList."""
+	# This is tricky because we want to maintain client/server links
+
+	# make a list of cloned nodes, map maps original nodes to new nodes
+	cloneList = []
+	map = {}
+	for node in nodeList:
+		newNode = node.Clone()
+		newNode.RemoveAllServers()
+		cloneList.append(newNode)
+		map[node] = newNode
+	
+	# fixup client/server links
+	for node in nodeList:
+		for s in node.GetServers():
+			if s in nodeList:
+				# connect the corresponding new server to
+				# corresponding new client
+				assert s in map.keys()
+				newServer = map[s]
+				assert newServer in cloneList
+				newNode = map[node]
+				newNode.LastSPU().AddServer(newServer)
+	return cloneList
+
+
+def RemoveNodesFromList(nodeList, removeList):
+	"""Remove the nodes in removeList from nodeList."""
+	# This is tricky because of client/server connections
+
+	# First, remove nodes from the nodeList
+	for node in removeList:
+		nodeList.remove(node)
+
+	# Second, if any preserved clients have servers in the removal list,
+	# disconnect the client from those servers.
+	for node in nodeList:
+		for server in node.GetServers():
+			if server in removeList:
+				node.LastSPU().RemoveServer(server)
+
+	# Third, loop over removed nodes, disconnect any servers in the
+	# preserved list.
+	for node in removeList:
+		for server in node.GetServers():
+			if not server in removeList:
+				node.LastSPU().RemoveServer(server)
+
+	# Validate the resulting lists
+	for node in nodeList:
+		for server in node.GetServers():
+			assert server in nodeList
+			assert not server in removeList
+	for node in removeList:
+		for server in node.GetServers():
+			assert server in removeList
+			assert not server in nodeList
+
+

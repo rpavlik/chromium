@@ -41,6 +41,7 @@ menu_SPLIT_NODES        = 210
 menu_MERGE_NODES        = 211
 menu_SERVER_OPTIONS     = 212
 menu_SERVER_TILES       = 213
+menu_SPU_DIR            = 214
 
 menu_SELECT_ALL_SPUS      = 300
 menu_SELECT_ALL_SPUS_TYPE = 301
@@ -81,6 +82,7 @@ AppNodeBrush = wxBrush(wxColor(55, 160, 55))
 ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
 BackgroundColor = wxColor(90, 150, 190)
 
+NodeClipboard = []
 
 
 #----------------------------------------------------------------------------
@@ -122,10 +124,17 @@ class MainFrame(wxFrame):
 
 		# Edit menu
 		self.editMenu = wxMenu()
-		self.editMenu.Append(menu_UNDO,   "Undo\tCTRL-Z")
-		self.editMenu.Append(menu_REDO,   "Redo\tSHIFT-CTRL-Z")
-		EVT_MENU(self, menu_UNDO, self.doUndo)
-		EVT_MENU(self, menu_REDO, self.doRedo)
+		self.editMenu.Append(wxID_UNDO,   "Undo\tCTRL-Z")
+		self.editMenu.Append(wxID_REDO,   "Redo\tSHIFT-CTRL-Z")
+		self.editMenu.AppendSeparator()
+		self.editMenu.Append(wxID_CUT,    "Cut\tCTRL-X")
+		self.editMenu.Append(wxID_COPY,   "Copy\tCTRL-C")
+		self.editMenu.Append(wxID_PASTE,  "Paste\tCTRL-V")
+		EVT_MENU(self, wxID_UNDO, self.doUndo)
+		EVT_MENU(self, wxID_REDO, self.doRedo)
+		EVT_MENU(self, wxID_CUT, self.doCut)
+		EVT_MENU(self, wxID_COPY, self.doCopy)
+		EVT_MENU(self, wxID_PASTE, self.doPaste)
 		menuBar.Append(self.editMenu, "Edit")
 
 		# Node menu
@@ -150,6 +159,8 @@ class MainFrame(wxFrame):
 		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Options...")
 		self.nodeMenu.Append(menu_SERVER_TILES,       "Server Tiles...")
 		self.nodeMenu.AppendSeparator()
+		self.nodeMenu.Append(menu_SPU_DIR,            "SPU Directory...")
+		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_LAYOUT_NODES,       "Layout Nodes")
 		EVT_MENU(self, menu_SELECT_ALL_NODES, self.doSelectAllNodes)
 		EVT_MENU(self, menu_DESELECT_ALL_NODES, self.doDeselectAllNodes)
@@ -162,6 +173,7 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_MERGE_NODES, self.doMergeNodes)
 		EVT_MENU(self, menu_SERVER_OPTIONS, self.doServerOptions)
 		EVT_MENU(self, menu_SERVER_TILES, self.doServerTiles)
+		EVT_MENU(self, menu_SPU_DIR, self.doSPUDirectory)
 		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		menuBar.Append(self.nodeMenu, "Node")
 
@@ -197,6 +209,8 @@ class MainFrame(wxFrame):
 		self.systemMenu.Append(menu_APP_RUN, "Run...")
 		self.systemMenu.Append(menu_APP_STOP, "Stop...")
 		EVT_MENU(self, menu_APP_OPTIONS, self.doAppOptions)
+		EVT_MENU(self, menu_APP_RUN, self.doRunApp)
+		EVT_MENU(self, menu_APP_STOP, self.doStopApp)
 		menuBar.Append(self.systemMenu, "Application")
 
 		# Help menu
@@ -680,9 +694,11 @@ class MainFrame(wxFrame):
 		if (self.fileName == None) and (len(self.mothership.Nodes()) == 0):
 			# Load contents into current (empty) document.
 			self.fileName = fileName
-			title = TitleString + ": " + os.path.basename(fileName)
-			self.SetTitle(title)
-			self.loadConfig()
+			if self.loadConfig():
+				title = TitleString + ": " + os.path.basename(fileName)
+				self.SetTitle(title)
+			else:
+				self.fileName = None
 		else:
 			# Open a new frame for this document.
 			title = TitleString + ": " + os.path.basename(fileName)
@@ -753,7 +769,8 @@ class MainFrame(wxFrame):
 		"""
 		global _docList, _app
 		for doc in _docList:
-			if not doc.dirty: continue
+			if not doc.dirty:
+				continue
 			doc.Raise()
 			if not doc.askIfUserWantsToSave("quitting"):
 				return
@@ -776,6 +793,43 @@ class MainFrame(wxFrame):
 		self.Redo()
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+
+	def doCut(self, event):
+		"""Edit / Cut callback."""
+		# Remove selected nodes from graph, put on clipboard
+		global NodeClipboard
+		cutNodes = self.mothership.SelectedNodes()
+		crutils.RemoveNodesFromList(self.mothership.Nodes(), cutNodes)
+		NodeClipboard = cutNodes
+		for node in cutNodes:
+			node.Deselect()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+		self.dirty = true
+
+	def doCopy(self, event):
+		"""Edit / Copy callback."""
+		# Copy selected nodes to clipboard
+		global NodeClipboard
+		copyNodes = self.mothership.SelectedNodes()
+		NodeClipboard = crutils.CloneNodeList(copyNodes)
+		for node in NodeClipboard:
+			node.Deselect()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doPaste(self, event):
+		"""Edit / Paste callback."""
+		# Copy selected nodes from clipboard to mothership
+		global NodeClipboard
+		self.mothership.DeselectAllNodes()
+		newNodes = crutils.CloneNodeList(NodeClipboard)
+		for node in newNodes:
+			node.Select()
+			self.mothership.AddNode(node)
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+		self.dirty = true
 
 	# ----------------------------------------------------------------------
 	# Node menu callbacks
@@ -802,16 +856,20 @@ class MainFrame(wxFrame):
 		deleteList = []
 		for node in self.mothership.SelectedNodes():
 			deleteList.append(node)
-		# loop over nodes again to remove server connections
-		for node in self.mothership.Nodes():
-			for server in node.GetServers():
-				if server.IsSelected():
-					node.LastSPU().RemoveServer(server)
-		# now delete the objects in the deleteList
-		for node in deleteList:
-			 self.mothership.Nodes().remove(node)
+		## loop over nodes again to remove server connections
+		#for node in self.mothership.Nodes():
+		#	for server in node.GetServers():
+		#		if server.IsSelected():
+		#			node.LastSPU().RemoveServer(server)
+		## now delete the objects in the deleteList
+		#for node in deleteList:
+		#	 self.mothership.Nodes().remove(node)
+
+		crutils.RemoveNodesFromList(self.mothership.Nodes(), deleteList)
+		
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	def doConnect(self, event):
 		"""Node / Connect callback"""
@@ -833,6 +891,7 @@ class MainFrame(wxFrame):
 		#print "serverNodes: %d" % len(serverNodes)
 
 		if len(appPackerNodes) == 0 and len(netPackerNodes) == 0:
+			self.Notify("Can't connect - no available packing SPUs found.")
 			#print "no packers!"
 			return
 
@@ -856,6 +915,7 @@ class MainFrame(wxFrame):
 					serverNodes.append(rightMost)
 					netPackerNodes.remove(rightMost)
 			else:
+				self.Notify("Can't connect - no available packing SPUs found.")
 				#print "no packers 2!"
 				return
 		packerNodes = appPackerNodes + netPackerNodes
@@ -880,10 +940,12 @@ class MainFrame(wxFrame):
 		# Done!
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	def doDisconnect(self, event):
 		"""Node / Disconnect callback"""
 		self.SaveState()
+		numDisconnected = 0
 		for node in self.mothership.SelectedNodes():
 			#servers = node.GetServers()
 			## make list of servers to remove
@@ -898,14 +960,19 @@ class MainFrame(wxFrame):
 			for s in node.GetServers()[:]:
 				if s.IsSelected():
 					node.LastSPU().RemoveServer(s)
+					numDisconnected += 1
+		if numDisconnected == 0:
+			self.Notify("Didn't find any connections.")
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	def doLayoutNodes(self, event):
 		"""Node / Layout Nodes callback"""
 		self.SaveState()
 		self.mothership.LayoutNodes()
 		self.drawArea.Refresh()
+		self.dirty = true
 
 	def doSetHost(self, event):
 		"""Node / Set Host callback"""
@@ -936,7 +1003,7 @@ class MainFrame(wxFrame):
 				node.SetHosts( newHosts[pos : pos + count] )
 				pos += count
 			self.drawArea.Refresh()
-		return
+		self.dirty = true
 
 	def doSetCount(self, event):
 		"""Node / Set Count callback"""
@@ -953,6 +1020,7 @@ class MainFrame(wxFrame):
 					node.SetCount(n)
 		dialog.Destroy()
 		self.drawArea.Refresh()
+		self.dirty = true
 
 	def doSplitNodes(self, event):
 		"""Node / Split callback"""
@@ -961,6 +1029,7 @@ class MainFrame(wxFrame):
 				crutils.SplitNode(node, self.mothership)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	def doMergeNodes(self, event):
 		"""Node / Merge callback"""
@@ -969,6 +1038,7 @@ class MainFrame(wxFrame):
 			self.Notify("The selected nodes are too dissimilar to be merged.")
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	def doServerOptions(self, event):
 		"""Node / Server Options callback"""
@@ -979,6 +1049,7 @@ class MainFrame(wxFrame):
 		dialog.SetValues(self.mothership.GetServerOptions())
 		if dialog.ShowModal() == wxID_OK:
 			self.mothership.SetServerOptions(dialog.GetValues())
+			self.dirty = true
 
 	def doServerTiles(self, event):
 		"""Node / Server Tiles callback"""
@@ -1003,7 +1074,29 @@ class MainFrame(wxFrame):
 			tileLists = dialog.GetTileLists()
 			for i in range(server.GetCount()):
 				server.SetTiles( tileLists[i], i )
+			self.dirty = true
 
+	def doSPUDirectory(self, event):
+		"""Node / SPU Directory callback"""
+		# find a non-null directory among selected nodes, if any
+		dir = ""
+		for node in self.mothership.SelectedNodes():
+			d = node.GetSPUDir()
+			if d != "":
+				dir = d
+				break
+		dialog = wxTextEntryDialog(parent=self, message=
+								   "Enter SPU directory for selected node(s).",
+								   caption="SPU Directory",
+								   defaultValue=dir)
+		dialog.Centre()
+		if dialog.ShowModal() == wxID_CANCEL:
+			return
+		dir = dialog.GetValue()
+		for node in self.mothership.SelectedNodes():
+			node.SPUDir(dir)
+		dialog.Destroy()
+		self.dirty = true
 
 	# ----------------------------------------------------------------------
 	# SPU menu callbacks
@@ -1047,6 +1140,7 @@ class MainFrame(wxFrame):
 					node.RemoveSPU(spu)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	def doSpuOptions(self, event):
 		"""SPU / SPU Options callback"""
@@ -1083,6 +1177,7 @@ class MainFrame(wxFrame):
 					pass
 			else:
 				print "Invalid SPU name: %s !!!" % name
+		self.dirty = true
 		return
 		
 	# ----------------------------------------------------------------------
@@ -1097,7 +1192,16 @@ class MainFrame(wxFrame):
 		dialog.SetValues(self.mothership.GetGlobalOptions())
 		if dialog.ShowModal() == wxID_OK:
 			self.mothership.SetGlobalOptions(dialog.GetValues())
+			self.dirty = true
 
+
+	def doRunApp(self, event):
+		"""Run the mothership"""
+		self.Notify("Not implemented yet, sorry.")
+
+	def doStopApp(self, event):
+		"""Stop the mothership"""
+		self.Notify("Not implemented yet, sorry.")
 
 	# ----------------------------------------------------------------------
 	# Help menu callbacks
@@ -1199,6 +1303,7 @@ class MainFrame(wxFrame):
 				self.nodeMenu.Enable(menu_MERGE_NODES, 0)
 				self.nodeMenu.Enable(menu_CONNECT, 0)
 			self.newSpuChoice.Enable(1)
+			self.nodeMenu.Enable(menu_SPU_DIR, 1)
 		else:
 			self.nodeMenu.Enable(menu_DELETE_NODE, 0)
 			self.nodeMenu.Enable(menu_CONNECT, 0)
@@ -1208,6 +1313,7 @@ class MainFrame(wxFrame):
 			self.nodeMenu.Enable(menu_SPLIT_NODES, 0)
 			self.nodeMenu.Enable(menu_MERGE_NODES, 0)
 			self.newSpuChoice.Enable(0)
+			self.nodeMenu.Enable(menu_SPU_DIR, 0)
 		# Node menu / servers
 		if self.mothership.NumSelectedServers() > 0:
 			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 1)
@@ -1265,8 +1371,9 @@ class MainFrame(wxFrame):
 	# File I/O
 
 	def loadConfig(self):
-		"""Load a graph from a file"""
+		"""Load a graph from the file named self.fileName"""
 		f = open(self.fileName, "r")
+		r = 0  # result
 		if f:
 			# read first line to check for template
 			l = f.readline()
@@ -1275,16 +1382,19 @@ class MainFrame(wxFrame):
 			v = re.search("^TEMPLATE = \"?([^\"]*)\"?", l)
 			if v:
 				template = v.group(1)
-				if not templates.ReadTemplate(template, self.mothership, f):
-					configio.ReadConfig(self.mothership, f)
+				if templates.ReadTemplate(template, self.mothership, f):
+					r = 1
+				else:
+					r = configio.ReadConfig(self.mothership, f, self.fileName)
 			else:
-				configio.ReadConfig(self.mothership, f)
+				r = configio.ReadConfig(self.mothership, f, self.fileName)
+			#print "Done reading config file, retVal = %d" % r
 			f.close()
 			self.dirty = false
 		else:
 			self.Notify("Problem opening " + self.fileName)
 		self.drawArea.Refresh()
-
+		return r
 
 	def saveConfig(self):
 		"""Save the Chromium configuration to a file."""

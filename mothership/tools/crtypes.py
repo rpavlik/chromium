@@ -28,14 +28,59 @@ class SpuOption:
 	"""Class to describe an SPU option."""
 	# XXX not used yet!  But we need to.
 	def __init__(self, name, description, type, count, default, mins, maxs):
+		assert len(default) == count
+		assert len(mins) == count or len(mins) == 0
+		assert len(maxs) == count or len(maxs) == 0
 		self.Name = name
 		self.Description = description
-		self.Type = type        # "BOOL", "INT", "FLOAT", or "STRING"
+		self.Type = type        # "BOOL", "INT", "FLOAT", "STRING" or "LABEL"
 		self.Count = count
 		self.Default = default  # vector[count]
 		self.Mins = mins        # vector[count]
 		self.Maxs = maxs        # vector[count]
 		self.Value = default    # vector[count]
+
+
+class SpuOptionList:
+	"""Container for a group of SpuOption objects"""
+	def __init__(self, options=[]):
+		self.__Options = []
+		for opt in options:
+			self.__Options.append(opt)
+
+	def TypeOf(self, optName):
+		"""Return data type of named option."""
+		for opt in self.__Options:
+			if opt.Name == optName:
+				return opt.Type
+		return None
+
+	def CountOf(self, optName):
+		"""Return count (dimension) of named option."""
+		for opt in self.__Options:
+			if opt.Name == optName:
+				return opt.Count
+		return None
+
+	def SetValue(self, optName, value):
+		"""Set value of named option."""
+		for opt in self.__Options:
+			if opt.Name == optName:
+				assert len(value) == opt.Count
+				opt.Value = value
+				return
+
+	def GetValue(self, optName):
+		"""Return value of named option."""
+		for opt in self.__Options:
+			if opt.Name == optName:
+				assert len(opt.Value) == opt.Count
+				return opt.Value
+
+	def Print(self):
+		for opt in self.__Options:
+			print "%s = %s" % (opt.Name, str(opt.Value))
+		
 
 
 # ----------------------------------------------------------------------
@@ -113,6 +158,9 @@ class SpuObject:
 	def RemoveServer(self, serverNode):
 		if serverNode in self.__Servers:
 			self.__Servers.remove(serverNode)
+
+	def RemoveAllServers(self):
+		self.__Servers = []
 
 	def GetServers(self):
 		"""Return the list of servers for this SPU.
@@ -372,6 +420,11 @@ class Node:
 		else:
 			return []
 
+	def RemoveAllServers(self):
+		"""Remove all servers from the last SPU (a packing SPU)"""
+		if self.NumSPUs() > 0:
+			self.LastSPU().RemoveAllServers()
+
 	def IsSimilarTo(self, node):
 		"""Test if this node is similar to the given node"""
 		# compare node type (app vs server)
@@ -388,19 +441,21 @@ class Node:
 		return 1  # close enough
 
 	def GetPosition(self):
+		"""Return screen position (x, y) for this node icon."""
 		return (self.__X, self.__Y)
 
 	def SetPosition(self, x, y):
+		"""Set screen position for this node icon."""
 		self.__X = x
 		self.__Y = y
 
-	# Return the (x,y) coordinate of the node's input socket
 	def GetInputPlugPos(self):
+		"""Return the (x,y) coordinate of the node's input socket."""
 		assert self.__IsServer
 		return self.__InputPlugPos
 
-	# Return the (x,y) coordinate of the node's output socket
 	def GetOutputPlugPos(self):
+		"""Return the (x,y) coordinate of the node's output socket."""
 		assert self.NumSPUs() > 0
 		last = self.LastSPU()
 		assert last.MaxServers() > 0
@@ -410,6 +465,7 @@ class Node:
 		return (x, y)
 
 	def InvalidateLayout(self):
+		"""Signal that this node needs its layout updated."""
 		self.__Width = 0
 
 	def Layout(self, dc):
@@ -502,6 +558,10 @@ class Node:
 		"""Set SPU directory, from config file."""
 		self.__SPUdir = dir
 
+	def GetSPUDir(self):
+		"""Return SPU directory."""
+		return self.__SPUdir
+
 	def ClientDLL(self, dll):
 		"""Needed for reading config files."""
 		pass
@@ -564,12 +624,35 @@ class ApplicationNode(Node):
 		self.__StartDir = ""
 		self.__Application = ""
 
+	def Clone(self):
+		"""Return a deep copy of this ApplicationNode."""
+		newNode = ApplicationNode(self.GetHosts(), self.GetCount())
+		for spu in self.SPUChain():
+			newSpu = spu.Clone()
+			newNode.AddSPU(newSpu)
+		pos = self.GetPosition()
+		newNode.SetPosition(pos[0], pos[1])
+		if self.IsSelected():
+			newNode.Select()
+		newNode.SetHostNamePattern( self.GetHostNamePattern() )
+		newNode.__StartDir = self.__StartDir
+		newNode.__Application = self.__Application
+		assert isinstance(newNode, ApplicationNode)
+		return newNode
+
 	def StartDir(self, dir):
 		self.__StartDir = dir
+
+	def GetStartDir(self):
+		return self.__StartDir
 
 	def SetApplication(self, app):
 		self.__Application = app
 		
+	def GetApplication(self):
+		return self.__Application
+
+
 # ----------------------------------------------------------------------
 
 class Mothership:
@@ -591,6 +674,7 @@ class Mothership:
 		 "   Example command: 'psubmit -size %N -rank %I -clear %0'\n" +
 		 "   Zeroth arg: '-swap'",
 		 "LABEL", 0, [], [], []),
+		# XXX this should probably be stored in the app nodes
 		("default_app", "Command", "STRING", 1, [""], [], []),
 		("zeroth_arg", "Zeroth arg", "STRING", 1, [""], [], []),
 		("default_dir", "Directory", "STRING", 1, [crconfig.crbindir], [], []),
@@ -610,11 +694,11 @@ class Mothership:
 		self.__TemplateVars = {}
 		# build __GlobalOptions dictionary
 		self.__GlobalOptions = {}
-		for (name, description, type, count, default, mins, maxs) in self.GlobalOptions:
+		for (name, desc, type, count, default, min, max) in self.GlobalOptions:
 			self.__GlobalOptions[name] = default
 		# build __ServerOptions dictionary
 		self.__ServerOptions = {}
-		for (name, description, type, count, default, mins, maxs) in self.ServerOptions:
+		for (name, desc, type, count, default, min, max) in self.ServerOptions:
 			self.__ServerOptions[name] = default
 
 	def GetGlobalOptions(self):
@@ -631,12 +715,35 @@ class Mothership:
 		self.__GlobalOptions = options
 
 	def SetGlobalOption(self, name, value):
-		"""Set a global option value"""
+		"""Set a global option value (value must be a list)"""
 		assert name in self.__GlobalOptions.keys()
 		self.__GlobalOptions[name] = value
 
-	def SetParam(self, name, value):
-		self.SetGlobalOption(name, value)
+	def SetParam(self, paramName, value):
+		"""Used while parsing config files"""
+		# Ugh, this is more complicated than one would expect
+		for (name, desc, type, count, default, min, max) in self.GlobalOptions:
+			if name == paramName:
+				#print "name=%s value = %s" % (name, str(value))
+				#print "type = %s  count = %d" % (type, count)
+				if count == 1:
+					if (type == "INT" or type == "BOOL" or type == "FLOAT"):
+						valList = [ value ]
+					elif type == "STRING":
+						if len(value) == 0:
+							valList = [ "" ]
+						else:
+							valList = [ value ]
+					else:
+						print "PROBLEM: unknown type for %s" % name
+				else:
+					# value should already be a list
+					assert len(value) == count
+					valList = value
+				#print "l = %s" % str(valList)
+				self.SetGlobalOption(name, valList)
+				return
+		print "SetParam error: unknown param name: %s" % paramName
 
 	def GetServerOptions(self):
 		"""Get the server options (a dictionary)"""
