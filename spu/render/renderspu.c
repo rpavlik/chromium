@@ -132,8 +132,11 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		WindowInfo *window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, crWindow);
 		ContextInfo *context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
 		context->currentWindow = crWindow;
+#ifdef CHROMIUM_THREADSAFE
 		crSetTSD(&_RenderTSD, context);
-
+#else
+		render_spu.currentContext = context;
+#endif
 		if (!window)
 		{
 			crDebug("renderspuMakeCurrent: invalid window id: %d", crWindow);
@@ -165,7 +168,11 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 	}
 	else
 	{
+#ifdef CHROMIUM_THREADSAFE
 		crSetTSD(&_RenderTSD, NULL);
+#else
+		render_spu.currentContext = NULL;
+#endif
 	}
 }
 
