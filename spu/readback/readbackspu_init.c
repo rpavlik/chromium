@@ -87,3 +87,17 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	
 	return 1;
 }
+
+
+
+
+/*
+ * This is a (temporary?) function used to test copies of the state
+ * tracker.  See the progs/statecopytest/statecopytest.c program for
+ * more information.
+ */
+void * READBACKSPU_APIENTRY readbackspu_state_test(void)
+{
+		extern CRStateBits *__currentBits;
+		return &__currentBits;
+}

@@ -5,3 +5,4 @@
 DESCRIPTION ""
 EXPORTS
 SPULoad
+readbackspu_state_test
