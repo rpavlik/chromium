@@ -16,12 +16,6 @@ print """#include <stdio.h>
 #include "cr_glwrapper.h"
 #include "printspu.h"
 
-#if defined(WINDOWS)
-#define PRINT_APIENTRY __stdcall
-#else
-#define PRINT_APIENTRY
-#endif
-
 #define PRINT_UNUSED(x) ((void)x)"""
 
 keys = gl_mapping.keys()
@@ -45,8 +39,13 @@ printf_mapping = {
 }
 
 for func_name in keys:
+	(return_type, names, types) = gl_mapping[func_name]
+	if stub_common.FindSpecial( 'printspu', func_name ): 
+		print 'extern %s PRINT_APIENTRY print%s%s;' % (return_type, func_name, stub_common.ArgumentString( names, types ) )
+
+for func_name in keys:
 	if stub_common.FindSpecial( 'printspu_unimplemented', func_name ): continue
-	if stub_common.FindSpecial( 'printspu_special', func_name ): continue
+	if stub_common.FindSpecial( 'printspu', func_name ): continue
 	(return_type, names, types) = gl_mapping[func_name]
 	print '\n%s PRINT_APIENTRY print%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
 	print '{'
@@ -77,6 +76,10 @@ for func_name in keys:
 		for i in range(len(names)):
 			name = names[i]
 			type = types[i]
+			if type == 'void':
+				printfstr = ""
+				argstr = ""
+				break;
 
 			if printf_mapping.has_key( type ):
 				printfstr += printf_mapping[type];

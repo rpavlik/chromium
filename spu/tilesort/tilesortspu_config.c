@@ -34,6 +34,8 @@ void tilesortspuGatherConfiguration( void )
 	crMothershipGetMTU( conn, response );
 	sscanf( response, "%d", &tilesort_spu.MTU );
 
+	crDebug( "Got the MTU as %d", tilesort_spu.MTU );
+
 	// The response to this tells us how many servers, what the
 	// SPU id of their first SPU is, and where they are.
 	//

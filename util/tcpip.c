@@ -341,15 +341,15 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 	crDebug( "Accepted connection from \"%s\".", conn->hostname );
 }
 
-void *crTCPIPAlloc( void )
+void *crTCPIPAlloc( CRConnection *conn )
 {
 	CRTCPIPBuffer *buf = (CRTCPIPBuffer *) crBufferPoolPop( &cr_tcpip.bufpool );
 	if ( buf == NULL )
 	{
 		crDebug( "Buffer pool was empty, so I allocated %d bytes", 
-			sizeof(CRTCPIPBuffer) + crNetMTU());
+			sizeof(CRTCPIPBuffer) + conn->mtu );
 		buf = (CRTCPIPBuffer *) 
-			crAlloc( sizeof(CRTCPIPBuffer) + crNetMTU() );
+			crAlloc( sizeof(CRTCPIPBuffer) + conn->mtu );
 		buf->magic = CR_TCPIP_BUFFER_MAGIC;
 		buf->kind  = CRTCPIPMemory;
 		buf->pad   = 0;
@@ -497,9 +497,9 @@ int crTCPIPRecv( void )
 
 		CRASSERT( len > 0 );
 
-		if ( len <= crNetMTU() )
+		if ( len <= conn->mtu )
 		{
-			tcpip_buffer = (CRTCPIPBuffer *) crTCPIPAlloc( ) - 1;
+			tcpip_buffer = (CRTCPIPBuffer *) crTCPIPAlloc( conn ) - 1;
 		}
 		else
 		{

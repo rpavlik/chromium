@@ -2,7 +2,11 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = printspu
-FILES = printspu printspu_config printspu_enums printspu_init
+FILES = printspu \
+		printspu_config \
+		printspu_enums \
+		printspu_init \
+		printspu_matrices
 
 LIBRARIES = crutil crmothership spuload
 

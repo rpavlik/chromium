@@ -18,21 +18,6 @@
 
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) // 2MB
 
-// This is the maximum size of any message we'll put on the wire.  We
-// need this so that things can get fragmented on networks that require
-// the receive buffer to be posted before a receive can happen.
-static unsigned int __cr_MTU = 0;
-
-unsigned int crNetMTU( void )
-{
-	return __cr_MTU;
-}
-
-void crNetSetMTU( unsigned int mtu )
-{
-	__cr_MTU = mtu;
-}
-
 static struct {
 	int                  initialized; // flag
 	CRNetReceiveFunc     recv;        // what to do with arriving packets
@@ -75,7 +60,6 @@ CRConnection *crNetConnectToServer( char *server,
 
 	CRASSERT( cr_net.initialized );
 
-	__cr_MTU = mtu;
 
 	// Tear the URL apart into relevant portions.
 	if ( !crParseURL( server, protocol, hostname, &port, default_port ) )
@@ -99,6 +83,7 @@ CRConnection *crNetConnectToServer( char *server,
 	conn->Free               = NULL;                 // How do we receive things?
 	conn->tcp_socket         = 0;
 	conn->gm_node_id         = 0;
+	conn->mtu                = mtu;
 
 	// now, just dispatch to the appropriate protocol's initialization functions.
 	
@@ -131,7 +116,7 @@ CRConnection *crNetConnectToServer( char *server,
 
 // Accept a client on various interfaces.
 
-CRConnection *crNetAcceptClient( char *protocol, unsigned short port )
+CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned int mtu )
 {
 	CRConnection *conn;
 
@@ -150,6 +135,7 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port )
 	conn->Free               = NULL;                 // How do we receive things?
 	conn->tcp_socket         = 0;
 	conn->gm_node_id         = 0;
+	conn->mtu                = mtu;
 
 	// now, just dispatch to the appropriate protocol's initialization functions.
 	
@@ -238,7 +224,7 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 void *crNetAlloc( CRConnection *conn )
 {
 	CRASSERT( conn );
-	return conn->Alloc( );
+	return conn->Alloc( conn );
 }
 
 // Send a set of commands on a connection.  Pretty straightforward, just
@@ -253,7 +239,7 @@ void crNetSend( CRConnection *conn, void **bufp,
 	if ( bufp ) {
 		CRASSERT( start >= *bufp );
 		CRASSERT( (unsigned char *) start + len <= 
-				(unsigned char *) *bufp + __cr_MTU );
+				(unsigned char *) *bufp + conn->mtu );
 	}
 
 #ifndef NDEBUG

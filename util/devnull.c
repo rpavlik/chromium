@@ -9,9 +9,9 @@ void crDevnullWriteExact( CRConnection *conn, void *buf, unsigned int len )
 	(void) len;
 }
 
-void *crDevnullAlloc( void )
+void *crDevnullAlloc( CRConnection *conn )
 {
-	return crAlloc( crNetMTU() );
+	return crAlloc( conn->mtu );
 }
 
 void crDevnullSingleRecv( CRConnection *conn, void *buf, unsigned int len )

@@ -57,7 +57,12 @@ extern TileSortBucketInfo *tilesortspuBucketGeometry(void);
 
 extern TileSortSPU tilesort_spu;
 
-extern void tilesortspuHuge( CROpcode opcode, void *buf );
-extern void tilesortspuFlush( void *arg );
+void tilesortspuHuge( CROpcode opcode, void *buf );
+void tilesortspuFlush( void *arg );
+void tilesortspuBroadcastGeom( void );
+void tilesortspuShipBuffers( void );
+void tilesortspuCreateDiffAPI( void );
+
+void tilesortspuDebugOpcodes( CRPackBuffer *pack );
 
 #endif /* TILESORT_SPU_H */

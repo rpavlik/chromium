@@ -112,9 +112,6 @@ static struct {
 
 #define CR_GM_DEBUG                0
 #define CR_GM_SYNCHRONOUS          0
-#define CR_GM_FENCE_BUFFERS        0
-#define CR_GM_FENCE_VALUE          0xdeadbeef
-#define CR_GM_PARANOIA             0
 
 void crGmSend( CRConnection *conn, void **bufp, 
 		void *start, unsigned int len );
@@ -135,10 +132,11 @@ static void cr_gm_debug( const char *format, ... )
 
 #endif
 
-static void cr_gm_info( void )
+static void cr_gm_info( unsigned int mtu )
 {
 	char name[ GM_MAX_HOST_NAME_LEN ];
-	unsigned int node_id, max_node_id, min_size;
+	unsigned int node_id, max_node_id;
+	unsigned int min_size;
 
 	gm_get_host_name( cr_gm.port, name );
 	gm_get_node_id( cr_gm.port, &node_id );
@@ -149,10 +147,9 @@ static void cr_gm_info( void )
 	crWarning( "GM: gm_max_node_id_inuse=%u",
 			max_node_id );
 
-	min_size = gm_min_size_for_length( crNetMTU() );
+	min_size = gm_min_size_for_length( mtu );
 	crWarning( "GM: gm_min_size_for_length( "
-			"crNetMTU()=%u ) = %u", crNetMTU(),
-			min_size );
+			"mtu=%u ) = %u", mtu, min_size );
 
 	crWarning( "GM: gm_max_length_for_size( "
 			"size=%u ) = %u", min_size,
@@ -349,29 +346,6 @@ static void * cr_gm_dma_malloc( unsigned long length )
 	return buf;
 }
 
-#if CR_GM_FENCE_BUFFERS
-
-static void crGmPlaceFence( void *buf )
-{
-	unsigned int fence = CR_GM_FENCE_VALUE;
-	unsigned int len   = crNetMTU();
-	memcpy( (char *) buf - sizeof(fence), &fence, sizeof(fence) );
-	memcpy( (char *) buf + len, &fence, sizeof(fence) );
-}
-
-static void crGmCheckFence( void *buf )
-{
-	unsigned int fence = CR_GM_FENCE_VALUE;
-	unsigned int len   = crNetMTU();
-	if ( memcmp( (char *) buf - sizeof(fence), &fence, sizeof(fence) ) ||
-			memcmp( (char *) buf + len, &fence, sizeof(fence) ) )
-	{
-		crError( "GM: bad fence value!" );
-	}
-}
-
-#endif
-
 // All the functions that shouldn't get called
 
 void crGmSendExact( CRConnection *conn, void *buf, unsigned int len )
@@ -565,7 +539,7 @@ crGmConnectionAdd( CRConnection *conn )
 	crGmCreditIncrease( gm_conn );
 }
 
-void *crGmAlloc( void )
+void *crGmAlloc( CRConnection *conn )
 {
 	CRGmBuffer *gm_buffer = (CRGmBuffer *)
 		crBufferPoolPop( &cr_gm.write_pool );
@@ -591,11 +565,6 @@ cr_gm_provide_receive_buffer( void *buf )
 
 	CRASSERT( ((CRGmBuffer *) msg - 1)->magic 
 			== CR_GM_BUFFER_RECV_MAGIC );
-
-#if CR_GM_PARANOIA
-	/* HACK, make sure we aren't getting reused memory? */
-	memset( buf, 0x33, crNetMTU() );
-#endif
 
 	msg->type = CR_MESSAGE_ERROR;
 
@@ -672,63 +641,6 @@ crGmRecvMulti( CRGmConnection *gm_conn, CRMessageMulti *msg,
 	}
 }
 
-#if CR_GM_PARANOIA
-
-typedef struct CRGmSavedSend {
-	void *ctx;
-	void *data;
-} CRGmSavedSend;
-
-static int                n_saved_send;
-static CRGmSavedSend *saved_send;
-static int last_seqno;
-
-
-	static void
-record_send( void *ctx )
-{
-	int i;
-
-	for ( i = 0; i < n_saved_send; i++ )
-	{
-		if ( saved_send[i].ctx == NULL )
-		{
-			saved_send[i].ctx = ctx;
-			memcpy( saved_send[i].data, ctx, crNetMTU() );
-			return;
-		}
-	}
-
-	crError( "record_send failed! (no slots)" );
-}
-
-	static void
-validate_send( void *ctx )
-{
-	int i;
-
-	for ( i = 0; i < n_saved_send; i++ )
-	{
-		if ( saved_send[i].ctx == ctx )
-		{
-			if ( memcmp( saved_send[i].data, ctx, crNetMTU() ) )
-			{
-				volatile int foo = 1;
-				crWarning( 
-						"GM: somebody stomped on a send!" );
-				while ( foo )
-					;
-			}
-			saved_send[i].ctx = NULL;
-			return;
-		}
-	}
-
-	crError( "validate_send failed! (no such ctx)" );
-}
-
-#endif
-
 static void
 crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		unsigned int len )
@@ -736,45 +648,6 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 	CRGmBuffer *temp;
 
 	CRASSERT( gm_conn->multi.buf == NULL );
-
-#if CR_GM_PARANOIA
-	if ( msg->type == CR_MESSAGE_OPCODES )
-	{
-		CRMessageOpcodes *msg2 = (CRMessageOpcodes *) msg;
-		unsigned long crc = gm_crc( msg2 + 1, len - sizeof(*msg2) );
-		if ( crc != msg2->crc )
-		{
-			int i, j;
-			unsigned int num_words, *data;
-			volatile int foo = 1;
-			crWarning( "msg: seqno=%d start=%p "
-					"len=%u "
-					"type=0x%x senderId=%u numOpcodes=%u crc=0x%x",
-					msg2->seqno, msg, len, msg2->type, msg2->senderId,
-					msg2->numOpcodes, msg2->crc );
-			crWarning( "crc mismatch! (I compute "
-					"crc=0x%x, msg says crc=0x%x)", crc, msg2->crc );
-
-			num_words = len >> 2;
-			if ( num_words > 100 )
-				num_words = 100;
-			data = (unsigned int *) msg;
-			for ( i = 0; i < num_words; ) 
-			{
-				char text[1024];
-				int  offset = 0;
-				for ( j = 0; i < num_words && j < 8; i++, j++ ) 
-				{
-					offset += sprintf( text + offset, " 0x%08x", *data++ );
-				}
-				crWarning( text );
-			}
-			while ( foo )
-				;
-		}
-		last_seqno = msg2->seqno;
-	}
-#endif
 
 	temp = (CRGmBuffer *) crBufferPoolPop( &cr_gm.read_pool );
 
@@ -792,7 +665,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 			crBufferPoolPop( &cr_gm.unpinned_read_pool );
 		if ( temp == NULL )
 		{
-			temp = crAlloc( sizeof(CRGmBuffer) + crNetMTU() );
+			temp = crAlloc( sizeof(CRGmBuffer) + gm_conn->conn->mtu );
 			temp->magic = CR_GM_BUFFER_RECV_MAGIC;
 			temp->kind  = CRGmMemoryUnpinned;
 			temp->pad   = 0;
@@ -837,10 +710,6 @@ cr_gm_send_callback( struct gm_port *port, void *ctx, gm_status_t status )
 	cr_gm.num_send_tokens++;
 	(void)(port);
 
-#if CR_GM_PARANOIA
-	validate_send( ctx );
-#endif
-
 	crBufferPoolPush( &cr_gm.write_pool, buf );
 }
 
@@ -882,10 +751,6 @@ cr_gm_send( CRConnection *conn, void *buf, unsigned int len,
 		memmove( temp, buf, len );
 		buf = temp;
 	}
-#endif
-
-#if CR_GM_PARANOIA
-	record_send( ctx );
 #endif
 
 	cr_gm.num_outstanding_sends++;
@@ -1023,9 +888,6 @@ int crGmRecv( void )
 						cr_gm_str_event_type( event ) );
 #endif
 
-#if CR_GM_FENCE_BUFFERS
-				crGmCheckFence( msg );
-#endif
 				switch ( msg->type )
 				{
 					case CR_MESSAGE_MULTI_BODY:
@@ -1054,36 +916,10 @@ int crGmRecv( void )
 						 * doesn't put it in the above case block.  That has
 						 * an obvious fix. */
 						{
-#if CR_GM_PARANOIA
-							int i, num_bytes;
-
-							crWarning( "GM: received a bad "
-									"message: src=%u len=%u", src_node, len );
-							crWarning( "GM: last good "
-									"seqno=%d", last_seqno );
-							num_bytes = len;
-							if ( num_bytes > 256 )
-								num_bytes = 256;
-							for ( i = 0; i < num_bytes; i += 32 )
-							{
-								char string[128];
-								int  x = num_bytes - i;
-								if ( x > 32 ) x = 32;
-								crWordsToString( string, sizeof(string),
-										(unsigned char *) msg + i, x );
-								crWarning( "  %s", string );
-							}
-							{
-								volatile int foo = 1;
-								while ( foo )
-									;
-							}
-#else
 							char string[128];
 							crBytesToString( string, sizeof(string), msg, len );
 							crError( "GM: received a bad message: src=%u len=%u "
 									"buf=[%s]", src_node, len, string );
-#endif					
 						}
 				}
 			}
@@ -1107,55 +943,6 @@ int crGmRecv( void )
 
 	return 1;
 }
-
-#if 0
-
-	static unsigned int
-xxx( void *buf, unsigned int len, unsigned int pos, void *pack )
-{
-	unsigned int n_bytes = len - pos;
-	if ( pos == 0 ) 
-	{
-		CRMessageMultiHead *msg = (CRMessageMultiHead *) pack;
-		CRASSERT( len > crNetMTU() );
-		msg->type = CR_MESSAGE_MULTI_HEAD;
-		msg->len  = len;
-		n_bytes = crNetMTU() - sizeof(*msg);
-		memcpy( msg + 1, (unsigned char *) buf + pos, n_bytes );
-	}
-	else if ( sizeof(CRMessageTail) + n_bytes <= crNetMTU() ) 
-	{
-		CRMessageMultiTail *msg = (CRMessageMultiTail *) pack;
-		msg->type = CR_MESSAGE_MULTI_TAIL;
-		memcpy( msg + 1, (unsigned char *) buf + pos, n_bytes );
-	}
-	else {
-		CRMessageMultiBody *msg = (CRMessageMultiBody *) pack;
-		msg->type = CR_MESSAGE_MULTI_BODY;
-		n_bytes = crNetMTU() - sizeof(*msg);
-		memcpy( msg + 1, (unsigned char *) buf + pos, n_bytes );
-	}
-
-	{
-		CRMessage *msg = (CRMessageMultiHead *) crGmAlloc( );
-		msg->type = CR_MESSAGE_MULTI_HEAD;
-		msg->len  = len;
-		n_bytes   = crNetMTU() - sizeof(*msg);
-		memcpy( msg + 1, buf, n_bytes );
-
-		cr_gm_send( conn, msg, n_bytes + sizeof(*msg), msg );
-	}
-
-	len -= n_bytes;
-	src  = (unsigned char *) buf + n_bytes;
-
-	while ( len > crNetMTU() - sizeof(CRMessage) )
-	{
-		CRMessage *msg = (CRMessage *) crGmAlloc( );
-	}
-}
-
-#endif
 
 	static void
 crGmWaitForSendCredits( CRConnection *conn )
@@ -1193,12 +980,12 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 	unsigned char *src;
 	CRASSERT( buf != NULL && len > 0 );
 
-	if ( len <= crNetMTU() )
+	if ( len <= conn->mtu )
 	{
 		/* the user is doing a send from memory not allocated by the
 		 * network layer, but it does fit within a single message, so
 		 * don't bother with fragmentation */
-		void *pack = crGmAlloc( );
+		void *pack = crGmAlloc( conn );
 		memcpy( pack, buf, len );
 		crGmSend( conn, &pack, pack, len );
 		return;
@@ -1217,13 +1004,13 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 	src = (unsigned char *) buf;
 	while ( len > 0 )
 	{
-		CRMessageMulti *msg = (CRMessageMulti *) crGmAlloc( );
+		CRMessageMulti *msg = (CRMessageMulti *) crGmAlloc( conn );
 		unsigned int        n_bytes;
 
-		if ( len + sizeof(*msg) > crNetMTU() )
+		if ( len + sizeof(*msg) > conn->mtu )
 		{
 			msg->type = CR_MESSAGE_MULTI_BODY;
-			n_bytes   = crNetMTU() - sizeof(*msg);
+			n_bytes   = conn->mtu - sizeof(*msg);
 		}
 		else
 		{
@@ -1249,59 +1036,11 @@ void crGmSend( CRConnection *conn, void **bufp,
 		crError( "crGmSend: can not be called within crGmRecv" );
 	}
 
-#if CR_GM_PARANOIA
-	{
-		CRMessageOpcodes *msg = (CRMessageOpcodes *) start;
-		if ( msg->type == CR_MESSAGE_OPCODES )
-		{
-			static int seqno = 0;
-			msg->seqno = seqno++;
-			msg->crc   = gm_crc( msg + 1, len - sizeof(*msg) );
-			if ( len <= 256 )
-			{
-				static FILE *foolog = NULL;
-				int i, j;
-				unsigned int num_words, *data;
-
-				if ( foolog == NULL )
-				{
-					foolog = fopen( "/tmp/foolog.txt", "w" );
-					if ( foolog == NULL )
-					{
-						crError( "can't create foolog!" );
-					}
-				}
-				fprintf( foolog, "msg: seqno=%d dst=%u start=%p len=%u "
-						"type=0x%x senderId=%u numOpcodes=%u crc=0x%x",
-						msg->seqno, conn->gm_node_id,
-						start, len, msg->type, msg->senderId,
-						msg->numOpcodes, msg->crc );
-				num_words = len >> 2;
-				if ( num_words > 100 )
-					num_words = 100;
-				data = (unsigned int *) start;
-				for ( i = 0; i < num_words; ) {
-					fputs( "\n", foolog );
-					for ( j = 0; i < num_words && j < 8; i++, j++ ) {
-						fprintf( foolog, " 0x%08x", *data++ );
-					}
-				}
-				fputs( "\n", foolog );
-
-			}
-		}
-	}
-#endif
-
 	if ( bufp == NULL )
 	{
 		crGmSendMulti( conn, start, len );
 		return;
 	}
-
-#if CR_GM_FENCE_BUFFERS
-	crGmCheckFence( *bufp );
-#endif
 
 	gm_buffer = (CRGmBuffer *) (*bufp) - 1;
 
@@ -1413,7 +1152,7 @@ cr_gm_set_acceptable_sizes( void )
 	}
 }
 
-void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
+void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, int mtu )
 {
 	gm_status_t status;
 	unsigned int port, min_port, max_port;
@@ -1461,11 +1200,11 @@ void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 	}
 	cr_gm.port_num = port;
 
-	cr_gm.message_size = gm_min_size_for_length( crNetMTU() );
+	cr_gm.message_size = gm_min_size_for_length( mtu );
 
 	cr_gm_set_acceptable_sizes( );
 
-	cr_gm_info( );
+	cr_gm_info( mtu );
 
 	gm_max_node_id_inuse( cr_gm.port, &max_node_id );
 
@@ -1481,15 +1220,9 @@ void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 	gm_get_node_id( cr_gm.port, &node_id );
 	cr_gm.node_id = node_id;
 
-	stride  = crNetMTU();
+	stride  = mtu;
 #if CR_GM_ROUND_UP
 	stride  = gm_max_length_for_size( gm_min_size_for_length( stride ) );
-#endif
-#if CR_GM_FENCE_BUFFERS
-	if ( crNetMTU() + sizeof(unsigned int) > stride )
-	{
-		stride += sizeof(unsigned int);
-	}
 #endif
 	stride += sizeof(CRGmBuffer);
 	count   = CR_GM_PINNED_READ_MEMORY_SIZE / stride;
@@ -1506,13 +1239,8 @@ void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 		CRGmBuffer *buf = (CRGmBuffer *) ( mem + i * stride );
 		buf->magic = CR_GM_BUFFER_RECV_MAGIC;
 		buf->kind  = CRGmMemoryPinned;
-		buf->len   = crNetMTU();
+		buf->len   = mtu;
 		buf->pad   = 0;
-
-#if CR_GM_FENCE_BUFFERS
-		crGmPlaceFence( buf + 1 );
-#endif
-
 		if ( i < num_recv_tokens )
 		{
 			cr_gm_provide_receive_buffer( buf + 1 );
@@ -1525,15 +1253,9 @@ void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 
 	crBufferPoolInit( &cr_gm.unpinned_read_pool, 16 );
 
-	stride  = crNetMTU();
+	stride  = mtu;
 #if CR_GM_ROUND_UP
 	stride  = gm_max_length_for_size( gm_min_size_for_length( stride ) );
-#endif
-#if CR_GM_FENCE_BUFFERS
-	if ( crNetMTU() + sizeof(unsigned int) > stride )
-	{
-		stride += sizeof(unsigned int);
-	}
 #endif
 	stride += sizeof(CRGmBuffer);
 	count   = CR_GM_PINNED_WRITE_MEMORY_SIZE / stride;
@@ -1548,12 +1270,9 @@ void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 		CRGmBuffer *buf = (CRGmBuffer *) ( mem + i * stride );
 		buf->magic = CR_GM_BUFFER_SEND_MAGIC;
 		buf->kind  = CRGmMemoryPinned;
-		buf->len   = crNetMTU();
+		buf->len   = mtu;
 		buf->pad   = 0;
 
-#if CR_GM_FENCE_BUFFERS
-		crGmPlaceFence( buf + 1 );
-#endif
 		crBufferPoolPush( &cr_gm.write_pool, buf );
 	}
 
@@ -1562,17 +1281,6 @@ void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 
 	cr_gm.num_outstanding_sends = 0;
 	cr_gm.num_send_tokens = gm_num_send_tokens( cr_gm.port );
-
-#if CR_GM_PARANOIA
-	n_saved_send = cr_gm.num_send_tokens;
-	saved_send   = (CRGmSavedSend *) 
-		crAlloc( sizeof(saved_send[0]) * n_saved_send );
-	for ( i = 0; i < cr_gm.num_send_tokens; i++ )
-	{
-		saved_send[i].ctx  = NULL;
-		saved_send[i].data = crAlloc( crNetMTU() );
-	}
-#endif
 
 	cr_gm.inside_recv = 0;
 

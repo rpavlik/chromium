@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
 	SPU *spu;
 	char *spuname = "renderspu";
 	float angle = 0;
+	int frame = 0;
 
 	if (argc > 1)
 	{
@@ -19,6 +20,11 @@ int main(int argc, char *argv[])
 	spu->dispatch_table.ClearColor( 0,0,0,1 );
 	for (;;)
 	{
+		frame++;
+		//if (frame == 3)
+		//{
+			//break;
+		//}
 		angle += ANGLE_STEP;
 		spu->dispatch_table.Clear( GL_COLOR_BUFFER_BIT );
 		spu->dispatch_table.MatrixMode( GL_MODELVIEW );

@@ -3,6 +3,12 @@
 
 #include "spu_dispatch_table.h"
 
+#if defined(WINDOWS)
+#define PRINT_APIENTRY __stdcall
+#else
+#define PRINT_APIENTRY
+#endif
+
 #include <stdio.h>
 
 typedef struct {
