@@ -24,24 +24,6 @@ static CRContext *defaultContext = NULL;
 
 
 /*
- * Allocate the state (dirty) bits data structures.
- * This should be called before we create any contexts.
- */
-void crStateInit(void)
-{
-	int j;
-
-	__currentBits = (CRStateBits *) crCalloc( sizeof(CRStateBits) );
-	crStateClientInitBits( &(__currentBits->client) );
-	crStateLightingInitBits( &(__currentBits->lighting) );
-	crStateTransformInitBits( &(__currentBits->transform) );
-
-	for (j=0;j<CR_MAX_CONTEXTS;j++)
-		g_availableContexts[j] = 0;
-}
-
-
-/*
  * Helper for crStateCreateContext, below.
  */
 static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
@@ -101,6 +83,45 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 
 
 /*
+ * Allocate the state (dirty) bits data structures.
+ * This should be called before we create any contexts.
+ * We'll also create the default/NULL context at this time and make
+ * it the current context by default.  This means that if someone
+ * tries to set GL state before calling MakeCurrent() they'll be
+ * modifying the default state object, and not segfaulting on a NULL
+ * pointer somewhere.
+ */
+void crStateInit(void)
+{
+	int j;
+
+	if (!defaultContext) {
+		/* Allocate the default/NULL context */
+		defaultContext = crStateCreateContextId(0, NULL);
+		CRASSERT(g_availableContexts[0] == 0);
+		g_availableContexts[0] = 1; /* in use forever */
+	}
+
+#ifdef CHROMIUM_THREADSAFE
+	crSetTSD(&__contextTSD, defaultContext);
+#else
+	if (!__currentContext) {
+		__currentContext = defaultContext;
+	}
+#endif
+
+	__currentBits = (CRStateBits *) crCalloc( sizeof(CRStateBits) );
+	crStateClientInitBits( &(__currentBits->client) );
+	crStateLightingInitBits( &(__currentBits->lighting) );
+	crStateTransformInitBits( &(__currentBits->transform) );
+
+	for (j=0;j<CR_MAX_CONTEXTS;j++)
+		g_availableContexts[j] = 0;
+}
+
+
+
+/*
  * Notes on context switching and the "default context".
  *
  * See the paper "Tracking Graphics State for Networked Rendering"
@@ -148,7 +169,9 @@ CRContext *crStateCreateContext(const CRLimitsState *limits)
 	int i;
 
 	if (!defaultContext) {
-		/* Allocate the default/NULL context */
+		/* Allocate the default/NULL context.  We really shouldn't
+		 * have to do this here, but we're playing it safe.
+		 */
 		defaultContext = crStateCreateContextId(0, limits);
 		CRASSERT(g_availableContexts[0] == 0);
 		g_availableContexts[0] = 1; /* in use forever */
