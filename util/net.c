@@ -161,7 +161,8 @@ InitConnection(CRConnection *conn, const char *protocol, unsigned int mtu)
  *                "protocol://servername:port" where the port specifier
  *                is optional and if the protocol is missing it is assumed
  *                to be "tcpip".
- * \param default_port  the port to connect to
+ * \param default_port  the port to connect to, if port not specified in the
+ *                      server URL string.
  * \param mtu  desired maximum transmission unit size (in bytes)
  * \param broker  either 1 or 0 to indicate if connection is brokered through
  *                the mothership
