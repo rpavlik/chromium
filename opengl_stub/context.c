@@ -373,21 +373,15 @@ stubGetWindowGeometry( const WindowInfo *window, int *x, int *y,
 }
 
 static void
-GetCursorPosition( const WindowInfo *window, int pos[2] )
+GetWindowTitle( const WindowInfo *window, char *title )
 {
-	RECT rect;
-	POINT point;
-	HWND hwnd = WindowFromDC( window->drawable );
-	if (hwnd) { 
-		GetClientRect( hwnd, &rect );
-		GetCursorPos (&point);
-		pos[0] = point.x - rect.left;
-		pos[1] = point.y - rect.top;
-	}
-	else {
-		pos[0] = 0;
-		pos[1] = 0;
-	}
+	HWND hwnd;
+	/* XXX - we don't handle recurseUp */
+	hwnd = WindowFromDC( window->drawable );
+	if (hwnd)
+		GetWindowText(hwnd, title, 100);
+	else
+		title[0] = 0;
 }
 
 static void
