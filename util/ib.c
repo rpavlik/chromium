@@ -431,7 +431,7 @@ ret_val_t create_common_resources(params_tx *params)
      /********************** SEND MR **********************/
      for(i=0; i<MAX_BUFS; i++){
 	     real_send_buf = VMALLOC(size+2*sizeof(CRIBBuffer)+PAGE_SIZE_ALIGN);
-	     send_buf = (void *) MT_UP_ALIGNX_VIRT(real_send_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
+	     send_buf = (void *) MT_UP_ALIGNX_VIRT((int)real_send_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
 	     
 	     COND_PRINTF3(("real=%p after=%p\n",real_send_buf,send_buf));
 	     
@@ -467,7 +467,7 @@ ret_val_t create_common_resources(params_tx *params)
      /**********************  RECV MR  **********************/
      for(i=0; i<MAX_BUFS; i++){
 	     real_recv_buf = VMALLOC(size+2*sizeof(CRIBBuffer)+PAGE_SIZE_ALIGN);
-	     recv_buf = (void *) MT_UP_ALIGNX_VIRT(real_recv_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
+	     recv_buf = (void *) MT_UP_ALIGNX_VIRT((int)real_recv_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
 
 	     COND_PRINTF(("real=%p after=%p\n",real_recv_buf,recv_buf));
 	     
@@ -1021,19 +1021,12 @@ ret_val_t cr_ib_send( CRConnection *conn, const void *buf,
 	/*crDebug("Conn: %d, Sending %d, len %d", conn->id, (int)sr.id, len);*/
 	
 	/* Post send buffer */
-	/* Use Inline data up to the limit size */
-	if ((len > 0 ) &&(len <= (unsigned int)ib_conn->params.max_inline_size)) {
-		sg_entry_s.addr = (VAPI_virt_addr_t)(MT_virt_addr_t)buf;
-		sg_entry_s.len  = len;
-		sg_entry_s.lkey = ib_conn->params.s_buffers[id].send_lkey;
-		res = EVAPI_post_inline_sr(hca_hndl, qp_hndl, &sr);
-	}
-	else {
- 		sg_entry_s.addr = (VAPI_virt_addr_t)(MT_virt_addr_t)buf;
-		sg_entry_s.len  = len;
-		sg_entry_s.lkey = ib_conn->params.s_buffers[id].send_lkey;
-		res = VAPI_post_sr(hca_hndl, qp_hndl, &sr);
-	}
+	
+	sg_entry_s.addr = (VAPI_virt_addr_t)(MT_virt_addr_t)buf;
+	sg_entry_s.len  = len;
+	sg_entry_s.lkey = ib_conn->params.s_buffers[id].send_lkey;
+	res = VAPI_post_sr(hca_hndl, qp_hndl, &sr);
+	
 	if (res != VAPI_OK) {
 		printf("sg_list_len %d\n", sr.sg_lst_len );
 		printf("Error: Posting send desc (%d): %s\n", id, VAPI_strerror(res));
@@ -1421,8 +1414,8 @@ crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 	cr_ib.num_ah          = 256;
 	cr_ib.size            = mtu;
 	cr_ib.mtu             = MTU1024;
-	cr_ib.num_ssge        = 40; /* To support inline data */
-	cr_ib.num_rsge        = 40; /* To support inline data */
+	cr_ib.num_ssge        = 10; /* To support inline data */
+	cr_ib.num_rsge        = 10; /* To support inline data */
 	cr_ib.alloc_aligned   = 1;
 	cr_ib.num_cqe         = MAX_BUFS+2;
 	cr_ib.num_r_wqe       = MAX_BUFS;  
