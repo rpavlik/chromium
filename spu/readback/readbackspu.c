@@ -195,7 +195,7 @@ CheckWindowSize(WindowInfo * window)
 	if (newSize[0] != window->width || newSize[1] != window->height)
 	{
 		/* The window size has changed (or first-time init) */
-		ResizeWindow(window, newSize[0], newSize[0]);
+		ResizeWindow(window, newSize[0], newSize[1]);
 	}
 }
 
