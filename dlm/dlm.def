@@ -10,6 +10,8 @@ crDLMNewDLM
 crDLMSetCurrentState
 crDLMFreeContext
 crDLMGetBounds
+crDLMSetBounds
+crDLMHasBounds
 crDLMFreeDLM
 crDLMGetCurrentMode
 crDLMGetCurrentList

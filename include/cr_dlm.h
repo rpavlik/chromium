@@ -181,6 +181,9 @@ CRDLMError crDLMDeleteListContent(CRDLM *dlm, unsigned long listIdentifier);
 int crDLMGetReferences(CRDLM *dlm, unsigned long listIdentifier,
     int firstIndex, int sizeofBuffer, unsigned int *buffer);
 CRDLMError crDLMGetBounds(CRDLM *dlm, unsigned long listIdentifier, CRDLMBounds *bounds);
+void crDLMSetBounds(CRDLM *dlm, unsigned long listIdentifier, double xmin, double ymin, double zmin, double xmax, double ymax, double zmax);
+GLboolean crDLMListHasBounds(CRDLM *dlm, unsigned long listIdentifier);
+
 
 GLuint crDLMGetCurrentList(void);
 GLenum crDLMGetCurrentMode(void);

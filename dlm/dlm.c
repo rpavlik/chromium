@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <float.h>
 #include "cr_dlm.h"
 #include "cr_mem.h"
 #include "cr_unpack.h"
@@ -463,20 +464,61 @@ int crDLMGetReferences(CRDLM *dlm, unsigned long listIdentifier,
     }
 }
 
-CRDLMError crDLMGetBounds(CRDLM *dlm, unsigned long listIdentifier, 
-	CRDLMBounds *bounds)
+CRDLMError
+crDLMGetBounds(CRDLM *dlm, unsigned long listIdentifier, CRDLMBounds *bounds)
 {
-    DLMListInfo *listInfo;
-
-    listInfo = (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
-    if (listInfo) {
-      *bounds = listInfo->bbox;
-      return GL_NO_ERROR;
-    }
-    else {
-      return GL_INVALID_OPERATION;
-    }
+	DLMListInfo *listInfo
+		= (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
+	if (listInfo) {
+		*bounds = listInfo->bbox;
+		return GL_NO_ERROR;
+	}
+	else {
+		return GL_INVALID_OPERATION;
+	}
 }
+
+/**
+ * Set the bounding box for a display list.
+ */
+void
+crDLMSetBounds(CRDLM *dlm, unsigned long listIdentifier,
+               double xmin, double ymin, double zmin,
+               double xmax, double ymax, double zmax)
+{
+	DLMListInfo *listInfo
+		= (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
+	if (!listInfo) {
+		/* allocate a list info now */
+		CRDLMContextState *listState = CURRENT_STATE();
+		listInfo = (DLMListInfo *) crCalloc(sizeof(DLMListInfo));
+		crHashtableReplace(listState->dlm->displayLists,
+											 listIdentifier, listInfo, crdlm_free_list);
+	}
+	if (listInfo) {
+		listInfo->bbox.xmin = xmin;
+		listInfo->bbox.ymin = ymin;
+		listInfo->bbox.zmin = zmin;
+		listInfo->bbox.xmax = xmax;
+		listInfo->bbox.ymax = ymax;
+		listInfo->bbox.zmax = zmax;
+	}
+}
+
+/**
+ * Return GL_TRUE if the given list has a valid bounding box
+ */
+GLboolean
+crDLMListHasBounds(CRDLM *dlm, unsigned long listIdentifier)
+{
+	DLMListInfo *listInfo
+		= (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
+	if (listInfo)
+		return listInfo->bbox.xmin != FLT_MAX;
+	else
+		return GL_FALSE;
+}
+
 
 void crDLMListSent(CRDLM *dlm, unsigned long listIdentifier)
 {
