@@ -887,6 +887,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
+	GLint childVisual;
 
 	CRASSERT(binaryswap_spu.child.BarrierCreateCR);
 
@@ -908,9 +909,11 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 		visBits |= CR_STENCIL_BIT;
 	else if (binaryswap_spu.alpha_composite)
 		visBits |= CR_ALPHA_BIT;
+	/* final display window should probably be visible */
+	childVisual = visBits & ~CR_PBUFFER_BIT;
 
 	context->renderContext = binaryswap_spu.super.CreateContext(dpyName, visBits);
-	context->childContext = binaryswap_spu.child.CreateContext(dpyName, visBits);
+	context->childContext = binaryswap_spu.child.CreateContext(dpyName, childVisual);
 
 	/* put into hash table */
 	crHashtableAdd(binaryswap_spu.contextTable, freeID, context);
@@ -964,6 +967,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyNa
 {
 	WindowInfo *window;
 	static GLint freeID = 1;  /* skip default window 0 */
+	GLint childVisBits;
 
 	/* Error out on second window */
 	if(freeID != 1)
@@ -986,10 +990,12 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyNa
 		return -1;
 	}
 
+	childVisBits = visBits & ~CR_PBUFFER_BIT;
+
 	/* init window */
 	window->index = freeID;
 	window->renderWindow = binaryswap_spu.super.WindowCreate(dpyName, visBits);
-	window->childWindow = 0; /* the default down-stream window */
+	window->childWindow = binaryswap_spu.child.WindowCreate(dpyName, childVisBits);
 	window->width = -1; /* unknown */
 	window->height = -1; /* unknown */
 	window->msgBuffer = NULL;
