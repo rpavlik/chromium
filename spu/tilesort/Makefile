@@ -35,7 +35,7 @@ LIBRARIES = crutil crmothership spuload
 TRACKS_STATE = 1
 PACKS = 1
 
-PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c
+PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_unimplemented.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += tilesort.def
@@ -50,6 +50,10 @@ endif
 tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special
 	@$(ECHO) Building the TileSort SPU
 	@$(PYTHON) tilesort.py > $@
+
+tilesortspu_unimplemented.c: tilesort_unimplemented.py tilesort_unimplemented_special
+	@$(ECHO) Building the TileSort Unimplemented Functions
+	@$(PYTHON) tilesort_unimplemented.py > $@
 
 tilesortspu_diffapi.c: diffapi.py
 	@$(ECHO) Building the TileSort Differencing API
