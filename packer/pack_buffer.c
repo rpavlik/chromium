@@ -163,7 +163,7 @@ void crPackAppendBuffer( const CRPackBuffer *src )
 void crPackAppendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 {
 	GET_PACKER_CONTEXT(pc);
-	const GLubyte *payload = (const GLubyte *) src->opcode_current + 1;
+	const GLbyte *payload = (const GLbyte *) src->opcode_current + 1;
 	const int num_opcodes = src->opcode_start - src->opcode_current;
 	const int length = src->data_current - src->opcode_current - 1;
 	const int len_aligned = (length + 3) & ~3;
