@@ -28,6 +28,7 @@
 
 #include "cr_mothership.h"
 #include "cr_mem.h"
+#include "cr_environment.h"
 #include "cr_string.h"
 #include "cr_error.h"
 
@@ -43,7 +44,7 @@ static const char *libgl_names[] = {
 #else
 
 #define DEFAULT_TMP_DIR "/tmp"
-#define OPENGL_CLIENT_LIB "crfaker.so"
+#define OPENGL_CLIENT_LIB "libcrfaker.so"
 
 #if defined(IRIX) || defined(IRIX64)
 #define SYSTEM_LIB_DIR  "/usr/lib32"
@@ -106,26 +107,6 @@ const char *basename( const char *path )
 		return path;
 	else
 		return last + 1;
-}
-
-void xsetenv( const char *var, const char *value )
-{
-#ifdef LINUX
-	setenv( var, value, 1 /* replace */ );
-#else
-	unsigned long len;
-	char *buf;
-
-	len = crStrlen(var) + 1 + crStrlen(value) + 1;
-	buf = (char *) malloc( len );
-	sprintf( buf, "%s=%s", var, value );
-	putenv( buf );
-
-	debug( "%s\n", buf );
-
-	/* don't free the buf, the string is *part* of the environment,
-	 * and can't be reclaimed */
-#endif
 }
 
 typedef struct List {
@@ -282,7 +263,7 @@ void do_it( char *argv[] )
 		crError( "I don't know where to find the client library.  You could "
 				"have set CR_FAKER_LIB, but didn't.  You could have used -lib "
 				"on the command line, but didn't.  I searched the PATH for "
-				"\"%s\", but couldn't find it.  I even asked the configuration"
+				"\"%s\", but couldn't find it.  I even asked the configuration "
 				"manager!\n", OPENGL_CLIENT_LIB );
 	}
 
@@ -313,7 +294,7 @@ void do_it( char *argv[] )
 
 	if (crMothershipGetSPUDir( mothership_conn, response ))
 	{
-		xsetenv( "SPU_DIR", response );
+		crSetenv( "SPU_DIR", response );
 	}
 
 	status = spawnv( _P_WAIT, argv[0], argv );
@@ -390,9 +371,9 @@ void make_tmpdir( char *name )
 	char *tmp;
 	int   index;
 
-	tmp = getenv( "TMP" );
+	tmp = crGetenv( "TMP" );
 	if ( !tmp )
-		tmp = getenv( "TEMP" );
+		tmp = crGetenv( "TEMP" );
 	if ( !tmp )
 		tmp = DEFAULT_TMP_DIR;
 
@@ -418,14 +399,14 @@ void prefix_env_var( const char *prefix, const char *varname )
 {
 	char *val;
 
-	val = getenv( varname );
+	val = crGetenv( varname );
 	if ( val ) {
 		unsigned long len = crStrlen( prefix ) + 1 + crStrlen( val ) + 1;
 		char *buf = (char *) crAlloc( len );
 		sprintf( buf, "%s:%s", prefix, val );
-		xsetenv( varname, buf );
+		crSetenv( varname, buf );
 	} else {
-		xsetenv( varname, prefix );
+		crSetenv( varname, prefix );
 	}
 }
 
@@ -497,11 +478,11 @@ void do_it( char *argv[] )
 		const char *path;
 
 #if defined(IRIX) || defined(IRIX64)
-		path = getenv( "LD_LIBRARYN32_PATH" );
+		path = crGetenv( "LD_LIBRARYN32_PATH" );
 		if ( !path )
-			path = getenv( "LD_LIBRARY_PATH" );
+			path = crGetenv( "LD_LIBRARY_PATH" );
 #else
-		path = getenv( "LD_LIBRARY_PATH" );
+		path = crGetenv( "LD_LIBRARY_PATH" );
 #endif
 		if ( path ) {
 			debug( "searching for client library \"%s\" in \"%s\"\n",
@@ -524,7 +505,7 @@ void do_it( char *argv[] )
 #if defined(IRIX) || defined(IRIX64)
 				"(actually, I looked in LD_LIBRARYN32_PATH first) "
 #endif
-				"for \"%s\", but couldn't find it.  I even asked the"
+				"for \"%s\", but couldn't find it.  I even asked the "
 				"mothership!\n", OPENGL_CLIENT_LIB );
 	}
 
@@ -567,16 +548,16 @@ void do_it( char *argv[] )
 #if defined(IRIX) || defined(IRIX64)
 	/* if these are set then they'll be used by rld, so we have to
 		 make sure to modify them. */
-	if ( getenv( "LD_LIBRARYN32_PATH" ) )
+	if ( crGetenv( "LD_LIBRARYN32_PATH" ) )
 		prefix_env_var( tmpdir, "LD_LIBRARYN32_PATH" );
 
-	if ( getenv( "LD_LIBRARY64_PATH" ) )
+	if ( crGetenv( "LD_LIBRARY64_PATH" ) )
 		prefix_env_var( tmpdir, "LD_LIBRARY64_PATH" );
 #endif
 
 	if (crMothershipGetSPUDir( mothership_conn, response ))
 	{
-		xsetenv( "SPU_DIR", response );
+		crSetenv( "SPU_DIR", response );
 	}
 
 	pid = fork( );
@@ -630,7 +611,7 @@ usage( void )
 			"The environment variable CR_FAKER_LIB specifies the default -lib,\n",
 			progname );
 
-	cr_lib = getenv( "CR_FAKER_LIB" );
+	cr_lib = crGetenv( "CR_FAKER_LIB" );
 	if ( cr_lib )
 		fprintf( stderr, "currently set to \"%s\".\n", cr_lib );
 	else
@@ -713,7 +694,7 @@ int main( int argc, char **argv )
 		char response[1024];
 
 		if (mothership)
-			xsetenv( "MOTHERSHIP", mothership );
+			crSetenv( "MOTHERSHIP", mothership );
 		mothership_conn = crMothershipConnect( );
 	
 		crMothershipIdentifyFaker( mothership_conn, response );
@@ -731,18 +712,18 @@ int main( int argc, char **argv )
 	}
 
 	if ( cr_lib == NULL ) {
-		cr_lib = getenv( "CR_FAKER_LIB" );
+		cr_lib = crGetenv( "CR_FAKER_LIB" );
 		if ( cr_lib )
 			debug( "using CR_FAKER_LIB=\"%s\" for library\n", cr_lib );
 	}
 
-	if ( !getenv("DISPLAY") ) {
+	if ( !crGetenv("DISPLAY") ) {
 		debug( "DISPLAY not set, defaulting to :0.0\n" );
-		xsetenv( "DISPLAY", ":0.0" );
+		crSetenv( "DISPLAY", ":0.0" );
 	}
 
 	// This will let SPUS do things differently if they want.
-	xsetenv( "__CR_LAUNCHED_FROM_APP_FAKER", "yes" );
+	crSetenv( "__CR_LAUNCHED_FROM_APP_FAKER", "yes" );
 	do_it( faked_argv );
 
 	return 0;

@@ -22,7 +22,7 @@ print """#include <stdio.h>
 #include "cr_glwrapper.h"
 """
 
-print 'SPUNamedFunctionTable pack_table[%d];' % len(keys)
+print 'SPUNamedFunctionTable pack_table[%d];' % (len(keys)+1)
 
 print """
 static void __fillin( int offset, char *name, SPUGenericFunction func )
@@ -45,4 +45,5 @@ for index in range(len(keys)):
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) packspu_%s );' % (index, func_name, func_name )
 	else:
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (index, func_name, func_name )
+print '\t__fillin( %3d, NULL, NULL );' % len(keys)
 print '}'

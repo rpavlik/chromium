@@ -42,8 +42,6 @@ for func_name in keys:
 print 'SPUNamedFunctionTable error_table[] = {'
 for index in range(len(keys)):
 	func_name = keys[index]
-	if index != len(keys) - 1:
-		print '\t{ "%s", (SPUGenericFunction) error%s },' % (func_name, func_name )
-	else:
-		print '\t{ "%s", (SPUGenericFunction) error%s }' % (func_name, func_name )
+	print '\t{ "%s", (SPUGenericFunction) error%s },' % (func_name, func_name )
+print '\t{ NULL, NULL }'
 print '};'

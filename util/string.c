@@ -14,8 +14,16 @@ int crStrlen( const char *str )
 
 char *crStrdup( const char *str )
 {
-	int len = crStrlen(str);
-	char *ret = crAlloc( len+1 );
+	int len;
+	char *ret;
+	
+	// Allow strdup'ing of NULL strings -- this makes the __fillin functions
+	// much cleaner.
+	
+	if (str == NULL) return NULL;
+	
+	len = crStrlen(str);
+	ret = crAlloc( len+1 );
 	memcpy( ret, str, len );
 	ret[len] = '\0';
 	return ret;

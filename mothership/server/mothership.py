@@ -53,6 +53,9 @@ class CRNode:
 		CRNode.SPUIndex += 1
 		allSPUs[spu.ID] = spu
 
+	def SPUDir( self, dir ):
+		self.config['SPUdir'] = dir
+
 class CRNetworkNode(CRNode):
 	def __init__( self, host, ipaddr=None ):
 		CRNode.__init__(self,host)
@@ -77,9 +80,6 @@ class CRApplicationNode(CRNode):
 
 	def ClientDLL( self, dir ):
 		self.config['clientdll'] = dir
-
-	def SPUDir( self, dir ):
-		self.config['SPUdir'] = dir
 
 class SockWrapper:
 	NOERROR = 200
@@ -192,11 +192,11 @@ class CR:
 		sock.Success( sock.node.config['clientdll'] )
 
 	def do_spudir( self, sock, args ):
-		if sock.node == None or not isinstance(sock.node,CRApplicationNode):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You're not a faker!" )
+		if sock.node == None:
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "Identify yourself!" )
 			return
 		if not sock.node.config.has_key( 'SPUdir' ):
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "Faker didn't say where it was." )
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "Node didn't say where the SPUs were." )
 			return
 		sock.Success( sock.node.config['SPUdir'] )
 

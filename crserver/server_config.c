@@ -1,5 +1,6 @@
 #include "cr_mothership.h"
 #include "cr_mem.h"
+#include "cr_environment.h"
 #include "cr_string.h"
 #include "cr_error.h"
 
@@ -41,6 +42,11 @@ void crServerGatherConfiguration(void)
 		spu_ids[i] = crStrToInt( spuchain[2*i+1] );
 		spu_names[i] = crStrdup( spuchain[2*i+2] );
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
+	}
+
+	if (crMothershipGetSPUDir( conn, response ))
+	{
+		crSetenv( "SPU_DIR", response );
 	}
 
 	cr_server.head_spu = crSPULoadChain( num_spus, spu_ids, spu_names );

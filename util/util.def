@@ -45,3 +45,5 @@ crNetServerConnect
 crPixelCopy1D
 crPixelCopy2D
 crPixelSize
+crGetenv
+crSetenv

@@ -1,4 +1,5 @@
 #include "cr_mem.h"
+#include "cr_environment.h"
 #include "cr_string.h"
 #include "cr_dll.h"
 #include "cr_error.h"
@@ -21,7 +22,7 @@ static char *__findDLL( char *name )
 {
 	static char path[8092];
 	
-	char *dir = getenv( "SPU_DIR" );
+	char *dir = crGetenv( "SPU_DIR" );
 	if (!dir)
 		dir = ".";
 	sprintf ( path, "%s/%s%s%s", dir, DLL_PREFIX, name, DLL_SUFFIX );

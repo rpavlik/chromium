@@ -107,8 +107,6 @@ print 'SPUNamedFunctionTable print_table[] = {'
 for index in range(len(keys)):
 	func_name = keys[index]
 	if stub_common.FindSpecial( 'printspu_unimplemented', func_name ): continue
-	if index != len(keys) - 1:
-		print '\t{ "%s", (SPUGenericFunction) print%s },' % (func_name, func_name )
-	else:
-		print '\t{ "%s", (SPUGenericFunction) print%s }' % (func_name, func_name )
+	print '\t{ "%s", (SPUGenericFunction) print%s },' % (func_name, func_name )
+print '\t{ NULL, NULL }'
 print '};'

@@ -23,7 +23,7 @@ print """#include <stdio.h>
 
 num_funcs = len(keys) - len(stub_common.AllSpecials('tilesort_unimplemented'))
 
-print 'SPUNamedFunctionTable tilesort_table[%d];' % num_funcs
+print 'SPUNamedFunctionTable tilesort_table[%d];' % (num_funcs+1)
 
 print """
 static void __fillin( int offset, char *name, SPUGenericFunction func )
@@ -54,4 +54,5 @@ for index in range(len(keys)):
 	else:
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (table_index, func_name, func_name )
 	table_index += 1
+print '\t__fillin( %3d, NULL, NULL );' % num_funcs
 print '}'

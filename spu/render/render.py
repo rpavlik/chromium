@@ -24,7 +24,7 @@ print """
 #include "renderspu.h"
 """
 
-print 'SPUNamedFunctionTable render_table[%d];' % len(keys)
+print 'SPUNamedFunctionTable render_table[%d];' % (len(keys)+1)
 
 print """
 #define RENDER_UNUSED(x) ((void)x)
@@ -79,6 +79,7 @@ for index in range(len(keys)):
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
 	else:
 		print '\t__fillin( %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
+print '\t__fillin( %3d, NULL, NULL );' % len(keys)
 
 useful_wgl_functions = [
 	"MakeCurrent",
@@ -100,9 +101,9 @@ useful_glx_functions = [
 ]
 print '#ifdef WINDOWS'
 for fun in useful_wgl_functions:
-	print 'render_spu.wgl%s = (wgl%sFunc_t) crDLLGet( dll, "wgl%s" );' % (fun,fun,fun)
+	print '\trender_spu.wgl%s = (wgl%sFunc_t) crDLLGet( dll, "wgl%s" );' % (fun,fun,fun)
 print '#else'
 for fun in useful_glx_functions:
-	print 'render_spu.%s = (%sFunc_t) crDLLGet( dll, "%s" );' % (fun, fun, fun)
+	print '\trender_spu.%s = (%sFunc_t) crDLLGet( dll, "%s" );' % (fun, fun, fun)
 print """#endif
 }"""
