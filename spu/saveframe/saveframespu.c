@@ -230,7 +230,7 @@ RGBA_to_PPM(char *filename, int width, int height, GLubyte * buffer,
 	FILE *file;
 	int i, j;
 
-	file = fopen(filename, "w");
+	file = fopen(filename, "wb");
 
 	if (file == NULL)
 	{
@@ -283,7 +283,7 @@ RGB_to_JPG(char *filename, int width, int height, GLubyte * buffer)
 	int row_stride;
 	JSAMPROW row_pointer[1];
 
-	file = fopen(filename, "w");
+	file = fopen(filename, "wb");
 
 	if (file == NULL)
 	{
