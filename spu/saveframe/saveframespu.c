@@ -178,22 +178,18 @@ saveframeGetChromiumParameterv(GLenum target, GLuint index, GLenum type,
 		if (type == GL_INT && count == 1)
 			*((GLint *) values) = saveframe_spu.framenum;
 		return;
-		break;
 	case GL_SAVEFRAME_STRIDE_CR:
 		if (type == GL_INT && count == 1)
 			*((GLint *) values) = saveframe_spu.stride;
 		return;
-		break;
 	case GL_SAVEFRAME_SINGLE_CR:
 		if (type == GL_INT && count == 1)
 			*((GLint *) values) = saveframe_spu.single;
 		return;
-		break;
 	case GL_SAVEFRAME_FILESPEC_CR:
 		if (type == GL_BYTE && count > 0)
 			crStrncpy((char *) values, saveframe_spu.spec, count);
 		return;
-		break;
 	default:
 		saveframe_spu.super.GetChromiumParametervCR(target, index, type, count,
 																								values);
