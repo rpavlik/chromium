@@ -191,12 +191,20 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		for (i = 0 ; i < GLEVAL_TOT ; i++)
 		{
-			a->evalStack[a->evalStackDepth].map1[i] = g->eval.enable1D[i];
-			a->evalStack[a->evalStackDepth].map2[i] = g->eval.enable2D[i];
+			a->evalStack[a->evalStackDepth].enable1D[i] = g->eval.enable1D[i];
+			a->evalStack[a->evalStackDepth].enable2D[i] = g->eval.enable2D[i];
 		}
 		a->evalStack[a->evalStackDepth].autoNormal = g->eval.autoNormal;
+		a->evalStack[a->evalStackDepth].un1D = g->eval.un1D;
+		a->evalStack[a->evalStackDepth].u11D = g->eval.u11D;
+		a->evalStack[a->evalStackDepth].u21D = g->eval.u21D;
+		a->evalStack[a->evalStackDepth].un2D = g->eval.un2D;
+		a->evalStack[a->evalStackDepth].u12D = g->eval.u12D;
+		a->evalStack[a->evalStackDepth].u22D = g->eval.u22D;
+		a->evalStack[a->evalStackDepth].vn2D = g->eval.vn2D;
+		a->evalStack[a->evalStackDepth].v12D = g->eval.v12D;
+		a->evalStack[a->evalStackDepth].v22D = g->eval.v22D;
 		a->evalStackDepth++;
-		crError( "Pushing evaluators is not quite implemented yet." );
 	}
 	if (mask & GL_FOG_BIT)
 	{
@@ -211,7 +219,21 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	}
 	if (mask & GL_HINT_BIT)
 	{
-		crError( "Pushing hints is not quite implemented yet" );
+		a->hintStack[a->hintStackDepth].perspectiveCorrection = g->hint.perspectiveCorrection;
+		a->hintStack[a->hintStackDepth].pointSmooth = g->hint.pointSmooth;
+		a->hintStack[a->hintStackDepth].lineSmooth = g->hint.lineSmooth;
+		a->hintStack[a->hintStackDepth].polygonSmooth = g->hint.polygonSmooth;
+		a->hintStack[a->hintStackDepth].fog = g->hint.fog;
+#ifdef CR_EXT_clip_volume_hint
+		a->hintStack[a->hintStackDepth].clipVolumeClipping = g->hint.clipVolumeClipping;
+#endif
+#ifdef CR_ARB_texture_compression
+		a->hintStack[a->hintStackDepth].textureCompression = g->hint.textureCompression;
+#endif
+#ifdef CR_SGIS_generate_mipmap
+		a->hintStack[a->hintStackDepth].generateMipmap = g->hint.generateMipmap;
+#endif
+		a->hintStackDepth++;
 	}
 	if (mask & GL_LIGHTING_BIT)
 	{
@@ -636,7 +658,27 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_EVAL_BIT)
 	{
-		crError( "Popping evaluators is not quite implemented yet." );
+		if (a->evalStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty eval stack!" );
+		}
+		a->evalStackDepth--;
+		for (i = 0 ; i < GLEVAL_TOT ; i++)
+		{
+			g->eval.enable1D[i] = a->evalStack[a->evalStackDepth].enable1D[i];
+			g->eval.enable2D[i] =a->evalStack[a->evalStackDepth].enable2D[i];
+		}
+		g->eval.autoNormal = a->evalStack[a->evalStackDepth].autoNormal;
+		g->eval.un1D = a->evalStack[a->evalStackDepth].un1D;
+		g->eval.u11D = a->evalStack[a->evalStackDepth].u11D;
+		g->eval.u21D = a->evalStack[a->evalStackDepth].u21D;
+		g->eval.un2D = a->evalStack[a->evalStackDepth].un2D;
+		g->eval.u12D = a->evalStack[a->evalStackDepth].u12D;
+		g->eval.u22D = a->evalStack[a->evalStackDepth].u22D;
+		g->eval.vn2D = a->evalStack[a->evalStackDepth].vn2D;
+		g->eval.v12D = a->evalStack[a->evalStackDepth].v12D;
+		g->eval.v22D = a->evalStack[a->evalStackDepth].v22D;
+		a->evalStackDepth++;
 	}
 	if (mask & GL_FOG_BIT)
 	{
@@ -663,7 +705,33 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_HINT_BIT)
 	{
-		crError( "Pushing hints is not quite implemented yet" );
+		if (a->hintStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty hint stack!" );
+		}
+		a->hintStackDepth--;
+		g->hint.perspectiveCorrection = a->hintStack[a->hintStackDepth].perspectiveCorrection;
+		g->hint.pointSmooth = a->hintStack[a->hintStackDepth].pointSmooth;
+		g->hint.lineSmooth = a->hintStack[a->hintStackDepth].lineSmooth;
+		g->hint.polygonSmooth = a->hintStack[a->hintStackDepth].polygonSmooth;
+		g->hint.fog = a->hintStack[a->hintStackDepth].fog;
+		sb->hint.dirty = g->neg_bitid;
+		sb->hint.perspectiveCorrection = g->neg_bitid;
+		sb->hint.pointSmooth = g->neg_bitid;
+		sb->hint.lineSmooth = g->neg_bitid;
+		sb->hint.polygonSmooth = g->neg_bitid;
+#ifdef CR_EXT_clip_volume_hint
+		g->hint.clipVolumeClipping = a->hintStack[a->hintStackDepth].clipVolumeClipping;
+		sb->hint.clipVolumeClipping = g->neg_bitid;
+#endif
+#ifdef CR_ARB_texture_compression
+		g->hint.textureCompression = a->hintStack[a->hintStackDepth].textureCompression;
+		sb->hint.textureCompression = g->neg_bitid;
+#endif
+#ifdef CR_SGIS_generate_mipmap
+		g->hint.generateMipmap = a->hintStack[a->hintStackDepth].generateMipmap;
+		sb->hint.generateMipmap = g->neg_bitid;
+#endif
 	}
 	if (mask & GL_LIGHTING_BIT)
 	{
