@@ -479,9 +479,9 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              pletmp = *p_plebuf;
              p_plebuf = (PLEbuf *) p_left;
          
-             pletmp.beg = (GLuint) p_data - (GLuint) p_plebuf;
+             pletmp.beg = (unsigned long) p_data - (unsigned long) p_plebuf;
              
-             zlen = (int) p_val - (int) p_plebuf;
+             zlen = (long) p_val - (long) p_plebuf;
              pletmp.len = zlen;
 
              *p_plebuf = pletmp;

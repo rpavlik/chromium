@@ -48,9 +48,9 @@ void crPackTestGenProgramsARB(void)
 }
 void crPackTestGetProgramEnvParameterdvARB(void)
 {
+	GLdouble  params[4];
 	crDebug ( "GetProgramEnvParameterdvARB is a stub and needs to be special cased  1!");
 	return;
-	GLdouble  params[4];
 	glGetProgramEnvParameterdvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, params);
 	if(errChk)
 		printError("glGetProgramEnvParameterdvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, )");
@@ -114,9 +114,9 @@ void crPackTestGetProgramEnvParameterdvARB(void)
 }
 void crPackTestGetProgramEnvParameterfvARB(void)
 {
+	GLfloat  params[4];
 	crDebug ( "GetProgramEnvParameterfvARB is a stub and needs to be special cased  1!");
 	return;
-	GLfloat  params[4];
 	glGetProgramEnvParameterfvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, params);
 	if(errChk)
 		printError("glGetProgramEnvParameterfvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, )");
@@ -210,9 +210,9 @@ void crPackTestGetProgramivARB(void)
 }
 void crPackTestGetProgramLocalParameterdvARB(void)
 {
+	GLdouble  params[4];
 	crDebug ( "GetProgramLocalParameterdvARB is a stub and needs to be special cased  1!");
 	return;
-	GLdouble  params[4];
 	glGetProgramLocalParameterdvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, params);
 	if(errChk)
 		printError("glGetProgramLocalParameterdvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, )");
@@ -276,9 +276,9 @@ void crPackTestGetProgramLocalParameterdvARB(void)
 }
 void crPackTestGetProgramLocalParameterfvARB(void)
 {
+	GLfloat  params[4];
 	crDebug ( "GetProgramLocalParameterfvARB is a stub and needs to be special cased  1!");
 	return;
-	GLfloat  params[4];
 	glGetProgramLocalParameterfvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, params);
 	if(errChk)
 		printError("glGetProgramLocalParameterfvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, )");
@@ -375,9 +375,9 @@ void crPackTestProgramEnvParameter4dARB(void)
 }
 void crPackTestProgramEnvParameter4dvARB(void)
 {
+	const GLdouble  params[4];
 	crDebug ( "ProgramEnvParameter4dvARB is a stub and needs to be special cased  0!");
 	return;
-	const GLdouble  params[4];
 	glProgramEnvParameter4dvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, params);
 	if(errChk)
 		printError("glProgramEnvParameter4dvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, )");
@@ -456,9 +456,9 @@ void crPackTestProgramEnvParameter4fARB(void)
 }
 void crPackTestProgramEnvParameter4fvARB(void)
 {
+	const GLfloat  params[4];
 	crDebug ( "ProgramEnvParameter4fvARB is a stub and needs to be special cased  0!");
 	return;
-	const GLfloat  params[4];
 	glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, params);
 	if(errChk)
 		printError("glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, )");
@@ -537,9 +537,9 @@ void crPackTestProgramLocalParameter4dARB(void)
 }
 void crPackTestProgramLocalParameter4dvARB(void)
 {
+	const GLdouble  params[4];
 	crDebug ( "ProgramLocalParameter4dvARB is a stub and needs to be special cased  0!");
 	return;
-	const GLdouble  params[4];
 	glProgramLocalParameter4dvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, params);
 	if(errChk)
 		printError("glProgramLocalParameter4dvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, )");
@@ -618,9 +618,9 @@ void crPackTestProgramLocalParameter4fARB(void)
 }
 void crPackTestProgramLocalParameter4fvARB(void)
 {
+	const GLfloat  params[4];
 	crDebug ( "ProgramLocalParameter4fvARB is a stub and needs to be special cased  0!");
 	return;
-	const GLfloat  params[4];
 	glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, params);
 	if(errChk)
 		printError("glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, (unsigned) 3, )");

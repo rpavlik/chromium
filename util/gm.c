@@ -1079,7 +1079,7 @@ void crGmSend( CRConnection *conn, void **bufp,
 	
 	if ( bufp == NULL )
 	{
-		crGmSendMulti( conn, start, len );
+		crGmSendMulti( conn, (void *)start, len );
 		return;
 	}
 	
@@ -1115,7 +1115,7 @@ void crGmSend( CRConnection *conn, void **bufp,
 		     "remaining", len, conn->hostname, conn->send_credits );
 #endif
 	
-	cr_gm_send( conn, start, len, *bufp );
+	cr_gm_send( conn, (void *)start, len, *bufp );
 	
 	*bufp = NULL;
 }

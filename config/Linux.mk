@@ -20,7 +20,12 @@ CFLAGS            += -DLINUX -Wall -Werror -Wmissing-prototypes -Wsign-compare
 C_RELEASE_FLAGS   += -O3 -DNDEBUG -fno-strict-aliasing
 C_DEBUG_FLAGS     += -g
 
+ifeq ($(MACHTYPE),x86_64)
+LDFLAGS           += -L/usr/X11R6/lib64
+CFLAGS            += -fPIC
+else
 LDFLAGS           += -L/usr/X11R6/lib
+endif
 LD_RELEASE_FLAGS  += 
 LD_DEBUG_FLAGS    += 
 

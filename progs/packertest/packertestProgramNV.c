@@ -82,9 +82,9 @@ void crPackTestGetProgramivNV(void)
 void crPackTestGetProgramNamedParameterdvNV(void)
 {
 	GLubyte name[100000];/* VECP */
+	GLdouble  params[4];
 	crDebug ( "GetProgramNamedParameterdvNV is a stub and needs to be special cased  1!");
 	return;
-	GLdouble  params[4];
 	glGetProgramNamedParameterdvNV((unsigned) 3, (unsigned) 10, 	(const GLubyte *)name /* VEC3 */
 , params);
 	if(errChk)
@@ -125,9 +125,9 @@ void crPackTestGetProgramNamedParameterdvNV(void)
 void crPackTestGetProgramNamedParameterfvNV(void)
 {
 	GLubyte name[100000];/* VECP */
+	GLfloat  params[4];
 	crDebug ( "GetProgramNamedParameterfvNV is a stub and needs to be special cased  1!");
 	return;
-	GLfloat  params[4];
 	glGetProgramNamedParameterfvNV((unsigned) 3, (unsigned) 10, 	(const GLubyte *)name /* VEC3 */
 , params);
 	if(errChk)
@@ -167,9 +167,9 @@ void crPackTestGetProgramNamedParameterfvNV(void)
 }
 void crPackTestGetProgramParameterdvNV(void)
 {
+	GLdouble  params[4];
 	crDebug ( "GetProgramParameterdvNV is a stub and needs to be special cased  1!");
 	return;
-	GLdouble  params[4];
 	glGetProgramParameterdvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, GL_PROGRAM_PARAMETER_NV, params);
 	if(errChk)
 		printError("glGetProgramParameterdvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, GL_PROGRAM_PARAMETER_NV, )");
@@ -306,9 +306,9 @@ void crPackTestProgramNamedParameter4dNV(void)
 void crPackTestProgramNamedParameter4dvNV(void)
 {
 	GLubyte name[100000];/* VECP2 */
+	const GLdouble  v[4];
 	crDebug ( "ProgramNamedParameter4dvNV is a stub and needs to be special cased  0!");
 	return;
-	const GLdouble  v[4];
 	glProgramNamedParameter4dvNV((unsigned) 3, (unsigned) 10, 	(const GLubyte *)name /* VEC3 */
 , v);
 	if(errChk)
@@ -359,9 +359,9 @@ void crPackTestProgramParameter4dNV(void)
 }
 void crPackTestProgramParameter4dvNV(void)
 {
+	const GLdouble  params[4];
 	crDebug ( "ProgramParameter4dvNV is a stub and needs to be special cased  0!");
 	return;
-	const GLdouble  params[4];
 	glProgramParameter4dvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, params);
 	if(errChk)
 		printError("glProgramParameter4dvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, )");
@@ -440,9 +440,9 @@ void crPackTestProgramParameter4fNV(void)
 }
 void crPackTestProgramParameter4fvNV(void)
 {
+	const GLfloat  params[4];
 	crDebug ( "ProgramParameter4fvNV is a stub and needs to be special cased  0!");
 	return;
-	const GLfloat  params[4];
 	glProgramParameter4fvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, params);
 	if(errChk)
 		printError("glProgramParameter4fvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, )");
@@ -506,9 +506,9 @@ void crPackTestProgramParameter4fvNV(void)
 }
 void crPackTestProgramParameters4dvNV(void)
 {
+	const GLdouble  params[4];
 	crDebug ( "ProgramParameters4dvNV is a stub and needs to be special cased  0!");
 	return;
-	const GLdouble  params[4];
 	glProgramParameters4dvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, (unsigned) 3, params);
 	if(errChk)
 		printError("glProgramParameters4dvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, (unsigned) 3, )");
@@ -572,9 +572,9 @@ void crPackTestProgramParameters4dvNV(void)
 }
 void crPackTestProgramParameters4fvNV(void)
 {
+	const GLfloat  params[4];
 	crDebug ( "ProgramParameters4fvNV is a stub and needs to be special cased  0!");
 	return;
-	const GLfloat  params[4];
 	glProgramParameters4fvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, (unsigned) 3, params);
 	if(errChk)
 		printError("glProgramParameters4fvNV(GL_VERTEX_PROGRAM_NV, (unsigned) 3, (unsigned) 3, )");

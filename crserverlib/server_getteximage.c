@@ -16,7 +16,7 @@ crServerDispatchGetTexImage(GLenum target, GLint level, GLenum format,
 														GLenum type, GLvoid * pixels)
 {
 	GLsizei width, height, depth, size;
-	GLvoid *buffer;
+	GLvoid *buffer = NULL;
 
 	cr_server.head_spu->dispatch_table.GetTexLevelParameteriv(target, level, GL_TEXTURE_WIDTH, &width);
 	cr_server.head_spu->dispatch_table.GetTexLevelParameteriv(target, level, GL_TEXTURE_HEIGHT, &height);
@@ -49,7 +49,7 @@ crServerDispatchGetCompressedTexImageARB(GLenum target, GLint level,
 																				 GLvoid *img)
 {
 	GLint size;
-	GLvoid *buffer;
+	GLvoid *buffer=NULL;
 
 	cr_server.head_spu->dispatch_table.GetTexLevelParameteriv(target, level, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
 

@@ -101,7 +101,7 @@ extern void crGmDoDisconnect( CRConnection *conn );
 extern int crGmErrno( void );
 extern char *crGmErrorString( int err );
 extern void crGmAccept( CRConnection *conn, char *hostname, unsigned short port );
-extern void crGmSendExact( CRConnection *conn, void *buf, unsigned int len );
+extern void crGmSendExact( CRConnection *conn, const void *buf, unsigned int len );
 extern void crGmFree( CRConnection *conn, void *buf );
 extern void *crGmAlloc( CRConnection *conn );
 extern void crGmReadExact( CRConnection *conn, void *buf, unsigned int len );

@@ -686,6 +686,10 @@ def GenParmLists(func_name,f):
 				# TODO: Add dummy vars to vector/matrix
 				tvec = name
 
+		for index in range(len(params)):
+			(name, type, vecSize) = params[index]
+			action = apiutil.ParamAction(func_name)
+
 			if type == "GLenum":
 				fvec = copy.deepcopy(apiutil.ParamProps(func_name))
 				for k in range(len(fvec)):
