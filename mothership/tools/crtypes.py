@@ -427,11 +427,11 @@ class Node:
 	def HasChild(self, childCandidate):
 		"""Test if childCandidate is a down-stream child (server) of this node
 		"""
-		if childCandidate in self.GetServers():
+		if self in childCandidate.GetServers():
 			return 1
 		else:
-			for server in self.GetServers():
-				return server.HasChild(childCandidate)
+			for server in childCandidate.GetServers():
+				return self.HasChild(server)
 			return 0
 
 	def SetHosts(self, namelist):
