@@ -208,6 +208,9 @@ static const char *crChromiumExtensions =
 #ifdef GL_CR_readback_barrier_size
 	"GL_CR_readback_barrier_size "
 #endif
+#ifdef USE_DMX
+	"GL_CR_dmx "
+#endif
 	"";
 
 #endif /* CR_EXTSTRING_H */
