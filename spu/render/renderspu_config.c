@@ -200,6 +200,10 @@ static void set_nv_swap_group( RenderSPU *render_spu, char *response )
 		render_spu->nvSwapGroup = 0;
 }
 
+static void set_ignore_papi( RenderSPU *render_spu, char *response )
+{
+	render_spu->ignore_papi = crStrToInt( response );
+}
 
 
 /* option, type, nr, default, min, max, title, callback
@@ -272,6 +276,9 @@ SPUOptions renderSPUOptions[] = {
      
 	{ "nv_swap_group", CR_INT, 1, "0", NULL, NULL,
 		"NVIDIA Swap Group Number", (SPUOptionCB) set_nv_swap_group },
+
+	{ "ignore_papi", CR_BOOL, 1, "0", NULL, NULL,
+		"Ignore Barrier and Semaphore calls", (SPUOptionCB) set_ignore_papi },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

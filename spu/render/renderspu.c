@@ -469,13 +469,18 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 
 static void RENDER_APIENTRY renderspuBarrierCreateCR( GLuint name, GLuint count )
 {
-	Barrier *b = (Barrier *) crHashtableSearch( render_spu.barrierHash, name );
+	Barrier *b;
+
+	if (render_spu.ignore_papi)
+		return;
+
+	b = (Barrier *) crHashtableSearch( render_spu.barrierHash, name );
 	if (b) {
 		/* HACK -- this allows everybody to create a barrier, and all
            but the first creation are ignored, assuming the count
            match. */
 		if ( b->count != count ) {
-			crError( "Barrier name=%u created with count=%u, but already "
+			crError( "Render SPU: Barrier name=%u created with count=%u, but already "
 					 "exists with count=%u", name, count, b->count );
 		}
 	}
@@ -489,17 +494,24 @@ static void RENDER_APIENTRY renderspuBarrierCreateCR( GLuint name, GLuint count 
 
 static void RENDER_APIENTRY renderspuBarrierDestroyCR( GLuint name )
 {
+	if (render_spu.ignore_papi)
+		return;
 	crHashtableDelete( render_spu.barrierHash, name, crFree );
 }
 
 static void RENDER_APIENTRY renderspuBarrierExecCR( GLuint name )
 {
-	Barrier *b = (Barrier *) crHashtableSearch( render_spu.barrierHash, name );
+	Barrier *b;
+
+	if (render_spu.ignore_papi)
+		return;
+
+	b = (Barrier *) crHashtableSearch( render_spu.barrierHash, name );
 	if (b) {
 		crWaitBarrier( &(b->barrier) );
 	}
 	else {
-		crWarning("Bad barrier name in renderspuBarrierExec()");
+		crWarning("Render SPU: Bad barrier name %d in BarrierExec()", name);
 	}
 }
 
