@@ -103,7 +103,7 @@ const char *__stateAppOnlyExtensions =
   "GL_EXT_texture_env_combine " \
   "GL_NV_fence " \
   "GL_NV_texture_env_combine4 " \
-  "GL_NV_texture_shader" \
+  "GL_NV_texture_shader " \
   "GL_NV_vertex_array_range " \
   "GL_NV_vertex_program " \
   "GL_NV_vertex_program1_1";
