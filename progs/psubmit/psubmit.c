@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	}
 	glMakeCurrentCR(window, ctx);
 
-#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
+#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x )
 	LOAD2( BarrierCreate );
 	LOAD2( BarrierExec );
 
