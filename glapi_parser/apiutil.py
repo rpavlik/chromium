@@ -384,6 +384,14 @@ def CanPack(funcName):
 	return 0
 
 
+def FuncGetsState(funcName):
+	"""Return 1 if the function gets GL state, else 0."""
+	d = GetFunctionDict()
+	props = Properties(funcName)
+	if "get" in props:
+		return 1
+
+
 def IsPointer(dataType):
 	"""Determine if the datatype is a pointer.  Return 1 or 0."""
 	if string.find(dataType, "*") == -1:
