@@ -27,7 +27,7 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 	 * NOTE!!!
 	 * Here we're telling the renderspu not to use the GDI
 	 * equivalent's of ChoosePixelFormat/DescribePixelFormat etc
-	 * There's are subtle differences in the use of these calls.
+	 * There are subtle differences in the use of these calls.
 	 */
 	crSetenv("CR_WGL_DO_NOT_USE_GDI", "yes");
 
