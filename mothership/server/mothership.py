@@ -686,58 +686,59 @@ class CR:
 						PORT = 10000 # default value
 				else:
 					PORT = 10000  # default value
-				for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
-					(af, socktype, proto, canonname, sa) = res
 
-					try:
-						s = socket.socket( af, socktype )
-					except:
-						CRDebug( "Couldn't create socket of family %u, trying another one" % af );
-						continue
+			for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
+				(af, socktype, proto, canonname, sa) = res
 
-					try:
-						s.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
-					except:
-						CRDebug( "Couldn't set the SO_REUSEADDR option on the socket!" )
-						continue
+				try:
+					s = socket.socket( af, socktype )
+				except:
+					CRDebug( "Couldn't create socket of family %u, trying another one" % af );
+					continue
 
-					try:
-						s.bind( sa )
-					except:
-						CRDebug( "Couldn't bind to port %d" % PORT );
-						continue
+				try:
+					s.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
+				except:
+					CRDebug( "Couldn't set the SO_REUSEADDR option on the socket!" )
+					continue
 
-					try:
-						s.listen(100)
-					except:
-						CRDebug( "Couldn't listen!" );
-						continue
+				try:
+					s.bind( sa )
+				except:
+					CRDebug( "Couldn't bind to port %d" % PORT );
+					continue
 
-					#CRDebug( "Mothership ready" );
-					self.all_sockets.append(s)
+				try:
+					s.listen(100)
+				except:
+					CRDebug( "Couldn't listen!" );
+					continue
 
-					# Start spawning processes for each node
-					# Call any callbacks which may have been
-					# set via CRAddStartupCallback()
-					for cb in CR.startupCallbacks:
-						cb(self)
+				#CRDebug( "Mothership ready" );
+				self.all_sockets.append(s)
 
-					# that has requested something be started.
-					spawner = CRSpawner( self.nodes ) ;
-					spawner.start() ;
+				# Start spawning processes for each node
+				# Call any callbacks which may have been
+				# set via CRAddStartupCallback()
+				for cb in CR.startupCallbacks:
+					cb(self)
 
-					while 1:
-						ready = select.select( self.all_sockets, [], [], 0.1 )[0]
-						for sock in ready:
-							if sock == s:
-								# accept a new connection
-								conn, addr = s.accept()
-								self.wrappers[conn] = SockWrapper(conn)
-								self.all_sockets.append( conn )
-							else:
-								# process request from established connection
-								self.ProcessRequest( self.wrappers[sock] )
-				Fatal( "Couldn't find local TCP port (make sure that another mothership isn't already running)")
+				# that has requested something be started.
+				spawner = CRSpawner( self.nodes ) ;
+				spawner.start() ;
+
+				while 1:
+					ready = select.select( self.all_sockets, [], [], 0.1 )[0]
+					for sock in ready:
+						if sock == s:
+							# accept a new connection
+							conn, addr = s.accept()
+							self.wrappers[conn] = SockWrapper(conn)
+							self.all_sockets.append( conn )
+						else:
+							# process request from established connection
+							self.ProcessRequest( self.wrappers[sock] )
+			Fatal( "Couldn't find local TCP port (make sure that another mothership isn't already running)")
 		except KeyboardInterrupt:
 			try:
 				for sock in self.all_sockets:
