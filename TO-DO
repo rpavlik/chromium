@@ -26,3 +26,11 @@ this.
 
 Convert the last two Perl scripts in scripts/fastdep.pl and
 state_tracker/gendiffcode.pl to Python. 
+
+Auto-documentation of SPUs.  Encode into the SPU code all the SPU's
+options, documentation for the options, whether or not it has a packer,
+whether or not it's a terminal SPU, etc.  Write a simple utility to
+load an SPU and print its options/docs.  Modify the config tools to
+scan for all available SPU libraries and invoke the utility to get
+the options/docs for all SPUs.
+
