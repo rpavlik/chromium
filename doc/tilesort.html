@@ -1,213 +1,205 @@
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+         See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Dynamic Tile Sorting</h1>
-<p>Since version 1.0, Chromium supports dynamic tile sort configuration.
-This means that the subdivision of the mural into tiles can be changed
-dynamically at runtime; the number of tiles and tile sizes are not fixed.
-</p>
-
-<h2 class="PageSubHeading">How it works</h2>
-
-<p>
-New tiling information can be specified either by the application program
-or by a special function in the Python configuration script.
-</p>
-<p>
-An application may specify new tile information when its window is resized
-and/or if the application is trying to do load balancing.
-</p>
-<p>
-Otherwise, a user-defined tile-layout function in the Python script will be
-called by the tilesort SPU when the tilesort's
-<code>tilesortspu_WindowSize()</code> function is called.
-This function would typically be called by the application stub when
-Chromium's <code>track_window_size</code> option is enabled.
-</p>
-<p>
-Finally, the tilesort SPU itself can do a simple tile re-allocation in
-response to window size changes if neither of the above solutions are used.
-</p>
-
-
-<h2 class="PageSubHeading">Application-controlled tile configuration</h2>
-
-<p>
-An application can specify new tiles to the tilesort SPU by calling
-
-<pre>
-	glChromiumParametervCR(GL_TILE_INFO_CR, GL_INT, count, params);
-</pre>
-
-once for each server.
-The <code>params</code> array is built as follows:
-</p>
-
-<pre>
-	params[0] = the server index in [0, number of servers - 1];
-	params[1] = new mural width;
-	params[2] = new mural height;
-	params[3] = number of tiles on this server (may be zero);
-
-	params[4] = first tile's x coord;
-	params[5] = first tile's y coord;
-	params[6] = first tile's width;
-	params[7] = first tile's height;
-
-	params[8] = second tile's x coord;
-	params[9] = second tile's y coord;
-	params[10] = second tile's width;
-	params[11] = second tile's height;
-
-	...
-
-	params[4 * n + 4] = tile n's x coord;
-	params[4 * n + 5] = tile n's y coord;
-	params[4 * n + 6] = tile n's width;
-	params[4 * n + 7] = tile n's height;
-</pre>
-
-<p>
-The <code>count</code> parameter is the total number of elements in the
-<code>params</code> array.
-It should be 4 + 4 * number-of-tiles.
-</p>
-<p>
-If there are (for example) four servers connected to the tilesort SPU
-you'll have to call <code>glChromiumParametervCR()</code> four times,
-once per server.
-You would typically do this when your application detects that the window
-size has changed, or when you want to reconfigure the mural for better
-load balancing.
-</p>
-<p>
-Look at
-<a href="../progs/retile/retile.c">cr/progs/retile/retile.c</a> for
-an example of this technique.
-</p>
-
-
-<h2 class="PageSubHeading">Config script-controlled tile configuration</h2>
-
-<p>
-If you define a tile layout function in the Python configuration script
-you can avoid modifying your application program.
-</p>
-<p>
-Here is an example:
-</p>
-<pre>
-def LayoutTiles(muralWidth, muralHeight):
-	"""Return list of tuples of new tiles for the given mural size.
-	Each tuple is of the form (serverIndex, x, y, width, height)."""
-
-	# always create four tiles, two per server
-	w = muralWidth / 2
-	h = muralHeight / 2
-	tile0 = (0, 0, 0, w, h) # lower-left
-	tile1 = (1, w, 0, muralWidth - w, h) # lower-right
-	tile2 = (1, 0, h, w, muralHeight - h) # upper-left
-	tile3 = (0, w, h, muralWidth - w, muralHeight - h) # upper-right
-
-	# construct the results list
-	tiles = []
-	tiles.append(tile0);
-	tiles.append(tile1);
-	tiles.append(tile2);
-	tiles.append(tile3);
-	return tiles
-</pre>
-
-<p>
-In this simple example we divide the mural into four tiles and assign
-them to two servers.
-</p>
-<p>
-The layout function always takes two parameters: the new mural width and
-height in pixels.
-The layout function must return a list of tuples of the form
-<code>(serverIndex, x, y, width, height)</code> which describes all the
-tiles.
-An empty list is legal.
-</p>
-<p>
-To register this function with the tilesort SPU, do the following:
-</p>
-<pre>
-	tilesortspu.TileLayoutFunction( LayoutTiles )
-</pre>
-<p>
-Now the tilesort SPU will call your Python tile layout function when its
-internal <code>tilesortspu_WindowSize()</code> function is called.
-This is described in more detail in the next section.
-</p>
-<p>
-Look at <a href="../mothership/configs/reassemble.conf">
-cr/mothership/configs/reassemble.conf</a> for an example
-of this technique.
-</p>
-<p>
-You'll likely need a more sophisticated layout function than the one
-shown above.
-You may elect to use one of the predefined layout functions in
-<a href="../mothership/server/tilelayout.py">
-cr/mothership/server/tilelayout.py</a>.
-These functions take extra arguments beyond <code>LayoutTiles()</code> so
-you'll have to provide a simple wrapper function which provides those
-arguments.
-</p>
-
-
-<h2 class="PageSubHeading">Other configuration details</h2>
-
-<p>
-If you want Chromium to monitor the application window's size and call
-the tile layout function you'll need to set the <code>track_window_size</code>
-option, like this:
-</p>
-<pre>
-	cr.Conf('track_window_size', 1)
-</pre>
-<p>
-This tells the Chromium OpenGL stub library to poll the application window's
-size whenever <code>glClear()</code> or <code>glViewport()</code> are called.
-If the window size changes, the head SPU (typically the tilesort)
-<code>WindowSize()</code> function will be called with the new window size.
-</p>
-
-<p>
-If your Chromium configuration is a tile reassember which
-uses the readback SPU, it's usually desirable to have the tail render SPU
-render back into the application window, rather than the SPU's private
-window.
-This can be accomplished by setting the <code>render_to_app_window</code>
-option for the render SPU.
-For example:
-<pre>
-	renderspu.Conf('render_to_app_window', 1)
-</pre>
-</p>
-<p>
-Again, see <a href="../mothership/configs/reassemble.conf">
-cr/mothership/configs/reassemble.conf</a> for an example of this.
-</p>
-
-
-
-</body>
-
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Dynamic Tile Sorting
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Dynamic Tile Sorting
+    </h1>
+    <p>
+      Since version 1.0, Chromium supports dynamic tile sort configuration.
+      This means that the subdivision of the mural into tiles can be changed
+      dynamically at runtime; the number of tiles and tile sizes are not fixed.
+    </p>
+    <h2 class="PageSubHeading">
+      How it works
+    </h2>
+    <p>
+      New tiling information can be specified either by the application program
+      or by a special function in the Python configuration script.
+    </p>
+    <p>
+      An application may specify new tile information when its window is
+      resized and/or if the application is trying to do load balancing.
+    </p>
+    <p>
+      Otherwise, a user-defined tile-layout function in the Python script will
+      be called by the tilesort SPU when the <span class=
+      "SPU">tilesort</span>'s <code class=
+      "Function">tilesortspu_WindowSize()</code> function is called. This
+      function would typically be called by the application stub when
+      Chromium's <code>track_window_size</code> option is enabled.
+    </p>
+    <p>
+      Finally, the <span class="SPU">tilesort</span> SPU itself can do a simple
+      tile re-allocation in response to window size changes if neither of the
+      above solutions are used.
+    </p>
+    <h2 class="PageSubHeading">
+      Application-controlled tile configuration
+    </h2>
+    <p>
+      An application can specify new tiles to the tilesort SPU by calling
+    </p>
+    <p class="GrayCodeListing2">
+      glChromiumParametervCR(GL_TILE_INFO_CR, GL_INT, count, params);
+    </p>
+    <p>
+      once for each server. The <code>params</code> array is built as follows:
+    </p>
+    <p class="GrayCodeListing2">
+      params[0] = the server index in [0, number of servers - 1];<br>
+      params[1] = new mural width;<br>
+      params[2] = new mural height;<br>
+      params[3] = number of tiles on this server (may be zero);<br>
+      <br>
+      params[4] = first tile's x coord;<br>
+      params[5] = first tile's y coord;<br>
+      params[6] = first tile's width;<br>
+      params[7] = first tile's height;<br>
+      <br>
+      params[8] = second tile's x coord;<br>
+      params[9] = second tile's y coord;<br>
+      params[10] = second tile's width;<br>
+      params[11] = second tile's height;<br>
+      <br>
+      ...<br>
+      <br>
+      params[4 * n + 4] = tile n's x coord;<br>
+      params[4 * n + 5] = tile n's y coord;<br>
+      params[4 * n + 6] = tile n's width;<br>
+      params[4 * n + 7] = tile n's height;
+    </p>
+    <p>
+      The <code>count</code> parameter is the total number of elements in the
+      <code>params</code> array. It should be 4 + 4 * number-of-tiles.
+    </p>
+    <p>
+      If there are (for example) four servers connected to the <span class=
+      "SPU">tilesort</span> SPU you'll have to call <code class=
+      "Function">glChromiumParametervCR()</code> four times, once per server.
+      You would typically do this when your application detects that the window
+      size has changed, or when you want to reconfigure the mural for better
+      load balancing.
+    </p>
+    <p>
+      Look at <a href="../progs/retile/retile.c" class=
+      "File">progs/retile/retile.c</a> for an example of this technique.
+    </p>
+    <h2 class="PageSubHeading">
+      Config script-controlled tile configuration
+    </h2>
+    <p>
+      If you define a tile layout function in the Python configuration script,
+      you can avoid modifying your application program.
+    </p>
+    <p>
+      Here is an example:
+    </p>
+    <p class="GrayCodeListing2">
+      def LayoutTiles(muralWidth, muralHeight):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;"""Return list of tuples of new tiles for the
+      given mural size.<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;Each tuple is of the form (serverIndex, x, y,
+      width, height)."""<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;# always create four tiles, two per server<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;w = muralWidth / 2<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;h = muralHeight / 2<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tile0 = ( 0, 0, 0, w, h ) # lower-left<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tile1 = ( 1, w, 0, muralWidth - w, h ) #
+      lower-right<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tile2 = ( 1, 0, h, w, muralHeight - h ) #
+      upper-left<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tile3 = ( 0, w, h, muralWidth - w, muralHeight -
+      h ) # upper-right<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;# construct the results list<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tiles = []<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tiles.append( tile0 );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tiles.append( tile1 );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tiles.append( tile2 );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tiles.append( tile3 );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;return tiles
+    </p>
+    <p>
+      In this simple example, we divide the mural into four tiles and assign
+      them to two servers.
+    </p>
+    <p>
+      The layout function always takes two parameters: the new mural width and
+      height in pixels. The layout function must return a list of tuples of the
+      form <code>(serverIndex, x, y, width, height)</code> which describes all
+      the tiles. An empty list is legal.
+    </p>
+    <p>
+      To register this function with the <span class="SPU">tilesort</span> SPU,
+      do the following:
+    </p>
+    <p class="GrayCodeListing2">
+      tilesortspu.TileLayoutFunction( LayoutTiles )
+    </p>
+    <p>
+      Now the tilesort SPU will call your Python tile layout function when its
+      internal <code>tilesortspu_WindowSize()</code> function is called. This
+      is described in more detail in the next section.
+    </p>
+    <p>
+      Look at <a href="../mothership/configs/reassemble.conf" class=
+      "File">mothership/configs/reassemble.conf</a> for an example of this
+      technique.
+    </p>
+    <p>
+      You'll likely need a more sophisticated layout function than the one
+      shown above. You may elect to use one of the predefined layout functions
+      in <a href="../mothership/server/tilelayout.py" class=
+      "File">mothership/server/tilelayout.py</a>. These functions take extra
+      arguments beyond <code class="Function">LayoutTiles()</code> so you'll
+      have to provide a simple wrapper function which provides those arguments.
+    </p>
+    <h2 class="PageSubHeading">
+      Other configuration details
+    </h2>
+    <p>
+      If you want Chromium to monitor the application window's size and call
+      the tile layout function you'll need to set the
+      <code>track_window_size</code> option, like this:
+    </p>
+    <p class="GrayCodeListing2">
+      cr.Conf( 'track_window_size', 1 )
+    </p>
+    <p>
+      This tells the Chromium OpenGL stub library to poll the application
+      window's size whenever <code class="Function">glClear()</code> or
+      <code class="Function">glViewport()</code> are called. If the window size
+      changes, the head SPU (typically the <span class="SPU">tilesort</span>)
+      <code class="Function">WindowSize()</code> function will be called with
+      the new window size.
+    </p>
+    <p>
+      If your Chromium configuration is a tile reassember which uses the
+      <span class="SPU">readback</span> SPU, it's usually desirable to have the
+      tail <span class="SPU">render</span> SPU render back into the application
+      window, rather than the SPU's private window. This can be accomplished by
+      setting the <code>render_to_app_window</code> option for the render SPU.
+      For example:
+    </p>
+    <p class="GrayCodeListing2">
+      renderspu.Conf( 'render_to_app_window', 1 )
+    </p>
+    <p>
+      Again, see <a href="../mothership/configs/reassemble.conf" class=
+      "File">mothership/configs/reassemble.conf</a> for an example of this.
+    </p>
+  </body>
 </html>
