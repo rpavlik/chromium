@@ -188,6 +188,7 @@ DisplayRings(void)
 	crSwapBuffers_ptr( window, CR_SUPPRESS_SWAP_BIT );
     }	
     frame++;
+    crutPostRedisplay();
 }
 
 static void changeRank( int value ) 

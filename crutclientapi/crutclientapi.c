@@ -176,9 +176,16 @@ crutIdleFunc( void (*func)(void))
 
 void 
 CRUT_CLIENT_APIENTRY 
-crutDisplayFunc(void (*func)(void))
+crutDisplayFunc( void (*func)(void) )
 {
     crut_client.callbacks.display = func;
+}
+
+void
+CRUT_CLIENT_APIENTRY
+crutPostRedisplay( void )
+{
+    crut_client.redisplay = 1;
 }
 
 int 
@@ -512,6 +519,7 @@ crutInitClient(void)
     crut_client.recv_conn = crNetConnectToServer( server, DEFAULT_PORT, mtu, 0 );
 
     crutConnectToClients( &crut_api );
+    crutPostRedisplay();
 }
 
 void
@@ -592,9 +600,13 @@ crutMainLoop( )
 	    }
 	} /* end while(crutCheckEvent()) */
 
-	if (crut_client.callbacks.idle) crut_client.callbacks.idle();
-	    
-	if (crut_client.callbacks.display) crut_client.callbacks.display();
+	if (crut_client.redisplay && crut_client.callbacks.display)
+	{
+	    crut_client.redisplay = 0;
+	    crut_client.callbacks.display();
+	}
+	else
+	    if (crut_client.callbacks.idle) crut_client.callbacks.idle();
 
     } /* end for(;;) */
 }

@@ -73,6 +73,7 @@ typedef struct
     int buffer_size;
     char protocol[1024];
     int num_bytes;
+    int redisplay;
     CRUTMessage *msg;
     CRConnection *recv_conn;
     CRUTClientCallbacks callbacks;
@@ -102,6 +103,7 @@ void CRUT_CLIENT_APIENTRY crutMotionFunc( void (*func) (int x, int y) );
 void CRUT_CLIENT_APIENTRY crutPassiveMotionFunc( void (*func) (int x, int y) );
 void CRUT_CLIENT_APIENTRY crutIdleFunc( void (*func)(void));
 void CRUT_CLIENT_APIENTRY crutDisplayFunc(void (*func)(void));
+void CRUT_CLIENT_APIENTRY crutPostRedisplay(void);
 void CRUT_CLIENT_APIENTRY crutMainLoop(void);
 int  CRUT_CLIENT_APIENTRY crutCreateContext ( unsigned int visual );
 void CRUT_CLIENT_APIENTRY crutReceiveEvent(CRUTMessage **msg);
