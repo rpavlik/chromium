@@ -54,8 +54,6 @@ void crNetSetRank( int my_rank );
 void crNetSetContextRange( int low_context, int high_context );
 void crNetSetNodeRange( const char *low_node, const char *high_node );
 
-void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len );
-
 typedef void (*CRVoidFunc)( void );
 typedef int (*CRNetReceiveFunc)( CRConnection *conn, void *buf, unsigned int len );
 typedef int (*CRNetConnectFunc)( CRConnection *conn );
@@ -76,6 +74,19 @@ void crNetAccept( CRConnection *conn, char *hostname, unsigned short port );
 int crNetConnect( CRConnection *conn );
 void crNetDisconnect( CRConnection *conn );
 void crCloseSocket( CRSocket sock );
+
+typedef struct __recvFuncList {
+	CRNetReceiveFunc recv;
+	struct __recvFuncList *next;
+} CRNetReceiveFuncList;
+
+typedef struct __closeFuncList {
+	CRNetCloseFunc close;
+	struct __closeFuncList *next;
+} CRNetCloseFuncList;
+
+void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len );
+void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn, void *buf, unsigned int len );
 
 typedef struct __messageList {
 	CRMessage *mesg;
