@@ -8,7 +8,7 @@ sys.path.append( "../opengl_stub" )
 import stub_common
 
 line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s+(.*)\s*$')
-extensions_line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s(GL_\S+)\s+(.*)\s*$')
+extensions_line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s(\S+)\s+(.*)\s*$')
 
 params = {}
 extended_params = {}
@@ -68,6 +68,7 @@ keys.sort()
 for pname in keys:
 	(srctype,ifdef,fields) = extended_params[pname]
 	ext = ifdef[3:]  # the extension name with the "GL_" prefix removed
+	ext = ifdef
 	print '#ifdef CR_%s' % ext
 	print "\tcase %s:" % pname
 	print "\t\treturn %s;" % extended_params[pname][2][0]

@@ -81,3 +81,17 @@ GLint GL_TEXTURE_COMPRESSION_HINT_ARB GL_ARB_texture_compression g->hint.texture
 
 # GL_EXT_texture_lod_bias
 GLfloat GL_MAX_TEXTURE_LOD_BIAS_EXT GL_EXT_texture_lod_bias g->limits.maxTextureLodBias
+
+# GL_EXT_fog_coordinate
+GLfloat GL_CURRENT_FOG_COORDINATE_EXT GL_EXT_fog_coord g->current.fogCoord
+GLboolean GL_FOG_COORDINATE_ARRAY_EXT GL_EXT_fog_coord g->client.f.enabled
+GLint GL_FOG_COORDINATE_ARRAY_TYPE_EXT GL_EXT_fog_coord g->client.f.type
+GLint GL_FOG_COORDINATE_ARRAY_STRIDE_EXT GL_EXT_fog_coord g->client.f.stride
+
+# GL_EXT_secondary_color
+GLboolean GL_COLOR_SUM_EXT GL_EXT_secondary_color g->lighting.colorSumEXT
+GLfloat GL_CURRENT_SECONDARY_COLOR_EXT GL_EXT_secondary_color g->current.secondaryColor.r g->current.secondaryColor.g g->current.secondaryColor.b
+GLboolean GL_SECONDARY_COLOR_ARRAY_EXT GL_EXT_secondary_color g->client.s.enabled
+GLint GL_SECONDARY_COLOR_ARRAY_TYPE_EXT GL_EXT_secondary_color g->client.s.type
+GLint GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT GL_EXT_secondary_color g->client.s.stride
+GLint GL_SECONDARY_COLOR_ARRAY_SIZE_EXT GL_EXT_secondary_color g->client.s.size
