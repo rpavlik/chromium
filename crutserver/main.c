@@ -313,7 +313,7 @@ crutInitServer(char *mothership, int argc, char *argv[])
     
     /* set up GLUT window */
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_STENCIL);
     glutInitWindowPosition( crut_api.winX,crut_api.winY );
     glutInitWindowSize( crut_api.winWidth,crut_api.winHeight );
     
