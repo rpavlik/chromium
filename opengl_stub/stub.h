@@ -114,6 +114,7 @@ typedef struct {
 	GLuint *matchChromiumWindowID;
 	GLuint numIgnoreWindowID;
 	char *matchWindowTitle;
+	int ignoreFreeglutMenus;
 	int trackWindowSize;
 	int trackWindowPos;
 

@@ -75,6 +75,8 @@ static void stubCheckWindowSize(void)
 	unsigned int winW, winH;
 	WindowInfo *window;
 
+	CRASSERT(stub.trackWindowSize || stub.trackWindowPos);
+
 	if (!stub.currentContext)
 		return;
 
@@ -218,6 +220,7 @@ static void stubInitVars(void)
 	stub.matchChromiumWindowCount = 0;
 	stub.matchChromiumWindowID = NULL;
 	stub.matchWindowTitle = NULL;
+	stub.ignoreFreeglutMenus = 1;
 	stub.threadSafe = GL_FALSE;
 	stub.trackWindowSize = 0;
 	stub.trackWindowPos = 0;
@@ -537,9 +540,9 @@ void stubInit(void)
 
 		stub.numIgnoreWindowID = count;
 
-		crDebug("Ignoring window ID's : ");
+		crDebug("GL faker: Ignoring window ID's : ");
 		while (count >= 0) {
-			crDebug("%d", stub.matchChromiumWindowID[count]);
+			crDebug("GL faker: %d", stub.matchChromiumWindowID[count]);
 			count--;
 		}
 		crFree(ns);
@@ -547,8 +550,12 @@ void stubInit(void)
 
 	if (conn && crMothershipGetFakerParam( conn, response, "match_window_title" )
 		&& response[0]) {
-		crDebug("match_window_title: %s\n", response );
+		crDebug("GL faker: match_window_title: %s", response );
 		stub.matchWindowTitle = crStrdup( response );
+	}
+
+	if (conn && crMothershipGetFakerParam( conn, response, "ignore_freeglut_menus" )) {
+		sscanf( response, "%d", &stub.ignoreFreeglutMenus );
 	}
 
 	if (conn && crMothershipGetFakerParam( conn, response, "track_window_size" ) ) {
@@ -563,15 +570,11 @@ void stubInit(void)
 		&& response[0]) {
 		int c;
 		sscanf( response, "%d", &c );
-		crDebug( "match_window_count: %d", c);
+		crDebug( "GL faker: match_window_count: %d", c);
 		stub.matchChromiumWindowCount = c;
 	}
 
-#if 0
-	if (conn && crMothershipGetSPUDir( conn, response ))
-#else
 	if (conn && crMothershipGetFakerParam( conn, response, "spu_dir" ) && crStrlen(response) > 0)
-#endif
 	{
 		spu_dir = crStrdup(response);
 	}

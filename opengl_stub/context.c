@@ -181,7 +181,8 @@ WindowInfo *
 stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 #endif
 {
-	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch(stub.windowTable, (unsigned int) drawable);
+	WindowInfo *winInfo = (WindowInfo *)
+		crHashtableSearch(stub.windowTable, (unsigned int) drawable);
 	if (!winInfo) {
 		winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 		if (!winInfo)
@@ -189,15 +190,14 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 #ifndef WINDOWS
 		crStrncpy(winInfo->dpyName, DisplayString(dpy), MAX_DPY_NAME);
 		winInfo->dpyName[MAX_DPY_NAME-1] = 0;
+		winInfo->dpy = dpy;
 #endif
 		winInfo->drawable = drawable;
 		winInfo->type = UNDECIDED;
 		winInfo->spuWindow = -1;
-#ifndef WINDOWS
-		winInfo->dpy = dpy;
-#endif
 		crHashtableAdd(stub.windowTable, (unsigned int) drawable, winInfo);
 	}
+
 	return winInfo;
 }
 
@@ -531,10 +531,12 @@ GetCursorPosition( const WindowInfo *window, int pos[2] )
 #endif
 
 
-/*
+/**
  * This function is called by MakeCurrent() and determines whether or
  * not a new rendering context should be bound to Chromium or the native
  * OpenGL.
+ * \return  GL_FALSE if native OpenGL should be used, or GL_TRUE if Chromium
+ *          should be used.
  */
 static GLboolean
 stubCheckUseChromium( WindowInfo *window )
@@ -547,6 +549,16 @@ stubCheckUseChromium( WindowInfo *window )
 	 */
 	if (window->type == CHROMIUM)
 		return GL_TRUE;
+
+	if (stub.ignoreFreeglutMenus) {
+		const char *glutMenuTitle = "freeglut menu";
+		char title[1000];
+		GetWindowTitle(window, title);
+		if (crStrcmp(title, glutMenuTitle) == 0) {
+			crDebug("GL faker: Ignoring freeglut menu window");
+			return GL_FALSE;
+		}
+	}
 
 	/*  If the user's specified a window count for Chromium, see if
 	 *  this window satisfies that criterium.
@@ -710,7 +722,6 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 #endif
 	}
 
-
 	if (context->type == NATIVE) {
 		/*
 		 * Native OpenGL MakeCurrent().
@@ -763,7 +774,6 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		/* Now, if we've transitions from Chromium to native rendering, or
 		 * vice versa, we have to change all the OpenGL entrypoint pointers.
 		 */
-
 		if (context->type == NATIVE) {
 			/* Switch to native API */
 			/*printf("  Switching to native API\n");*/
@@ -791,13 +801,12 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		 * call since we're probably using a tilesort SPU with fake_window_dims
 		 * which the tilesort SPU will use for the viewport.
 		 */
-		if (winW > 0 && winH > 0)
-			stub.spu->dispatch_table.Viewport( 0, 0, winW, winH );
-
 		window->width = winW;
 		window->height = winH;
 		if (stub.trackWindowSize)
 			stub.spuDispatch.WindowSize( window->spuWindow, winW, winH );
+		if (winW > 0 && winH > 0)
+			stub.spu->dispatch_table.Viewport( 0, 0, winW, winH );
 	}
 
 	return retVal;
