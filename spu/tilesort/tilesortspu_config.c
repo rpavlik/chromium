@@ -243,7 +243,7 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	crMothershipDisconnect(conn);
 
 	crWarning("Total output dimensions = (%d, %d)",
-						winInfo->lastWidth, winInfo->lastHeight);
+						winInfo->muralWidth, winInfo->muralHeight);
 
 	/* XXX we should really query all the servers to compute the limits! */
 	crStateLimitsInit(&tilesort_spu.limits);
