@@ -43,6 +43,7 @@ typedef unsigned int socklen_t;
 #include "cr_net.h"
 #include "cr_endian.h"
 #include "cr_threads.h"
+#include "cr_environment.h"
 #include "net_internals.h"
 
 #ifdef WINDOWS
@@ -949,11 +950,22 @@ void crTCPIPConnection( CRConnection *conn )
 
 int crGetHostname( char *buf, unsigned int len )
 {
-	int ret = gethostname( buf, len );
+	char *override = NULL;
+	int ret;
+
+ 	override = crGetenv("CR_HOSTNAME");
+	if (override)
+	{
+		strncpy(buf, override, len);
+		ret = 0;	
+	}
+	else
+		ret = gethostname( buf, len );
 	/*if (ret) 
 	 *{ 
 		 *int err = crTCPIPErrno(); 
 		 *crWarning( "Couldn't get hostname: %s", crTCPIPErrorString( err ) ); 
 	 *} */
+
 	return ret;
 }
