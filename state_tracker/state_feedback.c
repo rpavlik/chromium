@@ -482,6 +482,91 @@ crStateRenderMode( GLenum mode )
  * I've left them here as they interface to the other functions.....
  */
 
+
+void STATE_APIENTRY crStateFeedbackGetBooleanv( GLenum pname, GLboolean *params )
+
+{
+	CRContext *g = GetCurrentContext();
+
+	switch ( pname ) {
+
+		case GL_FEEDBACK_BUFFER_SIZE:
+			params[0] = (GLboolean) ( g->feedback.bufferSize != 0 );
+			break;
+		case GL_FEEDBACK_BUFFER_TYPE:
+			params[0] = (GLboolean) ( g->feedback.type != 0 );
+			break;
+		case GL_SELECTION_BUFFER_SIZE:
+			params[0] = (GLboolean) ( g->selection.bufferSize != 0 );
+			break;
+		default:
+			break;
+	}
+}
+
+void STATE_APIENTRY crStateFeedbackGetDoublev( GLenum pname, GLdouble *params )
+
+{
+	CRContext *g = GetCurrentContext();
+
+	switch ( pname ) {
+
+		case GL_FEEDBACK_BUFFER_SIZE:
+			params[0] = (GLdouble) g->feedback.bufferSize;
+			break;
+		case GL_FEEDBACK_BUFFER_TYPE:
+			params[0] = (GLdouble) g->feedback.type;
+			break;
+		case GL_SELECTION_BUFFER_SIZE:
+			params[0] = (GLdouble) g->selection.bufferSize;
+			break;
+		default:
+			break;
+	}
+}
+
+void STATE_APIENTRY crStateFeedbackGetFloatv( GLenum pname, GLfloat *params )
+
+{
+	CRContext *g = GetCurrentContext();
+
+	switch ( pname ) {
+
+		case GL_FEEDBACK_BUFFER_SIZE:
+			params[0] = (GLfloat) g->feedback.bufferSize;
+			break;
+		case GL_FEEDBACK_BUFFER_TYPE:
+			params[0] = (GLfloat) g->feedback.type;
+			break;
+		case GL_SELECTION_BUFFER_SIZE:
+			params[0] = (GLfloat) g->selection.bufferSize;
+			break;
+		default:
+			break;
+	}
+}
+
+void STATE_APIENTRY crStateFeedbackGetIntegerv( GLenum pname, GLint *params )
+
+{
+	CRContext *g = GetCurrentContext();
+
+	switch ( pname ) {
+
+		case GL_FEEDBACK_BUFFER_SIZE:
+			params[0] = (GLint) g->feedback.bufferSize;
+			break;
+		case GL_FEEDBACK_BUFFER_TYPE:
+			params[0] = (GLint) g->feedback.type;
+			break;
+		case GL_SELECTION_BUFFER_SIZE:
+			params[0] = (GLint) g->selection.bufferSize;
+			break;
+		default:
+			break;
+	}
+}
+
 void STATE_APIENTRY
 crStateFeedbackBegin( GLenum mode )
 {
