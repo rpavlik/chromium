@@ -32,7 +32,7 @@ FILES = main \
 PRECOMP = server_dispatch.h server_dispatch.c server_get.c server_retval.c server_simpleget.c
 SLOP = ${PRECOMP}
 
-LIBRARIES = spuload crutil crmothership 
+LIBRARIES = spuload crutil crmothership crpacker
 TRACKS_STATE = 1
 UNPACKS = 1
 
