@@ -77,7 +77,7 @@ endif
 
 ifeq ($(ARCH), OSF1)
 LDFLAGS += -lX11
-FILES += $(ARCH)_exports glx OSF1_edgeflagpointer
+FILES += $(ARCH)_exports glx xfont
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
