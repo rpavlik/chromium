@@ -21,6 +21,9 @@ void PACK_APIENTRY crPackCreateContext( const char *dpyName, GLint visual, GLint
 	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 
+	/* clear the buffer, to silence valgrind */
+	crMemZero(displayName, DISPLAY_NAME_LEN);
+
 	if (dpyName) {
 		crStrncpy( displayName, dpyName, DISPLAY_NAME_LEN );
 		displayName[DISPLAY_NAME_LEN - 1] = 0;
@@ -44,6 +47,9 @@ void PACK_APIENTRY crPackCreateContextSWAP( const char *dpyName, GLint visual, G
 	char displayName[DISPLAY_NAME_LEN];
 	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
+
+	/* clear the buffer, to silence valgrind */
+	crMemZero(displayName, DISPLAY_NAME_LEN);
 
 	if (dpyName) {
 		crStrncpy( displayName, dpyName, DISPLAY_NAME_LEN );
@@ -70,6 +76,9 @@ void PACK_APIENTRY crPackWindowCreate( const char *dpyName, GLint visBits, GLint
 	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 
+	/* clear the buffer, to silence valgrind */
+	crMemZero(displayName, DISPLAY_NAME_LEN);
+
 	if (dpyName) {
 		crStrncpy( displayName, dpyName, DISPLAY_NAME_LEN );
 		displayName[DISPLAY_NAME_LEN - 1] = 0;
@@ -93,6 +102,9 @@ void PACK_APIENTRY crPackWindowCreateSWAP( const char *dpyName, GLint visBits, G
 	char displayName[DISPLAY_NAME_LEN];
 	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
+
+	/* clear the buffer, to silence valgrind */
+	crMemZero(displayName, DISPLAY_NAME_LEN);
 
 	if (dpyName) {
 		crStrncpy( displayName, dpyName, DISPLAY_NAME_LEN );
