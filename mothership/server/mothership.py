@@ -235,7 +235,6 @@ class CR:
 		clients = "%d " % len(sock.node.clients)
 		for i in range(len(sock.node.clients)):
 			(spu, protocol) = sock.node.clients[i]
-			print >> sys.stderr, `sock.node.clients[i]`
 			clients += "%s %d" % (protocol, spu.ID)
 			if i != len(sock.node.clients) -1:
 				clients += ','

@@ -61,9 +61,8 @@ static CRDLL *__findSystemGL( void )
 }
 """
 
-for func_name in keys:
-	if stub_common.FindSpecial( "render", func_name ):
-		print 'void SPU_APIENTRY __renderSpecial%s(void) {}' % func_name
+for func_name in stub_common.AllSpecials( "render" ):
+	print 'void SPU_APIENTRY __renderSpecial%s(void) {}' % func_name
 
 print """
 void renderspuLoadSystemGL( )

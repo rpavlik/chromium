@@ -332,7 +332,7 @@ void PACK_APIENTRY crPackTexSubImage1D (GLenum target, GLint level,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences )
+void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences, GLboolean *return_val )
 {
 	unsigned char *data_ptr;
 	int packet_length;
@@ -342,7 +342,7 @@ void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures,
 		sizeof( GLenum ) +       // extend-o opcode
 		sizeof( n ) +            // num_textures
 		n*sizeof( *textures ) +  // textures
-		8;                       // return pointer
+		8 + 8;                   // return pointers
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, int, packet_length );
@@ -350,5 +350,6 @@ void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures,
 	WRITE_DATA( sizeof( int ) + 4, GLsizei, n );
 	memcpy( data_ptr + sizeof( int ) + 8, textures, n*sizeof( *textures ) );
 	WRITE_NETWORK_POINTER( sizeof( int ) + 8 + n*sizeof( *textures ), (void *) residences );
+	WRITE_NETWORK_POINTER( sizeof( int ) + 16 + n*sizeof( *textures ), (void *) return_val );
 	WRITE_OPCODE( CR_EXTEND_OPCODE );
 }

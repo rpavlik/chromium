@@ -55,6 +55,18 @@ def FindSpecial( table_file, glName ):
 		return 0
 
 def AllSpecials( table_file ):
+	table = {}
+	filename = table_file + "_special"
+	try:
+		table = specials[filename]
+	except KeyError:
+		table = LoadSpecials( filename )
+	
+	keys = table.keys()
+	keys.sort()
+	return keys
+
+def AllSpecials( table_file ):
 	filename = table_file + "_special"
 
 	table = {}
@@ -136,6 +148,15 @@ def ArgumentString( arg_names, arg_types ):
 			output += " ";
 		output += arg_names[index]
 		if index != len(arg_names) - 1:
+			output += ", "
+	output += " )"
+	return output
+	
+def CallString( arg_names ):
+	output = '( '
+	for index in range(0,len(arg_names)):
+		output += arg_names[index]
+		if arg_names[index] != '' and index != len(arg_names) - 1:
 			output += ", "
 	output += " )"
 	return output

@@ -24,13 +24,9 @@ keys.sort()
 
 for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "packer_get", func_name ):
-		for type in arg_types:
-			if string.find( type, '*' ) != -1:
-				break;
-		else:
-			arg_types.append( "%s *" % return_type )
-			arg_names.append( "return_value" )
+	if return_type != 'void':
+		arg_types.append( "%s *" % return_type )
+		arg_names.append( "return_value" )
 	elif stub_common.FindSpecial( "packer_pixel", func_name ):	
 		arg_types.append( "CRPackState *" )
 		arg_names.append( "packstate" )

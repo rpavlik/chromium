@@ -15,7 +15,6 @@ keys.sort();
 
 
 print """#include <stdio.h>
-#include "cr_error.h"
 #include "cr_string.h"
 #include "cr_spu.h"
 #include "packspu.h"
@@ -30,11 +29,20 @@ static void __fillin( int offset, char *name, SPUGenericFunction func )
 {
 	pack_table[offset].name = crStrdup( name );
 	pack_table[offset].fn = func;
-}
+}"""
 
-void packspuCreateFunctions( )
-{"""
+for func_name in keys:
+	(return_type, args, types) = gl_mapping[func_name]
+	if return_type != 'void' or stub_common.FindSpecial( "packspu", func_name ) or stub_common.FindSpecial( "../../packer/packer_get", func_name ):
+		print 'extern %s packspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
+
+print '\nvoid packspuCreateFunctions( )'
+print '{'
 for index in range(len(keys)):
 	func_name = keys[index]
-	print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (index, func_name, func_name )
+	(return_type, args, types) = gl_mapping[func_name]
+	if return_type != 'void' or stub_common.FindSpecial( "packspu", func_name ) or stub_common.FindSpecial( "../../packer/packer_get", func_name ):
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) packspu_%s );' % (index, func_name, func_name )
+	else:
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (index, func_name, func_name )
 print '}'

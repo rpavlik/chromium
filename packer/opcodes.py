@@ -22,8 +22,7 @@ keys.sort();
 print "typedef enum {"
 
 enum_index = 0
-for index in range(0,len(keys)):
-	func_name = keys[index]
+for func_name in keys:
 	if not stub_common.FindSpecial( "opcode", func_name ):
 		print "\t%s = %d," % ( stub_common.OpcodeName( func_name ), enum_index )
 		enum_index = enum_index + 1
@@ -31,17 +30,17 @@ print "\tCR_EXTEND_OPCODE=%d" % enum_index
 print "} CROpcode;\n"
 
 num_extends = 0
-for key in keys:
-	if stub_common.FindSpecial( "packer_get", key ):
+for func_name in keys:
+	(return_type, args, types) = gl_mapping[func_name]
+	if return_type != 'void' or stub_common.FindSpecial( "packer_get", func_name ):
 		num_extends += 1
-	
 
 print "typedef enum {"
 
 enum_index = 0
-for index in range(0,len(keys)):
-	func_name = keys[index]
-	if stub_common.FindSpecial( "packer_get", func_name ):
+for func_name in keys:
+	(return_type, args, types ) = gl_mapping[func_name]
+	if return_type != 'void' or stub_common.FindSpecial( "packer_get", func_name ):
 		if enum_index == num_extends-1:
 			print "\t%s = %d" % ( stub_common.ExtendedOpcodeName( func_name ), enum_index )
 		else:

@@ -196,7 +196,7 @@ HGLRC WINAPI wglCreateLayerContext_prox( HDC hdc, int layerPlane )
 
 PROC WINAPI wglGetProcAddress_prox( LPCSTR name )
 {
-	crError( "wglGetProcAddress: unsupported" );
+	crError( "wglGetProcAddress(%s): unsupported", name );
 	return (PROC) 0;
 }
 

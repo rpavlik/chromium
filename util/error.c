@@ -2,6 +2,11 @@
 #include "cr_string.h"
 #include "cr_net.h"
 
+#ifdef WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -71,6 +76,11 @@ void crError( char *format, ... )
 #endif
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
+#ifdef WINDOWS
+	if (getenv( "CR_GUI_ERROR" ) != NULL)
+		MessageBox( NULL, txt, "Chromium Error", MB_OK );
+	else
+#endif
 	fprintf( stderr, "%s\n", txt );
 	va_end( args );
 	exit(1);

@@ -4,8 +4,10 @@
 #include "cr_pixeldata.h"
 #include "cr_error.h"
 
+#include "state/cr_pixel.h"
+
 void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height, 
-		GLenum format, GLenum type, const GLvoid *pixels )
+		GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
 {
 	crError( "Unimplemented crPackDrawPixels" );
 
@@ -14,6 +16,7 @@ void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height,
 	(void) format;
 	(void) type;
 	(void) pixels;
+	(void) packstate;
 }
 
 void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width, 
