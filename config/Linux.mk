@@ -30,8 +30,8 @@ LD_RELEASE_FLAGS  +=
 LD_DEBUG_FLAGS    += 
 
 ifeq ($(MACHTYPE), alpha)
-CXXFLAGS          += -mieee 
-CFLAGS            += -mieee
+CXXFLAGS          += -fPIC -mieee 
+CFLAGS            += -fPIC -mieee
 endif
 
 ifeq ($(MACHTYPE), mips)
