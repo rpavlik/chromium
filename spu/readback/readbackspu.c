@@ -765,12 +765,18 @@ readbackspuTweakVisBits(GLint visBits,
 {
 	*childVisBits = visBits;
 
+	/* The child window/context won't need stencil/depth/accum/multisample,
+	 * unless Z compositing, see below.
+	 */
+	*childVisBits &= ~(CR_STENCIL_BIT | CR_DEPTH_BIT |
+										 CR_ACCUM_BIT | CR_MULTISAMPLE_BIT);
+
 	/* we probably don't want a pbuffer either */
 	*childVisBits &= ~CR_PBUFFER_BIT;
 
-	/* But if doing z-compositing, we do need stencil buffer */
+	/* But if doing z-compositing, we do need stencil and depth buffers */
 	if (readback_spu.extract_depth)
-		*childVisBits |= CR_STENCIL_BIT;
+		*childVisBits |= (CR_STENCIL_BIT | CR_DEPTH_BIT);
 	/* if doing alpha-compositing, we do need alpha channel */
 	if (readback_spu.extract_alpha)
 		*childVisBits |= CR_ALPHA_BIT;
