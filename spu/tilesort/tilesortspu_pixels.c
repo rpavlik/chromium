@@ -525,8 +525,9 @@ static void pixeltransfer_flush(void)
 {
 	GET_CONTEXT(ctx);
 	GLboolean tex_state[5];
-	int a, unit, orig_active_unit;
+	int a, orig_active_unit;
 	int already_flushed[5];
+	unsigned int unit;
 	
 	tex_state[0] = 
 	tex_state[1] = 
