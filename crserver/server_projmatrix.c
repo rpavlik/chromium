@@ -36,38 +36,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixd( const GLdouble *m )
 	}
 }
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchMultMatrixf( const GLfloat *m )
-{
-	crStateMultMatrixf( m );
-	if (cr_server.num_extents > 0 && cr_server.current_client->ctx->transform.mode == GL_PROJECTION)
-	{
-		// we're loading a matrix onto the projection stack -- better put the base
-		// projection there first!
-
-		crServerApplyBaseProjection();
-	}
-	else
-	{
-		cr_server.head_spu->dispatch_table.MultMatrixf( m );
-	}
-}
-
-void SERVER_DISPATCH_APIENTRY crServerDispatchMultMatrixd( const GLdouble *m )
-{
-	crStateMultMatrixd( m );
-	if (cr_server.num_extents > 0 && cr_server.current_client->ctx->transform.mode == GL_PROJECTION)
-	{
-		// we're loading a matrix onto the projection stack -- better put the base
-		// projection there first!
-
-		crServerApplyBaseProjection();
-	}
-	else
-	{
-		cr_server.head_spu->dispatch_table.MultMatrixd( m );
-	}
-}
-
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadIdentity( void )
 {
 	crStateLoadIdentity();

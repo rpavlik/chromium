@@ -18,8 +18,6 @@ Writeback
 Viewport
 LoadMatrixf
 LoadMatrixd
-MultMatrixf
-MultMatrixd
 LoadIdentity
 Color3ub
 Color3b

@@ -116,7 +116,6 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param) {
 			}
 			p->pack.alignment = param;
 			pb->pack = g->neg_bitid;
-			crDebug( "Setting the pack alignment to %d", param );
 			break;
 
 		case GL_UNPACK_SWAP_BYTES:
@@ -165,7 +164,6 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param) {
 			}
 			p->unpack.alignment = param;
 			pb->unpack = g->neg_bitid;
-			crDebug( "Setting the unpack alignment to %d", param );
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Unknown glPixelStore Pname: %d", pname);
