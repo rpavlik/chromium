@@ -124,8 +124,7 @@ typedef struct {
 	BBox bboxValues;
 
 	/* Store model and projection matix for clip */
-	GLfloat modl[16], proj[16];
-	
+	GLfloat modl[16], proj[16];	
 } Binaryswapspu;
 
 extern Binaryswapspu binaryswap_spu;

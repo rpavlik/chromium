@@ -148,7 +148,7 @@ binaryswapspuInit( int id, SPU *child, SPU *self,
 	crHashtableAdd(binaryswap_spu.windowTable, 0, window);
 	
 	binaryswapspuConnectToPeer();
-	
+
 	return &binaryswap_functions;
 }
 

@@ -521,12 +521,12 @@ static void CompositeNode( WindowInfo *window,
 			if(draw_width > 0 && draw_width > 0){
 				incoming_color = (GLubyte*)((GLubyte*)incoming_msg + binaryswap_spu.offset);
 				/* figure out blend function based on z */
-					binaryswap_spu.super.Enable(GL_BLEND);
+				binaryswap_spu.super.Enable(GL_BLEND);
 				/* Other image is on top of ours! */
 				if(binaryswap_spu.depth >= other_depth)
 				{
 					/* over operator */
-					binaryswap_spu.super.BlendFunc  ( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); 
+					binaryswap_spu.super.BlendFuncSeparateEXT  ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE ); 
 					binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
 					binaryswap_spu.super.DrawPixels ( draw_width, draw_height, 
 																						GL_RGBA, GL_UNSIGNED_BYTE, incoming_color ); 
@@ -535,7 +535,7 @@ static void CompositeNode( WindowInfo *window,
 				else
 				{  
 					/* under operator */
-					binaryswap_spu.super.BlendFunc  ( GL_ONE_MINUS_DST_ALPHA, GL_ONE );
+					binaryswap_spu.super.BlendFuncSeparateEXT  ( GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA, GL_ONE, GL_ONE );
 					binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
 					binaryswap_spu.super.DrawPixels ( draw_width, draw_height, 
 																						GL_RGBA, GL_UNSIGNED_BYTE, incoming_color );
