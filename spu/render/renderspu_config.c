@@ -26,6 +26,12 @@ static void set_window_geometry( RenderSPU *render_spu, const char *response )
 	render_spu->defaultY = (int) y;
 	render_spu->defaultWidth = (int) w;
 	render_spu->defaultHeight = (int) h;
+	crMemset(render_spu->display_string, 0, sizeof(render_spu->display_string));
+}
+
+static void set_display_string( RenderSPU *render_spu, const char *response )
+{
+   	strncpy(render_spu->display_string, response, strlen(response));
 }
 
 static void set_fullscreen( RenderSPU *render_spu, const char *response )
@@ -100,6 +106,9 @@ SPUOptions renderSPUOptions[] = {
    { "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
      "System GL Path", (SPUOptionCB)set_system_gl_path },
 
+   { "display_string", CR_STRING, 1, "", NULL, NULL, 
+     "Display String", (SPUOptionCB)set_display_string },
+
    { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
      "Render to app window", (SPUOptionCB)render_to_app_window },
 
@@ -149,7 +158,6 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 	render_spu->cursorY = 0;
 #ifndef WINDOWS	
 	render_spu->sync = 0;
-	render_spu->display_string = NULL;
 #endif
 }
 

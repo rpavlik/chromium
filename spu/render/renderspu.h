@@ -79,7 +79,7 @@ typedef struct {
 	unsigned int defaultWidth, defaultHeight;
 	int use_L2;
 	int fullscreen, ontop;
-	char        *display_string;
+	char        display_string[100];
 #ifndef WINDOWS
 	int          try_direct;
 	int          force_direct;
