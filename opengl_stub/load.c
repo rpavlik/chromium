@@ -362,27 +362,28 @@ void stubInit(void)
 			/* Build the argument vector and try spawning the mothership! */
 			int mothershipPort = 10000;
 			char *argv[1000];
+            int arg = 0;
 
-			argv[0] = PYTHON_EXE;
+			argv[arg++] = PYTHON_EXE;
+            argv[arg++] = "-E"; // Ignores any program-set PYTHONPATH or PYTHONHOME
 			for (i = 0; args[i]; i++)
 			{
 				if (crStrcmp(args[i], "%p") == 0)
-					argv[1 + i] = procName;
+					argv[arg++] = procName;
 				else if (crStrcmp(args[i], "%d") == 0)
-					argv[1 + i] = currentDir;
+					argv[arg++] = currentDir;
 				else if (crStrcmp(args[i], "%m") == 0) {
 					/* generate random port for mothership */
 					char portString[10];
 					crRandAutoSeed();
 					mothershipPort = crRandInt(10001, 10100);
 					sprintf(portString, "%d", mothershipPort);
-					argv[1 + i] = portString;
+					argv[arg++] = portString;
 				}
 				else
-					argv[1 + i] = args[i];
+					argv[arg++] = args[i];
 			}
-			i++;
-			argv[i++] = NULL;
+			argv[arg++] = NULL;
 
 			if (mothershipPort != 10000) {
 				char localHost[1000], mothershipStr[1010];
