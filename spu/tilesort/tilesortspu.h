@@ -171,6 +171,7 @@ typedef struct {
 	int splitBeginEnd;
 	int drawBBOX;
 	float bboxLineWidth;
+	float bboxScale;
 	int syncOnFinish, syncOnSwap;
 	int scaleToMuralSize;
 	int localTileSpec;

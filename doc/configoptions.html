@@ -351,6 +351,16 @@ configuration options that the render SPU accepts, plus a few more:
 	flag is not set, this parameter has no effect.&nbsp; The default is 5.</td>
   </tr>
   <tr>
+    <td width="19%" class="ConfigOption" height="38">bbox_scale</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+	<td width="115%" class="ConfigDesc" height="38">
+        Specifies a scaling factor for bounding boxes.
+        This is useful for vertex programs which perturb vertex positions.
+        By setting the scale factor to 2.0, for example, you can be sure
+        that warped/perturbed geometry still lies inside the bounding box.
+	The default is 1.</td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">fake_window_dims</td>
     <td width="12%" class="ConfigType" height="38">2 Integers</td>
     <td width="115%" class="ConfigDesc" height="38">Specifies the default

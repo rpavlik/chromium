@@ -575,6 +575,21 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		return;
 	}
 
+	if (tilesort_spu.bboxScale != 1.0) {
+		GLfloat scale = tilesort_spu.bboxScale;
+		/* compute center point of box */
+		GLfloat cx = 0.5 * (bucketInfo->objectMin.x + bucketInfo->objectMax.x);
+		GLfloat cy = 0.5 * (bucketInfo->objectMin.y + bucketInfo->objectMax.y);
+		GLfloat cz = 0.5 * (bucketInfo->objectMin.z + bucketInfo->objectMax.z);
+		/* scale bounds relative to center point */
+		bucketInfo->objectMin.x = cx + (bucketInfo->objectMin.x - cx) * scale;
+		bucketInfo->objectMin.y = cy + (bucketInfo->objectMin.y - cy) * scale;
+		bucketInfo->objectMin.z = cz + (bucketInfo->objectMin.z - cz) * scale;
+		bucketInfo->objectMax.x = cx + (bucketInfo->objectMax.x - cx) * scale;
+		bucketInfo->objectMax.y = cy + (bucketInfo->objectMax.y - cy) * scale;
+		bucketInfo->objectMax.z = cz + (bucketInfo->objectMax.z - cz) * scale;
+	}
+
 	xmin = bucketInfo->objectMin.x;
 	ymin = bucketInfo->objectMin.y;
 	zmin = bucketInfo->objectMin.z;
@@ -650,6 +665,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	ibounds.y2 = (int) (winInfo->halfViewportHeight * ymax + winInfo->viewportCenterY);
 
 	bucketInfo->pixelBounds = ibounds;
+
 
 	/* Initialize the retval bitvector.
 	 */

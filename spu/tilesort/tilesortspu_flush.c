@@ -209,7 +209,6 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 {
 	GET_THREAD(thread);
-
 #define DRAW_BBOX_MAX_SERVERS 128
 	static int init=0;
 	static GLfloat c[DRAW_BBOX_MAX_SERVERS][3];

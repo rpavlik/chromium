@@ -61,6 +61,12 @@ set_bbox_line_width(TileSortSPU *tilesort_spu, const char *response)
 }
 
 static void
+set_bounding_box_scale(TileSortSPU *tilesort_spu, const char *response)
+{
+	sscanf(response, "%f", &(tilesort_spu->bboxScale));
+}
+
+static void
 set_fake_window_dims(TileSortSPU *tilesort_spu, const char *response)
 {
 	float w, h;
@@ -142,6 +148,9 @@ SPUOptions tilesortSPUOptions[] = {
 
 	{"bbox_line_width", CR_INT, 1, "5", "0", "10",
 	 "Bounding Box Line Width", (SPUOptionCB) set_bbox_line_width},
+
+	{"bbox_scale", CR_FLOAT, 1, "1.0", "0.1", "10.0",
+	 "Bounding Box Scale Factor", (SPUOptionCB) set_bounding_box_scale},
 
 	{"fake_window_dims", CR_INT, 2, "0, 0", "0, 0", NULL,
 	 "Fake Window Dimensions (w, h)", (SPUOptionCB) set_fake_window_dims},
