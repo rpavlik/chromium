@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <memory.h>
 #ifdef WINDOWS
 #pragma warning( push, 3 )
 #endif

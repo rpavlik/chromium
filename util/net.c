@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <memory.h>
 
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
