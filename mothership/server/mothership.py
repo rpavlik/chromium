@@ -73,14 +73,17 @@ def Fatal( str ):
 def MakeString( x ):
 	"""MakeString(x)
 	Converts an object to a string"""
-	if type(x) == types.StringType: return x
-	return repr(x)
+	if type(x) == types.StringType:
+		return x
+	else:
+		return repr(x)
 
 def Conf( config, key, *values ):
 	"""Conf(config, key, *values)
 	Sets the configuration in "config" of "key" to a list
 	containing "values"."""
 	config[key] = map( MakeString, values )
+
 
 class SPU:
 	"""Main class that defines a Stream Processing Unit.
@@ -194,6 +197,10 @@ class CRNode:
 		else:
 			self.autostart_argv = program
 			self.autostart = program[0]
+
+	def SetPosition(self, x, y):
+		# not used by mothership, set by graphical config tool
+		pass
 
 class CRNetworkNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
