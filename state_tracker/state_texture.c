@@ -607,7 +607,7 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash)
 
 	/* Free the texture images */
 	for (face = 0; face < 6; face++) {
-		CRTextureLevel *levels;
+		CRTextureLevel *levels = NULL;
 		 switch (face) {
 		 case 0:
 			 levels = tobj->level;
