@@ -21,6 +21,7 @@ extern "C" {
 
 void crDebug( char *format, ... ) PRINTF;
 void crWarning( char *format, ... ) PRINTF;
+void crInfo( char *format, ... ) PRINTF;
 
 void crError( char *format, ... ) NORETURN_PRINTF;
 

@@ -4,8 +4,8 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_error.h"
 #include "cr_environment.h"
+#include "cr_error.h"
 #include "cr_string.h"
 #include "cr_net.h"
 
@@ -179,9 +179,26 @@ void crWarning( char *format, ... )
 	va_end( args );
 }
 
+void crInfo( char *format, ... )
+{
+	va_list args;
+	static char txt[8092];
+	int offset;
+
+	__crCheckCanada();
+	__crCheckSwedishChef();
+	__crCheckAustralia();
+	if (!my_hostname[0])
+		__getHostInfo();
+	offset = sprintf( txt, "CR Info(%s:%d): ", my_hostname, my_pid );
+	va_start( args, format );
+	vsprintf( txt + offset, format, args );
+	outputChromiumMessage( stderr, txt );
+	va_end( args );
+}
+
 void crDebug( char *format, ... )
 {
-#ifndef NDEBUG
 	va_list args;
 	static char txt[8092];
 	int offset;
@@ -190,6 +207,7 @@ void crDebug( char *format, ... )
 #endif
 	static FILE *output;
 	static int first_time = 1;
+	static int silent = 0;
 
 	if (first_time)
 	{
@@ -207,13 +225,24 @@ void crDebug( char *format, ... )
 		{
 			output = stderr;
 		}
+#if NDEBUG
+		/* Release mode: only emit crDebug messages if CR_DEBUG
+		 * or CR_DEBUG_FILE is set.
+		 */
+		if (!fname && !crGetenv("CR_DEBUG"))
+			silent = 1;
+#endif
 	}
+
+	if (silent)
+		return;
 
 	__crCheckCanada();
 	__crCheckSwedishChef();
 	__crCheckAustralia();
 	if (!my_hostname[0])
 		__getHostInfo();
+
 #ifdef WINDOWS
 	if ((err = GetLastError()) != 0 && crGetenv( "CR_WINDOWS_ERRORS" ) != NULL )
 	{
@@ -253,7 +282,4 @@ void crDebug( char *format, ... )
 	vsprintf( txt + offset, format, args );
 	outputChromiumMessage( output, txt );
 	va_end( args );
-#else /* RELEASE */
-	(void) format;
-#endif
 }
