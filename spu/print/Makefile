@@ -21,6 +21,8 @@ LIBRARIES = crutil crmothership spuload
 PRECOMP = printspu.c
 SLOP = $(PRECOMP)
 
+SPU_COPIES = COPYprintspu
+
 LIB_DEFS += print.def
 include ${TOP}/cr.mk
 

@@ -56,6 +56,7 @@ SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *super,
 	 * be good to go here. */
 
 	hiddenline_spu.super.Enable( GL_DEPTH_TEST );
+	hiddenline_spu.super.LineWidth( 5 );
 
 	return &hiddenline_functions;
 }
@@ -75,7 +76,7 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
 {
 	*name = "hiddenline";
-	*super = "array";
+	*super = "hlpassthrough";
 	*init = hiddenlineSPUInit;
 	*self = hiddenlineSPUSelfDispatch;
 	*cleanup = hiddenlineSPUCleanup;
