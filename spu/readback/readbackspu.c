@@ -925,11 +925,17 @@ readbackspuWindowSize(GLint win, GLint w, GLint h)
 /* don't implement WindowPosition() */
 
 
+/*
+ * The render SPU implements barriers for the case of multi-threaded
+ * rendering.  We don't want to block on barriers when using Readback.
+ * The Readback SPU has its own barriers.
+ */
 
 static void READBACKSPU_APIENTRY
 readbackspuBarrierCreateCR(GLuint name, GLuint count)
 {
 	(void) name;
+	(void) count;
 	/* no-op */
 }
 
@@ -1070,37 +1076,20 @@ readbackspuChromiumParameteriCR(GLenum target, GLint value)
 }
 
 SPUNamedFunctionTable _cr_readback_table[] = {
-	{"SwapBuffers", (SPUGenericFunction) readbackspuSwapBuffers}
-	,
-	{"CreateContext", (SPUGenericFunction) readbackspuCreateContext}
-	,
-	{"DestroyContext", (SPUGenericFunction) readbackspuDestroyContext}
-	,
-	{"MakeCurrent", (SPUGenericFunction) readbackspuMakeCurrent}
-	,
-	{"WindowCreate", (SPUGenericFunction) readbackspuWindowCreate}
-	,
-	{"WindowDestroy", (SPUGenericFunction) readbackspuWindowDestroy}
-	,
-	{"WindowSize", (SPUGenericFunction) readbackspuWindowSize}
-	,
-	{"BarrierCreateCR", (SPUGenericFunction) readbackspuBarrierCreateCR}
-	,
-	{"BarrierDestroyCR", (SPUGenericFunction) readbackspuBarrierDestroyCR}
-	,
-	{"BarrierExecCR", (SPUGenericFunction) readbackspuBarrierExecCR}
-	,
-	{"Viewport", (SPUGenericFunction) readbackspuViewport}
-	,
-	{"Flush", (SPUGenericFunction) readbackspuFlush}
-	,
-	{"ClearColor", (SPUGenericFunction) readbackspuClearColor}
-	,
-	{"ChromiumParametervCR",
-	 (SPUGenericFunction) readbackspuChromiumParametervCR}
-	,
-	{"ChromiumParameteriCR",
-	 (SPUGenericFunction) readbackspuChromiumParameteriCR}
-	,
+	{"SwapBuffers", (SPUGenericFunction) readbackspuSwapBuffers},
+	{"CreateContext", (SPUGenericFunction) readbackspuCreateContext},
+	{"DestroyContext", (SPUGenericFunction) readbackspuDestroyContext},
+	{"MakeCurrent", (SPUGenericFunction) readbackspuMakeCurrent},
+	{"WindowCreate", (SPUGenericFunction) readbackspuWindowCreate},
+	{"WindowDestroy", (SPUGenericFunction) readbackspuWindowDestroy},
+	{"WindowSize", (SPUGenericFunction) readbackspuWindowSize},
+	{"BarrierCreateCR", (SPUGenericFunction) readbackspuBarrierCreateCR},
+	{"BarrierDestroyCR", (SPUGenericFunction) readbackspuBarrierDestroyCR},
+	{"BarrierExecCR", (SPUGenericFunction) readbackspuBarrierExecCR},
+	{"Viewport", (SPUGenericFunction) readbackspuViewport},
+	{"Flush", (SPUGenericFunction) readbackspuFlush},
+	{"ClearColor", (SPUGenericFunction) readbackspuClearColor},
+	{"ChromiumParametervCR", (SPUGenericFunction) readbackspuChromiumParametervCR},
+	{"ChromiumParameteriCR", (SPUGenericFunction) readbackspuChromiumParameteriCR},
 	{NULL, NULL}
 };
