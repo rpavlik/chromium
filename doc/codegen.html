@@ -48,6 +48,7 @@ functions. In addition, we will need our own implementation of <code>glDisable</
 (to prevent the user from turning off blending), <code>glEnable</code> (to
 prevent the user from enabling the depth test), and <code>glBlendFunc</code>
 (to prevent the user from messing with our chosen blend function).&nbsp;
+<code>MakeCurrent</code> is needed in order to override default OpenGL state.
 Therefore, add
 the following lines to the new &quot;special&quot; file (they don't need to be
 in alphabetical order):</p>
@@ -88,7 +89,8 @@ in alphabetical order):</p>
       Disable<br>
       Enable<br>
       Materialfv<br>
-      Materialiv</td></tr></table>
+      Materialiv<br>
+      MakeCurrent</td></tr></table>
 
 <h2 class="PageSubHeading">Step 3: Auto-generate seethroughspu.c</h2>
 <p>This step is fairly involved.&nbsp; If you're having trouble following along,
@@ -475,7 +477,7 @@ identical:</p>
       {<br>
       &nbsp;&nbsp;&nbsp; if (cap == GL_DEPTH_TEST)<br>
       &nbsp;&nbsp;&nbsp; {<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crWarning( &quot;SeeThroughSPU: Ignoring enable of depth!" );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crWarning( &quot;"SeeThroughSPU: Ignoring enable of depth!" );<br>
       &nbsp;&nbsp;&nbsp; }<br>
       &nbsp;&nbsp;&nbsp; else<br>
       &nbsp;&nbsp;&nbsp; {<br>
@@ -551,14 +553,18 @@ function at the top of this file:</p>
 <p>There is a small robustness problem here -- the legal values for source and
 destination blending factors are slightly different, but no distinction is made
 between them here.</p>
-<h2 class="PageSubHeading">Step 8:&nbsp; Set up and turn on blending at startup</h2>
-<p>When the SPU is loaded, we need to enable blending and set the blend
+<h2 class="PageSubHeading">Step 8:&nbsp; Set up and turn on blending before rendering</h2>
+<p>Before any rendering, we need to enable blending and set the blend
 function.&nbsp; This is analogous to setting the default color in the <a href="newspu.html">Invert
-SPU</a>.&nbsp; At the very end of the <code>SPUInit</code> function in <code>seethroughspu_init.c</code>
-(after your previously-added call to build the function table), add the code:</p>
+SPU</a>.&nbsp;
+To do this we'll override the <code>MakeCurrent</code> function:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">seethrough_spu.super.Enable( GL_BLEND );<br>
-	seethrough_spu.super.BlendFunc( seethrough_spu.sfactor, seethrough_spu.dfactor );</td></tr></table>
+<table width="100%"><tr><td class="GrayCodeListing">
+void SEETHROUGHSPU_APIENTRY seethroughMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Enable( GL_BLEND );<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.BlendFunc( seethrough_spu.sfactor, seethrough_spu.dfactor );<br>
+}</td></tr></table>
 
 <p>Note that we do not have to disable the depth test at this point, as it is
 off by default, and our implementaton of glEnable will prevent it from ever
@@ -767,7 +773,7 @@ structure in <code>seethroughspu.h</code>:</p>
 <code>seethroughspu_init.c</code>:</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">		crStateInit();<br>
-	seethrough_spu.ctx = crStateCreateContext();<br>
+	seethrough_spu.ctx = crStateCreateContext(NULL);<br>
 	crStateMakeCurrent( seethrough_spu.ctx );</td></tr></table>
 
 <p>That's it!&nbsp; You're tracking state!</p>
