@@ -31,9 +31,9 @@ static void FPSSPU_APIENTRY fpsSwapBuffers( GLint window, GLint flags )
 	    elapsed_base = elapsed;
 	    frame_counter = 0;
 	    if (fps<1)
-		crDebug( "SPF: %f", 1.0/fps );
+		crWarning( "SPF: %f", 1.0/fps );
 	    else 
-		crDebug( "FPS: %f", fps );
+		crWarning( "FPS: %f", fps );
 	}
 
 	fps_spu.super.SwapBuffers( window, flags );
