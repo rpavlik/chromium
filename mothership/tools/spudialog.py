@@ -52,7 +52,7 @@ class SPUDialog(wxDialog):
 
 		box = wxStaticBox(parent=self, id=-1, label=title)
 		innerSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		outerSizer.Add(innerSizer, option=1, flag=wxALL|wxGROW, border=10)
+		outerSizer.Add(innerSizer, 1, wxALL|wxGROW, 10)
 		
 		if optionList and len(optionList) > 0:
 			i = 0
@@ -124,7 +124,7 @@ class SPUDialog(wxDialog):
 					assert opt.Count == 1
 					s = _BackslashChars(opt.Value[0])
 					ctrl = wxTextCtrl(parent=self, id=100+i, value=s)
-					rowSizer.Add(ctrl, option=1, flag=wxEXPAND)
+					rowSizer.Add(ctrl, 1, wxEXPAND)
 					innerSizer.Add(rowSizer, flag=wxALL|wxEXPAND, border=4)
 					controls.append(ctrl)
 				elif opt.Type == "ENUM":
@@ -160,12 +160,12 @@ class SPUDialog(wxDialog):
 		rowSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
 		self.RestoreButton = wxButton(parent=self, id=id_RESTORE,
 									  label=" Restore Defaults ")
-		rowSizer.Add(self.RestoreButton, option=0, flag=wxALIGN_CENTER)
+		rowSizer.Add(self.RestoreButton, 0, wxALIGN_CENTER)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
-		rowSizer.Add(self.OkButton, option=0, flag=wxALIGN_CENTER)
+		rowSizer.Add(self.OkButton, 0, wxALIGN_CENTER)
 		self.CancelButton = wxButton(parent=self, id=id_CANCEL, label="Cancel")
-		rowSizer.Add(self.CancelButton, option=0, flag=wxALIGN_CENTER)
-		outerSizer.Add(rowSizer, option=0, flag=wxGROW|wxBOTTOM, border=10)
+		rowSizer.Add(self.CancelButton, 0, wxALIGN_CENTER)
+		outerSizer.Add(rowSizer, 0, wxGROW|wxBOTTOM, 10)
 		EVT_BUTTON(self.RestoreButton, id_RESTORE, self._onRestore)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)

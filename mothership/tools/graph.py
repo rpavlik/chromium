@@ -331,7 +331,7 @@ class GraphFrame(wxFrame):
 
 		# Position everything in the window.
 		topSizer = wxBoxSizer(wxVERTICAL)
-		topSizer.Add(toolSizer, option=0, flag=wxALL|wxALIGN_TOP, border=4)
+		topSizer.Add(toolSizer, 0, wxALL|wxALIGN_TOP, 4)
 		topSizer.Add(self.drawArea, 1, wxEXPAND)
 
 		self.topPanel.SetAutoLayout(true)

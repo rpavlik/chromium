@@ -37,15 +37,14 @@ class IntDialog(wxDialog):
 		i = 0
 		for lab in labels:
 			textLabel = wxStaticText(parent=self, id=-1, label=lab + "  ")
-			flexSizer.Add(textLabel, option=0,
-						  flag=wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL)
+			flexSizer.Add(textLabel, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL)
 			spinner = wxSpinCtrl(parent=self, id=id_SPINNER,
 								 min=minValue, max=maxValue,
 								 value=str(defaultValues[i]))
 			flexSizer.Add(spinner, 0, wxALIGN_CENTER)
 			self.spinners.append(spinner)
 			i += 1
-		outerSizer.Add(flexSizer, option=1, flag=wxALL|wxGROW, border=10)
+		outerSizer.Add(flexSizer, 1, wxALL|wxGROW, 10)
 
 		# horizontal separator (box with height=0)
 		box = wxStaticBox(parent=self, id=-1, label="", size=wxSize(100,0))
@@ -54,11 +53,10 @@ class IntDialog(wxDialog):
 		# sizer for OK, Cancel buttons
 		rowSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
-		rowSizer.Add(self.OkButton, option=0, flag=wxALIGN_CENTER, border=10)
+		rowSizer.Add(self.OkButton, 0, wxALIGN_CENTER, 10)
 		self.CancelButton = wxButton(parent=self, id=id_CANCEL, label="Cancel")
-		rowSizer.Add(self.CancelButton, option=0, flag=wxALIGN_CENTER, border=10)
-		outerSizer.Add(rowSizer, option=0,
-					   flag=wxGROW|wxBOTTOM|wxLEFT|wxRIGHT, border=8)
+		rowSizer.Add(self.CancelButton, 0, wxALIGN_CENTER, 10)
+		outerSizer.Add(rowSizer, 0, wxGROW|wxBOTTOM|wxLEFT|wxRIGHT, 8)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
 

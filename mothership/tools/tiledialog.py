@@ -36,7 +36,7 @@ class TileDialog(wxDialog):
 			# spin box to choose node instance
 			box = wxStaticBox(parent=self, id=-1, label="Node Instance")
 			innerSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
-			outerSizer.Add(innerSizer, option=0, flag=wxGROW|wxALL, border=4)
+			outerSizer.Add(innerSizer, 0, wxGROW|wxALL, 4)
 			label = wxStaticText(parent=self, id=-1, label="Instance:")
 			innerSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
 			self.instanceCtrl = wxSpinCtrl(parent=self, id=id_INSTANCE,
@@ -54,19 +54,19 @@ class TileDialog(wxDialog):
 		# editable list of tile tuples
 		box = wxStaticBox(parent=self, id=-1, label="Edit Tile List")
 		innerSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		outerSizer.Add(innerSizer, option=1, flag=wxALL|wxGROW, border=4)
+		outerSizer.Add(innerSizer, 1, wxALL|wxGROW, 4)
 		self.listBox = wxEditableListBox(parent=self, id=-1,
 										 label="Tiles (x, y, width, height)",
 										 size=(300, 200))
-		innerSizer.Add(self.listBox, option=1, flag=wxGROW|wxALL, border=2)
+		innerSizer.Add(self.listBox, 1, wxGROW|wxALL, 2)
 
 		# OK / Cancel buttons
 		rowSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
-		rowSizer.Add(self.OkButton, option=0, flag=wxALIGN_CENTER)
+		rowSizer.Add(self.OkButton, 0, wxALIGN_CENTER)
 		self.CancelButton = wxButton(parent=self, id=id_CANCEL, label="Cancel")
-		rowSizer.Add(self.CancelButton, option=0, flag=wxALIGN_CENTER)
-		outerSizer.Add(rowSizer, option=0, flag=wxGROW|wxALL, border=4)
+		rowSizer.Add(self.CancelButton, 0, wxALIGN_CENTER)
+		outerSizer.Add(rowSizer, 0, wxGROW|wxALL, 4)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
 

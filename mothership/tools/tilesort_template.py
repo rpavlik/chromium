@@ -472,24 +472,20 @@ class TilesortDialog(wxDialog):
 		# Sizer for the OK, Cancel, Help buttons
 		okCancelSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
-		okCancelSizer.Add(self.OkButton, option=0,
-						  flag=wxALIGN_CENTER, border=0)
+		okCancelSizer.Add(self.OkButton, 0, wxALIGN_CENTER, 0)
 		self.CancelButton = wxButton(parent=self, id=id_CANCEL,
 									 label="Cancel")
-		okCancelSizer.Add(self.CancelButton, option=0,
-						  flag=wxALIGN_CENTER, border=0)
+		okCancelSizer.Add(self.CancelButton, 0, wxALIGN_CENTER, 0)
 		self.HelpButton = wxButton(parent=self, id=id_HELP,
 									 label="Help")
-		okCancelSizer.Add(self.HelpButton, option=0,
-						  flag=wxALIGN_CENTER, border=0)
+		okCancelSizer.Add(self.HelpButton, 0, wxALIGN_CENTER, 0)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
 		EVT_BUTTON(self.HelpButton, id_HELP, self._onHelp)
 
 		# The toolAndDrawSizer contains the toolpanel and drawing area
 		toolAndDrawSizer = wxBoxSizer(wxHORIZONTAL)
-		toolAndDrawSizer.Add(toolSizer, option=0,
- 					 flag=wxALL|wxALIGN_TOP, border=4)
+		toolAndDrawSizer.Add(toolSizer, 0, wxALL|wxALIGN_TOP, 4)
 		toolAndDrawSizer.Add(self.drawArea, 1, wxEXPAND)
 
 		# horizontal separator (box with height=0)
@@ -498,9 +494,9 @@ class TilesortDialog(wxDialog):
 
 		# The topsizer contains the toolAndDrawSizer and the okCancelSizer
 		topSizer = wxBoxSizer(wxVERTICAL)
-		topSizer.Add(toolAndDrawSizer, option=1, flag=wxGROW, border=0)
+		topSizer.Add(toolAndDrawSizer, 1, wxGROW, 0)
 		topSizer.Add(separator, flag=wxGROW, border=0)
-		topSizer.Add(okCancelSizer, option=0, flag=wxGROW|wxALL, border=10)
+		topSizer.Add(okCancelSizer, 0, wxGROW|wxALL, 10)
 
 		# Finish-up the dialog
 		self.SetAutoLayout(true)

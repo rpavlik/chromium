@@ -26,7 +26,7 @@ class TextDialog(wxDialog):
 		p = parent
 		self.html = wxHtmlWindow(parent=self, id=-1)
 
-		outerSizer.Add(self.html, option=1, flag=wxGROW)
+		outerSizer.Add(self.html, 1, wxGROW)
 
 
 		rowSizer = wxGridSizer(rows=1, cols=2, vgap=4)
@@ -34,10 +34,9 @@ class TextDialog(wxDialog):
 		self.CloseButton = wxButton(parent=self, id=id_CLOSE, label="Close")
 		EVT_BUTTON(self.BackButton, id_BACK, self.__onBack)
 		EVT_BUTTON(self.CloseButton, id_CLOSE, self.__onClose)
-		rowSizer.Add(self.BackButton, option=0, flag=wxALIGN_CENTER, border=8)
-		rowSizer.Add(self.CloseButton, option=0, flag=wxALIGN_CENTER, border=8)
-		outerSizer.Add(rowSizer, option=0,
-					   flag=wxGROW|wxALL, border=8)
+		rowSizer.Add(self.BackButton, 0, wxALIGN_CENTER, 8)
+		rowSizer.Add(self.CloseButton, 0, wxALIGN_CENTER, 8)
+		outerSizer.Add(rowSizer, 0, wxGROW|wxALL, 8)
 
 		self.SetSizer(outerSizer)
 		self.SetAutoLayout(true)
