@@ -8,6 +8,7 @@
 #include "cr_mothership.h"
 #include "cr_string.h"
 #include "cr_mem.h"
+#include "cr_url.h"
 #include <string.h>
 #include <math.h>
 
@@ -47,7 +48,6 @@ static void set_peers( void *foo, const char *response )
 	
 	/* figure out how many stages we have */
 	binaryswap_spu.stages = (int)(log(count)/log(2)+0.1);
-	crDebug("Swapping Stages: %d", binaryswap_spu.stages);
 }
 
 
@@ -119,7 +119,6 @@ SPUOptions binaryswapspuOptions[] = {
 void binaryswapspuGatherConfiguration( Binaryswapspu *binaryswap_spu )
 {
 	CRConnection *conn;
-	int i;
 	
 	__setDefaults( binaryswap_spu );
 	
@@ -152,21 +151,6 @@ void binaryswapspuGatherConfiguration( Binaryswapspu *binaryswap_spu )
 			binaryswap_spu->renderToAppWindow = renderToAppWindow;
 		}
 	}
-
-	/* build list of swap partners */
-	binaryswap_spu->swap_partners = crAlloc(binaryswap_spu->stages*sizeof(char*));
-	for( i=0; i<binaryswap_spu->stages; i++ ){
-		/* are we the high in the pair? */
-		if((binaryswap_spu->node_num%((int)pow(2, i+1)))/((int)pow(2, i)))
-		{
-			binaryswap_spu->swap_partners[i] = crStrdup(binaryswap_spu->peer_names[binaryswap_spu->node_num - (int)pow(2, i)]);
-		}
-		/* or the low? */
-		else{
-			binaryswap_spu->swap_partners[i] = crStrdup(binaryswap_spu->peer_names[binaryswap_spu->node_num + (int)pow(2, i)]);
-		}
-	}	
-	
 
 	binaryswap_spu->mtu = crMothershipGetMTU( conn );
 	
