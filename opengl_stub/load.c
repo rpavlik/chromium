@@ -55,9 +55,9 @@ static void stubCheckWindowSize(void)
 		return;
 	stubGetWindowSize( &(stub.Context[c]), &winW, &winH );
 	if (winW != stub.spuWindowWidth || winH != stub.spuWindowHeight) {
-	  stub.spuDispatch.WindowSize( stub.spuWindow, winW, winH );
-	  stub.spuWindowWidth = winW;
-	  stub.spuWindowHeight = winH;
+		stub.spuDispatch.WindowSize( stub.spuWindow, winW, winH );
+		stub.spuWindowWidth = winW;
+		stub.spuWindowHeight = winH;
 	}
 }
 
@@ -93,7 +93,6 @@ static void stubInitSPUDispatch(SPU *spu)
 {
 	crSPUInitDispatchTable( &stub.spuDispatch );
 	crSPUCopyDispatchTable( &stub.spuDispatch, &(spu->dispatch_table) );
-	crSPUCopyDispatchTable( &glim, &stub.spuDispatch );
 
 	if (stub.trackWindowSize) {
 		/* patch-in special glClear/Viewport function to track window sizing */
@@ -102,6 +101,8 @@ static void stubInitSPUDispatch(SPU *spu)
 		stub.spuDispatch.Clear = trapClear;
 		stub.spuDispatch.Viewport = trapViewport;
 	}
+
+	crSPUCopyDispatchTable( &glim, &stub.spuDispatch );
 }
 
 
