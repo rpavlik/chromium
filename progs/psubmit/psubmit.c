@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <iostream.h>
 #include "cr_applications.h"
 #include "cr_string.h"
 #include "cr_error.h"
