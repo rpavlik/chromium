@@ -213,13 +213,13 @@ void STATE_APIENTRY crStateEndList (void)
 
 	if (g->current.inBeginEnd)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glNewList called in Begin/End");
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glEndList called in Begin/End");
 		return;
 	}
 
-	if (l->newEnd)
+	if (!l->newEnd)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glNewList called inside display list");
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glEndList called outside display list");
 		return;
 	}
 
