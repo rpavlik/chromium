@@ -1232,12 +1232,11 @@ crTCPIPDoConnect( CRConnection *conn )
 			freeaddrinfo(res);
 			return 1;
 		}
-		crCloseSocket( conn->tcp_socket );
 #endif
 
 		err = crTCPIPErrno( );
 		if ( err == EADDRINUSE || err == ECONNREFUSED )
-			crWarning( "Couldn't connect to %s:%d, %s",
+			crWarning( "Connection refused to %s:%d, %s",
 					conn->hostname, conn->port, crTCPIPErrorString( err ) );
 
 		else if ( err == EINTR )
@@ -1249,6 +1248,7 @@ crTCPIPDoConnect( CRConnection *conn )
 		else
 			crWarning( "Couldn't connect to %s:%d, %s",
 					conn->hostname, conn->port, crTCPIPErrorString( err ) );
+		crCloseSocket( conn->tcp_socket );
 #ifndef ADDRINFO
 		i=0;
 #else
