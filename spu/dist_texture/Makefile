@@ -17,7 +17,5 @@ LIBRARIES = spuload crutil crmothership
 PRECOMP =
 SLOP = $(PRECOMP)
 
-CFLAGS += -g
-
 LIB_DEFS += dist_texturespu.def
 include ${TOP}/cr.mk
