@@ -61,7 +61,6 @@ print "typedef enum {"
 enum_index = 0
 for func in keys:
 	if "extpack" in apiutil.ChromiumProps(func):
-		assert func != "GetBufferPointervARB"
 		opcodeName = apiutil.ExtendedOpcodeName(func)
 		if enum_index != num_extends-1:
 			print "\t%s = %d," % (opcodeName, enum_index )
