@@ -48,6 +48,7 @@ The default is one.
 each thread.  The default is for all threads to render into one window.
 <li><code>-s1</code> specifies that only one thread should issue SwapBuffers
 commands.  The default is for all threads to swap their windows.
+<li><code>-b</code> specifies that barriers should be used for synchronization.
 </ul>
 
 <p>The <code>threadtest.c</code> program is very similar to the
@@ -67,7 +68,7 @@ Look near the top of the file for these options:</p>
 <li><code>NumThreads</code> indicates the number of threads to create
 <li><code>Config</code> can take one of four values: LOCAL_ONE_WINDOW,
 LOCAL_N_WINDOWS, REMOTE_ONE_WINDOW or SORT_LAST.  These demonstrate
-different types of parallelismg.
+different types of parallelism.
 </ul>
 
 <p>The LOCAL_ONE_WINDOW option will create one window which all N threads
@@ -85,7 +86,10 @@ Run the mothership, a crserver and crappfaker.</p>
 
 <p>The SORT_LAST option uses a readback SPU to render N partial images
 which are sent to render SPU on a downstream server.
-Run the mothership, a crserver and crappfaker.</p>
+Run the mothership, a crserver and crappfaker.
+Note that we don't use the -b option since the readback SPU itself will
+implement barrier synchronization.
+</p>
 
 <p>Threaded sort-first rendering with the tilesort SPU is also possible
 but is not implemented in the configuration script.</p>
