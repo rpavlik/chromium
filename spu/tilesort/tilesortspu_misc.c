@@ -432,6 +432,8 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 		PropogateCursorPosition((GLint *) values);
 		break;
 	case GL_SCREEN_BBOX_CR:  /* GL_CR_bounding_box */
+		CRASSERT(type == GL_FLOAT);
+		CRASSERT(count == 8);
 		if (values) {
 			GLfloat *bbox = (GLfloat *)values;
 			thread->packer->bounds_min.x = bbox[0];
@@ -449,6 +451,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 		}
 		/* fallthrough */
 	case GL_DEFAULT_BBOX_CR:  /* GL_CR_bounding_box */
+		CRASSERT(count == 0);
 		thread->packer->bounds_min = maxVector;
 		thread->packer->bounds_max = minVector;
 		/*crWarning( "I should really switch to the bbox API now, but API switching doesn't work" ); */
