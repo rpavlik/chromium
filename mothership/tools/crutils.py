@@ -71,10 +71,14 @@ def FindSPUNamesInDir(spuDirectory):
 	return spus
 
 
+__SPUNames = []
+
 def FindSPUNames():
 	"""Return turn list of SPUs found in the "default" directory"""
-	l = FindSPUNamesInDir(crconfig.crlibdir)
-	return l
+	global __SPUNames
+	if __SPUNames == []:
+		__SPUNames = FindSPUNamesInDir(crconfig.crlibdir)
+	return __SPUNames
 
 
 #----------------------------------------------------------------------
