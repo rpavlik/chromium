@@ -187,7 +187,9 @@ void READBACKSPU_APIENTRY rbSwapBuffers( void )
 static GLint READBACKSPU_APIENTRY readbackspuCreateContext( void *dpy, GLint visual)
 {
 	GLint retVal;
+#if 0
 	readback_spu.child.BarrierCreate( CREATE_CONTEXT_BARRIER, 0 );
+#endif
 	retVal = readback_spu.super.CreateContext(dpy, visual);
 	if (retVal) {
 		/* If doing z-compositing, need stencil buffer */
@@ -195,26 +197,36 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateContext( void *dpy, GLint vis
 			visual |= CR_STENCIL_BIT;
 		retVal = readback_spu.child.CreateContext(dpy, visual);
 	}
+#if 0
 	readback_spu.child.BarrierExec( CREATE_CONTEXT_BARRIER );
+#endif
 	return retVal;
 }
 
 
 static void READBACKSPU_APIENTRY readbackspuDestroyContext( void *dpy, GLint ctx )
 {
+#if 0
 	readback_spu.child.BarrierCreate( DESTROY_CONTEXT_BARRIER, 0 );
+#endif
 	readback_spu.super.DestroyContext(dpy, ctx);
 	readback_spu.child.DestroyContext(dpy, ctx);
+#if 0
 	readback_spu.child.BarrierExec( DESTROY_CONTEXT_BARRIER );
+#endif
 }
 
 
 static void READBACKSPU_APIENTRY readbackspuMakeCurrent(void *dpy, GLint drawable, GLint ctx)
 {
+#if 0
 	readback_spu.child.BarrierCreate( MAKE_CURRENT_BARRIER, 0 );
+#endif
 	readback_spu.super.MakeCurrent(dpy, drawable, ctx);
 	readback_spu.child.MakeCurrent(dpy, drawable, ctx);
+#if 0
 	readback_spu.child.BarrierExec( MAKE_CURRENT_BARRIER );
+#endif
 }
 
 
