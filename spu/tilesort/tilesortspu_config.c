@@ -95,7 +95,10 @@ void set_bbox_line_width( void *foo, const char *response )
 void set_fake_window_dims( void *foo, const char *response )
 {
    float w,h;
-   sscanf( response, "%f %f", &w, &h );
+   if (response[0] == '[')
+      sscanf( response, "[ %f, %f ]", &w, &h );
+   else
+      sscanf( response, "%f %f", &w, &h );
    tilesort_spu.fakeWindowWidth = (unsigned int) w;
    tilesort_spu.fakeWindowHeight = (unsigned int) h;
 }
@@ -131,7 +134,7 @@ SPUOptions tilesortSPUOptions[] = {
    { "bbox_line_width", CR_INT, 1, "5", "0", "10", 
      "Bounding Box Line Width", (SPUOptionCB)set_bbox_line_width },
 
-   { "fake_window_dims", CR_INT, 2, "0, 0", "1, 1", NULL, 
+   { "fake_window_dims", CR_INT, 2, "0, 0", "0, 0", NULL, 
      "Fake Window Dimensions (w, h)", (SPUOptionCB)set_fake_window_dims },
 
    { "scale_to_mural_size", CR_BOOL, 1, "1", NULL, NULL, 
