@@ -758,6 +758,12 @@ readbackspuCreateContext(const char *dpyName, GLint visBits)
 	context->renderContext = readback_spu.super.CreateContext(dpyName, visBits);
 	context->childContext =
 		readback_spu.child.CreateContext(dpyName, childVisBits);
+	context->visBits = visBits;
+
+	if (context->renderContext < 0 || context->childContext < 0) {
+		 crFree(context);
+		 return -1;
+	}
 
 	/* put into hash table */
 	crHashtableAdd(readback_spu.contextTable, freeID, context);
@@ -788,6 +794,7 @@ readbackspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 
 	if (context && window)
 	{
+		CRASSERT(context->visBits == window->visBits);
 #ifdef CHROMIUM_THREADSAFE
 		crSetTSD(&_ReadbackTSD, context);
 #else
@@ -842,6 +849,12 @@ readbackspuWindowCreate(const char *dpyName, GLint visBits)
 	window->height = -1;					/* unknown */
 	window->colorBuffer = NULL;
 	window->depthBuffer = NULL;
+	window->visBits = visBits;
+
+	if (window->renderWindow < 0 || window->childWindow < 0) {
+		 crFree(window);
+		 return -1;
+	}
 
 	/* put into hash table */
 	crHashtableAdd(readback_spu.windowTable, window->index, window);

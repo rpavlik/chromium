@@ -31,6 +31,7 @@ typedef struct {
 	GLenum rgbaFormat; /**< GL_RGBA or GL_BGRA */
 	GLenum rgbFormat;  /**< GL_RGB or GL_BGR */
 	CRrecti bboxUnion; /**< window-space union of all bounding boxes */
+	GLint visBits;     /**< Describes the visual attributes */
 } WindowInfo;
 
 typedef struct {
@@ -39,6 +40,7 @@ typedef struct {
 	GLint childContext;
 	CRContext *tracker;  /**< for tracking matrix state */
 	WindowInfo *currentWindow;
+	GLint visBits;
 } ContextInfo;
 
 typedef struct {
