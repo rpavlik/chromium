@@ -208,6 +208,12 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 		return;
 	}
 
+	if (mode != GL_COMPILE && mode != GL_COMPILE_AND_EXECUTE)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glNewList invalid mode");
+		return;
+	}
+
 	FLUSH();
 
 	crStateListsBindName(l, list);
