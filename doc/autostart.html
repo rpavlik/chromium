@@ -216,8 +216,10 @@ node.AutoStart( ["/bin/sh", "-c", env + " " + prog] )
       match.
     </p>
     <p class="Indent">
-      The %p sequence will be replaced by the program name. If %d is present,
-      it will be replaced by the current working directory.
+      The %p sequence will be replaced by the program name.
+      If %d is present, it will be replaced by the current working directory.
+      if %m is present, it will be replaced by a a randomly chosen mothership
+      port number.  The spawned mothership will listen on that port.
     </p>
     <p class="StepList">
       4. The CR_CONFIG_PATH and CR_CONFIG environment variables
