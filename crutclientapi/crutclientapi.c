@@ -10,11 +10,11 @@ CRUTClient crut_client;
 CRUTAPI crut_api;
 
 static int
-__getCRUTMessageSize(CRUTMessage* msg)
+__getCRUTMessageSize(int type)
 {
     int msg_size = 0;
 
-    switch( msg->msg_type )
+    switch( type )
     {
     case CRUT_MOUSE_EVENT:
 	msg_size = sizeof( CRUTMouseMsg );
@@ -64,7 +64,9 @@ static void
 __addToEventBuffer(CRMessage* msg)
 {
     CRUTMessage *crut_msg = (CRUTMessage *) msg;
-    int msg_size = __getCRUTMessageSize(crut_msg);
+
+    int msg_size = __getCRUTMessageSize(crut_msg->msg_type);
+
     long int dist = crut_client.last_buffer->buffer_end - crut_client.last_buffer->empty;
 
     if (0 <= dist && dist < MAX_MSG_SIZE)
@@ -203,7 +205,6 @@ crutCreateContext(unsigned int visual)
     return ctx;
 }
 
-
 static int
 __addMenuToList( void (*func) (int val) )
 {
@@ -235,8 +236,6 @@ crutCreateMenu( void (*func) (int val) )
 {
     return __addMenuToList( func );
 }
-
-
 
 static void
 __addItemToList( char* name, int value , int menu_type)
@@ -319,20 +318,14 @@ __createSubMenuXML( int clientMenuID , char* name)
 	    crStrcat( retBuf, __createSubMenuXML( tmpItem->value , tmpItem->name) );
 	else if ( tmpItem->type == MENU_ITEM_REGULAR )
 	{
-	    
 	    sprintf( tmpBuf, "<item type=\"%i\" name=\"%s\" value=\"%i\"></item>",
 		     tmpItem->type, tmpItem->name, tmpItem->value );
-	    
 	    crStrcat( retBuf, tmpBuf );
-	    
 	}
-
     }
-
     crStrcat( retBuf, "</menu>" ); 
 
     return retBuf;
-
 }
 
 /* Not sure of how this should be formatted yet */
@@ -343,19 +336,14 @@ __createMenuXML(void)
 
     char* header = "<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE CRUTmenu [ <!ELEMENT CRUTmenu (button, menu+)> <!ELEMENT button (#PCDATA)> <!ATTLIST button id CDATA #REQUIRED><!ELEMENT menu (item+, menu?)> <!ATTLIST menu name CDATA #IMPLIED> <!ELEMENT item (#PCDATA)> <!ATTLIST item type CDATA #REQUIRED> <!ATTLIST item name CDATA #REQUIRED> <!ATTLIST item value CDATA #REQUIRED> ]>";
     crStrcat( crut_client.menuBuffer, header );
-
     crStrcat( crut_client.menuBuffer, "<CRUTmenu>" );
 
-    
     sprintf( buffer, "<button id=\"%i\" />", crut_client.beginMenuList->att_button );
     crStrcat( crut_client.menuBuffer, buffer );
-    
-    crStrcat( crut_client.menuBuffer, __createSubMenuXML( crut_client.lastMenu->clientMenuID , 
-						     NULL ) );
-
+    crStrcat( crut_client.menuBuffer, 
+	      __createSubMenuXML( crut_client.lastMenu->clientMenuID , NULL ) );
     crStrcat( crut_client.menuBuffer, "</CRUTmenu>" );
 }
-
 
 /* Check to see if there are currently messages in an event buffer */
 int 
@@ -367,6 +355,33 @@ crutCheckEvent(void)
     
     crNetRecv();
     return 0;
+}
+
+/* Peek ahead to the next event, return the type */
+int
+CRUT_CLIENT_APIENTRY
+crutPeekNextEvent(void)
+{
+    CRUTMessage *msg;
+    int msgsize;
+
+    if (crut_client.next_event == crut_client.event_buffer->empty)
+	return CRUT_NO_EVENT;
+
+    msg = (CRUTMessage*) crut_client.next_event;
+    msgsize = __getCRUTMessageSize(msg->msg_type);
+
+    /* see if there is only one event */
+    if ((crut_client.event_buffer->empty - 
+	 (crut_client.next_event + msgsize)) == 0)
+    {
+	return CRUT_NO_EVENT;
+    }
+    else 
+    {
+	msg = (CRUTMessage*) (crut_client.next_event + msgsize);
+	return msg->msg_type;
+    }
 }
 
 /* Wait until we have an event to return */
@@ -381,7 +396,7 @@ crutReceiveEvent(CRUTMessage **msg)
 
     *msg = (CRUTMessage*) crut_client.next_event;
 
-    crut_client.next_event += __getCRUTMessageSize(*msg);
+    crut_client.next_event += __getCRUTMessageSize((*msg)->msg_type);
     
     dist = crut_client.event_buffer->buffer_end - crut_client.next_event;
 
@@ -416,7 +431,6 @@ crutClientRecv( CRConnection *conn, void *buf, unsigned int len )
 
        	return 1; /* HANDLED */
 	break;
-	
     default:
 	return 0; /* NOT HANDLED */
     }
@@ -498,13 +512,29 @@ void
 CRUT_CLIENT_APIENTRY 
 crutMainLoop( )
 {
+    int lastEvent = CRUT_NO_EVENT;
+    int nextEvent = CRUT_NO_EVENT;
+
     clientMenuList* menus;
 
     for (;;)
     {
 	if (crutCheckEvent())
 	{
+	    /* Drop all of the mouse motion events that don't need to be processed.
+	     * This happens here for a few reasons.  The event server can't tell how
+	     * many events it should be dropping, and when the events are first received
+	     * it is a little difficult to replace events already in the queue. */
+	    for ( nextEvent = crutPeekNextEvent();
+		  lastEvent == nextEvent && 
+		      (nextEvent == CRUT_MOTION_EVENT ||
+		       nextEvent == CRUT_PASSIVE_MOTION_EVENT);
+		  nextEvent = crutPeekNextEvent()) {
+		crutReceiveEvent(&crut_client.msg);
+	    }
+
 	    crutReceiveEvent(&crut_client.msg);
+	    lastEvent = crut_client.msg->msg_type;
 
 	    /* handle and forward events */
 	    if (crut_client.msg->msg_type == CRUT_MOUSE_EVENT && crut_client.callbacks.mouse) 
