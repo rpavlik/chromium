@@ -43,22 +43,24 @@ static struct {
 	int                  initialized; /* flag */
 	CRNetReceiveFuncList *recv_list;  /* what to do with arriving packets */
 	CRNetCloseFuncList   *close_list; /* what to do when a client goes down */
-	int                  use_tcpip;      /* count the number of people using GM */
-	int                  use_ib;      /* count the number of people using GM */
-	int                  use_file;      /* count the number of people using GM */
-	int                  use_udp;      /* count the number of people using GM */
-	int                  use_gm;      /* count the number of people using GM */
-  int                  use_sdp;      /* count the number of people using SDP */
-  int                  use_teac;    /* count the number of people using teac */
-  int                  use_tcscomm; /* count the number of people using tcscomm
-*/
 
-	int                  num_clients; /* count the number of total clients (unused?) */
+	/* Number of connections using each type of interface: */
+	int                  use_tcpip;
+	int                  use_ib;
+	int                  use_file;
+	int                  use_udp;
+	int                  use_gm;
+	int                  use_sdp;
+	int                  use_teac;
+	int                  use_tcscomm;
+
+	int                  num_clients; /* total number of clients (unused?) */
+
 	CRBufferPool         *message_list_pool;
 #ifdef CHROMIUM_THREADSAFE
 	CRmutex		     mutex;
 #endif
-  int                  my_rank;
+	int                  my_rank;  /* Teac/TSComm only */
 } cr_net;
 
 
@@ -159,12 +161,12 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 	}
 
 	/* This makes me ill, but we need to "fix" the hostname for sdp. MCH */
-	if( !crStrcmp( protocol, "sdp")){
-	     char* temp;
-	     temp = strtok(hostname, ".");
-	     crStrcat(temp, "sdp");
-	     strcpy(hostname, temp);
-	     crDebug("SDP rename hostname: %s", hostname);    
+	if (!crStrcmp(protocol, "sdp")) {
+		char* temp;
+		temp = strtok(hostname, ".");
+		crStrcat(temp, "sdp");
+		crStrcpy(hostname, temp);
+		crDebug("SDP rename hostname: %s", hostname);    
 	}
 
 	conn = (CRConnection *) crCalloc( sizeof(*conn) );
@@ -308,10 +310,13 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 }
 
 
-/* Create a new client */
+/**
+ * Send a message to the receiver that another connection is needed.
+ * We send a CR_MESSAGE_NEWCLIENT packet, then call crNetServerConnect.
+ */
 void crNetNewClient( CRConnection *conn, CRNetServer *ns )
 {
-	unsigned int len = sizeof(CRMessageNewClient*); /* XXX why pointer??? */
+	unsigned int len = sizeof(CRMessageNewClient);
 	CRMessageNewClient msg;
 
 	CRASSERT( conn );
@@ -447,10 +452,10 @@ crNetAcceptClient( const char *protocol, char *hostname,
 	else if ( !crStrcmp( protocol, "ib" ) )
 	{
 		cr_net.use_ib++;
-	        crDebug("Calling crIBInit() from crNetAcceptClient");
+		crDebug("Calling crIBInit() from crNetAcceptClient");
 		crIBInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crIBConnection( conn );
-	        crDebug("Done Calling crIBInit()");
+		crDebug("Done Calling crIBInit()");
 	}
 #endif
 	else
