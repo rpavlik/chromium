@@ -125,7 +125,7 @@ GLint
 stubNewWindow( const char *dpyName, GLint visBits )
 {
 	WindowInfo *winInfo;
-	GLint spuWin;
+	GLint spuWin, size[2];
 
 	spuWin = stub.spu->dispatch_table.WindowCreate( dpyName, visBits );
 	if (spuWin < 0) {
@@ -139,6 +139,17 @@ stubNewWindow( const char *dpyName, GLint visBits )
 	}
 
 	winInfo->type = CHROMIUM;
+
+	/* Ask the head SPU for the initial window size */
+	size[0] = size[1] = 0;
+	stub.spu->dispatch_table.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																									 0, GL_INT, 2, size);
+	if (size[0] == 0 && size[1] == 0) {
+		/* use some reasonable defaults */
+		size[0] = size[1] = 512;
+	}
+	winInfo->width = size[0];
+	winInfo->height = size[1];
 
 	if (!dpyName)
 		dpyName = "";
@@ -396,7 +407,9 @@ stubGetWindowGeometry( const WindowInfo *window, int *x, int *y,
 {
 	Window root, child;
 	unsigned int border, depth;
-	if (!window || !window->drawable
+	if (!window
+			|| !window->dpy
+			|| !window->drawable
 			|| !XGetGeometry(window->dpy, window->drawable, &root,
 											 x, y, w, h, &border, &depth)
 			|| !XTranslateCoordinates(window->dpy, window->drawable, root,
@@ -689,21 +702,6 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		else {
 			/* no API switch needed */
 		}
-	}
-
-	if (!window->width && window->type == CHROMIUM) {
-		/* Now call Viewport to setup initial parameters */
-		int x, y;
-		unsigned int winW, winH;
-
-		stubGetWindowGeometry( window, &x, &y, &winW, &winH );
-
-		stub.spu->dispatch_table.Viewport( 0, 0, winW, winH );
-
-		window->width = winW;
-		window->height = winH;
-		if (stub.trackWindowSize)
-			stub.spuDispatch.WindowSize( window->spuWindow, winW, winH );
 	}
 
 	return retVal;
