@@ -12,10 +12,6 @@
 :lightModel:lightModelTwoSide:*diff_api.LightModeli(GL_LIGHT_MODEL_TWO_SIDE, to->lightModelTwoSide==GL_TRUE);
 :lightModel:lightModelColorControlEXT:*diff_api.LightModeli(GL_LIGHT_MODEL_COLOR_CONTROL_EXT, to->lightModelColorControlEXT);
 %flush
-+>if (!to->lighting) {
-+>INVERTDIRTY(b->dirty, nbitID);
-+>return;
-+>}
 :material:ambient[0]|r,g,b,a:Materialfv, GL_FRONT, GL_AMBIENT
 :material:ambient[1]|r,g,b,a:Materialfv, GL_BACK, GL_AMBIENT
 :material:diffuse[0]|r,g,b,a:Materialfv, GL_FRONT, GL_DIFFUSE
@@ -38,10 +34,6 @@
 %extrabit=b
 :enable:enable:GL_LIGHT0+i
 %flush
-+>if (!tl->enable) {
-+>INVERTDIRTY(lb->dirty, nbitID);
-+>continue;
-+>}
 :ambient:ambient|r,g,b,a:Lightfv, GL_LIGHT0+i, GL_AMBIENT
 :diffuse:diffuse|r,g,b,a:Lightfv, GL_LIGHT0+i, GL_DIFFUSE
 :specular:specular|r,g,b,a:Lightfv, GL_LIGHT0+i, GL_SPECULAR
