@@ -88,11 +88,12 @@ The Array SPU has no configuration options.
 <a name="binaryswap">
 </a><h2 class="PageSubHeading"><a name="binaryswap">Binaryswap SPU</a></h2>
 <p>
-<a name="binaryswap">The Binaryswap SPU implements the well known <i>binary swap</i> method
-of image compositing.  It works similar to the Readback SPU.  Since
-the Binaryswap SPU is derived from the Render SPU, all the Render SPU
-options are applicable to the Binaryswap SPU.  See
-cr/mothership/configs/psubmit_bswap.conf for an example of how to use
+<a name="binaryswap">The Binaryswap SPU implements the well known
+<i>binary swap</i> method of image compositing for paralleld rendering.
+It works similar to the Readback SPU.
+Since the Binaryswap SPU is derived from the Render SPU, all the Render SPU
+options are applicable to the Binaryswap SPU.
+See cr/mothership/configs/psubmit_bswap.conf for an example of how to use
 this SPU.
 </a></p>
 
@@ -102,20 +103,23 @@ this SPU.
 Parallel Volume Rendering Using Binary-Swap Image Composition</a> (pdf).
 </p>
 
-
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+  <tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
   </tr>
   
   <tr>
-<td width="19%" class="ConfigOption" height="20">local_visualization</td><td width="12%" class="ConfigType" height="20">Boolean</td><td width="100%" class="ConfigDesc" height="20">
+    <td width="19%" class="ConfigOption" height="20">local_visualization</td>
+    <td width="12%" class="ConfigType" height="20">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="20">
     If true, intermediate rendering will be displayed in the binary swap
     SPU's window.
-    </td></tr>
-<tr>
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="20">node_number</td>
     <td width="12%" class="ConfigType" height="20">Integer</td>
     <td width="100%" class="ConfigDesc" height="20">
@@ -129,12 +133,30 @@ Parallel Volume Rendering Using Binary-Swap Image Composition</a> (pdf).
     </td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="20">peers</td><td width="12%" class="ConfigType" height="20">String</td><td width="100%" class="ConfigDesc" height="20">
-    List of peer nodes.  There <b><i>must</i></b> be a power of two number of
-    nodes.  The list of nodes <i>must</i> also be listed in the order
-    the nodes are defined in, e.g. node0 must be listed before node1.
-    </td></tr>
-
+    <td width="19%" class="ConfigOption" height="20">peers</td>
+    <td width="12%" class="ConfigType" height="20">String</td>
+    <td width="100%" class="ConfigDesc" height="20">
+      A comma-separated list of peer node names of the form
+      <i>PROTOCOL://HOSTNAME[:PORT]</i>.
+      <br>
+      <br>
+      For example: "sdp://render1.foo.com" or "tcpip://render2.foo.com:7100".
+      <br>
+      <br>
+      The port number is optional and
+      will be automatically chosen if not present.
+      <br>
+      <br>
+      An example list for a 4-node binary swap configuration is 
+      "tcpip://render1.foo.com,tcpip://render2.foo.com,
+      tcpip://render3.foo.com,tcpip://render4.foo.com".
+      <br>
+      <br>
+      The number of node names listed <b><i>must</i></b> be a power of two.
+      The list of nodes <i>must</i> also be listed in the order
+      the nodes are defined in, e.g. node0 must be listed before node1.
+    </td>
+  </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="20">type</td>
     <td width="12%" class="ConfigType" height="20">Enum</td>
