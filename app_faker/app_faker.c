@@ -667,6 +667,9 @@ static void do_it( char *argv[] )
 	add_dir_to_temp_list( tmpdir );
 
 #ifdef DARWIN
+	(void) i;
+	(void) find_next_version_name;
+
 	/*  This is useful for when running appfaker on remote machines (sort-last)
 		The faker had a habit of faking itself...
 	 */
