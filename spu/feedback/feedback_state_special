@@ -11,6 +11,10 @@ LoadMatrixf
 LoadMatrixd
 MultMatrixf
 MultMatrixd
+LoadTransposeMatrixfARB
+LoadTransposeMatrixdARB
+MultTransposeMatrixfARB
+MultTransposeMatrixdARB
 Translatef
 Translated
 Rotatef

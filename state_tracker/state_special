@@ -86,8 +86,12 @@ PopMatrix
 PushMatrix
 LoadMatrixf
 LoadMatrixd
+LoadTransposeMatrixfARB
+LoadTransposeMatrixdARB
 MultMatrixf
 MultMatrixd
+MultTransposeMatrixfARB
+MultTransposeMatrixdARB
 Translatef
 Translated
 Rotatef

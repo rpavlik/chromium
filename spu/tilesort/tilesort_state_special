@@ -85,6 +85,8 @@ ListBase
 LoadIdentity
 LoadMatrixd
 LoadMatrixf
+LoadTransposeMatrixdARB
+LoadTransposeMatrixfARB
 LoadName
 LogicOp
 Map1d
@@ -98,6 +100,8 @@ MapGrid2f
 MatrixMode
 MultMatrixd
 MultMatrixf
+MultTransposeMatrixdARB
+MultTransposeMatrixfARB
 Ortho
 PassThrough
 PixelMapfv
