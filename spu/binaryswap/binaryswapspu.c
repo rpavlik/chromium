@@ -531,7 +531,7 @@ static void CompositeNode( WindowInfo *window,
 								 binaryswap_spu.offset ); 
 				binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, 
 								 read_width, read_height, 
-								 GL_DEPTH_COMPONENT, GL_FLOAT, 
+								 GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 
 								 (GLubyte*)window->msgBuffer + // base address
 								 (read_width * read_height * 3) + // color information
 								 binaryswap_spu.offset );  // message header
@@ -581,7 +581,7 @@ static void CompositeNode( WindowInfo *window,
 				binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
 				binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
 								 GL_DEPTH_COMPONENT, 
-								 GL_FLOAT, incoming_depth );
+								 GL_UNSIGNED_INT, incoming_depth );
 				binaryswap_spu.super.Disable( GL_DEPTH_TEST );
 				
 				/* draw where depth worked */
