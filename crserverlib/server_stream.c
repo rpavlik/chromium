@@ -172,9 +172,9 @@ static RunQueue *__getNextClient(void)
 
 			if (all_blocked)
 			{
-				crError( "DEADLOCK! (numClients=%d)\n", cr_server.numClients );
+				crError( "crserver: DEADLOCK! (numClients=%d, all blocked)", cr_server.numClients );
 				if (cr_server.numClients < cr_server.maxBarrierCount) {
-					crError("Waiting for more clients!!!\n");
+					crError("Waiting for more clients!!!");
 					while (cr_server.numClients < cr_server.maxBarrierCount) {
 						crNetRecv();
 					}
