@@ -26,6 +26,7 @@ print """
 #include "cr_applications.h"
 #include "cr_string.h"
 #include "cr_error.h"
+#include "cr_spu.h"
 
 #include <stdio.h>
 
@@ -36,7 +37,7 @@ print """
 
 for func_name in stub_common.AllSpecials( "getprocaddress" ):
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name];
-	print 'extern %s stub_%s%s;' % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+	print 'extern %s APIENTRY stub_%s%s;' % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 
 print """
 CR_PROC CR_APIENTRY crGetProcAddress( const char *name )
