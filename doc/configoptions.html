@@ -25,14 +25,13 @@ SPU has <i>no</i> configuration options, it is not listed here.</p>
     <td width="19%" class="ConfigOption">log_file</td>
     <td width="12%" class="ConfigType">String</td>
     <td width="115%" class="ConfigDesc">Name of log file to generate.&nbsp; If this parameter is not
-      specified, the Print SPU will send its output to standard error.</td>
-  </tr>
-  <tr>
-    <td width="19%" class="ConfigOption">log_path</td>
-    <td width="12%" class="ConfigType">String</td>
-    <td width="115%" class="ConfigDesc">Directory that should contain the log file.&nbsp; Only has
-      an effect when used in conjunction with the <code>log_file</code>
-      parameter.</td>
+      specified, the Print SPU will send its output to standard error.  
+	  If this is a relative path, the file will be created relative
+	  to the current directory, which will usually be either the directory
+	  that the server was launched from, or the start directory specified
+	  for the application node.  If no start directory was specified, the
+	  client log file will appear in the directory that <code>crappfaker</code>
+	  was run from.</td>
   </tr>
 </table>
 <p class="PageSubHeading">Render SPU</p>
