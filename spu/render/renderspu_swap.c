@@ -82,7 +82,7 @@ void DrawCube( )
 
 int angle = 0;
 
-void Display( void )
+void CubeDisplay( void )
 {
 		float color[4];
 
@@ -144,7 +144,7 @@ void SPU_APIENTRY renderspuSwapBuffers( void )
 		crDebug( "The current context is 0x%x", render_spu.wglGetCurrentContext() );
 		crDebug( "The context *I* created is 0x%x", render_spu.hRC );
 	}
-	/* Display(); */
+	/* CubeDisplay(); */
 	if (!render_spu.wglSwapBuffers( render_spu.device_context ))
 	{
 		/* GOD DAMN IT.  The latest versions of the NVIDIA drivers

@@ -7,7 +7,6 @@
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_mothership.h"
-#include "cr_logo.h"
 #include "renderspu.h"
 
 #include <stdio.h>
