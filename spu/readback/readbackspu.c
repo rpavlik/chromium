@@ -196,7 +196,11 @@ static void read_and_send_tiles( WindowInfo *window )
 	else
 	{
 		/* we're running on the appfaker */
-		int x, y, w, h;
+		/* default to no bounding box - read/draw whole window */
+		/* the != NULL check will override this later... */
+		int x = 0, y = 0;
+		int w = window->width;
+		int h = window->height;
 
 		numExtents = 1; /* this may get set to zero below! */
 
@@ -264,13 +268,6 @@ static void read_and_send_tiles( WindowInfo *window )
 					h = (int) (readback_spu.halfViewportHeight*ymax + readback_spu.viewportCenterY) - y;
 				}
 			}
-		}
-		else {
-			/* no bounding box - read/draw whole window */
-			x = 0;
-			y = 0;
-			w = window->width;
-			h = window->height;
 		}
 
 		extent0.x1 = x;
