@@ -219,10 +219,6 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 
 	crSPUPropogateGLLimits( conn, tilesort_spu.id, child_spu, &tilesort_spu.limits );
 
-	/* XXX there may be a better way of doing this */
-	tilesort_spu.limits.maxViewportDims[0] = MAX_MURAL_WIDTH;
-	tilesort_spu.limits.maxViewportDims[1] = MAX_MURAL_HEIGHT;
-
 	crFreeStrings( serverchain );
 	crFreeStrings( serverlist );
 
