@@ -32,10 +32,8 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 	winInfo = thread->currentContext->currentWindow;
 	CRASSERT(winInfo);
 
-	/* XXX is this check needed?  Should we updateWindowInfo everytime? */
-	if (winInfo->lastWidth == 0 && winInfo->lastHeight == 0) {
-		 tilesortspuUpdateWindowInfo(winInfo);
-	}
+	/* get latest window dimensions */
+	tilesortspuUpdateWindowInfo(winInfo);
 
 	if (winInfo->lastWidth == 0 || winInfo->lastHeight == 0) 
 	{
