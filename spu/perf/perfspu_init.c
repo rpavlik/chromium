@@ -5,6 +5,7 @@
  */
 
 #include "cr_spu.h"
+#include "cr_mothership.h"
 #include "cr_environment.h"
 #include "cr_string.h"
 #include "cr_error.h"
@@ -56,6 +57,14 @@ SPUFunctions *perfSPUInit( int id, SPU *child, SPU *super,
 	perfspuChromiumParameterfCR(GL_PERF_START_TIMER_CR, 5.0);
 #endif
 
+	if ( perf_spu.mothership_log )
+		perf_spu.conn = crMothershipConnect( );
+	else if (crStrlen(perf_spu.log_filename)>0)
+      		perf_spu.log_file = fopen( perf_spu.log_filename, "w" );
+      		if (perf_spu.log_file == NULL) {
+	 	    crError( "Couldn't open perf SPU log file %s", perf_spu.log_filename );
+	}
+
 	return &perf_functions;
 }
 
@@ -67,10 +76,17 @@ void perfSPUSelfDispatch(SPUDispatchTable *self)
 
 int perfSPUCleanup(void)
 {
-	fprintf( perf_spu.log_file, "TOTAL FRAMES %d\n", perf_spu.total_frames );
-	fprintf( perf_spu.log_file, "TOTAL CLEARS %d\n", perf_spu.clear_counter );
+	char str[100];
 
-	fclose( perf_spu.log_file );
+	sprintf(str, "TOTAL FRAMES %d", perf_spu.total_frames );
+	perfspuDump( str );
+	sprintf(str, "TOTAL CLEARS %d", perf_spu.clear_counter );
+	perfspuDump( str );
+
+	if ( perf_spu.mothership_log )
+		crMothershipDisconnect( perf_spu.conn );
+	else 
+		fclose( perf_spu.log_file );
 
 	return 1;
 }

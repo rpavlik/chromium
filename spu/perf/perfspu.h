@@ -17,6 +17,7 @@
 #include "cr_timer.h"
 #include "cr_applications.h"
 
+extern void perfspuDump( char *str );
 void perfspuGatherConfiguration( void );
 
 /* Check cr_applications.h for structures */
@@ -26,7 +27,11 @@ typedef struct {
 	int has_child;
 	SPUDispatchTable self, child, super;
 
+	CRConnection *conn;
+	int mothership_log;
+
 	char hostname[100];
+	char *log_filename;
 	FILE *log_file;
 	char token[100];
 	char separator[100];

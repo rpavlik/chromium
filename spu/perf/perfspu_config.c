@@ -20,7 +20,11 @@
 static void __setDefaults( void )
 {
 	perf_spu.log_file = stderr;
+	perf_spu.log_filename = NULL;
 	perf_spu.frame_counter = 0;
+	perf_spu.clear_counter = 0;
+	perf_spu.total_frames = 0;
+	perf_spu.mothership_log = 0;
 	perf_spu.timer_event = 0.0f;
 	crMemset(&perf_spu.framestats, 0, sizeof(PerfData));
 	crMemset(&perf_spu.old_framestats, 0, sizeof(PerfData));
@@ -64,18 +68,23 @@ void set_log_file( void *foo, const char *response )
    	strcpy(filename, ffilename);
    }
 
-   if (crStrcmp( ffilename, "stderr" ) == 0) {
+   perf_spu.log_filename = (char *) crAlloc( crStrlen(ffilename) + 1 );
+   strcpy(perf_spu.log_filename, ffilename);
+
+   if (crStrcmp( response, "stderr" ) == 0) {
       perf_spu.log_file = stderr;
    } 
-   else if (crStrcmp( ffilename, "stdout" ) == 0) {
+   else if (crStrcmp( response, "stdout" ) == 0) {
       perf_spu.log_file = stdout;
    }
+#if 0 /* moved to perfspu_init.c */
    else if (ffilename) {
       perf_spu.log_file = fopen( ffilename, "w" );
       if (perf_spu.log_file == NULL) {
 	 crError( "Couldn't open perf SPU log file %s", ffilename );
       }
    }
+#endif
    else
       perf_spu.log_file = stderr;
 }
@@ -95,6 +104,11 @@ void set_separator( void *foo, const char *response )
    strncpy(perf_spu.separator, response, strlen(response));
 }
 
+void set_mothership_log( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(perf_spu.mothership_log) );
+}
+
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions perfSPUOptions[] = {
@@ -110,6 +124,9 @@ SPUOptions perfSPUOptions[] = {
 
    { "perf_set_log_separator", CR_STRING, 1, "\t", NULL, NULL, 
      "Performance SPU Log File separator", (SPUOptionCB)set_separator },
+
+   { "perf_set_mothership_log", CR_INT, 0, "0", "0", "1",
+     "Performance SPU Log to Mothership", (SPUOptionCB)set_mothership_log },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 

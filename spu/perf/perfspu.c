@@ -6,197 +6,104 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "cr_mothership.h"
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_pixeldata.h"
 #include "perfspu.h"
 
+
+#define DUMP_DATA(s,o,n) \
+	if (o < n) { \
+		sprintf(str, "%s%s%s%d%s%d", output, s, perf_spu.separator, n, perf_spu.separator, n - o); \
+		perfspuDump( str ); \
+	}
+
+#define DUMP_DATA2(s,o,n) \
+	if (o.count < n.count) { \
+		sprintf(str, "%s%s%s%d%s%d", output, s, perf_spu.separator, n.count, perf_spu.separator, n.count - o.count); \
+		perfspuDump( str ); \
+		perfspuDumpVertices(pstring, &o, &n); \
+	}
+
+void perfspuDump( char *str )
+{
+	if ( perf_spu.mothership_log )
+		crMothershipSendString ( perf_spu.conn, NULL, "logperf %s", str );
+	else {
+		fprintf( perf_spu.log_file, str );
+		fprintf( perf_spu.log_file, "\n" );
+	}
+}
+
 void perfspuDumpVertices(char *pstring, PerfVertex *old, PerfVertex *new)
 {
-	char *output;
-
-	output = (char *) crAlloc ( strlen(perf_spu.token) + strlen(perf_spu.hostname) + strlen(pstring) + (strlen(perf_spu.separator) * 4) );
+	char output[200];
+	char str[200];
 
 	sprintf(output, "%s%s%s%s%s%s", perf_spu.token, perf_spu.separator, perf_spu.hostname, perf_spu.separator, pstring, perf_spu.separator);
 
-	if (old->v2d < new->v2d)
-		fprintf( perf_spu.log_file, "%sglVertex2d%s%d%s%d\n", output, perf_spu.separator, new->v2d, perf_spu.separator, new->v2d - old->v2d);
+	DUMP_DATA("glVertex2d", old->v2d, new->v2d);
+	DUMP_DATA("glVertex2f", old->v2f, new->v2f);
+	DUMP_DATA("glVertex2i", old->v2i, new->v2i);
+	DUMP_DATA("glVertex2s", old->v2s, new->v2s);
+	DUMP_DATA("glVertex2dv", old->v2dv, new->v2dv);
+	DUMP_DATA("glVertex2fv", old->v2fv, new->v2fv);
+	DUMP_DATA("glVertex2iv", old->v2iv, new->v2iv);
+	DUMP_DATA("glVertex2sv", old->v2sv, new->v2sv);
+	DUMP_DATA("glVertex3d", old->v3d, new->v3d);
+	DUMP_DATA("glVertex3f", old->v3f, new->v3f);
+	DUMP_DATA("glVertex3i", old->v3i, new->v3i);
+	DUMP_DATA("glVertex3s", old->v3s, new->v3s);
+	DUMP_DATA("glVertex3dv", old->v3dv, new->v3dv);
+	DUMP_DATA("glVertex3fv", old->v3fv, new->v3fv);
+	DUMP_DATA("glVertex3iv", old->v3iv, new->v3iv);
+	DUMP_DATA("glVertex3sv", old->v3sv, new->v3sv);
+	DUMP_DATA("glVertex4d", old->v4d, new->v4d);
+	DUMP_DATA("glVertex4f", old->v4f, new->v4f);
+	DUMP_DATA("glVertex4i", old->v4i, new->v4i);
+	DUMP_DATA("glVertex4s", old->v4s, new->v4s);
+	DUMP_DATA("glVertex4dv", old->v4dv, new->v4dv);
+	DUMP_DATA("glVertex4fv", old->v4fv, new->v4fv);
+	DUMP_DATA("glVertex4iv", old->v4iv, new->v4iv);
+	DUMP_DATA("glVertex4sv", old->v4sv, new->v4sv);
 
-	if (old->v2f < new->v2f)
-		fprintf( perf_spu.log_file, "%sglVertex2f%s%d%s%d\n", output, perf_spu.separator, new->v2f, perf_spu.separator, new->v2f - old->v2f);
-
-	if (old->v2i < new->v2i)
-		fprintf( perf_spu.log_file, "%sglVertex2i%s%d%s%d\n", output, perf_spu.separator, new->v2i, perf_spu.separator, new->v2i - old->v2i);
-
-	if (old->v2s < new->v2s)
-		fprintf( perf_spu.log_file, "%sglVertex2s%s%d%s%d\n", output, perf_spu.separator, new->v2s, perf_spu.separator, new->v2s - old->v2s);
-
-	if (old->v2dv < new->v2dv)
-		fprintf( perf_spu.log_file, "%sglVertex2dv%s%d%s%d\n", output, perf_spu.separator, new->v2dv, perf_spu.separator, new->v2dv - old->v2dv);
-
-	if (old->v2fv < new->v2fv)
-		fprintf( perf_spu.log_file, "%sglVertex2fv%s%d%s%d\n", output, perf_spu.separator, new->v2fv, perf_spu.separator, new->v2fv - old->v2fv);
-
-	if (old->v2iv < new->v2iv)
-		fprintf( perf_spu.log_file, "%sglVertex2iv%s%d%s%d\n", output, perf_spu.separator, new->v2iv, perf_spu.separator, new->v2iv - old->v2iv);
-
-	if (old->v2sv < new->v2sv)
-		fprintf( perf_spu.log_file, "%sglVertex2sv%s%d%s%d\n", output, perf_spu.separator, new->v2sv, perf_spu.separator, new->v2sv - old->v2sv);
-
-	if (old->v3d < new->v3d)
-		fprintf( perf_spu.log_file, "%sglVertex3d%s%d%s%d\n", output, perf_spu.separator, new->v3d, perf_spu.separator, new->v3d - old->v3d);
-
-	if (old->v3f < new->v3f)
-		fprintf( perf_spu.log_file, "%sglVertex3f%s%d%s%d\n", output, perf_spu.separator, new->v3f, perf_spu.separator, new->v3f - old->v3f);
-
-	if (old->v3i < new->v3i)
-		fprintf( perf_spu.log_file, "%sglVertex3i%s%d%s%d\n", output, perf_spu.separator, new->v3i, perf_spu.separator, new->v3i - old->v3i);
-
-	if (old->v3s < new->v3s)
-		fprintf( perf_spu.log_file, "%sglVertex3s%s%d%s%d\n", output, perf_spu.separator, new->v3s, perf_spu.separator, new->v3s - old->v3s);
-
-	if (old->v3dv < new->v3dv)
-		fprintf( perf_spu.log_file, "%sglVertex3dv%s%d%s%d\n", output, perf_spu.separator, new->v3dv, perf_spu.separator, new->v3dv - old->v3dv);
-
-	if (old->v3fv < new->v3fv)
-		fprintf( perf_spu.log_file, "%sglVertex3fv%s%d%s%d\n", output, perf_spu.separator, new->v3fv, perf_spu.separator, new->v3fv - old->v3fv);
-
-	if (old->v3iv < new->v3iv)
-		fprintf( perf_spu.log_file, "%sglVertex3iv%s%d%s%d\n", output, perf_spu.separator, new->v3iv, perf_spu.separator, new->v3iv - old->v3iv);
-
-	if (old->v3sv < new->v3sv)
-		fprintf( perf_spu.log_file, "%sglVertex3sv%s%d%s%d\n", output, perf_spu.separator, new->v3sv, perf_spu.separator, new->v3sv - old->v3sv);
-
-	if (old->v4d < new->v4d)
-		fprintf( perf_spu.log_file, "%sglVertex4d%s%d%s%d\n", output, perf_spu.separator, new->v4d, perf_spu.separator, new->v4d - old->v4d);
-
-	if (old->v4f < new->v4f)
-		fprintf( perf_spu.log_file, "%sglVertex4f%s%d%s%d\n", output, perf_spu.separator, new->v4f, perf_spu.separator, new->v4f - old->v4f);
-
-	if (old->v4i < new->v4i)
-		fprintf( perf_spu.log_file, "%sglVertex4i%s%d%s%d\n", output, perf_spu.separator, new->v4i, perf_spu.separator, new->v4i - old->v4i);
-
-	if (old->v4s < new->v4s)
-		fprintf( perf_spu.log_file, "%sglVertex4s%s%d%s%d\n", output, perf_spu.separator, new->v4s, perf_spu.separator, new->v4s - old->v4s);
-
-	if (old->v4dv < new->v4dv)
-		fprintf( perf_spu.log_file, "%sglVertex4dv%s%d%s%d\n", output, perf_spu.separator, new->v4dv, perf_spu.separator, new->v4dv - old->v4dv);
-
-	if (old->v4fv < new->v4fv)
-		fprintf( perf_spu.log_file, "%sglVertex4fv%s%d%s%d\n", output, perf_spu.separator, new->v4fv, perf_spu.separator, new->v4fv - old->v4fv);
-
-	if (old->v4iv < new->v4iv)
-		fprintf( perf_spu.log_file, "%sglVertex4iv%s%d%s%d\n", output, perf_spu.separator, new->v4iv, perf_spu.separator, new->v4iv - old->v4iv);
-
-	if (old->v4sv < new->v4sv)
-		fprintf( perf_spu.log_file, "%sglVertex4sv%s%d%s%d\n", output, perf_spu.separator, new->v4sv, perf_spu.separator, new->v4sv - old->v4sv);
-
-	if (old->ipoints < new->ipoints)
-		fprintf( perf_spu.log_file, "%sINTERP_POINTS%s%d%s%d\n", output, perf_spu.separator, new->ipoints, perf_spu.separator, new->ipoints - old->ipoints);
-
-	if (old->ilines < new->ilines)
-		fprintf( perf_spu.log_file, "%sINTERP_LINES%s%d%s%d\n", output, perf_spu.separator, new->ilines, perf_spu.separator, new->ilines - old->ilines);
-
-	if (old->itris < new->itris)
-		fprintf( perf_spu.log_file, "%sINTERP_TRIS%s%d%s%d\n", output, perf_spu.separator, new->itris, perf_spu.separator, new->itris - old->itris);
-
-	if (old->iquads < new->iquads)
-		fprintf( perf_spu.log_file, "%sINTERP_QUADS%s%d%s%d\n", output, perf_spu.separator, new->iquads, perf_spu.separator, new->iquads - old->iquads);
-
-	if (old->ipolygons < new->ipolygons)
-		fprintf( perf_spu.log_file, "%sINTERP_POLYGONS%s%d%s%d\n", output, perf_spu.separator, new->ipolygons, perf_spu.separator, new->ipolygons - old->ipolygons);
+	DUMP_DATA("INTERP_POINTS", old->ipoints, new->ipoints);
+	DUMP_DATA("INTERP_LINES", old->ilines, new->ilines);
+	DUMP_DATA("INTERP_TRIS", old->itris, new->itris);
+	DUMP_DATA("INTERP_QUADS", old->iquads, new->iquads);
+	DUMP_DATA("INTERP_POLYGONS", old->ipolygons, new->ipolygons);
 
 	/* Break up for the next dump */
-	fprintf( perf_spu.log_file, "\n");
-
-	crFree(output);
+	perfspuDump( " " );
 }
 
 void perfspuDumpCounters(char *pstring, PerfData *old, PerfData *new)
 {
 	PerfPrim *oldprim = &old->vertex_data;
 	PerfPrim *newprim = &new->vertex_data;
-	char *output;
-
-	output = (char *) crAlloc ( strlen(perf_spu.token) + strlen(perf_spu.hostname) + strlen(pstring) + (strlen(perf_spu.separator) * 4) );
+	char output[200];
+	char str[200];
 
 	sprintf(output, "%s%s%s%s%s%s", perf_spu.token, perf_spu.separator, perf_spu.hostname, perf_spu.separator, pstring, perf_spu.separator);
 	
-	if (oldprim->points.count < newprim->points.count) {
-		fprintf( perf_spu.log_file, "%sPOINTS%s%d%s%d\n", output, perf_spu.separator, newprim->points.count, perf_spu.separator, newprim->points.count - oldprim->points.count);
+	DUMP_DATA2("POINTS", oldprim->points, newprim->points);
+	DUMP_DATA2("LINES", oldprim->lines, newprim->lines);
+	DUMP_DATA2("LINELOOPS", oldprim->lineloop, newprim->lineloop);
+	DUMP_DATA2("LINESTRIPS", oldprim->linestrip, newprim->linestrip);
+	DUMP_DATA2("TRANGLES", oldprim->triangles, newprim->triangles);
+	DUMP_DATA2("TRISTRIPS", oldprim->tristrip, newprim->tristrip);
+	DUMP_DATA2("TRIFANS", oldprim->trifan, newprim->trifan);
+	DUMP_DATA2("QUADS", oldprim->quads, newprim->quads);
+	DUMP_DATA2("QUADSTRIPS", oldprim->quadstrip, newprim->quadstrip);
+	DUMP_DATA2("POLYGONS", oldprim->polygon, newprim->polygon);
 
-		perfspuDumpVertices(pstring, &oldprim->points, &newprim->points);
-	}
-
-	if (oldprim->lines.count < newprim->lines.count) {
-		fprintf( perf_spu.log_file, "%sLINES%s%d%s%d\n", output, perf_spu.separator, newprim->lines.count, perf_spu.separator, newprim->lines.count - oldprim->lines.count);
-
-		perfspuDumpVertices(pstring, &oldprim->lines, &newprim->lines);
-	}
-
-	if (oldprim->lineloop.count < newprim->lineloop.count) {
-		fprintf( perf_spu.log_file, "%sLINELOOPS%s%d%s%d\n", output, perf_spu.separator, newprim->lineloop.count, perf_spu.separator, newprim->lineloop.count - oldprim->lineloop.count);
-	
-		perfspuDumpVertices(pstring, &oldprim->lineloop, &newprim->lineloop);
-	}
-
-	if (oldprim->linestrip.count < newprim->linestrip.count) {
-		fprintf( perf_spu.log_file, "%sLINESTRIPS%s%d%s%d\n", output, perf_spu.separator, newprim->linestrip.count, perf_spu.separator, newprim->linestrip.count - oldprim->linestrip.count);
-	
-		perfspuDumpVertices(pstring, &oldprim->linestrip, &newprim->linestrip);
-	}
-
-	if (oldprim->triangles.count < newprim->triangles.count) {
-		fprintf( perf_spu.log_file, "%sTRIANGLES%s%d%s%d\n", output, perf_spu.separator, newprim->triangles.count, perf_spu.separator, newprim->triangles.count - oldprim->triangles.count);
-	
-		perfspuDumpVertices(pstring, &oldprim->triangles, &newprim->triangles);
-	}
-
-	if (oldprim->tristrip.count < newprim->tristrip.count) {
-		fprintf( perf_spu.log_file, "%sTRISTRIPS%s%d%s%d\n", output, perf_spu.separator, newprim->tristrip.count, perf_spu.separator, newprim->tristrip.count - oldprim->tristrip.count);
-	
-		perfspuDumpVertices(pstring, &oldprim->tristrip, &newprim->tristrip);
-	}
-
-	if (oldprim->trifan.count < newprim->trifan.count) {
-		fprintf( perf_spu.log_file, "%sTRIFANS%s%d%s%d\n", output, perf_spu.separator, newprim->trifan.count, perf_spu.separator, newprim->trifan.count - oldprim->trifan.count);
-	
-		perfspuDumpVertices(pstring, &oldprim->tristrip, &newprim->tristrip);
-	}
-
-	if (oldprim->quads.count < newprim->quads.count) {
-		fprintf( perf_spu.log_file, "%sQUADS%s%d%s%d\n", output, perf_spu.separator, newprim->quads.count, perf_spu.separator, newprim->quads.count - oldprim->quads.count);
-
-		perfspuDumpVertices(pstring, &oldprim->quads, &newprim->quads);
-	}
-
-	if (oldprim->quadstrip.count < newprim->quadstrip.count) {
-		fprintf( perf_spu.log_file, "%sQUADSTRIPS%s%d%s%d\n", output,  perf_spu.separator, newprim->quadstrip.count, perf_spu.separator, newprim->quadstrip.count - oldprim->quadstrip.count);
-
-		perfspuDumpVertices(pstring, &oldprim->quadstrip, &newprim->quadstrip);
-	}
-	
-	if (oldprim->polygon.count < newprim->polygon.count) {
-		fprintf( perf_spu.log_file, "%sPOLYGONS%s%d%s%d\n", output, perf_spu.separator, newprim->polygon.count, perf_spu.separator, newprim->polygon.count - oldprim->polygon.count);
-
-		perfspuDumpVertices(pstring, &oldprim->polygon, &newprim->polygon);
-	}
-
-	if (old->draw_pixels < new->draw_pixels) {
-		fprintf( perf_spu.log_file, "%sDRAWPIXELS%s%d%s%d\n", output, perf_spu.separator, new->draw_pixels, perf_spu.separator, new->draw_pixels - old->draw_pixels);
-	}
-		
-	if (old->read_pixels < new->read_pixels) {
-		fprintf( perf_spu.log_file, "%sREADPIXELS%s%d%s%d\n", output, perf_spu.separator, new->read_pixels, perf_spu.separator, new->read_pixels - old->read_pixels);
-	}
+	DUMP_DATA("DRAWPIXELS", old->draw_pixels, new->draw_pixels);
+	DUMP_DATA("READPIXELS", old->read_pixels, new->read_pixels);
 		
 	/* Copy to the old structures for variance output */
 	crMemcpy(old, new, sizeof(PerfData));
-
-	crFree(output);
-	
-	fflush( perf_spu.log_file );
 }
 
 void perfspuInterpretVertexData( PerfVertex *stats, int diff )
