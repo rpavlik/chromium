@@ -414,7 +414,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
                    /* if ended because of matched run, back up one */
                    if (bufi < bufw && v_curr == v_peek)
                    {
-                      *p_val--;              /* undo last store */
+                      p_val--;              /* undo last store */
                       bufi--;                /* to start a matched run */
                       r++;                   /* adjust run count */
                       CRASSERT(r < 0);

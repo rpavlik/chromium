@@ -94,7 +94,7 @@ typedef struct{
                        */
         uint prefval;  /* preferred data value, 0 for XOR  */
         int  nruns;    /*XXX JAG debug count of runs */
-        PLEdata data[];
+        PLEdata data[0];
         }PLEbuf;
 
 /* 
