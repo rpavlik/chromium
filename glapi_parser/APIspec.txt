@@ -8190,7 +8190,7 @@ paramprop	target		GL_ARRAY_BUFFER_ARB GL_ELEMENT_ARRAY_BUFFER_ARB
 param		access		GLenum
 paramprop	access		GL_READ_ONLY_ARB GL_WRITE_ONLY_ARB GL_READ_WRITE_ARB
 category	GL_ARB_vertex_buffer_object
-props		nolist
+props		nolist get
 chromium	nopack
 
 name		UnmapBufferARB
@@ -8198,7 +8198,7 @@ return		GLboolean
 param		target		GLenum
 paramprop	target		GL_ARRAY_BUFFER_ARB GL_ELEMENT_ARRAY_BUFFER_ARB
 category	GL_ARB_vertex_buffer_object
-props		nolist
+props		nolist get
 chromium	nopack
 
 
