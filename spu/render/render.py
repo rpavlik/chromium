@@ -69,8 +69,8 @@ void LoadSystemGL( SPUNamedFunctionTable *table )
 	CRDLL *dll = __findSystemGL();
 """
 
-index = 0
-for func_name in keys:
+for index in range(len(keys)):
+	func_name = keys[index]
 	(return_type, names, types) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "render", func_name ):
 		print '\t__fillin( table + %3d, "%s", (SPUGenericFunction) __renderSpecial%s );' % (index, func_name, func_name )
@@ -78,7 +78,6 @@ for func_name in keys:
 		print '\t__fillin( table + %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
 	else:
 		print '\t__fillin( table + %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
-	index += 1
 
 useful_wgl_functions = [
 	"MakeCurrent",

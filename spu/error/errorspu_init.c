@@ -9,17 +9,15 @@ SPUFunctions the_functions = {
 	error_table // THE ACTUAL FUNCTIONS
 };
 
-static int SPUid;
-
 SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
+	(void) id;
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
 	(void) super;
-	SPUid = id;
 	return &the_functions;
 }
 
