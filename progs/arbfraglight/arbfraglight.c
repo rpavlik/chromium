@@ -31,23 +31,41 @@ static GLboolean PixelLight = GL_TRUE;
 
 static GLfloat Xrot = 0, Yrot = 0;
 
-static PFNGLPROGRAMLOCALPARAMETER4FVARBPROC glProgramLocalParameter4fvARB_func;
-static PFNGLPROGRAMLOCALPARAMETER4DVARBPROC glProgramLocalParameter4dvARB_func;
-static PFNGLPROGRAMLOCALPARAMETER4DARBPROC glProgramLocalParameter4dARB_func;
-static PFNGLGETPROGRAMLOCALPARAMETERDVARBPROC glGetProgramLocalParameterdvARB_func;
-static PFNGLPROGRAMENVPARAMETER4FVARBPROC glProgramEnvParameter4fvARB_func;
-static PFNGLPROGRAMENVPARAMETER4FARBPROC glProgramEnvParameter4fARB_func;
-static PFNGLPROGRAMENVPARAMETER4DVARBPROC glProgramEnvParameter4dvARB_func;
-static PFNGLPROGRAMENVPARAMETER4DARBPROC glProgramEnvParameter4dARB_func;
-static PFNGLGETPROGRAMENVPARAMETERDVARBPROC glGetProgramEnvParameterdvARB_func;
-static PFNGLGETPROGRAMENVPARAMETERFVARBPROC glGetProgramEnvParameterfvARB_func;
+/* We're making our own typedefs here since NVIDIA's gl.h is lacking them. */
+typedef void (APIENTRY * glProgramLocalParameter4dARB_t) (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+typedef void (APIENTRY * glProgramLocalParameter4dvARB_t) (GLenum target, GLuint index, const GLdouble *params);
+typedef void (APIENTRY * glProgramLocalParameter4fvARB_t) (GLenum target, GLuint index, const GLfloat *params);
+typedef void (APIENTRY * glGetProgramLocalParameterdvARB_t) (GLenum target, GLuint index, GLdouble *params);
+typedef void (APIENTRY * glProgramEnvParameter4dARB_t) (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+typedef void (APIENTRY * glProgramEnvParameter4dvARB_t) (GLenum target, GLuint index, const GLdouble *params);
+typedef void (APIENTRY * glProgramEnvParameter4fARB_t) (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+typedef void (APIENTRY * glProgramEnvParameter4fvARB_t) (GLenum target, GLuint index, const GLfloat *params);
+typedef void (APIENTRY * glGetProgramEnvParameterdvARB_t) (GLenum target, GLuint index, GLdouble *params);
+typedef void (APIENTRY * glGetProgramEnvParameterfvARB_t) (GLenum target, GLuint index, GLfloat *params);
+typedef void (APIENTRY * glGenProgramsARB_t) (GLsizei n, GLuint *programs);
+typedef void (APIENTRY * glProgramStringARB_t) (GLenum target, GLenum format, GLsizei len, const GLvoid *string);
+typedef void (APIENTRY * glBindProgramARB_t) (GLenum target, GLuint program);
+typedef GLboolean (APIENTRY * glIsProgramARB_t) (GLuint program);
+typedef void (APIENTRY * glVertexAttrib3fARB_t) (GLuint index, GLfloat x, GLfloat y, GLfloat z);
 
-static PFNGLGENPROGRAMSARBPROC glGenProgramsARB_func;
-static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB_func;
-static PFNGLBINDPROGRAMARBPROC glBindProgramARB_func;
-static PFNGLISPROGRAMARBPROC glIsProgramARB_func;
+static glProgramLocalParameter4fvARB_t glProgramLocalParameter4fvARB_func;
+static glProgramLocalParameter4dvARB_t glProgramLocalParameter4dvARB_func;
+static glProgramLocalParameter4dARB_t glProgramLocalParameter4dARB_func;
+static glGetProgramLocalParameterdvARB_t glGetProgramLocalParameterdvARB_func;
 
-static PFNGLVERTEXATTRIB3FARBPROC glVertexAttrib3fARB_func;
+static glProgramEnvParameter4fvARB_t glProgramEnvParameter4fvARB_func;
+static glProgramEnvParameter4fARB_t glProgramEnvParameter4fARB_func;
+static glProgramEnvParameter4dvARB_t glProgramEnvParameter4dvARB_func;
+static glProgramEnvParameter4dARB_t glProgramEnvParameter4dARB_func;
+static glGetProgramEnvParameterdvARB_t glGetProgramEnvParameterdvARB_func;
+static glGetProgramEnvParameterfvARB_t glGetProgramEnvParameterfvARB_func;
+
+static glGenProgramsARB_t glGenProgramsARB_func;
+static glProgramStringARB_t glProgramStringARB_func;
+static glBindProgramARB_t glBindProgramARB_func;
+static glIsProgramARB_t glIsProgramARB_func;
+
+static glVertexAttrib3fARB_t glVertexAttrib3fARB_func;
 
 
 /* These must match the indexes used in the fragment program */
@@ -342,49 +360,49 @@ static void Init( void )
    /*
     * Get extension function pointers.
     */
-   glProgramLocalParameter4fvARB_func = (PFNGLPROGRAMLOCALPARAMETER4FVARBPROC) crGetProcAddress("glProgramLocalParameter4fvARB");
+   glProgramLocalParameter4fvARB_func = (glProgramLocalParameter4fvARB_t) crGetProcAddress("glProgramLocalParameter4fvARB");
    assert(glProgramLocalParameter4fvARB_func);
 
-   glProgramLocalParameter4dvARB_func = (PFNGLPROGRAMLOCALPARAMETER4DVARBPROC) crGetProcAddress("glProgramLocalParameter4dvARB");
+   glProgramLocalParameter4dvARB_func = (glProgramLocalParameter4dvARB_t) crGetProcAddress("glProgramLocalParameter4dvARB");
    assert(glProgramLocalParameter4dvARB_func);
 
-   glProgramLocalParameter4dARB_func = (PFNGLPROGRAMLOCALPARAMETER4DARBPROC) crGetProcAddress("glProgramLocalParameter4dARB");
+   glProgramLocalParameter4dARB_func = (glProgramLocalParameter4dARB_t) crGetProcAddress("glProgramLocalParameter4dARB");
    assert(glProgramLocalParameter4dARB_func);
 
-   glGetProgramLocalParameterdvARB_func = (PFNGLGETPROGRAMLOCALPARAMETERDVARBPROC) crGetProcAddress("glGetProgramLocalParameterdvARB");
+   glGetProgramLocalParameterdvARB_func = (glGetProgramLocalParameterdvARB_t) crGetProcAddress("glGetProgramLocalParameterdvARB");
    assert(glGetProgramLocalParameterdvARB_func);
 
-   glProgramEnvParameter4fvARB_func = (PFNGLPROGRAMENVPARAMETER4FVARBPROC) crGetProcAddress("glProgramEnvParameter4fvARB");
+   glProgramEnvParameter4fvARB_func = (glProgramEnvParameter4fvARB_t) crGetProcAddress("glProgramEnvParameter4fvARB");
    assert(glProgramEnvParameter4fvARB_func);
 
-   glProgramEnvParameter4fARB_func = (PFNGLPROGRAMENVPARAMETER4FARBPROC) crGetProcAddress("glProgramEnvParameter4fARB");
+   glProgramEnvParameter4fARB_func = (glProgramEnvParameter4fARB_t) crGetProcAddress("glProgramEnvParameter4fARB");
    assert(glProgramEnvParameter4fARB_func);
 
-   glProgramEnvParameter4dvARB_func = (PFNGLPROGRAMENVPARAMETER4DVARBPROC) crGetProcAddress("glProgramEnvParameter4dvARB");
+   glProgramEnvParameter4dvARB_func = (glProgramEnvParameter4dvARB_t) crGetProcAddress("glProgramEnvParameter4dvARB");
    assert(glProgramEnvParameter4dvARB_func);
 
-   glProgramEnvParameter4dARB_func = (PFNGLPROGRAMENVPARAMETER4DARBPROC) crGetProcAddress("glProgramEnvParameter4dARB");
+   glProgramEnvParameter4dARB_func = (glProgramEnvParameter4dARB_t) crGetProcAddress("glProgramEnvParameter4dARB");
    assert(glProgramEnvParameter4dARB_func);
 
-   glGetProgramEnvParameterdvARB_func = (PFNGLGETPROGRAMENVPARAMETERDVARBPROC) crGetProcAddress("glGetProgramEnvParameterdvARB");
+   glGetProgramEnvParameterdvARB_func = (glGetProgramEnvParameterdvARB_t) crGetProcAddress("glGetProgramEnvParameterdvARB");
    assert(glGetProgramEnvParameterdvARB_func);
 
-   glGetProgramEnvParameterfvARB_func = (PFNGLGETPROGRAMENVPARAMETERFVARBPROC) crGetProcAddress("glGetProgramEnvParameterfvARB");
+   glGetProgramEnvParameterfvARB_func = (glGetProgramEnvParameterfvARB_t) crGetProcAddress("glGetProgramEnvParameterfvARB");
    assert(glGetProgramEnvParameterfvARB_func);
 
-   glGenProgramsARB_func = (PFNGLGENPROGRAMSARBPROC) crGetProcAddress("glGenProgramsARB");
+   glGenProgramsARB_func = (glGenProgramsARB_t) crGetProcAddress("glGenProgramsARB");
    assert(glGenProgramsARB_func);
 
-   glProgramStringARB_func = (PFNGLPROGRAMSTRINGARBPROC) crGetProcAddress("glProgramStringARB");
+   glProgramStringARB_func = (glProgramStringARB_t) crGetProcAddress("glProgramStringARB");
    assert(glProgramStringARB_func);
 
-   glBindProgramARB_func = (PFNGLBINDPROGRAMARBPROC) crGetProcAddress("glBindProgramARB");
+   glBindProgramARB_func = (glBindProgramARB_t) crGetProcAddress("glBindProgramARB");
    assert(glBindProgramARB_func);
 
-   glIsProgramARB_func = (PFNGLISPROGRAMARBPROC) crGetProcAddress("glIsProgramARB");
+   glIsProgramARB_func = (glIsProgramARB_t) crGetProcAddress("glIsProgramARB");
    assert(glIsProgramARB_func);
 
-   glVertexAttrib3fARB_func = (PFNGLVERTEXATTRIB3FARBPROC) crGetProcAddress("glVertexAttrib3fARB");
+   glVertexAttrib3fARB_func = (glVertexAttrib3fARB_t) crGetProcAddress("glVertexAttrib3fARB");
    assert(glVertexAttrib3fARB_func);
 
    /*
