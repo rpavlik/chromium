@@ -12,6 +12,10 @@ typedef struct {
 	float m30, m31, m32, m33;
 } CRmatrix;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void
 crMatrixInit(CRmatrix *m);
 
@@ -77,5 +81,8 @@ crMatrixOrtho(CRmatrix *m,
 							float bottom, float top,
 							float znear, float zfar);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

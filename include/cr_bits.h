@@ -30,6 +30,10 @@
 #define CR_MAX_CONTEXTS      512
 #define CR_MAX_BITARRAY      (CR_MAX_CONTEXTS / 32) /* 32 contexts per uint */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static INLINE void RESET( unsigned int *b, const unsigned int *d )
 {
 	int j;
@@ -74,6 +78,9 @@ static INLINE int CHECKDIRTY( const unsigned int *b, const unsigned int *d )
 	return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* CR_BITS_H */
