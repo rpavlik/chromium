@@ -35,11 +35,13 @@ unsigned int crHashtableNumElements( CRHashTable *h) ;
 #define CR_HASHTABLE_WALK( h, t ) {         \
   CRHashNode *t;                            \
   int _;                                        \
-  for (_ = 0 ; _ < CR_NUM_BUCKETS ; _++) {  \
-    for (t = h->buckets[_] ; t; t = t->next)   {
+  if (h) {					\
+    for (_ = 0; _ < CR_NUM_BUCKETS ; _++) {  \
+      for (t = h->buckets[_] ; t; t = t->next)   {
 
 
 #define CR_HASHTABLE_WALK_END( h )          \
+   }						\
   }                                             \
  }                                              \
 }
