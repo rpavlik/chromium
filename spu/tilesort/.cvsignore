@@ -5,7 +5,6 @@ tilesortspu_diffapi.c
 tilesortspu_pinch_gen.c
 tilesortspu_gen.c
 tilesortspu_gen.h
-tilesort_dlpack_ignore_special
 tilesortspu_dlpack_gen.c
 tilesortspu_dlpack_gen.h
 tilesortspu_dlpacker_gen.c
