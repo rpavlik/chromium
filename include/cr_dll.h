@@ -12,6 +12,10 @@
 #include <windows.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	char *name;
 #if defined(WINDOWS)
@@ -28,5 +32,9 @@ CRDLL *crDLLOpen( const char *dllname );
 CRDLLFunc crDLLGetNoError( CRDLL *dll, const char *symname );
 CRDLLFunc crDLLGet( CRDLL *dll, const char *symname );
 void crDLLClose( CRDLL *dll );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_DLL_H */
