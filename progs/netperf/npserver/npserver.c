@@ -89,7 +89,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *protocol = "tcpip";
-	const int port = 10000;
+	const unsigned short port = 10000;
 	CRConnection *clientConn;
 	int i;
 
