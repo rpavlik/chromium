@@ -19,22 +19,29 @@ static Display *currentDisplay = NULL;
 static GLXDrawable currentDrawable = 0;
 
 
+/* Define these types here, in case they're not defined in the glx.h or
+ * glxext.h headers.  Duplicate, _identical_ typedefs should be OK.
+ */
+typedef struct __GLXFBConfigRec *GLXFBConfigSGIX;
+typedef XID GLXPbufferSGIX;
+
+
 /*
  * Prototypes, in case they're not in glx.h or glxext.h
  * Unfortunately, there's some inconsistency between the extension
  * specs, and the SGI, NVIDIA, XFree86 and common glxext.h header
  * files.
  */
-#if defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX)
-/* match SGI's glx.h header */
-GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, const int *attrib_list);
-void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
-GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, const int *attrib_list, int *nelements);
-#else
+#if defined(GLX_GLXEXT_VERSION)
 /* match glxext.h, XFree86, Mesa */
 GLXPbufferSGIX glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, int *attrib_list);
 int glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
 GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, int *attrib_list, int *nelements);
+#else
+/* match SGI's glx.h header */
+GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, const int *attrib_list);
+void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
+GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, const int *attrib_list, int *nelements);
 #endif
 
 void glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf);
@@ -771,14 +778,14 @@ GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
 	return NULL;
 }
 
-#if defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX)
-GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
-																	 unsigned int width, unsigned int height,
-																	 const int *attrib_list)
-#else
+#if defined(GLX_GLXEXT_VERSION)
 GLXPbufferSGIX glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
 																			 unsigned int width, unsigned int height,
 																			 int *attrib_list)
+#else
+GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
+																	 unsigned int width, unsigned int height,
+																	 const int *attrib_list)
 #endif
 {
 	(void) dpy;
@@ -811,12 +818,12 @@ void glXGetSelectedEventSGIX(Display *dpy, GLXDrawable drawable, unsigned long *
 	(void) mask;
 }
 
-#if defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX)
-void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
-														int attribute, unsigned int *value)
-#else
+#if defined(GLX_GLXEXT_VERSION)
 int glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
 													 int attribute, unsigned int *value)
+#else
+void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
+														int attribute, unsigned int *value)
 #endif
 {
 	(void) dpy;
@@ -824,7 +831,7 @@ int glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
 	(void) attribute;
 	(void) value;
 	crWarning("glXQueryGLXPbufferSGIX not implemented by Chromium");
-#if !(defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX))
+#if defined(GLX_GLXEXT_VERSION)
 	return 0;
 #endif
 }
@@ -840,12 +847,12 @@ int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config,
 	return 0;
 }
 
-#if defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX)
-GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen,
-																			 const int *attrib_list, int *nelements)
-#else
+#if defined(GLX_GLXEXT_VERSION)
 GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen,
 																			 int *attrib_list, int *nelements)
+#else
+GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen,
+																			 const int *attrib_list, int *nelements)
 #endif
 {
 	(void) dpy;
