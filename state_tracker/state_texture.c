@@ -1838,13 +1838,12 @@ void STATE_APIENTRY crStateTexSubImage3D (GLenum target, GLint level, GLint xoff
 
 #if defined( CR_OPENGL_VERSION_1_2 ) || defined( GL_EXT_texture3D ) 
 void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level,
-#if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS)
-                                                                         GLenum internalFormat,
-#else
-                                                                         GLint internalFormat,
-#endif
-		GLsizei width, GLsizei height, GLsizei depth,
-		GLint border, GLenum format, GLenum type, const GLvoid *pixels  ) {
+                                       GLint internalFormat,
+																			 GLsizei width, GLsizei height,
+																			 GLsizei depth, GLint border,
+																			 GLenum format, GLenum type,
+																			 const GLvoid *pixels  )
+{
 	CRContext *g = GetCurrentContext();
 	CRTextureState *t = &(g->texture);
 	CRClientState *c = &(g->client);

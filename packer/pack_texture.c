@@ -187,14 +187,12 @@ void PACK_APIENTRY crPackTexImage3DEXT(GLenum target, GLint level,
 
 #ifdef CR_OPENGL_VERSION_1_2
 void PACK_APIENTRY crPackTexImage3D(GLenum target, GLint level,
-#if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS)
-																		GLenum internalformat,
-#else
 																		GLint internalformat,
-#endif
-                GLsizei width, GLsizei height, GLsizei depth, GLint border,
-                GLenum format, GLenum type, const GLvoid *pixels,
-                const CRPixelPackState *unpackstate )
+																		GLsizei width, GLsizei height,
+																		GLsizei depth, GLint border,
+																		GLenum format, GLenum type,
+																		const GLvoid *pixels,
+																		const CRPixelPackState *unpackstate )
 {
 	unsigned char *data_ptr;
 	int packet_length;
