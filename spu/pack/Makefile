@@ -15,6 +15,7 @@ FILES = packspu \
 	packspu_getstring \
 	packspu_flush \
 	packspu_init \
+	packspu_misc \
 	packspu_net \
 	packspu_swapbuf \
 	packspu_pixel
