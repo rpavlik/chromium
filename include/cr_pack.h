@@ -22,6 +22,10 @@
 #define DLLDATA
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	void          *pack;
 	unsigned int   size;
@@ -121,5 +125,9 @@ void SanityCheck(void);
 
 #define WRITE_NETWORK_POINTER( offset, data ) \
   crNetworkPointerWrite( (CRNetworkPointer *) ( data_ptr + (offset) ), (data) )
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_PACK_H */

@@ -9,6 +9,10 @@
 
 #include "cr_net.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	char *name;
 	int buffer_size;
@@ -16,5 +20,9 @@ typedef struct {
 } CRNetServer;
 
 void crNetServerConnect( CRNetServer *ns );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_NETSERVER_H */

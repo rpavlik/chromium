@@ -7,6 +7,10 @@
 #ifndef CR_PROTOCOL_H
 #define CR_PROTOCOL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
 	/* first message types is 'wGL\001', so we can immediately
 		 recognize bad message types */
@@ -87,5 +91,9 @@ typedef union {
 } CRMessage;
 
 void crNetworkPointerWrite( CRNetworkPointer *dst, void *src );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_PROTOCOL_H */

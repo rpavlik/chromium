@@ -10,6 +10,10 @@ typedef unsigned int iotimer32_t;
 #include <windows.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct Timer 
 {
 	double time0, elapsed;
@@ -40,5 +44,9 @@ void crStartTimer( CRTimer *t );
 void crStopTimer( CRTimer *t );
 void crResetTimer( CRTimer *t );
 double crTimerTime( CRTimer *t );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_TIMER_H */

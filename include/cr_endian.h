@@ -10,10 +10,6 @@ extern "C" {
 
 extern char crDetermineEndianness( void );
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
- 
 #ifdef WINDOWS
 typedef __int64 CR64BitType;
 #else
@@ -56,5 +52,9 @@ double SWAPDOUBLE( double d );
                        ((*((int *) &(x)) & 0xFF000000) >> 24))
 
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+ 
 
 #endif /* CR_ENDIAN_H */

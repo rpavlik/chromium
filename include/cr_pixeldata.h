@@ -10,6 +10,10 @@
 #include "cr_glwrapper.h"
 #include "state/cr_client.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int crPixelSize( GLenum format, GLenum type );
 
 unsigned int crImageSize( GLenum format, GLenum type,
@@ -24,5 +28,9 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 										const CRPixelPackState *dstPacking,
 										const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
 										const CRPixelPackState *srcPacking );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_PIXELDATA_H */

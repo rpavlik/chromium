@@ -16,6 +16,10 @@
 
 #include "state/cr_currentpointers.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	int spu_id;
 	int number;
@@ -60,6 +64,9 @@ typedef struct {
 } CRServer;
 
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

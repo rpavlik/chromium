@@ -7,7 +7,15 @@
 #ifndef CR_URL_H
 #define CR_URL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int crParseURL( char *url, char *protocol, char *hostname,
 				unsigned short *port, unsigned short default_port );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_URL_H */

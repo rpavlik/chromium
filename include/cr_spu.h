@@ -20,6 +20,10 @@
 
 #define SPU_ENTRY_POINT_NAME "SPULoad"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _SPUSTRUCT SPU;
 
 typedef struct {
@@ -86,5 +90,9 @@ void crSPUPropogateGLLimits( CRConnection *conn, int spu_id, const SPU *child_sp
 
 int crLoadOpenGL( crOpenGLInterface *interface, SPUNamedFunctionTable table[] );
 int crLoadOpenGLExtensions( const crOpenGLInterface *interface, SPUNamedFunctionTable table[] );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_SPU_H */

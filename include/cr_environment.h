@@ -7,7 +7,15 @@
 #ifndef CR_ENVIRONMENT_H
 #define CR_ENVIRONMENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void crSetenv( const char *var, const char *value );
 char *crGetenv( const char *var );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_ENVIRONMENT_H */

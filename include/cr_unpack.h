@@ -20,6 +20,10 @@
 #define DLLDATA
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern DLLDATA unsigned char *cr_unpackData;
 extern SPUDispatchTable cr_unpackDispatch;
 extern SPUDispatchTable *lastDispatch;
@@ -70,5 +74,9 @@ double crReadUnalignedDouble( void *buffer );
 
 #define SET_WRITEBACK_PTR( offset ) \
 	memcpy( writeback_ptr, cr_unpackData + (offset), sizeof( *writeback_ptr ) );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_UNPACK_H */

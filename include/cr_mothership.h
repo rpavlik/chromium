@@ -9,6 +9,10 @@
 
 #include "cr_net.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 CRConnection *crMothershipConnect( void );
 int crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... );
 int crMothershipReadResponse( CRConnection *conn, void *buf );
@@ -35,5 +39,9 @@ int crMothershipGetSPUDir( CRConnection *conn, char *response );
 void crMothershipGetMTU( CRConnection *conn, char *response );
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num );
 int crMothershipGetServerTiles( CRConnection *conn, char *response );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_MOTHERSHIP_H */

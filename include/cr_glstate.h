@@ -42,6 +42,10 @@ typedef struct CRContext CRContext;
 
 #define CR_MAX_EXTENTS 256
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	CRAttribBits    attrib;
 	CRBufferBits    buffer;
@@ -138,5 +142,9 @@ void crStateSetCurrentPointers( CRContext *ctx, CRCurrentStatePointers *current 
 
 void crStateDiffContext( CRContext *from, CRContext *to );
 void crStateSwitchContext( CRContext *from, CRContext *to );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CR_GLSTATE_H */
