@@ -14,6 +14,7 @@
 # Known issues:
 # 1. All tiles must be the same size
 # 2. Tiles can't overlap
+# 3. Need to support arbitrary SPUs on client/server nodes.
 
 
 import string, cPickle, os.path, re
@@ -682,8 +683,6 @@ def Create_Tilesort(parentWindow, mothership):
 		mothership.Template.TileWidth = defaultScreenSize[0]
 		mothership.Template.TileHeight = defaultScreenSize[1]
 
-	mothership.Template.LayoutTiles()  # initial tile layout
-
 	# build the graph
 	numServers = rows * cols
 	mothership.DeselectAllNodes()
@@ -702,10 +701,17 @@ def Create_Tilesort(parentWindow, mothership):
 	serverNode.AddSPU(renderSPU)
 	mothership.AddNode(serverNode)
 	tilesortSPU.AddServer(serverNode)
+
+	# Do initial tile layout
+	mothership.Template.UpdateFromMothership(mothership)
+	mothership.Template.LayoutTiles()
+
+	# Set the initial tile list for each server
 	i = 0
 	for tileList in mothership.Template.ServerTiles:
 		serverNode.SetTiles(tileList, i)
 		i += 1
+
 	# done with the dialog
 	dialog.Destroy()
 	return 1
