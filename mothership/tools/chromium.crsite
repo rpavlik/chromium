@@ -1,0 +1,19 @@
+# chromium.site
+
+# This file describes your site's Chomium resources.
+# You can use it to list all the hosts in your cluster, how large your
+# mural display is, the tile sizes, etc.  We'll add new stuff in the
+# future.
+
+# This file is read by the Chromium configuration tool in order to
+# initialize templates, etc.
+
+# The syntax is that of a Python dictionary which maps variable names to
+# values.  This lets us parse the file by simply calling eval()!
+
+{
+	"mural_size" : (2, 2),          # (cols, rows)
+	"screen_size" : (1280, 1024),   # in pixels
+	"client_hosts" : ["localhost"],
+	"server_hosts" : ["cr1", "cr2", "cr3", "cr4"]
+}
