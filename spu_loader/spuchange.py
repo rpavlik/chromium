@@ -42,7 +42,7 @@ void crSPUChangeInterface( SPUDispatchTable *table, void *orig_func, void *new_f
 
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
-	print '\tif (table->%s == orig_func)' % func_name
+	print '\tif ((void *)table->%s == orig_func)' % func_name
 	print '\t{'
 	print '\t\ttable->%s = (%sFunc_t)new_func;' % (func_name, func_name)
 	print '\t\tfor (temp = table->copyList ; temp ; temp = temp->next)'

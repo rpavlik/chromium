@@ -27,7 +27,7 @@ typedef struct CRHashTable {
 CRHashTable *crAllocHashtable( void );
 void crFreeHashtable( CRHashTable *hash );
 void crHashtableAdd( CRHashTable *h, unsigned int key, void *data );
-void crHashtableDelete( CRHashTable *h, unsigned int key );
+void crHashtableDelete( CRHashTable *h, unsigned int key, int freeData );
 void *crHashtableSearch( CRHashTable *h, unsigned int key );
 void crHashtableReplace( CRHashTable *h, unsigned int key, void *data, int free_mem );
 unsigned int crHashtableNumElements( CRHashTable *h) ;

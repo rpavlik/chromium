@@ -5,22 +5,36 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStateStencilInit(CRStencilState *s) 
+void crStateStencilInit(CRContext *ctx)
 {
+	CRStencilState *s = &ctx->stencil;
+	CRStateBits *stateb = GetCurrentBits();
+	CRStencilBits *sb = &(stateb->stencil);
+
 	s->stencilTest = GL_FALSE;
+	RESET(sb->enable, ctx->bitid);
+
 	s->func = GL_ALWAYS;
 	s->mask = 0xFFFFFFFF;
 	s->ref = 0;
+	RESET(sb->func, ctx->bitid);
+
 	s->fail = GL_KEEP;
 	s->passDepthFail = GL_KEEP;
 	s->passDepthPass = GL_KEEP;
+	RESET(sb->op, ctx->bitid);
+
 	s->clearValue = 0;
+	RESET(sb->clearValue, ctx->bitid);
+
 	s->writeMask = 0xFFFFFFFF;
+	RESET(sb->writeMask, ctx->bitid);
+
+	RESET(sb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateStencilFunc(GLenum func, GLint ref, GLuint mask) 
@@ -78,37 +92,55 @@ void STATE_APIENTRY crStateStencilOp (GLenum fail, GLenum zfail, GLenum zpass)
 
 	FLUSH();
 
-	if (fail != GL_KEEP &&
-		fail != GL_ZERO &&
-		fail != GL_REPLACE &&
-		fail != GL_INCR &&
-		fail != GL_DECR &&
-		fail != GL_INVERT) 
-	{
+	switch (fail) {
+	case GL_KEEP:
+	case GL_ZERO:
+	case GL_REPLACE:
+	case GL_INCR:
+	case GL_DECR:
+	case GL_INVERT:
+#ifdef CR_EXT_stencil_wrap
+	case GL_INCR_WRAP_EXT:
+	case GL_DECR_WRAP_EXT:
+#endif
+		break;
+	default:
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
 			"glStencilOp called with bogus fail: %d", fail);
 		return;
 	}
 
-	if (zfail != GL_KEEP &&
-		zfail != GL_ZERO &&
-		zfail != GL_REPLACE &&
-		zfail != GL_INCR &&
-		zfail != GL_DECR &&
-		zfail != GL_INVERT) 
-	{
+	switch (zfail) {
+	case GL_KEEP:
+	case GL_ZERO:
+	case GL_REPLACE:
+	case GL_INCR:
+	case GL_DECR:
+	case GL_INVERT:
+#ifdef CR_EXT_stencil_wrap
+	case GL_INCR_WRAP_EXT:
+	case GL_DECR_WRAP_EXT:
+#endif
+		break;
+	default:
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
 			"glStencilOp called with bogus zfail: %d", zfail);
 		return;
 	}
 
-	if (zpass != GL_KEEP &&
-		zpass != GL_ZERO &&
-		zpass != GL_REPLACE &&
-		zpass != GL_INCR &&
-		zpass != GL_DECR &&
-		zpass != GL_INVERT) 
-	{
+	switch (zpass) {
+	case GL_KEEP:
+	case GL_ZERO:
+	case GL_REPLACE:
+	case GL_INCR:
+	case GL_DECR:
+	case GL_INVERT:
+#ifdef CR_EXT_stencil_wrap
+	case GL_INCR_WRAP_EXT:
+	case GL_DECR_WRAP_EXT:
+#endif
+		break;
+	default:
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
 			"glStencilOp called with bogus zpass: %d", zpass);
 		return;
@@ -162,7 +194,7 @@ void STATE_APIENTRY crStateStencilMask (GLuint mask)
 
 	FLUSH();
 
-	s->mask = mask;
+	s->writeMask = mask;
 
 	DIRTY(sb->writeMask, g->neg_bitid);
 	DIRTY(sb->dirty, g->neg_bitid);

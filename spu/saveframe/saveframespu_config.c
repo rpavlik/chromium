@@ -5,7 +5,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 
 #ifndef WINDOWS
@@ -30,19 +29,19 @@ __setDefaults(void)
 #endif
 }
 
-void
+static void
 set_stride(void *foo, const char *response)
 {
 	sscanf(response, "%d", &saveframe_spu.stride);
 }
 
-void
+static void
 set_binary(void *foo, const char *response)
 {
 	sscanf(response, "%d", &saveframe_spu.binary);
 }
 
-void
+static void
 set_spec(void *foo, const char *response)
 {
 	if (saveframe_spu.spec && (!crStrcmp(response, "frame%d.ppm")))
@@ -54,7 +53,7 @@ set_spec(void *foo, const char *response)
 	saveframe_spu.spec = crStrdup(response);
 }
 
-void
+static void
 set_basename(void *foo, const char *response)
 {
 	int rl = crStrlen(response);
@@ -66,19 +65,19 @@ set_basename(void *foo, const char *response)
 	}
 }
 
-void
+static void
 set_format(void *foo, const char *response)
 {
 	saveframe_spu.format = crStrdup(response);
 }
 
-void
+static void
 set_single(void *foo, const char *response)
 {
 	sscanf(response, "%d", &saveframe_spu.single);
 }
 
-void
+static void
 set_geometry(void *foo, const char *response)
 {
 	int x, y, w, h, result;
@@ -92,7 +91,7 @@ set_geometry(void *foo, const char *response)
 		ResizeBuffer();
 }
 
-void
+static void
 set_enabled(void *foo, const char *response)
 {
 	sscanf(response, "%d", &saveframe_spu.enabled);

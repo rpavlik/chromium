@@ -14,12 +14,12 @@ print << 'EOF';
 
 EOF
 
-print "void crState".$name."Diff(CR".$name."Bits *b, GLbitvalue *bitID,\n";
+print "void crState".$name."Diff(CR".$name."Bits *b, CRbitvalue *bitID,\n";
 print "\tCR".$name."State *from, CR".$name."State *to)\n{\n";
 gendiffcode ("state_".lc($name).".txt", $name, 1, 0);
 print "}\n\n";
 
-print "void crState".$name."Switch(CR".$name."Bits *b, GLbitvalue *bitID,\n";
+print "void crState".$name."Switch(CR".$name."Bits *b, CRbitvalue *bitID,\n";
 print "\tCR".$name."State *from, CR".$name."State *to)\n{\n";
 gendiffcode ("state_".lc($name).".txt", $name, 0, 1);
 print "}\n\n";
@@ -55,7 +55,7 @@ $current_dependancy = "";
 open(FILE, $fname) || die "Can't open ".$fname."!";
 
 print "\tint j, i;\n";
-print "\tGLbitvalue nbitID[CR_MAX_BITARRAY];\n";
+print "\tCRbitvalue nbitID[CR_MAX_BITARRAY];\n";
 print "\tfor (j=0;j<CR_MAX_BITARRAY;j++)\n";
 print "\t\tnbitID[j] = ~bitID[j];\n";
 print "\ti = 0; /* silence compiler */\n";

@@ -4,6 +4,9 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_rand.h"
+
+
 /* Period parameters */
 #define N 624
 #define M 397

@@ -15,49 +15,49 @@ extern "C" {
 #endif
 
 typedef GLfloat GLdefault;
-#define GL_DEFAULTTYPE_FLOAT
+#define CR_DEFAULTTYPE_FLOAT
 
-#define GL_MAXBYTE		((GLbyte) 0x7F)
-#define GL_MAXUBYTE		((GLubyte) 0xFF)
-#define GL_MAXSHORT		((GLshort) 0x7FFF)
-#define GL_MAXUSHORT	((GLushort) 0xFFFF)
-#define GL_MAXINT			((GLint) 0x7FFFFFFF)
-#define GL_MAXUINT		((GLuint) 0xFFFFFFFF)
-#define GL_MAXFLOAT		1.0f
-#define GL_MAXDOUBLE	1.0
+#define CR_MAXBYTE		((GLbyte) 0x7F)
+#define CR_MAXUBYTE		((GLubyte) 0xFF)
+#define CR_MAXSHORT		((GLshort) 0x7FFF)
+#define CR_MAXUSHORT	((GLushort) 0xFFFF)
+#define CR_MAXINT			((GLint) 0x7FFFFFFF)
+#define CR_MAXUINT		((GLuint) 0xFFFFFFFF)
+#define CR_MAXFLOAT		1.0f
+#define CR_MAXDOUBLE	1.0
 
-#define GLBITS_LENGTH 32
-#define GLBITS_ONES 0xFFFFFFFF
-typedef unsigned int GLbitvalue;
+#define CRBITS_LENGTH 32
+#define CRBITS_ONES 0xFFFFFFFF
+typedef unsigned int CRbitvalue;
 
 typedef struct {
 	GLfloat x1, x2, y1, y2;
-} GLrectf;
+} CRrectf;
 
 typedef struct {
 	GLint x1, x2, y1, y2;
-} GLrecti;
+} CRrecti;
 
 typedef struct {
 	GLdefault m00, m01, m02, m03;
 	GLdefault m10, m11, m12, m13;
 	GLdefault m20, m21, m22, m23;
 	GLdefault m30, m31, m32, m33;
-} GLmatrix;
+} CRmatrix;
 
 typedef struct {
 	GLfloat m00, m01, m02, m03;
 	GLfloat m10, m11, m12, m13;
 	GLfloat m20, m21, m22, m23;
 	GLfloat m30, m31, m32, m33;
-} GLmatrixf;
+} CRmatrixf;
 
 typedef struct {
 	GLdouble m00, m01, m02, m03;
 	GLdouble m10, m11, m12, m13;
 	GLdouble m20, m21, m22, m23;
 	GLdouble m30, m31, m32, m33;
-} GLmatrixd;
+} CRmatrixd;
 
 #define VECTOR(type, name) typedef struct { type x,y,z,w; } name
 #define COLOR(type, name) typedef struct { type r,g,b,a; } name

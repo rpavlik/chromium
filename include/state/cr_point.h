@@ -14,15 +14,15 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue size[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue size[CR_MAX_BITARRAY];
 #ifdef CR_ARB_point_parameters
-	GLbitvalue minSize[CR_MAX_BITARRAY];
-	GLbitvalue maxSize[CR_MAX_BITARRAY];
-	GLbitvalue fadeThresholdSize[CR_MAX_BITARRAY];
-	GLbitvalue distanceAttenuation[CR_MAX_BITARRAY];
+	CRbitvalue minSize[CR_MAX_BITARRAY];
+	CRbitvalue maxSize[CR_MAX_BITARRAY];
+	CRbitvalue fadeThresholdSize[CR_MAX_BITARRAY];
+	CRbitvalue distanceAttenuation[CR_MAX_BITARRAY];
 #endif
-	GLbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRPointBits;
 
 typedef struct {
@@ -35,12 +35,11 @@ typedef struct {
 #endif
 } CRPointState;
 
-void crStatePointInitBits (CRPointBits *l);
-void crStatePointInit (CRPointState *l);
+void crStatePointInit (CRContext *ctx);
 
-void crStatePointDiff(CRPointBits *bb, GLbitvalue *bitID, 
+void crStatePointDiff(CRPointBits *bb, CRbitvalue *bitID, 
 		CRPointState *from, CRPointState *to);
-void crStatePointSwitch(CRPointBits *bb, GLbitvalue *bitID, 
+void crStatePointSwitch(CRPointBits *bb, CRbitvalue *bitID, 
 		CRPointState *from, CRPointState *to);
 
 #ifdef __cplusplus

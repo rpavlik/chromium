@@ -16,8 +16,6 @@
 #include "cr_spu.h"
 #include "cr_server.h"
 
-void templatespuGatherConfiguration( void );
-
 typedef struct {
 	int id;
 	int has_child;
@@ -26,5 +24,12 @@ typedef struct {
 } TemplateSPU;
 
 extern TemplateSPU template_spu;
+
+extern SPUNamedFunctionTable _cr_template_table[];
+
+extern SPUOptions templateSPUOptions[];
+
+extern void templatespuGatherConfiguration( void );
+
 
 #endif /* TEMPLATE_SPU_H */

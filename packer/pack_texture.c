@@ -7,7 +7,7 @@
 #include "packer.h"
 #include "cr_pixeldata.h"
 #include "cr_error.h"
-#include "state/cr_pixel.h"
+#include "cr_string.h"
 #include "cr_version.h"
 
 void PACK_APIENTRY
@@ -75,7 +75,7 @@ crPackTexImage2D(GLenum target, GLint level,
 	{
 		if (is_distrib)
 		{
-			distrib_buf_len = strlen(pixels) + 1 +
+			distrib_buf_len = crStrlen(pixels) + 1 +
 				((type == GL_TRUE) ? width * height * 3 : 0);
 			packet_length += distrib_buf_len;
 		}
@@ -100,7 +100,7 @@ crPackTexImage2D(GLenum target, GLint level,
 	{
 		if (is_distrib)
 		{
-			memcpy((void *) (data_ptr + 36), pixels, distrib_buf_len);
+			crMemcpy((void *) (data_ptr + 36), pixels, distrib_buf_len);
 		}
 		else
 		{
@@ -142,7 +142,7 @@ void PACK_APIENTRY crPackTexImage3DEXT(GLenum target, GLint level,
 	{
 		if ( is_distrib )
 		{
-			distrib_buf_len = strlen( pixels ) + 1 +
+			distrib_buf_len = crStrlen( pixels ) + 1 +
 				( (type == GL_TRUE) ? width*height*3 : 0 ) ;
 			packet_length += distrib_buf_len ;
 		}
@@ -169,7 +169,7 @@ void PACK_APIENTRY crPackTexImage3DEXT(GLenum target, GLint level,
 	{
 		if ( is_distrib )
 		{
-			memcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
+			crMemcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
 		}
 		else
 		{               
@@ -215,7 +215,7 @@ void PACK_APIENTRY crPackTexImage3D(GLenum target, GLint level,
 	{
 		if ( is_distrib )
 		{
-			distrib_buf_len = strlen( pixels ) + 1 +
+			distrib_buf_len = crStrlen( pixels ) + 1 +
 				( (type == GL_TRUE) ? width*height*3 : 0 ) ;
 			packet_length += distrib_buf_len ;
 		}
@@ -242,7 +242,7 @@ void PACK_APIENTRY crPackTexImage3D(GLenum target, GLint level,
 	{
 		if ( is_distrib )
 		{
-			memcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
+			crMemcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
 		}
 		else
 		{               
@@ -266,7 +266,7 @@ crPackDeleteTextures(GLsizei n, const GLuint * textures)
 	data_ptr = (unsigned char *) crPackAlloc(packet_length);
 	WRITE_DATA(0, int, packet_length);
 	WRITE_DATA(sizeof(int) + 0, GLsizei, n);
-	memcpy(data_ptr + sizeof(int) + 4, textures, n * sizeof(*textures));
+	crMemcpy(data_ptr + sizeof(int) + 4, textures, n * sizeof(*textures));
 	crHugePacket(CR_DELETETEXTURES_OPCODE, data_ptr);
 }
 
@@ -294,7 +294,7 @@ __handleTexEnvData(GLenum target, GLenum pname, const GLfloat * params)
 	WRITE_DATA(0, int, packet_length);
 	WRITE_DATA(sizeof(int) + 0, GLenum, target);
 	WRITE_DATA(sizeof(int) + 4, GLenum, pname);
-	memcpy(data_ptr + sizeof(int) + 8, params, params_length);
+	crMemcpy(data_ptr + sizeof(int) + 8, params, params_length);
 }
 
 
@@ -339,8 +339,8 @@ crPackPrioritizeTextures(GLsizei n,
 
 	WRITE_DATA(0, GLsizei, packet_length);
 	WRITE_DATA(sizeof(int) + 0, GLsizei, n);
-	memcpy(data_ptr + sizeof(int) + 4, textures, n * sizeof(*textures));
-	memcpy(data_ptr + sizeof(int) + 4 + n * sizeof(*textures),
+	crMemcpy(data_ptr + sizeof(int) + 4, textures, n * sizeof(*textures));
+	crMemcpy(data_ptr + sizeof(int) + 4 + n * sizeof(*textures),
 				 priorities, n * sizeof(*priorities));
 
 	crHugePacket(CR_PRIORITIZETEXTURES_OPCODE, data_ptr);
@@ -365,7 +365,7 @@ __handleTexGenData(GLenum coord, GLenum pname,
 	WRITE_DATA(0, int, packet_length);
 	WRITE_DATA(sizeof(int) + 0, GLenum, coord);
 	WRITE_DATA(sizeof(int) + 4, GLenum, pname);
-	memcpy(data_ptr + sizeof(int) + 8, params, params_length);
+	crMemcpy(data_ptr + sizeof(int) + 8, params, params_length);
 }
 
 void PACK_APIENTRY
@@ -428,7 +428,11 @@ __handleTexParameterData(GLenum target, GLenum pname, const GLfloat * params)
 #ifdef GL_TEXTURE_PRIORITY
 	case GL_TEXTURE_PRIORITY:
 #endif
+	  num_params = 1;
+		break;
 	case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+		num_params = 1;
+		break;
 	case GL_TEXTURE_MIN_LOD:
 	case GL_TEXTURE_MAX_LOD:
 	case GL_TEXTURE_BASE_LEVEL:
@@ -438,6 +442,27 @@ __handleTexParameterData(GLenum target, GLenum pname, const GLfloat * params)
 	case GL_TEXTURE_BORDER_COLOR:
 		num_params = 4;
 		break;
+#ifdef CR_ARB_shadow
+	case GL_TEXTURE_COMPARE_MODE_ARB:
+	case GL_TEXTURE_COMPARE_FUNC_ARB:
+		num_params = 1;
+		break;
+#endif
+#ifdef CR_ARB_shadow_ambient
+	case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
+		num_params = 1;
+		break;
+#endif
+#ifdef CR_ARB_depth_texture
+	case GL_DEPTH_TEXTURE_MODE_ARB:
+		num_params = 1;
+		break;
+#endif
+#ifdef CR_SGIS_generate_mipmap
+	case GL_GENERATE_MIPMAP_SGIS:
+		num_params = 1;
+		break;
+#endif
 	default:
 		num_params = __packTexParameterNumParams(pname);
 		if (!num_params)
@@ -453,7 +478,7 @@ __handleTexParameterData(GLenum target, GLenum pname, const GLfloat * params)
 	WRITE_DATA(0, int, packet_length);
 	WRITE_DATA(sizeof(int) + 0, GLenum, target);
 	WRITE_DATA(sizeof(int) + 4, GLenum, pname);
-	memcpy(data_ptr + sizeof(int) + 8, params, num_params * sizeof(*params));
+	crMemcpy(data_ptr + sizeof(int) + 8, params, num_params * sizeof(*params));
 	return GL_TRUE;
 }
 
@@ -611,7 +636,7 @@ crPackAreTexturesResident(GLsizei n, const GLuint * textures,
 	WRITE_DATA(0, int, packet_length);
 	WRITE_DATA(4, GLenum, CR_ARETEXTURESRESIDENT_EXTEND_OPCODE);
 	WRITE_DATA(sizeof(int) + 4, GLsizei, n);
-	memcpy(data_ptr + sizeof(int) + 8, textures, n * sizeof(*textures));
+	crMemcpy(data_ptr + sizeof(int) + 8, textures, n * sizeof(*textures));
 	WRITE_NETWORK_POINTER(sizeof(int) + 8 + n * sizeof(*textures),
 												(void *) residences);
 	WRITE_NETWORK_POINTER(sizeof(int) + 16 + n * sizeof(*textures),

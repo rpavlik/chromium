@@ -28,7 +28,7 @@ print """
 
 for func_name in stub_common.AllSpecials( "../../packer/packer_pixel" ):
 	(return_type, names, types) = gl_mapping[func_name]
-	print '%s TILESORTSPU_APIENTRY tilesortspuDiff%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ) )
+	print 'static %s TILESORTSPU_APIENTRY tilesortspuDiff%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ) )
 	print '{'
 	print '\tGET_CONTEXT(ctx);'
 	names.append( '&(ctx->client.unpack)' )

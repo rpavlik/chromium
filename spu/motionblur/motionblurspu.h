@@ -16,8 +16,6 @@
 #include "cr_spu.h"
 #include "cr_server.h"
 
-void motionblurspuGatherConfiguration( void );
-
 typedef struct {
 	int id;
 	int has_child;
@@ -29,5 +27,11 @@ typedef struct {
 } MotionblurSPU;
 
 extern MotionblurSPU motionblur_spu;
+
+extern SPUNamedFunctionTable _cr_motionblur_table[];
+
+extern SPUOptions motionblurSPUOptions[];
+
+extern void motionblurspuGatherConfiguration( void );
 
 #endif /* MOTIONBLUR_SPU_H */

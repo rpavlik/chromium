@@ -61,9 +61,9 @@ for its children/server SPU limits in order to determine its own limits.</p>
 <ol>
   <li>Add a new <code>CR_</code>* token to <code>include/cr_versions.h</code>.
   <li>Add a new GLboolean field to the <code>CRExtensionState</code> structure
-      in the <code>include/state_cr_extensions.h</code> file.
+      in the <code>include/state/cr_limits.h</code> file.
   <li>Add new code in <code>crStateExtensionsInit()</code>
-      in <code>spu/state_tracker/state_extensions.c</code> to initialize the
+      in <code>spu/state_tracker/state_limits.c</code> to initialize the
       new boolean.
       Update the extension strings in
       <code>spu/state_tracker/state_limits.c</code> as well.

@@ -16,8 +16,6 @@
 #include "cr_spu.h"
 #include "cr_glstate.h"
 
-void simplequeryspuGatherConfiguration( void );
-
 typedef struct {
 	int id;
 	int has_child;
@@ -26,5 +24,11 @@ typedef struct {
 } SimplequerySPU;
 
 extern SimplequerySPU simplequery_spu;
+
+extern SPUNamedFunctionTable _cr_simplequery_table[];
+
+extern SPUOptions simplequerySPUOptions[];
+
+extern void simplequeryspuGatherConfiguration( void );
 
 #endif /* SIMPLEQUERY_SPU_H */

@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <memory.h>
+#include <signal.h>
 
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -37,8 +38,8 @@
 
 static struct {
 	int                  initialized; /* flag */
-	CRNetReceiveFunc     recv;        /* what to do with arriving packets */
-	CRNetCloseFunc       close;       /* what to do when a client goes down */
+	CRNetReceiveFuncList *recv_list;  /* what to do with arriving packets */
+	CRNetCloseFuncList   *close_list; /* what to do when a client goes down */
 	int                  use_gm;      /* count the number of people using GM */
   int                  use_teac;    /* count the number of people using teac */
   int                  use_tcscomm; /* count the number of people using tcscomm 
@@ -57,7 +58,7 @@ static struct {
  * and a function to recieve work on that interface. */
 
 #define NETWORK_TYPE(x) \
-	extern void cr##x##Init(CRNetReceiveFunc, CRNetCloseFunc, unsigned int); \
+	extern void cr##x##Init(CRNetReceiveFuncList *, CRNetCloseFuncList *, unsigned int); \
 	extern void cr##x##Connection(CRConnection *); \
 	extern int cr##x##Recv(void)
 
@@ -173,17 +174,17 @@ CRConnection *crNetConnectToServer( char *server,
 	
 	if ( !crStrcmp( protocol, "devnull" ) )
 	{
-		crDevnullInit( cr_net.recv, cr_net.close, mtu );
+		crDevnullInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crDevnullConnection( conn );
 	}
 	else if ( !crStrcmp( protocol, "file" ) )
 	{
-		crFileInit( cr_net.recv, cr_net.close, mtu );
+		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crFileConnection( conn );
 	}
 	else if ( !crStrcmp( protocol, "swapfile" ) )
 	{
-		crFileInit( cr_net.recv, cr_net.close, mtu );
+		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crFileConnection( conn );
 		conn->swap = 1;
 	}
@@ -191,7 +192,7 @@ CRConnection *crNetConnectToServer( char *server,
 	else if ( !crStrcmp( protocol, "gm" ) )
 	{
 		cr_net.use_gm++;
-		crGmInit( cr_net.recv, cr_net.close, mtu );
+		crGmInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crGmConnection( conn );
 	}
 #endif
@@ -199,7 +200,7 @@ CRConnection *crNetConnectToServer( char *server,
   else if ( !crStrcmp( protocol, "quadrics" ) )
     {
       cr_net.use_teac++;
-      crTeacInit( cr_net.recv, cr_net.close, mtu );
+      crTeacInit( cr_net.recv_list, cr_net.close_list, mtu );
       crTeacConnection( conn );
     }
 #endif
@@ -207,18 +208,21 @@ CRConnection *crNetConnectToServer( char *server,
   else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
     {
       cr_net.use_tcscomm++;
-      crTcscommInit( cr_net.recv, cr_net.close, mtu );
+      crTcscommInit( cr_net.recv_list, cr_net.close_list, mtu );
       crTcscommConnection( conn );
     }
 #endif
 	else if ( !crStrcmp( protocol, "tcpip" ) )
 	{
-		crTCPIPInit( cr_net.recv, cr_net.close, mtu );
+	    crDebug("Calling crTCPIPInit()");
+		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crDebug("Calling crTCPIPConnection");
 		crTCPIPConnection( conn );
+		crDebug("Done calling crTCPIPConnection");
 	}
 	else if ( !crStrcmp( protocol, "udptcpip" ) )
 	{
-		crUDPTCPIPInit( cr_net.recv, cr_net.close, mtu );
+		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crUDPTCPIPConnection( conn );
 	}
 	else
@@ -228,6 +232,7 @@ CRConnection *crNetConnectToServer( char *server,
 
 	if (!crNetConnect( conn ))
 	{
+	    crDebug("Uh oh, freeing the connection");
 		crFree( conn );
 		return NULL;
 	}
@@ -312,7 +317,7 @@ CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned 
 	
 	if ( !crStrcmp( protocol, "devnull" ) )
 	{
-		crDevnullInit( cr_net.recv, cr_net.close, mtu );
+		crDevnullInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crDevnullConnection( conn );
 	}
 	if ( !crStrncmp( protocol, "file", crStrlen( "file" ) ) ||
@@ -324,14 +329,14 @@ CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned 
 			crError( "Malformed URL: \"%s\"", protocol );
 		}
 		conn->hostname = crStrdup( filename );
-		crFileInit( cr_net.recv, cr_net.close, mtu );
+		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crFileConnection( conn );
 	}
 #ifdef GM_SUPPORT
 	else if ( !crStrcmp( protocol, "gm" ) )
 	{
 		cr_net.use_gm++;
-		crGmInit( cr_net.recv, cr_net.close, mtu );
+		crGmInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crGmConnection( conn );
 	}
 #endif
@@ -339,7 +344,7 @@ CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned 
   else if ( !crStrcmp( protocol, "quadrics" ) )
     {
       cr_net.use_teac++;
-      crTeacInit( cr_net.recv, cr_net.close, mtu );
+      crTeacInit( cr_net.recv_list, cr_net.close_list, mtu );
       crTeacConnection( conn );
     }
 #endif
@@ -347,18 +352,18 @@ CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned 
   else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
     {
       cr_net.use_tcscomm++;
-      crTcscommInit( cr_net.recv, cr_net.close, mtu );
+      crTcscommInit( cr_net.recv_list, cr_net.close_list, mtu );
       crTcscommConnection( conn );
     }
 #endif
 	else if ( !crStrcmp( protocol, "tcpip" ) )
 	{
-		crTCPIPInit( cr_net.recv, cr_net.close, mtu );
+		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crTCPIPConnection( conn );
 	}
 	else if ( !crStrcmp( protocol, "udptcpip" ) )
 	{
-		crUDPTCPIPInit( cr_net.recv, cr_net.close, mtu );
+		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crUDPTCPIPConnection( conn );
 	}
 	else
@@ -376,29 +381,12 @@ CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned 
 
 void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 {
+	CRNetReceiveFuncList *rfl;
+	CRNetCloseFuncList *cfl;
+
 	if ( cr_net.initialized )
 	{
-		/* This way, networking can be initialized before anyone's really 
-		 * ready to play -- i.e., to talk to the configuration server. 
-		 * 
-		 * Basically, the OpenGL stub will initialize networking because 
-		 * it needs to get the damn WSAStartup in, but it has no clue 
-		 * what the recvFunc and closeFunc should be later. 
-		 * 
-		 * So, the stub explicitly them to NULL, meaning they can be overridden 
-		 * later. */
-		
-		if (cr_net.recv == NULL && cr_net.close == NULL) 
-		{
-			cr_net.recv = recvFunc;
-			cr_net.close = closeFunc;
-			return;
-		}
-		else
-		{
-			crWarning( "Networking already initialized!" );
-			return;
-		}
+		crDebug( "Networking already initialized!" );
 	}
 	else
 	{
@@ -412,8 +400,6 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 			crError("Couldn't initialize sockets on WINDOWS");
 #endif
 
-		cr_net.recv        = recvFunc;
-		cr_net.close       = closeFunc;
 		cr_net.use_gm      = 0;
 		cr_net.num_clients = 0;
 #ifdef CHROMIUM_THREADSAFE
@@ -422,6 +408,44 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 		crBufferPoolInit( &cr_net.message_list_pool, 16 );
 
 		cr_net.initialized = 1;
+		cr_net.recv_list = NULL;
+		cr_net.close_list = NULL;
+	}
+	if (recvFunc != NULL)
+	{
+		for (rfl = cr_net.recv_list ; rfl ; rfl = rfl->next )
+		{
+			if (rfl->recv == recvFunc) 
+			{
+				/* we've already seen this function -- do nothing */
+				break;
+			}
+		}
+		if (!rfl)
+		{
+			rfl = (CRNetReceiveFuncList *) malloc( sizeof (*rfl ));
+			rfl->recv = recvFunc;
+			rfl->next = cr_net.recv_list;
+			cr_net.recv_list = rfl;
+		}
+	}
+	if (closeFunc != NULL)
+	{
+		for (cfl = cr_net.close_list ; cfl ; cfl = cfl->next )
+		{
+			if (cfl->close == closeFunc) 
+			{
+				/* we've already seen this function -- do nothing */
+				break;
+			}
+		}
+		if (!cfl)
+		{
+			cfl = (CRNetCloseFuncList *) malloc( sizeof (*cfl ));
+			cfl->close = closeFunc;
+			cfl->next = cr_net.close_list;
+			cr_net.close_list = cfl;
+		}
 	}
 }
 
@@ -523,7 +547,7 @@ void crNetBarf( CRConnection *conn, void **bufp,
 	}
 #endif
 
-	conn->total_bytes_sent += len;  /* XXX was 'total_bytes' */
+	conn->total_bytes_sent += len;
 
 	msg->header.conn_id = conn->id;
 	conn->Barf( conn, bufp, start, len );
@@ -602,7 +626,7 @@ static void crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned in
 
 	dst = (unsigned char *) multi->buf + multi->len;
 	src = (unsigned char *) msg + sizeof(*msg);
-	memcpy( dst, src, len );
+	crMemcpy( dst, src, len );
 	multi->len += len;
 
 	if (msg->header.type == CR_MESSAGE_MULTI_TAIL)
@@ -640,14 +664,14 @@ static void crNetRecvFlowControl( CRConnection *conn,
 	conn->InstantReclaim( conn, (CRMessage *) msg );
 }
 
-void crNetRecvWriteback( CRMessageWriteback *wb )
+static void crNetRecvWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
-	memcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
+	crMemcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
 	(*writeback)--;
 }
 
-void crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
+static void crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
 {
 	/* minus the header, the destination pointer, 
 	 * *and* the implicit writeback pointer at the head. */
@@ -655,11 +679,11 @@ void crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
 	int payload_len = len - sizeof( *rb );
 	int *writeback;
 	void *dest_ptr; 
-	memcpy( &writeback, &(rb->writeback_ptr), sizeof( writeback ) );
-	memcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
+	crMemcpy( &writeback, &(rb->writeback_ptr), sizeof( writeback ) );
+	crMemcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
 
 	(*writeback)--;
-	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
+	crMemcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
 void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
@@ -696,6 +720,10 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 		case CR_MESSAGE_READBACK:
 			crNetRecvReadback( &(msg->readback), len );
 			return;
+	        case CR_MESSAGE_CRUT:
+		  {
+		  }
+		  break;
 		default:
 			/* We can end up here if anything strange happens in
 			 * the GM layer.  In particular, if the user tries to
@@ -746,6 +774,18 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 	conn->messageTail = msglist;
 }
 
+void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn, void *buf, unsigned int len )
+{
+	for ( ; rfl ; rfl = rfl->next)
+	{
+		if (rfl->recv( conn, buf, len ))
+		{
+			return;
+		}
+	}
+	crNetDefaultRecv( conn, buf, len );
+}
+
 unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message )
 {
 	if (conn->messageList != NULL)
@@ -774,7 +814,7 @@ unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message )
 
 unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 {
-	/* spin until we're out of work to do */
+	/* Keep getting work to do */
 	for (;;)
 	{
 		int len = crNetPeekMessage( conn, message );
@@ -793,9 +833,13 @@ unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 void crNetReadline( CRConnection *conn, void *buf )
 {
 	char *temp, c;
+
+	if (!conn || conn->type == CR_NO_CONNECTION) 
+		return;
+	
 	if (conn->type != CR_TCPIP)
 	{
-		crError( "Can't do a crNetReadline on anything other than TCPIP." );
+		crError( "Can't do a crNetReadline on anything other than TCPIP (%d).",conn->type );
 	}
 	temp = (char*)buf;
 	for (;;)

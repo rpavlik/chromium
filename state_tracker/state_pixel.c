@@ -4,14 +4,17 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "cr_mem.h"
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStatePixelInit(CRPixelState *p) { 
+void crStatePixelInit(CRContext *ctx)
+{
+	CRPixelState *p = &ctx->pixel;
+	CRStateBits *sb = GetCurrentBits();
+	CRPixelBits *pb = &(sb->pixel);
 	GLcolorf zero_color = {0.0f, 0.0f, 0.0f, 0.0f};
 	GLcolorf one_color = {1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -25,6 +28,8 @@ void crStatePixelInit(CRPixelState *p) {
 	p->depthBias          = 0.0f;
 	p->xZoom              = 1.0f;
 	p->yZoom              = 1.0f;
+	RESET(pb->transfer, ctx->bitid);
+	RESET(pb->zoom, ctx->bitid);
 
 	p->mapStoS[0] = 0;
 	p->mapItoI[0] = 0;
@@ -47,6 +52,8 @@ void crStatePixelInit(CRPixelState *p) {
 	p->mapGtoGsize   = 1;
 	p->mapBtoBsize   = 1;
 	p->mapAtoAsize   = 1;
+
+	RESET(pb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStatePixelTransferi (GLenum pname, GLint param)
@@ -243,14 +250,14 @@ void STATE_APIENTRY crStatePixelMapfv (GLenum map, GLint mapsize, const GLfloat 
 	case GL_PIXEL_MAP_I_TO_B:
 		p->mapItoBsize = mapsize;
 		for (i=0;i<mapsize;i++) {
-            GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
+            		GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
 			p->mapItoB[i] = val;
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_A:
 		p->mapItoAsize = mapsize;
 		for (i=0;i<mapsize;i++) {
-            GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
+            		GLfloat val = CLAMP( values[i], 0.0F, 1.0F );
 			p->mapItoA[i] = val;
 		}
 		break;
@@ -514,3 +521,268 @@ void STATE_APIENTRY crStateGetPixelMapusv (GLenum map, GLushort * values)
 		return;
 	}
 }
+
+void crStatePixelDiff(CRPixelBits *b, CRbitvalue *bitID,
+	CRPixelState *from, CRPixelState *to)
+{
+	int j, i;
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+	i = 0; /* silence compiler */
+	if (CHECKDIRTY(b->transfer, bitID))
+	{
+		if (from->indexOffset != to->indexOffset)
+		{
+			diff_api.PixelTransferi (GL_INDEX_OFFSET, to->indexOffset);
+			from->indexOffset = to->indexOffset;
+		}
+		if (from->indexShift != to->indexShift)
+		{
+			diff_api.PixelTransferi (GL_INDEX_SHIFT, to->indexShift);
+			from->indexShift = to->indexShift;
+		}
+		if (from->scale.r != to->scale.r)
+		{
+			diff_api.PixelTransferf (GL_RED_SCALE, to->scale.r);
+			from->scale.r = to->scale.r;
+		}
+		if (from->scale.g != to->scale.g)
+		{
+			diff_api.PixelTransferf (GL_GREEN_SCALE, to->scale.g);
+			from->scale.g = to->scale.g;
+		}
+		if (from->scale.b != to->scale.b)
+		{
+			diff_api.PixelTransferf (GL_BLUE_SCALE, to->scale.b);
+			from->scale.b = to->scale.b;
+		}
+		if (from->scale.a != to->scale.a)
+		{
+			diff_api.PixelTransferf (GL_ALPHA_SCALE, to->scale.a);
+			from->scale.a = to->scale.a;
+		}
+		if (from->bias.r != to->bias.r)
+		{
+			diff_api.PixelTransferf (GL_RED_BIAS, to->bias.r);
+			from->bias.r = to->bias.r;
+		}
+		if (from->bias.g != to->bias.g)
+		{
+			diff_api.PixelTransferf (GL_GREEN_BIAS, to->bias.g);
+			from->bias.g = to->bias.g;
+		}
+		if (from->bias.b != to->bias.b)
+		{
+			diff_api.PixelTransferf (GL_BLUE_BIAS, to->bias.b);
+			from->bias.b = to->bias.b;
+		}
+		if (from->bias.a != to->bias.a)
+		{
+			diff_api.PixelTransferf (GL_ALPHA_BIAS, to->bias.a);
+			from->bias.a = to->bias.a;
+		}
+		if (from->depthScale != to->depthScale)
+		{
+			diff_api.PixelTransferf (GL_DEPTH_SCALE, to->depthScale);
+			from->depthScale = to->depthScale;
+		}
+		if (from->depthBias != to->depthBias)
+		{
+			diff_api.PixelTransferf (GL_DEPTH_BIAS, to->depthBias);
+			from->depthBias = to->depthBias;
+		}
+		INVERTDIRTY(b->transfer, nbitID);
+	}
+	if (CHECKDIRTY(b->zoom, bitID))
+	{
+		if (from->xZoom != to->xZoom ||
+		    from->yZoom != to->yZoom)
+		{
+			diff_api.PixelZoom (to->xZoom,
+			    to->yZoom);
+			from->xZoom = to->xZoom;
+			from->yZoom = to->yZoom;
+		}
+		INVERTDIRTY(b->zoom, nbitID);
+	}
+	if (CHECKDIRTY(b->maps, bitID))
+	{
+		if (crMemcmp(to->mapStoS, from->mapStoS, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_S_TO_S,to->mapStoSsize,(GLfloat*)to->mapStoS);
+		if (crMemcmp(to->mapItoI, from->mapItoI, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_I,to->mapItoIsize,(GLfloat*)to->mapItoI);
+		if (crMemcmp(to->mapItoR, from->mapItoR, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_R,to->mapItoRsize,(GLfloat*)to->mapItoR);
+		if (crMemcmp(to->mapItoG, from->mapItoG, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_G,to->mapItoGsize,(GLfloat*)to->mapItoG);
+		if (crMemcmp(to->mapItoB, from->mapItoB, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_B,to->mapItoBsize,(GLfloat*)to->mapItoB);
+		if (crMemcmp(to->mapItoA, from->mapItoA, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_A,to->mapItoAsize,(GLfloat*)to->mapItoA);
+		if (crMemcmp(to->mapRtoR, from->mapRtoR, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_R_TO_R,to->mapRtoRsize,(GLfloat*)to->mapRtoR);
+		if (crMemcmp(to->mapGtoG, from->mapGtoG, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_G_TO_G,to->mapGtoGsize,(GLfloat*)to->mapGtoG);
+		if (crMemcmp(to->mapBtoB, from->mapBtoB, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_B_TO_B,to->mapBtoBsize,(GLfloat*)to->mapBtoB);
+		if (crMemcmp(to->mapAtoA, from->mapAtoA, CR_MAX_PIXEL_MAP_TABLE))
+			diff_api.PixelMapfv(GL_PIXEL_MAP_A_TO_A,to->mapAtoAsize,(GLfloat*)to->mapAtoA);
+		INVERTDIRTY(b->maps, nbitID);
+	}
+	INVERTDIRTY(b->dirty, nbitID);
+}
+
+void crStatePixelSwitch(CRPixelBits *b, CRbitvalue *bitID,
+	CRPixelState *from, CRPixelState *to)
+{
+	int j, i;
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+	i = 0; /* silence compiler */
+	if (CHECKDIRTY(b->transfer, bitID))
+	{
+		if (from->indexOffset != to->indexOffset)
+		{
+			diff_api.PixelTransferi (GL_INDEX_OFFSET, to->indexOffset);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->indexShift != to->indexShift)
+		{
+			diff_api.PixelTransferi (GL_INDEX_SHIFT, to->indexShift);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->scale.r != to->scale.r)
+		{
+			diff_api.PixelTransferf (GL_RED_SCALE, to->scale.r);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->scale.g != to->scale.g)
+		{
+			diff_api.PixelTransferf (GL_GREEN_SCALE, to->scale.g);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->scale.b != to->scale.b)
+		{
+			diff_api.PixelTransferf (GL_BLUE_SCALE, to->scale.b);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->scale.a != to->scale.a)
+		{
+			diff_api.PixelTransferf (GL_ALPHA_SCALE, to->scale.a);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->bias.r != to->bias.r)
+		{
+			diff_api.PixelTransferf (GL_RED_BIAS, to->bias.r);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->bias.g != to->bias.g)
+		{
+			diff_api.PixelTransferf (GL_GREEN_BIAS, to->bias.g);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->bias.b != to->bias.b)
+		{
+			diff_api.PixelTransferf (GL_BLUE_BIAS, to->bias.b);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->bias.a != to->bias.a)
+		{
+			diff_api.PixelTransferf (GL_ALPHA_BIAS, to->bias.a);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->depthScale != to->depthScale)
+		{
+			diff_api.PixelTransferf (GL_DEPTH_SCALE, to->depthScale);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->depthBias != to->depthBias)
+		{
+			diff_api.PixelTransferf (GL_DEPTH_BIAS, to->depthBias);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		INVERTDIRTY(b->transfer, nbitID);
+	}
+	if (CHECKDIRTY(b->zoom, bitID))
+	{
+		if (from->xZoom != to->xZoom ||
+		    from->yZoom != to->yZoom)
+		{
+			diff_api.PixelZoom (to->xZoom,
+			    to->yZoom);
+			FILLDIRTY(b->zoom);
+			FILLDIRTY(b->dirty);
+		}
+		INVERTDIRTY(b->zoom, nbitID);
+	}
+	if (CHECKDIRTY(b->maps, bitID))
+	{
+		if (crMemcmp(to->mapStoS, from->mapStoS, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_S_TO_S,to->mapStoSsize,(GLfloat*)to->mapStoS);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapItoI, from->mapItoI, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_I,to->mapItoIsize,(GLfloat*)to->mapItoI);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapItoR, from->mapItoR, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_R,to->mapItoRsize,(GLfloat*)to->mapItoR);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapItoG, from->mapItoG, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_G,to->mapItoGsize,(GLfloat*)to->mapItoG);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapItoB, from->mapItoB, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_B,to->mapItoBsize,(GLfloat*)to->mapItoB);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapItoA, from->mapItoA, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_A,to->mapItoAsize,(GLfloat*)to->mapItoA);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapRtoR, from->mapRtoR, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_R_TO_R,to->mapRtoRsize,(GLfloat*)to->mapRtoR);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapGtoG, from->mapGtoG, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_G_TO_G,to->mapGtoGsize,(GLfloat*)to->mapGtoG);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapBtoB, from->mapBtoB, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_B_TO_B,to->mapBtoBsize,(GLfloat*)to->mapBtoB);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		if (crMemcmp(to->mapAtoA, from->mapAtoA, CR_MAX_PIXEL_MAP_TABLE)) {
+			diff_api.PixelMapfv(GL_PIXEL_MAP_A_TO_A,to->mapAtoAsize,(GLfloat*)to->mapAtoA);
+			FILLDIRTY(b->maps);
+			FILLDIRTY(b->dirty);
+		}
+		INVERTDIRTY(b->maps, nbitID);
+	}
+	INVERTDIRTY(b->dirty, nbitID);
+}
+

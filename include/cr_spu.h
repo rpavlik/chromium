@@ -107,6 +107,9 @@ typedef int (WGL_APIENTRY *wglDescribePixelFormatFunc_t)(HDC, int, UINT, CONST P
 typedef int (WGL_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
 typedef HGLRC (WGL_APIENTRY *wglGetCurrentContextFunc_t)();
 typedef PROC (WGL_APIENTRY *wglGetProcAddressFunc_t)();
+typedef BOOL (WGL_APIENTRY *wglChoosePixelFormatEXTFunc_t)(HDC, const int *, const FLOAT *, UINT, int *, UINT *);
+typedef BOOL (WGL_APIENTRY *wglGetPixelFormatAttribivEXTFunc_t)(HDC, int, int, UINT, int *, int *);
+typedef BOOL (WGL_APIENTRY *wglGetPixelFormatAttribfvEXTFunc_t)(HDC, int, int, UINT, int *, int *);
 typedef const GLubyte *(WGL_APIENTRY *glGetStringFunc_t)( GLenum );
 #else
 typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
@@ -138,6 +141,9 @@ typedef struct {
 	wglChoosePixelFormatFunc_t wglChoosePixelFormat;
 	wglDescribePixelFormatFunc_t wglDescribePixelFormat;
 	wglSetPixelFormatFunc_t wglSetPixelFormat;
+	wglChoosePixelFormatEXTFunc_t wglChoosePixelFormatEXT;
+	wglGetPixelFormatAttribivEXTFunc_t wglGetPixelFormatAttribivEXT;
+	wglGetPixelFormatAttribfvEXTFunc_t wglGetPixelFormatAttribfvEXT;
 #else
 	glXGetConfigFunc_t  glXGetConfig;
 	glXQueryExtensionFunc_t glXQueryExtension;
@@ -155,6 +161,10 @@ typedef struct {
 } crOpenGLInterface;
 
 
+/* This is the one required function in _all_ SPUs */
+int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options, int *flags );
 
 SPU *crSPULoad( SPU *child, int id, char *name, char *dir, void *server);
 SPU *crSPULoadChain( int count, int *ids, char **names, char *dir, void *server );

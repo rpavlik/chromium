@@ -194,6 +194,9 @@ useful_wgl_functions = [
 	"wglChoosePixelFormat",
 	"wglDescribePixelFormat",
 	"wglSetPixelFormat",
+	"wglChoosePixelFormatEXT",
+	"wglGetPixelFormatAttribivEXT",
+	"wglGetPixelFormatAttribfvEXT",
 	"glGetString"
 ]
 useful_glx_functions = [

@@ -8,6 +8,7 @@
 #include "packer.h"
 #include "cr_error.h"
 #include "cr_protocol.h"
+#include "cr_unpack.h"
 
 #include <stdio.h>
 
@@ -151,7 +152,7 @@ void crPackAppendBuffer( CRPackBuffer *src )
 }
 
 
-void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
+void crPackAppendBoundedBuffer( CRPackBuffer *src, CRrecti *bounds )
 {
 	GET_PACKER_CONTEXT(pc);
 	int length = src->data_current - src->opcode_current - 1;

@@ -74,7 +74,7 @@ void crPackNullCurrentPointers( void );
 void crPackResetBBOX( CRPackContext *pc );
 
 void crPackAppendBuffer( CRPackBuffer *buffer );
-void crPackAppendBoundedBuffer( CRPackBuffer *buffer, GLrecti *bounds );
+void crPackAppendBoundedBuffer( CRPackBuffer *buffer, CRrecti *bounds );
 int crPackCanHoldOpcode( int num_opcode, int num_data );
 int crPackCanHoldBuffer( CRPackBuffer *buffer );
 

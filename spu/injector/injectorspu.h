@@ -37,6 +37,10 @@ typedef struct {
 
 extern InjectorSPU injector_spu;
 
+extern SPUNamedFunctionTable _cr_injector_table[];
+
+extern SPUOptions injectorSPUOptions[];
+
 extern void injectorspuGatherConfiguration( InjectorSPU* );
 extern void INJECTORSPU_APIENTRY injectorspuOOBSwapBuffers( GLint window, GLint i );
 extern void INJECTORSPU_APIENTRY injectorspuChromiumParameteri( GLenum param, GLint i );

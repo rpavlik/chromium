@@ -1,3 +1,4 @@
+#include "chromium.h"
 #include "cr_endian.h"
 
 char crDetermineEndianness( void )
@@ -27,6 +28,12 @@ char crDetermineEndianness( void )
 double SWAPDOUBLE( double d )
 {
 	CR64BitType *ptr = (CR64BitType *) (&d);
+#ifdef __STDC__
+	CR64BitType swapped;
+	SWAP64( *ptr );
+	swapped = *ptr;
+#else
 	CR64BitType swapped = SWAP64( *ptr );
+#endif
 	return *((double *) (&swapped));
 }

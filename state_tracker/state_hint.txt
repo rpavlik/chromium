@@ -7,7 +7,6 @@
 :polygonSmooth:polygonSmooth:Hint,GL_POLYGON_SMOOTH_HINT
 :perspectiveCorrection:perspectiveCorrection:Hint,GL_PERSPECTIVE_CORRECTION_HINT
 :fog:fog:Hint,GL_FOG_HINT
-# XXX don't know how to do extensions:
-#:clipVolumeClipping:clipVolumeClipping:Hint,GL_CLIP_VOLUME_CLIPPING_HINT_EXT
-#:textureCompression:textureCompression:Hint,GL_TEXTURE_COMPRESSION_HINT_ARB
-#:generateMipmap:generateMipmap:Hint,GL_GENERATE_MIPMAPS_HINT_SGIS
+:clipVolumeClipping:clipVolumeClipping:Hint,GL_CLIP_VOLUME_CLIPPING_HINT_EXT
+:generateMipmap:generateMipmap:Hint,GL_GENERATE_MIPMAP_HINT_SGIS
+:textureCompression:textureCompression:Hint,GL_TEXTURE_COMPRESSION_HINT_ARB

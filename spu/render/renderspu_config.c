@@ -75,6 +75,12 @@ static void render_to_app_window( RenderSPU *render_spu, const char *response )
 	sscanf( response, "%d", &(render_spu->render_to_app_window) );
 }
 
+static void render_to_crut_window( RenderSPU *render_spu, const char *response )
+{
+	sscanf( response, "%d", &(render_spu->render_to_crut_window) );
+}
+
+
 static void resizable( RenderSPU *render_spu, const char *response )
 {
 	sscanf( response, "%d", &(render_spu->resizable) );
@@ -158,6 +164,9 @@ SPUOptions renderSPUOptions[] = {
 
    { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
      "Render to Application window", (SPUOptionCB)render_to_app_window },
+
+   { "render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
+     "Render to CRUT window", (SPUOptionCB)render_to_crut_window },
 
    { "resizable", CR_BOOL, 1, "0", NULL, NULL,
      "Resizable Window", (SPUOptionCB)resizable },

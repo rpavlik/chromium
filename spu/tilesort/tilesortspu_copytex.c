@@ -4,11 +4,11 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 	
-#include "tilesortspu.h"
 #include "cr_mem.h"
+#include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 
 
-extern void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels );
 
 
 /*
@@ -105,8 +105,8 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexImage1D( GLenum target, GLint level
 	GLubyte *buffer = crAlloc(width * sizeof(GLubyte) * 4);
 	if (buffer)
 	{
-		const GLenum type = GL_UNSIGNED_BYTE;
 		const GLenum format = baseFormat( internalFormat );
+		const GLenum type = (format == GL_DEPTH_COMPONENT) ? GL_FLOAT : GL_UNSIGNED_BYTE;
 
 		tilesortspu_ReadPixels( x, y, width, 1, format, type, buffer );
 
@@ -127,8 +127,8 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexImage2D( GLenum target, GLint level
 	GLubyte *buffer = crAlloc(width * height * sizeof(GLubyte) * 4);
 	if (buffer)
 	{
-		const GLenum type = GL_UNSIGNED_BYTE;
 		const GLenum format = baseFormat( internalFormat );
+		const GLenum type = (format == GL_DEPTH_COMPONENT) ? GL_FLOAT : GL_UNSIGNED_BYTE;
 
 		tilesortspu_ReadPixels( x, y, width, height, format, type, buffer );
 

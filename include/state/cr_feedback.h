@@ -16,11 +16,11 @@ extern "C" {
 #define MAX_NAME_STACK_DEPTH 64
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRFeedbackBits;
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRSelectionBits;
 
 typedef struct {
@@ -42,9 +42,9 @@ typedef struct {
    	GLfloat hitMinZ, hitMaxZ;
 } CRSelectionState;
 
-extern void crStateFeedbackDiff(CRFeedbackBits *bb, GLbitvalue *bitID, 
+extern void crStateFeedbackDiff(CRFeedbackBits *bb, CRbitvalue *bitID, 
                                 CRFeedbackState *from, CRFeedbackState *to);
-extern void crStateFeedbackSwitch(CRFeedbackBits *bb, GLbitvalue *bitID, 
+extern void crStateFeedbackSwitch(CRFeedbackBits *bb, CRbitvalue *bitID, 
                                   CRFeedbackState *from, CRFeedbackState *to);
 
 #ifdef __cplusplus

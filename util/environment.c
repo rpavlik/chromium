@@ -6,7 +6,7 @@
 
 #include "cr_environment.h"
 #include "cr_string.h"
-
+#include "cr_mem.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -19,7 +19,7 @@ void crSetenv( const char *var, const char *value )
 	char *buf;
 
 	len = crStrlen(var) + 1 + crStrlen(value) + 1;
-	buf = (char *) malloc( len );
+	buf = (char *) crAlloc( len );
 	sprintf( buf, "%s=%s", var, value );
 	putenv( buf );
 

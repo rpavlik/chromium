@@ -17,16 +17,15 @@
 #include <unistd.h>
 #endif
 
-extern SPUNamedFunctionTable feedback_table[];
 feedbackSPU feedback_spu;
 
-SPUFunctions feedback_functions = {
+static SPUFunctions feedback_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	feedback_table /* THE ACTUAL FUNCTIONS */
+	_cr_feedback_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *feedbackSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *feedbackSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -50,18 +49,16 @@ SPUFunctions *feedbackSPUInit( int id, SPU *child, SPU *self,
 	return &feedback_functions;
 }
 
-void feedbackSPUSelfDispatch(SPUDispatchTable *self)
+static void feedbackSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(feedback_spu.self) );
 	crSPUCopyDispatchTable( &(feedback_spu.self), self );
 }
 
-int feedbackSPUCleanup(void)
+static int feedbackSPUCleanup(void)
 {
 	return 1;
 }
-
-extern SPUOptions feedbackSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

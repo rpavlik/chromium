@@ -27,11 +27,13 @@ for func_name in keys:
 		#print >> sys.stderr, func_name
 		pass
 
-print """#include <stdio.h>
+print """
+#include <stdio.h>
 #include "cr_string.h"
 #include "cr_spu.h"
-#include "hiddenlinespu.h"
 #include "cr_packfunctions.h"
+#include "hiddenlinespu.h"
+#include "hiddenlinespu_proto.h"
 """
 
 num_funcs = len(keys) - len( stub_common.AllSpecials( "hiddenline_ignore" ) )
@@ -40,21 +42,21 @@ for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
 
 specials = stub_common.AllSpecials( "hiddenline" ) + stub_common.AllSpecials( "hiddenline_pixel" )
-print 'SPUNamedFunctionTable hiddenline_table[%d];' % (num_funcs+1)
+print 'SPUNamedFunctionTable _cr_hiddenline_table[%d];' % (num_funcs+1)
 
 print ''
 print 'static void __fillin( int offset, char *name, SPUGenericFunction func )'
 print '{'
 print '\tCRASSERT( offset < %d);' % (num_funcs + 1)
-print '\thiddenline_table[offset].name = crStrdup( name );'
-print '\thiddenline_table[offset].fn = func;'
+print '\t_cr_hiddenline_table[offset].name = crStrdup( name );'
+print '\t_cr_hiddenline_table[offset].fn = func;'
 print '}'
 print ''
 
-for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
-	if func_name in specials:
-		print 'extern %s HIDDENLINESPU_APIENTRY hiddenlinespu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
+#for func_name in keys:
+#	(return_type, args, types) = gl_mapping[func_name]
+#	if func_name in specials:
+#		print 'extern %s HIDDENLINESPU_APIENTRY hiddenlinespu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
 print '\nvoid hiddenlinespuCreateFunctions( void )'
 print '{'

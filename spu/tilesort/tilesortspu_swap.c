@@ -8,6 +8,7 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 
 void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 {

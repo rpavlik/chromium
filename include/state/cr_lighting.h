@@ -13,26 +13,24 @@
 extern "C" {
 #endif
 
-#define CR_NUM_LIGHTS 8
-
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue ambient[CR_MAX_BITARRAY];
-	GLbitvalue diffuse[CR_MAX_BITARRAY];
-	GLbitvalue specular[CR_MAX_BITARRAY];
-	GLbitvalue position[CR_MAX_BITARRAY];
-	GLbitvalue attenuation[CR_MAX_BITARRAY];
-	GLbitvalue spot[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue ambient[CR_MAX_BITARRAY];
+	CRbitvalue diffuse[CR_MAX_BITARRAY];
+	CRbitvalue specular[CR_MAX_BITARRAY];
+	CRbitvalue position[CR_MAX_BITARRAY];
+	CRbitvalue attenuation[CR_MAX_BITARRAY];
+	CRbitvalue spot[CR_MAX_BITARRAY];
 } CRLightBits;
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue shadeModel[CR_MAX_BITARRAY];
-	GLbitvalue colorMaterial[CR_MAX_BITARRAY];
-	GLbitvalue lightModel[CR_MAX_BITARRAY];
-	GLbitvalue material[CR_MAX_BITARRAY];
-	GLbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue shadeModel[CR_MAX_BITARRAY];
+	CRbitvalue colorMaterial[CR_MAX_BITARRAY];
+	CRbitvalue lightModel[CR_MAX_BITARRAY];
+	CRbitvalue material[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
 	CRLightBits *light;
 } CRLightingBits;
 
@@ -74,11 +72,12 @@ typedef struct {
 } CRLightingState;
 
 void crStateLightingInitBits (CRLightingBits *l);
-void crStateLightingInit (CRLightingState *l);
+void crStateLightingInit (CRContext *ctx);
+void crStateLightingDestroy (CRContext *ctx);
 
-void crStateLightingDiff(CRLightingBits *bb, GLbitvalue *bitID,
+void crStateLightingDiff(CRLightingBits *bb, CRbitvalue *bitID,
 		CRLightingState *from, CRLightingState *to);
-void crStateLightingSwitch(CRLightingBits *bb, GLbitvalue *bitID,
+void crStateLightingSwitch(CRLightingBits *bb, CRbitvalue *bitID,
 		CRLightingState *from, CRLightingState *to);
 
 void crStateColorMaterialRecover( void );

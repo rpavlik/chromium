@@ -241,6 +241,9 @@ threadsafe:
 release:
 	@$(MAKE) RELEASE=1
 
+release-threadsafe:
+	@$(MAKE) RELEASE=1 THREADSAFE=1
+
 profile:
 	@$(MAKE) PROFILE=1
 
@@ -309,7 +312,7 @@ ifdef WINDOWS
 ifdef SHARED
 	@$(LD) $(SHARED_LDFLAGS) /Fe$(LIBNAME) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else
-	@$(LD) $(OBJS) $(LIBRARIES) $(LDFLAGS)
+	@LIB.EXE $(OBJS) $(LIBRARIES) /OUT:$(LIBNAME)
 endif #shared
 else #windows
 ifdef SHARED

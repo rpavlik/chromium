@@ -48,10 +48,10 @@ CRpid crSpawn( const char *command, const char *argv[] )
 	si.cb = sizeof(si);
 	ZeroMemory( &pi, sizeof(pi) );
 
-	strncpy(newargv, argv[0], 1000 );
+	crStrncpy(newargv, argv[0], 1000 );
 	for (i = 1; argv[i]; i++) {
-		strcat(newargv, " ");
-		strcat(newargv, argv[i]);
+		crStrcat(newargv, " ");
+		crStrcat(newargv, argv[i]);
 	}
 
 	if ( !CreateProcess(NULL, newargv, NULL, NULL, FALSE, 0, NULL,
@@ -107,8 +107,8 @@ void crGetProcName( char *name, int maxLen )
 		/* crude mechanism to blank out the backslashes
 		 * in the Windows filename and recover the actual
 		 * program name to return */
-		if (strstr(command, "\\")) {
-			strncpy(name, command+c+1, maxLen);
+		if (crStrstr(command, "\\")) {
+			crStrncpy(name, command+c+1, maxLen);
 			command[c] = 32;
 			c++;
 		}

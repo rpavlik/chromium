@@ -16,7 +16,7 @@ static void __setDefaults( void )
 	print_spu.fp = stderr;
 }
 
-void set_log_file( void *foo, const char *response )
+static void set_log_file( void *foo, const char *response )
 {
 	if (crStrcmp( response, "stderr" ) == 0)
 	{

@@ -8,6 +8,6 @@
 #include "cr_spu.h"
 #include "templatespu.h"
 
-SPUNamedFunctionTable template_table[] = {
+SPUNamedFunctionTable _cr_template_table[] = {
 	{ NULL, NULL }
 };

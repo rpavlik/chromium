@@ -43,12 +43,12 @@ for k in gltypes.keys():
 		print '}\n';
 
 scale = {
-	'ub' : 'GL_MAXUBYTE',
-	'b'  : 'GL_MAXBYTE',
-	'us' : 'GL_MAXUSHORT',
-	's'  : 'GL_MAXSHORT',
-	'ui' : 'GL_MAXUINT',
-	'i'  : 'GL_MAXINT',
+	'ub' : 'CR_MAXUBYTE',
+	'b'  : 'CR_MAXBYTE',
+	'us' : 'CR_MAXUSHORT',
+	's'  : 'CR_MAXSHORT',
+	'ui' : 'CR_MAXUINT',
+	'i'  : 'CR_MAXINT',
 	'f'  : '',
 	'd'  : ''
 }

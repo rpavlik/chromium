@@ -333,7 +333,7 @@ static float P133[3] = {442.28, -181.67, 9475.96};
 static float P134[3] = {442.08, -143.84, 9475.96};
 /* *INDENT-ON* */
 
-void
+static void
 Dolphin001(void)
 {
     glNormal3fv(N071);
@@ -390,7 +390,7 @@ Dolphin001(void)
     glEnd();
 }
 
-void
+static void
 Dolphin002(void)
 {
     glNormal3fv(N071);
@@ -447,7 +447,7 @@ Dolphin002(void)
     glEnd();
 }
 
-void
+static void
 Dolphin003(void)
 {
     glBegin(GL_POLYGON);
@@ -516,7 +516,7 @@ Dolphin003(void)
     glEnd();
 }
 
-void
+static void
 Dolphin004(void)
 {
     glBegin(GL_POLYGON);
@@ -601,7 +601,7 @@ Dolphin004(void)
     glEnd();
 }
 
-void
+static void
 Dolphin005(void)
 {
     glBegin(GL_POLYGON);
@@ -722,7 +722,7 @@ Dolphin005(void)
     glEnd();
 }
 
-void
+static void
 Dolphin006(void)
 {
     glBegin(GL_POLYGON);
@@ -779,7 +779,7 @@ Dolphin006(void)
     glEnd();
 }
 
-void
+static void
 Dolphin007(void)
 {
     glBegin(GL_POLYGON);
@@ -900,7 +900,7 @@ Dolphin007(void)
     glEnd();
 }
 
-void
+static void
 Dolphin008(void)
 {
     glBegin(GL_POLYGON);
@@ -1021,7 +1021,7 @@ Dolphin008(void)
     glEnd();
 }
 
-void
+static void
 Dolphin009(void)
 {
     glBegin(GL_POLYGON);
@@ -1142,7 +1142,7 @@ Dolphin009(void)
     glEnd();
 }
 
-void
+static void
 Dolphin010(void)
 {
     glBegin(GL_POLYGON);
@@ -1227,7 +1227,7 @@ Dolphin010(void)
     glEnd();
 }
 
-void
+static void
 Dolphin011(void)
 {
     glBegin(GL_POLYGON);
@@ -1312,7 +1312,7 @@ Dolphin011(void)
     glEnd();
 }
 
-void
+static void
 Dolphin012(void)
 {
     glBegin(GL_POLYGON);
@@ -1417,7 +1417,7 @@ Dolphin012(void)
     glEnd();
 }
 
-void
+static void
 Dolphin013(void)
 {
     glBegin(GL_POLYGON);
@@ -1502,7 +1502,7 @@ Dolphin013(void)
     glEnd();
 }
 
-void
+static void
 Dolphin014(void)
 {
     glBegin(GL_POLYGON);
@@ -1629,7 +1629,7 @@ Dolphin014(void)
     glEnd();
 }
 
-void
+static void
 Dolphin015(void)
 {
     glBegin(GL_POLYGON);
@@ -1772,7 +1772,7 @@ Dolphin015(void)
     glEnd();
 }
 
-void
+static void
 Dolphin016(void)
 {
 

@@ -10,9 +10,10 @@ void glSemaphoreCreateCR (GLuint name, GLuint count);
 void glSemaphoreDestroyCR (GLuint name);
 void glSemaphorePCR (GLuint name);
 void glSemaphoreVCR (GLuint name);
-void glBoundsInfoCR (const GLrecti *bounds, const GLbyte *payload, GLint len, GLint num_opcodes);
+void glBoundsInfoCR (const CRrecti *bounds, const GLbyte *payload, GLint len, GLint num_opcodes);
 void glBlendColorEXT (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 void glBlendEquationEXT (GLenum mode);
+void glBlendFuncSeparateEXT (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorA, GLenum dfactorA);
 void glMultiTexCoord1dARB (GLenum texture, GLdouble s);
 void glMultiTexCoord1fARB (GLenum texture, GLfloat s);
 void glMultiTexCoord1iARB (GLenum texture, GLint s);
@@ -187,3 +188,28 @@ void glFogCoordPointerEXT (GLenum type, GLsizei stride, const GLvoid * pointer);
 /* GL_ARB_point_parameters */
 void glPointParameterfARB (GLenum pname, GLfloat param);
 void glPointParameterfvARB (GLenum pname, const GLfloat *params);
+/* GL_ARB_multisample */
+void glSampleCoverageARB (GLclampf value, GLboolean invert);
+/* GL_EXT_multi_draw_arrays */
+void glMultiDrawArraysEXT (GLenum mode, GLint *first, GLsizei *count, GLsizei primcount);
+void glMultiDrawElementsEXT (GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount);
+/* GL_ARB_window_pos */
+void glWindowPos2dARB (GLdouble x, GLdouble y);
+void glWindowPos2dvARB (const GLdouble *v);
+void glWindowPos2fARB (GLfloat x, GLfloat y);
+void glWindowPos2fvARB (const GLfloat *v);
+void glWindowPos2iARB (GLint x, GLint y);
+void glWindowPos2ivARB (const GLint *v);
+void glWindowPos2sARB (GLshort x, GLshort y);
+void glWindowPos2svARB (const GLshort *v);
+void glWindowPos3dARB (GLdouble x, GLdouble y, GLdouble z);
+void glWindowPos3dvARB (const GLdouble *v);
+void glWindowPos3fARB (GLfloat x, GLfloat y, GLfloat z);
+void glWindowPos3fvARB (const GLfloat *v);
+void glWindowPos3iARB (GLint x, GLint y, GLint z);
+void glWindowPos3ivARB (const GLint *v);
+void glWindowPos3sARB (GLshort x, GLshort y, GLshort z);
+void glWindowPos3svARB (const GLshort *v);
+/* OpenGL 1.4 */
+void glPointParameteri (GLenum pname, GLint param);
+void glPointParameteriv (GLenum pname, const GLint *param);

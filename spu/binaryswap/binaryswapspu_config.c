@@ -8,6 +8,7 @@
 #include "cr_mothership.h"
 #include "cr_string.h"
 #include "cr_mem.h"
+#include <string.h>
 #include <math.h>
 
 static void set_peers( void *foo, const char *response )
@@ -76,11 +77,11 @@ static void set_swapmtu( void *spu, const char *response )
 static void set_type( void *spu, const char *response )
 {
    (void) spu;
-   if(strcmp( response, "alpha") == 0){
+   if(crStrcmp( response, "alpha") == 0){
       binaryswap_spu.alpha_composite = 1;
       binaryswap_spu.depth_composite = 0;
    }
-   else if(strcmp( response, "depth") == 0){
+   else if(crStrcmp( response, "depth") == 0){
       binaryswap_spu.depth_composite = 1;
       binaryswap_spu.alpha_composite = 0;
    }

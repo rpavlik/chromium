@@ -15,6 +15,12 @@ extern "C" {
 #endif
 
 
+/* glGetString strings */
+#define CR_RENDERER "Chromium"
+#define CR_VENDOR "Humper"
+#define CR_VERSION "1.1"   /* Chromium version, not OpenGL version */
+
+
 #define CR_MAX_TEXTURE_UNITS		8
 #define CR_MAX_GENERAL_COMBINERS	8
 #define CR_MAX_TEXTURE_SIZE		2048
@@ -47,22 +53,7 @@ extern "C" {
 #define CR_SMOOTH_LINE_WIDTH_MAX	64.0
 #define CR_LINE_WIDTH_GRANULARITY	0.5
 #define CR_MAX_VERTEX_ATTRIBS           16
-
-
-/* glGetString strings */
-#define CR_RENDERER "Chromium 1.0.1"
-#define CR_VENDOR "Humper"
-#if defined(CR_OPENGL_VERSION_1_4)
-#define CR_VERSION "1.4"
-#elif defined(CR_OPENGL_VERSION_1_3)
-#define CR_VERSION "1.3"
-#elif defined(CR_OPENGL_VERSION_1_2)
-#define CR_VERSION "1.2"
-#elif defined(CR_OPENGL_VERSION_1_1)
-#define CR_VERSION "1.1"
-#elif defined(CR_OPENGL_VERSION_1_0)
-#define CR_VERSION "1.0"
-#endif
+#define CR_MAX_TEXTURE_LOD_BIAS     8.0
 
 
 /*
@@ -97,6 +88,13 @@ typedef struct {
 	GLfloat aliasedLineWidthRange[2];
 	GLfloat smoothLineWidthRange[2];
 	GLfloat lineWidthGranularity;
+#ifdef CR_EXT_texture_lod_bias
+	GLfloat maxTextureLodBias;
+#endif
+#ifdef CR_ARB_texture_compression
+	GLuint numCompressedFormats;
+	GLenum compressedFormats[10];
+#endif
 	GLubyte *extensions;
 
 	/* Framebuffer/visual attributes */
@@ -107,14 +105,65 @@ typedef struct {
 	GLboolean rgbaMode;
 	GLboolean doubleBuffer;
 	GLboolean stereo;
+	GLuint sampleBuffers;
+	GLuint samples;
 
 } CRLimitsState;
+
+
+/* Booleans to indicate which OpenGL extensions are supported at runtime.
+ * XXX might merge this into the above structure someday.
+ */
+typedef struct {
+	GLboolean ARB_depth_texture;
+	GLboolean ARB_imaging;
+	GLboolean ARB_multisample;
+	GLboolean ARB_multitexture;
+	GLboolean ARB_point_parameters;
+	GLboolean ARB_shadow;
+	GLboolean ARB_shadow_ambient;
+	GLboolean ARB_texture_border_clamp; /* or SGIS_texture_border_clamp */
+	GLboolean ARB_texture_compression;
+	GLboolean ARB_texture_cube_map; /* or EXT_texture_cube_map */
+	GLboolean ARB_texture_env_add; /* standard in OpenGL 1.3 */
+	GLboolean ARB_texture_env_combine; /* standard in OpenGL 1.3 */
+	GLboolean ARB_texture_env_crossbar; /* standard in OpenGL 1.4 */
+	GLboolean ARB_texture_env_dot3; /* standard in OpenGL 1.3 */
+	GLboolean ARB_texture_mirrored_repeat;
+	GLboolean ARB_transpose_matrix;
+	GLboolean ARB_window_pos;
+	GLboolean EXT_blend_color;
+	GLboolean EXT_blend_logic_op;
+	GLboolean EXT_blend_func_separate;
+	GLboolean EXT_blend_minmax;
+	GLboolean EXT_blend_subtract;
+	GLboolean EXT_clip_volume_hint;
+	GLboolean EXT_fog_coord;
+	GLboolean EXT_multi_draw_arrays;
+	GLboolean EXT_secondary_color;
+	GLboolean EXT_separate_specular_color;
+	GLboolean EXT_stencil_wrap;
+	GLboolean EXT_texture_edge_clamp; /* or SGIS_texture_edge_clamp */
+	GLboolean EXT_texture_filter_anisotropic;
+	GLboolean EXT_texture_lod_bias;
+	GLboolean EXT_texture3D;
+	GLboolean NV_fog_distance;
+	GLboolean NV_register_combiners;
+	GLboolean NV_register_combiners2;
+	GLboolean NV_texgen_reflection;
+	GLboolean SGIS_generate_mipmap;
+
+	const GLubyte *version;
+} CRExtensionState;
+
 
 extern void crStateLimitsInit(CRLimitsState *limits);
 
 extern void crStateLimitsPrint(const CRLimitsState *limits);
 
 extern GLubyte * crStateMergeExtensions(GLuint n, const GLubyte **extensions);
+
+extern void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions );
 
 
 #ifdef __cplusplus

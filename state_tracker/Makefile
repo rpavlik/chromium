@@ -18,7 +18,6 @@ REGULAR_FILES = state_attrib \
 	state_enable \
 	state_error \
 	state_evaluators \
-	state_extensions \
 	state_feedback \
 	state_flush \
 	state_fog \
@@ -31,6 +30,7 @@ REGULAR_FILES = state_attrib \
 	state_limits \
 	state_line \
 	state_lists \
+	state_multisample \
 	state_pixel \
 	state_point \
 	state_polygon \
@@ -38,6 +38,7 @@ REGULAR_FILES = state_attrib \
 	state_regcombiner \
 	state_stencil \
 	state_texture \
+	state_teximage \
 	state_transform \
 	state_viewport
 
@@ -47,7 +48,7 @@ DIFF_FILES = buffer \
 	hint \
 	lighting \
 	line \
-	pixel \
+	multisample \
 	point \
 	polygon \
 	regcombiner \
@@ -67,7 +68,7 @@ SLOP = $(PRECOMP)
 
 ifdef WINDOWS
 SHARED = 1
-LIB_COPIES = crserver \
+LIB_COPIES = crserverlib \
 	packspu \
 	tilesortspu \
 	arrayspu \
@@ -85,7 +86,7 @@ endif
 
 ifdef BINUTIL_LINK_HACK
 SHARED = 1
-LIB_COPIES = crserver \
+LIB_COPIES = crserverlib \
 	packspu \
 	tilesortspu \
 	arrayspu \
@@ -146,9 +147,9 @@ state_line_gen.c: state_line.txt gendiffcode.pl
 	@$(ECHO) Making $@
 	@$(PERL) gendiffcode.pl Line > $@
 
-state_pixel_gen.c: state_pixel.txt gendiffcode.pl
-	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl Pixel > $@
+state_multisample_gen.c: state_multisample.txt gendiffcode.pl
+	@$(ECHO) Makint $@
+	@$(PERL) gendiffcode.pl Multisample >$@
 
 state_point_gen.c: state_point.txt gendiffcode.pl
 	@$(ECHO) Making $@

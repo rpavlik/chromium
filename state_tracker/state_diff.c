@@ -11,7 +11,7 @@
 void crStateDiffContext( CRContext *from, CRContext *to )
 {
 	CRContext *g = GetCurrentContext();
-	GLbitvalue *bitID = from->bitid;
+	CRbitvalue *bitID = from->bitid;
 	CRStateBits *sb = GetCurrentBits();
 
 	/*crDebug( "Diffing two contexts!" ); */
@@ -99,6 +99,8 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 		crStateImagingDiff	(&(sb->imaging), bitID,
 							 &(from->imaging), &(to->imaging));
 	}
+#endif
+#if 0
 	if (CHECKDIRTY(sb->selection.dirty, bitID))
 	{
 		crStateSelectionDiff	(&(sb->selection), bitID,
@@ -112,6 +114,13 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 								 &(from->regcombiner), &(to->regcombiner));
 	}
 #endif
+#ifdef CR_ARB_multisample
+	if (CHECKDIRTY(sb->multisample.dirty, bitID))
+	{
+		crStateMultisampleDiff	(&(sb->multisample), bitID,
+							 &(from->multisample), &(to->multisample));
+	}
+#endif
 
 	if (CHECKDIRTY(sb->current.dirty, bitID))
 	{
@@ -123,7 +132,7 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 void crStateSwitchContext( CRContext *from, CRContext *to )
 {
 	CRContext *g = GetCurrentContext();
-	GLbitvalue *bitID = to->bitid;
+	CRbitvalue *bitID = to->bitid;
 	CRStateBits *sb = GetCurrentBits();
 
 	if (CHECKDIRTY(sb->attrib.dirty, bitID))
@@ -229,6 +238,13 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	{
 		crStateRegCombinerSwitch	(&(sb->regcombiner), bitID,
 									 &(from->regcombiner), &(to->regcombiner));
+	}
+#endif
+#ifdef CR_ARB_multisample
+	if (CHECKDIRTY(sb->multisample.dirty, bitID))
+	{
+		crStateMultisampleSwitch	(&(sb->multisample), bitID,
+							 &(from->multisample), &(to->multisample));
 	}
 #endif
 	if (CHECKDIRTY(sb->current.dirty, bitID))

@@ -4,11 +4,11 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <assert.h>
 #include "packspu.h"
 #include "cr_mem.h"
 #include "cr_packfunctions.h"
 #include "cr_string.h"
+#include "packspu_proto.h"
 
 #define MAGIC_OFFSET 3000
 
@@ -142,7 +142,7 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 	}
 
 	/* Fill in the new context info */
-	pack_spu.context[slot].clientState = crStateCreateContext(NULL);
+	pack_spu.context[slot].clientState = crStateCreateContext(NULL, visual);
 	pack_spu.context[slot].serverCtx = serverCtx;
 
 #ifdef CHROMIUM_THREADSAFE

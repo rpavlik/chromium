@@ -14,10 +14,10 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue width[CR_MAX_BITARRAY];
-	GLbitvalue stipple[CR_MAX_BITARRAY];
-	GLbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue width[CR_MAX_BITARRAY];
+	CRbitvalue stipple[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRLineBits;
 
 typedef struct {
@@ -28,12 +28,11 @@ typedef struct {
 	GLint		repeat;
 } CRLineState;
 
-void crStateLineInitBits (CRLineBits *l);
-void crStateLineInit (CRLineState *l);
+void crStateLineInit (CRContext *ctx);
 
-void crStateLineDiff(CRLineBits *bb, GLbitvalue *bitID, 
+void crStateLineDiff(CRLineBits *bb, CRbitvalue *bitID, 
 		CRLineState *from, CRLineState *to);
-void crStateLineSwitch(CRLineBits *bb, GLbitvalue *bitID, 
+void crStateLineSwitch(CRLineBits *bb, CRbitvalue *bitID, 
 		CRLineState *from, CRLineState *to);
 
 #ifdef __cplusplus

@@ -4,13 +4,12 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue *neg_bitid,
+static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 				GLenum cap, GLboolean val)
 {
 	unsigned int i;
@@ -128,8 +127,8 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue *neg_bitid,
 			break;
 		case GL_POINT_SMOOTH :
 			g->point.pointSmooth = val;
-			DIRTY(sb->line.enable, neg_bitid);
-			DIRTY(sb->line.dirty, neg_bitid);
+			DIRTY(sb->point.enable, neg_bitid);
+			DIRTY(sb->point.dirty, neg_bitid);
 			break;
 		case GL_POLYGON_OFFSET_FILL:
 			g->polygon.polygonOffsetFill = val;
@@ -289,6 +288,29 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue *neg_bitid,
 		case GL_VERTEX_ARRAY:
 		case GL_NORMAL_ARRAY:
 			/* todo */
+			break;
+#endif
+#ifdef CR_ARB_multisample
+		case GL_MULTISAMPLE_ARB:
+			g->multisample.enabled = val;
+			DIRTY(sb->multisample.enable, neg_bitid);
+			DIRTY(sb->multisample.dirty, neg_bitid);
+			break;
+		case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+			g->multisample.sampleAlphaToCoverage = val;
+			DIRTY(sb->multisample.sampleAlphaToCoverage, neg_bitid);
+			DIRTY(sb->multisample.dirty, neg_bitid);
+			break;
+		case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+			g->multisample.sampleAlphaToOne = val;
+			DIRTY(sb->multisample.sampleAlphaToOne, neg_bitid);
+			DIRTY(sb->multisample.dirty, neg_bitid);
+			break;
+		case GL_SAMPLE_COVERAGE_ARB:
+			g->multisample.sampleCoverage = val;
+			DIRTY(sb->multisample.sampleCoverage, neg_bitid);
+			DIRTY(sb->multisample.dirty, neg_bitid);
+			break;
 #endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable called with bogus cap: 0x%x", cap);

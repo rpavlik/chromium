@@ -17,14 +17,14 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue eval1D[GLEVAL_TOT][CR_MAX_BITARRAY];
-	GLbitvalue eval2D[GLEVAL_TOT][CR_MAX_BITARRAY];
-	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue enable1D[GLEVAL_TOT][CR_MAX_BITARRAY];
-	GLbitvalue enable2D[GLEVAL_TOT][CR_MAX_BITARRAY];
-	GLbitvalue grid1D[CR_MAX_BITARRAY];
-	GLbitvalue grid2D[CR_MAX_BITARRAY];
-	GLbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue eval1D[GLEVAL_TOT][CR_MAX_BITARRAY];
+	CRbitvalue eval2D[GLEVAL_TOT][CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue enable1D[GLEVAL_TOT][CR_MAX_BITARRAY];
+	CRbitvalue enable2D[GLEVAL_TOT][CR_MAX_BITARRAY];
+	CRbitvalue grid1D[CR_MAX_BITARRAY];
+	CRbitvalue grid2D[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CREvaluatorBits;
 
 typedef struct {
@@ -62,12 +62,12 @@ typedef struct {
 
 extern const int gleval_sizes[];
 
-void crStateEvaluatorInitBits (CREvaluatorBits *);
-void crStateEvaluatorInit (CREvaluatorState *e);
+void crStateEvaluatorInit (CRContext *ctx);
+void crStateEvaluatorDestroy (CRContext *ctx);
 
-void crStateEvaluatorDiff(CREvaluatorBits *bb, GLbitvalue *bitID, 
+void crStateEvaluatorDiff(CREvaluatorBits *bb, CRbitvalue *bitID, 
 		CREvaluatorState *from, CREvaluatorState *to);
-void crStateEvaluatorSwitch(CREvaluatorBits *bb, GLbitvalue *bitID, 
+void crStateEvaluatorSwitch(CREvaluatorBits *bb, CRbitvalue *bitID, 
 		CREvaluatorState *from, CREvaluatorState *to);
 
 #ifdef __cplusplus

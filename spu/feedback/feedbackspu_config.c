@@ -12,7 +12,6 @@
 #include "feedbackspu.h"
 
 #include <stdio.h>
-#include <string.h>
 #ifndef WINDOWS
 #include <unistd.h>
 #endif
@@ -22,7 +21,7 @@ static void __setDefaults( void )
 	feedback_spu.render_mode = GL_RENDER;
 }
 
-void set_default_viewport( void *foo, const char *response )
+static void set_default_viewport( void *foo, const char *response )
 {
    sscanf( response, "%d", &(feedback_spu.default_viewport) );
 }

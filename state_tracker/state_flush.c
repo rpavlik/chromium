@@ -29,7 +29,7 @@ void crStateDiffAPI( SPUDispatchTable *api )
 	if (first_time)
 	{
 		first_time = 0;
-		crDebug( "CALLING INIT ON %p", &(diff_api) );
+		crDebug( "CALLING INIT ON %p", (void *)&(diff_api) );
 		crSPUInitDispatchTable( &(diff_api) );
 	}
 	crSPUCopyDispatchTable( &(diff_api), api );

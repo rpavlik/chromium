@@ -52,12 +52,10 @@ static GLBLENDEQUATIONEXTPROC glBlendEquation_ext;
 static GLuint currentWidth, currentHeight;
 static GLfloat bgColor[4] = { 0, 0, 1, 0.0 };
 
-
 static void
 Idle(void)
 {
 	glutPostRedisplay();
-	return;
 }
 
 
@@ -65,11 +63,9 @@ static void
 Display(void)
 {
 	const float size = 1.0;
-	static double theta = 0.0;
+	float theta = glutGet(GLUT_ELAPSED_TIME) * 0.010; /* 10 deg/second */
 
 	glClear(GL_COLOR_BUFFER_BIT);
-
-	theta += 0.05;
 
 	glLoadIdentity();
 	glRotated(90, 1, 0, 0);

@@ -18,3 +18,12 @@ LoadTransposeMatrixdARB
 MultTransposeMatrixdARB
 MultTransposeMatrixfARB
 PointParameterfvARB
+ProgramParameter4fvNV
+ProgramParameter4dvNV
+ProgramParameters4fvNV
+ProgramParameters4dvNV
+AreProgramsResidentNV
+LoadProgramNV
+DeleteProgramsNV
+ExecuteProgramNV
+RequestResidentProgramsNV

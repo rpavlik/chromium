@@ -119,7 +119,7 @@ clip_point(const CRVertex *v)
 	GLuint i;
 
 	/* user-defined clip planes */
-	for (i = 0; i < CR_MAX_CLIP_PLANES; i++)
+	for (i = 0; i < g->limits.maxClipPlanes; i++)
 	{
 	   if (g->transform.clip[i])
 	   {

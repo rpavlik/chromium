@@ -100,6 +100,38 @@ for the Chromium server.</p>
     </td>
   </tr>
 
+  <tr>
+    <td width="19%" class="ConfigOption">shared_display_lists</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       If zero, all clients connected to the server will get a private pool
+       of display list IDs.  If one, all clients connected to the server
+       will share a common pool of display list IDs.
+       The default is one (a shared pool of IDs).
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">shared_texture_objects</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       If zero, all clients connected to the server will get a private pool
+       of texture object IDs.  If one, all clients connected to the server
+       will share a common pool of texture object IDs.
+       The default is one (a shared pool of IDs).
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">shared_programs</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       If zero, all clients connected to the server will get a private pool
+       of program IDs.  If one, all clients connected to the server
+       will share a common pool of program IDs.
+       The default is one (a shared pool of IDs).
+    </td>
+  </tr>
 
 </table>
 </body>

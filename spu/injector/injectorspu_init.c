@@ -8,20 +8,18 @@
 #include "cr_spu.h"
 #include "cr_net.h"
 #include "cr_url.h"
-/*#include "cr_string.h"*/
 #include "injectorspu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable injector_table[];
 InjectorSPU injector_spu;
 
-SPUFunctions injector_functions = {
+static SPUFunctions injector_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	injector_table /* THE ACTUAL FUNCTIONS */
+	_cr_injector_table /* THE ACTUAL FUNCTIONS */
 };
 
-int injectorspuReceiveData( CRConnection* conn, void* buf, unsigned int len )
+static int injectorspuReceiveData( CRConnection* conn, void* buf, unsigned int len )
 {
 
 	CRMessage *msg = (CRMessage *) buf;
@@ -42,7 +40,7 @@ int injectorspuReceiveData( CRConnection* conn, void* buf, unsigned int len )
 	return 1 ; /* handled */
 }
 
-void injectorspuConnect( void )
+static void injectorspuConnect( void )
 {
 	char hostname[4096], protocol[4096] ;
 	unsigned short port ;
@@ -60,7 +58,7 @@ void injectorspuConnect( void )
 	injector_spu.info_msg.frameNum = 0 ;
 }
 
-SPUFunctions *injectorSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *injectorSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -91,7 +89,7 @@ SPUFunctions *injectorSPUInit( int id, SPU *child, SPU *self,
 	return &injector_functions;
 }
 
-void injectorSPUSelfDispatch(SPUDispatchTable *self)
+static void injectorSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(injector_spu.self) );
 	crSPUCopyDispatchTable( &(injector_spu.self), self );
@@ -99,12 +97,10 @@ void injectorSPUSelfDispatch(SPUDispatchTable *self)
 	injector_spu.server = (CRServer *)(self->server);
 }
 
-int injectorSPUCleanup(void)
+static int injectorSPUCleanup(void)
 {
 	return 1;
 }
-
-extern SPUOptions injectorSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

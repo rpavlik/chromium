@@ -11,12 +11,12 @@
 #include "cr_packfunctions.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable pack_table[];
+extern SPUNamedFunctionTable _cr_pack_table[];
 
 SPUFunctions pack_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	pack_table /* THE ACTUAL FUNCTIONS */
+	_cr_pack_table /* THE ACTUAL FUNCTIONS */
 };
 
 PackSPU pack_spu;
@@ -26,9 +26,10 @@ CRtsd _PackTSD;
 CRmutex _PackMutex;
 #endif
 
-SPUFunctions *packSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id,
-		unsigned int num_contexts )
+static SPUFunctions *
+packSPUInit( int id, SPU *child, SPU *self,
+						 unsigned int context_id,
+						 unsigned int num_contexts )
 {
 	ThreadInfo *thread;
 
@@ -55,12 +56,14 @@ SPUFunctions *packSPUInit( int id, SPU *child, SPU *self,
 	return &pack_functions;
 }
 
-void packSPUSelfDispatch(SPUDispatchTable *self)
+static void
+packSPUSelfDispatch(SPUDispatchTable *self)
 {
 	(void)self;
 }
 
-int packSPUCleanup(void)
+static int
+packSPUCleanup(void)
 {
 	return 1;
 }

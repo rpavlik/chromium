@@ -10,7 +10,7 @@
 #include "cr_spu.h"
 #include "cr_protocol.h"
 
-#include <memory.h>
+#include "cr_mem.h"
 
 #ifdef WINDOWS
 #ifndef DLLDATA 
@@ -70,10 +70,10 @@ double crReadUnalignedDouble( void *buffer );
 	INCR_DATA_PTR( *((int *) cr_unpackData ) )
 
 #define SET_RETURN_PTR( offset ) \
-	memcpy( return_ptr, cr_unpackData + (offset), sizeof( *return_ptr ) );
+	crMemcpy( return_ptr, cr_unpackData + (offset), sizeof( *return_ptr ) );
 
 #define SET_WRITEBACK_PTR( offset ) \
-	memcpy( writeback_ptr, cr_unpackData + (offset), sizeof( *writeback_ptr ) );
+	crMemcpy( writeback_ptr, cr_unpackData + (offset), sizeof( *writeback_ptr ) );
 
 #ifdef __cplusplus
 }

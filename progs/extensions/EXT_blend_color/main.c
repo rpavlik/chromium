@@ -66,11 +66,9 @@ static void
 Display(void)
 {
 	const float size = 50.0;
-	static double theta = 0.0;
+	float theta = glutGet(GLUT_ELAPSED_TIME) * 0.010; /* 10 deg/second */
 
 	glClear(GL_COLOR_BUFFER_BIT);
-
-	theta += 0.005;
 
 	glLoadIdentity();
 	glTranslatef(0.0, -2.0, 0.0);

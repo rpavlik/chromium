@@ -6,7 +6,7 @@
  * Stolen from GLT */
 
 #include "chromium.h"
-#include <stdio.h>
+#include "printspu.h"
 
 typedef struct {
     short  index;

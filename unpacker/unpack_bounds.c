@@ -9,7 +9,7 @@
 
 void crUnpackBoundsInfoCR( void  )
 {
-	GLrecti bounds;
+	CRrecti bounds;
 	GLint len;
 	GLuint num_opcodes;
 	GLbyte *payload;

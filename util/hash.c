@@ -29,7 +29,8 @@ void crFreeHashtable( CRHashTable *hash )
 	{
 		if ( hash->buckets[i] ) 
 		{
-			crFree( hash->buckets[i]->data );
+			if (hash->buckets[i]->data)
+				crFree( hash->buckets[i]->data );
 			crFree( hash->buckets[i] );
 		}
 	}
@@ -52,7 +53,7 @@ void crHashtableAdd( CRHashTable *h, unsigned int key, void *data )
 	h->num_elements++;
 }
 
-void crHashtableDelete( CRHashTable *h, unsigned int key )
+void crHashtableDelete( CRHashTable *h, unsigned int key, int freeData )
 {
 	unsigned int index = crHash( key );
 	CRHashNode *temp, *beftemp = NULL;
@@ -69,7 +70,9 @@ void crHashtableDelete( CRHashTable *h, unsigned int key )
 	else
 		h->buckets[index] = temp->next;
 	h->num_elements--;
-	crFree( temp->data );
+	if (freeData)
+	  crFree( temp->data );
+
 	crFree( temp );
 }
 

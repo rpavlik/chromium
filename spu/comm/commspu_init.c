@@ -11,15 +11,15 @@
 #include "commspu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable comm_table[];
+extern SPUNamedFunctionTable _cr_comm_table[];
 
 SPUFunctions comm_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	comm_table /* THE ACTUAL FUNCTIONS */
+	_cr_comm_table /* THE ACTUAL FUNCTIONS */
 };
 
-int commspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+static int commspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	(void) conn;
 	(void) buf;
@@ -28,7 +28,7 @@ int commspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 	return 0; /* Just let the work pile up for later viewing */
 }
 
-void commspuConnectToPeer( void )
+static void commspuConnectToPeer( void )
 {
 	char hostname[4096], protocol[4096];
 	unsigned short port;
@@ -51,7 +51,7 @@ void commspuConnectToPeer( void )
 	}
 }
 
-SPUFunctions *commSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *commSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -80,13 +80,13 @@ SPUFunctions *commSPUInit( int id, SPU *child, SPU *self,
 	return &comm_functions;
 }
 
-void commSPUSelfDispatch(SPUDispatchTable *self)
+static void commSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(comm_spu.self) );
 	crSPUCopyDispatchTable( &(comm_spu.self), self );
 }
 
-int commSPUCleanup(void)
+static int commSPUCleanup(void)
 {
 	return 1;
 }

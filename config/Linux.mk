@@ -11,7 +11,7 @@ CXXFLAGS          += -DLINUX -Wall -Werror
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
-CFLAGS            += -DLINUX -Wall -Werror
+CFLAGS            += -DLINUX -Wall -Werror -Wmissing-prototypes
 C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 

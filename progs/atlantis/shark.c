@@ -214,7 +214,7 @@ static float iP069[3] = {0.00, -418.25, 5765.04};
 static float iP070[3] = {0.00, 1266.91, 6629.60};
 /* *INDENT-ON* */
 
-void
+static void
 Fish001(void)
 {
     glBegin(GL_POLYGON);
@@ -435,7 +435,7 @@ Fish001(void)
     glEnd();
 }
 
-void
+static void
 Fish002(void)
 {
     glBegin(GL_POLYGON);
@@ -554,7 +554,7 @@ Fish002(void)
     glEnd();
 }
 
-void
+static void
 Fish003(void)
 {
     glBegin(GL_POLYGON);
@@ -659,7 +659,7 @@ Fish003(void)
     glEnd();
 }
 
-void
+static void
 Fish004(void)
 {
     glBegin(GL_POLYGON);
@@ -804,7 +804,7 @@ Fish004(void)
     glEnd();
 }
 
-void
+static void
 Fish005(void)
 {
     glBegin(GL_POLYGON);
@@ -897,7 +897,7 @@ Fish005(void)
     glEnd();
 }
 
-void
+static void
 Fish006(void)
 {
     glBegin(GL_POLYGON);
@@ -950,7 +950,7 @@ Fish006(void)
     glEnd();
 }
 
-void
+static void
 Fish007(void)
 {
     glBegin(GL_POLYGON);
@@ -987,7 +987,7 @@ Fish007(void)
     glEnd();
 }
 
-void
+static void
 Fish008(void)
 {
     glBegin(GL_POLYGON);
@@ -1024,7 +1024,7 @@ Fish008(void)
     glEnd();
 }
 
-void
+static void
 Fish009(void)
 {
     glBegin(GL_POLYGON);
@@ -1041,7 +1041,7 @@ Fish009(void)
     glEnd();
 }
 
-void
+static void
 Fish_1(void)
 {
     Fish004();
@@ -1055,7 +1055,7 @@ Fish_1(void)
     Fish001();
 }
 
-void
+static void
 Fish_2(void)
 {
     Fish005();
@@ -1069,7 +1069,7 @@ Fish_2(void)
     Fish001();
 }
 
-void
+static void
 Fish_3(void)
 {
     Fish005();
@@ -1083,7 +1083,7 @@ Fish_3(void)
     Fish006();
 }
 
-void
+static void
 Fish_4(void)
 {
     Fish005();
@@ -1097,7 +1097,7 @@ Fish_4(void)
     Fish006();
 }
 
-void
+static void
 Fish_5(void)
 {
     Fish009();
@@ -1111,7 +1111,7 @@ Fish_5(void)
     Fish005();
 }
 
-void
+static void
 Fish_6(void)
 {
     Fish009();
@@ -1125,7 +1125,7 @@ Fish_6(void)
     Fish005();
 }
 
-void
+static void
 Fish_7(void)
 {
     Fish009();
@@ -1139,7 +1139,7 @@ Fish_7(void)
     Fish006();
 }
 
-void
+static void
 Fish_8(void)
 {
     Fish009();

@@ -8,7 +8,6 @@
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_spu.h"
-#include <stdio.h>
 
 #ifdef CHROMIUM_THREADSAFE
 CRtsd __contextTSD;
@@ -26,9 +25,10 @@ static CRContext *defaultContext = NULL;
 /*
  * Helper for crStateCreateContext, below.
  */
-static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
+static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
+																				 GLint visBits)
 {
-	CRContext *ctx = (CRContext *) crAlloc( sizeof( *ctx ) );
+	CRContext *ctx = (CRContext *) crCalloc( sizeof( *ctx ) );
 	int j;
 	int node32 = i >> 5;
 	int node = i & 0x1f;
@@ -44,34 +44,74 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 		ctx->neg_bitid[j] = ~(ctx->bitid[j]);
 	}
 
-	crDebug( "Creating a context (id=%d addr=%p)", ctx->id, ctx);
+	crDebug( "Creating a context (id=%d addr=%p)", ctx->id, (void *)ctx);
 
 	/* use Chromium's OpenGL defaults */
 	crStateLimitsInit( &(ctx->limits) );
+	crStateExtensionsInit( &(ctx->limits), &(ctx->extensions) );
 
-	crStateBufferInit( &(ctx->buffer) );
-	crStateClientInit (&(ctx->limits), &(ctx->client) );
-	crStateCurrentInit( &(ctx->limits), &(ctx->current) );
-	crStateEvaluatorInit( &(ctx->eval) );
-	crStateExtensionsInit( ctx );
-	crStateFogInit( &(ctx->fog) );
-	crStateHintInit( &(ctx->hint) );
-	crStateLightingInit( &(ctx->lighting) );
-	crStateLineInit( &(ctx->line) );
-	crStateListsInit (&(ctx->lists) );
-	crStatePixelInit( &(ctx->pixel) );
-	crStatePolygonInit (&(ctx->polygon) );
-	crStatePointInit (&(ctx->point) );
-	crStateRegCombinerInit (&(ctx->regcombiner) );
-	crStateStencilInit( &(ctx->stencil) );
-	crStateTextureInit( (&ctx->limits), &(ctx->texture) );
-	crStateTransformInit( &(ctx->limits), &(ctx->transform) );
-	crStateViewportInit (&(ctx->viewport) );
+	crStateClientInit( &(ctx->limits), &(ctx->client) );
+
+	crStateBufferInit( ctx );
+	crStateCurrentInit( ctx );
+	crStateEvaluatorInit( ctx );
+	crStateFogInit( ctx );
+	crStateHintInit( ctx );
+	crStateLightingInit( ctx );
+	crStateLineInit( ctx );
+	crStateListsInit( ctx );
+	crStateMultisampleInit( ctx );
+	crStatePixelInit( ctx );
+	crStatePolygonInit( ctx );
+	crStatePointInit( ctx );
+	crStateRegCombinerInit( ctx );
+	crStateStencilInit( ctx );
+	crStateTextureInit( ctx );
+	crStateTransformInit( ctx );
+	crStateViewportInit ( ctx );
 	
 	/* This has to come last. */
 	crStateAttribInit( &(ctx->attrib) );
 
 	ctx->renderMode = GL_RENDER;
+
+	/* Initialize values that depend on the visual mode */
+	if (visBits & CR_DOUBLE_BIT) {
+		ctx->limits.doubleBuffer = GL_TRUE;
+	}
+	if (visBits & CR_RGB_BIT) {
+		ctx->limits.redBits = 8;
+		ctx->limits.greenBits = 8;
+		ctx->limits.blueBits = 8;
+		if (visBits & CR_ALPHA_BIT) {
+			ctx->limits.alphaBits = 8;
+		}
+	}
+	else {
+		ctx->limits.indexBits = 8;
+	}
+	if (visBits & CR_DEPTH_BIT) {
+		ctx->limits.depthBits = 24;
+	}
+	if (visBits & CR_STENCIL_BIT) {
+		ctx->limits.stencilBits = 8;
+	}
+	if (visBits & CR_ACCUM_BIT) {
+		ctx->limits.accumRedBits = 16;
+		ctx->limits.accumGreenBits = 16;
+		ctx->limits.accumBlueBits = 16;
+		if (visBits & CR_ALPHA_BIT) {
+			ctx->limits.accumAlphaBits = 16;
+		}
+	}
+	if (visBits & CR_STEREO_BIT) {
+		ctx->limits.stereo = GL_TRUE;
+	}
+	if (visBits & CR_MULTISAMPLE_BIT) {
+		ctx->limits.sampleBuffers = 1;
+		ctx->limits.samples = 4;
+		ctx->multisample.enabled = GL_TRUE;
+	}
 
 	return ctx;
 }
@@ -88,30 +128,44 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
  */
 void crStateInit(void)
 {
-	int j;
+	unsigned int i;
 
-	if (!defaultContext) {
-		/* Allocate the default/NULL context */
-		defaultContext = crStateCreateContextId(0, NULL);
-		CRASSERT(g_availableContexts[0] == 0);
-		g_availableContexts[0] = 1; /* in use forever */
+	/* Purely initialize the context bits */
+	if (!__currentBits) {
+		__currentBits = (CRStateBits *) crCalloc( sizeof(CRStateBits) );
+		crStateClientInitBits( &(__currentBits->client) );
+		crStateLightingInitBits( &(__currentBits->lighting) );
+	} else
+		crWarning("State tracker is being re-initialized..\n");
+
+	for (i=0;i<CR_MAX_CONTEXTS;i++)
+		g_availableContexts[i] = 0;
+
+	if (defaultContext) {
+		/* Free the default/NULL context */
+		crFree( defaultContext->transform.modelView );
+		crFree( defaultContext->transform.projection );
+		for (i = 0 ; i < defaultContext->limits.maxTextureUnits ; i++)
+			crFree( defaultContext->transform.texture[i] );
+		crFree( defaultContext->transform.color );
+		crFree( defaultContext->transform.clipPlane );
+		crFree( defaultContext->transform.clip );
+		crFree( defaultContext->client.list );
+		crFree( defaultContext->lighting.light );
+		crFree( defaultContext );
 	}
+
+	/* Allocate the default/NULL context */
+	defaultContext = crStateCreateContextId(0, NULL, CR_RGB_BIT);
+	CRASSERT(g_availableContexts[0] == 0);
+	g_availableContexts[0] = 1; /* in use forever */
 
 #ifdef CHROMIUM_THREADSAFE
 	crSetTSD(&__contextTSD, defaultContext);
 #else
-	if (!__currentContext) {
+	if (!__currentContext)
 		__currentContext = defaultContext;
-	}
 #endif
-
-	__currentBits = (CRStateBits *) crCalloc( sizeof(CRStateBits) );
-	crStateClientInitBits( &(__currentBits->client) );
-	crStateLightingInitBits( &(__currentBits->lighting) );
-	crStateTransformInitBits( &(__currentBits->transform) );
-
-	for (j=0;j<CR_MAX_CONTEXTS;j++)
-		g_availableContexts[j] = 0;
 }
 
 
@@ -159,25 +213,19 @@ void crStateInit(void)
  */
 
 
-CRContext *crStateCreateContext(const CRLimitsState *limits)
+CRContext *crStateCreateContext(const CRLimitsState *limits, GLint visBits)
 {
 	int i;
 
-	if (!defaultContext) {
-		/* Allocate the default/NULL context.  We really shouldn't
-		 * have to do this here, but we're playing it safe.
-		 */
-		defaultContext = crStateCreateContextId(0, limits);
-		CRASSERT(g_availableContexts[0] == 0);
-		g_availableContexts[0] = 1; /* in use forever */
-	}
+	/* Must have created the default context via crStateInit() first */
+	CRASSERT(defaultContext);
 
-	for (i = 0 ; i < CR_MAX_CONTEXTS ; i++)
+	for (i = 1 ; i < CR_MAX_CONTEXTS ; i++)
 	{
 		if (!g_availableContexts[i])
 		{
 			g_availableContexts[i] = 1; /* it's no longer available */
-			return crStateCreateContextId( i, limits );
+			return crStateCreateContextId( i, limits, visBits );
 		}
 	}
 	crError( "Out of available contexts in crStateCreateContexts (max %d)",
@@ -194,14 +242,24 @@ void crStateDestroyContext( CRContext *ctx )
 	if (current == ctx) {
 		/* destroying the current context - have to be careful here */
 		CRASSERT(defaultContext);
-		crStateSwitchContext(current, defaultContext);
+		/* Check to see if the differencer exists first,
+		   we may not have one, aka the packspu */
+		if (diff_api.AlphaFunc)
+			crStateSwitchContext(current, defaultContext);
 #ifdef CHROMIUM_THREADSAFE
 		crSetTSD(&__contextTSD, defaultContext);
 #else
 		__currentContext = defaultContext;
 #endif
 	}
+	crDebug( "Destroying a context (id=%d addr=%p)", ctx->id, (void *)ctx);
 	g_availableContexts[ctx->id] = 0;
+
+	crStateClientDestroy( &(ctx->client) );
+	crStateEvaluatorDestroy( ctx );
+	crStateLightingDestroy( ctx );
+	crStateTransformDestroy( ctx );
+
 	crFree( ctx );
 }
 
@@ -218,8 +276,12 @@ void crStateMakeCurrent( CRContext *ctx )
 
 	CRASSERT(ctx);
 
-	if (current)
-		crStateSwitchContext( current, ctx );
+	if (current) {
+		/* Check to see if the differencer exists first,
+		   we may not have one, aka the packspu */
+		if (diff_api.AlphaFunc)
+			crStateSwitchContext( current, ctx );
+	}
 
 #ifdef CHROMIUM_THREADSAFE
 	crSetTSD(&__contextTSD, ctx);

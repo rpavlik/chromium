@@ -9,19 +9,20 @@
 #include "printspu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable print_table[];
+extern SPUNamedFunctionTable _cr_print_table[];
 
-SPUFunctions print_functions = {
+static SPUFunctions print_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	print_table /* THE ACTUAL FUNCTIONS */
+	_cr_print_table /* THE ACTUAL FUNCTIONS */
 };
 
 PrintSpu print_spu;
 
-SPUFunctions *printSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id,
-		unsigned int num_contexts )
+static SPUFunctions *
+printSPUInit( int id, SPU *child, SPU *self,
+							unsigned int context_id,
+							unsigned int num_contexts )
 {
 	(void) context_id;
 	(void) num_contexts;
@@ -32,16 +33,18 @@ SPUFunctions *printSPUInit( int id, SPU *child, SPU *self,
 
 	crSPUInitDispatchTable( &(print_spu.passthrough) );
 	crSPUCopyDispatchTable( &(print_spu.passthrough), &(self->superSPU->dispatch_table) );
-	crDebug( "print_spu.passthrough = %p, super->dispatch_table = %p", &(print_spu.passthrough), &(self->superSPU->dispatch_table) );
+	crDebug( "print_spu.passthrough = %p, super->dispatch_table = %p", (void *)&(print_spu.passthrough), (void *)&(self->superSPU->dispatch_table) );
 	return &print_functions;
 }
 
-void printSPUSelfDispatch(SPUDispatchTable *parent)
+static void
+printSPUSelfDispatch(SPUDispatchTable *parent)
 {
 	(void)parent;
 }
 
-int printSPUCleanup(void)
+static int
+printSPUCleanup(void)
 {
 	if (print_spu.fp != stderr || print_spu.fp != stdout)
 		fclose(print_spu.fp);

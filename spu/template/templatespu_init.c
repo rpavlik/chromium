@@ -4,22 +4,22 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdio.h>
 #include "cr_spu.h"
 #include "templatespu.h"
-#include <stdio.h>
 
-extern SPUNamedFunctionTable template_table[];
 TemplateSPU template_spu;
 
-SPUFunctions template_functions = {
+static SPUFunctions template_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	template_table /* THE ACTUAL FUNCTIONS */
+	_cr_template_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *templateSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id,
-		unsigned int num_contexts )
+static SPUFunctions *
+templateSPUInit( int id, SPU *child, SPU *self,
+								 unsigned int context_id,
+								 unsigned int num_contexts )
 {
 
 	(void) self;
@@ -42,7 +42,8 @@ SPUFunctions *templateSPUInit( int id, SPU *child, SPU *self,
 	return &template_functions;
 }
 
-void templateSPUSelfDispatch(SPUDispatchTable *self)
+static void
+templateSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(template_spu.self) );
 	crSPUCopyDispatchTable( &(template_spu.self), self );
@@ -50,16 +51,16 @@ void templateSPUSelfDispatch(SPUDispatchTable *self)
 	template_spu.server = (CRServer *)(self->server);
 }
 
-int templateSPUCleanup(void)
+static int
+templateSPUCleanup(void)
 {
 	return 1;
 }
 
-extern SPUOptions templateSPUOptions[];
-
-int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
-	     SPUOptionsPtr *options, int *flags )
+int
+SPULoad( char **name, char **super, SPUInitFuncPtr *init,
+				 SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+				 SPUOptionsPtr *options, int *flags )
 {
 	*name = "template";
 	*super = NULL;

@@ -25,15 +25,16 @@ print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_spu.h"
+#include "passthroughspu.h"
 """
 
-print 'SPUNamedFunctionTable passthrough_table[%d];' % ( len(keys) + 1 )
+print 'SPUNamedFunctionTable _cr_passthrough_table[%d];' % ( len(keys) + 1 )
 
 print """
 static void __fillin( int offset, char *name, SPUGenericFunction func )
 {
-	passthrough_table[offset].name = crStrdup( name );
-	passthrough_table[offset].fn = func;
+	_cr_passthrough_table[offset].name = crStrdup( name );
+	_cr_passthrough_table[offset].fn = func;
 }
 
 void BuildPassthroughTable( SPU *child )

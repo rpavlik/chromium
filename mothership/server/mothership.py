@@ -293,6 +293,64 @@ class CRNetworkNode(CRNode):
 		"""
 		self.tiles_on_displays.append( (display_id,x,y,w,h) )
 
+class CRUTServerNode(CRNode):
+	"""Sub class of CRNode that defines a node in the SPU graph that
+	handles outgoing network traffic for events.
+
+	public functions:
+
+	    Conf:	Sets a key/value list in this node's configuration
+	    AddCRUTClient:	Adds a client to the list of crutclients.
+	"""
+
+	def __init__( self, host='localhost' ):
+	    	"""CRUTServerNode(host='localhost')
+		Creates a network node for the given "host"."""
+		CRNode.__init__(self,host)
+		self.crutclients = []
+
+	#A crutserver will be creating events, it should be the only server
+	def __add_crut_client( self, node, url ):
+		self.crutclients.append( (node, url) )
+
+	def AddCRUTClient( self, node, protocol='tcpip', port=9000 ):
+		"""AddCRUTClient(node, protocol='tcpip', port=9000)
+                Tells a crutserver node where to find a client."""
+                self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
+		
+class CRUTProxyNode(CRNode):
+	"""Sub class of CRNode that defines a node in the SPU graph that
+	handles incoming and outgoing network traffic for events.
+
+	public functions:
+
+	    Conf:	Sets a key/value list in this node's configuration
+	    AddCRUTClient:	Adds a client to the list of clients.
+	"""
+
+	def __init__( self, host='localhost' ):
+	    	"""CRUTProxyNode(host='localhost')
+		Creates a network node for the given "host"."""
+		CRNode.__init__(self,host)
+		self.crutclients = []
+		self.crutservers = []
+
+	def __add_crut_client( self, node, url ):
+		self.crutclients.append( (node, url) )
+
+	def AddCRUTClient( self, node, protocol='tcpip', port=9000 ):
+		"""AddCRUTClient(node, protocol='tcpip', port=9000)
+                Tells a crutproxy node where to find a client."""
+                self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
+
+	def __add_crut_server( self, node, url ):
+		self.crutservers.append( (node, url) )
+		
+	def AddCRUTServer( self, node, protocol='tcpip', port=9000 ):
+		self.__add_crut_server( node, "%s://%s:%d" % (protocol,node.host,port) )
+		if node != None:
+			node.AddCRUTClient( self, protocol, port)
+
 class CRApplicationNode(CRNode):
 	"""Sub class of CRNode that defines the start of the the SPU graph.
 
@@ -308,9 +366,12 @@ class CRApplicationNode(CRNode):
 	    	"""CRApplicationNode(host='localhost')
 		Creates an application node for the given "host"."""
 		CRNode.__init__(self, host)
+		self.crutservers = []
+		self.crutclients = []
 		self.id = CRApplicationNode.AppID
 		CRApplicationNode.AppID += 1;
 		self.Conf('start_dir', '.')
+		self.crut_spokenfor = 0
 
 	def SetApplication( self, app ):
 		"""SetApplication(name)
@@ -325,6 +386,22 @@ class CRApplicationNode(CRNode):
 	def ClientDLL( self, dir ):
 		"""Set the directory to search for the crfaker library."""
 		self.Conf('client_dll', dir)
+
+	def __add_crut_client( self, node, url ):
+		self.crutclients.append( (node, url) )
+
+	def AddCRUTClient( self, node, protocol='tcpip', port=9000 ):
+		"""AddCRUTClient(node, protocol='tcpip', port=9000)
+                Tells a crutserver node where to find a client."""
+                self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
+
+	def __add_crut_server( self, node, url ):
+		self.crutservers.append( (node, url) )
+		
+	def AddCRUTServer( self, node, protocol='tcpip', port=9000 ):
+		self.__add_crut_server( node, "%s://%s:%d" % (protocol,node.host,port) )
+		if node != None:
+			node.AddCRUTClient( self, protocol, port)
 
 class SockWrapper:
 	"Internal convenience class for handling sockets"
@@ -404,6 +481,10 @@ class CRSpawner(threading.Thread):
 			else:
 				if isinstance(node, CRNetworkNode):
 					CRInfo("Start a crserver on %s" % node.host)
+				elif isinstance(node, CRUTServerNode):
+					CRInfo("Start a crutserver on %s" % node.host)
+				elif isinstance(node, CRUTProxyNode):
+					CRInfo("Start a crutproxy on %s" % node.host)
 				else:
 					CRInfo("Start a crappfaker on %s" % node.host)
 
@@ -779,6 +860,44 @@ class CR:
 					return
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
 
+	def do_crutproxy( self, sock, args ):
+		CRDebug ( " Seeing if we have a crutproxy." )
+		"""do_crutserver(sock, args)
+		Hopefully tells us that we have a crutserver running somewhere."""
+		for node in self.nodes:
+			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
+				if isinstance(node,CRUTProxyNode):
+					node.spokenfor = 1
+					sock.node = node
+					sock.Success( " " )
+					return
+		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutproxy host %s" % args )
+		
+	def do_crutserver( self, sock, args ):
+		"""do_crutserver(sock, args)
+		Hopefully tells us that we have a crutserver running somewhere."""
+		for node in self.nodes:
+			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
+				if isinstance(node,CRUTServerNode):
+					node.spokenfor = 1
+					sock.node = node
+					sock.Success( " " )
+					return
+		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutserver host %s" % args )
+
+	def do_crutclient( self, sock, args ):
+		"""do_crutserver(sock, args)
+		Hopefully tells us that we have a crutclient running somewhere."""
+		for node in self.nodes:
+			if SameHost(string.lower(node.host), string.lower(args)):
+				if isinstance(node,CRApplicationNode) and not node.crut_spokenfor:
+					if (len(node.crutservers) > 0):
+						node.crut_spokenfor = 1
+						sock.node = node
+						sock.Success( " " )
+						return
+		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutclient host %s" % args )
+
 	def do_server( self, sock, args ):
 		"""do_server(sock, args)
 		Identifies the server in the graph. """
@@ -859,6 +978,18 @@ class CR:
 #		sock.Success( string.join( response, " " ) )
 		sock.Success( response )
 
+	def do_crutserverparam( self, sock, args ):
+		"""do_crutserverparam(sock, args)
+		Sends the given crutserver parameter."""
+		if sock.node == None or not isinstance(sock.node,CRUTServerNode):
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for server parameters without telling me what crutserver you are!" )
+			return
+		if not sock.node.config.has_key( args ):
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "Server doesn't have param %s" % (args) )
+			return
+		#sock.Success( string.join( sock.node.config[args], " " ) )
+		sock.Success( sock.node.config[args] )
+
 	def do_serverparam( self, sock, args ):
 		"""do_serverparam(sock, args)
 		Sends the given server parameter."""
@@ -900,6 +1031,33 @@ class CR:
 			if i != len(spu.servers) -1:
 				servers += ','
 		sock.Success( servers )
+
+	def do_crutservers( self, sock, args ):
+       		if len(sock.node.crutservers) == 0:
+			sock.Failure( SockWrapper.UNKNOWNPARAM, "CRUTClient %d doesn't have servers" % (sock.SPUid) )
+			return
+
+		crutservers = "%d " % len(sock.node.crutservers)
+		for i in range(len(sock.node.crutservers)):
+			(node,url) = sock.node.crutservers[i]
+			crutservers+= "%s" % (url)
+			if i != len(sock.node.crutservers) -1:
+				crutservers += " "
+		sock.Success( crutservers )
+
+	def do_crutclients(self, sock, args ):
+		#don't error here, you may not have any clients (e.g. last node in fan configuration)
+		if len(sock.node.crutclients) == 0:
+			sock.Success("0 CRUTserver doesn't have clients.")
+			return
+
+		crutclients = "%d " % len(sock.node.crutclients)
+		for i in range(len(sock.node.crutclients)):
+			(nocde,url) = sock.node.crutclients[i]
+			crutclients += "%s" % (url)
+			if i != len(sock.node.crutclients) -1:
+				crutclients += " "
+		sock.Success( crutclients )
 
 	def do_serverids( self, sock, args ):
 		"""do_serverids(sock, args)
@@ -1067,6 +1225,7 @@ class CR:
 		for node in self.nodes:
 			node.spokenfor = 0
 			node.spusloaded = 0
+			node.crut_spokenfor = 0
 		sock.Success( "Server Reset" );
 
 	def do_rank( self, sock, args ):

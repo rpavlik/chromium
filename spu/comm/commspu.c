@@ -12,7 +12,7 @@
 
 CommSPU comm_spu;
 
-void COMMSPU_APIENTRY commSwapBuffers( GLint window, GLint flags )
+static void COMMSPU_APIENTRY commSwapBuffers( GLint window, GLint flags )
 {
 	static unsigned int frame_counter = 0;
 	CRMessage *incoming_msg;
@@ -39,7 +39,7 @@ void COMMSPU_APIENTRY commSwapBuffers( GLint window, GLint flags )
 	comm_spu.super.SwapBuffers( window, flags );
 }
 
-SPUNamedFunctionTable comm_table[] = {
+SPUNamedFunctionTable _cr_comm_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) commSwapBuffers },
 	{ NULL, NULL }
 };

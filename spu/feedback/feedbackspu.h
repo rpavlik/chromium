@@ -16,8 +16,6 @@
 #include "cr_spu.h"
 #include "cr_timer.h"
 
-void feedbackspuGatherConfiguration( void );
-
 typedef struct {
 	int id;
 	int has_child;
@@ -29,5 +27,11 @@ typedef struct {
 } feedbackSPU;
 
 extern feedbackSPU feedback_spu;
+
+extern SPUNamedFunctionTable _cr_feedback_table[];
+
+extern SPUOptions feedbackSPUOptions[];
+
+extern void feedbackspuGatherConfiguration( void );
 
 #endif /* FEEDBACK_SPU_H */

@@ -9,12 +9,12 @@
 #include "readbackspu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable readback_table[];
+extern SPUNamedFunctionTable _cr_readback_table[];
 
 SPUFunctions readback_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	readback_table /* THE ACTUAL FUNCTIONS */
+	_cr_readback_table /* THE ACTUAL FUNCTIONS */
 };
 
 ReadbackSPU readback_spu;
@@ -23,9 +23,10 @@ ReadbackSPU readback_spu;
 CRtsd _ReadbackTSD;
 #endif
 
-SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id,
-		unsigned int num_contexts )
+static SPUFunctions *
+readbackSPUInit( int id, SPU *child, SPU *self,
+								 unsigned int context_id,
+								 unsigned int num_contexts )
 {
 	WindowInfo *window;
 	(void) context_id;
@@ -73,7 +74,8 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 	return &readback_functions;
 }
 
-void readbackSPUSelfDispatch(SPUDispatchTable *self)
+static void
+readbackSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(readback_spu.self) );
 	crSPUCopyDispatchTable( &(readback_spu.self), self );
@@ -81,7 +83,8 @@ void readbackSPUSelfDispatch(SPUDispatchTable *self)
 	readback_spu.server = (CRServer *)(self->server);
 }
 
-int readbackSPUCleanup(void)
+static int
+readbackSPUCleanup(void)
 {
 	return 1;
 }

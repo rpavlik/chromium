@@ -54,7 +54,7 @@ fishRec dolph;
 GLboolean moving;
 int screenshot = 0;
 
-void
+static void
 InitFishs(void)
 {
     int i;
@@ -93,7 +93,7 @@ InitFishs(void)
     babyWhale.v = 3.0;
 }
 
-void
+static void
 Init(void)
 {
     static float ambient[] =
@@ -138,7 +138,7 @@ Init(void)
     glClearColor(0.0, 0.5, 0.9, 0.0);
 }
 
-void
+static void
 Reshape(int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -151,7 +151,7 @@ Reshape(int width, int height)
 
 }
 
-void
+static void
 Animate(void)
 {
     int i;
@@ -170,7 +170,7 @@ Animate(void)
 }
 
 /* ARGSUSED1 */
-void
+static void
 Key(unsigned char key, int x, int y)
 {
 	(void) x;
@@ -191,7 +191,7 @@ Key(unsigned char key, int x, int y)
     }
 }
 
-void
+static void
 save_frame( void )
 {
 	GLint viewport[4];
@@ -225,7 +225,7 @@ save_frame( void )
 	printf( "done\n" );
 }
 
-void
+static void
 print_performance( void )
 {
 	static int first = 1;
@@ -253,7 +253,7 @@ print_performance( void )
 	}
 }
 
-void
+static void
 Display( void )
 {
     float ambient[] = {0.1, 0.1, 0.1, 1.0};
@@ -348,7 +348,7 @@ Display( void )
 	print_performance( );
 }
 
-void
+static void
 Visible(int state)
 {
     if (state == GLUT_VISIBLE) {
@@ -360,7 +360,7 @@ Visible(int state)
     }
 }
 
-void
+static void
 menuSelect(int value)
 {
     switch (value) {
@@ -381,9 +381,12 @@ menuSelect(int value)
 int
 main(int argc, char **argv)
 {
+    int mode = GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH;
     glutInitWindowSize(512, 192);
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+    if (argc > 1 && strcmp(argv[1], "-ms") == 0)
+       mode |= GLUT_MULTISAMPLE;
+    glutInitDisplayMode(mode);
     glutCreateWindow("GLUT Atlantis Demo");
     Init();
     glutDisplayFunc(Display);

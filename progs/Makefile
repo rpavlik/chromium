@@ -8,7 +8,11 @@ TOP = ..
 include ${TOP}/arch.mk
 
 SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit retile \
-	statecopytest tiletest city threadtest
+	statecopytest tiletest city psubmit_crut 
+
+ifeq ($(THREADSAFE), 1)
+SUBDIRS += threadtest
+endif
 
 ifeq ($(QT), 1)
 SUBDIRS += cr-recorder

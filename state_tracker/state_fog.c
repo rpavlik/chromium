@@ -4,30 +4,42 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStateFogInit (CRFogState *f) 
+void crStateFogInit (CRContext *ctx)
 {
+	CRFogState *f = &ctx->fog;
+	CRStateBits *sb = GetCurrentBits();
+	CRFogBits *fb = &(sb->fog);
 	GLcolorf black = {0.0f, 0.0f, 0.0f, 0.0f};
-	f->color = black;
 
+	f->color = black;
+	RESET(fb->color, ctx->bitid);
 	f->density = 1.0f;
+	RESET(fb->density, ctx->bitid);
 	f->end = 1.0f;
+	RESET(fb->end, ctx->bitid);
 	f->start = 0.0f;
+	RESET(fb->start, ctx->bitid);
 	f->mode = GL_EXP;
+	RESET(fb->mode, ctx->bitid);
 	f->index = 0;
+	RESET(fb->index, ctx->bitid);
 	f->enable = GL_FALSE;
+	RESET(fb->enable, ctx->bitid);
 
 #ifdef CR_NV_fog_distance
 	f->fogDistanceMode = GL_EYE_PLANE_ABSOLUTE_NV;
+	RESET(fb->fogDistanceMode, ctx->bitid);
 #endif
 #ifdef CR_EXT_fog_coord
 	f->fogCoordinateSource = GL_FRAGMENT_DEPTH_EXT;
+	RESET(fb->fogCoordinateSource, ctx->bitid);
 #endif
+	INVERTDIRTY(fb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateFogf(GLenum pname, GLfloat param) 
@@ -56,10 +68,10 @@ void STATE_APIENTRY crStateFogiv(GLenum pname, const GLint *param)
 			crStateFogfv( pname, &f_param );
 			break;
 		case GL_FOG_COLOR:
-			f_color.r = ((GLfloat) param[0]) / ((GLfloat) GL_MAXINT);
-			f_color.g = ((GLfloat) param[1]) / ((GLfloat) GL_MAXINT);
-			f_color.b = ((GLfloat) param[2]) / ((GLfloat) GL_MAXINT);
-			f_color.a = ((GLfloat) param[3]) / ((GLfloat) GL_MAXINT);
+			f_color.r = ((GLfloat) param[0]) / ((GLfloat) CR_MAXINT);
+			f_color.g = ((GLfloat) param[1]) / ((GLfloat) CR_MAXINT);
+			f_color.b = ((GLfloat) param[2]) / ((GLfloat) CR_MAXINT);
+			f_color.a = ((GLfloat) param[3]) / ((GLfloat) CR_MAXINT);
 			crStateFogfv( pname, (GLfloat *) &f_color );
 			break;
 #ifdef CR_NV_fog_distance
@@ -162,8 +174,8 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 		case GL_FOG_COORDINATE_SOURCE_EXT:
 			if (g->extensions.EXT_fog_coord)
 			{
-				if (param[0] != GL_FOG_COORDINATE_EXT &&
-						param[0] != GL_FRAGMENT_DEPTH_EXT)
+				if ((GLenum) param[0] != GL_FOG_COORDINATE_EXT &&
+						(GLenum) param[0] != GL_FRAGMENT_DEPTH_EXT)
 				{
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 						"Fogfv: GL_FOG_COORDINATE_SOURCE_EXT called with illegal parameter: 0x%x", (GLenum) param[0]);
@@ -174,7 +186,7 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 			}
 			else
 			{
-				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: 0x%x", (GLint) param[0]);
 				return;
 			}
 			break;

@@ -23,25 +23,25 @@ print """#include <stdio.h>
 #include "state/cr_stateerror.h"
 #include "simplequeryspu.h"
 
-void SIMPLEQUERYSPU_APIENTRY
+static void SIMPLEQUERYSPU_APIENTRY
 simplequeryChromiumParameteriCR( GLenum target, GLint value )
 {
 	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
 }
 
-void SIMPLEQUERYSPU_APIENTRY
+static void SIMPLEQUERYSPU_APIENTRY
 simplequeryChromiumParameterfCR( GLenum target, GLfloat value )
 {
 	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
 }
 
-void SIMPLEQUERYSPU_APIENTRY
+static void SIMPLEQUERYSPU_APIENTRY
 simplequeryChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
 {
 	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
 }
 
-void SIMPLEQUERYSPU_APIENTRY
+static void SIMPLEQUERYSPU_APIENTRY
 simplequeryGetChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
 {
 	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
@@ -52,7 +52,7 @@ simplequeryGetChromiumParametervCR( GLenum target, GLenum type, GLsizei count, c
 keys = gl_mapping.keys()
 keys.sort();
 
-print 'SPUNamedFunctionTable simplequery_table[] = {'
+print 'SPUNamedFunctionTable _cr_simplequery_table[] = {'
 for index in range(len(keys)):
 	func_name = keys[index]
 	if stub_common.FindSpecial( "simplequery", func_name ):

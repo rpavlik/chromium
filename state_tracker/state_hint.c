@@ -4,28 +4,40 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStateHintInit (CRHintState *h) 
+void crStateHintInit (CRContext *ctx) 
 {
+	CRHintState *h = &ctx->hint;
+	CRStateBits *sb = GetCurrentBits();
+	CRHintBits *hb = &(sb->hint);
+
 	h->perspectiveCorrection = GL_DONT_CARE;
+	RESET(hb->perspectiveCorrection, ctx->bitid);
 	h->pointSmooth = GL_DONT_CARE;
+	RESET(hb->pointSmooth, ctx->bitid);
 	h->lineSmooth = GL_DONT_CARE;
+	RESET(hb->lineSmooth, ctx->bitid);
 	h->polygonSmooth = GL_DONT_CARE;
+	RESET(hb->polygonSmooth, ctx->bitid);
 	h->fog = GL_DONT_CARE;
-#ifdef CR_EXT_clip_volumne_hint
+	RESET(hb->fog, ctx->bitid);
+#ifdef CR_EXT_clip_volume_hint
 	h->clipVolumeClipping = GL_DONT_CARE;
+	RESET(hb->clipVolumeClipping, ctx->bitid);
 #endif
 #ifdef CR_ARB_texture_compression
 	h->textureCompression = GL_DONT_CARE;
+	RESET(hb->textureCompression, ctx->bitid);
 #endif
 #ifdef CR_SGIS_generate_mipmap
 	h->generateMipmap = GL_DONT_CARE;
+	RESET(hb->generateMipmap, ctx->bitid);
 #endif
+	RESET(hb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateHint(GLenum target, GLenum mode) 

@@ -10,6 +10,7 @@
  */
 
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
 #include <math.h>
@@ -66,7 +67,7 @@ do {						\
  */
 
 
-void
+static void
 _math_horner_bezier_curve(const GLfloat * cp, GLfloat * out, GLfloat t,
 			  GLuint dim, GLuint order)
 {
@@ -110,7 +111,7 @@ _math_horner_bezier_curve(const GLfloat * cp, GLfloat * out, GLfloat t,
  * control net cn.
  */
 
-void
+static void
 _math_horner_bezier_surf(GLfloat * cn, GLfloat * out, GLfloat u, GLfloat v,
 			 GLuint dim, GLuint uorder, GLuint vorder)
 {
@@ -187,7 +188,7 @@ _math_horner_bezier_surf(GLfloat * cn, GLfloat * out, GLfloat u, GLfloat v,
  * values in the control net cn.
  */
 
-void
+static void
 _math_de_casteljau_surf(GLfloat * cn, GLfloat * out, GLfloat * du,
 			GLfloat * dv, GLfloat u, GLfloat v, GLuint dim,
 			GLuint uorder, GLuint vorder)

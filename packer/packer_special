@@ -68,6 +68,8 @@ TexSubImage3D
 ArrayElement
 DrawArrays
 DrawElements
+MultiDrawArraysEXT
+MultiDrawElementsEXT
 DrawRangeElements
 CombinerParameterfvNV
 CombinerParameterivNV
@@ -83,8 +85,6 @@ LoadTransposeMatrixfARB
 LoadTransposeMatrixdARB
 MultTransposeMatrixfARB
 MultTransposeMatrixdARB
-ProgramParameter4dvNV
-ProgramParameter4fvNV
 ProgramParameters4dvNV
 ProgramParameters4fvNV
 VertexAttribPointerNV

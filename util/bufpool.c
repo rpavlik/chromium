@@ -17,6 +17,12 @@ crBufferPoolInit( CRBufferPool *pool, unsigned int max )
 	pool->buf = (void **) crAlloc( pool->max * sizeof(pool->buf[0]) );
 }
 
+void
+crBufferPoolFree( CRBufferPool *pool )
+{
+	crFree( pool->buf );
+}
+
 static void
 crBufferPoolGrow( CRBufferPool *pool, unsigned int count )
 {

@@ -10,7 +10,8 @@
 :enable:dither:GL_DITHER
 alphaTest:alphaFunc:alphaTestFunc,alphaTestRef:AlphaFunc
 depthTest:depthFunc:depthFunc:DepthFunc
-blend:blendFunc:blendSrc,blendDst:BlendFunc
+blend:blendFunc:blendSrcRGB,blendDstRGB:BlendFunc
+blend:blendFuncSeparate:blendSrcRGB,blendDstRGB,blendSrcA,blendDstA:BlendFuncSeparateEXT
 logicOp:logicOp:logicOpMode:LogicOp
 indexLogicOp:indexLogicOp:logicOpMode:LogicOp
 :drawBuffer:drawBuffer:DrawBuffer

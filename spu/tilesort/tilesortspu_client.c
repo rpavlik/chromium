@@ -8,6 +8,7 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 
 void TILESORTSPU_APIENTRY tilesortspu_ArrayElement( GLint index )
 {
@@ -235,3 +236,33 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 		crError( "tilesortspu_DrawRangeElements called in a Begin/End" );
 	}
 }
+
+#ifdef CR_EXT_multi_draw_arrays
+void TILESORTSPU_APIENTRY tilesortspu_MultiDrawArraysEXT( GLenum mode, GLint *first, GLsizei *count, GLsizei primcount )
+{
+	GET_CONTEXT(ctx);
+	CRClientState *clientState = &(ctx->client);
+	if (tilesort_spu.swap)
+	{
+		crPackMultiDrawArraysEXTSWAP( mode, first, count, primcount, clientState );
+	}
+	else
+	{
+		crPackMultiDrawArraysEXT( mode, first, count, primcount, clientState );
+	}
+}
+
+void TILESORTSPU_APIENTRY tilesortspu_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount )
+{
+	GET_CONTEXT(ctx);
+	CRClientState *clientState = &(ctx->client);
+	if (tilesort_spu.swap)
+	{
+		crPackMultiDrawElementsEXTSWAP( mode, count, type, indices, primcount, clientState );
+	}
+	else
+	{
+		crPackMultiDrawElementsEXT( mode, count, type, indices, primcount, clientState );
+	}
+}
+#endif

@@ -15,8 +15,6 @@
 
 #include "cr_spu.h"
 
-void dist_texturespuGatherConfiguration( void );
-
 typedef struct {
 	int id;
 	int has_child;
@@ -25,7 +23,13 @@ typedef struct {
 
 extern Dist_textureSPU dist_texture_spu;
 
-void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D( 
+extern SPUNamedFunctionTable _cr_dist_texture_table[];
+
+extern SPUOptions dist_textureSPUOptions[];
+
+extern void dist_texturespuGatherConfiguration( void );
+
+extern void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D( 
 	GLenum target, GLint level, GLint internalformat,
 	GLsizei width, GLsizei height, GLint border,
 	GLenum format, GLenum type, const GLvoid *pixels ) ;

@@ -4,10 +4,10 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <string.h>
 #include "chromium.h"
 #include "cr_error.h"
 #include "cr_mem.h"
+#include "stub.h"
 
 /* code borrowed from Mesa */
 
@@ -220,7 +220,7 @@ void stubUseXFont( Display *dpy, Font font, int first, int count, int listbase )
 
 		glNewList(list, GL_COMPILE);
 		if (valid && (bm_width > 0) && (bm_height > 0)) {
-			memset(bm, '\0', bm_width * bm_height);
+			crMemset(bm, '\0', bm_width * bm_height);
 			fill_bitmap(dpy, win, gc, bm_width, bm_height, x, y, c, bm);
 			glBitmap(width, height, x0, y0, dx, dy, bm);
 		}

@@ -3,12 +3,12 @@
 
    See the file LICENSE.txt for information on redistributing this software. */
 	
-#include <stdio.h>
-#include "packspu.h"
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
 #include "cr_pixeldata.h"
 #include "cr_version.h"
+#include "packspu.h"
+#include "packspu_proto.h"
 
 void PACKSPU_APIENTRY packspu_GetTexImage (GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels)
 {

@@ -15,5 +15,6 @@
 #endif
 
 #include "cr_unpack.h"
+#include "unpack_extend.h"
 
 #endif /* CR_UNPACKER_H */

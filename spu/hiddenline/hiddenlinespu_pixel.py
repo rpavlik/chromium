@@ -21,6 +21,7 @@ stub_common.CopyrightC()
 
 print """#include <stdio.h>
 #include "hiddenlinespu.h"
+#include "hiddenlinespu_proto.h"
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
 

@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -51,8 +50,8 @@ typedef struct CRTeacBuffer {
 static struct {
   int                  initialized;
   int                  num_conns;
-  CRNetReceiveFunc     recv;
-  CRNetCloseFunc       close;
+  CRNetReceiveFuncList *recv_list;
+  CRNetCloseFuncList *close_list;
   CRTeacConnection    *credit_head;
   CRTeacConnection    *credit_tail;
   unsigned int         inside_recv;
@@ -346,7 +345,7 @@ crTeacSend( CRConnection *conn, void **bufp,
     buf  = payload - CR_TEAC_BUFFER_PAD; 
     sbuf = *((SBuffer **) buf );
 
-    memcpy( payload, start, len );
+    crMemcpy( payload, start, len );
 
     sbuf->validSize += len; 
     conn->send_credits -= sbuf->validSize;
@@ -371,7 +370,7 @@ CRConnection *
 crTeacSelect( void )
 {
   int  count    = 0;
-  int *teac_ids = malloc( sizeof( int ) * cr_teac.num_conns );
+  int *teac_ids = crAlloc( sizeof( int ) * cr_teac.num_conns );
   int  ready_id = -1;
   CRTeacConnection *teac_conn = NULL;
 
@@ -433,31 +432,22 @@ crTeacRecv( void )
 
   *((RBuffer **) buf ) = rbuf;
 
-  if ( !cr_teac.recv( conn, payload, len ) ) {
-    crNetDefaultRecv( conn, payload, len );
-  }
+  crNetDispatchMessage( cr_teac.recv_list, conn, payload, len );
 
   cr_teac.inside_recv--;
 
   return 1;
 }
 
-void crTeacInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc,
+void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 		 unsigned int mtu )
 {
   (void) mtu;
+  cr_teac.recv = recvFunc;
+  cr_teac.close = closeFunc;
+
   if ( cr_teac.initialized )
     {
-      if ( cr_teac.recv == NULL && cr_teac.close == NULL )
-	{
-	  cr_teac.recv = recvFunc;
-	  cr_teac.close = closeFunc;
-	}
-      else
-	{
-	  CRASSERT( cr_teac.recv == recvFunc );
-	  CRASSERT( cr_teac.close == closeFunc );
-	}
       return;
     }
   
@@ -481,9 +471,6 @@ void crTeacInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc,
 	     cr_teac.my_rank );
 
   cr_teac.num_conns = 0;
-
-  cr_teac.recv = recvFunc;
-  cr_teac.close = closeFunc;
 
   cr_teac.credit_head = NULL;
   cr_teac.credit_tail = NULL;

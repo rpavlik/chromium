@@ -5,6 +5,7 @@
  */
 
 #include "hiddenlinespu.h"
+#include "hiddenlinespu_proto.h"
 #include "cr_unpack.h"
 #include "cr_mem.h"
 
@@ -24,7 +25,7 @@ static void hiddenPlayback( SPUDispatchTable *table )
 	}
 }
 
-void HIDDENLINESPU_APIENTRY hlHandleEnable( GLenum cap )
+static void HIDDENLINESPU_APIENTRY hlHandleEnable( GLenum cap )
 {
 	if( cap != GL_TEXTURE_2D && cap != GL_BLEND && cap != GL_LIGHTING )
 	{
@@ -32,22 +33,22 @@ void HIDDENLINESPU_APIENTRY hlHandleEnable( GLenum cap )
 	}
 }
 
-void HIDDENLINESPU_APIENTRY hlHandleColor3bv (const GLbyte *v)    {}
-void HIDDENLINESPU_APIENTRY hlHandleColor3dv (const GLdouble *v)  {}
-void HIDDENLINESPU_APIENTRY hlHandleColor3fv (const GLfloat *v)   {}
-void HIDDENLINESPU_APIENTRY hlHandleColor3iv (const GLint *v)     {}
-void HIDDENLINESPU_APIENTRY hlHandleColor3sv (const GLshort *v)   {}
-void HIDDENLINESPU_APIENTRY hlHandleColor3ubv (const GLubyte *v)  {}
-void HIDDENLINESPU_APIENTRY hlHandleColor3uiv (const GLuint *v)   {}
-void HIDDENLINESPU_APIENTRY hlHandleColor3usv (const GLushort *v) {}
-void HIDDENLINESPU_APIENTRY hlHandleColor4bv (const GLbyte *v)    {}
-void HIDDENLINESPU_APIENTRY hlHandleColor4dv (const GLdouble *v)  {}
-void HIDDENLINESPU_APIENTRY hlHandleColor4fv (const GLfloat *v)   {}
-void HIDDENLINESPU_APIENTRY hlHandleColor4iv (const GLint *v)     {}
-void HIDDENLINESPU_APIENTRY hlHandleColor4sv (const GLshort *v)   {}
-void HIDDENLINESPU_APIENTRY hlHandleColor4ubv (const GLubyte *v)  {}
-void HIDDENLINESPU_APIENTRY hlHandleColor4uiv (const GLuint *v)   {}
-void HIDDENLINESPU_APIENTRY hlHandleColor4usv (const GLushort *v) {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor3bv (const GLbyte *v)    {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor3dv (const GLdouble *v)  {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor3fv (const GLfloat *v)   {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor3iv (const GLint *v)     {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor3sv (const GLshort *v)   {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor3ubv (const GLubyte *v)  {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor3uiv (const GLuint *v)   {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor3usv (const GLushort *v) {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor4bv (const GLbyte *v)    {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor4dv (const GLdouble *v)  {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor4fv (const GLfloat *v)   {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor4iv (const GLint *v)     {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor4sv (const GLshort *v)   {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor4ubv (const GLubyte *v)  {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor4uiv (const GLuint *v)   {}
+static void HIDDENLINESPU_APIENTRY hlHandleColor4usv (const GLushort *v) {}
 
 void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags )
 {

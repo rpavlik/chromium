@@ -61,6 +61,9 @@ typedef struct {
 	SPUDispatchTable self;
 	int id;
 
+	unsigned int window_id;
+	unsigned int context_id;
+
 	/* config options */
 	char *window_title;
 	int defaultX, defaultY;
@@ -74,6 +77,8 @@ typedef struct {
 	int          sync;
 #endif
 	int render_to_app_window;
+        int render_to_crut_window;
+        int crut_drawable;
 	int resizable;
 	int use_lut8, lut8[3][256];
 

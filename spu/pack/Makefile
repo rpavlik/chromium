@@ -37,18 +37,18 @@ endif
 
 PACKS = 1
 
-PRECOMP = packspu.c packspu_get.c packspu_flush.c
+PRECOMP = packspu.c packspu_get.c packspu_flush.c packspu_beginend.c packspu_proto.h
 SLOP = $(PRECOMP)
 
 LIB_DEFS += pack.def
 
 include ${TOP}/cr.mk
 
-packspu.c: pack.py packspu_special packspu_unimplemented_special ../../glapi_parser/gl_header.parsed
+packspu.c: pack.py packspu_special packspu_unimplemented_special ../../glapi_parser/gl_header.parsed packspu_proto.h
 	@$(ECHO) Building the Pack SPU
 	@$(PYTHON) pack.py > $@
 
-packspu_get.c: packspu_get.py packspu_special ../../crserver/get_sizes.py ../../glapi_parser/gl_header.parsed
+packspu_get.c: packspu_get.py packspu_special ../../crserverlib/get_sizes.py ../../glapi_parser/gl_header.parsed packspu_proto.h
 	@$(ECHO) Building the Pack SPU Get functions
 	@$(PYTHON) packspu_get.py > $@	
 
@@ -56,6 +56,10 @@ packspu_flush.c: packspu_flush.py packspu_flush_special ../../glapi_parser/gl_he
 	@$(ECHO) Building the Pack SPU Auto-flushing functions
 	@$(PYTHON) packspu_flush.py > $@
 
-packspu_beginend.c: packspu_beginend.py packspu_vertex_special ../../glapi_parser/gl_header.parsed
+packspu_beginend.c: packspu_beginend.py packspu_vertex_special ../../glapi_parser/gl_header.parsed packspu_proto.h
 	@$(ECHO) Building the Pack SPU Vertex functions
 	@$(PYTHON) packspu_beginend.py > $@
+
+packspu_proto.h: packspu_proto.py packspu_special packspu_unimplemented_special ../../glapi_parser/gl_header.parsed
+	@$(ECHO) Building the Pack SPU prototypes header
+	@$(PYTHON) packspu_proto.py > $@

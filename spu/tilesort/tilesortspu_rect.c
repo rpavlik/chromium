@@ -5,6 +5,7 @@
  */
 
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_packfunctions.h"
 #include "cr_error.h"
 

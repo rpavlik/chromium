@@ -9,17 +9,39 @@
  * permission of Brian Paul
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "cr_mem.h"
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
+/* free the 1-D evaluator map */
+static void
+free_1d_map(CRContext *ctx, GLenum map)
+{
+	CREvaluatorState *e = &ctx->eval;
+	const GLint k = map - GL_MAP1_COLOR_4;
+
+	crFree( e->eval1D[k].coeff );
+}
+
+/* free the 2-D evaluator map */
+static void
+free_2d_map(CRContext *ctx, GLenum map)
+{
+	CREvaluatorState *e = &ctx->eval;
+	const GLint k = map - GL_MAP2_COLOR_4;
+
+	crFree( e->eval2D[k].coeff );
+}
+
 /* Initialize a 1-D evaluator map */
 static void
-init_1d_map(CREvaluatorState * e, GLenum map, int n, const float *initial)
+init_1d_map(CRContext *ctx, GLenum map, int n, const float *initial)
 {
+	CREvaluatorState *e = &ctx->eval;
+	CRStateBits *sb = GetCurrentBits();
+	CREvaluatorBits *eb = &(sb->eval);
 	GLint i;
 	const GLint k = map - GL_MAP1_COLOR_4;
 	CRASSERT(k >= 0);
@@ -31,13 +53,17 @@ init_1d_map(CREvaluatorState * e, GLenum map, int n, const float *initial)
 	e->eval1D[k].coeff = (GLfloat *) crAlloc(n * sizeof(GLfloat));
 	for (i = 0; i < n; i++)
 		e->eval1D[k].coeff[i] = initial[i];
+	RESET(eb->eval1D[i], ctx->bitid);
 }
 
 
 /* Initialize a 2-D evaluator map */
 static void
-init_2d_map(CREvaluatorState * e, GLenum map, int n, const float *initial)
+init_2d_map(CRContext *ctx, GLenum map, int n, const float *initial)
 {
+	CREvaluatorState *e = &ctx->eval;
+	CRStateBits *sb = GetCurrentBits();
+	CREvaluatorBits *eb = &(sb->eval);
 	GLint i;
 	const GLint k = map - GL_MAP2_COLOR_4;
 	CRASSERT(k >= 0);
@@ -53,11 +79,39 @@ init_2d_map(CREvaluatorState * e, GLenum map, int n, const float *initial)
 	e->eval2D[k].coeff = (GLfloat *) crAlloc(n * sizeof(GLfloat));
 	for (i = 0; i < n; i++)
 		e->eval2D[k].coeff[i] = initial[i];
+	RESET(eb->eval2D[i], ctx->bitid);
 }
 
 void
-crStateEvaluatorInit(CREvaluatorState * e)
+crStateEvaluatorDestroy(CRContext *ctx)
 {
+	free_1d_map(ctx, GL_MAP1_VERTEX_3);
+	free_1d_map(ctx, GL_MAP1_VERTEX_4);
+	free_1d_map(ctx, GL_MAP1_INDEX);
+	free_1d_map(ctx, GL_MAP1_COLOR_4);
+	free_1d_map(ctx, GL_MAP1_NORMAL);
+	free_1d_map(ctx, GL_MAP1_TEXTURE_COORD_1);
+	free_1d_map(ctx, GL_MAP1_TEXTURE_COORD_2);
+	free_1d_map(ctx, GL_MAP1_TEXTURE_COORD_3);
+	free_1d_map(ctx, GL_MAP1_TEXTURE_COORD_4);
+
+	free_2d_map(ctx, GL_MAP2_VERTEX_3);
+	free_2d_map(ctx, GL_MAP2_VERTEX_4);
+	free_2d_map(ctx, GL_MAP2_INDEX);
+	free_2d_map(ctx, GL_MAP2_COLOR_4);
+	free_2d_map(ctx, GL_MAP2_NORMAL);
+	free_2d_map(ctx, GL_MAP2_TEXTURE_COORD_1);
+	free_2d_map(ctx, GL_MAP2_TEXTURE_COORD_2);
+	free_2d_map(ctx, GL_MAP2_TEXTURE_COORD_3);
+	free_2d_map(ctx, GL_MAP2_TEXTURE_COORD_4);
+}
+
+void
+crStateEvaluatorInit(CRContext *ctx)
+{
+	CREvaluatorState *e = &ctx->eval;
+	CRStateBits *sb = GetCurrentBits();
+	CREvaluatorBits *eb = &(sb->eval);
 	static GLfloat vertex[4] = { 0.0, 0.0, 0.0, 1.0 };
 	static GLfloat normal[3] = { 0.0, 0.0, 1.0 };
 	static GLfloat index[1] = { 1.0 };
@@ -65,30 +119,32 @@ crStateEvaluatorInit(CREvaluatorState * e)
 	static GLfloat texcoord[4] = { 0.0, 0.0, 0.0, 1.0 };
 
 	e->autoNormal = GL_FALSE;
+	RESET(eb->enable, ctx->bitid);
 
-	init_1d_map(e, GL_MAP1_VERTEX_3, 3, vertex);
-	init_1d_map(e, GL_MAP1_VERTEX_4, 4, vertex);
-	init_1d_map(e, GL_MAP1_INDEX, 1, index);
-	init_1d_map(e, GL_MAP1_COLOR_4, 4, color);
-	init_1d_map(e, GL_MAP1_NORMAL, 3, normal);
-	init_1d_map(e, GL_MAP1_TEXTURE_COORD_1, 1, texcoord);
-	init_1d_map(e, GL_MAP1_TEXTURE_COORD_2, 2, texcoord);
-	init_1d_map(e, GL_MAP1_TEXTURE_COORD_3, 3, texcoord);
-	init_1d_map(e, GL_MAP1_TEXTURE_COORD_4, 4, texcoord);
+	init_1d_map(ctx, GL_MAP1_VERTEX_3, 3, vertex);
+	init_1d_map(ctx, GL_MAP1_VERTEX_4, 4, vertex);
+	init_1d_map(ctx, GL_MAP1_INDEX, 1, index);
+	init_1d_map(ctx, GL_MAP1_COLOR_4, 4, color);
+	init_1d_map(ctx, GL_MAP1_NORMAL, 3, normal);
+	init_1d_map(ctx, GL_MAP1_TEXTURE_COORD_1, 1, texcoord);
+	init_1d_map(ctx, GL_MAP1_TEXTURE_COORD_2, 2, texcoord);
+	init_1d_map(ctx, GL_MAP1_TEXTURE_COORD_3, 3, texcoord);
+	init_1d_map(ctx, GL_MAP1_TEXTURE_COORD_4, 4, texcoord);
 
-	init_2d_map(e, GL_MAP2_VERTEX_3, 3, vertex);
-	init_2d_map(e, GL_MAP2_VERTEX_4, 4, vertex);
-	init_2d_map(e, GL_MAP2_INDEX, 1, index);
-	init_2d_map(e, GL_MAP2_COLOR_4, 4, color);
-	init_2d_map(e, GL_MAP2_NORMAL, 3, normal);
-	init_2d_map(e, GL_MAP2_TEXTURE_COORD_1, 1, texcoord);
-	init_2d_map(e, GL_MAP2_TEXTURE_COORD_2, 2, texcoord);
-	init_2d_map(e, GL_MAP2_TEXTURE_COORD_3, 3, texcoord);
-	init_2d_map(e, GL_MAP2_TEXTURE_COORD_4, 4, texcoord);
+	init_2d_map(ctx, GL_MAP2_VERTEX_3, 3, vertex);
+	init_2d_map(ctx, GL_MAP2_VERTEX_4, 4, vertex);
+	init_2d_map(ctx, GL_MAP2_INDEX, 1, index);
+	init_2d_map(ctx, GL_MAP2_COLOR_4, 4, color);
+	init_2d_map(ctx, GL_MAP2_NORMAL, 3, normal);
+	init_2d_map(ctx, GL_MAP2_TEXTURE_COORD_1, 1, texcoord);
+	init_2d_map(ctx, GL_MAP2_TEXTURE_COORD_2, 2, texcoord);
+	init_2d_map(ctx, GL_MAP2_TEXTURE_COORD_3, 3, texcoord);
+	init_2d_map(ctx, GL_MAP2_TEXTURE_COORD_4, 4, texcoord);
 
 	e->un1D = 1;
 	e->u11D = 0.0;
 	e->u21D = 1.0;
+	RESET(eb->grid1D, ctx->bitid);
 
 	e->un2D = 1;
 	e->vn2D = 1;
@@ -96,6 +152,9 @@ crStateEvaluatorInit(CREvaluatorState * e)
 	e->u22D = 1.0;
 	e->v12D = 0.0;
 	e->v22D = 1.0;
+	RESET(eb->grid1D, ctx->bitid);
+
+	RESET(eb->dirty, ctx->bitid);
 }
 
 const int gleval_sizes[] = { 4, 1, 3, 1, 2, 3, 4, 3, 4 };
@@ -112,7 +171,7 @@ const int gleval_sizes[] = { 4, 1, 3, 1, 2, 3, 4, 3, 4 };
  * Return:  pointer to buffer of contiguous control points or NULL if out
  *          of memory.
  */
-GLfloat *
+static GLfloat *
 _copy_map_points1f(GLint size, GLint ustride, GLint uorder,
 									 const GLfloat * points)
 {
@@ -138,7 +197,7 @@ _copy_map_points1f(GLint size, GLint ustride, GLint uorder,
 /*
  * Same as above but convert doubles to floats.
  */
-GLfloat *
+static GLfloat *
 _copy_map_points1d(GLint size, GLint ustride, GLint uorder,
 									 const GLdouble * points)
 {
@@ -171,7 +230,7 @@ _copy_map_points1d(GLint size, GLint ustride, GLint uorder,
  * Return:  pointer to buffer of contiguous control points or NULL if out
  *          of memory.
  */
-GLfloat *
+static GLfloat *
 _copy_map_points2f(GLint size,
 									 GLint ustride, GLint uorder,
 									 GLint vstride, GLint vorder, const GLfloat * points)
@@ -214,7 +273,7 @@ _copy_map_points2f(GLint size,
 /*
  * Same as above but convert doubles to floats.
  */
-GLfloat *
+static GLfloat *
 _copy_map_points2d(GLint size,
 									 GLint ustride, GLint uorder,
 									 GLint vstride, GLint vorder, const GLdouble * points)
@@ -268,8 +327,8 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
 		 GLint uorder, const GLvoid * points, GLenum type)
 {
 	CRContext *g = GetCurrentContext();
-	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorState *e = &(g->eval);
+	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorBits *eb = &(sb->eval);
 	CRTextureState *t = &(g->texture);
 	GLint i;
@@ -798,11 +857,11 @@ crStateMapGrid2d(GLint un, GLdouble u1, GLdouble u2,
 }
 
 void
-crStateEvaluatorSwitch(CREvaluatorBits * e, GLbitvalue * bitID,
+crStateEvaluatorSwitch(CREvaluatorBits * e, CRbitvalue * bitID,
 											 CREvaluatorState * from, CREvaluatorState * to)
 {
 	int i, j;
-	GLbitvalue nbitID[CR_MAX_BITARRAY];
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j = 0; j < CR_MAX_BITARRAY; j++)
 		nbitID[j] = ~bitID[j];
@@ -887,12 +946,12 @@ crStateEvaluatorSwitch(CREvaluatorBits * e, GLbitvalue * bitID,
 }
 
 void
-crStateEvaluatorDiff(CREvaluatorBits * e, GLbitvalue * bitID,
+crStateEvaluatorDiff(CREvaluatorBits * e, CRbitvalue * bitID,
 										 CREvaluatorState * from, CREvaluatorState * to)
 {
 	glAble able[2];
 	int i, j;
-	GLbitvalue nbitID[CR_MAX_BITARRAY];
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j = 0; j < CR_MAX_BITARRAY; j++)
 		nbitID[j] = ~bitID[j];

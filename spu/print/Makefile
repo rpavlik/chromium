@@ -29,3 +29,4 @@ include ${TOP}/cr.mk
 printspu.c: print.py printspu_unimplemented_special printspu_special
 	@$(ECHO) Building the Print SPU
 	@$(PYTHON) print.py > $@
+

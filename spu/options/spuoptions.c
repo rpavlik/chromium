@@ -50,7 +50,8 @@ static char *__findDLL( const char *name, const char *dir )
  * call any initialization functions from which the spu might try to
  * connect to the mothership, etc.  
  */
-SPU * SPULoadLite( SPU *child, int id, const char *name, char *dir, void *server )
+static SPU *
+SPULoadLite( SPU *child, int id, const char *name, char *dir, void *server )
 {
 	SPU *the_spu;
 	char *path;

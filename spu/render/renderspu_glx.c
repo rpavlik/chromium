@@ -11,16 +11,15 @@
 #include <X11/Xmu/StdCmap.h>
 #include <X11/Xatom.h>
 #include <sys/time.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <memory.h>
 
+#include "cr_mothership.h"
 #include "cr_error.h"
 #include "cr_string.h"
+#include "cr_mem.h"
 #include "renderspu.h"
 
 #define WINDOW_NAME render_spu.window_title
-
 
 static Bool WindowExistsFlag;
 
@@ -220,6 +219,14 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 		}
 	}
 
+	if (visAttribs & CR_MULTISAMPLE_BIT)
+	{
+		attribList[i++] = GLX_SAMPLE_BUFFERS_SGIS;
+		attribList[i++] = 1;
+		attribList[i++] = GLX_SAMPLES_SGIS;
+		attribList[i++] = 4;
+	}
+
 	if (render_spu.use_lut8)
 	{
 		/* 
@@ -244,8 +251,8 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 
 
 	}
-	/* XXX add multisample support eventually */
 
+	/* End the list */
 	attribList[i++] = None;
 
 	vis = render_spu.ws.glXChooseVisual( dpy, screen, attribList );
@@ -266,7 +273,7 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 	else
 		dpyName = NULL;
 
-	visual->dpy = XOpenDisplay(dpyName);
+	visual->dpy = XOpenDisplay(dpyName);  
 
 	if (!visual->dpy)
 	{
@@ -420,7 +427,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		crWarning( "Render SPU: unable to create window" );
 		return GL_FALSE;
 	}
-    
+
     /* Make a clear cursor to get rid of the monitor cursor */
 	if ( render_spu.fullscreen )
 	{
@@ -474,8 +481,8 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	class_hints->res_name = crStrdup( "foo" );
 	class_hints->res_class = crStrdup( "Chromium" );
 	XSetClassHint( dpy, window->window, class_hints );
-	free( class_hints->res_name );
-	free( class_hints->res_class );
+	crFree( class_hints->res_name );
+	crFree( class_hints->res_class );
 	XFree( class_hints );
 
 	crDebug( "Render SPU: About to make current to the context" );
@@ -532,6 +539,7 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 	CRASSERT(window);
 	CRASSERT(window->visual);
 	XDestroyWindow(window->visual->dpy, window->window);
+	XSync(window->visual->dpy, 0);
 	window->visual = NULL;
 	window->window = 0;
 	window->width = window->height = 0;
@@ -580,8 +588,11 @@ void renderspu_SystemDestroyContext( ContextInfo *context )
 
 void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, ContextInfo *context )
 {
-	CRASSERT(render_spu.ws.glXMakeCurrent);
+	CRConnection* conn;
+	char response[8096];
 
+	CRASSERT(render_spu.ws.glXMakeCurrent);
+	
 	if (window && context) {
 		if (window->visual != context->visual) {
 			/*
@@ -614,17 +625,38 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 		CRASSERT(context->context);
 
-		if (render_spu.render_to_app_window && nativeWindow)
+		if (render_spu.render_to_crut_window) {
+
+		  conn = crMothershipConnect();
+		  if (!conn)
+		  {
+		    crError("Couldn't connect to the mothership to get CRUT drawable-- I have no idea what to do!");
+		  }
+
+		  crMothershipGetParam( conn, "crut_drawable", response );
+		  render_spu.crut_drawable = crStrToInt(response);
+		  crMothershipDisconnect(conn);
+
+		  crDebug("Received a drawable: %i", render_spu.crut_drawable);
+		  if (!render_spu.crut_drawable)
+		    crError("Crut drawable is invalid\n");
+
+		  nativeWindow = render_spu.crut_drawable;
+		  window->nativeWindow = render_spu.crut_drawable;
+
+		}
+
+		if ((render_spu.render_to_crut_window || render_spu.render_to_app_window) && nativeWindow)
 		{
 			/* The render_to_app_window option is set and we've got a nativeWindow
 			 * handle, save the handle for later calls to swapbuffers().
 			 */
 			if (WindowExists(window->visual->dpy, nativeWindow))
 			{
-				 window->nativeWindow = (Window) nativeWindow;
+                                 window->nativeWindow = (Window) nativeWindow;
 				 render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																		(Window) nativeWindow, context->context );
-			}
+		        }
 			else
 			{
 				crWarning("render SPU's render_to_app_window option is set but the appliction window ID 0x%x is invalid on the display named %s", (unsigned int) nativeWindow, DisplayString(window->visual->dpy));
@@ -710,3 +742,4 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 	else
 		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
 }
+

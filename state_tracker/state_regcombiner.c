@@ -11,8 +11,11 @@
 #define UNUSED(x) ((void) (x))
 
 
-void crStateRegCombinerInit( CRRegCombinerState *reg )
+void crStateRegCombinerInit( CRContext *ctx )
 {
+	CRRegCombinerState *reg = &ctx->regcombiner;
+	CRStateBits *sb = GetCurrentBits();
+	CRRegCombinerBits *rb = &(sb->regcombiner);
 #ifndef CR_NV_register_combiners
 	UNUSED(reg)
 #else
@@ -20,8 +23,11 @@ void crStateRegCombinerInit( CRRegCombinerState *reg )
 	int i;
 
 	reg->enabledRegCombiners = GL_FALSE;
+	RESET(rb->enable, ctx->bitid);
 	reg->constantColor0 = zero_color;
+	RESET(rb->regCombinerColor0, ctx->bitid);
 	reg->constantColor1 = zero_color;
+	RESET(rb->regCombinerColor1, ctx->bitid);
 	for( i=0; i<CR_MAX_GENERAL_COMBINERS; i++ )
 	{
 	  /* RGB Portion */
@@ -68,7 +74,10 @@ void crStateRegCombinerInit( CRRegCombinerState *reg )
 		reg->alpha[i].cdDotProduct = GL_FALSE;
 		reg->alpha[i].muxSum = GL_FALSE;
 	}
+	RESET(rb->regCombinerInput, ctx->bitid);
+	RESET(rb->regCombinerOutput, ctx->bitid);
 	reg->numGeneralCombiners = 1;
+	RESET(rb->regCombinerVars, ctx->bitid);
 	reg->colorSumClamp = GL_TRUE;
 	reg->a = GL_FOG;
 	reg->b = GL_SPARE0_PLUS_SECONDARY_COLOR_NV;
@@ -91,6 +100,7 @@ void crStateRegCombinerInit( CRRegCombinerState *reg )
 	reg->ePortion = GL_RGB;
 	reg->fPortion = GL_RGB;
 	reg->gPortion = GL_ALPHA;
+	RESET(rb->regCombinerFinalInput, ctx->bitid);
 #ifdef CR_NV_register_combiners2
 	reg->enabledPerStageConstants = GL_FALSE;
 	for( i=0; i<CR_MAX_GENERAL_COMBINERS; i++ )
@@ -98,8 +108,12 @@ void crStateRegCombinerInit( CRRegCombinerState *reg )
 		reg->stageConstantColor0[i] = zero_color;
 		reg->stageConstantColor1[i] = zero_color;
 	}
+	RESET(rb->regCombinerStageColor0, ctx->bitid);
+	RESET(rb->regCombinerStageColor1, ctx->bitid);
 #endif /* CR_NV_register_combiners2 */
 #endif /* CR_NV_register_combiners */
+
+	RESET(rb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateCombinerParameterfvNV( GLenum pname, const GLfloat *params )

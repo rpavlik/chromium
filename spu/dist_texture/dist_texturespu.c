@@ -8,7 +8,7 @@
 #include "cr_spu.h"
 #include "dist_texturespu.h"
 
-SPUNamedFunctionTable dist_texture_table[] = {
+SPUNamedFunctionTable _cr_dist_texture_table[] = {
 	{ "TexImage2D", (SPUGenericFunction) dist_textureTexImage2D },
 	{ NULL, NULL }
 };

@@ -22,6 +22,7 @@ FILES = unpack \
 	unpack_misc \
 	unpack_pixelmap \
 	unpack_point \
+	unpack_program \
 	unpack_readpixels \
 	unpack_regcombiner \
 	unpack_stipple \
@@ -45,6 +46,10 @@ include $(TOP)/cr.mk
 	@$(ECHO) Making the Unpack Function header...
 	@$(PYTHON) unpack_header.py > $@
 
-unpack.c: unpack.py ../packer/opcode_special ../packer/opcode_extend_special unpacker_special unpacker_vector_special unpacker_extend_special
+unpack.c: unpack.py ../packer/opcode_special ../packer/opcode_extend_special unpacker_special unpacker_vector_special unpacker_extend_special unpack_extend.h
 	@$(ECHO) Making the UnPacker...
 	@$(PYTHON) unpack.py > $@
+
+unpack_extend.h: unpacker_special unpacker_extend_special unpack_extend.py
+	@$(PYTHON) unpack_extend.py > $@
+

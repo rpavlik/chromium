@@ -9,7 +9,7 @@
  * libreadbackspu_crstate_copy.so) really act as copies.
  *
  * We discovered the following on Linux:
- * 1. The crserver links with libcrserver_crstate_copy.so
+ * 1. The crserver links with libcrserverlib_crstate_copy.so
  * 2. The readback SPU links with libreadbackspu_crstate_copy.so
  * 3. If the crserver loads the readback SPU, the server and readback SPU
  *    both seem to use the same instance of the state tracker (we'd expect
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	p = (*fptr)();
 
 	printf("The statecopytest program finds &__currentBits = %p\n",
-		   &__currentBits);
+		   (void *)&__currentBits);
 
 	printf("The readback SPU finds   ...    &__currentBits = %p\n", p);
 

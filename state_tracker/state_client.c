@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "cr_mem.h"
 #include "state.h"
@@ -20,13 +19,13 @@
 
 void crStateClientInitBits (CRClientBits *c) 
 {
-	c->v = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->n = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->c = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->s = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->i = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->t = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
-	c->e = (GLbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	c->v = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
+	c->n = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
+	c->c = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
+	c->s = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
+	c->i = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
+	c->t = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
+	c->e = (CRbitvalue *) crCalloc(GLCLIENT_BIT_ALLOC*sizeof(CRbitvalue));
 	c->valloc = GLCLIENT_BIT_ALLOC;
 	c->nalloc = GLCLIENT_BIT_ALLOC;
 	c->calloc = GLCLIENT_BIT_ALLOC;
@@ -36,9 +35,14 @@ void crStateClientInitBits (CRClientBits *c)
 	c->ealloc = GLCLIENT_BIT_ALLOC;
 }
 
+void crStateClientDestroy(CRClientState *c)
+{
+	crFree( c->list );
+}
+
 void crStateClientInit(CRLimitsState *limits, CRClientState *c) 
 {
-  unsigned int i;
+	unsigned int i;
 
 	/* pixel pack/unpack */
 	c->unpack.rowLength   = 0;
@@ -133,8 +137,8 @@ void STATE_APIENTRY crStatePixelStoref (GLenum pname, GLfloat param)
 void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param)
 {
 	CRContext *g    = GetCurrentContext();
-	CRStateBits *sb = GetCurrentBits();
 	CRClientState *c = &(g->client);
+	CRStateBits *sb = GetCurrentBits();
 	CRClientBits *cb = &(sb->client);
 
 	if (g->current.inBeginEnd)
@@ -273,7 +277,7 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param)
 
 
 static void setClientState(CRClientState *c, CRClientBits *cb, 
-		GLbitvalue *neg_bitid, GLenum array, GLboolean state) 
+		CRbitvalue *neg_bitid, GLenum array, GLboolean state) 
 {
 	CRContext *g = GetCurrentContext();
 
@@ -340,7 +344,7 @@ void STATE_APIENTRY crStateDisableClientState (GLenum array)
 	setClientState(c, cb, g->neg_bitid, array, GL_FALSE);
 }
 
-void crStateClientSetPointer (CRClientPointer *cp, GLint size, 
+static void crStateClientSetPointer (CRClientPointer *cp, GLint size, 
 		GLenum type, GLsizei stride, const GLvoid *pointer) 
 {
 	cp->p = (unsigned char *) pointer;

@@ -15,13 +15,13 @@
 #include "tilesortspu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable tilesort_table[];
+extern SPUNamedFunctionTable _cr_tilesort_table[];
 TileSortSPU tilesort_spu;
 
-SPUFunctions tilesort_functions = {
+static SPUFunctions tilesort_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	tilesort_table /* THE ACTUAL FUNCTIONS */
+	_cr_tilesort_table /* THE ACTUAL FUNCTIONS */
 };
 
 #ifdef CHROMIUM_THREADSAFE
@@ -29,11 +29,10 @@ CRmutex _TileSortMutex;
 CRtsd _ThreadTSD;
 #endif
 
-extern void _math_init_eval(void);
-
-SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id,
-		unsigned int num_contexts )
+static SPUFunctions *
+tilesortSPUInit( int id, SPU *child, SPU *self,
+								 unsigned int context_id,
+								 unsigned int num_contexts )
 {
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 #if 0
@@ -94,22 +93,25 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *self,
 	return &tilesort_functions;
 }
 
-void tilesortSPUSelfDispatch(SPUDispatchTable *self)
+static void
+tilesortSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(tilesort_spu.self) );
 	crSPUCopyDispatchTable( &(tilesort_spu.self), self );
 }
 
-int tilesortSPUCleanup(void)
+static int
+tilesortSPUCleanup(void)
 {
 	return 1;
 }
 
 extern SPUOptions tilesortSPUOptions[];
 
-int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
-	     SPUOptionsPtr *options, int *flags )
+int
+SPULoad( char **name, char **super, SPUInitFuncPtr *init,
+				 SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+				 SPUOptionsPtr *options, int *flags )
 {
 	*name = "tilesort";
 	*super = NULL;

@@ -30,7 +30,7 @@ char *crStrdup( const char *str )
 	
 	len = crStrlen(str);
 	ret = (char*)crAlloc( len+1 );
-	memcpy( ret, str, len );
+	crMemcpy( ret, str, len );
 	ret[len] = '\0';
 	return ret;
 }
@@ -38,7 +38,7 @@ char *crStrdup( const char *str )
 char *crStrndup( const char *str, unsigned int len )
 {
 	char *ret = (char*)crAlloc( len+1 );
-	memcpy( ret, str, len );
+	crMemcpy( ret, str, len );
 	ret[len] = '\0';
 	return ret;
 }
@@ -122,7 +122,7 @@ int crStrcasecmp( const char *str1, const char *str2 )
 void crStrcpy( char *dest, const char *src )
 {
 	int len = crStrlen(src);
-	memcpy( dest, src, len );
+	crMemcpy( dest, src, len );
 	dest[len] = '\0';
 }
 
@@ -130,10 +130,10 @@ void crStrncpy( char *dest, const char *src, unsigned int len )
 {
 	const unsigned int str_len = crStrlen(src);
 	if (str_len > len - 1) {
-		memcpy( dest, src, len );  /* NOTE: not null-terminated! */
+		crMemcpy( dest, src, len );  /* NOTE: not null-terminated! */
 	}
 	else {
-		memcpy( dest, src, str_len + 1 );  /* includes null terminator */
+		crMemcpy( dest, src, str_len + 1 );  /* includes null terminator */
 	}
 }
 
@@ -148,8 +148,8 @@ char *crStrjoin( const char *str1, const char *str2 )
 	char *s = crAlloc(len1 + len2 + 1);
 	if (s)
 	{
-		memcpy( s, str1, len1 );
-		memcpy( s + len1, str2, len2 );
+		crMemcpy( s, str1, len1 );
+		crMemcpy( s + len1, str2, len2 );
 		s[len1 + len2] = '\0';
 	}
 	return s;
@@ -161,9 +161,9 @@ char *crStrjoin3( const char *str1, const char *str2, const char *str3 )
 	char *s = crAlloc(len1 + len2 + len3 + 1);
 	if (s)
 	{
-		memcpy( s, str1, len1 );
-		memcpy( s + len1, str2, len2 );
-		memcpy( s + len1 + len2, str3, len3 );
+		crMemcpy( s, str1, len1 );
+		crMemcpy( s + len1, str2, len2 );
+		crMemcpy( s + len1 + len2, str3, len3 );
 		s[len1 + len2 + len3] = '\0';
 	}
 	return s;
@@ -176,7 +176,7 @@ char *crStrstr( const char *str, const char *pat )
 	char first_char = *pat;
 	for (; str <= end ; str++)
 	{
-		if (*str == first_char && !memcmp( str, pat, pat_len ))
+		if (*str == first_char && !crMemcmp( str, pat, pat_len ))
 			return (char *) str;
 	}
 	return NULL;
@@ -220,7 +220,7 @@ void crBytesToString( char *string, int nstring, void *data, int ndata )
 	if ( i == ndata && offset > 0 )
 		string[offset-1] = '\0';
 	else
-		strcpy( string + offset - 3, "..." );
+		crStrcpy( string + offset - 3, "..." );
 }
 
 void crWordsToString( char *string, int nstring, void *data, int ndata )
@@ -250,7 +250,7 @@ void crWordsToString( char *string, int nstring, void *data, int ndata )
 	}
 
 	if ( ellipsis )
-		strcpy( string + offset, "..." );
+		crStrcpy( string + offset, "..." );
 	else if ( offset > 0 )
 		string[offset-1] = 0;
 }

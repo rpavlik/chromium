@@ -185,7 +185,7 @@ InitGL(void)
 }
 
 
-void
+static void
 InitSpecial(void)
 {
 	GLubyte textureData[32 * 32];

@@ -4,18 +4,18 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_spu.h"
 #include <stdio.h>
+#include "cr_spu.h"
 
 extern SPUNamedFunctionTable _cr_error_table[];
 
-SPUFunctions error_functions = {
+static SPUFunctions error_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	_cr_error_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *errorSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *errorSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -27,17 +27,17 @@ SPUFunctions *errorSPUInit( int id, SPU *child, SPU *self,
 	return &error_functions;
 }
 
-void errorSPUSelfDispatch(SPUDispatchTable *parent)
+static void errorSPUSelfDispatch(SPUDispatchTable *parent)
 {
 	(void)parent;
 }
 
-int errorSPUCleanup(void)
+static int errorSPUCleanup(void)
 {
 	return 1;
 }
 
-SPUOptions errorSPUOptions[] = {
+static SPUOptions errorSPUOptions[] = {
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 

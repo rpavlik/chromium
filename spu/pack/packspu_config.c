@@ -23,7 +23,7 @@ static void __setDefaults( void )
 }
 
 
-void set_emit( void *foo, const char *response )
+static void set_emit( void *foo, const char *response )
 {
 	sscanf( response, "%d", &(pack_spu.emit_GATHER_POST_SWAPBUFFERS) );
 }

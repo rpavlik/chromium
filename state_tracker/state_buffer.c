@@ -4,48 +4,75 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStateBufferInit (CRBufferState *b) 
+void crStateBufferInit (CRContext *ctx)
 {
+	CRBufferState *b = &ctx->buffer;
+	CRStateBits *sb          = GetCurrentBits();
+	CRBufferBits *bb = &(sb->buffer);
 	GLcolorf zero_colorf = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	b->depthTest = GL_FALSE;
 	b->blend     = GL_FALSE;
 	b->alphaTest = GL_FALSE;
-	b->logicOp   = GL_FALSE;
-	b->indexLogicOp   = GL_FALSE;
 	b->dither    = GL_TRUE;
+	RESET(bb->enable, ctx->bitid);
+
+	b->logicOp   = GL_FALSE;
+	RESET(bb->logicOp, ctx->bitid);
+	b->indexLogicOp   = GL_FALSE;
+	RESET(bb->indexLogicOp, ctx->bitid);
 	b->depthMask = GL_TRUE;
+	RESET(bb->depthMask, ctx->bitid);
 
 	b->alphaTestFunc = GL_ALWAYS;
 	b->alphaTestRef = 0;
+	RESET(bb->alphaFunc, ctx->bitid);
 	b->depthFunc = GL_LESS;
-	b->blendSrc = GL_ONE;
-	b->blendDst = GL_ZERO;
+	RESET(bb->depthFunc, ctx->bitid);
+	b->blendSrcRGB = GL_ONE;
+	b->blendDstRGB = GL_ZERO;
+	RESET(bb->blendFunc, ctx->bitid);
+#ifdef CR_EXT_blend_func_separate
+	b->blendSrcA = GL_ONE;
+	b->blendDstA = GL_ZERO;
+	RESET(bb->blendFuncSeparate, ctx->bitid);
+#endif
 	b->logicOpMode = GL_COPY;
 	b->drawBuffer = GL_BACK;
+	RESET(bb->drawBuffer, ctx->bitid);
 	b->readBuffer = GL_BACK;
+	RESET(bb->readBuffer, ctx->bitid);
 	b->indexWriteMask = 0xffffffff;
+	RESET(bb->indexMask, ctx->bitid);
 	b->colorWriteMask.r = GL_TRUE;
 	b->colorWriteMask.g = GL_TRUE;
 	b->colorWriteMask.b = GL_TRUE;
 	b->colorWriteMask.a = GL_TRUE;
+	RESET(bb->colorWriteMask, ctx->bitid);
 	b->colorClearValue = zero_colorf;
+	RESET(bb->clearColor, ctx->bitid);
 	b->indexClearValue = 0;
+	RESET(bb->clearIndex, ctx->bitid);
 	b->depthClearValue = (GLdefault) 1.0;
+	RESET(bb->clearDepth, ctx->bitid);
 	b->accumClearValue = zero_colorf;
+	RESET(bb->clearAccum, ctx->bitid);
 
 #ifdef CR_EXT_blend_color
 	b->blendColor = zero_colorf;
+	RESET(bb->blendColor, ctx->bitid);
 #endif
-#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) || defined(CR_EXT_blend_logic_op)
 	b->blendEquation = GL_FUNC_ADD_EXT;
+	RESET(bb->blendEquation, ctx->bitid);
 #endif
+
+	RESET(bb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateAlphaFunc (GLenum func, GLclampf ref) 
@@ -189,8 +216,10 @@ void STATE_APIENTRY crStateBlendFunc (GLenum sfactor, GLenum dfactor)
 			return;
 	}
 
-	b->blendSrc = sfactor;
-	b->blendDst = dfactor;
+	b->blendSrcRGB = sfactor;
+	b->blendDstRGB = dfactor;
+	b->blendSrcA = sfactor;
+	b->blendDstA = dfactor;
 	DIRTY(bb->dirty, g->neg_bitid);
 	DIRTY(bb->blendFunc, g->neg_bitid);
 }
@@ -216,6 +245,127 @@ void STATE_APIENTRY crStateBlendColorEXT( GLclampf red, GLclampf green, GLclampf
 	DIRTY(bb->dirty, g->neg_bitid);
 }
 
+void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorA, GLenum dfactorA )
+{
+	CRContext *g = GetCurrentContext();
+	CRBufferState *b = &(g->buffer);
+	CRStateBits *sb = GetCurrentBits();
+	CRBufferBits *bb = &(sb->buffer);
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "BlendFuncSeparateEXT called inside a Begin/End" );
+		return;
+	}
+
+	FLUSH();
+
+	switch (sfactorRGB) 
+	{
+		case GL_ZERO:
+		case GL_ONE:
+		case GL_DST_COLOR:
+		case GL_ONE_MINUS_DST_COLOR:
+		case GL_SRC_ALPHA:
+		case GL_ONE_MINUS_SRC_ALPHA:
+		case GL_DST_ALPHA:
+		case GL_ONE_MINUS_DST_ALPHA:
+		case GL_SRC_ALPHA_SATURATE:
+			break; /* OK */
+#ifdef CR_EXT_blend_color
+		case GL_CONSTANT_COLOR_EXT:
+		case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+		case GL_CONSTANT_ALPHA_EXT:
+		case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+			if (g->extensions.EXT_blend_color)
+				break; /* OK */
+#endif
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactorRGB passed to glBlendFunc: %d", sfactorRGB);
+			return;
+	}
+
+	switch (sfactorA) 
+	{
+		case GL_ZERO:
+		case GL_ONE:
+		case GL_DST_COLOR:
+		case GL_ONE_MINUS_DST_COLOR:
+		case GL_SRC_ALPHA:
+		case GL_ONE_MINUS_SRC_ALPHA:
+		case GL_DST_ALPHA:
+		case GL_ONE_MINUS_DST_ALPHA:
+		case GL_SRC_ALPHA_SATURATE:
+			break; /* OK */
+#ifdef CR_EXT_blend_color
+		case GL_CONSTANT_COLOR_EXT:
+		case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+		case GL_CONSTANT_ALPHA_EXT:
+		case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+			if (g->extensions.EXT_blend_color)
+				break; /* OK */
+#endif
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactorA passed to glBlendFunc: %d", sfactorA);
+			return;
+	}
+
+	switch (dfactorRGB) 
+	{
+		case GL_ZERO:
+		case GL_ONE:
+		case GL_SRC_COLOR:
+		case GL_ONE_MINUS_SRC_COLOR:
+		case GL_SRC_ALPHA:
+		case GL_ONE_MINUS_SRC_ALPHA:
+		case GL_DST_ALPHA:
+		case GL_ONE_MINUS_DST_ALPHA:
+			break; /* OK */
+#ifdef CR_EXT_blend_color
+		case GL_CONSTANT_COLOR_EXT:
+		case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+		case GL_CONSTANT_ALPHA_EXT:
+		case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+			if (g->extensions.EXT_blend_color)
+				break; /* OK */
+#endif
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactorRGB passed to glBlendFunc: %d", dfactorRGB);
+			return;
+	}
+
+	switch (dfactorA) 
+	{
+		case GL_ZERO:
+		case GL_ONE:
+		case GL_SRC_COLOR:
+		case GL_ONE_MINUS_SRC_COLOR:
+		case GL_SRC_ALPHA:
+		case GL_ONE_MINUS_SRC_ALPHA:
+		case GL_DST_ALPHA:
+		case GL_ONE_MINUS_DST_ALPHA:
+			break; /* OK */
+#ifdef CR_EXT_blend_color
+		case GL_CONSTANT_COLOR_EXT:
+		case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+		case GL_CONSTANT_ALPHA_EXT:
+		case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+			if (g->extensions.EXT_blend_color)
+				break; /* OK */
+#endif
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactorA passed to glBlendFunc: %d", dfactorA);
+			return;
+	}
+
+	b->blendSrcRGB = sfactorRGB;
+	b->blendDstRGB = dfactorRGB;
+	b->blendSrcA = sfactorA;
+	b->blendDstA = dfactorA;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->blendFuncSeparate, g->neg_bitid);
+}
+
 void STATE_APIENTRY crStateBlendEquationEXT( GLenum mode )
 {
 	CRContext *g = GetCurrentContext();
@@ -230,18 +380,22 @@ void STATE_APIENTRY crStateBlendEquationEXT( GLenum mode )
 	}
 	switch( mode )
 	{
-#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) || defined(CR_EXT_blend_logic_op)
 		case GL_FUNC_ADD_EXT:
 #ifdef CR_EXT_blend_subtract
 		case GL_FUNC_SUBTRACT_EXT:
+		case GL_FUNC_REVERSE_SUBTRACT_EXT:
 #endif /* CR_EXT_blend_subtract */
 #ifdef CR_EXT_blend_minmax
 		case GL_MIN_EXT:
 		case GL_MAX_EXT:
 #endif /* CR_EXT_blend_minmax */
+#ifdef CR_EXT_blend_logic_op
+		case GL_LOGIC_OP:
+#endif /* CR_EXT_blend_logic_op */
 			b->blendEquation = mode;
 			break;
-#endif /* defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) */
+#endif /* defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) || defined(CR_EXT_blend_logic_op) */
 		default:
 			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
 				"BlendEquationEXT: mode called with illegal parameter: 0x%x", (GLenum) mode );

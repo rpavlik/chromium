@@ -1,16 +1,17 @@
 #ifndef WINDOWS
 #include <unistd.h>
 #endif
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <memory.h>
 #include <assert.h>
 
 #include "cr_error.h"
+#include "cr_string.h"
+#include "cr_mem.h"
 
 #include "dist_texturespu.h"
 
@@ -143,7 +144,7 @@ static void pad_buffer_texture( GLubyte* dst, const GLubyte* src, int w, int h, 
 {
 	int i ;
 	for (i=0; i<h; i++)
-		memcpy( (void*) &dst[ 3*i*pw ], (void*) &src[ 3*i*w ], 3*w ) ;
+		crMemcpy( (void*) &dst[ 3*i*pw ], (void*) &src[ 3*i*w ], 3*w ) ;
 }
 
 #ifdef WINDOWS
@@ -211,7 +212,7 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 
 		assert( pixels ) ;
 
-		filenameLength = strlen( pixels ) ;
+		filenameLength = crStrlen( pixels ) ;
 #ifdef WINDOWS
 		f = OpenFile( pixels, OpenBuff, writing );
 		if ( f == HFILE_ERROR ) {
@@ -242,10 +243,10 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 				i = paddedWidth*paddedHeight*3 ;
 				if ( ! buffer ) {
 					bufferSize = i ;
-					buffer = malloc( bufferSize ) ;
+					buffer = crAlloc( bufferSize ) ;
 				} else if ( bufferSize < i ) {
 					bufferSize = i ;
-					buffer = realloc( buffer, bufferSize ) ;
+					crRealloc( (void **)&buffer, bufferSize ) ;
 				}
 				pad_buffer_texture( buffer, (const GLubyte *) pixels + filenameLength + 1,
 						width, height, paddedWidth, paddedHeight ) ;
@@ -276,10 +277,10 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 				i = paddedWidth*paddedHeight*3 ;
 				if ( ! buffer ) {
 					bufferSize = i ;
-					buffer = malloc( bufferSize ) ;
+					buffer = crAlloc( bufferSize ) ;
 				} else if ( bufferSize < i ) {
 					bufferSize = i ;
-					buffer = realloc( buffer, bufferSize ) ;
+					crRealloc( (void **)&buffer, bufferSize ) ;
 				}
 				pad_file_texture( buffer, f, width, height, paddedWidth, paddedHeight ) ;
 				break ;

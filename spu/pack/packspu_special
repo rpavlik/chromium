@@ -41,3 +41,6 @@ TexSubImage2D
 TexImage3D
 TexImage3DEXT
 TexSubImage3D
+ChromiumParametervCR
+MultiDrawArraysEXT
+MultiDrawElementsEXT

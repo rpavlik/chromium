@@ -6,24 +6,11 @@
 
 /* opengl_stub/glx.c */
 
-#include <GL/glx.h>
-
 #include "chromium.h"
 #include "cr_error.h"
 #include "cr_spu.h"
 #include "cr_mothership.h"
 #include "stub.h"
-
-#ifndef GLX_SAMPLE_BUFFERS_SGIS
-#define GLX_SAMPLE_BUFFERS_SGIS    0x186a0 /*100000*/
-#endif
-#ifndef GLX_SAMPLES_SGIS
-#define GLX_SAMPLES_SGIS           0x186a1 /*100001*/
-#endif
-#ifndef GLX_VISUAL_CAVEAT_EXT
-#define GLX_VISUAL_CAVEAT_EXT       0x20  /* visual_rating extension type */
-#endif
-
 
 /* For optimizing glXMakeCurrent */
 static Display *currentDisplay = NULL;
@@ -127,21 +114,22 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 {
 	int desiredVisual = 0;
-	GLint doubleBuffer, stereo;
-	GLint alphaSize, depthSize, stencilSize;
-	GLint accumRedSize, accumGreenSize, accumBlueSize;
+	GLint doubleBuffer = 0, stereo = 0;
+	GLint alphaSize = 0, depthSize = 0, stencilSize = 0;
+	GLint accumRedSize = 0, accumGreenSize = 0, accumBlueSize = 0;
+	GLint sampleBuffers = 0, samples = 0;
 	/* Should check more ??? */
 
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_DOUBLEBUFFER, &doubleBuffer);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_STEREO, &stereo);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ALPHA_SIZE, &alphaSize);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_DEPTH_SIZE, &depthSize);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_STENCIL_SIZE, &stencilSize);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_RED_SIZE, &accumRedSize);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_RED_SIZE, &accumRedSize);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_RED_SIZE, &accumRedSize);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_GREEN_SIZE, &accumGreenSize);
-   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_BLUE_SIZE, &accumBlueSize);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_DOUBLEBUFFER, &doubleBuffer);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_STEREO, &stereo);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ALPHA_SIZE, &alphaSize);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_DEPTH_SIZE, &depthSize);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_STENCIL_SIZE, &stencilSize);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_RED_SIZE, &accumRedSize);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_GREEN_SIZE, &accumGreenSize);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_BLUE_SIZE, &accumBlueSize);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_SAMPLE_BUFFERS_SGIS, &sampleBuffers);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_SAMPLES_SGIS, &samples);
 
 	desiredVisual |= CR_RGB_BIT;	/* assuming we always want this... */
 
@@ -157,6 +145,9 @@ GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 		desiredVisual |= CR_DOUBLE_BIT;
 	if (stereo)
 		desiredVisual |= CR_STEREO_BIT;
+	if (sampleBuffers > 0 && samples > 0)
+		desiredVisual |= CR_MULTISAMPLE_BIT;
+
 	/* Should we be checking more ... ??? */
 
 	return desiredVisual;
@@ -259,20 +250,13 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				attrib++;
 				break;
 
-			case GLX_SAMPLE_BUFFERS_SGIS:
-				if (attrib[1] > 0) {
-					return NULL;  /* don't handle multisample yet */
-					/* eventually... */
-					/*stub.desiredVisual |= CR_MULTISAMPLE_BIT;*/
-				}
+			case GLX_SAMPLE_BUFFERS_SGIS: /* aka GLX_SAMPLES_ARB */
+				if (attrib[1] > 0)
+					stub.desiredVisual |= CR_MULTISAMPLE_BIT;
 				attrib++;
 				break;
-			case GLX_SAMPLES_SGIS:
-				if (attrib[1] > 0) {
-					return NULL;  /* don't handle multisample yet */
-					/* eventually... */
-					/*stub.desiredVisual |= CR_MULTISAMPLE_BIT;*/
-				}
+			case GLX_SAMPLES_SGIS: /* aka GLX_SAMPLES_ARB */
+				/* just ignore value for now, we'll try to get 4 samples/pixel */
 				attrib++;
 				break;
 
@@ -299,6 +283,9 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			{
 				crDebug("faker native glXChooseVisual returning visual 0x%x\n",
 								(int) vis->visualid);
+				/* successful glXChooseVisual, so clear ours */
+				stub.desiredVisual = 0;
+				FindVisualInfo(dpy, vis);
 				return vis;
 			}
 		}
@@ -411,6 +398,23 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 
 	StubInit();
 
+	/* try to satisfy this request with the native glXGetConfig() */
+	if (stub.haveNativeOpenGL)
+	{
+		int foo, bar;
+		int return_val;
+
+		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar))
+		{
+			return_val = stub.wsInterface.glXGetConfig( dpy, vis, attrib, value );
+			if (return_val)
+			{
+				crDebug("faker native glXGetConfig returning 0x%x\n", return_val);
+			}
+			return return_val;
+		}
+	}
+
 	switch ( attrib ) {
 
 		case GLX_USE_GL:
@@ -511,6 +515,24 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 		  break;
 #endif 
 
+		case GLX_TRANSPARENT_TYPE:
+			*value = GLX_NONE_EXT;
+			break;
+		case GLX_TRANSPARENT_INDEX_VALUE:
+			*value = 0;
+			break;
+		case GLX_TRANSPARENT_RED_VALUE:
+			*value = 0;
+			break;
+		case GLX_TRANSPARENT_GREEN_VALUE:
+			*value = 0;
+			break;
+		case GLX_TRANSPARENT_BLUE_VALUE:
+			*value = 0;
+			break;
+		case GLX_TRANSPARENT_ALPHA_VALUE:
+			*value = 0;
+			break;
 		default:
 			crWarning( "Unsupported GLX Call: glXGetConfig with attrib 0x%x", attrib );
 			return GLX_BAD_ATTRIBUTE;
@@ -603,7 +625,8 @@ void glXWaitX( void )
 
 const char *glXQueryExtensionsString( Display *dpy, int screen )
 {
-	static const char *retval = "";
+	/* XXX maybe also advertise GLX_SGIS_multisample? */
+	static const char *retval = "GLX_ARB_multisample";
 	(void) dpy;
 	(void) screen;
 

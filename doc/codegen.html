@@ -363,14 +363,14 @@ Add the following function to the top of <code>seethroughspu_config.c</code>:</p
       {<br>
       &nbsp;&nbsp;&nbsp; if (o &lt; 0.0) o = 0.0;<br>
       &nbsp;&nbsp;&nbsp; if (0 > 1.0) o = 1.0;<br>
-      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityb  = (GLbyte) (o * GL_MAXBYTE);<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityb  = (GLbyte) (o * CR_MAXBYTE);<br>
       &nbsp;&nbsp;&nbsp; seethrough_spu.opacityd  = (GLdouble) (o);<br>
       &nbsp;&nbsp;&nbsp; seethrough_spu.opacityf  = (GLfloat) (o);<br>
-      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityi  = (GLint) (o * GL_MAXINT);<br>
-      &nbsp;&nbsp;&nbsp; seethrough_spu.opacitys  = (GLshort) (o * GL_MAXSHORT);<br>
-      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityub = (GLubyte) (o * GL_MAXUBYTE);<br>
-      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityui = (GLuint) (o * GL_MAXUINT);<br>
-      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityus = (GLushort) (o * GL_MAXUSHORT);<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityi  = (GLint) (o * CR_MAXINT);<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.opacitys  = (GLshort) (o * CR_MAXSHORT);<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityub = (GLubyte) (o * CR_MAXUBYTE);<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityui = (GLuint) (o * CR_MAXUINT);<br>
+      &nbsp;&nbsp;&nbsp; seethrough_spu.opacityus = (GLushort) (o * CR_MAXUSHORT);<br>
       }</td></tr></table>
 
 <p>The <code>GL_MAX*</code> constants are defined in <code>cr/include/state/cr_statetypes.h</code>,

@@ -55,7 +55,8 @@ replacing it with Chromium for several reasons:</p>
 </ul>
 
 <p>This documentation serves as both a reference guide and tutorial for
-using and extending Chromium.  See the the <a href="help.html">Where to
+using and extending Chromium.
+See the the <a href="help.html" target="main">Where to
 get help</a> link for other resources.
 </p>
 
@@ -76,7 +77,7 @@ really useful slave labor for us last summer when we were building our
 cluster. </p>
 
 <p>For the beta and 1.0 releases,
-<a href="http://www.mesa3d.org/brianp/home.html">Brian Paul</a> and
+<a href="mailto:brian@tungstengraphics.com">Brian Paul</a> and
 <a href="http://www.xfree86.org/~alanh">Alan Hourihane</a> of Tungsten
 Graphics, Inc. contributed many new features.</p>
 
@@ -234,6 +235,52 @@ Graphics, Inc. contributed many new features.</p>
     <li>Fixed parallel app state tracking bug that caused sporadic lighting,
         among other symptoms (David Thompson)
     <li>Fixed GLUquadric bug in EXT_separate_specular_color test program
+  </ul>
+</ul>
+
+
+<p>1.1 Release:  January 17, 2003</p>
+
+<ul>
+  <li>New Features
+  <ul>
+    <li>OpenGL 1.3 and 1.4 support, which includes...
+    <li>GL_ARB_multisample
+    <li>GL_ARB_multitexture
+    <li>GL_ARB_texture_border_clamp
+    <li>GL_ARB_texture_compression
+    <li>GL_ARB_texture_cube_map
+    <li>GL_ARB_texture_env_add
+    <li>GL_ARB_texture_env_combine
+    <li>GL_ARB_texture_env_dot3
+    <li>GL_ARB_transpose_matrix
+    <li>GL_ARB_depth_texture
+    <li>GL_ARB_shadow
+    <li>GL_ARB_point_parameters
+    <li>GL_ARB_texture_env_crossbar
+    <li>GL_ARB_texture_mirrored_repeat
+    <li>GL_ARB_window_pos
+    <li>GL_EXT_blend_color
+    <li>GL_EXT_blend_func_separate
+    <li>GL_EXT_blend_logic_op
+    <li>GL_EXT_blend_minmax
+    <li>GL_EXT_blend_subtract
+    <li>GL_EXT_fog_coord
+    <li>GL_EXT_multi_draw_arrays
+    <li>GL_EXT_secondary_color
+    <li>GL_EXT_stencil_wrap
+    <li>GL_SGIS_generate_mipmap
+    <li>GL_ARB_shadow_ambient
+    <li>GL_EXT_texture_lod_bias
+    <li>Added support for WGL_EXT_pixel_format (not tested and disabled fow now)
+          for enhanced Windows visual selection, like multisampling
+  </ul>
+  <li><A HREF="crut.html" target="main">CRUT</A> - Chromium Utility Toolkit for parallel applications (beta release)
+  <li>CRUT demonstration program: psubmit_crut
+  <li>New crserver configuration options: unique_display_lists, unique_texture_objects
+  <li>Bug Fixes
+  <ul>
+    <li>More GLX visual handling tweaks
   </ul>
 </ul>
 

@@ -43,6 +43,7 @@ typedef int socklen_t;
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
 #ifdef AIX
 #include <strings.h>
@@ -56,6 +57,8 @@ typedef int socklen_t;
 #include "cr_endian.h"
 #include "cr_threads.h"
 #include "net_internals.h"
+
+extern int __crSelect( int n, fd_set *readfds, struct timeval *timeout );
 
 #ifdef ADDRINFO
 #define PF PF_UNSPEC
@@ -88,12 +91,7 @@ typedef struct CRTCPIPBuffer {
 } CRTCPIPBuffer;
 
 
-extern void crTCPIPFree( CRConnection *conn, void *buf );
-extern int crTCPIPErrno( void );
-extern char *crTCPIPErrorString( int err );
-extern void crCloseSocket( CRSocket sock );
-
-extern struct {
+struct {
 	int                  initialized;
 	int                  num_conns;
 	CRConnection         **conns;
@@ -102,21 +100,18 @@ extern struct {
 	CRmutex              mutex;
 	CRmutex              recvmutex;
 #endif
-	CRNetReceiveFunc     recv;
-	CRNetCloseFunc       close;
+	CRNetReceiveFuncList *recv_list;
+	CRNetCloseFuncList *close_list;
 	CRSocket             server_sock;
 } cr_tcpip;
 
-extern int __read_exact( CRSocket sock, void *buf, unsigned int len );
-extern void crTCPIPReadExact( CRSocket sock, void *buf, unsigned int len );
-extern int __write_exact( CRSocket sock, void *buf, unsigned int len );
-extern void crTCPIPWriteExact( CRConnection *conn, void *buf, unsigned int len );
 
 #if defined( WINDOWS ) || defined( IRIX ) || defined( IRIX64 )
 typedef int socklen_t;
 #endif
 
-void crUDPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
+static void
+crUDPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
 {
 	int retval;
 	if ( len > conn->mtu + sizeof(conn->seq) )
@@ -178,7 +173,6 @@ void crUDPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
 	}
 }
 
-extern void crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port );
 static void crUDPTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	int err;
@@ -271,7 +265,6 @@ static void crUDPTCPIPAccept( CRConnection *conn, char *hostname, unsigned short
 	}
 }
 
-extern void *crTCPIPAlloc (CRConnection *conn );
 
 static unsigned int safelen=0;
 static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
@@ -280,6 +273,9 @@ static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 	static unsigned int safeblip=0;
 	CRTCPIPBuffer *udptcpip_buffer;
 	unsigned int      *lenp;
+
+	if ( !conn || conn->type == CR_NO_CONNECTION )
+		return;
 
 	if ( safelen+len > safelen )
 	{
@@ -299,6 +295,7 @@ static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 		 * to get fancy.  Simply write the length & the payload and
 		 * return. */
 		crTCPIPWriteExact( conn, &len_swap, sizeof(len_swap) );
+		if ( !conn || conn->type == CR_NO_CONNECTION ) return;
 		crTCPIPWriteExact( conn, start, len );
 		return;
 	}
@@ -321,10 +318,9 @@ static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 		*lenp = len;
 	}
 
-	if ( __write_exact( conn->tcp_socket, lenp, len + sizeof(*lenp) ) < 0 )
+	if ( __tcpip_write_exact( conn->tcp_socket, lenp, len + sizeof(*lenp) ) < 0 )
 	{
-		int err = crTCPIPErrno( );
-		crError( "crUDPTCPIPSend: %s", crTCPIPErrorString( err ) );
+		__tcpip_dead_connection( conn );
 	}
 
 	/* reclaim this pointer for reuse and try to keep the client from
@@ -336,7 +332,6 @@ static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.mutex);
 #endif
-	*bufp = NULL;
 }
 
 static unsigned int barflen=0;
@@ -421,10 +416,8 @@ static void crUDPTCPIPBarf( CRConnection *conn, void **bufp,
 	*bufp = NULL;
 }
 
-extern void __dead_connection( CRConnection *conn );
-extern int __crSelect( int n, fd_set *readfds, struct timeval *timeout );
-
-static void crUDPTCPIPReceive( CRConnection *conn, CRTCPIPBuffer *buf, int len )
+static void
+crUDPTCPIPReceive( CRConnection *conn, CRTCPIPBuffer *buf, int len )
 {
 	CRMessage *msg;
 	CRMessageType cached_type;
@@ -443,13 +436,11 @@ static void crUDPTCPIPReceive( CRConnection *conn, CRTCPIPBuffer *buf, int len )
 		msg->header.type = (CRMessageType) SWAP32( msg->header.type );
 		msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
 	}
-	if (!cr_tcpip.recv( conn, buf + 1, len ))
-	{
-		crNetDefaultRecv( conn, buf + 1, len );
-	}
+
+	crNetDispatchMessage( cr_tcpip.recv_list, conn, buf + 1, len );
 
 	/* CR_MESSAGE_OPCODES is freed in
-	 * crserver/server_stream.c 
+	 * crserverlib/server_stream.c 
 	 *
 	 * OOB messages are the programmer's problem.  -- Humper 12/17/01 */
 	if (cached_type != CR_MESSAGE_OPCODES && cached_type != CR_MESSAGE_OOB)
@@ -458,7 +449,8 @@ static void crUDPTCPIPReceive( CRConnection *conn, CRTCPIPBuffer *buf, int len )
 	}
 }
 
-int crUDPTCPIPRecv( void )
+int
+crUDPTCPIPRecv( void )
 {
 	int    num_ready, max_fd;
 	fd_set read_fds;
@@ -475,7 +467,7 @@ int crUDPTCPIPRecv( void )
 	for ( i = 0; i < num_conns; i++ )
 	{
 		CRConnection *conn = cr_tcpip.conns[i];
-		if (!conn) continue;
+		if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
 		if ( conn->recv_credits > 0 || conn->type != CR_UDPTCPIP )
 		{
 			/* 
@@ -532,11 +524,10 @@ int crUDPTCPIPRecv( void )
 	{
 		CRConnection     *conn = cr_tcpip.conns[i];
 		CRTCPIPBuffer *buf;
-		int read_ret;
 		int len;
 		int sock;
 
-		if (!conn) continue;
+		if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
 
 		if ( conn->type != CR_UDPTCPIP )
 			continue;
@@ -603,10 +594,9 @@ int crUDPTCPIPRecv( void )
 		if ( !FD_ISSET( sock, &read_fds ) )
 			continue;
 
-		read_ret = __read_exact( sock, &len, sizeof(len) );
-		if ( read_ret <= 0 )
+		if ( __tcpip_read_exact( sock, &len, sizeof(len)) <= 0 )
 		{
-			__dead_connection( conn );
+			__tcpip_dead_connection( conn );
 			i--;
 			continue;
 		}
@@ -633,12 +623,11 @@ int crUDPTCPIPRecv( void )
 
 		buf->len = len;
 
-		read_ret = __read_exact( sock, buf + 1, len );
-		if ( read_ret <= 0 )
+		if ( __tcpip_read_exact( sock, buf + 1, len ) <= 0 )
 		{
 			crWarning( "Bad juju: %d %d", buf->allocated, len );
 			crFree( buf );
-			__dead_connection( conn );
+			__tcpip_dead_connection( conn );
 			i--;
 			continue;
 		}
@@ -654,16 +643,16 @@ int crUDPTCPIPRecv( void )
 	return 1;
 }
 
-extern void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int mtu );
-void crUDPTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int mtu )
+extern void crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
+
+void crUDPTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 {
-	crTCPIPInit( recvFunc, closeFunc, mtu );
+	crTCPIPInit( rfl, cfl, mtu );
 }
 
 /* The function that actually connects.  This should only be called by clients 
  * Servers have another way to set up the socket. */
 
-extern int crTCPIPDoConnect( CRConnection *conn );
 static int crUDPTCPIPDoConnect( CRConnection *conn )
 {
 #ifdef WINDOWS
@@ -688,7 +677,7 @@ static int crUDPTCPIPDoConnect( CRConnection *conn )
 		return 0;
 
 	/* read its UDP port */
-	crTCPIPReadExact( conn->tcp_socket, &port, sizeof( port ) );
+	crTCPIPReadExact( conn, &port, sizeof( port ) );
 	port = ntohs(port);
 
 	crDebug( "Server's UDP port is %d", port);
@@ -777,14 +766,12 @@ static int crUDPTCPIPDoConnect( CRConnection *conn )
 	return 1;
 }
 
-extern void crTCPIPDoDisconnect( CRConnection *conn );
 static void crUDPTCPIPDoDisconnect( CRConnection *conn )
 {
 	crCloseSocket( conn->udp_socket );
 	crTCPIPDoDisconnect( conn );
 }
 
-extern void crTCPIPConnection( CRConnection *conn );
 void crUDPTCPIPConnection( CRConnection *conn )
 {
 	crTCPIPConnection( conn );

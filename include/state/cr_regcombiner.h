@@ -43,23 +43,23 @@ typedef struct {
 } CRRegCombinerState;
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue regCombinerVars[CR_MAX_BITARRAY]; /* numGeneralCombiners, colorSumClamp */
-	GLbitvalue regCombinerColor0[CR_MAX_BITARRAY];
-	GLbitvalue regCombinerColor1[CR_MAX_BITARRAY];
-	GLbitvalue regCombinerStageColor0[CR_MAX_BITARRAY];
-	GLbitvalue regCombinerStageColor1[CR_MAX_BITARRAY];
-	GLbitvalue regCombinerInput[CR_MAX_BITARRAY]; /* rgb/alpha[].a/b/c/d, .aMapping, .aPortion */
-	GLbitvalue regCombinerOutput[CR_MAX_BITARRAY]; /* rgb/alpha[].abOutput, .cdOutput, .sumOutput, .scale, .bias, .abDotProduct, .cdDotProduct, .muxSum */
-	GLbitvalue regCombinerFinalInput[CR_MAX_BITARRAY]; /* a/b/c/d/e/f/g, aMapping, aPortion */
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue regCombinerVars[CR_MAX_BITARRAY]; /* numGeneralCombiners, colorSumClamp */
+	CRbitvalue regCombinerColor0[CR_MAX_BITARRAY];
+	CRbitvalue regCombinerColor1[CR_MAX_BITARRAY];
+	CRbitvalue regCombinerStageColor0[CR_MAX_BITARRAY];
+	CRbitvalue regCombinerStageColor1[CR_MAX_BITARRAY];
+	CRbitvalue regCombinerInput[CR_MAX_BITARRAY]; /* rgb/alpha[].a/b/c/d, .aMapping, .aPortion */
+	CRbitvalue regCombinerOutput[CR_MAX_BITARRAY]; /* rgb/alpha[].abOutput, .cdOutput, .sumOutput, .scale, .bias, .abDotProduct, .cdDotProduct, .muxSum */
+	CRbitvalue regCombinerFinalInput[CR_MAX_BITARRAY]; /* a/b/c/d/e/f/g, aMapping, aPortion */
 } CRRegCombinerBits;
 
-void crStateRegCombinerInit( CRRegCombinerState *reg );
+void crStateRegCombinerInit( CRContext *ctx );
 
-void crStateRegCombinerDiff( CRRegCombinerBits *b, GLbitvalue *bitID, 
+void crStateRegCombinerDiff( CRRegCombinerBits *b, CRbitvalue *bitID, 
 		CRRegCombinerState *from, CRRegCombinerState *to );
-void crStateRegCombinerSwitch( CRRegCombinerBits *b, GLbitvalue *bitID, 
+void crStateRegCombinerSwitch( CRRegCombinerBits *b, CRbitvalue *bitID, 
 		CRRegCombinerState *from, CRRegCombinerState *to );
 
 #ifdef __cplusplus

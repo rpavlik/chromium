@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_mem.h"
@@ -117,7 +116,6 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 
 GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits )
 {
-	static GLint freeID = 0;
 	ContextInfo *context;
 	VisualInfo *visual;
 
@@ -134,10 +132,10 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 	if (!renderspu_SystemCreateContext( visual, context ))
 		return -1;
 
-	crHashtableAdd(render_spu.contextTable, freeID, context);
-	freeID++;
+	crHashtableAdd(render_spu.contextTable, render_spu.context_id, context);
+	render_spu.context_id++;
 
-	return freeID - 1;
+	return render_spu.context_id - 1;
 }
 
 
@@ -150,7 +148,7 @@ static void RENDER_APIENTRY renderspuDestroyContext( GLint ctx )
 	context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
 	CRASSERT(context);
 	renderspu_SystemDestroyContext( context );
-	crHashtableDelete(render_spu.contextTable, ctx);
+	crHashtableDelete(render_spu.contextTable, ctx, GL_TRUE);
 }
 
 void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)
@@ -214,7 +212,6 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 
 GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits )
 {
-	static GLint freeID = 0;
 	WindowInfo *window;
 	VisualInfo *visual;
 	GLboolean showIt;
@@ -238,9 +235,9 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 		return -1;
 	}
 
-	crHashtableAdd(render_spu.windowTable, freeID, window);
-	i = freeID;
-	freeID++;
+	crHashtableAdd(render_spu.windowTable, render_spu.window_id, window);
+	i = render_spu.window_id;
+	render_spu.window_id++;
 
 	/* Have GLX/WGL create the window */
 	if (render_spu.render_to_app_window)
@@ -264,7 +261,7 @@ static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
 	CRASSERT(window);
 	renderspu_SystemDestroyWindow( window );
-	crHashtableDelete(render_spu.windowTable, win);
+	crHashtableDelete(render_spu.windowTable, win, GL_TRUE);
 }
 
 static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
@@ -468,7 +465,7 @@ static void RENDER_APIENTRY renderspuBarrierCreateCR( GLuint name, GLuint count 
 
 static void RENDER_APIENTRY renderspuBarrierDestroyCR( GLuint name )
 {
-	crHashtableDelete( render_spu.barrierHash, name );
+	crHashtableDelete( render_spu.barrierHash, name, GL_TRUE );
 }
 
 static void RENDER_APIENTRY renderspuBarrierExecCR( GLuint name )
@@ -559,7 +556,7 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 
 		case GL_GATHER_CONNECT_CR:
 			if (render_spu.gather_userbuf_size)
-				privbuf = (unsigned char *)malloc(1024*768*4);
+				privbuf = (unsigned char *)crAlloc(1024*768*4);
 		
 			port = ((GLint *) values)[0];
 
@@ -696,7 +693,7 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 }
 
 
-static void RENDER_APIENTRY renderspuBoundsInfoCR( GLrecti *bounds, GLbyte *payload, GLint
+static void RENDER_APIENTRY renderspuBoundsInfoCR( CRrecti *bounds, GLbyte *payload, GLint
  len, GLint num_opcodes )
 {
 	(void) bounds;
@@ -721,6 +718,7 @@ static void remove_trailing_space(char *s)
 
 static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 {
+	static char tempStr[1000];
 	if (pname == GL_EXTENSIONS)
 	{
 		const char *nativeExt;
@@ -745,9 +743,11 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 	else if (pname == GL_VENDOR)
 		return (const GLubyte *) CR_VENDOR;
 	else if (pname == GL_VERSION)
-		return (const GLubyte *) CR_VERSION;
-	else if (pname == GL_RENDERER)
-		return (const GLubyte *) CR_RENDERER;
+		return render_spu.ws.glGetString(GL_VERSION);
+	else if (pname == GL_RENDERER) {
+		sprintf(tempStr, "Chromium (%s)", (char *) render_spu.ws.glGetString(GL_RENDERER));
+		return (const GLubyte *) tempStr;
+	}
 	else
 		return NULL;
 }

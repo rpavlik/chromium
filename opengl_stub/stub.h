@@ -114,6 +114,12 @@ extern void stubGetWindowSize( const ContextInfo *ctx, unsigned int *w, unsigned
 extern void stubMatchWindowTitle( const char *title );
 extern void StubInit(void);
 
+extern void APIENTRY stub_GetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values );
 
+#ifdef WINDOWS
+extern GLuint FindVisualInfo( HDC hdc );
+#else
+extern GLuint FindVisualInfo( Display *dpy, XVisualInfo *vis);
+#endif
 
 #endif /* CR_STUB_H */

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/fcntl.h>
-#include <string.h>
 
 #include "teac.h"
 #include "time.h"
@@ -157,7 +156,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
   void* control;
 #endif
 
-  if (!(result= (Tcomm*)malloc(sizeof(Tcomm)))) {
+  if (!(result= (Tcomm*)crAlloc(sizeof(Tcomm)))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
 	    sizeof(Tcomm));
     return(NULL);
@@ -193,7 +192,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
   elan3_nullcap(cap);
   
   bzero (&(cap->UserKey), sizeof(ELAN_USERKEY));
-  strncpy((char*)&(cap->UserKey), "This is pretty random!", 
+  crStrncpy((char*)&(cap->UserKey), "This is pretty random!", 
 	  sizeof(ELAN_USERKEY));
   cap->LowContext = lctx;
   cap->MyContext = lctx + (myrank%4);
@@ -264,7 +263,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
     teac_Close(result);
     return NULL;
   }
-  if ((here= strchr(buf,'.')) != NULL) *here= '\0';
+  if ((here= crStrchr(buf,'.')) != NULL) *here= '\0';
 #ifdef ELAN_PRE_KITE
   if (trans_host(buf) != info.NodeId) {
     fprintf(stderr,"teac_Init: compiled-in Quadrics port id %d does not match real value %d!\n",
@@ -304,14 +303,14 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
   }
   
   if (!(result->r_event= 
-	(sdramaddr_t**)malloc( cap->Entries*sizeof(sdramaddr_t*) ))) {
+	(sdramaddr_t**)crAlloc( cap->Entries*sizeof(sdramaddr_t*) ))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
 	    cap->Entries*sizeof(sdramaddr_t*));
     teac_Close(result);
     return(NULL);
   }
   if (!(result->r_event[0]=
-	(sdramaddr_t*)malloc( cap->Entries*NUM_SEND_BUFFERS
+	(sdramaddr_t*)crAlloc( cap->Entries*NUM_SEND_BUFFERS
 			      * sizeof(sdramaddr_t) ))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
 	    cap->Entries*NUM_SEND_BUFFERS*sizeof(sdramaddr_t));
@@ -340,7 +339,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
 #endif
 
   if (!(result->m_rcv= 
-	(volatile E3_uint32**)malloc( cap->Entries*sizeof(E3_uint32*) ))) {
+	(volatile E3_uint32**)crAlloc( cap->Entries*sizeof(E3_uint32*) ))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
 	    cap->Entries*sizeof(E3_uint32*));
     teac_Close(result);
@@ -356,7 +355,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
   for (i=1; i<cap->Entries; i++)
     result->m_rcv[i]= result->m_rcv[0] + i*NUM_SEND_BUFFERS;
   
-  if (!(result->mbuff= (teacMsg**)malloc( cap->Entries*sizeof(teacMsg*) ))) {
+  if (!(result->mbuff= (teacMsg**)crAlloc( cap->Entries*sizeof(teacMsg*) ))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
 	    cap->Entries*sizeof(teacMsg*));
     teac_Close(result);
@@ -439,7 +438,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
     result->sbuf_ready[i]= result->sbuf_ready[0] + i;
   
   if (!(result->sendWrappers[0]= 
-	(SBuffer*)malloc(NUM_SEND_BUFFERS*sizeof(SBuffer)))) {
+	(SBuffer*)crAlloc(NUM_SEND_BUFFERS*sizeof(SBuffer)))) {
     fprintf(stderr,"teac_Init: unable to allocate %d bytes!\n",
 	    NUM_SEND_BUFFERS*sizeof(SBuffer));
     teac_Close(result);
@@ -536,9 +535,9 @@ void teac_Close(Tcomm *tcomm)
       if (tcomm->r_event[0] != NULL) {
 	if (tcomm->r_event[0][0] != 0) elan3_freeElan(tcomm->ctx, 
 						      tcomm->r_event[0][0]);
-	free(tcomm->r_event[0]);
+	crFree(tcomm->r_event[0]);
       }
-      free(tcomm->r_event);
+      crFree(tcomm->r_event);
     }
     if (tcomm->sbuf_pull_event[0] != 0) 
       elan3_freeElan(tcomm->ctx, tcomm->sbuf_pull_event[0]);
@@ -547,7 +546,7 @@ void teac_Close(Tcomm *tcomm)
 	if (tcomm->sendWrappers[i]->buf != NULL) 
 	  elan3_free(tcomm->ctx, tcomm->sendWrappers[i]->buf);
       }
-      free(tcomm->sendWrappers[0]);
+      crFree(tcomm->sendWrappers[0]);
     }
     if (tcomm->rbuf_pull_event != 0) 
       elan3_freeElan(tcomm->ctx, tcomm->rbuf_pull_event);
@@ -556,7 +555,7 @@ void teac_Close(Tcomm *tcomm)
     if (tcomm->m_rcv != NULL) {
       if (tcomm->m_rcv[0] != NULL) elan3_free(tcomm->ctx,
 					      (E3_uint32*)tcomm->m_rcv[0]);
-      free(tcomm->m_rcv);
+      crFree(tcomm->m_rcv);
     }
     if (tcomm->sbuf_ready[0] != NULL) 
       elan3_free(tcomm->ctx, (E3_uint32*)tcomm->sbuf_ready[0]);
@@ -564,7 +563,7 @@ void teac_Close(Tcomm *tcomm)
 					    (E3_uint32*)tcomm->rbuf_ready);
     if (tcomm->mbuff != NULL) {
       if (tcomm->mbuff[0] != NULL) elan3_free(tcomm->ctx, tcomm->mbuff[0]);
-      free(tcomm->mbuff);
+      crFree(tcomm->mbuff);
     }
 #ifdef never
     elan3_detach(tcomm->ctx);
@@ -757,7 +756,7 @@ RBuffer* teac_Recv(Tcomm* tcomm, int id)
 #endif
 
   /* Make some space to put the message when it arrives */
-  if (!(result= (RBuffer*)malloc(sizeof(RBuffer)))) {
+  if (!(result= (RBuffer*)crAlloc(sizeof(RBuffer)))) {
     fprintf(stderr,"teac_Recv: unable to allocate %d bytes!\n",
 	    sizeof(RBuffer));
     return NULL;
@@ -798,7 +797,7 @@ RBuffer* teac_Recv(Tcomm* tcomm, int id)
 int teac_Dispose( Tcomm* tcomm, RBuffer* buf )
 {
   elan3_free(tcomm->ctx, buf->buf);
-  free(buf);
+  crFree(buf);
   return 0;
 }
 

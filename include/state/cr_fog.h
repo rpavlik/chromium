@@ -14,19 +14,19 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue color[CR_MAX_BITARRAY];
-	GLbitvalue index[CR_MAX_BITARRAY];
-	GLbitvalue density[CR_MAX_BITARRAY];
-	GLbitvalue start[CR_MAX_BITARRAY];
-	GLbitvalue end[CR_MAX_BITARRAY];
-	GLbitvalue mode[CR_MAX_BITARRAY];
-	GLbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue color[CR_MAX_BITARRAY];
+	CRbitvalue index[CR_MAX_BITARRAY];
+	CRbitvalue density[CR_MAX_BITARRAY];
+	CRbitvalue start[CR_MAX_BITARRAY];
+	CRbitvalue end[CR_MAX_BITARRAY];
+	CRbitvalue mode[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
 #ifdef CR_NV_fog_distance
-	GLbitvalue fogDistanceMode[CR_MAX_BITARRAY];
+	CRbitvalue fogDistanceMode[CR_MAX_BITARRAY];
 #endif
 #ifdef CR_EXT_fog_coord
-	GLbitvalue fogCoordinateSource[CR_MAX_BITARRAY];
+	CRbitvalue fogCoordinateSource[CR_MAX_BITARRAY];
 #endif
 } CRFogBits;
 
@@ -46,12 +46,11 @@ typedef struct {
 #endif
 } CRFogState;
 
-void crStateFogInitBits (CRFogBits *fb);
-void crStateFogInit(CRFogState *f);
+void crStateFogInit(CRContext *ctx);
 
-void crStateFogDiff(CRFogBits *bb, GLbitvalue *bitID, 
+void crStateFogDiff(CRFogBits *bb, CRbitvalue *bitID, 
 		CRFogState *from, CRFogState *to);
-void crStateFogSwitch(CRFogBits *bb, GLbitvalue *bitID, 
+void crStateFogSwitch(CRFogBits *bb, CRbitvalue *bitID, 
 		CRFogState *from, CRFogState *to);
 
 #ifdef __cplusplus

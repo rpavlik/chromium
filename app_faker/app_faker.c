@@ -106,7 +106,7 @@ const char *error_string( int err )
 
 #endif
 
-void debug( const char *format, ... )
+static void debug( const char *format, ... )
 {
 	if ( verbose ) {
 		va_list args;
@@ -117,7 +117,7 @@ void debug( const char *format, ... )
 	}
 }
 
-const char *basename( const char *path )
+static const char *basename( const char *path )
 {
 	char *last;
 	last = crStrrchr( path, '/' );
@@ -135,7 +135,7 @@ typedef struct List {
 static List *temp_files = NULL;
 static List *temp_dirs  = NULL;
 
-void add_to_list( List **list, const char *name )
+static void add_to_list( List **list, const char *name )
 {
 	List *node = (List *) crAlloc( sizeof(*node) );
 
@@ -144,12 +144,12 @@ void add_to_list( List **list, const char *name )
 	*list = node;
 }
 
-void add_file_to_temp_list( const char *filename )
+static void add_file_to_temp_list( const char *filename )
 {
 	add_to_list( &temp_files, filename );
 }
 
-void delete_temp_files( void )
+static void delete_temp_files( void )
 {
 	List *list;
 
@@ -170,12 +170,12 @@ void delete_temp_files( void )
 	}
 }
 
-void add_dir_to_temp_list( const char *dirname )
+static void add_dir_to_temp_list( const char *dirname )
 {
 	add_to_list( &temp_dirs, dirname );
 }
 
-void delete_temp_dirs( void )
+static void delete_temp_dirs( void )
 {
 	List *list;
 	for ( list = temp_dirs; list; list = list->next ) {
@@ -191,7 +191,7 @@ void delete_temp_dirs( void )
 
 #ifdef _WIN32
 
-char *find_file_on_path( const char *name )
+static char *find_file_on_path( const char *name )
 {
 	int   len;
 	char *path, *tail;
@@ -213,7 +213,7 @@ char *find_file_on_path( const char *name )
 	return path;
 }
 
-char *find_executable_on_path( const char *name, char **tail_ptr )
+static char *find_executable_on_path( const char *name, char **tail_ptr )
 {
 	int   len;
 	char *path, *tail;
@@ -234,7 +234,7 @@ char *find_executable_on_path( const char *name, char **tail_ptr )
 	return path;
 }
 
-void make_tmpdir( char *retval )
+static void make_tmpdir( char *retval )
 {
 	char *name;
 
@@ -250,7 +250,7 @@ void make_tmpdir( char *retval )
 	crStrcpy( retval, name );
 }
 
-void copy_file( const char *dst_filename, const char *src_filename )
+static void copy_file( const char *dst_filename, const char *src_filename )
 {
 	debug( "copying \"%s\" -> \"%s\"\n", src_filename, dst_filename );
 
@@ -258,7 +258,7 @@ void copy_file( const char *dst_filename, const char *src_filename )
 		crError( "copy \"%s\" -> \"%s\"", src_filename, dst_filename );
 }
 
-void do_it( char *argv[] )
+static void do_it( char *argv[] )
 {
 	char tmpdir[1024], argv0[1024], *tail;
 	char response[8096];
@@ -329,7 +329,7 @@ void do_it( char *argv[] )
 
 #else /* _WIN32 */
 
-char *find_file_on_path( const char *path, const char *basename )
+static char *find_file_on_path( const char *path, const char *basename )
 {
 	int  i;
 	char name[1024];
@@ -383,7 +383,7 @@ char *find_file_on_path( const char *path, const char *basename )
 	return NULL;
 }
 
-void make_tmpdir( char *name )
+static void make_tmpdir( char *name )
 {
 	char *tmp;
 	int   index;
@@ -412,7 +412,7 @@ void make_tmpdir( char *name )
 	debug( "tmpdir=\"%s\"\n", name );
 }
 
-void prefix_env_var( const char *prefix, const char *varname )
+static void prefix_env_var( const char *prefix, const char *varname )
 {
 	char *val;
 
@@ -427,7 +427,7 @@ void prefix_env_var( const char *prefix, const char *varname )
 	}
 }
 
-int is_a_version_of( const char *basename, const char *libname )
+static int is_a_version_of( const char *basename, const char *libname )
 {
 	int len = crStrlen( basename );
 
@@ -447,7 +447,7 @@ int is_a_version_of( const char *basename, const char *libname )
 	return ( *libname == '\0' );
 }
 
-const char *find_next_version_name( DIR *dir, const char *basename )
+static const char *find_next_version_name( DIR *dir, const char *basename )
 {
 	struct dirent *entry;
 
@@ -465,7 +465,7 @@ const char *find_next_version_name( DIR *dir, const char *basename )
 	return NULL;
 }
 
-int make_temp_link( const char *dir, const char *name, const char *target )
+static int make_temp_link( const char *dir, const char *name, const char *target )
 {
 	char link_name[1024];
 
@@ -482,7 +482,7 @@ int make_temp_link( const char *dir, const char *name, const char *target )
 	return 1;
 }
 
-void do_it( char *argv[] )
+static void do_it( char *argv[] )
 {
 	pid_t pid;
 	int status;
@@ -640,8 +640,8 @@ void do_it( char *argv[] )
 
 #endif /* _WIN32 */
 
-	void
-usage( void )
+
+static void usage( void )
 {
 	char *cr_lib;
 

@@ -6,6 +6,7 @@
 
 #include <float.h>
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_bbox.h"
 #include "cr_glstate.h"
 #include "cr_pack.h"
@@ -18,8 +19,8 @@
  */
 typedef struct BucketRegion *BucketRegion_ptr;
 typedef struct BucketRegion {
-	GLbitvalue       id[CR_MAX_BITARRAY];
-	GLrecti          extents;
+	CRbitvalue       id[CR_MAX_BITARRAY];
+	CRrecti          extents;
 	BucketRegion_ptr right;
 	BucketRegion_ptr up;
 } BucketRegion;
@@ -50,7 +51,7 @@ typedef struct grid_info {
 static GridInfo Grid;  /* XXX move into tilesort_spu struct? */
 
 
-float _min3f(float a, float b, float c)
+static float _min3f(float a, float b, float c)
 {
 	if ((a < b) && (a < c))
 		return a;
@@ -61,7 +62,7 @@ float _min3f(float a, float b, float c)
 		return c;
 }
 
-float _max3f(float a, float b, float c)
+static float _max3f(float a, float b, float c)
 {
 	if ((a > b) && (a > c))
 		return a;
@@ -72,7 +73,7 @@ float _max3f(float a, float b, float c)
 		return c;
 }
 
-float _min2f(float a, float b)
+static float _min2f(float a, float b)
 {
 	if (a < b)
 		return a;
@@ -80,7 +81,7 @@ float _min2f(float a, float b)
 		return b;
 }
 
-float _max2f(float a, float b)
+static float _max2f(float a, float b)
 {
 	if (a > b)
 		return a;
@@ -88,7 +89,7 @@ float _max2f(float a, float b)
 		return b;
 }
 
-float _fabs(float a)
+static float _fabs(float a)
 {
 	if (a < 0) return -a;
 
@@ -103,7 +104,7 @@ float _fabs(float a)
  * return 0 ==> no overlap 
  *        1 ==> overlap
  */
-int quad_overlap(float *quad, 
+static int quad_overlap(float *quad, 
 				float xmin, float ymin, float xmax, float ymax)
 {
 	int a;
@@ -300,7 +301,7 @@ GLboolean tilesortspuInitGridBucketing(void)
 	{
 		for (j = 0; j < tilesort_spu.servers[i].num_extents; j++) 
 		{
-			const GLrecti *extent = &(tilesort_spu.servers[i].extents[j]);
+			const CRrecti *extent = &(tilesort_spu.servers[i].extents[j]);
 			GLboolean found;
 
 			/* look for a row with same y0, y1 */
@@ -383,7 +384,7 @@ GLboolean tilesortspuInitGridBucketing(void)
 	{
 		for (j = 0; j < tilesort_spu.servers[i].num_extents; j++) 
 		{
-			const GLrecti *extent = &(tilesort_spu.servers[i].extents[j]);
+			const CRrecti *extent = &(tilesort_spu.servers[i].extents[j]);
 			int r, c;
 			GLboolean found = GL_FALSE;
 			for (r = 0; r < Grid.rows && !found; r++)
@@ -437,18 +438,18 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 {
 	GET_CONTEXT(g);
 	CRTransformState *t = &(g->transform);
-	GLmatrix *m = &(t->transform);
+	CRmatrix *m = &(t->transform);
 
 	const GLvectorf zero_vect = {0.0f, 0.0f, 0.0f, 1.0f};
 	const GLvectorf one_vect = {1.0f, 1.0f, 1.0f, 1.0f};
 	const GLvectorf neg_vect = {-1.0f, -1.0f, -1.0f, 1.0f};
-	const GLrecti fullscreen = {-GL_MAXINT, GL_MAXINT, -GL_MAXINT, GL_MAXINT};
-	const GLrecti nullscreen = {0, 0, 0, 0};
+	const CRrecti fullscreen = {-CR_MAXINT, CR_MAXINT, -CR_MAXINT, CR_MAXINT};
+	const CRrecti nullscreen = {0, 0, 0, 0};
 	float xmin, ymin, xmax, ymax, zmin, zmax;
-	GLrecti ibounds;
+	CRrecti ibounds;
 	int i, j;
 
-	GLbitvalue retval[CR_MAX_BITARRAY];
+	CRbitvalue retval[CR_MAX_BITARRAY];
 
 	/* Init bucketInfo */
 	bucketInfo->objectMin = thread->packer->bounds_min;
@@ -708,7 +709,7 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 
 	/* XXX why use retval at all?  Why not just use bucketInfo->hits? */
 	crMemcpy((char*)bucketInfo->hits, (char*)retval,
-				sizeof(GLbitvalue) * CR_MAX_BITARRAY);
+				sizeof(CRbitvalue) * CR_MAX_BITARRAY);
 
 	return;
 }

@@ -47,4 +47,8 @@ typedef struct {
 
 extern WetSPU wet_spu;
 
+extern SPUNamedFunctionTable _cr_wet_table[];
+
+extern SPUOptions wetSPUOptions[];
+
 #endif /* WET_SPU_H */

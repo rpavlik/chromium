@@ -24,14 +24,16 @@ print """
 #include <stdio.h>
 #include "cr_spu.h"
 #include "feedbackspu.h"
+#include "feedbackspu_proto.h"
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
 
 """
-for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "feedback_state", func_name ):
-		print 'extern %s FEEDBACKSPU_APIENTRY feedbackspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
+
+#for func_name in keys:
+#	(return_type, args, types) = gl_mapping[func_name]
+#	if stub_common.FindSpecial( "feedback_state", func_name ):
+#		print 'extern %s FEEDBACKSPU_APIENTRY feedbackspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
 print ""
 
@@ -39,7 +41,7 @@ for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, args, types) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "feedback", func_name ):
-		print '%s FEEDBACKSPU_APIENTRY feedbackspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
+		print 'static %s FEEDBACKSPU_APIENTRY feedbackspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 		print '{'
 		print '\tfeedback_spu.super.%s%s;' % ( func_name, stub_common.CallString( args ) )
 		print '}'
@@ -47,8 +49,8 @@ for index in range(len(keys)):
 
 
 print """
-#define CHANGE( name, func ) crSPUChangeInterface( &(feedback_spu.self), feedback_spu.self.name, (SPUGenericFunction) func )
-#define CHANGESWAP( name, swapfunc, regfunc ) crSPUChangeInterface( &(feedback_spu.self), feedback_spu.self.name, (SPUGenericFunction) (feedback_spu.swap ? swapfunc: regfunc ) )
+#define CHANGE( name, func ) crSPUChangeInterface( (void *)&(feedback_spu.self), (void *)feedback_spu.self.name, (void *)((SPUGenericFunction) func) )
+#define CHANGESWAP( name, swapfunc, regfunc ) crSPUChangeInterface( (void *)&(feedback_spu.self), (void *)feedback_spu.self.name, (void *)((SPUGenericFunction) (feedback_spu.swap ? swapfunc: regfunc )) )
 
 static void __loadFeedbackAPI( void )
 {
@@ -90,7 +92,7 @@ print """
 """
 
 print """
-GLint FEEDBACKSPU_APIENTRY feedbackspu_RenderMode ( GLenum mode )
+static GLint FEEDBACKSPU_APIENTRY feedbackspu_RenderMode ( GLenum mode )
 {
 	feedback_spu.render_mode = mode;
 
@@ -112,7 +114,7 @@ GLint FEEDBACKSPU_APIENTRY feedbackspu_RenderMode ( GLenum mode )
 	return crStateRenderMode( mode );
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_Begin ( GLenum mode )
+static void FEEDBACKSPU_APIENTRY feedbackspu_Begin ( GLenum mode )
 {
 	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackBegin( mode );
@@ -125,7 +127,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_Begin ( GLenum mode )
 	}
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_End ( void )
+static void FEEDBACKSPU_APIENTRY feedbackspu_End ( void )
 {
 	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackEnd( );
@@ -138,7 +140,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_End ( void )
 	}
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_Bitmap ( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap )
+static void FEEDBACKSPU_APIENTRY feedbackspu_Bitmap ( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap )
 {
 	crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 
@@ -150,7 +152,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_Bitmap ( GLsizei width, GLsizei height, GL
 		feedback_spu.super.Bitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
+static void FEEDBACKSPU_APIENTRY feedbackspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
 {
 	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackCopyPixels( x, y, width, height, type );
@@ -160,7 +162,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_CopyPixels( GLint x, GLint y, GLsizei widt
 		feedback_spu.super.CopyPixels( x, y, width, height, type );
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+static void FEEDBACKSPU_APIENTRY feedbackspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackDrawPixels( width, height, format, type, pixels );
@@ -170,7 +172,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_DrawPixels( GLsizei width, GLsizei height,
 		feedback_spu.super.DrawPixels( width, height, format, type, pixels );
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_GetBooleanv( GLenum pname, GLboolean *params )
+static void FEEDBACKSPU_APIENTRY feedbackspu_GetBooleanv( GLenum pname, GLboolean *params )
 
 {
 	if (pname == GL_FEEDBACK_BUFFER_SIZE ||
@@ -184,7 +186,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_GetBooleanv( GLenum pname, GLboolean *para
 		feedback_spu.super.GetBooleanv( pname, params );
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_GetDoublev( GLenum pname, GLdouble *params )
+static void FEEDBACKSPU_APIENTRY feedbackspu_GetDoublev( GLenum pname, GLdouble *params )
 
 {
 	if (pname == GL_FEEDBACK_BUFFER_SIZE ||
@@ -198,7 +200,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_GetDoublev( GLenum pname, GLdouble *params
 		feedback_spu.super.GetDoublev( pname, params );
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_GetFloatv( GLenum pname, GLfloat *params )
+static void FEEDBACKSPU_APIENTRY feedbackspu_GetFloatv( GLenum pname, GLfloat *params )
 
 {
 	if (pname == GL_FEEDBACK_BUFFER_SIZE ||
@@ -212,7 +214,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_GetFloatv( GLenum pname, GLfloat *params )
 		feedback_spu.super.GetFloatv( pname, params );
 }
 
-void FEEDBACKSPU_APIENTRY feedbackspu_GetIntegerv( GLenum pname, GLint *params )
+static void FEEDBACKSPU_APIENTRY feedbackspu_GetIntegerv( GLenum pname, GLint *params )
 
 {
 	if (pname == GL_FEEDBACK_BUFFER_SIZE ||
@@ -226,7 +228,7 @@ void FEEDBACKSPU_APIENTRY feedbackspu_GetIntegerv( GLenum pname, GLint *params )
 		feedback_spu.super.GetIntegerv( pname, params );
 }
 
-SPUNamedFunctionTable feedback_table[] = {
+SPUNamedFunctionTable _cr_feedback_table[] = {
 """
 
 for index in range(len(keys)):

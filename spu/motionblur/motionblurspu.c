@@ -48,7 +48,7 @@ static GLint MOTIONBLURSPU_APIENTRY motionblurspuCreateContext( const char *dpyN
 }
 
 
-SPUNamedFunctionTable motionblur_table[] = {
+SPUNamedFunctionTable _cr_motionblur_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) motionblurspuSwapBuffers },
 	{ "WindowSize", (SPUGenericFunction) motionblurspuWindowSize },
 	{ "WindowCreate", (SPUGenericFunction) motionblurspuWindowCreate },

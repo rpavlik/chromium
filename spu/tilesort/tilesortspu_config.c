@@ -242,6 +242,7 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	crWarning("Total output dimensions = (%d, %d)", tilesort_spu.muralWidth,
 						tilesort_spu.muralHeight);
 
+	/* XXX we should really query all the servers to compute the limits! */
 	crStateLimitsInit(&tilesort_spu.limits);
 
 	crMothershipDisconnect(conn);

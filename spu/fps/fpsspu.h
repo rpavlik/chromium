@@ -16,8 +16,6 @@
 #include "cr_spu.h"
 #include "cr_timer.h"
 
-void fpsspuGatherConfiguration( void );
-
 typedef struct {
 	int id;
 	int has_child;
@@ -27,5 +25,11 @@ typedef struct {
 } FpsSPU;
 
 extern FpsSPU fps_spu;
+
+extern SPUNamedFunctionTable _cr_fps_table[];
+
+extern SPUOptions fpsSPUOptions[];
+
+extern void fpsspuGatherConfiguration( void );
 
 #endif /* FPS_SPU_H */

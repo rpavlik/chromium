@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-void crTransformBBox( float xmin, float ymin, float zmin, float xmax, float ymax, float zmax, GLmatrix *m, float *out_xmin, float *out_ymin, float *out_zmin, float *out_xmax, float *out_ymax, float *out_zmax );
+void crTransformBBox( float xmin, float ymin, float zmin, float xmax, float ymax, float zmax, CRmatrix *m, float *out_xmin, float *out_ymin, float *out_zmin, float *out_xmax, float *out_ymax, float *out_zmax );
 
 #ifdef __cplusplus
 }

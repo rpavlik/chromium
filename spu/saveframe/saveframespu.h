@@ -14,7 +14,6 @@
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 #ifdef JPEG
 #include <jpeglib.h>

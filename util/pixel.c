@@ -1106,7 +1106,7 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 		dstRowStrideBytes = bytesPerRow;
 
 		for (i=0; i<height; i++) {
-			memcpy( (void *) dst, (const void *) src, bytesPerRow );
+			crMemcpy( (void *) dst, (const void *) src, bytesPerRow );
 			dst += dstRowStrideBytes;
 			src += srcRowStrideBytes;
 		} 
@@ -1174,7 +1174,7 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 			CRASSERT(srcBytesPerRow == dstBytesPerRow);
 			for (i = 0; i < height; i++)
 			{
-				memcpy( (void *) dst, (const void *) src, srcBytesPerRow );
+				crMemcpy( (void *) dst, (const void *) src, srcBytesPerRow );
 				dst += dstRowStrideBytes;
 				src += srcRowStrideBytes;
 			}
@@ -1213,8 +1213,8 @@ void crPixelCopy3D( GLsizei width, GLsizei height, GLsizei depth,
 	(void)srcFormat;
 	(void)dstPacking;
 
-	crWarning( "crPixelCopy3D:  simply memcpy'ing from srcPtr to dstPtr" );
+	crWarning( "crPixelCopy3D:  simply crMemcpy'ing from srcPtr to dstPtr" );
 
 	tex_size = crTextureSize( dstFormat, dstType, width, height, depth );
-	memcpy( (void *) dstPtr, (void *) srcPtr, tex_size ); 
+	crMemcpy( (void *) dstPtr, (void *) srcPtr, tex_size ); 
 }

@@ -1,5 +1,6 @@
 BlendColorEXT
 BlendEquationEXT
+BlendFuncSeparateEXT
 ActiveTextureARB
 ClientActiveTextureARB
 MultiTexCoord1dARB
@@ -67,3 +68,5 @@ SecondaryColor3usvEXT
 SecondaryColor3ubvEXT
 SecondaryColorPointerEXT
 TexImage3DEXT
+MultiDrawArraysEXT
+MultiDrawElementsEXT

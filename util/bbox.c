@@ -12,7 +12,7 @@ static float _vmult(float *m, float x, float y, float z)
 	return m[0]*x + m[4]*y + m[8]*z + m[12];
 }
 
-void crTransformBBox( float xmin, float ymin, float zmin, float xmax, float ymax, float zmax, GLmatrix *m, float *out_xmin, float *out_ymin, float *out_zmin, float *out_xmax, float *out_ymax, float *out_zmax )
+void crTransformBBox( float xmin, float ymin, float zmin, float xmax, float ymax, float zmax, CRmatrix *m, float *out_xmin, float *out_ymin, float *out_zmin, float *out_xmax, float *out_ymax, float *out_zmax )
 {
 	float x[8], y[8], z[8], w[8];
 	int i,j;

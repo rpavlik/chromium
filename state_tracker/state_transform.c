@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "cr_mem.h"
 #include "state.h"
@@ -17,7 +16,7 @@
 #pragma warning( disable : 4514 )  
 #endif
 
-static const GLmatrix identity_matrix = 
+static const CRmatrix identity_matrix = 
 {
 	(GLdefault) 1.0, (GLdefault) 0.0, (GLdefault) 0.0, (GLdefault) 0.0,
 	(GLdefault) 0.0, (GLdefault) 1.0, (GLdefault) 0.0, (GLdefault) 0.0,
@@ -29,7 +28,7 @@ static const GLmatrix identity_matrix =
 #define M_PI             3.14159265358979323846
 #endif
 
-#ifdef GL_DEFAULTTYPE_FLOAT
+#ifdef CR_DEFAULTTYPE_FLOAT
 
 #define LOADMATRIX(a) \
 { \
@@ -43,7 +42,7 @@ diff_api.LoadMatrixf((const GLfloat *) f); \
 
 #endif
 
-#ifdef GL_DEFAULTTYPE_DOUBLE
+#ifdef CR_DEFAULTTYPE_DOUBLE
 
 #define LOADMATRIX(a) \
 { \
@@ -59,7 +58,7 @@ diff_api.LoadMatrixd((const GLdouble *) f); \
 
 #if 0
 /* useful for debugging */
-static void PrintMatrix( const char *msg, const GLmatrix *m )
+static void PrintMatrix( const char *msg, const CRmatrix *m )
 {
    printf("%s\n", msg);
    printf("  %f %f %f %f\n", m->m00, m->m01, m->m02, m->m03);
@@ -109,17 +108,31 @@ static void _math_transposed( GLdouble to[16], const GLdouble from[16] )
    to[15] = from[15];
 }
 
-void crStateTransformInitBits (CRTransformBits *t) 
+void crStateTransformDestroy(CRContext *ctx)
 {
-	FILLDIRTY(t->dirty);
-	FILLDIRTY(t->matrix[1]);
+	CRTransformState *t = &ctx->transform;
+	unsigned int i;
+
+	crFree( t->modelView );
+	crFree( t->projection );
+	for (i = 0 ; i < ctx->limits.maxTextureUnits ; i++)
+		crFree( t->texture[i] );
+	crFree( t->color );
+	crFree( t->clipPlane );
+	crFree( t->clip );
 }
 
-void crStateTransformInit(CRLimitsState *limits, CRTransformState *t) 
+void crStateTransformInit(CRContext *ctx)
 {
+	CRLimitsState *limits = &ctx->limits;
+	CRTransformState *t = &ctx->transform;
+	CRStateBits *sb = GetCurrentBits();
+	CRTransformBits *tb = &(sb->transform);
 	unsigned int i;
 
 	t->mode = GL_MODELVIEW;
+	RESET(tb->mode, ctx->bitid);
+
 	t->matrixid = 0;
 
 #if 0
@@ -130,13 +143,13 @@ void crStateTransformInit(CRLimitsState *limits, CRTransformState *t)
 #endif
 	t->maxDepth = CR_MAX_MODELVIEW_STACK_DEPTH;
 
-	t->modelView = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_MODELVIEW_STACK_DEPTH);
-	t->projection = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_PROJECTION_STACK_DEPTH);
+	t->modelView = (CRmatrix *) crCalloc (sizeof (CRmatrix) * CR_MAX_MODELVIEW_STACK_DEPTH);
+	t->projection = (CRmatrix *) crCalloc (sizeof (CRmatrix) * CR_MAX_PROJECTION_STACK_DEPTH);
 	for (i = 0 ; i < limits->maxTextureUnits ; i++)
 	{
-		t->texture[i] = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_TEXTURE_STACK_DEPTH);
+		t->texture[i] = (CRmatrix *) crCalloc (sizeof (CRmatrix) * CR_MAX_TEXTURE_STACK_DEPTH);
 	}
-	t->color = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_COLOR_STACK_DEPTH);
+	t->color = (CRmatrix *) crCalloc (sizeof (CRmatrix) * CR_MAX_COLOR_STACK_DEPTH);
 
 	t->modelView[0] = identity_matrix;
 	t->projection[0] = identity_matrix;
@@ -155,14 +168,16 @@ void crStateTransformInit(CRLimitsState *limits, CRTransformState *t)
 	}
 	t->colorDepth = 0;
 	t->depth = &t->modelViewDepth;
+	RESET(tb->matrix[0], ctx->bitid);
+	RESET(tb->matrix[1], ctx->bitid);
+	RESET(tb->matrix[2], ctx->bitid);
+	RESET(tb->matrix[3], ctx->bitid);
 
 	t->normalize = GL_FALSE;
+	RESET(tb->enable, ctx->bitid);
 
-	t->clipPlane = NULL;
-	t->clip = NULL;
-
-	t->clipPlane = (GLvectord *) crAlloc (sizeof (GLvectord) * CR_MAX_CLIP_PLANES);
-	t->clip = (GLboolean *) crAlloc (sizeof (GLboolean) * CR_MAX_CLIP_PLANES);
+	t->clipPlane = (GLvectord *) crCalloc (sizeof (GLvectord) * CR_MAX_CLIP_PLANES);
+	t->clip = (GLboolean *) crCalloc (sizeof (GLboolean) * CR_MAX_CLIP_PLANES);
 	for (i = 0; i < CR_MAX_CLIP_PLANES; i++) 
 	{
 		t->clipPlane[i].x = 0.0f;
@@ -171,18 +186,22 @@ void crStateTransformInit(CRLimitsState *limits, CRTransformState *t)
 		t->clipPlane[i].w = 0.0f;
 		t->clip[i] = GL_FALSE;
 	}
+	RESET(tb->clipPlane, ctx->bitid);
+
 #ifdef CR_OPENGL_VERSION_1_2
 	t->rescaleNormals = GL_FALSE;
 #endif
 
 	t->transformValid = 0;
+
+	RESET(tb->dirty, ctx->bitid);
 }
 
 void crStateTransformUpdateTransform (CRTransformState *t) 
 {
-	GLmatrix *m1 = &t->projection[t->projectionDepth];
-	GLmatrix *m2 = &t->modelView[t->modelViewDepth];
-	GLmatrix *m = &(t->transform);
+	CRmatrix *m1 = &t->projection[t->projectionDepth];
+	CRmatrix *m2 = &t->modelView[t->modelViewDepth];
+	CRmatrix *m = &(t->transform);
 	/* I really hate this. */
 	const GLdefault lm00 = m1->m00; const GLdefault lm01 = m1->m01;  
 	const GLdefault lm02 = m1->m02;	const GLdefault lm03 = m1->m03;	
@@ -221,7 +240,7 @@ void crStateTransformUpdateTransform (CRTransformState *t)
 
 void crStateTransformXformPoint(CRTransformState *t, GLvectorf *p) 
 {
-	GLmatrix *m;
+	CRmatrix *m;
 	GLfloat x = p->x;
 	GLfloat y = p->y;
 	GLfloat z = p->z;
@@ -238,7 +257,7 @@ void crStateTransformXformPoint(CRTransformState *t, GLvectorf *p)
 	p->w = m->m03*x + m->m13*y + m->m23*z + m->m33*w;
 }
 
-void crStateTransformXformPointMatrixf(GLmatrix *m, GLvectorf *p) 
+void crStateTransformXformPointMatrixf(CRmatrix *m, GLvectorf *p) 
 {
 	GLfloat x = p->x;
 	GLfloat y = p->y;
@@ -251,7 +270,7 @@ void crStateTransformXformPointMatrixf(GLmatrix *m, GLvectorf *p)
 	p->w = m->m03*x + m->m13*y + m->m23*z + m->m33*w;
 }
 
-void crStateTransformXformPointMatrixd(GLmatrix *m, GLvectord *p) {
+void crStateTransformXformPointMatrixd(CRmatrix *m, GLvectord *p) {
 	GLdouble x = p->x;
 	GLdouble y = p->y;
 	GLdouble z = p->z;
@@ -263,7 +282,7 @@ void crStateTransformXformPointMatrixd(GLmatrix *m, GLvectord *p) {
 	p->w = (GLdouble) (m->m03*x + m->m13*y + m->m23*z + m->m33*w);
 }
 
-void crStateTransformInvertTransposeMatrix(GLmatrix *inv, GLmatrix *mat) {
+void crStateTransformInvertTransposeMatrix(CRmatrix *inv, CRmatrix *mat) {
 	/* Taken from Pomegranate code, trans.c.
 	 * Note: We have our data structures reversed
 	 */
@@ -389,7 +408,7 @@ void STATE_APIENTRY crStateClipPlane (GLenum plane, const GLdouble *equation) {
 	CRTransformBits *tb = &(sb->transform);
 	GLvectord e;
 	unsigned int i;
-	GLmatrix inv;
+	CRmatrix inv;
 
 	e.x = equation[0];
 	e.y = equation[1];
@@ -490,7 +509,7 @@ void STATE_APIENTRY crStateLoadIdentity()
 	*(t->m) = identity_matrix;
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 
 }
@@ -574,7 +593,7 @@ void STATE_APIENTRY crStateLoadMatrixf(const GLfloat *m1)
 	CRTransformState *t = &(g->transform);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
-	GLmatrix *m;
+	CRmatrix *m;
 
 	if (g->current.inBeginEnd)
 	{
@@ -604,7 +623,7 @@ void STATE_APIENTRY crStateLoadMatrixf(const GLfloat *m1)
 
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 
 }
@@ -615,7 +634,7 @@ void STATE_APIENTRY crStateLoadMatrixd(const GLdouble *m1)
 	CRTransformState *t = &(g->transform);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
-	GLmatrix *m;
+	CRmatrix *m;
 
 	if (g->current.inBeginEnd)
 	{
@@ -645,7 +664,7 @@ void STATE_APIENTRY crStateLoadMatrixd(const GLdouble *m1)
 
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -678,7 +697,7 @@ void STATE_APIENTRY crStateMultMatrixf(const GLfloat *m1)
 	CRTransformState *t = &(g->transform);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
-	GLmatrix *m = t->m;
+	CRmatrix *m = t->m;
 	const GLdefault lm00 = m->m00;  
 	const GLdefault lm01 = m->m01;  
 	const GLdefault lm02 = m->m02;	
@@ -739,7 +758,7 @@ void STATE_APIENTRY crStateMultMatrixf(const GLfloat *m1)
 
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -749,7 +768,7 @@ void STATE_APIENTRY crStateMultMatrixd(const GLdouble *m1)
 	CRTransformState *t = &(g->transform);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
-	GLmatrix *m = t->m;
+	CRmatrix *m = t->m;
 	const GLdefault lm00 = m->m00;  
 	const GLdefault lm01 = m->m01;  
 	const GLdefault lm02 = m->m02;	
@@ -810,7 +829,7 @@ void STATE_APIENTRY crStateMultMatrixd(const GLdouble *m1)
 
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -836,7 +855,7 @@ void STATE_APIENTRY crStateTranslatef(GLfloat x_arg, GLfloat y_arg, GLfloat z_ar
 	CRTransformState *t = &(g->transform);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
-	GLmatrix *m = t->m;
+	CRmatrix *m = t->m;
 	const GLdefault x = (GLdefault) x_arg;
 	const GLdefault y = (GLdefault) y_arg;
 	const GLdefault z = (GLdefault) z_arg;
@@ -856,7 +875,7 @@ void STATE_APIENTRY crStateTranslatef(GLfloat x_arg, GLfloat y_arg, GLfloat z_ar
 
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -867,7 +886,7 @@ void STATE_APIENTRY crStateTranslated(GLdouble x_arg, GLdouble y_arg, GLdouble z
 	CRTransformState *t = &(g->transform);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
-	GLmatrix *m = t->m;
+	CRmatrix *m = t->m;
 	const GLdefault x = (GLdefault) x_arg;
 	const GLdefault y = (GLdefault) y_arg;
 	const GLdefault z = (GLdefault) z_arg;
@@ -887,7 +906,7 @@ void STATE_APIENTRY crStateTranslated(GLdouble x_arg, GLdouble y_arg, GLdouble z
 
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }	
 
@@ -997,7 +1016,7 @@ void STATE_APIENTRY crStateScalef (GLfloat x_arg, GLfloat y_arg, GLfloat z_arg)
 	CRTransformState *t = &(g->transform);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
-	GLmatrix *m = t->m;
+	CRmatrix *m = t->m;
 	const GLdefault x = (GLdefault) x_arg;	
 	const GLdefault y = (GLdefault) y_arg;	
 	const GLdefault z = (GLdefault) z_arg;	
@@ -1025,7 +1044,7 @@ void STATE_APIENTRY crStateScalef (GLfloat x_arg, GLfloat y_arg, GLfloat z_arg)
 
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -1035,7 +1054,7 @@ void STATE_APIENTRY crStateScaled (GLdouble x_arg, GLdouble y_arg, GLdouble z_ar
 	CRTransformState *t = &(g->transform);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
-	GLmatrix *m = t->m;
+	CRmatrix *m = t->m;
 	const GLdefault x = (GLdefault) x_arg;	
 	const GLdefault y = (GLdefault) y_arg;	
 	const GLdefault z = (GLdefault) z_arg;	
@@ -1063,7 +1082,7 @@ void STATE_APIENTRY crStateScaled (GLdouble x_arg, GLdouble y_arg, GLdouble z_ar
 
 	t->transformValid = 0;
 
-	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -1160,11 +1179,11 @@ void  STATE_APIENTRY crStateGetClipPlane (GLenum plane, GLdouble *equation)
 	equation[3] = t->clipPlane[i].w;
 }
 
-void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue *bitID, 
+void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, CRbitvalue *bitID, 
 						 CRTransformState *from, CRTransformState *to) 
 {
 	GLuint i,j;
-	GLbitvalue nbitID[CR_MAX_BITARRAY];
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
@@ -1223,9 +1242,9 @@ void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitva
 
 	if (CHECKDIRTY(t->matrix[0], bitID)) {
 		if (crMemcmp (from->modelView+from->modelViewDepth,
-										to->modelView+to->modelViewDepth,
-										sizeof (GLmatrix))) {
-
+				to->modelView+to->modelViewDepth,
+				sizeof (CRmatrix)))
+		{
 			diff_api.MatrixMode(GL_MODELVIEW);		
 			LOADMATRIX(to->modelView+to->modelViewDepth);
 
@@ -1238,8 +1257,8 @@ void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitva
 	if (CHECKDIRTY(t->matrix[1], bitID)) {
 		if (crMemcmp (from->projection+from->projectionDepth,
 					to->projection+to->projectionDepth,
-					sizeof (GLmatrix))) {
-
+					sizeof (CRmatrix)))
+		{
 			diff_api.MatrixMode(GL_PROJECTION);		
 			LOADMATRIX(to->projection+to->projectionDepth);
 		
@@ -1255,7 +1274,7 @@ void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitva
 		{
 			if (crMemcmp (from->texture[i]+from->textureDepth[i],
 						to->texture[i]+to->textureDepth[i],
-						sizeof (GLmatrix))) 
+						sizeof (CRmatrix))) 
 			{
 				diff_api.MatrixMode(GL_TEXTURE);		
 				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
@@ -1271,8 +1290,8 @@ void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitva
 	if (CHECKDIRTY(t->matrix[3], bitID)) {
 		if (crMemcmp (from->color+from->colorDepth,
 					to->color+to->colorDepth,
-					sizeof (GLmatrix))) {
-
+					sizeof (CRmatrix)))
+		{
 			diff_api.MatrixMode(GL_COLOR);		
 			LOADMATRIX(to->color+to->colorDepth);
 		
@@ -1297,11 +1316,11 @@ void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitva
 	INVERTDIRTY(t->dirty, nbitID);
 }
 
-void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue *bitID, 
+void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, CRbitvalue *bitID, 
 						 CRTransformState *from, CRTransformState *to) 
 {
 	GLuint i,j;
-	GLbitvalue nbitID[CR_MAX_BITARRAY];
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
@@ -1363,9 +1382,9 @@ void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue
 	
 	if (CHECKDIRTY(t->matrix[0], bitID)) {
 		if (crMemcmp (from->modelView+from->modelViewDepth,
-										to->modelView+to->modelViewDepth,
-										sizeof (GLmatrix))) {
-
+				to->modelView+to->modelViewDepth,
+				sizeof (CRmatrix))) 
+		{
 			diff_api.MatrixMode(GL_MODELVIEW);		
 			LOADMATRIX(to->modelView+to->modelViewDepth);
 
@@ -1377,12 +1396,17 @@ void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue
 	}
 
 	if (CHECKDIRTY(t->matrix[1], bitID)) {
-		diff_api.MatrixMode(GL_PROJECTION);		
-		LOADMATRIX(to->projection+to->projectionDepth);
+		if (crMemcmp (from->projection+from->projectionDepth,
+				to->projection+to->projectionDepth,
+				sizeof (CRmatrix))) 
+		{
+			diff_api.MatrixMode(GL_PROJECTION);		
+			LOADMATRIX(to->projection+to->projectionDepth);
 
-		crMemcpy((void *) from->projection, (const void *) to->projection,
-			sizeof (from->projection[0]) * (to->projectionDepth + 1));
-		from->projectionDepth = to->projectionDepth;
+			crMemcpy((void *) from->projection, (const void *) to->projection,
+				sizeof (from->projection[0]) * (to->projectionDepth + 1));
+			from->projectionDepth = to->projectionDepth;
+		}
 		INVERTDIRTY(t->matrix[1], nbitID);
 	}
 
@@ -1391,7 +1415,7 @@ void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue
 		{
 			if (crMemcmp (from->texture[i]+from->textureDepth[i],
 						to->texture[i]+to->textureDepth[i],
-						sizeof (GLmatrix))) 
+						sizeof (CRmatrix))) 
 			{
 				diff_api.MatrixMode(GL_TEXTURE);		
 				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
@@ -1408,7 +1432,8 @@ void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue
 	if (CHECKDIRTY(t->matrix[3], bitID)) {
 		if (crMemcmp (from->color+from->colorDepth,
 					to->color+to->colorDepth,
-					sizeof (GLmatrix))) {
+					sizeof (CRmatrix))) 
+		{
 			diff_api.MatrixMode(GL_COLOR);		
 			LOADMATRIX(to->color+to->colorDepth);
 

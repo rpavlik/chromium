@@ -4,15 +4,20 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStateViewportInit(CRViewportState *v) 
+void crStateViewportInit(CRContext *ctx)
 {
+	CRViewportState *v = &ctx->viewport;
+	CRStateBits *sb = GetCurrentBits();
+	CRViewportBits *vb = &(sb->viewport);
+	CRTransformBits *tb = &(sb->transform);
+
 	v->scissorTest = GL_FALSE;
+	RESET(vb->enable, ctx->bitid);
 	
 	v->viewportValid = GL_FALSE;
 	v->viewportX = 0;
@@ -21,6 +26,7 @@ void crStateViewportInit(CRViewportState *v)
 	 * the context has been created */
 	v->viewportW = 640;
 	v->viewportH = 480;
+	RESET(vb->v_dims, ctx->bitid);
 
 	v->scissorValid = GL_FALSE;
 	v->scissorX = 0;
@@ -29,14 +35,21 @@ void crStateViewportInit(CRViewportState *v)
 	 * the context has been created */
 	v->scissorW = 640;
 	v->scissorH = 480;
+	RESET(vb->s_dims, ctx->bitid);
 
 	v->farClip = 1.0;
 	v->nearClip = 0.0;
+	RESET(vb->depth, ctx->bitid);
 
 	v->widthScale = v->heightScale = 1.0f;
 	v->x_offset = 0;
 	v->y_offset = 0;
 	/* v->outputdims will be initialized by the caller (I hope). */
+
+	RESET(vb->dirty, ctx->bitid);
+
+	RESET(tb->base, ctx->bitid);
+	RESET(tb->dirty, ctx->bitid);
 }
 
 void crStateViewportApply(CRViewportState *v, GLvectorf *p) 

@@ -24,7 +24,7 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 		case GL_RENDERER:
 			return (const GLubyte *) CR_RENDERER;
 		case GL_VERSION:
-			return (const GLubyte *) CR_VERSION;
+			return g->extensions.version;
 		case GL_EXTENSIONS:
 			/* This shouldn't normally be queried - the relevant SPU should
 			 * catch this query and do all the extension string merging/mucking.

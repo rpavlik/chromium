@@ -64,7 +64,83 @@ MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 }
 
 static BOOL
-bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
+bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
+{
+	int rattribList[100];
+	int attribList[100];
+	int numFormats;
+	int i = 0;
+	BOOL vis;
+
+	CRASSERT(visAttribs & CR_RGB_BIT);  /* anybody need color index */
+
+	crWarning("Using WGL_EXT_pixel_format to select visual ID.\n");
+
+	attribList[i++] = WGL_TYPE_RGBA_EXT;
+	attribList[i++] = WGL_RED_BITS_EXT;
+	attribList[i++] = 1;
+	attribList[i++] = WGL_GREEN_BITS_EXT;
+	attribList[i++] = 1;
+	attribList[i++] = WGL_BLUE_BITS_EXT;
+	attribList[i++] = 1;
+
+	if (visAttribs & CR_ALPHA_BIT)
+	{
+		attribList[i++] = WGL_ALPHA_BITS_EXT;
+		attribList[i++] = 1;
+	}
+
+	if (visAttribs & CR_DOUBLE_BIT)
+		attribList[i++] = WGL_DOUBLE_BUFFER_EXT;
+
+	if (visAttribs & CR_STEREO_BIT)
+		attribList[i++] = WGL_STEREO_EXT;
+
+	if (visAttribs & CR_DEPTH_BIT)
+	{
+		attribList[i++] = WGL_DEPTH_BITS_EXT;
+		attribList[i++] = 1;
+	}
+
+	if (visAttribs & CR_STENCIL_BIT)
+	{
+		attribList[i++] = WGL_STENCIL_BITS_EXT;
+		attribList[i++] = 1;
+	}
+
+	if (visAttribs & CR_ACCUM_BIT)
+	{
+		attribList[i++] = WGL_ACCUM_RED_BITS_EXT;
+		attribList[i++] = 1;
+		attribList[i++] = WGL_ACCUM_GREEN_BITS_EXT;
+		attribList[i++] = 1;
+		attribList[i++] = WGL_ACCUM_BLUE_BITS_EXT;
+		attribList[i++] = 1;
+		if (visAttribs & CR_ALPHA_BIT)
+		{
+			attribList[i++] = WGL_ACCUM_ALPHA_BITS_EXT;
+			attribList[i++] = 1;
+		}
+	}
+
+	if (visAttribs & CR_MULTISAMPLE_BIT)
+	{
+		attribList[i++] = WGL_SAMPLE_BUFFERS_EXT;
+		attribList[i++] = 1;
+		attribList[i++] = WGL_SAMPLES_EXT;
+		attribList[i++] = 4;
+	}
+
+	/* End the list */
+	attribList[i++] = 0;
+
+	vis = render_spu.ws.wglChoosePixelFormatEXT( hdc, attribList, NULL, 1, rattribList, &numFormats);
+
+	return vis;
+}
+
+static BOOL
+bSetupPixelFormatNormal( HDC hdc, GLbitfield visAttribs )
 {
 	PIXELFORMATDESCRIPTOR pfd = { 
 		sizeof(PIXELFORMATDESCRIPTOR),  /*  size of this pfd */
@@ -109,6 +185,9 @@ bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
 		ppfd->dwFlags |= PFD_DOUBLEBUFFER;
 	if (visAttribs & CR_STEREO_BIT)
 		ppfd->dwFlags |= PFD_STEREO;
+	if (visAttribs & CR_MULTISAMPLE_BIT)
+		ppfd->dwFlags |= PFD_STEREO;
+
 
 	/* 
 	 * We call the wgl functions directly if the SPU was loaded
@@ -169,6 +248,18 @@ bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
 
 	crWarning( "Render SPU: WGL chose these visual capabilities: %s", s);
 	return TRUE;
+}
+
+static BOOL
+bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
+{
+	/* Disable WGL_EXT_pixel_format for 1.1 release, until we can test it */
+#if 0
+	if (render_spu.ws.wglChoosePixelFormatEXT) 
+		return bSetupPixelFormatEXT( hdc, visAttribs );
+	else
+#endif
+		return bSetupPixelFormatNormal( hdc, visAttribs );
 }
 
 GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )

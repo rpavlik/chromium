@@ -20,9 +20,9 @@ keys.sort();
 stub_common.CopyrightC()
 
 print """
-#include <stdio.h>
 #include "cr_server.h"
 #include "feedbackspu.h"
+#include "feedbackspu_proto.h"
 """
 
 for func_name in keys:

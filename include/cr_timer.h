@@ -4,8 +4,10 @@
 #ifndef WINDOWS
 #include <sys/time.h>
 
+#if defined (IRIX) || defined( IRIX64 )
 typedef unsigned long long iotimer64_t;
 typedef unsigned int iotimer32_t;
+#endif
 #else
 #include <windows.h>
 #endif

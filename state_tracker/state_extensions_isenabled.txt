@@ -7,3 +7,7 @@
 
 GLboolean GL_RESCALE_NORMAL GL_OPENGL_VERSION_1_2 g->transform.rescaleNormals
 GLboolean GL_TEXTURE_3D GL_OPENGL_VERSION_1_2 g->texture.unit[g->texture.curTextureUnit].enabled3D
+GLboolean GL_MULTISAMPLE_ARB GL_multisample g->multisample.enabled
+GLboolean GL_SAMPLE_ALPHA_TO_COVERAGE_ARB GL_multisample g->multisample.sampleAlphaToCoverage
+GLboolean GL_SAMPLE_ALPHA_TO_ONE_ARB GL_multisample g->multisample.sampleAlphaToOne
+GLboolean GL_SAMPLE_COVERAGE_ARB GL_multisample g->multisample.sampleCoverage

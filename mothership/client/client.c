@@ -10,7 +10,6 @@
 #include "cr_mothership.h"
 #include "cr_environment.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -91,6 +90,17 @@ int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *par
 	return crMothershipSendString( conn, response, "spuparam %s", txt );
 }
 
+int crMothershipGetCRUTServerParam( CRConnection *conn, char *response, const char *param, ... )
+{
+	va_list args;
+	char txt[8096];
+	va_start( args, param );
+	vsprintf( txt, param, args );
+	va_end( args );
+
+	return crMothershipSendString( conn, response, "crutserverparam %s", txt );
+}
+
 int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param, ... )
 {
 	va_list args;
@@ -155,6 +165,35 @@ void crMothershipIdentifyServer( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "server %s", hostname ));
 }
 
+void crMothershipIdentifyCRUTClient( CRConnection *conn, char *response )
+{
+	char hostname[1024];
+	if ( crGetHostname( hostname, sizeof(hostname) ) )
+	{
+		crError( "Couldn't get my own hostname?" );
+	}
+	INSIST( crMothershipSendString( conn, response, "crutclient %s", hostname ));
+}
+
+void crMothershipIdentifyCRUTServer( CRConnection *conn, char *response )
+{
+	char hostname[1024];
+	if ( crGetHostname( hostname, sizeof(hostname) ) )
+	{
+		crError( "Couldn't get my own hostname?" );
+	}
+	INSIST( crMothershipSendString( conn, response, "crutserver %s", hostname ));
+}
+
+void crMothershipIdentifyCRUTProxy( CRConnection *conn, char *response )
+{
+	char hostname[1024];
+	if ( crGetHostname( hostname, sizeof(hostname) ) )
+	{
+		crError( "Couldn't get my own hostname?" );
+	}
+	INSIST( crMothershipSendString( conn, response, "crutproxy %s", hostname ));
+}
 
 void crMothershipSetParam( CRConnection *conn, const char *param, const char *value )
 {
@@ -183,6 +222,16 @@ int crMothershipGetRank( CRConnection *conn, char *response )
 void crMothershipGetClients( CRConnection *conn, char *response )
 {
 	INSIST( crMothershipSendString( conn, response, "clients" ));
+}
+
+void crMothershipGetCRUTServer( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "crutservers" ));
+}
+
+void crMothershipGetCRUTClients( CRConnection *conn, char *response )
+{
+	INSIST( crMothershipSendString( conn, response, "crutclients" ));
 }
 
 void crMothershipGetServers( CRConnection *conn, char *response )

@@ -8,16 +8,15 @@
 #include "fpsspu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable fps_table[];
 FpsSPU fps_spu;
 
-SPUFunctions fps_functions = {
+static SPUFunctions fps_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	fps_table /* THE ACTUAL FUNCTIONS */
+	_cr_fps_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *fpsSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *fpsSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -43,18 +42,16 @@ SPUFunctions *fpsSPUInit( int id, SPU *child, SPU *self,
 	return &fps_functions;
 }
 
-void fpsSPUSelfDispatch(SPUDispatchTable *self)
+static void fpsSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(fps_spu.self) );
 	crSPUCopyDispatchTable( &(fps_spu.self), self );
 }
 
-int fpsSPUCleanup(void)
+static int fpsSPUCleanup(void)
 {
 	return 1;
 }
-
-extern SPUOptions fpsSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

@@ -47,6 +47,8 @@ static SPUGenericFunction __findFunc( char *name, SPU *spu )
 /*
  * This function is not public outside the loader SPU.
  */
+extern void __buildDispatch( SPU *spu );
+
 void __buildDispatch( SPU *spu )
 {"""
 
@@ -129,7 +131,7 @@ void crSPUInitDispatchNops(SPUDispatchTable *table)
 	for (i = 0; i < numEntries; i++) {
 		if (ptr[i] == NULL) {
 			/*printf("!!!!!!!Warning entry[%d] = NULL\n", i);*/
-			ptr[i] = NopFunction;
+			ptr[i] = (void *)NopFunction;
 		}
 	}
 }

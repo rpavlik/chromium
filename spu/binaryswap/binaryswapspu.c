@@ -31,9 +31,10 @@
  * These functions below are used to do bounding box calculations
  *
  ****************************************************************/
-void clipCoords (GLdouble modl[16], GLdouble proj[16], 
-		 GLdouble *x1, GLdouble *y1, GLdouble *z1,
-		 GLdouble *x2, GLdouble *y2, GLdouble *z2) 
+static void
+clipCoords (GLdouble modl[16], GLdouble proj[16], 
+						GLdouble *x1, GLdouble *y1, GLdouble *z1,
+						GLdouble *x2, GLdouble *y2, GLdouble *z2) 
 {
 	static GLdouble m[16];
 	int i;
@@ -136,9 +137,10 @@ void clipCoords (GLdouble modl[16], GLdouble proj[16],
  * model matrices and the bounding box supplied by the
  * application.
  *******************************************************/
-int getClippedWindow(GLdouble modl[16], GLdouble proj[16], 
-		     int *xstart, int* ystart,
-		     int* xend, int* yend )
+static int
+getClippedWindow(GLdouble modl[16], GLdouble proj[16], 
+								 int *xstart, int* ystart,
+								 int* xend, int* yend )
 {
 	GLfloat viewport[4];
 	GLdouble x1, x2, y1, y2, z1, z2;
@@ -973,7 +975,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuDestroyContext( GLint ctx )
 	context = (ContextInfo *) crHashtableSearch(binaryswap_spu.contextTable, ctx);
 	CRASSERT(context);
 	binaryswap_spu.super.DestroyContext(context->renderContext);
-	crHashtableDelete(binaryswap_spu.contextTable, ctx);
+	crHashtableDelete(binaryswap_spu.contextTable, ctx, GL_TRUE);
 }
 
 
@@ -1061,7 +1063,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowDestroy( GLint win )
 	window = (WindowInfo *) crHashtableSearch(binaryswap_spu.windowTable, win);
 	CRASSERT(window);
 	binaryswap_spu.super.WindowDestroy(window->renderWindow);
-	crHashtableDelete(binaryswap_spu.windowTable, win);
+	crHashtableDelete(binaryswap_spu.windowTable, win, GL_TRUE);
 }
 
 static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowSize( GLint win, GLint w, GLint h )
@@ -1146,7 +1148,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum targ
 }
 
 
-SPUNamedFunctionTable binaryswap_table[] = {
+SPUNamedFunctionTable _cr_binaryswap_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) binaryswapspuSwapBuffers },
 	{ "CreateContext", (SPUGenericFunction) binaryswapspuCreateContext },
 	{ "DestroyContext", (SPUGenericFunction) binaryswapspuDestroyContext },

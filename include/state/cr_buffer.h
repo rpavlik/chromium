@@ -14,27 +14,30 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue	dirty[CR_MAX_BITARRAY];
-	GLbitvalue	enable[CR_MAX_BITARRAY];
-	GLbitvalue	alphaFunc[CR_MAX_BITARRAY];
-	GLbitvalue	depthFunc[CR_MAX_BITARRAY];
-	GLbitvalue	blendFunc[CR_MAX_BITARRAY];
-	GLbitvalue	logicOp[CR_MAX_BITARRAY];
-	GLbitvalue	indexLogicOp[CR_MAX_BITARRAY];
-	GLbitvalue	drawBuffer[CR_MAX_BITARRAY];
-	GLbitvalue	readBuffer[CR_MAX_BITARRAY];
-	GLbitvalue	indexMask[CR_MAX_BITARRAY];
-	GLbitvalue	colorWriteMask[CR_MAX_BITARRAY];
-	GLbitvalue	clearColor[CR_MAX_BITARRAY];
-	GLbitvalue	clearIndex[CR_MAX_BITARRAY];
-	GLbitvalue	clearDepth[CR_MAX_BITARRAY];
-	GLbitvalue	clearAccum[CR_MAX_BITARRAY];
-	GLbitvalue	depthMask[CR_MAX_BITARRAY];
+	CRbitvalue	dirty[CR_MAX_BITARRAY];
+	CRbitvalue	enable[CR_MAX_BITARRAY];
+	CRbitvalue	alphaFunc[CR_MAX_BITARRAY];
+	CRbitvalue	depthFunc[CR_MAX_BITARRAY];
+	CRbitvalue	blendFunc[CR_MAX_BITARRAY];
+	CRbitvalue	logicOp[CR_MAX_BITARRAY];
+	CRbitvalue	indexLogicOp[CR_MAX_BITARRAY];
+	CRbitvalue	drawBuffer[CR_MAX_BITARRAY];
+	CRbitvalue	readBuffer[CR_MAX_BITARRAY];
+	CRbitvalue	indexMask[CR_MAX_BITARRAY];
+	CRbitvalue	colorWriteMask[CR_MAX_BITARRAY];
+	CRbitvalue	clearColor[CR_MAX_BITARRAY];
+	CRbitvalue	clearIndex[CR_MAX_BITARRAY];
+	CRbitvalue	clearDepth[CR_MAX_BITARRAY];
+	CRbitvalue	clearAccum[CR_MAX_BITARRAY];
+	CRbitvalue	depthMask[CR_MAX_BITARRAY];
 #ifdef CR_EXT_blend_color
-	GLbitvalue	blendColor[CR_MAX_BITARRAY];
+	CRbitvalue	blendColor[CR_MAX_BITARRAY];
 #endif
-#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
-	GLbitvalue	blendEquation[CR_MAX_BITARRAY];
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) || defined(CR_EXT_blend_logic_op)
+	CRbitvalue	blendEquation[CR_MAX_BITARRAY];
+#endif
+#if defined(CR_EXT_blend_func_separate)
+	CRbitvalue	blendFuncSeparate[CR_MAX_BITARRAY];
 #endif
 } CRBufferBits;
 
@@ -50,8 +53,10 @@ typedef struct {
 	GLenum		alphaTestFunc;
 	GLfloat		alphaTestRef;
 	GLenum		depthFunc;
-	GLenum		blendSrc;
-	GLenum		blendDst;
+	GLenum		blendSrcRGB;
+	GLenum		blendDstRGB;
+	GLenum		blendSrcA;
+	GLenum		blendDstA;
 	GLenum		logicOpMode;
 	GLenum		drawBuffer;
 	GLenum		readBuffer;
@@ -69,12 +74,11 @@ typedef struct {
 #endif
 } CRBufferState;
 
-void crStateBufferInitBits(CRBufferBits *bb);
-void crStateBufferInit(CRBufferState *b);
+void crStateBufferInit(CRContext *ctx);
 
-void crStateBufferDiff(CRBufferBits *bb, GLbitvalue *bitID, 
+void crStateBufferDiff(CRBufferBits *bb, CRbitvalue *bitID, 
 		CRBufferState *from, CRBufferState *to);
-void crStateBufferSwitch(CRBufferBits *bb, GLbitvalue *bitID, 
+void crStateBufferSwitch(CRBufferBits *bb, CRbitvalue *bitID, 
 		CRBufferState *from, CRBufferState *to);
 
 #ifdef __cplusplus

@@ -8,16 +8,15 @@
 #include "wetspu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable wet_table[];
 WetSPU wet_spu;
 
-SPUFunctions wet_functions = {
+static SPUFunctions wet_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	wet_table /* THE ACTUAL FUNCTIONS */
+	_cr_wet_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *wetSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *wetSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -44,7 +43,7 @@ SPUFunctions *wetSPUInit( int id, SPU *child, SPU *self,
 	return &wet_functions;
 }
 
-void wetSPUSelfDispatch(SPUDispatchTable *self)
+static void wetSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(wet_spu.self) );
 	crSPUCopyDispatchTable( &(wet_spu.self), self );
@@ -52,12 +51,10 @@ void wetSPUSelfDispatch(SPUDispatchTable *self)
 	wet_spu.server = (CRServer *)(self->server);
 }
 
-int wetSPUCleanup(void)
+static int wetSPUCleanup(void)
 {
 	return 1;
 }
-
-extern SPUOptions wetSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

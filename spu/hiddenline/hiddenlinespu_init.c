@@ -8,20 +8,20 @@
 #include "cr_packfunctions.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable hiddenline_table[];
+extern SPUNamedFunctionTable _cr_hiddenline_table[];
 HiddenlineSPU hiddenline_spu;
 
 #ifdef CHROMIUM_THREADSAFE
 CRtsd _HiddenlineTSD;
 #endif
 
-SPUFunctions hiddenline_functions = {
+static SPUFunctions hiddenline_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	hiddenline_table /* THE ACTUAL FUNCTIONS */
+	_cr_hiddenline_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -59,13 +59,13 @@ SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *self,
 	return &hiddenline_functions;
 }
 
-void hiddenlineSPUSelfDispatch(SPUDispatchTable *self)
+static void hiddenlineSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(hiddenline_spu.self) );
 	crSPUCopyDispatchTable( &(hiddenline_spu.self), self );
 }
 
-int hiddenlineSPUCleanup(void)
+static int hiddenlineSPUCleanup(void)
 {
 	crFreeHashtable(hiddenline_spu.contextTable);
 	return 1;

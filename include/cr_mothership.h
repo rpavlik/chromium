@@ -33,6 +33,7 @@ int crMothershipGetParam( CRConnection *conn, const char *param, char *value );
 int crMothershipGetCRUTServerParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipGetFakerParam( CRConnection *conn, char *response, const char *param, ...);
+void crMothershipReset( CRConnection *conn );
 int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *param, ...);
 void crMothershipGetClients( CRConnection *conn, char *response );
 void crMothershipGetServers( CRConnection *conn, char *response );

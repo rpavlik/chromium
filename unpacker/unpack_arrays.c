@@ -5,6 +5,7 @@
  */
 
 #include "cr_error.h"
+#include "unpack_extend.h"
 
 void crUnpackDrawArrays(void)
 {
@@ -64,4 +65,14 @@ void crUnpackInterleavedArrays(void)
 void crUnpackSecondaryColorPointerEXT(void)
 {
 	crError( "Can't decode SecondaryColorPointerEXT" );
+}
+
+void crUnpackMultiDrawArraysEXT(void)
+{
+	crError( "Can't decode MultiDrawArraysEXT" );
+}
+
+void crUnpackMultiDrawElementsEXT(void)
+{
+	crError( "Can't decode MultiDrawElementsEXT" );
 }

@@ -5,6 +5,7 @@
 	
 #include <stdio.h>
 #include "hiddenlinespu.h"
+#include "hiddenlinespu_proto.h"
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
 
@@ -50,7 +51,7 @@ GLint HIDDENLINESPU_APIENTRY hiddenlinespu_CreateContext( const char *dpyName, G
 	/* init ContextInfo */
 	context->packer = crPackNewContext( 0 ); /* no byte swapping */
 	/* context->pack_buffer initialized in hiddenlineProvidePackBuffer() */
-	context->ctx = crStateCreateContext( NULL );
+	context->ctx = crStateCreateContext( NULL, visBits );
 	context->super_context = hiddenline_spu.super.CreateContext(dpyName, visBits);
 	context->clear_color.r = 0.0f;
 	context->clear_color.g = 0.0f;
@@ -76,5 +77,5 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_DestroyContext( GLint ctx )
 	context = crHashtableSearch(hiddenline_spu.contextTable, ctx);
 	CRASSERT(context);
 	hiddenline_spu.super.DestroyContext(context->super_context);
-	crHashtableDelete(hiddenline_spu.contextTable, ctx);
+	crHashtableDelete(hiddenline_spu.contextTable, ctx, GL_TRUE);
 }

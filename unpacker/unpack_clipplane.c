@@ -6,6 +6,7 @@
 
 #include "unpacker.h"
 #include "cr_mem.h"
+#include "unpack_extend.h"
 
 void crUnpackClipPlane( void  )
 {

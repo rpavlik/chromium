@@ -73,3 +73,5 @@ Vertex4f
 Vertex4i
 Vertex4s
 FogCoordfEXT
+ProgramParameter4fvNV
+ProgramParameter4dvNV

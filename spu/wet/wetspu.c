@@ -63,7 +63,7 @@ static void GenerateNewDrop( void )
 	}
 }
 
-float Evaluate( float elapsed, float distance, float max_dist )
+static float Evaluate( float elapsed, float distance, float max_dist )
 {
 	float val, s_val;
 	if (elapsed < distance)
@@ -311,7 +311,7 @@ static void DrawMesh( void )
 	wet_spu.super.PopAttrib();
 }
 
-void WETSPU_APIENTRY wetSwapBuffers( GLint window, GLint flags )
+static void WETSPU_APIENTRY wetSwapBuffers( GLint window, GLint flags )
 {
 	/* CR_SUPPRESS_SWAP_BIT is typically only used with multi-threaded
 	 * programs in which there are N threads rendering to the same window.
@@ -388,7 +388,7 @@ static void WETSPU_APIENTRY wetDestroyContext( GLint ctx )
 }
 
 
-SPUNamedFunctionTable wet_table[] = {
+SPUNamedFunctionTable _cr_wet_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) wetSwapBuffers },
 	{ "MakeCurrent", (SPUGenericFunction) wetMakeCurrent },
 	{ "DestroyContext", (SPUGenericFunction) wetDestroyContext },

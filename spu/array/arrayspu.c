@@ -12,7 +12,7 @@
 
 ArraySPU array_spu;
 
-void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
+static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 {
 	unsigned char *p;
 	CRClientState *c = &(array_spu.ctx->client);
@@ -221,7 +221,7 @@ void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 	}
 }
 
-void ARRAYSPU_APIENTRY arrayspu_DrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c)
+static void ARRAYSPU_APIENTRY arrayspu_DrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c)
 {
 	int i;
 
@@ -243,7 +243,7 @@ void ARRAYSPU_APIENTRY arrayspu_DrawArrays(GLenum mode, GLint first, GLsizei cou
 	array_spu.self.End();
 }
 
-void ARRAYSPU_APIENTRY arrayspu_DrawElements(GLenum mode, GLsizei count,
+static void ARRAYSPU_APIENTRY arrayspu_DrawElements(GLenum mode, GLsizei count,
 		GLenum type, const GLvoid *indices, CRClientState *c)
 {
 	int i;
@@ -294,67 +294,112 @@ void ARRAYSPU_APIENTRY arrayspu_DrawElements(GLenum mode, GLsizei count,
 	array_spu.self.End();
 }
 
-void ARRAYSPU_APIENTRY arrayspu_ColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
+static void ARRAYSPU_APIENTRY arrayspu_ColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateColorPointer( size, type, stride, pointer );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_SecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
+static void ARRAYSPU_APIENTRY arrayspu_SecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateSecondaryColorPointerEXT( size, type, stride, pointer );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_VertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
+static void ARRAYSPU_APIENTRY arrayspu_VertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateVertexPointer( size, type, stride, pointer );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_TexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
+static void ARRAYSPU_APIENTRY arrayspu_TexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateTexCoordPointer( size, type, stride, pointer );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_NormalPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
+static void ARRAYSPU_APIENTRY arrayspu_NormalPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateNormalPointer( type, stride, pointer );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_EdgeFlagPointer( GLsizei stride, const GLvoid *pointer )
+static void ARRAYSPU_APIENTRY arrayspu_EdgeFlagPointer( GLsizei stride, const GLvoid *pointer )
 {
 	crStateEdgeFlagPointer( stride, pointer );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_VertexAttribPointerNV( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer )
+static void ARRAYSPU_APIENTRY arrayspu_VertexAttribPointerNV( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer )
 {
 	crStateVertexAttribPointerNV( index, size, type, stride, pointer );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_FogCoordPointerEXT( GLenum type, GLsizei stride, const GLvoid *pointer )
+static void ARRAYSPU_APIENTRY arrayspu_FogCoordPointerEXT( GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateFogCoordPointerEXT( type, stride, pointer );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_GetPointerv( GLenum pname, GLvoid **params )
+static void ARRAYSPU_APIENTRY arrayspu_GetPointerv( GLenum pname, GLvoid **params )
 {
 	crStateGetPointerv( pname, params );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_EnableClientState( GLenum array )
+static void ARRAYSPU_APIENTRY arrayspu_EnableClientState( GLenum array )
 {
 	crStateEnableClientState( array );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_DisableClientState( GLenum array )
+static void ARRAYSPU_APIENTRY arrayspu_DisableClientState( GLenum array )
 {
 	crStateDisableClientState( array );
 }
 
-void ARRAYSPU_APIENTRY arrayspu_ClientActiveTextureARB( GLenum texture )
+static void ARRAYSPU_APIENTRY arrayspu_ClientActiveTextureARB( GLenum texture )
 {
 	crStateDisableClientState( texture );
 }
 
-SPUNamedFunctionTable array_table[] = {
+static void ARRAYSPU_APIENTRY arrayspu_MultiDrawArraysEXT(GLenum mode, GLint *first, GLsizei *count, GLsizei primcount, CRClientState *c)
+{
+	int i;
+
+	if (primcount < 0)
+	{
+		crError("array_spu.self.MultiDrawArraysEXT passed negative count: %d", primcount);
+	}
+
+	if (mode > GL_POLYGON)
+	{
+		crError("array_spu.self.MultiDrawArraysEXT called with invalid mode: %d", mode);
+	}
+
+	for (i = 0; i < primcount; i++)
+	{
+		array_spu.self.DrawArrays(mode, first[i], count[i]);
+	}
+}
+
+static void ARRAYSPU_APIENTRY arrayspu_MultiDrawElementsEXT(GLenum mode, GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount, CRClientState *c)
+{
+	int i;
+
+	if (primcount < 0)
+	{
+		crError("array_spu.self.MultiDrawElementsEXT passed negative count: %d", primcount);
+	}
+
+	if (mode > GL_POLYGON)
+	{
+		crError("array_spu.self.MultiDrawElementsEXT called with invalid mode: %d", mode);
+	}
+
+	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
+	{
+		crError("array_spu.self.MultiDrawElementsEXT called with invalid type: %d", type);
+	}
+
+	for (i = 0; i < primcount; i++)
+	{
+		array_spu.self.DrawElements(mode, count[i], type, indices[i]);
+	}
+}
+
+SPUNamedFunctionTable _cr_array_table[] = {
 	{ "ArrayElement", (SPUGenericFunction) arrayspu_ArrayElement },
 	{ "DrawArrays", (SPUGenericFunction) arrayspu_DrawArrays},
 	{ "DrawElements", (SPUGenericFunction)  arrayspu_DrawElements},
@@ -370,5 +415,7 @@ SPUNamedFunctionTable array_table[] = {
 	{ "EnableClientState", (SPUGenericFunction) arrayspu_EnableClientState},
 	{ "DisableClientState", (SPUGenericFunction) arrayspu_DisableClientState},
 	{ "ClientActiveTextureARB", (SPUGenericFunction) arrayspu_ClientActiveTextureARB },
+	{ "MultiDrawArraysEXT", (SPUGenericFunction) arrayspu_MultiDrawArraysEXT },
+	{ "MultiDrawElementsEXT", (SPUGenericFunction) arrayspu_MultiDrawElementsEXT },
 	{ NULL, NULL }
 };

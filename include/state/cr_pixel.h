@@ -16,10 +16,10 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue transfer[CR_MAX_BITARRAY];
-	GLbitvalue zoom[CR_MAX_BITARRAY];
-	GLbitvalue maps[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue transfer[CR_MAX_BITARRAY];
+	CRbitvalue zoom[CR_MAX_BITARRAY];
+	CRbitvalue maps[CR_MAX_BITARRAY];
 } CRPixelBits;
 
 typedef struct {
@@ -57,12 +57,11 @@ typedef struct {
 	GLint		mapAtoAsize;
 } CRPixelState;
 
-void crStatePixelInit( CRPixelState *pixel );
-void crStatePixelInitBits( CRPixelBits *pixelbits );
+void crStatePixelInit( CRContext *ctx );
 
-void crStatePixelDiff(CRPixelBits *bb, GLbitvalue *bitID, 
+void crStatePixelDiff(CRPixelBits *bb, CRbitvalue *bitID, 
 		CRPixelState *from, CRPixelState *to);
-void crStatePixelSwitch(CRPixelBits *bb, GLbitvalue *bitID, 
+void crStatePixelSwitch(CRPixelBits *bb, CRbitvalue *bitID, 
 		CRPixelState *from, CRPixelState *to);
 
 #ifdef __cplusplus

@@ -7,18 +7,16 @@
 #include "cr_spu.h"
 #include "cr_glstate.h"
 #include "simplequeryspu.h"
-#include <stdio.h>
 
-extern SPUNamedFunctionTable simplequery_table[];
 SimplequerySPU simplequery_spu;
 
-SPUFunctions simplequery_functions = {
+static SPUFunctions simplequery_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	simplequery_table /* THE ACTUAL FUNCTIONS */
+	_cr_simplequery_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *simplequerySPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *simplequerySPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -39,24 +37,22 @@ SPUFunctions *simplequerySPUInit( int id, SPU *child, SPU *self,
 	simplequeryspuGatherConfiguration();
 
 	crStateInit();
-	simplequery_spu.ctx = crStateCreateContext( NULL );
-	crStateMakeCurrent( simplequery_spu.ctx );
+	simplequery_spu.ctx = crStateCreateContext( NULL, CR_RGB_BIT );
+	crStateSetCurrent( simplequery_spu.ctx );
 
 	return &simplequery_functions;
 }
 
-void simplequerySPUSelfDispatch(SPUDispatchTable *self)
+static void simplequerySPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(simplequery_spu.self) );
 	crSPUCopyDispatchTable( &(simplequery_spu.self), self );
 }
 
-int simplequerySPUCleanup(void)
+static int simplequerySPUCleanup(void)
 {
 	return 1;
 }
-
-extern SPUOptions simplequerySPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

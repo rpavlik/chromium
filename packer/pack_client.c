@@ -355,3 +355,30 @@ void PACK_APIENTRY crPackDrawRangeElements(GLenum mode, GLuint start, GLuint end
 	}
 	crPackEnd();
 }
+
+#ifdef CR_EXT_multi_draw_arrays
+void PACK_APIENTRY crPackMultiDrawArraysEXT( GLenum mode, GLint *first,
+                          GLsizei *count, GLsizei primcount, CRClientState *c )
+{
+   GLint i;
+
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+         crPackDrawArrays(mode, first[i], count[i], c);
+      }
+   }
+}
+
+
+void PACK_APIENTRY crPackMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
+                            const GLvoid **indices, GLsizei primcount, CRClientState *c )
+{
+   GLint i;
+
+   for (i = 0; i < primcount; i++) {
+      if (count[i] > 0) {
+         crPackDrawElements(mode, count[i], type, indices[i], c);
+      }
+   }
+}
+#endif /* CR_EXT_multi_draw_arrays */

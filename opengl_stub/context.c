@@ -13,7 +13,6 @@
  * other windows are handled by the native OpenGL library.
  */
 
-#include <string.h>
 #include "chromium.h"
 #include "cr_error.h"
 #include "cr_spu.h"
@@ -28,10 +27,7 @@
 /* To convert array indexes into an easily recognized numbers for debugging. */
 #define MAGIC 500
 
-#ifdef WINDOWS
-extern int FindVisualInfo( HDC hdc );
-#else
-extern int FindVisualInfo( Display *dpy, XVisualInfo *vis);
+#ifndef WINDOWS
 
 /*
  * Get the display string for the given display pointer.
@@ -141,7 +137,7 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 	if (firstCall) {
 		char dpyName[1000];
 		StubInit();
-		memset(stub.Context, 0, sizeof(stub.Context));
+		crMemset(stub.Context, 0, sizeof(stub.Context));
 		firstCall = GL_FALSE;
 
 #ifdef WINDOWS

@@ -33,75 +33,113 @@
  * These functions below are used to do bounding box calculations
  *
  ****************************************************************/
-void clipCoords (GLdouble modl[16], GLdouble proj[16], 
-		 GLdouble *x1, GLdouble *y1, GLdouble *z1,
-		 GLdouble *x2, GLdouble *y2, GLdouble *z2) 
+static void
+clipCoords(GLdouble modl[16], GLdouble proj[16],
+					 GLdouble * x1, GLdouble * y1, GLdouble * z1,
+					 GLdouble * x2, GLdouble * y2, GLdouble * z2)
 {
-     static GLdouble m[16];
-     int i;
-     
-     GLdouble x[8], y[8], z[8], w[8];
-     GLdouble vx1, vy1, vz1;
-     GLdouble vx2, vy2, vz2;
-     
-     GLdouble xmin=DBL_MAX, ymin=DBL_MAX, zmin=DBL_MAX;
-     GLdouble xmax=-DBL_MAX, ymax=-DBL_MAX, zmax=-DBL_MAX;
-     
-     m[0]  =  proj[0]*modl[0] + proj[4]*modl[1]  + proj[8]*modl[2]   + proj[12]*modl[3];	
-     m[1]  =  proj[1]*modl[0] + proj[5]*modl[1]  + proj[9]*modl[2]   + proj[13]*modl[3];	
-     m[2]  =  proj[2]*modl[0] + proj[6]*modl[1]  + proj[10]*modl[2]  + proj[14]*modl[3];	
-     m[3]  =  proj[3]*modl[0] + proj[7]*modl[1]  + proj[11]*modl[2]  + proj[15]*modl[3];	
-     m[4]  =  proj[0]*modl[4] + proj[4]*modl[5]  + proj[8]*modl[6]   + proj[12]*modl[7];	
-     m[5]  =  proj[1]*modl[4] + proj[5]*modl[5]  + proj[9]*modl[6]   + proj[13]*modl[7];	
-     m[6]  =  proj[2]*modl[4] + proj[6]*modl[5]  + proj[10]*modl[6]  + proj[14]*modl[7];	
-     m[7]  =  proj[3]*modl[4] + proj[7]*modl[5]  + proj[11]*modl[6]  + proj[15]*modl[7];	
-     m[8]  =  proj[0]*modl[8] + proj[4]*modl[9]  + proj[8]*modl[10]  + proj[12]*modl[11];	
-     m[9]  =  proj[1]*modl[8] + proj[5]*modl[9]  + proj[9]*modl[10]  + proj[13]*modl[11];	
-     m[10] = proj[2]*modl[8]  + proj[6]*modl[9]  + proj[10]*modl[10] + proj[14]*modl[11];	
-     m[11] = proj[3]*modl[8]  + proj[7]*modl[9]  + proj[11]*modl[10] + proj[15]*modl[11];	
-     m[12] = proj[0]*modl[12] + proj[4]*modl[13] + proj[8]*modl[14]  + proj[12]*modl[15];	
-     m[13] = proj[1]*modl[12] + proj[5]*modl[13] + proj[9]*modl[14]  + proj[13]*modl[15];	
-     m[14] = proj[2]*modl[12] + proj[6]*modl[13] + proj[10]*modl[14] + proj[14]*modl[15];	
-     m[15] = proj[3]*modl[12] + proj[7]*modl[13] + proj[11]*modl[14] + proj[15]*modl[15];     
-     
-     /* Tranform the point by m */
-     vx1 = *x1;
-     vy1 = *y1;
-     vz1 = *z1;
-     vx2 = *x2;
-     vy2 = *y2;
-     vz2 = *z2;
-     
-     I_TRANSFORM (0 , m, vx1, vy1, vz1);
-     I_TRANSFORM (1 , m, vx1, vy1, vz2);
-     I_TRANSFORM (2 , m, vx1, vy2, vz1);
-     I_TRANSFORM (3 , m, vx1, vy2, vz2);
-     I_TRANSFORM (4 , m, vx2, vy1, vz1);
-     I_TRANSFORM (5 , m, vx2, vy1, vz2);
-     I_TRANSFORM (6 , m, vx2, vy2, vz1);
-     I_TRANSFORM (7 , m, vx2, vy2, vz2);
-     
-     for (i=0; i<8; i++) {
-	  
-	  x[i] /= w[i];
-	  y[i] /= w[i];
-	  z[i] /= w[i];
-	  
-	  if (x[i] > xmax) xmax = x[i];
-	  if (y[i] > ymax) ymax = y[i];
-	  if (z[i] > zmax) zmax = z[i]; 
-	  if (x[i] < xmin) xmin = x[i];
-	  if (y[i] < ymin) ymin = y[i];
-	  if (z[i] < zmin) zmin = z[i];
-	  
-     }    
-     
-     *x1 = xmin;
-     *y1 = ymin;
-     *z1 = zmin;
-     *x2 = xmax;
-     *y2 = ymax;
-     *z2 = zmax;
+	static GLdouble m[16];
+	int i;
+
+	GLdouble x[8], y[8], z[8], w[8];
+	GLdouble vx1, vy1, vz1;
+	GLdouble vx2, vy2, vz2;
+
+	GLdouble xmin = DBL_MAX, ymin = DBL_MAX, zmin = DBL_MAX;
+	GLdouble xmax = -DBL_MAX, ymax = -DBL_MAX, zmax = -DBL_MAX;
+
+	m[0] =
+		proj[0] * modl[0] + proj[4] * modl[1] + proj[8] * modl[2] +
+		proj[12] * modl[3];
+	m[1] =
+		proj[1] * modl[0] + proj[5] * modl[1] + proj[9] * modl[2] +
+		proj[13] * modl[3];
+	m[2] =
+		proj[2] * modl[0] + proj[6] * modl[1] + proj[10] * modl[2] +
+		proj[14] * modl[3];
+	m[3] =
+		proj[3] * modl[0] + proj[7] * modl[1] + proj[11] * modl[2] +
+		proj[15] * modl[3];
+	m[4] =
+		proj[0] * modl[4] + proj[4] * modl[5] + proj[8] * modl[6] +
+		proj[12] * modl[7];
+	m[5] =
+		proj[1] * modl[4] + proj[5] * modl[5] + proj[9] * modl[6] +
+		proj[13] * modl[7];
+	m[6] =
+		proj[2] * modl[4] + proj[6] * modl[5] + proj[10] * modl[6] +
+		proj[14] * modl[7];
+	m[7] =
+		proj[3] * modl[4] + proj[7] * modl[5] + proj[11] * modl[6] +
+		proj[15] * modl[7];
+	m[8] =
+		proj[0] * modl[8] + proj[4] * modl[9] + proj[8] * modl[10] +
+		proj[12] * modl[11];
+	m[9] =
+		proj[1] * modl[8] + proj[5] * modl[9] + proj[9] * modl[10] +
+		proj[13] * modl[11];
+	m[10] =
+		proj[2] * modl[8] + proj[6] * modl[9] + proj[10] * modl[10] +
+		proj[14] * modl[11];
+	m[11] =
+		proj[3] * modl[8] + proj[7] * modl[9] + proj[11] * modl[10] +
+		proj[15] * modl[11];
+	m[12] =
+		proj[0] * modl[12] + proj[4] * modl[13] + proj[8] * modl[14] +
+		proj[12] * modl[15];
+	m[13] =
+		proj[1] * modl[12] + proj[5] * modl[13] + proj[9] * modl[14] +
+		proj[13] * modl[15];
+	m[14] =
+		proj[2] * modl[12] + proj[6] * modl[13] + proj[10] * modl[14] +
+		proj[14] * modl[15];
+	m[15] =
+		proj[3] * modl[12] + proj[7] * modl[13] + proj[11] * modl[14] +
+		proj[15] * modl[15];
+
+	/* Tranform the point by m */
+	vx1 = *x1;
+	vy1 = *y1;
+	vz1 = *z1;
+	vx2 = *x2;
+	vy2 = *y2;
+	vz2 = *z2;
+
+	I_TRANSFORM(0, m, vx1, vy1, vz1);
+	I_TRANSFORM(1, m, vx1, vy1, vz2);
+	I_TRANSFORM(2, m, vx1, vy2, vz1);
+	I_TRANSFORM(3, m, vx1, vy2, vz2);
+	I_TRANSFORM(4, m, vx2, vy1, vz1);
+	I_TRANSFORM(5, m, vx2, vy1, vz2);
+	I_TRANSFORM(6, m, vx2, vy2, vz1);
+	I_TRANSFORM(7, m, vx2, vy2, vz2);
+
+	for (i = 0; i < 8; i++)
+	{
+		x[i] /= w[i];
+		y[i] /= w[i];
+		z[i] /= w[i];
+
+		if (x[i] > xmax)
+			xmax = x[i];
+		if (y[i] > ymax)
+			ymax = y[i];
+		if (z[i] > zmax)
+			zmax = z[i];
+		if (x[i] < xmin)
+			xmin = x[i];
+		if (y[i] < ymin)
+			ymin = y[i];
+		if (z[i] < zmin)
+			zmin = z[i];
+	}
+
+	*x1 = xmin;
+	*y1 = ymin;
+	*z1 = zmin;
+	*x2 = xmax;
+	*y2 = ymax;
+	*z2 = zmax;
 }
 
 /*******************************************************
@@ -109,49 +147,51 @@ void clipCoords (GLdouble modl[16], GLdouble proj[16],
  * model matrices and the bounding box supplied by the
  * application.
  *******************************************************/
-int getClippedWindow(GLdouble modl[16], GLdouble proj[16], 
-		     int* xstart, int* ystart,
-		     int* xend, int* yend )
+static int
+getClippedWindow(GLdouble modl[16], GLdouble proj[16],
+								 int *xstart, int *ystart, int *xend, int *yend)
 {
 	GLfloat viewport[4];
 	GLdouble x1, x2, y1, y2, z1, z2;
 	int win_height, win_width;
-	
-	if(readback_spu.bbox != NULL){
-		x1=readback_spu.bbox->xmin;
-		y1=readback_spu.bbox->ymin;
-		z1=readback_spu.bbox->zmin;
-		x2=readback_spu.bbox->xmax; 
-		y2=readback_spu.bbox->ymax;
-		z2=readback_spu.bbox->zmax;
-	    
+
+	if (readback_spu.bbox != NULL)
+	{
+		x1 = readback_spu.bbox->xmin;
+		y1 = readback_spu.bbox->ymin;
+		z1 = readback_spu.bbox->zmin;
+		x2 = readback_spu.bbox->xmax;
+		y2 = readback_spu.bbox->ymax;
+		z2 = readback_spu.bbox->zmax;
 	}
-	else{ /* no bounding box defined */
+	else
+	{															/* no bounding box defined */
 		crDebug("No BBox");
 		return 0;
 	}
-		
+
 	clipCoords(modl, proj, &x1, &y1, &z1, &x2, &y2, &z2);
 	/* Sanity check... */
-	if( x2 < x1 || y2 < y1 || z2 < z1){
-		crWarning( "Damnit!!!!, we screwed up the clipping somehow..." );
+	if (x2 < x1 || y2 < y1 || z2 < z1)
+	{
+		crWarning("Damnit!!!!, we screwed up the clipping somehow...");
 		return 0;
 	}
-	
-	/* can we remove this get to speed things up? */
-	readback_spu.super.GetFloatv( GL_VIEWPORT, viewport );
-	(*xstart) = (int)((x1+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
-	(*ystart) = (int)((y1+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
-	(*xend)   = (int)((x2+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
-	(*yend)   = (int)((y2+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
 
-	win_width  = (int)viewport[2];
-	win_height = (int)viewport[3];
-	
-	CLAMP ((*xstart), 0, win_width);
-	CLAMP ((*xend),   0, win_width);
-	CLAMP ((*ystart), 0, win_height);
-	CLAMP ((*yend),   0, win_height);
+	/* can we remove this get to speed things up? */
+	readback_spu.super.GetFloatv(GL_VIEWPORT, viewport);
+	(*xstart) = (int) ((x1 + 1.0f) * (viewport[2] / 2.0f) + viewport[0]);
+	(*ystart) = (int) ((y1 + 1.0f) * (viewport[3] / 2.0f) + viewport[1]);
+	(*xend) = (int) ((x2 + 1.0f) * (viewport[2] / 2.0f) + viewport[0]);
+	(*yend) = (int) ((y2 + 1.0f) * (viewport[3] / 2.0f) + viewport[1]);
+
+	win_width = (int) viewport[2];
+	win_height = (int) viewport[3];
+
+	CLAMP((*xstart), 0, win_width);
+	CLAMP((*xend), 0, win_width);
+	CLAMP((*ystart), 0, win_height);
+	CLAMP((*yend), 0, win_height);
 	return 1;
 }
 
@@ -159,7 +199,8 @@ int getClippedWindow(GLdouble modl[16], GLdouble proj[16],
  * Allocate the color and depth buffers needed for the glDraw/ReadPixels
  * commands for the given window.
  */
-static void AllocBuffers( WindowInfo *window )
+static void
+AllocBuffers(WindowInfo * window)
 {
 	CRASSERT(window);
 	CRASSERT(window->width >= 0);
@@ -167,14 +208,14 @@ static void AllocBuffers( WindowInfo *window )
 
 	if (window->colorBuffer)
 		crFree(window->colorBuffer);
-	
+
 	if (readback_spu.gather_url)
-		window->colorBuffer = (GLubyte *) crAlloc( window->width * window->height
-																						 * 4 * sizeof(GLubyte) 
-																						 + sizeof(CRMessageGather));
+		window->colorBuffer = (GLubyte *) crAlloc(window->width * window->height
+																							* 4 * sizeof(GLubyte)
+																							+ sizeof(CRMessageGather));
 	else
-		window->colorBuffer = (GLubyte *) crAlloc( window->width * window->height
-																						 * 4 * sizeof(GLubyte) );
+		window->colorBuffer = (GLubyte *) crAlloc(window->width * window->height
+																							* 4 * sizeof(GLubyte));
 
 	/* XXX we might try GL_ABGR on NVIDIA - it might be a faster path */
 	window->rgbaFormat = GL_RGBA;
@@ -191,7 +232,7 @@ static void AllocBuffers( WindowInfo *window )
 		{
 			/* Determine best type for the depth buffer image */
 			GLint zBits;
-			readback_spu.super.GetIntegerv( GL_DEPTH_BITS, &zBits );
+			readback_spu.super.GetIntegerv(GL_DEPTH_BITS, &zBits);
 			if (zBits <= 16)
 				window->depthType = GL_UNSIGNED_SHORT;
 			else
@@ -209,12 +250,12 @@ static void AllocBuffers( WindowInfo *window )
 		}
 
 		if (readback_spu.gather_url)
-			window->depthBuffer = (GLfloat *) crAlloc( window->width * window->height
-																							 * depthBytes
-																							 + sizeof(CRMessageGather));
+			window->depthBuffer = (GLfloat *) crAlloc(window->width * window->height
+																								* depthBytes
+																								+ sizeof(CRMessageGather));
 		else
-			window->depthBuffer = (GLfloat *) crAlloc( window->width * window->height
-																							 * depthBytes );
+			window->depthBuffer = (GLfloat *) crAlloc(window->width * window->height
+																								* depthBytes);
 	}
 }
 
@@ -225,7 +266,8 @@ static void AllocBuffers( WindowInfo *window )
  * We may either have to query the super or child SPU window dims.
  * Reallocate the glReadPixels RGBA/depth buffers if the size changes.
  */
-static void CheckWindowSize( WindowInfo *window )
+static void
+CheckWindowSize(WindowInfo * window)
 {
 	GLint newSize[2];
 	CRMessage *msg;
@@ -241,7 +283,7 @@ static void CheckWindowSize( WindowInfo *window )
 		{
 			/* something went wrong - recover - try viewport */
 			GLint geometry[4];
-			readback_spu.child.GetIntegerv( GL_VIEWPORT, geometry );
+			readback_spu.child.GetIntegerv(GL_VIEWPORT, geometry);
 			newSize[0] = geometry[2];
 			newSize[1] = geometry[3];
 		}
@@ -252,7 +294,8 @@ static void CheckWindowSize( WindowInfo *window )
 	{
 		/* not resizable - ask render SPU for its window size */
 		readback_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-					window->renderWindow, GL_INT, 2, newSize);
+																							 window->renderWindow, GL_INT,
+																							 2, newSize);
 	}
 
 	if (newSize[0] != window->width || newSize[1] != window->height)
@@ -267,25 +310,25 @@ static void CheckWindowSize( WindowInfo *window )
 			/* update super/render SPU window size & viewport */
 			CRASSERT(newSize[0] > 0);
 			CRASSERT(newSize[1] > 0);
-			readback_spu.super.WindowSize( window->renderWindow,
-																		 newSize[0], newSize[1] );
-			readback_spu.super.Viewport( 0, 0, newSize[0], newSize[1] );
+			readback_spu.super.WindowSize(window->renderWindow,
+																		newSize[0], newSize[1]);
+			readback_spu.super.Viewport(0, 0, newSize[0], newSize[1]);
 			/* set child's viewport too */
-			readback_spu.child.Viewport( 0, 0, newSize[0], newSize[1] );
+			readback_spu.child.Viewport(0, 0, newSize[0], newSize[1]);
 		}
 
- 		if (readback_spu.extract_alpha)
+		if (readback_spu.extract_alpha)
 			window->bytesPerColor = 4 * sizeof(GLubyte);
 		else
 			window->bytesPerColor = 3 * sizeof(GLubyte);
 
-		msg = (CRMessage *)window->colorBuffer; 
+		msg = (CRMessage *) window->colorBuffer;
 		msg->header.type = CR_MESSAGE_GATHER;
-		
- 		if (readback_spu.extract_depth)
- 		{
+
+		if (readback_spu.extract_depth)
+		{
 			GLint zBits;
- 			readback_spu.super.GetIntegerv( GL_DEPTH_BITS, &zBits );
+			readback_spu.super.GetIntegerv(GL_DEPTH_BITS, &zBits);
 			if (zBits > 16)
 				window->bytesPerDepth = 4;
 			else if (zBits > 8)
@@ -293,9 +336,9 @@ static void CheckWindowSize( WindowInfo *window )
 			else
 				window->bytesPerDepth = 1;
 			CRASSERT(window->depthBuffer);
- 			msg = (CRMessage *) window->depthBuffer; 
- 			msg->header.type = CR_MESSAGE_GATHER;
- 		}
+			msg = (CRMessage *) window->depthBuffer;
+			msg->header.type = CR_MESSAGE_GATHER;
+		}
 	}
 }
 
@@ -310,8 +353,9 @@ static void CheckWindowSize( WindowInfo *window )
  *         readx, ready - glReadPixels source location
  *         drawx, drawy - glDrawPixels dest location.
  */
-static void CompositeTile( WindowInfo *window, int w, int h,
-													 int readx, int ready, int drawx, int drawy )
+static void
+CompositeTile(WindowInfo * window, int w, int h,
+							int readx, int ready, int drawx, int drawy)
 {
 	unsigned int shift;
 	CRMessage *msg;
@@ -319,17 +363,19 @@ static void CompositeTile( WindowInfo *window, int w, int h,
 	if (readback_spu.gather_url)
 	{
 		msg = (CRMessage *) window->colorBuffer;
-		msg->gather.offset = window->bytesPerColor * (drawy * window->childWidth + drawx);
+		msg->gather.offset =
+			window->bytesPerColor * (drawy * window->childWidth + drawx);
 
 		msg->gather.len = window->bytesPerColor * (w * h);
 		if (readback_spu.extract_depth)
 		{
 			msg = (CRMessage *) window->depthBuffer;
-			msg->gather.offset = window->bytesPerDepth * (drawx * window->childWidth + drawx);
+			msg->gather.offset =
+				window->bytesPerDepth * (drawx * window->childWidth + drawx);
 			msg->gather.len = window->bytesPerDepth * (w * h);
 		}
 	}
-		
+
 	/* Clamp the image width and height to the readback SPU window's width
 	 * and height.  We do this because there's nothing preventing someone
 	 * from creating a tile larger than the rendering window.
@@ -342,9 +388,9 @@ static void CompositeTile( WindowInfo *window, int w, int h,
 		h = window->height;
 
 	/*
-		crDebug("readback from: %d, %d   to: %d, %d   size: %d x %d",
-						readx, ready, drawx, drawy, w, h);
-	*/
+	   crDebug("readback from: %d, %d   to: %d, %d   size: %d x %d",
+	   readx, ready, drawx, drawy, w, h);
+	 */
 
 	/* Karl's gather code */
 	shift = readback_spu.gather_url ? sizeof(CRMessageGather) : 0;
@@ -352,22 +398,22 @@ static void CompositeTile( WindowInfo *window, int w, int h,
 	/* Read RGB image, possibly alpha, possibly depth from framebuffer */
 	if (readback_spu.extract_alpha)
 	{
-		readback_spu.super.ReadPixels( readx, ready, w, h,
-																	 window->rgbaFormat, GL_UNSIGNED_BYTE,
-																	 window->colorBuffer + shift );
+		readback_spu.super.ReadPixels(readx, ready, w, h,
+																	window->rgbaFormat, GL_UNSIGNED_BYTE,
+																	window->colorBuffer + shift);
 	}
-	else 
+	else
 	{
-		readback_spu.super.ReadPixels( readx, ready, w, h, 
-																	 window->rgbFormat, GL_UNSIGNED_BYTE,
-																	 window->colorBuffer + shift );
+		readback_spu.super.ReadPixels(readx, ready, w, h,
+																	window->rgbFormat, GL_UNSIGNED_BYTE,
+																	window->colorBuffer + shift);
 	}
 
 	if (readback_spu.extract_depth)
 	{
-		readback_spu.super.ReadPixels( readx, ready, w, h,
-																	 GL_DEPTH_COMPONENT, window->depthType,
-																	 (GLubyte *) window->depthBuffer + shift);
+		readback_spu.super.ReadPixels(readx, ready, w, h,
+																	GL_DEPTH_COMPONENT, window->depthType,
+																	(GLubyte *) window->depthBuffer + shift);
 	}
 
 	/*
@@ -382,12 +428,13 @@ static void CompositeTile( WindowInfo *window, int w, int h,
 	 */
 	CRASSERT(window->width > 0);
 	CRASSERT(window->height > 0);
-	readback_spu.child.Viewport( 0, 0, window->width, window->height );
+	readback_spu.child.Viewport(0, 0, window->width, window->height);
 
 	/* Use the glBitmap trick to set the raster pos.
 	 */
 	readback_spu.child.RasterPos2i(0, 0);
-	readback_spu.child.Bitmap(0, 0, 0, 0, (GLfloat)drawx, (GLfloat)drawy, NULL);
+	readback_spu.child.Bitmap(0, 0, 0, 0, (GLfloat) drawx, (GLfloat) drawy,
+														NULL);
 
 	/*
 	 * OK, send color/depth images to child.
@@ -397,22 +444,22 @@ static void CompositeTile( WindowInfo *window, int w, int h,
 		/* Draw the depth image into the depth buffer, setting the stencil
 		 * to one wherever we pass the Z test, clearinging to zero where we fail.
 		 */
-		readback_spu.child.ColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-		readback_spu.child.StencilOp( GL_KEEP, GL_ZERO, GL_REPLACE );
-		readback_spu.child.StencilFunc( GL_ALWAYS, 1, ~0 );
-		readback_spu.child.Enable( GL_STENCIL_TEST );
-		readback_spu.child.Enable( GL_DEPTH_TEST );
-		readback_spu.child.DepthFunc( GL_LEQUAL );
-		readback_spu.child.DrawPixels( w, h,
-																	 GL_DEPTH_COMPONENT, window->depthType,
-																	 (GLubyte *) window->depthBuffer + shift );
+		readback_spu.child.ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		readback_spu.child.StencilOp(GL_KEEP, GL_ZERO, GL_REPLACE);
+		readback_spu.child.StencilFunc(GL_ALWAYS, 1, ~0);
+		readback_spu.child.Enable(GL_STENCIL_TEST);
+		readback_spu.child.Enable(GL_DEPTH_TEST);
+		readback_spu.child.DepthFunc(GL_LEQUAL);
+		readback_spu.child.DrawPixels(w, h,
+																	GL_DEPTH_COMPONENT, window->depthType,
+																	(GLubyte *) window->depthBuffer + shift);
 		/* Now draw the RGBA image, only where the stencil is one, reset stencil
 		 * to zero as we go (to avoid calling glClear(STENCIL_BUFFER_BIT)).
 		 */
-		readback_spu.child.Disable( GL_DEPTH_TEST );
-		readback_spu.child.StencilOp( GL_ZERO, GL_ZERO, GL_ZERO );
-		readback_spu.child.StencilFunc( GL_EQUAL, 1, ~0 );
-		readback_spu.child.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+		readback_spu.child.Disable(GL_DEPTH_TEST);
+		readback_spu.child.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+		readback_spu.child.StencilFunc(GL_EQUAL, 1, ~0);
+		readback_spu.child.ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		if (readback_spu.visualize_depth)
 		{
 			/* draw depth as grayscale image */
@@ -422,36 +469,36 @@ static void CompositeTile( WindowInfo *window, int w, int h,
 			readback_spu.child.PixelTransferf(GL_RED_SCALE, -1.0);
 			readback_spu.child.PixelTransferf(GL_GREEN_SCALE, -1.0);
 			readback_spu.child.PixelTransferf(GL_BLUE_SCALE, -1.0);
-			readback_spu.child.DrawPixels(w, h, 
+			readback_spu.child.DrawPixels(w, h,
 																		GL_LUMINANCE, window->depthType,
 																		(GLubyte *) window->depthBuffer + shift);
 		}
 		else
 		{
 			/* the usual case */
-			readback_spu.child.DrawPixels( w, h,
-																		 window->rgbFormat, GL_UNSIGNED_BYTE,
-																		 window->colorBuffer + shift );
+			readback_spu.child.DrawPixels(w, h,
+																		window->rgbFormat, GL_UNSIGNED_BYTE,
+																		window->colorBuffer + shift);
 		}
 		readback_spu.child.Disable(GL_STENCIL_TEST);
 	}
 	else if (readback_spu.extract_alpha)
 	{
 		/* alpha compositing */
-		readback_spu.child.BlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
-		readback_spu.child.Enable( GL_BLEND );
-		readback_spu.child.DrawPixels( w, h,
-																	 window->rgbaFormat, GL_UNSIGNED_BYTE,
-																	 window->colorBuffer + shift );
+		readback_spu.child.BlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		readback_spu.child.Enable(GL_BLEND);
+		readback_spu.child.DrawPixels(w, h,
+																	window->rgbaFormat, GL_UNSIGNED_BYTE,
+																	window->colorBuffer + shift);
 	}
 	else
 	{
 		if (!readback_spu.gather_url)
 		{
 			/* just send color image */
-			readback_spu.child.DrawPixels( w, h,
-																		 window->rgbFormat, GL_UNSIGNED_BYTE,
-																		 window->colorBuffer + shift );
+			readback_spu.child.DrawPixels(w, h,
+																		window->rgbFormat, GL_UNSIGNED_BYTE,
+																		window->colorBuffer + shift);
 		}
 	}
 }
@@ -466,11 +513,12 @@ static void CompositeTile( WindowInfo *window, int w, int h,
  *   - semaphore-based synchronization
  *   - call ProcessTile() for each region
  */
-static void ProcessTiles( WindowInfo *window )
+static void
+ProcessTiles(WindowInfo * window)
 {
-	GLrecti extent0, outputwindow0;
-	const GLrecti *extents;
-	const GLrecti *outputwindow;
+	CRrecti extent0, outputwindow0;
+	const CRrecti *extents;
+	const CRrecti *outputwindow;
 	int numExtents;
 	int i;
 
@@ -490,7 +538,7 @@ static void ProcessTiles( WindowInfo *window )
 		int w = window->width;
 		int h = window->height;
 
-		numExtents = 1; /* this may get set to zero below! */
+		numExtents = 1;							/* this may get set to zero below! */
 
 		/*
 		 * Do bounding box cull check
@@ -500,20 +548,20 @@ static void ProcessTiles( WindowInfo *window )
 			if (readback_spu.bbox->xmin == readback_spu.bbox->xmax)
 			{
 				/* client can tell us to do nothing */
-				numExtents = 0;   /* used to return here */
+				numExtents = 0;					/* used to return here */
 			}
 			else
 			{
-			     int read_start_x, read_start_y, read_end_x, read_end_y;
-			     GLdouble *proj = readback_spu.proj;
-			     GLdouble *modl = readback_spu.modl;
-			     getClippedWindow( modl, proj, 
-					       &read_start_x, &read_start_y, 
-					       &read_end_x, &read_end_y);
-			     x = read_start_x;
-			     y = read_start_y;
-			     w = read_end_x - read_start_x;
-			     h = read_end_y - read_start_y;
+				int read_start_x, read_start_y, read_end_x, read_end_y;
+				GLdouble *proj = readback_spu.proj;
+				GLdouble *modl = readback_spu.modl;
+				getClippedWindow(modl, proj,
+												 &read_start_x, &read_start_y,
+												 &read_end_x, &read_end_y);
+				x = read_start_x;
+				y = read_start_y;
+				w = read_end_x - read_start_x;
+				h = read_end_y - read_start_y;
 			}
 		}
 
@@ -543,14 +591,14 @@ static void ProcessTiles( WindowInfo *window )
 	 * image drawn will pass the depth test for all pixels, thus painting the
 	 * whole color buffer. (neat!)
 	 */
-	if (readback_spu.extract_depth) 
-		readback_spu.child.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	else 
-		readback_spu.child.Clear( GL_COLOR_BUFFER_BIT );
+	if (readback_spu.extract_depth)
+		readback_spu.child.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	else
+		readback_spu.child.Clear(GL_COLOR_BUFFER_BIT);
 
 	/* wait for everyone to finish clearing */
 	if (!readback_spu.gather_url)
-		readback_spu.child.BarrierExecCR( CLEAR_BARRIER );
+		readback_spu.child.BarrierExecCR(CLEAR_BARRIER);
 
 	/*
 	 * Begin critical region.
@@ -559,7 +607,7 @@ static void ProcessTiles( WindowInfo *window )
 	 * putting the mutex outside of the loop, we're more likely to pack more
 	 * data into each buffer when doing image reassembly.
 	 */
-	readback_spu.child.SemaphorePCR( MUTEX_SEMAPHORE );
+	readback_spu.child.SemaphorePCR(MUTEX_SEMAPHORE);
 
 	/*
 	 * loop over extents (image regions)
@@ -578,11 +626,12 @@ static void ProcessTiles( WindowInfo *window )
 	/*
 	 * End critical region.
 	 */
-	readback_spu.child.SemaphoreVCR( MUTEX_SEMAPHORE );
+	readback_spu.child.SemaphoreVCR(MUTEX_SEMAPHORE);
 }
 
 
-static void DoReadback( WindowInfo *window )
+static void
+DoReadback(WindowInfo * window)
 {
 	static int first_time = 1;
 	GLint packAlignment, unpackAlignment;
@@ -611,24 +660,26 @@ static void DoReadback( WindowInfo *window )
 			}
 		}
 	}
-	
+
 	if (first_time || window->width < 1 || window->height < 1)
 	{
-		CheckWindowSize( window );
+		CheckWindowSize(window);
 	}
 
 	if (first_time)
 	{
 		/* one-time initializations */
-		readback_spu.child.BarrierCreateCR(CLEAR_BARRIER, readback_spu.barrierSize);
-		readback_spu.child.BarrierCreateCR(SWAP_BARRIER, readback_spu.barrierSize);
+		readback_spu.child.BarrierCreateCR(CLEAR_BARRIER,
+																			 readback_spu.barrierSize);
+		readback_spu.child.BarrierCreateCR(SWAP_BARRIER,
+																			 readback_spu.barrierSize);
 		readback_spu.child.SemaphoreCreateCR(MUTEX_SEMAPHORE, 1);
 		first_time = 0;
 	}
 	else if (readback_spu.resizable)
 	{
 		/* check if window size changed, reallocate buffers if needed */
-		CheckWindowSize( window );
+		CheckWindowSize(window);
 	}
 
 	/*
@@ -649,55 +700,58 @@ static void DoReadback( WindowInfo *window )
 }
 
 
-static void READBACKSPU_APIENTRY readbackspuFlush( void )
+static void READBACKSPU_APIENTRY
+readbackspuFlush(void)
 {
 	WindowInfo *window;
 	GET_CONTEXT(context);
-	CRASSERT(context); /* we shouldn't be flushing without a context */
+	CRASSERT(context);						/* we shouldn't be flushing without a context */
 	window = context->currentWindow;
 	if (!window)
-			return;
+		return;
 
-	DoReadback( window );
+	DoReadback(window);
 
 	/*
 	 * XXX I'm not sure we need to sync on glFlush, but let's be safe for now.
 	 */
-	readback_spu.child.BarrierExecCR( SWAP_BARRIER );
+	readback_spu.child.BarrierExecCR(SWAP_BARRIER);
 }
 
 
 
-static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint win, GLint flags )
+static void READBACKSPU_APIENTRY
+readbackspuSwapBuffers(GLint win, GLint flags)
 {
 	WindowInfo *window;
-	
+
 	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
 	CRASSERT(window);
 
-	DoReadback( window );
+	DoReadback(window);
 
 	/*
 	 * Everyone syncs up here before calling SwapBuffers().
 	 */
-	readback_spu.child.BarrierExecCR( SWAP_BARRIER );
+	readback_spu.child.BarrierExecCR(SWAP_BARRIER);
 
 	if (!readback_spu.gather_url)
 	{
 		/* Note: we don't pass the CR_SUPPRESS_SWAP_BIT flag here. */
-		readback_spu.child.SwapBuffers( window->childWindow,
-																		flags & ~CR_SUPPRESS_SWAP_BIT );
+		readback_spu.child.SwapBuffers(window->childWindow,
+																	 flags & ~CR_SUPPRESS_SWAP_BIT);
 		readback_spu.child.Finish();
 	}
 
 	if (readback_spu.local_visualization)
 	{
-		readback_spu.super.SwapBuffers( window->renderWindow, 0 );
+		readback_spu.super.SwapBuffers(window->renderWindow, 0);
 	}
 }
 
 
-static GLint READBACKSPU_APIENTRY readbackspuCreateContext( const char *dpyName, GLint visual)
+static GLint READBACKSPU_APIENTRY
+readbackspuCreateContext(const char *dpyName, GLint visual)
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
@@ -719,7 +773,8 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateContext( const char *dpyName,
 		childVisual |= CR_ALPHA_BIT;
 
 	context->renderContext = readback_spu.super.CreateContext(dpyName, visual);
-	context->childContext = readback_spu.child.CreateContext(dpyName, childVisual);
+	context->childContext =
+		readback_spu.child.CreateContext(dpyName, childVisual);
 
 	/* put into hash table */
 	crHashtableAdd(readback_spu.contextTable, freeID, context);
@@ -728,17 +783,19 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateContext( const char *dpyName,
 }
 
 
-static void READBACKSPU_APIENTRY readbackspuDestroyContext( GLint ctx )
+static void READBACKSPU_APIENTRY
+readbackspuDestroyContext(GLint ctx)
 {
 	ContextInfo *context;
 	context = (ContextInfo *) crHashtableSearch(readback_spu.contextTable, ctx);
 	CRASSERT(context);
 	readback_spu.super.DestroyContext(context->renderContext);
-	crHashtableDelete(readback_spu.contextTable, ctx);
+	crHashtableDelete(readback_spu.contextTable, ctx, GL_TRUE);
 }
 
 
-static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
+static void READBACKSPU_APIENTRY
+readbackspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 {
 	ContextInfo *context;
 	WindowInfo *window;
@@ -765,9 +822,10 @@ static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint win, GLint nativeW
 		 */
 		readback_spu.child.MatrixMode(GL_PROJECTION);
 		readback_spu.child.LoadIdentity();
-		readback_spu.child.Ortho( 0.0, 1.0, 0.0, 1.0, -1.0, 1.0 );
+		readback_spu.child.Ortho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
 	}
-	else {
+	else
+	{
 #ifdef CHROMIUM_THREADSAFE
 		crSetTSD(&_ReadbackTSD, NULL);
 #else
@@ -777,11 +835,12 @@ static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint win, GLint nativeW
 }
 
 
-static GLint READBACKSPU_APIENTRY readbackspuWindowCreate( const char *dpyName, GLint visBits )
+static GLint READBACKSPU_APIENTRY
+readbackspuWindowCreate(const char *dpyName, GLint visBits)
 {
 	WindowInfo *window;
 	GLint childVisual = visBits;
-	static GLint freeID = 1;  /* skip default window 0 */
+	static GLint freeID = 1;			/* skip default window 0 */
 
 	/* If doing z-compositing, need stencil buffer */
 	if (readback_spu.extract_depth)
@@ -801,8 +860,8 @@ static GLint READBACKSPU_APIENTRY readbackspuWindowCreate( const char *dpyName, 
 	window->index = freeID;
 	window->renderWindow = readback_spu.super.WindowCreate(dpyName, visBits);
 	window->childWindow = 0;
-	window->width = -1; /* unknown */
-	window->height = -1; /* unknown */
+	window->width = -1;						/* unknown */
+	window->height = -1;					/* unknown */
 	window->colorBuffer = NULL;
 	window->depthBuffer = NULL;
 
@@ -813,172 +872,196 @@ static GLint READBACKSPU_APIENTRY readbackspuWindowCreate( const char *dpyName, 
 	return freeID - 1;
 }
 
-static void READBACKSPU_APIENTRY readbackspuWindowDestroy( GLint win )
+static void READBACKSPU_APIENTRY
+readbackspuWindowDestroy(GLint win)
 {
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
 	CRASSERT(window);
 	readback_spu.super.WindowDestroy(window->renderWindow);
-	crHashtableDelete(readback_spu.windowTable, win);
+	crHashtableDelete(readback_spu.windowTable, win, GL_TRUE);
 }
 
-static void READBACKSPU_APIENTRY readbackspuWindowSize( GLint win, GLint w, GLint h )
+static void READBACKSPU_APIENTRY
+readbackspuWindowSize(GLint win, GLint w, GLint h)
 {
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
 	CRASSERT(window);
-	readback_spu.super.WindowSize( window->renderWindow, w, h );
-	readback_spu.child.WindowSize( window->childWindow, w, h );
+	readback_spu.super.WindowSize(window->renderWindow, w, h);
+	readback_spu.child.WindowSize(window->childWindow, w, h);
 }
 
 /* don't implement WindowPosition() */
 
 
 
-static void READBACKSPU_APIENTRY readbackspuBarrierCreateCR( GLuint name, GLuint count )
+static void READBACKSPU_APIENTRY
+readbackspuBarrierCreateCR(GLuint name, GLuint count)
 {
 	(void) name;
 	/* no-op */
 }
 
-static void READBACKSPU_APIENTRY readbackspuBarrierDestroyCR( GLuint name )
+static void READBACKSPU_APIENTRY
+readbackspuBarrierDestroyCR(GLuint name)
 {
 	(void) name;
 	/* no-op */
 }
 
-static void READBACKSPU_APIENTRY readbackspuBarrierExecCR( GLuint name )
+static void READBACKSPU_APIENTRY
+readbackspuBarrierExecCR(GLuint name)
 {
 	(void) name;
 	/* no-op */
 }
 
-static void READBACKSPU_APIENTRY readbackspuClearColor( GLclampf red,
-																												GLclampf green,
-																												GLclampf blue,
-																												GLclampf alpha )
+static void READBACKSPU_APIENTRY
+readbackspuClearColor(GLclampf red,
+											GLclampf green, GLclampf blue, GLclampf alpha)
 {
-	readback_spu.super.ClearColor( red, green, blue, alpha );
-	readback_spu.child.ClearColor( red, green, blue, alpha );
+	readback_spu.super.ClearColor(red, green, blue, alpha);
+	readback_spu.child.ClearColor(red, green, blue, alpha);
 }
 
 
 
 
-static void READBACKSPU_APIENTRY readbackspuViewport( GLint x, 
-		GLint y, GLint w, GLint h )
+static void READBACKSPU_APIENTRY
+readbackspuViewport(GLint x, GLint y, GLint w, GLint h)
 {
-	readback_spu.super.Viewport( x, y, w, h );
+	readback_spu.super.Viewport(x, y, w, h);
 	readback_spu.halfViewportWidth = 0.5F * w;
 	readback_spu.halfViewportHeight = 0.5F * h;
 	readback_spu.viewportCenterX = x + readback_spu.halfViewportWidth;
 	readback_spu.viewportCenterY = y + readback_spu.halfViewportHeight;
 }
 
-static void READBACKSPU_APIENTRY readbackspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, GLvoid *values)
+static void READBACKSPU_APIENTRY
+readbackspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
+																GLvoid * values)
 {
-	switch( target )
+	switch (target)
 	{
-		case GL_OBJECT_BBOX_CR:
-			CRASSERT(type == GL_FLOAT);
-			CRASSERT(count == 6);
-			/* make copy of values! */
-			readback_spu.bboxValues.xmin = ((GLfloat *) values)[0];
-			readback_spu.bboxValues.ymin = ((GLfloat *) values)[1];
-			readback_spu.bboxValues.zmin = ((GLfloat *) values)[2];
-			readback_spu.bboxValues.xmax = ((GLfloat *) values)[3];
-			readback_spu.bboxValues.ymax = ((GLfloat *) values)[4];
-			readback_spu.bboxValues.zmax = ((GLfloat *) values)[5];
-			readback_spu.bbox = &(readback_spu.bboxValues);
-			readback_spu.super.GetDoublev( GL_PROJECTION_MATRIX, readback_spu.proj );
-			readback_spu.super.GetDoublev( GL_MODELVIEW_MATRIX,  readback_spu.modl );
-			break;
-		case GL_DEFAULT_BBOX_CR:
-			CRASSERT(count == 0);
-			readback_spu.bbox = NULL;
-			break;
-		default:
-			readback_spu.child.ChromiumParametervCR( target, type, count, values );
-			break;
+	case GL_OBJECT_BBOX_CR:
+		CRASSERT(type == GL_FLOAT);
+		CRASSERT(count == 6);
+		/* make copy of values! */
+		readback_spu.bboxValues.xmin = ((GLfloat *) values)[0];
+		readback_spu.bboxValues.ymin = ((GLfloat *) values)[1];
+		readback_spu.bboxValues.zmin = ((GLfloat *) values)[2];
+		readback_spu.bboxValues.xmax = ((GLfloat *) values)[3];
+		readback_spu.bboxValues.ymax = ((GLfloat *) values)[4];
+		readback_spu.bboxValues.zmax = ((GLfloat *) values)[5];
+		readback_spu.bbox = &(readback_spu.bboxValues);
+		readback_spu.super.GetDoublev(GL_PROJECTION_MATRIX, readback_spu.proj);
+		readback_spu.super.GetDoublev(GL_MODELVIEW_MATRIX, readback_spu.modl);
+		break;
+	case GL_DEFAULT_BBOX_CR:
+		CRASSERT(count == 0);
+		readback_spu.bbox = NULL;
+		break;
+	default:
+		readback_spu.child.ChromiumParametervCR(target, type, count, values);
+		break;
 	}
 }
 
-static void READBACKSPU_APIENTRY readbackspuChromiumParameteriCR(GLenum target,  GLint value)
+static void READBACKSPU_APIENTRY
+readbackspuChromiumParameteriCR(GLenum target, GLint value)
 {
-	
-	switch( target )
+
+	switch (target)
 	{
-		case GL_READBACK_BARRIER_SIZE_CR:
-			readback_spu.barrierSize = value;
-			break;
-		case GL_GATHER_POST_SWAPBUFFERS_CR:
-				if ((!readback_spu.server) || (readback_spu.server->numExtents < 0))
-					crError("bleh! trying to do GATHER on appfaker.");	
+	case GL_READBACK_BARRIER_SIZE_CR:
+		readback_spu.barrierSize = value;
+		break;
+	case GL_GATHER_POST_SWAPBUFFERS_CR:
+		if ((!readback_spu.server) || (readback_spu.server->numExtents < 0))
+			crError("bleh! trying to do GATHER on appfaker.");
 
-				if (readback_spu.gather_url)
-				{
-					GLint draw_parm[7];
-					CRMessage *msg;
-					static int first_time = 1;
-					WindowInfo *window = (WindowInfo *)
-						crHashtableSearch(readback_spu.windowTable, value);
-					GLrecti *outputwindow = readback_spu.server->outputwindow;
-					int w = outputwindow[0].x2 - outputwindow[0].x1;
-					int h = outputwindow[0].y2 - outputwindow[0].y1;
+		if (readback_spu.gather_url)
+		{
+			GLint draw_parm[7];
+			CRMessage *msg;
+			static int first_time = 1;
+			WindowInfo *window = (WindowInfo *)
+				crHashtableSearch(readback_spu.windowTable, value);
+			CRrecti *outputwindow = readback_spu.server->outputwindow;
+			int w = outputwindow[0].x2 - outputwindow[0].x1;
+			int h = outputwindow[0].y2 - outputwindow[0].y1;
 
-					CRASSERT(window);
+			CRASSERT(window);
 
-					/* only swap 1 tiled-rgb ATM */
-					draw_parm[0] = 0;
-					draw_parm[1] = 0;
-					draw_parm[2] = window->childWidth;
-					draw_parm[3] = window->childHeight;
-					draw_parm[4] = GL_RGB;
-					draw_parm[5] = GL_UNSIGNED_BYTE;
-					draw_parm[6] = value;
+			/* only swap 1 tiled-rgb ATM */
+			draw_parm[0] = 0;
+			draw_parm[1] = 0;
+			draw_parm[2] = window->childWidth;
+			draw_parm[3] = window->childHeight;
+			draw_parm[4] = GL_RGB;
+			draw_parm[5] = GL_UNSIGNED_BYTE;
+			draw_parm[6] = value;
 
-					if (!first_time)
-					{
-						crNetGetMessage(readback_spu.gather_conn, &msg);
-						if (msg->header.type != CR_MESSAGE_OOB)
-							crError("Expecting MESSAGE_OOB for sync after gather");
-						crNetFree(readback_spu.gather_conn, msg);
-					}
-					else
-						first_time = 0;
-	
-					/* send the color image */
-					crNetSend(readback_spu.gather_conn, NULL, window->colorBuffer, 
-										sizeof(CRMessageGather) + window->bytesPerColor * w * h);
+			if (!first_time)
+			{
+				crNetGetMessage(readback_spu.gather_conn, &msg);
+				if (msg->header.type != CR_MESSAGE_OOB)
+					crError("Expecting MESSAGE_OOB for sync after gather");
+				crNetFree(readback_spu.gather_conn, msg);
+			}
+			else
+				first_time = 0;
 
-					/* inform the child that their is a frame on the way */
-					readback_spu.child.ChromiumParametervCR(GL_GATHER_DRAWPIXELS_CR,
-																									GL_INT, 7, draw_parm);
-					readback_spu.child.Flush();
-				}
-				break;
+			/* send the color image */
+			crNetSend(readback_spu.gather_conn, NULL, window->colorBuffer,
+								sizeof(CRMessageGather) + window->bytesPerColor * w * h);
 
-		default:
-			readback_spu.child.ChromiumParameteriCR( target, value );
-			break;
+			/* inform the child that their is a frame on the way */
+			readback_spu.child.ChromiumParametervCR(GL_GATHER_DRAWPIXELS_CR,
+																							GL_INT, 7, draw_parm);
+			readback_spu.child.Flush();
+		}
+		break;
+
+	default:
+		readback_spu.child.ChromiumParameteriCR(target, value);
+		break;
 	}
 }
 
-SPUNamedFunctionTable readback_table[] = {
-	{ "SwapBuffers", (SPUGenericFunction) readbackspuSwapBuffers },
-	{ "CreateContext", (SPUGenericFunction) readbackspuCreateContext },
-	{ "DestroyContext", (SPUGenericFunction) readbackspuDestroyContext },
-	{ "MakeCurrent", (SPUGenericFunction) readbackspuMakeCurrent },
-	{ "WindowCreate", (SPUGenericFunction) readbackspuWindowCreate },
-	{ "WindowDestroy", (SPUGenericFunction) readbackspuWindowDestroy },
-	{ "WindowSize", (SPUGenericFunction) readbackspuWindowSize },
-	{ "BarrierCreateCR", (SPUGenericFunction) readbackspuBarrierCreateCR },
-	{ "BarrierDestroyCR", (SPUGenericFunction) readbackspuBarrierDestroyCR },
-	{ "BarrierExecCR", (SPUGenericFunction) readbackspuBarrierExecCR },
-	{ "Viewport", (SPUGenericFunction) readbackspuViewport },
-	{ "Flush", (SPUGenericFunction) readbackspuFlush },
-	{ "ClearColor", (SPUGenericFunction) readbackspuClearColor }, 
-	{ "ChromiumParametervCR", (SPUGenericFunction) readbackspuChromiumParametervCR },
-	{ "ChromiumParameteriCR", (SPUGenericFunction) readbackspuChromiumParameteriCR },
-	{ NULL, NULL }
+SPUNamedFunctionTable _cr_readback_table[] = {
+	{"SwapBuffers", (SPUGenericFunction) readbackspuSwapBuffers}
+	,
+	{"CreateContext", (SPUGenericFunction) readbackspuCreateContext}
+	,
+	{"DestroyContext", (SPUGenericFunction) readbackspuDestroyContext}
+	,
+	{"MakeCurrent", (SPUGenericFunction) readbackspuMakeCurrent}
+	,
+	{"WindowCreate", (SPUGenericFunction) readbackspuWindowCreate}
+	,
+	{"WindowDestroy", (SPUGenericFunction) readbackspuWindowDestroy}
+	,
+	{"WindowSize", (SPUGenericFunction) readbackspuWindowSize}
+	,
+	{"BarrierCreateCR", (SPUGenericFunction) readbackspuBarrierCreateCR}
+	,
+	{"BarrierDestroyCR", (SPUGenericFunction) readbackspuBarrierDestroyCR}
+	,
+	{"BarrierExecCR", (SPUGenericFunction) readbackspuBarrierExecCR}
+	,
+	{"Viewport", (SPUGenericFunction) readbackspuViewport}
+	,
+	{"Flush", (SPUGenericFunction) readbackspuFlush}
+	,
+	{"ClearColor", (SPUGenericFunction) readbackspuClearColor}
+	,
+	{"ChromiumParametervCR",
+	 (SPUGenericFunction) readbackspuChromiumParametervCR}
+	,
+	{"ChromiumParameteriCR",
+	 (SPUGenericFunction) readbackspuChromiumParameteriCR}
+	,
+	{NULL, NULL}
 };

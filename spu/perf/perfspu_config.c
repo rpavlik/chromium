@@ -32,7 +32,7 @@ static void __setDefaults( void )
 	crMemset(&perf_spu.old_timerstats, 0, sizeof(PerfData));
 }
 
-void set_log_file( void *foo, const char *response )
+static void set_log_file( void *foo, const char *response )
 {
    char filename[8096];
    char ffilename[8096];
@@ -46,7 +46,7 @@ void set_log_file( void *foo, const char *response )
       perf_spu.log_file = stdout;
    }
    else {
-      strncpy( filename, response, strlen( filename ));
+      crStrncpy( filename, response, crStrlen( filename ));
 
       /* break up the string with our specialized tokens.
        *
@@ -64,7 +64,7 @@ void set_log_file( void *foo, const char *response )
 
 		case 'H':
 			crGetHostname(hostname, sizeof(hostname));
-			strncpy(tmp, "%s", 2);
+			crStrncpy(tmp, "%s", 2);
 			sprintf(ffilename, filename, hostname);
 			break;
 	
@@ -73,40 +73,40 @@ void set_log_file( void *foo, const char *response )
 			break;
 	
 	}
-   	strcpy(filename, ffilename);
+   	crStrcpy(filename, ffilename);
       }
 
       perf_spu.log_filename = (char *) crAlloc( crStrlen(ffilename) + 1 );
-      strcpy(perf_spu.log_filename, ffilename);
+      crStrcpy(perf_spu.log_filename, ffilename);
    }
 }
 
-void set_token( void *foo, const char *response )
+static void set_token( void *foo, const char *response )
 {
-   strncpy(perf_spu.token, response, strlen(perf_spu.token));
+   crStrncpy(perf_spu.token, response, crStrlen(perf_spu.token));
 }
 
-void set_dump_on_swap_count( void *foo, const char *response )
+static void set_dump_on_swap_count( void *foo, const char *response )
 {
    sscanf( response, "%d", &(perf_spu.dump_on_swap_count) );
 }
 
-void set_separator( void *foo, const char *response )
+static void set_separator( void *foo, const char *response )
 {
-   strncpy(perf_spu.separator, response, strlen(perf_spu.separator));
+   crStrncpy(perf_spu.separator, response, crStrlen(perf_spu.separator));
 }
 
-void set_mothership_log( void *foo, const char *response )
+static void set_mothership_log( void *foo, const char *response )
 {
    sscanf( response, "%d", &(perf_spu.mothership_log) );
 }
 
-void set_dump_on_flush( void *foo, const char *response )
+static void set_dump_on_flush( void *foo, const char *response )
 {
    sscanf( response, "%d", &(perf_spu.dump_on_flush) );
 }
 
-void set_dump_on_finish( void *foo, const char *response )
+static void set_dump_on_finish( void *foo, const char *response )
 {
    sscanf( response, "%d", &(perf_spu.dump_on_finish) );
 }

@@ -26,7 +26,27 @@ typedef struct {
 
 extern PrintSpu print_spu;
 
-void printspuGatherConfiguration( const SPU *child_spu );
-char *printspuEnumToStr( GLenum e );
+extern void printspuGatherConfiguration( const SPU *child_spu );
+extern char *printspuEnumToStr( GLenum e );
+
+extern void PRINT_APIENTRY printGetIntegerv( GLenum pname, GLint *params );
+extern void PRINT_APIENTRY printGetFloatv( GLenum pname, GLfloat *params );
+extern void PRINT_APIENTRY printGetDoublev( GLenum pname, GLdouble *params );
+extern void PRINT_APIENTRY printGetBooleanv( GLenum pname, GLboolean *params );
+
+extern void PRINT_APIENTRY printMaterialfv( GLenum face, GLenum mode, const GLfloat *params );
+extern void PRINT_APIENTRY printMaterialiv( GLenum face, GLenum mode, const GLint *params );
+extern void PRINT_APIENTRY printLightfv( GLenum light, GLenum pname, const GLfloat *params );
+extern void PRINT_APIENTRY printLightiv( GLenum light, GLenum pname, const GLint *params );
+
+extern void PRINT_APIENTRY printLoadMatrixf( const GLfloat *m );
+extern void PRINT_APIENTRY printLoadMatrixd( const GLdouble *m );
+extern void PRINT_APIENTRY printMultMatrixf( const GLfloat *m );
+extern void PRINT_APIENTRY printMultMatrixd( const GLdouble *m );
+
+extern void PRINT_APIENTRY printChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values);
+extern void PRINT_APIENTRY printChromiumParameteriCR(GLenum target, GLint value);
+
+
 
 #endif /* PRINTSPU_H */

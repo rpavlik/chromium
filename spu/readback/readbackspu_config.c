@@ -25,27 +25,27 @@ static void __setDefaults( ReadbackSPU *readback_spu )
 	readback_spu->resizable = 0;
 }
 
-void set_extract_depth( ReadbackSPU *readback_spu, const char *response )
+static void set_extract_depth( ReadbackSPU *readback_spu, const char *response )
 {
 	readback_spu->extract_depth = crStrToInt( response );
 }
 
-void set_extract_alpha( ReadbackSPU *readback_spu, const char *response )
+static void set_extract_alpha( ReadbackSPU *readback_spu, const char *response )
 {
 	readback_spu->extract_alpha = crStrToInt( response );
 }
 
-void set_local_visualization( ReadbackSPU *readback_spu, const char *response )
+static void set_local_visualization( ReadbackSPU *readback_spu, const char *response )
 {
 	readback_spu->local_visualization = crStrToInt( response );
 }
 
-void set_visualize_depth( ReadbackSPU *readback_spu, const char *response )
+static void set_visualize_depth( ReadbackSPU *readback_spu, const char *response )
 {
 	readback_spu->visualize_depth = crStrToInt( response );
 }
 
-void set_gather_url( ReadbackSPU *readback_spu, const char *response )
+static void set_gather_url( ReadbackSPU *readback_spu, const char *response )
 {
 	if (crStrlen(response) > 0)
 		readback_spu->gather_url = crStrdup( response );
@@ -53,7 +53,7 @@ void set_gather_url( ReadbackSPU *readback_spu, const char *response )
 		readback_spu->gather_url = NULL;
 }
 
-void set_gather_mtu( ReadbackSPU *readback_spu, const char *response )
+static void set_gather_mtu( ReadbackSPU *readback_spu, const char *response )
 {
 	sscanf( response, "%d", &readback_spu->gather_mtu );
 }

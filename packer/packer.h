@@ -23,6 +23,7 @@
 #ifdef CHROMIUM_THREADSAFE
 #include "cr_threads.h"
 #endif
+#include "cr_mem.h"
 
 #ifdef CHROMIUM_THREADSAFE
 extern CRtsd _PackerTSD;

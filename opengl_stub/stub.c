@@ -7,7 +7,7 @@
 #include "cr_spu.h"
 #include "cr_error.h" 
 #include "stub.h"
-
+#include "api_templates.h"
 
 int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 {

@@ -11,7 +11,7 @@
 #include "cr_unpack.h"
 #include "injectorspu.h"
 
-void INJECTORSPU_APIENTRY
+static void INJECTORSPU_APIENTRY
 injectorspuSwapBuffers( GLint window, GLint flags )
 {
 	CRMessage *msg;
@@ -64,7 +64,7 @@ injectorspuChromiumParameteri( GLenum param, GLint i )
 	injector_spu.child.ChromiumParameteriCR( param, i ) ;
 }
 
-SPUNamedFunctionTable injector_table[] = {
+SPUNamedFunctionTable _cr_injector_table[] = {
 	{ "ChromiumParameteriCR", (SPUGenericFunction) injectorspuChromiumParameteri },
 	{ "SwapBuffers", (SPUGenericFunction) injectorspuSwapBuffers },
 	{ NULL, NULL }

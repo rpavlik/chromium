@@ -120,31 +120,38 @@ static void stubInitSPUDispatch(SPU *spu)
  * This is called when we exit.
  * We call the all the SPU's cleanup functions.
  */
-static void stubExitHandler(void)
+static void stubSPUTearDown(void)
 {
 	SPU *the_spu = stub.spu;
 
 	while (1) {
 		if (the_spu && the_spu->cleanup) {
-			printf("Cleaning up SPU %s\n",the_spu->name);
+			crWarning("Cleaning up SPU %s",the_spu->name);
 			the_spu->cleanup();
 		} else 
 			break;
 		the_spu = the_spu->superSPU;
 	}
 
+	stub.spu = NULL;
+}
+
+static void stubExitHandler(void)
+{
+	stubSPUTearDown();
+
 	/* kill the mothership we spawned earlier */
 	if (stub.mothershipPID)
 		crKill(stub.mothershipPID);
 }
-
 
 /*
  * Called when we receive a SIGTERM signal.
  */
 static void stubSignalHandler(int signo)
 {
-	(void) signo;
+	stubSPUTearDown();
+
 	exit(0);  /* this causes stubExitHandler() to be called */
 }
 
@@ -169,12 +176,16 @@ static void stubInitVars(void)
 	stub.threadSafe = GL_FALSE;
 	stub.spuWindowWidth = 0;
 	stub.spuWindowHeight = 0;
-	stub.trackWindowSize = 0;
+	stub.trackWindowSize = 1;
 	stub.mothershipPID = 0;
 
 #if 1
 	atexit(stubExitHandler);
 	signal(SIGTERM, stubSignalHandler);
+	signal(SIGINT, stubSignalHandler);
+#ifndef WINDOWS
+	signal(SIGPIPE, SIG_IGN); /* the networking code should catch this */
+#endif
 #else
 	(void) stubExitHandler;
 	(void) stubSignalHandler;

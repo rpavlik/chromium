@@ -5,6 +5,7 @@
  */
 	
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
 #include "cr_string.h"
@@ -122,6 +123,9 @@ GetLimit(GLenum pname, GLenum type, void *results)
 	/* GL_NV_register_combiners */
 	case GL_MAX_GENERAL_COMBINERS_NV:
 		params[0] = (GLfloat) CR_MAX_GENERAL_COMBINERS;
+		break;
+	case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+		params[0] = CR_MAX_TEXTURE_LOD_BIAS;
 		break;
 	default:
 		return GL_FALSE; /* not a GL limit */

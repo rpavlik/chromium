@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <memory.h>
 #include <GL/glut.h>
@@ -419,6 +420,8 @@ static void Init( void )
 
 int main( int argc, char *argv[] )
 {
+   int mode;
+
    /* Work around compiler issues that have 64k limits */
    wall = malloc(WALL_WIDTH * WALL_HEIGHT * WALL_BYTES_PER_PIXEL);
    memcpy(wall, walldata1, sizeof(walldata1) );
@@ -426,8 +429,12 @@ int main( int argc, char *argv[] )
    memcpy(wall + sizeof(walldata1) + sizeof(walldata2), walldata3, sizeof(walldata3) );
 
    glutInit( &argc, argv );
+   mode = GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH;
+   if (argc > 1 && strcmp(argv[1], "-ms") == 0)
+      mode |= GLUT_MULTISAMPLE;
+
    glutInitWindowSize( 400, 250 );
-   glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+   glutInitDisplayMode( mode );
    glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );

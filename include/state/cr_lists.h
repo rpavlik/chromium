@@ -8,34 +8,25 @@
 #define CR_STATE_LISTS_H
 
 #include "cr_hash.h"
+#include "cr_idpool.h"
 #include "state/cr_statetypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
- * We use a linked list of these structures to keep track of available
- * display list IDs.
- */
-typedef struct CRListsFreeElem {
-	GLuint min;
-	GLuint max;
-	struct CRListsFreeElem *next;
-	struct CRListsFreeElem *prev;
-} CRListsFreeElem;
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRListsBits;
 
 typedef struct {
 	GLboolean newEnd;
-	CRListsFreeElem *freeList;
 	GLuint base;
 	GLuint currentIndex;  /* list being built */
 	GLenum mode;
 	CRHashTable *hash;  /* map display list IDs to CRListEffect structs */
+	CRIdPool *idPool;
 } CRListsState;
 
 /*
@@ -50,11 +41,11 @@ typedef struct {
 } CRListEffect;
 
 
-void crStateListsInit(CRListsState *l);
+void crStateListsInit(CRContext *ctx);
 
-void crStateListsDiff(CRListsBits *bb, GLbitvalue *bitID, 
+void crStateListsDiff(CRListsBits *bb, CRbitvalue *bitID, 
 		CRListsState *from, CRListsState *to);
-void crStateListsSwitch(CRListsBits *bb, GLbitvalue *bitID, 
+void crStateListsSwitch(CRListsBits *bb, CRbitvalue *bitID, 
 		CRListsState *from, CRListsState *to);
 
 #ifdef __cplusplus

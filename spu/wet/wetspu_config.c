@@ -12,37 +12,37 @@
 #include <stdio.h>
 
 
-void set_density( void *foo, const char *response )
+static void set_density( void *foo, const char *response )
 {
    sscanf( response, "%d", &(wet_spu.density) );
 }
 
-void set_raininess( void *foo, const char *response )
+static void set_raininess( void *foo, const char *response )
 {
    sscanf( response, "%d", &(wet_spu.raininess) );
 }
 
-void set_mesh_dice( void *foo, const char *response )
+static void set_mesh_dice( void *foo, const char *response )
 {
    sscanf( response, "%d", &(wet_spu.mesh_dice) );
 }
 
-void set_ripple_freq( void *foo, const char *response )
+static void set_ripple_freq( void *foo, const char *response )
 {
    sscanf( response, "%f", &(wet_spu.ripple_freq) );
 }
 
-void set_ripple_scale( void *foo, const char *response )
+static void set_ripple_scale( void *foo, const char *response )
 {
    sscanf( response, "%f", &(wet_spu.ripple_scale) );
 }
 
-void set_time_scale( void *foo, const char *response )
+static void set_time_scale( void *foo, const char *response )
 {
    sscanf( response, "%f", &(wet_spu.time_scale) );
 }
 
-void set_ior( void *foo, const char *response )
+static void set_ior( void *foo, const char *response )
 {
    sscanf( response, "%f", &(wet_spu.ior) );
 }

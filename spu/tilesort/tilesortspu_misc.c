@@ -10,6 +10,7 @@
 #include "cr_net.h"
 #include "cr_string.h"
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 
 #include <float.h>
 
@@ -337,7 +338,7 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLin
 }
 
 
-GLint TILESORTSPU_APIENTRY tilesortspu_WindowCreate(void *dpy, GLint visBits)
+GLint TILESORTSPU_APIENTRY tilesortspu_WindowCreate( const char *dpy, GLint visBits)
 {
 	int i;
 

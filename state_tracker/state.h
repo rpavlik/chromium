@@ -26,4 +26,7 @@ extern CRContext *__currentContext;
 #define GetCurrentContext() __currentContext
 #endif
 
+extern void crStateTextureInitTextureObj (CRTextureState *t, CRTextureObj *tobj, GLuint name, GLenum target);
+extern void crStateTextureInitTextureFormat( CRTextureLevel *tl, GLenum internalFormat );
+
 #endif

@@ -7,19 +7,18 @@
 #include "nopspu.h"
 #include "cr_spu.h"
 #include "cr_glstate.h"
-#include <stdio.h>
 
-extern SPUNamedFunctionTable nop_table[];
+extern SPUNamedFunctionTable _cr_nop_table[];
 
 NOPSPU nop_spu;
 
-SPUFunctions nop_functions = {
+static SPUFunctions nop_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	nop_table /* THE ACTUAL FUNCTIONS */
+	_cr_nop_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *nopSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *nopSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -29,26 +28,24 @@ SPUFunctions *nopSPUInit( int id, SPU *child, SPU *self,
 	(void) child;
 	(void) self;
 
+	nopspuGatherConfiguration();
+
 	crStateInit();
-	nop_spu.ctx = crStateCreateContext( NULL );
-	crStateMakeCurrent( nop_spu.ctx );
+	nop_spu.ctx = crStateCreateContext( NULL, CR_RGB_BIT );
+	crStateSetCurrent( nop_spu.ctx );
 
 	return &nop_functions;
 }
 
-void nopSPUSelfDispatch(SPUDispatchTable *parent)
+static void nopSPUSelfDispatch(SPUDispatchTable *parent)
 {
 	(void)parent;
 }
 
-int nopSPUCleanup(void)
+static int nopSPUCleanup(void)
 {
 	return 1;
 }
-
-SPUOptions nopSPUOptions[] = {
-   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
-};
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

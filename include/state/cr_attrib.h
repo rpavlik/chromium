@@ -9,14 +9,13 @@
 
 #include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
-#include "state/cr_extensions.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRAttribBits;
 
 typedef struct {
@@ -32,8 +31,10 @@ typedef struct {
 
 	GLenum		alphaTestFunc;
 	GLfloat		alphaTestRef;
-	GLenum		blendSrc;
-	GLenum		blendDst;
+	GLenum		blendSrcRGB;
+	GLenum		blendDstRGB;
+	GLenum		blendSrcA;
+	GLenum		blendDstA;
 	GLcolorf	blendColor;	
 	GLenum    blendEquation;
 	GLenum		logicOpMode;
@@ -306,7 +307,7 @@ typedef struct {
 
 typedef struct {
 	GLint attribStackDepth;
-	GLbitvalue pushMaskStack[CR_MAX_ATTRIB_STACK_DEPTH];
+	CRbitvalue pushMaskStack[CR_MAX_ATTRIB_STACK_DEPTH];
 
 	GLint accumBufferStackDepth;
 	CRAccumBufferStack accumBufferStack[CR_MAX_ATTRIB_STACK_DEPTH];
@@ -372,7 +373,7 @@ typedef struct {
 void crStateAttribInit(CRAttribState *a);
 
 /* No diff! */
-void crStateAttribSwitch(CRAttribBits *bb, GLbitvalue *bitID, 
+void crStateAttribSwitch(CRAttribBits *bb, CRbitvalue *bitID, 
 		CRAttribState *from, CRAttribState *to);
 
 #ifdef __cplusplus

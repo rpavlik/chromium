@@ -1,5 +1,3 @@
-
-
 Finish up tilesort glReadPixels pixelstore parameters.
 
 Some packed pixel formats still aren't implemented in util/pixel.c
@@ -8,8 +6,3 @@ Grep the code for 'XXX' for miscellaneous loose ends.
 
 Convert the last two Perl scripts in scripts/fastdep.pl and
 state_tracker/gendiffcode.pl to Python. 
-
-state-diffing for PointParameters is incomplete (state_point.txt)
-
-In the SPUs, rename "passthrough_table", etc to something more obscure,
-like "_cr_passthrough_spu_table" to avoid symbol conflicts with apps.

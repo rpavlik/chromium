@@ -8,7 +8,7 @@
 #include "cr_error.h"
 
 #include <stdlib.h>
-#include <string.h>
+#include <memory.h>
 
 void *crAlloc( unsigned int nbytes )
 {
@@ -27,7 +27,7 @@ void *crCalloc( unsigned int nbytes )
 		crError( "Out of memory trying to (c)allocate %d bytes!", nbytes );
 		abort();
 	}
-	memset( ret, 0, nbytes );
+	crMemset( ret, 0, nbytes );
 	return ret;
 }
 

@@ -4,10 +4,10 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
 #include "packspu.h"
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
+#include "packspu_proto.h"
 
 void PACKSPU_APIENTRY packspu_ColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
@@ -120,3 +120,30 @@ void PACKSPU_APIENTRY packspu_ClientActiveTextureARB( GLenum texUnit )
 	crStateClientActiveTextureARB( texUnit );
 }
 
+void PACKSPU_APIENTRY packspu_MultiDrawArraysEXT( GLenum mode, GLint *first, GLsizei *count, GLsizei primcount )
+{
+        GET_CONTEXT(ctx);
+	CRClientState *clientState = &(ctx->clientState->client);
+	if (pack_spu.swap)
+	{
+		crPackMultiDrawArraysEXTSWAP( mode, first, count, primcount, clientState );
+	}
+	else
+	{
+		crPackMultiDrawArraysEXT( mode, first, count, primcount, clientState );
+	}
+}
+
+void PACKSPU_APIENTRY packspu_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount )
+{
+        GET_CONTEXT(ctx);
+	CRClientState *clientState = &(ctx->clientState->client);
+	if (pack_spu.swap)
+	{
+		crPackMultiDrawElementsEXTSWAP( mode, count, type, indices, primcount, clientState );
+	}
+	else
+	{
+		crPackMultiDrawElementsEXT( mode, count, type, indices, primcount, clientState );
+	}
+}

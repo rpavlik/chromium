@@ -183,10 +183,7 @@ Keyboard(unsigned char key, int x, int y)
 }
 
 
-
-
-
-void
+static void
 InitGL(void)
 {
 	currentWidth = 240;
@@ -214,7 +211,7 @@ InitGL(void)
 }
 
 
-void
+static void
 InitSpecial(void)
 {
 #ifdef WIN32

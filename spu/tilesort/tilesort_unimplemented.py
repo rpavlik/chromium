@@ -21,6 +21,7 @@ stub_common.CopyrightC()
 
 print """
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_error.h"    
 """
 

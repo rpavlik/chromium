@@ -34,8 +34,8 @@ for func_name in keys:
 		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
 print """
-#define CHANGE( name, func ) crSPUChangeInterface( &(tilesort_spu.self), tilesort_spu.self.name, (SPUGenericFunction) func )
-#define CHANGESWAP( name, swapfunc, regfunc ) crSPUChangeInterface( &(tilesort_spu.self), tilesort_spu.self.name, (SPUGenericFunction) (tilesort_spu.swap ? swapfunc: regfunc ) )
+#define CHANGE( name, func ) crSPUChangeInterface( (void *)&(tilesort_spu.self), (void *)tilesort_spu.self.name, (void *)((SPUGenericFunction) func) )
+#define CHANGESWAP( name, swapfunc, regfunc ) crSPUChangeInterface( (void *)&(tilesort_spu.self), (void *)tilesort_spu.self.name, (void *)((SPUGenericFunction) (tilesort_spu.swap ? swapfunc: regfunc )) )
 
 static void __loadListAPI( void )
 {

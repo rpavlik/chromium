@@ -6,20 +6,21 @@
 
 #include "cr_spu.h"
 #include "motionblurspu.h"
-#include <stdio.h>
 
-extern SPUNamedFunctionTable motionblur_table[];
+
 MotionblurSPU motionblur_spu;
 
 SPUFunctions motionblur_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	motionblur_table /* THE ACTUAL FUNCTIONS */
+	_cr_motionblur_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *motionblurSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id,
-		unsigned int num_contexts )
+
+static SPUFunctions *
+motionblurSPUInit( int id, SPU *child, SPU *self,
+									 unsigned int context_id,
+									 unsigned int num_contexts )
 {
 
 	(void) self;
@@ -42,7 +43,9 @@ SPUFunctions *motionblurSPUInit( int id, SPU *child, SPU *self,
 	return &motionblur_functions;
 }
 
-void motionblurSPUSelfDispatch(SPUDispatchTable *self)
+
+static void
+motionblurSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(motionblur_spu.self) );
 	crSPUCopyDispatchTable( &(motionblur_spu.self), self );
@@ -50,12 +53,13 @@ void motionblurSPUSelfDispatch(SPUDispatchTable *self)
 	motionblur_spu.server = (CRServer *)(self->server);
 }
 
-int motionblurSPUCleanup(void)
+
+static int
+motionblurSPUCleanup(void)
 {
 	return 1;
 }
 
-extern SPUOptions motionblurSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

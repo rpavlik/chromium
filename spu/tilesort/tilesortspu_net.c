@@ -5,6 +5,7 @@
  */
 
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_pack.h"
 #include "cr_net.h"
 #include "cr_protocol.h"
@@ -13,7 +14,8 @@
 #include "cr_url.h"
 #include "cr_mem.h"
 
-void tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
+static void
+tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 {
 	int payload_len = len - sizeof( *rp );
 	char *dest_ptr;
@@ -56,7 +58,8 @@ void tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 	--tilesort_spu.ReadPixels;
 }
 
-int tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+static int
+tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) buf;
 	

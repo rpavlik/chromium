@@ -101,7 +101,7 @@ static void __appendBuffer( CRPackBuffer *src )
 	/*crWarning( "Back from crPackAppendBuffer: 0x%x", thread->packer->buffer.data_current ); */
 }
 
-void __appendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
+static void __appendBoundedBuffer( CRPackBuffer *src, CRrecti *bounds )
 {
 	GET_THREAD(thread);
 	int length = ((src->data_current - src->opcode_current - 1) + 3) & ~3;
@@ -187,7 +187,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 	static int init=0;
 	static GLfloat c[DRAW_BBOX_MAX_SERVERS][3];
 	unsigned int i;
-	GLbitvalue a;
+	CRbitvalue a;
 	GLfloat outcolor[3] = {0.0f, 0.0f, 0.0f};
 	GLfloat tot;
 	GLfloat xmin = bucket_info->objectMin.x;

@@ -4,7 +4,6 @@
 	See the file LICENSE.txt for information on redistributing this software. */
 	
 #include <stdio.h>
-#include <string.h>
 #include "cr_threads.h"
 #include "cr_error.h"
 
@@ -81,43 +80,43 @@ unsigned long crThreadID(void)
 
 
 
-#ifdef WINDOWS
-void crInitMutex(CRITICAL_SECTION *mutex)
-{
-	InitializeCriticalSection(mutex);
-}
-#else
 void crInitMutex(CRmutex *mutex)
 {
-	pthread_mutex_init(mutex, NULL);
-}
-#endif
-
-
 #ifdef WINDOWS
-void crLockMutex(CRITICAL_SECTION *mutex)
-{
-	EnterCriticalSection(mutex);
-}
+	InitializeCriticalSection(mutex);
 #else
+	pthread_mutex_init(mutex, NULL);
+#endif
+}
+
+void crFreeMutex(CRmutex *mutex)
+{
+#ifdef WINDOWS
+	DeleteCriticalSection(mutex);
+#else
+	pthread_mutex_destroy(mutex);
+#endif
+}
+
+
 void crLockMutex(CRmutex *mutex)
 {
-	pthread_mutex_lock(mutex);
-}
-#endif
-
-
 #ifdef WINDOWS
-void crUnlockMutex(CRITICAL_SECTION *mutex)
-{
-	LeaveCriticalSection(mutex);
-}
+	EnterCriticalSection(mutex);
 #else
+	pthread_mutex_lock(mutex);
+#endif
+}
+
+
 void crUnlockMutex(CRmutex *mutex)
 {
+#ifdef WINDOWS
+	LeaveCriticalSection(mutex);
+#else
 	pthread_mutex_unlock(mutex);
-}
 #endif
+}
 
 
 

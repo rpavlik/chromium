@@ -8,6 +8,7 @@
 #include "cr_packfunctions.h"
 #include "state/cr_statefuncs.h"
 #include "cr_string.h"
+#include "packspu_proto.h"
 
 static const GLubyte *
 GetExtensions(void)
@@ -30,7 +31,7 @@ GetExtensions(void)
 	while (writeback)
 		crNetRecv();
 
-	CRASSERT(crStrlen(return_value) < 10*1000);
+	CRASSERT(crStrlen((char *)return_value) < 10*1000);
 
 	/* OK, we got the result from the server.  Now we have to
 	 * intersect is with the set of extensions that Chromium understands

@@ -78,3 +78,5 @@ Scissor
 WindowCreate
 WindowPosition
 WindowSize
+MultiDrawArraysEXT
+MultiDrawElementsEXT

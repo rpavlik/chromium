@@ -4,8 +4,11 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
+#ifdef WINDOWS
+#include <stdlib.h> 	/* for atoi() */
+#endif
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_packfunctions.h"
@@ -71,7 +74,7 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
  * the calling thread with crSetTSD().
  */
 #ifdef CHROMIUM_THREADSAFE
-ThreadInfo *tilesortspuNewThread( GLint slot )
+static ThreadInfo *tilesortspuNewThread( GLint slot )
 {
 	ThreadInfo *thread;
 	int i;
@@ -152,7 +155,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	 * Allocate the state tracker state for this context.
 	 * The GL limits were computed in tilesortspuGatherConfiguration().
 	 */
-	tilesort_spu.context[slot].State = crStateCreateContext( &tilesort_spu.limits );
+	tilesort_spu.context[slot].State = crStateCreateContext( &tilesort_spu.limits, visual );
 	if (!tilesort_spu.context[slot].State) {
 		crWarning( "tilesortspuCreateContext: crStateCreateContext() failed\n");
 #ifdef CHROMIUM_THREADSAFE
@@ -182,7 +185,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
-		server->context[slot] = crStateCreateContext( &tilesort_spu.limits );
+		server->context[slot] = crStateCreateContext( &tilesort_spu.limits, visual );
 		server->context[slot]->current.rasterPos.x =
 			server->context[slot]->current.rasterPosPre.x =
 			(float) server->extents[0].x1;

@@ -60,3 +60,5 @@ SemaphoreCreateCR
 SemaphoreDestroyCR
 SemaphorePCR
 SemaphoreVCR
+MultiDrawArraysEXT
+MultiDrawElementsEXT

@@ -28,16 +28,17 @@ print """
 #include "cr_spu.h"
 #include "packspu.h"
 #include "cr_packfunctions.h"
+#include "packspu_proto.h"
 """
 
 num_funcs = len(keys) - len(stub_common.AllSpecials('packspu_unimplemented'))
-print 'SPUNamedFunctionTable pack_table[%d];' % (num_funcs+1)
+print 'SPUNamedFunctionTable _cr_pack_table[%d];' % (num_funcs+1)
 
 print """
 static void __fillin( int offset, char *name, SPUGenericFunction func )
 {
-	pack_table[offset].name = crStrdup( name );
-	pack_table[offset].fn = func;
+	_cr_pack_table[offset].name = crStrdup( name );
+	_cr_pack_table[offset].fn = func;
 }"""
 
 pack_specials = []
@@ -53,12 +54,12 @@ for func_name in keys:
 	    stub_common.FindSpecial( "../../packer/packer_get", func_name )):
 	  pack_specials.append( func_name )
 
-for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "packspu_unimplemented", func_name ):
-		continue
-	if func_name in pack_specials:
-		print 'extern %s PACKSPU_APIENTRY packspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
+#for func_name in keys:
+#	(return_type, args, types) = gl_mapping[func_name]
+#	if stub_common.FindSpecial( "packspu_unimplemented", func_name ):
+#		continue
+#	if func_name in pack_specials:
+#		print 'extern %s PACKSPU_APIENTRY packspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
 print '\nvoid packspuCreateFunctions( void )'
 print '{'

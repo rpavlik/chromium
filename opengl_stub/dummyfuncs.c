@@ -119,16 +119,6 @@ void CR_APIENTRY glBlendEquation( GLenum mode )
 }
 #endif
 
-void CR_APIENTRY glBlendColor( GLclampf red, GLclampf green,
-									 GLclampf blue, GLclampf alpha )
-{
-	(void) red;
-	(void) green;
-	(void) blue;
-	(void) alpha;
-	crWarning("glBlendColor not implemented by Chromium");
-}
-
 void CR_APIENTRY glHistogram( GLenum target, GLsizei width,
 									GLenum internalformat, GLboolean sink )
 {

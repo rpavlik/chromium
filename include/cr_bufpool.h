@@ -18,6 +18,7 @@ typedef struct CRBufferPool {
 } CRBufferPool;
 
 void  crBufferPoolInit( CRBufferPool *pool, unsigned int max );
+void  crBufferPoolFree( CRBufferPool *pool );
 void  crBufferPoolLoad( CRBufferPool *pool, void *mem,
 		unsigned int stride, unsigned int count );
 void  crBufferPoolPush( CRBufferPool *pool, void *buf );

@@ -426,7 +426,7 @@ void tilesortspuPinch (void)
 	thread->pinchState.wind = wind;
 }
 
-void __pinchIssueParams (CRVertex *vtx) 
+static void __pinchIssueParams (CRVertex *vtx) 
 {
 	GET_CONTEXT(ctx);
 	GLfloat val[4];
@@ -483,7 +483,7 @@ void __pinchIssueParams (CRVertex *vtx)
 	}
 }
 
-void __pinchIssueVertex (CRVertex *vtx) 
+static void __pinchIssueVertex (CRVertex *vtx) 
 {
 	GLfloat val[4];
 

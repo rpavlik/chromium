@@ -24,28 +24,29 @@ print """
 #include <stdio.h>
 #include "cr_string.h"
 #include "cr_spu.h"
-#include "tilesortspu.h"
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
+#include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 """
 
 num_funcs = len(keys)
 
-print 'SPUNamedFunctionTable tilesort_table[%d];' % (num_funcs+1)
+print 'SPUNamedFunctionTable _cr_tilesort_table[%d];' % (num_funcs+1)
 
 print """
 static void __fillin( int offset, char *name, SPUGenericFunction func )
 {
-	tilesort_table[offset].name = crStrdup( name );
-	tilesort_table[offset].fn = func;
+	_cr_tilesort_table[offset].name = crStrdup( name );
+	_cr_tilesort_table[offset].fn = func;
 }"""
 
-for func_name in keys:
-	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
-		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )	
-	if stub_common.FindSpecial( "tilesort", func_name ):
-		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
+#for func_name in keys:
+#	(return_type, args, types) = gl_mapping[func_name]
+#	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
+#		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )	
+#	if stub_common.FindSpecial( "tilesort", func_name ):
+#		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
 print '\nvoid tilesortspuCreateFunctions( void )'
 print '{'

@@ -17,9 +17,6 @@
 #include "cr_timer.h"
 #include "cr_perf.h"
 
-extern void perfspuDump( char *str );
-void perfspuGatherConfiguration( void );
-
 /* Check cr_applications.h for structures */
 
 typedef struct {
@@ -57,5 +54,13 @@ typedef struct {
 } perfSPU;
 
 extern perfSPU perf_spu;
+
+extern SPUNamedFunctionTable _cr_perf_table[];
+
+extern CRConnection** crNetDump(int *num);
+
+extern void perfspuDump( char *str );
+
+extern void perfspuGatherConfiguration( void );
 
 #endif /* PERF_SPU_H */

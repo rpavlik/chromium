@@ -8,6 +8,7 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "packspu.h"
+#include "packspu_proto.h"
 
 #if 0
 

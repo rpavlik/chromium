@@ -19,7 +19,7 @@
  *June 20, 2001 */
 
 
-void
+static void
 draw(void)
 {
 
@@ -96,7 +96,7 @@ draw(void)
 
 
 
-void
+static void
 keyboard(unsigned char ch, int x, int y)
 {
 	/* modified by Humper to not explode on Windows */

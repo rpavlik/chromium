@@ -4,9 +4,9 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <assert.h>
 #include "cr_packfunctions.h"
 #include "packspu.h"
+#include "packspu_proto.h"
 
 void PACKSPU_APIENTRY packspu_ChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {

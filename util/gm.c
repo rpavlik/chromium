@@ -674,10 +674,7 @@ void crGmHandleNewMessage( CRConnection *conn, CRMessage *msg,
 	gm_buffer->len   = len;
 	gm_buffer->pad   = 0;
 
-	if (!cr_gm.recv( conn, msg, len ))
-	{
-		crNetDefaultRecv( conn, msg, len );
-	}
+	crNetDispatchMessage( cr_gm.recv_list, conn, msg, len );
 }
 
 static void
@@ -731,22 +728,19 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		     temp->pad   = 0;
 		}
 		temp->len = len;
-		memcpy( temp+1, msg, len );
+		crMemcpy( temp+1, msg, len );
 		cached_type = msg->header.type;
 
 		cr_gm_provide_receive_buffer( msg );
 
-		if (!cr_gm.recv( gm_conn->conn, temp+1, len ))
-		{
-			crNetDefaultRecv( gm_conn->conn, temp+1, len );
-		}
+		crNetDispatchMessage( cr_gm.recv_list, gm_conn->conn, temp+1, len );
 
 		switch( cached_type )
 		{
 		case CR_MESSAGE_FLOW_CONTROL: /* Handled by InstantReclaim */
 		case CR_MESSAGE_MULTI_BODY:	/* Handled by InstantReclaim */
 		case CR_MESSAGE_MULTI_TAIL:	/* Handled by InstantReclaim */
-		case CR_MESSAGE_OPCODES:	/* Handled in crserver/server_stream.c */
+		case CR_MESSAGE_OPCODES:	/* Handled in crserverlib/server_stream.c */
 		case CR_MESSAGE_OOB:		/* The programmer's problem (according to humper in util/tcpip.c) */
 			break;
 
@@ -762,10 +756,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		temp = (CRGmBuffer *) msg - 1;
 		temp->len = len;
 
-		if (!cr_gm.recv( gm_conn->conn, msg, len ))
-		{
-			crNetDefaultRecv( gm_conn->conn, msg, len );
-		}
+		crNetDispatchMessage( cr_gm.recv_list, gm_conn->conn, msg, len );
 	}
 }
 
@@ -1035,7 +1026,7 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 		 * network layer, but it does fit within a single message, so
 		 * don't bother with fragmentation */
 		void *pack = crGmAlloc( conn );
-		memcpy( pack, buf, len );
+		crMemcpy( pack, buf, len );
 		crGmSend( conn, &pack, pack, len );
 		return;
 	}
@@ -1068,7 +1059,7 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 			msg->header.conn_id = conn->id;
 			n_bytes   = len;
 		}
-		memcpy( msg + 1, src, n_bytes );
+		crMemcpy( msg + 1, src, n_bytes );
 
 		cr_gm_send( conn, msg, n_bytes + sizeof(*msg), msg );
 
@@ -1239,7 +1230,7 @@ cr_gm_set_acceptable_sizes( void )
 	}
 }
 
-void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int mtu )
+void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 {
 	gm_status_t status;
 	unsigned int port, min_port, max_port;
@@ -1249,8 +1240,8 @@ void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int
 
 	if ( cr_gm.initialized )
 	{
-		CRASSERT( cr_gm.recv == recvFunc );
-		CRASSERT( cr_gm.close == closeFunc );
+		cr_gm.recv_list = rfl;
+		cr_gm.close_list = cfl;
 		return;
 	}
 
@@ -1388,8 +1379,8 @@ void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int
 #endif
 	}
 
-	cr_gm.recv  = recvFunc;
-	cr_gm.close = closeFunc;
+	cr_gm.recv_list = rfl;
+	cr_gm.close_list = cfl;
 
 	cr_gm.num_outstanding_sends = 0;
 	cr_gm.num_send_tokens = gm_num_send_tokens( cr_gm.port );

@@ -6,3 +6,5 @@ ArrayElement
 DrawArrays
 DrawElements
 DrawRangeElements
+MultiDrawArraysEXT
+MultiDrawElementsEXT

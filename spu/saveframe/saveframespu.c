@@ -5,7 +5,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 
 #include "cr_error.h"
@@ -25,7 +24,7 @@ static int RGB_to_JPG(char *filename, int width, int height,
 
 SaveFrameSPU saveframe_spu;
 
-void SAVEFRAMESPU_APIENTRY
+static void SAVEFRAMESPU_APIENTRY
 swapBuffers(GLint window, GLint flags)
 {
 	if (saveframe_spu.enabled)
@@ -113,7 +112,7 @@ swapBuffers(GLint window, GLint flags)
 	saveframe_spu.child.SwapBuffers(window, flags);
 }
 
-void SAVEFRAMESPU_APIENTRY
+static void SAVEFRAMESPU_APIENTRY
 viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
 	saveframe_spu.height = height;
@@ -125,7 +124,7 @@ viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 	saveframe_spu.child.Viewport(x, y, width, height);
 }
 
-void SAVEFRAMESPU_APIENTRY
+static void SAVEFRAMESPU_APIENTRY
 saveframeChromiumParameteri(GLenum param, GLint i)
 {
 	switch (param)
@@ -150,7 +149,7 @@ saveframeChromiumParameteri(GLenum param, GLint i)
 	}
 }
 
-void SAVEFRAMESPU_APIENTRY
+static void SAVEFRAMESPU_APIENTRY
 saveframeChromiumParameterv(GLenum param, GLenum type, GLsizei count,
 														const GLvoid * p)
 {
@@ -168,7 +167,7 @@ saveframeChromiumParameterv(GLenum param, GLenum type, GLsizei count,
 	}
 }
 
-void SAVEFRAMESPU_APIENTRY
+static void SAVEFRAMESPU_APIENTRY
 saveframeGetChromiumParameterv(GLenum target, GLuint index, GLenum type,
 															 GLsizei count, GLvoid * values)
 {
@@ -197,7 +196,7 @@ saveframeGetChromiumParameterv(GLenum target, GLuint index, GLenum type,
 	}
 }
 
-SPUNamedFunctionTable saveframe_table[] = {
+SPUNamedFunctionTable _cr_saveframe_table[] = {
 	{"SwapBuffers", (SPUGenericFunction) swapBuffers}
 	,
 	{"Viewport", (SPUGenericFunction) viewport}
@@ -216,10 +215,10 @@ void
 ResizeBuffer(void)
 {
 	if (saveframe_spu.buffer != NULL)
-		free(saveframe_spu.buffer);
+		crFree(saveframe_spu.buffer);
 
 	saveframe_spu.buffer =
-		(GLubyte *) malloc(sizeof(GLubyte) * saveframe_spu.height *
+		(GLubyte *) crAlloc(sizeof(GLubyte) * saveframe_spu.height *
 											 saveframe_spu.width * 4);
 }
 

@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
@@ -129,12 +128,16 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		a->colorBufferStack[a->colorBufferStackDepth].alphaTestFunc = g->buffer.alphaTestFunc;
 		a->colorBufferStack[a->colorBufferStackDepth].alphaTestRef = g->buffer.alphaTestRef;
 		a->colorBufferStack[a->colorBufferStackDepth].blend = g->buffer.blend;
-		a->colorBufferStack[a->colorBufferStackDepth].blendSrc = g->buffer.blendSrc;
-		a->colorBufferStack[a->colorBufferStackDepth].blendDst = g->buffer.blendDst;
+		a->colorBufferStack[a->colorBufferStackDepth].blendSrcRGB = g->buffer.blendSrcRGB;
+		a->colorBufferStack[a->colorBufferStackDepth].blendDstRGB = g->buffer.blendDstRGB;
+#if defined(CR_EXT_blend_func_separate)
+		a->colorBufferStack[a->colorBufferStackDepth].blendSrcA = g->buffer.blendSrcA;
+		a->colorBufferStack[a->colorBufferStackDepth].blendDstA = g->buffer.blendDstA;
+#endif
 #ifdef CR_EXT_blend_color
 		a->colorBufferStack[a->colorBufferStackDepth].blendColor = g->buffer.blendColor;
 #endif
-#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) || defined(CR_EXT_blend_logic_op)
 		a->colorBufferStack[a->colorBufferStackDepth].blendEquation = g->buffer.blendEquation;
 #endif
 		a->colorBufferStack[a->colorBufferStackDepth].dither = g->buffer.dither;
@@ -177,11 +180,11 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		if (a->enableStack[a->enableStackDepth].clip == NULL)
 		{
-			a->enableStack[a->enableStackDepth].clip = (GLboolean *) crAlloc( g->limits.maxClipPlanes * sizeof( GLboolean ));
+			a->enableStack[a->enableStackDepth].clip = (GLboolean *) crCalloc( g->limits.maxClipPlanes * sizeof( GLboolean ));
 		}
 		if (a->enableStack[a->enableStackDepth].light == NULL)
 		{
-			a->enableStack[a->enableStackDepth].light = (GLboolean *) crAlloc( g->limits.maxLights * sizeof( GLboolean ));
+			a->enableStack[a->enableStackDepth].light = (GLboolean *) crCalloc( g->limits.maxLights * sizeof( GLboolean ));
 		}
 		a->enableStack[a->enableStackDepth].alphaTest = g->buffer.alphaTest;
 		a->enableStack[a->enableStackDepth].autoNormal = g->eval.autoNormal;
@@ -251,7 +254,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->evalStack[a->evalStackDepth].eval1D[i].u1 = g->eval.eval1D[i].u1;
 			a->evalStack[a->evalStackDepth].eval1D[i].u2 = g->eval.eval1D[i].u2;
 			a->evalStack[a->evalStackDepth].eval1D[i].order = g->eval.eval1D[i].order;
-			a->evalStack[a->evalStackDepth].eval1D[i].coeff = (GLfloat*)crAlloc(size1);
+			a->evalStack[a->evalStackDepth].eval1D[i].coeff = (GLfloat*)crCalloc(size1);
 			crMemcpy(a->evalStack[a->evalStackDepth].eval1D[i].coeff, g->eval.eval1D[i].coeff, size1);
 			a->evalStack[a->evalStackDepth].eval2D[i].u1 = g->eval.eval2D[i].u1;
 			a->evalStack[a->evalStackDepth].eval2D[i].u2 = g->eval.eval2D[i].u2;
@@ -259,7 +262,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->evalStack[a->evalStackDepth].eval2D[i].v2 = g->eval.eval2D[i].v2;
 			a->evalStack[a->evalStackDepth].eval2D[i].uorder = g->eval.eval2D[i].uorder;
 			a->evalStack[a->evalStackDepth].eval2D[i].vorder = g->eval.eval2D[i].vorder;
-			a->evalStack[a->evalStackDepth].eval2D[i].coeff = (GLfloat*)crAlloc(size2);
+			a->evalStack[a->evalStackDepth].eval2D[i].coeff = (GLfloat*)crCalloc(size2);
 			crMemcpy(a->evalStack[a->evalStackDepth].eval2D[i].coeff, g->eval.eval2D[i].coeff, size2);
 		}
 		a->evalStack[a->evalStackDepth].autoNormal = g->eval.autoNormal;
@@ -307,7 +310,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		if (a->lightingStack[a->lightingStackDepth].light == NULL)
 		{
-			a->lightingStack[a->lightingStackDepth].light = (CRLight *) crAlloc( g->limits.maxLights * sizeof( CRLight ));
+			a->lightingStack[a->lightingStackDepth].light = (CRLight *) crCalloc( g->limits.maxLights * sizeof( CRLight ));
 		}
 		a->lightingStack[a->lightingStackDepth].lightModelAmbient = g->lighting.lightModelAmbient;
 		a->lightingStack[a->lightingStackDepth].lightModelLocalViewer = g->lighting.lightModelLocalViewer;
@@ -444,11 +447,11 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		if (a->transformStack[a->transformStackDepth].clip == NULL)
 		{
-			a->transformStack[a->transformStackDepth].clip = (GLboolean *) crAlloc( g->limits.maxClipPlanes * sizeof( GLboolean ));
+			a->transformStack[a->transformStackDepth].clip = (GLboolean *) crCalloc( g->limits.maxClipPlanes * sizeof( GLboolean ));
 		}
 		if (a->transformStack[a->transformStackDepth].clipPlane == NULL)
 		{
-			a->transformStack[a->transformStackDepth].clipPlane = (GLvectord *) crAlloc( g->limits.maxClipPlanes * sizeof( GLvectord ));
+			a->transformStack[a->transformStackDepth].clipPlane = (GLvectord *) crCalloc( g->limits.maxClipPlanes * sizeof( GLvectord ));
 		}
 		a->transformStack[a->transformStackDepth].mode = g->transform.mode;
 		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
@@ -482,7 +485,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	CRAttribState *a = &(g->attrib);
 	CRStateBits *sb = GetCurrentBits();
 	CRAttribBits *ab = &(sb->attrib);
-	GLbitvalue mask;
+	CRbitvalue mask;
 	unsigned int i;
 
 	if (g->current.inBeginEnd)
@@ -525,12 +528,16 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->buffer.alphaTestFunc = a->colorBufferStack[a->colorBufferStackDepth].alphaTestFunc;
 		g->buffer.alphaTestRef = a->colorBufferStack[a->colorBufferStackDepth].alphaTestRef;
 		g->buffer.blend = a->colorBufferStack[a->colorBufferStackDepth].blend;
-		g->buffer.blendSrc = a->colorBufferStack[a->colorBufferStackDepth].blendSrc;
-		g->buffer.blendDst = a->colorBufferStack[a->colorBufferStackDepth].blendDst;
+		g->buffer.blendSrcRGB = a->colorBufferStack[a->colorBufferStackDepth].blendSrcRGB;
+		g->buffer.blendDstRGB = a->colorBufferStack[a->colorBufferStackDepth].blendDstRGB;
+#if defined(CR_EXT_blend_func_separate)
+		g->buffer.blendSrcA = a->colorBufferStack[a->colorBufferStackDepth].blendSrcA;
+		g->buffer.blendDstA = a->colorBufferStack[a->colorBufferStackDepth].blendDstA;
+#endif
 #ifdef CR_EXT_blend_color
 		g->buffer.blendColor = a->colorBufferStack[a->colorBufferStackDepth].blendColor;
 #endif
-#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) || defined(CR_EXT_blend_logic_op)
 		g->buffer.blendEquation = a->colorBufferStack[a->colorBufferStackDepth].blendEquation;
 #endif
 		g->buffer.dither = a->colorBufferStack[a->colorBufferStackDepth].dither;
@@ -549,7 +556,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 #ifdef CR_EXT_blend_color
 		DIRTY(sb->buffer.blendColor, g->neg_bitid);
 #endif
-#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) || defined(CR_EXT_blend_logic_op)
 		DIRTY(sb->buffer.blendEquation, g->neg_bitid);
 #endif
 		DIRTY(sb->buffer.drawBuffer, g->neg_bitid);
@@ -1101,7 +1108,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	DIRTY(ab->dirty, g->neg_bitid);
 }
 
-void crStateAttribSwitch( CRAttribBits *bb, GLbitvalue *bitID,
+void crStateAttribSwitch( CRAttribBits *bb, CRbitvalue *bitID,
 		CRAttribState *from, CRAttribState *to )
 {
 	if (to->attribStackDepth != 0 || from->attribStackDepth != 0)

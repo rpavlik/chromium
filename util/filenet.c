@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #ifdef WINDOWS
@@ -14,6 +13,7 @@
 #else
 #include <unistd.h>
 #endif
+
 
 #include "cr_error.h"
 #include "cr_mem.h"
@@ -51,11 +51,12 @@ static struct {
 #ifdef CHROMIUM_THREADSAFE
 	CRmutex              mutex;
 #endif
-	CRNetReceiveFunc     recv;
-	CRNetCloseFunc       close;
+	CRNetReceiveFuncList *recv_list;
+	CRNetCloseFuncList   *close_list;
 } cr_file;
 
-void crFileReadExact( CRConnection *conn, void *buf, unsigned int len )
+static void
+crFileReadExact( CRConnection *conn, void *buf, unsigned int len )
 {
 	char *dst = (char *) buf;
 
@@ -77,7 +78,8 @@ void crFileReadExact( CRConnection *conn, void *buf, unsigned int len )
 	}
 }
 
-void crFileWriteExact( CRConnection *conn, void *buf, unsigned int len )
+static void
+crFileWriteExact( CRConnection *conn, void *buf, unsigned int len )
 {
 	int retval = write( conn->fd, buf, len );
 	if ( retval < (int) len )
@@ -86,7 +88,8 @@ void crFileWriteExact( CRConnection *conn, void *buf, unsigned int len )
 	}
 }
 
-void crFileAccept( CRConnection *conn, char *hostname, unsigned short port )
+static void
+crFileAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	conn->file_direction = CR_FILE_READ;
 	conn->fd = open( conn->filename, O_RDONLY | O_BINARY );
@@ -97,7 +100,8 @@ void crFileAccept( CRConnection *conn, char *hostname, unsigned short port )
 	(void) port;
 }
 
-void *crFileAlloc( CRConnection *conn )
+static void
+*crFileAlloc( CRConnection *conn )
 {
 	CRFileBuffer *buf;
 
@@ -126,12 +130,14 @@ void *crFileAlloc( CRConnection *conn )
 	return (void *)( buf + 1 );
 }
 
-void crFileSingleRecv( CRConnection *conn, void *buf, unsigned int len )
+static void
+crFileSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 {
 	crFileReadExact( conn, buf, len );
 }
 
-void crFileSend( CRConnection *conn, void **bufp, void *start, unsigned int len )
+static void
+crFileSend( CRConnection *conn, void **bufp, void *start, unsigned int len )
 {
 	CRFileBuffer *file_buffer;
 	unsigned int      *lenp;
@@ -175,7 +181,8 @@ void crFileSend( CRConnection *conn, void **bufp, void *start, unsigned int len 
 	*bufp = NULL;
 }
 
-void crFileFree( CRConnection *conn, void *buf )
+static void
+crFileFree( CRConnection *conn, void *buf )
 {
 	CRFileBuffer *file_buffer = (CRFileBuffer *) buf - 1;
 
@@ -203,7 +210,8 @@ void crFileFree( CRConnection *conn, void *buf )
 	}
 }
 
-int crFileRecv( void )
+int
+crFileRecv( void )
 {
 	CRMessage *msg;
 	int i;
@@ -242,13 +250,10 @@ int crFileRecv( void )
 		conn->recv_credits -= len;
 
 		msg = (CRMessage *) (file_buffer + 1);
-		if (!cr_file.recv( conn, file_buffer + 1, len ))
-		{
-			crNetDefaultRecv( conn, file_buffer + 1, len );
-		}
+		crNetDispatchMessage( cr_file.recv_list, conn, file_buffer + 1, len );
 
 		/* CR_MESSAGE_OPCODES is freed in
-		 * crserver/server_stream.c 
+		 * crserverlib/server_stream.c 
 		 *
 		 * OOB messages are the programmer's problem.  -- Humper 12/17/01 */
 		if (msg->header.type != CR_MESSAGE_OPCODES && msg->header.type != CR_MESSAGE_OOB)
@@ -260,7 +265,8 @@ int crFileRecv( void )
 	return 1;
 }
 
-void crFileHandleNewMessage( CRConnection *conn, CRMessage *msg,
+static void
+crFileHandleNewMessage( CRConnection *conn, CRMessage *msg,
 		unsigned int len )
 {
 	CRFileBuffer *buf = ((CRFileBuffer *) msg) - 1;
@@ -271,32 +277,25 @@ void crFileHandleNewMessage( CRConnection *conn, CRMessage *msg,
 	buf->len   = len;
 	buf->pad   = 0;
 
-	if (!cr_file.recv( conn, msg, len ))
-	{
-		crNetDefaultRecv( conn, msg, len );
-	}
+	crNetDispatchMessage( cr_file.recv_list, conn, msg, len );
 }
 
-void crFileInstantReclaim( CRConnection *conn, CRMessage *mess )
+static void
+crFileInstantReclaim( CRConnection *conn, CRMessage *mess )
 {
 	crFileFree( conn, mess );
 }
 
-void crFileInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int mtu )
+void
+crFileInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 {
 	(void) mtu;
-	if ( cr_file.initialized )
+
+	cr_file.recv_list = rfl;
+	cr_file.close_list = cfl;
+
+	if (cr_file.initialized)
 	{
-		if ( cr_file.recv == NULL && cr_file.close == NULL )
-		{
-			cr_file.recv = recvFunc;
-			cr_file.close = closeFunc;
-		}
-		else
-		{
-			CRASSERT( cr_file.recv == recvFunc );
-			CRASSERT( cr_file.close == closeFunc );
-		}
 		return;
 	}
 
@@ -308,13 +307,12 @@ void crFileInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned i
 #endif
 	crBufferPoolInit( &cr_file.bufpool, 16 );
 
-	cr_file.recv = recvFunc;
-	cr_file.close = closeFunc;
 
 	cr_file.initialized = 1;
 }
 
-int crFileDoConnect( CRConnection *conn )
+static int
+crFileDoConnect( CRConnection *conn )
 {
 	conn->file_direction = CR_FILE_WRITE;
 	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY |
@@ -327,16 +325,18 @@ int crFileDoConnect( CRConnection *conn )
 	return 1;
 }
 
-void crFileDoDisconnect( CRConnection *conn )
+static void
+crFileDoDisconnect( CRConnection *conn )
 {
 	close( conn->fd );
 	conn->type = CR_NO_CONNECTION;
-	memcpy( cr_file.conns + conn->index, cr_file.conns + conn->index+1, 
+	crMemcpy( cr_file.conns + conn->index, cr_file.conns + conn->index+1, 
 		(cr_file.num_conns - conn->index - 1)*sizeof(*(cr_file.conns)) );
 	cr_file.num_conns--;
 }
 
-void crFileConnection( CRConnection *conn )
+void
+crFileConnection( CRConnection *conn )
 {
 	int n_bytes;
 
@@ -357,7 +357,7 @@ void crFileConnection( CRConnection *conn )
 	conn->sizeof_buffer_header = sizeof( CRFileBuffer );
 	conn->actual_network = 0;
 
-	conn->filename = strdup( conn->hostname );
+	conn->filename = crStrdup( conn->hostname );
 
 	n_bytes = ( cr_file.num_conns + 1 ) * sizeof(*cr_file.conns);
 	crRealloc( (void **) &cr_file.conns, n_bytes );
@@ -365,9 +365,11 @@ void crFileConnection( CRConnection *conn )
 	cr_file.conns[cr_file.num_conns++] = conn;
 }
 
-CRConnection** crFileDump( int* num )
+CRConnection**
+crFileDump( int* num )
 {
 	*num = cr_file.num_conns;
 
 	return cr_file.conns;
 }
+

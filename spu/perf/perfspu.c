@@ -5,10 +5,10 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include "cr_mothership.h"
 #include "cr_spu.h"
 #include "cr_error.h"
+#include "cr_string.h"
 #include "cr_mem.h"
 #include "cr_pixeldata.h"
 #include "perfspu.h"
@@ -37,7 +37,7 @@ void perfspuDump( char *str )
 	}
 }
 
-void perfspuDumpVertices(char *pstring, PerfVertex *old, PerfVertex *new)
+static void perfspuDumpVertices(char *pstring, PerfVertex *old, PerfVertex *new)
 {
 	char output[200];
 	char str[200];
@@ -79,7 +79,7 @@ void perfspuDumpVertices(char *pstring, PerfVertex *old, PerfVertex *new)
 	perfspuDump( " " );
 }
 
-void perfspuDumpCounters(char *pstring, PerfData *old, PerfData *new)
+static void perfspuDumpCounters(char *pstring, PerfData *old, PerfData *new)
 {
 	PerfPrim *oldprim = &old->vertex_data;
 	PerfPrim *newprim = &new->vertex_data;
@@ -106,7 +106,7 @@ void perfspuDumpCounters(char *pstring, PerfData *old, PerfData *new)
 	crMemcpy(old, new, sizeof(PerfData));
 }
 
-void perfspuInterpretVertexData( PerfVertex *stats, int diff )
+static void perfspuInterpretVertexData( PerfVertex *stats, int diff )
 {
 	if (diff) {
 
@@ -128,7 +128,7 @@ void perfspuInterpretVertexData( PerfVertex *stats, int diff )
 	}
 }
 
-void perfspuCheckVertexData( PerfVertex *stats, PerfVertex *snapshot )
+static void perfspuCheckVertexData( PerfVertex *stats, PerfVertex *snapshot )
 {
 	if (stats->v2d - snapshot->v2d)
 		perfspuInterpretVertexData( stats, stats->v2d - snapshot->v2d );
@@ -182,10 +182,7 @@ void perfspuCheckVertexData( PerfVertex *stats, PerfVertex *snapshot )
 
 
 
-
-
-
-void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
+static void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
 {
 	char rstr[100];
 
@@ -215,7 +212,7 @@ void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
 	perf_spu.super.ChromiumParameteriCR( target, value );
 }
 
-void PERFSPU_APIENTRY perfspuChromiumParameterfCR(GLenum target, GLfloat value)
+static void PERFSPU_APIENTRY perfspuChromiumParameterfCR(GLenum target, GLfloat value)
 {
 	/* We need to check the SPU ID, as in GetChromiumParameter(), this
 	 * way we only set the token on the required SPU */
@@ -240,14 +237,14 @@ void PERFSPU_APIENTRY perfspuChromiumParameterfCR(GLenum target, GLfloat value)
 	perf_spu.super.ChromiumParameterfCR( target, value );
 }
 
-void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
+static void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
 	/* We need to check the SPU ID, as in GetChromiumParameter(), this
 	 * way we only set the token on the required SPU */
 
 	switch (target) {
 	case GL_PERF_SET_TOKEN_CR:
-		strncpy(perf_spu.token, (char *)values, strlen(perf_spu.token));
+		crStrncpy(perf_spu.token, (char *)values, crStrlen(perf_spu.token));
 		break;
 	default:
 		break;
@@ -258,7 +255,7 @@ void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GL
 	perf_spu.super.ChromiumParametervCR( target, type, count, values );
 }
 
-void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
+static void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
 {
 	/* We use the index value to identify the SPU so that we
 	 * return a pointer to the correct stats */
@@ -283,10 +280,7 @@ void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index
 
 
 
-
-
-
-void PERFSPU_APIENTRY perfspuBegin( GLenum mode )
+static void PERFSPU_APIENTRY perfspuBegin( GLenum mode )
 {
 	switch (mode) {
 		case GL_POINTS:
@@ -351,7 +345,7 @@ void PERFSPU_APIENTRY perfspuBegin( GLenum mode )
 	perf_spu.super.Begin( mode );
 }
 
-void PERFSPU_APIENTRY perfspuEnd( )
+static void PERFSPU_APIENTRY perfspuEnd( )
 {
 	perfspuCheckVertexData(perf_spu.framestats.cur_vertex, &perf_spu.framestats.vertex_snapshot);
 
@@ -361,7 +355,7 @@ void PERFSPU_APIENTRY perfspuEnd( )
 	perf_spu.super.End( );
 }
 
-void PERFSPU_APIENTRY perfspuDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+static void PERFSPU_APIENTRY perfspuDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	perf_spu.framestats.draw_pixels += crImageSize( format, type, width, height );
 	if (perf_spu.timer_event)
@@ -370,7 +364,7 @@ void PERFSPU_APIENTRY perfspuDrawPixels( GLsizei width, GLsizei height, GLenum f
 	perf_spu.super.DrawPixels( width, height, format, type, pixels );
 }
 
-void PERFSPU_APIENTRY perfspuReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
+static void PERFSPU_APIENTRY perfspuReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
 {
 	perf_spu.framestats.read_pixels += crImageSize( format, type, width, height );
 	if (perf_spu.timer_event)
@@ -379,7 +373,7 @@ void PERFSPU_APIENTRY perfspuReadPixels( GLint x, GLint y, GLsizei width, GLsize
 	perf_spu.super.ReadPixels( x, y, width, height, format, type, pixels );
 }
 
-void PERFSPU_APIENTRY perfspuVertex2d( GLdouble v0, GLdouble v1 )
+static void PERFSPU_APIENTRY perfspuVertex2d( GLdouble v0, GLdouble v1 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v2d++;
@@ -389,7 +383,7 @@ void PERFSPU_APIENTRY perfspuVertex2d( GLdouble v0, GLdouble v1 )
 	perf_spu.super.Vertex2d( v0, v1 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex2dv( GLdouble *v0 )
+static void PERFSPU_APIENTRY perfspuVertex2dv( GLdouble *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v2dv++;
@@ -399,7 +393,7 @@ void PERFSPU_APIENTRY perfspuVertex2dv( GLdouble *v0 )
 	perf_spu.super.Vertex2dv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex2f( GLfloat v0, GLfloat v1 )
+static void PERFSPU_APIENTRY perfspuVertex2f( GLfloat v0, GLfloat v1 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v2f++;
@@ -409,7 +403,7 @@ void PERFSPU_APIENTRY perfspuVertex2f( GLfloat v0, GLfloat v1 )
 	perf_spu.super.Vertex2f( v0, v1 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex2fv( GLfloat *v0 )
+static void PERFSPU_APIENTRY perfspuVertex2fv( GLfloat *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v2fv++;
@@ -419,7 +413,7 @@ void PERFSPU_APIENTRY perfspuVertex2fv( GLfloat *v0 )
 	perf_spu.super.Vertex2fv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex2i( GLint v0, GLint v1 )
+static void PERFSPU_APIENTRY perfspuVertex2i( GLint v0, GLint v1 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v2i++;
@@ -429,7 +423,7 @@ void PERFSPU_APIENTRY perfspuVertex2i( GLint v0, GLint v1 )
 	perf_spu.super.Vertex2i( v0, v1 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex2iv( GLint *v0 )
+static void PERFSPU_APIENTRY perfspuVertex2iv( GLint *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v2iv++;
@@ -439,7 +433,7 @@ void PERFSPU_APIENTRY perfspuVertex2iv( GLint *v0 )
 	perf_spu.super.Vertex2iv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex2s( GLshort v0, GLshort v1 )
+static void PERFSPU_APIENTRY perfspuVertex2s( GLshort v0, GLshort v1 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v2s++;
@@ -449,7 +443,7 @@ void PERFSPU_APIENTRY perfspuVertex2s( GLshort v0, GLshort v1 )
 	perf_spu.super.Vertex2s( v0, v1 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex2sv( GLshort *v0 )
+static void PERFSPU_APIENTRY perfspuVertex2sv( GLshort *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v2sv++;
@@ -459,7 +453,7 @@ void PERFSPU_APIENTRY perfspuVertex2sv( GLshort *v0 )
 	perf_spu.super.Vertex2sv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex3d( GLdouble v0, GLdouble v1, GLdouble v2)
+static void PERFSPU_APIENTRY perfspuVertex3d( GLdouble v0, GLdouble v1, GLdouble v2)
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v3d++;
@@ -469,7 +463,7 @@ void PERFSPU_APIENTRY perfspuVertex3d( GLdouble v0, GLdouble v1, GLdouble v2)
 	perf_spu.super.Vertex3d( v0, v1, v2 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex3dv( GLdouble *v0 )
+static void PERFSPU_APIENTRY perfspuVertex3dv( GLdouble *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v3dv++;
@@ -479,7 +473,7 @@ void PERFSPU_APIENTRY perfspuVertex3dv( GLdouble *v0 )
 	perf_spu.super.Vertex3dv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex3f( GLfloat v0, GLfloat v1, GLfloat v2 )
+static void PERFSPU_APIENTRY perfspuVertex3f( GLfloat v0, GLfloat v1, GLfloat v2 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v3f++;
@@ -489,7 +483,7 @@ void PERFSPU_APIENTRY perfspuVertex3f( GLfloat v0, GLfloat v1, GLfloat v2 )
 	perf_spu.super.Vertex3f( v0, v1, v2 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex3fv( GLfloat *v0)
+static void PERFSPU_APIENTRY perfspuVertex3fv( GLfloat *v0)
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v3fv++;
@@ -499,7 +493,7 @@ void PERFSPU_APIENTRY perfspuVertex3fv( GLfloat *v0)
 	perf_spu.super.Vertex3fv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex3i( GLint v0, GLint v1, GLint v2 )
+static void PERFSPU_APIENTRY perfspuVertex3i( GLint v0, GLint v1, GLint v2 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v3i++;
@@ -509,7 +503,7 @@ void PERFSPU_APIENTRY perfspuVertex3i( GLint v0, GLint v1, GLint v2 )
 	perf_spu.super.Vertex3i( v0, v1, v2 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex3iv( GLint *v0 )
+static void PERFSPU_APIENTRY perfspuVertex3iv( GLint *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v3iv++;
@@ -519,7 +513,7 @@ void PERFSPU_APIENTRY perfspuVertex3iv( GLint *v0 )
 	perf_spu.super.Vertex3iv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex3s( GLshort v0, GLshort v1, GLshort v2 )
+static void PERFSPU_APIENTRY perfspuVertex3s( GLshort v0, GLshort v1, GLshort v2 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v3s++;
@@ -529,7 +523,7 @@ void PERFSPU_APIENTRY perfspuVertex3s( GLshort v0, GLshort v1, GLshort v2 )
 	perf_spu.super.Vertex3s( v0, v1, v2 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex3sv( GLshort *v0 )
+static void PERFSPU_APIENTRY perfspuVertex3sv( GLshort *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v3sv++;
@@ -539,7 +533,7 @@ void PERFSPU_APIENTRY perfspuVertex3sv( GLshort *v0 )
 	perf_spu.super.Vertex3sv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex4d( GLdouble v0, GLdouble v1, GLdouble v2, GLdouble v3 )
+static void PERFSPU_APIENTRY perfspuVertex4d( GLdouble v0, GLdouble v1, GLdouble v2, GLdouble v3 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v4d++;
@@ -549,7 +543,7 @@ void PERFSPU_APIENTRY perfspuVertex4d( GLdouble v0, GLdouble v1, GLdouble v2, GL
 	perf_spu.super.Vertex4d( v0, v1, v2, v3 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex4dv( GLdouble *v0 )
+static void PERFSPU_APIENTRY perfspuVertex4dv( GLdouble *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v4dv++;
@@ -559,7 +553,7 @@ void PERFSPU_APIENTRY perfspuVertex4dv( GLdouble *v0 )
 	perf_spu.super.Vertex4dv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex4f( GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
+static void PERFSPU_APIENTRY perfspuVertex4f( GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v4f++;
@@ -569,7 +563,7 @@ void PERFSPU_APIENTRY perfspuVertex4f( GLfloat v0, GLfloat v1, GLfloat v2, GLflo
 	perf_spu.super.Vertex4f( v0, v1, v2, v3 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex4fv( GLfloat *v0 )
+static void PERFSPU_APIENTRY perfspuVertex4fv( GLfloat *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v4fv++;
@@ -579,7 +573,7 @@ void PERFSPU_APIENTRY perfspuVertex4fv( GLfloat *v0 )
 	perf_spu.super.Vertex4fv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex4i( GLint v0, GLint v1, GLint v2, GLint v3 )
+static void PERFSPU_APIENTRY perfspuVertex4i( GLint v0, GLint v1, GLint v2, GLint v3 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v4i++;
@@ -589,7 +583,7 @@ void PERFSPU_APIENTRY perfspuVertex4i( GLint v0, GLint v1, GLint v2, GLint v3 )
 	perf_spu.super.Vertex4i( v0, v1, v2, v3 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex4iv( GLint *v0 )
+static void PERFSPU_APIENTRY perfspuVertex4iv( GLint *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v4iv++;
@@ -599,7 +593,7 @@ void PERFSPU_APIENTRY perfspuVertex4iv( GLint *v0 )
 	perf_spu.super.Vertex4iv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex4s( GLshort v0, GLshort v1, GLshort v2, GLshort v3 )
+static void PERFSPU_APIENTRY perfspuVertex4s( GLshort v0, GLshort v1, GLshort v2, GLshort v3 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v4s++;
@@ -609,7 +603,7 @@ void PERFSPU_APIENTRY perfspuVertex4s( GLshort v0, GLshort v1, GLshort v2, GLsho
 	perf_spu.super.Vertex4s( v0, v1, v2, v3 );
 }
 
-void PERFSPU_APIENTRY perfspuVertex4sv( GLshort *v0 )
+static void PERFSPU_APIENTRY perfspuVertex4sv( GLshort *v0 )
 {
 	if (perf_spu.timer_event)
 		perf_spu.timerstats.cur_vertex->v4sv++;
@@ -619,7 +613,7 @@ void PERFSPU_APIENTRY perfspuVertex4sv( GLshort *v0 )
 	perf_spu.super.Vertex4sv( v0 );
 }
 
-void PERFSPU_APIENTRY perfspuClear( GLbitfield mask )
+static void PERFSPU_APIENTRY perfspuClear( GLbitfield mask )
 {
 	char cstr[100];
 
@@ -634,7 +628,7 @@ void PERFSPU_APIENTRY perfspuClear( GLbitfield mask )
 	perf_spu.super.Clear( mask );
 }
 
-void PERFSPU_APIENTRY perfspuFinish( )
+static void PERFSPU_APIENTRY perfspuFinish( )
 {
 	char fstr[100];
 
@@ -645,7 +639,7 @@ void PERFSPU_APIENTRY perfspuFinish( )
 	perf_spu.super.Finish( );
 }
 
-void PERFSPU_APIENTRY perfspuFlush( )
+static void PERFSPU_APIENTRY perfspuFlush( )
 {
 	char fstr[100];
 
@@ -656,7 +650,7 @@ void PERFSPU_APIENTRY perfspuFlush( )
 	perf_spu.super.Flush( );
 }
 
-void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
+static void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 {
 	static float elapsed_base = 0;
 	char sstr[100];
@@ -691,7 +685,7 @@ void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 	perf_spu.super.SwapBuffers( window, flags );
 }
 
-SPUNamedFunctionTable perf_table[] = {
+SPUNamedFunctionTable _cr_perf_table[] = {
 	{ "ChromiumParameteriCR", (SPUGenericFunction) perfspuChromiumParameteriCR },
 	{ "ChromiumParameterfCR", (SPUGenericFunction) perfspuChromiumParameterfCR },
 	{ "ChromiumParametervCR", (SPUGenericFunction) perfspuChromiumParametervCR },

@@ -14,11 +14,11 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue offset[CR_MAX_BITARRAY];
-	GLbitvalue mode[CR_MAX_BITARRAY];
-	GLbitvalue stipple[CR_MAX_BITARRAY];
-	GLbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue offset[CR_MAX_BITARRAY];
+	CRbitvalue mode[CR_MAX_BITARRAY];
+	CRbitvalue stipple[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRPolygonBits;
 
 typedef struct {
@@ -37,12 +37,11 @@ typedef struct {
 	GLint		  stipple[32];
 } CRPolygonState;
 
-void crStatePolygonInitBits(CRPolygonBits *p);
-void crStatePolygonInit(CRPolygonState *p);
+void crStatePolygonInit(CRContext *ctx);
 
-void crStatePolygonDiff(CRPolygonBits *bb, GLbitvalue *bitID, 
+void crStatePolygonDiff(CRPolygonBits *bb, CRbitvalue *bitID, 
 		CRPolygonState *from, CRPolygonState *to);
-void crStatePolygonSwitch(CRPolygonBits *bb, GLbitvalue *bitID, 
+void crStatePolygonSwitch(CRPolygonBits *bb, CRbitvalue *bitID, 
 		CRPolygonState *from, CRPolygonState *to);
 
 #ifdef __cplusplus

@@ -23,7 +23,7 @@
 GLfloat Red[] = {1.0, 0.0, 0.0, 1.0};
 GLfloat Blue [] = {0.0, 0.0, 1.0, 1.0};
 
-void
+static void
 draw(void)
 {
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -53,7 +53,7 @@ draw(void)
 
 
 
-void
+static void
 keyboard(unsigned char ch, int x, int y)
 {
 	(void) x;

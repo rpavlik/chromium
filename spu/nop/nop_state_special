@@ -31,3 +31,4 @@ GetTexParameteriv
 IsEnabled 
 IsList 
 AreTexturesResident
+GenTextures

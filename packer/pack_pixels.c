@@ -8,7 +8,6 @@
 #include "cr_pixeldata.h"
 #include "cr_error.h"
 #include "cr_mem.h"
-#include "state/cr_pixel.h"
 #include "cr_version.h"
 
 

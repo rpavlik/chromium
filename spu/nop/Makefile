@@ -9,13 +9,13 @@ include ${TOP}/arch.mk
 
 SHARED = 1
 LIBRARY = nopspu
-FILES = nopspu nopspu_init
+FILES = nopspu nopspu_init nopspu_config
 
 ifdef WINDOWS
 TRACKS_STATE = 1
-LIBRARIES = crutil spuload
+LIBRARIES = crmothership crutil spuload
 else
-LIBRARIES = crutil spuload crstate
+LIBRARIES = crmothership crutil spuload crstate
 endif
 
 
@@ -32,6 +32,6 @@ LIB_DEFS += nop.def
 
 include ${TOP}/cr.mk
 
-nopspu.c: nop.py nop_state_special
+nopspu.c: nop.py nop_state_special nop_special
 	@$(ECHO) Building the NOP SPU
 	@$(PYTHON) $< > $@

@@ -212,8 +212,8 @@ GLclampf  GL_COLOR_CLEAR_VALUE        g->buffer.colorClearValue.r g->buffer.colo
 GLclampf  GL_INDEX_CLEAR_VALUE        g->buffer.indexClearValue
 GLclampd  GL_DEPTH_CLEAR_VALUE        g->buffer.depthClearValue
 GLfloat   GL_ACCUM_CLEAR_VALUE        g->buffer.accumClearValue.r g->buffer.accumClearValue.g g->buffer.accumClearValue.b g->buffer.accumClearValue.a
-GLenum    GL_BLEND_SRC                g->buffer.blendSrc
-GLenum    GL_BLEND_DST                g->buffer.blendDst
+GLenum    GL_BLEND_SRC                g->buffer.blendSrcRGB
+GLenum    GL_BLEND_DST                g->buffer.blendDstRGB
 #GLenum    GL_BLEND_EQUATION           g->buffer.blendEquation
 #GLclampf  GL_BLEND_COLOR              g->buffer.blendColor.r g->buffer.blendColor.g g->buffer.blendColor.b g->buffer.blendColor.a
 GLenum    GL_DEPTH_FUNC               g->buffer.depthFunc

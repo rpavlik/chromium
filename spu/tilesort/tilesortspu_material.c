@@ -7,6 +7,7 @@
 #include "cr_packfunctions.h"
 #include "state/cr_statefuncs.h"
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 
 void TILESORTSPU_APIENTRY tilesortspu_Materiali(GLenum face, GLenum mode, GLint param)
 {

@@ -15,12 +15,12 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue func[CR_MAX_BITARRAY];
-	GLbitvalue op[CR_MAX_BITARRAY];
-	GLbitvalue clearValue[CR_MAX_BITARRAY];
-	GLbitvalue writeMask[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue func[CR_MAX_BITARRAY];
+	CRbitvalue op[CR_MAX_BITARRAY];
+	CRbitvalue clearValue[CR_MAX_BITARRAY];
+	CRbitvalue writeMask[CR_MAX_BITARRAY];
 } CRStencilBits;
 
 typedef struct {
@@ -35,12 +35,11 @@ typedef struct {
 	GLint		writeMask;
 } CRStencilState;
 
-void crStateStencilInitBits (CRStencilBits *s);
-void crStateStencilInit(CRStencilState *s);
+void crStateStencilInit(CRContext *ctx);
 
-void crStateStencilDiff(CRStencilBits *bb, GLbitvalue *bitID, 
+void crStateStencilDiff(CRStencilBits *bb, CRbitvalue *bitID, 
 		CRStencilState *from, CRStencilState *to);
-void crStateStencilSwitch(CRStencilBits *bb, GLbitvalue *bitID, 
+void crStateStencilSwitch(CRStencilBits *bb, CRbitvalue *bitID, 
 		CRStencilState *from, CRStencilState *to);
 
 #ifdef __cplusplus

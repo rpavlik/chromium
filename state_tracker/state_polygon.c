@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "cr_mem.h"
 #include "cr_pixeldata.h"
@@ -12,24 +11,36 @@
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStatePolygonInit(CRPolygonState *p) 
+void crStatePolygonInit(CRContext *ctx)
 {
+	CRPolygonState *p = &ctx->polygon;
+        CRStateBits *sb = GetCurrentBits();
+	CRPolygonBits *pb = &(sb->polygon);
 	int i;
+
 	p->polygonSmooth = GL_FALSE;
 	p->polygonOffsetFill = GL_FALSE;
 	p->polygonOffsetLine = GL_FALSE;
 	p->polygonOffsetPoint = GL_FALSE;
 	p->polygonStipple = GL_FALSE;
 	p->cullFace = GL_FALSE;
+	RESET(pb->enable, ctx->bitid);
 
 	p->offsetFactor = 0;
 	p->offsetUnits = 0;
+	RESET(pb->offset, ctx->bitid);
+
 	p->cullFaceMode = GL_BACK;
 	p->frontFace = GL_CCW;
 	p->frontMode = GL_FILL;
 	p->backMode = GL_FILL;
+	RESET(pb->mode, ctx->bitid);
+
 	for (i=0; i<32; i++)
 		p->stipple[i] = 0xFFFFFFFF;
+	RESET(pb->stipple, ctx->bitid);
+
+	RESET(pb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateCullFace(GLenum mode) 

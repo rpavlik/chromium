@@ -35,7 +35,7 @@ keys.sort();
 
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
-	print '\n%s ERROR_APIENTRY error%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
+	print '\nstatic %s ERROR_APIENTRY error%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
 	print '{'
 	print '\tcrError( "ERROR SPU: Unsupported function gl%s called!" );' % func_name
 	for name in names:

@@ -50,6 +50,69 @@ extern "C" {
 /*****     Define things that might have been missing in gl.h     *****/
 /**********************************************************************/
 
+/* 
+ * Define missing GLX tokens:
+ */
+
+#ifndef GLX_SAMPLE_BUFFERS_SGIS
+#define GLX_SAMPLE_BUFFERS_SGIS    0x186a0 /*100000*/
+#endif
+#ifndef GLX_SAMPLES_SGIS
+#define GLX_SAMPLES_SGIS           0x186a1 /*100001*/
+#endif
+#ifndef GLX_VISUAL_CAVEAT_EXT
+#define GLX_VISUAL_CAVEAT_EXT       0x20  /* visual_rating extension type */
+#endif
+
+/*
+ * Define missing WGL tokens:
+ */
+#ifndef WGL_TYPE_RGBA_EXT
+#define WGL_TYPE_RGBA_EXT			0x202B
+#endif
+#ifndef WGL_RED_BITS_EXT
+#define WGL_RED_BITS_EXT			0x2015
+#endif
+#ifndef WGL_GREEN_BITS_EXT
+#define WGL_GREEN_BITS_EXT			0x2017
+#endif
+#ifndef WGL_BLUE_BITS_EXT
+#define WGL_BLUE_BITS_EXT			0x2019
+#endif
+#ifndef WGL_ALPHA_BITS_EXT
+#define WGL_ALPHA_BITS_EXT			0x201B
+#endif
+#ifndef WGL_DOUBLE_BUFFER_EXT
+#define WGL_DOUBLE_BUFFER_EXT			0x2011
+#endif
+#ifndef WGL_STEREO_EXT
+#define WGL_STEREO_EXT				0x2012
+#endif
+#ifndef WGL_ACCUM_RED_BITS_EXT
+#define WGL_ACCUM_RED_BITS_EXT			0x201E
+#endif
+#ifndef WGL_ACCUM_GREEN_BITS_EXT
+#define WGL_ACCUM_GREEN_BITS_EXT		0x201F
+#endif
+#ifndef WGL_ACCUM_BLUE_BITS_EXT
+#define WGL_ACCUM_BLUE_BITS_EXT			0x2020
+#endif
+#ifndef WGL_ACCUM_ALPHA_BITS_EXT
+#define WGL_ACCUM_ALPHA_BITS_EXT		0x2021
+#endif
+#ifndef WGL_DEPTH_BITS_EXT
+#define WGL_DEPTH_BITS_EXT			0x2022
+#endif
+#ifndef WGL_STENCIL_BITS_EXT
+#define WGL_STENCIL_BITS_EXT			0x2023
+#endif
+#ifndef WGL_SAMPLE_BUFFERS_EXT
+#define WGL_SAMPLE_BUFFERS_EXT			0x2041
+#endif
+#ifndef WGL_SAMPLES_EXT
+#define WGL_SAMPLES_EXT				0x2042
+#endif
+
 /*
  * Define missing 1.2 tokens:
  */
@@ -180,6 +243,10 @@ typedef void (*CR_GLXFuncPtr)();
 CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 #endif /* GLX_ARB_get_proc_address */
 
+#ifndef GLX_VERSION_1_4
+CR_GLXFuncPtr glXGetProcAddress( const GLubyte *name );
+#endif /* GLX_ARB_get_proc_address */
+
 
 #ifdef WINDOWS
 /* XXX how about this prototype for wglGetProcAddress()?
@@ -213,7 +280,7 @@ typedef void (APIENTRY *glSemaphoreVCRProc) (GLuint name);
 #define GL_CR_bounds_info 1
 /* Private, internal Chromium function */
 /*
-typedef void (APIENTRY *glBoundsInfoCRProc)(const GLrecti *, const GLbyte *, GLint, GLint);
+typedef void (APIENTRY *glBoundsInfoCRProc)(const CRrecti *, const GLbyte *, GLint, GLint);
 */
 #endif /* GL_CR_bounds_info */
 
@@ -348,10 +415,19 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #endif /* GL_CR_readback_barrier_size */
 
 
+#ifndef GL_CR_server_id_sharing
+#define GL_CR_server_id_sharing 1
+
+#define GL_SHARED_DISPLAY_LISTS_CR      0x8B12
+#define GL_SHARED_TEXTURE_OBJECTS_CR    0x8B13
+#define GL_SHARED_PROGRAMS_CR           0x8B14
+
+#endif /* GL_CR_server_id_sharing */
+
 
 
 /**********************************************************************/
-/*****                Chromium-specifid API                       *****/
+/*****                Chromium-specific API                       *****/
 /**********************************************************************/
 
 

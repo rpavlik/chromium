@@ -235,3 +235,5 @@ FogCoorddvEXT
 FogCoordPointerEXT
 PointParameterfARB
 PointParameterfvARB
+ProgramParameter4fvNV
+ProgramParameter4dvNV

@@ -7,11 +7,18 @@
 #define CR_NOPSPU_H
 
 #include "cr_glstate.h"
+#include "cr_spu.h"
 
 typedef struct {
+	int id;
+
+	unsigned int return_ids;
+
 	CRContext *ctx;
 } NOPSPU;
 
 extern NOPSPU nop_spu;
+extern void nopspuGatherConfiguration(void);
+extern SPUOptions nopSPUOptions[];
 
 #endif /* CR_NOPSPU_H */

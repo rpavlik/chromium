@@ -13,12 +13,12 @@
 #include "renderspu.h"
 #include <stdio.h>
 
-static SPUNamedFunctionTable render_table[1000];
+static SPUNamedFunctionTable _cr_render_table[1000];
 
 SPUFunctions render_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	render_table /* THE ACTUAL FUNCTIONS */
+	_cr_render_table /* THE ACTUAL FUNCTIONS */
 };
 
 RenderSPU render_spu;
@@ -27,7 +27,7 @@ RenderSPU render_spu;
 CRtsd _RenderTSD;
 #endif
 
-void swapsyncConnect()
+static void swapsyncConnect(void)
 {
 	char hostname[4096], protocol[4096];
 	unsigned short port;
@@ -62,13 +62,14 @@ void swapsyncConnect()
 }
 
 
-SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id, unsigned int num_contexts )
+static SPUFunctions *
+renderSPUInit( int id, SPU *child, SPU *self,
+               unsigned int context_id, unsigned int num_contexts )
 {
 	int numFuncs, numSpecial;
 	GLint defaultWin, defaultCtx;
 	/* Don't ask for ALPHA, if we don't have it, we fail immediately */
-	const GLuint visualBits = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT | CR_STENCIL_BIT /*| CR_ALPHA_BIT*/;
+	GLuint visualBits = CR_RGB_BIT;
 	WindowInfo *windowInfo;
 
 	(void) child;
@@ -90,10 +91,10 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 
 
 	/* Get our special functions. */
-	numSpecial = renderspuCreateFunctions( render_table );
+	numSpecial = renderspuCreateFunctions( _cr_render_table );
 
 	/* Get the OpenGL functions. */
-	numFuncs = crLoadOpenGL( &render_spu.ws, render_table + numSpecial );
+	numFuncs = crLoadOpenGL( &render_spu.ws, _cr_render_table + numSpecial );
 	if (numFuncs == 0) {
 		crError("The render SPU was unable to load the native OpenGL library");
 		return NULL;
@@ -101,6 +102,8 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 
 	numFuncs += numSpecial;
 
+	render_spu.window_id = 0;
+	render_spu.context_id = 0;
 	render_spu.contextTable = crAllocHashtable();
 	render_spu.windowTable = crAllocHashtable();
 
@@ -109,11 +112,20 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 	 * a client can use them without calling CreateContext or WindowCreate.
 	 */
 	defaultWin = renderspuWindowCreate( NULL, visualBits );
-	defaultCtx = renderspuCreateContext( NULL, visualBits );
-
+	if (defaultWin < 0) {
+		/* If we failed to get a default single buffered visual,
+		 * let's try a double buffered one
+		 */
+		crDebug( "WindowCreate returned %d, trying CR_DOUBLE_BIT", defaultWin );
+		visualBits = CR_RGB_BIT | CR_DOUBLE_BIT;
+		defaultWin = renderspuWindowCreate( NULL, visualBits );
+	}
 	crDebug( "WindowCreate returned %d", defaultWin );
 	CRASSERT(defaultWin == 0);
+
+	defaultCtx = renderspuCreateContext( NULL, visualBits );
 	CRASSERT(defaultCtx == 0);
+
 	renderspuMakeCurrent( defaultWin, 0, defaultCtx );
 
 	windowInfo = (WindowInfo *) crHashtableSearch(render_spu.windowTable, 0);
@@ -126,7 +138,7 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 	 * extensions, because the context has to be bound before
 	 * wglGetProcAddress will work correctly.  No such issue with GLX though.
 	 */
-	numFuncs += crLoadOpenGLExtensions( &render_spu.ws, render_table + numFuncs );
+	numFuncs += crLoadOpenGLExtensions( &render_spu.ws, _cr_render_table + numFuncs );
 	CRASSERT(numFuncs < 1000);
 
 	render_spu.barrierHash = crAllocHashtable();
@@ -140,7 +152,8 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 	return &render_functions;
 }
 
-void renderSPUSelfDispatch(SPUDispatchTable *self)
+
+static void renderSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(render_spu.self) );
 	crSPUCopyDispatchTable( &(render_spu.self), self );
@@ -148,8 +161,32 @@ void renderSPUSelfDispatch(SPUDispatchTable *self)
 	render_spu.server = (CRServer *)(self->server);
 }
 
-int renderSPUCleanup(void)
+
+static int renderSPUCleanup(void)
 {
+	WindowInfo *window;
+	ContextInfo *context;
+	unsigned int i, num_elements;
+
+	num_elements = crHashtableNumElements( render_spu.contextTable );
+	for (i = 0; i < num_elements; i++) {
+		context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, i);
+		renderspu_SystemDestroyContext( context );
+		crHashtableDelete(render_spu.contextTable, i, GL_TRUE);
+	}
+
+	num_elements = crHashtableNumElements( render_spu.windowTable );
+	for (i = 0; i < num_elements; i++) {
+		window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, i);
+		renderspu_SystemDestroyWindow( window );
+		crHashtableDelete(render_spu.windowTable, i, GL_TRUE);
+	}
+
+	crFreeHashtable(render_spu.windowTable);
+	crFreeHashtable(render_spu.contextTable);
+
+	crFreeHashtable(render_spu.barrierHash);
+
 	return 1;
 }
 

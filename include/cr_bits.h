@@ -30,7 +30,12 @@
 #define CR_MAX_CONTEXTS      512
 #define CR_MAX_BITARRAY      (CR_MAX_CONTEXTS / 32) /* 32 contexts per uint */
 
-
+static INLINE void RESET( unsigned int *b, const unsigned int *d )
+{
+	int j;
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		b[j] |= d[j];
+}
 static INLINE void DIRTY( unsigned int *b, const unsigned int *d )
 {
 	int j;

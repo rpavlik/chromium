@@ -7,20 +7,24 @@
 #include "cr_net.h"
 #include "cr_mem.h"
 #include "cr_error.h"
+#include "net_internals.h"
 
-void crDevnullWriteExact( CRConnection *conn, void *buf, unsigned int len )
+static void
+crDevnullWriteExact( CRConnection *conn, void *buf, unsigned int len )
 {
 	(void) conn;
 	(void) buf;
 	(void) len;
 }
 
-void *crDevnullAlloc( CRConnection *conn )
+static void *
+crDevnullAlloc( CRConnection *conn )
 {
 	return crAlloc( conn->buffer_size );
 }
 
-void crDevnullSingleRecv( CRConnection *conn, void *buf, unsigned int len )
+static void
+crDevnullSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 {
 	crError( "You can't receive data on a devnull connection!" );
 	(void) conn;
@@ -28,13 +32,15 @@ void crDevnullSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 	(void) len;
 }
 
-void crDevnullFree( CRConnection *conn, void *buf )
+static void
+crDevnullFree( CRConnection *conn, void *buf )
 {
 	crFree( buf );
 	(void) conn;
 }
 
-void crDevnullSend( CRConnection *conn, void **bufp,
+static void
+crDevnullSend( CRConnection *conn, void **bufp,
 				 void *start, unsigned int len )
 {
 	
@@ -54,33 +60,38 @@ void crDevnullSend( CRConnection *conn, void **bufp,
 	(void) len;
 }
 
-int crDevnullRecv( void )
+int
+crDevnullRecv( void )
 {
 	crError( "You can't receive data on a DevNull network, stupid." );
 	return 0;
 }
 
-void crDevnullInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int mtu )
+void
+crDevnullInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 {
+	(void) rfl;
+	(void) cfl;
 	(void) mtu;
-	(void) recvFunc;
-	(void) closeFunc;
 }
 
-void crDevnullAccept( CRConnection *conn, char *hostname, unsigned short port )
+static void
+crDevnullAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	crError( "Well, you *could* accept a devnull client, but you'd be disappointed. ");
 	(void) conn;
 	(void) port;
 }
 
-int crDevnullDoConnect( CRConnection *conn )
+static int
+crDevnullDoConnect( CRConnection *conn )
 {
 	(void) conn; 
 	return 1;
 }
 
-void crDevnullDoDisconnect( CRConnection *conn )
+static void
+crDevnullDoDisconnect( CRConnection *conn )
 {
 	(void) conn;
 }

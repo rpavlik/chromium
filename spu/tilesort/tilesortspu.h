@@ -32,7 +32,7 @@ typedef struct {
 	int num_extents;
 	int display_ndx[CR_MAX_EXTENTS];
 	GLfloat world_extents[CR_MAX_EXTENTS][8]; /* x1, y1, x2, y2, x3, y3, ... */
-	GLrecti extents[CR_MAX_EXTENTS];
+	CRrecti extents[CR_MAX_EXTENTS];
 	CRContext *context[CR_MAX_CONTEXTS];
 	GLint serverCtx[CR_MAX_CONTEXTS];
 
@@ -147,12 +147,12 @@ typedef struct {
 } TileSortSPU;
 
 typedef struct {
-	GLbitvalue hits[CR_MAX_BITARRAY];
+	CRbitvalue hits[CR_MAX_BITARRAY];
 	GLvectorf  screenMin;
 	GLvectorf  screenMax;
 	GLvectorf  objectMin;
 	GLvectorf  objectMax;
-	GLrecti    pixelBounds;
+	CRrecti    pixelBounds;
 } TileSortBucketInfo;
 
 
@@ -200,5 +200,8 @@ void TILESORTSPU_APIENTRY tilesortspu_End(void);
 
 void tilesortspuSendServerBuffer( int server_index );
 void tilesortspuBucketGeometry(TileSortBucketInfo *info);
+
+extern void _math_init_eval(void);
+
 
 #endif /* TILESORT_SPU_H */

@@ -6,7 +6,7 @@
 
 #include "printspu.h"
 
-void PRINT_APIENTRY printLoadMatrixf( GLfloat *m )
+void PRINT_APIENTRY printLoadMatrixf( const GLfloat *m )
 {
 	int i;
 	fprintf( print_spu.fp, "LoadMatrixf( [" );
@@ -23,7 +23,7 @@ void PRINT_APIENTRY printLoadMatrixf( GLfloat *m )
 	print_spu.passthrough.LoadMatrixf( m );
 }
 
-void PRINT_APIENTRY printLoadMatrixd( GLdouble *m )
+void PRINT_APIENTRY printLoadMatrixd( const GLdouble *m )
 {
 	int i;
 	fprintf( print_spu.fp, "LoadMatrixd( [" );
@@ -40,7 +40,7 @@ void PRINT_APIENTRY printLoadMatrixd( GLdouble *m )
 	print_spu.passthrough.LoadMatrixd( m );
 }
 
-void PRINT_APIENTRY printMultMatrixf( GLfloat *m )
+void PRINT_APIENTRY printMultMatrixf( const GLfloat *m )
 {
 	int i;
 	fprintf( print_spu.fp, "MultMatrixf( [" );
@@ -57,7 +57,7 @@ void PRINT_APIENTRY printMultMatrixf( GLfloat *m )
 	print_spu.passthrough.MultMatrixf( m );
 }
 
-void PRINT_APIENTRY printMultMatrixd( GLdouble *m )
+void PRINT_APIENTRY printMultMatrixd( const GLdouble *m )
 {
 	int i;
 	fprintf( print_spu.fp, "MultMatrixd( [" );

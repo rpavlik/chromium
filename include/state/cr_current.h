@@ -14,19 +14,19 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue  dirty[CR_MAX_BITARRAY];
-	GLbitvalue  enable[CR_MAX_BITARRAY];
-	GLbitvalue  color[CR_MAX_BITARRAY];
-	GLbitvalue  secondaryColor[CR_MAX_BITARRAY];
-	GLbitvalue  index[CR_MAX_BITARRAY];
-	GLbitvalue  texCoord[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	GLbitvalue  normal[CR_MAX_BITARRAY];
-	GLbitvalue  raster[CR_MAX_BITARRAY];
-	GLbitvalue  edgeFlag[CR_MAX_BITARRAY];
+	CRbitvalue  dirty[CR_MAX_BITARRAY];
+	CRbitvalue  enable[CR_MAX_BITARRAY];
+	CRbitvalue  color[CR_MAX_BITARRAY];
+	CRbitvalue  secondaryColor[CR_MAX_BITARRAY];
+	CRbitvalue  index[CR_MAX_BITARRAY];
+	CRbitvalue  texCoord[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue  normal[CR_MAX_BITARRAY];
+	CRbitvalue  raster[CR_MAX_BITARRAY];
+	CRbitvalue  edgeFlag[CR_MAX_BITARRAY];
 #ifdef CR_EXT_fog_coord
-	GLbitvalue  fogCoord[CR_MAX_BITARRAY];
+	CRbitvalue  fogCoord[CR_MAX_BITARRAY];
 #endif
-	GLbitvalue  vertexAttrib[CR_MAX_VERTEX_ATTRIBS][CR_MAX_BITARRAY];
+	CRbitvalue  vertexAttrib[CR_MAX_VERTEX_ATTRIBS][CR_MAX_BITARRAY];
 } CRCurrentBits;
 
 typedef struct {
@@ -97,15 +97,14 @@ typedef struct {
 
 } CRCurrentState;
 
-void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *current );
-void crStateCurrentInitBits( CRCurrentBits *currentbits );
+void crStateCurrentInit( CRContext *ctx );
 
 void crStateCurrentRecover( void );
 
-void crStateCurrentDiff(CRCurrentBits *bb, GLbitvalue *bitID,
+void crStateCurrentDiff(CRCurrentBits *bb, CRbitvalue *bitID,
 		CRCurrentState *from, CRCurrentState *to);
 void crStateCurrentSwitch(GLuint maxTexUnits,
-		CRCurrentBits *bb, GLbitvalue *bitID,
+		CRCurrentBits *bb, CRbitvalue *bitID,
 		CRCurrentState *from, CRCurrentState *to);
 
 #ifdef __cplusplus

@@ -12,7 +12,6 @@ struct CRContext;
 typedef struct CRContext CRContext;
 
 #include "cr_version.h"
-#include "state/cr_extensions.h"
 
 #include "state/cr_buffer.h"
 #include "state/cr_client.h"
@@ -25,9 +24,11 @@ typedef struct CRContext CRContext;
 #include "state/cr_limits.h"
 #include "state/cr_line.h"
 #include "state/cr_lists.h"
+#include "state/cr_multisample.h"
 #include "state/cr_pixel.h"
 #include "state/cr_point.h"
 #include "state/cr_polygon.h"
+/*#include "state/cr_program.h"*/
 #include "state/cr_regcombiner.h"
 #include "state/cr_stencil.h"
 #include "state/cr_texture.h"
@@ -49,34 +50,36 @@ extern "C" {
 #endif
 
 typedef struct {
-	CRAttribBits    attrib;
-	CRBufferBits    buffer;
-	CRClientBits    client;
-	CRCurrentBits   current;
-	CREvaluatorBits eval;
-	CRFeedbackBits	feedback;
-	CRFogBits       fog;
-	CRHintBits      hint;
-	CRLightingBits  lighting;
-	CRLineBits      line;
-	CRListsBits     lists;
-	CRPixelBits     pixel;
-	CRPointBits	point;
-	CRPolygonBits   polygon;
+	CRAttribBits      attrib;
+	CRBufferBits      buffer;
+	CRClientBits      client;
+	CRCurrentBits     current;
+	CREvaluatorBits   eval;
+	CRFeedbackBits    feedback;
+	CRFogBits         fog;
+	CRHintBits        hint;
+	CRLightingBits    lighting;
+	CRLineBits        line;
+	CRListsBits       lists;
+	CRMultisampleBits multisample;
+	CRPixelBits       pixel;
+	CRPointBits	      point;
+	CRPolygonBits     polygon;
+   /*	CRProgramBits     program;*/
 	CRRegCombinerBits regcombiner;
-	CRSelectionBits	selection;
-	CRStencilBits   stencil;
-	CRTextureBits   texture;
-	CRTransformBits transform;
-	CRViewportBits  viewport;
+	CRSelectionBits	  selection;
+	CRStencilBits     stencil;
+	CRTextureBits     texture;
+	CRTransformBits   transform;
+	CRViewportBits    viewport;
 } CRStateBits;
 
 typedef void (*CRStateFlushFunc)( void *arg );
 
 struct CRContext {
 	int id;
-	GLbitvalue bitid[CR_MAX_BITARRAY];
-	GLbitvalue neg_bitid[CR_MAX_BITARRAY];
+	CRbitvalue bitid[CR_MAX_BITARRAY];
+	CRbitvalue neg_bitid[CR_MAX_BITARRAY];
 
 	GLenum     renderMode;
 
@@ -85,28 +88,30 @@ struct CRContext {
 	CRStateFlushFunc flush_func;
 	void            *flush_arg;
 
-	CRAttribState    attrib;
-	CRBufferState    buffer;
-	CRClientState    client;
-	CRCurrentState   current;
-	CREvaluatorState eval;
-	CRExtensionState extensions;
-	CRFeedbackState  feedback;
-	CRFogState       fog;
-	CRHintState      hint;
-	CRLightingState  lighting;
-	CRLimitsState    limits;
-	CRLineState      line;
-	CRListsState     lists;
-	CRPixelState     pixel;
-	CRPointState	 point;
-	CRPolygonState   polygon;
+	CRAttribState      attrib;
+	CRBufferState      buffer;
+	CRClientState      client;
+	CRCurrentState     current;
+	CREvaluatorState   eval;
+	CRExtensionState   extensions;
+	CRFeedbackState    feedback;
+	CRFogState         fog;
+	CRHintState        hint;
+	CRLightingState    lighting;
+	CRLimitsState      limits;
+	CRLineState        line;
+	CRListsState       lists;
+	CRMultisampleState multisample;
+	CRPixelState       pixel;
+	CRPointState       point;
+	CRPolygonState     polygon;
+   /*	CRProgramState     program;*/
 	CRRegCombinerState regcombiner;
-	CRSelectionState selection;
-	CRStencilState   stencil;
-	CRTextureState   texture;
-	CRTransformState transform;
-	CRViewportState  viewport;
+	CRSelectionState   selection;
+	CRStencilState     stencil;
+	CRTextureState     texture;
+	CRTransformState   transform;
+	CRViewportState    viewport;
 
 	/* For buffering vertices for selection/feedback */
 	GLuint    vCount;
@@ -115,26 +120,6 @@ struct CRContext {
 	GLboolean lineLoop;
 };
 
-
-#define GLUPDATE_TRANS		0x00001
-#define GLUPDATE_PIXEL		0x00002
-#define GLUPDATE_CURRENT	0x00004
-#define GLUPDATE_VIEWPORT	0x00008
-#define GLUPDATE_FOG		0x00010
-#define GLUPDATE_TEXTURE	0x00020
-#define GLUPDATE_LISTS		0x00040
-#define GLUPDATE_CLIENT		0x00080
-#define GLUPDATE_BUFFER		0x00100
-#define GLUPDATE_HINT		0x00200
-#define GLUPDATE_LIGHTING	0x00400
-#define GLUPDATE_LINE		0x00800
-#define GLUPDATE_POLYGON	0x01000
-#define GLUPDATE_STENCIL	0x02000
-#define GLUPDATE_EVAL		0x04000
-#define GLUPDATE_IMAGING	0x08000
-#define GLUPDATE_SELECTION	0x10000
-#define GLUPDATE_ATTRIB		0x20000
-#define GLUPDATE_REGCOMBINER	0x40000
 
 /*
  * XXX might move these elsewhere someday so that the render SPU is no
@@ -146,7 +131,7 @@ extern const char *__stateChromiumExtensions;
 
 
 void crStateInit(void);
-CRContext *crStateCreateContext(const CRLimitsState *limits);
+CRContext *crStateCreateContext(const CRLimitsState *limits, GLint visBits);
 void crStateMakeCurrent(CRContext *ctx);
 void crStateSetCurrent(CRContext *ctx);
 CRContext *crStateGetCurrent(void);

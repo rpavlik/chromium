@@ -4,13 +4,15 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "cr_mem.h"
 #include "cr_string.h"
-#include "cr_spu.h"
+
+#ifdef WINDOWS
+#pragma warning( disable : 4127 )
+#endif
 
 
 /* This string is the list of OpenGL extensions which Chromium can understand
@@ -20,8 +22,14 @@
  */
 const char *__stateExtensionString =
   "GL_CHROMIUM "
+#ifdef CR_ARB_depth_texture
+	"GL_ARB_depth_texture "
+#endif
 #ifdef CR_ARB_imaging
 	"GL_ARB_imaging "
+#endif
+#ifdef CR_ARB_multisample
+	"GL_ARB_multisample "
 #endif
 #ifdef CR_ARB_multitexture
 	"GL_ARB_multitexture "
@@ -29,20 +37,58 @@ const char *__stateExtensionString =
 #ifdef CR_ARB_point_parameters
 	"GL_ARB_point_parameters "
 #endif
+#ifdef CR_ARB_shadow
+	"GL_ARB_shadow "
+#endif
+#ifdef CR_ARB_shadow_ambient
+	"GL_ARB_shadow_ambient "
+#endif
 #ifdef CR_ARB_texture_border_clamp
 	"GL_ARB_texture_border_clamp "
+#endif
+#ifdef CR_ARB_texture_compression
+	"GL_ARB_texture_compression "
 #endif
 #ifdef CR_ARB_texture_cube_map
 	"GL_ARB_texture_cube_map "
 #endif
+#ifdef CR_ARB_texture_env_add
+	"GL_ARB_texture_env_add "
+#endif
+#ifdef CR_ARB_texture_env_combine
+	"GL_ARB_texture_env_combine GL_EXT_texture_env_combine "
+#endif
+#ifdef CR_ARB_texture_env_crossbar
+	"GL_ARB_texture_env_crossbar "
+#endif
+#ifdef CR_ARB_texture_env_dot3
+	"GL_ARB_texture_env_dot3 GL_EXT_texture_env_dot3 "
+#endif
+#ifdef CR_ARB_texture_mirrored_repeat
+	"GL_ARB_texture_mirrored_repeat "
+#endif
 #ifdef CR_ARB_transpose_matrix
 	"GL_ARB_transpose_matrix "
+#endif
+#ifdef CR_ARB_window_pos
+	"GL_ARB_window_pos "
 #endif
 #ifdef CR_EXT_blend_color
 	"GL_EXT_blend_color "
 #endif
 #ifdef CR_EXT_blend_minmax
 	"GL_EXT_blend_minmax "
+#endif
+#ifdef CR_EXT_blend_func_separate
+	"GL_EXT_blend_func_separate "
+#endif
+"";
+const char *__stateExtensionString2 =
+#ifdef CR_EXT_clip_volume_hint
+	"GL_EXT_clip_volume_hint "
+#endif
+#ifdef CR_EXT_blend_logic_op
+	"GL_EXT_blend_logic_op "
 #endif
 #ifdef CR_EXT_blend_subtract
 	"GL_EXT_blend_subtract "
@@ -53,11 +99,17 @@ const char *__stateExtensionString =
 #ifdef CR_EXT_fog_coord
 	"GL_EXT_fog_coord "
 #endif
+#ifdef CR_EXT_multi_draw_arrays
+	"GL_EXT_multi_draw_arrays "
+#endif
 #ifdef CR_EXT_secondary_color
 	"GL_EXT_secondary_color "
 #endif
 #ifdef CR_EXT_separate_specular_color
 	"GL_EXT_separate_specular_color "
+#endif
+#ifdef CR_EXT_stencil_wrap
+	"GL_EXT_stencil_wrap "
 #endif
 #ifdef CR_EXT_texture_cube_map
 	"GL_EXT_texture_cube_map "
@@ -67,6 +119,9 @@ const char *__stateExtensionString =
 #endif
 #ifdef CR_EXT_texture_filter_anisotropic
 	"GL_EXT_texture_filter_anisotropic "
+#endif
+#ifdef CR_EXT_texture_lod_bias
+	"GL_EXT_texture_lod_bias "
 #endif
 #ifdef CR_EXT_texture_object
 	"GL_EXT_texture_object "
@@ -85,6 +140,9 @@ const char *__stateExtensionString =
 #endif
 #ifdef CR_NV_texgen_reflection
 	"GL_NV_texgen_reflection "
+#endif
+#ifdef CR_SGIS_generate_mipmap
+	"GL_SGIS_generate_mipmap "
 #endif
 #ifdef CR_SGIS_texture_border_clamp
 	"GL_SGIS_texture_border_clamp "
@@ -237,25 +295,31 @@ void crStateLimitsInit (CRLimitsState *l)
 	l->smoothLineWidthRange[0] = CR_SMOOTH_LINE_WIDTH_MIN;
 	l->smoothLineWidthRange[1] = CR_SMOOTH_LINE_WIDTH_MAX;
 	l->lineWidthGranularity = CR_LINE_WIDTH_GRANULARITY;
-	l->extensions = (GLubyte*)crStrdup( __stateExtensionString );
+#if CR_EXT_texture_lod_bias
+	l->maxTextureLodBias = CR_MAX_TEXTURE_LOD_BIAS;
+#endif
 
-	/* init frame buffer limits to typical maximums */
-	l->redBits = 8;
-	l->greenBits = 8;
-	l->blueBits = 8;
-	l->alphaBits = 8;
-	l->depthBits = 24;
-	l->stencilBits = 8;
-	l->accumRedBits = 16;
-	l->accumGreenBits = 16;
-	l->accumBlueBits = 16;
-	l->accumAlphaBits = 16;
+	l->extensions = (GLubyte*)crStrjoin( __stateExtensionString, __stateExtensionString2 );
 
-	/* XXX these values are hard-coded for now */
+	/* These will get properly set in crStateCreateContext() by examining
+	 * the visBits bitfield parameter.
+	 */
+	l->redBits = 0;
+	l->greenBits = 0;
+	l->blueBits = 0;
+	l->alphaBits = 0;
+	l->depthBits = 0;
+	l->stencilBits = 0;
+	l->accumRedBits = 0;
+	l->accumGreenBits = 0;
+	l->accumBlueBits = 0;
+	l->accumAlphaBits = 0;
 	l->auxBuffers = 0;
 	l->rgbaMode = GL_TRUE;
-	l->doubleBuffer = GL_TRUE;
+	l->doubleBuffer = GL_FALSE;
 	l->stereo = GL_FALSE;
+	l->sampleBuffers = 0;
+	l->samples = 0;
 }
 
 
@@ -284,4 +348,183 @@ GLubyte * crStateMergeExtensions(GLuint n, const GLubyte **extensions)
 	result = crStrjoin(merged, __stateChromiumExtensions);
 	crFree(merged);
 	return (GLubyte *) result;
+}
+
+
+
+
+static GLboolean hasExtension(const char *haystack, const char *needle)
+{
+	const int needleLen = crStrlen(needle);
+	const char *s;
+
+	while (1) {
+		s = crStrstr(haystack, needle);
+		if (!s)
+			return GL_FALSE;
+		if (s && (s[needleLen] == ' ' || s[needleLen] == 0))
+			return GL_TRUE;
+		haystack += needleLen;
+	}
+}
+
+/*
+ * Examine the context's extension string and set the boolean extension
+ * flags accordingly.  This is to be called during context initialization.
+ */
+void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
+{
+	/* init all booleans to false */
+	crMemZero(extensions, sizeof(CRExtensionState));
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_depth_texture"))
+		extensions->ARB_depth_texture = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_imaging"))
+		extensions->ARB_imaging = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_point_parameters"))
+		extensions->ARB_point_parameters = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_shadow"))
+		extensions->ARB_shadow = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_shadow_ambient"))
+		extensions->ARB_shadow_ambient = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_border_clamp") ||
+		hasExtension((const char*)limits->extensions, "GL_SGIS_texture_border_clamp"))
+		extensions->ARB_texture_border_clamp = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_multisample"))
+		extensions->ARB_multisample = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_multitexture"))
+		extensions->ARB_multitexture = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_compression"))
+		extensions->ARB_texture_compression = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_cube_map") ||
+		hasExtension((const char*)limits->extensions, "GL_EXT_texture_cube_map"))
+		extensions->ARB_texture_cube_map = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_env_add"))
+		extensions->ARB_texture_env_add = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_env_combine") ||
+			hasExtension((const char*)limits->extensions, "GL_EXT_texture_env_combine"))
+		extensions->ARB_texture_env_combine = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_env_crossbar"))
+		extensions->ARB_texture_env_crossbar = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_env_dot3") ||
+			hasExtension((const char*)limits->extensions, "GL_EXT_texture_env_dot3"))
+		extensions->ARB_texture_env_dot3 = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_texture_mirrored_repeat"))
+		extensions->ARB_texture_mirrored_repeat = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_transpose_matrix"))
+		extensions->ARB_transpose_matrix = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_window_pos"))
+		extensions->ARB_window_pos = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_blend_color"))
+		extensions->EXT_blend_color= GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_blend_minmax"))
+		extensions->EXT_blend_minmax = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_blend_func_separate"))
+		extensions->EXT_blend_func_separate = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_blend_logic_op"))
+		extensions->EXT_blend_logic_op = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_blend_subtract"))
+		extensions->EXT_blend_subtract = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_clip_volume_hint"))
+		extensions->EXT_clip_volume_hint = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_fog_coord"))
+		extensions->EXT_fog_coord = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_multi_draw_arrays"))
+		extensions->EXT_multi_draw_arrays = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_secondary_color"))
+		extensions->EXT_secondary_color = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_separate_specular_color"))
+		extensions->EXT_separate_specular_color = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_stencil_wrap"))
+		extensions->EXT_stencil_wrap = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_texture_edge_clamp") ||
+		hasExtension((const char*)limits->extensions, "GL_SGIS_texture_edge_clamp"))
+		extensions->EXT_texture_edge_clamp = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_texture_filter_anisotropic"))
+		extensions->EXT_texture_filter_anisotropic = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_texture_lod_bias"))
+		extensions->EXT_texture_lod_bias = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_NV_fog_distance"))
+		extensions->NV_fog_distance = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_NV_register_combiners"))
+		extensions->NV_register_combiners = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_NV_register_combiners2"))
+		extensions->NV_register_combiners2 = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_NV_texgen_reflection"))
+		extensions->NV_texgen_reflection = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_texture3D"))
+		extensions->EXT_texture3D = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_SGIS_generate_mipmap"))
+		extensions->SGIS_generate_mipmap = GL_TRUE;
+
+	/* Now, determine what level of OpenGL we support */
+	if (extensions->ARB_multisample &&
+			extensions->ARB_multitexture &&
+			extensions->ARB_texture_border_clamp &&
+			extensions->ARB_texture_compression &&
+			extensions->ARB_texture_cube_map &&
+			extensions->ARB_texture_env_add &&
+			extensions->ARB_texture_env_combine &&
+			extensions->ARB_texture_env_dot3) {
+		if (extensions->ARB_depth_texture &&
+				extensions->ARB_point_parameters &&
+				extensions->ARB_shadow &&
+				extensions->ARB_texture_env_crossbar &&
+				extensions->ARB_texture_mirrored_repeat &&
+				extensions->ARB_window_pos &&
+				extensions->EXT_blend_color &&
+				extensions->EXT_blend_func_separate &&
+				extensions->EXT_blend_logic_op &&
+				extensions->EXT_blend_minmax &&
+				extensions->EXT_blend_subtract &&
+				extensions->EXT_fog_coord &&
+				extensions->EXT_multi_draw_arrays &&
+				extensions->EXT_secondary_color &&
+				extensions->EXT_stencil_wrap &&
+				extensions->SGIS_generate_mipmap) {
+			extensions->version = (const GLubyte *) "1.4 Chromium " CR_VERSION;
+		}
+		else {
+			extensions->version = (const GLubyte *) "1.3 Chromium " CR_VERSION;
+		}
+	}
+	else {
+		extensions->version = (const GLubyte *) "1.2 Chromium " CR_VERSION;
+	}
 }

@@ -314,7 +314,7 @@ static float P120[3] = {519.73, 128.36, 9163.26};
 static float P121[3] = {524.66, 141.43, 9138.62};
 /* *INDENT-ON* */
 
-void
+static void
 Whale001(void)
 {
 
@@ -400,7 +400,7 @@ Whale001(void)
     glEnd();
 }
 
-void
+static void
 Whale002(void)
 {
     glBegin(GL_POLYGON);
@@ -485,7 +485,7 @@ Whale002(void)
     glEnd();
 }
 
-void
+static void
 Whale003(void)
 {
     glBegin(GL_POLYGON);
@@ -554,7 +554,7 @@ Whale003(void)
     glEnd();
 }
 
-void
+static void
 Whale004(void)
 {
     glBegin(GL_POLYGON);
@@ -639,7 +639,7 @@ Whale004(void)
     glEnd();
 }
 
-void
+static void
 Whale005(void)
 {
     glBegin(GL_POLYGON);
@@ -760,7 +760,7 @@ Whale005(void)
     glEnd();
 }
 
-void
+static void
 Whale006(void)
 {
     glBegin(GL_POLYGON);
@@ -801,7 +801,7 @@ Whale006(void)
     glEnd();
 }
 
-void
+static void
 Whale007(void)
 {
     glBegin(GL_POLYGON);
@@ -922,7 +922,7 @@ Whale007(void)
     glEnd();
 }
 
-void
+static void
 Whale008(void)
 {
     glBegin(GL_POLYGON);
@@ -1043,7 +1043,7 @@ Whale008(void)
     glEnd();
 }
 
-void
+static void
 Whale009(void)
 {
     glBegin(GL_POLYGON);
@@ -1164,7 +1164,7 @@ Whale009(void)
     glEnd();
 }
 
-void
+static void
 Whale010(void)
 {
     glBegin(GL_POLYGON);
@@ -1249,7 +1249,7 @@ Whale010(void)
     glEnd();
 }
 
-void
+static void
 Whale011(void)
 {
     glBegin(GL_POLYGON);
@@ -1334,7 +1334,7 @@ Whale011(void)
     glEnd();
 }
 
-void
+static void
 Whale012(void)
 {
     glBegin(GL_POLYGON);
@@ -1445,7 +1445,7 @@ Whale012(void)
     glEnd();
 }
 
-void
+static void
 Whale013(void)
 {
     glBegin(GL_POLYGON);
@@ -1524,7 +1524,7 @@ Whale013(void)
     glEnd();
 }
 
-void
+static void
 Whale014(void)
 {
     glBegin(GL_POLYGON);
@@ -1575,7 +1575,7 @@ Whale014(void)
     glEnd();
 }
 
-void
+static void
 Whale015(void)
 {
     glBegin(GL_POLYGON);
@@ -1636,7 +1636,7 @@ Whale015(void)
     glEnd();
 }
 
-void
+static void
 Whale016(void)
 {
     glBegin(GL_POLYGON);

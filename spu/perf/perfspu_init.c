@@ -16,19 +16,19 @@
 #include <unistd.h>
 #endif
 
-extern SPUNamedFunctionTable perf_table[];
 perfSPU perf_spu;
 
 #if 0 /* for testing */
 extern void perfspuChromiumParameterfCR(GLenum, float);
 #endif
-SPUFunctions perf_functions = {
+
+static SPUFunctions perf_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	perf_table /* THE ACTUAL FUNCTIONS */
+	_cr_perf_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *perfSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *perfSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -67,15 +67,13 @@ SPUFunctions *perfSPUInit( int id, SPU *child, SPU *self,
 	return &perf_functions;
 }
 
-void perfSPUSelfDispatch(SPUDispatchTable *self)
+static void perfSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(perf_spu.self) );
 	crSPUCopyDispatchTable( &(perf_spu.self), self );
 }
 
-extern CRConnection** crNetDump(int *num);
-
-int perfSPUCleanup(void)
+static int perfSPUCleanup(void)
 {
 	char str[200];
 	CRConnection **conn;

@@ -46,16 +46,16 @@ printf_mapping = {
 	'GLsizei':    '%u'
 }
 
-for func_name in keys:
-	(return_type, names, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( 'printspu', func_name ): 
-		print 'extern %s PRINT_APIENTRY print%s%s;' % (return_type, func_name, stub_common.ArgumentString( names, types ) )
+#for func_name in keys:
+#	(return_type, names, types) = gl_mapping[func_name]
+#	if stub_common.FindSpecial( 'printspu', func_name ): 
+#		print 'extern %s PRINT_APIENTRY print%s%s;' % (return_type, func_name, stub_common.ArgumentString( names, types ) )
 
 for func_name in keys:
 	if stub_common.FindSpecial( 'printspu_unimplemented', func_name ): continue
 	if stub_common.FindSpecial( 'printspu', func_name ): continue
 	(return_type, names, types) = gl_mapping[func_name]
-	print '\n%s PRINT_APIENTRY print%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
+	print '\nstatic %s PRINT_APIENTRY print%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
 	print '{'
 	print '\tfprintf( print_spu.fp, "%s(' % func_name ,
 
@@ -100,6 +100,7 @@ for func_name in keys:
 					argstr += name
 			elif type.find( "*" ):
 				printfstr += "%p"
+				argstr += "(void *)"
 				argstr += name
 			else:
 				argstr = ""
@@ -127,7 +128,7 @@ for func_name in keys:
 		print '\t}'
 	print '}'
 
-print 'SPUNamedFunctionTable print_table[] = {'
+print 'SPUNamedFunctionTable _cr_print_table[] = {'
 for index in range(len(keys)):
 	func_name = keys[index]
 	if stub_common.FindSpecial( 'printspu_unimplemented', func_name ): continue

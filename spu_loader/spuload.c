@@ -11,7 +11,6 @@
 #include "cr_error.h"
 #include "cr_spu.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 
 #ifdef WINDOWS
@@ -91,7 +90,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
 	}
 	the_spu->function_table = the_spu->init( id, child, the_spu, 0, 1 );
 	__buildDispatch( the_spu );
-	crDebug( "initializing dispatch table %p (for SPU %s)", &(the_spu->dispatch_table), name );
+	crDebug( "initializing dispatch table %p (for SPU %s)", (void*)&(the_spu->dispatch_table), name );
 	crSPUInitDispatchTable( &(the_spu->dispatch_table) );
 	crDebug( "Done initializing the dispatch table for SPU %s, calling the self function", name );
 

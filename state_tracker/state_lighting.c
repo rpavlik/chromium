@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "cr_mem.h"
@@ -13,22 +12,33 @@
 
 void crStateLightingInitBits (CRLightingBits *l)
 {
-	l->light = (CRLightBits *) crCalloc (sizeof(*(l->light)) * CR_NUM_LIGHTS );
+	l->light = (CRLightBits *) crCalloc (sizeof(*(l->light)) * CR_MAX_LIGHTS );
 }
 
-void crStateLightingInit (CRLightingState *l)
+void crStateLightingDestroy (CRContext *ctx)
 {
+	crFree( ctx->lighting.light );
+}
+
+void crStateLightingInit (CRContext *ctx)
+{
+	CRLightingState *l = &ctx->lighting;
+	CRStateBits *sb = GetCurrentBits();
+	CRLightingBits *lb = &(sb->lighting);
 	int i;
 	GLvectorf zero_vector	= {0.0f, 0.0f, 0.0f, 1.0f};
-	GLcolorf zero_color		= {0.0f, 0.0f, 0.0f, 1.0f};
-	GLcolorf ambient_color = {0.2f, 0.2f, 0.2f, 1.0f};
-	GLcolorf diffuse_color = {0.8f, 0.8f, 0.8f, 1.0f};
+	GLcolorf zero_color	= {0.0f, 0.0f, 0.0f, 1.0f};
+	GLcolorf ambient_color  = {0.2f, 0.2f, 0.2f, 1.0f};
+	GLcolorf diffuse_color  = {0.8f, 0.8f, 0.8f, 1.0f};
 	GLvectorf spot_vector	= {0.0f, 0.0f, -1.0f, 0.0f};
-	GLcolorf one_color		= {1.0f, 1.0f, 1.0f, 1.0f};
+	GLcolorf one_color	= {1.0f, 1.0f, 1.0f, 1.0f};
 
 	l->lighting = GL_FALSE;
+	RESET(lb->enable, ctx->bitid);
 	l->colorMaterial = GL_FALSE;
+	RESET(lb->colorMaterial, ctx->bitid);
 	l->shadeModel = GL_SMOOTH;
+	RESET(lb->shadeModel, ctx->bitid);
 	l->colorMaterialMode = GL_AMBIENT_AND_DIFFUSE;
 	l->colorMaterialFace = GL_FRONT_AND_BACK;
 	l->ambient[0] = ambient_color;
@@ -47,6 +57,7 @@ void crStateLightingInit (CRLightingState *l)
 	l->indexes[1][0] = 0;
 	l->indexes[1][1] = 1;
 	l->indexes[1][2] = 1;
+	RESET(lb->material, ctx->bitid);
 	l->lightModelAmbient = ambient_color;
 	l->lightModelLocalViewer = GL_FALSE;
 	l->lightModelTwoSide = GL_FALSE;
@@ -55,6 +66,7 @@ void crStateLightingInit (CRLightingState *l)
 #elif defined(CR_OPENGL_VERSION_1_2)
 	l->lightModelColorControlEXT = GL_SINGLE_COLOR;
 #endif
+	RESET(lb->lightModel, ctx->bitid);
 #if defined(CR_EXT_secondary_color)
 	l->colorSumEXT = GL_FALSE;
 #endif
@@ -62,28 +74,34 @@ void crStateLightingInit (CRLightingState *l)
 
 	for (i=0; i<CR_MAX_LIGHTS; i++)
 	{
+		CRLightBits *ltb = lb->light + i;
 		l->light[i].enable = GL_FALSE;
+		RESET(ltb->enable, ctx->bitid);
 		l->light[i].ambient = zero_color;
+		RESET(ltb->ambient, ctx->bitid);
 		l->light[i].diffuse = zero_color;
+		RESET(ltb->diffuse, ctx->bitid);
 		l->light[i].specular = zero_color;
+		RESET(ltb->specular, ctx->bitid);
 		l->light[i].position = zero_vector;
 		l->light[i].position.z = 1.0f;
 		l->light[i].position.w = 0.0f;
 		l->light[i].objPosition = l->light[i].position;
+		RESET(ltb->position, ctx->bitid);
 		l->light[i].spotDirection = spot_vector;
 		l->light[i].spotExponent = 0.0f;
 		l->light[i].spotCutoff = 180.0f;
+		RESET(ltb->spot, ctx->bitid);
 		l->light[i].constantAttenuation= 1.0f;
 		l->light[i].linearAttenuation= 0.0f;
 		l->light[i].quadraticAttenuation = 0.0f;
+		RESET(ltb->attenuation, ctx->bitid);
+		RESET(ltb->dirty, ctx->bitid);
 	}
 	l->light[0].diffuse = one_color;
 	l->light[0].specular = one_color;
-}
 
-void crStateLightingDestroy (CRLightingState *l)
-{
-	free (l->light);
+	RESET(lb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateShadeModel (GLenum mode)
@@ -240,10 +258,10 @@ void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 			crStateLightModelfv( pname, &f_param );
 			break;
 		case GL_LIGHT_MODEL_AMBIENT:
-			f_color.r = ((GLfloat)param[0])/GL_MAXINT;
-			f_color.g = ((GLfloat)param[1])/GL_MAXINT;
-			f_color.b = ((GLfloat)param[2])/GL_MAXINT;
-			f_color.a = ((GLfloat)param[3])/GL_MAXINT;
+			f_color.r = ((GLfloat)param[0])/CR_MAXINT;
+			f_color.g = ((GLfloat)param[1])/CR_MAXINT;
+			f_color.b = ((GLfloat)param[2])/CR_MAXINT;
+			f_color.a = ((GLfloat)param[3])/CR_MAXINT;
 			crStateLightModelfv( pname, (GLfloat *) &f_color );
 			break;
 #if defined(CR_OPENGL_VERSION_1_2)
@@ -289,8 +307,8 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 	CRLight *lt;
 	unsigned int i;
 	GLfloat x, y, z, w;
-	GLmatrix inv;
-	GLmatrix *mat;
+	CRmatrix inv;
+	CRmatrix *mat;
 	CRStateBits *sb = GetCurrentBits();
 	CRLightingBits *lb = &(sb->lighting);
 	CRLightBits *ltb;
@@ -439,10 +457,10 @@ void STATE_APIENTRY crStateLightiv (GLenum light, GLenum pname, const GLint *par
 		case GL_AMBIENT:
 		case GL_DIFFUSE:
 		case GL_SPECULAR:
-			f_color.r = ((GLfloat)param[0])/GL_MAXINT;
-			f_color.g = ((GLfloat)param[1])/GL_MAXINT;
-			f_color.b = ((GLfloat)param[2])/GL_MAXINT;
-			f_color.a = ((GLfloat)param[3])/GL_MAXINT;
+			f_color.r = ((GLfloat)param[0])/CR_MAXINT;
+			f_color.g = ((GLfloat)param[1])/CR_MAXINT;
+			f_color.b = ((GLfloat)param[2])/CR_MAXINT;
+			f_color.a = ((GLfloat)param[3])/CR_MAXINT;
 			crStateLightfv( light, pname, (GLfloat *) &f_color );
 			break;
 		case GL_POSITION:
@@ -679,10 +697,10 @@ void STATE_APIENTRY crStateMaterialiv (GLenum face, GLenum pname, const GLint *p
 		case GL_DIFFUSE :
 		case GL_SPECULAR :
 		case GL_EMISSION :
-			f_color.r = ((GLfloat) param[0]) / ((GLfloat) GL_MAXINT);
-			f_color.g = ((GLfloat) param[1]) / ((GLfloat) GL_MAXINT);
-			f_color.b = ((GLfloat) param[2]) / ((GLfloat) GL_MAXINT);
-			f_color.a = ((GLfloat) param[3]) / ((GLfloat) GL_MAXINT);
+			f_color.r = ((GLfloat) param[0]) / ((GLfloat) CR_MAXINT);
+			f_color.g = ((GLfloat) param[1]) / ((GLfloat) CR_MAXINT);
+			f_color.b = ((GLfloat) param[2]) / ((GLfloat) CR_MAXINT);
+			f_color.a = ((GLfloat) param[3]) / ((GLfloat) CR_MAXINT);
 			crStateMaterialfv( face, pname, (GLfloat *) &f_color );
 			break;
 		case GL_SHININESS:
@@ -820,22 +838,22 @@ void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 	switch (pname)
 	{
 		case GL_AMBIENT:
-			param[0] = (GLint) (lt->ambient.r * GL_MAXINT);
-			param[1] = (GLint) (lt->ambient.g * GL_MAXINT);
-			param[2] = (GLint) (lt->ambient.b * GL_MAXINT);
-			param[3] = (GLint) (lt->ambient.a * GL_MAXINT);
+			param[0] = (GLint) (lt->ambient.r * CR_MAXINT);
+			param[1] = (GLint) (lt->ambient.g * CR_MAXINT);
+			param[2] = (GLint) (lt->ambient.b * CR_MAXINT);
+			param[3] = (GLint) (lt->ambient.a * CR_MAXINT);
 			break;
 		case GL_DIFFUSE:
-			param[0] = (GLint) (lt->diffuse.r * GL_MAXINT);
-			param[1] = (GLint) (lt->diffuse.g * GL_MAXINT);
-			param[2] = (GLint) (lt->diffuse.b * GL_MAXINT);
-			param[3] = (GLint) (lt->diffuse.a * GL_MAXINT);
+			param[0] = (GLint) (lt->diffuse.r * CR_MAXINT);
+			param[1] = (GLint) (lt->diffuse.g * CR_MAXINT);
+			param[2] = (GLint) (lt->diffuse.b * CR_MAXINT);
+			param[3] = (GLint) (lt->diffuse.a * CR_MAXINT);
 			break;
 		case GL_SPECULAR:
-			param[0] = (GLint) (lt->specular.r * GL_MAXINT);
-			param[1] = (GLint) (lt->specular.g * GL_MAXINT);
-			param[2] = (GLint) (lt->specular.b * GL_MAXINT);
-			param[3] = (GLint) (lt->specular.a * GL_MAXINT);
+			param[0] = (GLint) (lt->specular.r * CR_MAXINT);
+			param[1] = (GLint) (lt->specular.g * CR_MAXINT);
+			param[2] = (GLint) (lt->specular.b * CR_MAXINT);
+			param[3] = (GLint) (lt->specular.a * CR_MAXINT);
 			break;
 		case GL_POSITION:
 			param[0] = (GLint) (lt->position.x);
@@ -1034,16 +1052,16 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 			switch (face)
 			{
 				case GL_FRONT:
-					param[0] = (GLint) (l->ambient[0].r * GL_MAXINT);
-					param[1] = (GLint) (l->ambient[0].g * GL_MAXINT);
-					param[2] = (GLint) (l->ambient[0].b * GL_MAXINT);
-					param[3] = (GLint) (l->ambient[0].a * GL_MAXINT);
+					param[0] = (GLint) (l->ambient[0].r * CR_MAXINT);
+					param[1] = (GLint) (l->ambient[0].g * CR_MAXINT);
+					param[2] = (GLint) (l->ambient[0].b * CR_MAXINT);
+					param[3] = (GLint) (l->ambient[0].a * CR_MAXINT);
 					break;
 				case GL_BACK:
-					param[0] = (GLint) (l->ambient[1].r * GL_MAXINT);
-					param[1] = (GLint) (l->ambient[1].g * GL_MAXINT);
-					param[2] = (GLint) (l->ambient[1].b * GL_MAXINT);
-					param[3] = (GLint) (l->ambient[1].a * GL_MAXINT);
+					param[0] = (GLint) (l->ambient[1].r * CR_MAXINT);
+					param[1] = (GLint) (l->ambient[1].g * CR_MAXINT);
+					param[2] = (GLint) (l->ambient[1].b * CR_MAXINT);
+					param[3] = (GLint) (l->ambient[1].a * CR_MAXINT);
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -1055,16 +1073,16 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 			switch (face)
 			{
 				case GL_FRONT:
-					param[0] = (GLint) (l->diffuse[0].r * GL_MAXINT);
-					param[1] = (GLint) (l->diffuse[0].g * GL_MAXINT);
-					param[2] = (GLint) (l->diffuse[0].b * GL_MAXINT);
-					param[3] = (GLint) (l->diffuse[0].a * GL_MAXINT);
+					param[0] = (GLint) (l->diffuse[0].r * CR_MAXINT);
+					param[1] = (GLint) (l->diffuse[0].g * CR_MAXINT);
+					param[2] = (GLint) (l->diffuse[0].b * CR_MAXINT);
+					param[3] = (GLint) (l->diffuse[0].a * CR_MAXINT);
 					break;
 				case GL_BACK:
-					param[0] = (GLint) (l->diffuse[1].r * GL_MAXINT);
-					param[1] = (GLint) (l->diffuse[1].g * GL_MAXINT);
-					param[2] = (GLint) (l->diffuse[1].b * GL_MAXINT);
-					param[3] = (GLint) (l->diffuse[1].a * GL_MAXINT);
+					param[0] = (GLint) (l->diffuse[1].r * CR_MAXINT);
+					param[1] = (GLint) (l->diffuse[1].g * CR_MAXINT);
+					param[2] = (GLint) (l->diffuse[1].b * CR_MAXINT);
+					param[3] = (GLint) (l->diffuse[1].a * CR_MAXINT);
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -1076,16 +1094,16 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 			switch (face)
 			{
 				case GL_FRONT:
-					param[0] = (GLint) (l->specular[0].r * GL_MAXINT);
-					param[1] = (GLint) (l->specular[0].g * GL_MAXINT);
-					param[2] = (GLint) (l->specular[0].b * GL_MAXINT);
-					param[3] = (GLint) (l->specular[0].a * GL_MAXINT);
+					param[0] = (GLint) (l->specular[0].r * CR_MAXINT);
+					param[1] = (GLint) (l->specular[0].g * CR_MAXINT);
+					param[2] = (GLint) (l->specular[0].b * CR_MAXINT);
+					param[3] = (GLint) (l->specular[0].a * CR_MAXINT);
 					break;
 				case GL_BACK:
-					param[0] = (GLint) (l->specular[1].r * GL_MAXINT);
-					param[1] = (GLint) (l->specular[1].g * GL_MAXINT);
-					param[2] = (GLint) (l->specular[1].b * GL_MAXINT);
-					param[3] = (GLint) (l->specular[1].a * GL_MAXINT);
+					param[0] = (GLint) (l->specular[1].r * CR_MAXINT);
+					param[1] = (GLint) (l->specular[1].g * CR_MAXINT);
+					param[2] = (GLint) (l->specular[1].b * CR_MAXINT);
+					param[3] = (GLint) (l->specular[1].a * CR_MAXINT);
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -1097,16 +1115,16 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 			switch (face)
 			{
 				case GL_FRONT:
-					param[0] = (GLint) (l->emission[0].r * GL_MAXINT);
-					param[1] = (GLint) (l->emission[0].g * GL_MAXINT);
-					param[2] = (GLint) (l->emission[0].b * GL_MAXINT);
-					param[3] = (GLint) (l->emission[0].a * GL_MAXINT);
+					param[0] = (GLint) (l->emission[0].r * CR_MAXINT);
+					param[1] = (GLint) (l->emission[0].g * CR_MAXINT);
+					param[2] = (GLint) (l->emission[0].b * CR_MAXINT);
+					param[3] = (GLint) (l->emission[0].a * CR_MAXINT);
 					break;
 				case GL_BACK:
-					param[0] = (GLint) (l->emission[1].r * GL_MAXINT);
-					param[1] = (GLint) (l->emission[1].g * GL_MAXINT);
-					param[2] = (GLint) (l->emission[1].b * GL_MAXINT);
-					param[3] = (GLint) (l->emission[1].a * GL_MAXINT);
+					param[0] = (GLint) (l->emission[1].r * CR_MAXINT);
+					param[1] = (GLint) (l->emission[1].g * CR_MAXINT);
+					param[2] = (GLint) (l->emission[1].b * CR_MAXINT);
+					param[3] = (GLint) (l->emission[1].a * CR_MAXINT);
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,

@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -45,8 +44,8 @@ typedef struct CRTcscommBuffer {
 static struct {
   int                  initialized;
   int                  num_conns;
-  CRNetReceiveFunc     recv;
-  CRNetCloseFunc       close;
+  CRNetReceiveFuncList *recv_list;
+  CRNetCloseFuncList *close_list;
   CRTcscommConnection *credit_head;
   CRTcscommConnection *credit_tail;
   unsigned int         inside_recv;
@@ -420,7 +419,7 @@ crTcscommSend( CRConnection *conn, void **bufp,
     tcscomm_buffer->len = len;
     conn->send_credits -= tcscomm_buffer->len;
 
-    memcpy( payload, start, len );
+    crMemcpy( payload, start, len );
 
     crTcscommWriteExact( conn, payload, len );
 
@@ -514,9 +513,7 @@ crTcscommRecv( void )
   
   crTcscommReadExact( conn->tcscomm_id, payload, len );
 
-  if ( !cr_tcscomm.recv( conn, payload, len ) ) {
-    crNetDefaultRecv( conn, payload, len );
-  }
+  crNetDispatchMessage( cr_tcscomm.recv_list, conn, payload, len );
 
   cr_tcscomm.inside_recv--;
 
@@ -538,22 +535,15 @@ crTcscommInstantReclaim( CRConnection *conn, CRMessage *mess )
   crTcscommFree( conn, mess );
 }
 
-void crTcscommInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc,
+void crTcscommInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 		 unsigned int mtu )
 {
   (void) mtu;
+  cr_tcscomm.recv_list = rfl;
+  cr_tcscomm.close_list = cfl;
+
   if ( cr_tcscomm.initialized )
     {
-      if ( cr_tcscomm.recv == NULL && cr_tcscomm.close == NULL )
-	{
-	  cr_tcscomm.recv = recvFunc;
-	  cr_tcscomm.close = closeFunc;
-	}
-      else
-	{
-	  CRASSERT( cr_tcscomm.recv == recvFunc );
-	  CRASSERT( cr_tcscomm.close == closeFunc );
-	}
       return;
     }
   
@@ -571,9 +561,6 @@ void crTcscommInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc,
 	     cr_tcscomm.my_rank );
 
   cr_tcscomm.num_conns = 0;
-
-  cr_tcscomm.recv = recvFunc;
-  cr_tcscomm.close = closeFunc;
 
   cr_tcscomm.credit_head = NULL;
   cr_tcscomm.credit_tail = NULL;

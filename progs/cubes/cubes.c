@@ -10,7 +10,7 @@
 
 float *data;
 
-void ComputeCube( int dice )
+static void ComputeCube( int dice )
 {
     int i,j;
     float step = 2.0f/dice;
@@ -33,7 +33,8 @@ void ComputeCube( int dice )
     }
 }
 
-void DrawCubeXX( int dice )
+#if 0
+static void DrawCubeXX( int dice )
 {
     int i, j, start, finish, verts_per_strip, bytes_per_strip, strips, bytes;
     float ii, jj, delta = 2.0f / (float) dice;
@@ -117,8 +118,9 @@ void DrawCubeXX( int dice )
             seconds, bytes, 1e-6 * verts_per_second,
             1e-6 * bytes_per_second );
 }
+#endif
 
-void DrawCube( GLenum mode, int dice )
+static void DrawCube( GLenum mode, int dice )
 {
     int    i, j;
     float *temp = data;
@@ -174,7 +176,7 @@ void DrawCube( GLenum mode, int dice )
 Timer timer;
 int   frame_count = 0;
 
-void
+static void
 PrintPerformance( int dice )
 {
 	int    vertexes, bytes;
@@ -204,7 +206,7 @@ int angle = 0;
 int dice;
 GLenum mode;
 
-void Display( void )
+static void Display( void )
 {
 	PrintPerformance( dice );
 
@@ -227,7 +229,7 @@ void Display( void )
     glutSwapBuffers();
 }
 
-void Keyboard( unsigned char key, int x, int y )
+static void Keyboard( unsigned char key, int x, int y )
 {
     (void) key;
     (void) x;
@@ -235,15 +237,14 @@ void Keyboard( unsigned char key, int x, int y )
     exit( 0 );
 }
 
-void Reshape( int width, int height )
+static void Reshape( int width, int height )
 {
     /* Need this so that GLUT doesn't call ViewPort on us. */
     (void) width;
     (void) height;
 }
 
-void
-usage( const char *argv0 )
+static void usage( const char *argv0 )
 {
 	fprintf( stderr, "%s [-points] [-strip] [<dice>]\n", argv0 );
 }

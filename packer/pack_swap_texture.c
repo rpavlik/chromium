@@ -7,7 +7,7 @@
 #include "packer.h"
 #include "cr_pixeldata.h"
 #include "cr_error.h"
-#include "state/cr_pixel.h"
+#include "cr_string.h"
 #include "cr_version.h"
 
 void PACK_APIENTRY crPackTexImage1DSWAP(GLenum target, GLint level, 
@@ -129,7 +129,7 @@ void PACK_APIENTRY crPackTexImage3DEXTSWAP(GLenum target, GLint level,
 	{
 		if ( is_distrib )
 		{
-			distrib_buf_len = strlen( pixels ) + 1 +
+			distrib_buf_len = crStrlen( pixels ) + 1 +
 				( (type == GL_TRUE) ? width*height*3 : 0 ) ;
 			packet_length += distrib_buf_len ;
 		}
@@ -156,7 +156,7 @@ void PACK_APIENTRY crPackTexImage3DEXTSWAP(GLenum target, GLint level,
 	{
 		if ( is_distrib )
 		{
-			memcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
+			crMemcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
 		}
 		else
 		{
@@ -202,7 +202,7 @@ void PACK_APIENTRY crPackTexImage3DSWAP(GLenum target, GLint level,
 	{
 		if ( is_distrib )
 		{
-			distrib_buf_len = strlen( pixels ) + 1 +
+			distrib_buf_len = crStrlen( pixels ) + 1 +
 				( (type == GL_TRUE) ? width*height*3 : 0 ) ;
 			packet_length += distrib_buf_len ;
 		}
@@ -229,7 +229,7 @@ void PACK_APIENTRY crPackTexImage3DSWAP(GLenum target, GLint level,
 	{
 		if ( is_distrib )
 		{
-			memcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
+			crMemcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
 		}
 		else
 		{

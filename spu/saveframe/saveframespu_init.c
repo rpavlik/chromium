@@ -5,21 +5,20 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 
 #include "cr_spu.h"
 #include "saveframespu.h"
 
-extern SPUNamedFunctionTable saveframe_table[];
+extern SPUNamedFunctionTable _cr_saveframe_table[];
 
-SPUFunctions the_functions = {
+static SPUFunctions saveframe_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	saveframe_table /* THE ACTUAL FUNCTIONS */
+	_cr_saveframe_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *SPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -39,16 +38,16 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *self,
 	crSPUCopyDispatchTable( &(saveframe_spu.super), &(self->superSPU->dispatch_table) );
 	saveframespuGatherConfiguration( child );
 
-	return &the_functions;
+	return &saveframe_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *self)
+static void SPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(saveframe_spu.self) );
 	crSPUCopyDispatchTable( &(saveframe_spu.self), self );
 }
 
-int SPUCleanup(void)
+static int SPUCleanup(void)
 {
 	return 1;
 }

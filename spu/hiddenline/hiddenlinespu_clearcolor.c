@@ -1,4 +1,5 @@
 #include "hiddenlinespu.h"
+#include "hiddenlinespu_proto.h"
 
 void HIDDENLINESPU_APIENTRY hiddenlinespu_ClearColor( GLclampf r, GLclampf g, GLclampf b, GLclampf a )
 {

@@ -23,7 +23,7 @@ extern "C" {
 typedef struct {
 	int spu_id;
 	int number;
-	GLmatrix baseProjection;
+	CRmatrix baseProjection;
 	CRConnection *conn;
 
 	CRContext *currentCtx;
@@ -38,6 +38,24 @@ typedef struct st_CRPoly
 } CRPoly;
 
 typedef struct {
+	CRrecti outputwindow;   /* coordinates in server's rendering window */
+	CRrecti imagewindow;    /* coordinates in mural space */
+	CRrectf bounds;         /* normalized coordinates in [-1,-1] x [1,1] */
+	int     display;        /* not used (historical?) */
+} CRRunQueueExtent;
+
+typedef struct __runqueue {
+	CRClient *client;
+	CRrecti imagespace;     /* the whole mural rectangle */
+	int numExtents;
+	CRRunQueueExtent extent[CR_MAX_EXTENTS];
+	int blocked;
+	int number;
+	struct __runqueue *next;
+	struct __runqueue *prev;
+} RunQueue;
+
+typedef struct {
 	unsigned short tcpip_port;
 
 	unsigned int numClients;
@@ -45,13 +63,16 @@ typedef struct {
 	CRClient *curClient;
 	CRCurrentStatePointers current;
 
+	GLboolean firstCallCreateContext;
+	GLboolean firstCallMakeCurrent;
+
 	int optimizeBucket;
 	int numExtents;  /* number of tiles */
 	int curExtent;
 	/* coordinates of each tile's rectangle in mural coord space */
-	GLrecti extents[CR_MAX_EXTENTS];
+	CRrecti extents[CR_MAX_EXTENTS];
 	/* coords of the tile in the server's rendering window */
-	GLrecti outputwindow[CR_MAX_EXTENTS];
+	CRrecti outputwindow[CR_MAX_EXTENTS];
 	int maxTileHeight; /* the tallest tile's height */
 
 	int useL2;
@@ -80,6 +101,9 @@ typedef struct {
 	unsigned int clearCount;
 	int only_swap_once;
 	int debug_barriers;
+	int sharedDisplayLists;
+	int sharedTextureObjects;
+	int sharedPrograms;
 	int localTileSpec;
 	int overlapBlending;
 	GLfloat alignment_matrix[16], unnormalized_alignment_matrix[16];
@@ -89,6 +113,10 @@ typedef struct {
 	float *overlap_intens;
 	int num_overlap_intens;
 	int num_overlap_levels;
+
+	CRHashTable *barriers, *semaphores;
+
+	RunQueue *run_queue;
 } CRServer;
 
 

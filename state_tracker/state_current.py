@@ -95,7 +95,20 @@ void crStateCurrentRecover( void )
 	GLvertexattrib_p *vertexAttrib = &(c->current->vertexAttrib);
 	GLfogcoord_p *fogCoord = &(c->current->fogCoord);
 	unsigned int i;
-	GLbitvalue nbitID[CR_MAX_BITARRAY];
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+
+	/* 
+	 * If the calling SPU hasn't called crStateSetCurrentPointers()
+	 * we can't recover anything, so abort now. (i.e. we don't have
+	 * a pincher, oh, and just emit the message once).
+	 */
+	if (!c->current) {
+		static int donewarning = 0;
+		if (!donewarning)
+			crWarning("No pincher, please call crStateSetCurrentPointers() in your SPU");
+		donewarning = 1;
+		return; /* never get here */
+	}
 
 	/* silence warnings */
 	(void) __convert_b1;

@@ -47,7 +47,7 @@ endif
 
 PACKS = 1
 
-PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_unimplemented.c
+PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_unimplemented.c tilesortspu_proto.h
 SLOP = $(PRECOMP)
 
 LIB_DEFS += tilesort.def
@@ -60,7 +60,7 @@ else
 LDFLAGS += -lXmu -lX11
 endif
 
-tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed
+tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed tilesortspu_proto.h
 	@$(ECHO) Building the TileSort SPU
 	@$(PYTHON) tilesort.py > $@
 
@@ -82,3 +82,7 @@ tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../../state_tracker/convert.py leng
 	@$(PYTHON) pinch_convert.py >> $@
 	@$(PYTHON) length_table.py >> $@
 	@$(CAT) tilesortspu_pinch.c >> $@
+
+tilesortspu_proto.h: tilesortspu_proto.py tilesort_special tilesort_state_special tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed
+	@$(ECHO) Building the TileSort SPU prototypes header
+	@$(PYTHON) tilesortspu_proto.py > $@

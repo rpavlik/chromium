@@ -14,20 +14,20 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue perspectiveCorrection[CR_MAX_BITARRAY];
-	GLbitvalue pointSmooth[CR_MAX_BITARRAY];
-	GLbitvalue lineSmooth[CR_MAX_BITARRAY];
-	GLbitvalue polygonSmooth[CR_MAX_BITARRAY];
-	GLbitvalue fog[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue perspectiveCorrection[CR_MAX_BITARRAY];
+	CRbitvalue pointSmooth[CR_MAX_BITARRAY];
+	CRbitvalue lineSmooth[CR_MAX_BITARRAY];
+	CRbitvalue polygonSmooth[CR_MAX_BITARRAY];
+	CRbitvalue fog[CR_MAX_BITARRAY];
 #ifdef CR_EXT_clip_volume_hint
-	GLbitvalue clipVolumeClipping[CR_MAX_BITARRAY];
+	CRbitvalue clipVolumeClipping[CR_MAX_BITARRAY];
 #endif
 #ifdef CR_ARB_texture_compression
-	GLbitvalue textureCompression[CR_MAX_BITARRAY];
+	CRbitvalue textureCompression[CR_MAX_BITARRAY];
 #endif
 #ifdef CR_SGIS_generate_mipmap
-	GLbitvalue generateMipmap[CR_MAX_BITARRAY];
+	CRbitvalue generateMipmap[CR_MAX_BITARRAY];
 #endif
 } CRHintBits;
 
@@ -48,12 +48,11 @@ typedef struct {
 #endif
 } CRHintState;
 
-void crStateHintInitBits (CRHintBits *fb);
-void crStateHintInit(CRHintState *f);
+void crStateHintInit(CRContext *ctx);
 
-void crStateHintDiff(CRHintBits *bb, GLbitvalue *bitID, 
+void crStateHintDiff(CRHintBits *bb, CRbitvalue *bitID, 
 		CRHintState *from, CRHintState *to);
-void crStateHintSwitch(CRHintBits *bb, GLbitvalue *bitID, 
+void crStateHintSwitch(CRHintBits *bb, CRbitvalue *bitID, 
 		CRHintState *from, CRHintState *to);
 
 #ifdef __cplusplus

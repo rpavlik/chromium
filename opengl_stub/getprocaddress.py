@@ -35,9 +35,9 @@ print """
 #endif
 """
 
-for func_name in stub_common.AllSpecials( "getprocaddress" ):
-	( return_type, arg_names, arg_types ) = gl_mapping[func_name];
-	print 'extern %s APIENTRY stub_%s%s;' % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+#for func_name in stub_common.AllSpecials( "getprocaddress" ):
+#	( return_type, arg_names, arg_types ) = gl_mapping[func_name];
+#	print 'extern %s APIENTRY stub_%s%s;' % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 
 print """
 CR_PROC CR_APIENTRY crGetProcAddress( const char *name )

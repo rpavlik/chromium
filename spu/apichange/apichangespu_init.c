@@ -8,12 +8,12 @@
 #include "apichangespu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable apichange_table[];
+extern SPUNamedFunctionTable _cr_apichange_table[];
 
 SPUFunctions apichange_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	apichange_table /* THE ACTUAL FUNCTIONS */
+	_cr_apichange_table /* THE ACTUAL FUNCTIONS */
 };
 
 SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *self,

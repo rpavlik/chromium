@@ -9,6 +9,7 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_pixeldata.h"
 #include "cr_mem.h"
 
@@ -128,7 +129,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	GLfloat screen_bbox[8];
 	int i, stride;
 	int bytes_per_pixel = 0;
-	GLrecti rect, isect;
+	CRrecti rect, isect;
 	int len = 44 + sizeof(CRNetworkPointer);
 	int offset;
 	int new_width, new_height, new_x, new_y, bytes_per_row;

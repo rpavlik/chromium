@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-void myReshape( int w, int h )
+static void myReshape( int w, int h )
 {
 	glViewport( 0, 0, w, h );
 	glMatrixMode( GL_PROJECTION );
@@ -25,7 +25,7 @@ static void printstring(void *font, char *string)
     glutBitmapCharacter(font,string[i]);
 }
 
-void display( void )
+static void display( void )
 {
 	glClear( GL_COLOR_BUFFER_BIT );
 
@@ -34,7 +34,7 @@ void display( void )
 	glutSwapBuffers();
 } 
 
-void keyboard( unsigned char key, int x, int y )
+static void keyboard( unsigned char key, int x, int y )
 {
 	(void) key;
 	(void) x;

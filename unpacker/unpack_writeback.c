@@ -26,7 +26,9 @@ void crUnpackExtendWriteback(void)
 	cr_unpackDispatch.Writeback( NULL );
 }
 
+#if 0
 void crUnpackWriteback(void)
 {
 	crError( "crUnpackWriteback should never be called" );
 }
+#endif

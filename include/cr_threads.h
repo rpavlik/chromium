@@ -20,7 +20,6 @@ extern "C" {
 #include <pthread.h>
 #endif
 #include <stdio.h>
-#include <string.h>
 #include "cr_error.h"
 
 
@@ -51,6 +50,7 @@ typedef pthread_mutex_t CRmutex;
 #endif
 
 extern void crInitMutex(CRmutex *mutex);
+extern void crFreeMutex(CRmutex *mutex);
 extern void crLockMutex(CRmutex *mutex);
 extern void crUnlockMutex(CRmutex *mutex);
 

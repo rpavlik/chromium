@@ -8,16 +8,15 @@
 #include "dist_texturespu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable dist_texture_table[];
 Dist_textureSPU dist_texture_spu;
 
-SPUFunctions dist_texture_functions = {
+static SPUFunctions dist_texture_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	dist_texture_table /* THE ACTUAL FUNCTIONS */
+	_cr_dist_texture_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *dist_textureSPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *dist_textureSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -40,18 +39,16 @@ SPUFunctions *dist_textureSPUInit( int id, SPU *child, SPU *self,
 	return &dist_texture_functions;
 }
 
-void dist_textureSPUSelfDispatch(SPUDispatchTable *self)
+static void dist_textureSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(dist_texture_spu.self) );
 	crSPUCopyDispatchTable( &(dist_texture_spu.self), self );
 }
 
-int dist_textureSPUCleanup(void)
+static int dist_textureSPUCleanup(void)
 {
 	return 1;
 }
-
-extern SPUOptions dist_textureSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

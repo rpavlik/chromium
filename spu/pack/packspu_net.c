@@ -4,21 +4,22 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "packspu.h"
 #include "cr_pack.h"
 #include "cr_mem.h"
 #include "cr_net.h"
 #include "cr_protocol.h"
 #include "cr_error.h"
+#include "packspu.h"
+#include "packspu_proto.h"
 
-void packspuWriteback( CRMessageWriteback *wb )
+static void packspuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
 	crMemcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
 	*writeback = 0;
 }
 
-void packspuReadback( CRMessageReadback *rb, unsigned int len )
+static void packspuReadback( CRMessageReadback *rb, unsigned int len )
 {
 	/* minus the header, the destination pointer, 
 	 * *and* the implicit writeback pointer at the head. */
@@ -76,7 +77,7 @@ static void packspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 	--pack_spu.ReadPixels;
 }
 
-int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+static int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) buf;
 

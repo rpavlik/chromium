@@ -16,23 +16,23 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue	dirty[CR_MAX_BITARRAY];
+	CRbitvalue	dirty[CR_MAX_BITARRAY];
 	/* pixel pack/unpack */
-	GLbitvalue	pack[CR_MAX_BITARRAY];
-	GLbitvalue	unpack[CR_MAX_BITARRAY];
+	CRbitvalue	pack[CR_MAX_BITARRAY];
+	CRbitvalue	unpack[CR_MAX_BITARRAY];
 	/* vertex array */
-	GLbitvalue	enableClientState[CR_MAX_BITARRAY];
-	GLbitvalue	clientPointer[CR_MAX_BITARRAY];
-	GLbitvalue	element[CR_MAX_BITARRAY];
-	GLbitvalue	*v; /* vertex */
-	GLbitvalue	*n; /* normal */
-	GLbitvalue	*c; /* color */
-	GLbitvalue	*i; /* index */
-	GLbitvalue	*t; /* texcoord */
-	GLbitvalue	*e; /* edgeflag */
-	GLbitvalue	*s; /* secondary color */
-	GLbitvalue	*f; /* fog coord */
-	GLbitvalue	*a[CR_MAX_VERTEX_ATTRIBS]; /* NV_vertex_program */
+	CRbitvalue	enableClientState[CR_MAX_BITARRAY];
+	CRbitvalue	clientPointer[CR_MAX_BITARRAY];
+	CRbitvalue	element[CR_MAX_BITARRAY];
+	CRbitvalue	*v; /* vertex */
+	CRbitvalue	*n; /* normal */
+	CRbitvalue	*c; /* color */
+	CRbitvalue	*i; /* index */
+	CRbitvalue	*t; /* texcoord */
+	CRbitvalue	*e; /* edgeflag */
+	CRbitvalue	*s; /* secondary color */
+	CRbitvalue	*f; /* fog coord */
+	CRbitvalue	*a[CR_MAX_VERTEX_ATTRIBS]; /* NV_vertex_program */
 	int valloc;
 	int nalloc;
 	int calloc;
@@ -89,10 +89,11 @@ typedef struct {
 
 void crStateClientInitBits(CRClientBits *c);
 void crStateClientInit (CRLimitsState *limits, CRClientState *c);
+void crStateClientDestroy (CRClientState *c);
 
-void crStateClientDiff(CRClientBits *bb, GLbitvalue *bitID,
+void crStateClientDiff(CRClientBits *bb, CRbitvalue *bitID,
 		CRClientState *from, CRClientState *to);
-void crStateClientSwitch(CRClientBits *bb, GLbitvalue *bitID,
+void crStateClientSwitch(CRClientBits *bb, CRbitvalue *bitID,
 		CRClientState *from, CRClientState *to);
 #ifdef __cplusplus
 }

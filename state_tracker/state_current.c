@@ -7,8 +7,12 @@
 #include "state.h"
 #include "state_internals.h"
 
-void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
+void crStateCurrentInit( CRContext *ctx )
 {
+	CRLimitsState *limits = &ctx->limits;
+	CRCurrentState *c = &ctx->current;
+	CRStateBits *sb = GetCurrentBits();
+	CRCurrentBits *cb = &(sb->current);
 	GLvectorf	default_normal     = {0.0f, 0.0f, 1.0f, 1.0f};
 	GLcolorf	default_color	     = {1.0f, 1.0f, 1.0f, 1.0f};
 	GLcolorf	default_secondaryColor = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -18,16 +22,27 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
   	unsigned int i;
 
 	c->color	= default_color;
+	c->colorPre	= default_color;
+	RESET(cb->color, ctx->bitid);
 	c->secondaryColor = default_secondaryColor;
+	c->secondaryColorPre = default_secondaryColor;
+	RESET(cb->secondaryColor, ctx->bitid);
 	c->index	= 1.0f;
+	c->indexPre	= 1.0f;
+	RESET(cb->index, ctx->bitid);
 	for (i = 0 ; i < limits->maxTextureUnits ; i++)
 	{
 		c->texCoord[i] = default_texcoord;
 		c->texCoordPre[i] = default_texcoord;
+		RESET(cb->texCoord[i], ctx->bitid);
 	}
 	c->normal	= default_normal;
+	c->normalPre	= default_normal;
+	RESET(cb->normal, ctx->bitid);
 #ifdef CR_EXT_fog_coord
 	c->fogCoord = default_fogCoord;
+	c->fogCoordPre = default_fogCoord;
+	RESET(cb->fogCoord, ctx->bitid);
 #endif
 
 	c->rasterPos = default_rasterpos;
@@ -39,8 +54,11 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 	c->rasterTexture = default_texcoord;
 	c->rasterValid = GL_TRUE;
 	c->rasterIndex = 1.0f;
+	RESET(cb->raster, ctx->bitid);
 
 	c->edgeFlag = GL_TRUE;
+	c->edgeFlagPre = GL_TRUE;
+	RESET(cb->edgeFlag, ctx->bitid);
 
 	c->inBeginEnd = GL_FALSE;
 	c->beginEndNum = 0;
@@ -51,6 +69,8 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 	c->flushOnEnd = 0;
 
 	c->current = 0; /* picked up by crStateSetCurrentPointers() */
+
+	RESET(cb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateColor3f( GLfloat r, GLfloat g, GLfloat b )
@@ -130,11 +150,11 @@ void STATE_APIENTRY crStateEnd( void )
 }
 
 void crStateCurrentSwitch( GLuint maxTextureUnits,
-						   CRCurrentBits *c, GLbitvalue *bitID,
+						   CRCurrentBits *c, CRbitvalue *bitID,
 						   CRCurrentState *from, CRCurrentState *to )
 {
 	unsigned int i,j;
-	GLbitvalue nbitID[CR_MAX_BITARRAY];
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
@@ -229,12 +249,12 @@ void crStateCurrentSwitch( GLuint maxTextureUnits,
 	INVERTDIRTY(c->dirty, nbitID);
 }
 
-void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue *bitID,
+void crStateCurrentDiff (CRCurrentBits *c, CRbitvalue *bitID,
 					 CRCurrentState *from, CRCurrentState *to)
 {
 	CRContext *g = GetCurrentContext();
 	unsigned int i, j;
-	GLbitvalue nbitID[CR_MAX_BITARRAY];
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];

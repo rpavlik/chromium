@@ -7,6 +7,8 @@
 #ifndef CR_STATE_TEXTURE_H
 #define CR_STATE_TEXTURE_H
 
+#include "cr_idpool.h"
+#include "cr_hash.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_limits.h"
 
@@ -16,12 +18,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct __CRTextureID {
-	GLuint name;
-	GLuint hwid;
-	struct __CRTextureID *next;
-} CRTextureID;
 
 struct CRTextureFormat {
 	GLubyte redbits;
@@ -43,15 +39,20 @@ typedef struct {
 	GLint border;
 	GLenum format;
 	GLenum type;
-	int	bytesPerPixel;
-
+	int bytesPerPixel;
+#if CR_ARB_texture_compression
+	GLboolean compressed;
+#endif
 	const struct CRTextureFormat *texFormat;
 
-	GLbitvalue dirty[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 } CRTextureLevel;
 
 typedef struct __CRTextureObj {
+	GLenum                 target;
+	GLuint                 name;
 
+	/* The mipmap levels */
 	CRTextureLevel        *level;
 #ifdef CR_ARB_texture_cube_map
 	CRTextureLevel        *negativeXlevel;
@@ -62,9 +63,6 @@ typedef struct __CRTextureObj {
 #endif
 
 	GLcolorf               borderColor;
-	GLenum                 target;
-	GLuint                 name;
-	struct __CRTextureObj *next;
 	GLenum                 minFilter, magFilter;
 	GLenum                 wrapS, wrapT;
 #ifdef CR_OPENGL_VERSION_1_2
@@ -75,30 +73,36 @@ typedef struct __CRTextureObj {
 	GLint                  baseLevel;
 	GLint                  maxLevel;
 #endif
-
-	GLbitvalue	           dirty[CR_MAX_BITARRAY];
-	GLbitvalue             paramsBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	GLbitvalue             imageBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 #ifdef CR_EXT_texture_filter_anisotropic
-	GLfloat maxAnisotropy;
+	GLfloat                maxAnisotropy;
 #endif
+#ifdef CR_ARB_depth_texture
+	GLenum                 depthMode;
+#endif
+#ifdef CR_ARB_shadow
+	GLenum                 compareMode;
+	GLenum                 compareFunc;
+#endif
+#ifdef CR_ARB_shadow_ambient
+	GLfloat                compareFailValue;
+#endif
+#ifdef CR_SGIS_generate_mipmap
+	GLboolean              generateMipmap;
+#endif
+	CRbitvalue	           dirty[CR_MAX_BITARRAY];
+	CRbitvalue             paramsBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue             imageBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 } CRTextureObj;
 
-typedef struct __CRTextureFreeElem {
-	GLuint min;
-	GLuint max;
-	struct __CRTextureFreeElem *next;
-	struct __CRTextureFreeElem *prev;
-} CRTextureFreeElem;
-
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue enable[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	GLbitvalue current[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	GLbitvalue objGen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	GLbitvalue eyeGen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	GLbitvalue envBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	GLbitvalue gen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue current[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue objGen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue eyeGen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	/* XXX someday create more bits for texture env state */
+	CRbitvalue envBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue gen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 } CRTextureBits;
 
 typedef struct {
@@ -116,10 +120,23 @@ typedef struct {
 #ifdef CR_ARB_texture_cube_map
 	GLboolean	enabledCubeMap;
 #endif
+#ifdef CR_EXT_texture_lod_bias
+	GLfloat     lodBias;
+#endif
 
 	GLenum		envMode;
 	GLcolorf	envColor;
 	
+	/* GL_ARB_texture_env_combine */
+	GLenum combineModeRGB;       /* GL_REPLACE, GL_DECAL, GL_ADD, etc. */
+	GLenum combineModeA;         /* GL_REPLACE, GL_DECAL, GL_ADD, etc. */
+	GLenum combineSourceRGB[3];  /* GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+	GLenum combineSourceA[3];    /* GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+	GLenum combineOperandRGB[3]; /* SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
+	GLenum combineOperandA[3];   /* SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
+	GLfloat combineScaleRGB;     /* 1 or 2 or 4 */
+	GLfloat combineScaleA;       /* 1 or 2 or 4 */
+
 	GLtexcoordb	textureGen;
 	GLvectorf	objSCoeff;
 	GLvectorf	objTCoeff;
@@ -141,14 +158,9 @@ typedef struct {
 } CRTextureUnit;
 
 typedef struct {
-	GLuint allocated;
-	CRTextureObj *textures;
-	CRTextureObj *firstFree;
-
 	/* FIXME: these should be moved into a shared-context structure */
-	CRTextureObj      *mapping[CRTEXTURE_HASHSIZE];
-	CRTextureFreeElem *freeList;
-	CRTextureID       *hwidhash[CRTEXTURE_HASHSIZE];
+	CRIdPool          *idPool;  /* for GenTextures */
+	CRHashTable       *idHash;  /* to map IDs to CRTextureObj objects */
 
 	/* Default texture objects (name = 0) */
 	CRTextureObj base1D;
@@ -178,8 +190,8 @@ typedef struct {
 	CRTextureUnit	unit[CR_MAX_TEXTURE_UNITS];
 } CRTextureState;
 
-void crStateTextureInitBits (CRTextureBits *t);
-void crStateTextureInit(const CRLimitsState *limits, CRTextureState *t);
+void crStateTextureInit(CRContext *ctx);
+void crStateTextureFree(CRTextureState *t);
 
 void crStateTextureInitTexture(GLuint name);
 CRTextureObj *crStateTextureAllocate(GLuint name);
@@ -188,9 +200,9 @@ CRTextureObj *crStateTextureGet(GLenum target, GLuint textureid);
 int crStateTextureGetSize(GLenum target, GLenum level);
 const GLvoid * crStateTextureGetData(GLenum target, GLenum level);
 
-void crStateTextureDiff(CRContext *g, CRTextureBits *bb, GLbitvalue *bitID, 
+void crStateTextureDiff(CRContext *g, CRTextureBits *bb, CRbitvalue *bitID, 
 		CRTextureState *from, CRTextureState *to);
-void crStateTextureSwitch(CRContext *g, CRTextureBits *bb, GLbitvalue *bitID, 
+void crStateTextureSwitch(CRContext *g, CRTextureBits *bb, CRbitvalue *bitID, 
 		CRTextureState *from, CRTextureState *to);
 
 #ifdef __cplusplus

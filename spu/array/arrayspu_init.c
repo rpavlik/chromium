@@ -8,15 +8,17 @@
 #include "arrayspu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable array_table[];
+extern SPUNamedFunctionTable _cr_array_table[];
 
-SPUFunctions array_functions = {
+extern SPUOptions arraySPUOptions[];
+
+static SPUFunctions array_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	array_table /* THE ACTUAL FUNCTIONS */
+	_cr_array_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *arraySPUInit( int id, SPU *child, SPU *self,
+static SPUFunctions *arraySPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -37,24 +39,24 @@ SPUFunctions *arraySPUInit( int id, SPU *child, SPU *self,
 	arrayspuGatherConfiguration();
 
 	crStateInit();
-	array_spu.ctx = crStateCreateContext( NULL );
-	crStateMakeCurrent( array_spu.ctx );
+	array_spu.ctx = crStateCreateContext( NULL, 0 );
+	/* we call SetCurrent instead of MakeCurrent as the differencer
+	 * isn't setup yet anyway */
+	crStateSetCurrent( array_spu.ctx );
 
 	return &array_functions;
 }
 
-void arraySPUSelfDispatch(SPUDispatchTable *self)
+static void arraySPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(array_spu.self) );
 	crSPUCopyDispatchTable( &(array_spu.self), self );
 }
 
-int arraySPUCleanup(void)
+static int arraySPUCleanup(void)
 {
 	return 1;
 }
-
-extern SPUOptions arraySPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,

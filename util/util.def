@@ -111,3 +111,10 @@ crSpawn
 crKill
 crGetProcName
 crGetCurrentDir
+crAllocIdPool
+crFreeIdPool
+crIdPoolAllocBlock
+crIdPoolFreeBlock
+crIdPoolAllocId
+crIdPoolIsIdFree
+crIdPoolIsIdUsed

@@ -345,6 +345,57 @@ application section</a> for more information.
 </p>
 
 
+<h2 class="PageSubHeading">GL_CR_server_id_sharing</h2>
+<p>This extension allows control over display list, texture object and
+vertex program ID management in network/server nodes.
+This is useful for parallel applications.
+</p>
+
+<p>
+Specifically, it allows a program to set the values for the server
+configuration options: <b>shared_display_lists</b>,
+<b>shared_texture_objects</b>&nbsp;
+and <b>shared_programs</b>&nbsp; at runtime.
+</p>
+
+<p>New tokens accepted by the <code>target</code> parameter to
+<code>glChromiumParameteriCR</code>:
+
+<dl>
+<dt>GL_SHARED_DISPLAY_LISTS_CR</dt>
+<dd>The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
+    whether display list IDs should be shared or unshared by all clients,
+    respectively.
+    This corresponds to the <b>shared_display_lists</b> network node
+    configuration option.
+    The default value is GL_TRUE.
+</dd>
+<dt>GL_SHARED_TEXTURE_OBJECTS_CR</dt>
+<dd>The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
+    whether texture object IDs should be shared or unshared by all clients,
+    respectively.
+    This corresponds to the <b>shared_texture_objects</b> network node
+    configuration option.
+    The default value is GL_TRUE.
+</dd>
+<dt>GL_SHARED_PROGRAMS_CR</dt>
+<dd>The <code>value</code> parameter may be GL_TRUE or GL_FALSE to indicate
+    whether vertex/fragment program IDs should be shared or unshared by all
+    clients, respectively.
+    This corresponds to the <b>shared_programs</b> network node
+    configuration option.
+    The default value is GL_TRUE.
+</dd>
+</dl>
+
+<p>In general, only parallel applications need to be concerned with these
+parameters.
+For example, if each of N instances of a parallel application create a
+display list named K and each application puts different OpenGL commands
+into the N instances of K, then GL_SHARED_DISPLAY_LISTS_CR should be set to
+GL_FALSE.
+The server will then distinguish between the N different lists named K.
+</p>
 
 </body>
 

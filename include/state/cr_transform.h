@@ -14,12 +14,12 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty[CR_MAX_BITARRAY];
-	GLbitvalue mode[CR_MAX_BITARRAY];
-	GLbitvalue matrix[4][CR_MAX_BITARRAY];
-	GLbitvalue clipPlane[CR_MAX_BITARRAY];
-	GLbitvalue enable[CR_MAX_BITARRAY];
-	GLbitvalue base[CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue mode[CR_MAX_BITARRAY];
+	CRbitvalue matrix[4][CR_MAX_BITARRAY];
+	CRbitvalue clipPlane[CR_MAX_BITARRAY];
+	CRbitvalue enable[CR_MAX_BITARRAY];
+	CRbitvalue base[CR_MAX_BITARRAY];
 } CRTransformBits;
 
 typedef struct {
@@ -37,39 +37,40 @@ typedef struct {
 	GLvectord  *clipPlane;
 	GLboolean  *clip;
 
-	GLmatrix  *modelView;
-	GLmatrix  *projection;
-	GLmatrix  *texture[CR_MAX_TEXTURE_UNITS];
-	GLmatrix  *color;
-	GLmatrix  *m;
+	CRmatrix  *modelView;
+	CRmatrix  *projection;
+	CRmatrix  *texture[CR_MAX_TEXTURE_UNITS];
+	CRmatrix  *color;
+	CRmatrix  *m;
 
 	GLboolean  transformValid;
-	GLmatrix  transform;
+	CRmatrix  transform;
 #ifdef CR_OPENGL_VERSION_1_2
 	GLboolean rescaleNormals;
 #endif
 	GLboolean normalize;
 } CRTransformState;
 
-void crStateTransformInitBits (CRTransformBits *tb);
 void crStateTransformSetOutputBounds (CRTransformState *t,
-		GLrecti *outputwindow,
-		GLrecti *imagespace,
-		GLrecti *imagewindow);
+		CRrecti *outputwindow,
+		CRrecti *imagespace,
+		CRrecti *imagewindow);
 
-void crStateTransformInit (CRLimitsState *limits, CRTransformState *t);
+void crStateTransformInit (CRContext *ctx);
+void crStateTransformDestroy (CRContext *ctx);
+
 void crStateTransformUpdateTransform(CRTransformState *t);
 void crStateTransformXformPoint  (CRTransformState *t, GLvectorf *p);
-void crStateTransformXformPointMatrixf(GLmatrix *m, GLvectorf *p);
-void crStateTransformXformPointMatrixd(GLmatrix *m, GLvectord *p);
-void crStateTransformInvertTransposeMatrix(GLmatrix *inv, GLmatrix *mat);
-void crStateTransformNormalizedDims(GLrectf *p, GLrecti *r, GLrecti *q);
+void crStateTransformXformPointMatrixf(CRmatrix *m, GLvectorf *p);
+void crStateTransformXformPointMatrixd(CRmatrix *m, GLvectord *p);
+void crStateTransformInvertTransposeMatrix(CRmatrix *inv, CRmatrix *mat);
+void crStateTransformNormalizedDims(CRrectf *p, CRrecti *r, CRrecti *q);
 
 void crStateTransformDiff(GLuint maxTextureUnits,
-		CRTransformBits *bb, GLbitvalue *bitID, 
+		CRTransformBits *bb, CRbitvalue *bitID, 
 		CRTransformState *from, CRTransformState *to);
 void crStateTransformSwitch(GLuint maxTextureUnits, 
-		CRTransformBits *bb, GLbitvalue *bitID, 
+		CRTransformBits *bb, CRbitvalue *bitID, 
 		CRTransformState *from, CRTransformState *to);
 
 #ifdef __cplusplus

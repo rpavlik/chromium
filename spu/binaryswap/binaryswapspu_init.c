@@ -13,12 +13,12 @@
 #include <stdio.h>
 #include <math.h>
 
-extern SPUNamedFunctionTable binaryswap_table[];
+extern SPUNamedFunctionTable _cr_binaryswap_table[];
 
 SPUFunctions binaryswap_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	binaryswap_table /* THE ACTUAL FUNCTIONS */
+	_cr_binaryswap_table /* THE ACTUAL FUNCTIONS */
 };
 
 Binaryswapspu binaryswap_spu;
@@ -27,19 +27,23 @@ Binaryswapspu binaryswap_spu;
 CRtsd _BinaryswapTSD;
 #endif
 
-int binaryswapspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+static int
+binaryswapspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	(void) conn;
 	(void) buf;
 	(void) len;
 	return 0; /* NOT HANDLED */
 }
+
+
 /*******************************************************************
  *
  * Set up connections for OOB
  *
  *******************************************************************/
-void binaryswapspuConnectToPeer( void )
+static void
+binaryswapspuConnectToPeer( void )
 {
 	char hostname[4096], protocol[4096];
 	unsigned short *ports;
@@ -97,9 +101,10 @@ void binaryswapspuConnectToPeer( void )
 	crFree(ports);
 }
 
-SPUFunctions *binaryswapspuInit( int id, SPU *child, SPU *self,
-				 unsigned int context_id,
-				 unsigned int num_contexts )
+static SPUFunctions *
+binaryswapspuInit( int id, SPU *child, SPU *self,
+									 unsigned int context_id,
+									 unsigned int num_contexts )
 {
 	WindowInfo *window;
 	(void) context_id;
@@ -146,7 +151,8 @@ SPUFunctions *binaryswapspuInit( int id, SPU *child, SPU *self,
 	return &binaryswap_functions;
 }
 
-void binaryswapspuSelfDispatch(SPUDispatchTable *self)
+static void
+binaryswapspuSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(binaryswap_spu.self) );
 	crSPUCopyDispatchTable( &(binaryswap_spu.self), self );
@@ -154,7 +160,8 @@ void binaryswapspuSelfDispatch(SPUDispatchTable *self)
 	binaryswap_spu.server = (CRServer *)(self->server);
 }
 
-int binaryswapspuCleanup(void)
+static int
+binaryswapspuCleanup(void)
 {
 	return 1;
 }

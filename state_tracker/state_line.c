@@ -4,18 +4,25 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStateLineInit (CRLineState *l) {
+void crStateLineInit (CRContext *ctx)
+{
+	CRLineState *l = &ctx->line;
+	CRStateBits *sb = GetCurrentBits();
+	CRLineBits *lb = &(sb->line);
+
 	l->lineSmooth = GL_FALSE;
 	l->lineStipple = GL_FALSE;
+	RESET(lb->enable, ctx->bitid);
 	l->width = 1.0f;
+	RESET(lb->width, ctx->bitid);
 	l->pattern = 0xFFFF;
 	l->repeat = 1;
+	RESET(lb->stipple, ctx->bitid);
 	/*
 	 *l->aliasedlinewidth_min = c->aliasedlinewidth_min; 
 	 *l->aliasedlinewidth_max = c->aliasedlinewidth_max; 
@@ -23,13 +30,15 @@ void crStateLineInit (CRLineState *l) {
 	 *l->smoothlinewidth_min = c->smoothlinewidth_min; 
 	 *l->smoothlinewidth_max = c->smoothlinewidth_max; 
 	 *l->smoothlinegranularity = c->smoothlinegranularity; */
+
+	RESET(lb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateLineWidth(GLfloat width) 
 {
 	CRContext *g = GetCurrentContext();
-	CRStateBits *sb = GetCurrentBits();
 	CRLineState *l = &(g->line);
+	CRStateBits *sb = GetCurrentBits();
 	CRLineBits *lb = &(sb->line);
 
 	if (g->current.inBeginEnd)

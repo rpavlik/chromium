@@ -42,7 +42,7 @@ void APICHANGESPU_APIENTRY apichangeSwapBuffers( GLint window )
 	apichange_spu.child.SwapBuffers();
 }
 
-SPUNamedFunctionTable apichange_table[] = {
+SPUNamedFunctionTable _cr_apichange_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) apichangeSwapBuffers },
 	{ "Vertex3fv", (SPUGenericFunction) doubleVertex3fv },
 	{ NULL, NULL }

@@ -4,22 +4,19 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_spu.h"
 #include "cr_error.h"
-#include <stdio.h>
+#include "passthroughspu.h"
 
-extern SPUNamedFunctionTable passthrough_table[];
-extern void BuildPassthroughTable( SPU *child );
-
-SPUFunctions passthrough_functions = {
+static SPUFunctions passthrough_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
-	passthrough_table /* THE ACTUAL FUNCTIONS */
+	_cr_passthrough_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *passthroughSPUInit( int id, SPU *child, SPU *self,
-		unsigned int context_id,
-		unsigned int num_contexts )
+static SPUFunctions *
+passthroughSPUInit( int id, SPU *child, SPU *self,
+										unsigned int context_id,
+										unsigned int num_contexts )
 {
 	(void) id;
 	(void) self;
@@ -34,17 +31,19 @@ SPUFunctions *passthroughSPUInit( int id, SPU *child, SPU *self,
 	return &passthrough_functions;
 }
 
-void passthroughSPUSelfDispatch(SPUDispatchTable *parent)
+static void
+passthroughSPUSelfDispatch(SPUDispatchTable *parent)
 {
 	(void)parent;
 }
 
-int passthroughSPUCleanup(void)
+static int
+passthroughSPUCleanup(void)
 {
 	return 1;
 }
 
-SPUOptions passthroughSPUOptions[] = {
+static SPUOptions passthroughSPUOptions[] = {
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
