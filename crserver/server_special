@@ -14,3 +14,4 @@ GetPixelMapuiv
 GetPixelMapusv
 GetPointerv
 Writeback
+Viewport
