@@ -346,18 +346,16 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 																				(GLubyte *) window->msgBuffer +
 																				binaryswap_spu.offset);
 
-			/* lower of pair => recv,send */
 			if (binaryswap_spu.highlow[i])
 			{
+				/* lower of pair => recv,send */
 				crNetGetMessage(binaryswap_spu.peer_recv[i], &incoming_msg);
-
 				crNetSend(binaryswap_spu.peer_send[i], NULL, window->msgBuffer,
 									(read_width * read_height * 4) + binaryswap_spu.offset);
 			}
-			/* higher of pair => send,recv */
 			else
 			{
-
+				/* higher of pair => send,recv */
 				crNetSend(binaryswap_spu.peer_send[i], NULL, window->msgBuffer,
 									(read_width * read_height * 4) + binaryswap_spu.offset);
 				crNetGetMessage(binaryswap_spu.peer_recv[i], &incoming_msg);
@@ -598,8 +596,8 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 		CRASSERT(window->width > 0);
 		CRASSERT(window->height > 0);
 
+		/* Begin critical region */
 		binaryswap_spu.child.SemaphorePCR(MUTEX_SEMAPHORE);
-		binaryswap_spu.child.Viewport(0, 0, window->width, window->height);
 
 		binaryswap_spu.child.WindowPos2iARB(draw_x, draw_y);
 		binaryswap_spu.child.DrawPixels(draw_width, draw_height,
@@ -607,6 +605,7 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 																		window->msgBuffer +
 																		binaryswap_spu.offset);
 
+		/* end critical region */
 		binaryswap_spu.child.SemaphoreVCR(MUTEX_SEMAPHORE);
 	}
 }
@@ -967,9 +966,9 @@ binaryswapspuTweakVisBits(GLint visBits,
 {
 	*superVisBits = visBits;
 
-	/* If doing z-compositing, need stencil buffer */
+	/* If doing z-compositing, need stencil and depth buffers */
 	if (binaryswap_spu.depth_composite)
-		*superVisBits |= CR_STENCIL_BIT;
+		*superVisBits |= (CR_STENCIL_BIT | CR_DEPTH_BIT);
 	else if (binaryswap_spu.alpha_composite)
 		*superVisBits |= CR_ALPHA_BIT;
 
