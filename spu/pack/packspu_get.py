@@ -59,7 +59,8 @@ hard_funcs = {
 
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "packspu", func_name ): continue
+	if stub_common.FindSpecial( "packspu", func_name ):
+		continue
 	if return_type != 'void' or stub_common.FindSpecial( "../../packer/packer_get", func_name):
 		print '%s PACKSPU_APIENTRY packspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 		print '{'
