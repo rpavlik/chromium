@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 
@@ -27,7 +28,9 @@
  * PFNGLSECONDARYCOLOR3FEXTPROC.  By undef'ing GL_EXT_secondary_color
  * we're sure to pick it up from glext.h.
  */
+#ifndef GL_GLEXT_VERSION  /* glext.h wasn't already included */
 #undef GL_EXT_secondary_color
+#endif
 #include <GL/glext.h>
 
 
