@@ -43,11 +43,11 @@ typedef void (*SPUOptionCB)( void *spu, const char *response );
 
 typedef struct {
 	const char *option;
-	enum { CR_BOOL, CR_INT, CR_FLOAT, CR_STRING } type; 
+	enum { CR_BOOL, CR_INT, CR_FLOAT, CR_STRING, CR_ENUM } type; 
 	int numValues;  /* usually 1 */
-	const char *deflt;  /* default value, as a string */
-	const char *min;
-	const char *max;
+	const char *deflt;  /* comma-separated string of [numValues] defaults */
+	const char *min;    /* comma-separated string of [numValues] minimums */
+	const char *max;    /* comma-separated string of [numValues] maximums */
 	const char *description;
 	SPUOptionCB cb;
 } SPUOptions, *SPUOptionsPtr;

@@ -7,6 +7,7 @@
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_mothership.h"
+#include "cr_string.h"
 #include <stdio.h>
 
 void crSPUInitDispatchTable( SPUDispatchTable *table )
@@ -56,6 +57,21 @@ static int validate_one_option( SPUOptions *opt,
 		return validate_int( response, min, max );
 	case CR_FLOAT:
 		return validate_float( response, min, max );
+	case CR_ENUM:
+		/* Make sure response string is present in the min string.
+		 * For enums, the min string is a comma-separted list of valid values.
+		 */
+		CRASSERT(opt->numValues = 1); /* an enum limitation for now */
+		{
+			const char *p = crStrstr(min, response);
+			if (!p)
+				return 0;  /* invalide value! */
+			if (p[-1] != '\'')
+				return 0;  /* right substring */
+			if (p[crStrlen(response)] != '\'')
+				return 0;  /* left substring */
+			return 1;
+		}
 	default:
 		return 0;
 	}

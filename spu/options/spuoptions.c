@@ -109,10 +109,11 @@ static void print_spu_header( SPU *spu, int pythonMode )
 }
 
 static const char *type_string[] = {
-   "BOOL", 
-   "INT",
-   "FLOAT",
-   "STRING"
+	"BOOL", 
+	"INT",
+	"FLOAT",
+	"STRING",
+	"ENUM"
 };
 
 static void print_option( SPUOptions *opt, int pythonMode )
