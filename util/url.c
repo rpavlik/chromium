@@ -34,14 +34,15 @@ int crParseURL( char *url, char *protocol, char *hostname,
 
 	/* pull off the protocol */
 	temp = crStrstr( url, "://" );
-	if ( temp == NULL )
+	if ( temp == NULL && protocol != NULL )
 	{
 		crStrcpy( protocol, "tcpip" );
 		temp = url;
 	}
-	else
+	else 
 	{
-		crStrncpy( protocol, url, temp-url );
+		if (protocol != NULL)
+			crStrncpy( protocol, url, temp-url );
 		temp += 3;
 	}
 
@@ -61,16 +62,20 @@ int crParseURL( char *url, char *protocol, char *hostname,
 	temp2 = crStrrchr( temp2, ':' );
 	if ( temp2 )
 	{
-		crStrncpy( hostname, temp, temp2 - temp );
+		if (hostname != NULL)
+			crStrncpy( hostname, temp, temp2 - temp );
 		temp2++;
 		if ( !is_digit_string( temp2 ) )
 			goto bad_url;
 
-		*port = (unsigned short) atoi( temp2 );
+		if (port != NULL)
+			*port = (unsigned short) atoi( temp2 );
 	}
 	else
 	{
-		crStrcpy( hostname, temp );
+		if (hostname != NULL)
+			crStrcpy( hostname, temp );
+		if (port != NULL)
 		*port = default_port;
 	}
 

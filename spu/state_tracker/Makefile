@@ -67,7 +67,8 @@ LIB_COPIES = crserver \
 	tilesortspu \
 	arrayspu \
 	hiddenlinespu \
-	nopspu
+	nopspu \
+	simplequeryspu
 
 include $(TOP)/cr.mk
 

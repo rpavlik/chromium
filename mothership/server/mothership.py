@@ -90,6 +90,10 @@ class SPU:
 		node.Conf( 'port', port )
 		if protocol == 'tcpip':
 			self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
+		elif protocol.startswith('file'):
+			self.__add_server( node, "%s" % protocol )
+			# Don't tell the server "node" about this.
+			return
 		else:
 			self.__add_server( node, "%s://%s:%d" % (protocol,node.host,port) )
 		node.AddClient( self, protocol )
@@ -154,6 +158,7 @@ class CRNetworkNode(CRNode):
 
 	    Conf:	Sets a key/value list in this node's configuration
 	    AddClient:	Adds a client to the list of clients.
+		FileClient: Add a file-readback client
 	    AddTile:	Adds a tile to the list of tiles
 	"""
 	def __init__( self, host='localhost' ):
@@ -161,6 +166,7 @@ class CRNetworkNode(CRNode):
 		Creates a network node for the given "host"."""
 		CRNode.__init__(self,host)
 		self.clients = []
+		self.file_clients = []
 		self.tiles = []
 
 	def Conf( self, key, *values ):
@@ -173,6 +179,11 @@ class CRNetworkNode(CRNode):
 		Adds a client node, communicating with "protocol", to the
 		list of clients."""
 		self.clients.append( (node,protocol) )
+
+	def FileClient( self, fname ):
+		"""FileClient(node, fname)
+		Adds a file-readback client link from the named file."""
+		self.file_clients.append( "file://%s" % fname )
 
 	def AddTile( self, x, y, w, h ):
 		"""AddTile(x, y, w, h)
@@ -714,11 +725,17 @@ class CR:
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
 			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for clients without telling me what server you are!" )
 			return
-		clients = "%d " % len(sock.node.clients)
+		total_clients = len(sock.node.clients) + len(sock.node.file_clients)
+		clients = "%d " % total_clients
 		for i in range(len(sock.node.clients)):
 			(spu, protocol) = sock.node.clients[i]
 			clients += "%s %d" % (protocol, spu.ID)
-			if i != len(sock.node.clients) -1:
+			if i != total_clients-1:
+				clients += ','
+		for i in range(len(sock.node.file_clients)):
+			fname = sock.node.file_clients[i]
+			clients += fname
+			if i-len(sock.node.clients) != total_clients-1:
 				clients += ','
 		sock.Success( clients )
 	

@@ -22,6 +22,7 @@ FILES = bufpool \
 	endian \
 	environment \
 	error \
+	filenet \
 	hash \
 	mem \
 	net \

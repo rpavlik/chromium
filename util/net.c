@@ -53,6 +53,7 @@ static struct {
 
 NETWORK_TYPE( TCPIP );
 NETWORK_TYPE( Devnull );
+NETWORK_TYPE( File );
 #ifdef GM_SUPPORT
 NETWORK_TYPE( Gm );
 #endif
@@ -110,20 +111,25 @@ CRConnection *crNetConnectToServer( char *server,
 
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
 	
-	if ( !strcmp( protocol, "devnull" ) )
+	if ( !crStrcmp( protocol, "devnull" ) )
 	{
 		crDevnullInit( cr_net.recv, cr_net.close, mtu );
 		crDevnullConnection( conn );
 	}
+	else if ( !crStrcmp( protocol, "file" ) )
+	{
+		crFileInit( cr_net.recv, cr_net.close, mtu );
+		crFileConnection( conn );
+	}
 #ifdef GM_SUPPORT
-	else if ( !strcmp( protocol, "gm" ) )
+	else if ( !crStrcmp( protocol, "gm" ) )
 	{
 		cr_net.use_gm++;
 		crGmInit( cr_net.recv, cr_net.close, mtu );
 		crGmConnection( conn );
 	}
 #endif
-	else if ( !strcmp( protocol, "tcpip" ) )
+	else if ( !crStrcmp( protocol, "tcpip" ) )
 	{
 		crTCPIPInit( cr_net.recv, cr_net.close, mtu );
 		crTCPIPConnection( conn );
@@ -182,20 +188,31 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned i
 
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
 	
-	if ( !strcmp( protocol, "devnull" ) )
+	if ( !crStrcmp( protocol, "devnull" ) )
 	{
 		crDevnullInit( cr_net.recv, cr_net.close, mtu );
 		crDevnullConnection( conn );
 	}
+	if ( !crStrncmp( protocol, "file", crStrlen( "file" ) ) )
+	{
+		char filename[4096];
+		if (!crParseURL( protocol, NULL, filename, NULL, 0 ))
+		{
+			crError( "Malformed URL: \"%s\"", protocol );
+		}
+		conn->hostname = crStrdup( filename );
+		crFileInit( cr_net.recv, cr_net.close, mtu );
+		crFileConnection( conn );
+	}
 #ifdef GM_SUPPORT
-	else if ( !strcmp( protocol, "gm" ) )
+	else if ( !crStrcmp( protocol, "gm" ) )
 	{
 		cr_net.use_gm++;
 		crGmInit( cr_net.recv, cr_net.close, mtu );
 		crGmConnection( conn );
 	}
 #endif
-	else if ( !strcmp( protocol, "tcpip" ) )
+	else if ( !crStrcmp( protocol, "tcpip" ) )
 	{
 		crTCPIPInit( cr_net.recv, cr_net.close, mtu );
 		crTCPIPConnection( conn );
@@ -568,6 +585,7 @@ int crNetRecv( void )
 	int found_work = 0;
 
 	found_work += crTCPIPRecv( );
+	found_work += crFileRecv( );
 #ifdef GM_SUPPORT
 	if ( cr_net.use_gm )
 		found_work += crGmRecv( );

@@ -14,7 +14,7 @@ LIBRARIES = crutil
 PRECOMP = passthroughspu.c
 SLOP = $(PRECOMP)
 
-SPU_COPIES = hlpassthroughspu
+SPU_COPIES = hlpassthroughspu sqpassthroughspu
 
 LIB_DEFS += passthrough.def
 include ${TOP}/cr.mk

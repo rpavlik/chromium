@@ -40,6 +40,7 @@ void crServerGatherConfiguration(char *mothership)
 	int numClients;
 	char **tilechain, **tilelist;
 	int num_servers;
+	int a_non_file_client;
 
 	char **serverchain;
 
@@ -120,6 +121,10 @@ void crServerGatherConfiguration(char *mothership)
 	
 	clientchain = crStrSplitn( response, " ", 1 );
 	numClients = crStrToInt( clientchain[0] );
+	if (numClients == 0)
+	{
+		crError( "I have no clients!  What's a poor server to do?" );
+	}
 	clientlist = crStrSplit( clientchain[1], "," );
 
 	cr_server.numClients = numClients;
@@ -151,6 +156,7 @@ void crServerGatherConfiguration(char *mothership)
 		}
 	}
 
+	a_non_file_client = -1;
 	for (i = 0 ; i < numClients ; i++)
 	{
 		char protocol[1024];
@@ -160,6 +166,11 @@ void crServerGatherConfiguration(char *mothership)
                 /* XXX limits should come from first SPU */
 		cr_server.clients[i].ctx = crStateCreateContext( &limits );
 		crStateSetCurrentPointers( cr_server.clients[i].ctx, &(cr_server.current) );
+
+		if (crStrncmp(protocol,"file",crStrlen("file")))
+		{
+			a_non_file_client = i;
+		}
 	}
 
 	/* Sigh -- the servers need to know how big the whole mural is if we're 
@@ -170,54 +181,61 @@ void crServerGatherConfiguration(char *mothership)
 	 * which SPU we pick for certain graph configurations, but we'll cross 
 	 * that bridge later. */
 
-	crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
-	crMothershipGetServers( conn, response );
-
-	serverchain = crStrSplitn( response, " ", 1 );
-	num_servers = crStrToInt( serverchain[0] );
-
-	if (num_servers == 0)
+	if (a_non_file_client != -1)
 	{
-		crError( "No servers specified for SPU %d?!", cr_server.clients[0].spu_id );
-	}
+		crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
+		crMothershipGetServers( conn, response );
 
-	num_servers = num_servers;
+		serverchain = crStrSplitn( response, " ", 1 );
+		num_servers = crStrToInt( serverchain[0] );
 
-	for (i = 0 ; i < num_servers ; i++)
-	{
-		int numExtents;
-		int tile;
-		if (!crMothershipGetTiles( conn, response, i ))
+		if (num_servers == 0)
 		{
-			break;
+			crError( "No servers specified for SPU %d?!", cr_server.clients[0].spu_id );
 		}
 
-		tilechain = crStrSplitn( response, " ", 1 );
-		numExtents = crStrToInt( tilechain[0] );
+		num_servers = num_servers;
 
-		tilelist = crStrSplit( tilechain[1], "," );
-
-		for (tile = 0; tile < numExtents ; tile++)
+		for (i = 0 ; i < num_servers ; i++)
 		{
-			int w,h;
-			int x1, y1;
-			int x2, y2;
-			sscanf( tilelist[tile], "%d %d %d %d", &x1, &y1, &w, &h );
-
-			x2 = x1 + w;
-			y2 = y1 + h;
-
-			if (x2 > (int) cr_server.muralWidth )
+			int numExtents;
+			int tile;
+			if (!crMothershipGetTiles( conn, response, i ))
 			{
-				cr_server.muralWidth = x2;
+				break;
 			}
-			if (y2 > (int) cr_server.muralHeight )
+
+			tilechain = crStrSplitn( response, " ", 1 );
+			numExtents = crStrToInt( tilechain[0] );
+
+			tilelist = crStrSplit( tilechain[1], "," );
+
+			for (tile = 0; tile < numExtents ; tile++)
 			{
-				cr_server.muralHeight = y2;
+				int w,h;
+				int x1, y1;
+				int x2, y2;
+				sscanf( tilelist[tile], "%d %d %d %d", &x1, &y1, &w, &h );
+
+				x2 = x1 + w;
+				y2 = y1 + h;
+
+				if (x2 > (int) cr_server.muralWidth )
+				{
+					cr_server.muralWidth = x2;
+				}
+				if (y2 > (int) cr_server.muralHeight )
+				{
+					cr_server.muralHeight = y2;
+				}
 			}
 		}
+		crWarning( "Total output dimensions = (%d, %d)", cr_server.muralWidth, cr_server.muralHeight );
 	}
-	crWarning( "Total output dimensions = (%d, %d)", cr_server.muralWidth, cr_server.muralHeight );
+	else
+	{
+		crWarning( "It looks like there are nothing but file clients.  That suits me just fine." );
+	}
 
 
 	crMothershipDisconnect( conn );

@@ -22,10 +22,9 @@ typedef struct CRConnection CRConnection;
 typedef enum {
 	CR_NO_CONNECTION,
 	CR_TCPIP,
-	CR_DROP_PACKETS,
-	CR_FILE_TRACE,
+	CR_FILE,
 	CR_GM,
-	CR_MULTI_PACKET
+	CR_DROP_PACKETS
 } CRConnectionType;
 
 #if defined(WINDOWS)
@@ -112,8 +111,9 @@ struct CRConnection {
 	int index;
 
 	/* FILE Tracing */
+	enum { CR_FILE_WRITE, CR_FILE_READ } file_direction;
 	char *filename;
-	FILE *fp;
+	int fd;
 
 	/* Myrinet GM */
 	unsigned int gm_node_id;
