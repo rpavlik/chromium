@@ -14,6 +14,7 @@
 int crStrlen( const char *str )
 {
 	const char *temp;
+	if (!str) return 0;
 	for (temp = str ; *temp ; temp++);
 	return temp-str;
 }
@@ -174,6 +175,7 @@ char *crStrstr( const char *str, const char *pat )
 	int pat_len = crStrlen( pat );
 	const char *end = str + crStrlen(str) - pat_len;
 	char first_char = *pat;
+	if (!str) return NULL;
 	for (; str <= end ; str++)
 	{
 		if (*str == first_char && !crMemcmp( str, pat, pat_len ))
