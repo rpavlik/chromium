@@ -20,6 +20,9 @@
  * We effectively wrap gl.h, glu.h, etc, just like GLUT
  */
 
+#define GL_GLEXT_PROTOTYPES
+#define GLX_GLXEXT_PROTOTYPES
+
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #define WGL_APIENTRY __stdcall
