@@ -30,7 +30,6 @@ def ScanFile(filename):
 				pass
 			else:
 				results.append( (name, val) )
-			#print '\t{ "%s", %s },' % (m.group(1), m.group(2))
 
 	file.close()
 	return results
@@ -96,11 +95,9 @@ def GenerateBlock(group):
 	block = []
 	for (name, value) in group:
 		while i < value % 256:
-			#s = '  /* %5d:        */  NULL,' % i
 			block.append(("", value))
 			i += 1
 		assert i == value % 256
-		#s = '  /* %5d: 0x%04x */  "%s",' % (0, value, name)
 		block.append((name, value))
 		i += 1
 	return block
@@ -146,17 +143,8 @@ print """
 pairs = []
 for arg in sys.argv:
 	pairs += ScanFile(arg)
-
-#pairs = [] #ScanFile("../../include/GL/glext.h")
-#pairs2 = ScanFile("/usr/include/GL/gl.h")
-#pairs = pairs + pairs2
-
 pairs.sort(Comparator)
 pairs = RemoveDuplicates(pairs)
-#for (name, value) in pairs:
-#	print '\t{ "%s", 0x%x },' % (name, value)
-
-
 (indexes, strings) = GenerateTables(pairs)
 
 print """
