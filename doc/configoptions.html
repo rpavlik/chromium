@@ -174,6 +174,58 @@ SPU has <i>no</i> configuration options, it is not listed here.</p>
   </tr>
 </table>
 
+<h2 class="PageSubHeading">Saveframe SPU</h2>
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">geometry</td>
+    <td width="12%" class="ConfigType" height="74">4 Integers</td>
+    <td width="115%" class="ConfigDesc" height="74">
+      Geometry of the frame to save.  This is specified as four integer
+      numbers.&nbsp; The first two give the (<i>x</i>,<i>y</i>) position of
+      the upper left corner of the frame, relative to the upper left corner
+      of the window.&nbsp; The last two numbers give the width and height
+      of the frame, respectively.  Any call to glViewport will override any
+      settings given in this parameter.  If no glViewport call has been
+      made, and no geometry is set, the saveframe SPU does nothing.
+
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">basename</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">
+      Base of the filename to which to save files.  All files will have a
+      four-digit frame number and <code>.ppm</code> appended to them.  Example:
+      <code>frame0000.ppm</code>.  This parameter allows you to modify the
+      filename.  The default is "<code>frame</code>".
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">stride</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="115%" class="ConfigDesc" height="38">
+      Sets the number of frames to skip.  The default is 1.  This means
+      that every frame is saved.  Setting to 2 means to only save every
+      other frame.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">single</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Specifies saving a single frame.
+          If this parameter is set, the saveframe SPU will only save a
+          single frame.  Set this to the frame number of the frame to save.
+          The default is unset.
+        </td>
+  </tr>
+</table>
+
 </body>
 
 </html>

@@ -119,6 +119,14 @@ from</a>.</p>
     stream of OpenGL commands.&nbsp; One-third of the logic of WireGL can be
     found in this library (the other thirds being in the server, and the state
     tracker, listed below).</p></li>
+  <li><p class="ProvidedThing">The &quot;saveframe&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU saves the current frame to a PPM file. 
+    Just like the print SPU, this SPU can be very useful for debugging the
+    streams.  It uses its child to to a ReadPixels, so this SPU can never
+    be the last one in the chain.  (It also might require a render SPU in
+    the same chain, though I haven't tested this.)
+    </p></li>
+
 </ul>
 <h2 class="PageSubHeading">Useful libraries</h2>
 <p>Chromium also builds several shared libraries which can be used by any
