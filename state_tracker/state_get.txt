@@ -263,6 +263,8 @@ GLdouble                                        GL_CURRENT_RASTER_INDEX         
 #GLint     GL_SECONDARY_COLOR_ARRAY_TYPE_EXT
 #GLint     GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT
 
+GLint   GL_MAX_VERTEX_ATTRIBS_ARB        g->limits.maxVertexProgramAttribs
+
 # Implementation-dependent limits queries
 
 GLint   GL_MAX_TEXTURE_UNITS_ARB         g->limits.maxTextureUnits
