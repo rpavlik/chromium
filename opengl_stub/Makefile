@@ -83,7 +83,7 @@ LIB_DEFS = opengl.def
 include ${TOP}/cr.mk
 
 ifdef WINDOWS
-LDFLAGS += user32.lib ws2_32.lib
+LDFLAGS += user32.lib ws2_32.lib gdi32.lib
 endif
 
 opengl.def: stub_common.py defs.py
