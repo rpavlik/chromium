@@ -269,9 +269,10 @@ for determining rendering performance of a Chromium configuration.
     <td width="100%" class="ConfigDesc">
     If the given number of frames have been rendered since the last time a
     report was issued, a new report is issued.  If set to <code>0</code>,
-    frame-based report triggers are disabled.  The default value is <code>100</code>,
-    meaning a report will be issued at least every 100 frames (possibly sooner,
-    if the <code>report_seconds</code> option, above, is used).
+    frame-based report triggers are disabled.  The default value is <code>0</code>,
+    meaning that frame-count-based reports are by default disabled.  
+    (Elapsed-time-based reports, as configured by <code>report_seconds</code>
+    above, will still be in effect.)
     </td>
   </tr>
   <tr>
