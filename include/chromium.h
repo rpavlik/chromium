@@ -51,7 +51,11 @@
 #include <GL/osmesa.h>
 #endif
 
+#ifdef DARWIN
+#include <stddef.h>
+#else
 #include <malloc.h>  /* to get ptrdiff_t used below */
+#endif
 
 #include <GL/glext.h>
 
