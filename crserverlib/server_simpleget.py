@@ -4,7 +4,6 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 import sys
-import cPickle
 
 sys.path.append( "../glapi_parser" )
 import apiutil
