@@ -132,10 +132,10 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	ContextInfo *contextInfo;
 	int i;
 
-#if 0
-fprintf(stderr,"CreateContext thread = %p\n",thread);
-#endif
-	crDebug( "Tilesort SPU: CreateContext(visBits=0x%x)", visBits );
+	crDebug("Tilesort SPU: CreateContext(%s, 0x%x)", dpyName, visBits);
+
+	if (tilesort_spu.forceQuadBuffering && tilesort_spu.stereoMode == CRYSTAL)
+		visBits |= CR_STEREO_BIT;
 
 	/* release geometry buffer */
 	crPackReleaseBuffer( thread0->packer );
@@ -156,7 +156,6 @@ fprintf(stderr,"CreateContext thread = %p\n",thread);
 	else
 		contextInfo->client_hdc = (HDC) crStrToInt(dpyName);
 #else
-	crDebug("Tilesort SPU: Displayname = %s", (dpyName ? dpyName : "(null)"));
 	
 	contextInfo->dpy = XOpenDisplay(dpyName);
 #endif
