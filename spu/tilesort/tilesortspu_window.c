@@ -357,9 +357,9 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 
 	if (!XTranslateCoordinates(winInfo->dpy, winInfo->xwin,
 														 root, x, y, &x, &y, &child)) {
-			crDebug("XTranslateCoordinates(%d) failed in tilesortspuUpdateWindowInfo",
-							(int) winInfo->xwin);
-			return;
+		crDebug("XTranslateCoordinates(%d) failed in tilesortspuUpdateWindowInfo",
+						(int) winInfo->xwin);
+		return;
 	}
 
 #ifdef USE_DMX

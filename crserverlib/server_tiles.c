@@ -81,7 +81,8 @@ initializeExtents(CRMuralInfo *mural)
 			if ( x + w > (int) mural->underlyingDisplay[2] )
 			{
 				if (x == leftMargin) {
-					crWarning("Ran out of room for tiles in this server's window (%d x %d)!!!",
+					crWarning("No room for %dx%d tile in this server's window (%d x %d)!",
+										w, h,
 										mural->underlyingDisplay[2], mural->underlyingDisplay[3]);
 				}
 				y += maxTileHeight;
@@ -108,7 +109,9 @@ initializeExtents(CRMuralInfo *mural)
 #endif
 
 			if ((unsigned int)extent->outputwindow.y2 > mural->underlyingDisplay[3])
-				crWarning("Ran out of room for tiles in this server's window (%d x %d)!!!", mural->underlyingDisplay[2], mural->underlyingDisplay[3]);
+				crWarning("No room for %dx%d tile in this server's window (%d x %d)!",
+									w, h,
+									mural->underlyingDisplay[2], mural->underlyingDisplay[3]);
 
 			if (h > maxTileHeight)
 				maxTileHeight = h;
@@ -180,7 +183,7 @@ crServerNewMuralTiling(CRMuralInfo *mural,
 
 	CRASSERT(numTiles >= 0);
 
-	crDebug("Reconfiguring tiles in crServerNewTiles:");
+	crDebug("Reconfiguring tiles in crServerNewMuralTiling:");
 	crDebug("  New mural size: %d x %d", muralWidth, muralHeight);
 	for (i = 0; i < numTiles; i++)
 	{

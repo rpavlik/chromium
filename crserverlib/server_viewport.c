@@ -73,7 +73,7 @@ crServerComputeViewportBounds( CRViewportState *v, CRMuralInfo *mural )
 		** We might as well use the actual scissorTest rather than
 		** scissorValid - it never gets reset anyway.
 		*/
-		if (!v->scissorTest) 
+		if (!v->scissorTest)
 		{
 			extent->scissorBox = extent->outputwindow;
 		} 

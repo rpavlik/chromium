@@ -377,24 +377,6 @@ SPUOptions tilesortSPUOptions[] = {
 	{"force_quad_buffering", CR_BOOL, 1, "0", NULL, NULL,
 	 "Force Quad-buffered Stereo", (SPUOptionCB) set_force_quad_buffering},
 
-#if 0
-	{"left_view_matrix", CR_FLOAT, 16,
-	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
-	 "Left Eye Viewing Matrix", (SPUOptionCB) set_left_view_matrix},
-
-	{"right_view_matrix", CR_FLOAT, 16,
-	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
-	 "Right Eye Viewing Matrix", (SPUOptionCB) set_right_view_matrix},
-
-	{"left_projection_matrix", CR_FLOAT, 16,
-	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
-	 "Left Eye Projection Matrix", (SPUOptionCB) set_left_projection_matrix},
-
-	{"right_projection_matrix", CR_FLOAT, 16,
-	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
-	 "Right Eye Projection Matrix", (SPUOptionCB) set_right_projection_matrix},
-#endif
-
 	{NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL},
 };
 
