@@ -1,0 +1,199 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Checking the Performance of Chromium</h1>
+
+<p>Chromium has an additional SPU that is capable of taking snapshots of
+the current state of certain aspects of how everything is performing</p>
+
+<p>Currently we have two mechanisms in which to obtain performance counters.
+These are frame based (i.e. via SwapBuffers) or timer based. To set Chromium
+up for this performance criteria, in your applications, we can issue the
+commands:</p>
+
+<li>glChromiumParameterfCR(GL_PERF_START_TIMER_CR, 5.0); or</li>
+<li>glChromiumParameteriCR(GL_PERF_SET_DUMP_ON_SWAP_CR, 1000);</li>
+
+<p>The first of these will start timer on a five second interval counting
+vertex statistics through SwapBuffers, and dump the relevant statistics
+on every fifth second. The second will dump the statistics on every
+1000'th frame (again through SwapBuffers).</p>
+
+<p>NOTE: To stop the timer at any time, issue:</p>
+
+<li>glChromiumParameterfCR(GL_PERF_STOP_TIMER_CR, 0.0);</li>
+
+<p>The statistics themselves are dumped to a log file. This can be
+stderr, stdout or a log file specified through the startup python
+script. Some examples:</p>
+
+<li>clientperfspu.Conf( 'perf_log_file', '/tmp/%H_perf.log' )</li>
+<li>clientperfspu.Conf( 'perf_log_file', 'stdout' )</li>
+
+<p>The %H is expanded into the hostname of the running node. This
+approach doesn't allow a unified logfile in which to output these
+statistics, so instead - we can use the mothership in which to
+dump data back to which collates all perfSPU data.</p>
+
+<li>clientperfspu.Conf( 'perf_set_mothership_log', '1' )</li>
+
+<p>In addition to setting the above, you must also set the logfile
+in which the mothership should 'append' data. This is defined through
+an environment variable - CR_PERF_MOTHERSHIP_LOGFILE, which should
+define the full path and logfile to output all incoming data.</p>
+
+<p>NOTE: Using the mothership logging facility will disable the 'perf_log_file'
+ability.</p>
+
+<p>Additional helper functions for use with the performance SPU are:</p>
+
+<li>clientperfspu.Conf( 'perf_set_dump_on_swap_count', '1000' )</li>
+<li>clientperfspu.Conf( 'perf_set_dump_on_finish', '1' )</li>
+<li>clientperfspu.Conf( 'perf_set_dump_on_flush', '1' )</li>
+<li>clientperfspu.Conf( 'perf_set_token', '1' )</li>
+
+<p>Equivalent functions (from above) that are accessible to applications:</p>
+
+<li>glChromiumParameteriCR(GL_PERF_SET_DUMP_ON_SWAP_CR, 1000);</li>
+<li>glChromiumParameteriCR(GL_PERF_SET_DUMP_ON_FINISH_CR, 1);</li>
+<li>glChromiumParameteriCR(GL_PERF_SET_DUMP_ON_FLUSH_CR, 0);</li>
+<li>glChromiumParametervCR(GL_PERF_SET_TOKEN_CR, "HeadSPU");</li>
+
+<p>The last one of these above - set_token, gives the ability to attach
+an extra string to each line of the output. This is useful to identify
+certain statistics that are defined as 'interesting'.</p>
+
+<p>We can also issue a request to the perfSPU to dump our statistics
+on demand, through:</p>
+
+<li>glChromiumParameteriCR(GL_PERF_DUMP_COUNTERS_CR, 0);</li>
+
+<p>Finally, to interact with the statistics that the perfSPU is monitoring,
+we can use:</p>
+
+<li>PerfData *framedata;</li>
+<li>glChromiumGetParametervCR(GL_PERF_GET_FRAME_DATA_CR, {spuid}, 0, 0, data);</li>
+
+<p>or</p>
+
+<li>PerfData *timerdata;</li>
+<li>glChromiumGetParametervCR(GL_PERF_GET_TIMER_DATA_CR, {spuid}, 0, 0, data);</li>
+
+<p>Both of these will return pointers to the data structures used in
+the perfSPU itself. Look in include/cr_applications for the information
+provided. Using this information, you can reset, or tweak, the data
+that the perfSPU is monitoring.</p>
+
+<p>Finally, to ensure the data is collected right to the end of the
+process that's running - be sure to issue a SIGTERM to the application
+(not crappfaker). This will ensure the SPU chain is shutdown cleanly
+and all data dumped to the logfile.</p>
+
+<p>Current sample output from atlantis, running with four crserver processes
+and with the tilesortSPU, on different nodes follows:</p>
+
+<tr>
+HeadSPU redhat FRAMESTATS 1000 POLYGONS 576000 576000
+HeadSPU redhat FRAMESTATS 1000 glVertex3fv 1859000 1859000
+HeadSPU redhat FRAMESTATS 1000 INTERP_TRIS 461000 461000
+HeadSPU redhat FRAMESTATS 1000 INTERP_QUADS 107000 107000
+HeadSPU redhat FRAMESTATS 1000 INTERP_POLYGONS 8000 8000
+
+sabrewulf FRAMESTATS 1000 POLYGONS 161153 161153
+sabrewulf FRAMESTATS 1000 glVertex3fv 518826 518826
+sabrewulf FRAMESTATS 1000 glVertex4fv 1214 1214
+sabrewulf FRAMESTATS 1000 INTERP_POINTS 374 374
+sabrewulf FRAMESTATS 1000 INTERP_LINES 1664 1664
+sabrewulf FRAMESTATS 1000 INTERP_TRIS 126422 126422
+sabrewulf FRAMESTATS 1000 INTERP_QUADS 31364 31364
+sabrewulf FRAMESTATS 1000 INTERP_POLYGONS 1936 1936
+
+aticatac FRAMESTATS 1000 POLYGONS 281181 281181
+aticatac FRAMESTATS 1000 glVertex3fv 908531 908531
+aticatac FRAMESTATS 1000 glVertex4fv 2048 2048
+aticatac FRAMESTATS 1000 INTERP_POINTS 652 652
+aticatac FRAMESTATS 1000 INTERP_LINES 2741 2741
+aticatac FRAMESTATS 1000 INTERP_TRIS 218043 218043
+aticatac FRAMESTATS 1000 INTERP_QUADS 57149 57149
+aticatac FRAMESTATS 1000 INTERP_POLYGONS 3620 3620
+
+pssst FRAMESTATS 1000 POLYGONS 156371 156371
+pssst FRAMESTATS 1000 glVertex3fv 503225 503225
+pssst FRAMESTATS 1000 glVertex4fv 1422 1422
+pssst FRAMESTATS 1000 INTERP_POINTS 711 711
+pssst FRAMESTATS 1000 INTERP_LINES 1509 1509
+pssst FRAMESTATS 1000 INTERP_TRIS 122894 122894
+pssst FRAMESTATS 1000 INTERP_QUADS 29786 29786
+pssst FRAMESTATS 1000 INTERP_POLYGONS 2182 2182
+
+jetpack FRAMESTATS 1000 POLYGONS 279325 279325
+jetpack FRAMESTATS 1000 glVertex3fv 902115 902115
+jetpack FRAMESTATS 1000 glVertex4fv 2580 2580
+jetpack FRAMESTATS 1000 INTERP_POINTS 1290 1290
+jetpack FRAMESTATS 1000 INTERP_LINES 2615 2615
+jetpack FRAMESTATS 1000 INTERP_TRIS 217065 217065
+jetpack FRAMESTATS 1000 INTERP_QUADS 55445 55445
+jetpack FRAMESTATS 1000 INTERP_POLYGONS 4200 4200
+
+HeadSPU redhat SPUID 0 NUMBER OF CONNECTIONS 5
+HeadSPU redhat SPUID 0 CONNECTION ID 0 PORT 7000 TOTAL_BYTES RECEIVED 17020
+HeadSPU redhat SPUID 0 CONNECTION ID 0 PORT 7000 TOTAL_BYTES SENT 15816964
+HeadSPU redhat SPUID 0 CONNECTION ID 1 PORT 7001 TOTAL_BYTES RECEIVED 17020
+HeadSPU redhat SPUID 0 CONNECTION ID 1 PORT 7001 TOTAL_BYTES SENT 28437708
+HeadSPU redhat SPUID 0 CONNECTION ID 2 PORT 7002 TOTAL_BYTES RECEIVED 17020
+HeadSPU redhat SPUID 0 CONNECTION ID 2 PORT 7002 TOTAL_BYTES SENT 15535012
+HeadSPU redhat SPUID 0 CONNECTION ID 3 PORT 7003 TOTAL_BYTES RECEIVED 17020
+HeadSPU redhat SPUID 0 CONNECTION ID 3 PORT 7003 TOTAL_BYTES SENT 28104632
+HeadSPU redhat SPUID 0 TOTAL FRAMES 1060
+HeadSPU redhat SPUID 0 TOTAL CLEARS 1061
+
+sabrewulf SPUID 2 NUMBER OF CONNECTIONS 4
+sabrewulf SPUID 2 CONNECTION ID 0 UNUSED (NULL CRConnection)
+sabrewulf SPUID 2 CONNECTION ID 2 PORT 7000 TOTAL_BYTES RECEIVED 15816964
+sabrewulf SPUID 2 CONNECTION ID 2 PORT 7000 TOTAL_BYTES SENT 17020
+sabrewulf SPUID 2 CONNECTION ID 3 UNUSED (NULL CRConnection)
+sabrewulf SPUID 2 TOTAL FRAMES 1060
+sabrewulf SPUID 2 TOTAL CLEARS 1061
+
+aticatac SPUID 4 NUMBER OF CONNECTIONS 4
+aticatac SPUID 4 CONNECTION ID 0 UNUSED (NULL CRConnection)
+aticatac SPUID 4 CONNECTION ID 2 PORT 7001 TOTAL_BYTES RECEIVED 28437708
+aticatac SPUID 4 CONNECTION ID 2 PORT 7001 TOTAL_BYTES SENT 17020
+aticatac SPUID 4 CONNECTION ID 3 UNUSED (NULL CRConnection)
+aticatac SPUID 4 TOTAL FRAMES 1060
+aticatac SPUID 4 TOTAL CLEARS 1061
+
+pssst SPUID 6 NUMBER OF CONNECTIONS 4
+pssst SPUID 6 CONNECTION ID 0 UNUSED (NULL CRConnection)
+pssst SPUID 6 CONNECTION ID 2 PORT 7002 TOTAL_BYTES RECEIVED 15535012
+pssst SPUID 6 CONNECTION ID 2 PORT 7002 TOTAL_BYTES SENT 17020
+pssst SPUID 6 CONNECTION ID 3 UNUSED (NULL CRConnection)
+pssst SPUID 6 TOTAL FRAMES 1060
+pssst SPUID 6 TOTAL CLEARS 1061
+
+jetpack SPUID 8 NUMBER OF CONNECTIONS 4
+jetpack SPUID 8 CONNECTION ID 0 UNUSED (NULL CRConnection)
+jetpack SPUID 8 CONNECTION ID 2 PORT 7003 TOTAL_BYTES RECEIVED 28104632
+jetpack SPUID 8 CONNECTION ID 2 PORT 7003 TOTAL_BYTES SENT 17020
+jetpack SPUID 8 CONNECTION ID 3 UNUSED (NULL CRConnection)
+jetpack SPUID 8 TOTAL FRAMES 1060
+jetpack SPUID 8 TOTAL CLEARS 1060
+</tr>
+
+</body>
+
+</html>

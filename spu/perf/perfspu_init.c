@@ -94,20 +94,20 @@ int perfSPUCleanup(void)
 		c = conn[i];
 		if (c) {
 		    if (c->port != 10000) {
-			sprintf(str, "SPUID %d CONNECTION ID %d PORT %d TOTAL_BYTES RECEIVED %d", perf_spu.id, i, c->port, c->total_bytes_recv);
+			sprintf(str, "%s %s SPUID %d CONNECTION ID %d PORT %d TOTAL_BYTES RECEIVED %d", perf_spu.token, perf_spu.hostname, perf_spu.id, i, c->port, c->total_bytes_recv);
 			perfspuDump( str );
-			sprintf(str, "SPUID %d CONNECTION ID %d PORT %d TOTAL_BYTES SENT %d", perf_spu.id, i, c->port, c->total_bytes_sent);
+			sprintf(str, "%s %s SPUID %d CONNECTION ID %d PORT %d TOTAL_BYTES SENT %d", perf_spu.token, perf_spu.hostname, perf_spu.id, i, c->port, c->total_bytes_sent);
 			perfspuDump( str );
 		    }
 		} else {
-			sprintf(str, "SPUID %d CONNECTION ID %d UNUSED (NULL CRConnection)", perf_spu.id, i);
+			sprintf(str, "%s %s SPUID %d CONNECTION ID %d UNUSED (NULL CRConnection)", perf_spu.token, perf_spu.hostname, perf_spu.id, i);
 			perfspuDump( str );
 		}
 	}
 
-	sprintf(str, "SPUID %d TOTAL FRAMES %d", perf_spu.id, perf_spu.total_frames );
+	sprintf(str, "%s %s SPUID %d TOTAL FRAMES %d", perf_spu.token, perf_spu.hostname, perf_spu.id, perf_spu.total_frames );
 	perfspuDump( str );
-	sprintf(str, "SPUID %d TOTAL CLEARS %d", perf_spu.id, perf_spu.clear_counter );
+	sprintf(str, "%s %s SPUID %d TOTAL CLEARS %d", perf_spu.token, perf_spu.hostname, perf_spu.id, perf_spu.clear_counter );
 	perfspuDump( str );
 
 	perfspuDump( " " );
