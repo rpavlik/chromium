@@ -23,12 +23,6 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyNam
 	GLint i, retVal = 0, ctxPos = -1;
 	CRContext *newCtx;
 
-#if 1
-	/* XXX temporary */
-	extern CRContext *__currentContext;
-	crDebug("crserver: &__currentContext = %p\n", (void *) &__currentContext);
-#endif
-
 	/* Since the Cr server serialized all incoming clients/contexts into
 	 * one outgoing GL stream, we only need to create one context for the
 	 * head SPU.  We'll only have to make it current once too, below.
