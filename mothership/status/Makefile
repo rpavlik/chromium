@@ -3,7 +3,11 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-TOP = ..
-SUBDIRS = client reset server status
+TOP = ../..
+
+PROGRAM = statusms
+FILES = status
+
+LIBRARIES = crmothership crutil
 
 include $(TOP)/cr.mk
