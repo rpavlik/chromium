@@ -457,7 +457,7 @@ Reshape(int w, int h)
 	glFrustum( -1.0, 1.0, -1.0, 1.0, 2.0, 13.0 );
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
-	glTranslatef( 0.0, 0.0, -3.0 );
+	glTranslatef( 0.0, 0.0, -3.5 );
 }
 
 
@@ -511,7 +511,7 @@ PrintHelp(void)
 	printf("  -s N        specifies number of spheres per frame\n");
 	printf("  -t N        specifies approximate number of triangles per sphere\n");
 	printf("  -f N        specifies number of frames to render before exiting\n");
-  printf("  -v          render with vertex buffer objects\n");
+	printf("  -v          render with vertex buffer objects\n");
 	printf("  -d          render with display lists\n");
 	printf("  -h          print this information\n");
 }
