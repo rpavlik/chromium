@@ -17,8 +17,8 @@ from wxPython.wx import *
 class SPUDialog(wxDialog):
 	def __init__(self, parent, id, title, options=None):
 		"""parent, id, and title are the standard wxDialog parameters.
-		options is a list of tuples (name, type, count, default, description)
-		that describes the controls to put in the dialog.
+		options is a list of tuples (name, description, type, count, default,
+		mins, maxs) that describes the controls to put in the dialog.
 		"""
 		wxDialog.__init__(self, parent, id, title, pos=wxPoint(-1,-1),
 						  style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER)
@@ -36,45 +36,67 @@ class SPUDialog(wxDialog):
 		
 		if options:
 			i = 0
-			for (name, type, count, default, description) in options:
-				if type == "bool":
+			for (name, description, type, count, default, mins, maxs) in options:
+				controls = []
+				if type == "BOOL":
 					labString = description + " (" + name + ")"
+					# XXX support [count] widgets?
+					assert count == 1
 					ctrl = wxCheckBox(parent=self, id=100+i, label=labString)
 					innerSizer.Add(ctrl, flag=wxLEFT|wxRIGHT, border=4)
-					ctrl.SetValue( default )
-				elif type == "int":
+					ctrl.SetValue( default[0] )
+					controls.append(ctrl)
+				elif type == "INT":
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
 					labString = description + ": "
 					label = wxStaticText(parent=self, id=-1, label=labString)
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
 					for j in range(0, count):
-						ctrl = wxSpinCtrl(parent=self, id=100+i, value=str(default),
-										  max=2048*2048)
+						if len(mins) > j:
+							minValue = mins[j]
+						else:
+							minValue = 0
+						if len(maxs) > j:
+							maxValue = maxs[j]
+						else:
+							maxValue = 1000000
+						ctrl = wxSpinCtrl(parent=self, id=100+i,
+										  size=wxSize(60,25),
+										  value=str(default[j]),
+										  min=minValue, max=maxValue)
 						rowSizer.Add(ctrl)
+						controls.append(ctrl)
 						i += 1
 					innerSizer.Add(rowSizer, flag=wxALL, border=4)
-				elif type == "float":
+				elif type == "FLOAT":
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
 					labString = description + ": "
 					label = wxStaticText(parent=self, id=-1, label=labString)
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
 					for j in range(0, count):
-						ctrl = wxTextCtrl(parent=self, id=100+i, value=str(default))
+						ctrl = wxTextCtrl(parent=self, id=100+i,
+										  size=wxSize(60,25),
+										  value=str(default[j]))
 						rowSizer.Add(ctrl)
+						controls.append(ctrl)
 						i += 1
 					innerSizer.Add(rowSizer, flag=wxALL, border=4)
-				elif type == "string":
+				else:
+					assert type == "STRING"
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
 					labString = description + ": "
 					label = wxStaticText(parent=self, id=-1, label=labString)
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
-					ctrl = wxTextCtrl(parent=self, id=100+i, value=default)
+					# XXX support [count] widgets?
+					assert count == 1
+					ctrl = wxTextCtrl(parent=self, id=100+i, value=default[0])
 					rowSizer.Add(ctrl, option=1, flag=wxEXPAND)
 					innerSizer.Add(rowSizer, flag=wxALL|wxEXPAND, border=4)
+					controls.append(ctrl)
 
 				# Save this option
-				value = default
-				self._Controls[name] = ctrl
+				value = default  # a vector
+				self._Controls[name] = controls   # a vector
 
 				i += 1
 
@@ -110,19 +132,26 @@ class SPUDialog(wxDialog):
 
 	# name is an SPU option like bbox_line_width
 	def SetValue(self, name, newValue):
-		"""Set a control's value"""
+		"""Set a control's value (a vector of values)"""
 		assert name in self._Controls.keys()
-		ctrl = self._Controls[name]
-		if isinstance(ctrl, wxSpinCtrl) or isinstance(ctrl, wxCheckBox):
-			newValue = int(newValue)
-		ctrl.SetValue(newValue)
+		ctrls = self._Controls[name]
+		count = len(ctrls)
+		assert len(newValue) == count
+		if isinstance(ctrls[0], wxSpinCtrl) or isinstance(ctrls[0], wxCheckBox):
+			for i in range(count):
+				ival = int(newValue[i])
+				ctrls[i].SetValue(ival)
 
 	# name is an SPU option like bbox_line_width
 	def GetValue(self, name):
-		"""Return current value of the named control"""
+		"""Return current value (vector) of the named control"""
 		assert name in self._Controls.keys()
-		ctrl = self._Controls[name]
-		return ctrl.GetValue()
+		ctrls = self._Controls[name]
+		result = []
+		count = len(ctrls)
+		for i in range(count):
+			result.append(ctrls[i].GetValue())
+		return result
 
 	# Override the wxDialog.ShowModal() method
 	def ShowModal(self):
@@ -130,11 +159,18 @@ class SPUDialog(wxDialog):
 		# Save starting values
 		values = {}
 		for name in self._Controls.keys():
-			values[name] = self._Controls[name].GetValue()
+			ctrls = self._Controls[name]
+			vals = []
+			for i in range(len(ctrls)):
+				vals.append(ctrls[i].GetValue())
+			values[name] = vals
 		# Show the dialog
 		retVal = wxDialog.ShowModal(self)
+		# Finish up
 		if retVal == 0:
 			# Cancelled, restore original values
 			for name in values.keys():
-				self._Controls[name].SetValue(values[name])
+				ctrls = self._Controls[name]
+				for i in range(len(ctrls)):
+					ctrls[i].SetValue(values[name][i])
 		return retVal
