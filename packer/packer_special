@@ -73,3 +73,5 @@ CombinerParameterivNV
 CombinerStageParameterfvNV
 ChromiumParametervCR
 crCreateWindow
+FeedbackBuffer
+SelectBuffer

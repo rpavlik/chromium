@@ -18,6 +18,7 @@ NORMAL_FILES = packer \
 	pack_current \
 	pack_error \
 	pack_extensions \
+	pack_feedback \
 	pack_fog \
 	pack_init \
 	pack_lights \
