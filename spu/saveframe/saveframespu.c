@@ -82,7 +82,7 @@ swapBuffers(GLint window, GLint flags)
 				}
 #ifdef JPEG
 				else if (!crStrcmp(saveframe_spu.format, "jpeg"))
-				  {
+				{
 				    GLubyte* in;
 				    GLubyte* out;
 				    saveframe_spu.child.ReadBuffer(GL_BACK);
@@ -93,15 +93,15 @@ swapBuffers(GLint window, GLint flags)
 				    /* Work around an apparent but in the NVIDIA OpenGL driver */
 				    in= out= saveframe_spu.buffer;
 				    while (in<saveframe_spu.buffer+4*saveframe_spu.height*saveframe_spu.width) {
-				      *out++= *in++; /* R */
-				      *out++= *in++; /* G */
-				      *out++= *in++; /* B */
-				      in++; /* skip A */
+					*out++= *in++; /* R */
+					*out++= *in++; /* G */
+					*out++= *in++; /* B */
+					in++; /* skip A */
 				    }
 				    
 				    RGB_to_JPG(filename, saveframe_spu.width, saveframe_spu.height,
 					       saveframe_spu.buffer);
-				  }
+				}
 #endif
 				else {
 				  crWarning("Invalid value for saveframe_spu.format: %s",
@@ -109,11 +109,11 @@ swapBuffers(GLint window, GLint flags)
 				}
 			}
 			else
-			  {
+			{
 			    crWarning
 			      ("saveframespu: Filename longer than %d characters isn't allowed. Skipping frame %d.",
 			       MAX_FILENAME_LENGTH, saveframe_spu.framenum);
-			  }
+			}
 		}
 	}
 
@@ -161,7 +161,7 @@ saveframeChromiumParameteri(GLenum param, GLint i)
 
 static void SAVEFRAMESPU_APIENTRY
 saveframeChromiumParameterv(GLenum param, GLenum type, GLsizei count,
-														const GLvoid * p)
+			    const GLvoid * p)
 {
 	switch (param)
 	{
@@ -179,7 +179,7 @@ saveframeChromiumParameterv(GLenum param, GLenum type, GLsizei count,
 
 static void SAVEFRAMESPU_APIENTRY
 saveframeGetChromiumParameterv(GLenum target, GLuint index, GLenum type,
-															 GLsizei count, GLvoid * values)
+			       GLsizei count, GLvoid * values)
 {
 	switch (target)
 	{
@@ -207,17 +207,11 @@ saveframeGetChromiumParameterv(GLenum target, GLuint index, GLenum type,
 }
 
 SPUNamedFunctionTable _cr_saveframe_table[] = {
-	{"SwapBuffers", (SPUGenericFunction) swapBuffers}
-	,
-	{"Viewport", (SPUGenericFunction) viewport}
-	,
-	{"ChromiumParameteriCR", (SPUGenericFunction) saveframeChromiumParameteri}
-	,
-	{"ChromiumParametervCR", (SPUGenericFunction) saveframeChromiumParameterv}
-	,
-	{"GetChromiumParametervCR",
-	 (SPUGenericFunction) saveframeGetChromiumParameterv}
-	,
+	{"SwapBuffers", (SPUGenericFunction) swapBuffers},
+	{"Viewport", (SPUGenericFunction) viewport},
+	{"ChromiumParameteriCR", (SPUGenericFunction) saveframeChromiumParameteri},
+	{"ChromiumParametervCR", (SPUGenericFunction) saveframeChromiumParameterv},
+	{"GetChromiumParametervCR", (SPUGenericFunction) saveframeGetChromiumParameterv},
 	{NULL, NULL}
 };
 
@@ -234,7 +228,7 @@ ResizeBuffer(void)
 
 static int
 RGBA_to_PPM(char *filename, int width, int height, GLubyte * buffer,
-						int binary)
+	    int binary)
 {
 	FILE *file;
 	int i, j;
@@ -271,9 +265,9 @@ RGBA_to_PPM(char *filename, int width, int height, GLubyte * buffer,
 			for (j = 0; j < width; j++)
 			{
 				fprintf(file, "%d %d %d \n",
-								buffer[i * width * 4 + j * 4 + 0],
-								buffer[i * width * 4 + j * 4 + 1],
-								buffer[i * width * 4 + j * 4 + 2]);
+					buffer[i * width * 4 + j * 4 + 0],
+					buffer[i * width * 4 + j * 4 + 1],
+					buffer[i * width * 4 + j * 4 + 2]);
 			}
 			fprintf(file, "\n");
 		}
