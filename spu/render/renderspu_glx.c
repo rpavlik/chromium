@@ -259,10 +259,10 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 	int screen;
 
 	CRASSERT(visual);
-	if (visual->displayName[0])
-		dpyName = visual->displayName;
-	else if (render_spu.display_string[0])
+	if (render_spu.display_string[0])
 		dpyName = render_spu.display_string;
+	else if (visual->displayName[0])
+		dpyName = visual->displayName;
 	else
 		dpyName = NULL;
 
