@@ -20,7 +20,7 @@
 #include <windows.h>
 #endif
 
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>

@@ -13,13 +13,9 @@
 
 #include "exec.h"
 #include "../common/logo.h"
+#include "cr_glwrapper.h"
 
-#ifndef WIN32
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glext.h>
-#else
 PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
-#endif
 
 
 /* --- Global Variables ----------------------------------------------------- */
@@ -61,12 +57,14 @@ void	InitSpecial	( void )
 {
 #ifdef WIN32
 	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)wglGetProcAddress( "glBlendEquationEXT" );
+#else
+	glBlendEquationEXT = (PFNGLBLENDEQUATIONEXTPROC)glXGetProcAddressARB( (GLubyte *)"glBlendEquationEXT" );
+#endif
 	if ( glBlendEquationEXT == NULL )
 	{
 		cout << "Error linking to extensions!" << endl;
 		exit( 0 );
 	}
-#endif
 	
 	return;
 }
@@ -182,8 +180,6 @@ void	Reshape		( int width, int height )
 
 void	Keyboard	( unsigned char key, int x, int y )
 {
-	static	GLboolean	wireframe = false;
-
 	switch( key )
 	{
 		case 'Q':

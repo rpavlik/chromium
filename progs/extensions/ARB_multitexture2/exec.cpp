@@ -19,7 +19,7 @@
 
 #ifndef WIN32
 #define GL_GLEXT_PROTOTYPES
-#include <gl/glext.h>
+#include <GL/glext.h>
 #endif
 
 #include <stdio.h>
@@ -39,8 +39,10 @@ static GLuint	currentWidth, currentHeight;
 static GLuint	textureID[eNumTextures];
 static GLfloat	bgColor[4] = { 0.1, 0.1, 0.1, 0.0 };
 
+#ifdef WINDOWS
 PFNGLMULTITEXCOORD2FARBPROC	glMultiTexCoord2fARB;
 PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
+#endif
 
 
 /* --- Function Definitions ------------------------------------------------- */
@@ -114,15 +116,12 @@ void	InitSpecial	( void )
 #ifdef WIN32
   glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)wglGetProcAddress( "glMultiTexCoord2fARB" );
   glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress( "glActiveTextureARB" );
-#else // Linux, etc
-  glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)glxGetProcAddressARB( "glMultiTexCoord2fARB" );
-  glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC)glxGetProcAddressARB( "glActiveTextureARB" );
-#endif
   if( !glMultiTexCoord2fARB || !glActiveTextureARB )
     {
       cout << "Error trying to link to extensions!" << endl;
       exit( 0 );
     }
+#endif
   // Gets of CURRENT_TEXTURE_COORDS return that of the active unit.
   // ActiveTextureARB( enum texture ) changes active unit for:
   // 	- Seperate Texture Matrices
@@ -307,8 +306,6 @@ void	Reshape		( int width, int height )
 
 void	Keyboard	( unsigned char key, int, int )
 {
-	static	GLboolean	wireframe = false;
-
 	switch( key )
 	{
 		case 'Q':

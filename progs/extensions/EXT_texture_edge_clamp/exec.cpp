@@ -15,9 +15,6 @@
 #include "../common/logo.h"
 
 #include <math.h>
-#ifndef WIN32
-#include <GL/glxext.h>
-#endif
 
 
 /* --- Global Variables ----------------------------------------------------- */
@@ -72,7 +69,7 @@ void	InitSpecial	( void )
 		{
 			float result = (255.0/15)*sqrt( (x-16)*(x-16)+(y-16)*(y-16) );
 			
-			textureData[ y*32+x ] = result > 255 ? 255: result;
+			textureData[ y*32+x ] = result > 255 ? 255: (GLubyte) result;
 		}
 	}
 
@@ -193,8 +190,6 @@ void	Reshape		( int width, int height )
 
 void	Keyboard	( unsigned char key, int x, int y )
 {
-	static	GLboolean	wireframe = false;
-
 	switch( key )
 	{
 		case 'Q':
