@@ -5,6 +5,7 @@
  */
 
 #include "replicatespu.h"
+#include "cr_mothership.h"
 #include "cr_mem.h"
 #include "cr_packfunctions.h"
 #include "cr_string.h"
@@ -108,6 +109,7 @@ static void replicatespuStartVnc( void )
 
 
 	/* NOTE: should probably check the major/minor version too!! */
+	CRASSERT(replicate_spu.glx_display);
 	if (!XVncQueryExtension(replicate_spu.glx_display, &maj, &min)) {
 		crWarning("Replicate SPU: VNC extension is not available.");
 		replicate_spu.vncAvailable = GL_FALSE;
@@ -122,6 +124,7 @@ static void replicatespuStartVnc( void )
 		XVncSelectNotify(replicate_spu.glx_display, 1);
 
 		vnclist = XVncListConnections(replicate_spu.glx_display, &num_conn);
+		crDebug("Replicate SPU: Found %d open VNC connections", num_conn);
 		for (i = 0; i < num_conn; i++) {
 
 			addr.s_addr = vnclist->ipaddress;
@@ -151,8 +154,14 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #endif
-	if (!replicate_spu.glx_display)
+	if (!replicate_spu.glx_display) {
 		replicate_spu.glx_display = XOpenDisplay(dpyName);
+		if (!replicate_spu.glx_display) {
+			/* Try local display */
+			replicate_spu.glx_display = XOpenDisplay(":0");
+		}
+		CRASSERT(replicate_spu.glx_display);
+	}
 
 	replicate_spu.thread[0].broadcast = 0;
 
@@ -408,6 +417,20 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 
 		newCtx->currentWindow = winInfo->id;
 
+
+		if (replicate_spu.render_to_crut_window && !nativeWindow) {
+			char response[8096];
+			CRConnection *conn = crMothershipConnect();
+			if (!conn) {
+				crError("Couldn't connect to the mothership to get CRUT drawable-- "
+								"I have no idea what to do!");
+			}
+			crMothershipGetParam( conn, "crut_drawable", response );
+			nativeWindow = crStrToInt(response);
+			crDebug("Replicate SPU: using CRUT drawable: 0x%x", nativeWindow);
+			crMothershipDisconnect(conn);
+		}
+
 		if (replicate_spu.glx_display && winInfo && winInfo->nativeWindow != nativeWindow) {
 			/* tell VNC to monitor this window id, for window moves */
 			XVncChromiumMonitor( replicate_spu.glx_display, winInfo->id, nativeWindow );
@@ -428,6 +451,9 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 		rserverCtx = NULL;
 	}
 
+	/*
+	 * Send the MakeCurrent to all crservers (vnc viewers)
+	 */
 	thread->broadcast = 0;
 
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
