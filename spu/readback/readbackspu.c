@@ -304,7 +304,7 @@ static void read_and_send_tiles( WindowInfo *window )
 		 * don't have to worry about the downstream viewport and projection.
 		 */
 		readback_spu.child.RasterPos2i(0, 0);
-		readback_spu.child.Bitmap(0, 0, 0, 0, drawx, drawy, NULL);
+		readback_spu.child.Bitmap(0, 0, 0, 0, (GLfloat)drawx, (GLfloat)drawy, NULL);
 
 		/*
 		 * OK, send color/depth images to child.
