@@ -292,8 +292,6 @@ for (name, value) in opts:
 
 if len(args) > 0:
 	PROGRAM = args[0]
-if PROGRAM == "":
-	Usage()
 
 print "--- Image Reassembly Template ---"
 print "Mural size: %d cols x %d rows" % (TILE_COLS, TILE_ROWS)
@@ -361,17 +359,18 @@ for i in range(NUM_APP_NODES):
 		clientnode.Conf(name, value)
 
 	# argument substitutions
-	if i == 0 and ZEROTH_ARG != "":
-		app_string = string.replace( PROGRAM, '%0', ZEROTH_ARG)
-	else:
-		app_string = string.replace( PROGRAM, '%0', '' )
-	app_string = string.replace( app_string, '%I', str(i) )
-	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
-	clientnode.Conf( 'application', app_string )
+	if PROGRAM != "":
+		if i == 0 and ZEROTH_ARG != "":
+			app_string = string.replace( PROGRAM, '%0', ZEROTH_ARG)
+		else:
+			app_string = string.replace( PROGRAM, '%0', '' )
+		app_string = string.replace( app_string, '%I', str(i) )
+		app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
+		clientnode.Conf( 'application', app_string )
 
-	if AUTO_START:
-		clientnode.AutoStart( ["/bin/sh", "-c",
-				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
+		if AUTO_START:
+			clientnode.AutoStart( ["/bin/sh", "-c",
+					"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
 
 	clientNodes.append(clientnode)
 
