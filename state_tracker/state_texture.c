@@ -3492,7 +3492,7 @@ int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target
 	CRTextureState *tsto;
 	CRbitvalue *bitID;
 	CRTextureObj *tobj   = NULL;
-	int maxLevel, i;
+	int maxLevel = 0, i;
 
 	CRASSERT(to);
 	CRASSERT(from);
