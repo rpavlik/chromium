@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef WINDOWS
 #include <fcntl.h>
+#ifdef WINDOWS
 #include <io.h>
 #else
 #include <unistd.h>
@@ -149,11 +149,6 @@ void crFileSend( CRConnection *conn, void **bufp, void *start, unsigned int len 
 		 accidentally reusing it directly */
 	crBufferPoolPush( &cr_file.bufpool, file_buffer );
 	*bufp = NULL;
-}
-
-static void __dead_connection( CRConnection *conn )
-{
-	crError( "End of file?! (filename=%s)", conn->filename );
 }
 
 void crFileFree( CRConnection *conn, void *buf )
