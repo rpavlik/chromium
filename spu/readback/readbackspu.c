@@ -312,21 +312,23 @@ static void read_and_send_tiles( WindowInfo *window )
 		if (readback_spu.extract_depth)
 		{
 			/* Draw the depth image into the depth buffer, setting the stencil
-			* to one wherever we pass the Z test.
+			 * to one wherever we pass the Z test, clearinging to zero where we fail.
 			 */
 			readback_spu.child.ColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-			readback_spu.child.StencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
+			readback_spu.child.StencilOp( GL_KEEP, GL_ZERO, GL_REPLACE );
 			readback_spu.child.StencilFunc( GL_ALWAYS, 1, ~0 );
 			readback_spu.child.Enable( GL_STENCIL_TEST );
 			readback_spu.child.Enable( GL_DEPTH_TEST );
 			readback_spu.child.DepthFunc( GL_LESS );
-			readback_spu.child.Clear( GL_STENCIL_BUFFER_BIT );
 			readback_spu.child.DrawPixels( w, h,
 																		 GL_DEPTH_COMPONENT, window->depthType,
 																		 window->depthBuffer );
 
-			/* Now draw the RGBA image, only where the stencil is one */
+			/* Now draw the RGBA image, only where the stencil is one, reset stencil
+			 * to zero as we go (to avoid calling glClear(STENCIL_BUFFER_BIT)).
+			 */
 			readback_spu.child.Disable( GL_DEPTH_TEST );
+			readback_spu.child.StencilOp( GL_ZERO, GL_ZERO, GL_ZERO );
 			readback_spu.child.StencilFunc( GL_EQUAL, 1, ~0 );
 			readback_spu.child.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 			if (readback_spu.visualize_depth) {
