@@ -145,12 +145,15 @@ static void stubInitSPUDispatch(SPU *spu)
 
 /*
  * This is called when we exit.
- * We call the all the SPU's cleanup functions.
+ * We call all the SPU's cleanup functions.
  */
 static void stubSPUTearDown(void)
 {
 	SPU *the_spu = stub.spu;
 	SPU *next_spu;
+
+	/* shutdown, now trap any calls to a NULL dispatcher */
+	crSPUCopyDispatchTable(&glim, &stubNULLDispatch);
 
 	while (1) {
 		if (the_spu && the_spu->cleanup) {
@@ -164,9 +167,6 @@ static void stubSPUTearDown(void)
 		the_spu = next_spu;
 	}
 	stub.spu = NULL;
-
-	/* shutdown, now trap any calls to a NULL dispatcher */
-	crSPUCopyDispatchTable(&glim, &stubNULLDispatch);
 
 	crUnloadOpenGL();
 }
