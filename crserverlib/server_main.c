@@ -136,6 +136,7 @@ int CRServerMain( int argc, char *argv[] )
 		}
 		if (!crStrcmp( argv[i], "-port" ))
 		{
+			/* This is the port on which we'll accept client connections */
 			if (i == argc - 1)
 			{
 				crError( "-port requires an argument" );
