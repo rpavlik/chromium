@@ -3474,7 +3474,10 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 			INVERTDIRTY(t->envBit[i], nbitID);
 		}
 	}
-	diff_api.ActiveTextureARB( GL_TEXTURE0_ARB + to->curTextureUnit );
+
+	/* After possible fiddling with the active unit, put it back now */
+	if (fromCtx->texture.curTextureUnit != toCtx->texture.curTextureUnit)
+		diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
 }
 
 /* 
