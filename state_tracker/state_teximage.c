@@ -412,7 +412,7 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	CRTextureLevel *tl = NULL;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-	int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
+	const int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
 	CRTextureUnit *unit;
 
 	if (g->current.inBeginEnd)
@@ -424,7 +424,11 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 
 	FLUSH();
 
-	if (ErrorCheckTexImage2D(target, level, width, height, border)) {
+	/* NOTE: we skip parameter error checking if this is a distributed
+	 * texture!  The user better provide correct parameters!!!
+	 */
+	if (!is_distrib
+			&& ErrorCheckTexImage2D(target, level, width, height, border)) {
 		if (IsProxyTarget(target)) {
 			/* clear all state, but don't generate error */
 			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
