@@ -453,15 +453,16 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 				 *unsigned char *data_ptr = (unsigned char *) ops + sizeof( *ops) + ((ops->numOpcodes + 3 ) & ~0x03); 
 				 *crDebugOpcodes( stdout, data_ptr-1, ops->numOpcodes ); */
 			}
+			break;
 		case CR_MESSAGE_READ_PIXELS:
 			crError( "Can't handle read pixels" );
-			break;
+			return;
 		case CR_MESSAGE_WRITEBACK:
 			crNetRecvWriteback( &(msg->writeback) );
 			return;
 		case CR_MESSAGE_READBACK:
 			crNetRecvReadback( &(msg->readback), len );
-			break;
+			return;
 		default:
 			/* We can end up here if anything strange happens in
 			 * the GM layer.  In particular, if the user tries to
