@@ -1,0 +1,12 @@
+DESCRIPTION ""
+EXPORTS
+CRDLLOpen
+CRDLLGetNoError
+CRDLLGet
+CRDLLClose
+CRError
+CRAlloc
+CRFree
+CRStrdup
+CRStrcmp
+CRStrcasecmp
