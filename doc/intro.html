@@ -348,10 +348,11 @@ Graphics, Inc. contributed much of the development.</p>
     <li>GL_NV_vertex_program
     <li>GL_NV_vertex_program1_1
     <li>GL_NV_vertex_program2
-    <p>NOTE: During development we've found that some graphics card/driver
+    <ul>NOTE: During development we've found that some graphics card/driver
        combinations have bugs in the vertex (and fragment?) program extensions
        that cause some demo programs to fail.  For more info, ask on the
        Chromium mailing lists.
+    </ul>
     <li>GL_NV_texture_rectangle
     <li>GL_EXT_shadow_funcs
     <li>GL_EXT_texture_rectangle
@@ -378,6 +379,10 @@ Graphics, Inc. contributed much of the development.</p>
   <ul>
   <li>Improved display list support in tilesort SPU
   <li>New <i>expando</i> SPU (saves and plays back display lists)
+  <li>New <i>replicate</i> SPU (allows direct rendered OpenGL with VNC)
+      <ul>
+       See http://xf4vnc.sf.net for more information on this enhancement.
+      </ul>
   </ul>
 <li>Bug Fixes
   <ul>
