@@ -158,6 +158,16 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 		cr_server.firstCallMakeCurrent = GL_FALSE;
 		cr_server.currentWindow = window;
 		cr_server.currentNativeWindow = nativeWindow;
+
+		/* Set initial raster/window position for this context.
+		 * The position has to be translated according to the tile origin.
+		 */
+		if (mural->numExtents > 0)
+		{
+			GLint x = -mural->extents[0].imagewindow.x1;
+			GLint y = -mural->extents[0].imagewindow.y1;
+			cr_server.head_spu->dispatch_table.WindowPos2iARB(x, y);
+		}
 	}
 
 	/* This used to be earlier, after crStateUpdateColorBits() call */
