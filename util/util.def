@@ -28,6 +28,7 @@ crStrcpy
 crStrncpy
 crStrcat
 crStrToInt
+crStrToFloat
 crBytesToString
 crWordsToString
 crGetHostname
