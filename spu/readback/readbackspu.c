@@ -61,7 +61,7 @@ AllocBuffers(WindowInfo * window)
 			if (zBits <= 16)
 				window->depthType = GL_UNSIGNED_SHORT;
 			else
-				window->depthType = GL_FLOAT;
+				window->depthType = GL_UNSIGNED_INT;
 		}
 
 		if (window->depthType == GL_UNSIGNED_SHORT)
@@ -70,8 +70,8 @@ AllocBuffers(WindowInfo * window)
 		}
 		else
 		{
-			CRASSERT(window->depthType == GL_FLOAT);
-			depthBytes = sizeof(GLfloat);
+			CRASSERT(window->depthType == GL_UNSIGNED_INT);
+			depthBytes = sizeof(GLuint);
 		}
 
 		if (readback_spu.gather_url)
