@@ -509,7 +509,7 @@ void STATE_APIENTRY crStateGetCombinerInputParameterivNV( GLenum stage, GLenum p
 	CRContext *g = GetCurrentContext();
 	CRRegCombinerState *r = &(g->regcombiner);
 	int i = stage - GL_COMBINER0_NV;
-	GLenum input, mapping, usage;
+	GLenum input = 0, mapping = 0, usage = 0;
 
 	if (g->current.inBeginEnd) 
 	{
