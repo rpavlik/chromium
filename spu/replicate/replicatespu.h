@@ -65,7 +65,6 @@ struct context_info_t {
 typedef struct {
 	int id;
 	int swap;
-	int emit_GATHER_POST_SWAPBUFFERS;
 	int ReadPixels;
 
 	int has_child;

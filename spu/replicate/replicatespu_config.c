@@ -22,18 +22,9 @@ static void __setDefaults( void )
 	replicate_spu.numThreads = 0;
 }
 
-
-static void set_emit( void *foo, const char *response )
-{
-	sscanf( response, "%d", &(replicate_spu.emit_GATHER_POST_SWAPBUFFERS) );
-}
-
 /* No SPU options yet. Well.. not really.. 
  */
 SPUOptions replicateSPUOptions[] = {
-	{ "emit_GATHER_POST_SWAPBUFFERS", CR_BOOL, 1, "0", NULL, NULL, 
-	  "Emit a parameteri after SwapBuffers", (SPUOptionCB)set_emit },
-
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
