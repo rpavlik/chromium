@@ -30,6 +30,7 @@ ifeq ($(ARCH), Linux)
 FILES += $(ARCH)_exports glx
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.s
+LDFLAGS += -lX11
 endif
 
 ifeq ($(ARCH), IRIX64)

@@ -16,7 +16,7 @@ SPUFunctions the_functions = {
 	apichange_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -40,13 +40,13 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *self)
+void apichangeSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(apichange_spu.self) );
 	crSPUCopyDispatchTable( &(apichange_spu.self), self );
 }
 
-int SPUCleanup(void)
+int apichangeSPUCleanup(void)
 {
 	return 1;
 }
@@ -56,9 +56,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 {
 	*name = "apichange";
 	*super = "passthrough";
-	*init = SPUInit;
-	*self = SPUSelfDispatch;
-	*cleanup = SPUCleanup;
+	*init = apichangeSPUInit;
+	*self = apichangeSPUSelfDispatch;
+	*cleanup = apichangeSPUCleanup;
 	
 	return 1;
 }

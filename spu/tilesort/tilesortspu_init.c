@@ -19,7 +19,7 @@ SPUFunctions the_functions = {
 	tilesort_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -91,13 +91,13 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *self)
+void tilesortSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(tilesort_spu.self) );
 	crSPUCopyDispatchTable( &(tilesort_spu.self), self );
 }
 
-int SPUCleanup(void)
+int tilesortSPUCleanup(void)
 {
 	return 1;
 }
@@ -107,9 +107,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 {
 	*name = "tilesort";
 	*super = NULL;
-	*init = SPUInit;
-	*self = SPUSelfDispatch;
-	*cleanup = SPUCleanup;
+	*init = tilesortSPUInit;
+	*self = tilesortSPUSelfDispatch;
+	*cleanup = tilesortSPUCleanup;
 	
 	return 1;
 }

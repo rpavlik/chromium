@@ -15,7 +15,7 @@ SPUFunctions the_functions = {
 	error_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *errorSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -27,12 +27,12 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *parent)
+void errorSPUSelfDispatch(SPUDispatchTable *parent)
 {
 	(void)parent;
 }
 
-int SPUCleanup(void)
+int errorSPUCleanup(void)
 {
 	return 1;
 }
@@ -42,9 +42,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 {
 	*name = "error";
 	*super = NULL;
-	*init = SPUInit;
-	*self = SPUSelfDispatch;
-	*cleanup = SPUCleanup;
+	*init = errorSPUInit;
+	*self = errorSPUSelfDispatch;
+	*cleanup = errorSPUCleanup;
 	
 	return 1;
 }

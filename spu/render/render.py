@@ -93,7 +93,11 @@ for func_name in stub_common.AllSpecials( "render_nop" ):
 print """
 void renderspuLoadSystemGL( void )
 {
-	CRDLL *dll = __findSystemGL();
+	CRDLL *dll;
+	
+	crDebug( "About to look for the system's OpenGL" );
+	dll = __findSystemGL();
+	crDebug( "Found it: 0x%p", dll );
 """
 
 useful_wgl_functions = [

@@ -17,7 +17,7 @@ SPUFunctions the_functions = {
 	passthrough_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *passthroughSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -34,12 +34,12 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *parent)
+void passthroughSPUSelfDispatch(SPUDispatchTable *parent)
 {
 	(void)parent;
 }
 
-int SPUCleanup(void)
+int passthroughSPUCleanup(void)
 {
 	return 1;
 }
@@ -49,9 +49,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 {
 	*name = "passthrough";
 	*super = NULL;
-	*init = SPUInit;
-	*self = SPUSelfDispatch;
-	*cleanup = SPUCleanup;
+	*init = passthroughSPUInit;
+	*self = passthroughSPUSelfDispatch;
+	*cleanup = passthroughSPUCleanup;
 	
 	return 1;
 }

@@ -19,7 +19,7 @@ SPUFunctions the_functions = {
 
 PrintSpu print_spu;
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *printSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -37,12 +37,12 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *parent)
+void printSPUSelfDispatch(SPUDispatchTable *parent)
 {
 	(void)parent;
 }
 
-int SPUCleanup(void)
+int printSPUCleanup(void)
 {
 	return 1;
 }
@@ -52,9 +52,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 {
 	*name = "print";
 	*super = "passthrough";
-	*init = SPUInit;
-	*self = SPUSelfDispatch;
-	*cleanup = SPUCleanup;
+	*init = printSPUInit;
+	*self = printSPUSelfDispatch;
+	*cleanup = printSPUCleanup;
 	
 	return 1;
 }

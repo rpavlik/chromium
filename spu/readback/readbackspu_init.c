@@ -16,7 +16,7 @@ SPUFunctions the_functions = {
 	readback_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -40,13 +40,13 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *self)
+void readbackSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(readback_spu.self) );
 	crSPUCopyDispatchTable( &(readback_spu.self), self );
 }
 
-int SPUCleanup(void)
+int readbackSPUCleanup(void)
 {
 	return 1;
 }
@@ -56,9 +56,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 {
 	*name = "readback";
 	*super = "render";
-	*init = SPUInit;
-	*self = SPUSelfDispatch;
-	*cleanup = SPUCleanup;
+	*init = readbackSPUInit;
+	*self = readbackSPUSelfDispatch;
+	*cleanup = readbackSPUCleanup;
 	
 	return 1;
 }

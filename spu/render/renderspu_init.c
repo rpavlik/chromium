@@ -22,7 +22,7 @@ SPUFunctions the_functions = {
 
 RenderSPU render_spu;
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id, unsigned int num_contexts )
 {
 	CRLimitsState limits[3];
@@ -57,7 +57,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *self)
+void renderSPUSelfDispatch(SPUDispatchTable *self)
 {
 	render_spu.dispatch = self;
 	render_spu.dispatch->ClearColor( 1, 0, 0, 1 );
@@ -96,7 +96,7 @@ void SPUSelfDispatch(SPUDispatchTable *self)
 	render_spu.dispatch->SwapBuffers();
 }
 
-int SPUCleanup(void)
+int renderSPUCleanup(void)
 {
 	return 1;
 }
@@ -106,9 +106,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 {
 	*name = "render";
 	*super = NULL;
-	*init = SPUInit;
-	*self = SPUSelfDispatch;
-	*cleanup = SPUCleanup;
+	*init = renderSPUInit;
+	*self = renderSPUSelfDispatch;
+	*cleanup = renderSPUCleanup;
 	
 	return 1;
 }

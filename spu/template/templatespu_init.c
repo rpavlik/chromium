@@ -16,7 +16,7 @@ SPUFunctions the_functions = {
 	template_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *templateSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -40,13 +40,13 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	return &the_functions;
 }
 
-void SPUSelfDispatch(SPUDispatchTable *self)
+void templateSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(template_spu.self) );
 	crSPUCopyDispatchTable( &(template_spu.self), self );
 }
 
-int SPUCleanup(void)
+int templateSPUCleanup(void)
 {
 	return 1;
 }
@@ -56,9 +56,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 {
 	*name = "template";
 	*super = NULL;
-	*init = SPUInit;
-	*self = SPUSelfDispatch;
-	*cleanup = SPUCleanup;
+	*init = templateSPUInit;
+	*self = templateSPUSelfDispatch;
+	*cleanup = templateSPUCleanup;
 	
 	return 1;
 }
