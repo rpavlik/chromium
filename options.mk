@@ -31,8 +31,9 @@ USE_VNC=0
 USE_OSMESA=0
 
 
-# Quadrics Elan3 interface support.  Set only one of the following; they're
-# two different implementations of Quadrics communication.
+# Quadrics Elan3 interface support.  There are two different implementations
+# of Quadrics communication.  TEAC_SUPPORT is probably what you want;
+# TCSCOMM_SUPPORT is somewhat outdated at this point.
 TEAC_SUPPORT=0
 TCSCOMM_SUPPORT=0
 
