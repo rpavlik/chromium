@@ -91,10 +91,6 @@ MapGrid1d
 MapGrid1f
 MapGrid2d
 MapGrid2f
-Materialf
-Materialfv
-Materiali
-Materialiv
 MatrixMode
 MultMatrixd
 MultMatrixf

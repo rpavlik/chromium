@@ -70,6 +70,8 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
 		server->ctx = crStateCreateContext();
+		server->ctx->current.rasterPos.x = server->ctx->current.rasterPosPre.x = (float) server->x1[0];
+		server->ctx->current.rasterPos.y = server->ctx->current.rasterPosPre.y = (float) server->y1[0];
 		crPackInitBuffer( &(server->pack), crNetAlloc( server->net.conn ), server->net.buffer_size, 0 );
 	}
 

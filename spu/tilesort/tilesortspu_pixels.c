@@ -22,9 +22,6 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 
 	tilesortspuFlush( tilesort_spu.ctx );
 
-	crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
-	crPackBitmap ( width, height, xorig, yorig, xmove, ymove, bitmap, &(tilesort_spu.ctx->pixel.unpack) );
-
 	screen_bbox[0] = (c->rasterPos.x - xorig)/v->viewportW;
 	screen_bbox[1] = (c->rasterPos.y - yorig)/v->viewportH;
 	screen_bbox[4] = (c->rasterPos.x - xorig + width)/v->viewportW;
@@ -39,6 +36,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 	screen_bbox[1] -= 1.0f;
 	screen_bbox[4] -= 1.0f;
 	screen_bbox[5] -= 1.0f;
+
+	crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
+	crPackBitmap ( width, height, xorig, yorig, xmove, ymove, bitmap, &(tilesort_spu.ctx->pixel.unpack) );
 
 	tilesortspu_Hint( CR_SCREEN_BBOX_HINT, (GLenum) screen_bbox );
 	c->rasterPosPre.x -= xmove;

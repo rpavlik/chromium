@@ -1,9 +1,7 @@
 Before July Alpha release:
-	Fix Kirchner's Material bug for real (not just pack 'n' track)
-	DrawPixels/RasterPos 
-		Rasterpos sort of works; needs to be tested on multiple tiles
-	tilesort Viewport testing 
-		Quake III should do it
+	DrawPixels
+	RasterPos
+		Debug fonttest on multiple tiles
 	test GM support 
 		can't test without a switch -- DAMMIT!
 	Parallel applications

@@ -12,6 +12,7 @@ FILES = tilesortspu \
 	tilesortspu_flush \
 	tilesortspu_hint \
 	tilesortspu_init \
+	tilesortspu_material \
 	tilesortspu_misc \
 	tilesortspu_net \
 	tilesortspu_pinch_gen \
