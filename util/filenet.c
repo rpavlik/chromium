@@ -315,8 +315,12 @@ static int
 crFileDoConnect( CRConnection *conn )
 {
 	conn->file_direction = CR_FILE_WRITE;
-	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY |
-					S_IREAD | S_IWRITE);
+	/* NOTE: the third parameter (file permissions) is only used/required when
+	 * we specify O_CREAT as part of the flags.  The permissions will be
+	 * masked according to the effective user's umask setting.
+	 */
+	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY,
+									 S_IREAD | S_IWRITE | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 	if (conn->fd < 0)
 	{
 		crWarning( "Couldn't open %s for writing!", conn->filename );
