@@ -95,7 +95,8 @@ main(int argc, char *argv[])
 
 	for (i = 1; i < argc; i++) {
 		if (!crStrcmp(argv[i], "-p") && i + 1 < argc) {
-			protocol = argv[i];
+			protocol = argv[i+1];
+			i++;
 		}
 		else if (!crStrcmp(argv[i], "-m") && i + 1 < argc) {
 			MTU = crStrToInt(argv[i+1]);
