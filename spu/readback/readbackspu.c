@@ -763,9 +763,7 @@ readbackspuSwapBuffers(GLint win, GLint flags)
 
 	if (!readback_spu.gather_url)
 	{
-		/* Note: we don't pass the CR_SUPPRESS_SWAP_BIT flag here. */
-		readback_spu.child.SwapBuffers(window->childWindow,
-																	 flags & ~CR_SUPPRESS_SWAP_BIT);
+		readback_spu.child.SwapBuffers(window->childWindow, flags);
 		readback_spu.child.Finish();
 	}
 

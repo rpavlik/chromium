@@ -917,9 +917,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuSwapBuffers( GLint win, GLint fl
 	 */
 	binaryswap_spu.child.BarrierExecCR( SWAP_BARRIER );
 
-	/* Note: we don't pass the CR_SUPPRESS_SWAP_BIT flag here. */
-	binaryswap_spu.child.SwapBuffers( window->childWindow, 
-					  flags & ~CR_SUPPRESS_SWAP_BIT);
+	binaryswap_spu.child.SwapBuffers( window->childWindow, flags );
 
 	binaryswap_spu.child.Finish();
 		
