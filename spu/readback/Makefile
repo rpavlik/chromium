@@ -14,7 +14,6 @@ FILES = readbackspu \
 	readbackspu_init
 
 ifdef WINDOWS
-TRACKS_STATE = 0
 LIBRARIES = spuload crutil crmothership
 else
 LIBRARIES = spuload crutil crmothership
