@@ -104,6 +104,9 @@ class SPU:
 	def Conf( self, key, *values ):
 		"""Set a configuration option."""
 		# XXX we'll eventually force values to be a single value or a list!
+		if type(values) == types.TupleType and len(values) > 1:
+			print "***WARNING: Obsolete syntax detected in Conf('%s', ...)!" % key
+			print "***WARNING: Put brackets around N-element values (i.e. Python list syntax)."
 		if len(values) > 1:
 			Conf( self.config, key, list(values) )
 		else:
