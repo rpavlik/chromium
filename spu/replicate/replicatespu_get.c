@@ -400,18 +400,18 @@ GLboolean REPLICATESPU_APIENTRY replicatespu_IsFenceNV( GLuint fence )
 	return return_val;
 }
 
-GLboolean REPLICATESPU_APIENTRY replicatespu_IsProgramNV( GLuint id )
+GLboolean REPLICATESPU_APIENTRY replicatespu_IsProgramARB( GLuint id )
 {
 	GET_THREAD(thread);
 	int writeback = 1;
 	GLboolean return_val = (GLboolean) 0;
 	if (replicate_spu.swap)
 	{
-		crPackIsProgramNVSWAP( id, &return_val, &writeback );
+		crPackIsProgramARBSWAP( id, &return_val, &writeback );
 	}
 	else
 	{
-		crPackIsProgramNV( id, &return_val, &writeback );
+		crPackIsProgramARB( id, &return_val, &writeback );
 	}
 	replicatespuFlush( (void *) thread );
 	while (writeback)
