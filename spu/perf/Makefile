@@ -9,7 +9,6 @@ SHARED = 1
 LIBRARY = perfspu
 FILES = perfspu \
 	perfspu_config \
-	perfspu_misc \
 	perfspu_init
 
 LIBRARIES = spuload crutil crmothership

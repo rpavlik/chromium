@@ -8,6 +8,7 @@
 #include "cr_environment.h"
 #include "cr_string.h"
 #include "cr_error.h"
+#include "cr_mem.h"
 #include "perfspu.h"
 #include <fcntl.h>
 #ifndef WINDOWS
@@ -17,6 +18,9 @@
 extern SPUNamedFunctionTable perf_table[];
 perfSPU perf_spu;
 
+#if 1
+extern void perfspuChromiumParameterfCR(GLenum, float);
+#endif
 SPUFunctions perf_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
@@ -44,11 +48,13 @@ SPUFunctions *perfSPUInit( int id, SPU *child, SPU *super,
 	crSPUCopyDispatchTable( &(perf_spu.super), &(super->dispatch_table) );
 	perfspuGatherConfiguration();
 
-	if (crStrlen(crGetenv("CR_PERF_LOG_FILE")) > 0)
-	    perf_spu.log_file = fopen( crGetenv("CR_PERF_LOG_FILE"), "w" );
+	crGetHostname(perf_spu.hostname, sizeof(perf_spu.hostname));
 
-	if (!perf_spu.log_file)
-	    crWarning("Couldn't open log file %s, not logging to this file.\n",crGetenv("CR_PERF_LOG_FILE"));
+	perf_spu.timer = crTimerNewTimer();
+
+#if 1
+	perfspuChromiumParameterfCR(GL_PERF_START_TIMER_CR, 5.0);
+#endif
 
 	return &perf_functions;
 }
