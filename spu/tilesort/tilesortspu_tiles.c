@@ -128,6 +128,7 @@ tilesortspuSendTileInfoToServers( WindowInfo *winInfo )
 /**
  * Get the tile information (count, extents, etc) from the servers
  * and build our corresponding data structures.
+ * This is called once during SPU initialization.
  * Input: conn - mothership connection
  */
 void
@@ -497,7 +498,7 @@ defaultNewTiling( WindowInfo *winInfo )
 	 */
 	switch (tilesort_spu.num_servers) {
 	case 0:
-		crError("Zero servers in defaultNewTiling!\n");
+		crError("Zero servers in defaultNewTiling!");
 		return;
 	case 1:
 		tileCols = 1;
@@ -533,7 +534,7 @@ defaultNewTiling( WindowInfo *winInfo )
 		break;
 	}
 
-	crDebug("Default Tile Layout: rows: %d  columns:%d\n", tileRows, tileCols);
+	crDebug("Default tile layout: rows: %d  columns: %d", tileRows, tileCols);
 
 	/* compute approx tile size */
 	tileWidth = winInfo->muralWidth / tileCols;
@@ -620,7 +621,7 @@ getTilingFromMothership( WindowInfo *winInfo )
 	{
 		int server, x, y, w, h, t;
 		sscanf(tiles[i], "%d %d %d %d %d", &server, &x, &y, &w, &h);
-		/*crDebug("Tile on %d: %d %d %d %d\n", server, x1, y1, x2, y2);*/
+		/*crDebug("Tile on %d: %d %d %d %d", server, x1, y1, x2, y2);*/
 		t = winInfo->server[server].num_extents;
 		winInfo->server[server].extents[t].x1 = x;
 		winInfo->server[server].extents[t].y1 = y;
@@ -652,7 +653,7 @@ getTilingFromDMX( WindowInfo *winInfo )
 	tilesortspuUpdateWindowInfo(winInfo);
 
 	if (!winInfo->xwin)
-		 return GL_FALSE;
+		return GL_FALSE;
 
 	for (i = 0; i < tilesort_spu.num_servers; i++) {
 		const BackendWindowInfo *backend = winInfo->backendWindows + i;
