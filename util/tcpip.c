@@ -77,7 +77,6 @@ typedef struct CRTCPIPBuffer {
 	unsigned int          pad;
 } CRTCPIPBuffer;
 
-
 /* Forward decl */
 void crTCPIPFree( CRConnection *conn, void *buf );
 
@@ -510,7 +509,7 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 		*temp = '\0';
 	}
 
-#if 000
+#ifdef RECV_BAIL_OUT 
 	err = sizeof(unsigned int);
 	if ( getsockopt( conn->tcp_socket, SOL_SOCKET, SO_RCVBUF,
 			(char *) &conn->krecv_buf_size, &err ) )
@@ -826,7 +825,10 @@ int crTCPIPRecv( void )
 	{
 		CRTCPIPBuffer *tcpip_buffer;
 		unsigned int   len, total, handled, leftover;
-		int            read_ret/*, inbuf*/;
+		int            read_ret;
+#ifdef RECV_BAIL_OUT
+		int inbuf;
+#endif
 		CRConnection  *conn = cr_tcpip.conns[i];
 		CRSocket       sock;
 
@@ -852,7 +854,7 @@ int crTCPIPRecv( void )
 		 * sysctl -a | grep rmem) , or this will really have no
 		 * effect.   --karl 
 		 */		 
-#if 000
+#ifdef RECV_BAIL_OUT 
 		read_ret = recv(sock, &len, sizeof(len), MSG_PEEK);
 		ioctl(conn->tcp_socket, FIONREAD, &inbuf);
 
@@ -1114,6 +1116,15 @@ int crTCPIPDoConnect( CRConnection *conn )
 #endif
 	{
 #ifndef ADDRINFO
+
+#ifdef RECV_BAIL_OUT		
+		err = sizeof(unsigned int);
+		if ( getsockopt( conn->tcp_socket, SOL_SOCKET, SO_RCVBUF,
+				(char *) &conn->krecv_buf_size, &err ) )
+		{
+			conn->krecv_buf_size = 0;	
+		}
+#endif
 		if ( !connect( conn->tcp_socket, (struct sockaddr *) &servaddr,
 					sizeof(servaddr) ) )
 			return 1;
@@ -1135,7 +1146,7 @@ int crTCPIPDoConnect( CRConnection *conn )
 		/* Set up the socket the way *we* want. */
 		__crSpankSocket( conn->tcp_socket );
 
-#if 000		
+#if RECV_BAIL_OUT		
 		err = sizeof(unsigned int);
 		if ( getsockopt( conn->tcp_socket, SOL_SOCKET, SO_RCVBUF,
 				(char *) &conn->krecv_buf_size, &err ) )
