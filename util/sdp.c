@@ -8,6 +8,11 @@
 
 /* sometimes the default IB install doesn't setup the includes correctly,
 	 so we are going to manually define AF_INET_SDP */
+/* if you use the Mellanox Gold 1.6.x or the OpenIB gen1 stack this
+ * will work, but for OpenIB gen2 and the corresponding vendor stacks,
+ * you will need to use the enum in the kernel tree which is currently
+ * 27, but should be defined by AF_INET_SDP */
+
 #ifndef AF_INET_SDP
 #define AF_INET_SDP 26
 #endif
