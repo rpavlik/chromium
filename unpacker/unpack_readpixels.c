@@ -23,7 +23,8 @@ void crUnpackReadPixels( void )
 	GLint bytes_per_row = READ_DATA( 40, GLint );
 	GLvoid *pixels;
 
-	crMemcpy( &pixels, DATA_POINTER( 44, GLvoid ), sizeof(pixels) );
+	/* point <pixels> at the 8-byte network pointer */
+	pixels = DATA_POINTER( 44, GLvoid );
 
 	(void) stride;
 	(void) bytes_per_row;

@@ -14,7 +14,6 @@
 #include "server_dispatch.h"
 #include "server.h"
 
-#include <memory.h>
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels)
 {
@@ -43,7 +42,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchReadPixels( GLint x, GLint y, GLsi
 	rp->skipRows = skipRows;
 	rp->skipPixels = skipPixels;
 
-	crMemcpy (&(rp->pixels), &pixels, sizeof(rp->pixels));
+	/* <pixels> points to the 8-byte network pointer */
+	crMemcpy( &rp->pixels, pixels, sizeof(rp->pixels) );
 	
 	crNetSend( cr_server.curClient->conn, NULL, rp, msg_len );
 	crFree( rp );
