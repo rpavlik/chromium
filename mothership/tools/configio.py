@@ -36,9 +36,9 @@ for (name, value) in MOTHERSHIP_OPTIONS:
 
 # Get program name
 if len(sys.argv) == 1:
-	program = DEFAULT_APP
+	pass
 elif len(sys.argv) == 2:
-	program = sys.argv[1]
+	DEFAULT_APP = sys.argv[1]
 else:
 	print "Usage: %s <program>" % sys.argv[0] 
 	sys.exit(-1)
