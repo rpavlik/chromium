@@ -9,6 +9,9 @@ Coding
 
 Update include/cr_version.h with new version numbers.
 
+Update mothership/server/mothership.py and update the version number near
+line 638.
+
 
 
 Make the tarballs
@@ -20,7 +23,7 @@ cvs -z3 -d:ext:YOURNAME@cvs.chromium.sf.net:/cvsroot/chromium co .
 cp -r cr cr-1.5
 find cr-1.5 -name CVS -exec rm -rf '{}' \;
 rm -f cr-1.5/mothership/server/crconfig.py
-Edit cr-1.5/options.mk and uncomment RELEASE=1 line at the end.
+Edit cr-1.5/options.mk and uncomment the RELEASE=1 line.
 tar cf cr-1.5.tar cr-1.5
 gzip cr-1.5.tar
 
