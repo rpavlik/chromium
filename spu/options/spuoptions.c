@@ -96,7 +96,7 @@ static void print_spu_header( SPU *spu, int pythonMode )
 			   ((spu->spu_flags & SPU_MAX_SERVERS_ONE) ? "one" : 
 				(spu->spu_flags & SPU_MAX_SERVERS_UNLIMITED) ? "unlimited" : 
 				"zero"));
-		printf(" [\n");
+		printf(" crtypes.OptionList( [\n");
 	}
 	else {
 		printf("param terminal %s\n", (spu->spu_flags & SPU_IS_TERMINAL) ? "yes" : "no");
@@ -118,7 +118,7 @@ static const char *type_string[] = {
 static void print_option( SPUOptions *opt, int pythonMode )
 {
 	if (pythonMode) {
-		printf("  ('%s', '%s', '%s', %d, ",
+		printf("  crtypes.Option('%s', '%s', '%s', %d, ",
 			   opt->option,
 			   opt->description,
 			   type_string[(int)opt->type],
@@ -161,7 +161,7 @@ static void print_option( SPUOptions *opt, int pythonMode )
 static void print_spu_footer( SPU *spu, int pythonMode )
 {
 	if (pythonMode) {
-		printf(" ]\n)\n");
+		printf(" ] )\n)\n");
 	}
 	else {
 		printf("\n");
