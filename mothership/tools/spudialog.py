@@ -211,18 +211,22 @@ class SPUDialog(wxDialog):
 		"""Return current value (a list) of the named control"""
 		assert name in self.__Controls.keys()
 		ctrls = self.__Controls[name]
+		type = self.__OptionList.GetType(name)
 		if ctrls:
 			result = []
 			count = len(ctrls)
 			for i in range(count):
-				if isinstance(ctrls[i], wxChoice):
+				if type == "ENUM":
 					result.append(ctrls[i].GetStringSelection())
-				elif isinstance(ctrls[i], wxTextCtrl):
+				elif type == "STRING":
 					s = ctrls[i].GetValue()
 					s = _UnBackslashChars(s)
 					result.append(s)
+				elif type == "FLOAT":
+					result.append(float(ctrls[i].GetValue()))
 				else:
-					result.append(ctrls[i].GetValue())
+					assert type == "INT" or type == "BOOL"
+					result.append(int(ctrls[i].GetValue()))
 			return result
 		else:
 			return [] # empty list
