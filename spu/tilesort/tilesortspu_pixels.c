@@ -499,7 +499,10 @@ tilesortspu_Bitmap(GLsizei width, GLsizei height,
 	GLfloat xmove2, ymove2;
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
 
-	CRASSERT(ctx->lists.mode == 0);
+	if (ctx->lists.mode) {
+		tilesortspu_PackBitmap(width, height, xorig, yorig, xmove, ymove, bitmap);
+		return;
+	}
 
 	if (!c->rasterValid)
 	{
