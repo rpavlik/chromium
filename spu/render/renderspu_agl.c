@@ -209,29 +209,24 @@ void renderspuFullscreen( WindowInfo *window, GLboolean fullscreen ) {
 
 
 GLboolean renderspuWindowAttachContext( WindowInfo *wi, WindowRef window, ContextInfo *context ) {
-	GLboolean   b;
-	if( render_spu.fullscreen ) {
-/*#if DEBUG
-		aglEnable( context->context, AGL_FS_CAPTURE_SINGLE );
-#else
-		aglDisable( context->context, AGL_FS_CAPTURE_SINGLE );
-#endif*/
+	GLboolean   result;
 
+	if( render_spu.fullscreen ) {
 		renderspuFullscreen( wi, GL_TRUE );
 
-		b = render_spu.ws.aglSetCurrentContext( context->context );
-		if( !b ) {
+		result = render_spu.ws.aglSetCurrentContext( context->context );
+		if( !result ) {
 			crDebug("Render SPU: SetCurrentContext Failed");
 			return GL_FALSE;
 		}
 
 #if 0
 		/* just be sure we set hDisplay in the PixelFormat */
-		b = render_spu.ws.aglSetFullScreen( context->context, 0, 0, 0, 0 );
+		result = render_spu.ws.aglSetFullScreen( context->context, 0, 0, 0, 0 );
 #else
-		b = render_spu.ws.aglSetFullScreen( context->context, wi->width, wi->height, 0, 0 );
+		result = render_spu.ws.aglSetFullScreen( context->context, wi->width, wi->height, 0, 0 );
 #endif
-		if( !b )
+		if( !result )
 			crDebug("Render SPU: SetFullScreen Failed");
 	} else {
 		CGrafPtr	save;
@@ -241,17 +236,21 @@ GLboolean renderspuWindowAttachContext( WindowInfo *wi, WindowRef window, Contex
 		port = GetWindowPort( window );
 		SetPort( port );
 
-		b = render_spu.ws.aglSetDrawable( context->context, port );
-		if( b )
-			b = render_spu.ws.aglSetCurrentContext( context->context );
+		/* Isn't this a bit 'expensive' to do every time? */
+		result = render_spu.ws.aglSetDrawable( context->context, port );
+		if( !result )
+			crDebug("Render SPU: SetDrawable Failed");
+
+		result = render_spu.ws.aglSetCurrentContext( context->context );
+		if( !result )
+			crDebug("Render SPU: SetCurrentContext Failed");
 
 		SetPort( save );
-/*		SetWContext( window, context ); */
 	}
 	
 	SetWContext( window, context );
 
-	return b;
+	return result;
 }
 
 
@@ -275,12 +274,12 @@ static pascal OSStatus windowEvtHndlr (EventHandlerCallRef myHandler, EventRef e
 #pragma unused (userData)
 	WindowRef			window = NULL;
     OSStatus			result = eventNotHandledErr;
-    UInt32 				class = GetEventClass (event);
-    UInt32 				kind = GetEventKind (event);
+    UInt32 				class = GetEventClass( event );
+    UInt32 				kind = GetEventKind( event );
 
 	switch (class) {
 	case kEventClassWindow:
-		GetEventParameter(event, kEventParamDirectObject, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
+		GetEventParameter( event, kEventParamDirectObject, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window );
 
 		switch (kind) {
 		case kEventWindowClose: // called when window is being closed (close box)
@@ -477,7 +476,7 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, ContextInfo *context )
 {
 //	CRConnection* conn;
-	Boolean b;
+	Boolean result;
 //	char response[8096];
 
 	CRASSERT(render_spu.ws.aglSetCurrentContext);
@@ -525,22 +524,22 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			if( WindowExists((WindowRef)nativeWindow) ) {
 				window->nativeWindow = (WindowRef) nativeWindow;
 
-				b = renderspuWindowAttachContext( window, window->nativeWindow, context );
-				/* don't CRASSERT(b) - it causes a problem with CRUT */
+				result = renderspuWindowAttachContext( window, window->nativeWindow, context );
+				/* don't CRASSERT(result) - it causes a problem with CRUT */
 			} else {
 				crWarning("Render SPU: render_to_app_window option is set,"
 						  "but the application window ID (0x%x) is invalid", (unsigned int) nativeWindow);
 				CRASSERT(window->window);
-				b = renderspuWindowAttachContext( window, window->window, context );
-				CRASSERT(b);
+				result = renderspuWindowAttachContext( window, window->window, context );
+				CRASSERT(result);
 			}
 		}
 		else
 		{
 			/* This is the normal case - rendering to the render SPU's own window */
 			CRASSERT(window->window);
-			b = renderspuWindowAttachContext( window, window->window, context );
-			CRASSERT(b);
+			result = renderspuWindowAttachContext( window, window->window, context );
+			CRASSERT(result);
 		}
 
 		/* XXX this is a total hack to work around an NVIDIA driver bug */
@@ -556,13 +555,13 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 }
 
 
-void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
+void renderspu_SystemSwapBuffers( WindowInfo *window, GLint flags )
 {
 	ContextInfo *context;
 
-	CRASSERT(w);
+	CRASSERT(window);
 
-	context = GetWContext( w );
+	context = GetWContext( window );
 
 	if( !context )
 		crError( "Render SPU: SwapBuffers got a null context from the window" );
