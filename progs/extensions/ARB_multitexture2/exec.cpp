@@ -83,7 +83,8 @@ void	InitGL	( void )
 void	InitSpecial	( void )
 {
   GLint	numTexUnits,
-    currentActiveUnit;
+    currentActiveUnit,
+    maxTextureSize;
 
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
   glFogfv( GL_FOG_COLOR, bgColor );
@@ -92,7 +93,9 @@ void	InitSpecial	( void )
   glFogf( GL_FOG_MODE, GL_LINEAR );
 
   glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &numTexUnits ); // Up to 4
+  glGetIntegerv( GL_MAX_TEXTURE_SIZE, &maxTextureSize );
   glGetIntegerv( GL_ACTIVE_TEXTURE_ARB, &currentActiveUnit );
+  cout << "MAX_TEXTURE_SIZE = " << maxTextureSize << endl;
   cout << "MAX_TEXTURE_UNITS_ARB = " << numTexUnits << endl;
   if( numTexUnits < 2 )
     {
