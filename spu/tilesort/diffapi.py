@@ -17,6 +17,18 @@ print """
 #include "tilesortspu.h"
 
 #include <stdio.h>
+
+static const CRPixelPackState defaultPacking = {
+	0, 		/* rowLength */
+	0, 		/* skipRows */
+	0, 		/* skipPixels */
+	1, 		/* alignment */
+	0, 		/* imageHeight */
+	0, 		/* skipImages */
+	GL_FALSE, 	/* swapBytes */
+	GL_FALSE  	/* psLSBFirst */
+};
+
 """
 
 keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
@@ -27,8 +39,7 @@ for func_name in apiutil.AllSpecials( "tilesort_pixel" ):
 	params = apiutil.Parameters(func_name)
 	print 'static %s TILESORTSPU_APIENTRY tilesortspuDiff%s( %s )' % (return_type, func_name, apiutil.MakeDeclarationString( params ) )
 	print '{'
-	print '\tGET_CONTEXT(ctx);'
-	params.append( ('&(ctx->client.unpack)', 'foo', 0) )
+	params.append( ('&defaultPacking', 'foo', 0) )
 	print '\tif (tilesort_spu.swap)'
 	print '\t{'
 	print '\t\tcrPack%sSWAP( %s );' % (func_name, apiutil.MakeCallString( params ) )
