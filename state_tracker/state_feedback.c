@@ -503,6 +503,8 @@ feedback_rasterpos(void)
 	v.secondaryColor = g->current.rasterSecondaryColor;
 	v.index = g->current.rasterIndex;  /* XXX need to apply lighting */
 	v.texCoord[0] = g->current.rasterTexture;
+
+	feedback_vertex(&v);
 }
 
 
