@@ -716,7 +716,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 				window->nativeWindow = (Window) nativeWindow;
 				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																			(Window) nativeWindow, context->context );
-				CRASSERT(b);
+				/* don't CRASSERT(b) - it causes a problem with CRUT */
 			}
 			else
 			{
