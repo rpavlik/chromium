@@ -42,8 +42,8 @@ extern "C"
 #define CCN_DEBUG
 #define MULTIPLE_VIEWPORTS
 
-static PFNGLSECONDARYCOLORPOINTEREXTPROC glSecondaryColorPointerEXT;
-static PFNGLSECONDARYCOLOR3FEXTPROC glSecondaryColor3fEXT;
+static PFNGLSECONDARYCOLORPOINTEREXTPROC glSecondaryColorPointerEXTptr;
+static PFNGLSECONDARYCOLOR3FEXTPROC glSecondaryColor3fEXTptr;
 
 static GLuint currentWidth, currentHeight;
 static GLfloat bgColor[4] = { 0.1, 0.2, 0.4, 0.0 };
@@ -101,17 +101,17 @@ Display(void)
 	glBegin(GL_QUADS);
 	{
 		glColor3f(1, 1, 1);
-		glSecondaryColor3fEXT(1, 0, 1);
+		glSecondaryColor3fEXTptr(1, 0, 1);
 		glVertex2f(-size, -size);
 
-		glSecondaryColor3fEXT(1, 0, 0);
+		glSecondaryColor3fEXTptr(1, 0, 0);
 		glVertex2f(-size, size);
 
 		glColor3f(0, 0, 0);
-		glSecondaryColor3fEXT(0, 1, 0);
+		glSecondaryColor3fEXTptr(0, 1, 0);
 		glVertex2f(size, size);
 
-		glSecondaryColor3fEXT(0, 0, 1);
+		glSecondaryColor3fEXTptr(0, 0, 1);
 		glVertex2f(size, -size);
 	}
 	glEnd();
@@ -133,7 +133,7 @@ Display(void)
 	glEnableClientState((GLenum) GL_SECONDARY_COLOR_ARRAY_EXT);
 	glVertexPointer(2, GL_FLOAT, stride, vertexArray);
 	glColorPointer(3, GL_FLOAT, stride, vertexArray + 2);
-	glSecondaryColorPointerEXT(3, GL_FLOAT, stride, vertexArray + 5);
+	glSecondaryColorPointerEXTptr(3, GL_FLOAT, stride, vertexArray + 5);
 	glDrawArrays(GL_QUADS, 0, 4);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
@@ -218,20 +218,20 @@ void
 InitSpecial(void)
 {
 #ifdef WIN32
-	glSecondaryColorPointerEXT =
+	glSecondaryColorPointerEXTptr =
 		(PFNGLSECONDARYCOLORPOINTEREXTPROC)
 		wglGetProcAddress("glSecondaryColorPointerEXT");
-	glSecondaryColor3fEXT =
+	glSecondaryColor3fEXTptr =
 		(PFNGLSECONDARYCOLOR3FEXTPROC) wglGetProcAddress("glSecondaryColor3fEXT");
 #else
-	glSecondaryColorPointerEXT =
+	glSecondaryColorPointerEXTptr =
 		(PFNGLSECONDARYCOLORPOINTEREXTPROC)
 		glXGetProcAddressARB((const GLubyte *) "glSecondaryColorPointerEXT");
-	glSecondaryColor3fEXT =
+	glSecondaryColor3fEXTptr =
 		(PFNGLSECONDARYCOLOR3FEXTPROC) glXGetProcAddressARB((const GLubyte *)
 								    "glSecondaryColor3fEXT");
 #endif
-	if (!glSecondaryColor3fEXT || !glSecondaryColorPointerEXT)
+	if (!glSecondaryColor3fEXTptr || !glSecondaryColorPointerEXTptr)
 	{
 		printf("Error trying to link to extensions!\n");
 		exit(0);
