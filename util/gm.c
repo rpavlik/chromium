@@ -524,8 +524,7 @@ void crGmAccept( CRConnection *conn, unsigned short port )
 	// to uniquely determine the sender when we get a packet!
 	crGmConnectionAdd( conn );
 
-	__copy_of_crMothershipSendString( mother, NULL, "quit" );
-	crNetDisconnect( mother );
+	__copy_of_crMothershipDisconnect( mother );
 	
 	(void) port;
 }
@@ -560,8 +559,7 @@ int crGmDoConnect( CRConnection *conn )
 	// to uniquely determine the sender when we get a packet!
 	crGmConnectionAdd( conn );
 
-	__copy_of_crMothershipSendString( mother, NULL, "quit" );
-	crNetDisconnect( mother );
+	__copy_of_crMothershipDisconnect( mother );
 	
 	return 1;
 }

@@ -626,3 +626,8 @@ int __copy_of_crMothershipSendString( CRConnection *conn, char *response_buf, ch
 	}
 }
 
+void __copy_of_crMothershipDisconnect( CRConnection *conn )
+{
+	__copy_of_crMothershipSendString( conn, NULL, "quit" );
+	crNetDisconnect( conn );
+}

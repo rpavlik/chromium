@@ -347,6 +347,8 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 		{
 			crError( "Mothership didn't like my accept request request" );
 		}
+
+		__copy_of_crMothershipDisconnect( mother );
 	}
 
 	addr_length =	sizeof( addr );
@@ -714,6 +716,8 @@ int crTCPIPDoConnect( CRConnection *conn )
 		{
 			crError( "Mothership didn't like my connect request request" );
 		}
+
+		__copy_of_crMothershipDisconnect( mother );
 
 		sscanf( response, "%d", &(remote_endianness) );
 
