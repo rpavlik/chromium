@@ -144,6 +144,9 @@ void crServerInitializeQueueExtents(RunQueue *q)
 		extent->outputwindow.x2 = x + w;
 		extent->outputwindow.y2 = ( cr_server.underlyingDisplay[3] - cr_server.maxTileHeight - y + h );
 
+		if (extent->outputwindow.y1 < 0)
+			crWarning("Ran out of room for tiles in this server's window!!!");
+
 		cr_server.outputwindow[i] = extent->outputwindow; /* x1,y1,x2,y2 */
 
 		if ( y_max < h )
