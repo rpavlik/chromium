@@ -1,3 +1,4 @@
+
 #include "cr_spu.h"
 #include "cr_glwrapper.h"
 #include "cr_error.h"
@@ -6,127 +7,145 @@
 #include "server_dispatch.h"
 #include "server.h"
 
-
-void SERVER_DISPATCH_APIENTRY crServerDispatchGenTextures( GLsizei n, GLuint *textures )
+unsigned int LookupComponents( GLenum pname )
 {
-	GLuint *local_textures = (GLuint *) crAlloc( n*sizeof( *local_textures) );
-	cr_server.head_spu->dispatch_table.GenTextures( n, local_textures );
-	crDebug( "Server got a texture!  It was %d", local_textures[0] );
-	crServerReturnValue( local_textures, n*sizeof( *local_textures ) );
-	crFree( local_textures );
+	switch( pname )
+	{
+
+			case GL_AMBIENT: return 4;
+			case GL_COLOR_INDEXES: return 3;
+			case GL_CONSTANT_ATTENUATION: return 1;
+			case GL_DIFFUSE: return 4;
+			case GL_EMISSION: return 4;
+			case GL_EYE_PLANE: return 4;
+			case GL_LINEAR_ATTENUATION: return 1;
+			case GL_OBJECT_PLANE: return 4;
+			case GL_POSITION: return 4;
+			case GL_QUADRATIC_ATTENUATION: return 1;
+			case GL_SHININESS: return 1;
+			case GL_SPECULAR: return 4;
+			case GL_SPOT_CUTOFF: return 1;
+			case GL_SPOT_DIRECTION: return 3;
+			case GL_SPOT_EXPONENT: return 1;
+			case GL_TEXTURE_BORDER_COLOR: return 4;
+			case GL_TEXTURE_ENV_COLOR: return 4;
+			case GL_TEXTURE_ENV_MODE: return 1;
+			case GL_TEXTURE_GEN_MODE: return 1;
+			case GL_TEXTURE_MAG_FILTER: return 1;
+			case GL_TEXTURE_MIN_FILTER: return 1;
+			case GL_TEXTURE_WRAP_S: return 1;
+			case GL_TEXTURE_WRAP_T: return 1;
+
+		default:
+			crError( "Unknown paramater name in LookupComponents: %d", pname );
+			break;
+	}
+	// NOTREACHED
+	return 0;
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetClipPlane( GLenum plane, GLdouble *equation )
 {
-	crError( "crServerDispatchGetClipPlane unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetClipPlane( plane, equation );
+	GLdouble  local_equation[4];
+	cr_server.head_spu->dispatch_table.GetClipPlane( plane, local_equation );
+	crServerReturnValue( &(local_equation[0]), 4*sizeof(GLdouble ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetLightfv( GLenum light, GLenum pname, GLfloat *params )
 {
-	crError( "crServerDispatchGetLightfv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetLightfv( light, pname, params );
+	GLfloat  local_params[4];
+	cr_server.head_spu->dispatch_table.GetLightfv( light, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetLightiv( GLenum light, GLenum pname, GLint *params )
 {
-	crError( "crServerDispatchGetLightiv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetLightiv( light, pname, params );
+	GLint  local_params[4];
+	cr_server.head_spu->dispatch_table.GetLightiv( light, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum query, GLdouble *v )
-{
-	crError( "crServerDispatchGetMapdv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetMapdv( target, query, v );
-}
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum query, GLfloat *v )
-{
-	crError( "crServerDispatchGetMapfv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetMapfv( target, query, v );
-}
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum query, GLint *v )
-{
-	crError( "crServerDispatchGetMapiv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetMapiv( target, query, v );
-}
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
 {
-	crError( "crServerDispatchGetMaterialfv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetMaterialfv( face, pname, params );
+	GLfloat  local_params[4];
+	cr_server.head_spu->dispatch_table.GetMaterialfv( face, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMaterialiv( GLenum face, GLenum pname, GLint *params )
 {
-	crError( "crServerDispatchGetMaterialiv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetMaterialiv( face, pname, params );
+	GLint  local_params[4];
+	cr_server.head_spu->dispatch_table.GetMaterialiv( face, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetPixelMapfv( GLenum map, GLfloat *values )
-{
-	crError( "crServerDispatchGetPixelMapfv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetPixelMapfv( map, values );
-}
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetPixelMapuiv( GLenum map, GLuint *values )
-{
-	crError( "crServerDispatchGetPixelMapuiv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetPixelMapuiv( map, values );
-}
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetPixelMapusv( GLenum map, GLushort *values )
-{
-	crError( "crServerDispatchGetPixelMapusv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetPixelMapusv( map, values );
-}
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetPointerv( GLenum pname, GLvoid* *params )
-{
-	crError( "crServerDispatchGetPointerv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetPointerv( pname, params );
-}
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetPolygonStipple( GLubyte *mask )
 {
-	crError( "crServerDispatchGetPolygonStipple unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetPolygonStipple( mask );
+	GLubyte  local_mask[128];
+	cr_server.head_spu->dispatch_table.GetPolygonStipple( local_mask );
+	crServerReturnValue( &(local_mask[0]), 128*sizeof(GLubyte ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
-	crError( "crServerDispatchGetTexEnvfv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexEnvfv( target, pname, params );
+	GLfloat  local_params[4];
+	cr_server.head_spu->dispatch_table.GetTexEnvfv( target, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexEnviv( GLenum target, GLenum pname, GLint *params )
 {
-	crError( "crServerDispatchGetTexEnviv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexEnviv( target, pname, params );
+	GLint  local_params[4];
+	cr_server.head_spu->dispatch_table.GetTexEnviv( target, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 {
-	crError( "crServerDispatchGetTexGendv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexGendv( coord, pname, params );
+	GLdouble  local_params[4];
+	cr_server.head_spu->dispatch_table.GetTexGendv( coord, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLdouble ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
-	crError( "crServerDispatchGetTexGenfv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexGenfv( coord, pname, params );
+	GLfloat  local_params[4];
+	cr_server.head_spu->dispatch_table.GetTexGenfv( coord, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 {
-	crError( "crServerDispatchGetTexGeniv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexGeniv( coord, pname, params );
+	GLint  local_params[4];
+	cr_server.head_spu->dispatch_table.GetTexGeniv( coord, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels )
-{
-	crError( "crServerDispatchGetTexImage unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexImage( target, level, format, type, pixels );
-}
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat *params )
 {
-	crError( "crServerDispatchGetTexLevelParameterfv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexLevelParameterfv( target, level, pname, params );
+	GLfloat  local_params[1];
+	cr_server.head_spu->dispatch_table.GetTexLevelParameterfv( target, level, pname, local_params );
+	crServerReturnValue( &(local_params[0]), 1*sizeof(GLfloat ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint *params )
 {
-	crError( "crServerDispatchGetTexLevelParameteriv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexLevelParameteriv( target, level, pname, params );
+	GLint  local_params[1];
+	cr_server.head_spu->dispatch_table.GetTexLevelParameteriv( target, level, pname, local_params );
+	crServerReturnValue( &(local_params[0]), 1*sizeof(GLint ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
-	crError( "crServerDispatchGetTexParameterfv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexParameterfv( target, pname, params );
+	GLfloat  local_params[4];
+	cr_server.head_spu->dispatch_table.GetTexParameterfv( target, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 {
-	crError( "crServerDispatchGetTexParameteriv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetTexParameteriv( target, pname, params );
+	GLint  local_params[4];
+	cr_server.head_spu->dispatch_table.GetTexParameteriv( target, pname, local_params );
+	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
+

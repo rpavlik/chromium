@@ -1,2 +1,15 @@
 #AreTexturesResident
+GetBooleanv
+GetDoublev
+GetFloatv
+GetIntegerv
 GetString
+GenTextures
+GetTexImage
+GetMapdv
+GetMapiv
+GetMapfv
+GetPixelMapfv
+GetPixelMapuiv 
+GetPixelMapusv
+GetPointerv
