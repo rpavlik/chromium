@@ -23,7 +23,7 @@ class IntDialog(wxDialog):
 		defaultValue, minValue, maxValue are self-explanatory.
 		"""
 		wxDialog.__init__(self, parent, id, title, pos=wxPoint(-1,-1),
-						  style = wxDEFAULT_DIALOG_STYLE)
+						  style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER)
 
 		id_OK = 1
 		id_CANCEL = 2
