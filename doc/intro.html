@@ -76,7 +76,7 @@ NVIDIA-specific ones.&nbsp; He also designed the Chromium logo and did a lot of
 really useful slave labor for us last summer when we were building our
 cluster. </p>
 
-<p>For the beta and 1.0 releases,
+<p>For the beta and 1.0, 1.1 and 1.2 releases
 <a href="mailto:brian@tungstengraphics.com">Brian Paul</a> and
 <a href="http://www.xfree86.org/~alanh">Alan Hourihane</a> of Tungsten
 Graphics, Inc. contributed many new features.</p>
@@ -275,7 +275,7 @@ Graphics, Inc. contributed many new features.</p>
     <li>Added support for WGL_EXT_pixel_format (not tested and disabled fow now)
           for enhanced Windows visual selection, like multisampling
   </ul>
-  <li><A HREF="crut.html" target="main">CRUT</A> - Chromium Utility Toolkit for parallel applications (beta release)
+  <li><A HREF="crut.html" target="_parent">CRUT</A> - Chromium Utility Toolkit for parallel applications (beta release)
   <li>CRUT demonstration program: psubmit_crut
   <li>New crserver configuration options: unique_display_lists, unique_texture_objects
   <li>Bug Fixes
@@ -285,26 +285,34 @@ Graphics, Inc. contributed many new features.</p>
 </ul>
 
 
-<p>1.1.1 Release:  month day, 2003</p>
+<p>1.2 Release:  April 4, 2003</p>
 
 <ul>
-<li>Bug fixes
+<li>New Features
+  <ul>
+  <li>DMX integration - Chromium can now be used on a
+      <A HREF="http://dmx.sf.net/" target="_parent">DMX display</A> to
+      provide OpenGL rendering on a multi-screen desktop
+  <li>Optimizations to the crserver and state_tracker
+  <li>Added retile_on_resize option to tilesort SPU
+  <li>Added maximum_window_size and match_window_count options for app nodes
+  <li>GL_IBM_raster_pos_clip extension support
+  <li>Improved support for multiple OpenGL windows
+  <li>Perf SPU now records glTexImage statistics
+  </ul>
+  <li>Bug Fixes
   <ul>
   <li>Updated Quadrics support (Joel Welling)
   <li>glGetInteger/Float/etc queries of fog coord and secondary color state didn't work
   <li>The track_window_size option was mistakenly turned on by default
   <li>Fixed a number of problems with user-specified bounding boxes in the tilesort SPU.
   <li>Don't abort if app requests a stereo visual
-  </ul>
-</ul>
-
-
-<p>1.2 Release:  month day, 2003</p>
-
-<ul>
-<li>New Features
-  <ul>
-  <li>DMX integration
+  <li>Colormaterial fix
+  <li>Fixed split_begin_end problem in tilesort SPU
+  <li>Fixed some display list issues and bugs related to bounding boxes
+  <li>Fixed some glTexImage and pixel transfer bugs (Karl Rasche)
+  <li>glViewport didn't always work as expected on tiled displays
+  <li>Lots of other minor fixes
   </ul>
 </ul>
 
