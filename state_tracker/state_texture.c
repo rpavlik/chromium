@@ -570,7 +570,7 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash)
 
 	/* remove from hash table */
 	if (t && updateHash) {
-		crHashtableDeleteBlock( t->idHash, tobj->name, 1, NULL ); /* null callback */
+		crHashtableDelete( t->idHash, tobj->name, NULL ); /* null callback */
 	}
 
 	/* Free the images */

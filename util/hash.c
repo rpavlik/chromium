@@ -115,6 +115,7 @@ static GLuint crHashIdPoolAllocBlock( CRHashIdPool *pool, GLuint count )
 	}
 
 	/* failed to find free block */
+	crDebug("crHashIdPoolAllocBlock failed");
 	return 0;
 }
 
@@ -137,10 +138,12 @@ static void crHashIdPoolFreeBlock( CRHashIdPool *pool, GLuint first, GLuint coun
 	}
 
 	/* j will always be valid */
-	if (!i)
+	if (!i) {
 		return;
-	if (!i->next && i->max == first)
+	}
+	if (!i->next && i->max == first) {
 		return;
+	}
 
 	/* Case:  j:(~,first-1) */
 	if (i->max + 1 == first) 
@@ -375,6 +378,7 @@ void crHashtableDelete( CRHashTable *h, unsigned long key, CRHashtableCallback d
 {
 	unsigned int index = crHash( key );
 	CRHashNode *temp, *beftemp = NULL;
+
 	for ( temp = h->buckets[index]; temp; temp = temp->next )
 	{
 		if ( temp->key == key )
@@ -393,12 +397,17 @@ void crHashtableDelete( CRHashTable *h, unsigned long key, CRHashtableCallback d
 	}
 
 	crFree( temp );
+
+	crHashIdPoolFreeBlock( h->idPool, key, 1 );
 }
 
 void crHashtableDeleteBlock( CRHashTable *h, unsigned long key, GLsizei range, CRHashtableCallback deleteFunc )
 {
-	crHashtableDelete( h, key, deleteFunc );
-	crHashIdPoolFreeBlock( h->idPool, key, range);
+	/* XXX optimize someday */
+	GLuint i;
+	for (i = 0; i < range; i++) {
+		crHashtableDelete( h, key, deleteFunc );
+	}
 }
 
 void *crHashtableSearch( const CRHashTable *h, unsigned long key )

@@ -112,7 +112,6 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 	
 void STATE_APIENTRY crStateDeleteLists (GLuint list, GLsizei range)
 {
-	int i;
 	CRContext *g = GetCurrentContext();
 	CRListsState *l = &(g->lists);
 
@@ -128,10 +127,7 @@ void STATE_APIENTRY crStateDeleteLists (GLuint list, GLsizei range)
 		return;
 	}
 
-	for (i=0; i<range; i++)
-	{
-		crHashtableDeleteBlock(l->hash, list + i, range, crFree); /* call crFree to delete list data */
-	}
+	crHashtableDeleteBlock(l->hash, list, range, crFree); /* call crFree to delete list data */
 }
 
 GLboolean STATE_APIENTRY crStateIsList(GLuint list)
