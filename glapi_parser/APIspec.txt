@@ -48,6 +48,81 @@
 #             omit      - totally omit this function.
 #             checklist - function may or may not be compiled into display
 #                         lists, depending on parameter values.
+#
+# Chromium packertest properties:
+#
+# Packertest  generates the permuted parameter lists for a GL function.
+# A definition in APUutil.txt looks like this:
+#
+#     name            ColorMaterial
+#     return          void
+#     param           face            GLenum
+#     paramprop       face            GL_FRONT GL_BACK GL_FRONT_AND_BACK
+#     param           mode            GLenum
+#     paramprop       mode            GL_EMISSION GL_AMBIENT GL_DIFFUSE GL_SPECULAR GL_AMBIENT_AND_DIFFUSE
+#     category        1.0
+#     chromium        pack
+#
+#  paramaction An optional list of action names for the Chromium packertest program. 
+#		specfied by 	parmaction	argument	property name
+#`		Possible property names include
+#			makeStripeImage -
+#			enableTex	-
+#			genTex		-
+#			pixelStore	-
+#
+#  paramprop An optional list of properties for this function. The properties correspond to 
+#		a list of GLenums for arguments that are of type GLenum
+#	example:
+#	param           face            GLenum
+#	paramprop       face            GL_FRONT GL_BACK GL_FRONT_AND_BACK
+#	param           mode            GLenum
+#	paramprop       mode            GL_EMISSION GL_AMBIENT GL_DIFFUSE GL_SPECULAR GL_AMBIENT_AND_DIFFUSE
+# 	After permuting all of the arguments the function we get:
+#
+# 	('GL_FRONT', 'GL_EMISSION')
+# 	('GL_BACK', 'GL_EMISSION')
+# 	('GL_FRONT_AND_BACK', 'GL_EMISSION')
+# 	('GL_FRONT', 'GL_AMBIENT')
+# 	('GL_BACK', 'GL_AMBIENT')
+# 	('GL_FRONT_AND_BACK', 'GL_AMBIENT')
+# 	('GL_FRONT', 'GL_DIFFUSE')
+# 	('GL_BACK', 'GL_DIFFUSE')
+# 	('GL_FRONT_AND_BACK', 'GL_DIFFUSE')
+# 	('GL_FRONT', 'GL_SPECULAR')
+# 	('GL_BACK', 'GL_SPECULAR')
+# 	('GL_FRONT_AND_BACK', 'GL_SPECULAR')
+# 	('GL_FRONT', 'GL_AMBIENT_AND_DIFFUSE')
+# 	('GL_BACK', 'GL_AMBIENT_AND_DIFFUSE')
+# 	('GL_FRONT_AND_BACK', 'GL_AMBIENT_AND_DIFFUSE')
+#
+#  paramlist An optional list of properties for a function for non glEnums
+#	The values are used in the generation of the permuted arguments.
+#	If paramlist is not used, a single default (specified in packertest.py) is
+#	used instead.
+#
+#	example:
+#	param         s               GLdouble
+#	paramlist     s               0 .5 1
+#	
+#
+#  paramset An optional list of properties for arguments of type GLenum.
+#
+#	Used when generating multiple sets of permuted arguments of type GLenum .
+#
+# 	paramset    [format type] [GL_RED GL_GREEN GL_BLUE GL_ALPHA GL_BGR GL_LUMINANCE GL_LUMINANCE_ALPHA] [GL_UNSIGNED_BYTE GL_BYTE GL_UNSIGNED_SHORT GL_SHORT GL_UNSIGNED_INT GL_INT GL_FLOAT]
+# 	paramset    [format type] [GL_RGB] [GL_UNSIGNED_BYTE GL_BYTE GL_UNSIGNED_SHORT GL_SHORT GL_UNSIGNED_INT GL_INT GL_FLOAT GL_UNSIGNED_BYTE_3_3_2 GL_UNSIGNED_BYTE_2_3_3_REV GL_UNSIGNED_SHORT_5_6_5 GL_UNSIGNED_SHORT_5_6_5_REV]
+#	paramset    [format type]  [GL_RGBA GL_BGRA] [GL_UNSIGNED_BYTE GL_BYTE GL_UNSIGNED_SHORT GL_SHORT GL_UNSIGNED_INT GL_INT GL_FLOAT GL_UNSIGNED_SHORT_4_4_4_4 GL_UNSIGNED_SHORT_4_4_4_4_REV GL_UNSIGNED_SHORT_5_5_5_1 GL_UNSIGNED_SHORT_1_5_5_5_REV GL_UNSIGNED_INT_8_8_8_8 GL_UNSIGNED_INT_8_8_8_8_REV GL_UNSIGNED_INT_10_10_10_2 GL_UNSIGNED_INT_2_10_10_10_REV]
+#
+#  paramvec  An optional property used for functions with vector arguments
+#		The specification is similar to that of paramlist.
+#
+#	example:
+#	param         v               const GLbyte *
+#	paramvec      v               2 2 2
+#	vector                v               3
+#
+#
 
 
 # OpenGL 1.0
@@ -3159,7 +3234,7 @@ param		target		GLenum
 param		level		GLint
 paramlist	level		0
 param		xoffset		GLint
-paramlist	xoffset		1
+paramlist	xoffset		0
 param		width		GLsizei
 paramlist	width		32
 param		format		GLenum

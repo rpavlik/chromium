@@ -13,7 +13,7 @@ void crUnpackExtendPointParameterfvARB( void  )
 	cr_unpackDispatch.PointParameterfvARB( pname, params );
 }
 
-#if 0
+#if 1
 void crUnpackExtendPointParameteriv( void  )
 {
 	GLenum pname = READ_DATA( sizeof( int ) + 0, GLenum );

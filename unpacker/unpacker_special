@@ -99,6 +99,7 @@ LoadTransposeMatrixfARB
 LoadTransposeMatrixdARB
 MultTransposeMatrixdARB
 MultTransposeMatrixfARB
+PointParameteriv
 PointParameterfvARB
 AreProgramsResidentNV
 DeleteProgramsNV

@@ -1,0 +1,670 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved. 
+    
+         See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+    
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Packertest</h1>
+
+<h2>pack/unpack validation tester
+</h2>
+
+
+<p>Packertest is an automatically generated pack/unpack validation tester.
+Any additions to the function specifications in the file APIspec.txt
+will automatically generate test cases for packertest.
+</p>
+
+<p>Once the specifications are in place, the packertest.py script will
+permute the argument specifications and generate permuted arguments for
+the new functions.
+</p>
+
+<h3>Caveats:</h3>
+
+<p>As of this time, most of the core functions supported by Chromium have test
+cases specified. There are a number of functions that require customized
+test cases are not handled by packertest.py
+</p>
+<p>The OpenGL image extension functions are not supported by Chromium. Packertest
+generates some of the tokens for the extension and some warnings will be
+issued by the Chromium state tracker.
+</p>
+
+<h1>packertest</h1>
+
+<pre>
+        Usage: packertest [options]
+        Options:
+          -a        enable accum buffer mode (default)
+          -A        enable all information
+			enables -dDaSm
+          -d        double buffer mode (default)
+          -error    do error check after each call (slow)
+          -h        print this information
+          -i        index mode
+          -m        multisample mode
+          -r        rgba mode (default)
+          -S        enable stencil buffer mode (default)
+          -s        stereo mode
+          -v        verbose output
+</pre>
+
+
+<h1>Running packertest</h1>
+
+<pre>
+import sys
+sys.path.append( '../server' )
+from mothership import *
+
+if len(sys.argv) > 3 or len(sys.argv) < 2:
+        print 'Usage: %s <demo> [spu]' % sys.argv[0]
+        sys.exit(-1)
+
+demo = sys.argv[1]
+
+if len(sys.argv) == 3:
+        clientspuname = sys.argv[2]
+else:
+        clientspuname = 'pack'
+
+server_spu = SPU( 'render' )
+client_spu = SPU( clientspuname )
+server_print_spu = SPU( 'print' )
+client_print_spu = SPU( 'print' )
+
+server_spu.Conf( 'window_geometry', [500, 500, 500, 500] )
+server_spu.Conf( 'stack_backtrace', 0)
+
+server_print_spu.Conf( 'log_file', '/tmp/%s_SERVER_LOG' % demo )
+client_print_spu.Conf( 'log_file', '/tmp/%s_CLIENT_LOG' % demo )
+
+server_node = CRNetworkNode( )
+server_node.AddSPU( server_print_spu )
+server_node.AddSPU( server_spu )
+
+if (clientspuname == 'tilesort' ):
+        server_node.AddTile( 0, 0, 500, 500 )
+
+client_node = CRApplicationNode( )
+client_node.AddSPU( SPU('feedback') )
+client_node.AddSPU( SPU('array') )
+client_node.AddSPU( client_print_spu )
+client_node.AddSPU( client_spu )
+client_spu.AddServer( server_node, 'tcpip' )
+
+client_node.SetApplication( os.path.join(crbindir, demo) )
+client_node.StartDir( crbindir )
+
+cr = CR()
+cr.MTU( 10 * 1024*1024 )
+cr.AddNode( client_node )
+cr.AddNode( server_node )
+cr.Go()
+</pre>
+Run packertest
+
+<pre>
+python packertest_full.conf "packertest -s -A -error"
+</pre>
+
+<p>It helps to redirect the output of crserver and crappfaker into
+files.
+</p>
+
+<h1>Interpreting the results.</h1>
+<p>
+Visually the screen results are totally meaningless. The real test results
+are located in the contents of the log files produced by the Print SPU
+and the debug output of crserver and crappfaker.
+</p>
+<p>
+	What do I do when I get ?
+</p>
+
+<ol>
+<li>CR Error(localhost:12345) Unknown parameter name in lookupComponents: 32878
+<br>
+edit crserverlib/get_components.py and add the missing token
+<br>
+<br>
+<li>CR Error(localhost:12345) Invalid pname to __numValues: 0x034f7
+<br>
+edit crserverlib/get_sizes.py and add the missing token
+<br>
+<br>
+<li> crserver dies and dumps core.
+<br>
+Sometimes there is a problem with returning values.
+<br>
+<br>
+</ol>
+
+<h1>Building the packertest program</h1>
+
+python packertest.py -v -d
+<pre>
+	-v	verbose output
+	-d	display debug output when generating code
+	-t	generate code that is table driven for all functions
+	-a 	generate code for all funcs in the APIspec.txt file
+	-s	not used
+	-n	not used
+</pre>
+
+<h1>Adding to packertest</h1>
+
+<h2>Adding functions to APIspec.txt</h2>
+
+<h3>
+Chromium packertest properties:
+</h3>
+<p>
+Packertest  generates the permuted parameter lists for a GL function.
+A definition in APUutil.txt looks like this:
+</p>
+
+<pre>
+    name            ColorMaterial
+    return          void
+    param           face            GLenum
+    paramprop       face            GL_FRONT GL_BACK GL_FRONT_AND_BACK
+    param           mode            GLenum
+    paramprop       mode            GL_EMISSION GL_AMBIENT GL_DIFFUSE GL_SPECULAR GL_AMBIENT_AND_DIFFUSE
+    category        1.0
+    chromium        pack
+</pre>
+ 
+<ul>
+<li><i>paramaction</i> An optional list of action names for the Chromium packertest program. 
+<pre>
+ 		specfied by 	parmaction	argument	property name
+</pre>
+<p>Possible property names include</p>
+<ul>
+<li> 			makeStripeImage -
+<li> 			enableTex	-
+<li> 			genTex		-
+<li> 			pixelStore	-
+</ul>
+ 
+<li><i>paramprop</i> An optional list of properties for this function. The properties correspond to 
+ 		a list of GLenums for arguments that are of type GLenum
+<pre>
+ 	example:
+ 	param           face            GLenum
+ 	paramprop       face            GL_FRONT GL_BACK GL_FRONT_AND_BACK
+ 	param           mode            GLenum
+ 	paramprop       mode            GL_EMISSION GL_AMBIENT GL_DIFFUSE GL_SPECULAR GL_AMBIENT_AND_DIFFUSE
+<pre>
+<p>
+After permuting all of the arguments the function we get:
+</p>
+ 
+<pre>
+	('GL_FRONT', 'GL_EMISSION')
+	('GL_BACK', 'GL_EMISSION')
+	('GL_FRONT_AND_BACK', 'GL_EMISSION')
+	('GL_FRONT', 'GL_AMBIENT')
+	('GL_BACK', 'GL_AMBIENT')
+	('GL_FRONT_AND_BACK', 'GL_AMBIENT')
+	('GL_FRONT', 'GL_DIFFUSE')
+	('GL_BACK', 'GL_DIFFUSE')
+	('GL_FRONT_AND_BACK', 'GL_DIFFUSE')
+	('GL_FRONT', 'GL_SPECULAR')
+	('GL_BACK', 'GL_SPECULAR')
+	('GL_FRONT_AND_BACK', 'GL_SPECULAR')
+	('GL_FRONT', 'GL_AMBIENT_AND_DIFFUSE')
+	('GL_BACK', 'GL_AMBIENT_AND_DIFFUSE')
+	('GL_FRONT_AND_BACK', 'GL_AMBIENT_AND_DIFFUSE')
+</pre>
+ 
+<li><i>paramlist</i>An optional list of properties for a function for non glEnums
+<p>
+The values are used in the generation of the permuted arguments.
+If paramlist is not used, a single default (specified in packertest.py) is
+used instead.
+</p>
+<pre>
+ 	example:
+ 	param         s               GLdouble
+ 	paramlist     s               0 .5 1
+ 	
+</pre>
+ 
+<li><i>paramset</i> An optional list of properties for arguments of type GLenum.
+<p>
+Used when generating multiple sets of permuted arguments of type GLenum .
+</p>
+<pre>
+ 
+	paramset    [format type] [GL_RED GL_GREEN GL_BLUE GL_ALPHA GL_BGR GL_LUMINANCE GL_LUMINANCE_ALPHA] [GL_UNSIGNED_BYTE GL_BYTE GL_UNSIGNED_SHORT GL_SHORT GL_UNSIGNED_INT GL_INT GL_FLOAT]
+	paramset    [format type] [GL_RGB] [GL_UNSIGNED_BYTE GL_BYTE GL_UNSIGNED_SHORT GL_SHORT GL_UNSIGNED_INT GL_INT GL_FLOAT GL_UNSIGNED_BYTE_3_3_2 GL_UNSIGNED_BYTE_2_3_3_REV GL_UNSIGNED_SHORT_5_6_5 GL_UNSIGNED_SHORT_5_6_5_REV]
+ 	paramset    [format type]  [GL_RGBA GL_BGRA] [GL_UNSIGNED_BYTE GL_BYTE GL_UNSIGNED_SHORT GL_SHORT GL_UNSIGNED_INT GL_INT GL_FLOAT GL_UNSIGNED_SHORT_4_4_4_4 GL_UNSIGNED_SHORT_4_4_4_4_REV GL_UNSIGNED_SHORT_5_5_5_1 GL_UNSIGNED_SHORT_1_5_5_5_REV GL_UNSIGNED_INT_8_8_8_8 GL_UNSIGNED_INT_8_8_8_8_REV GL_UNSIGNED_INT_10_10_10_2 GL_UNSIGNED_INT_2_10_10_10_REV]
+ 
+</pre>
+<li><i>paramvec</i> An optional property used for functions with vector arguments
+<p>
+The specification is similar to that of paramlist.
+</p>
+<pre>
+ 
+ 	example:
+ 	param         v               const GLbyte *
+ 	paramvec      v               2 2 2
+ 	vector                v               3
+</pre>
+</ul>
+ 
+<h2>Customization of packertest.py</h2>
+<h3>Table driven test cases</h3>
+<p>
+Due to combinatorial complexity, there a several functions in OpenGL that require the 
+testcases to be table driven. The array <b>special_keys</b> can be edited to allow
+the packertest.py script to generate test cases in a table driven format.
+The command <b>CombinerOutputNV</b> has been omitted as a special case because the
+number of test cases is astronomical.
+</p>
+<p>
+When a function is added to <b>special_keys</b>, don't forget to add the function
+to the file <b>packertest_special</b>
+</p>
+<pre>
+#
+# Special names that trigger a separate file since the
+# output for these GL calls are huge
+# CombinerOutputNV generates a massive file
+# TexImage3DEXT isn't used much anymore
+#
+special_keys = [
+        'BlendFuncSeparateEXT',
+        'ColorTable',
+        'ColorTableEXT', 
+        'CombinerInputNV',
+        'TexSubImage1D', 
+        'TexSubImage2D', 
+        'TexSubImage3D',
+        'TexImage1D',
+        'TexImage2D',
+        'TexImage3D'
+]
+        #'CombinerOutputNV',
+        #'TexImage3DEXT',
+
+</pre>
+<p>The output looks like:
+<pre>
+struct TexImage2D_params {
+        GLenum TexImage2D_target;
+        GLint TexImage2D_level;
+        GLint TexImage2D_internalFormat;
+        GLsizei TexImage2D_width;
+        GLsizei TexImage2D_height;
+        GLint TexImage2D_border;
+        GLenum TexImage2D_format;
+        GLenum TexImage2D_type;
+        char *prgstr;
+} TexImage2D_tab[] = {
+
+{ GL_TEXTURE_2D, (int) 1, (int) GL_ALPHA, (unsigned) 32, (unsigned) 32, (int) 0, GL_RED, GL_UNSIGNED_BYTE,
+ "TexImage2D_tab.GL_TEXTURE_2D, (int) 1, (int) GL_ALPHA, (unsigned) 32, (unsigned) 32, (int) 0, GL_RED, GL_UNSIGNED_BYTE, "},
+{ GL_TEXTURE_RECTANGLE_NV, (int) 1, (int) GL_ALPHA, (unsigned) 32, (unsigned) 32, (int) 0, GL_RED, GL_UNSIGNED_BYTE,
+ "TexImage2D_tab.GL_TEXTURE_RECTANGLE_NV, (int) 1, (int) GL_ALPHA, (unsigned) 32, (unsigned) 32, (int) 0, GL_RED, GL_UNSIGNED_BYTE, "},
+{ GL_TEXTURE_2D, (int) 1, (int) GL_ALPHA4, (unsigned) 32, (unsigned) 32, (int) 0, GL_RED, GL_UNSIGNED_BYTE,
+ "TexImage2D_tab.GL_TEXTURE_2D, (int) 1, (int) GL_ALPHA4, (unsigned) 32, (unsigned) 32, (int) 0, GL_RED, GL_UNSIGNED_BYTE, "},
+{ GL_TEXTURE_RECTANGLE_NV, (int) 1, (int) GL_ALPHA4, (unsigned) 32, (unsigned) 32, (int) 0, GL_RED, GL_UNSIGNED_BYTE,
+ "TexImage2D_tab.GL_TEXTURE_RECTANGLE_NV, (int) 1, (int) GL_ALPHA4, (unsigned) 32, (unsigned) 32, (int) 0, GL_RED, GL_UNSIGNED_BYTE, "},
+
+...
+
+</pre>
+<h3>Functions that require special casing</h3>
+<p>
+The following functions require special casing and manual intervention.
+</p>
+
+<pre>
+special_funcs = [
+        'Begin',
+        'End',
+        'BoundsInfoCR',
+        'BarrierCreateCR',
+        'BarrierDestroyCR',
+        'BarrierExecCR',
+        'SemaphoreCreateCR',
+        'SemaphoreDestroyCR',
+        'SemaphorePCR',
+        'SemaphoreVCR',
+        'AreTexturesResident',
+        'CallLists',
+        'EndList',
+        'DeleteTextures',
+        'PointParameterfvARB',
+        'PointParameteriv',
+        'PrioritizeTextures',
+        'PushAttrib',
+        'PopAttrib',
+        'AreProgramsResidentNV',
+        'DeleteProgramsARB',
+        'DeleteProgramsNV',
+        'ExecuteProgramNV',
+        'GenProgramsARB',
+        'GenProgramsNV',
+        'GetProgramEnvParameterdvARB',
+        'GetProgramEnvParameterfvARB',
+        'GetProgramivARB',
+        'GetProgramivNV',
+        'GetProgramLocalParameterdvARB',
+        'GetProgramLocalParameterfvARB',
+        'GetProgramNamedParameterdvNV',
+        'GetProgramNamedParameterfvNV',
+        'GetProgramParameterdvNV',
+        'GetProgramParameterfvNV',
+        'GetProgramStringARB',
+        'GetProgramStringNV',
+        'LoadProgramNV',
+        'ProgramEnvParameter4dARB',
+        'ProgramEnvParameter4dvARB',
+        'ProgramEnvParameter4fARB',
+        'ProgramEnvParameter4fvARB',
+        'ProgramLocalParameter4dARB',
+        'ProgramLocalParameter4dvARB',
+        'ProgramLocalParameter4fARB',
+        'ProgramLocalParameter4fvARB',
+        'ProgramNamedParameter4dNV',
+        'ProgramNamedParameter4dvNV',
+        'ProgramNamedParameter4fNV',
+        'ProgramNamedParameter4fvNV',
+        'ProgramParameter4dNV',
+        'ProgramParameter4dvNV',
+        'ProgramParameter4fNV',
+        'ProgramParameter4fvNV',
+        'ProgramParameters4dvNV',
+        'ProgramParameters4fvNV',
+        'ProgramStringARB',
+        'RequestResidentProgramsNV',
+        'DeleteQueriesARB',
+        'GenQueriesARB',
+        'BufferSubDataARB',
+        'GetBufferSubDataARB',
+        'BufferDataARB',
+        'GenBuffersARB',
+        'DeleteBuffersARB',
+        'GenFencesNV',
+        'IsFenceNV',
+        'TestFenceNV',
+        'GetFenceivNV',
+        'DeleteFencesNV',
+        'GetVertexAttribPointervNV',
+        'CompressedTexImage1DARB',
+        'GetVertexAttribPointervNV',
+        'CompressedTexImage1DARB',
+        'CompressedTexImage2DARB',
+        'CompressedTexImage3DARB',
+        'CompressedTexSubImage1DARB',
+        'CompressedTexSubImage2DARB',
+        'CompressedTexSubImage3DARB',
+        'GetCompressedTexImageARB',
+        'GetVertexAttribPointervARB',
+        'ReadPixels',
+        'ChromiumParametervCR',
+        'GetChromiumParametervCR',
+]
+</pre>
+<h3>Setting argument range defaults</h3>
+<p>The array range_mapping can be edited to provide different defaults
+or a range of defaults for the various primitive types.
+<pre>
+range_mapping = {
+        'GLuint': ([3]),
+        'GLsizei': ([10]),
+        'GLfloat': ([3.40]),
+        'GLbyte': ([2]),
+        'GLvoid': ([0]),
+        'GLubyte': ([14]),
+        'GLdouble': ([10.79]),
+        'GLshort': ([2]),
+        'GLint': ([1]),
+        'GLbitfield': ([0xffffff]),
+        'GLushort': ([5]),
+        'GLclampf': ([ 245.66]),
+        'GLclampd': ([1234.33]),
+        'GLsizeiptrARB': ([0]),
+        'GLintptrARB': ([0]),
+        'GLboolean': ['GL_FALSE', 'GL_TRUE']
+}
+
+</pre>
+<h3>Contents of packertest_special</h3>
+<p>
+</p>
+<pre>
+CreateContext
+DestroyContext
+MakeCurrent
+WindowDestroy
+WindowPosition
+WindowShow
+WindowSize
+Writeback
+WindowCreate
+SwapBuffers
+ChromiumParametervCR
+BoundsInfoCR
+BarrierCreateCR
+BarrierDestroyCR
+BarrierExecCR
+GetChromiumParametervCR
+SemaphoreCreateCR
+SemaphoreDestroyCR
+SemaphorePCR
+SemaphoreVCR
+#
+Begin
+End
+ZPix
+AreTexturesResident
+Finish
+CallLists
+EndList
+DeleteTextures
+#
+PointParameterfvARB
+PointParameteriv
+PrioritizeTextures
+#
+ReadPixels
+PushAttrib
+PopAttrib
+#
+AreProgramsResidentNV
+DeleteProgramsARB
+DeleteProgramsNV
+ExecuteProgramNV
+GenProgramsARB
+GenProgramsNV
+GetProgramEnvParameterdvARB
+GetProgramEnvParameterfvARB
+GetProgramivARB
+GetProgramivNV
+GetProgramLocalParameterdvARB
+GetProgramLocalParameterfvARB
+GetProgramNamedParameterdvNV
+GetProgramNamedParameterfvNV
+GetProgramParameterdvNV
+GetProgramParameterfvNV
+GetProgramStringARB
+GetProgramStringNV
+LoadProgramNV
+ProgramEnvParameter4dARB
+ProgramEnvParameter4dvARB
+ProgramEnvParameter4fARB
+ProgramEnvParameter4fvARB
+ProgramLocalParameter4dARB
+ProgramLocalParameter4dvARB
+ProgramLocalParameter4fARB
+ProgramLocalParameter4fvARB
+ProgramNamedParameter4dNV
+ProgramNamedParameter4dvNV
+ProgramNamedParameter4fNV
+ProgramNamedParameter4fvNV
+ProgramParameter4dNV
+ProgramParameter4dvNV
+ProgramParameter4fNV
+ProgramParameter4fvNV
+ProgramParameters4dvNV
+ProgramParameters4fvNV
+ProgramStringARB
+RequestResidentProgramsNV
+#
+DeleteQueriesARB
+GenQueriesARB
+BufferSubDataARB
+GetBufferSubDataARB
+BufferDataARB
+GenBuffersARB
+DeleteBuffersARB
+#
+# fences requires manual intervention
+#
+GenFencesNV
+IsFenceNV
+TestFenceNV
+GetFenceivNV
+DeleteFencesNV
+#
+# not supported in crserver
+#
+GetVertexAttribPointervARB
+GetVertexAttribPointervNV
+#
+# not supported
+#
+CompressedTexImage1DARB
+CompressedTexImage2DARB
+CompressedTexImage3DARB
+CompressedTexSubImage1DARB
+CompressedTexSubImage2DARB
+CompressedTexSubImage3DARB
+GetCompressedTexImageARB
+PicaListCompositors
+PicaGetCompositorParamiv
+PicaGetCompositorParamfv
+PicaGetCompositorParamcv
+PicaListNodes
+PicaCreateContext
+PicaDestroyContext
+PicaSetContextParami
+PicaSetContextParamiv
+PicaSetContextParamf
+PicaSetContextParamfv
+PicaSetContextParamv
+PicaGetContextParamiv
+PicaGetContextParamfv
+PicaGetContextParamcv
+PicaGetContextParamv
+PicaBindLocalContext
+PicaDestroyLocalContext
+PicaStartFrame
+PicaEndFrame
+PicaCancelFrame
+PicaQueryFrame
+PicaAddGfxFramelet
+PicaAddMemFramelet
+PicaReadFrame
+__unused413
+dummy
+MultiDrawArraysEXT
+MultiDrawElements
+MultiDrawElementsEXT
+IsQuery
+GetQueryObjectuiv
+GetQueryObjectiv
+GetQueryiv
+GenQueries
+EndQuery
+DeleteQueries
+BeginQuery
+ConvolutionFilter1DEXT
+ConvolutionFilter2DEXT
+ConvolutionParameterfvEXT
+ConvolutionParameterivEXT
+CopyConvolutionFilter1DEXT
+CopyConvolutionFilter2DEXT
+GetConvolutionFilterEXT
+GetConvolutionParameterfvEXT
+GetConvolutionParameterivEXT
+GetHistogramEXT
+GetHistogramParameterfvEXT
+GetHistogramParameterivEXT
+GetMinmaxEXT
+GetSeparableFilterEXT
+HistogramEXT
+MinmaxEXT
+SeparableFilter2DEXT
+ConvolutionFilter1DEXT
+ConvolutionFilter2DEXT
+ConvolutionParameterfEXT
+ConvolutionParameterfvEXT
+ConvolutionParameteriEXT
+ConvolutionParameterivEXT
+CopyColorSubTableEXT
+CopyConvolutionFilter1DEXT
+CopyConvolutionFilter2DEXT
+GetConvolutionFilterEXT
+GetConvolutionParameterfvEXT
+GetConvolutionParameterivEXT
+GetHistogramEXT
+GetHistogramParameterfvEXT
+GetHistogramParameterivEXT
+GetMinmaxEXT
+GetMinmaxParameterfvEXT
+GetMinmaxParameterivEXT
+GetSeparableFilterEXT
+HistogramEXT
+MinmaxEXT
+PolygonOffsetEXT
+ResetHistogramEXT
+ResetMinmaxEXT
+SeparableFilter2DEXT
+GetError
+#
+# these are huge - generate separately
+#
+BlendFuncSeparateEXT
+TexImage1D
+TexImage2D
+TexImage3D
+TexImage3DEXT
+CombinerInputNV
+CombinerOutputNV
+TexSubImage1D
+TexSubImage2D
+TexSubImage3D
+ColorTable
+ColorTableEXT
+</pre>
+
+<h2>Special Actions</h2>
+
+<p>Special actions required before a test case is executed are
+specified by the paramaction keyword in <b>APIspec.txt</b>. The actions
+themselves are implemented inside the function <b>PerformAction</b>
+
+
+
+</body>
+
+</html>
+

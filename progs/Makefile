@@ -14,6 +14,8 @@ SUBDIRS = \
 	city \
 	cubes \
 	dlisttest \
+	dlistperf1 \
+	dlistperf2 \
 	extensions \
 	fonttest \
 	fraglight \
@@ -29,6 +31,7 @@ SUBDIRS = \
 	stereocube \
 	tiletest \
 	viewports
+
 
 
 ifeq ($(THREADSAFE), 1)
