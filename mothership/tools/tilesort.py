@@ -25,7 +25,7 @@
 	used instead of the IDs.
 """
 
-import string, cPickle, os.path
+import string, cPickle, os.path, re
 from wxPython.wx import *
 
 import traceback, types
@@ -49,6 +49,8 @@ id_TileWidth   = 3003
 id_TileHeight  = 3004
 id_hLayout     = 3005
 id_vLayout     = 3006
+id_HostText    = 3007
+id_HostIndex   = 3008
 
 # Size of the drawing page, in pixels.
 PAGE_WIDTH  = 1000
@@ -61,10 +63,33 @@ CommonTileSizes = [ [128, 128],
 					[1280, 1024],
 					[1600, 1200] ]
 
+BackgroundColor = wxColor(90, 150, 190)
+
+
+#----------------------------------------------------------------------------
+def MakeHostname(format, number):
+	# find the hash characters first
+	p = re.search("#+", format)
+	if not p:
+		return format
+	numHashes = p.end() - p.start()
+	numDigits = len(str(number))
+	# start building result string
+	result = format[0:p.start()]
+	# insert padding zeros as needed
+	while numHashes > numDigits:
+		result += "0"
+		numHashes -= 1
+	# append the number
+	result += str(number)
+	# append rest of format string
+	result += format[p.end():]
+	return result
+
 
 #----------------------------------------------------------------------------
 
-class DrawingFrame(wxFrame):
+class MainFrame(wxFrame):
 	""" A frame showing the contents of a single document. """
 
 	# ==========================================
@@ -81,6 +106,10 @@ class DrawingFrame(wxFrame):
 		wxFrame.__init__(self, parent, id, title,
 				 style = wxDEFAULT_FRAME_STYLE | wxWANTS_CHARS |
 					 wxNO_FULL_REPAINT_ON_RESIZE)
+
+		self.HostNamePattern = "host##"
+		self.HostNameStartIndex = 0
+
 
 		# Setup our menu bar.
 		menuBar = wxMenuBar()
@@ -188,7 +217,8 @@ class DrawingFrame(wxFrame):
 		toolSizer.Add(tileSizer, flag=wxEXPAND)
 
 		# Total mural size (in pixels)
-		box = wxStaticBox(parent=self.topPanel, id=-1, label="Total Size", style=wxDOUBLE_BORDER)
+		box = wxStaticBox(parent=self.topPanel, id=-1, label="Total Size",
+						  style=wxDOUBLE_BORDER)
 		totalSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		self.totalSizeLabel = wxStaticText(parent=self.topPanel, id=-1, label="??")
 		totalSizer.Add(self.totalSizeLabel, flag=wxEXPAND)
@@ -207,25 +237,47 @@ class DrawingFrame(wxFrame):
 		EVT_RADIOBOX(self.hLayoutRadio, id_hLayout, self.onSizeChange)
 		EVT_RADIOBOX(self.vLayoutRadio, id_vLayout, self.onSizeChange)
 
+		# Host naming
+		box = wxStaticBox(parent=self.topPanel, id=-1, label="Host Names",
+						  style=wxDOUBLE_BORDER)
+		hostSizer = wxStaticBoxSizer(box, wxVERTICAL)
+		self.hostText = wxTextCtrl(parent=self.topPanel, id=id_HostText,
+								   value=self.HostNamePattern)
+		EVT_TEXT(self.hostText, id_HostText, self.onHostChange)
+		hostSizer.Add(self.hostText, flag=wxEXPAND)
+
+		spinSizer = wxBoxSizer(wxHORIZONTAL)
+		firstLabel = wxStaticText(parent=self.topPanel, id=-1, label="First index: ")
+		spinSizer.Add(firstLabel, flag=wxALIGN_CENTER_VERTICAL)
+		self.hostSpin = wxSpinCtrl(parent=self.topPanel, id=id_HostIndex,
+								   value=str(self.HostNameStartIndex), min=0,
+								   size=wxSize(60,25))
+		EVT_SPINCTRL(self.hostSpin, id_HostIndex, self.onHostChange)
+		spinSizer.Add(self.hostSpin)
+
+		hostSizer.Add(spinSizer, border=4, flag=wxTOP)
+		toolSizer.Add(hostSizer, flag=wxEXPAND)
+
 		# Setup the main drawing area.
 #		self.drawArea = wxScrolledWindow(self.topPanel, -1,
 #										 style=wxSUNKEN_BORDER)
 #		self.drawArea.EnableScrolling(true, true)
 #		self.drawArea.SetScrollbars(20, 20, PAGE_WIDTH / 20, PAGE_HEIGHT / 20)
 		self.drawArea = wxPanel(self.topPanel, id=-1, style=wxSUNKEN_BORDER)
-		self.drawArea.SetBackgroundColour(wxWHITE)
+		self.drawArea.SetBackgroundColour(BackgroundColor)
 		EVT_PAINT(self.drawArea, self.onPaintEvent)
 
 		# Position everything in the window.
 		topSizer = wxBoxSizer(wxHORIZONTAL)
-		topSizer.Add(toolSizer, 0, wxTOP | wxLEFT | wxRIGHT | wxALIGN_TOP, 5)
+		topSizer.Add(toolSizer, option=0,
+					 flag=wxTOP | wxLEFT | wxRIGHT | wxALIGN_TOP, border=5)
 		topSizer.Add(self.drawArea, 1, wxEXPAND)
 
 		self.topPanel.SetAutoLayout(true)
 		self.topPanel.SetSizer(topSizer)
 
 		self.SetSizeHints(minW=250, minH=200)
-		self.SetSize(wxSize(600, 400))
+		self.SetSize(wxSize(700, 450))
 
 		self.dirty     = false
 		self.fileName  = fileName
@@ -336,8 +388,15 @@ class DrawingFrame(wxFrame):
 				else:
 					jj = cols - j - 1
 				k = ii * cols + jj
-				dc.DrawText("cr%d" % k, x+3, y+3)
+				s = MakeHostname(self.HostNamePattern, self.HostNameStartIndex + k)
+				dc.DrawText(s, x+3, y+3)
 		dc.EndDrawing()
+
+	# Called when hostname or first host index changes
+	def onHostChange(self, event):
+		self.HostNamePattern = self.hostText.GetValue()
+		self.HostNameStartIndex = self.hostSpin.GetValue()
+		self.drawArea.Refresh()
 
 
 	# ==========================
@@ -348,7 +407,7 @@ class DrawingFrame(wxFrame):
 		""" Respond to the "New" menu command.
 		"""
 		global _docList
-		newFrame = DrawingFrame(None, -1, "Chromium Tilesort Configuration")
+		newFrame = MainFrame(None, -1, "Chromium Tilesort Configuration")
 		newFrame.Show(TRUE)
 		_docList.append(newFrame)
 
@@ -374,7 +433,7 @@ class DrawingFrame(wxFrame):
 			self.loadContents()
 		else:
 			# Open a new frame for this document.
-			newFrame = DrawingFrame(None, -1, os.path.basename(fileName),
+			newFrame = MainFrame(None, -1, os.path.basename(fileName),
 						fileName=fileName)
 			newFrame.Show(true)
 			_docList.append(newFrame)
@@ -623,7 +682,7 @@ class TilesortApp(wxApp):
 		if len(sys.argv) == 1:
 			# No file name was specified on the command line -> start with a
 			# blank document.
-			frame = DrawingFrame(None, -1, "Chromium Tilesort Configuration")
+			frame = MainFrame(None, -1, "Chromium Tilesort Configuration")
 			frame.Centre()
 			frame.Show(TRUE)
 			_docList.append(frame)
@@ -632,7 +691,7 @@ class TilesortApp(wxApp):
 			for arg in sys.argv[1:]:
 				fileName = os.path.join(os.getcwd(), arg)
 				if os.path.isfile(fileName):
-					frame = DrawingFrame(None, -1,
+					frame = MainFrame(None, -1,
 						 os.path.basename(fileName),
 						 fileName=fileName)
 					frame.Show(TRUE)
