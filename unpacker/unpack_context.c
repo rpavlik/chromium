@@ -16,6 +16,7 @@ void crUnpackExtendCreateContext( void )
 	SET_RETURN_PTR( 12 );
 	SET_WRITEBACK_PTR( 20 );
 	retVal = cr_unpackDispatch.CreateContext( NULL, visual );
+	(void) retVal;
 }
 
 void crUnpackDestroyContext( void )
