@@ -141,14 +141,14 @@ GLint REPLICATESPU_APIENTRY replicatespu_WindowCreate( const char *dpyName, GLin
 			}
 
 			if (i == 0) {
-			winInfo->id = return_val;
-			winInfo->visBits = visBits;
-			winInfo->width = 0;
-			winInfo->height = 0;
-			winInfo->nativeWindow = 0;
-			winInfo->viewable = GL_FALSE; 
+				winInfo->id = return_val;
+				winInfo->visBits = visBits;
+				winInfo->width = 0;
+				winInfo->height = 0;
+				winInfo->nativeWindow = 0;
+				winInfo->viewable = GL_FALSE; 
 
-			crHashtableAdd(replicate_spu.windowTable, freeWinID, winInfo);
+				crHashtableAdd(replicate_spu.windowTable, freeWinID, winInfo);
 			}
 		}
 	}
@@ -160,8 +160,10 @@ GLint REPLICATESPU_APIENTRY replicatespu_WindowCreate( const char *dpyName, GLin
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 
-	if (winInfo->id != -1)
+	if (winInfo->id != -1) {
+		crDebug("Replicate SPU: CreateWindow returning ID %d", freeWinID);
 		return freeWinID++;
+	}
 	else
 		return -1;
 }
