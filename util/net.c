@@ -309,6 +309,36 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 	}
 }
 
+extern CRConnection** crTCPIPDump( int * num );
+extern CRConnection** crDevnullDump( int * num );
+#ifdef GM_SUPPORT
+extern CRConnection** crGmDump( int * num );
+#endif
+extern CRConnection** crFileDump( int * num );
+
+CRConnection** crNetDump( int* num ) 
+{
+	CRConnection **c;
+
+	if ( ( c = crTCPIPDump( num ) ) )
+		return c;
+	else
+	if ( ( c = crDevnullDump ( num ) ) )
+		return c;
+	else
+	if ( ( c = crFileDump( num ) ) )
+		return c;
+#ifdef GM_SUPPORT
+	else
+	if ( ( c = crGmDump( num ) ) )
+		return c;
+#endif
+
+	*num = 0;
+	return NULL;
+}
+
+
 /* Buffers that will eventually be transmitted on a connection 
  * *must* be allocated using this interface.  This way, we can 
  * automatically pin memory and tag blocks, and we can also use 

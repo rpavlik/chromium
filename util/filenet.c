@@ -361,3 +361,10 @@ void crFileConnection( CRConnection *conn )
 
 	cr_file.conns[cr_file.num_conns++] = conn;
 }
+
+CRConnection** crFileDump( int* num )
+{
+	*num = cr_file.num_conns;
+
+	return cr_file.conns;
+}

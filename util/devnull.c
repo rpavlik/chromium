@@ -97,3 +97,9 @@ void crDevnullConnection( CRConnection *conn )
 	conn->Connect = crDevnullDoConnect;
 	conn->Disconnect = crDevnullDoDisconnect;
 }
+
+CRConnection** crDevnullDump( int * num )
+{
+	*num = 0;
+	return NULL;
+}

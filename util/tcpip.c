@@ -976,3 +976,10 @@ int crGetHostname( char *buf, unsigned int len )
 
 	return ret;
 }
+
+CRConnection** crTCPIPDump( int *num )
+{
+	*num = cr_tcpip.num_conns;
+
+	return cr_tcpip.conns;
+}

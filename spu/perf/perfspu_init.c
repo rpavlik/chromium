@@ -74,14 +74,38 @@ void perfSPUSelfDispatch(SPUDispatchTable *self)
 	crSPUCopyDispatchTable( &(perf_spu.self), self );
 }
 
+extern CRConnection** crNetDump(int *num);
+
 int perfSPUCleanup(void)
 {
-	char str[100];
+	char str[200];
+	CRConnection **conn;
+	CRConnection *c;
+	int num_conns;
+	int i;
 
-	sprintf(str, "TOTAL FRAMES %d", perf_spu.total_frames );
+	conn = crNetDump(&num_conns);
+
+	sprintf(str, "SPUID %d NUMBER OF CONNECTIONS %d", perf_spu.id, num_conns);
 	perfspuDump( str );
-	sprintf(str, "TOTAL CLEARS %d", perf_spu.clear_counter );
+
+	for (i = 0; i < num_conns; i++)
+	{
+		c = conn[i];
+		if (c) {
+			sprintf(str, "SPUID %d CONNECTION ID %d TOTAL_BYTES RECEIVED %d", perf_spu.id, i, c->total_bytes_recv);
+			perfspuDump( str );
+			sprintf(str, "SPUID %d CONNECTION ID %d TOTAL_BYTES SENT %d", perf_spu.id, i, c->total_bytes_sent);
+			perfspuDump( str );
+		}
+	}
+
+	sprintf(str, "SPUID %d TOTAL FRAMES %d", perf_spu.id, perf_spu.total_frames );
 	perfspuDump( str );
+	sprintf(str, "SPUID %d TOTAL CLEARS %d", perf_spu.id, perf_spu.clear_counter );
+	perfspuDump( str );
+
+	perfspuDump( " " );
 
 	if ( perf_spu.mothership_log )
 		crMothershipDisconnect( perf_spu.conn );

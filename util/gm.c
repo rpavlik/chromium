@@ -1456,3 +1456,11 @@ void crGmConnection( CRConnection *conn )
 			conn->gm_node_id, actual_name );
 #endif
 }
+
+CRConnection* crGmDump( int *num )
+{
+	/* TODO */
+
+	*num = 0;
+	return NULL;
+}
