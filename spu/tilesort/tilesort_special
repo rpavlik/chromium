@@ -9,8 +9,10 @@ CallLists
 ListBase
 DeleteBuffersARB
 DeleteLists
+AreTexturesResident
 DeleteTextures
 DeleteProgramsARB
+AreProgramsResidentNV
 Accum
 Begin
 Clear

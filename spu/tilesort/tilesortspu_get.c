@@ -449,3 +449,26 @@ const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 	}
 }
 
+
+GLboolean TILESORTSPU_APIENTRY tilesortspu_AreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences )
+{
+	/* lie for now */
+	int i;
+	(void) textures;
+	for (i = 0; i < n; i++) {
+		residences[i] = GL_TRUE;
+	}
+	return GL_TRUE;
+}
+
+
+GLboolean TILESORTSPU_APIENTRY tilesortspu_AreProgramsResidentNV( GLsizei n, const GLuint * ids, GLboolean * residences )
+{
+	/* lie for now */
+	int i;
+	(void) ids;
+	for (i = 0; i < n; i++) {
+		residences[i] = GL_TRUE;
+	}
+	return GL_TRUE;
+}
