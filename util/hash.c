@@ -12,7 +12,7 @@
 CRHashTable *crAllocHashtable( void )
 {
 	int i;
-	CRHashTable *hash = (CRHashTable *) crAlloc( sizeof( CRHashTable )) ;
+	CRHashTable *hash = (CRHashTable *) crCalloc( sizeof( CRHashTable )) ;
 	hash->num_elements = 0;
 	for (i = 0 ; i < CR_NUM_BUCKETS ; i++)
 	{
@@ -47,7 +47,7 @@ static unsigned int crHash( unsigned int key )
 
 void crHashtableAdd( CRHashTable *h, unsigned int key, void *data )
 {
-	CRHashNode *node = (CRHashNode *) crAlloc( sizeof( CRHashNode ) );
+	CRHashNode *node = (CRHashNode *) crCalloc( sizeof( CRHashNode ) );
 	node->key = key;
 	node->data = data;
 	node->next = h->buckets[crHash( key )];
