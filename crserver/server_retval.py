@@ -36,7 +36,7 @@ void crServerReturnValue( const void *payload, unsigned int payload_len )
 	memcpy( &(rb->writeback_ptr), &(cr_server.writeback_ptr), sizeof( rb->writeback_ptr ) );
 	memcpy( &(rb->readback_ptr), &(cr_server.return_ptr), sizeof( rb->readback_ptr ) );
 	memcpy( rb+1, payload, payload_len );
-	crNetSend( cr_server.clients[cr_server.cur_client].conn, NULL, rb, msg_len );
+	crNetSend( cr_server.curClient->conn, NULL, rb, msg_len );
 	crFree( rb );
 }
 """
