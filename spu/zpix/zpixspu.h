@@ -68,8 +68,8 @@ typedef struct {
 */
 typedef  signed char PLErun;
 typedef union pledata {
-        uint   value;                 /* data value  */
-        PLErun run[sizeof(uint)];     /* run length vector
+        GLuint   value;                 /* data value  */
+        PLErun run[sizeof(GLuint)];     /* run length vector
                                          indexed backwards from ple_doff
                                          each byte has a count
                                            -n = string of n single words
@@ -92,7 +92,7 @@ typedef struct{
                               starts as sizeof(PLEbuf)+n bytes)
                               but squeezed at end
                        */
-        uint prefval;  /* preferred data value, 0 for XOR  */
+        GLuint prefval;  /* preferred data value, 0 for XOR  */
         int  nruns;    /*XXX JAG debug count of runs */
         PLEdata data[0];
         }PLEbuf;

@@ -98,7 +98,7 @@ zpixSPUCleanup(void)
         
         if ( 0 < zpix_spu.n)
         {
-           zpix_spu.sum_prefv *= sizeof(uint);
+           zpix_spu.sum_prefv *= sizeof(GLuint);
            avg_b  =  zpix_spu.sum_bytes / zpix_spu.n;
            avg_zb =  zpix_spu.sum_zbytes / zpix_spu.n;
            pcz    =  100*(1.0 - ( avg_zb /  avg_b ));

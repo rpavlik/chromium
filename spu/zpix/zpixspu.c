@@ -45,12 +45,12 @@ static char  *FBname[3] = {"COLOR", "DEPTH", "STENCIL"};
 static void  FriskPLE( PLEbuf *p_plebuf) 
 {
              int       n, nrun, npref, r, runt;
-             uint      *p_val;
+             GLuint      *p_val;
              PLErun    *p_run;
 
              /* point again at first value and count */
              p_run    = (PLErun *) p_plebuf + p_plebuf->beg;
-             p_val    = (uint *) p_run;
+             p_val    = (GLuint *) p_run;
              n        = 0;
              nrun     = 0;
              npref    = 0;
@@ -143,11 +143,11 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
 {
         int       bufi = 0;
         int       bufw;
-        uint     *p_old;
-        uint     *p_new;
-        uint     *p_dif;
+        GLuint     *p_old;
+        GLuint     *p_new;
+        GLuint     *p_dif;
         int       pixsize;
-        uint      alen, plen;
+        GLuint      alen, plen;
         int       r, rc;
         ulong     zliblen;
         int       zlen;
@@ -156,8 +156,8 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
         GLint     zclient;
 
         PLEbuf    *p_plebuf, pletmp;
-  const uint      prefv = 0;
-        uint      *p_pix, *p_val, v_curr, v_peek;
+  const GLuint      prefv = 0;
+        GLuint      *p_pix, *p_val, v_curr, v_peek;
         PLErun    *p_run, *p_left, *p_data;
 
         zpix_spu.n++;
@@ -203,7 +203,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
         zpix_spu.b.fbWidth[FBtype] = width;
         zpix_spu.b.fbHeight[FBtype] = height;
 
-        alen = (plen + 7)& -sizeof(uint);     /* trim size up to doubleword */
+        alen = (plen + 7)& -sizeof(GLuint);     /* trim size up to doubleword */
         zpix_spu.b.fbLen[FBtype] = alen;
         zpix_spu.b.fBuf[FBtype] = crAlloc(alen);
         crMemZero(zpix_spu.b.fBuf[FBtype],alen);
@@ -220,7 +220,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
     so ple is the biggest
 */
         zlen = 2 + sizeof(PLEbuf) + plen + ((plen+3) >> 2);
-        zlen = (zlen-1+sizeof(uint)) & -sizeof(uint);
+        zlen = (zlen-1+sizeof(GLuint)) & -sizeof(GLuint);
         if (zpix_spu.zbLen[FBtype] < zlen)
           {
            if (zpix_spu.zBuf[FBtype]) crFree(zpix_spu.zBuf[FBtype]);
@@ -251,9 +251,9 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
       
       /*  Set buffer manipulation values */
 
-      bufw  = (plen + 3) / sizeof(uint);
+      bufw  = (plen + 3) / sizeof(GLuint);
       p_old = zpix_spu.b.fBuf[FBtype];
-      p_new = (uint *) pixels;
+      p_new = (GLuint *) pixels;
       p_dif = zpix_spu.b.dBuf[FBtype];
 
       /* initialize compressed length to max buffer len available */
@@ -280,7 +280,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
   
         for ( bufi = 0; bufi < bufw ; bufi++ )
           {
-           uint   xpix;
+           GLuint   xpix;
            xpix = (*(p_new + bufi)) ^ *(p_old + bufi) ;
            *(p_dif + bufi) = xpix;
            *(p_old + bufi) = *(p_new + bufi);
@@ -355,7 +355,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              p_plebuf = (PLEbuf *) zpix_spu.zBuf[FBtype];
              p_plebuf->len     = zlen;
              p_plebuf->n       = bufw;
-             p_plebuf->beg     = (bufw + sizeof(PLEbuf) + 3) & -sizeof(uint) ;
+             p_plebuf->beg     = (bufw + sizeof(PLEbuf) + 3) & -sizeof(GLuint) ;
              p_plebuf->prefval = prefv;
              p_plebuf->nruns   = 0;
 
@@ -364,7 +364,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              /* point at first value and count */
              p_run    = (PLErun *) p_plebuf + p_plebuf->beg;
              p_data  = p_run;
-             p_val    = (uint *) p_data;
+             p_val    = (GLuint *) p_data;
              p_run-- ;
              p_pix    = zpix_spu.b.dBuf[FBtype];
 
@@ -470,16 +470,16 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
 
              /* round down left edge to word boundary */
              /*  the following atrocity makes IRIX happy */ 
-             *((uint *) &p_run) &=  (uint) -sizeof (uint); 
+             *((GLuint *) &p_run) &=  (GLuint) -sizeof (GLuint); 
 
-             CRASSERT( (uint) p_run >=  (uint) &(p_plebuf->data) );
+             CRASSERT( (GLuint) p_run >=  (GLuint) &(p_plebuf->data) );
              p_left = p_run - sizeof(PLEbuf);
              
              /* scoot header up against run lengths */
              pletmp = *p_plebuf;
              p_plebuf = (PLEbuf *) p_left;
          
-             pletmp.beg = (uint) p_data - (uint) p_plebuf;
+             pletmp.beg = (GLuint) p_data - (GLuint) p_plebuf;
              
              zlen = (int) p_val - (int) p_plebuf;
              pletmp.len = zlen;
@@ -538,9 +538,9 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
                                 const GLvoid  *zpixels )
 {
         ulong   zldlen, zliblen;
-        uint    alen, plen;
-        uint    *p_fb;
-        uint    *p_dif;
+        GLuint    alen, plen;
+        GLuint    *p_fb;
+        GLuint    *p_dif;
         int     bufi = 0;
         int     dlen;
         int     pixsize;
@@ -636,7 +636,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
           zpix_spu.b.fbWidth[FBtype] = width;
           zpix_spu.b.fbHeight[FBtype] = height;
 
-          alen = (plen + 7)& -sizeof(uint);     /* trim size up to doubleword */
+          alen = (plen + 7)& -sizeof(GLuint);     /* trim size up to doubleword */
           zpix_spu.b.fbLen[FBtype] = alen;
 
           zpix_spu.b.fBuf[FBtype] = crAlloc(alen);
@@ -673,7 +673,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
             int    nrun;                /*XXX JAG debugging */
 
             PLEbuf *p_plebuf;
-            uint   *p_val, prefv, val;
+            GLuint   *p_val, prefv, val;
             PLErun *p_run;
 
        case ZNONE:
@@ -708,14 +708,14 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
 
            nrun = 0;
            n    = p_plebuf->n;  
-           dlen =  n * sizeof(uint);
-           CRASSERT(zpix_spu.b.fbLen[FBtype] >= n*sizeof(uint)) ;
+           dlen =  n * sizeof(GLuint);
+           CRASSERT(zpix_spu.b.fbLen[FBtype] >= n*sizeof(GLuint)) ;
 
            prefv = p_plebuf->prefval;
 
            /* point at first value and count */
            p_run    = (PLErun *) p_plebuf + p_plebuf->beg;
-           p_val    = (uint *) p_run;
+           p_val    = (GLuint *) p_run;
            p_run-- ;
            /* output buffer */
            p_dif = zpix_spu.b.dBuf[FBtype];
@@ -775,11 +775,11 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
              CRASSERT( n == 0 );
                  
              /* Check left and right edges */
-             CRASSERT(sizeof(PLEbuf) <= (uint) p_run - (uint) p_plebuf );
+             CRASSERT(sizeof(PLEbuf) <= (GLuint) p_run - (GLuint) p_plebuf );
 
 
 /*
-             CRASSERT(zlen >= (uint) p_val - (uint) p_plebuf );
+             CRASSERT(zlen >= (GLuint) p_val - (GLuint) p_plebuf );
 */
             break;
 
@@ -812,11 +812,11 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
             p_fb = zpix_spu.b.fBuf[FBtype];
             p_dif = zpix_spu.b.dBuf[FBtype];
 
-            for ( bufi = 0; bufi < (plen / sizeof(uint)) ; bufi++ )
+            for ( bufi = 0; bufi < (plen / sizeof(GLuint)) ; bufi++ )
             {
-             uint   xpix;
-               xpix =  *(p_dif + bufi) ^ *(p_fb + bufi) ;
-               *(p_fb + bufi) = xpix ;
+							GLuint xpix;
+							xpix =  *(p_dif + bufi) ^ *(p_fb + bufi) ;
+							*(p_fb + bufi) = xpix ;
             }
        }
 
