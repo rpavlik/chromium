@@ -30,6 +30,11 @@ CR_CC = $(CC)
 CR_CXX = $(CXX)
 endif
 
+ifdef USE_OSMESA 
+CFLAGS +=-DUSE_OSMESA
+CXXFLAGS +=-DUSE_OSMESA
+endif
+
 ifdef VTK
 VTK_STRING = (VTK)
 ifdef WINDOWS

@@ -47,6 +47,13 @@ typedef struct {
 #else
 	HDC nativeWindow; /* for render_to_app_window */
 #endif
+
+#ifdef USE_OSMESA
+	GLubyte *buffer;   	/* for rendering to off screen buffer.  */
+	int in_buffer_width;
+	int in_buffer_height;
+#endif
+
 } WindowInfo;
 
 typedef struct {
@@ -119,6 +126,18 @@ typedef struct {
 	char *swap_master_url;
 	CRConnection **swap_conns;
 	
+#ifdef USE_OSMESA	
+        /* Off screen rendering hooks.  */
+	int use_osmesa;
+
+	OSMesaContext (*OSMesaCreateContext)( GLenum format, OSMesaContext sharelist );
+	GLboolean (* OSMesaMakeCurrent)( OSMesaContext ctx, 
+					 GLubyte *buffer, 
+					 GLenum type,
+					 GLsizei width,
+					 GLsizei height );
+	void (*OSMesaDestroyContext)( OSMesaContext ctx );  
+#endif
 } RenderSPU;
 
 extern RenderSPU render_spu;

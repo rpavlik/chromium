@@ -108,6 +108,16 @@ renderSPUInit( int id, SPU *child, SPU *self,
 
 	CRASSERT(render_spu.default_visual & CR_RGB_BIT);
 
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) {
+		if (!crLoadOSMesa(&render_spu.OSMesaCreateContext,
+						  &render_spu.OSMesaMakeCurrent,
+						  &render_spu.OSMesaDestroyContext)) {
+			crError("Unable to load OSMesa library");
+		}
+	}
+#endif
+
 	/*
 	 * Create the default window and context.  Their indexes are zero and
 	 * a client can use them without calling CreateContext or WindowCreate.

@@ -73,7 +73,7 @@ __fillin( SPUNamedFunctionTable *entry, const char *funcName, SPUGenericFunction
 
 
 static CRDLL *
-__findSystemGL( char *provided_system_path )
+__findSystemLib( char *provided_system_path, char *lib )
 {
 	CRDLL *dll;
 	char system_path[8096];
@@ -98,10 +98,18 @@ __findSystemGL( char *provided_system_path )
 #endif
 	}
 	crStrcat( system_path, "/" );
-	crStrcat( system_path, SYSTEM_GL );
+	crStrcat( system_path, lib );
 	dll = crDLLOpen( system_path, 1 /*resolveGlobal*/ );
 	return dll;
 }
+
+
+static CRDLL *
+__findSystemGL( char *provided_system_path )
+{
+	return __findSystemLib( provided_system_path, SYSTEM_GL );
+}
+
 
 static SPUGenericFunction
 __findExtFunction( const crOpenGLInterface *interface, const char *funcName )
@@ -290,5 +298,44 @@ print """
 	entry->fn = NULL;
 	return entry - table;  /* number of entries filled */
 }
+"""
+
+
+print """
+
+#ifdef USE_OSMESA
+int crLoadOSMesa( OSMesaContext (**createContext)( GLenum format, OSMesaContext sharelist ), 
+		     GLboolean (**makeCurrent)( OSMesaContext ctx, GLubyte *buffer, 
+						GLenum type, GLsizei width, GLsizei height ),
+		     void (**destroyContext)( OSMesaContext ctx ))
+{
+	static CRDLL *osMesaDll = NULL;
+
+	char *env_syspath = crGetenv( "CR_SYSTEM_GL_PATH" );
+	
+	crDebug( "Looking for the system's OSMesa library..." );
+	osMesaDll = __findSystemLib( env_syspath, "libOSMesa.so" );
+	if (!osMesaDll)
+	{
+		crError("Unable to find system OSMesa!");
+		return 0;
+	}
+
+	crDebug( "Found it in %s.", !env_syspath ? "default path" : env_syspath );
+
+	*createContext =  (OSMesaContext (*) ( GLenum format, OSMesaContext sharelist ))
+		crDLLGetNoError( osMesaDll, "OSMesaCreateContext" );
+
+	*makeCurrent =  (GLboolean (*) ( OSMesaContext ctx, GLubyte *buffer, 
+					  GLenum type, GLsizei width, GLsizei height ))
+		crDLLGetNoError( osMesaDll, "OSMesaMakeCurrent" );
+
+	*destroyContext =  (void (*) ( OSMesaContext ctx))
+		crDLLGetNoError( osMesaDll, "OSMesaDestroyContext" );
+
+	return 1;
+}
+#endif 
+
 """
 

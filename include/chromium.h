@@ -36,6 +36,9 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/glu.h>
+#ifdef USE_OSMESA
+#include <GL/osmesa.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

@@ -175,6 +175,18 @@ static void set_num_clients ( RenderSPU *render_spu, char *response )
 	render_spu->num_swap_clients = crStrToInt( response );
 }
 
+static void set_use_osmesa ( RenderSPU *render_spu, char *response )
+{
+	int val = crStrToInt( response );
+#ifdef USE_OSMESA
+ 	render_spu->use_osmesa = val;
+#else
+	if (val != 0)
+		crError( "renderspu with Conf(use_osmesa, 1) but not compiled with -DUSE_OSMESA");
+#endif
+}
+
+
 
 /* option, type, nr, default, min, max, title, callback
  */
@@ -242,6 +254,8 @@ SPUOptions renderSPUOptions[] = {
    { "num_swap_clients", CR_INT, 1, "1", NULL, NULL,
      "How many swaps to wait on", (SPUOptionCB)set_num_clients },
 
+   { "use_osmesa", CR_BOOL, 1, "0", NULL, NULL,
+     "Use offscreen rendering with Mesa", (SPUOptionCB)set_use_osmesa },
      
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

@@ -313,6 +313,15 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 	int screen;
 
 	CRASSERT(visual);
+
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) {
+		/* A dummy visual - being non null is enough.  */
+		visual->visual =(XVisualInfo *) "os";
+		return GL_TRUE;
+	}
+#endif
+	
 	if (render_spu.display_string[0])
 		dpyName = render_spu.display_string;
 	else if (visual->displayName[0])
@@ -393,6 +402,11 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	window->width  = render_spu.defaultWidth;
 	window->height = render_spu.defaultHeight;
 	window->nativeWindow = 0;
+
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa)
+		return GL_TRUE;
+#endif
 
 	dpy = visual->dpy;
 
@@ -615,8 +629,19 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 {
 	CRASSERT(window);
 	CRASSERT(window->visual);
-	XDestroyWindow(window->visual->dpy, window->window);
-	XSync(window->visual->dpy, 0);
+
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) 
+	{
+		crFree(window->buffer);
+		window->buffer = NULL;
+	}
+	else
+#endif
+	{
+		XDestroyWindow(window->visual->dpy, window->window);
+		XSync(window->visual->dpy, 0);
+	}
 	window->visual = NULL;
 	window->window = 0;
 	window->width = window->height = 0;
@@ -632,6 +657,16 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 
 	context->visual = visual;
 
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) {
+		context->context = (GLXContext) render_spu.OSMesaCreateContext(OSMESA_RGB, 0);
+
+		if (context->context)
+			return GL_TRUE;
+		else
+			return GL_FALSE;
+	}
+#endif
 	context->context = render_spu.ws.glXCreateContext( visual->dpy, 
 																										 visual->visual,
 																										 NULL,
@@ -659,13 +694,42 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 
 void renderspu_SystemDestroyContext( ContextInfo *context )
 {
-#if 0
-	/* XXX disable for now - causes segfaults w/ NVIDIA's driver */
-	render_spu.ws.glXDestroyContext( context->visual->dpy, context->context );
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) 
+	{
+		render_spu.OSMesaDestroyContext( (OSMesaContext) context->context );
+	}
+	else
 #endif
+	{
+#if 0
+		/* XXX disable for now - causes segfaults w/ NVIDIA's driver */
+		render_spu.ws.glXDestroyContext( context->visual->dpy, context->context );
+#endif
+	}
 	context->visual = NULL;
 	context->context = 0;
 }
+
+
+#ifdef USE_OSMESA
+static void check_buffer_size( WindowInfo *window )
+{
+	if (window->width != window->in_buffer_width
+	    || window->height != window->in_buffer_height
+	    || ! window->buffer) {
+		crFree(window->buffer);
+
+		window->buffer = crCalloc(window->width * window->height 
+															* 4 * sizeof (GLubyte));
+		
+		window->in_buffer_width = window->width;
+		window->in_buffer_height = window->height;
+
+		crDebug("NRender SPU: dimensions changed to %d x %d", window->width, window->height);
+	}
+}
+#endif
 
 
 void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, ContextInfo *context )
@@ -675,6 +739,20 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 	Bool b;
 
 	CRASSERT(render_spu.ws.glXMakeCurrent);
+
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) {
+
+		check_buffer_size(window);
+
+		render_spu.OSMesaMakeCurrent( (OSMesaContext) context->context, 
+					       window->buffer,
+					       GL_UNSIGNED_BYTE,
+					       window->width,
+					       window->height);
+		return;
+	}
+#endif
 
 	if (window && context) {
 		if (window->visual != context->visual) {
@@ -775,6 +853,16 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 {
+
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) {
+		window->width = w;
+		window->height = h;
+		check_buffer_size(window);
+		return;
+	}
+#endif
+
 	CRASSERT(window);
 	CRASSERT(window->visual);
 	XResizeWindow(window->visual->dpy, window->window, w, h);
@@ -787,6 +875,15 @@ void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 	Window root;
 	int x, y;
 	unsigned int width, height, bw, d;
+
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa) {
+		*w = window->width;
+		*h = window->height;
+		return;
+	}
+#endif
+
 	CRASSERT(window);
 	CRASSERT(window->visual);
 	CRASSERT(window->window);
@@ -799,6 +896,11 @@ void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 
 void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 {
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa)
+		return;
+#endif
+
 	CRASSERT(window);
 	CRASSERT(window->visual);
 	XMoveWindow(window->visual->dpy, window->window, x, y);
@@ -809,6 +911,11 @@ void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 /* Either show or hide the render SPU's window. */
 void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 {
+#ifdef USE_OSMESA
+	if (render_spu.use_osmesa)
+		return;
+#endif
+
 	if ( window->visual->dpy && window->window )
 	{
 		if (showIt)

@@ -189,6 +189,13 @@ int crLoadOpenGL( crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] 
 void crUnloadOpenGL( void );
 int crLoadOpenGLExtensions( const crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );
 
+#ifdef USE_OSMESA
+int crLoadOSMesa( OSMesaContext (**createContext)( GLenum format, OSMesaContext sharelist ), 
+		  GLboolean (**makeCurrent)( OSMesaContext ctx, GLubyte *buffer, 
+					     GLenum type, GLsizei width, GLsizei height ),
+		  void (**destroyContext)( OSMesaContext ctx ));
+#endif
+
 #ifdef __cplusplus
 }
 #endif

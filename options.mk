@@ -25,3 +25,8 @@ THREADSAFE=0
 
 # Set RELEASE to 1 to compile with optimizations and without debug info.
 #RELEASE=1
+
+
+# define USE_OSMESA if you want to enable off screen rendering using Mesa.
+#USE_OSMESA=1
+
