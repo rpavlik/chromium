@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <memory.h>
 
 #include "cr_error.h"
 #include "cr_string.h"
