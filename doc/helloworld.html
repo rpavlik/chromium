@@ -1,0 +1,68 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+</head>
+
+<body>
+
+<p align="center"><font size="7">Your First Chromium Run</font></p>
+<p>Your first Chromium run will be something quite simple.&nbsp; One of the
+programs built during the compile of the Chromium system is called 'fonttest' --
+you can go ahead and run it now.&nbsp; If everything is OK, you should see a
+window appear with a text message in it.&nbsp; This window is using the system's
+OpenGL -- nothing Chromium-related has happened yet.&nbsp; To run this program
+using Chromium, you will need to follow these three steps (you'll need three
+shell windows open):</p>
+<ol>
+  <li>Pieces of any Chromium run will need to know what they are supposed to be
+    doing.&nbsp; They get this information from the <i>configuration mothership</i>.&nbsp;
+    The mothership is controlled by scripts written in the <a href="http://www.python.org" target="_blank">Python</a>
+    programming language.&nbsp; One such script is located in cr/mothership/configs/crdemo.conf.&nbsp;
+    Change to the cr/mothership/configs directory, and type:<br>
+    <br>
+    <code>python crdemo.conf fonttest</code><br>
+    <br>
+    The mothership will now be running, and you should see a message to that
+    effect.</li>
+  <li>In another window, start the Chromium server.&nbsp; From <i>any</i>
+    directory, run<br>
+    <br>
+    <code>crserver</code><br>
+    <br>
+    That's all there is to it.&nbsp; The Chromium server will configure itself
+    by asking questions to the mothership that you ran in step 1.&nbsp; You
+    should see a blank window appear on your screen.&nbsp; This window was
+    created by the &quot;Chromium Render SPU&quot;, which was loaded by the
+    server.&nbsp; It will dispatch the incoming stream of commands to your
+    system's OpenGL implementation.</li>
+  <li>In (yet) another window, start the Chromium &quot;application
+    faker&quot;.&nbsp; This is a loader program that will start another
+    unmodified application running and make sure that it finds the Chromium
+    OpenGL shared library instead of the system's.&nbsp; From <i>any</i>
+    directory, run<br>
+    <br>
+    <code>crappfaker</code><br>
+    <br>
+    Again, the faker (and the OpenGL DLL, and the SPU's loaded by the OpenGL
+    DLL) will all configure themselves by asking questions of the mothership
+    from step1.</li>
+</ol>
+
+<p>Once you run the application faker, you should get another blank window, and
+the text rendering should appear in the (previously blank) window from step
+2.&nbsp; The blank window belongs to the 'fonttest' program started by the
+application faker.&nbsp; As far as that application knows, it is rendering to
+that window.&nbsp; The Chromium OpenGL DLL intercepts all calls to OpenGL and
+sends them over the network (in this case, a TCP/IP connection to your local
+machine) to the Chromium server, where they are dispatched to the system.</p>
+<p>The Chromium run you have just done corresponds to the following graph of
+nodes:</p>
+<p align="center"><img border="0" src="helloworld.gif"></p>
+
+</body>
+
+</html>

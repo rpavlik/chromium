@@ -24,7 +24,7 @@ void display( void )
 	glClear( GL_COLOR_BUFFER_BIT );
 
 	glRasterPos2i( 100, 100 );
-	printstring( GLUT_BITMAP_TIMES_ROMAN_24, "Testing the fonts!" );
+	printstring( GLUT_BITMAP_TIMES_ROMAN_24, "Welcome to Chromium!" );
 	glutSwapBuffers();
 } 
 
