@@ -201,7 +201,7 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 				GLsizei newWidth = zoomedWidth;
 				GLsizei newHeight = zoomedHeight;
 				if (!unpacking.rowLength)
-					 unpacking.rowLength = width;
+					unpacking.rowLength = width;
 				if (ComputeSubImage(&newX, &newY, &newWidth, &newHeight,
 														&unpacking.skipPixels, &unpacking.skipRows,
 														&winInfo->server[i].extents[j])) {
@@ -211,14 +211,14 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 								 unpacking.skipPixels, unpacking.skipRows);
 					*/
 					if (tilesort_spu.swap) {
-						 crPackWindowPos2iARBSWAP(newX, newY);
-						 crPackDrawPixelsSWAP(newWidth, newHeight, format, type, pixels,
-																	&unpacking);
+						crPackWindowPos2iARBSWAP(newX, newY);
+						crPackDrawPixelsSWAP(newWidth, newHeight, format, type, pixels,
+																 &unpacking);
 					}
 					else {
-						 crPackWindowPos2iARB(newX, newY);
-						 crPackDrawPixels(newWidth, newHeight, format, type, pixels,
-															&unpacking);
+						crPackWindowPos2iARB(newX, newY);
+						crPackDrawPixels(newWidth, newHeight, format, type, pixels,
+														 &unpacking);
 					}
 				}
 			}
