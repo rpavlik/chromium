@@ -13,6 +13,7 @@ SUBDIRS = \
 	bboxtest \
 	city \
 	cubes \
+	dlisttest \
 	extensions \
 	fonttest \
 	fraglight \
