@@ -3,10 +3,10 @@
 
 TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 {
-	crError( "Tile/sort Accum unimplemented");
+	crDebug( "Tile/sort Accum unimplemented");
 }
 
 TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 {
-	crError( "Tile/sort Clear unimplemented");
+	crDebug( "Tile/sort Clear unimplemented");
 }

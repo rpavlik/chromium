@@ -33,7 +33,7 @@ void crPackResetPointers( void )
 {
 	unsigned int num_opcodes;
 
-	// Each opcode has a 1-word payload, so opcodes can occupy at most
+	// Each opcode has at least a 1-word payload, so opcodes can occupy at most
 	// 20% of the space.
 	num_opcodes = ( __pack_globals.buffer.size - sizeof(CRMessageOpcodes) ) / 5;
 	num_opcodes = (num_opcodes + 0x3) & (~0x3);

@@ -109,14 +109,15 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 
 void tilesortspuConnectToServers( void )
 {
+	int i;
+
 	crNetInit( tilesortspuReceiveData, NULL );
 
-	//crNetServerConnect( &(pack_spu.server) );
-
-	//pack_spu.buffer.pack = crNetAlloc( pack_spu.server.conn );
-	//pack_spu.buffer.size = pack_spu.server.buffer_size;
-	//crPackSetBuffer( &pack_spu.buffer );
-	//crPackResetPointers();
-	//crPackFlushFunc( tilesortspuFlush );
-	//crPackSendHugeFunc( tilesortspuHuge );
+	for (i = 0 ; i < tilesort_spu.num_servers; i++)
+	{
+		TileSortSPUServer *server = tilesort_spu.servers + i;
+		crNetServerConnect( &(server->net) );
+		server->pack.pack = crNetAlloc( server->net.conn );
+		server->pack.size = server->net.buffer_size;
+	}
 }

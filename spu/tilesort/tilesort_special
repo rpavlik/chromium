@@ -1,5 +1,7 @@
 Accum
+Begin
 Clear
 CreateContext
+End
 MakeCurrent
 SwapBuffers

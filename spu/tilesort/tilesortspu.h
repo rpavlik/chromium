@@ -18,7 +18,7 @@ void tilesortspuConnectToServers();
 
 typedef struct {
 	CRNetServer net;
-	CRPackBuffer server_pack;
+	CRPackBuffer pack;
 	int num_extents;
 	int mural_x[CR_MAX_EXTENTS], mural_y[CR_MAX_EXTENTS];
 	int mural_w[CR_MAX_EXTENTS], mural_h[CR_MAX_EXTENTS];
@@ -31,10 +31,16 @@ typedef struct {
 	CRPackBuffer geometry_pack;
 	CRContext *ctx;
 
+	int apply_viewtransform;
+
+	unsigned int MTU;
 	int num_servers;
 	TileSortSPUServer *servers;
 } TileSortSPU;
 
 extern TileSortSPU tilesort_spu;
+
+extern void tilesortspuHuge( CROpcode opcode, void *buf );
+extern void tilesortspuFlush( void );
 
 #endif /* TILESORT_SPU_H */

@@ -80,16 +80,6 @@ def UpdateCurrentPointer( func_name ):
 		print "\t__pack_globals.current.%s_op = __pack_globals.buffer.opcode_current;" % name
 		return
 
-def IsVector ( func_name ) :
-	m = re.search( r"^(Color|EdgeFlag|EvalCoord|Index|Normal|TexCoord|Vertex|RasterPos)([1234]?)(ub|b|us|s|ui|i|f|d|)v$", func_name )
-	if m :
-		if m.group(2) :
-			return string.atoi( m.group(2) )
-		else:
-			return 1
-	else:
-		return 0
-
 for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "packer", func_name ): continue
@@ -109,7 +99,7 @@ for func_name in keys:
 	print '{'
 	orig_func_name = func_name[:] #make copy
 	vector_arg_type = ""
-	vector_nelem = IsVector( func_name )
+	vector_nelem = stub_common.IsVector( func_name )
 	if vector_nelem :
 		func_name = SmackVector( func_name )
 		vector_arg_type = re.sub( r"\*", "", arg_types[0] )

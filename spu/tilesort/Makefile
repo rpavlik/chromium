@@ -2,7 +2,7 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = tilesortspu
-FILES = tilesortspu tilesortspu_bcast \
+FILES = tilesortspu tilesortspu_bcast tilesortspu_beginend \
 	tilesortspu_config tilesortspu_init \
 	tilesortspu_misc tilesortspu_net tilesortspu_swap
 
