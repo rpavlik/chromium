@@ -440,9 +440,13 @@ static void ProcessTiles( WindowInfo *window )
 
 	/* One will typically use serverNode.Conf('only_swap_once', 1) to
 	 * prevent extraneous glClear and SwapBuffer calls on the server.
+	 * NOTE: we don't have to clear the color buffer when doing Z compositing.
+	 * The reason is we're using GL_LEQUAL as the depth test so the first
+	 * image drawn will pass the depth test for all pixels, thus painting the
+	 * whole color buffer. (neat!)
 	 */
 	if (readback_spu.extract_depth) 
-		readback_spu.child.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		readback_spu.child.Clear( GL_DEPTH_BUFFER_BIT );
 	else 
 		readback_spu.child.Clear( GL_COLOR_BUFFER_BIT );
 
