@@ -427,8 +427,9 @@ for func_name in ( "wglChoosePixelFormat",
   		   "wglGetExtensionsStringEXT" ):
     print "%s@%d = %s_prox" % (func_name,stack_sizes[func_name],func_name)
 
-print "crCreateContext"
-print "crMakeCurrent"
-print "crSwapBuffers"
-print "crGetProcAddress"
+print """crCreateContext
+crMakeCurrent
+crSwapBuffers
+crGetProcAddress
+crInitDispatchInfo"""
 #print "DllMain"

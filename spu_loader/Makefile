@@ -8,7 +8,7 @@ SHARED = 1
 LIBRARY = spuload
 LIBRARIES = crutil crmothership
 
-FILES = spuchange spucopy spuinit spuload dispatch glloader dispatch_layer
+FILES = spuchange spucopy spuinit spuload dispatch glloader 
 
 PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c spuchange.c glloader.c
 SLOP = $(PRECOMP)

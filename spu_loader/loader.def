@@ -17,8 +17,3 @@ crSPUSetDefaultParams
 crLoadOpenGLExtensions
 crLoadOpenGL
 crUnloadOpenGL
-crChangeDispatchLayer
-crNewDispatchLayer
-crSetCurrentDispatchInfo
-crInitDispatchInfo
-glim
