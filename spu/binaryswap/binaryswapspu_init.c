@@ -51,6 +51,7 @@ binaryswapspuConnectToPeer( void )
 	
 	/* initialize recv function */
 	crNetInit( binaryswapspuReceiveData, NULL );
+	CRASSERT(binaryswap_spu.stages > 0);
 	
 	/* set up arrary for ports */
 	ports = crAlloc(binaryswap_spu.stages*sizeof(unsigned short));
@@ -64,9 +65,6 @@ binaryswapspuConnectToPeer( void )
 		}
 	}
 	
-	CRASSERT(binaryswap_spu.stages > 0);
-
-
 	/* allocate send/recv arrays for OOB communication */
 	binaryswap_spu.peer_recv = crAlloc(binaryswap_spu.stages*
 					   sizeof(CRConnection*));
@@ -75,7 +73,7 @@ binaryswapspuConnectToPeer( void )
 	
 	/* tracks network connection order */
 	binaryswap_spu.highlow = crAlloc(binaryswap_spu.stages*sizeof(int));
-
+	
 	/* set up accept connect paths for OOB */
 	for(i=0; i<binaryswap_spu.stages; i++){
 		/* lower of pair => accept,connect */
@@ -106,8 +104,8 @@ binaryswapspuConnectToPeer( void )
 
 static SPUFunctions *
 binaryswapspuInit( int id, SPU *child, SPU *self,
-									 unsigned int context_id,
-									 unsigned int num_contexts )
+		   unsigned int context_id,
+		   unsigned int num_contexts )
 {
 	WindowInfo *window;
 	(void) context_id;
