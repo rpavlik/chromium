@@ -490,8 +490,10 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 		    This is an issue even when running Linux version and using 
 		    the Solaris 9 sunX as a display.
-
 		    -- jw
+
+				jw: we might have to call glXMakeCurrent(dpy, 0, 0) to unbind
+        the context from the window before destroying it. -Brian
 		  */
 			renderspu_SystemDestroyWindow( window );
 #endif 
@@ -519,7 +521,6 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																		window->window, context->context );
 		}
-	
 	}
 }
 
