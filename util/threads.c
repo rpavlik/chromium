@@ -1,7 +1,8 @@
 /* Copyright (c) 2001, Stanford University
-	All rights reserved.
-
-	See the file LICENSE.txt for information on redistributing this software. */
+ * All rights reserved.
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
 	
 #include <stdio.h>
 #include "cr_threads.h"
@@ -34,10 +35,13 @@ void crInitTSDF(CRtsd *tsd, void (*destructor)(void *))
 #endif
 	tsd->initMagic = INIT_MAGIC;
 }
+
+
 void crInitTSD(CRtsd *tsd)
 {
     crInitTSDF(tsd, NULL);
 }
+
 
 void crFreeTSD(CRtsd *tsd)
 {
@@ -54,6 +58,7 @@ void crFreeTSD(CRtsd *tsd)
 #endif
 	tsd->initMagic = 0x0;
 }
+
 
 /* Set thread-specific data */
 void crSetTSD(CRtsd *tsd, void *ptr)
@@ -110,6 +115,7 @@ void crInitMutex(CRmutex *mutex)
 #endif
 }
 
+
 void crFreeMutex(CRmutex *mutex)
 {
 #ifdef WINDOWS
@@ -155,6 +161,7 @@ void crInitBarrier(CRbarrier *b, unsigned int count)
 	pthread_mutex_init( &(b->mutex), NULL );
 #endif
 }
+
 
 void crWaitBarrier(CRbarrier *b)
 {
