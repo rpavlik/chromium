@@ -231,7 +231,7 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 		crPackDisableSWAP(GL_LIGHTING);
 		crPackDisableSWAP(GL_BLEND);
 		crPackDisableSWAP(GL_ALPHA_TEST);
-		crPackDisableSWAP(GL_DEPTH_TEST);
+                crPackDisableSWAP(GL_DEPTH_TEST);
 		crPackDisableSWAP(GL_FOG);
 		crPackDisableSWAP(GL_STENCIL_TEST);
 		crPackDisableSWAP(GL_SCISSOR_TEST);

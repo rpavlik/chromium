@@ -16,6 +16,9 @@
 #include <limits.h>
 #include <float.h>
 
+/*
+ * Data structures for hash-based bucketing algorithm.
+ */
 typedef struct BucketRegion *BucketRegion_ptr;
 typedef struct BucketRegion {
 	GLbitvalue       id[CR_MAX_BITARRAY];
@@ -30,6 +33,24 @@ static BucketRegion *rhash[HASHRANGE][HASHRANGE];
 
 #define BKT_DOWNHASH(a, range) ((a)*HASHRANGE/(range))
 #define BKT_UPHASH(a, range) ((a)*HASHRANGE/(range) + ((a)*HASHRANGE%(range)?1:0))
+
+
+/*
+ * Data structures for non-regular grid bucketing algorithm.
+ * The idea is we have a 2-D grid of rows and columns but the
+ * width and height of the columns and rows isn't uniform.
+ * This'll often be the case with dynamic tile resizing.
+ */
+#define MAX_ROWS 128
+#define MAX_COLS 128
+typedef struct grid_info {
+	int rows, columns;
+	int rowY1[MAX_ROWS], rowY2[MAX_ROWS]; /* bounds of each row */
+	int colX1[MAX_COLS], colX2[MAX_COLS]; /* bounds of each column */
+	int server[MAX_ROWS][MAX_COLS];       /* the server for each rect */
+} GridInfo;
+
+static GridInfo Grid;  /* XXX move into tilesort_spu struct? */
 
 
 /*
@@ -129,6 +150,156 @@ static void fillBucketingHash(void)
 
 
 /*
+ * Initialize GridInfo data for the non-uniform grid case.
+ * If this succeeds, we'll set optimizeBucketing = 2 (but not here).
+ * Return: GL_TRUE - the server's tiles form a non-uniform grid
+ *         GL_FALSE - the tiles don't form a non-uniform grid - give it up.
+ */
+GLboolean tilesortspuInitGridBucketing(void)
+{
+	int i, j, k;
+
+	CRASSERT(tilesort_spu.muralRows > 0);
+	CRASSERT(tilesort_spu.muralColumns > 0);
+
+	/* analyze all the server tiles to determine grid information */
+	Grid.rows = 0;
+	Grid.columns = 0;
+
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+	{
+		for (j = 0; j < tilesort_spu.servers[i].num_extents; j++) 
+		{
+			const GLrecti *extent = &(tilesort_spu.servers[i].extents[j]);
+			GLboolean found;
+
+			/* look for a row with same y0, y1 */
+			found = GL_FALSE;
+			for (k = 0; k < Grid.rows; k++) {
+				if (Grid.rowY1[k] == extent->y1 &&
+					Grid.rowY2[k] == extent->y2)
+				{
+					found = GL_TRUE;
+					break;
+				}
+			}
+			if (!found)
+			{
+				/* add new row (insertion sort) */
+				k = Grid.rows;
+				while (k > 0 && extent->y1 < Grid.rowY1[k - 1]) {
+					/* move column entry up */
+					Grid.rowY1[k] = Grid.rowY1[k - 1];
+					Grid.rowY2[k] = Grid.rowY2[k - 1];
+					k--;
+				}
+				Grid.rowY1[k] = extent->y1;
+				Grid.rowY2[k] = extent->y2;
+				Grid.rows++;
+			}
+
+			/* look for a col with same x0, x1 */
+			found = GL_FALSE;
+			for (k = 0; k < Grid.columns; k++) {
+				if (Grid.colX1[k] == extent->x1 &&
+					Grid.colX2[k] == extent->x2)
+				{
+					found = GL_TRUE;
+					break;
+				}
+			}
+			if (!found)
+			{
+				/* add new row (insertion sort) */
+				k = Grid.columns;
+				while (k > 0 && extent->x1 < Grid.colX1[k - 1]) {
+					/* move column entry up */
+					Grid.colX1[k] = Grid.colX1[k - 1];
+					Grid.colX2[k] = Grid.colX2[k - 1];
+					k--;
+				}
+				Grid.colX1[k] = extent->x1;
+				Grid.colX2[k] = extent->x2;
+				Grid.columns++;
+			}
+		}
+	}
+
+	/* mural coverage test */
+	if (Grid.rowY1[0] != 0)
+		return GL_FALSE;   /* first row must start at zero */
+	if (Grid.rowY2[Grid.rows - 1] != tilesort_spu.muralHeight)
+		return GL_FALSE;   /* last row must and at mural height */
+	if (Grid.colX1[0] != 0)
+		return GL_FALSE;   /* first column must start at zero */
+	if (Grid.colX2[Grid.columns - 1] != tilesort_spu.muralWidth)
+		return GL_FALSE;   /* last column must and at mural width */
+
+	/* make sure the rows and columns adjoin without gaps or overlaps */
+	for (k = 1; k < Grid.rows; k++)
+		if (Grid.rowY2[k - 1] != Grid.rowY1[k])
+			return GL_FALSE;  /* found gap/overlap between rows */
+	for (k = 1; k < Grid.columns; k++)
+		if (Grid.colX2[k - 1] != Grid.colX1[k])
+			return GL_FALSE;  /* found gap/overlap between columns */
+
+	/* init Grid.server[][] array to -1 */
+	for (i = 0; i < Grid.rows; i++)
+		for (j = 0; j < Grid.columns; j++)
+			Grid.server[i][j] = -1;
+
+	/* now assign the server number for each rect */
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+	{
+		for (j = 0; j < tilesort_spu.servers[i].num_extents; j++) 
+		{
+			const GLrecti *extent = &(tilesort_spu.servers[i].extents[j]);
+			int r, c;
+			GLboolean found = GL_FALSE;
+			for (r = 0; r < Grid.rows && !found; r++)
+			{
+				if (Grid.rowY1[r] == extent->y1 && Grid.rowY2[r] == extent->y2)
+				{
+					for (c = 0; c < Grid.columns; c++)
+					{
+						if (Grid.colX1[c] == extent->x1 && Grid.colX2[c] == extent->x2)
+						{
+							if (Grid.server[r][c] != -1)
+							{
+								/* another server already has this tile! */
+								return GL_FALSE;
+							}
+							Grid.server[r][c] = i;
+							found = GL_TRUE;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/* make sure we have a server for each rect! */
+	for (i = 0; i < Grid.rows; i++)
+		for (j = 0; j < Grid.columns; j++)
+			if (Grid.server[i][j] == -1)
+				return GL_FALSE;  /* found a hole in the tiling! */
+
+#if 0
+	printf("rows:\n");
+	for (i = 0; i < Grid.rows; i++)
+		printf("  y: %d .. %d\n", Grid.rowY1[i], Grid.rowY2[i]);
+	printf("cols:\n");
+	for (i = 0; i < Grid.columns; i++)
+		printf("  x: %d .. %d\n", Grid.colX1[i], Grid.colX2[i]);
+#endif
+
+	return GL_TRUE;  /* a good grid! */
+}
+
+
+
+/*
  * Compute bounding box/tile intersections.
  * Output:  bucketInfo - results of intersection tests
  */
@@ -145,7 +316,7 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 	const GLrecti nullscreen = {0, 0, 0, 0};
 	float xmin, ymin, xmax, ymax, zmin, zmax;
 	GLrecti ibounds;
-	int i,j;
+	int i, j;
 
 	GLbitvalue retval[CR_MAX_BITARRAY];
 
@@ -228,7 +399,7 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 	/* Compute the retval bitvector values.
 	 * Bit [i] is set if the bounding box intersects any tile on server [i].
 	 */
-	if (!tilesort_spu.optimizeBucketing) 
+	if (tilesort_spu.optimizeBucketing == 0) 
 	{
 		/* Explicitly test the bounding box (ibounds) against all tiles on
 		 * all servers.
@@ -251,7 +422,7 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 			}
 		}
 	} 
-	else 
+	else if (tilesort_spu.optimizeBucketing == 1)
 	{
 		/* Use optimized hash table solution to determine
 		 * bounding box / server intersections.
@@ -277,6 +448,76 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 				}
 			}
 		}
+	}
+	else
+	{
+		/* Non-uniform grid bucketing (dynamic tile resize)
+		 * Algorithm: we basically march over the tile columns in from the left
+		 * and in from the right and the tile rows in from the bottom and in
+		 * from the top until we hit the object bounding box.
+		 * Then we loop over the intersecting tiles and flag those servers.
+		 */
+		int bottom, top, left, right;
+
+		CRASSERT(tilesort_spu.optimizeBucketing == 2);
+
+		/* march from bottom to top */
+		bottom = Grid.rows - 1;
+		for (i = 0; i < Grid.rows; i++)
+		{
+			if (Grid.rowY2[i] > ibounds.y1)
+			{
+				bottom = i;
+				break;
+			}
+		}
+		/* march from top to bottom */
+		top = 0;
+		for (i = Grid.rows - 1; i >= 0; i--)
+		{
+			if (Grid.rowY1[i] < ibounds.y2)
+			{
+				top = i;
+				break;
+			}
+		}
+		/* march from left to right */
+		left = Grid.columns - 1;
+		for (i = 0; i < Grid.columns; i++)
+		{
+			if (Grid.colX2[i] > ibounds.x1)
+			{
+				left = i;
+				break;
+			}
+		}
+		/* march from right to left */
+		right = 0;
+		for (i = Grid.columns - 1; i >= 0; i--)
+		{
+			if (Grid.colX1[i] < ibounds.x2)
+			{
+				right = i;
+				break;
+			}
+		}
+
+		CRASSERT(top >= bottom);
+		CRASSERT(right >= left);
+
+		for (i = bottom; i <= top; i++)
+		{
+			for (j = left; j <= right; j++)
+			{
+				const int server = Grid.server[i][j];
+				const int node32 = server >> 5;
+				const int node = server & 0x1f;
+				retval[node32] |= (1 << node);
+			}
+		}
+		/*
+		printf("bucket result: %d %d\n", retval[0] & 1, (retval[0] >> 1) & 1);
+		*/
 	}
 
 	/* XXX why use retval at all?  Why not just use bucketInfo->hits? */
@@ -306,7 +547,7 @@ void tilesortspuBucketingInit( void )
 {
 	tilesortspuSetBucketingBounds( 0, 0, tilesort_spu.muralWidth, tilesort_spu.muralHeight );
 
-	if (tilesort_spu.optimizeBucketing)
+	if (tilesort_spu.optimizeBucketing == 1)
 	{
 		fillBucketingHash();
 	}

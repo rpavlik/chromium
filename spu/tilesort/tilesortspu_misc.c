@@ -259,11 +259,25 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 	 * Lightning-2) then we'll want to resize all the tiles so that
 	 * the set of tiles matches the app window size.
 	 */
-	if (tilesort_spu.optimizeBucketing)
+	if (tilesort_spu.optimizeBucketing == 1)
+	{
 		crDebug("Tilesort SPU asked to resize window, "
-						"but optimize_bucketing is enabled");
+						"but optimize_bucketing is enabled.  No resize.");
+		return;
+	}
 	else if (!getNewTiling(w, h))
+	{
+		GLboolean b;
+
 		defaultNewTiling(w, h);
+
+		/* check if we can use non-uniform grid bucketing */
+		b = tilesortspuInitGridBucketing();
+		if (b)
+			tilesort_spu.optimizeBucketing = 2;
+		else
+			tilesort_spu.optimizeBucketing = 0;
+	}
 
 	crDebug("tilesort SPU: Reconfigured tiling:");
 	crDebug("  Mural size: %d x %d",

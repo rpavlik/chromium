@@ -143,7 +143,6 @@ extern CRtsd _ThreadTSD;
 	CRContext *C = thread->currentContext->State
 
 
-extern void tilesortspuBucketGeometry(TileSortBucketInfo *info);
 
 extern TileSortSPU tilesort_spu;
 
@@ -152,6 +151,7 @@ void tilesortspuGatherConfiguration( const SPU *child_spu );
 void tilesortspuConnectToServers( void );
 void tilesortspuGetTileInformation(CRConnection *conn);
 void tilesortspuComputeRowsColumns(void);
+GLboolean tilesortspuInitGridBucketing(void);
 
 void tilesortspuComputeMaxViewport( void );
 void tilesortspuInitThreadPacking( ThreadInfo *thread );
@@ -173,5 +173,6 @@ void TILESORTSPU_APIENTRY tilesortspu_Begin(GLenum prim);
 void TILESORTSPU_APIENTRY tilesortspu_End(void);
 
 void tilesortspuSendServerBuffer( int server_index );
+void tilesortspuBucketGeometry(TileSortBucketInfo *info);
 
 #endif /* TILESORT_SPU_H */

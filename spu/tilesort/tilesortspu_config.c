@@ -63,6 +63,13 @@ void set_broadcast( void *foo, const char *response )
 void set_optimize_bucket( void *foo, const char *response )
 {
    sscanf( response, "%d", &(tilesort_spu.optimizeBucketing) );
+   /* force value to zero or one */
+   if (tilesort_spu.optimizeBucketing)
+	   tilesort_spu.optimizeBucketing = 1;
+   /* 0 = no optimization */
+   /* 1 = all tiles same size, use hashing */
+   /* 2 = non-uniform grid, semi-optimized bucketing */
+
 }
 
 void set_sync_on_swap( void *foo, const char *response )
@@ -207,7 +214,7 @@ void tilesortspuGetTileInformation(CRConnection *conn)
 
 	/*
 	 * Get the list of tiles from all servers.
-	 * Make sure they're all the same size if optimizeBucketing is true.
+	 * Make sure they're all the same size if optimizeBucketing is 1.
 	 */
 	for (i = 0 ; i < num_servers ; i++)
 	{
@@ -253,7 +260,7 @@ void tilesortspuGetTileInformation(CRConnection *conn)
 			}
 
 			/* make sure tile is right size for optimizeBucket */
-			if (tilesort_spu.optimizeBucketing)
+			if (tilesort_spu.optimizeBucketing == 1)
 			{
 				if (optTileWidth == 0 && optTileHeight == 0)
 				{
