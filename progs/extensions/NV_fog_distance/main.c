@@ -28,9 +28,9 @@
 #error	Please update your GL/glext.h header file.
 #endif
 
-/*#define	CCN_DEBUG */
-#define	DISPLAY_LISTS
-#define	MULTIPLE_VIEWPORTS
+/*#define CCN_DEBUG */
+#define DISPLAY_LISTS
+#define MULTIPLE_VIEWPORTS
 
 static GLuint currentWidth, currentHeight;
 static GLuint texture[1];
@@ -89,7 +89,7 @@ Display(void)
 		glEnd();
 	}
 	glDisable(GL_TEXTURE_2D);
-#endif
+#endif /* !DISPLAY_LIST */
 
 	glColor3f(0, 0, 0);
 	glDisable(GL_FOG);
@@ -99,7 +99,7 @@ Display(void)
 
 	// Right Viewport
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight);
-#endif
+#endif /* MULTIPLE_VIEWPORTS */
 	glFogi((GLenum) GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
 #ifdef DISPLAY_LIST
 	glCallList(1);
@@ -120,7 +120,7 @@ Display(void)
 		glEnd();
 	}
 	glDisable(GL_TEXTURE_2D);
-#endif
+#endif /* !DISPLAY_LIST */
 	glColor3f(0, 0, 0);
 	glDisable(GL_FOG);
 	RenderString(-1.08, 1, "EYE_RADIAL_NV");
@@ -283,9 +283,9 @@ InitSpecial(void)
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-									GL_LINEAR_MIPMAP_LINEAR);
+			GL_LINEAR_MIPMAP_LINEAR);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE,
-										GL_UNSIGNED_BYTE, textureData);
+			  GL_UNSIGNED_BYTE, textureData);
 
 #ifdef DISPLAY_LIST
 	// Make the display list for the grass.
@@ -314,9 +314,7 @@ InitSpecial(void)
 int
 main(int argc, char *argv[])
 {
-#ifndef macintosh
 	glutInit(&argc, argv);
-#endif
 
 	printf("Written by Christopher Niederauer\n");
 	printf("ccn@graphics.stanford.edu\n");

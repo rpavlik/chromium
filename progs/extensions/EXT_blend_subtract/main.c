@@ -8,7 +8,7 @@
 
   main.cpp
 
-  This is the framework I am using to test extensions on Chromium.
+  This is an example of GL_EXT_blend_subtract.
 
   Christopher Niederauer, ccn@graphics.stanford.edu, 6/25/2001
 
@@ -22,9 +22,9 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-#define	TEST_EXTENSION_STRING	"GL_EXT_blend_subtract"
-#ifndef	GL_EXT_blend_subtract
-#error	Please update your GL/glext.h header file.
+#define TEST_EXTENSION_STRING  "GL_EXT_blend_subtract"
+#ifndef GL_EXT_blend_subtract
+#error Please update your GL/glext.h header file.
 #endif
 
 #ifndef GLX_ARB_get_proc_address
@@ -38,9 +38,9 @@ extern "C"
 #endif
 #endif
 
-/*#define	CCN_DEBUG */
+/* #define CCN_DEBUG */
 #define DISPLAY_LISTS
-#define	MULTIPLE_VIEWPORTS
+#define MULTIPLE_VIEWPORTS
 
 #ifndef APIENTRY
 #define APIENTRY
@@ -238,7 +238,7 @@ InitSpecial(void)
 #else
 	glBlendEquation_ext =
 		(GLBLENDEQUATIONEXTPROC) glXGetProcAddressARB((const GLubyte *)
-																									"glBlendEquationEXT");
+							      "glBlendEquationEXT");
 #endif
 	if (glBlendEquation_ext == NULL)
 	{

@@ -7,7 +7,7 @@
 /*
   main.c
 
-  This is an example of GL_EXT_blend_color.t
+  This is an example of GL_EXT_blend_color.
 
   Christopher Niederauer, ccn@graphics.stanford.edu, 5/30/2001
 */
@@ -21,8 +21,8 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-#ifndef	GL_EXT_blend_color
-#error	Please update your GL/glext.h header file.
+#ifndef GL_EXT_blend_color
+#error Please update your GL/glext.h header file.
 #endif
 
 #ifndef GLX_ARB_get_proc_address
@@ -36,17 +36,17 @@ extern "C"
 #endif
 #endif
 
-/*#define	CCN_DEBUG */
-#define	MULTIPLE_VIEWPORTS
+/* #define CCN_DEBUG */
+#define MULTIPLE_VIEWPORTS
 
-#define	TEST_EXTENSION_STRING	"GL_EXT_blend_color"
+#define TEST_EXTENSION_STRING  "GL_EXT_blend_color"
 
 #ifndef APIENTRY
 #define APIENTRY
 #endif
 
 typedef void (APIENTRY * GLBLENDCOLOREXTPROC) (GLclampf red, GLclampf green,
-																							 GLclampf blue, GLclampf alpha);
+					       GLclampf blue, GLclampf alpha);
 
 
 static GLBLENDCOLOREXTPROC glBlendColor_ext;
@@ -102,7 +102,7 @@ Display(void)
 
 	/* Upper Right Viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight);
-#endif
+#endif /* MULTIPLE_VIEWPORTS */
 	glEnable(GL_BLEND);
 	glBlendColor_ext(1.0, 1.0, 0.0, 0.0);
 	glBlendFunc(GL_CONSTANT_COLOR_EXT, GL_ZERO);
@@ -210,9 +210,9 @@ InitSpecial(void)
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-									GL_LINEAR_MIPMAP_LINEAR);
+			GL_LINEAR_MIPMAP_LINEAR);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE,
-										GL_UNSIGNED_BYTE, textureData);
+			  GL_UNSIGNED_BYTE, textureData);
 
 #ifdef WIN32
 	glBlendColor_ext =
@@ -222,7 +222,7 @@ InitSpecial(void)
 #else
 	glBlendColor_ext =
 		(GLBLENDCOLOREXTPROC) glXGetProcAddressARB((const GLubyte *)
-																							 "glBlendColorEXT");
+							   "glBlendColorEXT");
 #endif
 	if (glBlendColor_ext == NULL)
 	{

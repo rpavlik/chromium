@@ -8,7 +8,7 @@
 
   main.cpp
 
-  This is the framework I am using to test extensions on Chromium.
+  This is an example of GL_EXT_blend_minmax.
 
   Christopher Niederauer, ccn@graphics.stanford.edu, 6/25/2001
 
@@ -24,9 +24,9 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-#define	TEST_EXTENSION_STRING	"GL_EXT_blend_minmax"
-#ifndef	GL_EXT_blend_minmax
-#error	Please update your GL/glext.h header file.
+#define TEST_EXTENSION_STRING  "GL_EXT_blend_minmax"
+#ifndef GL_EXT_blend_minmax
+#error Please update your GL/glext.h header file.
 #endif
 
 #ifndef GLX_ARB_get_proc_address
@@ -40,9 +40,9 @@ extern "C"
 #endif
 #endif
 
-/*#define	CCN_DEBUG */
+/* #define CCN_DEBUG */
 #define DISPLAY_LISTS
-#define	MULTIPLE_VIEWPORTS
+#define MULTIPLE_VIEWPORTS
 
 #ifndef APIENTRY
 #define APIENTRY
@@ -118,7 +118,7 @@ Display(void)
 
 	/* Upper Right Viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight);
-#endif
+#endif /* MULTIPLE_VIEWPORTS */
 	glBegin(GL_QUADS);
 	glColor3f(0.5, 0.5, 0.5);
 	glVertex3f(-size, 0.0, size);

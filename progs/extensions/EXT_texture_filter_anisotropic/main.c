@@ -29,8 +29,8 @@
 #error	Please update your GL/glext.h header file.
 #endif
 
-/*#define	CCN_DEBUG */
-#define	MULTIPLE_VIEWPORTS
+/* #define CCN_DEBUG */
+#define MULTIPLE_VIEWPORTS
 
 static GLuint texture[4];
 static GLuint currentWidth, currentHeight;
@@ -104,7 +104,7 @@ Display(void)
 
 	/* Upper Right Viewport */
 	glViewport(currentWidth >> 1, currentHeight >> 1, currentWidth >> 1,
-						 currentHeight >> 1);
+		   currentHeight >> 1);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texture[2]);
 	glBegin(GL_QUADS);
@@ -125,7 +125,7 @@ Display(void)
 
 	/* Lower Right Viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight >> 1);
-#endif
+#endif /* MULTIPLE_VIEWPORTS */
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texture[3]);
 	glBegin(GL_QUADS);
@@ -239,24 +239,23 @@ InitSpecial(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 32, 0, GL_LUMINANCE,
-							 GL_UNSIGNED_BYTE, textureData);
+		     GL_UNSIGNED_BYTE, textureData);
 
 	/* Create Bilinear MipMapped Texture */
 	glBindTexture(GL_TEXTURE_2D, texture[1]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-									GL_LINEAR_MIPMAP_NEAREST);
+			GL_LINEAR_MIPMAP_NEAREST);
 	err =gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE,
-											GL_UNSIGNED_BYTE, textureData);
+			       GL_UNSIGNED_BYTE, textureData);
 
 	/* Create Trilinear MipMapped Texture */
 	glBindTexture(GL_TEXTURE_2D, texture[2]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-									GL_LINEAR_MIPMAP_LINEAR);
-	err =
-		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE,
-											GL_UNSIGNED_BYTE, textureData);
+			GL_LINEAR_MIPMAP_LINEAR);
+	err = gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE,
+				GL_UNSIGNED_BYTE, textureData);
 
 #endif
 
@@ -264,13 +263,11 @@ InitSpecial(void)
 	glBindTexture(GL_TEXTURE_2D, texture[3]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterfv(GL_TEXTURE_2D, (GLenum) GL_TEXTURE_MAX_ANISOTROPY_EXT,
-									 &testAni);
+	glTexParameterfv(GL_TEXTURE_2D, (GLenum) GL_TEXTURE_MAX_ANISOTROPY_EXT, &testAni);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 32, 0, GL_LUMINANCE,
-							 GL_UNSIGNED_BYTE, textureData);
+		     GL_UNSIGNED_BYTE, textureData);
 
-	glGetTexParameterfv(GL_TEXTURE_2D, (GLenum) GL_TEXTURE_MAX_ANISOTROPY_EXT,
-											&testAni);
+	glGetTexParameterfv(GL_TEXTURE_2D, (GLenum) GL_TEXTURE_MAX_ANISOTROPY_EXT, &testAni);
 	printf("Current Anisotropy: %f", testAni);
 }
 
@@ -278,9 +275,7 @@ InitSpecial(void)
 int
 main(int argc, char *argv[])
 {
-#ifndef macintosh
 	glutInit(&argc, argv);
-#endif
 
 	printf("Written by Christopher Niederauer\n");
 	printf("ccn@graphics.stanford.edu\n");

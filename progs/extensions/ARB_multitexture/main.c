@@ -25,13 +25,13 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-/*#define	CCN_DEBUG */
-#define	DISPLAY_LISTS
-#define	MULTIPLE_VIEWPORTS
+/* #define CCN_DEBUG */
+#define DISPLAY_LISTS
+#define MULTIPLE_VIEWPORTS
 
-#define	TEST_EXTENSION_STRING	"GL_ARB_multitexture"
-#ifndef	GL_ARB_multitexture
-#error	Please update your GL/glext.h header file.
+#define TEST_EXTENSION_STRING  "GL_ARB_multitexture"
+#ifndef GL_ARB_multitexture
+#error Please update your GL/glext.h header file.
 #endif
 
 #ifndef DISPLAY_LISTS

@@ -8,7 +8,7 @@
 
   main.cpp
 
-  This is the framework I am using for my extensions.
+  This is an example of GL_EXT_separate_specular_color.
 
   Christopher Niederauer, ccn@graphics.stanford.edu, 5/30/2001
 
@@ -23,9 +23,9 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-#define	TEST_EXTENSION_STRING	"GL_EXT_separate_specular_color"
-#ifndef	GL_EXT_separate_specular_color
-#error	Please update your GL/glext.h header file.
+#define TEST_EXTENSION_STRING  "GL_EXT_separate_specular_color"
+#ifndef GL_EXT_separate_specular_color
+#error Please update your GL/glext.h header file.
 #endif
 
 #ifndef GLX_ARB_get_proc_address
@@ -39,8 +39,8 @@ extern "C"
 #endif
 #endif
 
-/*#define	CCN_DEBUG*/
-#define	MULTIPLE_VIEWPORTS
+/* #define CCN_DEBUG */
+#define MULTIPLE_VIEWPORTS
 
 static GLuint currentWidth, currentHeight;
 static GLuint textureID, sphereList;
@@ -84,7 +84,7 @@ Display(void)
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glEnable(GL_LIGHTING);
 	glLightModelf((GLenum) GL_LIGHT_MODEL_COLOR_CONTROL_EXT,
-								GL_SINGLE_COLOR_EXT);
+		      GL_SINGLE_COLOR_EXT);
 	glCallList(sphereList);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
@@ -96,13 +96,13 @@ Display(void)
 
 	/* Upper Right Viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight);
-#endif
+#endif /* MULTIPLE_VIEWPORTS */
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glEnable(GL_LIGHTING);
 	glLightModelf((GLenum) GL_LIGHT_MODEL_COLOR_CONTROL_EXT,
-								GL_SEPARATE_SPECULAR_COLOR_EXT);
+		      GL_SEPARATE_SPECULAR_COLOR_EXT);
 	glCallList(sphereList);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
@@ -209,8 +209,8 @@ InitSpecial(void)
 	{
 		for (y = 0; y < texHeight; y++)
 		{
-			if ((x < (texWidth >> 1) && y < (texHeight >> 1))
-					|| (x >= (texWidth >> 1) && y >= (texHeight >> 1)))
+			if ((x < (texWidth >> 1) && y < (texHeight >> 1)) ||
+			    (x >= (texWidth >> 1) && y >= (texHeight >> 1)))
 				textureData[y * texWidth + x] = (GLubyte) 255;
 			else
 				textureData[y * texWidth + x] = (GLubyte) 0;
@@ -222,7 +222,7 @@ InitSpecial(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 16, 16, 0, GL_LUMINANCE,
-							 GL_UNSIGNED_BYTE, textureData);
+		     GL_UNSIGNED_BYTE, textureData);
 
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -233,9 +233,7 @@ InitSpecial(void)
 int
 main(int argc, char *argv[])
 {
-#ifndef macintosh
 	glutInit(&argc, argv);
-#endif
 
 	printf("Written by Christopher Niederauer\n");
 	printf("ccn@graphics.stanford.edu\n");

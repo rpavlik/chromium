@@ -8,7 +8,7 @@
 
   main.cpp
 
-  This is the framework I am using to test extensions on Chromium.
+  This is an example of GL_EXT_texture_edge_clamp.
 
   Christopher Niederauer, ccn@graphics.stanford.edu, 6/25/2001
 
@@ -24,9 +24,9 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-#define	TEST_EXTENSION_STRING	"GL_EXT_texture_edge_clamp"
+#define TEST_EXTENSION_STRING  "GL_EXT_texture_edge_clamp"
 #if !defined(GL_EXT_texture_edge_clamp) && !defined(GL_SGIS_texture_edge_clamp)
-#error	Please update your GL/glext.h header file.
+#error Please update your GL/glext.h header file.
 #endif
 
 #ifdef GL_CLAMP_TO_EDGE
@@ -37,9 +37,9 @@
 #define GL_CLAMP_TO_EDGE GL_CLAMP_TO_EDGE_EXT
 #endif
 
-/*#define	CCN_DEBUG 
- *#define DISPLAY_LISTS */
-#define	MULTIPLE_VIEWPORTS
+/* #define CCN_DEBUG  */
+/* #define DISPLAY_LISTS */
+#define MULTIPLE_VIEWPORTS
 
 static GLuint currentWidth, currentHeight;
 static GLuint textureID[2];
@@ -97,7 +97,7 @@ Display(void)
 
 	/* Upper Right Viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight);
-#endif
+#endif /* MULTIPLE_VIEWPORTS */
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, textureID[1]);
 	glBegin(GL_QUADS);
@@ -212,7 +212,7 @@ InitSpecial(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 32, 0, GL_LUMINANCE,
-							 GL_UNSIGNED_BYTE, textureData);
+		     GL_UNSIGNED_BYTE, textureData);
 #endif
 
 	/* Create Bilinear Filtered texture with normal clamping. */
@@ -222,7 +222,7 @@ InitSpecial(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 32, 0, GL_LUMINANCE,
-							 GL_UNSIGNED_BYTE, textureData);
+		     GL_UNSIGNED_BYTE, textureData);
 
 	return;
 }

@@ -6,11 +6,12 @@
 
 /*
 
-  main.cpp
+  exec.cpp
 
-  This is the framework I am using to test extensions on Chromium.
+  This is an example of GL_ARB_texture_cube_map, described
+  on page 48 of the NVidia OpenGL Extension Specifications.
 
-  Christopher Niederauer, ccn@graphics.stanford.edu, 6/25/2001
+  Christopher Niederauer, ccn@graphics.stanford.edu, 7/2/2001
 
 */
 
@@ -23,13 +24,13 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-/*#define	CCN_DEBUG */
+/* #define CCN_DEBUG */
 #define DISPLAY_LISTS
-#define	MULTIPLE_VIEWPORTS
+#define MULTIPLE_VIEWPORTS
 
-#define	TEST_EXTENSION_STRING	"GL_ARB_texture_cube_map"
-#ifndef	GL_ARB_texture_cube_map
-#error	Please update your GL/glext.h header file.
+#define TEST_EXTENSION_STRING  "GL_ARB_texture_cube_map"
+#ifndef GL_ARB_texture_cube_map
+#error Please update your GL/glext.h header file.
 #endif
 
 
@@ -176,7 +177,7 @@ Reshape(int width, int height)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(40, (GLfloat) currentWidth / currentHeight, 0.05, 30);
-	/*  glFrustum( -(GLfloat)currentWidth/currentHeight, (GLfloat)currentWidth/currentHeight, -1.0, 1.0, 0.05, 30.0 );*/
+/* 	glFrustum( -(GLfloat)currentWidth/currentHeight, (GLfloat)currentWidth/currentHeight, -1.0, 1.0, 0.05, 30.0 ); */
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -364,36 +365,26 @@ InitSpecial(void)
 
 		/* Create the Cubemap. */
 		glBindTexture((GLenum) GL_TEXTURE_CUBE_MAP_ARB, textureID[0]);
-		glTexParameteri((GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S,
-										GL_CLAMP);
-		glTexParameteri((GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T,
-										GL_CLAMP);
-		glTexParameteri((GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER,
-										GL_LINEAR);
-		glTexParameteri((GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER,
-										GL_LINEAR);
+		glTexParameteri((GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri((GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		glTexParameteri((GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri((GLenum) GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexImage2D((GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, 0, GL_RGB8,
-								 texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE,
-								 textureData[0]);
+			     texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[0]);
 		glTexImage2D((GLenum) GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, 0, GL_RGB8,
-								 texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE,
-								 textureData[1]);
+			     texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[1]);
 		glTexImage2D((GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, 0, GL_RGB8,
-								 texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE,
-								 textureData[2]);
+			     texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[2]);
 		glTexImage2D((GLenum) GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, 0, GL_RGB8,
-								 texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE,
-								 textureData[3]);
+			     texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[3]);
 		glTexImage2D((GLenum) GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, 0, GL_RGB8,
-								 texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE,
-								 textureData[4]);
+			     texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[4]);
 		glTexImage2D((GLenum) GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, 0, GL_RGB8,
-								 texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE,
-								 textureData[5]);
+			     texmapX, texmapY, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData[5]);
 	}
 
 	glEnable(GL_DEPTH_TEST);
-	/*  glEnable( GL_NORMALIZE );*/
+/* 	glEnable( GL_NORMALIZE ); */
 	glCullFace(GL_BACK);
 }
 
@@ -401,9 +392,7 @@ InitSpecial(void)
 int
 main(int argc, char *argv[])
 {
-#ifndef macintosh
 	glutInit(&argc, argv);
-#endif
 
 	printf("Written by Christopher Niederauer\n");
 	printf("ccn@graphics.stanford.edu\n");

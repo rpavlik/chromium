@@ -8,7 +8,7 @@
 
   main.cpp
 
-  This is the framework I am using for my extensions.
+  This is an example of GL_EXT_secondary_color.
 
   Christopher Niederauer, ccn@graphics.stanford.edu, 5/30/2001
 
@@ -23,9 +23,9 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-#define	TEST_EXTENSION_STRING	"GL_EXT_secondary_color"
-#ifndef	GL_EXT_secondary_color
-#error	Please update your GL/glext.h header file.
+#define TEST_EXTENSION_STRING  "GL_EXT_secondary_color"
+#ifndef GL_EXT_secondary_color
+#error Please update your GL/glext.h header file.
 #endif
 
 #ifndef GLX_ARB_get_proc_address
@@ -39,8 +39,8 @@ extern "C"
 #endif
 #endif
 
-#define	CCN_DEBUG
-#define	MULTIPLE_VIEWPORTS
+#define CCN_DEBUG
+#define MULTIPLE_VIEWPORTS
 
 static PFNGLSECONDARYCOLORPOINTEREXTPROC glSecondaryColorPointerEXT;
 static PFNGLSECONDARYCOLOR3FEXTPROC glSecondaryColor3fEXT;
@@ -125,7 +125,7 @@ Display(void)
 
 	/* Upper Right Viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight);
-#endif
+#endif /* MULTIPLE_VIEWPORTS */
 
 	glEnable((GLenum) GL_COLOR_SUM_EXT);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -215,9 +215,6 @@ InitGL(void)
 void
 InitSpecial(void)
 {
-	/* unused */
-	/* const int texWidth = 256, texHeight = 256; */
-
 #ifdef WIN32
 	glSecondaryColorPointerEXT =
 		(PFNGLSECONDARYCOLORPOINTEREXTPROC)
@@ -229,7 +226,8 @@ InitSpecial(void)
 		(PFNGLSECONDARYCOLORPOINTEREXTPROC)
 		glXGetProcAddressARB((const GLubyte *) "glSecondaryColorPointerEXT");
 	glSecondaryColor3fEXT =
-	   (PFNGLSECONDARYCOLOR3FEXTPROC) glXGetProcAddressARB((const GLubyte *) "glSecondaryColor3fEXT");
+		(PFNGLSECONDARYCOLOR3FEXTPROC) glXGetProcAddressARB((const GLubyte *)
+								    "glSecondaryColor3fEXT");
 #endif
 	if (!glSecondaryColor3fEXT || !glSecondaryColorPointerEXT)
 	{
@@ -242,9 +240,7 @@ InitSpecial(void)
 int
 main(int argc, char *argv[])
 {
-#ifndef macintosh
 	glutInit(&argc, argv);
-#endif
 
 	printf("Written by Christopher Niederauer\n");
 	printf("ccn@graphics.stanford.edu\n");

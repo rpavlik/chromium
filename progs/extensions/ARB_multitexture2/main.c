@@ -22,13 +22,13 @@
 #include <GL/glext.h>
 #include "../common/logo.h"
 
-/*#define	CCN_DEBUG */
-#define	DISPLAY_LISTS
-#define	MULTIPLE_VIEWPORTS
+/* #define CCN_DEBUG */
+#define DISPLAY_LISTS
+#define MULTIPLE_VIEWPORTS
 
-#define	TEST_EXTENSION_STRING	"GL_ARB_multitexture"
-#ifndef	GL_ARB_multitexture
-#error	Please update your GL/glext.h header file.
+#define	TEST_EXTENSION_STRING  "GL_ARB_multitexture"
+#ifndef GL_ARB_multitexture
+#error Please update your GL/glext.h header file.
 #endif
 
 enum
@@ -92,27 +92,27 @@ Display(void)
 
 	glBegin(GL_QUADS);
 	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, -texDetail + texOffset,
-											 texDetail + texOffset);
+			     texDetail + texOffset);
 	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, -texDetail + texOffset,
-											 texDetail + texOffset);
+			     texDetail + texOffset);
 	glVertex3f(-size, 0.0, size);
 
 	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, texDetail + texOffset,
-											 texDetail + texOffset);
+			     texDetail + texOffset);
 	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, texDetail + texOffset,
-											 texDetail + texOffset);
+			     texDetail + texOffset);
 	glVertex3f(size, 0.0, size);
 
 	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, texDetail + texOffset,
-											 -texDetail + texOffset);
+			     -texDetail + texOffset);
 	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, texDetail + texOffset,
-											 -texDetail + texOffset);
+			     -texDetail + texOffset);
 	glVertex3f(size, 0.0, -size);
 
 	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, -texDetail + texOffset,
-											 -texDetail + texOffset);
+			     -texDetail + texOffset);
 	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, -texDetail + texOffset,
-											 -texDetail + texOffset);
+			     -texDetail + texOffset);
 	glVertex3f(-size, 0.0, -size);
 	glEnd();
 
@@ -129,7 +129,8 @@ Display(void)
 
 	/* Upper Right Viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight);
-#endif
+#endif /* MULTIPLE_VIEWPORTS */
+
 	glEnable(GL_TEXTURE_2D);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -141,27 +142,27 @@ Display(void)
 
 	glBegin(GL_QUADS);
 	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, -texDetail + texOffset,
-											 texDetail + texOffset);
+			     texDetail + texOffset);
 	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, -texDetail + texOffset,
-											 texDetail + texOffset);
+			     texDetail + texOffset);
 	glVertex3f(-size, 0.0, size);
 
 	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, texDetail + texOffset,
-											 texDetail + texOffset);
+			     texDetail + texOffset);
 	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, texDetail + texOffset,
-											 texDetail + texOffset);
+			     texDetail + texOffset);
 	glVertex3f(size, 0.0, size);
 
 	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, texDetail + texOffset,
-											 -texDetail + texOffset);
+			     -texDetail + texOffset);
 	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, texDetail + texOffset,
-											 -texDetail + texOffset);
+			     -texDetail + texOffset);
 	glVertex3f(size, 0.0, -size);
 
 	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, -texDetail + texOffset,
-											 -texDetail + texOffset);
+			     -texDetail + texOffset);
 	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, -texDetail + texOffset,
-											 -texDetail + texOffset);
+			     -texDetail + texOffset);
 	glVertex3f(-size, 0.0, -size);
 	glEnd();
 
@@ -267,8 +268,7 @@ InitSpecial(void)
 	printf("EXTENSIONS: %s\n", (char *) glGetString(GL_EXTENSIONS));
 	if (numTexUnits < 2)
 	{
-		printf
-			("Sorry, this program requires at least two texture units to work properly.\n");
+		printf("Sorry, this program requires at least two texture units to work properly.\n");
 		exit(0);
 	}
 	switch (currentActiveUnit)
@@ -307,13 +307,13 @@ InitSpecial(void)
 	 *  - TexEnv calls
 	 *  - Get CURRENT_TEXTURE_COORDS
 	 */
-	/* Create the tile texture. */
-	glGenTextures(eNumTextures, textureID);
 
 	/* Load the textures. */
+	glGenTextures(eNumTextures, textureID);
 	{
 		const int texmapX = 128,
-			texmapY = 128, texmapSize = texmapX * texmapY * 3;
+		          texmapY = 128,
+		          texmapSize = texmapX * texmapY * 3;
 		FILE *file;
 		GLubyte textureData[texmapSize];
 
@@ -332,9 +332,9 @@ InitSpecial(void)
 			glBindTexture(GL_TEXTURE_2D, textureID[eBrickTex]);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-											GL_LINEAR_MIPMAP_LINEAR);
+					GL_LINEAR_MIPMAP_LINEAR);
 			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB8, texmapX, texmapY, GL_RGB,
-												GL_UNSIGNED_BYTE, textureData);
+					  GL_UNSIGNED_BYTE, textureData);
 		}
 
 		/* Load light texture. */
@@ -352,9 +352,9 @@ InitSpecial(void)
 			glBindTexture(GL_TEXTURE_2D, textureID[eLightTex]);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-											GL_LINEAR_MIPMAP_LINEAR);
+					GL_LINEAR_MIPMAP_LINEAR);
 			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, texmapX, texmapY,
-												GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData);
+					  GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData);
 		}
 	}
 }
@@ -363,9 +363,7 @@ InitSpecial(void)
 int
 main(int argc, char *argv[])
 {
-#ifndef macintosh
 	glutInit(&argc, argv);
-#endif
 
 	printf("Written by Christopher Niederauer\n");
 	printf("ccn@graphics.stanford.edu\n");
