@@ -16,7 +16,7 @@
 <body bgcolor="#FFFFFF">
 
 <h1 class="PageHeading">Chromium Introduction</h1>
-<p>Chromium is a new system for interactive rendering on clusters of
+<p>Chromium is a system for interactive rendering on clusters of
 workstations.&nbsp; It is a completely extensible architecture, so that parallel
 rendering algorithms can be implemented on clusters with ease.&nbsp;
 </p>
@@ -145,62 +145,64 @@ Graphics, Inc. contributed many new features.</p>
 </ul>
 
 
-<p><EM>Upcoming</EM> 1.0 Release:  September 30, 2002</p>
+<p>1.0 Release:  September 30, 2002</p>
 
-<p>New Features</p>
 <ul>
-  <li>Graphical configuration tool
-  <li>New SPUs:
+  <li>New Features
   <ul>
-    <li>Feedback (OpenGL feedback & selection support)
-    <li>Perf (performance SPU) for collecting performance statistics
-    <li>Wet
-    <li>Motion blur
+    <li>Graphical configuration tool
+    <li>New SPUs:
+    <ul>
+      <li>Feedback (OpenGL feedback & selection support)
+      <li>Perf (performance SPU) for collecting performance statistics
+      <li>Wet
+      <li>Motion blur
+    </ul>
+    <li>New configuration options and features:
+    <ul>
+      <li>Render SPU: render_to_app_window, resizable, display_string, lut8
+      <li>Tilesort SPU: bucket_mode, dynamic tile configuration (tile layout
+	  changable at runtime), warped tile support
+      <li>Readback SPU: tile/image reassembly
+      <li>Saveframe SPU: many new options
+      <li>New network (server) node options: only_swap_once, spu_dir
+      <li>New application node option: track_window_size, application,
+         start_dir, client_dll, spu_dir
+    </ul>
+    <li>SunOS support (Jorge Luis Williams)
+    <li>OpenGL 1.2 support (but not ARB_imaging)
+    <li>New OpenGL extensions:
+    <ul>
+      <li>GL_EXT_fog_coord support
+      <li>GL_ARB_point_parameters
+      <li>GL_NV_vertex_program  (on app nodes only)
+      <li>GL_NV_fence  (on app nodes only)
+      <li>GL_NV_vertex_array_range  (on app nodes only)
+    </ul>
+    <li>IPv6 support
+    <li>Quadrics network support
+    <li>OpenGL limits computed per context, not just once during start-up
+    <li>Header file clean-up (client apps should include chromium.h)
+    <li>Namespace cleanup (ex: BoundsInfo() is now BoundsInfoCR(), similarly
+	for semaphore and barrier functions)
+    <li>Thread safety clean-ups and fixes
+    <li>Improved OpenGL error handling
+    <li>city demo
   </ul>
-  <li>New configuration options and features:
+  <li>Bug Fixes
   <ul>
-    <li>Render SPU: render_to_app_window, resizable, display_string, lut8
-    <li>Tilesort SPU: bucket_mode, dynamic tile configuration (tile layout
-        changable at runtime), warped tile support
-    <li>Readback SPU: tile/image reassembly
-    <li>Saveframe SPU: many new options
-    <li>New network (server) node options: only_swap_once, spu_dir
-    <li>New application node option: track_window_size, application, start_dir,
-        client_dll, spu_dir
+    <li>Fixed GM memory leak (Michael Brodeur)
+    <li>Cygwin 5.1 patches (Sebastien Barre)
+    <li>Fixed sort-last rendering synchronization problems
+    <li>Fixed glRasterPos/glBitmap/display list bug in tilesort SPU
+    <li>Working binaryswap SPU
+    <li>Fixed tilesort bounding box / state broadcast bug
+    <li>Fixed overlapping tile bug in tilesort SPU / server
+    <li>glAreTexturesResident() fixed
+    <li>glGenTextures() fixed
+    <li>Fixed state tracker link bug (use static state tracker lib on Unix)
+    <li>Lots of other bug fixes
   </ul>
-  <li>SunOS support (Jorge Luis Williams)
-  <li>OpenGL 1.2 support (but not ARB_imaging)
-  <li>New OpenGL extensions:
-  <ul>
-    <li>GL_EXT_fog_coord support
-    <li>GL_ARB_point_parameters
-    <li>GL_NV_vertex_program  (on app nodes only)
-    <li>GL_NV_fence  (on app nodes only)
-  </ul>
-  <li>IPv6 support
-  <li>Quadrics network support
-  <li>OpenGL limits computed per context, not just once during start-up
-  <li>Header file clean-up (client apps should include chromium.h)
-  <li>Namespace cleanup (ex: BoundsInfo() is now BoundsInfoCR(), similarly for
-      semaphore and barrier functions)
-  <li>Thread safety clean-ups and fixes
-  <li>Improved OpenGL error handling
-  <li>city demo
-</ul>
-
-<p>Bug Fixes</p>
-<ul>
-  <li>Fixed GM memory leak (Michael Brodeur)
-  <li>Cygwin 5.1 patches (Sebastien Barre)
-  <li>Fixed sort-last rendering synchronization problems
-  <li>Fixed glRasterPos/glBitmap/display list bug in tilesort SPU
-  <li>Working binaryswap SPU
-  <li>Fixed tilesort bounding box / state broadcast bug
-  <li>Fixed overlapping tile bug in tilesort SPU / server
-  <li>glAreTexturesResident() fixed
-  <li>glGenTextures() fixed
-  <li>Fixed state tracker link bug (use static state tracker lib on Unix)
-  <li>Lots of other bug fixes
 </ul>
 
 

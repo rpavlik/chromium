@@ -62,7 +62,12 @@ fit together.
   <li><p class="ProvidedThing">An application launcher</p>
   <p class="ProvidedDesc"> The launcher, called &quot;<code>crappfaker</code>&quot;,
     launches applications in a special way that causes them to load the OpenGL
-    replacement library rather than the system's library.</p></li>
+    replacement library rather than the system's library.
+    <br>
+    The application launcher is usually refered to as an
+    <em>application node</em>.
+    Application nodes and <em>server/network nodes</em> host SPU chains.
+    </p></li>
 
   <li><p class="ProvidedThing">A network server</p>
   <p class="ProvidedDesc"> This server, called &quot;<code>crserver</code>&quot;, is
@@ -74,7 +79,12 @@ fit together.
     allowed by the <a href="parallelapplication.html">parallel API extensions</a>.&nbsp;
     In addition, a server can manage multiple display tiles, and is responsible for
     re-decoding a block of work multiple times, with appropriate modifications
-    to the viewing matrices for multiple tiles.</p></li>
+    to the viewing matrices for multiple tiles.
+    <br>
+    The crserver is otherwise known as a <em>network or server node</em>.
+    </p></li>
+
+
 </ul>
 <h2 class="PageSubHeading">Other SPU's</h2>
 <p>In addition to the SPU's shown so far, several more are provided.&nbsp; Some

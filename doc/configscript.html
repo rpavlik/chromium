@@ -27,6 +27,18 @@ can almost always create a new configuration script from an existing one without
 really understanding the semantics of the language.&nbsp; In WireGL, we were
 always writing homegrown parameterized scripts to generate configuration files;
 in Chromium, the script <i>is</i> the configuration file.</p>
+
+<p>A Chromium configuration script basically builds a graph which describes
+how OpenGL commands flow from the application node(s) to the server node(s).
+Application and server nodes host SPUs which process and filter the OpenGL
+command steram.  The graph is a DAG (directed acyclic graph).
+To get a better feel for the layout of configuration graphs, take a look
+at the figures shown in the <a href="configtool.html">graphical configuration
+tool section</a>.
+</p>
+
+
+
 <p>Let's look at the <code><a href="crdemo.conf" target="new_window">crdemo.conf</a> </code>script that drove the
 <a href="helloworld.html">Hello, World</a>  demo.&nbsp; You should be viewing
 this configuration script while reading the description below. </p>
