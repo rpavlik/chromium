@@ -3,12 +3,18 @@
 
 #include "cr_glstate.h"
 
+GLboolean crEnableSetExtensions( CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid, GLenum cap, GLboolean val );
+
 void crStateTextureInitExtensions( CRTextureState *t );
 void crStateTextureInitTextureObjExtensions( CRTextureState *t, CRTextureObj *tobj );
+int crStateTexImage2DTargetExtensions( GLenum target );
+int crStateTexSubImage2DTargetExtensions( GLenum target );
+int crStateBindTextureExtensions( GLenum target, GLuint texture, CRTextureState *t, CRTextureObj *tobj );
 int crStateTexParameterfvExtensions( CRTextureState *t, CRTextureObj *tobj, GLenum pname, const GLfloat *param );
 int crStateTexParameterivExtensions( GLenum target, GLenum pname, const GLint *param );
 int crStateGetTexParameterfvExtensions( CRTextureObj *tobj, GLenum pname, GLfloat *params );
 int crStateGetTexParameterivExtensions( CRTextureObj *tobj, GLenum pname, GLint *params );
+int crStateTexGenTextureGenModeExtensions( GLenum coord, GLenum param );
 void crStateTextureDiffParameterExtensions( CRTextureObj *tobj );
 
 void crStateFogInitExtensions( CRFogState *f );

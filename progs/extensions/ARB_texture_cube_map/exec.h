@@ -14,6 +14,7 @@
 #pragma once
 
 #ifdef WIN32
+#pragma warning(push,3)
 #include <windows.h>
 #endif
 

@@ -75,19 +75,22 @@ typedef struct {
 	CRTextureObj *currentTexture1D;
 	CRTextureObj *currentTexture2D;
 	CRTextureObj *currentTexture3D;
+	CRTextureObj *currentTextureCubeMap;
 	GLuint        currentTexture1DName[CR_MAX_TEXTURE_UNITS];
 	GLuint        currentTexture2DName[CR_MAX_TEXTURE_UNITS];
 	GLuint        currentTexture3DName[CR_MAX_TEXTURE_UNITS];
+	GLuint	      currentTextureCubeMapName[CR_MAX_TEXTURE_UNITS];
 
-	GLint         curTextureUnit;
+	GLint		curTextureUnit;
 
-	GLenum		    envMode[CR_MAX_TEXTURE_UNITS];
-	GLcolorf	    envColor[CR_MAX_TEXTURE_UNITS];
+	GLenum		envMode[CR_MAX_TEXTURE_UNITS];
+	GLcolorf	envColor[CR_MAX_TEXTURE_UNITS];
 	
-	GLboolean	    enabled1D[CR_MAX_TEXTURE_UNITS];
-	GLboolean	    enabled2D[CR_MAX_TEXTURE_UNITS];
-	GLboolean	    enabled3D[CR_MAX_TEXTURE_UNITS];
-	GLtexcoordb	  textureGen[CR_MAX_TEXTURE_UNITS];
+	GLboolean	enabled1D[CR_MAX_TEXTURE_UNITS];
+	GLboolean	enabled2D[CR_MAX_TEXTURE_UNITS];
+	GLboolean	enabled3D[CR_MAX_TEXTURE_UNITS];
+	GLboolean	enabledCubeMap[CR_MAX_TEXTURE_UNITS];
+	GLtexcoordb	textureGen[CR_MAX_TEXTURE_UNITS];
 
 	CRTextureObj      *mapping[CRTEXTURE_HASHSIZE];
 	CRTextureFreeElem *freeList;
@@ -96,13 +99,16 @@ typedef struct {
 	CRTextureObj base1D;
 	CRTextureObj base2D;
 	CRTextureObj base3D;
+	CRTextureObj baseCubeMap;
 	
-	GLint   maxTextureUnitsARB;
+	GLint		maxTextureUnitsARB;
 	GLint		maxTextureSize;
 	GLint		max3DTextureSize;
+	GLint		maxCubeMapTextureSize;
 	GLint		maxLevel;
 	GLint		max3DLevel;
-
+	GLint		maxCubeMapLevel;
+	
 	GLboolean	broadcastTextures;
 
 	/* Texture gen mode */

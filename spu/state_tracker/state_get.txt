@@ -19,6 +19,7 @@ GLint     GL_MAX_EVAL_ORDER                 g->eval.maxEvalOrder
 GLint     GL_MAX_VIEWPORT_DIMS              g->viewport.maxViewportDimsWidth g->viewport.maxViewportDimsHeight
 GLint     GL_MAX_LIGHTS                     g->lighting.maxLights
 GLint     GL_MAX_TEXTURE_SIZE               g->texture.maxTextureSize
+GLint     GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB  g->texture.maxCubeMapTextureSize
 GLint     GL_MAX_TEXTURE_UNITS_ARB          g->texture.maxTextureUnitsARB
 GLint     GL_ACTIVE_TEXTURE_ARB g->texture.curTextureUnit+GL_TEXTURE0_ARB
 GLint     GL_CLIENT_ACTIVE_TEXTURE_ARB g->client.curClientTextureUnit+GL_TEXTURE0_ARB

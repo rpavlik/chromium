@@ -8,11 +8,53 @@
 
 #include <GL/glext.h>
 
+GLboolean crEnableSetExtensions( CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid, GLenum cap, GLboolean val )
+{
+	switch( cap )
+	{
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			g->texture.enabledCubeMap[g->texture.curTextureUnit] = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
+			sb->texture.dirty = neg_bitid;
+			break;
+#if 0
+#ifdef GL_NV_register_combiners
+		case GL_REGISTER_COMBINERS_NV:
+			g->texture.extensions.regCombiners = val;
+			sb->texture.extensions.regCombiners = neg_bitid;
+			sb->texture.dirty = neg_bitid;
+			break;
+#endif
+#ifdef GL_NV_register_combiners2
+		case GL_PER_STAGE_CONSTANTS_NV:
+			g->texture.extensions.regPerStageConstants = val;
+			sb->texture.extensions.regPerStageConstants = neg_bitid;
+			sb->texture.dirty = neg_bitid;
+			break;
+#endif
+#endif /* 0 */
+		default:
+			return 1;
+	}
+	return 0;
+}
+
 void crStateTextureInitExtensions( CRTextureState *t )
 {
 #ifdef GL_EXT_texture_filter_anisotropic
 	t->extensions.maxTextureMaxAnisotropy = 8.0f;
 #endif
+#if 0
+#if defined(GL_ARB_texture_cube_map) || defined(GL_EXT_texture_cube_map)
+	t->extensions.cubeMap = GL_FALSE;
+#endif
+#ifdef GL_NV_register_combiners
+	t->extensions.regCombiners = GL_FALSE;
+#endif
+#ifdef GL_NV_register_combiners2
+	t->extensions.regPerStageConstants = GL_FALSE;
+#endif
+#endif /* 0 */
 }
 
 void crStateTextureInitTextureObjExtensions( CRTextureState *t, CRTextureObj *tobj )
@@ -21,6 +63,44 @@ void crStateTextureInitTextureObjExtensions( CRTextureState *t, CRTextureObj *to
 #ifdef GL_EXT_texture_filter_anisotropic
 	tobj->extensions.maxAnisotropy = 1.0f;
 #endif
+}
+
+int crStateTexImage2DTargetExtensions( GLenum target )
+{
+	switch( target )
+	{
+#if defined(GL_ARB_texture_cube_map) || defined(GL_EXT_texture_cube_map)
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+			break;
+#endif
+		default:
+			return 0;
+	}
+	return 1;
+}
+
+int crStateTexSubImage2DTargetExtensions( GLenum target )
+{
+	switch( target )
+	{
+#if defined(GL_ARB_texture_cube_map) || defined(GL_EXT_texture_cube_map)
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+			break;
+#endif
+		default:
+			return 0;
+	}
+	return 1;
 }
 
 int crStateTexParameterfvExtensions( CRTextureState *t, CRTextureObj *tobj, GLenum pname, const GLfloat *param )
@@ -108,6 +188,30 @@ int crStateGetTexParameterivExtensions( CRTextureObj *tobj, GLenum pname, GLint 
 			break;
 	}
 	return 0;
+}
+
+int crStateTexGenTextureGenModeExtensions( GLenum coord, GLenum param )
+{
+	switch( param )
+	{
+#if defined(GL_ARB_texture_cube_map) || defined(GL_EXT_texture_cube_map) || defined(GL_NV_texgen_reflection)
+		case GL_REFLECTION_MAP_ARB:
+		case GL_NORMAL_MAP_ARB:
+			if( coord == GL_S || coord == GL_T || coord == GL_R )
+			{
+				return 0;
+			}
+			else // specifically GL_Q is not able to be generated.
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+					"TexGen: ARB_texture_cube_map called with bogus coord: 0x%x", (GLenum) param);
+				return 1;
+			}
+			break;
+#endif
+		default:
+			return 1;
+	}
 }
 
 void crStateTextureDiffParameterExtensions( CRTextureObj *tobj )
@@ -310,3 +414,4 @@ void crStateBufferSwitchExtensions( CRBufferState *from, CRBufferState *to )
 	}
 #endif
 }
+

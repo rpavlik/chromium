@@ -4,6 +4,7 @@
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
+#include "state_extensionfuncs.h"
 
 static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 				GLenum cap, GLboolean val) 
@@ -208,8 +209,12 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			break;
 
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glEnable/glDisable called with bogus cap: %d", cap);
-			return;
+			if( crEnableSetExtensions( g, sb, neg_bitid, cap, val ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glEnable/glDisable called with bogus cap: %d", cap);
+				return;
+			}
+			break;
 	}
 }
 

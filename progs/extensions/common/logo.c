@@ -11,11 +11,13 @@
 #include <stdio.h>
 #include "cr_logo.h"
 #include "cr_glwrapper.h"
+#include "cr_error.h"
 
 void crExtensionsDrawLogo( int currentWidth, int currentHeight )
 {
 	static GLboolean inited = 0;
 	static GLuint	   textureID;
+	GLint actual_dims[4];
 
 	if( !inited )
 	{
@@ -31,13 +33,18 @@ void crExtensionsDrawLogo( int currentWidth, int currentHeight )
 		inited = 1;
 	}
 
+	glViewport( 0, 0, currentWidth, currentHeight );
+	glGetIntegerv( GL_VIEWPORT, actual_dims );
+	currentWidth = actual_dims[2];
+	currentHeight = actual_dims[3];
+
 	glPushMatrix();
 	glLoadIdentity();
 	glTranslatef( -5, -5, 0 );
 	glMatrixMode( GL_PROJECTION );
 	glPushMatrix();
 	glLoadIdentity();
-	glOrtho( 0, currentWidth, currentHeight, 0, -1, 1 );
+	glOrtho( 0, actual_dims[2], actual_dims[3], 0, -1, 1 );
 
 	glColor3f( 1, 1, 1 );
 	glEnable( GL_TEXTURE_2D );

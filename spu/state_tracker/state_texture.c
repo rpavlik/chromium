@@ -31,14 +31,17 @@ void crStateTextureInit(CRTextureState *t)
 	t->maxTextureSize = c->maxTextureSize;
 	t->max3Dtexturesize = c->max3Dtexturesize;
 #endif
-	t->maxTextureUnitsARB = 8; // XXX
+	t->maxTextureUnitsARB = CR_MAX_TEXTURE_UNITS; // XXX
 	t->maxTextureSize = 2048;
 	t->max3DTextureSize = 2048;
+	t->maxCubeMapTextureSize = 2048;
 
 	for (i=0, a=t->maxTextureSize; a; i++, a=a>>1);
 	t->maxLevel = i;
 	for (i=0, a=t->max3DTextureSize; a; i++, a=a>>1);
 	t->max3DLevel = i;
+	for (i=0, a=t->maxCubeMapTextureSize; a; i++, a=a>>1);
+	t->maxCubeMapLevel = i;
 
 	t->allocated = 1;
 
@@ -61,16 +64,19 @@ void crStateTextureInit(CRTextureState *t)
 	t->currentTexture1D = &(t->base1D);
 	t->currentTexture2D = &(t->base2D);
 	t->currentTexture3D = &(t->base3D);
+	t->currentTextureCubeMap = &(t->baseCubeMap);
 
 	crStateTextureInitTextureObj(t, &(t->base1D), 0);
 	crStateTextureInitTextureObj(t, &(t->base2D), 0);
 	crStateTextureInitTextureObj(t, &(t->base3D), 0);
+	crStateTextureInitTextureObj(t, &(t->baseCubeMap), 0 );
 
 	t->base1D.target = GL_TEXTURE_1D;
 	t->base2D.target = GL_TEXTURE_2D;
 #if 0
 	t->base3D.target = GL_TEXTURE_3D;
 #endif
+	t->baseCubeMap.target = GL_TEXTURE_CUBE_MAP_ARB;
 
 	t->curTextureUnit = 0;
 
@@ -79,10 +85,12 @@ void crStateTextureInit(CRTextureState *t)
 		t->currentTexture1DName[i] = 0;
 		t->currentTexture2DName[i] = 0;
 		t->currentTexture3DName[i] = 0;
+		t->currentTextureCubeMapName[i] = 0;
 
 		t->enabled1D[i] = GL_FALSE;
 		t->enabled2D[i] = GL_FALSE;
 		t->enabled3D[i] = GL_FALSE;
+		t->enabledCubeMap[i] = GL_FALSE;
 		t->textureGen[i].s = GL_FALSE;
 		t->textureGen[i].t = GL_FALSE;
 		t->textureGen[i].p = GL_FALSE;
@@ -323,6 +331,10 @@ CRTextureObj * crStateTextureAllocate_t (CRTextureState *t, GLuint name)
 		if (t->currentTexture3D != &(t->base3D)) 
 		{
 			t->currentTexture3D = t->textures + (t->currentTexture3D - tobj);
+		}
+		if (t->currentTextureCubeMap != &(t->baseCubeMap))
+		{
+			t->currentTextureCubeMap = t->textures + (t->currentTextureCubeMap - tobj);
 		}
 	}
 
@@ -570,6 +582,11 @@ void STATE_APIENTRY crStateDeleteTextures(GLsizei n, const GLuint *textures)
 				t->currentTexture3DName[t->curTextureUnit] = 0;
 			}
 #endif
+			if (name == t->currentTextureCubeMapName[t->curTextureUnit])
+			{
+				t->currentTextureCubeMap = &(t->baseCubeMap);
+				t->currentTextureCubeMapName[t->curTextureUnit] = 0;
+			}
 		}
 	}
 
@@ -656,6 +673,10 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 				t->currentTexture3DName[t->curTextureUnit] = 0;
 				break;
 #endif
+			case GL_TEXTURE_CUBE_MAP_ARB:
+				t->currentTextureCubeMap = &(t->baseCubeMap);
+				t->currentTextureCubeMapName[t->curTextureUnit] = 0;
+				break;
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid target passed to glBindTexture: %d", target);
 				return;
@@ -680,13 +701,11 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 		/* Target isn't set so set it now.*/
 		tobj->target = target;
 	}
-	else
+	if (tobj->target != target)
 	{
-		if (tobj->target != target)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Attempt to bind a texture of diffent dimenions");
-			return;
-		}
+		crWarning( "You called glBindTexture with a target of 0x%x, but the texture you wanted was target 0x%x", target, tobj->target );
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Attempt to bind a texture of diffent dimenions");
+		return;
 	}
 
 	/* Set the current texture */
@@ -706,6 +725,10 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 			t->currentTexture3DName[t->curTextureUnit] = texture;
 			break;
 #endif
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			t->currentTextureCubeMap = tobj;
+			t->currentTextureCubeMapName[t->curTextureUnit] = texture;
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid target passed to glBindTexture: %d", target);
 			return;
@@ -846,13 +869,15 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 
 	FLUSH();
 
-	if (target != GL_TEXTURE_2D)
+	if (target != GL_TEXTURE_2D &&
+	    (target < GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
+	    target > GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB))
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexImage2D target != GL_TEXTURE_2D: %d", target);
 		return;
 	}
 
-	if (level < 0 || level > t->maxLevel) 
+	if (level < 0 || (target == GL_TEXTURE_2D && level > t->maxLevel) || (target != GL_TEXTURE_2D && level > t->maxCubeMapLevel))
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage2D level oob: %d", level);
 		return;
@@ -894,37 +919,83 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 		return;
 	}
 
-	if (width > t->maxTextureSize)
+	if (target == GL_TEXTURE_2D)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glTexImage2D width oob: %d", width);
-		return;
+		if (width > t->maxTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				     "glTexImage2D width oob: %d", width);
+			return;
+		}
+		if (height > t->maxTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				     "glTexImage2D height oob: %d", height);
+			return;
+		}
 	}
-
-	if (height > t->maxTextureSize)
+	else // Cube map
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glTexImage2D height oob: %d", height);
-		return;
+		if (width > t->maxCubeMapTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				     "glTexImage2D width oob: %d", width);
+			return;
+		}
+		if (height > t->maxCubeMapTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				     "glTexImage2D height oob: %d", height);
+			return;
+		}
+		// Check that cube map width and height are equal.
+		if (width != height)
+		{
+			crStateError(__LINE__,__FILE__, GL_INVALID_VALUE,
+				     "glTexImage2D cube map width and height are unequal: %dx%d", width, height);
+			return;
+		}
 	}
 
 	/*
 	 ** Only set these fields if 
 	 ** defining the base texture.
 	 */
-	tobj = t->currentTexture2D;
-	tl = tobj->level+level;
-	tl->bytes= crPixelSize(format, type, width, height);
+	if( target == GL_TEXTURE_2D )
+	{
+		tobj = t->currentTexture2D;
+		tl = tobj->level+level;
+		tl->bytes = crPixelSize(format, type, width, height);
+	}
+	else // Cube map
+	{
+		tobj = t->currentTextureCubeMap;
+		tl = tobj->level+level;
+		tl->bytes = 6 * crPixelSize(format, type, width, height);
+	}
 
-	if (tl->img)
+	if (tl->img && target == GL_TEXTURE_2D)
 	{
 		crFree (tl->img);
 	}
-	tl->img= (GLubyte *) crAlloc (tl->bytes);
-
-	if (pixels) 
+	if (!tl->img)
 	{
-		crPixelCopy2D((GLvoid *) (tl->img), pixels, format, type, width, height, &(p->unpack) );
+		tl->img = (GLubyte *) crAlloc (tl->bytes);
+	}
+
+	if( target == GL_TEXTURE_2D )
+	{
+		if (pixels)
+		{
+			crPixelCopy2D((GLvoid *) (tl->img), pixels, format, type, width, height, &(p->unpack) );
+		}
+	}
+	else // Cube map
+	{
+		if (pixels)
+		{
+			crPixelCopy2D((GLvoid *) (tl->img+(tl->bytes/6*(target-GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB))), pixels, format, type, width, height, &(p->unpack) );
+		}
 	}
 
 	tl->width = width;
@@ -935,8 +1006,15 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 	tl->border = border;
 	tl->type = type;
 	tl->bytesPerPixel = tl->bytes/ (width*height);
-
-	tobj->target = target;
+	if( target != GL_TEXTURE_2D )
+	{
+		tl->bytesPerPixel /= 6;
+		tobj->target = GL_TEXTURE_CUBE_MAP_ARB;
+	}
+	else // Not a cube map
+	{
+		tobj->target = target;
+	}
 
 	tobj->dirty = g->neg_bitid;
 	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
@@ -1048,32 +1126,51 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 
 	FLUSH();
 
-	if (target != GL_TEXTURE_2D)
+	if (target == GL_TEXTURE_2D)
+	{
+		if (level < 0 || level > t->maxLevel)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage2D level oob: %d", level);
+			return;
+		}
+		if (width < 0 || width > t->maxTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				     "glSubTexImage2D width oob: %d", width);
+			return;
+		}
+		if (height < 0 || height > t->maxTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				     "glSubTexImage2D height oob: %d", height);
+			return;
+		}
+	}
+	else if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB && target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)
+	{
+		if (level < 0 || level > t->maxCubeMapLevel)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage2D level oob: %d", level);
+			return;
+		}
+		if (width < 0 || width > t->maxCubeMapTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				     "glTexSubImage2D width oob: %d", width);
+			return;
+		}
+		if (height < 0 || height > t->maxCubeMapTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				     "glSubTexImage2D height oob: %d", height);
+			return;
+		}
+	}
+	else
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexSubImage2D target != GL_TEXTURE_2D: %d", target);
 		return;
 	}
-
-	if (level < 0 || level > t->maxLevel) 
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage2D level oob: %d", level);
-		return;
-	}
-
-	if (width < 0 || width > t->maxTextureSize)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glSubTexImage2D width oob: %d", width);
-		return;
-	}
-
-	if (height < 0 || height > t->maxTextureSize)
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glSubTexImage2D height oob: %d", height);
-		return;
-	}
-
 
 	/* XXX We need to handle conversion! */	
 	if (format != tl->format) 
@@ -1099,11 +1196,22 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 
 	subimg = (GLubyte *) crAlloc (crPixelSize(format, type, width, height));
 
-	crPixelCopy2D( subimg,	pixels, format, type, width, height, &(p->unpack) );
+	crPixelCopy2D( subimg, pixels, format, type, width, height, &(p->unpack) );
 
-	img =   tl->img +
-		xoffset*tl->bytesPerPixel +
-		yoffset*tl->width*tl->bytesPerPixel;
+	if (target == GL_TEXTURE_2D )
+	{
+		img =   tl->img +
+			xoffset*tl->bytesPerPixel +
+			yoffset*tl->width*tl->bytesPerPixel;
+	}
+	else // Cube map
+	{
+		img =	tl->img + 
+			(tl->bytes/6 * (target-GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB)) +
+			xoffset*tl->bytesPerPixel +
+			yoffset*tl->width*tl->bytesPerPixel;
+	}
+
 	src = subimg;
 
 	/* Copy the data into the texture */
@@ -1271,6 +1379,9 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 			tobj = t->currentTexture3D[t->curTextureUnit];
 			break;
 #endif
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			tobj = t->currentTextureCubeMap;
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 						"TexParamterfv: target is invalid: %d", target);
@@ -1595,9 +1706,12 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 							e != GL_EYE_LINEAR &&
 							e != GL_SPHERE_MAP)
 					{
-						crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+						if( crStateTexGenTextureGenModeExtensions( coord, e ))
+						{
+							crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 									"glTexGen called with bad param: %lf", *param);
-						return;
+							return;
+						}
 					}
 					t->gen[t->curTextureUnit].s = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
@@ -1637,9 +1751,12 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 							e != GL_EYE_LINEAR &&
 							e != GL_SPHERE_MAP)
 					{
-						crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+						if( crStateTexGenTextureGenModeExtensions( coord, e ))
+						{
+							crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 									"glTexGen called with bad param: %lf", *param);
-						return;
+							return;
+						}
 					}
 					t->gen[t->curTextureUnit].t = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
@@ -1677,9 +1794,12 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					e = (GLenum) *param;
 					if (e != GL_OBJECT_LINEAR && e != GL_EYE_LINEAR)
 					{
-						crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+						if( crStateTexGenTextureGenModeExtensions( coord, e ))
+						{
+							crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 									"glTexGen called with bad param: %lf", *param);
-						return;
+							return;
+						}
 					}
 					t->gen[t->curTextureUnit].p = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
@@ -1718,9 +1838,12 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					if (e != GL_OBJECT_LINEAR &&
 							e != GL_EYE_LINEAR)
 					{
-						crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+						if( crStateTexGenTextureGenModeExtensions( coord, e ))
+						{
+							crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 									"glTexGen called with bad param: %lf", *param);
-						return;
+							return;
+						}
 					}
 					t->gen[t->curTextureUnit].q = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
@@ -2179,9 +2302,12 @@ void STATE_APIENTRY crStateGetTexLevelParameterfv (GLenum target, GLint level,
 			break;
 #if 0
 		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D[t->curTextureUnit];
+			tobj = t->currentTexture3D;
 			break;
 #endif
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			tobj = t->currentTextureCubeMap;
+			break;
 		default: 
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 						"GetTexLevelParameter: invalid target: %d", target);
@@ -2240,9 +2366,12 @@ void STATE_APIENTRY crStateGetTexLevelParameteriv (GLenum target, GLint level,
 			break;
 #if 0
 		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D[t->curTextureUnit];
+			tobj = t->currentTexture3D;
 			break;
 #endif
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			tobj = t->currentTextureCubeMap;
+			break;
 		default: 
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 						"GetTexLevelParameter: invalid target: %d", target);
@@ -2293,9 +2422,12 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 			break;
 #if 0
 		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D[t->curTextureUnit];
+			tobj = t->currentTexture3D;
 			break;
 #endif
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			tobj = t->currentTextureCubeMap;
+			break;
 		default: 
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 						"glGetTexParameter: invalid target: %d", target);
@@ -2354,9 +2486,12 @@ void STATE_APIENTRY crStateGetTexParameteriv (GLenum target, GLenum pname, GLint
 			break;
 #if 0
 		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D[t->curTextureUnit];
+			tobj = t->currentTexture3D;
 			break;
 #endif
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			tobj = t->currentTextureCubeMap;
+			break;
 		default: 
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 						"glGetTexParameter: invalid target: %d", target);
@@ -2443,6 +2578,12 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 				t->dirty = GLBITS_ONES;
 			}
 #endif
+			if (from->enabledCubeMap[i] != to->enabledCubeMap[i])
+			{
+				able[to->enabledCubeMap[i]](GL_TEXTURE_CUBE_MAP_ARB);
+				t->enable[i] = GLBITS_ONES;
+				t->dirty = GLBITS_ONES;
+			}
 			if (from->textureGen[i].s != to->textureGen[i].s ||
 					from->textureGen[i].t != to->textureGen[i].t ||
 					from->textureGen[i].p != to->textureGen[i].p ||
@@ -2488,6 +2629,11 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 				t->dirty = GLBITS_ONES;
 			}
 #endif
+			if (from->currentTextureCubeMapName[i] != to->currentTextureCubeMapName[i]) {
+				diff_api.BindTexture(GL_TEXTURE_CUBE_MAP_ARB, to->currentTextureCubeMapName[i]);
+				t->current[i] = GLBITS_ONES;
+				t->dirty = GLBITS_ONES;
+			}
 		}
 
 		if (t->objGen[i] & bitID) 
@@ -2698,6 +2844,17 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			cname = &(from->currentTexture2DName[i]);
 		}
 
+		if (to->enabledCubeMap[i] == GL_TRUE)
+		{
+			GET_TOBJ(tobj,to,to->currentTextureCubeMapName[i]);
+			if (!tobj)
+			{
+				tobj = to->currentTextureCubeMap;
+			}
+			name = to->currentTextureCubeMapName[i];
+			cname = &(from->currentTextureCubeMapName[i]);
+		}
+
 		if (!tobj)
 		{
 			continue;
@@ -2752,6 +2909,26 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 
 							break;
 #endif
+						case GL_TEXTURE_CUBE_MAP_ARB:
+							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, i, tl->components,
+									tl->width, tl->height, tl->border,
+									tl->format, tl->type, tl->img + tl->bytes/6*0);
+							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, i, tl->components,
+									tl->width, tl->height, tl->border,
+									tl->format, tl->type, tl->img + tl->bytes/6*1);
+							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, i, tl->components,
+									tl->width, tl->height, tl->border,
+									tl->format, tl->type, tl->img + tl->bytes/6*2);
+							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, i, tl->components,
+									tl->width, tl->height, tl->border,
+									tl->format, tl->type, tl->img + tl->bytes/6*3);
+							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, i, tl->components,
+									tl->width, tl->height, tl->border,
+									tl->format, tl->type, tl->img + tl->bytes/6*4);
+							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, i, tl->components,
+									tl->width, tl->height, tl->border,
+									tl->format, tl->type, tl->img + tl->bytes/6*5);
+							break;
 						default:
 							UNIMPLEMENTED();
 						}	
@@ -2785,6 +2962,10 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 				from->enabled3D[i] = to->enabled3D[i];
 			}
 #endif
+			if (from->enabledCubeMap[i] != to->enabledCubeMap[i]) {
+				able[to->enabledCubeMap[i]](GL_TEXTURE_CUBE_MAP_ARB);
+				from->enabledCubeMap[i] = to->enabledCubeMap[i];
+			}
 			if (from->textureGen[i].s != to->textureGen[i].s ||
 					from->textureGen[i].t != to->textureGen[i].t ||
 					from->textureGen[i].p != to->textureGen[i].p ||
@@ -2823,6 +3004,13 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			cname = &(from->currenttexture3dname[i]);
 		}
 #endif
+
+		if (to->enabledCubeMap[i] == GL_TRUE) {
+			GET_TOBJ(tobj,to,to->currentTextureCubeMapName[i]);
+			//tobj = to->currentTextureCubeMap;
+			name = to->currentTextureCubeMapName[i];
+			cname = &(from->currentTextureCubeMapName[i]);
+		}
 
 		if (!tobj) 
 		{
