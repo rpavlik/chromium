@@ -260,7 +260,7 @@ CheckWindowSize(WindowInfo * window)
  * This is the guts of the binaryswap operation.  Here, we call glReadPixels
  * to read a region of the color and depth buffers from the parent (render
  * SPU) window.	 We then begin the process of composition using binary swap.
- * Each node does a glReadPixels and sends it's swap region to its swap 
+ * Each node does a glReadPixels and sends its swap region to its swap 
  * partner.  Once we receive our partner's frame region, we use draw pixels to
  * composite against our frame.  This repeats for all swap partners.  Once we
  * have all of the regions composited against the one we are responsible for,
@@ -498,7 +498,7 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 		binaryswap_spu.super.Flush();
 
 		/* find optimal starting point for readback based on 
-		   this nodes region and the partner's region */
+		   this node's region and the partner's region */
 		recalc_start_x = render_info->start_x;
 		if (startx < render_info->clipped_x)
 		{
@@ -532,7 +532,7 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 		}
 
 		/* find optimal ending point for readback based on 
-		 * this nodes region and the partner's region
+		 * this node's region and the partner's region
 		 */
 		recalc_end_x = render_info->start_x + render_info->width;
 		if (endx > (render_info->clipped_x + render_info->clipped_width))
@@ -1133,9 +1133,9 @@ binaryswapspuWindowSize(GLint win, GLint w, GLint h)
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(binaryswap_spu.windowTable, win);
 	CRASSERT(window);
-	binaryswapspu_ResizeWindow(window, w, h);
 	binaryswap_spu.super.WindowSize(window->renderWindow, w, h);
 	binaryswap_spu.child.WindowSize(window->childWindow, w, h);
+	binaryswapspu_ResizeWindow(window, w, h);
 }
 
 
