@@ -278,6 +278,11 @@ void crServerSerializeRemoteStreams(void)
 			 */
 			crStateMakeCurrent( cr_server.curClient->currentCtx );
 
+			/* Force scissor, viewport and projection matrix update in
+			 * crServerSetOutputBounds().
+			 */
+			cr_server.currentSerialNo = 0;
+
 			msg_opcodes = (CRMessageOpcodes *) msg;
 			data_ptr = (char *) msg_opcodes + 
 				sizeof( *msg_opcodes) + 
