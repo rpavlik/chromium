@@ -15,6 +15,8 @@ print '#ifndef CR_API_TEMPLATES_H'
 print '#define CR_API_TEMPLATES_H'
 
 for func_name in keys:
-    print "extern void *%s;" % stub_common.DoImmediateMapping( func_name )
+	if stub_common.FindSpecial( "noexport", func_name ): 
+		continue
+	print "extern void *%s;" % stub_common.DoImmediateMapping( func_name )
 
 print '#endif /* CR_API_TEMPLATES_H */'

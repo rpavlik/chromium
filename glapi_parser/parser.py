@@ -6,10 +6,11 @@ func_line = '^WINGDIAPI'
 line_reg_exp = re.compile(func_line)
 
 system_gl = open("system_header/GL.H", 'r')
+chromium_gl = open("system_header/CR_GL.H", 'r')
 output_mapping_file = open("gl_header.parsed", 'wb')
 output_mapping = {}
 
-for line in system_gl.readlines():
+for line in system_gl.readlines() + chromium_gl.readlines():
 	match = line_reg_exp.match( line )
 	if match != None:
 		line = re.sub( "WINGDIAPI ", "", line )

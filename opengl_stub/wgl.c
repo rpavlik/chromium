@@ -1,5 +1,6 @@
 #include "cr_error.h"
 #include "cr_spu.h"
+#include "cr_applications.h"
 
 extern SPU *stub_spu;
 extern void StubInit(void);
@@ -196,8 +197,7 @@ HGLRC WINAPI wglCreateLayerContext_prox( HDC hdc, int layerPlane )
 
 PROC WINAPI wglGetProcAddress_prox( LPCSTR name )
 {
-	crError( "wglGetProcAddress(%s): unsupported", name );
-	return (PROC) 0;
+	return (PROC) crGetProcAddress( name );
 }
 
 BOOL WINAPI wglUseFontBitmapsA_prox( HDC hdc, DWORD first, DWORD count, DWORD listBase )

@@ -3,6 +3,12 @@
 
 #include "cr_glwrapper.h"
 
+#ifdef WINDOWS
+#define CR_APIENTRY __stdcall
+#else
+#define CR_APIENTRY
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,6 +39,9 @@ WINGDIAPI void APIENTRY glSemaphoreV (GLuint name);
 void APIENTRY crCreateContext(void);
 void APIENTRY crMakeCurrent(void);
 void APIENTRY crSwapBuffers(void);
+
+typedef int (CR_APIENTRY *CR_PROC)();
+CR_PROC APIENTRY crGetProcAddress( const char *name );
 
 #ifdef __cplusplus
 }
