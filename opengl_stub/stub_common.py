@@ -130,6 +130,7 @@ lengths['GLsizei'] = 4
 lengths['GLbitfield'] = 4
 
 lengths['void'] = 0
+lengths['int'] = 4
 
 align_types = 1
 

@@ -488,10 +488,10 @@ const char *glXQueryServerString( Display *dpy, int screen, int name )
 
 CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name )
 {
-	return (CR_GLXFuncPtr) crGetProcAddress( name );
+	return (CR_GLXFuncPtr) crGetProcAddress( (const char *) name );
 }
 
 CR_GLXFuncPtr glXGetProcAddress( const GLubyte *name )
 {
-	return (CR_GLXFuncPtr) crGetProcAddress( name );
+	return (CR_GLXFuncPtr) crGetProcAddress( (const char *) name );
 }

@@ -8,14 +8,13 @@
 
 #include <GL/glext.h>
 
-int crPackTexParameterParamsLength( GLenum param )
+int __packTexParameterNumParams( GLenum param )
 {
-	static int one_param = sizeof( GLfloat );
 	switch( param )
 	{
 #ifdef GL_EXT_texture_filter_anisotropic
 		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-			return one_param;
+			return 1;
 #endif
 		default:
 			break;
@@ -23,7 +22,7 @@ int crPackTexParameterParamsLength( GLenum param )
 	return 0;
 }
 
-int crPackFogParamsLength( GLenum param )
+int __packFogParamsLength( GLenum param )
 {
 	static int one_param = sizeof( GLfloat );
 	switch( param )

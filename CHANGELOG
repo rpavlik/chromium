@@ -1,0 +1,6 @@
+7/12/01: Implemented glPushAttrib/glPopAttrib
+7/13/01: Removed opcode names from packer/packer.c
+7/13/01: Started writing swapping packer
+7/13/01: Added endianness determining code
+7/13/01: Added missing double read/write code (!)
+7/13-17/01: Added swapping packer.  Still need to swap packet headers

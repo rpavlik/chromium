@@ -61,12 +61,13 @@ static int __gl_Map1NumComponents( GLenum target )
 	return -1;
 }
 
-void PACK_APIENTRY crPackMap2d(GLenum target, GLdouble u1, 
+void PACK_APIENTRY crPackMap2dSWAP(GLenum target, GLdouble u1, 
 		GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, 
 		GLint vstride, GLint vorder, const GLdouble *points)
 {
 	unsigned char *data_ptr;
 	int u,v;
+	int comp;
 	GLdouble *dest_data, *src_data;
 	int packet_length = 
 		sizeof( target ) + 
@@ -84,15 +85,15 @@ void PACK_APIENTRY crPackMap2d(GLenum target, GLdouble u1,
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 
-	WRITE_DATA( 0, GLenum, target );
-	WRITE_DOUBLE( 4, u1 );
-	WRITE_DOUBLE( 12, u2 );
-	WRITE_DATA( 20, GLint, num_components );
-	WRITE_DATA( 24, GLint, uorder );
-	WRITE_DOUBLE( 28, v1 );
-	WRITE_DOUBLE( 36, v2 );
-	WRITE_DATA( 44, GLint, num_components*uorder );
-	WRITE_DATA( 48, GLint, vorder );
+	WRITE_DATA( 0, GLenum, SWAP32(target) );
+	WRITE_SWAPPED_DOUBLE( 4, u1 );
+	WRITE_SWAPPED_DOUBLE( 12, u2 );
+	WRITE_DATA( 20, GLint, SWAP32(num_components) );
+	WRITE_DATA( 24, GLint, SWAP32(uorder) );
+	WRITE_SWAPPED_DOUBLE( 28, v1 );
+	WRITE_SWAPPED_DOUBLE( 36, v2 );
+	WRITE_DATA( 44, GLint, SWAP32(num_components*uorder) );
+	WRITE_DATA( 48, GLint, SWAP32(vorder) );
 
 	dest_data = (GLdouble *) (data_ptr + 52);
 	src_data = (GLdouble *) points;
@@ -100,7 +101,10 @@ void PACK_APIENTRY crPackMap2d(GLenum target, GLdouble u1,
 	{
 		for (u = 0 ; u < uorder ; u++)
 		{
-			memcpy( dest_data, src_data, num_components * sizeof( *points ) );
+			for (comp = 0 ; comp < num_components ; comp++)
+			{
+				WRITE_SWAPPED_DOUBLE( ((unsigned char *) dest_data + comp*sizeof(*points)) - data_ptr, *(src_data + comp) );
+			}
 			dest_data += num_components;
 			src_data += ustride;
 		}
@@ -111,12 +115,13 @@ void PACK_APIENTRY crPackMap2d(GLenum target, GLdouble u1,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackMap2f(GLenum target, GLfloat u1, 
+void PACK_APIENTRY crPackMap2fSWAP(GLenum target, GLfloat u1, 
 		GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, 
 		GLint vstride, GLint vorder, const GLfloat *points)
 {
 	unsigned char *data_ptr;
 	int u,v;
+	int comp;
 	GLfloat *dest_data, *src_data;
 	int packet_length = 
 		sizeof( target ) + 
@@ -134,15 +139,15 @@ void PACK_APIENTRY crPackMap2f(GLenum target, GLfloat u1,
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 
-	WRITE_DATA( 0, GLenum, target );
-	WRITE_DATA( 4, GLfloat, u1 );
-	WRITE_DATA( 8, GLfloat, u2 );
-	WRITE_DATA( 12, GLint, num_components );
-	WRITE_DATA( 16, GLint, uorder );
-	WRITE_DATA( 20, GLfloat, v1 );
-	WRITE_DATA( 24, GLfloat, v2 );
-	WRITE_DATA( 28, GLint, num_components*uorder );
-	WRITE_DATA( 32, GLint, vorder );
+	WRITE_DATA( 0, GLenum, SWAP32(target) );
+	WRITE_DATA( 4, GLfloat, SWAPFLOAT(u1) );
+	WRITE_DATA( 8, GLfloat, SWAPFLOAT(u2) );
+	WRITE_DATA( 12, GLint, SWAP32(num_components) );
+	WRITE_DATA( 16, GLint, SWAP32(uorder) );
+	WRITE_DATA( 20, GLfloat, SWAPFLOAT(v1) );
+	WRITE_DATA( 24, GLfloat, SWAPFLOAT(v2) );
+	WRITE_DATA( 28, GLint, SWAP32(num_components*uorder) );
+	WRITE_DATA( 32, GLint, SWAP32(vorder) );
 
 	dest_data = (GLfloat *) (data_ptr + 36);
 	src_data = (GLfloat *) points;
@@ -150,7 +155,10 @@ void PACK_APIENTRY crPackMap2f(GLenum target, GLfloat u1,
 	{
 		for (u = 0 ; u < uorder ; u++)
 		{
-			memcpy( dest_data, src_data, num_components * sizeof( *points ) );
+			for (comp = 0 ; comp < num_components ; comp++)
+			{
+				WRITE_DATA( (unsigned char *) dest_data + comp*sizeof(*points) - data_ptr, GLfloat, SWAPFLOAT( *(src_data + comp) ) );
+			}
 			dest_data += num_components;
 			src_data += ustride;
 		}
@@ -161,7 +169,7 @@ void PACK_APIENTRY crPackMap2f(GLenum target, GLfloat u1,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackMap1d( GLenum target, GLdouble u1,
+void PACK_APIENTRY crPackMap1dSWAP( GLenum target, GLdouble u1,
 		GLdouble u2, GLint stride, GLint order, const GLdouble *points )
 {
 	unsigned char *data_ptr;
@@ -175,22 +183,26 @@ void PACK_APIENTRY crPackMap1d( GLenum target, GLdouble u1,
 	int num_components = __gl_Map1NumComponents( target );
 	GLdouble *src_data, *dest_data;
 	int u;
+	int comp;
 
 	packet_length += num_components * order * sizeof( *points );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 
-	WRITE_DATA( 0, GLenum, target );
-	WRITE_DOUBLE( 4, u1 );
-	WRITE_DOUBLE( 12, u2 );
-	WRITE_DATA( 20, GLint, num_components );
-	WRITE_DATA( 24, GLint, order );
+	WRITE_DATA( 0, GLenum, SWAP32(target) );
+	WRITE_SWAPPED_DOUBLE( 4, u1 );
+	WRITE_SWAPPED_DOUBLE( 12, u2 );
+	WRITE_DATA( 20, GLint, SWAP32(num_components) );
+	WRITE_DATA( 24, GLint, SWAP32(order) );
 
 	dest_data = (GLdouble *) (data_ptr + 28);
 	src_data = (GLdouble *) points;
 	for (u = 0 ; u < order ; u++)
 	{
-		memcpy( dest_data, src_data, num_components * sizeof( *points ) );
+		for (comp = 0 ; comp < num_components ; comp++)
+		{
+			WRITE_SWAPPED_DOUBLE( (unsigned char *) dest_data + comp*sizeof(*points) - data_ptr, *(src_data + comp) );
+		}
 		dest_data += num_components;
 		src_data += stride;
 	}
@@ -199,7 +211,7 @@ void PACK_APIENTRY crPackMap1d( GLenum target, GLdouble u1,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackMap1f( GLenum target, GLfloat u1,
+void PACK_APIENTRY crPackMap1fSWAP( GLenum target, GLfloat u1,
 		GLfloat u2, GLint stride, GLint order, const GLfloat *points )
 {
 	unsigned char *data_ptr;
@@ -213,22 +225,26 @@ void PACK_APIENTRY crPackMap1f( GLenum target, GLfloat u1,
 	int num_components = __gl_Map1NumComponents( target );
 	GLfloat *src_data, *dest_data;
 	int u;
+	int comp;
 
 	packet_length += num_components * order * sizeof( *points );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 
-	WRITE_DATA( 0, GLenum, target );
-	WRITE_DATA( 4, GLfloat, u1 );
-	WRITE_DATA( 8, GLfloat, u2 );
-	WRITE_DATA( 12, GLint, num_components );
-	WRITE_DATA( 16, GLint, order );
+	WRITE_DATA( 0, GLenum, SWAP32(target) );
+	WRITE_DATA( 4, GLfloat, SWAPFLOAT(u1) );
+	WRITE_DATA( 8, GLfloat, SWAPFLOAT(u2) );
+	WRITE_DATA( 12, GLint, SWAP32(num_components) );
+	WRITE_DATA( 16, GLint, SWAP32(order) );
 
 	dest_data = (GLfloat *) (data_ptr + 20);
 	src_data = (GLfloat *) points;
 	for (u = 0 ; u < order ; u++)
 	{
-		memcpy( dest_data, src_data, num_components * sizeof( *points ) );
+		for (comp = 0 ; comp < num_components ; comp++)
+		{
+			WRITE_DATA( (unsigned char *) dest_data + comp*sizeof(*points) - data_ptr, GLfloat, SWAPFLOAT( *(src_data + comp) ) );
+		}
 		dest_data += num_components;
 		src_data += stride;
 	}

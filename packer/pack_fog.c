@@ -26,7 +26,7 @@ static void __handleFogData( GLenum pname, const GLfloat *params )
 			params_length = 4*sizeof( *params );
 			break;
 		default:
-			params_length = crPackFogParamsLength( pname );
+			params_length = __packFogParamsLength( pname );
 			if (!params_length)
 			{
 				crError( "Invalid pname in Fog: %d", pname );

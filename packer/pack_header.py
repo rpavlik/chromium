@@ -62,6 +62,7 @@ for func_name in keys:
 		arg_types.append( "int *" )
 		arg_names.append( "writeback" )
 	print 'void PACK_APIENTRY crPack%s%s;' %( func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+	print 'void PACK_APIENTRY crPack%sSWAP%s;' %( func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 
 for n in [2,3,4]:
 	for t in ['d', 'f', 'i', 's']:
@@ -70,5 +71,7 @@ for n in [2,3,4]:
 			( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 			print 'void PACK_APIENTRY crPack%sBBOX%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 			print 'void PACK_APIENTRY crPack%sBBOX_COUNT%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+			print 'void PACK_APIENTRY crPack%sBBOXSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+			print 'void PACK_APIENTRY crPack%sBBOX_COUNTSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 
 print '\n#endif /* CR_PACKFUNCTIONS_H */'

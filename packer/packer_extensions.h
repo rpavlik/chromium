@@ -9,7 +9,7 @@
 
 #include "cr_glwrapper.h"
 
-int crPackTexParameterParamsLength( GLenum pname );
-int crPackFogParamsLength( GLenum pname );
+int __packTexParameterNumParams( GLenum pname );
+int __packFogParamsLength( GLenum pname );
 
 #endif /* CR_PACKER_EXTENSION_H */

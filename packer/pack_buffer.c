@@ -13,6 +13,29 @@
 #include <stdlib.h>
 #include <memory.h>
 
+void crWriteUnalignedDouble( void *buffer, double d )
+{
+	unsigned int *ui = (unsigned int *) buffer;
+	ui[0] = ((unsigned int *) &d)[0];
+	ui[1] = ((unsigned int *) &d)[1];
+}
+
+void crWriteSwappedDouble( void *buffer, double d )
+{
+	unsigned int *ui = (unsigned int *) buffer;
+	ui[0] = SWAP32(((unsigned int *) &d)[1]);
+	ui[1] = SWAP32(((unsigned int *) &d)[0]);
+}
+
+double crReadUnalignedDouble( void *buffer )
+{
+	unsigned int *ui = (unsigned int *) buffer;
+	double d;
+	((unsigned int *) &d)[0] = ui[0];
+	((unsigned int *) &d)[1] = ui[1];
+	return d;
+}
+
 void crPackSetBuffer( CRPackBuffer *buffer )
 {
 	CRASSERT( buffer != NULL );
@@ -167,22 +190,4 @@ void crNetworkPointerWrite( CRNetworkPointer *dst, void *src )
 	dst->ptrAlign[0] = 0xDeadBeef;
 	dst->ptrAlign[1] = 0xCafeBabe;
 	memcpy( dst, &src, sizeof(src) );
-}
-
-void SanityCheck( void )
-{
-	unsigned char *ptr = cr_packer_globals.buffer.opcode_start;
-
-	while (ptr > cr_packer_globals.buffer.opcode_current)
-	{
-		if (ptr[0] == CR_EXTEND_OPCODE &&
-				ptr[1] == CR_EXTEND_OPCODE &&
-				ptr[2] == CR_EXTEND_OPCODE &&
-				ptr[3] == CR_EXTEND_OPCODE &&
-				ptr[4] == CR_EXTEND_OPCODE)
-		{
-                   //DebugBreak();
-		}
-		ptr--;
-	}
 }

@@ -43,7 +43,10 @@ static void __handleMaterialData( GLenum face, GLenum pname, const GLfloat *para
 		WRITE_DATA( sizeof( int ) + 12, GLfloat, params[1] );
 		WRITE_DATA( sizeof( int ) + 16, GLfloat, params[2] );
 	}
-	if (packet_length > 3*sizeof( *params ) ) WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
+	if (packet_length > 3*sizeof( *params ) ) 
+	{
+		WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
+	}
 }
 
 void PACK_APIENTRY crPackMaterialfv(GLenum face, GLenum pname, const GLfloat *params)

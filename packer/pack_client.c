@@ -206,7 +206,7 @@ void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRC
 		crError("crPackDrawArrays called with invalid mode: %d", mode);
 	}
 
-	crPackBegin (mode);
+	crPackBegin(mode);
 	for (i=0; i<count; i++) 
 	{
 		crPackArrayElement(first++, c);
@@ -235,7 +235,7 @@ void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
 		crError("crPackDrawElements called with invalid type: %d", type);
 	}
 	
-	crPackBegin (mode);
+	crPackBegin(mode);
 	switch (type) 
 	{
 	case GL_UNSIGNED_BYTE:

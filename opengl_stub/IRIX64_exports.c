@@ -1,15 +1,15 @@
 /* Copyright (c) 2001, Stanford University
- * All rights reserved
- *
- * See the file LICENSE.txt for information on redistributing this software.
- */
+	All rights reserved.
 
+	See the file LICENSE.txt for information on redistributing this software. */
+	
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/gl.h>
 
 /* these pointers live in opengl_stub/api_templates.c */
 extern void *__glim_Accum;
+extern void *__glim_ActiveTextureARB;
 extern void *__glim_AlphaFunc;
 extern void *__glim_AreTexturesResident;
 extern void *__glim_ArrayElement;
@@ -19,6 +19,8 @@ extern void *__glim_BarrierExec;
 extern void *__glim_Begin;
 extern void *__glim_BindTexture;
 extern void *__glim_Bitmap;
+extern void *__glim_BlendColorEXT;
+extern void *__glim_BlendEquationEXT;
 extern void *__glim_BlendFunc;
 extern void *__glim_CallList;
 extern void *__glim_CallLists;
@@ -28,6 +30,7 @@ extern void *__glim_ClearColor;
 extern void *__glim_ClearDepth;
 extern void *__glim_ClearIndex;
 extern void *__glim_ClearStencil;
+extern void *__glim_ClientActiveTextureARB;
 extern void *__glim_ClipPlane;
 extern void *__glim_Color3b;
 extern void *__glim_Color3bv;
@@ -190,6 +193,38 @@ extern void *__glim_Materialiv;
 extern void *__glim_MatrixMode;
 extern void *__glim_MultMatrixd;
 extern void *__glim_MultMatrixf;
+extern void *__glim_MultiTexCoord1dARB;
+extern void *__glim_MultiTexCoord1dvARB;
+extern void *__glim_MultiTexCoord1fARB;
+extern void *__glim_MultiTexCoord1fvARB;
+extern void *__glim_MultiTexCoord1iARB;
+extern void *__glim_MultiTexCoord1ivARB;
+extern void *__glim_MultiTexCoord1sARB;
+extern void *__glim_MultiTexCoord1svARB;
+extern void *__glim_MultiTexCoord2dARB;
+extern void *__glim_MultiTexCoord2dvARB;
+extern void *__glim_MultiTexCoord2fARB;
+extern void *__glim_MultiTexCoord2fvARB;
+extern void *__glim_MultiTexCoord2iARB;
+extern void *__glim_MultiTexCoord2ivARB;
+extern void *__glim_MultiTexCoord2sARB;
+extern void *__glim_MultiTexCoord2svARB;
+extern void *__glim_MultiTexCoord3dARB;
+extern void *__glim_MultiTexCoord3dvARB;
+extern void *__glim_MultiTexCoord3fARB;
+extern void *__glim_MultiTexCoord3fvARB;
+extern void *__glim_MultiTexCoord3iARB;
+extern void *__glim_MultiTexCoord3ivARB;
+extern void *__glim_MultiTexCoord3sARB;
+extern void *__glim_MultiTexCoord3svARB;
+extern void *__glim_MultiTexCoord4dARB;
+extern void *__glim_MultiTexCoord4dvARB;
+extern void *__glim_MultiTexCoord4fARB;
+extern void *__glim_MultiTexCoord4fvARB;
+extern void *__glim_MultiTexCoord4iARB;
+extern void *__glim_MultiTexCoord4ivARB;
+extern void *__glim_MultiTexCoord4sARB;
+extern void *__glim_MultiTexCoord4svARB;
 extern void *__glim_NewList;
 extern void *__glim_Normal3b;
 extern void *__glim_Normal3bv;
@@ -357,6 +392,7 @@ extern void *__glim_Viewport;
 extern void *__glim_Writeback;
 
 typedef void (*glAccum_ptr) ( GLenum op, GLfloat value ) ;
+typedef void (*glActiveTextureARB_ptr) ( GLenum texture ) ;
 typedef void (*glAlphaFunc_ptr) ( GLenum func, GLclampf ref ) ;
 typedef GLboolean (*glAreTexturesResident_ptr) ( GLsizei n, const GLuint *textures, GLboolean *residences ) ;
 typedef void (*glArrayElement_ptr) ( GLint i ) ;
@@ -366,6 +402,8 @@ typedef void (*glBarrierExec_ptr) ( GLuint name ) ;
 typedef void (*glBegin_ptr) ( GLenum mode ) ;
 typedef void (*glBindTexture_ptr) ( GLenum target, GLuint texture ) ;
 typedef void (*glBitmap_ptr) ( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap ) ;
+typedef void (*glBlendColorEXT_ptr) ( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) ;
+typedef void (*glBlendEquationEXT_ptr) ( GLenum mode ) ;
 typedef void (*glBlendFunc_ptr) ( GLenum sfactor, GLenum dfactor ) ;
 typedef void (*glCallList_ptr) ( GLuint list ) ;
 typedef void (*glCallLists_ptr) ( GLsizei n, GLenum type, const GLvoid *lists ) ;
@@ -375,6 +413,7 @@ typedef void (*glClearColor_ptr) ( GLclampf red, GLclampf green, GLclampf blue, 
 typedef void (*glClearDepth_ptr) ( GLclampd depth ) ;
 typedef void (*glClearIndex_ptr) ( GLfloat c ) ;
 typedef void (*glClearStencil_ptr) ( GLint s ) ;
+typedef void (*glClientActiveTextureARB_ptr) ( GLenum texture ) ;
 typedef void (*glClipPlane_ptr) ( GLenum plane, const GLdouble *equation ) ;
 typedef void (*glColor3b_ptr) ( GLbyte red, GLbyte green, GLbyte blue ) ;
 typedef void (*glColor3bv_ptr) ( const GLbyte *v ) ;
@@ -537,6 +576,38 @@ typedef void (*glMaterialiv_ptr) ( GLenum face, GLenum pname, const GLint *param
 typedef void (*glMatrixMode_ptr) ( GLenum mode ) ;
 typedef void (*glMultMatrixd_ptr) ( const GLdouble *m ) ;
 typedef void (*glMultMatrixf_ptr) ( const GLfloat *m ) ;
+typedef void (*glMultiTexCoord1dARB_ptr) ( GLenum texture, GLdouble s ) ;
+typedef void (*glMultiTexCoord1dvARB_ptr) ( GLenum texture, const GLdouble *t ) ;
+typedef void (*glMultiTexCoord1fARB_ptr) ( GLenum texture, GLfloat s ) ;
+typedef void (*glMultiTexCoord1fvARB_ptr) ( GLenum texture, const GLfloat *t ) ;
+typedef void (*glMultiTexCoord1iARB_ptr) ( GLenum texture, GLint s ) ;
+typedef void (*glMultiTexCoord1ivARB_ptr) ( GLenum texture, const GLint *t ) ;
+typedef void (*glMultiTexCoord1sARB_ptr) ( GLenum texture, GLshort s ) ;
+typedef void (*glMultiTexCoord1svARB_ptr) ( GLenum texture, const GLshort *t ) ;
+typedef void (*glMultiTexCoord2dARB_ptr) ( GLenum texture, GLdouble s, GLdouble t ) ;
+typedef void (*glMultiTexCoord2dvARB_ptr) ( GLenum texture, const GLdouble *t ) ;
+typedef void (*glMultiTexCoord2fARB_ptr) ( GLenum texture, GLfloat s, GLfloat t ) ;
+typedef void (*glMultiTexCoord2fvARB_ptr) ( GLenum texture, const GLfloat *t ) ;
+typedef void (*glMultiTexCoord2iARB_ptr) ( GLenum texture, GLint s, GLint t ) ;
+typedef void (*glMultiTexCoord2ivARB_ptr) ( GLenum texture, const GLint *t ) ;
+typedef void (*glMultiTexCoord2sARB_ptr) ( GLenum texture, GLshort s, GLshort t ) ;
+typedef void (*glMultiTexCoord2svARB_ptr) ( GLenum texture, const GLshort *t ) ;
+typedef void (*glMultiTexCoord3dARB_ptr) ( GLenum texture, GLdouble s, GLdouble t, GLdouble r ) ;
+typedef void (*glMultiTexCoord3dvARB_ptr) ( GLenum texture, const GLdouble *t ) ;
+typedef void (*glMultiTexCoord3fARB_ptr) ( GLenum texture, GLfloat s, GLfloat t, GLfloat r ) ;
+typedef void (*glMultiTexCoord3fvARB_ptr) ( GLenum texture, const GLfloat *t ) ;
+typedef void (*glMultiTexCoord3iARB_ptr) ( GLenum texture, GLint s, GLint t, GLint r ) ;
+typedef void (*glMultiTexCoord3ivARB_ptr) ( GLenum texture, const GLint *t ) ;
+typedef void (*glMultiTexCoord3sARB_ptr) ( GLenum texture, GLshort s, GLshort t, GLshort r ) ;
+typedef void (*glMultiTexCoord3svARB_ptr) ( GLenum texture, const GLshort *t ) ;
+typedef void (*glMultiTexCoord4dARB_ptr) ( GLenum texture, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) ;
+typedef void (*glMultiTexCoord4dvARB_ptr) ( GLenum texture, const GLdouble *t ) ;
+typedef void (*glMultiTexCoord4fARB_ptr) ( GLenum texture, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) ;
+typedef void (*glMultiTexCoord4fvARB_ptr) ( GLenum texture, const GLfloat *t ) ;
+typedef void (*glMultiTexCoord4iARB_ptr) ( GLenum texture, GLint s, GLint t, GLint r, GLint q ) ;
+typedef void (*glMultiTexCoord4ivARB_ptr) ( GLenum texture, const GLint *t ) ;
+typedef void (*glMultiTexCoord4sARB_ptr) ( GLenum texture, GLshort s, GLshort t, GLshort r, GLshort q ) ;
+typedef void (*glMultiTexCoord4svARB_ptr) ( GLenum texture, const GLshort *t ) ;
 typedef void (*glNewList_ptr) ( GLuint list, GLenum mode ) ;
 typedef void (*glNormal3b_ptr) ( GLbyte nx, GLbyte ny, GLbyte nz ) ;
 typedef void (*glNormal3bv_ptr) ( const GLbyte *v ) ;
@@ -708,6 +779,11 @@ void glAccum ( GLenum op, GLfloat value )
 	((glAccum_ptr) __glim_Accum) ( op , value );
 }
 
+void glActiveTextureARB ( GLenum texture )
+{
+	((glActiveTextureARB_ptr) __glim_ActiveTextureARB) ( texture );
+}
+
 void glAlphaFunc ( GLenum func, GLclampf ref )
 {
 	((glAlphaFunc_ptr) __glim_AlphaFunc) ( func , ref );
@@ -753,6 +829,16 @@ void glBitmap ( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLf
 	((glBitmap_ptr) __glim_Bitmap) ( width , height , xorig , yorig , xmove , ymove , bitmap );
 }
 
+void glBlendColorEXT ( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
+{
+	((glBlendColorEXT_ptr) __glim_BlendColorEXT) ( red , green , blue , alpha );
+}
+
+void glBlendEquationEXT ( GLenum mode )
+{
+	((glBlendEquationEXT_ptr) __glim_BlendEquationEXT) ( mode );
+}
+
 void glBlendFunc ( GLenum sfactor, GLenum dfactor )
 {
 	((glBlendFunc_ptr) __glim_BlendFunc) ( sfactor , dfactor );
@@ -796,6 +882,11 @@ void glClearIndex ( GLfloat c )
 void glClearStencil ( GLint s )
 {
 	((glClearStencil_ptr) __glim_ClearStencil) ( s );
+}
+
+void glClientActiveTextureARB ( GLenum texture )
+{
+	((glClientActiveTextureARB_ptr) __glim_ClientActiveTextureARB) ( texture );
 }
 
 void glClipPlane ( GLenum plane, const GLdouble *equation )
@@ -1606,6 +1697,166 @@ void glMultMatrixd ( const GLdouble *m )
 void glMultMatrixf ( const GLfloat *m )
 {
 	((glMultMatrixf_ptr) __glim_MultMatrixf) ( m );
+}
+
+void glMultiTexCoord1dARB ( GLenum texture, GLdouble s )
+{
+	((glMultiTexCoord1dARB_ptr) __glim_MultiTexCoord1dARB) ( texture , s );
+}
+
+void glMultiTexCoord1dvARB ( GLenum texture, const GLdouble *t )
+{
+	((glMultiTexCoord1dvARB_ptr) __glim_MultiTexCoord1dvARB) ( texture , t );
+}
+
+void glMultiTexCoord1fARB ( GLenum texture, GLfloat s )
+{
+	((glMultiTexCoord1fARB_ptr) __glim_MultiTexCoord1fARB) ( texture , s );
+}
+
+void glMultiTexCoord1fvARB ( GLenum texture, const GLfloat *t )
+{
+	((glMultiTexCoord1fvARB_ptr) __glim_MultiTexCoord1fvARB) ( texture , t );
+}
+
+void glMultiTexCoord1iARB ( GLenum texture, GLint s )
+{
+	((glMultiTexCoord1iARB_ptr) __glim_MultiTexCoord1iARB) ( texture , s );
+}
+
+void glMultiTexCoord1ivARB ( GLenum texture, const GLint *t )
+{
+	((glMultiTexCoord1ivARB_ptr) __glim_MultiTexCoord1ivARB) ( texture , t );
+}
+
+void glMultiTexCoord1sARB ( GLenum texture, GLshort s )
+{
+	((glMultiTexCoord1sARB_ptr) __glim_MultiTexCoord1sARB) ( texture , s );
+}
+
+void glMultiTexCoord1svARB ( GLenum texture, const GLshort *t )
+{
+	((glMultiTexCoord1svARB_ptr) __glim_MultiTexCoord1svARB) ( texture , t );
+}
+
+void glMultiTexCoord2dARB ( GLenum texture, GLdouble s, GLdouble t )
+{
+	((glMultiTexCoord2dARB_ptr) __glim_MultiTexCoord2dARB) ( texture , s , t );
+}
+
+void glMultiTexCoord2dvARB ( GLenum texture, const GLdouble *t )
+{
+	((glMultiTexCoord2dvARB_ptr) __glim_MultiTexCoord2dvARB) ( texture , t );
+}
+
+void glMultiTexCoord2fARB ( GLenum texture, GLfloat s, GLfloat t )
+{
+	((glMultiTexCoord2fARB_ptr) __glim_MultiTexCoord2fARB) ( texture , s , t );
+}
+
+void glMultiTexCoord2fvARB ( GLenum texture, const GLfloat *t )
+{
+	((glMultiTexCoord2fvARB_ptr) __glim_MultiTexCoord2fvARB) ( texture , t );
+}
+
+void glMultiTexCoord2iARB ( GLenum texture, GLint s, GLint t )
+{
+	((glMultiTexCoord2iARB_ptr) __glim_MultiTexCoord2iARB) ( texture , s , t );
+}
+
+void glMultiTexCoord2ivARB ( GLenum texture, const GLint *t )
+{
+	((glMultiTexCoord2ivARB_ptr) __glim_MultiTexCoord2ivARB) ( texture , t );
+}
+
+void glMultiTexCoord2sARB ( GLenum texture, GLshort s, GLshort t )
+{
+	((glMultiTexCoord2sARB_ptr) __glim_MultiTexCoord2sARB) ( texture , s , t );
+}
+
+void glMultiTexCoord2svARB ( GLenum texture, const GLshort *t )
+{
+	((glMultiTexCoord2svARB_ptr) __glim_MultiTexCoord2svARB) ( texture , t );
+}
+
+void glMultiTexCoord3dARB ( GLenum texture, GLdouble s, GLdouble t, GLdouble r )
+{
+	((glMultiTexCoord3dARB_ptr) __glim_MultiTexCoord3dARB) ( texture , s , t , r );
+}
+
+void glMultiTexCoord3dvARB ( GLenum texture, const GLdouble *t )
+{
+	((glMultiTexCoord3dvARB_ptr) __glim_MultiTexCoord3dvARB) ( texture , t );
+}
+
+void glMultiTexCoord3fARB ( GLenum texture, GLfloat s, GLfloat t, GLfloat r )
+{
+	((glMultiTexCoord3fARB_ptr) __glim_MultiTexCoord3fARB) ( texture , s , t , r );
+}
+
+void glMultiTexCoord3fvARB ( GLenum texture, const GLfloat *t )
+{
+	((glMultiTexCoord3fvARB_ptr) __glim_MultiTexCoord3fvARB) ( texture , t );
+}
+
+void glMultiTexCoord3iARB ( GLenum texture, GLint s, GLint t, GLint r )
+{
+	((glMultiTexCoord3iARB_ptr) __glim_MultiTexCoord3iARB) ( texture , s , t , r );
+}
+
+void glMultiTexCoord3ivARB ( GLenum texture, const GLint *t )
+{
+	((glMultiTexCoord3ivARB_ptr) __glim_MultiTexCoord3ivARB) ( texture , t );
+}
+
+void glMultiTexCoord3sARB ( GLenum texture, GLshort s, GLshort t, GLshort r )
+{
+	((glMultiTexCoord3sARB_ptr) __glim_MultiTexCoord3sARB) ( texture , s , t , r );
+}
+
+void glMultiTexCoord3svARB ( GLenum texture, const GLshort *t )
+{
+	((glMultiTexCoord3svARB_ptr) __glim_MultiTexCoord3svARB) ( texture , t );
+}
+
+void glMultiTexCoord4dARB ( GLenum texture, GLdouble s, GLdouble t, GLdouble r, GLdouble q )
+{
+	((glMultiTexCoord4dARB_ptr) __glim_MultiTexCoord4dARB) ( texture , s , t , r , q );
+}
+
+void glMultiTexCoord4dvARB ( GLenum texture, const GLdouble *t )
+{
+	((glMultiTexCoord4dvARB_ptr) __glim_MultiTexCoord4dvARB) ( texture , t );
+}
+
+void glMultiTexCoord4fARB ( GLenum texture, GLfloat s, GLfloat t, GLfloat r, GLfloat q )
+{
+	((glMultiTexCoord4fARB_ptr) __glim_MultiTexCoord4fARB) ( texture , s , t , r , q );
+}
+
+void glMultiTexCoord4fvARB ( GLenum texture, const GLfloat *t )
+{
+	((glMultiTexCoord4fvARB_ptr) __glim_MultiTexCoord4fvARB) ( texture , t );
+}
+
+void glMultiTexCoord4iARB ( GLenum texture, GLint s, GLint t, GLint r, GLint q )
+{
+	((glMultiTexCoord4iARB_ptr) __glim_MultiTexCoord4iARB) ( texture , s , t , r , q );
+}
+
+void glMultiTexCoord4ivARB ( GLenum texture, const GLint *t )
+{
+	((glMultiTexCoord4ivARB_ptr) __glim_MultiTexCoord4ivARB) ( texture , t );
+}
+
+void glMultiTexCoord4sARB ( GLenum texture, GLshort s, GLshort t, GLshort r, GLshort q )
+{
+	((glMultiTexCoord4sARB_ptr) __glim_MultiTexCoord4sARB) ( texture , s , t , r , q );
+}
+
+void glMultiTexCoord4svARB ( GLenum texture, const GLshort *t )
+{
+	((glMultiTexCoord4svARB_ptr) __glim_MultiTexCoord4svARB) ( texture , t );
 }
 
 void glNewList ( GLuint list, GLenum mode )

@@ -15,7 +15,7 @@
 
 #include "state/cr_pixel.h"
 
-void PACK_APIENTRY crPackTexImage1D(GLenum target, GLint level, 
+void PACK_APIENTRY crPackTexImage1DSWAP(GLenum target, GLint level, 
 		GLint internalformat, GLsizei width, GLint border, GLenum format, 
 		GLenum type, const GLvoid *pixels, CRPackState *packstate )
 {
@@ -39,14 +39,14 @@ void PACK_APIENTRY crPackTexImage1D(GLenum target, GLint level,
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, GLenum, target );
-	WRITE_DATA( 4, GLint, level );
-	WRITE_DATA( 8, GLint, internalformat );
-	WRITE_DATA( 12, GLsizei, width );
-	WRITE_DATA( 16, GLint, border );
-	WRITE_DATA( 20, GLenum, format );
-	WRITE_DATA( 24, GLenum, type );
-	WRITE_DATA( 28, int, isnull );
+	WRITE_DATA( 0, GLenum, SWAP32(target) );
+	WRITE_DATA( 4, GLint, SWAP32(level) );
+	WRITE_DATA( 8, GLint, SWAP32(internalformat) );
+	WRITE_DATA( 12, GLsizei, SWAP32(width) );
+	WRITE_DATA( 16, GLint, SWAP32(border) );
+	WRITE_DATA( 20, GLenum, SWAP32(format) );
+	WRITE_DATA( 24, GLenum, SWAP32(type) );
+	WRITE_DATA( 28, int, SWAP32(isnull) );
 
 	if (pixels) {
 		crPixelCopy1D( (void *)(data_ptr + 32), pixels, format, type, width, packstate );
@@ -56,7 +56,7 @@ void PACK_APIENTRY crPackTexImage1D(GLenum target, GLint level,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level, 
+void PACK_APIENTRY crPackTexImage2DSWAP(GLenum target, GLint level, 
 		GLint internalformat, GLsizei width, GLsizei height, GLint border, 
 		GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
 {
@@ -81,15 +81,15 @@ void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level,
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, GLenum, target );
-	WRITE_DATA( 4, GLint, level );
-	WRITE_DATA( 8, GLint, internalformat );
-	WRITE_DATA( 12, GLsizei, width );
-	WRITE_DATA( 16, GLsizei, height );
-	WRITE_DATA( 20, GLint, border );
-	WRITE_DATA( 24, GLenum, format );
-	WRITE_DATA( 28, GLenum, type );
-	WRITE_DATA( 32, int, isnull );
+	WRITE_DATA( 0, GLenum, SWAP32(target) );
+	WRITE_DATA( 4, GLint, SWAP32(level) );
+	WRITE_DATA( 8, GLint, SWAP32(internalformat) );
+	WRITE_DATA( 12, GLsizei, SWAP32(width) );
+	WRITE_DATA( 16, GLsizei, SWAP32(height) );
+	WRITE_DATA( 20, GLint, SWAP32(border) );
+	WRITE_DATA( 24, GLenum, SWAP32(format) );
+	WRITE_DATA( 28, GLenum, SWAP32(type) );
+	WRITE_DATA( 32, int, SWAP32(isnull) );
 
 	if (pixels)
 	{
@@ -102,9 +102,10 @@ void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackDeleteTextures( GLsizei n, const GLuint *textures )
+void PACK_APIENTRY crPackDeleteTexturesSWAP( GLsizei n, const GLuint *textures )
 {
 	unsigned char *data_ptr;
+	int i;
 	int packet_length = 
 		sizeof( int ) + 
 		sizeof( n ) + 
@@ -113,7 +114,10 @@ void PACK_APIENTRY crPackDeleteTextures( GLsizei n, const GLuint *textures )
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, int, packet_length );
 	WRITE_DATA( sizeof( int ) + 0, GLsizei, n );
-	memcpy( data_ptr + sizeof( int ) + 4, textures, n*sizeof(*textures) );
+	for ( i = 0 ; i < n ; i++)
+	{
+		WRITE_DATA( (i+1)*sizeof( int ) + 4, GLint, SWAP32(textures[i]) );
+	}
 	crHugePacket( CR_DELETETEXTURES_OPCODE, data_ptr );
 	crPackFree( data_ptr );
 }
@@ -121,40 +125,41 @@ void PACK_APIENTRY crPackDeleteTextures( GLsizei n, const GLuint *textures )
 static void __handleTexEnvData( GLenum target, GLenum pname, const GLfloat *params )
 {
 	unsigned char *data_ptr;
-	int params_length;
+	int num_params;
+	int i;
 
 	int packet_length = 
 		sizeof( int ) + 
 		sizeof( target ) + 
 		sizeof( pname );
 
+	num_params = 1;
 	if ( pname == GL_TEXTURE_ENV_COLOR )
 	{
-		params_length = 4*sizeof( *params );
-	}
-	else
-	{
-		params_length = sizeof( *params );
+		num_params = 4;
 	}
 
-	packet_length += params_length;
+	packet_length += num_params*sizeof(*params);
 
 	GET_BUFFERED_POINTER( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( sizeof( int ) + 0, GLenum, target );
-	WRITE_DATA( sizeof( int ) + 4, GLenum, pname );
-	memcpy( data_ptr + sizeof( int ) + 8, params, params_length );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( sizeof( int ) + 0, GLenum, SWAP32(target) );
+	WRITE_DATA( sizeof( int ) + 4, GLenum, SWAP32(pname) );
+	for ( i = 0 ; i < num_params ; i++)
+	{
+		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLfloat, SWAPFLOAT( params[i] ) );
+	}
 }
 
 
-void PACK_APIENTRY crPackTexEnvfv( GLenum target, GLenum pname,
+void PACK_APIENTRY crPackTexEnvfvSWAP( GLenum target, GLenum pname,
 		const GLfloat *params )
 {
 	__handleTexEnvData( target, pname, params );
 	WRITE_OPCODE( CR_TEXENVFV_OPCODE );
 }
 
-void PACK_APIENTRY crPackTexEnviv( GLenum target, GLenum pname,
+void PACK_APIENTRY crPackTexEnvivSWAP( GLenum target, GLenum pname,
 		const GLint *params )
 {
 	/* floats and ints are the same size, so the packing should be the same */
@@ -162,7 +167,7 @@ void PACK_APIENTRY crPackTexEnviv( GLenum target, GLenum pname,
 	WRITE_OPCODE( CR_TEXENVIV_OPCODE );
 }
 
-void PACK_APIENTRY crPackPrioritizeTextures( GLsizei n,
+void PACK_APIENTRY crPackPrioritizeTexturesSWAP( GLsizei n,
 		const GLuint *textures, const GLclampf *priorities )
 {
 	unsigned char *data_ptr;
@@ -171,14 +176,21 @@ void PACK_APIENTRY crPackPrioritizeTextures( GLsizei n,
 		sizeof( n ) + 
 		n*sizeof( *textures ) + 
 		n*sizeof( *priorities );
+	int i;
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 
 	WRITE_DATA( 0, GLsizei, packet_length );
 	WRITE_DATA( sizeof( int ) + 0, GLsizei, n );
-	memcpy( data_ptr + sizeof( int ) + 4, textures, n*sizeof( *textures ) );
-	memcpy( data_ptr + sizeof( int ) + 4 + n*sizeof( *textures ),
-			priorities, n*sizeof( *priorities ) );
+	for ( i = 0 ; i < n ; i++)
+	{
+		WRITE_DATA( (i+1)*sizeof( int ) + 4, GLint, SWAP32(textures[i]));
+	}
+	for ( i = 0 ; i < n ; i++)
+	{
+		WRITE_DATA( (i+1)*sizeof( int ) + 4 + n*sizeof( *textures ),
+				GLclampf, SWAPFLOAT(priorities[i]));
+	}
 
 	crHugePacket( CR_PRIORITIZETEXTURES_OPCODE, data_ptr );
 	crPackFree( data_ptr );
@@ -188,36 +200,40 @@ static void __handleTexGenData( GLenum coord, GLenum pname,
 		int sizeof_param, const GLvoid *params )
 {
 	unsigned char *data_ptr;
-	int packet_length = sizeof( int ) + sizeof( coord ) + sizeof( pname ) + sizeof_param;
-	int params_length = sizeof_param;
+	int packet_length = sizeof( int ) + sizeof( coord ) + sizeof( pname );
+	int num_params = 1;
+	int i;
 	if (pname == GL_OBJECT_PLANE || pname == GL_EYE_PLANE)
 	{
-		packet_length += 3*sizeof_param;
-		params_length += 3*sizeof_param;
+		num_params = 4;
 	}
+	packet_length += num_params * sizeof_param;
 	
 	GET_BUFFERED_POINTER( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( sizeof( int ) + 0, GLenum, coord );
-	WRITE_DATA( sizeof( int ) + 4, GLenum, pname );
-	memcpy( data_ptr + sizeof( int ) + 8, params, params_length );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( sizeof( int ) + 0, GLenum, SWAP32(coord) );
+	WRITE_DATA( sizeof( int ) + 4, GLenum, SWAP32(pname) );
+	for ( i = 0 ; i < num_params ; i++)
+	{
+		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLint, SWAP32(((GLint *)params)[i]) );
+	}
 }
 
-void PACK_APIENTRY crPackTexGendv( GLenum coord, GLenum pname,
+void PACK_APIENTRY crPackTexGendvSWAP( GLenum coord, GLenum pname,
 		const GLdouble *params )
 {
 	__handleTexGenData( coord, pname, sizeof( *params ), params );
 	WRITE_OPCODE( CR_TEXGENDV_OPCODE );
 }
 
-void PACK_APIENTRY crPackTexGenfv( GLenum coord, GLenum pname,
+void PACK_APIENTRY crPackTexGenfvSWAP( GLenum coord, GLenum pname,
 		const GLfloat *params )
 {
 	__handleTexGenData( coord, pname, sizeof( *params ), params );
 	WRITE_OPCODE( CR_TEXGENFV_OPCODE );
 }
 
-void PACK_APIENTRY crPackTexGeniv( GLenum coord, GLenum pname,
+void PACK_APIENTRY crPackTexGenivSWAP( GLenum coord, GLenum pname,
 		const GLint *params )
 {
 	__handleTexGenData( coord, pname, sizeof( *params ), params );
@@ -229,6 +245,7 @@ static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat
 	unsigned char *data_ptr;
 	int packet_length = sizeof( int ) + sizeof( target ) + sizeof( pname );
 	int num_params = 0;
+	int i;
 
 	switch( pname )
 	{
@@ -237,10 +254,10 @@ static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat
 		case GL_TEXTURE_WRAP_S:
 		case GL_TEXTURE_WRAP_T:
 		case GL_TEXTURE_PRIORITY:
-			num_params = sizeof( *params );
+			num_params = 1;
 			break;
 		case GL_TEXTURE_BORDER_COLOR:
-			num_params = 4* sizeof( *params );
+			num_params = 4;
 			break;
 		default:
 			num_params = __packTexParameterNumParams( pname );
@@ -253,27 +270,30 @@ static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat
 	packet_length += num_params * sizeof(*params);
 
 	GET_BUFFERED_POINTER( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( sizeof( int ) + 0, GLenum, target );
-	WRITE_DATA( sizeof( int ) + 4, GLenum, pname );
-	memcpy( data_ptr + sizeof( int ) + 8, params, num_params * sizeof(*params) );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( sizeof( int ) + 0, GLenum, SWAP32(target) );
+	WRITE_DATA( sizeof( int ) + 4, GLenum, SWAP32(pname) );
+	for ( i = 0 ; i < num_params ; i++)
+	{
+		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLfloat, SWAPFLOAT(params[i]) );
+	}
 }
 
-void PACK_APIENTRY crPackTexParameterfv( GLenum target, GLenum pname, 
+void PACK_APIENTRY crPackTexParameterfvSWAP( GLenum target, GLenum pname, 
 		const GLfloat *params )
 {
 	__handleTexParameterData( target, pname, params );
 	WRITE_OPCODE( CR_TEXPARAMETERFV_OPCODE );
 }
 
-void PACK_APIENTRY crPackTexParameteriv( GLenum target, GLenum pname, 
+void PACK_APIENTRY crPackTexParameterivSWAP( GLenum target, GLenum pname, 
 		const GLint *params )
 {
 	__handleTexParameterData( target, pname, (GLfloat *) params );
 	WRITE_OPCODE( CR_TEXPARAMETERIV_OPCODE );
 }
 
-void PACK_APIENTRY crPackTexSubImage2D (GLenum target, GLint level, 
+void PACK_APIENTRY crPackTexSubImage2DSWAP (GLenum target, GLint level, 
 		GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, 
 		GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
 {
@@ -292,14 +312,14 @@ void PACK_APIENTRY crPackTexSubImage2D (GLenum target, GLint level,
 		crPixelSize( format, type, width, height );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, GLenum, target );
-	WRITE_DATA( 4, GLint, level );
-	WRITE_DATA( 8, GLint, xoffset );
-	WRITE_DATA( 12, GLint, yoffset );
-	WRITE_DATA( 16, GLsizei, width );
-	WRITE_DATA( 20, GLsizei, height );
-	WRITE_DATA( 24, GLenum, format );
-	WRITE_DATA( 28, GLenum, type );
+	WRITE_DATA( 0, GLenum, SWAP32(target) );
+	WRITE_DATA( 4, GLint, SWAP32(level) );
+	WRITE_DATA( 8, GLint, SWAP32(xoffset) );
+	WRITE_DATA( 12, GLint, SWAP32(yoffset) );
+	WRITE_DATA( 16, GLsizei, SWAP32(width) );
+	WRITE_DATA( 20, GLsizei, SWAP32(height) );
+	WRITE_DATA( 24, GLenum, SWAP32(format) );
+	WRITE_DATA( 28, GLenum, SWAP32(type) );
 
 	crPixelCopy2D((GLvoid *) (data_ptr + 32), pixels, format, type, width, height, packstate );
 
@@ -307,7 +327,7 @@ void PACK_APIENTRY crPackTexSubImage2D (GLenum target, GLint level,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackTexSubImage1D (GLenum target, GLint level, 
+void PACK_APIENTRY crPackTexSubImage1DSWAP (GLenum target, GLint level, 
 		GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
 {
 	unsigned char *data_ptr;
@@ -323,12 +343,12 @@ void PACK_APIENTRY crPackTexSubImage1D (GLenum target, GLint level,
 		crPixelSize( format, type, width, 1 );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, GLenum, target );
-	WRITE_DATA( 4, GLint, level );
-	WRITE_DATA( 8, GLint, xoffset );
-	WRITE_DATA( 12, GLsizei, width );
-	WRITE_DATA( 16, GLenum, format );
-	WRITE_DATA( 20, GLenum, type );
+	WRITE_DATA( 0, GLenum, SWAP32(target) );
+	WRITE_DATA( 4, GLint, SWAP32(level) );
+	WRITE_DATA( 8, GLint, SWAP32(xoffset) );
+	WRITE_DATA( 12, GLsizei, SWAP32(width) );
+	WRITE_DATA( 16, GLenum, SWAP32(format) );
+	WRITE_DATA( 20, GLenum, SWAP32(type) );
 
 	crPixelCopy1D((GLvoid *) (data_ptr + 24), pixels, format, type, width, packstate );
 
@@ -336,10 +356,11 @@ void PACK_APIENTRY crPackTexSubImage1D (GLenum target, GLint level,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences, GLboolean *return_val, int *writeback )
+void PACK_APIENTRY crPackAreTexturesResidentSWAP( GLsizei n, const GLuint *textures, GLboolean *residences, GLboolean *return_val, int *writeback )
 {
 	unsigned char *data_ptr;
 	int packet_length;
+	int i;
 
 	packet_length = 
 		sizeof(int) +            // packet length 
@@ -349,10 +370,13 @@ void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures,
 		8 + 8 + 8;               // return pointers
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( sizeof( int ) + 0, GLenum, CR_ARETEXTURESRESIDENT_EXTEND_OPCODE );
-	WRITE_DATA( sizeof( int ) + 4, GLsizei, n );
-	memcpy( data_ptr + sizeof( int ) + 8, textures, n*sizeof( *textures ) );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( sizeof( int ) + 0, GLenum, SWAP32(CR_ARETEXTURESRESIDENT_EXTEND_OPCODE) );
+	WRITE_DATA( sizeof( int ) + 4, GLsizei, SWAP32(n) );
+	for (i = 0 ; i < n ; i++)
+	{
+		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLuint, SWAP32(textures[i]) );
+	}
 	WRITE_NETWORK_POINTER( sizeof( int ) + 8 + n*sizeof( *textures ), (void *) residences );
 	WRITE_NETWORK_POINTER( sizeof( int ) + 16 + n*sizeof( *textures ), (void *) return_val );
 	WRITE_NETWORK_POINTER( sizeof( int ) + 24 + n*sizeof( *textures ), (void *) writeback );

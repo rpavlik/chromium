@@ -7,7 +7,7 @@ TOP = ..
 
 SHARED = 1
 LIBRARY = crpacker
-FILES = packer \
+NORMAL_FILES = packer \
 	pack_arrays \
 	pack_bbox \
 	pack_bounds \
@@ -20,19 +20,40 @@ FILES = packer \
 	pack_fog \
 	pack_lights \
 	pack_lists \
+	pack_swap_lists \
 	pack_map \
+	pack_swap_map \
 	pack_materials \
 	pack_matrices \
 	pack_pixelmap \
+	pack_swap_pixelmap \
 	pack_pixels \
 	pack_rect \
 	pack_stipple \
-	pack_texture
+	pack_texture \
+	pack_swap_texture
 LIB_DEFS = packer.def
 
 LIBRARIES = crutil
 
-PRECOMP = packer.def ../include/cr_packfunctions.h ../include/cr_opcodes.h ../include/state/cr_currentpointers.h pack_bbox.c pack_current.c packer.c
+SWAP_FILES = pack_arrays \
+	pack_bounds \
+	pack_client \
+	pack_clipplane \
+	pack_context \
+	pack_fog \
+	pack_lights \
+	pack_materials \
+	pack_matrices \
+	pack_pixels \
+	pack_rect \
+	pack_stipple
+NAMED_SWAP_FILES = $(addsuffix _swap, $(SWAP_FILES))
+SWAP_C_FILES = $(addsuffix .c, $(NAMED_SWAP_FILES))
+
+FILES = $(NAMED_SWAP_FILES) $(NORMAL_FILES)
+
+PRECOMP = packer.def ../include/cr_packfunctions.h ../include/cr_opcodes.h ../include/state/cr_currentpointers.h pack_bbox.c pack_current.c packer.c $(SWAP_C_FILES)
 SLOP = $(PRECOMP)
 
 include $(TOP)/cr.mk
@@ -64,3 +85,7 @@ pack_bbox.c: packer_bbox.py
 pack_current.c: pack_current.py pack_currenttypes.py
 	@$(ECHO) Making the current functions...
 	@$(PYTHON) pack_current.py > $@
+
+%_swap.c: %.c
+	@$(ECHO) Making the swapping version of $<
+	@$(PYTHON) pack_swap.py $< > $@

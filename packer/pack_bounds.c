@@ -17,8 +17,9 @@ void PACK_APIENTRY crPackBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len
 
 	unsigned char *data_ptr = cr_packer_globals.buffer.data_current;
 	int len_aligned     = ( len + 0x3 ) & ~0x3;
+	int total_len = 24 + len_aligned;
 
-	WRITE_DATA( 0, int, 24 + len_aligned );
+	WRITE_DATA( 0, int, total_len );
 	WRITE_DATA( 4, int, bounds->x1 );
 	WRITE_DATA( 8, int, bounds->y1 );
 	WRITE_DATA( 12, int, bounds->x2 );

@@ -47,6 +47,7 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 {
 	unsigned char *data_ptr;
 	int row_length, data_length=0;
+	int isnull = (bitmap == NULL);
 	int packet_length = 
 		sizeof( width ) + 
 		sizeof( height ) +
@@ -78,7 +79,7 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 	WRITE_DATA( 12, GLfloat, yorig );
 	WRITE_DATA( 16, GLfloat, xmove );
 	WRITE_DATA( 20, GLfloat, ymove );
-	WRITE_DATA( 24, GLuint, ( bitmap == NULL ) );
+	WRITE_DATA( 24, GLuint, isnull );
 	if ( bitmap )
 	{
 		memcpy( data_ptr + 28, bitmap, data_length );

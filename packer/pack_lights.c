@@ -45,7 +45,10 @@ static void __handleLightData( GLenum light, GLenum pname, const GLfloat *params
 		WRITE_DATA( sizeof( int ) + 12, GLfloat, params[1] );
 		WRITE_DATA( sizeof( int ) + 16, GLfloat, params[2] );
 	}
-	if (packet_length > 3*sizeof( *params )) WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
+	if (packet_length > 3*sizeof( *params )) 
+	{
+		WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
+	}
 }
 
 void PACK_APIENTRY crPackLightfv (GLenum light, GLenum pname, const GLfloat *params)
@@ -61,7 +64,7 @@ void PACK_APIENTRY crPackLightiv (GLenum light, GLenum pname, const GLint *param
 	WRITE_OPCODE( CR_LIGHTIV_OPCODE );
 }
 
-void __handleLightModelData( GLenum pname, const GLfloat *params )
+static void __handleLightModelData( GLenum pname, const GLfloat *params )
 {
 	unsigned int packet_length = sizeof( int ) + sizeof( pname );
 	unsigned int params_length = 0;

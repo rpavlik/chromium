@@ -17,7 +17,7 @@ void PACK_APIENTRY crPackVertexPointer( GLint size, GLenum type, GLsizei stride,
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackVertexPointer!" );
+	crError( "Unimplemented crPackVertexPointer" );
 }
 
 void PACK_APIENTRY crPackColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -26,7 +26,7 @@ void PACK_APIENTRY crPackColorPointer( GLint size, GLenum type, GLsizei stride, 
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackColorPointer!" );
+	crError( "Unimplemented crPackColorPointer" );
 }
 
 void PACK_APIENTRY crPackNormalPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -34,7 +34,7 @@ void PACK_APIENTRY crPackNormalPointer( GLenum type, GLsizei stride, const GLvoi
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackNormalPointer!" );
+	crError( "Unimplemented crPackNormalPointer" );
 }
 
 void PACK_APIENTRY crPackTexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -43,14 +43,14 @@ void PACK_APIENTRY crPackTexCoordPointer( GLint size, GLenum type, GLsizei strid
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackTexCoordPointer!" );
+	crError( "Unimplemented crPackTexCoordPointer" );
 }
 
 void PACK_APIENTRY crPackEdgeFlagPointer( GLsizei stride, const GLvoid *pointer )
 {
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackEdgeFlagPointer!" );
+	crError( "Unimplemented crPackEdgeFlagPointer" );
 }
 
 void PACK_APIENTRY crPackIndexPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -58,5 +58,5 @@ void PACK_APIENTRY crPackIndexPointer( GLenum type, GLsizei stride, const GLvoid
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackIndexPointer!" );
+	crError( "Unimplemented crPackIndexPointer" );
 }

@@ -58,3 +58,4 @@ crHashtableReplace
 crHashtableNumElements
 crAllocHashtable
 crFreeHashtable
+crDetermineEndianness

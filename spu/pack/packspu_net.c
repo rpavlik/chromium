@@ -56,7 +56,7 @@ int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 }
 
 static CRMessageOpcodes *
-__prependHeader( CRPackBuffer *buf, unsigned int *len )
+__prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
 {
 	int num_opcodes;
 	CRMessageOpcodes *hdr;
@@ -73,7 +73,7 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len )
 	CRASSERT( (void *) hdr >= buf->pack );
 
 	hdr->type       = CR_MESSAGE_OPCODES;
-	hdr->senderId   = (unsigned int) ~0;  /* to be initialized by caller */
+	hdr->senderId   = senderID;
 	hdr->numOpcodes = num_opcodes;
 
 	*len = buf->data_current - (unsigned char *) hdr;
@@ -91,8 +91,7 @@ void packspuFlush( void *arg )
 	if ( buf->opcode_current == buf->opcode_start )
 		return;
 
-	hdr = __prependHeader( buf, &len );
-	hdr->senderId = 0;
+	hdr = __prependHeader( buf, &len, 0 );
 
 	crNetSend( pack_spu.server.conn, &(buf->pack), hdr, len );
 	buf->pack = crNetAlloc( pack_spu.server.conn );

@@ -66,6 +66,7 @@ void crPackAppendBoundedBuffer( CRPackBuffer *buffer, GLrecti *bounds );
 #undef CR_UNALIGNED_ACCESS_OKAY
 #endif
 void crWriteUnalignedDouble( void *buffer, double d );
+void crWriteSwappedDouble( void *buffer, double d );
 
 void *crPackAlloc( unsigned int len );
 void crHugePacket( CROpcode op, void *ptr );
@@ -109,6 +110,9 @@ void SanityCheck(void);
 #define WRITE_DOUBLE( offset, data ) \
   crWriteUnalignedDouble( data_ptr + (offset), (data) )
 #endif
+
+#define WRITE_SWAPPED_DOUBLE( offset, data ) \
+	crWriteSwappedDouble( data_ptr + (offset), (data) )
 
 #define WRITE_OPCODE( opcode )  \
   *(cr_packer_globals.buffer.opcode_current--) = (unsigned char) opcode

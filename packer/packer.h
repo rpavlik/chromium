@@ -18,4 +18,15 @@
 #include "cr_packfunctions.h"
 #include "packer_extensions.h"
 
+#define SWAP8(x) x
+#define SWAP16(x) ((x & 0x00FF << 8) | (x & 0xFF00 >> 8))
+#define SWAP32(x) ((x & 0x000000FF << 24) | \
+		               (x & 0x0000FF00 << 8)  | \
+									 (x & 0x00FF0000 >> 8)  | \
+									 (x & 0xFF000000 >> 24))
+#define SWAPFLOAT(x) ( (*((int *) &x) & 0x000000FF << 24) | \
+                       (*((int *) &x) & 0x0000FF00 << 8) | \
+                       (*((int *) &x) & 0x00FF0000 >> 8) | \
+                       (*((int *) &x) & 0xFF000000 >> 24))
+
 #endif /* CR_PACKER_H */
