@@ -1,5 +1,4 @@
 Before July Alpha release:
-	ColorMaterial
 	DrawPixels/RasterPos 
 		Rasterpos sort of works; needs to be tested on multiple tiles
 	tilesort Viewport testing 
