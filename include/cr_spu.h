@@ -110,6 +110,7 @@ typedef const GLubyte *(WGL_APIENTRY *glGetStringFunc_t)( GLenum );
 #else
 typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
 typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
+typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
 typedef XVisualInfo *(*glXChooseVisualFunc_t)( Display *, int, int * );
 typedef GLXContext (*glXCreateContextFunc_t)( Display *, XVisualInfo *, GLXContext, Bool );
 typedef void (*glXDestroyContextFunc_t)( Display *, GLXContext );
@@ -139,6 +140,7 @@ typedef struct {
 #else
 	glXGetConfigFunc_t  glXGetConfig;
 	glXQueryExtensionFunc_t glXQueryExtension;
+	glXQueryExtensionsStringFunc_t glXQueryExtensionsString;
 	glXChooseVisualFunc_t glXChooseVisual;
 	glXCreateContextFunc_t glXCreateContext;
 	glXDestroyContextFunc_t glXDestroyContext;

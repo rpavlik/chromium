@@ -199,6 +199,7 @@ useful_wgl_functions = [
 useful_glx_functions = [
 	"glXGetConfig",
 	"glXQueryExtension",
+	"glXQueryExtensionsString",
 	"glXChooseVisual",
 	"glXCreateContext",
 	"glXDestroyContext",

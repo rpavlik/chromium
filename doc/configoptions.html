@@ -156,6 +156,21 @@ spu.Conf('bucket_mode', 'Uniform Grid')
           window size accordingly.
           Default is 0.</td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">lut8</td>
+    <td width="12%" class="ConfigType" height="38">768 Integers</td>
+    <td width="115%" class="ConfigDesc" height="38">
+		Specify an eight-bit/channel color lookup table. The first
+		256 integers makeup the red lookup values, the next 256 make up the
+		green lookup values, and the final make up the blue lookup values. For
+		example, <br>
+		<center>spu.Conf('lut8', [0, 1, 2, ..., 255, 0, 1, 2, ..., 255, 0, 1, 2, ..., 255]) </center><br>
+
+				would provide the identity mapping.
+		X-Windows ONLY.
+   </td>
+  </tr>
+
 </table>
 
 <h2 class="PageSubHeading">Readback SPU</h2>

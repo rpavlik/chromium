@@ -49,6 +49,57 @@ WindowExists( Display *dpy, Window w )
 
 
 static Colormap 
+GetLUTColormap( Display *dpy, XVisualInfo *vi )
+{
+	int a;	
+	XColor col;
+	Colormap cmap;
+
+#if defined(__cplusplus) || defined(c_plusplus)
+    int localclass = vi->c_class; /* C++ */
+#else
+    int localclass = vi->class; /* C */
+#endif
+	
+	if ( localclass != DirectColor )
+	{
+		crError( "No support for non-DirectColor visuals with LUTs" );
+	}
+
+	cmap = XCreateColormap( dpy, RootWindow(dpy, vi->screen), 
+			vi->visual, AllocAll );
+
+	for (a=0; a<256; a++)
+	{	
+		col.red = render_spu.lut8[0][a]<<8;
+		col.green = col.blue = 0;
+		col.pixel = a<<16;
+		col.flags = DoRed;
+		XStoreColor(dpy, cmap, &col);
+	}
+	   
+	for (a=0; a<256; a++)
+	{	
+		col.green = render_spu.lut8[1][a]<<8;
+		col.red = col.blue = 0;
+		col.pixel = a<<8;
+		col.flags = DoGreen;
+		XStoreColor(dpy, cmap, &col);
+	}
+   
+	for (a=0; a<256; a++)
+	{	
+		col.blue = render_spu.lut8[2][a]<<8;
+		col.red = col.green= 0;
+		col.pixel = a;
+		col.flags = DoBlue;
+		XStoreColor(dpy, cmap, &col);
+	}
+   
+	return cmap;
+}
+
+static Colormap 
 GetShareableColormap( Display *dpy, XVisualInfo *vi )
 {
 	Status status;
@@ -61,6 +112,7 @@ GetShareableColormap( Display *dpy, XVisualInfo *vi )
 #else
     int localclass = vi->class; /* C */
 #endif
+	
 	if ( localclass != TrueColor )
 	{
 		crError( "No support for non-TrueColor visuals." );
@@ -168,6 +220,30 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 		}
 	}
 
+	if (render_spu.use_lut8)
+	{
+		/* 
+		 * See if we have have GLX_EXT_visual_info so we
+		 * can grab a Direct Color visual
+		 */
+#ifdef GLX_EXT_visual_info   
+		if (crStrstr(render_spu.ws.glXQueryExtensionsString( dpy, screen ),
+								"GLX_EXT_visual_info"))
+		{
+							
+			attribList[i++] = GLX_X_VISUAL_TYPE_EXT;
+			attribList[i++] = GLX_DIRECT_COLOR_EXT; 
+		}
+		else
+		{
+			render_spu.use_lut8 = 0;	
+		}
+#else
+		render_spu.use_lut8 = 0;
+#endif  
+
+
+	}
 	/* XXX add multisample support eventually */
 
 	attribList[i++] = None;
@@ -306,7 +382,10 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	/*
 	 * Get a colormap.
 	 */
-	cmap = GetShareableColormap( dpy, visual->visual );
+	if (render_spu.use_lut8)
+		cmap = GetLUTColormap( dpy, visual->visual );
+	else
+		cmap = GetShareableColormap( dpy, visual->visual );
 	if ( !cmap ) {
 		crError( "Render SPU: Unable to get a colormap!" );
 		return GL_FALSE;

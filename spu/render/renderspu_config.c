@@ -98,6 +98,28 @@ static void gather_userbuf( RenderSPU *render_spu, const char *response )
 	sscanf( response, "%d", &(render_spu->gather_userbuf_size) );
 }
 
+static void set_lut8( RenderSPU *render_spu, const char *response )
+{
+	int a;	
+	char **lut;
+	
+	if (!response[0]) return;
+
+	lut = crStrSplit(response, ",");
+	if (!lut) return;
+
+	for (a=0; a<256; a++)
+	{
+		render_spu->lut8[0][a]	= crStrToInt(lut[a]);
+		render_spu->lut8[1][a]	= crStrToInt(lut[256+a]);
+		render_spu->lut8[2][a]	= crStrToInt(lut[512+a]);
+	}
+
+	crFreeStrings(lut);
+
+	render_spu->use_lut8 = 1;
+}
+
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions renderSPUOptions[] = {
@@ -140,6 +162,10 @@ SPUOptions renderSPUOptions[] = {
      "Size of Buffer to Allocate for Gathering",
      (SPUOptionCB)gather_userbuf},
 
+   { "lut8", CR_STRING, 1, "", NULL, NULL,
+     "8 bit RGB LUT", (SPUOptionCB)set_lut8},
+
+     
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
@@ -148,6 +174,15 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 {
 	CRConnection *conn;
 	char response[8096];
+	int a;
+
+	for (a=0; a<256; a++)
+	{
+		render_spu->lut8[0][a] = 
+		render_spu->lut8[1][a] = 
+		render_spu->lut8[2][a] = a;
+	}
+	render_spu->use_lut8 = 0;
 
 	conn = crMothershipConnect( );
 	

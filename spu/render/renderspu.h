@@ -75,7 +75,8 @@ typedef struct {
 #endif
 	int render_to_app_window;
 	int resizable;
-	
+	int use_lut8, lut8[3][256];
+
 	CRServer *server;
 	int gather_port;
 	int gather_userbuf_size;
