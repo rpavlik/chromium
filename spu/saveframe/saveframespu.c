@@ -204,12 +204,21 @@ swapBuffers(GLint window, GLint flags)
 static void SAVEFRAMESPU_APIENTRY
 viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-	saveframe_spu.height = height;
-	saveframe_spu.width = width;
+	int sizeChange= 0;
+
+	if (height>saveframe_spu.height) {
+		saveframe_spu.height = height;
+		sizeChange= 1;
+	}
+	if (width>saveframe_spu.width) {
+		saveframe_spu.width = width;
+		sizeChange= 1;
+	}
 	saveframe_spu.x = x;
 	saveframe_spu.y = y;
 
-	ResizeBuffer();
+	if (sizeChange)
+		ResizeBuffer();
 	saveframe_spu.child.Viewport(x, y, width, height);
 }
 
