@@ -272,7 +272,7 @@ crMatrixInvertTranspose(CRmatrix *inv, const CRmatrix *mat)
                              m30, m31, m32 );
 
 
-  const float inv_det = ((const float) 1.0) / ( m00 * cof00 + m01 * cof01 +
+  const float inv_det = 1.0f / ( m00 * cof00 + m01 * cof01 +
                                             m02 * cof02 + m03 * cof03 );
 
 
