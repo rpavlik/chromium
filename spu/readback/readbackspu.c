@@ -168,7 +168,8 @@ static void DoFlush( WindowInfo *window )
 {
 	static int first_time = 1;
 	GLfloat xmax = 0, xmin = 0, ymax = 0, ymin = 0;
-	int readx, ready, drawx, drawy, x, y, w, h;
+	int readx, ready, drawx, drawy;
+	int x = -1, y = -1, w = -1, h = -1;
 	GLint packAlignment, unpackAlignment;
 
 	if (readback_spu.resizable)
