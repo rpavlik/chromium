@@ -103,14 +103,11 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 		 * will do the right thing and select the appropriate
 	  	 * visual at it's node.
 		 *
-		 * NOTE: We only do this, when no desiredVisual has
-		 * already been set. An application may call glXChooseVisual
-		 * to select it's desiredflags, and we honour that!
+		 * NOTE: We OR just in case an application has called
+		 * glXChooseVisual to select it's desiredflags, and we honour 
+		 * them!
 		 */
-		if (!stub.desiredVisual)
-			stub.desiredVisual = FindVisualInfo( dpy, vis );
-		else
-			stub.desiredVisual |= FindVisualInfo( dpy, vis );
+		stub.desiredVisual |= FindVisualInfo( dpy, vis );
 
 		stub.spuWindow = crCreateWindow( dpyName, stub.desiredVisual );
 #endif
