@@ -632,17 +632,21 @@ void glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 
 void glXUseXFont( Font font, int first, int count, int listBase )
 {
-	Display *dpy = stub.wsInterface.glXGetCurrentDisplay();
-	if (dpy) {
-		stubUseXFont( dpy, font, first, count, listBase );
-	}
-	else {
-		dpy = XOpenDisplay(NULL);
-		if (!dpy)
-			return;
-		stubUseXFont( dpy, font, first, count, listBase );
-		XCloseDisplay(dpy);
-	}
+	if (stub.currentContext->type == CHROMIUM)
+	{
+		Display *dpy = stub.wsInterface.glXGetCurrentDisplay();
+		if (dpy) {
+			stubUseXFont( dpy, font, first, count, listBase );
+		}
+		else {
+			dpy = XOpenDisplay(NULL);
+			if (!dpy)
+				return;
+			stubUseXFont( dpy, font, first, count, listBase );
+			XCloseDisplay(dpy);
+		}
+	} else
+		stub.wsInterface.glXUseXFont( font, first, count, listBase );
 }
 
 void glXWaitGL( void )

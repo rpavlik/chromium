@@ -118,6 +118,7 @@ typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
 typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
 typedef XVisualInfo *(*glXChooseVisualFunc_t)( Display *, int, int * );
 typedef GLXContext (*glXCreateContextFunc_t)( Display *, XVisualInfo *, GLXContext, Bool );
+typedef void (*glXUseXFontFunc_t)(Font font, int first, int count, int listBase);
 typedef void (*glXDestroyContextFunc_t)( Display *, GLXContext );
 typedef Bool (*glXIsDirectFunc_t)( Display *, GLXContext );
 typedef Bool (*glXMakeCurrentFunc_t)( Display *, GLXDrawable, GLXContext );
@@ -153,6 +154,7 @@ typedef struct {
 	glXChooseVisualFunc_t glXChooseVisual;
 	glXCreateContextFunc_t glXCreateContext;
 	glXDestroyContextFunc_t glXDestroyContext;
+	glXUseXFontFunc_t glXUseXFont;
 	glXIsDirectFunc_t glXIsDirect;
 	glXMakeCurrentFunc_t glXMakeCurrent;
 	glXSwapBuffersFunc_t glXSwapBuffers;

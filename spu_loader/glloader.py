@@ -216,6 +216,7 @@ useful_glx_functions = [
 	"glXChooseVisual",
 	"glXCreateContext",
 	"glXDestroyContext",
+	"glXUseXFont",
 	"glXIsDirect",
 	"glXMakeCurrent",
 	"glGetString",
