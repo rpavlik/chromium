@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright (c) 2001, Stanford University
 # All rights reserved.
 #
