@@ -227,7 +227,10 @@ static void BuildSwapLimits( WindowInfo *window )
 				else
 				{
 					window->read_x[i] = window->read_x[i-1]+window->width/(xdiv);
-					window->read_y[i] = window->height/(ydiv)-window->read_y[i-1];
+					if(binaryswap_spu.highlow[i-1])
+					     window->read_y[i] = window->read_y[i-1] - window->height/(ydiv);
+					else
+					     window->read_y[i] = window->height/(ydiv) + window->read_y[i-1];
 				}
 			}
 			/* left */
@@ -242,7 +245,10 @@ static void BuildSwapLimits( WindowInfo *window )
 				else
 				{
 					window->read_x[i] = window->read_x[i-1];
-					window->read_y[i] = window->height/(ydiv)-window->read_y[i-1];
+					if(binaryswap_spu.highlow[i-1])
+					     window->read_y[i] = window->read_y[i-1] - window->height/(ydiv);
+					else
+					     window->read_y[i] = window->height/(ydiv) + window->read_y[i-1];
 				}
 			}
 		}
@@ -254,14 +260,20 @@ static void BuildSwapLimits( WindowInfo *window )
 			if(binaryswap_spu.highlow[i])
 			{
 				crDebug("Swap %d: top", i);
-				window->read_x[i] = window->width/(xdiv)-window->read_x[i-1];
+				if(!binaryswap_spu.highlow[i-1])
+				     window->read_x[i] = window->read_x[i-1] - window->width/(xdiv);
+				else
+				     window->read_x[i] = window->width/(xdiv) + window->read_x[i-1];	     
 				window->read_y[i] = window->read_y[i-1]+window->height/(ydiv);
 			}
 			/* bottom */
 			else
 			{
 				crDebug("Swap %d: bottom", i);
-				window->read_x[i] = window->width/(xdiv)-window->read_x[i-1];
+				if(!binaryswap_spu.highlow[i-1])
+				     window->read_x[i] = window->read_x[i-1] - window->width/(xdiv);
+				else
+				     window->read_x[i] = window->width/(xdiv) + window->read_x[i-1];
 				window->read_y[i] = window->read_y[i-1];
 			}
 		}
@@ -907,6 +919,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuSwapBuffers( GLint win, GLint fl
 	 * Everyone syncs up here before calling SwapBuffers().
 	 */
 	binaryswap_spu.child.BarrierExecCR( SWAP_BARRIER );
+
 
 	binaryswap_spu.child.SwapBuffers( window->childWindow, 
 					  flags & ~CR_SUPPRESS_SWAP_BIT );
