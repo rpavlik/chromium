@@ -64,7 +64,6 @@ MultiDrawArraysEXT
 MultiDrawElementsEXT
 PicaAddGfxFramelet
 PicaAddMemFramelet
-PicaBar
 PicaBindLocalContext
 PicaCancelFrame
 PicaCreateContext

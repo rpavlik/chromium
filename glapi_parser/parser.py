@@ -79,7 +79,6 @@ output_mapping['PicaQueryFrame'] = ( 'PICAerror', ['ctx', 'frameID', 'nodeID', '
 output_mapping['PicaAddGfxFramelet'] = ( 'PICAerror', ['lctx', 'srcRect', 'dstPos', 'order', 'iVolatile'], ['PICAcontextID', 'const PICArect *', 'const PICApoint *', 'PICAuint', 'PICAint'])
 output_mapping['PicaAddMemFramelet'] = ( 'PICAerror', ['lctx', 'colorBuffer', 'depthBuffer', 'span_x', 'srcRect', 'dstPos', 'order', 'iVolatile'], ['PICAcontextID', 'const PICAvoid *', 'const PICAvoid *', 'PICAuint', 'const PICArect *', 'const PICApoint *', 'PICAuint', 'PICAint'])
 output_mapping['PicaReadFrame'] = ( 'PICAerror', ['lctx', 'frameID', 'format', 'colorBuffer', 'depthBuffer', 'rect'], ['PICAcontextID', 'PICAframeID', 'PICAuint', 'PICAvoid *', 'PICAvoid *', 'const PICArect *'])
-output_mapping['PicaBar'] = ( 'PICAerror', ['phrase'], ['char *'] )
 
 cPickle.dump( output_mapping, output_mapping_file, 1 )
 

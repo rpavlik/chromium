@@ -458,5 +458,4 @@ print "crPicaQueryFrame"
 print "crPicaAddGfxFramelet"
 print "crPicaAddMemFramelet"
 print "crPicaReadFrame"
-print "crPicaBar"
-print "crInitDispatchInfo"
+

@@ -110,5 +110,4 @@ extern PICAerror APIENTRY crPicaReadFrame(PICAcontextID lctx,
 					  PICAvoid *colorbuffer,
 					  PICAvoid *depthbuffer,
 					  const PICArect *rect);
-extern PICAerror APIENTRY crPicaBar(char* phrase);
 #endif /* CR_API_TEMPLATES_H */

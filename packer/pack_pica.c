@@ -640,17 +640,3 @@ void PACK_APIENTRY crPackPicaReadFrameSWAP(PICAcontextID lctx,
      (void) depthbuffer;
      (void) rect;
 }
-void PACK_APIENTRY crPackPicaBar( char* phrase, PICAerror *return_value, int* writeback )
-{
-     crWarning("You can't really pack PICA calls!");
-     *return_value = -1;
-     *writeback = 0;
-     (void) phrase;
-}
-void PACK_APIENTRY crPackPicaBarSWAP( char* phrase, PICAerror *return_value, int* writeback )
-{
-     crWarning("You can't really pack PICA calls!");
-     *return_value = -1;
-     *writeback = 0;
-     (void) phrase;
-}

@@ -316,10 +316,6 @@ PICAerror APIENTRY crPicaReadFrame(PICAcontextID lctx,
 					    depthBuffer,
 					    rect);
 }
-PICAerror APIENTRY crPicaBar(char* phrase)
-{
-     return stub.spu->dispatch_table.PicaBar(phrase);
-}
 
 
 

@@ -83,7 +83,6 @@ bonus_functions = [
 	"crPicaAddGfxFramelet",
 	"crPicaAddMemFramelet",
 	"crPicaReadFrame",
-	"crPicaBar",
 	"glColorTable",
 	"glColorTableParameterfv",
 	"glColorTableParameteriv",

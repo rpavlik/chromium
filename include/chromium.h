@@ -705,7 +705,6 @@ typedef PICAerror (APIENTRY *crPicaReadFrameProc)(PICAcontextID lctx,
 						  PICAvoid *colorbuffer,
 						  PICAvoid *depthbuffer,
 						  const PICArect *rect);
-typedef PICAerror (APIENTRY *crPicaBarProc)(char* phrase);
 #endif /* CR_PICA */
 
 #ifdef __cplusplus
