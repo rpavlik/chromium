@@ -17,7 +17,7 @@ in the mothership.
 
 
 import wxPython
-import sys
+import string, sys
 sys.path.append("../server")
 import crconfig
 
@@ -83,10 +83,10 @@ class OptionList:
 		for opt in self.__Options:
 			if opt.Name == optName:
 				return opt.Count
-		return None
+		return 0
 
 	def SetValue(self, optName, value):
-		"""Set value of named option."""
+		"""Set value of named option.  Value is a list"""
 		for opt in self.__Options:
 			if opt.Name == optName:
 				assert len(value) == opt.Count
@@ -224,7 +224,41 @@ class SpuObject:
 		
 	def Conf(self, var, *values):
 		"""Set an option, via config file"""
-		self.SetOption(var, values) # XXX is this a tuple or list???
+		print "Conf %s" % var
+		# Get count and type of expected values
+		count = self.__OptionList.GetCount(var)
+		if count == 0:
+			print "Bad config option: %s" % var
+			return
+		type = self.__OptionList.GetType(var)
+		assert type != None
+
+		# values is a tuple, we need to convert it to list.
+		valueList = []
+		if len(values) == count:
+			# the tuple size matches the expected length
+			for i in range(count):
+				if type == "INT" or type == "BOOL":
+					valueList.append(int(values[i]))
+				elif type == "FLOAT":
+					valueList.append(float(values[i]))
+				else:
+					valueList.append(values[i])
+		else:
+			assert len(values) == 1
+			valueString = values[0]
+			stringList = string.split(valueString)
+			for i in range(count):
+				if type == "INT" or type == "BOOL":
+					valueList.append(int(stringList[i]))
+				elif type == "FLOAT":
+					valueList.append(float(stringList[i]))
+				else:
+					valueList.append(stringList[i])
+
+		self.SetOption(var, valueList)
+		return
+
 
 	def PrintOptions(self):
 		self.__OptionList.Print()
