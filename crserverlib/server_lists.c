@@ -117,8 +117,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchCallLists( GLsizei n, GLenum type,
 
 GLboolean SERVER_DISPATCH_APIENTRY crServerDispatchIsList( GLuint list )
 {
+	GLboolean retval;
 	list = TranslateListID( list );
-	return cr_server.head_spu->dispatch_table.IsList( list );
+	crServerReturnValue( &retval, sizeof(retval) );
+	retval = cr_server.head_spu->dispatch_table.IsList( list );
+	return retval;
 }
 
 
@@ -163,8 +166,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchDeleteTextures( GLsizei n, const G
 
 GLboolean SERVER_DISPATCH_APIENTRY crServerDispatchIsTexture( GLuint texture )
 {
+	GLboolean retval;
 	texture = TranslateTextureID( texture );
-	return cr_server.head_spu->dispatch_table.IsTexture( texture );
+	retval = cr_server.head_spu->dispatch_table.IsTexture( texture );
+	crServerReturnValue( &retval, sizeof(retval) );
+	return retval; /* WILL PROBABLY BE IGNORED */
 }
 
 
