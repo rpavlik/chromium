@@ -26,7 +26,6 @@ Other internal functions/classes:
     CRDebug:        Used to print out debugging messages.
     Fatal:          Used to print out a debugging messages and exit.
     MakeString:     Converts a Python object to a string.
-    Conf:           Sets a name/value list into a configuration.
     SockWrapper:    Internal convience class for handling sockets
 """
 
