@@ -17,7 +17,6 @@
 #include <stdio.h>
 
 /* For optimizing wglMakeCurrent */
-static HDC currenthdc = NULL;
 static HGLRC currenthglrc = NULL;
 
 int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd )
@@ -100,18 +99,15 @@ BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 {
 	BOOL retVal;
 
-	if (hdc == NULL && hglrc == NULL) {
-		currenthdc = NULL;
+	if (hglrc == NULL) {
 		currenthglrc = NULL;
 		return 1;
 	}
 
 	retVal = stubMakeCurrent( hdc, hglrc );
 
-	if (retVal) {
+	if (retVal)
 		currenthglrc = hglrc;
-		currenthdc = hdc;
-	}
 
 	return retVal;
 }
