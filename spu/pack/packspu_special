@@ -3,6 +3,7 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 GetString
+GetTexImage
 EnableClientState
 DisableClientState
 Enable
@@ -32,13 +33,14 @@ Flush
 Finish
 PixelStorei
 PixelStoref
+PushClientAttrib
+PopClientAttrib
 CreateContext
 WindowCreate
 MakeCurrent
 DestroyContext
 Begin
 End
-GetTexImage
 TexImage1D
 TexSubImage1D
 TexImage2D

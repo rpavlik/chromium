@@ -362,3 +362,14 @@ void PACKSPU_APIENTRY packspu_Disable( GLenum cap )
 
 	crPackDisable(cap);
 }
+
+
+void PACKSPU_APIENTRY packspu_PushClientAttrib( GLbitfield mask )
+{
+	crStatePushClientAttrib(mask);
+}
+
+void PACKSPU_APIENTRY packspu_PopClientAttrib( void )
+{
+	crStatePopClientAttrib();
+}
