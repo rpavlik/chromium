@@ -195,8 +195,20 @@ endif
 
 ifdef TRACKS_STATE
 # May God forgive me for this hack
-STATE_STRING = (STATE)
+STATE_STRING += (STATE)
 LIBRARIES += $(addsuffix _crstate_copy, $(SHORT_TARGET_NAME))
+endif
+
+ifdef PACKS
+# May God forgive me for this hack
+PACK_STRING += (PACK)
+LIBRARIES += $(addsuffix _crpacker_copy, $(SHORT_TARGET_NAME))
+endif
+
+ifdef UNPACKS
+# May God forgive me for this hack
+UNPACK_STRING += (UNPACK)
+LIBRARIES += $(addsuffix _crunpacker_copy, $(SHORT_TARGET_NAME))
 endif
 
 ifndef SUBDIRS
@@ -227,10 +239,10 @@ ifdef BANNER
 	@$(ECHO) "              $(BANNER)"
 else
 ifdef PROGRAM
-	@$(ECHO) "              Building $(TARGET) for $(ARCH) $(RELEASE_STRING) $(STATE_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
+	@$(ECHO) "              Building $(TARGET) for $(ARCH) $(RELEASE_STRING) $(STATE_STRING) $(PACK_STRING) $(UNPACK_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
 endif
 ifdef LIBRARY
-	@$(ECHO) "              Building $(TARGET) for $(ARCH) $(RELEASE_STRING) $(STATE_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
+	@$(ECHO) "              Building $(TARGET) for $(ARCH) $(RELEASE_STRING) $(SATE_STRING) $(PACK_STRING) $(UNPACK_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
 endif
 endif
 	@$(ECHO) "-------------------------------------------------------------------------------"

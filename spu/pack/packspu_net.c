@@ -144,6 +144,7 @@ void packspuHuge( CROpcode opcode, void *buf )
 	}
 
 	crNetSend( pack_spu.server.conn, NULL, src, len );
+	crPackFree( buf );
 }
 
 void packspuConnectToServer( void )

@@ -53,7 +53,6 @@ void PACK_APIENTRY crPackTexImage1D(GLenum target, GLint level,
 	}
 
 	crHugePacket( CR_TEXIMAGE1D_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level, 
@@ -99,7 +98,6 @@ void PACK_APIENTRY crPackTexImage2D(GLenum target, GLint level,
 	}
 
 	crHugePacket( CR_TEXIMAGE2D_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackDeleteTextures( GLsizei n, const GLuint *textures )
@@ -115,7 +113,6 @@ void PACK_APIENTRY crPackDeleteTextures( GLsizei n, const GLuint *textures )
 	WRITE_DATA( sizeof( int ) + 0, GLsizei, n );
 	memcpy( data_ptr + sizeof( int ) + 4, textures, n*sizeof(*textures) );
 	crHugePacket( CR_DELETETEXTURES_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 static void __handleTexEnvData( GLenum target, GLenum pname, const GLfloat *params )
@@ -181,7 +178,6 @@ void PACK_APIENTRY crPackPrioritizeTextures( GLsizei n,
 			priorities, n*sizeof( *priorities ) );
 
 	crHugePacket( CR_PRIORITIZETEXTURES_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 static void __handleTexGenData( GLenum coord, GLenum pname, 
@@ -304,7 +300,6 @@ void PACK_APIENTRY crPackTexSubImage2D (GLenum target, GLint level,
 	crPixelCopy2D((GLvoid *) (data_ptr + 32), pixels, format, type, width, height, packstate );
 
 	crHugePacket( CR_TEXSUBIMAGE2D_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackTexSubImage1D (GLenum target, GLint level, 
@@ -333,7 +328,6 @@ void PACK_APIENTRY crPackTexSubImage1D (GLenum target, GLint level,
 	crPixelCopy1D((GLvoid *) (data_ptr + 24), pixels, format, type, width, packstate );
 
 	crHugePacket( CR_TEXSUBIMAGE1D_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences, GLboolean *return_val, int *writeback )

@@ -27,8 +27,9 @@ FILES = tilesortspu \
 	tilesortspu_swap \
 	tilesortspu_viewport
 
-LIBRARIES = crutil crmothership crpacker spuload
+LIBRARIES = crutil crmothership spuload
 TRACKS_STATE = 1
+PACKS = 1
 
 PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c
 SLOP = $(PRECOMP)

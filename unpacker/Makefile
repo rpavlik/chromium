@@ -33,6 +33,9 @@ LIBRARIES = crutil spuload
 PRECOMP = unpack.c ../include/cr_unpackfuncs.h
 SLOP = $(PRECOMP)
 
+LIB_COPIES = crserver \
+	hiddenlinespu
+
 include $(TOP)/cr.mk
 
 ../include/cr_unpackfuncs.h: unpack_header.py 

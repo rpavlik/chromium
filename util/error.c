@@ -60,8 +60,8 @@ void crError( char *format, ... )
 	__crCheckCanada();
 	if (!my_hostname[0])
 		__getHostInfo();
-	#ifdef WINDOWS
-	if ((err = GetLastError()) != 0)
+#ifdef WINDOWS
+	if ((err = GetLastError()) != 0 && getenv( "CR_WINDOWS_ERRORS" ) != NULL )
 	{
 		static char buf[8092], *temp;
 
@@ -141,12 +141,32 @@ void crDebug( char *format, ... )
 #ifdef WINDOWS
 	DWORD err;
 #endif
+	static FILE *output;
+	static int first_time = 1;
+
+	if (first_time)
+	{
+		char *fname = getenv( "CR_DEBUG_FILE" );
+		first_time = 0;
+		if (fname)
+		{
+			output = fopen( fname, "w" );
+			if (!output)
+			{
+				crError( "Couldn't open debug log %s", fname ); 
+			}
+		}
+		else
+		{
+			output = stderr;
+		}
+	}
 
 	__crCheckCanada();
 	if (!my_hostname[0])
 		__getHostInfo();
 #ifdef WINDOWS
-	if ((err = GetLastError()) != 0)
+	if ((err = GetLastError()) != 0 && getenv( "CR_WINDOWS_ERRORS" ) != NULL )
 	{
 		static char buf[8092], *temp;
 
@@ -181,7 +201,8 @@ void crDebug( char *format, ... )
 #endif
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
-	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
+	fprintf( output, "%s%s\n", txt, canada ? ", eh?" : "" );
+	fflush( output );
 	va_end( args );
 #else /* RELEASE */
 	(void) format;

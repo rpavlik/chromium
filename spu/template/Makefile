@@ -13,6 +13,7 @@ FILES = templatespu \
 
 LIBRARIES = spuload crutil crmothership
 
+PRECOMP =
 SLOP = $(PRECOMP)
 
 LIB_DEFS += templatespu.def

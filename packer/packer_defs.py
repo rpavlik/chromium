@@ -92,4 +92,5 @@ crPackResetBBOX
 crPackOffsetCurrentPointers
 crPackNullCurrentPointers
 crPackInit
+crPackFree
 """

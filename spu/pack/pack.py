@@ -29,7 +29,7 @@ print """#include <stdio.h>
 #include "cr_glwrapper.h"
 """
 
-num_funcs = len(keys) - len(stub_common.AllSpecials('pack_unimplemented'))
+num_funcs = len(keys) - len(stub_common.AllSpecials('packspu_unimplemented'))
 print 'SPUNamedFunctionTable pack_table[%d];' % (num_funcs+1)
 
 print """
@@ -53,7 +53,7 @@ for func_name in keys:
 
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "pack_unimplemented", func_name ):
+	if stub_common.FindSpecial( "packspu_unimplemented", func_name ):
 		continue
 	if func_name in pack_specials:
 		print 'extern %s PACKSPU_APIENTRY packspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
@@ -63,7 +63,7 @@ print '{'
 for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "pack_unimplemented", func_name ):
+	if stub_common.FindSpecial( "packspu_unimplemented", func_name ):
 		continue
 	if func_name in pack_specials:
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) packspu_%s );' % (index, func_name, func_name )

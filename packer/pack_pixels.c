@@ -49,7 +49,6 @@ void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height,
 		pixels, format, type, width, height, packstate );
 
 	crHugePacket( CR_DRAWPIXELS_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width, 
@@ -111,5 +110,4 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 	}
 
 	crHugePacket( CR_BITMAP_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }

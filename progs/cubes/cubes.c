@@ -256,8 +256,8 @@ int main(int argc, char *argv[])
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA );
 
-	mode = GL_POINTS;
-	dice = 100;
+	mode = GL_TRIANGLE_STRIP;
+	dice = 1;
 
 	for ( i = 1; i < argc; i++ )
 	{

@@ -59,6 +59,10 @@ FILES = $(NAMED_SWAP_FILES) $(NORMAL_FILES)
 PRECOMP = packer.def ../include/cr_packfunctions.h ../include/cr_opcodes.h ../include/state/cr_currentpointers.h pack_bbox.c pack_current.c packer.c $(SWAP_C_FILES)
 SLOP = $(PRECOMP)
 
+LIB_COPIES = packspu \
+	tilesortspu \
+	hiddenlinespu
+
 include $(TOP)/cr.mk
 
 packer.def: packer_defs.py

@@ -135,7 +135,6 @@ void tilesortspuShipBuffers( void )
 
 void tilesortspuHuge( CROpcode opcode, void *buf )
 {
-#if 1
 	unsigned int          len;
 	unsigned char        *src;
 	CRMessageOpcodes *msg;
@@ -175,11 +174,7 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
        go across the wire before this big packet */
 	__sendServerBuffer( state_server );
 	crNetSend( state_server->net.conn, NULL, src, len );
-#else
-	crError( "Trying to send a huge packet, which is unimplemented!" );
-	(void) opcode;
-	(void) buf;
-#endif
+	crPackFree( buf );
 }
 
 

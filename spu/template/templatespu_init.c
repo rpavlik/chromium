@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 extern SPUNamedFunctionTable template_table[];
+TemplateSPU template_spu;
 
 SPUFunctions template_functions = {
 	NULL, /* CHILD COPY */
