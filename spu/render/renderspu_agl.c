@@ -15,10 +15,9 @@
 
 #define WINDOW_NAME window->title
 
-#define WindowExists(w)		( IsValidWindowPtr((w)) )
-
 #define SetWContext(w, c)   ( SetWRefCon( (w), (unsigned long) (c) ) )
 #define GetWContext(w)		( (ContextInfo *) GetWRefCon( ((w)->nativeWindow ? (w)->nativeWindow : (w)->window) ) )
+
 
 
 /* Only one of these overall */
@@ -211,6 +210,9 @@ void renderspuFullscreen( WindowInfo *window, GLboolean fullscreen ) {
 GLboolean renderspuWindowAttachContext( WindowInfo *wi, WindowRef window, ContextInfo *context ) {
 	GLboolean   result;
 
+	if( !context || !wi )
+		return render_spu.ws.aglSetCurrentContext( NULL );
+
 	if( render_spu.fullscreen ) {
 		renderspuFullscreen( wi, GL_TRUE );
 
@@ -247,7 +249,7 @@ GLboolean renderspuWindowAttachContext( WindowInfo *wi, WindowRef window, Contex
 
 		SetPort( save );
 	}
-	
+
 	SetWContext( window, context );
 
 	return result;
@@ -269,7 +271,7 @@ static double getDictDouble( CFDictionaryRef refDict, CFStringRef key ) {
 }
 
 // window event handler
-static pascal OSStatus windowEvtHndlr (EventHandlerCallRef myHandler, EventRef event, void* userData)
+static pascal OSStatus windowEvtHndlr( EventHandlerCallRef myHandler, EventRef event, void* userData )
 {
 #pragma unused (userData)
 	WindowRef			window = NULL;
@@ -302,7 +304,8 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 //	CGDirectDisplayID   dpy;
 	WindowAttributes	winAttr = 0L;
 	WindowClass			winClass;
-	Rect				rect;
+	Rect				windowRect;
+	OSStatus			stat;
 
 	CRASSERT(visual);
 	CRASSERT(window);
@@ -332,26 +335,31 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		winAttr |= kWindowNoShadowAttribute;
 		winClass = kAltPlainWindowClass;
 	} else {
-		winAttr |= kWindowStandardFloatingAttributes | kWindowMetalAttribute | kWindowStandardHandlerAttribute;
+		window->y += 20; // It -should- be offsetting from the title bar...
+		winAttr |= kWindowStandardFloatingAttributes | kWindowStandardHandlerAttribute;
 		winClass = kDocumentWindowClass;
 	}
 
-	if( window->window && WindowExists(window->window) )
+	if( window->window && IsValidWindowPtr(window->window) )
 		/* destroy the old one */
 		DisposeWindow( window->window );
 
-	OSStatus stat;
+	SetRect( &windowRect, window->x, window->y,
+						  window->x + window->width, window->y + window->height );
 
-	rect.left   = window->x;
-	rect.right  = window->x + window->width;
-	rect.top    = window->y;
-	rect.bottom = window->y + window->height;
-
-	stat = CreateNewWindow( winClass, winAttr, &rect, &window->window );
+	stat = CreateNewWindow( winClass, winAttr, &windowRect, &window->window );
 
 	if( stat != noErr ) {
 		crError( "Render SPU: unable to create window" );
 		return GL_FALSE;
+	}
+
+	{
+		CFStringRef title_string;
+
+		title_string = CFStringCreateWithCStringNoCopy(NULL, WINDOW_NAME, kCFStringEncodingMacRoman, NULL);
+		SetWindowTitleWithCFString( window->window, title_string );
+		CFRelease( title_string );
 	}
 
 	if( !masterGroup ) {
@@ -378,12 +386,13 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 			current_dispMode = disp_mode;
 	} else {
 		/* Even though there are still issues with the windows themselves, install the event handlers */
-		EventHandlerRef ref;
-		EventTypeSpec list[] = { { kEventClassWindow, kEventWindowClose } };
-		window->event_handler = NewEventHandlerUPP(windowEvtHndlr); 
+		EventTypeSpec event_list[] = { { kEventClassWindow, kEventWindowClose } };
 
-		InstallWindowEventHandler( window->window, window->event_handler, GetEventTypeCount(list), list,
-								   (void*)window->window, &ref );
+		window->event_handler = NewEventHandlerUPP( windowEvtHndlr ); 
+
+		InstallWindowEventHandler( window->window, window->event_handler,
+								   GetEventTypeCount(event_list), event_list,
+								   NULL, NULL );
 	}
 
 	if( showIt )
@@ -424,6 +433,7 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 {
 	CRASSERT(window);
 	CRASSERT(window->window);
+
 	SizeWindow( window->window, w, h, true );
 }
 
@@ -460,8 +470,9 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 	if( render_spu.fullscreen )
 		renderspuFullscreen( window, showIt );
 
-	if( WindowExists(window->window) ) {
+	if( IsValidWindowPtr(window->window) ) {
 		if( showIt ) {
+			TransitionWindow( window->window, kWindowZoomTransitionEffect, kWindowShowTransitionAction, NULL );
 			ShowWindow( window->window );
 			SelectWindow( window->window );
 		} else {
@@ -472,6 +483,18 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 	window->visible = showIt;
 }
 
+extern CGSConnectionID    _CGSDefaultConnection(void);
+extern OSStatus CGSGetWindowBounds( CGSConnectionID cid, CGSWindowID wid, float *bounds );
+
+GLboolean WindowExists( CGSWindowID window ) {
+	OSStatus err;
+	float bounds[4];
+
+	err = CGSGetWindowBounds( _CGSDefaultConnection(), window, bounds );
+
+	return err == noErr;
+}
+
 
 void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, ContextInfo *context )
 {
@@ -480,6 +503,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 //	char response[8096];
 
 	CRASSERT(render_spu.ws.aglSetCurrentContext);
+	crDebug( "renderspu_SystemMakeCurrent( %x, %i, %x )", window, nativeWindow, context );
 
 	if( window && context ) {
 		if( window->visual != context->visual ) {
@@ -497,44 +521,48 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 		CRASSERT(context->context);
 
-		/* Thanks to GLUT, this doesn't do anything.. yet */
-/*		if( render_spu.render_to_crut_window ) {
-			conn = crMothershipConnect();
-			if( !conn )
-				crError("Couldn't connect to the mothership to get CRUT drawable-- I have no idea what to do!");
+#if 0
+		/* Thanks to CGS being used on the appfaker and Carbon in here,
+		 * this will not work.. yet
+		 */
+		if( render_spu.render_to_crut_window ) {
+			if( render_spu.crut_drawable == 0 ) {
+				conn = crMothershipConnect();
+				if( !conn )
+					crError( "Couldn't connect to the mothership to get CRUT drawable-- I have no idea what to do!" );
 
-			crMothershipGetParam( conn, "crut_drawable", response );
-			render_spu.crut_drawable = crStrToInt(response);
-			crMothershipDisconnect( conn );
+				crMothershipGetParam( conn, "crut_drawable", response );
+				render_spu.crut_drawable = crStrToInt(response);  // Getting CGSWindow
+				crMothershipDisconnect( conn );
 
-			crDebug( "Received a drawable: %i", render_spu.crut_drawable );
-			if( !render_spu.crut_drawable )
-				crError("Crut drawable is invalid\n");
+				crDebug( "Render SPU: using CRUT drawable 0x%x", render_spu.crut_drawable );
+				if( !render_spu.crut_drawable )
+					crDebug( "Render SPU: Crut drawable 0 is invalid" );
+			}
 
 			nativeWindow = render_spu.crut_drawable;
-			window->nativeWindow = (WindowRef)render_spu.crut_drawable;
 		}
 
-		if( (render_spu.render_to_crut_window || render_spu.render_to_app_window) && nativeWindow )*/
-		if( render_spu.render_to_app_window && nativeWindow )
+		if( (render_spu.render_to_crut_window || render_spu.render_to_app_window) && nativeWindow )
 		{
 			/* The render_to_app_window option is set and we've got a nativeWindow
 			 * handle, save the handle for later calls to swapbuffers().
 			 */
-			if( WindowExists((WindowRef)nativeWindow) ) {
+			if( WindowExists(nativeWindow) ) {
 				window->nativeWindow = (WindowRef) nativeWindow;
 
 				result = renderspuWindowAttachContext( window, window->nativeWindow, context );
 				/* don't CRASSERT(result) - it causes a problem with CRUT */
 			} else {
-				crWarning("Render SPU: render_to_app_window option is set,"
-						  "but the application window ID (0x%x) is invalid", (unsigned int) nativeWindow);
+				crWarning("Render SPU: render_to_app/crut_window option is set,"
+						  "but the application window ID (%i) is invalid", nativeWindow);
 				CRASSERT(window->window);
 				result = renderspuWindowAttachContext( window, window->window, context );
 				CRASSERT(result);
 			}
 		}
 		else
+#endif
 		{
 			/* This is the normal case - rendering to the render SPU's own window */
 			CRASSERT(window->window);
@@ -551,6 +579,8 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 				render_spu.self.WindowPos2iARB(0, 0);
 			}
 		}
+	} else {
+		renderspuWindowAttachContext( 0, 0, 0 );
 	}
 }
 
