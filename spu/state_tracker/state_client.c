@@ -30,6 +30,7 @@ void crStateClientInitBits (CRClientBits *c)
 	memset(c->v, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	memset(c->n, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	memset(c->c, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
+	memset(c->s, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	memset(c->i, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	memset(c->t, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));
 	memset(c->e, 0, GLCLIENT_BIT_ALLOC*sizeof(GLbitvalue));

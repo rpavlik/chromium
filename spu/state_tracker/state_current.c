@@ -30,6 +30,7 @@ void crStateCurrentInit( CRCurrentState *c )
 
 	c->rasterDistance = 0.0f;
 	c->rasterColor = default_color;
+	c->rasterSecondaryColor = default_secondaryColor;
 	c->rasterTexture = default_texcoord;
 	c->rasterValid = GL_TRUE;
 	c->rasterIndex = 1.0f;
@@ -144,6 +145,7 @@ void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 		c->color &= nbitID;
 	}
 
+	/* NEED TO FIX THIS, ALSO?!!!!! */
 #ifdef CR_EXT_secondary_color
 	if (c->secondaryColor & bitID) {
 		if (COMPARE_COLOR(from->secondaryColor,to->secondaryColor)) {

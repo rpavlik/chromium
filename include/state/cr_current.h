@@ -59,6 +59,7 @@ typedef struct {
 
 	GLfloat      rasterDistance;
 	GLcolorf     rasterColor;
+	GLcolorf     rasterSecondaryColor;
 	GLtexcoordf  rasterTexture;
 	GLdouble     rasterIndex;
 	GLboolean    rasterValid;
