@@ -93,7 +93,11 @@ void crMothershipIdentifySPU( CRConnection *conn, int spu )
 
 #define INSIST(x) if (!x) crError( "Bad Mothership response: %s", response )
 
-/* Called by app faker nodes to identify themselves to the mothership */
+/**
+ * Called by app faker nodes to identify themselves to the mothership.
+ * \param response  returns the result of contacting the mothership - a
+ *                  string of the form "ID arg0 arg1 arg2 ..."
+ */
 void crMothershipIdentifyFaker( CRConnection *conn, char *response )
 {
 	char hostname[1024];
