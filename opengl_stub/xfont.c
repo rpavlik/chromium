@@ -136,7 +136,7 @@ void stubUseXFont( Display *dpy, Font font, int first, int count, int listbase )
 
 	fs = XQueryFont(dpy, font);
 	if (!fs) {
-		crError("Couldn't get font structure information");
+		crWarning("Couldn't get font structure information");
 		return;
 	}
 
@@ -149,7 +149,7 @@ void stubUseXFont( Display *dpy, Font font, int first, int count, int listbase )
 	bm = (GLubyte *) crAlloc((max_bm_width * max_bm_height) * sizeof(GLubyte));
 	if (!bm) {
 		XFreeFontInfo( NULL, fs, 1 );
-		crError("Couldn't allocate bitmap in glXUseXFont()");
+		crWarning("Couldn't allocate bitmap in glXUseXFont()");
 		return;
 	}
 
