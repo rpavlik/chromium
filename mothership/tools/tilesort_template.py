@@ -185,7 +185,7 @@ cr.Go()
 
 #----------------------------------------------------------------------------
 
-def __FindTilesortSPU(mothership):
+def FindTilesortSPU(mothership):
 	"""Search the mothership for the tilesort SPU."""
 	nodes = mothership.Nodes()
 	assert len(nodes) == 2
@@ -198,7 +198,7 @@ def __FindTilesortSPU(mothership):
 	assert tilesortSPU.Name() == "tilesort"
 	return tilesortSPU
 
-def __FindRenderSPU(mothership):
+def FindRenderSPU(mothership):
 	"""Search the mothership for the render SPU."""
 	nodes = mothership.Nodes()
 	assert len(nodes) == 2
@@ -509,7 +509,7 @@ class TilesortDialog(wxDialog):
 
 	def __OnTilesortOptions(self, event):
 		"""Called when Tilesort Options button is pressed."""
-		tilesortSPU = __FindTilesortSPU(self.mothership)
+		tilesortSPU = FindTilesortSPU(self.mothership)
 		(params, opts) = crutils.GetSPUOptions("tilesort")
 		# create the dialog
 		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
@@ -798,31 +798,43 @@ def Read_Tilesort(mothership, fileHandle):
 			# parentheses in the regexp define groups
 			# \"? is an optional double-quote character
 			# [^\"] is any character but double-quote
-			v = re.search("^TILESORT_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+			v = re.search("^TILESORT_([a-zA-Z0-9\_]+) = (\"[^\"]*\")", l)
 			if v:
 				name = v.group(1)
 				value = v.group(2)
+				if value[0] != '[':
+					value = '[' + value + ']'
+				value = eval(value)
 				tilesortSPU.SetOption(name, value)
 		elif re.match("^RENDER_", l):
 			# A render SPU option
-			v = re.search("^RENDER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+			v = re.search("^RENDER_([a-zA-Z0-9\_]+) = (\"[^\"]*\")", l)
 			if v:
 				name = v.group(1)
 				value = v.group(2)
+				if value[0] != '[':
+					value = '[' + value + ']'
+				value = eval(value)
 				renderSPU.SetOption(name, value)
 		elif re.match("^SERVER_", l):
 			# A server option
-			v = re.search("^SERVER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+			v = re.search("^SERVER_([a-zA-Z0-9\_]+) = (\"[^\"]*\")", l)
 			if v:
 				name = v.group(1)
 				value = v.group(2)
+				if value[0] != '[':
+					value = '[' + value + ']'
+				value = eval(value)
 				mothership.SetServerOption(name, value)
 		elif re.match("^GLOBAL_", l):
 			# A global option
-			v = re.search("^GLOBAL_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+			v = re.search("^GLOBAL_([a-zA-Z0-9\_]+) = (\"[^\"]*\")", l)
 			if v:
 				name = v.group(1)
 				value = v.group(2)
+				if value[0] != '[':
+					value = '[' + value + ']'
+				value = eval(value)
 				mothership.SetGlobalOption(name, value)
 		elif re.match("^# end of options$", l):
 			# that's the end of the variables
@@ -857,11 +869,11 @@ def Write_Tilesort(mothership, file):
 	file.write("NUM_CLIENTS = %d\n" % tilesort.NumClients)
 
 	# write tilesort SPU options
-	tilesortSPU = __FindTilesortSPU(mothership)
+	tilesortSPU = FindTilesortSPU(mothership)
 	configio.WriteSPUOptions(tilesortSPU, "TILESORT", file)
 
 	# write render SPU options
-	renderSPU = __FindRenderSPU(mothership)
+	renderSPU = FindRenderSPU(mothership)
 	configio.WriteSPUOptions(renderSPU, "RENDER", file)
 
 	# write server and global options
