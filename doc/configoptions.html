@@ -18,10 +18,12 @@
 <p>This page provides a complete list of all the configuration parameters
 supported by all SPU's shipped with Chromium ALPHA, arranged by SPU.&nbsp; If a
 SPU has <i>no</i> configuration options, it is not listed here.</p>
-<p>An example of setting an SPU parameter is:</p>
+<p>Example of setting SPU parameters are:</p>
 <code>
 spu = SPU('render')<br>
-spu.Conf('window_geometry', 0, 0, 512, 512)<br>
+spu.Conf('window_geometry', [0, 0, 512, 512])<br>
+spu.Conf('window_title', 'my window')<br>
+spu.Conf('resizable', 1)<br>
 </code>
 
 <h2 class="PageSubHeading">Print SPU </h2>
@@ -59,7 +61,7 @@ spu.Conf('window_geometry', 0, 0, 512, 512)<br>
       first two give the (<i>x</i>,<i>y</i>) position of the upper left corner
       of the window, relative to the upper left corner of the screen.&nbsp; The
       last two numbers give the width and height of the window,
-      respectively.&nbsp; The default is (0,0,256,256).</td>
+      respectively.&nbsp; The default is [0, 0, 256, 256].</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">fullscreen</td>
