@@ -22,6 +22,7 @@ static char my_hostname[256];
 static int my_pid = 0;
 static int canada = 0;
 static int swedish_chef = 0;
+static int australia = 0;
 
 static void __getHostInfo( void )
 {
@@ -62,9 +63,26 @@ static void __crCheckSwedishChef(void)
 	}
 }
 
+static void __crCheckAustralia(void)
+{
+	static int first = 1;
+	if (first)
+	{
+		char *env = getenv( "CR_AUSTRALIA" );
+		char *env2 = getenv( "CR_AUSSIE" );
+		if (env || env2)
+			australia = 1;
+		first = 0;
+	}
+}
+
 static void outputChromiumMessage( FILE *output, char *str )
 {
-	fprintf( output, "%s%s%s\n", str, canada ? ", eh?" : "", swedish_chef ? " BORK BORK BORK!" : "" );
+	fprintf( output, "%s%s%s%s\n", str, 
+			swedish_chef ? " BORK BORK BORK!" : "",
+			canada ? ", eh?" : "",
+			australia ? ", mate!" : ""
+			);
 	fflush( output );
 }
 
@@ -79,6 +97,7 @@ void crError( char *format, ... )
 
 	__crCheckCanada();
 	__crCheckSwedishChef();
+	__crCheckAustralia();
 	if (!my_hostname[0])
 		__getHostInfo();
 #ifdef WINDOWS
@@ -149,6 +168,7 @@ void crWarning( char *format, ... )
 
 	__crCheckCanada();
 	__crCheckSwedishChef();
+	__crCheckAustralia();
 	if (!my_hostname[0])
 		__getHostInfo();
 	offset = sprintf( txt, "CR Warning(%s:%d): ", my_hostname, my_pid );
@@ -190,6 +210,7 @@ void crDebug( char *format, ... )
 
 	__crCheckCanada();
 	__crCheckSwedishChef();
+	__crCheckAustralia();
 	if (!my_hostname[0])
 		__getHostInfo();
 #ifdef WINDOWS
