@@ -51,7 +51,7 @@ static void BuildSwapLimits( WindowInfo *window )
 			/* right */
 			if(!binaryswap_spu.highlow[i])
 			{
-				crDebug("Swap %d: right", i);
+				crDebug("Binary Swap %d: right", i);
 				if(i==0)
 				{
 					window->read_x[i] = window->width/2;
@@ -77,7 +77,7 @@ static void BuildSwapLimits( WindowInfo *window )
 			/* left */
 			else
 			{
-				crDebug("Swap %d: left", i);
+				crDebug("Binary Swap %d: left", i);
 				if(i==0)
 				{
 					window->read_y[i] = 0;
@@ -108,7 +108,7 @@ static void BuildSwapLimits( WindowInfo *window )
 			/* top */
 			if(binaryswap_spu.highlow[i])
 			{
-				crDebug("Swap %d: top", i);
+				crDebug("Binary Swap %d: top", i);
 				window->read_x[i] = other_x;
 				window->read_y[i] = other_y + other_height/2;
 				window->read_width[i] = other_width;
@@ -119,7 +119,7 @@ static void BuildSwapLimits( WindowInfo *window )
 			/* bottom */
 			else
 			{
-				crDebug("Swap %d: bottom", i);
+				crDebug("Binary Swap %d: bottom", i);
 				window->read_x[i] = other_x;
 				window->read_y[i] = other_y;
 				window->read_width[i] = other_width;
@@ -129,8 +129,9 @@ static void BuildSwapLimits( WindowInfo *window )
 				other_height = other_height/2 + other_height%2;
 			}
 		}
-		crDebug("Width: %d, Height: %d", window->read_width[i], window->read_height[i]);
-		crDebug("x: %d, y: %d", window->read_x[i], window->read_y[i]);
+		crDebug("Binary Swap SPU: Width: %d, Height: %d, x: %d, y: %d",
+						window->read_width[i], window->read_height[i],
+						window->read_x[i], window->read_y[i]);
 	}
 }
 
@@ -326,7 +327,6 @@ static void CompositeNode( WindowInfo *window,
 		read_start_y = msg->clipped_y;
 		read_width   = msg->clipped_width;
 		read_height  = msg->clipped_height;
-		
 		
 		/* read our portion for this pass */
 		/* figure out which mode to use, depth or alpha */
@@ -585,12 +585,12 @@ static void ProcessNode( WindowInfo *window )
 	int x1, y1, x2, y2;
 
 	/* compute region to process */
-	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x1 == 0) {
+	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
 			/* use whole window */
 		x1 = 0;
 		y1 = 0;
 		x2 = window->width;
-		y2 = window->width;
+		y2 = window->height;
 	}
 	else {
 		/* Clamp the screen bbox union to the window dims.
