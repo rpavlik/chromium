@@ -131,12 +131,20 @@ crutConnectToClients( CRUTAPI *crut_api )
 
 }
 
+void crutSendEvent( CRUTAPI *crut_api, void *msg, int size )
+{
+    int i;
+    
+    for (i=0; i<crut_api->numclients; ++i)
+    {
+        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, size );
+    }
+}
+
 void 
 CRUT_APIENTRY
 crutSendMouseEvent( CRUTAPI *crut_api, int button, int state, int x, int y ) 
 {
-    int i;
-
     CRUTMouseMsg *msg = crAlloc(sizeof(CRUTMouseMsg));
     msg->header.type = CR_MESSAGE_CRUT;
     msg->msg_type = CRUT_MOUSE_EVENT;
@@ -145,10 +153,8 @@ crutSendMouseEvent( CRUTAPI *crut_api, int button, int state, int x, int y )
     msg->x = x;
     msg->y = y;
     
-    for (i=0; i<crut_api->numclients; i++) 
-    {
-        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTMouseMsg) );
-    }
+    crutSendEvent( crut_api, msg, sizeof(CRUTMouseMsg) );
+
     crFree(msg);
 }
 
@@ -156,18 +162,15 @@ void
 CRUT_APIENTRY
 crutSendKeyboardEvent( CRUTAPI *crut_api, int key, int x, int y ) 
 {
-    int i;
-
     CRUTKeyboardMsg *msg = crAlloc(sizeof(CRUTKeyboardMsg));
     msg->header.type = CR_MESSAGE_CRUT;
     msg->msg_type = CRUT_KEYBOARD_EVENT;
     msg->key = key;
     msg->x = x;
     msg->y = y;
-    for (i=0; i<crut_api->numclients; i++) 
-    {
-      crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTKeyboardMsg) );
-    }
+
+    crutSendEvent( crut_api, msg, sizeof(CRUTKeyboardMsg) );
+
     crFree(msg);
 }
 
@@ -175,17 +178,14 @@ void
 CRUT_APIENTRY
 crutSendReshapeEvent( CRUTAPI *crut_api, int width, int height )
 {
-    int i;
-
     CRUTReshapeMsg *msg = crAlloc(sizeof(CRUTReshapeMsg));
     msg->header.type = CR_MESSAGE_CRUT;
     msg->msg_type = CRUT_RESHAPE_EVENT;
     msg->width = width;
     msg->height = height;
-    for (i=0; i<crut_api->numclients; i++) 
-    {
-        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTReshapeMsg) );
-    }
+
+    crutSendEvent( crut_api, msg, sizeof(CRUTReshapeMsg) );
+
     crFree(msg);
 }
 
@@ -193,17 +193,14 @@ void
 CRUT_APIENTRY
 crutSendMotionEvent( CRUTAPI *crut_api, int x, int y )
 {
-    int i;
-
     CRUTMotionMsg *msg = crAlloc(sizeof(CRUTMotionMsg));
     msg->header.type = CR_MESSAGE_CRUT;
     msg->msg_type = CRUT_MOTION_EVENT;
     msg->x = x;
     msg->y = y;
-    for (i=0; i<crut_api->numclients; i++) 
-    {
-        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTMotionMsg) );
-    }
+
+    crutSendEvent( crut_api, msg, sizeof(CRUTMotionMsg) );
+
     crFree(msg);
 }
 
@@ -211,17 +208,14 @@ void
 CRUT_APIENTRY
 crutSendPassiveMotionEvent( CRUTAPI *crut_api, int x, int y )
 {
-    int i;
-
     CRUTPassiveMotionMsg *msg = crAlloc(sizeof(CRUTPassiveMotionMsg));
     msg->header.type = CR_MESSAGE_CRUT;
     msg->msg_type = CRUT_PASSIVE_MOTION_EVENT;
     msg->x = x;
     msg->y = y;
-    for (i=0; i<crut_api->numclients; i++) 
-    {
-        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTPassiveMotionMsg) );
-    }
+
+    crutSendEvent( crut_api, msg, sizeof(CRUTPassiveMotionMsg) );
+
     crFree(msg);
 }
 
@@ -229,16 +223,13 @@ void
 CRUT_APIENTRY
 crutSendMenuEvent( CRUTAPI *crut_api, int menuID, int value )
 {
-    int i;
-
     CRUTMenuMsg *msg = crAlloc(sizeof(CRUTMenuMsg));
     msg->header.type = CR_MESSAGE_CRUT;
     msg->msg_type = CRUT_MENU_EVENT;
     msg->menuID = menuID;
     msg->value = value;
-    for (i=0; i<crut_api->numclients; i++) 
-    {
-        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTMenuMsg) );
-    }
+
+    crutSendEvent( crut_api, msg, sizeof(CRUTMenuMsg) );
+
     crFree(msg);
 }

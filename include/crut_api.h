@@ -10,6 +10,9 @@
 #include "cr_net.h"
 #include "cr_protocol.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Compile-time version tests */
 #define CRUT_MAJOR_VERSION 1
@@ -176,11 +179,16 @@ void CRUT_APIENTRY crutGetWindowParams( CRUTAPI *crut_api );
 void CRUT_APIENTRY crutGetMenuXML( CRUTAPI *crut_api );
 void CRUT_APIENTRY crutSetWindowID( CRUTAPI *crut_api, int windowID );
 void CRUT_APIENTRY crutConnectToClients( CRUTAPI *crut_api );
+void crutSendEvent( CRUTAPI *crut_api, void *msg, int size );
 void CRUT_APIENTRY crutSendMouseEvent( CRUTAPI *crut_api, int button, int state, int x, int y );
 void CRUT_APIENTRY crutSendKeyboardEvent( CRUTAPI *crut_api, int key, int x, int y );
 void CRUT_APIENTRY crutSendReshapeEvent( CRUTAPI *crut_api, int width, int height );
 void CRUT_APIENTRY crutSendMotionEvent( CRUTAPI *crut_api, int x, int y );
 void CRUT_APIENTRY crutSendPassiveMotionEvent( CRUTAPI *crut_api, int x, int y );
 void CRUT_APIENTRY crutSendMenuEvent( CRUTAPI *crut_api, int menuID, int value );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CRUTAPI_H */

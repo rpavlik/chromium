@@ -10,8 +10,11 @@
 #include "chromium.h"
 #include "crut_api.h"
 
-
 #define EVENT_BUFFER_SIZE 1024*50 /* 50K, for now */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct client_menu_item
 {
@@ -103,9 +106,14 @@ void CRUT_CLIENT_APIENTRY crutMainLoop(void);
 int  CRUT_CLIENT_APIENTRY crutCreateContext ( unsigned int visual );
 void CRUT_CLIENT_APIENTRY crutReceiveEvent(CRUTMessage **msg);
 int  CRUT_CLIENT_APIENTRY crutCheckEvent( void );
-
+int  CRUT_CLIENT_APIENTRY crutPeekNextEvent( void );
 int  CRUT_CLIENT_APIENTRY crutCreateMenu( void (*func) (int val) );
 void CRUT_CLIENT_APIENTRY crutAddMenuEntry( char* name, int value );
 void CRUT_CLIENT_APIENTRY crutAddSubMenu( char* name, int menuID );
 void CRUT_CLIENT_APIENTRY crutAttachMenu( int button );
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* CRUT_CLIENTAPI_H */
