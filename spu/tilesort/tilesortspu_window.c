@@ -506,25 +506,26 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint newWidth, G
 		GET_THREAD(thread);
 		int i;
 
-		/* The default buffer */
-		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+		/* release geometry buffer */
+		crPackReleaseBuffer( thread->packer );
 
 		/* keep this loop, in case we change the behaviour someday */
 		for (i = 0; i < tilesort_spu.num_servers; i++)
 		{
 			const int serverWin = winInfo->server[i].window;
-			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 			if (tilesort_spu.swap)
 				crPackWindowSizeSWAP( serverWin, newWidth, newHeight );
 			else
 				crPackWindowSize( serverWin, newWidth, newHeight );
 
-			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+			/* release server buffer */
+			crPackReleaseBuffer( thread->packer );
 		}
 
 		/* The default buffer */
-		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 	}
 }
 
@@ -556,10 +557,14 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLin
 GLint TILESORTSPU_APIENTRY
 tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 {
+   GET_THREAD(thread);
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 	static GLint freeWinID = 400;
 	WindowInfo *winInfo;
 	int i;
+
+	/* release geometry buffer */
+	crPackReleaseBuffer(thread->packer );
 
 	winInfo = tilesortspuCreateWindowInfo( freeWinID, visBits );
 	if (!winInfo)
@@ -574,14 +579,15 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 		int writeback = 1;
 		GLint return_val = 0;
 
-		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
+		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackWindowCreateSWAP( dpyName, visBits, &return_val, &writeback);
 		else
 			crPackWindowCreate( dpyName, visBits, &return_val, &writeback );
 
-		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
+		/* release server buffer */
+		crPackReleaseBuffer( thread0->packer );
 
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
@@ -623,8 +629,8 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 		winInfo->server[i].window = return_val;
 	}
 
-	/* The default pack buffer */
-	crPackSetBuffer( thread0->packer, &(thread0->geometry_pack) );
+	/* The default geometry pack buffer */
+	crPackSetBuffer( thread0->packer, &(thread0->geometry_buffer) );
 
 	tilesortspuBucketingInit(winInfo);
 

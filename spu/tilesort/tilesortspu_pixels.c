@@ -279,7 +279,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	thread->currentContext->readPixelsCount = 0;
 	for ( i = 0; i < tilesort_spu.num_servers; i++ )
 	{
-		CRPackBuffer *pack = &(thread->pack[i]);
+		CRPackBuffer *buffer = &(thread->buffer[i]);
 
 		/* Grab current server's boundaries */
 		isect = winInfo->server[i].extents[0];  /* x1,y1,x2,y2 */
@@ -323,14 +323,14 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 		offset += ((isect.y1 - y) * stride);
 
 		/* Munge the per server packing structures */
-		data_ptr = pack->data_current; 
+		data_ptr = buffer->data_current; 
 		if (!crPackCanHoldOpcode( 1, len ) )
  		{ 
 			tilesortspuFlush( thread );
-			data_ptr = pack->data_current; 
+			data_ptr = buffer->data_current; 
 			CRASSERT( crPackCanHoldOpcode( 1, len ) );
 		}
-		pack->data_current += len;
+		buffer->data_current += len;
 		WRITE_DATA( 0,  GLint,  new_x );
 		WRITE_DATA( 4,  GLint,  new_y );
 		WRITE_DATA( 8,  GLsizei,  new_width );
@@ -343,7 +343,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 		WRITE_DATA( 36, GLint, p->skipPixels );
 		WRITE_DATA( 40, GLint,  bytes_per_row );
 		WRITE_NETWORK_POINTER( 44, (char *) pixels + offset );
-		*(pack->opcode_current--) = (unsigned char) CR_READPIXELS_OPCODE;
+		*(buffer->opcode_current--) = (unsigned char) CR_READPIXELS_OPCODE;
 
 		tilesortspuSendServerBuffer( i );
 	}

@@ -25,6 +25,8 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_MakeCurrent(GLint crWindow, GLint nati
 
 	if (context)
 	{
+		/* setup initial buffer for packing commands */
+		hiddenlineProvidePackBuffer();
 		crPackSetContext( context->packer );
 		crStateMakeCurrent( context->ctx );
 		hiddenline_spu.super.MakeCurrent(crWindow, nativeWindow, context->super_context);

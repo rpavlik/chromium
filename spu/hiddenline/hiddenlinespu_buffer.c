@@ -81,7 +81,9 @@ void hiddenlineFlush( void *arg )
 
 	CRASSERT(context);
 	buf = &(context->pack_buffer);
-	crPackGetBuffer( context->packer, buf );
+
+	/* release previous buffer if any */
+	crPackReleaseBuffer( context->packer );
 
 	hiddenlineRecord( buf->pack, buf->data_start, buf->opcode_start, buf->opcode_start - buf->opcode_current , 1 );
 

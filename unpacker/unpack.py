@@ -220,7 +220,7 @@ void crUnpack( void *data, void *opcodes,
 
 	for (i = 0 ; i < num_opcodes ; i++)
 	{
-		/*crDebug(\"Unpacking opcode %d\\n\", *unpack_opcodes);*/
+		/*crDebug(\"Unpacking opcode \%d\", *unpack_opcodes);*/
 		switch( *unpack_opcodes )
 		{"""
 
@@ -267,7 +267,7 @@ void crUnpackExtend(void)
 	GLenum extend_opcode = %s;""" % ReadData( 4, 'GLenum' );
 
 print """
-	/*crDebug(\"Unpacking extended opcode \%d\\n\", extend_opcode);*/
+	/*crDebug(\"Unpacking extended opcode \%d", extend_opcode);*/
 	switch( extend_opcode )
 	{"""
 

@@ -85,7 +85,6 @@ tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			*/
 			return 0; /* NOT HANDLED */
 	}
-	CRASSERT(0);
 	return 0; /* never get here */
 }
 
@@ -99,7 +98,7 @@ void tilesortspuConnectToServers( void )
 	int some_net_traffic = 0;
 
 	CRASSERT(thread0->net);
-	CRASSERT(thread0->pack);
+	CRASSERT(thread0->buffer);
 
 	crNetInit( tilesortspuReceiveData, NULL );
 

@@ -14,5 +14,5 @@ USE_DMX=0
 
 
 # Set THREADSAFE to 1 if you want thread safety for parallel applications.
-THREADSAFE=0
+THREADSAFE=1
 

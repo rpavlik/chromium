@@ -26,6 +26,8 @@
 extern "C" {
 #endif
 
+typedef struct CRPackContext_t CRPackContext;
+
 typedef struct {
 	void          *pack;
 	unsigned int   size;
@@ -38,6 +40,7 @@ typedef struct {
 	GLboolean canBarf;
 	GLboolean holds_List;
 	GLboolean in_List;
+	CRPackContext *context;
 } CRPackBuffer;
 
 typedef void (*CRPackFlushFunc)(void *arg);
@@ -46,8 +49,8 @@ typedef void (*CRPackErrorHandlerFunc)(GLenum);
 
 typedef GLvectorf CRBBOXPoint;
 
-typedef struct {
-	CRPackBuffer buffer;
+struct CRPackContext_t{
+	CRPackBuffer buffer;   /* not a pointer, see comments in pack_buffer.c */
 	CRPackFlushFunc Flush;
 	void *flush_arg;
 	CRPackSendHugeFunc SendHuge;
@@ -56,15 +59,21 @@ typedef struct {
 	CRBBOXPoint bounds_min, bounds_max;
 	int updateBBOX;
 	int swapping;
-} CRPackContext;
+	CRPackBuffer *currentBuffer;
+	char *file;  /* for debugging only */
+	int line;    /* for debugging only */
+};
+
 
 CRPackContext *crPackNewContext(int swapping);
 void crPackSetContext( CRPackContext *pc );
 CRPackContext *crPackGetContext( void );
 
-/* XXX add these const keywords??? */
-void crPackSetBuffer( CRPackContext *pc, /*const */CRPackBuffer *buffer );
-void crPackGetBuffer( /*const */CRPackContext *pc, CRPackBuffer *buffer );
+void crPackSetBuffer( CRPackContext *pc, CRPackBuffer *buffer );
+void crPackSetBufferDEBUG( const char *file, int line,
+													 CRPackContext *pc, CRPackBuffer *buffer );
+void crPackReleaseBuffer( CRPackContext *pc );
+
 void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int mtu );
 void crPackResetPointers( CRPackContext *pc );
 void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff );
@@ -98,6 +107,7 @@ void SanityCheck(void);
 
 #define GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len ) \
   THREADASSERT( pc ); \
+  CRASSERT( pc->currentBuffer ); \
   data_ptr = pc->buffer.data_current; \
   if ( !crPackCanHoldOpcode( 1, (len) ) ) \
   { \
@@ -108,13 +118,15 @@ void SanityCheck(void);
   pc->buffer.data_current += (len)
 
 #define GET_BUFFERED_POINTER( pc, len ) \
+  CRASSERT( pc->currentBuffer ); \
   if ( pc->buffer.holds_BeginEnd && ! pc->buffer.in_BeginEnd ) { \
-	pc->Flush( pc->flush_arg ); \
-	pc->buffer.holds_BeginEnd = 0; \
+		pc->Flush( pc->flush_arg ); \
+		pc->buffer.holds_BeginEnd = 0; \
   } \
   GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len )
 
 #define GET_BUFFERED_COUNT_POINTER( pc, len ) \
+  CRASSERT( pc->currentBuffer ); \
   data_ptr = pc->buffer.data_current; \
   if ( !crPackCanHoldOpcode( 1, (len) ) ) \
   { \

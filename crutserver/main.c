@@ -15,6 +15,7 @@ static int
 crutServerRecv( CRConnection *conn, void *buf, unsigned int len )
 {
     CRMessage *msg = (CRMessage *) buf;
+    (void) len;
     
     switch( msg->header.type )
     {
@@ -24,7 +25,6 @@ crutServerRecv( CRConnection *conn, void *buf, unsigned int len )
     default:
 	return 0; /* NOT HANDLED */
     }
-  (void) len;
 #ifndef WINDOWS	
   return 0; /* HANDLED */
 #endif
@@ -318,7 +318,8 @@ crutInitServer(char *mothership, int argc, char *argv[])
     
     /* give window id to mothership */
 #ifndef WINDOWS
-    drawable = glXGetCurrentDrawable();
+    /* XXX is this cast safe? */
+    drawable = (int) glXGetCurrentDrawable();
     crutSetWindowID( &crut_api, drawable);
 #endif
 

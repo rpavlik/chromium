@@ -141,8 +141,8 @@ GetLimit(GLenum pname, GLenum type, void *results)
 
 	CRASSERT(numValues < 16);
 
-	/* Save the default pack buffer */
-	crPackGetBuffer( thread0->packer, &(thread0->geometry_pack) );
+	/* release geometry buffer */
+	crPackReleaseBuffer( thread0->packer );
 
 	/*
 	 * loop over servers, issuing the glGet.
@@ -153,14 +153,15 @@ GetLimit(GLenum pname, GLenum type, void *results)
 		int writeback = 1;
 		GLfloat values[16];
 
-		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
+		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackGetFloatvSWAP( pname, values, &writeback );
 		else
 			crPackGetFloatv( pname, values, &writeback );
 
-		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
+		/* release server buffer */
+		crPackReleaseBuffer( thread0->packer );
 
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
@@ -187,7 +188,7 @@ GetLimit(GLenum pname, GLenum type, void *results)
 	}
 
 	/* Restore the default pack buffer */
-	crPackSetBuffer( thread0->packer, &(thread0->geometry_pack) );
+	crPackSetBuffer( thread0->packer, &(thread0->geometry_buffer) );
 
 	/* return the results */
 	if (type == GL_BOOL)
@@ -301,8 +302,8 @@ tilesortspuGetExtensionsString(void)
 		return NULL;
 	}
 
-	/* Save the default pack buffer */
-	crPackGetBuffer( thread0->packer, &(thread0->geometry_pack) );
+	/* release geometry buffer */
+	crPackReleaseBuffer( thread0->packer );
 
 	/*
 	 * loop over servers, issuing the glGet.
@@ -315,14 +316,15 @@ tilesortspuGetExtensionsString(void)
 		extensions[i] = crCalloc(50 * 1000);
 		CRASSERT(extensions[i]);
 
-		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
+		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackGetStringSWAP( GL_EXTENSIONS, extensions[i], &writeback );
 		else
 			crPackGetString( GL_EXTENSIONS, extensions[i], &writeback );
 
-		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
+		/* release server buffer */
+		crPackReleaseBuffer( thread0->packer );
 
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
@@ -337,7 +339,7 @@ tilesortspuGetExtensionsString(void)
 	}
 
 	/* Restore the default pack buffer */
-	crPackSetBuffer( thread0->packer, &(thread0->geometry_pack) );
+	crPackSetBuffer( thread0->packer, &(thread0->geometry_buffer) );
 
 	ext = crStateMergeExtensions(tilesort_spu.num_servers, extensions);
 

@@ -19,11 +19,10 @@ static void PropogateCursorPosition(const GLint pos[2])
 {
 	GET_THREAD(thread);
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
-
 	int i;
 
-	/* The default buffer */
-	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+	/* release geometry buffer */
+	crPackReleaseBuffer( thread->packer );
 
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
@@ -34,18 +33,19 @@ static void PropogateCursorPosition(const GLint pos[2])
 		tilePos[0] = (GLint) (pos[0] * winInfo->widthScale) - servWinInfo->extents[0].x1;
 		tilePos[1] = (GLint) (pos[1] * winInfo->heightScale) - servWinInfo->extents[0].y1;
 
-		crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+		crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackChromiumParametervCRSWAP(GL_CURSOR_POSITION_CR, GL_INT, 2, tilePos);
 		else
 			crPackChromiumParametervCR(GL_CURSOR_POSITION_CR, GL_INT, 2, tilePos);
 
-		crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+		/* release server buffer */
+		crPackReleaseBuffer( thread->packer );
 	}
 
 	/* The default buffer */
-	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 }
 
 
@@ -70,23 +70,24 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParameteriCR(GLenum target, GLint 
 		resetVertexCounters();
 		break;
 	default:
-		/* The default buffer */
-		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+		/* release geometry buffer */
+		crPackReleaseBuffer( thread->packer );
 
 		for (i = 0; i < tilesort_spu.num_servers; i++)
 		{
-			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 			if (tilesort_spu.swap)
 				crPackChromiumParameteriCRSWAP( target, value );
 			else
 				crPackChromiumParameteriCR( target, value );
 
-			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+			/* release server buffer */
+			crPackReleaseBuffer( thread->packer );
 		}
 
 		/* The default buffer */
-		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 		break;
 	}
 }
@@ -104,23 +105,24 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParameterfCR(GLenum target, GLfloa
 		resetVertexCounters();
 		break;
 	default:
-		/* The default buffer */
-		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+		/* release geom buffer */
+		crPackReleaseBuffer( thread->packer );
 
 		for (i = 0; i < tilesort_spu.num_servers; i++)
 		{
-			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 			if (tilesort_spu.swap)
 				crPackChromiumParameterfCRSWAP( target, value );
 			else
 				crPackChromiumParameterfCR( target, value );
 
-			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+			/* release server buffer */
+			crPackReleaseBuffer( thread->packer );
 		}
 
 		/* The default buffer */
-		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 		break;
 	}
 }
@@ -244,23 +246,24 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 	default:
 		/* Propogate the data to the servers */
 
-		/* Save default buffer */
-		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+		/* release geom buffer */
+		crPackReleaseBuffer( thread->packer );
 
 		for (i = 0; i < tilesort_spu.num_servers; i++)
 		{
-			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 			if (tilesort_spu.swap)
 				crPackChromiumParametervCRSWAP( target, type, count, values );
 			else
 				crPackChromiumParametervCR( target, type, count, values );
 
-			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+			/* release server buffer */
+			crPackReleaseBuffer( thread->packer );
 		}
 
-		/* Restore default buffer */
-		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+		/* Restore default geom buffer */
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 		break;
 	}
 }
@@ -332,27 +335,29 @@ void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLu
 		}
 		break;
 	default:
-		/* The default buffer */
-		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+		/* release geom buffer */
+		crPackReleaseBuffer( thread->packer );
 
 		for (i = 0; i < tilesort_spu.num_servers; i++)
 		{
-			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 			if (tilesort_spu.swap)
 				crPackGetChromiumParametervCRSWAP( target, index, type, count, values, &writeback );
 			else
 				crPackGetChromiumParametervCR( target, index, type, count, values, &writeback );
 
-			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
-			
+			/* release server buffer */
+			crPackReleaseBuffer( thread->packer );
+
 			tilesortspuSendServerBuffer( i );
 
 			while (writeback)
 				crNetRecv();
 		}
-		/* The default buffer */
-		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+
+		/* pack into geom buffer again */
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 		break;
 	}
 }

@@ -55,12 +55,12 @@ static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned i
 	return hdr;
 }
 
-void tilesortspuDebugOpcodes( CRPackBuffer *pack )
+void tilesortspuDebugOpcodes( CRPackBuffer *buffer )
 {
 	unsigned char *tmp;
-	for (tmp = pack->opcode_start; tmp > pack->opcode_current; tmp--)
+	for (tmp = buffer->opcode_start; tmp > buffer->opcode_current; tmp--)
 	{
-		crDebug( "  %d (0x%p, 0x%p)", *tmp, tmp, pack->opcode_current );
+		crDebug( "  %d (0x%p, 0x%p)", *tmp, tmp, buffer->opcode_current );
 	}
 	crDebug( "\n" );
 }
@@ -71,7 +71,7 @@ void tilesortspuDebugOpcodes( CRPackBuffer *pack )
  */
 void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 {
-	CRPackBuffer *pack = &(thread->pack[server_index]);
+	CRPackBuffer *pack = &(thread->buffer[server_index]);
 	CRNetServer *net = &(thread->net[server_index]);
 	unsigned int len;
 	CRMessageOpcodes *hdr;
@@ -80,6 +80,9 @@ void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 		/* buffer is empty */
 		return;
 	}
+
+	/* buffer should not be bound at this time */
+	CRASSERT(pack->context == NULL);
 
 	hdr = __applySendBufferHeader( pack, &len );
 
@@ -104,6 +107,9 @@ void tilesortspuSendServerBuffer( int server_index )
 }
 
 
+/*
+ * Append the given buffer onto the current packing buffer.
+ */
 static void __appendBuffer( const CRPackBuffer *src )
 {
 	GET_THREAD(thread);
@@ -111,13 +117,17 @@ static void __appendBuffer( const CRPackBuffer *src )
 	/*crWarning( "In __appendBuffer: %d bytes left, packing %d bytes", thread->packer->buffer.data_end - thread->packer->buffer.data_current, num_data ); */
 
 	if ( !crPackCanHoldBuffer(src)
-		|| thread->packer->buffer.holds_BeginEnd ^ src->holds_BeginEnd)
+			 || thread->packer->buffer.holds_BeginEnd ^ src->holds_BeginEnd)
 	{
 		/* No room to append -- send now */
 
 		/*crWarning( "OUT OF ROOM!");*/
+		crPackReleaseBuffer( thread->packer );
+
 		tilesortspuSendServerBuffer( thread->state_server_index );
-		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+
+		crPackSetBuffer( thread->packer, &(thread->buffer[thread->state_server_index]) );
+
 		CRASSERT(crPackCanHoldBuffer( src ));
 	}
 
@@ -144,8 +154,9 @@ static void __appendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bound
 		|| thread->packer->buffer.holds_BeginEnd ^ src->holds_BeginEnd)
 	{
 		/* No room to append -- send now */
+		crPackReleaseBuffer( thread->packer );
 		tilesortspuSendServerBuffer( thread->state_server_index );
-		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+		crPackSetBuffer( thread->packer, &(thread->buffer[thread->state_server_index]) );
 		CRASSERT(crPackCanHoldOpcode( 1, length + 24 ) || src->holds_BeginEnd );
 	}
 
@@ -414,11 +425,10 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		/*crDebug( "Overflowed while doing a context difference!" ); */
 		CRASSERT( broadcast == 0 );
 		
-		/* First, extract the packing state into the server */
-		crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+		/* Unbind the current buffer to sync it up */
+		crPackReleaseBuffer( thread->packer );
 
 		/* Now, get the buffer out of here. */
-		
 		tilesortspuSendServerBuffer( thread->state_server_index );
 		
 		/* Finally, restore the packing state so we can continue 
@@ -426,7 +436,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		 * because the state server now has a new pack buffer 
 		 * from the buffer pool. */
 
-		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+		crPackSetBuffer( thread->packer, &(thread->buffer[thread->state_server_index]) );
 
 		return;
 	}
@@ -510,12 +520,10 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	 * geometry buffer.
 	 * Now we're about to do state differencing and send state change commands
 	 * to the servers.
-	 * Before we do so, we have to save the current packing state back into
-	 * the thread->geometry_pack struct.
-	 * Then, we can call crPackSetBuffer to start packing state change commands
-	 * into the per-server state buffers (thread->pack[i]).
+	 * Before we do so, we have to release the geometry buffer to make sure
+	 * it's all synced up.
 	 */
-	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+	crPackReleaseBuffer( thread->packer );
 
 	/* Now, see if we need to do things to each server */
 
@@ -539,7 +547,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		thread->currentContext->server[i].vertexCount += thread->packer->current.vtx_count;
 
 		/* Set the destination for packing state difference commands */
-		crPackSetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+		crPackSetBuffer( thread->packer, &(thread->buffer[thread->state_server_index]) );
 
 		/* We're going to do lazy state evaluation now */
 		if (!broadcast || send_state_anyway)
@@ -552,10 +560,13 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			{
 				__drawBBOX( &bucket_info );
 			}
-			/* save the state-change packing info */
-			crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
-			/*crDebug( "pack buffer after differencing" ); 
-			 *tilesortspuDebugOpcodes( &(thread->state_server->pack) ); */
+
+			/* Unbind the buffer of state-change commands to sync it up before
+			 * sending it to a server.
+			 */
+			crPackReleaseBuffer( thread->packer );
+
+			/*tilesortspuDebugOpcodes( &(thread->state_server->pack) ); */
 		}
 
 		/* The state server's buffer now contains the commands 
@@ -585,21 +596,27 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			 * 
 			 * Now we see why I tucked away the geometry buffer earlier. */
 
+			/* We're about to append onto the per-server buffer */
+			crPackSetBuffer( thread->packer, &(thread->buffer[thread->state_server_index]) );
+
 			if ( !broadcast )
 			{
 				/*crDebug( "Appending a bounded buffer" ); */
-				__appendBoundedBuffer( &(thread->geometry_pack),
+				__appendBoundedBuffer( &(thread->geometry_buffer),
 									   &bucket_info.pixelBounds );
 			}
 			else
 			{
 				/*crDebug( "Appending a NON-bounded buffer" ); 
-				 *tilesortspuDebugOpcodes( &(thread->geometry_pack) ); 
+				 *tilesortspuDebugOpcodes( &(thread->geometry_buffer) ); 
 				 *tilesortspuDebugOpcodes( &(thread->packer->buffer) ); */
-				__appendBuffer( &(thread->geometry_pack) );
+				__appendBuffer( &(thread->geometry_buffer) );
 				/*tilesortspuDebugOpcodes( &(thread->packer->buffer) ); */
 			}
-			crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
+
+			/* Release the buffer before sending, to sync it up */
+			crPackReleaseBuffer( thread->packer );
+
 		}
 	} /* loop over servers */
 
@@ -611,8 +628,8 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	/* Not sure what this is all about */
 	for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
 	{
-		if (thread->pack[i].mtu > thread->net[i].conn->mtu)
-			thread->pack[i].mtu = thread->net[i].conn->mtu;
+		if (thread->buffer[i].mtu > thread->net[i].conn->mtu)
+			thread->buffer[i].mtu = thread->net[i].conn->mtu;
 		if (tilesort_spu.MTU > thread->net[i].conn->mtu)
 			tilesort_spu.MTU = thread->net[i].conn->mtu;
 	}
@@ -624,23 +641,22 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		 */
 		void *p = crAlloc( tilesort_spu.geom_buffer_size );
 		crDebug( "Throwing away the big packet" );
-		crFree( thread->geometry_pack.pack );
-		crPackInitBuffer( &(thread->geometry_pack),
+		crFree( thread->geometry_buffer.pack );
+		crPackInitBuffer( &(thread->geometry_buffer),
 											p, 
 											tilesort_spu.geom_buffer_size,
 											tilesort_spu.geom_buffer_mtu );
-#if 1 /* NEW */
-		crPackSetBuffer( thread->packer, &(thread->geometry_pack ) );
-#endif
+
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer ) );
 		/* No need to call crPackResetPointers, crPackInitBuffer did it */
 	}
 	else
 	{
 		/*crDebug( "Reverting to the old geometry buffer" ); */
 		/* XXX why is this mtu assignment here? */
-		CRASSERT(thread->geometry_pack.mtu >= tilesort_spu.geom_buffer_mtu);
-		thread->geometry_pack.mtu = tilesort_spu.MTU - (24+END_FLUFF+8);
-		crPackSetBuffer( thread->packer, &(thread->geometry_pack ) );
+		CRASSERT(thread->geometry_buffer.mtu >= tilesort_spu.geom_buffer_mtu);
+		thread->geometry_buffer.mtu = tilesort_spu.MTU - (24+END_FLUFF+8);
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer ) );
 		crPackResetPointers( thread->packer );
 	}
 
@@ -673,7 +689,7 @@ void tilesortspuFlush( ThreadInfo *thread )
 	CRContext *ctx;
 	int newSize;
 
-	CRPackBuffer old_geometry_pack;
+	CRPackBuffer old_geometry_buffer;
 
 	CRASSERT(thread);
 	CRASSERT(thread->currentContext);
@@ -708,24 +724,24 @@ void tilesortspuFlush( ThreadInfo *thread )
 
 	ctx->current.flushOnEnd = 1;
 
-	/* Get current packing info, store in old_geometry_pack */
-	CRASSERT(thread->packer->buffer.pack == thread->geometry_pack.pack);
-	crPackGetBuffer( thread->packer, &(old_geometry_pack) );
+	/* release the geometry buffer to sync it up */
+	CRASSERT(thread->packer->buffer.pack == thread->geometry_buffer.pack);
+	crPackReleaseBuffer( thread->packer );
 
-	newSize = thread->geometry_pack.size * 2;
+	newSize = thread->geometry_buffer.size * 2;
 	crDebug( "-=-=-=- Growing the buffer to %d -=-=-=-", newSize );
 
-	crPackInitBuffer( &(thread->geometry_pack),
+	crPackInitBuffer( &(thread->geometry_buffer),
 										crAlloc( newSize ), newSize,
 										newSize - (24+END_FLUFF+8) );
 
-	thread->geometry_pack.geometry_only = GL_TRUE;
+	thread->geometry_buffer.geometry_only = GL_TRUE;
 
 	/* Use the new geometry buffer */
-	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
 	/* Copy the old buffer's contents into the new buffer */
-	crPackAppendBuffer(&(old_geometry_pack));
+	crPackAppendBuffer(&(old_geometry_buffer));
 
 	/* The location of the geometry buffer has changed, so we need to 
 	 * tell the state tracker to update its "current" pointers. 
@@ -733,8 +749,8 @@ void tilesortspuFlush( ThreadInfo *thread )
 	 * buffers be contiguous -- in fact they almost certainly won't be.
 	 */
 	crPackOffsetCurrentPointers( thread->packer->buffer.data_current -
-															 old_geometry_pack.data_current );
+															 old_geometry_buffer.data_current );
 
 	/* Discard the old, small buffer */
-	crFree( old_geometry_pack.pack );
+	crFree( old_geometry_buffer.pack );
 }

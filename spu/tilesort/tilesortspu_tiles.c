@@ -29,6 +29,10 @@ tilesortspuComputeMaxViewport(WindowInfo *winInfo)
 	GLint totalDims[2];
 	int i;
 
+
+	/* release geometry buffer, if it's bound */
+	crPackReleaseBuffer( thread0->packer );
+
 	/*
 	 * It's hard to say what the max viewport size should be.
 	 * We've changed this computation a few times now.
@@ -51,14 +55,15 @@ tilesortspuComputeMaxViewport(WindowInfo *winInfo)
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
-		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
+		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackChromiumParametervCRSWAP(GL_SET_MAX_VIEWPORT_CR, GL_INT, 2, totalDims);
 		else
 			crPackChromiumParametervCR(GL_SET_MAX_VIEWPORT_CR, GL_INT, 2, totalDims);
 
-		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
+		/* release server buffer */
+		crPackReleaseBuffer( thread0->packer );
 
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
@@ -75,8 +80,8 @@ tilesortspuSendTileInfoToServers( WindowInfo *winInfo )
 	GET_THREAD(thread);
 	int i;
 
-	/* Save default buffer */
-	crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+	/* release geometry buffer */
+	crPackReleaseBuffer( thread->packer );
 
 	/* loop over servers */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
@@ -102,7 +107,7 @@ tilesortspuSendTileInfoToServers( WindowInfo *winInfo )
 		arraySize = 4 + 4 * servWinInfo->num_extents;
 
 		/* pack/send to server[i] */
-		crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+		crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackChromiumParametervCRSWAP(GL_TILE_INFO_CR, GL_INT,
@@ -111,11 +116,12 @@ tilesortspuSendTileInfoToServers( WindowInfo *winInfo )
 			crPackChromiumParametervCR(GL_TILE_INFO_CR, GL_INT,
 									   arraySize, tileInfo);
 
-		crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+		/* release server buffer */
+		crPackReleaseBuffer( thread->packer );
 	}
 
 	/* Restore default buffer */
-	crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 }
 
 
@@ -147,7 +153,7 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 
 	tilesort_spu.thread[0].net =
 		(CRNetServer *) crCalloc(num_servers * sizeof(CRNetServer));
-	tilesort_spu.thread[0].pack =
+	tilesort_spu.thread[0].buffer =
 		(CRPackBuffer *) crCalloc(num_servers * sizeof(CRPackBuffer));
 
 	/* XXX: there is lots of overlap between these cases. merge! */

@@ -22,8 +22,8 @@ rasterpos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 
 		tilesortspuFlush( thread );
 
-		save = thread->geometry_pack.geometry_only;
-		thread->geometry_pack.geometry_only = GL_FALSE;
+		save = thread->geometry_buffer.geometry_only;
+		thread->geometry_buffer.geometry_only = GL_FALSE;
 
 		/* Broadcast the raster pos update */
 		if (tilesort_spu.swap)
@@ -40,7 +40,7 @@ rasterpos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 		}
 		tilesortspuBroadcastGeom(1);
 
-		thread->geometry_pack.geometry_only = save;
+		thread->geometry_buffer.geometry_only = save;
 
 		/* Need to update state tracker's current raster info, but don't set
 		 * dirty bits!

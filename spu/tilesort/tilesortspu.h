@@ -137,7 +137,7 @@ typedef struct {
 } TileSortSPUPinchState;
 
 struct thread_info_t {
-	CRPackBuffer geometry_pack;
+	CRPackBuffer geometry_buffer;
 	CRPackContext *packer;
 	ContextInfo *currentContext;
 	TileSortSPUPinchState pinchState;
@@ -149,7 +149,7 @@ struct thread_info_t {
 	/* Array of buffers for packing state changes for servers.
 	 * Usually just used during state differencing.
 	 */
-	CRPackBuffer *pack;  /* array pack[num_servers] */
+	CRPackBuffer *buffer;  /* array buffer[num_servers] */
 };
 
 typedef struct {
@@ -240,7 +240,7 @@ void tilesortspuFlush( ThreadInfo *thread );
 void tilesortspuFlush_callback( void *arg );
 void tilesortspuBroadcastGeom( int send_state_anyway );
 void tilesortspuShipBuffers( void );
-void tilesortspuDebugOpcodes( CRPackBuffer *pack );
+void tilesortspuDebugOpcodes( CRPackBuffer *buffer );
 
 /* tilesortspu_diffapi.c */
 void tilesortspuCreateDiffAPI( void );
