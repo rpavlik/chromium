@@ -31,6 +31,10 @@ print """
 #define STATE_APIENTRY
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define STATE_UNUSED(x) ((void)x)"""
 
 keys = gl_mapping.keys()
@@ -47,4 +51,12 @@ for func_name in stub_common.AllSpecials( "state_feedback" ):
 for func_name in stub_common.AllSpecials( "state_select" ):
 	(return_type, names, types) = gl_mapping[func_name]
 	print '%s STATE_APIENTRY crStateSelect%s%s;' % (return_type, func_name, stub_common.ArgumentString( names, types ))
-print '\n#endif /* CR_STATE_FUNCS_H */'
+
+
+print """
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CR_STATE_FUNCS_H */
+"""
