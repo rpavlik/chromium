@@ -64,7 +64,7 @@ SPUOptions readbackSPUOptions[] = {
    { "visualize_depth", CR_BOOL, 1, "0", NULL, NULL,
      "Visualize Depth", (SPUOptionCB)set_extract_depth },
 
-   { "drawpixels_pos", CR_INT, 2, "0 0", "0 0", NULL,
+   { "drawpixels_pos", CR_INT, 2, "0, 0", "0, 0", NULL,
      "Depth Type", (SPUOptionCB)set_extract_depth },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },

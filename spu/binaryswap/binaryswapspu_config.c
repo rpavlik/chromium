@@ -88,8 +88,8 @@ SPUOptions binaryswapSPUOptions[] = {
    { "peers", CR_STRING, 1, "", NULL, NULL, 
      "Peers", (SPUOptionCB)set_peers},
 
-   { "node#", CR_STRING, 1, "", NULL, NULL, 
-     "Node #", (SPUOptionCB)set_node},
+   { "node_number", CR_STRING, 1, "", NULL, NULL, 
+     "Node Number", (SPUOptionCB)set_node},
 
    /* Really an enumerate (alpha/depth), not a string
     */

@@ -53,6 +53,7 @@ ThreadInfo *packspuNewThread( unsigned long id )
 	/* packer setup */
 	CRASSERT(thread->packer == NULL);
 	thread->packer = crPackNewContext( pack_spu.swap );
+        CRASSERT(thread->packer);
 	crPackInitBuffer( &(thread->buffer), crNetAlloc(thread->server.conn),
 					  thread->server.buffer_size, 0 );
 	crPackSetBuffer( thread->packer, &thread->buffer );

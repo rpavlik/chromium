@@ -79,7 +79,7 @@ SPUOptions renderSPUOptions[] = {
    { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
      "Window Title", (SPUOptionCB)set_title },
 
-   { "window_geometry", CR_INT, 4, "0 0 256 256", "0 0 1 1", NULL, 
+   { "window_geometry", CR_INT, 4, "0, 0, 256, 256", "0, 0, 1, 1", NULL, 
      "Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
 
    { "system_gl_path", CR_STRING, 1, "/usr/lib/", NULL, NULL, 
