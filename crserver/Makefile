@@ -3,7 +3,8 @@ TOP = ..
 PROGRAM = crserver
 FILES = main server_config server_dispatch server_gentextures \
 	server_get server_getmap server_getstring server_getpointer \
-	server_getpixelmap server_getteximage server_retval server_simpleget
+	server_getpixelmap server_getteximage server_retval server_simpleget \
+	server_writeback
 
 PRECOMP = server_dispatch.h server_dispatch.c server_get.c server_retval.c server_simpleget.c
 SLOP = ${PRECOMP}

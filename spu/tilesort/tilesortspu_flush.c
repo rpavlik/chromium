@@ -239,13 +239,13 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		{
 			// Now, we have to decide whether or not to append the geometry buffer
 			// as a BOUNDS_INFO packet or just a bag-o-commands.  This is
-			// controlled by the apply_viewtransform flag, which basically tells
+			// controlled by the sendBounds flag, which basically tells
 			// us whether or not any servers are managing multiple tiles.  Should
 			// this be done on a per-server basis?
 			
 			// Now we see why I tucked away the geometry buffer earlier.
 
-			if ( tilesort_spu.apply_viewtransform && !broadcast )
+			if ( tilesort_spu.sendBounds && !broadcast )
 			{
 				crDebug( "Appending a bounded buffer" );
 				__appendBoundedBuffer( &(tilesort_spu.geometry_pack), &bounds );

@@ -10,7 +10,7 @@ void tilesortspuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
 	memcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
-	*writeback = 0;
+	(*writeback)--;
 }
 
 void tilesortspuReadback( CRMessageReadback *rb, unsigned int len )
@@ -24,7 +24,7 @@ void tilesortspuReadback( CRMessageReadback *rb, unsigned int len )
 	memcpy( &writeback, &(rb->writeback_ptr), sizeof( writeback ) );
 	memcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
 
-	*writeback = 0;
+	(*writeback)--;
 	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
@@ -41,41 +41,13 @@ void tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			tilesortspuReadback( &(msg->readback), len );
 			break;
 		default:
-			crError( "Why is the pack SPU getting a message of type %d?", msg->type );
+			crError( "Why is the tilesort SPU getting a message of type %d?", msg->type );
 			break;
 	}
 	crNetFree( conn, buf );
 	(void) conn;	
 	(void) len;	
 }
-
-#if 0
-static CRMessageOpcodes *
-__prependHeader( CRPackBuffer *buf, unsigned int *len )
-{
-	int num_opcodes;
-	CRMessageOpcodes *hdr;
-
-	CRASSERT( buf->opcode_current < buf->opcode_start );
-	CRASSERT( buf->opcode_current >= buf->opcode_end );
-	CRASSERT( buf->data_current > buf->data_start );
-	CRASSERT( buf->data_current <= buf->data_end );
-
-	num_opcodes = buf->opcode_start - buf->opcode_current;
-	hdr = (CRMessageOpcodes *) 
-		( buf->data_start - ( ( num_opcodes + 3 ) & ~0x3 ) - sizeof(*hdr) );
-
-	CRASSERT( (void *) hdr >= buf->pack );
-
-	hdr->type       = CR_MESSAGE_OPCODES;
-	hdr->senderId   = (unsigned int) ~0;  /* to be initialized by caller */
-	hdr->numOpcodes = num_opcodes;
-
-	*len = buf->data_current - (unsigned char *) hdr;
-
-	return hdr;
-}
-#endif
 
 void tilesortspuHuge( CROpcode opcode, void *buf )
 {
@@ -104,6 +76,7 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 
 	crNetSend( tilesort_spu.server.conn, NULL, src, len );
 #else
+	crError( "Trying to send a huge packet, which is unimplemented!" );
 	(void) opcode;
 	(void) buf;
 #endif

@@ -86,6 +86,7 @@ def UpdateCurrentPointer( func_name ):
 for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "packer", func_name ): continue
+	is_extended = 0
 	if return_type != 'void':
 		# Yet another gross hack for glGetString
 		if string.find( return_type, '*' ) == -1:
@@ -94,9 +95,11 @@ for func_name in keys:
 			arg_types.append( "%s" % return_type )
 		arg_names.append( "return_value" )
 	if return_type != 'void' or stub_common.FindSpecial( 'packer_get', func_name ):
+		is_extended = 1
 		arg_types.append( "int *" )
 		arg_names.append( "writeback" )
-
+ 	elif stub_common.FindSpecial( "opcode_extend", func_name ):
+		is_extended = 1
 	print 'void PACK_APIENTRY ' + stub_common.PackFunction( func_name ),
 	print stub_common.ArgumentString( arg_names, arg_types )
 	print '{'
@@ -121,14 +124,14 @@ for func_name in keys:
 		if packet_length == 0:
 			print "\tGET_BUFFERED_POINTER_NO_ARGS( );"
 		else:
-			if return_type != 'void' or stub_common.FindSpecial( "packer_get", func_name ):
+			if is_extended:
 				packet_length += 8
 			print "\tGET_BUFFERED_POINTER( %d );" % packet_length
 
 		UpdateCurrentPointer( func_name )
 
 		counter = 0
-		if return_type != 'void' or stub_common.FindSpecial( "packer_get", func_name ):
+		if is_extended:
 			counter = 8
 			print WriteData( 0, 'int', packet_length )
 			print WriteData( 4, 'GLenum', stub_common.ExtendedOpcodeName( func_name ) )
@@ -143,7 +146,7 @@ for func_name in keys:
 						counter += stub_common.PointerSize()
 					else:
 						counter += stub_common.lengths[arg_types[index]]
-		if return_type != 'void' or stub_common.FindSpecial( "packer_get", func_name ):
+		if is_extended:
 			print "\tWRITE_OPCODE( CR_EXTEND_OPCODE );"
 		else:
 			print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name )

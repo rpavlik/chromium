@@ -13,3 +13,4 @@ GetPixelMapfv
 GetPixelMapuiv 
 GetPixelMapusv
 GetPointerv
+Writeback

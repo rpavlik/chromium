@@ -18,6 +18,6 @@ else
 LDFLAGS += -lXmu -lX11
 endif
 
-renderspu.c: render.py render_special
+renderspu.c: render.py render_special render_nop_special
 	@$(ECHO) Building the Render SPU
 	@$(PYTHON) render.py > renderspu.c

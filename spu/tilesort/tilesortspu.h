@@ -37,10 +37,12 @@ typedef struct {
 	CRPackBuffer geometry_pack;
 	CRContext *ctx;
 
-	int apply_viewtransform;
+	int sendBounds;
 	int splitBeginEnd;
 	int broadcast;
 	int optimizeBucketing;
+
+	int syncOnSwap;
 
 	float viewportCenterX, viewportCenterY;
 	float halfViewportWidth, halfViewportHeight;

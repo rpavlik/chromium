@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "cr_glwrapper.h"
 
-#define ANGLE_STEP .1f
+#define ANGLE_STEP 1.0f
 
 int main(int argc, char *argv[])
 {

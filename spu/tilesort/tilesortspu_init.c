@@ -35,7 +35,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	tilesort_spu.geom_pack_size = tilesort_spu.MTU;
 	tilesort_spu.geom_pack_size -= sizeof( CRMessageOpcodes );
 	tilesort_spu.geom_pack_size -= 4;
-	if (tilesort_spu.apply_viewtransform)
+	if (tilesort_spu.sendBounds)
 	{
 		// Some server has multiple tiles, so we need to shrink everything
 		// to fit in the DATA part of the server's send buffer.  Yuck.

@@ -14,12 +14,13 @@ void PRINT_APIENTRY printLoadMatrixf( GLfloat *m )
 		}
 	}
 	fprintf( print_spu.fp, "] )\n" );
+	print_spu.passthrough.LoadMatrixf( m );
 }
 
 void PRINT_APIENTRY printLoadMatrixd( GLdouble *m )
 {
 	int i;
-	fprintf( print_spu.fp, "LoadMatrixf( [" );
+	fprintf( print_spu.fp, "LoadMatrixd( [" );
 	for (i = 0; i < 16 ; i++)
 	{
 		fprintf( print_spu.fp, "%10.2f  ", m[i] );
@@ -29,6 +30,7 @@ void PRINT_APIENTRY printLoadMatrixd( GLdouble *m )
 		}
 	}
 	fprintf( print_spu.fp, "] )\n" );
+	print_spu.passthrough.LoadMatrixd( m );
 }
 
 void PRINT_APIENTRY printMultMatrixf( GLfloat *m )
@@ -44,12 +46,13 @@ void PRINT_APIENTRY printMultMatrixf( GLfloat *m )
 		}
 	}
 	fprintf( print_spu.fp, "] )\n" );
+	print_spu.passthrough.MultMatrixf( m );
 }
 
 void PRINT_APIENTRY printMultMatrixd( GLdouble *m )
 {
 	int i;
-	fprintf( print_spu.fp, "MultMatrixf( [" );
+	fprintf( print_spu.fp, "MultMatrixd( [" );
 	for (i = 0; i < 16 ; i++)
 	{
 		fprintf( print_spu.fp, "%10.2f  ", m[i] );
@@ -59,4 +62,5 @@ void PRINT_APIENTRY printMultMatrixd( GLdouble *m )
 		}
 	}
 	fprintf( print_spu.fp, "] )\n" );
+	print_spu.passthrough.MultMatrixd( m );
 }

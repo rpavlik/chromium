@@ -28,9 +28,11 @@ SPUDispatchTable cr_unpackDispatch;
 extern void crUnpackExtend(void);
 """
 
-for func_name in keys:
-	if stub_common.FindSpecial( "unpacker", func_name ):
-		print 'extern void crUnpack%s(void);' % func_name
+for func_name in stub_common.AllSpecials( "unpacker" ):
+	print 'extern void crUnpack%s(void);' % func_name
+
+for func_name in stub_common.AllSpecials( "unpacker_extend" ):
+	print 'extern void crUnpackExtend%s(void);' % func_name
 
 def MakeVector( func_name ):
 	return func_name + "v"
@@ -156,12 +158,12 @@ print """
 }"""
 
 for func_name in keys:
-	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
-	if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ):
-		print 'void crUnpackExtend%s(void)' % func_name
-		print '{'
-		MakeNormalCall( return_type, func_name, arg_types, arg_names, 8 )
-		print '}\n'
+		( return_type, arg_names, arg_types ) = gl_mapping[func_name]
+		if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ) or func_name in stub_common.AllSpecials( "../packer/opcode_extend" ) and not stub_common.FindSpecial( "unpacker_extend", func_name):
+			print 'void crUnpackExtend%s(void)' % func_name
+			print '{'
+			MakeNormalCall( return_type, func_name, arg_types, arg_names, 8 )
+			print '}\n'
 
 print """
 void crUnpackExtend(void)
@@ -171,9 +173,8 @@ void crUnpackExtend(void)
 	{""" % ReadData( 4, 'GLenum' );
 for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
-	if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ):
+	if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ) or func_name in stub_common.AllSpecials( "../packer/opcode_extend" ):
 		print '\t\tcase %s:' % stub_common.ExtendedOpcodeName( func_name )
-		#print '\t\t\tcrDebug( "Decoding %s (Extended)" );' % func_name,
 		print '\t\t\tcrUnpackExtend%s( );' % func_name
 		print '\t\t\tbreak;'
 print """		default:

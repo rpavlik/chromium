@@ -11,12 +11,14 @@ static void __setDefaults( void )
 {
 	tilesort_spu.num_servers = 0;
 	tilesort_spu.servers = NULL;
-	tilesort_spu.apply_viewtransform = 0;
+	tilesort_spu.sendBounds = 0;
 	tilesort_spu.splitBeginEnd = 1;
 	tilesort_spu.broadcast = 0;
 	tilesort_spu.optimizeBucketing = 1;
 	tilesort_spu.muralWidth = 0;
 	tilesort_spu.muralHeight = 0;
+
+	tilesort_spu.syncOnSwap = 1;
 
 	tilesort_spu.fakeWindowWidth = 0;
 	tilesort_spu.fakeWindowHeight = 0;
@@ -63,6 +65,11 @@ void tilesortspuGatherConfiguration( void )
 	if (crMothershipSPUParam( conn, response, "optimize_bucket") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.optimizeBucketing) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "sync_on_swap") )
+	{
+		sscanf( response, "%d", &(tilesort_spu.syncOnSwap) );
 	}
 
 	// The response to this tells us how many servers, what the
@@ -115,7 +122,7 @@ void tilesortspuGatherConfiguration( void )
 
 		if (server->num_extents > 1)
 		{
-			tilesort_spu.apply_viewtransform = 1;
+			tilesort_spu.sendBounds = 1;
 		}
 		for (tile = 0; tile < server->num_extents ; tile++)
 		{

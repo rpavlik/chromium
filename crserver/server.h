@@ -30,5 +30,6 @@ extern CRServer cr_server;
 void crServerGatherConfiguration( void );
 void crServerInitDispatch(void);
 void crServerReturnValue( const void *payload, unsigned int payload_len );
+void crServerWriteback(void);
 
 #endif /* CR_SERVER_H */

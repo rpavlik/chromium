@@ -20,6 +20,8 @@ print """#ifndef SERVER_DISPATCH_HEADER
 #else
 #define SERVER_DISPATCH_APIENTRY
 #endif
+
+#include "cr_glwrapper.h"
 """
 
 for func_name in keys:
