@@ -634,25 +634,14 @@ class CR:
 	def do_faker( self, sock, args ):
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
-		print "********* args=%s" % args
 		for node in self.nodes:
-			print "************ %s ?= %s  spoken=%d app=%d" % (string.lower(node.host), string.lower(args), node.spokenfor, isinstance(node, CRApplicationNode))
-			if string.lower(node.host) == string.lower(args):
-				print "*** point 0"
-			else:
-				print "*** different hosts"
 			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
-				print "*** point 1"
 				if isinstance(node,CRApplicationNode):
-					print "*** point 2"
 					try:
-						print "*** point 3"
 						application = node.config['application']
 					except:
-						print "*** point 4"
 						self.ClientError( sock, SockWrapper.NOAPPLICATION, "Client node has no application!" )
 						return
-					print "*** point 5"
 					node.spokenfor = 1
 					sock.node = node
 					sock.Success( "%d %s" % (node.id, application) )
