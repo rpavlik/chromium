@@ -22,7 +22,7 @@ typedef struct CRListsFreeElem {
 } CRListsFreeElem;
 
 typedef struct {
-	GLbitvalue dirty;
+	GLbitvalue dirty[CR_MAX_BITARRAY];
 } CRListsBits;
 
 typedef struct {
@@ -30,13 +30,14 @@ typedef struct {
 	CRListsFreeElem *freeList;
 	GLuint base;
 	GLuint currentIndex;  /* list being built */
+	GLenum mode;
 } CRListsState;
 
 void crStateListsInit(CRListsState *l);
 
-void crStateListsDiff(CRListsBits *bb, GLbitvalue bitID, 
+void crStateListsDiff(CRListsBits *bb, GLbitvalue *bitID, 
 		CRListsState *from, CRListsState *to);
-void crStateListsSwitch(CRListsBits *bb, GLbitvalue bitID, 
+void crStateListsSwitch(CRListsBits *bb, GLbitvalue *bitID, 
 		CRListsState *from, CRListsState *to);
 
 #ifdef __cplusplus

@@ -34,12 +34,58 @@ void packspuReadback( CRMessageReadback *rb, unsigned int len )
 	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
+void packspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
+{
+	int payload_len = len - sizeof( *rp );
+	char *dest_ptr;
+	const char *src_ptr = (char *) rp + sizeof(*rp);
+
+	memcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
+
+	if (rp->alignment == 1 &&
+		rp->skipRows == 0 &&
+		rp->skipPixels == 0 &&
+		rp->stride == rp->bytes_per_row) {
+		/* no special packing is needed */
+		memcpy ( dest_ptr, ((char *)rp) + sizeof(*rp), payload_len );
+	}
+	else {
+		/* need special packing */
+#if 0
+		CRPixelPackState packing;
+		packing.rowLength = 0;
+		packing.skipRows = rp->skipRows;
+		packing.skipPixels = rp->skipPixels;
+		packing.alignment = rp->alignment;
+		packing.imageHeight = 0;
+		packing.skipImages = 0;
+		packing.swapBytes = GL_FALSE;
+		packing.psLSBFirst = GL_FALSE;
+		crPixelCopy2D( rp->bytes_per_row, rp->rows,
+				dest_ptr, rp->format, rp->type, &packing,
+				src_ptr, rp->format, rp->type, NULL);
+#else
+		GLuint row;
+		for (row = 0; row < rp->rows; row++) {
+		   memcpy( dest_ptr, src_ptr, rp->bytes_per_row );
+		   src_ptr += rp->bytes_per_row;
+		   dest_ptr += rp->stride;
+		}
+#endif
+	}
+
+	--pack_spu.ReadPixels;
+}
+
 int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) buf;
 
 	switch( msg->header.type )
 	{
+		case CR_MESSAGE_READ_PIXELS:
+			packspuReadPixels( &(msg->readPixels), len );
+			break;
 		case CR_MESSAGE_WRITEBACK:
 			packspuWriteback( &(msg->writeback) );
 			break;

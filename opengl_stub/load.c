@@ -11,9 +11,11 @@
 #include "cr_string.h"
 #include "cr_mothership.h"
 #include "cr_environment.h"
+#include "stub.h"
+
 
 SPU *stub_spu = NULL;
-extern void FakerInit( SPU *fns );
+int crAppDrawCursor = 0;
 
 void StubInit(void)
 {
@@ -68,6 +70,33 @@ void StubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
+	if (crMothershipGetParam( conn, "show_cursor", response ) )
+		sscanf( response, "%d", &crAppDrawCursor );
+	else
+		crAppDrawCursor = 0;
+	crDebug( "show_cursor = %d\n", crAppDrawCursor );
+
+	if (crMothershipGetParam( conn, "minimum_window_size", response )
+		&& response[0]) {
+		int w, h;
+		sscanf( response, "%d %d", &w, &h );
+		crDebug( "minimum_window_size: %d x %d", w, h );
+		stubMinimumChromiumWindowSize( w, h );
+	}
+	else {
+		int minX, minY;
+		minX = minY = 0;
+	}
+
+	if (crMothershipGetParam( conn, "match_window_title", response )
+		&& response[0]) {
+		crDebug("match_window_title: %s\n", response );
+		stubMatchWindowTitle( response );
+	}
+	else {
+	}
+
+
 	if (crMothershipGetSPUDir( conn, response ))
 	{
 		spu_dir = response;
@@ -79,7 +108,7 @@ void StubInit(void)
 
 	crMothershipDisconnect( conn );
 
-	stub_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir );
+	stub_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir, NULL );
 
 	crFree( spuchain );
 	crFree( spu_ids );

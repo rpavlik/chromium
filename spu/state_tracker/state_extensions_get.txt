@@ -17,6 +17,14 @@ GLenum GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT GL_EXT_texture_filter_anisotropic g->li
 
 GLclampf GL_BLEND_COLOR_EXT GL_EXT_blend_color g->buffer.blendColor.r g->buffer.blendColor.g g->buffer.blendColor.b g->buffer.blendColor.a
 
+# GL_OPENGL_VERSION_1_2
+
+GLboolean GL_RESCALE_NORMAL GL_OPENGL_VERSION_1_2 g->transform.rescaleNormals
+GLenum    GL_LIGHT_MODEL_COLOR_CONTROL GL_OPENGL_VERSION_1_2 g->lighting.lightModelColorControlEXT
+
+# GL_EXT_separate_specular_color
+
+GLenum    GL_LIGHT_MODEL_COLOR_CONTROL_EXT GL_EXT_separate_specular_color g->lighting.lightModelColorControlEXT
 
 # GL_EXT_blend_minmax
 

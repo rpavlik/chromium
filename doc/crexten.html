@@ -1,0 +1,227 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Chromium Extensions to OpenGL</h1>
+<p>Chromium defines several extensions to the OpenGL API to provide
+special features.
+This section documents those extensions.
+</p>
+<p>
+All Chromium extensions to OpenGL are identified by <EM>CR</EM> in
+the same way that <EM>SGI</EM> is used to identify SGI's OpenGL
+extensions.
+</p>
+<p>
+At compile time the application should use
+<code>#ifdef extension_name / #endif</code> around Chromium-related
+code so that it'll compile when the extension is not defined.
+</p>
+<p>
+At runtime the application should call <code>glGetString(GL_EXTENSIONS)</code>
+to see if the particular extension is supported.
+Then the application should use <code>wglGetProcAddress()</code>
+or <code>glXGetProcAddress()</code> to obtain a pointer to any
+extension functions that are needed.
+</p>
+
+
+<h2 class="PageSubHeading">GL_CR_state_parameter</h2>
+<p>This extension adds three new functions to OpenGL.  By itself, this
+extension provides no new features.  Instead, other Chromium extensions
+are layered on top of this one.
+</p>
+
+</p>
+<dl>
+<dt>glChromiumParameteriCR(GLenum target, GLint value)</dt>
+<dd>Set a Chromium parameter to an integer value.<br>
+<code>target</code> specifies the parameter being set.<br>
+<code>value</code> is the integer value.<br>
+The error <code>GL_INVALID_ENUM</code> will be recorded if <code>target</code>
+is not a recognized value.
+</dd>
+
+<dt>glChromiumParameterfCR(GLenum target, GLfloat value)</dt>
+<dd>Set a Chromium parameter to a floating point value.<br>
+<code>target</code> specifies the parameter being set.<br>
+<code>value</code> is the floating point value.<br>
+The error <code>GL_INVALID_ENUM</code> will be recorded if <code>target</code>
+is not a recognized value.
+</dd>
+
+<dt>glChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
+const GLvoid *values)</dt>
+<dd>Specifies a vector of parameters to Chromium.<br>
+<code>target</code> specifies the parameter being set.<br>
+<code>type</code> specifies the datatype of the value(s) and may
+be <code>GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT,
+GL_INT, GL_UNSIGNED_INT, GL_FLOAT or GL_DOUBLE</code>.<br>
+<code>count</code> specifies the number of values in the vector and
+must be greater than or equal to one.<br>
+<code>values</code> points to the beginning of the values vector.<br>
+The error <code>GL_INVALID_ENUM</code> will be recorded if <code>target</code>
+or <code>type</code> is not a recognized value.  The error
+<code>GL_INVALID_VALUE</code> will be recorded if <code>count</code>
+is less than one.
+</dd>
+
+<dt>glGetChromiumParametervCR(GLenum target, GLuint index,GLenum type,
+GLsizei count, GLvoid *values)</dt>
+<dd>Queries Chromium state.<br>
+<code>target</code> specifies the parameter to query.<br>
+<code>index</code> specifies the element in an array of target values,
+if applicable.<br>
+<code>type</code> specifies the datatype of the return value(s) and
+may be <code>GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT,
+GL_INT, GL_UNSIGNED_INT, GL_FLOAT or GL_DOUBLE</code>.<br>
+<code>count</code> specifies the number of values in the return values
+vector and must be greater than or equal to one.<br>
+<code>values</code> points to the beginning of the return values vector.<br>
+The error <code>GL_INVALID_ENUM</code> will be recorded if <code>target</code>
+or <code>type</code> is not a recognized value.  The error
+<code>GL_INVALID_VALUE</code> will be recorded if <code>count</code>
+is less than one.
+</dd>
+
+
+</dl>
+
+
+<h2 class="PageSubHeading">GL_CR_cursor_position</h2>
+<p>This extension is used internally to Chromium to specify the position
+of the virtual cursor.</p>
+<p>This extension requires the GL_CR_state_parameter extension.</p>
+
+<p>
+The new token <code>CR_CURSOR_POSITION_CR</code> may be specified as
+the <code>target</code> parameter to <code>glChromiumParametervCR</code>.
+The <code>type</code> parameter must be <code>GL_INTEGER</code> and
+<code>count</code> must be 2.  The <code>values</code> parameter points
+to an array of two integers with represents the cursor's (x,y) position.
+</p>
+
+
+<h2 class="PageSubHeading">GL_CR_bounding_box</h2>
+<p>This extension is used to inform Chromium that subsequent geometry
+is bounded by a specific bounding box.  This information can be used
+to improve the performance of the tile-sort SPU.
+</p>
+<p>This extension requires the GL_CR_state_parameter extension.</p>
+
+<p>New tokens accepted by the <code>target</code> parameter to
+<code>glChromiumParametervCR</code>:
+
+<dl>
+<dt>GL_DEFAULT_BBOX_CR</dt>
+<dd>XXX definintion?</dd>
+<dt>GL_SCREEN_BBOX_CR</dt>
+<dd>XXX definintion?</dd>
+<dt>GL_OBJECT_BBOX_CR</dt>
+<dd>XXX definintion?</dd>
+</dl>
+
+
+<h2 class="PageSubHeading">GL_CR_print_string</h2>
+<p>This extension is allows the application to insert its own text
+into the output produced by the printSPU.
+</p>
+<p>This extension requires the GL_CR_state_parameter extension.</p>
+
+<p>
+The print SPU can emit user text by calling
+<code>glChromiumParametervCR(GL_PRINT_STRING_CR, GL_BYTE, count, string)</code>
+where <code>count</code> is the length of the text and <code>string</code>
+is the text.
+</p>
+
+<p>XXX what about printing integers and floats?</p>
+<p>XXX should we rely on count specifying the string length, or assume
+that it's a null-terminated string?</p>
+
+
+<h2 class="PageSubHeading">GL_CR_tilesort_info</h2>
+<p>This extension is allows the application to query and set parameters
+of the tilesort SPU, if present.
+</p>
+<p>This extension requires the GL_CR_state_parameter extension.</p>
+<p>The query targets currently supported with the
+<code>glGetChromiumParametervCR</code> function are:</p>
+
+<dl>
+
+<dt>GL_MURAL_SIZE_CR</dt>
+<dd>Returns the width and height of the mural.<br>
+<code>index</code> is ignored.<br>
+<code>type</code> must be <code>GL_INT</code>.<br>
+<code>count</code> must be 2.<br>
+<code>values[0]</code> will return the width<br>
+<code>values[1]</code> will return the height.
+</dd>
+
+<dt>GL_NUM_SERVERS_CR</dt>
+<dd>Returns the number of tilesort servers.<br>
+<code>index</code> is ignored.<br>
+<code>type</code> must be <code>GL_INT</code>.<br>
+<code>count</code> must be 1.<br>
+<code>values[0]</code> will return the number of servers.
+</dd>
+
+<dt>GL_VERTEX_COUNTS_CR</dt>
+<dd>Returns the number of vertices that have been sent to each of the
+tilesort servers.<br>
+<code>index</code> is ignored.<br>
+<code>type</code> must be <code>GL_INT</code>.<br>
+<code>count</code> should be N, where N is the number of servers returned by
+querying <code>GL_NUM_SERVERS_CR</code>.<br>
+<code>values[i]</code> will return the number of vertices sent to server i
+where 0 <= i < N.
+</dd>
+
+<dt>GL_NUM_TILES_CR</dt>
+<dd>Returns the number of tils on a particular server.<br>
+<code>index</code> specifies the server number.<br>
+<code>type</code> must be <code>GL_INT</code>.<br>
+<code>count</code> must be 1.<br>
+<code>values[0]</code> will return the number of tiles on the given server.
+</dd>
+
+<dt>GL_TILE_BOUNDS_CR</dt>
+<dd>Returns the bounds of a tile on a server.<br>
+<code>index</b> encodes both the server number and tile number:
+index = server * 65536 + tile.  Alternately, index = (server << 16) | tile.<br>
+<code>type</b> must be <code>GL_INT</b>.<br>
+<code>count</b> must be 4.<br>
+<code>values[0]</b> will return x1 (left).<br>
+<code>values[1]</b> will return y1 (bottom).<br>
+<code>values[2]</b> will return x2 (right).<br>
+<code>values[3]</b> will return y2 (top).
+</dd>
+
+
+</dl>
+
+<p>The vertex counters which are queried with <code>GL_VERTEX_COUNTS_CR</code>
+may be reset to zero with either of the following commands:</p>
+
+<ul>
+<li><code>glChromiumParameteriCR(GL_RESET_VERTEX_COUNTERS_CR, 0);</code>
+<li><code>glChromiumParameterfCR(GL_RESET_VERTEX_COUNTERS_CR, 0.0);</code>
+</ul>
+
+</body>
+
+</html>

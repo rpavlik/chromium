@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/mman.h>
-#ifndef Linux
+#if defined( IRIX ) || defined( IRIX64 )
 #include <sys/syssgi.h>
 #endif
 #include <sys/errno.h>
@@ -34,7 +34,7 @@ static double crTimerGetTime( CRTimer *t )
 #elif defined( WINDOWS )
 	QueryPerformanceCounter( &t->performance_counter );
 	return ((double) t->performance_counter.QuadPart)*t->one_over_frequency;
-#elif defined( Linux )
+#elif defined( Linux ) || defined( FreeBSD ) || defined(__APPLE__)
 	gettimeofday( &t->timeofday, NULL );	
 	return t->timeofday.tv_sec + t->timeofday.tv_usec / 1000000.0;
 #else

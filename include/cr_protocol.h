@@ -68,6 +68,11 @@ typedef struct CRMessageReadPixels {
 	unsigned int           bytes_per_row;
 	unsigned int           stride;
 	unsigned int           rows;
+	int                    alignment;
+    	int                    skipRows;
+    	int                    skipPixels;
+	int		       format;
+	int		       type;
 	CRNetworkPointer       pixels;
 } CRMessageReadPixels;
 

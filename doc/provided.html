@@ -119,6 +119,15 @@ from</a>.</p>
     stream of OpenGL commands.&nbsp; One-third of the logic of WireGL can be
     found in this library (the other thirds being in the server, and the state
     tracker, listed below).</p></li>
+  <li><p class="ProvidedThing">The &quot;readback&quot; SPU</p>
+  <p class="ProvidedDesc"> The readback SPU is derived from the render SPU.
+    As such it accepts a stream of OpenGL commands and renders them into
+    its window.  When SwapBuffers is called, however, the color buffer image
+    is sent to the child SPU via glDrawPixels.  Optionally, the depth (Z)
+    buffer image is also sent to the child SPU.  By sending the color and
+    depth images from several readback SPUs to one render SPU, one can
+    implement a sort-last (Z-compositing) architecture.
+    </p></li>
   <li><p class="ProvidedThing">The &quot;saveframe&quot; SPU</p>
   <p class="ProvidedDesc"> This SPU saves the current frame to a PPM file. 
     Just like the print SPU, this SPU can be very useful for debugging the

@@ -76,7 +76,7 @@ state_get.c: state_get.py state_get.txt state_extensions_get.txt
 	@$(ECHO) Making the Get functions
 	@$(PYTHON) state_get.py > $@
 
-state_isenabled.c: state_isenabled.py state_isenabled.txt
+state_isenabled.c: state_isenabled.py state_isenabled.txt state_extensions_isenabled.txt
 	@$(ECHO) Making the IsEnabled function
 	@$(PYTHON) state_isenabled.py > $@
 

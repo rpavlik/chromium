@@ -15,11 +15,11 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty;
-	GLbitvalue v_dims;
-	GLbitvalue s_dims;
-	GLbitvalue enable;
-	GLbitvalue depth;
+	GLbitvalue dirty[CR_MAX_BITARRAY];
+	GLbitvalue v_dims[CR_MAX_BITARRAY];
+	GLbitvalue s_dims[CR_MAX_BITARRAY];
+	GLbitvalue enable[CR_MAX_BITARRAY];
+	GLbitvalue depth[CR_MAX_BITARRAY];
 } CRViewportBits;
 
 typedef struct {
@@ -54,9 +54,9 @@ void crStateViewportInit(CRViewportState *);
 void crStateViewportApply( CRViewportState *v, GLvectorf *p );
 void crStateViewportMakeCurrent(CRViewportState *v, CRViewportBits *vb);
 
-void crStateViewportDiff(CRViewportBits *bb, GLbitvalue bitID, 
+void crStateViewportDiff(CRViewportBits *bb, GLbitvalue *bitID, 
 		CRViewportState *from, CRViewportState *to);
-void crStateViewportSwitch(CRViewportBits *bb, GLbitvalue bitID, 
+void crStateViewportSwitch(CRViewportBits *bb, GLbitvalue *bitID, 
 		CRViewportState *from, CRViewportState *to);
 
 #ifdef __cplusplus

@@ -112,6 +112,7 @@ void crServerSetViewportBounds (CRViewportState *v,
 	q.y1 = v->viewportY;
 	q.y2 = v->viewportY + v->viewportH;
 
+	/* This is where the viewport gets clamped to the max size. */
 	crServerViewportClipToWindow(imagewindow, &q);
 
 	if (clipped_imagespace) 
@@ -163,7 +164,7 @@ void crServerApplyBaseProjection(void)
 	cr_server.head_spu->dispatch_table.PushAttrib( GL_TRANSFORM_BIT );
 	cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
 	cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.curClient->baseProjection) );
-	cr_server.head_spu->dispatch_table.MultMatrixf( (GLfloat *) (cr_server.curClient->ctx->transform.projection + cr_server.curClient->ctx->transform.projectionDepth) );
+	cr_server.head_spu->dispatch_table.MultMatrixf( (GLfloat *) (cr_server.curClient->currentCtx->transform.projection + cr_server.curClient->currentCtx->transform.projectionDepth) );
 	cr_server.head_spu->dispatch_table.PopAttrib( );
 }
 
@@ -201,7 +202,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchViewport( GLint x, GLint y, GLsize
 {
 	/* Note -- If there are tiles, this will be overridden in the 
 	 * process of decoding the BoundsInfo packet, so no worries. */
-	
 	crStateViewport( x, y, width, height );
 	cr_server.head_spu->dispatch_table.Viewport( x, y, width, height );
 }

@@ -275,6 +275,8 @@ class CR:
 	    MTU: 	Sets the maximum communication buffer size.
 	    Go:		Starts the ball rolling.
 	    AllSPUConf: Adds the key/values list to all SPUs' configuration.
+	    SetParam:   Set a mothership parameter
+	    GetParam:   Return value of a mothership parameter
 
 	internal functions:
             ProcessRequest:     Handles an incoming request, mapping it to
@@ -300,6 +302,8 @@ class CR:
 	    do_spuparam:	Sends the given SPU (or global) parameter.
 	    do_startdir:	Sends the startup directory to a SPU or server.
 	    do_tiles:		Sends the defined tiles for a SPU.
+	    do_setparam:        Sets a mothership parameter value
+	    do_getparam:        Returns a mothership parameter value
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
 	    ClientError:	Sends an error message on the given socket.
@@ -310,6 +314,7 @@ class CR:
 		self.wrappers = {}
 		self.mtu = 1024*1024
 		self.allSPUConf = []
+		self.param = {}
 		self.conn_id = 1
 
 	def AddNode( self, node ):
@@ -328,6 +333,36 @@ class CR:
 		XXX Greg, is this right? (ahern)
 		Adds the key/values list to all SPUs' configuration."""
 		self.allSPUConf.append( (regex, key, map( MakeString, values) ) )
+		
+	# Added by BrianP
+	def SetParam( self, key, value ):
+		self.param[key] = [value]
+
+	# Added by BrianP
+	def GetParam( self, key ):
+		if self.param.has_key(key):
+			return string.join(self.param[key], "")
+		else:
+			return ""
+
+	# Added by BrianP
+	def do_setparam( self, sock, args ):
+		params = args.split( " ", 1 )
+		key = params[0]
+		value = params[1]
+		self.param[key] = value
+		sock.Success( "OK" )
+		return
+		
+	# Added by BrianP
+	def do_getparam( self, sock, args ):
+		key = args
+		if not self.param.has_key(key):
+			response = ""
+		else:
+			response = string.join(self.param[key], "")
+		sock.Success( response )
+		return
 		
 	def Go( self, PORT=10000 ):
 		"""Go(PORT=10000)
@@ -637,7 +672,7 @@ class CR:
 		if not sock.node.config.has_key( args ):
 			sock.Reply( SockWrapper.UNKNOWNPARAM, "Server doesn't have param %s" % (args) )
 			return
-		sock.Success( string.join( sock.node.config[args], " " ) )	
+		sock.Success( string.join( sock.node.config[args], " " ) )
 
 	def do_servers( self, sock, args ):
 		"""do_servers(sock, args)

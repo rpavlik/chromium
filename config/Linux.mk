@@ -5,9 +5,14 @@
 
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++
+ifeq ($(MACHTYPE), alpha)
+CXXFLAGS += -DLINUX -Wall -Werror -mieee
+CFLAGS += -DLINUX -Wall -Werror -mieee
+else
 CXXFLAGS += -DLINUX -Wall -Werror
-CC = gcc
 CFLAGS += -DLINUX -Wall -Werror
+endif
+CC = gcc
 
 DEBUGFLAGS = -g
 RELEASEFLAGS = -g -O3 -DNDEBUG

@@ -14,6 +14,7 @@
 void crStateListsInit(CRListsState *l) 
 {
 	l->newEnd = GL_FALSE;
+	l->mode = 0;
 	l->freeList = (CRListsFreeElem*) malloc (sizeof(*(l->freeList)));
 	l->freeList->min = 1;
 	l->freeList->max = GL_MAXUINT;
@@ -195,8 +196,6 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 	CRContext *g = GetCurrentContext();
 	CRListsState *l = &(g->lists);
 
-	(void) mode;
-
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glNewList called in Begin/End");
@@ -211,8 +210,10 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 
 	FLUSH();
 
-	crStateListsBindName(l, list);	
+	crStateListsBindName(l, list);
+	l->currentIndex = list;
 	l->newEnd = GL_TRUE;
+	l->mode = mode;
 }
 
 void STATE_APIENTRY crStateEndList (void) 
@@ -232,7 +233,9 @@ void STATE_APIENTRY crStateEndList (void)
 		return;
 	}
 
+	l->currentIndex = 0;
 	l->newEnd = GL_FALSE;
+	l->mode = 0;
 }
 
 GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
@@ -341,7 +344,7 @@ void STATE_APIENTRY crStateListBase (GLuint base)
 	l->base = base;
 }
 
-void crStateListsDiff( CRListsBits *b, GLbitvalue bitID, 
+void crStateListsDiff( CRListsBits *b, GLbitvalue *bitID, 
 		CRListsState *from, CRListsState *to )
 {
 	(void) b;
@@ -350,7 +353,7 @@ void crStateListsDiff( CRListsBits *b, GLbitvalue bitID,
 	(void) to;
 }
 
-void crStateListsSwitch( CRListsBits *b, GLbitvalue bitID, 
+void crStateListsSwitch( CRListsBits *b, GLbitvalue *bitID, 
 		CRListsState *from, CRListsState *to )
 {
 	(void) b;

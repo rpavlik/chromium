@@ -43,23 +43,23 @@ typedef struct {
 } CRRegCombinerState;
 
 typedef struct {
-	GLbitvalue dirty;
-	GLbitvalue enable;
-	GLbitvalue regCombinerVars; /* numGeneralCombiners, colorSumClamp */
-	GLbitvalue regCombinerColor0;
-	GLbitvalue regCombinerColor1;
-	GLbitvalue regCombinerStageColor0;
-	GLbitvalue regCombinerStageColor1;
-	GLbitvalue regCombinerInput; /* rgb/alpha[].a/b/c/d, .aMapping, .aPortion */
-	GLbitvalue regCombinerOutput; /* rgb/alpha[].abOutput, .cdOutput, .sumOutput, .scale, .bias, .abDotProduct, .cdDotProduct, .muxSum */
-	GLbitvalue regCombinerFinalInput; /* a/b/c/d/e/f/g, aMapping, aPortion */
+	GLbitvalue dirty[CR_MAX_BITARRAY];
+	GLbitvalue enable[CR_MAX_BITARRAY];
+	GLbitvalue regCombinerVars[CR_MAX_BITARRAY]; /* numGeneralCombiners, colorSumClamp */
+	GLbitvalue regCombinerColor0[CR_MAX_BITARRAY];
+	GLbitvalue regCombinerColor1[CR_MAX_BITARRAY];
+	GLbitvalue regCombinerStageColor0[CR_MAX_BITARRAY];
+	GLbitvalue regCombinerStageColor1[CR_MAX_BITARRAY];
+	GLbitvalue regCombinerInput[CR_MAX_BITARRAY]; /* rgb/alpha[].a/b/c/d, .aMapping, .aPortion */
+	GLbitvalue regCombinerOutput[CR_MAX_BITARRAY]; /* rgb/alpha[].abOutput, .cdOutput, .sumOutput, .scale, .bias, .abDotProduct, .cdDotProduct, .muxSum */
+	GLbitvalue regCombinerFinalInput[CR_MAX_BITARRAY]; /* a/b/c/d/e/f/g, aMapping, aPortion */
 } CRRegCombinerBits;
 
 void crStateRegCombinerInit( CRRegCombinerState *reg );
 
-void crStateRegCombinerDiff( CRRegCombinerBits *b, GLbitvalue bitID, 
+void crStateRegCombinerDiff( CRRegCombinerBits *b, GLbitvalue *bitID, 
 		CRRegCombinerState *from, CRRegCombinerState *to );
-void crStateRegCombinerSwitch( CRRegCombinerBits *b, GLbitvalue bitID, 
+void crStateRegCombinerSwitch( CRRegCombinerBits *b, GLbitvalue *bitID, 
 		CRRegCombinerState *from, CRRegCombinerState *to );
 
 #ifdef __cplusplus

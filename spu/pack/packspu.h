@@ -26,6 +26,9 @@ void packspuConnectToServer( void );
 void packspuFlush( void *arg );
 void packspuHuge( CROpcode opcode, void *buf );
 
+extern GLint PACKSPU_APIENTRY packspu_CreateContext( void * display, GLint visual );
+extern void PACKSPU_APIENTRY packspu_MakeCurrent( void *dpy, GLint draw, GLint ctx );
+
 typedef struct {
 	int id;
 
@@ -33,10 +36,10 @@ typedef struct {
 	CRPackBuffer buffer;
 
 	int swap;
-
-	CRContext *ctx;
+	int ReadPixels;
 
 	CRLimitsState limits; /* OpenGL limits of receiving unpacker */
+	CRContext *currentCtx;  /* used to store client-side GL state */
 } PackSPU;
 
 extern PackSPU pack_spu;

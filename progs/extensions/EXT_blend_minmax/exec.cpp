@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include "exec.h"
 #include "../common/logo.h"
-#include "cr_glwrapper.h"
 
 PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
 

@@ -15,11 +15,11 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue enable;
-	GLbitvalue size;
-	GLbitvalue width;
-	GLbitvalue stipple;
-	GLbitvalue dirty;
+	GLbitvalue enable[CR_MAX_BITARRAY];
+	GLbitvalue size[CR_MAX_BITARRAY];
+	GLbitvalue width[CR_MAX_BITARRAY];
+	GLbitvalue stipple[CR_MAX_BITARRAY];
+	GLbitvalue dirty[CR_MAX_BITARRAY];
 } CRLineBits;
 
 typedef struct {
@@ -36,9 +36,9 @@ typedef struct {
 void crStateLineInitBits (CRLineBits *l);
 void crStateLineInit (CRLineState *l);
 
-void crStateLineDiff(CRLineBits *bb, GLbitvalue bitID, 
+void crStateLineDiff(CRLineBits *bb, GLbitvalue *bitID, 
 		CRLineState *from, CRLineState *to);
-void crStateLineSwitch(CRLineBits *bb, GLbitvalue bitID, 
+void crStateLineSwitch(CRLineBits *bb, GLbitvalue *bitID, 
 		CRLineState *from, CRLineState *to);
 
 #ifdef __cplusplus

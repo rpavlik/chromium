@@ -16,6 +16,7 @@ NORMAL_FILES = packer \
 	pack_clipplane \
 	pack_context \
 	pack_current \
+	pack_error \
 	pack_extensions \
 	pack_fog \
 	pack_init \
@@ -23,6 +24,7 @@ NORMAL_FILES = packer \
 	pack_lists \
 	pack_swap_lists \
 	pack_map \
+	pack_misc \
 	pack_regcombiner \
 	pack_swap_map \
 	pack_materials \
@@ -42,11 +44,11 @@ SWAP_FILES = pack_arrays \
 	pack_bounds \
 	pack_client \
 	pack_clipplane \
-	pack_context \
 	pack_fog \
 	pack_lights \
 	pack_materials \
 	pack_matrices \
+	pack_misc \
 	pack_pixels \
 	pack_regcombiner \
 	pack_rect \

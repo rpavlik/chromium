@@ -12,7 +12,7 @@
 
 void crSetenv( const char *var, const char *value )
 {
-#ifdef LINUX
+#if defined(LINUX) || defined(FREEBSD) || defined(DARWIN)
 	setenv( var, value, 1 /* replace */ );
 #else
 	unsigned long len;

@@ -29,7 +29,7 @@ typedef struct Timer
 #elif defined(WINDOWS)
 	LARGE_INTEGER performance_counter, performance_frequency;
 	double one_over_frequency;
-#elif defined( Linux )
+#elif defined( Linux ) || defined( FreeBSD ) || defined(__APPLE__)
 	struct timeval timeofday;
 #endif
 } CRTimer;

@@ -47,12 +47,32 @@ void crStateClientInit(CRClientState *c)
 {
 	int i;
 
+	/* pixel pack/unpack */
+	c->unpack.rowLength   = 0;
+	c->unpack.skipRows    = 0;
+	c->unpack.skipPixels  = 0;
+	c->unpack.skipImages  = 0;
+	c->unpack.alignment   = 4;
+	c->unpack.imageHeight = 0;
+	c->unpack.swapBytes   = GL_FALSE;
+	c->unpack.psLSBFirst  = GL_FALSE;
+	c->pack.rowLength     = 0;
+	c->pack.skipRows      = 0;
+	c->pack.skipPixels    = 0;
+	c->pack.skipImages    = 0;
+	c->pack.alignment     = 4;
+	c->pack.imageHeight   = 0;
+	c->pack.swapBytes     = GL_FALSE;
+	c->pack.psLSBFirst    = GL_FALSE;
+
+	/* ARB multitexture */
 	c->curClientTextureUnit = 0;
 
 	c->list_alloc = GLCLIENT_LIST_ALLOC;
 	c->list_size = 0;
 	c->list = (int *) malloc (c->list_alloc * sizeof (int));
 
+	/* vertex array */
 	c->v.p = NULL;
 	c->v.size = 0;
 	c->v.type = GL_NONE;
@@ -93,8 +113,172 @@ void crStateClientInit(CRClientState *c)
 	}
 }
 
-void crStateClientSetClientState(CRClientState *c, CRClientBits *cb, 
-		GLbitvalue neg_bitid, GLenum array, GLboolean state) 
+
+/*
+ * PixelStore functions are here, not in state_pixel.c because this
+ * is client-side state, like vertex arrays.
+ */
+
+void STATE_APIENTRY crStatePixelStoref (GLenum pname, GLfloat param) {
+
+	/* The GL SPEC says I can do this on page 76. */
+	switch( pname )
+	{
+		case GL_PACK_SWAP_BYTES:
+		case GL_PACK_LSB_FIRST:
+		case GL_UNPACK_SWAP_BYTES:
+		case GL_UNPACK_LSB_FIRST:
+			crStatePixelStorei( pname, param == 0.0f ? 0: 1 );
+			break;
+		default:
+			crStatePixelStorei( pname, (GLint) param );
+			break;
+	}
+}
+
+void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param) {
+	CRContext *g    = GetCurrentContext();
+	CRStateBits *sb = GetCurrentBits();
+	CRClientState *c = &(g->client);
+	CRClientBits *cb = &(sb->client);
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "PixelStore{if} called in Begin/End");
+		return;
+	}
+
+	FLUSH();
+
+
+	switch(pname) {
+		case GL_PACK_SWAP_BYTES:
+			c->pack.swapBytes = (GLboolean) param;
+			DIRTY(cb->pack, g->neg_bitid);
+			break;
+		case GL_PACK_LSB_FIRST:
+			c->pack.psLSBFirst = (GLboolean) param;
+			DIRTY(cb->pack, g->neg_bitid);
+			break;
+		case GL_PACK_ROW_LENGTH:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Row Length: %f", param);
+				return;
+			}
+			c->pack.rowLength = param;
+			DIRTY(cb->pack, g->neg_bitid);
+			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_PACK_IMAGE_HEIGHT:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Image Height: %f", param);
+				return;
+			}
+			c->pack.imageHeight = param;
+			DIRTY(cb->pack, g->neg_bitid);
+			break;
+#endif
+		case GL_PACK_SKIP_PIXELS:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Skip Pixels: %f", param);
+				return;
+			}
+			c->pack.skipPixels = param;
+			DIRTY(cb->pack, g->neg_bitid);
+			break;
+		case GL_PACK_SKIP_ROWS:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Row Skip: %f", param);
+				return;
+			}
+			c->pack.skipRows = param;
+			DIRTY(cb->pack, g->neg_bitid);
+			break;
+		case GL_PACK_ALIGNMENT:
+			if (((GLint) param) != 1 && 
+					((GLint) param) != 2 &&
+					((GLint) param) != 4 &&
+					((GLint) param) != 8) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid Alignment: %f", param);
+				return;
+			}
+			c->pack.alignment = param;
+			DIRTY(cb->pack, g->neg_bitid);
+			break;
+
+		case GL_UNPACK_SWAP_BYTES:
+			c->unpack.swapBytes = (GLboolean) param;
+			DIRTY(cb->unpack, g->neg_bitid);
+			break;
+		case GL_UNPACK_LSB_FIRST:
+			c->unpack.psLSBFirst = (GLboolean) param;
+			DIRTY(cb->unpack, g->neg_bitid);
+			break;
+		case GL_UNPACK_ROW_LENGTH:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Row Length: %f", param);
+				return;
+			}
+			c->unpack.rowLength = param;
+			DIRTY(cb->unpack, g->neg_bitid);
+			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_UNPACK_IMAGE_HEIGHT:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Image Height: %f", param);
+				return;
+			}
+			c->unpack.imageHeight = param;
+			DIRTY(cb->unpack, g->neg_bitid);
+			break;
+#endif
+		case GL_UNPACK_SKIP_PIXELS:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Skip Pixels: %f", param);
+				return;
+			}
+			c->unpack.skipPixels = param;
+			DIRTY(cb->unpack, g->neg_bitid);
+			break;
+		case GL_UNPACK_SKIP_ROWS:
+			if (param < 0.0f) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative Row Skip: %f", param);
+				return;
+			}
+			c->unpack.skipRows = param;
+			DIRTY(cb->unpack, g->neg_bitid);
+			break;
+		case GL_UNPACK_ALIGNMENT:
+			if (((GLint) param) != 1 && 
+					((GLint) param) != 2 &&
+					((GLint) param) != 4 &&
+					((GLint) param) != 8) 
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid Alignment: %f", param);
+				return;
+			}
+			c->unpack.alignment = param;
+			DIRTY(cb->unpack, g->neg_bitid);
+			break;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Unknown glPixelStore Pname: %d", pname);
+			return;
+	}
+	DIRTY(cb->dirty, g->neg_bitid);
+}
+
+
+static void setClientState(CRClientState *c, CRClientBits *cb, 
+		GLbitvalue *neg_bitid, GLenum array, GLboolean state) 
 {
 	CRContext *g = GetCurrentContext();
 
@@ -133,8 +317,8 @@ void crStateClientSetClientState(CRClientState *c, CRClientBits *cb,
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid Enum passed to Enable/Disable Client State: 0x%x", array );
 			return;
 	}
-	cb->dirty = neg_bitid;
-	cb->enableClientState = neg_bitid;
+	DIRTY(cb->dirty, neg_bitid);
+	DIRTY(cb->enableClientState, neg_bitid);
 }
 
 void STATE_APIENTRY crStateEnableClientState (GLenum array) 
@@ -146,7 +330,7 @@ void STATE_APIENTRY crStateEnableClientState (GLenum array)
 
 	FLUSH();
 
-	crStateClientSetClientState(c, cb, g->neg_bitid, array, GL_TRUE);
+	setClientState(c, cb, g->neg_bitid, array, GL_TRUE);
 }
 
 void STATE_APIENTRY crStateDisableClientState (GLenum array) 
@@ -158,7 +342,7 @@ void STATE_APIENTRY crStateDisableClientState (GLenum array)
 
 	FLUSH();
 
-	crStateClientSetClientState(c, cb, g->neg_bitid, array, GL_FALSE);
+	setClientState(c, cb, g->neg_bitid, array, GL_FALSE);
 }
 
 void crStateClientSetPointer (CRClientPointer *cp, GLint size, 
@@ -230,8 +414,8 @@ void STATE_APIENTRY crStateVertexPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->v), size, type, stride, p);
-	cb->dirty = g->neg_bitid;
-	cb->clientPointer = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateColorPointer(GLint size, GLenum type, 
@@ -264,8 +448,8 @@ void STATE_APIENTRY crStateColorPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->c), size, type, stride, p);
-	cb->dirty = g->neg_bitid;
-	cb->clientPointer = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateSecondaryColorPointerEXT(GLint size,
@@ -304,8 +488,8 @@ void STATE_APIENTRY crStateSecondaryColorPointerEXT(GLint size,
 	}
 
 	crStateClientSetPointer(&(c->s), size, type, stride, p);
-	cb->dirty = g->neg_bitid;
-	cb->clientPointer = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateIndexPointer(GLenum type, GLsizei stride, 
@@ -318,7 +502,7 @@ void STATE_APIENTRY crStateIndexPointer(GLenum type, GLsizei stride,
 
 	FLUSH();
 
-	if (type != GL_SHORT && type != GL_INT &&
+	if (type != GL_SHORT && type != GL_INT && type != GL_UNSIGNED_BYTE &&
 			type != GL_FLOAT && type != GL_DOUBLE)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glIndexPointer: invalid type: %d", type);
@@ -331,8 +515,8 @@ void STATE_APIENTRY crStateIndexPointer(GLenum type, GLsizei stride,
 	}
 
 	crStateClientSetPointer(&(c->i), 1, type, stride, p);
-	cb->dirty = g->neg_bitid;
-	cb->clientPointer = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateNormalPointer(GLenum type, GLsizei stride, 
@@ -359,8 +543,8 @@ void STATE_APIENTRY crStateNormalPointer(GLenum type, GLsizei stride,
 	}
 
 	crStateClientSetPointer(&(c->n), 3, type, stride, p);
-	cb->dirty = g->neg_bitid;
-	cb->clientPointer = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateTexCoordPointer(GLint size, GLenum type, 
@@ -391,8 +575,8 @@ void STATE_APIENTRY crStateTexCoordPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->t[c->curClientTextureUnit]), size, type, stride, p);
-	cb->dirty = g->neg_bitid;
-	cb->clientPointer = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateEdgeFlagPointer(GLsizei stride, const GLvoid *p) 
@@ -411,8 +595,8 @@ void STATE_APIENTRY crStateEdgeFlagPointer(GLsizei stride, const GLvoid *p)
 	}
 
 	crStateClientSetPointer(&(c->e), 1, GL_UNSIGNED_BYTE, stride, p);
-	cb->dirty = g->neg_bitid;
-	cb->clientPointer = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
 }
 
 
@@ -467,8 +651,8 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 			return;
 	}
 
-	cb->dirty = g->neg_bitid;
-	cb->clientPointer = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
 
 /* p, size, type, stride, enabled, bytesPerIndex */
 /*
@@ -799,6 +983,10 @@ void STATE_APIENTRY crStateGetPointerv(GLenum pname, GLvoid * * params)
 			}
 			break;
 #endif
+		case GL_FEEDBACK_BUFFER_POINTER:
+		case GL_SELECTION_BUFFER_POINTER:
+			/* do nothing - API switching should pick this up */
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 					"glGetPointerv: invalid pname: %d", pname);

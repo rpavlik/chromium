@@ -5,6 +5,7 @@
 GetString
 EnableClientState
 DisableClientState
+ClientActiveTextureARB
 ColorPointer
 SecondaryColorPointerEXT
 GetPointerv
@@ -15,8 +16,15 @@ EdgeFlagPointer
 ArrayElement
 DrawArrays
 DrawElements
+DrawRangeElements
+InterleavedArrays
+ReadPixels
+CopyPixels
 SwapBuffers
 Flush
 Finish
 PixelStorei
 PixelStoref
+CreateContext
+MakeCurrent
+DestroyContext

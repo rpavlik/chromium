@@ -47,6 +47,7 @@ void glMultiTexCoord4ivARB (GLenum texture, const GLint *t);
 void glMultiTexCoord4svARB (GLenum texture, const GLshort *t);
 void glActiveTextureARB (GLenum texture);
 void glClientActiveTextureARB (GLenum texture);
+/* GL_NV_register_combiners */
 void glCombinerParameterfvNV (GLenum pname, const GLfloat *params);
 void glCombinerParameterivNV (GLenum pname, const GLint *params);
 void glCombinerParameterfNV (GLenum pname, GLfloat param);
@@ -54,8 +55,16 @@ void glCombinerParameteriNV (GLenum pname, GLint param);
 void glCombinerInputNV (GLenum stage, GLenum portion, GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage);
 void glCombinerOutputNV (GLenum stage, GLenum portion, GLenum abOutput, GLenum cdOutput, GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct, GLboolean cdDotProduct, GLboolean muxSum);
 void glFinalCombinerInputNV (GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage);
+void glGetCombinerInputParameterfvNV (GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params);
+void glGetCombinerInputParameterivNV (GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params);
+void glGetCombinerOutputParameterfvNV (GLenum stage, GLenum portion, GLenum pname, GLfloat *params);
+void glGetCombinerOutputParameterivNV (GLenum stage, GLenum portion, GLenum pname, GLint *params);
+void glGetFinalCombinerInputParameterfvNV (GLenum variable, GLenum pname, GLfloat *params);
+void glGetFinalCombinerInputParameterivNV (GLenum variable, GLenum pname, GLint *params);
+/* GL_NV_register_combiners2 */
 void glCombinerStageParameterfvNV (GLenum stage, GLenum pname, const GLfloat *params);
 void glGetCombinerStageParameterfvNV (GLenum stage, GLenum pname, GLfloat *params);
+/* GL_EXT_secondary_color */
 void glSecondaryColor3bEXT (GLbyte red, GLbyte green, GLbyte blue);
 void glSecondaryColor3bvEXT (const GLbyte *v);
 void glSecondaryColor3dEXT (GLdouble red, GLdouble green, GLdouble blue);
@@ -73,3 +82,7 @@ void glSecondaryColor3uivEXT (const GLuint *v);
 void glSecondaryColor3usEXT (GLushort red, GLushort green, GLushort blue);
 void glSecondaryColor3usvEXT (const GLushort *v);
 void glSecondaryColorPointerEXT (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+void glChromiumParameteriCR (GLenum target, GLint value);
+void glChromiumParameterfCR (GLenum target, GLfloat value);
+void glChromiumParametervCR (GLenum target, GLenum type, GLsizei count, const GLvoid *values);
+void glGetChromiumParametervCR (GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values);

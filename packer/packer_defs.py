@@ -93,4 +93,5 @@ crPackOffsetCurrentPointers
 crPackNullCurrentPointers
 crPackInit
 crPackFree
+crNetworkPointerWrite
 """

@@ -18,6 +18,12 @@
 <p>This page provides a complete list of all the configuration parameters
 supported by all SPU's shipped with Chromium ALPHA, arranged by SPU.&nbsp; If a
 SPU has <i>no</i> configuration options, it is not listed here.</p>
+<p>An example of setting an SPU parameter is:</p>
+<code>
+spu = SPU('render')<br>
+spu.Conf('window_geometry', 0, 0, 512, 512)<br>
+</code>
+
 <h2 class="PageSubHeading">Print SPU </h2>
 <table border="1" width="100%">
   <tr class="ConfigTableHeader">
@@ -87,7 +93,75 @@ SPU has <i>no</i> configuration options, it is not listed here.</p>
 	  If true, do not allow the SPU to start if a direct rendering
 	  visual is not available.  X-Windows ONLY.  The default is 0.</td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">window_title</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">
+	  Specifies the text to display in the titlebar of the window.
+          Default is "Chromium Render SPU".</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">system_gl_path</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">
+          Specifies the directory (path to) the OpenGL library to use.
+          Default (on IRIX/Linux) is /usr/lib.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">show_cursor</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">
+          If set to 1, render a <em>virtual cursor</em> which tracks the
+          location of the user's mouse pointer in the application window.
+          This typically only works well with applications that constantly
+          redraw the 3D window's contents.  Default is 0.</td>
+  </tr>
 </table>
+
+<h2 class="PageSubHeading">Readback SPU</h2>
+<p>
+Since the readback SPU is derived from the render SPU, it accepts all
+configuration options that the render SPU accepts, plus a few more:
+</p>
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">extract_depth</td>
+    <td width="12%" class="ConfigType" height="74">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="74">If set to 1, the depth
+      buffer values will be used to do <em>Z-compositing</em> of the color
+      images.  This is used for <em>sort-last</em> configurations.
+      The default is 1.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">local_visualization</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If set to 1, SwapBuffers
+      will be issued by the readback SPU so that you can actually see what's
+      being rendered by the SPU.  The default is 0.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">visualize_depth</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If set to 1, the depth
+      buffer values will be sent downstream as a luminance image, rather
+      than sending the RGB image.  This allows one to see the Z buffer
+      values as a grayscale image.  The default is 0.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">drawpixels_pos</td>
+    <td width="12%" class="ConfigType" height="38">2 Integers</td>
+    <td width="115%" class="ConfigDesc" height="38">Specifies the window
+      coordinate at which the downstream glDrawPixels commands should be
+      positioned.  This is used for reassembling image tiles into a complete
+      image.  The default values are 0, 0.</td>
+  </tr>
+</table>
+
 <h2 class="PageSubHeading">Tilesort SPU</h2>
 
 <table border="1" width="100%" height="149">
@@ -171,6 +245,14 @@ SPU has <i>no</i> configuration options, it is not listed here.</p>
       call</a>), the fake window dimensions will be returned.&nbsp; If these
       parameters are <i>not</i> set, and there is no client window, using <code>glViewport</code>
       or <code>glScissor</code> will cause a fatal run-time error.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">scale_to_mural_size</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If set to 1, the OpenGL
+      viewport will be rescaled to match the mural size (usually the desired
+      behaviour).  If set to 0, the viewport will not be rescaled.  This is
+      useful for conformance testing.  The default is 1.</td>
   </tr>
 </table>
 

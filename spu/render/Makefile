@@ -4,14 +4,31 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ../..
+ifneq ($(ARCH), WIN_NT)
+ifneq ($(ARCH), WIN_98)
+ARCH=$(shell uname | sed -e 's/-//g')
+endif
+endif
+
+ifeq ($(ARCH),CYGWIN_NT5.0)
+ARCH=WIN_NT
+endif
 
 SHARED = 1
 LIBRARY = renderspu
-FILES = renderspu renderspu_config renderspu_init renderspu_swap renderspu_window
+FILES = renderspu_config \
+	renderspu_init \
+	renderspu_misc \
+	renderspu_swap
+
+ifeq ($(ARCH), WIN_NT)
+FILES += renderspu_wgl
+else
+FILES += renderspu_glx
+endif
 
 LIBRARIES = spuload crmothership crutil
 
-PRECOMP = renderspu.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += render.def
@@ -22,7 +39,3 @@ LDFLAGS += user32.lib gdi32.liB
 else
 LDFLAGS += -lXmu -lX11
 endif
-
-renderspu.c: render.py render_special render_nop_special render_extensions_special
-	@$(ECHO) Building the Render SPU
-	@$(PYTHON) render.py > renderspu.c

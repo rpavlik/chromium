@@ -20,6 +20,10 @@ void crMothershipIdentifyFaker( CRConnection *conn, char *response );
 void crMothershipIdentifyServer( CRConnection *conn, char *response );
 
 void crMothershipGetStartdir( CRConnection *conn, char *response );
+
+void crMothershipSetParam( CRConnection *conn, const char *param, const char *value );
+int crMothershipGetParam( CRConnection *conn, const char *param, char *value );
+
 int crMothershipGetServerParam( CRConnection *conn, char *response, char *param, ...);
 int crMothershipGetSPUParam( CRConnection *conn, char *response, char *param, ...);
 int crMothershipSetSPUParam( CRConnection *conn, const char *param, const char *value);

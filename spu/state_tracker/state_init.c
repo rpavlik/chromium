@@ -11,37 +11,55 @@
 #include <stdio.h>
 #include <memory.h>
 
-/* To increase this, we need a more general bitvector representation. */
-#define CR_MAX_CONTEXTS 32
-
 CRContext *__currentContext = NULL;
 CRStateBits *__currentBits = NULL;
 
-CRContext *__hwcontext = NULL;
+GLboolean g_availableContexts[CR_MAX_CONTEXTS];
 
+static CRContext *defaultContext = NULL;
+
+
+/*
+ * Allocate the state (dirty) bits data structures.
+ * This should be called before we create any contexts.
+ */
 void crStateInit(void)
 {
+	int j;
 	__currentBits = (CRStateBits *) crAlloc( sizeof( *__currentBits) );
 	memset( __currentBits, 0, sizeof( *__currentBits ) );
 
 	crStateClientInitBits( &(__currentBits->client) );
 	crStateLightingInitBits( &(__currentBits->lighting) );
 	crStateTransformInitBits( &(__currentBits->transform) );
+
+	for (j=0;j<CR_MAX_CONTEXTS;j++)
+		g_availableContexts[j] = 0;
 }
 
-GLbitvalue g_availableContexts = 0xFFFFFFFF;
 
-
+/*
+ * Helper for crStateCreateContext, below.
+ */
 static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 {
 	CRContext *ctx = (CRContext *) crAlloc( sizeof( *ctx ) );
+	int j;
+	int node32 = i >> 5;
+	int node = i & 0x1f;
+
 	ctx->id = i;
 	ctx->flush_func = NULL;
-	ctx->bitid = (1 << i);
-	ctx->neg_bitid = ~(ctx->bitid);
-	ctx->update = GLBITS_ONES;
+	for (j=0;j<CR_MAX_BITARRAY;j++){
+		if (j == node32) {
+			ctx->bitid[j] = (1 << node);
+		} else {
+			ctx->bitid[j] = 0;
+		}
+		ctx->neg_bitid[j] = ~(ctx->bitid[j]);
+	}
 
-	crDebug( "Creating a context: %d (0x%x)", ctx->id, (int) ctx->bitid );
+	crDebug( "Creating a context (id=%d addr=%p)", ctx->id, ctx);
 
 	/* This has to come first. */
 	if (limits) {
@@ -77,44 +95,110 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 	return ctx;
 }
 
+
+/*
+ * Notes on context switching and the "default context".
+ *
+ * See the paper "Tracking Graphics State for Networked Rendering"
+ * by Ian Buck, Greg Humphries and Pat Hanrahan for background
+ * information about how the state tracker and context switching
+ * works.
+ *
+ * When we make a new context current, we call crStateSwitchContext()
+ * in order to transform the 'from' context into the 'to' context
+ * (i.e. the old context to the new context).  The transformation
+ * is accomplished by calling GL functions through the 'diff_api'
+ * so that the downstream GL machine (represented by the __currentContext
+ * structure) is updated to reflect the new context state.  Finally, 
+ * we point __currentContext to the new context.
+ *
+ * A subtle problem we have to deal with is context destruction.
+ * This issue arose while testing with Glean.  We found that when
+ * the currently bound context was getting destroyed that state
+ * tracking was incorrect when a subsequent new context was activated.
+ * In DestroyContext, the __hwcontext was being set to NULL and effectively
+ * going away.  Later in MakeCurrent we had no idea what the state of the
+ * downstream GL machine was (since __hwcontext was gone).  This meant
+ * we had nothing to 'diff' against and the downstream GL machine was
+ * in an unknown state.
+ *
+ * The solution to this problem is the "default/NULL" context.  The
+ * default context is created the first time CreateContext is called
+ * and is never freed.  Whenever we get a crStateMakeCurrent(NULL) call
+ * or destroy the currently bound context in crStateDestroyContext()
+ * we call crStateSwitchContext() to switch to the default context and
+ * then set the __currentContext pointer to point to the default context.
+ * This ensures that the dirty bits are updated and the diff_api functions
+ * are called to keep the downstream GL machine in a known state.
+ * Finally, the __hwcontext variable is no longer needed now.
+ *
+ * Yeah, this is kind of a mind-bender, but it really solves the problem
+ * pretty cleanly.
+ *
+ * -Brian
+ */
+
+
 CRContext *crStateCreateContext(const CRLimitsState *limits)
 {
 	int i;
-	int id = 1;
-	
+
+	if (!defaultContext) {
+		/* Allocate the default/NULL context */
+		defaultContext = crStateCreateContextId(0, limits);
+		CRASSERT(g_availableContexts[0] == 0);
+		g_availableContexts[0] = 1; /* in use forever */
+	}
+
 	for (i = 0 ; i < CR_MAX_CONTEXTS ; i++)
 	{
-		if (id & g_availableContexts)
+		if (!g_availableContexts[i])
 		{
-			g_availableContexts ^= id; /* it's no longer available */
+			g_availableContexts[i] = 1; /* it's no longer available */
 			return crStateCreateContextId( i, limits );
 		}
-		id <<= 1;
 	}
-	crError( "Out of available contexts in crStateCreateContexts (max %d)", CR_MAX_CONTEXTS );
-	/* NOTREACHED */
+	crError( "Out of available contexts in crStateCreateContexts (max %d)",
+			 CR_MAX_CONTEXTS );
+	/* NOT REACHED */
 	return NULL;
 }
 
+
+void crStateDestroyContext( CRContext *ctx )
+{
+	if (__currentContext == ctx) {
+		/* destroying the current context - have to be careful here */
+		CRASSERT(defaultContext);
+		crStateSwitchContext(__currentContext, defaultContext);
+		__currentContext = defaultContext;
+	}
+	g_availableContexts[ctx->id] = 0;
+	crFree( ctx );
+}
+
+
 void crStateMakeCurrent( CRContext *ctx )
 {
-	if (__currentContext == ctx) return;
+	if (ctx == NULL)
+		ctx = defaultContext;
+
+	if (__currentContext == ctx)
+		return; /* no-op */
+
+	CRASSERT(ctx);
+
+	if (__currentContext)
+		crStateSwitchContext( __currentContext, ctx );
+
 	__currentContext = ctx;
+}
 
-#if 0
-	if (ctx && !ctx->viewport.viewportValid && !ctx->viewport.scissorValid)
-	{
-		crStateViewportMakeCurrent( &(ctx->viewport), &(__currentBits->viewport) );
-	}
-#endif
+void crStateUpdateColorBits(void)
+{
+	/* This is a hack to force updating the 'current' attribs */
 
-	if (__hwcontext && ctx)
-	{
-		crStateSwitchContext( __hwcontext, ctx );	
-	}
-
-	if (ctx)
-	{
-		__hwcontext = ctx;
-	}
+	CRStateBits *sb = GetCurrentBits();
+	FILLDIRTY(sb->current.dirty);
+	FILLDIRTY(sb->current.color);
 }

@@ -49,10 +49,13 @@ int main( int argc, char *argv[] )
 		for ( i = 0 ; i < cr_server.numClients ; i++)
 		{
 			crServerRecomputeBaseProjection( &(cr_server.clients[i].baseProjection) );
+#if 00
+	/* Moved into MakeCurrent() */
 			cr_server.clients[i].ctx->viewport.outputDims.x1 = cr_server.underlyingDisplay[0];
 			cr_server.clients[i].ctx->viewport.outputDims.x2 = cr_server.underlyingDisplay[2];
 			cr_server.clients[i].ctx->viewport.outputDims.y1 = cr_server.underlyingDisplay[1];
 			cr_server.clients[i].ctx->viewport.outputDims.y2 = cr_server.underlyingDisplay[3];
+#endif
 		}
 		cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
 		cr_server.head_spu->dispatch_table.LoadMatrixf( (GLfloat *) &(cr_server.clients[0].baseProjection) );
@@ -63,7 +66,7 @@ int main( int argc, char *argv[] )
 	}
 	crServerInitDispatch();
 	crStateDiffAPI( &(cr_server.head_spu->dispatch_table) );
-	crStateMakeCurrent( cr_server.clients[0].ctx );
+
 	crUnpackSetReturnPointer( &(cr_server.return_ptr) );
 	crUnpackSetWritebackPointer( &(cr_server.writeback_ptr) );
 

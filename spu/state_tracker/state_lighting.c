@@ -52,7 +52,14 @@ void crStateLightingInit (CRLightingState *l)
 	l->lightModelAmbient = ambient_color;
 	l->lightModelLocalViewer = GL_FALSE;
 	l->lightModelTwoSide = GL_FALSE;
-
+#if defined(CR_EXT_separate_specular_color)
+	l->lightModelColorControlEXT = GL_SINGLE_COLOR_EXT;
+#elif defined(CR_OPENGL_VERSION_1_2)
+	l->lightModelColorControlEXT = GL_SINGLE_COLOR;
+#endif
+#if defined(CR_EXT_secondary_color)
+	l->colorSumEXT = GL_FALSE;
+#endif
 	l->light = (CRLight *) crAlloc (sizeof (*(l->light)) * CR_MAX_LIGHTS);
 	memset ((void *) l->light, 0, sizeof (*(l->light)) * CR_MAX_LIGHTS);
 
@@ -105,8 +112,8 @@ void STATE_APIENTRY crStateShadeModel (GLenum mode)
 	}
 
 	l->shadeModel = mode;
-	lb->shadeModel = g->neg_bitid;
-	lb->dirty = g->neg_bitid;
+	DIRTY(lb->shadeModel, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateColorMaterial (GLenum face, GLenum mode)
@@ -144,8 +151,8 @@ void STATE_APIENTRY crStateColorMaterial (GLenum face, GLenum mode)
 
 	l->colorMaterialFace = face;
 	l->colorMaterialMode = mode;
-	lb->colorMaterial = g->neg_bitid;
-	lb->dirty = g->neg_bitid;
+	DIRTY(lb->colorMaterial, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
@@ -177,7 +184,20 @@ void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 			l->lightModelAmbient.b = param[2];
 			l->lightModelAmbient.a = param[3];
 			break;
-#ifdef CR_EXT_separate_specular_color
+#if defined(CR_OPENGL_VERSION_1_2)
+		case GL_LIGHT_MODEL_COLOR_CONTROL:
+			if (param[0] == GL_SEPARATE_SPECULAR_COLOR || param[0] == GL_SINGLE_COLOR)
+			{
+				l->lightModelColorControlEXT = (GLenum) param[0];
+			}
+			else
+			{
+				crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "LightModel: Invalid param for LIGHT_MODEL_COLOR_CONTROL: 0x%x", param[0] );
+				return;
+			}
+			break;
+#else
+#if defined(CR_EXT_separate_specular_color)
 		case GL_LIGHT_MODEL_COLOR_CONTROL_EXT:
 			if( g->extensions.EXT_separate_specular_color )
 			{
@@ -198,19 +218,22 @@ void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 			}
 			break;
 #endif
+#endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModelfv: Invalid pname: %d", pname);
 			return;
 	}
-	lb->lightModel = g->neg_bitid;
-	lb->dirty = g->neg_bitid;
+	DIRTY(lb->lightModel, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 {
 	GLfloat f_param;
 	GLcolor f_color;
+#ifndef CR_OPENGL_VERSION_1_2
 	CRContext *g = GetCurrentContext();
+#endif
 
 	switch (pname)
 	{
@@ -226,6 +249,12 @@ void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 			f_color.a = ((GLfloat)param[3])/GL_MAXINT;
 			crStateLightModelfv( pname, (GLfloat *) &f_color );
 			break;
+#if defined(CR_OPENGL_VERSION_1_2)
+		case GL_LIGHT_MODEL_COLOR_CONTROL:
+			f_param = (GLfloat) (*param);
+			crStateLightModelfv( pname, &f_param );
+			break;
+#else
 #ifdef CR_EXT_separate_specular_color
 		case GL_LIGHT_MODEL_COLOR_CONTROL_EXT:
 			if( g->extensions.EXT_separate_specular_color ) {
@@ -236,6 +265,7 @@ void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 				return;
 			}
 			break;
+#endif
 #endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "LightModeliv: Invalid pname: %d", pname);
@@ -293,21 +323,21 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 			lt->ambient.g = param[1];
 			lt->ambient.b = param[2];
 			lt->ambient.a = param[3];
-			ltb->ambient = g->neg_bitid;
+			DIRTY(ltb->ambient, g->neg_bitid);
 			break;
 		case GL_DIFFUSE:
 			lt->diffuse.r = param[0];
 			lt->diffuse.g = param[1];
 			lt->diffuse.b = param[2];
 			lt->diffuse.a = param[3];
-			ltb->diffuse = g->neg_bitid;
+			DIRTY(ltb->diffuse, g->neg_bitid);
 			break;
 		case GL_SPECULAR:
 			lt->specular.r = param[0];
 			lt->specular.g = param[1];
 			lt->specular.b = param[2];
 			lt->specular.a = param[3];
-			ltb->specular = g->neg_bitid;
+			DIRTY(ltb->specular, g->neg_bitid);
 			break;
 		case GL_POSITION:
 			x = param[0];
@@ -326,7 +356,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 			lt->position.z = mat->m02*x + mat->m12*y + mat->m22*z + mat->m32*w;
 			lt->position.w = mat->m03*x + mat->m13*y + mat->m23*z + mat->m33*w;
 
-			ltb->position = g->neg_bitid;
+			DIRTY(ltb->position, g->neg_bitid);
 			break;
 		case GL_SPOT_DIRECTION:
 			lt->spotDirection.x = param[0];
@@ -346,7 +376,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 			crStateTransformInvertTransposeMatrix (&inv, mat);
 			crStateTransformXformPointMatrixf (&inv, &(lt->spotDirection));
 
-			ltb->spot = g->neg_bitid;
+			DIRTY(ltb->spot, g->neg_bitid);
 			break;
 		case GL_SPOT_EXPONENT:
 			if (*param < 0.0f || *param > 180.0f)
@@ -355,7 +385,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 				return;
 			}
 			lt->spotExponent = *param;
-			ltb->spot = g->neg_bitid;
+			DIRTY(ltb->spot, g->neg_bitid);
 			break;
 		case GL_SPOT_CUTOFF:
 			if ((*param < 0.0f || *param > 90.0f) && *param != 180.0f)
@@ -364,7 +394,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 				return;
 			}
 			lt->spotCutoff = *param;
-			ltb->spot = g->neg_bitid;
+			DIRTY(ltb->spot, g->neg_bitid);
 			break;
 		case GL_CONSTANT_ATTENUATION:
 			if (*param < 0.0f)
@@ -373,7 +403,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 				return;
 			}
 			lt->constantAttenuation = *param;
-			ltb->attenuation = g->neg_bitid;
+			DIRTY(ltb->attenuation, g->neg_bitid);
 			break;
 		case GL_LINEAR_ATTENUATION:
 			if (*param < 0.0f)
@@ -382,7 +412,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 				return;
 			}
 			lt->linearAttenuation = *param;
-			ltb->attenuation = g->neg_bitid;
+			DIRTY(ltb->attenuation, g->neg_bitid);
 			break;
 		case GL_QUADRATIC_ATTENUATION:
 			if (*param < 0.0f)
@@ -391,14 +421,14 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 				return;
 			}
 			lt->quadraticAttenuation = *param;
-			ltb->attenuation = g->neg_bitid;
+			DIRTY(ltb->attenuation, g->neg_bitid);
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid pname: %d", pname);
 			return;
 	}
-	ltb->dirty = g->neg_bitid;
-	lb->dirty = g->neg_bitid;
+	DIRTY(ltb->dirty, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateLightiv (GLenum light, GLenum pname, const GLint *param)
@@ -611,14 +641,33 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 			}
 			break;
 		case GL_COLOR_INDEXES :
-			crError( "Unimplemented GL_COLOR_INDEXES in glMaterialfv" );
+			switch (face)
+			{
+				case GL_FRONT:
+					l->indexes[0][0] = (GLint) param[0];
+					l->indexes[0][1] = (GLint) param[1];
+					l->indexes[0][2] = (GLint) param[2];
+					break;
+				case GL_FRONT_AND_BACK:
+					l->indexes[0][0] = (GLint) param[0];
+					l->indexes[0][1] = (GLint) param[1];
+					l->indexes[0][2] = (GLint) param[2];
+				case GL_BACK:
+					l->indexes[1][0] = (GLint) param[0];
+					l->indexes[1][1] = (GLint) param[1];
+					l->indexes[1][2] = (GLint) param[2];
+					break;
+				default:
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad face: %d", face);
+					return;
+			}
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialfv: bad pname: %d", pname);
 			return;
 	}
-	lb->material = g->neg_bitid;
-	lb->dirty = g->neg_bitid;
+	DIRTY(lb->material, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateMaterialiv (GLenum face, GLenum pname, const GLint *param)
@@ -644,7 +693,8 @@ void STATE_APIENTRY crStateMaterialiv (GLenum face, GLenum pname, const GLint *p
 			crStateMaterialfv( face, pname, (GLfloat *) &f_param );
 			break;
 		case GL_COLOR_INDEXES :
-			crError( "Unimplemented GL_COLOR_INDEX in glMaterialiv" );
+			f_param = (GLfloat) (*param);
+			crStateMaterialfv( face, pname, (GLfloat *) &f_param );
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterialiv: bad pname: %d", pname);

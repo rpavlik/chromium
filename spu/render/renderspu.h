@@ -18,32 +18,16 @@
 
 #include "cr_spu.h"
 
-void renderspuLoadSystemGL( void );
-void renderspuLoadSystemExtensions( void );
 void renderspuGatherConfiguration( void );
-void renderspuCreateWindow( void );
+GLboolean renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt );
+void renderspuShowWindow( GLboolean showIt );
+void renderspuMakeVisString( GLbitfield visAttribs, char *s );
+int renderspuCreateFunctions( SPUNamedFunctionTable table[] );
 
 void RENDER_APIENTRY renderspuSwapBuffers( void );
+void RENDER_APIENTRY renderspuClear( GLbitfield mask );
 
-#ifdef WINDOWS
-typedef HGLRC (RENDER_APIENTRY *wglCreateContextFunc_t)(HDC);
-typedef BOOL (RENDER_APIENTRY *wglMakeCurrentFunc_t)(HDC,HGLRC);
-typedef BOOL (RENDER_APIENTRY *wglSwapBuffersFunc_t)(HDC);
-typedef int (RENDER_APIENTRY *wglChoosePixelFormatFunc_t)(HDC, CONST PIXELFORMATDESCRIPTOR *);
-typedef int (RENDER_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
-typedef HGLRC (RENDER_APIENTRY *wglGetCurrentContextFunc_t)();
-typedef PROC (RENDER_APIENTRY *wglGetProcAddressFunc_t)();
-#else
-typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
-typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
-typedef XVisualInfo *(*glXChooseVisualFunc_t)( Display *, int, int * );
-typedef GLXContext (*glXCreateContextFunc_t)( Display *, XVisualInfo *, GLXContext, Bool );
-typedef Bool (*glXIsDirectFunc_t)( Display *, GLXContext );
-typedef Bool (*glXMakeCurrentFunc_t)( Display *, GLXDrawable, GLXContext );
-typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
-typedef void (*glXSwapBuffersFunc_t)( Display *, GLXDrawable );
-typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
-#endif
+
 
 typedef struct {
 	SPUDispatchTable self;
@@ -54,28 +38,24 @@ typedef struct {
 	unsigned int actual_window_width, actual_window_height;
 	int use_L2;
 	int fullscreen, ontop;
-	int depth_bits, stencil_bits;
+
+	GLboolean drawCursor;
+	GLint cursorX, cursorY;
+
+	crOpenGLInterface ws;  /* Window System interface */
+	ClearFunc_t ClearFunc;
+
+#if 0
+	/* XXX these will be going away */
+	int depth_bits, stencil_bits, accum_bits, alpha_bits;
+#endif
+
+	GLbitfield visAttribs;
 #ifdef WINDOWS
 	HWND         hWnd;
 	HGLRC        hRC;
 	HDC          device_context;
-	wglGetProcAddressFunc_t wglGetProcAddress;
-	wglCreateContextFunc_t wglCreateContext;
-	wglMakeCurrentFunc_t wglMakeCurrent;
-	wglSwapBuffersFunc_t wglSwapBuffers;
-	wglGetCurrentContextFunc_t wglGetCurrentContext;
-	wglChoosePixelFormatFunc_t wglChoosePixelFormat;
-	wglSetPixelFormatFunc_t wglSetPixelFormat;
 #else
-	glXGetConfigFunc_t  glXGetConfig;
-	glXQueryExtensionFunc_t glXQueryExtension;
-	glXChooseVisualFunc_t glXChooseVisual;
-	glXCreateContextFunc_t glXCreateContext;
-	glXIsDirectFunc_t glXIsDirect;
-	glXMakeCurrentFunc_t glXMakeCurrent;
-	glGetStringFunc_t glGetString;
-	glXSwapBuffersFunc_t glXSwapBuffers;
-	glXGetProcAddressARBFunc_t glXGetProcAddressARB;
 	Display     *dpy;
 	XVisualInfo *visual;
 	GLXContext   context;

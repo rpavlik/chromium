@@ -8,6 +8,7 @@ TOP = ..
 ifneq ($(ARCH), WIN_NT)
 ifneq ($(ARCH), WIN_98)
 ARCH=$(shell uname | sed -e 's/-//g')
+MACHTYPE=$(shell uname -m)
 endif
 endif
 
@@ -15,9 +16,21 @@ ifeq ($(ARCH),CYGWIN_NT5.0)
 ARCH=WIN_NT
 endif
 
+ifeq ($(MACHTYPE),i686)
+MACHTYPE=i386
+endif
+
+ifeq ($(MACHTYPE),i586)
+MACHTYPE=i386
+endif
+
+ifeq ($(MACHTYPE),i486)
+MACHTYPE=i386
+endif
+
 SHARED = 1
 LIBRARY = crfaker
-FILES = getprocaddress init load stub dummyfuncs
+FILES = getprocaddress init load stub context dummyfuncs
 LIBRARIES = crmothership crutil spuload
 
 ifeq ($(ARCH), WIN_NT)
@@ -27,10 +40,30 @@ ARCH_EXPORTS = windows_exports.c
 endif
 
 ifeq ($(ARCH), Linux)
-FILES += $(ARCH)_exports glx
-ARCH_EXPORTS_PY = $(ARCH)_exports.py
-ARCH_EXPORTS = $(ARCH)_exports.s
 LDFLAGS += -lX11
+ifeq ($(MACHTYPE), i386)
+FILES += $(ARCH)_$(MACHTYPE)_exports glx xfont
+ARCH_EXPORTS_PY = $(ARCH)_$(MACHTYPE)_exports.py
+ARCH_EXPORTS = $(ARCH)_$(MACHTYPE)_exports.s
+else
+FILES += $(ARCH)_exports glx xfont
+ARCH_EXPORTS_PY = $(ARCH)_exports.py
+ARCH_EXPORTS = $(ARCH)_exports.c 
+endif
+endif
+
+ifeq ($(ARCH), FreeBSD)
+LDFLAGS += -lX11
+FILES += $(ARCH)_exports glx xfont
+ARCH_EXPORTS_PY = $(ARCH)_exports.py
+ARCH_EXPORTS = $(ARCH)_exports.c 
+endif
+
+ifeq ($(ARCH), Darwin)
+LDFLAGS += -lX11
+FILES += $(ARCH)_exports glx xfont
+ARCH_EXPORTS_PY = $(ARCH)_exports.py
+ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
 
 ifeq ($(ARCH), IRIX64)

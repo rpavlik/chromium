@@ -16,68 +16,53 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty;
-	GLbitvalue pack;
-	GLbitvalue unpack;
-	GLbitvalue transfer;
-	GLbitvalue zoom;
-	GLbitvalue maps;
+	GLbitvalue dirty[CR_MAX_BITARRAY];
+	GLbitvalue transfer[CR_MAX_BITARRAY];
+	GLbitvalue zoom[CR_MAX_BITARRAY];
+	GLbitvalue maps[CR_MAX_BITARRAY];
 } CRPixelBits;
 
 typedef struct {
-	GLint		   rowLength;
-	GLint		   skipRows;
-	GLint		   skipPixels;
-	GLint		   alignment;
-	GLint		   imageHeight;
-	GLint		   skipImages;
-	GLboolean	 swapBytes;
-	GLboolean	 psLSBFirst; /* don't conflict with crap from Xlib.h */
-} CRPackState;
+	GLboolean	mapColor;
+	GLboolean	mapStencil;
+	GLint			indexShift;
+	GLint			indexOffset;
+	GLcolorf	scale;
+	GLfloat		depthScale;
+	GLcolorf	bias;
+	GLfloat		depthBias;
+	GLfloat		xZoom;
+	GLfloat		yZoom;
 
-typedef struct {
-	CRPackState pack;
-	CRPackState unpack;
-	GLboolean   mapColor;
-	GLboolean   mapStencil;
-	GLint		    indexShift;
-	GLint		    indexOffset;
-	GLcolorf	  scale;
-	GLfloat		  depthScale;
-	GLcolorf	  bias;
-	GLfloat		  depthBias;
-	GLfloat		  xZoom;
-	GLfloat		  yZoom;
+	GLint			mapItoI[CR_MAX_PIXEL_MAP_TABLE];
+	GLint			mapStoS[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		mapItoR[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		mapItoG[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		mapItoB[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		mapItoA[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		mapRtoR[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		mapGtoG[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		mapBtoB[CR_MAX_PIXEL_MAP_TABLE];
+	GLfloat		mapAtoA[CR_MAX_PIXEL_MAP_TABLE];
 
-	GLint		 mapItoI[CR_MAX_PIXEL_MAP_TABLE];
-	GLint		 mapStoS[CR_MAX_PIXEL_MAP_TABLE];
-	GLfloat		 mapItoR[CR_MAX_PIXEL_MAP_TABLE];
-	GLfloat		 mapItoG[CR_MAX_PIXEL_MAP_TABLE];
-	GLfloat		 mapItoB[CR_MAX_PIXEL_MAP_TABLE];
-	GLfloat		 mapItoA[CR_MAX_PIXEL_MAP_TABLE];
-	GLfloat		 mapRtoR[CR_MAX_PIXEL_MAP_TABLE];
-	GLfloat		 mapGtoG[CR_MAX_PIXEL_MAP_TABLE];
-	GLfloat		 mapBtoB[CR_MAX_PIXEL_MAP_TABLE];
-	GLfloat		 mapAtoA[CR_MAX_PIXEL_MAP_TABLE];
- 
-	GLint		    mapItoIsize;
-	GLint		    mapStoSsize;
-	GLint		    mapItoRsize;
-	GLint		    mapItoGsize;
-	GLint		    mapItoBsize;
-	GLint		    mapItoAsize;
-	GLint		    mapRtoRsize;
-	GLint		    mapGtoGsize;
-	GLint		    mapBtoBsize;
-	GLint		    mapAtoAsize;
+	GLint		mapItoIsize;
+	GLint		mapStoSsize;
+	GLint		mapItoRsize;
+	GLint		mapItoGsize;
+	GLint		mapItoBsize;
+	GLint		mapItoAsize;
+	GLint		mapRtoRsize;
+	GLint		mapGtoGsize;
+	GLint		mapBtoBsize;
+	GLint		mapAtoAsize;
 } CRPixelState;
 
 void crStatePixelInit( CRPixelState *pixel );
 void crStatePixelInitBits( CRPixelBits *pixelbits );
 
-void crStatePixelDiff(CRPixelBits *bb, GLbitvalue bitID, 
+void crStatePixelDiff(CRPixelBits *bb, GLbitvalue *bitID, 
 		CRPixelState *from, CRPixelState *to);
-void crStatePixelSwitch(CRPixelBits *bb, GLbitvalue bitID, 
+void crStatePixelSwitch(CRPixelBits *bb, GLbitvalue *bitID, 
 		CRPixelState *from, CRPixelState *to);
 
 #ifdef __cplusplus

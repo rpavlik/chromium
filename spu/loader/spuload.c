@@ -42,7 +42,7 @@ static char *__findDLL( char *name, char *dir )
 /* Load a single SPU from disk and initialize it.  Is there any reason 
  * to export this from the SPU loader library? */
 
-SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
+SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
 {
 	SPU *the_spu;
 	char *path;
@@ -61,6 +61,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 				SPU_ENTRY_POINT_NAME, name );
 	}
 
+	/* This basicall calls the SPU's SPULoad() function */
 	if (!the_spu->entry_point( &(the_spu->name), &(the_spu->super_name), 
 				&(the_spu->init), &(the_spu->self), 
 				&(the_spu->cleanup) ) )
@@ -69,11 +70,12 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 	}
 	if (crStrcmp(the_spu->name,"error"))
 	{
+		/* the default super/base class for an SPU is the error SPU */
 		if (the_spu->super_name == NULL)
 		{
 			the_spu->super_name = "error";
 		}
-		the_spu->superSPU = crSPULoad( child, id, the_spu->super_name, dir );
+		the_spu->superSPU = crSPULoad( child, id, the_spu->super_name, dir, server );
 	}
 	else
 	{
@@ -84,6 +86,8 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 	crDebug( "initializing dispatch table %p (for SPU %s)", &(the_spu->dispatch_table), name );
 	crSPUInitDispatchTable( &(the_spu->dispatch_table) );
 	crDebug( "Done initializing the dispatch table for SPU %s, calling the self function", name );
+
+	the_spu->dispatch_table.server = server;
 	the_spu->self( &(the_spu->dispatch_table) );
 	crDebug( "Done with the self function" );
 
@@ -93,7 +97,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 /* Load the entire chain of SPUs and initialize all of them. 
  * This function returns the first one in the chain */
 
-SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
+SPU * crSPULoadChain( int count, int *ids, char **names, char *dir, void *server )
 {
 	int i;
 	SPU *child_spu = NULL;
@@ -108,7 +112,7 @@ SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 		/* This call passes the previous version of spu, which is the SPU's 
 		 * "child" in this chain. */
 
-		the_spu = crSPULoad( child_spu, spu_id, spu_name, dir );
+		the_spu = crSPULoad( child_spu, spu_id, spu_name, dir, server );
 		if (child_spu != NULL)
 		{
 			/* keep track of this so that people can pass functions through but 
@@ -125,22 +129,3 @@ SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 	}
 	return child_spu;
 }
-
-/*
- * Search a SPU named function table for a specific function.  Return
- * a pointer to it or NULL if not found.
- */
-SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const char *fname )
-{
-	const SPUNamedFunctionTable *temp;
-
-	for (temp = table ; temp->name != NULL ; temp++)
-	{
-		if (!crStrcmp( fname, temp->name ) )
-		{
-			return temp->fn;
-		}
-	}
-	return NULL;
-}
-

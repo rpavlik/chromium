@@ -51,6 +51,11 @@ void crUnpackDrawElements(void)
 	crError( "Can't decode DrawElements" );
 }
 
+void crUnpackDrawRangeElements(void)
+{
+	crError( "Can't decode DrawRangeElements" );
+}
+
 void crUnpackInterleavedArrays(void)
 {
 	crError( "Can't decode InterleavedArrays" );

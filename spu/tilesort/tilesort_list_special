@@ -11,6 +11,7 @@ PixelStore
 Flush
 Finish
 IsEnabled
+IsTexture
 GetBooleanv
 GetClipPlane
 GetDoublev

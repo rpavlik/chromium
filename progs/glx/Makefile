@@ -2,4 +2,9 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
-SwapBuffers
+
+TOP = ../..
+
+SUBDIRS = multicontext
+
+include ${TOP}/cr.mk

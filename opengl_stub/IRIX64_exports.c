@@ -89,6 +89,21 @@ void glCallLists( GLsizei n, GLenum type, const GLvoid *lists )
 	glim.CallLists( n, type, lists );
 }
 
+void glChromiumParameterfCR( GLenum target, GLfloat value )
+{
+	glim.ChromiumParameterfCR( target, value );
+}
+
+void glChromiumParameteriCR( GLenum target, GLint value )
+{
+	glim.ChromiumParameteriCR( target, value );
+}
+
+void glChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
+{
+	glim.ChromiumParametervCR( target, type, count, values );
+}
+
 void glClear( GLbitfield mask )
 {
 	glim.Clear( mask );
@@ -364,9 +379,9 @@ void glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffs
 	glim.CopyTexSubImage2D( target, level, xoffset, yoffset, x, y, width, height );
 }
 
-void glCreateContext( void *arg1, void *arg2 )
+GLint glCreateContext( void *dpy, GLint visual )
 {
-	glim.CreateContext( arg1, arg2 );
+	return  glim.CreateContext( dpy, visual );
 }
 
 void glCullFace( GLenum mode )
@@ -399,6 +414,11 @@ void glDepthRange( GLclampd zNear, GLclampd zFar )
 	glim.DepthRange( zNear, zFar );
 }
 
+void glDestroyContext( void *dpy, GLint ctx )
+{
+	glim.DestroyContext( dpy, ctx );
+}
+
 void glDisable( GLenum cap )
 {
 	glim.Disable( cap );
@@ -427,6 +447,11 @@ void glDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indi
 void glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	glim.DrawPixels( width, height, format, type, pixels );
+}
+
+void glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices )
+{
+	glim.DrawRangeElements( mode, start, end, count, type, indices );
 }
 
 void glEdgeFlag( GLboolean flag )
@@ -584,9 +609,34 @@ void glGetBooleanv( GLenum pname, GLboolean *params )
 	glim.GetBooleanv( pname, params );
 }
 
+void glGetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values )
+{
+	glim.GetChromiumParametervCR( target, index, type, count, values );
+}
+
 void glGetClipPlane( GLenum plane, GLdouble *equation )
 {
 	glim.GetClipPlane( plane, equation );
+}
+
+void glGetCombinerInputParameterfvNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params )
+{
+	glim.GetCombinerInputParameterfvNV( stage, portion, variable, pname, params );
+}
+
+void glGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params )
+{
+	glim.GetCombinerInputParameterivNV( stage, portion, variable, pname, params );
+}
+
+void glGetCombinerOutputParameterfvNV( GLenum stage, GLenum portion, GLenum pname, GLfloat *params )
+{
+	glim.GetCombinerOutputParameterfvNV( stage, portion, pname, params );
+}
+
+void glGetCombinerOutputParameterivNV( GLenum stage, GLenum portion, GLenum pname, GLint *params )
+{
+	glim.GetCombinerOutputParameterivNV( stage, portion, pname, params );
 }
 
 void glGetCombinerStageParameterfvNV( GLenum stage, GLenum pname, GLfloat *params )
@@ -602,6 +652,16 @@ void glGetDoublev( GLenum pname, GLdouble *params )
 GLenum glGetError( void )
 {
 	return  glim.GetError(  );
+}
+
+void glGetFinalCombinerInputParameterfvNV( GLenum variable, GLenum pname, GLfloat *params )
+{
+	glim.GetFinalCombinerInputParameterfvNV( variable, pname, params );
+}
+
+void glGetFinalCombinerInputParameterivNV( GLenum variable, GLenum pname, GLint *params )
+{
+	glim.GetFinalCombinerInputParameterivNV( variable, pname, params );
 }
 
 void glGetFloatv( GLenum pname, GLfloat *params )
@@ -899,9 +959,9 @@ void glLogicOp( GLenum opcode )
 	glim.LogicOp( opcode );
 }
 
-void glMakeCurrent( void )
+void glMakeCurrent( void *dpy, GLint drawable, GLint ctx )
 {
-	glim.MakeCurrent(  );
+	glim.MakeCurrent( dpy, drawable, ctx );
 }
 
 void glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points )

@@ -10,7 +10,6 @@ GetBooleanv
 GetDoublev
 GetFloatv
 GetIntegerv
-Hint
 Materialfv
 Materialiv
 Lightfv

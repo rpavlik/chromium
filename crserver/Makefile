@@ -10,6 +10,7 @@ FILES = main \
 	server_boundsinfo \
 	server_clear \
 	server_config \
+	server_context \
 	server_dispatch \
 	server_gentextures \
 	server_get \
@@ -21,6 +22,7 @@ FILES = main \
 	server_misc \
 	server_papi \
 	server_projmatrix \
+	server_readpixels \
 	server_retval \
 	server_simpleget \
 	server_stream \
@@ -48,7 +50,7 @@ server_retval.c: server_retval.py ../packer/packer_get_special server_special
 	@$(ECHO) Building the server retval functions
 	@$(PYTHON) server_retval.py > $@
 
-server_get.c: server_get.py ../packer/packer_get_special server_special
+server_get.c: server_get.py ../packer/packer_get_special server_special get_components.py
 	@$(ECHO) Building the server get functions
 	@$(PYTHON) server_get.py > $@
 

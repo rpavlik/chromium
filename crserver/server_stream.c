@@ -142,7 +142,12 @@ void crServerSerializeRemoteStreams(void)
 		cr_server.curClient = client;
 		/*sprintf( debug_buf, "     ---- Switching contexts to connection 0x%p ----", client->conn ); 
 		 *cr_server.dispatch.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf ); */
+#if 00
 		crStateMakeCurrent( client->ctx );
+#else
+		if (client->currentCtx)
+			crStateMakeCurrent( client->currentCtx );
+#endif
 		for( ;; )
 		{
 			CRMessageOpcodes *msg_opcodes;

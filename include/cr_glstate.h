@@ -66,9 +66,10 @@ typedef void (*CRStateFlushFunc)( void *arg );
 
 struct CRContext {
 	int id;
-	GLbitvalue bitid;
-	GLbitvalue neg_bitid;
-	GLbitvalue update;
+	GLbitvalue bitid[CR_MAX_BITARRAY];
+	GLbitvalue neg_bitid[CR_MAX_BITARRAY];
+
+	GLenum     error;
 
 	CRStateFlushFunc flush_func;
 	void            *flush_arg;
@@ -115,6 +116,7 @@ struct CRContext {
 #define GLUPDATE_ATTRIB		0x20000
 #define GLUPDATE_REGCOMBINER	0x40000
 
+
 extern CRContext *__currentContext;
 extern CRStateBits *__currentBits;
 extern SPUDispatchTable diff_api;
@@ -130,6 +132,7 @@ void crStateDestroyContext(CRContext *ctx);
 void crStateFlushFunc( CRStateFlushFunc ff );
 void crStateFlushArg( void *arg );
 void crStateDiffAPI( SPUDispatchTable *api );
+void crStateUpdateColorBits( void );
 
 void crStateSetCurrentPointers( CRContext *ctx, CRCurrentStatePointers *current );
 

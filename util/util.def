@@ -29,6 +29,7 @@ crStrcasecmp
 crStrcpy
 crStrncpy
 crStrcat
+crStrjoin
 crStrToInt
 crStrToFloat
 crBytesToString
@@ -52,6 +53,7 @@ crNetGetMessage
 crPixelCopy1D
 crPixelCopy2D
 crPixelSize
+crImageSize
 crGetenv
 crSetenv
 crHashtableAdd

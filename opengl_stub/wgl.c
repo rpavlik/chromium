@@ -7,9 +7,7 @@
 #include "cr_error.h"
 #include "cr_spu.h"
 #include "cr_applications.h"
-
-extern SPU *stub_spu;
-extern void StubInit(void);
+#include "stub.h"
 
 /* I *know* most of the parameters are unused, dammit. */
 #pragma warning( disable: 4100 )
@@ -17,6 +15,7 @@ extern void StubInit(void);
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
+
 
 int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd )
 {
@@ -90,12 +89,13 @@ BOOL WINAPI wglSetPixelFormat_prox( HDC hdc, int pixelFormat,
 
 BOOL WINAPI wglDeleteContext_prox( HGLRC hglrc )
 {
+	stubDestroyContext( hglrc );
 	return 1;
 }
 
 BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 {
-	stub_spu->dispatch_table.MakeCurrent();
+	stubMakeCurrent( hdc, hglrc );
 
 	return 1;
 }
@@ -171,31 +171,13 @@ BOOL WINAPI wglShareLists_prox( HGLRC hglrc1, HGLRC hglrc2 )
 
 HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 {
-	static int already_has_a_context = 0;
-	/* This should be early enough to initialize everything. 
-	 * You have to create a context before you can make current 
-	 * to it, right? */
-
-	if (!already_has_a_context)
-	{
-		already_has_a_context = 1;
-	}
-	else
-	{
-		crError( "I'm sorry, I don't support multiple context creation right now.  If this is holding you up, file a bug." ); 
-	}
-
-	StubInit();
-	stub_spu->dispatch_table.CreateContext( (void *) hdc, NULL );
-
-	/* hack hack hack */
-	return (HGLRC) 0x69696969;
+	return stubCreateContext( hdc );
 }
 
 BOOL WINAPI
 wglSwapBuffers_prox( HDC hdc )
 {
-	stub_spu->dispatch_table.SwapBuffers();
+	stubSwapBuffers( hdc );
 	return 1;
 }
 

@@ -73,20 +73,26 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierDestroy( GLuint name )
 void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExec( GLuint name )
 {
 	CRBarrier *barrier;
+#if 0
 	char debug_buf[4096];
+#endif
 
 	barrier = (CRBarrier *) crHashtableSearch( cr_barriers, name );
 	if ( barrier == NULL )
 	{
 		crError( "No such barrier: %d", name );
 	}
+
+#if 0
 	sprintf( debug_buf, "BarrierExec( %d )", name );
-	cr_server.head_spu->dispatch_table.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf );
+	cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
 	sprintf( debug_buf, "num_waiting = %d", barrier->num_waiting );
-	cr_server.head_spu->dispatch_table.Hint( CR_PRINTSPU_STRING_HINT, (GLenum) debug_buf );
+	cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
+#endif
 
 	barrier->waiting[barrier->num_waiting++] = run_queue;
 	run_queue->blocked = 1;
+
 	if ( barrier->num_waiting == barrier->count )
 	{
 		GLuint i;

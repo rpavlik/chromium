@@ -45,15 +45,20 @@ void PACKSPU_APIENTRY packspu_GetPointerv( GLenum pname, GLvoid **params )
 	crStateGetPointerv( pname, params );
 }
 
+void PACKSPU_APIENTRY packspu_InterleavedArrays( GLenum format, GLsizei stride, const GLvoid *pointer )
+{
+	crStateInterleavedArrays( format, stride, pointer );
+}
+
 void PACKSPU_APIENTRY packspu_ArrayElement( GLint index )
 {
 	if (pack_spu.swap)
 	{
-		crPackArrayElementSWAP( index, &(pack_spu.ctx->client) );
+		crPackArrayElementSWAP( index, &(pack_spu.currentCtx->client) );
 	}
 	else
 	{
-		crPackArrayElement( index, &(pack_spu.ctx->client) );
+		crPackArrayElement( index, &(pack_spu.currentCtx->client) );
 	}
 }
 
@@ -61,11 +66,23 @@ void PACKSPU_APIENTRY packspu_DrawElements( GLenum mode, GLsizei count, GLenum t
 {
 	if (pack_spu.swap)
 	{
-		crPackDrawElementsSWAP( mode, count, type, indices, &(pack_spu.ctx->client) );
+		crPackDrawElementsSWAP( mode, count, type, indices, &(pack_spu.currentCtx->client) );
 	}
 	else
 	{
-		crPackDrawElements( mode, count, type, indices, &(pack_spu.ctx->client) );
+		crPackDrawElements( mode, count, type, indices, &(pack_spu.currentCtx->client) );
+	}
+}
+
+void PACKSPU_APIENTRY packspu_DrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices )
+{
+	if (pack_spu.swap)
+	{
+		crPackDrawRangeElementsSWAP( mode, start, end, count, type, indices, &(pack_spu.currentCtx->client) );
+	}
+	else
+	{
+		crPackDrawRangeElements( mode, start, end, count, type, indices, &(pack_spu.currentCtx->client) );
 	}
 }
 
@@ -73,11 +90,11 @@ void PACKSPU_APIENTRY packspu_DrawArrays( GLenum mode, GLint first, GLsizei coun
 {
 	if (pack_spu.swap)
 	{
-		crPackDrawArraysSWAP( mode, first, count, &(pack_spu.ctx->client) );
+		crPackDrawArraysSWAP( mode, first, count, &(pack_spu.currentCtx->client) );
 	}
 	else
 	{
-		crPackDrawArrays( mode, first, count, &(pack_spu.ctx->client) );
+		crPackDrawArrays( mode, first, count, &(pack_spu.currentCtx->client) );
 	}
 }
 
@@ -90,3 +107,9 @@ void PACKSPU_APIENTRY packspu_DisableClientState( GLenum array )
 {
 	crStateDisableClientState( array );
 }
+
+void PACKSPU_APIENTRY packspu_ClientActiveTextureARB( GLenum texUnit )
+{
+	crStateClientActiveTextureARB( texUnit );
+}
+

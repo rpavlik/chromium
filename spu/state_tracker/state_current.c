@@ -4,8 +4,11 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "cr_glstate.h"
 #include "cr_glwrapper.h"
+#include "state_internals.h"
 
 void crStateCurrentInit( CRCurrentState *c )
 {
@@ -51,6 +54,39 @@ void crStateCurrentInit( CRCurrentState *c )
 #endif
 }
 
+void STATE_APIENTRY crStateColor3f( GLfloat r, GLfloat g, GLfloat b )
+{
+	crStateColor4f(r, g, b, 1.0F);
+}
+
+void STATE_APIENTRY crStateColor3fv( const GLfloat *color )
+{
+	crStateColor4f( color[0], color[1], color[2], 1.0F );
+}
+
+void STATE_APIENTRY crStateColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
+{
+	CRContext *g = GetCurrentContext();
+	CRCurrentState *c = &(g->current);
+	CRStateBits *sb = GetCurrentBits();
+	CRCurrentBits *cb = &(sb->current);
+
+	FLUSH();
+
+        c->color.r = red;
+        c->color.g = green;
+        c->color.b = blue;
+        c->color.a = alpha;
+
+        DIRTY(cb->dirty, g->neg_bitid);
+        DIRTY(cb->color, g->neg_bitid);
+}
+
+void STATE_APIENTRY crStateColor4fv( const GLfloat *color )
+{
+	crStateColor4f( color[0], color[1], color[2], color[3] );
+}
+
 void crStateSetCurrentPointers( CRContext *ctx, CRCurrentStatePointers *current )
 {
 	CRCurrentState *c = &(ctx->current);
@@ -94,25 +130,29 @@ void STATE_APIENTRY crStateEnd( void )
 	c->inBeginEnd = GL_FALSE;
 }
 
-void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
-					 CRCurrentState *from, CRCurrentState *to)
+void crStateCurrentSwitch( GLuint maxTextureUnits,
+						   CRCurrentBits *c, GLbitvalue *bitID,
+						   CRCurrentState *from, CRCurrentState *to )
 {
-	int i;
-	GLbitvalue nbitID = ~bitID;
+	unsigned int i,j;
+	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
-	if (c->enable & bitID) {
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	if (CHECKDIRTY(c->enable, bitID)) {
 		if (from->normalize != to->normalize) {
 			if (to->normalize == GL_TRUE)
 				diff_api.Enable(GL_NORMALIZE);
 			else
 				diff_api.Disable(GL_NORMALIZE);
-			c->enable = GLBITS_ONES;
+			FILLDIRTY(c->enable);
+			FILLDIRTY(c->dirty);
 		}
-		c->enable &= nbitID;
-		c->dirty = GLBITS_ONES;
+		INVERTDIRTY(c->enable, nbitID);
 	}
 
-	if (c->raster & bitID) {
+	if (CHECKDIRTY(c->raster, bitID)) {
 		if (to->rasterValid) {
 			if (to->rasterPosPre.x != from->rasterPos.x ||
 				to->rasterPosPre.y != from->rasterPos.y) {
@@ -120,11 +160,11 @@ void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 					p.x = to->rasterPosPre.x - from->rasterPos.x;
 					p.y = to->rasterPosPre.y - from->rasterPos.y;
 					diff_api.Bitmap(0, 0, 0.0f, 0.0f, p.x, p.y, 0);
-					c->raster = GLBITS_ONES;
-					c->dirty  = GLBITS_ONES;
+					FILLDIRTY(c->raster);
+					FILLDIRTY(c->dirty);
 			}
 		}
-		c->raster &= nbitID;
+		INVERTDIRTY(c->raster, nbitID);
 	}
 
 	/* Vertex Current State Switch Code */
@@ -136,67 +176,70 @@ void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 	*/
 
 	/* NEED TO FIX THIS!!!!!! */
-	if (c->color & bitID) {
-		if (COMPARE_COLOR(from->color,to->color)) {
+	if (CHECKDIRTY(c->color, bitID)) {
+           if (COMPARE_COLOR(from->color,to->color)) {
 			diff_api.Color4fv ((GLfloat *) &(to->color));
-			c->color = GLBITS_ONES;
-			c->dirty = GLBITS_ONES;
+			FILLDIRTY(c->color);
+			FILLDIRTY(c->dirty);
 		}
-		c->color &= nbitID;
+		INVERTDIRTY(c->color, nbitID);
 	}
 
 	/* NEED TO FIX THIS, ALSO?!!!!! */
 #ifdef CR_EXT_secondary_color
-	if (c->secondaryColor & bitID) {
+	if (CHECKDIRTY(c->secondaryColor, bitID)) {
 		if (COMPARE_COLOR(from->secondaryColor,to->secondaryColor)) {
 			diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->secondaryColor));
-			c->secondaryColor = GLBITS_ONES;
-			c->dirty = GLBITS_ONES;
+			FILLDIRTY(c->secondaryColor);
+			FILLDIRTY(c->dirty);
 		}
-		c->secondaryColor &= nbitID;
+		INVERTDIRTY(c->secondaryColor, nbitID);
 	}
 #endif
 
-	if (c->index & bitID) {
+	if (CHECKDIRTY(c->index, bitID)) {
 		if (to->index != from->index) {
 			diff_api.Indexf (to->index);
-			c->index = GLBITS_ONES;
-			c->dirty = GLBITS_ONES;
+			FILLDIRTY(c->index);
+			FILLDIRTY(c->dirty);
 		}
-		c->index &= nbitID;
+		INVERTDIRTY(c->index, nbitID);
 	}
 
-	if (c->normal & bitID) {
+	if (CHECKDIRTY(c->normal, bitID)) {
 		if (COMPARE_VECTOR (from->normal, to->normal)) {
 			diff_api.Normal3fv ((GLfloat *) &(to->normal.x));
-			c->normal = GLBITS_ONES;
-			c->dirty = GLBITS_ONES;
+			FILLDIRTY(c->normal);
+			FILLDIRTY(c->dirty);
 		}
-		c->normal &= nbitID;
+		INVERTDIRTY(c->normal, nbitID);
 	}
 
-	for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+	for (i = 0; i < maxTextureUnits; i++)
 	{
-		if (c->texCoord[i] & bitID) {
+		if (CHECKDIRTY(c->texCoord[i], bitID)) {
 			if (COMPARE_TEXCOORD (from->texCoord[i], to->texCoordPre[i])) {
 				diff_api.MultiTexCoord4fvARB (i+GL_TEXTURE0_ARB, (GLfloat *) &(to->texCoord[i].s));
-				c->normal = GLBITS_ONES;
-				c->dirty = GLBITS_ONES;
+				FILLDIRTY(c->normal);
+				FILLDIRTY(c->dirty);
 			}
-			c->texCoord[i] &= nbitID;
+			INVERTDIRTY(c->texCoord[i], nbitID);
 		}
 	}
 
-	c->dirty &= nbitID;
+	INVERTDIRTY(c->dirty, nbitID);
 }
 
-void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
+void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue *bitID,
 					 CRCurrentState *from, CRCurrentState *to)
 {
-	int i;
-	GLbitvalue nbitID = ~bitID;
+	int i,j;
+	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
-	if (c->enable & bitID) {
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	if (CHECKDIRTY(c->enable, bitID)) {
 		if (from->normalize != to->normalize) {
 			if (to->normalize == GL_TRUE)
 				diff_api.Enable(GL_NORMALIZE);
@@ -204,10 +247,10 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
 				diff_api.Disable(GL_NORMALIZE);
 			from->normalize = to->normalize;
 		}
-		c->enable &= nbitID;
+		INVERTDIRTY(c->enable, nbitID);
 	}
 
-	if (c->raster & bitID) {
+	if (CHECKDIRTY(c->raster, bitID)) {
 		from->rasterValid = to->rasterValid;
 		if (to->rasterValid) {
 			if (to->rasterPosPre.x != from->rasterPos.x ||
@@ -219,7 +262,7 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
 			}
 			from->rasterPos = to->rasterPos;
 		}
-		c->raster &= nbitID;
+		INVERTDIRTY(c->raster, nbitID);
 	}
 
 	/* Vertex Current State Sync Code */
@@ -231,58 +274,58 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
 	** 3) Copy is done outside of the compare to ensure
 	**    that it happens.
 	*/
-	if (c->color & bitID) {
+	if (CHECKDIRTY(c->color, bitID)) {
 		if (COMPARE_COLOR(from->color,to->colorPre)) {
 			diff_api.Color4fv ((GLfloat *) &(to->colorPre.r));
 		}
 		from->color = to->color;
-		c->color &= nbitID;
+		INVERTDIRTY(c->color, nbitID);
 	}
 
 #ifdef CR_EXT_secondary_color
-	if (c->secondaryColor & bitID) {
+	if (CHECKDIRTY(c->secondaryColor, bitID)) {
 		if (COMPARE_COLOR(from->secondaryColor,to->secondaryColorPre)) {
 			diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->secondaryColorPre.r));
 		}
 		from->secondaryColor = to->secondaryColor;
-		c->secondaryColor &= nbitID;
+		INVERTDIRTY(c->secondaryColor, nbitID);
 	}
 #endif
 
-	if (c->index & bitID) {
+	if (CHECKDIRTY(c->index, bitID)) {
 		if (from->index != to->indexPre) {
 			diff_api.Indexf (to->index);
 		}
 		from->index = to->index;
-		c->index &= nbitID;
+		INVERTDIRTY(c->index, nbitID);
 	}
 
-	if (c->normal & bitID) {
+	if (CHECKDIRTY(c->normal, bitID)) {
 		if (COMPARE_VECTOR (from->normal, to->normalPre)) {
 			diff_api.Normal3fv ((GLfloat *) &(to->normalPre.x));
 		}
 		from->normal = to->normal;
-		c->normal &= nbitID;
+		INVERTDIRTY(c->normal, nbitID);
 	}
 
 	for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
-		if (c->texCoord[i] & bitID) {
+		if (CHECKDIRTY(c->texCoord[i], bitID)) {
 			if (COMPARE_TEXCOORD (from->texCoord[i], to->texCoordPre[i])) {
 				diff_api.MultiTexCoord4fvARB (GL_TEXTURE0_ARB + i, (GLfloat *) &(to->texCoordPre[i].s));
 			}
 			from->texCoord[i] = to->texCoord[i];
-			c->texCoord[i] &= nbitID;
+			INVERTDIRTY(c->texCoord[i], nbitID);
 		}
 	}
 
-	if (c->edgeFlag & bitID) {
+	if (CHECKDIRTY(c->edgeFlag, bitID)) {
 		if (from->edgeFlag != to->edgeFlagPre) {
 			diff_api.EdgeFlag (to->edgeFlagPre);
 		}
 		from->edgeFlag = to->edgeFlag;
-		c->edgeFlag &= nbitID;
+		INVERTDIRTY(c->edgeFlag, nbitID);
 	}
 
-	c->dirty &= nbitID;
+	INVERTDIRTY(c->dirty, nbitID);
 }

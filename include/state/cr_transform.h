@@ -15,12 +15,12 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty;
-	GLbitvalue mode;
-	GLbitvalue matrix[4];
-	GLbitvalue clipPlane;
-	GLbitvalue enable;
-	GLbitvalue base;
+	GLbitvalue dirty[CR_MAX_BITARRAY];
+	GLbitvalue mode[CR_MAX_BITARRAY];
+	GLbitvalue matrix[4][CR_MAX_BITARRAY];
+	GLbitvalue clipPlane[CR_MAX_BITARRAY];
+	GLbitvalue enable[CR_MAX_BITARRAY];
+	GLbitvalue base[CR_MAX_BITARRAY];
 } CRTransformBits;
 
 typedef struct {
@@ -46,6 +46,9 @@ typedef struct {
 
 	GLboolean  transformValid;
 	GLmatrix  transform;
+#ifdef CR_OPENGL_VERSION_1_2
+	GLboolean rescaleNormals;
+#endif
 } CRTransformState;
 
 void crStateTransformInitBits (CRTransformBits *tb);
@@ -62,9 +65,9 @@ void crStateTransformXformPointMatrixd(GLmatrix *m, GLvectord *p);
 void crStateTransformInvertTransposeMatrix(GLmatrix *inv, GLmatrix *mat);
 void crStateTransformNormalizedDims(GLrectf *p, GLrecti *r, GLrecti *q);
 
-void crStateTransformDiff(CRTransformBits *bb, GLbitvalue bitID, 
+void crStateTransformDiff(CRTransformBits *bb, GLbitvalue *bitID, 
 		CRTransformState *from, CRTransformState *to);
-void crStateTransformSwitch(CRTransformBits *bb, GLbitvalue bitID, 
+void crStateTransformSwitch(CRTransformBits *bb, GLbitvalue *bitID, 
 		CRTransformState *from, CRTransformState *to);
 
 #ifdef __cplusplus

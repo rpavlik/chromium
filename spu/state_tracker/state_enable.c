@@ -11,41 +11,41 @@
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
+static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue *neg_bitid,
 				GLenum cap, GLboolean val)
 {
 	unsigned int i;
 	i = cap - GL_CLIP_PLANE0;
 	if (i < g->limits.maxClipPlanes) {
 		g->transform.clip[i] = val;
-		sb->transform.enable = neg_bitid;
-		sb->transform.dirty = neg_bitid;
+		DIRTY(sb->transform.enable, neg_bitid);
+		DIRTY(sb->transform.dirty, neg_bitid);
 		return;
 	}
 	i = cap - GL_LIGHT0;
 	if (i < g->limits.maxLights) {
 		g->lighting.light[i].enable = val;
-		sb->lighting.light[i].dirty = neg_bitid;
-		sb->lighting.light[i].enable = neg_bitid;
-		sb->lighting.dirty = neg_bitid;
+		DIRTY(sb->lighting.light[i].dirty, neg_bitid);
+		DIRTY(sb->lighting.light[i].enable, neg_bitid);
+		DIRTY(sb->lighting.dirty, neg_bitid);
 		return;
 	}
 
 	switch (cap) {
 		case GL_AUTO_NORMAL:
 			g->eval.autoNormal = val;
-			sb->eval.enable = neg_bitid;
-			sb->eval.dirty = neg_bitid;
+			DIRTY(sb->eval.enable, neg_bitid);
+			DIRTY(sb->eval.dirty, neg_bitid);
 			break;
 		case GL_ALPHA_TEST:
 			g->buffer.alphaTest = val;
-			sb->buffer.enable = neg_bitid;
-			sb->buffer.dirty = neg_bitid;
+			DIRTY(sb->buffer.enable, neg_bitid);
+			DIRTY(sb->buffer.dirty, neg_bitid);
 			break;
 		case GL_BLEND:
 			g->buffer.blend = val;
-			sb->buffer.enable = neg_bitid;
-			sb->buffer.dirty = neg_bitid;
+			DIRTY(sb->buffer.enable, neg_bitid);
+			DIRTY(sb->buffer.dirty, neg_bitid);
 			break;
 		case GL_COLOR_MATERIAL :
 			if (!val)
@@ -61,15 +61,15 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 				crStateColorMaterialRecover( );
 			}
 			g->lighting.colorMaterial = val;
-			sb->lighting.enable = neg_bitid;
-			sb->lighting.dirty = neg_bitid;
+			DIRTY(sb->lighting.enable, neg_bitid);
+			DIRTY(sb->lighting.dirty, neg_bitid);
 			break;
 #ifdef CR_EXT_secondary_color
 		case GL_COLOR_SUM_EXT :
 			if (g->extensions.EXT_secondary_color) { /* XXX does EXT_separate_specular color support this enable, too? */
 				g->lighting.colorSumEXT = val;
-				sb->lighting.enable = neg_bitid;
-				sb->lighting.dirty = neg_bitid;
+				DIRTY(sb->lighting.enable, neg_bitid);
+				DIRTY(sb->lighting.dirty, neg_bitid);
 			}
 			else {
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(GL_COLOR_SUM_EXT) - No support for secondary color!");
@@ -79,85 +79,90 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 #endif
 		case GL_CULL_FACE :
 			g->polygon.cullFace = val;
-			sb->polygon.enable = neg_bitid;
-			sb->polygon.dirty = neg_bitid;
+			DIRTY(sb->polygon.enable, neg_bitid);
+			DIRTY(sb->polygon.dirty, neg_bitid);
 			break;
 		case GL_DEPTH_TEST :
 			g->buffer.depthTest = val;
-			sb->buffer.enable = neg_bitid;
-			sb->buffer.dirty = neg_bitid;
+			DIRTY(sb->buffer.enable, neg_bitid);
+			DIRTY(sb->buffer.dirty, neg_bitid);
 			break;
 		case GL_DITHER :
 			g->buffer.dither = val;
-			sb->buffer.enable = neg_bitid;
-			sb->buffer.dirty = neg_bitid;
+			DIRTY(sb->buffer.enable, neg_bitid);
+			DIRTY(sb->buffer.dirty, neg_bitid);
 			break;
 		case GL_FOG :
 			g->fog.enable = val;
-			sb->fog.enable = neg_bitid;
-			sb->fog.dirty = neg_bitid;
+			DIRTY(sb->fog.enable, neg_bitid);
+			DIRTY(sb->fog.dirty, neg_bitid);
 			break;
 		case GL_LIGHTING :
 			g->lighting.lighting = val;
-			sb->lighting.enable = neg_bitid;
-			sb->lighting.dirty = neg_bitid;
+			DIRTY(sb->lighting.enable, neg_bitid);
+			DIRTY(sb->lighting.dirty, neg_bitid);
 			break;
 		case GL_LINE_SMOOTH :
 			g->line.lineSmooth = val;
-			sb->line.enable = neg_bitid;
-			sb->line.dirty = neg_bitid;
+			DIRTY(sb->line.enable, neg_bitid);
+			DIRTY(sb->line.dirty, neg_bitid);
 			break;
 		case GL_LINE_STIPPLE :
 			g->line.lineStipple = val;
-			sb->line.enable = neg_bitid;
-			sb->line.dirty = neg_bitid;
+			DIRTY(sb->line.enable, neg_bitid);
+			DIRTY(sb->line.dirty, neg_bitid);
 			break;
-		case GL_LOGIC_OP :
+		case GL_COLOR_LOGIC_OP :
 			g->buffer.logicOp = val;
-			sb->buffer.enable = neg_bitid;
-			sb->buffer.dirty = neg_bitid;
+			DIRTY(sb->buffer.enable, neg_bitid);
+			DIRTY(sb->buffer.dirty, neg_bitid);
+			break;
+		case GL_INDEX_LOGIC_OP : 	
+			g->buffer.indexLogicOp = val;
+			DIRTY(sb->buffer.enable, neg_bitid);
+			DIRTY(sb->buffer.dirty, neg_bitid);
 			break;
 		case GL_NORMALIZE :
 			g->current.normalize = val;
-			sb->current.enable = neg_bitid;
-			sb->current.dirty = neg_bitid;
+			DIRTY(sb->current.enable, neg_bitid);
+			DIRTY(sb->current.dirty, neg_bitid);
 			break;
 		case GL_POINT_SMOOTH :
 			g->line.pointSmooth = val;
-			sb->line.enable = neg_bitid;
-			sb->line.dirty = neg_bitid;
+			DIRTY(sb->line.enable, neg_bitid);
+			DIRTY(sb->line.dirty, neg_bitid);
 			break;
 		case GL_POLYGON_OFFSET_FILL:
 			g->polygon.polygonOffsetFill = val;
-			sb->polygon.enable = neg_bitid;
-			sb->polygon.dirty = neg_bitid;
+			DIRTY(sb->polygon.enable, neg_bitid);
+			DIRTY(sb->polygon.dirty, neg_bitid);
 			break;
 		case GL_POLYGON_OFFSET_LINE:
 			g->polygon.polygonOffsetLine = val;
-			sb->polygon.enable = neg_bitid;
-			sb->polygon.dirty = neg_bitid;
+			DIRTY(sb->polygon.enable, neg_bitid);
+			DIRTY(sb->polygon.dirty, neg_bitid);
 			break;
 		case GL_POLYGON_OFFSET_POINT:
 			g->polygon.polygonOffsetPoint = val;
-			sb->polygon.enable = neg_bitid;
-			sb->polygon.dirty = neg_bitid;
+			DIRTY(sb->polygon.enable, neg_bitid);
+			DIRTY(sb->polygon.dirty, neg_bitid);
 			break;
 		case GL_POLYGON_SMOOTH :
 			g->polygon.polygonSmooth = val;
-			sb->polygon.enable = neg_bitid;
-			sb->polygon.dirty = neg_bitid;
+			DIRTY(sb->polygon.enable, neg_bitid);
+			DIRTY(sb->polygon.dirty, neg_bitid);
 			break;
 		case GL_POLYGON_STIPPLE :
 			g->polygon.polygonStipple = val;
-			sb->polygon.enable = neg_bitid;
-			sb->polygon.dirty = neg_bitid;
+			DIRTY(sb->polygon.enable, neg_bitid);
+			DIRTY(sb->polygon.dirty, neg_bitid);
 			break;
 #ifdef CR_NV_register_combiners
 		case GL_REGISTER_COMBINERS_NV :
 			if (g->extensions.NV_register_combiners) {
 				g->regcombiner.enabledRegCombiners = val;
-				sb->regcombiner.enable = neg_bitid;
-				sb->regcombiner.dirty = neg_bitid;
+				DIRTY(sb->regcombiner.enable, neg_bitid);
+				DIRTY(sb->regcombiner.dirty, neg_bitid);
 			}
 			else {
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(GL_REGISTER_COMBINERS_NV) - No support for NV_register_combiners");
@@ -169,8 +174,8 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_PER_STAGE_CONSTANTS_NV :
 			if (g->extensions.NV_register_combiners2) {
 				g->regcombiner.enabledPerStageConstants = val;
-				sb->regcombiner.enable = neg_bitid;
-				sb->regcombiner.dirty = neg_bitid;
+				DIRTY(sb->regcombiner.enable, neg_bitid);
+				DIRTY(sb->regcombiner.dirty, neg_bitid);
 			}
 			else {
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(GL_PER_STAGE_CONSTANTS_NV) - No support for NV_register_combiners2");
@@ -178,39 +183,46 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			}
 			break;
 #endif
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_RESCALE_NORMAL :
+			g->transform.rescaleNormals = val;
+			DIRTY(sb->transform.enable, neg_bitid);
+			DIRTY(sb->transform.dirty, neg_bitid);
+			break;
+#endif
 		case GL_SCISSOR_TEST :
 			g->viewport.scissorTest = val;
-			sb->viewport.enable = neg_bitid;
-			sb->viewport.dirty = neg_bitid;
+			DIRTY(sb->viewport.enable, neg_bitid);
+			DIRTY(sb->viewport.dirty, neg_bitid);
 			break;
 		case GL_STENCIL_TEST :
 			g->stencil.stencilTest= val;
-			sb->stencil.enable = neg_bitid;
-			sb->stencil.dirty = neg_bitid;
+			DIRTY(sb->stencil.enable, neg_bitid);
+			DIRTY(sb->stencil.dirty, neg_bitid);
 			break;
 		case GL_TEXTURE_1D :
 			g->texture.unit[g->texture.curTextureUnit].enabled1D = val;
-			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-			sb->texture.dirty = neg_bitid;
+			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+			DIRTY(sb->texture.dirty, neg_bitid);
 			break;
 		case GL_TEXTURE_2D :
 			g->texture.unit[g->texture.curTextureUnit].enabled2D = val;
-			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-			sb->texture.dirty = neg_bitid;
+			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+			DIRTY(sb->texture.dirty, neg_bitid);
 			break;
 #ifdef CR_OPENGL_VERSION_1_1
 		case GL_TEXTURE_3D :
 			g->texture.unit[g->texture.curTextureUnit].enabled3D = val;
-			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-			sb->texture.dirty = neg_bitid;
+			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+			DIRTY(sb->texture.dirty, neg_bitid);
 			break;
 #endif
 #ifdef CR_ARB_texture_cube_map
 		case GL_TEXTURE_CUBE_MAP_ARB:
 			if (g->extensions.ARB_texture_cube_map) {
 				g->texture.unit[g->texture.curTextureUnit].enabledCubeMap = val;
-				sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-				sb->texture.dirty = neg_bitid;
+				DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+				DIRTY(sb->texture.dirty, neg_bitid);
 			}
 			else {
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
@@ -220,23 +232,23 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 #endif /* CR_ARB_texture_cube_map */
 		case GL_TEXTURE_GEN_Q :
 			g->texture.unit[g->texture.curTextureUnit].textureGen.q = val;
-			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-			sb->texture.dirty = neg_bitid;
+			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+			DIRTY(sb->texture.dirty, neg_bitid);
 			break;
 		case GL_TEXTURE_GEN_R :
 			g->texture.unit[g->texture.curTextureUnit].textureGen.r = val;
-			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-			sb->texture.dirty = neg_bitid;
+			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+			DIRTY(sb->texture.dirty, neg_bitid);
 			break;
 		case GL_TEXTURE_GEN_S :
 			g->texture.unit[g->texture.curTextureUnit].textureGen.s = val;
-			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-			sb->texture.dirty = neg_bitid;
+			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+			DIRTY(sb->texture.dirty, neg_bitid);
 			break;
 		case GL_TEXTURE_GEN_T :
 			g->texture.unit[g->texture.curTextureUnit].textureGen.t = val;
-			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-			sb->texture.dirty = neg_bitid;
+			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+			DIRTY(sb->texture.dirty, neg_bitid);
 			break;
 		case GL_MAP1_COLOR_4 :
 		case GL_MAP1_INDEX :
@@ -253,8 +265,8 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 				return;
 			}
 			g->eval.enable1D[cap - GL_MAP1_COLOR_4] = val;
-			sb->eval.enable1D[cap - GL_MAP1_COLOR_4] = neg_bitid;
-			sb->eval.dirty = neg_bitid;
+			DIRTY(sb->eval.enable1D[cap - GL_MAP1_COLOR_4], neg_bitid);
+			DIRTY(sb->eval.dirty, neg_bitid);
 			break;
 		case GL_MAP2_COLOR_4 :
 		case GL_MAP2_INDEX :
@@ -271,12 +283,16 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 				return;
 			}
 			g->eval.enable2D[cap - GL_MAP2_COLOR_4] = val;
-			sb->eval.enable2D[cap - GL_MAP2_COLOR_4] = neg_bitid;
-			sb->eval.dirty = neg_bitid;
+			DIRTY(sb->eval.enable2D[cap - GL_MAP2_COLOR_4], neg_bitid);
+			DIRTY(sb->eval.dirty, neg_bitid);
 			break;
-
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_VERTEX_ARRAY:
+		case GL_NORMAL_ARRAY:
+			/* todo */
+#endif
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable called with bogus cap: %d", cap);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable called with bogus cap: 0x%x", cap);
 			return;
 	}
 }

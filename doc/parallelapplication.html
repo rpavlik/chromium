@@ -77,11 +77,14 @@ synchronization and would get this information from, say, MPI.</p>
 <p>Once the rank and size of the program are determined, the following two lines
 appear:</p>
 
-<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		crCreateContext();<br>
-	crMakeCurrent();</td></tr></table>
+<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		context = crCreateContextCR(0, CR_RGB_BIT | CR_DEPTH_BIT);<br>
+	crMakeCurrentCR(0, context);</td></tr></table>
 
-<p>These calls, declared in the header file &quot;<code>cr_applications.h</code>&quot;,
-provide a mechanism to initialize the Chromium system without creating a
+<p>crCreateContextCR and crMakeCurrentCR are actually function pointers
+initialized via crGetProcAddress.
+The typedefs for these functions are in the header file
+&quot;<code>cr_applications.h</code>&quot;.
+They provide a mechanism to initialize the Chromium system without creating a
 window.&nbsp; This is particularly useful for parallel applications, since it
 doesn't really make sense to have a bunch of blank faked-out windows popping up
 all over the cluster.&nbsp; This also means that the client nodes in the cluster
@@ -128,6 +131,17 @@ format of all simple parallel OpenGL applications:</p>
     simply indicate ordering constraints to be obeyed by the server when
     switching contexts.&nbsp; Therefore, the clients do not have to stall, and
     can get ahead of the servers.</li>
+</ul>
+
+<p>
+To run the psubmit demo you'll need to issue the following commands, probably
+from four separate shell windows:
+</p>
+<ul>
+<li><code>cd mothership/configs ; python psubmit.conf</code>
+<li><code>crserver</code>
+<li><code>crappfaker</code>
+<li><code>crappfaker</code>
 </ul>
 
 </body>

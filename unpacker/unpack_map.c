@@ -23,12 +23,6 @@ void crUnpackMap2d( void  )
 	GLint vstride = READ_DATA( sizeof( int ) + 44, GLint );
 	GLint vorder = READ_DATA( sizeof( int ) + 48, GLint );
 
-#ifdef WIREGL_UNALIGNED_ACCESS_OKAY
-	GLdouble *points = DATA_POINTER( sizeof(int) + 52, GLdouble );
-
-	cr_unpackDispatch.Map2d( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, 
-			 points );
-#else
 	int n_points = READ_DATA( 0, int ) - ( sizeof( int ) + 52 );
 	GLdouble *points;
 
@@ -40,7 +34,6 @@ void crUnpackMap2d( void  )
 	cr_unpackDispatch.Map2d( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, 
 			 points );
 	crFree( points );
-#endif
 
 	INCR_VAR_PTR();
 }
@@ -71,10 +64,6 @@ void crUnpackMap1d( void  )
 	GLint stride = READ_DATA( sizeof( int ) + 20, GLint );
 	GLint order = READ_DATA( sizeof( int ) + 24, GLint );
 
-#ifdef WIREGL_UNALIGNED_ACCESS_OKAY
-	GLdouble *points = DATA_POINTER( sizeof(int) + 28, GLdouble );
-	cr_unpackDispatch.Map1d( target, u1, u2, stride, order, points );
-#else
 	int n_points = READ_DATA( 0, int ) - ( sizeof(int) + 28 );
 	GLdouble *points;
 
@@ -85,7 +74,6 @@ void crUnpackMap1d( void  )
 	
 	cr_unpackDispatch.Map1d( target, u1, u2, stride, order, points );
 	crFree( points );
-#endif
 
 	INCR_VAR_PTR();
 }

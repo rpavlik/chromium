@@ -7,6 +7,7 @@
 #ifndef CR_SERVER_H
 #define CR_SERVER_H
 
+
 #include "cr_spu.h"
 #include "cr_net.h"
 #include "cr_hash.h"
@@ -16,46 +17,15 @@
 
 #include "state/cr_currentpointers.h"
 
-typedef struct {
-	int spu_id;
-	GLmatrix baseProjection;
-	CRConnection *conn;
-	CRContext *ctx;
-} CRClient;
-
-typedef struct {
-	unsigned short tcpip_port;
-
-	int numClients;
-	CRClient *clients;
-	CRClient *curClient;
-	CRCurrentStatePointers current;
-
-	int optimizeBucket;
-	int numExtents, curExtent;
-	int x1[CR_MAX_EXTENTS], y1[CR_MAX_EXTENTS];
-	int x2[CR_MAX_EXTENTS], y2[CR_MAX_EXTENTS];
-	int maxTileHeight;
-
-	int useL2;
-
-	unsigned int muralWidth, muralHeight;
-	unsigned int underlyingDisplay[4]; /* needed for laying out the extents */
-
-	SPU *head_spu;
-	SPUDispatchTable dispatch;
-
-	CRNetworkPointer return_ptr;
-	CRNetworkPointer writeback_ptr;
-} CRServer;
+#include "cr_server.h"
 
 extern CRServer cr_server;
 
 typedef struct {
-	GLrecti outputwindow;
-	GLrecti imagewindow;
-	GLrectf bounds;
-	int     display;
+	GLrecti outputwindow;   /* coordinates in mural space */
+	GLrecti imagewindow;    /* coordinates in render window */
+	GLrectf bounds;         /* coordinates in [-1,11] x [1,1], I think */
+	int     display;        /* not used (historical?) */
 } CRRunQueueExtent;
 
 typedef struct __runqueue {

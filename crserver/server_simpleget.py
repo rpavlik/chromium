@@ -36,10 +36,11 @@ for index in range(len(funcs)):
 	(return_type, arg_names, arg_types) = gl_mapping[func_name]
 	print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s%s' % ( func_name, stub_common.ArgumentString( arg_names, arg_types ))
 	print '{'
-	print '\t%s get_values[16]; /* Be safe */' % types[index]
-	print '\tint num_values;'
+	print '\t%s *get_values;' % types[index]
+	print '\tint tablesize = __numValues( pname ) * sizeof(%s);' % types[index]
 	print '\t(void) params;'
+	print '\tget_values = (%s *) crAlloc( tablesize );' % types[index]
 	print '\tcr_server.head_spu->dispatch_table.%s( pname, get_values );' % func_name
-	print '\tnum_values = __numValues( pname);'
-	print '\tcrServerReturnValue( get_values, num_values*sizeof(get_values[0]) );'
+	print '\tcrServerReturnValue( get_values, tablesize );'
+	print '\tcrFree(get_values);'
 	print '}\n'

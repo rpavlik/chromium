@@ -34,11 +34,11 @@ FILES = bufpool \
 PRECOMP = debug_opcodes.c
 SLOP += ${PRECOMP}
 
-ifeq ($(ARCH),Linux)
-CFLAGS += -DGM_SUPPORT
-FILES += gm
-LDFLAGS += -lgm
-endif
+#ifeq ($(ARCH),Linux)
+#CFLAGS += -DGM_SUPPORT
+#FILES += gm
+#LDFLAGS += -lgm
+#endif
 
 LIB_DEFS = util.def
 
@@ -47,7 +47,11 @@ CFLAGS += -DGM_SUPPORT
 FILES += gm
 LDFLAGS += user32.lib ws2_32.lib gm.lib
 else
+ifeq ($(ARCH),FreeBSD)
+LDFLAGS +=
+else
 LDFLAGS += -ldl
+endif
 endif
 
 include ${TOP}/cr.mk

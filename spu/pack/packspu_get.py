@@ -69,6 +69,24 @@ for func_name in keys:
 			args.append( "&return_val" )
 		if (func_name in easy_swaps.keys() and easy_swaps[func_name] != '0') or func_name in simple_funcs or func_name in hard_funcs.keys():
 			print '\tunsigned int i;'
+		if func_name in simple_funcs:
+			print '\tif (pname == GL_UNPACK_ALIGNMENT ||'
+			print '\t\tpname == GL_UNPACK_ROW_LENGTH ||'
+			print '\t\tpname == GL_UNPACK_SKIP_PIXELS ||'
+			print '#ifdef CR_OPENGL_VERSION_1_2'
+			print '\t\tpname == GL_UNPACK_IMAGE_HEIGHT ||'
+			print '#endif'
+			print '\t\tpname == GL_UNPACK_SKIP_ROWS ||'
+			print '\t\tpname == GL_PACK_ALIGNMENT ||'
+			print '\t\tpname == GL_PACK_ROW_LENGTH ||'
+			print '\t\tpname == GL_PACK_SKIP_PIXELS ||'
+			print '#ifdef CR_OPENGL_VERSION_1_2'
+			print '\t\tpname == GL_PACK_IMAGE_HEIGHT ||'
+			print '#endif'
+			print '\t\tpname == GL_PACK_SKIP_ROWS) {'
+			print '\t\t\tcrState%s( pname, params );' % func_name
+			print '\t\t\treturn;'
+			print '\t}'
 		args.append( "&writeback" )
 		print '\tif (pack_spu.swap)'
 		print '\t{'

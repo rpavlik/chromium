@@ -15,26 +15,27 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue	dirty;
-	GLbitvalue	enable;
-	GLbitvalue	alphaFunc;
-	GLbitvalue	depthFunc;
-	GLbitvalue	blendFunc;
-	GLbitvalue	logicOp;
-	GLbitvalue	drawBuffer;
-	GLbitvalue	readBuffer;
-	GLbitvalue	indexMask;
-	GLbitvalue	colorWriteMask;
-	GLbitvalue	clearColor;
-	GLbitvalue	clearIndex;
-	GLbitvalue	clearDepth;
-	GLbitvalue	clearAccum;
-	GLbitvalue	depthMask;
+	GLbitvalue	dirty[CR_MAX_BITARRAY];
+	GLbitvalue	enable[CR_MAX_BITARRAY];
+	GLbitvalue	alphaFunc[CR_MAX_BITARRAY];
+	GLbitvalue	depthFunc[CR_MAX_BITARRAY];
+	GLbitvalue	blendFunc[CR_MAX_BITARRAY];
+	GLbitvalue	logicOp[CR_MAX_BITARRAY];
+	GLbitvalue	indexLogicOp[CR_MAX_BITARRAY];
+	GLbitvalue	drawBuffer[CR_MAX_BITARRAY];
+	GLbitvalue	readBuffer[CR_MAX_BITARRAY];
+	GLbitvalue	indexMask[CR_MAX_BITARRAY];
+	GLbitvalue	colorWriteMask[CR_MAX_BITARRAY];
+	GLbitvalue	clearColor[CR_MAX_BITARRAY];
+	GLbitvalue	clearIndex[CR_MAX_BITARRAY];
+	GLbitvalue	clearDepth[CR_MAX_BITARRAY];
+	GLbitvalue	clearAccum[CR_MAX_BITARRAY];
+	GLbitvalue	depthMask[CR_MAX_BITARRAY];
 #ifdef CR_EXT_blend_color
-	GLbitvalue	blendColor;
+	GLbitvalue	blendColor[CR_MAX_BITARRAY];
 #endif
 #if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
-	GLbitvalue	blendEquation;
+	GLbitvalue	blendEquation[CR_MAX_BITARRAY];
 #endif
 } CRBufferBits;
 
@@ -43,6 +44,7 @@ typedef struct {
 	GLboolean	blend;
 	GLboolean	alphaTest;
 	GLboolean	logicOp;
+	GLboolean	indexLogicOp;
 	GLboolean	dither;
 	GLboolean	depthMask;
 
@@ -66,33 +68,14 @@ typedef struct {
 #if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
 	GLenum		blendEquation;
 #endif
-
-	/* static config state */
-	GLint	auxBuffers;
-	GLboolean	rgbaMode;
-	GLboolean	indexMode;
-	GLboolean	doubleBuffer;
-	GLboolean	stereo;
-	GLint	subPixelBits;			
-	GLint	redBits;
-	GLint	greenBits;
-	GLint	blueBits;
-	GLint	alphaBits;
-	GLint	indexBits;
-	GLint	depthBits;
-	GLint	stencilBits;
-	GLint	accumRedBits;
-	GLint	accumGreenBits;
-	GLint	accumBlueBits;
-	GLint	accumAlphaBits;
 } CRBufferState;
 
 void crStateBufferInitBits(CRBufferBits *bb);
 void crStateBufferInit(CRBufferState *b);
 
-void crStateBufferDiff(CRBufferBits *bb, GLbitvalue bitID, 
+void crStateBufferDiff(CRBufferBits *bb, GLbitvalue *bitID, 
 		CRBufferState *from, CRBufferState *to);
-void crStateBufferSwitch(CRBufferBits *bb, GLbitvalue bitID, 
+void crStateBufferSwitch(CRBufferBits *bb, GLbitvalue *bitID, 
 		CRBufferState *from, CRBufferState *to);
 
 #ifdef __cplusplus

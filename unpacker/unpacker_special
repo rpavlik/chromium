@@ -2,6 +2,9 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
+#
+# Non-extended functions which can't be auto-generated
+#
 AreTexturesResident
 ArrayElement
 Bitmap
@@ -9,8 +12,10 @@ CallLists
 ClipPlane
 ColorPointer
 DeleteTextures
+DestroyContext
 DrawArrays
 DrawElements
+DrawRangeElements
 DrawPixels
 EdgeFlagPointer
 FeedbackBuffer
@@ -24,6 +29,7 @@ LightModelfv
 LightModeliv
 LoadMatrixf
 LoadMatrixd
+MakeCurrent
 Map1d
 Map1f
 Map2d
@@ -55,6 +61,5 @@ TexSubImage1D
 TexSubImage2D
 VertexPointer
 UpdateClientPointer
-CreateContext
 BoundsInfo
 SecondaryColorPointerEXT

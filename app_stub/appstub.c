@@ -19,7 +19,7 @@
 
 #endif
 
-#if defined(IRIX) || defined(IRIX64) || defined(Linux)
+#if defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD)
 
 #include <GL/gl.h>
 #include <dlfcn.h>
@@ -31,7 +31,7 @@
 
 static char *map_dll_error( void )
 {
-	char *why = dlerror( );
+	char *why = (char *)dlerror( );
 	if ( why[0] == 'd' && why[1] == 'l' && why[2] == 's' && why[3] == 'y' &&
 			why[4] == 'm' && why[5] == ':' && why[6] == ' ' )
 		why += 7;

@@ -8,13 +8,21 @@
 #define CR_PIXELDATA_H
 
 #include "cr_glwrapper.h"
-#include "state/cr_pixel.h"
+#include "state/cr_client.h"
 
-unsigned int crPixelSize( GLenum format, GLenum type, GLsizei width, GLsizei height );
-void crPixelCopy1D( GLvoid *dst, const GLvoid *src, GLenum format, 
-		                GLenum type, GLsizei width, CRPackState *packstate );
-void crPixelCopy2D( GLvoid *dst, const GLvoid *src, GLenum format, 
-		                GLenum type, GLsizei width, GLsizei height,
-										CRPackState *packstate );
+int crPixelSize( GLenum format, GLenum type );
+
+unsigned int crImageSize( GLenum format, GLenum type,
+													GLsizei width, GLsizei height );
+
+void crPixelCopy1D( GLvoid *dstPtr, GLenum dstFormat, GLenum dstType,
+										const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
+										GLsizei width, const CRPixelPackState *srcPacking );
+
+void crPixelCopy2D( GLsizei width, GLsizei height,
+										GLvoid *dstPtr, GLenum dstFormat, GLenum dstType,
+										const CRPixelPackState *dstPacking,
+										const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
+										const CRPixelPackState *srcPacking );
 
 #endif /* CR_PIXELDATA_H */

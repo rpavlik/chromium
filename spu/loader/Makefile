@@ -8,9 +8,9 @@ SHARED = 1
 LIBRARY = spuload
 LIBRARIES = crutil crmothership
 
-FILES = spuchange spucopy spuinit spuload dispatch limits
+FILES = spuchange spucopy spuinit spuload dispatch limits glloader
 
-PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c spuchange.c
+PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c spuchange.c glloader.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += loader.def
@@ -31,3 +31,7 @@ spucopy.c: spucopy.py
 spuchange.c: spuchange.py
 	@$(ECHO) Making the SPU interface changer
 	@$(PYTHON) spuchange.py > spuchange.c
+
+glloader.c: glloader.py glloader_extensions_special
+	@$(ECHO) Building the OpenGL API loader
+	@$(PYTHON) glloader.py > glloader.c

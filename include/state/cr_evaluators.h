@@ -11,34 +11,37 @@
 #include "state/cr_statetypes.h"
 
 #define GLEVAL_TOT 9
+#define MAX_EVAL_ORDER 30
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue eval1D[GLEVAL_TOT];
-	GLbitvalue eval2D[GLEVAL_TOT];
-	GLbitvalue enable;
-	GLbitvalue enable1D[GLEVAL_TOT];
-	GLbitvalue enable2D[GLEVAL_TOT];
-	GLbitvalue grid1D;
-	GLbitvalue grid2D;
-	GLbitvalue dirty;
+	GLbitvalue eval1D[GLEVAL_TOT][CR_MAX_BITARRAY];
+	GLbitvalue eval2D[GLEVAL_TOT][CR_MAX_BITARRAY];
+	GLbitvalue enable[CR_MAX_BITARRAY];
+	GLbitvalue enable1D[GLEVAL_TOT][CR_MAX_BITARRAY];
+	GLbitvalue enable2D[GLEVAL_TOT][CR_MAX_BITARRAY];
+	GLbitvalue grid1D[CR_MAX_BITARRAY];
+	GLbitvalue grid2D[CR_MAX_BITARRAY];
+	GLbitvalue dirty[CR_MAX_BITARRAY];
 } CREvaluatorBits;
 
 typedef struct {
-	GLdouble  u1, u2;
+	GLfloat  u1, u2;
+	GLfloat  du;
 	GLint    order;
-	GLdouble  *coeff;
+	GLfloat  *coeff;
 } CREvaluator1D;
 
 typedef struct {
-	GLdouble  u1, u2;
-	GLdouble  v1, v2;
+	GLfloat  u1, u2;
+	GLfloat  v1, v2;
+	GLfloat  du, dv;
 	GLint    uorder;
 	GLint    vorder;
-	GLdouble  *coeff;
+	GLfloat  *coeff;
 } CREvaluator2D;
 
 typedef struct {
@@ -50,12 +53,12 @@ typedef struct {
 	CREvaluator2D   eval2D[GLEVAL_TOT];
 
 	GLint      un1D;        /* GL_MAP1_GRID_SEGMENTS */
-	GLdouble   u11D, u21D;  /* GL_MAP1_GRID_DOMAIN */
+	GLfloat    u11D, u21D;  /* GL_MAP1_GRID_DOMAIN */
 
 	GLint      un2D;        /* GL_MAP2_GRID_SEGMENTS (u) */
 	GLint      vn2D;        /* GL_MAP2_GRID_SEGMENTS (v) */
-	GLdouble   u12D, u22D;  /* GL_MAP2_GRID_DOMAIN (u) */
-	GLdouble   v12D, v22D;  /* GL_MAP2_GRID_DOMAIN (v) */
+	GLfloat    u12D, u22D;  /* GL_MAP2_GRID_DOMAIN (u) */
+	GLfloat    v12D, v22D;  /* GL_MAP2_GRID_DOMAIN (v) */
 } CREvaluatorState;
 
 extern const int gleval_sizes[];
@@ -63,9 +66,9 @@ extern const int gleval_sizes[];
 void crStateEvaluatorInitBits (CREvaluatorBits *);
 void crStateEvaluatorInit (CREvaluatorState *e);
 
-void crStateEvaluatorDiff(CREvaluatorBits *bb, GLbitvalue bitID, 
+void crStateEvaluatorDiff(CREvaluatorBits *bb, GLbitvalue *bitID, 
 		CREvaluatorState *from, CREvaluatorState *to);
-void crStateEvaluatorSwitch(CREvaluatorBits *bb, GLbitvalue bitID, 
+void crStateEvaluatorSwitch(CREvaluatorBits *bb, GLbitvalue *bitID, 
 		CREvaluatorState *from, CREvaluatorState *to);
 
 #ifdef __cplusplus

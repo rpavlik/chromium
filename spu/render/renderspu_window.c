@@ -1,3 +1,11 @@
+
+/* XXX
+ * This file is obsolete.  It's been replaced by renderspu_glx.c and
+ * renderspu_wgl.c.  We'll remove this file at a future date.
+ */
+
+
+
 /* Copyright (c) 2001, Stanford University
  * All rights reserved
  *
@@ -8,7 +16,7 @@
 #if defined WINDOWS
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
-#elif defined( IRIX ) || defined( IRIX64 ) || defined( Linux )
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD)
 	#include <GL/glx.h>
 	#include <X11/Xlib.h>
 	#include <X11/Xutil.h>
@@ -31,12 +39,38 @@
 
 #define WINDOW_NAME render_spu.window_title
 
+
+/* used for debugging and giving info to the user */
+static void makeVisString( GLbitfield visAttribs, char *s )
+{
+	s[0] = 0;
+
+	if (visAttribs & CR_RGB_BIT)
+		crStrcat(s, "RGB");
+	if (visAttribs & CR_ALPHA_BIT)
+		crStrcat(s, "A");
+	if (visAttribs & CR_DOUBLE_BIT)
+		crStrcat(s, ", Doublebuffer");
+	if (visAttribs & CR_STEREO_BIT)
+		crStrcat(s, ", Stereo");
+	if (visAttribs & CR_DEPTH_BIT)
+		crStrcat(s, ", Z");
+	if (visAttribs & CR_STENCIL_BIT)
+		crStrcat(s, ", Stencil");
+	if (visAttribs & CR_ACCUM_BIT)
+		crStrcat(s, ", Accum");
+	if (visAttribs & CR_MULTISAMPLE_BIT)
+		crStrcat(s, ", Multisample");
+}
+
+
+
 #ifndef WINDOWS
 
 /* This stuff is from WireGL, and hasn't been changed yet since 
  * I'm developing on Windows. */
 
-	static Colormap 
+static Colormap 
 GetShareableColormap( Display *dpy, XVisualInfo *vi )
 {
 	Status status;
@@ -82,7 +116,7 @@ GetShareableColormap( Display *dpy, XVisualInfo *vi )
 	return cmap;
 }
 
-	static int
+static int
 WaitForMapNotify( Display *display, XEvent *event, char *arg )
 {
 	(void)display;
@@ -96,6 +130,8 @@ static BOOL bSetupPixelFormat( HDC );
 
 #endif
 
+
+
 #ifndef WINDOWS
 
 /* More WireGL holdover until I move this to Linux. */
@@ -103,43 +139,75 @@ static BOOL bSetupPixelFormat( HDC );
 Attrib( int attrib )
 {
 	int value = 0;
-	render_spu.glXGetConfig( render_spu.dpy, render_spu.visual, attrib, &value );
+	render_spu.ws.glXGetConfig( render_spu.dpy, render_spu.visual, attrib, &value );
 	return value;
 }
 
-static void
-makeAttribList( int *attribList, int red, int green, int blue, 
-		int depth, int stencil )
+static XVisualInfo *chooseVisual( Display *dpy, GLbitfield visAttribs )
 {
-	int idx = 0;
+	XVisualInfo *vis;
+	int attribList[100];
+	int i = 0;
 
-	attribList[idx++] = GLX_DOUBLEBUFFER;
-	attribList[idx++] = GLX_RGBA;
+	CRASSERT(visAttribs & CR_RGB_BIT);  /* color index??? */
 
-	attribList[idx++] = GLX_RED_SIZE;
-	attribList[idx++] = red;
-	attribList[idx++] = GLX_GREEN_SIZE;
-	attribList[idx++] = green;
-	attribList[idx++] = GLX_BLUE_SIZE;
-	attribList[idx++] = blue;
+	attribList[i++] = GLX_RGBA;
+	attribList[i++] = GLX_RED_SIZE;
+	attribList[i++] = 1;
+	attribList[i++] = GLX_GREEN_SIZE;
+	attribList[i++] = 1;
+	attribList[i++] = GLX_BLUE_SIZE;
+	attribList[i++] = 1;
 
-	if ( depth )
+	if (visAttribs & CR_ALPHA_BIT)
 	{
-		attribList[idx++] = GLX_DEPTH_SIZE;
-		attribList[idx++] = depth;
+		attribList[i++] = GLX_ALPHA_SIZE;
+		attribList[i++] = 1;
 	}
 
-	if ( stencil )
+	if (visAttribs & CR_DOUBLE_BIT)
+		attribList[i++] = GLX_DOUBLEBUFFER;
+
+	if (visAttribs & CR_STEREO_BIT)
+		attribList[i++] = GLX_STEREO;
+
+	if (visAttribs & CR_DEPTH_BIT)
 	{
-		attribList[idx++] = GLX_STENCIL_SIZE;
-		attribList[idx++] = stencil;
+		attribList[i++] = GLX_DEPTH_SIZE;
+		attribList[i++] = 1;
 	}
 
-	attribList[idx++] = None;
+	if (visAttribs & CR_STENCIL_BIT)
+	{
+		attribList[i++] = GLX_STENCIL_SIZE;
+		attribList[i++] = 8;  /* XXX also try 1-bit stencil */
+	}
+
+	if (visAttribs & CR_ACCUM_BIT)
+	{
+		attribList[i++] = GLX_ACCUM_RED_SIZE;
+		attribList[i++] = 1;
+		attribList[i++] = GLX_ACCUM_GREEN_SIZE;
+		attribList[i++] = 1;
+		attribList[i++] = GLX_ACCUM_BLUE_SIZE;
+		attribList[i++] = 1;
+		if (visAttribs & CR_ALPHA_BIT)
+		{
+			attribList[i++] = GLX_ACCUM_ALPHA_SIZE;
+			attribList[i++] = 1;
+		}
+	}
+
+	attribList[i++] = None;
+
+	vis = render_spu.ws.glXChooseVisual( dpy, DefaultScreen(dpy), attribList );
+	return vis;
 }
+
+
 #endif
 
-void renderspuCreateWindow( void )
+void renderspuCreateWindow( GLbitfield visAttribs, GLboolean showIt )
 {
 #ifndef WINDOWS
 	Colormap             cmap;
@@ -149,7 +217,6 @@ void renderspuCreateWindow( void )
 	XTextProperty        text_prop;
 	XClassHint          *class_hints = NULL;
 	char                *name;
-	int                  attribList[16];
 	Bool                 is_direct;
 	unsigned long        flags;
 #else
@@ -174,14 +241,10 @@ void renderspuCreateWindow( void )
 	}
 
 #ifndef WINDOWS
-	/* WireGL Holdover */
-#if 0
-	if ( render_spu.display_string == NULL )
-	{
-		render_spu.display_string = ":0.0";
-	}
-#endif
-
+	/*
+	 * Begin GLX code
+	 */
+	
 	render_spu.dpy = XOpenDisplay( render_spu.display_string );
 	if ( !render_spu.dpy )
 	{
@@ -201,7 +264,7 @@ void renderspuCreateWindow( void )
 		XSynchronize( render_spu.dpy, True );
 	}
 
-	if ( !render_spu.glXQueryExtension( render_spu.dpy, NULL, NULL ) )
+	if ( !render_spu.ws.glXQueryExtension( render_spu.dpy, NULL, NULL ) )
 	{
 		crError( "Display %s doesn't support GLX", 
 				render_spu.display_string );
@@ -227,93 +290,44 @@ void renderspuCreateWindow( void )
 		render_spu.actual_window_width  = xwa.width;
 		render_spu.actual_window_height = xwa.height;
 
-		crDebug( "root window=%dx%d",
-				xwa.width, xwa.height );
+		crDebug( "root window=%dx%d",	xwa.width, xwa.height );
 
 		actual_window_x = 0;
 		actual_window_y = 0;
 	}
 
-	makeAttribList( attribList, 8, 8, 8, 
-			render_spu.depth_bits, render_spu.stencil_bits );
-
-	/* choose visual seems to be somewhat busted, so work it a bit */
-	render_spu.visual = 
-		render_spu.glXChooseVisual( render_spu.dpy, 
-				DefaultScreen( render_spu.dpy ), 
-				attribList );
-	if ( !render_spu.visual )
-	{
-		makeAttribList( attribList, 5, 6, 5,
-				render_spu.depth_bits, render_spu.stencil_bits );
-		render_spu.visual = 
-			render_spu.glXChooseVisual( render_spu.dpy, 
-					DefaultScreen( render_spu.dpy), 
-					attribList );
-	}
+	render_spu.visual = chooseVisual( render_spu.dpy, visAttribs );
 
 	if ( !render_spu.visual )
 	{
-		makeAttribList( attribList, 4, 4, 4,
-				render_spu.depth_bits, render_spu.stencil_bits );
-		render_spu.visual = 
-			render_spu.glXChooseVisual( render_spu.dpy, 
-					DefaultScreen( render_spu.dpy ), 
-					attribList );
-	}
-
-	if ( !render_spu.visual )
-	{
-		makeAttribList( attribList, 1, 1, 1,
-				render_spu.depth_bits, render_spu.stencil_bits );
-		render_spu.visual = 
-			render_spu.glXChooseVisual( render_spu.dpy, 
-					DefaultScreen( render_spu.dpy ), 
-					attribList );
-	}
-
-	if ( !render_spu.visual && render_spu.depth_bits > 24 ) {
-		/* MWE -- why does Francois end up here? */
-		render_spu.depth_bits = 24;
-
-		makeAttribList( attribList, 8, 8, 8, 
-				render_spu.depth_bits, render_spu.stencil_bits );
-
-		render_spu.visual = 
-			render_spu.glXChooseVisual( render_spu.dpy, 
-					DefaultScreen( render_spu.dpy ), 
-					attribList );
-	}
-
-	if ( !render_spu.visual )
-	{
-		crError( "Display %s doesn't have the necessary visual "
-				"(RGB=%d, Z=%d stencil=%d double=%d)",
-				render_spu.display_string, 8, 
-				render_spu.depth_bits, render_spu.stencil_bits,
-				1 );
+		char s[1000];
+		makeVisString( visAttribs, s );
+		crError( "Display %s doesn't have the necessary visual: %s",
+						 render_spu.display_string, s );
 	}
 
 	crDebug( "Chose a visual (id=%ld)", render_spu.visual->visualid );
-	crDebug( "Visual: RGBA=<%d,%d,%d,%d> "
-			"Z=%d stencil=%d double=%d", Attrib( GLX_RED_SIZE ),
-			Attrib( GLX_GREEN_SIZE ), Attrib( GLX_BLUE_SIZE ),
-			Attrib( GLX_ALPHA_SIZE ), Attrib( GLX_DEPTH_SIZE ),
-			Attrib( GLX_STENCIL_SIZE ), Attrib( GLX_DOUBLEBUFFER ) );
+	crDebug( "Visual: RGBA=<%d,%d,%d,%d> Z=%d stencil=%d double=%d stereo=%d accum=(%d,%d,%d,%d)",
+					 Attrib( GLX_RED_SIZE ), Attrib( GLX_GREEN_SIZE ),
+					 Attrib( GLX_BLUE_SIZE ), Attrib( GLX_ALPHA_SIZE ),
+					 Attrib( GLX_DEPTH_SIZE ), Attrib( GLX_STENCIL_SIZE ),
+					 Attrib( GLX_DOUBLEBUFFER ), Attrib( GLX_STEREO ),
+					 Attrib( GLX_ACCUM_RED_SIZE ), Attrib( GLX_ACCUM_GREEN_SIZE ),
+					 Attrib( GLX_ACCUM_BLUE_SIZE ), Attrib( GLX_ACCUM_ALPHA_SIZE )
+					 );
 
 	cmap = GetShareableColormap( render_spu.dpy, render_spu.visual );
-	crDebug( "Chose a colormap" );
+	if ( !cmap )
+		crError( "Unable to get a colormap!" );
 
-	crDebug( "Creating the OpenGL context" );
-
-	render_spu.context = render_spu.glXCreateContext( render_spu.dpy, 
+	render_spu.context = render_spu.ws.glXCreateContext( render_spu.dpy, 
 			render_spu.visual,
 			NULL, render_spu.try_direct );
 
 	if ( render_spu.context == NULL )
 		crError( "Couldn't create rendering context" ); 
 
-	is_direct = render_spu.glXIsDirect( render_spu.dpy, render_spu.context );
+	is_direct = render_spu.ws.glXIsDirect( render_spu.dpy, render_spu.context );
 
 	crDebug( "Created a context (%s)",
 			is_direct ? "direct" : "indirect" );
@@ -347,10 +361,7 @@ void renderspuCreateWindow( void )
 				render_spu.visual->visual,
 				flags, &swa );
 
-	crDebug( "actual_window_x: %d", 
-			actual_window_x);
-	crDebug( "actual_window_y: %d", 
-			actual_window_y);
+	crDebug( "actual_window_x,y: %d, %d", actual_window_x, actual_window_y);
 
 
 	if ( render_spu.fullscreen )
@@ -404,12 +415,14 @@ void renderspuCreateWindow( void )
 
 	crDebug( "About to make current to the context" );
 
-	XMapWindow( render_spu.dpy, render_spu.window );
-	XIfEvent( render_spu.dpy, &event, WaitForMapNotify, 
-			(char *) render_spu.window );
+	if (showIt) {
+		XMapWindow( render_spu.dpy, render_spu.window );
+		XIfEvent( render_spu.dpy, &event, WaitForMapNotify, 
+							(char *) render_spu.window );
+	}
 
 #if 0
-	/* Note: There is a nasty bug somewhere in render_spu.glXMakeCurrent() for
+	/* Note: There is a nasty bug somewhere in render_spu.ws.glXMakeCurrent() for
 		 the 0.9.5 version of the NVIDIA OpenGL drivers, and has been
 		 observed under both RedHat 6.2 (running a 2.2.16-3 kernel) and
 		 RedHat 7.0 (running the stock 2.2.16-22 kernel).  The bug
@@ -421,18 +434,27 @@ void renderspuCreateWindow( void )
 			"almost certainly wedge the machine." );
 #endif
 
-	if ( !render_spu.glXMakeCurrent( render_spu.dpy, render_spu.window, 
+	if ( !render_spu.ws.glXMakeCurrent( render_spu.dpy, render_spu.window, 
 				render_spu.context ) )
 	{
 		crError( "Error making current" );
 	}
 	crDebug( "Made current to the context" );
 
-	crDebug( "GL_VENDOR:   %s", render_spu.glGetString( GL_VENDOR ) );
-	crDebug( "GL_RENDERER: %s", render_spu.glGetString( GL_RENDERER ) );
-	crDebug( "GL_VERSION:  %s", render_spu.glGetString( GL_VERSION ) );
+	crDebug( "GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
+	crDebug( "GL_RENDERER: %s", render_spu.ws.glGetString( GL_RENDERER ) );
+	crDebug( "GL_VERSION:  %s", render_spu.ws.glGetString( GL_VERSION ) );
+
+	/*
+	 * End GLX code
+	 */
 
 #else
+
+	/*
+	 * Begin Windows / WGL code
+	 */
+
 	hinstance = GetModuleHandle( NULL );
 	if (!hinstance)
 	{
@@ -591,25 +613,36 @@ void renderspuCreateWindow( void )
 		crError( "Couldn't set up the device context!  Yikes!" );
 	}
 
-	render_spu.hRC = render_spu.wglCreateContext( render_spu.device_context );
+	render_spu.hRC = render_spu.ws.wglCreateContext( render_spu.device_context );
 	if (!render_spu.hRC)
 	{
 		crError( "Couldn't create the context for the window!" );
 	}
 	crDebug( "Created the context: 0x%x", render_spu.hRC );
-	if (!render_spu.wglMakeCurrent( render_spu.device_context, render_spu.hRC ))
+	if (!render_spu.ws.wglMakeCurrent( render_spu.device_context, render_spu.hRC ))
 	{
 		crError( "Couldn't make current to the context!" );
 	}
 	crDebug( "Made Current" );
 
+	/*
+	 * End Windows / WGL code
+	 */
+
 #endif
+
+	crDebug( "actual_window_width, height = %d, %d\n",
+			 render_spu.actual_window_width, render_spu.actual_window_height);
+	crDebug( "window_x, y, width, height = %d, %d, %d, %d\n",
+			 render_spu.window_x, render_spu.window_y,
+			 render_spu.window_width, render_spu.window_height);
+
 }
 
 void renderspuKillWindow( void )
 {
 #ifdef WINDOWS
-	render_spu.wglMakeCurrent( GetDC( render_spu.hWnd ), NULL );
+	render_spu.ws.wglMakeCurrent( GetDC( render_spu.hWnd ), NULL );
 	/*wglDeleteContext( render_spu.hRC ); */
 	DestroyWindow( render_spu.hWnd );
 	render_spu.hWnd = NULL;
@@ -685,16 +718,16 @@ bSetupPixelFormat( HDC hdc )
 	 * faked out) seems to not work. */
 	if (getenv( "__CR_LAUNCHED_FROM_APP_FAKER" ) != NULL)
 	{
-		pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
+		pixelformat = render_spu.ws.wglChoosePixelFormat( hdc, ppfd );
 		/* doing this twice is normal Win32 magic */
-		pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
+		pixelformat = render_spu.ws.wglChoosePixelFormat( hdc, ppfd );
 		if ( pixelformat == 0 ) 
 		{
-			crError( "render_spu.wglChoosePixelFormat failed" );
+			crError( "render_spu.ws.wglChoosePixelFormat failed" );
 		}
-		if ( !render_spu.wglSetPixelFormat( hdc, pixelformat, ppfd ) ) 
+		if ( !render_spu.ws.wglSetPixelFormat( hdc, pixelformat, ppfd ) ) 
 		{
-			crError( "render_spu.wglSetPixelFormat failed" );
+			crError( "render_spu.ws.wglSetPixelFormat failed" );
 		}
 	}
 	else
@@ -716,3 +749,20 @@ bSetupPixelFormat( HDC hdc )
 	return TRUE;
 }
 #endif
+
+
+/* Either show or hide the render SPU's window. */
+void renderspuShowWindow( GLboolean showIt )
+{
+#ifdef WINDOWS
+
+
+#else
+	/* GLX */
+	if ( render_spu.dpy && render_spu.window ) {
+		XMapWindow( render_spu.dpy, render_spu.window );
+		XIfEvent( render_spu.dpy, &event, WaitForMapNotify, 
+							(char *) render_spu.window );
+	}
+#endif
+}

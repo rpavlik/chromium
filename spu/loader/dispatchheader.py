@@ -56,6 +56,7 @@ print """
     struct _copy_list_node *copyList;
     struct _spu_dispatch_table *copy_of;
 		int mark;
+    void *server;		
 } SPUDispatchTable;
 
 struct _copy_list_node {

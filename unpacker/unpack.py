@@ -38,12 +38,26 @@ SPUDispatchTable cr_unpackDispatch;
 extern void crUnpackExtend(void);
 """
 
+#
+# Print extern declarations for all functions not defined in this file
+#
 for func_name in stub_common.AllSpecials( "unpacker" ):
 	print 'extern void crUnpack%s(void);' % func_name
 
-for func_name in stub_common.AllSpecials( "../packer/opcode_extend" ):
+#for func_name in stub_common.AllSpecials( "../packer/opcode_extend" ):
+#	print 'extern void crUnpackExtend%s(void);' % func_name
+
+print ""
+
+for func_name in stub_common.AllSpecials( "unpacker_extend" ):
 	print 'extern void crUnpackExtend%s(void);' % func_name
 
+print ""
+
+
+#
+# Useful functions
+#
 def MakeVector( func_name ):
 	return func_name + "v"
 
@@ -118,6 +132,10 @@ def MakeVectorCall( return_type, func_name, arg_type ):
 	else:
 		print "\tcr_unpackDispatch.%s((%s *) cr_unpackData);" %( MakeVector( func_name ), arg_type )
 
+
+#
+# Generate unpack functions for all the simple functions.
+#
 for func_name in keys:
 	if stub_common.FindSpecial( "../packer/opcode", func_name ): continue
 	if stub_common.FindSpecial( "../packer/opcode_extend", func_name ): continue
@@ -138,6 +156,10 @@ for func_name in keys:
 	    print "\tINCR_DATA_PTR( %d );" % packet_length
 	print "}\n"
 
+
+#
+# Emit some code
+#
 print """ 
 typedef struct __dispatchNode {
 	unsigned char *unpackData;
@@ -188,6 +210,9 @@ void crUnpack( void *data, void *opcodes,
 		switch( *unpack_opcodes )
 		{"""
 
+#
+# Emit switch cases for all unextended opcodes
+#
 for func_name in keys:
 	if stub_common.FindSpecial( "../packer/opcode", func_name ): continue
 	if stub_common.FindSpecial( "../packer/opcode_extend", func_name ): continue
@@ -206,6 +231,10 @@ print """
 	}
 }"""
 
+
+#
+# Emit unpack functions for extended opcodes
+#
 for func_name in keys:
 		( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 		if stub_common.FindSpecial( "unpacker", func_name ):

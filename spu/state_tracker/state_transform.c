@@ -60,8 +60,8 @@ diff_api.LoadMatrixd((const GLdouble *) f); \
 
 void crStateTransformInitBits (CRTransformBits *t) 
 {
-	t->dirty = GLBITS_ONES;
-	t->matrix[1] = GLBITS_ONES;
+	FILLDIRTY(t->dirty);
+	FILLDIRTY(t->matrix[1]);
 }
 
 void crStateTransformInit(CRTransformState *t) 
@@ -118,6 +118,9 @@ void crStateTransformInit(CRTransformState *t)
 		t->clipPlane[i].w = 0.0f;
 		t->clip[i] = GL_FALSE;
 	}
+#ifdef CR_OPENGL_VERSION_1_2
+	t->rescaleNormals = GL_FALSE;
+#endif
 
 	t->transformValid = 0;
 }
@@ -358,8 +361,8 @@ void STATE_APIENTRY crStateClipPlane (GLenum plane, const GLdouble *equation) {
 	crStateTransformInvertTransposeMatrix (&inv, &(t->modelView[t->modelViewDepth]));
 	crStateTransformXformPointMatrixd (&inv, &e);
 	t->clipPlane[i] = e;
-	tb->clipPlane = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->clipPlane, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateMatrixMode(GLenum e) 
@@ -412,8 +415,8 @@ void STATE_APIENTRY crStateMatrixMode(GLenum e)
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid matrix mode: %d", e);
 			return;
 	}
-	tb->mode = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->mode, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateLoadIdentity() 
@@ -434,8 +437,8 @@ void STATE_APIENTRY crStateLoadIdentity()
 	*(t->m) = identity_matrix;
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 
 }
 
@@ -470,8 +473,8 @@ void STATE_APIENTRY crStatePopMatrix()
 
 	t->transformValid = 0;
 
-	tb->matrix[t->matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStatePushMatrix() 
@@ -503,13 +506,12 @@ void STATE_APIENTRY crStatePushMatrix()
 	/* Perform the copy */
 	t->m[1] = t->m[0];
 
-
 	/* Move the stack pointer */
 	t->m++;
-	(*t->depth)++;
+	(*(t->depth))++;
 
-	tb->matrix[t->matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[t->matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 
@@ -549,8 +551,8 @@ void STATE_APIENTRY crStateLoadMatrixf(const GLfloat *m1)
 
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 
 }
 
@@ -590,8 +592,8 @@ void STATE_APIENTRY crStateLoadMatrixd(const GLdouble *m1)
 
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 /* This code is based on the Pomegranate stuff.
@@ -668,8 +670,8 @@ void STATE_APIENTRY crStateMultMatrixf(const GLfloat *m1)
 
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateMultMatrixd(const GLdouble *m1) 
@@ -739,8 +741,8 @@ void STATE_APIENTRY crStateMultMatrixd(const GLdouble *m1)
 
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateTranslatef(GLfloat x_arg, GLfloat y_arg, GLfloat z_arg) 
@@ -769,8 +771,8 @@ void STATE_APIENTRY crStateTranslatef(GLfloat x_arg, GLfloat y_arg, GLfloat z_ar
 
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 
@@ -800,8 +802,8 @@ void STATE_APIENTRY crStateTranslated(GLdouble x_arg, GLdouble y_arg, GLdouble z
 
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }	
 
 /* TODO: use lookup tables for cosine and sine functions */
@@ -938,8 +940,8 @@ void STATE_APIENTRY crStateScalef (GLfloat x_arg, GLfloat y_arg, GLfloat z_arg)
 
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateScaled (GLdouble x_arg, GLdouble y_arg, GLdouble z_arg) 
@@ -976,8 +978,8 @@ void STATE_APIENTRY crStateScaled (GLdouble x_arg, GLdouble y_arg, GLdouble z_ar
 
 	t->transformValid = 0;
 
-	tb->matrix[g->transform.matrixid] = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(tb->matrix[g->transform.matrixid], g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateFrustum (	GLdouble left, GLdouble right,
@@ -1073,13 +1075,32 @@ void  STATE_APIENTRY crStateGetClipPlane (GLenum plane, GLdouble *equation)
 	equation[3] = t->clipPlane[i].w;
 }
 
-void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID, 
+void crStateTransformSwitch (CRTransformBits *t, GLbitvalue *bitID, 
 						 CRTransformState *from, CRTransformState *to) 
 {
-	GLbitvalue nbitID = ~bitID;
-	int i;
+	int i,j;
+	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
-	if (t->clipPlane & bitID) {
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	if (CHECKDIRTY(t->enable, bitID))
+	{
+		glAble able[2];
+		able[0] = diff_api.Disable;
+		able[1] = diff_api.Enable;
+#ifdef CR_OPENGL_VERSION_1_2
+		if (from->rescaleNormals != to->rescaleNormals)
+		{
+			able[to->rescaleNormals](GL_RESCALE_NORMAL);
+			FILLDIRTY(t->enable);
+			FILLDIRTY(t->dirty);
+		}
+#endif
+		INVERTDIRTY(t->enable, nbitID);
+	}
+
+	if (CHECKDIRTY(t->clipPlane, bitID)) {
 		for (i=0; i<CR_MAX_CLIP_PLANES; i++) {
 			if (from->clipPlane[i].x != to->clipPlane[i].x ||
 				from->clipPlane[i].y != to->clipPlane[i].y ||
@@ -1098,14 +1119,14 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID,
 				diff_api.ClipPlane(GL_CLIP_PLANE0 + i, (const GLdouble *)(cp));
 				diff_api.PopMatrix();
 
-				t->clipPlane = GLBITS_ONES;
-				t->dirty = GLBITS_ONES;
+				FILLDIRTY(t->clipPlane);
+				FILLDIRTY(t->dirty);
 			}
 		}
-		t->clipPlane &= nbitID;
+		INVERTDIRTY(t->clipPlane, nbitID);
 	}
 
-	if (t->matrix[0] & bitID) {
+	if (CHECKDIRTY(t->matrix[0], bitID)) {
 		if (memcmp (from->modelView+from->modelViewDepth,
 										to->modelView+to->modelViewDepth,
 										sizeof (GLmatrix))) {
@@ -1113,13 +1134,13 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID,
 			diff_api.MatrixMode(GL_MODELVIEW);		
 			LOADMATRIX(to->modelView+to->modelViewDepth);
 
-			t->matrix[0] = GLBITS_ONES;
-			t->dirty = GLBITS_ONES;
+			FILLDIRTY(t->matrix[0]);
+			FILLDIRTY(t->dirty);
 		}
-		t->matrix[0] &= nbitID;
+		INVERTDIRTY(t->matrix[0], nbitID);
 	}
 
-	if (t->matrix[1] & bitID) {
+	if (CHECKDIRTY(t->matrix[1], bitID)) {
 		if (memcmp (from->projection+from->projectionDepth,
 					to->projection+to->projectionDepth,
 					sizeof (GLmatrix))) {
@@ -1127,13 +1148,13 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID,
 			diff_api.MatrixMode(GL_PROJECTION);		
 			LOADMATRIX(to->projection+to->projectionDepth);
 		
-			t->matrix[1] = GLBITS_ONES;
-			t->dirty = GLBITS_ONES;
+			FILLDIRTY(t->matrix[1]);
+			FILLDIRTY(t->dirty);
 		}
-		t->matrix[1] &= nbitID;
+		INVERTDIRTY(t->matrix[1], nbitID);
 	}
 
-	if (t->matrix[2] & bitID) 
+	if (CHECKDIRTY(t->matrix[2], bitID)) 
 	{
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
 		{
@@ -1145,14 +1166,14 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID,
 				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 				LOADMATRIX(to->texture[i]+to->textureDepth[i]);
 			
-				t->matrix[2] = GLBITS_ONES;
-				t->dirty = GLBITS_ONES;
+				FILLDIRTY(t->matrix[2]);
+				FILLDIRTY(t->dirty);
 			}
 		}
-		t->matrix[2] &= nbitID;
+		INVERTDIRTY(t->matrix[2], nbitID);
 	}
 
-	if (t->matrix[3] & bitID) {
+	if (CHECKDIRTY(t->matrix[3], bitID)) {
 		if (memcmp (from->color+from->colorDepth,
 					to->color+to->colorDepth,
 					sizeof (GLmatrix))) {
@@ -1160,34 +1181,59 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID,
 			diff_api.MatrixMode(GL_COLOR);		
 			LOADMATRIX(to->color+to->colorDepth);
 		
-			t->matrix[3] = GLBITS_ONES;
-			t->dirty = GLBITS_ONES;
+			FILLDIRTY(t->matrix[3]);
+			FILLDIRTY(t->dirty);
 		}
-		t->matrix[3] &= nbitID;
+		INVERTDIRTY(t->matrix[3], nbitID);
 	}
 
 /*  HACK: Don't treat MatrixMode as stand alone state.
-	if (t->mode & bitID) {
+	if (CHECKDIRTY(t->mode, bitID)) {
 		if (force_mode || from->mode != to->mode) {
 			diff_api.MatrixMode(to->mode);
-			t->mode = GLBITS_ONES;
-			t->dirty = GLBITS_ONES;
+			FILLDIRTY(t->mode);
+			FILLDIRTY(t->dirty);
 		}
-		t->mode &= nbitID;
+		INVERTDIRTY(t->mode, nbitID);
 	}
 */
 
 	to->transformValid = 0;
-	t->dirty &= nbitID;
+	INVERTDIRTY(t->dirty, nbitID);
 }
 
-void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID, 
+void crStateTransformDiff(CRTransformBits *t, GLbitvalue *bitID, 
 						 CRTransformState *from, CRTransformState *to) 
 {
-	GLbitvalue nbitID = ~bitID;
-	GLint i;
+	GLint i,j;
+	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
-	if (t->clipPlane & bitID) {
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	if (CHECKDIRTY(t->enable, bitID)) {
+		glAble able[2];
+		able[0] = diff_api.Disable;
+		able[1] = diff_api.Enable;
+		for (i=0; i<CR_MAX_CLIP_PLANES; i++) {
+			if (from->clip[i] != to->clip[i]) {
+				if (to->clip[i] == GL_TRUE)
+					diff_api.Enable(GL_CLIP_PLANE0 + i);
+				else
+					diff_api.Disable(GL_CLIP_PLANE0 + i);
+				from->clip[i] = to->clip[i];
+			}
+		}
+#ifdef CR_OPENGL_VERSION_1_2
+		if (from->rescaleNormals != to->rescaleNormals) {
+			able[to->rescaleNormals](GL_RESCALE_NORMAL);
+			from->rescaleNormals = to->rescaleNormals;
+		}
+#endif
+		INVERTDIRTY(t->enable, nbitID);
+	}
+
+	if (CHECKDIRTY(t->clipPlane, bitID)) {
 		for (i=0; i<CR_MAX_CLIP_PLANES; i++) {
 			if (from->clipPlane[i].x != to->clipPlane[i].x ||
 				from->clipPlane[i].y != to->clipPlane[i].y ||
@@ -1208,10 +1254,10 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID,
 				from->clipPlane[i] = to->clipPlane[i];
 			}
 		}
-		t->clipPlane &= nbitID;
+		INVERTDIRTY(t->clipPlane, nbitID);
 	}
 	
-	if (t->matrix[0] & bitID) {
+	if (CHECKDIRTY(t->matrix[0], bitID)) {
 		if (memcmp (from->modelView+from->modelViewDepth,
 										to->modelView+to->modelViewDepth,
 										sizeof (GLmatrix))) {
@@ -1223,20 +1269,20 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID,
 					sizeof (from->modelView[0]) * (to->modelViewDepth + 1));
 			from->modelViewDepth = to->modelViewDepth;
 		}
-		t->matrix[0] &= nbitID;
+		INVERTDIRTY(t->matrix[0], nbitID);
 	}
 
-	if (t->matrix[1] & bitID) {
+	if (CHECKDIRTY(t->matrix[1], bitID)) {
 		diff_api.MatrixMode(GL_PROJECTION);		
 		LOADMATRIX(to->projection+to->projectionDepth);
 
 		memcpy((void *) from->projection, (const void *) to->projection,
 			sizeof (from->projection[0]) * (to->projectionDepth + 1));
 		from->projectionDepth = to->projectionDepth;
-		t->matrix[1] &= nbitID;
+		INVERTDIRTY(t->matrix[1], nbitID);
 	}
 
-	if (t->matrix[2] & bitID) {
+	if (CHECKDIRTY(t->matrix[2], bitID)) {
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 		{
 			if (memcmp (from->texture[i]+from->textureDepth[i],
@@ -1252,10 +1298,10 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID,
 				from->textureDepth[i] = to->textureDepth[i];
 			}
 		}
-		t->matrix[2] &= nbitID;
+		INVERTDIRTY(t->matrix[2], nbitID);
 	}
 
-	if (t->matrix[3] & bitID) {
+	if (CHECKDIRTY(t->matrix[3], bitID)) {
 		if (memcmp (from->color+from->colorDepth,
 					to->color+to->colorDepth,
 					sizeof (GLmatrix))) {
@@ -1266,32 +1312,19 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID,
 					sizeof (from->color[0]) * (to->colorDepth + 1));
 			from->colorDepth = to->colorDepth;
 		}
-		t->matrix[3] &= nbitID;
+		INVERTDIRTY(t->matrix[3], nbitID);
 	}
 
 	/* HACK: Don't treat MatrixMode as stand alone state.
-	if (t->mode & bitID) {
+	if (CHECKDIRTY(t->mode, bitID)) {
 		if (force_mode || from->mode != to->mode) {
 			diff_api.MatrixMode(to->mode);
 			from->mode = to->mode;
 		}
-		t->mode &= nbitID;
+		INVERTDIRTY(t->mode, nbitID);
 	}
 	*/
 	
-	if (t->enable & bitID) {
-		for (i=0; i<CR_MAX_CLIP_PLANES; i++) {
-			if (from->clip[i] != to->clip[i]) {
-				if (to->clip[i] == GL_TRUE)
-					diff_api.Enable(GL_CLIP_PLANE0 + i);
-				else
-					diff_api.Disable(GL_CLIP_PLANE0 + i);
-				from->clip[i] = to->clip[i];
-			}
-		}
-		t->enable &= nbitID;
-	}
-
 	to->transformValid = 0;
-	t->dirty &= nbitID;
+	INVERTDIRTY(t->dirty, nbitID);
 }

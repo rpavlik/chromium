@@ -114,6 +114,9 @@ static char *crExtensionString =
 #ifdef CR_EXT_texture_filter_anisotropic
 	"GL_EXT_texture_filter_anisotropic "
 #endif
+#ifdef CR_EXT_texture_object
+	"GL_EXT_texture_object "
+#endif
 #ifdef CR_NV_fog_distance
 	"GL_NV_fog_distance "
 #endif
@@ -133,6 +136,28 @@ static char *crExtensionString =
 	"GL_SGIS_texture_edge_clamp"
 #endif
 	"";
+
+static char *chromiumExtensions[] = {
+#ifdef GL_CR_state_parameter
+	"GL_CR_state_parameter",
+#endif
+#ifdef GL_CR_cursor_position
+	"CR_GL_cursor_position",
+#endif
+#ifdef GL_CR_bounding_box
+	"CR_GL_bounding_box",
+#endif
+#ifdef GL_CR_print_string
+	"GL_CR_print_string",
+#endif
+#ifdef GL_CR_tilesort_info
+	"GL_CR_tilesort_info",
+#endif
+#ifdef GL_CR_client_clear_control
+	"GL_CR_client_clear_control",
+#endif
+	NULL
+};
 
 
 
@@ -176,6 +201,24 @@ void crSPUInitGLLimits( CRLimitsState *l )
 	l->smoothLineWidthRange[1] = CR_SMOOTH_LINE_WIDTH_MAX;
 	l->lineWidthGranularity = CR_LINE_WIDTH_GRANULARITY;
 	l->extensions = (GLubyte*)crStrdup( crExtensionString );
+
+	/* init frame buffer limits to typical maximums */
+	l->redBits = 8;
+	l->greenBits = 8;
+	l->blueBits = 8;
+	l->alphaBits = 8;
+	l->depthBits = 24;
+	l->stencilBits = 8;
+	l->accumRedBits = 16;
+	l->accumGreenBits = 16;
+	l->accumBlueBits = 16;
+	l->accumAlphaBits = 16;
+
+	/* XXX these values are hard-coded for now */
+	l->auxBuffers = 0;
+	l->rgbaMode = GL_TRUE;
+	l->doubleBuffer = GL_TRUE;
+	l->stereo = GL_FALSE;
 }
 
 
@@ -326,6 +369,17 @@ void crSPUQueryGLLimits( CRConnection *conn, int spu_id, CRLimitsState *limits )
 	GET_FLOAT_LIMIT(lineWidthGranularity, GL_SMOOTH_LINE_WIDTH_GRANULARITY, 0.5);
 	GET_STRING_LIMIT(extensions, GL_EXTENSIONS, "***error***");
 
+	GET_INT_LIMIT(redBits, GL_RED_BITS, 8);
+	GET_INT_LIMIT(greenBits, GL_GREEN_BITS, 8);
+	GET_INT_LIMIT(blueBits, GL_BLUE_BITS, 8);
+	GET_INT_LIMIT(alphaBits, GL_ALPHA_BITS, 0);
+	GET_INT_LIMIT(depthBits, GL_DEPTH_BITS, 16);
+	GET_INT_LIMIT(stencilBits, GL_STENCIL_BITS, 0);
+	GET_INT_LIMIT(accumRedBits, GL_ACCUM_RED_BITS, 0);
+	GET_INT_LIMIT(accumGreenBits, GL_ACCUM_GREEN_BITS, 0);
+	GET_INT_LIMIT(accumBlueBits, GL_ACCUM_BLUE_BITS, 0);
+	GET_INT_LIMIT(accumAlphaBits, GL_ACCUM_ALPHA_BITS, 0);
+
 #undef GET_INT_LIMIT
 #undef GET_STRING_LIMIT
 }
@@ -424,6 +478,17 @@ void crSPUReportGLLimits( const CRLimitsState *limits, int spu_id )
 	else {
 		REPORT_STRING(GL_EXTENSIONS, (const char*)limits->extensions);
 	}
+
+	REPORT_INT(GL_RED_BITS, limits->redBits);
+	REPORT_INT(GL_GREEN_BITS, limits->greenBits);
+	REPORT_INT(GL_BLUE_BITS, limits->blueBits);
+	REPORT_INT(GL_ALPHA_BITS, limits->alphaBits);
+	REPORT_INT(GL_DEPTH_BITS, limits->depthBits);
+	REPORT_INT(GL_STENCIL_BITS, limits->stencilBits);
+	REPORT_INT(GL_ACCUM_RED_BITS, limits->accumRedBits);
+	REPORT_INT(GL_ACCUM_GREEN_BITS, limits->accumGreenBits);
+	REPORT_INT(GL_ACCUM_BLUE_BITS, limits->accumBlueBits);
+	REPORT_INT(GL_ACCUM_ALPHA_BITS, limits->accumAlphaBits);
 
 #undef REPORT_INT
 #undef REPORT_INT2
@@ -545,6 +610,37 @@ void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits
 	(*getFloatv)(GL_SMOOTH_LINE_WIDTH_RANGE, limits->smoothLineWidthRange);
 	(*getFloatv)(GL_SMOOTH_LINE_WIDTH_GRANULARITY, &limits->lineWidthGranularity);
 #endif
+
+	(*getIntegerv)(GL_RED_BITS, (GLint*) &limits->redBits);
+	(*getIntegerv)(GL_GREEN_BITS, (GLint*) &limits->greenBits);
+	(*getIntegerv)(GL_BLUE_BITS, (GLint*) &limits->blueBits);
+	(*getIntegerv)(GL_ALPHA_BITS, (GLint*) &limits->alphaBits);
+	(*getIntegerv)(GL_DEPTH_BITS, (GLint*) &limits->depthBits);
+	(*getIntegerv)(GL_STENCIL_BITS, (GLint*) &limits->stencilBits);
+	(*getIntegerv)(GL_ACCUM_RED_BITS, (GLint*) &limits->accumRedBits);
+	(*getIntegerv)(GL_ACCUM_GREEN_BITS, (GLint*) &limits->accumGreenBits);
+	(*getIntegerv)(GL_ACCUM_BLUE_BITS, (GLint*) &limits->accumBlueBits);
+	(*getIntegerv)(GL_ACCUM_ALPHA_BITS, (GLint*) &limits->accumAlphaBits);
+}
+
+
+/*
+ * Check if extension <ext> is in the extension <string>.  We have
+ * to be careful not to match a substring!
+ */
+static GLboolean hasExtension(const char *string, const char *ext)
+{
+	const int len = crStrlen(ext);
+
+	while (1) {
+		const char *p = crStrstr(string, ext);
+		if (!p)
+			return GL_FALSE;
+		else if (p[len] == 0 || p[len] == ' ')
+			return GL_TRUE;
+		else
+			string = p + len;
+	}
 }
 
 
@@ -604,10 +700,10 @@ void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merg
 	*merged = limits[0];
 	merged->extensions = (GLubyte*)crStrdup((const char*)limits[0].extensions);
 
-#define CHECK_LIMIT(LIMIT)				\
-	if (limits->LIMIT < merged->LIMIT)		\
-	{ \
-			merged->LIMIT = limits->LIMIT; \
+#define CHECK_LIMIT(LIMIT)						\
+	if (limits->LIMIT < merged->LIMIT)	\
+	{																		\
+			merged->LIMIT = limits->LIMIT;	\
 	}
 
 	for (i = 1; i < n; i++)
@@ -648,19 +744,44 @@ void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merg
 		CHECK_LIMIT(lineWidthGranularity);
 		CHECK_LIMIT(maxGeneralCombiners);
 
-        /* find the intersection of limits[i].extensions and
-         * merged.extensions */
+		/* find the intersection of limits[i].extensions and
+		 * merged.extensions */
 
-        s = merge_ext_strings((const char*)merged->extensions,
-                              (const char*)limits[i].extensions);
+		s = merge_ext_strings((const char*)merged->extensions,
+													(const char*)limits[i].extensions);
 
 		if (merged->extensions)
 		{
 			crFree(merged->extensions);
 		}
-		merged->extensions = (GLubyte*)s;
-	}
 
+		/* append the Chromium extenstions to OpenGL */
+		{
+			int j;
+			for (j = 0; chromiumExtensions[j]; j++) {
+				if (!hasExtension(s, chromiumExtensions[j])) {
+					/* append chromiumExtensions[j] and a space character */
+					char *tmp1 = crStrjoin(s, chromiumExtensions[j]);
+					char *tmp2 = crStrjoin(tmp1, " ");
+					crFree(tmp1);
+					crFree(s);
+					s = tmp2;
+				}
+			}
+		}
+		merged->extensions = (GLubyte *) s;
+
+		CHECK_LIMIT(redBits);
+		CHECK_LIMIT(greenBits);
+		CHECK_LIMIT(blueBits);
+		CHECK_LIMIT(alphaBits);
+		CHECK_LIMIT(depthBits);
+		CHECK_LIMIT(stencilBits);
+		CHECK_LIMIT(accumRedBits);
+		CHECK_LIMIT(accumGreenBits);
+		CHECK_LIMIT(accumBlueBits);
+		CHECK_LIMIT(accumAlphaBits);
+	}
 
 #undef CHECK_LIMIT
 }

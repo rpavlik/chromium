@@ -44,6 +44,8 @@ void readbackSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(readback_spu.self) );
 	crSPUCopyDispatchTable( &(readback_spu.self), self );
+
+	readback_spu.server = (CRServer *)(self->server);
 }
 
 int readbackSPUCleanup(void)

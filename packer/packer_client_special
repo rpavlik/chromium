@@ -5,3 +5,4 @@
 ArrayElement
 DrawArrays
 DrawElements
+DrawRangeElements

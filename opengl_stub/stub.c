@@ -6,24 +6,29 @@
 
 #include "cr_applications.h"
 #include "cr_spu.h"
+#include "stub.h"
 
-#include <stdio.h>
 
-extern SPU *stub_spu;
-extern void StubInit(void);
-
-void APIENTRY crCreateContext( void )
+int APIENTRY crCreateContext( void *display, GLint visBits )
 {
 	StubInit();
-	stub_spu->dispatch_table.CreateContext( NULL, NULL );
+	return stub_spu->dispatch_table.CreateContext( display, visBits );
 }
 
-void APIENTRY crMakeCurrent( void )
+void APIENTRY crDestroyContext( void *display, GLint context )
 {
-	stub_spu->dispatch_table.MakeCurrent( );
+	stub_spu->dispatch_table.DestroyContext( display, context );
 }
 
-void APIENTRY crSwapBuffers( void )
+void APIENTRY crMakeCurrent( void *display, GLint drawable, GLint context )
 {
+	stub_spu->dispatch_table.MakeCurrent( display, drawable, context );
+}
+
+void APIENTRY crSwapBuffers( void *display, GLint drawable )
+{
+	(void) display;
+	(void) drawable;
+	/* XXX these should get passed through */
 	stub_spu->dispatch_table.SwapBuffers( );
 }

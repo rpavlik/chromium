@@ -78,7 +78,6 @@ void crStateCurrentRecover( void )
 	CRCurrentState *c = &(g->current);
 	CRStateBits *b = GetCurrentBits();
 	CRCurrentBits *cb = &(b->current);
-	GLbitvalue nbitID = g->neg_bitid;
 	static const GLcolorf color_default			= {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLcolorf secondaryColor_default= {0.0f, 0.0f, 0.0f, 0.0f};
 	static const GLtexcoordf texCoord_default	= {0.0f, 0.0f, 0.0f, 1.0f};
@@ -91,8 +90,10 @@ void crStateCurrentRecover( void )
 	GLtexcoord_p	*texCoord	= &(c->current->texCoord);
 	GLindex_p		*index		= &(c->current->index);
 	GLedgeflag_p	*edgeFlag	= &(c->current->edgeFlag);
-
 	int i;
+	GLbitvalue nbitID[CR_MAX_BITARRAY];
+
+	DIRTY(nbitID, g->neg_bitid);
 
 	/* Save pre state */
 	c->normalPre = c->normal;
@@ -149,10 +150,10 @@ for k in current_fns.keys():
 	elif k == 'SecondaryColor':
 		print '%s\t\tconvert(&(c->%s.r), v);' % (indent,name)
 	if current_fns[k].has_key( 'array' ):
-		print '%s\t\tcb->%s[i] = nbitID;' % (indent,name)
+		print '%s\t\tDIRTY(cb->%s[i], nbitID);' % (indent,name)
 	else:
-		print '%s\t\tcb->%s = nbitID;' % (indent,name)
-	print '%s\t\tcb->dirty = nbitID;' % indent
+		print '%s\t\tDIRTY(cb->%s, nbitID);' % (indent,name)
+	print '%s\t\tDIRTY(cb->dirty, nbitID);' % indent
 	print '%s\t}' % indent
 	if current_fns[k].has_key( 'array' ):
 		print '%s\t%s->ptr[i] = v;' % (indent, name )

@@ -41,7 +41,28 @@ num_components = {
 }
 
 num_extended_components = {
-	'GL_TEXTURE_MAX_ANISOTROPY_EXT': ( 1, 'CR_EXT_texture_filter_anisotropic' )
+	'GL_TEXTURE_MAX_ANISOTROPY_EXT': ( 1, 'CR_EXT_texture_filter_anisotropic' ),
+	'GL_TEXTURE_WRAP_R': ( 1, 'CR_OPENGL_VERSION_1_2'),
+	'GL_TEXTURE_PRIORITY': ( 1, 'CR_OPENGL_VERSION_1_2'),
+	'GL_TEXTURE_MIN_LOD': ( 1, 'CR_OPENGL_VERSION_1_2'),
+	'GL_TEXTURE_MAX_LOD': ( 1, 'CR_OPENGL_VERSION_1_2'),
+	'GL_TEXTURE_BASE_LEVEL': ( 1, 'CR_OPENGL_VERSION_1_2'),
+	'GL_TEXTURE_MAX_LEVEL': ( 1, 'CR_OPENGL_VERSION_1_2'),
+	'GL_COMBINER_INPUT_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_MAPPING_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_COMPONENT_USAGE_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_AB_DOT_PRODUCT_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_CD_DOT_PRODUCT_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_MUX_SUM_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_SCALE_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_BIAS_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_AB_OUTPUT_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_CD_OUTPUT_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_SUM_OUTPUT_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_INPUT_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_INPUT_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_MAPPING_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_COMBINER_COMPONENT_USAGE_NV': ( 1, 'CR_NV_register_combiners')
 }
 
 print """static unsigned int __lookupComponents( GLenum pname )
@@ -64,7 +85,7 @@ for comp in comps:
 
 print """
 		default:
-			crError( "Unknown paramater name in LookupComponents: %d", pname );
+			crError( "Unknown parameter name in __lookupComponents: %d", pname );
 			break;
 	}
 	/* NOTREACHED */

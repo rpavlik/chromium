@@ -1,0 +1,104 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Test Programs</h1>
+<p>This section describes test programs included with Chromium.
+</p>
+
+<h2 class="PageSubHeading">tiletest</h2>
+<p>
+The tiletest program verifies that the tilesort SPU is working correctly.
+It can also be used to visually experiment with simple tile layouts and
+load balancing.
+</p>
+
+<p>
+The tiletest program verifies that tilesorting is working correctly
+by doing the following:
+</p>
+<ul>
+<li>Ask the Chromium tilesort SPU for the number of servers, the number
+of tiles per server, and the size and location of all tiles.
+<li>Draw a colored square corresponding to each tile.  The tile color
+indicates the server.  Each tile is also labeled 'sXtY' to indicate server
+number X and tile number Y.
+<li>Draw a cube centered in each tile.
+<li>As the cubes are drawn, the tilesort SPU records the number of vertices
+sent to each render server.
+<li>Query the servers to determine how many vertices each received.
+<li>Print a report of the results and compare the number of vertices
+received to the number expected.
+</ul>
+
+<p>
+Three tests are performed by changing the granularity of the
+glBegin/glEnd primitives:
+</p>
+<ul>
+<li>Per-face: glBegin and glEnd are called for each face of each cube.
+<li>Per-cube: glBegin and glEnd are called once for each cube.
+<li>Per-scene: glBegin and glEnd are called just once for the whole test.
+</ul>
+
+<p>
+In the first two cases each tile should receive 24 vertices (the number
+of vertices per cube).  So if a server has T tiles, the server should
+receive 24T vertices.
+</p>
+<p>
+In the last case all cube vertices should be sent to all servers since
+Chromium bins only whole glBegin/glEnd primitives.
+Therefore, if C cubes are drawn, each server should receive 24C vertices.
+</p>
+
+<p>
+The tiletest program can also be used to experiment with tile layouts.
+Run tiletest with the -t option.  You'll see a matrix of colored squares.
+Each color represents a different server.  The number of servers, tile
+rows and tile columns can be changed with the keyboard:
+</p>
+
+<ul>
+<li>s/S = decrease/increase number of servers
+<li>r/R = decrease/increase rows of tiles
+<li>c/C = decrease/increase columns of tiles
+</ul>
+
+<p>
+The following shows a configuration with 3 servers and a 4x4 array of tiles.
+It's a good configuration because the tiles are evenly distributed.
+</p>
+
+<IMG src="goodtiling.gif">
+
+<p>
+If we increase the number of servers to 4 and use a naive tile allocation
+then we'll get the following configuration:
+</p>
+
+<IMG src="badtiling.gif">
+
+<p>
+The point is that the tile configuration for a given number of servers
+is important and determines how well the rendering load is balanced among
+the servers.
+</p>
+
+
+</body>
+
+</html>

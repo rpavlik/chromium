@@ -33,7 +33,7 @@ static int __gl_Map2NumComponents( GLenum target )
 	case GL_MAP2_TEXTURE_COORD_2:
 		return 2;
 	default:
-		crError( "Invalid map target: %d", target );
+		return -1;
 	}
 	return -1;
 }
@@ -56,7 +56,7 @@ static int __gl_Map1NumComponents( GLenum target )
 	case GL_MAP1_TEXTURE_COORD_2:
 		return 2;
 	default:
-		crError( "Invalid map target: %d", target );
+		return -1;
 	}
 	return -1;
 }
@@ -80,6 +80,13 @@ void PACK_APIENTRY crPackMap2d(GLenum target, GLdouble u1,
 		sizeof( vstride );
 
 	int num_components = __gl_Map2NumComponents( target );
+	if (num_components < 0)
+	{
+		__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+								 "crPackMap2d(bad target)" );
+		return;
+	}
+
 	packet_length += num_components*uorder*vorder*sizeof( *points );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
@@ -129,6 +136,13 @@ void PACK_APIENTRY crPackMap2f(GLenum target, GLfloat u1,
 		sizeof( vstride );
 
 	int num_components = __gl_Map2NumComponents( target );
+	if (num_components < 0)
+	{
+		__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+								 "crPackMap2f(bad target)" );
+		return;
+	}
+
 	packet_length += num_components*uorder*vorder*sizeof( *points );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
@@ -174,6 +188,13 @@ void PACK_APIENTRY crPackMap1d( GLenum target, GLdouble u1,
 	GLdouble *src_data, *dest_data;
 	int u;
 
+	if (num_components < 0)
+	{
+		__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+								 "crPackMap1d(bad target)" );
+		return;
+	}
+
 	packet_length += num_components * order * sizeof( *points );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
@@ -210,6 +231,13 @@ void PACK_APIENTRY crPackMap1f( GLenum target, GLfloat u1,
 	int num_components = __gl_Map1NumComponents( target );
 	GLfloat *src_data, *dest_data;
 	int u;
+
+	if (num_components < 0)
+	{
+		__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+								 "crPackMap1f(bad target)" );
+		return;
+	}
 
 	packet_length += num_components * order * sizeof( *points );
 

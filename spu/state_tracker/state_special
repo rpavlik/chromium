@@ -180,6 +180,7 @@ NewList
 EndList
 DeleteLists
 IsList
+IsTexture
 ListBase
 EnableClientState
 DisableClientState
@@ -213,3 +214,8 @@ FinalCombinerInputNV
 #GetFinalCombinerInputParameterivNV
 CombinerStageParameterfvNV
 GetCombinerStageParameterfvNV
+Color3f
+Color3fv
+Color4f
+Color4fv
+Hint

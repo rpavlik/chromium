@@ -1,0 +1,201 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Chromium OpenGL Conformance</h1>
+<p>
+Chromium strives to be a drop-in replacement for a conventional OpenGL
+implementation.  In order to do so, Chromium must conform to the
+OpenGL specification.  In some areas, this is very difficult or
+impossible to achieve.  This section describes the ways in which
+Chromium differs from OpenGL.
+</p>
+
+<h2 class="PageSubHeading">Core OpenGL</h2>
+
+<p>
+The following OpenGL features are not implemented in Chromium at this
+time:
+</p>
+<ul>
+<li>Selection
+<li>Feedback
+<li>OpenGL 1.2 imaging functions related to histogram, min/max,
+convolution and colortables
+</ul>
+
+<p>
+Display lists aren't completely conformant.  The problem is that state
+changes contained in display lists aren't visible to the state
+tracker.  A concrete example of this problem is text rendering.
+</p>
+<p>
+glBitmap commands, encapsulated in display lists, are the conventional
+way to render bitmap text with OpenGL.  The xmove, ymove parameters to
+glBitmap specify how the raster position is to be updated after
+rendering a glyph.  But since Chromium's state tracker doesn't notice
+the raster position deltas in display lists, text won't be rendered as
+expected.
+</p>
+<p>
+This display list problem should be addressed in the future.
+</p>
+<p>
+Here are the results of running the OpenGL conformance tests with
+the tilesort SPU (1 tile, 100x100 pixels) with comments explaining
+some of the failures:
+</p>
+    DrawPixels test (Test number #29) failed.
+       GL_DEPTH_COMPONENT test fails because of glRasterPos problem.
+    CopyPixels test (Test number #30) failed.
+       GL_STENCIL test fails because of glRasterPos problem.
+    Bitmap Rasterization test (Test number #31) failed.
+       Bitmap renders incorrectly due to glRasterPos problem.
+    Display Lists test (Test number #72) failed.
+       Known display list problem.
+    Texture Edge Clamp test (Test number #75) not supported (not an error).
+    Packed Pixels test (Test number #76) not supported (not an error).
+    Texture LOD test (Test number #77) not supported (not an error).
+    Rescale Normal test (Test number #78) not supported (not an error).
+    Color Table test (Test number #79) not supported (not an error).
+    Convolution test (Test number #80) not supported (not an error).
+    Convolution Border test (Test number #81) not supported (not an error).
+    Histogram test (Test number #82) not supported (not an error).
+    MinMax test (Test number #83) not supported (not an error).
+    Texture Combine test (Test number #85) not supported (not an error).
+    Texture Cube Map test (Test number #86) failed.
+    Transpose Matrix test (Test number #87) not supported (not an error).
+    Texture Add test (Test number #88) not supported (not an error).
+<p>
+To show the differences of the tilesort SPU failures, here are the
+results of running the OpenGL conformance tests with the tilesort SPU
+(2 tiles, 50x100 pixels each) again with comments explaining some
+of the failures:
+</p>
+<pre>
+    Viewport Transformation test (Test number #8) failed.
+       This may never be fixed because of the way the tilesort SPU
+       manipulates the OpenGL viewport.
+    Buffer Clear test (Test number #9) failed.
+    Buffer Invariance test (Test number #14) failed.
+       This test happens to draw a point which exactly falls in the
+       center of the mural and winds up getting culled.  If the point is
+       moved, the test passes.
+    Scissor test (Test number #18) failed.
+    DrawPixels test (Test number #29) failed.
+       (as per single tile above)
+    CopyPixels test (Test number #30) failed.
+       (as per single tile above)
+    Bitmap Rasterization test (Test number #31) failed.
+       (as per single tile above)
+    Line Rasterization test (Test number #34) failed.
+    Line Stipple test (Test number #35) failed.
+       Line stipple can't be properly handled when lines cross tiles.
+    Anti-aliased Line test (Test number #36) failed.
+    Horizontal and Vertical Line test (Test number #37) failed.
+    Triangle Rasterization test (Test number #38) failed.
+    Triangle Tile test (Test number #39) failed.
+    Triangle Stipple test (Test number #40) failed.
+       Polygon stipples must be rotated if tile sizes aren't multiples of 32.
+    Anti-aliased Triangles test (Test number #41) failed.
+    Quad Rasterization test (Test number #42) failed.
+    Polygon Face test (Test number #43) failed.
+    Polygon Cull test (Test number #44) failed.
+    Polygon Stipple test (Test number #45) failed.
+       Polygon stipples must be rotated if tile sizes aren't multiples of 32.
+    Polygon Edge test (Test number #46) failed.
+    Texture Decal test (Test number #68) failed.
+    Texture Border test (Test number #69) failed.
+    Mipmaps Selection test (Test number #70) failed.
+    Display Lists test (Test number #72) failed.
+       Known display list problem.
+    Texture Edge Clamp test (Test number #75) not supported (not an error).
+    Packed Pixels test (Test number #76) not supported (not an error).
+    Texture LOD test (Test number #77) not supported (not an error).
+    Rescale Normal test (Test number #78) not supported (not an error).
+    Color Table test (Test number #79) not supported (not an error).
+    Convolution test (Test number #80) not supported (not an error).
+    Convolution Border test (Test number #81) not supported (not an error).
+    Histogram test (Test number #82) not supported (not an error).
+    MinMax test (Test number #83) not supported (not an error).
+    MultiTexture test (Test number #84) failed.
+    Texture Combine test (Test number #85) not supported (not an error).
+    Texture Cube Map test (Test number #86) failed.
+    Transpose Matrix test (Test number #87) not supported (not an error).
+    Texture Add test (Test number #88) not supported (not an error).
+</pre>
+
+
+<h2 class="PageSubHeading">GLX</h2>
+
+<p>
+The following GLX functions are not implemented by Chromium.  Calling
+them will result in an error message.  Zero will be returned if the
+function returns a value.
+</p>
+
+<ul>
+<li><code>glXCopyContext</code>
+<li><code>glXCreateGLXPixmap</code>
+<li><code>glXDestroyGLXPixmap</code>
+<li><code>glXWaitGL</code>
+<li><code>glXWaitX</code>
+</ul>
+
+<p>
+Additionally, none of the GLX 1.3 functions related to Pbuffers or
+visual configs are implemented.
+</p>
+
+<p>
+GLX visuals present a problem for Chromium.  The basic problem is that
+the visuals available on the application host display may not match
+the visuals of the rendering host display(s).  If the application
+queries the GLX visual attributes of the local host display it may
+find a visual that has no equal on the rendering hosts.  It may even
+be the case that the local host display has no GLX capabilities at
+all.  In a heterogeneous cluster, the rendering hosts themselves may
+have different visual capabilities.
+</p>
+<p>
+Ideally, when the application queries GLX visuals and their attributes
+it should get results which reflect the capabilities of the rendering
+host displays.  The results should be the minimums of the union of the
+rendering hosts.  For example, if there are four rendering hosts and
+three of them support accumulation buffers but one doesn't then the
+application should be told that no accumulation buffer exists.
+</p>
+<p>
+This level of sophistication does not yet exist in the Chromium GLX
+code.  Therefore, it's possible for an application to determine that
+there are visual capabilities that don't really exist, causing the
+application to eventually abort.  Luckily, all modern graphics
+hardware supports stencil buffers, alpha channels and accumulation
+buffers so this is seldom a problem.  Trying to use stereo and
+multisample color buffers may be problematic, however.
+</p>
+
+
+<h2 class="PageSubHeading">WGL</h2>
+
+<p>
+TBD: document known WGL issues.
+</p>
+
+
+</body>
+
+</html>

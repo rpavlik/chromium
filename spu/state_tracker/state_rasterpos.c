@@ -44,6 +44,12 @@ void crStateRasterPosUpdate(CRContext *g,
 	c->rasterPos = p;
 	c->rasterPosPre = p;
 
+	c->rasterColor = c->color;
+	c->rasterSecondaryColor = c->secondaryColor;
+	c->rasterIndex = c->index;
+	c->rasterTexture = c->texCoord[0];
+
+
 	/*
 	**  Need handle these for glGet...
 	**  c->rasterdistance;
@@ -52,6 +58,8 @@ void crStateRasterPosUpdate(CRContext *g,
 	**  c->rastertexture;
 	*/
 }
+
+
 void STATE_APIENTRY crStateRasterPos2d(GLdouble x, GLdouble y)
 {
   CRContext *g = GetCurrentContext();
@@ -68,8 +76,8 @@ void STATE_APIENTRY crStateRasterPos2d(GLdouble x, GLdouble y)
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos2f(GLfloat x, GLfloat y)
@@ -88,8 +96,8 @@ void STATE_APIENTRY crStateRasterPos2f(GLfloat x, GLfloat y)
 
 	crStateRasterPosUpdate(g,x, y, 0.0f, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos2i(GLint x, GLint y)
@@ -108,8 +116,8 @@ void STATE_APIENTRY crStateRasterPos2i(GLint x, GLint y)
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos2s(GLshort x, GLshort y)
@@ -128,8 +136,8 @@ void STATE_APIENTRY crStateRasterPos2s(GLshort x, GLshort y)
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, 0.0f, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
@@ -148,8 +156,8 @@ void STATE_APIENTRY crStateRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
@@ -168,8 +176,8 @@ void STATE_APIENTRY crStateRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 
 	crStateRasterPosUpdate(g,x, y, z, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos3i(GLint x, GLint y, GLint z)
@@ -188,8 +196,8 @@ void STATE_APIENTRY crStateRasterPos3i(GLint x, GLint y, GLint z)
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos3s(GLshort x, GLshort y, GLshort z)
@@ -208,8 +216,8 @@ void STATE_APIENTRY crStateRasterPos3s(GLshort x, GLshort y, GLshort z)
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
@@ -228,8 +236,8 @@ void STATE_APIENTRY crStateRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdou
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -248,8 +256,8 @@ void STATE_APIENTRY crStateRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat 
 
 	crStateRasterPosUpdate(g,x, y, z, w);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos4i(GLint x, GLint y, GLint z, GLint w)
@@ -268,8 +276,8 @@ void STATE_APIENTRY crStateRasterPos4i(GLint x, GLint y, GLint z, GLint w)
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
@@ -288,8 +296,8 @@ void STATE_APIENTRY crStateRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort 
 
 	crStateRasterPosUpdate(g,(GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos2dv(const GLdouble *v)
@@ -308,8 +316,8 @@ void STATE_APIENTRY crStateRasterPos2dv(const GLdouble *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos2fv(const GLfloat *v)
@@ -328,8 +336,8 @@ void STATE_APIENTRY crStateRasterPos2fv(const GLfloat *v)
 
 	crStateRasterPosUpdate(g,v[0], v[1], 0.0f, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos2iv(const GLint *v)
@@ -348,8 +356,8 @@ void STATE_APIENTRY crStateRasterPos2iv(const GLint *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos2sv(const GLshort *v)
@@ -368,8 +376,8 @@ void STATE_APIENTRY crStateRasterPos2sv(const GLshort *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], 0.0f, 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos3dv(const GLdouble *v)
@@ -388,8 +396,8 @@ void STATE_APIENTRY crStateRasterPos3dv(const GLdouble *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos3fv(const GLfloat *v)
@@ -408,8 +416,8 @@ void STATE_APIENTRY crStateRasterPos3fv(const GLfloat *v)
 
 	crStateRasterPosUpdate(g,v[0], v[1], v[2], 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos3iv(const GLint *v)
@@ -428,8 +436,8 @@ void STATE_APIENTRY crStateRasterPos3iv(const GLint *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos3sv(const GLshort *v)
@@ -448,8 +456,8 @@ void STATE_APIENTRY crStateRasterPos3sv(const GLshort *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0f);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos4dv(const GLdouble *v)
@@ -468,8 +476,8 @@ void STATE_APIENTRY crStateRasterPos4dv(const GLdouble *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos4fv(const GLfloat *v)
@@ -488,8 +496,8 @@ void STATE_APIENTRY crStateRasterPos4fv(const GLfloat *v)
 
 	crStateRasterPosUpdate(g,v[0], v[1], v[2], v[3]);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos4iv(const GLint *v)
@@ -508,8 +516,8 @@ void STATE_APIENTRY crStateRasterPos4iv(const GLint *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateRasterPos4sv(const GLshort *v)
@@ -528,6 +536,6 @@ void STATE_APIENTRY crStateRasterPos4sv(const GLshort *v)
 
 	crStateRasterPosUpdate(g,(GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 
-	cb->dirty = g->neg_bitid;
-	cb->raster = g->neg_bitid;
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->raster, g->neg_bitid);
 }

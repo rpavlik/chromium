@@ -11,8 +11,8 @@
 
 void TILESORTSPU_APIENTRY tilesortspu_Begin( GLenum mode )
 {
-	CRTransformState *t = &(tilesort_spu.ctx->transform);
-	CRCurrentState *c = &(tilesort_spu.ctx->current);
+	CRTransformState *t = &(tilesort_spu.currentContext->transform);
+	CRCurrentState *c = &(tilesort_spu.currentContext->current);
 	/* We have to set this every time because a flush from 
 	 * the state tracker will turn off its flusher. */
 
@@ -47,7 +47,7 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 	{
 		unsigned int i;
 
-		for (i = 0 ; i < tilesort_spu.ctx->limits.maxTextureUnits; i++)
+		for (i = 0 ; i < tilesort_spu.currentContext->limits.maxTextureUnits; i++)
 		{
 			if (i == 0)
 			{

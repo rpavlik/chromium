@@ -27,7 +27,7 @@ static int __gl_CallListsNumBytes( GLenum type )
 		case GL_4_BYTES:
 			return 4;
 		default:
-			crError( "Invalid type: %d", type );
+			return -1;
 	}
 	return -1;
 }
@@ -43,6 +43,13 @@ void PACK_APIENTRY crPackCallListsSWAP(GLint n, GLenum type,
 
 	int bytesPerList = __gl_CallListsNumBytes( type );
 	int numBytes = bytesPerList * n;
+
+	if (numBytes < 0)
+	{
+		__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+								 "crPackCallLists(bad type)" );
+		return;
+	}
 
 	packet_length = sizeof( n ) + 
 		sizeof( type ) + 

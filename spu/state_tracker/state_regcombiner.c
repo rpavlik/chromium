@@ -116,14 +116,14 @@ void STATE_APIENTRY crStateCombinerParameterfvNV( GLenum pname, const GLfloat *p
 			r->constantColor0.g = params[1];
 			r->constantColor0.b = params[2];
 			r->constantColor0.a = params[3];
-			rb->regCombinerColor0 = g->neg_bitid;
+			DIRTY(rb->regCombinerColor0, g->neg_bitid);
 			break;
 		case GL_CONSTANT_COLOR1_NV:
 			r->constantColor1.r = params[0];
 			r->constantColor1.g = params[1];
 			r->constantColor1.b = params[2];
 			r->constantColor1.a = params[3];
-			rb->regCombinerColor1 = g->neg_bitid;
+			DIRTY(rb->regCombinerColor1, g->neg_bitid);
 			break;
 		case GL_NUM_GENERAL_COMBINERS_NV:
 			if( *params < 1 || *params > g->limits.maxGeneralCombiners )
@@ -132,18 +132,18 @@ void STATE_APIENTRY crStateCombinerParameterfvNV( GLenum pname, const GLfloat *p
 				return;
 			}
 			r->numGeneralCombiners = (GLint)*params;
-			rb->regCombinerVars = g->neg_bitid;
+			DIRTY(rb->regCombinerVars, g->neg_bitid);
 			break;
 		case GL_COLOR_SUM_CLAMP_NV:
 			r->colorSumClamp = (GLboolean)*params;
-			rb->regCombinerVars = g->neg_bitid;
+			DIRTY(rb->regCombinerVars, g->neg_bitid);
 			break;
 		default:
 			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "CombinerParameter passed bogus pname: 0x%x", pname );
 			return;
 	}
 
-	rb->dirty = g->neg_bitid;
+	DIRTY(rb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateCombinerParameterivNV( GLenum pname, const GLint *params )
@@ -292,8 +292,8 @@ void STATE_APIENTRY crStateCombinerInputNV( GLenum stage, GLenum portion, GLenum
 		return;
 	}
 
-	rb->regCombinerInput = g->neg_bitid;
-	rb->dirty = g->neg_bitid;
+	DIRTY(rb->regCombinerInput, g->neg_bitid);
+	DIRTY(rb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateCombinerOutputNV( GLenum stage, GLenum portion, GLenum abOutput, GLenum cdOutput, GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct, GLboolean cdDotProduct, GLboolean muxSum )
@@ -387,8 +387,8 @@ void STATE_APIENTRY crStateCombinerOutputNV( GLenum stage, GLenum portion, GLenu
 		return;
 	}
 
-	rb->regCombinerOutput = g->neg_bitid;
-	rb->dirty = g->neg_bitid;
+	DIRTY(rb->regCombinerOutput, g->neg_bitid);
+	DIRTY(rb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateFinalCombinerInputNV( GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage )
@@ -467,8 +467,8 @@ void STATE_APIENTRY crStateFinalCombinerInputNV( GLenum variable, GLenum input, 
 			return;
 	}
 
-	rb->regCombinerFinalInput = g->neg_bitid;
-	rb->dirty = g->neg_bitid;
+	DIRTY(rb->regCombinerFinalInput, g->neg_bitid);
+	DIRTY(rb->dirty, g->neg_bitid);
 }
 
 #if 0
@@ -502,21 +502,21 @@ void STATE_APIENTRY crStateCombinerStageParameterfvNV( GLenum stage, GLenum pnam
 			r->stageConstantColor0[stage].g = params[1];
 			r->stageConstantColor0[stage].b = params[2];
 			r->stageConstantColor0[stage].a = params[3];
-			rb->regCombinerStageColor0 = g->neg_bitid;
+			DIRTY(rb->regCombinerStageColor0, g->neg_bitid);
 			break;
 		case GL_CONSTANT_COLOR1_NV:
 			r->stageConstantColor1[stage].r = params[0];
 			r->stageConstantColor1[stage].g = params[1];
 			r->stageConstantColor1[stage].b = params[2];
 			r->stageConstantColor1[stage].a = params[3];
-			rb->regCombinerStageColor1 = g->neg_bitid;
+			DIRTY(rb->regCombinerStageColor1, g->neg_bitid);
 			break;
 		default:
 			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "CombinerStageParameter passed bogus pname: 0x%x", pname );
 			return;
 	}
 
-	rb->dirty = g->neg_bitid;
+	DIRTY(rb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateGetCombinerStageParameterfvNV( GLenum stage, GLenum pname, GLfloat *params )

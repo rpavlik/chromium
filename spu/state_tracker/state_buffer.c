@@ -19,6 +19,7 @@ void crStateBufferInit (CRBufferState *b)
 	b->blend     = GL_FALSE;
 	b->alphaTest = GL_FALSE;
 	b->logicOp   = GL_FALSE;
+	b->indexLogicOp   = GL_FALSE;
 	b->dither    = GL_TRUE;
 	b->depthMask = GL_TRUE;
 
@@ -46,25 +47,6 @@ void crStateBufferInit (CRBufferState *b)
 #if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
 	b->blendEquation = GL_FUNC_ADD_EXT;
 #endif
-
-	/* XXX This info should really go into a 'framebuffer' struct */
-	b->auxBuffers = 0;
-	b->rgbaMode = GL_TRUE;
-	b->indexMode = GL_FALSE;
-	b->doubleBuffer = GL_TRUE;
-	b->stereo = GL_FALSE;
-	b->subPixelBits = 4;
-	b->redBits = 8;
-	b->greenBits = 8;
-	b->blueBits = 8;
-	b->alphaBits = 8;
-	b->indexBits = 0;
-	b->depthBits = 16;
-	b->stencilBits = 0;
-	b->accumRedBits = 0;
-	b->accumGreenBits = 0;
-	b->accumBlueBits = 0;
-	b->accumAlphaBits = 0;
 }
 
 void STATE_APIENTRY crStateAlphaFunc (GLenum func, GLclampf ref) 
@@ -103,8 +85,8 @@ void STATE_APIENTRY crStateAlphaFunc (GLenum func, GLclampf ref)
 
 	b->alphaTestFunc = func;
 	b->alphaTestRef = ref;
-	bb->dirty = g->neg_bitid;
-	bb->alphaFunc = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->alphaFunc, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateDepthFunc (GLenum func) 
@@ -140,8 +122,8 @@ void STATE_APIENTRY crStateDepthFunc (GLenum func)
 
 
 	b->depthFunc = func;
-	bb->dirty = g->neg_bitid;
-	bb->depthFunc = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->depthFunc, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateBlendFunc (GLenum sfactor, GLenum dfactor) 
@@ -210,8 +192,8 @@ void STATE_APIENTRY crStateBlendFunc (GLenum sfactor, GLenum dfactor)
 
 	b->blendSrc = sfactor;
 	b->blendDst = dfactor;
-	bb->dirty = g->neg_bitid;
-	bb->blendFunc = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->blendFunc, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateBlendColorEXT( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
@@ -231,8 +213,8 @@ void STATE_APIENTRY crStateBlendColorEXT( GLclampf red, GLclampf green, GLclampf
 	b->blendColor.g = green;
 	b->blendColor.b = blue;
 	b->blendColor.a = alpha;
-	bb->blendColor = g->neg_bitid;
-	bb->dirty = g->neg_bitid;
+	DIRTY(bb->blendColor, g->neg_bitid);
+	DIRTY(bb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateBlendEquationEXT( GLenum mode )
@@ -266,8 +248,8 @@ void STATE_APIENTRY crStateBlendEquationEXT( GLenum mode )
 				"BlendEquationEXT: mode called with illegal parameter: 0x%x", (GLenum) mode );
 			return;
 	}
-	bb->blendEquation = g->neg_bitid;
-	bb->dirty = g->neg_bitid;
+	DIRTY(bb->blendEquation, g->neg_bitid);
+	DIRTY(bb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateLogicOp (GLenum opcode) 
@@ -310,8 +292,9 @@ void STATE_APIENTRY crStateLogicOp (GLenum opcode)
 	}
 
 	b->logicOpMode = opcode;
-	bb->dirty = g->neg_bitid;
-	bb->logicOp = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->logicOp, g->neg_bitid);
+	DIRTY(bb->indexLogicOp, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateDrawBuffer (GLenum mode) 
@@ -341,6 +324,10 @@ void STATE_APIENTRY crStateDrawBuffer (GLenum mode)
 		case GL_LEFT:
 		case GL_RIGHT:
 		case GL_FRONT_AND_BACK:
+		case GL_AUX0:
+		case GL_AUX1:
+		case GL_AUX2:
+		case GL_AUX3:
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glDrawBuffer called with bogus mode: %d", mode);
@@ -348,8 +335,8 @@ void STATE_APIENTRY crStateDrawBuffer (GLenum mode)
 	}
 
 	b->drawBuffer = mode;
-	bb->dirty = g->neg_bitid;
-	bb->drawBuffer = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->drawBuffer, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateReadBuffer (GLenum mode) 
@@ -379,6 +366,10 @@ void STATE_APIENTRY crStateReadBuffer (GLenum mode)
 		case GL_LEFT:
 		case GL_RIGHT:
 		case GL_FRONT_AND_BACK:
+		case GL_AUX0:
+		case GL_AUX1:
+		case GL_AUX2:
+		case GL_AUX3:
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glReadBuffer called with bogus mode: %d", mode);
@@ -386,8 +377,8 @@ void STATE_APIENTRY crStateReadBuffer (GLenum mode)
 	}
 
 	b->readBuffer = mode;
-	bb->dirty = g->neg_bitid;
-	bb->readBuffer = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->readBuffer, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateIndexMask (GLuint mask) 
@@ -406,8 +397,8 @@ void STATE_APIENTRY crStateIndexMask (GLuint mask)
 	FLUSH();
 
 	b->indexWriteMask = mask;
-	bb->dirty = g->neg_bitid;
-	bb->indexMask = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->indexMask, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateColorMask (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha) 
@@ -429,8 +420,8 @@ void STATE_APIENTRY crStateColorMask (GLboolean red, GLboolean green, GLboolean 
 	b->colorWriteMask.g = green;
 	b->colorWriteMask.b = blue;
 	b->colorWriteMask.a = alpha;
-	bb->dirty = g->neg_bitid;
-	bb->colorWriteMask = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->colorWriteMask, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) 
@@ -461,8 +452,8 @@ void STATE_APIENTRY crStateClearColor (GLclampf red, GLclampf green, GLclampf bl
 	b->colorClearValue.g = green;
 	b->colorClearValue.b = blue;
 	b->colorClearValue.a = alpha;
-	bb->dirty = g->neg_bitid;
-	bb->clearColor = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->clearColor, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateClearIndex (GLfloat c) 
@@ -479,8 +470,8 @@ void STATE_APIENTRY crStateClearIndex (GLfloat c)
 	}
 
 	b->indexClearValue = c;
-	bb->dirty = g->neg_bitid;
-	bb->clearIndex = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->clearIndex, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateClearDepth (GLclampd depth) 
@@ -502,8 +493,8 @@ void STATE_APIENTRY crStateClearDepth (GLclampd depth)
 	if (depth > 1.0) depth = 1.0;
 
 	b->depthClearValue = (GLdefault) depth;
-	bb->dirty = g->neg_bitid;
-	bb->clearDepth = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->clearDepth, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateClearAccum (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) 
@@ -534,8 +525,8 @@ void STATE_APIENTRY crStateClearAccum (GLclampf red, GLclampf green, GLclampf bl
 	b->accumClearValue.g = green;
 	b->accumClearValue.b = blue;
 	b->accumClearValue.a = alpha;
-	bb->dirty = g->neg_bitid;
-	bb->clearAccum = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->clearAccum, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateDepthMask (GLboolean b) 
@@ -554,6 +545,6 @@ void STATE_APIENTRY crStateDepthMask (GLboolean b)
 	FLUSH();
 
 	bs->depthMask = b;
-	bb->dirty = g->neg_bitid;
-	bb->depthMask = g->neg_bitid;
+	DIRTY(bb->dirty, g->neg_bitid);
+	DIRTY(bb->depthMask, g->neg_bitid);
 }

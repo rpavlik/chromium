@@ -184,20 +184,25 @@ for rettype in types:
 		#print '#ifdef %s' % ifdef
 		print '#ifdef CR_%s' % ext
 		print '\t\tcase %s:' % pname
-		print '\t\t\tif (g->extensions.%s) {' % ext
+		if ext != 'OPENGL_VERSION_1_2':
+			print '\t\t\tif (g->extensions.%s) {' % ext
 		try:
 			cvt = convert[srctype][rettype]
 			i = 0
 			for field in fields:
 				expr = cvt % field
-				print '\t\t\t\tparams[%d] = %s;' % (i,expr)
+				if ext != 'OPENGL_VERSION_1_2':
+					print '\t\t\t\tparams[%d] = %s;' % (i,expr)
+				else:
+					print '\t\t\tparams[%d] = %s;' % (i,expr)
 				i += 1
 		except:
 			print '\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented GLGet!");'
-		print "\t\t\t}"
-		print "\t\t\telse {"
-		print '\t\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_ENUM, "glGet%sv");' % rettype
-		print "\t\t\t}"
+		if ext != 'OPENGL_VERSION_1_2':
+			print "\t\t\t}"
+			print "\t\t\telse {"
+			print '\t\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_ENUM, "glGet%sv");' % rettype
+			print "\t\t\t}"
 		print "\t\t\tbreak;"
 		#print '#endif /* %s */' % ifdef
 		print '#endif /* CR_%s */' % ext

@@ -14,6 +14,7 @@
 #endif
 
 #include "cr_spu.h"
+#include "cr_server.h"
 
 void readbackspuGatherConfiguration( void );
 
@@ -21,12 +22,20 @@ typedef struct {
 	int id;
 	int has_child;
 	SPUDispatchTable self, child, super;
+	CRServer *server;
 
 	int extract_depth;
 	int local_visualization;
+	int visualize_depth;
+	int drawX, drawY;
+	GLenum depthType;
+
 } ReadbackSPU;
 
-#define READBACK_BARRIER 1
+#define READBACK_BARRIER        1
+#define CREATE_CONTEXT_BARRIER  2
+#define MAKE_CURRENT_BARRIER    3
+#define DESTROY_CONTEXT_BARRIER 4
 
 extern ReadbackSPU readback_spu;
 

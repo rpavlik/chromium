@@ -97,7 +97,7 @@ void *crFileAlloc( CRConnection *conn )
 	if ( buf == NULL )
 	{
 		crDebug( "Buffer pool was empty, so I allocated %d bytes", 
-			sizeof(CRFileBuffer) + conn->mtu );
+			(int)(sizeof(CRFileBuffer) + conn->mtu) );
 		buf = (CRFileBuffer *) 
 			crAlloc( sizeof(CRFileBuffer) + conn->mtu );
 		buf->magic = CR_FILE_BUFFER_MAGIC;

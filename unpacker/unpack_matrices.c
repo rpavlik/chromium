@@ -10,12 +10,8 @@
 
 void crUnpackMultMatrixd( void  )
 {
-#ifdef WIREGL_UNALIGNED_ACCESS_OKAY
-	GLdouble *m = DATA_POINTER( 0, GLdouble );
-#else
 	GLdouble m[16];
 	memcpy( m, DATA_POINTER( 0, GLdouble ), sizeof(m) );
-#endif
 
 	cr_unpackDispatch.MultMatrixd( m );
 	INCR_DATA_PTR( 16*sizeof( GLdouble ) );
@@ -31,12 +27,8 @@ void crUnpackMultMatrixf( void  )
 
 void crUnpackLoadMatrixd( void  )
 {
-#ifdef WIREGL_UNALIGNED_ACCESS_OKAY
-	GLdouble *m = DATA_POINTER( 0, GLdouble );
-#else
 	GLdouble m[16];
 	memcpy( m, DATA_POINTER( 0, GLdouble ), sizeof(m) );
-#endif
 
 	cr_unpackDispatch.LoadMatrixd( m );
 	INCR_DATA_PTR( 16*sizeof( GLdouble ) );

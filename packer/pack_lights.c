@@ -8,7 +8,7 @@
 #include "cr_glwrapper.h"
 #include "cr_error.h"
 
-static void __handleLightData( GLenum light, GLenum pname, const GLfloat *params )
+static GLboolean __handleLightData( GLenum light, GLenum pname, const GLfloat *params )
 {
 	unsigned int packet_length = sizeof( int ) + sizeof( light ) + sizeof( pname );
 	unsigned int params_length = 0;
@@ -32,7 +32,9 @@ static void __handleLightData( GLenum light, GLenum pname, const GLfloat *params
 			params_length = sizeof( *params );
 			break;
 		default:
-			crError( "Unkown parameter: %d", pname );
+			__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+									 "crPackLight(bad pname)" );
+			return GL_FALSE;
 	}
 	packet_length += params_length;
 	GET_BUFFERED_POINTER( packet_length );
@@ -49,22 +51,23 @@ static void __handleLightData( GLenum light, GLenum pname, const GLfloat *params
 	{
 		WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
 	}
+	return GL_TRUE;
 }
 
 void PACK_APIENTRY crPackLightfv (GLenum light, GLenum pname, const GLfloat *params)
 {
-	__handleLightData( light, pname, params );
-	WRITE_OPCODE( CR_LIGHTFV_OPCODE );
+	if (__handleLightData( light, pname, params ))
+		WRITE_OPCODE( CR_LIGHTFV_OPCODE );
 }
 
 void PACK_APIENTRY crPackLightiv (GLenum light, GLenum pname, const GLint *params)
 {
 	/* floats and ints are the same size, so the packing should be the same */
-	__handleLightData( light, pname, (const GLfloat *) params );
-	WRITE_OPCODE( CR_LIGHTIV_OPCODE );
+	if (__handleLightData( light, pname, (const GLfloat *) params ))
+		WRITE_OPCODE( CR_LIGHTIV_OPCODE );
 }
 
-static void __handleLightModelData( GLenum pname, const GLfloat *params )
+static GLboolean __handleLightModelData( GLenum pname, const GLfloat *params )
 {
 	unsigned int packet_length = sizeof( int ) + sizeof( pname );
 	unsigned int params_length = 0;
@@ -79,7 +82,9 @@ static void __handleLightModelData( GLenum pname, const GLfloat *params )
 			params_length = sizeof( *params );
 			break;
 		default:
-			crError( "Unknown parameter: %d", pname );
+			__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+									 "crPackLightModel(bad pname)" );
+			return GL_FALSE;
 	}
 	packet_length += params_length;
 	GET_BUFFERED_POINTER( packet_length );
@@ -92,17 +97,18 @@ static void __handleLightModelData( GLenum pname, const GLfloat *params )
 		WRITE_DATA( sizeof( int ) + 12, GLfloat, params[2] );
 		WRITE_DATA( sizeof( int ) + 16, GLfloat, params[3] );
 	}
+	return GL_TRUE;
 }
 
 void PACK_APIENTRY crPackLightModelfv (GLenum pname, const GLfloat *params)
 {
-	__handleLightModelData( pname, params );
-	WRITE_OPCODE( CR_LIGHTMODELFV_OPCODE );
+	if (__handleLightModelData( pname, params ))
+		WRITE_OPCODE( CR_LIGHTMODELFV_OPCODE );
 }
 
 void PACK_APIENTRY crPackLightModeliv (GLenum pname, const GLint *params)
 {
 	/* floats and ints are the same size, so the packing should be the same */
-	__handleLightModelData( pname, (const GLfloat *) params );
-	WRITE_OPCODE( CR_LIGHTMODELIV_OPCODE );
+	if (__handleLightModelData( pname, (const GLfloat *) params ))
+		WRITE_OPCODE( CR_LIGHTMODELIV_OPCODE );
 }

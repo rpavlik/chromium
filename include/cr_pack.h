@@ -95,7 +95,7 @@ void SanityCheck(void);
     data_ptr = cr_packer_globals.buffer.data_current; \
     CRASSERT( data_ptr + (len) <= cr_packer_globals.buffer.data_end ); \
   } \
-	cr_packer_globals.current.vtx_count++; \
+  cr_packer_globals.current.vtx_count++; \
   cr_packer_globals.buffer.data_current += (len)
 
 #define GET_BUFFERED_POINTER_NO_ARGS( ) \

@@ -14,12 +14,12 @@ print << 'EOF';
 
 EOF
 
-print "void crState".$name."Diff(CR".$name."Bits *b, GLbitvalue bitID,\n";
+print "void crState".$name."Diff(CR".$name."Bits *b, GLbitvalue *bitID,\n";
 print "\tCR".$name."State *from, CR".$name."State *to)\n{\n";
 gendiffcode ("state_".lc($name).".txt", $name, 1, 0);
 print "}\n\n";
 
-print "void crState".$name."Switch(CR".$name."Bits *b, GLbitvalue bitID,\n";
+print "void crState".$name."Switch(CR".$name."Bits *b, GLbitvalue *bitID,\n";
 print "\tCR".$name."State *from, CR".$name."State *to)\n{\n";
 gendiffcode ("state_".lc($name).".txt", $name, 0, 1);
 print "}\n\n";
@@ -53,7 +53,11 @@ $current_dependancy = "";
 
 open(FILE, $fname) || die "Can't open ".$fname."!";
 
-print "\tGLbitvalue nbitID = ~bitID;\n";
+print "\tint j, i;\n";
+print "\tGLbitvalue nbitID[CR_MAX_BITARRAY];\n";
+print "\tfor (j=0;j<CR_MAX_BITARRAY;j++)\n";
+print "\t\tnbitID[j] = ~bitID[j];\n";
+print "\ti = 0; /* silence compiler */\n";
 
 mainloop: while ($line = <FILE>) {
 	chomp $line;
@@ -89,7 +93,7 @@ mainloop: while ($line = <FILE>) {
 
 	if ($line =~ /%flush/) {
 		if (($current_guard ne "")) {
-			print $tab."$bit->$current_guard &= nbitID;\n";
+			print $tab."INVERTDIRTY($bit->$current_guard, nbitID);\n";
 			chop ($tab);
 			print $tab."}\n";
 		}
@@ -108,7 +112,7 @@ mainloop: while ($line = <FILE>) {
 
 ## Close the guardbit and dependancy
   if (($current_guard ne "") && ($current_guard ne $guardbit)) {
-	print $tab."$bit->$current_guard &= nbitID;\n";
+	print $tab."INVERTDIRTY($bit->$current_guard, nbitID);\n";
 	chop ($tab);
 	print $tab."}\n";
   }
@@ -131,7 +135,7 @@ mainloop: while ($line = <FILE>) {
   }
   
   if ($current_guard ne $guardbit && $guardbit ne "") {
-		print $tab."if ($bit->$guardbit & bitID)\n".$tab."{\n";
+		print $tab."if (CHECKDIRTY($bit->$guardbit, bitID))\n".$tab."{\n";
 		$tab = $tab."\t";
 		if (substr($members,0,1) ne "\*" && $guardbit eq "enable") {
 			print $tab."glAble able[2];\n";
@@ -252,9 +256,9 @@ mainloop: while ($line = <FILE>) {
 	## Do the clear if nessesary
 	  if ($doinvalid) {
 		if ($guardbit ne "") {
-			print $tab."$bit->$guardbit=GLBITS_ONES;\n";
+			print $tab."FILLDIRTY($bit->$guardbit);\n";
 		}
-		print $tab."$bit->dirty=GLBITS_ONES;\n";
+		print $tab."FILLDIRTY($bit->dirty);\n";
 	  }
 
 	## Close the compare
@@ -267,7 +271,7 @@ mainloop: while ($line = <FILE>) {
 
 ## Do final closures
 if ($current_guard ne "") {
-  print $tab."$bit->$current_guard &= nbitID;\n";
+  print $tab."INVERTDIRTY($bit->$current_guard, nbitID);\n";
   chop ($tab);
   print $tab."}\n";
 }
@@ -276,7 +280,7 @@ if ($docopy && $current_dependancy ne "") {
   print $tab."} \/*$current_dependancy*\/\n"
 }
 
-print $tab."$bit->dirty &= nbitID;\n";
+print $tab."INVERTDIRTY($bit->dirty, nbitID);\n";
 
 }
 

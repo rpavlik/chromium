@@ -176,6 +176,18 @@ void crMothershipIdentifyServer( CRConnection *conn, char *response )
 	INSIST( crMothershipSendString( conn, response, "server %s", hostname ));
 }
 
+
+void crMothershipSetParam( CRConnection *conn, const char *param, const char *value )
+{
+	(void) crMothershipSendString( conn, NULL, "SetParam %s %s", param, value );
+}
+
+int crMothershipGetParam( CRConnection *conn, const char *param, char *response )
+{
+	return crMothershipSendString( conn, response, "GetParam %s", param );
+}
+
+
 void crMothershipGetMTU( CRConnection *conn, char *response )
 {
 	INSIST( crMothershipSendString( conn, response, "mtu" ) );

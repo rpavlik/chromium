@@ -2,6 +2,16 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
+:unpack:unpack.rowLength:PixelStorei,GL_UNPACK_ROW_LENGTH
+#:unpack:unpack.skipImages:PixelStorei,GL_UNPACK_SKIP_IMAGES
+:unpack:unpack.skipRows:PixelStorei,GL_UNPACK_SKIP_ROWS
+:unpack:unpack.skipPixels:PixelStorei,GL_UNPACK_SKIP_PIXELS
+#:unpack:unpack.imageHeight:PixelStorei,GL_UNPACK_IMAGE_HEIGHT
+:pack:pack.rowLength:PixelStorei,GL_PACK_ROW_LENGTH
+#:pack:pack.skipImages:PixelStorei,GL_PACK_SKIP_IMAGES
+:pack:pack.skipRows:PixelStorei,GL_PACK_SKIP_ROWS
+:pack:pack.skipPixels:PixelStorei,GL_PACK_SKIP_PIXELS
+#:pack:pack.imageHeight:PixelStorei,GL_PACK_IMAGE_HEIGHT
 #:clientPointer:v.size,v.type,v.stride,v.p:VertexPointer
 #:clientPointer:c.size,c.type,c.stride,c.p:ColorPointer
 #:clientPointer:s.size,s.type,s.stride,s.p:SecondaryColorPointerEXT

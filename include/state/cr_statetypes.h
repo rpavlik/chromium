@@ -27,7 +27,7 @@ typedef GLfloat GLdefault;
 
 #define GLBITS_LENGTH 32
 #define GLBITS_ONES 0xFFFFFFFF
-typedef unsigned long GLbitvalue;
+typedef unsigned int GLbitvalue;
 
 typedef struct {
 	GLfloat x1, x2, y1, y2;

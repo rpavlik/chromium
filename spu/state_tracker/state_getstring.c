@@ -28,7 +28,9 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 #error "cr_version.h wasn't included!"
 #endif
 
-	CRContext   *g = GetCurrentContext( );
+	CRContext *g = GetCurrentContext();
+	if (!g)
+		return NULL;
 
 	switch( name )
 	{
@@ -41,7 +43,8 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 		case GL_EXTENSIONS:
 			return g->limits.extensions;
 		default:
-			crError( "Unknown parameter in crStateGetString: %d", name );
+			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
+									"calling glGetString() with invalid name" );
 			return NULL;
 	}
 }

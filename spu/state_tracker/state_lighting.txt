@@ -2,7 +2,6 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
->int i;
 :enable:lighting:GL_LIGHTING
 :enable:colorMaterial:GL_COLOR_MATERIAL
 :enable:colorSumEXT:GL_COLOR_SUM_EXT
@@ -10,7 +9,7 @@
 :colorMaterial:colorMaterialFace,colorMaterialMode:ColorMaterial
 %flush
 +>if (!to->lighting) {
-+>b->dirty &= nbitID;
++>INVERTDIRTY(b->dirty, nbitID);
 +>return;
 +>}
 :lightModel:lightModelAmbient|r,g,b,a:LightModelfv,GL_LIGHT_MODEL_AMBIENT
@@ -32,14 +31,14 @@
 >CRLightBits *lb = b->light+i;
 >CRLight *tl = to->light+i;
 >CRLight *cl = from->light+i;
->if (!(lb->dirty & bitID)) continue;
+>if (!(CHECKDIRTY(lb->dirty, bitID))) continue;
 %target=tl
 %current=cl
 %bit=lb
 :enable:enable:GL_LIGHT0+i
 %flush
 +>if (!tl->enable) {
-+>lb->dirty &=nbitID;
++>INVERTDIRTY(lb->dirty, nbitID);
 +>continue;
 +>}
 :ambient:ambient|r,g,b,a:Lightfv, GL_LIGHT0+i, GL_AMBIENT
@@ -62,7 +61,7 @@
 :spot:spotCutoff:Lightf, GL_LIGHT0+i, GL_SPOT_CUTOFF
 :spot:*diff_api.PopMatrix();
 %flush
->lb->dirty &= nbitID;
+>INVERTDIRTY(lb->dirty, nbitID);
 >}
 %target=to
 %current=from

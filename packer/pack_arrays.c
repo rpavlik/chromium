@@ -69,3 +69,11 @@ void PACK_APIENTRY crPackSecondaryColorPointerEXT( GLint size, GLenum type, GLsi
 	UNUSED( pointer );
 	crError( "Unimplemented crPackSecondaryColorPointerEXT" );
 }
+
+void PACK_APIENTRY crPackInterleavedArrays( GLenum format, GLsizei stride, const GLvoid *pointer )
+{
+	UNUSED( format );
+	UNUSED( stride );
+	UNUSED( pointer );
+	crError( "Unimplemented crPackInterleavedArrays" );
+}

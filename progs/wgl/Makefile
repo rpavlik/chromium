@@ -2,14 +2,9 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
-BoundsInfo
-BarrierCreate
-BarrierDestroy
-BarrierExec
-SemaphoreCreate
-SemaphoreDestroy
-SemaphoreP
-SemaphoreV
-CreateContext
-MakeCurrent
-Writeback
+
+TOP = ../..
+
+SUBDIRS = multicontext
+
+include ${TOP}/cr.mk

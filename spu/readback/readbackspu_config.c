@@ -15,6 +15,10 @@ static void __setDefaults( void )
 {
 	readback_spu.extract_depth = 0;
 	readback_spu.local_visualization = 1;
+	readback_spu.visualize_depth = 0;
+	readback_spu.depthType = GL_FLOAT;
+	readback_spu.drawX = 0;
+	readback_spu.drawY = 0;
 }
 
 void readbackspuGatherConfiguration( void )
@@ -42,6 +46,14 @@ void readbackspuGatherConfiguration( void )
 	if (crMothershipGetSPUParam( conn, response, "local_visualization" ))
 	{
 		readback_spu.local_visualization = crStrToInt( response );
+	}
+	if (crMothershipGetSPUParam( conn, response, "visualize_depth" ))
+	{
+		readback_spu.visualize_depth = crStrToInt( response );
+	}
+	if (crMothershipGetSPUParam( conn, response, "drawpixels_pos" ) )
+	{
+		sscanf( response, "%d %d", &readback_spu.drawX, &readback_spu.drawY );
 	}
 
 	crMothershipDisconnect( conn );

@@ -18,12 +18,16 @@ void crStateViewportInit(CRViewportState *v)
 	v->viewportValid = GL_FALSE;
 	v->viewportX = 0;
 	v->viewportY = 0;
+	/* These are defaults, the tilesort spu overrides when
+	 * the context has been created */
 	v->viewportW = 640;
 	v->viewportH = 480;
 
 	v->scissorValid = GL_FALSE;
 	v->scissorX = 0;
 	v->scissorY = 0;
+	/* These are defaults, the tilesort spu overrides when
+	 * the context has been created */
 	v->scissorW = 640;
 	v->scissorH = 480;
 
@@ -53,7 +57,8 @@ void STATE_APIENTRY crStateViewport(GLint x, GLint y, GLsizei width,
 	
 	if (g->current.inBeginEnd)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glViewport called in Begin/End");
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION,
+									"calling glViewport() between glBegin/glEnd" );
 		return;
 	}
 
@@ -61,16 +66,17 @@ void STATE_APIENTRY crStateViewport(GLint x, GLint y, GLsizei width,
 	
 	if (width < 0 || height < 0)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Negative viewport width or height: %dx%d", width, height);
+		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE,
+									"glViewport(bad width or height)" );
 		return;
 	}
 
-	/* if (x > v->maxviewportdims_width)	x = v->maxviewportdims_width; 
-	 * if (x < -v->maxviewportdims_width)	x = -v->maxviewportdims_width; 
-	 * if (y > v->maxviewportdims_height)	y = v->maxviewportdims_height; 
-	 * if (y < -v->maxviewportdims_height)	y = -v->maxviewportdims_height; 
-	 * if (width > v->maxviewportdims_width)	width = v->maxviewportdims_width; 
-	 *if (height > v->maxviewportdims_height)	height = v->maxviewportdims_height; */
+	if (x > g->limits.maxViewportDims[0]) x = g->limits.maxViewportDims[0];
+	if (x < -g->limits.maxViewportDims[0]) x = -g->limits.maxViewportDims[0]; 
+	if (y > g->limits.maxViewportDims[1])	y = g->limits.maxViewportDims[1]; 
+	if (y < -g->limits.maxViewportDims[1])	y = -g->limits.maxViewportDims[1]; 
+	if (width > g->limits.maxViewportDims[0])  width = g->limits.maxViewportDims[0]; 
+	if (height > g->limits.maxViewportDims[1])  height = g->limits.maxViewportDims[1];
 
 	v->viewportX = (GLint) (x);
 	v->viewportY = (GLint) (y);
@@ -79,10 +85,10 @@ void STATE_APIENTRY crStateViewport(GLint x, GLint y, GLsizei width,
 
 	v->viewportValid = GL_TRUE;
 
-	vb->v_dims = g->neg_bitid;
-	vb->dirty = g->neg_bitid;
-	tb->base = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(vb->v_dims, g->neg_bitid);
+	DIRTY(vb->dirty, g->neg_bitid);
+	DIRTY(tb->base, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 
 }
 
@@ -109,9 +115,9 @@ void STATE_APIENTRY crStateDepthRange(GLclampd znear, GLclampd zfar)
 	if (v->farClip < 0.0) v->farClip = 0.0;
 	if (v->farClip > 1.0) v->farClip = 1.0;
 
-	vb->depth = g->neg_bitid;
-	vb->dirty = g->neg_bitid;
-	tb->dirty = g->neg_bitid;
+	DIRTY(vb->depth, g->neg_bitid);
+	DIRTY(vb->dirty, g->neg_bitid);
+	DIRTY(tb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateScissor (GLint x, GLint y, 
@@ -146,6 +152,6 @@ void STATE_APIENTRY crStateScissor (GLint x, GLint y,
 
 	v->scissorValid = GL_TRUE;
 
-	vb->s_dims = g->neg_bitid;
-	vb->dirty = g->neg_bitid;
+	DIRTY(vb->s_dims, g->neg_bitid);
+	DIRTY(vb->dirty, g->neg_bitid);
 }

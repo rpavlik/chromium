@@ -10,8 +10,9 @@
 
 extern SPUDispatchTable glim;
 
-extern void APIENTRY crCreateContext(void);
-extern void APIENTRY crMakeCurrent(void);
-extern void APIENTRY crSwapBuffers(void);
+extern GLint APIENTRY crCreateContext(void *display, GLint visBits);
+extern void APIENTRY crDestroyContext(void *display, GLint context);
+extern void APIENTRY crMakeCurrent(void *display, GLint drawable, GLint context);
+extern void APIENTRY crSwapBuffers(void *display, GLint drawable);
 
 #endif /* CR_API_TEMPLATES_H */

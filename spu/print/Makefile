@@ -11,10 +11,10 @@ FILES = printspu \
 		printspu_config \
 		printspu_enums \
 		printspu_get \
-		printspu_hint \
 		printspu_init \
 		printspu_lighting \
-		printspu_matrices
+		printspu_matrices \
+		printspu_misc
 
 LIBRARIES = crutil crmothership spuload
 

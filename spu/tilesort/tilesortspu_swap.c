@@ -12,7 +12,7 @@
 void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers(void)
 {
 	int writeback = tilesort_spu.num_servers;
-	tilesortspuFlush( tilesort_spu.ctx );
+	tilesortspuFlush( tilesort_spu.currentContext );
 	if (tilesort_spu.swap)
 	{
 		crPackSwapBuffersSWAP( );

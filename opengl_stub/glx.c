@@ -12,9 +12,21 @@
 #include "cr_error.h"
 #include "cr_spu.h"
 #include "cr_applications.h"
+#include "cr_mothership.h"
+#include "stub.h"
 
-extern SPU *stub_spu;
-extern void StubInit(void);
+#ifndef GLX_SAMPLE_BUFFERS_SGIS
+#define GLX_SAMPLE_BUFFERS_SGIS    0x186a0 /*100000*/
+#endif
+#ifndef GLX_SAMPLES_SGIS
+#define GLX_SAMPLES_SGIS           0x186a1 /*100001*/
+#endif
+
+
+/* For optimizing glXMakeCurrent */
+static Display *currentDisplay = NULL;
+static GLXDrawable currentDrawable = 0;
+static GLXContext currentContext = 0;
 
 static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 {
@@ -101,8 +113,10 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 	return visual;
 }
 
+
 XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 {
+	XVisualInfo *vis;
 	int *attrib, wants_rgb;
 
 	wants_rgb = 0;
@@ -125,8 +139,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 					int level = attrib[1];
 					if ( level != 0 )
 					{
-						crWarning( "glXChooseVisual: "
-								"level=%d unsupported", level );
+						crWarning( "glXChooseVisual: GLX_LEVEL = %d unsupported", level );
 						return NULL;
 					}
 				}
@@ -134,17 +147,18 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				break;
 
 			case GLX_RGBA:
+				DesiredVisual |= CR_RGB_BIT;
 				wants_rgb = 1;
 				break;
 
 			case GLX_DOUBLEBUFFER:
-				/* ignored? */
+				DesiredVisual |= CR_DOUBLE_BIT;
 				/* wants_doublebuffer = 1; */
 				break;
 
 			case GLX_STEREO:
-				crWarning( "glXChooseVisual: stereo "
-						"unsupported" );
+				DesiredVisual |= CR_STEREO_BIT;
+				crWarning( "glXChooseVisual: stereo unsupported" );
 				return NULL;
 
 			case GLX_AUX_BUFFERS:
@@ -152,8 +166,8 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 					int aux_buffers = attrib[1];
 					if ( aux_buffers != 0 )
 					{
-						crWarning( "glXChooseVisual: "
-								"aux_buffers=%d unsupported", aux_buffers );
+						crWarning( "glXChooseVisual: aux_buffers=%d unsupported",
+											 aux_buffers );
 						return NULL;
 					}
 				}
@@ -163,10 +177,26 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			case GLX_RED_SIZE:
 			case GLX_GREEN_SIZE:
 			case GLX_BLUE_SIZE:
+				if (attrib[1] > 0)
+					DesiredVisual |= CR_RGB_BIT;
+				attrib++;
+				break;
+
 			case GLX_ALPHA_SIZE:
+				if (attrib[1] > 0)
+					DesiredVisual |= CR_ALPHA_BIT;
+				attrib++;
+				break;
+
 			case GLX_DEPTH_SIZE:
+				if (attrib[1] > 0)
+					DesiredVisual |= CR_DEPTH_BIT;
+				attrib++;
+				break;
+
 			case GLX_STENCIL_SIZE:
-				/* ignored */
+				if (attrib[1] > 0)
+					DesiredVisual |= CR_STENCIL_BIT;
 				attrib++;
 				break;
 
@@ -174,34 +204,42 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			case GLX_ACCUM_GREEN_SIZE:
 			case GLX_ACCUM_BLUE_SIZE:
 			case GLX_ACCUM_ALPHA_SIZE:
-				/* unsupported */
-				{
-					int accum_size = attrib[1];
-					if ( accum_size != 0 )
-					{
-						crWarning( "glXChooseVisual: "
-								"accum_size=%d unsupported", accum_size );
-						return NULL;
-					}
+				if (attrib[1] > 0)
+					DesiredVisual |= CR_ACCUM_BIT;
+				attrib++;
+				break;
+
+			case GLX_SAMPLE_BUFFERS_SGIS:
+				if (attrib[1] > 0) {
+					return NULL;  /* don't handle multisample yet */
+					/* eventually... */
+					/*DesiredVisual |= CR_MULTISAMPLE_BIT;*/
+				}
+				attrib++;
+				break;
+			case GLX_SAMPLES_SGIS:
+				if (attrib[1] > 0) {
+					return NULL;  /* don't handle multisample yet */
+					/* eventually... */
+					/*DesiredVisual |= CR_MULTISAMPLE_BIT;*/
 				}
 				attrib++;
 				break;
 
 			default:
-				crWarning( "glXChooseVisual: bad "
-						"attrib=0x%x", *attrib );
+				crWarning( "glXChooseVisual: bad attrib=0x%x", *attrib );
 				return NULL;
 		}
 	}
 
 	if ( !wants_rgb )
 	{
-		crWarning( "glXChooseVisual: didn't request"
-				"RGB visual?" );
+		crWarning( "glXChooseVisual: didn't request RGB visual?" );
 		return NULL;
 	}
 
-	return ReasonableVisual( dpy, screen );
+	vis = ReasonableVisual( dpy, screen );
+	return vis;
 }
 
 /* There is a problem with glXCopyContext.
@@ -214,42 +252,66 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
  ** #ifdef out the code.
  */
 
-#if 0
-	void
-glXCopyContext( Display *dpy, GLXContext src, GLXContext dst, GLuint mask )
+void
+glXCopyContext( Display *dpy, GLXContext src, GLXContext dst, unsigned long mask )
 {
-	crError( "Unsupported GLX Call: glXCopyContext()" );
-}
-#endif
-
-GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share,
-		Bool direct )
-{
-	static int already_has_a_context = 0;
-
-	if (!already_has_a_context)
-	{
-		already_has_a_context = 1;
-	}
-	else
-	{
-		crError( "I'm sorry, I don't support multiple context creation right now.  If this is holding you up, file a bug." ); 
-	}
-
 	(void) dpy;
-	(void) vis;
-	(void) share;
-	(void) direct;
-#if 0
-	/* This is moving to glXMakeCurrent because the tilesort SPU needs 
-	 * to know the drawable in order to do something intelligent with 
-	 * the viewport calls. */
-
-	StubInit();
-	stub_spu->dispatch_table.CreateContext();
-#endif
-	return (GLXContext) "foo";
+	(void) src;
+	(void) dst;
+	(void) mask;
+	crWarning( "Unsupported GLX Call: glXCopyContext()" );
 }
+
+
+
+/*
+ * For now we're ignoring all the parameters.
+ */
+GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct )
+{
+	return stubCreateContext( dpy, vis, share, direct);
+}
+
+
+void glXDestroyContext( Display *dpy, GLXContext ctx )
+{
+	stubDestroyContext( dpy, ctx );
+}
+
+
+Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
+{
+	Bool retVal;
+
+	/*
+	printf("glXMakeCurrent(%p, %d, %d)\n", dpy, (int) drawable, (int) ctx);
+	*/
+
+	if (drawable == 0 && ctx == 0) {
+		/* Glean is one app that calls glXMakeCurrent(dpy, 0, 0).
+		 * We can safely ignore it.
+		 */
+		currentDrawable = 0;
+		currentContext = 0;
+		return True;
+	}
+
+	/*
+	if (currentDrawable && currentDrawable != drawable)
+		crWarning("Multiple drawables not fully supported!");
+	*/
+
+	retVal = stubMakeCurrent( dpy, drawable, ctx );
+
+	if (retVal) {
+		currentDisplay = dpy;
+		currentDrawable = drawable;
+		currentContext = ctx;
+	}
+
+	return retVal;
+}
+
 
 GLXPixmap glXCreateGLXPixmap( Display *dpy, XVisualInfo *vis, Pixmap pixmap )
 {
@@ -257,28 +319,22 @@ GLXPixmap glXCreateGLXPixmap( Display *dpy, XVisualInfo *vis, Pixmap pixmap )
 	(void) vis;
 	(void) pixmap;
 
-	crError( "Unsupported GLX Call: glXCreateGLXPixmap()" );
+	crWarning( "Unsupported GLX Call: glXCreateGLXPixmap()" );
 	return (GLXPixmap) 0;
-}
-
-void glXDestroyContext( Display *dpy, GLXContext ctx )
-{
-	(void) dpy;
-	(void) ctx;
-	crWarning( "Unsupported GLX Call: glXDestroyContext()" );
 }
 
 void glXDestroyGLXPixmap( Display *dpy, GLXPixmap pix )
 {
 	(void) dpy;
 	(void) pix;
-	crError( "Unsupported GLX Call: glXDestroyGLXPixmap()" );
+	crWarning( "Unsupported GLX Call: glXDestroyGLXPixmap()" );
 }
 
 int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 {
 	(void) dpy;
 	(void) vis;
+
 	switch ( attrib ) {
 
 		case GLX_USE_GL:
@@ -322,34 +378,54 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_ALPHA_SIZE:
-			*value = 8;
+			*value = (DesiredVisual & CR_ALPHA_BIT) ? 8 : 0;
 			break;
 
 		case GLX_DEPTH_SIZE:
-			*value = 24;
+			*value = 16;
 			break;
 
 		case GLX_STENCIL_SIZE:
+			DesiredVisual |= CR_STENCIL_BIT;
 			*value = 8;
 			break;
 
 		case GLX_ACCUM_RED_SIZE:
-			*value = 0;
+			DesiredVisual |= CR_ACCUM_BIT;
+			*value = 16;
 			break;
 
 		case GLX_ACCUM_GREEN_SIZE:
-			*value = 0;
+			DesiredVisual |= CR_ACCUM_BIT;
+			*value = 16;
 			break;
 
 		case GLX_ACCUM_BLUE_SIZE:
-			*value = 0;
+			DesiredVisual |= CR_ACCUM_BIT;
+			*value = 16;
 			break;
 
 		case GLX_ACCUM_ALPHA_SIZE:
-			*value = 0;
+			DesiredVisual |= CR_ACCUM_BIT;
+			*value = 16;
+			break;
+
+		case GLX_SAMPLE_BUFFERS_SGIS:
+			DesiredVisual |= CR_MULTISAMPLE_BIT;
+			*value = 0;  /* fix someday */
+			break;
+
+		case GLX_SAMPLES_SGIS:
+			DesiredVisual |= CR_MULTISAMPLE_BIT;
+			*value = 0;  /* fix someday */
+			break;
+
+		case GLX_VISUAL_CAVEAT_EXT:
+			*value = GLX_NONE_EXT;
 			break;
 
 		default:
+			crWarning( "Unsupported GLX Call: glXGetConfig with attrib 0x%x", attrib );
 			return GLX_BAD_ATTRIBUTE;
 	}
 
@@ -358,36 +434,18 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 
 GLXContext glXGetCurrentContext( void )
 {
-	crError( "Unsupported GLX Call: glXGetCurrentContext()" );
-	return (GLXContext) 0;
+	return currentContext;
 }
 
 GLXDrawable glXGetCurrentDrawable( void )
 {
-	crError( "Unsupported GLX Call: glXGetCurrentDrawable()" );
-	return (GLXDrawable) 0;
+	return currentDrawable;
 }
 
 Bool glXIsDirect( Display *dpy, GLXContext ctx )
 {
 	(void) dpy;
 	(void) ctx;
-	return 1;
-}
-
-Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
-{
-	static int first_time = 1;
-	(void) dpy;
-	(void) drawable;
-	(void) ctx;
-	if (first_time)
-	{
-		first_time = 0;
-		StubInit();
-		stub_spu->dispatch_table.CreateContext( (void *) dpy, (void *) drawable );
-	}
-	stub_spu->dispatch_table.MakeCurrent();
 	return True;
 }
 
@@ -410,18 +468,22 @@ Bool glXQueryVersion( Display *dpy, int *major, int *minor )
 
 void glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 {
-	(void) dpy;
-	(void) drawable;
-	stub_spu->dispatch_table.SwapBuffers();
+	stubSwapBuffers( dpy, drawable );
 }
 
 void glXUseXFont( Font font, int first, int count, int listBase )
 {
-	(void) font;
-	(void) first;
-	(void) count;
-	(void) listBase;
-	crError( "Unsupported GLX Call: glXUseXFont()" );
+	Display *dpy = glinterface.glXGetCurrentDisplay();
+	if (dpy) {
+		stubUseXFont( dpy, font, first, count, listBase );
+	}
+	else {
+		dpy = XOpenDisplay(NULL);
+		if (!dpy)
+			return;
+		stubUseXFont( dpy, font, first, count, listBase );
+		XCloseDisplay(dpy);
+	}
 }
 
 void glXWaitGL( void )

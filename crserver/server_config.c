@@ -45,7 +45,9 @@ void crServerGatherConfiguration(char *mothership)
 	char **serverchain;
 
 
+#if 0
 	CRLimitsState limits;
+#endif
 
 	__setDefaults();
 
@@ -84,14 +86,18 @@ void crServerGatherConfiguration(char *mothership)
 		spu_dir = NULL;
 	}
 
-	cr_server.head_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir );
+	cr_server.head_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir, &cr_server );
 
 	/* Need to do this as early as possible */
-    cr_server.head_spu->dispatch_table.GetIntegerv( GL_VIEWPORT,
-        (GLint*)cr_server.underlyingDisplay );
+	cr_server.head_spu->dispatch_table.GetIntegerv( GL_VIEWPORT,
+		(GLint*)cr_server.underlyingDisplay );
 
 	/* Get OpenGL limits from first SPU */
-	crSPUQueryGLLimits( conn, spu_ids[0], &limits);
+	crSPUQueryGLLimits( conn, spu_ids[0], &cr_server.limits);
+
+	/* XXX revisit viewport clamping someday */
+	cr_server.limits.maxViewportDims[0] = MAX_MURAL_WIDTH;
+	cr_server.limits.maxViewportDims[1] = MAX_MURAL_HEIGHT;
 
 	crFree( spu_ids );
 	crFree( spu_names );
@@ -136,6 +142,10 @@ void crServerGatherConfiguration(char *mothership)
 	}
 	else
 	{
+		/* response is of the form: "N x y w h, x y w h, ..."
+		 * where N is the number of tiles and each set of 'x y w h'
+		 * values describes the tile location and size.
+		 */
 		tilechain = crStrSplitn( response, " ", 1 );
 		cr_server.numExtents = crStrToInt( tilechain[0] );
 		cr_server.maxTileHeight = 0;
@@ -160,18 +170,24 @@ void crServerGatherConfiguration(char *mothership)
 	for (i = 0 ; i < numClients ; i++)
 	{
 		char protocol[1024];
+		int j;
 
 		sscanf( clientlist[i], "%s %d", protocol, &(cr_server.clients[i].spu_id) );
 		cr_server.clients[i].conn = crNetAcceptClient( protocol, cr_server.tcpip_port, mtu, 1 );
-                /* XXX limits should come from first SPU */
-		cr_server.clients[i].ctx = crStateCreateContext( &limits );
-		crStateSetCurrentPointers( cr_server.clients[i].ctx, &(cr_server.current) );
+
+		/* Init all context-related variables */
+		for (j = 0; j < CR_MAX_CONTEXTS; j++)
+			cr_server.clients[i].context[j] = NULL;
+		cr_server.clients[i].currentCtx = NULL;
+
+		cr_server.clients[i].number = i;
 
 		if (crStrncmp(protocol,"file",crStrlen("file")))
 		{
 			a_non_file_client = i;
 		}
 	}
+	cr_server.SpuContext = 0;
 
 	/* Sigh -- the servers need to know how big the whole mural is if we're 
 	 * doing tiling, so they can compute their base projection.  For now, 
@@ -179,10 +195,27 @@ void crServerGatherConfiguration(char *mothership)
 	 * the configuration step of the tilesort SPU.  Basically this is a dirty 
 	 * way to figure out who the other servers are.  It *might* matter 
 	 * which SPU we pick for certain graph configurations, but we'll cross 
-	 * that bridge later. */
+	 * that bridge later.
+	 *
+	 * As long as we're at it, we're going to verify that all the tile
+	 * sizes are uniform when optimizeBucket is true.
+	 */
+
+	crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
+	crMothershipGetServers( conn, response );
+
+	/* crMothershipGetServers() response is of the form
+	 * "N protocol://ip:port protocol://ipnumber:port ..."
+	 * For example: "2 tcpip://10.0.0.1:7000 tcpip://10.0.0.2:7000"
+	 */
+
+	serverchain = crStrSplitn( response, " ", 1 );
+	num_servers = crStrToInt( serverchain[0] );
 
 	if (a_non_file_client != -1)
 	{
+		int optTileWidth = 0, optTileHeight = 0;
+
 		crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
 		crMothershipGetServers( conn, response );
 
@@ -227,6 +260,24 @@ void crServerGatherConfiguration(char *mothership)
 				if (y2 > (int) cr_server.muralHeight )
 				{
 					cr_server.muralHeight = y2;
+				}
+
+				if (cr_server.optimizeBucket) {
+					if (optTileWidth == 0 && optTileHeight == 0) {
+						/* first tile */
+						optTileWidth = w;
+						optTileHeight = h;
+					}
+					else {
+						/* subsequent tile - make sure it's the same size as first */
+						if (w != optTileWidth || h != optTileHeight) {
+							crWarning("Tile %d on server %d is not the right size!",
+												i, tile);
+							crWarning("All tiles must be same size with optimize_bucket.");
+							crWarning("Turning off server's optimize_bucket.");
+							cr_server.optimizeBucket = 0;
+						}
+					}
 				}
 			}
 		}

@@ -6,11 +6,24 @@
 ifneq ($(ARCH), WIN_NT)
 ifneq ($(ARCH), WIN_98)
 ARCH=$(shell uname | sed -e 's/-//g')
+MACHTYPE=$(shell uname -m)
 endif
 endif
 
-ifeq ($(ARCH),CYGWIN_NT5.0)
+ifeq ($(ARCH), CYGWIN_NT5.0)
 ARCH=WIN_NT
+endif
+
+ifeq ($(MACHTYPE),i686)
+MACHTYPE=i386
+endif
+
+ifeq ($(MACHTYPE),i586)
+MACHTYPE=i386
+endif
+
+ifeq ($(MACHTYPE),i486)
+MACHTYPE=i386
 endif
 
 ECHO := echo
@@ -62,7 +75,7 @@ endif
 
 ifdef OPENGL
 ifdef WINDOWS
-LDFLAGS += glu32.lib opengl32.lib
+LDFLAGS += glu32.lib opengl32.lib gdi32.lib user32.lib shell32.lib
 else
 ifdef SYSTEM_OPENGL_LIBRARY
 LDFLAGS += -L/usr/X11R6/lib -lGLU $(SYSTEM_OPENGL_LIBRARY) -lXmu -lXi -lX11
@@ -73,7 +86,9 @@ endif
 endif
 
 ifdef MATH
+ifndef WINDOWS
 LDFLAGS += -lm
+endif
 endif
 
 OBJDIR := $(BUILDDIR)/$(ARCH)

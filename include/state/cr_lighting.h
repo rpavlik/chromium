@@ -17,23 +17,23 @@ extern "C" {
 #define CR_NUM_LIGHTS 8
 
 typedef struct {
-	GLbitvalue dirty;
-	GLbitvalue enable;
-	GLbitvalue ambient;
-	GLbitvalue diffuse;
-	GLbitvalue specular;
-	GLbitvalue position;
-	GLbitvalue attenuation;
-	GLbitvalue spot;
+	GLbitvalue dirty[CR_MAX_BITARRAY];
+	GLbitvalue enable[CR_MAX_BITARRAY];
+	GLbitvalue ambient[CR_MAX_BITARRAY];
+	GLbitvalue diffuse[CR_MAX_BITARRAY];
+	GLbitvalue specular[CR_MAX_BITARRAY];
+	GLbitvalue position[CR_MAX_BITARRAY];
+	GLbitvalue attenuation[CR_MAX_BITARRAY];
+	GLbitvalue spot[CR_MAX_BITARRAY];
 } CRLightBits;
 
 typedef struct {
-	GLbitvalue dirty;
-	GLbitvalue shadeModel;
-	GLbitvalue colorMaterial;
-	GLbitvalue lightModel;
-	GLbitvalue material;
-	GLbitvalue enable;
+	GLbitvalue dirty[CR_MAX_BITARRAY];
+	GLbitvalue shadeModel[CR_MAX_BITARRAY];
+	GLbitvalue colorMaterial[CR_MAX_BITARRAY];
+	GLbitvalue lightModel[CR_MAX_BITARRAY];
+	GLbitvalue material[CR_MAX_BITARRAY];
+	GLbitvalue enable[CR_MAX_BITARRAY];
 	CRLightBits *light;
 } CRLightingBits;
 
@@ -63,11 +63,13 @@ typedef struct {
 	GLcolorf	specular[2];     /* material front/back */
 	GLcolorf	emission[2];     /* material front/back */
 	GLfloat		shininess[2];     /* material front/back */
-    GLint       indexes[2][3];    /* material front/back amb/diff/spec */
+	GLint       indexes[2][3];    /* material front/back amb/diff/spec */
 	GLcolorf	lightModelAmbient;
 	GLboolean	lightModelLocalViewer;
 	GLboolean	lightModelTwoSide;
+#if defined(CR_EXT_separate_specular_color) || defined(CR_OPENGL_VERSION_1_2)
 	GLenum		lightModelColorControlEXT; /* CR_EXT_separate_specular_color */
+#endif
 	GLboolean	colorSumEXT; /* CR_EXT_secondary_color */
 	CRLight		*light;
 } CRLightingState;
@@ -75,9 +77,9 @@ typedef struct {
 void crStateLightingInitBits (CRLightingBits *l);
 void crStateLightingInit (CRLightingState *l);
 
-void crStateLightingDiff(CRLightingBits *bb, GLbitvalue bitID,
+void crStateLightingDiff(CRLightingBits *bb, GLbitvalue *bitID,
 		CRLightingState *from, CRLightingState *to);
-void crStateLightingSwitch(CRLightingBits *bb, GLbitvalue bitID,
+void crStateLightingSwitch(CRLightingBits *bb, GLbitvalue *bitID,
 		CRLightingState *from, CRLightingState *to);
 
 void crStateColorMaterialRecover( void );

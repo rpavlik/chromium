@@ -19,11 +19,6 @@
 extern "C" {
 #endif
 
-#define CR_SCREEN_BBOX_HINT     0x10000001
-#define CR_OBJECT_BBOX_HINT     0x10000002
-#define CR_DEFAULT_BBOX_HINT    0x10000003
-#define CR_PRINTSPU_STRING_HINT 0x10000004
-
 /* Parallel API Extensions */
 
 #ifndef APIENTRY
@@ -38,9 +33,10 @@ typedef void (APIENTRY *glSemaphoreDestroyProc) (GLuint name);
 typedef void (APIENTRY *glSemaphorePProc) (GLuint name);
 typedef void (APIENTRY *glSemaphoreVProc) (GLuint name);
 
-typedef void (APIENTRY *crCreateContextProc)(void);
-typedef void (APIENTRY *crMakeCurrentProc)(void);
-typedef void (APIENTRY *crSwapBuffersProc)(void);
+typedef GLint (APIENTRY *crCreateContextProc)(void *display, GLint visBits);
+typedef void (APIENTRY *crDestroyContextProc)(void *display, GLint context);
+typedef void (APIENTRY *crMakeCurrentProc)(void *display, GLint drawable, GLint context);
+typedef void (APIENTRY *crSwapBuffersProc)(void *display, GLint context);
 
 typedef int (CR_APIENTRY *CR_PROC)();
 CR_PROC APIENTRY crGetProcAddress( const char *name );

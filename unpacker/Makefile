@@ -20,6 +20,7 @@ FILES = unpack \
 	unpack_map \
 	unpack_materials \
 	unpack_matrices \
+	unpack_misc \
 	unpack_pixelmap \
 	unpack_readpixels \
 	unpack_regcombiner \
@@ -28,7 +29,7 @@ FILES = unpack \
 	unpack_writeback
 LIB_DEFS = unpack.def
 
-LIBRARIES = crutil spuload
+LIBRARIES = crutil spuload crpacker
 
 PRECOMP = unpack.c ../include/cr_unpackfuncs.h
 SLOP = $(PRECOMP)
@@ -42,6 +43,6 @@ include $(TOP)/cr.mk
 	@$(ECHO) Making the Unpack Function header...
 	@$(PYTHON) unpack_header.py > $@
 
-unpack.c: unpack.py ../packer/opcode_special ../packer/opcode_extend_special unpacker_special unpacker_vector_special
+unpack.c: unpack.py ../packer/opcode_special ../packer/opcode_extend_special unpacker_special unpacker_vector_special unpacker_extend_special
 	@$(ECHO) Making the UnPacker...
 	@$(PYTHON) unpack.py > $@

@@ -17,3 +17,7 @@ crSPUMergeGLLimits
 crSPUPropogateGLLimits
 crSPUChangeInterface
 crSPUInitDispatchTable
+crSPUInitDispatchNops
+crSPUInitDispatch
+crLoadOpenGLExtensions
+crLoadOpenGL

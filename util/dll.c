@@ -9,7 +9,7 @@
 #include "cr_dll.h"
 #include "cr_string.h"
 
-#if defined(IRIX) || defined(IRIX64) || defined(Linux)
+#if defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(__APPLE__)
 #include <dlfcn.h>
 #endif
 
@@ -24,9 +24,9 @@ CRDLL *crDLLOpen( const char *dllname )
 #if defined(WINDOWS)
 	dll->hinstLib = LoadLibrary( dllname );
 	dll_err = NULL;
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(__APPLE__)
 	dll->hinstLib = dlopen( dllname, RTLD_LAZY );
-	dll_err = dlerror();
+	dll_err = (char*) dlerror();
 #else
 #error DSO
 #endif
@@ -46,7 +46,7 @@ CRDLLFunc crDLLGetNoError( CRDLL *dll, const char *symname )
 {
 #if defined(WINDOWS)
 	return (CRDLLFunc) GetProcAddress( dll->hinstLib, symname );
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(__APPLE__)
 	return (CRDLLFunc) dlsym( dll->hinstLib, symname );
 #else
 #error CR DLL ARCHITETECTURE
@@ -58,9 +58,8 @@ CRDLLFunc crDLLGet( CRDLL *dll, const char *symname )
 	CRDLLFunc data = crDLLGetNoError( dll, symname );
 	if (!data)
 	{
-		crError( "Couldn't get symbol \"%s\" in \"%s\".  Are you "
-						   "sure there isn't some C++ mangling messing you "
-						   "up?", symname, dll->name );
+		/* Are you sure there isn't some C++ mangling messing you up? */
+		crWarning( "Couldn't get symbol \"%s\" in \"%s\"", symname, dll->name );
 	}
 	return data;
 }
@@ -69,7 +68,7 @@ void crDLLClose( CRDLL *dll )
 {
 #if defined(WINDOWS)
 	FreeLibrary( dll->hinstLib );
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(__APPLE__)
 	dlclose( dll->hinstLib );
 #else
 #error DSO

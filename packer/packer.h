@@ -18,4 +18,6 @@
 #include "cr_packfunctions.h"
 #include "packer_extensions.h"
 
+void __PackError( int line, const char *file, GLenum error, char *format, ... );
+
 #endif /* CR_PACKER_H */

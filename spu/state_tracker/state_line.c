@@ -54,8 +54,8 @@ void STATE_APIENTRY crStatePointSize(GLfloat size)
 	}
 		
 	l->pointSize = size;
-	lb->size = g->neg_bitid;
-	lb->dirty = g->neg_bitid;
+	DIRTY(lb->size, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateLineWidth(GLfloat width) 
@@ -80,8 +80,8 @@ void STATE_APIENTRY crStateLineWidth(GLfloat width)
 	}
 
 	l->width = width;
-	lb->width = g->neg_bitid;
-	lb->dirty = g->neg_bitid;
+	DIRTY(lb->width, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateLineStipple(GLint factor, GLushort pattern) 
@@ -105,7 +105,7 @@ void STATE_APIENTRY crStateLineStipple(GLint factor, GLushort pattern)
 
 	l->pattern = pattern;
 	l->repeat = factor;
-	lb->stipple = g->neg_bitid;
-	lb->dirty = g->neg_bitid;
+	DIRTY(lb->stipple, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 

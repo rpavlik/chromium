@@ -98,7 +98,7 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 					return;
 				}
 				f->mode = e;
-				fb->mode = g->neg_bitid;
+				DIRTY(fb->mode, g->neg_bitid);
 			}
 			break;
 		case GL_FOG_DENSITY:
@@ -107,26 +107,26 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 			{
 				f->density = 0.0f;
 			}
-			fb->density = g->neg_bitid;
+			DIRTY(fb->density, g->neg_bitid);
 			break;
 		case GL_FOG_START:
 			f->start = *param;
-			fb->start = g->neg_bitid;
+			DIRTY(fb->start, g->neg_bitid);
 			break;
 		case GL_FOG_END:
 			f->end = *param;
-			fb->end = g->neg_bitid;
+			DIRTY(fb->end, g->neg_bitid);
 			break;
 		case GL_FOG_INDEX:
 			f->index = (GLint) *param;
-			fb->index = g->neg_bitid;
+			DIRTY(fb->index, g->neg_bitid);
 			break;
 		case GL_FOG_COLOR:
 			f->color.r = param[0];
 			f->color.g = param[1];
 			f->color.b = param[2];
 			f->color.a = param[3];
-			fb->color = g->neg_bitid;
+			DIRTY(fb->color, g->neg_bitid);
 			break;
 #ifdef CR_NV_fog_distance
 		case GL_FOG_DISTANCE_MODE_NV:
@@ -140,7 +140,7 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 					return;
 				}
 				f->fogDistanceMode = (GLenum) param[0];
-				fb->fogDistanceMode = g->neg_bitid;
+				DIRTY(fb->fogDistanceMode, g->neg_bitid);
 				break;
 			}
 			/* FALL-THROUGH */
@@ -150,5 +150,5 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
 			return;
 	}
-	fb->dirty = g->neg_bitid;
+	DIRTY(fb->dirty, g->neg_bitid);
 }

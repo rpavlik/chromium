@@ -15,15 +15,15 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue  dirty;
-	GLbitvalue  enable;
-	GLbitvalue  color;
-	GLbitvalue	secondaryColor;
-	GLbitvalue  index;
-	GLbitvalue  texCoord[CR_MAX_TEXTURE_UNITS];
-	GLbitvalue  normal;
-	GLbitvalue  raster;
-	GLbitvalue  edgeFlag;
+	GLbitvalue  dirty[CR_MAX_BITARRAY];
+	GLbitvalue  enable[CR_MAX_BITARRAY];
+	GLbitvalue  color[CR_MAX_BITARRAY];
+	GLbitvalue	secondaryColor[CR_MAX_BITARRAY];
+	GLbitvalue  index[CR_MAX_BITARRAY];
+	GLbitvalue  texCoord[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	GLbitvalue  normal[CR_MAX_BITARRAY];
+	GLbitvalue  raster[CR_MAX_BITARRAY];
+	GLbitvalue  edgeFlag[CR_MAX_BITARRAY];
 } CRCurrentBits;
 
 typedef struct {
@@ -79,9 +79,10 @@ void crStateCurrentInitBits( CRCurrentBits *currentbits );
 
 void crStateCurrentRecover( void );
 
-void crStateCurrentDiff(CRCurrentBits *bb, GLbitvalue bitID,
+void crStateCurrentDiff(CRCurrentBits *bb, GLbitvalue *bitID,
 		CRCurrentState *from, CRCurrentState *to);
-void crStateCurrentSwitch(CRCurrentBits *bb, GLbitvalue bitID,
+void crStateCurrentSwitch(GLuint maxTexUnits,
+		CRCurrentBits *bb, GLbitvalue *bitID,
 		CRCurrentState *from, CRCurrentState *to);
 
 #ifdef __cplusplus

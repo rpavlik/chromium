@@ -16,16 +16,20 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue	dirty;
-	GLbitvalue	enableClientState;
-	GLbitvalue	clientPointer;
-	GLbitvalue  element;
-	GLbitvalue  *v;
-	GLbitvalue  *n;
-	GLbitvalue  *c;
-	GLbitvalue  *i;
-	GLbitvalue  *t;
-	GLbitvalue  *e;
+	GLbitvalue	dirty[CR_MAX_BITARRAY];
+	/* pixel pack/unpack */
+	GLbitvalue	pack[CR_MAX_BITARRAY];
+	GLbitvalue	unpack[CR_MAX_BITARRAY];
+	/* vertex array */
+	GLbitvalue	enableClientState[CR_MAX_BITARRAY];
+	GLbitvalue	clientPointer[CR_MAX_BITARRAY];
+	GLbitvalue	element[CR_MAX_BITARRAY];
+	GLbitvalue	*v;
+	GLbitvalue	*n;
+	GLbitvalue	*c;
+	GLbitvalue	*i;
+	GLbitvalue	*t;
+	GLbitvalue	*e;
 	GLbitvalue	*s;
 	int valloc;
 	int nalloc;
@@ -37,16 +41,31 @@ typedef struct {
 } CRClientBits;
 
 typedef struct {
+	GLint		rowLength;
+	GLint		skipRows;
+	GLint		skipPixels;
+	GLint		alignment;
+	GLint		imageHeight;
+	GLint		skipImages;
+	GLboolean	swapBytes;
+	GLboolean	psLSBFirst; /* don't conflict with crap from Xlib.h */
+} CRPixelPackState;
+
+typedef struct {
 	unsigned char *p;
 	GLint size;
 	GLint type;
 	GLint stride;
 	GLboolean enabled;
-
 	int bytesPerIndex;
 } CRClientPointer;
 
 typedef struct {
+	/* pixel pack/unpack */
+	CRPixelPackState pack;
+	CRPixelPackState unpack;
+
+	/* vertex array */
 	CRClientPointer v;
 	CRClientPointer n;
 	CRClientPointer c;
@@ -65,9 +84,9 @@ typedef struct {
 void crStateClientInitBits(CRClientBits *c);
 void crStateClientInit (CRClientState *c);
 
-void crStateClientDiff(CRClientBits *bb, GLbitvalue bitID,
+void crStateClientDiff(CRClientBits *bb, GLbitvalue *bitID,
 		CRClientState *from, CRClientState *to);
-void crStateClientSwitch(CRClientBits *bb, GLbitvalue bitID,
+void crStateClientSwitch(CRClientBits *bb, GLbitvalue *bitID,
 		CRClientState *from, CRClientState *to);
 #ifdef __cplusplus
 }

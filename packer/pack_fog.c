@@ -8,7 +8,7 @@
 #include "cr_opcodes.h"
 #include "cr_glwrapper.h"
 
-static void __handleFogData( GLenum pname, const GLfloat *params )
+static GLboolean __handleFogData( GLenum pname, const GLfloat *params )
 {
 	int params_length = 0;
 	int packet_length = sizeof( int ) + sizeof( pname );
@@ -29,7 +29,9 @@ static void __handleFogData( GLenum pname, const GLfloat *params )
 			params_length = __packFogParamsLength( pname );
 			if (!params_length)
 			{
-				crError( "Invalid pname in Fog: %d", pname );
+				__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+										 "Invalid pname in Fog: %d", pname );
+				return GL_FALSE;
 			}
 			break;
 	}
@@ -45,17 +47,18 @@ static void __handleFogData( GLenum pname, const GLfloat *params )
 		WRITE_DATA( 16, GLfloat, params[2] );
 		WRITE_DATA( 20, GLfloat, params[3] );
 	}
+	return GL_TRUE;
 }
 
 void PACK_APIENTRY crPackFogfv(GLenum pname, const GLfloat *params)
 {
-	__handleFogData( pname, params );
-	WRITE_OPCODE( CR_FOGFV_OPCODE );
+	if (__handleFogData( pname, params ))
+		WRITE_OPCODE( CR_FOGFV_OPCODE );
 }
 
 void PACK_APIENTRY crPackFogiv(GLenum pname, const GLint *params)
 {
 	/* floats and ints are the same size, so the packing should be the same */
-	__handleFogData( pname, (const GLfloat *) params );
-	WRITE_OPCODE( CR_FOGIV_OPCODE );
+	if (__handleFogData( pname, (const GLfloat *) params ))
+		WRITE_OPCODE( CR_FOGIV_OPCODE );
 }

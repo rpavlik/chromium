@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty;
+	GLbitvalue dirty[CR_MAX_BITARRAY];
 } CRAttribBits;
 
 typedef struct {
@@ -28,6 +28,7 @@ typedef struct {
 	GLboolean	blend;
 	GLboolean	alphaTest;
 	GLboolean	logicOp;
+	GLboolean	indexLogicOp;
 	GLboolean	dither;
 
 	GLenum		alphaTestFunc;
@@ -90,6 +91,9 @@ typedef struct {
 	GLboolean polygonOffsetPoint;
 	GLboolean polygonSmooth;
 	GLboolean polygonStipple;
+#ifdef CR_OPENGL_VERSION_1_2
+	GLboolean rescaleNormals;
+#endif
 	GLboolean scissorTest;
 	GLboolean stencilTest;
 	GLboolean texture1D[CR_MAX_TEXTURE_UNITS];
@@ -108,12 +112,14 @@ typedef struct {
 	GLboolean enable1D[GLEVAL_TOT];
 	GLboolean enable2D[GLEVAL_TOT];
 	GLboolean autoNormal;
+	CREvaluator1D   eval1D[GLEVAL_TOT];
+	CREvaluator2D   eval2D[GLEVAL_TOT];
 	GLint     un1D;
-	GLdouble  u11D, u21D;
+	GLfloat  u11D, u21D;
 	GLint     un2D;
 	GLint     vn2D;
-	GLdouble  u12D, u22D;
-	GLdouble  v12D, v22D;
+	GLfloat  u12D, u22D;
+	GLfloat  v12D, v22D;
 } CREvalStack;
 
 typedef struct {
@@ -124,9 +130,13 @@ typedef struct {
 	GLcolorf	specular[2];
 	GLcolorf	emission[2];
 	GLfloat		shininess[2];
+	GLint		indexes[2][3];
 	GLcolorf	lightModelAmbient;
 	GLboolean	lightModelLocalViewer;
 	GLboolean	lightModelTwoSide;
+#if defined(CR_EXT_separate_specular_color) || defined(CR_OPENGL_VERSION_1_2)
+	GLenum          lightModelColorControlEXT;
+#endif
 	CRLight		*light;
 } CRLightingStack;
 
@@ -241,8 +251,14 @@ typedef struct {
 	GLenum wrapT[4];
 #ifdef CR_OPENGL_VERSION_1_2
 	GLenum wrapR[4];
+	GLfloat priority[4];
+	GLfloat minLod[4];
+	GLfloat maxLod[4];
+	GLint baseLevel[4];
+	GLint maxLevel[4];
 #endif
 
+	GLint		curTextureUnit;
 	GLenum		envMode[CR_MAX_TEXTURE_UNITS];
 	GLcolorf	envColor[CR_MAX_TEXTURE_UNITS];
 
@@ -263,6 +279,9 @@ typedef struct {
 	GLvectord  *clipPlane;
 	GLboolean  *clip;
 	GLboolean normalize;
+#ifdef CR_OPENGL_VERSION_1_2
+	GLboolean rescaleNormals;
+#endif
 } CRTransformStack;
 
 typedef struct {
@@ -342,7 +361,7 @@ typedef struct {
 void crStateAttribInit(CRAttribState *a);
 
 /* No diff! */
-void crStateAttribSwitch(CRAttribBits *bb, GLbitvalue bitID, 
+void crStateAttribSwitch(CRAttribBits *bb, GLbitvalue *bitID, 
 		CRAttribState *from, CRAttribState *to);
 
 #ifdef __cplusplus

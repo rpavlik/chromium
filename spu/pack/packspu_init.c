@@ -42,9 +42,13 @@ SPUFunctions *packSPUInit( int id, SPU *child, SPU *super,
 	packspuCreateFunctions();
 	crStateInit();
 
-	/* GL Limits were computed in packspuGatherConfiguration() above */
-	pack_spu.ctx = crStateCreateContext( &pack_spu.limits );
-	crStateMakeCurrent( pack_spu.ctx );
+	/* We really onlu use the state tracker context to maintain the
+	 * client-side GL state such as vertex array and pixek pack/unpack
+	 * parameters.
+	 */
+	pack_spu.currentCtx = crStateCreateContext( &pack_spu.limits );
+	crStateMakeCurrent(pack_spu.currentCtx);
+
 	return &pack_functions;
 }
 

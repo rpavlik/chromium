@@ -66,13 +66,15 @@ struct _SPUSTRUCT {
 	SPUDispatchTable dispatch_table;
 };
 
-SPU *crSPULoad( SPU *child, int id, char *name, char *dir );
-SPU *crSPULoadChain( int count, int *ids, char **names, char *dir );
+SPU *crSPULoad( SPU *child, int id, char *name, char *dir, void *server);
+SPU *crSPULoadChain( int count, int *ids, char **names, char *dir, void *server );
 void crSPUInitDispatchTable( SPUDispatchTable *table );
 void crSPUCopyDispatchTable( SPUDispatchTable *dst, SPUDispatchTable *src );
 void crSPUChangeInterface( SPUDispatchTable *table, void *origFunc, void *newFunc );
 
 SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const char *fname );
+void crSPUInitDispatch( SPUDispatchTable *dispatch, const SPUNamedFunctionTable *table );
+void crSPUInitDispatchNops(SPUDispatchTable *table);
 
 void crSPUInitGLLimits( CRLimitsState *limits );
 void crSPUCopyGLLimits( CRLimitsState *dest, const CRLimitsState *src );
@@ -81,5 +83,8 @@ void crSPUReportGLLimits( const CRLimitsState *limits, int spu_id );
 void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits );
 void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merged );
 void crSPUPropogateGLLimits( CRConnection *conn, int spu_id, const SPU *child_spu, CRLimitsState *limitsResult );
+
+int crLoadOpenGL( crOpenGLInterface *interface, SPUNamedFunctionTable table[] );
+int crLoadOpenGLExtensions( const crOpenGLInterface *interface, SPUNamedFunctionTable table[] );
 
 #endif /* CR_SPU_H */

@@ -28,6 +28,7 @@ SPUFunctions *templateSPUInit( int id, SPU *child, SPU *super,
 
 	template_spu.id = id;
 	template_spu.has_child = 0;
+	template_spu.server = NULL;
 	if (child)
 	{
 		crSPUInitDispatchTable( &(template_spu.child) );
@@ -45,6 +46,8 @@ void templateSPUSelfDispatch(SPUDispatchTable *self)
 {
 	crSPUInitDispatchTable( &(template_spu.self) );
 	crSPUCopyDispatchTable( &(template_spu.self), self );
+
+	template_spu.server = (CRServer *)(self->server);
 }
 
 int templateSPUCleanup(void)

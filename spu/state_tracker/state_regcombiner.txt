@@ -2,7 +2,6 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
->int i;
 :enable:enabledRegCombiners:GL_REGISTER_COMBINERS_NV
 :enable:enabledPerStageConstants:GL_PER_STAGE_CONSTANTS_NV
 %flush

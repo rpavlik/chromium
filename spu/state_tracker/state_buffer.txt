@@ -5,12 +5,14 @@
 :enable:depthTest:GL_DEPTH_TEST
 :enable:blend:GL_BLEND
 :enable:alphaTest:GL_ALPHA_TEST
-:enable:logicOp:GL_LOGIC_OP
+:enable:logicOp:GL_COLOR_LOGIC_OP
+:enable:indexLogicOp:GL_INDEX_LOGIC_OP
 :enable:dither:GL_DITHER
 alphaTest:alphaFunc:alphaTestFunc,alphaTestRef:AlphaFunc
 depthTest:depthFunc:depthFunc:DepthFunc
 blend:blendFunc:blendSrc,blendDst:BlendFunc
 logicOp:logicOp:logicOpMode:LogicOp
+indexLogicOp:indexLogicOp:logicOpMode:LogicOp
 :drawBuffer:drawBuffer:DrawBuffer
 :readBuffer:readBuffer:ReadBuffer
 :indexMask:indexWriteMask:IndexMask

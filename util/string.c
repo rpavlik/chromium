@@ -141,6 +141,19 @@ void crStrcat( char *dest, const char *src )
 	crStrcpy( dest + crStrlen(dest), src );
 }
 
+char *crStrjoin( const char *str1, const char *str2 )
+{
+	const int len1 = crStrlen(str1), len2 = crStrlen(str2);
+	char *s = crAlloc(len1 + len2 + 1);
+	if (s)
+	{
+		memcpy( s, str1, len1 );
+		memcpy( s + len1, str2, len2 );
+		s[len1 + len2] = '\0';
+	}
+	return s;
+}
+
 char *crStrstr( const char *str, const char *pat )
 {
 	int pat_len = crStrlen( pat );

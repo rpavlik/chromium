@@ -12,6 +12,7 @@
 void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 {
 	unsigned char *p;
+	int unit;
 
 #if 0
 	if (index < 0)
@@ -22,49 +23,53 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 	{
 		crPackEdgeFlagv(c->e.p + index*c->e.stride);
 	}
-	if (c->t[c->curClientTextureUnit].enabled)
+	for (unit = 0; unit < CR_MAX_TEXTURE_UNITS; unit++)
 	{
-		p = c->t[c->curClientTextureUnit].p + index*c->t[c->curClientTextureUnit].stride;
-		switch (c->t[c->curClientTextureUnit].type)
+		if (c->t[unit].enabled)
 		{
-			case GL_SHORT:
-				switch (c->t[c->curClientTextureUnit].size)
-				{
-					case 1: crPackTexCoord1sv((GLshort *)p); break;
-					case 2: crPackTexCoord2sv((GLshort *)p); break;
-					case 3: crPackTexCoord3sv((GLshort *)p); break;
-					case 4: crPackTexCoord4sv((GLshort *)p); break;
-				}
-				break;
-			case GL_INT:
-				switch (c->t[c->curClientTextureUnit].size)
-				{
-					case 1: crPackTexCoord1iv((GLint *)p); break;
-					case 2: crPackTexCoord2iv((GLint *)p); break;
-					case 3: crPackTexCoord3iv((GLint *)p); break;
-					case 4: crPackTexCoord4iv((GLint *)p); break;
-				}
-				break;
-			case GL_FLOAT:
-				switch (c->t[c->curClientTextureUnit].size)
-				{
-					case 1: crPackTexCoord1fv((GLfloat *)p); break;
-					case 2: crPackTexCoord2fv((GLfloat *)p); break;
-					case 3: crPackTexCoord3fv((GLfloat *)p); break;
-					case 4: crPackTexCoord4fv((GLfloat *)p); break;
-				}
-				break;
-			case GL_DOUBLE:
-				switch (c->t[c->curClientTextureUnit].size)
-				{
-					case 1: crPackTexCoord1dv((GLdouble *)p); break;
-					case 2: crPackTexCoord2dv((GLdouble *)p); break;
-					case 3: crPackTexCoord3dv((GLdouble *)p); break;
-					case 4: crPackTexCoord4dv((GLdouble *)p); break;
-				}
-				break;
+			p = c->t[unit].p + index*c->t[unit].stride;
+			switch (c->t[unit].type)
+			{
+				case GL_SHORT:
+					switch (c->t[c->curClientTextureUnit].size)
+					{
+						case 1: crPackMultiTexCoord1svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
+						case 2: crPackMultiTexCoord2svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
+						case 3: crPackMultiTexCoord3svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
+						case 4: crPackMultiTexCoord4svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
+					}
+					break;
+				case GL_INT:
+					switch (c->t[c->curClientTextureUnit].size)
+					{
+						case 1: crPackMultiTexCoord1ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
+						case 2: crPackMultiTexCoord2ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
+						case 3: crPackMultiTexCoord3ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
+						case 4: crPackMultiTexCoord4ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
+					}
+					break;
+				case GL_FLOAT:
+					switch (c->t[c->curClientTextureUnit].size)
+					{
+						case 1: crPackMultiTexCoord1fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
+						case 2: crPackMultiTexCoord2fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
+						case 3: crPackMultiTexCoord3fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
+						case 4: crPackMultiTexCoord4fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
+					}
+					break;
+				case GL_DOUBLE:
+					switch (c->t[c->curClientTextureUnit].size)
+					{
+						case 1: crPackMultiTexCoord1dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
+						case 2: crPackMultiTexCoord2dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
+						case 3: crPackMultiTexCoord3dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
+						case 4: crPackMultiTexCoord4dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
+					}
+					break;
+			}
 		}
-	}
+	} /* loop over texture units */
+
 	if (c->i.enabled)
 	{
 		p = c->i.p + index*c->i.stride;
@@ -232,18 +237,20 @@ void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRC
 
 	if (count < 0)
 	{
-		crError("crPackDrawArrays passed negative count: %d", count);
+		__PackError(__LINE__, __FILE__, GL_INVALID_VALUE, "crPackDrawArrays(negative count)");
+		return;
 	}
 
 	if (mode > GL_POLYGON)
 	{
-		crError("crPackDrawArrays called with invalid mode: %d", mode);
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, "crPackDrawArrays(bad mode)");
+		return;
 	}
 
 	crPackBegin(mode);
 	for (i=0; i<count; i++)
 	{
-		crPackArrayElement(first++, c);
+		crPackArrayElement(first + i, c);
 	}
 	crPackEnd();
 }
@@ -256,17 +263,20 @@ void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
 
 	if (count < 0)
 	{
-		crError("crPackDrawElements passed negative count: %d", count);
+		__PackError(__LINE__, __FILE__, GL_INVALID_VALUE, "crPackDrawElements(negative count)");
+		return;
 	}
 
 	if (mode > GL_POLYGON)
 	{
-		crError("crPackDrawElements called with invalid mode: %d", mode);
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, "crPackDrawElements(bad mode)");
+		return;
 	}
 
 	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
 	{
-		crError("crPackDrawElements called with invalid type: %d", type);
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, "crPackDrawElements(bad type)");
+		return;
 	}
 
 	crPackBegin(mode);
@@ -294,6 +304,62 @@ void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
 		break;
 	default:
 		crError( "this can't happen: crPackDrawElements" );
+		break;
+	}
+	crPackEnd();
+}
+
+void PACK_APIENTRY crPackDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, 
+																			GLenum type, const GLvoid *indices, CRClientState *c)
+{
+	int i;
+	GLubyte *p = (GLubyte *)indices;
+
+	(void) end;
+
+	if (count < 0)
+	{
+		__PackError(__LINE__, __FILE__, GL_INVALID_VALUE, "crPackDrawRangeElements(negative count)");
+		return;
+	}
+
+	if (mode > GL_POLYGON)
+	{
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, "crPackDrawRangeElements(bad mode)");
+		return;
+	}
+
+	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
+	{
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, "crPackDrawRangeElements(bad type)");
+		return;
+	}
+
+	crPackBegin(mode);
+	switch (type)
+	{
+	case GL_UNSIGNED_BYTE:
+		for (i=start; i<count; i++)
+		{
+			crPackArrayElement((GLint) *p++, c);
+		}
+		break;
+	case GL_UNSIGNED_SHORT:
+		for (i=start; i<count; i++)
+		{
+			crPackArrayElement((GLint) * (GLushort *) p, c);
+			p+=sizeof (GLushort);
+		}
+		break;
+	case GL_UNSIGNED_INT:
+		for (i=start; i<count; i++)
+		{
+			crPackArrayElement((GLint) * (GLuint *) p, c);
+			p+=sizeof (GLuint);
+		}
+		break;
+	default:
+		crError( "this can't happen: crPackDrawRangeElements" );
 		break;
 	}
 	crPackEnd();

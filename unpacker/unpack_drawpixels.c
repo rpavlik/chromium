@@ -20,7 +20,7 @@ void crUnpackDrawPixels( void )
 	cr_unpackDispatch.PixelStorei( GL_UNPACK_SKIP_PIXELS, 0 );
 	cr_unpackDispatch.PixelStorei( GL_UNPACK_SKIP_ROWS, 0 );
 	cr_unpackDispatch.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-	
+
 	cr_unpackDispatch.DrawPixels( width, height, format, type, pixels );
 
 	INCR_VAR_PTR( );
@@ -46,6 +46,7 @@ void crUnpackBitmap( void )
 	cr_unpackDispatch.PixelStorei( GL_UNPACK_SKIP_PIXELS, 0 );
 	cr_unpackDispatch.PixelStorei( GL_UNPACK_SKIP_ROWS, 0 );
 	cr_unpackDispatch.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+
 	cr_unpackDispatch.Bitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 
 	INCR_VAR_PTR( );

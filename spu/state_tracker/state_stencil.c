@@ -58,8 +58,8 @@ void STATE_APIENTRY crStateStencilFunc(GLenum func, GLint ref, GLuint mask)
 	s->ref = ref;
 	s->mask = mask;
 
-	sb->func = g->neg_bitid;
-	sb->dirty = g->neg_bitid;
+	DIRTY(sb->func, g->neg_bitid);
+	DIRTY(sb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateStencilOp (GLenum fail, GLenum zfail, GLenum zpass) 
@@ -118,8 +118,8 @@ void STATE_APIENTRY crStateStencilOp (GLenum fail, GLenum zfail, GLenum zpass)
 	s->passDepthFail = zfail;
 	s->passDepthPass = zpass;
 
-	sb->op = g->neg_bitid;
-	sb->dirty = g->neg_bitid;
+	DIRTY(sb->op, g->neg_bitid);
+	DIRTY(sb->dirty, g->neg_bitid);
 }
 
 
@@ -142,8 +142,8 @@ void STATE_APIENTRY crStateClearStencil (GLint c)
 
 	s->clearValue = c;
 	
-	sb->clearValue = g->neg_bitid;
-	sb->dirty = g->neg_bitid;
+	DIRTY(sb->clearValue, g->neg_bitid);
+	DIRTY(sb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateStencilMask (GLuint mask) 
@@ -164,6 +164,6 @@ void STATE_APIENTRY crStateStencilMask (GLuint mask)
 
 	s->mask = mask;
 
-	sb->writeMask = g->neg_bitid;
-	sb->dirty = g->neg_bitid;
+	DIRTY(sb->writeMask, g->neg_bitid);
+	DIRTY(sb->dirty, g->neg_bitid);
 }

@@ -13,9 +13,12 @@ FILES = tilesortspu \
 	tilesortspu_bucket \
 	tilesortspu_client \
 	tilesortspu_config \
+	tilesortspu_context \
+	tilesortspu_copytex \
 	tilesortspu_diffapi \
+	tilesortspu_eval \
 	tilesortspu_flush \
-	tilesortspu_hint \
+	tilesortspu_get \
 	tilesortspu_init \
 	tilesortspu_lists \
 	tilesortspu_material \

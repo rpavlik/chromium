@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "cr_pixeldata.h"
@@ -55,8 +56,8 @@ void STATE_APIENTRY crStateCullFace(GLenum mode)
 	}
 
 	p->cullFaceMode = mode;
-	pb->mode = g->neg_bitid;
-	pb->dirty = g->neg_bitid;
+	DIRTY(pb->mode, g->neg_bitid);
+	DIRTY(pb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateFrontFace (GLenum mode) 
@@ -83,8 +84,8 @@ void STATE_APIENTRY crStateFrontFace (GLenum mode)
 	}
 
 	p->frontFace = mode;
-	pb->mode = g->neg_bitid;
-	pb->dirty = g->neg_bitid;
+	DIRTY(pb->mode, g->neg_bitid);
+	DIRTY(pb->dirty, g->neg_bitid);
 }
 
 void  STATE_APIENTRY crStatePolygonMode (GLenum face, GLenum mode) 
@@ -124,8 +125,8 @@ void  STATE_APIENTRY crStatePolygonMode (GLenum face, GLenum mode)
 					"glPolygonMode called with bogus face: %d", face);
 			return;
 	}
-	pb->mode = g->neg_bitid;
-	pb->dirty = g->neg_bitid;
+	DIRTY(pb->mode, g->neg_bitid);
+	DIRTY(pb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStatePolygonOffset (GLfloat factor, GLfloat units) 
@@ -147,15 +148,14 @@ void STATE_APIENTRY crStatePolygonOffset (GLfloat factor, GLfloat units)
 	p->offsetFactor = factor;
 	p->offsetUnits = units;
 
-	pb->offset = g->neg_bitid;
-	pb->dirty = g->neg_bitid;
+	DIRTY(pb->offset, g->neg_bitid);
+	DIRTY(pb->dirty, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStatePolygonStipple (const GLubyte *p) 
 {
 	CRContext *g = GetCurrentContext();
 	CRPolygonState *poly = &(g->polygon);
-	CRPixelState *pix = &(g->pixel);
 	CRStateBits *sb = GetCurrentBits();
 	CRPolygonBits *pb = &(sb->polygon);
 
@@ -175,22 +175,23 @@ void STATE_APIENTRY crStatePolygonStipple (const GLubyte *p)
 		return;
 	}
 
-	crPixelCopy2D ( (void *) poly->stipple, p,
-			GL_COLOR_INDEX, GL_BITMAP, 32, 32,
-			&(pix->pack));
+	memcpy((char*)poly->stipple, (char*)p, 128);
 
-	pb->dirty = g->neg_bitid;
-	pb->stipple = g->neg_bitid;
+	DIRTY(pb->dirty, g->neg_bitid);
+	DIRTY(pb->stipple, g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateGetPolygonStipple( GLubyte *b )
 {
 	CRContext *g = GetCurrentContext();
 	CRPolygonState *poly = &(g->polygon);
-	CRPixelState *pix = &(g->pixel);
 
-	/* XXX untested */
-	crPixelCopy2D( (void *) b, poly->stipple,
-				   GL_COLOR_INDEX, GL_BITMAP, 32, 32,
-				   &(pix->unpack) );
+	if (g->current.inBeginEnd) 
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+				"glGetPolygonStipple called in begin/end");
+		return;
+	}
+
+	memcpy((char*)b, (char*)poly->stipple, 128);
 }

@@ -80,3 +80,9 @@ SecondaryColor3uiEXT
 SecondaryColor3iEXT
 SecondaryColor3fEXT
 SecondaryColor3dEXT
+MakeCurrent
+CreateContext
+DestroyContext
+ReadPixels
+GetChromiumParametervCR
+SwapBuffers

@@ -19,6 +19,8 @@ SPUFunctions tilesort_functions = {
 	tilesort_table /* THE ACTUAL FUNCTIONS */
 };
 
+extern void _math_init_eval(void);
+
 SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
@@ -30,6 +32,7 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *super,
 	(void) child;
 	(void) super;
 
+	_math_init_eval();
 
 	tilesort_spu.id = id;
 	tilesortspuGatherConfiguration( child );
@@ -51,40 +54,21 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *super,
 	tilesort_spu.geom_pack_size = (tilesort_spu.geom_pack_size * 4) / 5;
 	tilesort_spu.geom_pack_size -= (24 + 1); /* 24 is the size of the BoundsInfo packet */
 
-	/* need to have the ctx first so we can give it as an argument o 
+	/* need to have the ctx first so we can give it as an argument to 
 	 * crPackFlushArg. */
 	crStateInit();
 
-	/* The GL limits were computed in tilesortspuGatherConfiguration() */
-	tilesort_spu.ctx = crStateCreateContext( &tilesort_spu.limits );
-
-	crPackInit( tilesort_spu.swap );
-	crPackInitBuffer( &(tilesort_spu.geometry_pack), crAlloc( tilesort_spu.geom_pack_size ), 
-			              tilesort_spu.geom_pack_size, END_FLUFF );
-	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
-	crPackFlushFunc( tilesortspuFlush );
-	crPackFlushArg( tilesort_spu.ctx );
-	crPackSendHugeFunc( tilesortspuHuge );
-	crPackResetBBOX();
-
-	crStateMakeCurrent( tilesort_spu.ctx );
-	crStateFlushArg( tilesort_spu.ctx );
 	tilesortspuCreateDiffAPI();
-	crStateSetCurrentPointers( tilesort_spu.ctx, &(cr_packer_globals.current) );
-	tilesort_spu.ctx->current.current->vtx_count = 0;
 
 	tilesort_spu.pinchState.numRestore = 0;
 	tilesort_spu.pinchState.wind = 0;
 	tilesort_spu.pinchState.isLoop = 0;
 
-	for (i = 0 ; i < tilesort_spu.num_servers; i++)
-	{
-		TileSortSPUServer *server = tilesort_spu.servers + i;
-		server->ctx = crStateCreateContext( &tilesort_spu.limits );
-		server->ctx->current.rasterPos.x = server->ctx->current.rasterPosPre.x = (float) server->x1[0];
-		server->ctx->current.rasterPos.y = server->ctx->current.rasterPosPre.y = (float) server->y1[0];
-		crPackInitBuffer( &(server->pack), crNetAlloc( server->net.conn ), server->net.buffer_size, 0 );
+	/* context pointer init */
+	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
+		tilesort_spu.context[i] = NULL;
 	}
+	tilesort_spu.currentContext = NULL;
 
 	tilesortspuBucketingInit();
 

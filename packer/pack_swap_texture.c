@@ -17,7 +17,7 @@
 
 void PACK_APIENTRY crPackTexImage1DSWAP(GLenum target, GLint level, 
 		GLint internalformat, GLsizei width, GLint border, GLenum format, 
-		GLenum type, const GLvoid *pixels, CRPackState *packstate )
+		GLenum type, const GLvoid *pixels, const CRPixelPackState *unpackstate )
 {
 	unsigned char *data_ptr;
 	int packet_length;
@@ -35,7 +35,7 @@ void PACK_APIENTRY crPackTexImage1DSWAP(GLenum target, GLint level,
 
 	if (pixels)
 	{
-		packet_length += crPixelSize( format, type, width, 1 );
+		packet_length += crImageSize( format, type, width, 1 );
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
@@ -49,7 +49,8 @@ void PACK_APIENTRY crPackTexImage1DSWAP(GLenum target, GLint level,
 	WRITE_DATA( 28, int, SWAP32(isnull) );
 
 	if (pixels) {
-		crPixelCopy1D( (void *)(data_ptr + 32), pixels, format, type, width, packstate );
+		crPixelCopy1D( (void *)(data_ptr + 32), format, type,
+									 pixels, format, type, width, unpackstate );
 	}
 
 	crHugePacket( CR_TEXIMAGE1D_OPCODE, data_ptr );
@@ -58,7 +59,8 @@ void PACK_APIENTRY crPackTexImage1DSWAP(GLenum target, GLint level,
 
 void PACK_APIENTRY crPackTexImage2DSWAP(GLenum target, GLint level, 
 		GLint internalformat, GLsizei width, GLsizei height, GLint border, 
-		GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
+		GLenum format, GLenum type, const GLvoid *pixels,
+		const CRPixelPackState *unpackstate )
 {
 	unsigned char *data_ptr;
 	int packet_length;
@@ -77,7 +79,7 @@ void PACK_APIENTRY crPackTexImage2DSWAP(GLenum target, GLint level,
 
 	if (pixels)
 	{
-		packet_length += crPixelSize( format, type, width, height );
+		packet_length += crImageSize( format, type, width, height );
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
@@ -93,9 +95,9 @@ void PACK_APIENTRY crPackTexImage2DSWAP(GLenum target, GLint level,
 
 	if (pixels)
 	{
-		crPixelCopy2D( 
-			(void *)(data_ptr + 36), 
-			pixels, format, type, width, height, packstate );
+		crPixelCopy2D( width, height,
+									 (void *)(data_ptr + 36), format, type, NULL,  /* dst */
+									 pixels, format, type, unpackstate );  /* src */
 	}
 
 	crHugePacket( CR_TEXIMAGE2D_OPCODE, data_ptr );
@@ -265,7 +267,7 @@ void PACK_APIENTRY crPackTexGeniSWAP( GLenum coord, GLenum pname, GLint param )
 	crPackTexGenivSWAP( coord, pname, &param );
 }
 
-static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat *params )
+static GLboolean __handleTexParameterData( GLenum target, GLenum pname, const GLfloat *params )
 {
 	unsigned char *data_ptr;
 	int packet_length = sizeof( int ) + sizeof( target ) + sizeof( pname );
@@ -278,7 +280,13 @@ static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat
 		case GL_TEXTURE_MAG_FILTER:
 		case GL_TEXTURE_WRAP_S:
 		case GL_TEXTURE_WRAP_T:
+		case GL_TEXTURE_WRAP_R:
 		case GL_TEXTURE_PRIORITY:
+		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+		case GL_TEXTURE_MIN_LOD:
+		case GL_TEXTURE_MAX_LOD:
+		case GL_TEXTURE_BASE_LEVEL:
+		case GL_TEXTURE_MAX_LEVEL:
 			num_params = 1;
 			break;
 		case GL_TEXTURE_BORDER_COLOR:
@@ -288,9 +296,10 @@ static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat
 			num_params = __packTexParameterNumParams( pname );
 			if (!num_params)
 			{
-				crError( "Unnown pname: %d", pname );
+				__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+										 "crPackTexParameter(bad pname)" );
+				return GL_FALSE;
 			}
-			break;
 	}
 	packet_length += num_params * sizeof(*params);
 
@@ -302,20 +311,21 @@ static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat
 	{
 		WRITE_DATA( (i+1)*sizeof( int ) + 8, GLuint, SWAPFLOAT(params[i]) );
 	}
+	return GL_TRUE;
 }
 
 void PACK_APIENTRY crPackTexParameterfvSWAP( GLenum target, GLenum pname, 
 		const GLfloat *params )
 {
-	__handleTexParameterData( target, pname, params );
-	WRITE_OPCODE( CR_TEXPARAMETERFV_OPCODE );
+	if (__handleTexParameterData( target, pname, params ))
+		WRITE_OPCODE( CR_TEXPARAMETERFV_OPCODE );
 }
 
 void PACK_APIENTRY crPackTexParameterivSWAP( GLenum target, GLenum pname, 
 		const GLint *params )
 {
-	__handleTexParameterData( target, pname, (GLfloat *) params );
-	WRITE_OPCODE( CR_TEXPARAMETERIV_OPCODE );
+	if (__handleTexParameterData( target, pname, (GLfloat *) params ))
+		WRITE_OPCODE( CR_TEXPARAMETERIV_OPCODE );
 }
 
 void PACK_APIENTRY crPackTexParameterfSWAP( GLenum target, GLenum pname, GLfloat param )
@@ -330,7 +340,8 @@ void PACK_APIENTRY crPackTexParameteriSWAP( GLenum target, GLenum pname, GLint p
 
 void PACK_APIENTRY crPackTexSubImage2DSWAP (GLenum target, GLint level, 
 		GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, 
-		GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
+		GLenum format, GLenum type, const GLvoid *pixels,
+		const CRPixelPackState *unpackstate )
 {
 	unsigned char *data_ptr;
 	int packet_length;
@@ -344,7 +355,7 @@ void PACK_APIENTRY crPackTexSubImage2DSWAP (GLenum target, GLint level,
 		sizeof( height ) +
 		sizeof( format ) +
 		sizeof( type ) +
-		crPixelSize( format, type, width, height );
+		crImageSize( format, type, width, height );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, GLenum, SWAP32(target) );
@@ -356,14 +367,17 @@ void PACK_APIENTRY crPackTexSubImage2DSWAP (GLenum target, GLint level,
 	WRITE_DATA( 24, GLenum, SWAP32(format) );
 	WRITE_DATA( 28, GLenum, SWAP32(type) );
 
-	crPixelCopy2D((GLvoid *) (data_ptr + 32), pixels, format, type, width, height, packstate );
+	crPixelCopy2D( width, height,
+								 (GLvoid *) (data_ptr + 32), format, type, NULL,  /* dst */
+								 pixels, format, type, unpackstate );  /* src */
 
 	crHugePacket( CR_TEXSUBIMAGE2D_OPCODE, data_ptr );
 	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackTexSubImage1DSWAP (GLenum target, GLint level, 
-		GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
+		GLint xoffset, GLsizei width, GLenum format, GLenum type,
+		const GLvoid *pixels, const CRPixelPackState *unpackstate )
 {
 	unsigned char *data_ptr;
 	int packet_length;
@@ -375,7 +389,7 @@ void PACK_APIENTRY crPackTexSubImage1DSWAP (GLenum target, GLint level,
 		sizeof( width ) +
 		sizeof( format ) +
 		sizeof( type ) +
-		crPixelSize( format, type, width, 1 );
+		crImageSize( format, type, width, 1 );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, GLenum, SWAP32(target) );
@@ -385,7 +399,8 @@ void PACK_APIENTRY crPackTexSubImage1DSWAP (GLenum target, GLint level,
 	WRITE_DATA( 16, GLenum, SWAP32(format) );
 	WRITE_DATA( 20, GLenum, SWAP32(type) );
 
-	crPixelCopy1D((GLvoid *) (data_ptr + 24), pixels, format, type, width, packstate );
+	crPixelCopy1D((GLvoid *) (data_ptr + 24), format, type,
+								pixels, format, type, width, unpackstate );
 
 	crHugePacket( CR_TEXSUBIMAGE1D_OPCODE, data_ptr );
 	crPackFree( data_ptr );

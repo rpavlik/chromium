@@ -23,8 +23,8 @@ print """
 
 #include "cr_spu.h"
 #include "cr_string.h"
+#include "cr_error.h"
 
-#include <stdio.h>
 
 static SPUGenericFunction __findFunc( char *name, SPU *spu )
 {
@@ -43,6 +43,10 @@ static SPUGenericFunction __findFunc( char *name, SPU *spu )
 	return __findFunc( name, spu->superSPU );
 }
 
+
+/*
+ * This function is not public outside the loader SPU.
+ */
 void __buildDispatch( SPU *spu )
 {"""
 
@@ -53,3 +57,74 @@ for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
 	print '\tspu->dispatch_table.%s = (%sFunc_t) __findFunc( "%s", spu );' % (func_name,func_name,func_name)
 print '}'
+
+
+print """
+
+/*
+ * Public function:
+ * Search a SPU named function table for a specific function.  Return
+ * a pointer to it or NULL if not found.
+ */
+SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const char *fname )
+{
+	const SPUNamedFunctionTable *temp;
+
+	for (temp = table ; temp->name != NULL ; temp++)
+	{
+		if (!crStrcmp( fname, temp->name ) )
+		{
+			return temp->fn;
+		}
+	}
+	return NULL;
+}
+
+
+/*
+ * Public function:
+ * Initializes the pointers in an SPUDispatchTable by looking for functions
+ * in an SPUNamedFunctionTable.
+ * It doesn't know anything about SPUs and SPU inheritance.
+ */
+void crSPUInitDispatch( SPUDispatchTable *dispatch, const SPUNamedFunctionTable *table )
+{"""
+
+keys = gl_mapping.keys()
+keys.sort();
+
+for func_name in keys:
+	(return_type, names, types) = gl_mapping[func_name]
+	print '\tdispatch->%s = (%sFunc_t) crSPUFindFunction(table, "%s");' % (func_name, func_name, func_name)
+print '}'
+
+
+
+print """
+/*
+ * Generic no-op function
+ */
+static int NopFunction(void)
+{
+	crWarning("Calling generic no-op function in dispatch.c");
+	return 0;
+}
+
+
+/*
+ * Scan the given dispatch table for NULL pointers.  Hook in the generic
+ * no-op function wherever we find a NULL pointer.
+ */
+void crSPUInitDispatchNops(SPUDispatchTable *table)
+{
+	const int numEntries = sizeof(*table) / sizeof(table->Accum);
+	void **ptr = (void **) table;
+	int i;
+	for (i = 0; i < numEntries; i++) {
+		if (ptr[i] == NULL) {
+			/*printf("!!!!!!!Warning entry[%d] = NULL\n", i);*/
+			ptr[i] = NopFunction;
+		}
+	}
+}
+"""

@@ -23,19 +23,31 @@ typedef struct __CRTextureID {
 	struct __CRTextureID *next;
 } CRTextureID;
 
+struct CRTextureFormat {
+	GLubyte redbits;
+	GLubyte greenbits;
+	GLubyte bluebits;
+	GLubyte alphabits;
+	GLubyte luminancebits;
+	GLubyte intensitybits;
+	GLubyte indexbits;
+};
+
 typedef struct {
 	GLubyte *img;
 	int bytes;
 	GLint width;
 	GLint height;
 	GLint depth;
-	GLint components;
+	GLint internalFormat;
 	GLint border;
 	GLenum format;
 	GLenum type;
 	int	bytesPerPixel;
 
-	GLbitvalue dirty[CR_MAX_TEXTURE_UNITS];
+	const struct CRTextureFormat *texFormat;
+
+	GLbitvalue dirty[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 } CRTextureLevel;
 
 typedef struct __CRTextureObj {
@@ -57,11 +69,16 @@ typedef struct __CRTextureObj {
 	GLenum		             wrapS, wrapT;
 #ifdef CR_OPENGL_VERSION_1_2
 	GLenum		             wrapR;
+	GLfloat                      priority;
+	GLfloat                      minLod;
+	GLfloat                      maxLod;
+	GLint                        baseLevel;
+	GLint                        maxLevel;
 #endif
 
-	GLbitvalue	           dirty;
-	GLbitvalue             paramsBit[CR_MAX_TEXTURE_UNITS];
-	GLbitvalue             imageBit[CR_MAX_TEXTURE_UNITS];
+	GLbitvalue	           dirty[CR_MAX_BITARRAY];
+	GLbitvalue             paramsBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	GLbitvalue             imageBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 #ifdef CR_EXT_texture_filter_anisotropic
 	GLfloat maxAnisotropy;
 #endif
@@ -75,13 +92,13 @@ typedef struct __CRTextureFreeElem {
 } CRTextureFreeElem;
 
 typedef struct {
-	GLbitvalue dirty;
-	GLbitvalue enable[CR_MAX_TEXTURE_UNITS];
-	GLbitvalue current[CR_MAX_TEXTURE_UNITS];
-	GLbitvalue objGen[CR_MAX_TEXTURE_UNITS];
-	GLbitvalue eyeGen[CR_MAX_TEXTURE_UNITS];
-	GLbitvalue envBit[CR_MAX_TEXTURE_UNITS];
-	GLbitvalue gen[CR_MAX_TEXTURE_UNITS];
+	GLbitvalue dirty[CR_MAX_BITARRAY];
+	GLbitvalue enable[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	GLbitvalue current[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	GLbitvalue objGen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	GLbitvalue eyeGen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	GLbitvalue envBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	GLbitvalue gen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 } CRTextureBits;
 
 typedef struct {
@@ -170,9 +187,9 @@ CRTextureObj *crStateTextureGet(GLuint textureid);
 int crStateTextureGetSize(GLenum target, GLenum level);
 const GLvoid * crStateTextureGetData(GLenum target, GLenum level);
 
-void crStateTextureDiff(CRContext *g, CRTextureBits *bb, GLbitvalue bitID, 
+void crStateTextureDiff(CRContext *g, CRTextureBits *bb, GLbitvalue *bitID, 
 		CRTextureState *from, CRTextureState *to);
-void crStateTextureSwitch(CRContext *g, CRTextureBits *bb, GLbitvalue bitID, 
+void crStateTextureSwitch(CRContext *g, CRTextureBits *bb, GLbitvalue *bitID, 
 		CRTextureState *from, CRTextureState *to);
 
 #ifdef __cplusplus

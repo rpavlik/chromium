@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	(void) argc;
 	(void) argv;
 
-	spu = crSPULoadChain( sizeof(spunames)/sizeof(spunames[0]), ids, spunames, NULL );
+	spu = crSPULoadChain( sizeof(spunames)/sizeof(spunames[0]), ids, spunames, NULL, NULL );
 
 	spu->dispatch_table.NewList( 1, GL_COMPILE );
 		spu->dispatch_table.Color3f( 1,1,0 );

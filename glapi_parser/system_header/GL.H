@@ -72,6 +72,7 @@ void glDrawArrays (GLenum mode, GLint first, GLsizei count);
 void glDrawBuffer (GLenum mode);
 void glDrawElements (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
 void glDrawPixels (GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+void glDrawRangeElements (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
 void glEdgeFlag (GLboolean flag);
 void glEdgeFlagPointer (GLsizei stride, const GLvoid *pointer);
 void glEdgeFlagv (const GLboolean *flag);

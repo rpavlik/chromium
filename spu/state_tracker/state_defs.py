@@ -29,6 +29,7 @@ for func_name in stub_common.AllSpecials( 'state' ):
 
 print """crStateInit
 crStateCreateContext
+crStateDestroyContext
 crStateDiffContext
 crStateSwitchContext
 crStateMakeCurrent
@@ -39,4 +40,7 @@ crStateSetCurrentPointers
 crStateCurrentRecover
 crStateTransformUpdateTransform
 crStateColorMaterialRecover
+crStateError
+crStateUpdateColorBits
+crStateClientInit
 """

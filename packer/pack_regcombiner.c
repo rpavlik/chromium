@@ -8,7 +8,7 @@
 #include "cr_opcodes.h"
 #include "cr_glwrapper.h"
 
-static void __handleCombinerParameterData( GLenum pname, const GLfloat *params, GLenum extended_opcode )
+static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *params, GLenum extended_opcode )
 {
 	int params_length = 0;
 	int packet_length = sizeof( int ) + sizeof( extended_opcode ) + sizeof( pname );
@@ -25,7 +25,9 @@ static void __handleCombinerParameterData( GLenum pname, const GLfloat *params, 
 			params_length = sizeof( *params );
 			break;
 		default:
-			crError( "Invalid pname in CombinerParameter: 0x%x", pname );
+			__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
+									 "crPackCombinerParameter(bad pname)" );
+			return GL_FALSE;
 	}
 	packet_length += params_length;
 	GET_BUFFERED_POINTER( packet_length );
@@ -39,19 +41,20 @@ static void __handleCombinerParameterData( GLenum pname, const GLfloat *params, 
 		WRITE_DATA( sizeof( int ) + 16, GLfloat, params[2] );
 		WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
 	}
+	return GL_TRUE;
 }
 
 void PACK_APIENTRY crPackCombinerParameterfvNV( GLenum pname, const GLfloat *params )
 {
-	__handleCombinerParameterData( pname, params, CR_COMBINERPARAMETERFVNV_EXTEND_OPCODE );
-	WRITE_OPCODE( CR_EXTEND_OPCODE );
+	if (__handleCombinerParameterData( pname, params, CR_COMBINERPARAMETERFVNV_EXTEND_OPCODE ))
+		WRITE_OPCODE( CR_EXTEND_OPCODE );
 }
 
 void PACK_APIENTRY crPackCombinerParameterivNV( GLenum pname, const GLint *params )
 {
 	/* floats and ints are the same size, so the packing should be the same */
-	__handleCombinerParameterData( pname, (const GLfloat *) params, CR_COMBINERPARAMETERIVNV_EXTEND_OPCODE );
-	WRITE_OPCODE( CR_EXTEND_OPCODE );
+	if (__handleCombinerParameterData( pname, (const GLfloat *) params, CR_COMBINERPARAMETERIVNV_EXTEND_OPCODE ))
+		WRITE_OPCODE( CR_EXTEND_OPCODE );
 }
 
 void PACK_APIENTRY crPackCombinerStageParameterfvNV( GLenum stage, GLenum pname, const GLfloat *params )

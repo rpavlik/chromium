@@ -13,7 +13,10 @@
 
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
+#define WGL_APIENTRY __stdcall
 #include <windows.h>
+#else
+#include <GL/glx.h>
 #endif
 
 #include <GL/gl.h>
@@ -152,5 +155,183 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 #endif
 
 
+/*
+ * Chromium extensions
+ */
+
+#ifndef GL_CR_state_parameter
+#define GL_CR_state_parameter 1
+
+extern void glChromiumParameteriCR(GLenum target, GLint value);
+extern void glChromiumParameterfCR(GLenum target, GLfloat value);
+extern void glChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values);
+extern void glGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values);
+
+#endif /* GL_CR_state_parameter */
+
+
+#ifndef GL_CR_cursor_position
+#define GL_CR_cursor_position 1
+
+#define GL_CURSOR_POSITION_CR  0x9900  /* unofficial! */
+
+#endif /* GL_CR_cursor_position */
+
+
+#ifndef GL_CR_bounding_box
+#define GL_CR_bounding_box 1
+
+#define GL_DEFAULT_BBOX_CR	0x9901 /* unofficial! */
+#define GL_SCREEN_BBOX_CR	0x9902 /* unofficial! */
+#define GL_OBJECT_BBOX_CR	0x9903 /* unofficial! */
+
+#endif /* GL_CR_bounding_box */
+
+
+#ifndef GL_CR_print_string
+#define GL_CR_print_string 1
+
+#define GL_PRINT_STRING_CR	0x9904 /* unofficial! */
+
+#endif /* GL_CR_print_string */
+
+
+#ifndef GL_CR_tilesort_info
+#define GL_CR_tilesort_info 1
+
+#define GL_MURAL_SIZE_CR             0x9905 /* unofficial! */
+#define GL_NUM_SERVERS_CR            0x9906 /* unofficial! */
+#define GL_NUM_TILES_CR              0x9907 /* unofficial! */
+#define GL_TILE_BOUNDS_CR            0x9908 /* unofficial! */
+#define GL_VERTEX_COUNTS_CR          0x9909 /* unofficial! */
+#define GL_RESET_VERTEX_COUNTERS_CR  0x990A /* unofficial! */
+
+#endif /* GL_CR_tilesort_info */
+
+
+#ifndef GL_CR_client_clear_control
+#define GL_CR_client_clear_control 1
+
+#define GL_SINGLE_CLIENT_BIT_CR  0x10000000
+
+#endif /*  GL_CR_client_clear_control */
+
+
+
+/*
+ * These are the OpenGL / window system interface functions
+ */
+#ifdef WINDOWS
+typedef HGLRC (WGL_APIENTRY *wglCreateContextFunc_t)(HDC);
+typedef void (WGL_APIENTRY *wglDeleteContextFunc_t)(HGLRC);
+typedef BOOL (WGL_APIENTRY *wglMakeCurrentFunc_t)(HDC,HGLRC);
+typedef BOOL (WGL_APIENTRY *wglSwapBuffersFunc_t)(HDC);
+typedef int (WGL_APIENTRY *wglChoosePixelFormatFunc_t)(HDC, CONST PIXELFORMATDESCRIPTOR *);
+typedef int (WGL_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
+typedef HGLRC (WGL_APIENTRY *wglGetCurrentContextFunc_t)();
+typedef PROC (WGL_APIENTRY *wglGetProcAddressFunc_t)();
+#else
+typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
+typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
+typedef XVisualInfo *(*glXChooseVisualFunc_t)( Display *, int, int * );
+typedef GLXContext (*glXCreateContextFunc_t)( Display *, XVisualInfo *, GLXContext, Bool );
+typedef void (*glXDestroyContextFunc_t)( Display *, GLXContext );
+typedef Bool (*glXIsDirectFunc_t)( Display *, GLXContext );
+typedef Bool (*glXMakeCurrentFunc_t)( Display *, GLXDrawable, GLXContext );
+typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
+typedef void (*glXSwapBuffersFunc_t)( Display *, GLXDrawable );
+typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
+typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
+#endif
+
+/*
+ * Package up the WGL/GLX function pointers into a struct.  We use
+ * this in a few different places.
+ */
+typedef struct {
+#ifdef WINDOWS
+	wglGetProcAddressFunc_t wglGetProcAddress;
+	wglCreateContextFunc_t wglCreateContext;
+	wglDeleteContextFunc_t wglDeleteContext;
+	wglMakeCurrentFunc_t wglMakeCurrent;
+	wglSwapBuffersFunc_t wglSwapBuffers;
+	wglGetCurrentContextFunc_t wglGetCurrentContext;
+	wglChoosePixelFormatFunc_t wglChoosePixelFormat;
+	wglSetPixelFormatFunc_t wglSetPixelFormat;
+#else
+	glXGetConfigFunc_t  glXGetConfig;
+	glXQueryExtensionFunc_t glXQueryExtension;
+	glXChooseVisualFunc_t glXChooseVisual;
+	glXCreateContextFunc_t glXCreateContext;
+	glXDestroyContextFunc_t glXDestroyContext;
+	glXIsDirectFunc_t glXIsDirect;
+	glXMakeCurrentFunc_t glXMakeCurrent;
+	glGetStringFunc_t glGetString;
+	glXSwapBuffersFunc_t glXSwapBuffers;
+	glXGetProcAddressARBFunc_t glXGetProcAddressARB;
+	glXGetCurrentDisplayFunc_t glXGetCurrentDisplay;
+#endif
+} crOpenGLInterface;
+
+
+/* Used to communicate visual attributes throughout Chromium */
+#define CR_RGB_BIT          0x1
+#define CR_ALPHA_BIT        0x2
+#define CR_DEPTH_BIT        0x4
+#define CR_STENCIL_BIT      0x8
+#define CR_ACCUM_BIT        0x10
+#define CR_DOUBLE_BIT       0x20
+#define CR_STEREO_BIT       0x40
+#define CR_MULTISAMPLE_BIT  0x80
+
+#define CR_MAX_CONTEXTS      512
+#define CR_MAX_BITARRAY      (CR_MAX_CONTEXTS / 32) /* 32 contexts per uint */
+
+/* These might belong elsewhere */
+#define MAX_MURAL_WIDTH  (1280*8)
+#define MAX_MURAL_HEIGHT  (1280*8)
+
+
+/* Function inlining */
+#if defined(__GNUC__)
+#  define INLINE __inline__
+#elif defined(__MSC__)
+#  define INLINE __inline
+#elif defined(_MSC_VER)
+#  define INLINE __inline
+#elif defined(__ICL)
+#  define INLINE __inline
+#else
+#  define INLINE
+#endif
+
+static INLINE void DIRTY( unsigned int *b, const unsigned int *d )
+{
+	int j;
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		b[j] = d[j];
+}
+static INLINE void FILLDIRTY( unsigned int *b )
+{
+	int j;
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		b[j] = 0xffffffff;
+}
+static INLINE void INVERTDIRTY( unsigned int *b, const unsigned int *d )
+{
+	int j;
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		b[j] &= d[j];
+}
+static INLINE int CHECKDIRTY( const unsigned int *b, const unsigned int *d )
+{
+	int j;
+
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		if (b[j] & d[j])
+			return 1;
+
+	return 0;
+}
 
 #endif /* CR_GLWRAPPER_H */

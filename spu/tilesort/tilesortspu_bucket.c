@@ -13,6 +13,7 @@
 
 #include <limits.h>
 #include <float.h>
+#include <memory.h>
 
 static float _vmult(float *m, float x, float y, float z) 
 {
@@ -21,7 +22,7 @@ static float _vmult(float *m, float x, float y, float z)
 
 typedef struct BucketRegion *BucketRegion_ptr;
 typedef struct BucketRegion {
-	GLbitvalue       id;
+	GLbitvalue       id[CR_MAX_BITARRAY];
 	GLrecti          extents;
 	BucketRegion_ptr right;
 	BucketRegion_ptr up;
@@ -59,10 +60,14 @@ void __fillBucketingHash (void)
 	id = 0;
 	for (i=0; i< tilesort_spu.num_servers; i++)
 	{
+		int node32 = i >> 5;
+		int node = i & 0x1f;
 		for (j=0; j<tilesort_spu.servers[i].num_extents; j++) 
 		{
 			BucketRegion *r = &rlist[id++];
-			r->id = 1 << i;
+			for (k=0;k<CR_MAX_BITARRAY;k++)
+	     			r->id[k] = 0;
+			r->id[node32] = (1 << node);
 			r->extents.x1 = tilesort_spu.servers[i].x1[j];
 			r->extents.x2 = tilesort_spu.servers[i].x2[j];
 			r->extents.y1 = tilesort_spu.servers[i].y1[j];
@@ -130,7 +135,7 @@ void __fillBucketingHash (void)
 static TileSortBucketInfo *__doBucket( void )
 {
 	static TileSortBucketInfo bucketInfo;
-	CRContext *g = tilesort_spu.ctx;
+	CRContext *g = tilesort_spu.currentContext;
 	CRTransformState *t = &(g->transform);
 	GLmatrix *m = &(t->transform);
 
@@ -144,7 +149,7 @@ static TileSortBucketInfo *__doBucket( void )
 	GLrecti ibounds;
 	int i,j;
 
-	GLbitvalue retval;
+	GLbitvalue retval[CR_MAX_BITARRAY];
 
 	/*  Here is the arrangement of the bounding box
 	 *  
@@ -177,7 +182,8 @@ static TileSortBucketInfo *__doBucket( void )
 	bucketInfo.screenMin = zero_vect;
 	bucketInfo.screenMax = zero_vect;
 	bucketInfo.pixelBounds = nullscreen;
-	bucketInfo.hits = 0;
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+	     bucketInfo.hits[j] = 0;
 
 	/* Check to make sure the transform is valid */
 	if (!t->transformValid)
@@ -195,7 +201,7 @@ static TileSortBucketInfo *__doBucket( void )
 		bucketInfo.screenMin = neg_vect;
 		bucketInfo.screenMax = one_vect;
 		bucketInfo.pixelBounds = fullscreen;
-		bucketInfo.hits = GLBITS_ONES;
+		FILLDIRTY(bucketInfo.hits);
 		return &bucketInfo;
 	}
 
@@ -206,7 +212,7 @@ static TileSortBucketInfo *__doBucket( void )
 	ymax = bucketInfo.objectMax.y;
 	zmax = bucketInfo.objectMax.z;
 
-	if (tilesort_spu.providedBBOX != CR_SCREEN_BBOX_HINT)
+	if (tilesort_spu.providedBBOX != GL_SCREEN_BBOX_CR)
 	{
 		/*Now transform the bounding box points */
 		x[0] = _vmult(&(m->m00), xmin, ymin, zmin);
@@ -329,7 +335,8 @@ static TileSortBucketInfo *__doBucket( void )
 	/* triv reject */
 	if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
 	{
-		bucketInfo.hits = 0;
+		for (j=0;j<CR_MAX_BITARRAY;j++)
+	     		bucketInfo.hits[j] = 0;
 		return &bucketInfo;
 	}
 
@@ -346,20 +353,23 @@ static TileSortBucketInfo *__doBucket( void )
 
 	bucketInfo.pixelBounds = ibounds;
 
-	retval = 0;
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+	     retval[j] = 0;
 
 	if (!tilesort_spu.optimizeBucketing) 
 	{
 		for (i=0; i < tilesort_spu.num_servers; i++) 
 		{
+			int node32 = i >> 5;
+			int node = i & 0x1f;
 			for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
 			{
-			    if (ibounds.x1 < tilesort_spu.servers[i].x2[j] && 
-				ibounds.x2 >= tilesort_spu.servers[i].x1[j] &&
-				ibounds.y1 < tilesort_spu.servers[i].y2[j] &&
-				ibounds.y2 >= tilesort_spu.servers[i].y1[j]) 
+				if (ibounds.x1 < tilesort_spu.servers[i].x2[j] && 
+						ibounds.x2 >= tilesort_spu.servers[i].x1[j] &&
+						ibounds.y1 < tilesort_spu.servers[i].y2[j] &&
+						ibounds.y2 >= tilesort_spu.servers[i].y1[j]) 
 				{
-					retval |= 1 << i;
+					retval[node32] = (1 << node);
 					break;
 				}
 			}
@@ -376,20 +386,22 @@ static TileSortBucketInfo *__doBucket( void )
 		{
 			for (q=r; q && ibounds.x2 >= q->extents.x1; q = q->right) 
 			{
-				if (retval & q->id) 
+				if (CHECKDIRTY(retval, q->id)) 
 				{
 					continue;
 				}
 				if (ibounds.x1 < q->extents.x2 && ibounds.x2 >= q->extents.x1 &&
 		 		    ibounds.y1 < q->extents.y2 && ibounds.y2 >= q->extents.y1) 
 				{
-					retval |= q->id;
+					for (j=0;j<CR_MAX_BITARRAY;j++)
+					     retval[j] |= q->id[j];
 				}
 			}
 		}
 	}
 
-	bucketInfo.hits = retval;
+	memcpy((char*)bucketInfo.hits,(char*)retval,sizeof(*retval));
+
 	return &bucketInfo;
 }
 

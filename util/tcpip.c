@@ -14,6 +14,10 @@
 typedef int ssize_t;
 #define write(a,b,c) send(a,b,c,0)
 #else
+#include <sys/types.h>
+#ifdef __APPLE__
+typedef unsigned int socklen_t;
+#endif
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
@@ -56,6 +60,11 @@ typedef struct CRTCPIPBuffer {
 	unsigned int          allocated;
 	unsigned int          pad;
 } CRTCPIPBuffer;
+
+
+/* Forward decl */
+void crTCPIPFree( CRConnection *conn, void *buf );
+
 
 #ifdef WINDOWS
 
@@ -401,7 +410,7 @@ void *crTCPIPAlloc( CRConnection *conn )
 	if ( buf == NULL )
 	{
 		crDebug( "Buffer pool was empty, so I allocated %d bytes", 
-			sizeof(CRTCPIPBuffer) + conn->mtu );
+			(unsigned int)sizeof(CRTCPIPBuffer) + conn->mtu );
 		buf = (CRTCPIPBuffer *) 
 			crAlloc( sizeof(CRTCPIPBuffer) + conn->mtu );
 		buf->magic = CR_TCPIP_BUFFER_MAGIC;

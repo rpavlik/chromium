@@ -14,6 +14,7 @@
 #endif
 
 #include "cr_spu.h"
+#include "cr_server.h"
 
 void templatespuGatherConfiguration( void );
 
@@ -21,6 +22,7 @@ typedef struct {
 	int id;
 	int has_child;
 	SPUDispatchTable self, child, super;
+	CRServer *server;
 } TemplateSPU;
 
 extern TemplateSPU template_spu;

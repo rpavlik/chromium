@@ -10,12 +10,12 @@
 
 void TILESORTSPU_APIENTRY tilesortspu_Rectf (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) 
 {
-	if (tilesort_spu.ctx->current.inBeginEnd)
+	if (tilesort_spu.currentContext->current.inBeginEnd)
 	{
 			crError( "tilesortspu_Rect?? called in Begin/End");
 	}
 
-	tilesortspuFlush( tilesort_spu.ctx );
+	tilesortspuFlush( tilesort_spu.currentContext );
 
 	crStateFlushFunc( tilesortspuFlush );
 	if (tilesort_spu.swap)

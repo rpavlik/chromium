@@ -3,6 +3,7 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 DrawPixels
+ReadPixels
 TexImage1D
 TexImage2D
 TexSubImage1D

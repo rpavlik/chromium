@@ -15,16 +15,16 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue dirty;
-	GLbitvalue color;
-	GLbitvalue index;
-	GLbitvalue density;
-	GLbitvalue start;
-	GLbitvalue end;
-	GLbitvalue mode;
-	GLbitvalue enable;
+	GLbitvalue dirty[CR_MAX_BITARRAY];
+	GLbitvalue color[CR_MAX_BITARRAY];
+	GLbitvalue index[CR_MAX_BITARRAY];
+	GLbitvalue density[CR_MAX_BITARRAY];
+	GLbitvalue start[CR_MAX_BITARRAY];
+	GLbitvalue end[CR_MAX_BITARRAY];
+	GLbitvalue mode[CR_MAX_BITARRAY];
+	GLbitvalue enable[CR_MAX_BITARRAY];
 #ifdef CR_NV_fog_distance
-	GLbitvalue fogDistanceMode;
+	GLbitvalue fogDistanceMode[CR_MAX_BITARRAY];
 #endif
 } CRFogBits;
 
@@ -44,9 +44,9 @@ typedef struct {
 void crStateFogInitBits (CRFogBits *fb);
 void crStateFogInit(CRFogState *f);
 
-void crStateFogDiff(CRFogBits *bb, GLbitvalue bitID, 
+void crStateFogDiff(CRFogBits *bb, GLbitvalue *bitID, 
 		CRFogState *from, CRFogState *to);
-void crStateFogSwitch(CRFogBits *bb, GLbitvalue bitID, 
+void crStateFogSwitch(CRFogBits *bb, GLbitvalue *bitID, 
 		CRFogState *from, CRFogState *to);
 
 #ifdef __cplusplus

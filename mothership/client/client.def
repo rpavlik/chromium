@@ -21,6 +21,7 @@ crMothershipGetClients
 crMothershipGetServers
 crMothershipGetClientDLL
 crMothershipGetSPUDir
+crMothershipGetParam
 crMothershipGetMTU
 crMothershipGetTiles
 crMothershipGetServerTiles

@@ -55,7 +55,7 @@ for func_name in keys:
 			arg_types.append( "%s *" % return_type )
 		arg_names.append( "return_value" )
 	elif stub_common.FindSpecial( "packer_pixel", func_name ):	
-		arg_types.append( "CRPackState *" )
+		arg_types.append( "const CRPixelPackState *" )
 		arg_names.append( "packstate" )
 	elif stub_common.FindSpecial( "packer_client", func_name ):	
 		arg_types.append( "CRClientState *" )

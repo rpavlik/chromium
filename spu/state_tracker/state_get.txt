@@ -42,10 +42,12 @@ GLenum    GL_POLYGON_MODE             g->polygon.frontMode g->polygon.backMode
 GLboolean GL_CULL_FACE                g->polygon.cullFace
 GLboolean GL_POLYGON_SMOOTH           g->polygon.polygonSmooth
 GLboolean GL_POLYGON_STIPPLE          g->polygon.polygonStipple
-
+GLfloat   GL_POLYGON_OFFSET_FACTOR    g->polygon.offsetFactor
+GLfloat   GL_POLYGON_OFFSET_UNITS     g->polygon.offsetUnits
 
 GLboolean GL_ALPHA_TEST               g->buffer.alphaTest
 GLboolean GL_BLEND                    g->buffer.blend
+GLboolean GL_COLOR_LOGIC_OP           g->buffer.logicOp
 GLboolean GL_COLOR_MATERIAL           GL_FALSE
 GLboolean GL_CLIP_PLANE0              g->transform.clip[0]
 GLboolean GL_CLIP_PLANE1              g->transform.clip[1]
@@ -56,6 +58,7 @@ GLboolean GL_CLIP_PLANE5              g->transform.clip[5]
 GLboolean GL_DEPTH_TEST               g->buffer.depthTest
 GLboolean GL_DEPTH_WRITEMASK          g->buffer.depthMask
 GLboolean GL_DITHER                   g->buffer.dither
+GLboolean GL_INDEX_LOGIC_OP           g->buffer.indexLogicOp
 GLboolean GL_FOG                      g->fog.enable
 GLboolean GL_LIGHT0                   g->lighting.light[0].enable
 GLboolean GL_LIGHT1                   g->lighting.light[1].enable
@@ -68,7 +71,6 @@ GLboolean GL_LIGHT7                   g->lighting.light[7].enable
 GLboolean GL_LIGHTING                 g->lighting.lighting
 GLboolean GL_LINE_SMOOTH              g->line.lineSmooth
 GLboolean GL_LINE_STIPPLE             g->line.lineStipple
-GLboolean GL_LOGIC_OP                 g->buffer.logicOp
 GLint     GL_LOGIC_OP_MODE            g->buffer.logicOpMode
 GLboolean GL_POINT_SMOOTH             g->line.pointSmooth
 GLboolean GL_NORMALIZE                g->current.normalize
@@ -86,22 +88,22 @@ GLfloat   GL_LINE_WIDTH               g->line.width
 GLint     GL_LINE_STIPPLE_PATTERN     g->line.pattern
 GLint     GL_LINE_STIPPLE_REPEAT      g->line.repeat
 
-GLboolean GL_PACK_SWAP_BYTES          g->pixel.pack.swapBytes
-GLboolean GL_PACK_LSB_FIRST           g->pixel.pack.psLSBFirst
-GLboolean GL_UNPACK_SWAP_BYTES        g->pixel.unpack.swapBytes
-GLboolean GL_UNPACK_LSB_FIRST         g->pixel.unpack.psLSBFirst
-GLint     GL_PACK_ROW_LENGTH          g->pixel.pack.rowLength
-GLint     GL_PACK_SKIP_ROWS           g->pixel.pack.skipRows
-GLint     GL_PACK_SKIP_PIXELS         g->pixel.pack.skipPixels
-GLint     GL_PACK_ALIGNMENT           g->pixel.pack.alignment
-GLint     GL_PACK_IMAGE_HEIGHT        g->pixel.pack.imageHeight
-GLint     GL_PACK_SKIP_IMAGES         g->pixel.pack.skipImages
-GLint     GL_UNPACK_ROW_LENGTH        g->pixel.unpack.rowLength
-GLint     GL_UNPACK_SKIP_ROWS         g->pixel.unpack.skipRows
-GLint     GL_UNPACK_SKIP_PIXELS       g->pixel.unpack.skipPixels
-GLint     GL_UNPACK_ALIGNMENT         g->pixel.unpack.alignment
-GLint     GL_UNPACK_IMAGE_HEIGHT      g->pixel.unpack.imageHeight
-GLint     GL_UNPACK_SKIP_IMAGES       g->pixel.unpack.skipImages
+GLboolean GL_PACK_SWAP_BYTES          g->client.pack.swapBytes
+GLboolean GL_PACK_LSB_FIRST           g->client.pack.psLSBFirst
+GLboolean GL_UNPACK_SWAP_BYTES        g->client.unpack.swapBytes
+GLboolean GL_UNPACK_LSB_FIRST         g->client.unpack.psLSBFirst
+GLint     GL_PACK_ROW_LENGTH          g->client.pack.rowLength
+GLint     GL_PACK_SKIP_ROWS           g->client.pack.skipRows
+GLint     GL_PACK_SKIP_PIXELS         g->client.pack.skipPixels
+GLint     GL_PACK_ALIGNMENT           g->client.pack.alignment
+GLint     GL_PACK_IMAGE_HEIGHT        g->client.pack.imageHeight
+GLint     GL_PACK_SKIP_IMAGES         g->client.pack.skipImages
+GLint     GL_UNPACK_ROW_LENGTH        g->client.unpack.rowLength
+GLint     GL_UNPACK_SKIP_ROWS         g->client.unpack.skipRows
+GLint     GL_UNPACK_SKIP_PIXELS       g->client.unpack.skipPixels
+GLint     GL_UNPACK_ALIGNMENT         g->client.unpack.alignment
+GLint     GL_UNPACK_IMAGE_HEIGHT      g->client.unpack.imageHeight
+GLint     GL_UNPACK_SKIP_IMAGES       g->client.unpack.skipImages
 GLfloat   GL_ZOOM_X                   g->pixel.xZoom
 GLfloat   GL_ZOOM_Y                   g->pixel.yZoom
 GLfloat	  GL_RED_BIAS                 g->pixel.bias.r
@@ -165,22 +167,43 @@ GLint     GL_TEXTURE_BINDING_1D g->texture.unit[g->texture.curTextureUnit].curre
 GLint     GL_TEXTURE_BINDING_2D g->texture.unit[g->texture.curTextureUnit].currentTexture2DName
 GLint     GL_TEXTURE_BINDING_3D g->texture.unit[g->texture.curTextureUnit].currentTexture3DName
 
-GLboolean GL_RGBA_MODE                g->buffer.rgbaMode
-GLboolean GL_INDEX_MODE               g->buffer.indexMode
-GLint     GL_AUX_BUFFERS              g->buffer.auxBuffers
-GLboolean GL_STEREO                   g->buffer.stereo
-GLboolean GL_DOUBLEBUFFER             g->buffer.doubleBuffer
-GLint	  GL_INDEX_BITS               g->buffer.indexBits
-GLint     GL_DEPTH_BITS               g->buffer.depthBits
-GLint     GL_RED_BITS                 g->buffer.redBits
-GLint     GL_GREEN_BITS               g->buffer.greenBits
-GLint     GL_BLUE_BITS                g->buffer.blueBits
-GLint     GL_ALPHA_BITS               g->buffer.alphaBits
-GLint     GL_STENCIL_BITS             g->buffer.stencilBits
-GLint     GL_ACCUM_RED_BITS           g->buffer.accumRedBits
-GLint     GL_ACCUM_GREEN_BITS         g->buffer.accumGreenBits
-GLint     GL_ACCUM_BLUE_BITS          g->buffer.accumBlueBits
-GLint     GL_ACCUM_ALPHA_BITS         g->buffer.accumAlphaBits
+GLboolean GL_VERTEX_ARRAY             g->client.v.enabled
+GLint     GL_VERTEX_ARRAY_SIZE        g->client.v.size
+GLint     GL_VERTEX_ARRAY_STRIDE      g->client.v.stride
+GLint     GL_VERTEX_ARRAY_TYPE        g->client.v.type
+GLboolean GL_NORMAL_ARRAY             g->client.n.enabled
+GLint     GL_NORMAL_ARRAY_STRIDE      g->client.n.stride
+GLint     GL_NORMAL_ARRAY_TYPE        g->client.n.type
+GLboolean GL_COLOR_ARRAY              g->client.c.enabled
+GLint     GL_COLOR_ARRAY_SIZE         g->client.c.size
+GLint     GL_COLOR_ARRAY_STRIDE       g->client.c.stride
+GLint     GL_COLOR_ARRAY_TYPE         g->client.c.type
+GLboolean GL_INDEX_ARRAY              g->client.i.enabled
+GLint     GL_INDEX_ARRAY_STRIDE       g->client.i.stride
+GLint     GL_INDEX_ARRAY_TYPE         g->client.i.type
+GLboolean GL_TEXTURE_COORD_ARRAY      g->client.t[g->client.curClientTextureUnit].enabled
+GLint     GL_TEXTURE_COORD_ARRAY_SIZE g->client.t[g->client.curClientTextureUnit].size
+GLint     GL_TEXTURE_COORD_ARRAY_STRIDE g->client.t[g->client.curClientTextureUnit].stride
+GLint     GL_TEXTURE_COORD_ARRAY_TYPE g->client.t[g->client.curClientTextureUnit].type
+GLboolean GL_EDGE_FLAG_ARRAY          g->client.e.enabled
+GLint     GL_EDGE_FLAG_ARRAY_STRIDE   g->client.e.stride
+
+GLboolean GL_RGBA_MODE                g->limits.rgbaMode
+GLboolean GL_INDEX_MODE               (!g->limits.rgbaMode)
+GLint     GL_AUX_BUFFERS              g->limits.auxBuffers
+GLboolean GL_STEREO                   g->limits.stereo
+GLboolean GL_DOUBLEBUFFER             g->limits.doubleBuffer
+GLint	  GL_INDEX_BITS               g->limits.indexBits
+GLint     GL_DEPTH_BITS               g->limits.depthBits
+GLint     GL_RED_BITS                 g->limits.redBits
+GLint     GL_GREEN_BITS               g->limits.greenBits
+GLint     GL_BLUE_BITS                g->limits.blueBits
+GLint     GL_ALPHA_BITS               g->limits.alphaBits
+GLint     GL_STENCIL_BITS             g->limits.stencilBits
+GLint     GL_ACCUM_RED_BITS           g->limits.accumRedBits
+GLint     GL_ACCUM_GREEN_BITS         g->limits.accumGreenBits
+GLint     GL_ACCUM_BLUE_BITS          g->limits.accumBlueBits
+GLint     GL_ACCUM_ALPHA_BITS         g->limits.accumAlphaBits
 GLclampf  GL_COLOR_CLEAR_VALUE        g->buffer.colorClearValue.r g->buffer.colorClearValue.g g->buffer.colorClearValue.b g->buffer.colorClearValue.a
 GLclampf  GL_INDEX_CLEAR_VALUE        g->buffer.indexClearValue
 GLclampd  GL_DEPTH_CLEAR_VALUE        g->buffer.depthClearValue
@@ -199,6 +222,7 @@ GLint     GL_INDEX_WRITEMASK          g->buffer.indexWriteMask
 
 GLint     GL_LIST_BASE                g->lists.base
 GLint     GL_LIST_INDEX               g->lists.currentIndex
+GLenum    GL_LIST_MODE                g->lists.mode
 
 GLint     GL_STENCIL_CLEAR_VALUE      g->stencil.clearValue
 GLint     GL_STENCIL_FAIL             g->stencil.fail

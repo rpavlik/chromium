@@ -27,7 +27,7 @@ static void __setDefaults( void )
 	tilesort_spu.drawBBOX = 0;
 	tilesort_spu.bboxLineWidth = 5;
 
-	tilesort_spu.providedBBOX = CR_DEFAULT_BBOX_HINT;
+	tilesort_spu.providedBBOX = GL_DEFAULT_BBOX_CR;
 	tilesort_spu.inDrawPixels = 0;
 
 	tilesort_spu.syncOnFinish = 1;
@@ -35,6 +35,9 @@ static void __setDefaults( void )
 
 	tilesort_spu.fakeWindowWidth = 0;
 	tilesort_spu.fakeWindowHeight = 0;
+
+	tilesort_spu.scaleToMuralSize = GL_TRUE;
+
 #ifdef WINDOWS
 	tilesort_spu.client_hdc = NULL;
 	tilesort_spu.client_hwnd = NULL;
@@ -53,6 +56,8 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 	char **serverchain, **serverlist;
 	int num_servers;
 	int i;
+
+	int optTileWidth = 0, optTileHeight = 0;
 
 	__setDefaults();
 
@@ -113,6 +118,11 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 		tilesort_spu.fakeWindowHeight = (unsigned int) h;
 	}
 
+	if (crMothershipGetSPUParam( conn, response, "scale_to_mural_size") )
+	{
+		sscanf( response, "%d", &(tilesort_spu.scaleToMuralSize) );
+	}
+
 	/* The response to this tells us how many servers and where they are 
 	 *
 	 * For example:  2 tcpip://foo tcpip://bar 
@@ -133,6 +143,10 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 
 	crDebug( "Got %d servers!", num_servers );
 
+	/*
+	 * Get the list of tiles from all servers.
+	 * Make sure they're all the same size if optimizeBucketing is true.
+	 */
 	for (i = 0 ; i < num_servers ; i++)
 	{
 		char server_url[1024];
@@ -165,6 +179,7 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 			server->x2[tile] = server->x1[tile] + w;
 			server->y2[tile] = server->y1[tile] + h;
 
+			/* update mural size */
 			if (server->x2[tile] > (int) tilesort_spu.muralWidth )
 			{
 				tilesort_spu.muralWidth = server->x2[tile];
@@ -173,17 +188,37 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 			{
 				tilesort_spu.muralHeight = server->y2[tile];
 			}
+
+			/* make sure tile is right size for optimizeBucket */
+			if (tilesort_spu.optimizeBucketing) {
+				if (optTileWidth == 0 && optTileHeight == 0) {
+					optTileWidth = w;
+					optTileHeight = h;
+				}
+				else if (w != optTileWidth || h != optTileHeight) {
+					crWarning("Tile %d on server %d is not the right size!",
+										i, tile);
+					crWarning("All tiles must be same size with optimize_bucket.");
+					crWarning("Turning off tilesort SPU's optimize_bucket.");
+					tilesort_spu.optimizeBucketing = 0;
+				}
+			}
+
 		}
 
-                crFreeStrings( tilechain );
-                crFreeStrings( tilelist );
+		crFreeStrings( tilechain );
+		crFreeStrings( tilelist );
 	}
 	crWarning( "Total output dimensions = (%d, %d)", tilesort_spu.muralWidth, tilesort_spu.muralHeight );
 
-        crSPUPropogateGLLimits( conn, tilesort_spu.id, child_spu, &tilesort_spu.limits );
+	crSPUPropogateGLLimits( conn, tilesort_spu.id, child_spu, &tilesort_spu.limits );
 
-        crFreeStrings( serverchain );
-        crFreeStrings( serverlist );
+	/* XXX there may be a better way of doing this */
+	tilesort_spu.limits.maxViewportDims[0] = MAX_MURAL_WIDTH;
+	tilesort_spu.limits.maxViewportDims[1] = MAX_MURAL_HEIGHT;
+
+	crFreeStrings( serverchain );
+	crFreeStrings( serverlist );
 
 	crMothershipDisconnect( conn );
 }

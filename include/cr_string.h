@@ -20,6 +20,7 @@ int    crStrcasecmp( const char *str1, const char *str2 );
 void   crStrcpy( char *dst, const char *src );
 void   crStrncpy( char *dst, const char *src, unsigned int len );
 void   crStrcat( char *dst, const char *src );
+char  *crStrjoin( const char *src1, const char *src2 );
 char  *crStrstr( const char *str, const char *pat );
 char  *crStrchr( const char *str, char c );
 char  *crStrrchr( const char *str, char c );

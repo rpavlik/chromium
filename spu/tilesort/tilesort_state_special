@@ -36,12 +36,8 @@ FrontFace
 Frustum
 GenLists
 GenTextures
-GetBooleanv
 GetClipPlane
-GetDoublev
 GetError
-GetFloatv
-GetIntegerv
 GetLightfv
 GetLightiv
 GetMapdv
@@ -186,6 +182,7 @@ IndexPointer
 NormalPointer
 TexCoordPointer
 EdgeFlagPointer
+InterleavedArrays
 GetPointerv
 ActiveTextureARB
 ClientActiveTextureARB

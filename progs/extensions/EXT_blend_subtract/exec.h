@@ -26,11 +26,20 @@
 #include <windows.h>
 #endif
 
-#include "cr_glwrapper.h"
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include <iostream.h>
+
+#ifndef GLX_ARB_get_proc_address
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void *glXGetProcAddressARB( const GLubyte *name );
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 /*#define	CCN_DEBUG */
 #define DISPLAY_LISTS

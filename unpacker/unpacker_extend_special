@@ -2,7 +2,12 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
+#
+# Extended functions which can't be auto-generated
+#
 Writeback
 CombinerParameterfvNV
 CombinerParameterivNV
 CombinerStageParameterfvNV
+ChromiumParametervCR
+CreateContext

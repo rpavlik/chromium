@@ -54,29 +54,29 @@ void STATE_APIENTRY crStateHint(GLenum target, GLenum mode)
 	switch (target) {
 	case GL_PERSPECTIVE_CORRECTION_HINT:
 		h->perspectiveCorrection = mode;
-		hb->perspectiveCorrection = g->neg_bitid;
+		DIRTY(hb->perspectiveCorrection, g->neg_bitid);
 		break;
 	case GL_FOG_HINT:
 		h->fog = mode;
-		hb->fog = g->neg_bitid;
+		DIRTY(hb->fog, g->neg_bitid);
 		break;
 	case GL_LINE_SMOOTH_HINT:
 		h->lineSmooth = mode;
-		hb->lineSmooth = g->neg_bitid;
+		DIRTY(hb->lineSmooth, g->neg_bitid);
 		break;
 	case GL_POINT_SMOOTH_HINT:
 		h->pointSmooth = mode;
-		hb->pointSmooth = g->neg_bitid;
+		DIRTY(hb->pointSmooth, g->neg_bitid);
 		break;
 	case GL_POLYGON_SMOOTH_HINT:
 		h->polygonSmooth = mode;
-		hb->polygonSmooth = g->neg_bitid;
+		DIRTY(hb->polygonSmooth, g->neg_bitid);
 		break;
 #ifdef CR_EXT_clip_volume_hint
 	case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
 		if (g->extensions.EXT_clip_volume_hint) {
 			h->clipVolumeClipping = mode;
-			hb->clipVolumeClipping = g->neg_bitid;
+			DIRTY(hb->clipVolumeClipping, g->neg_bitid);
 		}
 		else {
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -89,7 +89,7 @@ void STATE_APIENTRY crStateHint(GLenum target, GLenum mode)
 	case GL_TEXTURE_COMPRESSION_HINT_ARB:
 		if (g->extensions.ARB_texture_compression) {
 			h->textureCompression = mode;
-			hb->textureCompression = g->neg_bitid;
+			DIRTY(hb->textureCompression, g->neg_bitid);
 		}
 		else {
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -102,7 +102,7 @@ void STATE_APIENTRY crStateHint(GLenum target, GLenum mode)
 	case GL_GENERATE_MIPMAP_HINT_SGIS:
 		if (g->extensions.SGIS_generate_mipmap) {
 			h->generateMipmap = mode;
-			hb->generateMipmap = g->neg_bitid;
+			DIRTY(hb->generateMipmap, g->neg_bitid);
 		}
 		else {
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -117,5 +117,5 @@ void STATE_APIENTRY crStateHint(GLenum target, GLenum mode)
 		return;
 	}
 
-	hb->dirty = g->neg_bitid;
+	DIRTY(hb->dirty, g->neg_bitid);
 }

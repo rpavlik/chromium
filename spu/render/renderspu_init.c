@@ -6,12 +6,12 @@
 
 #include "cr_spu.h"
 #include "cr_error.h"
+#include "cr_string.h"
 #include "cr_mothership.h"
 #include "renderspu.h"
-
 #include <stdio.h>
 
-extern SPUNamedFunctionTable render_table[];
+static SPUNamedFunctionTable render_table[1000];
 
 SPUFunctions render_functions = {
 	NULL, /* CHILD COPY */
@@ -25,6 +25,8 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id, unsigned int num_contexts )
 {
 	CRLimitsState limits[3];
+	int numFuncs, numSpecial;
+
 	(void) child;
 	(void) super;
 	(void) context_id;
@@ -32,13 +34,35 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 
 	render_spu.id = id;
 	renderspuGatherConfiguration();
-	renderspuLoadSystemGL( );
-	renderspuCreateWindow();
-	
-	/* SIGH -- we have to wait until the very bitter end to load the 
-	 * extensions, because the context has to be created first. */
 
-	renderspuLoadSystemExtensions();
+	/* Get our special functions. */
+	numSpecial = renderspuCreateFunctions( render_table );
+
+	/* Get the OpenGL functions. */
+	numFuncs = crLoadOpenGL( &render_spu.ws, render_table + numSpecial );
+	if (numFuncs == 0) {
+		crError("The render SPU was unable to load the native OpenGL library");
+		return NULL;
+	}
+
+	/* Get pointer to the real OpenGL glClear function */
+	render_spu.ClearFunc = (ClearFunc_t)
+		 crSPUFindFunction(render_table + numSpecial, "Clear");
+	CRASSERT(render_spu.ClearFunc);
+
+	numFuncs += numSpecial;
+
+	/* Need to create the window and call glX/wglMakeCurrent here */
+	(void) renderspuCreateWindow( render_spu.visAttribs, GL_FALSE );
+	
+	/*
+	 * Get the OpenGL extension functions.
+	 * SIGH -- we have to wait until the very bitter end to load the 
+	 * extensions, because the context has to be bound before
+	 * wglGetProcAddress will work correctly.  No such issue with GLX though.
+	 */
+	numFuncs += crLoadOpenGLExtensions( &render_spu.ws, render_table + numFuncs );
+	CRASSERT(numFuncs < 1000);
 
 	/* Report OpenGL limits to the mothership.
 	 * We use crSPUGetGLLimits() to query the real OpenGL limits via

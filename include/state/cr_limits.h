@@ -71,7 +71,7 @@ typedef struct {
 	GLuint maxEvalOrder;
 	GLuint maxListNesting;
 	GLuint maxPixelMapTable;
-	GLuint maxViewportDims[2];
+	GLint maxViewportDims[2];
 	GLuint subpixelBits;
 	GLfloat aliasedPointSizeRange[2];
 	GLfloat smoothPointSizeRange[2];
@@ -80,6 +80,16 @@ typedef struct {
 	GLfloat smoothLineWidthRange[2];
 	GLfloat lineWidthGranularity;
 	GLubyte *extensions;
+
+	/* Framebuffer/visual attributes */
+	GLuint redBits, greenBits, blueBits, alphaBits;
+	GLuint depthBits, stencilBits, indexBits;
+	GLuint accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits;
+	GLuint auxBuffers;
+	GLboolean rgbaMode;
+	GLboolean doubleBuffer;
+	GLboolean stereo;
+
 } CRLimitsState;
 
 void crStateLimitsInit(CRLimitsState *limits);
