@@ -108,7 +108,7 @@ struct context_info_t {
 	GLuint displayListIdentifier;
 #ifdef WINDOWS
 	HDC client_hdc;
-#elif defined(DARWIN)
+#elif defined(Darwin)
 	AGLContext context;
 #else
 	Display *dpy;
@@ -136,7 +136,7 @@ struct context_info_t {
  * For DMX
  */
 struct backend_window_info_t {
-#if !( defined(WINDOWS) || defined(DARWIN) )
+#ifdef GLX
 	GLXDrawable xwin;     /**< backend server's X window */
 	GLXDrawable xsubwin;  /**< child of xwin, clipped to screen bounds */
 	Display *dpy;
@@ -206,7 +206,7 @@ struct window_info_t {
 
 #ifdef WINDOWS
 	HWND client_hwnd;
-#elif defined(DARWIN)
+#elif defined(Darwin)
 	WindowRef window;
 #else
 	Display *dpy;

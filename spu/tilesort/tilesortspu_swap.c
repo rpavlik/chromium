@@ -52,7 +52,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 			 */
 #ifdef WINDOWS
 			/** XXX \todo is there a Window equivalent here??? */
-#elif defined(DARWIN)
+#elif defined(Darwin)
 			/** XXX \todo is there a Darwin equivalent here??? */
 #else
 			CRASSERT(winInfo->dpy);

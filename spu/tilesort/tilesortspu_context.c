@@ -156,7 +156,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		contextInfo->client_hdc = GetDC(NULL);
 	else
 		contextInfo->client_hdc = (HDC) crStrToInt(dpyName);
-#elif defined(DARWIN)
+#elif defined(Darwin)
 	/** XXX \todo Fill in Darwin */
 	if( !dpyName )
 		crDebug("tilesortspu_CreateContext: dont' know what to do without a dpyName!");
@@ -360,7 +360,7 @@ fprintf(stderr,"MakeCurrent thread = %p\n",thread);
 		CRASSERT(winInfo);
 #ifdef WINDOWS
 		winInfo->client_hwnd = WindowFromDC( newCtx->client_hdc );
-#elif defined(DARWIN)
+#elif defined(Darwin)
 		/** XXX \todo Fill in Darwin */
 #else
 		winInfo->dpy = newCtx->dpy;
@@ -384,7 +384,7 @@ fprintf(stderr,"MakeCurrent thread = %p\n",thread);
 
 		crStateSetCurrentPointers( newCtx->State, &(thread->packer->current) );
 
-#if !( defined(WINDOWS) || defined(DARWIN) )
+#ifdef GLX
 		if (nativeWindow) {
 			CRASSERT((int) winInfo->xwin == nativeWindow);
 		}

@@ -336,7 +336,7 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
 		}
 	}
-#elif defined(DARWIN)
+#elif defined(Darwin)
 	GrafPtr save;
 	Rect rect;
 
@@ -516,7 +516,7 @@ WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint xwindowID)
 #ifdef WINDOWS
 	if (!winInfo->client_hwnd)
 		winInfo->client_hwnd = (HWND) xwindowID;
-#elif defined(DARWIN)
+#elif defined(Darwin)
 	if( !winInfo->window )
 		winInfo->window = (WindowRef) xwindowID;
 #else
