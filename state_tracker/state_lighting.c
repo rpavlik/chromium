@@ -1197,6 +1197,11 @@ void crStateColorMaterialRecover(void)
 
 	if (l->colorMaterial)
 	{
+		/* prevent recursion here (was in tilesortspu_flush.c's doFlush() for a
+		 * short time.  Without this, kirchner_colormaterial fails.
+		 */
+		crStateFlushFunc(NULL);
+
 		crStateMaterialfv( l->colorMaterialFace, l->colorMaterialMode, &(c->vertexAttrib[VERT_ATTRIB_COLOR0][0]) );
 	}
 }

@@ -531,7 +531,6 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway,
 	 * We know we can do this now because this function will get called if 
 	 * glDisable turns off COLOR_MATERIAL, so that would be the very very 
 	 * latest time we could actually get away with that. */
-	crStateFlushFunc(NULL); /* prevent recursion here */
 	crStateColorMaterialRecover( );
 
 	/* Okay.  Now, we need to un-hide the bonus space for the extra glEnd packet 
