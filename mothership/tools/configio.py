@@ -203,7 +203,7 @@ def WriteConfig(mothership, file):
 
 	# tail of file, boilerplate
 	file.write(__ConfigFileTail)
-
+	return 1
 
 
 #----------------------------------------------------------------------
