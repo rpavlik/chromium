@@ -3,6 +3,7 @@
 import re, os, string, sys
 sys.path.append("../server")
 import crconfig
+import crtypes
 
 #----------------------------------------------------------------------
 
@@ -109,9 +110,19 @@ def FindSPUNames():
 
 #----------------------------------------------------------------------
 
+__InfoCache = {}
+
 def GetSPUOptions(spuName):
 	"""Use the spuoptions program to get the params/options for the SPU.
-	Same result returned as for ParseSPUOptionsFile() above."""
+	The return value is a tuple (params, options) where params is a
+	dictionary of parameter values and options is an array of tuples
+	of the form (name, description, type, count, default, mins, maxs).
+	Run 'spuoptions --pythonmode tilesort' to see an example.
+	"""
+	# first check if we've cached this SPU's options
+	if spuName in __InfoCache:
+		return __InfoCache[spuName]
+	# use the spuoptions program to get the options
 	program = os.path.join(crconfig.crbindir, 'spuoptions')
 	command = '%s --pythonmode %s' % (program, spuName)
 	f = os.popen(command, 'r')
@@ -119,7 +130,36 @@ def GetSPUOptions(spuName):
 		s = f.read()
 		result = eval(s)
 		f.close()
+		__InfoCache[spuName] = result  # save in cache
 		return result
 	else:
 		print "Error running spuoptions program (where is it?)"
 		return 0
+
+def SPUMaxServers(spuName):
+	"""Return the max number of servers this SPU can have."""
+	(params, opts) = GetSPUOptions(spuName)
+	if params["packer"] == "yes":
+		m = params["maxservers"]
+		if m == "zero":
+			return 0
+		elif m == "one":
+			return 1
+		else:
+			return 100000
+	else:
+		return 0
+
+def SPUIsTerminal(spuName):
+	"""Return 1 if spuname is a terminal, else return 0."""
+	(params, opts) = GetSPUOptions(spuName)
+	if params["terminal"] == "yes":
+		return 1
+	else:
+		return 0
+
+def NewSPU(spuName):
+	"""Return a new instance of the named SPU"""
+	return crtypes.SpuObject(spuName, SPUIsTerminal(spuName),
+						   SPUMaxServers(spuName))
+
