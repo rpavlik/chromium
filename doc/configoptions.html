@@ -86,6 +86,17 @@ Chromium configuration uses this SPU.
       respectively.&nbsp; The default is [0, 0, 256, 256].</td>
   </tr>
   <tr>
+    <td width="19%" class="ConfigOption" height="38">default_visual</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">The default visual used
+      for windows and rendering contexts can be set by specifying a
+      comma-separated list of the following tokens: <em>rgb, alpha,
+      depth (or z), double, stencil, accum, stereo, multisample</em>.
+      The visual is normally determined by the application program, but
+      in some cases, this option is useful.
+      The default is <em>"rgb"</em>.</td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">fullscreen</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="115%" class="ConfigDesc" height="38">If this flag is set, the <code>window_geometry</code>
@@ -97,12 +108,6 @@ Chromium configuration uses this SPU.
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="115%" class="ConfigDesc" height="38">If this flag is set, the 
 	  window will appear on top of all other windows.</td>
-  </tr>
-  <tr>
-    <td width="19%" class="ConfigOption" height="38">stencil_bits</td>
-    <td width="12%" class="ConfigType" height="38">Integer</td>
-    <td width="115%" class="ConfigDesc" height="38">Sets the number of required stencil
-	  bits for the created window.  The default is 0.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">try_direct</td>
