@@ -91,7 +91,7 @@ void crServerInitializeTiling(void)
 {
 	if (cr_server.numExtents > 0)
 	{
-		int j;
+		unsigned int j;
 		for ( j = 0 ; j < cr_server.numClients ; j++)
 		{
 			crServerRecomputeBaseProjection( &(cr_server.clients[j].baseProjection), 0, 0, cr_server.muralWidth, cr_server.muralHeight );
