@@ -653,7 +653,8 @@ def Create_Tilesort(parentWindow, mothership):
 								 labels=["Number of application nodes:",
 										 "Mural Columns:",
 										 "Mural Rows:"],
-								 defaultValues=dialogDefaults, maxValue=10000)
+								 defaultValues=dialogDefaults,
+								 minValue=1, maxValue=10000)
 	dialog.Centre()
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()

@@ -465,7 +465,7 @@ def Create_Sortlast(parentWindow, mothership):
 									 "Window Height:"],
 							 defaultValues=[defaultNodes,
 											defaultWidth, defaultHeight],
-							 maxValue=10000)
+							 minValue=1, maxValue=10000)
 	dialog.Centre()
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()

@@ -107,7 +107,7 @@ class LightningParameters:
 
 		# initialize tile lists
 		self.ServerTiles = []  # array [server] of array of (x,y,w,h)
-		self.Tiles = []        # tuples (row, col, server)
+		self.Tiles = []        # tuples (row, col, server) for drawing
 		self.NextTile = []     # array [server] of (row,col)
 		for i in range(self.NumServers):
 			self.ServerTiles.append( [] )
@@ -668,7 +668,7 @@ class LightningDialog(wxDialog):
 
 	def _onOK(self, event):
 		"""Called by OK button"""
-		self.__UpdateVarsFromWidgets()
+		#self.__UpdateVarsFromWidgets()
 		self.EndModal(wxID_OK)
 
 	def _onCancel(self, event):
@@ -683,7 +683,6 @@ class LightningDialog(wxDialog):
 		space = 2
 
 		dc = wxPaintDC(self.drawArea)
-#		self.drawArea.PrepareDC(dc)  # only for scrolled windows
 		dc.BeginDrawing()
 		dc.SetPen(wxBLACK_PEN);
 		dc.SetBrush(wxLIGHT_GREY_BRUSH);
@@ -765,12 +764,15 @@ class LightningDialog(wxDialog):
 		retVal = wxDialog.ShowModal(self)
 		if retVal == wxID_OK:
 			# update the template vars and mothership
+			self.__UpdateVarsFromWidgets()
 			mothership.Template = self.Template
 			clientNode = FindClientNode(mothership)
 			serverNode = FindServerNode(mothership)
 			serverNode.SetCount(mothership.Template.NumServers)
 			serverNode.SetHostNamePattern(mothership.Template.ServerPattern)
 			serverNode.SetHosts(mothership.Template.ServerHosts)
+			for i in range(serverNode.GetCount()):
+				serverNode.SetTiles(mothership.Template.ServerTiles[i], i)
 		return retVal
 
 
@@ -789,7 +791,8 @@ def Create_Lightning2(parentWindow, mothership):
 										 "Number of server nodes:",
 										 "Number of Columns:",
 										 "Number of Rows:"],
-								 defaultValues=[1, 4, 5, 4], maxValue=10000)
+								 defaultValues=[1, 4, 5, 4],
+								 minValue=1, maxValue=10000)
 	dialog.Centre()
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()
@@ -885,7 +888,7 @@ def Edit_Lightning2(parentWindow, mothership):
 
 	print "Edit lightning-2"
 
-	# XXX we only need to create one instance of the Lightning2Frame() and
+	# XXX we only need to create one instance of the LightningDialog() and
 	# reuse it in the future.
 	dialog = LightningDialog(parent=parentWindow)
 	dialog.Centre()
