@@ -176,11 +176,11 @@ void REPLICATESPU_APIENTRY replicatespu_WindowSize( GLint win, GLint w, GLint h 
 
 	if (replicate_spu.swap)
 	{
-		crPackWindowSizeSWAP( win, w, h );
+		crPackWindowSizeSWAP( winInfo->id, w, h );
 	}
 	else
 	{
-		crPackWindowSize( win, w, h );
+		crPackWindowSize( winInfo->id, w, h );
 	}
 	replicatespuFlush( (void *) thread );
 }
