@@ -285,7 +285,7 @@ This extension requires the GL_CR_state_parameter extension.</p>
 <code>glChromiumParametervCR</code>:
 
 <dl>
-<dt>GL_TILE_INFO_SIZE_CR</dt>
+<dt>GL_TILE_INFO_CR</dt>
 <dd>The <code>count</code> parameter indicates the number of tile parameters,
     defined below.
     </dd>
@@ -297,11 +297,13 @@ This extension requires the GL_CR_state_parameter extension.</p>
    values[1] = the overall mural width
    values[2] = the overall mural height
    values[3] = number of tiles
-   values[4] = first tile x1
-   values[5] = first tile y1
-   values[6] = first tile x2
-   values[7] = first tile y2
-   values[8] = second tile x1
+   values[4] = first tile x pos
+   values[5] = first tile y pos
+   values[6] = first tile width
+   values[7] = first tile height
+   values[8] = second tile x pos
+   values[9] = second tile y pos
+   values[10] = second tile width
    ...
 </pre>
    <code>count</code> should be 4 + 4 * (number of tiles).
