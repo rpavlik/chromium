@@ -9,6 +9,6 @@ PROGRAM = psubmit
 FILES = psubmit
 MATH = 1
 
-LIBRARIES = crutil crfaker
+LIBRARIES = crutil crfaker crmothership spuload
 
 include ${TOP}/cr.mk
