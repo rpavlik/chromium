@@ -19,5 +19,7 @@ crSPUChangeInterface
 crSPUInitDispatchTable
 crSPUInitDispatchNops
 crSPUInitDispatch
+crSPUGetMothershipParams
+crSPUSetDefaultParams
 crLoadOpenGLExtensions
 crLoadOpenGL

@@ -18,7 +18,7 @@ static void __setDefaults( void )
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions counterSPUOptions[] = {
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 void counterspuGatherConfiguration( void )

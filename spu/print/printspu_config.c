@@ -39,10 +39,10 @@ void set_log_file( void *foo, const char *response )
  */
 SPUOptions printSPUOptions[] = {
 
-   { "log_file", STRING, 1, "stderr", NULL, NULL, 
+   { "log_file", CR_STRING, 1, "stderr", NULL, NULL, 
      "Log file name (or stdout,stderr)", (SPUOptionCB)set_log_file },
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
 };
 

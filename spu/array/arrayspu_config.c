@@ -18,7 +18,7 @@ static void __setDefaults( void )
 /* No SPU options yet.
  */
 SPUOptions arraySPUOptions[] = {
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 

@@ -17,8 +17,8 @@ static void __setDefaults( void )
 
 /* option, type, nr, default, min, max, title, callback
  */
-SPUOptions templatespuSPUOptions[] = {
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+SPUOptions templateSPUOptions[] = {
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -35,12 +35,12 @@ void templatespuGatherConfiguration( void )
 	{
 		/* The mothership isn't running.  Some SPU's can recover gracefully, some 
 		 * should issue an error here. */
-         	crSPUSetDefaultParams( &template_spu, templatespuSPUOptions );
+         	crSPUSetDefaultParams( &template_spu, templateSPUOptions );
 		return;
 	}
 	crMothershipIdentifySPU( conn, template_spu.id );
 
-	crSPUGetMothershipParams( conn, &template_spu, templatespuSPUOptions );
+	crSPUGetMothershipParams( conn, &template_spu, templateSPUOptions );
 
 	crMothershipDisconnect( conn );
 }

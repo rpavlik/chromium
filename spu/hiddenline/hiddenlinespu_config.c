@@ -39,19 +39,19 @@ void set_line_width( void *foo, const char *response )
  */
 SPUOptions hiddenlineSPUOptions[] = {
 
-   { "buffer_size", INT, 1, "32768", "128", "1048576", 
+   { "buffer_size", CR_INT, 1, "32768", "128", "1048576", 
      "Buffer Size", (SPUOptionCB)set_buffer_size },
 
-   { "poly_color", FLOAT, 3, ".75 .75 0", "0 0 0", "1 1 1", 
+   { "poly_color", CR_FLOAT, 3, ".75 .75 0", "0 0 0", "1 1 1", 
      "Polygon Color", (SPUOptionCB)set_poly_color },
 
-   { "line_color", FLOAT, 3, "0 0 0", "0 0 0", "1 1 1", 
+   { "line_color", CR_FLOAT, 3, "0 0 0", "0 0 0", "1 1 1", 
      "Line Color", (SPUOptionCB)set_line_color },
 
-   { "line_width", FLOAT, 1, "1", "0", "20", 
+   { "line_width", CR_FLOAT, 1, "1", "0", "20", 
      "Line Color", (SPUOptionCB)set_line_color },
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
 };
 

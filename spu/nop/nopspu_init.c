@@ -46,7 +46,7 @@ int nopSPUCleanup(void)
 }
 
 SPUOptions nopSPUOptions[] = {
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,

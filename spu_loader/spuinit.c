@@ -50,9 +50,9 @@ static int validate_one_option( SPUOptions *opt,
 				const char *max )
 {
    switch (opt->type) {
-   case BOOL: return validate_int( response, "0", "1" );
-   case INT: return validate_int( response, min, max );
-   case FLOAT: return validate_float( response, min, max );
+   case CR_BOOL: return validate_int( response, "0", "1" );
+   case CR_INT: return validate_int( response, min, max );
+   case CR_FLOAT: return validate_float( response, min, max );
    default: return 0;
    }
 }
@@ -63,7 +63,7 @@ static int validate_option( SPUOptions *opt, const char *response )
    const char *max = opt->max;
    int i = 0;
 
-   if (opt->type == STRING)
+   if (opt->type == CR_STRING)
       return 1;
    
    if (opt->numValues == 0)

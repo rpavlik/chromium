@@ -26,7 +26,7 @@ static void __setDefaults( void )
 /* No SPU options yet.
  */
 SPUOptions packSPUOptions[] = {
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 

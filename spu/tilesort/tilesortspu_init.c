@@ -94,7 +94,7 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *super,
 		{
 			if (tilesort_spu.servers[i].x1[j] == 0)
 				totalDims[1] += vpdims[0];
-			if (tilesort_spu.servers[i].y2[j] == tilesort_spu.muralHeight)
+			if (tilesort_spu.servers[i].y2[j] == (int)tilesort_spu.muralHeight)
 				totalDims[0] += vpdims[1];
 		}
 	}

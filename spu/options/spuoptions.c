@@ -96,10 +96,10 @@ static void print_spu_header( SPU *spu )
 }
 
 static const char *type_string[] = {
-   "BOOL", 
-   "INT",
-   "FLOAT",
-   "STRING"
+   "CR_BOOL", 
+   "CR_INT",
+   "CR_FLOAT",
+   "CR_STRING"
 };
 
 static void print_option( SPUOptions *opt )

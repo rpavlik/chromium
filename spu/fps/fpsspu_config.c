@@ -19,7 +19,7 @@ static void __setDefaults( void )
  */
 SPUOptions fpsSPUOptions[] = {
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 

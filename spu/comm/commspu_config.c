@@ -34,13 +34,13 @@ static void set_server( void *foo, const char *response )
  */
 SPUOptions commSPUOptions[] = {
 
-   { "server", BOOL, 1, "0", NULL, NULL, 
+   { "server", CR_BOOL, 1, "0", NULL, NULL, 
      "Server Node", (SPUOptionCB)set_server },
 
-   { "peer", STRING, 1, "", NULL, NULL, 
+   { "peer", CR_STRING, 1, "", NULL, NULL, 
      "Peer Name", (SPUOptionCB)set_peer},
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 

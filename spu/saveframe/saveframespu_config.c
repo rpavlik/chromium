@@ -52,19 +52,19 @@ void set_geometry( void *foo, const char *response )
  */
 SPUOptions saveframeSPUOptions[] = {
 
-   { "stride", INT, 1, "1", NULL, NULL, 
+   { "stride", CR_INT, 1, "1", NULL, NULL, 
      "Stride", (SPUOptionCB)set_stride },
 
-   { "basename", STRING, 1, "frame", NULL, NULL, 
+   { "basename", CR_STRING, 1, "frame", NULL, NULL, 
      "Basename", (SPUOptionCB)set_basename },
 
-   { "single", INT, 1, "-1", NULL, NULL, 
+   { "single", CR_INT, 1, "-1", NULL, NULL, 
      "Single", (SPUOptionCB)set_single },
 
-   { "geometry", INT, 4, "-1 -1 -1 -1", NULL, NULL, /* -1 width ??? */
+   { "geometry", CR_INT, 4, "-1 -1 -1 -1", NULL, NULL, /* -1 width ??? */
      "Geometry", (SPUOptionCB)set_geometry },
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
 };
 

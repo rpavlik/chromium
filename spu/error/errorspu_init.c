@@ -38,7 +38,7 @@ int errorSPUCleanup(void)
 }
 
 SPUOptions errorSPUOptions[] = {
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 

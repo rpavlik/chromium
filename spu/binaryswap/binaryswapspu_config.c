@@ -85,19 +85,19 @@ static void set_type( void *foo, const char *response )
  */
 SPUOptions binaryswapSPUOptions[] = {
 
-   { "peers", STRING, 1, "", NULL, NULL, 
+   { "peers", CR_STRING, 1, "", NULL, NULL, 
      "Peers", (SPUOptionCB)set_peers},
 
-   { "node#", STRING, 1, "", NULL, NULL, 
+   { "node#", CR_STRING, 1, "", NULL, NULL, 
      "Node #", (SPUOptionCB)set_node},
 
    /* Really an enumerate (alpha/depth), not a string
     */
-   { "type", STRING, 1, "depth", NULL, NULL, 
+   { "type", CR_STRING, 1, "depth", NULL, NULL, 
      "Composite type (alpha/depth)", (SPUOptionCB)set_type},
 
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 

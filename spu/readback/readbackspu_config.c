@@ -52,23 +52,22 @@ SPUOptions readbackSPUOptions[] = {
 
    /* Really a multiple choice:  Extract depth or alpha.
     */
-   { "extract_depth", BOOL, 1, "0", NULL, NULL,
+   { "extract_depth", CR_BOOL, 1, "0", NULL, NULL,
      "Extract Depth", (SPUOptionCB)set_extract_depth },
 
-   { "extract_alpha", BOOL, 1, "0", NULL, NULL,
+   { "extract_alpha", CR_BOOL, 1, "0", NULL, NULL,
      "Extract Alpha", (SPUOptionCB)set_extract_alpha },
 
-   { "local_visualization", BOOL, 1, "1", NULL, NULL,
+   { "local_visualization", CR_BOOL, 1, "1", NULL, NULL,
      "Local Visualizatoin", (SPUOptionCB)set_local_visualization },
 
-   { "visualize_depth", BOOL, 1, "0", NULL, NULL,
+   { "visualize_depth", CR_BOOL, 1, "0", NULL, NULL,
      "Visualize Depth", (SPUOptionCB)set_extract_depth },
 
-   { "drawpixels_pos", INT, 2, "0 0", "0 0", NULL,
+   { "drawpixels_pos", CR_INT, 2, "0 0", "0 0", NULL,
      "Depth Type", (SPUOptionCB)set_extract_depth },
 
-
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
 };
 

@@ -51,28 +51,28 @@ void set_ior( void *foo, const char *response )
 
 SPUOptions wetSPUOptions[] = {
 
-   { "density", INT, 1, "5", "0", NULL, 
+   { "density", CR_INT, 1, "5", "0", NULL, 
      "Density", (SPUOptionCB)set_density },
 
-   { "raininess", INT, 1, "10", "0", NULL, 
+   { "raininess", CR_INT, 1, "10", "0", NULL, 
      "Raininess", (SPUOptionCB)set_raininess },
 
-   { "mesh_dice", INT, 1, "100", "1", NULL, 
+   { "mesh_dice", CR_INT, 1, "100", "1", NULL, 
      "Mesh Dice", (SPUOptionCB)set_mesh_dice },
 
-   { "ripple_freq", FLOAT, 1, "2", NULL, NULL, 
+   { "ripple_freq", CR_FLOAT, 1, "2", NULL, NULL, 
      "Ripple Frequency", (SPUOptionCB)set_ripple_freq },
 
-   { "ripple_scale", FLOAT, 1, "1", NULL, NULL, 
+   { "ripple_scale", CR_FLOAT, 1, "1", NULL, NULL, 
      "Line Color", (SPUOptionCB)set_ripple_scale },
 
-   { "time_scale", FLOAT, 1, ".1", NULL, NULL
+   { "time_scale", CR_FLOAT, 1, ".1", NULL, NULL
      "Time Scale", (SPUOptionCB)set_time_scale },
 
-   { "ior", FLOAT, 1, "1.2", NULL, NULL, 
+   { "ior", CR_FLOAT, 1, "1.2", NULL, NULL, 
      "IOR", (SPUOptionCB)set_ior },
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
 };
 

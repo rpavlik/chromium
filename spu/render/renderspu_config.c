@@ -63,29 +63,29 @@ static void set_force_direct( RenderSPU *render_spu, const char *response )
  */
 SPUOptions renderSPUOptions[] = {
 #ifndef WINDOWS
-   { "try_direct", BOOL, 1, "1", NULL, NULL, 
+   { "try_direct", CR_BOOL, 1, "1", NULL, NULL, 
      "Try Direct Rendering", (SPUOptionCB)set_try_direct  },
 
-   { "force_direct", BOOL, 1, "0", NULL, NULL, 
+   { "force_direct", CR_BOOL, 1, "0", NULL, NULL, 
      "Force Direct Rendering", (SPUOptionCB)set_force_direct },
 #endif
 
-   { "fullscreen", BOOL, 1, "0", NULL, NULL, 
+   { "fullscreen", CR_BOOL, 1, "0", NULL, NULL, 
      "Full-screen Window", (SPUOptionCB)set_fullscreen },
 
-   { "on_top", BOOL, 1, "0", NULL, NULL, 
+   { "on_top", CR_BOOL, 1, "0", NULL, NULL, 
      "Display on top", (SPUOptionCB)set_on_top },
 
-   { "title", STRING, 1, "Chromium Render SPU", NULL, NULL, 
+   { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
      "Window Title", (SPUOptionCB)set_title },
 
-   { "window_geometry", INT, 4, "0 0 256 256", "0 0 1 1", NULL, 
+   { "window_geometry", CR_INT, 4, "0 0 256 256", "0 0 1 1", NULL, 
      "Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
 
-   { "system_gl_path", STRING, 1, "/usr/lib/", NULL, NULL, 
+   { "system_gl_path", CR_STRING, 1, "/usr/lib/", NULL, NULL, 
      "System GL Path", (SPUOptionCB)set_system_gl_path},
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 

@@ -101,34 +101,34 @@ void set_scale_to_mural_size( void *foo, const char *response )
  */
 SPUOptions tilesortSPUOptions[] = {
 
-   { "split_begin_end", BOOL, 1, "1", NULL, NULL, 
+   { "split_begin_end", CR_BOOL, 1, "1", NULL, NULL, 
      "Split glBegin/glEnd", (SPUOptionCB)set_split_begin_end },
 
-   { "broadcast", BOOL, 1, "0", NULL, NULL, 
+   { "broadcast", CR_BOOL, 1, "0", NULL, NULL, 
      "Broadcast", (SPUOptionCB)set_broadcast },
 
-   { "optimize_bucket", BOOL, 1, "1", NULL, NULL, 
+   { "optimize_bucket", CR_BOOL, 1, "1", NULL, NULL, 
      "Optimize Bucket", (SPUOptionCB)set_optimize_bucket },
 
-   { "sync_on_swap", BOOL, 1, "1", NULL, NULL, 
+   { "sync_on_swap", CR_BOOL, 1, "1", NULL, NULL, 
      "Sync on Swap", (SPUOptionCB)set_sync_on_swap },
 
-   { "sync_on_finish", BOOL, 1, "1", NULL, NULL, 
+   { "sync_on_finish", CR_BOOL, 1, "1", NULL, NULL, 
      "Sync on Finish", (SPUOptionCB)set_sync_on_finish },
 
-   { "draw_bbox", BOOL, 1, "0", NULL, NULL, 
+   { "draw_bbox", CR_BOOL, 1, "0", NULL, NULL, 
      "Draw Bounding Box", (SPUOptionCB)set_draw_bbox },
 
-   { "bbox_line_width", INT, 1, "5", "0", "10", 
+   { "bbox_line_width", CR_INT, 1, "5", "0", "10", 
      "Bounding Box Line Width", (SPUOptionCB)set_bbox_line_width },
 
-   { "fake_window_dims", INT, 2, "0 0", "1 1", NULL, 
+   { "fake_window_dims", CR_INT, 2, "0 0", "1 1", NULL, 
      "Fake Window Dimensions (w, h)", (SPUOptionCB)set_fake_window_dims },
 
-   { "scale_to_mural_size", BOOL, 1, "1", NULL, NULL, 
+   { "scale_to_mural_size", CR_BOOL, 1, "1", NULL, NULL, 
      "Scale to Mural Size", (SPUOptionCB)set_scale_to_mural_size },
 
-   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+   { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
 
