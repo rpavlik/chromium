@@ -30,7 +30,7 @@ static GLboolean __handleFogData( GLenum pname, const GLfloat *params )
 			if (!params_length)
 			{
 				char msg[100];
-				sprintf(msg, "Invalid pname in Fog: %d", pname );
+				sprintf(msg, "Invalid pname in Fog: %d", (int) pname );
 				__PackError( __LINE__, __FILE__, GL_INVALID_ENUM, msg);
 				return GL_FALSE;
 			}
