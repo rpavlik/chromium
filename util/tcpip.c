@@ -825,6 +825,19 @@ crTCPIPRecv( void )
 			slen = sizeof( s );
 			/* Check that the socket is REALLY connected */
 			if (getpeername(sock, (struct sockaddr *) &s, &slen) < 0) {
+				/* Another kludge.....
+				 * If we disconnect a socket without writing
+				 * anything to it, we end up here. Detect
+				 * the disconnected socket by checking if
+				 * we've ever sent something and then
+				 * disconnect it.
+				 * 
+				 * I think the networking layer needs
+				 * a bit of a re-write.... Alan.
+				 */
+				if (conn->total_bytes_sent > 0) {
+					crTCPIPDoDisconnect( conn );
+				}
 				FD_CLR(sock, &read_fds);
 				msock = sock;
 			}
