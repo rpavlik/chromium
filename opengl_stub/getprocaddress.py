@@ -31,9 +31,6 @@ print """#include "cr_glwrapper.h"
 #pragma warning( disable: 4055 )
 #endif
 
-extern crCreateContextProc crCreateContext;
-extern crMakeCurrentProc crMakeCurrent;
-extern crSwapBuffersProc crSwapBuffers;
 
 CR_PROC CR_APIENTRY crGetProcAddress( const char *name )
 {"""

@@ -26,21 +26,17 @@ extern "C" {
 
 /* Parallel API Extensions */
 
-#ifndef WINGDIAPI
-#define WINGDIAPI
-#endif
-
 #ifndef APIENTRY
 #define APIENTRY
 #endif
 
-typedef WINGDIAPI void (APIENTRY *glBarrierCreateProc) (GLuint name, GLuint count);
-typedef WINGDIAPI void (APIENTRY *glBarrierDestroyProc) (GLuint name);
-typedef WINGDIAPI void (APIENTRY *glBarrierExecProc) (GLuint name);
-typedef WINGDIAPI void (APIENTRY *glSemaphoreCreateProc) (GLuint name, GLuint count);
-typedef WINGDIAPI void (APIENTRY *glSemaphoreDestroyProc) (GLuint name);
-typedef WINGDIAPI void (APIENTRY *glSemaphorePProc) (GLuint name);
-typedef WINGDIAPI void (APIENTRY *glSemaphoreVProc) (GLuint name);
+typedef void (APIENTRY *glBarrierCreateProc) (GLuint name, GLuint count);
+typedef void (APIENTRY *glBarrierDestroyProc) (GLuint name);
+typedef void (APIENTRY *glBarrierExecProc) (GLuint name);
+typedef void (APIENTRY *glSemaphoreCreateProc) (GLuint name, GLuint count);
+typedef void (APIENTRY *glSemaphoreDestroyProc) (GLuint name);
+typedef void (APIENTRY *glSemaphorePProc) (GLuint name);
+typedef void (APIENTRY *glSemaphoreVProc) (GLuint name);
 
 typedef void (APIENTRY *crCreateContextProc)(void);
 typedef void (APIENTRY *crMakeCurrentProc)(void);

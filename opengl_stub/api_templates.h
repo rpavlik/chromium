@@ -10,4 +10,8 @@
 
 extern SPUDispatchTable glim;
 
+extern void APIENTRY crCreateContext(void);
+extern void APIENTRY crMakeCurrent(void);
+extern void APIENTRY crSwapBuffers(void);
+
 #endif /* CR_API_TEMPLATES_H */
