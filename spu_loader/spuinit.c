@@ -221,6 +221,8 @@ int crSPUGetEnumIndex( const SPUOptions *options, const char *optName, const cha
 			char **values;
 			int i;
 
+			CRASSERT(opt->type == CR_ENUM);
+
 			/* break into array of strings */
 			/* min string should be of form "'enum1', 'enum2', 'enum3', etc" */
 			values = crStrSplit(opt->min, ",");
