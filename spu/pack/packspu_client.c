@@ -9,6 +9,11 @@
 #include "cr_glstate.h"
 #include "packspu_proto.h"
 
+void PACKSPU_APIENTRY packspu_FogCoordPointerEXT( GLenum type, GLsizei stride, const GLvoid *pointer )
+{
+	crStateFogCoordPointerEXT( type, stride, pointer );
+}
+
 void PACKSPU_APIENTRY packspu_ColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateColorPointer( size, type, stride, pointer );
