@@ -12,8 +12,8 @@
 <body bgcolor="#FFFFFF">
 
 <h1 class="PageHeading">Automatically generating code for a new SPU</h1>
-<p>This page will describe the creation of a more complicated SPU -- the 
-"seethrough" SPU.  This SPU will force everything to draw transparently.
+<p>This page will describe the creation of a more complicated SPU -- the &quot;seethrough&quot;
+SPU.  This SPU will force everything to draw transparently.
 The alpha setting for every color will be configurable, along with the 
 blend mode.  Unlike the <a href="newspu.html">invert SPU</a>, this SPU
 will not omit any of the relevant functions.  Instead, it will use a 
@@ -89,7 +89,8 @@ in alphabetical order):</p>
 <h2 class="PageSubHeading">Step 3: Auto-generate seethroughspu.c</h2>
 <p>This step is fairly involved.&nbsp; If you're having trouble following along,
 you can always check out <a href="seethrough.tar.gz">the completed SeeThrough
-SPU</a>.</p>
+SPU</a> (although see step 13 for one required edit to a file outside the <code>cr/spu/seethrough</code>
+directory).</p>
 
 <p>For this example, we're going to automatically generate the named
 dispatch table contained in <code>seethroughspu.c</code>.  Create
@@ -104,8 +105,8 @@ import cPickle;<br>
 import string;<br>
 import re;<br>
 <br>
-sys.path.append( "../../opengl_stub" )<br>
-parsed_file = open( "../../glapi_parser/gl_header.parsed", "rb" )<br>
+sys.path.append( &quot;../../opengl_stub&quot; )<br>
+parsed_file = open( &quot;../../glapi_parser/gl_header.parsed&quot;, &quot;rb&quot; )<br>
 gl_mapping = cPickle.load( parsed_file )<br>
 <br>
 import stub_common;</td></tr></table>
@@ -113,7 +114,7 @@ import stub_common;</td></tr></table>
 <p>This code loads in the parsed representation of the OpenGL headers,
 which gives a structured interface to the entire API supported by 
 Chromium.  <code>gl_mapping</code> is an associative array whose keys
-are OpenGL function names (without the "gl" prefix).  
+are OpenGL function names (without the &quot;gl&quot; prefix).  
 <code>stub_common</code> is a set of utility functions that we will
 use to generate code later.</p>
 
@@ -135,10 +136,10 @@ Python <code>print</code> statement:</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">print """<br>
       #include <stdio.h>&lt;stdio.h&gt;<br>
-#include "cr_spu.h"<br>
+#include &quot;cr_spu.h&quot;<br>
       #include &quot;cr_glwrapper.h&quot;<br>
       #include &quot;cr_string.h&quot;<br>
-#include "seethroughspu.h&quot;<br>
+#include &quot;seethroughspu.h&quot;<br>
 <br>
       SeethroughSpu seethrough_spu;<br>
 """</td></tr></table>
@@ -168,15 +169,16 @@ unsigned variants.&nbsp; To generate the 32 <code>glColor</code> calls, we will
 loop over the legal types and legal component numbers (in this case, 3 and 4).</p>
 <p>Add the following code to the python script:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">for type in ['b', 'd', 'f', 'i', 's', 'ub', 'ui', 'us']:<br>
+<table width="100%"><tr><td class="GrayCodeListing">for type in ['b', 'd', 'f',
+      'i', 's', 'ub', 'ui', 'us']:<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for components in [3, 4]:<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       func_name = 'Color%d%s' % (components, type)<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       (return_type, arg_names, arg_types) = gl_mapping[func_name]<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      print 'void SEETHROUGHSPU_APIENTRY seethrough%s%s' % (func_name, stub_common.ArgumentString(
-      arg_names, arg_types ) )<br>
+      print 'void SEETHROUGHSPU_APIENTRY seethrough%s%s' % (func_name,
+      stub_common.ArgumentString( arg_names, arg_types ) )<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       print '{'<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -225,7 +227,8 @@ indented two block levels):</p>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; arg_names[3] = 'seethrough_spu.opacity%s' % type<br>
       <br>
       new_func_name = 'Color4%s' % type<br>
-		print '\tseethrough_spu.super.%s%s;' % (new_func_name, stub_common.CallString( arg_names ) )</td></tr></table>
+		print '\tseethrough_spu.super.%s%s;' % (new_func_name,
+      stub_common.CallString( arg_names ) )</td></tr></table>
 
 <p>Now we have half of our glColor functions working.&nbsp; The implementation
 for the vector passing functions is even easier.&nbsp; Just add this code:</p>
@@ -233,7 +236,8 @@ for the vector passing functions is even easier.&nbsp; Just add this code:</p>
 <table width="100%"><tr><td class="GrayCodeListing">new_names = [ 'v[0]',
       'v[1]', 'v[2]', 'seethrough_spu.opacity%s' % type ]<br>
       new_func_name = 'Color4%s' % type<br>
-		print '\tseethrough_spu.super.%s%s;' % (new_func_name, stub_common.CallString(
+		print '\tseethrough_spu.super.%s%s;' % (new_func_name,
+      stub_common.CallString(
       new_names ) )</td></tr></table>
 
 <p>Notice that in both cases, we have dispatched to the 4-parameter version of
@@ -259,7 +263,8 @@ this code is <i>not</i> indented at all -- it's at the outermost scope):</p>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       (return_type, arg_names, arg_types) = gl_mapping[func_name]<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      print 'extern void SEETHROUGHSPU_APIENTRY seethrough%s%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )</td></tr></table>
+      print 'extern void SEETHROUGHSPU_APIENTRY seethrough%s%s;' % (func_name,
+      stub_common.ArgumentString( arg_names, arg_types ) )</td></tr></table>
 
 <p>Notice that we bother declaring the actual prototype for these functions even
 though they're going to be cast to <code>SPUGenericFunction</code> in the named
@@ -283,8 +288,10 @@ file:</p>
 <table width="100%"><tr><td class="GrayCodeListing">print """<br>
       static void __fillin( int offset, char *name, SPUGenericFunction func )<br>
       {<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tilesort_table[offset].name = crStrdup( name );<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tilesort_table[offset].fn = func;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tilesort_table[offset].name =
+      crStrdup( name );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tilesort_table[offset].fn =
+      func;<br>
       }"""&nbsp;</td></tr></table>
 
 <p>Now, we're <i>finally</i> ready to build our named function table.</p>
@@ -303,7 +310,8 @@ file:</p>
 <p>So that we can call this function from <code>SPUInit</code>, add a
 declaration for it to <code>seethroughspu.h</code>:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">void seethroughspuBuildFunctionTable( void );</td></tr></table>
+<table width="100%"><tr><td class="GrayCodeListing">void
+      seethroughspuBuildFunctionTable( void );</td></tr></table>
 
 <h1 class="PageSubHeading">Step 4: Take a break</h1>
 <p>That was brutal.&nbsp; Go have a good glass of wine.&nbsp; When you get back,
@@ -320,12 +328,12 @@ opacity variables that are floating around.</p>
 <p>Add the following declarations to the <code>SeethroughSPU</code> structure in
 <code>seethroughspu.h</code>:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">	GLbyte   opacityb;<br>
+<table width="100%"><tr><td class="GrayCodeListing">	GLbyte opacityb;<br>
 	GLdouble opacityd;<br>
-	GLfloat  opacityf;<br>
-	GLint    opacityi;<br>
-	GLshort  opacitys;<br>
-	GLubyte  opacityub;<br>
+	GLfloat opacityf;<br>
+	GLint opacityi;<br>
+	GLshort opacitys;<br>
+	GLubyte opacityub;<br>
 	GLuint   opacityui;<br>
 	GLushort opacityus;</td></tr></table>
 
@@ -632,10 +640,33 @@ implement vertex arrays in our SPU.</p>
 tracker.&nbsp; The state tracker will keep track of the location of all of the
 vertex array pointers, which ones are enabled, and what format they're in.</p>
 <p>First, let's make sure that we are linking against the state tracker.&nbsp;
-Add the string &quot;crstate&quot; to the <code>LIBRARIES</code> variable in the
-<code>Makefile</code>.&nbsp; The resulting line should look like:</p>
+Because the state tracker has global state, we link against it in a special way
+to avoid sharing global variables with other SPU's that also track state.&nbsp;
+To link against the state tracker, do the following.</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">		LIBRARIES = spuload crutil crmothership crstate</td></tr></table>
+<p>Edit the file <code>cr/spu/state_tracker/Makefile</code> and add the string
+&quot;seethroughspu&quot; to the variable &quot;LIB_COPIES&quot;.&nbsp; The new
+setting should look like:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		LIB_COPIES = crserver \<br>
+      &nbsp;&nbsp;&nbsp; packspu \<br>
+      &nbsp;&nbsp;&nbsp; tilesortspu \<br>
+      &nbsp;&nbsp;&nbsp; seethroughspu</td></tr></table>
+
+<p>Once you've done this, type '<code>make</code>' in the <code>state_tracker</code>
+directory to get a personalized copy of the state tracker built for the
+SeeThrough SPU.&nbsp;</p>
+
+<p><b>NOTE: This step won't have been done for you if you're just using the
+completed implementation, so you have to do it!</b></p>
+
+<p>Now go back to cr/spu/seethrough/Makefile, and add the line:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		TRACKS_STATE = 1</td></tr></table>
+
+<p>Anywhere before the &quot;<code>include</code>&quot; of <code>cr.mk</code>..&nbsp;
+I typically put the <code>TRACKS_STATE</code> setting immediately after the <code>LIBRARIES</code>
+variable.</p>
 
 <p>While we're in the Makefile, let's create a new file for our array
 implementations.&nbsp; Add a file called &quot;seethroughspu_arrays&quot; to the
@@ -648,13 +679,13 @@ FILES variable.&nbsp; The resulting list should look like:</p>
       &nbsp;&nbsp; seethroughspu_misc</td></tr></table>
 
 <p>Before we start implementing functions, let's figure out what it is we want
-to do.&nbsp; We will need to use the state tracker's implementation of
-glEnableClientState, glDisableClientState, glVertexPointer, glColorPointer,
-glIndexPointer, glNormalPointer, glTexCoordPointer, glEdgeFlagPointer, and
-glInterleavedArrays.&nbsp; For each of these functions, we will want to call the
+to do.&nbsp; We will need to use the state tracker's implementation of <code>glEnableClientState</code>,
+<code>glDisableClientState</code>, <code>glVertexPointer</code>, <code>glColorPointer</code>,
+<code>glIndexPointer</code>, <code>glNormalPointer</code>, <code>glTexCoordPointer</code>,
+<code>glEdgeFlagPointer</code>, and <code>glInterleavedArrays</code>.&nbsp; For each of these functions, we will want to call the
 state tracker's implementation, and then also dispatch to our SuperSPU.&nbsp;
 Because this is a very simple task and highly repetitive, we'll add it to the
-auto-generating code in seethrough.py.&nbsp;&nbsp;</p>
+auto-generating code in <code> seethrough.py</code>.</p>
 <p>First, let's add the 9 functions listed above to a new file called <code>seethrough_state_special</code>.&nbsp;
 We'll update the auto-generating code so that anything found in this file will
 automatically dispatch to the state tracker as well as our SuperSPU.&nbsp; The

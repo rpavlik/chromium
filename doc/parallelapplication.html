@@ -47,7 +47,7 @@ called psubmit, and can be found in the directory <code>cr/progs/psumit</code>.<
     sort-first or sort-last (assuming that it doesn't need the additional
     ordering provided by sort-first) without modification or recompilation.</li>
 </ul>
-<p>The Basic Idea</p>
+<h2 class="PageSubHeading">The Basic Idea</h2>
 <p>Writing a parallel OpenGL application is pretty simple.&nbsp; You have a
 bunch of processes, each one of which is responsible for a portion of the model
 to be rendered.&nbsp; Each process renders its portion pretty much as if it were
@@ -59,7 +59,7 @@ before B.&nbsp; With parallel programs, it's no longer clear which function is
 getting called first.&nbsp; Therefore, if you aren't using the depth test (for
 example), and you draw two overlapping triangles in parallel, you don't know
 which one will appear on top.&nbsp; To get around this problem, Chromium
-implements the parallel API proposed by <a href="http://graphics.stanford.edu/papers/parallel_api/">Igehy,
+implements the parallel API proposed by <a href="http://graphics.stanford.edu/papers/parallel_api/" target="new_window">Igehy,
 Stoll and Hanrahan in SIGGRAPH '98</a>.&nbsp; This API extends OpenGL to have
 barriers and semaphores, which are sufficient to express almost all ordering
 constraints that come up in graphics.</p>
