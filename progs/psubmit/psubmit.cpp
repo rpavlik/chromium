@@ -23,7 +23,7 @@ float colors[7][3] = {
 
 static const int MASTER_BARRIER = 1;
 
-int main(int argc, char *argv[])
+void main(int argc, char *argv[])
 {
 	int rank = -1, size=-1;
 	int i;
@@ -96,7 +96,5 @@ int main(int argc, char *argv[])
 		{
 			crSwapBuffers();
 		}
-
 	}
-	return 0;
 }
