@@ -1,0 +1,127 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Warped Tile Sorting</h1>
+<p>
+It is occasionaly useful to be able to specify non-rectangular tiles. This is commonly
+the case when working with an array of projectors which are not precisely aligned. 
+By determining the distortion of one projector relative to another, we can distort the 
+tile such that when it is projected, neighboring projectors are aligned.
+</p>
+<p>
+This document does not discuss how to determine the transformation to be used to 
+warp the tiles. There have been several papers published on how to recover this 
+transformation, which can be referred to as needed.
+</p>
+
+<h2 class="PageSubHeading">The Big Picture</h2>
+
+<p>
+<center><img src="warp_demo.jpg"></center>
+</p>
+
+<p>
+Assume that we have two tiles as shown above, with one rotated 45 degrees and shifted
+off to one side. Units are given with respect to the default GL transformation. We will 
+walk through the steps needed to setup the Tilesort SPU and CRServer to see a world of 
+this nature.  
+For this example, refer to <a href="warp_demo.conf">warp_demo.conf</a>. Once all tiles
+have been specified, the projection matrix will be scaled such that the mural viewport 
+is a rectangle that roughly fits within the union of the tiles.
+</p>
+
+<h2 class="PageSubHeading">Step 1: Determine the Transformations</h2>
+
+<p>
+The first step is to determine the linear transform which maps a tile to its approprate
+spot on the mural. In order to avoid problems with potential pixel size mismatches,
+we will specify our tiles in a space which can be thought of as the normalized device 
+coordinates of the mural. That is, specifing the identity as a transform will yield
+a tile from (-1, -1) to (1, 1). This is what we will use for our first tile above.
+</p>
+
+<p>
+For our second tile, things will be a bit more interesting. First, rotate the tile
+by 45 degrees, then translate it 2 units along the x axis.  This yields the 
+transformation shown in the image above.
+</p>
+
+<p>
+Specifing every tile in our mural in this manner is somewhat overkill. Usually, tiles 
+will be rectangular in the framebuffer space of the system they are to be displayed upon. 
+With this, we can simplify the specification. 
+</p>
+
+<p>
+We define a <i>display</i> to be a collection of tiles which need to be warped by the same 
+transformation. In the case of projector alignment, we may have several tiles which are
+displayed on a given projector. We will specify a transformation only for each display 
+in the system. Tiles which fall within a display are specified in a familiar fashion.
+In our example above, we only use one tile per display. However, the specification of more tiles
+on a given display is not difficult and does not need additional transformations to be 
+determined.
+</p>
+
+<p>
+<b>NOTE:</b> It is also necessary to determine the inverses of the above transformations. 
+This is usually trivial to recover when computing projector (mis)alignment, thus we have
+not included matrix inversion code with Chromium.
+</p>
+
+<h2 class="PageSubHeading">Step 2: Configure the Tilesort SPU</h2>
+
+<p>
+We now need to report the displays and their transformations to the Tilesort SPU. In our 
+Python config file, we add the following:
+<pre>
+   tilesort_spu.AddDisplay(0, DISPLAY_WIDTH, DISPLAY_HEIGHT, inverse_transform_0, transform_0) 
+</pre>
+Where the first argument is the <i>display id</i>, the second and third specify the 
+resolution of the display, followed by the transformation and its inverse. For our 
+first tile, we would use the following:
+<pre>
+   ident_matrix       = [1, 0, 0,  0, 1, 0,  0, 0, 1]
+   tilesort_spu.AddDisplay(0, TILE_WIDTH, TILE_HEIGHT, ident_matrix, ident_matrix);
+</pre>
+We also need to pass the Tilesort SPU a few options so that it knows to use the warped tiles.
+<pre>
+   tilesort_spu.Conf('local_tile_spec', 1)
+   tilesort_spu.Conf('bucket_mode',     'Warped Grid')
+</pre>
+</p>
+
+<h2 class="PageSubHeading">Step 3: Configure the CRServer</h2>
+
+<p>
+Finally, we need to add tiling information to the CRServers where they reside. The format
+for this is:
+
+<pre>
+   render_node.AddTileToDisplay(<i>display_id</i>, start_x, start_y, TILE_WIDTH, TILE_HEIGHT )
+</pre>
+
+Additional tiles can be added to the display at will. As with the Tilesort SPU, we must set
+an option to make use of the tiling:
+
+<pre>
+   render_node.Conf('local_tile_spec', 1)
+</pre>
+
+
+</body>
+
+</html>
