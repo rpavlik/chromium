@@ -324,7 +324,7 @@ ifdef SHARED
 else
 	@$(LD) $(OBJS) $(LIBRARIES) $(LDFLAGS)
 endif #shared
-else
+else #windows
 ifdef SHARED
 ifdef AIXSHAREDLIB
 	@$(ECHO) "AIX shared obj link"
@@ -342,16 +342,16 @@ ifdef AIXSHAREDLIB
 	@$(CP) $(AIXDLIBNAME) $(DSO_DIR)
 	rm -f tmpAnyDX.* shr.o load.map
 	rm -f $(DSO_DIR)/$(LIBPREFIX)$(SHORT_TARGET_NAME)$(DLLSUFFIX)
-else
+else #aixsharedlib
 	@$(LD) $(SHARED_LDFLAGS) -o $(LIBNAME) $(OBJS) $(LDFLAGS) $(LIBRARIES)
-endif # aix
-else
-	@$(ECHO) How do I make static libraries on $(ARCH)?
+endif #aixsharedlib
+else #shared
+	@$(AR) $(ARCREATEFLAGS) $@ $(OBJS)
 endif #shared
-endif
+endif #windows
 
 	@$(CP) $(LIBNAME) $(DSO_DIR)
-endif
+endif #library
 
 ifdef LIB_COPIES
 COPY_TARGETS := $(foreach copy, $(LIB_COPIES), $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)$(copy)_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) )
