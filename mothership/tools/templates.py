@@ -12,7 +12,7 @@ from wxPython.wx import *
 import crtypes
 import crutils
 import intdialog
-from tilesort_template import *
+import tilesort_template
 
 
 # Eventually we'll move these into separate files in a special directory.
@@ -163,10 +163,21 @@ def __Write_BinarySwap(mothership, file):
 # XXX also specify functions for editing options, saving, validation, etc.
 
 __Templates = {
-	"Tilesort"     : (Create_Tilesort,Is_Tilesort, Edit_Tilesort, Read_Tilesort, Write_Tilesort),
-	"Sort-last"    : (__Create_Sortlast, __Is_Sortlast, __Edit_Sortlast, __Read_Sortlast, __Write_Sortlast),
-	"Binary-swap"  : (__Create_BinarySwap, __Is_BinarySwap, __Edit_BinarySwap, __Read_BinarySwap, __Write_BinarySwap),
-#	"Lightning-2"  : (__Create_Lightning2, __Edit_Lightning2)
+	"Tilesort"     : ( tilesort_template.Create_Tilesort,
+					   tilesort_template.Is_Tilesort,
+					   tilesort_template.Edit_Tilesort,
+					   tilesort_template.Read_Tilesort,
+					   tilesort_template.Write_Tilesort ),
+	"Sort-last"    : ( __Create_Sortlast,
+					   __Is_Sortlast,
+					   __Edit_Sortlast,
+					   __Read_Sortlast,
+					   __Write_Sortlast ),
+	"Binary-swap"  : ( __Create_BinarySwap,
+					   __Is_BinarySwap,
+					   __Edit_BinarySwap,
+					   __Read_BinarySwap,
+					   __Write_BinarySwap ),
 }
 
 def GetTemplateList():
@@ -224,7 +235,7 @@ def ReadTemplate(templateName, mothership, file):
 
 
 def WriteTemplate(templateName, mothership, file):
-	"""Write the mothership config as a template to given file handle."""
+	"""Write a templatized mothership config to given file handle."""
 	assert templateName in __Templates.keys()
 	(create, validate, edit, read, write) = __Templates[templateName]
 	assert validate(mothership)
