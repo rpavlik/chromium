@@ -346,6 +346,7 @@ endif
 endif #aixsharedlib
 else #shared
 	@$(AR) $(ARCREATEFLAGS) $@ $(OBJS)
+	@$(RANLIB) $@
 endif #shared
 endif #windows
 

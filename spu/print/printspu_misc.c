@@ -19,7 +19,7 @@ void PRINT_APIENTRY printChromiumParametervCR(GLenum target, GLenum type, GLsize
 		fprintf( print_spu.fp, "ChromiumParametervCR( " ) ;
 		fprintf( print_spu.fp, "%s, ", printspuEnumToStr( target ) ) ;
 		fprintf( print_spu.fp, "%s, ", printspuEnumToStr( type ) ) ;
-		fprintf( print_spu.fp, "%d, %p=[ ", count, values ) ;
+		fprintf( print_spu.fp, "%d, %p=[ ", (int) count, values ) ;
 		switch( type ) {
 			case GL_INT:
 				for (i=0; i<count; i++)
@@ -68,7 +68,7 @@ void PRINT_APIENTRY printChromiumParameteriCR(GLenum target, GLint value)
 	switch (target) {
 	default:
 		fprintf( print_spu.fp, "ChromiumParameteri( %s, ", printspuEnumToStr(target) ) ;
-		fprintf( print_spu.fp, "%d )\n", value );
+		fprintf( print_spu.fp, "%d )\n", (int) value );
 		fflush( print_spu.fp );
 		break;
 	}

@@ -1793,7 +1793,7 @@ char * printspuEnumToStr(GLenum value)
 									return str;
 					}
 			}
-    sprintf(buf, "%u", value);
+    sprintf(buf, "0x%x", (unsigned int) value);
     return buf;
 }
 

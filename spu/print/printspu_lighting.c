@@ -43,7 +43,7 @@ void PRINT_APIENTRY printMaterialiv( GLenum face, GLenum mode, const GLint *para
 
 	for (i = 0 ; i < num_params ; i++)
 	{
-		fprintf( print_spu.fp, "%d", params[i] );
+		fprintf( print_spu.fp, "%d", (int) params[i] );
 		if (i != num_params -1)
 		{
 			fprintf( print_spu.fp, ", " );
@@ -91,7 +91,7 @@ void PRINT_APIENTRY printLightiv( GLenum light, GLenum pname, const GLint *param
 
 	for (i = 0 ; i < num_params ; i++)
 	{
-		fprintf( print_spu.fp, "%d", params[i] );
+		fprintf( print_spu.fp, "%d", (int) params[i] );
 		if (i != num_params -1)
 		{
 			fprintf( print_spu.fp, ", " );

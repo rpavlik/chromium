@@ -73,11 +73,11 @@ void PACKSPU_APIENTRY packspu_SwapBuffers( GLint window, GLint flags )
 		thread->writeback = 1;
 		if (pack_spu.swap)
 		{
-			crPackWritebackSWAP( &thread->writeback );
+			crPackWritebackSWAP( (GLint *) &thread->writeback );
 		}
 		else
 		{
-			crPackWriteback( &thread->writeback );
+			crPackWriteback( (GLint *) &thread->writeback );
 		}
 		break;
 	case 1:

@@ -48,7 +48,7 @@ packspu.c: pack.py packspu_special packspu_unimplemented_special ../../glapi_par
 	@$(ECHO) Building the Pack SPU
 	@$(PYTHON) pack.py > $@
 
-packspu_get.c: packspu_get.py packspu_special ../../crserverlib/get_sizes.py ../../glapi_parser/gl_header.parsed packspu_proto.h
+packspu_get.c: packspu_get.py packspu_special ../../crserverlib/get_sizes.py ../../crserverlib/get_components.py ../../glapi_parser/gl_header.parsed packspu_proto.h
 	@$(ECHO) Building the Pack SPU Get functions
 	@$(PYTHON) packspu_get.py > $@	
 

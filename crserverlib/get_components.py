@@ -108,7 +108,7 @@ for comp in comps:
 
 print """
 		default:
-			crError( "Unknown parameter name in __lookupComponents: %d", pname );
+			crError( "Unknown parameter name in __lookupComponents: 0x%x", (int) pname );
 			break;
 	}
 	/* NOTREACHED */

@@ -30,20 +30,20 @@ keys = gl_mapping.keys()
 keys.sort();
 
 printf_mapping = {
-	'GLint':      '%d',
-	'GLshort':    '%hd',
-	'GLbyte':     '%d',
-	'GLubyte':    '%u',
-	'GLuint':     '%u',
-	'GLushort':   '%hu',
-	'GLenum':     '%s',
-	'GLfloat':    '%f',
-	'GLclampf':   '%f',
-	'GLdouble':   '%f',
-	'GLclampd':   '%f',
-	'GLbitfield': '0x%x',
-	'GLboolean':  '%s',
-	'GLsizei':    '%u'
+	'GLint':      ('%d','int'),
+	'GLshort':    ('%hd','short'),
+	'GLbyte':     ('%d','int'),
+	'GLubyte':    ('%u','unsigned'),
+	'GLuint':     ('%u','unsigned'),
+	'GLushort':   ('%hu','unsigned short'),
+	'GLenum':     ('%s','' ),
+	'GLfloat':    ('%f','float'),
+	'GLclampf':   ('%f','float'),
+	'GLdouble':   ('%f','float'),
+	'GLclampd':   ('%f','float'),
+	'GLbitfield': ('0x%x','int'),
+	'GLboolean':  ('%s',''),
+	'GLsizei':    ('%u','unsigned')
 }
 
 #for func_name in keys:
@@ -79,8 +79,12 @@ for func_name in keys:
 			printfstr += '['
 			for index in range( vector_nelem ):
 				if printf_mapping.has_key( vector_arg_type ):
-					printfstr += printf_mapping[vector_arg_type]
-					arg = '%s[%d]' % (names[len(names)-1], index)
+					(format_str, cast) = printf_mapping[vector_arg_type]
+					printfstr += format_str
+					cast_str = ''
+					if cast != '':
+						cast_str = '(%s)' % cast
+					arg = '%s %s[%d]' % (cast_str,names[len(names)-1], index)
 					if vector_arg_type == 'GLboolean':
 						argstr += '%s ? "GL_TRUE" : "GL_FALSE"' % arg
 					else:
@@ -91,13 +95,17 @@ for func_name in keys:
 			printfstr += ']'
 		else:
 			if printf_mapping.has_key( type ):
-				printfstr += printf_mapping[type];
+				(format_str, cast) = printf_mapping[type]
+				printfstr += format_str
+				cast_str = ''
+				if cast != '':
+					cast_str = '(%s)' % cast
 				if type == 'GLenum':
 					argstr += 'printspuEnumToStr( %s )' % name
 				elif type == 'GLboolean':
 					argstr += '%s ? "GL_TRUE" : "GL_FALSE"' % name
 				else:
-					argstr += name
+					argstr += '%s %s' % (cast_str,name)
 			elif type.find( "*" ):
 				printfstr += "%p"
 				argstr += "(void *)"

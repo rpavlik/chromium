@@ -43,7 +43,7 @@ void PACKSPU_APIENTRY packspu_ChromiumParametervCR(GLenum target, GLenum type, G
 void PACKSPU_APIENTRY packspu_Finish( void )
 {
 	GET_THREAD(thread);
-	int writeback = pack_spu.thread[0].server.conn->actual_network;
+	GLint writeback = pack_spu.thread[0].server.conn->actual_network;
 	if (pack_spu.swap)
 	{
 		crPackFinishSWAP(  );
