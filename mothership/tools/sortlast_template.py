@@ -46,7 +46,7 @@ CommonWindowSizes = [ [128, 128],
 #----------------------------------------------------------------------
 
 _ImportsSection = """
-import string, sys
+import string, sys, getopt
 sys.path.append( "../server" )
 from mothership import *
 
@@ -55,24 +55,78 @@ from mothership import *
 # This is the guts of the sortlast configuration script.
 # It's simply appended to the file after we write all the configuration options
 _ConfigBody = """
+def Usage():
+	print "Usage:"
+	print "  %s [-w imageWidth] [-h imageHeight] [-s servers] [program]" % sys.argv[0]
+	sys.exit(0)
+
+
+# Init globals
+PROGRAM = ""
+ZEROTH_ARG = ""
+AUTO_START = 0
+WIDTH = 0
+HEIGHT = 0
+
 # Look for some special options
 for (name, value) in APP_OPTIONS:
 	if name == "application":
-		DEFAULT_APP = value
+		PROGRAM = value
 	elif name == "zeroth_arg":
 		ZEROTH_ARG = value
 for (name, value) in MOTHERSHIP_OPTIONS:
 	if name == "auto_start":
 		AUTO_START = value
+for (name, value) in READBACK_OPTIONS:
+	if name == "window_geometry":
+		WIDTH = value[2]
+		HEIGHT = value[3]
 
 # Check for program name/args on command line
-if len(sys.argv) == 1:
-	program = DEFAULT_APP
-else:
-	program = string.join(sys.argv[1:])
-if program == "":
-	print "No program to run!"
-	sys.exit(-1)
+try:
+	(opts, args) = getopt.getopt(sys.argv[1:], "w:h:s:")
+except getopt.GetoptError:
+	Usage()
+
+for (name, value) in opts:
+	if name == "-w":
+		WIDTH = int(value)
+	elif name == "-h":
+		HEIGHT = int(value)
+	elif name == "-s":
+		APP_HOSTS = str.split(value, ",")
+		NUM_APP_NODES = len(APP_HOSTS)
+	
+
+if len(args) > 0:
+	PROGRAM = args[0]
+if PROGRAM == "":
+	Usage()
+
+# update window width/height if changed
+if WIDTH and HEIGHT:
+	for i in range(len(READBACK_OPTIONS)):
+		(name, value) = READBACK_OPTIONS[i]
+		if name == "window_geometry":
+			value[2] = WIDTH
+			value[3] = HEIGHT
+			READBACK_OPTIONS[i] = (name, value)
+			break
+	for i in range(len(RENDER_OPTIONS)):
+		(name, value) = RENDER_OPTIONS[i]
+		if name == "window_geometry":
+			value[2] = WIDTH
+			value[3] = HEIGHT
+			RENDER_OPTIONS[i] = (name, value)
+			break
+		
+print "--- Sort-last Template ---"
+print "Num Nodes: %s" % NUM_APP_NODES
+print "App Hosts: %s" % APP_HOSTS
+print "Program: %s" % PROGRAM
+print "Image size: %d x %d" % (WIDTH, HEIGHT)
+print "--------------------------"
+
 
 cr = CR()
 
@@ -103,9 +157,9 @@ for i in range(NUM_APP_NODES):
 
 	# argument substitutions
 	if i == 0 and ZEROTH_ARG != "":
-		app_string = string.replace( program, '%0', ZEROTH_ARG)
+		app_string = string.replace( PROGRAM, '%0', ZEROTH_ARG)
 	else:
-		app_string = string.replace( program, '%0', '' )
+		app_string = string.replace( PROGRAM, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 	node.Conf( 'application', app_string )
