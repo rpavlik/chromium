@@ -243,10 +243,7 @@ CompositeTile(WindowInfo * window, int w, int h,
 	}
 	else
 	{
-		//readback_spu.super.ReadPixels(readx, ready, w/1.414, h/1.414,
-		//readback_spu.super.ReadPixels(readx, ready, w/2, h/2,
 		readback_spu.super.ReadPixels(readx, ready, w, h,
-		//readback_spu.super.ReadPixels(readx, ready, 2, 2,
 																	window->rgbFormat, GL_UNSIGNED_BYTE,
 																	window->colorBuffer + shift);
 		
@@ -327,7 +324,6 @@ CompositeTile(WindowInfo * window, int w, int h,
 		{
 			/* just send color image */
 			readback_spu.child.DrawPixels(w, h,
-			//readback_spu.child.DrawPixels(2, 2,
 																		window->rgbFormat, GL_UNSIGNED_BYTE,
 																		window->colorBuffer + shift);
 		}
@@ -818,7 +814,7 @@ readbackspuWindowCreate(const char *dpyName, GLint visBits)
 	/* init window */
 	window->index = freeID;
 	window->renderWindow = readback_spu.super.WindowCreate(dpyName, visBits);
-	window->childWindow = 0;      /* use the default window! */
+	window->childWindow = readback_spu.child.WindowCreate(dpyName, visBits);
 	window->width = -1;						/* unknown */
 	window->height = -1;					/* unknown */
 	window->colorBuffer = NULL;
