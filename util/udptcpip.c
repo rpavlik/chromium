@@ -121,7 +121,7 @@ void crUDPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
 	int retval;
 	if ( len > conn->mtu + sizeof(conn->seq) )
 	{
-		crWarning( "crUDPIPWriteExact(%d): too big a packet for mtu %d, dropping !", len, conn->mtu + sizeof(conn->seq) );
+		crWarning( "crUDPIPWriteExact(%d): too big a packet for mtu %d, dropping !", len, (int)(conn->mtu + sizeof(conn->seq)) );
 		return;
 	}
 	retval = sendto( conn->udp_socket, buf, len, 0,
