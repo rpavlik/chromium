@@ -22,14 +22,10 @@ static void __setDefaults( void )
 	perf_spu.log_file = stderr;
 	perf_spu.frame_counter = 0;
 	perf_spu.timer_event = 0.0f;
-	perf_spu.old_draw_pixels = 0;
-	perf_spu.old_read_pixels = 0;
-	perf_spu.draw_pixels = 0;
-	perf_spu.read_pixels = 0;
-	crMemset(&perf_spu.framestats, 0, sizeof(PerfPrim));
-	crMemset(&perf_spu.old_framestats, 0, sizeof(PerfPrim));
-	crMemset(&perf_spu.timerstats, 0, sizeof(PerfPrim));
-	crMemset(&perf_spu.old_timerstats, 0, sizeof(PerfPrim));
+	crMemset(&perf_spu.framestats, 0, sizeof(PerfData));
+	crMemset(&perf_spu.old_framestats, 0, sizeof(PerfData));
+	crMemset(&perf_spu.timerstats, 0, sizeof(PerfData));
+	crMemset(&perf_spu.old_timerstats, 0, sizeof(PerfData));
 }
 
 void set_log_file( void *foo, const char *response )
@@ -89,9 +85,9 @@ void set_token( void *foo, const char *response )
    strncpy(perf_spu.token, response, strlen(response));
 }
 
-void set_swapdumpcount( void *foo, const char *response )
+void set_dump_on_swap_count( void *foo, const char *response )
 {
-   sscanf( response, "%d", &(perf_spu.swapdumpcount) );
+   sscanf( response, "%d", &(perf_spu.dump_on_swap_count) );
 }
 
 void set_separator( void *foo, const char *response )
@@ -109,8 +105,8 @@ SPUOptions perfSPUOptions[] = {
    { "perf_set_token", CR_STRING, 1, "", NULL, NULL, 
      "Performance SPU filter token", (SPUOptionCB)set_token },
 
-   { "perf_set_swapdumpcount", CR_INT, 1, "0", "0", "99999",
-     "Performance SPU Dump Statistics on SwapBuffers Count", (SPUOptionCB)set_swapdumpcount },
+   { "perf_set_dump_on_swap_count", CR_INT, 1, "0", "0", "99999",
+     "Performance SPU Dump Statistics on SwapBuffers Count", (SPUOptionCB)set_dump_on_swap_count },
 
    { "perf_set_log_separator", CR_STRING, 1, "\t", NULL, NULL, 
      "Performance SPU Log File separator", (SPUOptionCB)set_separator },

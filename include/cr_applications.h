@@ -35,7 +35,7 @@ extern "C" {
 
 /* 
  * For the performance SPU. Allows application to obtain it's own
- * statistics, and reset etc. through glChromiumParameter*CR().
+ * statistics, and reset etc. 
  */
 typedef struct {
 	int 	count;
@@ -67,6 +67,14 @@ typedef struct {
 	PerfVertex polygon;
 } PerfPrim;
 
+typedef struct {
+	int draw_pixels;
+	int read_pixels;
+
+	PerfVertex *cur_vertex;
+	PerfVertex vertex_snapshot;
+	PerfPrim vertex_data;
+} PerfData;
 
 typedef void (APIENTRY *glBarrierCreateCRProc) (GLuint name, GLuint count);
 typedef void (APIENTRY *glBarrierDestroyCRProc) (GLuint name);
