@@ -62,13 +62,13 @@ def WriteSPUOptions(spu, prefix, file):
 		__WriteOption(prefix + "_" + name, type, values, file)
 
 
-def WriteConfig(mothership, file):
-	"""Write the mothership config to file handle."""
+def ReadConfig(mothership, file):
+	"""Read a mothership config from file handle."""
 	pass
 
 
 
-def ReadConfig(mothership, file):
+def WriteConfig(mothership, file):
 	"""Write the mothership config to file handle."""
 
 	file.write("# Chromium configuration produced by graph.py\n")
@@ -83,10 +83,10 @@ def ReadConfig(mothership, file):
 		nodeNames[node] = "node[%d]" % n
 		if node.IsServer():
 			file.write("node[%d] = crNetworkNode('%s')\n" %
-					   (n, node.GetHost()))
+					   (n, node.GetHost()[0])) # XXX fix hostnames
 		else:
 			file.write("node[%d] = crApplicationNode('%s')\n" %
-					   (n, node.GetHost()))
+					   (n, node.GetHost()[0]))
 		# write the node's SPUs
 		for spu in node.SPUChain():
 			spuNames[spu] = "spu[%d]" % s

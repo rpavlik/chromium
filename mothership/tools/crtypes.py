@@ -200,11 +200,14 @@ class SpuObject:
 
 class Node:
 	"""Base class for the ServerNode and NetworkNode classes.
+	Not to be used directly by clients!
+	Note: A single Node instance can actually represent N Chromium nodes
+	by setting count > 1.  This allows compact, convenient representations
+	for may configurations.
 	"""
 
-	def __init__(self, host="localhost", isServer = 0, cnt=1,
-				 color=wxPython.wx.wxLIGHT_GREY):
-		self.__Count = cnt
+	def __init__(self, hostnames, isServer, count, color):
+		self.__Count = count
 		self.__X = 0
 		self.__Y = 0
 		self.__Width = 0
@@ -215,15 +218,15 @@ class Node:
 		self.__InputPlugPos = (0,0)
 		self.__Color = color
 		self.__Brush = wxPython.wx.wxBrush(color)
-		self.__Host = ""
-		self.__FirstHost = 1
-		self.__Label = ""
-		self.SetHost(host)
+		#self.__Hosts = hostnames
+		#self.__Label = ""
+		self.SetHosts(hostnames)
+		self.__HostPattern = (hostnames[0], 1)
 		self.__FontHeight = 0
 
 	def Clone(self):
 		"""Return a deep copy/clone of this Node object"""
-		newNode = Node(self.__Host, self.__IsServer, self.__Count,
+		newNode = Node(self.__Hosts, self.__IsServer, self.__Count,
 					   self.__Color)
 		for spu in self.SPUChain():
 			newSpu = spu.Clone()
@@ -264,28 +267,26 @@ class Node:
 				return server.HasChild(childCandidate)
 			return 0
 
-	def SetHost(self, hostname):
-		"""Set the node's host name"""
-		# XXX we'll eventually want a list of hostnames for explicitly naming
-		# an N-node's hosts.
-		self.__Host = hostname
+	def SetHosts(self, namelist):
+		"""Specify a list of hostnames for this (N-instance) node."""
+		self.__Hosts = namelist
 		if self.__IsServer:
-			self.__Label = "Server node host=" + hostname
+			self.__Label = "Server node host=" + namelist[0]
 		else:
-			self.__Label = "App node host=" + hostname
+			self.__Label = "App node host=" + namelist[0]
 		self.InvalidateLayout()
 
-	def GetHost(self):
-		"""Return the host name"""
-		return self.__Host
+	def GetHosts(self):
+		"""Return the host name list."""
+		return self.__Hosts
 
-	def SetFirstHost(self, first):
-		"""Set the number for the first host."""
-		self.__FirstHost = first
+	def SetHostNamePattern(self, patternTuple):
+		"""Set the host naming pattern tuple (string, startIndex)."""
+		self.__HostPattern = patternTuple
 
-	def GetFirstHost(self):
-		"""Get the number for the first host."""
-		return self.__FirstHost
+	def GetHostNamePattern(self):
+		"""Return (pattern, firstIndex) tuple for naming hosts."""
+		return self.__HostPattern
 
 	def SetCount(self, count):
 		"""Set the host count"""
@@ -492,14 +493,14 @@ class Node:
 
 class NetworkNode(Node):
 	"""A CRNetworkNode object"""
-	def __init__(self, host="localhost", count=1):
-		Node.__init__(self, host, isServer=1, cnt=count,
+	def __init__(self, hostnames=["localhost"], count=1):
+		Node.__init__(self, hostnames, 1, count,
 					  color=wxPython.wx.wxColor(210,105,135))
 
 class ApplicationNode(Node):
 	"""A CRApplicationNode object"""
-	def __init__(self, host="localhost", count=1):
-		Node.__init__(self, host, isServer=0, cnt=count,
+	def __init__(self, hostnames=["localhost"], count=1):
+		Node.__init__(self, hostnames, 0, count,
 					  color=wxPython.wx.wxColor(55,160,55))
 
 # ----------------------------------------------------------------------

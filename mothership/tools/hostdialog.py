@@ -118,21 +118,14 @@ class HostDialog(wxDialog):
 		"""Return lists of hostnames"""
 		return self.listBox.GetStrings()
 
-	def SetPattern(self, pattern):
+	def SetHostPattern(self, patternTuple):
 		"""Set the naming pattern string"""
-		self.patternCtrl.SetValue(pattern)
+		self.patternCtrl.SetValue(patternTuple[0])
+		self.startCtrl.SetValue(patternTuple[1])
 
-	def GetPattern(self):
-		"""Get the naming pattern string"""
-		return self.patternCtrl.GetValue()
-
-	def SetStart(self, start):
-		"""Set the first host name index"""
-		self.startCtrl.SetValue(start)
-
-	def GetStart(self):
-		"""Get the first host name index"""
-		return int(self.startCtrl.GetValue())
+	def GetHostPattern(self):
+		"""Get the naming pattern tuple (string, startIndex)."""
+		return (self.patternCtrl.GetValue(), int(self.startCtrl.GetValue()))
 
 	def SetCount(self, count):
 		"""Set the host name count"""
@@ -147,10 +140,7 @@ class HostDialog(wxDialog):
 		pattern = self.patternCtrl.GetValue()
 		start = self.startCtrl.GetValue()
 		count = self.countCtrl.GetValue()
-		names = []
-		for i in range(count):
-			name = crutils.MakeHostname(pattern, start+i)
-			names.append(name)
+		names = crutils.MakeHostnames(pattern, start, count)
 		self.listBox.SetStrings(names)
 		return names
 

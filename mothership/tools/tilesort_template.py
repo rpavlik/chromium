@@ -21,7 +21,7 @@
 import string, cPickle, os.path, re
 from wxPython.wx import *
 import traceback, types
-import intdialog, spudialog
+import intdialog, spudialog, hostdialog
 import crutils, crtypes, configio
 
 
@@ -29,14 +29,19 @@ import crutils, crtypes, configio
 class TilesortParameters:
 	"""C-style struct describing a tilesort configuration"""
 	# This is where we set all the default tilesort parameters.
-	Columns = 2
-	Rows = 1
-	TileWidth = 1024
-	TileHeight = 1024
-	RightToLeft = 0
-	BottomToTop = 0
-	Hostname = "host##"
-	FirstHost = 1
+	def __init__(self, rows=1, cols=2):
+		assert rows >= 1
+		assert cols >= 1
+		self.Columns = cols
+		self.Rows = rows
+		self.TileWidth = 1024
+		self.TileHeight = 1024
+		self.RightToLeft = 0
+		self.BottomToTop = 0
+#		self.Hostname = "host##"
+#		self.FirstHost = 1
+#		self.Hosts = crutils.MakeHostnames(self.Hostname, self.FirstHost,
+#										   rows * cols)
 
 	def Clone(self):
 		"""Return a clone of this object."""
@@ -48,8 +53,9 @@ class TilesortParameters:
 		p.TileHeight = self.TileHeight
 		p.RightToLeft = self.RightToLeft
 		p.BottomToTop = self.BottomToTop
-		p.HostName = self.Hostname
-		p.FirstHost = self.FirstHost
+#		p.HostName = self.Hostname
+#		p.FirstHost = self.FirstHost
+#		p.Hosts = self.Hosts  # XXX does this copy???
 		return p
 
 
@@ -87,31 +93,12 @@ if program == "":
 	sys.exit(-1)
 
 # Determine if tiles are on one server or many
-if string.find(HOSTNAME, '#') == -1:
-	singleServer = 1
-else:
+if (len(SERVER_HOSTS) >= 2) and (SERVER_HOSTS[0] != SERVER_HOSTS[1]):
 	singleServer = 0
+else:
+	singleServer = 1
 
 localHostname = os.uname()[1]
-
-def MakeHostname(format, number):
-	# find the hash characters first
-	p = re.search('#+', format)
-	if not p:
-		return format
-	numHashes = p.end() - p.start()
-	numDigits = len(str(number))
-	# start building result string
-	result = format[0:p.start()]
-	# insert padding zeros as needed
-	while numHashes > numDigits:
-		result += "0"
-		numHashes -= 1
-	# append the number
-	result += str(number)
-	# append rest of format string
-	result += format[p.end():]
-	return result
 
 cr = CR()
 cr.MTU( GLOBAL_MTU )
@@ -169,13 +156,13 @@ for row in range(TILE_ROWS):
 
 		if singleServer:
 			renderspu.Conf('window_geometry',
-						   int(1.1 * col * TILE_WIDTH),
-						   int(1.1 * row * TILE_HEIGHT),
+						   int(1.1 * j * TILE_WIDTH),
+						   int(1.1 * i * TILE_HEIGHT),
 						   TILE_WIDTH, TILE_HEIGHT)
-			host = HOSTNAME
+			host = SERVER_HOSTS[0]
 		else:
 			renderspu.Conf('window_geometry', 0, 0, TILE_WIDTH, TILE_HEIGHT)
-			host = MakeHostname(HOSTNAME, FIRSTHOST + index)
+			host = SERVER_HOSTS[index]
 		servernode = CRNetworkNode(host)
 
 		servernode.AddTile(col * TILE_WIDTH,
@@ -215,28 +202,26 @@ def FindClientNode(mothership):
 		assert nodes[1].IsAppNode()
 		return nodes[1]
 
-def FindTilesortSPU(mothership):
-	"""Search the mothership for the tilesort SPU."""
+def FindServerNode(mothership):
+	"""Search the mothership for the server node."""
 	nodes = mothership.Nodes()
 	assert len(nodes) == 2
-	if nodes[0].IsAppNode():
-		appNode = nodes[0]
+	if nodes[0].IsServer():
+		return nodes[0]
 	else:
-		assert nodes[1].IsAppNode()
-		appNode = nodes[1]
+		assert nodes[1].IsServer()
+		return nodes[1]
+
+def FindTilesortSPU(mothership):
+	"""Search the mothership for the tilesort SPU."""
+	appNode = FindClientNode(mothership)
 	tilesortSPU = appNode.LastSPU()
 	assert tilesortSPU.Name() == "tilesort"
 	return tilesortSPU
 
 def FindRenderSPU(mothership):
 	"""Search the mothership for the render SPU."""
-	nodes = mothership.Nodes()
-	assert len(nodes) == 2
-	if nodes[0].IsServer():
-		serverNode = nodes[0]
-	else:
-		assert nodes[1].IsServer()
-		serverNode = nodes[1]
+	serverNode = FindServerNode(mothership)
 	renderSPU = serverNode.LastSPU()
 	assert renderSPU.Name() == "render"
 	return renderSPU
@@ -262,8 +247,9 @@ class TilesortDialog(wxDialog):
 		id_HostText    = 3007
 		id_HostIndex   = 3008
 		id_TilesortOptions = 3009
-		id_OK          = 3010
-		id_CANCEL      = 3011
+		id_Hostnames   = 3010
+		id_OK          = 3011
+		id_CANCEL      = 3012
 
 		# init misc member vars
 		self.__Mothership = 0
@@ -358,32 +344,44 @@ class TilesortDialog(wxDialog):
 		EVT_RADIOBOX(self.vLayoutRadio, id_vLayout, self.__OnLayoutChange)
 
 		# Host naming
-		box = wxStaticBox(parent=self, id=-1, label="Host Names",
-						  style=wxDOUBLE_BORDER)
-		hostSizer = wxStaticBoxSizer(box, wxVERTICAL)
+#		box = wxStaticBox(parent=self, id=-1, label="Host Names",
+#						  style=wxDOUBLE_BORDER)
+#		hostSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		# XXX should probably use a wxComboBox here so we can keep a small
 		# history of frequently used hostname pattern strings.
-		self.hostText = wxTextCtrl(parent=self, id=id_HostText, value="")
-		EVT_TEXT(self.hostText, id_HostText, self.__OnHostNameChange)
-		hostSizer.Add(self.hostText, flag=wxEXPAND)
+#		self.hostText = wxTextCtrl(parent=self, id=id_HostText, value="")
+#		EVT_TEXT(self.hostText, id_HostText, self.__OnHostNameChange)
+#		hostSizer.Add(self.hostText, flag=wxEXPAND)
 
-		spinSizer = wxBoxSizer(wxHORIZONTAL)
-		firstLabel = wxStaticText(parent=self, id=-1,
-								  label="First index: ")
-		spinSizer.Add(firstLabel, flag=wxALIGN_CENTER_VERTICAL)
-		self.hostSpin = wxSpinCtrl(parent=self, id=id_HostIndex,
-								   value="0", min=0,
-								   size=wxSize(60,25))
-		EVT_SPINCTRL(self.hostSpin, id_HostIndex, self.__OnHostStartChange)
-		spinSizer.Add(self.hostSpin)
+#		spinSizer = wxBoxSizer(wxHORIZONTAL)
+#		firstLabel = wxStaticText(parent=self, id=-1,
+#								  label="First index: ")
+#		spinSizer.Add(firstLabel, flag=wxALIGN_CENTER_VERTICAL)
+#		self.hostSpin = wxSpinCtrl(parent=self, id=id_HostIndex,
+#								   value="0", min=0,
+#								   size=wxSize(60,25))
+#		EVT_SPINCTRL(self.hostSpin, id_HostIndex, self.__OnHostStartChange)
+#		spinSizer.Add(self.hostSpin)
 
-		hostSizer.Add(spinSizer, border=4, flag=wxTOP)
-		toolSizer.Add(hostSizer, flag=wxEXPAND)
+#		hostSizer.Add(spinSizer, border=4, flag=wxTOP)
+#		toolSizer.Add(hostSizer, flag=wxEXPAND)
 
-		# SPU option buttons
+
+		# Hostname dialog
+		self.hostsDialog = hostdialog.HostDialog(parent=NULL, id=-1,
+						title="Chromium Hosts",
+						message="Specify host names for the tile servers")
+
+		# Hostname button
+		self.hostsButton = wxButton(parent=self, id=id_Hostnames,
+									label=" Tile Host Names... ")
+		toolSizer.Add(self.hostsButton, flag=wxALL|wxALIGN_CENTRE_HORIZONTAL, border=2)
+		EVT_BUTTON(self.hostsButton, id_Hostnames, self.__OnHostnames)
+
+		# Tilesort SPU option button
 		self.tilesortButton = wxButton(parent=self, id=id_TilesortOptions,
 									   label=" Tilesort SPU Options... ")
-		toolSizer.Add(self.tilesortButton, flag=wxALL, border=4)
+		toolSizer.Add(self.tilesortButton, flag=wxALL, border=2)
 		EVT_BUTTON(self.tilesortButton, id_TilesortOptions,
 				   self.__OnTilesortOptions)
 
@@ -460,8 +458,8 @@ class TilesortDialog(wxDialog):
 		tilesort.TileHeight = self.tileHeightControl.GetValue()
 		tilesort.RightToLeft = self.hLayoutRadio.GetSelection()
 		tilesort.BottomToTop = self.vLayoutRadio.GetSelection()
-		tilesort.Hostname = self.hostText.GetValue()
-		tilesort.FirstHost = self.hostSpin.GetValue()
+#		tilesort.Hostname = self.hostText.GetValue()
+#		tilesort.FirstHost = self.hostSpin.GetValue()
 
 	def __UpdateWidgetsFromVars(self):
 		"""Set widget values to the tilesort parameters."""
@@ -472,8 +470,8 @@ class TilesortDialog(wxDialog):
 		self.tileHeightControl.SetValue(tilesort.TileHeight)
 		self.hLayoutRadio.SetSelection(tilesort.RightToLeft)
 		self.vLayoutRadio.SetSelection(tilesort.BottomToTop)
-		self.hostSpin.SetValue(tilesort.FirstHost)
-		self.hostText.SetValue(tilesort.Hostname) # must be last!!!
+#		self.hostSpin.SetValue(tilesort.FirstHost)
+#		self.hostText.SetValue(tilesort.Hostname) # must be last!!!
 
 	# ----------------------------------------------------------------------
 	# Event handling
@@ -516,6 +514,18 @@ class TilesortDialog(wxDialog):
 		self.__UpdateVarsFromWidgets()
 		self.drawArea.Refresh()
 		self.dirty = true
+
+	def __OnHostnames(self, event):
+		"""Called when the hostnames button is pressed."""
+		tilesort = self.__Mothership.Tilesort
+		serverNode = FindServerNode(self.__Mothership)
+		self.hostsDialog.SetHostPattern(serverNode.GetHostNamePattern())
+		self.hostsDialog.SetCount(tilesort.Rows * tilesort.Columns)
+		self.hostsDialog.SetHosts(serverNode.GetHosts())
+		if self.hostsDialog.ShowModal() == wxID_OK:
+			serverNode.SetHostNamePattern(self.hostsDialog.GetHostPattern())
+			serverNode.SetHosts(self.hostsDialog.GetHosts())
+		self.drawArea.Refresh()
 
 	def __OnTilesortOptions(self, event):
 		"""Called when Tilesort Options button is pressed."""
@@ -590,6 +600,8 @@ class TilesortDialog(wxDialog):
 		# draw the tiles as boxes
 		w = tileWidth * scale
 		h = tileHeight * scale
+		serverNode = FindServerNode(self.__Mothership)
+		hosts = serverNode.GetHosts()
 		for i in range(rows):
 			for j in range(cols):
 				x = j * (w + space) + border
@@ -604,8 +616,12 @@ class TilesortDialog(wxDialog):
 				else:
 					jj = cols - j - 1
 				k = ii * cols + jj
-				s = crutils.MakeHostname(self.__Mothership.Tilesort.Hostname,
-									 self.__Mothership.Tilesort.FirstHost + k)
+				#s = crutils.MakeHostname(self.__Mothership.Tilesort.Hostname,
+				#					 self.__Mothership.Tilesort.FirstHost + k)
+				if k < len(hosts):
+					s = hosts[k]
+				else:
+					s = hosts[-1]
 				dc.DrawText(s, x+3, y+3)
 		dc.EndDrawing()
 
@@ -626,16 +642,8 @@ class TilesortDialog(wxDialog):
 def Create_Tilesort(parentWindow, mothership):
 	"""Create a tilesort configuration"""
 
-	# Initialize default tilesort variables
-	mothership.Tilesort = TilesortParameters()
-
-	# XXX need a widget for the hostnames???
-	dialogDefaults = [
-		1,
-		mothership.Tilesort.Columns,
-		mothership.Tilesort.Rows]
-	dialog = intdialog.IntDialog(NULL, id=-1,
-								 title="Tilesort Template",
+	dialogDefaults = [1, 2, 1]
+	dialog = intdialog.IntDialog(NULL, id=-1, title="Tilesort Template",
 								 labels=["Number of application nodes:",
 										 "Mural Columns:",
 										 "Mural Rows:"],
@@ -643,15 +651,20 @@ def Create_Tilesort(parentWindow, mothership):
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()
 		return 0
+
+	# Init tilesort parameters
 	values = dialog.GetValues()
-	mothership.Tilesort.Columns = values[1]
-	mothership.Tilesort.Rows = values[2]
 	numClients = values[0]
-	numServers = values[1] * values[2]
+	cols = values[1]
+	rows = values[2]
+	mothership.Tilesort = TilesortParameters(rows, cols)
+
+	# build the graph
+	numServers = rows * cols
 	hostname = "localhost"
 	mothership.DeselectAllNodes()
 	# Create the <numClients> app nodes
-	appNode = crtypes.ApplicationNode(host=hostname)
+	appNode = crtypes.ApplicationNode()
 	appNode.SetPosition(50, 50)
 	appNode.SetCount(numClients)
 	appNode.Select()
@@ -659,9 +672,8 @@ def Create_Tilesort(parentWindow, mothership):
 	appNode.AddSPU(tilesortSPU)
 	mothership.AddNode(appNode)
 	# Create the <numServers> server nodes
-	serverNode = crtypes.NetworkNode(host=hostname)
+	serverNode = crtypes.NetworkNode(count=numServers)
 	serverNode.SetPosition(350, 50)
-	serverNode.SetCount(numServers)
 	serverNode.Select()
 	renderSPU = crutils.NewSPU("render")
 	serverNode.AddSPU(renderSPU)
@@ -723,8 +735,8 @@ def Edit_Tilesort(parentWindow, mothership):
 		else:
 			clientNode = nodes[1]
 			serverNode = nodes[0]
-		mothership.Tilesort.Hostname = serverNode.GetHost()
-		mothership.Tilesort.FirstHost = serverNode.GetFirstHost()
+#		mothership.Tilesort.Hostname = serverNode.GetHosts()[0]
+#		mothership.Tilesort.FirstHost = serverNode.GetFirstHost()
 	else:
 		print "This is not a tilesort configuration!"
 		return
@@ -741,8 +753,8 @@ def Edit_Tilesort(parentWindow, mothership):
 		# update mothership with new values
 		tiles = mothership.Tilesort.Rows * mothership.Tilesort.Columns
 		serverNode.SetCount(tiles)
-		serverNode.SetHost(mothership.Tilesort.Hostname)
-		serverNode.SetFirstHost(mothership.Tilesort.FirstHost)
+#		serverNode.SetHost(mothership.Tilesort.Hostname)
+#		serverNode.SetFirstHost(mothership.Tilesort.FirstHost)
 
 
 def __ParseOption(s, prefix):
@@ -812,12 +824,14 @@ def Read_Tilesort(mothership, fileHandle):
 		elif re.match("^RIGHT_TO_LEFT = [01]$", l):
 			v = re.search("[01]", l)
 			mothership.Tilesort.RightToLeft = int(l[v.start() : v.end()])
-		elif re.match("^HOSTNAME = ", l):
-			v = re.search("\".+\"", l)
-			mothership.Tilesort.Hostname = l[v.start()+1 : v.end()-1]
-		elif re.match("^FIRSTHOST = [0-9]+$", l):
-			v = re.search("[0-9]+", l)
-			mothership.Tilesort.FirstHost = int(l[v.start() : v.end()])
+		elif re.match("^SERVER_HOSTS = ", l):
+			v = re.search("\[.+\]$", l)
+			hosts = eval(l[v.start() : v.end()])
+			serverNode.SetHosts(hosts)
+		elif re.match("^SERVER_PATTERN = ", l):
+			v = re.search("\(.+\)$", l)
+			pattern = eval(l[v.start() : v.end()])
+			serverNode.SetHostNamePattern(pattern)
 		elif re.match("^NUM_CLIENTS = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
 			numClients = int(l[v.start() : v.end()])
@@ -837,7 +851,7 @@ def Read_Tilesort(mothership, fileHandle):
 			# A global option
 			(name, values) = __ParseOption(l, "GLOBAL")
 			mothership.SetGlobalOption(name, values)
-		elif re.match("^# end of options$", l):
+		elif re.match("^# end of options", l):
 			# that's the end of the variables
 			# save the rest of the file....
 			break
@@ -847,8 +861,6 @@ def Read_Tilesort(mothership, fileHandle):
 
 	clientNode.SetCount(numClients)
 	serverNode.SetCount(mothership.Tilesort.Rows * mothership.Tilesort.Columns)
-	serverNode.SetHost(mothership.Tilesort.Hostname)
-	serverNode.SetFirstHost(mothership.Tilesort.FirstHost)
 	mothership.LayoutNodes()
 	return 1
 
@@ -858,8 +870,10 @@ def Write_Tilesort(mothership, file):
 	assert Is_Tilesort(mothership)
 	assert mothership.GetTemplateType() == "Tilesort"
 
+	print "Writing tilesort config"
 	tilesort = mothership.Tilesort
 	clientNode = FindClientNode(mothership)
+	serverNode = FindServerNode(mothership)
 
 	file.write('TEMPLATE = "Tilesort"\n')
 	file.write("TILE_ROWS = %d\n" % tilesort.Rows)
@@ -868,8 +882,8 @@ def Write_Tilesort(mothership, file):
 	file.write("TILE_HEIGHT = %d\n" % tilesort.TileHeight)
 	file.write("RIGHT_TO_LEFT = %d\n" % tilesort.RightToLeft)
 	file.write("BOTTOM_TO_TOP = %d\n" % tilesort.BottomToTop)
-	file.write('HOSTNAME = "%s"\n' % tilesort.Hostname)
-	file.write("FIRSTHOST = %d\n" % tilesort.FirstHost)
+	file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
+	file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
 	file.write("NUM_CLIENTS = %d\n" % clientNode.GetCount())
 
 	# write tilesort SPU options
@@ -884,5 +898,5 @@ def Write_Tilesort(mothership, file):
 	configio.WriteServerOptions(mothership, file)
 	configio.WriteGlobalOptions(mothership, file)
 
-	file.write("# end of options\n")
+	file.write("# end of options, the rest is boilerplate\n")
 	file.write(__ConfigBody)

@@ -17,7 +17,7 @@ import string, os.path, types, random, copy
 from wxPython.wx import *
 from crutils import *
 from crtypes import *
-import spudialog, intdialog, templates, configio
+import spudialog, intdialog, templates, configio, hostdialog
 
 
 #----------------------------------------------------------------------
@@ -170,10 +170,6 @@ class MainFrame(wxFrame):
 		# View menu
 		self.viewMenu = wxMenu()
 		self.viewMenu.Append(menu_LAYOUT_NODES, "Auto-Layout")
-		self.viewMenu.AppendSeparator()
-		self.viewMenu.Append(menu_GRAPH,     "As Graph", checkable=TRUE)
-		self.viewMenu.Append(menu_TILESORT,  "As Tilesort", checkable=TRUE)
-		self.viewMenu.Append(menu_LIGHTNING2,"As Lightning-2", checkable=TRUE)
 		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		menuBar.Append(self.viewMenu, "View")
 
@@ -206,6 +202,26 @@ class MainFrame(wxFrame):
 
 		toolSizer = wxBoxSizer(wxHORIZONTAL)
 
+		# New Template button
+#		templateLabel = wxStaticText(parent=self.topPanel, id=-1,
+#									 label=" Template:")
+#		toolSizer.Add(templateLabel, flag=wxALIGN_CENTRE)
+
+		templateNames = [ "New Template" ] + templates.GetTemplateList()
+		self.newTemplateChoice = wxChoice(parent=self.topPanel,
+										  id=id_NewTemplate,
+										  choices=templateNames)
+		EVT_CHOICE(self.newTemplateChoice, id_NewTemplate, self.onNewTemplate)
+		toolSizer.Add(self.newTemplateChoice, flag=wxEXPAND+wxALL, border=2)
+
+		# Edit template settings button
+		self.templateButton = wxButton(parent=self.topPanel,
+									   id=id_TemplateOptions,
+									   label="  Edit Template...  ")
+		toolSizer.Add(self.templateButton, flag=wxEXPAND+wxALL, border=2)
+		EVT_BUTTON(self.templateButton, id_TemplateOptions,
+				   self.onTemplateEdit)
+
 		# New app node button
 		appChoices = ["New App Node(s)", "1 App node", "2 App nodes",
 					  "3 App nodes", "4 App nodes", "N App nodes..."]
@@ -232,26 +248,6 @@ class MainFrame(wxFrame):
 		EVT_CHOICE(self.newSpuChoice, id_NewSpu, self.onNewSpu)
 		toolSizer.Add(self.newSpuChoice, flag=wxEXPAND+wxALL, border=2)
 
-		# New Template button
-#		templateLabel = wxStaticText(parent=self.topPanel, id=-1,
-#									 label=" Template:")
-#		toolSizer.Add(templateLabel, flag=wxALIGN_CENTRE)
-
-		templateNames = [ "New Template" ] + templates.GetTemplateList()
-		self.newTemplateChoice = wxChoice(parent=self.topPanel,
-										  id=id_NewTemplate,
-										  choices=templateNames)
-		EVT_CHOICE(self.newTemplateChoice, id_NewTemplate, self.onNewTemplate)
-		toolSizer.Add(self.newTemplateChoice, flag=wxEXPAND+wxALL, border=2)
-
-		# Edit template settings button
-		self.templateButton = wxButton(parent=self.topPanel,
-									   id=id_TemplateOptions,
-									   label="Edit Template...")
-		toolSizer.Add(self.templateButton, flag=wxEXPAND+wxALL, border=2)
-		EVT_BUTTON(self.templateButton, id_TemplateOptions,
-				   self.onTemplateEdit)
-
 		# Setup the main drawing area.
 		self.drawArea = wxScrolledWindow(self.topPanel, -1,
 										 style=wxSUNKEN_BORDER)
@@ -274,6 +270,12 @@ class MainFrame(wxFrame):
 
 		self.SetSizeHints(minW=500, minH=200)
 		self.SetSize(wxSize(700, 400))
+
+		# Create the hostnames dialog
+		self.HostsDialog = hostdialog.HostDialog(parent=NULL, id=-1,
+						title="Chromium Hosts",
+						message="Specify host names for the selected nodes")
+
 
 		self.dirty     = false
 		self.fileName  = fileName
@@ -526,7 +528,7 @@ class MainFrame(wxFrame):
 #			templates.CreateNClientTilesort(self, self.mothership)
 #		elif t == 4:
 #			templates.CreateBinarySwap(self, self.mothership)
-#		self.newTemplateChoice.SetSelection(0)
+		self.newTemplateChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
@@ -534,6 +536,8 @@ class MainFrame(wxFrame):
 		templateName = self.mothership.GetTemplateType()
 		if templateName != "":
 			templates.EditTemplate(templateName, self, self.mothership)
+		else:
+			self.Notify("This configuration doesn't match any template.")
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
@@ -684,7 +688,8 @@ class MainFrame(wxFrame):
 		"""File / Save callback"""
 		if self.fileName != None:
 			self.saveConfig()
-
+		else:
+			self.doSaveAs(event)
 
 	def doSaveAs(self, event):
 		"""File / Save As callback"""
@@ -885,14 +890,34 @@ class MainFrame(wxFrame):
 
 	def doSetHost(self, event):
 		"""Node / Set Host callback"""
-		# XXX load dialog with default/current hostname???
-		dialog = wxTextEntryDialog(self, message="Enter the hostname for the selected nodes")
-		dialog.SetTitle("Chromium host")
-		if dialog.ShowModal() == wxID_OK:
+		assert len(self.mothership.SelectedNodes()) > 0
+		# Load dialog values
+		names = []
+		count = 0
+		for node in self.mothership.SelectedNodes():
+			names += node.GetHosts()
+			count += node.GetCount()
+		self.HostsDialog.SetHosts(names)
+		self.HostsDialog.SetCount(count)
+		# XXX if more than one node is selected, use first node's pattern???
+		firstSelected = self.mothership.SelectedNodes()[0]
+		self.HostsDialog.SetHostPattern(firstSelected.GetHostNamePattern())
+		# OK, show the dialog
+		if self.HostsDialog.ShowModal() == wxID_OK:
+			firstSelected.SetHostNamePattern(self.HostsDialog.GetHostPattern())
+			newHosts = self.HostsDialog.GetHosts()
+			# duplicate the last name until we have [count] names
+			while len(newHosts) < count:
+				newHosts.append(newHosts[-1])
+			assert len(newHosts) >= count
+			# this is a little tricky
+			pos = 0
 			for node in self.mothership.SelectedNodes():
-				node.SetHost(dialog.GetValue())
-		dialog.Destroy()
-		self.drawArea.Refresh()
+				count = node.GetCount()
+				node.SetHosts( newHosts[pos : pos + count] )
+				pos += count
+			self.drawArea.Refresh()
+		return
 
 	def doSetCount(self, event):
 		"""Node / Set Count callback"""
