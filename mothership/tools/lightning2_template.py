@@ -18,9 +18,11 @@
 
 
 
-import string, cPickle, os.path, re
+import string, cPickle, os.path, re, sys
 from wxPython.wx import *
 import crtypes, crutils, intdialog, hostdialog, configio
+sys.path.append( "../server" )
+import tilelayout
 
 
 class LightningParameters:
@@ -88,7 +90,7 @@ class LightningParameters:
 		renderSPU = FindReassemblySPU(mothership)
 		
 		for i in range(serverNode.GetCount()):
-			serverNode.SetTiles(self.ServerTiles[i], i)
+			serverNode.SetTiles(self.MuralTiles[i], i)
 		if self.DynamicSize:
 			mothership.Conf('track_window_size', 1)
 		else:
@@ -99,143 +101,92 @@ class LightningParameters:
 			renderSPU.Conf('render_to_app_window', 0)
 
 
-	def __AllocTile(self, server, row, col):
-		"""Allocate a tile for mural position (row, col) on the nth server.
+	def __AllocTiles(self, numServers, tiles):
+		"""Allocate space for the tiles on the servers.  This is where
+		we'll determine if there's enough space in the server's rendering
+		window to accomodate all the tiles.
+		Input: tiles is a list of tuples (server, x, y, w, h).
+		Result: self.MuralTiles and self.ServerTiles will be filled in.
 		Return 1 for success, 0 if we run out of room on the server."""
-		# XXX we're assuming all tiles are the same size here
-		assert server >= 0
-		assert server < self.NumServers
-		assert self.NumServers == len(self.ServerTiles)
-		assert len(self.ServerTiles) == len(self.NextTile)
-		# Check if tile of size (TileWidth, TileHeight) will fit on this server
-		# We allocate tiles in raster order, as in the crserver.
-		(x, y) = self.NextTile[server] # (x,y) position on server's screen
-		if y + self.TileHeight > self.ScreenHeight:
-			# ran out of room on this server!!!
-			return 0
-		elif x + self.TileWidth > self.ScreenWidth:
-			# go to next row
-			x = 0
-			y += self.TileHeight
-			if y + self.TileHeight > self.ScreenHeight:
+		# XXX we're assuming all tiles are the same height here!
+
+		# initialize tile lists
+		self.MuralTiles = []   # array [server] of array of (x, y, w, h)
+		nextTile = []          # array [server] of (x, y)
+		for i in range(numServers):
+			self.MuralTiles.append( [] )
+			nextTile.append( (0, 0) )
+
+		self.ServerTiles = tiles[:] # copy the list
+
+		for (server, x, y, w, h) in tiles:
+			assert server >= 0
+			assert server < numServers
+			assert numServers == len(self.MuralTiles)
+			assert len(self.MuralTiles) == len(nextTile)
+			# Check if tile of size (w, h) will fit on this server
+			# We allocate tiles in raster order, as in the crserver.
+			# (nextX, nextY) = position on server's screen
+			(nextX, nextY) = nextTile[server]
+			if nextY + h > self.ScreenHeight:
 				# ran out of room on this server!!!
 				return 0
-		# It'll fit, save it
-		mx = col * self.TileWidth   # mural X coord
-		my = row * self.TileHeight  # mural Y coord
-		muralTile = (mx, my, self.TileWidth, self.TileHeight)
-		self.ServerTiles[server].append( muralTile )
-		self.Tiles.append( (row, col, server) )
-		# Update NextTile position for this server
-		x += self.TileWidth
-		self.NextTile[server] = (x, y)
+			elif nextX + w > self.ScreenWidth:
+				# go to next row
+				nextX = 0
+				nextY += h
+				if nextY + h > self.ScreenHeight:
+					# ran out of room on this server!!!
+					return 0
+			# It'll fit, save it
+			muralTile = (x, y, w, h)  # omit server
+			self.MuralTiles[server].append( muralTile )
+			# Update NextTile position for this server
+			nextX += w
+			nextTile[server] = (nextX, nextY)
 		return 1
+
 
 	def PrintTiles(self):
 		# for debug only
-		for i in range(len(self.ServerTiles)):
+		for i in range(len(self.MuralTiles)):
 			print "server %d" % i
-			for tile in self.ServerTiles[i]:
+			for tile in self.MuralTiles[i]:
 				print "  (%d, %d, %d, %d)" % tile
 
 	def LayoutTiles(self):
 		"""Compute locations and hosts for the tiles."""
 
-		# initialize tile lists
-		self.ServerTiles = []  # array [server] of array of (x,y,w,h)
-		self.Tiles = []        # tuples (row, col, server) for drawing
-		self.NextTile = []     # array [server] of (row,col)
-		for i in range(self.NumServers):
-			self.ServerTiles.append( [] )
-			self.NextTile.append( (0, 0) )
-
 		# begin layout
 		if self.Layout == 0:
 			# Simple raster order layout
-			for i in range(self.Rows):
-				for j in range(self.Columns):
-					server = (i * self.Columns + j) % self.NumServers
-					self.__AllocTile(server, i, j)
-			#endfor
+			muralWidth = self.TileWidth * self.Columns
+			muralHeight = self.TileHeight * self.Rows
+			tiles = tilelayout.LayoutRaster(muralWidth, muralHeight,
+											self.NumServers,
+											self.TileWidth, self.TileHeight,
+											self.Rows, self.Columns)
 		elif self.Layout == 1:
 			# Slightly different raster order layout
-			for i in range(self.Rows):
-				for j in range(self.Columns):
-					if i % 2 == 1:
-						# odd row
-						server = (i * self.Columns + (self.Columns - j - 1)) % self.NumServers
-					else:
-						# even row
-						server = (i * self.Columns + j) % self.NumServers
-					self.__AllocTile(server, i, j)
-			#endfor
+			muralWidth = self.TileWidth * self.Columns
+			muralHeight = self.TileHeight * self.Rows
+			tiles = tilelayout.LayoutZigZag(muralWidth, muralHeight,
+											self.NumServers,
+											self.TileWidth, self.TileHeight,
+											self.Rows, self.Columns)
 		else:
 			# Spiral outward from the center (this is a little tricky)
 			assert self.Layout == 2
-			curRow = (self.Rows - 1) / 2
-			curCol = (self.Columns - 1) / 2
-			radius = 0
-			march = 0
-			colStep = 0
-			rowStep = -1
-			serv = 0
-			while 1:
-				assert ((rowStep == 0 and colStep != 0) or
-						(rowStep != 0 and colStep == 0))
-				if (curRow >= 0 and curRow < self.Rows and
-					curCol >= 0 and	curCol < self.Columns):
-					# save this tile location
-					#server = len(self.Tiles) % self.NumServers
-					server = serv % self.NumServers
-					assert (curRow, curCol, server) not in self.Tiles
-					if not self.__AllocTile(server, curRow, curCol):
-						outOfSpace = 1
-					else:
-						outOfSpace = 0
-					# check if we're done
-					if ((len(self.Tiles) >= self.Rows * self.Columns) or
-						outOfSpace):
-						# all done
-						break
-				serv += 1
-				# advance to next space
-				march += 1
-				if march < radius:
-					# step in current direction
-					curRow += rowStep
-					curCol += colStep
-					pass
-				else:
-					# change direction
-					if colStep == 1 and rowStep == 0:
-						# transition right -> down
-						colStep = 0
-						rowStep = 1
-					elif colStep == 0 and rowStep == 1:
-						# transition down -> left
-						colStep = -1
-						rowStep = 0
-						radius += 1
-					elif colStep == -1 and rowStep == 0:
-						# transition left -> up
-						colStep = 0
-						rowStep = -1
-					else:
-						# transition up -> right
-						assert colStep == 0
-						assert rowStep == -1
-						colStep = 1
-						rowStep = 0
-						radius += 1
-					#endif
-					march = 0
-					curRow += rowStep
-					curCol += colStep
-				#endif
-			#endwhile
-		#endif
-	#enddef
 
+			muralWidth = self.TileWidth * self.Columns
+			muralHeight = self.TileHeight * self.Rows
+			tiles = tilelayout.LayoutSpiral(muralWidth, muralHeight,
+											self.NumServers,
+											self.TileWidth, self.TileHeight,
+											self.Rows, self.Columns)
+		# Allocate tiles on the server
+		self.__AllocTiles(self.NumServers, tiles)
+		return
 
 
 # Predefined tile sizes shown in the wxChoice widget (feel free to change)
@@ -275,6 +226,7 @@ __ConfigBody = """
 import string, sys
 sys.path.append( "../server" )
 from mothership import *
+import tilelayout
 
 # Look for some special mothership params
 for (name, value) in MOTHERSHIP_OPTIONS:
@@ -304,6 +256,43 @@ else:
 
 localHostname = os.uname()[1]
 
+NumServers = len(TILES) # XXX fix this?
+
+
+def LayoutTiles(muralWidth, muralHeight):
+	if DYNAMIC_SIZE == 1:
+		# variable rows/cols, fixed tile size
+		tileWidth = TILE_WIDTH
+		tileHeight = TILE_HEIGHT
+		rows = 0
+		cols = 0
+	else:
+		# fixed rows/cols, variable tile size
+		assert DYNAMIC_SIZE == 2
+		tileWidth = 0
+		tileHeight = 0
+		rows = TILE_ROWS
+		cols = TILE_COLS
+
+	if LAYOUT == 0:
+		tiles = tilelayout.LayoutRaster(muralWidth, muralHeight,
+										NumServers,
+										tileWidth, tileHeight,
+										rows, cols)
+	elif LAYOUT == 1:
+		tiles = tilelayout.LayoutZigZag(muralWidth, muralHeight,
+										NumServers,
+										tileWidth, tileHeight,
+										rows, cols)
+	else:
+		tiles = tilelayout.LayoutSpiral(muralWidth, muralHeight,
+										NumServers,
+										tileWidth, tileHeight,
+										rows, cols)
+	return tiles
+
+
+
 cr = CR()
 
 
@@ -315,6 +304,7 @@ for i in range(NUM_APP_NODES):
 	for (name, value) in TILESORT_OPTIONS:
 		tilesortspu.Conf( name, value )
 	if DYNAMIC_SIZE:
+		tilesortspu.TileLayoutFunction(LayoutTiles)
 		tilesortspu.Conf('optimize_bucket', 0)
 	tilesortSPUs.append(tilesortspu)
 
@@ -338,9 +328,6 @@ for i in range(NUM_APP_NODES):
 	clientNodes.append(clientnode)
 
 
-NumServers = len(TILES)
-SCREEN_HEIGHT = 1280
-SCREEN_WIDTH = 1024
 
 if REASSEMBLY:
 	reassembleNode = CRNetworkNode()  # xxx host?
@@ -523,8 +510,8 @@ class LightningDialog(wxDialog):
 
 		# Dynamic vs Static layout
 		dynamicChoices = [ "Fixed size image",
-						   "Variable size, fixed tile size",
-						   "Variable size, fixed rows/columns" ]
+						   "Variable rows/cols, fixed tile size",
+						   "Variable tile size, fixed rows/columns" ]
 		self.dynamicRadio = wxRadioBox(parent=self, id=id_Dynamic,
 									  label="Fixed or Variable Size Image",
 									  choices=dynamicChoices,
@@ -872,9 +859,10 @@ class LightningDialog(wxDialog):
 		hosts = self.Template.ServerHosts
 		numColors = len(ServerColors)
 		numServers = self.Template.NumServers
-		for (row, col, server) in self.Template.Tiles:
-			x = col * (w + space) + border
-			y = row * (h + space) + border
+		for (server, x, y, w, h) in self.Template.ServerTiles:
+			x += border
+			y += border
+
 			color = server % numColors
 			dc.SetBrush(wxBrush(ServerColors[color]))
 			dc.DrawRectangle(x, y, w,h)
@@ -1209,7 +1197,7 @@ def Write_Lightning2(mothership, file):
 	# The tiles will be recomputed when we reload the config file so
 	# we can put this info after the parameter sectino.
 	file.write("\n")
-	file.write("TILES = %s\n" % str(template.ServerTiles))
+	file.write("TILES = %s\n" % str(template.MuralTiles))
 
 	file.write(__ConfigBody)
 	return 1
