@@ -1,0 +1,5 @@
+:enable:stencilTest:GL_STENCIL_TEST
+:clearValue:clearValue:ClearStencil
+stencilTest:func:func,ref,mask:StencilFunc
+stencilTest:op:fail,passDepthFail,passDepthPass:StencilOp
+stencilTest:writeMask:writeMask:StencilMask

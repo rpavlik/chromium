@@ -32,6 +32,11 @@ typedef struct {
 void crStateStencilInitBits (CRStencilBits *s);
 void crStateStencilInit(CRStencilState *s);
 
+void crStateStencilDiff(CRStencilBits *bb, GLbitvalue bitID, 
+		CRStencilState *from, CRStencilState *to);
+void crStateStencilSwitch(CRStencilBits *bb, GLbitvalue bitID, 
+		CRStencilState *from, CRStencilState *to);
+
 #ifdef __cplusplus
 }
 #endif

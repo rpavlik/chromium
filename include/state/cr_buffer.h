@@ -74,6 +74,11 @@ typedef struct {
 void crStateBufferInitBits(CRBufferBits *bb);
 void crStateBufferInit(CRBufferState *b);
 
+void crStateBufferDiff(CRBufferBits *bb, GLbitvalue bitID, 
+		CRBufferState *from, CRBufferState *to);
+void crStateBufferSwitch(CRBufferBits *bb, GLbitvalue bitID, 
+		CRBufferState *from, CRBufferState *to);
+
 #ifdef __cplusplus
 }
 #endif

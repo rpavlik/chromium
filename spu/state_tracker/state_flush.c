@@ -1,6 +1,8 @@
 #include "cr_glstate.h"
 #include "cr_spu.h"
 
+SPUDispatchTable diff_api;
+
 void crStateFlushFunc( CRStateFlushFunc func )
 {
 	CRContext *g = GetCurrentContext();
@@ -17,7 +19,5 @@ void crStateFlushArg( void *arg )
 
 void crStateDiffAPI( SPUDispatchTable *api )
 {
-	CRContext *g = GetCurrentContext();
-
-	crSPUCopyDispatchTable( &(g->diff_api), api );
+	crSPUCopyDispatchTable( &(diff_api), api );
 }

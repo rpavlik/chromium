@@ -1,0 +1,7 @@
+:enable:enable:GL_FOG
+enable:color:color|r,g,b,a:Fogfv,GL_FOG_COLOR
+enable:index:index:Fogi,GL_FOG_INDEX
+enable:density:density:Fogf,GL_FOG_DENSITY
+enable:start:start:Fogf,GL_FOG_START
+enable:end:end:Fogf,GL_FOG_END
+enable:mode:mode:Fogi,GL_FOG_MODE

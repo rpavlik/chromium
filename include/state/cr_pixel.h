@@ -69,6 +69,11 @@ typedef struct {
 void crStatePixelInit( CRPixelState *pixel );
 void crStatePixelInitBits( CRPixelBits *pixelbits );
 
+void crStatePixelDiff(CRPixelBits *bb, GLbitvalue bitID, 
+		CRPixelState *from, CRPixelState *to);
+void crStatePixelSwitch(CRPixelBits *bb, GLbitvalue bitID, 
+		CRPixelState *from, CRPixelState *to);
+
 #ifdef __cplusplus
 }
 #endif

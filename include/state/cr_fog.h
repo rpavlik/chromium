@@ -32,6 +32,11 @@ typedef struct {
 void crStateFogInitBits (CRFogBits *fb);
 void crStateFogInit(CRFogState *f);
 
+void crStateFogDiff(CRFogBits *bb, GLbitvalue bitID, 
+		CRFogState *from, CRFogState *to);
+void crStateFogSwitch(CRFogBits *bb, GLbitvalue bitID, 
+		CRFogState *from, CRFogState *to);
+
 #ifdef __cplusplus
 }
 #endif

@@ -39,6 +39,11 @@ typedef struct {
 
 void crStateViewportInit(CRViewportState *);
 
+void crStateViewportDiff(CRViewportBits *bb, GLbitvalue bitID, 
+		CRViewportState *from, CRViewportState *to);
+void crStateViewportSwitch(CRViewportBits *bb, GLbitvalue bitID, 
+		CRViewportState *from, CRViewportState *to);
+
 #ifdef __cplusplus
 }
 #endif

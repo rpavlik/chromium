@@ -28,6 +28,11 @@ typedef struct {
 
 void crStateListsInit(CRListsState *l);
 
+void crStateListsDiff(CRListsBits *bb, GLbitvalue bitID, 
+		CRListsState *from, CRListsState *to);
+void crStateListsSwitch(CRListsBits *bb, GLbitvalue bitID, 
+		CRListsState *from, CRListsState *to);
+
 #ifdef __cplusplus
 }
 #endif

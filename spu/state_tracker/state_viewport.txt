@@ -1,0 +1,10 @@
+:enable:scissortest:GL_SCISSOR_TEST
++scissortest:s_dims:*GLrecti p;
++scissortest:s_dims:*__glviewport_clamp (current, target, &p, target->s_x, target->s_y, target->s_w, target->s_h);
++scissortest:s_dims:s_x,s_y,s_w,s_h:*__glhw_Scissor(p.x1, p.y1, p.x2-p.x1, p.y2-p.y1);
+-scissortest:s_dims:s_x,s_y,s_w,s_h:Scissor
++:v_dims:*GLrecti p;
++:v_dims:*__glviewport_clamp (current, target, &p, target->v_x, target->v_y, target->v_w, target->v_h);
++:v_dims:v_x,v_y,v_w,v_h:*__glhw_Viewport(p.x1, p.y1, p.x2-p.x1, p.y2-p.y1);
+-:v_dims:v_x,v_y,v_w,v_h:Viewport
+:depth:n,f:DepthRange

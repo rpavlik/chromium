@@ -42,6 +42,11 @@ typedef struct {
 void crStateLineInitBits (CRLineBits *l);
 void crStateLineInit (CRLineState *l);
 
+void crStateLineDiff(CRLineBits *bb, GLbitvalue bitID, 
+		CRLineState *from, CRLineState *to);
+void crStateLineSwitch(CRLineBits *bb, GLbitvalue bitID, 
+		CRLineState *from, CRLineState *to);
+
 #ifdef __cplusplus
 }
 #endif

@@ -62,6 +62,11 @@ void crStateTransformXformPointMatrixd(GLmatrix *m, GLvectord *p);
 void crStateTransformInvertTransposeMatrix(GLmatrix *inv, GLmatrix *mat);
 void crStateTransformNormalizedDims(GLrectf *p, GLrecti *r, GLrecti *q);
 
+void crStateTransformDiff(CRTransformBits *bb, GLbitvalue bitID, 
+		CRTransformState *from, CRTransformState *to);
+void crStateTransformSwitch(CRTransformBits *bb, GLbitvalue bitID, 
+		CRTransformState *from, CRTransformState *to);
+
 #ifdef __cplusplus
 }
 #endif

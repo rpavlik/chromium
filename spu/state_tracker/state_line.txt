@@ -1,0 +1,6 @@
+:enable:lineSmooth:GL_LINE_SMOOTH
+:enable:lineStipple:GL_LINE_STIPPLE
+:enable:pointSmooth:GL_POINT_SMOOTH
+:size:pointSize:PointSize
+:width:width:LineWidth
+lineStipple:stipple:repeat,pattern:LineStipple

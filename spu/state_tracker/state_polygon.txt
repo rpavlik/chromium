@@ -1,0 +1,16 @@
+:enable:polygonSmooth:GL_POLYGON_SMOOTH
+:enable:polygonOffset:GL_POLYGON_OFFSET_FILL
+:enable:polygonStipple:GL_POLYGON_STIPPLE
+:enable:cullFace:GL_CULL_FACE
+:offset:offsetFactor,offsetUnits:PolygonOffset
+:mode:frontFace:FrontFace
+:mode:cullFaceMode:CullFace
+:mode:backMode:PolygonMode,GL_BACK
+:mode:frontMode:PolygonMode,GL_FRONT
+-:stipple:stipple:*diff_api.PolygonStipple ((GLubyte *) to->stipple);
++:stipple:*int j;
++:stipple:*diff_api.PolygonStipple ((GLubyte *) to->stipple);
++:stipple:*for (j=0; j<32; j++)
++:stipple:*{
++:stipple:*	from->stipple[j] = to->stipple[j];
++:stipple:*}

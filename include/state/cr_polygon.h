@@ -33,6 +33,11 @@ typedef struct {
 void crStatePolygonInitBits(CRPolygonBits *p);
 void crStatePolygonInit(CRPolygonState *p);
 
+void crStatePolygonDiff(CRPolygonBits *bb, GLbitvalue bitID, 
+		CRPolygonState *from, CRPolygonState *to);
+void crStatePolygonSwitch(CRPolygonBits *bb, GLbitvalue bitID, 
+		CRPolygonState *from, CRPolygonState *to);
+
 #ifdef __cplusplus
 }
 #endif

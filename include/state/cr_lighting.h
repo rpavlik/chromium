@@ -67,6 +67,11 @@ typedef struct {
 void crStateLightingInitBits (CRLightingBits *l);
 void crStateLightingInit (CRLightingState *l);
 
+void crStateLightingDiff(CRLightingBits *bb, GLbitvalue bitID, 
+		CRLightingState *from, CRLightingState *to);
+void crStateLightingSwitch(CRLightingBits *bb, GLbitvalue bitID, 
+		CRLightingState *from, CRLightingState *to);
+
 #ifdef __cplusplus
 }
 #endif

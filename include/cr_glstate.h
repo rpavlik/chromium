@@ -44,10 +44,10 @@ typedef struct CRContext {
 	int id;
 	GLbitvalue bitid;
 	GLbitvalue neg_bitid;
+	GLbitvalue update;
 
 	CRStateFlushFunc flush_func;
 	void            *flush_arg;
-	SPUDispatchTable diff_api;
 
 	CRBufferState    buffer;
 	CRClientState    client;
@@ -66,8 +66,28 @@ typedef struct CRContext {
 } CRContext;
 
 
+#define GLUPDATE_TRANS		0x00001
+#define GLUPDATE_PIXEL		0x00002
+#define GLUPDATE_CURRENT	0x00004
+#define GLUPDATE_VIEWPORT	0x00008
+#define GLUPDATE_FOG		0x00010
+#define GLUPDATE_TEXTURE	0x00020
+#define GLUPDATE_LISTS		0x00040
+#define GLUPDATE_CLIENT		0x00080
+#define GLUPDATE_BUFFER		0x00100
+#define GLUPDATE_HINT		0x00200
+#define GLUPDATE_LIGHTING	0x00400
+#define GLUPDATE_LINE		0x00800
+#define GLUPDATE_POLYGON	0x01000
+#define GLUPDATE_STENCIL	0x02000
+#define GLUPDATE_EVAL		0x04000
+#define GLUPDATE_IMAGING	0x08000
+#define GLUPDATE_SELECTION	0x10000
+
 extern CRContext *__currentContext;
 extern CRStateBits *__currentBits;
+extern SPUDispatchTable diff_api;
+
 #define GetCurrentContext() __currentContext
 #define GetCurrentBits() __currentBits
 

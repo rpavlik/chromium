@@ -122,6 +122,11 @@ CRTextureObj *crStateTextureGet(GLuint textureid);
 int crStateTextureGetSize(GLenum target, GLenum level);
 const GLvoid * crStateTextureGetData(GLenum target, GLenum level);
 
+void crStateTextureDiff(CRTextureBits *bb, GLbitvalue bitID, 
+		CRTextureState *from, CRTextureState *to);
+void crStateTextureSwitch(CRTextureBits *bb, GLbitvalue bitID, 
+		CRTextureState *from, CRTextureState *to);
+
 #ifdef __cplusplus
 }
 #endif

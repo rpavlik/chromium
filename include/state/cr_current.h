@@ -71,7 +71,12 @@ typedef struct {
 void crStateCurrentInit( CRCurrentState *current );
 void crStateCurrentInitBits( CRCurrentBits *currentbits );
 
-#ifdef __cplusplus
+void crStateCurrentDiff(CRCurrentBits *bb, GLbitvalue bitID, 
+		CRCurrentState *from, CRCurrentState *to);
+void crStateCurrentSwitch(CRCurrentBits *bb, GLbitvalue bitID, 
+		CRCurrentState *from, CRCurrentState *to);
+
+#ifdef __cplusplusk
 }
 #endif
 

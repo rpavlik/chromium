@@ -29,6 +29,8 @@ static CRContext *crStateCreateContextId(int i)
 	ctx->flush_func = NULL;
 	ctx->bitid = (1<<i);
 	ctx->neg_bitid = ~(ctx->bitid);
+	ctx->update = GLBITS_ONES;
+
 	crDebug( "Creating a context: %d (0x%x)", ctx->id, (int)ctx->bitid );
 	crStateBufferInit( &(ctx->buffer) );
 	crStateClientInit (&(ctx->client) );
