@@ -108,7 +108,7 @@ send_matrices(int eye)
 	crPackReleaseBuffer( thread->packer );
 
 	for (server = 0; server < tilesort_spu.num_servers; server++) {
-		GLfloat params[17];
+		GLfloat params[18];
 
 		/* send new frustum to <server> */
 		crPackSetBuffer( thread->packer, &(thread->buffer[server]) );
