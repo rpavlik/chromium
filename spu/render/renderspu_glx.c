@@ -1034,7 +1034,7 @@ static void check_buffer_size( WindowInfo *window )
 		window->in_buffer_width = window->width;
 		window->in_buffer_height = window->height;
 
-		crDebug("NRender SPU: dimensions changed to %d x %d", window->width, window->height);
+		crDebug("Render SPU: dimensions changed to %d x %d", window->width, window->height);
 	}
 }
 #endif
