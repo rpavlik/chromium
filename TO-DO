@@ -24,6 +24,7 @@ Wes Bethel:
   app-side SPU additions - I've not checked.
 
 Remove #include <math.h> ; create a cr_math.h file instead.
+  Wrapper for absf() in server_tiles.c
 
 Rewrite the opengl_stub/defs.py file so that we don't need to manually
 update the stack_sizes array.  The sizes should be obtained by calling
@@ -31,3 +32,4 @@ apiutil.PacketLength() or something similar.
 
 Check unpacker/unpack.c for unfinished special case functions.
 
+GL_EXT_draw_range_elements
