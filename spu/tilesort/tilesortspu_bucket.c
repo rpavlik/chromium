@@ -365,11 +365,11 @@ static TileSortBucketInfo *__doBucket( void )
 			for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
 			{
 				if (ibounds.x1 < tilesort_spu.servers[i].x2[j] && 
-						ibounds.x2 >= tilesort_spu.servers[i].x1[j] &&
-						ibounds.y1 < tilesort_spu.servers[i].y2[j] &&
-						ibounds.y2 >= tilesort_spu.servers[i].y1[j]) 
+			  	    ibounds.x2 >= tilesort_spu.servers[i].x1[j] &&
+				    ibounds.y1 < tilesort_spu.servers[i].y2[j] &&
+				    ibounds.y2 >= tilesort_spu.servers[i].y1[j]) 
 				{
-					retval[node32] = (1 << node);
+					retval[node32] |= (1 << node);
 					break;
 				}
 			}
