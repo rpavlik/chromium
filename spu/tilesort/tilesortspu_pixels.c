@@ -53,10 +53,16 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 
 	tilesortspuFlush( thread );
 
+	/* min x, y, z, w */
 	screen_bbox[0] = (c->rasterPos.x)/v->viewportW;
 	screen_bbox[1] = (c->rasterPos.y)/v->viewportH;
+	screen_bbox[2] = 0.0;
+	screen_bbox[3] = 1.0;
+	/* max x, y, z, w */
 	screen_bbox[4] = (c->rasterPos.x + width)/v->viewportW;
 	screen_bbox[5] = (c->rasterPos.y + height)/v->viewportH;
+	screen_bbox[6] = 0.0;
+	screen_bbox[7] = 1.0;
 
 	screen_bbox[0] *= 2.0f;
 	screen_bbox[1] *= 2.0f;
@@ -152,11 +158,18 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 		return;
 	}
 
+	/* min x, y, z, w */
 	screen_bbox[0] = (c->rasterPos.x)/v->viewportW;
 	screen_bbox[1] = (c->rasterPos.y)/v->viewportH;
+	screen_bbox[2] = 0.0;
+	screen_bbox[3] = 1.0;
+	/* max x, y, z, w */
 	screen_bbox[4] = (c->rasterPos.x + width)/v->viewportW;
 	screen_bbox[5] = (c->rasterPos.y + height)/v->viewportH;
+	screen_bbox[6] = 0.0;
+	screen_bbox[7] = 1.0;
 
+	/* map from [0, 1] to [-1, 1] */
 	screen_bbox[0] *= 2.0f;
 	screen_bbox[1] *= 2.0f;
 	screen_bbox[4] *= 2.0f;
@@ -410,10 +423,16 @@ static void tilesortspu_exec_Bitmap(
 		crPackBitmap ( width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack) );
 	}
 
+	/* min x, y, z, w */
 	screen_bbox[0] = (c->rasterPos.x - xorig)/v->viewportW;
 	screen_bbox[1] = (c->rasterPos.y - yorig)/v->viewportH;
+	screen_bbox[2] = 0.0;
+	screen_bbox[3] = 1.0;
+	/* max x, y, z, w */
 	screen_bbox[4] = (c->rasterPos.x - xorig + width) / v->viewportW;
 	screen_bbox[5] = (c->rasterPos.y - yorig + height) / v->viewportH;
+	screen_bbox[6] = 0.0;
+	screen_bbox[7] = 1.0;
 
 	screen_bbox[0] *= 2.0f;
 	screen_bbox[1] *= 2.0f;
