@@ -49,7 +49,14 @@ static void set_default_visual( RenderSPU *render_spu, const char *response )
 
 static void set_display_string( RenderSPU *render_spu, const char *response )
 {
-   	crStrncpy(render_spu->display_string, response, sizeof(render_spu->display_string));
+    if (!crStrcmp(response, "DEFAULT"))
+        crStrncpy(render_spu->display_string,
+                  crGetenv("DISPLAY"),
+                  sizeof(render_spu->display_string));
+    else
+        crStrncpy(render_spu->display_string,
+                  response,
+                  sizeof(render_spu->display_string));
 }
 
 static void set_fullscreen( RenderSPU *render_spu, const char *response )
@@ -233,7 +240,7 @@ SPUOptions renderSPUOptions[] = {
 	{ "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
 		"System GL Path", (SPUOptionCB)set_system_gl_path },
 
-	{ "display_string", CR_STRING, 1, ":0.0", NULL, NULL, 
+	{ "display_string", CR_STRING, 1, "DEFAULT", NULL, NULL, 
 		"X Display String", (SPUOptionCB)set_display_string },
 
 	{ "gather_url", CR_STRING, 1, "", NULL, NULL,
