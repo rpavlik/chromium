@@ -371,10 +371,16 @@ crutPeekNextEvent(void)
     msg = (CRUTMessage*) crut_client.next_event;
     msgsize = __getCRUTMessageSize(msg->msg_type);
 
-    /* see if there is only one event */
+    /* see if there is only one event in the current buffer */
     if ((crut_client.event_buffer->empty - 
-	 (crut_client.next_event + msgsize)) == 0)
+	 (crut_client.next_event + msgsize)) < MAX_MSG_SIZE)
     {
+	if (crut_client.event_buffer != crut_client.last_buffer)
+	{
+	    msg = (CRUTMessage*) crut_client.event_buffer->next->buffer;
+	    return msg->msg_type;
+	}
+
 	return CRUT_NO_EVENT;
     }
     else 
