@@ -189,6 +189,8 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 		crStrncpy(winInfo->dpyName, DisplayString(dpy), MAX_DPY_NAME);
 		winInfo->dpyName[MAX_DPY_NAME-1] = 0;
 		winInfo->dpy = dpy;
+#elif defined(Darwin)
+		winInfo->connection = _CGSDefaultConnection(); // store our connection as default
 #endif
 		winInfo->drawable = drawable;
 		winInfo->type = UNDECIDED;
@@ -470,7 +472,7 @@ stubGetWindowGeometry( const WindowInfo *window, int *x, int *y, unsigned int *w
 {
 	float rect[4];
 
-	CGSGetWindowBounds( _CGSDefaultConnection(), window->drawable, rect );
+	CGSGetWindowBounds( window->connection, window->drawable, rect );
 
 	*x = (int) rect[0];
 	*y = (int) rect[1];
@@ -494,7 +496,7 @@ GetCursorPosition( const WindowInfo *window, int pos[2] )
 	float window_rect[4];
 
 	GetMouse( &mouse_pos );
-	CGSGetScreenRectForWindow( _CGSDefaultConnection(), window->drawable, window_rect );
+	CGSGetScreenRectForWindow( window->connection, window->drawable, window_rect );
 
 	pos[0] = mouse_pos.h - (int) window_rect[0];
 	pos[1] = (int) window_rect[3] - (mouse_pos.v - (int) window_rect[1]);
@@ -792,10 +794,8 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		retVal = (GLboolean) stub.wsInterface.wglMakeCurrent( window->drawable, context->hglrc );
 #elif defined(Darwin)
 		// XXX \todo We need to differentiate between these two..
-		if( 1 )
-			retVal = (stub.wsInterface.CGLSetCurrentContext(context->cglc) == noErr);
-		else
-			retVal = (stub.wsInterface.CGLSetSurface(context->cglc, _CGSDefaultConnection(), window->drawable, window->surface) == noErr);
+		retVal = ( stub.wsInterface.CGLSetSurface(context->cglc, window->connection, window->drawable, window->surface) == noErr );
+		retVal = ( stub.wsInterface.CGLSetCurrentContext(context->cglc) == noErr );
 #elif defined(GLX)
 		retVal = (GLboolean) stub.wsInterface.glXMakeCurrent( window->dpy, window->drawable, context->glxContext );
 #endif

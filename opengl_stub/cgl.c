@@ -88,12 +88,6 @@ void stubSwapContextBuffers( const ContextInfo *context, GLint flags )
 }
 
 
-static CGLError
-stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
-{
-}
-
-
 CGLError
 CGLCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
 {
@@ -622,19 +616,25 @@ CGLError CGLSetSurface( CGLContextObj ctx, CGSConnectionID connID, CGSWindowID w
 	WindowInfo  *window  = stubGetWindowInfo( winID );
 	DEBUG_FUNCTION(CGLSetSurface);
 
+	window->connection = connID;
 	window->surface = surfaceID;
 
 	return MakeCurrent( window, context );
 }
 
 /*
- * Parameters are unknown, so we can't do anything ... yet
+ * Not too certain on these... but it should work. (although, nothing seems to use this..)
  */
 CGLError CGLGetSurface( CGLContextObj ctx, CGSConnectionID connID, CGSWindowID winID, CGSSurfaceID *surfaceID ) {
-	ContextInfo *context = GET_CONTEXTINFO( ctx );
+	WindowInfo  *window  = stubGetWindowInfo( winID );
 	DEBUG_FUNCTION(CGLGetSurface);
 
-	return stub.wsInterface.CGLGetSurface( context->cglc, connID, winID, surfaceID );
+	if( connID != window->connection )
+		return kCGLBadContext;
+
+	*surfaceID = window->surface;
+
+	return noErr;
 }
 
 

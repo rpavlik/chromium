@@ -110,6 +110,7 @@ struct window_info_t
 #ifdef WINDOWS
 	HDC drawable;
 #elif defined(DARWIN)
+	CGSConnectionID connection;
 	CGSWindowID  drawable;
 	CGSSurfaceID surface;
 #elif defined(GLX)
