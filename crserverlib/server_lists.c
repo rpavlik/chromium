@@ -135,8 +135,8 @@ GLboolean SERVER_DISPATCH_APIENTRY crServerDispatchIsList( GLuint list )
 {
 	GLboolean retval;
 	list = TranslateListID( list );
-	crServerReturnValue( &retval, sizeof(retval) );
 	retval = cr_server.head_spu->dispatch_table.IsList( list );
+	crServerReturnValue( &retval, sizeof(retval) );
 	return retval;
 }
 
