@@ -124,7 +124,7 @@ void crServerInitializeQueueExtents(RunQueue *q)
 		extent->bounds.y2 = ( (GLfloat) (2*extent->imagewindow.y2) /
 				cr_server.muralHeight - 1.0f );
 
-		/* Width of height of tile, in mural pixels */
+		/* Width and height of tile, in mural pixels */
 		w = cr_server.extents[i].x2 - cr_server.extents[i].x1;
 		h = cr_server.extents[i].y2 - cr_server.extents[i].y1;
 
