@@ -217,7 +217,7 @@ const float		size = 1.0,
 	glClear( GL_COLOR_BUFFER_BIT );
 	
 	//theta += 0.05;
-        theta = glutGet(GLUT_ELAPSED_TIME) / 100.0;
+        theta = glutGet((GLenum)GLUT_ELAPSED_TIME) / 100.0;
 
 	glLoadIdentity();
 	glRotated( 90.0, 1.0, 0.0, 0.0 );

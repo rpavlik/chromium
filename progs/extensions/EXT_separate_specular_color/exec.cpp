@@ -73,8 +73,8 @@ void	InitSpecial	( void )
 	glEnable( GL_LIGHT0 );
 
 	q = gluNewQuadric();
-	gluQuadricDrawStyle( q, GLU_FILL );
-	gluQuadricNormals( q, GLU_SMOOTH );
+	gluQuadricDrawStyle( q, (GLenum)GLU_FILL );
+	gluQuadricNormals( q, (GLenum)GLU_SMOOTH );
 	gluQuadricTexture( q, GL_TRUE );
 	glEnable( GL_CULL_FACE );
 	glFrontFace( GL_CCW );
@@ -140,7 +140,7 @@ void	Display		( void )
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, textureID );
 	glEnable( GL_LIGHTING );
-	glLightModelf( GL_LIGHT_MODEL_COLOR_CONTROL_EXT, GL_SINGLE_COLOR_EXT );
+	glLightModelf((GLenum) GL_LIGHT_MODEL_COLOR_CONTROL_EXT, GL_SINGLE_COLOR_EXT );
 	glCallList( sphereList );
 	glDisable( GL_LIGHTING );
 	glDisable( GL_TEXTURE_2D );
@@ -156,7 +156,7 @@ void	Display		( void )
 	glEnable( GL_TEXTURE_2D );
 	glBindTexture( GL_TEXTURE_2D, textureID );
 	glEnable( GL_LIGHTING );
-	glLightModelf( GL_LIGHT_MODEL_COLOR_CONTROL_EXT, GL_SEPARATE_SPECULAR_COLOR_EXT );
+	glLightModelf((GLenum) GL_LIGHT_MODEL_COLOR_CONTROL_EXT, GL_SEPARATE_SPECULAR_COLOR_EXT );
 	glCallList( sphereList );
 	glDisable( GL_LIGHTING );
 	glDisable( GL_TEXTURE_2D );

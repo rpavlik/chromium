@@ -125,7 +125,7 @@ void	Display		( void )
 	// Left Viewport
 	glViewport( 0, 0, currentWidth >> 1, currentHeight );
 
-	glEnable( GL_COLOR_SUM_EXT );
+	glEnable((GLenum) GL_COLOR_SUM_EXT );
 	glBegin( GL_QUADS );
 	{
 		glColor3f( 1, 1, 1 );
@@ -143,7 +143,7 @@ void	Display		( void )
 			glVertex2f(  size, -size );
 	}
 	glEnd();
-	glDisable( GL_COLOR_SUM_EXT );
+	glDisable((GLenum) GL_COLOR_SUM_EXT );
 
 	glColor3f( 1, 1, 1 );
 	glPushMatrix();glLoadIdentity();
@@ -154,18 +154,18 @@ void	Display		( void )
 	glViewport( currentWidth >> 1, 0, currentWidth >> 1, currentHeight );
 #endif
 
-	glEnable( GL_COLOR_SUM_EXT );
+	glEnable((GLenum) GL_COLOR_SUM_EXT );
 	glEnableClientState( GL_VERTEX_ARRAY );
 	glEnableClientState( GL_COLOR_ARRAY );
-	glEnableClientState( GL_SECONDARY_COLOR_ARRAY_EXT );
+	glEnableClientState((GLenum) GL_SECONDARY_COLOR_ARRAY_EXT );
 	glVertexPointer( 2, GL_FLOAT, stride, vertexArray );
 	glColorPointer( 3, GL_FLOAT, stride, vertexArray+2 );
 	glSecondaryColorPointerEXT( 3, GL_FLOAT, stride, vertexArray+5 );
 	glDrawArrays( GL_QUADS, 0, 4 );
 	glDisableClientState( GL_VERTEX_ARRAY );
 	glDisableClientState( GL_COLOR_ARRAY );
-	glDisableClientState( GL_SECONDARY_COLOR_ARRAY_EXT );
-	glDisable( GL_COLOR_SUM_EXT );
+	glDisableClientState((GLenum) GL_SECONDARY_COLOR_ARRAY_EXT );
+	glDisable((GLenum) GL_COLOR_SUM_EXT );
 
 	glColor3f( 1, 1, 1 );
 	glPushMatrix();glLoadIdentity();
