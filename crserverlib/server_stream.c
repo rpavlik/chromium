@@ -115,10 +115,13 @@ static void crServerDeleteFromRunQueue( CRClient *client )
 					/* Only one client */
 					crFree(q);
 					cr_server.run_queue = NULL;
+					cr_server.curClient = NULL;
 					crWarning("No RUN_QUEUE!! (quitting) \n");
 				} 
 				else
 				{
+					if (cr_server.curClient == q->client)
+						cr_server.curClient = NULL;
 					if (cr_server.run_queue == q)
 						cr_server.run_queue = q->next;
 					q->prev->next = q->next;
