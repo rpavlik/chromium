@@ -125,25 +125,19 @@ static void RunState( void )
 	case GL_POLYGON:
 		return;
 	case GL_LINES:
-		if ((thread->BeginEndState + 1) % 2)
-		{
-			thread->BeginEndState = (thread->BeginEndState + 1) % 2;
+		thread->BeginEndState = (thread->BeginEndState + 1) % 2;
+		if (thread->BeginEndState)
 			return;
-		}
 		break;
 	case GL_TRIANGLES:
-		if ((thread->BeginEndState + 1) % 3)
-		{
-			thread->BeginEndState = (thread->BeginEndState + 1) % 3;
+		thread->BeginEndState = (thread->BeginEndState + 1) % 3;
+		if (thread->BeginEndState)
 			return;
-		}
 		break;
 	case GL_QUADS:
-		if ((thread->BeginEndState + 1) % 4)
-		{
-			thread->BeginEndState = (thread->BeginEndState + 1) % 4;
+		thread->BeginEndState = (thread->BeginEndState + 1) % 4;
+		if (thread->BeginEndState)
 			return;
-		}
 		break;
 	}
 	DoVertex();
