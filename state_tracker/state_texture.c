@@ -72,23 +72,23 @@ void crStateTextureInit(CRContext *ctx)
 	/* Initalize id pool and hash table */
 	t->idHash = crAllocHashtable();
 
-	crStateTextureInitTextureObj(t, &(t->base1D), 0, GL_TEXTURE_1D);
-	crStateTextureInitTextureObj(t, &(t->base2D), 0, GL_TEXTURE_2D);
+	crStateTextureInitTextureObj(ctx, &(t->base1D), 0, GL_TEXTURE_1D);
+	crStateTextureInitTextureObj(ctx, &(t->base2D), 0, GL_TEXTURE_2D);
 #ifdef CR_OPENGL_VERSION_1_2
-	crStateTextureInitTextureObj(t, &(t->base3D), 0, GL_TEXTURE_3D);
+	crStateTextureInitTextureObj(ctx, &(t->base3D), 0, GL_TEXTURE_3D);
 #endif
 #ifdef CR_ARB_texture_cube_map
-	crStateTextureInitTextureObj(t, &(t->baseCubeMap), 0,
+	crStateTextureInitTextureObj(ctx, &(t->baseCubeMap), 0,
 		GL_TEXTURE_CUBE_MAP_ARB);
 #endif
 
-	crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
-	crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+	crStateTextureInitTextureObj(ctx, &(t->proxy1D), 0, GL_TEXTURE_1D);
+	crStateTextureInitTextureObj(ctx, &(t->proxy2D), 0, GL_TEXTURE_2D);
 #ifdef CR_OPENGL_VERSION_1_2
-	crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+	crStateTextureInitTextureObj(ctx, &(t->proxy3D), 0, GL_TEXTURE_3D);
 #endif
 #ifdef CR_ARB_texture_cube_map
-	crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+	crStateTextureInitTextureObj(ctx, &(t->proxyCubeMap), 0,
 		GL_TEXTURE_CUBE_MAP_ARB);
 #endif
 
@@ -178,12 +178,11 @@ void crStateTextureFree( CRTextureState *t )
 
 
 
-void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint name, GLenum target)
+void crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj, GLuint name, GLenum target)
 {
-	int i;
-	int j;
-	int k;
+	CRTextureState *t = &(ctx->texture);
 	CRTextureLevel *tl;
+	int i, j;
 
 	tobj->borderColor.r = 0.0f;
 	tobj->borderColor.g = 0.0f;
@@ -204,31 +203,28 @@ void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint 
 	tobj->target        = target;
 	tobj->name          = name;
 
-#define INIT_LEVELS(ARRAY)											\
-	tobj->ARRAY = (CRTextureLevel *) crAlloc(sizeof(CRTextureLevel)	\
-												 * t->maxLevel);				\
-	if (!tobj->ARRAY)															\
-		return; /* out of memory */									\
-	for (i=0; i<t->maxLevel; i++)									\
-	{																							\
-		tl                = &(tobj->ARRAY[i]);			\
-		tl->compressed    = GL_FALSE;								\
-		tl->bytes         = 0;											\
-		tl->img           = NULL;										\
-		tl->width         = 0;											\
-		tl->height        = 0;											\
-		tl->depth         = 0;											\
-		tl->border        = 0;											\
-		tl->internalFormat= GL_RGBA;								\
-		tl->bytesPerPixel = 0;											\
-		tl->format        = GL_RGBA;								\
+#define INIT_LEVELS(ARRAY)							\
+	tobj->ARRAY = (CRTextureLevel *) crCalloc(sizeof(CRTextureLevel)	\
+					* t->maxLevel);				\
+	if (!tobj->ARRAY)							\
+		return; /* out of memory */					\
+	for (i=0; i<t->maxLevel; i++)						\
+	{									\
+		tl                = &(tobj->ARRAY[i]);				\
+		tl->compressed    = GL_FALSE;					\
+		tl->bytes         = 0;						\
+		tl->img           = NULL;					\
+		tl->width         = 0;						\
+		tl->height        = 0;						\
+		tl->depth         = 0;						\
+		tl->border        = 0;						\
+		tl->internalFormat= GL_RGBA;					\
+		tl->bytesPerPixel = 0;						\
+		tl->format        = GL_RGBA;					\
 		tl->type          = GL_UNSIGNED_BYTE;				\
-		crStateTextureInitTextureFormat( tl, tl->internalFormat );						\
-		for (j = 0; j < CR_MAX_TEXTURE_UNITS; j++)														\
-		{																																			\
-			for (k = 0; k < CR_MAX_BITARRAY; k++)																\
-				tl->dirty[j][k]     = 0;  /* By default this level is ignored.*/	\
-		}																																			\
+		crStateTextureInitTextureFormat( tl, tl->internalFormat );	\
+		for (j = 0; j < CR_MAX_TEXTURE_UNITS; j++)			\
+			RESET(tl->dirty[j], ctx->bitid);			\
 	}
 
 	INIT_LEVELS(level);
@@ -258,12 +254,11 @@ void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint 
 	tobj->compareFailValue = 0.0;
 #endif
 
-	/* UGh. Should be neg_bitid */
-	FILLDIRTY(tobj->dirty);
+	RESET(tobj->dirty, ctx->bitid);
 	for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
 	{
-		FILLDIRTY(tobj->paramsBit[i]);
-		FILLDIRTY(tobj->imageBit[i]);
+		RESET(tobj->paramsBit[i], ctx->bitid);
+		RESET(tobj->imageBit[i], ctx->bitid);
 	}
 }
 
@@ -500,7 +495,7 @@ void crStateTextureInitTexture (GLuint name)
 	GET_TOBJ(tobj, name);
 	if (!tobj) return;
 
-	crStateTextureInitTextureObj(t, tobj, name, GL_NONE);
+	crStateTextureInitTextureObj(g, tobj, name, GL_NONE);
 }
 #endif
 
@@ -538,8 +533,9 @@ CRTextureObj * crStateTextureGet(GLenum target, GLuint name)
  * Allocate a new texture object with the given name
  */
 static CRTextureObj *
-crStateTextureAllocate_t (CRTextureState *t, GLuint name) 
+crStateTextureAllocate_t (CRContext *ctx, GLuint name) 
 {
+	CRTextureState *t = &(ctx->texture);
 	CRTextureObj *tobj;
 
 	if (!name) 
@@ -551,7 +547,7 @@ crStateTextureAllocate_t (CRTextureState *t, GLuint name)
 
 	crHashtableAdd( t->idHash, name, (void *) tobj );
 
-	crStateTextureInitTextureObj(t, tobj, name, GL_NONE);
+	crStateTextureInitTextureObj(ctx, tobj, name, GL_NONE);
 
 	return tobj;
 }
@@ -812,7 +808,7 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 	GET_TOBJ(tobj, t, texture);
 	if (!tobj)
 	{
-		tobj = crStateTextureAllocate_t(t, texture);
+		tobj = crStateTextureAllocate_t(g, texture);
 	}
 
 	/* Check the targets */
@@ -3855,6 +3851,8 @@ crStateTextureDiff( CRTextureBits *t, CRbitvalue *bitID,
 			INVERTDIRTY(t->enable[i], nbitID);
 		}
 
+		tobj = NULL;
+
 		/* Get the active texture */
 		if (to->unit[i].enabled1D == GL_TRUE) 
 		{
@@ -4179,4 +4177,8 @@ crStateTextureDiff( CRTextureBits *t, CRbitvalue *bitID,
 			INVERTDIRTY(t->envBit[i], nbitID);
 		}
 	}
+
+	/* After possible fiddling with the active unit, put it back now */
+	if (fromCtx->texture.curTextureUnit != toCtx->texture.curTextureUnit)
+		diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
 }

@@ -116,7 +116,7 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 		if (target == GL_PROXY_TEXTURE_1D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
 		}
 		else
 		{
@@ -131,7 +131,7 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 		if (target == GL_PROXY_TEXTURE_1D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
 		}
 		else
 		{
@@ -155,7 +155,7 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 		if (target == GL_PROXY_TEXTURE_1D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
 		}
 		else
 		{
@@ -170,7 +170,7 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 		if (target == GL_PROXY_TEXTURE_1D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+			crStateTextureInitTextureObj(g, &(t->proxy1D), 0, GL_TEXTURE_1D);
 		}
 		else
 		{
@@ -301,13 +301,13 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 		if (target == GL_PROXY_TEXTURE_2D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
 		}
 #ifdef CR_ARB_texture_cube_map
 		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+			crStateTextureInitTextureObj(g, &(t->proxyCubeMap), 0,
 																	 GL_TEXTURE_CUBE_MAP_ARB);
 		}
 #endif
@@ -324,13 +324,13 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 		if (target == GL_PROXY_TEXTURE_2D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
 		}
 #ifdef CR_ARB_texture_cube_map
 		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+			crStateTextureInitTextureObj(g, &(t->proxyCubeMap), 0,
 																	 GL_TEXTURE_CUBE_MAP_ARB);
 		}
 #endif
@@ -356,13 +356,13 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 		if (target == GL_PROXY_TEXTURE_2D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
 		}
 #ifdef CR_ARB_texture_cube_map
 		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+			crStateTextureInitTextureObj(g, &(t->proxyCubeMap), 0,
 																	 GL_TEXTURE_CUBE_MAP_ARB);
 		}
 #endif
@@ -411,7 +411,7 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 				|| height > ((int) g->limits.maxTextureSize + 2))
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
 			return;
 		}
 	}
@@ -422,7 +422,7 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 				height > (int) g->limits.maxCubeMapTextureSize || width != height)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+			crStateTextureInitTextureObj(g, &(t->proxyCubeMap), 0,
 																	 GL_TEXTURE_CUBE_MAP_ARB);
 			return;
 		}
@@ -991,7 +991,7 @@ crStateTexImage3D(GLenum target, GLint level,
 		if (target == GL_PROXY_TEXTURE_3D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
 		}
 		else
 		{
@@ -1006,7 +1006,7 @@ crStateTexImage3D(GLenum target, GLint level,
 		if (target == GL_PROXY_TEXTURE_3D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
 		}
 		else
 		{
@@ -1036,7 +1036,7 @@ crStateTexImage3D(GLenum target, GLint level,
 		if (target == GL_PROXY_TEXTURE_3D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
 		}
 		else
 		{
@@ -1055,7 +1055,7 @@ crStateTexImage3D(GLenum target, GLint level,
 		if (target == GL_PROXY_TEXTURE_3D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
 		}
 		else
 		{
@@ -1070,7 +1070,7 @@ crStateTexImage3D(GLenum target, GLint level,
 		if (target == GL_PROXY_TEXTURE_3D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
 		}
 		else
 		{
@@ -1085,7 +1085,7 @@ crStateTexImage3D(GLenum target, GLint level,
 		if (target == GL_PROXY_TEXTURE_3D)
 		{
 			/* clear all the texture object state */
-			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+			crStateTextureInitTextureObj(g, &(t->proxy3D), 0, GL_TEXTURE_3D);
 		}
 		else
 		{
