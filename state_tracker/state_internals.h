@@ -17,9 +17,9 @@
 #define FLUSH() \
 	if (g->flush_func != NULL) \
 	{ \
-		CRStateFlushFunc ff = g->flush_func; \
+		CRStateFlushFunc cached_ff = g->flush_func; \
 		g->flush_func = NULL; \
-		ff( g->flush_arg ); \
+		cached_ff( g->flush_arg ); \
 	}
 
 typedef void (SPU_APIENTRY *glAble)(GLenum);

@@ -605,7 +605,7 @@ void STATE_APIENTRY crStatePushMatrix()
 	if (t->currentStack->depth < 0 ||
 		t->currentStack->depth >= t->currentStack->maxDepth)
 	{
-		crError( "Bogus depth in PushMatrix: %d", t->currentStack->depth );
+		crError( "Bogus depth in PushMatrix: %d", (int) t->currentStack->depth );
 	}
 
 	/* Perform the copy */
