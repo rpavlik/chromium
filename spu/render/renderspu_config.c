@@ -26,7 +26,6 @@ static void set_window_geometry( RenderSPU *render_spu, const char *response )
 	render_spu->defaultY = (int) y;
 	render_spu->defaultWidth = (int) w;
 	render_spu->defaultHeight = (int) h;
-	crMemset(render_spu->display_string, 0, sizeof(render_spu->display_string));
 }
 
 static void set_display_string( RenderSPU *render_spu, const char *response )
