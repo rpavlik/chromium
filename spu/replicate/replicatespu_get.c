@@ -109,6 +109,16 @@ void REPLICATESPU_APIENTRY replicatespu_GetChromiumParametervCR( GLenum target, 
 {
 	GET_THREAD(thread);
 	int writeback = 1;
+
+	if (target == GL_WINDOW_SIZE_CR) {
+		WindowInfo *winInfo = (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, index );
+		if (!winInfo) {
+			crWarning("Replicate SPU: attempt to query size of unknown window %d", index);
+			return;
+		}
+		index = winInfo->id;
+	}
+
 	if (replicate_spu.swap)
 	{
 		crPackGetChromiumParametervCRSWAP( target, index, type, count, values, &writeback );
