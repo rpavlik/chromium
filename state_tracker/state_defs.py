@@ -46,4 +46,5 @@ crStateUpdateColorBits
 crStateClientInit
 crStateGetCurrent
 __currentContext
+__currentBits
 """

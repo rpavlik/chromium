@@ -58,5 +58,8 @@ int main(int argc, char *argv[])
 
 	crDLLClose(lib);
 
+	(void) argc;
+	(void) argv;
+
 	return 0;
 }
