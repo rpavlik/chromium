@@ -296,7 +296,7 @@ else
 
 LDFLAGS += -L$(DSO_DIR)
 LIBRARIES := $(foreach lib,$(LIBRARIES),-l$(lib))
-LIBRARIES += $(foreach lib,$(PERSONAL_LIBRARIES),-l$(SHORT_TARGET_NAME_$(lib)_copy))
+LIBRARIES += $(foreach lib,$(PERSONAL_LIBRARIES),-l$(SHORT_TARGET_NAME)_$(lib)_copy)
 
 endif
 
