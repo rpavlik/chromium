@@ -281,7 +281,7 @@ endif
 endif
 
 ifdef LIB_COPIES
-COPY_TARGETS := $(foreach copy, $(LIB_COPIES), $(TOP)/built/$(copy)_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(DLLPREFIX)$(copy)_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) )
+COPY_TARGETS := $(foreach copy, $(LIB_COPIES), $(TOP)/built/$(copy)_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$(copy)_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) )
 
 copies: 
 	@$(MAKE) relink
@@ -292,14 +292,14 @@ endif
 relink: $(LIB_COPIES)
 
 $(LIB_COPIES):
-	@$(ECHO) "Linking $(DLLPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)"
+	@$(ECHO) "Linking $(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)"
 	$(MKDIR) $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)
 ifdef WINDOWS
-	@$(LD) $(SHARED_LDFLAGS) /Fe$(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(DLLPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
+	@$(LD) $(SHARED_LDFLAGS) /Fe$(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else
-	@$(LD) $(SHARED_LDFLAGS) -o $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(DLLPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(OBJS) $(LDFLAGS) $(LIBRARIES)
+	@$(LD) $(SHARED_LDFLAGS) -o $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(OBJS) $(LDFLAGS) $(LIBRARIES)
 endif
-	@$(CP) $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(DLLPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(DSO_DIR)
+	@$(CP) $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(DSO_DIR)
 
 
 
