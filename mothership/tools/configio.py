@@ -273,7 +273,7 @@ def ReadConfig(mothership, file, filename=""):
 					caption="Configuration File Arugments",
 					defaultValue=name + " ")
 		if dialog.ShowModal() == wxID_CANCEL:
-			return
+			return 0
 
 		# Set new argument vector
 		newArgv = dialog.GetValue()
