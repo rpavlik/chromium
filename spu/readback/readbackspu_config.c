@@ -14,11 +14,12 @@ static void __setDefaults( ReadbackSPU *readback_spu )
 	readback_spu->windows[0].inUse = GL_TRUE;
 	readback_spu->windows[0].renderWindow = 0;
 	readback_spu->windows[0].childWindow = 0;
-	readback_spu->barrierCount = 0;
 
 	/* This will make the viewport be computed later */
 	readback_spu->halfViewportWidth = 0;
-	readback_spu->cleared_this_frame = 0;
+
+	/* misc */
+	readback_spu->barrierSize = 0;
 	readback_spu->bbox = NULL;
 
 	/* config options */

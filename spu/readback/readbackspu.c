@@ -198,6 +198,8 @@ static void read_and_send_tiles( WindowInfo *window )
 		/* we're running on the appfaker */
 		int x, y, w, h;
 
+		numExtents = 1; /* this may get set to zero below! */
+
 		/*
 		 * Do bounding box cull check
 		 */
@@ -211,52 +213,57 @@ static void read_and_send_tiles( WindowInfo *window )
 			if (readback_spu.bbox->xmin == readback_spu.bbox->xmax)
 			{
 				/* client can tell us to do nothing */
-				return;
+				numExtents = 0;   /* used to return here */
 			}
-			/* Check to make sure the transform is valid */
-			if (!t->transformValid)
+			else
 			{
-				/* I'm pretty sure this is always the case, but I'll leave it. */
-				crStateTransformUpdateTransform(t);
+				/* Check to make sure the transform is valid */
+				if (!t->transformValid)
+				{
+					/* I'm pretty sure this is always the case, but I'll leave it. */
+					crStateTransformUpdateTransform(t);
+				}
+
+				crTransformBBox( 
+						readback_spu.bbox->xmin,
+						readback_spu.bbox->ymin,
+						readback_spu.bbox->zmin,
+						readback_spu.bbox->xmax,
+						readback_spu.bbox->ymax,
+						readback_spu.bbox->zmax,
+						m,
+						&xmin, &ymin, NULL, 
+						&xmax, &ymax, NULL );
+
+				/* triv reject */
+				if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
+				{
+					numExtents = 0;   /* used to return here */
+				}
+				else
+				{
+					/* clamp */
+					if (xmin < -1.0f) xmin = -1.0f;
+					if (ymin < -1.0f) ymin = -1.0f;
+					if (xmax > 1.0f) xmax = 1.0f;
+					if (ymax > 1.0f) ymax = 1.0f;
+
+					if (readback_spu.halfViewportWidth == 0)
+					{
+						/* we haven't computed it, and they haven't
+						 * called glViewport, so set it to the full window */
+
+						readback_spu.halfViewportWidth = (window->width / 2.0f);
+						readback_spu.halfViewportHeight = (window->height / 2.0f);
+						readback_spu.viewportCenterX = readback_spu.halfViewportWidth;
+						readback_spu.viewportCenterY = readback_spu.halfViewportHeight;
+					}
+					x = (int) (readback_spu.halfViewportWidth*xmin + readback_spu.viewportCenterX);
+					w = (int) (readback_spu.halfViewportWidth*xmax + readback_spu.viewportCenterX) - x;
+					y = (int) (readback_spu.halfViewportHeight*ymin + readback_spu.viewportCenterY);
+					h = (int) (readback_spu.halfViewportHeight*ymax + readback_spu.viewportCenterY) - y;
+				}
 			}
-
-			crTransformBBox( 
-					readback_spu.bbox->xmin,
-					readback_spu.bbox->ymin,
-					readback_spu.bbox->zmin,
-					readback_spu.bbox->xmax,
-					readback_spu.bbox->ymax,
-					readback_spu.bbox->zmax,
-					m,
-					&xmin, &ymin, NULL, 
-					&xmax, &ymax, NULL );
-
-			/* triv reject */
-			if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
-			{
-				return;
-			}
-
-			/* clamp */
-			if (xmin < -1.0f) xmin = -1.0f;
-			if (ymin < -1.0f) ymin = -1.0f;
-			if (xmax > 1.0f) xmax = 1.0f;
-			if (ymax > 1.0f) ymax = 1.0f;
-
-			if (readback_spu.halfViewportWidth == 0)
-			{
-				/* we haven't computed it, and they haven't
-				 * called glViewport, so set it to the full window */
-
-				readback_spu.halfViewportWidth = (window->width / 2.0f);
-				readback_spu.halfViewportHeight = (window->height / 2.0f);
-				readback_spu.viewportCenterX = readback_spu.halfViewportWidth;
-				readback_spu.viewportCenterY = readback_spu.halfViewportHeight;
-			}
-			x = (int) (readback_spu.halfViewportWidth*xmin + readback_spu.viewportCenterX);
-			w = (int) (readback_spu.halfViewportWidth*xmax + readback_spu.viewportCenterX) - x;
-			y = (int) (readback_spu.halfViewportHeight*ymin + readback_spu.viewportCenterY);
-			h = (int) (readback_spu.halfViewportHeight*ymax + readback_spu.viewportCenterY) - y;
 		}
 		else {
 			/* no bounding box - read/draw whole window */
@@ -266,7 +273,6 @@ static void read_and_send_tiles( WindowInfo *window )
 			h = window->height;
 		}
 
-		numExtents = 1;
 		extent0.x1 = x;
 		extent0.y1 = y;
 		extent0.x2 = x + w;
@@ -278,6 +284,34 @@ static void read_and_send_tiles( WindowInfo *window )
 		outputwindow0.y2 = y + h;
 		outputwindow = &outputwindow0;
 	}
+
+	/*
+	 * NOTE: numExtents may be zero here if the bounding box test
+	 * determined that nothing was drawn.  We can't just return though!
+	 * we have to go through the barriers below so that we don't deadlock
+	 * the server.
+	 */
+
+	/* One will typically use serverNode.Conf('only_swap_once', 1) to
+	 * prevent extraneous glClear and SwapBuffer calls on the server.
+	 */
+	if (readback_spu.extract_depth) 
+		readback_spu.child.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	else 
+		readback_spu.child.Clear( GL_COLOR_BUFFER_BIT );
+
+	/* wait for everyone to finish clearing */
+	if (!readback_spu.gather_url)
+		readback_spu.child.BarrierExec( CLEAR_BARRIER );
+
+	/*
+	 * Begin critical region.
+	 * NOTE: we could put the SemaphoreP and SemaphoreV calls inside this
+	 * loop to more tightly bracket the glDrawPixels calls.  However, by
+	 * putting the mutex outside of the loop, we're more likely to pack more
+	 * data into each buffer when doing image reassembly.
+	 */
+	readback_spu.child.SemaphoreP( MUTEX_SEMAPHORE );
 
 	/*
 	 * loop over extents (image regions)
@@ -361,24 +395,7 @@ static void read_and_send_tiles( WindowInfo *window )
 		CRASSERT(window->height > 0);
 		readback_spu.child.Viewport( 0, 0, window->width, window->height );
 
-		/* Send glClear to child (downstream SPU) */
-		if (!readback_spu.cleared_this_frame)
-		{
-			if (readback_spu.extract_depth) 
-			{
-				readback_spu.child.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-			}
-			else 
-			{
-				readback_spu.child.Clear( GL_COLOR_BUFFER_BIT );
-			}
-			if (!readback_spu.gather_url)
-				readback_spu.child.BarrierExec( READBACK_BARRIER );
-			readback_spu.cleared_this_frame = 1;
-		}
-
-		/* Use the glBitmap trick to set the raster pos.  This way we
-		 * don't have to worry about the downstream viewport and projection.
+		/* Use the glBitmap trick to set the raster pos.
 		 */
 		readback_spu.child.RasterPos2i(0, 0);
 		readback_spu.child.Bitmap(0, 0, 0, 0, (GLfloat)drawx, (GLfloat)drawy, NULL);
@@ -446,6 +463,11 @@ static void read_and_send_tiles( WindowInfo *window )
 			}
 		}
 	}
+
+	/*
+	 * End critical region.
+	 */
+	readback_spu.child.SemaphoreV( MUTEX_SEMAPHORE );
 }
 
 
@@ -468,7 +490,7 @@ static ThreadInfo *readbackspuNewThread( unsigned long id )
 #endif
 
 
-static void DoFlush( WindowInfo *window )
+static void DoReadback( WindowInfo *window )
 {
 	static int first_time = 1;
 	GLint packAlignment, unpackAlignment;
@@ -479,10 +501,16 @@ static void DoFlush( WindowInfo *window )
 	}
 	if (first_time)
 	{
-		readback_spu.child.BarrierCreate( READBACK_BARRIER, 0 );
+		/* one-time initializations */
+		readback_spu.child.BarrierCreate(CLEAR_BARRIER, readback_spu.barrierSize);
+		readback_spu.child.BarrierCreate(SWAP_BARRIER, readback_spu.barrierSize);
+		readback_spu.child.SemaphoreCreate(MUTEX_SEMAPHORE, 1);
+#if 000
+		readback_spu.child.MatrixMode(GL_PROJECTION);
 		readback_spu.child.LoadIdentity();
 		readback_spu.child.Ortho( 0, window->width,
-															0, window->height, -10000, 10000);
+															0, window->height, -1, 1);
+#endif
 		first_time = 0;
 	}
 	else if (readback_spu.resizable)
@@ -511,9 +539,6 @@ static void DoFlush( WindowInfo *window )
 
 static void READBACKSPU_APIENTRY readbackspuFlush( void )
 {
-	/* DoFlush will do the clear and the first barrier
-	 * if necessary. */
-
 	/* find current context's window */
 	WindowInfo *window;
 	GET_THREAD(thread);
@@ -523,7 +548,12 @@ static void READBACKSPU_APIENTRY readbackspuFlush( void )
 	if (!window->inUse)
 		return;  /* invalid window */
 
-	DoFlush( window );
+	DoReadback( window );
+
+	/*
+	 * XXX I'm not sure we need to sync on glFlush, but let's be safe for now.
+	 */
+	readback_spu.child.BarrierExec( SWAP_BARRIER );
 }
 
 
@@ -533,6 +563,8 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint fla
 	unsigned short port = 3000;
 	char url[4098];
 	
+	(void) flags;
+
 	/* setup OOB gather connections, if necessary */
 	if (readback_spu.gather_url)
 	{
@@ -553,13 +585,13 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint fla
 		}
 	}
 	
-	/* DoFlush will do the clear and the first barrier
-	 * if necessary. */
+	DoReadback( &(readback_spu.windows[window]) );
 
-	DoFlush( &(readback_spu.windows[window]) );
+	/*
+	 * Everyone syncs up here before calling SwapBuffers().
+	 */
+	readback_spu.child.BarrierExec( SWAP_BARRIER );
 
-	readback_spu.child.BarrierExec( READBACK_BARRIER );
-	
 	if (!readback_spu.gather_url)
 	{
 		readback_spu.child.SwapBuffers( readback_spu.windows[window].childWindow, 0 );
@@ -570,8 +602,6 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint fla
 	{
 		readback_spu.super.SwapBuffers( readback_spu.windows[window].renderWindow, 0 );
 	}
-	readback_spu.cleared_this_frame = 0;
-	(void) flags;
 }
 
 
@@ -644,6 +674,13 @@ static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint window, GLint nati
 				nativeWindow,
 				readback_spu.contexts[ctx].childContext);
 
+		/* Initialize child's projection matrix so that glRasterPos2i(0,0)
+		 * corresponds to window coordinate (0,0).
+		 */
+		readback_spu.child.MatrixMode(GL_PROJECTION);
+		readback_spu.child.LoadIdentity();
+		readback_spu.child.Ortho( 0.0, 1.0, 0.0, 1.0, -1.0, 1.0 );
+
 		/* state tracker (for matrices) */
 		crStateMakeCurrent( readback_spu.contexts[ctx].tracker );
 	}
@@ -708,12 +745,7 @@ static void READBACKSPU_APIENTRY readbackspuWindowSize( GLint window, GLint w, G
 static void READBACKSPU_APIENTRY readbackspuBarrierCreate( GLuint name, GLuint count )
 {
 	(void) name;
-	/* We'll propogate this value downstream to the server when we create
-	* private readback SPU barriers.
-	 */
-	/* readback_spu.barrierCount = count;*/
-
-	/* this is totally wrong -- the barrierCount should be zero.*/
+	/* no-op */
 }
 
 static void READBACKSPU_APIENTRY readbackspuBarrierDestroy( GLuint name )
@@ -837,6 +869,9 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParameteriCR(GLenum target, 
 	
 	switch( target )
 	{
+		case GL_READBACK_BARRIER_SIZE_CR:
+			readback_spu.barrierSize = value;
+			break;
 		case GL_GATHER_POST_SWAPBUFFERS_CR:
 				if ((!readback_spu.server) || (readback_spu.server->numExtents < 0))
 					crError("bleh! trying to do GATHER on appfaker.");	

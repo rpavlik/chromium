@@ -79,19 +79,16 @@ typedef struct {
 	GLint childWindow;
 	GLint childContext;
 
-	GLint barrierCount;
+	GLint barrierSize;
 
 	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
-	int cleared_this_frame;
 	struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;
 
 } ReadbackSPU;
 
-#define READBACK_BARRIER        1
-#define CREATE_CONTEXT_BARRIER  2
-#define MAKE_CURRENT_BARRIER    3
-#define DESTROY_CONTEXT_BARRIER 4
-
+#define CLEAR_BARRIER   1
+#define SWAP_BARRIER    2
+#define MUTEX_SEMAPHORE 3
 
 extern ReadbackSPU readback_spu;
 
