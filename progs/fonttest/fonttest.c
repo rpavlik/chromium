@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <GL/glut.h>
@@ -42,15 +43,28 @@ static void keyboard( unsigned char key, int x, int y )
 	exit(0);
 }
 
+static void timefunc( int val )
+{
+  fprintf(stderr,"Exiting on timeout.\n");
+  exit(0);
+}
+
 int main(int argc, char **argv)
 {
+  int i;
+  long timeout= 0;
+
     glutInit(&argc, argv);
+    for (i=0; i<(argc-1); i++) {
+      if (!strcmp(argv[i],"-timeout")) timeout= atol(argv[i+1]);
+    }
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(500, 500);
     glutCreateWindow(argv[0]);
     glutReshapeFunc(myReshape);
     glutDisplayFunc(display);
-		glutKeyboardFunc(keyboard);
+    glutKeyboardFunc(keyboard);
+    if (timeout != 0) glutTimerFunc(timeout, timefunc, 0);
     glutMainLoop();
     return 0;
 }
