@@ -20,12 +20,12 @@
 <table border="1" width="100%">
 	<tr>
 		<td align="center">
-            <p align="center"><img border="0" src="psubmit.jpg"></p>
+            <p align="center"><img border="0" src="rings.jpg"></p>
 		</td>
 	</tr>
 	<tr>
 		<td align="center">
-            Each triangle is submitted by a separate client in a
+            Each ring is submitted/rendered by a separate client in a
             cluster-parallel program.
 		</td>
 	</tr>
@@ -34,29 +34,15 @@
 distributed OpenGL application.&nbsp; Here we will build a trivial parallel
 application using Chromium.&nbsp; The application that we will be considering is
 called psubmit, and can be found in the directory <code>cr/progs/psumit</code>.</p>
-<h2 class="PageSubHeading">Be Warned</h2>
-<ul>
-  <li>The parallel submission portion of Chromium has been tested very
-    little.&nbsp; In fact, the little amount of testing I've done on this part
-    of the system indicates that something is leaking memory like a sieve, so
-    the runs don't last very long.&nbsp; This is my absolute #1 top priority
-    thing to fix after the alpha release, so if you care about this, stay tuned
-    to the chromium-users mailing list.</li>
-  <li>The semantics of writing parallel applications haven't been completely
-    thought through.&nbsp; For example, a sort-first parallel program from
-    WireGL will port trivially to a sort-first parallel Chromium program, but if
-    you wrote a sort-last SPU and wanted to run the same application, it might
-    require (very minor) changes to some calls.&nbsp; I'm going to work on
-    pushing this logic into the mothership so the same application will run
-    sort-first or sort-last (assuming that it doesn't need the additional
-    ordering provided by sort-first) without modification or recompilation.</li>
-</ul>
 <h2 class="PageSubHeading">The Basic Idea</h2>
 <p>Writing a parallel OpenGL application is pretty simple.&nbsp; You have a
 bunch of processes, each one of which is responsible for a portion of the model
-to be rendered.&nbsp; Each process renders its portion pretty much as if it were
-the only process in the world.&nbsp; The differences come up when you have
-requirements about the <i>ordering</i> of command execution.</p>
+to be rendered.&nbsp; Each process renders its portion pretty much as if it
+were the only process in the world.&nbsp;
+The partial renderings may either be composited together according to Z or
+alpha (sort-last) or tiled together (sort-first).
+However, <i>ordering</i> requirements add some complexity to the process.</p>
+
 <p>OpenGL provides <i>ordered semantics</i>.&nbsp; That means that if function A
 is called before function B, the resulting image should look as if A happened
 before B.&nbsp; With parallel programs, it's no longer clear which function is
@@ -77,19 +63,25 @@ synchronization and would get this information from, say, MPI.</p>
 <p>Once the rank and size of the program are determined, the following two lines
 appear:</p>
 
-<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		context = crCreateContextCR(0, CR_RGB_BIT | CR_DEPTH_BIT);<br>
-	crMakeCurrentCR(0, context);</td></tr></table>
+<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		context = crCreateContextCR(NULL, CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT);<br>
+	crMakeCurrentCR(NULL, 0, context);</td></tr></table>
 
 <p>crCreateContextCR and crMakeCurrentCR are actually function pointers
 initialized via crGetProcAddress.
 The typedefs for these functions are in the header file
 &quot;<code>cr_applications.h</code>&quot;.
-They provide a mechanism to initialize the Chromium system without creating a
-window.&nbsp; This is particularly useful for parallel applications, since it
-doesn't really make sense to have a bunch of blank faked-out windows popping up
-all over the cluster.&nbsp; This also means that the client nodes in the cluster
-do not have to have a graphical environment running just to house a blank
-faked-out window.</p>
+They provide a mechanism to use Chromium without using GLX or WGL and
+having to create applications windows, etc.
+This is particularly useful for parallel applications, since it doesn't
+really make sense to have a bunch of blank faked-out windows popping up
+all over the cluster.&nbsp; This also means that the client nodes in the
+cluster do not have to have a graphical environment running just to house
+a blank faked-out window.</p>
+
+<p>The <code>NULL</code> parameters are pointers which aren't used at
+this time (they'll be used to specify the X display in the future).
+The 0 parameter to <code>crMakeCurrentCR</code> is the window ID.
+Zero indicates that the default window should be used.</p>
 
 <p>The next thing that the application does is create a GL barrier:</p>
 
@@ -100,27 +92,28 @@ perfectly legal, as long as the &quot;size&quot; parameter matches up.&nbsp; <co
 is just an integer that &quot;names&quot; this barrier, much like an OpenGL
 display list or texture object (except that the namespace is shared between
 clients by default).</p>
-<p>Next comes the main drawing loop.&nbsp; This application follows the basic
+
+<p>After some GL initialization code comes the main drawing loop.&nbsp;
+This application follows the basic
 format of all simple parallel OpenGL applications:</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">		for (;;)<br>
       {<br>
-      &nbsp;&nbsp;&nbsp; if (rank == 0) glClear(...);<br>
+      &nbsp;&nbsp;&nbsp; if (clearAndSwap) glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );<br>
       &nbsp;&nbsp;&nbsp; glBarrierExec( MASTER_BARRIER );<br>
       <br>
       &nbsp;&nbsp;&nbsp; // Drawing code here<br>
       <br>
       &nbsp;&nbsp;&nbsp; glBarrierExec( MASTER_BARRIER );<br>
-      &nbsp;&nbsp;&nbsp; if (rank == 0) crSwapBuffers();<br>
+      &nbsp;&nbsp;&nbsp; if (clearAndSwap) crSwapBuffers();<br>
       }</td></tr></table>
 
 <p>A few things to note about this drawing method:</p>
 <ul>
-  <li>Only rank 0 is doing a clear and a swap.&nbsp; This makes sense for
-    sort-first applications, but is one of the ways in which this application
-    would not work in a sort-last configuration.&nbsp; It is likely that this
-    logic will move into the SPUs themselves (i.e., the SPU's will know whether
-    or not to pay attention to a call to <code>glClear</code>) in the future.</li>
+  <li>In a sort-last configuration <code>clearAndSwap</code> be true
+    for all processes.
+  <li>In a sort-first configuration <code>clearAndSwap</code> be true
+    only for the first (0th) process.
   <li><code>glBarrierExec</code> (also declared in <code>cr_applications.h</code>)
     is the call to enter a barrier.</li>
   <li>The barrier following the clear ensures that the clear has happened before
