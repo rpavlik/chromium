@@ -118,7 +118,7 @@ GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 	GLint doubleBuffer = 0, stereo = 0;
 	GLint alphaSize = 0, depthSize = 0, stencilSize = 0;
 	GLint accumRedSize = 0, accumGreenSize = 0, accumBlueSize = 0;
-	GLint sampleBuffers = 0, samples = 0;
+	GLint sampleBuffers = 0, samples = 0, level = 0;
 	/* Should check more ??? */
 
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_DOUBLEBUFFER, &doubleBuffer);
@@ -131,6 +131,7 @@ GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_BLUE_SIZE, &accumBlueSize);
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_SAMPLE_BUFFERS_SGIS, &sampleBuffers);
 	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_SAMPLES_SGIS, &samples);
+	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_LEVEL, &level);
 
 	desiredVisual |= CR_RGB_BIT;	/* assuming we always want this... */
 
@@ -150,6 +151,9 @@ GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 	if (sampleBuffers > 0 && samples > 0)
 		desiredVisual |= CR_MULTISAMPLE_BIT;
 #endif
+	if (level > 0)
+		desiredVisual |= CR_OVERLAY_BIT;
+
 	/* Should we be checking more ... ??? */
 
 	return desiredVisual;
@@ -178,14 +182,8 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				break;
 
 			case GLX_LEVEL:
-				{
-					int level = attrib[1];
-					if ( level != 0 )
-					{
-						crWarning( "glXChooseVisual: GLX_LEVEL = %d unsupported", level );
-						return NULL;
-					}
-				}
+				if (attrib[1] > 0)
+					stub.desiredVisual |= CR_OVERLAY_BIT;
 				attrib++;
 				break;
 
@@ -421,7 +419,7 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_LEVEL:
-			*value = 0;
+			*value = (stub.desiredVisual & CR_OVERLAY_BIT) ? 1 : 0;
 			break;
 
 		case GLX_RGBA:

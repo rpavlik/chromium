@@ -107,6 +107,7 @@ typedef struct {
 	GLboolean stereo;
 	GLuint sampleBuffers;
 	GLuint samples;
+	GLuint level;
 
 } CRLimitsState;
 

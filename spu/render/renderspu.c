@@ -64,6 +64,8 @@ void renderspuMakeVisString( GLbitfield visAttribs, char *s )
 		crStrcat(s, ", Accum");
 	if (visAttribs & CR_MULTISAMPLE_BIT)
 		crStrcat(s, ", Multisample");
+	if (visAttribs & CR_OVERLAY_BIT)
+		crStrcat(s, ", Overlay");
 }
 
 

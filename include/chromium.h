@@ -458,6 +458,7 @@ typedef void (APIENTRY *glGetChromiumParametervCRProc) (GLenum target, GLuint in
 #define CR_DOUBLE_BIT         0x20
 #define CR_STEREO_BIT         0x40
 #define CR_MULTISAMPLE_BIT    0x80
+#define CR_OVERLAY_BIT        0x100
 
 
 /* Accepted by crSwapBuffers() flag parameter */

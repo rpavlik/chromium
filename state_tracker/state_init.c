@@ -111,6 +111,10 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
 		ctx->multisample.enabled = GL_TRUE;
 	}
 
+	if (visBits & CR_OVERLAY_BIT) {
+		ctx->limits.level = 1;
+	}
+
 	return ctx;
 }
 

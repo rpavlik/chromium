@@ -131,6 +131,7 @@ void crStateLimitsInit (CRLimitsState *l)
 	l->stereo = GL_FALSE;
 	l->sampleBuffers = 0;
 	l->samples = 0;
+	l->level = 0;
 
 	(void) crAppOnlyExtensions; /* silence warning */
 }

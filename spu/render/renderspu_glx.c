@@ -227,6 +227,12 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 		attribList[i++] = 4;
 	}
 
+	if (visAttribs & CR_OVERLAY_BIT)
+	{
+		attribList[i++] = GLX_LEVEL;
+		attribList[i++] = 1;
+	}
+
 	if (render_spu.use_lut8)
 	{
 		/* 
@@ -268,6 +274,8 @@ chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 
 	if (visAttribs & CR_MULTISAMPLE_BIT)
 	  visAttribs &= ~CR_MULTISAMPLE_BIT;
+	else if (visAttribs & CR_OVERLAY_BIT)
+	  visAttribs &= ~CR_OVERLAY_BIT;
 	else if (visAttribs & CR_STEREO_BIT)
 	  visAttribs &= ~CR_STEREO_BIT;
 	else if (visAttribs & CR_ACCUM_BIT)
