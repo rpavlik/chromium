@@ -192,22 +192,23 @@ int
 CRUT_CLIENT_APIENTRY 
 crutCreateContext(unsigned int visual) 
 {
-    crCreateContextProc glCreateContextCR;
-    crMakeCurrentProc   glMakeCurrentCR;
+    crCreateContextProc crCreateContext_ptr;
+    crMakeCurrentProc   crMakeCurrent_ptr;
+
     int ctx;
     const char *dpy = NULL;
 
-#define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
+#define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
 
-    LOAD( CreateContext );
-    LOAD( MakeCurrent );
+    LOAD( crCreateContext );
+    LOAD( crMakeCurrent );
 
-    ctx = glCreateContextCR(dpy, visual);
+    ctx = crCreateContext_ptr(dpy, visual);
     if (ctx < 0) {
-	crError("glCreateContextCR() call failed!\n");
+	crError("crCreateContext_ptr() call failed!\n");
     }
     
-    glMakeCurrentCR(0, ctx);
+    crMakeCurrent_ptr(0, ctx);
     
     return ctx;
 }
