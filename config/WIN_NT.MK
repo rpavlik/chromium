@@ -1,9 +1,9 @@
 WINDOWS=1
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = cl
-CXXFLAGS += /nologo /DWIN32 /DWINDOWS /TP /W4 /MD
+CXXFLAGS += /nologo /DWIN32 /DWINDOWS /TP /W4 /WX /MD
 CC = cl
-CFLAGS += /nologo /DWIN32 /DWINDOWS /W4 /MD /TC
+CFLAGS += /nologo /DWIN32 /DWINDOWS /W4 /WX /MD /TC
 LDFLAGS += /nologo
 DEBUGFLAGS = /Yd /Z7 /GZ
 RELEASEFLAGS = /Ox /DNDEBUG
