@@ -36,6 +36,9 @@ from crconfig import arch, crdir
 crbindir = os.path.join(crdir,'bin',arch)
 crlibdir = os.path.join(crdir,'lib',arch)
 
+# This controls whether debug messages are printed (1=yes, 0=no)
+DebugMode = 1
+
 def CRInfo( str ):
 	"""CRInfo(str)
 	Prints informational messages to stderr."""
@@ -44,7 +47,8 @@ def CRInfo( str ):
 def CRDebug( str ):
 	"""CRDebug(str)
 	Prints debugging message to stderr."""
-	print >> sys.stderr, str
+	if DebugMode:
+		print >> sys.stderr, str
 
 allSPUs = {}
 
