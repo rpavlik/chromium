@@ -293,8 +293,8 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	}
 	if (mask & GL_POLYGON_STIPPLE_BIT)
 	{
-		memcpy( a->polygonStippleStack[a->polygonStackDepth].pattern, g->polygon.stipple, 32*sizeof(GLint) );
-		a->polygonStackDepth++;
+		memcpy( a->polygonStippleStack[a->polygonStippleStackDepth].pattern, g->polygon.stipple, 32*sizeof(GLint) );
+		a->polygonStippleStackDepth++;
 	}
 	if (mask & GL_SCISSOR_BIT)
 	{
@@ -419,16 +419,18 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty accum buffer stack!" );
 		}
-		g->buffer.accumClearValue = a->accumBufferStack[a->accumBufferStackDepth--].accumClearValue;
+		a->accumBufferStackDepth--;
+		g->buffer.accumClearValue = a->accumBufferStack[a->accumBufferStackDepth].accumClearValue;
 		sb->buffer.dirty = g->neg_bitid;
 		sb->buffer.clearAccum = g->neg_bitid;
 	}
 	if (mask & GL_COLOR_BUFFER_BIT)
 	{
-		if (a->accumBufferStackDepth == 0)
+		if (a->colorBufferStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty color buffer stack!" );
 		}
+		a->colorBufferStackDepth--;
 		g->buffer.alphaTest = a->colorBufferStack[a->colorBufferStackDepth].alphaTest;
 		g->buffer.alphaTestFunc = a->colorBufferStack[a->colorBufferStackDepth].alphaTestFunc;
 		g->buffer.alphaTestRef = a->colorBufferStack[a->colorBufferStackDepth].alphaTestRef;
@@ -446,7 +448,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->buffer.indexClearValue = a->colorBufferStack[a->colorBufferStackDepth].indexClearValue;
 		g->buffer.colorWriteMask = a->colorBufferStack[a->colorBufferStackDepth].colorWriteMask;
 		g->buffer.indexWriteMask = a->colorBufferStack[a->colorBufferStackDepth].indexWriteMask;
-		a->colorBufferStackDepth--;
 		sb->buffer.dirty = g->neg_bitid;
 		sb->buffer.enable = g->neg_bitid;
 		sb->buffer.alphaFunc = g->neg_bitid;
@@ -465,6 +466,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty current stack!" );
 		}
+		a->currentStackDepth--;
 		g->current.color = a->currentStack[a->currentStackDepth].color;
 		g->current.index = a->currentStack[a->currentStackDepth].index;
 		g->current.normal = a->currentStack[a->currentStackDepth].normal;
@@ -478,7 +480,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->current.rasterIndex = a->currentStack[a->currentStackDepth].rasterIndex;
 		g->current.rasterTexture = a->currentStack[a->currentStackDepth].rasterTexture;
 		g->current.edgeFlag = a->currentStack[a->currentStackDepth].edgeFlag;
-		a->currentStackDepth--;
 		sb->current.dirty = g->neg_bitid;
 		sb->current.color = g->neg_bitid;
 		sb->current.index = g->neg_bitid;
@@ -496,6 +497,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty depth buffer stack!" );
 		}
+		a->depthBufferStackDepth--;
 		g->buffer.depthTest = a->depthBufferStack[a->depthBufferStackDepth].depthTest;
 		g->buffer.depthFunc = a->depthBufferStack[a->depthBufferStackDepth].depthFunc;
 		g->buffer.depthClearValue = a->depthBufferStack[a->depthBufferStackDepth].depthClearValue;
@@ -505,10 +507,14 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		sb->buffer.depthFunc = g->neg_bitid;
 		sb->buffer.clearDepth = g->neg_bitid;
 		sb->buffer.depthMask = g->neg_bitid;
-		a->depthBufferStackDepth--;
 	}
 	if (mask & GL_ENABLE_BIT)
 	{
+		if (a->enableStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty enable stack!" );
+		}
+		a->enableStackDepth--;
 		g->buffer.alphaTest = a->enableStack[a->enableStackDepth].alphaTest;
 		g->eval.autoNormal = a->enableStack[a->enableStackDepth].autoNormal;
 		g->buffer.blend = a->enableStack[a->enableStackDepth].blend;
@@ -554,7 +560,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->texture.textureGen[i].r = a->enableStack[a->enableStackDepth].textureGenR[i];
 			g->texture.textureGen[i].q = a->enableStack[a->enableStackDepth].textureGenQ[i];
 		}
-		a->enableStackDepth--;
 		sb->buffer.dirty = g->neg_bitid;
 		sb->eval.dirty = g->neg_bitid;
 		sb->transform.dirty = g->neg_bitid;
@@ -588,6 +593,11 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_FOG_BIT)
 	{
+		if (a->fogStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty fog stack!" );
+		}
+		a->fogStackDepth--;
 		g->fog.enable = a->fogStack[a->fogStackDepth].enable;
 		g->fog.color = a->fogStack[a->fogStackDepth].color;
 		g->fog.density = a->fogStack[a->fogStackDepth].density;
@@ -595,7 +605,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->fog.end = a->fogStack[a->fogStackDepth].end;
 		g->fog.index = a->fogStack[a->fogStackDepth].index;
 		g->fog.mode = a->fogStack[a->fogStackDepth].mode;
-		a->fogStackDepth--;
 		sb->fog.dirty = g->neg_bitid;
 		sb->fog.color = g->neg_bitid;
 		sb->fog.index = g->neg_bitid;
@@ -611,6 +620,11 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_LIGHTING_BIT)
 	{
+		if (a->lightingStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty lighting stack!" );
+		}
+		a->lightingStackDepth--;
 		g->lighting.lightModelAmbient = a->lightingStack[a->lightingStackDepth].lightModelAmbient;
 		g->lighting.lightModelLocalViewer = a->lightingStack[a->lightingStackDepth].lightModelLocalViewer;
 		g->lighting.lightModelTwoSide = a->lightingStack[a->lightingStackDepth].lightModelTwoSide;
@@ -638,7 +652,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->lighting.shininess[i] = a->lightingStack[a->lightingStackDepth].shininess[i];
 		}
 		g->lighting.shadeModel = a->lightingStack[a->lightingStackDepth].shadeModel;
-		a->lightingStackDepth--;
 		sb->lighting.dirty = g->neg_bitid;
 		sb->lighting.shadeModel = g->neg_bitid;
 		sb->lighting.lightModel = g->neg_bitid;
@@ -658,12 +671,16 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_LINE_BIT)
 	{
+		if (a->lineStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty line stack!" );
+		}
+		a->lineStackDepth--;
 		g->line.lineSmooth = a->lineStack[a->lineStackDepth].lineSmooth;
 		g->line.lineStipple = a->lineStack[a->lineStackDepth].lineStipple;
 		g->line.pattern = a->lineStack[a->lineStackDepth].pattern;
 		g->line.repeat = a->lineStack[a->lineStackDepth].repeat;
 		g->line.width = a->lineStack[a->lineStackDepth].width;
-		a->lineStackDepth--;
 		sb->line.dirty = g->neg_bitid;
 		sb->line.enable = g->neg_bitid;
 		sb->line.width = g->neg_bitid;
@@ -671,12 +688,21 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_LIST_BIT)
 	{
-		g->lists.base = a->listStack[a->listStackDepth].base;
+		if (a->listStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty list stack!" );
+		}
 		a->listStackDepth--;
+		g->lists.base = a->listStack[a->listStackDepth].base;
 		sb->lists.dirty = g->neg_bitid;
 	}
 	if (mask & GL_PIXEL_MODE_BIT)
 	{
+		if (a->pixelModeStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty pixel mode stack!" );
+		}
+		a->pixelModeStackDepth--;
 		g->pixel.bias = a->pixelModeStack[a->pixelModeStackDepth].bias;
 		g->pixel.scale = a->pixelModeStack[a->pixelModeStackDepth].scale;
 		g->pixel.indexOffset = a->pixelModeStack[a->pixelModeStackDepth].indexOffset;
@@ -691,19 +717,27 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		sb->pixel.zoom = g->neg_bitid;
 		sb->buffer.dirty = g->neg_bitid;
 		sb->buffer.readBuffer = g->neg_bitid;
-		a->pixelModeStackDepth--;
 	}
 	if (mask & GL_POINT_BIT)
 	{
+		if (a->pointStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty point stack!" );
+		}
+		a->pointStackDepth--;
 		g->line.pointSmooth = a->pointStack[a->pointStackDepth].pointSmooth;
 		g->line.pointSize = a->pointStack[a->pointStackDepth].pointSize;
-		a->pointStackDepth--;
 		sb->line.dirty = g->neg_bitid;
 		sb->line.size = g->neg_bitid;
 		sb->line.enable = g->neg_bitid;
 	}
 	if (mask & GL_POLYGON_BIT)
 	{
+		if (a->polygonStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty polygon stack!" );
+		}
+		a->polygonStackDepth--;
 		g->polygon.cullFace = a->polygonStack[a->polygonStackDepth].cullFace;
 		g->polygon.cullFaceMode = a->polygonStack[a->polygonStackDepth].cullFaceMode;
 		g->polygon.frontFace = a->polygonStack[a->polygonStackDepth].frontFace;
@@ -716,7 +750,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->polygon.polygonOffsetPoint = a->polygonStack[a->polygonStackDepth].polygonOffsetPoint;
 		g->polygon.offsetFactor = a->polygonStack[a->polygonStackDepth].offsetFactor;
 		g->polygon.offsetUnits = a->polygonStack[a->polygonStackDepth].offsetUnits;
-		a->polygonStackDepth--;
 		sb->polygon.dirty = g->neg_bitid;
 		sb->polygon.enable = g->neg_bitid;
 		sb->polygon.offset = g->neg_bitid;
@@ -725,25 +758,38 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_POLYGON_STIPPLE_BIT)
 	{
-		memcpy( g->polygon.stipple, a->polygonStippleStack[a->polygonStackDepth].pattern, 32*sizeof(GLint) );
-		a->polygonStackDepth--;
+		if (a->polygonStippleStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty polygon stipple stack!" );
+		}
+		a->polygonStippleStackDepth--;
+		memcpy( g->polygon.stipple, a->polygonStippleStack[a->polygonStippleStackDepth].pattern, 32*sizeof(GLint) );
 		sb->polygon.dirty = g->neg_bitid;
 		sb->polygon.stipple = g->neg_bitid;
 	}
 	if (mask & GL_SCISSOR_BIT)
 	{
+		if (a->scissorStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty scissor stack!" );
+		}
+		a->scissorStackDepth--;
 		g->viewport.scissorTest = a->scissorStack[a->scissorStackDepth].scissorTest;
 		g->viewport.scissorX = a->scissorStack[a->scissorStackDepth].scissorX;
 		g->viewport.scissorY = a->scissorStack[a->scissorStackDepth].scissorY;
 		g->viewport.scissorW = a->scissorStack[a->scissorStackDepth].scissorW;
 		g->viewport.scissorH = a->scissorStack[a->scissorStackDepth].scissorH;
-		a->scissorStackDepth--;
 		sb->viewport.dirty = g->neg_bitid;
 		sb->viewport.enable = g->neg_bitid;
 		sb->viewport.s_dims = g->neg_bitid;
 	}
 	if (mask & GL_STENCIL_BUFFER_BIT)
 	{
+		if (a->stencilBufferStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty stencil stack!" );
+		}
+		a->stencilBufferStackDepth--;
 		g->stencil.stencilTest = a->stencilBufferStack[a->stencilBufferStackDepth].stencilTest;
 		g->stencil.func = a->stencilBufferStack[a->stencilBufferStackDepth].func;
 		g->stencil.mask = a->stencilBufferStack[a->stencilBufferStackDepth].mask;
@@ -753,7 +799,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->stencil.passDepthPass = a->stencilBufferStack[a->stencilBufferStackDepth].passDepthPass;
 		g->stencil.clearValue = a->stencilBufferStack[a->stencilBufferStackDepth].clearValue;
 		g->stencil.writeMask = a->stencilBufferStack[a->stencilBufferStackDepth].writeMask;
-		a->stencilBufferStackDepth--;
 		sb->stencil.dirty = g->neg_bitid;
 		sb->stencil.enable = g->neg_bitid;
 		sb->stencil.func = g->neg_bitid;
@@ -763,6 +808,11 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_TEXTURE_BIT)
 	{
+		if (a->textureStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty texture stack!" );
+		}
+		a->textureStackDepth--;
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 		{
 			g->texture.enabled1D[i] = a->textureStack[a->textureStackDepth].enabled1D[i];
@@ -795,7 +845,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->texture.currentTexture1D->wrapT = a->textureStack[a->textureStackDepth].wrapT[0];
 		g->texture.currentTexture2D->wrapT = a->textureStack[a->textureStackDepth].wrapT[1];
 		g->texture.currentTexture3D->wrapT = a->textureStack[a->textureStackDepth].wrapT[2];
-		a->textureStackDepth--;
 		sb->texture.dirty = g->neg_bitid;
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 		{
@@ -824,6 +873,11 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_TRANSFORM_BIT)
 	{
+		if (a->transformStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty transform stack!" );
+		}
+		a->transformStackDepth--;
 		g->transform.mode = a->transformStack[a->transformStackDepth].mode;
 		for (i = 0 ; i < g->transform.maxClipPlanes ; i++)
 		{
@@ -831,7 +885,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->transform.clipPlane[i] = a->transformStack[a->transformStackDepth].clipPlane[i];
 		}
 		g->current.normalize = a->transformStack[a->transformStackDepth].normalize;
-		a->transformStackDepth--;
 		sb->transform.dirty = g->neg_bitid;
 		sb->transform.mode = g->neg_bitid;
 		sb->transform.clipPlane = g->neg_bitid;
@@ -840,13 +893,17 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	}
 	if (mask & GL_VIEWPORT_BIT)
 	{
+		if (a->viewportStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty viewport stack!" );
+		}
+		a->viewportStackDepth--;
 		g->viewport.viewportX = a->viewportStack[a->viewportStackDepth].viewportX;
 		g->viewport.viewportY = a->viewportStack[a->viewportStackDepth].viewportY;
 		g->viewport.viewportW = a->viewportStack[a->viewportStackDepth].viewportW;
 		g->viewport.viewportH = a->viewportStack[a->viewportStackDepth].viewportH;
 		g->viewport.nearClip = a->viewportStack[a->viewportStackDepth].nearClip;
 		g->viewport.farClip = a->viewportStack[a->viewportStackDepth].farClip;
-		a->viewportStackDepth--;
 		sb->viewport.dirty = g->neg_bitid;
 		sb->viewport.v_dims = g->neg_bitid;
 		sb->viewport.depth = g->neg_bitid;
