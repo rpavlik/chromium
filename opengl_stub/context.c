@@ -136,8 +136,6 @@ stubNewWindow( const char *dpyName, GLint visBits )
 	WindowInfo *winInfo;
 	GLint spuWin, size[2];
 	
-	crDebug( "stubNewWindow( \"%s\", %i )", dpyName, visBits );
-	
 	spuWin = stub.spu->dispatch_table.WindowCreate( dpyName, visBits );
 	if (spuWin < 0) {
 		 return -1;
@@ -328,7 +326,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) {
 			stub.desiredVisual |= FindVisualInfo( dpy, vis );
 			if (stub.force_pbuffers) {
-				crInfo("Forcing use of Pbuffers");
+				crInfo("App faker: Forcing use of Pbuffers");
 				stub.desiredVisual |= CR_PBUFFER_BIT;
 			}
 		}
@@ -622,7 +620,7 @@ GetCursorPosition( const WindowInfo *window, int pos[2] )
 	pos[0] = mouse_pos.h - (int) window_rect[0];
 	pos[1] = (int) window_rect[3] - (mouse_pos.v - (int) window_rect[1]);
 
-	crDebug( "%i %i", pos[0], pos[1] );
+	/*crDebug( "%i %i", pos[0], pos[1] );*/
 }
 
 #elif defined(GLX)
@@ -1019,7 +1017,6 @@ stubDestroyContext( unsigned long contextId )
 	context = (ContextInfo *) crHashtableSearch(stub.contextTable, contextId);
 
 	CRASSERT(context);
-	crDebug( "stubDestroyContext( %li )", contextId );
 
 	if (context->type == NATIVE) {
 #ifdef WINDOWS
