@@ -49,13 +49,13 @@ typedef struct {
 	CREvaluator1D   eval1D[GLEVAL_TOT];
 	CREvaluator2D   eval2D[GLEVAL_TOT];
 
-	GLint      un1D;
-	GLdouble   u11D, u21D;
+	GLint      un1D;        /* GL_MAP1_GRID_SEGMENTS */
+	GLdouble   u11D, u21D;  /* GL_MAP1_GRID_DOMAIN */
 
-	GLint      un2D;
-	GLint      vn2D;
-	GLdouble   u12D, u22D;
-	GLdouble   v12D, v22D;
+	GLint      un2D;        /* GL_MAP2_GRID_SEGMENTS (u) */
+	GLint      vn2D;        /* GL_MAP2_GRID_SEGMENTS (v) */
+	GLdouble   u12D, u22D;  /* GL_MAP2_GRID_DOMAIN (u) */
+	GLdouble   v12D, v22D;  /* GL_MAP2_GRID_DOMAIN (v) */
 } CREvaluatorState;
 
 extern const int gleval_sizes[];

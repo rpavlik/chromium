@@ -105,9 +105,15 @@ typedef struct {
 } CREnableStack;
 
 typedef struct {
-	GLboolean map1[GLEVAL_TOT];
-	GLboolean map2[GLEVAL_TOT];
+	GLboolean enable1D[GLEVAL_TOT];
+	GLboolean enable2D[GLEVAL_TOT];
 	GLboolean autoNormal;
+	GLint     un1D;
+	GLdouble  u11D, u21D;
+	GLint     un2D;
+	GLint     vn2D;
+	GLdouble  u12D, u22D;
+	GLdouble  v12D, v22D;
 } CREvalStack;
 
 typedef struct {
@@ -133,6 +139,23 @@ typedef struct {
 	GLint     mode;
 	GLboolean enable;
 } CRFogStack;
+
+typedef struct {
+	GLenum perspectiveCorrection;
+	GLenum pointSmooth;
+	GLenum lineSmooth;
+	GLenum polygonSmooth;
+	GLenum fog;
+#ifdef CR_EXT_clip_volume_hint
+	GLenum clipVolumeClipping;
+#endif
+#ifdef CR_ARB_texture_compression
+	GLenum textureCompression;
+#endif
+#ifdef CR_SGIS_generate_mipmap
+	GLenum generateMipmap;
+#endif
+} CRHintStack;
 
 typedef struct {
 	GLboolean	lineSmooth;
@@ -271,6 +294,9 @@ typedef struct {
 
 	GLint fogStackDepth;
 	CRFogStack fogStack[CR_MAX_ATTRIB_STACK_DEPTH];
+
+	GLint hintStackDepth;
+	CRHintStack hintStack[CR_MAX_ATTRIB_STACK_DEPTH];
 
 	GLint lightingStackDepth;
 	CRLightingStack lightingStack[CR_MAX_ATTRIB_STACK_DEPTH];
