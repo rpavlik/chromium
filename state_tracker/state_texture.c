@@ -948,7 +948,7 @@ void STATE_APIENTRY crStateTexParameterfv(GLenum target, GLenum pname, const GLf
 			}
 #endif
 #ifdef CR_ARB_texture_border_clamp
-			else if (e == GL_CLAMP_TO_BORDER_SGIS && g->extensions.ARB_texture_border_clamp) {
+			else if (e == GL_CLAMP_TO_BORDER_ARB && g->extensions.ARB_texture_border_clamp) {
 				tobj->wrapS = e;
 			}
 #endif
@@ -978,7 +978,7 @@ void STATE_APIENTRY crStateTexParameterfv(GLenum target, GLenum pname, const GLf
 			}
 #endif
 #ifdef CR_ARB_texture_border_clamp
-			else if (e == GL_CLAMP_TO_BORDER_SGIS && g->extensions.ARB_texture_border_clamp) {
+			else if (e == GL_CLAMP_TO_BORDER_ARB && g->extensions.ARB_texture_border_clamp) {
 				tobj->wrapT = e;
 			}
 #endif
@@ -1007,7 +1007,7 @@ void STATE_APIENTRY crStateTexParameterfv(GLenum target, GLenum pname, const GLf
 			}
 #endif
 #ifdef CR_ARB_texture_border_clamp
-			else if (e == GL_CLAMP_TO_BORDER_SGIS && g->extensions.ARB_texture_border_clamp) {
+			else if (e == GL_CLAMP_TO_BORDER_ARB && g->extensions.ARB_texture_border_clamp) {
 				tobj->wrapR = e;
 			}
 #endif
