@@ -88,7 +88,7 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 	return thread;
 }
 
-static void replicatespuStartVnc( )
+static void replicatespuStartVnc( void )
 {
 	VncConnectionList *vnclist;
 	int num_conn;
@@ -399,6 +399,11 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 	unsigned int show_window = 0;
 	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, window );
 	GET_THREAD(thread);
+
+	if (!winInfo) {
+		crWarning("Replicate SPU: Invalid window ID %d passed to MakeCurrent", window);
+		return;
+	}
 
 	if (thread)
 		replicatespuFlush( (void *)thread );
