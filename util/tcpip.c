@@ -335,6 +335,7 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 			err = crTCPIPErrno( );
 			crError( "Couldn't bind to socket (port=%d): %s", port, crTCPIPErrorString( err ) );
 		}
+		last_port = port;
 
 		if ( listen( cr_tcpip.server_sock, 100 /* max pending connections */ ) )
 		{
