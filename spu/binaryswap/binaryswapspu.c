@@ -288,21 +288,15 @@ static void DoFlush( WindowInfo *window )
 
       /* lower of pair => recv,send */
       if(binaryswap_spu.highlow[i]){
-	crDebug("get");
 	crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
-	crDebug("send");
 	crNetSend( binaryswap_spu.peer_send[i], NULL, binaryswap_spu.outgoing_msg, 
 		   (width[i]*height[i]*4) + binaryswap_spu.offset);
-	crDebug("done");;
       }
       /* higher of pair => send,recv */
       else{
-	crDebug("send");
 	crNetSend( binaryswap_spu.peer_send[i], NULL, binaryswap_spu.outgoing_msg, 
 		   (width[i]*height[i]*4) + binaryswap_spu.offset);
-	crDebug("get");
 	crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
-	crDebug("done");;
       }
       
       /* get render info from other node */
