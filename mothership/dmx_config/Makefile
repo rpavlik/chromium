@@ -2,17 +2,22 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
-#
-TOP=..
+
+TOP = ../..
+
 include $(TOP)/arch.mk
 
-TOP = ..
-SUBDIRS = client reset quit server status
+PROGRAM = dmx_config
+FILES = getconfig
 
-ifndef WINDOWS
-ifeq ($(USE_DMX), 1)
-SUBDIRS += dmx_config
+ifdef DMX_LIBDIR
+LDFLAGS += -L${DMX_LIBDIR}
 endif
+LDFLAGS += -ldmx -lXext -lX11
+ifdef DMX_INCDIR
+CFLAGS += -I${DMX_INCDIR}
 endif
+
+LIBRARIES = 
 
 include $(TOP)/cr.mk

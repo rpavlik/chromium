@@ -62,12 +62,18 @@ LIB_DEFS += tilesort.def
 include ${TOP}/cr.mk
 
 ifdef WINDOWS
-LDFLAGS += user32.lib gdi32.lib
+    LDFLAGS += user32.lib gdi32.lib
 else
-LDFLAGS += -lXmu -lX11
-ifeq ($(USE_DMX), 1)
-LDFLAGS += -ldmx
-endif
+    LDFLAGS += -lXmu -lX11
+    ifeq ($(USE_DMX), 1)
+        ifdef DMX_LIBDIR
+            LDFLAGS += -L${DMX_LIBDIR}
+        endif
+        LDFLAGS += -ldmx
+        ifdef DMX_INCDIR
+            CFLAGS += -I${DMX_INCDIR}
+        endif
+    endif
 endif
 
 APIFILES = ../../glapi_parser/apiutil.py ../../glapi_parser/APIspec.txt

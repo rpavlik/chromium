@@ -138,9 +138,6 @@ The auto-start feature lets you do just that.
 <h3>Prerequisites</h3>
 
 <ol>
-<li>Your ~/.crsite file needs to be setup (or $CRSITE or /etc/crsite).
-<br>
-<br>
 <li>Your ~/.crconfigs file needs to be setup.  Specifically, it needs a
     line like this:
     <pre>
@@ -187,10 +184,7 @@ The auto-start feature lets you do just that.
 <h3>Troubleshooting autodmx.conf Problems</h3>
 
 <p>
-First, review the prerequisites above to be sure your
-<code>~/.crsite</code> and <code>~/.crconfigs</code> files are setup
-correctly.
-Then verify that libGL.so and libGL.so.1 resolve to libcrfaker.so by
+First, verify that libGL.so and libGL.so.1 resolve to libcrfaker.so by
 running <code>ldd</code> on your application.
 Make sure your DISPLAY environment variable is set to the DMX display.
 </p>
