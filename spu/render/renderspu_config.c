@@ -27,6 +27,8 @@ static void __setDefaults( void )
 	render_spu.fullscreen = 0;
 	render_spu.ontop = 0;
 	render_spu.use_L2 = 0;
+	render_spu.force_direct = 1;
+	render_spu.try_direct = 1;
 }
 
 void renderspuGatherConfiguration( void )
@@ -70,6 +72,16 @@ void renderspuGatherConfiguration( void )
 	if (crMothershipSPUParam( conn, response, "stencil_bits" ) )
 	{
 		sscanf( response, "%d", &(render_spu.stencil_bits) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "try_direct" ) )
+	{
+		sscanf( response, "%d", &(render_spu.try_direct) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "force_direct" ) )
+	{
+		sscanf( response, "%d", &(render_spu.force_direct) );
 	}
 
 	crMothershipDisconnect( conn );
