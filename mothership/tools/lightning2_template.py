@@ -28,7 +28,7 @@ class LightningParameters:
 	When we begin editing a Lightning-2 config we init these values from
 	the mothership (number of servers, etc) and/or the initial create-
 	lightning-2 dialog.
-	When we finish editing, we update the mothership."""
+	When we finish editing, we update the mothership config."""
 	def __init__(self, rows=1, cols=2):
 		assert rows >= 1
 		assert cols >= 1
@@ -42,6 +42,8 @@ class LightningParameters:
 		self.ScreenWidth = 1280  # server screen
 		self.ScreenHeight = 1024
 		self.Layout = 0
+		self.DynamicSize = 0   # 0, 1, or 2
+		self.Reassembly = 0
 
 	def Clone(self):
 		"""Return a clone of this object."""
@@ -57,6 +59,8 @@ class LightningParameters:
 		p.ScreenWidth = self.ScreenWidth
 		p.ScreenHeight = self.ScreenHeight
 		p.Layout = self.Layout
+		p.DynamicSize = self.DynamicSize
+		p.Reassembly = self.Reassembly
 		return p
 
 	def UpdateFromMothership(self, mothership):
@@ -70,6 +74,8 @@ class LightningParameters:
 		#self.TileWidth = ??
 		#self.TileHeight = ??
 		#self.Layout = ??
+		#self.DynamicSize = ??
+		#self.Reassembly = ??
 		
 	def __AllocTile(self, server, row, col):
 		"""Allocate a tile for mural position (row, col) on the nth server.
@@ -265,6 +271,11 @@ else:
 
 localHostname = os.uname()[1]
 
+if REASSEMBLY == 2:
+	RENDER_TO_APP_WINDOW = 1
+else:
+	RENDER_TO_APP_WINDOW = 0
+
 cr = CR()
 cr.MTU( GLOBAL_MTU )
 
@@ -308,23 +319,43 @@ NumServers = len(TILES)
 SCREEN_HEIGHT = 1280
 SCREEN_WIDTH = 1024
 
+if REASSEMBLY:
+	reassembleNode = CRNetworkNode()  # xxx host?
+	reassembleSPU = SPU('render')
+	reassembleNode.AddSPU(reassembleSPU)
+	# xxx reassembleSPU.Conf()
+	if RENDER_TO_APP_WINDOW:
+		reassembleSPU.Conf('render_to_app_window', '1')
+	else:
+		reassembleSPU.Conf('window_geometry',
+								REASSEMBLE_window_geometry[0],
+								REASSEMBLE_window_geometry[1],
+								REASSEMBLE_window_geometry[2],
+								REASSEMBLE_window_geometry[3])
+
 # Loop over servers
 for serverIndex in range(NumServers):
 
 	# Create this server's render SPU
-	renderspu = SPU('render')
-	renderspu.Conf('try_direct', RENDER_try_direct)
-	renderspu.Conf('force_direct', RENDER_force_direct)
-	renderspu.Conf('fullscreen', RENDER_fullscreen)
-	renderspu.Conf('title', RENDER_title)
-	renderspu.Conf('system_gl_path', RENDER_system_gl_path)
+	if REASSEMBLY:
+		renderspu = SPU('readback')
+	else:
+		renderspu = SPU('render')
+	renderspu.Conf('try_direct', READBACK_try_direct)
+	renderspu.Conf('force_direct', READBACK_force_direct)
+	renderspu.Conf('fullscreen', READBACK_fullscreen)
+	renderspu.Conf('title', READBACK_title)
+	renderspu.Conf('system_gl_path', READBACK_system_gl_path)
 
 	# Setup render SPU's window geometry
+	renderspu.Conf('window_geometry',
+					READBACK_window_geometry[0],
+					READBACK_window_geometry[1],
+					READBACK_window_geometry[2],
+					READBACK_window_geometry[3] )
 	if singleServer:
-		renderspu.Conf('window_geometry', 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
 		host = SERVER_HOSTS[0]
 	else:
-		renderspu.Conf('window_geometry', 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
 		host = SERVER_HOSTS[serverIndex]
 	servernode = CRNetworkNode(host)
 
@@ -335,12 +366,17 @@ for serverIndex in range(NumServers):
 
 	# Add SPU to node, node to mothership
 	servernode.AddSPU(renderspu)
+	if REASSEMBLY:
+		packspu = SPU('pack')
+		servernode.AddSPU(packspu)
+		packspu.AddServer( reassembleNode, protocol='tcpip', port=7777 )
+
 	servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
 	cr.AddNode(servernode)
 
 	# connect app nodes to server
 	for i in range(NUM_APP_NODES):
-		tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port = 7000 + serverIndex)
+		tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port=7000+serverIndex)
 
 	# auto-start
 	if GLOBAL_auto_start:
@@ -350,9 +386,13 @@ for serverIndex in range(NumServers):
 
 for i in range(NUM_APP_NODES):
 	cr.AddNode(clientNodes[i])
+if REASSEMBLY:
+	cr.AddNode(reassembleNode)
+
 cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
 cr.SetParam('match_window_title', GLOBAL_match_window_title)
 cr.SetParam('show_cursor', GLOBAL_show_cursor)
+cr.SetParam('track_window_size', DYNAMIC_SIZE)
 cr.Go()
 
 """
@@ -363,36 +403,59 @@ cr.Go()
 def FindClientNode(mothership):
 	"""Search the mothership for the client node."""
 	nodes = mothership.Nodes()
-	assert len(nodes) == 2
-	if nodes[0].IsAppNode():
-		return nodes[0]
-	else:
-		assert nodes[1].IsAppNode()
-		return nodes[1]
+	for n in nodes:
+		if n.IsAppNode():
+			return n
+	return None
 
 def FindServerNode(mothership):
 	"""Search the mothership for the server node."""
-	nodes = mothership.Nodes()
-	assert len(nodes) == 2
-	if nodes[0].IsServer():
-		return nodes[0]
+	# XXX avoid the reassembly node
+	client = FindClientNode(mothership)
+	assert client != None
+	servers = client.GetServers()
+	if servers:
+		return servers[0]
 	else:
-		assert nodes[1].IsServer()
-		return nodes[1]
+		return None
+
+def FindReassemblyNode(mothership):
+	"""Search the mothership for the image reassembly node"""
+	s = FindServerNode(mothership)
+	assert s != None
+	servers = s.GetServers()
+	assert len(servers) == 0 or len(servers) == 1
+	if len(servers) > 0:
+		return servers[0]
+	else:
+		# no reassembly node
+		return None
 
 def FindTilesortSPU(mothership):
 	"""Search the mothership for the tilesort SPU."""
 	appNode = FindClientNode(mothership)
+	assert appNode
 	tilesortSPU = appNode.LastSPU()
 	assert tilesortSPU.Name() == "tilesort"
 	return tilesortSPU
 
-def FindRenderSPU(mothership):
-	"""Search the mothership for the render SPU."""
+def FindReadbackSPU(mothership):
+	"""Search the mothership for the readback (or render) SPU."""
 	serverNode = FindServerNode(mothership)
-	renderSPU = serverNode.LastSPU()
-	assert renderSPU.Name() == "render"
-	return renderSPU
+	spu = serverNode.SPUChain()[0]
+	assert spu.Name() == "render" or spu.Name() == "readback"
+	return spu
+
+def FindReassemblySPU(mothership):
+	"""Search the mothership for the render SPU."""
+	reassemblyNode = FindReassemblyNode(mothership)
+	if not reassemblyNode:
+		return None
+	spus = reassemblyNode.SPUChain()
+	if len(spus) == 1 and spus[0].Name() == "render":
+		return spus[0]
+	else:
+		return None
 
 
 #----------------------------------------------------------------------------
@@ -402,7 +465,8 @@ class LightningDialog(wxDialog):
 
 	def __init__(self, parent=NULL, id=-1):
 		"""Construct a Lightning-2 dialog."""
-		wxDialog.__init__(self, parent, id, title="Lighting-2 Configuration",
+		wxDialog.__init__(self, parent, id,
+						  title="Image Reassembly Configuration",
 						  style = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 
 		# Widget IDs
@@ -412,6 +476,7 @@ class LightningDialog(wxDialog):
 		id_TileWidth   = 5003
 		id_TileHeight  = 5004
 		id_Layout      = 5005
+		id_Dynamic     = 5006
 		id_HostText    = 5007
 		id_HostStart   = 5008
 		id_HostCount   = 5009
@@ -419,6 +484,7 @@ class LightningDialog(wxDialog):
 		id_Cancel      = 5011
 		id_NumServers  = 5012
 		id_Hostnames   = 5013
+		id_Reassembly  = 5014
 
 		self.HostNamePattern = "host##"
 		self.HostNameStart = 0
@@ -427,32 +493,42 @@ class LightningDialog(wxDialog):
 		# this sizer holds all the control widgets
 		toolSizer = wxBoxSizer(wxVERTICAL)
 
-		# Server hosts
+		# Rendering node count and names
 		box = wxStaticBox(parent=self, id=-1, label="Rendering Nodes",
 						  style=wxDOUBLE_BORDER)
-		boxSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		rowSizer = wxBoxSizer(wxHORIZONTAL)
+		rowSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
 		numberLabel = wxStaticText(parent=self, id=-1, label="Number:")
+		rowSizer.Add(numberLabel, flag=wxALIGN_CENTER_VERTICAL|wxALL, border=4)
 		self.numberControl = wxSpinCtrl(parent=self, id=id_NumServers,
 										value="1", min=1, max=10000,
-										size=wxSize(70,25))
+										size=wxSize(50,25))
 		EVT_SPINCTRL(self.numberControl, id_NumServers,
 					 self.__OnNumServersChange)
-		rowSizer.Add(numberLabel, flag=wxALIGN_CENTER_VERTICAL|wxALL, border=4)
 		rowSizer.Add(self.numberControl,
 					 flag=wxALIGN_CENTER_VERTICAL|wxALL, border=2)
-		boxSizer.Add(rowSizer, flag=wxALL, border = 0)
 		self.hostsButton = wxButton(parent=self, id=id_Hostnames,
 									label=" Host Names... ")
-		boxSizer.Add(self.hostsButton, flag=wxALIGN_CENTER|wxALL, border=4)
 		EVT_BUTTON(self.hostsButton, id_Hostnames, self.__OnHostnames)
-		toolSizer.Add(boxSizer, flag=wxALL|wxGROW, border=0)
+		rowSizer.Add(self.hostsButton, flag=wxALIGN_CENTER_VERTICAL|wxLEFT, border=6)
+		toolSizer.Add(rowSizer, flag=wxALL|wxGROW, border=2)
+
+		# Dynamic vs Static layout
+		dynamicChoices = [ "Fixed size image",
+						   "Variable size, fixed tile size",
+						   "Variable size, fixed rows/columns" ]
+		self.dynamicRadio = wxRadioBox(parent=self, id=id_Dynamic,
+									  label="Fixed or Variable Size Image",
+									  choices=dynamicChoices,
+									  majorDimension=1,
+									  style=wxRA_SPECIFY_COLS )
+		EVT_RADIOBOX(self.dynamicRadio, id_Dynamic, self.__onDynamicChange)
+		toolSizer.Add(self.dynamicRadio, flag=wxEXPAND|wxALL, border=2)
 
 		# Mural width/height (in tiles)
-		box = wxStaticBox(parent=self, id=-1, label="Mural Size",
+		box = wxStaticBox(parent=self, id=-1, label="Tiling Size",
 						  style=wxDOUBLE_BORDER)
 		muralSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
+		flexSizer = wxFlexGridSizer(rows=1, cols=4, hgap=4, vgap=4)
 		columnsLabel = wxStaticText(parent=self, id=-1,
 									label="Columns")
 		self.columnsControl = wxSpinCtrl(parent=self, id=id_MuralWidth,
@@ -471,32 +547,31 @@ class LightningDialog(wxDialog):
 		flexSizer.Add(rowsLabel, flag=wxALIGN_CENTER_VERTICAL)
 		flexSizer.Add(self.rowsControl)
 		muralSizer.Add(flexSizer)
-		toolSizer.Add(muralSizer, flag=wxEXPAND)
+		toolSizer.Add(muralSizer, flag=wxEXPAND|wxALL, border=2)
 
 		# Tile size (in pixels)
 		box = wxStaticBox(parent=self, id=-1, label="Tile Size",
 						  style=wxDOUBLE_BORDER)
 		tileSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
 		tileChoices = []
 		for i in CommonTileSizes:
 			tileChoices.append( str("%d x %d" % (i[0], i[1])) )
 		tileChoices.append("Custom")
 		self.tileChoice = wxChoice(parent=self, id=id_TileChoice,
 								   choices=tileChoices)
-		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
+		flexSizer = wxFlexGridSizer(rows=1, cols=4, hgap=4, vgap=4)
 		self.tileWidthLabel = wxStaticText(parent=self, id=-1,
 										   label="Width:")
 		self.tileWidthControl = wxSpinCtrl(parent=self,
 										   id=id_TileWidth,
 										   value="256", min=8, max=2048,
-										   size=wxSize(80,25))
+										   size=wxSize(60,25))
 		self.tileHeightLabel = wxStaticText(parent=self, id=-1,
 											label="Height:")
 		self.tileHeightControl = wxSpinCtrl(parent=self,
 											id=id_TileHeight,
 											value="256", min=8, max=2048,
-											size=wxSize(80,25))
+											size=wxSize(60,25))
 		EVT_SPINCTRL(self.tileWidthControl, id_TileWidth, self.__onSizeChange)
 		EVT_SPINCTRL(self.tileHeightControl, id_TileHeight, self.__onSizeChange)
 		EVT_CHOICE(self.tileChoice, id_TileChoice, self.__onTileChoice)
@@ -504,9 +579,10 @@ class LightningDialog(wxDialog):
 		flexSizer.Add(self.tileWidthControl)
 		flexSizer.Add(self.tileHeightLabel, flag=wxALIGN_CENTER_VERTICAL)
 		flexSizer.Add(self.tileHeightControl)
-		tileSizer.Add(self.tileChoice, flag=wxALIGN_CENTER|wxALL, border=4)
+#		tileSizer.Add(self.tileChoice, flag=wxALIGN_CENTER|wxALL, border=4)
+		tileSizer.Add(self.tileChoice, flag=wxALIGN_LEFT|wxALL, border=4)
 		tileSizer.Add(flexSizer)
-		toolSizer.Add(tileSizer, flag=wxEXPAND)
+		toolSizer.Add(tileSizer, flag=wxEXPAND|wxALL, border=2)
 
 		# Total mural size (in pixels)
 		box = wxStaticBox(parent=self, id=-1, label="Total Size",
@@ -515,18 +591,30 @@ class LightningDialog(wxDialog):
 		self.totalSizeLabel = wxStaticText(parent=self, id=-1,
 										   label="??")
 		totalSizer.Add(self.totalSizeLabel, flag=wxEXPAND)
-		toolSizer.Add(totalSizer, flag=wxEXPAND)
+		toolSizer.Add(totalSizer, flag=wxEXPAND|wxALL, border=2)
 
 		# Tile layout
-		layoutChoices = [ "Raster order", "Zig-zag Raster order",
+		layoutChoices = [ "Raster order", "Zig-zag raster order",
 						  "Spiral from center" ]
 		self.layoutRadio = wxRadioBox(parent=self, id=id_Layout,
 									  label="Tile Layout",
 									  choices=layoutChoices,
 									  majorDimension=1,
 									  style=wxRA_SPECIFY_COLS )
-		toolSizer.Add(self.layoutRadio, flag=wxEXPAND)
 		EVT_RADIOBOX(self.layoutRadio, id_Layout, self.__onLayoutChange)
+		toolSizer.Add(self.layoutRadio, flag=wxEXPAND|wxALL, border=2)
+
+		# Image reassembly
+		reassemblyChoices = [ "No reassembly",
+							  "Reassemble into render SPU window",
+							  "Reassemble into application window" ]
+		self.reassemblyRadio = wxRadioBox(parent=self, id=id_Layout,
+									  label="Image Reassembly",
+									  choices=reassemblyChoices,
+									  majorDimension=1,
+									  style=wxRA_SPECIFY_COLS )
+		EVT_RADIOBOX(self.reassemblyRadio, id_Reassembly, self.__onReassemblyChange)
+		toolSizer.Add(self.reassemblyRadio, flag=wxEXPAND|wxALL, border=2)
 
 		# Setup the drawing area
 		self.drawArea = wxPanel(self, id=-1, style=wxSUNKEN_BORDER)
@@ -568,7 +656,7 @@ class LightningDialog(wxDialog):
 		minSize = topSizer.GetMinSize()
 		minSize[0] = 600
 		minSize[1] += 10
-		self.SetSizeHints(minW=400, minH=minSize[1])
+		self.SetSizeHints(minW=750, minH=minSize[1])
 		self.SetSize(minSize)
 
 		# Hostname dialog
@@ -592,10 +680,35 @@ class LightningDialog(wxDialog):
 		if i >= len(CommonTileSizes):
 			# must be custom size
 			self.tileChoice.SetSelection(len(CommonTileSizes))  # "Custom"
+		# dynamic = 0 -> fixed
+		dynamic = self.dynamicRadio.GetSelection()
 		# update total mural size readout
-		totalW = self.Template.Columns * self.Template.TileWidth
-		totalH = self.Template.Rows * self.Template.TileHeight
-		self.totalSizeLabel.SetLabel(str("%d x %d" % (totalW, totalH)))
+		if dynamic == 0:
+			totalW = self.Template.Columns * self.Template.TileWidth
+			totalH = self.Template.Rows * self.Template.TileHeight
+			self.totalSizeLabel.SetLabel(str("%d x %d" % (totalW, totalH)))
+		else:
+			self.totalSizeLabel.SetLabel("Variable")
+		if dynamic == 0:
+			self.columnsControl.Enable(TRUE)
+			self.rowsControl.Enable(TRUE)
+			self.tileChoice.Enable(TRUE)
+			self.tileWidthControl.Enable(TRUE)
+			self.tileHeightControl.Enable(TRUE)
+		elif dynamic == 1:
+			self.columnsControl.Enable(FALSE)
+			self.rowsControl.Enable(FALSE)
+			self.tileChoice.Enable(TRUE)
+			self.tileWidthControl.Enable(TRUE)
+			self.tileHeightControl.Enable(TRUE)
+		else:
+			assert dynamic == 2
+			self.columnsControl.Enable(TRUE)
+			self.rowsControl.Enable(TRUE)
+			self.tileChoice.Enable(FALSE)
+			self.tileWidthControl.Enable(FALSE)
+			self.tileHeightControl.Enable(FALSE)
+
 
 	def __UpdateWidgetsFromVars(self):
 		"""Update the widgets from internal vars."""
@@ -605,6 +718,8 @@ class LightningDialog(wxDialog):
 		self.tileWidthControl.SetValue(self.Template.TileWidth)
 		self.tileHeightControl.SetValue(self.Template.TileHeight)
 		self.layoutRadio.SetSelection(self.Template.Layout)
+		self.dynamicRadio.SetSelection(self.Template.DynamicSize)
+		self.reassemblyRadio.SetSelection(self.Template.Reassembly)
 
 	def __UpdateVarsFromWidgets(self):
 		self.Template.NumServers = self.numberControl.GetValue()
@@ -613,8 +728,10 @@ class LightningDialog(wxDialog):
 		self.Template.TileWidth = self.tileWidthControl.GetValue()
 		self.Template.TileHeight = self.tileHeightControl.GetValue()
 		self.Template.Layout = self.layoutRadio.GetSelection()
+		self.Template.DynamicSize = self.dynamicRadio.GetSelection()
+		self.Template.Reassembly = self.reassemblyRadio.GetSelection()
 
-		
+
 	#----------------------------------------------------------------------
 	# Widget callback functions
 
@@ -674,13 +791,31 @@ class LightningDialog(wxDialog):
 		self.drawArea.Refresh()
 		self.dirty = true
 
+	def __onDynamicChange(self, event):
+		"""Called when Dynamic vs Static layout changes."""
+		self.__UpdateVarsFromWidgets()
+		self.__UpdateDependentWidgets()
+		#self.Template.LayoutTiles()
+		self.drawArea.Refresh()
+		self.dirty = true
+
+	def __onReassemblyChange(self, event):
+		"""Called when image reassembly option changes."""
+		self.__UpdateVarsFromWidgets()
+		#self.Template.LayoutTiles()
+		#self.drawArea.Refresh()
+		self.dirty = true
+
+
 	def _onOK(self, event):
 		"""Called by OK button"""
+		# xxx OK vs cancel updates?
 		#self.__UpdateVarsFromWidgets()
 		self.EndModal(wxID_OK)
 
 	def _onCancel(self, event):
 		"""Called by Cancel button"""
+		# xxx OK vs cancel updates?
 		self.EndModal(wxID_CANCEL)
 
 	def __onPaintEvent(self, event):
@@ -743,19 +878,21 @@ class LightningDialog(wxDialog):
 			dc.DrawText(s, x+dx, y+dy)
 
 		# draw top width label
-		topLabel = "<---  %d  --->" % desiredWidth
-		(tw, th) = dc.GetTextExtent(topLabel)
-		dc.DrawText(topLabel, (size.width - tw) / 2, 2)
+		dynamic = self.dynamicRadio.GetSelection()
+		if dynamic == 0:
+			topLabel = "<---  %d  --->" % desiredWidth
+			(tw, th) = dc.GetTextExtent(topLabel)
+			dc.DrawText(topLabel, (size.width - tw) / 2, 2)
 
-		# draw left height label (very crude for now)
-		leftLabel = "^|| %d ||v" % desiredHeight
-		(tw, th) = dc.GetTextExtent(leftLabel[0:1])
-		totalH = th * len(leftLabel)
-		x = 6
-		y = (size.height - totalH) / 2
-		for i in range(0, len(leftLabel)):
-			dc.DrawText(leftLabel[i:i+1], x, y)
-			y += th
+			# draw left height label (very crude for now)
+			leftLabel = "^|| %d ||v" % desiredHeight
+			(tw, th) = dc.GetTextExtent(leftLabel[0:1])
+			totalH = th * len(leftLabel)
+			x = 6
+			y = (size.height - totalH) / 2
+			for i in range(0, len(leftLabel)):
+				dc.DrawText(leftLabel[i:i+1], x, y)
+				y += th
 
 		dc.EndDrawing()
 
@@ -794,7 +931,7 @@ def Create_Lightning2(parentWindow, mothership):
 
 	# XXX also prompt for tile size here?
 	dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
-								 title="Lightning-2 Template",
+								 title="Image Reassembly Template",
 								 labels=["Number of application nodes:",
 										 "Number of server nodes:",
 										 "Number of Columns:",
@@ -832,19 +969,30 @@ def Create_Lightning2(parentWindow, mothership):
 	mothership.DeselectAllNodes()
 	# Create the <numClients> app nodes
 	appNode = crutils.NewApplicationNode(numClients)
-	appNode.SetPosition(50, 50)
+	appNode.SetPosition(10, 50)
 	appNode.Select()
 	tilesortSPU = crutils.NewSPU("tilesort")
 	appNode.AddSPU(tilesortSPU)
 	mothership.AddNode(appNode)
 	# Create the <numServers> server nodes
 	serverNode = crutils.NewNetworkNode(numServers)
-	serverNode.SetPosition(350, 50)
+	serverNode.SetPosition(210, 50)
 	serverNode.Select()
-	renderSPU = crutils.NewSPU("render")
-	serverNode.AddSPU(renderSPU)
+	readbackSPU = crutils.NewSPU("readback")
+	packSPU = crutils.NewSPU("pack")
+	serverNode.AddSPU(readbackSPU)
+	serverNode.AddSPU(packSPU)
 	mothership.AddNode(serverNode)
 	tilesortSPU.AddServer(serverNode)
+	# Create the tile reassembly node
+	reassemblyNode = crutils.NewNetworkNode(1)
+	reassemblyNode.SetPosition(420, 50)
+	reassemblyNode.Select()
+	reassemblySPU = crutils.NewSPU('render')
+	reassemblyNode.AddSPU(reassemblySPU)
+	mothership.AddNode(reassemblyNode)
+	packSPU.AddServer(reassemblyNode)
+
 	# done with the dialog
 	dialog.Destroy()
 	return 1
@@ -853,36 +1001,32 @@ def Create_Lightning2(parentWindow, mothership):
 def Is_Lightning2(mothership):
 	"""Test if the mothership describes a lightning-2 configuration.
 	Return 1 if so, 0 otherwise."""
-	# First, check for correct number and type of nodes
-	nodes = mothership.Nodes()
-	if len(nodes) != 2: 
-		print "not 2 nodes"
+	# First, check for client node and tilesort spu
+	clientNode = FindClientNode(mothership)
+	if not clientNode:
 		return 0
-	if not ((nodes[0].IsAppNode() and nodes[1].IsServer()) or
-			(nodes[1].IsAppNode() and nodes[0].IsServer())):
-		# one node must be the app node, the other the server
-		print "bad nodes"
+	tilesortSPU = FindTilesortSPU(mothership)
+	if not tilesortSPU:
 		return 0
-	# Next, check for correct SPU types
-	if nodes[0].IsAppNode():
-		tilesortSPU = nodes[0].LastSPU()
-		serverNode = nodes[1]
-		renderSPU = serverNode.LastSPU()
-	else:
-		tilesortSPU = nodes[1].LastSPU()
-		serverNode = nodes[0]
-		renderSPU = serverNode.LastSPU()
-	if tilesortSPU.Name() != "tilesort":
-		print "no tilesort SPU"
+	# check for render/readback node
+	serverNode = FindServerNode(mothership)
+	if not serverNode:
 		return 0
-	if renderSPU.Name() != "render":
-		print "no render SPU"
+	serverSPUs = serverNode.SPUChain()
+	if len(serverSPUs) != 1 and len(serverSPUs) != 2:
 		return 0
-	# Next, check that the app's servers are correct
-	servers = tilesortSPU.GetServers()
-	if len(servers) != 1 or servers[0] != serverNode:
-		print "no client/server connection"
+	if serverSPUs[0].Name() != "render" and serverSPUs[0].Name() != "readback":
 		return 0
+	if len(serverSPUs) > 1 and serverSPUs[1].Name() != "pack":
+		return 0
+	# check for reassembly node
+	reassemblyNode = FindReassemblyNode(mothership)
+	if reassemblyNode:
+		spus = reassemblyNode.SPUChain()
+		if len(spus) != 1:
+			return 0
+		if spus[0].Name() != "render":
+			return 0
 	# OK, this is a tilesort config!
 	return 1
 
@@ -909,20 +1053,30 @@ def Read_Lightning2(mothership, fileHandle):
 	"""Read a Lightning-2 config from the given file handle."""
 	mothership.Template = LightningParameters()
 
+	# build the nodes and SPUs
+	reassembleNode = crtypes.NetworkNode()
+	reassembleSPU = crutils.NewSPU("render")
+	reassembleNode.AddSPU(reassembleSPU)
+
 	serverNode = crtypes.NetworkNode()
-	renderSPU = crutils.NewSPU("render")
-	serverNode.AddSPU(renderSPU)
+	readbackSPU = crutils.NewSPU("readback")
+	packSPU = crutils.NewSPU("pack")
+	packSPU.AddServer(reassembleNode)
+	serverNode.AddSPU(readbackSPU)
+	serverNode.AddSPU(packSPU)
 
 	clientNode = crtypes.ApplicationNode()
 	tilesortSPU = crutils.NewSPU("tilesort")
-	clientNode.AddSPU(tilesortSPU)
 	tilesortSPU.AddServer(serverNode)
+	clientNode.AddSPU(tilesortSPU)
 
 	mothership.AddNode(clientNode)
 	mothership.AddNode(serverNode)
+	mothership.AddNode(reassembleNode)
 
 	numClients = 1
 	numServers = 1
+	reassembly = 0
 
 	# useful regex patterns
 	integerPat = "[0-9]+"
@@ -965,14 +1119,26 @@ def Read_Lightning2(mothership, fileHandle):
 		elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
 			numClients = int(l[v.start() : v.end()])
+		elif re.match("^REASSEMBLY = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
+			mothership.Template.Reassembly = int(l[v.start() : v.end()])
+		elif re.match("^DYNAMIC_SIZE = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
+			mothership.Template.DynamicSize = int(l[v.start() : v.end()])
+			
 		elif re.match("^TILESORT_", l):
 			# A tilesort SPU option
 			(name, values) = configio.ParseOption(l, "TILESORT")
 			tilesortSPU.SetOption(name, values)
-		elif re.match("^RENDER_", l):
+		elif re.match("^REASSEMBLE_", l):
 			# A render SPU option
-			(name, values) = configio.ParseOption(l, "RENDER")
-			renderSPU.SetOption(name, values)
+			(name, values) = configio.ParseOption(l, "REASSEMBLE")
+			reassembleSPU.SetOption(name, values)
+		elif re.match("^READBACK_", l):
+			# A readback SPU option
+			(name, values) = configio.ParseOption(l, "READBACK")
+			readbackSPU.SetOption(name, values)
+
 		elif re.match("^SERVER_", l):
 			# A server option
 			(name, values) = configio.ParseOption(l, "SERVER")
@@ -991,6 +1157,12 @@ def Read_Lightning2(mothership, fileHandle):
 
 	clientNode.SetCount(numClients)
 	serverNode.SetCount(numServers)
+
+#	if reassembly:
+#		reassemblyNode = crtypes.NetworkNode('localhost')  # XXX host OK?
+#		reassemblySPU = crutils.NewSPU('render')
+#		mothership.AddNode(reassemblyNode)
+
 	mothership.LayoutNodes()
 	return 1
 
@@ -1003,6 +1175,7 @@ def Write_Lightning2(mothership, file):
 	print "Writing Lightning-2 config"
 
 	template = mothership.Template
+	template.UpdateFromMothership(mothership)
 	template.LayoutTiles() # just in case this wasn't done already
 
 	clientNode = FindClientNode(mothership)
@@ -1018,14 +1191,21 @@ def Write_Lightning2(mothership, file):
 	file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
 	file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
 	file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
+	file.write("DYNAMIC_SIZE = %d\n" % template.DynamicSize)
+	file.write("REASSEMBLY = %d\n" % template.Reassembly)
 
 	# write tilesort SPU options
 	tilesortSPU = FindTilesortSPU(mothership)
 	configio.WriteSPUOptions(tilesortSPU, "TILESORT", file)
 
 	# write render SPU options
-	renderSPU = FindRenderSPU(mothership)
-	configio.WriteSPUOptions(renderSPU, "RENDER", file)
+	readbackSPU = FindReadbackSPU(mothership)
+	configio.WriteSPUOptions(readbackSPU, "READBACK", file)
+
+	# write reassemble SPU options
+	reassemblySPU = FindReassemblySPU(mothership)
+	configio.WriteSPUOptions(reassemblySPU, "REASSEMBLE", file)
+
 
 	# write server and global options
 	configio.WriteServerOptions(serverNode, file)
