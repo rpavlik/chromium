@@ -458,6 +458,12 @@ Graphics, Inc. contributed much of the development.</p>
   <li>state tracking for display lists is now disabled by default in the
       tilesort SPU (see 'dlist_state_tracking' option).
   </ul>
+<li>Known Problems
+  <ul>
+  <li>The display list manager code used for state tracking in the tilesort
+      SPU doesn't work on Windows.  This will occur when the tilesort SPU's
+      dlist_state_tracking option is enabled.
+  </ul>
 </ul>
 
 
