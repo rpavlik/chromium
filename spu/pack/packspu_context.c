@@ -37,26 +37,26 @@ ThreadInfo *packspuNewThread( unsigned long id )
 	thread->currentContext = NULL;
 
 	/* connect to the server */
-	thread->server.name = crStrdup( pack_spu.name );
-	thread->server.buffer_size = pack_spu.buffer_size;
+	thread->netServer.name = crStrdup( pack_spu.name );
+	thread->netServer.buffer_size = pack_spu.buffer_size;
 	if (pack_spu.numThreads == 0) {
-		packspuConnectToServer( &(thread->server) );
-		CRASSERT(thread->server.conn);
-		pack_spu.swap = thread->server.conn->swap;
+		packspuConnectToServer( &(thread->netServer) );
+		CRASSERT(thread->netServer.conn);
+		pack_spu.swap = thread->netServer.conn->swap;
 	}
 	else {
 		/* a new pthread */
-		crNetNewClient( pack_spu.thread[0].server.conn, &(thread->server));
-		CRASSERT(thread->server.conn);
+		crNetNewClient( pack_spu.thread[0].netServer.conn, &(thread->netServer));
+		CRASSERT(thread->netServer.conn);
 	}
 
 	/* packer setup */
 	CRASSERT(thread->packer == NULL);
 	thread->packer = crPackNewContext( pack_spu.swap );
 	CRASSERT(thread->packer);
-	crPackInitBuffer( &(thread->buffer), crNetAlloc(thread->server.conn),
-				thread->server.conn->buffer_size, thread->server.conn->mtu );
-	thread->buffer.canBarf = thread->server.conn->Barf ? GL_TRUE : GL_FALSE;
+	crPackInitBuffer( &(thread->buffer), crNetAlloc(thread->netServer.conn),
+				thread->netServer.conn->buffer_size, thread->netServer.conn->mtu );
+	thread->buffer.canBarf = thread->netServer.conn->Barf ? GL_TRUE : GL_FALSE;
 	crPackSetBuffer( thread->packer, &thread->buffer );
 	crPackFlushFunc( thread->packer, packspuFlush );
 	crPackFlushArg( thread->packer, (void *) thread );
@@ -96,7 +96,7 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 
 	/* Flush buffer and get return value */
 	packspuFlush( &(pack_spu.thread[0]) );
-	if (!(pack_spu.thread[0].server.conn->actual_network))
+	if (!(pack_spu.thread[0].netServer.conn->actual_network))
 	{
 		/* HUMUNGOUS HACK TO MATCH SERVER NUMBERING
 		 *

@@ -34,7 +34,7 @@ void PACKSPU_APIENTRY packspu_Begin( GLenum mode )
 		crPackBegin( mode );
 	}
 
-	if ( thread->server.conn->Barf ) {
+	if ( thread->netServer.conn->Barf ) {
 		thread->BeginEndMode = mode;
 		thread->BeginEndState = -1;
 		if ( mode == GL_LINES || mode == GL_TRIANGLES || mode == GL_QUADS || mode == GL_POLYGON )
@@ -42,8 +42,8 @@ void PACKSPU_APIENTRY packspu_Begin( GLenum mode )
 			CRASSERT(!buf->pack);
 
 			crPackReleaseBuffer( thread->packer );
-			buf->pack = crNetAlloc( thread->server.conn );
-			crPackInitBuffer( buf, buf->pack, thread->server.conn->buffer_size, thread->server.conn->mtu );
+			buf->pack = crNetAlloc( thread->netServer.conn );
+			crPackInitBuffer( buf, buf->pack, thread->netServer.conn->buffer_size, thread->netServer.conn->mtu );
 			buf->holds_BeginEnd = 1;
 			buf->in_BeginEnd = 1;
 			crPackSetBuffer( thread->packer, buf );
@@ -58,7 +58,7 @@ void PACKSPU_APIENTRY packspu_End( void )
 	GET_THREAD(thread);
 	CRPackBuffer *buf = &thread->BeginEndBuffer;
 
-	if ( thread->server.conn->Barf &&
+	if ( thread->netServer.conn->Barf &&
 		(thread->BeginEndMode == GL_LINES
 		|| thread->BeginEndMode == GL_TRIANGLES
 		|| thread->BeginEndMode == GL_QUADS
@@ -72,7 +72,7 @@ void PACKSPU_APIENTRY packspu_End( void )
 			packspuFlush( (void *) thread );
 
 		crPackAppendBuffer( buf );
-		crNetFree( thread->server.conn, buf->pack );
+		crNetFree( thread->netServer.conn, buf->pack );
 		buf->pack = NULL;
 	}
 
@@ -112,7 +112,7 @@ static void DoVertex( void )
 static void RunState( void )
 {
 	GET_THREAD(thread);
-	if (! thread->server.conn->Barf ) return;
+	if (! thread->netServer.conn->Barf ) return;
 	if (thread->BeginEndState == -1) return;
 	switch(thread->BeginEndMode) {
 	case GL_POLYGON:

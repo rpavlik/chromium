@@ -175,17 +175,17 @@ void packspuFlush(void *arg )
 
 	hdr = __prependHeader( buf, &len, 0 );
 
-	CRASSERT( thread->server.conn );
+	CRASSERT( thread->netServer.conn );
 
 	if ( buf->holds_BeginEnd )
-		crNetBarf( thread->server.conn, &(buf->pack), hdr, len );
+		crNetBarf( thread->netServer.conn, &(buf->pack), hdr, len );
 	else
-		crNetSend( thread->server.conn, &(buf->pack), hdr, len );
+		crNetSend( thread->netServer.conn, &(buf->pack), hdr, len );
 
-	buf->pack = crNetAlloc( thread->server.conn );
+	buf->pack = crNetAlloc( thread->netServer.conn );
 
 	/* The network may have found a new mtu */
-	buf->mtu = thread->server.conn->mtu;
+	buf->mtu = thread->netServer.conn->mtu;
 
 	crPackSetBuffer( thread->packer, buf );
 
@@ -233,8 +233,8 @@ void packspuHuge( CROpcode opcode, void *buf )
 		msg->numOpcodes  = 1;
 	}
 
-	CRASSERT( thread->server.conn );
-	crNetSend( thread->server.conn, NULL, src, len );
+	CRASSERT( thread->netServer.conn );
+	crNetSend( thread->netServer.conn, NULL, src, len );
 	crPackFree( buf );
 }
 

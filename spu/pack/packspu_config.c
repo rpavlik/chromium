@@ -28,11 +28,21 @@ static void set_emit( void *foo, const char *response )
 	sscanf( response, "%d", &(pack_spu.emit_GATHER_POST_SWAPBUFFERS) );
 }
 
+static void set_swapbuffer_sync( void *foo, const char *response )
+{
+	sscanf( response, "%d", &(pack_spu.swapbuffer_sync) );
+}
+
+
+
 /* No SPU options yet. Well.. not really.. 
  */
 SPUOptions packSPUOptions[] = {
 	{ "emit_GATHER_POST_SWAPBUFFERS", CR_BOOL, 1, "0", NULL, NULL, 
 	  "Emit a parameteri after SwapBuffers", (SPUOptionCB)set_emit },
+
+	{ "swapbuffer_sync", CR_BOOL, 1, "1", NULL, NULL,
+		"Sync on SwapBuffers", (SPUOptionCB) set_swapbuffer_sync },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

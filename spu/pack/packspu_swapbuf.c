@@ -43,51 +43,53 @@ void PACKSPU_APIENTRY packspu_SwapBuffers( GLint window, GLint flags )
 	}
 	packspuFlush( (void *) thread );
 
-	if (!(thread->server.conn->actual_network))
+	if (!(thread->netServer.conn->actual_network))
 	{
 		/* no synchronization needed */
 		return;
 	}
 
-	/* This won't block unless there has been more than 1 frame
-	 * since we received a writeback acknowledgement.  In the
-	 * normal case there's no performance penalty for doing this
-	 * (beyond the cost of packing the writeback request into the
-	 * stream and receiving the reply), but it eliminates the
-	 * problem of runaway rendering that can occur, eg when
-	 * rendering frames consisting of a single large display list
-	 * in a tight loop.
-	 *
-	 * Note that this is *not* the same as doing a sync after each
-	 * swapbuffers, which would force a round-trip 'bubble' into
-	 * the network stream under normal conditions.
-	 *
-	 * This is complicated because writeback in the pack spu is
-	 * overriden to always set the value to zero when the
-	 * reply is received, rather than decrementing it: 
-	 */
-	switch( thread->writeback ) {
-	case 0:
-		/* Request writeback.
+	if (pack_spu.swapbuffer_sync) {
+		/* This won't block unless there has been more than 1 frame
+		 * since we received a writeback acknowledgement.  In the
+		 * normal case there's no performance penalty for doing this
+		 * (beyond the cost of packing the writeback request into the
+		 * stream and receiving the reply), but it eliminates the
+		 * problem of runaway rendering that can occur, eg when
+		 * rendering frames consisting of a single large display list
+		 * in a tight loop.
+		 *
+		 * Note that this is *not* the same as doing a sync after each
+		 * swapbuffers, which would force a round-trip 'bubble' into
+		 * the network stream under normal conditions.
+		 *
+		 * This is complicated because writeback in the pack spu is
+		 * overriden to always set the value to zero when the
+		 * reply is received, rather than decrementing it: 
 		 */
-		thread->writeback = 1;
-		if (pack_spu.swap)
-		{
-			crPackWritebackSWAP( (GLint *) &thread->writeback );
+		switch( thread->writeback ) {
+		case 0:
+			/* Request writeback.
+			 */
+			thread->writeback = 1;
+			if (pack_spu.swap)
+			{
+				crPackWritebackSWAP( (GLint *) &thread->writeback );
+			}
+			else
+			{
+				crPackWriteback( (GLint *) &thread->writeback );
+			}
+			break;
+		case 1:
+			/* Make sure writeback from previous frame has been received.
+			 */
+			while (thread->writeback)
+			{
+				crNetRecv();
+			}
+			break;
 		}
-		else
-		{
-			crPackWriteback( (GLint *) &thread->writeback );
-		}
-		break;
-	case 1:
-		/* Make sure writeback from previous frame has been received.
-		 */
-		while (thread->writeback)
-		{
-			crNetRecv();
-		}
-		break;
 	}
 
 	/* want to emit a parameteri here */

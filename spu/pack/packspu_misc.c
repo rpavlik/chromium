@@ -27,7 +27,7 @@ void PACKSPU_APIENTRY packspu_ChromiumParametervCR(GLenum target, GLenum type, G
 			msg.header.type = CR_MESSAGE_GATHER;
 			msg.gather.offset = 69;
 			len = sizeof(CRMessageGather);
-			crNetSend(thread->server.conn, NULL, &msg, len);
+			crNetSend(thread->netServer.conn, NULL, &msg, len);
 			break;
 			
 		default:
@@ -43,7 +43,7 @@ void PACKSPU_APIENTRY packspu_ChromiumParametervCR(GLenum target, GLenum type, G
 void PACKSPU_APIENTRY packspu_Finish( void )
 {
 	GET_THREAD(thread);
-	GLint writeback = pack_spu.thread[0].server.conn->actual_network;
+	GLint writeback = pack_spu.thread[0].netServer.conn->actual_network;
 	if (pack_spu.swap)
 	{
 		crPackFinishSWAP(  );
@@ -63,7 +63,7 @@ void PACKSPU_APIENTRY packspu_Finish( void )
 GLint PACKSPU_APIENTRY packspu_WindowCreate( const char *dpyName, GLint visBits )
 {
 	static int num_calls = 0;
-	int writeback = pack_spu.thread[0].server.conn->actual_network;
+	int writeback = pack_spu.thread[0].netServer.conn->actual_network;
 	GLint return_val = (GLint) 0;
 
 	/* WindowCreate is special - just like CreateContext.
@@ -83,7 +83,7 @@ GLint PACKSPU_APIENTRY packspu_WindowCreate( const char *dpyName, GLint visBits 
 		crPackWindowCreate( dpyName, visBits, &return_val, &writeback );
 	}
 	packspuFlush( &pack_spu.thread[0] );
-	if (!(pack_spu.thread[0].server.conn->actual_network))
+	if (!(pack_spu.thread[0].netServer.conn->actual_network))
 	{
 		return num_calls++;
 	}
