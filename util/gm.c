@@ -747,7 +747,8 @@ static void crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		
 		cr_gm_provide_receive_buffer( msg );
 		
-		crNetDispatchMessage( cr_gm.recv_list, gm_conn->conn, temp+1, len );
+		crNetDispatchMessage( cr_gm.recv_list, gm_conn->conn,
+													(CRMessage *) (temp+1), len );
 		
 		switch( cached_type )
 		{

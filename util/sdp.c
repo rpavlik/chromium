@@ -853,7 +853,7 @@ crSDPRecv( void )
 			conn->total_bytes_recv +=  handled;
 		}
     
-		crNetDispatchMessage( cr_sdp.recv_list, conn, sdp_buffer + 1, len );
+		crNetDispatchMessage( cr_sdp.recv_list, conn, msg, len );
     
     
 		/* CR_MESSAGE_OPCODES is freed in

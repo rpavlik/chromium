@@ -250,7 +250,7 @@ crFileRecv( void )
 		conn->recv_credits -= len;
 
 		msg = (CRMessage *) (file_buffer + 1);
-		crNetDispatchMessage( cr_file.recv_list, conn, file_buffer + 1, len );
+		crNetDispatchMessage( cr_file.recv_list, conn, msg, len );
 
 		/* CR_MESSAGE_OPCODES is freed in
 		 * crserverlib/server_stream.c 

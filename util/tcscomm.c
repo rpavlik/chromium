@@ -534,7 +534,7 @@ crTcscommRecv( void )
   
   crTcscommReadExact( conn->tcscomm_id, payload, len );
 
-  crNetDispatchMessage( cr_tcscomm.recv_list, conn, payload, len );
+  crNetDispatchMessage( cr_tcscomm.recv_list, conn, (CRMessage *) payload, len );
 
   cr_tcscomm.inside_recv--;
 

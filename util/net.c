@@ -56,7 +56,6 @@ static struct {
 
 	int                  num_clients; /* total number of clients (unused?) */
 
-	CRBufferPool         *message_list_pool;
 #ifdef CHROMIUM_THREADSAFE
 	CRmutex		     mutex;
 #endif
@@ -385,7 +384,6 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 #ifdef CHROMIUM_THREADSAFE
 		crInitMutex(&cr_net.mutex);
 #endif
-		cr_net.message_list_pool = crBufferPoolInit(16);
 
 		cr_net.initialized = 1;
 		cr_net.recv_list = NULL;
@@ -715,7 +713,8 @@ crNetRecvFlowControl( CRConnection *conn,	CRMessageFlowControl *msg,
  * Called by the main receive function when we get a CR_MESSAGE_WRITEBACK
  * message.  Writeback is used to implement glGet*() functions.
  */
-static void crNetRecvWriteback( CRMessageWriteback *wb )
+static void
+crNetRecvWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
 	crMemcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
@@ -727,7 +726,8 @@ static void crNetRecvWriteback( CRMessageWriteback *wb )
  * Called by the main receive function when we get a CR_MESSAGE_READBACK
  * message.  Used to implement glGet*() functions.
  */
-static void crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
+static void
+crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
 {
 	/* minus the header, the destination pointer,
 	 * *and* the implicit writeback pointer at the head. */
@@ -743,13 +743,16 @@ static void crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
 }
 
 
-void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
+/**
+ * If an incoming message is not consumed by any of the connection's
+ * receive callbacks, this function will get called.
+ *
+ * XXX Make this function static???
+ */
+void
+crNetDefaultRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-	CRMessageList *msglist;
-
-	CRMessage *msg = (CRMessage *) buf;
-
-	switch( msg->header.type )
+	switch (msg->header.type)
 	{
 		case CR_MESSAGE_GATHER:
 			break;
@@ -779,7 +782,7 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 			return;
 		case CR_MESSAGE_CRUT:
 			/* nothing */
-		  break;
+			break;
 		default:
 			/* We can end up here if anything strange happens in
 			 * the GM layer.  In particular, if the user tries to
@@ -800,47 +803,37 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 			}
 	}
 
-	/* If we make it this far, it's not a special message, so
-	 * just tack it on to the end of the connection's list of
-	 * work blocks. */
-
-#ifdef CHROMIUM_THREADSAFE
-	crLockMutex(&cr_net.mutex);
-#endif
-	msglist = (CRMessageList *) crBufferPoolPop( cr_net.message_list_pool, conn->buffer_size );
-	if ( msglist == NULL )
+	/* If we make it this far, it's not a special message, so append it to
+	 * the end of the connection's list of received messages.
+	 */
 	{
-		msglist = (CRMessageList *) crAlloc( sizeof( *msglist ) );
+		CRMessageListNode *node;
+		node = (CRMessageListNode *) crAlloc(sizeof(CRMessageListNode));
+		node->mesg = msg;
+		node->len = len;
+		node->next = NULL;
+		if (conn->messageList.tail)
+			conn->messageList.tail->next = node;
+		else
+			conn->messageList.head = node;
+		conn->messageList.tail = node;
 	}
-#ifdef CHROMIUM_THREADSAFE
-	crUnlockMutex(&cr_net.mutex);
-#endif
-	msglist->mesg = (CRMessage*)buf;
-	msglist->len = len;
-	msglist->next = NULL;
-	if (conn->messageTail)
-	{
-		conn->messageTail->next = msglist;
-	}
-	else
-	{
-		conn->messageList = msglist;
-	}
-	conn->messageTail = msglist;
 }
 
 
 /**
  * Default handler for receiving data.  Called via crNetRecv().
  * Typically, the various implementations of the network layer call this.
+ * \param msg this is the address of the message (of <len> bytes) the
+ *            first part of which is a CRMessage union.
  */
 void
 crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
-											void *buf, unsigned int len )
+											CRMessage *msg, unsigned int len )
 {
 	for ( ; rfl ; rfl = rfl->next)
 	{
-		if (rfl->recv( conn, buf, len ))
+		if (rfl->recv( conn, msg, len ))
 		{
 			/* Message was consumed by somebody (maybe a SPU).
 			 * All done.
@@ -853,49 +846,62 @@ crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
 	 * then freed with a call to crNetFree()).  At this point, the buffer
 	 * *must* have been allocated with crNetAlloc!
 	 */
-	crNetDefaultRecv( conn, buf, len );
+	crNetDefaultRecv( conn, msg, len );
 }
 
 
 /**
- * Look at the next incoming message but don't remove/pop it from the
- * incoming stream of messages.
+ * Get the next message in the connection's message list.  These are
+ * message that have already been received.  We do not try to read more
+ * bytes from the network connection.
+ *
+ * The crNetFree() function should be called when finished with the message!
+ *
  * \param conn  the network connection
  * \param message  returns a pointer to the next message
+ * \return length of message (header + payload, in bytes)
  */
-unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message )
+unsigned int
+crNetPeekMessage( CRConnection *conn, CRMessage **message )
 {
-	if (conn->messageList != NULL)
-	{
-		CRMessageList *temp;
+	if (conn->messageList.head) {
+		CRMessageListNode *node = conn->messageList.head;
 		unsigned int len;
-		*message = conn->messageList->mesg;
-		len = conn->messageList->len;
-		temp = conn->messageList;
-		conn->messageList = conn->messageList->next;
-		if (!conn->messageList)
-		{
-			conn->messageTail = NULL;
+
+		/* unlink the node */
+		conn->messageList.head = node->next;
+		if (!conn->messageList.head) {
+			/* empty list */
+			conn->messageList.tail = NULL;
 		}
-#ifdef CHROMIUM_THREADSAFE
-		crLockMutex(&cr_net.mutex);
-#endif
-		crBufferPoolPush( cr_net.message_list_pool, temp, conn->buffer_size );
-#ifdef CHROMIUM_THREADSAFE
-		crUnlockMutex(&cr_net.mutex);
-#endif
+
+		*message = node->mesg;
+		len = node->len;
+		crFree(node);
+
 		return len;
 	}
 	return 0;
 }
 
-unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
+
+/**
+ * Get the next message from the given network connection.  If there isn't
+ * one already in the linked list of received messages, call crNetRecv()
+ * until we get something.
+ *
+ * \param message returns pointer to the message
+ * \return total length of message (header + payload, in bytes)
+ */
+unsigned int
+crNetGetMessage( CRConnection *conn, CRMessage **message )
 {
 	/* Keep getting work to do */
 	for (;;)
 	{
 		int len = crNetPeekMessage( conn, message );
-		if (len) return len;
+		if (len)
+			return len;
 		crNetRecv();
 	}
 
@@ -904,6 +910,7 @@ unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 	return 0;
 #endif
 }
+
 
 /**
  * Read a \n-terminated string from a socket.  Replace the \n with \0.

@@ -27,6 +27,7 @@
 #endif
 
 #include "cr_protocol.h"
+#include "cr_threads.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,7 +60,7 @@ typedef int    CRSocket;
 #endif
 
 typedef void (*CRVoidFunc)( void );
-typedef int (*CRNetReceiveFunc)( CRConnection *conn, void *buf, unsigned int len );
+typedef int (*CRNetReceiveFunc)( CRConnection *conn, CRMessage *msg, unsigned int len );
 typedef int (*CRNetConnectFunc)( CRConnection *conn );
 typedef void (*CRNetCloseFunc)( unsigned int sender_id );
 
@@ -73,11 +74,17 @@ typedef struct __closeFuncList {
 	struct __closeFuncList *next;
 } CRNetCloseFuncList;
 
-typedef struct __messageList {
-	CRMessage *mesg;
-	unsigned int len;
-	struct __messageList *next;
+typedef struct __messageListNode {
+	CRMessage *mesg;   /* the actual message (header + payload) */
+	unsigned int len;  /* length of message (header + payload) */
+	struct __messageListNode *next;  /* next in list */
+} CRMessageListNode;
+
+typedef struct {
+	CRMessageListNode *head, *tail;
+	CRmutex lock;
 } CRMessageList;
+
 
 /**
  * Used to accumulate CR_MESSAGE_MULTI_BODY/TAIL chunks into one big buffer.
@@ -96,7 +103,10 @@ struct CRConnection {
 	CRConnectionType type;
 	unsigned int id;         /* obtained from the mothership (if brokered) */
 
-	CRMessageList *messageList, *messageTail;
+	/* List of messages that we've received on the network connection but
+	 * nobody has yet consumed.
+	 */
+	CRMessageList messageList;
 
 	CRMultiBuffer multi;
 
@@ -216,8 +226,8 @@ extern unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message );
 extern unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message );
 extern void crNetReadline( CRConnection *conn, void *buf );
 extern int crNetRecv( void );
-extern void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len );
-extern void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn, void *buf, unsigned int len );
+extern void crNetDefaultRecv( CRConnection *conn, CRMessage *msg, unsigned int len );
+extern void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn, CRMessage *msg, unsigned int len );
 
 extern CRConnection *crNetConnectToServer( const char *server, unsigned short default_port, int mtu, int broker );
 extern CRConnection *crNetAcceptClient( const char *protocol, const char *hostname, unsigned short port, unsigned int mtu, int broker );

@@ -402,7 +402,7 @@ crUDPTCPIPReceive( CRConnection *conn, CRTCPIPBuffer *buf, int len )
 		msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
 	}
 
-	crNetDispatchMessage( cr_tcpip.recv_list, conn, buf + 1, len );
+	crNetDispatchMessage( cr_tcpip.recv_list, conn, msg, len );
 
 	/* CR_MESSAGE_OPCODES is freed in
 	 * crserverlib/server_stream.c 

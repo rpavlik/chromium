@@ -165,6 +165,10 @@ static unsigned short last_port = 0;
 
 cr_tcpip_data cr_tcpip;
 
+/**
+ * Read len bytes from socket, and store in buffer.
+ * \return 1 if success, -1 if error, 0 if sender exited.
+ */
 int
 __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len )
 {
@@ -178,7 +182,7 @@ __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len )
 
 	while ( len > 0 )
 	{
-		int num_read = recv( sock, dst, (int) len, 0 );
+		const int num_read = recv( sock, dst, (int) len, 0 );
 
 #ifdef WINDOWS_XXXX
 		/* MWE: why is this necessary for windows???  Does it return a
@@ -197,9 +201,14 @@ __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len )
 					crWarning( "__tcpip_read_exact(TCPIP): "
 							"caught an EINTR, looping for more data" );
 					continue;
-				case EFAULT: crWarning( "EFAULT" ); break;
-				case EINVAL: crWarning( "EINVAL" ); break;
-				default: break;
+				case EFAULT:
+					crWarning( "EFAULT" );
+					break;
+				case EINVAL:
+					crWarning( "EINVAL" );
+					break;
+				default:
+					break;
 			}
 			crWarning( "Bad bad bad socket error: %s", crTCPIPErrorString( error ) );
 			return -1;
@@ -227,11 +236,14 @@ crTCPIPReadExact( CRConnection *conn, void *buf, unsigned int len )
 	}
 }
 
+/**
+ * Write the given buffer of len bytes on the socket.
+ * \return 1 if OK, negative value if error.
+ */
 int
 __tcpip_write_exact( CRSocket sock, const void *buf, unsigned int len )
 {
-	int err;
-	char *src = (char *) buf;
+	const char *src = (const char *) buf;
 
 	/* 
 	 * Shouldn't write to a non-existent socket, ie when 
@@ -242,13 +254,13 @@ __tcpip_write_exact( CRSocket sock, const void *buf, unsigned int len )
 
 	while ( len > 0 )
 	{
-		int num_written = send( sock, src, len, 0 );
+		const int num_written = send( sock, src, len, 0 );
 		if ( num_written <= 0 )
 		{
+			int err;
 		  if ( (err = crTCPIPErrno( )) == EINTR )
 		  {
-				crWarning( "__tcpip_write_exact(TCPIP): "
-									 "caught an EINTR, continuing" );
+				crWarning("__tcpip_write_exact(TCPIP): caught an EINTR, continuing");
 				continue;
 		  }
 		  
@@ -272,7 +284,7 @@ crTCPIPWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 }
 
 
-/* 
+/**
  * Make sockets do what we want: 
  * 
  * 1) Change the size of the send/receive buffers to 64K 
@@ -521,6 +533,7 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 	crDebug( "Accepted connection from \"%s\".", conn->hostname );
 }
 
+
 void *
 crTCPIPAlloc( CRConnection *conn )
 {
@@ -666,7 +679,8 @@ __crSelect( int n, fd_set *readfds, int sec, int usec )
 }
 
 
-void crTCPIPFree( CRConnection *conn, void *buf )
+void
+crTCPIPFree( CRConnection *conn, void *buf )
 {
 	CRTCPIPBuffer *tcpip_buffer = (CRTCPIPBuffer *) buf - 1;
 
@@ -700,55 +714,191 @@ void crTCPIPFree( CRConnection *conn, void *buf )
 }
 
 
-/* returns the amt of pending data which was handled */ 
+/**
+ * Check if message type is GATHER.  If so, process it specially.
+ * \return number of bytes which were consumed
+ */ 
 static int
 crTCPIPUserbufRecv(CRConnection *conn, CRMessage *msg)
 {
-	unsigned int buf[2];
-	int len;
+	if (msg->header.type == CR_MESSAGE_GATHER) {
+		/* grab the offset and the length */
+		const int len = 2 * sizeof(unsigned int); /* was unsigned long!!!! */
+		unsigned int buf[2];
 
-	switch (msg->header.type)
-	{
-		case CR_MESSAGE_GATHER:
-			/* grab the offset and the length */
-			len = 2*sizeof(unsigned long);
-			if (__tcpip_read_exact(conn->tcp_socket, buf, len) <= 0)
-			{
-				__tcpip_dead_connection( conn );
-			}
-			msg->gather.offset = buf[0];
-			msg->gather.len = buf[1];
+		if (__tcpip_read_exact(conn->tcp_socket, buf, len) <= 0)
+		{
+			__tcpip_dead_connection( conn );
+		}
+		msg->gather.offset = buf[0];
+		msg->gather.len = buf[1];
 
-			/* read the rest into the userbuf */
-			if (buf[0]+buf[1] > (unsigned int)conn->userbuf_len)
-			{
-				crDebug("userbuf for Gather Message is too small!");
-				return len;
-			}
+		/* read the rest into the userbuf */
+		if (buf[0] + buf[1] > (unsigned int) conn->userbuf_len)
+		{
+			crDebug("userbuf for Gather Message is too small!");
+			return len;
+		}
 
-			if (__tcpip_read_exact(conn->tcp_socket, conn->userbuf+buf[0], buf[1]) <= 0)
-			{
-				__tcpip_dead_connection( conn );
-			}
-			return len+buf[1];
-
-		default:
-			return 0;
+		if (__tcpip_read_exact(conn->tcp_socket,
+													 conn->userbuf + buf[0], buf[1]) <= 0)
+	 	{
+			__tcpip_dead_connection( conn );
+		}
+		return len + buf[1];
+	}
+	else {
+		return 0;
 	}
 }
 
 
-int
-crTCPIPRecv( void )
+/**
+ * Receive incoming data on the given connection.
+ * By the time we call this, we already know there's something to receive.
+ */
+static void
+crTCPIPRecvOnConnection(CRConnection *conn)
 {
 	CRMessage *msg;
 	CRMessageType cached_type;
-	int    num_ready, max_fd;
-	fd_set read_fds;
-	int i;
-	int msock = -1; /* assumed mothership socket */
+	CRTCPIPBuffer *tcpip_buffer;
+	unsigned int len, total, leftover;
+	const int sock = conn->tcp_socket;
+
+	/* Our gigE board is acting odd. If we recv() an amount
+	 * less than what is already in the RECVBUF, performance
+	 * goes into the toilet (somewhere around a factor of 3).
+	 * This is an ugly hack, but seems to get around whatever
+	 * funk is being produced  
+	 *
+	 * Remember to set your kernel recv buffers to be bigger
+	 * than the framebuffer 'chunk' you are sending (see
+	 * sysctl -a | grep rmem) , or this will really have no
+	 * effect.   --karl 
+	 */		 
+#ifdef RECV_BAIL_OUT 
+	{
+		int inbuf;
+		(void) recv(sock, &len, sizeof(len), MSG_PEEK);
+		ioctl(conn->tcp_socket, FIONREAD, &inbuf);
+
+		if ((conn->krecv_buf_size > len) && (inbuf < len))
+			return;
+	}
+#endif
+
+	/* this reads the length of the message */
+	if ( __tcpip_read_exact( sock, &len, sizeof(len)) <= 0 )
+	{
+		__tcpip_dead_connection( conn );
+		return;
+	}
+
+	if (conn->swap)
+		len = SWAP32(len);
+
+	CRASSERT( len > 0 );
+
+	if ( len <= conn->buffer_size )
+	{
+		/* put in pre-allocated buffer */
+		tcpip_buffer = (CRTCPIPBuffer *) crTCPIPAlloc( conn ) - 1;
+	}
+	else
+	{
+		/* allocate new buffer */
+		tcpip_buffer = (CRTCPIPBuffer *) crAlloc( sizeof(*tcpip_buffer) + len );
+		tcpip_buffer->magic = CR_TCPIP_BUFFER_MAGIC;
+		tcpip_buffer->kind  = CRTCPIPMemoryBig;
+		tcpip_buffer->pad   = 0;
+	}
+
+	tcpip_buffer->len = len;
+
+	/* if we have set a userbuf, and there is room in it, we probably 
+	 * want to stick the message into that, instead of our allocated
+	 * buffer.
+	 */
+	leftover = 0;
+	total = len;
+	if ((conn->userbuf != NULL)
+			&& (conn->userbuf_len >= (int) sizeof(CRMessageHeader)))
+	{
+		leftover = len - sizeof(CRMessageHeader);
+		total = sizeof(CRMessageHeader);
+	}
+
+	if ( __tcpip_read_exact( sock, tcpip_buffer + 1, total) <= 0 )
+	{
+		crWarning( "Bad juju: %d %d on sock %x", tcpip_buffer->allocated,
+							 total, sock );
+		crFree( tcpip_buffer );
+		__tcpip_dead_connection( conn );
+		return;
+	}
+
+	conn->recv_credits -= total;
+	conn->total_bytes_recv +=  total;
+
+	msg = (CRMessage *) (tcpip_buffer + 1);
+	cached_type = msg->header.type;
+	if (conn->swap)
+	{
+		msg->header.type = (CRMessageType) SWAP32( msg->header.type );
+		msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
+	}
+	
+	/* if there is still data pending, it should go into the user buffer */
+	if (leftover)
+	{
+		const unsigned int handled = crTCPIPUserbufRecv(conn, msg);
+
+		/* if there is anything left, plop it into the recv_buffer */
+		if (leftover - handled)
+		{
+			if ( __tcpip_read_exact( sock, tcpip_buffer + 1 + total, leftover-handled) <= 0 )
+			{
+				crWarning( "Bad juju: %d %d", tcpip_buffer->allocated, leftover-handled);
+				crFree( tcpip_buffer );
+				__tcpip_dead_connection( conn );
+				return;
+			}
+		}
+
+		conn->recv_credits -= handled;
+		conn->total_bytes_recv +=  handled;
+	}
+
+	crNetDispatchMessage( cr_tcpip.recv_list, conn, msg, len );
+#if 0
+	crLogRead( len );
+#endif
+
+	/* CR_MESSAGE_OPCODES is freed in crserverlib/server_stream.c with crNetFree.
+	 * OOB messages are the programmer's problem.  -- Humper 12/17/01
+	 */
+	if (cached_type != CR_MESSAGE_OPCODES
+			&& cached_type != CR_MESSAGE_OOB
+			&& cached_type != CR_MESSAGE_GATHER) 
+	{
+		crTCPIPFree( conn, tcpip_buffer + 1 );
+	}
+}
+
+
+/**
+ * Loop over all TCP/IP connections, reading incoming data on those
+ * that are ready.
+ */
+int
+crTCPIPRecv( void )
+{
 	/* ensure we don't get caught with a new thread connecting */
-	int num_conns = cr_tcpip.num_conns;
+	const int num_conns = cr_tcpip.num_conns;
+	int num_ready, max_fd, i;
+	fd_set read_fds;
+	int msock = -1; /* assumed mothership socket */
 #if CRAPPFAKER_SHOULD_DIE
 	int none_left = 1;
 #endif
@@ -757,12 +907,17 @@ crTCPIPRecv( void )
 	crLockMutex(&cr_tcpip.recvmutex);
 #endif
 
+	/*
+	 * Loop over all connections and determine which are TCP/IP connections
+	 * that are ready to be read.
+	 */
 	max_fd = 0;
 	FD_ZERO( &read_fds );
 	for ( i = 0; i < num_conns; i++ )
 	{
 		CRConnection *conn = cr_tcpip.conns[i];
-		if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
+		if ( !conn || conn->type == CR_NO_CONNECTION )
+			continue;
 
 #if CRAPPFAKER_SHOULD_DIE
 		none_left = 0;
@@ -813,6 +968,7 @@ crTCPIPRecv( void )
 			FD_SET( sock, &only_fd );
 			slen = sizeof( s );
 			/* Check that the socket is REALLY connected */
+			/* Doesn't this call introduce some inefficiency??? (BP) */
 			if (getpeername(sock, (struct sockaddr *) &s, &slen) < 0) {
 				/* Another kludge.....
 				 * If we disconnect a socket without writing
@@ -863,12 +1019,10 @@ crTCPIPRecv( void )
 		return 0;
 	}
 
-	if ( num_conns )
-	{
+	if ( num_conns ) {
 		num_ready = __crSelect( max_fd, &read_fds, 0, 500 );
 	}
-	else
-	{
+	else {
 		crWarning( "Waiting for first connection..." );
 		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
 	}
@@ -880,144 +1034,27 @@ crTCPIPRecv( void )
 		return 0;
 	}
 
+	/*
+	 * Loop over connections, receive data on the TCP/IP connections that
+	 * we determined are ready above.
+	 */
 	for ( i = 0; i < num_conns; i++ )
 	{
-		CRTCPIPBuffer *tcpip_buffer;
-		unsigned int   len, total, handled, leftover;
-#ifdef RECV_BAIL_OUT
-		int inbuf;
-#endif
-		CRConnection  *conn = cr_tcpip.conns[i];
-		CRSocket       sock;
+		CRConnection *conn = cr_tcpip.conns[i];
+		CRSocket sock;
 
-		if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
+		if ( !conn || conn->type == CR_NO_CONNECTION )
+			continue;
 
 		/* Added by Samuel Thibault during TCP/IP / UDP code factorization */
 		if ( conn->type != CR_TCPIP )
 			continue;
 
 		sock = conn->tcp_socket;
-
 		if ( !FD_ISSET( sock, &read_fds ) )
 			continue;
 
-		/* Our gigE board is acting odd. If we recv() an amount
-		 * less than what is already in the RECVBUF, performance
-		 * goes into the toilet (somewhere around a factor of 3).
-		 * This is an ugly hack, but seems to get around whatever
-		 * funk is being produced  
-		 *
-		 * Remember to set your kernel recv buffers to be bigger
-		 * than the framebuffer 'chunk' you are sending (see
-		 * sysctl -a | grep rmem) , or this will really have no
-		 * effect.   --karl 
-		 */		 
-#ifdef RECV_BAIL_OUT 
-		(void) recv(sock, &len, sizeof(len), MSG_PEEK);
-		ioctl(conn->tcp_socket, FIONREAD, &inbuf);
-
-		if ((conn->krecv_buf_size > len) && (inbuf < len)) continue;
-#endif
-		/* this reads the length of the message */
-		if ( __tcpip_read_exact( sock, &len, sizeof(len)) <= 0 )
-		{
-			__tcpip_dead_connection( conn );
-			i--;
-			continue;
-		}
-
-		if (conn->swap)
-		{
-			len = SWAP32(len);
-		}
-
-		CRASSERT( len > 0 );
-
-		if ( len <= conn->buffer_size )
-		{
-			tcpip_buffer = (CRTCPIPBuffer *) crTCPIPAlloc( conn ) - 1;
-		}
-		else
-		{
-			tcpip_buffer = (CRTCPIPBuffer *) 
-				crAlloc( sizeof(*tcpip_buffer) + len );
-
-			tcpip_buffer->magic = CR_TCPIP_BUFFER_MAGIC;
-			tcpip_buffer->kind  = CRTCPIPMemoryBig;
-			tcpip_buffer->pad   = 0;
-		}
-
-		tcpip_buffer->len = len;
-
-		/* if we have set a userbuf, and there is room in it, we probably 
-		 * want to stick the message into that, instead of our allocated
-		 * buffer.  */
-		leftover = 0;
-		total = len;
-		if ((conn->userbuf != NULL) && (conn->userbuf_len >= (int) sizeof(CRMessageHeader)))
-		{
-			leftover = len - sizeof(CRMessageHeader);
-			total = sizeof(CRMessageHeader);
-		}
-		if ( __tcpip_read_exact( sock, tcpip_buffer + 1, total) <= 0 )
-		{
-			crWarning( "Bad juju: %d %d on sock %x", tcpip_buffer->allocated, total, sock );
-			crFree( tcpip_buffer );
-			__tcpip_dead_connection( conn );
-			i--;
-			continue;
-		}
-		
-		conn->recv_credits -= total;
-		conn->total_bytes_recv +=  total;
-
-		msg = (CRMessage *) (tcpip_buffer + 1);
-		cached_type = msg->header.type;
-		if (conn->swap)
-		{
-			msg->header.type = (CRMessageType) SWAP32( msg->header.type );
-			msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
-		}
-	
-		/* if there is still data pending, it should go into the user buffer */
-		if (leftover)
-		{
-			handled = crTCPIPUserbufRecv(conn, msg);
-
-			/* if there is anything left, plop it into the recv_buffer */
-			if (leftover-handled)
-			{
-				if ( __tcpip_read_exact( sock, tcpip_buffer + 1 + total, leftover-handled) <= 0 )
-				{
-					crWarning( "Bad juju: %d %d", tcpip_buffer->allocated, leftover-handled);
-					crFree( tcpip_buffer );
-					__tcpip_dead_connection( conn );
-					i--;
-					continue;
-				}
-			}
-			
-			conn->recv_credits -= handled;
-			conn->total_bytes_recv +=  handled;
-		}
-
-		
-		crNetDispatchMessage( cr_tcpip.recv_list, conn, tcpip_buffer + 1, len );
-#if 0
-		crLogRead( len );
-#endif
-
-
-		/* CR_MESSAGE_OPCODES is freed in
-		 * crserverlib/server_stream.c 
-		 *
-		 * OOB messages are the programmer's problem.  -- Humper 12/17/01 */
-		if (cached_type != CR_MESSAGE_OPCODES && cached_type != CR_MESSAGE_OOB
-		    &&	cached_type != CR_MESSAGE_GATHER) 
-		{
-			crTCPIPFree( conn, tcpip_buffer + 1 );
-		}
-		
+		crTCPIPRecvOnConnection(conn);
 	}
 
 #ifdef CHROMIUM_THREADSAFE
@@ -1077,8 +1114,11 @@ crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 	cr_tcpip.bufpool = crBufferPoolInit(16);
 }
 
-/* The function that actually connects.  This should only be called by clients 
- * Servers have another way to set up the socket. */
+
+/**
+ * The function that actually connects.  This should only be called by clients 
+ * Servers have another way to set up the socket.
+ */
 int
 crTCPIPDoConnect( CRConnection *conn )
 {
@@ -1113,8 +1153,7 @@ crTCPIPDoConnect( CRConnection *conn )
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons( (short) conn->port );
 
-	crMemcpy( (char *) &servaddr.sin_addr, hp->h_addr,
-			sizeof(servaddr.sin_addr) );
+	crMemcpy((char *) &servaddr.sin_addr, hp->h_addr, sizeof(servaddr.sin_addr));
 #else
 	char port_s[NI_MAXSERV];
 	struct addrinfo *res,*cur;
@@ -1247,6 +1286,7 @@ crTCPIPDoConnect( CRConnection *conn )
 	cr_tcpip.conns[conn->index] = NULL; /* remove from table */
 	return 0;
 }
+
 
 void
 crTCPIPDoDisconnect( CRConnection *conn )
