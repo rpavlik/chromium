@@ -21,6 +21,7 @@
 static char my_hostname[256];
 static int my_pid = 0;
 static int canada = 0;
+static int swedish_chef = 0;
 
 static void __getHostInfo( void )
 {
@@ -49,6 +50,24 @@ static void __crCheckCanada(void)
 	}
 }
 
+static void __crCheckSwedishChef(void)
+{
+	static int first = 1;
+	if (first)
+	{
+		char *env = getenv( "CR_SWEDEN" );
+		if (env)
+			swedish_chef = 1;
+		first = 0;
+	}
+}
+
+static void outputChromiumMessage( FILE *output, char *str )
+{
+	fprintf( output, "%s%s%s\n", str, canada ? ", eh?" : "", swedish_chef ? " BORK BORK BORK!" : "" );
+	fflush( output );
+}
+
 void crError( char *format, ... )
 {
 	va_list args;
@@ -59,6 +78,7 @@ void crError( char *format, ... )
 #endif
 
 	__crCheckCanada();
+	__crCheckSwedishChef();
 	if (!my_hostname[0])
 		__getHostInfo();
 #ifdef WINDOWS
@@ -98,7 +118,7 @@ void crError( char *format, ... )
 #endif
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
-	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
+	outputChromiumMessage( stderr, txt );
 #ifdef WINDOWS
 	if (getenv( "CR_GUI_ERROR" ) != NULL)
 	{
@@ -128,12 +148,13 @@ void crWarning( char *format, ... )
 	int offset;
 
 	__crCheckCanada();
+	__crCheckSwedishChef();
 	if (!my_hostname[0])
 		__getHostInfo();
 	offset = sprintf( txt, "CR Warning(%s:%d): ", my_hostname, my_pid );
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
-	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
+	outputChromiumMessage( stderr, txt );
 	va_end( args );
 }
 
@@ -168,6 +189,7 @@ void crDebug( char *format, ... )
 	}
 
 	__crCheckCanada();
+	__crCheckSwedishChef();
 	if (!my_hostname[0])
 		__getHostInfo();
 #ifdef WINDOWS
@@ -207,8 +229,7 @@ void crDebug( char *format, ... )
 #endif
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
-	fprintf( output, "%s%s\n", txt, canada ? ", eh?" : "" );
-	fflush( output );
+	outputChromiumMessage( output, txt );
 	va_end( args );
 #else /* RELEASE */
 	(void) format;
