@@ -41,7 +41,7 @@ static void DoFlush( void )
 	GET_THREAD(thread);
 	static int first_time = 1;
 	static int geometry[4];
-	GLfloat xmax, xmin, ymax, ymin;
+	GLfloat xmax = 0, xmin = 0, ymax = 0, ymin = 0;
 	int x, y, w, h;
 
 	if (first_time)
@@ -140,8 +140,8 @@ static void DoFlush( void )
 			/* we haven't computed it, and they haven't
 			 * called glViewport, so set it to the full window */
 			
-			readback_spu.halfViewportWidth = geometry[2]/2.0f;
-			readback_spu.halfViewportHeight = geometry[3]/2.0f;
+			readback_spu.halfViewportWidth = (geometry[2]/2.0f);
+			readback_spu.halfViewportHeight = (geometry[3]/2.0f);
 			readback_spu.viewportCenterX = readback_spu.halfViewportWidth;
 			readback_spu.viewportCenterY = readback_spu.halfViewportHeight;
 		}
@@ -207,7 +207,7 @@ static void DoFlush( void )
 		readback_spu.cleared_this_frame = 1;
 	}
 
-	readback_spu.child.RasterPos2f(x, y);
+	readback_spu.child.RasterPos2i(x, y);
 
 	if (readback_spu.extract_depth)
 	{

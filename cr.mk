@@ -226,19 +226,19 @@ endif
 ifdef TRACKS_STATE
 # May God forgive me for this hack
 STATE_STRING += (STATE)
-LIBRARIES += $(addsuffix _crstate_copy, $(SHORT_TARGET_NAME))
+PERSONAL_LIBRARIES += crstate
 endif
 
 ifdef PACKS
 # May God forgive me for this hack
 PACK_STRING += (PACK)
-LIBRARIES += $(addsuffix _crpacker_copy, $(SHORT_TARGET_NAME))
+PERSONAL_LIBRARIES += crpacker
 endif
 
 ifdef UNPACKS
 # May God forgive me for this hack
 UNPACK_STRING += (UNPACK)
-LIBRARIES += $(addsuffix _crunpacker_copy, $(SHORT_TARGET_NAME))
+PERSONAL_LIBRARIES += crunpacker
 endif
 
 ifndef SUBDIRS
@@ -289,12 +289,14 @@ endif
 ifdef WINDOWS
 
 LIBRARIES := $(foreach lib,$(LIBRARIES),$(TOP)/built/$(lib)/$(ARCH)/$(LIBPREFIX)$(lib)$(LIBSUFFIX))
+LIBRARIES += $(foreach lib,$(PERSONAL_LIBRARIES),$(TOP)/built/$(lib)/$(ARCH)/$(LIBPREFIX)$(SHORT_TARGET_NAME)_$(lib)_copy$(LIBSUFFIX))
 #LIBRARIES := $(LIBRARIES:$(DLLSUFFIX)=$(LIBSUFFIX))
 
 else
 
 LDFLAGS += -L$(DSO_DIR)
 LIBRARIES := $(foreach lib,$(LIBRARIES),-l$(lib))
+LIBRARIES += $(foreach lib,$(PERSONAL_LIBRARIES),-l$(SHORT_TARGET_NAME_$(lib)_copy)
 
 endif
 
@@ -352,7 +354,7 @@ endif
 endif
 
 ifdef LIB_COPIES
-COPY_TARGETS := $(foreach copy, $(LIB_COPIES), $(TOP)/built/$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$(copy)_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) )
+COPY_TARGETS := $(foreach copy, $(LIB_COPIES), $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)$(copy)_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) )
 
 copies: 
 	@$(MAKE) relink
@@ -369,9 +371,9 @@ endif
 
 relink: $(COPY_TARGETS)
 
-$(TOP)/built/$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)%_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX): $(OBJS)
+$(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX): $(OBJS)
 	@$(ECHO) "Linking $(LIBPREFIX)$*_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)"
-	$(MKDIR) $(TOP)/built/$(SHORT_TARGET_NAME)_copy/$(ARCH)
+	$(MKDIR) $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)
 ifdef WINDOWS
 	@$(LD) $(SHARED_LDFLAGS) /Fe$@ $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else

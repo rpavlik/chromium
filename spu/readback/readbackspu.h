@@ -72,7 +72,7 @@ typedef struct {
 	GLint barrierCount;
 
 	CRContext *ctx;
-	int halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
+	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
 	int cleared_this_frame;
 	struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;
 } ReadbackSPU;
