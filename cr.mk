@@ -360,7 +360,7 @@ copies:
 	@$(MAKE) relink
 else 
 ifdef SPU_COPIES
-COPY_TARGETS := $(foreach copy, $(SPU_COPIES), $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)$(copy)_copy$(DLLSUFFIX) )
+COPY_TARGETS := $(foreach copy, $(SPU_COPIES), $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)$(copy)$(DLLSUFFIX) )
 
 copies: 
 	@$(MAKE) relink
@@ -397,8 +397,8 @@ endif
 endif
 	@$(CP) $@ $(DSO_DIR)
 
-$(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%_copy$(DLLSUFFIX): $(OBJS)
-	@$(ECHO) "Linking $(LIBPREFIX)$*_copy$(DLLSUFFIX)"
+$(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%$(DLLSUFFIX): $(OBJS)
+	@$(ECHO) "Linking $(LIBPREFIX)$*$(DLLSUFFIX)"
 	$(MKDIR) $(TOP)/built/$*/$(ARCH)
 ifdef WINDOWS
 	@$(LD) $(SHARED_LDFLAGS) /Fe$@ $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
