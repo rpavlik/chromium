@@ -59,6 +59,10 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 		crWarning( "wglChoosePixelFormat: too much color precision requested\n" );
 	}
 
+	if ( pfd->dwFlags & PFD_DOUBLEBUFFER ) {
+		stub.desiredVisual |= CR_DOUBLE_BIT;
+	}
+
 	if ( pfd->cColorBits > 8)
 		stub.desiredVisual |= CR_RGB_BIT;
 
