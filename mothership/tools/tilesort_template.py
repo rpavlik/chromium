@@ -202,7 +202,7 @@ for i in range(NUM_APP_NODES):
 		tilesortspu.Conf(name, value)
 	tilesortSPUs.append(tilesortspu)
 
-	appnode = CRApplicationNode(APP_NODES[i])
+	appnode = CRApplicationNode(APP_HOSTS[i])
 	for (name, value) in APP_OPTIONS:
 		appnode.Conf(name, value)
 
