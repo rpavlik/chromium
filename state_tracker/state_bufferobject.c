@@ -346,7 +346,7 @@ crStateBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, c
 		return;
 	}
 
-	if (size < 0 || offset < 0 || offset + size > obj->size) {
+	if (size < 0 || (unsigned int)offset < 0 || (unsigned int)offset + size > obj->size) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 								 "glBufferSubDataARB(bad offset and/or size)");
 		return;
@@ -405,7 +405,7 @@ crStateGetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size
 		return;
 	}
 
-	if (size < 0 || offset < 0 || offset + size > obj->size) {
+	if (size < 0 || (unsigned int)offset < 0 || (unsigned int)offset + size > obj->size) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 								 "glGetBufferSubDataARB(bad offset and/or size)");
 		return;

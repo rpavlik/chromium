@@ -124,13 +124,18 @@ def PrintFunc( func_name, params, is_swapped, can_have_pointers ):
 	# Check if there are any pointer parameters.
 	# That's usually a problem so we'll emit an error function.
 	nonVecParams = apiutil.Parameters(func_name)
+	bail_out = 0
 	for (name, type, vecSize) in nonVecParams:
 		if apiutil.IsPointer(type) and vecSize == 0 and not can_have_pointers:
-			print '\tcrError ( "%s needs to be special cased %d %d!");' % (func_name, vecSize, can_have_pointers)
-			print '\t(void) pc;'
-			print '}'
-			# XXX we should really abort here
-			return
+			bail_out = 1
+	if bail_out:
+		for (name, type, vecSize) in nonVecParams:
+			print '\t(void)%s;' % (name)
+		print '\tcrError ( "%s needs to be special cased %d %d!");' % (func_name, vecSize, can_have_pointers)
+		print '\t(void) pc;'
+		print '}'
+		# XXX we should really abort here
+		return
 
 	if "extpack" in apiutil.ChromiumProps(func_name):
 		is_extended = 1

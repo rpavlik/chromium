@@ -107,7 +107,7 @@ initializeExtents(CRMuralInfo *mural)
 			extent->outputwindow.y2 = y + h;
 #endif
 
-			if (extent->outputwindow.y2 > mural->underlyingDisplay[3])
+			if ((unsigned int)extent->outputwindow.y2 > mural->underlyingDisplay[3])
 				crWarning("Ran out of room for tiles in this server's window (%d x %d)!!!", mural->underlyingDisplay[2], mural->underlyingDisplay[3]);
 
 			if (h > maxTileHeight)

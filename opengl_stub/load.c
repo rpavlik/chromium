@@ -554,9 +554,9 @@ void stubInit(void)
 	  char **words, *found;
 	  
 	  /* remove the silly []'s */
-	  while ((found = crStrchr(response, '[')))
+	  while ((found = crStrchr(response, '[')) == NULL)
 	    *found = ' ';
-	  while ((found = crStrchr(response, ']')))
+	  while ((found = crStrchr(response, ']')) == NULL)
 	    *found = ' ';
 	  
 	  words = crStrSplit(response, ",");

@@ -1391,7 +1391,7 @@ GLboolean crStateUseServerArrays(void)
 	if (c->array.i.enabled && (!c->array.i.buffer || !c->array.i.buffer->name))
 		return GL_FALSE;
 
-	for (i = 0; i < g->limits.maxTextureUnits; i++)
+	for (i = 0; (unsigned int)i < g->limits.maxTextureUnits; i++)
 		 if (c->array.t[i].enabled && (!c->array.t[i].buffer || !c->array.t[i].buffer->name))
 				return GL_FALSE;
 
@@ -1404,7 +1404,7 @@ GLboolean crStateUseServerArrays(void)
 	if (c->array.f.enabled && (!c->array.f.buffer || !c->array.f.buffer->name))
 		 return GL_FALSE;
 
-	for (i = 0; i < g->limits.maxVertexProgramAttribs; i++)
+	for (i = 0; (unsigned int)i < g->limits.maxVertexProgramAttribs; i++)
 		 if (c->array.a[i].enabled && (!c->array.a[i].buffer || !c->array.a[i].buffer->name))
 				return GL_FALSE;
 
@@ -1485,7 +1485,7 @@ crStateClientDiff(CRClientBits *cb, CRbitvalue *bitID,
 			CLEARDIRTY2(cb->i, bitID);
 		}
 		/* texcoords */
-		for (i = 0; i < toCtx->limits.maxTextureUnits; i++) {
+		for (i = 0; (unsigned int)i < toCtx->limits.maxTextureUnits; i++) {
 			if (CHECKDIRTY(cb->t[i], bitID)) {
 				if (from->array.t[i].size != to->array.t[i].size ||
 						from->array.t[i].type != to->array.t[i].type ||
@@ -1546,7 +1546,7 @@ crStateClientDiff(CRClientBits *cb, CRbitvalue *bitID,
 		}
 #if defined(CR_NV_vertex_program) || defined(CR_ARB_vertex_program)
 		/* vertex attributes */
-		for (i = 0; i < toCtx->limits.maxVertexProgramAttribs; i++) {
+		for (i = 0; (unsigned int)i < toCtx->limits.maxVertexProgramAttribs; i++) {
 			if (CHECKDIRTY(cb->a[i], bitID)) {
 				if (from->array.a[i].size != to->array.a[i].size ||
 						from->array.a[i].type != to->array.a[i].type ||
@@ -1592,7 +1592,7 @@ crStateClientDiff(CRClientBits *cb, CRbitvalue *bitID,
 			able[to->array.i.enabled](GL_INDEX_ARRAY);
 			from->array.i.enabled = to->array.i.enabled;
 		}
-		for (i = 0; i < toCtx->limits.maxTextureUnits; i++) {
+		for (i = 0; (unsigned int)i < toCtx->limits.maxTextureUnits; i++) {
 			if (from->array.t[i].enabled != to->array.t[i].enabled) {
 				diff_api.ClientActiveTextureARB(GL_TEXTURE0_ARB + i);
 				able[to->array.t[i].enabled](GL_TEXTURE_COORD_ARRAY);
@@ -1611,7 +1611,7 @@ crStateClientDiff(CRClientBits *cb, CRbitvalue *bitID,
 			able[to->array.f.enabled](GL_FOG_COORDINATE_ARRAY_EXT);
 			from->array.f.enabled = to->array.f.enabled;
 		}
-		for (i = 0; i < toCtx->limits.maxVertexProgramAttribs; i++) {
+		for (i = 0; (unsigned int)i < toCtx->limits.maxVertexProgramAttribs; i++) {
 			if (from->array.a[i].enabled != to->array.a[i].enabled) {
 				able[to->array.a[i].enabled](GL_VERTEX_ATTRIB_ARRAY0_NV + i);
 				from->array.a[i].enabled = to->array.a[i].enabled;
@@ -1682,7 +1682,7 @@ crStateClientSwitch(CRClientBits *cb, CRbitvalue *bitID,
 			CLEARDIRTY2(cb->i, bitID);
 		}
 		/* texcoords */
-		for (i = 0; i < toCtx->limits.maxTextureUnits; i++) {
+		for (i = 0; (unsigned int)i < toCtx->limits.maxTextureUnits; i++) {
 			if (CHECKDIRTY(cb->t[i], bitID)) {
 				if (from->array.t[i].size != to->array.t[i].size ||
 						from->array.t[i].type != to->array.t[i].type ||
@@ -1734,7 +1734,7 @@ crStateClientSwitch(CRClientBits *cb, CRbitvalue *bitID,
 		}
 #if defined(CR_NV_vertex_program) || defined(CR_ARB_vertex_program)
 		/* vertex attributes */
-		for (i = 0; i < toCtx->limits.maxVertexProgramAttribs; i++) {
+		for (i = 0; (unsigned int)i < toCtx->limits.maxVertexProgramAttribs; i++) {
 			if (CHECKDIRTY(cb->a[i], bitID)) {
 				if (from->array.a[i].size != to->array.a[i].size ||
 						from->array.a[i].type != to->array.a[i].type ||
@@ -1776,7 +1776,7 @@ crStateClientSwitch(CRClientBits *cb, CRbitvalue *bitID,
 			able[to->array.i.enabled](GL_INDEX_ARRAY);
 			FILLDIRTY(cb->enableClientState);
 		}
-		for (i = 0; i < toCtx->limits.maxTextureUnits; i++) {
+		for (i = 0; (unsigned int)i < toCtx->limits.maxTextureUnits; i++) {
 			if (from->array.t[i].enabled != to->array.t[i].enabled) {
 				diff_api.ClientActiveTextureARB(GL_TEXTURE0_ARB + i);
 				able[to->array.t[i].enabled](GL_TEXTURE_COORD_ARRAY);
@@ -1795,7 +1795,7 @@ crStateClientSwitch(CRClientBits *cb, CRbitvalue *bitID,
 			able[to->array.f.enabled](GL_FOG_COORDINATE_ARRAY_EXT);
 			FILLDIRTY(cb->enableClientState);
 		}
-		for (i = 0; i < toCtx->limits.maxVertexProgramAttribs; i++) {
+		for (i = 0; (unsigned int)i < toCtx->limits.maxVertexProgramAttribs; i++) {
 			if (from->array.a[i].enabled != to->array.a[i].enabled) {
 				able[to->array.a[i].enabled](GL_VERTEX_ATTRIB_ARRAY0_NV + i);
 				FILLDIRTY(cb->enableClientState);
