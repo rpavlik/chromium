@@ -19,7 +19,7 @@ from wxPython.wx import *
 
 import crtypes, crutils
 import configio
-import spudialog, intdialog, hostdialog, tiledialog
+import spudialog, intdialog, hostdialog, tiledialog, textdialog
 import tilesort_template
 import sortlast_template
 import reassembly_template
@@ -86,8 +86,8 @@ menu_APP_OPTIONS        = 500
 menu_APP_RUN            = 501
 menu_APP_STOP           = 502
 
-menu_HELP               = 600
-menu_ABOUT              = 601
+menu_ABOUT              = 600
+menu_DOCS               = 601
 
 
 # Widget IDs
@@ -242,10 +242,10 @@ class GraphFrame(wxFrame):
 
 		# Help menu
 		self.helpMenu = wxMenu()
-		#self.helpMenu.Append(menu_HELP,  "Introduction...")
 		self.helpMenu.Append(menu_ABOUT, "About Config tool...")
-		#EVT_MENU(self, menu_HELP, self.doShowIntro)
+		self.helpMenu.Append(menu_DOCS,  "Documentation...")
 		EVT_MENU(self, menu_ABOUT, self.doShowAbout)
+		EVT_MENU(self, menu_DOCS, self.doShowDocs)
 		menuBar.Append(self.helpMenu, "Help")
 
 		self.SetMenuBar(menuBar)
@@ -350,6 +350,12 @@ class GraphFrame(wxFrame):
 		self.SelectDeltaY = 0
 
 		self.UpdateMenus()
+
+		# Create the help/documentation dialog
+		self.helpDialog = textdialog.TextDialog(parent=self, id = -1,
+									   title="Config Tool Documentation")
+		self.helpDialog.LoadPage("../../doc/configtool.html")
+
 
 	# ----------------------------------------------------------------------
 	# Utility functions
@@ -1269,47 +1275,9 @@ class GraphFrame(wxFrame):
 	# Help menu callbacks
 
 
-	def doShowIntro(self, event):
-		"""Help / Introduction callback"""
-		dialog = wxDialog(self, -1, "Introduction") # ,
-				  #style=wxDIALOG_MODAL | wxSTAY_ON_TOP)
-		#dialog.SetBackgroundColour(wxWHITE)
-
-		panel = wxPanel(dialog, -1)
-		#panel.SetBackgroundColour(wxWHITE)
-
-		panelSizer = wxBoxSizer(wxVERTICAL)
-
-		text = wxStaticText(parent=panel, id=-1, label=
-			"Use the New App Node(s) button to create new application nodes.\n"
-			"Use the New Server Node(s) button to create new server nodes.\n"
-			"Use the New SPU button to add an SPU to the selected nodes.\n"
-			"Use the mouse to select and move nodes.\n"
-			"Shift-click extends the selection.\n"
-			"Control-click toggles the selection.\n")
-
-		btnOK = wxButton(panel, wxID_OK, "OK")
-
-		panelSizer.Add(text, 0, wxALIGN_CENTRE)
-		panelSizer.Add(10, 10) # Spacer.
-		panelSizer.Add(btnOK, 0, wxALL | wxALIGN_CENTRE, 5)
-
-		panel.SetAutoLayout(true)
-		panel.SetSizer(panelSizer)
-		panelSizer.Fit(panel)
-
-		topSizer = wxBoxSizer(wxHORIZONTAL)
-		topSizer.Add(panel, 0, wxALL, 10)
-
-		dialog.SetAutoLayout(true)
-		dialog.SetSizer(topSizer)
-		topSizer.Fit(dialog)
-
-		dialog.Centre()
-
-		btn = dialog.ShowModal()
-		dialog.Destroy()
-
+	def doShowDocs(self, event):
+		"""Help / Documentation callback"""
+		self.helpDialog.Show()
 
 	def doShowAbout(self, event):
 		"""Help / About callback"""
