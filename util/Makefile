@@ -5,6 +5,10 @@ ARCH=$(shell uname | sed -e 's/-//g')
 endif
 endif
 
+ifeq ($(ARCH),CYGWIN_NT5.0)
+ARCH=WIN_NT
+endif
+
 SHARED = 1
 LIBRARY = crutil
 FILES = bufpool devnull dll environment error mem net pixel string tcpip url
