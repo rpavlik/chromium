@@ -1,144 +1,264 @@
-<!-- Copyright (c) 2001, Stanford University
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"><html><head><!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
 	 See the file LICENSE.txt for information on redistributing this software.  -->
-<html>
+  
+  
+  
+  <meta http-equiv="Content-Language" content="en-us">
 
-<head>
-<meta http-equiv="Content-Language" content="en-us">
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
+
+
+
+  
+  
+  
+  <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+
+
+
+  
+  
+  
+  <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+
+
+
+
+  
+  
+  
+  <meta name="ProgId" content="FrontPage.Editor.Document">
+  <title>New Page 1</title>
+
+  
+
+  
+
+  
+
+
+  <base target="_self">
+  
+  
+  
+  <link rel="stylesheet" type="text/css" href="chromium.css">
 </head>
 
-<body bgcolor="#FFFFFF">
 
-<h1 class="PageHeading">Source Code Organization</h1>
+<body style="background-color: rgb(255, 255, 255);">
 
-<p>This section summarizes the the Chromium directory tree.</p>
+<h1 class="PageHeading">Source Code Organization&nbsp;</h1>
+<br>
+<br>
+
+
+
+
+<h2><span style="font-weight: bold;"></span>This section summarizes the the Chromium directory tree. <br>
+</h2>
+<p>Doxygen generated source trees (if generated)&nbsp; may found by traversing the links.
+
+
+  </p>
 <ul>
-  <li><p class="Directory">cr/app_faker</p> 
-    <p class="DirDesc">The source to the <code>crappfaker</code> program.</p></li>
-  <li><p class="Directory">cr/app_stub</p>
-  <p class="DirDesc"> The library for applications to use in order to get
-    Parallel API functions as well as Chromium-specific functions like
-	<code>crCreateContext</code> and <code>crSwapBuffers</code>.  The
-	declarations of these functions are found in 
-	<code>cr/include/chromium.h</code></p></li>
-  <li><p class="Directory">cr/config</p>
+  <li> 
+    <p class="Directory">cr/<a href="../doxygen/app_faker/index.html">app_faker</a></p>
+    <p class="DirDesc">The source to the <code>crappfaker</code> program.</p>
+  </li>
+  <li> 
+    
+    <p class="Directory">cr/<a href="../doxygen/crutapi/index.html">crutapi</a></p>
+    <span style="font-family: courier new;">XXX</span></li>
+  <li><p class="Directory">cr/<a href="../doxygen/crutclientapi/index.html">crutclientapi</a></p>
+  <p class="DirDesc">XXX</p></li>
+  <li> 
+    <p class="Directory">cr/<a href="../doxygen/crutproxy/index.html">crutproxy</a></p><span style="font-family: courier new;">XXX</span></li>
+  <li><p class="Directory">cr/<a href="../doxygen/crutserver/index.html">crutserver</a></p>
+  <p class="DirDesc">XXX</p></li>
+<li><p class="Directory">cr/config</p>
   <p class="DirDesc"> Platform-specific configuration files for the
   build system.</p></li>
+
   <li><p class="Directory">cr/cr.mk</p>
   <p class="DirDesc"> The build system itself.</p></li>
+
   <li><p class="Directory">cr/doc</p>
-  <p class="DirDesc"> This documentation.</p></li>
-  <li><p class="Directory">cr/glapi_parser</p>
+  <p class="DirDesc"> This documentation.</p></li><li><p class="Directory">cr/<a href="../doxygen/dlm/index.html">dlm</a></p>
+  <p class="DirDesc">The display list manager.<br>
+</p></li>
+
+
+  <li><p class="Directory">cr/<a href="../doxygen/glapi_parser/index.html">glapi_parser</a></p>
   <p class="DirDesc"> Code for parsing the OpenGL header to extract the
   full API supported by Chromium.  New functions to be supported are added
   to <code>cr/glapi_parser/system_header/CR_GL.h</code>.  This parser
   isn't very robust (that's an understatement), so be careful to format
   new functions <i>exactly</i> like the existing ones.</p></li>
-  <li><p class="Directory">cr/include</p>
+
+  <li><p class="Directory">cr/<a href="../doxygen/include/index.html">include</a></p>
   <p class="DirDesc"> Header files for use by all Chromium components.</p></li>
-  <li><p class="Directory">cr/include/state</p>
+
+  <li><p class="Directory">cr/<a href="../doxygen/include_state/index.html">include/state</a></p>
   <p class="DirDesc"> Header files for the state tracker.</p></li>
-  <li><p class="Directory">cr/mothership/client</p>
+
+  <li><p class="Directory">cr/mothership/<a href="../doxygen/mothership/client_8c.html">client</a></p>
   <p class="DirDesc"> The mothership client access library.</p></li>
+
   <li><p class="Directory">cr/mothership/configs</p>
   <p class="DirDesc"> A number of sample configuration files.</p></li>
-  <li><p class="Directory">cr/mothership/prshd</p>
+
+  <li><p class="Directory">cr/mothership/<a href="../doxygen/mothership_server/prshd_8py.html">prshd</a></p>
   <p class="DirDesc"> The "poor man's" RSH Daemon.  Don't run this, ever.</p></li>
-  <li><p class="Directory">cr/mothership/reset</p>
+
+  <li><p class="Directory">cr/mothership/<a href="../doxygen/mothership/reset_8c.html">reset</a></p>
   <p class="DirDesc"> The <code>resetms</code> program for resetting 
   the mothership between runs.</p></li>
-  <li><p class="Directory">cr/mothership/quit</p>
+
+  <li><p class="Directory">cr/mothership/<a href="../doxygen/mothership/quit_8c.html">quit</a></p>
   <p class="DirDesc"> The <code>quitms</code> program for quitting 
   the mothership.</p></li>
-  <li><p class="Directory">cr/mothership/server</p>
+
+  <li><p class="Directory">cr/mothership/<a href="../doxygen/mothership_server/index.html">server</a></p>
   <p class="DirDesc"> The code for the mothership itself.</p></li>
-  <li><p class="Directory">cr/mothership/tools</p>
+
+  <li><p class="Directory">cr/mothership/<a href="../doxygen/mothership_server/index.html">tools</a></p>
   <p class="DirDesc"> The code for the graphical configuration tool.</p></li>
-  <li><p class="Directory">cr/opengl_stub</p>
+
+  <li><p class="Directory">cr/<a href="../doxygen/opengl_stub/index.html">opengl_stub</a></p>
   <p class="DirDesc"> The OpenGL faker library.  Also contains
   <code>stub_common.py</code>, which is used by many modules.</p></li>
-  <li><p class="Directory">cr/packer</p>
+
+  <li><p class="Directory">cr/<a href="../doxygen/packer/index.html">packer</a></p>
   <p class="DirDesc"> The packer.  This directory generates a number
   of useful files, include the structures for tracking "current" state
   (which, for performance reasons, is partially done by the packer).</p></li>
+
   <li><p class="Directory">cr/progs</p>
-  <p class="DirDesc"> Demonstration and test programs.</p></li>
+  <p class="DirDesc"> Demonstration and test programs. Not all of them listed here.<br>
+</p></li>
+  <ul>
+    <li><a href="../doxygen/progs/arbfraglight/index.html">arbfraglight</a></li>
+    <li><a href="../doxygen/progs/bboxtest/index.html">bboxtest</a></li>
+    <li><a href="../doxygen/progs/dlisttest/index.html">dlisttest</a></li>
+    <li><a href="../doxygen/progs/packertest/index.html">packertest</a></li>
+    <li><a href="../doxygen/progs/packperf/index.html">packperf</a></li>
+    <li><a href="../doxygen/progs/psubmit/index.html">psubmit</a></li>
+    <li><a href="../doxygen/progs/psubmit_crut/index.html">psubmit_crut</a></li>
+    <li><a href="../doxygen/progs/threadtest/index.html">threadtest</a></li>
+    <li><a href="../doxygen/progs/tiletest/index.html">tiletest</a><br>
+    </li>
+  </ul>
+
+
   <li><p class="Directory">cr/scripts</p>
-  <p class="DirDesc"> <a href="http://graphics.stanford.edu/~eldridge/" target="new_window">Matthew
+  <p class="DirDesc"> <a href="http://graphics.stanford.edu/%7Eeldridge/" target="new_window">Matthew
   Eldridge</a>'s Perl-based fast C/C++ dependency generator.</p></li>
-  <li><p class="Directory">cr/crserverlib</p>
+
+  <li><p class="Directory">cr/<a href="../doxygen/crserverlib/index.html">crserverlib</a></p>
   <p class="DirDesc">Cr server (aka Network Node) code, built as a library</p>
-  <li><p class="Directory">cr/crserver</p>
+  </li>
+  <li><p class="Directory">cr/<a href="../doxygen/crserver/index.html">crserver</a></p>
   <p class="DirDesc">The Cr server program (uses crserverlib).</p>
-  <li><p class="Directory">cr/state_tracker</p>
+  </li>
+  <li><p class="Directory">cr/<a href="../doxygen/state_tracker/index.html">state_tracker</a></p>
   <p class="DirDesc"> The state tracking library.  There's a lot of code in 
   here, and some of it is pretty hairy.</p></li>
-  <li><p class="Directory">cr/spu_loader</p>
+
+  <li><p class="Directory">cr/<a href="../doxygen/spu_loader/index.html">spu_loader</a></p>
   <p class="DirDesc"> The SPU loader, and also functions for manipulating
   the SPU dispatch tables.</p></li>
+
   <li><p class="Directory">cr/spu</p>
   <p class="DirDesc"> The spu directory is where all the SPUs are found
   (not all of them are listed here).
   </p></li>
 
+
+  
   <ul>
-    <li><p class="Directory">cr/spu/array</p>
-    <p class="DirDesc"> The Array SPU.  This SPU implements OpenGL's
-    vertex array functions.</p></li>
-    <li><p class="Directory">cr/spu/error</p>
+
+    </ul>
+  <ul>
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/binaryswap/index.html">binaryswap</a></p>
+    <p class="DirDesc"> The binary swap SPU. <br>
+</p></li>
+  </ul>
+  <ul>
+
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/error/index.html">error</a></p>
     <p class="DirDesc"> The Error SPU, the implicit parent of all other 
     SPU's.</p></li>
-    <li><p class="Directory">cr/spu/expando</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/expando/index.html">expando</a></p>
     <p class="DirDesc"> The Expando SPU.  This SPU records display lists
     when they're build, then replays (expands) them when they're called.
     </p></li>
-    <li><p class="Directory">cr/spu/nop</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/nop/index.html">nop</a></p>
     <p class="DirDesc"> The NOP (do nothing) SPU.</p></li>
-    <li><p class="Directory">cr/spu/feedback</p>
-    <p class="DirDesc"> The Feedback & Selection SPU.</p></li>
-    <li><p class="Directory">cr/spu/motionblur</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/feedback/index.html">feedback</a></p>
+    <p class="DirDesc"> The Feedback &amp; Selection SPU.</p></li>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/motionblur/index.html">motionblur</a></p>
     <p class="DirDesc"> The Motion blur SPU.</p></li>
-    <li><p class="Directory">cr/spu/options</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/options/index.html">options</a></p>
     <p class="DirDesc"> The <code>spuoptions</code> program.</p></li>
-    <li><p class="Directory">cr/spu/pack</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/pack/index.html">pack</a></p>
     <p class="DirDesc"> The Pack SPU for sending unanalyzed streams of
     OpenGL over a network.</p></li>
-    <li><p class="Directory">cr/spu/passthrough</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/passthrough/index.html">passthrough</a></p>
     <p class="DirDesc"> The Passthrough SPU, mainly a starting point for
     new filter-SPU's</p></li>
-    <li><p class="Directory">cr/spu/perf</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/perf/index.html">perf</a></p>
     <p class="DirDesc"> The Performance Monitoring SPU.</p></li>
-    <li><p class="Directory">cr/spu/print</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/print/index.html">print</a></p>
     <p class="DirDesc"> The Print SPU.</p></li>
-    <li><p class="Directory">cr/spu/render</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/render/index.html">render</a></p>
     <p class="DirDesc"> The Render SPU.</p></li>
-    <li><p class="Directory">cr/spu/readback</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/readback/index.html">readback</a></p>
     <p class="DirDesc"> The Readback SPU.</p></li>
-    <li><p class="Directory">cr/spu/template</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/template/index.html">template</a></p>
     <p class="DirDesc"> The starting point for new SPU's.</p></li>
-    <li><p class="Directory">cr/spu/tester</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/tester/index.html">tester</a></p>
     <p class="DirDesc"> A simple program that loads a SPU explicitly and uses
     it to draw.</p></li>
-    <li><p class="Directory">cr/spu/tilesort</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/tilesort/index.html">tilesort</a></p>
     <p class="DirDesc"> The TileSort SPU for driving tiled displays.</p></li>
-    <li><p class="Directory">cr/spu/wet</p>
+
+    <li><p class="Directory">cr/spu/<a href="../doxygen/spu/wet/index.html">wet</a></p>
     <p class="DirDesc"> The Wet SPU.</p></li>
+
+  
+  
   </ul>
 
-  <li><p class="Directory">cr/unpacker</p>
+
+
+  <li><p class="Directory">cr/<a href="../doxygen/unpacker/index.html">unpacker</a></p>
   <p class="DirDesc"> The unpacking library.</p></li>
-  <li><p class="Directory">cr/util</p>
+
+  <li><p class="Directory">cr/<a href="../doxygen/util/index.html">util</a></p>
   <p class="DirDesc"> All the utitlity functions, and some other miscellany that didn't fit anywhere else.</p></li>
+
 </ul>
 
 
-</body>
 
-</html>
+
+
+
+</body></html>
