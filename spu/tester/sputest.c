@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 	}
 	spu = crSPULoad( NULL, 0, spuname, NULL );
 
-	spu->dispatch_table.Viewport( 0, 0, 150, 100 );
+	//spu->dispatch_table.Viewport( 0, 0, 150, 100 );
 	spu->dispatch_table.ClearColor( 0,0,0,1 );
 	for (;;)
 	{
