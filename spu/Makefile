@@ -5,6 +5,8 @@
 
 TOP = ..
 
+include ${TOP}/arch.mk
+
 SUBDIRS = tester options
 SUBDIRS += error nop pack passthrough print readback render template tilesort
 SUBDIRS += saveframe comm array binaryswap hiddenline fps wet perf dist_texture
