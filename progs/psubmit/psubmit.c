@@ -24,6 +24,7 @@ static GLfloat colors[7][4] = {
 static const int MASTER_BARRIER = 100;
 
 static crCreateContextProc crCreateContext_ptr;
+static crWindowCreateProc crWindowCreate_ptr;
 static crMakeCurrentProc   crMakeCurrent_ptr;
 static crSwapBuffersProc   crSwapBuffers_ptr;
 
@@ -85,7 +86,7 @@ drawBBox(const GLfloat bbox[6])
 	const GLfloat x0 = bbox[0], y0 = bbox[1], z0 = bbox[2];
 	const GLfloat x1 = bbox[3], y1 = bbox[4], z1 = bbox[5];
 	 
-	glColor3f(1, 1, 1);
+	glColor3f(1.0F, 1.0F, 1.0F);
 	glBegin(GL_LINE_LOOP);
 	glVertex3f(x0, y0, z0);
 	glVertex3f(x1, y0, z0);
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
 	static const GLfloat pos[4] = { -1, -1, 10, 0 };
 	int rank = -1, size = -1, barrierSize = -1;
 	int i, ctx, frame;
-	int window = 0;  /* default window */
+	int window;
 	float theta;
 	int swapFlag = 0, clearFlag = 0;
 	const char *dpy = NULL;
@@ -205,6 +206,7 @@ int main(int argc, char *argv[])
 #define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
 
 	LOAD( crCreateContext );
+	LOAD( crWindowCreate );
 	LOAD( crMakeCurrent );
 	LOAD( crSwapBuffers );
 	LOAD( glChromiumParametervCR );
@@ -214,16 +216,23 @@ int main(int argc, char *argv[])
 
 	ctx = crCreateContext_ptr(dpy, visual);
 	if (ctx < 0) {
-		crError("glCreateContextCR() call failed!\n");
+		crError("psubmit: crCreateContext() call failed!\n");
 		return 0;
 	}
 
+	window = crWindowCreate_ptr(dpy, visual);
+	if (window < 0) {
+		crError("psubmit: crWindowCreate() call failed!\n");
+		return 0;
+	}
+
+	printf("psubmit: window %d context %d\n", window, ctx);
 	crMakeCurrent_ptr(window, ctx);
 
 	/* Test getting window size */
 	{
 		GLint winsize[2];
-		glGetChromiumParametervCR_ptr(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
+		glGetChromiumParametervCR_ptr(GL_WINDOW_SIZE_CR, window, GL_INT, 2, winsize);
 		printf("psubmit using window size: %d x %d\n", winsize[0], winsize[1]);
 		glViewport(0, 0, winsize[0], winsize[1]);
 		aspectRatio = (float) winsize[0] / (float) winsize[1];
@@ -256,7 +265,6 @@ int main(int argc, char *argv[])
 	{
 		const GLfloat innerRadius = 0.15f;
 		const GLfloat outerRadius = 0.70f;
-		GLfloat bbox[6];
 
 		if (clearFlag)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -274,6 +282,7 @@ int main(int argc, char *argv[])
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[rank%7]);
 
 		if (useBBox) {
+			GLfloat bbox[6];
 			bbox[0] = -(innerRadius + outerRadius);
 			bbox[1] = -(innerRadius + outerRadius);
 			bbox[2] = -innerRadius;
