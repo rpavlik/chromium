@@ -228,7 +228,6 @@ typedef struct {
 	wglGetPixelFormatAttribivEXTFunc_t wglGetPixelFormatAttribivEXT;
 	wglGetPixelFormatAttribfvEXTFunc_t wglGetPixelFormatAttribfvEXT;
 	wglGetExtensionsStringEXTFunc_t wglGetExtensionsStringEXT;
-	aglSwapBuffersFunc_t aglSwapBuffers;
 #else
 	glXGetConfigFunc_t  glXGetConfig;
 	glXQueryExtensionFunc_t glXQueryExtension;
