@@ -5,8 +5,6 @@
 
 TOP = ../..
 
-MOTHERSHIP = 1
-
 SHARED = 1
 LIBRARY = crmothership
 LIBRARIES = crutil

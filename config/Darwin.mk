@@ -60,11 +60,6 @@ MPI_CC = mpicc
 MPI_CXX = mpiCC
 MPI_LDFLAGS =
 
-ifdef MOHERSHIP
-LIBPREFIX = lib
-DLLSUFFIX = .dylib
-SHARED_LDFLAGS += -dynamiclib
-else
 ifdef SPU
 LIBPREFIX = 
 DLLSUFFIX = .bundle
@@ -73,7 +68,6 @@ else
 LIBPREFIX = lib
 DLLSUFFIX = .dylib
 SHARED_LDFLAGS = -dynamiclib -multiply_defined suppress
-endif
 endif
 
 GLUT_INC   = /System/Library/Frameworks/GLUT.framework/Headers
