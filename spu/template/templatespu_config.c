@@ -9,9 +9,8 @@
 #include "cr_mothership.h"
 #include "cr_string.h"
 
-#include <stdio.h>
 
-static void __setDefaults( void )
+static void setDefaults( void )
 {
 }
 
@@ -26,7 +25,7 @@ void templatespuGatherConfiguration( void )
 {
 	CRConnection *conn;
 
-	__setDefaults();
+	setDefaults();
 
 	/* Connect to the mothership and identify ourselves. */
 	
@@ -35,7 +34,7 @@ void templatespuGatherConfiguration( void )
 	{
 		/* The mothership isn't running.  Some SPU's can recover gracefully, some 
 		 * should issue an error here. */
-         	crSPUSetDefaultParams( &template_spu, templateSPUOptions );
+		crSPUSetDefaultParams( &template_spu, templateSPUOptions );
 		return;
 	}
 	crMothershipIdentifySPU( conn, template_spu.id );
