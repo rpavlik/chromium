@@ -1,6 +1,6 @@
 #include "cr_packfunctions.h"
 #include "cr_pack.h"
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 #include "cr_opcodes.h"
 
 #include <string.h>

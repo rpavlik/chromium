@@ -13,7 +13,7 @@ import stub_common;
 print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_spu.h"
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 
 #if defined(WINDOWS)
 #define NOP_APIENTRY __stdcall

@@ -1,7 +1,7 @@
 #include "cr_packfunctions.h"
 #include "cr_pack.h"
 #include "cr_opcodes.h"
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 
 static void __handleFogData( GLenum pname, const GLfloat *params )
 {

@@ -14,7 +14,7 @@ gl_mapping = cPickle.load( parsed_file )
 print """#ifndef CR_PACKFUNCTIONS_H
 #define CR_PACKFUNCTIONS_H
 
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 #include "state/cr_pixel.h"
 #include "cr_pack.h"
 """

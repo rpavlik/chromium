@@ -1,7 +1,7 @@
 #ifndef CR_STATE_TYPES_H
 #define CR_STATE_TYPES_H
 
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 
 #ifdef __cplusplus
 extern "C" {

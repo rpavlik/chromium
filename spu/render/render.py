@@ -16,7 +16,7 @@ keys.sort();
 
 print """
 #include <stdio.h>
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 #include "cr_error.h"
 #include "cr_dll.h"
 #include "cr_spu.h"

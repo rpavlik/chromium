@@ -1,6 +1,6 @@
 #include "cr_spu.h"
 #include <stdio.h>
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 
 #define ANGLE_STEP .1f
 

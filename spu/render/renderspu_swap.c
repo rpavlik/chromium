@@ -3,10 +3,10 @@
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_string.h"
+#include "cr_glwrapper.h"
 
 #include <stdio.h>
 
-#include <GL/gl.h>
 
 void SPU_APIENTRY renderspuSwapBuffers( void )
 {

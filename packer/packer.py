@@ -13,7 +13,7 @@ parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
 gl_mapping = cPickle.load( parsed_file )
 
 print """
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 #include "cr_pack.h"
 #include "cr_opcodes.h"
 #include "cr_packfunctions.h"

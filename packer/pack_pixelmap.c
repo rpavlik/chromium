@@ -1,6 +1,6 @@
 #include "cr_packfunctions.h"
 #include "cr_pack.h"
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 #include <string.h>
 
 static unsigned char * __gl_HandlePixelMapData( GLenum map, GLsizei mapsize, int size_of_value, const GLvoid *values )

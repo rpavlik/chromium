@@ -19,7 +19,7 @@ print """#ifndef CR_SPU_DISPATCH_TABLE_H
 #define SPU_APIENTRY
 #endif
 
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 """
 
 keys = gl_mapping.keys()

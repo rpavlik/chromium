@@ -13,7 +13,7 @@
 	#error "I don't know how to make windows on this platform."
 #endif
 
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 
 #include <stdlib.h>
 #include <stdio.h>

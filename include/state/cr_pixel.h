@@ -1,7 +1,7 @@
 #ifndef CR_STATE_PIXEL_H
 #define CR_STATE_PIXEL_H
 
-#include <GL/gl.h>
+#include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 
 #ifdef __cplusplus
