@@ -27,5 +27,5 @@ settings to 1280*8 in the crserver and tilesort SPU to get around
 this.
 
 Convert the last two Perl scripts in scripts/fastdep.pl and
-state_tracker/gendiffcode.pl to Python.
+state_tracker/gendiffcode.pl to Python. (Alan Hourihane)
 
