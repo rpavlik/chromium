@@ -10,7 +10,7 @@ LIBRARIES = crutil crmothership
 
 FILES = spucopy spuload dispatch limits
 
-PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c limits.c
+PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += loader.def
