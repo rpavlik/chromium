@@ -45,8 +45,8 @@ FinalCombinerInputNV
 #GetCombinerInputParameterivNV
 #GetCombinerOutputParameterfvNV
 #GetCombinerOutputParameterivNV
-#GetFinalCombinerInputParameterfvNV
-#GetFinalCombinerInputParameterivNV
+GetFinalCombinerInputParameterfvNV
+GetFinalCombinerInputParameterivNV
 CombinerStageParameterfvNV
 GetCombinerStageParameterfvNV
 SecondaryColor3dEXT
