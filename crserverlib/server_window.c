@@ -38,7 +38,7 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 				windowID = cr_server.clients[j].windowList[pos];
 				cr_server.curClient->windowList[pos] = windowID;
 				crServerReturnValue( &windowID, sizeof(windowID) ); /* real return value */
-				crDebug("CRServer: sharing window %d", windowID);
+				crDebug("CRServer: client %d sharing window %d", cr_server.curClient->number, windowID);
 				return windowID;
 			}
 		}
@@ -48,7 +48,7 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 	 * Have first SPU make a new window, get initial size.
 	 */
 	windowID = cr_server.head_spu->dispatch_table.WindowCreate( dpyName, visBits );
-	crDebug("CRServer: created new window %d", windowID);
+	crDebug("CRServer: client %d created new window %d", cr_server.curClient->number, windowID);
 	if (windowID < 0)
 		return windowID; /* error case */
 	crServerReturnValue( &windowID, sizeof(windowID) ); /* real return value */
