@@ -265,7 +265,7 @@ void glXDestroyContext( Display *dpy, GLXContext ctx )
 {
 	(void) dpy;
 	(void) ctx;
-	crError( "Unsupported GLX Call: glXDestroyContext()" );
+	crWarning( "Unsupported GLX Call: glXDestroyContext()" );
 }
 
 void glXDestroyGLXPixmap( Display *dpy, GLXPixmap pix )

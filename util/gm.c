@@ -453,8 +453,11 @@ static void crGmConnectionAdd( CRConnection *conn )
 {
 	CRGmConnection *gm_conn, **bucket;
 
+	crDebug( "Adding a connection with id 0x%x", conn->id );
 	bucket = &CR_GM_HASH( conn->id );
+	crDebug( "The initial bucket was %p", bucket );
 
+#if 0
 	for ( gm_conn = *bucket; gm_conn != NULL; gm_conn = gm_conn->hash_next )
 	{
 		if ( gm_conn->node_id  == conn->gm_node_id && 
@@ -465,6 +468,7 @@ static void crGmConnectionAdd( CRConnection *conn )
 					conn->gm_node_id, conn->gm_port_num, conn->hostname );
 		}
 	}
+#endif
 
 	gm_conn = (CRGmConnection*)crAlloc( sizeof(*gm_conn) );
 	gm_conn->node_id   = conn->gm_node_id;
@@ -577,13 +581,17 @@ crGmConnectionLookup( unsigned int id )
 {
 	CRGmConnection *gm_conn;
 
+	/* crDebug( "I was asked to lookup a connection with id %d", id ); */
 	gm_conn = CR_GM_HASH( id );
+	/* crDebug( "Initially, it hashed to %p", gm_conn ); */
 	while ( gm_conn )
 	{
 		if ( gm_conn->conn->id == id )
 		{
 			return gm_conn;
 		}
+		/* crDebug( "I rejected that connection, because it's ID was %d and I'm looking for %d", gm_conn->conn->id, id );
+		crDebug( "Moving on to %p", gm_conn->hash_next ); */
 		gm_conn = gm_conn->hash_next;
 	}
 
@@ -622,6 +630,7 @@ cr_gm_provide_receive_buffer( void *buf )
 			== CR_GM_BUFFER_RECV_MAGIC );
 
 	msg->header.type = CR_MESSAGE_ERROR;
+	msg->header.conn_id = 0x69;
 
 	gm_provide_receive_buffer( cr_gm.port, buf,
 			cr_gm.message_size,
@@ -809,6 +818,7 @@ crGmSendCredits( CRConnection *conn )
 	msg = (CRMessageFlowControl *) ( gm_buffer + 1 );
 
 	msg->header.type    = CR_MESSAGE_FLOW_CONTROL;
+	msg->header.conn_id = conn->id;
 	msg->credits = conn->recv_credits;
 
 #if CR_GM_CREDITS_DEBUG
@@ -974,11 +984,13 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 		if ( len + sizeof(*msg) > conn->mtu )
 		{
 			msg->header.type = CR_MESSAGE_MULTI_BODY;
+			msg->header.conn_id = conn->id;
 			n_bytes   = conn->mtu - sizeof(*msg);
 		}
 		else
 		{
 			msg->header.type = CR_MESSAGE_MULTI_TAIL;
+			msg->header.conn_id = conn->id;
 			n_bytes   = len;
 		}
 		memcpy( msg + 1, src, n_bytes );

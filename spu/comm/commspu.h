@@ -34,6 +34,7 @@ typedef struct {
 	int mtu;
 	CRConnection *peer_send, *peer_recv;
 	CommSPUPing *msg;
+	int num_bytes;
 } CommSPU;
 
 extern CommSPU comm_spu;

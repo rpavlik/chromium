@@ -7,6 +7,7 @@
 #include "cr_spu.h"
 #include "cr_url.h"
 #include "cr_error.h"
+#include "cr_mem.h"
 #include "commspu.h"
 #include <stdio.h>
 
@@ -72,7 +73,10 @@ SPUFunctions *commSPUInit( int id, SPU *child, SPU *super,
 	commspuGatherConfiguration();
 
 	commspuConnectToPeer();
-	comm_spu.msg = crNetAlloc( comm_spu.peer_send );
+	comm_spu.num_bytes = sizeof( *(comm_spu.msg) );
+	/* Uncomment this to test fragmented messages */
+	/* comm_spu.num_bytes = sizeof( *(comm_spu.msg) ) + 3*comm_spu.peer_send->mtu; */
+	comm_spu.msg = crAlloc( comm_spu.num_bytes );
 
 	return &comm_functions;
 }

@@ -457,7 +457,7 @@ class CR:
 				if client_sock.connect_wait != None:
 					(client_hostname, client_port, client_node_id, client_port_num, client_endianness) = client_sock.connect_wait
 					if client_hostname == hostname:
-						sock.Success( "%d %d %d" % (self.conn_id, client_node_id, server_port_num) )
+						sock.Success( "%d %d %d" % (self.conn_id, client_node_id, client_port_num) )
 						client_sock.Success( "%d %d %d %d" % (self.conn_id, node_id, port_num, endianness) )
 						self.conn_id += 1
 						return
