@@ -525,12 +525,13 @@ crutMainLoop( )
 
     for (;;)
     {
-	if (crutCheckEvent())
+	while (crutCheckEvent())
 	{
 	    /* Drop all of the mouse motion events that don't need to be processed.
 	     * This happens here for a few reasons.  The event server can't tell how
 	     * many events it should be dropping, and when the events are first received
 	     * it is a little difficult to replace events already in the queue. */
+
 	    for ( nextEvent = crutPeekNextEvent();
 		  lastEvent == nextEvent && 
 		      (nextEvent == CRUT_MOTION_EVENT ||
@@ -538,7 +539,7 @@ crutMainLoop( )
 		  nextEvent = crutPeekNextEvent()) {
 		crutReceiveEvent(&crut_client.msg);
 	    }
-
+		
 	    crutReceiveEvent(&crut_client.msg);
 	    lastEvent = crut_client.msg->msg_type;
 
@@ -589,7 +590,7 @@ crutMainLoop( )
 			menus->menu( msg->value );
 		}
 	    }
-	} /* end if(crutCheckEvent()) */
+	} /* end while(crutCheckEvent()) */
 
 	if (crut_client.callbacks.idle) crut_client.callbacks.idle();
 	    
