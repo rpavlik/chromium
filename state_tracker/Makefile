@@ -78,8 +78,7 @@ LIB_COPIES = crserverlib \
 	feedbackspu \
 	nopspu \
 	simplequeryspu \
-	binaryswapspu \
-	readbackspu \
+	pixelsortspu \
 	statecopytest
 else
 # make static libcrstate.a library on everything else
@@ -95,8 +94,6 @@ LIB_COPIES = crserverlib \
 	feedbackspu \
 	nopspu \
 	simplequeryspu \
-	binaryswapspu \
-	readbackspu \
 	renderspu \
 	statecopytest
 endif
