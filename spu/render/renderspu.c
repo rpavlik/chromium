@@ -11,7 +11,7 @@
 #include "renderspu.h"
 #include "cr_extstring.h"
 
-static void __doSync()
+static void __doSync(void)
 {
 	CRMessage *in, out;
 
