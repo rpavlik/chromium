@@ -80,10 +80,9 @@ static void replicatespuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 	--replicate_spu.ReadPixels;
 }
 
-static int replicatespuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+static int
+replicatespuReceiveData( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-	CRMessage *msg = (CRMessage *) buf;
-
 	switch( msg->header.type )
 	{
 		case CR_MESSAGE_READ_PIXELS:
