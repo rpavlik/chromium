@@ -66,15 +66,13 @@ MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 }
 
 static BOOL
-bSetupPixelFormat( HDC hdc )
+bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
 {
-	PIXELFORMATDESCRIPTOR *ppfd; 
 	PIXELFORMATDESCRIPTOR pfd = { 
 		sizeof(PIXELFORMATDESCRIPTOR),  /*  size of this pfd */
 		1,                              /* version number */
 		PFD_DRAW_TO_WINDOW |            /* support window */
-		PFD_SUPPORT_OPENGL |            /* support OpenGL */
-		PFD_DOUBLEBUFFER,               /* double buffered */
+		PFD_SUPPORT_OPENGL,             /* support OpenGL */
 		PFD_TYPE_RGBA,                  /* RGBA type */
 		24,                             /* 24-bit color depth */
 		0, 0, 0, 0, 0, 0,               /* color bits ignored */
@@ -89,16 +87,26 @@ bSetupPixelFormat( HDC hdc )
 		0,                              /* reserved */
 		0, 0, 0                         /* layer masks ignored */
 	}; 
+	PIXELFORMATDESCRIPTOR *ppfd = &pfd; 
+	char s[1000];
+	GLbitfield b = 0;
 	int pixelformat;
 
-	/* set depth buffer */
-	/* pfd.cDepthBits = (BYTE) render_spu.depth_bits; */
-        /* set stencil buffer */
-	/* pfd.cStencilBits = (BYTE) render_spu.stencil_bits; */
-
-	/*  Commented out by Ian. 
-	 *pfd.cColorBits = GetDeviceCaps(hdc,BITSPIXEL); */
-	ppfd = &pfd;
+	/* These really come into play with sort-last configs */
+	if (visAttribs & CR_DEPTH_BIT)
+		ppfd->cDepthBits = 24;
+	if (visAttribs & CR_ACCUM_BIT)
+		ppfd->cAccumBits = 16;
+	if (visAttribs & CR_RGB_BIT)
+		ppfd->cColorBits = 24;
+	if (visAttribs & CR_STENCIL_BIT)
+		ppfd->cStencilBits = 8;
+	if (visAttribs & CR_ALPHA_BIT)
+		ppfd->cAlphaBits = 8;
+	if (visAttribs & CR_DOUBLE_BIT)
+		ppfd->dwFlags |= PFD_DOUBLEBUFFER;
+	if (visAttribs & CR_STEREO_BIT)
+		ppfd->dwFlags |= PFD_STEREO;
 
 	/* 
 	 * We call the wgl functions directly if the SPU was loaded
@@ -135,6 +143,26 @@ bSetupPixelFormat( HDC hdc )
 		}
 	}
 
+	DescribePixelFormat( hdc, pixelformat, sizeof(ppfd), ppfd );
+
+	if (ppfd->cDepthBits > 0)
+		b |= CR_DEPTH_BIT;
+	if (ppfd->cAccumBits > 0)
+		b |= CR_ACCUM_BIT;
+	if (ppfd->cColorBits > 8)
+		b |= CR_RGB_BIT;
+	if (ppfd->cStencilBits > 0)
+		b |= CR_STENCIL_BIT;
+	if (ppfd->cAlphaBits > 0)
+		b |= CR_ALPHA_BIT;
+	if (ppfd->dwFlags & PFD_DOUBLEBUFFER)
+		b |= CR_DOUBLE_BIT;
+	if (ppfd->dwFlags & PFD_STEREO)
+		b |= CR_STEREO_BIT;
+
+	renderspuMakeVisString( b, s );
+
+	crWarning( "Render SPU: WGL chose these visual capabilities: %s", s);
 	return TRUE;
 }
 
@@ -322,7 +350,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 	crDebug( " Got the DC: 0x%x", visual->device_context );
 
-	if ( !bSetupPixelFormat( visual->device_context ) )
+	if ( !bSetupPixelFormat( visual->device_context, visual->visAttribs ) )
 	{
 		crError( "Couldn't set up the device context!  Yikes!" );
 		return GL_FALSE;

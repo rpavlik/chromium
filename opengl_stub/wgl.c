@@ -57,6 +57,9 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 		crWarning( "wglChoosePixelFormat: too much color precision requested\n" );
 	}
 
+	if ( pfd->cColorBits > 8)
+		stub.desiredVisual |= CR_RGB_BIT;
+
 	if ( pfd->cAccumBits      > 0 ||
 			pfd->cAccumRedBits   > 0 ||
 			pfd->cAccumGreenBits > 0 ||
@@ -65,13 +68,22 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 		crWarning( "wglChoosePixelFormat: asked for accumulation buffer, ignoring\n" );
 	}
 
+	if ( pfd->cAccumBits > 0 )
+		stub.desiredVisual |= CR_ACCUM_BIT;
+
 	if ( pfd->cDepthBits > 32 ) {
 		crError( "wglChoosePixelFormat; asked for too many depth bits\n" );
 	}
+	
+	if ( pfd->cDepthBits > 0 )
+		stub.desiredVisual |= CR_DEPTH_BIT;
 
 	if ( pfd->cStencilBits > 8 ) {
 		crError( "wglChoosePixelFormat: asked for too many stencil bits\n" );
 	}
+
+	if ( pfd->cStencilBits > 0 )
+		stub.desiredVisual |= CR_STENCIL_BIT;
 
 	if ( pfd->cAuxBuffers > 0 ) {
 		crError( "wglChoosePixelFormat: asked for aux buffers\n" );
@@ -80,7 +92,6 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 	if ( pfd->iLayerType != PFD_MAIN_PLANE ) {
 		crError( "wglChoosePixelFormat: asked for a strange layer\n" );
 	}
-
 
 	return 1;
 }

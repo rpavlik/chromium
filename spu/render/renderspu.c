@@ -97,6 +97,7 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 		return NULL;
 	}
 #else
+	render_spu.visuals[0].visAttribs = visAttribs;
 	return &(render_spu.visuals[0]);
 #endif
 }
