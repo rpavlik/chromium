@@ -1,6 +1,5 @@
 #include <math.h>
 #include <float.h>
-#include <GL/glu.h>
 
 #include "pmodel.h"
 #include "chromium.h"
@@ -37,7 +36,7 @@ int DrawFrame( void )
 						 globals.center.y, 
 						 globals.center.z,
 						 0, 1, 0 );
-	glRotatef( frame_count, 1 ,0, 0 );
+	glRotatef( (float) frame_count, 1 ,0, 0 );
 	frame_count++;
 
 	for (i = 0,model=globals.models ; 
@@ -137,7 +136,7 @@ void SetupCamera( void )
 	globals.height   = (globals.global_bounds.max.y-globals.global_bounds.min.y);
 	globals.depth    = (globals.global_bounds.max.z-globals.global_bounds.min.z);
  
-	globals.radius= sqrt( globals.width*globals.width/4 + 
+	globals.radius= (float) sqrt( globals.width*globals.width/4 + 
 			        globals.height*globals.height/4 + 
 							globals.depth*globals.depth/4 );
 

@@ -195,7 +195,7 @@ void ReadFile( MFIList *mfi, Model *model )
 void ReadFiles( void )
 {
 	int node_id = 0;
-	int cur_node_tris;
+	int cur_node_tris = 0;
 	MFIList *mfi;
 	int tris_per_node;
 

@@ -8,8 +8,13 @@ TOP = ../..
 PROGRAM = pmodel
 FILES = ball plyfile pmodel readply
 
-LDFLAGS += -lGLU
 
 LIBRARIES = crutil crfaker
 
 include ${TOP}/cr.mk
+
+ifeq ($(ARCH),WIN_NT)
+LDFLAGS += GLU32.lib
+else
+LDFLAGS += -lGLU
+endif
