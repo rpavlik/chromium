@@ -489,6 +489,8 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 
 GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 {
+	context->visual = visual;
+
 	/* Found a visual, so we're o.k. to create the context now */
 	if (visual->device_context) {
 
@@ -520,6 +522,17 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 	CRASSERT(render_spu.ws.wglMakeCurrent);
 
 	if (context && window) {
+		if (window->visual != context->visual) {
+			/*
+		 	 * XXX have to revisit this issue!!!
+		  	 *
+		 	 * But for now we destroy the current window
+		 	 * and re-create it with the context's visual abilities
+		 	 */
+			renderspu_SystemDestroyWindow( window );
+			renderspu_SystemCreateWindow( context->visual, window->visible, window );
+		}
+
 		if (render_spu.render_to_app_window && nativeWindow)
 		{
 			/* The render_to_app_window option is set and we've got a nativeWindow
@@ -537,26 +550,26 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		}
 		else
 		{
-			if (!window->visual->device_context) {
-				window->visual->device_context = GetDC( window->visual->hWnd );
+			if (!context->visual->device_context) {
+				context->visual->device_context = GetDC( window->visual->hWnd );
 
-				crDebug( " MakeCurrent made the DC: 0x%x", window->visual->device_context );
+				crDebug( " MakeCurrent made the DC: 0x%x", context->visual->device_context );
 
-				if ( !bSetupPixelFormat( window->visual->device_context, window->visual->visAttribs ) )
+				if ( !bSetupPixelFormat( context->visual->device_context, context->visual->visAttribs ) )
 				{
 					crError( "(MakeCurrent) Couldn't set up the device context!  Yikes!" );
 				}
 			}
 
 			if (!context->hRC) {
-				context->hRC = render_spu.ws.wglCreateContext( window->visual->device_context );
+				context->hRC = render_spu.ws.wglCreateContext( context->visual->device_context );
 				if (!context->hRC)
 				{
 					crError( "(MakeCurrent) Couldn't create the context for the window 0x%x !", GetLastError() );
 				}
 			}
 
-			render_spu.ws.wglMakeCurrent( window->visual->device_context, context->hRC );
+			render_spu.ws.wglMakeCurrent( context->visual->device_context, context->hRC );
 		}
 
 	}
