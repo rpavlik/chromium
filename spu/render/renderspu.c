@@ -181,9 +181,14 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		renderspu_SystemMakeCurrent( /*thread,*/ window, nativeWindow, context );
 		if (!context->everCurrent) {
 			/* print OpenGL info */
+			const char *extString = (const char *) render_spu.ws.glGetString( GL_EXTENSIONS );
 			crDebug( "Render SPU: GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
 			crDebug( "Render SPU: GL_RENDERER: %s", render_spu.ws.glGetString( GL_RENDERER ) );
-			CRASSERT(render_spu.ws.glGetString( GL_VERSION ) );
+			crDebug( "Render SPU: GL_VERSION: %s", render_spu.ws.glGetString( GL_VERSION ) );
+			if (crStrstr(extString, "GL_ARB_window_pos"))
+				context->haveWindowPosARB = GL_TRUE;
+			else
+				context->haveWindowPosARB = GL_FALSE;
 			context->everCurrent = GL_TRUE;
 		}
 		if (crWindow == 0 && window->mapPending &&

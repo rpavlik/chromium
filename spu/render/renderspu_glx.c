@@ -700,13 +700,12 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		}
 
 		/* XXX this is a total hack to work around an NVIDIA driver bug */
-		if (render_spu.self.GetFloatv) {
+		if (render_spu.self.GetFloatv && context->haveWindowPosARB) {
 			GLfloat f[4];
 			render_spu.self.GetFloatv(GL_CURRENT_RASTER_POSITION, f);
 			if (!window->everCurrent || f[1] < 0.0) {
 				crDebug("Resetting raster pos");
 				render_spu.self.WindowPos2iARB(0, 0);
-				window->everCurrent = GL_TRUE;
 			}
 		}
 

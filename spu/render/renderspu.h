@@ -52,6 +52,7 @@ typedef struct {
 typedef struct {
 	VisualInfo *visual;
 	GLboolean everCurrent;
+	GLboolean haveWindowPosARB;
 #ifdef WINDOWS
 	HGLRC hRC;
 #else
