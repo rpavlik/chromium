@@ -615,6 +615,12 @@ class CR:
 			except:
 				pass
 
+	def ClientError( self, sock_wrapper, code, msg ):
+		"""ClientError(sock_wrapper, code, msg)
+		Sends an error message on the given socket."""
+		sock_wrapper.Reply( code, msg )
+		self.ClientDisconnect( sock_wrapper )
+		
 	def ClientDisconnect( self, sock_wrapper ):
 		"""ClientDisconnect(sock_wrapper)
 		Disconnects from the client on the given socket."""
@@ -1167,7 +1173,9 @@ class CR:
 			return
 		words = string.split( line )
 		if len(words) == 0: 
-			sock_wrapper.Failure( SockWrapper.NOTHINGTOSAY, "Request was empty?" )
+			self.ClientError( sock_wrapper,
+							  SockWrapper.NOTHINGTOSAY, "Request was empty?" )
+			#sock_wrapper.Failure( SockWrapper.NOTHINGTOSAY, "Request was empty?" )
 			return
 		command = string.lower( words[0] )
                 #CRDebug("command = " + command)
