@@ -70,6 +70,7 @@ typedef struct {
 	float halfViewportWidth, halfViewportHeight;
 
 	GLenum providedBBOX;
+	int inDrawPixels;
 
 	unsigned int muralWidth, muralHeight;
 

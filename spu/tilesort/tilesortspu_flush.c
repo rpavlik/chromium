@@ -149,6 +149,12 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 	unsigned char        *src;
 	CRMessageOpcodes *msg;
 
+	if (tilesort_spu.inDrawPixels)
+	{
+		tilesortspuFlush( tilesort_spu.ctx );
+		return;
+	}
+
 	/* packet length is indicated by the variable length field, and
 	   includes an additional word for the opcode (with alignment) and
 	   a header */

@@ -41,3 +41,4 @@ SemaphoreCreate
 SemaphoreDestroy
 SemaphoreP
 SemaphoreV
+DrawPixels
