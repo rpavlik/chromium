@@ -113,6 +113,15 @@ CRConnection *crNetConnectToServer( char *server,
 	    crError( "Malformed URL: \"%s\"", server );
 	  }
 	
+	/* If the host name is "localhost" replace it with the _real_ name
+	 * of the localhost.  If we don't do this, there seems to be
+	 * confusion in the mothership as to whether or not "localhost" and
+	 * "foo.bar.com" are the same machine.
+	 */
+	if (crStrcmp(hostname, "localhost") == 0) {
+		CRASSERT(!crGetHostname(hostname, 4096));
+	}
+
 	if ( !crStrcmp( protocol, "quadrics" ) ||
 	     !crStrcmp( protocol, "quadrics-tcscomm" ) ) {
 	  /* For Quadrics protocols, treat "port" as "rank" */
