@@ -33,6 +33,6 @@ extern DLLDATA CRPackContext cr_packer_globals;
 #define GET_PACKER_CONTEXT(C) CRPackContext *C = &cr_packer_globals
 #endif
 
-extern void __PackError( int line, const char *file, GLenum error, char *format, ... );
+extern void __PackError( int line, const char *file, GLenum error, const char *info );
 
 #endif /* CR_PACKER_H */

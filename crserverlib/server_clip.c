@@ -550,8 +550,6 @@ crComputeKnockoutGeom(double *quads, int nquad, int my_quad_idx, CRPoly **res)
 	
 	__generate_masks(nquad, &mask, &idx);
 
-	printf("%d masks\n", idx);
-
 	for (a=0; a<idx; a++)
 	{
 		/* test for above conditions */

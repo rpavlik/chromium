@@ -23,7 +23,7 @@ FILES = tilesortspu \
 	tilesortspu_get \
 	tilesortspu_init \
 	tilesortspu_lists \
-	tilesortspu_material \
+	tilesortspu_lists_gen \
 	tilesortspu_misc \
 	tilesortspu_net \
 	tilesortspu_pinch_gen \
@@ -38,9 +38,9 @@ FILES = tilesortspu \
 
 ifdef WINDOWS
 TRACKS_STATE = 1
-LIBRARIES = crutil crmothership spuload
+LIBRARIES = crutil crmothership crdlm spuload
 else
-LIBRARIES = crutil crmothership spuload crstate
+LIBRARIES = crutil crmothership crdlm spuload crstate
 endif
 
 ifdef BINUTIL_LINK_HACK
@@ -50,7 +50,7 @@ endif
 
 PACKS = 1
 
-PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_unimplemented.c tilesortspu_proto.h
+PRECOMP = tilesortspu.c tilesortspu_lists_gen.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_unimplemented.c tilesortspu_proto.h
 SLOP = $(PRECOMP)
 
 LIB_DEFS += tilesort.def
@@ -78,7 +78,7 @@ tilesortspu_diffapi.c: diffapi.py ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the TileSort Differencing API
 	@$(PYTHON) diffapi.py > $@
 
-tilesortspu_lists.c: tilesort_lists.py tilesort_list_special tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special ../../glapi_parser/gl_header.parsed
+tilesortspu_lists_gen.c: tilesort_lists.py tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the TileSort Display List Manager
 	@$(PYTHON) tilesort_lists.py > $@
 

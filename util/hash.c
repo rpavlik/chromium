@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_threads.h"
 #include "cr_hash.h"
 #include "cr_mem.h"
 #include "cr_error.h"
@@ -33,6 +34,9 @@ struct CRHashTable {
         unsigned int num_elements;
         CRHashNode *buckets[CR_NUM_BUCKETS];
         CRHashIdPool   *idPool;
+#ifdef CHROMIUM_THREADSAFE
+	CRmutex	mutex;
+#endif
 };
 
 
@@ -302,6 +306,9 @@ CRHashTable *crAllocHashtable( void )
 		hash->buckets[i] = NULL;
 	}
 	hash->idPool = crAllocHashIdPool();
+#ifdef CHROMIUM_THREADSAFE
+	crInitMutex(&hash->mutex);
+#endif
 	return hash;
 }
 
@@ -310,6 +317,10 @@ void crFreeHashtable( CRHashTable *hash, CRHashtableCallback deleteFunc )
 	int i;
 
 	if ( !hash) return;
+
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&hash->mutex);
+#endif
 
 	for ( i = 0; i < CR_NUM_BUCKETS; i++ )
 	{
@@ -322,6 +333,12 @@ void crFreeHashtable( CRHashTable *hash, CRHashtableCallback deleteFunc )
 		}
 	}
 	crFreeHashIdPool( hash->idPool );
+
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&hash->mutex);
+	crFreeMutex(&hash->mutex);
+#endif
+
 	crFree( hash );
 }
 
@@ -355,12 +372,18 @@ static unsigned int crHash( unsigned long key )
 void crHashtableAdd( CRHashTable *h, unsigned long key, void *data )
 {
 	CRHashNode *node = (CRHashNode *) crCalloc( sizeof( CRHashNode ) );
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&h->mutex);
+#endif
 	node->key = key;
 	node->data = data;
 	node->next = h->buckets[crHash( key )];
 	h->buckets[ crHash( key ) ] = node;
 	h->num_elements++;
 	crHashIdPoolAllocId (h->idPool, key);
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&h->mutex);
+#endif
 }
 
 GLuint crHashtableAllocKeys( CRHashTable *h,  GLsizei range)
@@ -368,7 +391,13 @@ GLuint crHashtableAllocKeys( CRHashTable *h,  GLsizei range)
 	GLuint res;
 	int i;
 
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&h->mutex);
+#endif
 	res = crHashIdPoolAllocBlock (h->idPool, range);
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&h->mutex);
+#endif
 	for ( i = 0; i < range; i++)
 		crHashtableAdd( h, i + res , NULL );
 	return res;
@@ -379,14 +408,21 @@ void crHashtableDelete( CRHashTable *h, unsigned long key, CRHashtableCallback d
 	unsigned int index = crHash( key );
 	CRHashNode *temp, *beftemp = NULL;
 
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&h->mutex);
+#endif
 	for ( temp = h->buckets[index]; temp; temp = temp->next )
 	{
 		if ( temp->key == key )
 			break;
 		beftemp = temp;
 	}
-	if ( !temp )
+	if ( !temp ) {
+#ifdef CHROMIUM_THREADSAFE
+		crUnlockMutex(&h->mutex);
+#endif
 		return; /* not an error */
+	}
 	if ( beftemp )
 		beftemp->next = temp->next;
 	else
@@ -399,6 +435,9 @@ void crHashtableDelete( CRHashTable *h, unsigned long key, CRHashtableCallback d
 	crFree( temp );
 
 	crHashIdPoolFreeBlock( h->idPool, key, 1 );
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&h->mutex);
+#endif
 }
 
 void crHashtableDeleteBlock( CRHashTable *h, unsigned long key, GLsizei range, CRHashtableCallback deleteFunc )
@@ -414,11 +453,17 @@ void *crHashtableSearch( const CRHashTable *h, unsigned long key )
 {
 	unsigned int index = crHash( key );
 	CRHashNode *temp;
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex((CRmutex *)&h->mutex);
+#endif
 	for ( temp = h->buckets[index]; temp; temp = temp->next )
 	{
 		if ( temp->key == key )
 			break;
 	}
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex((CRmutex *)&h->mutex);
+#endif
 	if ( !temp )
 	{
 		return NULL;
@@ -431,21 +476,33 @@ void crHashtableReplace( CRHashTable *h, unsigned long key, void *data,
 {
 	unsigned int index = crHash( key );
 	CRHashNode *temp;
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&h->mutex);
+#endif
 	for ( temp = h->buckets[index]; temp; temp = temp->next )
 	{
 		if ( temp->key == key )
 			break;
 	}
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&h->mutex);
+#endif
 	if ( !temp )
 	{
 		crHashtableAdd( h, key, data );
 		return;
 	}
+#ifdef CHROMIUM_THREADSAFE
+	crLockMutex(&h->mutex);
+#endif
 	if ( temp->data && deleteFunc )
 	{
 		(*deleteFunc)( temp->data );
 	}
 	temp->data = data;
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&h->mutex);
+#endif
 }
 
 unsigned int crHashtableNumElements( const CRHashTable *h) 

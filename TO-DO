@@ -26,7 +26,3 @@ Wes Bethel:
   app-side SPU additions - I've not checked.
 
 
-Gary Kong:
-  Is there any particular reason why the system_gl_path configuration option is 
-  not available to set for the application node??? If there is none, would it 
-  be possible to add it for future releases??!!

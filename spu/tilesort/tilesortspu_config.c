@@ -67,6 +67,18 @@ set_bounding_box_scale(TileSortSPU *tilesort_spu, const char *response)
 }
 
 static void
+set_auto_dlist_bbox(TileSortSPU *tilesort_spu, const char *response)
+{
+	sscanf(response, "%d", &(tilesort_spu->autoDListBBoxes));
+}
+
+static void
+set_lazy_send_dlists(TileSortSPU *tilesort_spu, const char *response)
+{
+	sscanf(response, "%d", &(tilesort_spu->lazySendDLists));
+}
+
+static void
 set_fake_window_dims(TileSortSPU *tilesort_spu, const char *response)
 {
 	float w = 0.0, h = 0.0;
@@ -151,6 +163,14 @@ SPUOptions tilesortSPUOptions[] = {
 
 	{"bbox_scale", CR_FLOAT, 1, "1.0", "0.1", "10.0",
 	 "Bounding Box Scale Factor", (SPUOptionCB) set_bounding_box_scale},
+
+        {"auto_dlist_bbox", CR_BOOL, 1, "1", NULL, NULL,
+         "Automatically compute/use bounding boxes for display lists",
+         (SPUOptionCB) set_auto_dlist_bbox},
+
+        {"lazy_send_dlists", CR_BOOL, 1, "0", NULL, NULL,
+         "Send display lists to servers only when needed (lazy)",
+         (SPUOptionCB) set_lazy_send_dlists},
 
 	{"fake_window_dims", CR_INT, 2, "0, 0", "0, 0", NULL,
 	 "Fake Window Dimensions (w, h)", (SPUOptionCB) set_fake_window_dims},

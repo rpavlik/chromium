@@ -59,6 +59,9 @@ static GLuint TranslateTextureID( GLuint id )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchNewList( GLuint list, GLenum mode )
 {
+	if (mode == GL_COMPILE_AND_EXECUTE)
+		crWarning("using glNewList(GL_COMPILE_AND_EXECUTE) can confuse the crserver");
+
 	list = TranslateListID( list );
 	crStateNewList( list, mode );
 	cr_server.head_spu->dispatch_table.NewList( list, mode );
@@ -66,52 +69,65 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchNewList( GLuint list, GLenum mode 
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchCallList( GLuint list )
 {
-	CRMuralInfo *mural = cr_server.curClient->currentMural;
-	int i;
-
 	list = TranslateListID( list );
 
-	if (!mural->viewportValidated) {
-		crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport),
-																	mural);
-	}
+	if (cr_server.curClient->currentCtx->lists.mode == 0) {
+		/* we're not compiling, so execute the list now */
+		CRMuralInfo *mural = cr_server.curClient->currentMural;
+		int i;
 
-	if (mural->numExtents == 0) {
-		/* Issue the list as-is */
-		cr_server.head_spu->dispatch_table.CallList( list );
-	}
-	else {
-		/* Loop over the extents (tiles) calling glCallList() */
-		for ( i = 0; i < mural->numExtents; i++ )	{
-			if (cr_server.run_queue->client->currentCtx)
-				crServerSetOutputBounds( mural, i );
+		if (!mural->viewportValidated) {
+			crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport), mural);
+		}
+
+		if (mural->numExtents == 0) {
+			/* Issue the list as-is */
 			cr_server.head_spu->dispatch_table.CallList( list );
 		}
+		else {
+			/* Loop over the extents (tiles) calling glCallList() */
+			for ( i = 0; i < mural->numExtents; i++ )	{
+				if (cr_server.run_queue->client->currentCtx)
+					crServerSetOutputBounds( mural, i );
+				cr_server.head_spu->dispatch_table.CallList( list );
+			}
+		}
+	}
+	else {
+		/* we're compiling glCallList into another list - just pass it through */
+		cr_server.head_spu->dispatch_table.CallList( list );
 	}
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchCallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
-	CRMuralInfo *mural = cr_server.curClient->currentMural;
-	int i;
-
 	/* XXX not sure what to do here, in terms of ID translation */
 
-	if (!mural->viewportValidated) {
-		crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport), mural);
-	}
+	if (cr_server.curClient->currentCtx->lists.mode == 0) {
+		/* we're not compiling, so execute the list now */
+		CRMuralInfo *mural = cr_server.curClient->currentMural;
+		int i;
 
-	if (mural->numExtents == 0) {
-		/* Issue the list as-is */
-		cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
-	}
-	else {
-		/* Loop over the extents (tiles) calling glCallList() */
-		for ( i = 0; i < mural->numExtents; i++ ) {
-			if (cr_server.run_queue->client->currentCtx)
-				crServerSetOutputBounds( mural, i );
+		if (!mural->viewportValidated) {
+			crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport), mural);
+		}
+
+		if (mural->numExtents == 0) {
+			/* Issue the list as-is */
 			cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
 		}
+		else {
+			/* Loop over the extents (tiles) calling glCallList() */
+			for ( i = 0; i < mural->numExtents; i++ ) {
+				if (cr_server.run_queue->client->currentCtx)
+					crServerSetOutputBounds( mural, i );
+				cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
+			}
+		}
+	}
+	else {
+		/* we're compiling glCallList into another list - just pass it through */
+		cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
 	}
 }
 

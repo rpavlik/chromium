@@ -39,18 +39,15 @@ static void __fillin( int offset, char *name, SPUGenericFunction func )
 {
 	_cr_tilesort_table[offset].name = crStrdup( name );
 	_cr_tilesort_table[offset].fn = func;
-}"""
+}
+"""
 
-#for func_name in keys:
-#	(return_type, args, types) = gl_mapping[func_name]
-#	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
-#		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )	
-#	if stub_common.FindSpecial( "tilesort", func_name ):
-#		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
-print '\nvoid tilesortspuCreateFunctions( void )'
+
+print 'void tilesortspuCreateFunctions( void )'
 print '{'
 table_index = 0
+# XXX NOTE: this should basically be identical to code in tilesort_lists.py
 for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, args, types) = gl_mapping[func_name]

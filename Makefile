@@ -8,7 +8,7 @@ TOP = .
 include $(TOP)/arch.mk
 
 SUBDIRS = glapi_parser util mothership spu_loader packer state_tracker \
-	unpacker spu app_faker opengl_stub crserverlib crserver \
+	unpacker dlm spu app_faker opengl_stub crserverlib crserver \
 	crutapi crutclientapi crutproxy crutserver progs
 
 include ${TOP}/cr.mk

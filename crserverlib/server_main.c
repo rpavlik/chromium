@@ -22,7 +22,7 @@
 
 CRServer cr_server;
 
-static int tearingdown = 0;
+int tearingdown = 0;
 
 int CRServerMain( int argc, char *argv[] );
 
@@ -57,6 +57,7 @@ static void crServerTearDown( void )
 	}
 
 	cr_server.curClient = NULL;
+	cr_server.run_queue = NULL;
 
 	crFree( cr_server.clients );
 	cr_server.clients = NULL;

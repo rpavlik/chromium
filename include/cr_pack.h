@@ -45,7 +45,7 @@ typedef struct {
 
 typedef void (*CRPackFlushFunc)(void *arg);
 typedef void (*CRPackSendHugeFunc)(CROpcode, void *);
-typedef void (*CRPackErrorHandlerFunc)(GLenum);
+typedef void (*CRPackErrorHandlerFunc)(int line, const char *file, GLenum error, const char *info);
 
 typedef GLvectorf CRBBOXPoint;
 
@@ -79,7 +79,7 @@ void crPackResetPointers( CRPackContext *pc );
 void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff );
 void crPackFlushArg( CRPackContext *pc, void *flush_arg );
 void crPackSendHugeFunc( CRPackContext *pc, CRPackSendHugeFunc shf );
-void crPackErrorHandlerFunc( CRPackContext *pc, CRPackErrorHandlerFunc errf );
+void crPackErrorFunction( CRPackContext *pc, CRPackErrorHandlerFunc errf );
 void crPackOffsetCurrentPointers( int offset );
 void crPackNullCurrentPointers( void );
 

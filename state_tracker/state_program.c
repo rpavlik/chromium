@@ -225,7 +225,7 @@ void STATE_APIENTRY crStateBindProgramARB(GLenum target, GLuint id)
 }
 
 
-void STATE_APIENTRY crStateDeleteProgramsNV(GLsizei n, const GLuint *ids)
+void STATE_APIENTRY crStateDeleteProgramsARB(GLsizei n, const GLuint *ids)
 {
 	CRContext *g = GetCurrentContext();
 	CRProgramState *p = &(g->program);
@@ -265,12 +265,6 @@ void STATE_APIENTRY crStateDeleteProgramsNV(GLsizei n, const GLuint *ids)
 			crHashtableDelete(p->programHash, ids[i], GL_FALSE);
 		}
 	}
-}
-
-
-void STATE_APIENTRY crStateDeleteProgramsARB(GLsizei n, const GLuint *ids)
-{
-	crStateDeleteProgramsNV(n, ids);
 }
 
 
@@ -314,7 +308,7 @@ void STATE_APIENTRY crStateGenProgramsARB(GLsizei n, GLuint *ids)
 }
 
 
-GLboolean STATE_APIENTRY crStateIsProgramNV(GLuint id)
+GLboolean STATE_APIENTRY crStateIsProgramARB(GLuint id)
 {
 	CRContext *g = GetCurrentContext();
 	CRProgramState *p = &(g->program);
@@ -322,13 +316,13 @@ GLboolean STATE_APIENTRY crStateIsProgramNV(GLuint id)
 
 	if (g->current.inBeginEnd) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-								 "glIsProgramNV called in Begin/End");
+								 "glIsProgram called in Begin/End");
 		return GL_FALSE;
 	}
 
 	if (id == 0) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glIsProgramNV(id==0)");
+									 "glIsProgram(id==0)");
 		return GL_FALSE;
 	}
 
@@ -337,12 +331,6 @@ GLboolean STATE_APIENTRY crStateIsProgramNV(GLuint id)
 		return GL_TRUE;
 	else
 		return GL_FALSE;
-}
-
-
-GLboolean STATE_APIENTRY crStateIsProgramARB(GLuint id)
-{
-	return crStateIsProgramNV(id);
 }
 
 

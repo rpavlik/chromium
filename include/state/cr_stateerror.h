@@ -9,6 +9,6 @@
 
 #include "chromium.h"
 
-void crStateError( int line, char *file, GLenum err, char *format, ... );
+void crStateError( int line, const char *file, GLenum err, const char *format, ... );
 
 #endif /* CR_STATE_ERROR_H */

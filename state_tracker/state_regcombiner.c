@@ -495,13 +495,23 @@ void STATE_APIENTRY crStateFinalCombinerInputNV( GLenum variable, GLenum input, 
 	DIRTY(rb->dirty, g->neg_bitid);
 }
 
-#if 0
+
 /* XXX Unfinished RegCombiner State functions */
-void STATE_APIENTRY crStateGetCombinerOutputParameterfvNV( GLenum stage, GLenum portion, GLenum pname, GLfloat *params ){}
-void STATE_APIENTRY crStateGetCombinerOutputParameterivNV( GLenum stage, GLenum portion, GLenum pname, GLint *params ){}
-void STATE_APIENTRY crStateGetFinalCombinerInputParameterfvNV( GLenum variable, GLenum pname, GLfloat *params ){}
-void STATE_APIENTRY crStateGetFinalCombinerInputParameterivNV( GLenum variable, GLenum pname, GLfloat *params ){}
-#endif /* 0 */
+void STATE_APIENTRY crStateGetCombinerOutputParameterfvNV( GLenum stage, GLenum portion, GLenum pname, GLfloat *params )
+{
+}
+
+void STATE_APIENTRY crStateGetCombinerOutputParameterivNV( GLenum stage, GLenum portion, GLenum pname, GLint *params )
+{
+}
+
+void STATE_APIENTRY crStateGetFinalCombinerInputParameterfvNV( GLenum variable, GLenum pname, GLfloat *params )
+{
+}
+
+void STATE_APIENTRY crStateGetFinalCombinerInputParameterivNV( GLenum variable, GLenum pname, GLint *params )
+{
+}
 
 
 void STATE_APIENTRY crStateGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params )

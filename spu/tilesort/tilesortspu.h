@@ -20,6 +20,7 @@
 #include "cr_pack.h"
 #include "cr_spu.h"
 #include "cr_threads.h"
+#include "cr_dlm.h"
 
 #include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
@@ -57,19 +58,21 @@ struct context_info_t {
 	CRContext *State;
 	GLint serverContext;   /* returned by server's CreateContext() */
 	WindowInfo *currentWindow;
+	CRDLMContextState *dlmContext; /* display list manager state */
 #ifdef WINDOWS
 	HDC client_hdc;
 #else
 	Display *dpy;
 #endif
 
-	ServerContextInfo *server;  /* array [numServers] of ServerContextInfo */
+	ServerContextInfo *server;  /* array [num_servers] of ServerContextInfo */
 
 	/* Misc per-context tilesort state */
 	GLenum providedBBOX;  /* GL_OBJECT/SCREEN/DEFAULT_BBOX_CR */
 	GLboolean inDrawPixels;
 	int readPixelsCount;   /* for gathering pieces of glReadPixels image */
 	GLboolean everCurrent; /* has this context ever been bound? */
+
 };
 
 /* For DMX */
@@ -108,7 +111,7 @@ struct window_info_t {
 	float halfViewportWidth, halfViewportHeight;
 	void *bucketInfo;          /* private to tilesortspu_bucket.c */
 
-	ServerWindowInfo *server;  /* array [numServers] of ServerWindowInfo */
+	ServerWindowInfo *server;  /* array [num_servers] of ServerWindowInfo */
 
 	GLboolean validRasterOrigin;
 	GLboolean newBackendWindows;
@@ -157,6 +160,10 @@ typedef struct {
 	int id;
 	SPUDispatchTable self;
 
+	/* for display lists */
+	SPUDispatchTable packerDispatch; /* for display list uploads */
+	SPUDispatchTable stateDispatch;  /* for display list state reconciliation */
+
 	/* Threads */
 	int numThreads;
 	ThreadInfo thread[MAX_THREADS];
@@ -178,6 +185,8 @@ typedef struct {
 	int emit_GATHER_POST_SWAPBUFFERS;
 	int useDMX;
 	int retileOnResize;
+	int autoDListBBoxes;
+	int lazySendDLists;
 	TileSortBucketMode defaultBucketMode;
 	unsigned int fakeWindowWidth, fakeWindowHeight;
 
@@ -195,6 +204,8 @@ typedef struct {
 	WarpDisplayInfo *displays;
 
 	CRLimitsState limits;  /* OpenGL limits computed from children */
+
+	CRDLM *dlm;  /* Display list manager */
 } TileSortSPU;
 
 typedef struct {
@@ -262,7 +273,7 @@ void tilesortspuGetNewTiling(WindowInfo *winInfo);
 void tilesortspuComputeMaxViewport( WindowInfo *winInfo );
 void tilesortspuSendTileInfoToServers( WindowInfo *winInfo );
 
-/* tilesortspu_bucket. */
+/* tilesortspu_bucket.c */
 void tilesortspuSetBucketingBounds( WindowInfo *winInfo, int x, int y, unsigned int w, unsigned int h );
 void tilesortspuBucketingInit( WindowInfo *winInfo );
 void tilesortspuBucketGeometry(WindowInfo *winInfo, TileSortBucketInfo *info);
@@ -282,6 +293,59 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 
 /* tilesortspu_get.c */
 const GLubyte *tilesortspuGetExtensionsString(void);
+
+/* tilesortspu_list_gen.c */
+void tilesortspuLoadSortTable(SPUDispatchTable *t);
+void tilesortspuLoadStateTable(SPUDispatchTable *t);
+void tilesortspuLoadPackTable(SPUDispatchTable *t);
+
+/* tilesortspu_lists.c */
+void tilesortspuStateCallList(GLuint list);
+void tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists);
+
+/* tilesortspu_pixels.c */
+void TILESORTSPU_APIENTRY
+tilesortspu_PackBitmap(GLsizei width, GLsizei height,
+											 GLfloat xorig, GLfloat yorig,
+											 GLfloat xmove, GLfloat ymove,
+											 const GLubyte * bitmap);
+void TILESORTSPU_APIENTRY
+tilesortspu_PackDrawPixels(GLsizei width, GLsizei height, GLenum format,
+													 GLenum type, const GLvoid *pixels);
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexImage1D(GLenum target, GLint level,
+													 GLint internalformat, GLsizei width, GLint border,
+													 GLenum format, GLenum type, const GLvoid * pixels);
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexImage2D(GLenum target, GLint level,
+													 GLint internalformat, GLsizei width, GLsizei height,
+													 GLint border,
+													 GLenum format, GLenum type, const GLvoid * pixels);
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexImage3D(GLenum target, GLint level,
+													 GLint internalformat, GLsizei width, GLsizei height,
+													 GLsizei depth, GLint border,
+													 GLenum format, GLenum type, const GLvoid * pixels);
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexImage3DEXT(GLenum target, GLint level,
+															GLenum internalformat, GLsizei width,
+															GLsizei height, GLsizei depth, GLint border,
+															GLenum format, GLenum type,
+															const GLvoid * pixels);
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexSubImage1D(GLenum target, GLint level, GLint xoffset,
+															GLsizei width, GLenum format, GLenum type,
+															const GLvoid *pixels);
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexSubImage2D(GLenum target, GLint level, GLint xoffset,
+															GLint yoffset, GLsizei width, GLsizei height,
+															GLenum format, GLenum type,
+															const GLvoid *pixels);
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexSubImage3D(GLenum target, GLint level, GLint xoffset,
+															GLint yoffset, GLint zoffset, GLsizei width,
+															GLsizei height, GLsizei depth, GLenum format,
+															GLenum type, const GLvoid *pixels);
 
 
 #endif /* TILESORT_SPU_H */

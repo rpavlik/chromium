@@ -143,6 +143,8 @@ header = """
 	}
 
 	if ( pname == GL_CURRENT_INDEX || pname == GL_CURRENT_COLOR ||
+	    pname == GL_CURRENT_SECONDARY_COLOR_EXT ||
+		pname == GL_CURRENT_FOG_COORDINATE_EXT ||
 		pname == GL_CURRENT_NORMAL || pname == GL_EDGE_FLAG ||
 		pname == GL_CURRENT_TEXTURE_COORDS )
 	{

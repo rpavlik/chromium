@@ -27,17 +27,6 @@ typedef struct {
 	CRHashTable *hash;    /* map display list IDs to CRListEffect structs */
 } CRListsState;
 
-/*
- * This structure records the state changes that take place while
- * executing a display list.  At this time we're only tracking changes
- * to the raster pos in order to solve problems with glRasterPos. glBitmap
- * and display lists with the tilesort SPU.
- * The hash table maps display list IDs to these structures.
- */
-typedef struct {
-	GLfloat rasterPosDx, rasterPosDy; /* from glBitmap */
-} CRListEffect;
-
 
 void crStateListsInit(CRContext *ctx);
 void crStateListsDestroy(CRContext *ctx);

@@ -9,6 +9,12 @@
 #include "tilesortspu.h"
 #include "tilesortspu_proto.h"
 
+
+/*
+ * XXX NOTE: This file is not being used at this time.
+ */
+
+
 void TILESORTSPU_APIENTRY tilesortspu_Materiali(GLenum face, GLenum mode, GLint param)
 {
 	GET_CONTEXT(ctx);

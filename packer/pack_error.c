@@ -9,60 +9,63 @@
 #include "cr_environment.h"
 #include "cr_pack.h"
 #include "packer.h"
-#include <stdarg.h>
 
-void crPackErrorHandlerFunc( CRPackContext *pc, CRPackErrorHandlerFunc errf )
+
+/*
+ * Set the error handler callback
+ */
+void crPackErrorFunction( CRPackContext *pc, CRPackErrorHandlerFunc function )
 {
-	pc->Error = errf;
+	pc->Error = function;
 }
 
-void __PackError( int line, const char *file, GLenum error, char *format, ... )
+
+/*
+ * This function is called by the packer functions when it detects and
+ * OpenGL error.
+ */
+void __PackError( int line, const char *file, GLenum error, const char *info)
 {
 	GET_PACKER_CONTEXT(pc);
-	char errstr[8096];
-	va_list args;
 
 	if (pc->Error)
-		pc->Error( error );
+		pc->Error( line, file, error, info );
 
 	if (crGetenv("CR_DEBUG"))
 	{
 		char *glerr;
-		va_start( args, format );
-		vsprintf( errstr, format, args );
-		va_end( args );
 
 		switch (error) {
 		case GL_NO_ERROR:
 			glerr = "GL_NO_ERROR";
-	    		break;
+			break;
 		case GL_INVALID_VALUE:
-	    		glerr = "GL_INVALID_VALUE";
-	    		break;
+			glerr = "GL_INVALID_VALUE";
+			break;
 		case GL_INVALID_ENUM:
-	    		glerr = "GL_INVALID_ENUM";
-	    		break;
+			glerr = "GL_INVALID_ENUM";
+			break;
 		case GL_INVALID_OPERATION:
-	    		glerr = "GL_INVALID_OPERATION";
-	    		break;
+			glerr = "GL_INVALID_OPERATION";
+			break;
 		case GL_STACK_OVERFLOW:
-	    		glerr = "GL_STACK_OVERFLOW";
-	    		break;
+			glerr = "GL_STACK_OVERFLOW";
+			break;
 		case GL_STACK_UNDERFLOW:
-	    		glerr = "GL_STACK_UNDERFLOW";
-	    		break;
+			glerr = "GL_STACK_UNDERFLOW";
+			break;
 		case GL_OUT_OF_MEMORY:
-	    		glerr = "GL_OUT_OF_MEMORY";
-	    		break;
+			glerr = "GL_OUT_OF_MEMORY";
+			break;
 		case GL_TABLE_TOO_LARGE:
 			glerr = "GL_TABLE_TOO_LARGE";
 			break;
 		default:
-	    		glerr = "unknown";
-	    		break;
+			glerr = "unknown";
+			break;
 		}
 
 		crWarning( "GL error in packer: %s, line %d: %s: %s",
-						 file, line, glerr, errstr );
+						 file, line, glerr, info );
 	}
 }

@@ -24,7 +24,7 @@ impossible to achieve.  This section describes the ways in which
 Chromium differs from OpenGL.
 </p>
 
-<h2 class="PageSubHeading">Core OpenGL</h2>
+<h2 class="PageSubHeading">Conformance Issues</h2>
 
 <p>
 The following OpenGL features are not implemented in Chromium at this
@@ -33,17 +33,43 @@ time:
 <ul>
 <li>OpenGL 1.2 imaging functions related to histogram, min/max,
 convolution and colortables.</li>
-<li>To support Feedback & Selection, you need to use the feedbackSPU. If you don't these features won't be implemented in your configuration.</li>
+<li>To support Feedback & Selection, you need to use the feedbackSPU.
+If you don't, these features won't work.</li>
 </ul>
 
 <p>
-Display lists aren't completely conformant.  The problem is that state
-changes contained in display lists aren't visible to the state
-tracker.  A concrete example of this problem is text rendering.
+Display lists aren't fully conformant.  There are several issues:
+</p>
+
+<ul>
+<li>When using the tilesort SPU, glCopyTexImage (and similar) commands
+can't be implemented correctly since the framebuffer is tiled and the
+individual renderers can't access their peers.
+</li>
+<li>GL_COMPILE_AND_EXECUTE mode may not work reliably, specifically
+if there is a glGet* call between glNewList and glEndList which gets
+state that was set by a previous command compiled/executed inside the
+display list.
+</li>
+</ul>
+
+<p>
+glReadPixels and glCopyPixels may not work correctly when using a
+tilesort configuration.  Since the mural size usually doesn't match
+the original window size, there may be any number of inconsistences
+between what's drawn with glDrawPixels and what's seen on-screen,
+for example.
 </p>
 <p>
-This display list problem should be addressed in the future.
+Similarly, glReadPixels may not return the expected results.  For
+example, if the application window is 600x400 and you try to read
+back the entire 600x400 window, but you're using a tilesort config
+with a mural size of 2000x1500, you won't get back the whole image.
 </p>
+
+
+<h2 class="PageSubHeading">Conformance Test Results</h2>
+
 <p>
 Here are the results of running the OpenGL conformance tests with
 the tilesort SPU (1 tile, 100x100 pixels) with comments explaining

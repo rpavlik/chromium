@@ -52,7 +52,7 @@ CRDLL *crDLLOpen( const char *dllname, int resolveGlobal )
 		{
 			crDebug( "DLL_ERROR: %s", dll_err );
 		}
-		crError( "DLL Loader couldn't find %s", dllname );
+		crError( "DLL Loader couldn't find/open %s", dllname );
 	}
 	return dll;
 }

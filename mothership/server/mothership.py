@@ -523,6 +523,7 @@ class CR:
 	    do_quit: 		Disconnects from clients.
 	    do_reset: 		Resets the mothership to its initial state.
 	    do_server:		Identifies the server in the graph.
+	    do_newserver:	Identifies a new server for replication.
 	    do_serverids:	Sends the list of server IDs.
 	    do_serverparam:	Sends the given server parameter.
 	    do_fakerparam:	Sends the given app faker parameter.
@@ -874,6 +875,11 @@ class CR:
 					return
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
 
+	def do_newserver( self, sock, args ):
+		"""do_newserver(sock, args)
+		Identifies a new server for replication. """
+		sock.Success( "1 1 render" )
+
 	def do_crutproxy( self, sock, args ):
 		CRDebug ( " Seeing if we have a crutproxy." )
 		"""do_crutserver(sock, args)
@@ -1211,6 +1217,11 @@ class CR:
 			if i != len(node.tiles_on_displays) - 1:
 				tiles += ","
 		sock.Success( tiles )
+
+	def do_newclients( self, sock, args ):
+		"""do_clients(sock, args)
+		Sends the list of new clients to a server."""
+		sock.Success( "1 tcpip 0" )
 
 	def do_clients( self, sock, args ):
 		"""do_clients(sock, args)

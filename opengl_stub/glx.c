@@ -353,7 +353,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 			vis = stub.wsInterface.glXChooseVisual(dpy, screen, attribList);
 			if (vis)
 			{
-				crDebug("faker native glXChooseVisual returning visual 0x%x\n",
+				crDebug("faker native glXChooseVisual returning visual 0x%x",
 								(int) vis->visualid);
 				/* successful glXChooseVisual, so clear ours */
 				stub.desiredVisual = FindVisualInfo(dpy, vis);
@@ -365,7 +365,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 	vis = ReasonableVisual( dpy, screen );
 	if (vis)
 	{
-		crDebug("faker glXChooseVisual returning visual 0x%x\n",
+		crDebug("faker glXChooseVisual returning visual 0x%x",
 						(int) vis->visualid);
 	}
 	return vis;

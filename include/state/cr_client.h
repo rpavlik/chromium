@@ -79,6 +79,12 @@ typedef struct {
 #ifdef CR_NV_vertex_program
 	CRClientPointer a[CR_MAX_VERTEX_ATTRIBS];  /* vertex attribs */
 #endif
+#ifdef CR_NV_vertex_array_range
+	GLboolean arrayRange;
+	GLboolean arrayRangeValid;
+	void *arrayRangePointer;
+	GLuint arrayRangeLength;
+#endif
 } CRVertexArrays;
 
 typedef struct {
@@ -105,6 +111,8 @@ typedef struct {
 	GLint vertexArrayStackDepth;
 	CRVertexArrays vertexArrayStack[CR_MAX_CLIENT_ATTRIB_STACK_DEPTH];
 } CRClientState;
+
+extern const CRPixelPackState crStateNativePixelPacking;
 
 void crStateClientInitBits(CRClientBits *c);
 void crStateClientInit(CRClientState *c);

@@ -9,6 +9,7 @@
 
 /* perror() messages */
 #define INIT_TSD_ERROR "InitTSD: failed to allocate key"
+#define FREE_TSD_ERROR "FreeTSD: failed to destroy key"
 #define SET_TSD_ERROR "InitTSD: thread failed to set thread specific data"
 #define GET_TSD_ERROR "InitTSD: failed to get thread specific data"
 
@@ -17,7 +18,7 @@
 
 
 /* Initialize a CRtsd */
-void crInitTSD(CRtsd *tsd)
+void crInitTSDF(CRtsd *tsd, void (*destructor)(void *))
 {
 #ifdef WINDOWS
 	tsd->key = TlsAlloc();
@@ -25,14 +26,33 @@ void crInitTSD(CRtsd *tsd)
 		crError("crInitTSD failed!");
 	}
 #else
-	if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
+	if (pthread_key_create(&tsd->key, destructor) != 0) {
 		perror(INIT_TSD_ERROR);
 		crError("crInitTSD failed!");
 	}
 #endif
 	tsd->initMagic = INIT_MAGIC;
 }
+void crInitTSD(CRtsd *tsd)
+{
+    crInitTSDF(tsd, NULL);
+}
 
+void crFreeTSD(CRtsd *tsd)
+{
+#ifdef WINDOWS
+	/* Windows returns true on success, 0 on failure */
+	if (TlsFree(tsd->key) == 0) {
+		crError("crFreeTSD failed!");
+	}
+#else
+	if (pthread_key_delete(tsd->key) != 0) {
+		perror(FREE_TSD_ERROR);
+		crError("crFreeTSD failed!");
+	}
+#endif
+	tsd->initMagic = 0x0;
+}
 
 /* Set thread-specific data */
 void crSetTSD(CRtsd *tsd, void *ptr)

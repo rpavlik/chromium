@@ -19,6 +19,7 @@ REGULAR_FILES = state_attrib \
 	state_error \
 	state_evaluators \
 	state_feedback \
+	state_fence \
 	state_flush \
 	state_fog \
 	state_get \
@@ -120,55 +121,55 @@ state.def: state_defs.py state_special state_select_special state_feedback_speci
 	@$(ECHO) Making cr_statefuncs.h
 	@$(PYTHON) state_funcs.py > $@
 
-state_buffer_gen.c: state_buffer.txt gendiffcode.pl
+state_buffer_gen.c: state_buffer.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl buffer Buffer > $@
+	@$(PYTHON) gendiffcode.py buffer Buffer > $@
 
-state_client_gen.c: state_client.txt gendiffcode.pl
+state_client_gen.c: state_client.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl client Client > $@
+	@$(PYTHON) gendiffcode.py client Client > $@
 
 state_current_gen.c: state_current.py convert.py
 	@$(ECHO) Making $@
 	@$(PYTHON) state_current.py > $@
 
-state_fog_gen.c: state_fog.txt gendiffcode.pl
+state_fog_gen.c: state_fog.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl fog Fog > $@
+	@$(PYTHON) gendiffcode.py fog Fog > $@
 
-state_hint_gen.c: state_hint.txt gendiffcode.pl
+state_hint_gen.c: state_hint.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl hint Hint > $@
+	@$(PYTHON) gendiffcode.py hint Hint > $@
 
-state_lighting_gen.c: state_lighting.txt gendiffcode.pl
+state_lighting_gen.c: state_lighting.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl lighting Lighting > $@
+	@$(PYTHON) gendiffcode.py lighting Lighting > $@
 
-state_line_gen.c: state_line.txt gendiffcode.pl
+state_line_gen.c: state_line.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl line Line > $@
+	@$(PYTHON) gendiffcode.py line Line > $@
 
-state_multisample_gen.c: state_multisample.txt gendiffcode.pl
+state_multisample_gen.c: state_multisample.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl multisample Multisample >$@
+	@$(PYTHON) gendiffcode.py multisample Multisample >$@
 
-state_point_gen.c: state_point.txt gendiffcode.pl
+state_point_gen.c: state_point.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl point Point > $@
+	@$(PYTHON) gendiffcode.py point Point > $@
 
-state_polygon_gen.c: state_polygon.txt gendiffcode.pl
+state_polygon_gen.c: state_polygon.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl polygon Polygon > $@
+	@$(PYTHON) gendiffcode.py polygon Polygon > $@
 
-state_regcombiner_gen.c: state_regcombiner.txt gendiffcode.pl
+state_regcombiner_gen.c: state_regcombiner.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl regcombiner RegCombiner > $@
+	@$(PYTHON) gendiffcode.py regcombiner RegCombiner > $@
 
-state_stencil_gen.c: state_stencil.txt gendiffcode.pl
+state_stencil_gen.c: state_stencil.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl stencil Stencil > $@
+	@$(PYTHON) gendiffcode.py stencil Stencil > $@
 
-state_viewport_gen.c: state_viewport.txt gendiffcode.pl
+state_viewport_gen.c: state_viewport.txt gendiffcode.py
 	@$(ECHO) Making $@
-	@$(PERL) gendiffcode.pl viewport Viewport > $@
+	@$(PYTHON) gendiffcode.py viewport Viewport > $@
 

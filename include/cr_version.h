@@ -25,6 +25,7 @@
 #define CR_OPENGL_VERSION_1_0 1
 #define CR_OPENGL_VERSION_1_1 1
 #define CR_OPENGL_VERSION_1_2 1
+#define CR_OPENGL_VERSION_1_2_1 1
 #define CR_OPENGL_VERSION_1_3 1
 #define CR_OPENGL_VERSION_1_4 1
 
@@ -57,6 +58,7 @@
 #define CR_ARB_window_pos 1
 
 #define CR_EXT_blend_color 1
+#define CR_EXT_blend_equation 1
 #define CR_EXT_blend_minmax 1
 #define CR_EXT_blend_logic_op 1
 #define CR_EXT_blend_subtract 1

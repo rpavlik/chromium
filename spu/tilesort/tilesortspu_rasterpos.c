@@ -12,47 +12,10 @@
 static void
 rasterpos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w) 
 {
-	GET_CONTEXT(g);
-
-	GLboolean haveRasterPosClip = g->extensions.IBM_rasterpos_clip;
-
-	if (haveRasterPosClip) {
-		int save;
-		GET_THREAD(thread);
-
-		tilesortspuFlush( thread );
-
-		save = thread->geometry_buffer.geometry_only;
-		thread->geometry_buffer.geometry_only = GL_FALSE;
-
-		/* Broadcast the raster pos update */
-		if (tilesort_spu.swap)
-		{
-			crPackEnableSWAP(GL_RASTER_POSITION_UNCLIPPED_IBM);
-			crPackRasterPos4fSWAP( x, y, z, w );
-			crPackDisableSWAP(GL_RASTER_POSITION_UNCLIPPED_IBM);
-		}
-		else
-		{
-			crPackEnable(GL_RASTER_POSITION_UNCLIPPED_IBM);
-			crPackRasterPos4f( x, y, z, w );
-			crPackDisable(GL_RASTER_POSITION_UNCLIPPED_IBM);
-		}
-		tilesortspuBroadcastGeom(1);
-
-		thread->geometry_buffer.geometry_only = save;
-
-		/* Need to update state tracker's current raster info, but don't set
-		 * dirty bits!
-		 */
-		crStateRasterPosUpdate(x, y, z, w);
-	}
-	else {
-		/* We can't disable raster pos clipping on the back-end.
-		 * Use the old window-pos/bitmap method.
-		 */
-		crStateRasterPos4f(x, y, z, w); /* DO set dirty state */
-	}
+	/* We can't disable raster pos clipping on the back-end.
+	 * Use the old window-pos/bitmap method.
+	 */
+	crStateRasterPos4f(x, y, z, w); /* DO set dirty state */
 }
 
 

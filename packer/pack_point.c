@@ -27,8 +27,11 @@ static GLboolean __handlePointDataf( GLenum pname, const GLfloat *params )
 			params_length = 3 * sizeof( *params );
 			break;
 		default:
-			__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
-									 "Invalid pname in PointParameter: %d", pname );
+			{
+				char msg[100];
+				sprintf(msg, "Invalid pname in PointParameter: %d", pname );
+				__PackError( __LINE__, __FILE__, GL_INVALID_ENUM, msg);
+			}								 
 			return GL_FALSE;
 	}
 	packet_length += params_length;
@@ -72,8 +75,11 @@ static GLboolean __handlePointDatai( GLenum pname, const GLint *params )
 			params_length = 3 * sizeof( *params );
 			break;
 		default:
-			__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
-									 "Invalid pname in PointParameter: %d", pname );
+			{
+				char msg[100];
+				sprintf(msg, "Invalid pname in PointParameter: %d", pname );
+				__PackError( __LINE__, __FILE__, GL_INVALID_ENUM, msg);
+			}
 			return GL_FALSE;
 	}
 	packet_length += params_length;

@@ -27,7 +27,6 @@ CompressedTexSubImage2DARB
 CompressedTexSubImage3DARB
 DeleteFencesNV
 DeleteProgramsARB
-DeleteProgramsNV
 DisableVertexAttribArrayARB
 EnableVertexAttribArrayARB
 ExecuteProgramNV
@@ -75,7 +74,6 @@ GetVertexAttribPointervARB
 GetVertexAttribPointervNV
 IsFenceNV
 IsProgramARB
-IsProgramNV
 LoadProgramNV
 MultiDrawArraysEXT
 MultiDrawElementsEXT

@@ -12,7 +12,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-void crStateError( int line, char *file, GLenum error, char *format, ... )
+void crStateError( int line, const char *file, GLenum error, const char *format, ... )
 {
 	CRContext *g = GetCurrentContext();
 	char errstr[8096];
@@ -30,35 +30,35 @@ void crStateError( int line, char *file, GLenum error, char *format, ... )
 		switch (error) {
 		case GL_NO_ERROR:
 			glerr = "GL_NO_ERROR";
-	    		break;
+			break;
 		case GL_INVALID_VALUE:
-	    		glerr = "GL_INVALID_VALUE";
-	    		break;
+			glerr = "GL_INVALID_VALUE";
+			break;
 		case GL_INVALID_ENUM:
-	    		glerr = "GL_INVALID_ENUM";
-	    		break;
+			glerr = "GL_INVALID_ENUM";
+			break;
 		case GL_INVALID_OPERATION:
-	    		glerr = "GL_INVALID_OPERATION";
-	    		break;
+			glerr = "GL_INVALID_OPERATION";
+			break;
 		case GL_STACK_OVERFLOW:
-	    		glerr = "GL_STACK_OVERFLOW";
-	    		break;
+			glerr = "GL_STACK_OVERFLOW";
+			break;
 		case GL_STACK_UNDERFLOW:
-	    		glerr = "GL_STACK_UNDERFLOW";
-	    		break;
+			glerr = "GL_STACK_UNDERFLOW";
+			break;
 		case GL_OUT_OF_MEMORY:
-	    		glerr = "GL_OUT_OF_MEMORY";
-	    		break;
+			glerr = "GL_OUT_OF_MEMORY";
+			break;
 		case GL_TABLE_TOO_LARGE:
 			glerr = "GL_TABLE_TOO_LARGE";
 			break;
 		default:
-	    		glerr = "unknown";
-	    		break;
+			glerr = "unknown";
+			break;
 		}
 
 		crWarning( "OpenGL error in %s, line %d: %s: %s\n",
-						 file, line, glerr, errstr );
+							 file, line, glerr, errstr );
 	}
 }
 

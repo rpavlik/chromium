@@ -2,6 +2,12 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
+NewList
+EndList
+CallList
+CallLists
+ListBase
+DeleteLists
 Accum
 Begin
 Clear
@@ -26,14 +32,6 @@ Rectiv
 Rects
 Rectsv
 Bitmap
-NewList
-EndList
-CallList
-CallLists
-Materialf
-Materiali
-Materialfv
-Materialiv
 BarrierCreateCR
 BarrierExecCR
 BarrierDestroyCR

@@ -40,7 +40,7 @@ void crMothershipDisconnect( CRConnection *conn )
 	crFree( conn );
 }
 
-int crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... )
+int crMothershipSendString( CRConnection *conn, char *response_buf, const char *str, ... )
 {
 	va_list args;
 	static char txt[8092];

@@ -37,6 +37,8 @@ typedef struct {
 
 
 extern void crInitTSD(CRtsd *tsd);
+extern void crInitTSDF(CRtsd *tsd, void (*destructor)(void *));
+extern void crFreeTSD(CRtsd *tsd);
 extern void crSetTSD(CRtsd *tsd, void *ptr);
 extern void *crGetTSD(CRtsd *tsd);
 extern unsigned long crThreadID(void);

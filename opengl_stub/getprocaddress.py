@@ -57,7 +57,39 @@ bonus_functions = [
 	"crWindowDestroy",
 	"crWindowSize",
 	"crWindowPosition",
-	"crWindowShow"
+	"crWindowShow",
+	"glColorTable",
+	"glColorTableParameterfv",
+	"glColorTableParameteriv",
+	"glCopyColorTable",
+	"glGetColorTable",
+	"glGetColorTableParameterfv",
+	"glGetColorTableParameteriv",
+	"glColorSubTable",
+	"glCopyColorSubTable",
+	"glConvolutionFilter1D",
+	"glConvolutionFilter2D",
+	"glConvolutionParameterf",
+	"glConvolutionParameterfv",
+	"glConvolutionParameteri",
+	"glConvolutionParameteriv",
+	"glCopyConvolutionFilter1D",
+	"glCopyConvolutionFilter2D",
+	"glGetConvolutionFilter",
+	"glGetConvolutionParameterfv",
+	"glGetConvolutionParameteriv",
+	"glGetSeparableFilter",
+	"glSeparableFilter2D",
+	"glGetHistogram",
+	"glGetHistogramParameterfv",
+	"glGetHistogramParameteriv",
+	"glGetMinmax",
+	"glGetMinmaxParameterfv",
+	"glGetMinmaxParameteriv",
+	"glHistogram",
+	"glMinmax",
+	"glResetHistogram",
+	"glResetMinmax"
 ]
 
 for func_name in keys:
@@ -66,10 +98,22 @@ for func_name in keys:
 	if stub_common.FindSpecial( "getprocaddress", func_name ):
 		print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) stub_%s;' % ( func_name, func_name )
 		continue
-	print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( func_name, func_name )
+	ext_define = alias_exports.ExtDefine( func_name )
+	if ext_define:
+		print '#if defined(CR_%s)' % ext_define 
+		print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( func_name, func_name )
+		print '#endif'
+	else:
+		print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( func_name, func_name )
 	real_func_name = alias_exports.AliasMap( func_name )
+	gl_version = alias_exports.GLversion( func_name )
 	if real_func_name:
-		print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( real_func_name, func_name )
+		if gl_version:
+			print '#if defined(%s)' % gl_version
+			print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( real_func_name, func_name )
+			print '#endif'
+		else:
+			print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( real_func_name, func_name )
 
 for func_name in bonus_functions:
 	print '\tif (!crStrcmp( name, "%s" )) return (CR_PROC) %s;' % ( func_name, func_name )

@@ -12,11 +12,15 @@
 #include "tilesortspu_proto.h"
 #include "cr_pixeldata.h"
 #include "cr_mem.h"
+#include "cr_dlm.h"
+
 
 /*
- * Execute glDrawPixels().
+ * Execute glDrawPixels().  Immediate mode only.
  */
-static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+void TILESORTSPU_APIENTRY
+tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
+											 GLenum type, const GLvoid *pixels)
 {
 	GET_CONTEXT(ctx);
 	CRCurrentState *c = &(ctx->current);
@@ -27,6 +31,8 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 	GLint zoomedHeight = (GLint) (height * ctx->pixel.yZoom + 0.5);
 
 	(void) v;
+
+	CRASSERT(ctx->lists.mode == 0);
 
 	if (c->inBeginEnd)
 	{
@@ -86,7 +92,10 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 	 */
 
 	thread->currentContext->inDrawPixels = GL_TRUE;
-	crPackDrawPixels (width, height, format, type, pixels, &(ctx->client.unpack));
+	if (tilesort_spu.swap)
+		 crPackDrawPixelsSWAP(width, height, format, type, pixels, &(ctx->client.unpack));
+	else
+	crPackDrawPixels(width, height, format, type, pixels, &(ctx->client.unpack));
 
 	if (thread->packer->buffer.data_current != thread->packer->buffer.data_start)
 	{
@@ -99,35 +108,24 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 
 
 /*
- * glDrawPixels entry point.  We'll either execute DrawPixels, compile it
- * into the display list, or both.
- * We can't just call the crPackDrawPixels() function from the dispatch table
- * since it requires a pixel-unpacking argument.
+ * Wrapper for crPackDrawPixels to provide the unpacking state.
  */
-void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+void TILESORTSPU_APIENTRY
+tilesortspu_PackDrawPixels(GLsizei width, GLsizei height, GLenum format,
+													 GLenum type, const GLvoid *pixels)
 {
-	GET_CONTEXT(ctx);
-
-	if (ctx->lists.mode == 0 || ctx->lists.mode == GL_COMPILE_AND_EXECUTE)
-	{
-		/* execute */
-		tilesortspu_exec_DrawPixels(width, height, format, type, pixels);
-	}
-	if (ctx->lists.mode != 0)
-	{
-		/* compile into display list */
-		if (tilesort_spu.swap)
-		{
-			crPackDrawPixelsSWAP(width, height, format, type, pixels, &(ctx->client.unpack));
-		}
-		else
-		{
-			crPackDrawPixels(width, height, format, type, pixels, &(ctx->client.unpack));
-		}
-	}
+	if (tilesort_spu.swap)
+		 crPackDrawPixelsSWAP(width, height, format, type, pixels,
+													&crStateNativePixelPacking);
+	else
+		 crPackDrawPixels(width, height, format, type, pixels,
+											&crStateNativePixelPacking);
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
+
+void TILESORTSPU_APIENTRY
+tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+											 GLenum format, GLenum type, GLvoid *pixels)
 {
 	GET_CONTEXT(ctx);
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
@@ -401,13 +399,13 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 
 
 /*
- * Execute glBitmap.
+ * Execute glBitmap.  Immediate mode only.
  */
-static void tilesortspu_exec_Bitmap( 
-		GLsizei width, GLsizei height,
-		GLfloat xorig, GLfloat yorig,
-		GLfloat xmove, GLfloat ymove,
-		const GLubyte * bitmap) 
+void TILESORTSPU_APIENTRY
+tilesortspu_Bitmap(GLsizei width, GLsizei height,
+									 GLfloat xorig, GLfloat yorig,
+									 GLfloat xmove, GLfloat ymove,
+									 const GLubyte * bitmap)
 {
 	GET_CONTEXT(ctx);
 	CRCurrentState *c = &(ctx->current);
@@ -415,6 +413,8 @@ static void tilesortspu_exec_Bitmap(
 	GLfloat screen_bbox[8];
 	GLenum hint;
 	GLfloat xmove2, ymove2;
+
+	CRASSERT(ctx->lists.mode == 0);
 
 	if (!c->rasterValid)
 	{
@@ -474,16 +474,8 @@ static void tilesortspu_exec_Bitmap(
 	hint = thread->currentContext->providedBBOX;
 	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
 
-	if (ctx->extensions.IBM_rasterpos_clip) {
-		/* send delta with the bitmap command */
-		xmove2 = xmove;
-		ymove2 = ymove;
-	}
-	else {
-		/* don't send the delta, we'll just record it later */
-		xmove2 = 0;
-		ymove2 = 0;
-	}
+	xmove2 = 0;
+	ymove2 = 0;
 
 	if (tilesort_spu.swap)
 	{
@@ -496,55 +488,31 @@ static void tilesortspu_exec_Bitmap(
 
 	tilesortspuFlush( thread );
 
-	if (ctx->extensions.IBM_rasterpos_clip) {
-		/* update our local notion of the raster pos, but don't set dirty state */
-		ctx->current.rasterAttrib[VERT_ATTRIB_POS][0] += xmove;
-		ctx->current.rasterAttrib[VERT_ATTRIB_POS][1] += ymove;
-	}
-	else {
-		/* update state and set dirty flag */
-		crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
-	}
+	/* update state and set dirty flag */
+	crStateBitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 
 	thread->currentContext->providedBBOX = hint;
 }
 
 
 /*
- * glBitmap entry point.  We'll either execute Bitmap, compile it
- * into the display list, or both.
- * We can't just call the crPackBitmap() function from the dispatch table
- * since it requires a pixel-unpacking argument.
+ * Wrapper for crPackBitmap in order to provide the unpacking state.
+ * This will be called by the DLM when we're sending a display list
+ * to the server.  Note that pixel unpacking will have already occured
+ * and the image will be packed according to crStateNativePixelPacking.
  */
-void TILESORTSPU_APIENTRY tilesortspu_Bitmap( 
-		GLsizei width, GLsizei height,
-		GLfloat xorig, GLfloat yorig,
-		GLfloat xmove, GLfloat ymove,
-		const GLubyte * bitmap)
+void TILESORTSPU_APIENTRY
+tilesortspu_PackBitmap(GLsizei width, GLsizei height,
+											 GLfloat xorig, GLfloat yorig,
+											 GLfloat xmove, GLfloat ymove,
+											 const GLubyte * bitmap)
 {
-	GET_CONTEXT(ctx);
-
-	if (ctx->lists.mode == 0 || ctx->lists.mode == GL_COMPILE_AND_EXECUTE)
-	{
-		/* execute */
-		tilesortspu_exec_Bitmap(width, height, xorig, yorig, xmove, ymove, bitmap);
-	}
-	if (ctx->lists.mode != 0)
-	{
-		/* compile into display list */
-		CRListEffect *effect = crHashtableSearch(ctx->lists.hash, ctx->lists.currentIndex);
-		CRASSERT(effect);
-		effect->rasterPosDx += xmove;
-		effect->rasterPosDy += ymove;
-		if (tilesort_spu.swap)
-		{
-			crPackBitmapSWAP(width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack));
-		}
-		else
-		{
-			crPackBitmap(width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack));
-		}
-	}
+	if (tilesort_spu.swap)
+		crPackBitmapSWAP(width, height, xorig, yorig, xmove, ymove, bitmap,
+										 &crStateNativePixelPacking);
+	else
+		crPackBitmap(width, height, xorig, yorig, xmove, ymove, bitmap,
+								 &crStateNativePixelPacking);
 }
 
 
@@ -795,4 +763,112 @@ void TILESORTSPU_APIENTRY tilesortspu_PixelMapusv (GLenum map, GLint mapsize, co
 	tilesortspuBroadcastGeom(1);
 }
 
+
+/*
+ * Wrappers for crPackTexImage?D to provide the unpack parameter.
+ * Note, this is called from the DLM which has already-unpacked images.
+ */
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexImage1D(GLenum target, GLint level,
+													 GLint internalformat, GLsizei width, GLint border,
+													 GLenum format, GLenum type, const GLvoid * pixels)
+{
+	if (tilesort_spu.swap)
+		crPackTexImage1DSWAP(target, level, internalformat, width, border,
+												 format, type, pixels, &crStateNativePixelPacking);
+	else
+		crPackTexImage1D(target, level, internalformat, width, border,
+										 format, type, pixels, &crStateNativePixelPacking);
+}
+
+
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexImage2D(GLenum target, GLint level,
+													 GLint internalformat, GLsizei width, GLsizei height,
+													 GLint border,
+													 GLenum format, GLenum type, const GLvoid * pixels)
+{
+	if (tilesort_spu.swap)
+		crPackTexImage2DSWAP(target, level, internalformat, width, height, border,
+												 format, type, pixels, &crStateNativePixelPacking);
+	else
+		crPackTexImage2D(target, level, internalformat, width, height, border,
+										 format, type, pixels, &crStateNativePixelPacking);
+}
+
+
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexImage3D(GLenum target, GLint level,
+													 GLint internalformat, GLsizei width, GLsizei height,
+													 GLsizei depth, GLint border,
+													 GLenum format, GLenum type, const GLvoid * pixels)
+{
+	if (tilesort_spu.swap)
+		crPackTexImage3DSWAP(target, level, internalformat, width, height, depth,
+												 border, format, type, pixels, &crStateNativePixelPacking);
+	else
+		crPackTexImage3D(target, level, internalformat, width, height, depth,
+										 border, format, type, pixels, &crStateNativePixelPacking);
+}
+
+
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexImage3DEXT(GLenum target, GLint level,
+															GLenum internalformat, GLsizei width,
+															GLsizei height, GLsizei depth, GLint border,
+															GLenum format, GLenum type,
+															const GLvoid * pixels)
+{
+	if (tilesort_spu.swap)
+		crPackTexImage3DEXTSWAP(target, level, internalformat, width, height, depth,
+														border, format, type, pixels, &crStateNativePixelPacking);
+	else
+		crPackTexImage3DEXT(target, level, internalformat, width, height, depth,
+												border, format, type, pixels, &crStateNativePixelPacking);
+}
+
+
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexSubImage1D(GLenum target, GLint level, GLint xoffset,
+															GLsizei width, GLenum format, GLenum type,
+															const GLvoid *pixels)
+{
+	if (tilesort_spu.swap)
+		crPackTexSubImage1DSWAP(target, level, xoffset, width,
+														format, type, pixels, &crStateNativePixelPacking);
+	else
+		crPackTexSubImage1D(target, level, xoffset, width,
+												format, type, pixels, &crStateNativePixelPacking);
+}
+
+
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexSubImage2D(GLenum target, GLint level, GLint xoffset,
+															GLint yoffset, GLsizei width, GLsizei height,
+															GLenum format, GLenum type, const GLvoid *pixels)
+{
+	if (tilesort_spu.swap)
+		crPackTexSubImage2DSWAP(target, level, xoffset, yoffset, width, height,
+														format, type, pixels, &crStateNativePixelPacking);
+	else
+		crPackTexSubImage2D(target, level, xoffset, yoffset, width, height,
+												format, type, pixels, &crStateNativePixelPacking);
+}
+
+
+void TILESORTSPU_APIENTRY
+tilesortspu_PackTexSubImage3D(GLenum target, GLint level, GLint xoffset,
+															GLint yoffset, GLint zoffset, GLsizei width,
+															GLsizei height, GLsizei depth, GLenum format,
+															GLenum type, const GLvoid *pixels)
+{
+	if (tilesort_spu.swap)
+		crPackTexSubImage3DSWAP(target, level, xoffset, yoffset, zoffset, width,
+														height, depth, format, type, pixels,
+														&crStateNativePixelPacking);
+	else
+		crPackTexSubImage3D(target, level, xoffset, yoffset, zoffset, width,
+												height, depth, format, type, pixels,
+												&crStateNativePixelPacking);
+}
 

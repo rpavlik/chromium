@@ -91,14 +91,6 @@ void crUnpackExtendLoadProgramNV(void)
 }
 
 
-void crUnpackExtendDeleteProgramsNV(void)
-{
-	GLsizei n = READ_DATA( 8, GLsizei );
-	crError( "DeleteProgramsNV needs to be special cased!" );
-	cr_unpackDispatch.DeleteProgramsNV( n, NULL );
-}
-
-
 void crUnpackExtendExecuteProgramNV(void)
 {
 	GLenum target = READ_DATA( 8, GLenum );

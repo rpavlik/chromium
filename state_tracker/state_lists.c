@@ -30,7 +30,6 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 {
 	CRContext *g = GetCurrentContext();
 	CRListsState *l = &(g->lists);
-	CRListEffect *effect;
 
 	if (g->current.inBeginEnd)
 	{
@@ -65,8 +64,6 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 
 	l->currentIndex = list;
 	l->mode = mode;
-	effect = crCalloc(sizeof(CRListEffect));
-	crHashtableAdd(l->hash, list, effect);
 }
 
 void STATE_APIENTRY crStateEndList (void) 

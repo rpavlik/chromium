@@ -24,6 +24,7 @@ __setDefaults(void)
 
 	if (!cr_server.tcpip_port)
 		cr_server.tcpip_port = 7000;
+	cr_server.run_queue = NULL;
 	cr_server.optimizeBucket = 1;
 	cr_server.useL2 = 0;
 	cr_server.maxBarrierCount = 0;
@@ -66,6 +67,7 @@ crServerGatherConfiguration(char *mothership)
 	int high_context = CR_QUADRICS_DEFAULT_HIGH_CONTEXT;
 	char *low_node = "none";
 	char *high_node = "none";
+	char *newserver = NULL;
 
 	char **clientchain, **clientlist;
 	int numClients;
@@ -88,8 +90,20 @@ crServerGatherConfiguration(char *mothership)
 			("Couldn't connect to the mothership -- I have no idea what to do!");
 	}
 
+	newserver = crGetenv("CRNEWSERVER");
+
 	/* The response will tell which SPUs to load */
-	crMothershipIdentifyServer(conn, response);
+	if (newserver) {
+		char hostname[1024];
+		if ( crGetHostname( hostname, sizeof(hostname) ) )
+		{
+			crError( "Couldn't get my own hostname?" );
+		}
+		if (!crMothershipSendString( conn, response, "newserver %s", hostname ))
+			crError( "Bad Mothership response: %s", response );
+	} else {
+		crMothershipIdentifyServer(conn, response);
+	}
 
 	spuchain = crStrSplit(response, " ");
 	num_spus = crStrToInt(spuchain[0]);
@@ -260,7 +274,16 @@ crServerGatherConfiguration(char *mothership)
 	/* The response will tell us what protocols we need to serve 
 	 * example: "3 tcpip 1,gm 2,via 10" */
 
-	crMothershipGetClients(conn, response);
+	if (newserver) {
+		char hostname[1024];
+		if ( crGetHostname( hostname, sizeof(hostname) ) )
+		{
+			crError( "Couldn't get my own hostname?" );
+		}
+		if (!crMothershipSendString( conn, response, "newclients %s", hostname ))
+			crError( "Bad Mothership response: %s", response );
+	} else
+		crMothershipGetClients(conn, response);
 
 	clientchain = crStrSplitn(response, " ", 1);
 	numClients = crStrToInt(clientchain[0]);

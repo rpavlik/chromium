@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <stdio.h>
 
+#include "cr_environment.h"
 #include "cr_mothership.h"
 #include "cr_error.h"
 #include "cr_string.h"
@@ -383,6 +384,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	XClassHint          *class_hints = NULL;
 	char                *name;
 	unsigned long        flags;
+	unsigned int vncWin;
 
 	CRASSERT(visual);
 	window->visual = visual;
@@ -467,11 +469,32 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		/* destroy the old one */
 		XDestroyWindow( dpy, window->window );
 	}
-	window->window =
-        XCreateWindow( dpy, RootWindow( dpy, visual->visual->screen ),
+
+	/* 
+	 * We pass the VNC's desktop windowID via an environment variable.
+	 * If we don't find one, we're not on a 3D-capable vncviewer, or
+	 * if we do find one, then create the renderspu subwindow as a
+	 * child of the vncviewer's desktop window. 
+	 *
+	 * This is purely for the replicateSPU.
+	 *
+	 * NOTE: This is crufty, and will do for now. FIXME.
+	 */
+	vncWin = crStrToInt( crGetenv("CRVNCWINDOW") );
+
+	if (!vncWin) {
+		window->window =
+       		XCreateWindow( dpy, RootWindow( dpy, visual->visual->screen ),
                        window->x, window->y, window->width, window->height,
                        0, visual->visual->depth, InputOutput,
                        visual->visual->visual, flags, &swa);
+	} else {
+		window->window =
+       		XCreateWindow( dpy, (Window)vncWin,
+                       window->x, window->y, window->width, window->height,
+                       0, visual->visual->depth, InputOutput,
+                       visual->visual->visual, flags, &swa);
+	}
 
 	if (!window->window) {
 		crWarning( "Render SPU: unable to create window" );
@@ -796,6 +819,7 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 		else
 		{
 			XUnmapWindow( window->visual->dpy, window->window );
+			XSync(window->visual->dpy, 0);
 		}
 		window->visible = showIt;
 	}

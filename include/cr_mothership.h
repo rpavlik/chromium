@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 CRConnection *crMothershipConnect( void );
-int crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... );
+int crMothershipSendString( CRConnection *conn, char *response_buf, const char *str, ... );
 int crMothershipReadResponse( CRConnection *conn, void *buf );
 void crMothershipDisconnect( CRConnection *conn );
 

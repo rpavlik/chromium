@@ -579,6 +579,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			 * by themselves, followed by the big packet. */
 			crDebug( "Sending big packet of %d bytes to server %d",
 							 big_packet_len, i );
+
 			/* Send state-change commands */
 			tilesortspuSendServerBuffer( thread->state_server_index );
 			/* send geometry */

@@ -33,7 +33,7 @@
 #endif
 
 
-SPUDispatchTable glim;
+extern SPUDispatchTable glim; /* declared in dispatch_layer.c in spu loader */
 SPUDispatchTable stubThreadsafeDispatch;
 Stub stub;
 
@@ -545,6 +545,11 @@ void stubInit(void)
 		high_node = crStrdup( response );
 	}
 	crNetSetNodeRange( low_node, high_node );
+
+	if (conn && crMothershipGetFakerParam( conn, response, "system_gl_path" ))
+	{
+		crSetenv( "CR_SYSTEM_GL_PATH", response );
+	}
 
 	if (conn)
 	{

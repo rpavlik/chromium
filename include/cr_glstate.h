@@ -140,6 +140,9 @@ void crStateSetExtensionString( CRContext *ctx, const GLubyte *extensions );
 void crStateDiffContext( CRContext *from, CRContext *to );
 void crStateSwitchContext( CRContext *from, CRContext *to );
 
+void crStateTextureObjSwitchCallback( unsigned long key, void *data1, void *data2 );
+void crStateTextureObjDiffCallback( unsigned long key, void *data1, void *data2 );
+
 #ifdef __cplusplus
 }
 #endif

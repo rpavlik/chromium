@@ -283,6 +283,7 @@ void crServerSerializeRemoteStreams(void)
 					data_ptr-1, 
 					msg_opcodes->numOpcodes, 
 					&(cr_server.dispatch) );
+
 			crNetFree( cr_server.curClient->conn, msg );
 			if (q->blocked)
 			{

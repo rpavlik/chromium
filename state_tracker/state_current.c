@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_mem.h"
 #include "state.h"
 #include "state_internals.h"
 
@@ -106,6 +107,24 @@ void crStateSetCurrentPointers( CRContext *ctx, CRCurrentStatePointers *current 
 	CRCurrentState *c = &(ctx->current);
 	c->current = current;
 }
+
+#if 0
+/* XXX NEW: this could replace code elsewhere... */
+void crStateResetCurrentPointers( CRCurrentStatePointers *current )
+{
+	crMemset(&(current->index), 0, sizeof(GLindex_p));
+	crMemset(&(current->vertexAttrib), 0, sizeof(GLvertexattrib_p));
+	crMemset(&(current->fogCoord), 0, sizeof(GLfogcoord_p));
+	crMemset(&(current->edgeFlag), 0, sizeof(GLedgeflag_p));
+	crMemset(&(current->normal), 0, sizeof(GLnormal_p));
+	crMemset(&(current->color), 0, sizeof(GLcolor_p));
+	crMemset(&(current->secondaryColor), 0, sizeof(GLsecondarycolor_p));
+	crMemset(&(current->texCoord), 0, sizeof(GLtexcoord_p));
+	/*
+	current->attribsUsedMask = 0;
+	*/
+}
+#endif
 
 void STATE_APIENTRY crStateBegin( GLenum mode )
 {

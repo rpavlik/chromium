@@ -13,7 +13,6 @@
 #include "cr_spu.h"
 #include "cr_mem.h"
 #include "tilesortspu.h"
-#include <stdio.h>
 
 extern SPUNamedFunctionTable _cr_tilesort_table[];
 TileSortSPU tilesort_spu;
@@ -98,6 +97,12 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 
 	crStateInit();
 	tilesortspuCreateDiffAPI();
+
+        /* special dispatch tables for display lists */
+        crSPUInitDispatchTable(&tilesort_spu.packerDispatch);
+        tilesortspuLoadPackTable(&tilesort_spu.packerDispatch);
+        crSPUInitDispatchTable(&tilesort_spu.stateDispatch);
+        tilesortspuLoadStateTable(&tilesort_spu.stateDispatch);
 
 	if (tilesort_spu.useDMX) {
 		/* load OpenGL */

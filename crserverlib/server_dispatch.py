@@ -12,6 +12,7 @@ sys.path.append( "../opengl_stub" )
 parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
 gl_mapping = cPickle.load( parsed_file )
 
+import alias_exports;
 import stub_common;
 
 stub_common.CopyrightC()
@@ -32,11 +33,16 @@ for func_name in stub_common.AllSpecials( "../state_tracker/state" ):
 	(return_type, names, types) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "server", func_name ) or stub_common.FindSpecial( "../packer/packer_get", func_name ) or return_type != 'void':
 		continue
+	ext_define = alias_exports.ExtDefine(func_name)
+	if ext_define:
+		print '#if defined(CR_%s)' % ext_define
 	print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s%s' % ( func_name, stub_common.ArgumentString( names, types ) )
 	print '{'
 	print '\tcrState%s%s;' % (func_name, stub_common.CallString( names ) )
 	print '\tcr_server.head_spu->dispatch_table.%s%s;' % (func_name, stub_common.CallString( names ) )
 	print '}'
+	if ext_define:
+		print '#endif'
 
 keys = gl_mapping.keys()
 keys.sort()
@@ -113,5 +119,10 @@ void crServerInitDispatch(void)
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
 	if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ) or stub_common.FindSpecial( "server", func_name ) or stub_common.FindSpecial( "../state_tracker/state", func_name ):
+		ext_define = alias_exports.ExtDefine(func_name)
+		if ext_define:
+			print '#if defined(CR_%s)' % ext_define
 		print '\tcr_server.dispatch.%s = crServerDispatch%s;' % (func_name, func_name)
+		if ext_define:
+			print '#endif'
 print '}'

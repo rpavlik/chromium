@@ -25,6 +25,19 @@
 #define GLCLIENT_LIST_ALLOC 1024
 #define GLCLIENT_BIT_ALLOC 1024
 
+
+const CRPixelPackState crStateNativePixelPacking = {
+   0, /* rowLength */
+   0, /* skipRows */
+   0, /* skipPixels */
+   1, /* alignment */
+   0, /* imageHeight */
+   0, /* skipImages */
+   GL_FALSE, /* swapBytes */
+   GL_FALSE, /* psLSBFirst */
+};
+
+
 void crStateClientInitBits (CRClientBits *c) 
 {
 	int i;
@@ -178,7 +191,6 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param)
 	}
 
 	FLUSH();
-
 
 	switch(pname) {
 		case GL_PACK_SWAP_BYTES:
@@ -1270,3 +1282,18 @@ void STATE_APIENTRY crStatePopClientAttrib( void )
 
 	DIRTY(cb->dirty, g->neg_bitid);
 }
+
+
+void STATE_APIENTRY crStateVertexArrayRangeNV(GLsizei length, const GLvoid *pointer)
+{
+  /* XXX todo */
+	crWarning("crStateVertexArrayRangeNV not implemented");
+}
+
+
+void STATE_APIENTRY crStateFlushVertexArrayRangeNV(void)
+{
+  /* XXX todo */
+	crWarning("crStateFlushVertexArrayRangeNV not implemented");
+}
+

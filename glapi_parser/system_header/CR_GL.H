@@ -98,9 +98,10 @@ void glVertexArrayRangeNV (GLsizei length, const GLvoid *pointer);
 void glFlushVertexArrayRangeNV (void);
 /* GL_NV_vertex_program */
 /* NOTE: the NV VertexAttrib functions are aliased to the ARB functions */
+/* NOTE: DeleteProgramsNV is aliased to DeleteProgramsARB */
+/* NOTE: IsProgramNV is aliased to IsProgramARB */
 GLboolean glAreProgramsResidentNV (GLsizei n, const GLuint *ids, GLboolean *residences);
 void glBindProgramNV (GLenum target, GLuint id);
-void glDeleteProgramsNV (GLsizei n, const GLuint *ids);
 void glExecuteProgramNV (GLenum target, GLuint id, const GLfloat * params);
 void glGenProgramsNV (GLsizei n, GLuint * ids);
 void glGetProgramParameterdvNV (GLenum target, GLuint index, GLenum pname, GLdouble * params);
@@ -112,7 +113,6 @@ void glGetVertexAttribdvNV (GLuint index, GLenum pname, GLdouble * params);
 void glGetVertexAttribfvNV (GLuint index, GLenum pname, GLfloat * params);
 void glGetVertexAttribivNV (GLuint index, GLenum pname, GLint * params);
 void glGetVertexAttribPointervNV (GLuint index, GLenum pname, GLvoid ** pointer);
-GLboolean glIsProgramNV (GLuint id);
 void glLoadProgramNV (GLenum target, GLuint id, GLsizei len, const GLubyte * program);
 void glProgramParameter4dNV (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 void glProgramParameter4dvNV (GLenum target, GLuint index, const GLdouble * params);
@@ -205,11 +205,11 @@ void glGetProgramEnvParameterfvARB (GLenum target, GLuint index, GLfloat *params
 void glGetProgramivARB (GLenum target, GLenum pname, GLint *params);
 void glGetProgramLocalParameterdvARB (GLenum target, GLuint index, GLdouble *params);
 void glGetProgramLocalParameterfvARB (GLenum target, GLuint index, GLfloat *params);
-void glGetProgramStringARB (GLenum target, GLenum pname, void *string);
+void glGetProgramStringARB (GLenum target, GLenum pname, GLvoid *string);
 void glGetVertexAttribdvARB (GLuint index, GLenum pname, GLdouble *params);
 void glGetVertexAttribfvARB (GLuint index, GLenum pname, GLfloat *params);
 void glGetVertexAttribivARB (GLuint index, GLenum pname, GLint *params);
-void glGetVertexAttribPointervARB (GLuint index, GLenum pname, void **pointer);
+void glGetVertexAttribPointervARB (GLuint index, GLenum pname, GLvoid **pointer);
 void glProgramEnvParameter4dARB (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 void glProgramEnvParameter4dvARB (GLenum target, GLuint index, const GLdouble *params);
 void glProgramEnvParameter4fARB (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
@@ -218,7 +218,7 @@ void glProgramLocalParameter4dARB (GLenum target, GLuint index, GLdouble x, GLdo
 void glProgramLocalParameter4dvARB (GLenum target, GLuint index, const GLdouble *params);
 void glProgramLocalParameter4fARB (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 void glProgramLocalParameter4fvARB (GLenum target, GLuint index, const GLfloat *params);
-void glProgramStringARB (GLenum target, GLenum format, GLsizei len, const void *string); 
+void glProgramStringARB (GLenum target, GLenum format, GLsizei len, const GLvoid *string); 
 void glVertexAttrib1dARB (GLuint index, GLdouble x);
 void glVertexAttrib1dvARB (GLuint index, const GLdouble *v);
 void glVertexAttrib1fARB (GLuint index, GLfloat x);
@@ -255,4 +255,4 @@ void glVertexAttrib4svARB (GLuint index, const GLshort *v);
 void glVertexAttrib4ubvARB (GLuint index, const GLubyte *v);
 void glVertexAttrib4uivARB (GLuint index, const GLuint *v);
 void glVertexAttrib4usvARB (GLuint index, const GLushort *v);
-void glVertexAttribPointerARB (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+void glVertexAttribPointerARB (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer);

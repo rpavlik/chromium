@@ -12,6 +12,16 @@
 #include "cr_string.h"
 
 
+/* This function is registered with the DLM and will get called when
+ * the DLM detects any OpeNGL errors.
+ */
+static void
+ErrorCallback(int line, const char *file, GLenum error, const char *info)
+{
+	crStateError(line, file, error, info);
+}
+
+
 /*
  * Initialize per-thread data.
  */
@@ -26,6 +36,8 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 	thread->packer = crPackNewContext( tilesort_spu.swap );
 	if (!thread->packer)
 		crError("tilesortspuInitThread failed!");
+
+	crPackErrorFunction(thread->packer, ErrorCallback);
 
 	crPackSetContext( thread->packer ); /* sets the packer's per-thread context */
 	crPackInitBuffer( &(thread->geometry_buffer),
@@ -182,6 +194,8 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	{
 		contextInfo->server[i].State = crStateCreateContext( &tilesort_spu.limits,
 																												 visBits );
+		crStateSetCurrentPointers( contextInfo->server[i].State,
+															 &(thread0->packer->current) );
 	}
 
 	/*
@@ -250,6 +264,50 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 
 	contextInfo->id = freeContextID;
 	crHashtableAdd(tilesort_spu.contextTable, freeContextID, contextInfo);
+
+#if 11 /* Display list manager */
+	{
+		/* Our configuration for the DLM we're going to create.
+		 * It says that we want the DLM to handle everything
+		 * itself, making display lists transparent to 
+		 * the host SPU.
+		 */
+		CRDLMConfig dlmConfig = {
+			CRDLM_DEFAULT_BUFFERSIZE,	/* bufferSize */
+			CRDLM_HANDLE_DLM,		/* handleCreation */
+			CRDLM_HANDLE_SPU		/* handleReference */
+		};
+
+		/* Supplement that with our DLM.  In a more correct situation, we should
+		 * see if we've been called through glXCreateContext, which has a parameter
+		 * for sharing DLMs.  We don't currently get that information, so for now
+		 * give each context its own DLM.
+		 */
+		if (!tilesort_spu.dlm) {
+			tilesort_spu.dlm = crDLMNewDLM(sizeof(dlmConfig), &dlmConfig);
+			if (!tilesort_spu.dlm) {
+				crDebug("expando: couldn't get DLM!");
+			}
+			crDLMErrorFunction(ErrorCallback);
+		}
+
+		contextInfo->dlmContext = crDLMNewContext(tilesort_spu.dlm,
+																							&contextInfo->State->client);
+		if (!contextInfo->dlmContext) {
+			crDebug("expando: couldn't get dlmContext");
+			/* XXX need graceful error handling here */
+		}
+
+		/* We're not going to hold onto the dlm ourselves, so we can
+		 * free it.  It won't be actually freed until all the structures
+		 * that refer to it (like our dlmContext) are freed.
+		 */
+		/*
+		crDLMFreeDLM(dlm);
+		*/
+	}
+#endif
+
 	return freeContextID++;
 }
 
@@ -387,6 +445,8 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 	/* Restore the default buffer */
 	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
+	crDLMSetCurrentState(newCtx->dlmContext);
+
 	if (newCtx && !newCtx->everCurrent) {
 		/* This is the first time the context has been made current.  Query
 		 * the servers' extension strings and update our notion of which
@@ -427,7 +487,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 		crStateSetCurrent(NULL);
 	}
 
-	/* release geometry buffer */
+	/* release again, just in case */
 	crPackReleaseBuffer( thread0->packer );
 
 	/*
@@ -467,6 +527,8 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 
 	/* The default buffer */
 	crPackSetBuffer( thread0->packer, &(thread->geometry_buffer) );
+
+	crDLMFreeContext(contextInfo->dlmContext);
 }
 
 

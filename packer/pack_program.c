@@ -171,17 +171,6 @@ void PACK_APIENTRY crPackVertexAttribs4ubvNV( GLuint index, GLsizei n, const GLu
 }
 
 
-void PACK_APIENTRY crPackDeleteProgramsNV( GLsizei n, const GLuint *ids )
-{
-	GET_PACKER_CONTEXT(pc);
-#if 0
-	crError ( "DeleteProgramsNV needs to be special cased!");
-#endif
-	(void) pc;
-	(void) n;
-	(void) ids;
-}
-
 void PACK_APIENTRY crPackExecuteProgramNV( GLenum target, GLuint id, const GLfloat *params )
 {
 	const int packet_length = 32;

@@ -163,7 +163,6 @@ GetVertexAttribdvNV
 GetVertexAttribfvNV
 GetVertexAttribivNV
 GetVertexAttribPointervNV
-IsProgramNV
 LoadProgramNV
 ProgramParameter4dNV
 ProgramParameter4dvNV

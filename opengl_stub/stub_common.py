@@ -58,6 +58,71 @@ def DoStateFunctionMapping( glName ):
 def DoImmediateMapping( glName ):
 	return "__glim_" + glName
 
+
+
+# Annotations are a generalization of Specials (below).
+# Each line of an annotation file is a set of words.
+# The first word is a key; the remainder are all annotations
+# for that key.  This is a useful model for grouping keys
+# (like GL function names) into overlapping subsets, all in
+# a single file.
+annotations = {}
+def LoadAnnotations(filename):
+	table = {}
+	try:
+		f = open(filename, "r")
+	except:
+		annotations[filename] = {}
+		return {}
+	
+	for line in f.readlines():
+		line = line.strip()
+		if line == "" or line[0] == '#':
+			continue
+		subtable = {}
+		words = line.split()
+		for word in words[1:]:
+			subtable[word] = 1
+		table[words[0]] = subtable
+
+	annotations[filename] = table
+	return table
+
+def GetAnnotations( filename, key ):
+	table = {}
+	try:
+		table = annotations[filename]
+	except KeyError:
+		table = LoadAnnotations(filename)
+	
+	try:
+		subtable = table[key]
+	except KeyError:
+		return []
+
+	keys = subtable.keys()
+	keys.sort()
+	return keys
+
+def FindAnnotation( filename, key, subkey ):
+	table = {}
+	try:
+		table = annotations[filename]
+	except KeyError:
+		table = LoadAnnotations(filename)
+	
+	try:
+	    	subtable = table[key]
+	except KeyError:
+		return 0
+
+	try:
+		return subtable[subkey]
+	except KeyError:
+		return 0
+		
+
+
 specials = {}
 
 def LoadSpecials( filename ):
@@ -70,7 +135,7 @@ def LoadSpecials( filename ):
 	
 	for line in f.readlines():
 		line = string.strip(line)
-		if line[0] == '#':
+		if line == "" or line[0] == '#':
 			continue
 		table[line] = 1
 	
@@ -178,8 +243,9 @@ def PacketLength( arg_types ):
 	len = WordAlign( len )
 	return len
 
-def ArgumentString( arg_names, arg_types ):
-	output = '( '
+def InternalArgumentString( arg_names, arg_types ):
+	"""Return string of C-style function declaration arguments."""
+	output = ''
 	for index in range(0,len(arg_names)):
 		if len(arg_names) != 1 and arg_names[index] == '':
 			continue
@@ -189,15 +255,24 @@ def ArgumentString( arg_names, arg_types ):
 		output += arg_names[index]
 		if index != len(arg_names) - 1:
 			output += ", "
-	output += " )"
+	return output
+
+def ArgumentString( arg_names, arg_types ):
+	"""Return InternalArgumentString inside parenthesis."""
+	output = '( ' + InternalArgumentString(arg_names, arg_types) + ' )'
 	return output
 	
-def CallString( arg_names ):
-	output = '( '
+def InternalCallString( arg_names ):
+	output = ''
 	for index in range(0,len(arg_names)):
 		output += arg_names[index]
 		if arg_names[index] != '' and index != len(arg_names) - 1:
 			output += ", "
+	return output
+
+def CallString( arg_names ):
+	output = '( '
+	output += InternalCallString(arg_names)
 	output += " )"
 	return output
 

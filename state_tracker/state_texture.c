@@ -3221,6 +3221,79 @@ GLboolean STATE_APIENTRY crStateIsTexture(GLuint texture)
 	return tobj != NULL;
 }
 
+void crStateTextureObjSwitchCallback( unsigned long key, void *data1, void *data2 )
+{
+	CRTextureObj *tobj = (CRTextureObj *) data1;
+	CRContext *fromCtx = (CRContext *) data2;
+	unsigned int i = 0;
+	unsigned int j = 0;
+	CRbitvalue *bitID = fromCtx->bitid;
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	if (!tobj) return;
+
+	FILLDIRTY(tobj->dirty);
+	FILLDIRTY(tobj->imageBit);
+
+	for (i = 0; i < fromCtx->limits.maxTextureUnits; i++)
+	{
+		int j;
+
+		FILLDIRTY(tobj->paramsBit[i]);
+		
+		switch (tobj->target)
+		{
+			case GL_TEXTURE_1D:
+			case GL_TEXTURE_2D:
+				for (j=0; j<fromCtx->texture.maxLevel; j++) 
+				{
+					CRTextureLevel *tl = &(tobj->level[j]);
+					FILLDIRTY(tl->dirty);
+				}
+				break;
+#ifdef CR_OPENGL_VERSION_1_2
+			case GL_TEXTURE_3D:
+#endif
+				for (j=0; j<fromCtx->texture.max3DLevel; j++) 
+				{
+					CRTextureLevel *tl = &(tobj->level[j]);
+					FILLDIRTY(tl->dirty);
+				}
+				break;
+#ifdef CR_ARB_texture_cube_map
+			case GL_TEXTURE_CUBE_MAP_ARB:
+				for (j=0; j<fromCtx->texture.maxCubeMapLevel; j++) 
+				{
+					CRTextureLevel *tl;
+					/* Positive X */
+					tl = &(tobj->level[j]);
+					FILLDIRTY(tl->dirty);
+					/* Negative X */
+					tl = &(tobj->negativeXlevel[j]);
+					FILLDIRTY(tl->dirty);
+					/* Positive Y */
+					tl = &(tobj->positiveYlevel[j]);
+					FILLDIRTY(tl->dirty);
+					/* Negative Y */
+					tl = &(tobj->negativeYlevel[j]);
+					FILLDIRTY(tl->dirty);
+					/* Positive Z */
+					tl = &(tobj->positiveZlevel[j]);
+					FILLDIRTY(tl->dirty);
+					/* Negative Z */
+					tl = &(tobj->negativeZlevel[j]);
+					FILLDIRTY(tl->dirty);
+				}
+				break;
+#endif
+			default:
+				UNIMPLEMENTED();
+		}	
+	}
+}
 
 void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID, 
 													 CRContext *fromCtx, CRContext *toCtx )
@@ -3230,6 +3303,7 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 	unsigned int i,j;
 	glAble able[2];
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
+	int activeUnit = -1;
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
@@ -3240,7 +3314,10 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 	{
 		if (CHECKDIRTY(tb->enable[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (activeUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				activeUnit = i;
+			}
 			if (from->unit[i].enabled1D != to->unit[i].enabled1D) 
 			{
 				able[to->unit[i].enabled1D](GL_TEXTURE_1D);
@@ -3304,7 +3381,10 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 
 		if (CHECKDIRTY(tb->current[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (activeUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				activeUnit = i;
+			}
 			if (from->unit[i].currentTexture1D->name != to->unit[i].currentTexture1D->name) 
 			{
 				diff_api.BindTexture(GL_TEXTURE_1D, to->unit[i].currentTexture1D->name);
@@ -3344,7 +3424,10 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 
 		if (CHECKDIRTY(tb->objGen[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (activeUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				activeUnit = i;
+			}
 			if (from->unit[i].objSCoeff.x != to->unit[i].objSCoeff.x ||
 				  from->unit[i].objSCoeff.y != to->unit[i].objSCoeff.y ||
 				  from->unit[i].objSCoeff.z != to->unit[i].objSCoeff.z ||
@@ -3402,7 +3485,10 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 		}
 		if (CHECKDIRTY(tb->eyeGen[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (activeUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				activeUnit = i;
+			}
 			diff_api.MatrixMode(GL_MODELVIEW);
 			diff_api.PushMatrix();
 			diff_api.LoadIdentity();
@@ -3463,7 +3549,10 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 		}
 		if (CHECKDIRTY(tb->genMode[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (activeUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				activeUnit = i;
+			}
 			if (from->unit[i].gen.s != to->unit[i].gen.s ||
 				from->unit[i].gen.t != to->unit[i].gen.t ||
 				from->unit[i].gen.r != to->unit[i].gen.r ||
@@ -3483,7 +3572,10 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 		/* Texture enviroment */
 		if (CHECKDIRTY(tb->envBit[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (activeUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				activeUnit = i;
+			}
 			if (from->unit[i].envMode != to->unit[i].envMode) 
 			{
 				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->unit[i].envMode);
@@ -3605,7 +3697,9 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 	}
 
 	/* After possible fiddling put them back now */
-	diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
+	if (activeUnit != toCtx->texture.curTextureUnit) {
+		diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
+	}
 	diff_api.MatrixMode(toCtx->transform.matrixMode);
 }
 
@@ -3696,6 +3790,334 @@ int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target
 	return 0;
 }
 
+void crStateTextureObjDiffCallback( unsigned long key, void *data1, void *data2 )
+{
+	CRContext *ctx = (CRContext *) data2;
+	CRTextureState *t = &(ctx->texture);
+	CRTextureObj *tobj = (CRTextureObj *) data1;
+	unsigned int u = 0; /* use first texture unit to upload */
+	unsigned int j = 0;
+	CRbitvalue *bitID = ctx->bitid;
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	if (!tobj) return;
+
+	/* Notes to remember......
+	 * Realistically we should be comparing the from/to context
+	 * bits of the texture object ID's to really see if they're dirty.
+	 * Check by asking the from context if it can
+	 * see the same name in the to and from context's tobj table..
+	 * More definately to do here, as we just mosey on through and
+	 * push all textures out the door. Ouch....
+	 */
+
+	/* This is were we push all textures out the door, 
+	 * define to 1 to try and diff. This code is only used
+	 * currently by the replicateSPU.
+	 */
+#define TEXTURECHECK 0
+
+#if TEXTURECHECK
+	if (CHECKDIRTY(tobj->dirty, bitID)) 
+#endif
+	{
+		if (ctx->texture.curTextureUnit != u) {
+			diff_api.ActiveTextureARB( u + GL_TEXTURE0_ARB );
+			ctx->texture.curTextureUnit = u;
+		}
+		diff_api.BindTexture( tobj->target, tobj->name );
+
+		/* now, if the texture object is dirty */
+#if TEXTURECHECK
+		if (CHECKDIRTY(tobj->dirty, bitID)) 
+#endif
+		{
+#if TEXTURECHECK
+			if (CHECKDIRTY(tobj->paramsBit[u], bitID)) 
+#endif
+			{
+				GLfloat f[4];
+				f[0] = tobj->borderColor.r;
+				f[1] = tobj->borderColor.g;
+				f[2] = tobj->borderColor.b;
+				f[3] = tobj->borderColor.a;
+				diff_api.TexParameteri(tobj->target, GL_TEXTURE_MIN_FILTER, tobj->minFilter);
+				diff_api.TexParameteri(tobj->target, GL_TEXTURE_MAG_FILTER, tobj->magFilter);
+				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_S, tobj->wrapS);
+				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_T, tobj->wrapT);
+#ifdef CR_OPENGL_VERSION_1_2
+				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_R, tobj->wrapR);
+				diff_api.TexParameterf(tobj->target, GL_TEXTURE_PRIORITY, tobj->priority);
+#endif
+				diff_api.TexParameterfv(tobj->target, GL_TEXTURE_BORDER_COLOR, (const GLfloat *) f);
+#ifdef CR_EXT_texture_filter_anisotropic
+				if (ctx->extensions.EXT_texture_filter_anisotropic) {
+					diff_api.TexParameterf(tobj->target, GL_TEXTURE_MAX_ANISOTROPY_EXT, tobj->maxAnisotropy);
+				}
+#endif
+#ifdef CR_ARB_depth_texture
+				if (ctx->extensions.ARB_depth_texture)
+					diff_api.TexParameteri(tobj->target, GL_DEPTH_TEXTURE_MODE_ARB, tobj->depthMode);
+#endif
+#ifdef CR_ARB_shadow
+				if (ctx->extensions.ARB_shadow) {
+					diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_MODE_ARB, tobj->compareMode);
+					diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_FUNC_ARB, tobj->compareFunc);
+				}
+#endif
+#ifdef CR_ARB_shadow_ambient
+				if (ctx->extensions.ARB_shadow_ambient) {
+					diff_api.TexParameterf(tobj->target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, tobj->compareFailValue);
+				}
+#endif
+#ifdef CR_SGIS_generate_mipmap
+				if (ctx->extensions.SGIS_generate_mipmap) {
+					diff_api.TexParameteri(tobj->target, GL_GENERATE_MIPMAP_SGIS, tobj->generateMipmap);
+				}
+#endif
+#if TEXTURECHECK
+				CLEARDIRTY(tobj->paramsBit[u], nbitID);
+#endif
+			}
+
+			/* now, if the texture images are dirty */
+#if TEXTURECHECK
+			if (CHECKDIRTY(tobj->imageBit, bitID)) 
+#endif
+			{
+				int lvl;
+				switch (tobj->target)
+				{
+					case GL_TEXTURE_1D:
+						for (lvl = 0; lvl < t->maxLevel; lvl++) 
+						{
+							CRTextureLevel *tl = &(tobj->level[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID)) 
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage1D(GL_TEXTURE_1D, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->border,
+																		tl->format,	tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+						}
+						break;
+					case GL_TEXTURE_2D:
+						for (lvl = 0; lvl < t->maxLevel; lvl++) 
+						{
+							CRTextureLevel *tl = &(tobj->level[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID)) 
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(GL_TEXTURE_2D, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+						}
+						break;
+#ifdef CR_OPENGL_VERSION_1_2
+					case GL_TEXTURE_3D:
+						for (lvl = 0; lvl < t->maxLevel; lvl++) 
+						{
+							CRTextureLevel *tl = &(tobj->level[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID)) 
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage3D(GL_TEXTURE_3D, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->depth,
+																		tl->border, tl->format,
+																		tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+						}
+						break;
+#endif
+#ifdef CR_NV_texture_rectangle 
+					case GL_TEXTURE_RECTANGLE_NV:
+						/* only one level */
+						for (lvl = 0; lvl < t->maxRectLevel; lvl++) 
+						{
+							CRTextureLevel *tl;
+							tl = &(tobj->level[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID))
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(GL_TEXTURE_RECTANGLE_NV, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+						}
+						break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+					case GL_TEXTURE_CUBE_MAP_ARB:
+						for (lvl = 0; lvl < t->maxCubeMapLevel; lvl++) 
+						{
+							CRTextureLevel *tl;
+							/* Positive X */
+							tl = &(tobj->level[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID))
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+							/* Negative X */
+							tl = &(tobj->negativeXlevel[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID))
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+							/* Positive Y */
+							tl = &(tobj->positiveYlevel[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID)) 
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+								CLEARDIRTY(tl->dirty, nbitID);
+							}
+							/* Negative Y */
+							tl = &(tobj->negativeYlevel[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID))
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+							/* Positive Z */
+							tl = &(tobj->positiveZlevel[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID))
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+							/* Negative Z */
+							tl = &(tobj->negativeZlevel[lvl]);
+#if TEXTURECHECK
+							if (CHECKDIRTY(tl->dirty, bitID))
+#endif
+							{
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+#if TEXTURECHECK
+								CLEARDIRTY(tl->dirty, nbitID);
+#endif
+							}
+						}
+						break;
+#endif
+					default:
+						UNIMPLEMENTED();
+				}	
+			} /* if (CHECKDIRTY(tobj->imageBit, bitID)) */
+
+		} /* if (CHECKDIRTY(tobj->dirty, bitID)) */
+	}
+}
 
 void
 crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,

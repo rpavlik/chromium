@@ -45,7 +45,4 @@ GetPointerv
 GetCombinerStageParameterfvNV
 Bitmap
 DrawPixels
-TexImage1D
-TexImage2D
-TexImage3D
-TexImage3DEXT
+

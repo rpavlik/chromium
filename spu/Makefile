@@ -8,6 +8,10 @@ TOP = ..
 SUBDIRS = tester options
 SUBDIRS += error nop pack passthrough print readback render template tilesort
 SUBDIRS += saveframe comm array binaryswap hiddenline fps wet perf dist_texture
-SUBDIRS += feedback simplequery motionblur injector
+SUBDIRS += feedback simplequery motionblur injector expando
+
+ifeq ($(USE_VNC), 1)
+SUBDIRS += replicate
+endif
 
 include ${TOP}/cr.mk

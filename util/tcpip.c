@@ -651,7 +651,7 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 void
 __tcpip_dead_connection( CRConnection *conn )
 {
-	crWarning( "Dead connection (sock=%d, host=%s), removing from pool",
+	crDebug( "Dead connection (sock=%d, host=%s), removing from pool",
   				   conn->tcp_socket, conn->hostname );
   
 	/* remove from connection pool */
@@ -1085,7 +1085,7 @@ crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mt
 		return;
 	}
 
-	crWarning("Initializing TCPIP\n");
+	crDebug("Initializing TCPIP\n");
 
 	cr_tcpip.num_conns = 0;
 	cr_tcpip.conns     = NULL;
@@ -1284,7 +1284,7 @@ crTCPIPDoDisconnect( CRConnection *conn )
 
 	if (none_left && cr_tcpip.server_sock != -1)
 	{
-		crWarning("Closing master socket (probably quitting).");
+		crDebug("Closing master socket (probably quitting).");
 		crCloseSocket( cr_tcpip.server_sock );
 #ifdef CHROMIUM_THREADSAFE
 		crFreeMutex(&cr_tcpip.mutex);

@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_environment.h"
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_mem.h"
@@ -255,7 +256,7 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	render_spu.window_id++;
 
 	/* Have GLX/WGL create the window */
-	if (render_spu.render_to_app_window)
+	if (render_spu.render_to_app_window && !crGetenv("CRNEWSERVER"))
 		showIt = 0;
 	else
 		showIt = i > 0;

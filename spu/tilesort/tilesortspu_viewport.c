@@ -127,7 +127,7 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 	crStatePopAttrib();
 
 	/*
-	 * If PopAttrib changed the something call the appropriate
+	 * If PopAttrib changed the viewport call the appropriate
 	 * functions to be sure everything gets updated correctly
 	 */
 	if (v->viewportX != oldViewportX || v->viewportY != oldViewportY ||

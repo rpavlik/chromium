@@ -73,8 +73,8 @@ Redisplay(void)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Red);
 		glutSolidIcosahedron();
 	}
-        if (UseBoundingBox) /* disable bounding box now */
-           glChromiumParametervCR_ptr(GL_DEFAULT_BBOX_CR, GL_FLOAT, 0, NULL);
+	if (UseBoundingBox) /* disable bounding box now */
+		glChromiumParametervCR_ptr(GL_DEFAULT_BBOX_CR, GL_FLOAT, 0, NULL);
 
 	glPopMatrix();
 
@@ -94,8 +94,8 @@ Redisplay(void)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Green);
 		glutSolidIcosahedron();
 	}
-        if (UseBoundingBox) /* disable bounding box now */
-           glChromiumParametervCR_ptr(GL_DEFAULT_BBOX_CR, GL_FLOAT, 0, NULL);
+	if (UseBoundingBox) /* disable bounding box now */
+		glChromiumParametervCR_ptr(GL_DEFAULT_BBOX_CR, GL_FLOAT, 0, NULL);
 
 	glPopMatrix();
 
