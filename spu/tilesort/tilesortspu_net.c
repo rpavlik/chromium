@@ -41,7 +41,7 @@ int tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			tilesortspuReadback( &(msg->readback), len );
 			break;
 		default:
-			crWarning( "Why is the tilesort SPU getting a message of type %d?", msg->type );
+			//crWarning( "Why is the tilesort SPU getting a message of type %d?", msg->type );
 			return 0; // NOT HANDLED
 	}
 	crNetFree( conn, buf );

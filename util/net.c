@@ -33,7 +33,7 @@ static struct {
 // and a function to recieve work on that interface.
 
 #define NETWORK_TYPE(x) \
-	extern void cr##x##Init(CRNetReceiveFunc, CRNetCloseFunc); \
+	extern void cr##x##Init(CRNetReceiveFunc, CRNetCloseFunc, unsigned int); \
 	extern void cr##x##Connection(CRConnection *); \
 	extern int cr##x##Recv(void)
 
@@ -98,19 +98,20 @@ CRConnection *crNetConnectToServer( char *server,
 	
 	if ( !strcmp( protocol, "devnull" ) )
 	{
-		crDevnullInit( cr_net.recv, cr_net.close );
+		crDevnullInit( cr_net.recv, cr_net.close, mtu );
 		crDevnullConnection( conn );
 	}
 #ifdef GM_SUPPORT
 	else if ( !strcmp( protocol, "gm" ) )
 	{
-		crGmInit( cr_net.recv, cr_net.close );
+		cr_net.use_gm++;
+		crGmInit( cr_net.recv, cr_net.close, mtu );
 		crGmConnection( conn );
 	}
 #endif
 	else if ( !strcmp( protocol, "tcpip" ) )
 	{
-		crTCPIPInit( cr_net.recv, cr_net.close );
+		crTCPIPInit( cr_net.recv, cr_net.close, mtu );
 		crTCPIPConnection( conn );
 	}
 	else
@@ -141,8 +142,8 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned i
 	conn->total_bytes        = 0;                    // how many bytes have we sent?
 	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
-	// conn->hostname           = crStrdup( hostname ); 
-	// conn->port               = port;
+	//conn->hostname           = crStrdup( hostname ); 
+	conn->port               = port;
 	conn->Alloc              = NULL;                 // How do we allocate buffers to send?
 	conn->Send               = NULL;                 // How do we send things?
 	conn->Free               = NULL;                 // How do we receive things?
@@ -161,19 +162,20 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned i
 	
 	if ( !strcmp( protocol, "devnull" ) )
 	{
-		crDevnullInit( cr_net.recv, cr_net.close );
+		crDevnullInit( cr_net.recv, cr_net.close, mtu );
 		crDevnullConnection( conn );
 	}
 #ifdef GM_SUPPORT
 	else if ( !strcmp( protocol, "gm" ) )
 	{
-		crGmInit( cr_net.recv, cr_net.close );
+		cr_net.use_gm++;
+		crGmInit( cr_net.recv, cr_net.close, mtu );
 		crGmConnection( conn );
 	}
 #endif
 	else if ( !strcmp( protocol, "tcpip" ) )
 	{
-		crTCPIPInit( cr_net.recv, cr_net.close );
+		crTCPIPInit( cr_net.recv, cr_net.close, mtu );
 		crTCPIPConnection( conn );
 	}
 	else
@@ -387,10 +389,10 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 		case CR_MESSAGE_MULTI_BODY:
 		case CR_MESSAGE_MULTI_TAIL:
 			crNetRecvMulti( conn, &(msg->multi), len );
-			break;
+			return;
 		case CR_MESSAGE_FLOW_CONTROL:
 			crNetRecvFlowControl( conn, &(msg->flowControl), len );
-			break;
+			return;
 		case CR_MESSAGE_OPCODES:
 			{
 				//CRMessageOpcodes *ops = (CRMessageOpcodes *) msg;

@@ -41,7 +41,7 @@ int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			packspuReadback( &(msg->readback), len );
 			break;
 		default:
-			crWarning( "Why is the pack SPU getting a message of type %d?", msg->type );
+			//crWarning( "Why is the pack SPU getting a message of type 0x%x?", msg->type );
 			return 0; // NOT HANDLED
 	}
 	crNetFree( conn, buf );

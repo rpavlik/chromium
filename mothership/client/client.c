@@ -2,6 +2,7 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "cr_mothership.h"
+#include "cr_environment.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,7 +18,7 @@ CRConnection *crMothershipConnect( void )
 
 	crNetInit( NULL, NULL );
 
-	mother_server = getenv( "CRMOTHERSHIP" );
+	mother_server = crGetenv( "CRMOTHERSHIP" );
 	if (!mother_server)
 	{
 		crWarning( "Couldn't find the CRMOTHERSHIP environment variable, defaulting to localhost" );

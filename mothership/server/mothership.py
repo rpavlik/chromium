@@ -1,4 +1,4 @@
-import sys, string, types
+import sys, string, types, traceback
 
 from socket import *
 from select import *
@@ -47,6 +47,8 @@ class CRNode:
 		self.spokenfor = 0
 		self.spusloaded = 0
 		self.config = {}
+		self.accept_wait = None
+		self.connect_wait = None
 	
 	def AddSPU( self, spu ):
 		self.SPUs.append( spu )
@@ -109,6 +111,8 @@ class SockWrapper:
 		self.file = sock.makefile( "r" )
 		self.SPUid = -1
 		self.node = None
+		self.accept_wait = None
+		self.connect_wait = None
 
 	def readline( self ):
 		return self.file.readline()
@@ -171,10 +175,21 @@ class CR:
 						self.ProcessRequest( self.wrappers[sock] )
 		except KeyboardInterrupt:
 			try:
-				s.shutdown( 2 )
+				for sock in self.all_sockets:
+					sock.shutdown(2)
+					sock.close( )
 			except:
 				pass
 			print >> sys.stderr, "\n\nThank you for using Chromium!"
+		except:
+			print >> sys.stderr, "\n\nMOTHERSHIP EXCEPTION!  TERRIBLE!"
+			traceback.print_exc(None, sys.stderr)
+			try:
+				for sock in self.all_sockets:
+					sock.shutdown(2)
+					sock.close( )
+			except:
+				pass
 
 	def ClientError( self, sock_wrapper, code, msg ):
 		sock_wrapper.Reply( code, msg )
@@ -182,10 +197,41 @@ class CR:
 
 	def ClientDisconnect( self, sock_wrapper ):
 		self.all_sockets.remove( sock_wrapper.sock )
+		del self.wrappers[sock_wrapper.sock]
 		try:
-			sock_wrapper.sock.shutdown( 2 )
+			sock_wrapper.sock.close( )
 		except:
 			pass
+
+	def do_connectrequest( self, sock, args ):
+		connect_info = args.split( " " )
+		(hostname, port_str, node_id_str, port_num_str) = connect_info
+		port = int(port_str)
+		node_id = int(node_id_str)
+		port_num = int(port_num_str)
+		for server_sock in self.wrappers.values():
+			if server_sock.accept_wait != None:
+				(server_hostname, server_port, server_node_id, server_port_num) = server_sock.accept_wait
+				if server_hostname == hostname:
+					sock.Success( "%d %d" % (server_node_id, server_port_num) )
+					server_sock.Success( "%d %d" % (node_id, port_num) )
+					return
+		sock.connect_wait = (hostname, port, node_id, port_num)
+
+	def do_acceptrequest( self, sock, args ):
+		accept_info = args.split( " " )
+		(hostname, port_str, node_id_str, port_num_str) = accept_info
+		port = int(port_str)
+		node_id = int(node_id_str)
+		port_num = int(port_num_str)
+		for client_sock in self.wrappers.values():
+			if client_sock.connect_wait != None:
+				(client_hostname, client_port, client_node_id, client_port_num) = client_sock.connect_wait
+				if client_hostname == hostname:
+					sock.Success( "%d %d" % (client_node_id, server_port_num) )
+					client_sock.Success( "%d %d" % (node_id, port_num) )
+					return
+		sock.accept_wait = (hostname, port, node_id, port_num)
 
 	def do_faker( self, sock, args ):
 		for node in self.nodes:

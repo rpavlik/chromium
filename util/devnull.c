@@ -54,8 +54,9 @@ int crDevnullRecv( void )
 	return 0;
 }
 
-void crDevnullInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
+void crDevnullInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int mtu )
 {
+	(void) mtu;
 	(void) recvFunc;
 	(void) closeFunc;
 }

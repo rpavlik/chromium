@@ -19,6 +19,7 @@
 #include "cr_net.h"
 #include "cr_protocol.h"
 #include "cr_string.h"
+#include "cr_environment.h"
 
 #define CR_GM_USE_CREDITS 1
 #define CR_GM_SEND_CREDITS_THRESHOLD ( 1 << 18 )
@@ -358,26 +359,6 @@ void crGmBogusRecv( CRConnection *conn, void *buf, unsigned int len )
 	(void) len;
 }
 
-void crGmAccept( CRConnection *conn, unsigned short port )
-{
-	crError( "crGmAccept shouldn't ever get called." );
-	(void) conn;
-	(void) port;
-}
-
-int crGmDoConnect( CRConnection *conn )
-{
-	crError( "crGmDoConnect shouldn't ever get called." );
-	(void) conn;
-	return 1;
-}
-
-void crGmDoDisconnect( CRConnection *conn )
-{
-	crError( "crGmDoDisconnect shouldn't ever get called." );
-	(void) conn;
-}
-
 static void crGmCreditIncrease( CRGmConnection *gm_conn )
 {
 	CRGmConnection *parent;
@@ -459,35 +440,9 @@ crGmCreditZero( CRGmConnection *gm_conn )
 		cr_gm.credit_tail = gm_conn;
 	}
 }
-
 #define CR_GM_HASH(n,p)	cr_gm.gm_conn_hash[ (n) & (CR_GM_CONN_HASH_SIZE-1) ]
 
-	static __inline CRGmConnection *
-crGmConnectionLookup( unsigned int node_id, unsigned int port_num )
-{
-	CRGmConnection *gm_conn;
-
-	CRASSERT( node_id < cr_gm.num_nodes );
-
-	gm_conn = CR_GM_HASH( node_id, port_id );
-	while ( gm_conn )
-	{
-		if ( gm_conn->node_id == node_id && gm_conn->port_num == port_num )
-		{
-			return gm_conn;
-		}
-		gm_conn = gm_conn->hash_next;
-	}
-
-	crError( "GM: lookup on unknown source: node=%u port=%u",
-			node_id, port_num );
-
-	/* unreached */
-	return NULL;
-}
-
-	static void
-crGmConnectionAdd( CRConnection *conn )
+static void crGmConnectionAdd( CRConnection *conn )
 {
 	CRGmConnection *gm_conn, **bucket;
 
@@ -530,6 +485,176 @@ crGmConnectionAdd( CRConnection *conn )
 	 * up the list, we certainly can't move down it */
 	crGmCreditIncrease( gm_conn );
 }
+
+// The fact that I've copied this function makes me ill.
+// GM connections need to be brokered through the mothership,
+// so I need to connect to the mothership, but I can't use the
+// client library because it links against *this* library.
+// Shoot me now.  No wonder academics have such a terrible
+// reputation in industry.
+//
+//      --Humper
+
+#define MOTHERPORT 10000
+
+static CRConnection *__copy_of_crMothershipConnect( void )
+{
+	char *mother_server = NULL;
+	int   mother_port = MOTHERPORT;
+	char mother_url[1024];
+
+	crNetInit( NULL, NULL );
+
+	mother_server = crGetenv( "CRMOTHERSHIP" );
+	if (!mother_server)
+	{
+		crWarning( "Couldn't find the CRMOTHERSHIP environment variable, defaulting to localhost" );
+		mother_server = "localhost";
+	}
+
+	sprintf( mother_url, "%s:%d", mother_server, mother_port );
+
+	return crNetConnectToServer( mother_server, 10000, 8096 );
+}
+
+// More code-copying lossage.  I sure hope no one ever sees this code.  Ever.
+
+
+static int __copy_of_crMothershipReadResponse( CRConnection *conn, void *buf )
+{
+	char codestr[4];
+	int code;
+
+	crNetSingleRecv( conn, codestr, 4 );
+	crNetReadline( conn, buf );
+
+	code = crStrToInt( codestr );
+	return (code == 200);
+}
+
+// And, the final insult.
+
+static int __copy_of_crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... )
+{
+	va_list args;
+	static char txt[8092];
+
+	va_start(args, str);
+	vsprintf( txt, str, args );
+	va_end(args);
+
+	crStrcat( txt, "\n" );
+	crNetSendExact( conn, txt, crStrlen(txt) );
+	if (response_buf)
+	{
+		return __copy_of_crMothershipReadResponse( conn, response_buf );
+	}
+	else
+	{
+		char devnull[1024];
+		return __copy_of_crMothershipReadResponse( conn, devnull );
+	}
+}
+
+
+void crGmAccept( CRConnection *conn, unsigned short port )
+{
+	CRConnection *mother;
+	char response[8096];
+  char my_hostname[256];
+	crWarning( "crGmAccept is being called -- brokering the connection through the mothership!." );
+
+	mother = __copy_of_crMothershipConnect( );
+
+	if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
+	{
+		crError( "Couldn't determine my own hostname in crGmAccept!" );
+	}
+	
+	// Tell the mothership I'm willing to receive a client, and what my GM info is
+	if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest %s %d %d %d", my_hostname, conn->port, cr_gm.node_id, cr_gm.port_num ) )
+	{
+		crError( "Mothership didn't like my accept request request" );
+	}
+
+	// The response will contain the GM information for the guy who accepted
+	// this connection.  The mothership will sit on the acceptrequest
+	// until someone connects.
+	
+	sscanf( response, "%d %d", &(conn->gm_node_id), &(conn->gm_port_num) );
+	
+	// NOW, we can add the connection, since we have enough information
+	// to uniquely determine the sender when we get a packet!
+	crGmConnectionAdd( conn );
+
+	__copy_of_crMothershipSendString( mother, NULL, "quit" );
+	crNetDisconnect( mother );
+	
+	(void) port;
+}
+
+int crGmDoConnect( CRConnection *conn )
+{
+	CRConnection *mother;
+	char response[8096];
+	crWarning( "crGmDoConnect is being called -- brokering the connection through the mothership!." );
+
+	mother = __copy_of_crMothershipConnect( );
+
+	// Tell the mothership who I want to connect to, and what my GM info is
+	if (!__copy_of_crMothershipSendString( mother, response, "connectrequest %s %d %d %d", conn->hostname, conn->port, cr_gm.node_id, cr_gm.port_num ) )
+	{
+		crError( "Mothership didn't like my connect request request" );
+	}
+
+	// The response will contain the GM information for the guy who accepted
+	// this connection.  The mothership will sit on the connectrequest
+	// until someone accepts.
+	
+	sscanf( response, "%d %d", &(conn->gm_node_id), &(conn->gm_port_num) );
+
+	// NOW, we can add the connection, since we have enough information
+	// to uniquely determine the sender when we get a packet!
+	crGmConnectionAdd( conn );
+
+	__copy_of_crMothershipSendString( mother, NULL, "quit" );
+	crNetDisconnect( mother );
+	
+	return 1;
+}
+
+void crGmDoDisconnect( CRConnection *conn )
+{
+	crError( "crGmDoDisconnect shouldn't ever get called." );
+	(void) conn;
+}
+
+
+
+	static __inline CRGmConnection *
+crGmConnectionLookup( unsigned int node_id, unsigned int port_num )
+{
+	CRGmConnection *gm_conn;
+
+	CRASSERT( node_id < cr_gm.num_nodes );
+
+	gm_conn = CR_GM_HASH( node_id, port_id );
+	while ( gm_conn )
+	{
+		if ( gm_conn->node_id == node_id && gm_conn->port_num == port_num )
+		{
+			return gm_conn;
+		}
+		gm_conn = gm_conn->hash_next;
+	}
+
+	crError( "GM: lookup on unknown source: node=%u port=%u",
+			node_id, port_num );
+
+	/* unreached */
+	return NULL;
+}
+
 
 void *crGmAlloc( CRConnection *conn )
 {
@@ -752,6 +877,8 @@ crGmSendCredits( CRConnection *conn )
 	cr_gm_debug( "sending %d credits to host %s",
 			conn->recv_credits, conn->hostname );
 #endif
+	crDebug( "sending %d credits to host %s (%d, %d)",
+			conn->recv_credits, conn->hostname, conn->gm_node_id, conn->gm_port_num );
 
 	conn->recv_credits = 0;
 
@@ -993,7 +1120,25 @@ void crGmSend( CRConnection *conn, void **bufp,
 
 void crGmInstantReclaim( CRConnection *conn, CRMessage *msg )
 {
-	cr_gm_provide_receive_buffer( msg );
+	CRGmBuffer *gm_buffer = (CRGmBuffer *) msg - 1;
+
+	CRASSERT( gm_buffer->magic == CR_GM_BUFFER_RECV_MAGIC );
+
+	switch ( gm_buffer->kind )
+	{
+		case CRGmMemoryPinned:
+			cr_gm_provide_receive_buffer( gm_buffer );
+			break;
+
+		case CRGmMemoryUnpinned:
+		case CRGmMemoryBig:
+			crFree( gm_buffer );
+			break;
+
+		default:
+			crError( "Bad buffer kind in crGmInstantReclaim: %d", gm_buffer->kind );
+			break;
+	}
 }
 
 	void
@@ -1027,6 +1172,7 @@ crGmFree( CRConnection *conn, void *buf )
 				conn->gm_port_num ) );
 }
 
+#if 0
 	static int 
 cr_gm_looks_like_same_host( const char *a, const char *b )
 {
@@ -1044,6 +1190,7 @@ cr_gm_looks_like_same_host( const char *a, const char *b )
 			( *a == '.'  && *b == '\0' ) ||
 			( *a == '\0' && *b == '.'  ) );
 }
+#endif
 
 	static void
 cr_gm_set_acceptable_sizes( void )
@@ -1069,7 +1216,7 @@ cr_gm_set_acceptable_sizes( void )
 	}
 }
 
-void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, int mtu )
+void crGmInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int mtu )
 {
 	gm_status_t status;
 	unsigned int port, min_port, max_port;
@@ -1218,10 +1365,19 @@ unsigned int crGmPortNum( void )
 
 void crGmConnection( CRConnection *conn )
 {
+	// The #if 0'ed out code here did some sanity checking on 
+	// the integrity of the GM network.  This doesn't quite work
+	// any more because we don't have an initial TCPIP handshake
+	// to establish the GM node ID of the other party.  Perhaps
+	// we can do this validation in GmAccept once the mothership
+	// is brokering connections?
+#if 0
 	char *actual_name;
+#endif
 
 	CRASSERT( cr_gm.initialized );
 
+#if 0
 	if ( conn->gm_node_id == GM_NO_SUCH_NODE_ID )
 	{
 		crError( "GM: there's no host called \"%s\"?",
@@ -1242,8 +1398,8 @@ void crGmConnection( CRConnection *conn )
 				"is on that ID", conn->hostname,
 				conn->gm_node_id, actual_name );
 	}
+#endif
 
-	crGmConnectionAdd( conn );
 
 	conn->type  = CR_GM;
 	conn->Alloc = crGmAlloc;
@@ -1258,7 +1414,9 @@ void crGmConnection( CRConnection *conn )
 	conn->Disconnect = crGmDoDisconnect;
 	conn->sizeof_buffer_header = sizeof( CRGmBuffer );
 
+#if 0
 	crWarning( "GM: accepted connection from "
 			"host=%s id=%d (gm_name=%s)", conn->hostname,
 			conn->gm_node_id, actual_name );
+#endif
 }

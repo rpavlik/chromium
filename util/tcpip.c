@@ -579,8 +579,9 @@ void crTCPIPInstantReclaim( CRConnection *conn, CRMessage *mess )
 	crTCPIPFree( conn, mess );
 }
 
-void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
+void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned int mtu )
 {
+	(void) mtu;
 	if ( cr_tcpip.initialized )
 	{
 		if ( cr_tcpip.recv == NULL && cr_tcpip.close == NULL )
