@@ -56,7 +56,8 @@ TexGenf
 TexGeni
 TexImage1D
 TexImage2D
-#TexImage3D
+TexImage3D
+TexImage3DEXT
 TexParameterfv
 TexParameteriv
 TexParameterf

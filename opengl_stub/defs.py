@@ -321,6 +321,7 @@ stack_sizes = {
   'TexGeniv': 12,
   'TexImage1D': 32,
   'TexImage2D': 36,
+  'TexImage3D': 36,
   'TexParameterf': 12,
   'TexParameterfv': 12,
   'TexParameteri': 12,

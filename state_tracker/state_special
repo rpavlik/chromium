@@ -110,6 +110,8 @@ DeleteTextures
 BindTexture
 TexImage1D
 TexImage2D
+TexImage3D
+TexImage3DEXT
 TexSubImage1D
 TexSubImage2D
 TexParameterfv

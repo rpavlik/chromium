@@ -58,8 +58,10 @@ crNetDump
 crNetBarf
 crPixelCopy1D
 crPixelCopy2D
+crPixelCopy3D
 crPixelSize
 crImageSize
+crTextureSize
 crGetenv
 crSetenv
 crHashtableAdd

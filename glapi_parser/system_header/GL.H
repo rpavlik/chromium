@@ -306,6 +306,7 @@ void glTexGeni (GLenum coord, GLenum pname, GLint param);
 void glTexGeniv (GLenum coord, GLenum pname, const GLint *params);
 void glTexImage1D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+void glTexImage3D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 void glTexParameterf (GLenum target, GLenum pname, GLfloat param);
 void glTexParameterfv (GLenum target, GLenum pname, const GLfloat *params);
 void glTexParameteri (GLenum target, GLenum pname, GLint param);

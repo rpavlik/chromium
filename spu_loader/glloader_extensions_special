@@ -66,3 +66,4 @@ SecondaryColor3uivEXT
 SecondaryColor3usvEXT
 SecondaryColor3ubvEXT
 SecondaryColorPointerEXT
+TexImage3DEXT

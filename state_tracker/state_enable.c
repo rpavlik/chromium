@@ -209,7 +209,7 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue *neg_bitid,
 			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
 			DIRTY(sb->texture.dirty, neg_bitid);
 			break;
-#ifdef CR_OPENGL_VERSION_1_1
+#ifdef CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_3D :
 			g->texture.unit[g->texture.curTextureUnit].enabled3D = val;
 			DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);

@@ -89,4 +89,7 @@ void crStateExtensionsInit( CRContext *g )
 
 	if (hasExtension((const char*)g->limits.extensions, "GL_NV_texgen_reflection"))
 		g->extensions.NV_texgen_reflection = GL_TRUE;
+
+	if (hasExtension((const char*)g->limits.extensions, "GL_EXT_texture3D"))
+		g->extensions.EXT_texture3D = GL_TRUE;
 }

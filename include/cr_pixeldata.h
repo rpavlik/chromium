@@ -19,6 +19,8 @@ int crPixelSize( GLenum format, GLenum type );
 unsigned int crImageSize( GLenum format, GLenum type,
 													GLsizei width, GLsizei height );
 
+unsigned int crTextureSize( GLenum format, GLenum type, GLsizei width, GLsizei height, GLsizei depth );
+
 void crPixelCopy1D( GLvoid *dstPtr, GLenum dstFormat, GLenum dstType,
 										const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
 										GLsizei width, const CRPixelPackState *srcPacking );
@@ -28,6 +30,10 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 										const CRPixelPackState *dstPacking,
 										const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
 										const CRPixelPackState *srcPacking );
+
+void crPixelCopy3D( GLsizei width, GLsizei height, GLsizei depth, GLvoid *dstPtr, GLenum dstFormat, GLenum dstType,
+	            const CRPixelPackState *dstPacking, const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
+	            const CRPixelPackState *srcPacking );
 
 #ifdef __cplusplus
 }

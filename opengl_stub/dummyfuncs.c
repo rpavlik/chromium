@@ -13,34 +13,11 @@
  */
 
 
-/*#define GL_GLEXT_PROTOTYPES*/
 #include "chromium.h"
 #include "cr_error.h"
+#include "cr_version.h"
 
-void glTexImage3D( GLenum target, GLint level,
-#if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS) || defined(OSF1)
-									 GLenum internalFormat,
-#else
-									 GLint internalFormat,
-#endif
-									 GLsizei width, GLsizei height, GLsizei depth,
-									 GLint border, GLenum format, GLenum type,
-									 const GLvoid *pixels )
-{
-	(void) target;
-	(void) level;
-	(void) internalFormat;
-	(void) width;
-	(void) height;
-	(void) depth;
-	(void) border;
-	(void) format;
-	(void) type;
-	(void) pixels;
-	crWarning("glTexImage3D not implemented by Chromium");
-}
-
-void glTexSubImage3D( GLenum target, GLint level,
+void CR_APIENTRY glTexSubImage3D( GLenum target, GLint level,
 											GLint xoffset, GLint yoffset,	GLint zoffset,
 											GLsizei width, GLsizei height, GLsizei depth,
 											GLenum format, GLenum type, const GLvoid *pixels)
@@ -59,7 +36,7 @@ void glTexSubImage3D( GLenum target, GLint level,
 	crWarning("glTexSubImage3D not implemented by Chromium");
 }
 
-void glCopyTexSubImage3D( GLenum target, GLint level,
+void CR_APIENTRY glCopyTexSubImage3D( GLenum target, GLint level,
                           GLint xoffset, GLint yoffset,
                           GLint zoffset, GLint x, GLint y, GLsizei width,
                           GLsizei height )
@@ -76,7 +53,7 @@ void glCopyTexSubImage3D( GLenum target, GLint level,
 	crWarning("glCopyTexSubImage3D not implemented by Chromium");
 }
 
-void glColorTable( GLenum target, GLenum internalformat,
+void CR_APIENTRY glColorTable( GLenum target, GLenum internalformat,
 									 GLsizei width, GLenum format,
 									 GLenum type, const GLvoid *table )
 {
@@ -89,7 +66,7 @@ void glColorTable( GLenum target, GLenum internalformat,
 	crWarning("glColorTable not implemented by Chromium");
 }
 
-void glColorSubTable( GLenum target, GLsizei start, GLsizei count,
+void CR_APIENTRY glColorSubTable( GLenum target, GLsizei start, GLsizei count,
 											GLenum format, GLenum type, const GLvoid *data )
 {
 	(void) target;
@@ -101,7 +78,7 @@ void glColorSubTable( GLenum target, GLsizei start, GLsizei count,
 	crWarning("glColorSubTable not implemented by Chromium");
 }
 
-void glColorTableParameteriv(GLenum target, GLenum pname,
+void CR_APIENTRY glColorTableParameteriv(GLenum target, GLenum pname,
 														 const GLint *params)
 {
 	(void) target;
@@ -110,7 +87,7 @@ void glColorTableParameteriv(GLenum target, GLenum pname,
 	crWarning("glColorTableParameteriv not implemented by Chromium");
 }
 
-void glColorTableParameterfv(GLenum target, GLenum pname,
+void CR_APIENTRY glColorTableParameterfv(GLenum target, GLenum pname,
 														 const GLfloat *params)
 {
 	(void) target;
@@ -119,7 +96,7 @@ void glColorTableParameterfv(GLenum target, GLenum pname,
 	crWarning("glColorTableParameterfv not implemented by Chromium");
 }
 
-void glCopyColorSubTable( GLenum target, GLsizei start,
+void CR_APIENTRY glCopyColorSubTable( GLenum target, GLsizei start,
 													GLint x, GLint y, GLsizei width )
 {
 	(void) target;
@@ -130,7 +107,7 @@ void glCopyColorSubTable( GLenum target, GLsizei start,
 	crWarning("glCopyColorSubTable not implemented by Chromium");
 }
 
-void glCopyColorTable( GLenum target, GLenum internalformat,
+void CR_APIENTRY glCopyColorTable( GLenum target, GLenum internalformat,
 											 GLint x, GLint y, GLsizei width )
 {
 	(void) target;
@@ -141,7 +118,7 @@ void glCopyColorTable( GLenum target, GLenum internalformat,
 	crWarning("glCopyColorTable not implemented by Chromium");
 }
 
-void glGetColorTable( GLenum target, GLenum format,
+void CR_APIENTRY glGetColorTable( GLenum target, GLenum format,
 											GLenum type, GLvoid *table )
 {
 	(void) target;
@@ -151,7 +128,7 @@ void glGetColorTable( GLenum target, GLenum format,
 	crWarning("glGetColorTable not implemented by Chromium");
 }
 
-void glGetColorTableParameterfv( GLenum target, GLenum pname,
+void CR_APIENTRY glGetColorTableParameterfv( GLenum target, GLenum pname,
 																 GLfloat *params )
 {
 	(void) target;
@@ -160,7 +137,7 @@ void glGetColorTableParameterfv( GLenum target, GLenum pname,
 	crWarning("id glGetColorTableParameterfv not implemented by Chromium");
 }
 
-void glGetColorTableParameteriv( GLenum target, GLenum pname,
+void CR_APIENTRY glGetColorTableParameteriv( GLenum target, GLenum pname,
 																 GLint *params )
 {
 	(void) target;
@@ -170,15 +147,15 @@ void glGetColorTableParameteriv( GLenum target, GLenum pname,
 }
 
 #ifndef WINDOWS
-extern void glBlendEquationEXT(GLenum);
+extern void CR_APIENTRY glBlendEquationEXT(GLenum);
 
-void glBlendEquation( GLenum mode )
+void CR_APIENTRY glBlendEquation( GLenum mode )
 {
 	glBlendEquationEXT(mode);
 }
 #endif
 
-void glBlendColor( GLclampf red, GLclampf green,
+void CR_APIENTRY glBlendColor( GLclampf red, GLclampf green,
 									 GLclampf blue, GLclampf alpha )
 {
 	(void) red;
@@ -188,7 +165,7 @@ void glBlendColor( GLclampf red, GLclampf green,
 	crWarning("glBlendColor not implemented by Chromium");
 }
 
-void glHistogram( GLenum target, GLsizei width,
+void CR_APIENTRY glHistogram( GLenum target, GLsizei width,
 									GLenum internalformat, GLboolean sink )
 {
 	(void) target;
@@ -198,13 +175,13 @@ void glHistogram( GLenum target, GLsizei width,
 	crWarning("id glHistogram not implemented by Chromium");
 }
 
-void glResetHistogram( GLenum target )
+void CR_APIENTRY glResetHistogram( GLenum target )
 {
 	(void) target;
 	crWarning("glResetHistogram not implemented by Chromium");
 }
 
-void glGetHistogram( GLenum target, GLboolean reset,
+void CR_APIENTRY glGetHistogram( GLenum target, GLboolean reset,
 										 GLenum format, GLenum type, GLvoid *values )
 {
 	(void) target;
@@ -215,7 +192,7 @@ void glGetHistogram( GLenum target, GLboolean reset,
 	crWarning("glGetHistogram not implemented by Chromium");
 }
 
-void glGetHistogramParameterfv( GLenum target, GLenum pname,
+void CR_APIENTRY glGetHistogramParameterfv( GLenum target, GLenum pname,
 																GLfloat *params )
 {
 	(void) target;
@@ -224,7 +201,7 @@ void glGetHistogramParameterfv( GLenum target, GLenum pname,
 	crWarning("glGetHistogramParameterfv not implemented by Chromium");
 }
 
-void glGetHistogramParameteriv( GLenum target, GLenum pname,
+void CR_APIENTRY glGetHistogramParameteriv( GLenum target, GLenum pname,
 																GLint *params )
 {
 	(void) target;
@@ -233,7 +210,7 @@ void glGetHistogramParameteriv( GLenum target, GLenum pname,
 	crWarning("glGetHistogramParameteriv not implemented by Chromium");
 }
 
-void glMinmax( GLenum target, GLenum internalformat, GLboolean sink )
+void CR_APIENTRY glMinmax( GLenum target, GLenum internalformat, GLboolean sink )
 {
 	(void) target;
 	(void) internalformat;
@@ -241,13 +218,13 @@ void glMinmax( GLenum target, GLenum internalformat, GLboolean sink )
 	crWarning("glMinmax not implemented by Chromium");
 }
 
-void glResetMinmax( GLenum target )
+void CR_APIENTRY glResetMinmax( GLenum target )
 {
 	(void) target;
 	crWarning("glResetMinmax not implemented by Chromium");
 }
 
-void glGetMinmax( GLenum target, GLboolean reset,
+void CR_APIENTRY glGetMinmax( GLenum target, GLboolean reset,
 									GLenum format, GLenum types, GLvoid *values )
 {
 	(void) target;
@@ -258,7 +235,7 @@ void glGetMinmax( GLenum target, GLboolean reset,
 	crWarning("glGetMinmax not implemented by Chromium");
 }
 
-void glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat *params )
+void CR_APIENTRY glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
 	(void) target;
 	(void) pname;
@@ -266,7 +243,7 @@ void glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat *params )
 	crWarning("glGetMinmaxParameterfv not implemented by Chromium");
 }
 
-void glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint *params )
+void CR_APIENTRY glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint *params )
 {
 	(void) target;
 	(void) pname;
@@ -274,7 +251,7 @@ void glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint *params )
 	crWarning("glGetMinmaxParameteriv not implemented by Chromium");
 }
 
-void glConvolutionFilter1D( GLenum target, GLenum internalformat,
+void CR_APIENTRY glConvolutionFilter1D( GLenum target, GLenum internalformat,
 														GLsizei width, GLenum format, GLenum type,
 														const GLvoid *image )
 {
@@ -287,7 +264,7 @@ void glConvolutionFilter1D( GLenum target, GLenum internalformat,
 	crWarning("glConvolutionFilter1D not implemented by Chromium");
 }
 
-void glConvolutionFilter2D( GLenum target, GLenum internalformat,
+void CR_APIENTRY glConvolutionFilter2D( GLenum target, GLenum internalformat,
 														GLsizei width, GLsizei height, GLenum format,
 														GLenum type, const GLvoid *image )
 {
@@ -301,7 +278,7 @@ void glConvolutionFilter2D( GLenum target, GLenum internalformat,
 	crWarning("glConvolutionFilter2D not implemented by Chromium");
 }
 
-void glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params )
+void CR_APIENTRY glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params )
 {
 	(void) target;
 	(void) pname;
@@ -309,7 +286,7 @@ void glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params )
 	crWarning("glConvolutionParameterf not implemented by Chromium");
 }
 
-void glConvolutionParameterfv( GLenum target, GLenum pname,
+void CR_APIENTRY glConvolutionParameterfv( GLenum target, GLenum pname,
 															 const GLfloat *params )
 {
 	(void) target;
@@ -318,7 +295,7 @@ void glConvolutionParameterfv( GLenum target, GLenum pname,
 	crWarning("glConvolutionParameterfv not implemented by Chromium");
 }
 
-void glConvolutionParameteri( GLenum target, GLenum pname, GLint params )
+void CR_APIENTRY glConvolutionParameteri( GLenum target, GLenum pname, GLint params )
 {
 	(void) target;
 	(void) pname;
@@ -326,7 +303,7 @@ void glConvolutionParameteri( GLenum target, GLenum pname, GLint params )
 	crWarning("glConvolutionParameteri not implemented by Chromium");
 }
 
-void glConvolutionParameteriv( GLenum target, GLenum pname,
+void CR_APIENTRY glConvolutionParameteriv( GLenum target, GLenum pname,
 															 const GLint *params )
 {
 	(void) target;
@@ -335,7 +312,7 @@ void glConvolutionParameteriv( GLenum target, GLenum pname,
 	crWarning("glConvolutionParameteriv not implemented by Chromium");
 }
 
-void glCopyConvolutionFilter1D( GLenum target, GLenum internalformat,
+void CR_APIENTRY glCopyConvolutionFilter1D( GLenum target, GLenum internalformat,
 																GLint x, GLint y, GLsizei width )
 {
 	(void) target;
@@ -346,7 +323,7 @@ void glCopyConvolutionFilter1D( GLenum target, GLenum internalformat,
 	crWarning("glCopyConvolutionFilter1D not implemented by Chromium");
 }
 
-void glCopyConvolutionFilter2D( GLenum target, GLenum internalformat,
+void CR_APIENTRY glCopyConvolutionFilter2D( GLenum target, GLenum internalformat,
 																GLint x, GLint y, GLsizei width,
 																GLsizei height)
 {
@@ -359,7 +336,7 @@ void glCopyConvolutionFilter2D( GLenum target, GLenum internalformat,
 	crWarning("glCopyConvolutionFilter2D not implemented by Chromium");
 }
 
-void glGetConvolutionFilter( GLenum target, GLenum format,
+void CR_APIENTRY glGetConvolutionFilter( GLenum target, GLenum format,
 														 GLenum type, GLvoid *image )
 {
 	(void) target;
@@ -369,7 +346,7 @@ void glGetConvolutionFilter( GLenum target, GLenum format,
 	crWarning("glGetConvolutionFilter not implemented by Chromium");
 }
 
-void glGetConvolutionParameterfv( GLenum target, GLenum pname,
+void CR_APIENTRY glGetConvolutionParameterfv( GLenum target, GLenum pname,
 																	GLfloat *params )
 {
 	(void) target;
@@ -378,7 +355,7 @@ void glGetConvolutionParameterfv( GLenum target, GLenum pname,
 	crWarning("glGetConvolutionParameterfv not implemented by Chromium");
 }
 
-void glGetConvolutionParameteriv( GLenum target, GLenum pname,
+void CR_APIENTRY glGetConvolutionParameteriv( GLenum target, GLenum pname,
 																	GLint *params )
 {
 	(void) target;
@@ -388,9 +365,9 @@ void glGetConvolutionParameteriv( GLenum target, GLenum pname,
 }
 
 #ifdef SunOS
-void glSeparableFilter2D (GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *row, GLvoid *column)
+void CR_APIENTRY glSeparableFilter2D (GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *row, GLvoid *column)
 #else
-void glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width,
+void CR_APIENTRY glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width,
 													GLsizei height, GLenum format, GLenum type,
 													const GLvoid *row, const GLvoid *column )
 #endif
@@ -406,7 +383,7 @@ void glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width,
 	crWarning("glSeparableFilter2D not implemented by Chromium");
 }
 
-void glGetSeparableFilter( GLenum target, GLenum format, GLenum type,
+void CR_APIENTRY glGetSeparableFilter( GLenum target, GLenum format, GLenum type,
 													 GLvoid *row, GLvoid *column, GLvoid *span )
 {
 	(void) target;
@@ -418,14 +395,14 @@ void glGetSeparableFilter( GLenum target, GLenum format, GLenum type,
 	crWarning("glGetSeparableFilter not implemented by Chromium");
 }
 
-void glPointParameterfEXT( GLenum pname, GLfloat param )
+void CR_APIENTRY glPointParameterfEXT( GLenum pname, GLfloat param )
 {
 	(void) pname;
 	(void) param;
 	crWarning("glPointparameterfEXT not implemented by Chromium");
 }
 
-void glPointParameterfvEXT( GLenum pname, const GLfloat *param )
+void CR_APIENTRY glPointParameterfvEXT( GLenum pname, const GLfloat *param )
 {
 	(void) pname;
 	(void) param;

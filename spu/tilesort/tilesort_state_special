@@ -164,6 +164,8 @@ TexGeni
 TexGeniv
 TexImage1D
 TexImage2D
+TexImage3D
+TexImage3DEXT
 TexParameterf
 TexParameterfv
 TexParameteri

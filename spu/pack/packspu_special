@@ -38,3 +38,5 @@ TexImage1D
 TexSubImage1D
 TexImage2D
 TexSubImage2D
+TexImage3D
+TexImage3DEXT

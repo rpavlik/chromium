@@ -117,6 +117,9 @@ static char *crExtensionString =
 #ifdef CR_EXT_texture_object
 	"GL_EXT_texture_object "
 #endif
+#ifdef CR_EXT_texture3D
+	"GL_EXT_texture3D "
+#endif
 #ifdef CR_NV_fog_distance
 	"GL_NV_fog_distance "
 #endif

@@ -8,6 +8,59 @@
 #include "cr_error.h"
 #include "cr_protocol.h"
 #include "cr_mem.h"
+#include "cr_version.h"
+ 
+#if defined( GL_EXT_texture3D ) 
+void crUnpackTexImage3DEXT( void )
+{
+        GLenum target = READ_DATA( sizeof( int ) + 0, GLenum );
+        GLint level = READ_DATA( sizeof( int ) + 4, GLint );
+        GLenum internalformat = READ_DATA( sizeof( int ) + 8, GLint );
+        GLsizei width = READ_DATA( sizeof( int ) + 12, GLsizei );
+        GLsizei height = READ_DATA( sizeof( int ) + 16, GLsizei );
+        GLsizei depth = READ_DATA( sizeof( int ) + 20, GLsizei );
+        GLint border = READ_DATA( sizeof( int ) + 24, GLint );
+        GLenum format = READ_DATA( sizeof( int ) + 28, GLenum );
+        GLenum type = READ_DATA( sizeof( int ) + 32, GLenum );
+        int is_null = READ_DATA( sizeof( int ) + 36, int );
+        GLvoid *pixels;
+
+        if ( is_null )
+                pixels = NULL;
+        else
+                pixels = DATA_POINTER( sizeof( int ) + 40, GLvoid );
+
+        cr_unpackDispatch.TexImage3DEXT( target, level, internalformat, width, height, depth,
+                                      border, format, type, pixels );
+        INCR_VAR_PTR();
+}
+#endif /* GL_EXT_texture3D */
+
+#if defined( CR_OPENGL_VERSION_1_2 )
+void crUnpackTexImage3D( void )
+{
+        GLenum target = READ_DATA( sizeof( int ) + 0, GLenum );
+        GLint level = READ_DATA( sizeof( int ) + 4, GLint );
+        GLint internalformat = READ_DATA( sizeof( int ) + 8, GLint );
+        GLsizei width = READ_DATA( sizeof( int ) + 12, GLsizei );
+        GLsizei height = READ_DATA( sizeof( int ) + 16, GLsizei );
+        GLsizei depth = READ_DATA( sizeof( int ) + 20, GLsizei );
+        GLint border = READ_DATA( sizeof( int ) + 24, GLint );
+        GLenum format = READ_DATA( sizeof( int ) + 28, GLenum );
+        GLenum type = READ_DATA( sizeof( int ) + 32, GLenum );
+        int is_null = READ_DATA( sizeof( int ) + 36, int );
+        GLvoid *pixels;
+
+        if ( is_null )
+                pixels = NULL;
+        else
+                pixels = DATA_POINTER( sizeof( int ) + 40, GLvoid );
+
+        cr_unpackDispatch.TexImage3D( target, level, internalformat, width, height, depth,
+                                      border, format, type, pixels );
+        INCR_VAR_PTR();
+}
+#endif /* CR_OPENGL_VERSION_1_2 */
 
 void crUnpackTexImage2D( void )
 {

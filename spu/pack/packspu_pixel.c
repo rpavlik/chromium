@@ -8,6 +8,7 @@
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
 #include "cr_pixeldata.h"
+#include "cr_version.h"
 
 void PACKSPU_APIENTRY packspu_GetTexImage (GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels)
 {
@@ -137,6 +138,52 @@ void PACKSPU_APIENTRY packspu_TexImage2D( GLenum target, GLint level, GLint inte
 		crPackTexImage2D( target, level, internalformat, width, height, border, format, type, pixels, &(clientState->unpack) );
 	}
 }
+
+#ifdef GL_EXT_texture3D
+void PACKSPU_APIENTRY packspu_TexImage3DEXT( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
+{
+        GET_CONTEXT(ctx);
+        CRClientState *clientState = &(ctx->clientState->client);
+
+	crStateTexImage3D( target, level, internalformat, width, height, depth, border, format, type, pixels );
+
+        if (pack_spu.swap)
+        {
+                crPackTexImage3DEXTSWAP( target, level, internalformat, width, height, depth, border, format, type, pixels, &(clientState->unpack) );
+        }
+        else
+        {
+                crPackTexImage3DEXT( target, level, internalformat, width, height, depth, border, format, type, pixels, &(clientState->unpack) );
+        }
+}
+#endif
+
+#ifdef CR_OPENGL_VERSION_1_2
+void PACKSPU_APIENTRY packspu_TexImage3D(GLenum target, GLint level,
+#if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS)
+                                    GLenum internalformat,
+#else
+                                    GLint internalformat,
+#endif
+                                    GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
+{
+        GET_CONTEXT(ctx);
+        CRClientState *clientState = &(ctx->clientState->client);
+
+	crStateTexImage3D( target, level, internalformat, width, height, depth, border, format, type, pixels );
+
+        if (pack_spu.swap)
+        {
+                crPackTexImage3DSWAP( target, level, internalformat, width, height, depth, border, format, type, pixels, &(clientState->unpack) );
+        }
+        else
+        {
+                crPackTexImage3D( target, level, internalformat, width, height, depth, border, format, type, pixels, &(clientState->unpack) );
+        }
+}
+#endif /* CR_OPENGL_VERSION_1_2 */
+
+
 void PACKSPU_APIENTRY packspu_TexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	GET_CONTEXT(ctx);

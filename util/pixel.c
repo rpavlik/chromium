@@ -1026,6 +1026,29 @@ unsigned int crImageSize( GLenum format, GLenum type, GLsizei width, GLsizei hei
 	return bytes;
 }
 
+/*
+ * Return number of bytes of storage needed to accomodate a
+ * 3D texture with the give format, type, and size.
+ */
+unsigned int crTextureSize( GLenum format, GLenum type, GLsizei width, GLsizei height, GLsizei depth )
+{
+        unsigned int bytes = width * height;
+
+        if (type == GL_BITMAP)
+        {
+		/*
+		 * Not sure about this one, so just multiply
+		 * by the depth?
+		 */
+                bytes = ((width + 7) / 8) * height * depth;
+        }
+        else
+        {
+                bytes = width * height * depth * crPixelSize( format, type );
+        }
+
+        return bytes;
+}
 
 static const CRPixelPackState defaultPacking = {
 	0, 		/* rowLength */
@@ -1174,4 +1197,24 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 			crFree(tmpRow);
 		}
 	}
+}
+
+void crPixelCopy3D( GLsizei width, GLsizei height, GLsizei depth, 
+                    GLvoid *dstPtr, GLenum dstFormat, GLenum dstType,
+                    const CRPixelPackState *dstPacking,
+                    const GLvoid *srcPtr, GLenum srcFormat, GLenum srcType,
+                    const CRPixelPackState *srcPacking )
+
+{
+	int tex_size = 0;
+	
+	(void)srcPacking;
+	(void)srcType;
+	(void)srcFormat;
+	(void)dstPacking;
+
+	crWarning( "crPixelCopy3D:  simply memcpy'ing from srcPtr to dstPtr" );
+
+	tex_size = crTextureSize( dstFormat, dstType, width, height, depth );
+	memcpy( (void *) dstPtr, (void *) srcPtr, tex_size ); 
 }
