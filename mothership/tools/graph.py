@@ -719,6 +719,9 @@ class MainFrame(wxFrame):
 				return
 
 		_docList.remove(self)
+		if len(_docList) == 0:
+			_app.ExitMainLoop()
+
 		self.Destroy()
 
 
