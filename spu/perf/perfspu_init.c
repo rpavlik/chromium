@@ -86,8 +86,10 @@ int perfSPUCleanup(void)
 
 	conn = crNetDump(&num_conns);
 
+#if 0
 	sprintf(str, "SPUID %d NUMBER OF CONNECTIONS %d", perf_spu.id, num_conns);
 	perfspuDump( str );
+#endif
 
 	for (i = 0; i < num_conns; i++)
 	{
@@ -99,9 +101,11 @@ int perfSPUCleanup(void)
 			sprintf(str, "%s %s SPUID %d CONNECTION ID %d PORT %d TOTAL_BYTES SENT %d", perf_spu.token, perf_spu.hostname, perf_spu.id, i, c->port, c->total_bytes_sent);
 			perfspuDump( str );
 		    }
+#if 0
 		} else {
 			sprintf(str, "%s %s SPUID %d CONNECTION ID %d UNUSED (NULL CRConnection)", perf_spu.token, perf_spu.hostname, perf_spu.id, i);
 			perfspuDump( str );
+#endif
 		}
 	}
 
