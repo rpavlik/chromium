@@ -8,6 +8,9 @@ TOP = ..
 include ${TOP}/arch.mk
 
 # Uncomment for Quadrics Elan3 interface support
+#
+# Pick only one of the following; they're two different implementations of
+# Quadrics communication.
 #TEAC_SUPPORT = 1
 #TCSCOMM_SUPPORT = 1
 
