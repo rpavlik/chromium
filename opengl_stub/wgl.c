@@ -171,9 +171,19 @@ BOOL WINAPI wglShareLists_prox( HGLRC hglrc1, HGLRC hglrc2 )
 
 HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 {
+	static int already_has_a_context = 0;
 	// This should be early enough to initialize everything.
 	// You have to create a context before you can make current
 	// to it, right?
+
+	if (!already_has_a_context)
+	{
+		already_has_a_context = 1;
+	}
+	else
+	{
+		crError( "I'm sorry, I don't support multiple context creation right now.  If this is holding you up, file a bug." ); 
+	}
 
 	StubInit();
 	stub_spu->dispatch_table.CreateContext( (void *) hdc, NULL );

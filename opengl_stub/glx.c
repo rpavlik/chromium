@@ -213,6 +213,17 @@ glXCopyContext( Display *dpy, GLXContext src, GLXContext dst, GLuint mask )
 GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share,
 		Bool direct )
 {
+	static int already_has_a_context = 0;
+
+	if (!already_has_a_context)
+	{
+		already_has_a_context = 1;
+	}
+	else
+	{
+		crError( "I'm sorry, I don't support multiple context creation right now.  If this is holding you up, file a bug." ); 
+	}
+
 	(void) dpy;
 	(void) vis;
 	(void) share;
