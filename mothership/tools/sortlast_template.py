@@ -474,16 +474,14 @@ def Create_Sortlast(parentWindow, mothership):
 
 	# Create the server/render node
 	xPos = 300
-	if 1:
-		yPos = 5
-	else:
-		yPos = numApps * 60 / 2 - 20
+	yPos = 5
 	serverNode = crtypes.NetworkNode(serverHosts, 1)
 	serverNode.SetPosition(xPos, yPos)
 	serverNode.Select()
 	renderSPU = crutils.NewSPU("render")
 	renderSPU.SetOption("window_geometry", [0, 0, width, height])
 	serverNode.AddSPU(renderSPU)
+	serverNode.SetOption( "only_swap_once", [1] )
 	mothership.AddNode(serverNode)
 
 	# Create the client/app nodes
