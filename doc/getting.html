@@ -34,11 +34,11 @@ gzip'ed tar file of the entire source tree on the release date, along with a
 copy of this documentation.&nbsp; Simply extract the archive and you've got
 everything.  For example:</p>
 <pre>
-      tar zxvf cr-1.4.tar.gz
+      tar zxvf cr-1.5.tar.gz
 </pre>
 or
 <pre>
-      gzcat cr-1.4.tar.gz | tar xvf -
+      gzcat cr-1.5.tar.gz | tar xvf -
 </pre>
 
 <p>Alternately, you can check out the top-of-tree source code from the CVS
@@ -91,7 +91,6 @@ You'll need GLUT installed so that the demonstration programs will compile.
     variable.&nbsp; Chromium builds a <i>lot</i> of shared libraries, so you
     can't skip this step.</li>
   <br>
-  <br>
   <li><b>Windows</b>:&nbsp; You will also need to install the <a href="http://cygwin.com/">cygwin
     tools</a> to build Chromium.&nbsp; If you're building from the Windows shell
     (as opposed to the cygwin bash implementation), you will need to set the
@@ -101,10 +100,8 @@ You'll need GLUT installed so that the demonstration programs will compile.
     which (since it's on your path, right?) will be searched automatically, so
     there's no <code> LD_LIBRARY_PATH</code> silliness.</li>
   <br>
-  <br>
   <li><b>IRIX</b>:&nbsp; GNU make is required.  Build Chromium by typing
-    <code>gmake</code> instead of <code>make</code>.
-  <br>
+    <code>gmake</code> instead of <code>make</code>.</li>
   <br>
   <li><b>AIX</b>:&nbsp;
     Shared libraries are somewhat different on this platform.  For Cr clients
@@ -116,8 +113,8 @@ You'll need GLUT installed so that the demonstration programs will compile.
     The exec loader will continue to look for .a's (rather, shared objects in
     ar archives) and .so's.  So to run clients without the app_faker, prepend
     LIBPATH with a dir that has a link libGL.a ->  lib/AIX/libcrfaker.a . As
-    with other platforms, you also need to set the CR_APPLICATION_ID_NUMBER  .
-  <br>
+    with other platforms, you also need to set the CR_APPLICATION_ID_NUMBER.
+    </li>
   <br>
   <li><b>SunOS</b>:&nbsp;
     OpenGL apps must be compiled with SUN_OGL_NO_VERTEX_MACROS defined so
@@ -130,23 +127,20 @@ You'll need GLUT installed so that the demonstration programs will compile.
     There seems to be a bug in the version of Xsun that comes with Solaris 9.
     To go around it set SOLARIS_9_X_BUG. Even if you're compiling say the
     Linux version but are using a sun for the display you should set this.
-  <br>
+    </li>
   <br>
   <li><b>Darwin</b>:&nbsp;
     Support for this operating system is not complete.
-
+    </li>
 </ul>
 
-<p>Build options:</p>
-<ul>
-<li><code>make debug</code> will build Chromium with debugging information
-    (this is the default).
-<li><code>make release</code> will build Chromium with optimizations and
-    no debugging information.
-<li><code>make threadsafe</code> will build Chromium with thread safety.
-    See the <code>progs/threadtest/threadtest.c</code> program for an example.
-    There is a <em>slight</em> performance penalty for thread safety.
-</ul>
+
+<h3>Build Options</h3>
+
+<p>
+See the cr/options.mk file for some configuration options which control
+thread safety, debug vs release, DMX support, etc.
+</p>
 
 
 </body>
