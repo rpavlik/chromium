@@ -12,10 +12,10 @@
  * Alpha Release = 0.1.0, Beta Release = 0.2.0
  */
 #define CR_MAJOR_VERSION 1
-#define CR_MINOR_VERSION 3
+#define CR_MINOR_VERSION 4
 #define CR_PATCH_VERSION 0
 
-#define CR_VERSION_STRING "1.3"   /* Chromium version, not OpenGL version */
+#define CR_VERSION_STRING "1.4"   /* Chromium version, not OpenGL version */
 
 
 /* These define the OpenGL version that Chromium supports.
