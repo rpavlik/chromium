@@ -954,6 +954,7 @@ void crNetServerConnect( CRNetServer *ns )
 
 CRConnection *__copy_of_crMothershipConnect( void )
 {
+	CRConnection *conn;
 	char *mother_server = NULL;
 
 	crNetInit( NULL, NULL );
@@ -965,7 +966,12 @@ CRConnection *__copy_of_crMothershipConnect( void )
 		mother_server = "localhost";
 	}
 
-	return crNetConnectToServer( mother_server, MOTHERPORT, 8096, 0 );
+	conn = crNetConnectToServer( mother_server, MOTHERPORT, 8096, 0 );
+
+	if (!conn)
+		crError("Failed to connect to mothership\n");
+
+	return conn;
 }
 
 /* More code-copying lossage.  I sure hope no one ever sees this code.  Ever. */
