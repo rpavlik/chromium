@@ -321,7 +321,10 @@ void PACKSPU_APIENTRY packspu_Enable( GLenum cap )
 		;
 	}
 
-	crPackEnable(cap);
+	if (pack_spu.swap)
+		crPackEnableSWAP(cap);
+	else
+		crPackEnable(cap);
 }
 
 
@@ -360,7 +363,10 @@ void PACKSPU_APIENTRY packspu_Disable( GLenum cap )
 		;
 	}
 
-	crPackDisable(cap);
+	if (pack_spu.swap)
+		crPackDisableSWAP(cap);
+	else
+		crPackDisable(cap);
 }
 
 
