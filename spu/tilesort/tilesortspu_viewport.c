@@ -134,10 +134,8 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 	GET_CONTEXT(ctx);
 	CRViewportState *v = &(ctx->viewport);
 	CRTransformState *t = &(ctx->transform);
-	CRCurrentState *c = &(ctx->current);
 	GLint oldViewportX, oldViewportY, oldViewportW, oldViewportH;
 	GLint oldScissorX, oldScissorY, oldScissorW, oldScissorH;
-	GLfloat oldColorR, oldColorG, oldColorB, oldColorA;
 	GLenum oldmode;
 
 	/* save current matrix mode */
@@ -148,12 +146,6 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 	oldViewportY = v->viewportY;
 	oldViewportW = v->viewportW;
 	oldViewportH = v->viewportH;
-
-	/* save current colors */
-	oldColorR = c->color.r;
-	oldColorG = c->color.g;
-	oldColorB = c->color.b;
-	oldColorA = c->color.a;
 
 	/* save current scissor dims */
 	oldScissorX = v->scissorX;
@@ -179,14 +171,6 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 	{
 		 tilesortspu_Scissor( v->scissorX, v->scissorY,
 													 v->scissorW, v->scissorH );
-	}
-
-	if (c->color.r != oldColorR || c->color.g != oldColorG ||
-		c->color.b != oldColorB || c->color.a != oldColorA)
-	{
-printf("YEP\n");
-		crStateColor4f( c->color.r, c->color.g, c->color.b,
-			c->color.a );
 	}
 
 	if (t->mode != oldmode)
