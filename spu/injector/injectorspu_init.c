@@ -29,7 +29,7 @@ int injectorspuReceiveData( CRConnection* conn, void* buf, unsigned int len )
 	switch ( msg->header.type ) {
 		case CR_MESSAGE_OOB:
 			/*injector_spu.oob_count++ ;*/
-			crDebug( "injectorspuReceiveData: OOB from conn 0x%x ?", (unsigned int) conn ) ;
+			crDebug( "injectorspuReceiveData: OOB from conn %p ?", conn ) ;
 			break ;
 		default:
 			crWarning( "injectorspuReceiveData: Why did I receive message of type 0x%x ?", msg->header.type ) ;
