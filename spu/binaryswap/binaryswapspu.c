@@ -772,6 +772,9 @@ AccumulateBBox(const GLfloat *bbox)
 		return;
 	}
 
+	/* adjust depth for alpha composite */
+	binaryswap_spu.depth = z2;
+
 	/* map to window coords */
 	binaryswap_spu.super.GetFloatv(GL_VIEWPORT, viewport);
 	winBox.x1 = (int) ((x1 + 1.0f) * (viewport[2] * 0.5F) + viewport[0]);
