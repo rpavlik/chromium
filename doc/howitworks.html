@@ -296,15 +296,16 @@
     </p>
     <p>
       On Darwin, the process is about the same as on UNIX, but with a few extra
-      steps. Due to the nature of Frameworks on Darwin, the entirety of
-      OpenGL.framework has to be 'created' in order to properly fake the
-      dynamic linker. Frameworks are a series of folders and symbolic links
-      that contain all the OpenGL headers and binaries. The faker creates one
-      similar to the actual OpenGL.framework, putting the faker library in
-      where needed. The faker then prepends the framework directory to the
-      <span class="EnvVar">DYLD_FRAMEWORK_PATH</span> before spawning the
-      executable. See <code class="Funciton">make_temp_framework</code> in
-      <span class="File">app_faker/app_faker.c</span> for the framework.
+      steps. Due to the nature of frameworks on Darwin, the entirety of
+      OpenGL.framework has to be 'created' temporarily in order to properly
+      fake the dynamic linker. The OpenGL framework is a series of folders and
+      symbolic links that contain all the OpenGL headers and binaries. The
+      faker creates one similar to the actual OpenGL framework, putting the
+      faker library in where needed. The faker then prepends the framework
+      directory to the <span class="EnvVar">DYLD_FRAMEWORK_PATH</span>
+      environment variable before spawning the executable. See <code class=
+      "Function">make_temp_framework</code> in <span class=
+      "File">app_faker/app_faker.c</span> for the framework.
     </p>
     <p>
       <span class="CrApp">crappfaker</span> can also be told where the

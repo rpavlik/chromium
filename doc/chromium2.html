@@ -347,14 +347,15 @@
       </li>
       <li>
         <b>Darwin</b>: Support for this operating system is not complete. You
-        need the following to get Chromium to compile on the Mac:
+        need to install the following to get Chromium to compile on the Mac:
         <ul>
-          <li>Apple Developer Tools (XCode especially)
+          <li>Apple Developer Tools
           </li>
-        </ul>Use <span class="EnvVar">DYLD_FALLBACK_LIBRARY_PATH</span> the
-        same way as <span class="EnvVar">LD_LIBRARY_PATH</span>. Make sure that
-        <span class="EnvVar">LD_PREBIND</span> and <span class=
-        "EnvVar">LD_PREBIND_ALLOW_OVERLAP</span> are <b>NOT</b> set. Other
+        </ul>Add the chromium library path to <span class=
+        "EnvVar">DYLD_LIBRARY_PATH</span> instead of <span class=
+        "EnvVar">LD_LIBRARY_PATH</span>. Make sure that <span class=
+        "EnvVar">LD_PREBIND</span> and <span class=
+        "EnvVar">LD_PREBIND_ALLOW_OVERLAP</span> are <em>NOT</em> set. Other
         <span class="EnvVar">LD</span> variables may interfere with the build
         process.
       </li>
