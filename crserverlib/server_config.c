@@ -132,6 +132,11 @@ crServerGatherConfiguration(char *mothership)
 	}
 	crNetSetNodeRange(low_node, high_node);
 
+	if (low_node)
+		crFree(low_node);
+	if (high_node)
+		crFree(high_node);
+
 	cr_server.head_spu =
 		crSPULoadChain(num_spus, spu_ids, spu_names, spu_dir, &cr_server);
 
