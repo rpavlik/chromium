@@ -122,9 +122,9 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue *neg_bitid,
 			DIRTY(sb->buffer.dirty, neg_bitid);
 			break;
 		case GL_NORMALIZE :
-			g->current.normalize = val;
-			DIRTY(sb->current.enable, neg_bitid);
-			DIRTY(sb->current.dirty, neg_bitid);
+			g->transform.normalize = val;
+			DIRTY(sb->transform.enable, neg_bitid);
+			DIRTY(sb->transform.dirty, neg_bitid);
 			break;
 		case GL_POINT_SMOOTH :
 			g->point.pointSmooth = val;

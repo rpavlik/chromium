@@ -117,6 +117,8 @@ void crStateTransformInit(CRLimitsState *limits, CRTransformState *t)
 	t->colorDepth = 0;
 	t->depth = &t->modelViewDepth;
 
+	t->normalize = GL_FALSE;
+
 	t->clipPlane = NULL;
 	t->clip = NULL;
 
@@ -1101,6 +1103,14 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue *bitID,
 		glAble able[2];
 		able[0] = diff_api.Disable;
 		able[1] = diff_api.Enable;
+		if (from->normalize != to->normalize) {
+			if (to->normalize == GL_TRUE)
+				diff_api.Enable(GL_NORMALIZE);
+			else
+				diff_api.Disable(GL_NORMALIZE);
+			FILLDIRTY(t->enable);
+			FILLDIRTY(t->dirty);
+		}
 #ifdef CR_OPENGL_VERSION_1_2
 		if (from->rescaleNormals != to->rescaleNormals)
 		{
@@ -1237,6 +1247,13 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue *bitID,
 					diff_api.Disable(GL_CLIP_PLANE0 + i);
 				from->clip[i] = to->clip[i];
 			}
+		}
+		if (from->normalize != to->normalize) {
+			if (to->normalize == GL_TRUE)
+				diff_api.Enable(GL_NORMALIZE);
+			else
+				diff_api.Disable(GL_NORMALIZE);
+			from->normalize = to->normalize;
 		}
 #ifdef CR_OPENGL_VERSION_1_2
 		if (from->rescaleNormals != to->rescaleNormals) {

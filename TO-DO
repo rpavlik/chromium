@@ -6,8 +6,6 @@ Finish up tilesort glReadPixels pixelstore parameters.
 
 Incorporate the patch for remote job starting.
 
-Multithread support
-
 Implement an error callback facility in packer/pack_error.c so that
 errors detected in the packer lib can be handled by the client (such
 as the pack SPU.
@@ -27,8 +25,4 @@ settings to 1280*8 in the crserver and tilesort SPU to get around
 this.
 
 Convert the last two Perl scripts in scripts/fastdep.pl and
-state_tracker/gendiffcode.pl to Python. (Alan Hourihane)
-
-Revisit the swap parameter to crPackInit() in tilesortSPUInit().
-
-Move the GL_NORMALIZE state out of "current" group into "transform" group.
+state_tracker/gendiffcode.pl to Python. 

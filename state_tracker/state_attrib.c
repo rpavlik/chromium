@@ -159,7 +159,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->enableStack[a->enableStackDepth].map1[i] = g->eval.enable1D[i];
 			a->enableStack[a->enableStackDepth].map2[i] = g->eval.enable2D[i];
 		}
-		a->enableStack[a->enableStackDepth].normalize = g->current.normalize;
+		a->enableStack[a->enableStackDepth].normalize = g->transform.normalize;
 		a->enableStack[a->enableStackDepth].pointSmooth = g->point.pointSmooth;
 		a->enableStack[a->enableStackDepth].polygonOffsetLine = g->polygon.polygonOffsetLine;
 		a->enableStack[a->enableStackDepth].polygonOffsetFill = g->polygon.polygonOffsetFill;
@@ -471,7 +471,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->transformStack[a->transformStackDepth].clip[i] = g->transform.clip[i];
 			a->transformStack[a->transformStackDepth].clipPlane[i] = g->transform.clipPlane[i];
 		}
-		a->transformStack[a->transformStackDepth].normalize = g->current.normalize;
+		a->transformStack[a->transformStackDepth].normalize = g->transform.normalize;
 #ifdef CR_OPENGL_VERSION_1_2
 		a->transformStack[a->transformStackDepth].rescaleNormals = g->transform.rescaleNormals;
 #endif
@@ -653,7 +653,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->eval.enable1D[i] = a->enableStack[a->enableStackDepth].map1[i];
 			g->eval.enable2D[i] = a->enableStack[a->enableStackDepth].map2[i];
 		}
-		g->current.normalize = a->enableStack[a->enableStackDepth].normalize;
+		g->transform.normalize = a->enableStack[a->enableStackDepth].normalize;
 		g->point.pointSmooth = a->enableStack[a->enableStackDepth].pointSmooth;
 		g->polygon.polygonOffsetLine = a->enableStack[a->enableStackDepth].polygonOffsetLine;
 		g->polygon.polygonOffsetFill = a->enableStack[a->enableStackDepth].polygonOffsetFill;
@@ -1127,7 +1127,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->transform.clip[i] = a->transformStack[a->transformStackDepth].clip[i];
 			g->transform.clipPlane[i] = a->transformStack[a->transformStackDepth].clipPlane[i];
 		}
-		g->current.normalize = a->transformStack[a->transformStackDepth].normalize;
+		g->transform.normalize = a->transformStack[a->transformStackDepth].normalize;
 #ifdef CR_OPENGL_VERSION_1_2
 		g->transform.rescaleNormals = a->transformStack[a->transformStackDepth].rescaleNormals;
 #endif
@@ -1135,8 +1135,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		DIRTY(sb->transform.mode, g->neg_bitid);
 		DIRTY(sb->transform.clipPlane, g->neg_bitid);
 		DIRTY(sb->transform.enable, g->neg_bitid);
-		DIRTY(sb->current.dirty, g->neg_bitid);
-		DIRTY(sb->current.enable, g->neg_bitid);
 	}
 	if (mask & GL_VIEWPORT_BIT)
 	{

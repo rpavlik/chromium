@@ -39,7 +39,6 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 	c->rasterIndex = 1.0f;
 
 	c->edgeFlag = GL_TRUE;
-	c->normalize = GL_FALSE;
 
 	c->inBeginEnd = GL_FALSE;
 	c->beginEndNum = 0;
@@ -138,18 +137,6 @@ void crStateCurrentSwitch( GLuint maxTextureUnits,
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
 
-	if (CHECKDIRTY(c->enable, bitID)) {
-		if (from->normalize != to->normalize) {
-			if (to->normalize == GL_TRUE)
-				diff_api.Enable(GL_NORMALIZE);
-			else
-				diff_api.Disable(GL_NORMALIZE);
-			FILLDIRTY(c->enable);
-			FILLDIRTY(c->dirty);
-		}
-		INVERTDIRTY(c->enable, nbitID);
-	}
-
 	if (CHECKDIRTY(c->raster, bitID)) {
 		if (to->rasterValid) {
 			if (to->rasterPosPre.x != from->rasterPos.x ||
@@ -237,17 +224,6 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue *bitID,
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
-
-	if (CHECKDIRTY(c->enable, bitID)) {
-		if (from->normalize != to->normalize) {
-			if (to->normalize == GL_TRUE)
-				diff_api.Enable(GL_NORMALIZE);
-			else
-				diff_api.Disable(GL_NORMALIZE);
-			from->normalize = to->normalize;
-		}
-		INVERTDIRTY(c->enable, nbitID);
-	}
 
 	if (CHECKDIRTY(c->raster, bitID)) {
 		from->rasterValid = to->rasterValid;

@@ -49,6 +49,7 @@ typedef struct {
 #ifdef CR_OPENGL_VERSION_1_2
 	GLboolean rescaleNormals;
 #endif
+	GLboolean normalize;
 } CRTransformState;
 
 void crStateTransformInitBits (CRTransformBits *tb);

@@ -64,8 +64,6 @@ typedef struct {
 	GLdouble     rasterIndex;
 	GLboolean    rasterValid;
 
-	GLboolean    normalize;
-
 	GLboolean    inBeginEnd;
 	GLenum       mode;
 	GLuint       beginEndMax;
