@@ -12,6 +12,7 @@ FILES = main \
 	server_getpointer \
 	server_getpixelmap \
 	server_getteximage \
+	server_projmatrix \
 	server_retval \
 	server_simpleget \
 	server_stream \

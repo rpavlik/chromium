@@ -4,7 +4,15 @@
 #include "cr_spu.h"
 #include "cr_protocol.h"
 
-extern unsigned char *cr_unpackData;
+#ifdef WINDOWS
+#ifndef DLLDATA 
+#define DLLDATA __declspec(dllimport)
+#endif
+#else
+#define DLLDATA
+#endif
+
+extern DLLDATA unsigned char *cr_unpackData;
 extern SPUDispatchTable cr_unpackDispatch;
 
 void crUnpackSetReturnPointer( CRNetworkPointer *ptr );

@@ -72,7 +72,7 @@ CRContext *crStateCreateContext(void)
 
 void crStateMakeCurrent( CRContext *ctx )
 {
-	crDebug( "Making current to 0x%p", ctx );
+	if (__currentContext == ctx) return;
 	__currentContext = ctx;
 
 #if 0

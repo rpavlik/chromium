@@ -27,7 +27,7 @@ print """#ifndef SERVER_DISPATCH_HEADER
 
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
-	if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ) or stub_common.FindSpecial( "server", func_name ):
+	if return_type != 'void' or stub_common.FindSpecial( "../packer/packer_get", func_name ) or stub_common.FindSpecial( "server", func_name ) or stub_common.FindSpecial( "../spu/state_tracker/state", func_name ):
 		print '%s SERVER_DISPATCH_APIENTRY crServerDispatch%s%s;' % (return_type, func_name, stub_common.ArgumentString( names, types ))
 
 print '#endif /* SERVER_DISPATCH_HEADER */'

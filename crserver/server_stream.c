@@ -87,11 +87,11 @@ void crServerSerializeRemoteStreams(void)
 		CRMessage *msg;
 		int len;
 
-		cr_server.current_connection = client->conn;
+		cr_server.current_client = client;
 		crStateMakeCurrent( client->ctx ); 
-		for( len = crNetGetMessage( cr_server.current_connection, &msg );
+		for( len = crNetGetMessage( cr_server.current_client->conn, &msg );
 				 len;
-				 len = crNetGetMessage( cr_server.current_connection, &msg ) )
+				 len = crNetGetMessage( cr_server.current_client->conn, &msg ) )
 		{
 			CRMessageOpcodes *msg_opcodes;
 			char *data_ptr;
@@ -103,7 +103,7 @@ void crServerSerializeRemoteStreams(void)
 			msg_opcodes = (CRMessageOpcodes *) msg;
 			data_ptr = (char *) msg_opcodes + sizeof( *msg_opcodes) + ((msg_opcodes->numOpcodes + 3 ) & ~0x03);
 			crUnpack( data_ptr, data_ptr-1, msg_opcodes->numOpcodes, &(cr_server.dispatch) );
-			crNetFree( cr_server.current_connection, msg );
+			crNetFree( cr_server.current_client->conn, msg );
 		}
 	}
 }

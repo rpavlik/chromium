@@ -13,7 +13,7 @@ gl_mapping = cPickle.load( parsed_file )
 keys = gl_mapping.keys()
 keys.sort()
 
-print """#include "cr_unpack.h"
+print """#include "unpacker.h"
 #include "cr_opcodes.h"
 #include "cr_unpackfuncs.h"
 #include "cr_glwrapper.h"

@@ -9,6 +9,10 @@
 static void __setDefaults( void )
 {
 	cr_server.tcpip_port = 7000;
+	cr_server.num_extents = 0;
+	cr_server.current_extent = 0;
+	cr_server.muralWidth = 0;
+	cr_server.muralHeight = 0;
 }
 
 void crServerGatherConfiguration(void)
@@ -27,6 +31,9 @@ void crServerGatherConfiguration(void)
 	char **clientchain, **clientlist;
 	int num_clients;
 	char **tilechain, **tilelist;
+	int num_servers;
+
+	char **serverchain, **serverlist;
 
 	__setDefaults();
 	
@@ -89,7 +96,6 @@ void crServerGatherConfiguration(void)
 	if (!crMothershipGetServerTiles( conn, response ))
 	{
 		crDebug( "No tiling information for server!" );
-		cr_server.num_extents = 0;
 	}
 	else
 	{
@@ -108,7 +114,6 @@ void crServerGatherConfiguration(void)
 		}
 	}
 
-	crMothershipDisconnect( conn );
 	for (i = 0 ; i < num_clients ; i++)
 	{
 		char protocol[1024];
@@ -118,4 +123,64 @@ void crServerGatherConfiguration(void)
 		cr_server.clients[i].ctx = crStateCreateContext();
 		crServerAddToRunQueue( i );
 	}
+
+	// Sigh -- the servers need to know how big the whole mural is if we're
+	// doing tiling, so they can compute their base projection.  For now,
+	// just have them pretend to be one of their client SPU's, and redo
+	// the configuration step of the tilesort SPU.  Basically this is a dirty
+	// way to figure out who the other servers are.  It *might* matter
+	// which SPU we pick for certain graph configurations, but we'll cross
+	// that bridge later.
+
+	crMothershipIdentifySPU( conn, cr_server.clients[0].spu_id );
+	crMothershipGetServers( conn, response );
+
+	serverchain = crStrSplitn( response, " ", 1 );
+	num_servers = crStrToInt( serverchain[0] );
+
+	if (num_servers == 0)
+	{
+		crError( "No servers specified for SPU %d?!", cr_server.clients[0].spu_id );
+	}
+	serverlist = crStrSplit( serverchain[1], "," );
+
+	num_servers = num_servers;
+
+	for (i = 0 ; i < num_servers ; i++)
+	{
+		int num_extents;
+		int tile;
+		if (!crMothershipGetTiles( conn, response, i ))
+		{
+			crError( "No tile information for server %d!  I can't continue!", i );
+		}
+
+		tilechain = crStrSplitn( response, " ", 1 );
+		num_extents = crStrToInt( tilechain[0] );
+
+		tilelist = crStrSplit( tilechain[1], "," );
+
+		for (tile = 0; tile < num_extents ; tile++)
+		{
+			int w,h;
+			int x1, y1;
+			int x2, y2;
+			sscanf( tilelist[tile], "%d %d %d %d", &x1, &y1, &w, &h );
+
+			x2 = x1 + w;
+			y2 = y1 + h;
+
+			if (x2 > (int) cr_server.muralWidth )
+			{
+				cr_server.muralWidth = x2;
+			}
+			if (y2 > (int) cr_server.muralHeight )
+			{
+				cr_server.muralHeight = y2;
+			}
+		}
+	}
+	crWarning( "Total output dimensions = (%d, %d)", cr_server.muralWidth, cr_server.muralHeight );
+
+	crMothershipDisconnect( conn );
 }
