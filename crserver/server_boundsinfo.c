@@ -171,15 +171,15 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 		BucketRegion *p;
 
 		for (r = rhash[BKT_DOWNHASH(bounds->y1, cr_server.muralHeight)][BKT_DOWNHASH(bounds->x1, cr_server.muralWidth)];
-				r && bounds->y2 > r->extents.y1;
+				r && bounds->y2 >= r->extents.y1;
 				r = r->up)
 		{
-			for (p=r; p && bounds->x2 > p->extents.x1; p = p->right)
+			for (p=r; p && bounds->x2 >= p->extents.x1; p = p->right)
 			{
 				if ( p->id != -1 &&
-						bounds->x1 < p->extents.x2  &&
-						bounds->y1 < p->extents.y2 &&
-						bounds->y2 > p->extents.y1 )
+					bounds->x1 < p->extents.x2  &&
+					bounds->y1 < p->extents.y2 &&
+					bounds->y2 >= p->extents.y1 )
 				{
 					cr_server.curExtent = p->id;
 					crServerSetOutputBounds( run_queue->client->ctx,
@@ -198,9 +198,9 @@ crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
 			CRRunQueueExtent *extent = &run_queue->extent[i];
 
 			if ( !( extent->imagewindow.x2 > bounds->x1 &&
-							extent->imagewindow.x1 < bounds->x2 &&
-							extent->imagewindow.y2 > bounds->y1 &&
-							extent->imagewindow.y1 < bounds->y2 ) )
+				extent->imagewindow.x1 < bounds->x2 &&
+				extent->imagewindow.y2 > bounds->y1 &&
+				extent->imagewindow.y1 < bounds->y2 ) )
 			{
 				continue;
 			}

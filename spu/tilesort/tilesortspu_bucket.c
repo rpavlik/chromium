@@ -354,10 +354,10 @@ static TileSortBucketInfo *__doBucket( void )
 		{
 			for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
 			{
-				if (ibounds.x1 < tilesort_spu.servers[i].x2[j] && 
-						ibounds.x2 > tilesort_spu.servers[i].x1[j] &&
-						ibounds.y1 < tilesort_spu.servers[i].y2[j] &&
-						ibounds.y2 > tilesort_spu.servers[i].y1[j]) 
+			    if (ibounds.x1 < tilesort_spu.servers[i].x2[j] && 
+				ibounds.x2 >= tilesort_spu.servers[i].x1[j] &&
+				ibounds.y1 < tilesort_spu.servers[i].y2[j] &&
+				ibounds.y2 >= tilesort_spu.servers[i].y1[j]) 
 				{
 					retval |= 1 << i;
 					break;
@@ -371,17 +371,17 @@ static TileSortBucketInfo *__doBucket( void )
 		BucketRegion *q;
 
 		for (r = rhash[BKT_DOWNHASH(0, tilesort_spu.muralHeight)][BKT_DOWNHASH(0, tilesort_spu.muralWidth)];
-				 r && ibounds.y2 > r->extents.y1;
+				 r && ibounds.y2 >= r->extents.y1;
 				 r = r->up) 
 		{
-			for (q=r; q && ibounds.x2 > q->extents.x1; q = q->right) 
+			for (q=r; q && ibounds.x2 >= q->extents.x1; q = q->right) 
 			{
 				if (retval & q->id) 
 				{
 					continue;
 				}
-				if (ibounds.x1 < q->extents.x2 && /* ibounds.x2 > q->extents.x1 && */
-						ibounds.y1 < q->extents.y2 && ibounds.y2 > q->extents.y1) 
+				if (ibounds.x1 < q->extents.x2 && ibounds.x2 >= q->extents.x1 &&
+		 		    ibounds.y1 < q->extents.y2 && ibounds.y2 >= q->extents.y1) 
 				{
 					retval |= q->id;
 				}
