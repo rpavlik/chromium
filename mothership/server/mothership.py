@@ -39,7 +39,10 @@ class SPU:
 
 	def AddServer( self, node, protocol='tcpip', port=7000 ):
 		node.Conf( 'port', port )
-		self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
+		if protocol == 'tcpip':
+			self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
+		else:
+			self.__add_server( node, "%s://%s:%d" % (protocol,node.host,port) )
 		node.AddClient( self, protocol )
 
 class CRNode:
@@ -49,7 +52,6 @@ class CRNode:
 		self.host = host
 		if (host == 'localhost'):
 			self.host = gethostname()
-			print >> sys.stderr, "Resetting a localhost to %s" % self.host
 		self.ipaddr = gethostbyname(self.host)
 
 		# unqualify the hostname if it is already that way.
