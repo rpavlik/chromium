@@ -306,7 +306,7 @@ static void RENDER_APIENTRY renderspuWindowShow( GLint win, GLint flag )
 	CRASSERT(win >= 0);
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
 	if (window)
-		renderspu_SystemShowWindow( window, flag );
+		renderspu_SystemShowWindow( window, (GLboolean) flag );
 }
 
 /*
