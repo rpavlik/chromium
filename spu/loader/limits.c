@@ -451,6 +451,9 @@ void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits
 	GetErrorFunc getError;
 	const char *str;
 
+	/* For memory safety, zero out the limits structure */
+	memset(limits, 0, sizeof(CRLimitsState));
+
 	/* Get function pointers */
 	getIntegerv = (GetIntegervFunc) crSPUFindFunction(table, "GetIntegerv");
 	if (!getIntegerv)

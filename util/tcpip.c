@@ -81,15 +81,15 @@ char *crTCPIPErrorString( int err )
 		case WSAECONNREFUSED: X( "connection refused" );
 		case WSAECONNRESET:   X( "connection reset" );
 		default:
-													FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER |
-															FORMAT_MESSAGE_FROM_SYSTEM |
-															FORMAT_MESSAGE_MAX_WIDTH_MASK, NULL, err,
-															MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
-															(LPTSTR) &temp, 0, NULL );
-													if ( temp )
-													{
-														crStrncpy( buf, temp, sizeof(buf)-1 );
-													}
+                        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                                FORMAT_MESSAGE_FROM_SYSTEM |
+                                FORMAT_MESSAGE_MAX_WIDTH_MASK, NULL, err,
+                                MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
+                                (LPTSTR) &temp, 0, NULL );
+                        if ( temp )
+                        {
+                            crStrncpy( buf, temp, sizeof(buf)-1 );
+                        }
 	}
 
 #undef X
@@ -482,6 +482,28 @@ static int __crSelect( int n, fd_set *readfds, struct timeval *timeout )
 	}
 }
 
+void crTCPIPFree( CRConnection *conn, void *buf )
+{
+	CRTCPIPBuffer *tcpip_buffer = (CRTCPIPBuffer *) buf - 1;
+
+	CRASSERT( tcpip_buffer->magic == CR_TCPIP_BUFFER_MAGIC );
+	conn->recv_credits += tcpip_buffer->len;
+
+	switch ( tcpip_buffer->kind )
+	{
+		case CRTCPIPMemory:
+			crBufferPoolPush( &cr_tcpip.bufpool, tcpip_buffer );
+			break;
+
+		case CRTCPIPMemoryBig:
+			crFree( tcpip_buffer );
+			break;
+
+		default:
+			crError( "Weird buffer kind trying to free in crTCPIPFree: %d", tcpip_buffer->kind );
+	}
+}
+
 int crTCPIPRecv( void )
 {
 	CRMessage *msg;
@@ -582,15 +604,18 @@ int crTCPIPRecv( void )
 
 		conn->recv_credits -= len;
 
+		msg = (CRMessage *) (tcpip_buffer + 1);
 		if (conn->swap)
 		{
-			msg = (CRMessage *) (tcpip_buffer + 1);
 			msg->type = (CRMessageType) SWAP32( msg->type );
 		}
 		if (!cr_tcpip.recv( conn, tcpip_buffer + 1, len ))
 		{
 			crNetDefaultRecv( conn, tcpip_buffer + 1, len );
 		}
+
+		if (msg->type != CR_MESSAGE_OPCODES)
+			crTCPIPFree( conn, tcpip_buffer + 1 );
 	}
 
 	return 1;
@@ -610,28 +635,6 @@ void crTCPIPHandleNewMessage( CRConnection *conn, CRMessage *msg,
 	if (!cr_tcpip.recv( conn, msg, len ))
 	{
 		crNetDefaultRecv( conn, msg, len );
-	}
-}
-
-void crTCPIPFree( CRConnection *conn, void *buf )
-{
-	CRTCPIPBuffer *tcpip_buffer = (CRTCPIPBuffer *) buf - 1;
-
-	CRASSERT( tcpip_buffer->magic == CR_TCPIP_BUFFER_MAGIC );
-	conn->recv_credits += tcpip_buffer->len;
-
-	switch ( tcpip_buffer->kind )
-	{
-		case CRTCPIPMemory:
-			crBufferPoolPush( &cr_tcpip.bufpool, tcpip_buffer );
-			break;
-
-		case CRTCPIPMemoryBig:
-			crFree( tcpip_buffer );
-			break;
-
-		default:
-			crError( "Weird buffer kind trying to free in crTCPIPFree: %d", tcpip_buffer->kind );
 	}
 }
 
