@@ -29,7 +29,9 @@
 /* To convert array indexes into an easily recognized numbers for debugging. */
 #define MAGIC 500
 
-#ifndef WINDOWS
+#ifdef WINDOWS
+extern int FindVisualInfo( HDC hdc );
+#else
 extern int FindVisualInfo( Display *dpy, XVisualInfo *vis);
 #endif
 
@@ -117,6 +119,9 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 #ifdef WINDOWS
 		sprintf(dpyName, "%d", hdc);
 		stub.spuWindow = crCreateWindow( (const char *)dpyName, stub.desiredVisual );
+		if (stub.haveNativeOpenGL)
+			stub.desiredVisual |= FindVisualInfo( hdc );
+			
 #else
 		dpyName = DisplayString(dpy);
 

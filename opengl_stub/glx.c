@@ -116,7 +116,7 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 	return visual;
 }
 
-int FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
+GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 {
 	int desiredVisual = 0;
 	GLint doubleBuffer, stereo;

@@ -113,10 +113,7 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 
 	if (!dpyName || crStrlen(render_spu.display_string)>0)
 		dpyName = render_spu.display_string;
-	if (visBits & CR_INVALID_VISUAL_BIT)
-	{
-		visBits = CR_DEFAULT_VISUAL_BITS;
-	}
+
 	visual = renderspuFindVisual( dpyName, visBits );
 	if (!visual)
 		return -1;
@@ -224,10 +221,6 @@ GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits 
 	if (!dpyName || crStrlen(render_spu.display_string)>0)
 		dpyName = render_spu.display_string;
 
-	if (visBits & CR_INVALID_VISUAL_BIT)
-	{
-		visBits = CR_DEFAULT_VISUAL_BITS;
-	}
 	visual = renderspuFindVisual( dpyName, visBits );
 	if (!visual)
 	{

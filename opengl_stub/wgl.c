@@ -17,6 +17,34 @@
 #include <windows.h>
 #include <stdio.h>
 
+GLuint FindVisualInfo( HDC hdc )
+{
+	PIXELFORMATDESCRIPTOR pfd; 
+	int iPixelFormat;
+	GLuint b;
+
+	iPixelFormat = GetPixelFormat( hdc );
+
+	DescribePixelFormat( hdc, iPixelFormat, sizeof(pfd), &pfd );
+
+	if (pfd.cDepthBits > 0)
+		b |= CR_DEPTH_BIT;
+	if (pfd.cAccumBits > 0)
+		b |= CR_ACCUM_BIT;
+	if (pfd.cColorBits > 8)
+		b |= CR_RGB_BIT;
+	if (pfd.cStencilBits > 0)
+		b |= CR_STENCIL_BIT;
+	if (pfd.cAlphaBits > 0)
+		b |= CR_ALPHA_BIT;
+	if (pfd.dwFlags & PFD_DOUBLEBUFFER)
+		b |= CR_DOUBLE_BIT;
+	if (pfd.dwFlags & PFD_STEREO)
+		b |= CR_STEREO_BIT;
+
+	return b;
+}
+
 int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd )
 {
 	DWORD okayFlags;
