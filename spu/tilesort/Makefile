@@ -23,6 +23,12 @@ SLOP = $(PRECOMP)
 LIB_DEFS += tilesort.def
 include ${TOP}/cr.mk
 
+ifdef WINDOWS
+LDFLAGS += user32.lib gdi32.lib
+else
+LDFLAGS += -lXmu -lX11
+endif
+
 tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special
 	@$(ECHO) Building the TileSort SPU
 	@$(PYTHON) tilesort.py > $@

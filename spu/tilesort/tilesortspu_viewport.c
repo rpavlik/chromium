@@ -1,11 +1,30 @@
 #include "tilesortspu.h"
-#include "cr_packfunctions.h"
+#include "cr_glstate.h"
 #include "cr_error.h"
+
+#ifdef WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 static int __getWindowSize( int *width_return, int *height_return )
 {
 #ifdef WINDOWS
 	RECT r;
+#else
+	Window       root;
+	int          x, y;
+	unsigned int width, height, border, depth;
+#endif
+
+	if (tilesort_spu.fakeWindowWidth != 0)
+	{
+		*width_return = tilesort_spu.fakeWindowWidth;
+		*height_return = tilesort_spu.fakeWindowHeight;
+		return 1;
+	}
+
+#ifdef WINDOWS
 	if (!tilesort_spu.client_hwnd)
 	{
 		tilesort_spu.client_hwnd = WindowFromDC( tilesort_spu.client_hdc );
@@ -19,10 +38,6 @@ static int __getWindowSize( int *width_return, int *height_return )
 	*height_return = r.bottom - r.top;
 
 #else
-
-	Window       root;
-	int          x, y;
-	unsigned int width, height, border, depth;
 
 	if (!tilesort_spu.glx_display)
 	{
@@ -44,6 +59,21 @@ static int __getWindowSize( int *width_return, int *height_return )
 
 void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
+	int w,h;
+	float widthscale, heightscale;
+
+	if (!__getWindowSize( &w, &h ))
+	{
+		crError( "Couldn't get the window size in tilesortspu_Viewport!\nIf there is no Window, you can set some bogus\ndimensions in the configuration manager." );
+	}
+	widthscale = (float) (tilesort_spu.muralWidth) / (float) w;
+	heightscale = (float) (tilesort_spu.muralHeight) / (float) h;
+		
+	crWarning( "Viewport: %d %d %f %f", w, h, widthscale, heightscale );
+	crStateViewport( (int) (x*widthscale + 0.5f), 
+									 (int) (y*heightscale + 0.5f),
+			             (int) (width*widthscale + 0.5f), 
+									 (int) (height*heightscale + 0.5f) );
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )

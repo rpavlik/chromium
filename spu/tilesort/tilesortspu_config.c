@@ -13,6 +13,18 @@ static void __setDefaults( void )
 	tilesort_spu.servers = NULL;
 	tilesort_spu.apply_viewtransform = 0;
 	tilesort_spu.splitBeginEnd = 1;
+	tilesort_spu.muralWidth = 0;
+	tilesort_spu.muralHeight = 0;
+
+	tilesort_spu.fakeWindowWidth = 0;
+	tilesort_spu.fakeWindowHeight = 0;
+#ifdef WINDOWS
+	tilesort_spu.client_hdc = NULL;
+	tilesort_spu.client_hwnd = NULL;
+#else
+	tilesort_spu.glx_display = NULL;
+	tilesort_spu.glx_drawable = NULL;
+#endif
 }
 
 void tilesortspuGatherConfiguration( void )
@@ -102,7 +114,7 @@ void tilesortspuGatherConfiguration( void )
 		{
 			if (!crMothershipSPUParam( conn, response, "tile%d", tile+1 ))
 			{
-				crWarning( "No tile extent information for tile %d, defaulting", tile );
+				crWarning( "No extent information for tile %d, defaulting", tile );
 				crWarning( "To 0,0,640,480" );
 				crStrcpy( response, "0 0 640 480" );
 			}
@@ -114,8 +126,17 @@ void tilesortspuGatherConfiguration( void )
 					i+1, tile+1, server->num_extents,
 					server->mural_x[tile], server->mural_y[tile],
 					server->mural_w[tile], server->mural_h[tile] );
+			if (server->mural_x[tile] + server->mural_w[tile] > tilesort_spu.muralWidth )
+			{
+				tilesort_spu.muralWidth = server->mural_x[tile] + server->mural_w[tile];
+			}
+			if (server->mural_y[tile] + server->mural_h[tile] > tilesort_spu.muralHeight )
+			{
+				tilesort_spu.muralHeight = server->mural_y[tile] + server->mural_h[tile];
+			}
 		}
 	}
+	crWarning( "Width, Height = (%d, %d)", tilesort_spu.muralWidth, tilesort_spu.muralHeight );
 
 	crMothershipDisconnect( conn );
 }

@@ -25,7 +25,7 @@ typedef struct {
 	CRPackBuffer pack;
 	int num_extents;
 	int mural_x[CR_MAX_EXTENTS], mural_y[CR_MAX_EXTENTS];
-	int mural_w[CR_MAX_EXTENTS], mural_h[CR_MAX_EXTENTS];
+	unsigned int mural_w[CR_MAX_EXTENTS], mural_h[CR_MAX_EXTENTS];
 	CRContext *ctx;
 } TileSortSPUServer;
 
@@ -39,6 +39,8 @@ typedef struct {
 	int apply_viewtransform;
 	int splitBeginEnd;
 
+	unsigned int muralWidth, muralHeight;
+
 	unsigned int MTU;
 	int num_servers;
 	TileSortSPUServer *servers;
@@ -50,6 +52,7 @@ typedef struct {
 	Display *glx_display;
 	Drawable glx_drawable;
 #endif
+	unsigned int fakeWindowWidth, fakeWindowHeight;
 } TileSortSPU;
 
 typedef struct {
