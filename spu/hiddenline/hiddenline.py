@@ -29,6 +29,11 @@ print """#include <stdio.h>
 """
 
 num_funcs = len(keys) - len( stub_common.AllSpecials( "hiddenline_ignore" ) )
+for func_name in keys:
+	(return_type, args, types) = gl_mapping[func_name]
+	if return_type != "void":
+		num_funcs -= 1
+
 specials = stub_common.AllSpecials( "hiddenline" ) + stub_common.AllSpecials( "hiddenline_pixel" )
 print 'SPUNamedFunctionTable hiddenline_table[%d];' % (num_funcs+1)
 
@@ -52,6 +57,8 @@ for index in range(len(keys)):
 	if stub_common.FindSpecial( "hiddenline_ignore", func_name ):
 		continue
 	(return_type, args, types) = gl_mapping[func_name]
+	if return_type != 'void':
+		continue
 	if func_name in specials:
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) hiddenlinespu_%s );' % (table_index, func_name, func_name )
 	else:

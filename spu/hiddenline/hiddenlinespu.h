@@ -41,6 +41,9 @@ typedef struct {
 	CRContext *ctx;
 
 	float clear_r, clear_g, clear_b;
+	float poly_r, poly_g, poly_b;
+	float line_r, line_g, line_b;
+	float line_width;
 
 	CRLimitsState limits;
 	BufList *frame_head, *frame_tail;
