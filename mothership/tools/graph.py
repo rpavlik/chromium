@@ -1247,7 +1247,7 @@ class GraphFrame(wxFrame):
 	def doAppOptions(self, event):
 		"""Application / Options callback"""
 		dialog = spudialog.SPUDialog(parent=self, id=-1,
-								title="Application Options",
+								title="Application / Mothership Options",
 								optionList=self.mothership.GetOptions())
 		dialog.Centre()
 		if dialog.ShowModal() == wxID_OK:
