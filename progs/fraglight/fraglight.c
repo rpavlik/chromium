@@ -15,6 +15,9 @@
 #include <GL/glut.h>
 #include "chromium.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 static GLfloat Diffuse[4] = { 0.5, 0.5, 1.0, 1.0 };
 static GLfloat Specular[4] = { 0.8, 0.8, 0.8, 1.0 };
