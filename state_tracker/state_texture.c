@@ -416,102 +416,103 @@ const struct CRTextureFormat _texformat_ci8 = {
 };
 
 
-/*
+/**
  * Given an internal texture format enum or 1, 2, 3, 4 initialize the
  * texture levels texture format.  This basically just indicates the
  * number of red, green, blue, alpha, luminance, etc. bits are used to
  * store the image.
  */
-void crStateTextureInitTextureFormat( CRTextureLevel *tl, GLenum internalFormat )
+void
+crStateTextureInitTextureFormat( CRTextureLevel *tl, GLenum internalFormat )
 {
-   switch ( internalFormat ) {
-   case 4:
-   case GL_RGBA:
-	 case GL_COMPRESSED_RGBA_ARB:
-      tl->texFormat = &_texformat_rgba8888;
-      break;
+	switch (internalFormat) {
+	case 4:
+	case GL_RGBA:
+	case GL_COMPRESSED_RGBA_ARB:
+		tl->texFormat = &_texformat_rgba8888;
+		break;
 
-   case 3:
-   case GL_RGB:
-	 case GL_COMPRESSED_RGB_ARB:
-      tl->texFormat = &_texformat_rgb888;
-      break;
+	case 3:
+	case GL_RGB:
+	case GL_COMPRESSED_RGB_ARB:
+		tl->texFormat = &_texformat_rgb888;
+		break;
 
-   case GL_RGBA2:
-   case GL_RGBA4:
-   case GL_RGB5_A1:
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
-      tl->texFormat = &_texformat_rgba8888;
-      break;
+	case GL_RGBA2:
+	case GL_RGBA4:
+	case GL_RGB5_A1:
+	case GL_RGBA8:
+	case GL_RGB10_A2:
+	case GL_RGBA12:
+	case GL_RGBA16:
+		tl->texFormat = &_texformat_rgba8888;
+		break;
 
-   case GL_R3_G3_B2:
-      tl->texFormat = &_texformat_rgb332;
-      break;
-   case GL_RGB4:
-   case GL_RGB5:
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
-      tl->texFormat = &_texformat_rgb888;
-      break;
+	case GL_R3_G3_B2:
+		tl->texFormat = &_texformat_rgb332;
+		break;
+	case GL_RGB4:
+	case GL_RGB5:
+	case GL_RGB8:
+	case GL_RGB10:
+	case GL_RGB12:
+	case GL_RGB16:
+		tl->texFormat = &_texformat_rgb888;
+		break;
 
-   case GL_ALPHA:
-   case GL_ALPHA4:
-   case GL_ALPHA8:
-   case GL_ALPHA12:
-   case GL_ALPHA16:
-	 case GL_COMPRESSED_ALPHA_ARB:
-      tl->texFormat = &_texformat_a8;
-      break;
+	case GL_ALPHA:
+	case GL_ALPHA4:
+	case GL_ALPHA8:
+	case GL_ALPHA12:
+	case GL_ALPHA16:
+	case GL_COMPRESSED_ALPHA_ARB:
+		tl->texFormat = &_texformat_a8;
+		break;
 
-   case 1:
-   case GL_LUMINANCE:
-   case GL_LUMINANCE4:
-   case GL_LUMINANCE8:
-   case GL_LUMINANCE12:
-   case GL_LUMINANCE16:
-	 case GL_COMPRESSED_LUMINANCE_ARB:
-      tl->texFormat = &_texformat_l8;
-      break;
+	case 1:
+	case GL_LUMINANCE:
+	case GL_LUMINANCE4:
+	case GL_LUMINANCE8:
+	case GL_LUMINANCE12:
+	case GL_LUMINANCE16:
+	case GL_COMPRESSED_LUMINANCE_ARB:
+		tl->texFormat = &_texformat_l8;
+		break;
 
-   case 2:
-   case GL_LUMINANCE_ALPHA:
-   case GL_LUMINANCE4_ALPHA4:
-   case GL_LUMINANCE6_ALPHA2:
-   case GL_LUMINANCE8_ALPHA8:
-   case GL_LUMINANCE12_ALPHA4:
-   case GL_LUMINANCE12_ALPHA12:
-   case GL_LUMINANCE16_ALPHA16:
-	 case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
-      tl->texFormat = &_texformat_al88;
-      break;
+	case 2:
+	case GL_LUMINANCE_ALPHA:
+	case GL_LUMINANCE4_ALPHA4:
+	case GL_LUMINANCE6_ALPHA2:
+	case GL_LUMINANCE8_ALPHA8:
+	case GL_LUMINANCE12_ALPHA4:
+	case GL_LUMINANCE12_ALPHA12:
+	case GL_LUMINANCE16_ALPHA16:
+	case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
+		tl->texFormat = &_texformat_al88;
+		break;
 
-   case GL_INTENSITY:
-   case GL_INTENSITY4:
-   case GL_INTENSITY8:
-   case GL_INTENSITY12:
-   case GL_INTENSITY16:
-	 case GL_COMPRESSED_INTENSITY_ARB:
-      tl->texFormat = &_texformat_i8;
-      break;
+	case GL_INTENSITY:
+	case GL_INTENSITY4:
+	case GL_INTENSITY8:
+	case GL_INTENSITY12:
+	case GL_INTENSITY16:
+	case GL_COMPRESSED_INTENSITY_ARB:
+		tl->texFormat = &_texformat_i8;
+		break;
 
-   case GL_COLOR_INDEX:
-   case GL_COLOR_INDEX1_EXT:
-   case GL_COLOR_INDEX2_EXT:
-   case GL_COLOR_INDEX4_EXT:
-   case GL_COLOR_INDEX8_EXT:
-   case GL_COLOR_INDEX12_EXT:
-   case GL_COLOR_INDEX16_EXT:
-      tl->texFormat = &_texformat_ci8;
-      break;
+	case GL_COLOR_INDEX:
+	case GL_COLOR_INDEX1_EXT:
+	case GL_COLOR_INDEX2_EXT:
+	case GL_COLOR_INDEX4_EXT:
+	case GL_COLOR_INDEX8_EXT:
+	case GL_COLOR_INDEX12_EXT:
+	case GL_COLOR_INDEX16_EXT:
+		tl->texFormat = &_texformat_ci8;
+		break;
 
-   default:
-      return;
-   }
+	default:
+		return;
+	}
 }
 
 #if 0
