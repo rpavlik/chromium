@@ -53,10 +53,10 @@ for i in range(len(keys)):
 	print "\t%sFunc_t %s; " % ( func_name, func_name )
 
 print """
-    struct _copy_list_node *copyList;
-    struct _spu_dispatch_table *copy_of;
-		int mark;
-    void *server;		
+	struct _copy_list_node *copyList;
+	struct _spu_dispatch_table *copy_of;
+	int mark;
+	void *server;		
 } SPUDispatchTable;
 
 struct _copy_list_node {
