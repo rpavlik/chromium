@@ -43,9 +43,9 @@
 #include "cr_string.h"
 
 /* added */
-#include <mosal.h>  // for MOSAL_get_counts_per_sec()
+#include <mosal.h>  /* for MOSAL_get_counts_per_sec() */
 #include <stdio.h>
-#include <unistd.h> // for sleep
+#include <unistd.h> /* for sleep */
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <vapi.h>
@@ -225,7 +225,7 @@ static inline u_int64_t get_cpu_clocks_per_seconds ()
 u_int64_t cpu_CLCKS_PER_SECS = 1000000.0;
 
 #define DEBUG_LEVEL 1 
-//#define DEBUG_PRINT
+/*#define DEBUG_PRINT*/
 
 #define MIN2(a,b) ((a)>(b) ? (b) : (a))
 #ifndef MAX
@@ -449,7 +449,7 @@ ret_val_t create_common_resources(params_tx *params)
 	     params->s_buffers[i].real_send_buf = real_send_buf;
 	     
 	     mr_in.acl =  VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE |  
-		     VAPI_EN_REMOTE_READ | VAPI_EN_REMOTE_ATOM;//Noam + Vladz(MCH: magic?)
+		     VAPI_EN_REMOTE_READ | VAPI_EN_REMOTE_ATOM;/*Noam + Vladz(MCH: magic?)*/
 	     
 	     mr_in.l_key = 0;
 	     mr_in.pd_hndl = pd_hndl;
@@ -485,7 +485,7 @@ ret_val_t create_common_resources(params_tx *params)
 	     params->r_buffers[i].real_recv_buf = real_recv_buf;
 	     
 	     mr_in.acl =  VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE | 
-		     VAPI_EN_REMOTE_READ | VAPI_EN_REMOTE_ATOM;//Noam + Vladz(MCH: magic?)
+		     VAPI_EN_REMOTE_READ | VAPI_EN_REMOTE_ATOM;/*Noam + Vladz(MCH: magic?)*/
 	     
 	     mr_in.l_key = 0;
 	     mr_in.pd_hndl = pd_hndl;
@@ -928,7 +928,7 @@ static void crIBConnectionAdd( CRConnection *conn, CRIBConnection* ib_conn_in )
 		}
 	}
 	
-	ib_conn = ib_conn_in;//(CRIBConnection*)crAlloc( sizeof(*ib_conn) );
+	ib_conn = ib_conn_in;/*(CRIBConnection*)crAlloc( sizeof(*ib_conn) );*/
 	ib_conn->node_id   = conn->ib_node_id;
 	ib_conn->port_num  = conn->ib_port_num;
 	ib_conn->conn      = conn;
@@ -944,7 +944,7 @@ void* cr_ib_recv( CRConnection *conn,
 	VAPI_wc_desc_t      rc;
 	void* dst;
 	VAPI_ret_t          res;
-	//char string[1024];
+	/*char string[1024];*/
 	
 	/* Copy all input parameters - don't want to rewrite the loop code */
 	VAPI_hca_hndl_t     hca_hndl    = cr_ib.hca_hndl;
@@ -958,9 +958,9 @@ void* cr_ib_recv( CRConnection *conn,
 	/* sit and wait for a recv completion*/
 	res = poll_cq_nowait(hca_hndl, r_cq_hndl, &rc);
 	if (res == VAPI_OK) {
-		//crDebug("I got recv buffer id %d, len %d", (int)rc.id, rc.byte_len);
+		/*crDebug("I got recv buffer id %d, len %d", (int)rc.id, rc.byte_len);*/
 		dst = ib_conn->params.r_buffers[rc.id].recv_buf;
-		//crDebug("I'm setting it to 0x%x", (unsigned int)dst);
+		/*crDebug("I'm setting it to 0x%x", (unsigned int)dst);*/
 		*len = rc.byte_len;
 		
 		/*crBytesToString( string, sizeof(string), dst+sizeof(CRIBBuffer), *len );
@@ -1000,7 +1000,7 @@ ret_val_t cr_ib_send( CRConnection *conn, const void *buf,
 	VAPI_hca_hndl_t     hca_hndl    = cr_ib.hca_hndl;
 	VAPI_qp_hndl_t      qp_hndl;
 	VAPI_cq_hndl_t      s_cq_hndl;
-	//char string[128];
+	/*char string[128];*/
 
 	ib_conn = crIBConnectionLookup(conn->id);	
 
@@ -1018,7 +1018,7 @@ ret_val_t cr_ib_send( CRConnection *conn, const void *buf,
 	sr.sg_lst_p = &sg_entry_s;
 
 	sr.id = id;
-	//crDebug("Conn: %d, Sending %d, len %d", conn->id, (int)sr.id, len);
+	/*crDebug("Conn: %d, Sending %d, len %d", conn->id, (int)sr.id, len);*/
 	
 	/* Post send buffer */
 	/* Use Inline data up to the limit size */
@@ -1073,7 +1073,7 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
 
      ib_conn->params.total_sends = 0;
      
-     // Create IB reasources 
+     /* Create IB reasources  */
      if (RET_OK != create_common_resources(&ib_conn->params)) {
 	     clean_up(&ib_conn->params);
      }
@@ -1125,7 +1125,7 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
      
      print_params( &ib_conn->params );
 
-     // setup all recv buffers
+     /* setup all recv buffers */
      for(i=0; i<MAX_BUFS; i++){
 	     CRIBBuffer *ib_buffer = (CRIBBuffer*)ib_conn->params.r_buffers[i].recv_buf;
 	     ib_buffer->magic = CR_IB_BUFFER_MAGIC;
@@ -1134,10 +1134,10 @@ crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
 	     ib_buffer->id = i;
      }
 
-     // post all recv buffers
+     /* post all recv buffers */
      ib_post_recv_buffers( &ib_conn->params );
 
-     // and push all of the send buffers
+     /* and push all of the send buffers */
      ib_conn->send_pool = crBufferPoolInit(MAX_BUFS);
      for(i=0; i<MAX_BUFS; i++){
 	     CRIBBuffer *ib_buffer = (CRIBBuffer*)ib_conn->params.s_buffers[i].send_buf;
@@ -1171,14 +1171,13 @@ void
 	qp_hndl   = ib_conn->params.qp_hndl;
 	s_cq_hndl = ib_conn->params.s_cq_hndl;
 
-	//fprintf(stderr, "fast buffer recover: \n");
-	// see if other buffers finished but don't block unless it's needed
+	/*fprintf(stderr, "fast buffer recover: \n");*/
+	/* see if other buffers finished but don't block unless it's needed */
 	while(poll_cq_nowait(hca_hndl,s_cq_hndl,&sc) == VAPI_OK){
-	     //fprintf(stderr, "conn: %d, recovered #%d\n", conn->id, (int)sc.id);
-	     crBufferPoolPush( ib_conn->send_pool, ib_conn->params.s_buffers[sc.id].send_buf, 
-			       conn->buffer_size );
-	     count++;
-	   
+		/*fprintf(stderr, "conn: %d, recovered #%d\n", conn->id, (int)sc.id);*/
+		crBufferPoolPush( ib_conn->send_pool, ib_conn->params.s_buffers[sc.id].send_buf, 
+											conn->buffer_size );
+		count++;
 	}  
 	crWarning("conn: %d fast recovered %d, pool = %d", conn->id, count, crBufferPoolGetNumBuffers( ib_conn->send_pool));
 
@@ -1193,8 +1192,8 @@ void
 		ib_buffer = (CRIBBuffer*)(ib_conn->params.s_buffers[sc.id].send_buf);
 	}
 	
-	//crWarning("IBAlloc returning 0x%x", (unsigned int)(ib_buffer+1));
-	//crWarning("IBAlloc returning buffer %d", ib_buffer->id);
+	/*crWarning("IBAlloc returning 0x%x", (unsigned int)(ib_buffer+1));*/
+	/*crWarning("IBAlloc returning buffer %d", ib_buffer->id);*/
 	return (void*)(ib_buffer + 1);
 }
 
@@ -1208,7 +1207,7 @@ static void crIBSendMulti( CRConnection *conn, const void *buf, unsigned int len
 		/* the user is doing a send from memory not allocated by the
 		 * network layer, but it does fit within a single message, so
 		 * don't bother with fragmentation */
-		//crDebug("fast multi");
+		/*crDebug("fast multi");*/
 		void *pack = crIBAlloc( conn );
 		crMemcpy( pack, buf, len );
 		crIBSend( conn, &pack, pack, len );
@@ -1287,13 +1286,13 @@ crIBFree( CRConnection *conn, void *buf )
 	switch ( ib_buffer->kind )
 	{
 		case CRIBMemory:
-			// We can repost this buffer, excellent	
+			/* We can repost this buffer, excellent	*/
 			rr.opcode     = VAPI_RECEIVE;
 			rr.comp_type  = VAPI_SIGNALED;
 			rr.sg_lst_len = 1;
 			rr.sg_lst_p   = &sg_entry_r;
 			rr.id = ib_buffer->id;
-			//crDebug("Freeing %d", ib_buffer->id);
+			/*crDebug("Freeing %d", ib_buffer->id);*/
 			sg_entry_r.lkey = ib_conn->params.r_buffers[rr.id].recv_lkey;
 			sg_entry_r.len  = cr_ib.size;
 			sg_entry_r.addr = (VAPI_virt_addr_t)(MT_virt_addr_t)(ib_conn->params.r_buffers[rr.id].recv_buf+sizeof(CRIBBuffer));
@@ -1326,7 +1325,7 @@ crIBRecv( void )
 	CRMessage *msg;
 	int i;
 	int found;
-	//char string[128];
+	/*char string[128];*/
 
 	if (!cr_ib.num_conns)
 	{
@@ -1341,7 +1340,7 @@ crIBRecv( void )
 		unsigned int   len;
 		CRConnection  *conn = cr_ib.conns[i];
 
-		//fprintf(stderr, ".");
+		/*fprintf(stderr, ".");*/
 
 		ib_buffer = cr_ib_recv( conn, &len );
 		
@@ -1366,7 +1365,7 @@ crIBRecv( void )
 			found++;
 		}
 	}
-	//fprintf(stderr, "\n");
+	/*fprintf(stderr, "\n");*/
 	return found;
 }
 
@@ -1422,8 +1421,8 @@ crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 	cr_ib.num_ah          = 256;
 	cr_ib.size            = mtu;
 	cr_ib.mtu             = MTU1024;
-	cr_ib.num_ssge        = 40; // To support inline data
-	cr_ib.num_rsge        = 40; // To support inline data
+	cr_ib.num_ssge        = 40; /* To support inline data */
+	cr_ib.num_rsge        = 40; /* To support inline data */
 	cr_ib.alloc_aligned   = 1;
 	cr_ib.num_cqe         = MAX_BUFS+2;
 	cr_ib.num_r_wqe       = MAX_BUFS;  
@@ -1454,7 +1453,7 @@ crIBDoConnect( CRConnection *conn )
 
      ib_conn->params.total_sends = 0;
      
-     // Create IB reasources 
+     /* Create IB reasources */
      if (RET_OK != create_common_resources(&ib_conn->params)) {
 	     clean_up(&ib_conn->params);
      }
@@ -1507,7 +1506,7 @@ crIBDoConnect( CRConnection *conn )
      
      print_params( &ib_conn->params );
 
-     // setup all recv buffers
+     /* setup all recv buffers */
      for(i=0; i<MAX_BUFS; i++){
 	     CRIBBuffer *ib_buffer = (CRIBBuffer*)ib_conn->params.r_buffers[i].recv_buf;
 	     ib_buffer->magic = CR_IB_BUFFER_MAGIC;
@@ -1516,10 +1515,10 @@ crIBDoConnect( CRConnection *conn )
 	     ib_buffer->id = i;
      }
 
-     // post all recv buffers
+     /* post all recv buffers */
      ib_post_recv_buffers( &ib_conn->params );
 
-     // and push all of the send buffers
+     /* and push all of the send buffers */
      ib_conn->send_pool = crBufferPoolInit(MAX_BUFS);
      for(i=0; i<MAX_BUFS; i++){
 	     CRIBBuffer *ib_buffer = (CRIBBuffer*)ib_conn->params.s_buffers[i].send_buf;
