@@ -3845,11 +3845,17 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 	able[0] = diff_api.Disable;
 	able[1] = diff_api.Enable;
 
+#if 0
+	/* XXX disabling this code fixed Wes Bethel's problem with missing/white
+	 * textures.  Setting the active texture unit here can screw up the
+	 * current texture object bindings.
+	 */
 	/* Set active texture unit, and bind this texture object */
 	if (from->curTextureUnit != u) {
 		diff_api.ActiveTextureARB( u + GL_TEXTURE0_ARB );
 		from->curTextureUnit = u;
 	}
+#endif
 	diff_api.BindTexture( tobj->target, tobj->name );
 
 	if (alwaysDirty || CHECKDIRTY(tobj->paramsBit[u], bitID)) 
