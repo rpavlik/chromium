@@ -12,8 +12,8 @@ CXXFLAGS          += -DLINUX -Wall -Werror
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG -fno-strict-aliasing
 CXX_DEBUG_FLAGS   += -g
 
-CFLAGS            += -DLINUX -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing
-C_RELEASE_FLAGS   += -O3 -DNDEBUG
+CFLAGS            += -DLINUX -Wall -Werror -Wmissing-prototypes
+C_RELEASE_FLAGS   += -O3 -DNDEBUG -fno-strict-aliasing
 C_DEBUG_FLAGS     += -g
 
 LDFLAGS           += -L/usr/X11R6/lib
