@@ -900,6 +900,8 @@ class GraphFrame(wxFrame):
 				style = wxOK | wxCANCEL | wxICON_QUESTION,
 				parent=self) == wxCANCEL:
 			return
+		del self.mothership
+		self.mothership = crtypes.Mothership() # a new mothership object
 		self.loadConfig(self.fileName)
 
 
