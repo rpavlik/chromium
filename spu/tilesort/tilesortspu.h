@@ -12,9 +12,9 @@
 #include "cr_netserver.h"
 #include "cr_pack.h"
 
-void tilesortspuCreateFunctions();
-void tilesortspuGatherConfiguration();
-void tilesortspuConnectToServers();
+void tilesortspuCreateFunctions( void );
+void tilesortspuGatherConfiguration( void );
+void tilesortspuConnectToServers( void );
 
 typedef struct {
 	CRNetServer net;

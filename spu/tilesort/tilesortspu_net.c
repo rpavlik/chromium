@@ -49,6 +49,7 @@ void tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 	(void) len;	
 }
 
+#if 0
 static CRMessageOpcodes *
 __prependHeader( CRPackBuffer *buf, unsigned int *len )
 {
@@ -74,6 +75,7 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len )
 
 	return hdr;
 }
+#endif
 
 void tilesortspuFlush( void )
 {
@@ -82,6 +84,7 @@ void tilesortspuFlush( void )
 
 void tilesortspuHuge( CROpcode opcode, void *buf )
 {
+#if 0
 	unsigned int          len;
 	unsigned char        *src;
 	CRMessageOpcodes *msg;
@@ -101,10 +104,14 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 	msg = (CRMessageOpcodes *) src;
 
 	msg->type       = CR_MESSAGE_OPCODES;
-	//msg->senderId   = tilesort_spu.server.conn->sender_id;
+	msg->senderId   = tilesort_spu.server.conn->sender_id;
 	msg->numOpcodes = 1;
 
-	//crNetSend( tilesort_spu.server.conn, NULL, src, len );
+	crNetSend( tilesort_spu.server.conn, NULL, src, len );
+#else
+	(void) opcode;
+	(void) buf;
+#endif
 }
 
 void tilesortspuConnectToServers( void )

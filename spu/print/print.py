@@ -37,8 +37,8 @@ printf_mapping = {
 	'GLenum':     '%s',
 	'GLfloat':    '%f',
 	'GLclampf':   '%f',
-	'GLdouble':   '%lf',
-	'GLclampd':   '%lf',
+	'GLdouble':   '%f',
+	'GLclampd':   '%f',
 	'GLbitfield': '0x%x',
 	'GLboolean':  '%s',
 	'GLsizei':    '%u'
@@ -64,7 +64,11 @@ for func_name in keys:
 		for index in range( vector_nelem ):
 			if printf_mapping.has_key( vector_arg_type ):
 				printfstr += printf_mapping[vector_arg_type]
-				argstr += '%s[%d]' % (names[0], index)
+				arg = '%s[%d]' % (names[0], index)
+				if vector_arg_type == 'GLboolean':
+					argstr += '%s ? "true" : "false"' % arg
+				else:
+					argstr += arg
 			if index != vector_nelem - 1:
 				printfstr += ", "
 				argstr += ", "
