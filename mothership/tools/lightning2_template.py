@@ -22,10 +22,12 @@ class LightningParameters:
 		assert rows >= 1
 		assert cols >= 1
 		self.NumServers = 4
+		self.ServerHosts = ["localhost"]
+		self.ServerPattern = ("localhost", 1)
 		self.Columns = cols
 		self.Rows = rows
-		self.TileWidth = 1024
-		self.TileHeight = 1024
+		self.TileWidth = 256
+		self.TileHeight = 256
 		self.Layout = 0
 
 	def Clone(self):
@@ -33,23 +35,34 @@ class LightningParameters:
 		# We're not using the copy.copy() function since it's flakey
 		p = LightningParameters()
 		p.NumServers = self.NumServers
+		p.ServerHosts = self.ServerHosts[:]
+		p.ServerPattern = self.ServerPattern
 		p.Columns = self.Columns
 		p.Rows = self.Rows
 		p.TileWidth = self.TileWidth
 		p.TileHeight = self.TileHeight
-		p.Layout = 0
+		p.Layout = self.Layout
 		return p
 
+	def UpdateFromMothership(self, mothership):
+		serverNode = FindServerNode(mothership)
+		clientNode = FindClientNode(mothership)
+		self.NumServers = serverNode.GetCount()
+		self.ServerHosts = serverNode.GetHosts()[:] # [:] makes a copy
+		self.ServerPattern = serverNode.GetHostNamePattern()
+		#self.Columns = ??
+		#self.Rows = ??
+		#self.TileWidth = ??
+		#self.TileHeight = ??
+		#self.Layout = ??
+		
 
 # Predefined tile sizes shown in the wxChoice widget (feel free to change)
-CommonTileSizes = [ [64, 64],
+CommonTileSizes = [ [32, 32],
+					[64, 64],
 					[128, 128],
 					[256, 256],
 					[512, 512] ]
-
-# Size of the drawing page, in pixels.
-PAGE_WIDTH  = 1000
-PAGE_HEIGHT = 1000
 
 BackgroundColor = wxColor(90, 150, 190)
 
@@ -331,13 +344,13 @@ class LightningDialog(wxDialog):
 										   label="Width:")
 		self.tileWidthControl = wxSpinCtrl(parent=self,
 										   id=id_TileWidth,
-										   value="256", min=128, max=2048,
+										   value="256", min=8, max=2048,
 										   size=wxSize(80,25))
 		self.tileHeightLabel = wxStaticText(parent=self, id=-1,
 											label="Height:")
 		self.tileHeightControl = wxSpinCtrl(parent=self,
 											id=id_TileHeight,
-											value="256", min=128, max=2048,
+											value="256", min=8, max=2048,
 											size=wxSize(80,25))
 		EVT_SPINCTRL(self.tileWidthControl, id_TileWidth, self.onSizeChange)
 		EVT_SPINCTRL(self.tileHeightControl, id_TileHeight, self.onSizeChange)
@@ -413,9 +426,6 @@ class LightningDialog(wxDialog):
 		self.SetSizeHints(minW=400, minH=minSize[1])
 		self.SetSize(minSize)
 
-		self.__RecomputeTotalSize()
-		#self.LayoutTiles()
-
 		# Hostname dialog
 		self.hostsDialog = hostdialog.HostDialog(parent=NULL, id=-1,
 						title="Chromium Hosts",
@@ -424,43 +434,47 @@ class LightningDialog(wxDialog):
 
 	# end of __init__()
 
-	def __RecomputeTotalSize(self):
-		"""Recompute the total mural size in pixels and update the widgets."""
-		tileW = self.tileWidthControl.GetValue()
-		tileH = self.tileHeightControl.GetValue()
-		totalW = self.columnsControl.GetValue() * tileW
-		totalH = self.rowsControl.GetValue() * tileH
-		self.totalSizeLabel.SetLabel(str("%d x %d" % (totalW, totalH)))
-		custom = 1
+	def __UpdateDependentWidgets(self):
+		"""Update tile choice widget and the total mural size readout."""
+		w = self.tileWidthControl.GetValue()
+		h = self.tileHeightControl.GetValue()
+		assert w == self.Template.TileWidth
+		assert h == self.Template.TileHeight
 		for i in range(0, len(CommonTileSizes)):
-			if tileW == CommonTileSizes[i][0] and tileH == CommonTileSizes[i][1]:
+			if w == CommonTileSizes[i][0] and h == CommonTileSizes[i][1]:
 				self.tileChoice.SetSelection(i)
-				return
-		# must be custom size
-		self.tileChoice.SetSelection(len(CommonTileSizes))  # "Custom"
+				break
+		if i >= len(CommonTileSizes):
+			# must be custom size
+			self.tileChoice.SetSelection(len(CommonTileSizes))  # "Custom"
+		# update total mural size readout
+		totalW = self.Template.Columns * self.Template.TileWidth
+		totalH = self.Template.Rows * self.Template.TileHeight
+		self.totalSizeLabel.SetLabel(str("%d x %d" % (totalW, totalH)))
 
 	def __UpdateWidgetsFromVars(self):
 		"""Update the widgets from internal vars."""
-		self.numberControl.SetValue(self.__Mothership.Template.NumServers)
-		self.layoutRadio.SetSelection(self.__Mothership.Template.Layout)
-		self.columnsControl.SetValue(self.__Mothership.Template.Columns)
-		self.rowsControl.SetValue(self.__Mothership.Template.Rows)
+		self.numberControl.SetValue(self.Template.NumServers)
+		self.columnsControl.SetValue(self.Template.Columns)
+		self.rowsControl.SetValue(self.Template.Rows)
+		self.tileWidthControl.SetValue(self.Template.TileWidth)
+		self.tileHeightControl.SetValue(self.Template.TileHeight)
+		self.layoutRadio.SetSelection(self.Template.Layout)
 
 	def __UpdateVarsFromWidgets(self):
-		serverNode = FindServerNode(self.__Mothership)
-		serverNode.SetCount(self.numberControl.GetValue())
-		#
-		self.__Mothership.Template.NumServers = self.numberControl.GetValue()
-		self.__Mothership.Template.Layout = self.layoutRadio.GetSelection()
-		self.__Mothership.Template.Rows = self.rowsControl.GetValue()
-		self.__Mothership.Template.Columns = self.columnsControl.GetValue()
+		self.Template.NumServers = self.numberControl.GetValue()
+		self.Template.Rows = self.rowsControl.GetValue()
+		self.Template.Columns = self.columnsControl.GetValue()
+		self.Template.TileWidth = self.tileWidthControl.GetValue()
+		self.Template.TileHeight = self.tileHeightControl.GetValue()
+		self.Template.Layout = self.layoutRadio.GetSelection()
 
-	def LayoutTiles(self):
+	def __LayoutTiles(self):
 		"""Compute location and host number for the tiles."""
-		cols = self.columnsControl.GetValue()
-		rows = self.rowsControl.GetValue()
-		numServers = self.numberControl.GetValue()
-		layoutOrder = self.layoutRadio.GetSelection()
+		cols = self.Template.Columns
+		rows = self.Template.Rows
+		numServers = self.Template.NumServers
+		layoutOrder = self.Template.Layout
 		self.Tiles = []  # list of (row, tile, server) tuples
 		if layoutOrder == 0:
 			# Simple raster order layout
@@ -548,34 +562,36 @@ class LightningDialog(wxDialog):
 
 	def __OnNumServersChange(self, event):
 		"Called when number of servers changes"""
-		self.__Mothership.Template.NumServers = self.numberControl.GetValue()
-		self.LayoutTiles()
+		self.__UpdateVarsFromWidgets()
+		if len(self.Template.ServerHosts) < self.Template.NumServers:
+			# generate additional host names
+			k = len(self.Template.ServerHosts)
+			n = self.Template.NumServers - k
+			start = self.Template.ServerPattern[1] + k
+			newHosts = crutils.MakeHostnames(self.Template.ServerPattern[0],
+											 start, n)
+			self.Template.ServerHosts += newHosts
+		self.__LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
-	def __OnHostnames(self,event):
+	def __OnHostnames(self, event):
 		"""Called when the hostnames button is pressed."""
-		sortlast = self.__Mothership.Sortlast
-		clientNode = FindClientNode(self.__Mothership)
-		self.hostsDialog.SetHostPattern(clientNode.GetHostNamePattern())
-		self.hostsDialog.SetCount(clientNode.GetCount())
-		self.hostsDialog.SetHosts(clientNode.GetHosts())
+		self.hostsDialog.SetHosts(self.Template.ServerHosts)
+		self.hostsDialog.SetCount(self.Template.NumServers)
+		self.hostsDialog.SetHostPattern(self.Template.ServerPattern)
 		if self.hostsDialog.ShowModal() == wxID_OK:
-			clientNode.SetHostNamePattern(self.hostsDialog.GetHostPattern())
-			clientNode.SetHosts(self.hostsDialog.GetHosts())
-		#self.drawArea.Refresh()
-		#self.dirty = true
+			self.Template.ServerHosts = self.hostsDialog.GetHosts()
+			self.Template.NumServers = self.hostsDialog.GetCount()
+			self.Template.ServerPattern = self.hostsDialog.GetHostPattern()
+		self.drawArea.Refresh()
+		self.dirty = true
 
 	def onSizeChange(self, event):
 		"""Called when tile size changes with spin controls."""
-		self.__RecomputeTotalSize()
-		self.LayoutTiles()
-		self.drawArea.Refresh()
-		self.dirty = true
-
-	def onLayoutChange(self, event):
-		"""Called when Layout order changes."""
-		self.LayoutTiles()
+		self.__UpdateVarsFromWidgets()
+		self.__UpdateDependentWidgets()
+		self.__LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -587,18 +603,16 @@ class LightningDialog(wxDialog):
 			h = CommonTileSizes[i][1]
 			self.tileWidthControl.SetValue(w)
 			self.tileHeightControl.SetValue(h)
-		self.__RecomputeTotalSize()
-		self.LayoutTiles()
+		self.__UpdateVarsFromWidgets()
+		self.__UpdateDependentWidgets()
+		self.__LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
-	# Called when hostname or first host index changes
-	def onHostChange(self, event):
-		"""Called when the host name pattern or first index changes."""
-		self.HostNamePattern = self.hostText.GetValue()
-		self.HostNameStart = self.hostStart.GetValue()
-		self.HostNameCount = self.hostCount.GetValue()
-		self.LayoutTiles()
+	def onLayoutChange(self, event):
+		"""Called when Layout order changes."""
+		self.__UpdateVarsFromWidgets()
+		self.__LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -614,23 +628,22 @@ class LightningDialog(wxDialog):
 	def onPaintEvent(self, event):
 		""" Respond to a request to redraw the contents of our drawing panel.
 		"""
+		# border around the window and space between the tiles
+		border = 20
+		space = 2
+
 		dc = wxPaintDC(self.drawArea)
 #		self.drawArea.PrepareDC(dc)  # only for scrolled windows
 		dc.BeginDrawing()
 		dc.SetPen(wxBLACK_PEN);
 		dc.SetBrush(wxLIGHT_GREY_BRUSH);
-
-		# border around the window and space between the tiles
-		border = 20
-		space = 2
 		
 		# Get current settings
 		size = self.drawArea.GetSize()
-		cols = self.columnsControl.GetValue()
-		rows = self.rowsControl.GetValue()
-		tileWidth = self.tileWidthControl.GetValue()
-		tileHeight = self.tileHeightControl.GetValue()
-		layout = self.layoutRadio.GetSelection()
+		cols = self.Template.Columns
+		rows = self.Template.Rows
+		tileWidth = self.Template.TileWidth
+		tileHeight = self.Template.TileHeight
 
 		# how many pixels we'd like to draw
 		desiredWidth = cols * tileWidth
@@ -654,9 +667,9 @@ class LightningDialog(wxDialog):
 		h = tileHeight * scale
 
 		# draw the tiles as boxes
-		hosts = FindServerNode(self.__Mothership).GetHosts()
+		hosts = self.Template.ServerHosts
 		numColors = len(ServerColors)
-		numServers = self.numberControl.GetValue()
+		numServers = self.Template.NumServers
 		for (row, col, server) in self.Tiles:
 			x = col * (w + space) + border
 			y = row * (h + space) + border
@@ -667,27 +680,10 @@ class LightningDialog(wxDialog):
 				s = hosts[server]
 			else:
 				s = hosts[-1]
-			#crutils.MakeHostname(self.HostNamePattern, self.HostNameStart + server)
 			(tw, th) = dc.GetTextExtent(s)
 			dx = (w - tw) / 2
 			dy = (h - th) / 2
 			dc.DrawText(s, x+dx, y+dy)
-		dc.EndDrawing()
-
-		#for i in range(rows):
-		#	for j in range(cols):
-		#		x = j * (w + space) + border
-		#		y = i * (h + space) + border
-		#		server = (i * cols + j) % numServers
-		#		color = server % numColors
-		#		dc.SetBrush(wxBrush(ServerColors[color]))
-		#		dc.DrawRectangle(x, y, w,h)
-		#		s = MakeHostname(self.HostNamePattern, self.HostNameStart + server)
-		#		(tw, th) = dc.GetTextExtent(s)
-		#		dx = (w - tw) / 2
-		#		dy = (h - th) / 2
-		#		dc.DrawText(s, x+dx, y+dy)
-		dc.EndDrawing()
 
 		# draw top width label
 		topLabel = "<---  %d  --->" % desiredWidth
@@ -704,15 +700,28 @@ class LightningDialog(wxDialog):
 			dc.DrawText(leftLabel[i:i+1], x, y)
 			y += th
 
-	def SetMothership(self, mothership):
-		"""Specify the mothership to modify.
-		mothership is a Mothership object.
-		"""
-		self.__Mothership = mothership
-		# update all the widgets to the template's values
+		dc.EndDrawing()
+
+
+	def ShowModal(self, mothership):
+		"""Show the dialog and block until OK or Cancel is chosen."""
+		# Load the template values
+		self.Template = mothership.Template.Clone()
+		self.Template.UpdateFromMothership(mothership)
 		self.__UpdateWidgetsFromVars()
-		self.__RecomputeTotalSize()
-		self.LayoutTiles()
+		self.__UpdateDependentWidgets()
+		self.__LayoutTiles()
+		# show the dialog
+		retVal = wxDialog.ShowModal(self)
+		if retVal == wxID_OK:
+			# update the template vars and mothership
+			mothership.Template = self.Template
+			clientNode = FindClientNode(mothership)
+			serverNode = FindServerNode(mothership)
+			serverNode.SetCount(mothership.Template.NumServers)
+			serverNode.SetHostNamePattern(mothership.Template.ServerPattern)
+			serverNode.SetHosts(mothership.Template.ServerHosts)
+		return retVal
 
 
 def Create_Lightning2(parentWindow, mothership):
@@ -730,7 +739,7 @@ def Create_Lightning2(parentWindow, mothership):
 										 "Number of server nodes:",
 										 "Number of Columns:",
 										 "Number of Rows:"],
-								 defaultValues=[1, 4, 2, 2], maxValue=10000)
+								 defaultValues=[1, 4, 5, 4], maxValue=10000)
 	dialog.Centre()
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()
@@ -743,6 +752,14 @@ def Create_Lightning2(parentWindow, mothership):
 	cols = values[2]
 	rows = values[3]
 	mothership.Template = LightningParameters(rows, cols)
+
+	hosts = crutils.GetSiteDefault("server_hosts")
+	if hosts:
+		mothership.Template.ServerHosts = hosts
+	tileSize = crutils.GetSiteDefault("tile_size")
+	if tileSize:
+		mothership.TemplateTileWidth = tileSize[0]
+		mothership.TemplateTileHeight = tileSize[1]
 
 	# build the graph
 	mothership.DeselectAllNodes()
@@ -808,27 +825,17 @@ def Edit_Lightning2(parentWindow, mothership):
 	# XXX we only need to create one instance of the Lightning2Frame() and
 	# reuse it in the future.
 	t = Is_Lightning2(mothership)
-	if t:
-		clientNode = FindClientNode(mothership)
-		serverNode = FindServerNode(mothership)
-		print "Edit lightning-2"
-	else:
+	if not t:
 		print "This is not a tilesort configuration!"
 		return
 
-	d = LightningDialog(parent=parentWindow)
-	d.Centre()
-	backupLightningParams = mothership.Template.Clone()
-	d.SetMothership(mothership)
+	print "Edit lightning-2"
 
-	if d.ShowModal() == wxID_CANCEL:
-		# restore original values
-		mothership.Lightning = backupLightningParams
-	else:
-		# update mothership with new values
-		# already done in __UpdateVarsFromWidgets()
-		pass
-
+	dialog = LightningDialog(parent=parentWindow)
+	dialog.Centre()
+	retVal = dialog.ShowModal(mothership)
+	dialog.Destroy()
+	return retVal
 
 
 def Read_Lightning2(mothership, fileHandle):
