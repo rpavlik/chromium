@@ -99,7 +99,7 @@ def SameHost( host1, host2 ):
 	For example, if host1='foo' and host2='foo.bar.com' we'll return 1.
 	"""
 	try:
-		if socket.gethostbyname(host1) == socket.gethostbyname(host2):
+		if host1 == host2 or socket.gethostbyname(host1) == socket.gethostbyname(host2):
 			return 1
 		else:
 			return 0
@@ -734,15 +734,17 @@ class CR:
 	    CommKey: Sets the Quadrics communication key
 
 	internal functions:
-            ProcessRequest:     Handles an incoming request, mapping it to
-                                an appropriate do_* function.
+	    ProcessRequest:	Handles an incoming request, mapping it to
+				an appropriate do_* function.
 	    do_acceptrequest:	Accepts the given socket.
 	    do_clients: 	Sends the list of clients to a server.
 	    do_connectrequest:	Connects the given socket.
 	    do_faker:		Maps a faker app to an ApplicationNode.
 	    do_opengldll:	Identifies the application node in the graph.
-	    do_rank:            Sends the node's rank down.
-	    do_quit: 		Disconnects from clients.
+	    do_rank:		Sends the node's rank down.
+	    do_disconnect: 	Disconnects from clients.
+	    do_quit: 		Disconnects from clients and quits the
+				mothership.
 	    do_reset: 		Resets the mothership to its initial state.
 	    do_server:		Identifies the server in the graph.
 	    do_newserver:	Identifies a new server for replication.
@@ -754,12 +756,12 @@ class CR:
 	    do_spu:		Identifies a SPU.
 	    do_spuparam:	Sends the given SPU (or global) parameter.
 	    do_tiles:		Sends the defined tiles for a SPU.
-	    do_setparam:        Sets a mothership parameter value
-	    do_getparam:        Returns a mothership parameter value
+	    do_setparam:	Sets a mothership parameter value
+	    do_getparam:	Returns a mothership parameter value
 	    do_logperf:		Logs Performance Data to a logfile.
 	    do_gettilelayout:   Calls the user's LayoutTiles() function and returns
-		                   the list of new tiles.
-		 do_getstatus:		Returns information about the state of the nodes.
+				the list of new tiles.
+	    do_getstatus:	Returns information about the state of the nodes.
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
 	"""
@@ -1702,8 +1704,8 @@ class CR:
 			return
 		sock.Success( sock.node.config['rank'] )
 
-	def do_quit( self, sock, args ):
-		"""do_quit(sock, args)
+	def do_disconnect( self, sock, args ):
+		"""do_disconnect(sock, args)
 		Disconnects from clients."""
 		sock.Success( "Bye" )
 		self.ClientDisconnect( sock )
