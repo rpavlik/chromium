@@ -121,15 +121,6 @@ struct CRContext {
 };
 
 
-/*
- * XXX might move these elsewhere someday so that the render SPU is no
- * longer dependent on the state tracker.
- */
-extern const char *__stateExtensionString;
-extern const char *__stateAppOnlyExtensions;
-extern const char *__stateChromiumExtensions;
-
-
 void crStateInit(void);
 CRContext *crStateCreateContext(const CRLimitsState *limits, GLint visBits);
 void crStateMakeCurrent(CRContext *ctx);

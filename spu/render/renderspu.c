@@ -9,6 +9,7 @@
 #include "cr_mem.h"
 #include "cr_spu.h"
 #include "renderspu.h"
+#include "cr_extstring.h"
 
 static void __doSync()
 {
@@ -717,18 +718,15 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 	{
 		const char *nativeExt;
 		char *crExt, *s1, *s2;
+
 		if (!render_spu.ws.glGetString)
 			return NULL;
-		/*
-		 * XXX Our only dependency on the state tracker is in the use of
-		 * the __stateExtensionsString, __stateAppOnlyExtensions and
-		 * __stateChromiumExtensions string.
-		 */
+
 		nativeExt = (const char *) render_spu.ws.glGetString(GL_EXTENSIONS);
-		crExt = crStrjoin3(__stateExtensionString, " ", __stateAppOnlyExtensions);
+		crExt = crStrjoin3(crExtensions, " ", crAppOnlyExtensions);
 		s1 = crStrIntersect(nativeExt, crExt);
 		remove_trailing_space(s1);
-		s2 = crStrjoin3(s1, " ", __stateChromiumExtensions);
+		s2 = crStrjoin3(s1, " ", crChromiumExtensions);
 		remove_trailing_space(s2);
 		crFree(crExt);
 		crFree(s1);

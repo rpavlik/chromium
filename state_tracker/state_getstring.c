@@ -9,6 +9,7 @@
 #include "cr_version.h"
 #include "state.h"
 #include "state/cr_statetypes.h"
+#include "cr_extstring.h"
 
 
 const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
@@ -29,11 +30,14 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 			/* This shouldn't normally be queried - the relevant SPU should
 			 * catch this query and do all the extension string merging/mucking.
 			 */
-			return (const GLubyte *) __stateExtensionString;
+			return (const GLubyte *) crExtensions;
 			/*return g->limits.extensions;  OLD colde */
 		default:
 			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
 									"calling glGetString() with invalid name" );
 			return NULL;
 	}
+
+	(void) crAppOnlyExtensions;  /* silence warnings */
+	(void) crChromiumExtensions;
 }

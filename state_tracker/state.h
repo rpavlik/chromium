@@ -14,7 +14,6 @@
 
 extern SPUDispatchTable diff_api;
 extern CRStateBits *__currentBits;
-extern const char *__stateExtensionString;
 
 #define GetCurrentBits() __currentBits
 

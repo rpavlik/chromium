@@ -19,14 +19,7 @@ else
 FILES += renderspu_glx
 endif
 
-# Ugh, we only need the state tracker for renderspuGetString(), oh well.
-ifdef WINDOWS
-TRACKS_STATE = 1
 LIBRARIES += crutil crmothership spuload
-else
-LIBRARIES += crutil crmothership spuload crstate
-endif
-
 
 SLOP = $(PRECOMP)
 
