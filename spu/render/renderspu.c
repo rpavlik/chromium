@@ -697,11 +697,11 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 		return (const GLubyte *) s2;  /* leak - this never gets freed! */
 	}
 	else if (pname == GL_VENDOR)
-		return CR_VENDOR;
+		return (const GLubyte *) CR_VENDOR;
 	else if (pname == GL_VERSION)
-		return CR_VERSION;
+		return (const GLubyte *) CR_VERSION;
 	else if (pname == GL_RENDERER)
-		return CR_RENDERER;
+		return (const GLubyte *) CR_RENDERER;
 	else
 		return NULL;
 }
