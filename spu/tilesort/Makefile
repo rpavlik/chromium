@@ -2,9 +2,16 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = tilesortspu
-FILES = tilesortspu tilesortspu_bcast tilesortspu_beginend \
-	tilesortspu_config tilesortspu_init \
-	tilesortspu_misc tilesortspu_net tilesortspu_swap
+FILES = tilesortspu \
+	tilesortspu_bcast \
+	tilesortspu_beginend \
+	tilesortspu_bucket \
+	tilesortspu_config \
+	tilesortspu_flush \
+	tilesortspu_init \
+	tilesortspu_misc \
+	tilesortspu_net \
+	tilesortspu_swap
 
 LIBRARIES = crutil crmothership crstate crpacker
 

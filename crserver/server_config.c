@@ -20,6 +20,7 @@ void crServerGatherConfiguration(void)
 	int num_spus;
 	int *spu_ids;
 	char **spu_names;
+	char *spu_dir;
 	unsigned int mtu;
 	int i;
 
@@ -46,10 +47,14 @@ void crServerGatherConfiguration(void)
 
 	if (crMothershipGetSPUDir( conn, response ))
 	{
-		crSetenv( "SPU_DIR", response );
+		spu_dir = response;
+	}
+	else
+	{
+		spu_dir = NULL;
 	}
 
-	cr_server.head_spu = crSPULoadChain( num_spus, spu_ids, spu_names );
+	cr_server.head_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir );
 
 	crFree( spu_ids );
 	crFree( spu_names );

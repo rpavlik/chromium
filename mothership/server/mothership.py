@@ -223,6 +223,7 @@ class CR:
 					for spu in node.SPUs:
 						spuchain += " %d %sspu" % (spu.ID, spu.name)
 					sock.Success( spuchain )
+					sock.node = node
 					return
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL host %s" % args )
 

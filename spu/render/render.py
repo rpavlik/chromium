@@ -61,8 +61,8 @@ static CRDLL *__findSystemGL( void )
 }
 """
 
-for func_name in stub_common.AllSpecials( "render" ):
-	print 'void SPU_APIENTRY __renderSpecial%s(void) {}' % func_name
+for func_name in stub_common.AllSpecials( "render_nop" ):
+	print 'void SPU_APIENTRY __renderNop%s(void) {}' % func_name
 
 print """
 void renderspuLoadSystemGL( )
@@ -73,9 +73,9 @@ void renderspuLoadSystemGL( )
 for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, names, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "render", func_name ):
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) __renderSpecial%s );' % (index, func_name, func_name )
-	elif stub_common.FindSpecial( "render_system", func_name ): 
+	if stub_common.FindSpecial( "render_nop", func_name ):
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) __renderNop%s );' % (index, func_name, func_name )
+	elif stub_common.FindSpecial( "render", func_name ): 
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
 	else:
 		print '\t__fillin( %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )

@@ -57,8 +57,8 @@ struct _SPUSTRUCT {
 	SPUDispatchTable dispatch_table;
 };
 
-SPU *crSPULoad( SPU *child, int id, char *name );
-SPU *crSPULoadChain( int count, int *ids, char **names );
+SPU *crSPULoad( SPU *child, int id, char *name, char *dir );
+SPU *crSPULoadChain( int count, int *ids, char **names, char *dir );
 void crSPUCopyDispatchTable( SPUDispatchTable *dst, SPUDispatchTable *src );
 
 #endif /* CR_SPU_H */

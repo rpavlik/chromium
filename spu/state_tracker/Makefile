@@ -3,12 +3,29 @@ SHARED = 1
 LIBRARY = crstate
 LIBRARIES = spuload crutil
 
-FILES = state_buffer state_client state_current state_enable \
-	state_error state_evaluators state_flush \
-	state_fog state_get state_getstring state_init \
-	state_isenabled state_lighting state_line state_lists state_pixel \
-	state_polygon state_rasterpos state_stencil \
-	state_texture state_transform state_viewport
+FILES = state_buffer \
+	state_client \
+	state_current \
+	state_diff \
+	state_enable \
+	state_error \
+	state_evaluators \
+	state_flush \
+	state_fog \
+	state_get \
+	state_getstring \
+	state_init \
+	state_isenabled \
+	state_lighting \
+	state_line \
+	state_lists \
+	state_pixel \
+	state_polygon \
+	state_rasterpos \
+	state_stencil \
+	state_texture \
+	state_transform \
+	state_viewport
 LIB_DEFS = state.def
 
 PRECOMP = state_get.c state_isenabled.c state.def ../../include/state/cr_statefuncs.h

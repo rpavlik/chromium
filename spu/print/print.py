@@ -88,7 +88,7 @@ for func_name in keys:
 					argstr += name
 			else:
 				argstr = ""
-				printfstr = ""
+				printfstr = "???"
 				break;
 			if i != len(names) - 1:
 				printfstr += ", "

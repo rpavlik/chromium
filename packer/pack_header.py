@@ -22,6 +22,7 @@ print """#ifndef CR_PACKFUNCTIONS_H
 keys = gl_mapping.keys()
 keys.sort()
 
+
 for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 	if return_type != 'void':
@@ -37,4 +38,12 @@ for func_name in keys:
 		arg_types.append( "int *" )
 		arg_names.append( "writeback" )
 	print 'void PACK_APIENTRY crPack%s%s;' %( func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+
+for n in [2,3,4]:
+	for t in ['d', 'f', 'i', 's']:
+		for v in ['', 'v']:
+			func_name = 'Vertex%d%s%s' % (n,t,v)
+			( return_type, arg_names, arg_types ) = gl_mapping[func_name]
+			print 'void PACK_APIENTRY crPack%sBBOX%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+			
 print '\n#endif /* CR_PACKFUNCTIONS_H */'

@@ -2,6 +2,7 @@
 #include "cr_pack.h"
 #include "cr_error.h"
 #include "cr_protocol.h"
+#include "cr_packfunctions.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,47 +11,93 @@
 void crPackSetBuffer( CRPackBuffer *buffer )
 {
 	CRASSERT( buffer != NULL );
-	memcpy( &(__pack_globals.buffer), buffer, sizeof(*buffer) );
+	memcpy( &(cr_packer_globals.buffer), buffer, sizeof(*buffer) );
 }
 
 void crPackGetBuffer( CRPackBuffer *buffer )
 {
 	CRASSERT( buffer != NULL );
-	memcpy( buffer, &(__pack_globals.buffer), sizeof(*buffer) );
+	memcpy( buffer, &(cr_packer_globals.buffer), sizeof(*buffer) );
 }
 
-void crPackFlushFunc( FlushFunc ff )
+void crPackFlushFunc( CRPackFlushFunc ff )
 {
-	__pack_globals.Flush = ff;
+	cr_packer_globals.Flush = ff;
 }
 
-void crPackSendHugeFunc( SendHugeFunc shf )
+void crPackFlushArg( void *flush_arg )
 {
-	__pack_globals.SendHuge = shf;
+	cr_packer_globals.flush_arg = flush_arg;
 }
 
-void crPackResetPointers( void )
+void crPackSendHugeFunc( CRPackSendHugeFunc shf )
+{
+	cr_packer_globals.SendHuge = shf;
+}
+
+void crPackResetPointers( int extra )
+{
+	crPackInitBuffer( &(cr_packer_globals.buffer), cr_packer_globals.buffer.pack, cr_packer_globals.buffer.size, extra );
+}
+
+void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int extra )
 {
 	unsigned int num_opcodes;
 
+	buf->size = size;
+	buf->pack = pack;
+
 	// Each opcode has at least a 1-word payload, so opcodes can occupy at most
 	// 20% of the space.
-	num_opcodes = ( __pack_globals.buffer.size - sizeof(CRMessageOpcodes) ) / 5;
+	num_opcodes = ( buf->size - sizeof(CRMessageOpcodes) ) / 5;
 	num_opcodes = (num_opcodes + 0x3) & (~0x3);
 
-	__pack_globals.buffer.data_start    = 
-		(unsigned char *) __pack_globals.buffer.pack + num_opcodes + sizeof(CRMessageOpcodes);
-	__pack_globals.buffer.data_current  = __pack_globals.buffer.data_start;
-	__pack_globals.buffer.data_end      = (unsigned char *) __pack_globals.buffer.pack + __pack_globals.buffer.size;
+	buf->data_start    = 
+		(unsigned char *) buf->pack + num_opcodes + sizeof(CRMessageOpcodes);
+	buf->data_current  = buf->data_start;
+	buf->data_end      = (unsigned char *) buf->pack + buf->size;
 
-	__pack_globals.buffer.opcode_start   = __pack_globals.buffer.data_start - 1;
-	__pack_globals.buffer.opcode_current = __pack_globals.buffer.opcode_start;
-	__pack_globals.buffer.opcode_end     = __pack_globals.buffer.opcode_start - num_opcodes;
+	buf->opcode_start   = buf->data_start - 1;
+	buf->opcode_current = buf->opcode_start;
+	buf->opcode_end     = buf->opcode_start - num_opcodes;
+
+	buf->data_end -= extra; // caller may want extra space (sigh)
+}
+
+void crPackAppendBuffer( CRPackBuffer *src )
+{
+	int num_data = src->data_current - src->data_start;
+	int num_opcode;
+
+	if ( cr_packer_globals.buffer.data_current + num_data > cr_packer_globals.buffer.data_end )
+		crError( "crPackAppendBuffer: overflowed the destination!" );
+	memcpy( cr_packer_globals.buffer.data_current, src->data_start, num_data );
+	cr_packer_globals.buffer.data_current += num_data;
+
+	num_opcode = src->opcode_start - src->opcode_current;
+	CRASSERT( cr_packer_globals.buffer.opcode_current - num_opcode >= cr_packer_globals.buffer.opcode_end );
+	memcpy( cr_packer_globals.buffer.opcode_current + 1 - num_opcode, src->opcode_current + 1,
+			num_opcode );
+	cr_packer_globals.buffer.opcode_current -= num_opcode;
+}
+
+
+void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
+{
+	int length = src->data_current - ( src->opcode_current + 1 );
+
+	// 24 is the size of the bounds-info packet...
+	
+	if ( cr_packer_globals.buffer.data_current + length + 24 > cr_packer_globals.buffer.data_end )
+		crError( "crPackAppendBoundedBuffer: overflowed the destination!" );
+
+	crPackBoundsInfo( bounds, src->opcode_current + 1, length,
+					src->opcode_start - src->opcode_current );
 }
 
 void *crPackAlloc( unsigned int size )
 {
-	CRPackGlobals *g = &__pack_globals;
+	CRPackGlobals *g = &cr_packer_globals;
 	unsigned char *data_ptr;
 
 	/* include space for the length and make the payload word-aligned */
@@ -64,7 +111,7 @@ void *crPackAlloc( unsigned int size )
 	else 
 	{
 		/* Okay, it didn't fit.  Maybe it will after we flush. */
-		__pack_globals.Flush( );
+		cr_packer_globals.Flush( cr_packer_globals.flush_arg );
 		if ( g->buffer.data_current + size <= g->buffer.data_end )
 		{
 			GET_BUFFERED_POINTER( size );
@@ -87,15 +134,15 @@ void *crPackAlloc( unsigned int size )
 }
 
 #define IS_BUFFERED( packet ) \
-    ((unsigned char *) (packet) >= __pack_globals.buffer.data_start && \
-	 (unsigned char *) (packet) < __pack_globals.buffer.data_end)
+    ((unsigned char *) (packet) >= cr_packer_globals.buffer.data_start && \
+	 (unsigned char *) (packet) < cr_packer_globals.buffer.data_end)
 
 void crHugePacket( CROpcode opcode, void *packet )
 {
 	if ( IS_BUFFERED( packet ) )
 		WRITE_OPCODE( opcode );
 	else
-		__pack_globals.SendHuge( opcode, packet );
+		cr_packer_globals.SendHuge( opcode, packet );
 }
 
 void crPackFree( void *packet )

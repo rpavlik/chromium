@@ -292,11 +292,6 @@ void do_it( char *argv[] )
 		add_file_to_temp_list( name );
 	}
 
-	if (crMothershipGetSPUDir( mothership_conn, response ))
-	{
-		crSetenv( "SPU_DIR", response );
-	}
-
 	status = spawnv( _P_WAIT, argv[0], argv );
 
 	if ( status == -1 )

@@ -38,9 +38,7 @@ typedef struct {
 	CRViewportBits  viewport;
 } CRStateBits;
 
-struct CRContext;
-
-typedef void (*CRStateFlushFunc)( struct CRContext *ctx );
+typedef void (*CRStateFlushFunc)( void *arg );
 
 typedef struct CRContext {
 	int id;
@@ -48,6 +46,7 @@ typedef struct CRContext {
 	GLbitvalue neg_bitid;
 
 	CRStateFlushFunc flush_func;
+	void            *flush_arg;
 	SPUDispatchTable diff_api;
 
 	CRBufferState    buffer;
@@ -66,6 +65,7 @@ typedef struct CRContext {
 	CRViewportState  viewport;
 } CRContext;
 
+
 extern CRContext *__currentContext;
 extern CRStateBits *__currentBits;
 #define GetCurrentContext() __currentContext
@@ -74,5 +74,11 @@ extern CRStateBits *__currentBits;
 void crStateInit(void);
 CRContext *crStateCreateContext(void);
 void crStateMakeCurrent(CRContext *ctx);
+
+void crStateFlushFunc( CRStateFlushFunc ff );
+void crStateFlushArg( void *arg );
+void crStateDiffAPI( SPUDispatchTable *api );
+
+void crStateDiffContext( CRContext *from, CRContext *to );
 
 #endif /* CR_GLSTATE_H */

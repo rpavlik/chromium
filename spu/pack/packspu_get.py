@@ -31,7 +31,7 @@ for func_name in keys:
 			args.append( "&return_val" )
 		args.append( "&writeback" )
 		print '\tcrPack%s%s;' % (func_name, stub_common.CallString( args ) )
-		print '\tpackspuFlush();'
+		print '\tpackspuFlush(NULL);'
 		print '\twhile (writeback)'
 		print '\t\tcrNetRecv();'
 		if return_type != 'void':

@@ -77,11 +77,6 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len )
 }
 #endif
 
-void tilesortspuFlush( void )
-{
-	crError( "In tilesortspuFlush" );
-}
-
 void tilesortspuHuge( CROpcode opcode, void *buf )
 {
 #if 0
@@ -124,7 +119,6 @@ void tilesortspuConnectToServers( void )
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
 		crNetServerConnect( &(server->net) );
-		server->pack.pack = crNetAlloc( server->net.conn );
-		server->pack.size = server->net.buffer_size;
+		crPackInitBuffer( &(server->pack), crNetAlloc( server->net.conn ), server->net.buffer_size, 0 );
 	}
 }

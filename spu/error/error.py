@@ -13,6 +13,7 @@ import stub_common;
 print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_spu.h"
+#include "state/cr_statetypes.h"
 #include "cr_glwrapper.h"
 
 #if defined(WINDOWS)
@@ -30,7 +31,7 @@ for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
 	print '\n%s ERROR_APIENTRY error%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
 	print '{'
-	print '\tcrError( "Unsupported function gl%s called!" );' % func_name
+	print '\tcrError( "ERROR SPU: Unsupported function gl%s called!" );' % func_name
 	for name in names:
 		# Handle the void parameter list
 		if name:

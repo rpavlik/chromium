@@ -12,6 +12,7 @@ static void __setDefaults( void )
 	tilesort_spu.num_servers = 0;
 	tilesort_spu.servers = NULL;
 	tilesort_spu.apply_viewtransform = 0;
+	tilesort_spu.splitBeginEnd = 1;
 }
 
 void tilesortspuGatherConfiguration( void )
@@ -77,6 +78,11 @@ void tilesortspuGatherConfiguration( void )
 		// more sense.
 
 		crMothershipIdentifySPU( conn, server_spuid );
+
+		if (crMothershipSPUParam( conn, response, "split_begin_end") )
+		{
+			sscanf( response, "%d", &(tilesort_spu.splitBeginEnd) );
+		}
 
 		if (!crMothershipSPUParam( conn, response, "num_tiles" ))
 		{

@@ -12,6 +12,10 @@
 #include "cr_netserver.h"
 #include "cr_pack.h"
 
+#include "state/cr_statetypes.h"
+
+#define END_FLUFF 4 // space for phantom GLEND opcode for splitting
+
 void tilesortspuCreateFunctions( void );
 void tilesortspuGatherConfiguration( void );
 void tilesortspuConnectToServers( void );
@@ -28,19 +32,32 @@ typedef struct {
 typedef struct {
 	int id;
 
+	int geom_pack_size;
 	CRPackBuffer geometry_pack;
 	CRContext *ctx;
 
 	int apply_viewtransform;
+	int splitBeginEnd;
 
 	unsigned int MTU;
 	int num_servers;
 	TileSortSPUServer *servers;
 } TileSortSPU;
 
+typedef struct {
+	GLbitvalue hits;
+	GLvectorf  screenMin;
+	GLvectorf  screenMax;
+	GLvectorf  objectMin;
+	GLvectorf  objectMax;
+	GLrecti    pixelBounds;
+} TileSortBucketInfo;
+
+extern TileSortBucketInfo *tilesortspuBucketGeometry(void);
+
 extern TileSortSPU tilesort_spu;
 
 extern void tilesortspuHuge( CROpcode opcode, void *buf );
-extern void tilesortspuFlush( void );
+extern void tilesortspuFlush( void *arg );
 
 #endif /* TILESORT_SPU_H */

@@ -22,6 +22,7 @@ void StubInit(void)
 	int num_spus;
 	int *spu_ids;
 	char **spu_names;
+	char *spu_dir;
 	int i;
 
 	static int stub_initialized = 0;
@@ -31,7 +32,6 @@ void StubInit(void)
 	
 	conn = crMothershipConnect( );
 	crMothershipIdentifyOpenGL( conn, response );
-	crMothershipDisconnect( conn );
 	crDebug( "response = \"%s\"", response );
 	spuchain = crStrSplit( response, " " );
 	num_spus = crStrToInt( spuchain[0] );
@@ -44,7 +44,18 @@ void StubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	stub_spu = crSPULoadChain( num_spus, spu_ids, spu_names );
+	if (crMothershipGetSPUDir( conn, response ))
+	{
+		spu_dir = response;
+	}
+	else
+	{
+		spu_dir = NULL;
+	}
+
+	crMothershipDisconnect( conn );
+
+	stub_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir );
 
 	crFree( spuchain );
 	crFree( spu_ids );

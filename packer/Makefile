@@ -2,9 +2,23 @@ TOP = ..
 
 SHARED = 1
 LIBRARY = crpacker
-FILES = packer pack_arrays pack_buffer pack_clipplane pack_fog \
-	pack_lights pack_lists pack_map pack_materials pack_matrices \
-	pack_pixelmap pack_pixels pack_rect pack_stipple pack_texture
+FILES = packer \
+	pack_arrays \
+	pack_bbox \
+	pack_bounds \
+	pack_buffer \
+	pack_clipplane \
+	pack_fog \
+	pack_lights \
+	pack_lists \
+	pack_map \
+	pack_materials \
+	pack_matrices \
+	pack_pixelmap \
+	pack_pixels \
+	pack_rect \
+	pack_stipple \
+	pack_texture
 LIB_DEFS = packer.def
 
 LIBRARIES = crutil
@@ -33,3 +47,7 @@ packer.def: packer_defs.py
 packer.c: packer.py packer_special packer_get_special
 	@$(ECHO) Making the Packer...
 	@$(PYTHON) packer.py > $@
+
+pack_bbox.c: packer_bbox.py
+	@$(ECHO) Making the BBOX Packer...
+	@$(PYTHON) packer_bbox.py > $@

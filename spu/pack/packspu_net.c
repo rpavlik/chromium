@@ -75,7 +75,7 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len )
 	return hdr;
 }
 
-void packspuFlush( void )
+void packspuFlush( void *arg )
 {
 	unsigned int len;
 	CRMessageOpcodes *hdr;
@@ -91,7 +91,8 @@ void packspuFlush( void )
 	crNetSend( pack_spu.server.conn, &(buf->pack), hdr, len );
 	buf->pack = crNetAlloc( pack_spu.server.conn );
 	crPackSetBuffer( buf );
-	crPackResetPointers();
+	crPackResetPointers(0); // don't need extra room like tilesort
+	(void) arg;
 }
 
 void packspuHuge( CROpcode opcode, void *buf )
@@ -127,10 +128,8 @@ void packspuConnectToServer( void )
 
 	crNetServerConnect( &(pack_spu.server) );
 
-	pack_spu.buffer.pack = crNetAlloc( pack_spu.server.conn );
-	pack_spu.buffer.size = pack_spu.server.buffer_size;
+	crPackInitBuffer( &(pack_spu.buffer), crNetAlloc( pack_spu.server.conn ), pack_spu.server.buffer_size, 0 );
 	crPackSetBuffer( &pack_spu.buffer );
-	crPackResetPointers();
 	crPackFlushFunc( packspuFlush );
 	crPackSendHugeFunc( packspuHuge );
 }

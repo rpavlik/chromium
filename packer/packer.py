@@ -20,7 +20,7 @@ print """
 
 #define PACK_UNUSED(x) ((void)(x))
 
-CRPackGlobals __pack_globals;
+CRPackGlobals cr_packer_globals;
 
 char *__cr_opcode_names[] = {
 """
@@ -55,29 +55,29 @@ def UpdateCurrentPointer( func_name ):
 	if m :
 		name = string.lower( m.group(1) )
 		type = m.group(3) + m.group(2)
-		print "\t__pack_globals.current.%s.%s = data_ptr;" % (name,type)
+		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(Index)(ub|b|us|s|ui|i|f|d)$", func_name )
 	if m :
 		name = string.lower( m.group(1) )
 		type = m.group(2) + "1"
-		print "\t__pack_globals.current.%s.%s = data_ptr;" % (name,type)
+		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(EdgeFlag)$", func_name )
 	if m :
 		name = string.lower( m.group(1) )
 		type = "l1"
-		print "\t__pack_globals.current.%s.%s = data_ptr;" % (name,type)
+		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(Begin)$", func_name )
 	if m :
 		name = string.lower( m.group(1) )
 		type = ""
-		print "\t__pack_globals.current.%s_data = data_ptr;" % name
-		print "\t__pack_globals.current.%s_op = __pack_globals.buffer.opcode_current;" % name
+		print "\tcr_packer_globals.current.%s_data = data_ptr;" % name
+		print "\tcr_packer_globals.current.%s_op = cr_packer_globals.buffer.opcode_current;" % name
 		return
 
 for func_name in keys:

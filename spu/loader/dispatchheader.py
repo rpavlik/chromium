@@ -19,6 +19,7 @@ print """#ifndef CR_SPU_DISPATCH_TABLE_H
 #define SPU_APIENTRY
 #endif
 
+#include "state/cr_statetypes.h"
 #include "cr_glwrapper.h"
 """
 
