@@ -15,6 +15,7 @@ void printspuGatherConfiguration( void )
 {
 	CRConnection *conn;
 	char response[8096];
+	char log_path[8096];
 
 	__setDefaults();
 
@@ -28,12 +29,18 @@ void printspuGatherConfiguration( void )
 	}
 	crMothershipIdentifySPU( conn, print_spu.id );
 
+	if (!crMothershipSPUParam( conn, log_path, "log_path") )
+	{
+		strcpy( log_path, "." );
+	}
+
 	if (crMothershipSPUParam( conn, response, "log_file") )
 	{
-		print_spu.fp = fopen( response, "w" );
+		sprintf( log_path, "%s/%s", log_path, response );
+		print_spu.fp = fopen( log_path, "w" );
 		if (print_spu.fp == NULL)
 		{
-			crError( "Couldn't open print SPU log file %s", response );
+			crError( "Couldn't open print SPU log file %s", log_path );
 		}
 	}
 
