@@ -188,7 +188,7 @@ ifdef PLAYSTATION2
 INCLUDE_DIRS += -I/usr/X11R6/include
 endif
 
-ifdef IB_SUPPORT
+ifeq ($(IB_SUPPORT), 1)
 INCLUDE_DIRS += -I/usr/local/topspin/include/vapi
 LDFLAGS += -L/usr/local/topspin/lib
 endif
