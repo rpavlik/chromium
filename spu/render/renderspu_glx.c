@@ -21,6 +21,7 @@
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_mem.h"
+#include "cr_process.h"
 #include "renderspu.h"
 
 
@@ -1169,6 +1170,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 {
+	 int attempt;
 
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
@@ -1181,8 +1183,25 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 
 	CRASSERT(window);
 	CRASSERT(window->visual);
+
+	/*
+	 * This is ugly, but it seems to be the only thing that works.
+	 * Basically, XResizeWindow() doesn't seem to always take effect immediately.
+	 * Even after an XSync(), the GetWindowAttributes() call will sometimes
+	 * return the old window size.  So, we use a loop to repeat the window
+	 * resize until it seems to take effect.
+	 */
 	XResizeWindow(window->visual->dpy, window->window, w, h);
 	XSync(window->visual->dpy, 0);
+	for (attempt = 0; attempt < 3; attempt++) { /* try three times max */
+		XWindowAttributes attribs;
+		/* Now, query the window size */
+		XGetWindowAttributes(window->visual->dpy, window->window, &attribs);
+		if (attribs.width == w && attribs.height == h)
+			break;
+		/* sleep for a millisecond and try again */
+		crMsleep(1);
+	}
 }
 
 
