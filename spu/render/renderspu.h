@@ -96,7 +96,7 @@ typedef struct {
 	int gather_userbuf_size;
 	CRConnection **gather_conns;
 
-	GLboolean drawCursor;
+	GLint drawCursor;
 	GLint cursorX, cursorY;
 
 	int numVisuals;

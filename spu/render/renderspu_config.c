@@ -90,6 +90,11 @@ static void set_borderless( RenderSPU *render_spu, const char *response )
 	sscanf( response, "%d", &(render_spu->borderless) );
 }
 
+static void set_cursor( RenderSPU *render_spu, const char *response )
+{
+	sscanf( response, "%d", &(render_spu->drawCursor) );
+}
+
 static void gather_url( RenderSPU *render_spu, const char *response )
 {
 	char protocol[4096], hostname[4096];
@@ -184,6 +189,9 @@ SPUOptions renderSPUOptions[] = {
    { "borderless", CR_BOOL, 1, "0", NULL, NULL,
      "Borderless Window", (SPUOptionCB) set_borderless },
 
+   { "show_cursor", CR_BOOL, 1, "0", NULL, NULL,
+     "Show Software Cursor", (SPUOptionCB) set_cursor },
+
    { "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
      "System GL Path", (SPUOptionCB)set_system_gl_path },
 
@@ -217,7 +225,6 @@ SPUOptions renderSPUOptions[] = {
 void renderspuGatherConfiguration( RenderSPU *render_spu )
 {
 	CRConnection *conn;
-	char response[8096];
 	int a;
 
 	for (a=0; a<256; a++)
@@ -229,27 +236,13 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 	render_spu->use_lut8 = 0;
 
 	conn = crMothershipConnect( );
-	
-	render_spu->drawCursor = GL_FALSE;
-
 	if (conn) {
 		crMothershipIdentifySPU( conn, render_spu->id );
-		
 		crSPUGetMothershipParams( conn, 
 					  (void *)render_spu,
 					  renderSPUOptions );
 		
 		render_spu->swap_mtu = crMothershipGetMTU( conn );
-
-		/* Additional configuration not expressed in the 
-		 * SPUOptions array:
-		 */
-		if (crMothershipGetParam( conn, "show_cursor", response ) && crStrlen(response) > 0) {
-			int show_cursor = 0;
-			sscanf( response, "%d", &show_cursor );
-			render_spu->drawCursor = show_cursor ? GL_TRUE : GL_FALSE;
-		}
-
 		crMothershipDisconnect( conn );
 	}
 	else {
