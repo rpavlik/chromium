@@ -169,7 +169,7 @@ typedef struct
 #define MAX_MSG_SIZE sizeof(CRUTMouseMsg)
 
 
-//extern CRUTAPI crut_api;
+/* extern CRUTAPI crut_api;*/
 
 void CRUT_APIENTRY crutInitAPI( CRUTAPI *crut_api, const char *mothership );
 void CRUT_APIENTRY crutGetWindowParams( CRUTAPI *crut_api );

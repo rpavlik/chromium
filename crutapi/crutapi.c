@@ -8,7 +8,7 @@
 #include "cr_string.h"
 #include "cr_url.h"
 
-//CRUTAPI crut_api;
+/*CRUTAPI crut_api;*/
 
 void 
 CRUT_APIENTRY
