@@ -239,9 +239,9 @@ static void DrawMesh( void )
 	wet_spu.super.MatrixMode( GL_MODELVIEW );
 	wet_spu.super.PushMatrix();
 	wet_spu.super.LoadIdentity();
-	// wet_spu.super.Scalef(5,5,5);
-	//wet_spu.super.Rotatef(60,1,0,0);
-	//wet_spu.super.Rotatef(30,0,1,0);
+	/* wet_spu.super.Scalef(5,5,5); */
+	/*wet_spu.super.Rotatef(60,1,0,0); */
+	/*wet_spu.super.Rotatef(30,0,1,0); */
 	wet_spu.super.MatrixMode( GL_TEXTURE );
 	wet_spu.super.PushMatrix();
 	wet_spu.super.LoadIdentity();
@@ -249,7 +249,7 @@ static void DrawMesh( void )
 	wet_spu.super.Disable( GL_LIGHTING );
 	wet_spu.super.Color3f( 1, 1, 1 );
 
-	//wet_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+	/*wet_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_LINE ); */
 	
 	for (y = 0 ; y < wet_spu.mesh_height-1 ; y++)
 	{

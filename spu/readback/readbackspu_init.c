@@ -67,7 +67,7 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 	window->childWindow = 0;  /* default child SPU window */
 	crHashtableAdd(readback_spu.windowTable, 0, window);
 
-	//crStateInit();
+	/*crStateInit();*/
 	readback_spu.gather_conn = NULL;
 
 	return &readback_functions;
