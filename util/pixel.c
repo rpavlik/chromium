@@ -78,6 +78,9 @@ int crPixelSize( GLenum format, GLenum type )
 			bytes *= 3;
 			break;
 		case GL_RGBA:
+#ifdef GL_ABGR_EXT
+		case GL_ABGR_EXT:
+#endif
 #ifdef CR_OPENGL_VERSION_1_2
 		case GL_BGRA:
 #endif
