@@ -67,7 +67,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 		{
 			int numTiles, muralWidth, muralHeight, server, tiles;
 			int *tileBounds;
-			CRASSERT(count >= 8);
+			CRASSERT(count >= 4);
 			CRASSERT((count - 4) % 4 == 0); /* must be multiple of four */
 			CRASSERT(type == GL_INT);
 			numTiles = (count - 4) / 4;
