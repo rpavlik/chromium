@@ -601,7 +601,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 	}
 }
 
-void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
+void renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 {
 	int winprop;
 	CRASSERT(window);
@@ -617,7 +617,7 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 }
 
 
-void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int *w, int *h )
+void renderspu_SystemGetWindowGeometry( WindowInfo *window, GLint *x, GLint *y, GLint *w, GLint *h )
 {
 	RECT rect;
 
@@ -632,7 +632,7 @@ void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int 
 }
 
 
-void renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h )
+void renderspu_SystemGetMaxWindowSize( WindowInfo *window, GLint *w, GLint *h )
 {
 	/* XXX fix this */
 	(void) window;
@@ -641,7 +641,7 @@ void renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h )
 }
 
 
-void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
+void renderspu_SystemWindowPosition( WindowInfo *window, GLint x, GLint y )
 {
 	int winprop;
 	CRASSERT(window);

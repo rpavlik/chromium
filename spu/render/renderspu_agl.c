@@ -429,7 +429,7 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 }
 
 
-void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
+void renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 {
 	CRASSERT(window);
 	CRASSERT(window->window);
@@ -438,7 +438,7 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 }
 
 
-void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int *w, int *h )
+void renderspu_SystemGetWindowGeometry( WindowInfo *window, GLint *x, GLint *y, GLint *w, GLint *h )
 {
 	GrafPtr save;
 	Rect r;
@@ -458,7 +458,7 @@ void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int 
 }
 
 
-void renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h )
+void renderspu_SystemGetMaxWindowSize( WindowInfo *window, GLint *w, GLint *h )
 {
 	/* XXX fix this */
 	(void) window;
@@ -467,7 +467,7 @@ void renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h )
 }
 
 
-void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
+void renderspu_SystemWindowPosition( WindowInfo *window, GLint x, GLint y )
 {
 	CRASSERT(window);
 

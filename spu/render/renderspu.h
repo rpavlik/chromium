@@ -201,10 +201,10 @@ extern GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo 
 extern void renderspu_SystemDestroyContext( ContextInfo *context );
 extern GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window );
 extern void renderspu_SystemDestroyWindow( WindowInfo *window );
-extern void renderspu_SystemWindowSize( WindowInfo *window, int w, int h );
-extern void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int *w, int *h );
-extern void renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h );
-extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
+extern void renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h );
+extern void renderspu_SystemGetWindowGeometry( WindowInfo *window, GLint *x, GLint *y, GLint *w, GLint *h );
+extern void renderspu_SystemGetMaxWindowSize( WindowInfo *window, GLint *w, GLint *h );
+extern void renderspu_SystemWindowPosition( WindowInfo *window, GLint x, GLint y );
 extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
 extern void renderspu_SystemMakeCurrent( WindowInfo *window, GLint windowInfor, ContextInfo *context );
 extern void renderspu_SystemSwapBuffers( WindowInfo *window, GLint flags );

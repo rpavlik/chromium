@@ -1184,7 +1184,7 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 
 
 void
-renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
+renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 {
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
@@ -1262,7 +1262,7 @@ renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 
 void
 renderspu_SystemGetWindowGeometry( WindowInfo *window,
-																	 int *x, int *y, int *w, int *h )
+																	 GLint *x, GLint *y, GLint *w, GLint *h )
 {
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
@@ -1313,7 +1313,7 @@ renderspu_SystemGetWindowGeometry( WindowInfo *window,
 
 
 void
-renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h )
+renderspu_SystemGetMaxWindowSize( WindowInfo *window, GLint *w, GLint *h )
 {
 	 int scrn;
 #ifdef USE_OSMESA
@@ -1335,7 +1335,7 @@ renderspu_SystemGetMaxWindowSize( WindowInfo *window, int *w, int *h )
 
 
 void
-renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
+renderspu_SystemWindowPosition( WindowInfo *window, GLint x, GLint y )
 {
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa)
