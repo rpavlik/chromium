@@ -102,7 +102,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBindTexture( GLenum target, GLuint
 void SERVER_DISPATCH_APIENTRY crServerDispatchDeleteTextures( GLsizei n, const GLuint *textures)
 {
 	if (!cr_server.sharedTextureObjects) {
-		GLuint i, *newTextures = (GLuint *) crAlloc(n * sizeof(GLuint));
+		GLuint *newTextures = (GLuint *) crAlloc(n * sizeof(GLuint));
+		GLint i;
 		if (!newTextures) {
 			/* XXX out of memory error */
 			return;

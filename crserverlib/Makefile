@@ -34,8 +34,6 @@ FILES = server_main \
 	server_viewport \
 	server_writeback
 
-LIBRARIES = spuload crutil crmothership crstate
-
 LIB_DEFS = crserverlib.def
 
 PRECOMP = server_dispatch.h server_dispatch.c server_get.c server_retval.c server_simpleget.c

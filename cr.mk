@@ -312,7 +312,7 @@ ifdef WINDOWS
 ifdef SHARED
 	@$(LD) $(SHARED_LDFLAGS) /Fe$(LIBNAME) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else
-	@LIB.EXE $(OBJS) $(LIBRARIES) /OUT:$(LIBNAME)
+	@LIB.EXE /nologo $(OBJS) $(LIBRARIES) /OUT:$(LIBNAME)
 endif #shared
 else #windows
 ifdef SHARED
