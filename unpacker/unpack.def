@@ -1,0 +1,5 @@
+DESCRIPTION ""
+EXPORTS
+crUnpack
+crUnpackSetReturnPointer
+crUnpackSetWritebackPointer
