@@ -35,6 +35,7 @@ typedef struct CRConnection CRConnection;
 
 typedef enum {
 	CR_NO_CONNECTION,
+	CR_SDP,
 	CR_TCPIP,
 	CR_UDPTCPIP,
 	CR_FILE,
