@@ -41,6 +41,7 @@ SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *super,
 	hiddenline_spu.frame_head = hiddenline_spu.frame_tail = NULL;
 
 	hiddenline_spu.packer = crPackNewContext( 0 ); /* Certainly don't want to swap bytes */
+        crPackSetContext( hiddenline_spu.packer );
 	hiddenlineProvidePackBuffer();
 	crPackFlushFunc( hiddenline_spu.packer, hiddenlineFlush );
 	crPackSendHugeFunc( hiddenline_spu.packer, hiddenlineHuge );
