@@ -18,8 +18,13 @@ FILES = hiddenlinespu \
 	hiddenlinespu_pixel \
 	hiddenlinespu_swap
 
-LIBRARIES = spuload crutil crmothership crpacker
+ifdef WINDOWS
 TRACKS_STATE=1
+LIBRARIES = spuload crutil crmothership crpacker
+else
+LIBRARIES = spuload crutil crmothership crpacker crstate
+endif
+
 PACKS = 1
 UNPACKS = 1
 
@@ -36,7 +41,7 @@ endif
 hiddenlinespu.c: hiddenline.py hiddenline_special hiddenline_pixel_special hiddenline_ignore_special
 	@$(ECHO) Building the Hidden Line SPU
 	@$(PYTHON) hiddenline.py > $@
-	
+
 hiddenlinespu_pixel.c: hiddenlinespu_pixel.py hiddenline_pixel_special
 	@$(ECHO) Building the Pack SPU Pixel functions
 	@$(PYTHON) hiddenlinespu_pixel.py > $@
