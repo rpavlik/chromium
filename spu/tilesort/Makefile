@@ -20,7 +20,6 @@ FILES = tilesortspu \
 	tilesortspu_diffapi \
 	tilesortspu_eval \
 	tilesortspu_flush \
-	tilesortspu_get \
 	tilesortspu_init \
 	tilesortspu_lists \
 	tilesortspu_material \

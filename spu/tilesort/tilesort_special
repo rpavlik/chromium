@@ -51,10 +51,6 @@ ChromiumParameteriCR
 ChromiumParameterfCR
 ChromiumParametervCR
 GetChromiumParametervCR
-GetFloatv
-GetIntegerv
-GetBooleanv
-GetDoublev
 EvalCoord1d
 EvalCoord1f
 EvalCoord1dv

@@ -162,10 +162,6 @@ TexGenf
 TexGenfv
 TexGeni
 TexGeniv
-TexImage1D
-TexImage2D
-TexImage3D
-TexImage3DEXT
 TexParameterf
 TexParameterfv
 TexParameteri
@@ -187,6 +183,10 @@ TexCoordPointer
 EdgeFlagPointer
 InterleavedArrays
 GetPointerv
+GetFloatv
+GetIntegerv
+GetBooleanv
+GetDoublev
 ActiveTextureARB
 ClientActiveTextureARB
 CombinerParameterfvNV
@@ -198,3 +198,7 @@ CombinerOutputNV
 FinalCombinerInputNV
 CombinerStageParameterfvNV
 GetCombinerStageParameterfvNV
+TexImage1D
+TexImage2D
+TexImage3D
+TexImage3DEXT
