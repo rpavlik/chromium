@@ -48,7 +48,6 @@ typedef int ssize_t;
 #include <unistd.h>
 #endif
 
-//#include <string.h>
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_string.h"
@@ -248,7 +247,7 @@ crSDPWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 /* 
  * Make sockets do what we want: 
  * 
- * 1) Change the size of the send/receive buffers to 64K 
+ * 1) Change the size of the send/receive buffers to 1MB 
  * 2) Turn off Nagle's algorithm
  */
 static void
@@ -305,95 +304,95 @@ crSDPAccept( CRConnection *conn, char *hostname, unsigned short port )
 	     /* with the new OOB stuff, we can have multiple ports being 
 	      * accepted on, so we need to redo the server socket every time.
 	      */
-	     cr_sdp.server_sock = socket( AF_INET_SDP, SOCK_STREAM, 0 );
-	     if ( cr_sdp.server_sock == -1 )
-	     {
+    cr_sdp.server_sock = socket( AF_INET_SDP, SOCK_STREAM, 0 );
+    if ( cr_sdp.server_sock == -1 )
+    {
 		  err = crSDPErrno( );
 		  crError( "Couldn't create socket: %s", crSDPErrorString( err ) );
-	     }
-	     spankSocket( cr_sdp.server_sock );
-	     
-	     servaddr.sin_family = AF_INET_SDP;
-	     servaddr.sin_addr.s_addr = INADDR_ANY;
-	     servaddr.sin_port = htons( port );
-	     
-	     if ( bind( cr_sdp.server_sock, (struct sockaddr *) &servaddr, sizeof(servaddr) ) )
-	     {
+    }
+    spankSocket( cr_sdp.server_sock );
+    
+    servaddr.sin_family = AF_INET_SDP;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons( port );
+    
+    if ( bind( cr_sdp.server_sock, (struct sockaddr *) &servaddr, sizeof(servaddr) ) )
+    {
 		  err = crSDPErrno( );
 		  crError( "Couldn't bind to socket (port=%d): %s", port, crSDPErrorString( err ) );
-	     }
-	     last_port = port;
-	     if ( listen( cr_sdp.server_sock, 100 /* max pending connections */ ) )
-	     {
+    }
+    last_port = port;
+    if ( listen( cr_sdp.server_sock, 100 /* max pending connections */ ) )
+    {
 		  err = crSDPErrno( );
 			crError( "Couldn't listen on socket: %s", crSDPErrorString( err ) );
-	     }
+    }
 	}
 	
 	if (conn->broker)
 	{
-	     CRConnection *mother;
-	     char response[8096];
-	     char my_hostname[256];
-	     char *temp;
-	     mother = __copy_of_crMothershipConnect( );
-	     
-	     if (!hostname)
-	     {
+    CRConnection *mother;
+    char response[8096];
+    char my_hostname[256];
+    char *temp;
+    mother = __copy_of_crMothershipConnect( );
+    
+    if (!hostname)
+    {
 		  if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
 		  {
-		       crError( "Couldn't determine my own hostname in crSDPAccept!" );
+        crError( "Couldn't determine my own hostname in crSDPAccept!" );
 		  }
-	     }
-	     else
+    }
+    else
 		  crStrcpy(my_hostname, hostname);
-	
-	     /* Hack hostname, YUCK!!! */
-	     temp = strtok(my_hostname, ".");
-	     crStrcat(temp, "sdp");
-	     (void) temp;
-	     if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest sdp %s %d %d", temp, conn->port, conn->endianness ) )
-	     {
+    
+    /* Hack hostname, YUCK!!! */
+    temp = strtok(my_hostname, ".");
+    crStrcat(temp, "sdp");
+    (void) temp;
+    if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest sdp %s %d %d", temp, conn->port, conn->endianness ) )
+    {
 		  crError( "Mothership didn't like my accept request request" );
-	     }
-	     
-	     __copy_of_crMothershipDisconnect( mother );
-	     
-	     sscanf( response, "%u", &(conn->id) );
+    }
+    
+    __copy_of_crMothershipDisconnect( mother );
+    
+    sscanf( response, "%u", &(conn->id) );
 	}
 	
 	addr_length =	sizeof( addr );
 	conn->sdp_socket = accept( cr_sdp.server_sock, (struct sockaddr *) &addr, &addr_length );
 	if (conn->sdp_socket == -1)
 	{
-	     err = crSDPErrno( );
-	     crError( "Couldn't accept client: %s", crSDPErrorString( err ) );
+    err = crSDPErrno( );
+    crError( "Couldn't accept client: %s", crSDPErrorString( err ) );
 	}
 	
 	sin_addr = ((struct sockaddr_in *) &addr)->sin_addr;
 	host = gethostbyaddr( (char *) &sin_addr, sizeof( sin_addr), AF_INET_SDP );
 	if (host == NULL )
 	{
-	     char *temp = inet_ntoa( sin_addr );
-	     conn->hostname = crStrdup( temp );
+    char *temp = inet_ntoa( sin_addr );
+    conn->hostname = crStrdup( temp );
 	}
 	else
 	{
-	     char *temp;
-	     conn->hostname = crStrdup( host->h_name );
-	     
-	     temp = conn->hostname;
-	     while (*temp && *temp != '.' )
+    char *temp;
+    conn->hostname = crStrdup( host->h_name );
+    
+    temp = conn->hostname;
+    while (*temp && *temp != '.' )
 		  temp++;
-	     *temp = '\0';
+    *temp = '\0';
 	}
 	
 #ifdef RECV_BAIL_OUT 
 	err = sizeof(unsigned int);
 	if ( getsockopt( conn->sdp_socket, SOL_SOCKET, SO_RCVBUF,
-			 (char *) &conn->krecv_buf_size, &err ) )
+                   (char *) &conn->krecv_buf_size, &err ) )
 	{
-	     conn->krecv_buf_size = 0;	
+    conn->krecv_buf_size = 0;	
 	}
 #endif
 	crDebug( "Accepted connection from \"%s\".", conn->hostname );
@@ -402,19 +401,19 @@ crSDPAccept( CRConnection *conn, char *hostname, unsigned short port )
 void *
 crSDPAlloc( CRConnection *conn )
 {
-     CRSDPBuffer *buf;
-     
+  CRSDPBuffer *buf;
+  
 #ifdef CHROMIUM_THREADSAFE
-     crLockMutex(&cr_sdp.mutex);
+  crLockMutex(&cr_sdp.mutex);
 #endif
-     
+  
 	buf = (CRSDPBuffer *) crBufferPoolPop( cr_sdp.bufpool, conn->buffer_size );
-
+  
 	if ( buf == NULL )
 	{
 		crDebug( "Buffer pool %p was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
-			 cr_sdp.bufpool,
-			 (unsigned int)sizeof(CRSDPBuffer) + conn->buffer_size, &cr_sdp.bufpool );
+             cr_sdp.bufpool,
+             (unsigned int)sizeof(CRSDPBuffer) + conn->buffer_size, &cr_sdp.bufpool );
 		crDebug("sizeof(CRSDPBuffer): %d", (unsigned int)sizeof(CRSDPBuffer));
 		crDebug("sizeof(conn->buffer_size): %d", conn->buffer_size);
 		buf = (CRSDPBuffer *) 
@@ -428,7 +427,7 @@ crSDPAlloc( CRConnection *conn )
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_sdp.mutex);
 #endif
-
+  
 	return (void *)( buf + 1 );
 }
 
@@ -442,30 +441,30 @@ crSDPSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 
 static void
 crSDPSend( CRConnection *conn, void **bufp,
-						 const void *start, unsigned int len )
+           const void *start, unsigned int len )
 {
 	CRSDPBuffer *sdp_buffer;
 	unsigned int      *lenp;
-
+  
 	if ( !conn || conn->type == CR_NO_CONNECTION )
 		return;
-
+  
 	if ( bufp == NULL )
 	{
 		/* we are doing synchronous sends from user memory, so no need
 		 * to get fancy.  Simply write the length & the payload and
 		 * return. */
 		const int sendable_len = conn->swap ? SWAP32(len) : len;
-
+    
 		crSDPWriteExact( conn, &sendable_len, sizeof(len) );
 		if ( !conn || conn->type == CR_NO_CONNECTION) return;
 		crSDPWriteExact( conn, start, len );
 		return;
 	}
 	sdp_buffer = (CRSDPBuffer *)(*bufp) - 1;
-
+  
 	CRASSERT( sdp_buffer->magic == CR_SDP_BUFFER_MAGIC );
-
+  
 	/* All of the buffers passed to the send function were allocated
 	 * with crSDPAlloc(), which includes a header with a 4 byte
 	 * length field, to insure that we always have a place to write
@@ -479,12 +478,11 @@ crSDPSend( CRConnection *conn, void **bufp,
 	{
 		*lenp = len;
 	}
-
+  
 	if ( __sdp_write_exact( conn->sdp_socket, lenp, len + sizeof(int) ) < 0 )
 	{
 		__sdp_dead_connection( conn );
 	}
-  //crDebug("Done");
 	/* reclaim this pointer for reuse and try to keep the client from
 		 accidentally reusing it directly */
 #ifdef CHROMIUM_THREADSAFE
@@ -506,7 +504,7 @@ void
 __sdp_dead_connection( CRConnection *conn )
 {
 	crDebug( "Dead connection (sock=%d, host=%s), removing from pool",
-  				   conn->sdp_socket, conn->hostname );
+           conn->sdp_socket, conn->hostname );
   
 	/* remove from connection pool */
 	crSDPDoDisconnect( conn );
@@ -519,7 +517,7 @@ __crSDPSelect( int n, fd_set *readfds, int sec, int usec )
 	for ( ; ; ) 
 	{ 
 		int err, num_ready;
-
+    
 		if (sec || usec)
 		{
 			/* We re-init everytime for Linux, as it corrupts
@@ -533,12 +531,12 @@ __crSDPSelect( int n, fd_set *readfds, int sec, int usec )
 		} 
 		else
 			num_ready = select( n, readfds, NULL, NULL, NULL );
-
+    
 		if ( num_ready >= 0 )
 		{
 			return num_ready;
 		}
-
+    
 		err = crSDPErrno( );
 		if ( err == EINTR )
 		{
@@ -555,33 +553,33 @@ __crSDPSelect( int n, fd_set *readfds, int sec, int usec )
 void crSDPFree( CRConnection *conn, void *buf )
 {
 	CRSDPBuffer *sdp_buffer = (CRSDPBuffer *) buf - 1;
-
+  
 	CRASSERT( sdp_buffer->magic == CR_SDP_BUFFER_MAGIC );
 	conn->recv_credits += sdp_buffer->len;
-
+  
 	switch ( sdp_buffer->kind )
 	{
-		case CRSDPMemory:
+  case CRSDPMemory:
 #ifdef CHROMIUM_THREADSAFE
-			crLockMutex(&cr_sdp.mutex);
+    crLockMutex(&cr_sdp.mutex);
 #endif
-			if (cr_sdp.bufpool) {
-				/* pool may have been deallocated just a bit earlier in response
-				 * to a SIGPIPE (Broken Pipe) signal.
-				 */
-				crBufferPoolPush( cr_sdp.bufpool, sdp_buffer, sdp_buffer->allocated );
-			}
+    if (cr_sdp.bufpool) {
+      /* pool may have been deallocated just a bit earlier in response
+       * to a SIGPIPE (Broken Pipe) signal.
+       */
+      crBufferPoolPush( cr_sdp.bufpool, sdp_buffer, sdp_buffer->allocated );
+    }
 #ifdef CHROMIUM_THREADSAFE
-			crUnlockMutex(&cr_sdp.mutex);
+    crUnlockMutex(&cr_sdp.mutex);
 #endif
-			break;
-
-		case CRSDPMemoryBig:
-			crFree( sdp_buffer );
-			break;
-
-		default:
-			crError( "Weird buffer kind trying to free in crSDPFree: %d", sdp_buffer->kind );
+    break;
+    
+  case CRSDPMemoryBig:
+    crFree( sdp_buffer );
+    break;
+    
+  default:
+    crError( "Weird buffer kind trying to free in crSDPFree: %d", sdp_buffer->kind );
 	}
 }
 
@@ -592,34 +590,34 @@ crSDPUserbufRecv(CRConnection *conn, CRMessage *msg)
 {
 	unsigned int buf[2];
 	int len;
-
+  
 	switch (msg->header.type)
 	{
-		case CR_MESSAGE_GATHER:
-			/* grab the offset and the length */
-			len = 2*sizeof(unsigned long);
-			if (__sdp_read_exact(conn->sdp_socket, buf, len) <= 0)
-			{
-				__sdp_dead_connection( conn );
-			}
-			msg->gather.offset = buf[0];
-			msg->gather.len = buf[1];
-
-			/* read the rest into the userbuf */
-			if (buf[0]+buf[1] > (unsigned int)conn->userbuf_len)
-			{
-				crDebug("userbuf for Gather Message is too small!");
-				return len;
-			}
-
-			if (__sdp_read_exact(conn->sdp_socket, conn->userbuf+buf[0], buf[1]) <= 0)
-			{
-				__sdp_dead_connection( conn );
-			}
-			return len+buf[1];
-
-		default:
-			return 0;
+  case CR_MESSAGE_GATHER:
+    /* grab the offset and the length */
+    len = 2*sizeof(unsigned long);
+    if (__sdp_read_exact(conn->sdp_socket, buf, len) <= 0)
+    {
+      __sdp_dead_connection( conn );
+    }
+    msg->gather.offset = buf[0];
+    msg->gather.len = buf[1];
+    
+    /* read the rest into the userbuf */
+    if (buf[0]+buf[1] > (unsigned int)conn->userbuf_len)
+    {
+      crDebug("userbuf for Gather Message is too small!");
+      return len;
+    }
+    
+    if (__sdp_read_exact(conn->sdp_socket, conn->userbuf+buf[0], buf[1]) <= 0)
+    {
+      __sdp_dead_connection( conn );
+    }
+    return len+buf[1];
+    
+  default:
+    return 0;
 	}
 }
 
@@ -637,32 +635,32 @@ crSDPRecv( void )
 #if CRAPPFAKER_SHOULD_DIE
 	int none_left = 1;
 #endif
-
+  
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_sdp.recvmutex);
 #endif
-
+  
 	max_fd = 0;
 	FD_ZERO( &read_fds );
 	for ( i = 0; i < num_conns; i++ )
 	{
-	     CRConnection *conn = cr_sdp.conns[i];
-	     if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
-	     
+    CRConnection *conn = cr_sdp.conns[i];
+    if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
+    
 #if CRAPPFAKER_SHOULD_DIE
-	     none_left = 0;
+    none_left = 0;
 #endif
-	     
-	     if ( conn->recv_credits > 0 || conn->type != CR_SDP )
-	     {
+    
+    if ( conn->recv_credits > 0 || conn->type != CR_SDP )
+    {
 		  
 		  CRSocket sock = conn->sdp_socket;
 		  
 		  if ( (int) sock + 1 > max_fd ){
-		       max_fd = (int) sock + 1;
+        max_fd = (int) sock + 1;
 		  }
 		  FD_SET( sock, &read_fds );	
-	     }
+    }
 	}
 	
 #if CRAPPFAKER_SHOULD_DIE
@@ -679,7 +677,7 @@ crSDPRecv( void )
 		exit(0); /* shouldn't get here */
 	}
 #endif
-
+  
 	if (!max_fd) {
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_sdp.recvmutex);
@@ -696,15 +694,14 @@ crSDPRecv( void )
 		crWarning( "Waiting for first connection..." );
 		num_ready = __crSDPSelect( max_fd, &read_fds, 0, 0 );
 	}
-
+  
 	if ( num_ready == 0 ) {
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_sdp.recvmutex);
 #endif
-    //crDebug("RECV: no work?!");
 		return 0;
 	}
-
+  
 	for ( i = 0; i < num_conns; i++ )
 	{
 		CRSDPBuffer *sdp_buffer;
@@ -714,14 +711,14 @@ crSDPRecv( void )
 #endif
 		CRConnection  *conn = cr_sdp.conns[i];
 		CRSocket       sock;
-
+    
 		if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
-
+    
 		sock = conn->sdp_socket;
-
+    
 		if ( !FD_ISSET( sock, &read_fds ) )
 			continue;
-
+    
 		/* this reads the length of the message */
 		if ( __sdp_read_exact( sock, &len, sizeof(len)) <= 0 )
 		{
@@ -729,14 +726,14 @@ crSDPRecv( void )
 			i--;
 			continue;
 		}
-
+    
 		if (conn->swap)
 		{
 			len = SWAP32(len);
 		}
-
+    
 		CRASSERT( len > 0 );
-
+    
 		if ( len <= conn->buffer_size )
 		{
 			sdp_buffer = (CRSDPBuffer *) crSDPAlloc( conn ) - 1;
@@ -744,16 +741,16 @@ crSDPRecv( void )
 		else
 		{
       crWarning("Sending as BIG, the performance is going to tank!!!.  You need larger buffers!!!");
-			sdp_buffer = (CRSDPBuffer *) 
-				crAlloc( sizeof(*sdp_buffer) + len );
+      sdp_buffer = (CRSDPBuffer *) 
+			  crAlloc( sizeof(*sdp_buffer) + len );
       
-			sdp_buffer->magic = CR_SDP_BUFFER_MAGIC;
-			sdp_buffer->kind  = CRSDPMemoryBig;
-			sdp_buffer->pad   = 0;
+      sdp_buffer->magic = CR_SDP_BUFFER_MAGIC;
+      sdp_buffer->kind  = CRSDPMemoryBig;
+      sdp_buffer->pad   = 0;
 		}
     
 		sdp_buffer->len = len;
-
+    
 		/* if we have set a userbuf, and there is room in it, we probably 
 		 * want to stick the message into that, instead of our allocated
 		 * buffer.  */
@@ -775,7 +772,7 @@ crSDPRecv( void )
 		
 		conn->recv_credits -= total;
 		conn->total_bytes_recv +=  total;
-
+    
 		msg = (CRMessage *) (sdp_buffer + 1);
 		cached_type = msg->header.type;
 		if (conn->swap)
@@ -783,13 +780,12 @@ crSDPRecv( void )
 			msg->header.type = (CRMessageType) SWAP32( msg->header.type );
 			msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
 		}
-	
+    
 		/* if there is still data pending, it should go into the user buffer */
 		if (leftover)
 		{
-		     crDebug("Leftover");
 			handled = crSDPUserbufRecv(conn, msg);
-
+      
 			/* if there is anything left, plop it into the recv_buffer */
 			if (leftover-handled)
 			{
@@ -806,10 +802,10 @@ crSDPRecv( void )
 			conn->recv_credits -= handled;
 			conn->total_bytes_recv +=  handled;
 		}
-
+    
 		crNetDispatchMessage( cr_sdp.recv_list, conn, sdp_buffer + 1, len );
-
-
+    
+    
 		/* CR_MESSAGE_OPCODES is freed in
 		 * crserverlib/server_stream.c 
 		 *
@@ -821,27 +817,27 @@ crSDPRecv( void )
 		}
 		
 	}
-
+  
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_sdp.recvmutex);
 #endif
-
+  
 	return 1;
 }
 
 
 static void
 crSDPHandleNewMessage( CRConnection *conn, CRMessage *msg,
-		unsigned int len )
+                       unsigned int len )
 {
 	CRSDPBuffer *buf = ((CRSDPBuffer *) msg) - 1;
-
+  
 	/* build a header so we can delete the message later */
 	buf->magic = CR_SDP_BUFFER_MAGIC;
 	buf->kind  = CRSDPMemory;
 	buf->len   = len;
 	buf->pad   = 0;
-
+  
 	crNetDispatchMessage( cr_sdp.recv_list, conn, msg, len );
 }
 
@@ -855,25 +851,25 @@ crSDPInstantReclaim( CRConnection *conn, CRMessage *mess )
 
 void
 crSDPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
-	   unsigned int mtu )
+           unsigned int mtu )
 {
 	(void) mtu;
-
+  
 	cr_sdp.recv_list = rfl;
 	cr_sdp.close_list = cfl;
 	if ( cr_sdp.initialized )
 	{
 		return;
 	}
-
+  
 	cr_sdp.initialized = 1;
 	crDebug("Initializing SDP\n");
-
+  
 	cr_sdp.num_conns = 0;
 	cr_sdp.conns     = NULL;
 	
 	cr_sdp.server_sock    = -1;
-
+  
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&cr_sdp.mutex);
 	crInitMutex(&cr_sdp.recvmutex);
@@ -890,7 +886,7 @@ crSDPDoConnect( CRConnection *conn )
 	struct sockaddr_in servaddr;
 	struct hostent *hp;
 	int i;
-
+  
 	conn->sdp_socket = socket( AF_INET_SDP, SOCK_STREAM, 0 );
 	if ( conn->sdp_socket < 0 )
 	{
@@ -899,10 +895,10 @@ crSDPDoConnect( CRConnection *conn )
 		cr_sdp.conns[conn->index] = NULL; /* remove from table */
 		return 0;
 	}
-
+  
 	/* Set up the socket the way *we* want. */
 	spankSocket( conn->sdp_socket );
-
+  
 	/* Standard Berkeley sockets mumbo jumbo */
 	hp = gethostbyname( conn->hostname );
 	if ( !hp )
@@ -911,31 +907,31 @@ crSDPDoConnect( CRConnection *conn )
 		cr_sdp.conns[conn->index] = NULL; /* remove from table */
 		return 0;
 	}
-
+  
 	crMemset( &servaddr, 0, sizeof(servaddr) );
 	servaddr.sin_family = AF_INET_SDP;
 	servaddr.sin_port = htons( (short) conn->port );
-
+  
 	crMemcpy( (char *) &servaddr.sin_addr, hp->h_addr,
-			sizeof(servaddr.sin_addr) );
-
+            sizeof(servaddr.sin_addr) );
+  
 	if (conn->broker)
 	{
 		CRConnection *mother;
 		char response[8096];
 		int remote_endianness;
 		mother = __copy_of_crMothershipConnect( );
-
+    
 		if (!__copy_of_crMothershipSendString( mother, response, "connectrequest sdp %s %d %d", 
-						       conn->hostname, conn->port, conn->endianness) )
+                                           conn->hostname, conn->port, conn->endianness) )
 		{
 			crError( "Mothership didn't like my connect request request" );
 		}
-
+    
 		__copy_of_crMothershipDisconnect( mother );
-
+    
 		sscanf( response, "%u %d", &(conn->id), &(remote_endianness) );
-
+    
 		if (conn->endianness != remote_endianness)
 		{
 			conn->swap = 1;
@@ -946,29 +942,29 @@ crSDPDoConnect( CRConnection *conn )
 #ifdef RECV_BAIL_OUT		
 		err = sizeof(unsigned int);
 		if ( getsockopt( conn->sdp_socket, SOL_SOCKET, SO_RCVBUF,
-				(char *) &conn->krecv_buf_size, &err ) )
+                     (char *) &conn->krecv_buf_size, &err ) )
 		{
 			conn->krecv_buf_size = 0;	
 		}
 #endif
 		if ( !connect( conn->sdp_socket, (struct sockaddr *) &servaddr,
-					sizeof(servaddr) ) )
+                   sizeof(servaddr) ) )
 			return 1;
-
+    
 		err = crSDPErrno( );
 		if ( err == EADDRINUSE || err == ECONNREFUSED )
 			crWarning( "Couldn't connect to %s:%d, %s",
-					conn->hostname, conn->port, crSDPErrorString( err ) );
-
+                 conn->hostname, conn->port, crSDPErrorString( err ) );
+    
 		else if ( err == EINTR )
 		{
 			crWarning( "connection to %s:%d "
-					"interruped, trying again", conn->hostname, conn->port );
+                 "interruped, trying again", conn->hostname, conn->port );
 			continue;
 		}
 		else
 			crWarning( "Couldn't connect to %s:%d, %s",
-					conn->hostname, conn->port, crSDPErrorString( err ) );
+                 conn->hostname, conn->port, crSDPErrorString( err ) );
 		i=0;
 	}
 	cr_sdp.conns[conn->index] = NULL; /* remove from table */
@@ -981,18 +977,18 @@ crSDPDoDisconnect( CRConnection *conn )
 	int num_conns = cr_sdp.num_conns;
 	int none_left = 1;
 	int i;
-
+  
 	crCloseSocket( conn->sdp_socket );
 	conn->sdp_socket = 0;
 	conn->type = CR_NO_CONNECTION;
 	cr_sdp.conns[conn->index] = NULL;
-
+  
 	for (i = 0; i < num_conns; i++) 
 	{
 		if ( cr_sdp.conns[i] && cr_sdp.conns[i]->type != CR_NO_CONNECTION )
 			none_left = 0; /* found a live connection */
 	}
-
+  
 	if (none_left && cr_sdp.server_sock != -1)
 	{
 		crDebug("Closing master socket (probably quitting).");
@@ -1013,9 +1009,9 @@ crSDPConnection( CRConnection *conn )
 {
 	int i, found = 0;
 	int n_bytes;
-
+  
 	CRASSERT( cr_sdp.initialized );
-
+  
 	conn->type  = CR_SDP;
 	conn->Alloc = crSDPAlloc;
 	conn->Send  = crSDPSend;
@@ -1031,7 +1027,7 @@ crSDPConnection( CRConnection *conn )
 	conn->sizeof_buffer_header = sizeof( CRSDPBuffer );
 	conn->actual_network = 1;
 	conn->krecv_buf_size = 0;
-
+  
 	/* Find a free slot */
 	for (i = 0; i < cr_sdp.num_conns; i++) {
 		if (cr_sdp.conns[i] == NULL) {
@@ -1053,6 +1049,6 @@ crSDPConnection( CRConnection *conn )
 CRConnection** crSDPDump( int *num )
 {
 	*num = cr_sdp.num_conns;
-
+  
 	return cr_sdp.conns;
 }
