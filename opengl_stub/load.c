@@ -149,7 +149,11 @@ static void stubInitVars(void)
 	stub.spuWindowHeight = 0;
 	stub.trackWindowSize = 0;
 
+#if 0
 	signal(SIGTERM, stubCleanup);
+#else
+        (void) stubCleanup;
+#endif
 }
 
 
@@ -167,6 +171,12 @@ void StubInit(void)
 	char **spuchain;
 	int num_spus;
 	int *spu_ids;
+	/* Quadrics defaults */
+	int my_rank = 0;
+	int low_context  = CR_QUADRICS_DEFAULT_LOW_CONTEXT;
+	int high_context = CR_QUADRICS_DEFAULT_HIGH_CONTEXT;
+	char *low_node  = "none";
+	char *high_node = "none";
 	char **spu_names;
 	char *spu_dir;
 	char * app_id;
@@ -185,10 +195,10 @@ void StubInit(void)
 	if (!app_id)
 	{
 		crWarning( "the OpenGL faker was loaded without crappfaker!\n"
-							 "Defaulting to an application id of -1!\n"
-							 "This won't work if you're debugging a parallel application!\n"
-							 "In this case, set the CR_APPLICATION_ID_NUMBER environment\n"
-							 "variable to the right thing (see opengl_stub/load.c)" );
+			   "Defaulting to an application id of -1!\n"
+			   "This won't work if you're debugging a parallel application!\n"
+			   "In this case, set the CR_APPLICATION_ID_NUMBER environment\n"
+			   "variable to the right thing (see opengl_stub/load.c)" );
 		app_id = "-1";
 	}
 	conn = crMothershipConnect( );
@@ -250,6 +260,34 @@ void StubInit(void)
 	{
 		spu_dir = NULL;
 	}
+
+       if (conn && crMothershipGetRank( conn, response ))
+        {
+                my_rank = crStrToInt( response );
+        }
+        crNetSetRank( my_rank );
+
+        if (conn && crMothershipGetParam( conn, "low_context", response ))
+          {
+            low_context = crStrToInt( response );
+          }
+
+        if (conn && crMothershipGetParam( conn, "high_context", response ))
+          {
+            high_context = crStrToInt( response );
+          }
+        crNetSetContextRange( low_context, high_context );
+
+        if (conn && crMothershipGetParam( conn, "low_node", response ))
+          {
+            low_node = crStrdup( response );
+          }
+
+        if (conn && crMothershipGetParam( conn, "high_node", response ))
+          {
+            high_node = crStrdup( response );
+          }
+        crNetSetNodeRange( low_node, high_node );
 
 	if (conn)
 	{

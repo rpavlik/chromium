@@ -110,10 +110,16 @@ static E3_Addr elanAddrBase[]= { /* indexed by node number */
 
 static int trans_host(const char *hn)  {
   int	i;
+  int   j;
   for (i=0; i<MAXHOSTS; i++)  {
-    if (strcmp(hn, hosts[i].name) == 0)  {
-      return(hosts[i].id);
+    int match= 1;
+    for (j=0; (hn[j]!='\0' && hn[j]!='.'); j++) {
+      if (hn[j] != hosts[i].name[j]) {
+	match= 0;
+	break;
+      }
     }
+    if (match) return(hosts[i].id);
   }
   return(-1);
 }
@@ -234,15 +240,24 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
     - info.NumLevels
     - info.NodeLevel
   */
-#ifdef never
+
+#ifdef ELAN_PRE_KITE
   fprintf(stdout, "NodeId: %d, NumLevels: %d, NodeLevel: %d\n",
 	  info.NodeId, info.NumLevels, info.NodeLevel);
-  
+#else
+  fprintf(stdout, "NodeId: %d, NumLevels: %d, NodeLevel: %d\n",
+	  info.Position.NodeId, info.Position.NumLevels, 
+	  info.Position.NodeLevel);
+#endif
+
+#ifdef never
   fprintf(stderr,"Capability: <%s>\n",
           elan3_capability_string(&(result->cap),junkString));
   fprintf(stderr,"railmask is %d\n",result->cap.RailMask);
   fprintf(stderr,"bitmap is %x\n",result->cap.Bitmap[0]);
+
 #endif
+
   /* Reality check. */
   if (gethostname(buf,sizeof(buf)-1)) {
     perror("Can't get my own host name");
@@ -250,12 +265,23 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
     return NULL;
   }
   if ((here= strchr(buf,'.')) != NULL) *here= '\0';
+#ifdef ELAN_PRE_KITE
   if (trans_host(buf) != info.NodeId) {
     fprintf(stderr,"teac_Init: compiled-in Quadrics port id %d does not match real value %d!\n",
 	    trans_host(buf), info.NodeId);
     teac_Close(result);
     return NULL;
   }
+#else
+#ifdef never
+  if (trans_host(buf) != info.Position.NodeId) {
+    fprintf(stderr,"teac_Init: compiled-in Quadrics port id %d does not match real value %d!\n",
+	    trans_host(buf), info.Position.NodeId);
+    teac_Close(result);
+    return NULL;
+  }
+#endif
+#endif
   
   if (elan3_attach(result->ctx, &(result->cap)))  {
     fprintf(stderr, "teac_Init: elan3_attach failed\n");
@@ -467,7 +493,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
     for (i=0; i<NUM_SEND_BUFFERS; i++) {
       elan3_primeevent(result->ctx, result->r_event[j][i], 1);
     }
-  
+
   /* Fire the sbuffer free events, so that the buffers look free when 
    * the first call to send happens.
    */
@@ -479,6 +505,8 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank)
   /* And now we're ready to face the world. */
   elan3_block_inputter (result->ctx, 0);
   
+  fprintf(stderr,"#######Teac initialization time: sdram handle is %d!\n",
+          (int)result->ctx->sdram);
   return(result);
 }
   
@@ -633,7 +661,8 @@ int teac_Send( Tcomm* tcomm, int* ids, int num_ids, SBuffer* buf, void *start )
 
   /* Reality check: did they write too much into the message? */
   if (buf->validSize > buf->totSize) {
-    fprintf(stderr,"teac_Send: message too large!\n" );
+    fprintf(stderr,"teac_Send: message too large! (%d > %d)\n",
+	    buf->validSize, buf->totSize);
     return 0;
   }
 
@@ -733,13 +762,6 @@ RBuffer* teac_Recv(Tcomm* tcomm, int id)
 	    sizeof(RBuffer));
     return NULL;
   }
-#ifdef never
-  if (!(result->buf= (void*)elan3_allocMain(tcomm->ctx, 8,E_BUFFER_SIZE))) {
-    perror("teac_Recv: elan3_allocMain failed for buffer");
-    return(NULL);
-  }
-  result->totSize= E_BUFFER_SIZE;
-#endif
   if (!(result->buf= (void*)elan3_allocMain(tcomm->ctx, 8, tcomm->mbuff[id][iBuf].size))) {
 	  perror("teac_Recv: elan3_allocMain failed for buffer");
 	  return(NULL);

@@ -467,6 +467,11 @@ void crTeacInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc,
     }
   strtok( cr_teac.my_hostname, "." );
   
+  if ((cr_teac.low_node==NULL) || (cr_teac.high_node==NULL)) 
+    {
+      crError( "crTeacInit: node range is not set!" );
+    }    
+
   cr_teac.teac_conn = teac_Init( cr_teac.low_node, cr_teac.high_node,
 				 cr_teac.low_context, cr_teac.high_context,
 				 cr_teac.my_rank );
@@ -507,7 +512,7 @@ crTeacAccept( CRConnection *conn, unsigned short port )
 					 "acceptrequest quadrics %s %d %d",
 					 cr_teac.my_hostname, cr_teac.my_rank,
 					 conn->endianness ) ) {
-    crError( "crTeacAccpet:  Mothership didn't like my accept request request" );
+    crError( "crTeacAccept:  Mothership didn't like my accept request request" );
   }
   
   /* The response will contain the Teac information for the guy who accepted 
