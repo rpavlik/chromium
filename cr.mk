@@ -4,7 +4,7 @@ ARCH=$(shell uname | sed -e 's/-//g')
 endif
 endif
 
-ifeq ($(ARCH),CYGWIN_NT5.0)
+ifeq ($(ARCH),CYGWIN_NT-5.0)
 ARCH=WIN_NT
 endif
 
