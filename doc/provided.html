@@ -135,6 +135,36 @@ from</a>.</p>
     be the last one in the chain.  (It also might require a render SPU in
     the same chain, though I haven't tested this.)
     </p></li>
+  <li><p class="ProvidedThing">The &quot;dist_texture&quot; SPU</p>
+  <p class="ProvidedDesc"> The distributed texture SPU allows you to
+    have texture images saved to disk on nodes running crserver processes.
+    The textures can later be loaded by specifying only the filename,
+    thus avoiding the network traffic cost of sending the entire image.
+    This is accomplished by intercepting <code>glTexImage2D</code> calls and
+    checking the value of the <code>type</code> parameter. If it is
+    <code>GL_TRUE</code>, then the texture data (in the <code>pixels</code>
+    parameter) is assumed to be a NULL-terminated filename string followed by
+    texture data of the given width and height (which need not be powers of
+    two). The image data must be interleaved RGB values in
+    <code>GL_UNSIGNED_BYTE</code> format and will be written to disk as
+    a raw PPM image. Once the file is written, the image will be padded
+    if necessary (so that the width and height are powers of two)
+    and sent downstream as a valid <code>glTexImage2D</code> call.
+    If the <code>type</code> parameter is <code>GL_FALSE</code>, then
+    the <code>pixels</code> parameter is assumed to be the filename of
+    a raw PPM image file which will be read, padded if necessary, and
+    sent downstream as a valid <code>glTexImage2D</code> call. This 
+    extension to <code>glTexImage2D</code> was developed for the
+    <a href="http://www.ncsa.uiuc.edu/TechFocus/Deployment/DBox/Doc/PixelBlaster.html">NCSA Pixel Blaster</a>
+    (a movie player for tiled displays), which is a good example of
+    its use. Unlike the original NCSA modifications to WireGL, the
+    distributed texture SPU does not ban absolute filenames because
+    Chromium's crserver processes are meant to be started by the same
+    user who is running the application. The original WireGL modifications
+    were by <a href="mailto:prajlich@ncsa.uiuc.edu">Paul Rajlich</a>, but
+    don't bug him about this version; all the bugs are due to
+    <a href="dcthomp@sandia.gov">David Thompson</a>.
+    </p></li>
 
 </ul>
 <h2 class="PageSubHeading">Useful libraries</h2>
