@@ -4,6 +4,8 @@ print """
 #include "packer.h"
 #include "state/cr_currentpointers.h"
 
+#include <stdio.h>
+
 void crPackOffsetCurrentPointers( int offset )
 {
 	GLnormal_p		*normal		= &(cr_packer_globals.current.normal);
