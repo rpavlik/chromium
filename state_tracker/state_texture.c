@@ -3593,6 +3593,7 @@ crStateTextureDiff( CRTextureBits *t, CRbitvalue *bitID,
 		/* First, try to create the current texture 
 		 * objects before mucking with the individual 
 		 * units. */
+		tobj = NULL;
 
 		if (to->unit[i].enabled1D == GL_TRUE) 
 		{
