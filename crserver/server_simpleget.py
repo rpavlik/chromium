@@ -304,8 +304,6 @@ for index in range(len(funcs)):
 	print '\tint num_values;'
 	print '\t(void) params;'
 	print '\tcr_server.head_spu->dispatch_table.%s( pname, get_values );' % func_name
-	if types[index] == 'GLint':
-		print '\tcrDebug( "I called %s(0x%%x), and got %%d", pname, get_values[0] );' % func_name
 	print '\tnum_values = __numValues( pname);'
 	print '\tcrServerReturnValue( get_values, num_values*sizeof(get_values[0]) );'
 	print '}\n'
