@@ -94,7 +94,7 @@ SPUOptions renderSPUOptions[] = {
      "Window Title", (SPUOptionCB)set_title },
 
    { "window_geometry", CR_INT, 4, "0, 0, 768, 768", "0, 0, 1, 1", NULL, 
-     "Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
+     "Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
 
    { "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
      "System GL Path", (SPUOptionCB)set_system_gl_path },
