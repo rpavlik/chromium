@@ -23,6 +23,7 @@ print """#include <stdio.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "nopspu.h"
+#include "cr_mem.h"
 
 #if defined(WINDOWS)
 #define NOP_APIENTRY __stdcall
@@ -68,6 +69,17 @@ static GLint NOP_APIENTRY nopWindowCreate( const char *dpyName, GLint visBits )
 		slot++;
 
 	return slot;
+}
+static void NOP_APIENTRY nopGetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values )
+{
+	switch( target )
+	{
+		case GL_HEAD_SPU_NAME_CR:
+			crMemcpy((char*)values,"nop",3);
+			return;
+		default:
+			break;
+	}
 }
 """
 
