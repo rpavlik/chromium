@@ -45,6 +45,7 @@ typedef struct
 	const char *name;
 	int size;
 	int rank;
+	int barrierSize;
 	int swapFlag;
 	int clearFlag;
 	int numSpheres;
@@ -502,16 +503,17 @@ PrintHelp(void)
 {
 	printf("Usage: spheres [options]\n");
 	printf("Options:\n");
-	printf("  -size N   specifies number of parallel instances\n");
-	printf("  -rank I   specifies instance's rank in [0..N-1]\n");
-	printf("  -swap     do SwapBuffers\n");
-	printf("  -clear    do glClear\n");
-	printf("  -s N      specifies number of spheres per frame\n");
-	printf("  -t N      specifies approximate number of triangles per sphere\n");
-	printf("  -f N      specifies number of frames to render before exiting\n");
-  printf("  -v        render with vertex buffer objects\n");
-	printf("  -d        render with display lists\n");
-	printf("  -h        print this information\n");
+	printf("  -size N     specifies number of parallel instances\n");
+	printf("  -rank I     specifies instance's rank in [0..N-1]\n");
+	printf("  -barrier N  specifies barrier size (default = -size value\n");
+	printf("  -swap       do SwapBuffers\n");
+	printf("  -clear      do glClear\n");
+	printf("  -s N        specifies number of spheres per frame\n");
+	printf("  -t N        specifies approximate number of triangles per sphere\n");
+	printf("  -f N        specifies number of frames to render before exiting\n");
+  printf("  -v          render with vertex buffer objects\n");
+	printf("  -d          render with display lists\n");
+	printf("  -h          print this information\n");
 }
 
 
@@ -523,6 +525,7 @@ ParseOptions(int argc, char *argv[], Options *options)
 	options->name = argv[0];
 	options->size = 1;
 	options->rank = 0;
+	options->barrierSize = -1;
 	options->swapFlag = 0;
 	options->clearFlag = 0;
 	options->numSpheres = 12;
@@ -550,6 +553,16 @@ ParseOptions(int argc, char *argv[], Options *options)
 				exit(1);
 			}
 			options->size = atoi( argv[i+1] );
+			i++;
+		}
+		else if (!strcmp( argv[i], "-barrier" ))
+		{
+			if (i == argc - 1)
+			{
+				fprintf(stderr, "-barrier requires an argument" );
+				exit(1);
+			}
+			options->barrierSize = atoi( argv[i+1] );
 			i++;
 		}
 		else if (!strcmp( argv[i], "-swap" ))
@@ -610,6 +623,10 @@ ParseOptions(int argc, char *argv[], Options *options)
 		options->clearFlag = 1;
 	}
 
+	if (options->barrierSize < 0) {
+		options->barrierSize = options->size;
+	}
+
 	options->theta = 360.0f / (float) options->numSpheres;
 	options->radius = options->theta * 0.005f;
 	if (options->radius > 0.3f)
@@ -660,7 +677,7 @@ ChromiumMain(const Options *options)
 	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
-	glBarrierCreateCR_ptr( MASTER_BARRIER, options->size );
+	glBarrierCreateCR_ptr( MASTER_BARRIER, options->barrierSize );
 
 	InitGL(options);
 
