@@ -1214,6 +1214,10 @@ void crPixelCopy3D( GLsizei width, GLsizei height, GLsizei depth,
 	(void)dstPacking;
 
 	crWarning( "crPixelCopy3D:  simply crMemcpy'ing from srcPtr to dstPtr" );
+	if (dstFormat != srcFormat)
+		crWarning( "crPixelCopy3D: formats don't match!" );
+	if (dstType != srcType)
+		crWarning( "crPixelCopy3D: formats don't match!" );
 
 	tex_size = crTextureSize( dstFormat, dstType, width, height, depth );
 	crMemcpy( (void *) dstPtr, (void *) srcPtr, tex_size ); 
