@@ -370,20 +370,19 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	if (!broadcast)
 	{
 		/* We've called the flush routine when no vertices
-		 * have been sent. Call off the flush until next time...
+		 * have been sent. Therefore we have no bounding box.
+		 * In this case, we have to broadcast, so set the
+		 * broadcast flag and continue.
 		 */
 		if (thread->packer->bounds_min.x == FLT_MAX &&
 		    thread->packer->bounds_max.x == -FLT_MAX) {
-			/*
-			crDebug("OOOF, no vertices during this flush\n");
-			*/
-		    return;
-		}
-		/*crDebug( "About to bucket the geometry" ); */
-		tilesortspuBucketGeometry(&bucket_info);
-		if (tilesort_spu.providedBBOX != GL_OBJECT_BBOX_CR)
-		{
-			crPackResetBBOX( thread->packer );
+			/*crDebug("No vertices or bounding box set during this flush - Broadcasting geometry\n");*/
+			broadcast = 1;
+		} else {
+			/*crDebug( "About to bucket the geometry" ); */
+			tilesortspuBucketGeometry(&bucket_info);
+			if (tilesort_spu.providedBBOX != GL_OBJECT_BBOX_CR)
+				crPackResetBBOX( thread->packer );
 		}
 	}
 	else
