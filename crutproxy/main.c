@@ -69,12 +69,10 @@ crutProxyRecv( CRConnection *conn, void *buf, unsigned int len )
 
         default:
 	    crDebug("got a message NOT of type CRUT");
-	    return 0; /* NOT HANDLED */
+	    break;
     }
     (void) len;	
-#ifndef WINDOWS
-    return 0; /* HANDLED */
-#endif
+    return 0; /* HANDLED -- why weren't we doing this on Windows? Have to return something. */
 }
 
 static void 
