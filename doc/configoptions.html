@@ -34,45 +34,7 @@ Users should examine the sample Chromium configuration files to see how
 some of these SPUs are used.
 </p>
 
-<p>
-Note that brackets must be put around configuration parameters when
-there's more than one value (i.e. use Python's list syntax).
-For example, the hiddenline SPU's fog_color parameter is specified with
-three floating point values.
-They must be contained in brackets:
-</p>
-<code>
-spu = SPU('hiddenline')<br>
-spu.Conf('fog_color', [ 1.0, 0.5, 0.25 ])
-</code>
 
-
-<h3>
-SPU index
-</h3>
-<ul>
-<li><a href="#print">Print</a>
-<li><a href="#render">Render</a>
-<li><a href="#pack">Pack</a>
-<li><a href="#readback">Readback</a>
-<li><a href="#tilesort">Tilesort</a>
-<li><a href="#binaryswap">Binaryswap</a>
-<li><a href="#saveframe">Saveframe</a>
-<li><a href="#motionblur">Motionblur</a>
-<li><a href="#hiddenline">Hiddenline</a>
-<li><a href="#wet">Wet</a>
-<li><a href="#perf">Perf</a>
-<li><a href="#array">Array</a>
-<li><a href="#feedback">Feedback</a>
-<li><a href="#expando">Expando</a>
-<li><a href="#injector">Injector</a>
-<li><a href="#replicate">Replicate</a>
-<li><a href="#simplequery">Simplequery</a>
-<li><a href="#zpix">ZPix</a>
-</ul>
-
-
-<a name="print">
 <h2 class="PageSubHeading">Print SPU </h2>
 <p>
 The Print SPU prints each OpenGL command to stderr or a file.
@@ -100,8 +62,6 @@ issued by applications
   </tr>
 </table>
 
-
-<a name="render">
 <h2 class="PageSubHeading">Render SPU</h2>
 <p>
 The Render SPU renders OpenGL commands into a window.  Virtually every
@@ -279,7 +239,6 @@ Chromium configuration uses this SPU.
 </table>
 
 
-<a name="pack">
 <h2 class="PageSubHeading">Pack SPU</h2>
 <p>
 The Pack SPU simply packs all the OpenGL commands into buffer which are
@@ -287,7 +246,6 @@ sent to the downstream server.  The Pack SPU has no configuration options.
 </p>
 
 
-<a name="readback">
 <h2 class="PageSubHeading">Readback SPU</h2>
 <p>
 The Readback SPU is very similar to the Render SPU.  It's special in
@@ -351,8 +309,6 @@ configuration options that the render SPU accepts, plus a few more:
   </tr>
 </table>
 
-
-<a name="tilesort">
 <h2 class="PageSubHeading">Tilesort SPU</h2>
 <p>
 The Tilesort SPU is used to divide the framebuffer into tiles which are
@@ -566,8 +522,6 @@ one or more downstream servers.
   </tr>
 </table>
 
-
-<a name="binaryswap">
 <h2 class="PageSubHeading">Binaryswap SPU</h2>
 <p>
 The Binaryswap SPU implements the well known <i>binary swap</i> method
@@ -637,7 +591,6 @@ paper</a>.
 </table>
 
 
-<a name="saveframe">
 <h2 class="PageSubHeading">Saveframe SPU</h2>
 <p>
 The Savefame SPU saves the image from the colorbuffer to a file whenever
@@ -734,8 +687,6 @@ SwapBuffers is called.  It's useful for "screengrabs".
   </tr>
 </table>
 
-
-<a name="motionblur">
 <h2 class="PageSubHeading">Motionblur SPU</h2>
 <p>
 The Motionblur SPU uses the accumulation buffer to simulate motion blur of
@@ -758,8 +709,6 @@ moving objects.
   </tr>
 </table>
 
-
-<a name="hiddenline">
 <h2 class="PageSubHeading">Hiddenline SPU</h2>
 <p>
 The Hiddenline SPU draws objects in hidden-line mode.
@@ -827,7 +776,6 @@ The Hiddenline SPU draws objects in hidden-line mode.
 </table>
 
 
-<a name="wet">
 <h2 class="PageSubHeading">Wet SPU</h2>
 <p>
 The Wet SPU causes the image to appear wavy, as if viewed through water.
@@ -894,8 +842,6 @@ The Wet SPU causes the image to appear wavy, as if viewed through water.
   </tr>
 </table>
 
-
-<a name="perf">
 <h2 class="PageSubHeading">Perf SPU</h2>
 <p>
 The Perf SPU is used to collect performance statistics while running
@@ -956,8 +902,6 @@ Chromium.
   </tr>
 </table>
 
-
-<a name="array">
 <h2 class="PageSubHeading">Array SPU</h2>
 <p>
 The Array SPU implement's OpenGL's vertex arrays.  If your application uses
@@ -965,8 +909,6 @@ vertex arrays, the array SPU should be the first one in the SPU chain.
 The Array SPU has no configuration options.
 </p>
 
-
-<a name="feedback">
 <h2 class="PageSubHeading">Feedback SPU</h2>
 <p>
 The Feedback SPU implement's OpenGL's selection and feedback features.
@@ -993,23 +935,17 @@ Feedback SPU in your configuration.
 </table>
 </table>
 
-
-<a name="expando">
 <h2 class="PageSubHeading">Expando SPU</h2>
 <p>
 The Expando SPU records the contents of display lists, then replays the
 commands when glCallList is called.  The Expando SPU has no options.
 </p>
 
-
-<a name="injector">
 <h2 class="PageSubHeading">Injector SPU</h2>
 <p>
 XXX no description?
 </p>
 
-
-<a name="replicate">
 <h2 class="PageSubHeading">Replicate SPU</h2>
 <p>
 The Replicate SPU works in-conjunction with another SourceForge project
@@ -1019,7 +955,6 @@ performance of the local graphics card at the viewer. Contact <a href=http://www
 </p>
 
 
-<a name="simplequery">
 <h2 class="PageSubHeading">Simplequery SPU</h2>
 <p>
 The Simplequery SPU intercepts all OpenGL glGet*() functions and returns
@@ -1027,8 +962,6 @@ simple default values.  This is useful when using <i>file networking</i>
 which records command streams to files.
 </p>
 
-
-<a name="zpix">
 <h2 class="PageSubHeading">ZPix SPU</h2>
 <p>
 The ZPix SPU offers frame differencing and some simple-minded compression 
@@ -1039,23 +972,27 @@ Frame differences are tracked in three logical buffers;
 one each for color, depth, and stenciling.
 <p>
 For applications with a lot of image coherence, frame differencing
-yields lots of unchanged pixels which can compress dramatically.
+often results in many unchanged pixels which compress significantly..
 The default GNU zlib compression scheme minimizes network
 bandwidth while the PLE compression scheme takes advantage of
-the special case of zero data values in the difference to
-get good compression with much less CPU time.
+the special case of zero data values in the differenced frames to
+get good compression with much less CPU resource.
 <p>
-Frame differencing does not work if multiple clients feed a server
-because the server's ZPix SPU cannot disambiguate client instances;
-therefore set the <b>no_diff,1</b> option in those configurations.
+When multiple clients feed a server, it is necessary to track
+differences on a per client basis.
+To disambiguate multiple instances use the <b>client_id</b>
+to assign a unique integer id for each client.
+<p>
+Frame differencing is independent of compression and can be suppressed
+with the <b>no_diff</b> option.
 A useful artifact of suppressing frame differencing can be
-obtained even in single client, single server configurations
-by just suppressing it on the server. What results is a
+obtained by just suppressing it on the server. What results is a
 display where identical pixels are black and changed ones
 are not (although the colors may be whimsical and the
 depth buffer may become quite comical). 
 <p>
-</p>
+Several additional options provide for more verbose output
+and debugging.  
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -1075,11 +1012,33 @@ depth buffer may become quite comical).
         </td>
   </tr>
   <tr>
-    <td width="19%" class="ConfigOption" height="38">zparm</td>
+    <td width="19%" class="ConfigOption" height="38">ztype_parm</td>
     <td width="12%" class="ConfigType" height="38">Int</td>
 	<td width="115%" class="ConfigDesc" height="38">
 	  Arbitrary parameter to pass to compression.
           <br>Default = -1 (what zlib expects)
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">client_id</td>
+    <td width="12%" class="ConfigType" height="38">Int</td>
+	<td width="115%" class="ConfigDesc" height="38">
+	  Client identification to use for tracking differences
+          <br>Default = 0
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">verbose</td>
+    <td width="12%" class="ConfigType" height="38">Bool</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          If TRUE, compression statistics  printed for each frame
+        </td>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">debug</td>
+    <td width="12%" class="ConfigType" height="38">Bool</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          If TRUE, then perform additional debugging checks
+          with each frame
         </td>
   </tr>
   <tr>
@@ -1088,22 +1047,6 @@ depth buffer may become quite comical).
 	<td width="115%" class="ConfigDesc" height="38">
            <dd> 0 - (default) do frame differencing
            <dd> 1 - suppress frame differencing
-        <br> Frame differencing does <b>not</b> work if multiple
-             clients feed a server
-        </td>
-  </tr>
-  <tr>
-    <td width="19%" class="ConfigOption" height="38">verbose</td>
-    <td width="12%" class="ConfigType" height="38">Bool</td>
-	<td width="115%" class="ConfigDesc" height="38">
-          If TRUE, compress statistics  printed for each frame
-        </td>
-  <tr>
-    <td width="19%" class="ConfigOption" height="38">debug</td>
-    <td width="12%" class="ConfigType" height="38">Bool</td>
-	<td width="115%" class="ConfigDesc" height="38">
-          If TRUE, then additional debugging checks and data printed
-          with each frame
         </td>
   </tr>
 </table>
