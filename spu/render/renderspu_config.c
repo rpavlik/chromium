@@ -18,7 +18,9 @@
 static void set_window_geometry( RenderSPU *render_spu, const char *response )
 {
 	float x, y, w, h;
-	if (crStrchr(response, ','))
+	if (response[0] == '[')
+		sscanf( response, "[ %f, %f, %f, %f ]", &x, &y, &w, &h );
+	else if (crStrchr(response, ','))
 		sscanf( response, "%f, %f, %f, %f", &x, &y, &w, &h );
 	else
 		sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
@@ -99,7 +101,7 @@ SPUOptions renderSPUOptions[] = {
    { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
      "Window Title", (SPUOptionCB)set_title },
 
-   { "window_geometry", CR_INT, 4, "0, 0, 768, 768", "0, 0, 1, 1", NULL, 
+   { "window_geometry", CR_INT, 4, "0, 0, 256, 256", "0, 0, 1, 1", NULL, 
      "Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
 
    { "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
