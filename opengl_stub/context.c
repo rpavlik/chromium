@@ -583,25 +583,29 @@ Bool stubMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext context )
 	 * function.
 	 */
 	if (stub.Context[i].type == NATIVE) {
+		/* Handled by native OpenGL library */
 #ifdef WINDOWS
-		retVal = (int) stub.wsInterface.wglMakeCurrent( drawable, stub.Context[i].hglrc );
+		retVal = (int) stub.wsInterface.wglMakeCurrent(drawable,
+																									 stub.Context[i].hglrc);
 #else
-		retVal = (int) stub.wsInterface.glXMakeCurrent( dpy, drawable,
-																							 stub.Context[i].glxContext );
+		retVal = (int) stub.wsInterface.glXMakeCurrent(dpy, drawable,
+																									 stub.Context[i].glxContext);
 #endif
 	}
 	else {
-		/* let the pack SPU or tilesort SPU, etc handle this */
+		/* handled by first SPU in the chain */
 		GLint stubCtx = stub.Context[i].stubContext;
 		CRASSERT(stub.Context[i].type == CHROMIUM);
 		CRASSERT(stubCtx >= 0);
 
-		if (stub.Context[i].currentDrawable && stub.Context[i].currentDrawable != drawable) {
+		if (stub.Context[i].currentDrawable
+				&& stub.Context[i].currentDrawable != drawable) {
 			crWarning("Can't rebind context %d to a different window", i);
 			retVal = 0;
 		}
 		else {
-			stub.spu->dispatch_table.MakeCurrent( stub.spuWindow, (GLint) drawable, stubCtx );
+			stub.spu->dispatch_table.MakeCurrent( stub.spuWindow,
+																						(GLint) drawable, stubCtx );
 			retVal = 1;
 		}
 	}
