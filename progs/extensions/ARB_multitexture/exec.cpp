@@ -34,18 +34,6 @@
 #endif
 
 
-#ifdef IRIX
-/* this lets us compile the demo, but not run it */
-void glActiveTextureARB(GLenum texture)
-{
-}
-
-void glMultiTexCoord2fARB(GLenum texture, GLfloat s, GLfloat t)
-{
-}
-#endif
-
-
 enum
   {
     eGrassTex = 0,
