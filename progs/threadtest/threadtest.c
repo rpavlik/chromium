@@ -28,7 +28,7 @@
 # define M_PI		3.14159265358979323846	/* pi */
 #endif
 
-float colors[7][4] = {
+static float colors[7][4] = {
 	{1,0,0,1},
 	{0,1,0,1},
 	{0,0,1,1},
@@ -38,20 +38,21 @@ float colors[7][4] = {
 	{1,1,1,1}
 };
 
-static const int MASTER_BARRIER = 100;
 
+static crCreateContextProc   crCreateContextCR;
+static crMakeCurrentProc     crMakeCurrentCR;
+static crSwapBuffersProc     crSwapBuffersCR;
+static crCreateWindowProc    crCreateWindowCR;
+static crWindowPositionProc  crWindowPositionCR;
+static glChromiumParameteriCRProc glChromiumParameteriCR;
 
-#define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
-#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x )
+#define GET_FUNCTION(target, proc, string)         \
+	target = (proc) crGetProcAddress(string);      \
+    printf("target = %p\n", (void*) target);\
+	if (!target) {                                 \
+		crError("%s function not found! %d", string,__LINE__); \
+	}
 
-crCreateContextProc   glCreateContextCR;
-crMakeCurrentProc     glMakeCurrentCR;
-crSwapBuffersProc     glSwapBuffersCR;
-crCreateWindowProc    glCreateWindowCR;
-crWindowPositionProc  glWindowPositionCR;
-
-glBarrierCreateCRProc glBarrierCreateCR;
-glBarrierExecCRProc   glBarrierExecCR;
 
 #define MAXIMUM_THREADS 10
 
@@ -127,16 +128,18 @@ static void *render_loop( void *threadData )
 
 	rank = context->Rank;
 
-	glMakeCurrentCR(context->Window, context->Context);
+	crMakeCurrentCR(context->Window, context->Context);
 
-	LOAD2( BarrierCreate );
-	LOAD2( BarrierExec );
-	if (!glBarrierCreateCR)
-		 crError("BarrierCreateCR is NULL!");
-	if (!glBarrierExecCR)
-		 crError("BarrierExecCR is NULL!");
-	/* It's OK for everyone to create this, as long as all the "size"s match */
-	glBarrierCreateCR( MASTER_BARRIER, NumThreads );
+	/* need to do this after MakeCurrent, unfortunately */
+	GET_FUNCTION(glChromiumParameteriCR, glChromiumParameteriCRProc, "glChromiumParameteriCR");
+
+	/* We need to make this call so that the private barriers inside
+	 * of the readback SPU are set to the right size.  See, this demo
+	 * creates three threads.  The readback SPU thinks there are four
+	 * clients (the main process plus three threads) but we want the
+	 * readback SPU to synchronize on 3 clients, not 4.
+	 */
+	glChromiumParameteriCR( GL_READBACK_BARRIER_SIZE_CR, NumThreads);
 
 	theta = (float) (360.0 / (float) NumThreads);
 
@@ -164,8 +167,6 @@ static void *render_loop( void *threadData )
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		}
 
-		glBarrierExecCR( MASTER_BARRIER );
-
 		glPushMatrix();
 		glRotatef((GLfloat)frame, 1, 0, 0);
 		glRotatef((GLfloat)(-2 * frame), 0, 1, 0);
@@ -178,12 +179,10 @@ static void *render_loop( void *threadData )
 
 		glPopMatrix();
 
-		glBarrierExecCR( MASTER_BARRIER );
-
 		/* The crserver only executes the SwapBuffers() for the 0th client.
 		 * No need to test for rank==0 as we used to do.
 		 */
-		glSwapBuffersCR(context->Window, context->SwapFlags);
+		crSwapBuffersCR(context->Window, context->SwapFlags);
 	}
 
 	ExitFlag = GL_TRUE;
@@ -238,33 +237,36 @@ int main(int argc, char *argv[])
 		crError( "%d threads is the limit", MAXIMUM_THREADS);
 	}
 
-	LOAD( CreateContext );
-	LOAD( MakeCurrent );
-	LOAD( SwapBuffers );
-	LOAD( CreateWindow );
-	LOAD( WindowPosition );
+	/*
+	 * Get extension function pointers.
+	 */
+	GET_FUNCTION(crCreateContextCR, crCreateContextProc, "crCreateContext");
+	GET_FUNCTION(crMakeCurrentCR, crMakeCurrentProc, "crMakeCurrent");
+	GET_FUNCTION(crSwapBuffersCR, crSwapBuffersProc, "crSwapBuffers");
+	GET_FUNCTION(crCreateWindowCR, crCreateWindowProc, "crCreateWindow");
+	GET_FUNCTION(crWindowPositionCR, crWindowPositionProc, "crWindowPosition");
 
-	Context[0].Window = glCreateWindowCR(dpy, visual);
-	/*	Context[0].Context = glCreateContextCR(dpy, visual);*/
+	Context[0].Window = crCreateWindowCR(dpy, visual);
+	/*	Context[0].Context = crCreateContextCR(dpy, visual);*/
 	if (Context[0].Window < 0) {
 		 crError("Failed to create 0th window!\n");
 		 return 0;
 	}
 	Context[0].Clear = GL_TRUE;
 	Context[0].SwapFlags = 0;
-	glWindowPositionCR(Context[0].Window, 20, 20);
+	crWindowPositionCR(Context[0].Window, 20, 20);
 
 	/* Create a context for each thread */
 	for (i = 0; i < NumThreads; i++) {
 		if (i > 0) {
 			if (multiWindow) {
 				/* a new window */
-				Context[i].Window = glCreateWindowCR(dpy, visual);
+				Context[i].Window = crCreateWindowCR(dpy, visual);
 				if (Context[i].Window < 0) {
-					crError("glCreateWindowCR() failed!\n");
+					crError("crCreateWindowCR() failed!\n");
 					return 0;
 				}
-				glWindowPositionCR(Context[i].Window, 420*i, 20);
+				crWindowPositionCR(Context[i].Window, 420*i, 20);
 				Context[i].Clear = GL_TRUE;
 			}
 			else {
@@ -281,9 +283,9 @@ int main(int argc, char *argv[])
 			}
 		}
 		Context[i].Rank = i;
-		Context[i].Context = glCreateContextCR(dpy, visual);
+		Context[i].Context = crCreateContextCR(dpy, visual);
 		if (Context[i].Context < 0) {
-			crError("glCreateContextCR() call for thread %d failed!\n", i);
+			crError("crCreateContextCR() call for thread %d failed!\n", i);
 			return 0;
 		}
 	}
