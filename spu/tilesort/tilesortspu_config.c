@@ -13,6 +13,8 @@ static void __setDefaults( void )
 	tilesort_spu.servers = NULL;
 	tilesort_spu.apply_viewtransform = 0;
 	tilesort_spu.splitBeginEnd = 1;
+	tilesort_spu.broadcast = 0;
+	tilesort_spu.optimizeBucketing = 1;
 	tilesort_spu.muralWidth = 0;
 	tilesort_spu.muralHeight = 0;
 
@@ -47,6 +49,21 @@ void tilesortspuGatherConfiguration( void )
 	sscanf( response, "%d", &tilesort_spu.MTU );
 
 	crDebug( "Got the MTU as %d", tilesort_spu.MTU );
+
+	if (crMothershipSPUParam( conn, response, "split_begin_end") )
+	{
+		sscanf( response, "%d", &(tilesort_spu.splitBeginEnd) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "broadcast") )
+	{
+		sscanf( response, "%d", &(tilesort_spu.broadcast) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "optimize_bucket") )
+	{
+		sscanf( response, "%d", &(tilesort_spu.optimizeBucketing) );
+	}
 
 	// The response to this tells us how many servers, what the
 	// SPU id of their first SPU is, and where they are.
@@ -93,11 +110,6 @@ void tilesortspuGatherConfiguration( void )
 
 		crMothershipIdentifySPU( conn, server_spuid );
 
-		if (crMothershipSPUParam( conn, response, "split_begin_end") )
-		{
-			sscanf( response, "%d", &(tilesort_spu.splitBeginEnd) );
-		}
-
 		if (!crMothershipSPUParam( conn, response, "num_tiles" ))
 		{
 			server->num_extents = 1;
@@ -112,31 +124,30 @@ void tilesortspuGatherConfiguration( void )
 		}
 		for (tile = 0; tile < server->num_extents ; tile++)
 		{
+			int w,h;
 			if (!crMothershipSPUParam( conn, response, "tile%d", tile+1 ))
 			{
 				crWarning( "No extent information for tile %d, defaulting", tile );
 				crWarning( "To 0,0,640,480" );
 				crStrcpy( response, "0 0 640 480" );
 			}
-			sscanf( response, "%d %d %d %d", &(server->mural_x[tile]), 
-					&(server->mural_y[tile]), &(server->mural_w[tile]), 
-					&(server->mural_h[tile]) );
+			sscanf( response, "%d %d %d %d", &(server->x1[tile]), 
+					&(server->y1[tile]), &w, &h );
 
-			crDebug( "Server %d, tile %d/%d: (%d, %d, %d, %d)",
-					i+1, tile+1, server->num_extents,
-					server->mural_x[tile], server->mural_y[tile],
-					server->mural_w[tile], server->mural_h[tile] );
-			if (server->mural_x[tile] + server->mural_w[tile] > tilesort_spu.muralWidth )
+			server->x2[tile] = server->x1[tile] + w;
+			server->y2[tile] = server->y1[tile] + h;
+
+			if (server->x2[tile] > (int) tilesort_spu.muralWidth )
 			{
-				tilesort_spu.muralWidth = server->mural_x[tile] + server->mural_w[tile];
+				tilesort_spu.muralWidth = server->x2[tile];
 			}
-			if (server->mural_y[tile] + server->mural_h[tile] > tilesort_spu.muralHeight )
+			if (server->y2[tile] > (int) tilesort_spu.muralHeight )
 			{
-				tilesort_spu.muralHeight = server->mural_y[tile] + server->mural_h[tile];
+				tilesort_spu.muralHeight = server->y2[tile];
 			}
 		}
 	}
-	crWarning( "Width, Height = (%d, %d)", tilesort_spu.muralWidth, tilesort_spu.muralHeight );
+	crWarning( "Total output dimensions = (%d, %d)", tilesort_spu.muralWidth, tilesort_spu.muralHeight );
 
 	crMothershipDisconnect( conn );
 }

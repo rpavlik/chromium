@@ -25,7 +25,7 @@ LIB_DEFS = packer.def
 
 LIBRARIES = crutil
 
-PRECOMP = packer.def ../include/cr_packfunctions.h ../include/cr_opcodes.h ../include/state/cr_currentpointers.h packer.c
+PRECOMP = packer.def ../include/cr_packfunctions.h ../include/cr_opcodes.h ../include/state/cr_currentpointers.h pack_bbox.c pack_current.c packer.c
 SLOP = $(PRECOMP)
 
 include $(TOP)/cr.mk

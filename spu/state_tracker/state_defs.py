@@ -28,4 +28,6 @@ crStateFlushFunc
 crStateFlushArg
 crStateDiffAPI
 crStateSetCurrentPointers
+crStateCurrentRecover
+crStateTransformUpdateTransform
 """

@@ -6,7 +6,7 @@ print """
 """
 
 for k in current_fns.keys():
-	name = k.lower()
+	name = k.lower();
 	print "typedef struct {"
 	print "\tunsigned char *ptr;"
 	for type in current_fns[k]['types']:
@@ -16,8 +16,9 @@ for k in current_fns.keys():
 
 print "typedef struct {"
 for k in current_fns.keys():
-	name = k.lower();
-	print "\tGL%s_p %s;" % (name,name)
+	name = k.lower()
+	field = '%s%s' % (k[:1].lower(),k[1:])
+	print "\tGL%s_p %s;" % (name,field)
 
 print """
 	unsigned char *vtx_op;

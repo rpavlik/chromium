@@ -52,28 +52,32 @@ def WriteData( offset, arg_type, arg_name ):
 def UpdateCurrentPointer( func_name ):
 	m = re.search( r"^(Color|Normal|TexCoord)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
 	if m :
-		name = string.lower( m.group(1) )
+		k = m.group(1)
+		name = '%s%s' % (k[:1].lower(),k[1:])
 		type = m.group(3) + m.group(2)
 		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(Index)(ub|b|us|s|ui|i|f|d)$", func_name )
 	if m :
-		name = string.lower( m.group(1) )
+		k = m.group(1)
+		name = '%s%s' % (k[:1].lower(),k[1:])
 		type = m.group(2) + "1"
 		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(EdgeFlag)$", func_name )
 	if m :
-		name = string.lower( m.group(1) )
+		k = m.group(1)
+		name = '%s%s' % (k[:1].lower(),k[1:])
 		type = "l1"
 		print "\tcr_packer_globals.current.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(Begin)$", func_name )
 	if m :
-		name = string.lower( m.group(1) )
+		k = m.group(1)
+		name = '%s%s' % (k[:1].lower(),k[1:])
 		type = ""
 		print "\tcr_packer_globals.current.%s_data = data_ptr;" % name
 		print "\tcr_packer_globals.current.%s_op = cr_packer_globals.buffer.opcode_current;" % name

@@ -25,9 +25,7 @@ typedef struct {
 typedef void (*CRPackFlushFunc)(void *arg);
 typedef void (*CRPackSendHugeFunc)(CROpcode, void *);
 
-typedef struct {
-	float x,y,z;
-} CRBBOXPoint;
+typedef GLvectorf CRBBOXPoint;
 
 typedef struct {
 	CRPackBuffer buffer;

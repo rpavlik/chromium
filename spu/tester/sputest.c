@@ -31,9 +31,9 @@ int main(int argc, char *argv[])
 		spu->dispatch_table.LoadIdentity();
 		spu->dispatch_table.Rotatef( angle, 0, 0, 1 );
 		spu->dispatch_table.Begin( GL_TRIANGLES );
-		spu->dispatch_table.Vertex3f( 0,0,0 );
-		spu->dispatch_table.Vertex3f( 0,1,0 );
-		spu->dispatch_table.Vertex3f( 1,0,0 );
+		spu->dispatch_table.Vertex3f( .5, .5, 0 );
+		spu->dispatch_table.Vertex3f( .5,1,0 );
+		spu->dispatch_table.Vertex3f( 1,.5,0 );
 		spu->dispatch_table.End( );
 		spu->dispatch_table.SwapBuffers();
 	}

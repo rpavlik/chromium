@@ -10,14 +10,14 @@ void crPackOffsetCurrentPointers( int offset )
 {
 	GLnormal_p		*normal		= &(cr_packer_globals.current.normal);
 	GLcolor_p		*color		= &(cr_packer_globals.current.color);
-	GLtexcoord_p	*texcoord	= &(cr_packer_globals.current.texcoord);
+	GLtexcoord_p	*texCoord	= &(cr_packer_globals.current.texCoord);
 	GLindex_p		*index		= &(cr_packer_globals.current.index);
-	GLedgeflag_p	*edgeflag	= &(cr_packer_globals.current.edgeflag);
+	GLedgeflag_p	*edgeFlag	= &(cr_packer_globals.current.edgeFlag);
 
 """
 
 for k in current_fns.keys():
-	name = k.lower()
+	name = '%s%s' % (k[:1].lower(),k[1:])
 	for type in current_fns[k]['types']:
 		for size in current_fns[k]['sizes']:
 			ptr = "%s->%s%d" % (name, type, size )
@@ -30,13 +30,13 @@ void crPackNullCurrentPointers( void )
 {
 	GLnormal_p		*normal		= &(cr_packer_globals.current.normal);
 	GLcolor_p		*color		= &(cr_packer_globals.current.color);
-	GLtexcoord_p	*texcoord	= &(cr_packer_globals.current.texcoord);
+	GLtexcoord_p	*texCoord	= &(cr_packer_globals.current.texCoord);
 	GLindex_p		*index		= &(cr_packer_globals.current.index);
-	GLedgeflag_p	*edgeflag	= &(cr_packer_globals.current.edgeflag);
+	GLedgeflag_p	*edgeFlag	= &(cr_packer_globals.current.edgeFlag);
 """
 
 for k in current_fns.keys():
-	name = k.lower()
+	name = '%s%s' % (k[:1].lower(),k[1:])
 	for type in current_fns[k]['types']:
 		for size in current_fns[k]['sizes']:
 			ptr = "%s->%s%d" % (name, type, size )

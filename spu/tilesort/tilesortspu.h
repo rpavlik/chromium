@@ -24,8 +24,8 @@ typedef struct {
 	CRNetServer net;
 	CRPackBuffer pack;
 	int num_extents;
-	int mural_x[CR_MAX_EXTENTS], mural_y[CR_MAX_EXTENTS];
-	unsigned int mural_w[CR_MAX_EXTENTS], mural_h[CR_MAX_EXTENTS];
+	int x1[CR_MAX_EXTENTS], y1[CR_MAX_EXTENTS];
+	int x2[CR_MAX_EXTENTS], y2[CR_MAX_EXTENTS];
 	CRContext *ctx;
 } TileSortSPUServer;
 
@@ -38,6 +38,11 @@ typedef struct {
 
 	int apply_viewtransform;
 	int splitBeginEnd;
+	int broadcast;
+	int optimizeBucketing;
+
+	float viewportCenterX, viewportCenterY;
+	float halfViewportWidth, halfViewportHeight;
 
 	unsigned int muralWidth, muralHeight;
 
@@ -73,6 +78,8 @@ void tilesortspuFlush( void *arg );
 void tilesortspuBroadcastGeom( void );
 void tilesortspuShipBuffers( void );
 void tilesortspuCreateDiffAPI( void );
+void tilesortspuSetBucketingBounds( int x, int y, unsigned int w, unsigned int h );
+void tilesortspuBucketingInit( void );
 
 void tilesortspuDebugOpcodes( CRPackBuffer *pack );
 

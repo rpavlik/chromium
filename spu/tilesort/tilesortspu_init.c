@@ -63,6 +63,9 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 		server->ctx = crStateCreateContext();
 		crPackInitBuffer( &(server->pack), crNetAlloc( server->net.conn ), server->net.buffer_size, 0 );
 	}
+
+	tilesortspuBucketingInit();
+
 	return &the_functions;
 }
 

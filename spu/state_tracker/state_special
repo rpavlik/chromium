@@ -172,6 +172,8 @@ RasterPos4fv
 RasterPos4iv
 RasterPos4sv
 GenLists
+NewList
+EndList
 DeleteLists 
 IsList
 ListBase 

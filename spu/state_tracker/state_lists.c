@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state_internals.h"
 
 void crStateListsInit(CRListsState *l) 
 {
@@ -180,6 +181,50 @@ void crStateListsUnbindName(CRListsState *l, GLuint name)
 	}
 }
 
+void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode) 
+{
+	CRContext *g = GetCurrentContext();
+	CRListsState *l = &(g->lists);
+
+	(void) mode;
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glNewList called in Begin/End");
+		return;
+	}
+
+	if (l->newEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glNewList called inside display list");
+		return;
+	}
+
+	FLUSH();
+
+	crStateListsBindName(l, list);	
+	l->newEnd = GL_TRUE;
+}
+
+void STATE_APIENTRY crStateEndList (void) 
+{
+	CRContext *g = GetCurrentContext();
+	CRListsState *l = &(g->lists);
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glNewList called in Begin/End");
+		return;
+	}
+
+	if (l->newEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glNewList called inside display list");
+		return;
+	}
+
+	l->newEnd = GL_FALSE;
+}
 
 GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 {

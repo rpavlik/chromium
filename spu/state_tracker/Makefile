@@ -29,6 +29,7 @@ REGULAR_FILES = state_buffer \
 
 DIFF_FILES = buffer \
 	client \
+	current \
 	fog \
 	lighting \
 	line \
@@ -76,6 +77,10 @@ state_buffer_gen.c: state_buffer.txt gendiffcode.pl
 state_client_gen.c: state_client.txt gendiffcode.pl
 	@$(ECHO) Making $@
 	@$(PERL) gendiffcode.pl Client > $@
+
+state_current_gen.c: state_current.py
+	@$(ECHO) Making $@
+	@$(PYTHON) state_current.py > $@
 
 state_fog_gen.c: state_fog.txt gendiffcode.pl
 	@$(ECHO) Making $@
