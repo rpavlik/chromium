@@ -336,7 +336,6 @@ class CRNode:
 		self.SPUs.append( spu )
 		spu.ID = CRNode.SPUIndex
 		spu.node = self
-
 		CRNode.SPUIndex += 1
 		allSPUs[spu.ID] = spu
 
@@ -693,7 +692,7 @@ def VNCServerClaim(node, sock):
 		for spu in node.SPUs:
 			spuchain += " %d %s" % (spu.ID, spu.name)
 		sock.Success( spuchain )
-		CRDebug("ServerClaim returning %s" % spuchain);
+		CRDebug("ServerClaim returning %s" % spuchain)
 NodeTypes["vncserver"] = (VNCServerValidNode, VNCServerClaim)
 
 
@@ -1880,17 +1879,20 @@ class CR:
 	def do_getvncclient( self, sock, args ):
 		"""do_clients(sock, args)
 		Like do_clients, return list of clients of this server, but this
-		function is for vnc only."""
+		function is for vnc only.
+		Note that the client/server terminology of Chromium (in this
+		configuration anyway) is just the opposite of VNC's terminology."""
 		# NOTE: we ignore args (the hostname)
 		if sock.node == None or not isinstance(sock.node, CRVNCServerNode):
 			sock.Failure( SockWrapper.UNKNOWNSERVER,
 						  "You can't ask for vnc clients without telling " +
 						  "me which VNC server node you are!" )
 			return
-		for node in self.nodes:
-			if isinstance(node, CRApplicationNode):
-				tailSPU = node.SPUs[-1]
-				sock.Success("1 tcpip %d" % tailSPU.ID);
+		# Just find the replicate SPU
+		for i in allSPUs.keys():
+			spu = allSPUs[i]
+			if spu.name == "replicate":
+				sock.Success("1 tcpip %d" % spu.ID);
 				return
 		sock.Failure(SockWrapper.NOTHINGTOSAY,
 					 "getvncclient: Didn't find VNC ApplicationNode and SPU")
