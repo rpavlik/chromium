@@ -234,6 +234,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	  case GL_GREEN:
 	  case GL_BLUE:
 	  case GL_ALPHA:
+	  case GL_INTENSITY:
 	  case GL_LUMINANCE:
 		break;
 
