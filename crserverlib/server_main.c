@@ -11,6 +11,7 @@
 #include "cr_glstate.h"
 #include "cr_string.h"
 #include "cr_mem.h"
+#include "cr_hash.h"
 #include <signal.h>
 #include <stdlib.h>
 
@@ -23,7 +24,7 @@ static void crServerTearDown( void )
 	SPU *the_spu = cr_server.head_spu;
 	CRBarrier *barrier;
 	CRSemaphore *sema;
-	unsigned int i, num_elements;
+	unsigned int i;
 
 	/* Free all context info */
 	crStateSetCurrent( NULL );
@@ -36,21 +37,23 @@ static void crServerTearDown( void )
 	crFree( cr_server.clients );
 	crFree( cr_server.overlap_intens );
 
-	num_elements = crHashtableNumElements( cr_server.semaphores );
-	for (i = 0; i < num_elements; i++) {
-		sema = (CRSemaphore *) crHashtableSearch( cr_server.semaphores, i);
-		crFree( sema );
-		crHashtableDelete(cr_server.semaphores, i, GL_TRUE);
-	}
-
-	num_elements = crHashtableNumElements( cr_server.barriers );
-	for (i = 0; i < num_elements; i++) {
-		barrier = (CRBarrier *) crHashtableSearch( cr_server.barriers, i);
-		crFree( barrier );
-		crHashtableDelete(cr_server.barriers, i, GL_TRUE);
-	}
-
+	/* Deallocate semaphores */
+	CR_HASHTABLE_WALK( cr_server.semaphores, entry)
+		sema = (CRSemaphore *) entry->data;
+		CRASSERT(sema);
+		crFree(sema);
+		entry->data = NULL;
+	CR_HASHTABLE_WALK_END( cr_server.semaphores)
 	crFreeHashtable(cr_server.semaphores);
+
+	/* Deallocate barriers */
+	CR_HASHTABLE_WALK( cr_server.barriers, entry)
+		barrier = (CRBarrier *) entry->data;
+		CRASSERT(barrier);
+		crFree(barrier->waiting);
+		crFree(barrier);
+		entry->data = NULL;
+	CR_HASHTABLE_WALK_END( cr_server.barriers)
 	crFreeHashtable(cr_server.barriers);
 
 	while (1) {
