@@ -801,11 +801,11 @@ class Mothership:
 		assert self.__Options.HasOption(name)
 		self.__Options.SetValue(name, value)
 
-	def SetParam(self, paramName, value):
-		"""Used while parsing config files"""
+	def Conf(self, paramName, value):
+		"""Set a mothership config parameter"""
 		# Ugh, this is more complicated than one would expect
 		if not self.__Options.HasOption(paramName):
-			print "bad name in SetParam(): %s" % paramName
+			print "bad name in Conf(): %s" % paramName
 			return
 		count = self.__Options.GetCount(paramName)
 		type = self.__Options.GetType(paramName)
@@ -827,6 +827,10 @@ class Mothership:
 			assert len(value) == count
 			valList = value
 		self.SetOption(paramName, valList)
+
+	# XXX obsolete - remove someday
+	def SetParam(self, paramName, value):
+		self.Conf(paramName, value)
 
 	def MTU(self, bytes):
 		"""Set the MTU size (in bytes)."""

@@ -434,14 +434,23 @@ class CR:
 		Adds the key/values list to all SPUs' configuration."""
 		self.allSPUConf.append( (regex, key, map( MakeString, values) ) )
 		
-	# Added by BrianP
-	def SetParam( self, key, value ):
-		"""Set a global mothership parameter value (via Python)"""
+	def Conf( self, key, value ):
+		"""Set a global mothership configuration value (via Python)"""
 		self.param[key] = value
 
-	# Added by BrianP
+	# XXX obsolete; use Conf() instead
+	def SetParam( self, key, value ):
+		self.param[key] = value
+
+	def GetConf( self, key ):
+		"""Get a global mothership configuration value (via Python)"""
+		if self.param.has_key(key):
+			return string.join(self.param[key], "")
+		else:
+			return ""
+
+	# XXX obsolete; use GetConf() instead
 	def GetParam( self, key ):
-		"""Get a global mothership parameter value (via Python)"""
 		if self.param.has_key(key):
 			return string.join(self.param[key], "")
 		else:
