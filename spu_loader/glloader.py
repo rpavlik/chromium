@@ -77,7 +77,7 @@ __findSystemGL( char *provided_system_path )
 {
 	CRDLL *dll;
 	char system_path[8096];
-	if (provided_system_path)
+	if (provided_system_path && (crStrlen(provided_system_path) > 0) )
 	{
 		crStrcpy( system_path, provided_system_path );
 	}
