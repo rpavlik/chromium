@@ -537,6 +537,13 @@ clobber: clean
 ifdef LIBRARY
 	@$(ECHO) "Removing $(LIBNAME) for $(ARCH)."
 	@$(RM) $(LIBNAME)
+	@$(ECHO) "Also removing $(DSO_DIR)/$(TARGET)."
+	@$(RM) $(DSO_DIR)/$(TARGET)
+ifdef COPY_TARGETS
+	@$(ECHO) "Also removing library copies."
+	@$(RM) $(COPY_TARGETS)
+	@$(RM) $(addprefix $(DSO_DIR)/,$(notdir $(COPY_TARGETS)))
+endif
 else
 ifdef PROGRAM
 	@$(ECHO) "Removing $(PROGRAM) for $(ARCH)."
