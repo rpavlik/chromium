@@ -3,7 +3,7 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-import sys, string, types, traceback
+import sys, string, types, traceback, re
 
 from socket import *
 from select import *
@@ -17,11 +17,12 @@ def Fatal( str ):
 	print >> sys.stderr, str
 	sys.exit(-1)
 
+def MakeString( x ):
+	if type(x) == types.StringType: return x
+	return repr(x)
+
 def Conf( config, key, *values ):
-	def makestr( x ):
-		if type(x) == types.StringType: return x
-		return repr(x)
-	config[key] = map( makestr, values )
+	config[key] = map( MakeString, values )
 
 class SPU:
 	def __init__( self, name ):
@@ -148,6 +149,7 @@ class CR:
 		self.all_sockets = []
 		self.wrappers = {}
 		self.mtu = 1024*1024
+		self.allSPUConf = []
 
 	def AddNode( self, node ):
 		self.nodes.append( node )
@@ -155,6 +157,9 @@ class CR:
 	def MTU( self, mtu ):
 		self.mtu = mtu;
 
+	def AllSPUConf( self, regex, key, *values ):
+		self.allSPUConf.append( (regex, key, map( MakeString, values) ) )
+		
 	def Go( self, PORT=10000 ):
 		print >> sys.stderr, "This is Chromium, Version ALPHA"
 		try:
@@ -321,14 +326,22 @@ class CR:
 			return
 		spu = allSPUs[sock.SPUid]
 		if not spu.config.has_key( args ):
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (sock.SPUid, args) )
-			return
-		print "responding with args = " + `spu.config[args]`
-		sock.Success( string.join( spu.config[args], " " ) )	
+			# Okay, there's no specific parameter for the SPU.  Try the global SPU configurations.
+			for (regex, key, values) in self.allSPUConf:
+				if args == key and re.search( regex, spu.name ) != -1:
+					response = values
+					break
+			else:
+				sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (sock.SPUid, args) )
+				return
+		else:
+			response = spu.config[args]
+		print "responding with args = " + `response`
+		sock.Success( string.join( response, " " ) )	
 
 	def do_serverparam( self, sock, args ):
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for Server parameters without telling me what server you are!" )
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for server parameters without telling me what server you are!" )
 			return
 		if not sock.node.config.has_key( args ):
 			sock.Reply( SockWrapper.UNKNOWNPARAM, "Server doesn't have param %s" % (args) )
@@ -337,7 +350,7 @@ class CR:
 
 	def do_servers( self, sock, args ):
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for servers without telling me what SPU id you are!" )
 			return
 		spu = allSPUs[sock.SPUid]
 		if len(spu.servers) == 0:
