@@ -181,7 +181,7 @@ crLoadOpenGL( crOpenGLInterface *interface, SPUNamedFunctionTable table[] )
 		crError("Unable to find system OpenGL!");
 		return 0;
 	}
-	crDebug( "Found it." );
+	crDebug( "Found it in %s.", crGetenv("CR_SYSTEM_GL_PATH") );
 """
 
 useful_wgl_functions = [
