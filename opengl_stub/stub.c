@@ -17,7 +17,7 @@ int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 {
 	ContextInfo *context;
 	stubInit();
-	context = stubNewContext(dpyName, visBits, CHROMIUM);
+	context = stubNewContext(dpyName, visBits, UNDECIDED);
 	return context ? context->id : -1;
 }
 

@@ -228,7 +228,7 @@ stubNewContext( const char *dpyName, GLint visBits, ContextType type )
 	context->id = stub.freeContextNumber++;
 	context->type = type;
 	context->spuContext = spuContext;
-	context->visBits = stub.desiredVisual;
+	context->visBits = visBits;
 	context->currentDrawable = NULL;
 	crStrncpy(context->dpyName, dpyName, MAX_DPY_NAME);
 	context->dpyName[MAX_DPY_NAME-1] = 0;
@@ -500,6 +500,12 @@ stubCheckUseChromium( WindowInfo *window )
 	int x, y;
 	unsigned int w, h;
 
+	/* If the provided window is CHROMIUM, we're clearly intended
+	 * to create a CHROMIUM context.
+	 */
+	if (window->type == CHROMIUM)
+		return GL_TRUE;
+
 	/*  If the user's specified a window count for Chromium, see if
 	 *  this window satisfies that criterium.
 	 */
@@ -623,7 +629,7 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			CRASSERT(stub.spu);
 			CRASSERT(stub.spu->dispatch_table.CreateContext);
 			context->spuContext = stub.spu->dispatch_table.CreateContext(
-															context->dpyName, stub.desiredVisual );
+															context->dpyName, context->visBits );
 			context->type = CHROMIUM;
 
 			if (!window->spuWindow)
