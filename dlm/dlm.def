@@ -20,3 +20,8 @@ crdlm_compile_CallList
 crDLMGetBounds
 crdlm_compile_CallLists
 crdlm_DeleteLists
+crDLMFreeDLM
+crDLMGetCurrentMode
+crDLMGetCurrentList
+crdlm_GenLists
+crdlm_IsList

@@ -82,6 +82,7 @@ SWAPDOUBLE
 crBufferPoolInit
 crBufferPoolPush
 crBufferPoolPop
+crBufferPoolFree
 crTimerNewTimer
 crBufferPoolGetNumBuffers
 crBufferPoolGetMaxBuffers
