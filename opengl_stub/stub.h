@@ -8,6 +8,7 @@
 #define CR_STUB_H
 
 #include "chromium.h"
+#include "cr_process.h"
 #include "cr_spu.h"
 #include "cr_threads.h"
 #include "spu_dispatch_table.h"
@@ -72,11 +73,7 @@ typedef struct {
 	CRmutex mutex;
 #endif
 
-#ifdef WINDOWS
-	HANDLE mothershipPID;
-#else
-	unsigned long mothershipPID;
-#endif
+	CRpid mothershipPID;
 
 	/* visual/context/window management */
 	GLuint desiredVisual;  /* Bitwise-or of CR_*_BIT flags */

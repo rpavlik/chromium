@@ -16,19 +16,26 @@
 extern "C" {
 #endif
 
+/*
+ * Process ID type
+ */
+#ifdef WINDOWS
+typedef HANDLE CRpid;
+#else
+typedef unsigned long CRpid;
+#endif
+
+
 extern void crSleep( unsigned int seconds );
 
-#ifdef WINDOWS
-extern HANDLE crSpawn( const char *command, const char *argv[] );
-extern void crKill( HANDLE pid );
-#else
-extern unsigned long crSpawn( const char *command, const char *argv[] );
-extern void crKill( unsigned long pid );
-#endif
+extern CRpid crSpawn( const char *command, const char *argv[] );
+
+extern void crKill( CRpid pid );
 
 extern void crGetProcName( char *name, int maxLen );
 
 extern void crGetCurrentDir( char *dir, int maxLen );
+
 
 #ifdef __cplusplus
 }

@@ -34,11 +34,7 @@ void crSleep( unsigned int seconds )
 /*
  * Spawn (i.e. fork/exec) a new process.
  */
-#ifdef WINDOWS
-HANDLE crSpawn( const char *command, const char *argv[] )
-#else
-unsigned long crSpawn( const char *command, const char *argv[] )
-#endif
+CRpid crSpawn( const char *command, const char *argv[] )
 {
 #ifdef WINDOWS
 	char newargv[1000];
@@ -82,11 +78,7 @@ unsigned long crSpawn( const char *command, const char *argv[] )
 /*
  * Kill the named process.
  */
-#ifdef WINDOWS
-void crKill( HANDLE pid )
-#else
-void crKill( unsigned long pid )
-#endif
+void crKill( CRpid pid )
 {
 #ifdef WINDOWS
 	TerminateProcess( pid, 0 );

@@ -19,6 +19,12 @@
 
 #define CONFIG_LOOKUP_FILE ".crconfigs"
 
+#ifdef WINDOWS
+#define PYTHON_EXE "python.exe"
+#else
+#define PYTHON_EXE "python"
+#endif
+
 
 SPUDispatchTable glim;
 Stub stub;
@@ -293,11 +299,7 @@ void StubInit(void)
 			/* Build the argument vector and try spawning the mothership! */
 			char *argv[1000];
 
-#ifdef WINDOWS
-			argv[0] = "python.exe";
-#else
-			argv[0] = "python";
-#endif
+			argv[0] = PYTHON_EXE;
 			for (i = 0; args[i]; i++)
 			{
 				if (crStrcmp(args[i], "%p") == 0)
@@ -315,11 +317,7 @@ void StubInit(void)
 					crDebug("argv[%d] = '%s'", i, argv[i]);
 			}
 
-#ifdef WINDOWS
-			stub.mothershipPID = crSpawn("python.exe", (const char **) argv );
-#else
-			stub.mothershipPID = crSpawn("python", (const char **) argv );
-#endif
+			stub.mothershipPID = crSpawn(PYTHON_EXE, (const char **) argv );
 			crSleep(1);
 
 			crFreeStrings(args);
