@@ -10,6 +10,7 @@
 #include "cr_net.h"
 #include "tilesortspu.h"
 #include "cr_applications.h"
+#include "cr_pixeldata.h"
 
 void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
@@ -32,6 +33,15 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height,
 
 	if (!c->rasterValid)
 	{
+		return;
+	}
+
+	if (crPixelSize(format, type, width, height) >
+				tilesort_spu.servers[0].net.conn->mtu ) {
+		crError("DrawPixels called with insufficient MTU size\n"
+			"Needed %d, but currently MTU is set at %d\n", 
+			crPixelSize(format, type, width, height), 
+			tilesort_spu.servers[0].net.conn->mtu );
 		return;
 	}
 
