@@ -49,12 +49,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchWindowPos2fvARB( const GLfloat * v
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchWindowPos2iARB( GLint x, GLint y )
 {
-	crServerWindowPos(x, y, 0.0F);
+	crServerWindowPos((GLfloat)x, (GLfloat)y, 0.0F);
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchWindowPos2ivARB( const GLint * v )
 {
-	crServerWindowPos(v[0], v[1], 0.0F);
+	crServerWindowPos((GLfloat)v[0], (GLfloat)v[1], 0.0F);
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchWindowPos2sARB( GLshort x, GLshort y )
@@ -89,12 +89,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchWindowPos3fvARB( const GLfloat * v
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchWindowPos3iARB( GLint x, GLint y, GLint z )
 {
-	crServerWindowPos(x, y, z);
+	crServerWindowPos((GLfloat)x,(GLfloat)y, (GLfloat)z);
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchWindowPos3ivARB( const GLint * v )
 {
-	crServerWindowPos(v[0], v[1], v[2]);
+	crServerWindowPos((GLfloat)v[0], (GLfloat)v[1], (GLfloat)v[2]);
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchWindowPos3sARB( GLshort x, GLshort y, GLshort z )
