@@ -385,15 +385,17 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 		/* This is the first time the context has been made current.  Query
 		 * the servers' extension strings and update our notion of which
 		 * extensions we have and don't have (for this context and the servers'
-		 * contexts).
+		 * contexts).  Omit for file network.
 		 */
-		int i;
-		const GLubyte *ext = tilesortspuGetExtensionsString();
-		crStateSetExtensionString( newCtx->State, ext );
-		for (i = 0; i < tilesort_spu.num_servers; i++)
-			crStateSetExtensionString(newCtx->server[i].State, ext);
+		if (thread->net->conn->actual_network) {
+			int i;
+			const GLubyte *ext = tilesortspuGetExtensionsString();
+			crStateSetExtensionString( newCtx->State, ext );
+			for (i = 0; i < tilesort_spu.num_servers; i++)
+				crStateSetExtensionString(newCtx->server[i].State, ext);
+			crFree((void *) ext);
+		}
 		newCtx->everCurrent = GL_TRUE;
-		crFree((void *) ext);
 	}
 }
 
