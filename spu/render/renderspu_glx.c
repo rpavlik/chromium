@@ -41,8 +41,7 @@ typedef struct
 #define MWM_HINTS_DECORATIONS   (1L << 1)
 
 
-
-#define WINDOW_NAME render_spu.window_title
+#define WINDOW_NAME window->title
 
 static Bool WindowExistsFlag;
 
@@ -1264,6 +1263,19 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 }
 
 
+/** Experimental **/
+static void
+MarkWindow(WindowInfo *w)
+{
+	static GC gc = 0;
+	if (!gc) {
+		XGCValues gcValues;
+		gc = XCreateGC(w->visual->dpy, w->nativeWindow, 0, &gcValues);
+	}
+	XDrawLine(w->visual->dpy, w->nativeWindow, gc, 0, 0, w->width, w->height);
+}
+
+
 void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 {
 	CRASSERT(w);
@@ -1286,8 +1298,14 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 	 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
 	 * structure.
 	 */
-	if (w->nativeWindow)
+	if (w->nativeWindow) {
+#if 0
+		MarkWindow(w);
+#else
+		(void) MarkWindow;
+#endif
 		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
+	}
 	else
 		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
 }

@@ -13,7 +13,7 @@
 #include "cr_mem.h"
 #include "renderspu.h"
 
-#define WINDOW_NAME render_spu.window_title
+#define WINDOW_NAME window->title
 
 #define WindowExists(w)		( IsValidWindowPtr((w)) )
 

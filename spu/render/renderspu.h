@@ -53,6 +53,7 @@ typedef struct {
 	GLboolean mapPending;
 	GLboolean visible;
 	GLboolean everCurrent; /**< has this window ever been bound? */
+	char *title;
 #ifdef WINDOWS
 	HDC nativeWindow; /**< for render_to_app_window */
 #elif defined(DARWIN)

@@ -254,13 +254,33 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	window->id = render_spu.window_id;
 	render_spu.window_id++;
 
-	/* Have GLX/WGL/AGL create the window */
 	if ((render_spu.render_to_app_window || render_spu.render_to_crut_window) && !crGetenv("CRNEWSERVER"))
 		showIt = 0;
 	else
 		showIt = window->id > 0;
 
+	/* Set window->title, replacing %i with the window ID number */
+	{
+		const char *s = crStrstr(render_spu.window_title, "%i");
+		if (s) {
+			int i, j, k;
+			window->title = crAlloc(crStrlen(render_spu.window_title) + 10);
+			for (i = 0; render_spu.window_title[i] != '%'; i++)
+				window->title[i] = render_spu.window_title[i];
+			k = sprintf(window->title + i, "%d", window->id);
+			CRASSERT(k < 10);
+			i++; /* skip the 'i' after the '%' */
+			j = i + k;
+			for (; (window->title[j] = s[i]) != 0; i++, j++)
+				;
+		}
+		else {
+			window->title = crStrdup(render_spu.window_title);
+		}
+	}
+
 	crDebug("Render SPU: Creating window (visBits=0x%x, id=%d)", visBits, window->id);
+	/* Have GLX/WGL/AGL create the window */
 	if (!renderspu_SystemCreateWindow( visual, showIt, window ))
 	{
 		crWarning( "Couldn't create a window, renderspu_SystemCreateWindow failed" );
@@ -287,8 +307,11 @@ static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
 	CRASSERT(w > 0);
 	CRASSERT(h > 0);
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
-	if (window)
+	if (window) {
 		renderspu_SystemWindowSize( window, w, h );
+		window->width = w;
+		window->height = h;
+	}
 }
 
 static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y )
