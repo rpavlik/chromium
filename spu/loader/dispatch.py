@@ -19,25 +19,21 @@ static SPUGenericFunction __findFunc( char *name, SPU *spu )
 {
 	SPUNamedFunctionTable *temp;
 
-	printf ("Finding %s\\n", name);
-
 	if (spu == NULL)
 		return NULL;
 
 	for (temp = spu->function_table->table ; temp->name != NULL ; temp++)
 	{
-		if (!CRStrcmp( name, temp->name ) )
+		if (!crStrcmp( name, temp->name ) )
 		{
 			return temp->fn;
 		}
 	}
-	printf ("Looking for %s in parent!\\n", name );
 	return __findFunc( name, spu->superSPU );
 }
 
 void __buildDispatch( SPU *spu )
-{
-"""
+{"""
 
 keys = gl_mapping.keys()
 keys.sort();

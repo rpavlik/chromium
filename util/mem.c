@@ -3,15 +3,29 @@
 
 #include <stdlib.h>
 
-void *CRAlloc( unsigned int nbytes )
+void *crAlloc( unsigned int nbytes )
 {
 	void *ret = malloc( nbytes );
 	if (!ret)
-		CRError( "Out of memory trying to allocate %d bytes!", nbytes );
+		crError( "Out of memory trying to allocate %d bytes!", nbytes );
 	return ret;
 }
 
-void CRFree( void *ptr )
+void crRealloc( void **ptr, unsigned int nbytes )
+{
+	if ( *ptr == NULL )
+	{
+		*ptr = crAlloc( nbytes );
+	}
+	else
+	{
+		*ptr = realloc( *ptr, nbytes );
+		if (*ptr == NULL)
+			crError( "Couldn't realloc %d bytes!", nbytes );
+	}
+}
+
+void crFree( void *ptr )
 {
 	if (ptr)
 		free(ptr);

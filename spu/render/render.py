@@ -21,12 +21,7 @@ print """
 #include "cr_dll.h"
 #include "cr_spu.h"
 #include "cr_string.h"
-
-#if defined(WINDOWS)
-#define RENDER_APIENTRY __stdcall
-#else
-#define RENDER_APIENTRY
-#endif
+#include "renderspu.h"
 """
 
 print 'SPUNamedFunctionTable render_table[%d];' % len(keys)
@@ -44,7 +39,7 @@ print """
 
 static void __fillin( SPUNamedFunctionTable *table, char *name, SPUGenericFunction func )
 {
-	table->name = CRStrdup( name );
+	table->name = crStrdup( name );
 	table->fn = func;
 }
 
@@ -55,18 +50,18 @@ static CRDLL *__findSystemGL( void )
 #if defined(WINDOWS)
 	GetSystemDirectory(system_path, MAX_PATH);
 #else
-	CRStrcpy( system_path, "/usr/lib" )
+	crStrcpy( system_path, "/usr/lib" )
 #endif
-	CRStrcat( system_path, "/" );
-	CRStrcat( system_path, SYSTEM_GL );
-	dll = CRDLLOpen( system_path );
+	crStrcat( system_path, "/" );
+	crStrcat( system_path, SYSTEM_GL );
+	dll = crDLLOpen( system_path );
 	return dll;
 }
 """
 
 for func_name in keys:
 	if stub_common.FindSpecial( "render", func_name ):
-		print 'void RENDER_APIENTRY __renderSpecial%s(void) {}' % func_name
+		print 'void SPU_APIENTRY __renderSpecial%s(void) {}' % func_name
 
 print """
 void LoadSystemGL( SPUNamedFunctionTable *table )
@@ -77,9 +72,18 @@ void LoadSystemGL( SPUNamedFunctionTable *table )
 index = 0
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "render", func_name ): 
+	if stub_common.FindSpecial( "render", func_name ):
 		print '\t__fillin( table + %3d, "%s", (SPUGenericFunction) __renderSpecial%s );' % (index, func_name, func_name )
+	elif stub_common.FindSpecial( "render_system", func_name ): 
+		print '\t__fillin( table + %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
 	else:
-		print '\t__fillin( table + %3d, "%s", CRDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
+		print '\t__fillin( table + %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
 	index += 1
-print '}'
+print """#ifdef WINDOWS
+	render_spu.wglMakeCurrent = (wglMakeCurrentFunc_t) crDLLGet( dll, "wglMakeCurrent" );
+	render_spu.wglSwapBuffers = (wglSwapBuffersFunc_t) crDLLGet( dll, "wglSwapBuffers" );
+	render_spu.wglCreateContext = (wglCreateContextFunc_t) crDLLGet( dll, "wglCreateContext" );
+#else
+#error WORK ON IT
+#endif
+}"""

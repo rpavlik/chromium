@@ -1,3 +1,4 @@
 DESCRIPTION ""
 EXPORTS
 LoadSPU
+LoadSPUChain

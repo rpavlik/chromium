@@ -8,7 +8,7 @@ endif
 
 LIBRARY = crfaker
 FILES = api_templates init load
-LIBRARIES = crutil spuload
+LIBRARIES = crmothership crutil spuload
 
 ifeq ($(ARCH), WIN_NT)
 FILES += windows_exports wgl
@@ -37,10 +37,10 @@ endif
 PRECOMP = $(ARCH_EXPORTS) init.c api_templates.h api_templates.c opengl.def
 SLOP = $(PRECOMP)
 
+LIB_DEFS = opengl.def
 include ${TOP}/cr.mk
 
 ifdef WINDOWS
-LIB_DEFS = opengl.def
 LDFLAGS += user32.lib ws2_32.lib
 endif
 

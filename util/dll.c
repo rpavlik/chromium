@@ -6,12 +6,12 @@
 #include <dlfcn.h>
 #endif
 
-CRDLL *CRDLLOpen( const char *dllname )
+CRDLL *crDLLOpen( const char *dllname )
 {
 	CRDLL *dll;
 	
-	dll = (CRDLL *) CRAlloc( sizeof( CRDLL ) );
-	dll->name = (char *) CRAlloc( strlen(dllname) + 1 );
+	dll = (CRDLL *) crAlloc( sizeof( CRDLL ) );
+	dll->name = (char *) crAlloc( strlen(dllname) + 1 );
 	strcpy( dll->name, dllname );
 
 #if defined(WINDOWS)
@@ -24,12 +24,12 @@ CRDLL *CRDLLOpen( const char *dllname )
 
 	if (!dll->hinstLib)
 	{
-		CRError( "DLL Loader couldn't find %s", dllname );
+		crError( "DLL Loader couldn't find %s", dllname );
 	}
 	return dll;
 }
 
-CRDLLFunc CRDLLGetNoError( CRDLL *dll, const char *symname )
+CRDLLFunc crDLLGetNoError( CRDLL *dll, const char *symname )
 {
 #if defined(WINDOWS)
 	return (CRDLLFunc) GetProcAddress( dll->hinstLib, symname );
@@ -40,19 +40,19 @@ CRDLLFunc CRDLLGetNoError( CRDLL *dll, const char *symname )
 #endif
 }
 
-CRDLLFunc CRDLLGet( CRDLL *dll, const char *symname )
+CRDLLFunc crDLLGet( CRDLL *dll, const char *symname )
 {
-	CRDLLFunc data = CRDLLGetNoError( dll, symname );
+	CRDLLFunc data = crDLLGetNoError( dll, symname );
 	if (!data)
 	{
-		CRError( "Couldn't get symbol \"%s\" in \"%s\".  Are you "
+		crError( "Couldn't get symbol \"%s\" in \"%s\".  Are you "
 						   "sure there isn't some C++ mangling messing you "
 						   "up?", symname, dll->name );
 	}
 	return data;
 }
 
-void CRDLLClose( CRDLL *dll )
+void crDLLClose( CRDLL *dll )
 {
 #if defined(WINDOWS)
 	FreeLibrary( dll->hinstLib );
@@ -61,6 +61,6 @@ void CRDLLClose( CRDLL *dll )
 #else
 #error DSO
 #endif
-	CRFree( dll->name );
-	CRFree( dll );
+	crFree( dll->name );
+	crFree( dll );
 }

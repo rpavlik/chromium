@@ -6,6 +6,8 @@
 
 #define SPU_ENTRY_POINT_NAME "SPULoad"
 
+typedef struct _SPUSTRUCT SPU;
+
 typedef struct {
 	char *name;
 	int arg_type;
@@ -30,26 +32,30 @@ typedef struct {
 	SPUNamedFunctionTable *table;
 } SPUFunctions;
 
-typedef SPUFunctions *(*SPUInitFuncPtr)(SPUDispatchTable **, unsigned int, unsigned int, unsigned int, unsigned int, SPUArgs *, void *);
-typedef void (*SPUParentFuncPtr)(SPUDispatchTable *, SPUDispatchTable *, void *);
+typedef SPUFunctions *(*SPUInitFuncPtr)(int id, SPU *child,
+		SPU *super, unsigned int, unsigned int, unsigned int, 
+		unsigned int, SPUArgs *, void *);
+typedef void (*SPUSelfDispatchFuncPtr)(SPUDispatchTable *);
 typedef int (*SPUCleanupFuncPtr)(void);
-typedef int (*SPULoadFunction)(char **, char **, void *, void *, void *, unsigned int *, SPUArgs **);
+typedef int (*SPULoadFunction)(char **, char **, void *, void *, 
+		void *, unsigned int *, SPUArgs **);
 
-typedef struct _SPUSTRUCT {
+struct _SPUSTRUCT {
 	char *name;
 	char *super_name;
 	struct _SPUSTRUCT *superSPU;
 	CRDLL *dll;
 	SPULoadFunction entry_point;
 	SPUInitFuncPtr init;
-	SPUParentFuncPtr parent;
+	SPUSelfDispatchFuncPtr self;
 	SPUCleanupFuncPtr cleanup;
 	unsigned int nargs;
 	SPUArgs *args;
 	SPUFunctions *function_table;
 	SPUDispatchTable dispatch_table;
-} SPU;
+};
 
-SPU *LoadSPU( char *name );
+SPU *LoadSPU( SPU *child, int id, char *name );
+SPU *LoadSPUChain( int count, int *ids, char **names );
 
 #endif /* CR_SPU_H */

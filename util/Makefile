@@ -1,11 +1,11 @@
 TOP = ..
 LIBRARY = crutil
+FILES = bufpool dll error mem net string tcpip url
 
-FILES = dll error mem string
+LIB_DEFS = util.def
 
 include ${TOP}/cr.mk
 
 ifdef WINDOWS
-LIB_DEFS = util.def
 LDFLAGS += user32.lib ws2_32.lib
 endif

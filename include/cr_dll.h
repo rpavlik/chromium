@@ -18,9 +18,9 @@ typedef struct {
 } CRDLL;
 
 typedef void (*CRDLLFunc)(void);
-CRDLL *CRDLLOpen( const char *dllname );
-CRDLLFunc CRDLLGetNoError( CRDLL *dll, const char *symname );
-CRDLLFunc CRDLLGet( CRDLL *dll, const char *symname );
-void CRDLLClose( CRDLL *dll );
+CRDLL *crDLLOpen( const char *dllname );
+CRDLLFunc crDLLGetNoError( CRDLL *dll, const char *symname );
+CRDLLFunc crDLLGet( CRDLL *dll, const char *symname );
+void crDLLClose( CRDLL *dll );
 
 #endif /* CR_DLL_H */

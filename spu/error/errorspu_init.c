@@ -9,7 +9,9 @@ SPUFunctions the_functions = {
 	error_table // THE ACTUAL FUNCTIONS
 };
 
-SPUFunctions *SPUInit( SPUDispatchTable **child,
+static int SPUid;
+
+SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 		unsigned int num_children,
 		unsigned int context_id,
 		unsigned int num_contexts,
@@ -17,18 +19,15 @@ SPUFunctions *SPUInit( SPUDispatchTable **child,
 		SPUArgs *args,
 		void *data)
 {
-	printf ("error SPU being initialized: %d %d %d %d!\n", num_children, context_id, num_contexts, num_args);
+	printf ("error SPU %d being initialized: %d %d %d %d!\n", id, num_children, context_id, num_contexts, num_args);
+	SPUid = id;
 	return &the_functions;
 }
 
-void SPUParent(SPUDispatchTable *parent,
-		SPUDispatchTable *super,
-		void *data)
+void SPUSelfDispatch(SPUDispatchTable *parent)
 {
-	printf ("error SPU getting its parent information!\n");
+	printf ("error SPU getting its self information!\n");
 	(void)parent;
-	(void)super;
-	(void)data;
 }
 
 int SPUCleanup(void)
@@ -38,13 +37,13 @@ int SPUCleanup(void)
 }
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUParentFuncPtr *parent, SPUCleanupFuncPtr *cleanup, 
+	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup, 
 	int *nargs, SPUArgs **args )
 {
 	*name = "error";
 	*super = NULL;
 	*init = SPUInit;
-	*parent = SPUParent;
+	*self = SPUSelfDispatch;
 	*cleanup = SPUCleanup;
 	*nargs = 0;
 	*args = NULL;

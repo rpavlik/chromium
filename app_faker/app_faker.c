@@ -8,7 +8,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -25,6 +24,11 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #endif
+
+#include "cr_mothership.h"
+#include "cr_mem.h"
+#include "cr_string.h"
+#include "cr_error.h"
 
 #ifdef _WIN32
 
@@ -58,6 +62,16 @@ static int         verbose    = 0;
 
 #ifdef _WIN32
 
+void print_argv( char **argv )
+{
+	char **temp;
+	for (temp = argv; *temp; temp++)
+	{
+		fprintf( stderr, " %s", *temp );
+	}
+	fprintf( stderr, "\n" );
+}
+
 const char *error_string( int err )
 {
 	char *buf;
@@ -82,64 +96,6 @@ void debug( const char *format, ... )
 	}
 }
 
-void error( const char *format, ... )
-{
-	va_list args;
-	fprintf( stderr, "%s: ", progname );
-	va_start( args, format );
-	vfprintf( stderr, format, args );
-	va_end( args );
-}
-
-void sys_error( const char *format, ... )
-{
-#ifdef _WIN32
-	const char *msg = error_string( GetLastError( ) );
-#else
-	const char *msg = strerror( errno );
-#endif
-
-	va_list args;
-	fprintf( stderr, "%s: ", progname );
-	va_start( args, format );
-	vfprintf( stderr, format, args );
-	va_end( args );
-	fprintf( stderr, ": %s", msg );
-#ifndef _WIN32
-	fputc( '\n', stderr );
-#endif	
-}
-
-void fatal( const char *format, ... )
-{
-	va_list args;
-	fprintf( stderr, "%s: ", progname );
-	va_start( args, format );
-	vfprintf( stderr, format, args );
-	va_end( args );
-	exit( 1 );
-}
-
-void sys_fatal( const char *format, ... )
-{
-#ifdef _WIN32
-	const char *msg = error_string( GetLastError( ) );
-#else
-	const char *msg = strerror( errno );
-#endif
-
-	va_list args;
-	fprintf( stderr, "%s: ", progname );
-	va_start( args, format );
-	vfprintf( stderr, format, args );
-	va_end( args );
-	fprintf( stderr, ": %s", msg );
-#ifndef _WIN32
-	fputc( '\n', stderr );
-#endif	
-	exit( 1 );
-}
-
 const char *basename( const char *path )
 {
 	char *last;
@@ -148,25 +104,6 @@ const char *basename( const char *path )
 		return path;
 	else
 		return last + 1;
-}
-
-void *xmalloc( size_t nbytes )
-{
-	void *ptr = malloc( nbytes );
-	if ( ptr == NULL )
-		fatal( "malloc( %d bytes ) failed!\n", nbytes );
-
-	return ptr;
-}
-
-char *xstrdup( const char *s1 )
-{
-	char *s2;
-
-	assert( s1 );
-	s2 = xmalloc( strlen(s1) + 1 );
-	strcpy( s2, s1 );
-	return s2;
 }
 
 void xsetenv( const char *var, const char *value )
@@ -199,10 +136,10 @@ static List *temp_dirs  = NULL;
 
 void add_to_list( List **list, const char *name )
 {
-	List *node = (List *) xmalloc( sizeof(*node) );
+	List *node = (List *) crAlloc( sizeof(*node) );
 
-	node->name = (char *) xmalloc( strlen(name) + 1 );
-	strcpy( node->name, name );
+	node->name = (char *) crAlloc( strlen(name) + 1 );
+	crStrcpy( node->name, name );
 	node->next = *list;
 	*list = node;
 }
@@ -225,10 +162,10 @@ void delete_temp_files( void )
 	for ( list = temp_files; list; list = list->next ) {
 #ifdef _WIN32
 		if ( !DeleteFile( list->name ) )
-			sys_error( "DeleteFile \"%s\"", list->name );
+			crError( "DeleteFile \"%s\"", list->name );
 #else
 		if ( unlink( list->name ) )
-			sys_error( "unlink \"%s\"", list->name );
+			crError( "unlink \"%s\"", list->name );
 #endif
 	}
 }
@@ -244,10 +181,10 @@ void delete_temp_dirs( void )
 	for ( list = temp_dirs; list; list = list->next ) {
 #ifdef _WIN32
 		if ( !RemoveDirectory( list->name ) )
-			sys_error( "RemoveDirectory \"%s\"", list->name );
+			crError( "RemoveDirectory \"%s\"", list->name );
 #else
 		if ( rmdir( list->name ) )
-			sys_error( "rmdir \"%s\"", list->name );
+			crError( "rmdir \"%s\"", list->name );
 #endif
 	}
 }
@@ -261,15 +198,15 @@ char *find_file_on_path( const char *name )
 
 	len = SearchPath( NULL, name, NULL, 0, NULL, &tail );
 	if ( len == 0 ) {
-		sys_error( "\"%s\"", name );
+		crError( "Couldn't find \"%s\" on the path.", name );
 		return NULL;
 	}
 
 	len += 2;
-	path = (char *) xmalloc( len + 12 );
+	path = (char *) crAlloc( len + 12 );
 
 	if ( !SearchPath( NULL, name, NULL, len, path, &tail ) ) {
-		sys_error( "\"%s\"", name );
+		crError( "Couldn't find \"%s\" on the path", name );
 		return NULL;
 	}
 
@@ -283,13 +220,13 @@ char *find_executable_on_path( const char *name, char **tail_ptr )
 
 	len = SearchPath( NULL, name, ".exe", 0, NULL, &tail );
 	if ( len == 0 )
-		sys_fatal( "\"%s\"", name );
+		crError( "Couldn't find \"%s\" on the path", name );
 
 	len+=2;
-	path = (char *) xmalloc( len + 12 );
+	path = (char *) crAlloc( len + 12 );
 
 	if ( !SearchPath( NULL, name, ".exe", len, path, &tail ) )
-		sys_fatal( "\"%s\"", name );
+		crError( "Couldn't find \"%s\" on the path", name );
 
 	if ( tail_ptr )
 		*tail_ptr = tail;
@@ -303,14 +240,14 @@ void make_tmpdir( char *retval )
 
 	name = _tempnam( DEFAULT_TMP_DIR, "cr" );
 	if ( name == NULL )
-		fatal( "cannot create a unique directory name\n" );
+		crError( "cannot create a unique directory name\n" );
 
 	debug( "tmpdir=\"%s\"\n", name );
 
 	if ( !CreateDirectory( name, NULL ) )
-		sys_fatal( "CreateDirectory \"%s\"", name );
+		crError( "CreateDirectory \"%s\"", name );
 
-	strcpy( retval, name );
+	crStrcpy( retval, name );
 }
 
 void copy_file( const char *dst_filename, const char *src_filename )
@@ -318,7 +255,7 @@ void copy_file( const char *dst_filename, const char *src_filename )
 	debug( "copying \"%s\" -> \"%s\"\n", src_filename, dst_filename );
 
 	if ( !CopyFile( src_filename, dst_filename, 1 /* fail if exists */ ) )
-		sys_fatal( "copy \"%s\" -> \"%s\"", src_filename, dst_filename );
+		crError( "copy \"%s\" -> \"%s\"", src_filename, dst_filename );
 }
 
 void do_it( char *argv[] )
@@ -333,7 +270,7 @@ void do_it( char *argv[] )
 	}
 
 	if ( cr_lib == NULL ) {
-		fatal( "I don't know where to find the client library.  You could "
+		crError( "I don't know where to find the client library.  You could "
 				"have set CR_FAKER_LIB, but didn't.  You could have used -lib "
 				"on the command line, but didn't.  I searched the PATH for "
 				"\"%s\", but couldn't find it.\n", OPENGL_CLIENT_LIB );
@@ -345,9 +282,9 @@ void do_it( char *argv[] )
 	add_dir_to_temp_list( tmpdir );
 
 	argv[0] = find_executable_on_path( argv[0], &tail );
-	strcpy( argv0, tmpdir );
-	strcat( argv0, "\\" );
-	strcat( argv0, tail );
+	crStrcpy( argv0, tmpdir );
+	crStrcat( argv0, "\\" );
+	crStrcat( argv0, tail );
 
 	copy_file( argv0, argv[0] );
 
@@ -357,9 +294,9 @@ void do_it( char *argv[] )
 
 	for ( i = 0; i < sizeof(libgl_names)/sizeof(libgl_names[0]); i++ ) {
 		char name[1024];
-		strcpy( name, tmpdir );
-		strcat( name, "\\" );
-		strcat( name, libgl_names[i] );
+		crStrcpy( name, tmpdir );
+		crStrcat( name, "\\" );
+		crStrcat( name, libgl_names[i] );
 		copy_file( name, cr_lib );
 		add_file_to_temp_list( name );
 	}
@@ -367,9 +304,9 @@ void do_it( char *argv[] )
 	status = spawnv( _P_WAIT, argv[0], argv );
 
 	if ( status == -1 )
-		sys_fatal( "\"%s\"", argv[0] );
+		crError( "Couldn't spawn \"%s\".", argv[0] );
 	else if ( status > 0 )
-		error( "\"%s\": exited with status=%d\n", argv[0], status );
+		crError( "\"%s\": exited with status=%d\n", argv[0], status );
 
 	delete_temp_files( );
 	delete_temp_dirs( );
@@ -403,31 +340,31 @@ char *find_file_on_path( const char *path, const char *basename )
 
 		if ( name[0] == '.' ) {
 			if ( !getcwd( name, sizeof(name) ) ) {
-				sys_error( "find_on_path: getcwd" );
+				crError( "find_on_path: getcwd" );
 				continue;
 			}
 			i = strlen( name );
 		}
 		else if ( name[0] != '/' ) {
-			error( "find_on_path: relative paths anger me (%s)", name );
+			crError( "find_on_path: relative paths anger me (%s)", name );
 			continue;
 		}
 
 		if ( name[i-1] != '/' && name[i-1] != '\\' )
 			name[i++] = '/';
-		strcpy( name+i, basename );
+		crStrcpy( name+i, basename );
 
 		if ( stat( name, &stat_buf ) ) {
 			/* continue if the stat fails */
 			if ( errno != ENOENT ) {
 				/* complain if the problem isn't just a missing file */
-				sys_error( "find_on_path: stat( \"%s\" )", name );
+				crError( "find_on_path: stat( \"%s\" )", name );
 			}
 			errno = 0;
 			continue;
 		}
 
-		return xstrdup( name );
+		return crStrdup( name );
 	}
 
 	return NULL;
@@ -451,7 +388,7 @@ void make_tmpdir( char *name )
 	{
 		index++;
 
-		sys_error( "mkdir \"%s\"", name );
+		crError( "mkdir \"%s\"", name );
 
 		if ( errno != EEXIST )
 			exit( 1 );
@@ -469,7 +406,7 @@ void prefix_env_var( const char *prefix, const char *varname )
 	val = getenv( varname );
 	if ( val ) {
 		unsigned long len = strlen( prefix ) + 1 + strlen( val ) + 1;
-		char *buf = (char *) xmalloc( len );
+		char *buf = (char *) crAlloc( len );
 		sprintf( buf, "%s:%s", prefix, val );
 		xsetenv( varname, buf );
 	} else {
@@ -515,12 +452,12 @@ int make_temp_link( const char *dir, const char *name, const char *target )
 {
 	char link_name[1024];
 
-	strcpy( link_name, dir );
-	strcat( link_name, "/" );
-	strcat( link_name, name );
+	crStrcpy( link_name, dir );
+	crStrcat( link_name, "/" );
+	crStrcat( link_name, name );
 
 	if ( symlink( target, link_name ) ) {
-		sys_error( "link \"%s\" -> \"%s\"", link_name, target );
+		crError( "link \"%s\" -> \"%s\"", link_name, target );
 		return 0;
 	}
 
@@ -554,7 +491,7 @@ void do_it( char *argv[] )
 	}
 
 	if ( cr_lib == NULL ) {
-		fatal( "I don't know where to find the client library.  You could "
+		crError( "I don't know where to find the client library.  You could "
 				"have set CR_FAKER_LIB, but didn't.  You could have used -lib "
 				"on the command line, but didn't.  I searched the LD_LIBRARY_PATH "
 #if defined(IRIX) || defined(IRIX64)
@@ -566,10 +503,10 @@ void do_it( char *argv[] )
 	debug( "cr_lib=\"%s\"\n", cr_lib );
 
 	if ( stat( cr_lib, &stat_buf ) )
-		sys_fatal( "\"%s\"", cr_lib );
+		crError( "\"%s\"", cr_lib );
 
 	if ( !S_ISREG(stat_buf.st_mode) )
-		fatal( "\"%s\" isn't a regular file?\n", cr_lib );
+		crError( "\"%s\" isn't a regular file?\n", cr_lib );
 
 	make_tmpdir( tmpdir );
 
@@ -593,7 +530,7 @@ void do_it( char *argv[] )
 			}
 			closedir( dir );
 		} else {
-			sys_error( "opendir( \"%s\" )", SYSTEM_LIB_DIR );
+			crError( "opendir( \"%s\" )", SYSTEM_LIB_DIR );
 		}
 	}
 
@@ -611,11 +548,11 @@ void do_it( char *argv[] )
 
 	pid = fork( );
 	if ( pid < 0 )
-		sys_fatal( "fork" );
+		crError( "fork" );
 
 	if ( pid == 0 ) {
 		execvp( argv[0], argv );
-		sys_fatal( "execvp \"%s\"", argv[0] );
+		crError( "execvp \"%s\"", argv[0] );
 	}
 
 	debug( "started \"%s\" [%d]\n", argv[0], pid );
@@ -681,42 +618,52 @@ int main( int argc, char **argv )
 {
 	int i;
 	char *cr_lib;
+	char *mothership;
+	char **faked_argv = NULL;
 
 	progname = basename( argv[0] );
 
 	cr_lib = NULL;
-	cr_lib = NULL;
+	mothership = NULL;
 
 	for ( i = 1; i < argc; i++ ) {
 
 		if ( argv[i][0] != '-' )
 			break;
 
-		if ( !strcmp( argv[i], "-lib" ) ) {
+		if ( !crStrcmp( argv[i], "-lib" ) ) {
 
 			i++;
 			if ( i == argc )
-				fatal( "%s expects argument\n", argv[i-1] );
+				crError( "%s expects argument\n", argv[i-1] );
 
 			cr_lib = argv[i];
 		}
-		else if ( !strcmp( argv[i], "-v" ) ||
-				!strcmp( argv[i], "-verbose" ) ) {
+		else if ( !crStrcmp( argv[i], "-mothership" ) ||
+				!crStrcmp( argv[i], "-m" )) {
+			i++;
+			if ( i == argc )
+				crError( "%s expects argument\n", argv[i-1] );
+
+			mothership = argv[i];
+		}
+		else if ( !crStrcmp( argv[i], "-v" ) ||
+				!crStrcmp( argv[i], "-verbose" ) ) {
 			verbose = 1;
 		}
-		else if ( !strcmp( argv[i], "-q" ) ||
-				!strcmp( argv[i], "-quiet" ) ) {
+		else if ( !crStrcmp( argv[i], "-q" ) ||
+				!crStrcmp( argv[i], "-quiet" ) ) {
 			verbose = 0;
 		}
-		else if ( !strcmp( argv[i], "-h" ) ||
-				!strcmp( argv[i], "-help" ) ) {
+		else if ( !crStrcmp( argv[i], "-h" ) ||
+				!crStrcmp( argv[i], "-help" ) ) {
 
 			usage( );
 			exit( 0 );
 		}
 		else {
 
-			error( "unknown argument: %s\n", argv[i] );
+			crError( "unknown argument: %s\n", argv[i] );
 			usage( );
 			exit( 1 );
 		}
@@ -726,7 +673,39 @@ int main( int argc, char **argv )
 	argv += i;
 
 	if ( argc < 1 )
-		fatal( "no command to run?\n" );
+	{
+		// No command specified, contact the configuration server to
+		// ask what I should do.
+	
+		CRConnection *conn;
+		char query[1024];
+		char hostname[1024];
+		char response[1024];
+		int num_args = 1;
+		int args_allocated = 1;
+
+		crNetInit( NULL, NULL );
+		conn = crMothershipConnect( mothership );
+	
+		if ( crGetHostname( hostname, sizeof(hostname) ) )
+		{
+			crError( "Couldn't get my own hostname?" );
+		}
+		sprintf( query, "faker %s", hostname );
+		if (!crMothershipSendString( conn, response, query ))
+		{
+			crError ("Bad mothership response: %s", response );
+		}
+		else
+		{
+			faked_argv = crStrSplit( response, " " );
+		}
+		crMothershipDisconnect( conn );
+	}
+	else
+	{
+		faked_argv = argv;
+	}
 
 	if ( cr_lib == NULL ) {
 		cr_lib = getenv( "CR_FAKER_LIB" );
@@ -739,7 +718,7 @@ int main( int argc, char **argv )
 		xsetenv( "DISPLAY", ":0.0" );
 	}
 
-	do_it( argv );
+	do_it( faked_argv );
 
 	return 0;
 }

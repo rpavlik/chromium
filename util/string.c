@@ -2,17 +2,34 @@
 #include "cr_string.h"
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-char *CRStrdup( char *str )
+int crStrlen( const char *str )
 {
-	int len = strlen(str);
-	char *ret = CRAlloc( len+1 );
+	const char *temp;
+	for (temp = str ; *temp ; temp++);
+	return temp-str;
+}
+
+char *crStrdup( const char *str )
+{
+	int len = crStrlen(str);
+	char *ret = crAlloc( len+1 );
 	memcpy( ret, str, len );
 	ret[len] = '\0';
 	return ret;
 }
 
-int CRStrcmp( char *str1, char *str2 )
+char *crStrndup( const char *str, unsigned int len )
+{
+	char *ret = crAlloc( len+1 );
+	memcpy( ret, str, len );
+	ret[len] = '\0';
+	return ret;
+}
+
+int crStrcmp( const char *str1, const char *str2 )
 {
 	while (*str1 && *str2)
 	{
@@ -60,7 +77,7 @@ char lowercase[256] = {
 	'\370', '\371', '\372', '\373', '\374', '\375', '\376', '\377' 
 };
 
-int CRStrcasecmp( char *str1, char *str2 )
+int crStrcasecmp( const char *str1, const char *str2 )
 {
 	while (*str1 && *str2)
 	{
@@ -73,14 +90,143 @@ int CRStrcasecmp( char *str1, char *str2 )
 	return (lowercase[*str1] - lowercase[*str2]);
 }
 
-void CRStrcpy( char *dest, char *src )
+void crStrcpy( char *dest, const char *src )
 {
-	int len = strlen(src);
+	int len = crStrlen(src);
 	memcpy( dest, src, len );
 	dest[len] = '\0';
 }
 
-void CRStrcat( char *dest, char *src )
+void crStrncpy( char *dest, const char *src, unsigned int len )
 {
-	CRStrcpy( dest + strlen(dest), src );
+	memcpy( dest, src, len );
+	dest[len] = '\0';
+}
+
+void crStrcat( char *dest, const char *src )
+{
+	crStrcpy( dest + crStrlen(dest), src );
+}
+
+char *crStrstr( const char *str, const char *pat )
+{
+	int pat_len = crStrlen( pat );
+	const char *end = str + strlen(str) - pat_len;
+	char first_char = *pat;
+	for (; str < end ; str++)
+	{
+		if (*str == first_char && !memcmp( str, pat, pat_len ))
+			return (char *) str;
+	}
+	return NULL;
+}
+
+char *crStrchr( const char *str, char c )
+{
+	for ( ; *str ; str++ )
+	{
+		if (*str == c)
+			return (char *) str;
+	}
+	return NULL;
+}
+
+char *crStrrchr( const char *str, char c )
+{
+	const char *temp = str + crStrlen( str );
+	for ( ; temp >= str ; temp-- )
+	{
+		if (*temp == c)
+			return (char *) temp;
+	}
+	return NULL;
+}
+
+// These functions are from the old wiregl net.c -- hexdumps?  Not sure quite yet.
+	
+void crBytesToString( char *string, int nstring, void *data, int ndata )
+{
+	int i, offset;
+	unsigned char *udata;
+
+	offset = 0;
+	udata = (unsigned char *) data;
+	for ( i = 0; i < ndata && ( offset + 4 <= nstring ); i++ ) 
+	{
+		offset += sprintf( string + offset, "%02x ", udata[i] );
+	}
+
+	if ( i == ndata && offset > 0 )
+		string[offset-1] = '\0';
+	else
+		strcpy( string + offset - 3, "..." );
+}
+
+void crWordsToString( char *string, int nstring, void *data, int ndata )
+{
+	int i, offset, ellipsis;
+	unsigned int *udata;
+
+	/* turn byte count into word count */
+	ndata /= 4;
+
+	/* we need an ellipsis if all the words won't fit in the string */
+	ellipsis = ( ndata * 9 > nstring );
+	if ( ellipsis )
+	{
+		ndata = nstring / 9;
+
+		/* if the ellipsis won't fit then print one less word */
+		if ( ndata * 9 + 3 > nstring )
+			ndata--;
+	}
+		
+	offset = 0;
+	udata = (unsigned int *) data;
+	for ( i = 0; i < ndata; i++ ) 
+	{
+		offset += sprintf( string + offset, "%08x ", udata[i] );
+	}
+
+	if ( ellipsis )
+		strcpy( string + offset, "..." );
+	else if ( offset > 0 )
+		string[offset-1] = 0;
+}
+
+int crStrToInt( const char *str )
+{
+	return atoi(str);
+}
+
+static int __numOccurrences( const char *str, const char *substr )
+{
+	int ret = 0;
+	char *temp = (char *) str;
+	while ((temp = crStrstr( temp, substr )) != NULL )
+	{
+		temp += strlen(substr);
+		ret++;
+	}
+	return ret;
+}
+
+char **crStrSplit( const char *str, const char *splitstr )
+{
+	char  *temp = (char *) str;
+	int num_args = __numOccurrences( str, splitstr ) + 1;
+	char **faked_argv = (char **) crAlloc( (num_args + 1)*sizeof(char *) );
+	int i;
+
+	for (i = 0 ; i < num_args ; i++)
+	{
+		char *end;
+		end = crStrstr( temp, splitstr );
+		if (!end)
+			end = temp + crStrlen( temp );
+		faked_argv[i] = crStrndup( temp, end-temp );
+		temp = end + strlen(splitstr);
+	}
+	faked_argv[num_args] = NULL;
+	return faked_argv;
 }

@@ -26,45 +26,73 @@ static char *__findDLL( char *name )
 	return path;
 }
 
-SPU *LoadSPU( char *name )
+// Load a single SPU from disk and initialize it.  Is there any reason
+// to export this from the SPU loader library?
+
+SPU *LoadSPU( SPU *child, int id, char *name )
 {
 	SPU *the_spu;
 	char *path;
 
 	CRASSERT( name != NULL );
 
-	the_spu = CRAlloc( sizeof( *the_spu ) );
+	the_spu = crAlloc( sizeof( *the_spu ) );
 	path = __findDLL( name );
-	the_spu->dll = CRDLLOpen( path );
+	the_spu->dll = crDLLOpen( path );
 	the_spu->entry_point = 
-		(SPULoadFunction) CRDLLGetNoError( the_spu->dll, SPU_ENTRY_POINT_NAME );
+		(SPULoadFunction) crDLLGetNoError( the_spu->dll, SPU_ENTRY_POINT_NAME );
 	if (!the_spu->entry_point)
 	{
-		CRError( "Couldn't load the SPU entry point \"%s\" from SPU \"%s\"!", 
+		crError( "Couldn't load the SPU entry point \"%s\" from SPU \"%s\"!", 
 				SPU_ENTRY_POINT_NAME, name );
 	}
 
 	if (!the_spu->entry_point( &(the_spu->name), &(the_spu->super_name), 
-				&(the_spu->init), &(the_spu->parent), 
+				&(the_spu->init), &(the_spu->self), 
 				&(the_spu->cleanup), &(the_spu->nargs), 
 				&(the_spu->args) ) )
 	{
-		CRError( "I found the SPU \"%s\", but loading it failed!", name );
+		crError( "I found the SPU \"%s\", but loading it failed!", name );
 	}
-	if (CRStrcmp(the_spu->name,"error"))
+	if (crStrcmp(the_spu->name,"error"))
 	{
 		if (the_spu->super_name == NULL)
 		{
 			the_spu->super_name = "errorspu";
 		}
-		the_spu->superSPU = LoadSPU( the_spu->super_name );
+		the_spu->superSPU = LoadSPU( child, id, the_spu->super_name );
 	}
 	else
 	{
 		the_spu->superSPU = NULL;
 	}
-	the_spu->function_table = the_spu->init( NULL, 0, 0, 1, 0, NULL, NULL );
+	the_spu->function_table = the_spu->init( id, child, 
+			the_spu->superSPU, child ? 1 : 0, 
+			0, 1, 0, NULL, NULL );
 	__buildDispatch( the_spu );
+	the_spu->self( &(the_spu->dispatch_table) );
 
 	return the_spu;
+}
+
+// Load the entire chain of SPUs and initialize all of them.
+// This function returns the first one in the chain
+
+SPU *LoadSPUChain( int count, int *ids, char **names )
+{
+	int i;
+	SPU *spu = NULL;
+	CRASSERT( count > 0 );
+
+	for (i = count-1 ; i >= 0 ; i--)
+	{
+		int spu_id = ids[i];
+		char *spu_name = names[i];
+		
+		// This call passes the previous version of spu, which is the SPU's
+		// "child" in this chain.
+
+		spu = LoadSPU( spu, spu_id, spu_name );
+	}
+	return spu;
 }

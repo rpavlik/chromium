@@ -14,7 +14,7 @@ class SPU:
 		self.config = {}
 
 	def Conf( self, key, *values ):
-		self.config[key] = values
+		self.config[key] = map( repr, values )
 
 class CRNode:
 	SPUIndex = 0
@@ -45,10 +45,13 @@ class SockWrapper:
 	UNKNOWNHOST = 400
 	NOTHINGTOSAY = 401
 	UNKNOWNCOMMAND = 402
+	UNKNOWNSPU = 403
+	UNKNOWNPARAM = 404
 
 	def __init__(self, sock):
 		self.sock = sock
 		self.file = sock.makefile( "r" )
+		self.SPUid = -1
 
 	def readline( self ):
 		return self.file.readline()
@@ -61,7 +64,7 @@ class SockWrapper:
 		if str != None:
 			tosend += " " + str
 		self.Send( tosend )
-		CRDebug( "Replying (%d): %s" % ( code, str ) )
+		CRDebug( 'Replying (%d): "%s"' % ( code, str ) )
 
 	def Success( self, msg ):
 		self.Reply( SockWrapper.NOERROR, msg )
@@ -70,6 +73,7 @@ class CR:
 	def __init__( self ):
 		self.nodes = []
 		self.all_sockets = []
+		self.wrappers = {}
 
 	def AddNode( self, node ):
 		self.nodes.append( node )
@@ -88,9 +92,10 @@ class CR:
 			for sock in ready:
 				if sock == s:
 					conn, addr = s.accept()
+					self.wrappers[conn] = SockWrapper(conn)
 					self.all_sockets.append( conn )
 				else:
-					self.ProcessRequest( SockWrapper(sock) )
+					self.ProcessRequest( self.wrappers[sock] )
 
 	def ClientError( self, sock_wrapper, code, msg ):
 		sock_wrapper.Reply( code, msg )
@@ -100,48 +105,68 @@ class CR:
 		self.all_sockets.remove( sock_wrapper.sock )
 		sock_wrapper.sock.shutdown( 2 )
 
-	def do_faker( self, sock, string ):
+	def do_faker( self, sock, args ):
 		for node in self.nodes:
-			if node.host == string and not node.spokenfor:
+			if node.host == args and not node.spokenfor:
 				if isinstance(node,CRApplicationNode):
 					node.spokenfor = 1
 					sock.Success( node.application )
 					return
-		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % string )
+		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
 
-	def do_server( self, sock, string ):
+	def do_server( self, sock, args ):
 		for node in self.nodes:
-			if node.host == string and not node.spokenfor:
+			if node.host == args and not node.spokenfor:
 				if isinstance(node,CRNetworkNode):
 					node.spokenfor = 1
 					node.spusloaded = 1
 					sock.Success( "" )
 					return
-		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s" % string )
+		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s" % args )
 
-	def do_opengldll( self, sock, string ):
+	def do_opengldll( self, sock, args ):
 		for node in self.nodes:
-			if node.host == string and node.spokenfor and not node.spusloaded:
+			if node.host == args and node.spokenfor and not node.spusloaded:
 				if isinstance(node,CRApplicationNode):
-					spuchain = "%d " % len(node.SPUs)
+					spuchain = "%d" % len(node.SPUs)
 					for spu in node.SPUs:
-						spuchain += "%d %s " % (spu.ID, spu.name)
+						spuchain += " %d %sspu" % (spu.ID, spu.name)
 					sock.Success( spuchain )
 					return
-		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL host %s" % string )
+		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL host %s" % args )
 
-	def do_reset( self, sock, string ):
+	def do_spu( self, sock, args ):
+		spuid = int(args)
+		if not allSPUs.has_key( spuid ):
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "Never heard of SPU %d" % spuid )
+			return
+		sock.SPUid = spuid
+		sock.Success( "Hello, SPU!" )
+
+	def do_spuparam( self, sock, args ):
+		if sock.SPUid == -1:
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
+			return
+		spu = allSPUs[sock.SPUid]
+		if not spu.config.has_key( args ):
+			self.ClientError( sock, SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (sock.SPUid, args) )
+			return
+		print "responding with args = " + `spu.config[args]`
+		sock.Success( string.join( spu.config[args], " " ) )	
+	
+	def do_reset( self, sock, args ):
 		for node in self.nodes:
 			node.spokenfor = 0
 			node.spusloaded = 0
 
-	def do_quit( self, sock, string ):
+	def do_quit( self, sock, args ):
 		sock.Success( "Bye" )
 		self.ClientDisconnect( sock )
 
 	def ProcessRequest( self, sock_wrapper ):
 		try:
-			line = sock_wrapper.readline()
+			line = string.strip(sock_wrapper.readline())
+			print "Got a line: " + line
 		except:
 			CRDebug( "Client blew up?" )
 			self.ClientDisconnect( sock_wrapper )
