@@ -1253,8 +1253,6 @@ void
 renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 														 ContextInfo *context )
 {
-	CRConnection* conn;
-	char response[8096];
 	Bool b;
 
 	CRASSERT(render_spu.ws.glXMakeCurrent);
@@ -1308,7 +1306,8 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 		if (render_spu.render_to_crut_window) {
 			if (render_spu.crut_drawable == 0) {
 				/* We don't know the X drawable ID yet.  Ask mothership for it. */
-				conn = crMothershipConnect();
+				char response[8096];
+				CRConnection *conn = crMothershipConnect();
 				if (!conn)
 				{
 					crError("Couldn't connect to the mothership to get CRUT drawable-- "
