@@ -22,7 +22,7 @@ print '''
 #pragma warning( disable : 4127 )
 #endif
 
-typedef void (*convert_func) (GLfloat *, unsigned char *);
+typedef void (*convert_func) (GLfloat *, const unsigned char *);
 '''
 
 import convert
@@ -81,7 +81,7 @@ print '''
 
 void crStateCurrentRecover( void )
 {
-	unsigned char *v;
+	const unsigned char *v;
 	convert_func convert=NULL;
 	CRContext *g = GetCurrentContext();
 	CRCurrentState *c = &(g->current);

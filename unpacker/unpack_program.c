@@ -256,7 +256,7 @@ void crUnpackExtendDeleteProgramsARB(void)
 void crUnpackVertexAttrib4NbvARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLbyte *v = (const GLbyte *) (cr_unpackData + 4);
+	const GLbyte *v = DATA_POINTER(4, const GLbyte);
 	cr_unpackDispatch.VertexAttrib4NbvARB( index, v );
 	INCR_DATA_PTR( 8 );
 }
@@ -264,7 +264,7 @@ void crUnpackVertexAttrib4NbvARB(void)
 void crUnpackVertexAttrib4NivARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLint *v = (const GLint *) (cr_unpackData + 4);
+	const GLint *v = DATA_POINTER(4, const GLint);
 	cr_unpackDispatch.VertexAttrib4NivARB( index, v );
 	INCR_DATA_PTR( 20 );
 }
@@ -272,7 +272,7 @@ void crUnpackVertexAttrib4NivARB(void)
 void crUnpackVertexAttrib4NsvARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLshort *v = (const GLshort *) (cr_unpackData + 4);
+	const GLshort *v = DATA_POINTER(4, const GLshort);
 	cr_unpackDispatch.VertexAttrib4NsvARB( index, v );
 	INCR_DATA_PTR( 12 );
 }
@@ -280,7 +280,7 @@ void crUnpackVertexAttrib4NsvARB(void)
 void crUnpackVertexAttrib4NubvARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLubyte *v = (const GLubyte *) (cr_unpackData + 4);
+	const GLubyte *v = DATA_POINTER(4, const GLubyte);
 	cr_unpackDispatch.VertexAttrib4NubvARB( index, v );
 	INCR_DATA_PTR( 8 );
 }
@@ -288,7 +288,7 @@ void crUnpackVertexAttrib4NubvARB(void)
 void crUnpackVertexAttrib4NuivARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLuint *v = (const GLuint *) (cr_unpackData + 4);
+	const GLuint *v = DATA_POINTER(4, const GLuint);
 	cr_unpackDispatch.VertexAttrib4NuivARB( index, v );
 	INCR_DATA_PTR( 20 );
 }
@@ -296,7 +296,7 @@ void crUnpackVertexAttrib4NuivARB(void)
 void crUnpackVertexAttrib4NusvARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLushort *v = (const GLushort *) (cr_unpackData + 4);
+	const GLushort *v = DATA_POINTER(4, const GLushort);
 	cr_unpackDispatch.VertexAttrib4NusvARB( index, v );
 	INCR_DATA_PTR( 12 );
 }
@@ -304,7 +304,7 @@ void crUnpackVertexAttrib4NusvARB(void)
 void crUnpackVertexAttrib4bvARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLbyte *v = (const GLbyte *) (cr_unpackData + 4);
+	const GLbyte *v = DATA_POINTER(4, const GLbyte);
 	cr_unpackDispatch.VertexAttrib4bvARB( index, v );
 	INCR_DATA_PTR( 8 );
 }
@@ -312,7 +312,7 @@ void crUnpackVertexAttrib4bvARB(void)
 void crUnpackVertexAttrib4ivARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLint *v = (const GLint *) (cr_unpackData + 4);
+	const GLint *v = DATA_POINTER(4, const GLint);
 	cr_unpackDispatch.VertexAttrib4ivARB( index, v );
 	INCR_DATA_PTR( 20 );
 }
@@ -320,7 +320,7 @@ void crUnpackVertexAttrib4ivARB(void)
 void crUnpackVertexAttrib4ubvARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLubyte *v = (const GLubyte *) (cr_unpackData + 4);
+	const GLubyte *v = DATA_POINTER(4, const GLubyte);
 	cr_unpackDispatch.VertexAttrib4ubvARB( index, v );
 	INCR_DATA_PTR( 8 );
 }
@@ -328,7 +328,7 @@ void crUnpackVertexAttrib4ubvARB(void)
 void crUnpackVertexAttrib4uivARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLuint *v = (const GLuint *) (cr_unpackData + 4);
+	const GLuint *v = DATA_POINTER(4, const GLuint);
 	cr_unpackDispatch.VertexAttrib4uivARB( index, v );
 	INCR_DATA_PTR( 20 );
 }
@@ -336,7 +336,7 @@ void crUnpackVertexAttrib4uivARB(void)
 void crUnpackVertexAttrib4usvARB(void)
 {
 	GLuint index = READ_DATA( 0, GLuint );
-	const GLushort *v = (const GLushort *) (cr_unpackData + 4);
+	const GLushort *v = DATA_POINTER(4, const GLushort);
 	cr_unpackDispatch.VertexAttrib4usvARB( index, v );
 	INCR_DATA_PTR( 12 );
 }

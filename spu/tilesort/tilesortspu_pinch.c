@@ -49,10 +49,10 @@ void tilesortspuPinch (void)
 	unsigned char * vtx_op;
 	unsigned char * vtx_data;
 
-	unsigned char *color_ptr = ctx->current.current->c.color.ptr;
-	unsigned char *normal_ptr = ctx->current.current->c.normal.ptr;
-	unsigned char *texCoord_ptr[CR_MAX_TEXTURE_UNITS];
-	unsigned char *edgeFlag_ptr = ctx->current.current->c.edgeFlag.ptr;
+	const unsigned char *color_ptr = ctx->current.current->c.color.ptr;
+	const unsigned char *normal_ptr = ctx->current.current->c.normal.ptr;
+	const unsigned char *texCoord_ptr[CR_MAX_TEXTURE_UNITS];
+	const unsigned char *edgeFlag_ptr = ctx->current.current->c.edgeFlag.ptr;
 	/* unsigned char *index_ptr = ctx->current.current->index.ptr; */
 	CRVertex v_current;
 

@@ -19,9 +19,9 @@ apiutil.CopyrightC()
 print '''
 #include "state/cr_statetypes.h"
 
-static double __read_double( void *src )
+static double __read_double( const void *src )
 {
-    unsigned int *ui = (unsigned int *) src;
+    const unsigned int *ui = (const unsigned int *) src;
     double d;
     ((unsigned int *) &d)[0] = ui[0];
     ((unsigned int *) &d)[1] = ui[1];
@@ -31,7 +31,7 @@ static double __read_double( void *src )
 
 for k in gltypes.keys():
 	for i in range(1,5):
-		print 'static void __convert_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k]['type'])
+		print 'static void __convert_%s%d (GLfloat *dst, const %s *src) {' % (k,i,gltypes[k]['type'])
 		if k == 'd':
 		  for j in range(i-1):
 		    print '\t*dst++ = (GLfloat) __read_double(src++);'
@@ -60,7 +60,7 @@ for k in gltypes.keys():
 		else:
 			k2 = k
 		for i in range(1,5):
-			print 'static void __convert_rescale_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k2]['type'])
+			print 'static void __convert_rescale_%s%d (GLfloat *dst, const %s *src) {' % (k,i,gltypes[k2]['type'])
 			for j in range(i-1):
 				print '\t*dst++ = ((GLfloat) *src++) / %s;' % scale[k2]
 			print '\t*dst = ((GLfloat) *src) / %s;' % scale[k2]
@@ -68,7 +68,7 @@ for k in gltypes.keys():
 
 print '''
 
-static void __convert_boolean (GLboolean *dst, GLboolean *src) {
+static void __convert_boolean (GLboolean *dst, const GLboolean *src) {
 	*dst = *src;
 }
 '''

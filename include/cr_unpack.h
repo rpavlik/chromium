@@ -9,7 +9,6 @@
 
 #include "cr_spu.h"
 #include "cr_protocol.h"
-
 #include "cr_mem.h"
 
 #ifdef WINDOWS
@@ -24,13 +23,12 @@
 extern "C" {
 #endif
 
-extern DLLDATA unsigned char *cr_unpackData;
+extern DLLDATA const unsigned char *cr_unpackData;
 extern SPUDispatchTable cr_unpackDispatch;
-extern SPUDispatchTable *lastDispatch;
 
 void crUnpackSetReturnPointer( CRNetworkPointer *ptr );
 void crUnpackSetWritebackPointer( CRNetworkPointer *ptr );
-void crUnpack( void *data, void *opcodes, unsigned int num_opcodes, SPUDispatchTable *table );
+void crUnpack( const void *data, const void *opcodes, unsigned int num_opcodes, SPUDispatchTable *table );
 void crUnpackPush(void);
 void crUnpackPop(void);
 
@@ -44,7 +42,7 @@ extern CRNetworkPointer *return_ptr, *writeback_ptr;
 double crReadUnalignedDouble( void *buffer );
 
 #define READ_DATA( offset, type ) \
-	*( (type *) (cr_unpackData + (offset)))
+	*( (const type *) (cr_unpackData + (offset)))
 
 #ifdef CR_UNALIGNED_ACCESS_OKAY
 #define READ_DOUBLE( offset ) \
@@ -55,8 +53,9 @@ double crReadUnalignedDouble( void *buffer );
 #endif
 
 #define READ_NETWORK_POINTER( offset ) \
-  ( cr_unpackData + (offset) )
+	( cr_unpackData + (offset) )
 
+/* XXX make this const */
 #define DATA_POINTER( offset, type ) \
 	( (type *) (cr_unpackData + (offset)) )
 

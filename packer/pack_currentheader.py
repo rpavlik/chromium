@@ -26,15 +26,15 @@ for k in current_fns.keys():
 	name = k.lower();
 	print "typedef struct {"
 	if current_fns[k].has_key( 'array' ):
-		print "\tunsigned char *ptr[%s];" % current_fns[k]['array']
+		print "\tconst unsigned char *ptr[%s];" % current_fns[k]['array']
 	else:
-		print "\tunsigned char *ptr;"
+		print "\tconst unsigned char *ptr;"
 	for type in current_fns[k]['types']:
 		for size in current_fns[k]['sizes']:
 			if current_fns[k].has_key( 'array' ):
-				print "\tunsigned char *%s%d[%s];" % (type, size, current_fns[k]['array'])
+				print "\tconst unsigned char *%s%d[%s];" % (type, size, current_fns[k]['array'])
 			else:
-				print "\tunsigned char *%s%d;" % (type, size)
+				print "\tconst unsigned char *%s%d;" % (type, size)
 	print "} GL%s_p;\n" % name
 
 print "typedef	struct attrs {"

@@ -89,7 +89,7 @@ extern void crTcscommSetNodeRange( const char *, const char * );
 
 #define CR_MINIMUM_MTU 1024
 
-CRConnection *crNetConnectToServer( char *server,
+CRConnection *crNetConnectToServer( const char *server,
 		unsigned short default_port, int mtu, int broker )
 {
 	char hostname[4096], protocol[4096];

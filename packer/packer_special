@@ -135,4 +135,5 @@ BufferDataARB
 BufferSubDataARB
 MapBufferARB
 UnmapBufferARB
+DeleteBuffersARB
 ZPix
