@@ -539,7 +539,7 @@ int crGmDoConnect( CRConnection *conn )
 	mother = __copy_of_crMothershipConnect( );
 
 	/* Tell the mothership who I want to connect to, and what my GM info is */
-	if (!__copy_of_crMothershipSendString( mother, response, "connectrequest %s %d %d %d %d", conn->hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
+	if (!__copy_of_crMothershipSendString( mother, response, "connectrequest gm %s %d %d %d %d", conn->hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
 	{
 		crError( "Mothership didn't like my connect request request" );
 	}
