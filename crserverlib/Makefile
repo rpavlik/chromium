@@ -36,6 +36,7 @@ FILES = server_main \
 	server_tiles \
 	server_viewport \
 	server_window \
+	server_winpos \
 	server_writeback
 
 LIB_DEFS = crserverlib.def
