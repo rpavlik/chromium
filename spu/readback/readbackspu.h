@@ -58,7 +58,6 @@ typedef struct {
 	int visualize_depth;
 	int drawX, drawY;
 	int resizable;
-
 	WindowInfo windows[MAX_WINDOWS];
 
 	ContextInfo contexts[MAX_CONTEXTS];
@@ -71,6 +70,7 @@ typedef struct {
 	GLint renderContext;
 	GLint childWindow;
 	GLint childContext;
+	GLint childW, childH;
 
 	GLint barrierCount;
 

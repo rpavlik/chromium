@@ -77,8 +77,15 @@ static void CheckWindowSize( WindowInfo *window )
 		/* no sense in reading the whole window if the tile 
 		 * only convers part of it..
 		 */
+		readback_spu.child.GetIntegerv( GL_VIEWPORT, geometry );
+		readback_spu.childW = geometry[2];
+		readback_spu.childH = geometry[3];
+
 		geometry[2] = readback_spu.server->extents[0].x2 - readback_spu.server->extents[0].x1;
 		geometry[3] = readback_spu.server->extents[0].y2 - readback_spu.server->extents[0].y1;
+
+		readback_spu.drawX = readback_spu.server->extents[0].x1;
+		readback_spu.drawY = readback_spu.server->extents[0].y1;
 	}
 	else
 	{
@@ -87,6 +94,10 @@ static void CheckWindowSize( WindowInfo *window )
 		 * the whole shebang. if we dont have tiles, we're 
 		 * likely not doing sort-first., so do it all 
 		 */
+
+		readback_spu.drawX = 0;
+		readback_spu.drawY = 0;
+
 		if (readback_spu.resizable)
 		{
 			/* ask downstream SPU (probably render) for its window size */
@@ -110,6 +121,9 @@ static void CheckWindowSize( WindowInfo *window )
 			/* not resizable - ask render SPU for viewport size */
 			readback_spu.super.GetIntegerv( GL_VIEWPORT, geometry );
 		}
+
+		readback_spu.childW = geometry[2];
+		readback_spu.childH = geometry[3];
 	}
 
 	if (geometry[2] != window->width || geometry[3] != window->height)
@@ -119,6 +133,7 @@ static void CheckWindowSize( WindowInfo *window )
 			/* update super/render SPU window size & viewport */
 			readback_spu.super.WindowSize( w, geometry[2], geometry[3] );
 			readback_spu.super.Viewport( 0, 0, geometry[2], geometry[3] );
+			
 			/* set child's viewport too */
 			readback_spu.child.Viewport( 0, 0, geometry[2], geometry[3] );
 		}
@@ -153,7 +168,7 @@ static void DoFlush( WindowInfo *window )
 {
 	static int first_time = 1;
 	GLfloat xmax = 0, xmin = 0, ymax = 0, ymin = 0;
-	int x, y, w, h;
+	int readx, ready, drawx, drawy, x, y, w, h;
 	GLint packAlignment, unpackAlignment;
 
 	if (readback_spu.resizable)
@@ -168,9 +183,9 @@ static void DoFlush( WindowInfo *window )
 
 		readback_spu.child.BarrierCreate( READBACK_BARRIER, 0 );
 		readback_spu.child.LoadIdentity();
-		readback_spu.child.Ortho( 0, window->width - 1,
-															0, window->height - 1,
-															-10000, 10000 );
+
+		readback_spu.child.Ortho( 0, readback_spu.childW,
+															0, readback_spu.childH, -10000, 10000);
 		first_time = 0;
 	}
 
@@ -232,11 +247,16 @@ static void DoFlush( WindowInfo *window )
 		w = (int) (readback_spu.halfViewportWidth*xmax + readback_spu.viewportCenterX) - x;
 		y = (int) (readback_spu.halfViewportHeight*ymin + readback_spu.viewportCenterY);
 		h = (int) (readback_spu.halfViewportHeight*ymax + readback_spu.viewportCenterY) - y;
+
+		readx = drawx = x;
+		ready = drawy = y;
 	}
 	else
 	{
-		x = 0;
-		y = 0;
+		readx = ready = 0;
+	
+		drawx = readback_spu.drawX;
+		drawy = readback_spu.drawY;
 		w = window->width;
 		h = window->height;
 	}
@@ -268,20 +288,20 @@ static void DoFlush( WindowInfo *window )
 	/* Read RGB image, possibly alpha, possibly depth from framebuffer */
 	if (readback_spu.extract_alpha)
 	{
-		readback_spu.super.ReadPixels( x, y, w, h,
+		readback_spu.super.ReadPixels( readx, ready, w, h,
 				GL_RGBA, GL_UNSIGNED_BYTE,
 				window->colorBuffer );
 	}
 	else 
 	{
-		readback_spu.super.ReadPixels( x, y, w, h, 
+		readback_spu.super.ReadPixels( readx, ready, w, h, 
 				GL_RGB, GL_UNSIGNED_BYTE,
 				window->colorBuffer );
 	}
 
 	if (readback_spu.extract_depth)
 	{
-		readback_spu.super.ReadPixels( x, y, w, h,
+		readback_spu.super.ReadPixels( readx, ready, w, h,
 																	 GL_DEPTH_COMPONENT, window->depthType,
 																	 window->depthBuffer );
 	}
@@ -301,8 +321,8 @@ static void DoFlush( WindowInfo *window )
 		readback_spu.cleared_this_frame = 1;
 	}
 
-	readback_spu.child.RasterPos2i(x, y);
-
+	
+	readback_spu.child.RasterPos2i(drawx, drawy);
 
 	/*
 	 * OK, send color/depth images to child.
@@ -690,7 +710,6 @@ SPUNamedFunctionTable readback_table[] = {
 	{ "BarrierCreate", (SPUGenericFunction) readbackspuBarrierCreate },
 	{ "BarrierDestroy", (SPUGenericFunction) readbackspuBarrierDestroy },
 	{ "BarrierExec", (SPUGenericFunction) readbackspuBarrierExec },
-
 	{ "LoadMatrixf", (SPUGenericFunction) readbackspuLoadMatrixf },
 	{ "LoadMatrixd", (SPUGenericFunction) readbackspuLoadMatrixd },
 	{ "MultMatrixf", (SPUGenericFunction) readbackspuMultMatrixf },
