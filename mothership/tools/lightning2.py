@@ -305,12 +305,10 @@ class MainFrame(wxFrame):
 		startLabel = wxStaticText(parent=self.topPanel, id=-1, label="First:")
 		self.hostStart = wxSpinCtrl(parent=self.topPanel, id=id_HostStart,
 								   value=str(self.HostNameStart), min=0)
-#								   size=wxSize(60,25))
 		EVT_SPINCTRL(self.hostStart, id_HostStart, self.onHostChange)
 		countLabel = wxStaticText(parent=self.topPanel, id=-1, label="Number:")
 		self.hostCount = wxSpinCtrl(parent=self.topPanel, id=id_HostCount,
 								   value=str(self.HostNameCount), min=1)
-#								   size=wxSize(60,25))
 		EVT_SPINCTRL(self.hostCount, id_HostCount, self.onHostChange)
 
 		flexSizer.Add(hostLabel, flag=wxALIGN_CENTER_VERTICAL)
@@ -329,12 +327,17 @@ class MainFrame(wxFrame):
 						  style=wxDOUBLE_BORDER)
 		muralSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
-		columnsLabel = wxStaticText(parent=self.topPanel, id=-1, label="Columns")
+		columnsLabel = wxStaticText(parent=self.topPanel, id=-1,
+									label="Columns")
 		self.widthControl = wxSpinCtrl(parent=self.topPanel, id=id_MuralWidth,
-									   value="5", min=1, max=16, size=wxSize(50,25))
-		rowsLabel = wxStaticText(parent=self.topPanel, id=-1, label="Rows:")
-		self.heightControl = wxSpinCtrl(parent=self.topPanel, id=id_MuralHeight,
-										value="4", min=1, max=16, size=wxSize(50,25))
+									   value="5", min=1, max=16,
+									   size=wxSize(50,25))
+		rowsLabel = wxStaticText(parent=self.topPanel, id=-1,
+								 label="Rows:")
+		self.heightControl = wxSpinCtrl(parent=self.topPanel,
+										id=id_MuralHeight,
+										value="4", min=1, max=16,
+										size=wxSize(50,25))
 		EVT_SPINCTRL(self.widthControl, id_MuralWidth, self.onSizeChange)
 		EVT_SPINCTRL(self.heightControl, id_MuralHeight, self.onSizeChange)
 		flexSizer.Add(columnsLabel, flag=wxALIGN_CENTER_VERTICAL)
@@ -358,12 +361,14 @@ class MainFrame(wxFrame):
 		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
 		self.tileWidthLabel = wxStaticText(parent=self.topPanel, id=-1,
 										   label="Width:")
-		self.tileWidthControl = wxSpinCtrl(parent=self.topPanel, id=id_TileWidth,
+		self.tileWidthControl = wxSpinCtrl(parent=self.topPanel,
+										   id=id_TileWidth,
 										   value="256", min=128, max=2048,
 										   size=wxSize(80,25))
 		self.tileHeightLabel = wxStaticText(parent=self.topPanel, id=-1,
 											label="Height:")
-		self.tileHeightControl = wxSpinCtrl(parent=self.topPanel, id=id_TileHeight,
+		self.tileHeightControl = wxSpinCtrl(parent=self.topPanel,
+											id=id_TileHeight,
 											value="256", min=128, max=2048,
 											size=wxSize(80,25))
 		EVT_SPINCTRL(self.tileWidthControl, id_TileWidth, self.onSizeChange)
@@ -381,14 +386,17 @@ class MainFrame(wxFrame):
 		box = wxStaticBox(parent=self.topPanel, id=-1, label="Total Size",
 						  style=wxDOUBLE_BORDER)
 		totalSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		self.totalSizeLabel = wxStaticText(parent=self.topPanel, id=-1, label="??")
+		self.totalSizeLabel = wxStaticText(parent=self.topPanel, id=-1,
+										   label="??")
 		totalSizer.Add(self.totalSizeLabel, flag=wxEXPAND)
 		toolSizer.Add(totalSizer, flag=wxEXPAND)
 
-		layoutChoices = [ "Raster order", "Spiral from center" ]
+		layoutChoices = [ "Raster order", "Zig-zag Raster order",
+						  "Spiral from center" ]
 		self.layoutRadio = wxRadioBox(parent=self.topPanel, id=id_Layout,
 									  label="Layout", choices=layoutChoices,
-									  majorDimension=1, style=wxRA_SPECIFY_COLS )
+									  majorDimension=1,
+									  style=wxRA_SPECIFY_COLS )
 		toolSizer.Add(self.layoutRadio, flag=wxEXPAND)
 		EVT_RADIOBOX(self.layoutRadio, id_Layout, self.onLayoutChange)
 
@@ -482,29 +490,42 @@ class MainFrame(wxFrame):
 				for j in range(cols):
 					server = (i * cols + j) % numServers
 					self.Tiles.append((i, j, server))
-			pass
+		elif layoutOrder == 1:
+			# Slightly different raster order layout
+			for i in range(rows):
+				for j in range(cols):
+					if i % 2 == 1:
+						# odd row
+						server = (i * cols + (cols - j - 1)) % numServers
+					else:
+						# even row
+						server = (i * cols + j) % numServers
+					self.Tiles.append((i, j, server))
 		else:
 			# Spiral outward from the center (this is a little tricky)
-			assert layoutOrder == 1
+			assert layoutOrder == 2
 			curRow = (rows - 1) / 2
 			curCol = (cols - 1) / 2
 			radius = 0
 			march = 0
 			colStep = 0
 			rowStep = -1
+			serv = 0
 			while 1:
 				assert ((rowStep == 0 and colStep != 0) or
 						(rowStep != 0 and colStep == 0))
 				if (curRow >= 0 and curRow < rows and
 					curCol >= 0 and	curCol < cols):
 					# save this tile location
-					server = len(self.Tiles) % numServers
+					#server = len(self.Tiles) % numServers
+					server = serv % numServers
 					assert (curRow, curCol, server) not in self.Tiles
 					self.Tiles.append((curRow, curCol, server))
 					# check if we're done
 					if len(self.Tiles) >= rows * cols:
 						# all done
 						break
+				serv += 1
 				# advance to next space
 				march += 1
 				if march < radius:
