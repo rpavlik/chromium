@@ -28,7 +28,7 @@ print """
 
 void crSPUCopyDispatchTable( SPUDispatchTable *dst, SPUDispatchTable *src )
 {
-	struct _copy_list_node *copynode;"""
+"""
 
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
@@ -40,14 +40,18 @@ for func_name in keys:
 print """
 	if (dst->copy_of != NULL)
 	{
-		struct _copy_list_node *temp, *beftemp = NULL;
-		for( temp = dst->copy_of->copyList ; temp ; beftemp = temp, temp = temp->next )
+		/*
+		 * dst was already a copy, go back to the original, 
+		 * and remove dst from the original's copyList.
+		 */
+		struct _copy_list_node *temp, *prior = NULL;
+		for (temp = dst->copy_of->copyList; temp; prior = temp, temp = temp->next)
 		{
 			if (temp->copy == dst)
 			{
-				if (beftemp)
+				if (prior)
 				{
-					beftemp->next = temp->next;
+					prior->next = temp->next;
 				}
 				else
 				{
@@ -58,17 +62,28 @@ print """
 			}
 		}
 	}
+	/*
+	 * Now that dst->copy_of is unused, set it to point to our
+	 * new original.
+	 */
 	if (src->copy_of)
 	{
-			dst->copy_of = src->copy_of;
+		dst->copy_of = src->copy_of;
 	}
 	else
 	{
 		dst->copy_of = src;
 	}
-	copynode = (struct _copy_list_node*)crAlloc( sizeof( *copynode ) );
-	copynode->copy = dst;
-	copynode->next = src->copyList;
-	src->copyList = copynode;
+	/*
+	 * Create a new copy node, so the src can keep track of the 
+	 * new copy (i.e. dst).
+	 */
+	{
+		struct _copy_list_node *copynode;
+		copynode = (struct _copy_list_node*)crAlloc( sizeof( *copynode ) );
+		copynode->copy = dst;
+		copynode->next = src->copyList;
+		src->copyList = copynode;
+	}
 }
 """
