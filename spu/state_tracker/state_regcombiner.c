@@ -24,7 +24,7 @@ void crStateRegCombinerInit( CRRegCombinerState *reg )
 	reg->constantColor1 = zero_color;
 	for( i=0; i<CR_MAX_GENERAL_COMBINERS; i++ )
 	{
-		// RGB Portion
+	  /* RGB Portion */
 		reg->rgb[i].a = GL_PRIMARY_COLOR_NV;
 		reg->rgb[i].b = GL_ZERO;
 		reg->rgb[i].c = GL_ZERO;
@@ -46,7 +46,7 @@ void crStateRegCombinerInit( CRRegCombinerState *reg )
 		reg->rgb[i].cdDotProduct = GL_FALSE;
 		reg->rgb[i].muxSum = GL_FALSE;
 
-		// Alpha Portion
+		/* Alpha Portion */
 		reg->alpha[i].a = GL_PRIMARY_COLOR_NV;
 		reg->alpha[i].b = GL_ZERO;
 		reg->alpha[i].c = GL_ZERO;
@@ -160,7 +160,7 @@ void STATE_APIENTRY crStateCombinerParameterivNV( GLenum pname, const GLint *par
 	}
 	else
 	{
-		// Only one paramater:
+		/* Only one paramater: */
 		*fparams = (GLfloat) *params;
 	}
 	crStateCombinerParameterfvNV( pname, fparams );
@@ -471,12 +471,15 @@ void STATE_APIENTRY crStateFinalCombinerInputNV( GLenum variable, GLenum input, 
 	rb->dirty = g->neg_bitid;
 }
 
-//void STATE_APIENTRY crStateGetCombinerInputParameterfvNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params ){}
-//void STATE_APIENTRY crStateGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params ){}
-//void STATE_APIENTRY crStateGetCombinerOutputParameterfvNV( GLenum stage, GLenum portion, GLenum pname, GLfloat *params ){}
-//void STATE_APIENTRY crStateGetCombinerOutputParameterivNV( GLenum stage, GLenum portion, GLenum pname, GLint *params ){}
-//void STATE_APIENTRY crStateGetFinalCombinerInputParameterfvNV( GLenum variable, GLenum pname, GLfloat *params ){}
-//void STATE_APIENTRY crStateGetFinalCombinerInputParameterivNV( GLenum variable, GLenum pname, GLfloat *params ){}
+#ifdef 0
+/* XXX Unfinished RegCombiner State functions */
+void STATE_APIENTRY crStateGetCombinerInputParameterfvNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params ){}
+void STATE_APIENTRY crStateGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params ){}
+void STATE_APIENTRY crStateGetCombinerOutputParameterfvNV( GLenum stage, GLenum portion, GLenum pname, GLfloat *params ){}
+void STATE_APIENTRY crStateGetCombinerOutputParameterivNV( GLenum stage, GLenum portion, GLenum pname, GLint *params ){}
+void STATE_APIENTRY crStateGetFinalCombinerInputParameterfvNV( GLenum variable, GLenum pname, GLfloat *params ){}
+void STATE_APIENTRY crStateGetFinalCombinerInputParameterivNV( GLenum variable, GLenum pname, GLfloat *params ){}
+#endif /* 0 */
 
 void STATE_APIENTRY crStateCombinerStageParameterfvNV( GLenum stage, GLenum pname, const GLfloat *params )
 {

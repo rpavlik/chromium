@@ -45,14 +45,14 @@ typedef struct {
 typedef struct {
 	GLbitvalue dirty;
 	GLbitvalue enable;
-	GLbitvalue regCombinerVars; // numGeneralCombiners, colorSumClamp
+	GLbitvalue regCombinerVars; /* numGeneralCombiners, colorSumClamp */
 	GLbitvalue regCombinerColor0;
 	GLbitvalue regCombinerColor1;
 	GLbitvalue regCombinerStageColor0;
 	GLbitvalue regCombinerStageColor1;
-	GLbitvalue regCombinerInput; // rgb/alpha[].a/b/c/d, .aMapping, .aPortion
-	GLbitvalue regCombinerOutput; // rgb/alpha[].abOutput, .cdOutput, .sumOutput, .scale, .bias, .abDotProduct, .cdDotProduct, .muxSum
-	GLbitvalue regCombinerFinalInput; // a/b/c/d/e/f/g, aMapping, aPortion
+	GLbitvalue regCombinerInput; /* rgb/alpha[].a/b/c/d, .aMapping, .aPortion */
+	GLbitvalue regCombinerOutput; /* rgb/alpha[].abOutput, .cdOutput, .sumOutput, .scale, .bias, .abDotProduct, .cdDotProduct, .muxSum */
+	GLbitvalue regCombinerFinalInput; /* a/b/c/d/e/f/g, aMapping, aPortion */
 } CRRegCombinerBits;
 
 void crStateRegCombinerInit( CRRegCombinerState *reg );

@@ -66,8 +66,8 @@ typedef struct {
 	GLcolorf	lightModelAmbient;
 	GLboolean	lightModelLocalViewer;
 	GLboolean	lightModelTwoSide;
-	GLenum		lightModelColorControlEXT; // CR_EXT_separate_specular_color
-	GLboolean	colorSumEXT; // CR_EXT_secondary_color
+	GLenum		lightModelColorControlEXT; /* CR_EXT_separate_specular_color */
+	GLboolean	colorSumEXT; /* CR_EXT_secondary_color */
 	CRLight		*light;
 } CRLightingState;
 

@@ -45,10 +45,10 @@
 
 /* --- Function Prototypes -------------------------------------------------- */
 
-// main.cpp
+/* main.cpp */
 void	RenderString	( float, float, char* );
 
-// exec.cpp
+/* exec.cpp */
 void	InitGL		( void );
 void	InitSpecial	( void );
 void	Idle		( void );
