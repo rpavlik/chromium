@@ -156,7 +156,15 @@ functions = [
 	'crPackVertexAttribs4dvNV',
 	'crPackVertexAttribs4fvNV',
 	'crPackVertexAttribs4svNV',
-	'crPackVertexAttribs4ubvNV' ]
+	'crPackVertexAttribs4ubvNV',
+	'crPackExpandDrawArrays',
+	'crPackExpandDrawElements',
+	'crPackExpandDrawRangeElements',
+	'crPackExpandArrayElement',
+	'crPackExpandMultiDrawArraysEXT',
+	'crPackExpandMultiDrawElementsEXT',
+	'crPackMapBufferARB',
+	'crPackUnmapBufferARB' ]
 
 for func_name in functions:
     print "%s" % func_name
@@ -185,5 +193,7 @@ crPackFree
 crNetworkPointerWrite
 crPackCanHoldBuffer
 crPackCanHoldOpcode
+crPackCanHoldBoundedBuffer
+crPackNumData
 crPackErrorFunction
 """
