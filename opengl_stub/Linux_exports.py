@@ -20,7 +20,8 @@ keys.sort();
 
 stub_common.CopyrightC()
 
-for func_name in keys:
+for index in range(len(keys)):
+	func_name = keys[index]
 	if stub_common.FindSpecial( "noexport", func_name ): continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
@@ -28,9 +29,12 @@ for func_name in keys:
 	print ".globl gl%s" % func_name
 	print "\t.type gl%s,@function" % func_name
 	print "gl%s:" % func_name
-	print "\tmovl __glim_%s, %%eax" % func_name
+	print "\tmovl glim+%d, %%eax" % (4*index)
 	print "\tjmp *%eax"
 	print ""
+
+# Deal with NVIDIA driver lossage.  These functions will never be called, but
+# the symbols need to exist.  Fooey.
 
 GLcore_crap = [
 	'__glTLSCXIndex',
@@ -54,5 +58,5 @@ for crap in GLcore_crap:
 	print ".globl %s" % crap
 	print "\t.type %s,@function" % crap
 	print "%s:" % crap
-	print "\tret"
+	
 

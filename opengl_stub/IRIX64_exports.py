@@ -23,46 +23,22 @@ stub_common.CopyrightC()
 print """#include <stdio.h>
 #include <stdlib.h>
 #include <GL/gl.h>
+
+#include "api_templates.h"
 """
 
-print "/* these pointers live in opengl_stub/api_templates.c */"
-for func_name in keys:
-    if stub_common.FindSpecial( "exports", func_name ): continue
-    if stub_common.FindSpecial( "noexport", func_name ): continue
-    print "extern void *" + stub_common.DoImmediateMapping( func_name ) + ";"
-print ""
-
 for func_name in keys:
     if stub_common.FindSpecial( "exports", func_name ): continue
     if stub_common.FindSpecial( "noexport", func_name ): continue
     ( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
-    print "typedef " + return_type + " (*gl" + func_name + "_ptr)",
-    print stub_common.ArgumentString( arg_names, arg_types ),
-    print ";"
-print ""
-
-for func_name in keys:
-    if stub_common.FindSpecial( "exports", func_name ): continue
-    if stub_common.FindSpecial( "noexport", func_name ): continue
-    ( return_type, arg_names, arg_types ) = gl_mapping[func_name]
-
-    print return_type + " gl" + func_name,
-    print stub_common.ArgumentString( arg_names, arg_types )
+    print "%s gl%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
     print "{"
     print "\t",
 
     if return_type != "void":
 	print "return ",
-    print "((gl" + func_name + "_ptr) __glim_" + func_name + ")",
-    print "(",
-    for index in range( 0, len( arg_names ) ):
-	arg = arg_names[index]
-	if arg != "":
-	    print arg,
-	    if index != len( arg_names ) - 1:
-		print ",",
-    print ");"
+    print "glim.%s%s;" % (func_name, stub_common.CallString( arg_names ))
 
     print "}"
     print ""

@@ -17,7 +17,7 @@ endif
 
 SHARED = 1
 LIBRARY = crfaker
-FILES = api_templates getprocaddress init load stub
+FILES = getprocaddress init load stub
 LIBRARIES = crmothership crutil spuload
 
 ifeq ($(ARCH), WIN_NT)
@@ -44,7 +44,7 @@ ARCH_EXPORTS_PY = IRIX64_exports.py
 ARCH_EXPORTS = IRIX64_exports.c 
 endif
 
-PRECOMP = $(ARCH_EXPORTS) getprocaddress.c init.c api_templates.h api_templates.c opengl.def
+PRECOMP = $(ARCH_EXPORTS) getprocaddress.c opengl.def
 SLOP = $(PRECOMP)
 
 LIB_DEFS = opengl.def
@@ -57,18 +57,6 @@ endif
 opengl.def: stub_common.py defs.py
 	@$(ECHO) "Creating the defs file..."
 	@$(PYTHON) defs.py > opengl.def
-
-api_templates.h: stub_common.py api_templates_header.py
-	@$(ECHO) "Creating the OpenGL indirection header"
-	@$(PYTHON) api_templates_header.py > api_templates.h
-
-api_templates.c: stub_common.py api_templates.py
-	@$(ECHO) "Creating the OpenGL indirection file"
-	@$(PYTHON) api_templates.py > api_templates.c
-
-init.c: stub_common.py init.py
-	@$(ECHO) "Creating the SPU Initializer"
-	@$(PYTHON) init.py > init.c
 
 getprocaddress.c: getprocaddress.py
 	@$(ECHO) "Creating crGetProcAddress"
