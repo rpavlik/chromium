@@ -31,7 +31,8 @@ typedef struct {
 	GLenum rgbaFormat; /**< GL_RGBA or GL_BGRA */
 	GLenum rgbFormat;  /**< GL_RGB or GL_BGR */
 	CRrecti bboxUnion; /**< window-space union of all bounding boxes */
-	GLint visBits;     /**< Describes the visual attributes */
+	GLint childVisBits;     /**< Visual for downstream window */
+	GLint superVisBits;     /**< Visual for parent/render SPU window */
 } WindowInfo;
 
 typedef struct {
@@ -40,7 +41,8 @@ typedef struct {
 	GLint childContext;
 	CRContext *tracker;  /**< for tracking matrix state */
 	WindowInfo *currentWindow;
-	GLint visBits;
+	GLint childVisBits;     /**< Visual for downstream context */
+	GLint superVisBits;     /**< Visual for parent/render SPU context */
 } ContextInfo;
 
 typedef struct {
@@ -86,12 +88,17 @@ extern ReadbackSPU readback_spu;
 
 #ifdef CHROMIUM_THREADSAFE
 extern CRtsd _ReadbackTSD;
-#define GET_CONTEXT(T)  ContextInfo *T = crGetTSD(&_ReadbackTSD)
+#define GET_CONTEXT(C)  ContextInfo *C = crGetTSD(&_ReadbackTSD)
+#define SET_CONTEXT(C)	crSetTSD(&_ReadbackTSD, C)
 #else
-#define GET_CONTEXT(T)  ContextInfo *T = readback_spu.currentContext
+#define GET_CONTEXT(C)  ContextInfo *C = readback_spu.currentContext
+#define SET_CONTEXT(C)  readback_spu.currentContext = C
 #endif
 
 
 extern void readbackspuGatherConfiguration( ReadbackSPU *spu );
+
+extern void readbackspuTweakVisBits(GLint visBits,
+																		GLint *childVisBits, GLint *superVisBits);
 
 #endif /* READBACK_SPU_H */

@@ -492,7 +492,6 @@ ProcessTiles(WindowInfo * window)
 	 * data into each buffer when doing image reassembly.
 	 */
 	readback_spu.child.SemaphorePCR(MUTEX_SEMAPHORE);
-
 	/*
 	 * loop over extents (image regions)
 	 */
@@ -576,6 +575,9 @@ DoReadback(WindowInfo * window)
 	readback_spu.super.PixelStorei(GL_PACK_ALIGNMENT, 1);
 	readback_spu.child.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+	/*
+	 * Now do the readback/compositing
+	 */
 	ProcessTiles(window);
 
 	/*
@@ -731,12 +733,39 @@ readbackspuSwapBuffers(GLint win, GLint flags)
 }
 
 
+/**
+ * When we create a window or context, we need to twiddle with the
+ * visual bitmask a bit.  Do that here.
+ */
+void
+readbackspuTweakVisBits(GLint visBits,
+													GLint *childVisBits, GLint *superVisBits)
+{
+	*childVisBits = visBits;
+
+	/* If doing z-compositing, need stencil buffer */
+	if (readback_spu.extract_depth)
+		*childVisBits |= CR_STENCIL_BIT;
+	if (readback_spu.extract_alpha)
+		*childVisBits |= CR_ALPHA_BIT;
+	/* final display window should probably be visible */
+	*childVisBits &= ~CR_PBUFFER_BIT;
+
+	*superVisBits = visBits;
+
+	/* we should probably be able to get away with a single-buffered pbuffer */
+	if (visBits & CR_PBUFFER_BIT)
+		*superVisBits &= ~CR_DOUBLE_BIT;
+}
+
+
+
 static GLint READBACKSPU_APIENTRY
 readbackspuCreateContext(const char *dpyName, GLint visBits)
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
-	GLint childVisBits = visBits;
+	GLint childVisBits, superVisBits;
 
 	CRASSERT(readback_spu.child.BarrierCreateCR);
 
@@ -747,18 +776,14 @@ readbackspuCreateContext(const char *dpyName, GLint visBits)
 		return -1;
 	}
 
-	/* If doing z-compositing, need stencil buffer */
-	if (readback_spu.extract_depth)
-		childVisBits |= CR_STENCIL_BIT;
-	if (readback_spu.extract_alpha)
-		childVisBits |= CR_ALPHA_BIT;
-	/* final display window should probably be visible */
-	childVisBits &= ~CR_PBUFFER_BIT;
+	readbackspuTweakVisBits(visBits, &childVisBits, &superVisBits);
 
-	context->renderContext = readback_spu.super.CreateContext(dpyName, visBits);
-	context->childContext =
-		readback_spu.child.CreateContext(dpyName, childVisBits);
-	context->visBits = visBits;
+	context->renderContext
+		= readback_spu.super.CreateContext(dpyName, superVisBits);
+	context->childContext
+		= readback_spu.child.CreateContext(dpyName, childVisBits);
+	context->childVisBits = childVisBits;
+	context->superVisBits = superVisBits;
 
 	if (context->renderContext < 0 || context->childContext < 0) {
 		 crFree(context);
@@ -794,12 +819,9 @@ readbackspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 
 	if (context && window)
 	{
-		CRASSERT(context->visBits == window->visBits);
-#ifdef CHROMIUM_THREADSAFE
-		crSetTSD(&_ReadbackTSD, context);
-#else
-		readback_spu.currentContext = context;
-#endif
+		CRASSERT(context->superVisBits == window->superVisBits);
+		CRASSERT(context->childVisBits == window->childVisBits);
+		SET_CONTEXT(context);
 		CRASSERT(window);
 		context->currentWindow = window;
 		readback_spu.super.MakeCurrent(window->renderWindow,
@@ -809,11 +831,7 @@ readbackspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 	}
 	else
 	{
-#ifdef CHROMIUM_THREADSAFE
-		crSetTSD(&_ReadbackTSD, NULL);
-#else
-		readback_spu.currentContext = NULL;
-#endif
+		SET_CONTEXT(NULL);
 	}
 }
 
@@ -822,16 +840,10 @@ static GLint READBACKSPU_APIENTRY
 readbackspuWindowCreate(const char *dpyName, GLint visBits)
 {
 	WindowInfo *window;
-	GLint childVisBits = visBits;
+	GLint childVisBits, superVisBits;
 	static GLint freeID = 1;			/* skip default window 0 */
 
-	/* If doing z-compositing, need stencil buffer */
-	if (readback_spu.extract_depth)
-		childVisBits |= CR_STENCIL_BIT;
-	if (readback_spu.extract_alpha)
-		childVisBits |= CR_ALPHA_BIT;
-	/* final display window should probably be visible */
-	childVisBits &= ~CR_PBUFFER_BIT;
+	readbackspuTweakVisBits(visBits, &childVisBits, &superVisBits);
 
 	/* allocate window */
 	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
@@ -843,13 +855,14 @@ readbackspuWindowCreate(const char *dpyName, GLint visBits)
 
 	/* init window */
 	window->index = freeID;
-	window->renderWindow = readback_spu.super.WindowCreate(dpyName, visBits);
+	window->renderWindow = readback_spu.super.WindowCreate(dpyName, superVisBits);
 	window->childWindow = readback_spu.child.WindowCreate(dpyName, childVisBits);
 	window->width = -1;						/* unknown */
 	window->height = -1;					/* unknown */
 	window->colorBuffer = NULL;
 	window->depthBuffer = NULL;
-	window->visBits = visBits;
+	window->childVisBits = childVisBits;
+	window->superVisBits = superVisBits;
 
 	if (window->renderWindow < 0 || window->childWindow < 0) {
 		 crFree(window);
@@ -940,6 +953,26 @@ static void READBACKSPU_APIENTRY
 readbackspuViewport(GLint x, GLint y, GLint w, GLint h)
 {
 	readback_spu.super.Viewport(x, y, w, h);
+}
+
+
+static void READBACKSPU_APIENTRY
+readbackspuDrawBuffer(GLenum buffer)
+{
+	GET_CONTEXT(context);
+	WindowInfo *window;
+
+	window = context->currentWindow;
+	CRASSERT(window);
+
+	if (window->superVisBits & CR_PBUFFER_BIT) {
+		/* we only have a front color buffer see TweakVisBits() above */
+		if (buffer != GL_FRONT) {
+			crWarning("Readback SPU: bad glDrawBuffer(0x%x)", buffer);
+			buffer = GL_FRONT;
+		}
+		readback_spu.super.DrawBuffer(buffer);
+	}
 }
 
 
@@ -1060,5 +1093,6 @@ SPUNamedFunctionTable _cr_readback_table[] = {
 	{"ClearColor", (SPUGenericFunction) readbackspuClearColor},
 	{"ChromiumParametervCR", (SPUGenericFunction) readbackspuChromiumParametervCR},
 	{"ChromiumParameteriCR", (SPUGenericFunction) readbackspuChromiumParameteriCR},
+	{"DrawBuffer", (SPUGenericFunction) readbackspuDrawBuffer},
 	{NULL, NULL}
 };
