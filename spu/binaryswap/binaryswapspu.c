@@ -22,9 +22,7 @@
  * We don't handle byte swapping!!!! (read the above)
  *
  * Alpha compositing:
- * 1) The hacky glHint method of passing info is problematic
- *    especially on systems that are not 32-bit.  What to do?
- * 2) There may be an issue with depth during the swap, should 
+ * 1) There may be an issue with depth during the swap, should 
  *    we update our depth to the furthest forward of ourselves
  *    and our swap partner?
  *
@@ -187,31 +185,24 @@ void setupBBox(void)
 				 binaryswap_spu.bounding_box->z2);
 }
 
-
-/**************************************************************************
- *
- * Right now this is the only nice way to generically pass information into
- * Chromium.  Yes this is hacky...
- *
- **************************************************************************/
-void BINARYSWAPSPU_APIENTRY binaryswapHint( GLenum target,
-					    GLenum mode )
+void BINARYSWAPSPU_APIENTRY binaryswapChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
-  /* intercept Z info */
-  if( target == 0x4200 ){
-    /* mode is really a float, cast it and grab info */
-    binaryswap_spu.depth = (float)mode;
-  } 
-  if( target == 0x4201 ){
-    /* mode is really a pointer, cast it and grab info */
-    binaryswap_spu.bounding_box = (BBox*)mode;
-    /* figure out all of the info we need */
-    setupBBox();
-  }
-  /* Pass on all other hints to child */
-  else{
-    binaryswap_spu.child.Hint( target, mode );
-  }
+	switch (target) {
+	case 0x4201:
+    		binaryswap_spu.bounding_box = (BBox*)values;
+    		/* figure out all of the info we need */
+    		setupBBox();
+		break;
+	}
+}
+
+void BINARYSWAPSPU_APIENTRY binaryswapChromiumParameterfCR(GLenum target, GLfloat value)
+{
+	switch (target) {
+       		case 0x4200:
+			binaryswap_spu.depth = value;
+			break;
+	}
 }
 
 /********************************************************
@@ -514,7 +505,8 @@ void BINARYSWAPSPU_APIENTRY binaryswapSwapBuffers( void )
  **************************************************************/
 SPUNamedFunctionTable binaryswap_table[] = {
   { "SwapBuffers", (SPUGenericFunction) binaryswapSwapBuffers },
-  { "Hint", (SPUGenericFunction) binaryswapHint },
+  { "ChromiumParameterfCR", (SPUGenericFunction) binaryswapChromiumParameterfCR },
+  { "ChromiumParametervCR", (SPUGenericFunction) binaryswapChromiumParametervCR },
   { NULL, NULL }
 };
 
