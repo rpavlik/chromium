@@ -85,7 +85,14 @@ renderDestroyWindow( Display *dpy, Window w )
 	return WindowExistsFlag;
 }
 
-void renderspu_GCWindow(void)
+/*
+ * Garbage collection function.
+ * Loop over all known windows and check if corresponding X window still
+ * exists.  If it doesn't, destroy the render SPU window.
+ * XXX seems to blow up with threadtest.conf tests.
+ */
+void
+renderspu_GCWindow(void)
 {
 	int i;
 	WindowInfo *window;
@@ -973,7 +980,11 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		}
 
 	}
+
+#if 0
+	/* XXX disabled for now due to problem with threadtest.conf */
 	renderspu_GCWindow();
+#endif
 }
 
 
