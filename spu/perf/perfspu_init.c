@@ -18,7 +18,7 @@
 extern SPUNamedFunctionTable perf_table[];
 perfSPU perf_spu;
 
-#if 1
+#if 0 /* for testing */
 extern void perfspuChromiumParameterfCR(GLenum, float);
 #endif
 SPUFunctions perf_functions = {
@@ -52,7 +52,7 @@ SPUFunctions *perfSPUInit( int id, SPU *child, SPU *super,
 
 	perf_spu.timer = crTimerNewTimer();
 
-#if 1
+#if 0 /* for testing */
 	perfspuChromiumParameterfCR(GL_PERF_START_TIMER_CR, 5.0);
 #endif
 
