@@ -641,8 +641,8 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		  if (!render_spu.crut_drawable)
 		    crError("Crut drawable is invalid\n");
 
-		  nativeWindow = render_spu.crut_drawable;
-		  window->nativeWindow = render_spu.crut_drawable;
+			nativeWindow = render_spu.crut_drawable;
+			window->nativeWindow = render_spu.crut_drawable;
 
 		}
 
@@ -653,10 +653,10 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			 */
 			if (WindowExists(window->visual->dpy, nativeWindow))
 			{
-                                 window->nativeWindow = (Window) nativeWindow;
-				 render_spu.ws.glXMakeCurrent( window->visual->dpy,
-																		(Window) nativeWindow, context->context );
-		        }
+				window->nativeWindow = (Window) nativeWindow;
+				render_spu.ws.glXMakeCurrent( window->visual->dpy,
+																			(Window) nativeWindow, context->context );
+			}
 			else
 			{
 				crWarning("render SPU's render_to_app_window option is set but the appliction window ID 0x%x is invalid on the display named %s", (unsigned int) nativeWindow, DisplayString(window->visual->dpy));
@@ -667,6 +667,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		}
 		else
 		{
+			/* This is the normal case - rendering to the render SPU's own window */
 			CRASSERT(window->window);
 			render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																		window->window, context->context );
