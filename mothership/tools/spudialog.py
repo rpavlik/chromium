@@ -120,11 +120,11 @@ class SPUDialog(wxDialog):
 
 	def _onOK(self, event):
 		"""Called by OK button"""
-		self.EndModal(1)
+		self.EndModal(wxID_OK)
 
 	def _onCancel(self, event):
 		"""Called by Cancel button"""
-		self.EndModal(0)
+		self.EndModal(wxID_CANCEL)
 
 	def IsOption(self, name):
 		"""Return true if name is a recognized option."""
@@ -155,7 +155,7 @@ class SPUDialog(wxDialog):
 
 	# Override the wxDialog.ShowModal() method
 	def ShowModal(self):
-		"""Display dialog and return 0 for cancel, 1 for OK."""
+		"""Display dialog and return wxID_OK or wxID_CANCEL."""
 		# Save starting values
 		values = {}
 		for name in self._Controls.keys():
@@ -167,7 +167,7 @@ class SPUDialog(wxDialog):
 		# Show the dialog
 		retVal = wxDialog.ShowModal(self)
 		# Finish up
-		if retVal == 0:
+		if retVal == wxID_CANCEL:
 			# Cancelled, restore original values
 			for name in values.keys():
 				ctrls = self._Controls[name]
