@@ -76,28 +76,39 @@ static int validate_option( SPUOptions *opt, const char *response )
 
 	for (;;)
 	{
+		/* skip leading [ for multi-value options */
+		if (opt->numValues > 1 && *response == '[')
+			response++;
 		if (!validate_one_option( opt, response, min, max ))
 		{
-			retval = 0; break;
+			retval = 0;
+			break;
 		}
 		if (++i == opt->numValues)
 		{
-			retval = 1; break;
+			retval = 1;
+			break;
 		}
 		if (min)
 		{
-			while (*min != ' ' && *min) min++;
-			while (*min == ' ') min++;
+			while (*min != ' ' && *min)
+				min++;
+			while (*min == ' ')
+				min++;
 		}
 		if (max)
 		{
-			while (*max != ' ' && *max) max++;
-			while (*max == ' ') max++;
+			while (*max != ' ' && *max)
+				max++;
+			while (*max == ' ')
+				max++;
 		}
 		if (response)
 		{
-			while (*response != ' ' && *response) response++;
-			while (*response == ' ') response++;
+			while (*response != ' ' && *response)
+				response++;
+			while (*response == ' ')
+				response++;
 		}
 	}
 
