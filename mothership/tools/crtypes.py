@@ -534,7 +534,10 @@ class NetworkNode(Node):
 
 	def GetTiles(self, nodeIndex=0):
 		"""Return the nth server's list of tiles."""
-		return self.__Tiles[nodeIndex]
+		if nodeIndex < len(self.__Tiles):
+			return self.__Tiles[nodeIndex]
+		else:
+			return []
 
 	def DeleteTiles(self):
 		"""Delete all tiles on this server."""
