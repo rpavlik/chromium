@@ -207,13 +207,10 @@ int crStateTexGenTextureGenModeExtensions( GLenum coord, GLenum param )
 			{
 				return 0;
 			}
-			else // specifically GL_Q is not able to be generated.
-			{
-				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"TexGen: ARB_texture_cube_map called with bogus coord: 0x%x", (GLenum) param);
-				return 1;
-			}
-			break;
+			// specifically GL_Q is not able to be generated.
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+				"TexGen: ARB_texture_cube_map called with bogus coord: 0x%x", (GLenum) param);
+			return 1;
 #endif
 		default:
 			return 1;
