@@ -18,7 +18,7 @@ from wxPython.wx import *
 
 import crtypes, crutils
 import templates, configio
-import spudialog, intdialog, hostdialog
+import spudialog, intdialog, hostdialog, tiledialog
 
 
 #----------------------------------------------------------------------
@@ -40,6 +40,7 @@ menu_SET_COUNT          = 209
 menu_SPLIT_NODES        = 210
 menu_MERGE_NODES        = 211
 menu_SERVER_OPTIONS     = 212
+menu_SERVER_TILES       = 213
 
 menu_SELECT_ALL_SPUS    = 300
 menu_DESELECT_ALL_SPUS  = 301
@@ -138,13 +139,16 @@ class MainFrame(wxFrame):
 		self.nodeMenu.Append(menu_CONNECT,            "Connect")
 		self.nodeMenu.Append(menu_DISCONNECT,         "Disconnect")
 		self.nodeMenu.AppendSeparator()
-		self.nodeMenu.Append(menu_SET_HOST,           "Set Host...")
-		self.nodeMenu.Append(menu_SET_COUNT,          "Set Count...")
+		self.nodeMenu.Append(menu_SET_HOST,           "Host name(s)...")
+		self.nodeMenu.Append(menu_SET_COUNT,          "Node Count...")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SPLIT_NODES,        "Split")
 		self.nodeMenu.Append(menu_MERGE_NODES,        "Merge")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Options...")
+		self.nodeMenu.Append(menu_SERVER_TILES,       "Server Tiles...")
+		self.nodeMenu.AppendSeparator()
+		self.nodeMenu.Append(menu_LAYOUT_NODES,       "Layout Nodes")
 		EVT_MENU(self, menu_SELECT_ALL_NODES, self.doSelectAllNodes)
 		EVT_MENU(self, menu_DESELECT_ALL_NODES, self.doDeselectAllNodes)
 		EVT_MENU(self, menu_DELETE_NODE, self.doDeleteNodes)
@@ -155,6 +159,8 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_SPLIT_NODES, self.doSplitNodes)
 		EVT_MENU(self, menu_MERGE_NODES, self.doMergeNodes)
 		EVT_MENU(self, menu_SERVER_OPTIONS, self.doServerOptions)
+		EVT_MENU(self, menu_SERVER_TILES, self.doServerTiles)
+		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		menuBar.Append(self.nodeMenu, "Node")
 
 		# SPU menu
@@ -172,19 +178,13 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_SPU_OPTIONS, self.doSpuOptions)
 		menuBar.Append(self.spuMenu, "SPU")
 
-		# View menu
-		self.viewMenu = wxMenu()
-		self.viewMenu.Append(menu_LAYOUT_NODES, "Auto-Layout")
-		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
-		menuBar.Append(self.viewMenu, "View")
-
 		# Application menu
 		self.systemMenu = wxMenu()
 		self.systemMenu.Append(menu_APP_OPTIONS, "Options...")
 		self.systemMenu.Append(menu_APP_RUN, "Run...")
 		self.systemMenu.Append(menu_APP_STOP, "Stop...")
-		menuBar.Append(self.systemMenu, "Application")
 		EVT_MENU(self, menu_APP_OPTIONS, self.doAppOptions)
+		menuBar.Append(self.systemMenu, "Application")
 
 		# Help menu
 		self.helpMenu = wxMenu()
@@ -993,7 +993,6 @@ class MainFrame(wxFrame):
 		first.SetCount(totalCount)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
-		pass
 
 	def doServerOptions(self, event):
 		"""Node / Server Options callback"""
@@ -1004,7 +1003,23 @@ class MainFrame(wxFrame):
 		dialog.SetValues(self.mothership.GetServerOptions())
 		if dialog.ShowModal() == wxID_OK:
 			self.mothership.SetServerOptions(dialog.GetValues())
-		return
+
+	def doServerTiles(self, event):
+		"""Node / Server Tiles callback"""
+		dialog = tiledialog.TileDialog(parent=self, id=-1,
+									   title="Server Tiles")
+		dialog.Centre()
+		# find first server
+		server = 0
+		for node in self.mothership.SelectedNodes():
+			if node.IsServer():
+				server = node
+				break
+		assert server
+		# show the dialog
+		dialog.SetTiles( server.GetTiles() )
+		if dialog.ShowModal() == wxID_OK:
+			server.SetTiles( dialog.GetTiles() )
 
 
 	# ----------------------------------------------------------------------
@@ -1183,12 +1198,15 @@ class MainFrame(wxFrame):
 			self.nodeMenu.Enable(menu_SET_HOST, 0)
 			self.nodeMenu.Enable(menu_SET_COUNT, 0)
 			self.nodeMenu.Enable(menu_SPLIT_NODES, 0)
+			self.nodeMenu.Enable(menu_MERGE_NODES, 0)
 			self.newSpuChoice.Enable(0)
 		# Node menu / servers
 		if self.mothership.NumSelectedServers() > 0:
 			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 1)
+			self.nodeMenu.Enable(menu_SERVER_TILES, 1)
 		else:
 			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 0)
+			self.nodeMenu.Enable(menu_SERVER_TILES, 0)
 		if len(self.mothership.Nodes()) > 0:
 			self.nodeMenu.Enable(menu_SELECT_ALL_NODES, 1)
 			self.nodeMenu.Enable(menu_DESELECT_ALL_NODES, 1)
