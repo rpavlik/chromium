@@ -351,6 +351,75 @@ templates (it's a modular interface).</p>
 <p>A template for binary-swap image composition is likely.</p>
 
 
+
+<h2 class="PageSubHeading">Hardware Description File</h2>
+
+<p>The config tool looks for a special hardware description file when
+a template is created.
+This file contains cluster host names, the mural size, screen sizes, etc.
+If you set up this file, it'll save you some time when designing a new
+Chromium configuration.
+</p>
+<p>
+Here's a sample of the file:
+</p>
+<pre>
+{
+	"mural_size" : (2, 2),          # (cols, rows)
+	"screen_size" : (1280, 1024),   # in pixels
+	"tile_size" : (256, 256),       # for lightning-2 (in pixels)
+	"frontend_hosts" : ["localhost"],
+	"cluster_hosts" : ["cr1", "cr2", "cr3", "cr4"],
+	"cluster_pattern" : ("cr#", 1)
+}
+</pre>
+
+<p>
+The file format can be directly parsed by Python (it's a dictionary
+which maps configuration option names to values.)
+</p>
+
+<p>
+In this case, we set the following parameters:
+</p>
+
+<ul>
+<li><code>mural_size</code> - this defines the size of your mural display
+in terms of columns and rows of screens.  In this case, there are two
+rows of two screens.
+<li><code>screen_size</code> - this indicates that each screen of each
+rendering host is 1280 x 1024 pixels in size.
+<li><code>tile_size</code> - for a tile-reassembly configuration (such
+as used with Lightning-2) this indicates the default tile size in pixels.
+<li><code>frontend_hosts</code> - this list contains the host names of the
+client workstations.  Usually, there's only one name in this list.
+In a typical tile-sort configuration, this will be the application host.
+In a sort-last configuration, this would be the host that displays the
+composited image.
+<li><code>cluster_hosts</code> - this list contains the names of the systems
+in the rendering cluster.  In this example there are four hosts, which
+corresponds to the 2 by 2 mural size.
+<li><code>cluster_pattern</code> - this tuple describes the naming
+convention for the cluster.  In this example, the hostnames start with
+the prefix "cr" and end with a number.  The first host is number 1.
+Some sites may number their hosts starting at zero.
+The <code>cluster_hosts</code> parameter has priority over the
+<code>cluster_pattern</code> parameter if both are set.
+</ul>
+
+<p>
+All the parameters are optional.  The config tool will use built-in
+defaults if any of these fields aren't set.
+</p>
+
+<p>
+Currently, this file is named <code>chromium.crsite</code> and should
+be in the directory which the config tool is started.
+The name and location of this file may change in the future.
+</p>
+
+
+
 </body>
 
 </html>
