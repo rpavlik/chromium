@@ -84,13 +84,15 @@ GLboolean GL_POLYGON_SMOOTH           g->polygon.polygonSmooth
 GLboolean GL_POLYGON_STIPPLE          g->polygon.polygonStipple
 GLboolean GL_NORMALIZE                g->current.normalize
 GLboolean GL_RGBA_MODE                GL_TRUE
-GLboolean GL_TEXTURE_GEN_S g->texture.textureGen[g->texture.curTextureUnit].s
-GLboolean GL_TEXTURE_GEN_T g->texture.textureGen[g->texture.curTextureUnit].t
-GLboolean GL_TEXTURE_GEN_R g->texture.textureGen[g->texture.curTextureUnit].r
-GLboolean GL_TEXTURE_GEN_Q g->texture.textureGen[g->texture.curTextureUnit].q
-GLboolean GL_TEXTURE_1D g->texture.enabled1D[g->texture.curTextureUnit]
-GLboolean GL_TEXTURE_2D g->texture.enabled2D[g->texture.curTextureUnit]
-# GLboolean GL_TEXTURE_3D
+GLboolean GL_TEXTURE_GEN_S g->texture.unit[g->texture.curTextureUnit].textureGen.s
+GLboolean GL_TEXTURE_GEN_T g->texture.unit[g->texture.curTextureUnit].textureGen.t
+GLboolean GL_TEXTURE_GEN_R g->texture.unit[g->texture.curTextureUnit].textureGen.r
+GLboolean GL_TEXTURE_GEN_Q g->texture.unit[g->texture.curTextureUnit].textureGen.q
+GLboolean GL_TEXTURE_1D g->texture.unit[g->texture.curTextureUnit].enabled1D
+GLboolean GL_TEXTURE_2D g->texture.unit[g->texture.curTextureUnit].enabled2D
+# GLboolean GL_TEXTURE_3D g->texture.unit[g->texture.curTextureUnit].enabled3D
+# GLboolean GL_TEXTURE_CUBE_MAP_ARB g->texture.unit[g->texture.curTextureUnit].enabledCubeMap
+
 # g->texture.enabled3D[g->texture.curTextureUnit]
 GLboolean GL_UNPACK_SWAP_BYTES        g->pixel.unpack.swapBytes
 GLboolean GL_UNPACK_LSB_FIRST         g->pixel.unpack.psLSBFirst
@@ -119,9 +121,10 @@ GLint     GL_UNPACK_ALIGNMENT         g->pixel.unpack.alignment
 GLfloat   GL_ZOOM_X                   g->pixel.xZoom
 GLfloat   GL_ZOOM_Y                   g->pixel.yZoom
 
-GLint     GL_TEXTURE_BINDING_1D g->texture.currentTexture1DName[g->texture.curTextureUnit]
-GLint     GL_TEXTURE_BINDING_2D g->texture.currentTexture2DName[g->texture.curTextureUnit]
-# GLint     GL_TEXTURE_BINDING_3D # g->texture.currentTexture3DName[g->texture.curTextureUnit]
+GLint     GL_TEXTURE_BINDING_1D g->texture.unit[g->texture.curTextureUnit].currentTexture1DName
+GLint     GL_TEXTURE_BINDING_2D g->texture.unit[g->texture.curTextureUnit].currentTexture2DName
+# GLint     GL_TEXTURE_BINDING_3D # g->texture.unit[g->texture.curTextureUnit].currentTexture3DName
+# GLint     GL_TEXTURE_BINDING_CUBE_MAP_ARB # g->texture.unit[g->texture.curTextureUnit].currentTextureCubeMapName
 
 GLint     GL_STENCIL_BITS             g->buffer.stencilBits
 GLclampf  GL_COLOR_CLEAR_VALUE        g->buffer.colorClearValue.r g->buffer.colorClearValue.g g->buffer.colorClearValue.b g->buffer.colorClearValue.a   
