@@ -93,6 +93,8 @@ def GetSPUOptions(spuName):
 	The return value is a tuple (params, options) where params is a
 	dictionary of parameter values and options is an OptionList object.
 	Run 'spuoptions --pythonmode tilesort' to see an example.
+	NOTE: if this isn't working for you on Linux, make sure that your
+	LD_LIBRARY_PATH is set to the location of your SPUs.
 	"""
 	global __InfoCache
 	# first check if we've cached this SPU's options
@@ -104,6 +106,9 @@ def GetSPUOptions(spuName):
 	f = os.popen(command, 'r')
 	if f:
 		s = f.read()
+		if not s:
+			print "Error: unable to get SPU options for %s" % spuName
+			return 0
 		result = eval(s)
 		f.close()
 		__InfoCache[spuName] = result  # save in cache
