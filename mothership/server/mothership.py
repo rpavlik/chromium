@@ -354,7 +354,10 @@ class CRSpawner(threading.Thread):
 				os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
 				CRInfo("Autostart for node %s: %s" % (node.host, str(node.autostart_argv)))
 			else:
-				CRInfo("Nothing to start for node %s" % node.host)
+				if isinstance(node, CRNetworkNode):
+					CRInfo("Start a crserver on %s" % node.host)
+				else:
+					CRInfo("Start a crappfaker on %s" % node.host)
 
 class CR:
 	"""Main class that controls the mothership
@@ -468,7 +471,7 @@ class CR:
 		"""Go(PORT=10000)
 		Starts the ball rolling.
 		This starts the mothership's event loop."""
-		CRInfo("This is Chromium, Version ALPHA")
+		CRInfo("This is Chromium, Version BETA")
 		try:
 			HOST = ""
 			try:
