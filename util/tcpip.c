@@ -562,7 +562,7 @@ crTCPIPAlloc( CRConnection *conn )
 		crDebug( "Buffer pool was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
 			(unsigned int)sizeof(CRTCPIPBuffer) + conn->buffer_size, &cr_tcpip.bufpool );
 		crDebug("sizeof(CRTCPIPBuffer): %d", (unsigned int)sizeof(CRTCPIPBuffer));
-		crDebug("sizeof(conn->buffer_size): %d\n", conn->buffer_size);
+		crDebug("sizeof(conn->buffer_size): %d", conn->buffer_size);
 		buf = (CRTCPIPBuffer *) 
 			crAlloc( sizeof(CRTCPIPBuffer) + conn->buffer_size );
 		buf->magic = CR_TCPIP_BUFFER_MAGIC;
