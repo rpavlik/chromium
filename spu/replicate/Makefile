@@ -11,6 +11,7 @@ SHARED = 1
 LIBRARY = replicatespu
 FILES = replicatespu \
 	replicatespu_beginend \
+	replicatespu_bufferobject \
 	replicatespu_client \
 	replicatespu_config \
 	replicatespu_context \

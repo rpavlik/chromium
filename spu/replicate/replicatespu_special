@@ -47,3 +47,8 @@ TexSubImage3D
 ChromiumParametervCR
 MultiDrawArraysEXT
 MultiDrawElementsEXT
+MapBufferARB
+UnmapBufferARB
+BufferDataARB
+BindBufferARB
+GetBufferPointervARB

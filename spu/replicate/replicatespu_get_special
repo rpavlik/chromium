@@ -4,7 +4,6 @@ GenTextures
 IsEnabled
 IsList
 IsTexture
-GetBufferPointervARB
 GetClipPlane
 GetLightfv
 GetLightiv

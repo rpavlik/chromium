@@ -684,3 +684,66 @@ void REPLICATESPU_APIENTRY replicatespu_GetVertexAttribivARB( GLuint index, GLen
 	while (writeback)
 		crNetRecv();
 }
+
+GLboolean REPLICATESPU_APIENTRY replicatespu_IsBufferARB( GLuint buffer )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	GLboolean return_val = (GLboolean) 0;
+	if (replicate_spu.swap)
+	{
+		crPackIsBufferARBSWAP( buffer, &return_val, &writeback );
+	}
+	else
+	{
+		crPackIsBufferARB( buffer, &return_val, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+	if (replicate_spu.swap)
+	{
+		return_val = (GLboolean) SWAP32(return_val);
+	}
+	return return_val;
+}
+
+GLboolean REPLICATESPU_APIENTRY replicatespu_IsQueryARB( GLuint id )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	GLboolean return_val = (GLboolean) 0;
+	if (replicate_spu.swap)
+	{
+		crPackIsQueryARBSWAP( id, &return_val, &writeback );
+	}
+	else
+	{
+		crPackIsQueryARB( id, &return_val, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+	if (replicate_spu.swap)
+	{
+		return_val = (GLboolean) SWAP32(return_val);
+	}
+	return return_val;
+}
+
+void REPLICATESPU_APIENTRY replicatespu_GetBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data )
+{
+	GET_THREAD(thread);
+	int writeback = 1;
+	if (replicate_spu.swap)
+	{
+		crPackGetBufferSubDataARBSWAP( target, offset, size, data, &writeback );
+	}
+	else
+	{
+		crPackGetBufferSubDataARB( target, offset, size, data, &writeback );
+	}
+	replicatespuFlush( (void *) thread );
+	while (writeback)
+		crNetRecv();
+}
