@@ -29,6 +29,7 @@ FILES = bufpool \
 	pixel \
 	string \
 	tcpip \
+	threads \
 	timer \
 	url
 PRECOMP = debug_opcodes.c
@@ -43,9 +44,12 @@ SLOP += ${PRECOMP}
 LIB_DEFS = util.def
 
 ifeq ($(ARCH), WIN_NT)
+ifdef (WANT_GM)
 CFLAGS += -DGM_SUPPORT
 FILES += gm
-LDFLAGS += user32.lib ws2_32.lib gm.lib
+LDFLAGS += gm.lib
+endif
+LDFLAGS += user32.lib ws2_32.lib
 else
 ifeq ($(ARCH),FreeBSD)
 LDFLAGS +=
