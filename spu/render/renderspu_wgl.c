@@ -62,7 +62,7 @@ MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 			break;
 
 		case WM_CLOSE:
-			crWarning( "caught WM_CLOSE -- quitting." );
+			crWarning( "Render SPU: caught WM_CLOSE -- quitting." );
 			exit( 0 );
 			break;
 	}
@@ -83,7 +83,7 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 
 	CRASSERT(visAttribs & CR_RGB_BIT);  /* anybody need color index */
 
-	crWarning("Using WGL_EXT_pixel_format to select visual ID.\n");
+	crWarning("Render SPU: Using WGL_EXT_pixel_format to select visual ID.");
 
 	attribList[i++] = WGL_DRAW_TO_WINDOW_EXT;
 	attribList[i++] = GL_TRUE;
@@ -98,7 +98,7 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 	attribList[i++] = WGL_BLUE_BITS_EXT;
 	attribList[i++] = 1;
 
-	crWarning("Visual chosen is... RGB");
+	crWarning("Render SPU: Visual chosen is... RGB");
 
 	if (visAttribs & CR_ALPHA_BIT)
 	{
@@ -169,11 +169,11 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 
 	vis = render_spu.ws.wglChoosePixelFormatEXT( hdc, attribList, fattribList, 1, &pixelFormat, &numFormats);
 
-	crDebug("wglChoosePixelFormatEXT - 0x%x 0x%x 0x%x\n",vis,GetLastError(),pixelFormat);
+	crDebug("Render SPU: wglChoosePixelFormatEXT (vis 0x%x, LastError 0x%x, pixelFormat 0x%x", vis, GetLastError(), pixelFormat);
 
 	render_spu.ws.wglSetPixelFormat( hdc, pixelFormat, &ppfd );
 
-	crDebug("wglSetPixelFormat - 0x%x\n",GetLastError());
+	crDebug("Render SPU: wglSetPixelFormat (Last error 0x%x)", GetLastError());
 
 	return vis;
 }
@@ -258,7 +258,7 @@ bSetupPixelFormatNormal( HDC hdc, GLbitfield visAttribs )
 		}
 		if ( !SetPixelFormat( hdc, pixelformat, ppfd ) ) 
 		{
-			crError( "SetPixelFormat failed 0x%x", GetLastError() );
+			crError( "SetPixelFormat failed (Error 0x%x)", GetLastError() );
 		}
 		
 		DescribePixelFormat( hdc, pixelformat, sizeof(ppfd), ppfd );
@@ -324,10 +324,10 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	hinstance = GetModuleHandle( NULL );
 	if (!hinstance)
 	{
-		crError( "Couldn't get a handle to my module." );
+		crError( "Render SPU: Couldn't get a handle to my module." );
 		return GL_FALSE;
 	}
-	crDebug( "Got the module handle: 0x%x", hinstance );
+	crDebug( "Render SPU: Got the module handle: 0x%x", hinstance );
 
 	/* If we were launched from a service, telnet, or rsh, we need to
 	 * get the input desktop.  */
@@ -340,10 +340,10 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 	if ( !desktop )
 	{
-		crError( "Couldn't aquire input desktop" );
+		crError( "Render SPU: Couldn't aquire input desktop" );
 		return GL_FALSE;
 	}
-	crDebug( "Got the desktop: 0x%x", desktop );
+	crDebug( "Render SPU: Got the desktop: 0x%x", desktop );
 
 	if ( !SetThreadDesktop( desktop ) )
 	{
@@ -353,7 +353,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 		/*crError( "Couldn't set thread to input desktop" ); */
 	}
-	crDebug( "Set the thread desktop -- this might have failed." );
+	crDebug( "Render SPU: Set the thread desktop -- this might have failed." );
 
 	if ( !GetClassInfo(hinstance, WINDOW_NAME, &wc) ) 
 	{
@@ -370,15 +370,15 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 		if ( !RegisterClass( &wc ) )
 		{
-			crError( "Couldn't register window class -- you're not trying "
+			crError( "Render SPU: Couldn't register window class -- you're not trying "
 					"to do multi-pipe stuff on windows, are you?\n\nNote --"
 					"This error message is from 1997 and probably doesn't make"
 					"any sense any more, but it's nostalgic for Humper." );
 			return GL_FALSE;
 		}
-		crDebug( "Registered the class" );
+		crDebug( "Render SPU: Registered the class" );
 	}
-	crDebug( "Got the class information" );
+	crDebug( "Render SPU: Got the class information" );
 
 	/* Full screen window should be a popup (undecorated) window */
 #if 1
@@ -388,7 +388,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	window_style |= WS_SYSMENU;
 #endif
 
-	crDebug( "Fullscreen: %s\n", render_spu.fullscreen ? "yes" : "no");
+	crDebug( "Render SPU: Fullscreen: %s", render_spu.fullscreen ? "yes" : "no");
 
 	if ( render_spu.fullscreen )
 	{
@@ -401,7 +401,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		window->width = GetSystemMetrics( SM_CXSCREEN ) ;
 		window->height = GetSystemMetrics( SM_CYSCREEN ) ;
 
-		crDebug( "Window Dims: %d, %d\n", window->width, window->height );
+		crDebug( "Render SPU: Window Dims: %d, %d", window->width, window->height );
 
 		window->x = render_spu->defaultX - smCxFixedFrame - 1;
 		window->y = render_spu->defaultY - smCyFixedFrame - smCyCaption;
@@ -429,11 +429,11 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 		int smCxFixedFrame, smCyFixedFrame, smCyCaption;
 		smCxFixedFrame = GetSystemMetrics( SM_CXFIXEDFRAME );
-		crDebug( "Got the X fixed frame" );
+		crDebug( "Render SPU: Got the X fixed frame" );
 		smCyFixedFrame = GetSystemMetrics( SM_CYFIXEDFRAME );
-		crDebug( "Got the Y fixed frame" );
+		crDebug( "Render SPU: Got the Y fixed frame" );
 		smCyCaption = GetSystemMetrics( SM_CYCAPTION );
-		crDebug( "Got the Caption " );
+		crDebug( "Render SPU: Got the Caption " );
 
 		window_plus_caption_width = window->width +	2 * smCxFixedFrame;
 		window_plus_caption_height = window->height + 2 * smCyFixedFrame + smCyCaption;
@@ -442,7 +442,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		window->y = render_spu.defaultY - smCyFixedFrame - smCyCaption;
 	}
 
-	crDebug( "Creating the window: (%d,%d), (%d,%d)", render_spu.defaultX, render_spu.defaultY, window_plus_caption_width, window_plus_caption_height );
+	crDebug( "Render SPU: Creating the window: (%d,%d), (%d,%d)", render_spu.defaultX, render_spu.defaultY, window_plus_caption_width, window_plus_caption_height );
 	visual->hWnd = CreateWindow( WINDOW_NAME, WINDOW_NAME,
 			window_style,
 			window->x, window->y,
@@ -452,15 +452,13 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 	if ( !visual->hWnd )
 	{
-		crError( "Create Window failed!  That's almost certainly terrible." );
+		crError( "Render SPU: Create Window failed!  That's almost certainly terrible." );
 		return GL_FALSE;
 	}
 
 	if (showIt) {
 		/* NO ERROR CODE FOR SHOWWINDOW */
-
-		crDebug( "Showing the window" );
-
+		crDebug( "Render SPU: Showing the window" );
 		ShowWindow( visual->hWnd, SW_SHOWNORMAL );
 	}
 
@@ -479,11 +477,11 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 	visual->device_context = GetDC( visual->hWnd );
 
-	crDebug( " Got the DC: 0x%x", visual->device_context );
+	crDebug( "Render SPU: Got the DC: 0x%x", visual->device_context );
 
 	if ( !bSetupPixelFormat( visual->device_context, visual->visAttribs ) )
 	{
-		crError( "Couldn't set up the device context!  Yikes!" );
+		crError( "Render SPU: Couldn't set up the device context!  Yikes!" );
 		return GL_FALSE;
 	}
 
@@ -507,16 +505,16 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 	/* Found a visual, so we're o.k. to create the context now */
 	if (visual->device_context) {
 
-		crDebug( " Using the DC: 0x%x", visual->device_context );
+		crDebug( "Render SPU: Using the DC: 0x%x", visual->device_context );
 
 		context->hRC = render_spu.ws.wglCreateContext( visual->device_context );
 		if (!context->hRC)
 		{
-			crError( "Couldn't create the context for the window 0x%x !", GetLastError() );
+			crError( "Render SPU: wglCreateContext failed (error 0x%x)", GetLastError() );
 			return GL_FALSE;
 		}
 	} else {
-		crDebug( " Delaying DC creation " );
+		crDebug( "Render SPU: Delaying DC creation " );
 		context->hRC = NULL;	/* create it later in makecurrent */
 	}
 
@@ -564,7 +562,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 				context->hRC = render_spu.ws.wglCreateContext( window->nativeWindow );
 				if (!context->hRC)
 				{
-					crError( "(MakeCurrent) Couldn't create the context for the window 0x%x !", GetLastError() );
+					crError( "(MakeCurrent) Couldn't create the context for the window (error 0x%x)", GetLastError() );
 				}
 			}
 			render_spu.ws.wglMakeCurrent( window->nativeWindow, context->hRC );
@@ -574,11 +572,11 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			if (!context->visual->device_context) {
 				context->visual->device_context = GetDC( window->visual->hWnd );
 
-				crDebug( " MakeCurrent made the DC: 0x%x", context->visual->device_context );
+				crDebug( "Render SPU: MakeCurrent made the DC: 0x%x", context->visual->device_context );
 
 				if ( !bSetupPixelFormat( context->visual->device_context, context->visual->visAttribs ) )
 				{
-					crError( "(MakeCurrent) Couldn't set up the device context!  Yikes!" );
+					crError( "Render SPU: (MakeCurrent) Couldn't set up the device context!  Yikes!" );
 				}
 			}
 
@@ -586,7 +584,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 				context->hRC = render_spu.ws.wglCreateContext( context->visual->device_context );
 				if (!context->hRC)
 				{
-					crError( "(MakeCurrent) Couldn't create the context for the window 0x%x !", GetLastError() );
+					crError( "Render SPU: (MakeCurrent) Couldn't create the context for the window (error 0x%x)", GetLastError() );
 				}
 			}
 
