@@ -699,7 +699,12 @@ void crTCPIPFree( CRConnection *conn, void *buf )
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_tcpip.mutex);
 #endif
-			crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, tcpip_buffer->allocated );
+			if (cr_tcpip.bufpool) {
+				/* pool may have been deallocated just a bit earlier in response
+				 * to a SIGPIPE (Broken Pipe) signal.
+				 */
+				crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, tcpip_buffer->allocated );
+			}
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_tcpip.mutex);
 #endif
