@@ -80,7 +80,7 @@ print """
 
 void TILESORTSPU_APIENTRY tilesortspu_NewList (GLuint list, GLuint mode) 
 {
-	// the state tracker will do error checking and the flush for us.
+	/* the state tracker will do error checking and the flush for us. */
 	crStateNewList( list, mode );
 	if (tilesort_spu.swap)
 	{
@@ -96,7 +96,7 @@ void TILESORTSPU_APIENTRY tilesortspu_NewList (GLuint list, GLuint mode)
 
 void TILESORTSPU_APIENTRY tilesortspu_EndList (void) 
 {
-	// the state tracker will do error checking and the flush for us.
+	/* the state tracker will do error checking and the flush for us. */
 	if (tilesort_spu.swap)
 	{
 		crPackEndListSWAP( );

@@ -11,9 +11,9 @@
 extern SPUNamedFunctionTable apichange_table[];
 
 SPUFunctions the_functions = {
-	NULL, // CHILD COPY
-	NULL, // DATA
-	apichange_table // THE ACTUAL FUNCTIONS
+	NULL, /* CHILD COPY */
+	NULL, /* DATA */
+	apichange_table /* THE ACTUAL FUNCTIONS */
 };
 
 SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
