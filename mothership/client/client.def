@@ -9,6 +9,7 @@ crMothershipSendString
 crMothershipReadResponse
 crMothershipIdentifySPU
 crMothershipGetSPUParam
+crMothershipGetSPURank
 crMothershipGetServerParam
 crMothershipGetServerParamFromSPU
 crMothershipIdentifyFaker
