@@ -239,9 +239,11 @@ Feedback SPU in your configuration.
 <a name="fps">
 </a><h2 class="PageSubHeading"><a name="fps">FPS SPU </a></h2>
 <p>
-<a name="fps">The FPS SPU prints each OpenGL command to stderr or a file.
-It's useful for debugging Chromium and inspecting the OpenGL commands
-issued by applications
+<a name="fps">The FPS SPU measures the time between calls to
+<code>glXSwapBuffers()</code>, and issues performance 
+reports to <code>stderr</code> at regular intervals.  It's useful 
+for determining rendering performance of a Chromium configuration.
+</a></p>
 </a></p>
 <table border="1" width="100%">
   <tbody><tr class="ConfigTableHeader">
@@ -250,19 +252,36 @@ issued by applications
     <td width="100%">Description</td>
   </tr>
   <tr>
-    <td width="19%" class="ConfigOption">report_at_end</td>
-    <td width="12%" class="ConfigType">String</td>
-    <td width="100%" class="ConfigDesc">XXX</td>
-  </tr>
-  <tr>
     <td width="19%" class="ConfigOption">report_seconds</td>
-    <td width="12%" class="ConfigType">String</td>
-    <td width="100%" class="ConfigDesc">XXX</td>
+    <td width="12%" class="ConfigType">Float</td>
+    <td width="100%" class="ConfigDesc">
+    If the given number of seconds have passed since the last time a report
+    was issued, a new report is issued.  If set to <code>0.0</code>, time-based
+    report triggers are disabled.  The default value is <code>10.0</code>,
+    meaning a report will be issued about every 10 seconds (although a report
+    could be issued sooner if the <code>report_frames</code> option, below,
+    is used).
+    </td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption">report_frames</td>
-    <td width="12%" class="ConfigType">String</td>
-    <td width="100%" class="ConfigDesc">XXX</td>
+    <td width="12%" class="ConfigType">Integer</td>
+    <td width="100%" class="ConfigDesc">
+    If the given number of frames have been rendered since the last time a
+    report was issued, a new report is issued.  If set to <code>0</code>,
+    frame-based report triggers are disabled.  The default value is <code>100</code>,
+    meaning a report will be issued at least every 100 frames (possibly sooner,
+    if the <code>report_seconds</code> option, above, is used).
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">report_at_end</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="100%" class="ConfigDesc">
+    If set, an additional report with the average FPS across the entire
+    run of the SPU is issued as the SPU is closing down.  The default
+    value is set.
+    </td>
   </tr>
 </tbody></table>
 
