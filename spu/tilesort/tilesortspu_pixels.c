@@ -23,7 +23,6 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height,
 	GLenum hint;
 
 	(void) v;
-	(void) hint;
 
 	if (c->inBeginEnd)
 	{
