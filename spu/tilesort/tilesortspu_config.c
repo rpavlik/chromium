@@ -112,7 +112,7 @@ void tilesortspuGatherConfiguration( void )
 
 		if (!crMothershipGetTiles( conn, response, i ))
 		{
-			crError( "No tile information for server %d!  I can't continue!" );
+			crError( "No tile information for server %d!  I can't continue!", i );
 		}
 
 		tilechain = crStrSplitn( response, " ", 1 );
