@@ -40,7 +40,8 @@ static void set_on_top( RenderSPU *render_spu, const char *response )
 
 static void set_system_gl_path( RenderSPU *render_spu, const char *response )
 {
-	crSetenv( "CR_SYSTEM_GL_PATH", response );
+	if (crStrlen(response) > 0)
+		crSetenv( "CR_SYSTEM_GL_PATH", response );
 }
 
 static void set_title( RenderSPU *render_spu, const char *response )
