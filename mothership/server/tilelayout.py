@@ -57,20 +57,22 @@ def __CheckArgs(muralWidth, muralHeight, numServers, tileWidth, tileHeight, tile
 			tileWidth = muralWidth / tileCols
 		if tileHeight == 0:
 			tileHeight = muralHeight / tileRows
+		fixedTileSize = 0
 	else:
 		# we're told the tile size, compute rows and columns
 		assert tileWidth > 0
 		assert tileHeight > 0
 		tileCols = (muralWidth + tileWidth - 1) / tileWidth
 		tileRows = (muralHeight + tileHeight - 1) / tileHeight
+		fixedTileSize = 1
 
-	return (tileWidth, tileHeight, tileRows, tileCols)
+	return (tileWidth, tileHeight, tileRows, tileCols, fixedTileSize)
 
 
 def LayoutRaster(muralWidth, muralHeight, numServers, tileWidth, tileHeight, tileRows, tileCols):
 	"""Layout tiles in a simple top-to-bottom, left-to-right raster order."""
 	# check args, and compute missing values
-	(tileWidth, tileHeight, tileRows, tileCols) = __CheckArgs(muralWidth, muralHeight, numServers, tileWidth, tileHeight, tileRows, tileCols)
+	(tileWidth, tileHeight, tileRows, tileCols, fixedTileSize) = __CheckArgs(muralWidth, muralHeight, numServers, tileWidth, tileHeight, tileRows, tileCols)
 
 	# layout tiles now
 	tiles = []
@@ -79,11 +81,11 @@ def LayoutRaster(muralWidth, muralHeight, numServers, tileWidth, tileHeight, til
 			server = (i * tileCols + j) % numServers
 			x = j * tileWidth
 			y = i * tileHeight
-			if i < tileRows - 1:
+			if i < tileRows - 1 or fixedTileSize:
 				h = tileHeight
 			else:
 				h = muralHeight - (tileRows - 1) * tileHeight
-			if j < tileCols - 1:
+			if j < tileCols - 1 or fixedTileSize:
 				w = tileWidth
 			else:
 				w = muralWidth - (tileCols - 1) * tileWidth
@@ -95,7 +97,7 @@ def LayoutZigZag(muralWidth, muralHeight, numServers, tileWidth, tileHeight, til
 	"""Layout tiles in a simple top-to-bottom order, alternating between
 	left-to-right and right-to-left with each row."""
 	# check args, and compute missing values
-	(tileWidth, tileHeight, tileRows, tileCols) = __CheckArgs(muralWidth, muralHeight, numServers, tileWidth, tileHeight, tileRows, tileCols)
+	(tileWidth, tileHeight, tileRows, tileCols, fixedTileSize) = __CheckArgs(muralWidth, muralHeight, numServers, tileWidth, tileHeight, tileRows, tileCols)
 
 	# layout tiles now
 	tiles = []
@@ -110,11 +112,11 @@ def LayoutZigZag(muralWidth, muralHeight, numServers, tileWidth, tileHeight, til
 				server = (i * tileCols + j) % numServers
 			x = j * tileWidth
 			y = i * tileHeight
-			if i < tileRows - 1:
+			if i < tileRows - 1 or fixedTileSize:
 				h = tileHeight
 			else:
 				h = muralHeight - (tileRows - 1) * tileHeight
-			if j < tileCols - 1:
+			if j < tileCols - 1 or fixedTileSize:
 				w = tileWidth
 			else:
 				w = muralWidth - (tileCols - 1) * tileWidth
@@ -126,7 +128,7 @@ def LayoutSpiral(muralWidth, muralHeight, numServers, tileWidth, tileHeight, til
 	"""Layout tiles starting in the center of the mural and winding outward
 	in a spiral."""
 	# check args, and compute missing values
-	(tileWidth, tileHeight, tileRows, tileCols) = __CheckArgs(muralWidth, muralHeight, numServers, tileWidth, tileHeight, tileRows, tileCols)
+	(tileWidth, tileHeight, tileRows, tileCols, fixedTileSize) = __CheckArgs(muralWidth, muralHeight, numServers, tileWidth, tileHeight, tileRows, tileCols)
 
 	curRow = (tileRows - 1) / 2
 	curCol = (tileCols - 1) / 2
@@ -147,11 +149,11 @@ def LayoutSpiral(muralWidth, muralHeight, numServers, tileWidth, tileHeight, til
 			# compute tile position and size
 			x = curCol * tileWidth
 			y = curRow * tileHeight
-			if curCol < tileCols - 1:
+			if curCol < tileCols - 1 or fixedTileSize:
 				w = tileWidth
 			else:
 				w = muralWidth - (tileCols - 1) * tileWidth
-			if curRow < tileRows - 1:
+			if curRow < tileRows - 1 or fixedTileSize:
 				h = tileHeight
 			else:
 				h = muralHeight - (tileRows - 1) * tileHeight
