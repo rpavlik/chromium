@@ -196,7 +196,7 @@ for row in range(TILE_ROWS):
 		renderspu.Conf('force_direct', RENDER_force_direct)
 		renderspu.Conf('fullscreen', RENDER_fullscreen)
 		renderspu.Conf('resizable', RENDER_resizable)
-		renderspu.Conf('render_to_app_winodw', RENDER_render_to_app_window)
+		renderspu.Conf('render_to_app_window', RENDER_render_to_app_window)
 		renderspu.Conf('title', RENDER_title)
 		renderspu.Conf('system_gl_path', RENDER_system_gl_path)
 
