@@ -28,13 +28,16 @@
 #define CLAMP(a, b, c) \
     if (a < b) a = b; if (a > c) a = c
 
-/****************************************************************
- *
- * These functions below are used to do bounding box calculations
- *
- ****************************************************************/
+
+/**
+ * Given the coordinates of the two opposite corners of a bounding box
+ * in object space (x1,y1,z1) and (x2,y2,z2), use the given modelview
+ * and projection matrices to transform the coordinates to NDC space.
+ * Find the 3D bounding bounding box of those eight coordinates and
+ * return the min/max in (x1,y1,x1) and (x2,y2,z2).
+ */
 static void
-clipCoords(GLfloat modl[16], GLfloat proj[16],
+clipCoords(const GLfloat modl[16], const GLfloat proj[16],
 					 GLfloat * x1, GLfloat * y1, GLfloat * z1,
 					 GLfloat * x2, GLfloat * y2, GLfloat * z2)
 {
@@ -120,6 +123,8 @@ clipCoords(GLfloat modl[16], GLfloat proj[16],
 		y[i] /= w[i];
 		z[i] /= w[i];
 
+		/* XXX note: no view frustum clipping is done */
+
 		if (x[i] > xmax)
 			xmax = x[i];
 		if (y[i] > ymax)
@@ -142,13 +147,16 @@ clipCoords(GLfloat modl[16], GLfloat proj[16],
 	*z2 = zmax;
 }
 
-/*******************************************************
- * Get the clipped window based on the projection and 
- * model matrices and the bounding box supplied by the
- * application.
- *******************************************************/
+
+/**
+ * Transform the current bounding box to screen space and return
+ * the results in the xstart, ystart, xend, yend variables.
+ * \param modl  the modelview matrix
+ * \param proj  the projection matrix
+ * \return  1 for success or 0 for failure (no bounding box)
+ */
 static int
-getClippedWindow(GLfloat modl[16], GLfloat proj[16],
+getClippedWindow(const GLfloat modl[16], const GLfloat proj[16],
 								 int *xstart, int *ystart, int *xend, int *yend)
 {
 	GLfloat viewport[4];
@@ -576,8 +584,8 @@ ProcessTiles(WindowInfo * window)
 			else
 			{
 				int read_start_x, read_start_y, read_end_x, read_end_y;
-				GLfloat *proj = readback_spu.proj;
-				GLfloat *modl = readback_spu.modl;
+				const GLfloat *proj = readback_spu.proj;
+				const GLfloat *modl = readback_spu.modl;
 				getClippedWindow(modl, proj,
 												 &read_start_x, &read_start_y,
 												 &read_end_x, &read_end_y);
@@ -961,9 +969,6 @@ readbackspuClearColor(GLclampf red,
 	readback_spu.child.ClearColor(red, green, blue, alpha);
 }
 
-
-
-
 static void READBACKSPU_APIENTRY
 readbackspuViewport(GLint x, GLint y, GLint w, GLint h)
 {
@@ -995,6 +1000,7 @@ readbackspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
 		readback_spu.super.GetFloatv(GL_MODELVIEW_MATRIX, readback_spu.modl);
 		break;
 	case GL_DEFAULT_BBOX_CR:
+		/* reset / no bounding box */
 		CRASSERT(count == 0);
 		readback_spu.bbox = NULL;
 		break;
