@@ -58,9 +58,9 @@ tilesortspu_lists.c: tilesort_lists.py tilesort_list_special tilesort_unimplemen
 	@$(ECHO) Building the TileSort Display List Manager
 	@$(PYTHON) tilesort_lists.py > $@
 
-tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../state_tracker/convert.py length_table.py pinch_convert.py
+tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../../state_tracker/convert.py length_table.py pinch_convert.py
 	@$(ECHO) Munging the pincher... yuck
-	@$(PYTHON) ../state_tracker/convert.py > $@
+	@$(PYTHON) ../../state_tracker/convert.py > $@
 	@$(PYTHON) pinch_convert.py >> $@
 	@$(PYTHON) length_table.py >> $@
 	@$(CAT) tilesortspu_pinch.c >> $@
