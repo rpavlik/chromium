@@ -341,11 +341,14 @@ configuration options that the render SPU accepts, plus a few more:
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">fake_window_dims</td>
-    <td width="12%" class="ConfigType" height="38">2 Floats</td>
-    <td width="115%" class="ConfigDesc" height="38">This parameter provides a
-      way to use <code>glViewport</code> or <code>glScissor</code> calls with
-      applications that do not have a window.&nbsp; The Tilesort SPU's <code>glViewport</code>
-      implementation will determine the size of the client window (if it exists)
+    <td width="12%" class="ConfigType" height="38">2 Integers</td>
+    <td width="115%" class="ConfigDesc" height="38">Specifies the default
+      window/mural size when the application doesn't create an X or Win32
+      application window (i.e. parallel applications, like psubmit).
+      This is needed in order for <code>glViewport</code> and
+      <code>glScissor</code> to work correctly.
+      The Tilesort SPU's <code>glViewport</code> implementation will
+      determine the size of the client window (if it exists)
       to determine what part of the output space the client is trying to
       restrict drawing to.&nbsp; However, if the Chromium context has been
       created out of thin air (i.e., with the <a href="parallelapplication.html">crCreateContext
