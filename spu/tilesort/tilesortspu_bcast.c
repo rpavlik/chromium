@@ -247,7 +247,7 @@ translate_id(const GLvoid *lists, GLenum type, GLuint i)
 		case GL_FLOAT:
 			{
 				const GLfloat *p = (const GLfloat *) lists;
-				list = p[i];
+				list = (GLuint) p[i];
 			}
 			break;
 		case GL_2_BYTES:
