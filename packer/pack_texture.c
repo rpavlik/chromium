@@ -237,10 +237,10 @@ static void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat
 		case GL_TEXTURE_WRAP_S:
 		case GL_TEXTURE_WRAP_T:
 		case GL_TEXTURE_PRIORITY:
-			num_params = sizeof( *params );
+			num_params = 1;
 			break;
 		case GL_TEXTURE_BORDER_COLOR:
-			num_params = 4* sizeof( *params );
+			num_params = 4;
 			break;
 		default:
 			num_params = __packTexParameterNumParams( pname );
