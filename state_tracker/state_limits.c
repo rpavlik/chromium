@@ -13,11 +13,12 @@
 #include "cr_spu.h"
 
 
-/* This string is the list of OpenGL extensions which Chromium can understand.
+/* This string is the list of OpenGL extensions which Chromium can understand
+ * (in the packer, unpacker and state-tracker).
  * In practice, this string will get intersected with what's reported by the
  * rendering SPUs to reflect what we can really offer to client apps.
  */
-char *__stateExtensionString =
+const char *__stateExtensionString =
   "GL_CHROMIUM "
 #ifdef CR_ARB_imaging
 	"GL_ARB_imaging "
@@ -45,6 +46,9 @@ char *__stateExtensionString =
 #endif
 #ifdef CR_EXT_blend_subtract
 	"GL_EXT_blend_subtract "
+#endif
+#ifdef CR_EXT_texture_env_add
+	"GL_EXT_texture_env_add "
 #endif
 #ifdef CR_EXT_fog_coord
 	"GL_EXT_fog_coord "
@@ -90,8 +94,26 @@ char *__stateExtensionString =
 #endif
 	"";
 
-static char *chromiumExtensions =
-	" "
+
+/*
+ * Extensions which are only supported if the render/readback SPU is
+ * on the app node (no packing/unpacking/state-tracking).
+ */
+const char *__stateAppOnlyExtensions =
+  "GL_EXT_texture_env_combine " \
+  "GL_NV_fence " \
+  "GL_NV_texture_env_combine4 " \
+  "GL_NV_texture_shader" \
+  "GL_NV_vertex_array_range " \
+  "GL_NV_vertex_program " \
+  "GL_NV_vertex_program1_1";
+
+
+/*
+ * Special extensions which are unique to Chromium.
+ * We typically append this to the result of glGetString(GL_EXTENSIONS).
+ */
+const char *__stateChromiumExtensions =
 #ifdef GL_CR_state_parameter
 	"GL_CR_state_parameter "
 #endif
@@ -110,7 +132,7 @@ static char *chromiumExtensions =
 #ifdef GL_CR_client_clear_control
 	"GL_CR_client_clear_control "
 #endif
-	;
+	"";
 
 
 /* This is a debug helper function. */
@@ -216,51 +238,6 @@ void crStateLimitsInit (CRLimitsState *l)
 }
 
 
-
-static char *merge_ext_strings(const char *s1, const char *s2)
-{
-	const int len1 = crStrlen(s1);
-	const int len2 = crStrlen(s2);
-	char *result;
-	char **exten1, **exten2;
-	int i, j;
-
-	/* allocate storage for result */
-	result = (char*)crAlloc(((len1 > len2) ? len1 : len2) + 2);
-	if (!result)
-	{
-		return NULL;
-	}
-	result[0] = 0;
-
-	/* split s1 and s2 at space chars */
-	exten1 = crStrSplit(s1, " ");
-	exten2 = crStrSplit(s2, " ");
-
-	for (i = 0; exten1[i]; i++)
-	{
-		for (j = 0; exten2[j]; j++)
-		{
-			if (crStrcmp(exten1[i], exten2[j]) == 0)
-			{
-				/* found an intersection, append to result */
-				crStrcat(result, exten1[i]);
-				crStrcat(result, " ");
-				break;
-			}
-		}
-	}
-
-	/* free split strings */
-	crFreeStrings( exten1 );
-	crFreeStrings( exten2 );
-
-	/* all done! */
-	return result;
-}
-
-
-
 /*
  * <extenions> is an array [n] of GLubyte pointers which contain lists of
  * OpenGL extensions.
@@ -276,14 +253,14 @@ GLubyte * crStateMergeExtensions(GLuint n, const GLubyte **extensions)
 	merged = crStrdup(__stateExtensionString);
 	for (i = 0; i < n; i++)
 	{
-		char *m = merge_ext_strings(merged, extensions[i]);
+		char *m = crStrIntersect(merged, extensions[i]);
 		if (merged)
 			crFree(merged);
 		merged = m;
 	}
 
 	/* append Cr extensions */
-	result = crStrjoin(merged, chromiumExtensions);
+	result = crStrjoin(merged, __stateChromiumExtensions);
 	crFree(merged);
 	return (GLubyte *) result;
 }

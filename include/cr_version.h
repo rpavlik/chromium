@@ -46,6 +46,7 @@
 
 #define CR_EXT_texture_cube_map 1
 #define CR_EXT_texture_edge_clamp 1
+#define CR_EXT_texture_env_add 1
 #define CR_EXT_texture_filter_anisotropic 1
 #define CR_EXT_texture_object 1
 #define CR_EXT_texture3D 1

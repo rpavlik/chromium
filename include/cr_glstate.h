@@ -130,6 +130,15 @@ struct CRContext {
 #define GLUPDATE_ATTRIB		0x20000
 #define GLUPDATE_REGCOMBINER	0x40000
 
+/*
+ * XXX might move these elsewhere someday so that the render SPU is no
+ * longer dependent on the state tracker.
+ */
+extern const char *__stateExtensionString;
+extern const char *__stateAppOnlyExtensions;
+extern const char *__stateChromiumExtensions;
+
+
 void crStateInit(void);
 CRContext *crStateCreateContext(const CRLimitsState *limits);
 void crStateMakeCurrent(CRContext *ctx);

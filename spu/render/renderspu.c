@@ -665,21 +665,49 @@ static void RENDER_APIENTRY renderspuWriteback( GLint *writeback )
 }
 
 
+static void remove_trailing_space(char *s)
+{
+	int k = crStrlen(s);
+	while (k > 0 && s[k-1] == ' ')
+		k--;
+	s[k] = 0;
+}
+
 static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 {
-	if (!render_spu.ws.glGetString)
-		return NULL;
 	if (pname == GL_EXTENSIONS)
 	{
-		const GLubyte *extensions, *ext;
-		extensions = render_spu.ws.glGetString(GL_EXTENSIONS);
-		ext = crStateMergeExtensions(1, &extensions);
-		return ext;
+		const char *nativeExt;
+		char *crExt, *s1, *s2;
+		if (!render_spu.ws.glGetString)
+			return NULL;
+		/*
+		 * XXX Our only dependency on the state tracker is in the use of
+		 * the __stateExtensionsString, __stateAppOnlyExtensions and
+		 * __stateChromiumExtensions string.
+		 */
+		nativeExt = render_spu.ws.glGetString(GL_EXTENSIONS);
+		crExt = crStrjoin3(__stateExtensionString, " ", __stateAppOnlyExtensions);
+		s1 = crStrIntersect(nativeExt, crExt);
+		remove_trailing_space(s1);
+		s2 = crStrjoin3(s1, " ", __stateChromiumExtensions);
+		remove_trailing_space(s2);
+		printf("native: %s\n", nativeExt);
+		printf("crExt: %s.\n", crExt);
+		printf("s1: %s.\n", s1);
+		printf("s2: %s.\n", s2);
+		crFree(crExt);
+		crFree(s1);
+		return s2;  /* leak - this never gets freed! */
 	}
+	else if (pname == GL_VENDOR)
+		return CR_VENDOR;
+	else if (pname == GL_VERSION)
+		return CR_VERSION;
+	else if (pname == GL_RENDERER)
+		return CR_RENDERER;
 	else
-	{
-		return crStateGetString(pname);
-	}
+		return NULL;
 }
 
 
