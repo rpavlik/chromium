@@ -608,6 +608,7 @@ class SockWrapper:
 NodeTypes = { }
 def FakerValidNode(node):
 	return (not node.spokenfor and isinstance(node, CRApplicationNode))
+
 def FakerClaim(node, sock):
 	try:
 		application = node.config['application']
@@ -623,6 +624,7 @@ NodeTypes["faker"] = (FakerValidNode, FakerClaim)
 
 def CrutProxyValidNode(node):
 	return (not node.spokenfor and isinstance(node, CRUTProxyNode))
+
 def CrutProxyClaim(node, sock):
 	node.spokenfor = 1
 	if sock != None:
@@ -632,6 +634,7 @@ NodeTypes["crutproxy"] = (CrutProxyValidNode, CrutProxyClaim)
 
 def CrutServerValidNode(node):
 	return (not node.spokenfor and isinstance(node, CRUTServerNode))
+
 def CrutServerClaim(node, sock):
 	node.spokenfor = 1
 	if sock != None:
@@ -747,8 +750,7 @@ class CR:
 	    do_opengldll:	Identifies the application node in the graph.
 	    do_rank:		Sends the node's rank down.
 	    do_disconnect: 	Disconnects from clients.
-	    do_quit: 		Disconnects from clients and quits the
-				mothership.
+	    do_quit: 		Disconnects from clients and quits the mothership.
 	    do_reset: 		Resets the mothership to its initial state.
 	    do_server:		Identifies the server in the graph.
 	    do_newserver:	Identifies a new server for replication.
@@ -756,15 +758,15 @@ class CR:
 	    do_serverparam:	Sends the given server parameter.
 	    do_fakerparam:	Sends the given app faker parameter.
 	    do_servers: 	Sends the list of servers.
-	    do_servertiles: 	Sends the defined tiles for a server.
-	    do_spu:		Identifies a SPU.
+	    do_servertiles: Sends the defined tiles for a server.
+	    do_spu:			Identifies a SPU.
 	    do_spuparam:	Sends the given SPU (or global) parameter.
 	    do_tiles:		Sends the defined tiles for a SPU.
 	    do_setparam:	Sets a mothership parameter value
 	    do_getparam:	Returns a mothership parameter value
 	    do_logperf:		Logs Performance Data to a logfile.
 	    do_gettilelayout:   Calls the user's LayoutTiles() function and returns
-				the list of new tiles.
+							the list of new tiles.
 	    do_getstatus:	Returns information about the state of the nodes.
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
@@ -1027,228 +1029,304 @@ class CR:
 		except:
 			pass
 
+
+	def ConnectTCPIP( self, sock, connect_info ):
+		"""Connect routine for TCP/IP (see do_connectrequest())"""
+		(p, hostname, port_str, endianness_str) = connect_info
+		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		port = int(port_str)
+		endianness = int(endianness_str)
+		for server_sock in self.wrappers.values():
+			if server_sock.tcpip_accept_wait != None:
+				(server_hostname, server_port, server_endianness) = server_sock.tcpip_accept_wait
+				if SameHost(server_hostname, hostname) and server_port == port:
+					sock.Success("%d %d" % (self.conn_id, server_endianness))
+					server_sock.Success( "%d" % self.conn_id )
+					self.conn_id += 1
+					return
+				else:
+					CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")"
+							 % (server_hostname, server_port, hostname, port) )
+		sock.tcpip_connect_wait = (hostname, port, endianness)
+		return
+
+	def ConnectSDP( self, sock, connect_info ):
+		"""Connect routine for SDP (see do_connectrequest())"""
+		(p, hostname, port_str, endianness_str) = connect_info
+		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		port = int(port_str)
+		endianness = int(endianness_str)
+		for server_sock in self.wrappers.values():
+			if server_sock.sdp_accept_wait != None:
+				(server_hostname, server_port, server_endianness) = server_sock.sdp_accept_wait
+				if SameHost(server_hostname, hostname) and server_port == port:
+					sock.Success("%d %d" % (self.conn_id, server_endianness))
+					server_sock.Success( "%d" % self.conn_id )
+					self.conn_id += 1
+					return
+				else:
+					CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")"
+							 % (server_hostname, server_port, hostname, port) )
+		sock.sdp_connect_wait = (hostname, port, endianness)
+		return	
+
+	def ConnectIB( self, sock, connect_info ):
+		"""Connect routine for InfiniBand (see do_connectrequest())"""
+		(p, hostname, port_str, node_id_str, endianness_str, lid1, qp_ous, qp) = connect_info
+		CRInfo("do_connectrequest processing ib protocol")
+		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		port = int(port_str)
+		node_id = int(node_id_str)
+		endianness = int(endianness_str)
+		for server_sock in self.wrappers.values():
+			if server_sock.ib_accept_wait != None:
+				(server_hostname, server_port, server_node_id, server_endianness, server_lid1, server_qp_ous, server_qp) = server_sock.ib_accept_wait
+				if SameHost(server_hostname, hostname) and server_port == port:
+					sock.Success( "%d %d %d %s %s %s" % (self.conn_id, server_node_id, server_endianness, server_lid1, server_qp_ous, server_qp ) )
+					server_sock.Success( "%d %d %s %s %s" % (self.conn_id, node_id, lid1, qp_ous, qp ) )
+					self.conn_id += 1
+					return
+				else:
+					CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")"
+							 % (server_hostname, server_port, hostname, port) )
+		sock.ib_connect_wait = (hostname, port, node_id, endianness, lid1, qp_ous, qp)
+		return
+
+	def ConnectGM( self, sock, connect_info ):
+		"""Connect routine for GM (see do_connectrequest())"""
+		(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = connect_info
+		port = int(port_str)
+		node_id = int(node_id_str)
+		port_num = int(port_num_str)
+		endianness = int(endianness_str)
+		for server_sock in self.wrappers.values():
+			if server_sock.gm_accept_wait != None:
+				(server_hostname, server_port, server_node_id, server_port_num, server_endianness) = server_sock.gm_accept_wait
+				if SameHost(server_hostname, hostname) and server_port == port:
+					sock.Success( "%d %d %d %d" % (self.conn_id, server_node_id, server_port_num, server_endianness) )
+					server_sock.Success( "%d %d %d" % (self.conn_id, node_id, port_num) )
+					server_sock.gm_accept_wait = None
+					self.conn_id += 1
+					return
+		sock.gm_connect_wait = (hostname, port, node_id, port_num, endianness)
+		return
+
+	def ConnectQuadrics( self, sock, connect_info ):
+		"""Connect routine for Quadrics (see do_connectrequest())"""
+		(p, remote_hostname, remote_rank_str, my_hostname, my_rank_str, my_endianness_str) = connect_info
+		remote_rank = int(remote_rank_str)
+		my_rank = int(my_rank_str)
+		my_endianness = int(my_endianness_str)
+		for server_sock in self.wrappers.values():
+			if server_sock.teac_accept_wait != []:
+				(server_hostname, server_rank, server_endianness) = server_sock.teac_accept_wait[0]
+				if SameHost(server_hostname, remote_hostname) and server_rank == remote_rank:
+					server_sock.teac_accept_wait.pop(0)
+					sock.Success( "%d %d" % (self.conn_id, server_endianness) )
+					server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
+					self.conn_id += 1
+					return
+		sock.teac_connect_wait.append( (my_hostname, my_rank, my_endianness, remote_hostname, remote_rank) )
+		return
+
+	def ConnectTcscomm( self, sock, connect_info ):
+		"""Connect routine for Quadrics-Tcscomm (see do_connectrequest())"""
+		(p, remote_hostname, remote_rank_str, my_hostname, my_rank_str, my_endianness_str) = connect_info
+		remote_rank = int(remote_rank_str)
+		my_rank = int(my_rank_str)
+		my_endianness = int(my_endianness_str)
+		for server_sock in self.wrappers.values():
+			if server_sock.tcscomm_accept_wait != []:
+				(server_hostname, server_rank, server_endianness) = server_sock.tcscomm_accept_wait[0]
+				if SameHost(server_hostname, remote_hostname) and server_rank == remote_rank:
+					server_sock.tcscomm_accept_wait.pop(0)
+					sock.Success( "%d %d" % (self.conn_id, server_endianness) )
+					server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
+					self.conn_id += 1
+					return
+		sock.tcscomm_connect_wait.append( (my_hostname, my_rank, my_endianness, remote_hostname, remote_rank) )
+		return
+
 	def do_connectrequest( self, sock, args ):
-		"""do_connectrequest(sock, args)
-		Connects the given socket."""
+		"""
+		This function is called when the mothership receives a "connectrequest"
+		message from a network-specific Connect() function (in "util/") if the
+		connection is brokered.
+		We call a network-specific connect routine above which returns its
+		response on the given socket.
+		"""
 		connect_info = args.split( " " )
 		protocol = connect_info[0]
 		if (protocol == 'tcpip' or protocol == 'udptcpip'):
-			(p, hostname, port_str, endianness_str) = connect_info
-			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
-			port = int(port_str)
-			endianness = int(endianness_str)
-			for server_sock in self.wrappers.values():
-				if server_sock.tcpip_accept_wait != None:
-					(server_hostname, server_port, server_endianness) = server_sock.tcpip_accept_wait
-					if SameHost(server_hostname, hostname) and server_port == port:
-						sock.Success( "%d %d" % (self.conn_id, server_endianness ) )
-						server_sock.Success( "%d" % self.conn_id )
-						self.conn_id += 1
-						return
-					else:
-						CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")" % (server_hostname, server_port, hostname, port) )
-			sock.tcpip_connect_wait = (hostname, port, endianness)
+			self.ConnectTCPIP( sock, connect_info )
 		elif (protocol == 'sdp'):
-			(p, hostname, port_str, endianness_str) = connect_info
-			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
-			port = int(port_str)
-			endianness = int(endianness_str)
-			for server_sock in self.wrappers.values():
-				if server_sock.sdp_accept_wait != None:
-					(server_hostname, server_port, server_endianness) = server_sock.sdp_accept_wait
-					if SameHost(server_hostname, hostname) and server_port == port:
-						sock.Success( "%d %d" % (self.conn_id, server_endianness ) )
-						server_sock.Success( "%d" % self.conn_id )
-						self.conn_id += 1
-						return
-					else:
-						CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")" % (server_hostname, server_port, hostname, port) )
-			sock.sdp_connect_wait = (hostname, port, endianness)
+			self.ConnectSDP( sock, connect_info )
 		elif (protocol == 'ib'):
-			(p, hostname, port_str, node_id_str, endianness_str, lid1, qp_ous, qp) = connect_info
-			CRInfo("do_connectrequest processing ib protocol")
-			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
-			port = int(port_str)
-			node_id = int(node_id_str)
-			endianness = int(endianness_str)
-			for server_sock in self.wrappers.values():
-				if server_sock.ib_accept_wait != None:
-					(server_hostname, server_port, server_node_id, server_endianness, server_lid1, server_qp_ous, server_qp) = server_sock.ib_accept_wait
-					if SameHost(server_hostname, hostname) and server_port == port:
-						sock.Success( "%d %d %d %s %s %s" % (self.conn_id, server_node_id, server_endianness, server_lid1, server_qp_ous, server_qp ) )
-						server_sock.Success( "%d %d %s %s %s" % (self.conn_id, node_id, lid1, qp_ous, qp ) )
-						self.conn_id += 1
-						return
-					else:
-						CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")" % (server_hostname, server_port, hostname, port) )
-			sock.ib_connect_wait = (hostname, port, node_id, endianness, lid1, qp_ous, qp)
+			self.ConnectIB( sock, connect_info )
 		elif (protocol == 'gm'):
-			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = connect_info
-			port = int(port_str)
-			node_id = int(node_id_str)
-			port_num = int(port_num_str)
-			endianness = int(endianness_str)
-			for server_sock in self.wrappers.values():
-				if server_sock.gm_accept_wait != None:
-					(server_hostname, server_port, server_node_id, server_port_num, server_endianness) = server_sock.gm_accept_wait
-					if SameHost(server_hostname, hostname) and server_port == port:
-						sock.Success( "%d %d %d %d" % (self.conn_id, server_node_id, server_port_num, server_endianness) )
-						server_sock.Success( "%d %d %d" % (self.conn_id, node_id, port_num) )
-						server_sock.gm_accept_wait = None
-						self.conn_id += 1
-						return
-			sock.gm_connect_wait = (hostname, port, node_id, port_num, endianness)
+			self.ConnectGM( sock, connect_info )
 		elif (protocol == 'quadrics'):
-			(p, remote_hostname, remote_rank_str, my_hostname, my_rank_str, my_endianness_str) = connect_info
-			remote_rank = int(remote_rank_str)
-			my_rank = int(my_rank_str)
-			my_endianness = int(my_endianness_str)
-			for server_sock in self.wrappers.values():
-				if server_sock.teac_accept_wait != []:
-					(server_hostname, server_rank, server_endianness) = server_sock.teac_accept_wait[0]
-					if SameHost(server_hostname, remote_hostname) and server_rank == remote_rank:
-						server_sock.teac_accept_wait.pop(0)
-						sock.Success( "%d %d" % (self.conn_id, server_endianness) )
-						server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
-						self.conn_id += 1
-						return
-			sock.teac_connect_wait.append( (my_hostname, my_rank, my_endianness, remote_hostname, remote_rank) )
+			self.ConnectQuadrics( sock, connect_info )
 		elif (protocol == 'quadrics-tcscomm'):
-			(p, remote_hostname, remote_rank_str, my_hostname, my_rank_str, my_endianness_str) = connect_info
-			remote_rank = int(remote_rank_str)
-			my_rank = int(my_rank_str)
-			my_endianness = int(my_endianness_str)
-			for server_sock in self.wrappers.values():
-				if server_sock.tcscomm_accept_wait != []:
-					(server_hostname, server_rank, server_endianness) = server_sock.tcscomm_accept_wait[0]
-					if SameHost(server_hostname, remote_hostname) and server_rank == remote_rank:
-						server_sock.tcscomm_accept_wait.pop(0)
-						sock.Success( "%d %d" % (self.conn_id, server_endianness) )
-						server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
-						self.conn_id += 1
-						return
-			sock.tcscomm_connect_wait.append( (my_hostname, my_rank, my_endianness, remote_hostname, remote_rank) )
+			self.ConnectTcscomm( sock, connect_info )
 		else:
-			sock.Failure( SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
+			sock.Failure( SockWrapper.UNKNOWNPROTOCOL,
+						  "Never heard of protocol %s" % protocol )
+		return
+
+
+	def AcceptTCPIP( self, sock, accept_info ):
+		"""Accept routine for TCP/IP (see do_acceptrequest())"""
+		(p, hostname, port_str, endianness_str) = accept_info
+		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		port = int(port_str)
+		endianness = int(endianness_str)
+		for client_sock in self.wrappers.values():
+			if client_sock.tcpip_connect_wait != None:
+				(client_hostname, client_port, client_endianness) = client_sock.tcpip_connect_wait
+				if SameHost(client_hostname, hostname) and client_port == port:
+					sock.Success( "%d" % self.conn_id )
+					client_sock.Success("%d %d" % (self.conn_id, endianness))
+					self.conn_id += 1
+					return
+				else:
+					CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
+			else:
+				CRDebug( "tcpip_connect_wait" )
+		sock.tcpip_accept_wait = (hostname, port, endianness)
+		return
+
+	def AcceptSDP( self, sock, accept_info ):
+		"""Accept routine for SDP (see do_acceptrequest())"""
+		(p, hostname, port_str, endianness_str) = accept_info
+		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		port = int(port_str)
+		endianness = int(endianness_str)
+		for client_sock in self.wrappers.values():
+			if client_sock.sdp_connect_wait != None:
+				(client_hostname, client_port, client_endianness) = client_sock.sdp_connect_wait
+				if SameHost(client_hostname, hostname) and client_port == port:
+					sock.Success( "%d" % self.conn_id )
+					client_sock.Success("%d %d" % (self.conn_id, endianness))
+					self.conn_id += 1
+					return
+				else:
+					CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
+			else:
+				CRDebug( "sdp_connect_wait" )
+		sock.sdp_accept_wait = (hostname, port, endianness)
+		return
+
+	def AcceptIB( self, sock, accept_info ):
+		"""Accept routine for InfiniBand (see do_acceptrequest())"""
+		(p, hostname, port_str, node_id_str, endianness_str, lid1, qp_ous, qp) = accept_info
+		CRInfo("do_acceptrequest processing ib protocol")
+		hostname = socket.gethostbyname(hostname)
+		port = int(port_str)
+		node_id = int(node_id_str)
+		endianness = int(endianness_str)
+		for client_sock in self.wrappers.values():
+			if client_sock.ib_connect_wait != None:
+				(client_hostname, client_port, client_node_id,
+				 client_endianness, client_lid1, client_qp_ous, client_qp) = client_sock.ib_connect_wait
+				if SameHost(client_hostname, hostname) and client_port == port:
+					sock.Success( "%d %d %s %s %s" % (self.conn_id, client_node_id, client_lid1, client_qp_ous, client_qp ) )
+					client_sock.Success( "%d %d %d %s %s %s" % (self.conn_id, node_id, endianness, lid1, qp_ous, qp ) )
+					self.conn_id += 1
+					return
+				else:
+					CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
+			else:
+				CRDebug( "ib_connect_wait" )
+		sock.ib_accept_wait = (hostname, port, node_id, endianness, lid1, qp_ous, qp)
+		return
+
+	def AcceptGM( self, sock, accept_info ):
+		"""Accept routine for GM (see do_acceptrequest())"""
+		(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = accept_info
+		port = int(port_str)
+		node_id = int(node_id_str)
+		port_num = int(port_num_str)
+		endianness = int(endianness_str)
+		for client_sock in self.wrappers.values():
+			if client_sock.gm_connect_wait != None:
+				(client_hostname, client_port, client_node_id, client_port_num, client_endianness) = client_sock.gm_connect_wait
+				if SameHost(client_hostname, hostname) and client_port == port:
+					sock.Success( "%d %d %d" % (self.conn_id, client_node_id, client_port_num) )
+					client_sock.Success( "%d %d %d %d" % (self.conn_id, node_id, port_num, endianness) )
+					self.conn_id += 1
+					client_sock.gm_connect_wait = None
+					return
+		sock.gm_accept_wait = (hostname, port, node_id, port_num, endianness)
+		return
+	
+	def AcceptQuadrics( self, sock, accept_info ):
+		"""Accept routine for Quadrics (see do_acceptrequest())"""
+		(p, hostname, rank_str, endianness_str) = accept_info
+		rank = int(rank_str)
+		endianness = int(endianness_str)
+		for client_sock in self.wrappers.values():
+			if client_sock.teac_connect_wait != []:
+				(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.teac_connect_wait[0]
+				if SameHost(server_hostname, hostname) and server_rank == rank:
+					client_sock.teac_connect_wait.pop(0)
+					sock.Success( "%d %s %d %d" % (self.conn_id, client_hostname, client_rank, client_endianness) )
+					client_sock.Success( "%d %d" % (self.conn_id, endianness) )
+					self.conn_id += 1
+					return
+		sock.teac_accept_wait.append( (hostname, rank, endianness) )
+		return
+
+	def AcceptTcscomm( self, sock, accept_info ):
+		"""Accept routine for Quadrics-Tcscomm (see do_acceptrequest())"""
+		(p, hostname, rank_str, endianness_str) = accept_info
+		rank = int(rank_str)
+		endianness = int(endianness_str)
+		for client_sock in self.wrappers.values():
+			if client_sock.tcscomm_connect_wait != []:
+				(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.tcscomm_connect_wait[0]
+				if SameHost(remote_hostname, hostname) and remote_rank == rank:
+					client_sock.tcscomm_connect_wait.pop(0)
+					sock.Success( "%d %s %d %d" % (self.conn_id, client_hostname, client_rank, client_endianness) )
+					client_sock.Success("%d %d" % (self.conn_id, my_endianness))
+					self.conn_id += 1
+					return
+		sock.tcscomm_accept_wait.append( (hostname, rank, endianness) )
+		return
 
 	def do_acceptrequest( self, sock, args ):
-		"""do_acceptrequest(sock, args)
-		Accepts the given socket."""
+		"""
+		This function is called when the mothership receives a "acceptrequest"
+		message from a network-specific Accept() function (in "util/") if the
+		connection is brokered.
+		We call a network-specific accept routine above which returns its
+		response on the given socket.
+		"""
 		accept_info = args.split( " " )
 		protocol = accept_info[0]
 		if protocol == 'tcpip' or protocol == 'udptcpip':
-			(p, hostname, port_str, endianness_str) = accept_info
-			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
-			port = int(port_str)
-			endianness = int(endianness_str)
-			for client_sock in self.wrappers.values():
-				if client_sock.tcpip_connect_wait != None:
-					(client_hostname, client_port, client_endianness) = client_sock.tcpip_connect_wait
-					if SameHost(client_hostname, hostname) and client_port == port:
-						sock.Success( "%d" % self.conn_id )
-						client_sock.Success( "%d %d" % (self.conn_id, endianness ) )
-						self.conn_id += 1
-						return
-					else:
-						CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
-				else:
-					CRDebug( "tcpip_connect_wait" )
-						
-			sock.tcpip_accept_wait = (hostname, port, endianness)
+			self.AcceptTCPIP(sock, accept_info)
 		elif protocol == 'sdp':
-			(p, hostname, port_str, endianness_str) = accept_info
-			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
-			port = int(port_str)
-			endianness = int(endianness_str)
-			for client_sock in self.wrappers.values():
-				if client_sock.sdp_connect_wait != None:
-					(client_hostname, client_port, client_endianness) = client_sock.sdp_connect_wait
-					if SameHost(client_hostname, hostname) and client_port == port:
-						sock.Success( "%d" % self.conn_id )
-						client_sock.Success( "%d %d" % (self.conn_id, endianness ) )
-						self.conn_id += 1
-						return
-					else:
-						CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
-				else:
-					CRDebug( "sdp_connect_wait" )
-						
-			sock.sdp_accept_wait = (hostname, port, endianness)
+			self.AcceptSDP(sock, accept_info)
 		elif protocol == 'ib':
-			(p, hostname, port_str, node_id_str, endianness_str, lid1, qp_ous, qp) = accept_info
-			CRInfo("do_acceptrequest processing ib protocol")
-			hostname = socket.gethostbyname(hostname)
-			port = int(port_str)
-			node_id = int(node_id_str)
-			endianness = int(endianness_str)
-			for client_sock in self.wrappers.values():
-				if client_sock.ib_connect_wait != None:
-					(client_hostname, client_port, client_node_id,
-					 client_endianness, client_lid1, client_qp_ous, client_qp) = client_sock.ib_connect_wait
-					if SameHost(client_hostname, hostname) and client_port == port:
-						sock.Success( "%d %d %s %s %s" % (self.conn_id, client_node_id, client_lid1, client_qp_ous, client_qp ) )
-						client_sock.Success( "%d %d %d %s %s %s" % (self.conn_id, node_id, endianness, lid1, qp_ous, qp ) )
-						self.conn_id += 1
-						return
-					else:
-						CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
-				else:
-					CRDebug( "ib_connect_wait" )
-						
-			sock.ib_accept_wait = (hostname, port, node_id, endianness, lid1, qp_ous, qp)
+			self.AcceptIB(sock, accept_info)
 		elif protocol == 'gm':
-			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = accept_info
-			port = int(port_str)
-			node_id = int(node_id_str)
-			port_num = int(port_num_str)
-			endianness = int(endianness_str)
-			for client_sock in self.wrappers.values():
-				if client_sock.gm_connect_wait != None:
-					(client_hostname, client_port, client_node_id, client_port_num, client_endianness) = client_sock.gm_connect_wait
-					if SameHost(client_hostname, hostname) and client_port == port:
-						sock.Success( "%d %d %d" % (self.conn_id, client_node_id, client_port_num) )
-						client_sock.Success( "%d %d %d %d" % (self.conn_id, node_id, port_num, endianness) )
-						self.conn_id += 1
-						client_sock.gm_connect_wait = None
-						return
-			sock.gm_accept_wait = (hostname, port, node_id, port_num, endianness)
+			self.AcceptGM(sock, accept_info)
 		elif protocol == 'quadrics':
-			(p, hostname, rank_str, endianness_str) = accept_info
-			rank = int(rank_str)
-			endianness = int(endianness_str)
-			for client_sock in self.wrappers.values():
-				if client_sock.teac_connect_wait != []:
-					(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.teac_connect_wait[0]
-					if SameHost(server_hostname, hostname) and server_rank == rank:
-						client_sock.teac_connect_wait.pop(0)
-						sock.Success( "%d %s %d %d" % (self.conn_id, client_hostname, client_rank, client_endianness) )
-						client_sock.Success( "%d %d" % (self.conn_id, endianness) )
-						self.conn_id += 1
-						return
-			sock.teac_accept_wait.append( (hostname, rank, endianness) )
+			self.AcceptQuadrics(sock, accept_info)
 		elif protocol == 'quadrics-tcscomm':
-			(p, hostname, rank_str, endianness_str) = accept_info
-			rank = int(rank_str)
-			endianness = int(endianness_str)
-			for client_sock in self.wrappers.values():
-				if client_sock.tcscomm_connect_wait != []:
-					(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.tcscomm_connect_wait[0]
-					if SameHost(remote_hostname, hostname) and remote_rank == rank:
-						client_sock.tcscomm_connect_wait.pop(0)
-						sock.Success( "%d %s %d %d" % (self.conn_id, client_hostname, client_rank, client_endianness) )
-						client_sock.Success( "%d %d" % (self.conn_id, my_endianness) )
-						self.conn_id += 1
-						return
-			sock.tcscomm_accept_wait.append( (hostname, rank, endianness) )
+			self.AcceptTcscomm(sock, accept_info)
 		else:
-			sock.Failure( SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
+			sock.Failure( SockWrapper.UNKNOWNPROTOCOL,
+						  "Never heard of protocol %s" % protocol )
 
-	# A (too?) clever routine.  This handles all the work of matching various
-	# types of nodes, with static matches or with dynamic matches.
-	# It even handles dynamic resolution and errors.
-	# Input: args: the hostname of the caller
-	# Return: a node reference
 	def MatchNode(self, nodeTypeName, sock, args):
+		""" A (too?) clever routine.  This handles all the work of matching
+		various types of nodes, with static matches or with dynamic matches.
+		It even handles dynamic resolution and errors.
+		Input: args: the hostname of the caller
+		Return: a node reference
+		"""
 		try:
 			(validFunc, claimFunc) = NodeTypes[nodeTypeName]
 		except:
@@ -1280,23 +1358,26 @@ class CR:
 
 		# If unresolved nodes are present, we can try to resolve them.
 		if len(dynamicHostsNeeded) > 0:
-			# Only the "grandmothership" (i.e., a mothership with no mother)  may
-			# resolve nodes.
+			# Only the "grandmothership" (i.e., a mothership with no mother)
+			# may resolve nodes.
 			if not self.mother: # i.e. I'm the grandmother
 				index = 0
 				for node in self.nodes:
 					if validFunc(node) and MatchUnresolvedNode(node,args):
-						# We matched the server with an appropriate node.  Tell the daughters.
+						# We matched the server with an appropriate node.
+						# Tell the daughters.
 						self.Broadcast(self.daughters, "match %d %s" % (index, args))
 						claimFunc(node, sock)
 						return node
 					index += 1
 			else:
-				# A daughtership must ask its mother to resolve nodes; the answer will come back
-				# asynchronously, so we'll have to save our request and deal with it later.
-				# When we get the match back, we'll pull all matching pending resolutions from
-				# here and restart their processing.  The exception raised prevents the
-				# main routine (which called us) from continuing with normal processing.
+				# A daughtership must ask its mother to resolve nodes; the
+				# answer will come back asynchronously, so we'll have to
+				# save our request and deal with it later.
+				# When we get the match back, we'll pull all matching pending
+				# resolutions from here and restart their processing.
+				# The exception raised prevents the main routine (which
+				# called us) from continuing with normal processing.
 				self.mother.Send("requestmatch %s %s" % (nodeTypeName, args))
 				self.pendingResolution.append( ("do_%s" % nodeTypeName, sock, args) )
 				return node
@@ -1342,10 +1423,12 @@ class CR:
 		self.MatchNode("server", sock, args)
 
 	def do_match(self, sock, args):
-		# This can either come in as a result of a request we made for a match,
-		# or spontaneously (to notify us of a match the mothership has made).
-		# We are to notify our daughters, log the node ourselves, and to release
-		# and activate any resolutions that were waiting on this node.
+		"""
+		This can either come in as a result of a request we made for a match,
+		or spontaneously (to notify us of a match the mothership has made).
+		We are to notify our daughters, log the node ourselves, and to
+		release and activate any resolutions that were waiting on this node.
+		"""
 		self.Broadcast(self.daughters, "match %s" % args)
 
 		words = string.split(args)
@@ -1363,9 +1446,11 @@ class CR:
 		self.pendingResolution = stillUnresolved
 
 	def do_requestmatch(self, sock, args):
-		# This can only come from a daughter to a mother.  If we're the grandmother, we
-		# process it.  Otherwise, we pass it up.  We'll eventually get a "match"
-		# command back, with information we need.
+		"""
+		This can only come from a daughter to a mother.  If we're the
+		grandmother, we process it.  Otherwise, we pass it up.  We'll
+		eventually get a "match" command back, with information we need.
+		"""
 		if self.mother:
 			self.mother.Send("requestmatch %s" % args)
 			return
@@ -1389,7 +1474,6 @@ class CR:
 	def do_opengldll( self, sock, args ):
 		"""do_opengldll(sock, args)
 		XXX Is this documentation right??!  Not sure. (ahern)
-
 		Identifies the application node in the graph.
 		Also, return the client's SPU chain."""
 		(id_string, hostname) = args.split( " " )
