@@ -31,3 +31,4 @@ crMothershipGetCRUTServerParam
 crMothershipGetCRUTClients
 crMothershipGetCRUTServer
 crMothershipIdentifyCRUTClient
+crMothershipIdentifyCRUTProxy

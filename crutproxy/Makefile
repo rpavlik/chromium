@@ -3,7 +3,7 @@
 TOP = ..
 
 PROGRAM = crutproxy
-FILES = main \
+FILES = main
 
 PRECOMP = 
 SLOP = ${PRECOMP}
