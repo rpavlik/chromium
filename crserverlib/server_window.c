@@ -64,3 +64,17 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchWindowDestroy( GLint window )
 {
 	cr_server.head_spu->dispatch_table.WindowDestroy( window );
 }
+
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchWindowSize( GLint window, GLint width, GLint height )
+{
+  CRMuralInfo *mural;
+
+	mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
+	CRASSERT(mural);
+	mural->underlyingDisplay[2] = width;
+	mural->underlyingDisplay[3] = height;
+	crServerInitializeTiling(mural);
+
+	cr_server.head_spu->dispatch_table.WindowSize(window, width, height);
+}
