@@ -110,123 +110,15 @@ def FindSPUNames():
 
 #----------------------------------------------------------------------
 
-def ParseSPUOptionsLine(line):
-	"""Parse an SPU option line string and return a tuple:
-	(name, description, type, numValues, defaults, mins, maxs)
-	"""
-	space = '\s+'
-	optionPat = '^(option)'
-	namePat = '([a-z_]+)'
-	descPat = '"([^"]+)"'
-	typePat = '(BOOL|INT|FLOAT|STRING)'
-	numPat = '([0-9]+)'
-	arrayPat = '\[([^\]]*)\]'
-	remainderPat = '(.*)$'
-	pattern = optionPat + space + namePat + space + descPat + space + typePat + space + numPat + space + arrayPat + remainderPat
-	m = re.match(pattern, line)
-	if not m:
-		print "bad option pattern"
-		return 0
-	name = m.group(2)
-	descrip = m.group(3)
-	type = m.group(4)
-	num = int(m.group(5))
-	default = m.group(6)
-	remainder = m.group(7)
-	if type == "BOOL":
-		defaults = string.split(default, ' ')
-		for i in range(num):
-			defaults[i] = int(defaults[i])
-		mins = []
-		maxs = []
-	elif type == "INT":
-		# extract default values array
-		defaults = string.split(default, ' ')
-		for i in range(num):
-			defaults[i] = int(defaults[i])
-		# extract min values array
-		m = re.match(space + arrayPat + remainderPat, remainder)
-		if m:
-			mins = string.split(m.group(1), ' ')
-			for i in range(len(mins)):
-				mins[i] = int(mins[i])
-			remainder = m.group(2)
-			# extract max values array
-			m = re.match(space + arrayPat +remainderPat, remainder)
-			if m:
-				maxs = string.split(m.group(1), ' ')
-				for i in range(len(maxs)):
-					maxs[i] = int(maxs[i])
-			else:
-				maxs = []
-		else:
-			mins = []
-	elif type == "FLOAT":
-		# extract default values array
-		defaults = string.split(default, ' ')
-		for i in range(num):
-			defaults[i] = float(defaults[i])
-		# extract min values array
-		m = re.match(space + arrayPat + remainderPat, remainder)
-		if m:
-			mins = string.split(m.group(1), ' ')
-			for i in range(len(mins)):
-				mins[i] = float(mins[i])
-			remainder = m.group(2)
-			# extract max values array
-			m = re.match(space + arrayPat +remainderPat, remainder)
-			if m:
-				maxs = string.split(m.group(1), ' ')
-				for i in range(len(maxs)):
-					maxs[i] = float(maxs[i])
-			else:
-				maxs = []
-		else:
-			mins = []
-	else:
-		assert type == "STRING"
-		defaults = []
-		defaults.append(default)
-		mins = []
-		maxs = []
-	return (name, descrip, type, num, defaults, mins, maxs)
-
-def ParseSPUOptionsFile(fileHandle):
-	"""Parse an SPU options/parameters file and return a two-tuple of the
-	SPU parameters and options.  Each being a dictonary."""
-	params = {}
-	options = []
-	assert fileHandle
-	while 1:
-		line = fileHandle.readline()
-		if not line:
-			break
-		if re.match("^param", line):
-			m = re.match("^param\s(\S+)\s(\S+)", line)
-			if m:
-				param = m.group(1)
-				value = m.group(2)
-				params[param] = value
-			#print "match param %s is %s" % (param, value)
-		elif re.match("^option", line):
-			opt = ParseSPUOptionsLine(line)
-			if opt:
-				options.append(opt)
-			#print "match options = %s" % str(options)
-		else:
-			#print "unrecognized line: %s" % line
-			pass
-	#endwhile
-	return (params, options)
-
 def GetSPUOptions(spuName):
 	"""Use the spuoptions program to get the params/options for the SPU.
 	Same result returned as for ParseSPUOptionsFile() above."""
 	program = os.path.join(crconfig.crdir, 'bin', crconfig.arch, 'spuoptions')
-	command = '%s %s' % (program, spuName)
+	command = '%s --pythonmode %s' % (program, spuName)
 	f = os.popen(command, 'r')
 	if f:
-		result = ParseSPUOptionsFile(f)
+		s = f.read()
+		result = eval(s)
 		f.close()
 		return result
 	else:
