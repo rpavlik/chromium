@@ -1,3 +1,12 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+#
+# Authors:
+#   Brian Paul
+
+
 """The SPUDialog class builds a dialog with a set of options specified by
 the caller.  Options can be boolean, integer, float or string.
 """
@@ -17,6 +26,8 @@ class SPUDialog(wxDialog):
 		id_OK = 1
 		id_CANCEL = 2
 
+		self._Controls = {}
+
 		outerSizer = wxBoxSizer(wxVERTICAL)
 
 		box = wxStaticBox(parent=self, id=-1, label=title)
@@ -35,16 +46,21 @@ class SPUDialog(wxDialog):
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
 					label = wxStaticText(parent=self, id=-1, label=description)
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
-					ctrl = wxSpinCtrl(parent=self, id=100+i, value=str(default))
-					rowSizer.Add(ctrl)
+					for j in range(0, count):
+						ctrl = wxSpinCtrl(parent=self, id=100+i, value=str(default),
+										  max=2048)
+						rowSizer.Add(ctrl)
+						i += 1
 					innerSizer.Add(rowSizer, flag=wxALL, border=4)
 				elif type == "float":
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
 					labString = description + ": "
 					label = wxStaticText(parent=self, id=-1, label=labString)
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
-					ctrl = wxTextCtrl(parent=self, id=100+i, value=str(default))
-					rowSizer.Add(ctrl)
+					for j in range(0, count):
+						ctrl = wxTextCtrl(parent=self, id=100+i, value=str(default))
+						rowSizer.Add(ctrl)
+						i += 1
 					innerSizer.Add(rowSizer, flag=wxALL, border=4)
 				elif type == "string":
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
@@ -54,6 +70,11 @@ class SPUDialog(wxDialog):
 					ctrl = wxTextCtrl(parent=self, id=100+i, value=default)
 					rowSizer.Add(ctrl, option=1, flag=wxEXPAND)
 					innerSizer.Add(rowSizer, flag=wxALL|wxEXPAND, border=4)
+
+				# Save this option
+				value = default
+				self._Controls[name] = ctrl
+
 				i += 1
 
 		# XXX still need to write the callbacks for each control
@@ -64,8 +85,8 @@ class SPUDialog(wxDialog):
 		self.CancelButton = wxButton(parent=self, id=id_CANCEL, label="Cancel")
 		rowSizer.Add(self.CancelButton, option=0, flag=wxALIGN_CENTER, border=10)
 		outerSizer.Add(rowSizer, option=0, flag=wxGROW|wxBOTTOM, border=10)
-		EVT_BUTTON(self.OkButton, id_OK, self.onOK)
-		EVT_BUTTON(self.CancelButton, id_CANCEL, self.onCancel)
+		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
+		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
 
 		min = outerSizer.GetMinSize()
 		min[0] = 500
@@ -74,9 +95,39 @@ class SPUDialog(wxDialog):
 		self.SetSizeHints(minW=min[0], minH=min[1])
 		self.SetSize(min)
 
-
-	def onOK(self, event):
+	def _onOK(self, event):
+		"""Called by OK button"""
 		self.EndModal(1)
 
-	def onCancel(self, event):
+	def _onCancel(self, event):
+		"""Called by Cancel button"""
 		self.EndModal(0)
+
+	# name is an SPU option like bbox_line_width
+	def SetValue(self, name, newValue):
+		"""Set a control's value"""
+		assert name in self._Controls
+		ctrl = self._Controls[name]
+		ctrl.SetValue(newValue)
+
+	# name is an SPU option like bbox_line_width
+	def GetValue(self, name):
+		"""Return current value of the named control"""
+		assert name in self._Controls
+		ctrl = self._Controls[name]
+		return ctrl.GetValue()
+
+	# Override the wxDialog.ShowModal() method
+	def ShowModal(self):
+		"""Display dialog and return 0 for cancel, 1 for OK."""
+		# Save starting values
+		values = {}
+		for name in self._Controls:
+			values[name] = self._Controls[name].GetValue()
+		# Show the dialog
+		retVal = wxDialog.ShowModal(self)
+		if retVal == 0:
+			# Cancelled, restore original values
+			for name in values:
+				self._Controls[name].SetValue(values[name])
+		return retVal
