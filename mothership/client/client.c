@@ -9,15 +9,14 @@
 
 #define MOTHERPORT 10000
 
-CRConnection *crMothershipConnect( char *server )
+CRConnection *crMothershipConnect( void )
 {
-	char *mother_server = server;
+	char *mother_server = NULL;
 	int   mother_port = MOTHERPORT;
 	CRConnection *conn;
 	char mother_url[1024];
 
-	if (!mother_server)
-		mother_server = getenv( "CRMOTHERSHIP" );
+	mother_server = getenv( "CRMOTHERSHIP" );
 	if (!mother_server)
 	{
 		crWarning( "Couldn't find the CRMOTHERSHIP environment variable, defaulting to localhost" );

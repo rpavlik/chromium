@@ -31,7 +31,7 @@ void StubInit(void)
 	stub_initialized = 1;
 	
 	crNetInit( NULL, NULL );
-	conn = crMothershipConnect( NULL );
+	conn = crMothershipConnect( );
 	if (crGetHostname( hostname, sizeof( hostname ) ) )
 	{
 		crError( "Couldn't get my own hostname in the OpenGL DLL!" );
@@ -82,13 +82,13 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD fdwReason, LPVOID lpvReserved )
 	{
 		//__stubInit();
 		//DebugBreak();
-		printf ("!!!!!!!!!!!!!!!!!Process attach!\n");
+		//printf ("!!!!!!!!!!!!!!!!!Process attach!\n");
 	}
 	if (fdwReason == DLL_THREAD_ATTACH)
 	{
 		//__stubInit();
 		//DebugBreak();
-		printf ("!!!!!!!!!!!!!!!!!Thread attach!\n");
+		//printf ("!!!!!!!!!!!!!!!!!Thread attach!\n");
 	}
 	return TRUE;
 }

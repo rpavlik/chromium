@@ -17,6 +17,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <process.h>
+#include <direct.h>
 #else
 #include <unistd.h>
 #include <sys/types.h>
@@ -678,27 +679,32 @@ int main( int argc, char **argv )
 		// ask what I should do.
 	
 		CRConnection *conn;
-		char query[1024];
 		char hostname[1024];
 		char response[1024];
 		int num_args = 1;
 		int args_allocated = 1;
 
 		crNetInit( NULL, NULL );
-		conn = crMothershipConnect( mothership );
+		if (mothership)
+			xsetenv( "MOTHERSHIP", mothership );
+		conn = crMothershipConnect( );
 	
 		if ( crGetHostname( hostname, sizeof(hostname) ) )
 		{
 			crError( "Couldn't get my own hostname?" );
 		}
-		sprintf( query, "faker %s", hostname );
-		if (!crMothershipSendString( conn, response, query ))
+		if (!crMothershipSendString( conn, response, "faker %s", hostname ))
 		{
 			crError ("Bad mothership response: %s", response );
 		}
-		else
+		faked_argv = crStrSplit( response, " " );
+		if (!crMothershipSendString( conn, response, "startdir" ))
 		{
-			faked_argv = crStrSplit( response, " " );
+			crError( "Bad mothership response: %s", response );
+		}
+		if (chdir( response ))
+		{
+			crError( "Couldn't change to the starting directory: %s", response );
 		}
 		crMothershipDisconnect( conn );
 	}
@@ -718,6 +724,8 @@ int main( int argc, char **argv )
 		xsetenv( "DISPLAY", ":0.0" );
 	}
 
+	// This will let SPUS do things differently if they want.
+	xsetenv( "__CR_LAUNCHED_FROM_APP_FAKER", "yes" );
 	do_it( faked_argv );
 
 	return 0;

@@ -552,7 +552,7 @@ void crTCPIPDoConnect( CRConnection *conn )
 
 	memset( &servaddr, 0, sizeof(servaddr) );
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons( conn->port );
+	servaddr.sin_port = htons( (short) conn->port );
 
 	memcpy( (char *) &servaddr.sin_addr, hp->h_addr,
 			sizeof(servaddr.sin_addr) );

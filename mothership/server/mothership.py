@@ -40,6 +40,9 @@ class CRApplicationNode(CRNode):
 	def SetApplication( self, app ):
 		self.application = app
 
+	def StartDir( self, dir ):
+		self.startdir = dir
+
 class SockWrapper:
 	NOERROR = 200
 	UNKNOWNHOST = 400
@@ -52,6 +55,7 @@ class SockWrapper:
 		self.sock = sock
 		self.file = sock.makefile( "r" )
 		self.SPUid = -1
+		self.node = None
 
 	def readline( self ):
 		return self.file.readline()
@@ -110,6 +114,7 @@ class CR:
 			if node.host == args and not node.spokenfor:
 				if isinstance(node,CRApplicationNode):
 					node.spokenfor = 1
+					sock.node = node
 					sock.Success( node.application )
 					return
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
@@ -126,7 +131,7 @@ class CR:
 
 	def do_opengldll( self, sock, args ):
 		for node in self.nodes:
-			if node.host == args and node.spokenfor and not node.spusloaded:
+			if node.host == args and not node.spusloaded:
 				if isinstance(node,CRApplicationNode):
 					spuchain = "%d" % len(node.SPUs)
 					for spu in node.SPUs:
@@ -162,6 +167,14 @@ class CR:
 	def do_quit( self, sock, args ):
 		sock.Success( "Bye" )
 		self.ClientDisconnect( sock )
+
+	def do_startdir( self, sock, args ):
+		if not sock.node:
+			self.ClientError( sock_wrapper, SockWrapper.UNKNOWNHOST, "Can't ask me where to start until you tell me who you are." )
+		if not hasattr( sock.node, "startdir" ):
+			sock.Success( "." )
+		else:
+			sock.Success( sock.node.startdir )
 
 	def ProcessRequest( self, sock_wrapper ):
 		try:

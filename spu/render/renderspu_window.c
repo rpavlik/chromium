@@ -697,18 +697,38 @@ bSetupPixelFormat( HDC hdc )
 	//  Commented out by Ian.
 	//pfd.cColorBits = GetDeviceCaps(hdc,BITSPIXEL);
 	ppfd = &pfd;
-	pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
-	/* doing this twice is normal Win32 magic */
-	pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
-	if ( pixelformat == 0 ) 
+
+	// calling the wgl functions directly if the SPU was loaded by the
+	// application (i.e., if the app didn't create a window and get
+	// faked out) seems to not work.
+	if (getenv( "__CR_LAUNCHED_FROM_APP_FAKER" ) != NULL)
 	{
-		MessageBox( NULL, "render_spu.wglChoosePixelFormat failed", "Error", MB_OK ); 
-		return FALSE; 
+		pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
+		/* doing this twice is normal Win32 magic */
+		pixelformat = render_spu.wglChoosePixelFormat( hdc, ppfd );
+		if ( pixelformat == 0 ) 
+		{
+			crError( "render_spu.wglChoosePixelFormat failed" );
+		}
+		if ( !render_spu.wglSetPixelFormat( hdc, pixelformat, ppfd ) ) 
+		{
+			crError( "render_spu.wglSetPixelFormat failed" );
+		}
 	}
-	if ( !render_spu.wglSetPixelFormat( hdc, pixelformat, ppfd ) ) 
+	else
 	{
-		MessageBox( NULL, "render_spu.wglSetPixelFormat failed", "Error", MB_OK ); 
-		return FALSE;
+		// Okay, we were loaded manually.  Call the GDI functions.
+		pixelformat = ChoosePixelFormat( hdc, ppfd );
+		/* doing this twice is normal Win32 magic */
+		pixelformat = ChoosePixelFormat( hdc, ppfd );
+		if ( pixelformat == 0 ) 
+		{
+			crError( "ChoosePixelFormat failed" );
+		}
+		if ( !SetPixelFormat( hdc, pixelformat, ppfd ) ) 
+		{
+			crError( "SetPixelFormat failed" );
+		}
 	}
 
 	return TRUE;
