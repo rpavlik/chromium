@@ -17,9 +17,10 @@ void TILESORTSPU_APIENTRY tilesortspu_Rectf (GLfloat x1, GLfloat y1, GLfloat x2,
 			crError( "tilesortspu_Rect?? called in Begin/End");
 	}
 
-	tilesortspuFlush( thread );
-
 	crStateFlushFunc( tilesortspuFlush_callback );
+
+#if 1
+	/* the usual implementation */
 	if (tilesort_spu.swap)
 	{
 		crPackRectfSWAP (x1, y1, x2, y2);
@@ -41,6 +42,15 @@ void TILESORTSPU_APIENTRY tilesortspu_Rectf (GLfloat x1, GLfloat y1, GLfloat x2,
 
 	if (thread->packer->bounds_min.z > 0.0f) thread->packer->bounds_min.z = 0.0f;
 	if (thread->packer->bounds_max.z < 0.0f) thread->packer->bounds_max.z = 0.0f;
+#else
+	/* render as polygon */
+	tilesortspu_Begin(GL_POLYGON);
+	crPackVertex2fBBOX_COUNT(x1, y1);
+	crPackVertex2fBBOX_COUNT(x2, y1);
+	crPackVertex2fBBOX_COUNT(x2, y2);
+	crPackVertex2fBBOX_COUNT(x1, y2);
+	tilesortspu_End();
+#endif
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Rectfv (const GLfloat *v1, const GLfloat *v2) 
