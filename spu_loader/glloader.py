@@ -125,11 +125,13 @@ __findSystemLib( const char *provided_system_path, char *lib )
 		 * lives in /usr/lib.   We'll use the /usr/lib/tls/
 		 * version if it exists; otherwise, we'll use /usr/lib.
 		 */
-		if (FileExists("/usr/lib/tls", lib)) {
-		    crStrcpy( system_path, "/usr/lib/tls" ); 
+		crStrcpy(system_path, "/usr/lib");
+		if (sizeof(void *) == 8) {
+			crStrcat(system_path, "64");
 		}
-		else {
-		    crStrcpy( system_path, "/usr/lib" ); 
+		if (FileExists("/usr/lib/tls", lib) ||
+		    FileExists("/usr/lib64/tls", lib)) {
+			crStrcat(system_path, "/tls");
 		}
 #endif
 	}
