@@ -177,10 +177,10 @@ int getClippedWindow(int *xstart, int* ystart,int* xend, int* yend )
     return 0;
   }
   binaryswap_spu.super.GetFloatv( GL_VIEWPORT, viewport );
-  (*xstart) = (x1+1.0f)*(viewport[2] / 2.0f) + viewport[0];
-  (*ystart) = (y1+1.0f)*(viewport[3] / 2.0f) + viewport[1];
-  (*xend)   = (x2+1.0f)*(viewport[2] / 2.0f) + viewport[0];
-  (*yend)   = (y2+1.0f)*(viewport[3] / 2.0f) + viewport[1];
+  (*xstart) = (int)((x1+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
+  (*ystart) = (int)((y1+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
+  (*xend)   = (int)((x2+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
+  (*yend)   = (int)((y2+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
   
   binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, window_dim );
   win_width  = window_dim[2];
@@ -254,7 +254,8 @@ static void DoFlush( WindowInfo *window )
   float other_depth;
   int draw_x = 0, draw_y = 0;
   int draw_width = 0, draw_height = 0;
-  int start_clipped_x, start_clipped_y, end_clipped_x, end_clipped_y;
+  int start_clipped_x = 0, start_clipped_y = 0;
+  int end_clipped_x = 0, end_clipped_y = 0;
   int read_start_x, read_start_y, read_width, read_height;
   GLubyte* incoming_color;
   GLfloat* incoming_depth;
