@@ -74,7 +74,8 @@ viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 SPUNamedFunctionTable saveframe_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) swapBuffers },
-	{ "Viewport", (SPUGenericFunction) viewport }
+	{ "Viewport", (SPUGenericFunction) viewport },
+	{ NULL, NULL }
 };
 
 void
