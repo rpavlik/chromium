@@ -441,6 +441,5 @@ for func_name in ( "wglChoosePixelFormat",
 print """crCreateContext
 crMakeCurrent
 crSwapBuffers
-crGetProcAddress
-crInitDispatchInfo"""
+crGetProcAddress"""
 #print "DllMain"

@@ -82,7 +82,7 @@ def GenerateEntrypoints():
 		if "stub" in apiutil.ChromiumProps(func_name):
 			return_type = apiutil.ReturnType(func_name)
 			params = apiutil.Parameters(func_name)
-			print "GLAPI %s APIENTRY gl%s( %s )" % (return_type, func_name, apiutil.MakeDeclarationString(params))
+			print "NAKED %s cr_gl%s( %s )" % (return_type, func_name, apiutil.MakeDeclarationString(params))
 			print "{"
 			if return_type != "void":
 				print "return (%s) 0" % return_type

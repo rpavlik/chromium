@@ -22,7 +22,27 @@ print """
 #pragma warning( disable: 4055 )
 #endif
 
+"""
 
+
+# Extern-like declarations
+keys = apiutil.GetAllFunctions("../glapi_parser/APIspec.txt")
+for func_name in keys:
+	if "Chromium" == apiutil.Category(func_name):
+		continue
+	if func_name == "BoundsInfoCR":
+		continue
+	if "GL_chromium" == apiutil.Category(func_name):
+		pass #continue
+
+	return_type = apiutil.ReturnType(func_name)
+	params = apiutil.Parameters(func_name)
+
+	print "%s cr_gl%s( %s );" % (return_type, func_name,
+								  apiutil.MakeDeclarationString( params ))
+
+
+print """
 struct name_address {
   const char *name;
   CR_PROC address;
@@ -30,8 +50,6 @@ struct name_address {
 
 static struct name_address functions[] = {
 """
-
-
 
 
 keys = apiutil.GetAllFunctions("../glapi_parser/APIspec.txt")
@@ -45,7 +63,7 @@ for func_name in keys:
 
 	wrap = apiutil.GetCategoryWrapper(func_name)
 	name = "gl" + func_name
-	address = "gl" + func_name
+	address = "cr_gl" + func_name
 	if wrap:
 		print '#ifdef CR_%s' % wrap
 	print '\t{ "%s", (CR_PROC) %s },' % (name, address)
