@@ -462,32 +462,32 @@ endif
 $(DEPDIR)/%.depend: %.cpp
 	@$(MAKE_DEPDIR)
 	@$(ECHO) "Rebuilding dependencies for $<"
-	@$(PERL) $(TOP)/scripts/fastdep.pl $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
+	@$(PYTHON) $(TOP)/scripts/fastdep.py $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
 
 $(DEPDIR)/%.depend: %.cxx
 	@$(MAKE_DEPDIR)
 	@$(ECHO) "Rebuilding dependencies for $<"
-	@$(PERL) $(TOP)/scripts/fastdep.pl $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
+	@$(PYTHON) $(TOP)/scripts/fastdep.py $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
 
 $(DEPDIR)/%.depend: %.cc
 	@$(MAKE_DEPDIR)
 	@$(ECHO) "Rebuilding dependencies for $<"
-	@$(PERL) $(TOP)/scripts/fastdep.pl $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
+	@$(PYTHON) $(TOP)/scripts/fastdep.py $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
 
 $(DEPDIR)/%.depend: %.C
 	@$(MAKE_DEPDIR)
 	@$(ECHO) "Rebuilding dependencies for $<"
-	@$(PERL) $(TOP)/scripts/fastdep.pl $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
+	@$(PYTHON) $(TOP)/scripts/fastdep.py $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
 
 $(DEPDIR)/%.depend: %.c
 	@$(MAKE_DEPDIR)
 	@$(ECHO) "Rebuilding dependencies for $<"
-	@$(PERL) $(TOP)/scripts/fastdep.pl $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
+	@$(PYTHON) $(TOP)/scripts/fastdep.py $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
 
 $(DEPDIR)/%.depend: %.s
 	@$(MAKE_DEPDIR)
 	@$(ECHO) "Rebuilding dependencies for $<"
-	@$(PERL) $(TOP)/scripts/fastdep.pl $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
+	@$(PYTHON) $(TOP)/scripts/fastdep.py $(INCLUDE_DIRS) --obj-prefix='$(OBJDIR)/' --extra-target=$@ $< > $@
 
 $(OBJDIR)/%.obj: %.cpp Makefile
 	@$(ECHO) -n "Compiling "
