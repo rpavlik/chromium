@@ -1068,9 +1068,9 @@ void  STATE_APIENTRY crStateGetClipPlane (GLenum plane, GLdouble *equation)
 	}
 
 	equation[0] = t->clipPlane[i].x;
-	equation[1] = t->clipPlane[i].x;
-	equation[2] = t->clipPlane[i].x;
-	equation[3] = t->clipPlane[i].x;
+	equation[1] = t->clipPlane[i].y;
+	equation[2] = t->clipPlane[i].z;
+	equation[3] = t->clipPlane[i].w;
 }
 
 void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID, 
