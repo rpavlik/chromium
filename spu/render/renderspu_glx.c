@@ -1049,30 +1049,33 @@ createPBuffer( VisualInfo *visual, WindowInfo *window )
 
 	CRASSERT(visual->fbconfig);
 
-#if SEPIA3
-	if (render_spu.sepiaPam)
 	{
-		window->window = SepiaCreateDrawable(render_spu.sepiaPam, visual->dpy,
-																				 DefaultScreen(visual->dpy),
-																				 visual->fbconfig,
-																				 window->width, window->height,
-																				 visual->sepiaBuffers);
-		crDebug("Render SPU: SepiaCreateDrawable returned %d",
-						(int) window->window);
-	}
-	else
-#endif /* SEPIA3 */
-	{
-		int attribs[100], i = 0;
+		int attribs[100], i = 0, w, h;
+		if (render_spu.pbufferWidth == 0 && render_spu.pbufferHeight == 0) {
+			/* allocate the exact requested size */
+			w = window->width;
+			h = window->height;
+		}
+		else {
+			/* allocate fixed size specified by 'pbuffer_size' */
+			w = render_spu.pbufferWidth;
+			h = render_spu.pbufferHeight;
+		}
 		attribs[i++] = GLX_PRESERVED_CONTENTS;
 		attribs[i++] = True;
 		attribs[i++] = GLX_PBUFFER_WIDTH;
-		attribs[i++] = window->width;
+		attribs[i++] = w;
 		attribs[i++] = GLX_PBUFFER_HEIGHT;
-		attribs[i++] = window->height;
+		attribs[i++] = h;
 		attribs[i++] = 0; /* terminator */
 		window->window = render_spu.ws.glXCreatePbuffer(visual->dpy,
 																										visual->fbconfig, attribs);
+		if (window->window) {
+			crDebug("Render SPU: Allocated %d x %d pbuffer", w, h);
+		}
+		else {
+			crWarning("Render SPU: Failed to allocate %d x %d pbuffer", w, h);
+		}
 	}
 	if (window->window) {
 		return GL_TRUE;
@@ -1378,7 +1381,19 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 	CRASSERT(window->visual);
 	if (window->visual->visAttribs & CR_PBUFFER_BIT)
 	{
-		if (window->width != w || window->height != h) {
+		/* resizing a pbuffer */
+		if (render_spu.pbufferWidth != 0 || render_spu.pbufferHeight != 0) {
+			/* we're configured to use a fixed size pbuffer */
+			if (w > render_spu.pbufferWidth != 0 ||
+					h > render_spu.pbufferHeight != 0) {
+				crWarning("Render SPU: Request for %d x %d pbuffer is larger than "
+									"the configured size of %d x %d. ('pbuffer_size')",
+									w, h, render_spu.pbufferWidth, render_spu.pbufferHeight);
+				return;
+			}
+		}
+		else if (window->width != w || window->height != h) {
+			/* Only resize if the new dimensions really are different */
 #ifdef CHROMIUM_THREADSAFE
 			ContextInfo *currentContext = (ContextInfo *) crGetTSD(&_RenderTSD);
 #else
@@ -1405,7 +1420,8 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 	{
 		/*
 		 * This is ugly, but it seems to be the only thing that works.
-		 * Basically, XResizeWindow() doesn't seem to always take effect immediately.
+		 * Basically, XResizeWindow() doesn't seem to always take effect
+		 * immediately.
 		 * Even after an XSync(), the GetWindowAttributes() call will sometimes
 		 * return the old window size.  So, we use a loop to repeat the window
 		 * resize until it seems to take effect.

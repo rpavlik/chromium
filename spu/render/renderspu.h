@@ -138,6 +138,7 @@ typedef struct {
 	int nvSwapGroup;
 	int ignore_papi;
 	int ignore_window_moves;
+	int pbufferWidth, pbufferHeight;
 	/*@}*/
 
 	CRServer *server;

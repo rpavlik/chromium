@@ -212,6 +212,13 @@ static void set_ignore_window_moves( RenderSPU *render_spu, char *response )
 	render_spu->ignore_window_moves = crStrToInt( response );
 }
 
+static void set_pbuffer_size( RenderSPU *render_spu, const char *response )
+{
+	CRASSERT(response[0] == '[');
+	sscanf( response, "[ %d, %d ]",
+					&render_spu->pbufferWidth, &render_spu->pbufferHeight);
+}
+
 
 /* option, type, nr, default, min, max, title, callback
  */
@@ -289,6 +296,9 @@ SPUOptions renderSPUOptions[] = {
 
 	{ "ignore_window_moves", CR_BOOL, 1, "0", NULL, NULL,
 		"Ignore crWindowPosition calls", (SPUOptionCB) set_ignore_window_moves },
+
+	{ "pbuffer_size", CR_INT, 2, "[0, 0]", "[0, 0]", NULL,
+		"Fixed PBuffer Size", (SPUOptionCB) set_pbuffer_size },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
