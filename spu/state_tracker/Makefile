@@ -77,7 +77,7 @@ state_client_gen.c: state_client.txt gendiffcode.pl
 	@$(ECHO) Making $@
 	@$(PERL) gendiffcode.pl Client > $@
 
-state_current_gen.c: state_current.py
+state_current_gen.c: state_current.py convert.py
 	@$(ECHO) Making $@
 	@$(PYTHON) state_current.py > $@
 

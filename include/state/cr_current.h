@@ -22,9 +22,9 @@ typedef struct {
 typedef struct {
 	GLvectorf	pos;
 	GLcolorf	color;
-	GLtexcoordf	texcoord;
+	GLtexcoordf	texCoord;
 	GLvectorf	normal;
-	GLboolean	edgeflag;
+	GLboolean	edgeFlag;
 	GLfloat		index;
 } CRVertex;
 
@@ -57,15 +57,10 @@ typedef struct {
 
 	GLboolean    inBeginEnd;
 	GLenum       mode;
-	GLboolean    isLoop;
-
 	GLuint       beginEndMax;
 	GLuint       beginEndNum;
 	GLuint       flushOnEnd;
 
-	GLint        numRestore;
-	GLint        wind;
-	CRVertex     vtx[3];
 } CRCurrentState;
 
 void crStateCurrentInit( CRCurrentState *current );

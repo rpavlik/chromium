@@ -72,6 +72,31 @@ for num_coords in [2,3,4]:
 		print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name )
 		print '}\n'
 
+		print 'void PACK_APIENTRY %sBBOX_COUNT' % stub_common.PackFunction( func_name ),
+		print stub_common.ArgumentString( arg_names, arg_types )
+		print '{'
+		packet_length = stub_common.PacketLength( arg_types )
+
+		print "\tunsigned char *data_ptr;"
+		if arg_types[0] != 'GLfloat':
+			print "\tCREATE_%dD_FLOATS();" % num_coords
+
+		print "\tGET_BUFFERED_COUNT_POINTER( %d );" % packet_length
+		print "\tif (cr_packer_globals.updateBBOX)"
+		print "\t{"
+		if num_coords < 4:
+			print "\t\tUPDATE_%dD_BBOX();" % num_coords
+		else:
+			print "\t\tUPDATE_3D_BBOX();"
+		print "\t}"
+
+		counter = 0
+		for index in range(0,len(arg_names)):
+			print WriteData( counter, arg_types[index], arg_names[index] )
+			counter += stub_common.lengths[arg_types[index]]
+		print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name )
+		print '}\n'
+
 		func_name = 'Vertex%d%sv' % (num_coords,argtype)
 		( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 		vector_type = re.sub( r'\*', '', arg_types[0] )
@@ -79,6 +104,33 @@ for num_coords in [2,3,4]:
 		vector_type = string.strip(vector_type)
 
 		print 'void PACK_APIENTRY %sBBOX' % stub_common.PackFunction( func_name ),
+		print stub_common.ArgumentString( arg_names, arg_types )
+		print '{'
+		packet_length = num_coords * stub_common.lengths[vector_type]
+		if packet_length % 4 != 0:
+			packet_length += 2
+
+		print "\tunsigned char *data_ptr;"
+		if arg_types[0] != 'GLfloat':
+			print "\tCREATE_%dD_VFLOATS();" % num_coords
+
+		print "\tGET_BUFFERED_POINTER( %d );" % packet_length
+		print "\tif (cr_packer_globals.updateBBOX)"
+		print "\t{"
+		if num_coords < 4:
+			print "\t\tUPDATE_%dD_BBOX();" % num_coords
+		else:
+			print "\t\tUPDATE_3D_BBOX();"
+		print "\t}"
+
+		counter = 0
+		for index in range(num_coords):
+			print WriteData( counter, vector_type, "%s[%d]" % (arg_names[0], index) )
+			counter += stub_common.lengths[vector_type]
+		print "\tWRITE_OPCODE( %s );" % stub_common.OpcodeName( func_name[:-1] )
+		print '}\n'
+
+		print 'void PACK_APIENTRY %sBBOX_COUNT' % stub_common.PackFunction( func_name ),
 		print stub_common.ArgumentString( arg_names, arg_types )
 		print '{'
 		packet_length = num_coords * stub_common.lengths[vector_type]

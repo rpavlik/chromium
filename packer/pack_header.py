@@ -55,5 +55,6 @@ for n in [2,3,4]:
 			func_name = 'Vertex%d%s%s' % (n,t,v)
 			( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 			print 'void PACK_APIENTRY crPack%sBBOX%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+			print 'void PACK_APIENTRY crPack%sBBOX_COUNT%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 
 print '\n#endif /* CR_PACKFUNCTIONS_H */'

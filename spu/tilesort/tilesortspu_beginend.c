@@ -6,9 +6,15 @@
 void TILESORTSPU_APIENTRY tilesortspu_Begin( GLenum mode )
 {
 	CRTransformState *t = &(tilesort_spu.ctx->transform);
+	CRCurrentState *c = &(tilesort_spu.ctx->current);
 	// We have to set this every time because a flush from
 	// the state tracker will turn off its flusher.
 	
+	tilesort_spu.pinchState.beginOp = cr_packer_globals.buffer.opcode_current;
+	tilesort_spu.pinchState.beginData = cr_packer_globals.buffer.data_current;
+	tilesort_spu.pinchState.wind = 0;
+	tilesort_spu.pinchState.isLoop = 0;
+
 	crStateFlushFunc( tilesortspuFlush );
 	crPackBegin( mode );
 	crStateBegin( mode );
@@ -19,10 +25,21 @@ void TILESORTSPU_APIENTRY tilesortspu_Begin( GLenum mode )
 		// computed, since we're going to need it.
 		crStateTransformUpdateTransform( t );
 	}
+	c->current->vtx_count_begin = c->current->vtx_count;
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_End( void )
 {
+	if (tilesort_spu.pinchState.isLoop)
+	{
+		crPackTexCoord4fv ((GLfloat *) &(tilesort_spu.pinchState.vtx->texCoord.s));
+		crPackNormal3fv((GLfloat *) &(tilesort_spu.pinchState.vtx->normal.x));
+		crPackEdgeFlag(tilesort_spu.pinchState.vtx->edgeFlag);
+		crPackColor4fv((GLfloat *) &(tilesort_spu.pinchState.vtx->color.r));
+		crPackVertex4fvBBOX_COUNT((GLfloat *) &(tilesort_spu.pinchState.vtx->pos.x));
+
+		tilesort_spu.pinchState.isLoop = 0;
+	}
 	crPackEnd();
 	crStateEnd();
 }

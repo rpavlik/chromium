@@ -76,6 +76,17 @@ void crNetworkPointerWrite( CRNetworkPointer *, void * );
   } \
   cr_packer_globals.buffer.data_current += (len)
 
+#define GET_BUFFERED_COUNT_POINTER( len ) \
+  data_ptr = cr_packer_globals.buffer.data_current; \
+  if (data_ptr + (len) > cr_packer_globals.buffer.data_end ) \
+  { \
+    cr_packer_globals.Flush( cr_packer_globals.flush_arg ); \
+    data_ptr = cr_packer_globals.buffer.data_current; \
+    CRASSERT( data_ptr + (len) <= cr_packer_globals.buffer.data_end ); \
+  } \
+	cr_packer_globals.current.vtx_count++; \
+  cr_packer_globals.buffer.data_current += (len)
+
 #define GET_BUFFERED_POINTER_NO_ARGS( ) \
   GET_BUFFERED_POINTER( 4 );  \
   WRITE_DATA( 0, GLuint, 0xdeadbeef )

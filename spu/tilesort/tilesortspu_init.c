@@ -56,6 +56,11 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	crStateFlushArg( tilesort_spu.ctx );
 	tilesortspuCreateDiffAPI();
 	crStateSetCurrentPointers( tilesort_spu.ctx, &(cr_packer_globals.current) );
+	tilesort_spu.ctx->current.current->vtx_count = 0;
+
+	tilesort_spu.pinchState.numRestore = 0;
+	tilesort_spu.pinchState.wind = 0;
+	tilesort_spu.pinchState.isLoop = 0;
 
 	for (i = 0 ; i < tilesort_spu.num_servers; i++)
 	{

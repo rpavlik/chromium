@@ -8,6 +8,7 @@ DEBUGFLAGS = -g
 RELEASEFLAGS = -O2 -DNDEBUG
 PROFILEFLAGS = -pg -a
 
+CAT=cat
 LEX = flex -t
 LEXLIB = -ll
 YACC = bison -y -d

@@ -31,11 +31,20 @@ typedef struct {
 } TileSortSPUServer;
 
 typedef struct {
+	GLboolean    isLoop;
+	GLint        numRestore;
+	GLint        wind;
+	CRVertex     vtx[3];
+	unsigned char *beginOp, *beginData;
+} TileSortSPUPinchState;
+
+typedef struct {
 	int id;
 
 	int geom_pack_size;
 	CRPackBuffer geometry_pack;
 	CRContext *ctx;
+	TileSortSPUPinchState pinchState;
 
 	int sendBounds;
 	int splitBeginEnd;
@@ -89,6 +98,8 @@ void tilesortspuShipBuffers( void );
 void tilesortspuCreateDiffAPI( void );
 void tilesortspuSetBucketingBounds( int x, int y, unsigned int w, unsigned int h );
 void tilesortspuBucketingInit( void );
+void tilesortspuPinch( void );
+void tilesortspuPinchRestoreTriangle( void );
 
 void tilesortspuDebugOpcodes( CRPackBuffer *pack );
 

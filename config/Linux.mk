@@ -7,6 +7,7 @@ CFLAGS += -DLINUX -Wall -Werror
 DEBUGFLAGS = -g
 RELEASEFLAGS = -g -O3 -DNDEBUG
 PROFILEFLAGS = -pg -a
+CAT=cat
 
 AS = as
 LEX = flex -t

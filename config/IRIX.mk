@@ -9,6 +9,7 @@ FULLWARN = -fullwarn
 DEBUGFLAGS = -g
 RELEASEFLAGS = -O2 -DNDEBUG
 PROFILEFLAGS = -pg -a
+CAT=cat
 
 LDFLAGS += -n32 -lm
 LEX = flex -t

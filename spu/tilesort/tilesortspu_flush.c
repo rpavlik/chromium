@@ -312,6 +312,13 @@ static void __doFlush( CRContext *ctx, int broadcast )
 
 	crStateCurrentRecover( );
 
+	// At this point, we invoke the "pincher", which will check if
+	// the current buffer needs to be stopped mid-triangle (or whatever),
+	// and tuck away the appropriate state so that the triangle can be
+	// re-started once this flush is done.
+
+	tilesortspuPinch();
+
 	// If GL_COLOR_MATERIAL is enabled, we need to copy the color values
 	// into the state element for materials so that Gets will work and so
 	// that the material will get sent down.
@@ -445,7 +452,7 @@ static void __doFlush( CRContext *ctx, int broadcast )
 	//crDebug( "Setting all the Current pointers to NULL" );
 	crPackNullCurrentPointers();
 
-	// crError( "Here is where I would do pinching and whatever else goes in __glEndFlush()" );
+	tilesortspuPinchRestoreTriangle();
 }
 
 void tilesortspuBroadcastGeom( void )

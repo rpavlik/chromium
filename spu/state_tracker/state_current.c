@@ -14,10 +14,6 @@ void crStateCurrentInit( CRCurrentState *c )
 	c->normal	= zero_vector;
 	c->normal.z = 1.0f;
 
-	c->numRestore = 0;
-	c->wind = 0;
-	c->isLoop = 0;
-
 	c->rasterPos.x = 0.0f;
 	c->rasterPos.y = 0.0f;
 	c->rasterPos.z = 0.0f;
@@ -70,9 +66,6 @@ void STATE_APIENTRY crStateBegin( GLenum mode )
 		return;
 	}
 
-	c->current->vtx_count_begin = c->current->vtx_count;
-	c->wind = 0;
-	c->isLoop = 0;
 	c->inBeginEnd = GL_TRUE;
 	c->mode = mode;
 	c->beginEndNum++;
@@ -89,11 +82,6 @@ void STATE_APIENTRY crStateEnd( void )
 		return;
 	}
 
-	if (c->isLoop)
-	{
-		crError( "Loop?" );
-		c->isLoop = 0;
-	}
 
 	c->inBeginEnd = GL_FALSE;
 }
