@@ -9,7 +9,6 @@
 #include "cr_bufpool.h"
 #include <limits.h>
 
-
 /*
  * New (version 1.4) buffer pool implementation.
  *
@@ -98,6 +97,16 @@ crBufferPoolPush( CRBufferPool *pool, void *buf, unsigned int bytes )
 {
 	Buffer *b = crCalloc(sizeof(Buffer));
 	if (b) {
+#ifndef NDEBUG
+		/* check that the buffer to push isn't already in the pool! */
+		{
+			const Buffer *b;
+			for (b = pool->head; b; b = b->next) {
+				CRASSERT(b->address != buf);
+			}
+		}
+#endif
+
 		b->address = buf;
 		b->size = bytes;
 		b->next = pool->head;
@@ -117,6 +126,7 @@ crBufferPoolPop( CRBufferPool *pool, unsigned int bytes )
 	maybe_use = NULL;
 	for (b = pool->head, i=0; i<pool->numBuffers; b = b->next, i++) {
 		if (b->size == bytes) {
+			/* we found an exact size match! */
 			void *p = b->address;
 			if (prev) {
 				prev->next = b->next;
@@ -128,24 +138,28 @@ crBufferPoolPop( CRBufferPool *pool, unsigned int bytes )
 			pool->numBuffers--;
 			return p;
 		}
-		else if(b->size >= bytes){
+		else if (b->size >= bytes){
+			/* We found a buffer that's large enough, but keep looking
+			 * for a smaller one that's large enough.
+			 */
 			if (b->size < next_smallest){
-			     maybe_use = b;
+				maybe_use = b;
 			}
 		}
 		prev = b;
 	}
-	if(maybe_use != NULL){
-	     void *p = maybe_use->address;
-	     if (prev) {
+	/* we found the smallest buffer whose size is > bytes */
+	if (maybe_use != NULL){
+		void *p = maybe_use->address;
+		if (prev) {
 		  prev->next = maybe_use->next;
-	     }
-	     else {
+		}
+		else {
 		  pool->head = maybe_use->next;
-	     }
-	     crFree(maybe_use);
-	     pool->numBuffers--;
-	     return p;
+		}
+		crFree(maybe_use);
+		pool->numBuffers--;
+		return p;
 	}
 	return NULL;
 }
