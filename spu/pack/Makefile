@@ -44,18 +44,18 @@ LIB_DEFS += pack.def
 
 include ${TOP}/cr.mk
 
-packspu.c: pack.py packspu_special packspu_unimplemented_special
+packspu.c: pack.py packspu_special packspu_unimplemented_special ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the Pack SPU
 	@$(PYTHON) pack.py > $@
 
-packspu_get.c: packspu_get.py packspu_special ../../crserver/get_sizes.py
+packspu_get.c: packspu_get.py packspu_special ../../crserver/get_sizes.py ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the Pack SPU Get functions
 	@$(PYTHON) packspu_get.py > $@	
 
-packspu_flush.c: packspu_flush.py packspu_flush_special
+packspu_flush.c: packspu_flush.py packspu_flush_special ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the Pack SPU Auto-flushing functions
 	@$(PYTHON) packspu_flush.py > $@
 
-packspu_beginend.c: packspu_beginend.py packspu_vertex_special
+packspu_beginend.c: packspu_beginend.py packspu_vertex_special ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the Pack SPU Vertex functions
 	@$(PYTHON) packspu_beginend.py > $@
