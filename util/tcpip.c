@@ -336,7 +336,7 @@ typedef int socklen_t;
 #endif
 
 void
-crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
+crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
 	int err;
 	socklen_t		addr_length;

@@ -140,7 +140,8 @@ crUDPIPWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 	}
 }
 
-static void crUDPTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
+static void
+crUDPTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
 	int err;
 	socklen_t		addr_length;

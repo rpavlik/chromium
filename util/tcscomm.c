@@ -72,7 +72,7 @@ void crTcscommSingleRecv( CRConnection *conn, void *buf, unsigned int len );
 void crTcscommHandleNewMessage( CRConnection *conn, CRMessage *msg,
 				unsigned int len );
 void crTcscommInstantReclaim( CRConnection *conn, CRMessage *mess );
-void crTcscommAccept( CRConnection *conn, char *hostname, 
+void crTcscommAccept( CRConnection *conn, const char *hostname, 
 		      unsigned short port );
 int crTcscommDoConnect( CRConnection *conn );
 void crTcscommDoDisconnect( CRConnection *conn );
@@ -592,7 +592,7 @@ void crTcscommInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 }
 
 void
-crTcscommAccept( CRConnection *conn, char *hostname, unsigned short port )
+crTcscommAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
   CRConnection *mother;
   char          response[8096];

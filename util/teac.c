@@ -74,7 +74,7 @@ void crTeacInstantReclaim( CRConnection *conn, CRMessage *msg );
 void crTeacSend( CRConnection *conn, void **bufp,
 		 void *start, unsigned int len );
 CRConnection *crTeacSelect( void );
-void crTeacAccept( CRConnection *conn, char *hostname, unsigned short port );
+void crTeacAccept( CRConnection *conn, const char *hostname, unsigned short port );
 int crTeacDoConnect( CRConnection *conn );
 void crTeacDoDisconnect( CRConnection *conn );
 void crTeacHandleNewMessage( CRConnection *conn, CRMessage *msg,
@@ -506,7 +506,7 @@ void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 }
 
 void
-crTeacAccept( CRConnection *conn, char *hostname, unsigned short port )
+crTeacAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
   CRConnection *mother;
   char          response[8096];

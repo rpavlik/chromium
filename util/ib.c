@@ -104,9 +104,6 @@ void
 crIBSendExact( CRConnection *conn, const void *buf, unsigned int len );
 
 void
-crIBAccept( CRConnection *conn, char *hostname, unsigned short port );
-
-void
 *crIBAlloc( CRConnection *conn );
 
 typedef enum {
@@ -1036,7 +1033,7 @@ ret_val_t cr_ib_send( CRConnection *conn, const void *buf,
 }
 
 void
-crIBAccept( CRConnection *conn, char *hostname, unsigned short port )
+crIBAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
      CRConnection *mother;
      char response[8096];

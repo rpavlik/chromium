@@ -514,7 +514,7 @@ static void crGmConnectionAdd( CRConnection *conn )
 }
 
 
-void crGmAccept( CRConnection *conn, char *hostname, unsigned short port )
+void crGmAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
 	CRConnection *mother;
 	char response[8096];

@@ -76,7 +76,7 @@ crDevnullInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int 
 }
 
 static void
-crDevnullAccept( CRConnection *conn, char *hostname, unsigned short port )
+crDevnullAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
 	crError( "Well, you *could* accept a devnull client, but you'd be disappointed. ");
 	(void) conn;

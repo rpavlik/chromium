@@ -192,6 +192,21 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 		crFileConnection( conn );
 		conn->swap = 1;
 	}
+	else if ( !crStrcmp( protocol, "tcpip" ) )
+	{	
+		cr_net.use_tcpip++;
+		crDebug("Calling crTCPIPInit()");
+		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crDebug("Calling crTCPIPConnection");
+		crTCPIPConnection( conn );
+		crDebug("Done calling crTCPIPConnection");
+	}
+	else if ( !crStrcmp( protocol, "udptcpip" ) )
+	{	
+		cr_net.use_udp++;
+		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crUDPTCPIPConnection( conn );
+	}
 #ifdef GM_SUPPORT
 	else if ( !crStrcmp( protocol, "gm" ) )
 	{
@@ -216,15 +231,6 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 		crTcscommConnection( conn );
 	}
 #endif
-	else if ( !crStrcmp( protocol, "tcpip" ) )
-	{	
-		cr_net.use_tcpip++;
-		crDebug("Calling crTCPIPInit()");
-		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crDebug("Calling crTCPIPConnection");
-		crTCPIPConnection( conn );
-		crDebug("Done calling crTCPIPConnection");
-	}
 #ifdef SDP_SUPPORT
 	else if ( !crStrcmp( protocol, "sdp" ) )
 	{	
@@ -246,12 +252,6 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 		crDebug("Done Calling crIBInit()");
 	}
 #endif
-	else if ( !crStrcmp( protocol, "udptcpip" ) )
-	{	
-		cr_net.use_udp++;
-		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crUDPTCPIPConnection( conn );
-	}
 	else
 	{
 		crError( "Unknown Protocol: \"%s\"", protocol );
@@ -298,7 +298,7 @@ void crNetNewClient( CRConnection *conn, CRNetServer *ns )
  * Accept a client on various interfaces.
  */
 CRConnection *
-crNetAcceptClient( const char *protocol, char *hostname,
+crNetAcceptClient( const char *protocol, const char *hostname,
 									 unsigned short port, unsigned int mtu, int broker )
 {
 	CRConnection *conn;
@@ -354,8 +354,8 @@ crNetAcceptClient( const char *protocol, char *hostname,
 		crDevnullInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crDevnullConnection( conn );
 	}
-	if ( !crStrncmp( protocol, "file", crStrlen( "file" ) ) ||
-	     !crStrncmp( protocol, "swapfile", crStrlen( "swapfile" ) ) )
+	else if ( !crStrncmp( protocol, "file", crStrlen( "file" ) ) ||
+						!crStrncmp( protocol, "swapfile", crStrlen( "swapfile" ) ) )
 	{
 		char filename[4096];
 		cr_net.use_file++;
@@ -366,6 +366,18 @@ crNetAcceptClient( const char *protocol, char *hostname,
 		conn->hostname = crStrdup( filename );
 		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crFileConnection( conn );
+	}
+	else if ( !crStrcmp( protocol, "tcpip" ) )
+	{
+		cr_net.use_tcpip++;
+		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crTCPIPConnection( conn );
+	}
+	else if ( !crStrcmp( protocol, "udptcpip" ) )
+	{
+		cr_net.use_udp++;
+		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crUDPTCPIPConnection( conn );
 	}
 #ifdef GM_SUPPORT
 	else if ( !crStrcmp( protocol, "gm" ) )
@@ -391,12 +403,6 @@ crNetAcceptClient( const char *protocol, char *hostname,
 		crTcscommConnection( conn );
 	}
 #endif
-	else if ( !crStrcmp( protocol, "tcpip" ) )
-	{
-		cr_net.use_tcpip++;
-		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crTCPIPConnection( conn );
-	}
 #ifdef SDP_SUPPORT
 	else if ( !crStrcmp( protocol, "sdp" ) )
 	{
@@ -405,12 +411,6 @@ crNetAcceptClient( const char *protocol, char *hostname,
 		crSDPConnection( conn );
 	}
 #endif
-	else if ( !crStrcmp( protocol, "udptcpip" ) )
-	{
-		cr_net.use_udp++;
-		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crUDPTCPIPConnection( conn );
-	}
 #ifdef IB_SUPPORT
 	else if ( !crStrcmp( protocol, "ib" ) )
 	{
@@ -689,7 +689,7 @@ void crNetDisconnect( CRConnection *conn )
 /**
  * Aparently, only called from crNetAcceptClient().
  */
-void crNetAccept( CRConnection *conn, char *hostname, unsigned short port )
+void crNetAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
 	conn->Accept( conn, hostname, port );
 }
