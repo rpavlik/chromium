@@ -17,6 +17,9 @@ include ${TOP}/arch.mk
 # Uncomment for Myrinet Support
 #GM_SUPPORT = 1
 
+# Uncomment for InfiniBand Support
+#IB_SUPPORT = 1
+
 SHARED = 1
 LIBRARY = crutil
 FILES = bbox \
@@ -45,6 +48,11 @@ FILES = bbox \
 PRECOMP = debug_opcodes.c
 SLOP += ${PRECOMP}
 
+ifeq ($(IB_SUPPORT), 1)
+CFLAGS += -DIB_SUPPORT -I/usr/mellanox/include
+FILES += ib
+LDFLAGS += -L/usr/mellanox/lib -lvapi -lmosal -lpthread -lmpga
+endif
 ifeq ($(GM_SUPPORT), 1)
 ifeq ($(ARCH),Linux)
 CFLAGS += -DGM_SUPPORT

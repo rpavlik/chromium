@@ -227,6 +227,15 @@ CRConnection *crNetConnectToServer( char *server,
 		crTCPIPConnection( conn );
 		crDebug("Done calling crTCPIPConnection");
 	}
+#ifdef IB_SUPPORT
+	else if ( !crStrcmp( protocol, "ib" ) )
+	{
+	        crDebug("Calling crIBInit()");
+		crIBInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crIBConnection( conn );
+	        crDebug("Done Calling crIBInit()");
+	}
+#endif
 	else if ( !crStrcmp( protocol, "udptcpip" ) )
 	{
 		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
@@ -373,6 +382,15 @@ CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned 
 		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crUDPTCPIPConnection( conn );
 	}
+#ifdef IB_SUPPORT
+	else if ( !crStrcmp( protocol, "ib" ) )
+	{
+	        crDebug("Calling crIBInit() from crNetAcceptClient");
+		crIBInit( cr_net.recv_list, cr_net.close_list, mtu );
+		crIBConnection( conn );
+	        crDebug("Done Calling crIBInit()");
+	}
+#endif
 	else
 	{
 		crError( "Unknown Protocol: \"%s\"", protocol );
@@ -478,6 +496,10 @@ CRConnection** crNetDump( int* num )
 
 #ifdef GM_SUPPORT
 	c = crGmDump( num );
+	if ( c ) return c;
+#endif
+#ifdef IB_SUPPORT
+	c = crIBDump( num );
 	if ( c ) return c;
 #endif
 
@@ -871,7 +893,9 @@ int crNetRecv( void )
 	int found_work = 0;
 
 	found_work += crTCPIPRecv( );
-
+#ifdef IB_SUPPORT
+	found_work += crIBRecv( );
+#endif
 	found_work += crUDPTCPIPRecv( );
 
 	found_work += crFileRecv( );
