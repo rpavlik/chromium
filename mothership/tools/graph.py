@@ -1484,8 +1484,7 @@ class GraphFrame(wxFrame):
 		if result:
 			self.dirty = false
 		else:
-			response = wxMessageBox("Couldn't open %s for writing."
-									% self.fileName,
+			response = wxMessageBox("Error writing %s." % self.fileName,
 									"Error", wxOK, self)
 
 
