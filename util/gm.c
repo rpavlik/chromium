@@ -127,6 +127,7 @@ static struct {
 
 void crGmSend( CRConnection *conn, void **bufp, 
 		void *start, unsigned int len );
+void crGmFree( CRConnection *conn, void *buf );
 
 #if CR_GM_DEBUG || CR_GM_CREDITS_DEBUG
 
@@ -679,6 +680,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		unsigned int len )
 {
 	CRGmBuffer *temp;
+	CRMessageType cached_type;
 
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_gm.read_mutex);
@@ -717,12 +719,27 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		}
 		temp->len = len;
 		memcpy( temp+1, msg, len );
+		cached_type = msg->header.type;
 
 		cr_gm_provide_receive_buffer( msg );
 
 		if (!cr_gm.recv( gm_conn->conn, temp+1, len ))
 		{
 			crNetDefaultRecv( gm_conn->conn, temp+1, len );
+		}
+
+		switch( cached_type )
+		{
+		case CR_MESSAGE_FLOW_CONTROL: /* Handled by InstantReclaim */
+		case CR_MESSAGE_MULTI_BODY:	/* Handled by InstantReclaim */
+		case CR_MESSAGE_MULTI_TAIL:	/* Handled by InstantReclaim */
+		case CR_MESSAGE_OPCODES:	/* Handled in crserver/server_stream.c */
+		case CR_MESSAGE_OOB:		/* The programmer's problem (according to humper in util/tcpip.c) */
+			break;
+
+		default:
+			crGmFree( gm_conn->conn, temp+1 );
+			break
 		}
 	}
 	else
