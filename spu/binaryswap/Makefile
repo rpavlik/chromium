@@ -14,15 +14,9 @@ FILES = binaryswapspu \
 	binaryswapspu_init
 
 ifdef WINDOWS
-TRACKS_STATE = 1
 LIBRARIES = spuload crutil crmothership
 else
 LIBRARIES = spuload crutil crmothership crstate
-endif
-
-ifdef BINUTIL_LINK_HACK
-TRACKS_STATE = 1
-LIBRARIES -= crstate
 endif
 
 SLOP = $(PRECOMP)
