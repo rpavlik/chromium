@@ -19,7 +19,7 @@
 
 #endif
 
-#if defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX)
+#if defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS)
 
 #include <GL/gl.h>
 #include <dlfcn.h>

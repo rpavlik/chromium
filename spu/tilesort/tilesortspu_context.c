@@ -121,7 +121,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		tilesort_spu.client_hdc = (HDC) atoi(dpyName);
 	tilesort_spu.client_hwnd = NULL;
 #else
-	crDebug("Tilesort SPU: Displayname = %s\n", dpyName);
+	crDebug("Tilesort SPU: Displayname = %s\n", (dpyName ? dpyName : "(null)"));
 	tilesort_spu.glx_display = XOpenDisplay(dpyName);
 #endif
 

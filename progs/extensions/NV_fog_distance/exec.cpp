@@ -21,6 +21,10 @@
 #include "../common/logo.h"
 #include <stdlib.h>
 
+#ifdef SunOS
+   #include <iostream.h>
+   #include <iomanip.h>
+#endif
 
 /* --- Global Variables ----------------------------------------------------- */
 

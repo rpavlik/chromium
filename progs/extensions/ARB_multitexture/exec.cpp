@@ -26,7 +26,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
+#ifdef SunOS
+   #include <iostream.h>
+   #include <iomanip.h>
+#endif
 
 #ifndef DISPLAY_LISTS
 #error This program requires display lists to do anything :-(

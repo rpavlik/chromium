@@ -89,7 +89,7 @@ void	InitSpecial	( void )
 	
 #ifdef WIN32
 	glBlendColor_ext = (GLBLENDCOLOREXTPROC)wglGetProcAddress( "glBlendColorEXT" );
-#elif defined(IRIX)
+#elif defined(IRIX) || defined (SunOS)
 	glBlendColor_ext = glBlendColorEXT;
 #else
 	glBlendColor_ext = (GLBLENDCOLOREXTPROC)glXGetProcAddressARB( (const GLubyte *) "glBlendColorEXT" );

@@ -436,7 +436,7 @@ int is_a_version_of( const char *basename, const char *libname )
 	if ( *libname != '.' ) return 0;
 
 	/* remainder of libname should be digits and periods */
-	while ( *libname == '.' || isdigit(*libname) )
+	while ( *libname == '.' || isdigit((int)*libname) )
 		libname++;
 
 	/* did we make it to the end of the libname? */

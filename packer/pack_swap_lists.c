@@ -69,10 +69,12 @@ void PACK_APIENTRY crPackCallListsSWAP(GLint n, GLenum type,
 			switch( bytesPerList )
 			{
 				case 2:
-					*(shortPtr++) = SWAP16(*shortPtr);
+				  *shortPtr = SWAP16(*shortPtr);
+				  shortPtr+=1;
 					break;
 				case 4:
-					*(intPtr++) = SWAP32(*intPtr);
+				  *intPtr = SWAP32(*intPtr);
+				  intPtr+=1;
 					break;
 			}
 		}

@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
 		{
 			mode = GL_TRIANGLE_STRIP;
 		}
-		else if ( isdigit( argv[i][0] ) )
+		else if ( isdigit( (int) argv[i][0] ) )
 		{
 			dice = atoi( argv[i] );
 		}

@@ -24,6 +24,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef SunOS
+   #include <iostream.h>
+   #include <iomanip.h>
+#endif
 
 enum
   {

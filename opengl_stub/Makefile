@@ -60,6 +60,13 @@ ARCH_EXPORTS = $(ARCH)_exports.c
 endif
 endif
 
+ifeq ($(ARCH), SunOS)
+LDFLAGS += -lX11
+FILES += $(ARCH)_exports glx xfont
+ARCH_EXPORTS_PY = $(ARCH)_exports.py
+ARCH_EXPORTS = $(ARCH)_exports.c
+endif
+
 ifeq ($(ARCH), FreeBSD)
 LDFLAGS += -lX11
 FILES += $(ARCH)_exports glx xfont

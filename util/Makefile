@@ -47,6 +47,10 @@ FILES += gm
 LDFLAGS += -lgm
 endif
 
+ifeq ($(ARCH), SunOS)
+LDFLAGS+= -lsocket -lnsl
+endif
+
 LIB_DEFS = util.def
 
 ifeq ($(ARCH), WIN_NT)

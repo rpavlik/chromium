@@ -18,7 +18,7 @@
 #include "cr_error.h"
 
 void glTexImage3D( GLenum target, GLint level,
-#if defined(IRIX) || defined(IRIX64) || defined(AIX)
+#if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS)
 									 GLenum internalFormat,
 #else
 									 GLint internalFormat,
@@ -387,9 +387,13 @@ void glGetConvolutionParameteriv( GLenum target, GLenum pname,
 	crWarning("glGetConvolutionParameteriv not implemented by Chromium");
 }
 
+#ifdef SunOS
+void glSeparableFilter2D (GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *row, GLvoid *column)
+#else
 void glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width,
 													GLsizei height, GLenum format, GLenum type,
 													const GLvoid *row, const GLvoid *column )
+#endif
 {
 	(void) target;
 	(void) internalformat;

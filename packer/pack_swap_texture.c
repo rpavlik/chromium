@@ -289,7 +289,9 @@ static GLboolean __handleTexParameterData( GLenum target, GLenum pname, const GL
 		case GL_TEXTURE_WRAP_S:
 		case GL_TEXTURE_WRAP_T:
 		case GL_TEXTURE_WRAP_R:
+#ifdef GL_TEXTURE_PRIORITY
 		case GL_TEXTURE_PRIORITY:
+#endif
 		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
 		case GL_TEXTURE_MIN_LOD:
 		case GL_TEXTURE_MAX_LOD:

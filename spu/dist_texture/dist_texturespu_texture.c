@@ -117,8 +117,9 @@ static int read_int( int file, int* number )
 			crWarning( "Read failed trying to get ASCII integer" ) ;
 			return -1 ;
 		}
-		if ( ! isspace( c ) ) {
-			if ( ! isdigit( c ) ) {
+
+		if ( ! isspace( (int)c ) ) {
+		     if ( ! isdigit( (int)c ) ) {
 				if ( c == '#' )
 					skip_line( file ) ;
 				else

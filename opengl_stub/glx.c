@@ -298,7 +298,11 @@ glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
 #if defined(AIX)
 GLuint mask )
 #else
+#if defined(SunOS)
+unsigned int mask )
+#else
 unsigned long mask )
+#endif
 #endif
 {
 	(void) dpy;
@@ -469,10 +473,21 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 		case GLX_VISUAL_CAVEAT_EXT:
 			*value = GLX_NONE_EXT;
 			break;
+#ifdef SunOS
+		/*
+		  I don't think this is even a valid attribute for glxGetConfig. 
+		  No idea why this gets called under SunOS but we simply ignore it
+		  -- jw
+		*/
+		case GLX_X_VISUAL_TYPE:
+		  crWarning ("Ignoring Unsuported GLX Call: glxGetConfig with attrib 0x%x", attrib);
+		  break;
+#endif 
 
 		default:
 			crWarning( "Unsupported GLX Call: glXGetConfig with attrib 0x%x", attrib );
 			return GLX_BAD_ATTRIBUTE;
+		
 	}
 
 	return 0;
