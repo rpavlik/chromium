@@ -275,7 +275,7 @@ ifdef PROGRAM
 	@$(ECHO) "              Building $(TARGET) for $(ARCH) $(RELEASE_STRING) $(STATE_STRING) $(PACK_STRING) $(UNPACK_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
 endif
 ifdef LIBRARY
-	@$(ECHO) "              Building $(TARGET) for $(ARCH) $(RELEASE_STRING) $(SATE_STRING) $(PACK_STRING) $(UNPACK_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
+	@$(ECHO) "              Building $(TARGET) for $(ARCH) $(RELEASE_STRING) $(STATE_STRING) $(PACK_STRING) $(UNPACK_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
 endif
 endif
 	@$(ECHO) "-------------------------------------------------------------------------------"
