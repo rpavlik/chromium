@@ -41,16 +41,67 @@ static void stubInitNativeDispatch( void )
 }
 
 
+/* Pointer to the SPU's real glClear and glViewport functions */
+static ClearFunc_t origClear;
+static ViewportFunc_t origViewport;
+
+
+static void stubCheckWindowSize(void)
+{
+	unsigned int winW, winH;
+	GLint c = stub.currentContext;
+	if (c < 0)
+		return;
+	stubGetWindowSize( &(stub.Context[c]), &winW, &winH );
+	if (winW != stub.spuWindowWidth || winH != stub.spuWindowHeight) {
+	  stub.spuDispatch.WindowSize( stub.spuWindow, winW, winH );
+	  stub.spuWindowWidth = winW;
+	  stub.spuWindowHeight = winH;
+	}
+}
+
+
+/* Override the head SPU's glClear function.
+ * We're basically trapping this function so that we can poll the
+ * application window size at a regular interval.
+ */
+static void SPU_APIENTRY trapClear(GLbitfield mask)
+{
+	stubCheckWindowSize();
+	/* call the original SPU glClear function */
+	origClear(mask);
+}
+
+/*
+ * As above, but for glViewport.  Most apps call glViewport before
+ * glClear when a window is resized.
+ */
+static void SPU_APIENTRY trapViewport(GLint x, GLint y, GLsizei w, GLsizei h)
+{
+	stubCheckWindowSize();
+	/* call the original SPU glViewport function */
+	origViewport(x, y, w, h);
+}
+
+
 /*
  * Use the GL function pointers in <spu> to initialize the static glim
  * dispatch table.
  */
-static void stubInitSPUDispatch( SPU *spu )
+static void stubInitSPUDispatch(SPU *spu)
 {
 	crSPUInitDispatchTable( &stub.spuDispatch );
 	crSPUCopyDispatchTable( &stub.spuDispatch, &(spu->dispatch_table) );
 
 	memcpy(&glim, &stub.spuDispatch, sizeof(SPUDispatchTable));
+
+	if (stub.trackWindowSize) {
+		/* patch-in special glClear/Viewport function to track window sizing */
+		origClear = stub.spuDispatch.Clear;
+		origViewport = stub.spuDispatch.Viewport;
+		stub.spuDispatch.Clear = trapClear;
+		stub.spuDispatch.Viewport = trapViewport;
+	}
 }
 
 
@@ -93,6 +144,9 @@ static void stubInitVars(void)
 	stub.minChromiumWindowHeight = 0;
 	stub.matchWindowTitle = NULL;
 	stub.threadSafe = GL_FALSE;
+	stub.spuWindowWidth = 0;
+	stub.spuWindowHeight = 0;
+	stub.trackWindowSize = 0;
 
 	signal(SIGTERM, stubCleanup);
 }
@@ -159,11 +213,9 @@ void StubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	if (conn && crMothershipGetParam( conn, "show_cursor", response ) )
+	if (conn && crMothershipGetParam( conn, "show_cursor", response ) ) {
 		sscanf( response, "%d", &stub.appDrawCursor );
-	else
-		stub.appDrawCursor = 0;
-	crDebug( "show_cursor = %d\n", stub.appDrawCursor );
+	}
 
 	if (conn && crMothershipGetParam( conn, "minimum_window_size", response )
 		&& response[0]) {
@@ -178,6 +230,10 @@ void StubInit(void)
 		&& response[0]) {
 		crDebug("match_window_title: %s\n", response );
 		stub.matchWindowTitle = crStrdup( response );
+	}
+
+	if (conn && crMothershipGetParam( conn, "track_window_size", response ) ) {
+		sscanf( response, "%d", &stub.trackWindowSize );
 	}
 
 	if (conn && crMothershipGetSPUDir( conn, response ))

@@ -335,6 +335,7 @@ Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 		 */
 		currentDrawable = 0;
 		currentContext = 0;
+		stub.currentContext = -1;
 		return True;
 	}
 

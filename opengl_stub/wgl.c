@@ -95,7 +95,10 @@ BOOL WINAPI wglDeleteContext_prox( HGLRC hglrc )
 BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 {
 	if (hglrc == NULL)
+	{
+		stub.currentContext = -1;
 		return 1;
+	}
 
 	return (stubMakeCurrent( hdc, hglrc ));
 }

@@ -12,6 +12,81 @@
 #include "cr_threads.h"
 #include "spu_dispatch_table.h"
 
+
+/* When we first create a rendering context we can't be sure whether
+ * it'll be handled by Chromium or as a native GLX/WGL context.  So in
+ * CreateContext() we'll mark the ContextInfo object as UNDECIDED then
+ * switch it to either NATIVE or CHROMIUM the first time MakeCurrent()
+ * is called.  In MakeCurrent() we can use a criterium like window size
+ * or window title to decide between CHROMIUM and NATIVE.
+ */
+typedef enum
+{
+	UNDECIDED,
+	CHROMIUM,
+	NATIVE
+} ContextType;
+
+
+typedef struct
+{
+	GLboolean inUse;
+	GLint stubContext;
+	ContextType type;
+#ifdef WINDOWS
+	HGLRC hglrc;
+	HDC currentDrawable;
+#else
+	Display *dpy;
+	GLXContext share;
+	XVisualInfo *visual;
+	Bool direct;
+	GLXContext glxContext;
+	Window currentDrawable;
+#endif
+} ContextInfo;
+
+
+/* "Global" variables for the stub library */
+typedef struct {
+	/* the first SPU in the SPU chain on this app node */
+	SPU *spu;
+
+	/* OpenGL/SPU dispatch tables */
+	crOpenGLInterface wsInterface;
+	SPUDispatchTable spuDispatch;
+	SPUDispatchTable nativeDispatch;
+	GLboolean haveNativeOpenGL;
+
+	/* config options */
+	int appDrawCursor;
+	GLuint minChromiumWindowWidth;
+	GLuint minChromiumWindowHeight;
+	char *matchWindowTitle;
+	int trackWindowSize;
+
+	/* thread safety stuff */
+	GLboolean threadSafe;
+#ifdef CHROMIUM_THREADSAFE
+	CRtsd dispatchTSD;
+	CRmutex mutex;
+#endif
+
+	/* visual/context/window management */
+	GLuint desiredVisual;  /* Bitwise-or of CR_*_BIT flags */
+	GLint spuWindow;       /* returned by dispatch->CreateWindow() */
+  GLint spuWindowWidth, spuWindowHeight;
+	GLint currentContext;  /* index into Context[] array, or -1 for none */
+	ContextInfo Context[CR_MAX_CONTEXTS];
+
+} Stub;
+
+
+extern Stub stub;
+extern SPUDispatchTable glim;
+extern SPUDispatchTable stubThreadsafeDispatch;
+
+
 #ifdef WINDOWS
 
 /* WGL versions */
@@ -32,42 +107,10 @@ extern void stubUseXFont( Display *dpy, Font font, int first, int count, int lis
 
 #endif
 
+extern void stubGetWindowSize( const ContextInfo *ctx, unsigned int *w, unsigned int *h );
 extern void stubMatchWindowTitle( const char *title );
 extern void StubInit(void);
 
-
-extern SPUDispatchTable glim;
-extern SPUDispatchTable stubThreadsafeDispatch;
-
-
-/* "Global" variables for the stub library */
-typedef struct {
-	int appDrawCursor;
-	SPU *spu;
-
-	crOpenGLInterface wsInterface;
-	SPUDispatchTable spuDispatch;
-	SPUDispatchTable nativeDispatch;
-
-	GLboolean haveNativeOpenGL;
-
-#ifdef CHROMIUM_THREADSAFE
-	CRtsd dispatchTSD;
-
-	CRmutex mutex;
-#endif
-
-	GLuint desiredVisual;  /* Bitwise-or of CR_*_BIT flags */
-	GLuint minChromiumWindowWidth;
-	GLuint minChromiumWindowHeight;
-	char *matchWindowTitle;
-
-	GLint spuWindow;  /* returned by dispatch->CreateWindow() */
-
-	GLboolean threadSafe;
-} Stub;
-
-extern Stub stub;
 
 
 #endif /* CR_STUB_H */
