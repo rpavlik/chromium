@@ -146,6 +146,9 @@ GLboolean STATE_APIENTRY crStateIsList(GLuint list)
 		return GL_FALSE;
 	}
 
+	if (list == 0)
+		return GL_FALSE;
+
 	return crHashtableIsKeyUsed(l->hash, list);
 }
 	
