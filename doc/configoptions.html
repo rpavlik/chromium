@@ -786,30 +786,43 @@ Chromium configuration uses this SPU.
           Otherwise, the render SPU will print a warning that the application
           window ID is invalid for the render SPU's display.
           </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">render_to_crut_window</td><td width="12%" class="ConfigType" height="38">Bool</td><td width="100%" class="ConfigDesc" height="38">
-	XXX (default 0 (off)).
-   </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">resizable</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-          If non-zero, the render SPU window will be resizable by the user.
-          The readback SPU also recognizes this flag and will adjust its
-          window size accordingly.
-          Default is 0.</td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">title</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">
-	  Specifies the text to display in the titlebar of the window.
-          If the string contains <code>%i</code> it'll be replaced by the
-	  window ID number.
-          Default is "Chromium Render SPU".</td></tr>
-<tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">render_to_crut_window</td>
+    <td width="12%" class="ConfigType" height="38">Bool</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If set, a window ID will be obtained from the mothership and OpenGL
+      rendering will go to that window.
+      The window ID is set by the CRUT server.
+      The default is 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">resizable</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If non-zero, the render SPU window will be resizable by the user.
+      The readback SPU also recognizes this flag and will adjust its
+      window size accordingly.
+      Default is 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">title</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Specifies the text to display in the titlebar of the window.
+      If the string contains <code>%i</code> it'll be replaced by the
+      window ID number.
+      Default is "Chromium Render SPU".
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">try_direct</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
-	<td width="100%" class="ConfigDesc" height="38"> If true, try to create a
-	direct rendering visual.  X-Windows ONLY.  The default is 1.</td>
+    <td width="100%" class="ConfigDesc" height="38"> If true, try to create a
+	direct rendering visual.  X-Windows ONLY.  The default is 1.
+    </td>
   </tr>
-  
-  
   <tr>
     <td width="19%" class="ConfigOption" height="38">system_gl_path</td>
     <td width="12%" class="ConfigType" height="38">String</td>
@@ -817,7 +830,6 @@ Chromium configuration uses this SPU.
           Specifies the directory (path to) the OpenGL library to use.
           Default (on IRIX/Linux) is /usr/lib.</td>
   </tr>
-  
   <tr>
     <td width="19%" class="ConfigOption" height="38">show_cursor</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
@@ -830,10 +842,6 @@ Chromium configuration uses this SPU.
           Note: you must also set the application node's show_cursor
           option to make this work.</td>
   </tr>
-  
-  
-  
-  
   <tr>
     <td width="19%" class="ConfigOption" height="38">swap_master_url</td>
     <td width="12%" class="ConfigType" height="38">String</td>
@@ -843,8 +851,6 @@ Chromium configuration uses this SPU.
 		<code>is_swap_master</code> and <code>num_swap_clients</code>
    </td>
   </tr>
-  
-  
   <tr>
     <td width="19%" class="ConfigOption" height="38">use_osmesa</td>
     <td width="12%" class="ConfigType" height="38">Bool</td>
@@ -853,20 +859,20 @@ Chromium configuration uses this SPU.
                 use OSMesa for off-screen rendering.
    </td>
   </tr>
-  
-  
-  
-  
   <tr>
-<td width="19%" class="ConfigOption" height="74">window_geometry</td><td width="12%" class="ConfigType" height="74">4 Integers</td><td width="100%" class="ConfigDesc" height="74">Geometry of the window to
+    <td width="19%" class="ConfigOption" height="74">window_geometry</td>
+    <td width="12%" class="ConfigType" height="74">4 Integers</td>
+    <td width="100%" class="ConfigDesc" height="74">Geometry of the window to
       create.&nbsp; This is specified as four floating point numbers.&nbsp; The
       first two give the (<i>x</i>,<i>y</i>) position of the upper left corner
       of the window, relative to the upper left corner of the screen.&nbsp; The
       last two numbers give the width and height of the window,
-      respectively.&nbsp; The default is [0, 0, 256, 256].</td></tr>
+      respectively.&nbsp; The default is [0, 0, 256, 256].
+    </td>
+  </tr>
+</tbody>
+</table>
 
-
-</tbody></table>
 
 <a name="replicate">
 </a><h2 class="PageSubHeading"><a name="replicate">Replicate SPU</a></h2>
@@ -1227,6 +1233,16 @@ one or more downstream servers.
       tilesort SPU query the DMX server for updated window size/position
       information whenever the application window size/position changes.
       The DMX server information will be used to compute a new tile arrangment.
+      The default is 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">render_to_crut_window</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If set, a window ID will be obtained from the mothership and OpenGL
+      rendering will go to that window.
+      The window ID is set by the CRUT server.
       The default is 0.
     </td>
   </tr>
