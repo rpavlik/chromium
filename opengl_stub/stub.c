@@ -12,7 +12,7 @@
 
 int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 {
-	crDebug( "In CreateConetxt" );
+	crDebug( "In CreateContext" );
 	StubInit();
 	return stub.spu->dispatch_table.CreateContext( dpyName, visBits );
 }
