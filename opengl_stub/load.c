@@ -211,6 +211,7 @@ static void stubInitVars(void)
 
 	defaultWin = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 	defaultWin->type = CHROMIUM;
+	defaultWin->spuWindow = 0;  /* window 0 always exists */
 	crHashtableAdd(stub.windowTable, 0, defaultWin);
 
 #if 1

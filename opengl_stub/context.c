@@ -190,6 +190,7 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 			return NULL;
 		winInfo->drawable = drawable;
 		winInfo->type = UNDECIDED;
+		winInfo->spuWindow = -1;
 #ifndef WINDOWS
 		winInfo->dpy = dpy;
 #endif
@@ -632,7 +633,7 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 															context->dpyName, context->visBits );
 			context->type = CHROMIUM;
 
-			if (!window->spuWindow)
+			if (window->spuWindow == -1)
 				window->spuWindow = stub.spu->dispatch_table.WindowCreate(
 													 window->dpyName, context->visBits );
 		}
