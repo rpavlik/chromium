@@ -53,8 +53,7 @@ SLOP = $(PRECOMP)
 
 LIB_COPIES = crserver \
 	packspu \
-	tilesortspu \
-	seethroughspu
+	tilesortspu
 
 include $(TOP)/cr.mk
 
