@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#ifdef WINDOWS
 #pragma warning( push, 3 )
+#endif
 #include <gm.h>
+#ifdef WINDOWS
 #pragma warning( pop )
+#endif
 #ifndef WINDOWS
 #include <ctype.h> // for tolower
 #endif
@@ -152,15 +156,15 @@ static void cr_gm_info( void )
 
 	crWarning( "GM: gm_max_length_for_size( "
 			"size=%u ) = %u", min_size,
-			gm_max_length_for_size( min_size ) );
+			(unsigned int) gm_max_length_for_size( min_size ) );
 
 	crWarning( "GM: gm_min_message_size() = %u",
-			gm_min_message_size( cr_gm.port ) );
+			(unsigned int) gm_min_message_size( cr_gm.port ) );
 
 	crWarning( "GM: num_send_tokens=%u "
 			"num_receive_tokens=%u",
-			gm_num_send_tokens( cr_gm.port ),
-			gm_num_receive_tokens( cr_gm.port ) );
+			(unsigned int) gm_num_send_tokens( cr_gm.port ),
+			(unsigned int) gm_num_receive_tokens( cr_gm.port ) );
 }
 
 #if CR_GM_DEBUG
@@ -332,7 +336,7 @@ static void * cr_gm_dma_malloc( unsigned long length )
 	buf = gm_dma_malloc( cr_gm.port, length );
 	if ( buf == NULL )
 	{
-		crError( "gm_dma_malloc( port=%p, len=%d ) : failed",
+		crError( "gm_dma_malloc( port=%p, len=%ld ) : failed",
 				cr_gm.port, length );
 	}
 
@@ -1402,7 +1406,7 @@ cr_gm_set_acceptable_sizes( void )
 		if ( status != GM_SUCCESS )
 		{
 			crError( "GM: gm_set_acceptable_sizes( port=%u, pri=%u, "
-					"mask=%u ) failed: %s (%d)", cr_gm.port_num,
+					"mask=%ld ) failed: %s (%d)", cr_gm.port_num,
 					priority, mask, 
 					cr_gm_str_error( status ), status );
 		}
