@@ -253,7 +253,7 @@ GLubyte * crStateMergeExtensions(GLuint n, const GLubyte **extensions)
 	merged = crStrdup(__stateExtensionString);
 	for (i = 0; i < n; i++)
 	{
-		char *m = crStrIntersect(merged, extensions[i]);
+		char *m = crStrIntersect(merged, (const char *) extensions[i]);
 		if (merged)
 			crFree(merged);
 		merged = m;
