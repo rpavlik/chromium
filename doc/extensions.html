@@ -60,23 +60,46 @@ for its children/server SPU limits in order to determine its own limits.</p>
 <p>Here are the steps for adding a new extension to Chromium:</p>
 <ol>
   <li>Add a new <code>CR_</code>* token to <code>include/cr_versions.h</code>.
-  <li>Add the new extension string in <code>spu/loader/limits.c</code>.
   <li>Add a new GLboolean field to the <code>CRExtensionState</code> structure
       in the <code>include/state_cr_extensions.h</code> file.
   <li>Add new code in <code>crStateExtensionsInit()</code>
       in <code>spu/state_tracker/state_extensions.c</code> to initialize the
       new boolean.
+      Update the extension strings in
+      <code>spu/state_tracker/state_limits.c</code> as well.
   <li>Implement the new code for the extension as needed throughout Chromium.
-      Functions which correspond to OpenGL entry points, such as
-      <code>glEnable()</code>, should test the boolean extension flag created
-      in step 3 and signal an OpenGL error if the extension is not enabled.
-      The code for new extensions should be surrounded by
+      Specifically, the packer, unpacker and state tracker are the major
+      modules which need updating.
+      The best advice here is to look at existing extensions for ideas.
+  <li>Extensions which only add new tokens to existing functions are easiest
+      to implement.  Often, only the state tracker needs to be updated.
+  <li>Extensions which add new OpenGL functions are more work.  The OpenGL
+      API dispatcher is defined by the functions in
+      <code>cr/glapi_parser/system_header/CR_GL.H</code>.  New API functions
+      must be added there.
+  <li>The code for new extensions should be surrounded by
       <code>#ifdef CR_(extension_name)</code> and <code>#endif</code> so that
       it can be disabled if desired.
       See the <code>GL_TEXTURE_CUBE_MAP_ARB</code> clause in
       <code>__enableSet()</code> in <code>spu/state_tracker/state_enable.c</code>
       for an example.
 </ol>
+
+
+<h2 class="PageSubHeading">Application-only extensions</h2>
+<p>
+A short-cut to adding new extensions is to implment them for the
+application-side only.
+This means that the extension can only be used by
+SPUs running on the application node (such as the render SPU or readback
+SPU when using a sort-last configuration).
+Examples of current application-only extensions are GL_NV_vertex_program
+and GL_NV_fence.
+</p>
+<p>
+Basically, only the OpenGL API dispatcher needs to be updated.
+The extension should be added to the <code>__stateAppOnlyExtensions</code>
+string in <code>state_tracker/state_limits.c</code>.
 
 
 </body>
