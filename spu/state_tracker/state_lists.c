@@ -13,7 +13,6 @@
 
 void crStateListsInit(CRListsState *l) 
 {
-	l->maxListNesting = 10; // XXX
 	l->newEnd = GL_FALSE;
 	l->freeList = (CRListsFreeElem*) malloc (sizeof(*(l->freeList)));
 	l->freeList->min = 1;

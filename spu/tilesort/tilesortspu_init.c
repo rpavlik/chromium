@@ -32,7 +32,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 
 
 	tilesort_spu.id = id;
-	tilesortspuGatherConfiguration();
+	tilesortspuGatherConfiguration( child );
 	tilesortspuConnectToServers();
 
 	tilesort_spu.swap = tilesort_spu.servers[0].net.conn->swap;
@@ -54,7 +54,9 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	// need to have the ctx first so we can give it as an argument o
 	// crPackFlushArg.
 	crStateInit();
-	tilesort_spu.ctx = crStateCreateContext();
+
+	/* The GL limits were computed in tilesortspuGatherConfiguration() */
+	tilesort_spu.ctx = crStateCreateContext( &tilesort_spu.limits );
 
 	crPackInit( tilesort_spu.swap );
 	crPackInitBuffer( &(tilesort_spu.geometry_pack), crAlloc( tilesort_spu.geom_pack_size ), 
@@ -78,7 +80,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	for (i = 0 ; i < tilesort_spu.num_servers; i++)
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
-		server->ctx = crStateCreateContext();
+		server->ctx = crStateCreateContext( &tilesort_spu.limits );
 		server->ctx->current.rasterPos.x = server->ctx->current.rasterPosPre.x = (float) server->x1[0];
 		server->ctx->current.rasterPos.y = server->ctx->current.rasterPosPre.y = (float) server->y1[0];
 		crPackInitBuffer( &(server->pack), crNetAlloc( server->net.conn ), server->net.buffer_size, 0 );

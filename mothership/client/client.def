@@ -9,8 +9,9 @@ crMothershipDisconnect
 crMothershipSendString
 crMothershipReadResponse
 crMothershipIdentifySPU
-crMothershipSPUParam
-crMothershipServerParam
+crMothershipGetSPUParam
+crMothershipGetNamedSPUParam
+crMothershipGetServerParam
 crMothershipIdentifyFaker
 crMothershipIdentifyOpenGL
 crMothershipIdentifyServer

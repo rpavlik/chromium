@@ -24,6 +24,7 @@ REGULAR_FILES = state_attrib \
 	state_init \
 	state_isenabled \
 	state_lighting \
+	state_limits \
 	state_line \
 	state_lists \
 	state_pixel \

@@ -7,6 +7,7 @@
 #include "cr_glstate.h"
 #include "cr_mem.h"
 #include "cr_error.h"
+#include "cr_spu.h"
 #include <stdio.h>
 #include <memory.h>
 
@@ -23,27 +24,40 @@ void crStateInit(void)
 	__currentBits = (CRStateBits *) crAlloc( sizeof( *__currentBits) );
 	memset( __currentBits, 0, sizeof( *__currentBits ) );
 
-  crStateClientInitBits( &(__currentBits->client) );
-  crStateLightingInitBits( &(__currentBits->lighting) );
-  crStateTransformInitBits( &(__currentBits->transform) );
+	crStateClientInitBits( &(__currentBits->client) );
+	crStateLightingInitBits( &(__currentBits->lighting) );
+	crStateTransformInitBits( &(__currentBits->transform) );
 }
 
 GLbitvalue g_availableContexts = 0xFFFFFFFF;
 
-static CRContext *crStateCreateContextId(int i)
+
+static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 {
 	CRContext *ctx = (CRContext *) crAlloc( sizeof( *ctx ) );
 	ctx->id = i;
 	ctx->flush_func = NULL;
-	ctx->bitid = (1<<i);
+	ctx->bitid = (1 << i);
 	ctx->neg_bitid = ~(ctx->bitid);
 	ctx->update = GLBITS_ONES;
 
-	crDebug( "Creating a context: %d (0x%x)", ctx->id, (int)ctx->bitid );
+	crDebug( "Creating a context: %d (0x%x)", ctx->id, (int) ctx->bitid );
+
+	// This has to come first.
+	if (limits) {
+		/* use provided OpenGL limits */
+		crSPUCopyGLLimits( &(ctx->limits), limits);
+	}
+	else {
+		/* use Chromium's OpenGL defaults */
+		crSPUInitGLLimits( &(ctx->limits) );
+	}
+
 	crStateBufferInit( &(ctx->buffer) );
 	crStateClientInit (&(ctx->client) );
 	crStateCurrentInit( &(ctx->current) );
 	crStateEvaluatorInit( &(ctx->eval) );
+	crStateExtensionsInit( ctx );
 	crStateFogInit( &(ctx->fog) );
 	crStateLightingInit( &(ctx->lighting) );
 	crStateLineInit( &(ctx->line) );
@@ -51,16 +65,17 @@ static CRContext *crStateCreateContextId(int i)
 	crStatePixelInit( &(ctx->pixel) );
 	crStatePolygonInit (&(ctx->polygon) );
 	crStateStencilInit( &(ctx->stencil) );
-	crStateTextureInit( &(ctx->texture) );
+	crStateTextureInit( (&ctx->limits), &(ctx->texture) );
 	crStateTransformInit( &(ctx->transform) );
 	crStateViewportInit (&(ctx->viewport) );
 	
 	// This has to come last.
 	crStateAttribInit( &(ctx->attrib) );
+
 	return ctx;
 }
 
-CRContext *crStateCreateContext(void)
+CRContext *crStateCreateContext(const CRLimitsState *limits)
 {
 	int i;
 	int id = 1;
@@ -70,7 +85,7 @@ CRContext *crStateCreateContext(void)
 		if (id & g_availableContexts)
 		{
 			g_availableContexts ^= id; // it's no longer available
-			return crStateCreateContextId( i );
+			return crStateCreateContextId( i, limits );
 		}
 		id <<= 1;
 	}

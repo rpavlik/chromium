@@ -49,7 +49,7 @@ void renderspuGatherConfiguration( void )
 
 	crMothershipIdentifySPU( conn, render_spu.id );
 
-	if (crMothershipSPUParam( conn, response, "window_geometry" ) )
+	if (crMothershipGetSPUParam( conn, response, "window_geometry" ) )
 	{
 		float x,y,w,h;
 		sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
@@ -59,28 +59,28 @@ void renderspuGatherConfiguration( void )
 		render_spu.window_height = (int)h;
 	}
 
-	if (crMothershipSPUParam( conn, response, "fullscreen" ) )
+	if (crMothershipGetSPUParam( conn, response, "fullscreen" ) )
 	{
 		sscanf( response, "%d", &(render_spu.fullscreen) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "ontop" ) )
+	if (crMothershipGetSPUParam( conn, response, "ontop" ) )
 	{
 		sscanf( response, "%d", &(render_spu.ontop) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "stencil_bits" ) )
+	if (crMothershipGetSPUParam( conn, response, "stencil_bits" ) )
 	{
 		sscanf( response, "%d", &(render_spu.stencil_bits) );
 	}
 
 #ifndef WINDOWS
-	if (crMothershipSPUParam( conn, response, "try_direct" ) )
+	if (crMothershipGetSPUParam( conn, response, "try_direct" ) )
 	{
 		sscanf( response, "%d", &(render_spu.try_direct) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "force_direct" ) )
+	if (crMothershipGetSPUParam( conn, response, "force_direct" ) )
 	{
 		sscanf( response, "%d", &(render_spu.force_direct) );
 	}

@@ -19,7 +19,7 @@ print """
 #ifndef CR_CURRENT_H
 #define CR_CURRENT_H
 
-#define CR_MAX_TEXTURE_UNITS 2
+#include "cr_limits.h"
 """
 
 for k in current_fns.keys():

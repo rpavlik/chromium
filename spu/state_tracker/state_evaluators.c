@@ -38,25 +38,19 @@ void crStateEvaluatorInit(CREvaluatorState *e)
 {
 	int i;
 
-#if 0
-	e->maxEvalOrder = c->maxEvalOrder;
-#else
-	e->maxEvalOrder = 4; // -=-
-#endif
-
 	e->autoNormal = GL_FALSE;
 
 	/* What are the correct defaults?!? */
 	for (i=0; i < GLEVAL_TOT; i++) 
 	{
 		e->enable1D[i] = GL_FALSE;
-		e->eval1D[i].coeff = (GLdouble *) crAlloc (sizeof(GLdouble) * e->maxEvalOrder*4);
+		e->eval1D[i].coeff = (GLdouble *) crAlloc (sizeof(GLdouble) * CR_MAX_EVAL_ORDER);
 		e->eval1D[i].order = 0;
 		e->eval1D[i].u1 = 0.0;
 		e->eval1D[i].u2 = 1.0;
 
 		e->enable2D[i] = GL_FALSE;
-		e->eval2D[i].coeff= (GLdouble *) crAlloc (sizeof(GLdouble) * e->maxEvalOrder*4*2);
+		e->eval2D[i].coeff= (GLdouble *) crAlloc (sizeof(GLdouble) * CR_MAX_EVAL_ORDER);
 		e->eval2D[i].uorder=0;
 		e->eval2D[i].vorder=0;
 		e->eval2D[i].u1=0.0;
@@ -104,7 +98,7 @@ void STATE_APIENTRY crStateMap1d (GLenum target, GLdouble u1, GLdouble u2,
 		return;
 	}
 
-	if (order < 1 || order > e->maxEvalOrder)
+	if (order < 1 || order > g->limits.maxEvalOrder)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map1d: order oob: %d", order);
 		return;
@@ -167,7 +161,7 @@ void STATE_APIENTRY crStateMap1f (GLenum target, GLfloat u1, GLfloat u2,
 		return;
 	}
 
-	if (order < 1 || order > e->maxEvalOrder)
+	if (order < 1 || order > g->limits.maxEvalOrder)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map1f: order oob: %d", order);
 		return;
@@ -236,13 +230,13 @@ void STATE_APIENTRY crStateMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint us
 		return;
 	}
 
-	if (uorder < 1 || uorder > e->maxEvalOrder)
+	if (uorder < 1 || uorder > g->limits.maxEvalOrder)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map2f: order oob: %d", uorder);
 		return;
 	}
 
-	if (vorder < 1 || vorder > e->maxEvalOrder)
+	if (vorder < 1 || vorder > g->limits.maxEvalOrder)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map2f: vorder oob: %d", vorder);
 		return;
@@ -324,13 +318,13 @@ void STATE_APIENTRY crStateMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint 
 		return;
 	}
 
-	if (uorder < 1 || uorder > e->maxEvalOrder)
+	if (uorder < 1 || uorder > g->limits.maxEvalOrder)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map2d: order oob: %d", uorder);
 		return;
 	}
 
-	if (vorder < 1 || vorder > e->maxEvalOrder)
+	if (vorder < 1 || vorder > g->limits.maxEvalOrder)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Map2d: vorder oob: %d", vorder);
 		return;

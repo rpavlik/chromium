@@ -9,15 +9,14 @@
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_mem.h"
-
-#include <stdio.h>
+#include "cr_spu.h"
 
 static void __setDefaults( void )
 {
 	print_spu.fp = stderr;
 }
 
-void printspuGatherConfiguration( void )
+void printspuGatherConfiguration( const SPU *child_spu )
 {
 	CRConnection *conn;
 	char response[8096];
@@ -34,7 +33,7 @@ void printspuGatherConfiguration( void )
 	}
 	crMothershipIdentifySPU( conn, print_spu.id );
 
-	if (crMothershipSPUParam( conn, response, "log_file") )
+	if (crMothershipGetSPUParam( conn, response, "log_file") )
 	{
 		print_spu.fp = fopen( response, "w" );
 		if (print_spu.fp == NULL)
@@ -42,6 +41,8 @@ void printspuGatherConfiguration( void )
 			crError( "Couldn't open print SPU log file %s", response );
 		}
 	}
+
+        crSPUPropogateGLLimits( conn, print_spu.id, child_spu, NULL );
 
 	crMothershipDisconnect( conn );
 }

@@ -50,6 +50,11 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 	CRASSERT( name != NULL );
 
 	the_spu = crAlloc( sizeof( *the_spu ) );
+	if (!the_spu) {
+		crWarning("out of memory in crSPULoad()");
+		return NULL;
+	}
+	the_spu->id = id;
 	path = __findDLL( name, dir );
 	the_spu->dll = crDLLOpen( path );
 	the_spu->entry_point = 
@@ -91,7 +96,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 {
 	int i;
-	SPU *spu = NULL;
+	SPU *child_spu = NULL;
 	CRASSERT( count > 0 );
 
 	for (i = count-1 ; i >= 0 ; i--)
@@ -102,7 +107,26 @@ SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 		// This call passes the previous version of spu, which is the SPU's
 		// "child" in this chain.
 
-		spu = crSPULoad( spu, spu_id, spu_name, dir );
+		child_spu = crSPULoad( child_spu, spu_id, spu_name, dir );
 	}
-	return spu;
+	return child_spu;
 }
+
+/*
+ * Search a SPU named function table for a specific function.  Return
+ * a pointer to it or NULL if not found.
+ */
+SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const char *fname )
+{
+	const SPUNamedFunctionTable *temp;
+
+	for (temp = table ; temp->name != NULL ; temp++)
+	{
+		if (!crStrcmp( fname, temp->name ) )
+		{
+			return temp->fn;
+		}
+	}
+	return NULL;
+}
+

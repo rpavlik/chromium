@@ -43,6 +43,9 @@ void crServerGatherConfiguration(char *mothership)
 
 	char **serverchain;
 
+
+	CRLimitsState limits;
+
 	__setDefaults();
 
 	if (mothership)
@@ -85,20 +88,23 @@ void crServerGatherConfiguration(char *mothership)
 	// Need to do this as early as possible
 	cr_server.head_spu->dispatch_table.GetIntegerv( GL_VIEWPORT, cr_server.underlyingDisplay );
 
+	/* Get OpenGL limits from first SPU */
+	crSPUQueryGLLimits( conn, spu_ids[0], &limits);
+
 	crFree( spu_ids );
 	crFree( spu_names );
 	crFree( spuchain );
 
 
-	if (crMothershipServerParam( conn, response, "port" ))
+	if (crMothershipGetServerParam( conn, response, "port" ))
 	{
 		cr_server.tcpip_port = crStrToInt( response );
 	}
-	if (crMothershipServerParam( conn, response, "optimize_bucket" ))
+	if (crMothershipGetServerParam( conn, response, "optimize_bucket" ))
 	{
 		cr_server.optimizeBucket = crStrToInt( response );
 	}
-	if (crMothershipServerParam( conn, response, "lightning2" ))
+	if (crMothershipGetServerParam( conn, response, "lightning2" ))
 	{
 		cr_server.useL2 = crStrToInt( response );
 	}
@@ -150,7 +156,8 @@ void crServerGatherConfiguration(char *mothership)
 
 		sscanf( clientlist[i], "%s %d", protocol, &(cr_server.clients[i].spu_id) );
 		cr_server.clients[i].conn = crNetAcceptClient( protocol, cr_server.tcpip_port, mtu, 1 );
-		cr_server.clients[i].ctx = crStateCreateContext();
+                /* XXX limits should come from first SPU */
+		cr_server.clients[i].ctx = crStateCreateContext( &limits );
 		crStateSetCurrentPointers( cr_server.clients[i].ctx, &(cr_server.current) );
 	}
 

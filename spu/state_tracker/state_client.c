@@ -44,9 +44,6 @@ void crStateClientInit(CRClientState *c)
 {
 	int i;
 
-	c->maxElementsIndices = 16384; // XXX
-	c->maxElementsVertices = 16384; // XXX
-
 	c->curClientTextureUnit = 0;
 
 	c->list_alloc = GLCLIENT_LIST_ALLOC;

@@ -13,24 +13,8 @@ GLdefault GL_TEXTURE_MATRIX               g->transform.texture[g->texture.curTex
 # GLdefault GL_COLOR_MATRIX                 g->transform.color[g->transform.colorDepth].m00 g->transform.color[g->transform.colorDepth].m01 g->transform.color[g->transform.colorDepth].m02 g->transform.color[g->transform.colorDepth].m03 g->transform.color[g->transform.colorDepth].m10 g->transform.color[g->transform.colorDepth].m11 g->transform.color[g->transform.colorDepth].m12 g->transform.color[g->transform.colorDepth].m13 g->transform.color[g->transform.colorDepth].m20 g->transform.color[g->transform.colorDepth].m21 g->transform.color[g->transform.colorDepth].m22 g->transform.color[g->transform.colorDepth].m23 g->transform.color[g->transform.colorDepth].m30 g->transform.color[g->transform.colorDepth].m31 g->transform.color[g->transform.colorDepth].m32 g->transform.color[g->transform.colorDepth].m33 
 
 GLint	  GL_ATTRIB_STACK_DEPTH             g->attrib.attribStackDepth
-GLint	  GL_MAX_ATTRIB_STACK_DEPTH         g->attrib.maxAttribStackDepth
-GLint     GL_MAX_CLIP_PLANES                g->transform.maxClipPlanes
-GLint     GL_MAX_MODELVIEW_STACK_DEPTH      g->transform.maxModelViewStackDepth
-GLint     GL_MAX_PROJECTION_STACK_DEPTH     g->transform.maxProjectionStackDepth
-GLint     GL_MAX_TEXTURE_STACK_DEPTH        g->transform.maxTextureStackDepth
-# GLint     GL_MAX_COLOR_MATRIX_STACK_DEPTH   g->transform.maxColorStackDepth
-GLint     GL_MAX_EVAL_ORDER                 g->eval.maxEvalOrder
-GLint     GL_MAX_VIEWPORT_DIMS              g->viewport.maxViewportDimsWidth g->viewport.maxViewportDimsHeight
-GLint     GL_MAX_LIGHTS                     g->lighting.maxLights
-GLint     GL_MAX_TEXTURE_SIZE               g->texture.maxTextureSize
-GLint     GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB  g->texture.maxCubeMapTextureSize
-GLint     GL_MAX_TEXTURE_UNITS_ARB          g->texture.maxTextureUnitsARB
 GLint     GL_ACTIVE_TEXTURE_ARB g->texture.curTextureUnit+GL_TEXTURE0_ARB
 GLint     GL_CLIENT_ACTIVE_TEXTURE_ARB g->client.curClientTextureUnit+GL_TEXTURE0_ARB
-GLint     GL_MAX_PIXEL_MAP_TABLE            0
-GLint     GL_MAX_ATTRIB_STACK_DEPTH         0
-GLint     GL_MAX_NAME_STACK_DEPTH           0
-GLint     GL_MAX_CLIENT_ATTRIB_STACK_DEPTH  0
 
 GLint     GL_VIEWPORT                     g->viewport.viewportX g->viewport.viewportY g->viewport.viewportW g->viewport.viewportH
 GLclampd  GL_DEPTH_RANGE                  g->viewport.nearClip g->viewport.farClip
@@ -98,11 +82,7 @@ GLboolean GL_UNPACK_SWAP_BYTES        g->pixel.unpack.swapBytes
 GLboolean GL_UNPACK_LSB_FIRST         g->pixel.unpack.psLSBFirst
 
 GLfloat   GL_POINT_SIZE               g->line.pointSize
-# GLfloat   GL_POINT_SIZE_RANGE         g->line.aliasedpointsizerange_min g->line.aliasedpointsizerange_max
-# GLfloat   GL_POINT_SIZE_GRANULARITY   g->line.aliasedpointsizegranularity
 GLfloat   GL_LINE_WIDTH               g->line.width
-# GLfloat   GL_LINE_WIDTH_RANGE         g->line.aliasedlinewidth_min g->line.aliasedlinewidth_max
-# GLfloat   GL_LINE_WIDTH_GRANULARITY   g->line.aliasedlinegranularity
 GLint     GL_LINE_STIPPLE_PATTERN     g->line.pattern
 GLint     GL_LINE_STIPPLE_REPEAT      g->line.repeat
 
@@ -156,3 +136,35 @@ GLboolean                                       GL_CURRENT_RASTER_POSITION_VALID
 GLclampf?b?ub?s?us?i?ui?f?d     GL_CURRENT_RASTER_COLOR          g->current.rastercolor?.r g->current.rastercolor?.g g->current.rastercolor?.b g->current.rastercolor?.a 
 GLfloat                                         GL_CURRENT_RASTER_DISTANCE       g->current.rasterDistance
 GLdouble                                        GL_CURRENT_RASTER_INDEX          g->current.rasterIndex
+
+
+# Implementation-dependent limits queries
+
+GLint   GL_MAX_TEXTURE_UNITS_ARB         g->limits.maxTextureUnits
+GLint   GL_MAX_TEXTURE_SIZE              g->limits.maxTextureSize
+GLint   GL_MAX_3D_TEXTURE_SIZE           g->limits.max3DTextureSize
+GLint   GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB g->limits.maxCubeMapTextureSize
+GLint   GL_MAX_LIGHTS                    g->limits.maxLights
+GLint   GL_MAX_CLIP_PLANES               g->limits.maxClipPlanes
+GLint   GL_MAX_PROJECTION_STACK_DEPTH    g->limits.maxProjectionStackDepth
+GLint   GL_MAX_MODELVIEW_STACK_DEPTH     g->limits.maxModelviewStackDepth
+GLint   GL_MAX_TEXTURE_STACK_DEPTH       g->limits.maxTextureStackDepth
+GLint   GL_MAX_COLOR_MATRIX_STACK_DEPTH  g->limits.maxColorStackDepth
+GLint   GL_MAX_ATTRIB_STACK_DEPTH        g->limits.maxAttribStackDepth
+GLint   GL_MAX_CLIENT_ATTRIB_STACK_DEPTH g->limits.maxClientAttribStackDepth
+GLint   GL_MAX_NAME_STACK_DEPTH          g->limits.maxNameStackDepth
+GLint   GL_MAX_ELEMENTS_INDICES          g->limits.maxElementsIndices
+GLint   GL_MAX_ELEMENTS_VERTICES         g->limits.maxElementsVertices
+GLint   GL_MAX_EVAL_ORDER                g->limits.maxEvalOrder
+GLint   GL_MAX_LIST_NESTING              g->limits.maxListNesting
+GLint   GL_MAX_PIXEL_MAP_TABLE           g->limits.maxPixelMapTable
+GLint   GL_MAX_VIEWPORT_DIMS             g->limits.maxViewportDims[0] g->limits.maxViewportDims[1]
+GLint   GL_SUBPIXEL_BITS                 g->limits.subpixelBits
+GLfloat GL_ALIASED_POINT_SIZE_RANGE      g->limits.aliasedPointSizeRange[0] g->limits.aliasedPointSizeRange[1]
+GLfloat GL_SMOOTH_POINT_SIZE_RANGE       g->limits.smoothPointSizeRange[0] g->limits.smoothPointSizeRange[1]
+GLfloat GL_SMOOTH_POINT_SIZE_GRANULARITY g->limits.pointSizeGranularity
+GLfloat GL_ALIASED_LINE_WIDTH_RANGE      g->limits.aliasedLineWidthRange[0] g->limits.aliasedLineWidthRange[1]
+GLfloat GL_SMOOTH_LINE_WIDTH_RANGE       g->limits.smoothLineWidthRange[0] g->limits.smoothLineWidthRange[1]
+GLfloat GL_SMOOTH_LINE_WIDTH_GRANULARITY g->limits.lineWidthGranularity
+
+

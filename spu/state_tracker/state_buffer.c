@@ -10,7 +10,6 @@
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
-#include "state_extensionfuncs.h"
 
 void crStateBufferInit (CRBufferState *b) 
 {
@@ -28,7 +27,6 @@ void crStateBufferInit (CRBufferState *b)
 	b->depthFunc = GL_LESS;
 	b->blendSrc = GL_ONE;
 	b->blendDst = GL_ZERO;
-	b->blendColor = zero_colorf;
 	b->logicOpMode = GL_COPY;
 	b->drawBuffer = GL_BACK;
 	b->readBuffer = GL_BACK;
@@ -42,7 +40,12 @@ void crStateBufferInit (CRBufferState *b)
 	b->depthClearValue = (GLdefault) 1.0;
 	b->accumClearValue = zero_colorf;
 
-	crStateBufferInitExtensions( b );
+#ifdef CR_EXT_blend_color
+	b->blendColor = zero_colorf;
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+	b->blendEquation = GL_FUNC_ADD_EXT;
+#endif
 }
 
 void STATE_APIENTRY crStateAlphaFunc (GLenum func, GLclampf ref) 
@@ -148,13 +151,18 @@ void STATE_APIENTRY crStateBlendFunc (GLenum sfactor, GLenum dfactor)
 		case GL_DST_ALPHA:
 		case GL_ONE_MINUS_DST_ALPHA:
 		case GL_SRC_ALPHA_SATURATE:
-			break;
+			break; /* OK */
+#ifdef CR_EXT_blend_color
+		case GL_CONSTANT_COLOR_EXT:
+		case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+		case GL_CONSTANT_ALPHA_EXT:
+		case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+			if (g->extensions.EXT_blend_color)
+				break; /* OK */
+#endif
 		default:
-			if (!crStateBlendFuncExtensionsCheckFactor( sfactor ))
-			{
-				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactor passed to glBlendFunc: %d", sfactor);
-				return;
-			}
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactor passed to glBlendFunc: %d", sfactor);
+			return;
 	}
 
 	switch (dfactor) 
@@ -167,19 +175,80 @@ void STATE_APIENTRY crStateBlendFunc (GLenum sfactor, GLenum dfactor)
 		case GL_ONE_MINUS_SRC_ALPHA:
 		case GL_DST_ALPHA:
 		case GL_ONE_MINUS_DST_ALPHA:
-			break;
+			break; /* OK */
+#ifdef CR_EXT_blend_color
+		case GL_CONSTANT_COLOR_EXT:
+		case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+		case GL_CONSTANT_ALPHA_EXT:
+		case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+			if (g->extensions.EXT_blend_color)
+				break; /* OK */
+#endif
 		default:
-			if (!crStateBlendFuncExtensionsCheckFactor( dfactor ))
-			{
-				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactor passed to glBlendFunc: %d", dfactor);
-				return;
-			}
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactor passed to glBlendFunc: %d", dfactor);
+			return;
 	}
 
 	b->blendSrc = sfactor;
 	b->blendDst = dfactor;
 	bb->dirty = g->neg_bitid;
 	bb->blendFunc = g->neg_bitid;
+}
+
+void STATE_APIENTRY crStateBlendColorEXT( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
+{
+	CRContext *g = GetCurrentContext();
+	CRBufferState *b = &(g->buffer);
+	CRStateBits *sb = GetCurrentBits();
+	CRBufferBits *bb = &(sb->buffer);
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "BlendColorEXT called inside a Begin/End" );
+		return;
+	}
+
+	b->blendColor.r = red;
+	b->blendColor.g = green;
+	b->blendColor.b = blue;
+	b->blendColor.a = alpha;
+	bb->blendColor = g->neg_bitid;
+	bb->dirty = g->neg_bitid;
+}
+
+void STATE_APIENTRY crStateBlendEquationEXT( GLenum mode )
+{
+	CRContext *g = GetCurrentContext();
+	CRBufferState *b = &(g->buffer);
+	CRStateBits *sb = GetCurrentBits();
+	CRBufferBits *bb = &(sb->buffer);
+
+	if( g->current.inBeginEnd )
+	{
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "BlendEquationEXT called inside a Begin/End" );
+		return;
+	}
+	switch( mode )
+	{
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+		case GL_FUNC_ADD_EXT:
+#ifdef CR_EXT_blend_subtract
+		case GL_FUNC_SUBTRACT_EXT:
+#endif /* CR_EXT_blend_subtract */
+#ifdef CR_EXT_blend_minmax
+		case GL_MIN_EXT:
+		case GL_MAX_EXT:
+#endif /* CR_EXT_blend_minmax */
+			b->blendEquation = mode;
+			break;
+#endif /* defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract) */
+		default:
+			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
+				"BlendEquationEXT: mode called with illegal parameter: 0x%x", (GLenum) mode );
+			return;
+	}
+	bb->blendEquation = g->neg_bitid;
+	bb->dirty = g->neg_bitid;
 }
 
 void STATE_APIENTRY crStateLogicOp (GLenum opcode) 

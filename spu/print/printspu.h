@@ -8,6 +8,7 @@
 #define PRINTSPU_H
 
 #include "spu_dispatch_table.h"
+#include "cr_spu.h"
 
 #if defined(WINDOWS)
 #define PRINT_APIENTRY __stdcall
@@ -25,7 +26,7 @@ typedef struct {
 
 extern PrintSpu print_spu;
 
-void printspuGatherConfiguration( void );
+void printspuGatherConfiguration( const SPU *child_spu );
 char *printspuEnumToStr( GLenum e );
 
 #endif /* PRINTSPU_H */

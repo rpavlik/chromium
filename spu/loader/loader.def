@@ -7,3 +7,11 @@ EXPORTS
 crSPULoad
 crSPULoadChain
 crSPUCopyDispatchTable
+crSPUFindFunction
+crSPUInitGLLimits
+crSPUCopyGLLimits
+crSPUQueryGLLimits
+crSPUReportGLLimits
+crSPUGetGLLimits
+crSPUMergeGLLimits
+crSPUPropogateGLLimits

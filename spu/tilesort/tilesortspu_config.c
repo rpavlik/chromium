@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdio.h>
 #include "tilesortspu.h"
 
 #include "cr_mothership.h"
@@ -11,8 +12,8 @@
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_applications.h"
+#include "cr_spu.h"
 
-#include <stdio.h>
 
 static void __setDefaults( void )
 {
@@ -42,7 +43,8 @@ static void __setDefaults( void )
 #endif
 }
 
-void tilesortspuGatherConfiguration( void )
+
+void tilesortspuGatherConfiguration( const SPU *child_spu )
 {
 	CRConnection *conn;
 	char response[8096];
@@ -67,42 +69,42 @@ void tilesortspuGatherConfiguration( void )
 
 	crDebug( "Got the MTU as %d", tilesort_spu.MTU );
 
-	if (crMothershipSPUParam( conn, response, "split_begin_end") )
+	if (crMothershipGetSPUParam( conn, response, "split_begin_end") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.splitBeginEnd) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "broadcast") )
+	if (crMothershipGetSPUParam( conn, response, "broadcast") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.broadcast) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "optimize_bucket") )
+	if (crMothershipGetSPUParam( conn, response, "optimize_bucket") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.optimizeBucketing) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "sync_on_swap") )
+	if (crMothershipGetSPUParam( conn, response, "sync_on_swap") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.syncOnSwap) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "sync_on_finish") )
+	if (crMothershipGetSPUParam( conn, response, "sync_on_finish") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.syncOnFinish) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "draw_bbox") )
+	if (crMothershipGetSPUParam( conn, response, "draw_bbox") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.drawBBOX) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "bbox_line_width") )
+	if (crMothershipGetSPUParam( conn, response, "bbox_line_width") )
 	{
 		sscanf( response, "%f", &(tilesort_spu.bboxLineWidth) );
 	}
 
-	if (crMothershipSPUParam( conn, response, "fake_window_dims") )
+	if (crMothershipGetSPUParam( conn, response, "fake_window_dims") )
 	{
 		float w,h;
 		sscanf( response, "%f %f", &w, &h );
@@ -110,15 +112,10 @@ void tilesortspuGatherConfiguration( void )
 		tilesort_spu.fakeWindowHeight = (unsigned int) h;
 	}
 
-	// The response to this tells us how many servers, what the
-	// SPU id of their first SPU is, and where they are.
+	// The response to this tells us how many servers and where they are
 	//
-	// For example:  2 1 tcpip://foo 2 tcpip://bar
+	// For example:  2 tcpip://foo tcpip://bar
 	//
-	// We need the SPU ID since the tiling information is actually
-	// associated with the render SPU that must be at the head of the
-	// server chain for tile/sorting to work properly.
-
 	crMothershipGetServers( conn, response );
 
 	serverchain = crStrSplitn( response, " ", 1 );
@@ -176,8 +173,16 @@ void tilesortspuGatherConfiguration( void )
 				tilesort_spu.muralHeight = server->y2[tile];
 			}
 		}
+
+                crFreeStrings( tilechain );
+                crFreeStrings( tilelist );
 	}
 	crWarning( "Total output dimensions = (%d, %d)", tilesort_spu.muralWidth, tilesort_spu.muralHeight );
+
+        crSPUPropogateGLLimits( conn, tilesort_spu.id, child_spu, &tilesort_spu.limits );
+
+        crFreeStrings( serverchain );
+        crFreeStrings( serverlist );
 
 	crMothershipDisconnect( conn );
 }

@@ -5,6 +5,8 @@
  */
 
 #include "cr_spu.h"
+#include "cr_error.h"
+#include "cr_mothership.h"
 #include "cr_logo.h"
 #include "renderspu.h"
 
@@ -23,6 +25,7 @@ RenderSPU render_spu;
 SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id, unsigned int num_contexts )
 {
+	CRLimitsState limits[3];
 	(void) child;
 	(void) super;
 	(void) context_id;
@@ -39,6 +42,18 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	// extensions, because the context has to be created first.
 
 	renderspuLoadSystemExtensions();
+
+	/* Report OpenGL limits to the mothership.
+	 * We use crSPUGetGLLimits() to query the real OpenGL limits via
+	 * glGetString, glGetInteger, etc.
+	 * Then, we intersect those limits with Chromium's OpenGL limits.
+	 * Finally, we report the intersected limits to the mothership.
+	 */
+	crSPUGetGLLimits( render_table, &limits[0] );  /* OpenGL */
+	crSPUInitGLLimits( &limits[1] );               /* Chromium */
+	crSPUMergeGLLimits( 2, limits, &limits[2] );   /* intersection */
+	crSPUReportGLLimits( &limits[2], render_spu.id );
+
 	return &the_functions;
 }
 

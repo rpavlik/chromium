@@ -37,7 +37,7 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 	}
 	if (update & GLUPDATE_TEXTURE && sb->texture.dirty & bitID)
 	{
-		crStateTextureDiff	(&(sb->texture), bitID,
+		crStateTextureDiff	(from, &(sb->texture), bitID,
 							 &(from->texture), &(to->texture));
 	}
 	if (update & GLUPDATE_LISTS && sb->lists.dirty & bitID)
@@ -142,7 +142,7 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	}
 	if (update & GLUPDATE_TEXTURE && sb->texture.dirty & bitID)
 	{
-		crStateTextureSwitch	(&(sb->texture), bitID,
+		crStateTextureSwitch	(from, &(sb->texture), bitID,
 							 &(from->texture), &(to->texture));
 	}
 	if (update & GLUPDATE_LISTS && sb->lists.dirty & bitID)

@@ -41,7 +41,7 @@ num_components = {
 }
 
 num_extended_components = {
-	'GL_TEXTURE_MAX_ANISOTROPY_EXT': ( 1, 'GL_EXT_texture_filter_anisotropic' )
+	'GL_TEXTURE_MAX_ANISOTROPY_EXT': ( 1, 'CR_EXT_texture_filter_anisotropic' )
 }
 
 print """static unsigned int __lookupComponents( GLenum pname )

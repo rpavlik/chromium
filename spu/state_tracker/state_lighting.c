@@ -46,12 +46,11 @@ void crStateLightingInit (CRLightingState *l)
 	l->lightModelAmbient = ambient_color;
 	l->lightModelLocalViewer = GL_FALSE;
 	l->lightModelTwoSide = GL_FALSE;
-	l->maxLights = CR_NUM_LIGHTS;
 
-	l->light = (CRLight *) crAlloc (sizeof (*(l->light)) * l->maxLights);
-	memset ((void *) l->light, 0, sizeof (*(l->light)) * l->maxLights);
+	l->light = (CRLight *) crAlloc (sizeof (*(l->light)) * CR_MAX_LIGHTS);
+	memset ((void *) l->light, 0, sizeof (*(l->light)) * CR_MAX_LIGHTS);
 
-	for (i=0; i<l->maxLights; i++) 
+	for (i=0; i<CR_MAX_LIGHTS; i++) 
 	{
 		l->light[i].enable = GL_FALSE;
 		l->light[i].ambient = zero_color;
@@ -239,7 +238,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 	FLUSH();
 
 	i = light - GL_LIGHT0;
-	if (i<0 || i>=l->maxLights)
+	if (i<0 || i>=g->limits.maxLights)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glLight: invalid light specified: %d", light);
 		return;
@@ -639,7 +638,7 @@ void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *para
 	}
 
 	i = light - GL_LIGHT0;
-	if (i<0 || i>=l->maxLights)
+	if (i<0 || i>=g->limits.maxLights)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 				"glGetLight: invalid light specified: %d", light);
@@ -722,7 +721,7 @@ void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 	}
 
 	i = light - GL_LIGHT0;
-	if (i<0 || i>=l->maxLights)
+	if (i<0 || i>=g->limits.maxLights)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 				"glGetLight: invalid light specified: %d", light);

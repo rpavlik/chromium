@@ -28,7 +28,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	(void) super;
 
 	print_spu.id = id;
-	printspuGatherConfiguration();
+	printspuGatherConfiguration( child );
 
 	crSPUCopyDispatchTable( &(print_spu.passthrough), &(super->dispatch_table) );
 	return &the_functions;

@@ -29,7 +29,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	(void) super;
 
 	pack_spu.id = id;
-	packspuGatherConfiguration();
+	packspuGatherConfiguration( child );
 	packspuConnectToServer();
 
 	crPackInit( pack_spu.server.conn->swap );
@@ -41,7 +41,9 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	pack_spu.swap = pack_spu.server.conn->swap;
 	packspuCreateFunctions();
 	crStateInit();
-	pack_spu.ctx = crStateCreateContext();
+
+	/* GL Limits were computed in packspuGatherConfiguration() above */
+	pack_spu.ctx = crStateCreateContext( &pack_spu.limits );
 	crStateMakeCurrent( pack_spu.ctx );
 	return &the_functions;
 }

@@ -8,6 +8,6 @@ TOP = ../..
 PROGRAM = sputest
 FILES = sputest
 
-LIBRARIES = spuload crutil
+LIBRARIES = spuload crutil crmothership
 
 include $(TOP)/cr.mk

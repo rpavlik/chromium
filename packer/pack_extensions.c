@@ -12,7 +12,7 @@ int __packTexParameterNumParams( GLenum param )
 {
 	switch( param )
 	{
-#ifdef GL_EXT_texture_filter_anisotropic
+#ifdef CR_EXT_texture_filter_anisotropic
 		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
 			return 1;
 #endif
@@ -25,9 +25,10 @@ int __packTexParameterNumParams( GLenum param )
 int __packFogParamsLength( GLenum param )
 {
 	static int one_param = sizeof( GLfloat );
+        (void) one_param;
 	switch( param )
 	{
-#ifdef GL_NV_fog_distance
+#ifdef CR_NV_fog_distance
 		case GL_FOG_DISTANCE_MODE_NV:
 			return one_param;
 #endif

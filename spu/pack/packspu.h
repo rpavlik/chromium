@@ -16,9 +16,12 @@
 #include "cr_glstate.h"
 #include "cr_netserver.h"
 #include "cr_pack.h"
+#include "cr_spu.h"
+
+#include "state/cr_limits.h"
 
 void packspuCreateFunctions( void );
-void packspuGatherConfiguration( void );
+void packspuGatherConfiguration( const SPU *child_spu );
 void packspuConnectToServer( void );
 void packspuFlush( void *arg );
 void packspuHuge( CROpcode opcode, void *buf );
@@ -32,6 +35,8 @@ typedef struct {
 	int swap;
 
 	CRContext *ctx;
+
+	CRLimitsState limits; /* OpenGL limits of receiving unpacker */
 } PackSPU;
 
 extern PackSPU pack_spu;

@@ -6,11 +6,11 @@
 TOP = ../../
 SHARED = 1
 LIBRARY = spuload
-LIBRARIES = crutil
+LIBRARIES = crutil crmothership
 
-FILES = spucopy spuload dispatch
+FILES = spucopy spuload dispatch limits
 
-PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c
+PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c limits.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += loader.def

@@ -10,7 +10,6 @@
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
-#include "state_extensionfuncs.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 
@@ -47,8 +46,6 @@ void crStateAttribInit (CRAttribState *a)
 	a->textureStackDepth = 0;
 	a->transformStackDepth = 0;
 	a->viewportStackDepth = 0;
-
-	a->maxAttribStackDepth = CR_MAX_ATTRIB_STACK_DEPTH; // XXX
 }
 
 void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
@@ -86,8 +83,12 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		a->colorBufferStack[a->colorBufferStackDepth].blend = g->buffer.blend;
 		a->colorBufferStack[a->colorBufferStackDepth].blendSrc = g->buffer.blendSrc;
 		a->colorBufferStack[a->colorBufferStackDepth].blendDst = g->buffer.blendDst;
-		a->colorBufferStack[a->colorBufferStackDepth].blendColor = g->buffer.extensions.blendColor;
-		a->colorBufferStack[a->colorBufferStackDepth].blendEquation = g->buffer.extensions.blendEquation;
+#ifdef CR_EXT_blend_color
+		a->colorBufferStack[a->colorBufferStackDepth].blendColor = g->buffer.blendColor;
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+		a->colorBufferStack[a->colorBufferStackDepth].blendEquation = g->buffer.blendEquation;
+#endif
 		a->colorBufferStack[a->colorBufferStackDepth].dither = g->buffer.dither;
 		a->colorBufferStack[a->colorBufferStackDepth].drawBuffer = g->buffer.drawBuffer;
 		a->colorBufferStack[a->colorBufferStackDepth].logicOp = g->buffer.logicOp;
@@ -128,16 +129,16 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		if (a->enableStack[a->enableStackDepth].clip == NULL)
 		{
-			a->enableStack[a->enableStackDepth].clip = (GLboolean *) crAlloc( g->transform.maxClipPlanes * sizeof( GLboolean ));
+			a->enableStack[a->enableStackDepth].clip = (GLboolean *) crAlloc( g->limits.maxClipPlanes * sizeof( GLboolean ));
 		}
 		if (a->enableStack[a->enableStackDepth].light == NULL)
 		{
-			a->enableStack[a->enableStackDepth].light = (GLboolean *) crAlloc( g->lighting.maxLights * sizeof( GLboolean ));
+			a->enableStack[a->enableStackDepth].light = (GLboolean *) crAlloc( g->limits.maxLights * sizeof( GLboolean ));
 		}
 		a->enableStack[a->enableStackDepth].alphaTest = g->buffer.alphaTest;
 		a->enableStack[a->enableStackDepth].autoNormal = g->eval.autoNormal;
 		a->enableStack[a->enableStackDepth].blend = g->buffer.blend;
-		for (i = 0 ; i < g->transform.maxClipPlanes ; i++)
+		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
 		{
 			a->enableStack[a->enableStackDepth].clip[i] = g->transform.clip[i];
 		}
@@ -146,7 +147,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		a->enableStack[a->enableStackDepth].depthTest = g->buffer.depthTest;
 		a->enableStack[a->enableStackDepth].dither = g->buffer.dither;
 		a->enableStack[a->enableStackDepth].fog = g->fog.enable;
-		for (i = 0 ; i < g->lighting.maxLights ; i++)
+		for (i = 0 ; i < g->limits.maxLights ; i++)
 		{
 			a->enableStack[a->enableStackDepth].light[i] = g->lighting.light[i].enable;
 		}
@@ -216,13 +217,13 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		if (a->lightingStack[a->lightingStackDepth].light == NULL)
 		{
-			a->lightingStack[a->lightingStackDepth].light = (CRLight *) crAlloc( g->lighting.maxLights * sizeof( CRLight ));
+			a->lightingStack[a->lightingStackDepth].light = (CRLight *) crAlloc( g->limits.maxLights * sizeof( CRLight ));
 		}
 		a->lightingStack[a->lightingStackDepth].lightModelAmbient = g->lighting.lightModelAmbient;
 		a->lightingStack[a->lightingStackDepth].lightModelLocalViewer = g->lighting.lightModelLocalViewer;
 		a->lightingStack[a->lightingStackDepth].lightModelTwoSide = g->lighting.lightModelTwoSide;
 		a->lightingStack[a->lightingStackDepth].lighting = g->lighting.lighting;
-		for (i = 0 ; i < g->lighting.maxLights; i++)
+		for (i = 0 ; i < g->limits.maxLights; i++)
 		{
 			a->lightingStack[a->lightingStackDepth].light[i].enable = g->lighting.light[i].enable;
 			a->lightingStack[a->lightingStackDepth].light[i].ambient = g->lighting.light[i].ambient;
@@ -390,14 +391,14 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		if (a->transformStack[a->transformStackDepth].clip == NULL)
 		{
-			a->transformStack[a->transformStackDepth].clip = (GLboolean *) crAlloc( g->transform.maxClipPlanes * sizeof( GLboolean ));
+			a->transformStack[a->transformStackDepth].clip = (GLboolean *) crAlloc( g->limits.maxClipPlanes * sizeof( GLboolean ));
 		}
 		if (a->transformStack[a->transformStackDepth].clipPlane == NULL)
 		{
-			a->transformStack[a->transformStackDepth].clipPlane = (GLvectord *) crAlloc( g->transform.maxClipPlanes * sizeof( GLvectord ));
+			a->transformStack[a->transformStackDepth].clipPlane = (GLvectord *) crAlloc( g->limits.maxClipPlanes * sizeof( GLvectord ));
 		}
 		a->transformStack[a->transformStackDepth].mode = g->transform.mode;
-		for (i = 0 ; i < g->transform.maxClipPlanes ; i++)
+		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
 		{
 			a->transformStack[a->transformStackDepth].clip[i] = g->transform.clip[i];
 			a->transformStack[a->transformStackDepth].clipPlane[i] = g->transform.clipPlane[i];
@@ -469,8 +470,12 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->buffer.blend = a->colorBufferStack[a->colorBufferStackDepth].blend;
 		g->buffer.blendSrc = a->colorBufferStack[a->colorBufferStackDepth].blendSrc;
 		g->buffer.blendDst = a->colorBufferStack[a->colorBufferStackDepth].blendDst;
-		g->buffer.extensions.blendColor = a->colorBufferStack[a->colorBufferStackDepth].blendColor;
-		g->buffer.extensions.blendEquation = a->colorBufferStack[a->colorBufferStackDepth].blendEquation;
+#ifdef CR_EXT_blend_color
+		g->buffer.blendColor = a->colorBufferStack[a->colorBufferStackDepth].blendColor;
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+		g->buffer.blendEquation = a->colorBufferStack[a->colorBufferStackDepth].blendEquation;
+#endif
 		g->buffer.dither = a->colorBufferStack[a->colorBufferStackDepth].dither;
 		g->buffer.drawBuffer = a->colorBufferStack[a->colorBufferStackDepth].drawBuffer;
 		g->buffer.logicOp = a->colorBufferStack[a->colorBufferStackDepth].logicOp;
@@ -484,7 +489,12 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		sb->buffer.enable = g->neg_bitid;
 		sb->buffer.alphaFunc = g->neg_bitid;
 		sb->buffer.blendFunc = g->neg_bitid;
-		sb->buffer.extensions = g->neg_bitid;
+#ifdef CR_EXT_blend_color
+		sb->buffer.blendColor = g->neg_bitid;
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+		sb->buffer.blendEquation = g->neg_bitid;
+#endif
 		sb->buffer.drawBuffer = g->neg_bitid;
 		sb->buffer.logicOp = g->neg_bitid;
 		sb->buffer.clearColor = g->neg_bitid;
@@ -550,7 +560,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->buffer.alphaTest = a->enableStack[a->enableStackDepth].alphaTest;
 		g->eval.autoNormal = a->enableStack[a->enableStackDepth].autoNormal;
 		g->buffer.blend = a->enableStack[a->enableStackDepth].blend;
-		for (i = 0 ; i < g->transform.maxClipPlanes ; i++)
+		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
 		{
 			g->transform.clip[i] = a->enableStack[a->enableStackDepth].clip[i];
 		}
@@ -559,7 +569,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->buffer.depthTest = a->enableStack[a->enableStackDepth].depthTest;
 		g->buffer.dither = a->enableStack[a->enableStackDepth].dither;
 		g->fog.enable = a->enableStack[a->enableStackDepth].fog;
-		for (i = 0 ; i < g->lighting.maxLights ; i++)
+		for (i = 0 ; i < g->limits.maxLights ; i++)
 		{
 			g->lighting.light[i].enable = a->enableStack[a->enableStackDepth].light[i];
 		}
@@ -666,7 +676,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->lighting.lightModelLocalViewer = a->lightingStack[a->lightingStackDepth].lightModelLocalViewer;
 		g->lighting.lightModelTwoSide = a->lightingStack[a->lightingStackDepth].lightModelTwoSide;
 		g->lighting.lighting = a->lightingStack[a->lightingStackDepth].lighting;
-		for (i = 0 ; i < g->lighting.maxLights; i++)
+		for (i = 0 ; i < g->limits.maxLights; i++)
 		{
 			g->lighting.light[i].enable = a->lightingStack[a->lightingStackDepth].light[i].enable;
 			g->lighting.light[i].ambient = a->lightingStack[a->lightingStackDepth].light[i].ambient;
@@ -694,7 +704,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		sb->lighting.lightModel = g->neg_bitid;
 		sb->lighting.material = g->neg_bitid;
 		sb->lighting.enable = g->neg_bitid;
-		for (i = 0 ; i < g->lighting.maxLights; i++)
+		for (i = 0 ; i < g->limits.maxLights; i++)
 		{
 			sb->lighting.light[i].dirty = g->neg_bitid;
 			sb->lighting.light[i].enable = g->neg_bitid;
@@ -921,7 +931,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		}
 		a->transformStackDepth--;
 		g->transform.mode = a->transformStack[a->transformStackDepth].mode;
-		for (i = 0 ; i < g->transform.maxClipPlanes ; i++)
+		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
 		{
 			g->transform.clip[i] = a->transformStack[a->transformStackDepth].clip[i];
 			g->transform.clipPlane[i] = a->transformStack[a->transformStackDepth].clipPlane[i];

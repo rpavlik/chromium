@@ -20,4 +20,5 @@ logicOp:logicOp:logicOpMode:LogicOp
 :clearDepth:depthClearValue:ClearDepth
 :clearAccum:accumClearValue|r,g,b,a:ClearAccum
 :depthMask:depthMask:DepthMask
-:extensions:foo:bar
+:blendEquation:blendEquation:BlendEquationEXT
+:blendColor:blendColor|r,g,b,a:BlendColorEXT

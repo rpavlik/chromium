@@ -11,7 +11,6 @@ print << 'EOF';
 
 #include "cr_glstate.h"
 #include "state_internals.h"
-#include "state_extensionfuncs.h"
 
 EOF
 

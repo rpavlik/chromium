@@ -30,9 +30,6 @@ static const GLmatrix identity_matrix =
 #define M_PI             3.14159265358979323846
 #endif
 
-#define MAX_MATRIX_STACK_DEPTH 512
-#define MAX_CLIPPLANES 8
-
 #ifdef GL_DEFAULTTYPE_FLOAT
 
 #define LOADMATRIX(a) \
@@ -74,31 +71,21 @@ void crStateTransformInit(CRTransformState *t)
 	t->mode = GL_MODELVIEW;
 	t->matrixid = 0;
 
+#if 0
 	t->maxModelViewStackDepth = MAX_MATRIX_STACK_DEPTH;
 	t->maxProjectionStackDepth = MAX_MATRIX_STACK_DEPTH;
 	t->maxTextureStackDepth = MAX_MATRIX_STACK_DEPTH;
 	t->maxColorStackDepth = MAX_MATRIX_STACK_DEPTH;
-	t->maxDepth = t->maxModelViewStackDepth;
+#endif
+	t->maxDepth = CR_MAX_MODELVIEW_STACK_DEPTH;
 
-	if (t->maxModelViewStackDepth)
+	t->modelView = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_MODELVIEW_STACK_DEPTH);
+	t->projection = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_PROJECTION_STACK_DEPTH);
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
-		t->modelView = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxModelViewStackDepth);
+		t->texture[i] = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_TEXTURE_STACK_DEPTH);
 	}
-	if (t->maxProjectionStackDepth)
-	{
-		t->projection = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxProjectionStackDepth);
-	}
-	if (t->maxTextureStackDepth)
-	{
-		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
-		{
-			t->texture[i] = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxTextureStackDepth);
-		}
-	}
-	if (t->maxColorStackDepth)
-	{
-		t->color = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxColorStackDepth);
-	}
+	t->color = (GLmatrix *) crAlloc (sizeof (GLmatrix) * CR_MAX_COLOR_STACK_DEPTH);
 
 	t->modelView[0] = identity_matrix;
 	t->projection[0] = identity_matrix;
@@ -118,22 +105,18 @@ void crStateTransformInit(CRTransformState *t)
 	t->colorDepth = 0;
 	t->depth = &t->modelViewDepth;
 
-	t->maxClipPlanes = MAX_CLIPPLANES;
-
 	t->clipPlane = NULL;
 	t->clip = NULL;
-	if (t->maxClipPlanes) 
+
+	t->clipPlane = (GLvectord *) crAlloc (sizeof (GLvectord) * CR_MAX_CLIP_PLANES);
+	t->clip = (GLboolean *) crAlloc (sizeof (GLboolean) * CR_MAX_CLIP_PLANES);
+	for (i = 0; i < CR_MAX_CLIP_PLANES; i++) 
 	{
-		t->clipPlane = (GLvectord *) crAlloc (sizeof (GLvectord) * t->maxClipPlanes);
-		t->clip = (GLboolean *) crAlloc (sizeof (GLboolean) * t->maxClipPlanes);
-		for (i=0; i<t->maxClipPlanes; i++) 
-		{
-			t->clipPlane[i].x = 0.0f;
-			t->clipPlane[i].y = 0.0f;
-			t->clipPlane[i].z = 0.0f;
-			t->clipPlane[i].w = 0.0f;
-			t->clip[i] = GL_FALSE;
-		}
+		t->clipPlane[i].x = 0.0f;
+		t->clipPlane[i].y = 0.0f;
+		t->clipPlane[i].z = 0.0f;
+		t->clipPlane[i].w = 0.0f;
+		t->clip[i] = GL_FALSE;
 	}
 
 	t->transformValid = 0;
@@ -366,7 +349,7 @@ void STATE_APIENTRY crStateClipPlane (GLenum plane, const GLdouble *equation) {
 	FLUSH();
 
 	i = plane - GL_CLIP_PLANE0;
-	if (i >= t->maxClipPlanes)
+	if (i >= g->limits.maxClipPlanes)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "ClipPlane called with bad enumerant: %d", plane);
 		return;
@@ -400,28 +383,28 @@ void STATE_APIENTRY crStateMatrixMode(GLenum e)
 		case GL_MODELVIEW:
 			t->m = &(t->modelView[t->modelViewDepth]);
 			t->depth = &t->modelViewDepth;
-			t->maxDepth = t->maxModelViewStackDepth;
+			t->maxDepth = g->limits.maxModelviewStackDepth;
 			t->mode = GL_MODELVIEW;
 			t->matrixid = 0;
 			break;
 		case GL_PROJECTION:
 			t->m = &(t->projection[t->projectionDepth]);
 			t->depth = &t->projectionDepth;
-			t->maxDepth = t->maxProjectionStackDepth;
+			t->maxDepth = g->limits.maxProjectionStackDepth;
 			t->mode = GL_PROJECTION;
 			t->matrixid = 1;
 			break;
 		case GL_TEXTURE:
 			t->m = &(t->texture[tex->curTextureUnit][t->textureDepth[tex->curTextureUnit]]);
 			t->depth = &t->textureDepth[tex->curTextureUnit];
-			t->maxDepth = t->maxTextureStackDepth;
+			t->maxDepth = g->limits.maxTextureStackDepth;
 			t->mode = GL_TEXTURE;
 			t->matrixid = 2;
 			break;
 		case GL_COLOR:
 			t->m = &(t->color[t->colorDepth]);
 			t->depth = &t->colorDepth;
-			t->maxDepth = t->maxColorStackDepth;
+			t->maxDepth = g->limits.maxColorStackDepth;
 			t->mode = GL_COLOR;
 			t->matrixid = 3;
 			break;
@@ -1077,7 +1060,7 @@ void  STATE_APIENTRY crStateGetClipPlane (GLenum plane, GLdouble *equation)
 	}
 
 	i = plane - GL_CLIP_PLANE0;
-	if (i >= t->maxClipPlanes)
+	if (i >= g->limits.maxClipPlanes)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
 			"GetClipPlane called with bad enumerant: %d", plane);
@@ -1097,7 +1080,7 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID,
 	int i;
 
 	if (t->clipPlane & bitID) {
-		for (i=0; i<from->maxClipPlanes; i++) {
+		for (i=0; i<CR_MAX_CLIP_PLANES; i++) {
 			if (from->clipPlane[i].x != to->clipPlane[i].x ||
 				from->clipPlane[i].y != to->clipPlane[i].y ||
 				from->clipPlane[i].z != to->clipPlane[i].z ||
@@ -1205,7 +1188,7 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID,
 	GLint i;
 
 	if (t->clipPlane & bitID) {
-		for (i=0; i<from->maxClipPlanes; i++) {
+		for (i=0; i<CR_MAX_CLIP_PLANES; i++) {
 			if (from->clipPlane[i].x != to->clipPlane[i].x ||
 				from->clipPlane[i].y != to->clipPlane[i].y ||
 				from->clipPlane[i].z != to->clipPlane[i].z ||
@@ -1297,7 +1280,7 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID,
 	*/
 	
 	if (t->enable & bitID) {
-		for (i=0; i<from->maxClipPlanes; i++) {
+		for (i=0; i<CR_MAX_CLIP_PLANES; i++) {
 			if (from->clip[i] != to->clip[i]) {
 				if (to->clip[i] == GL_TRUE)
 					diff_api.Enable(GL_CLIP_PLANE0 + i);

@@ -18,13 +18,15 @@
 #include "cr_net.h"
 #include "cr_netserver.h"
 #include "cr_pack.h"
+#include "cr_spu.h"
 
+#include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
 
 #define END_FLUFF 4 // space for phantom GLEND opcode for splitting
 
 void tilesortspuCreateFunctions( void );
-void tilesortspuGatherConfiguration( void );
+void tilesortspuGatherConfiguration( const SPU *child_spu );
 void tilesortspuConnectToServers( void );
 
 typedef struct {
@@ -83,6 +85,9 @@ typedef struct {
 	Drawable glx_drawable;
 #endif
 	unsigned int fakeWindowWidth, fakeWindowHeight;
+
+	CRLimitsState limits;  /* OpenGL limits computed from children */
+
 } TileSortSPU;
 
 typedef struct {

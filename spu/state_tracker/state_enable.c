@@ -10,21 +10,20 @@
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
-#include "state_extensionfuncs.h"
 
 static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 				GLenum cap, GLboolean val) 
 {
 	int i;
 	i = cap - GL_CLIP_PLANE0;
-	if (i >= 0 && i < g->transform.maxClipPlanes) {
+	if (i >= 0 && i < g->limits.maxClipPlanes) {
 		g->transform.clip[i] = val;
 		sb->transform.enable = neg_bitid;
 		sb->transform.dirty = neg_bitid;
 		return;
 	}
 	i = cap - GL_LIGHT0;
-	if (i >= 0 && i < g->lighting.maxLights) {
+	if (i >= 0 && i < g->limits.maxLights) {
 		g->lighting.light[i].enable = val;
 		sb->lighting.light[i].dirty = neg_bitid;
 		sb->lighting.light[i].enable = neg_bitid;
@@ -168,12 +167,18 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			break;
 #endif
 #ifdef CR_ARB_texture_cube_map
-		case GL_TEXTURE_CUBE_MAP_ARB :
-			g->texture.unit[g->texture.curTextureUnit].enabledCubeMap = val;
-			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
-			sb->texture.dirty = neg_bitid;
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			if (g->extensions.ARB_texture_cube_map) {
+				g->texture.unit[g->texture.curTextureUnit].enabledCubeMap = val;
+				sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
+				sb->texture.dirty = neg_bitid;
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
+				return;
+			}
 			break;
-#endif
+#endif /* CR_ARB_texture_cube_map */
 		case GL_TEXTURE_GEN_Q :
 			g->texture.unit[g->texture.curTextureUnit].textureGen.q = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
@@ -231,13 +236,38 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->eval.dirty = neg_bitid;
 			break;
 
-		default:
-			if( crEnableSetExtensions( g, sb, neg_bitid, cap, val ))
-			{
-				crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glEnable/glDisable called with bogus cap: %d", cap);
+#if 0 /* XXX not finished yet */
+#ifdef CR_NV_register_combiners
+		case GL_REGISTER_COMBINERS_NV:
+			if (g->extensions.NV_register_combiners) {
+				g->texture.extensions.regCombiners = val;
+				sb->texture.extensions.regCombiners = neg_bitid;
+				sb->texture.dirty = neg_bitid;
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
 				return;
 			}
 			break;
+#endif
+#ifdef CR_NV_register_combiners2
+		case GL_PER_STAGE_CONSTANTS_NV:
+			if (g->extensions.NV_register_combiners) {
+				g->texture.extensions.regPerStageConstants = val;
+				sb->texture.extensions.regPerStageConstants = neg_bitid;
+				sb->texture.dirty = neg_bitid;
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
+				return;
+			}
+			break;
+#endif
+#endif /* 0 not finshed */
+
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable called with bogus cap: %d", cap);
+			return;
 	}
 }
 

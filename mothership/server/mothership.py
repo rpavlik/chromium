@@ -380,6 +380,42 @@ class CR:
 		print "responding with args = " + `response`
 		sock.Success( string.join( response, " " ) )	
 
+	def do_namedspuparam( self, sock, args ):
+		# XXX New- Greg should review (BrianP)
+##		if sock.SPUid == -1:
+##			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
+##			return
+		params = args.split( " " )
+		spuid = int(params[0])
+		key = params[1]
+		#print "Get named spu param id is %d" % spuid
+		#print "Get named spu param key is " + key
+		spu = allSPUs[spuid]
+		if spu.config.has_key( key ):
+			response = spu.config[key]
+		else:
+			# Okay, there's no specific parameter for the SPU.  Try the global SPU configurations.
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (spuid, args) )
+			return
+		print "responding with args = " + `response`
+		sock.Success( string.join( response, " " ) )	
+
+
+	def do_setspuparam( self, sock, args):
+		# XXX this should be reviewed by Greg  (BrianP)
+		if sock.SPUid == -1:
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't set SPU parameters without telling me what SPU id you are!" )
+			return
+		spu = allSPUs[sock.SPUid]
+		#spu = self.allSPUConf
+		params = args.split( " ", 1 )
+		key = params[0]
+		value = params[1]
+		# print "Setting key " + key + " to " + value
+		spu.config[key] = [value]
+		print "responding with OK"
+		sock.Success( "OK" )
+
 	def do_serverparam( self, sock, args ):
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
 			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for server parameters without telling me what server you are!" )
@@ -402,6 +438,24 @@ class CR:
 		for i in range(len(spu.servers)):
 			(node, url) = spu.servers[i]
 			servers += "%s" % (url)
+			if i != len(spu.servers) -1:
+				servers += ','
+		sock.Success( servers )
+
+	def do_serverids( self, sock, args ):
+		# XXX this might only be temporary (BrianP)
+		if sock.SPUid == -1:
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for server ids without telling me what SPU id you are!" )
+			return
+		spu = allSPUs[sock.SPUid]
+		if len(spu.servers) == 0:
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have servers!" % (sock.SPUid) )
+			return
+
+		servers = "%d " % len(spu.servers)
+		for i in range(len(spu.servers)):
+			(node, url) = spu.servers[i]
+			servers += "%d" % (node.SPUs[0].ID)
 			if i != len(spu.servers) -1:
 				servers += ','
 		sock.Success( servers )

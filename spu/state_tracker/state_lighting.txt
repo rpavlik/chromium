@@ -26,7 +26,7 @@
 :material:shininess[0]:Materialf, GL_FRONT, GL_SHININESS
 :material:shininess[1]:Materialf, GL_BACK, GL_SHININESS
 %flush
->for (i=0; i<from->maxLights; i++) {
+>for (i=0; i<CR_MAX_LIGHTS; i++) {
 >CRLightBits *lb = b->light+i;
 >CRLight *tl = to->light+i;
 >CRLight *cl = from->light+i;
