@@ -116,7 +116,7 @@ void ZPIXSPU_APIENTRY zpixRasterPos2i( GLint x, GLint y)
   the raster position with glBitmap instead of glRasterPos2i.
   This makes me a little ill...
 ----------------------------------------------------------*/
-void ZPIXSPU_APIENTRY zpixBitmap( GLsizei width, 
+/*void ZPIXSPU_APIENTRY zpixBitmap( GLsizei width, 
 				  GLsizei height,
 				  GLfloat xorig,
 				  GLfloat yorig,
@@ -125,12 +125,11 @@ void ZPIXSPU_APIENTRY zpixBitmap( GLsizei width,
 				  const GLubyte *bitmap )
 {
      if(bitmap == NULL){
-	  /*XXX remember and pass it through for now */
-	  zpix_spu.rXnew = xmove;
-	  zpix_spu.rYnew = ymove;
+	  zpix_spu.rXnew = (int)xmove;
+	  zpix_spu.rYnew = (int)ymove;
      }
      zpix_spu.child.Bitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
-}
+}*/
 
 /*----------------------------------------------------------
   zpixDrawPixels:  Compress the data from glDrawPixels
@@ -832,7 +831,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
 SPUNamedFunctionTable _cr_zpix_table[] = {
   { "RasterPos2i",    (SPUGenericFunction) zpixRasterPos2i },
   { "DrawPixels", (SPUGenericFunction) zpixDrawPixels },
-  { "Bitmap", (SPUGenericFunction) zpixBitmap },
+  /*{ "Bitmap", (SPUGenericFunction) zpixBitmap },*/
   { "ZPix", (SPUGenericFunction) zpixZPix },
   { NULL, NULL }
 }; 
