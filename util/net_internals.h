@@ -2,6 +2,7 @@
 #define NET_INTERNALS_H
 
 #include "cr_bufpool.h"
+#include "cr_threads.h"
 
 CRConnection *__copy_of_crMothershipConnect( void );
 int __copy_of_crMothershipReadResponse( CRConnection *conn, void *buf );
