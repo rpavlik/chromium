@@ -66,7 +66,8 @@ static void GenerateNewDrop( void )
 float Evaluate( float elapsed, float distance, float max_dist )
 {
 	float val, s_val;
-	if (elapsed < distance) return 0;
+	if (elapsed < distance)
+		return 0;
 
 	val =  elapsed + wet_spu.ripple_freq * distance;
 	s_val = wet_spu.ripple_scale * (float) sin( val );
@@ -134,20 +135,31 @@ static void ComputeNormal( int x, int y, float n[3] )
 	p2[1] = (float) y-1;
 	p3[1] = (float) y;
 	p4[1] = (float) y+1;
-	if (x > 0) p1[2] = wet_spu.mesh_displacement[(int) p1[1]][(int) p1[0]];
-	if (y > 0) p2[2] = wet_spu.mesh_displacement[(int) p2[1]][(int) p2[0]];
-	if (x < wet_spu.mesh_width-1) p3[2] = wet_spu.mesh_displacement[(int) p3[1]][(int) p3[0]];
-	if (y < wet_spu.mesh_height-1) p4[2] = wet_spu.mesh_displacement[(int) p4[1]][(int) p4[0]];
+	if (x > 0)
+		p1[2] = wet_spu.mesh_displacement[(int) p1[1]][(int) p1[0]];
+	if (y > 0)
+		p2[2] = wet_spu.mesh_displacement[(int) p2[1]][(int) p2[0]];
+	if (x < wet_spu.mesh_width-1)
+		p3[2] = wet_spu.mesh_displacement[(int) p3[1]][(int) p3[0]];
+	if (y < wet_spu.mesh_height-1)
+		p4[2] = wet_spu.mesh_displacement[(int) p4[1]][(int) p4[0]];
 
+/* Huh?  This looks like a cross product, but left-handed?!? */
 #define ADD_VECTOR( a, b ) \
-	n[0] += b[1]*a[2] - b[2]*a[1]; \
-	n[1] += b[0]*a[2] - b[2]*a[0]; \
-	n[2] += b[0]*a[1] - b[1]*a[0]; \
+	do { \
+		n[0] += b[1]*a[2] - b[2]*a[1]; \
+		n[1] += b[0]*a[2] - b[2]*a[0]; \
+		n[2] += b[0]*a[1] - b[1]*a[0]; \
+	} while (0)
 
-	if (x > 0 && y > 0) { ADD_VECTOR( p1, p2 ); }
-	if (y > 0 && x < wet_spu.mesh_width-1 ) { ADD_VECTOR( p2, p3 ); }
-	if (x < wet_spu.mesh_width-1 && y < wet_spu.mesh_height-1 ) { ADD_VECTOR( p3, p4 ); }
-	if (y < wet_spu.mesh_height-1 && x > 0) { ADD_VECTOR( p4, p1 ); }
+	if (x > 0 && y > 0)
+		ADD_VECTOR( p1, p2 );
+	if (y > 0 && x < wet_spu.mesh_width-1 )
+		ADD_VECTOR( p2, p3 );
+	if (x < wet_spu.mesh_width-1 && y < wet_spu.mesh_height-1 )
+		ADD_VECTOR( p3, p4 );
+	if (y < wet_spu.mesh_height-1 && x > 0)
+		ADD_VECTOR( p4, p1 );
 
 	len = (float) sqrt( n[0]*n[0] + n[1]*n[1] + n[2]*n[2]);
 	n[0] /= len;
@@ -211,10 +223,10 @@ static void DrawMesh( void )
 	wet_spu.super.BindTexture( GL_TEXTURE_2D, wet_spu.tex_id );
 	wet_spu.super.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 	wet_spu.super.TexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-  wet_spu.super.TexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-  wet_spu.super.TexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  wet_spu.super.TexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  wet_spu.super.TexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+	wet_spu.super.TexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
+	wet_spu.super.TexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	wet_spu.super.TexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	wet_spu.super.TexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
 	wet_spu.super.CopyTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, 0, 0, win_width, win_height );
 	/* wet_spu.super.TexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, CR_LOGO_H_WIDTH, CR_LOGO_H_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, raw_bytes ); */
 
