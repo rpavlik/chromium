@@ -63,6 +63,7 @@ limits are propogated all the way up to the client.
 
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 #include "state/cr_limits.h"
 #include "cr_error.h"
 #include "cr_mothership.h"
