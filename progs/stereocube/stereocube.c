@@ -26,6 +26,7 @@ static GLfloat ViewXrot = 30, ViewYrot = 0, ViewZrot = 0;
 static GLfloat CameraRot = 0.0;
 static GLfloat ViewDist = 5.0;
 static GLfloat FocalDist = 5.0;
+static GLfloat EyeSep = 0.25f;  /* half of interocular distance */
 static GLboolean ShowOverlay = GL_FALSE;
 
 
@@ -142,11 +143,10 @@ static void Draw( void )
 	const GLfloat lookAtY = 1.0;
 	const GLfloat aspect = (float) WinWidth / (float) WinHeight;
 	/* Note: these values are also in stereo1.conf */
-	const GLfloat eyeSep = .3f;  /* half of interocular distance */
 	const GLfloat width = 12.0; /* width of frustum at FocalDist */
 	const GLfloat hither = 1.0, yon = 25;  /* clipping planes */
 
-        const GLfloat halfWidth = 0.5 * width;
+	const GLfloat halfWidth = 0.5 * width;
 	const GLfloat s = hither / FocalDist;  /* similar triangle ratio */
 	GLfloat left, right, bottom, top;
 
@@ -162,14 +162,14 @@ static void Draw( void )
 
 		glMatrixMode( GL_PROJECTION );
 		glLoadIdentity();
-		left = s * ((halfWidth * -aspect) - eyeSep);
-		right = s * ((halfWidth * aspect) - eyeSep);
+		left = s * ((halfWidth * -aspect) - EyeSep);
+		right = s * ((halfWidth * aspect) - EyeSep);
 		glFrustum( left, right, bottom, top, hither, yon );
 
 		glMatrixMode( GL_MODELVIEW );
 		glLoadIdentity();
                 glRotatef(CameraRot, 0, 1, 0);
-		glTranslatef(+eyeSep, -lookAtY, -ViewDist);
+		glTranslatef(+EyeSep, -lookAtY, -ViewDist);
 
 		glPushMatrix();
 		glRotatef(ViewXrot, 1, 0, 0);
@@ -184,14 +184,14 @@ static void Draw( void )
 
 		glMatrixMode( GL_PROJECTION );
 		glLoadIdentity();
-		left = s * (halfWidth * -aspect + eyeSep);
-		right = s * (halfWidth * aspect + eyeSep);
+		left = s * (halfWidth * -aspect + EyeSep);
+		right = s * (halfWidth * aspect + EyeSep);
 		glFrustum( left, right, bottom, top, hither, yon );
 
 		glMatrixMode( GL_MODELVIEW );
 		glLoadIdentity();
                 glRotatef(CameraRot, 0, 1, 0);
-		glTranslatef(-eyeSep, -lookAtY, -ViewDist);
+		glTranslatef(-EyeSep, -lookAtY, -ViewDist);
 
 		glPushMatrix();
 		glRotatef(ViewXrot, 1, 0, 0);
@@ -278,6 +278,12 @@ static void Key( unsigned char key, int x, int y )
 			glutIdleFunc(NULL);
 		}
 		break;
+	case 'e':
+		EyeSep -= 0.05;
+		break;
+	case 'E':
+		EyeSep += 0.05;
+		break;
 	case 'f':
 		FocalDist -= step;
 		break;
@@ -297,7 +303,9 @@ static void Key( unsigned char key, int x, int y )
 		ViewXrot = 30;
 		ViewYrot = 0;
 		ViewZrot = 0;
-		ViewDist = 10.0;
+		ViewDist = 5.0;
+		FocalDist = 5.0;
+		EyeSep = 0.25;
 		break;
 	case 'y':
 		CameraRot -= 2.0;
@@ -311,7 +319,8 @@ static void Key( unsigned char key, int x, int y )
 		break;
 	}
 	glutPostRedisplay();
-	printf("ViewDist = %f  FocalDist = %f\n", ViewDist, FocalDist);
+	printf("ViewDist = %f  FocalDist = %f  EyeSep = %f\n",
+		   ViewDist, FocalDist, EyeSep);
 }
 
 
@@ -380,6 +389,8 @@ int main( int argc, char *argv[] )
 	if (help) {
 		printf("Valid options:\n");
 		printf("  -ms   enable multisample antialiasing\n");
+		printf("  -s    choose stereo-capable visual\n");
+		printf("  -h    display this message\n");
 		exit(0);
 	}
 
@@ -393,6 +404,18 @@ int main( int argc, char *argv[] )
 	if (Anim)
 		glutIdleFunc(Idle);
 	Init();
+
+	printf("Keys:\n");
+	printf("          a - toggle animation on/off\n");
+	printf("        e/E - decrease/increase interocular distance\n");
+	printf("        f/F - decrease/increase focal distance\n");
+	printf("        v/V - decrease/increase viewing distance\n");
+	printf("          o - toggle overlay display on/off\n");
+	printf("          0 - reset view parameters to defaults\n");
+	printf("        y/Y - rotate camera\n");
+	printf("cursor keys - rotate scene\n");
+	printf("      ESC/q - quit\n");
+
 	glutMainLoop();
 	return 0;
 }
