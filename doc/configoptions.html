@@ -114,6 +114,15 @@ spu.Conf('bucket_mode', 'Uniform Grid')
           Default (on IRIX/Linux) is /usr/lib.</td>
   </tr>
   <tr>
+    <td width="19%" class="ConfigOption" height="38">display_string</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">
+          Name of the X display to create windows on.  The default is the
+          null string, so the DISPLAY environment variable will be used.
+          This option is only recognized when using the X Window System.
+          </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">show_cursor</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="115%" class="ConfigDesc" height="38">
@@ -128,7 +137,15 @@ spu.Conf('bucket_mode', 'Uniform Grid')
     <td width="115%" class="ConfigDesc" height="38">
           If non-zero, the render SPU will render back into the original
           application window, instead of creating a new window.
-          Default is 0.</td>
+          Default is 0.
+          <br>
+          Note: this option only works if the render SPU is using the same
+          X display as the application.
+          You may have to set the display_string option to match the
+          application display.
+          Otherwise, the render SPU will print a warning that the application
+          window ID is invalid for the render SPU's display.
+          </td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">resizable</td>
