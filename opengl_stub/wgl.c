@@ -326,3 +326,110 @@ BOOL WINAPI wglSwapLayerBuffers_prox( HDC hdc, UINT planes )
 	crWarning( "wglSwapLayerBuffers: unsupported" );
 	return 0;
 }
+
+BOOL WINAPI wglChoosePixelFormatEXT_prox(HDC hdc, const int *piAttributes, const FLOAT *pfAttributes, UINT nMaxFormats, int *piFormats, UINT *nNumFormats)
+{
+	int *pi;
+	int wants_rgb = 0;
+
+	stubInit();
+
+	/* TODO : Need to check pfAttributes too ! */
+
+	for ( pi = (int *)piAttributes; *pi != 0; pi++ )
+	{
+		switch ( *pi )
+		{
+			case WGL_COLOR_BITS_EXT:
+				if (pi[1] > 8)
+					wants_rgb = 1;
+				pi++;
+				break;
+
+			case WGL_RED_BITS_EXT:
+			case WGL_GREEN_BITS_EXT:
+			case WGL_BLUE_BITS_EXT:
+				if (pi[1] > 3)
+					wants_rgb = 1;
+				pi++;
+				break;
+
+			case WGL_ACCUM_ALPHA_BITS_EXT:
+			case WGL_ALPHA_BITS_EXT:
+				if (pi[1] > 0)
+					stub.desiredVisual |= CR_ALPHA_BIT;
+				pi++;
+				break;
+
+			case WGL_DOUBLE_BUFFER_EXT:
+				if (pi[1] > 0)
+					stub.desiredVisual |= CR_DOUBLE_BIT;
+				pi++;
+				break;
+
+			case WGL_STEREO_EXT:
+				if (pi[1] > 0)
+					stub.desiredVisual |= CR_STEREO_BIT;
+				pi++;
+				break;
+
+			case WGL_DEPTH_BITS_EXT:
+				if (pi[1] > 0)
+					stub.desiredVisual |= CR_DEPTH_BIT;
+				pi++;
+				break;
+
+			case WGL_STENCIL_BITS_EXT:
+				if (pi[1] > 0)
+					stub.desiredVisual |= CR_STENCIL_BIT;
+				pi++;
+				break;
+
+			case WGL_ACCUM_RED_BITS_EXT:
+			case WGL_ACCUM_GREEN_BITS_EXT:
+			case WGL_ACCUM_BLUE_BITS_EXT:
+				if (pi[1] > 0)
+					stub.desiredVisual |= CR_ACCUM_BIT;
+				pi++;
+				break;
+
+			case WGL_SAMPLE_BUFFERS_EXT:
+			case WGL_SAMPLES_EXT:
+				if (pi[1] > 0)
+					stub.desiredVisual |= CR_MULTISAMPLE_BIT;
+				pi++;
+				break;
+
+
+			default:
+				crWarning( "wglChoosePixelFormatEXT: bad pi=0x%x", *pi );
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+BOOL WINAPI wglGetPixelFormatAttribivEXT_prox(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, int *piAttributes, int *pValues)
+{
+	/* TODO */
+
+	return 1;
+}
+
+BOOL WINAPI wglGetPixelFormatAttribfvEXT_prox(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, int *piAttributes, int *pValues)
+{
+	/* TODO */
+
+	return 1;
+}
+
+const GLubyte * WINAPI wglGetExtensionsStringEXT_prox( HDC hdc )
+{
+	static GLubyte *retval = "WGL_EXT_pixel_format WGL_ARB_multisample";
+
+	(void) hdc;
+
+	return retval;
+}
+

@@ -380,7 +380,11 @@ stack_sizes = {
   'wglUseFontBitmapsA': 16,
   'wglUseFontBitmapsW': 16,
   'wglUseFontOutlinesA': 32,
-  'wglUseFontOutlinesW': 32
+  'wglUseFontOutlinesW': 32,
+  'wglChoosePixelFormatEXT' : 24,
+  'wglGetPixelFormatAttribivEXT' : 24,
+  'wglGetPixelFormatAttribfvEXT' : 24,
+  'wglGetExtensionsStringEXT' : 4
 }
 
 keys = gl_mapping.keys()
@@ -417,7 +421,10 @@ for func_name in ( "wglChoosePixelFormat",
 		   "wglUseFontBitmapsW",
 		   "wglUseFontOutlinesA",
 		   "wglUseFontOutlinesW", 
-		   "wglChoosePixelFormat" ):
+  		   "wglChoosePixelFormatEXT",
+  		   "wglGetPixelFormatAttribivEXT",
+  		   "wglGetPixelFormatAttribfvEXT",
+  		   "wglGetExtensionsStringEXT" ):
     print "%s@%d = %s_prox" % (func_name,stack_sizes[func_name],func_name)
 
 print "crCreateContext"

@@ -72,5 +72,20 @@ for func_name in keys:
 for func_name in bonus_functions:
 	print '\tif (!crStrcmp( name, "%s" )) return (CR_PROC) %s;' % ( func_name, func_name )
 
+print """
+/* As these are Windows specific (i.e. wgl), define these now.... */
+#ifdef WINDOWS
+	{
+		wglGetExtensionsStringEXTFunc_t wglGetExtensionsStringEXT = NULL;
+		wglChoosePixelFormatFunc_t wglChoosePixelFormatEXT = NULL;
+		wglGetPixelFormatAttribivEXTFunc_t wglGetPixelFormatAttribivEXT = NULL;
+		wglGetPixelFormatAttribfvEXTFunc_t wglGetPixelFormatAttribfvEXT = NULL;
+		if (!crStrcmp( name, "wglGetExtensionsStringEXT" )) return (CR_PROC) wglGetExtensionsStringEXT;
+		if (!crStrcmp( name, "wglChoosePixelFormatEXT" )) return (CR_PROC) wglChoosePixelFormatEXT;
+		if (!crStrcmp( name, "wglGetPixelFormatAttribivEXT" )) return (CR_PROC) wglGetPixelFormatAttribivEXT;
+		if (!crStrcmp( name, "wglGetPixelFormatAttribfvEXT" )) return (CR_PROC) wglGetPixelFormatAttribfvEXT;
+	}
+#endif
+"""
 print '\treturn NULL;'
 print '}'

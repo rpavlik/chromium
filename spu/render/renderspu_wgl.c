@@ -73,7 +73,8 @@ MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 static BOOL
 bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 {
-	int pixelFormat[100];
+	PIXELFORMATDESCRIPTOR ppfd;
+	int pixelFormat;
 	int attribList[100];
 	float fattribList[] = { 0.0, 0.0 };
 	int numFormats;
@@ -97,32 +98,41 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 	attribList[i++] = WGL_BLUE_BITS_EXT;
 	attribList[i++] = 1;
 
+	crWarning("Visual chosen is... RGB");
+
 	if (visAttribs & CR_ALPHA_BIT)
 	{
 		attribList[i++] = WGL_ALPHA_BITS_EXT;
 		attribList[i++] = 1;
+		crWarning("A");
 	}
+
+	crWarning(", ");
 
 	if (visAttribs & CR_DOUBLE_BIT) {
 		attribList[i++] = WGL_DOUBLE_BUFFER_EXT;
 		attribList[i++] = GL_TRUE;
+		crWarning("DB, ");
 	}
 
 	if (visAttribs & CR_STEREO_BIT) {
 		attribList[i++] = WGL_STEREO_EXT;
 		attribList[i++] = GL_TRUE;
+		crWarning("Stereo, ");
 	}
 
 	if (visAttribs & CR_DEPTH_BIT)
 	{
 		attribList[i++] = WGL_DEPTH_BITS_EXT;
 		attribList[i++] = 1;
+		crWarning("Z, ");
 	}
 
 	if (visAttribs & CR_STENCIL_BIT)
 	{
 		attribList[i++] = WGL_STENCIL_BITS_EXT;
 		attribList[i++] = 1;
+		crWarning("Stencil, ");
 	}
 
 	if (visAttribs & CR_ACCUM_BIT)
@@ -133,10 +143,12 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 		attribList[i++] = 1;
 		attribList[i++] = WGL_ACCUM_BLUE_BITS_EXT;
 		attribList[i++] = 1;
+		crWarning("Accum, ");
 		if (visAttribs & CR_ALPHA_BIT)
 		{
 			attribList[i++] = WGL_ACCUM_ALPHA_BITS_EXT;
 			attribList[i++] = 1;
+			crWarning("Accum Alpha, ");
 		}
 	}
 
@@ -146,15 +158,22 @@ bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
 		attribList[i++] = 1;
 		attribList[i++] = WGL_SAMPLES_EXT;
 		attribList[i++] = 4;
+		crWarning("Multisample, ");
 	}
+
+	crWarning("\n");
 
 	/* End the list */
 	attribList[i++] = 0;
 	attribList[i++] = 0;
 
-	vis = render_spu.ws.wglChoosePixelFormatEXT( hdc, attribList, fattribList, 1, pixelFormat, &numFormats);
+	vis = render_spu.ws.wglChoosePixelFormatEXT( hdc, attribList, fattribList, 1, &pixelFormat, &numFormats);
 
-	crDebug("wglChoosePixelFormatEXT - said 0x%x 0x%x 0x%x\n",vis,GetLastError(),pixelFormat[0]);
+	crDebug("wglChoosePixelFormatEXT - 0x%x 0x%x 0x%x\n",vis,GetLastError(),pixelFormat);
+
+	render_spu.ws.wglSetPixelFormat( hdc, pixelFormat, &ppfd );
+
+	crDebug("wglSetPixelFormat - 0x%x\n",GetLastError());
 
 	return vis;
 }
@@ -273,12 +292,9 @@ bSetupPixelFormatNormal( HDC hdc, GLbitfield visAttribs )
 static BOOL
 bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
 {
-	/* Disable WGL_EXT_pixel_format for 1.1 release, until we can test it */
-#if 0
 	if (render_spu.ws.wglChoosePixelFormatEXT) 
 		return bSetupPixelFormatEXT( hdc, visAttribs );
 	else
-#endif
 		return bSetupPixelFormatNormal( hdc, visAttribs );
 }
 
@@ -535,8 +551,16 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 		if (render_spu.render_to_app_window && nativeWindow)
 		{
-			/* The render_to_app_window option is set and we've got a nativeWindow
-			 * handle, save the handle for later calls to swapbuffers().
+			/* The render_to_app_window option 
+			 * is set and we've got a nativeWindow
+			 * handle, save the handle for 
+			 * later calls to swapbuffers().
+			 *
+			 * NOTE: This doesn't work, except 
+			 * for software driven Mesa.
+			 * We'd need to object link the 
+			 * crappfaker and crserver to be able to share
+			 * the HDC values between processes.. FIXME!
 			 */
 			window->nativeWindow = (HDC) nativeWindow;
 			if (context->hRC == 0) {
