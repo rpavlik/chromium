@@ -31,8 +31,8 @@ int rlist_alloc = 0;
 
 void __fillBucketingHash (void) 
 {
-	int i, j, k, m;
-	int r_len=0;
+	unsigned int i, j, k, m;
+	unsigned int r_len=0;
 	BucketRegion *rlist;
 	GLbitvalue id;
 

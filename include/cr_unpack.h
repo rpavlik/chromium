@@ -4,6 +4,8 @@
 #include "cr_spu.h"
 #include "cr_protocol.h"
 
+#include <memory.h>
+
 #ifdef WINDOWS
 #ifndef DLLDATA 
 #define DLLDATA __declspec(dllimport)

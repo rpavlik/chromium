@@ -348,6 +348,7 @@ extern void *__glim_Vertex4s;
 extern void *__glim_Vertex4sv;
 extern void *__glim_VertexPointer;
 extern void *__glim_Viewport;
+extern void *__glim_Writeback;
 
 typedef void (*glAccum_ptr) ( GLenum op, GLfloat value ) ;
 typedef void (*glAlphaFunc_ptr) ( GLenum func, GLclampf ref ) ;
@@ -409,7 +410,7 @@ typedef void (*glCopyTexImage1D_ptr) ( GLenum target, GLint level, GLenum intern
 typedef void (*glCopyTexImage2D_ptr) ( GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) ;
 typedef void (*glCopyTexSubImage1D_ptr) ( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) ;
 typedef void (*glCopyTexSubImage2D_ptr) ( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) ;
-typedef void (*glCreateContext_ptr) ( void ) ;
+typedef void (*glCreateContext_ptr) ( void *arg1, void *arg2 ) ;
 typedef void (*glCullFace_ptr) ( GLenum mode ) ;
 typedef void (*glDeleteLists_ptr) ( GLuint list, GLsizei range ) ;
 typedef void (*glDeleteTextures_ptr) ( GLsizei n, const GLuint *textures ) ;
@@ -694,6 +695,7 @@ typedef void (*glVertex4s_ptr) ( GLshort x, GLshort y, GLshort z, GLshort w ) ;
 typedef void (*glVertex4sv_ptr) ( const GLshort *v ) ;
 typedef void (*glVertexPointer_ptr) ( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer ) ;
 typedef void (*glViewport_ptr) ( GLint x, GLint y, GLsizei width, GLsizei height ) ;
+typedef void (*glWriteback_ptr) ( GLint *writeback ) ;
 
 void glAccum ( GLenum op, GLfloat value )
 {
@@ -995,9 +997,9 @@ void glCopyTexSubImage2D ( GLenum target, GLint level, GLint xoffset, GLint yoff
 	((glCopyTexSubImage2D_ptr) __glim_CopyTexSubImage2D) ( target , level , xoffset , yoffset , x , y , width , height );
 }
 
-void glCreateContext ( void )
+void glCreateContext ( void *arg1, void *arg2 )
 {
-	((glCreateContext_ptr) __glim_CreateContext) ( );
+	((glCreateContext_ptr) __glim_CreateContext) ( arg1 , arg2 );
 }
 
 void glCullFace ( GLenum mode )
@@ -2418,5 +2420,10 @@ void glVertexPointer ( GLint size, GLenum type, GLsizei stride, const GLvoid *po
 void glViewport ( GLint x, GLint y, GLsizei width, GLsizei height )
 {
 	((glViewport_ptr) __glim_Viewport) ( x , y , width , height );
+}
+
+void glWriteback ( GLint *writeback )
+{
+	((glWriteback_ptr) __glim_Writeback) ( writeback );
 }
 

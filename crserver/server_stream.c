@@ -75,7 +75,6 @@ void crServerSerializeRemoteStreams(void)
 		RunQueue *q = __getNextClient();
 		CRClient *client = q->client;
 		CRMessage *msg;
-		int len;
 		char debug_buf[8096];
 
 		cr_server.current_client = client;
@@ -87,7 +86,7 @@ void crServerSerializeRemoteStreams(void)
 			CRMessageOpcodes *msg_opcodes;
 			char *data_ptr;
 
-			len = crNetGetMessage( cr_server.current_client->conn, &msg );
+			(void) crNetGetMessage( cr_server.current_client->conn, &msg );
 			if (msg->type != CR_MESSAGE_OPCODES)
 			{
 				crError( "SPU %d sent me CRAP (type=%d)", client->spu_id, msg->type );
@@ -113,5 +112,8 @@ void crServerSerializeRemoteStreams(void)
 
 int crServerRecv( CRConnection *conn, void *buf, unsigned int len )
 {
+	(void) conn;
+	(void) buf;
+	(void) len;
 	return 0; // Never handle anything -- let packets queue up per-client instead.
 }

@@ -33,7 +33,7 @@ void crServerGatherConfiguration(char *mothership)
 	char **tilechain, **tilelist;
 	int num_servers;
 
-	char **serverchain, **serverlist;
+	char **serverchain;
 
 	__setDefaults();
 
@@ -148,7 +148,6 @@ void crServerGatherConfiguration(char *mothership)
 	{
 		crError( "No servers specified for SPU %d?!", cr_server.clients[0].spu_id );
 	}
-	serverlist = crStrSplit( serverchain[1], "," );
 
 	num_servers = num_servers;
 

@@ -6,6 +6,7 @@
 #include "state/cr_pixel.h"
 
 #include <stdio.h> 
+#include <memory.h>
 
 void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height, 
 		GLenum format, GLenum type, const GLvoid *pixels, CRPackState *packstate )
