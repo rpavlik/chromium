@@ -50,6 +50,14 @@ error VTK on non-windows platform?
 endif
 endif
 
+ifeq ($(ARCH), Darwin)
+define MAKE_GL_LINKS
+	if test ! -f $(TOP)/include/GL/glut.h; then $(LN) $(GLUT_INC)/glut.h $(TOP)/include/GL/glut.h; fi
+	if test ! -f $(TOP)/include/GL/gl.h; then $(LN) $(OPENGL_INC)/gl.h $(TOP)/include/GL/gl.h; fi
+	if test ! -f $(TOP)/include/GL/glu.h; then $(LN) $(OPENGL_INC)/glu.h $(TOP)/include/GL/glu.h; fi
+endef
+endif
+
 ifdef GLUT
 ifdef WINDOWS
 LDFLAGS += glut32.lib
@@ -284,6 +292,9 @@ ifdef LIBRARY
 endif
 endif
 	@$(ECHO) "-------------------------------------------------------------------------------"
+ifeq ($(ARCH), Darwin)
+	@$(MAKE_GL_LINKS)
+endif
 ifneq ($(BUILDDIR), dummy_builddir)
 	@$(MAKE_BINDIR)
 	@$(MAKE_OBJDIR)

@@ -76,6 +76,9 @@ SHARED_LDFLAGS = -dynamiclib -multiply_defined suppress
 endif
 endif
 
+GLUT_INC   = /System/Library/Frameworks/GLUT.framework/Headers
+OPENGL_INC = /System/Library/Frameworks/OpenGL.framework/Headers
+
 QT=0
 ifeq ($(QT),1)
     QTDIR=/insert/path/to/qt/here/qt-2.3.1
