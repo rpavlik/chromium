@@ -730,6 +730,14 @@
 	  </li>
           <li>VNC server SPU.
           </li>
+	  <li>PBuffer support.  The new CR_PBUFFER_BIT flag may be passed to
+	      crCreateContext() and crWindowCreate() to indicate that
+	      off-screen rendering is desired.
+          </li>
+	  <li>Added force_pbuffers option for Application nodes.
+	  </li>
+	  <li>Added ignore_window_moves option for Render SPU.
+	  </li>
         </ul>
       </li>
       <li>Changes
@@ -774,6 +782,10 @@
 	  <li>GL_GENERATE_MIPMAP_SGI didn't work reliably with tilesort
 	  </li>
 	  <li>Packing/unpacking of glAreTextures/ProgramsResident() was broken
+	  </li>
+	  <li>Any number of binary swap SPUs can now run on one host.
+	  </li>
+	  <li>Fixed some visual selection problems with CRUT.
 	  </li>
         </ul>
       </li>
