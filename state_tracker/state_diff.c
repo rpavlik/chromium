@@ -10,7 +10,6 @@
 
 void crStateDiffContext( CRContext *from, CRContext *to )
 {
-	CRContext *g = GetCurrentContext();
 	CRbitvalue *bitID = from->bitid;
 	CRStateBits *sb = GetCurrentBits();
 
@@ -108,7 +107,7 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 	}
 #endif
 #ifdef CR_NV_register_combiners
-	if (CHECKDIRTY(sb->regcombiner.dirty, bitID) && g->extensions.NV_register_combiners)
+	if (CHECKDIRTY(sb->regcombiner.dirty, bitID) && to->extensions.NV_register_combiners)
 	{
 		crStateRegCombinerDiff	(&(sb->regcombiner), bitID,
 								 &(from->regcombiner), &(to->regcombiner));
@@ -131,7 +130,6 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 
 void crStateSwitchContext( CRContext *from, CRContext *to )
 {
-	CRContext *g = GetCurrentContext();
 	CRbitvalue *bitID = to->bitid;
 	CRStateBits *sb = GetCurrentBits();
 
@@ -234,7 +232,7 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	}
 #endif
 #ifdef CR_NV_register_combiners
-	if (CHECKDIRTY(sb->regcombiner.dirty, bitID) && g->extensions.NV_register_combiners)
+	if (CHECKDIRTY(sb->regcombiner.dirty, bitID) && to->extensions.NV_register_combiners)
 	{
 		crStateRegCombinerSwitch	(&(sb->regcombiner), bitID,
 									 &(from->regcombiner), &(to->regcombiner));
