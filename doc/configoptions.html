@@ -49,7 +49,7 @@ SPU has <i>no</i> configuration options, it is not listed here.</p>
       create.&nbsp; This is specified as four floating point numbers.&nbsp; The
       first two give the (<i>x</i>,<i>y</i>) position of the upper left corner
       of the window, relative to the upper left corner of the screen.&nbsp; The
-      second two numbers give the width and height of the window,
+      last two numbers give the width and height of the window,
       respectively.&nbsp; The default is (0,0,256,256).</td>
   </tr>
   <tr>
@@ -132,9 +132,9 @@ SPU has <i>no</i> configuration options, it is not listed here.</p>
   <tr>
     <td width="19%" class="ConfigOption" height="38">bbox_line_width</td>
     <td width="12%" class="ConfigType" height="38">Float</td>
-    <td width="115%" class="ConfigDesc" height="38">The width of lines to use
-      when drawing the bounding box.&nbsp; If the <code>draw_bbox</code> flag is
-      not set, this parameter has no effect.&nbsp; The default is 5.</td>
+	<td width="115%" class="ConfigDesc" height="38">The width in pixels of the
+	lines used to draw the bounding box.&nbsp; If the <code>draw_bbox</code>
+	flag is not set, this parameter has no effect.&nbsp; The default is 5.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">fake_window_dims</td>
@@ -146,7 +146,7 @@ SPU has <i>no</i> configuration options, it is not listed here.</p>
       to determine what part of the output space the client is trying to
       restrict drawing to.&nbsp; However, if the Chromium context has been
       created out of thin air (i.e., with the <a href="parallelapplication.html">crCreateContext
-      call</a>), these window dimensions will be returned.&nbsp; If these
+      call</a>), the fake window dimensions will be returned.&nbsp; If these
       parameters are <i>not</i> set, and there is no client window, using <code>glViewport</code>
       or <code>glScissor</code> will cause a fatal run-time error.</td>
   </tr>

@@ -20,15 +20,15 @@ Following is a list of issues I'm aware of at the time of this release:</p>
     the previous bug.</li>
   <li>Flow control has some of the same issues that it did in WireGL.&nbsp; It's
     fairly easy for a small parallel submission program to overflow the memory
-    of a server, particularly over TCPIP.&nbsp; The &quot;psubmit&quot; program
+    of a server, particularly over TCP/IP.&nbsp; The &quot;psubmit&quot; program
     shows off this memory explosion nicely.&nbsp; This is partially due to the
     fact that the client doesn't exactly know how much memory a message will
     consume on the server, and partially due to the new networking abstraction
     (I think).&nbsp; This is a very high priority bug.</li>
   <li>DrawPixels/ReadPixels are not implemented.</li>
-  <li>Evaluators aren't implemented in the Tilesort SPU</li>
+  <li>Evaluators aren't implemented in the Tilesort SPU.</li>
   <li>OpenGL Selection/Feedback buffers don't work.</li>
-  <li>The Print SPU doesn't special case many functions, so often a pointer
+  <li>The Print SPU doesn't special-case many functions, so often a pointer
     address is printed when you're interested in the contents of the data.&nbsp;
     I've been updating the Print SPU as my debugging needs have dictated.</li>
   <li>Byte swapping isn't implemented, so a cluster has to be homogenous with
@@ -36,8 +36,7 @@ Following is a list of issues I'm aware of at the time of this release:</p>
   <li>The networking abstraction still isn't as robust as I need to create
     network connections outside of the client/server model.</li>
   <li>The Render SPU will put up a new window even when it's bolted directly to
-    an application, which is a little awkward.&nbsp; This is on my very short
-    list of things to fix. </li>
+    an application, which is a little awkward.&nbsp; This is a high priority bug. </li>
 </ul>
 
 </body>
