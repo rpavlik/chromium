@@ -36,7 +36,7 @@ for index in range(len(keys)):
 # Deal with NVIDIA driver lossage.  These functions will never be called, but
 # the symbols need to exist.  Fooey.
 
-nvidia_symbols = 0
+nvidia_symbols = 1
 
 if nvidia_symbols:
 	GLcore_crap = [
