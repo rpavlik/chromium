@@ -151,8 +151,6 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 		return;
 	}
 
-	tilesortspuFlush( thread );
-
 	screen_bbox[0] = (c->rasterPos.x)/v->viewportW;
 	screen_bbox[1] = (c->rasterPos.y)/v->viewportH;
 	screen_bbox[4] = (c->rasterPos.x + width)/v->viewportW;
@@ -170,6 +168,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 
 	hint = tilesort_spu.providedBBOX;
 	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
+	tilesortspuFlush( thread );
 
 	switch ( type )
 	{
