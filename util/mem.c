@@ -10,10 +10,31 @@
 #include <stdlib.h>
 #include <memory.h>
 
+
 #if DEBUG_MEM
 #include <stdio.h>
 #define THRESHOLD 100 * 1024
-#endif
+
+#undef crAlloc
+#undef crCalloc
+
+/* Need these stubs because util.def says we're always exporting crAlloc
+ * and crCalloc.
+ */
+extern void *crAlloc( unsigned int bytes );
+void *crAlloc( unsigned int bytes )
+{
+   return NULL;
+}
+
+extern void *crCalloc( unsigned int bytes );
+void *crCalloc( unsigned int bytes )
+{
+   return NULL;
+}
+#endif /* DEBUG_MEM */
+
+
 
 #if DEBUG_MEM
 static void *_crAlloc( unsigned int nbytes )
