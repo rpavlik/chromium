@@ -116,7 +116,7 @@ BackgroundColor = wxColor(70, 170, 130)
 #----------------------------------------------------------------------------
 
 _ImportsSection = """
-import string, sys
+import string, sys, getopt
 sys.path.append( "../server" )
 from mothership import *
 
@@ -125,10 +125,21 @@ from mothership import *
 # This is the guts of the tilesort configuration script.
 # It's simply appended to the file after we write all the configuration options
 _ConfigBody = """
-# Look for some special mothership params
+def Usage():
+	print "Usage:"
+	print "  %s [-c columns] [-r rows] [-w tileWidth] [-h tileHeight] [-s servers] [program]" % sys.argv[0]
+	sys.exit(0)
+	
+
+# Init globals
+PROGRAM = ""
+ZEROTH_ARG = ""
+AUTO_START = 0
+
+# Look for some special app and mothership params
 for (name, value) in APP_OPTIONS:
 	if name == "application":
-		DEFAULT_APP = value
+		PROGRAM = value
 	elif name == "zeroth_arg":
 		ZEROTH_ARG = value
 for (name, value) in MOTHERSHIP_OPTIONS:
@@ -136,13 +147,35 @@ for (name, value) in MOTHERSHIP_OPTIONS:
 		AUTO_START = value
 
 # Check for program name/args on command line
-if len(sys.argv) == 1:
-	program = DEFAULT_APP
-else:
-	program = string.join(sys.argv[1:])
-if program == "":
-	print "No program to run!"
-	sys.exit(-1)
+try:
+	(opts, args) = getopt.getopt(sys.argv[1:], "c:r:w:h:s:")
+except getopt.GetoptError:
+	Usage()
+
+for (name, value) in opts:
+	if name == "-c":
+		TILE_COLS = int(value)
+	elif name == "-r":
+		TILE_ROWS = int(value)
+	elif name == "-w":
+		TILE_WIDTH = int(value)
+	elif name == "-h":
+		TILE_HEIGHT = int(value)
+	elif name == "-s":
+		SERVER_HOSTS = str.split(value, ",")
+		
+if len(args) > 0:
+	PROGRAM = args[0]
+if PROGRAM == "":
+	Usage()
+
+print "-- Tilesort Template --"
+print "Mural size: %d cols x %d rows" % (TILE_COLS, TILE_ROWS)
+print "Tile size: %d x %d" % (TILE_WIDTH, TILE_HEIGHT)
+print "Total size: %d x %d" % (TILE_WIDTH * TILE_COLS, TILE_HEIGHT * TILE_ROWS)
+print "Servers: %s" % SERVER_HOSTS
+print "Program: %s" % PROGRAM
+
 
 # Determine if tiles are on one server or many
 singleServer = 1
@@ -174,9 +207,9 @@ for i in range(NUM_APP_NODES):
 
 	# argument substitutions
 	if i == 0 and ZEROTH_ARG != "":
-		app_string = string.replace( program, '%0', ZEROTH_ARG)
+		app_string = string.replace( PROGRAM, '%0', ZEROTH_ARG)
 	else:
-		app_string = string.replace( program, '%0', '' )
+		app_string = string.replace( PROGRAM, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 	appnode.Conf('application', app_string )
