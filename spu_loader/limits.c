@@ -142,10 +142,10 @@ static char *chromiumExtensions[] = {
 	"GL_CR_state_parameter",
 #endif
 #ifdef GL_CR_cursor_position
-	"CR_GL_cursor_position",
+	"GL_CR_cursor_position",
 #endif
 #ifdef GL_CR_bounding_box
-	"CR_GL_bounding_box",
+	"GL_CR_bounding_box",
 #endif
 #ifdef GL_CR_print_string
 	"GL_CR_print_string",
