@@ -18,7 +18,7 @@ int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 	ContextInfo *context;
 	stubInit();
 	context = stubNewContext(dpyName, visBits, UNDECIDED);
-	return context ? context->id : -1;
+	return context ? (int) context->id : -1;
 }
 
 void APIENTRY crDestroyContext( GLint context )
@@ -43,7 +43,7 @@ GLint APIENTRY crGetCurrentContext( void )
 {
 	stubInit();
 	if (stub.currentContext)
-	  return stub.currentContext->id;
+	  return (GLint) stub.currentContext->id;
 	else
 	  return 0;
 }
