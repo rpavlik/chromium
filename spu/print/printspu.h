@@ -27,7 +27,7 @@ typedef struct {
 extern PrintSpu print_spu;
 
 extern void printspuGatherConfiguration( const SPU *child_spu );
-extern char *printspuEnumToStr( GLenum e );
+extern const char *printspuEnumToStr( GLenum e );
 
 extern void PRINT_APIENTRY printGetIntegerv( GLenum pname, GLint *params );
 extern void PRINT_APIENTRY printGetFloatv( GLenum pname, GLfloat *params );
