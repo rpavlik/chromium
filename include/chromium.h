@@ -531,6 +531,7 @@ extern void APIENTRY glGetChromiumParametervCR(GLenum target, GLuint index, GLen
 #define GL_SERVER_VIEW_MATRIX_CR        0x8B15
 #define GL_SERVER_PROJECTION_MATRIX_CR  0x8B16
 #define GL_SERVER_FRUSTUM_CR            0x8B17
+#define GL_SERVER_CURRENT_EYE_CR        0x8B18
 
 #endif /* GL_CR_server_matrix */
 

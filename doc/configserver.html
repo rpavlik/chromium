@@ -213,7 +213,17 @@ for the Chromium server.</p>
     <td width="12%" class="ConfigType">List of 16 Floats</td>
     <td width="115%" class="ConfigDesc">
     Specifies a viewing matrix to premultiply onto the normal OpenGL
-    modelview matrix.
+    modelview matrix (for left view if in stereo mode).
+    Used for <a href="nonplanar.html">non-planar tilesort</a>.
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">right_view_matrix</td>
+    <td width="12%" class="ConfigType">List of 16 Floats</td>
+    <td width="115%" class="ConfigDesc">
+    Specifies a viewing matrix to premultiply onto the normal OpenGL
+    modelview matrix for right stereo views.
     Used for <a href="nonplanar.html">non-planar tilesort</a>.
     </td>
   </tr>
@@ -223,7 +233,17 @@ for the Chromium server.</p>
     <td width="12%" class="ConfigType">List of 16 Floats</td>
     <td width="115%" class="ConfigDesc">
     Specifies a projection matrix to use instead of the normal OpenGL
-    projection matrix.
+    projection matrix (for left view if in stereo mode).
+    Used for <a href="nonplanar.html">non-planar tilesort</a>.
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">right_projection_matrix</td>
+    <td width="12%" class="ConfigType">List of 16 Floats</td>
+    <td width="115%" class="ConfigDesc">
+    Specifies a projection matrix to use instead of the normal OpenGL
+    projection matrix for right stereo views.
     Used for <a href="nonplanar.html">non-planar tilesort</a>.
     </td>
   </tr>

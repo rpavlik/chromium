@@ -18,6 +18,27 @@
  */
 
 
+
+/*
+ * Determine which view and projection matrices to use when in stere mode.
+ * Return 0 = left eye, 1 = right eye.
+ */
+int crServerGetCurrentEye(void)
+{
+	if (cr_server.currentEye != -1) {
+		/* current eye was specified by tilesort SPU */
+		return cr_server.currentEye;
+	}
+	else {
+		/* we have a quad-buffered window and we're watching glDrawBuffer */
+		GLenum drawBuffer = cr_server.curClient->currentCtx->buffer.drawBuffer;
+		int eye = drawBuffer == GL_BACK_RIGHT || drawBuffer == GL_FRONT_RIGHT
+			|| drawBuffer == GL_RIGHT;
+		return eye;
+	}
+}
+
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixf( const GLfloat *m )
 {
 	const GLenum matMode = cr_server.curClient->currentCtx->transform.matrixMode;
@@ -32,7 +53,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixf( const GLfloat *m )
 																	baseProjection));
 	}
 	else if (matMode == GL_MODELVIEW && cr_server.viewOverride) {
-		crServerApplyViewMatrix(&cr_server.viewMatrix);
+		int eye = crServerGetCurrentEye();
+		crServerApplyViewMatrix(&cr_server.viewMatrix[eye]);
 	}
 	else {
 		cr_server.head_spu->dispatch_table.LoadMatrixf( m );
@@ -54,7 +76,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixd( const GLdouble *m )
 																	baseProjection));
 	}
 	else if (matMode == GL_MODELVIEW && cr_server.viewOverride) {
-		crServerApplyViewMatrix(&cr_server.viewMatrix);
+		int eye = crServerGetCurrentEye();
+		crServerApplyViewMatrix(&cr_server.viewMatrix[eye]);
 	}
 	else {
 		cr_server.head_spu->dispatch_table.LoadMatrixd( m );
@@ -68,7 +91,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMultMatrixf( const GLfloat *m )
 
 	if (matMode == GL_PROJECTION && cr_server.projectionOverride) {
 		/* load the overriding projection matrix */
-		crStateLoadMatrix( &cr_server.projectionMatrix );
+		int eye = crServerGetCurrentEye();
+		crStateLoadMatrix( &cr_server.projectionMatrix[eye] );
 	}
 	else {
 		/* the usual case */
@@ -84,7 +108,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMultMatrixd( const GLdouble *m )
 
 	if (matMode == GL_PROJECTION && cr_server.projectionOverride) {
 		/* load the overriding projection matrix */
-		crStateLoadMatrix( &cr_server.projectionMatrix );
+		int eye = crServerGetCurrentEye();
+		crStateLoadMatrix( &cr_server.projectionMatrix[eye] );
 	}
 	else {
 		/* the usual case */
@@ -109,7 +134,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchLoadIdentity( void )
 																	baseProjection));
 	}
 	else if (matMode == GL_MODELVIEW && cr_server.viewOverride) {
-		crServerApplyViewMatrix(&cr_server.viewMatrix);
+		int eye = crServerGetCurrentEye();
+		crServerApplyViewMatrix(&cr_server.viewMatrix[eye]);
 	}
 	else {
 		cr_server.head_spu->dispatch_table.LoadIdentity( );

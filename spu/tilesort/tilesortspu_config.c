@@ -18,6 +18,11 @@ setDefaults(void)
 	tilesort_spu.numThreads = 1;
 	tilesort_spu.num_servers = 0;
 
+	crMatrixInit(&tilesort_spu.stereoViewMatrices[0]);
+	crMatrixInit(&tilesort_spu.stereoViewMatrices[1]);
+	crMatrixInit(&tilesort_spu.stereoProjMatrices[0]);
+	crMatrixInit(&tilesort_spu.stereoProjMatrices[1]);
+
 /*  	tilesort_spu.splitBeginEnd = 1; */
 /*  	tilesort_spu.drawBBOX = 0; */
 /*  	tilesort_spu.bboxLineWidth = 5; */
@@ -274,6 +279,7 @@ set_glasses_type(TileSortSPU *tilesort_spu, const char *response)
 }
 
 
+#if 0
 static void
 set_left_view_matrix(TileSortSPU *tilesort_spu, const char *response)
 {
@@ -297,6 +303,7 @@ set_right_projection_matrix(TileSortSPU *tilesort_spu, const char *response)
 {
 	crMatrixInitFromString(&tilesort_spu->stereoProjMatrices[1], response);
 }
+#endif
 
 
 /* option, type, nr, default, min, max, title, callback
@@ -370,6 +377,7 @@ SPUOptions tilesortSPUOptions[] = {
 	{"force_quad_buffering", CR_BOOL, 1, "0", NULL, NULL,
 	 "Force Quad-buffered Stereo", (SPUOptionCB) set_force_quad_buffering},
 
+#if 0
 	{"left_view_matrix", CR_FLOAT, 16,
 	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
 	 "Left Eye Viewing Matrix", (SPUOptionCB) set_left_view_matrix},
@@ -385,6 +393,7 @@ SPUOptions tilesortSPUOptions[] = {
 	{"right_projection_matrix", CR_FLOAT, 16,
 	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
 	 "Right Eye Projection Matrix", (SPUOptionCB) set_right_projection_matrix},
+#endif
 
 	{NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL},
 };

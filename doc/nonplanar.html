@@ -347,18 +347,20 @@ frustum left, right, bottom, top, near, far parameters.
 
 <p>
 Alternately, an arbitrary per-server projection matrix may be set by calling
-<code>glChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT, 17, m)
+<code>glChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT, 18, m)
 </code>
-where m[0] is the server index and m[1] through m[16] are the sixteen
+where m[0] is the server index, m[1] is 0 or 1 indicating the left or
+right eye view (0 for non-stereo) and m[2] through m[17] are the sixteen
 elements of the projection matrix.
 </p>
 
 <p>
 The per-server viewing matrix may also be set from within the application
 (instead of in the Python configuration file) by calling
-<code>glChromiumParametervCR(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 17, m)
+<code>glChromiumParametervCR(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 18, m)
 </code>
-where m[0] is the server index and m[1] through m[16] are the sixteen
+where m[0] is the server index, m[1] is 0 or 1 indicating the left or
+right eye view (0 for non-stereo) and m[2] through m[17] are the sixteen
 elements of the viewing matrix.
 </p>
 

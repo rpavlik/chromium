@@ -23,6 +23,7 @@ static GLboolean Anim = GL_TRUE;
 static GLboolean Stereo = GL_FALSE;
 static GLfloat CubeXrot = 0, CubeYrot = 0, CubeZrot = 0;
 static GLfloat ViewXrot = 30, ViewYrot = 0, ViewZrot = 0;
+static GLfloat CameraRot = 0.0;
 static GLfloat ViewDist = 5.0;
 static GLfloat FocalDist = 5.0;
 static GLboolean ShowOverlay = GL_FALSE;
@@ -167,6 +168,7 @@ static void Draw( void )
 
 		glMatrixMode( GL_MODELVIEW );
 		glLoadIdentity();
+                glRotatef(CameraRot, 0, 1, 0);
 		glTranslatef(+eyeSep, -lookAtY, -ViewDist);
 
 		glPushMatrix();
@@ -188,6 +190,7 @@ static void Draw( void )
 
 		glMatrixMode( GL_MODELVIEW );
 		glLoadIdentity();
+                glRotatef(CameraRot, 0, 1, 0);
 		glTranslatef(-eyeSep, -lookAtY, -ViewDist);
 
 		glPushMatrix();
@@ -212,6 +215,7 @@ static void Draw( void )
 
 		glMatrixMode( GL_MODELVIEW );
 		glLoadIdentity();
+                glRotatef(CameraRot, 0, 1, 0);
 		glTranslatef(0, -lookAtY, -ViewDist);
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -294,6 +298,12 @@ static void Key( unsigned char key, int x, int y )
 		ViewYrot = 0;
 		ViewZrot = 0;
 		ViewDist = 10.0;
+		break;
+	case 'y':
+		CameraRot -= 2.0;
+		break;
+	case 'Y':
+		CameraRot += 2.0;
 		break;
 	case 'q':
 	case 27:

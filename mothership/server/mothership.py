@@ -98,7 +98,7 @@ def SameHost( host1, host2 ):
 	"""Return 1 if host1 and host2 name the same host.	Return 0 otherwise.
 	For example, if host1='foo' and host2='foo.bar.com' we'll return 1.
 	"""
-	try: 
+	try:
 		if socket.gethostbyname(host1) == socket.gethostbyname(host2):
 			return 1
 		else:
@@ -384,7 +384,7 @@ class CRNode:
 		except:
 			print "***WARNING: unknown constraint '%s' on host '%s' ignored" % (constraint, self.host)
 			return
-		if constraintType != STATIC_CONSTRAINT: 
+		if constraintType != STATIC_CONSTRAINT:
 			self.dynamic_host = True
 			dynamicHostsNeeded[self.host] = 1
 		self.constraints.append( (constraint, arg) )
@@ -1466,7 +1466,7 @@ class CR:
 			# The formatURL string may include a reference to the resolved hostname.
 			# Replace it if it does.
 			host = node.host
-			if node.dynamic_host: 
+			if node.dynamic_host:
 				if dynamicHosts.has_key(host):
 					host = dynamicHosts[host]
 				else:
@@ -1905,7 +1905,7 @@ class CR:
 				return
 
 		words = string.split( line )
-		if len(words) == 0: 
+		if len(words) == 0:
 			self.ClientError( sock_wrapper,
 							  SockWrapper.NOTHINGTOSAY, "Request was empty?" )
 			#sock_wrapper.Failure( SockWrapper.NOTHINGTOSAY, "Request was empty?" )

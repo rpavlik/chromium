@@ -136,10 +136,11 @@ typedef struct {
 	int stereoView;
 	/* view_matrix config */
 	GLboolean viewOverride;
-	CRmatrix viewMatrix;
+	CRmatrix viewMatrix[2];  /* left and right eye */
 	/* projection_matrix config */
 	GLboolean projectionOverride;
-	CRmatrix projectionMatrix;
+	CRmatrix projectionMatrix[2];  /* left and right eye */
+	int currentEye;
 
 	/* for warped tiles */
 	GLfloat alignment_matrix[16], unnormalized_alignment_matrix[16];

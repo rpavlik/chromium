@@ -44,8 +44,11 @@ setDefaults(void)
 	cr_server.overlap_intens = 0;
 	cr_server.SpuContext = 0;
 
-	crMatrixInit(&cr_server.viewMatrix);
-	crMatrixInit(&cr_server.projectionMatrix);
+	crMatrixInit(&cr_server.viewMatrix[0]);
+	crMatrixInit(&cr_server.viewMatrix[1]);
+	crMatrixInit(&cr_server.projectionMatrix[0]);
+	crMatrixInit(&cr_server.projectionMatrix[1]);
+	cr_server.currentEye = -1;
 
 	for (i = 0; i < CR_MAX_CONTEXTS; i++)
 		cr_server.context[i] = NULL;
@@ -288,14 +291,32 @@ crServerGatherConfiguration(char *mothership)
 	}
 	if (crMothershipGetServerParam(conn, response, "view_matrix"))
 	{
-		crMatrixInitFromString(&cr_server.viewMatrix, response);
+		crMatrixInitFromString(&cr_server.viewMatrix[0], response);
 		cr_server.viewOverride = GL_TRUE;
 	}
+	if (crMothershipGetServerParam(conn, response, "right_view_matrix"))
+	{
+		crMatrixInitFromString(&cr_server.viewMatrix[1], response);
+		cr_server.viewOverride = GL_TRUE;
+	}
+
 	if (crMothershipGetServerParam(conn, response, "projection_matrix"))
 	{
-		crMatrixInitFromString(&cr_server.projectionMatrix, response);
+		crMatrixInitFromString(&cr_server.projectionMatrix[0], response);
 		cr_server.projectionOverride = GL_TRUE;
 	}
+	if (crMothershipGetServerParam(conn, response, "right_projection_matrix"))
+	{
+		crMatrixInitFromString(&cr_server.projectionMatrix[1], response);
+		cr_server.projectionOverride = GL_TRUE;
+	}
+
+	/*
+	crMatrixPrint("Left view", &cr_server.viewMatrix[0]);
+	crMatrixPrint("right view", &cr_server.viewMatrix[1]);
+	crMatrixPrint("Left projection", &cr_server.projectionMatrix[0]);
+	crMatrixPrint("right projection", &cr_server.projectionMatrix[1]);
+	*/
 
 	/*
 	 * Load the SPUs

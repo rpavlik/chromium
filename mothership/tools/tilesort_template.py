@@ -910,7 +910,11 @@ class TilesortTemplate(templatebase.TemplateBase):
 				v = re.search(integerPat, l)
 				numClients = int(l[v.start() : v.end()])
 			elif re.match("^TILESORT_OPTIONS = \[", l):
-				tilesortSPU.GetOptions().Read(fileHandle)
+				w = mothership.Template.Columns * mothership.Template.TileWidth
+				h = mothership.Template.Rows * mothership.Template.TileHeight
+				subst = [ ("TILE_COLS * TILE_WIDTH", str(w)),
+						  ("TILE_ROWS * TILE_HEIGHT", str(h)) ]
+				tilesortSPU.GetOptions().Read(fileHandle, subst)
 			elif re.match("^RENDER_OPTIONS = \[", l):
 				renderSPU.GetOptions().Read(fileHandle)
 			elif re.match("^SERVER_OPTIONS = \[", l):

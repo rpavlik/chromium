@@ -702,7 +702,9 @@ class NetworkNode(Node):
 			Option("vertprog_projection_param", "Vertex Program Projection Matrix Register Start or Name", "STRING", 1, [""], [], []),
 			Option("stereo_view", "Stereo View (Eyes)", "ENUM", 1, ['Both'], ['Both', 'Left', 'Right'], []),
 			Option("view_matrix", "Viewing Matrix", "FLOAT", 16, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], [], []),
-			Option("projection_matrix", "Projection Matrix", "FLOAT", 16, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], [], [])
+			Option("right_view_matrix", "Right Viewing Matrix", "FLOAT", 16, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], [], []),
+			Option("projection_matrix", "Projection Matrix", "FLOAT", 16, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], [], []),
+			Option("right_projection_matrix", "Right Projection Matrix", "FLOAT", 16, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], [], [])
 			] )
 
 	def Clone(self):

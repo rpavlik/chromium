@@ -34,7 +34,7 @@ static glChromiumParametervCRProc glChromiumParametervCR_ptr = NULL;
 void
 MultiviewLoadIdentity(GLenum target, int numServers)
 {
-	GLfloat v[17];
+	GLfloat v[18];
 	int i;
 
 	if (!glChromiumParametervCR_ptr) {
@@ -48,11 +48,12 @@ MultiviewLoadIdentity(GLenum target, int numServers)
 	assert(target == GL_SERVER_VIEW_MATRIX_CR ||
 				 target == GL_SERVER_PROJECTION_MATRIX_CR);
 
-	memcpy(v + 1, Identity, sizeof(Identity));
+	memcpy(v + 2, Identity, sizeof(Identity));
 	for (i = 0; i < numServers; i++) {
 		v[0] = (GLfloat)i; /* the server */
+		v[1] = 0.0; /* the eye */
 #if USE_CHROMIUM
-		glChromiumParametervCR_ptr(target, GL_FLOAT, 17, v);
+		glChromiumParametervCR_ptr(target, GL_FLOAT, 18, v);
 #endif
 	}
 	(void)target;
@@ -85,7 +86,7 @@ MultiviewFrustum(int server, float boxSize, float farClip,
 {
 	GLfloat rightX, rightY, rightZ;
 	GLfloat eX, eY, eZ;
-	GLfloat frustum[7], v[17];
+	GLfloat frustum[7], v[18];
 
 	if (!glChromiumParametervCR_ptr) {
 		glChromiumParametervCR_ptr = (glChromiumParametervCRProc) GET_PROC("glChromiumParametervCR");
@@ -146,35 +147,36 @@ MultiviewFrustum(int server, float boxSize, float farClip,
 
 	/*** View matrix ***/
 	v[0] = (float) server;
+	v[1] = 0.0; /* the eye */
 
-	v[1] = rightX;
-	v[2] = rightY;
-	v[3] = rightZ;
-	v[4] = 0;
+	v[2] = rightX;
+	v[3] = rightY;
+	v[4] = rightZ;
+	v[5] = 0;
 
-	v[5] = upX;
-	v[6] = upY;
-	v[7] = upZ;
-	v[8] = 0;
+	v[6] = upX;
+	v[7] = upY;
+	v[8] = upZ;
+	v[9] = 0;
 
-	v[9] = dirX;
-	v[10] = dirY;
-	v[11] = dirZ;
-	v[12] = 0;
-
+	v[10] = dirX;
+	v[11] = dirY;
+	v[12] = dirZ;
 	v[13] = 0;
+
 	v[14] = 0;
 	v[15] = 0;
-	v[16] = 1;
+	v[16] = 0;
+	v[17] = 1;
 
-	glChromiumParametervCR_ptr(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 17, v);
+	glChromiumParametervCR_ptr(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 18, v);
 #if 0
 	{
 		printf("view matrix:\n");
 		int i;
-		for (i = 1; i < 17; i++) {
-			printf("%f ", v[i]);
-			if (i % 4 == 0)
+		for (i = 0; i < 16; i++) {
+			printf("%f ", v[2+i]);
+			if ((i+1) % 4 == 0)
 				printf("\n");
 		}
 		printf("\n");

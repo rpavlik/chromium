@@ -446,8 +446,10 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 				}
 			}
 			/* copy view /projection matrices too */
-			winInfo->server[i].viewMatrix = winInfo0->server[i].viewMatrix;
-			winInfo->server[i].projectionMatrix = winInfo0->server[i].projectionMatrix;
+			winInfo->server[i].viewMatrix[0] = winInfo0->server[i].viewMatrix[0];
+			winInfo->server[i].viewMatrix[1] = winInfo0->server[i].viewMatrix[1];
+			winInfo->server[i].projectionMatrix[0] = winInfo0->server[i].projectionMatrix[0];
+			winInfo->server[i].projectionMatrix[1] = winInfo0->server[i].projectionMatrix[1];
 		}
 	}
 

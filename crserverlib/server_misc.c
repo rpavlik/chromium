@@ -113,27 +113,18 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 		/* Set this server's view matrix which will get premultiplied onto the
 		 * modelview matrix.  For non-planar tilesort and stereo.
 		 */
-		CRASSERT(count == 17);
+		CRASSERT(count == 18);
 		CRASSERT(type == GL_FLOAT);
 		/* values[0] is the server index. Ignored here but used in tilesort SPU */
+		/* values[1] is the left/right eye index (0 or 1) */
 		{
 			const GLfloat *v = (const GLfloat *) values;
-			cr_server.viewMatrix.m00 = v[1];
-			cr_server.viewMatrix.m01 = v[2];
-			cr_server.viewMatrix.m02 = v[3];
-			cr_server.viewMatrix.m03 = v[4];
-			cr_server.viewMatrix.m10 = v[5];
-			cr_server.viewMatrix.m11 = v[6];
-			cr_server.viewMatrix.m12 = v[7];
-			cr_server.viewMatrix.m13 = v[8];
-			cr_server.viewMatrix.m20 = v[9];
-			cr_server.viewMatrix.m21 = v[10];
-			cr_server.viewMatrix.m22 = v[11];
-			cr_server.viewMatrix.m23 = v[12];
-			cr_server.viewMatrix.m30 = v[13];
-			cr_server.viewMatrix.m31 = v[14];
-			cr_server.viewMatrix.m32 = v[15];
-			cr_server.viewMatrix.m33 = v[16];
+			const int eye = v[1] == 0.0 ? 0 : 1;
+			crMatrixInitFromFloats(&cr_server.viewMatrix[eye], v + 2);
+			/*
+			printf("Got SERVER_VIEW Matrix %d\n", eye);
+			crMatrixPrint("view", &cr_server.viewMatrix[eye]);
+			*/
 		}
 		cr_server.viewOverride = GL_TRUE;
 		break;
@@ -142,27 +133,18 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 		/* Set this server's projection matrix which will get replace the user's
 		 * projection matrix.  For non-planar tilesort and stereo.
 		 */
-		CRASSERT(count == 17);
+		CRASSERT(count == 18);
 		CRASSERT(type == GL_FLOAT);
 		/* values[0] is the server index. Ignored here but used in tilesort SPU */
+		/* values[1] is the left/right eye index (0 or 1) */
 		{
 			const GLfloat *v = (const GLfloat *) values;
-			cr_server.projectionMatrix.m00 = v[1];
-			cr_server.projectionMatrix.m01 = v[2];
-			cr_server.projectionMatrix.m02 = v[3];
-			cr_server.projectionMatrix.m03 = v[4];
-			cr_server.projectionMatrix.m10 = v[5];
-			cr_server.projectionMatrix.m11 = v[6];
-			cr_server.projectionMatrix.m12 = v[7];
-			cr_server.projectionMatrix.m13 = v[8];
-			cr_server.projectionMatrix.m20 = v[9];
-			cr_server.projectionMatrix.m21 = v[10];
-			cr_server.projectionMatrix.m22 = v[11];
-			cr_server.projectionMatrix.m23 = v[12];
-			cr_server.projectionMatrix.m30 = v[13];
-			cr_server.projectionMatrix.m31 = v[14];
-			cr_server.projectionMatrix.m32 = v[15];
-			cr_server.projectionMatrix.m33 = v[16];
+			const int eye = v[1] == 0.0 ? 0 : 1;
+			crMatrixInitFromFloats(&cr_server.projectionMatrix[eye], v + 2);
+			/*
+			printf("Got SERVER_PROJ Matrix %d\n", eye);
+			crMatrixPrint("proj", &cr_server.projectionMatrix[eye]);
+			*/
 		}
 		cr_server.projectionOverride = GL_TRUE;
 		break;
@@ -186,6 +168,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParameteriCR(GLenum target
 		break;
 	case GL_SHARED_PROGRAMS_CR:
 		cr_server.sharedPrograms = value;
+		break;
+	case GL_SERVER_CURRENT_EYE_CR:
+		cr_server.currentEye = value ? 1 : 0;
 		break;
 	default:
 		/* Pass the parameter info to the head SPU */

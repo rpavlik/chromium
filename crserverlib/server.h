@@ -68,4 +68,6 @@ void crServerNewMuralTiling(CRMuralInfo *mural, int muralWidth, int muralHeight,
 void crComputeOverlapGeom(double *quads, int nquad, CRPoly ***res);
 void crComputeKnockoutGeom(double *quads, int nquad, int my_quad_idx, CRPoly **res);
 
+int crServerGetCurrentEye(void);
+
 #endif /* CR_SERVER_H */

@@ -230,8 +230,10 @@ void
 crServerApplyBaseProjection(const CRmatrix *baseProj)
 {
 	const CRmatrix *projMatrix;
-	if (cr_server.projectionOverride)
-		projMatrix = &cr_server.projectionMatrix;
+	if (cr_server.projectionOverride) {
+		int eye = crServerGetCurrentEye();
+		projMatrix = &cr_server.projectionMatrix[eye];
+	}
 	else
 		projMatrix = cr_server.curClient->currentCtx->transform.projectionStack.top;
 

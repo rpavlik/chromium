@@ -255,51 +255,52 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 			const GLfloat top    = v[4];
 			const GLfloat hither = v[5];
 			const GLfloat yon    = v[6];
-			GLfloat m[17];
+			GLfloat m[18];
 
-			/* server number */
-			m[0] = v[0];
+			m[0] = v[0];		/* server number */
+			m[1] = 0; /* eye */
 
 			/* build projection matrix */
-			m[1] = (2.0f * hither) / (right - left);
-			m[2] = 0.0;
+			m[2] = (2.0f * hither) / (right - left);
 			m[3] = 0.0;
 			m[4] = 0.0;
-
 			m[5] = 0.0;
-			m[6] = (2.0f * hither) / (top - bottom);
-			m[7] = 0.0;
+
+			m[6] = 0.0;
+			m[7] = (2.0f * hither) / (top - bottom);
 			m[8] = 0.0;
+			m[9] = 0.0;
 
-			m[9] = (right + left) / (right - left);
-			m[10] = (top + bottom) / (top - bottom);
-			m[11] = (-hither - yon) / (yon - hither);
-			m[12] = -1.0;
+			m[10] = (right + left) / (right - left);
+			m[11] = (top + bottom) / (top - bottom);
+			m[12] = (-hither - yon) / (yon - hither);
+			m[13] = -1.0;
 
-			m[13] = 0.0;
 			m[14] = 0.0;
-			m[15] = (2.0f * yon * hither) / (hither - yon);
-			m[16] = 0.0;
+			m[15] = 0.0;
+			m[16] = (2.0f * yon * hither) / (hither - yon);
+			m[17] = 0.0;
 
 			/* Recurse, using the code in the next switch case */
 			tilesortspu_ChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR,
-																			 type, 17, m);
+																			 type, 18, m);
 		}
 		break;
 
 	case GL_SERVER_PROJECTION_MATRIX_CR:
 		/* Set per-server projection matrix / frustum (for CAVE-like stuff) */
-		CRASSERT(count == 17);
+		CRASSERT(count == 18);
 		CRASSERT(type == GL_FLOAT);
 		{
 			const GLfloat *v = (const GLfloat *) values;
 			const int server = (int) v[0];
+			const int eye = v[1] == 0.0 ? 0 : 1;
 
 			if (server < tilesort_spu.num_servers) {
 				ServerWindowInfo *servWinInfo = winInfo->server + server;
 
 				/* save new matrix */
-				crMatrixInitFromFloats(&servWinInfo->projectionMatrix, v + 1);
+				crMatrixInitFromFloats(&servWinInfo->projectionMatrix[eye], v + 2);
 				winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
 
 				/* release geom buffer */
@@ -313,13 +314,13 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 				if (tilesort_spu.swap) {
 					crPackPushAttribSWAP(GL_TRANSFORM_BIT);
 					crPackMatrixModeSWAP(GL_PROJECTION);
-					crPackLoadMatrixfSWAP(v + 1);
+					crPackLoadMatrixfSWAP(v + 2);
 					crPackPopAttribSWAP();
 				}
 				else {
 					crPackPushAttrib(GL_TRANSFORM_BIT);
 					crPackMatrixMode(GL_PROJECTION);
-					crPackLoadMatrixf(v + 1);
+					crPackLoadMatrixf(v + 2);
 					crPackPopAttrib();
 				}
 				/* release server buffer */
@@ -336,16 +337,17 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 
 	case GL_SERVER_VIEW_MATRIX_CR:
 		/* Set per-server view matrix (for CAVE-like stuff) */
-		CRASSERT(count == 17);
+		CRASSERT(count == 18);
 		CRASSERT(type == GL_FLOAT);
 		{
 			const GLfloat *v = (const GLfloat *) values;
 			const int server = (int) v[0];
+			const int eye = v[1] == 0.0 ? 0 : 1;
 			if (server >= 0 && server < tilesort_spu.num_servers){
 				ServerWindowInfo *servWinInfo = winInfo->server + server;
 
 				/* save new matrix */
-				crMatrixInitFromFloats(&servWinInfo->viewMatrix, v + 1);
+				crMatrixInitFromFloats(&servWinInfo->viewMatrix[eye], v + 2);
 				winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
 
 				/* release geom buffer */

@@ -338,35 +338,6 @@ demonstration, see the <code>stereo2.conf</code> configuration file.
 The <em>force_quad_buffering</em> option is explained below.
 </p>
 
-
-<li>Specify the left/right view/projection matrices for the tilesort SPU:
-<pre>
-
-    # Left view matrix
-    v = crmatrix.CRMatrix()
-    v.Translate(+EyeSep, 0, 0)
-    tilesortspu.Conf('left_view_matrix', v.ToList())
-
-    # Right view matrix
-    v = crmatrix.CRMatrix()
-    v.Translate(-EyeSep, 0, 0)
-    tilesortspu.Conf('left_view_matrix', v.ToList())
-
-    # Left projection matrix
-    p = crmatrix.CRMatrix()
-    left = s * ((Width * -Aspect) - EyeSep);
-    right = s * ((Width * Aspect) - EyeSep);
-    p.Frustum(left, right, bottom, top, Hither, Yon)
-    tilesortspu.Conf('left_projection_matrix', p.ToList())
-
-    # Right projection matrix
-    p = crmatrix.CRMatrix()
-    left = s * ((Width * -Aspect) + EyeSep);
-    right = s * ((Width * Aspect) + EyeSep);
-    p.Frustum(left, right, bottom, top, Hither, Yon)
-    tilesortspu.Conf('rightt_projection_matrix', p.ToList())
-</pre>
-
 <li>Create the crserver node with render SPU:
 <pre>
     renderspu = SPU('render')
@@ -380,6 +351,33 @@ The <em>force_quad_buffering</em> option is explained below.
     cr.AddNode(server)
 
     tilesortspu.AddServer(server, protocol='tcpip', port=7000)
+</pre>
+
+<li>Specify the left/right view/projection matrices for the server node:
+<pre>
+    # Left view matrix
+    v = crmatrix.CRMatrix()
+    v.Translate(+EyeSep, 0, 0)
+    servernode.Conf('view_matrix', v.ToList())
+
+    # Right view matrix
+    v = crmatrix.CRMatrix()
+    v.Translate(-EyeSep, 0, 0)
+    servernode.Conf('right_view_matrix', v.ToList())
+
+    # Left projection matrix
+    p = crmatrix.CRMatrix()
+    left = s * ((Width * -Aspect) - EyeSep);
+    right = s * ((Width * Aspect) - EyeSep);
+    p.Frustum(left, right, bottom, top, Hither, Yon)
+    servernode.Conf('projection_matrix', p.ToList())
+
+    # Right projection matrix
+    p = crmatrix.CRMatrix()
+    left = s * ((Width * -Aspect) + EyeSep);
+    right = s * ((Width * Aspect) + EyeSep);
+    p.Frustum(left, right, bottom, top, Hither, Yon)
+    servernode.Conf('right_projection_matrix', p.ToList())
 </pre>
 
 </ul>

@@ -565,11 +565,12 @@ TransformBBox(const WindowInfo *winInfo, int server,
 		/* Use matrices obtained from the servers */
 		const ServerWindowInfo *servWinInfo = winInfo->server + server;
 		CRmatrix pv, pvm;
+		int eye = (thread->currentContext->stereoDestFlags & EYE_RIGHT) ? 1:0;
 
 		/* XXX we could multiply this earlier! */
 		/* pv = proj matrix * view matrix */
-		crMatrixMultiply(&pv, &servWinInfo->projectionMatrix,
-														&servWinInfo->viewMatrix);
+		crMatrixMultiply(&pv, &servWinInfo->projectionMatrix[eye],
+														&servWinInfo->viewMatrix[eye]);
 		/* pvm = pv * model matrix */
 		crMatrixMultiply(&pvm, &pv, t->modelViewStack.top);
 
@@ -939,13 +940,14 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				int clipAndMask;
 				CRmatrix m;
 				GLvectorf corner[8];
+				int eye = (thread->currentContext->stereoDestFlags & EYE_LEFT) ? 0:1;
 
 				/* Compute matrix m = projection * view * modelview. */
 				if (winInfo->matrixSource == MATRIX_SOURCE_SERVERS) {
 					/* Use projection and view matrices obtained from servers */
 					/* XXX use pre-multiplied matrix here */
-					crMatrixMultiply(&m, &servWinInfo->projectionMatrix,
-																	&servWinInfo->viewMatrix);
+					crMatrixMultiply(&m, &servWinInfo->projectionMatrix[eye],
+																	&servWinInfo->viewMatrix[eye]);
 				}
 				else if (winInfo->matrixSource == MATRIX_SOURCE_CONFIG &&
 					 thread->currentContext->stereoDestFlags != (EYE_LEFT | EYE_RIGHT)) {
@@ -959,7 +961,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				else {
 					/* Use the application's projection and server's view matrice */
 					crMatrixMultiply(&m, t->projectionStack.top,
-																	&servWinInfo->viewMatrix);
+																	&servWinInfo->viewMatrix[eye]);
 				}
 				crMatrixMultiply(&m, &m, t->modelViewStack.top);
 

@@ -789,10 +789,11 @@ Init(void)
 					glPushMatrix();
 					glLoadIdentity();
 					glRotatef(i * 90, 0, 1, 0);
-					glGetFloatv(GL_MODELVIEW_MATRIX, m + 1);
+					glGetFloatv(GL_MODELVIEW_MATRIX, m + 2);
 					glPopMatrix();
 					m[0] = (GLfloat) i * 2 + j;  /* the server */
-					glChromiumParametervCR_ptr(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 17, m);
+					m[1] = 0; /* the eye */
+					glChromiumParametervCR_ptr(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 18, m);
 				}
 			}
 		}

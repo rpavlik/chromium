@@ -127,8 +127,8 @@ struct server_window_info_t {
 	CRrecti extents[CR_MAX_EXTENTS];
 	int eyeFlags;   /* bitmask of EYE_LEFT, EYE_RIGHT, for passive stereo */
 	/* per-server viewing and projection matrices (for non-planar tilesort) */
-	CRmatrix viewMatrix;
-	CRmatrix projectionMatrix;
+	CRmatrix viewMatrix[2]; /* 0=left, 1=right */
+	CRmatrix projectionMatrix[2]; /* 0=left, 1=right */
 	/* warped grid */
 	int display_ndx[CR_MAX_EXTENTS];
 	GLfloat world_extents[CR_MAX_EXTENTS][8]; /* x1, y1, x2, y2, x3, y3, ... */

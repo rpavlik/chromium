@@ -94,6 +94,7 @@ static void
 send_matrices(int eye)
 {
 	GET_THREAD(thread);
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	int server;
 
 	CRASSERT(tilesort_spu.stereoMode != PASSIVE);
@@ -114,55 +115,91 @@ send_matrices(int eye)
 
 		if (eye == EYE_LEFT || eye == EYE_RIGHT) {
 			/* Either updating left or right view, not both */
-			const int i = (eye == EYE_LEFT) ? 0 : 1;
-			/* send new view matrix to the server */
-			crMatrixGetFloats(params + 1, &tilesort_spu.stereoViewMatrices[i]);
-			if (tilesort_spu.swap) {
-				crPackChromiumParametervCRSWAP(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT,
-																			 17, params);
-			}
-			else {
-				crPackChromiumParametervCR(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT,
-																	 17, params);
-			}
 
-			/* send new projection matrix to the server */
-			crMatrixGetFloats(params + 1, &tilesort_spu.stereoProjMatrices[i]);
-			if (tilesort_spu.swap) {
-				crPackChromiumParametervCRSWAP(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT,
-																			 17, params);
+			if (winInfo->matrixSource == MATRIX_SOURCE_SERVERS) {
+				/* just tell servers whether to use left or right matrices */
+				const int i = (eye == EYE_LEFT) ? 0 : 1;
+				if (tilesort_spu.swap)
+					crPackChromiumParameteriCRSWAP(GL_SERVER_CURRENT_EYE_CR, i);
+				else
+					crPackChromiumParameteriCR(GL_SERVER_CURRENT_EYE_CR, i);
 			}
 			else {
-				crPackChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT,
-																	 17, params);
+				 /* send new view matrix to the server */
+				 const int i = (eye == EYE_LEFT) ? 0 : 1;
+				 if (tilesort_spu.forceQuadBuffering) {
+					 /* the server doesn't know anything about left vs. right */
+					 params[1] = 0;
+				 }
+				 else {
+					 /* app is already issuing correct left/right transformations */
+					 params[1] = (float) i; /* 0=left eye, 1=right eye */
+				 }
+
+				 crMatrixGetFloats(params + 2, &tilesort_spu.stereoViewMatrices[i]);
+				 if (tilesort_spu.swap) {
+					 crPackChromiumParametervCRSWAP(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT,
+																					18, params);
+				 }
+				 else {
+					 crPackChromiumParametervCR(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT,
+																			18, params);
+				 }
+
+				 /* send new projection matrix to the server */
+				 crMatrixGetFloats(params + 2, &tilesort_spu.stereoProjMatrices[i]);
+				 if (tilesort_spu.swap) {
+					 crPackChromiumParametervCRSWAP(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT,
+																					18, params);
+				 }
+				 else {
+					 crPackChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT,
+																			18, params);
+				 }
 			}
 		}
 		else {
 			/* both views - same projection for both views (ala 2D overlays gfx) */
 			CRASSERT(eye == (EYE_LEFT | EYE_RIGHT));
 
-			/*printf("sending identity transform\n");*/
-			/* send identity view matrix to the server */
-			tilesortMakeIdentityf(params + 1);
-			if (tilesort_spu.swap) {
-				crPackChromiumParametervCRSWAP(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT,
-																			 17, params);
+			if (winInfo->matrixSource == MATRIX_SOURCE_SERVERS) {
+				/* XXX should tell server to use identity matrix */
+				/* XXX this whole business is kind of broken anyway - that is,
+				 * glDrawBuffer(GL_LEFT_AND_RIGHT) is really hard to deal with
+				 */
+#if 0
+				const int i = -1;
+				if (tilesort_spu.swap)
+					crPackChromiumParameteriCRSWAP(9993, i);
+				else
+					crPackChromiumParameteriCR(9993, i);
+#endif
 			}
 			else {
-				crPackChromiumParametervCR(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT,
-																	 17, params);
-			}
+				params[1] = 0; /* just left eye */
+				/*printf("sending identity transform\n");*/
+				/* send identity view matrix to the server */
+				tilesortMakeIdentityf(params + 2);
+				if (tilesort_spu.swap) {
+					crPackChromiumParametervCRSWAP(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT,
+																				 18, params);
+				}
+				else {
+					crPackChromiumParametervCR(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT,
+																		 18, params);
+				}
 
-			/* send user's projection matrix to the server */
-			crMatrixGetFloats(params + 1,
-								thread->currentContext->State->transform.projectionStack.top);
-			if (tilesort_spu.swap) {
-				crPackChromiumParametervCRSWAP(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT,
-																			 17, params);
-			}
-			else {
-				crPackChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT,
-																	 17, params);
+				/* send user's projection matrix to the server */
+				crMatrixGetFloats(params + 2,
+									thread->currentContext->State->transform.projectionStack.top);
+				if (tilesort_spu.swap) {
+					crPackChromiumParametervCRSWAP(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT,
+																				 18, params);
+				}
+				else {
+					crPackChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT,
+																		 18, params);
+				}
 			}
 		}
 

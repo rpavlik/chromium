@@ -1211,7 +1211,11 @@ class ReassemblyTemplate(templatebase.TemplateBase):
 				v = re.search(quotedStringPat, l)
 				reassembleHost = l[v.start(1) : v.end(1)]
 			elif re.match("^TILESORT_OPTIONS = \[", l):
-				tilesortSPU.GetOptions().Read(fileHandle)
+				w = mothership.Template.Columns * mothership.Template.TileWidth
+				h = mothership.Template.Rows * mothership.Template.TileHeight
+				subst = [ ("TILE_COLS * TILE_WIDTH", str(w)),
+						  ("TILE_ROWS * TILE_HEIGHT", str(h)) ]
+				tilesortSPU.GetOptions().Read(fileHandle, subst)
 			elif re.match("^REASSEMBLE_OPTIONS = \[", l):
 				reassembleSPU.GetOptions().Read(fileHandle)
 			elif re.match("^READBACK_OPTIONS = \[", l):

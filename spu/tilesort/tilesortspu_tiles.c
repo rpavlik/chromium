@@ -428,23 +428,44 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 				}
 			}
 
-			/* get view matrix from the server */
+			/* get view matrices from the server */
 			if (crMothershipGetServerParamFromSPU( conn, i,
 																						 "view_matrix", response)) {
-				crMatrixInitFromString(&servWinInfo->viewMatrix, response);
-				if (!crMatrixIsIdentity(&servWinInfo->viewMatrix))
+				crMatrixInitFromString(&servWinInfo->viewMatrix[0], response);
+				if (!crMatrixIsIdentity(&servWinInfo->viewMatrix[0]))
 					winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
 			}
+			if (crMothershipGetServerParamFromSPU( conn, i,
+																						 "right_view_matrix", response)) {
+				crMatrixInitFromString(&servWinInfo->viewMatrix[1], response);
+				if (!crMatrixIsIdentity(&servWinInfo->viewMatrix[1]))
+					winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
+			}
+			/*
+			crMatrixPrint("Left view", &servWinInfo->viewMatrix[0]);
+			crMatrixPrint("Right view", &servWinInfo->viewMatrix[1]);
+			*/
 
 			/* Also get overriding projection matrix.
 			 * Note that this matrix is only relevant to FRUSTUM bucketing.
 			 */
 			if (crMothershipGetServerParamFromSPU( conn, i,
-																						 "projection_matrix", response)) {
-				crMatrixInitFromString(&servWinInfo->projectionMatrix, response);
-				if (!crMatrixIsIdentity(&servWinInfo->viewMatrix))
+																			 "projection_matrix", response)) {
+				/* XXX projection_matrix is obsolete, keep for a while though */
+				crMatrixInitFromString(&servWinInfo->projectionMatrix[0], response);
+				if (!crMatrixIsIdentity(&servWinInfo->projectionMatrix[0]))
 					winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
 			}
+			if (crMothershipGetServerParamFromSPU( conn, i,
+																			 "right_projection_matrix", response)) {
+				crMatrixInitFromString(&servWinInfo->projectionMatrix[1], response);
+				if (!crMatrixIsIdentity(&servWinInfo->projectionMatrix[1]))
+					winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
+			}
+			/*
+			crMatrixPrint("Left proj", &servWinInfo->projectionMatrix[0]);
+			crMatrixPrint("Right proj", &servWinInfo->projectionMatrix[1]);
+			*/
 		}
 	}
 
