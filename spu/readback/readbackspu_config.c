@@ -110,7 +110,6 @@ void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 			sscanf(response, "%d", &resizable);
 			readback_spu->resizable = resizable;
 		}
-		printf(">>>>>>> resizable = %d\n", readback_spu->resizable);
 	}
 
 	crMothershipDisconnect( conn );
