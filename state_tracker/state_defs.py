@@ -44,4 +44,5 @@ crStateColorMaterialRecover
 crStateError
 crStateUpdateColorBits
 crStateClientInit
+crStateGetCurrent
 """
