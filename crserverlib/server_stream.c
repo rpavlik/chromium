@@ -210,6 +210,7 @@ static void crServerDeleteFromRunQueue( CRClient *client )
 					crFree(q);
 				}
 				cr_server.numClients--;
+				cr_server.maxBarrierCount--;
 				return;
 			}
 			q = q->next;
