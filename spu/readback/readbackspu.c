@@ -89,7 +89,6 @@ static void AllocBuffers( WindowInfo *window )
 static void CheckWindowSize( WindowInfo *window )
 {
 	GLint newSize[2];
-	const GLint w = window->index;
 	CRMessage *msg;
 
 	newSize[0] = newSize[1] = 0;
@@ -97,7 +96,8 @@ static void CheckWindowSize( WindowInfo *window )
 	{
 		/* ask downstream SPU (probably render) for its window size */
 		readback_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-																							 w, GL_INT, 2, newSize);
+																							 window->childWindow,
+																							 GL_INT, 2, newSize);
 		if (newSize[0] == 0 && newSize[1] == 0)
 		{
 			/* something went wrong - recover - try viewport */
@@ -128,9 +128,9 @@ static void CheckWindowSize( WindowInfo *window )
 			/* update super/render SPU window size & viewport */
 			CRASSERT(newSize[0] > 0);
 			CRASSERT(newSize[1] > 0);
-			readback_spu.super.WindowSize( w, newSize[0], newSize[1] );
+			readback_spu.super.WindowSize( window->renderWindow,
+																		 newSize[0], newSize[1] );
 			readback_spu.super.Viewport( 0, 0, newSize[0], newSize[1] );
-			
 			/* set child's viewport too */
 			readback_spu.child.Viewport( 0, 0, newSize[0], newSize[1] );
 		}
@@ -263,7 +263,7 @@ static void CompositeTile( WindowInfo *window, int w, int h,
 		readback_spu.child.StencilFunc( GL_ALWAYS, 1, ~0 );
 		readback_spu.child.Enable( GL_STENCIL_TEST );
 		readback_spu.child.Enable( GL_DEPTH_TEST );
-		readback_spu.child.DepthFunc( GL_LESS );
+		readback_spu.child.DepthFunc( GL_LEQUAL );
 		readback_spu.child.DrawPixels( w, h,
 																	 GL_DEPTH_COMPONENT, window->depthType,
 																	 (GLubyte *) window->depthBuffer + shift );
