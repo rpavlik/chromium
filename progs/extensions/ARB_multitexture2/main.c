@@ -14,15 +14,12 @@
 
 */
 
-#define GL_GLEXT_LEGACY
-#define GL_GLEXT_PROTOTYPES
 #include "../common/logo.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <GL/glu.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
+#include "chromium.h"
 
 /* #define CCN_DEBUG */
 #define DISPLAY_LISTS
@@ -45,26 +42,18 @@ static GLuint currentWidth, currentHeight;
 static GLuint textureID[eNumTextures];
 static GLfloat bgColor[4] = { 0.1, 0.1, 0.1, 0.0 };
 
-#ifdef WINDOWS
-PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
-PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-#endif
+/* NVIDIA's gl.h may not include glext.h or defined the PFNGL pointers,
+ * so we define our own with unique names.
+ */
+typedef void (APIENTRY * glActiveTextureARB_t)(GLenum texture);
+typedef void (APIENTRY * glMultiTexCoord2fARB_t) (GLenum target, GLfloat s, GLfloat t);
 
-#ifdef IRIX
-void
-glActiveTextureARB(GLenum texture)
-{
-}
-
-void
-glMultiTexCoord2fARB(GLenum texture, GLfloat s, GLfloat t)
-{
-}
-#endif
+static glActiveTextureARB_t glActiveTextureARB_func;
+static glMultiTexCoord2fARB_t glMultiTexCoord2fARB_func;
 
 
 static void
-Display(void)
+Redisplay(void)
 {
 	const float size = 1.0, texDetail = 0.5, texOffset = 0.5;
 	static double theta = 0.0;
@@ -84,42 +73,42 @@ Display(void)
 	glViewport(0, 0, currentWidth >> 1, currentHeight);
 
 	glEnable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTextureARB_func(GL_TEXTURE0_ARB);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glBindTexture(GL_TEXTURE_2D, textureID[eBrickTex]);
-	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glActiveTextureARB_func(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glBindTexture(GL_TEXTURE_2D, textureID[eLightTex]);
 
 	glBegin(GL_QUADS);
-	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, -texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, -texDetail + texOffset,
 			     texDetail + texOffset);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, -texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, -texDetail + texOffset,
 			     texDetail + texOffset);
 	glVertex3f(-size, 0.0, size);
 
-	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, texDetail + texOffset,
 			     texDetail + texOffset);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, texDetail + texOffset,
 			     texDetail + texOffset);
 	glVertex3f(size, 0.0, size);
 
-	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, texDetail + texOffset,
 			     -texDetail + texOffset);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, texDetail + texOffset,
 			     -texDetail + texOffset);
 	glVertex3f(size, 0.0, -size);
 
-	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, -texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, -texDetail + texOffset,
 			     -texDetail + texOffset);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, -texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, -texDetail + texOffset,
 			     -texDetail + texOffset);
 	glVertex3f(-size, 0.0, -size);
 	glEnd();
 
 	glDisable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTextureARB_func(GL_TEXTURE0_ARB);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glDisable(GL_TEXTURE_2D);
 
@@ -134,42 +123,42 @@ Display(void)
 #endif /* MULTIPLE_VIEWPORTS */
 
 	glEnable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTextureARB_func(GL_TEXTURE0_ARB);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glBindTexture(GL_TEXTURE_2D, textureID[eBrickTex]);
-	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glActiveTextureARB_func(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
 	glBindTexture(GL_TEXTURE_2D, textureID[eLightTex]);
 
 	glBegin(GL_QUADS);
-	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, -texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, -texDetail + texOffset,
 			     texDetail + texOffset);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, -texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, -texDetail + texOffset,
 			     texDetail + texOffset);
 	glVertex3f(-size, 0.0, size);
 
-	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, texDetail + texOffset,
 			     texDetail + texOffset);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, texDetail + texOffset,
 			     texDetail + texOffset);
 	glVertex3f(size, 0.0, size);
 
-	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, texDetail + texOffset,
 			     -texDetail + texOffset);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, texDetail + texOffset,
 			     -texDetail + texOffset);
 	glVertex3f(size, 0.0, -size);
 
-	glMultiTexCoord2fARB(GL_TEXTURE0_ARB, -texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, -texDetail + texOffset,
 			     -texDetail + texOffset);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB, -texDetail + texOffset,
+	glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, -texDetail + texOffset,
 			     -texDetail + texOffset);
 	glVertex3f(-size, 0.0, -size);
 	glEnd();
 
 	glDisable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTextureARB_func(GL_TEXTURE0_ARB);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glDisable(GL_TEXTURE_2D);
 
@@ -245,7 +234,7 @@ InitGL(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glutIdleFunc(Idle);
-	glutDisplayFunc(Display);
+	glutDisplayFunc(Redisplay);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(NULL);
@@ -295,17 +284,16 @@ InitSpecial(void)
 		break;
 	}
 
-#ifdef WIN32
-	glMultiTexCoord2fARB =
-		(PFNGLMULTITEXCOORD2FARBPROC) wglGetProcAddress("glMultiTexCoord2fARB");
-	glActiveTextureARB =
-		(PFNGLACTIVETEXTUREARBPROC) wglGetProcAddress("glActiveTextureARB");
-	if (!glMultiTexCoord2fARB || !glActiveTextureARB)
+	glMultiTexCoord2fARB_func =
+		(PFNGLMULTITEXCOORD2FARBPROC) GET_PROC("glMultiTexCoord2fARB");
+	glActiveTextureARB_func =
+		(PFNGLACTIVETEXTUREARBPROC) GET_PROC("glActiveTextureARB");
+	if (!glMultiTexCoord2fARB_func || !glActiveTextureARB_func)
 	{
 		printf("getProcAddress() failed\n");
 		exit(0);
 	}
-#endif
+
 	/* Gets of CURRENT_TEXTURE_COORDS return that of the active unit.
 	 * ActiveTextureARB( enum texture ) changes active unit for:
 	 *  - Seperate Texture Matrices
