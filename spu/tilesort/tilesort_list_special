@@ -50,3 +50,5 @@ DrawArrays
 DrawElements
 DrawRangeElements
 ArrayElement
+PushClientAttrib
+PopClientAttrib
