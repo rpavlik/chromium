@@ -85,7 +85,6 @@ void crStateClientInit(CRClientState *c)
 void crStateClientSetClientState(CRClientState *c, CRClientBits *cb, 
 		GLbitvalue neg_bitid, GLenum array, GLboolean state) 
 {
-	int i;
 	switch (array) 
 	{
 		case GL_VERTEX_ARRAY:
@@ -101,10 +100,7 @@ void crStateClientSetClientState(CRClientState *c, CRClientBits *cb,
 			c->i.enabled = state;
 			break;
 		case GL_TEXTURE_COORD_ARRAY:
-			for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
-			{
-				c->t[i].enabled = state;
-			}
+			c->t[c->curClientTextureUnit].enabled = state;
 			break;
 		case GL_EDGE_FLAG_ARRAY:
 			c->e.enabled = state;

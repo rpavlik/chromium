@@ -596,7 +596,7 @@ void STATE_APIENTRY crStateClientActiveTextureARB( GLenum texture )
 
 	FLUSH();
 
-	c->curClientTextureUnit = texture;
+	c->curClientTextureUnit = texture - GL_TEXTURE0_ARB;
 }
 
 void STATE_APIENTRY crStateActiveTextureARB( GLenum texture )
