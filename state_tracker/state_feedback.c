@@ -741,27 +741,27 @@ crStateFeedbackVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 			feedback_point(v);
 			break;
 		case GL_LINE:
-		if (g->vCount == 0)
-		{
-			g->lineLoop = GL_FALSE;
-			g->vCount = 1;
-		}
-		else if (g->vCount == 1)
-		{
-			feedback_line(g->vBuffer + 0, g->vBuffer + 1, g->lineReset);
-			g->lineReset = GL_FALSE;
-			g->lineLoop = GL_TRUE;
-			g->vCount = 2;
-		}
-		else
-		{
-			CRASSERT(g->vCount == 2);
-			CRASSERT(g->lineReset == GL_FALSE);
-			g->lineLoop = GL_FALSE;
-			feedback_line(g->vBuffer + 1, g->vBuffer + 2, g->lineReset);
-			g->vBuffer[1] = g->vBuffer[2];
-			/* leave g->vCount at 2 */
-		}
+			if (g->vCount == 0)
+			{
+				g->lineLoop = GL_FALSE;
+				g->vCount = 1;
+			}
+			else if (g->vCount == 1)
+			{
+				feedback_line(g->vBuffer + 0, g->vBuffer + 1, g->lineReset);
+				g->lineReset = GL_FALSE;
+				g->lineLoop = GL_TRUE;
+				g->vCount = 2;
+			}
+			else
+			{
+				CRASSERT(g->vCount == 2);
+				CRASSERT(g->lineReset == GL_FALSE);
+				g->lineLoop = GL_FALSE;
+				feedback_line(g->vBuffer + 1, g->vBuffer + 2, g->lineReset);
+				g->vBuffer[1] = g->vBuffer[2];
+				/* leave g->vCount at 2 */
+			}
 			break;
 		case GL_FILL:
 			/* draw as a tri-fan */
