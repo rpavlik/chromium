@@ -64,6 +64,11 @@ def GenerateEntrypoints(hacks = []):
 				print "{"
 				print "\tglim.ProgramParameters4fvNV( target, index, num, params );"
 				print "}"
+			elif func_name == "MultiDrawElementsEXT":
+				print "void glMultiDrawElementsEXT(GLenum mode, GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount)"
+				print "{"
+				print "\tglim.MultiDrawElementsEXT(mode, count,type, indices, primcount);"
+				print "}"
 			elif func_name == "ProgramParameters4dvNV":
 				print "void glProgramParameters4dvNV( GLenum target, GLuint index, GLuint num, const GLdouble *params )"
 				print "{"
