@@ -5,7 +5,9 @@
  */
 
 #include <stdlib.h>
+#ifndef WINDOWS
 #include <unistd.h>
+#endif
 #include "saveframespu.h"
 
 #include "cr_mothership.h"
