@@ -105,68 +105,66 @@ generate the code.</p>
 
 <p>At the top of the file, put the lines:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">
-import sys,os;<br>
-import cPickle;<br>
-import string;<br>
-import re;<br>
-<br>
-sys.path.append( &quot;../../opengl_stub&quot; )<br>
-parsed_file = open( &quot;../../glapi_parser/gl_header.parsed&quot;, &quot;rb&quot; )<br>
-gl_mapping = cPickle.load( parsed_file )<br>
-<br>
-import stub_common;</td></tr></table>
+<pre class="GrayCodeListing">
+import sys, os, cPickle, string, re<br>
+sys.path.append( "../../glapi_parser" )<br>
+import apiutil
+</pre>
 
-<p>This code loads in the parsed representation of the OpenGL headers,
-which gives a structured interface to the entire API supported by 
-Chromium.  <code>gl_mapping</code> is an associative array whose keys
-are OpenGL function names (without the &quot;gl&quot; prefix).  
-<code>stub_common</code> is a set of utility functions that we will
-use to generate code later.</p>
 
-<p>Although we won't need to in this example, we can easily extract the list
-of all functions into a sorted list with the commands:</p>
+<p>
+The apiutil module provides functions for getting information about all
+the OpenGL API functions, as well as related utilities.</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">
-keys = gl_mapping.keys()<br>
-keys.sort()</td></tr></table>
+<p>Although we won't need to in this example, we can easily get a list
+of all OpenGL functions in a sorted list with the command:</p>
+
+<pre class="GrayCodeListing">
+keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
+</pre>
 
 <p>Many of the code generating scripts throughout Chromium will iterate over
 this list of keys.</p>
 
-<p>Now that the parsed representation of the file has been loaded, we should
-print out the header of <code>seethroughspu.c</code>.  in our case, this will
-be identical to the existing <code>seethroughspu.c</code> (created in step 1),
-so just pull the first 6 lines of that file into our script, wrapped in a
-Python <code>print</code> statement:</p>
+<p>Now we print out the header code of <code>seethroughspu.c</code>.
+in our case, this will be identical to the existing
+<code>seethroughspu.c</code> (created in step 1), so just pull the
+first 6 lines of that file into our script, wrapped in a Python
+<code>print</code> statement:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">print """<br>
-      #include <stdio.h>&lt;stdio.h&gt;<br>
+<pre class="GrayCodeListing">
+print """<br>
+#include <stdio.h>&lt;stdio.h&gt;<br>
 #include &quot;cr_spu.h&quot;<br>
-      #include &quot;chromium.h&quot;<br>
-      #include &quot;cr_string.h&quot;<br>
+#include &quot;chromium.h&quot;<br>
+#include &quot;cr_string.h&quot;<br>
 #include &quot;seethroughspu.h&quot;<br>
 <br>
       SeethroughSpu seethrough_spu;<br>
-"""</td></tr></table>
+"""
+</pre>
 
-<p>In Python, strings enclosed in triple quotes (<code>"""</code>) can have
-embedded newlines in them.&nbsp; Notice the include of &quot;<code>chromium.h</code>&quot;
--- this is a wrapper for the system's OpenGL header, required on Windows (since <code>&lt;windows.h&gt;</code>
-has to be included before <code>&lt;GL/gl.h&gt;</code> will work on Windows).&nbsp;
-Also, we've added &quot;<code>cr_string.h</code>&quot;, which will be used when
-building the named function table.</p>
+<p>In Python, strings enclosed in triple quotes
+(<code>"""<!--"""></code>) can have embedded newlines in them.&nbsp;
+Notice the include of &quot;<code>chromium.h</code>&quot; -- this is a
+wrapper for the system's OpenGL header, required on Windows (since
+<code>&lt;windows.h&gt;</code> has to be included before
+<code>&lt;GL/gl.h&gt;</code> will work on Windows).&nbsp; Also, we've
+added &quot;<code>cr_string.h</code>&quot;, which will be used when
+building the named function table.
+</p>
 
-<p>Because there are so many <code>glColor</code> calls, we'll auto-generate the
+<p>
+Because there are so many <code>glColor</code> calls, we'll auto-generate the
 code for those, and hand-code the few remaining functions.&nbsp; We're going to
 want a typical color function to look like:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">void SEETHROUGHSPU_APIENTRY
-      seethroughColor3f( GLfloat r, GLfloat g, GLfloat b )<br>
-      {<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; seethrough_spu.super.Color4f( r, g, b,
-      seethrough_spu.opacityf );<br>
-      }</td></tr></table>
+<pre class="GrayCodeListing">
+void SEETHROUGHSPU_APIENTRY seethroughColor3f( GLfloat r, GLfloat g, GLfloat b )<br>
+{<br>
+&nbsp;&nbsp;seethrough_spu.super.Color4f( r, g, b, seethrough_spu.opacityf );<br>
+}
+</pre>
 
 <p>Notice the variable &quot;seethrough_spu.opacityf&quot; -- we'll assume that
 the configuration routine has pre-computed the user-specified opacity in all the
@@ -175,44 +173,50 @@ unsigned variants.&nbsp; To generate the 32 <code>glColor</code> calls, we will
 loop over the legal types and legal component numbers (in this case, 3 and 4).</p>
 <p>Add the following code to the python script:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">for type in ['b', 'd', 'f',
-      'i', 's', 'ub', 'ui', 'us']:<br>
+<pre class="GrayCodeListing">
+for type in ['b', 'd', 'f', 'i', 's', 'ub', 'ui', 'us']:<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for components in [3, 4]:<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       func_name = 'Color%d%s' % (components, type)<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      (return_type, arg_names, arg_types) = gl_mapping[func_name]<br>
+      return_type = apiutil.ReturnType(func_name)<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      print 'void SEETHROUGHSPU_APIENTRY seethrough%s%s' % (func_name,
-      stub_common.ArgumentString( arg_names, arg_types ) )<br>
+      params = apiutil.Parameters(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      print 'void SEETHROUGHSPU_APIENTRY seethrough%s(%s)' % (func_name,
+      apiutil.MakeDeclarationString(params) )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      print '{'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      print '}'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      print ''<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      func_name = 'Color%d%sv' % (components, type)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      return_type = apiutil.ReturnType(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      params = apiutil.Parameters(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      print 'void SEETHROUGHSPU_APIENTRY seethrough%s(%s)' % (func_name,
+      apiutil.MakeDeclarationString(params) )<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       print '{'<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       print '}'<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       print ''
-      <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      func_name = 'Color%d%sv' % (components, type)<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      (return_type, arg_names, arg_types) = gl_mapping[func_name]<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      print 'void SEETHROUGHSPU_APIENTRY seethrough%s%s' % (func_name,
-      stub_common.ArgumentString( arg_names, arg_types ) )<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      print '{'<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      print '}'<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      print ''</td></tr></table>
+</pre>
+
 
 <p>This code will generate empty function bodies for all the <code>glColor</code>
 functions that we want to implement, alternating between the parameter-passing
 (e.g., <code>glColor3f</code>) and vector (e.g., <code>glColor3fv</code>)
-varieties.&nbsp; Notice that the <code>gl_mapping</code> array has given us the
+varieties.&nbsp; Notice that the <code>apiutil</code> module has given us the
 return type of our function, as well as a list of argument names and argument
-types.&nbsp; The <code>stub_common</code> library uses this information to build
+types.&nbsp; The <code>apiutil</code> library uses this information to build
 the argument list for the function definition.</p>
-<p>The easiest way to implement these functions is to have the <code>stub_common</code>
+<p>The easiest way to implement these functions is to have the <code>apiutil</code>
 library build the SuperSPU call string for you, just like it built the argument
 declarations.&nbsp; To do this, all we need to have is a Python array that
 contains the names of the arguments we want to pass.&nbsp; For the
@@ -225,26 +229,32 @@ curly braces), add the following code, taking extra care to make sure that the
 indentation matches with the surrounding code (i.e., this code should be
 indented two block levels):</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">		if components == 3:<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; arg_names.append( 'seethrough_spu.opacity%s' % type )<br>
-		else:<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\t(void) %s;' %
-      arg_names[3]<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; arg_names[3] = 'seethrough_spu.opacity%s' % type<br>
+<pre class="GrayCodeListing">
+# Modify params list to add/change the fourth parameter so it is the opacity<br>
+if components == 3:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      tuple = (('seethrough_spu.opacity%s' % type), "notype", "0")<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      params.append( tuple )<br>
+else:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      print '\t(void) %s;' % params[3][0]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      tuple = ( ('seethrough_spu.opacity%s' % type), params[3][1], params[3][2])<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      params[3] = tuple<br>
       <br>
-      new_func_name = 'Color4%s' % type<br>
-		print '\tseethrough_spu.super.%s%s;' % (new_func_name,
-      stub_common.CallString( arg_names ) )</td></tr></table>
+new_func_name = 'Color4%s' % type<br>
+print '\tseethrough_spu.super.%s(%s);' % (new_func_name, apiutil.MakeCallString( params ) )
+</pre>
 
 <p>Now we have half of our glColor functions working.&nbsp; The implementation
 for the vector passing functions is even easier.&nbsp; Just add this code:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">new_names = [ 'v[0]',
-      'v[1]', 'v[2]', 'seethrough_spu.opacity%s' % type ]<br>
+<table width="100%"><tr><td class="GrayCodeListing">
       new_func_name = 'Color4%s' % type<br>
-		print '\tseethrough_spu.super.%s%s;' % (new_func_name,
-      stub_common.CallString(
-      new_names ) )</td></tr></table>
+      print '\tseethrough_spu.super.%s(v[0], v[1], v[2], seethrough_spu.opacity%s);' % (new_func_name, type)
+</td></tr></table>
 
 <p>Notice that in both cases, we have dispatched to the 4-parameter version of
 the <code>glColor</code> functions.&nbsp; Also note that if we are implementing
@@ -253,7 +263,7 @@ bogus reference to the fourth (alpha) parameter to avoid &quot;unused
 variable&quot; warnings from the compiler.&nbsp;</p>
 <p>Now that all of our color&nbsp; functions are implemented, let's declare the
 rest of the functions as &quot;<code>extern</code>&quot; and generate the named
-function table.&nbsp; To do this, we're going to use a method of <code>stub_common</code>
+function table.&nbsp; To do this, we're going to use a method of <code>apiutil</code>
 called &quot;<code>AllSpecials</code>&quot;, which returns an the array of
 function names in a given &quot;<code>_special</code>&quot; file.&nbsp; There is
 also a &quot;<code>FindSpecial</code>&quot; predicate function that tells
@@ -263,14 +273,14 @@ file or not.</p>
 this code is <i>not</i> indented at all -- it's at the outermost scope):</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">for func_name in
-      stub_common.AllSpecials( &quot;seethrough&quot; ):<br>
+      apiutil.AllSpecials( &quot;seethrough&quot; ):<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if not func_name.startswith(
       &quot;Color&quot; ):<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      (return_type, arg_names, arg_types) = gl_mapping[func_name]<br>
+      params = apiutil.Parameters(func_name)<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      print 'extern void SEETHROUGHSPU_APIENTRY seethrough%s%s;' % (func_name,
-      stub_common.ArgumentString( arg_names, arg_types ) )</td></tr></table>
+      print 'extern void SEETHROUGHSPU_APIENTRY seethrough%s(%s);' % (func_name,
+      apiutil.MakePrototypeString(params))</td></tr></table>
 
 <p>Notice that we bother declaring the actual prototype for these functions even
 though they're going to be cast to <code>SPUGenericFunction</code> in the named
@@ -284,7 +294,7 @@ declare the table.&nbsp; Since we're going to fill it ourselves, we know how big
 it is.&nbsp; Don't forget to leave space at the end for the NULL terminator!</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">print 'SPUNamedFunctionTable
-      _cr_seethrough_table[%d];' % ( len(stub_common.AllSpecials( &quot;seethrough&quot;
+      _cr_seethrough_table[%d];' % ( len(apiutil.AllSpecials( &quot;seethrough&quot;
       )) + 1 )</td></tr></table>
 
 <p>I like to use a helper function called &quot;<code>__fillin</code>&quot; for
@@ -306,7 +316,7 @@ file:</p>
       seethroughspuBuildFunctionTable( void )'<br>
       print '{'<br>
       offset = 0<br>
-      for func_name in stub_common.AllSpecials( &quot;seethrough&quot; ):<br>
+      for func_name in apiutil.AllSpecials( &quot;seethrough&quot; ):<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\t__fillin( %d, "%s", (SPUGenericFunction) seethrough%s );' % (offset,
       func_name, func_name )<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; offset += 1<br>
@@ -461,7 +471,7 @@ about it, we'll print a warning to the screen when this happens.</p>
       {<br>
       &nbsp;&nbsp;&nbsp; if (cap == GL_BLEND)<br>
       &nbsp;&nbsp;&nbsp; {<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crWarning( &quot;SeeThroughSPU: Ignoring disable of blending!" );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; crWarning( &quot;SeeThroughSPU: Ignoring disable of blending!&quot );<br>
       &nbsp;&nbsp;&nbsp; }<br>
       &nbsp;&nbsp;&nbsp; else<br>
       &nbsp;&nbsp;&nbsp; {<br>
@@ -636,7 +646,7 @@ that's prohibited in <code>seethroughEnable</code> in <code>seethroughspu_misc.c
 <table width="100%"><tr><td class="GrayCodeListing">		else if (cap ==
       GL_CULL_FACE)<br>
 	{<br>
-      &nbsp;&nbsp;&nbsp; crWarning( &quot;SeeThroughSPU: Ignoring enable of face culling!" );<br>
+      &nbsp;&nbsp;&nbsp; crWarning( &quot;SeeThroughSPU: Ignoring enable of face culling!&quot );<br>
 	}</td></tr></table>
 
 <p>And we disable it in <code>SPUInit</code> in <code>seethroughspu_init.c</code>:</p>
@@ -716,17 +726,16 @@ after the code for generating the <code>seethroughColor</code> functions, add
 the following code:</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">		for func_name in
-      stub_common.AllSpecials( &quot;seethrough_state&quot; ):<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (return_type, arg_names,
-      arg_types) = gl_mapping[func_name]<br>
+      apiutil.AllSpecials( &quot;seethrough_state&quot; ):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; params = apiutil.Parameters(func_name)<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print 'void
-      SEETHROUGHSPU_APIENTRY seethrough%s%s' % (func_name,
-      stub_common.ArgumentString( arg_names, arg_types ) )<br>
+      SEETHROUGHSPU_APIENTRY seethrough%s(%s)' % (func_name,
+      apiutil.ArgumentString(params) )<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '{'<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\tcrState%s%s;' % (func_name,
-      stub_common.CallString( arg_names ) )<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\tseethrough_spu.super.%s%s;' %
-      (func_name, stub_common.CallString( arg_names ) )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\tcrState%s(%s);' % (func_name,
+      apiutil.CallString( arg_names ) )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\tseethrough_spu.super.%s(%s);' %
+      (func_name, apiutil.MakeCallString(params) )<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '}'</td></tr></table>
 
 <p>This will generate functions that look like:</p>
@@ -750,14 +759,14 @@ First of all, this will make our named function table <i>bigger</i>.&nbsp; Let's
 update the line in <code>seethroughspu.py</code> where the named function table
 declaration is printed.&nbsp; The new line should read:</p>
 
-<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		print 'SPUNamedFunctionTable _cr_seethrough_table[%d];' % ( len(stub_common.AllSpecials( "seethrough_state" )) + len(stub_common.AllSpecials( "seethrough" )) + 1 )</td></tr></table>
+<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		print 'SPUNamedFunctionTable _cr_seethrough_table[%d];' % ( len(apiutil.AllSpecials( "seethrough_state" )) + len(apiutil.AllSpecials( "seethrough" )) + 1 )</td></tr></table>
 
 <p>This will allow enough space for all the functions from <i>both</i> <code>_special</code>
 files.&nbsp; Now, just add a second loop to add functions to the table.&nbsp;
 This should come immediately after the final loop in the script, before the NULL
 terminator is printed:</p>
 
-<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		for func_name in stub_common.AllSpecials( "seethrough_state" ):<br>
+<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		for func_name in apiutil.AllSpecials( "seethrough_state" ):<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\t__fillin( %d, "%s", (SPUGenericFunction) seethrough%s );' % (offset, func_name, func_name )<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; offset += 1</td></tr></table>
 
