@@ -15,6 +15,7 @@
 
 #define DEBUG_BARRIERS 1
 
+/* Semaphore wait queue node */
 typedef struct _wqnode {
 	RunQueue *q;
 	struct _wqnode *next;
@@ -114,7 +115,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExec( GLuint name )
 	barrier = (CRBarrier *) crHashtableSearch( cr_barriers, name );
 	if ( barrier == NULL )
 	{
-		crError( "No such barrier: %d", name );
+		crError( "crServerDispatchBarrierExec: No such barrier: %d", name );
 	}
 
 #if DEBUG_BARRIERS
@@ -155,6 +156,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreDestroy( GLuint name )
 	crError( "NO DESTROY FOR YOU! (name=%u)", name );
 }
 
+/* Semaphore wait */
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreP( GLuint name )
 {
 	CRSemaphore *sema;
@@ -166,10 +168,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreP( GLuint name )
 	}
 	if (sema->count)
 	{
+		/* go */
 		sema->count--;
 	}
 	else
 	{
+		/* block */
 		wqnode *node;
 		run_queue->blocked = 1;
 		node = (wqnode *) crAlloc( sizeof( *node ) );
@@ -187,6 +191,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreP( GLuint name )
 	}
 }
 
+/* Semaphore signal */
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreV( GLuint name )
 {
 	CRSemaphore *sema;
@@ -198,6 +203,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreV( GLuint name )
 	}
 	if (sema->waiting)
 	{
+		/* unblock one waiter */
 		wqnode *temp = sema->waiting;
 		temp->q->blocked = 0;
 		sema->waiting = temp->next;
@@ -209,6 +215,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreV( GLuint name )
 	}
 	else
 	{
+		/* nobody's waiting */
 		sema->count++;
 	}
 }
