@@ -79,7 +79,7 @@ static void __appendBuffer( CRPackBuffer *src )
 	{
 		// No room to append -- send now
 
-		crWarning( "OUT OF ROOM!") ;
+		//crWarning( "OUT OF ROOM!") ;
 		__sendServerBuffer( state_server );
 		crPackSetBuffer( &(state_server->pack) );
 	}
@@ -259,7 +259,7 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		// to get the buffer out the door so the differencer can 
 		// keep doing what it's doing.
 
-		crDebug( "Overflowed while doing a context difference!" );
+		//crDebug( "Overflowed while doing a context difference!" );
 		CRASSERT( broadcast == 0 );
 		
 		// First, extract the packing state into the server
@@ -336,7 +336,7 @@ static void __doFlush( CRContext *ctx, int broadcast )
 	
 	if ( tilesort_spu.ctx->current.inBeginEnd )
 	{
-		crDebug( "Closing this Begin/end!!!" );
+		//crDebug( "Closing this Begin/end!!!" );
 		cr_packer_globals.buffer.data_end += END_FLUFF;
 		crPackEnd();
 	}
