@@ -21,6 +21,8 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 {
 	DWORD okayFlags;
 
+	StubInit();
+
 	/* 
 	 * NOTE!!!
 	 * Here we're telling the renderspu not to use the GDI
