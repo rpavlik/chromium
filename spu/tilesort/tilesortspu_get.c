@@ -26,7 +26,7 @@
 static GLboolean
 GetLimit(GLenum pname, GLenum type, void *results)
 {
-	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	GET_THREAD(thread);
 	GLint numValues = 1;
 	GLboolean minMax = GL_FALSE;
 	GLfloat params[16];
@@ -142,7 +142,7 @@ GetLimit(GLenum pname, GLenum type, void *results)
 	CRASSERT(numValues < 16);
 
 	/* release geometry buffer */
-	crPackReleaseBuffer( thread0->packer );
+	crPackReleaseBuffer( thread->packer );
 
 	/*
 	 * loop over servers, issuing the glGet.
@@ -153,7 +153,7 @@ GetLimit(GLenum pname, GLenum type, void *results)
 		int writeback = 1;
 		GLfloat values[16];
 
-		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
+		crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackGetFloatvSWAP( pname, values, &writeback );
@@ -161,7 +161,7 @@ GetLimit(GLenum pname, GLenum type, void *results)
 			crPackGetFloatv( pname, values, &writeback );
 
 		/* release server buffer */
-		crPackReleaseBuffer( thread0->packer );
+		crPackReleaseBuffer( thread->packer );
 
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
@@ -188,7 +188,7 @@ GetLimit(GLenum pname, GLenum type, void *results)
 	}
 
 	/* Restore the default pack buffer */
-	crPackSetBuffer( thread0->packer, &(thread0->geometry_buffer) );
+	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
 	/* return the results */
 	if (type == GL_BOOL)
@@ -294,7 +294,7 @@ void TILESORTSPU_APIENTRY tilesortspu_GetBooleanv( GLenum pname, GLboolean *para
 const GLubyte *
 tilesortspuGetExtensionsString(void)
 {
-	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	GET_THREAD(thread);
 	const GLubyte **extensions, *ext;
 	GLint i;
 
@@ -306,7 +306,7 @@ tilesortspuGetExtensionsString(void)
 	}
 
 	/* release geometry buffer */
-	crPackReleaseBuffer( thread0->packer );
+	crPackReleaseBuffer( thread->packer );
 
 	/*
 	 * loop over servers, issuing the glGet.
@@ -319,7 +319,7 @@ tilesortspuGetExtensionsString(void)
 		extensions[i] = crCalloc(50 * 1000);
 		CRASSERT(extensions[i]);
 
-		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
+		crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackGetStringSWAP( GL_EXTENSIONS, extensions[i], &writeback );
@@ -327,7 +327,7 @@ tilesortspuGetExtensionsString(void)
 			crPackGetString( GL_EXTENSIONS, extensions[i], &writeback );
 
 		/* release server buffer */
-		crPackReleaseBuffer( thread0->packer );
+		crPackReleaseBuffer( thread->packer );
 
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
@@ -342,7 +342,7 @@ tilesortspuGetExtensionsString(void)
 	}
 
 	/* Restore the default pack buffer */
-	crPackSetBuffer( thread0->packer, &(thread0->geometry_buffer) );
+	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
 	ext = crStateMergeExtensions(tilesort_spu.num_servers, extensions);
 
@@ -360,7 +360,7 @@ tilesortspuGetExtensionsString(void)
 GLfloat
 tilesortspuGetVersionNumber(void)
 {
-	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	GET_THREAD(thread);
 	GLfloat *versions, minVersion;
 	GLint i;
 
@@ -372,7 +372,7 @@ tilesortspuGetVersionNumber(void)
 	}
 
 	/* release geometry buffer */
-	crPackReleaseBuffer( thread0->packer );
+	crPackReleaseBuffer( thread->packer );
 
 	/*
 	 * loop over servers, issuing the glGet.
@@ -383,7 +383,7 @@ tilesortspuGetVersionNumber(void)
 		int writeback = 1;
 		GLubyte version[1000];
 
-		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
+		crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
 
 		if (tilesort_spu.swap)
 			crPackGetStringSWAP( GL_VERSION, version, &writeback );
@@ -391,7 +391,7 @@ tilesortspuGetVersionNumber(void)
 			crPackGetString( GL_VERSION, version, &writeback );
 
 		/* release server buffer */
-		crPackReleaseBuffer( thread0->packer );
+		crPackReleaseBuffer( thread->packer );
 
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
@@ -406,7 +406,7 @@ tilesortspuGetVersionNumber(void)
 	}
 
 	/* Restore the default pack buffer */
-	crPackSetBuffer( thread0->packer, &(thread0->geometry_buffer) );
+	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
 	/* find min */
 	minVersion = versions[0];

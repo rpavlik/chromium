@@ -83,7 +83,7 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
  * the calling thread with crSetTSD().
  */
 #ifdef CHROMIUM_THREADSAFE
-static ThreadInfo *tilesortspuNewThread( GLint slot )
+static ThreadInfo *tilesortspuNewThread(void)
 {
 	ThreadInfo *thread;
 	int i;
@@ -129,7 +129,10 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	crDebug( "Tilesort SPU: CreateContext(visBits=0x%x)", visBits );
 
 	/* release geometry buffer */
-	crPackReleaseBuffer( thread->packer );
+	crPackReleaseBuffer( thread0->packer );
+
+	if (!thread)
+		thread = tilesortspuNewThread();
 
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&_TileSortMutex);
@@ -327,7 +330,7 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 
 #ifdef CHROMIUM_THREADSAFE
 	if (!thread)
-		thread = tilesortspuNewThread( 0 );
+		thread = tilesortspuNewThread();
 #endif
 	CRASSERT(thread);
 
