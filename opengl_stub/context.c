@@ -983,7 +983,7 @@ stubDestroyContext( unsigned long contextId )
 	context = (ContextInfo *) crHashtableSearch(stub.contextTable, contextId);
 
 	CRASSERT(context);
-	crDebug( "stubDestroyContext( %i )", contextId );
+	crDebug( "stubDestroyContext( %li )", contextId );
 
 	if (context->type == NATIVE) {
 #ifdef WINDOWS
