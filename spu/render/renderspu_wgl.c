@@ -403,9 +403,11 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 
 void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 {
-	/* XXX TO-DO: return size of the window in w, h */
-	*w = window->width;  /* just a temporary hack */
-	*h = window->height;  /* just a temporary hack */
+	RECT rect;
+
+	GetWindowRect( window->visual->hWnd, &rect );
+	*w = rect.right - rect.left;
+	*h = rect.bottom - rect.top;
 }
 
 
