@@ -16,7 +16,10 @@ int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 {
 	ContextInfo *context;
 	stubInit();
-	context = stubNewContext(dpyName, visBits, UNDECIDED);
+	/* XXX in Chromium 1.5 and earlier, the last parameter was UNDECIDED.
+	 * That didn't seem right so it was changed to CHROMIUM. (Brian)
+	 */
+	context = stubNewContext(dpyName, visBits, CHROMIUM);
 	return context ? (int) context->id : -1;
 }
 
