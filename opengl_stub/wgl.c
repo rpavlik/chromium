@@ -56,8 +56,8 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 		crError( "wglChoosePixelFormat; asked for too many depth bits\n" );
 	}
 
-	if ( pfd->cStencilBits > 0 ) {
-		crError( "wglChoosePixelFormat: asked for stencil bits\n" );
+	if ( pfd->cStencilBits > 8 ) {
+		crError( "wglChoosePixelFormat: asked for too many stencil bits\n" );
 	}
 
 	if ( pfd->cAuxBuffers > 0 ) {
@@ -119,8 +119,8 @@ int WINAPI wglDescribePixelFormat_prox( HDC hdc, int pixelFormat, UINT nBytes,
 //	}
 
 	if ( nBytes != sizeof(*pfd) ) {
-		crError( "wglDescribePixelFormat: nBytes=%u?\n", nBytes );
-		return 0;
+		crWarning( "wglDescribePixelFormat: nBytes=%u?\n", nBytes );
+		return 1; // There's only one, baby
 	}
 
 	pfd->nSize           = sizeof(*pfd);
@@ -145,7 +145,7 @@ int WINAPI wglDescribePixelFormat_prox( HDC hdc, int pixelFormat, UINT nBytes,
 	pfd->cAccumBlueBits  = 0;
 	pfd->cAccumAlphaBits = 0;
 	pfd->cDepthBits      = 32;
-	pfd->cStencilBits    = 0;
+	pfd->cStencilBits    = 8;
 	pfd->cAuxBuffers     = 0;
 	pfd->iLayerType      = PFD_MAIN_PLANE;
 	pfd->bReserved       = 0;
