@@ -62,11 +62,11 @@ GM libraries</a>, you should turn off GM support in the file <code>cr/util/Makef
 before building.&nbsp; There are instructions in that file.</p>
 <p>Platform specific notes:</p>
 <ul>
-  <li>Any UNIX: Shared libraries will be put in the directory <code> cr/lib/&lt;ARCH&gt;</code>.
+  <li><b>Any UNIX</b>: Shared libraries will be put in the directory <code> cr/lib/&lt;ARCH&gt;</code>.
     You will need to add this directory to your <code> LD_LIBRARY_PATH</code> environment
     variable.&nbsp; Chromium builds a <i>lot</i> of shared libraries, so you
     can't skip this step.</li>
-  <li>Windows:&nbsp; You will also need to install the <a href="http://sources.redhat.com/cygwin/">cygwin
+  <li><b>Windows</b>:&nbsp; You will also need to install the <a href="http://sources.redhat.com/cygwin/">cygwin
     tools</a> to build Chromium.&nbsp; If you're building from the Windows shell
     (as opposed to the cygwin bash implementation), you will need to set the
     environment variable &quot;<code>MAKE_MODE</code>&quot; to the string &quot;<code>unix</code>&quot;.&nbsp;
@@ -74,9 +74,9 @@ before building.&nbsp; There are instructions in that file.</p>
     which is required.&nbsp; Shared libraries on Windows get put in <code>cr/bin/WIN_NT</code>,
     which (since it's on your path, right?) will be searched automatically, so
     there's no <code> LD_LIBRARY_PATH</code> silliness.</li>
-  <li>IRIX:&nbsp; GNU make is required.  Build Chromium by typing
+  <li><b>IRIX</b>:&nbsp; GNU make is required.  Build Chromium by typing
     <code>gmake</code> instead of <code>make</code>.
-  <li>AIX:&nbsp;
+  <li><b>AIX</b>:&nbsp;
     Shared libraries are somewhat different on this platform.  For Cr clients
     and servers to run, a dlopen-able system GL is needed.  At present, do this
     (once) manually (ar -x /usr/lib/libGL.a && mv shr.o libGL.o ) . Set
@@ -87,7 +87,18 @@ before building.&nbsp; There are instructions in that file.</p>
     ar archives) and .so's.  So to run clients without the app_faker, prepend
     LIBPATH with a dir that has a link libGL.a ->  lib/AIX/libcrfaker.a . As
     with other platforms, you also need to set the CR_APPLICATION_ID_NUMBER  .
-  <li>Darwin:&nbsp;
+  <li><b>SunOS</b>:&nbsp;
+    OpenGL apps must be compiled with SUN_OGL_NO_VERTEX_MACROS defined so
+    that macros aren't used for OpenGL API functions.
+    This also means that Sun's stock GLUT and GLU libraries won't work with
+    Chromium.
+    After you've produced new GLUT and GLU libraries you may have to edit
+    SunOS.mk and modify your LD_LIBRARY_PATH to select the new libraries.
+    <br>
+    There seems to be a bug in the version of Xsun that comes with Solaris 9.
+    To go around it set SOLARIS_9_X_BUG. Even if you're compiling say the
+    Linux version but are using a sun for the display you should set this.
+  <li><b>Darwin</b>:&nbsp;
     Support for this operating system is not complete.
 
 </ul>
