@@ -12,6 +12,10 @@
 #include "cr_mem.h"
 #include "cr_spu.h"
 
+/* fwd decl */
+SPUOptions tilesortSPUOptions[];
+
+
 static void
 setDefaults(void)
 {
@@ -119,25 +123,16 @@ set_local_tile_spec(TileSortSPU *tilesort_spu, const char *response)
 static void
 set_bucket_mode(TileSortSPU *tilesort_spu, const char *response)
 {
-	if (crStrcmp(response, "Broadcast") == 0)
-		tilesort_spu->defaultBucketMode = BROADCAST;
-	else if (crStrcmp(response, "Test All Tiles") == 0)
-		tilesort_spu->defaultBucketMode = TEST_ALL_TILES;
-	else if (crStrcmp(response, "Uniform Grid") == 0)
-		tilesort_spu->defaultBucketMode = UNIFORM_GRID;
-	else if (crStrcmp(response, "Non-Uniform Grid") == 0)
-		tilesort_spu->defaultBucketMode = NON_UNIFORM_GRID;
-	else if (crStrcmp(response, "Random") == 0)
-		tilesort_spu->defaultBucketMode = RANDOM;
-	else if (crStrcmp(response, "Warped Grid") == 0)
-		tilesort_spu->defaultBucketMode = WARPED_GRID;
-	else if (crStrcmp(response, "Frustum") == 0)
-		tilesort_spu->defaultBucketMode = FRUSTUM;
-	else
-	{
-		crWarning("Tilesort SPU: Bad value (%s) for tilesort bucket_mode", response);
-		tilesort_spu->defaultBucketMode = BROADCAST;
+	/* NOTE: list of enum values in the SPUOptions array _must_ match the
+	 * order of the enum values for TileSortBucketMode in tilesortspu.h!
+	 */
+	int i = crSPUGetEnumIndex(tilesortSPUOptions, "bucket_mode", response);
+	if (i < 0) {
+		crWarning("Tilesort SPU: Bad value (%s) for tilesort bucket_mode",
+							response);
+		i = 0;
 	}
+	tilesort_spu->defaultBucketMode = BROADCAST + i;
 }
 
 static void
@@ -160,37 +155,17 @@ scale_images(TileSortSPU *tilesort_spu, const char *response)
 }
 
 static void
-set_stereomode(TileSortSPU *server, const char *response)
+set_stereo_mode(TileSortSPU *tilesort_spu, const char *response)
 {
-	char buffer[32], mode[16], *bptr;
-	const char *rptr;
-
-	if (response) {
-		for (rptr = response, bptr = buffer; *rptr; rptr++) {
-			if (*rptr != ' ') {
-				*bptr = *rptr;
-				bptr++;
-			}
-		}
-		*bptr = '\0';
-		sscanf(buffer, "%s", mode);
-		if (!crStrcmp(mode, "None"))
-			server->stereoMode = NONE;
-		else if (!crStrcmp(mode, "Passive"))
-			server->stereoMode = PASSIVE;
-		else if (!crStrcmp(mode, "CrystalEyes"))
-			server->stereoMode = CRYSTAL;
-		else if (!crStrcmp(mode, "Anaglyph"))
-			server->stereoMode = ANAGLYPH;
-		else if (!crStrcmp(mode, "SideBySide"))
-			server->stereoMode = SIDE_BY_SIDE;
-		else {
-			crWarning
-				("Tilesort SPU: stereo_mode '%s' is not supported.  Currently supported modes are 'None', 'Passive', 'CrystalEyes', 'Anaglyph' and 'SideBySide'.\n", 
-				 mode);
-			server->stereoMode = NONE;
-		}
+	int i = crSPUGetEnumIndex(tilesortSPUOptions, "stereo_mode", response);
+	if (i < 0) {
+		crWarning("Tilesort SPU: stereo_mode '%s' is not supported.  "
+							"Currently supported modes are 'None', 'Passive', "
+							"'CrystalEyes', 'Anaglyph' and 'SideBySide'.\n", 
+							response);
+		i = 0;
 	}
+	tilesort_spu->stereoMode = NONE + i;
 }
 
 static void
@@ -258,23 +233,13 @@ tilesortspuSetAnaglyphMask(TileSortSPU *tilesort_spu)
 static void
 set_glasses_type(TileSortSPU *tilesort_spu, const char *response)
 {
-	if (crStrcmp(response, "RedBlue") == 0)
-		tilesort_spu->glassesType = RED_BLUE;
-	else if (crStrcmp(response, "RedGreen") == 0)
-		tilesort_spu->glassesType = RED_GREEN;
-	else if (crStrcmp(response, "RedCyan") == 0)
-		tilesort_spu->glassesType = RED_CYAN;
-	else if (crStrcmp(response, "BlueRed") == 0)
-		tilesort_spu->glassesType = BLUE_RED;
-	else if (crStrcmp(response, "GreenRed") == 0)
-		tilesort_spu->glassesType = GREEN_RED;
-	else if (crStrcmp(response, "CyanRed") == 0)
-		tilesort_spu->glassesType = CYAN_RED;
-	else
-	{
-		crWarning("Tilesort SPU: Bad value (%s) for tilesort glasses_type", response);
-		tilesort_spu->glassesType = RED_BLUE;
+	int i = crSPUGetEnumIndex(tilesortSPUOptions, "glasses_type", response);
+	if (i < 0) {
+		crWarning("Tilesort SPU: Bad value (%s) for tilesort glasses_type",
+							response);
+		i = 0;
 	}
+	tilesort_spu->glassesType = RED_BLUE + i;
 	tilesortspuSetAnaglyphMask(tilesort_spu);
 }
 
@@ -365,7 +330,7 @@ SPUOptions tilesortSPUOptions[] = {
 
 	{"stereo_mode", CR_ENUM, 1, "None",
 	 "'None', 'Passive', 'CrystalEyes', 'SideBySide', 'Anaglyph'", NULL,
-	 "Stereo Mode", (SPUOptionCB) set_stereomode },
+	 "Stereo Mode", (SPUOptionCB) set_stereo_mode },
 
 	{"glasses_type", CR_ENUM, 1, "RedBlue",
 	 "'RedBlue', 'RedGreen', 'RedCyan', 'BlueRed', 'GreenRed', 'CyanRed'", NULL, 
