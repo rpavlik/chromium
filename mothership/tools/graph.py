@@ -14,7 +14,7 @@ for creating/editing Chromium graphs.
 """
 
 
-import string, os, signal, os.path, types, re, random, copy
+import string, os, signal, os.path, types, re, random, copy, sys
 from wxPython.wx import *
 
 import crtypes, crutils
