@@ -15,7 +15,7 @@ static void hiddenPlayback( SPUDispatchTable *table )
 
 void HIDDENLINESPU_APIENTRY hlHandleEnable( GLenum cap )
 {
-	if (cap != GL_TEXTURE_2D && cap != GL_BLEND)
+	if (cap != GL_TEXTURE_2D && cap != GL_BLEND && cap != GL_LIGHTING)
 	{
 		hiddenline_spu.child.Enable( cap );
 	}
@@ -80,11 +80,8 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( void )
 	 * disable texturing, disable lighting, things like that. */
 
 	hiddenline_spu.super.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	hiddenline_spu.super.Enable( GL_POLYGON_OFFSET_FILL );
 	hiddenline_spu.super.PolygonOffset( 1.5f, 0.000001f );
 	hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-	hiddenline_spu.super.Disable( GL_TEXTURE_2D );
-	hiddenline_spu.super.Disable( GL_BLEND );
 	hiddenline_spu.super.Color3f( hiddenline_spu.poly_r, hiddenline_spu.poly_g, hiddenline_spu.poly_b );
 
 	/* Now, Play it back just to the depth buffer */

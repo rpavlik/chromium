@@ -28,6 +28,7 @@ FILES = bufpool \
 	pixel \
 	string \
 	tcpip \
+	timer \
 	url
 PRECOMP = debug_opcodes.c
 SLOP += ${PRECOMP}

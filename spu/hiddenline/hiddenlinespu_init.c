@@ -56,6 +56,7 @@ SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *super,
 	 * be good to go here. */
 
 	hiddenline_spu.super.Enable( GL_DEPTH_TEST );
+	hiddenline_spu.super.Enable( GL_POLYGON_OFFSET_FILL );
 	hiddenline_spu.super.LineWidth( hiddenline_spu.line_width );
 
 	return &hiddenline_functions;
