@@ -19,7 +19,8 @@ ifeq ($(ARCH), CYGWIN_NT5.1)
 ARCH=WIN_NT
 endif
 
-SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit retile tiletest
+SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit retile \
+	statecopytest tiletest
 
 ifeq ($(ARCH), WIN_NT)
 SUBDIRS += wgl
