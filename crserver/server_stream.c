@@ -14,6 +14,7 @@
 #include <stdlib.h>
 
 RunQueue *run_queue = NULL;
+static int added = 0;
 
 #if 0
 static int QueueSize( void )
@@ -36,25 +37,47 @@ static int QueueSize( void )
  */
 void crServerAddNewClient( void )
 {
-	CRClient *newClient = &(cr_server.clients[cr_server.numClients]);
+	CRClient *newClient;
+	int n;
 
-	CRASSERT(cr_server.numClients < MAX_CLIENTS);
+	/* Save current client number */
+	n = cr_server.curClient->number;
 
+	/* This messes up all our pointers..... So we need to fix them up.. */
+	crRealloc((void **)&cr_server.clients, sizeof(*cr_server.clients) * (cr_server.numClients + 1));
+
+	/* Fix up our current client with the realloc'ed data */
+	cr_server.curClient = &cr_server.clients[n];
+
+	/* now we can allocate our new client data */
+	newClient = &(cr_server.clients[cr_server.numClients]);
 	crMemZero(newClient, sizeof(CRClient));
+
+	/* 
+	 * Because we've Realloced the client data above, the run_queue list
+ 	 * is now void of all pointer information. We need to re-init
+	 * the run_queue's client pointers here.
+	 */
+	{
+		RunQueue *q = run_queue;
+		RunQueue *qStart = run_queue;
+		do {
+			q->client = &cr_server.clients[q->number];
+			q = q->next;
+		} while (q != qStart);
+	}
 
 	newClient->number = cr_server.numClients;
 	newClient->spu_id = cr_server.clients[0].spu_id;
 	newClient->conn = crNetAcceptClient( cr_server.protocol, cr_server.tcpip_port, cr_server.mtu, 1 );
 
 	crServerAddToRunQueue( newClient );
-	if (cr_server.numExtents > 0)	{
+	if (cr_server.numExtents > 0)
 		 crServerRecomputeBaseProjection( &(newClient->baseProjection), 0, 0, cr_server.muralWidth, cr_server.muralHeight );
-	}
 
 	cr_server.numClients++;
 }
 
-static int added = 0;
 
 void crServerAddToRunQueue( CRClient *client )
 {
@@ -65,6 +88,7 @@ void crServerAddToRunQueue( CRClient *client )
 	added++;
 
 	crDebug( "Adding to the run queue: client=%p number=%d count=%d", client, client->number, added );
+	q->number = client->number;
 	q->client = client;
 	q->blocked = 0;
 

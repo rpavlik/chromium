@@ -30,13 +30,11 @@ typedef struct {
 	GLint currentWindow;
 } CRClient;
 
-#define MAX_CLIENTS 20  /* XXX temporary */
-
 typedef struct {
 	unsigned short tcpip_port;
 
 	unsigned int numClients;
-	CRClient clients[MAX_CLIENTS];
+	CRClient *clients;
 	CRClient *curClient;
 	CRCurrentStatePointers current;
 

@@ -34,6 +34,7 @@ typedef struct __runqueue {
 	int numExtents;
 	CRRunQueueExtent extent[CR_MAX_EXTENTS];
 	int blocked;
+	int number;
 	struct __runqueue *next;
 	struct __runqueue *prev;
 } RunQueue;

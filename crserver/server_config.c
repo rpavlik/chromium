@@ -159,6 +159,9 @@ void crServerGatherConfiguration(char *mothership)
 	}
 
 	a_non_file_client = -1;
+
+	cr_server.clients = (CRClient *) crAlloc(sizeof(CRClient) * numClients);
+
 	for (i = 0 ; i < numClients ; i++)
 	{
 		CRClient *client = &cr_server.clients[i];
