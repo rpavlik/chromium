@@ -1010,7 +1010,7 @@ class CR:
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
 		for node in self.nodes:
-			if AvailableMatchingHost(node, CRApplicationNode, args):
+			if AvailableMatchingNode(node, CRApplicationNode, args):
 				try:
 					application = node.config['application']
 				except:
