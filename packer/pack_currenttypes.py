@@ -1,3 +1,5 @@
+# This file is imported by several other Python scripts
+
 current_fns = {
 	'Color': {
 		'types': ['b','ub','s','us','i','ui','f','d'],

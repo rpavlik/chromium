@@ -1,3 +1,7 @@
+/* Chromium sources include this file instead of including
+ * the GL/gl.h and GL/glext.h headers directly.
+ */
+
 #ifndef CR_GLWRAPPER_H
 #define CR_GLWRAPPER_H
 

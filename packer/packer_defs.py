@@ -1,3 +1,5 @@
+# This script generates the packer/packer.def file.
+
 import sys,os;
 import cPickle;
 import string;

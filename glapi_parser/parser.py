@@ -1,5 +1,9 @@
 #!/usr/common/bin/python
 
+# This script reads the GL.H and CR_GL.H header files and produces
+# the gl_header.parsed file.  gl_header.parsed describes all the
+# OpenGL functions and is used by several other Python scripts.
+
 import sys, os, re, string, cPickle
 
 system_gl = open("system_header/GL.H", 'r')
