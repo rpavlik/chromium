@@ -72,7 +72,7 @@ typedef struct {
 	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
 	BBox *bbox;  /* Either NULL or points to bboxValues */
 	BBox bboxValues;
-	GLdouble modl[16], proj[16];
+	GLfloat modl[16], proj[16];
 
 } ReadbackSPU;
 

@@ -34,19 +34,19 @@
  *
  ****************************************************************/
 static void
-clipCoords(GLdouble modl[16], GLdouble proj[16],
-					 GLdouble * x1, GLdouble * y1, GLdouble * z1,
-					 GLdouble * x2, GLdouble * y2, GLdouble * z2)
+clipCoords(GLfloat modl[16], GLfloat proj[16],
+					 GLfloat * x1, GLfloat * y1, GLfloat * z1,
+					 GLfloat * x2, GLfloat * y2, GLfloat * z2)
 {
-	static GLdouble m[16];
+	static GLfloat m[16];
 	int i;
 
-	GLdouble x[8], y[8], z[8], w[8];
-	GLdouble vx1, vy1, vz1;
-	GLdouble vx2, vy2, vz2;
+	GLfloat x[8], y[8], z[8], w[8];
+	GLfloat vx1, vy1, vz1;
+	GLfloat vx2, vy2, vz2;
 
-	GLdouble xmin = DBL_MAX, ymin = DBL_MAX, zmin = DBL_MAX;
-	GLdouble xmax = -DBL_MAX, ymax = -DBL_MAX, zmax = -DBL_MAX;
+	GLfloat xmin = DBL_MAX, ymin = DBL_MAX, zmin = DBL_MAX;
+	GLfloat xmax = -DBL_MAX, ymax = -DBL_MAX, zmax = -DBL_MAX;
 
 	m[0] =
 		proj[0] * modl[0] + proj[4] * modl[1] + proj[8] * modl[2] +
@@ -148,11 +148,11 @@ clipCoords(GLdouble modl[16], GLdouble proj[16],
  * application.
  *******************************************************/
 static int
-getClippedWindow(GLdouble modl[16], GLdouble proj[16],
+getClippedWindow(GLfloat modl[16], GLfloat proj[16],
 								 int *xstart, int *ystart, int *xend, int *yend)
 {
 	GLfloat viewport[4];
-	GLdouble x1, x2, y1, y2, z1, z2;
+	GLfloat x1, x2, y1, y2, z1, z2;
 	int win_height, win_width;
 
 	if (readback_spu.bbox != NULL)
@@ -570,8 +570,8 @@ ProcessTiles(WindowInfo * window)
 			else
 			{
 				int read_start_x, read_start_y, read_end_x, read_end_y;
-				GLdouble *proj = readback_spu.proj;
-				GLdouble *modl = readback_spu.modl;
+				GLfloat *proj = readback_spu.proj;
+				GLfloat *modl = readback_spu.modl;
 				getClippedWindow(modl, proj,
 												 &read_start_x, &read_start_y,
 												 &read_end_x, &read_end_y);
@@ -981,8 +981,8 @@ readbackspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
 		readback_spu.bboxValues.ymax = ((GLfloat *) values)[4];
 		readback_spu.bboxValues.zmax = ((GLfloat *) values)[5];
 		readback_spu.bbox = &(readback_spu.bboxValues);
-		readback_spu.super.GetDoublev(GL_PROJECTION_MATRIX, readback_spu.proj);
-		readback_spu.super.GetDoublev(GL_MODELVIEW_MATRIX, readback_spu.modl);
+		readback_spu.super.GetFloatv(GL_PROJECTION_MATRIX, readback_spu.proj);
+		readback_spu.super.GetFloatv(GL_MODELVIEW_MATRIX, readback_spu.modl);
 		break;
 	case GL_DEFAULT_BBOX_CR:
 		CRASSERT(count == 0);
