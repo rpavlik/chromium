@@ -17,7 +17,7 @@ typedef struct {
 	GLbitvalue  dirty[CR_MAX_BITARRAY];
 	GLbitvalue  enable[CR_MAX_BITARRAY];
 	GLbitvalue  color[CR_MAX_BITARRAY];
-	GLbitvalue	secondaryColor[CR_MAX_BITARRAY];
+	GLbitvalue  secondaryColor[CR_MAX_BITARRAY];
 	GLbitvalue  index[CR_MAX_BITARRAY];
 	GLbitvalue  texCoord[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 	GLbitvalue  normal[CR_MAX_BITARRAY];
