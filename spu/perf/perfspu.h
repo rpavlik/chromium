@@ -36,6 +36,7 @@ typedef struct {
 	int dump_on_swap_count;
 	int dump_on_clear_count;
 
+	int total_frames;
 	int frame_counter;
 	int clear_counter;
 

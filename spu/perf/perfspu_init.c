@@ -67,7 +67,7 @@ void perfSPUSelfDispatch(SPUDispatchTable *self)
 
 int perfSPUCleanup(void)
 {
-	fprintf( perf_spu.log_file, "TOTAL FRAMES %d\n", perf_spu.frame_counter );
+	fprintf( perf_spu.log_file, "TOTAL FRAMES %d\n", perf_spu.total_frames );
 	fprintf( perf_spu.log_file, "TOTAL CLEARS %d\n", perf_spu.clear_counter );
 
 	fclose( perf_spu.log_file );

@@ -55,7 +55,7 @@ void set_log_file( void *foo, const char *response )
 			strncpy(tmp, "%s", 2);
 			sprintf(ffilename, filename, hostname);
 			break;
-
+	
 		default:
 			crError("Unknown perf SPU tag\n");
 			break;

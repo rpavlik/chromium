@@ -684,7 +684,8 @@ void PERFSPU_APIENTRY perfspuClear( GLbitfield mask )
 
 	perf_spu.clear_counter++;
 
-	if (perf_spu.clear_counter & perf_spu.dump_on_clear_count) {
+	if (perf_spu.dump_on_clear_count && 
+		!(perf_spu.clear_counter % perf_spu.dump_on_clear_count) ) {
 		sprintf(cstr, "CLEARCOUNT%s%d", perf_spu.separator, perf_spu.dump_on_clear_count);
 		perfspuDumpCounters(cstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	}
@@ -715,15 +716,18 @@ void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 	float total_elapsed = (float) crTimerTime( perf_spu.timer );
 	float elapsed = total_elapsed - elapsed_base;
 
+	perf_spu.total_frames++;
+
 	perf_spu.frame_counter++;
-	if ((int)(elapsed / perf_spu.timer_event))
+
+	if ((int)(elapsed / perf_spu.timer_event) && perf_spu.timer_event)
 	{
 		float fps = perf_spu.frame_counter / elapsed;
 		elapsed_base = total_elapsed;
 		perf_spu.frame_counter = 0;
 
 		/* Put the FPS to the screen */
-		printf( "FPS: %f\n", fps );
+		printf( "PERFSPU FPS: %f\n", fps );
 
 		/* And the timerstats to the log file */
 		sprintf(sstr, "TIMERSTATS%s%2.2f", perf_spu.separator, perf_spu.timer_event);
@@ -731,7 +735,8 @@ void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 		perfspuDumpCounters(sstr, &perf_spu.old_timerstats, &perf_spu.timerstats);
 	}
 
-	if (perf_spu.frame_counter & perf_spu.dump_on_swap_count) {
+	if (perf_spu.dump_on_swap_count && 
+		!(perf_spu.total_frames % perf_spu.dump_on_swap_count) ) {
 		sprintf(sstr, "FRAMESTATS%s%d", perf_spu.separator, perf_spu.dump_on_swap_count);
 		perfspuDumpCounters(sstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	}
