@@ -20,7 +20,6 @@
 
 /* --- Preprocessor --------------------------------------------------------- */
 
-#define GL_GLEXT_PROTOTYPES
 #include "exec.h"
 #include "../common/logo.h"
 
