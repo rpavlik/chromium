@@ -64,43 +64,6 @@ static struct {
 } cr_net;
 
 
-/* This is the common interface that every networking type should
- * export in order to work with this abstraction.  An initializer, a
- * 'start up connection' function, and a function to recieve work on
- * that interface.
- */
-
-/**
- * Macro for defining external references to specific network interfaces.
- */
-#define NETWORK_TYPE(x) \
-	extern void cr##x##Init(CRNetReceiveFuncList *, CRNetCloseFuncList *, unsigned int); \
-	extern void cr##x##Connection(CRConnection *); \
-	extern int cr##x##Recv(void)
-
-/* Now, all the appropriate interfaces are defined simply by listing the
- * supported networking types here.
- */
-NETWORK_TYPE( TCPIP );
-NETWORK_TYPE( UDPTCPIP );
-NETWORK_TYPE( Devnull );
-NETWORK_TYPE( File );
-#ifdef GM_SUPPORT
-NETWORK_TYPE( Gm );
-#endif
-#ifdef TEAC_SUPPORT
-NETWORK_TYPE( Teac );
-#endif
-#ifdef TCSCOMM_SUPPORT
-NETWORK_TYPE( Tcscomm );
-extern void crTcscommSetRank( int );
-extern void crTcscommSetContextRange( int, int );
-extern void crTcscommSetNodeRange( const char *, const char * );
-#endif
-#ifdef SDP_SUPPORT
-NETWORK_TYPE( SDP );
-#endif
-
 
 /**
  * Establish a connection with a server.
@@ -547,15 +510,6 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 	}
 }
 
-extern CRConnection** crTCPIPDump( int * num );
-extern CRConnection** crDevnullDump( int * num );
-#ifdef GM_SUPPORT
-extern CRConnection** crGmDump( int * num );
-#endif
-#ifdef SDP_SUPPORT
-extern CRConnection** crSDPDump( int * num );
-#endif
-extern CRConnection** crFileDump( int * num );
 
 CRConnection** crNetDump( int* num )
 {

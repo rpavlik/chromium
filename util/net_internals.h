@@ -4,25 +4,41 @@
 #include "cr_bufpool.h"
 #include "cr_threads.h"
 
-CRConnection *__copy_of_crMothershipConnect( void );
-int __copy_of_crMothershipReadResponse( CRConnection *conn, void *buf );
-int __copy_of_crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... );
-void __copy_of_crMothershipDisconnect( CRConnection *conn );
+
+/*
+ * Mothership networking
+ */
+extern CRConnection *__copy_of_crMothershipConnect( void );
+extern int __copy_of_crMothershipReadResponse( CRConnection *conn, void *buf );
+extern int __copy_of_crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... );
+extern void __copy_of_crMothershipDisconnect( CRConnection *conn );
 extern int __crSelect( int n, fd_set *readfds, int sec, int usec );
 
+
+/*
+ * DevNull network interface
+ */
 extern void crDevnullInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
 extern void crDevnullConnection( CRConnection *conn );
 extern int crDevnullRecv( void );
-extern CRConnection** crDevnullDump( int * num );
+extern CRConnection** crDevnullDump( int *num );
 
+
+/*
+ * File network interface
+ */
 extern void crFileInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
 extern void crFileConnection( CRConnection *conn );
 extern int crFileRecv( void );
-extern CRConnection** crFileDump( int* num );
+extern CRConnection** crFileDump( int *num );
 
+
+/*
+ * TCP/IP network interface
+ */
 typedef enum {
-        CRTCPIPMemory,
-        CRTCPIPMemoryBig
+	CRTCPIPMemory,
+	CRTCPIPMemoryBig
 } CRTCPIPBufferKind;
 
 #define CR_TCPIP_BUFFER_MAGIC 0x89134532
@@ -61,10 +77,6 @@ extern int crTCPIPErrno( void );
 extern char *crTCPIPErrorString( int err );
 extern void crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port );
 extern void crTCPIPWriteExact( CRConnection *conn, const void *buf, unsigned int len );
-extern void crTeacSetRank( int );
-extern void crTeacSetContextRange( int, int );
-extern void crTeacSetNodeRange( const char *, const char * );
-extern void crTeacSetKey( const unsigned char *key, const int keyLength );
 extern void crTCPIPFree( CRConnection *conn, void *buf );
 extern void *crTCPIPAlloc( CRConnection *conn );
 extern void crTCPIPReadExact( CRConnection *conn, void *buf, unsigned int len );
@@ -72,9 +84,48 @@ extern int __tcpip_write_exact( CRSocket sock, const void *buf, unsigned int len
 extern int __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len );
 extern void __tcpip_dead_connection( CRConnection *conn );
 
+
+/*
+ * UDP network interface
+ */
+extern void crUDPTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
+extern void crUDPTCPIPConnection( CRConnection *conn );
+extern int crUDPTCPIPRecv( void );
+
+
+/*
+ * TEAC network interface
+ */
+#ifdef TEAC_SUPPORT
+extern void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
+			unsigned int mtu );
+extern void crTeacConnection( CRConnection *conn );
+extern int crTeacRecv( void );
+extern void crTeacSetRank( int );
+extern void crTeacSetContextRange( int, int );
+extern void crTeacSetNodeRange( const char *, const char * );
+extern void crTeacSetKey( const unsigned char *key, const int keyLength );
+#endif /* TEAC_SUPPORT */
+
+
+/*
+ * Tcscomm network interface
+ */
+#ifdef TCSCOMM_SUPPORT
+extern void crTcscommInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
+                           unsigned int mtu );
+extern void crTcscommConnection( CRConnection *conn );
+extern int crTcscommRecv( void );
+#endif /* TCSCOMM_SUPPORT */
+
+
+/*
+ * SDP network interface
+ */
+#ifdef SDP_SUPPORT
 typedef enum {
-        CRSDPMemory,
-        CRSDPMemoryBig
+	CRSDPMemory,
+	CRSDPMemoryBig
 } CRSDPBufferKind;
 
 #define CR_SDP_BUFFER_MAGIC 0x89134532
@@ -120,7 +171,13 @@ extern int __sdp_write_exact( CRSocket sock, const void *buf, unsigned int len )
 extern int __sdp_read_exact( CRSocket sock, void *buf, unsigned int len );
 extern void __sdp_dead_connection( CRConnection *conn );
 extern int __crSDPSelect( int n, fd_set *readfds, int sec, int usec );
+#endif /* SDP_SUPPORT */
 
+
+/*
+ * Infiniband network interface
+ */
+#ifdef IB_SUPPORT
 extern void crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
 extern void crIBConnection( CRConnection *conn );
 extern int crIBRecv( void );
@@ -137,10 +194,13 @@ extern void crIBReadExact( CRConnection *conn, void *buf, unsigned int len );
 extern int __ib_write_exact( CRConnection *conn, CRSocket sock, void *buf, unsigned int len );
 extern int __ib_read_exact( CRSocket sock, CRConnection *conn, void *buf, unsigned int len );
 extern void __ib_dead_connection( CRConnection *conn );
-extern void crUDPTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
-extern void crUDPTCPIPConnection( CRConnection *conn );
-extern int crUDPTCPIPRecv( void );
+#endif /* IB_SUPPORT */
 
+
+/*
+ * GM network interface
+ */
+#ifdef GM_SUPPORT
 extern void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
 extern void crGmConnection( CRConnection *conn );
 extern int crGmRecv( void );
@@ -159,23 +219,9 @@ extern void crGmHandleNewMessage( CRConnection *conn, CRMessage *msg, unsigned i
 extern void crGmInstantReclaim( CRConnection *conn, CRMessage *msg );
 extern unsigned int crGmNodeId( void );
 extern unsigned int crGmPortNum( void );
-
-#ifdef TEAC_SUPPORT
-extern void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
-			unsigned int mtu );
-extern void crTeacConnection( CRConnection *conn );
-extern int  crTeacRecv( void );
-#endif
-
-#ifdef TCSCOMM_SUPPORT
-extern void crTcscommInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
-		    unsigned int mtu );
-extern void crTcscommConnection( CRConnection *conn );
-extern int  crTcscommRecv( void );
+#endif /* GM_SUPPORT */
 
 
-#endif
-
-extern CRConnection** crNetDump( int* num );
+extern CRConnection** crNetDump( int *num );
 
 #endif /* NET_INTERNALS_H */
