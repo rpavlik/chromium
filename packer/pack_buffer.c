@@ -77,7 +77,9 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int extra )
 
 	/* Each opcode has at least a 1-word payload, so opcodes can occupy at most 
 	 * 20% of the space. */
-	num_opcodes = ( buf->size - sizeof(CRMessageOpcodes) ) / 5;
+
+	/* Don't forget to add one here, thanks to Ken Moreland for finding this */
+	num_opcodes = (( buf->size - sizeof(CRMessageOpcodes) ) / 5) + 1;
 	num_opcodes = (num_opcodes + 0x3) & (~0x3);
 
 	buf->data_start    = 

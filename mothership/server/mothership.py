@@ -392,11 +392,13 @@ class CR:
 			endianness = int(endianness_str)
 			for server_sock in self.wrappers.values():
 				if server_sock.accept_wait != None:
-						(server_hostname, server_port, server_endianness) = server_sock.accept_wait
-						if server_hostname == hostname:
-							sock.Success( "%d" % server_endianness )
-							server_sock.Success( "" )
-							return
+					(server_hostname, server_port, server_endianness) = server_sock.accept_wait
+					if server_hostname == hostname:
+						sock.Success( "%d" % server_endianness )
+						server_sock.Success( "" )
+						return
+					else:
+						CRDebug( "not accepting from %s" % client_hostname )
 			sock.connect_wait = (hostname, port, endianness)
 		elif (protocol == 'gm'):
 			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = connect_info
@@ -432,6 +434,9 @@ class CR:
 						sock.Success( "" )
 						client_sock.Success( "%d" % endianness ) 
 						return
+					else:
+						CRDebug( "not accepting from %s" % client_hostname )
+						
 			sock.accept_wait = (hostname, port, endianness)
 		elif protocol == 'gm':
 			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = accept_info

@@ -106,6 +106,10 @@ GLint     GL_TEXTURE_BINDING_3D g->texture.unit[g->texture.curTextureUnit].curre
 # GLint     GL_TEXTURE_BINDING_CUBE_MAP_ARB # g->texture.unit[g->texture.curTextureUnit].currentTextureCubeMapName
 
 GLint     GL_STENCIL_BITS             g->buffer.stencilBits
+GLint     GL_ACCUM_RED_BITS           g->buffer.accumredBits
+GLint     GL_ACCUM_GREEN_BITS         g->buffer.accumgreenBits
+GLint     GL_ACCUM_BLUE_BITS          g->buffer.accumblueBits
+GLint     GL_ACCUM_ALPHA_BITS         g->buffer.accumalphaBits
 GLclampf  GL_COLOR_CLEAR_VALUE        g->buffer.colorClearValue.r g->buffer.colorClearValue.g g->buffer.colorClearValue.b g->buffer.colorClearValue.a
 GLclampf  GL_INDEX_CLEAR_VALUE        g->buffer.indexClearValue
 GLclampd  GL_DEPTH_CLEAR_VALUE        g->buffer.depthClearValue
