@@ -8,6 +8,7 @@ TOP = ../../..
 PROGRAM = multicontext
 WINDOWS = 1
 OPENGL = 1
+GLUT = 1
 
 FILES = multicontext
 
