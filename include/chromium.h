@@ -30,8 +30,13 @@
  * We effectively wrap gl.h, glu.h, etc, just like GLUT
  */
 
+#ifndef GL_GLEXT_PROTOTYPES
 #define GL_GLEXT_PROTOTYPES
+#endif
+
+#ifndef GLX_GLXEXT_PROTOTYPES
 #define GLX_GLXEXT_PROTOTYPES
+#endif
 
 #if defined(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
