@@ -15,6 +15,10 @@ ifeq ($(ARCH), CYGWIN_NT5.0)
 ARCH=WIN_NT
 endif
 
+ifeq ($(ARCH), CYGWIN_NT5.1)
+ARCH=WIN_NT
+endif
+
 SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit tiletest
 
 ifeq ($(ARCH), WIN_NT)
