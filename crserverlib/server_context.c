@@ -92,8 +92,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 
 		/* Update the state tracker's current context */
 		ctx = cr_server.context[ctxPos];
-
-		crStateSetCurrentPointers( ctx, &(cr_server.current) );
 	}
 	else {
 		ctx = NULL;
@@ -112,6 +110,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 	 * the SerializeStreams loop?  It seems to work OK here.
 	 */
 	crStateMakeCurrent( ctx );
+
+	if (ctx)
+		crStateSetCurrentPointers( ctx, &(cr_server.current) );
 
 	/* check if being made current for first time, update viewport */
 	if (ctx) {

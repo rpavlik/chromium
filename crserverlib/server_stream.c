@@ -66,7 +66,7 @@ static void crServerAddNewClient( void )
 	newClient->conn = crNetAcceptClient( cr_server.protocol, NULL, cr_server.tcpip_port, cr_server.mtu, 1 );
 
 	crServerAddToRunQueue( newClient );
-	if (mural->numExtents > 0) {
+	if (mural && mural->numExtents > 0) {
 		 crServerRecomputeBaseProjection( &(newClient->baseProjection), 0, 0, mural->width, mural->height );
 	}
 
