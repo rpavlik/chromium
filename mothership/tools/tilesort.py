@@ -111,7 +111,8 @@ GlobalOptions = [
 	("match_window_title", "string", 1, "", "Match App Window Title"),
 	("show_cursor", "bool", 1, false, "Show Virtual cursor"),
 	("MTU", "int", 1, (1024*1024), "Mean Transmission Unit (bytes)"),
-	("default_app", "string", 1, "", "Default Application Program")
+	("default_app", "string", 1, "", "Default Application Program"),
+	("auto_start", "bool", 1, false, "Automatically Start Servers")
 ]
 
 # This is the guts of the tilesort configuration script.
@@ -142,6 +143,8 @@ if string.find(HOSTNAME, "#") == -1:
 else:
 	singleServer = 0
 
+localHostname = os.uname()[1]
+
 cr = CR()
 cr.MTU( GLOBAL_MTU )
 
@@ -161,6 +164,10 @@ clientnode.AddSPU(tilesortspu)
 
 clientnode.StartDir( crbindir )
 clientnode.SetApplication( os.path.join(crbindir, program) )
+if GLOBAL_auto_start:
+	clientnode.AutoStart( ["/bin/sh", "-c",
+		"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
+
 
 for row in range(TILE_ROWS):
 	for col in range(TILE_COLS):
@@ -187,19 +194,24 @@ for row in range(TILE_ROWS):
 
 		if singleServer:
 			renderspu.Conf('window_geometry', 1.1 * col * TILE_WIDTH, 1.1 * row * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
-			node = CRNetworkNode(HOSTNAME)
+			host = HOSTNAME
 		else:
 			renderspu.Conf('window_geometry', 0, 0, TILE_WIDTH, TILE_HEIGHT)
 			host = MakeHostname(HOSTNAME, FIRSTHOST + index)
-			node = CRNetworkNode(host)
+		servernode = CRNetworkNode(host)
 
-		node.AddTile(col * TILE_WIDTH, (TILE_ROWS - row - 1) * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
+		servernode.AddTile(col * TILE_WIDTH, (TILE_ROWS - row - 1) * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
 
-		node.AddSPU(renderspu)
-		node.Conf('optimize_bucket', SERVER_optimize_bucket)
+		servernode.AddSPU(renderspu)
+		servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
 
-		cr.AddNode(node)
-		tilesortspu.AddServer(node, protocol='tcpip', port = 7000 + index)
+		cr.AddNode(servernode)
+		tilesortspu.AddServer(servernode, protocol='tcpip', port = 7000 + index)
+
+		if GLOBAL_auto_start:
+			servernode.AutoStart( ["/usr/bin/rsh", host,
+									"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
+
 
 cr.AddNode(clientnode)
 #cr.SetParam('minimum_window_size', fix-me)
