@@ -257,6 +257,7 @@ typedef void (WGL_APIENTRY *wglDeleteContextFunc_t)(HGLRC);
 typedef BOOL (WGL_APIENTRY *wglMakeCurrentFunc_t)(HDC,HGLRC);
 typedef BOOL (WGL_APIENTRY *wglSwapBuffersFunc_t)(HDC);
 typedef int (WGL_APIENTRY *wglChoosePixelFormatFunc_t)(HDC, CONST PIXELFORMATDESCRIPTOR *);
+typedef int (WGL_APIENTRY *wglDescribePixelFormatFunc_t)(HDC, int, UINT, CONST PIXELFORMATDESCRIPTOR *);
 typedef int (WGL_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
 typedef HGLRC (WGL_APIENTRY *wglGetCurrentContextFunc_t)();
 typedef PROC (WGL_APIENTRY *wglGetProcAddressFunc_t)();
@@ -288,6 +289,7 @@ typedef struct {
 	wglSwapBuffersFunc_t wglSwapBuffers;
 	wglGetCurrentContextFunc_t wglGetCurrentContext;
 	wglChoosePixelFormatFunc_t wglChoosePixelFormat;
+	wglDescribePixelFormatFunc_t wglDescribePixelFormat;
 	wglSetPixelFormatFunc_t wglSetPixelFormat;
 #else
 	glXGetConfigFunc_t  glXGetConfig;

@@ -188,6 +188,7 @@ useful_wgl_functions = [
 	"wglDeleteContext",
 	"wglGetCurrentContext",
 	"wglChoosePixelFormat",
+	"wglDescribePixelFormat",
 	"wglSetPixelFormat",
 	"glGetString"
 ]

@@ -130,6 +130,8 @@ bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
 		{
 			crError( "render_spu.ws.wglSetPixelFormat failed" );
 		}
+	
+		render_spu.ws.wglDescribePixelFormat( hdc, pixelformat, sizeof(ppfd), ppfd );
 	}
 	else
 	{
@@ -145,9 +147,10 @@ bSetupPixelFormat( HDC hdc, GLbitfield visAttribs )
 		{
 			crError( "SetPixelFormat failed" );
 		}
+		
+		DescribePixelFormat( hdc, pixelformat, sizeof(ppfd), ppfd );
 	}
 
-	DescribePixelFormat( hdc, pixelformat, sizeof(ppfd), ppfd );
 
 	if (ppfd->cDepthBits > 0)
 		b |= CR_DEPTH_BIT;
