@@ -5,7 +5,7 @@
 
 TOP = ..
 
-SUBDIRS = tester
+SUBDIRS = tester options
 SUBDIRS += error nop pack passthrough print readback render template tilesort
 SUBDIRS += saveframe comm array binaryswap counter hiddenline
 
