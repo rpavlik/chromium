@@ -8,7 +8,7 @@ TOP = ../../..
 include ${TOP}/arch.mk
 
 LIBRARY = crextensionscommon
-FILES = logo
+FILES = logo util
 SHARED = 1
 OPENGL = 1
 

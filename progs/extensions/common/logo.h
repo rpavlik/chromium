@@ -13,6 +13,10 @@ extern "C" {
 
 void crExtensionsDrawLogo( int currentWidth, int currentHeight );
 
+void RenderString(float x, float y, char *string);
+
+int CheckForExtension(const char *extension);
+
 #ifdef __cplusplus
 }
 #endif
