@@ -305,30 +305,10 @@ class CRNode:
 		if (host == 'localhost'):
 			host = socket.getfqdn()
 		self.host = host
-
-		# unqualify the hostname if it is already that way.
-		# e.g., turn "foo.bar.baz" into "foo"
-		# Disabled by Brian.
-		#period = self.host.find( "." )
-		#if period != -1:
-		#	self.host = self.host[:period]
-
 		self.SPUs = []
 		self.spokenfor = 0
 		self.spusloaded = 0
 		self.config = {}
-		self.tcpip_accept_wait = None
-		self.tcpip_connect_wait = None
-		self.sdp_accept_wait = None
-		self.sdp_connect_wait = None
-		self.ib_accept_wait = None
-		self.ib_connect_wait = None
-		self.gm_accept_wait = None
-		self.gm_connect_wait = None
-		self.teac_accept_wait = []
-		self.teac_connect_wait = []
-		self.tcscomm_accept_wait = []
-		self.tcscomm_connect_wait = []
 		self.alias = host
 		self.autostart = ""
 		self.autostart_argv = []
@@ -338,7 +318,8 @@ class CRNode:
 
 		# Add the default constraint to the node.
 		self.constraints = []
-		if constraintArg == None: constraintArg = self.host
+		if constraintArg == None:
+			constraintArg = self.host
 		self.AddConstraint(constraint, constraintArg)
 
 	def Alias( self, name ):
@@ -774,12 +755,12 @@ class CR:
 	startupCallbacks = []
 	
 	def __init__( self ):
-		self.nodes = []
+		self.nodes = []    # list of all nodes
 		self.all_sockets = []
-		self.wrappers = {}
+		self.wrappers = {} # list of SockWrapper objects, indexed by socket no.
 		self.allSPUConf = []
 		self.daughters = []
-		self.conn_id = 1
+		self.conn_id = 1   # Next free connection ID number
 		self.enable_autostart = 1
 		self.config = {"MTU" : 1024 * 1024,
 				"low_context" : 32,
