@@ -30,6 +30,9 @@
 #include "cr_threads.h"
 #include "net_internals.h"
 
+
+#define CR_MINIMUM_MTU 1024
+
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) /* 2MB */
 
 /* Allow up to four processes per node. . . */
@@ -57,18 +60,24 @@ static struct {
   int                  my_rank;
 } cr_net;
 
-/* This the common interface that every networking type should export in order
- * to work with this abstraction.  An initializer, a 'start up connection' function,
- * and a function to recieve work on that interface. */
 
+/* This is the common interface that every networking type should
+ * export in order to work with this abstraction.  An initializer, a
+ * 'start up connection' function, and a function to recieve work on
+ * that interface.
+ */
+
+/**
+ * Macro for defining external references to specific network interfaces.
+ */
 #define NETWORK_TYPE(x) \
 	extern void cr##x##Init(CRNetReceiveFuncList *, CRNetCloseFuncList *, unsigned int); \
 	extern void cr##x##Connection(CRConnection *); \
 	extern int cr##x##Recv(void)
 
-/* Now, all the appropriate interfaces are defined simply by listing the supported
- * networking types here. */
-
+/* Now, all the appropriate interfaces are defined simply by listing the
+ * supported networking types here.
+ */
 NETWORK_TYPE( TCPIP );
 NETWORK_TYPE( UDPTCPIP );
 NETWORK_TYPE( Devnull );
@@ -86,15 +95,20 @@ extern void crTcscommSetContextRange( int, int );
 extern void crTcscommSetNodeRange( const char *, const char * );
 #endif
 
-/* Clients call this function to connect to a server.  The "server" argument is
- * expected to be a URL type specifier "protocol://servername:port", where the port
- * specifier is optional, and if the protocol is missing it is assumed to be
- * "tcpip".  */
 
-#define CR_MINIMUM_MTU 1024
-
-CRConnection *crNetConnectToServer( const char *server,
-		unsigned short default_port, int mtu, int broker )
+/**
+ * Establish a connection with a server.
+ * \param server  the server to connect to, in the form
+ *                "protocol://servername:port" where the port specifier
+ *                is optional and if the protocol is missing it is assumed
+ *                to be "tcpip".
+ * \param default_port  the port to connect to
+ * \param mtu  desired maximum transmission unit size (in bytes)
+ * \param broker  broker flag (need more info)
+ */
+CRConnection *
+crNetConnectToServer( const char *server,	unsigned short default_port,
+											int mtu, int broker )
 {
 	char hostname[4096], protocol[4096];
 	unsigned short port;
@@ -109,10 +123,9 @@ CRConnection *crNetConnectToServer( const char *server,
 	}
 
 	/* Tear the URL apart into relevant portions. */
-	if ( !crParseURL( server, protocol, hostname, &port, default_port ) )
-	  {
-	    crError( "Malformed URL: \"%s\"", server );
-	  }
+	if ( !crParseURL( server, protocol, hostname, &port, default_port ) ) {
+		 crError( "Malformed URL: \"%s\"", server );
+	}
 
 	/* If the host name is "localhost" replace it with the _real_ name
 	 * of the localhost.  If we don't do this, there seems to be
@@ -237,10 +250,10 @@ CRConnection *crNetConnectToServer( const char *server,
 	else if ( !crStrcmp( protocol, "ib" ) )
 	{	
 		cr_net.use_ib++;
-	        crDebug("Calling crIBInit()");
+		crDebug("Calling crIBInit()");
 		crIBInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crIBConnection( conn );
-	        crDebug("Done Calling crIBInit()");
+		crDebug("Done Calling crIBInit()");
 	}
 #endif
 	else if ( !crStrcmp( protocol, "udptcpip" ) )
@@ -256,18 +269,19 @@ CRConnection *crNetConnectToServer( const char *server,
 
 	if (!crNetConnect( conn ))
 	{
-	    crDebug("Uh oh, freeing the connection");
+		crDebug("crNetConnect() failed, freeing the connection");
 		crFree( conn );
 		return NULL;
 	}
 
 	if (conn->swap)
 	{
-		crWarning( "Creating a byte-swapped connection!" );
+		crWarning( "crNetConnectToServer: Creating a byte-swapped connection!" );
 	}
 	crDebug( "Done connecting to server." );
 	return conn;
 }
+
 
 /* Create a new client */
 void crNetNewClient( CRConnection *conn, CRNetServer *ns )
@@ -287,9 +301,12 @@ void crNetNewClient( CRConnection *conn, CRNetServer *ns )
 }
 
 
-/* Accept a client on various interfaces. */
-
-CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned short port, unsigned int mtu, int broker )
+/**
+ * Accept a client on various interfaces.
+ */
+CRConnection *
+crNetAcceptClient( const char *protocol, char *hostname,
+									 unsigned short port, unsigned int mtu, int broker )
 {
 	CRConnection *conn;
 
@@ -526,21 +543,44 @@ CRConnection** crNetDump( int* num )
 }
 
 
-/* Buffers that will eventually be transmitted on a connection
+/*
+ * Allocate a network data buffer.  The size will be the mtu size specified
+ * earlier to crNetConnectToServer() or crNetAcceptClient().
+ *
+ * Buffers that will eventually be transmitted on a connection
  * *must* be allocated using this interface.  This way, we can
  * automatically pin memory and tag blocks, and we can also use
- * our own buffer pool management. */
-
+ * our own buffer pool management.
+ */
 void *crNetAlloc( CRConnection *conn )
 {
 	CRASSERT( conn );
 	return conn->Alloc( conn );
 }
 
-/* Send a set of commands on a connection.  Pretty straightforward, just
- * error checking, byte counting, and a dispatch to the protocol's
- * "send" implementation. */
 
+/**
+ * This returns a buffer (which was obtained from crNetAlloc()) back
+ * to the network layer so that it may be reused.
+ */
+void crNetFree( CRConnection *conn, void *buf )
+{
+	conn->Free( conn, buf );
+}
+
+
+/**
+ * Send a set of commands on a connection.  Pretty straightforward, just
+ * error checking, byte counting, and a dispatch to the protocol's
+ * "send" implementation.
+ * The payload will be prefixed by a 4-byte length field.
+ *
+ * \param conn  the network connection
+ * \param bufp  if non-null the buffer was provided by the network layer
+ *              and should be returned to the 'free' pool after it's sent.
+ * \param start  points to first byte to send
+ * \param len  number of bytes to send
+ */
 void crNetSend( CRConnection *conn, void **bufp,
 		            const void *start, unsigned int len )
 {
@@ -568,10 +608,12 @@ void crNetSend( CRConnection *conn, void **bufp,
 	conn->Send( conn, bufp, start, len );
 }
 
-/* Barf a set of commands on a connection.  Pretty straightforward, just
- * error checking, byte counting, and a dispatch to the protocol's
- * "barf" implementation. */
 
+/**
+ * Like crNetSend(), but the network layer is free to discard the data
+ * if something goes wrong.  In particular, the UDP layer might discard
+ * the data in the event of transmission errors.
+ */
 void crNetBarf( CRConnection *conn, void **bufp,
 		            const void *start, unsigned int len )
 {
@@ -600,45 +642,64 @@ void crNetBarf( CRConnection *conn, void **bufp,
 	conn->Barf( conn, bufp, start, len );
 }
 
-/* Send something exact on a connection without the message length
- * header. */
 
+/**
+ * Send a block of bytes across the connection without any sort of
+ * header/length information.
+ * \param conn  the network connection
+ * \param buf  points to first byte to send
+ * \param len  number of bytes to send
+ */
 void crNetSendExact( CRConnection *conn, const void *buf, unsigned int len )
 {
 	conn->SendExact( conn, buf, len );
 }
 
-/* Since the networking layer allocates memory, it needs to free it as
- * well.  This will return things to the correct buffer pool etc. */
 
-void crNetFree( CRConnection *conn, void *buf )
+/**
+ * Connect to a server, as specified by the 'name' and 'buffer_size' fields
+ * of the CRNetServer parameter.
+ */
+void crNetServerConnect( CRNetServer *ns )
 {
-	conn->Free( conn, buf );
+	ns->conn = crNetConnectToServer( ns->name, 7000, ns->buffer_size, 1 );
 }
 
-/* Actually do the connection implied by the argument */
 
+/**
+ * Actually do the connection implied by the argument.
+ * Aparently, this is only called from the crNetConnectToServer function.
+ */
 int crNetConnect( CRConnection *conn )
 {
 	return conn->Connect( conn );
 }
 
-/* Tear it down */
 
+/**
+ * Tear down a network connection (close the socket, etc).
+ */
 void crNetDisconnect( CRConnection *conn )
 {
 	conn->Disconnect( conn );
 }
 
+
+/**
+ * Aparently, only called from crNetAcceptClient().
+ */
 void crNetAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	conn->Accept( conn, hostname, port );
 }
 
-/* Do a blocking receive on a particular connection.  This only
- * really works for TCPIP, but it's really only used (right now) by
- * the mothership client library. */
 
+/**
+ * Do a blocking receive on a particular connection.  This only
+ * really works for TCPIP, but it's really only used (right now) by
+ * the mothership client library.
+ * Read exactly the number of bytes specified (no headers/prefixes).
+ */
 void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 {
 	if (conn->type != CR_TCPIP)
@@ -649,7 +710,8 @@ void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 }
 
 
-static void crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
+static void
+crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
 {
 	CRMultiBuffer *multi = &(conn->multi);
 	unsigned char *src, *dst;
@@ -711,6 +773,11 @@ static void crNetRecvFlowControl( CRConnection *conn,
 	conn->InstantReclaim( conn, (CRMessage *) msg );
 }
 
+
+/**
+ * Called by the main receive function when we get a CR_MESSAGE_WRITEBACK
+ * message.  Writeback is used to implement glGet*() functions.
+ */
 static void crNetRecvWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
@@ -718,6 +785,11 @@ static void crNetRecvWriteback( CRMessageWriteback *wb )
 	(*writeback)--;
 }
 
+
+/**
+ * Called by the main receive function when we get a CR_MESSAGE_READBACK
+ * message.  Used to implement glGet*() functions.
+ */
 static void crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
 {
 	/* minus the header, the destination pointer,
@@ -732,6 +804,7 @@ static void crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
 	(*writeback)--;
 	crMemcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
+
 
 void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 {
@@ -821,7 +894,14 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 	conn->messageTail = msglist;
 }
 
-void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn, void *buf, unsigned int len )
+
+/**
+ * Default handler for receiving data.  Called via crNetRecv().
+ * Typically, the various implementations of the network layer call this
+ */
+void
+crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
+											void *buf, unsigned int len )
 {
 	for ( ; rfl ; rfl = rfl->next)
 	{
@@ -833,6 +913,13 @@ void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn, void *
 	crNetDefaultRecv( conn, buf, len );
 }
 
+
+/**
+ * Look at the next incoming message but don't remove/pop it from the
+ * incoming stream of messages.
+ * \param conn  the network connection
+ * \param message  returns a pointer to the next message
+ */
 unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message )
 {
 	if (conn->messageList != NULL)
@@ -875,8 +962,12 @@ unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 #endif
 }
 
-/* Read a line from a socket.  Useful for reading from the mothership. */
-
+/**
+ * Read a \n-terminated string from a socket.  Replace the \n with \0.
+ * Useful for reading from the mothership.
+ * \param conn  the network connection
+ * \param buf  buffer in which to place results
+ */
 void crNetReadline( CRConnection *conn, void *buf )
 {
 	char *temp, c;
@@ -901,40 +992,41 @@ void crNetReadline( CRConnection *conn, void *buf )
 	}
 }
 
-/* The big boy -- call this function to see (non-blocking) if there is
+/**
+ * The big boy -- call this function to see (non-blocking) if there is
  * any pending work.  If there is, the networking layer's "work received"
  * handler will be called, so this function only returns a flag.  Work
- * is assumed to be placed on queues for processing by the handler. */
-
+ * is assumed to be placed on queues for processing by the handler.
+ */
 int crNetRecv( void )
 {
 	int found_work = 0;
 
 	if ( cr_net.use_tcpip )
-	     found_work += crTCPIPRecv( );
+		found_work += crTCPIPRecv();
 #ifdef IB_SUPPORT
 	if ( cr_net.use_ib )
-	     found_work += crIBRecv( );
+		found_work += crIBRecv();
 #endif
 	if ( cr_net.use_udp )
-	     found_work += crUDPTCPIPRecv( );
+		found_work += crUDPTCPIPRecv();
 	
 	if ( cr_net.use_file )
-	     found_work += crFileRecv( );
+		found_work += crFileRecv();
 
 #ifdef GM_SUPPORT
 	if ( cr_net.use_gm )
-		found_work += crGmRecv( );
+		found_work += crGmRecv();
 #endif
 
 #ifdef TEAC_SUPPORT
-  	if ( cr_net.use_teac )
-    		found_work += crTeacRecv( );
+	if ( cr_net.use_teac )
+		found_work += crTeacRecv();
 #endif
 
 #ifdef TCSCOMM_SUPPORT
-  	if ( cr_net.use_tcscomm )
-    		found_work += crTcscommRecv( );
+	if ( cr_net.use_tcscomm )
+		found_work += crTcscommRecv();
 #endif
 
 	return found_work;
@@ -945,6 +1037,10 @@ int crGetPID( void )
 	return (int) getpid();
 }
 
+
+/**
+ * Teac/TSComm only
+ */
 void
 crNetSetRank( int my_rank )
 {
@@ -958,6 +1054,9 @@ crNetSetRank( int my_rank )
 #endif
 }
 
+/**
+ * Teac/TSComm only
+ */
 void
 crNetSetContextRange( int low_context, int high_context )
 {
@@ -969,6 +1068,9 @@ crNetSetContextRange( int low_context, int high_context )
 #endif
 }
 
+/**
+ * Teac/TSComm only
+ */
 void
 crNetSetNodeRange( const char *low_node, const char *high_node )
 {
@@ -980,6 +1082,9 @@ crNetSetNodeRange( const char *low_node, const char *high_node )
 #endif
 }
 
+/**
+ * Teac/TSComm only
+ */
 void
 crNetSetKey( const unsigned char* key, const int keyLength )
 {
@@ -988,10 +1093,6 @@ crNetSetKey( const unsigned char* key, const int keyLength )
 #endif
 }
 
-void crNetServerConnect( CRNetServer *ns )
-{
-	ns->conn = crNetConnectToServer( ns->name, 7000, ns->buffer_size, 1 );
-}
 
 /* The fact that I've copied this function makes me ill.
  * GM connections need to be brokered through the mothership,

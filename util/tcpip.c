@@ -113,7 +113,7 @@ char *crTCPIPErrorString( int err )
 	return buf;
 }
 
-#else
+#else /* WINDOWS */
 
 int crTCPIPErrno( void )
 {
@@ -140,7 +140,9 @@ char *crTCPIPErrorString( int err )
 	return buf;
 }
 
-#endif
+#endif /* WINDOWS */
+
+
 void crCloseSocket( CRSocket sock )
 {
 	int fail;
@@ -149,7 +151,7 @@ void crCloseSocket( CRSocket sock )
 		return;
 
 #ifdef WINDOWS
-    	fail = ( closesocket( sock ) != 0 );
+	fail = ( closesocket( sock ) != 0 );
 #else
 	shutdown( sock, 2 /* RDWR */ );
 	fail = ( close( sock ) != 0 );
@@ -158,7 +160,7 @@ void crCloseSocket( CRSocket sock )
 	{
 		int err = crTCPIPErrno( );
 		crWarning( "crCloseSocket( sock=%d ): %s",
-					   sock, crTCPIPErrorString( err ) );
+							 sock, crTCPIPErrorString( err ) );
 	}
 }
 
@@ -241,25 +243,23 @@ __tcpip_write_exact( CRSocket sock, const void *buf, unsigned int len )
 	if ( sock <= 0 )
 		return 1;
 
-	
-	     
 	while ( len > 0 )
 	{
-	     int num_written = send( sock, src, len, 0 );
-	     if ( num_written <= 0 )
-	     {
+		int num_written = send( sock, src, len, 0 );
+		if ( num_written <= 0 )
+		{
 		  if ( (err = crTCPIPErrno( )) == EINTR )
 		  {
-		       crWarning( "__tcpip_write_exact(TCPIP): "
-				  "caught an EINTR, continuing" );
-		       continue;
+				crWarning( "__tcpip_write_exact(TCPIP): "
+									 "caught an EINTR, continuing" );
+				continue;
 		  }
 		  
 		  return -err;
-	     }
+		}
 	     
-	     len -= num_written;
-	     src += num_written;
+		len -= num_written;
+		src += num_written;
 	}
 	     
 	return 1;
@@ -274,14 +274,15 @@ crTCPIPWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 	}
 }
 
+
 /* 
  * Make sockets do what we want: 
  * 
  * 1) Change the size of the send/receive buffers to 64K 
- * 2) Turn off Nagle's algorithm */
-
+ * 2) Turn off Nagle's algorithm
+ */
 static void
-__crSpankSocket( CRSocket sock )
+spankSocket( CRSocket sock )
 {
 	/* why do we do 1) ? things work much better for me to push the
 	 * the buffer size way up -- karl
@@ -362,7 +363,7 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 			err = crTCPIPErrno( );
 			crError( "Couldn't create socket: %s", crTCPIPErrorString( err ) );
 		}
-		__crSpankSocket( cr_tcpip.server_sock );
+		spankSocket( cr_tcpip.server_sock );
 
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = INADDR_ANY;
@@ -407,7 +408,7 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 						   cur->ai_family, crTCPIPErrorString( err ) );
 				continue;
 			}
-			__crSpankSocket( cr_tcpip.server_sock );
+			spankSocket( cr_tcpip.server_sock );
 
 			if ( bind( cr_tcpip.server_sock, cur->ai_addr, cur->ai_addrlen ) )
 			{
@@ -559,12 +560,13 @@ crTCPIPAlloc( CRConnection *conn )
 	return (void *)( buf + 1 );
 }
 
+
 static void
 crTCPIPSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 {
-    
 	crTCPIPReadExact( conn, buf, len );
 }
+
 
 static void
 crTCPIPSend( CRConnection *conn, void **bufp,
@@ -581,11 +583,14 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 		/* we are doing synchronous sends from user memory, so no need
 		 * to get fancy.  Simply write the length & the payload and
 		 * return. */
+		const int sendable_len = conn->swap ? SWAP32(len) : len;
+#if 0
 		int sendable_len=len;/* can't swap len then use it for length*/
 		if (conn->swap)
 		{
 			sendable_len = SWAP32(len);
 		}
+#endif
 		crTCPIPWriteExact( conn, &sendable_len, sizeof(len) );
 		if ( !conn || conn->type == CR_NO_CONNECTION) return;
 		crTCPIPWriteExact( conn, start, len );
@@ -630,6 +635,7 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 #endif
 }
 
+
 void
 __tcpip_dead_connection( CRConnection *conn )
 {
@@ -639,6 +645,7 @@ __tcpip_dead_connection( CRConnection *conn )
 	/* remove from connection pool */
 	crTCPIPDoDisconnect( conn );
 }
+
 
 int
 __crSelect( int n, fd_set *readfds, int sec, int usec )
@@ -661,7 +668,6 @@ __crSelect( int n, fd_set *readfds, int sec, int usec )
 		else
 			num_ready = select( n, readfds, NULL, NULL, NULL );
 
-
 		if ( num_ready >= 0 )
 		{
 			return num_ready;
@@ -678,6 +684,7 @@ __crSelect( int n, fd_set *readfds, int sec, int usec )
 		}
 	}
 }
+
 
 void crTCPIPFree( CRConnection *conn, void *buf )
 {
@@ -706,6 +713,7 @@ void crTCPIPFree( CRConnection *conn, void *buf )
 			crError( "Weird buffer kind trying to free in crTCPIPFree: %d", tcpip_buffer->kind );
 	}
 }
+
 
 /* returns the amt of pending data which was handled */ 
 static int
@@ -743,6 +751,7 @@ crTCPIPUserbufRecv(CRConnection *conn, CRMessage *msg)
 			return 0;
 	}
 }
+
 
 int
 crTCPIPRecv( void )
@@ -1026,13 +1035,13 @@ crTCPIPRecv( void )
 		
 	}
 
-
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.recvmutex);
 #endif
 
 	return 1;
 }
+
 
 static void
 crTCPIPHandleNewMessage( CRConnection *conn, CRMessage *msg,
@@ -1049,14 +1058,17 @@ crTCPIPHandleNewMessage( CRConnection *conn, CRMessage *msg,
 	crNetDispatchMessage( cr_tcpip.recv_list, conn, msg, len );
 }
 
+
 static void
 crTCPIPInstantReclaim( CRConnection *conn, CRMessage *mess )
 {
 	crTCPIPFree( conn, mess );
 }
 
+
 void
-crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
+crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
+						 unsigned int mtu )
 {
 	(void) mtu;
 
@@ -1103,7 +1115,7 @@ crTCPIPDoConnect( CRConnection *conn )
 	}
 
 	/* Set up the socket the way *we* want. */
-	__crSpankSocket( conn->tcp_socket );
+	spankSocket( conn->tcp_socket );
 
 	/* Standard Berkeley sockets mumbo jumbo */
 	hp = gethostbyname( conn->hostname );
@@ -1200,7 +1212,7 @@ crTCPIPDoConnect( CRConnection *conn )
 		setsockopt(conn->tcp_socket, SOL_SOCKET, SO_REUSEADDR,  &err, sizeof(int));
 
 		/* Set up the socket the way *we* want. */
-		__crSpankSocket( conn->tcp_socket );
+		spankSocket( conn->tcp_socket );
 
 #if RECV_BAIL_OUT		
 		err = sizeof(unsigned int);
