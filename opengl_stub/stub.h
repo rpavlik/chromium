@@ -72,13 +72,16 @@ struct context_info_t
 	ContextInfo *share;
 	CGLContextObj cglc;
 
-	/* This is all for delaying the CGLSetParameter calls */
+	/* CGLContextEnable (CGLEnable, CGLDisable, and CGLIsEnabled) */
+	unsigned int options;
+
+	/* CGLContextParameter (CGLSetParameter and CGLGetParameter) */
 	GLint parambits;
-	long swap_rect[4];
-	long swap_interval;
+	long swap_rect[4], swap_interval;
 	unsigned long client_storage;
-	long	disp_mask;
-	unsigned long surf_a, surf_b, surf_c;
+	long surf_order, surf_opacy;
+
+	long disp_mask;
 #else
 	Display *dpy;
 	ContextInfo *share;
@@ -94,11 +97,6 @@ enum {
 	VISBIT_SWAP_INTERVAL,
 	VISBIT_CLIENT_STORAGE
 };
-enum {
-	DRAW_SET_CURRENT = 0,
-	DRAW_HAVE,
-	DRAW_SET_DRAWABLE
-};
 #endif
 
 struct window_info_t
@@ -111,7 +109,8 @@ struct window_info_t
 #ifdef WINDOWS
 	HDC drawable;
 #elif defined(DARWIN)
-	WindowRef drawable;
+	CGSWindowID  drawable;
+	CGSSurfaceID surface;
 #else
 	Display *dpy;
 	GLXDrawable drawable;
@@ -181,12 +180,17 @@ extern GLuint FindVisualInfo( HDC hdc );
 
 #elif defined(DARWIN)
 
+extern CGSConnectionID    _CGSDefaultConnection(void);
+extern OSStatus CGSGetWindowLevel( CGSConnectionID cid, CGSWindowID wid, CGWindowLevel *level );
+extern OSStatus CGSSetWindowAlpha( const CGSConnectionID cid, CGSWindowID wid, float alpha );
+
+
 /* These don't seem to be included in the OSX glext.h ... */
 extern void glPointParameteri( GLenum pname, GLint param );
 extern void glPointParameteriv( GLenum pname, const GLint * param );
 
 extern CGLError stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx );
-extern WindowInfo *stubGetWindowInfo( WindowRef drawable );
+extern WindowInfo *stubGetWindowInfo( CGSWindowID drawable );
 extern GLuint FindVisualInfo( CGLPixelFormatObj pix );
 
 #else
@@ -202,12 +206,7 @@ extern void stubUseXFont( Display *dpy, Font font, int first, int count, int lis
 
 extern ContextInfo *stubNewContext( const char *dpyName, GLint visBits, ContextType type );
 extern void stubDestroyContext( unsigned long contextId );
-#ifdef DARWIN
-extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context, GLenum drawable_type );
-extern void stubSwapContextBuffers( const ContextInfo *context, GLint flags );
-#else
 extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context );
-#endif
 extern GLint stubNewWindow( const char *dpyName, GLint visBits );
 extern void stubSwapBuffers( const WindowInfo *window, GLint flags );
 extern void stubGetWindowGeometry( const WindowInfo *win, int *x, int *y, unsigned int *w, unsigned int *h );

@@ -38,11 +38,8 @@ void APIENTRY crMakeCurrent( GLint window, GLint context )
 		crWarning("Can't call crMakeCurrent with native GL context");
 		return;
 	}
-#ifdef DARWIN
-	stubMakeCurrent(winInfo, contextInfo, DRAW_HAVE);
-#else
+
 	stubMakeCurrent(winInfo, contextInfo);
-#endif
 }
 
 GLint APIENTRY crGetCurrentContext( void )

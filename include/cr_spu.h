@@ -240,9 +240,12 @@ typedef void (*CGLGetVersionFunc_t)( long *, long * );
 typedef const char * (*CGLErrorStringFunc_t)( CGLError );
 
 /** XXX \todo Undocumented CGL functions. Are these all correct? */
+typedef void *CGSConnectionID;
+typedef int CGSWindowID;
+typedef int CGSSurfaceID;
 
-typedef CGLError (*CGLSetSurfaceFunc_t)( CGLContextObj, unsigned long, unsigned long, unsigned long );
-typedef CGLError (*CGLGetSurfaceFunc_t)( CGLContextObj, unsigned long, unsigned long, unsigned long );
+typedef CGLError (*CGLSetSurfaceFunc_t)( CGLContextObj, CGSConnectionID, CGSWindowID, CGSSurfaceID );
+typedef CGLError (*CGLGetSurfaceFunc_t)( CGLContextObj, CGSConnectionID, CGSWindowID, CGSSurfaceID* );
 typedef CGLError (*CGLUpdateContextFunc_t)( CGLContextObj );
 /*@}*/
 #else

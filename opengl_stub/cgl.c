@@ -13,19 +13,20 @@
 
 #define GET_CONTEXTINFO(c)  (ContextInfo *) crHashtableSearch( stub.contextTable, (unsigned long) (c) )
 
-#define MakeCurrent(w,c,t)	\
-		( stubMakeCurrent((w), (c), (t)) ? noErr : kCGLBadContext )
+#define MakeCurrent(w,c)	\
+		( stubMakeCurrent((w), (c)) ? noErr : kCGLBadContext )
 
-#define MakeCurrent_Force(w, c)	\
-		( stubMakeCurrent(stubGetWindowInfo((WindowRef)(w)), (c), DRAW_HAVE) ? noErr : kCGLBadContext )
-
+#if 1
+#define DEBUG_FUNCTION(s)	crDebug(#s)
+#else
+#define DEBUG_FUNCTION(s)	
+#endif
 
 GLuint FindVisualInfo( CGLPixelFormatObj pix )
 {
 	GLuint b = 0;
 	long val = 0;
 
-	crDebug("FindVisualInfo");
 	CRASSERT(pix);
 
 	stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFADepthSize, &val );
@@ -59,10 +60,30 @@ GLuint FindVisualInfo( CGLPixelFormatObj pix )
 	return b;
 }
 
+/*
+ * Darwin swaps by context, not window
+ */
+void stubSwapContextBuffers( const ContextInfo *context, GLint flags )
+{
+	if( !context )
+		return;
+
+	if( context->type == NATIVE ) {
+		stub.wsInterface.CGLUpdateContext( context->cglc );
+	} else if( context->type == CHROMIUM ) {
+		if( context->currentDrawable )
+			stubSwapBuffers( context->currentDrawable, 0 );
+		else
+			crDebug("stubSwapContextBuffers: Not sure what to do with chromium context buffers.");
+	} else {
+		crDebug("Calling SwapContextBuffers on a window we haven't seen before (no-op).");
+	}
+}
+
 
 CGLError CGLCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
 {
-	crDebug("CGLCreateContext");
+	DEBUG_FUNCTION(CGLCreateContext);
 	stubInit();
 	return stubCreateContext( pix, share, ctx );
 }
@@ -70,7 +91,6 @@ CGLError CGLCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContex
 
 CGLError CGLDestroyContext( CGLContextObj ctx )
 {
-	crDebug("CGLDestroyContext");
 	stubDestroyContext( (unsigned long) ctx );
 	return noErr;
 }
@@ -79,31 +99,31 @@ CGLError CGLDestroyContext( CGLContextObj ctx )
 CGLError CGLSetCurrentContext( CGLContextObj ctx )
 {
 	ContextInfo *context = GET_CONTEXTINFO(ctx);
-	/* This is to make debugging a little bit easier */
-	static int times = 0;
-	if( times < 10 )
-		crDebug("CGLSetCurrentContext");
-	times++;
+
+//	DEBUG_FUNCTION(CGLSetCurrentContext);
 
 	stubInit();
 
-	if( crGetenv("CR_FORCE_CHROMIUM") )
-		return MakeCurrent_Force(0, context);
+	if( context->currentDrawable )
+		return MakeCurrent( context->currentDrawable, context );
 
-	return MakeCurrent(NULL, context, DRAW_SET_CURRENT);
+	/* Don't do anything until we have a window (and the context with it) */
+	return noErr;
 }
 
 
 CGLError CGLFlushDrawable( CGLContextObj ctx )
 {
-//	crDebug("CGLFlushDrawable");
-	stubSwapContextBuffers( GET_CONTEXTINFO(ctx), 0);
+	ContextInfo *context = GET_CONTEXTINFO(ctx);
+//	DEBUG_FUNCTION(CGLFlushDrawable);
+
+	stubSwapContextBuffers( context, 0 );
 	return noErr;
 }
 
 #define DEBUG_ENTRY(s)  \
 	case (s):			\
-		crDebug(#s);	\
+		crDebug("CGLChoosePixelFormat: " #s);	\
 		break;
 
 CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPixelFormatObj *pix, long *npix )
@@ -112,7 +132,6 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 	CGLPixelFormatAttribute attribCopy[128];
 	int copy=0;
 
-	crDebug("CGLChoosePixelFormat");
 	stubInit();
 
 	/* 
@@ -121,59 +140,59 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 	 * equivalent's of ChoosePixelFormat/DescribePixelFormat etc
 	 * There are subtle differences in the use of these calls.
 	 */
-	crSetenv("CR_WGL_DO_NOT_USE_GDI", "yes");
+//	crSetenv("CR_WGL_DO_NOT_USE_GDI", "yes");
 
 	for( ; *attrib != NULL; attrib++ ) {
 		attribCopy[copy++] = *attrib;
 
 		switch( *attrib ) {
 		case kCGLPFADoubleBuffer:
-			crDebug("kCGLPFADoubleBuffer");
+			crDebug("CGLChoosePixelFormat: kCGLPFADoubleBuffer");
 			stub.desiredVisual |= CR_DOUBLE_BIT;
 			break;
 
 		case kCGLPFAStereo:
-			crDebug("kCGLPFAStereo");
+			crDebug("CGLChoosePixelFormat: kCGLPFAStereo");
 			stub.desiredVisual |= CR_STEREO_BIT;
 			break;
 
 		case kCGLPFAAuxBuffers:
-			crDebug("kCGLPFAAuxBuffers: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFAAuxBuffers: %i", attrib[0]);
 			if( attrib[0] != 0 )
 				crWarning("CGLChoosePixelFormat: aux_buffers=%d unsupported", attrib[0]);
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFAColorSize:
-			crDebug("kCGLPFAColorSize: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFAColorSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
 				stub.desiredVisual |= CR_RGB_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFAAlphaSize:
-			crDebug("kCGLPFAAlphaSize: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFAAlphaSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
 				stub.desiredVisual |= CR_ALPHA_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFADepthSize:
-			crDebug("kCGLPFADepthSize: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFADepthSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
 				stub.desiredVisual |= CR_DEPTH_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFAStencilSize:
-			crDebug("kCGLPFAStencilSize: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFAStencilSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
 				stub.desiredVisual |= CR_STENCIL_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFAAccumSize:
-			crDebug("kCGLPFAAccumSize: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFAAccumSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
 				stub.desiredVisual |= CR_ACCUM_BIT;
 			attribCopy[copy++] = *(++attrib);
@@ -196,17 +215,17 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 		DEBUG_ENTRY(kCGLPFAWindow)
 
 		case kCGLPFARendererID:
-			crDebug("kCGLPFARendererID: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFARendererID: %i", attrib[0]);
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFADisplayMask:
-			crDebug("kCGLPFADisplayMask: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFADisplayMask: %i", attrib[0]);
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFAVirtualScreenCount:
-			crDebug("kCGLPFAVirtualScreenCount: %i", attrib[0]);
+			crDebug("CGLChoosePixelFormat: kCGLPFAVirtualScreenCount: %i", attrib[0]);
 			attribCopy[copy++] = *(++attrib);
 			break;
 
@@ -216,7 +235,6 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 	}
 
 	attribCopy[copy++] = NULL;
-	crDebug("CGLChoosePixelFormat num=%i", copy);
 
 	if( stub.haveNativeOpenGL ) {
 		stub.wsInterface.CGLChoosePixelFormat( attribList, pix, npix );
@@ -235,17 +253,14 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 
 CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFormatAttribute attrib, long *value )
 {
-	crDebug("CGLDescribePixelFormat");
 	stubInit();
 
-	/* the max PFD index */
 	return stub.wsInterface.CGLDescribePixelFormat( pix, pix_num, attrib, value );
 }
 
 
 CGLContextObj CGLGetCurrentContext( void )
 {
-//	crDebug("CGLGetCurrentContext");
 	return (CGLContextObj) ( stub.currentContext ? stub.currentContext->id : NULL );
 }
 
@@ -269,74 +284,163 @@ CGLError CGLCopyContext( CGLContextObj src, CGLContextObj dst, unsigned long mas
 
 
 CGLError CGLQueryRendererInfo( unsigned long display_mask, CGLRendererInfoObj *rend, long *nrend ) {
+	DEBUG_FUNCTION(CGLQueryRendererInfo);
 	stubInit();
-	crDebug("CGLQueryRendererInfo");
+
 	return stub.wsInterface.CGLQueryRendererInfo( display_mask, rend, nrend );;
 }
 
 
 CGLError CGLDestroyRendererInfo( CGLRendererInfoObj rend ) {
-	crDebug( "CGLDestroyRendererInfo" );
+	DEBUG_FUNCTION(CGLDestroyRendererInfo);
+
 	return stub.wsInterface.CGLDestroyRendererInfo( rend );
 }
 
 
 CGLError CGLDescribeRenderer( CGLRendererInfoObj rend, long rend_num, CGLRendererProperty prop, long *value ) {
-	crDebug( "CGLDescribeRenderer" );
+	DEBUG_FUNCTION(CGLDescribeRenderer);
+
 	return stub.wsInterface.CGLDescribeRenderer( rend, rend_num, prop, value );
 }
 
 
 CGLError CGLSetOffScreen( CGLContextObj ctx, long width, long height, long rowbytes, void *baseaddr ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLSetOffScreen" );
+	DEBUG_FUNCTION(CGLSetOffScreen);
+
 	return stub.wsInterface.CGLSetOffScreen( context->cglc, width, height, rowbytes, baseaddr );
 }
 
 
 CGLError CGLGetOffScreen( CGLContextObj ctx, long *width, long *height, long *rowbytes, void **baseaddr ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLGetOffScreen" );
+	DEBUG_FUNCTION(CGLGetOffScreen);
+
 	return stub.wsInterface.CGLGetOffScreen( context->cglc, width, height, rowbytes, baseaddr );
 }
 
 
 CGLError CGLSetFullScreen( CGLContextObj ctx ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLSetFullScreen" );
+	DEBUG_FUNCTION(CGLSetFullScreen);
+
 	return stub.wsInterface.CGLSetFullScreen( context->cglc );
 }
 
 
 CGLError CGLClearDrawable( CGLContextObj ctx ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-//	crDebug( "CGLClearDrawable" );
+	DEBUG_FUNCTION(CGLClearDrawable);
 
-	if( crGetenv("CR_FORCE_CHROMIUM") )
-		return MakeCurrent(NULL, context, DRAW_HAVE);
+	if( context->currentDrawable )
+		return MakeCurrent( NULL, context );
 
 	return stub.wsInterface.CGLClearDrawable( context->cglc );
 }
 
+#define CGL_OPT_SWAP_RECT	0x01
+#define CGL_OPT_SWAP_LIMIT	0x02
+#define CGL_OPT_RASTERIZE	0x04
+#define CGL_OPT_STATE_VAL	0x10
+#define CGL_OPT_DRAW_LINE	0x20
 
 CGLError CGLEnable( CGLContextObj ctx, CGLContextEnable pname ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLEnable" );
-	return stub.wsInterface.CGLEnable( context->cglc, pname );
+	DEBUG_FUNCTION(CGLEnable);
+
+	if( stub.haveNativeOpenGL )
+		return stub.wsInterface.CGLEnable( context->cglc, pname );
+
+	switch( pname ) {
+	case kCGLCESwapRectangle:
+		context->options |= CGL_OPT_SWAP_RECT;
+		break;
+
+	case kCGLCESwapLimit:
+		context->options |= CGL_OPT_SWAP_LIMIT;
+		break;
+
+	case kCGLCERasterization:
+		context->options |= CGL_OPT_RASTERIZE;
+		break;
+
+	case kCGLCEStateValidation:
+		context->options |= CGL_OPT_STATE_VAL;
+		break;
+
+	case kCGLCEDrawSyncBlueLine:
+		context->options |= CGL_OPT_DRAW_LINE;
+		break;
+	}
+
+	return noErr;
 }
 
 
 CGLError CGLDisable( CGLContextObj ctx, CGLContextEnable pname ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLDisable" );
-	return stub.wsInterface.CGLDisable( context->cglc, pname );
+	DEBUG_FUNCTION(CGLDisable);
+
+	if( stub.haveNativeOpenGL )
+		return stub.wsInterface.CGLDisable( context->cglc, pname );
+
+	switch( pname ) {
+	case kCGLCESwapRectangle:
+		context->options &= ~CGL_OPT_SWAP_RECT;
+		break;
+
+	case kCGLCESwapLimit:
+		context->options &= ~CGL_OPT_SWAP_LIMIT;
+		break;
+
+	case kCGLCERasterization:
+		context->options &= ~CGL_OPT_RASTERIZE;
+		break;
+
+	case kCGLCEStateValidation:
+		context->options &= ~CGL_OPT_STATE_VAL;
+		break;
+
+	case kCGLCEDrawSyncBlueLine:
+		context->options &= ~CGL_OPT_DRAW_LINE;
+		break;
+	}
+
+	return noErr;
 }
 
 
 CGLError CGLIsEnabled( CGLContextObj ctx, CGLContextEnable pname, long *enable ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLIsEnabled" );
-	return stub.wsInterface.CGLIsEnabled( context->cglc, pname, enable );
+	DEBUG_FUNCTION(CGLIsEnabled);
+
+	if( stub.haveNativeOpenGL )
+		return stub.wsInterface.CGLIsEnabled( context->cglc, pname, enable );
+
+	switch( pname ) {
+	case kCGLCESwapRectangle:
+		*enable = ( context->options & CGL_OPT_SWAP_RECT ) != 0;
+		break;
+
+	case kCGLCESwapLimit:
+		*enable = ( context->options & CGL_OPT_SWAP_LIMIT ) != 0;
+		break;
+
+	case kCGLCERasterization:
+		*enable = ( context->options & CGL_OPT_RASTERIZE ) != 0;
+		break;
+
+	case kCGLCEStateValidation:
+		*enable = ( context->options & CGL_OPT_STATE_VAL ) != 0;
+		break;
+
+	case kCGLCEDrawSyncBlueLine:
+		*enable = ( context->options & CGL_OPT_DRAW_LINE ) != 0;
+		break;
+	}
+
+	return noErr;
 }
 
 
@@ -345,76 +449,119 @@ CGLError CGLIsEnabled( CGLContextObj ctx, CGLContextEnable pname, long *enable )
  *  we'll put off setting these values until the context has been created.
  */
 CGLError CGLSetParameter( CGLContextObj ctx, CGLContextParameter pname, const long *params ) {
-	CGLError retval = noErr;
-	ContextInfo *ci = GET_CONTEXTINFO( ctx );
+	ContextInfo *context = GET_CONTEXTINFO( ctx );
 
-	if( ci->type == UNDECIDED ) {
-		if( pname == kCGLCPSwapRectangle ) {
-			crDebug( "CGLSetParameter: SwapRec: {%i %i %i %i}", params[0], params[1], params[2], params[3] );
-			ci->parambits |= VISBIT_SWAP_RECT;
-			ci->swap_rect[0] = params[0];
-			ci->swap_rect[1] = params[1];
-			ci->swap_rect[2] = params[2];
-			ci->swap_rect[3] = params[3];
-		} else
-
-		if( pname == kCGLCPSwapInterval ) {
-			crDebug( "CGLSetParameter: SwapInterval: %i", *params );
-			ci->parambits |= VISBIT_SWAP_INTERVAL;
-			ci->swap_interval = *params;
-		} else
-
-		if( pname == kCGLCPClientStorage ) {
-			crDebug( "CGLSetParameter: ClientStorage: %i", *params );
-			ci->parambits |= VISBIT_CLIENT_STORAGE;
-			ci->client_storage = (unsigned long) *params;
-		}
-	} else {
+	if( stub.haveNativeOpenGL && context->type != UNDECIDED ) {
 		crDebug( "CGLSetParameter (Native) %i %i %i", ctx, pname, params[0] );
-		retval = stub.wsInterface.CGLSetParameter( ci->cglc, pname, params );
+		return stub.wsInterface.CGLSetParameter( context->cglc, pname, params );
 	}
 
-	return retval;
+	switch( pname ) {
+	case kCGLCPSwapRectangle:
+		crDebug( "CGLSetParameter: SwapRec: {%i %i %i %i}", params[0], params[1], params[2], params[3] );
+		context->swap_rect[0] = params[0];
+		context->swap_rect[1] = params[1];
+		context->swap_rect[2] = params[2];
+		context->swap_rect[3] = params[3];
+		break;
+
+	case kCGLCPSwapInterval:
+		crDebug( "CGLSetParameter: SwapInterval: %i", *params );
+		context->swap_interval = *params;
+		break;
+
+	case kCGLCPClientStorage:
+		crDebug( "CGLSetParameter: ClientStorage: %i", *params );
+		context->client_storage = (unsigned long) *params;
+		break;
+
+	case kCGLCPSurfaceOrder:
+		crDebug( "CGLSetParameter: SurfaceOrder: %i", *params );
+		context->surf_order = *params;
+		break;
+
+	case kCGLCPSurfaceOpacity:
+		crDebug( "CGLSetParameter: SurfaceOpacy: %i", *params );
+		context->surf_opacy = *params;
+		break;
+	}
+
+	return noErr;
 }
 
 
 CGLError CGLGetParameter(CGLContextObj ctx, CGLContextParameter pname, long *params) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLGetParameter" );
-	return stub.wsInterface.CGLGetParameter( context->cglc, pname, params );
+	DEBUG_FUNCTION(CGLGetParameter);
+
+	if( stub.haveNativeOpenGL )
+		return stub.wsInterface.CGLGetParameter( context->cglc, pname, params );
+
+	switch( pname ) {
+	case kCGLCPSwapRectangle:
+		params[0] = context->swap_rect[0];
+		params[1] = context->swap_rect[1];
+		params[2] = context->swap_rect[2];
+		params[3] = context->swap_rect[3];
+		break;
+
+	case kCGLCPSwapInterval:
+		*params = context->swap_interval;
+		break;
+
+	case kCGLCPClientStorage:
+		*params = context->client_storage;
+		break;
+
+	case kCGLCPSurfaceOrder:
+		*params = context->surf_order;
+		break;
+
+	case kCGLCPSurfaceOpacity:
+		*params = context->surf_opacy;
+		break;
+	}
+
+	return noErr;
 }
 
 
 CGLError CGLSetVirtualScreen(CGLContextObj ctx, long screen) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLSetVirtualScreen" );
+	DEBUG_FUNCTION(CGLSetVirtualScreen);
+
 	return stub.wsInterface.CGLSetVirtualScreen( context->cglc, screen );
 }
 
 
 CGLError CGLGetVirtualScreen(CGLContextObj ctx, long *screen) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLGetVirtualScreen" );
+	DEBUG_FUNCTION(CGLGetVirtualScreen);
+
 	return stub.wsInterface.CGLGetVirtualScreen( context->cglc, screen );
 }
 
 
 CGLError CGLSetOption(CGLGlobalOption pname, long param) {
-	crDebug( "CGLSetOption( %i, %i )", pname, param );
-	if( !stub.wsInterface.CGLSetOption )
-		stubInit();
+//	DEBUG_FUNCTION(CGLSetOption);
+	crDebug("CGLSetOption( %i )", pname);
+
+	stubInit();
+
 	return stub.wsInterface.CGLSetOption( pname, param );
 }
 
 
 CGLError CGLGetOption(CGLGlobalOption pname, long *param) {
-	crDebug( "CGLGetOption" );
+	DEBUG_FUNCTION(CGLGetOption);
+
 	return stub.wsInterface.CGLGetOption( pname, param );
 }
 
 
 void CGLGetVersion(long *majorvers, long *minorvers) {
-	crDebug( "CGLGetVersion" );
+	DEBUG_FUNCTION(CGLGetVersion);
+
 //	stub.wsInterface.CGLGetVersion( majorvers, minorvers );
 	*majorvers = 1;
 	*minorvers = 4;
@@ -422,7 +569,8 @@ void CGLGetVersion(long *majorvers, long *minorvers) {
 
 
 const char *CGLErrorString( CGLError err ) {
-	crDebug( "CGLErrorString( %i )", err );
+	DEBUG_FUNCTION(CGLErrorString);
+
 	return stub.wsInterface.CGLErrorString( err );
 }
 
@@ -433,36 +581,36 @@ GLboolean gluCheckExtension( const GLubyte *extName, const GLubyte *extString ) 
 
 
 /*
- * I don't know if the parameters for these last functions are right at all
+ * Not too sure about these function parameters, but they're close enough that things work.
  */
-CGLError CGLSetSurface( CGLContextObj ctx, unsigned long a, unsigned long b, unsigned long c ) {
+
+CGLError CGLSetSurface( CGLContextObj ctx, CGSConnectionID connID, CGSWindowID winID, CGSSurfaceID surfaceID ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLSetSurface: %i %i %i %i", ctx, a, b, c );
-//	if( context->type == UNDECIDED )
-//		crDebug("it doesnt know what it wants to be!");
-	context->surf_a = a;
-	context->surf_b = b;
-	context->surf_c = c;
+	WindowInfo  *window  = stubGetWindowInfo( winID );
+	DEBUG_FUNCTION(CGLSetSurface);
 
-	if( crGetenv("CR_FORCE_CHROMIUM") )
-		return MakeCurrent_Force(0, context);
+	window->surface = surfaceID;
 
-	return stub.wsInterface.CGLSetSurface(context->cglc, a, b, c);
+	return MakeCurrent( window, context );
 }
 
-
-CGLError CGLGetSurface( CGLContextObj ctx, unsigned long b, unsigned long c, unsigned long d ) {
+/*
+ * Parameters are unknown, so we can't do anything ... yet
+ */
+CGLError CGLGetSurface( CGLContextObj ctx, CGSConnectionID connID, CGSWindowID winID, CGSSurfaceID *surfaceID ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLGetSurface: %i %i %i %i", ctx, b, c, d );
-	return stub.wsInterface.CGLGetSurface( context->cglc, b, c, d );
+	DEBUG_FUNCTION(CGLGetSurface);
+
+	return stub.wsInterface.CGLGetSurface( context->cglc, connID, winID, surfaceID );
 }
+
 
 CGLError CGLUpdateContext( CGLContextObj ctx ) {
 	ContextInfo *context = GET_CONTEXTINFO( ctx );
-	crDebug( "CGLUpdateContext" );
-	if( crGetenv("CR_FORCE_CHROMIUM") )
-		return noErr;
+	DEBUG_FUNCTION(CGLUpdateContext);
 
-	return stub.wsInterface.CGLUpdateContext( context->cglc );
+	stubSwapContextBuffers( context, 0 );
+
+	return noErr;
 }
 

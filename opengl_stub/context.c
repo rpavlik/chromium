@@ -33,7 +33,7 @@
 #include "stub.h"
 
 
-#if !( defined(WINDOWS) || defined(DARWIN) )
+#if !( defined(WINDOWS) || defined(Darwin) )
 
 /**
  * Get the display string for the given display pointer.
@@ -136,6 +136,8 @@ stubNewWindow( const char *dpyName, GLint visBits )
 	WindowInfo *winInfo;
 	GLint spuWin, size[2];
 	
+	crDebug( "stubNewWindow( \"%s\", %i )", dpyName, visBits );
+	
 	spuWin = stub.spu->dispatch_table.WindowCreate( dpyName, visBits );
 	if (spuWin < 0) {
 		 return -1;
@@ -168,8 +170,8 @@ stubNewWindow( const char *dpyName, GLint visBits )
 	/* Use spuWin as the hash table index and GLX/WGL handle*/
 #ifdef WINDOWS
 	winInfo->drawable = (HDC) spuWin;
-#elif defined(DARWIN)
-	winInfo->drawable = (WindowRef) spuWin;
+#elif defined(Darwin)
+	winInfo->drawable = (CGSWindowID) spuWin;
 #else
 	winInfo->drawable = (GLXDrawable) spuWin;
 #endif
@@ -188,9 +190,9 @@ stubNewWindow( const char *dpyName, GLint visBits )
 #ifdef WINDOWS
 WindowInfo *
 stubGetWindowInfo( HDC drawable )
-#elif defined(DARWIN)
+#elif defined(Darwin)
 WindowInfo *
-stubGetWindowInfo( WindowRef drawable )
+stubGetWindowInfo( CGSWindowID drawable )
 #else
 WindowInfo *
 stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
@@ -201,14 +203,14 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 		winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 		if (!winInfo)
 			return NULL;
-#if !( defined(WINDOWS) || defined(DARWIN) )
+#if !( defined(WINDOWS) || defined(Darwin) )
 		crStrncpy(winInfo->dpyName, DisplayString(dpy), MAX_DPY_NAME);
 		winInfo->dpyName[MAX_DPY_NAME-1] = 0;
 #endif
 		winInfo->drawable = drawable;
 		winInfo->type = UNDECIDED;
 		winInfo->spuWindow = -1;
-#if !( defined(WINDOWS) || defined(DARWIN) )
+#if !( defined(WINDOWS) || defined(Darwin) )
 		winInfo->dpy = dpy;
 #endif
 		crHashtableAdd(stub.windowTable, (unsigned int) drawable, winInfo);
@@ -266,7 +268,7 @@ stubNewContext( const char *dpyName, GLint visBits, ContextType type )
 #ifdef WINDOWS
 HGLRC
 stubCreateContext( HDC hdc )
-#elif defined(DARWIN)
+#elif defined(Darwin)
 CGLError
 stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
 #else
@@ -296,7 +298,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 	sprintf(dpyName, "%d", hdc);
 	if (stub.haveNativeOpenGL)
 		stub.desiredVisual |= FindVisualInfo( hdc );
-#elif defined(DARWIN)
+#elif defined(Darwin)
 	dpyName[0] = '\0';
 	if( stub.haveNativeOpenGL )
 		stub.desiredVisual |= FindVisualInfo( pix );
@@ -315,7 +317,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 		return 0;
 
 #ifndef WINDOWS
-#ifndef DARWIN
+#ifndef Darwin
 	context->dpy = dpy;
 	context->visual = vis;
 	context->direct = direct;
@@ -325,11 +327,11 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 
 #ifdef WINDOWS
 	return (HGLRC) context->id;
-#elif defined(DARWIN)
+#elif defined(Darwin)
+	// Store extra info
 	if( stub.haveNativeOpenGL )
 		stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFADisplayMask, &context->disp_mask );
-	else
-		context->disp_mask = 0;
+
 	*ctx = (CGLContextObj) context->id;
 	return noErr;
 #else
@@ -338,7 +340,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 }
 
 
-#ifdef DARWIN
+#ifdef Darwin
 
 #define SET_ATTR(l,i,a)		( (l)[(i)++] = (a) )
 #define SET_ATTR_V(l,i,a,v) ( SET_ATTR(l,i,a), SET_ATTR(l,i,v) )
@@ -392,7 +394,7 @@ InstantiateNativeContext( WindowInfo *window, ContextInfo *context )
 #ifdef WINDOWS
 	context->hglrc = stub.wsInterface.wglCreateContext( window->drawable );
 	return context->hglrc ? GL_TRUE : GL_FALSE;
-#elif defined(DARWIN)
+#elif defined(Darwin)
 	CGLContextObj shareCtx = NULL;
 	CGLPixelFormatObj pix;
 	long npix;
@@ -409,8 +411,6 @@ InstantiateNativeContext( WindowInfo *window, ContextInfo *context )
 		else
 			shareCtx = context->cglc;
 	}
-
-	/* XXX \todo We need to get this to work (?) */
 
 	stubSetPFA( context, attribs, 16, &ind );
 
@@ -431,10 +431,10 @@ InstantiateNativeContext( WindowInfo *window, ContextInfo *context )
 
 		if( context->parambits & VISBIT_CLIENT_STORAGE )
 			stub.wsInterface.CGLSetParameter( context->cglc, kCGLCPClientStorage, &(context->client_storage) );
-		
+
 		context->parambits = 0;
 	}
-	
+
 	return context->cglc ? GL_TRUE : GL_FALSE;
 #else
 	GLXContext shareCtx = 0;
@@ -560,56 +560,46 @@ GetCursorPosition( const WindowInfo *window, int pos[2] )
 	}
 }
 
-#elif defined(DARWIN)
+#elif defined(Darwin)
+
+extern OSStatus CGSGetScreenRectForWindow( CGSConnectionID cid, CGSWindowID wid, float *outRect );
+extern OSStatus CGSGetWindowBounds( CGSConnectionID cid, CGSWindowID wid, float *bounds );
 
 void
 stubGetWindowGeometry( const WindowInfo *window, int *x, int *y, unsigned int *w, unsigned int *h )
 {
-	Rect rect;
+	float rect[4];
 
-#if 1
-	GetWindowBounds( window->drawable, kWindowStructureRgn, &rect );
-#else
-	GetWindowPortBounds( window->drawable, &rect );
-#endif
+	CGSGetWindowBounds( _CGSDefaultConnection(), window->drawable, rect );
 
-	*x = rect.left;
-	*y = rect.top;
-	*w = rect.right  - rect.left;
-	*h = rect.bottom - rect.top;
+	*x = (int) rect[0];
+	*y = (int) rect[1];
+	*w = (int) rect[2];
+	*h = (int) rect[3];
 }
 
 
 static void
 GetWindowTitle( const WindowInfo *window, char *title )
 {
-	/* we dont have a DC, just a window :)
-	 * XXX figure this out plz
-	 */
-	if( window->drawable ) {
-		GetWTitle( window->drawable, title );
-	} else
-		title[0] = 0;
+	/* XXX \todo Darwn window Title */
+	title[0] = '\0';
 }
+
 
 static void
 GetCursorPosition( const WindowInfo *window, int pos[2] )
 {
-	GrafPtr save, port;
-	Point pt;
-	Rect rect = {0,0,0,0};
+	Point mouse_pos;
+	float window_rect[4];
 
-	WindowRef win = FrontWindow();
+	GetMouse( &mouse_pos );
+	CGSGetScreenRectForWindow( _CGSDefaultConnection(), window->drawable, window_rect );
 
-	GetPort( &save );
-	port = GetWindowPort( win );
-	GetPortBounds( port, &rect );
-	SetPort( port );
-	GetMouse( &pt );	// this gets local
-	SetPort( save );
+	pos[0] = mouse_pos.h - (int) window_rect[0];
+	pos[1] = (int) window_rect[3] - (mouse_pos.v - (int) window_rect[1]);
 
-	pos[0] = pt.h;
-	pos[1] = (rect.bottom - rect.top) - pt.v;
+	crDebug( "%i %i", pos[0], pos[1] );
 }
 
 #else
@@ -714,14 +704,6 @@ stubCheckUseChromium( WindowInfo *window )
 {
 	int x, y;
 	unsigned int w, h;
-
-#ifdef DARWIN
-	if( !window )
-		return GL_FALSE;
-
-	if( !crGetenv("CR_FORCE_CHROMIUM") )
-		return GL_FALSE;
-#endif
 
 	/* If the provided window is CHROMIUM, we're clearly intended
 	 * to create a CHROMIUM context.
@@ -843,26 +825,15 @@ stubCheckUseChromium( WindowInfo *window )
 
 
 GLboolean
-#ifdef DARWIN
-/*
- * 'have_drawable' is a little work-around for CGLSetCurrentContext,
- *  which doesn't come with a drawable
- */
-stubMakeCurrent( WindowInfo *window, ContextInfo *context, GLenum drawable_type )
-#else
 stubMakeCurrent( WindowInfo *window, ContextInfo *context )
-#endif
 {
 	GLboolean retVal;
 
 	/*
 	 * Get WindowInfo and ContextInfo pointers.
 	 */
-#ifdef DARWIN
-	if( !context || (drawable_type==DRAW_HAVE && !window) ) {
-#else
+
 	if (!context || !window) {
-#endif
 		if (stub.currentContext)
 			stub.currentContext->currentDrawable = NULL;
 		if (context)
@@ -875,18 +846,13 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 	stubCheckMultithread();
 #endif
 
-
 	if (context->type == UNDECIDED) {
 		/* Here's where we really create contexts */
 #ifdef CHROMIUM_THREADSAFE
 		crLockMutex(&stub.mutex);
 #endif
 
-#ifdef DARWIN
-		if( drawable_type==DRAW_HAVE && stubCheckUseChromium(window) ) {
-#else
-		if(stubCheckUseChromium(window)) {
-#endif
+		if( stubCheckUseChromium(window) ) {
 			/*
 			 * Create a Chromium context.
 			 */
@@ -894,16 +860,9 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			CRASSERT(stub.spu->dispatch_table.CreateContext);
 			context->type = CHROMIUM;
 
-			/* For Darwin, the window should be created first. (shouldn't it?) */
-#ifdef DARWIN
-			if( window->spuWindow == -1 )
-				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
-			context->spuContext = stub.spu->dispatch_table.CreateContext( context->dpyName, context->visBits );
-#else
 			context->spuContext = stub.spu->dispatch_table.CreateContext( context->dpyName, context->visBits );
 			if (window->spuWindow == -1) 
 				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
-#endif
 		}
 		else {
 			/*
@@ -931,11 +890,12 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		 */
 #ifdef WINDOWS
 		retVal = (GLboolean) stub.wsInterface.wglMakeCurrent( window->drawable, context->hglrc );
-#elif defined(DARWIN)
-		if( drawable_type == DRAW_SET_CURRENT )
+#elif defined(Darwin)
+		// XXX \todo We need to differentiate between these two..
+		if( 1 )
 			retVal = (stub.wsInterface.CGLSetCurrentContext(context->cglc) == noErr);
 		else
-			retVal = (stub.wsInterface.CGLSetSurface(context->cglc, context->surf_a, context->surf_b, context->surf_c) == noErr);
+			retVal = (stub.wsInterface.CGLSetSurface(context->cglc, _CGSDefaultConnection(), window->drawable, window->surface) == noErr);
 #else
 		retVal = (GLboolean) stub.wsInterface.glXMakeCurrent( window->dpy, window->drawable, context->glxContext );
 #endif
@@ -967,9 +927,6 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		}
 	}
 
-#ifdef DARWIN
-	if( drawable_type == DRAW_HAVE )
-#endif
 	window->type = context->type;
 	context->currentDrawable = window;
 	stub.currentContext = context;
@@ -992,9 +949,7 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			/* no API switch needed */
 		}
 	}
-#ifdef DARWIN
-	if( drawable_type == DRAW_HAVE )
-#endif
+
 	if (!window->width && window->type == CHROMIUM) {
 		/* Now call Viewport to setup initial parameters */
 		int x, y;
@@ -1028,11 +983,12 @@ stubDestroyContext( unsigned long contextId )
 	context = (ContextInfo *) crHashtableSearch(stub.contextTable, contextId);
 
 	CRASSERT(context);
+	crDebug( "stubDestroyContext( %i )", contextId );
 
 	if (context->type == NATIVE) {
 #ifdef WINDOWS
 		stub.wsInterface.wglDeleteContext( context->hglrc );
-#elif defined(DARWIN)
+#elif defined(Darwin)
 		stub.wsInterface.CGLDestroyContext( context->cglc );
 #else
 		stub.wsInterface.glXDestroyContext( context->dpy, context->glxContext );
@@ -1053,27 +1009,6 @@ stubDestroyContext( unsigned long contextId )
 }
 
 
-#ifdef DARWIN
-void
-stubSwapContextBuffers( const ContextInfo *context, GLint flags )
-{
-	if( !context )
-		return;
-
-	if( context->type == NATIVE ) {
-		stub.wsInterface.CGLFlushDrawable( context->cglc );
-	} else if( context->type == CHROMIUM ) {
-		if( context->currentDrawable )
-			stubSwapBuffers( context->currentDrawable, 0 );
-		else
-			crDebug("stubSwapContextBuffers: Not sure what to do with chromium context buffers.");
-	} else {
-		crDebug("Calling SwapContextBuffers on a window we haven't seen before (no-op).");
-	}
-}
-#endif
-
-
 void
 stubSwapBuffers( const WindowInfo *window, GLint flags )
 {
@@ -1088,7 +1023,7 @@ stubSwapBuffers( const WindowInfo *window, GLint flags )
 		/*printf("*** Swapping native window %d\n", (int) drawable);*/
 #ifdef WINDOWS
 		(void) stub.wsInterface.wglSwapBuffers( window->drawable );
-#elif defined(DARWIN)
+#elif defined(Darwin)
 		/* ...is this ok? */
 /*		stub.wsInterface.CGLFlushDrawable( context->cglc ); */
 		crDebug("stubSwapBuffers: unable to swap (no context!)");
