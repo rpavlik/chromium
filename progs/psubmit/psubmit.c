@@ -189,9 +189,11 @@ int main(int argc, char *argv[])
 
 	for (frame = 0; ; frame++)
 	{
+		/*
 		static const GLfloat boundingBox[6] = {
 			-0.85, 0.85, -0.85, 0.85, -0.7, 0.7
 		};
+		*/
 		if (clearFlag)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
