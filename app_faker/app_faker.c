@@ -622,6 +622,10 @@ static void do_it( char *argv[] )
 		path = crGetenv( "LD_LIBRARYN32_PATH" );
 		if ( !path )
 			path = crGetenv( "LD_LIBRARY_PATH" );
+#elif defined(Darwin)
+		path = crGetenv( "DYLD_LIBRARY_PATH" );
+		if( !path )
+			path = crGetenv( "LD_LIBRARY_PATH" );
 #else
 		path = crGetenv( "LD_LIBRARY_PATH" );
 #if defined(AIX)
@@ -649,6 +653,8 @@ static void do_it( char *argv[] )
 				"on the command line, but didn't.  I searched the LD_LIBRARY_PATH "
 #if defined(IRIX) || defined(IRIX64)
 				"(actually, I looked in LD_LIBRARYN32_PATH first) "
+#elif defined(Darwin)
+				"(actually, I looked in DYLD_LIBRARY_PATH first) "
 #endif
 				"for \"%s\", but couldn't find it.  I even asked the "
 				"mothership!\n", OPENGL_CLIENT_LIB );
@@ -811,6 +817,8 @@ static void usage( void )
 			"PATH "
 #elif defined(IRIX) || defined(IRIX64)
 			"LD_LIBRARYN32_PATH (and LD_LIBRARY_PATH) "
+#elif defined(Darwin)
+			"DYLD_LIBRARY_PATH (and LD_LIBRARY_PATH) "
 #else
 			"LD_LIBRARY_PATH "
 #endif
