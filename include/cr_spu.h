@@ -3,9 +3,12 @@
  *
  * See the file LICENSE.txt for information on redistributing this software.
  */
-
 #ifndef CR_SPU_H
 #define CR_SPU_H
+
+#ifdef DARWIN
+#include <OpenGL/CGLTypes.h>
+#endif
 
 #ifdef WINDOWS
 #define SPULOAD_APIENTRY __stdcall
@@ -140,22 +143,6 @@ typedef BOOL (WGL_APIENTRY *wglGetPixelFormatAttribfvEXTFunc_t)(HDC, int, int, U
 typedef const GLubyte *(WGL_APIENTRY *glGetStringFunc_t)( GLenum );
 typedef const GLubyte *(WGL_APIENTRY *wglGetExtensionsStringEXTFunc_t)( HDC );
 /*@}*/
-#elif defined(DARWIN)
-/**
- * Apple/AGL
- */
-/*@{*/
-typedef AGLPixelFormat (*aglChoosePixelFormatFunc_t) (const AGLDevice *, GLint, const GLint *);
-// typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
-typedef AGLContext (*aglCreateContextFunc_t)( AGLPixelFormat, AGLContext );
-typedef GLboolean (*aglUseFontFunc_t)(AGLContext, GLint, Style, GLint, GLint, GLint, GLint);
-typedef GLboolean (*aglDestroyContextFunc_t)( AGLContext );
-typedef GLboolean (*aglSetCurrentContextFunc_t)( AGLContext );
-typedef void (*aglSwapBuffersFunc_t)( AGLContext );
-// typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
-// typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
-typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
-/*@}*/
 #else
 /**
  * X11/GLX
@@ -184,6 +171,44 @@ typedef Bool (*glXResetFrameCountNVFunc_t)(Display *dpy, int screen);
 #endif
 
 
+#ifdef DARWIN
+  typedef CGLError (*CGLChoosePixelFormatFunc_t)  (const CGLPixelFormatAttribute *attribs,
+					       CGLPixelFormatObj *pix, long *npix);
+  typedef CGLError (*CGLDestroyPixelFormatFunc_t)  (CGLPixelFormatObj pix);
+  typedef CGLError (*CGLDescribePixelFormatFunc_t) (CGLPixelFormatObj pix, long pix_num, CGLPixelFormatAttribute attrib, long *value);
+  typedef CGLError (*CGLQueryRendererInfoFunc_t) (unsigned long display_mask, CGLRendererInfoObj *rend, long *nrend);
+  typedef CGLError (*CGLDestroyRendererInfoFunc_t) (CGLRendererInfoObj rend);
+  typedef CGLError (*CGLDescribeRendererFunc_t) (CGLRendererInfoObj rend, long rend_num, CGLRendererProperty prop, long *value);
+  typedef CGLError (*CGLCreateContextFunc_t) (CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx);
+  typedef CGLError (*CGLDestroyContextFunc_t) (CGLContextObj ctx);
+  typedef CGLError (*CGLCopyContextFunc_t) (CGLContextObj src, CGLContextObj dst, unsigned long mask);
+  typedef CGLError (*CGLSetCurrentContextFunc_t)(CGLContextObj ctx);
+  typedef CGLContextObj (*CGLGetCurrentContextFunc_t)(void);
+  typedef CGLError (*CGLCreatePBufferFunc_t) (long width, long height, unsigned long target, unsigned long internalFormat, long max_level, CGLPBufferObj *pbuffer);
+  typedef CGLError (*CGLDestroyPBufferFunc_t) (CGLPBufferObj pbuffer);
+  typedef CGLError (*CGLDescribePBufferFunc_t) (CGLPBufferObj obj, long *width, long *height, unsigned long *target, unsigned long *internalFormat, long *mipmap) ;
+  typedef CGLError (*CGLTexImagePBufferFunc_t) (CGLContextObj ctx, CGLPBufferObj pbuffer, unsigned long source) ;
+  typedef CGLError (*CGLSetOffScreenFunc_t) (CGLContextObj ctx, long width, long height, long rowbytes, void *baseaddr);
+  typedef CGLError (*CGLGetOffScreenFunc_t)(CGLContextObj ctx, long *width, long *height, long *rowbytes, void **baseaddr);
+  typedef CGLError (*CGLSetFullScreenFunc_t)(CGLContextObj ctx);
+  typedef CGLError (*CGLSetPBufferFunc_t) (CGLContextObj ctx, CGLPBufferObj pbuffer, unsigned long face, long level, long screen) ;
+  typedef CGLError (*CGLGetPBufferFunc_t) (CGLContextObj ctx, CGLPBufferObj *pbuffer, unsigned long *face, long *level, long *screen) ;
+  typedef CGLError (*CGLClearDrawableFunc_t)(CGLContextObj ctx);
+  typedef CGLError (*CGLFlushDrawableFunc_t)(CGLContextObj ctx);
+  typedef CGLError (*CGLEnableFunc_t) (CGLContextObj ctx, CGLContextEnable pname);
+  typedef CGLError (*CGLDisableFunc_t) (CGLContextObj ctx, CGLContextEnable pname);
+  typedef CGLError (*CGLIsEnabledFunc_t) (CGLContextObj ctx, CGLContextEnable pname, long *enable);
+  typedef CGLError (*CGLSetParameterFunc_t) (CGLContextObj ctx, CGLContextParameter pname, const long *params);
+  typedef CGLError (*CGLGetParameterFunc_t) (CGLContextObj ctx, CGLContextParameter pname, long *params);
+  typedef CGLError (*CGLSetVirtualScreenFunc_t) (CGLContextObj ctx, long screen);
+  typedef CGLError (*CGLGetVirtualScreenFunc_t)(CGLContextObj ctx, long *screen);
+  typedef CGLError (*CGLSetOptionFunc_t) (CGLGlobalOption pname, long param);
+  typedef CGLError (*CGLGetOptionFunc_t) (CGLGlobalOption pname, long *param);
+  typedef void (*CGLGetVersionFunc_t)(long *majorvers, long *minorvers);
+  typedef char *(*CGLErrorStringFunc_t)(CGLError error);
+#endif
+
+
 /**
  * Package up the WGL/GLX function pointers into a struct.  We use
  * this in a few different places.
@@ -203,12 +228,6 @@ typedef struct {
 	wglGetPixelFormatAttribivEXTFunc_t wglGetPixelFormatAttribivEXT;
 	wglGetPixelFormatAttribfvEXTFunc_t wglGetPixelFormatAttribfvEXT;
 	wglGetExtensionsStringEXTFunc_t wglGetExtensionsStringEXT;
-#elif defined(DARWIN)
-	aglChoosePixelFormatFunc_t aglChoosePixelFormat;
-	aglCreateContextFunc_t aglCreateContext;
-	aglUseFontFunc_t aglUseFont;
-	aglDestroyContextFunc_t aglDestroyContext;
-	aglSetCurrentContextFunc_t aglSetCurrentContext;
 	aglSwapBuffersFunc_t aglSwapBuffers;
 #else
 	glXGetConfigFunc_t  glXGetConfig;
@@ -229,6 +248,41 @@ typedef struct {
 	glXQueryMaxSwapGroupsNVFunc_t glXQueryMaxSwapGroupsNV;
 	glXQueryFrameCountNVFunc_t glXQueryFrameCountNV;
 	glXResetFrameCountNVFunc_t glXResetFrameCountNV;
+#endif
+#ifdef DARWIN
+  CGLChoosePixelFormatFunc_t CGLChoosePixelFormat;
+  CGLDestroyPixelFormatFunc_t CGLDestroyPixelFormat;
+  CGLDescribePixelFormatFunc_t CGLDescribePixelFormat;
+  CGLQueryRendererInfoFunc_t CGLQueryRendererInfo;
+  CGLDestroyRendererInfoFunc_t CGLDestroyRendererInfo;
+  CGLDescribeRendererFunc_t CGLDescribeRenderer;
+  CGLCreateContextFunc_t CGLCreateContext;
+  CGLDestroyContextFunc_t CGLDestroyContext;
+  CGLSetCurrentContextFunc_t CGLSetCurrentContext;
+  CGLCopyContextFunc_t CGLCopyContext;
+  CGLGetCurrentContextFunc_t CGLGetCurrentContext;
+  CGLCreatePBufferFunc_t CGLCreatePBuffer;
+  CGLDestroyPBufferFunc_t CGLDestroyPBuffer;
+  CGLDescribePBufferFunc_t CGLDescribePBuffer;
+  CGLTexImagePBufferFunc_t CGLTexImagePBuffer;
+  CGLSetPBufferFunc_t CGLSetPBuffer;
+  CGLGetPBufferFunc_t CGLGetPBuffer;
+  CGLEnableFunc_t CGLEnable;
+  CGLDisableFunc_t CGLDisable;
+  CGLIsEnabledFunc_t CGLIsEnabled;
+  CGLSetParameterFunc_t CGLSetParameter;
+  CGLGetParameterFunc_t CGLGetParameter;
+  CGLSetOffScreenFunc_t CGLSetOffScreen;
+  CGLGetOffScreenFunc_t CGLGetOffScreen;
+  CGLSetFullScreenFunc_t CGLSetFullScreen;
+  CGLClearDrawableFunc_t CGLClearDrawable;
+  CGLFlushDrawableFunc_t CGLFlushDrawable;
+  CGLSetVirtualScreenFunc_t CGLSetVirtualScreen;
+  CGLGetVirtualScreenFunc_t CGLGetVirtualScreen;
+  CGLSetOptionFunc_t CGLSetOption;
+  CGLGetOptionFunc_t CGLGetOption;
+  CGLGetVersionFunc_t CGLGetVersion;
+  CGLErrorStringFunc_t CGLErrorString;
 #endif
 	glGetStringFunc_t glGetString;
 } crOpenGLInterface;

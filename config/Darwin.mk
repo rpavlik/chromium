@@ -3,9 +3,10 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+DARWIN=1
 G++-INCLUDE-DIR = /usr/include/g++
-CXX = c++ -fno-common
-CC = cc -fno-common
+CXX = g++ -fno-common
+CC = gcc -I/sw/include -I$(TOP)/include -I/usr/X11R6/include -fno-common
 
 CXXFLAGS          += -DDARWIN -Wall -Werror -Wno-format
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG
@@ -15,7 +16,7 @@ CFLAGS            += -DDARWIN -Wall -Werror -Wno-format
 C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
-LDFLAGS           += 
+LDFLAGS           += -L/usr/X11R6/lib -L/sw/lib
 LD_RELEASE_FLAGS  += 
 LD_DEBUG_FLAGS    += 
 
@@ -28,7 +29,7 @@ LEXLIB = -ll
 YACC = bison -y -d
 LD = $(CXX)
 AR = ar
-ARCREATEFLAGS = cr
+ARCREATEFLAGS = crs
 RANLIB = ranlib
 LN = ln -s
 MKDIR = mkdir -p
@@ -45,7 +46,16 @@ DLLSUFFIX = .dylib
 LIBSUFFIX = .a
 OBJSUFFIX = .o
 MV = mv
-SHARED_LDFLAGS += -dynamiclib
+ifdef MOTHERSHIP
+SHARED_LDFLAGS += -dynamiclib -noprebind
+else
+ifdef SPU
+SHARED_LDFLAGS += -bundle -noprebind
+else
+SHARED_LDFLAGS += -dynamiclib -noprebind -multiply_defined suppress 
+endif
+endif
+
 PERL = perl
 PYTHON = python
 JGRAPH = /u/eldridge/bin/IRIX/jgraph

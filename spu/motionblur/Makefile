@@ -4,6 +4,7 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ../..
+SPU=1
 
 SHARED = 1
 LIBRARY = motionblurspu

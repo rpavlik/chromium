@@ -6,6 +6,7 @@
 TOP = ../../
 include ${TOP}/arch.mk
 
+
 FILES = \
 	packertest0 \
 	packertest100 \
@@ -53,13 +54,18 @@ FILES = \
 	packertestPointParamARB \
 	packertestProgramARB \
 	packertestProgramNV \
-	packertestQueriesARB
+	packertestQueriesARB \
+	packertestglobal
 
 PROGRAM = packertest
 GLUT = 1
 OPENGL = 1
 LIBRARIES = crutil crfaker crmothership spuload
-LDFLAGS += -lcrutil -lcrfaker -lcrmothership -lspuload
+LDFLAGS += -lcrutil -lcrfaker -lcrmothership -lspuload 
+
+ifdef DARWIN
+LDFLAGS += -noprebind -multiply_defined suppress -bind_at_load
+endif
 
 
 PRECOMP = \

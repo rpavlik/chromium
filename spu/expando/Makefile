@@ -5,6 +5,7 @@
 
 TOP = ../..
 
+SPU = 1
 SHARED = 1
 LIBRARY = expandospu
 FILES = expandospu \

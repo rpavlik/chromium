@@ -29,7 +29,8 @@ print """
 #include <direct.h>
 #define SYSTEM_GL "opengl32.dll"
 #elif defined (DARWIN)
-#define SYSTEM_GL "libdl.dylib"
+#define SYSTEM_GL "libGL.dylib"
+#define SYSTEM_CGL "OpenGL"
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
 #if defined(AIX)
 #define SYSTEM_GL "libGL.o"
@@ -44,6 +45,14 @@ extern glxfuncptr glxGetProcAddressARB( const GLubyte *name );
 
 static CRDLL *glDll = NULL;
 
+#ifdef DARWIN
+#define SYSTEM_GL_LIB_DIR   "/System/Library/Frameworks/OpenGL.framework/Libraries"
+#define SYSTEM_CGL_LIB_DIR  "/System/Library/Frameworks/OpenGL.framework"
+#define SYSTEM_GLX_LIB_DIR  "/usr/X11R6/lib"
+
+static CRDLL *glxDll = NULL;
+static CRDLL *cglDll = NULL;
+#endif
 
 /*
  * Add an entry to the SPUNamedFunctionTable
@@ -131,9 +140,22 @@ __findSystemLib( char *provided_system_path, char *lib )
 
 
 static CRDLL *
+#ifdef DARWIN
+__findSystemGL( char *provided_system_path, char *default_system_path, char *provided_lib_name)
+#else
 __findSystemGL( char *provided_system_path )
+#endif
 {
-	return __findSystemLib( provided_system_path, SYSTEM_GL );
+#ifdef DARWIN
+  if (provided_system_path && (crStrlen(provided_system_path) > 0))
+    {
+      return __findSystemLib (provided_system_path, provided_lib_name);
+    }
+
+    return __findSystemLib (default_system_path, provided_lib_name);
+#else
+   return __findSystemLib( provided_system_path, SYSTEM_GL );
+#endif
 }
 
 static SPUGenericFunction
@@ -232,17 +254,89 @@ print """
 	int i;
 
 	char *env_syspath = crGetenv( "CR_SYSTEM_GL_PATH" );
+#ifdef DARWIN
+	char *env_glx_syspath = crGetenv ( "CR_SYSTEM_GLX_PATH" );
+	char *env_cgl_syspath = crGetenv ( "CR_SYSTEM_CGL_PATH" );
+#endif
 	
 	crDebug( "Looking for the system's OpenGL library..." );
+#ifdef DARWIN
+	glDll = __findSystemGL( env_syspath, SYSTEM_GL_LIB_DIR, SYSTEM_GL );
+#else
 	glDll = __findSystemGL( env_syspath );
+#endif
 	if (!glDll)
 	{
 		crError("Unable to find system OpenGL!");
 		return 0;
 	}
-
+	
 	crDebug( "Found it in %s.", !env_syspath ? "default path" : env_syspath );
+#ifdef DARWIN
+	crDebug( "Looking for the system's GLX library..." );
+
+	glxDll = __findSystemGL( env_glx_syspath, SYSTEM_GLX_LIB_DIR, SYSTEM_GL );
+	if (!glxDll)
+	{
+		crError("Unable to find system GLX library!");
+		return 0;
+	}
+	
+	crDebug( "Found it in %s.", !env_glx_syspath ? "default path" : env_glx_syspath );
+
+	crDebug( "Looking for the system's CGL library..." );
+
+	cglDll = __findSystemGL( env_cgl_syspath, SYSTEM_CGL_LIB_DIR, SYSTEM_CGL );
+	if (!cglDll)
+	{
+		crError("Unable to find system CGL library!");
+		return 0;
+	}
+	
+	crDebug( "Found it in %s.", !env_cgl_syspath ? "default path" : env_cgl_syspath );
+
+
+#endif
 """
+
+in_gl_functions = [
+  "CGLGetCurrentContext",
+  "CGLSetCurrentContext"
+]
+
+useful_cgl_functions = [
+  "CGLChoosePixelFormat",
+  "CGLDestroyPixelFormat",
+  "CGLDescribePixelFormat",
+  "CGLQueryRendererInfo",
+  "CGLDestroyRendererInfo",
+  "CGLDescribeRenderer",
+  "CGLCreateContext",
+  "CGLDestroyContext",
+  "CGLCopyContext",
+  "CGLCreatePBuffer",
+  "CGLDestroyPBuffer",
+  "CGLDescribePBuffer",
+  "CGLTexImagePBuffer",
+  "CGLSetPBuffer",
+  "CGLGetPBuffer",
+  "CGLEnable",
+  "CGLDisable",
+  "CGLIsEnabled",
+  "CGLSetParameter",
+  "CGLGetParameter",
+  "CGLSetOffScreen",
+  "CGLGetOffScreen",
+  "CGLSetFullScreen",
+  "CGLClearDrawable",
+  "CGLFlushDrawable",
+  "CGLSetVirtualScreen",
+  "CGLGetVirtualScreen",
+  "CGLSetOption",
+  "CGLGetOption",
+  "CGLGetVersion",
+  "CGLErrorString"
+];
 
 useful_wgl_functions = [
 	"wglGetProcAddress",
@@ -259,14 +353,7 @@ useful_wgl_functions = [
 	"wglGetPixelFormatAttribfvEXT",
 	"glGetString"
 ]
-useful_agl_functions = [
-       "aglChoosePixelFormat",
-       "aglCreateContext",
-       "aglUseFont",
-       "aglDestroyContext",
-       "aglSetCurrentContext",
-       "aglSwapBuffers"
-]
+
 useful_glx_functions = [
 	"glXGetConfig",
 	"glXQueryExtension",
@@ -296,11 +383,8 @@ print '#ifdef WINDOWS'
 for fun in useful_wgl_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun,fun,fun)
 
-print '#elif defined(DARWIN)'
-for fun in useful_agl_functions:
-	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun,fun,fun)
-
 print '#else'
+print '#ifndef DARWIN'
 print '\t/* GLX */'
 
 # XXX merge these loops?
@@ -308,6 +392,21 @@ for fun in useful_glx_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun, fun, fun)
 for fun in possibly_useful_glx_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun, fun, fun)
+print '#else'
+
+for fun in useful_glx_functions:
+	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glxDll, "%s" );' % (fun, fun, fun)
+for fun in possibly_useful_glx_functions:
+	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glxDll, "%s" );' % (fun, fun, fun)
+
+print '\t/* CGL */'
+for fun in useful_cgl_functions:
+	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( cglDll, "%s" );' % (fun, fun, fun)
+
+print '\t/* CGL Functions in GL lib */'
+for fun in in_gl_functions:
+	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun, fun, fun)
+print '#endif'
 print '#endif'
 
 print """

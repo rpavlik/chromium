@@ -5,7 +5,9 @@
 
 TOP = ../..
 
+SPU=1
 include ${TOP}/arch.mk
+
 
 SHARED = 1
 LIBRARY = hiddenlinespu

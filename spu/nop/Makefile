@@ -4,8 +4,10 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ../..
+SPU=1
 
 include ${TOP}/arch.mk
+
 
 SHARED = 1
 LIBRARY = nopspu

@@ -5,13 +5,21 @@
 
 TOP = ../..
 
+SPU=1
+include ${TOP}/arch.mk
+
+
 SHARED = 1
 LIBRARY = injectorspu
 FILES = injectorspu \
 	injectorspu_config \
 	injectorspu_init
 
-LIBRARIES = spuload crutil crmothership
+LIBRARIES = spuload crutil crmothership 
+
+ifdef DARWIN
+LIBRARIES += crpacker
+endif
 
 UNPACKS = 1
 

@@ -134,7 +134,7 @@ for comp in comps:
 
 print """
 		default:
-			crError( "Unknown parameter name in lookupComponents: %d", pname );
+			crError( "Unknown parameter name in lookupComponents: %d", (int) pname );
 			break;
 	}
 	/* NOTREACHED */

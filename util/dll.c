@@ -40,7 +40,11 @@ CRDLL *crDLLOpen( const char *dllname, int resolveGlobal )
 	if (resolveGlobal)
 		dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL );
 	else
+#ifdef DARWIN
+		dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_LOCAL );
+#else
 		dll->hinstLib = dlopen( dllname, RTLD_LAZY );
+#endif
 	dll_err = (char*) dlerror();
 #else
 #error DSO

@@ -57,8 +57,8 @@ ARCH_EXPORTS = $(ARCH)_exports.c
 endif
 
 ifeq ($(ARCH), Darwin)
-LDFLAGS += -lX11
-FILES += $(ARCH)_exports glx xfont
+LDFLAGS +=  -lX11 -compatibility_version 1.2 -current_version 1.4 
+FILES += $(ARCH)_exports glx xfont cgl
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif

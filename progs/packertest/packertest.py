@@ -1238,8 +1238,8 @@ def PrintHeaders (f):
 #include "cr_error.h"
 #include "packertest.h"
 
-int errChk;
-int verbose;
+extern int errChk;
+extern int verbose;
 void printError(char *name);
 """)
 

@@ -4,6 +4,7 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ..
+include $(TOP)/arch.mk
 
 SHARED = 1
 LIBRARY = crunpacker
@@ -31,7 +32,11 @@ FILES = unpack \
 	unpack_writeback
 LIB_DEFS = unpack.def
 
-LIBRARIES = crutil spuload crpacker
+LIBRARIES = crutil spuload crpacker 
+
+ifdef DARWIN
+LIBRARIES += crmothership
+endif
 
 PRECOMP = unpack.c unpack_extend.h
 SLOP = $(PRECOMP)

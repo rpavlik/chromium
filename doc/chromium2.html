@@ -314,7 +314,18 @@
     <br></li>
 
     <li><b>Darwin</b>: Support for this operating system is not
-    complete.</li>
+    complete. Only GLX applications work at the moment.  You need the
+    following to get Chromium to compile on the Mac:
+      <ul>
+	<li>X11 and the X11 SDK from Apple</li>
+	<li>An X11 version of glut (you can get this from <a
+	href="http://fink.sourceforge.net/">fink</a>)</li>
+	<li>Xcode</li>
+    </ul>
+    Use <b>DYLD_LIBRARY_PATH</b> instead of <b>LD_LIBRARY_PATH</b>.
+    Make sure that <b>LD_PREBIND</b>
+    and <b>LD_PREBIND_ALLOW_OVERLAP</b> are <b>NOT</b> set.
+    Other <b>LD</b> variables may interfere with the build process. 
   </ul><br>
 
   <h3><a name="mozTocId518358" class="mozTocH3" id="mozTocId518358"></a>Special Notes</h3>

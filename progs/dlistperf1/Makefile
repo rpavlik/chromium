@@ -6,7 +6,7 @@
 TOP = ../..
 
 PROGRAM = dlistperf1
-FILES = dlistperf1 OGLwin Timer
+FILES = dlistperf1 OGLwin Timer global
 GLUT = 1
 MATH = 1
 

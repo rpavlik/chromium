@@ -54,18 +54,18 @@ int OGLwin_QTest(void);
 OGL_DEVICE OGLwin_Qread(int *val);
 
 
-Display *Dsp;
-Window XWindow;
+extern Display *Dsp;
+extern Window XWindow;
 
 
-Display *global_display;
-int direct_context;
-int parent_border;
-int override_redirect;
+extern Display *global_display;
+extern int direct_context;
+extern int parent_border;
+extern int override_redirect;
 
-GLXContext Cxt;
-Colormap Cmap;
-int fontBase;
-XEvent event;
-XVisualInfo *Vi;
+extern GLXContext Cxt;
+extern Colormap Cmap;
+extern int fontBase;
+extern XEvent event;
+extern XVisualInfo *Vi;
 #endif

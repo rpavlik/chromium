@@ -21,10 +21,15 @@
 #define DLL_SUFFIX ".o"
 #define DLL_PREFIX "lib"
 #else
+#ifdef DARWIN
+#define DLL_SUFFIX ".dylib"
+#define DLL_PREFIX "lib"
+#else
 #define DLL_SUFFIX ".so"
 #define DLL_PREFIX "lib"
 #endif
 #endif
+#endif 
 
 extern void __buildDispatch( SPU *spu );
 

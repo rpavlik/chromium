@@ -15,16 +15,13 @@ typedef int ssize_t;
 #else
 #include <sys/types.h>
 #include <sys/wait.h>
-#ifdef DARWIN
-#elif defined(OSF1)
+#if defined(OSF1)
 typedef int socklen_t;
 #endif
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
-#ifndef DARWIN
 #include <netinet/tcp.h>
-#endif
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -441,6 +438,7 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 		char response[8096];
 		char my_hostname[256];
 		char *temp;
+
 		mother = __copy_of_crMothershipConnect( );
 		
 		if (!hostname)
@@ -1357,6 +1355,7 @@ int crGetHostname( char *buf, unsigned int len )
 		 *int err = crTCPIPErrno(); 
 		 *crWarning( "Couldn't get hostname: %s", crTCPIPErrorString( err ) ); 
 	 *} */
+
 
 	return ret;
 }

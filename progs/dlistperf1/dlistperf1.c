@@ -1,6 +1,8 @@
 #include "OGLwin.h"
 #include <math.h>
+#ifndef DARWIN
 #include <malloc.h>
+#endif
 #include "Timer.h"
 
 #include <stdio.h>

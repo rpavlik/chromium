@@ -42,14 +42,16 @@ int main(int argc, char *argv[])
 	void *p;
 
 	/* Load the readback SPU */
-#ifndef WINDOWS
+#if defined(WINDOWS)
 	lib = crDLLOpen("libreadbackspu.so", 0);
+#elif defined (DARWIN)
+        lib = crDLLOpen("libreadbackspu.dylib", 0);
 #else
 	lib = crDLLOpen("readbackspu.dll", 0);
 #endif
 	CRASSERT(lib);
 	/* get address of the readbackspu_state_test() function */
-	fptr = (FuncPtr_t) crDLLGet(lib, "readbackspu_state_test");
+	fptr = (FuncPtr_t) crDLLGet(lib, "_readbackspu_state_test");
 	/* call it */
 	p = (*fptr)();
 

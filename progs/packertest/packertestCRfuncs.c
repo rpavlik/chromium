@@ -19,8 +19,8 @@
 #include "packertest.h"
 #include "state/cr_statetypes.h"
 
-int errChk;
-int verbose;
+extern int errChk;
+extern int verbose;
 void printError(char *name);
 extern void APIENTRY glBoundsInfoCR(const CRrecti *, const GLbyte *, GLint, GLint);
 
