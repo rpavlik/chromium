@@ -935,7 +935,10 @@ void STATE_APIENTRY crStateTexImage1D (GLenum target, GLint level, GLint compone
 	tl->border = border;
 	tl->components = components;
 	tl->type = type;
-	tl->bytesPerPixel = tl->bytes / width;
+	if (width)
+		tl->bytesPerPixel = tl->bytes / width;
+	else
+		tl->bytesPerPixel = 0;
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
 	tobj->dirty = g->neg_bitid;
@@ -1227,7 +1230,10 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 	tl->components = components;
 	tl->border = border;
 	tl->type = type;
-	tl->bytesPerPixel = tl->bytes/ (width*height);
+	if (width && height)
+		tl->bytesPerPixel = tl->bytes / (width * height);
+	else
+		tl->bytesPerPixel = 0;
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
 	tobj->dirty = g->neg_bitid;
