@@ -156,9 +156,9 @@ class GraphFrame(wxFrame):
 
 		# Edit menu
 		self.editMenu = wxMenu()
-		self.editMenu.Append(wxID_UNDO,   "Undo\tCTRL-Z")
-		self.editMenu.Append(wxID_REDO,   "Redo\tSHIFT-CTRL-Z")
-		self.editMenu.AppendSeparator()
+		#self.editMenu.Append(wxID_UNDO,   "Undo\tCTRL-Z")
+		#self.editMenu.Append(wxID_REDO,   "Redo\tSHIFT-CTRL-Z")
+		#self.editMenu.AppendSeparator()
 		self.editMenu.Append(wxID_CUT,    "Cut\tCTRL-X")
 		self.editMenu.Append(wxID_COPY,   "Copy\tCTRL-C")
 		self.editMenu.Append(wxID_PASTE,  "Paste\tCTRL-V")
@@ -373,6 +373,7 @@ class GraphFrame(wxFrame):
 	def SaveState(self):
 		"""Save the current state to the undo stack.  This should be
 		called immediately before any modifications to the project."""
+		pass # XXX temporary - deepcopy() is broken!
 		# make a deep copy of the current state (the mothership)
 		state = copy.deepcopy(self.mothership)
 		# put the copy on the undo stack
@@ -761,15 +762,16 @@ class GraphFrame(wxFrame):
 				self.UpdateSelection(self.mothership.Nodes(), 0, self.DESELECT_ALL)
 		else:
 			# mouse up
-			if self.SelectDeltaX != 0 and self.SelectDeltaY != 0:
+			if (self.SelectDeltaX != 0 and self.SelectDeltaY != 0
+				and len(self.mothership.SelectedNodes()) > 0):
 				self.SaveState()
-			for node in self.mothership.SelectedNodes():
-				p = node.GetPosition()
-				x = p[0]
-				y = p[1]
-				x += self.SelectDeltaX
-				y += self.SelectDeltaY
-				node.SetPosition(x, y)
+				self.dirty = true
+				# translate the selected nodes
+				for node in self.mothership.SelectedNodes():
+					p = node.GetPosition()
+					x = p[0] + self.SelectDeltaX
+					y = p[1] + self.SelectDeltaY
+					node.SetPosition(x, y)
 			self.SelectDeltaX = 0
 			self.SelectDeltaY = 0
 			self.LeftDown = 0
@@ -800,7 +802,6 @@ class GraphFrame(wxFrame):
 				break
 			if anySelected:
 				self.drawArea.Refresh()
-			self.dirty = true
 
 	# ----------------------------------------------------------------------
 	# File menu callbacks
@@ -963,6 +964,11 @@ class GraphFrame(wxFrame):
 		newNodes = crutils.CloneNodeList(NodeClipboard)
 		for node in newNodes:
 			node.Select()
+			# translate a little
+			p = node.GetPosition()
+			px = p[0] + 10
+			py = p[1] + 10
+			node.SetPosition(px, py)
 			self.mothership.AddNode(node)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
@@ -1440,6 +1446,8 @@ class GraphFrame(wxFrame):
 		# complicated than this.  So is the newSpuChoice widget state.
 		# Node menu
 		if self.mothership.NumSelectedNodes() > 0:
+			self.editMenu.Enable(wxID_CUT, 1)
+			self.editMenu.Enable(wxID_COPY, 1)
 			self.nodeMenu.Enable(menu_DELETE_NODE, 1)
 			self.nodeMenu.Enable(menu_DISCONNECT, 1)
 			self.nodeMenu.Enable(menu_SET_HOST, 1)
@@ -1453,6 +1461,8 @@ class GraphFrame(wxFrame):
 				self.nodeMenu.Enable(menu_CONNECT, 0)
 			self.newSpuChoice.Enable(1)
 		else:
+			self.editMenu.Enable(wxID_CUT, 0)
+			self.editMenu.Enable(wxID_COPY, 0)
 			self.nodeMenu.Enable(menu_DELETE_NODE, 0)
 			self.nodeMenu.Enable(menu_CONNECT, 0)
 			self.nodeMenu.Enable(menu_DISCONNECT, 0)
@@ -1461,6 +1471,11 @@ class GraphFrame(wxFrame):
 			self.nodeMenu.Enable(menu_SPLIT_NODES, 0)
 			self.nodeMenu.Enable(menu_COMBINE_NODES, 0)
 			self.newSpuChoice.Enable(0)
+		if len(NodeClipboard) > 0:
+			self.editMenu.Enable(wxID_PASTE, 1)
+		else:
+			self.editMenu.Enable(wxID_PASTE, 0)
+
 		# Node menu / servers
 		if self.mothership.NumSelectedServers() > 0:
 			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 1)
@@ -1495,14 +1510,14 @@ class GraphFrame(wxFrame):
 			self.spuMenu.Enable(menu_DELETE_SPU, 0)
 			self.spuMenu.Enable(menu_SPU_OPTIONS, 0)
 		# Edit menu
-		if len(self.undoStack) > 0:
-			self.editMenu.Enable(menu_UNDO, 1)
-		else:
-			self.editMenu.Enable(menu_UNDO, 0)
-		if len(self.redoStack) > 0:
-			self.editMenu.Enable(menu_REDO, 1)
-		else:
-			self.editMenu.Enable(menu_REDO, 0)
+		#if len(self.undoStack) > 0:
+		#	self.editMenu.Enable(menu_UNDO, 1)
+		#else:
+		#	self.editMenu.Enable(menu_UNDO, 0)
+		#if len(self.redoStack) > 0:
+		#	self.editMenu.Enable(menu_REDO, 1)
+		#else:
+		#	self.editMenu.Enable(menu_REDO, 0)
 		# Template options button
 		self.templateButton.Enable(1) # XXX fix sometime
 #		type = self.mothership.GetTemplateType()
@@ -1552,6 +1567,7 @@ class GraphFrame(wxFrame):
 				self.fileName = fileName
 		else:
 			self.Notify("Problem opening " + fileName)
+		self.UpdateMenus()
 		self.drawArea.Refresh()
 		return result
 
