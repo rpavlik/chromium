@@ -416,6 +416,121 @@ configuration options that the render SPU accepts, plus a few more:
   </tr>
 </table>
 
+<h2 class="PageSubHeading">Hiddenline SPU</h2>
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">buffer_size</td>
+    <td width="12%" class="ConfigType" height="38">int</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          The size of command buffer used for recording OpenGL commands
+          (in bytes).  Default is 32768.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">poly_color</td>
+    <td width="12%" class="ConfigType" height="38">3 Floats</td>
+	<td width="115%" class="ConfigDesc" height="38">
+	  Sets the polygon color (red, green, blue).
+          Default is pale yellow (0.75, 0.75. 0.75).
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">line_color</td>
+    <td width="12%" class="ConfigType" height="38">3 Floats</td>
+	<td width="115%" class="ConfigDesc" height="38">
+	  Sets the line color (red, green, blue).
+          Default is pale black (0, 0, 0).
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">line_width</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+	<td width="115%" class="ConfigDesc" height="38">
+	  Sets the line width (in pixels).  Default is 1.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">single_clear</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Controls whether glClear commands are ignored when issued but
+          later called in SwapBuffers.  Default is true.
+          You may need to set this to false for sort-last rendering.
+        </td>
+  </tr>
+</table>
+
+
+<h2 class="PageSubHeading">Wet SPU</h2>
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">density</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Description?
+          Default is 5.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">raininess</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Description?
+          Default is 10.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">mesh_dice</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Number of rows and columns of control points in the underlying
+          quadrilateral mesh which is distorted.
+          Default is 100 rows and columns.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">ripple_freq</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Ripple frequency.  Default is 2.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">ripple_scale</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Scale factor for water ripples.  Default is 1.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">time_scale</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Time scale factor.  Default is 1.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">ior</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Index of refraction (between air and water?).
+          Default is 1.2.
+        </td>
+  </tr>
+
+</table>
+
+
 <br>
 
 </body>
