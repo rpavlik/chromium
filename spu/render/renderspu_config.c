@@ -49,14 +49,20 @@ static void set_default_visual( RenderSPU *render_spu, const char *response )
 
 static void set_display_string( RenderSPU *render_spu, const char *response )
 {
-    if (!crStrcmp(response, "DEFAULT"))
-        crStrncpy(render_spu->display_string,
-                  crGetenv("DISPLAY"),
-                  sizeof(render_spu->display_string));
-    else
-        crStrncpy(render_spu->display_string,
-                  response,
-                  sizeof(render_spu->display_string));
+	if (!crStrcmp(response, "DEFAULT")) {
+		const char *display = crGetenv("DISPLAY");
+		if (display)
+			crStrncpy(render_spu->display_string,
+								display,
+								sizeof(render_spu->display_string));
+		else
+			crStrcpy(render_spu->display_string, ""); /* empty string */
+	}
+	else {
+		crStrncpy(render_spu->display_string,
+							response,
+							sizeof(render_spu->display_string));
+	}
 }
 
 static void set_fullscreen( RenderSPU *render_spu, const char *response )
