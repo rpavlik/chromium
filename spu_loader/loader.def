@@ -13,6 +13,7 @@ crSPUInitDispatchNops
 crSPUInitDispatch
 crSPUGetMothershipParams
 crSPUSetDefaultParams
+crSPUGetEnumIndex
 crLoadOpenGLExtensions
 crLoadOpenGL
 crUnloadOpenGL
