@@ -252,8 +252,10 @@ Error SPU).&nbsp;&nbsp;&nbsp; </p>
 <p>Then, the <code>SPUInit</code> function is called.&nbsp; This function is
 passed the unique SPU ID given to this SPU by the mothership, a pointer to the
 (already built) dispatch table for the SPU immediately following the one being
-loaded in the chain (the &quot;child&quot; SPU), a pointer to the loaded
-SuperSPU, and two more (currently usused) arguments.</p>
+loaded in the chain (the &quot;child&quot; SPU), a pointer to 
+its own SPU structure (from which the already-loaded
+SuperSPU can be accessed through the <code>-&gt;superSPU</code> member),
+and two more (currently unused) arguments.</p>
 <p>Based on the named function table returned (see &quot;<a href="newspu.html">Writing
 a new SPU</a>&quot; and &quot;<a href="codegen.html">Automatically generating
 code for a SPU</a>&quot;), the dispatch table is built by the function <code>__buildDispatch</code>,
