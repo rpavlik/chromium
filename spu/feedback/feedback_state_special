@@ -23,8 +23,6 @@ ClearIndex
 ClearDepth
 ClearAccum
 DepthMask
-Enable
-Disable
 Map1d
 Map1f
 Map2d

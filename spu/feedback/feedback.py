@@ -33,6 +33,10 @@ extern void STATE_APIENTRY crStateFeedbackEnd( void );
 extern void STATE_APIENTRY crStateFeedbackBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap );
 extern void STATE_APIENTRY crStateFeedbackDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels );
 extern void STATE_APIENTRY crStateFeedbackCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type );
+extern void STATE_APIENTRY crStateFeedbackGetBooleanv( GLenum pname, GLboolean *params );
+extern void STATE_APIENTRY crStateFeedbackGetDoublev( GLenum pname, GLdouble *params );
+extern void STATE_APIENTRY crStateFeedbackGetFloatv( GLenum pname, GLfloat *params );
+extern void STATE_APIENTRY crStateFeedbackGetIntegerv( GLenum pname, GLint *params );
 """
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
@@ -172,6 +176,38 @@ void FEEDBACKSPU_APIENTRY feedbackspu_DrawPixels( GLsizei width, GLsizei height,
 		feedback_spu.super.DrawPixels( width, height, format, type, pixels );
 }
 
+void FEEDBACKSPU_APIENTRY feedbackspu_GetBooleanv( GLenum pname, GLboolean *params )
+
+{
+	crStateFeedbackGetBooleanv( pname, params );
+
+	feedback_spu.super.GetBooleanv( pname, params );
+}
+
+void FEEDBACKSPU_APIENTRY feedbackspu_GetDoublev( GLenum pname, GLdouble *params )
+
+{
+	crStateFeedbackGetDoublev( pname, params );
+
+	feedback_spu.super.GetDoublev( pname, params );
+}
+
+void FEEDBACKSPU_APIENTRY feedbackspu_GetFloatv( GLenum pname, GLfloat *params )
+
+{
+	crStateFeedbackGetFloatv( pname, params );
+
+	feedback_spu.super.GetFloatv( pname, params );
+}
+
+void FEEDBACKSPU_APIENTRY feedbackspu_GetIntegerv( GLenum pname, GLint *params )
+
+{
+	crStateFeedbackGetIntegerv( pname, params );
+
+	feedback_spu.super.GetIntegerv( pname, params );
+}
+
 SPUNamedFunctionTable feedback_table[] = {
 """
 
@@ -181,6 +217,10 @@ for index in range(len(keys)):
 	if stub_common.FindSpecial( "feedback_state", func_name ):
 		print '\t{ "%s", (SPUGenericFunction) feedbackspu_%s }, ' % ( func_name, func_name )
 print """
+	{ "GetBooleanv", (SPUGenericFunction) feedbackspu_GetBooleanv },
+	{ "GetDoublev", (SPUGenericFunction) feedbackspu_GetDoublev },
+	{ "GetFloatv", (SPUGenericFunction) feedbackspu_GetFloatv },
+	{ "GetIntegerv", (SPUGenericFunction) feedbackspu_GetIntegerv },
 	{ "FeedbackBuffer", (SPUGenericFunction) crStateFeedbackBuffer },
 	{ "SelectBuffer", (SPUGenericFunction) crStateSelectBuffer },
 	{ "InitNames", (SPUGenericFunction) crStateInitNames },
