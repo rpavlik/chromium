@@ -41,6 +41,10 @@ LIB_COPIES = crserver \
 	injectorspu \
 	archsplitspu
 
+ifeq ($(USE_VNC), 1)
+LIB_COPIES += vncviewer
+endif
+
 include $(TOP)/cr.mk
 
 unpack.c: unpack.py unpacker_special unpack_extend.h ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
