@@ -201,6 +201,8 @@ CRTextureObj *crStateTextureGet(GLenum target, GLuint textureid);
 int crStateTextureGetSize(GLenum target, GLenum level);
 const GLvoid * crStateTextureGetData(GLenum target, GLenum level);
 
+int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target, int textureUnit);
+
 void crStateTextureDiff(CRContext *g, CRTextureBits *bb, CRbitvalue *bitID, 
 		CRTextureState *from, CRTextureState *to);
 void crStateTextureSwitch(CRContext *g, CRTextureBits *bb, CRbitvalue *bitID, 

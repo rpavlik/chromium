@@ -827,7 +827,7 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 	}
 	else if (tobj->target != target)
 	{
-		crWarning( "You called glBindTexture with a target of 0x%x, but the texture you wanted was target 0x%x", target, tobj->target );
+		crWarning( "You called glBindTexture with a target of 0x%x, but the texture you wanted was target 0x%x [1D: %x 2D: %x 3D: %x cube: %x]", target, tobj->target, GL_TEXTURE_1D, GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP );
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Attempt to bind a texture of diffent dimenions");
 		return;
 	}
@@ -3478,6 +3478,93 @@ void crStateTextureSwitch(CRContext *g, CRTextureBits *t, CRbitvalue *bitID,
 		}
 	}
 	diff_api.ActiveTextureARB( GL_TEXTURE0_ARB + to->curTextureUnit );
+}
+
+/* 
+ * Check the dirty bits for the specified texture on a given unit to
+ * determine if any of its images are dirty.
+ * Return:  1 -- dirty, 0 -- clean
+ */
+int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target, int textureUnit)
+{
+	CRContext *g         = GetCurrentContext();
+	CRTextureState *tsto;
+	CRbitvalue *bitID;
+	CRTextureObj *tobj   = NULL;
+	int maxLevel, i;
+
+	CRASSERT(to);
+	CRASSERT(from);
+
+	tsto = &(to->texture);
+	bitID = from->bitid;
+
+	CRASSERT(tsto);
+
+	switch(target)
+	{
+		case GL_TEXTURE_1D:
+			tobj = tsto->unit[textureUnit].currentTexture1D;
+			maxLevel = tsto->maxLevel;
+			break;
+		case GL_TEXTURE_2D:
+			tobj = tsto->unit[textureUnit].currentTexture2D;
+			maxLevel = tsto->maxLevel;
+			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_3D:
+			tobj = tsto->unit[textureUnit].currentTexture3D;
+			maxLevel = tsto->max3DLevel;
+			break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+		case GL_TEXTURE_CUBE_MAP:
+			if (g->extensions.ARB_texture_cube_map) {
+				tobj = tsto->unit[textureUnit].currentTextureCubeMap;
+				maxLevel = tsto->maxCubeMapLevel;
+			}
+			break;
+#endif
+#ifdef CR_NV_texture_rectangle
+		case GL_TEXTURE_RECTANGLE_NV:
+			if (g->extensions.NV_texture_rectangle) {
+				tobj = tsto->unit[textureUnit].currentTextureRectangle;
+				maxLevel = 1;
+			}
+			break;
+#endif
+		default:
+			crError("Bad texture target in crStateTextureCheckDirtyImages()");
+			return 0;
+	}
+
+	if (!tobj)
+	{
+		return 0;
+	}
+
+	for (i = 0; i < maxLevel; i++) {
+		if (CHECKDIRTY(tobj->level[i].dirty[textureUnit], bitID))
+			return 1;
+	}
+
+	if (target == GL_TEXTURE_CUBE_MAP) {
+		for (i = 0; i < maxLevel; i++) {
+			/* check -X, +Y, -Y, etc images */
+			if (CHECKDIRTY(tobj->negativeXlevel[i].dirty[textureUnit], bitID))
+				return 1;
+			if (CHECKDIRTY(tobj->positiveYlevel[i].dirty[textureUnit], bitID))
+				return 1;
+			if (CHECKDIRTY(tobj->negativeYlevel[i].dirty[textureUnit], bitID))
+				return 1;
+			if (CHECKDIRTY(tobj->positiveZlevel[i].dirty[textureUnit], bitID))
+				return 1;
+			if (CHECKDIRTY(tobj->negativeZlevel[i].dirty[textureUnit], bitID))
+				return 1;
+		}
+	}
+
+	return 0;
 }
 
 void crStateTextureDiff(CRContext *g, CRTextureBits *t, CRbitvalue *bitID, 
