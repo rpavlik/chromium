@@ -42,7 +42,7 @@ static const int MASTER_BARRIER = 100;
 
 
 #define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
-#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
+#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x )
 
 crCreateContextProc   glCreateContextCR;
 crMakeCurrentProc     glMakeCurrentCR;
