@@ -30,13 +30,22 @@ for index in range(0,len(keys)):
 print "\tCR_EXTEND_OPCODE=%d" % enum_index
 print "} CROpcode;\n"
 
+num_extends = 0
+for key in keys:
+	if stub_common.FindSpecial( "packer_get", key ):
+		num_extends += 1
+	
+
 print "typedef enum {"
 
 enum_index = 0
 for index in range(0,len(keys)):
 	func_name = keys[index]
 	if stub_common.FindSpecial( "packer_get", func_name ):
-		print "\t%s = %d," % ( stub_common.ExtendedOpcodeName( func_name ), enum_index )
+		if enum_index == num_extends-1:
+			print "\t%s = %d" % ( stub_common.ExtendedOpcodeName( func_name ), enum_index )
+		else:
+			print "\t%s = %d," % ( stub_common.ExtendedOpcodeName( func_name ), enum_index )
 		enum_index = enum_index + 1
 print "} CRExtendOpcode;\n"
 print "#endif /* CR_OPCODES_H */"

@@ -613,7 +613,7 @@ void crTCPIPDoConnect( CRConnection *conn )
 
 	memcpy( (char *) &servaddr.sin_addr, hp->h_addr,
 			sizeof(servaddr.sin_addr) );
-	while (1)
+	for (;;)
 	{
 		if ( !connect( conn->tcp_socket, (struct sockaddr *) &servaddr,
 					sizeof(servaddr) ) )

@@ -204,6 +204,10 @@ glXCopyContext( Display *dpy, GLXContext src, GLXContext dst, GLuint mask )
 GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share,
 		Bool direct )
 {
+	(void) dpy;
+	(void) vis;
+	(void) share;
+	(void) direct;
 	StubInit();
 	stub_spu->dispatch_table.CreateContext();
 	return (GLXContext) "foo";
@@ -211,22 +215,32 @@ GLXContext glXCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share,
 
 GLXPixmap glXCreateGLXPixmap( Display *dpy, XVisualInfo *vis, Pixmap pixmap )
 {
+	(void) dpy;
+	(void) vis;
+	(void) pixmap;
+
 	crError( "Unsupported GLX Call: glXCreateGLXPixmap()" );
 	return (GLXPixmap) 0;
 }
 
 void glXDestroyContext( Display *dpy, GLXContext ctx )
 {
+	(void) dpy;
+	(void) ctx;
 	crError( "Unsupported GLX Call: glXDestroyContext()" );
 }
 
 void glXDestroyGLXPixmap( Display *dpy, GLXPixmap pix )
 {
+	(void) dpy;
+	(void) pix;
 	crError( "Unsupported GLX Call: glXDestroyGLXPixmap()" );
 }
 
 int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 {
+	(void) dpy;
+	(void) vis;
 	switch ( attrib ) {
 
 		case GLX_USE_GL:
@@ -318,6 +332,8 @@ GLXDrawable glXGetCurrentDrawable( void )
 
 Bool glXIsDirect( Display *dpy, GLXContext ctx )
 {
+	(void) dpy;
+	(void) ctx;
 	return 1;
 }
 
@@ -340,17 +356,24 @@ void __glX_WindowGetSize( Display *display, GLXDrawable drawable,
 
 Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 {
+	(void) dpy;
+	(void) drawable;
+	(void) ctx;
 	stub_spu->dispatch_table.MakeCurrent();
 	return True;
 }
 
 Bool glXQueryExtension( Display *dpy, int *errorBase, int *eventBase )
 {
+	(void) dpy;
+	(void) errorBase;
+	(void) eventBase;
 	return 1; // You BET we do...
 }
 
 Bool glXQueryVersion( Display *dpy, int *major, int *minor )
 {
+	(void) dpy;
 	*major = 1;
 	*minor = 3;
 
@@ -359,11 +382,17 @@ Bool glXQueryVersion( Display *dpy, int *major, int *minor )
 
 void glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 {
+	(void) dpy;
+	(void) drawable;
 	stub_spu->dispatch_table.SwapBuffers();
 }
 
 void glXUseXFont( Font font, int first, int count, int listBase )
 {
+	(void) font;
+	(void) first;
+	(void) count;
+	(void) listBase;
 	crError( "Unsupported GLX Call: glXUseXFont()" );
 }
 
@@ -392,6 +421,8 @@ void glXWaitX( void )
 const char *glXQueryExtensionsString( Display *dpy, int screen )
 {
 	static const char *retval = "";
+	(void) dpy;
+	(void) screen;
 
 	return retval;
 }
@@ -399,6 +430,8 @@ const char *glXQueryExtensionsString( Display *dpy, int screen )
 const char *glXGetClientString( Display *dpy, int name )
 {
 	const char *retval;
+	(void) dpy;
+	(void) name;
 
 	switch ( name ) {
 
@@ -424,6 +457,8 @@ const char *glXGetClientString( Display *dpy, int name )
 const char *glXQueryServerString( Display *dpy, int screen, int name )
 {
 	const char *retval;
+	(void) dpy;
+	(void) screen;
 
 	switch ( name ) {
 

@@ -6,7 +6,9 @@
 
 void packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
-	
+	(void) conn;	
+	(void) buf;	
+	(void) len;	
 }
 
 static CRMessageOpcodes *

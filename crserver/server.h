@@ -20,6 +20,6 @@ typedef struct {
 
 extern CRServer cr_server;
 
-void crServerGatherConfiguration();
+void crServerGatherConfiguration( void );
 
 #endif /* CR_SERVER_H */

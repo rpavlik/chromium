@@ -1,6 +1,7 @@
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_dll.h"
+#include "cr_string.h"
 
 #if defined(IRIX) || defined(IRIX64) || defined(Linux)
 #include <dlfcn.h>
@@ -12,8 +13,7 @@ CRDLL *crDLLOpen( const char *dllname )
 	char *dll_err;
 	
 	dll = (CRDLL *) crAlloc( sizeof( CRDLL ) );
-	dll->name = (char *) crAlloc( strlen(dllname) + 1 );
-	strcpy( dll->name, dllname );
+	dll->name = crStrdup( dllname );
 
 #if defined(WINDOWS)
 	dll->hinstLib = LoadLibrary( dllname );

@@ -47,7 +47,7 @@ int crMothershipSendString( CRConnection *conn, char *response_buf, char *str, .
 	va_end(args);
 
 	crStrcat( txt, "\n" );
-	crNetSendExact( conn, txt, strlen(txt) );
+	crNetSendExact( conn, txt, crStrlen(txt) );
 	if (response_buf)
 	{
 		return crMothershipReadResponse( conn, response_buf );

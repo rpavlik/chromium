@@ -42,7 +42,7 @@ static struct {
 #define NETWORK_TYPE(x) \
 	extern void cr##x##Init(CRNetReceiveFunc, CRNetCloseFunc); \
 	extern void cr##x##Connection(CRConnection *); \
-	extern int cr##x##Recv(void);
+	extern int cr##x##Recv(void)
 
 // Now, all the appropriate interfaces are defined simply by listing the supported 
 // networking types here.
@@ -335,7 +335,7 @@ void crNetReadline( CRConnection *conn, void *buf )
 		crError( "Can't do a crNetReadline on anything other than TCPIP." );
 	}
 	temp = buf;
-	while(1)
+	for (;;)
 	{
 		conn->Recv( conn, &c, 1 );
 		if (c == '\n')
