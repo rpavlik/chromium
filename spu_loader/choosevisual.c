@@ -251,7 +251,7 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 				 * Now, we need to get a new XVisualInfo pointer in case the caller
 				 * calls XFree on it.
 				 */
-				templateFlags = VisualScreenMask | VisualClassMask;
+				templateFlags = VisualScreenMask | VisualIDMask;
 				templateVis.screen = screen;
 				templateVis.visualid = vis[i].visual->visualid;
 				XFree(vis); /* free the list */
@@ -303,7 +303,7 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 			 * Now, we need to get a new XVisualInfo pointer in case the caller
 			 * calls XFree on it.
 			 */
-			templateFlags = VisualScreenMask | VisualClassMask;
+			templateFlags = VisualScreenMask | VisualIDMask;
 			templateVis.screen = screen;
 			templateVis.visualid = best->visualid;
 			XFree(vis); /* free the list */
