@@ -1,0 +1,51 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Configuring the server</h1>
+<p>This page provides a complete list of all the configuration parameters
+for the Chromium server.
+<table border="1" width="100%">
+  <tr class="ConfigTableHeader">
+    <td width="19%">Parameter Name</td>
+    <td width="12%">Value Types</td>
+    <td width="115%">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">optimize_bucket</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">If this flag is set, use a 
+	more complex algorithm to compute the set of intersected tiles when
+	a bounds_info packet arrives.  This is the same optimized algorithm
+	that is used by the tilesort SPU to determine tile overlaps.  This
+	algorithm <i>requires</i> that the tiles all be the same size.  The
+	default is 1.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">lightning2</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">If this flag is set, leave a
+	2-pixel wide gap between tiles, and draw the strip headers for
+	Lightning-2 for image reassembly.  Also, this flag will cause the
+	servers to use Lightning-2's back-channel communication to synchronize
+	their swapping.  Currently, this option is mostly unimplemented (only
+	the gaps are left).</td>
+  </tr>
+</table>
+</body>
+
+</html>
+
+
