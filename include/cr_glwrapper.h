@@ -209,15 +209,13 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 #ifndef GL_CR_performance_info
 #define GL_CR_performance_info
 
-#define GL_PERF_GET_FRAME_VERTEX_DATA_CR     0x990D /* unofficial! */
-#define GL_PERF_GET_TIMER_VERTEX_DATA_CR     0x990E /* unofficial! */
-#define GL_PERF_RESET_READPIXELS_COUNTER_CR  0x990F /* unofficial! */
-#define GL_PERF_RESET_DRAWPIXELS_COUNTER_CR  0x9910 /* unofficial! */
-#define GL_PERF_DUMP_COUNTERS_CR             0x9911 /* unofficial! */
-#define GL_PERF_SET_TOKEN_CR                 0x9912 /* unofficial! */
-#define GL_PERF_SET_SWAPBUFFERS_DUMP_COUNT_CR 0x9913 /* unofficial! */
-#define GL_PERF_START_TIMER_CR               0x9914 /* unofficial! */
-#define GL_PERF_STOP_TIMER_CR                0x9915 /* unofficial! */
+#define GL_PERF_GET_FRAME_DATA_CR       0x990D /* unofficial! */
+#define GL_PERF_GET_TIMER_DATA_CR       0x990E /* unofficial! */
+#define GL_PERF_DUMP_COUNTERS_CR        0x990F /* unofficial! */
+#define GL_PERF_SET_TOKEN_CR            0x9910 /* unofficial! */
+#define GL_PERF_SET_DUMP_ON_SWAP_CR     0x9911 /* unofficial! */
+#define GL_PERF_START_TIMER_CR          0x9912 /* unofficial! */
+#define GL_PERF_STOP_TIMER_CR           0x9913 /* unofficial! */
 
 #endif /* GL_CR_performance_info */
 

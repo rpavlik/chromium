@@ -281,11 +281,7 @@ void perfspuCheckVertexData( PerfVertex *stats, PerfVertex *snapshot )
 void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
 {
 	switch (target) {
-	case GL_PERF_RESET_DRAWPIXELS_COUNTER_CR:
-		break;
-	case GL_PERF_RESET_READPIXELS_COUNTER_CR:
-		break;
-	case GL_PERF_SET_SWAPBUFFERS_DUMP_COUNT_CR:
+	case GL_PERF_SET_DUMP_ON_SWAP_CR:
 		perf_spu.dump_on_swap_count = value;
 		break;
 	case GL_PERF_DUMP_COUNTERS_CR:
