@@ -57,7 +57,7 @@ void crStateError( int line, char *file, GLenum error, char *format, ... )
 	    		break;
 		}
 
-		crError( "OpenGL error in %s, line %d: %s: %s",
+		crWarning( "OpenGL error in %s, line %d: %s: %s",
 						 file, line, glerr, errstr );
 	}
 }

@@ -6,38 +6,65 @@
 
 
 #include "cr_error.h"
+#include "cr_environment.h"
 #include "cr_glwrapper.h"
+#include "cr_pack.h"
+#include "packer.h"
 #include <stdarg.h>
 #include <stdio.h>
 
+void crPackErrorHandlerFunc( CRPackContext *pc, CRPackErrorHandlerFunc errf )
+{
+	pc->Error = errf;
+}
 
-/*
- * This is called by the packer functions when an OpenGL error is
- * detected.
- */
 void __PackError( int line, const char *file, GLenum error, char *format, ... )
 {
+	GET_PACKER_CONTEXT(pc);
 	char errstr[8096];
 	va_list args;
 
-	va_start( args, format );
-	vsprintf( errstr, format, args );
-	va_end( args );
+	if (pc->Error)
+		pc->Error( error );
 
-	/* temporary */
-	crWarning("GL Error in packer: %s line %d: code=0x%x %s\n",
-						file, line, (int) error, errstr);
-}
+	if (crGetenv("CR_DEBUG"))
+	{
+		char *glerr;
+		va_start( args, format );
+		vsprintf( errstr, format, args );
+		va_end( args );
 
+		switch (error) {
+		case GL_NO_ERROR:
+			glerr = "GL_NO_ERROR";
+	    		break;
+		case GL_INVALID_VALUE:
+	    		glerr = "GL_INVALID_VALUE";
+	    		break;
+		case GL_INVALID_ENUM:
+	    		glerr = "GL_INVALID_ENUM";
+	    		break;
+		case GL_INVALID_OPERATION:
+	    		glerr = "GL_INVALID_OPERATION";
+	    		break;
+		case GL_STACK_OVERFLOW:
+	    		glerr = "GL_STACK_OVERFLOW";
+	    		break;
+		case GL_STACK_UNDERFLOW:
+	    		glerr = "GL_STACK_UNDERFLOW";
+	    		break;
+		case GL_OUT_OF_MEMORY:
+	    		glerr = "GL_OUT_OF_MEMORY";
+	    		break;
+		case GL_TABLE_TOO_LARGE:
+			glerr = "GL_TABLE_TOO_LARGE";
+			break;
+		default:
+	    		glerr = "unknown";
+	    		break;
+		}
 
-/*
- * XXX eventually we should re-implement __PackError() above so that
- * errors can be routed back to the pack SPU (for example).
- * We can do this by offering a callback mechanism for the error
- * handler here, which the pack SPU would hook into.
- */
-void __PackErrorHandler( void *function_pointer )
-{
-	/* not implemented yet */
-	(void) function_pointer;
+		crWarning( "GL error in packer: %s, line %d: %s: %s",
+						 file, line, glerr, errstr );
+	}
 }

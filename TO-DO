@@ -2,21 +2,10 @@
 
 Finish up tilesort glReadPixels pixelstore parameters.
 
-Implement an error callback facility in packer/pack_error.c so that
-errors detected in the packer lib can be handled by the client (such
-as the pack SPU.
-
 Some packed pixel formats still aren't implemented in util/pixel.c
 
 Grep the code for 'XXX' for miscellaneous loose ends.
 
 Convert the last two Perl scripts in scripts/fastdep.pl and
 state_tracker/gendiffcode.pl to Python. 
-
-Auto-documentation of SPUs.  Encode into the SPU code all the SPU's
-options, documentation for the options, whether or not it has a packer,
-whether or not it's a terminal SPU, etc.  Write a simple utility to
-load an SPU and print its options/docs.  Modify the config tools to
-scan for all available SPU libraries and invoke the utility to get
-the options/docs for all SPUs.
 
