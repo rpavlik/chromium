@@ -601,6 +601,18 @@ Bool stubMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext context )
 
 	stub.currentContext = i;
 
+	if (!stub.spuWindowWidth) {
+		/* Now call Viewport to setup initial parameters */
+		unsigned int winW, winH;
+
+		stubGetWindowSize( &(stub.Context[i]), &winW, &winH );
+
+		stub.spu->dispatch_table.Viewport( 0, 0, winW, winH );
+
+		stub.spuWindowWidth = winW;
+		stub.spuWindowHeight = winH;
+	}
+
 	return retVal;
 }
 
