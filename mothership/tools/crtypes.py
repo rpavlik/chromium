@@ -514,8 +514,9 @@ class Mothership:
 		("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
 		("show_cursor", "Show Virtual cursor", "BOOL", 1, [0], [], []),
 		("MTU", "Mean Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
+		("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], []),
 		("default_app", "Default Application Program", "STRING", 1, [""], [], []),
-		("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], [])
+		("default_dir", "Default Application Directory", "STRING", 1, [""], [], []),
 	]
 
 	# Server node options, defined just like SPU options
