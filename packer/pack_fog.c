@@ -18,6 +18,9 @@ static void __handleFogData( GLenum pname, const GLfloat *params )
 			break;
 		case GL_FOG_COLOR:
 			packet_length += 4*sizeof( *params );
+			break;
+		default:
+			crError( "Invalid pname in Fog: %d", pname );
 	}
 	GET_BUFFERED_POINTER( packet_length );
 	WRITE_DATA( 0, int, packet_length );
