@@ -95,6 +95,7 @@ num_extended_components = {
 	'GL_QUERY_RESULT_AVAILABLE_ARB': (1, 'CR_ARB_occlusion_query'),
 	'GL_QUERY_RESULT_ARB': (1, 'CR_ARB_occlusion_query'),
 	'GL_CURRENT_QUERY_ARB': (1, 'CR_ARB_occlusion_query'),
+	'GL_TEXTURE_COMPRESSED_IMAGE_SIZE': (1, 'CR_ARB_texture_compression'),
 }
 
 print """static unsigned int lookupComponents( GLenum pname )
