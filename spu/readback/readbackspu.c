@@ -256,8 +256,6 @@ CompositeTile(WindowInfo * window, int w, int h,
 		readback_spu.super.ReadPixels(readx, ready, w, h,
 																	window->rgbFormat, GL_UNSIGNED_BYTE,
 																	window->colorBuffer + shift);
-		
-											
 	}
 
 	if (readback_spu.extract_depth)
@@ -743,6 +741,8 @@ readbackspuCreateContext(const char *dpyName, GLint visual)
 		childVisual |= CR_STENCIL_BIT;
 	if (readback_spu.extract_alpha)
 		childVisual |= CR_ALPHA_BIT;
+	/* final display window should probably be visible */
+	childVisual &= ~CR_PBUFFER_BIT;
 
 	context->renderContext = readback_spu.super.CreateContext(dpyName, visual);
 	context->childContext =
@@ -824,6 +824,7 @@ readbackspuWindowCreate(const char *dpyName, GLint visBits)
 	/* init window */
 	window->index = freeID;
 	window->renderWindow = readback_spu.super.WindowCreate(dpyName, visBits);
+	visBits &= ~CR_PBUFFER_BIT;
 	window->childWindow = readback_spu.child.WindowCreate(dpyName, visBits);
 	window->width = -1;						/* unknown */
 	window->height = -1;					/* unknown */
