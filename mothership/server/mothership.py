@@ -402,7 +402,7 @@ class CR:
 						server_sock.Success( "" )
 						return
 					else:
-						CRDebug( "not accepting from %s" % client_hostname )
+						CRDebug( "not accepting from %s" % server_hostname )
 			sock.connect_wait = (hostname, port, endianness)
 		elif (protocol == 'gm'):
 			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = connect_info
