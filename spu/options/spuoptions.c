@@ -87,11 +87,10 @@ SPU * SPULoadLite( SPU *child, int id, char *name, char *dir, void *server )
 
 static void print_spu_header( SPU *spu )
 {
-   printf("SPU %s: (packer %s, terminal %s, max-servers %s)\n", 
-	  spu->name,
-	  (spu->spu_flags & SPU_HAS_PACKER) ? "y" : "n",
-	  (spu->spu_flags & SPU_IS_TERMINAL) ? "y" : "n",
-	  ((spu->spu_flags & SPU_MAX_SERVERS_ONE) ? "one" : 
+   printf("param terminal %s\n", (spu->spu_flags & SPU_IS_TERMINAL) ? "yes" : "no");
+   printf("param packer %s\n", (spu->spu_flags & SPU_HAS_PACKER) ? "yes" : "no");
+   printf("param maxservers %s\n",
+          ((spu->spu_flags & SPU_MAX_SERVERS_ONE) ? "one" : 
 	   (spu->spu_flags & SPU_MAX_SERVERS_UNLIMITED) ? "unlimited" : 
 	   "zero"));
 }
@@ -105,29 +104,26 @@ static const char *type_string[] = {
 
 static void print_option( SPUOptions *opt )
 {
-   printf("\t\"%s\", %s, \"%s\", %d, \"%s\", ", 
+   printf("option %s \"%s\" %s %d [%s] ", 
 	  opt->option, 
-	  type_string[(int)opt->type],
 	  opt->description,
+	  type_string[(int)opt->type],
 	  opt->numValues,
 	  opt->deflt);
 
-   if (opt->min)
-      printf("\"%s\", ", opt->min);
-   else
-      printf("NULL, ");
-
-   if (opt->max)
-      printf("\"%s\"", opt->max);
-   else
-      printf("NULL");
+   if (opt->min) {
+      printf("[%s] ", opt->min);
+      if (opt->max) {
+         printf("[%s]", opt->max);
+      }
+   }
    
    printf("\n");
 }
 
 static void print_spu_footer( SPU *spu )
 {
-   printf("\n\n");
+   printf("\n");
 }
 
 
