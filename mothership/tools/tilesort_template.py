@@ -94,7 +94,8 @@ class TilesortParameters:
 				if server >= len(self.ServerHosts):
 					server = len(self.ServerHosts) - 1
 				# save tile
-				self.Tiles.append( (row, col, server) )
+				#self.Tiles.append( (row, col, server) )
+				self.Tiles.append( (i, j, server) )
 				# save per-server mural tile
 				while len(self.ServerTiles) - 1 < server:
 					self.ServerTiles.append( [] )
@@ -538,6 +539,7 @@ class TilesortDialog(wxDialog):
 		self.Template.TileHeight = self.tileHeightControl.GetValue()
 		self.Template.RightToLeft = self.hLayoutRadio.GetSelection()
 		self.Template.BottomToTop = self.vLayoutRadio.GetSelection()
+		self.Template.LayoutTiles()
 		# XXX set render SPU's window_geometry = tile size!!
 
 	def __UpdateWidgetsFromVars(self):
