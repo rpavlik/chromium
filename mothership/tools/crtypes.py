@@ -424,11 +424,8 @@ class Node:
 		self.__InputPlugPos = (0,0)
 		self.__Color = color
 		self.__Brush = wxPython.wx.wxBrush(color)
-		#self.__Hosts = hostnames
-		#self.__Label = ""
 		self.SetHosts(hostnames)
 		self.__HostPattern = (hostnames[0], 1)
-		self.__SPUdir = ""
 		self.__FontHeight = 0
 		self.__AutoStart = None
 
@@ -708,24 +705,13 @@ class Node:
 
 	def SPUDir(self, dir):
 		"""Set SPU directory, from config file."""
-		self.__SPUdir = dir
-
-	def GetSPUDir(self):
-		"""Return SPU directory."""
-		return self.__SPUdir
-
-	def ClientDLL(self, dll):
-		"""Needed for reading config files."""
-		pass
+		# XXX this is obsolete; use node.Conf('spu_dir', dir)
+		self.SetOption("spu_dir", [dir])
 
 	def AutoStart(self, program):
 		"""Needed for reading config files."""
 		self.__AutoStart = program
 		pass
-
-	def GetAutoStart(self):
-		"""Return autostart parameters."""
-		return self.__AutoStart
 
 	def SetOption(self, name, value):
 		"""Set named option"""
@@ -735,7 +721,11 @@ class Node:
 		"""Return the server OptionList."""
 		return self._Options
 
-	def Conf(self, name, *values):
+	def GetOption(self, name):
+		"""Return value of named option"""
+		return self._Options.GetValue(name)
+
+ 	def Conf(self, name, *values):
 		"""Set an option, via config file"""
 		# XXX Eventually we'll remove the '*' for varargs!
 		self._Options.Conf(name, values)
@@ -839,12 +829,18 @@ class ApplicationNode(Node):
 		assert isinstance(newNode, ApplicationNode)
 		return newNode
 
-	def StartDir(self, dir):
-		self._Options.SetValue('start_dir', [dir])
-
 	def SetApplication(self, app):
 		self._Options.SetValue('application', [app])
 		
+	def StartDir(self, dir):
+		# XXX obsolete; use appnode.Conf('start_dir', dir)
+		self._Options.SetValue('start_dir', [dir])
+
+	def ClientDLL(self, dll):
+		"""Needed for reading config files."""
+		# XXX this is obsolete; use node.Conf('client_dll', dir)
+		self._Options.SetValue('client_dll', [dll])
+
 
 # ----------------------------------------------------------------------
 

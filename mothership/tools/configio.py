@@ -175,9 +175,6 @@ def WriteConfig(mothership, file):
 
 			(x, y) = node.GetPosition()
 			file.write("nodes[%d].SetPosition(%d, %d)\n" % (i, x, y))
-			dir = node.GetSPUDir()
-			if dir != "":
-				file.write("nodes[%d].SPUDir('%s')\n" % (i, dir))
 			file.write("cr.AddNode(nodes[%d])\n" % i)
 
 			WriteAutoStart("nodes[%d]" % i,
