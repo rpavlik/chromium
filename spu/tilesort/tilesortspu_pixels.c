@@ -631,10 +631,19 @@ void TILESORTSPU_APIENTRY tilesortspu_PixelTransferi (GLenum pname, GLint param)
 	/* Don't flush if we're not really changing the on/off state.
 	 * This is a special case for OpenRM, but safe for everyone.
 	 */
+
 	if (pname == GL_MAP_COLOR && ctx->pixel.mapColor == param)
 		return;
+
 	pixeltransfer_flush();
+
 	crStatePixelTransferi( pname, param );
+
+	if (tilesort_spu.swap) {
+		crPackPixelTransferiSWAP(pname, param);
+	} else {
+		crPackPixelTransferi(pname, param);
+	}
 }
  
 void TILESORTSPU_APIENTRY tilesortspu_PixelTransferf (GLenum pname, GLfloat param)
@@ -646,7 +655,14 @@ void TILESORTSPU_APIENTRY tilesortspu_PixelTransferf (GLenum pname, GLfloat para
 	if (pname == GL_MAP_COLOR && ctx->pixel.mapColor == (GLint) param)
 		return;
 	pixeltransfer_flush();
+
 	crStatePixelTransferf( pname, param );
+
+	if (tilesort_spu.swap) {
+		crPackPixelTransferfSWAP(pname, param);
+	} else {
+		crPackPixelTransferf(pname, param);
+	}
 }
 
 
