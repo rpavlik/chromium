@@ -355,6 +355,7 @@ DrawMesh(const TriangleMesh *mesh, DrawMode drawMode)
 	if (drawMode == DRAW_VBO) {
 		static int first = 1;
 		glBindBufferARB_ptr(GL_ARRAY_BUFFER_ARB, mesh->VertexBufferObj);
+		glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh->ElementBufferObj);
 		if (first) {
 			/* This is a bit of a hack.
 			 * Apparently, calling glVertex/NormalPointer every time reduces
@@ -365,7 +366,6 @@ DrawMesh(const TriangleMesh *mesh, DrawMode drawMode)
 			glEnable(GL_VERTEX_ARRAY);
 			glEnable(GL_NORMAL_ARRAY);
 			first = 0;
-			glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh->ElementBufferObj);
 		}
 		if (mesh->NumIndices <= 65535)
 			glDrawRangeElements_ptr(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
