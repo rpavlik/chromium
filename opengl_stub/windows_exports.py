@@ -15,6 +15,7 @@ def GenerateEntrypoints():
 	apiutil.CopyrightC()
 
 	print '#include "chromium.h"'
+	print '#include "stub.h"'
 	print ''
 	print '#define NAKED __declspec(naked)'
 	print '#define UNUSED(x) ((void)(x))'
@@ -34,8 +35,8 @@ def GenerateEntrypoints():
 		return_type = apiutil.ReturnType(func_name)
 		params = apiutil.Parameters(func_name)
 
-		print "NAKED %s cr_gl( %s )" % (return_type, func_name),
-		print apiutil.MakeDeclarationString( params )
+		print "NAKED %s cr_gl%s( %s )" % (return_type, func_name,
+									  apiutil.MakeDeclarationString( params ))
 		print "{"
 		print "\t__asm jmp [glim.%s]" % func_name
 		for (name, type, vecSize) in params:
@@ -62,10 +63,10 @@ def GenerateEntrypoints():
 		if alias:
 			return_type = apiutil.ReturnType(func_name)
 			params = apiutil.Parameters(func_name)
-			print "NAKED %s cr_gl( %s )" % (return_type, real_func_name),
-			print apiutil.MakeDeclarationString( params )
+			print "NAKED %s cr_gl%s( %s )" % (return_type, func_name,
+								apiutil.MakeDeclarationString( params ))
 			print "{"
-			print "\t__asm jmp [glim.%s]" % func_name
+			print "\t__asm jmp [glim.%s]" % alias
 			for (name, type, vecSize) in params:
 				print "\tUNUSED( %s );" % name
 			print "}"
@@ -79,7 +80,9 @@ def GenerateEntrypoints():
 	# Now generate no-op stub functions
 	for func_name in allkeys:
 		if "stub" in apiutil.ChromiumProps(func_name):
-			print "%s gl%s( %s )" % (return_type, func_name, apiutil.MakeDeclarationString(params))
+			return_type = apiutil.ReturnType(func_name)
+			params = apiutil.Parameters(func_name)
+			print "GLAPI %s APIENTRY gl%s( %s )" % (return_type, func_name, apiutil.MakeDeclarationString(params))
 			print "{"
 			if return_type != "void":
 				print "return (%s) 0" % return_type
