@@ -5,15 +5,23 @@
 
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = c++ -fno-common
-CXXFLAGS += -DDARWIN -Wall -Werror
 CC = cc -I/sw/include -I/usr/X11R6/include -fno-common
-CFLAGS += -DDARWIN -Wall -Werror
 
-DEBUGFLAGS = -g
-RELEASEFLAGS = -g -O3 -DNDEBUG
+CXXFLAGS          += -DDARWIN -Wall -Werror
+CXX_RELEASE_FLAGS += -g -O3 -DNDEBUG
+CXX_DEBUG_FLAGS   += -g
+
+CFLAGS            += -DDARWIN -Wall -Werror
+C_RELEASE_FLAGS   += -g -O3 -DNDEBUG
+C_DEBUG_FLAGS     += -g
+
+LDFLAGS           += -L/usr/X11R6/lib -L/sw/lib
+LD_RELEASE_FLAGS  += 
+LD_DEBUG_FLAGS    += 
+
 PROFILEFLAGS = -pg -a
-CAT=cat
 
+CAT = cat
 AS = as
 LEX = flex -t
 LEXLIB = -ll
@@ -38,7 +46,6 @@ LIBSUFFIX = .a
 OBJSUFFIX = .o
 MV = mv
 SHARED_LDFLAGS += -dynamiclib
-LDFLAGS += -L/usr/X11R6/lib -L/sw/lib
 PERL = perl
 PYTHON = python
 JGRAPH = /u/eldridge/bin/IRIX/jgraph

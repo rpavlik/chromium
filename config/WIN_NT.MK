@@ -6,18 +6,27 @@
 WINDOWS=1
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = cl
-CXXFLAGS += /nologo /DWIN32 /DWINDOWS /TP /W4 /WX /MD
 CC = cl
-CFLAGS += /nologo /DWIN32 /DWINDOWS /W4 /WX /MD /TC
-LDFLAGS += /nologo /MD
-DEBUGFLAGS = /Yd /Z7 /GZ
-RELEASEFLAGS = /Ox /DNDEBUG
+
+CXXFLAGS          += /nologo /DWIN32 /DWINDOWS /TP /W4 /WX /QIfist
+CXX_RELEASE_FLAGS += /MD /Ox /DNDEBUG
+# This is just not working for me on VC++ 7 --> CXX_DEBUG_FLAGS   += /GZ
+CXX_DEBUG_FLAGS   += /MDd /Yd /Z7 /GZ
+
+CFLAGS          += /nologo /DWIN32 /DWINDOWS /W4 /WX /TC /QIfist
+C_RELEASE_FLAGS += /MD /Ox /DNDEBUG
+# This is just not working for me on VC++ 7 --> C_DEBUG_FLAGS   += /GZ
+C_DEBUG_FLAGS   += /MDd /Yd /Z7 /GZ
+
+LDFLAGS          += /nologo
+LD_RELEASE_FLAGS += 
+LD_DEBUG_FLAGS   += 
+
 CAT = cat
 LEX = flex -t
 LEXLIB = -ll
 YACC = bison -y -d
 LD = cl
-LDFLAGS += 
 AR = ar
 ARCREATEFLAGS = cr
 RANLIB = true

@@ -5,18 +5,24 @@
 
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = CC
-CXXFLAGS += -n32
 CC = cc
-CFLAGS += -n32
+
+CXXFLAGS          += -n32
+CXX_RELEASE_FLAGS += -O2 -DNDEBUG
+CXX_DEBUG_FLAGS   += -g
+
+CFLAGS            += -n32
+C_RELEASE_FLAGS   += -O2 -DNDEBUG
+C_DEBUG_FLAGS     += -g
+
+LDFLAGS           += -n32 -lm
+LD_RELEASE_FLAGS  +=
+LD_DEBUG_FLAGS    +=
 
 FULLWARN = -fullwarn
-
-DEBUGFLAGS = -g
-RELEASEFLAGS = -O2 -DNDEBUG
 PROFILEFLAGS = -pg -a
-CAT=cat
 
-LDFLAGS += -n32 -lm
+CAT = cat
 LEX = flex -t
 LEXLIB = -ll
 YACC = bison -y -d

@@ -5,20 +5,28 @@
 
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++
-ifeq ($(MACHTYPE), alpha)
-CXXFLAGS += -DLINUX -Wall -Werror -mieee
-CFLAGS += -DLINUX -Wall -Werror -mieee
-else
-CXXFLAGS += -DLINUX -Wall -Werror
-CFLAGS += -DLINUX -Wall -Werror
-endif
 CC = gcc
 
-DEBUGFLAGS = -g
-RELEASEFLAGS = -g -O3 -DNDEBUG
-PROFILEFLAGS = -pg -a
-CAT=cat
+CXXFLAGS          += -DLINUX -Wall -Werror
+CXX_RELEASE_FLAGS += -g -O3 -DNDEBUG
+CXX_DEBUG_FLAGS   += -g
 
+CFLAGS            += -DLINUX -Wall -Werror
+C_RELEASE_FLAGS   += -g -O3 -DNDEBUG
+C_DEBUG_FLAGS     += -g
+
+LDFLAGS           += -L/usr/X11R6/lib
+LD_RELEASE_FLAGS  += 
+LD_DEBUG_FLAGS    += 
+
+ifeq ($(MACHTYPE), alpha)
+CXXFLAGS          += -mieee
+CFLAGS            += -mieee
+endif
+
+PROFILEFLAGS = -pg -a
+
+CAT = cat
 AS = as
 LEX = flex -t
 LEXLIB = -ll
@@ -43,7 +51,6 @@ LIBSUFFIX = .a
 OBJSUFFIX = .o
 MV = mv
 SHARED_LDFLAGS += -shared 
-LDFLAGS += -L/usr/X11R6/lib
 PERL = perl
 PYTHON = python
 JGRAPH = /u/eldridge/bin/IRIX/jgraph
