@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include "cr_spu.h"
 #include "fpsspu.h"
-#include "cr_error.h"
 
 static void FPSSPU_APIENTRY fpsSwapBuffers( GLint window, GLint flags )
 {
@@ -18,15 +17,23 @@ static void FPSSPU_APIENTRY fpsSwapBuffers( GLint window, GLint flags )
 	(void) window;
 
 	frame_counter++;
-	if ((frame_counter == 10) || (elapsed - elapsed_base > 1))
-	{
-		float fps = frame_counter / (elapsed - elapsed_base);
-		elapsed_base = elapsed;
-		frame_counter = 0;
-        if (fps<1)
-            crDebug( "SPF: %f", 1.0/fps );
-        else
-            crDebug( "FPS: %f", fps );
+	if (fps_spu.total_frames == 0) {
+	    /* Get the first timer time */
+	    fps_spu.first_swap_time = elapsed;
+	}
+	fps_spu.total_frames++;
+
+	if (
+	    (fps_spu.report_frames > 0 && frame_counter == fps_spu.report_frames) ||
+	    (fps_spu.report_seconds > 0.0 && (elapsed - elapsed_base > fps_spu.report_seconds))
+	) {
+	    float fps = frame_counter / (elapsed - elapsed_base);
+	    elapsed_base = elapsed;
+	    frame_counter = 0;
+	    if (fps<1)
+		crDebug( "SPF: %f", 1.0/fps );
+	    else 
+		crDebug( "FPS: %f", fps );
 	}
 
 	fps_spu.super.SwapBuffers( window, flags );

@@ -50,6 +50,14 @@ static void fpsSPUSelfDispatch(SPUDispatchTable *self)
 
 static int fpsSPUCleanup(void)
 {
+	if (fps_spu.report_at_end) {
+	    float elapsed = (float) crTimerTime( fps_spu.timer );
+	    float fps = (fps_spu.total_frames - 1) / (elapsed - fps_spu.first_swap_time);
+	    if (fps<1)
+		crDebug( "Average SPF: %f", 1.0/fps );
+	    else 
+		crDebug( "Average FPS: %f", fps );
+	}
 	return 1;
 }
 

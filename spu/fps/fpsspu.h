@@ -15,6 +15,7 @@
 
 #include "cr_spu.h"
 #include "cr_timer.h"
+#include "cr_error.h"
 
 typedef struct {
 	int id;
@@ -22,6 +23,12 @@ typedef struct {
 	SPUDispatchTable self, child, super;
 
 	CRTimer *timer;
+
+	unsigned long total_frames;
+	float first_swap_time;
+	int report_frames;	/* Give a report at least every N frames */
+	float report_seconds;	/* Give a report at least every N seconds */
+	int report_at_end;	/* Give an average report at the end of the run */
 } FpsSPU;
 
 extern FpsSPU fps_spu;
@@ -31,5 +38,6 @@ extern SPUNamedFunctionTable _cr_fps_table[];
 extern SPUOptions fpsSPUOptions[];
 
 extern void fpsspuGatherConfiguration( void );
+
 
 #endif /* FPS_SPU_H */
