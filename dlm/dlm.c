@@ -14,7 +14,7 @@ CRtsd CRDLMTSDKey;
 CRDLMContextState *CRDLMCurrentState = NULL;
 #endif
 
-#define MIN(a,b) ((a)<(b)?(a):(b))
+#define MIN2(a,b) ((a)<(b)?(a):(b))
 
 
 /*************************************************************************/
@@ -111,7 +111,7 @@ CRDLM *crDLMNewDLM(unsigned int userConfigSize, const CRDLMConfig *userConfig)
 	 * section of the structure that they know about.
 	 */
 	crMemcpy((void *)&config, (void *) userConfig, 
-		MIN(userConfigSize, sizeof(config)));
+		MIN2(userConfigSize, sizeof(config)));
     }
     dlm->bufferSize = config.bufferSize;
     dlm->handleCreation = config.handleCreation;
