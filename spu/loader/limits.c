@@ -363,7 +363,9 @@ void crSPUReportGLLimits( const CRLimitsState *limits, int spu_id )
 	REPORT_INT(GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, limits->maxCubeMapTextureSize);
 
 	if (crStrstr(limits->extensions, "GL_EXT_texture_filter_anisotropic"))
+	{
 		REPORT_FLOAT(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, limits->maxTextureAnisotropy);
+	}
 
 	REPORT_INT(GL_MAX_LIGHTS, limits->maxLights);
 	REPORT_INT(GL_MAX_CLIP_PLANES, limits->maxClipPlanes);
@@ -411,10 +413,10 @@ void crSPUReportGLLimits( const CRLimitsState *limits, int spu_id )
  */
 void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits )
 {
-	typedef void (*GetIntegervFunc)(GLenum, GLint *);
-	typedef void (*GetFloatvFunc)(GLenum, GLfloat *);
-	typedef const GLubyte * (*GetStringFunc)(GLenum);
-	typedef GLenum (*GetErrorFunc)(void);
+	typedef void (SPU_APIENTRY *GetIntegervFunc)(GLenum, GLint *);
+	typedef void (SPU_APIENTRY *GetFloatvFunc)(GLenum, GLfloat *);
+	typedef const GLubyte * (SPU_APIENTRY *GetStringFunc)(GLenum);
+	typedef GLenum (SPU_APIENTRY *GetErrorFunc)(void);
 	GetIntegervFunc getIntegerv;
 	GetFloatvFunc getFloatv;
 	GetStringFunc getString;
@@ -424,39 +426,58 @@ void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits
 	/* Get function pointers */
 	getIntegerv = (GetIntegervFunc) crSPUFindFunction(table, "GetIntegerv");
 	if (!getIntegerv)
+	{
 		return;
+	}
 	getFloatv = (GetFloatvFunc) crSPUFindFunction(table, "GetFloatv");
 	if (!getFloatv)
+	{
 		return;
+	}
 	getString = (GetStringFunc) crSPUFindFunction(table, "GetString");
 	if (!getString)
+	{
 		return;
+	}
 	getError = (GetErrorFunc) crSPUFindFunction(table, "GetError");
-	if (!getString)
+	if (!getError)
+	{
 		return;
+	}
 
 	/* Get extensions first */
 	str = (const char *) (*getString)(GL_EXTENSIONS);
 	limits->extensions = crStrdup(str);
 
 	if (crStrstr(limits->extensions, "GL_ARB_multitexture"))
+	{
 		(*getIntegerv)(GL_MAX_TEXTURE_UNITS_ARB, &limits->maxTextureUnits);
+	}
 	else
+	{
 		limits->maxTextureUnits = 1;
+	}
 
 	(*getIntegerv)(GL_MAX_TEXTURE_SIZE, &limits->maxTextureSize);
 	(*getIntegerv)(GL_MAX_3D_TEXTURE_SIZE, &limits->max3DTextureSize);
 
 	if (crStrstr(limits->extensions, "GL_EXT_texture_cube_map") ||
 		crStrstr(limits->extensions, "GL_ARB_texture_cube_map"))
+	{
 		(*getIntegerv)(GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, &limits->maxCubeMapTextureSize);
+	}
 	else
-		limits->maxCubeMapTextureSize = 0;
-
+	{
+		limits->maxCubeMapTextureSize = 0; 
+	}
 	if (crStrstr(limits->extensions, "GL_EXT_texture_filter_anisotropic"))
+	{
 		(*getFloatv)(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &limits->maxTextureAnisotropy);
+	}
 	else
+	{
 		limits->maxTextureAnisotropy = 0.0;
+	}
 
 	(*getIntegerv)(GL_MAX_LIGHTS, &limits->maxLights);
 	(*getIntegerv)(GL_MAX_CLIP_PLANES, &limits->maxClipPlanes);
@@ -467,19 +488,23 @@ void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits
 	(*getIntegerv)(GL_MAX_ATTRIB_STACK_DEPTH, &limits->maxAttribStackDepth);
 	(*getIntegerv)(GL_MAX_CLIENT_ATTRIB_STACK_DEPTH, &limits->maxClientAttribStackDepth);
 	(*getIntegerv)(GL_MAX_NAME_STACK_DEPTH, &limits->maxNameStackDepth);
+#ifndef WINDOWS
 	(*getIntegerv)(GL_MAX_ELEMENTS_INDICES, &limits->maxElementsIndices);
 	(*getIntegerv)(GL_MAX_ELEMENTS_VERTICES, &limits->maxElementsVertices);
+#endif
 	(*getIntegerv)(GL_MAX_EVAL_ORDER, &limits->maxEvalOrder);
 	(*getIntegerv)(GL_MAX_LIST_NESTING, &limits->maxListNesting);
 	(*getIntegerv)(GL_MAX_PIXEL_MAP_TABLE, &limits->maxPixelMapTable);
 	(*getIntegerv)(GL_MAX_VIEWPORT_DIMS, limits->maxViewportDims);
 	(*getIntegerv)(GL_SUBPIXEL_BITS, &limits->subpixelBits);
+#ifndef WINDOWS
 	(*getFloatv)(GL_ALIASED_POINT_SIZE_RANGE, limits->aliasedPointSizeRange);
 	(*getFloatv)(GL_SMOOTH_POINT_SIZE_RANGE, limits->smoothPointSizeRange);
 	(*getFloatv)(GL_SMOOTH_POINT_SIZE_GRANULARITY, &limits->pointSizeGranularity);
 	(*getFloatv)(GL_ALIASED_LINE_WIDTH_RANGE, limits->aliasedLineWidthRange);
 	(*getFloatv)(GL_SMOOTH_LINE_WIDTH_RANGE, limits->smoothLineWidthRange);
 	(*getFloatv)(GL_SMOOTH_LINE_WIDTH_GRANULARITY, &limits->lineWidthGranularity);
+#endif
 }
 
 
@@ -494,7 +519,9 @@ static char *merge_ext_strings(const char *s1, const char *s2)
 	/* allocate storage for result */
 	result = crAlloc(((len1 > len2) ? len1 : len2) + 2);
 	if (!result)
+	{
 		return NULL;
+	}
 	result[0] = 0;
 
 	/* split s1 and s2 at space chars */
@@ -516,8 +543,8 @@ static char *merge_ext_strings(const char *s1, const char *s2)
 	}
 
 	/* free split strings */
-        crFreeStrings( exten1 );
-        crFreeStrings( exten2 );
+	crFreeStrings( exten1 );
+	crFreeStrings( exten2 );
 
 	/* all done! */
 	return result;
@@ -539,8 +566,9 @@ void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merg
 
 #define CHECK_LIMIT(LIMIT)				\
 	if (limits->LIMIT < merged->LIMIT)		\
-			merged->LIMIT = limits->LIMIT;
-
+	{ \
+			merged->LIMIT = limits->LIMIT; \
+	}
 
 	for (i = 1; i < n; i++)
 	{
@@ -582,7 +610,9 @@ void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merg
 		/* find the intersection of limits[i].extensions and merged.extensions */
 		s = merge_ext_strings(merged->extensions, limits[i].extensions);
 		if (merged->extensions)
+		{
 			crFree(merged->extensions);
+		}
 		merged->extensions = s;
 	}
 
@@ -605,9 +635,13 @@ void crSPUPropogateGLLimits( CRConnection *conn, int spu_id, const SPU *child_sp
 	CRLimitsState tmpLimits, *myLimits;
 
 	if (limitsResult)
+	{
 		myLimits = limitsResult;
+	}
 	else
+	{
 		myLimits = &tmpLimits;
+	}
 
 	if (child_spu) {
 		/* query motherhip for child's OpenGL limits */

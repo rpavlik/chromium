@@ -54,7 +54,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	CRAttribState *a = &(g->attrib);
 	CRStateBits *sb = GetCurrentBits();
 	CRAttribBits *ab = &(sb->attrib);
-	int i;
+	unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -428,7 +428,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	CRAttribBits *ab = &(sb->attrib);
 
 	GLbitvalue mask;
-	int i;
+	unsigned int i;
 
 
 	if (g->current.inBeginEnd)

@@ -9,7 +9,7 @@ SHARED = 1
 LIBRARY = renderspu
 FILES = renderspu renderspu_config renderspu_init renderspu_swap renderspu_window
 
-LIBRARIES = crmothership crutil
+LIBRARIES = spuload crmothership crutil
 
 PRECOMP = renderspu.c
 SLOP = $(PRECOMP)

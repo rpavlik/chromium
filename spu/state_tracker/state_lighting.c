@@ -221,7 +221,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 	CRLightingState *l = &(g->lighting);
 	CRTransformState *t = &(g->transform);
 	CRLight *lt;
-	int i;
+	unsigned int i;
 	GLfloat x, y, z, w;
 	GLmatrix inv;
 	GLmatrix *mat;
@@ -628,7 +628,7 @@ void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *para
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
 	CRLight *lt;
-	int i;
+	unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -711,7 +711,7 @@ void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
 	CRLight *lt;
-	int i;
+	unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{

@@ -232,9 +232,9 @@ int crStrToInt( const char *str )
 	return atoi(str);
 }
 
-double crStrToFloat( const char *str )
+float crStrToFloat( const char *str )
 {
-	return atof(str);
+	return (float) atof(str);
 }
 
 static int __numOccurrences( const char *str, const char *substr )

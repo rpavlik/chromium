@@ -15,6 +15,7 @@ extended_params = {}
 
 input = open( "state_get.txt", 'r' )
 for line in input.readlines():
+	if line[0] == '#': continue
 	match = line_re.match( line )
 	if match:
 		type = match.group(1)
@@ -24,6 +25,7 @@ for line in input.readlines():
 
 input = open( "state_extensions_get.txt", 'r' )
 for line in input.readlines():
+	if line[0] == '#': continue
 	match = extensions_line_re.match( line )
 	if match:
 		type = match.group(1)

@@ -20,7 +20,8 @@ void crStateViewportInit(CRViewportState *v)
 	v->viewportY = 0;
 	v->viewportW = 640;
 	v->viewportH = 480;
-	v->scissorValid = GL_TRUE;
+
+	v->scissorValid = GL_FALSE;
 	v->scissorX = 0;
 	v->scissorY = 0;
 	v->scissorW = 640;

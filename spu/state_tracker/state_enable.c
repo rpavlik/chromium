@@ -14,7 +14,7 @@
 static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 				GLenum cap, GLboolean val) 
 {
-	int i;
+	unsigned int i;
 	i = cap - GL_CLIP_PLANE0;
 	if (i >= 0 && i < g->limits.maxClipPlanes) {
 		g->transform.clip[i] = val;

@@ -332,7 +332,7 @@ void STATE_APIENTRY crStateClipPlane (GLenum plane, const GLdouble *equation) {
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
 	GLvectord e;
-	int i;
+	unsigned int i;
 	GLmatrix inv;
 
 	e.x = equation[0];
@@ -1050,7 +1050,7 @@ void  STATE_APIENTRY crStateGetClipPlane (GLenum plane, GLdouble *equation)
 {
 	CRContext *g = GetCurrentContext();
 	CRTransformState *t = &g->transform;
-	int i;
+	unsigned int i;
 	
 	if (g->current.inBeginEnd)
 	{
