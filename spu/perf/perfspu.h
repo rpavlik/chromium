@@ -38,7 +38,6 @@ typedef struct {
 
 	int frame_counter;
 	int clear_counter;
-	int swap_counter;
 
 	PerfData framestats;
 	PerfData old_framestats;

@@ -729,8 +729,6 @@ void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 		perfspuDumpCounters(sstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	}
 	
-	perf_spu.swap_counter++;
-
 	perf_spu.super.SwapBuffers( window, flags );
 }
 
