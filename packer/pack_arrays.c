@@ -17,7 +17,7 @@ void PACK_APIENTRY crPackVertexPointer( GLint size, GLenum type, GLsizei stride,
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackVertexPointer" );
+	crWarning( "Unimplemented crPackVertexPointer" );
 }
 
 void PACK_APIENTRY crPackColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -26,7 +26,7 @@ void PACK_APIENTRY crPackColorPointer( GLint size, GLenum type, GLsizei stride, 
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackColorPointer" );
+	crWarning( "Unimplemented crPackColorPointer" );
 }
 
 void PACK_APIENTRY crPackNormalPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -34,7 +34,7 @@ void PACK_APIENTRY crPackNormalPointer( GLenum type, GLsizei stride, const GLvoi
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackNormalPointer" );
+	crWarning( "Unimplemented crPackNormalPointer" );
 }
 
 void PACK_APIENTRY crPackTexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -43,14 +43,14 @@ void PACK_APIENTRY crPackTexCoordPointer( GLint size, GLenum type, GLsizei strid
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackTexCoordPointer" );
+	crWarning( "Unimplemented crPackTexCoordPointer" );
 }
 
 void PACK_APIENTRY crPackEdgeFlagPointer( GLsizei stride, const GLvoid *pointer )
 {
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackEdgeFlagPointer" );
+	crWarning( "Unimplemented crPackEdgeFlagPointer" );
 }
 
 void PACK_APIENTRY crPackIndexPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -58,7 +58,7 @@ void PACK_APIENTRY crPackIndexPointer( GLenum type, GLsizei stride, const GLvoid
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackIndexPointer" );
+	crWarning( "Unimplemented crPackIndexPointer" );
 }
 
 void PACK_APIENTRY crPackSecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
@@ -67,7 +67,7 @@ void PACK_APIENTRY crPackSecondaryColorPointerEXT( GLint size, GLenum type, GLsi
 	UNUSED( type );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackSecondaryColorPointerEXT" );
+	crWarning( "Unimplemented crPackSecondaryColorPointerEXT" );
 }
 
 void PACK_APIENTRY crPackInterleavedArrays( GLenum format, GLsizei stride, const GLvoid *pointer )
@@ -75,5 +75,5 @@ void PACK_APIENTRY crPackInterleavedArrays( GLenum format, GLsizei stride, const
 	UNUSED( format );
 	UNUSED( stride );
 	UNUSED( pointer );
-	crError( "Unimplemented crPackInterleavedArrays" );
+	crWarning( "Unimplemented crPackInterleavedArrays" );
 }
