@@ -422,7 +422,12 @@ WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint xwindowID)
 	if (!winInfo)
 		return NULL;
 
-#ifdef USE_DMX
+#ifdef WINDOWS
+	/* XXX double-check this on Windows
+	if (!winInfo->client_hwnd)
+		winInfo->client_hwnd = xwindowID;
+	*/
+#else
 	if (!winInfo->xwin)
 		winInfo->xwin = xwindowID;
 #endif
