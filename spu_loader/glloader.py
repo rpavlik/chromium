@@ -59,6 +59,7 @@ fillin( SPUNamedFunctionTable *entry, const char *funcName, SPUGenericFunction f
 	return 0;
 }
 
+#ifndef WINDOWS
 static int FileExists(char *directory, char *filename)
 {
 	FILE *f;
@@ -77,6 +78,7 @@ static int FileExists(char *directory, char *filename)
 	    return 0;
 	}
 }
+#endif
 
 
 /*
