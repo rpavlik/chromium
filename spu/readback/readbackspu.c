@@ -485,6 +485,31 @@ static void DoReadback( WindowInfo *window )
 	static int first_time = 1;
 	GLint packAlignment, unpackAlignment;
 
+	/* setup OOB gather connections, if necessary */
+	if (readback_spu.gather_url)
+	{
+		unsigned short port = 3000;
+		char url[4098];
+		if (readback_spu.gather_conn == NULL)
+		{
+			crParseURL(readback_spu.gather_url, url, url, &port, 3000);
+
+			readback_spu.child.ChromiumParametervCR(GL_GATHER_CONNECT_CR,
+																							GL_INT, 1, &port);
+			readback_spu.child.Flush();
+
+			readback_spu.gather_conn = crNetConnectToServer(readback_spu.gather_url,
+																											port,
+																											readback_spu.gather_mtu,
+																											1);
+
+			if (!readback_spu.gather_conn)
+			{
+				crError("Problem setting up gather connection");
+			}
+		}
+	}
+	
 	if (first_time || window->width < 1 || window->height < 1)
 	{
 		CheckWindowSize( window );
@@ -544,35 +569,10 @@ static void READBACKSPU_APIENTRY readbackspuFlush( void )
 static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint win, GLint flags )
 {
 	WindowInfo *window;
-	unsigned short port = 3000;
-	char url[4098];
 	
 	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
 	CRASSERT(window);
 
-	/* setup OOB gather connections, if necessary */
-	if (readback_spu.gather_url)
-	{
-		if (readback_spu.gather_conn == NULL)
-		{
-			crParseURL(readback_spu.gather_url, url, url, &port, 3000);
-
-			readback_spu.child.ChromiumParametervCR(GL_GATHER_CONNECT_CR,
-																							GL_INT, 1, &port);
-			readback_spu.child.Flush();
-
-			readback_spu.gather_conn = crNetConnectToServer(readback_spu.gather_url,
-																											port,
-																											readback_spu.gather_mtu,
-																											1);
-
-			if (!readback_spu.gather_conn)
-			{
-				crError("Problem setting up gather connection");
-			}
-		}
-	}
-	
 	DoReadback( window );
 
 	/*
