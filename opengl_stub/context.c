@@ -186,6 +186,8 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 		winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 		if (!winInfo)
 			return NULL;
+		crStrncpy(winInfo->dpyName, DisplayString(dpy), MAX_DPY_NAME);
+		winInfo->dpyName[MAX_DPY_NAME-1] = 0;
 		winInfo->drawable = drawable;
 		winInfo->type = UNDECIDED;
 		winInfo->spuWindow = -1;
@@ -578,7 +580,6 @@ stubCheckUseChromium( WindowInfo *window )
 		}
 
 		GetWindowTitle( window, title );
-		crDebug("title[0] = %d window=%x\n", (int) title[0], (int) window->drawable);
 		if (title[0]) {
 			if (wildcard) {
 				if (crStrstr(title, titlePattern)) {
@@ -697,7 +698,7 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			retVal = 0;
 		}
 		else {
-			if (window->spuWindow == -1) 
+			if (window->spuWindow == -1)
 				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
 
 			if (window->spuWindow != (GLint)window->drawable)
