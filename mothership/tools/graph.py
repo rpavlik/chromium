@@ -269,7 +269,7 @@ class MainFrame(wxFrame):
 
 		# Position everything in the window.
 		topSizer = wxBoxSizer(wxVERTICAL)
-		topSizer.Add(toolSizer, 0, wxTOP | wxLEFT | wxRIGHT | wxALIGN_TOP, 5)
+		topSizer.Add(toolSizer, option=0, flag=wxALL|wxALIGN_TOP, border=4)
 		topSizer.Add(self.drawArea, 1, wxEXPAND)
 
 		self.topPanel.SetAutoLayout(true)
