@@ -468,9 +468,11 @@ one or more downstream servers.
 <h2 class="PageSubHeading">Binaryswap SPU</h2>
 <p>
 The Binaryswap SPU implements the well known <i>binary swap</i> method
-of image compositing.  It works similar to the Readback SPU.
-Since the Binaryswap SPU is derived from the Render SPU, all the Render
-SPU options are applicable to the Binaryswap SPU.
+of image compositing.  It works similar to the Readback SPU.  Since
+the Binaryswap SPU is derived from the Render SPU, all the Render SPU
+options are applicable to the Binaryswap SPU.  See
+cr/mothership/configs/psubmit_bswap.conf for an example of how to use
+this SPU.
 </p>
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
@@ -491,12 +493,13 @@ SPU options are applicable to the Binaryswap SPU.
     <td width="19%" class="ConfigOption" height="20">node_number</td>
     <td width="12%" class="ConfigType" height="20">String</td>
     <td width="115%" class="ConfigDesc" height="20">
-    The number of the node.  The nodes must be ordered correctly for the
-    case of alpha composite.  In object space, the portion being rendered by
-    node0 needs to be 'next' to the portion being rendered by node1.  Then that
-    block should, in object space, be 'next' to the block rendered by node2 and
-    node3, etc.  If your final image is composited incorrectly, double check
-    the node ordering you setup here.
+    The number of the node.  The nodes must be ordered correctly for
+    the case of alpha composite.  The data must be divided in object
+    space sensitive to composite order.  Basically the data for nodes
+    0,1;2,3;3,4;etc must be next to each other, 01,23;34,56;etc must
+    be next to each other, and so on.  If your final image is
+    composited incorrectly, double check the node ordering you setup
+    here.
     </td>
   </tr>
   <tr>
