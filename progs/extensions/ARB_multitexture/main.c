@@ -16,6 +16,7 @@
 */
 
 #define GL_GLEXT_LEGACY /* for glActiveTextureARB etc */
+#define GL_GLEXT_PROTOTYPES
 
 #include "../common/logo.h"
 #include <math.h>
