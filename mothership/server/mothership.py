@@ -1155,23 +1155,23 @@ class CR:
 		We call a network-specific connect routine above which returns its
 		response on the given socket.
 		"""
-		connect_info = args.split( " " )
+		connect_info = args.split(" ")
 		protocol = connect_info[0]
-		if (protocol == 'tcpip' or protocol == 'udptcpip'):
-			self.ConnectTCPIP( sock, connect_info )
-		elif (protocol == 'sdp'):
-			self.ConnectSDP( sock, connect_info )
-		elif (protocol == 'ib'):
-			self.ConnectIB( sock, connect_info )
-		elif (protocol == 'gm'):
-			self.ConnectGM( sock, connect_info )
-		elif (protocol == 'quadrics'):
-			self.ConnectQuadrics( sock, connect_info )
-		elif (protocol == 'quadrics-tcscomm'):
-			self.ConnectTcscomm( sock, connect_info )
+		if protocol == 'tcpip' or protocol == 'udptcpip':
+			self.ConnectTCPIP(sock, connect_info)
+		elif protocol == 'sdp':
+			self.ConnectSDP(sock, connect_info)
+		elif protocol == 'ib':
+			self.ConnectIB(sock, connect_info)
+		elif protocol == 'gm':
+			self.ConnectGM(sock, connect_info)
+		elif protocol == 'quadrics':
+			self.ConnectQuadrics(sock, connect_info)
+		elif protocol == 'quadrics-tcscomm':
+			self.ConnectTcscomm(sock, connect_info)
 		else:
-			sock.Failure( SockWrapper.UNKNOWNPROTOCOL,
-						  "Never heard of protocol %s" % protocol )
+			sock.Failure(SockWrapper.UNKNOWNPROTOCOL,
+						 "Never heard of protocol %s" % protocol)
 		return
 
 
@@ -1302,7 +1302,7 @@ class CR:
 		We call a network-specific accept routine above which returns its
 		response on the given socket.
 		"""
-		accept_info = args.split( " " )
+		accept_info = args.split(" ")
 		protocol = accept_info[0]
 		if protocol == 'tcpip' or protocol == 'udptcpip':
 			self.AcceptTCPIP(sock, accept_info)
@@ -1317,8 +1317,8 @@ class CR:
 		elif protocol == 'quadrics-tcscomm':
 			self.AcceptTcscomm(sock, accept_info)
 		else:
-			sock.Failure( SockWrapper.UNKNOWNPROTOCOL,
-						  "Never heard of protocol %s" % protocol )
+			sock.Failure(SockWrapper.UNKNOWNPROTOCOL,
+						 "Never heard of protocol %s" % protocol)
 
 	def MatchNode(self, nodeTypeName, sock, args):
 		""" A (too?) clever routine.  This handles all the work of matching
