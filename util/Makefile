@@ -11,6 +11,9 @@ include ${TOP}/arch.mk
 #TEAC_SUPPORT = 1
 #TCSCOMM_SUPPORT = 1
 
+# Uncomment for Myrinet Support
+#GM_SUPPORT = 1
+
 SHARED = 1
 LIBRARY = crutil
 FILES = bbox \
@@ -38,11 +41,18 @@ FILES = bbox \
 PRECOMP = debug_opcodes.c
 SLOP += ${PRECOMP}
 
-#ifeq ($(ARCH),Linux)
-#CFLAGS += -DGM_SUPPORT
-#FILES += gm
-#LDFLAGS += -lgm
-#endif
+ifeq ($(GM_SUPPORT), 1)
+ifeq ($(ARCH),Linux)
+CFLAGS += -DGM_SUPPORT
+FILES += gm
+LDFLAGS += -lgm
+endif
+ifeq ($(ARCH), WIN_NT)
+CFLAGS += -DGM_SUPPORT
+FILES += gm
+LDFLAGS += gm.lib
+endif
+endif
 
 ifeq ($(ARCH), SunOS)
 LDFLAGS+= -lsocket -lnsl
@@ -51,11 +61,6 @@ endif
 LIB_DEFS = util.def
 
 ifeq ($(ARCH), WIN_NT)
-ifdef (WANT_GM)
-CFLAGS += -DGM_SUPPORT
-FILES += gm
-LDFLAGS += gm.lib
-endif
 LDFLAGS += user32.lib ws2_32.lib
 else
 ifeq ($(ARCH),FreeBSD)
