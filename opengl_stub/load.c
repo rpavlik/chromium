@@ -225,7 +225,9 @@ static void stubInitVars(void)
 	stub.threadSafe = GL_FALSE;
 	stub.trackWindowSize = 0;
 	stub.trackWindowPos = 0;
+	stub.trackWindowVisibility = 0;
 	stub.mothershipPID = 0;
+	stub.spu_dir = NULL;
 
 	stub.freeContextNumber = MAGIC_CONTEXT_BASE;
 	stub.contextTable = crAllocHashtable();
@@ -309,6 +311,182 @@ static void MothershipPhoneHome(int signo)
 	Mothership_Awake = 1;
 }
 
+
+/**
+ * Get configuration options from the mothership.
+ * NOTE: if you add any new options here, be sure to also add them to
+ * the graphical config program in mothership/tools/crtypes.h in the
+ * ApplicationNode class.
+ */
+static void
+getConfigurationOptions(CRConnection *conn)
+{
+	char response[1024];
+	/* Quadrics defaults */
+	int my_rank = 0;
+	int low_context  = CR_QUADRICS_DEFAULT_LOW_CONTEXT;
+	int high_context = CR_QUADRICS_DEFAULT_HIGH_CONTEXT;
+	char *low_node  = "none";
+	char *high_node = "none";
+	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+	if (crMothershipGetFakerParam( conn, response, "show_cursor" ) ) {
+		sscanf( response, "%d", &stub.appDrawCursor );
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "minimum_window_size" )
+		&& response[0]) {
+		int w, h;
+		sscanf( response, "[%d, %d]", &w, &h );
+		crDebug( "minimum_window_size: %d x %d", w, h );
+		stub.minChromiumWindowWidth = w;
+		stub.minChromiumWindowHeight = h;
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "maximum_window_size" )
+		&& response[0]) {
+		int w, h;
+		sscanf( response, "[%d, %d]", &w, &h );
+		crDebug( "maximum_window_size: %d x %d", w, h );
+		stub.maxChromiumWindowWidth = w;
+		stub.maxChromiumWindowHeight = h;
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "ignore_window_list" )
+		&& response[0]) {
+		unsigned int n;
+		int count = 0;
+		char *ns;
+		char *copyns;
+		crDebug( "ignore_window_list: %s", response);
+		ns = (char *)crAlloc(sizeof(response));
+		copyns = response;
+		while (sscanf(copyns , "%d,%s", &n, ns) == 2) {
+			count++;
+			copyns = ns;
+		}
+
+		stub.matchChromiumWindowID = crCalloc(count * sizeof(unsigned int));
+
+		count = 0;
+		copyns = response;
+		while (sscanf(copyns , "%d,%s", &n, ns) == 2) {
+			stub.matchChromiumWindowID[count] = n;
+			copyns = ns;
+			count++;
+		}
+		stub.matchChromiumWindowID[count] = n;
+
+		stub.numIgnoreWindowID = count;
+
+		crDebug("GL faker: Ignoring window ID's : ");
+		while (count >= 0) {
+			crDebug("GL faker: %d", stub.matchChromiumWindowID[count]);
+			count--;
+		}
+		crFree(ns);
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "match_window_title" )
+		&& response[0]) {
+		crDebug("GL faker: match_window_title: %s", response );
+		stub.matchWindowTitle = crStrdup( response );
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "ignore_freeglut_menus" )) {
+		sscanf( response, "%d", &stub.ignoreFreeglutMenus );
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "track_window_size" ) ) {
+		sscanf( response, "%d", &stub.trackWindowSize );
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "track_window_position" ) ) {
+		sscanf( response, "%d", &stub.trackWindowPos );
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "track_window_visibility" ) ) {
+		sscanf( response, "%d", &stub.trackWindowVisibility );
+	}
+
+
+	if (crMothershipGetFakerParam( conn, response, "match_window_count" )
+		&& response[0]) {
+		int c;
+		sscanf( response, "%d", &c );
+		crDebug( "GL faker: match_window_count: %d", c);
+		stub.matchChromiumWindowCount = c;
+	}
+
+	if (crMothershipGetFakerParam( conn, response, "spu_dir" ) && crStrlen(response) > 0)
+	{
+		stub.spu_dir = crStrdup(response);
+	}
+	else
+	{
+		stub.spu_dir = NULL;
+	}
+
+	if (crMothershipGetRank( conn, response ))
+	{
+		my_rank = crStrToInt( response );
+	}
+	crNetSetRank( my_rank );
+
+	if (crMothershipGetParam( conn, "low_context", response ))
+	{
+		low_context = crStrToInt( response );
+	}
+
+	if (crMothershipGetParam( conn, "high_context", response ))
+	{
+		high_context = crStrToInt( response );
+	}
+	crNetSetContextRange( low_context, high_context );
+
+	if (crMothershipGetParam( conn, "low_node", response ))
+	{
+		low_node = crStrdup( response );
+	}
+
+	if (crMothershipGetParam( conn, "high_node", response ))
+	{
+		high_node = crStrdup( response );
+	}
+	crNetSetNodeRange( low_node, high_node );
+
+	if (crMothershipGetParam(conn, "comm_key", response))
+	{
+	  unsigned int a;
+	  char **words, *found;
+	  
+	  /* remove the silly []'s */
+	  while ((found = crStrchr(response, '[')) != NULL)
+	    *found = ' ';
+	  while ((found = crStrchr(response, ']')) != NULL)
+	    *found = ' ';
+	  
+	  words = crStrSplit(response, ",");
+	  
+	  a = 0;
+	  while (words[a] != NULL && a<sizeof(key))
+	    {
+	      key[a]= crStrToInt(words[a]);
+	      a++;
+	    }
+	  
+	  crFreeStrings(words);
+	}
+	crNetSetKey(key,sizeof(key));
+
+	if (conn && crMothershipGetFakerParam( conn, response, "system_gl_path" ))
+	{
+		crSetenv( "CR_SYSTEM_GL_PATH", response );
+	}
+}
+
+
+
 void stubInit(void)
 {
 	/* Here is where we contact the mothership to find out what we're supposed
@@ -323,16 +501,8 @@ void stubInit(void)
 	char **spuchain;
 	int num_spus;
 	int *spu_ids;
-	/* Quadrics defaults */
-	int my_rank = 0;
-	int low_context  = CR_QUADRICS_DEFAULT_LOW_CONTEXT;
-	int high_context = CR_QUADRICS_DEFAULT_HIGH_CONTEXT;
-	char *low_node  = "none";
-	char *high_node = "none";
 	char **spu_names;
-	char *spu_dir;
 	const char *app_id;
-	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	int i;
 
 	static int stub_initialized = 0;
@@ -493,157 +663,8 @@ void stubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	if (conn && crMothershipGetFakerParam( conn, response, "show_cursor" ) ) {
-		sscanf( response, "%d", &stub.appDrawCursor );
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "minimum_window_size" )
-		&& response[0]) {
-		int w, h;
-		sscanf( response, "[%d, %d]", &w, &h );
-		crDebug( "minimum_window_size: %d x %d", w, h );
-		stub.minChromiumWindowWidth = w;
-		stub.minChromiumWindowHeight = h;
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "maximum_window_size" )
-		&& response[0]) {
-		int w, h;
-		sscanf( response, "[%d, %d]", &w, &h );
-		crDebug( "maximum_window_size: %d x %d", w, h );
-		stub.maxChromiumWindowWidth = w;
-		stub.maxChromiumWindowHeight = h;
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "ignore_window_list" )
-		&& response[0]) {
-		unsigned int n;
-		int count = 0;
-		char *ns;
-		char *copyns;
-		crDebug( "ignore_window_list: %s", response);
-		ns = (char *)crAlloc(sizeof(response));
-		copyns = response;
-		while (sscanf(copyns , "%d,%s", &n, ns) == 2) {
-			count++;
-			copyns = ns;
-		}
-
-		stub.matchChromiumWindowID = crCalloc(count * sizeof(unsigned int));
-
-		count = 0;
-		copyns = response;
-		while (sscanf(copyns , "%d,%s", &n, ns) == 2) {
-			stub.matchChromiumWindowID[count] = n;
-			copyns = ns;
-			count++;
-		}
-		stub.matchChromiumWindowID[count] = n;
-
-		stub.numIgnoreWindowID = count;
-
-		crDebug("GL faker: Ignoring window ID's : ");
-		while (count >= 0) {
-			crDebug("GL faker: %d", stub.matchChromiumWindowID[count]);
-			count--;
-		}
-		crFree(ns);
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "match_window_title" )
-		&& response[0]) {
-		crDebug("GL faker: match_window_title: %s", response );
-		stub.matchWindowTitle = crStrdup( response );
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "ignore_freeglut_menus" )) {
-		sscanf( response, "%d", &stub.ignoreFreeglutMenus );
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "track_window_size" ) ) {
-		sscanf( response, "%d", &stub.trackWindowSize );
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "track_window_position" ) ) {
-		sscanf( response, "%d", &stub.trackWindowPos );
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "match_window_count" )
-		&& response[0]) {
-		int c;
-		sscanf( response, "%d", &c );
-		crDebug( "GL faker: match_window_count: %d", c);
-		stub.matchChromiumWindowCount = c;
-	}
-
-	if (conn && crMothershipGetFakerParam( conn, response, "spu_dir" ) && crStrlen(response) > 0)
-	{
-		spu_dir = crStrdup(response);
-	}
-	else
-	{
-		spu_dir = NULL;
-	}
-
-	if (conn && crMothershipGetRank( conn, response ))
-	{
-		my_rank = crStrToInt( response );
-	}
-	crNetSetRank( my_rank );
-
-	if (conn && crMothershipGetParam( conn, "low_context", response ))
-	{
-		low_context = crStrToInt( response );
-	}
-
-	if (conn && crMothershipGetParam( conn, "high_context", response ))
-	{
-		high_context = crStrToInt( response );
-	}
-	crNetSetContextRange( low_context, high_context );
-
-	if (conn && crMothershipGetParam( conn, "low_node", response ))
-	{
-		low_node = crStrdup( response );
-	}
-
-	if (conn && crMothershipGetParam( conn, "high_node", response ))
-	{
-		high_node = crStrdup( response );
-	}
-	crNetSetNodeRange( low_node, high_node );
-
-	if (conn && crMothershipGetParam(conn, "comm_key", response))
-	{
-	  unsigned int a;
-	  char **words, *found;
-	  
-	  /* remove the silly []'s */
-	  while ((found = crStrchr(response, '[')) != NULL)
-	    *found = ' ';
-	  while ((found = crStrchr(response, ']')) != NULL)
-	    *found = ' ';
-	  
-	  words = crStrSplit(response, ",");
-	  
-	  a = 0;
-	  while (words[a] != NULL && a<sizeof(key))
-	    {
-	      key[a]= crStrToInt(words[a]);
-	      a++;
-	    }
-	  
-	  crFreeStrings(words);
-	}
-	crNetSetKey(key,sizeof(key));
-
-	if (conn && crMothershipGetFakerParam( conn, response, "system_gl_path" ))
-	{
-		crSetenv( "CR_SYSTEM_GL_PATH", response );
-	}
-
-	if (conn)
-	{
+	if (conn) {
+		getConfigurationOptions(conn);
 		crMothershipDisconnect( conn );
 	}
 
@@ -653,13 +674,12 @@ void stubInit(void)
 	 * configuration options list in mothership/tools/crtypes.py
 	 */
 
-	stub.spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir, NULL );
+	stub.spu = crSPULoadChain( num_spus, spu_ids, spu_names, stub.spu_dir, NULL );
 
 	crFree( spuchain );
 	crFree( spu_ids );
 	for (i = 0; i < num_spus; ++i)
 		crFree(spu_names[i]);
-	crFree(spu_dir);
 	crFree( spu_names );
 
 	crSPUInitDispatchTable( &glim );

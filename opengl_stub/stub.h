@@ -143,6 +143,8 @@ typedef struct {
 	int ignoreFreeglutMenus;
 	int trackWindowSize;
 	int trackWindowPos;
+	int trackWindowVisibility;
+	char *spu_dir;
 
 	/* thread safety stuff */
 	GLboolean threadSafe;

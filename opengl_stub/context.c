@@ -231,7 +231,7 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 		winInfo->drawable = drawable;
 		winInfo->type = UNDECIDED;
 		winInfo->spuWindow = -1;
-		winInfo->mapped = stubIsWindowVisible(winInfo);
+		winInfo->mapped = -1; /* don't know */
 		crHashtableAdd(stub.windowTable, (unsigned int) drawable, winInfo);
 	}
 	return winInfo;
@@ -994,10 +994,12 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 	 * to unmapped application windows.  Without this, perfly (for example)
 	 * opens *lots* of temporary windows which otherwise clutter the screen.
 	 */
-	if (window->type == CHROMIUM && window->dpy && window->mapped != 1) {
-		int mapped = stubIsWindowVisible(window);
-		stub.spu->dispatch_table.WindowShow(window->spuWindow, mapped);
-		window->mapped = mapped;
+	if (stub.trackWindowVisibility && window->type == CHROMIUM && window->dpy) {
+		const int mapped = stubIsWindowVisible(window);
+		if (mapped != window->mapped) {
+			stub.spu->dispatch_table.WindowShow(window->spuWindow, mapped);
+			window->mapped = mapped;
+		}
 	}
 
 	return retVal;
