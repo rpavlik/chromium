@@ -37,10 +37,10 @@ print """
 #error I don't know where your system's GL lives.  Too bad.
 #endif
 
-static void __fillin( SPUNamedFunctionTable *table, char *name, SPUGenericFunction func )
+static void __fillin( int offset, char *name, SPUGenericFunction func )
 {
-	table->name = crStrdup( name );
-	table->fn = func;
+	render_table[offset].name = crStrdup( name );
+	render_table[offset].fn = func;
 }
 
 static CRDLL *__findSystemGL( void )
@@ -64,7 +64,7 @@ for func_name in keys:
 		print 'void SPU_APIENTRY __renderSpecial%s(void) {}' % func_name
 
 print """
-void LoadSystemGL( SPUNamedFunctionTable *table )
+void renderspuLoadSystemGL( )
 {
 	CRDLL *dll = __findSystemGL();
 """
@@ -73,11 +73,11 @@ for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, names, types) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "render", func_name ):
-		print '\t__fillin( table + %3d, "%s", (SPUGenericFunction) __renderSpecial%s );' % (index, func_name, func_name )
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) __renderSpecial%s );' % (index, func_name, func_name )
 	elif stub_common.FindSpecial( "render_system", func_name ): 
-		print '\t__fillin( table + %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
 	else:
-		print '\t__fillin( table + %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
+		print '\t__fillin( %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
 
 useful_wgl_functions = [
 	"MakeCurrent",

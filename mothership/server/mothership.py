@@ -1,4 +1,4 @@
-import sys, string
+import sys, string, types
 
 from socket import *
 from select import *
@@ -14,7 +14,10 @@ class SPU:
 		self.config = {}
 
 	def Conf( self, key, *values ):
-		self.config[key] = map( repr, values )
+		def makestr( x ):
+			if type(x) == types.StringType: return x
+			return repr(x)
+		self.config[key] = map( makestr, values )
 
 class CRNode:
 	SPUIndex = 0
@@ -163,6 +166,7 @@ class CR:
 		for node in self.nodes:
 			node.spokenfor = 0
 			node.spusloaded = 0
+		sock.Success( "Server Reset" );
 
 	def do_quit( self, sock, args ):
 		sock.Success( "Bye" )

@@ -59,6 +59,12 @@ int crPixelSize (GLenum format, GLenum type, GLsizei width, GLsizei height )
 	return pixelbytes;
 }
 
+void crPixelCopy1D( GLvoid *dstptr, const GLvoid *srcptr, GLenum format,
+		GLenum type, GLsizei width, CRPackState *packstate )
+{
+	crPixelCopy2D( dstptr, srcptr, format, type, width, 1, packstate );
+}
+
 void crPixelCopy2D( GLvoid *dstptr, const GLvoid *srcptr, GLenum format,
 		GLenum type, GLsizei width, GLsizei height, CRPackState *packstate )
 {

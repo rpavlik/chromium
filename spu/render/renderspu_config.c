@@ -29,16 +29,12 @@ void renderspuGatherConfiguration( void )
 
 	// Connect to the mothership and identify ourselves.
 	
-	crNetInit( NULL, NULL );
 	conn = crMothershipConnect( );
-	if (!crMothershipSendString( conn, NULL, "spu %d", render_spu.id ))
-	{
-		crError( "But you SAID I was Render SPU %d!\nDon't ever lie to me again.", render_spu.id );
-	}
+	crMothershipIdentifySPU( conn, render_spu.id );
 
 	__setDefaults();
 
-	if (crMothershipSendString( conn, response, "spuparam window_geometry", render_spu.id ) )
+	if (crMothershipSPUParam( conn, response, "window_geometry" ) )
 	{
 		sscanf( response, "%d %d %d %d", &(render_spu.window_x), 
 				&(render_spu.window_y), &(render_spu.window_width),

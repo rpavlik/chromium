@@ -38,8 +38,8 @@ for line in system_gl.readlines():
 
 		output_mapping[func_name] = ( return_type, arg_names, arg_types )
 
-output_mapping['SwapBuffers'] = ( 'void', [], ['void'] )
-output_mapping['MakeCurrent'] = ( 'void', [], ['void'] )
-output_mapping['CreateContext'] = ( 'void', [], ['void'] )
+output_mapping['SwapBuffers'] = ( 'void', [''], ['void'] )
+output_mapping['MakeCurrent'] = ( 'void', [''], ['void'] )
+output_mapping['CreateContext'] = ( 'void', [''], ['void'] )
 
 cPickle.dump( output_mapping, output_mapping_file, 1 )

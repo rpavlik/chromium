@@ -1,3 +1,4 @@
+#include "cr_packfunctions.h"
 #include "cr_pack.h"
 #include "cr_opengl_types.h"
 #include "cr_opcodes.h"
@@ -5,62 +6,52 @@
 
 #define UNUSED(x) ((void)(x))
 
-void PACK_APIENTRY crPackVertexPointer( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *pointer )
+void PACK_APIENTRY crPackVertexPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	UNUSED( size );
 	UNUSED( type );
 	UNUSED( stride );
-	UNUSED( count );
 	UNUSED( pointer );
 	crError( "Unimplemented Vertex Array Pack Function called!" );
 }
 
-void PACK_APIENTRY crPackColorPointer( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *pointer )
+void PACK_APIENTRY crPackColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	UNUSED( size );
 	UNUSED( type );
 	UNUSED( stride );
-	UNUSED( count );
 	UNUSED( pointer );
 	crError( "Unimplemented Vertex Array Pack Function called!" );
 }
 
-void PACK_APIENTRY crPackNormalPointer( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *pointer )
+void PACK_APIENTRY crPackNormalPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
 {
-	UNUSED( size );
 	UNUSED( type );
 	UNUSED( stride );
-	UNUSED( count );
 	UNUSED( pointer );
 	crError( "Unimplemented Vertex Array Pack Function called!" );
 }
 
-void PACK_APIENTRY crPackTexCoordPointer( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *pointer )
+void PACK_APIENTRY crPackTexCoordPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	UNUSED( size );
 	UNUSED( type );
 	UNUSED( stride );
-	UNUSED( count );
 	UNUSED( pointer );
 	crError( "Unimplemented Vertex Array Pack Function called!" );
 }
 
-void PACK_APIENTRY crPackEdgeFlagPointer( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *pointer )
+void PACK_APIENTRY crPackEdgeFlagPointer( GLsizei stride, const GLvoid *pointer )
 {
-	UNUSED( size );
-	UNUSED( type );
 	UNUSED( stride );
-	UNUSED( count );
 	UNUSED( pointer );
 	crError( "Unimplemented Vertex Array Pack Function called!" );
 }
 
-void PACK_APIENTRY crPackIndexPointer( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *pointer )
+void PACK_APIENTRY crPackIndexPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
 {
-	UNUSED( size );
 	UNUSED( type );
 	UNUSED( stride );
-	UNUSED( count );
 	UNUSED( pointer );
 	crError( "Unimplemented Vertex Array Pack Function called!" );
 }

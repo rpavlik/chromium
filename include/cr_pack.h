@@ -19,17 +19,23 @@ typedef struct {
 	unsigned char *opcode_start, *opcode_current, *opcode_end;
 } CRPackBuffer;
 
+typedef void (*FlushFunc)(void);
+typedef void (*SendHugeFunc)(CROpcode, void *);
+
 typedef struct {
 	CRPackBuffer buffer;
-	void (*Flush)(void);
-	void (*SendHuge)(CROpcode, void *);
+	FlushFunc Flush;
+	SendHugeFunc SendHuge;
 	CRCurrentStatePointers current;
 } CRPackGlobals;
 
 extern CRPackGlobals __pack_globals;
 
-void crPackBuffer( CRPackBuffer *buffer );
+void crPackSetBuffer( CRPackBuffer *buffer );
+void crPackGetBuffer( CRPackBuffer *buffer );
 void crPackResetPointers( void );
+void crPackFlushFunc( FlushFunc ff );
+void crPackSendHugeFunc( SendHugeFunc shf );
 
 #if defined(LINUX) || defined(WINDOWS)
 #define CR_UNALIGNED_ACCESS_OKAY

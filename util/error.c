@@ -59,14 +59,14 @@ void crError( char *format, ... )
 			temp--;
 		}
 
-		offset = sprintf( txt, "\t-----------------------\n\tWindows ERROR: %s\n\t-----------------\nCR Error 1(%s:%d): ", buf, my_hostname, my_pid );
+		offset = sprintf( txt, "\t-----------------------\n\tWindows ERROR: %s\n\t-----------------\nCR Error(%s:%d): ", buf, my_hostname, my_pid );
 	}
 	else
 	{
-		offset = sprintf( txt, "CR Error 2(%s:%d): ", my_hostname, my_pid );
+		offset = sprintf( txt, "CR Error(%s:%d): ", my_hostname, my_pid );
 	}
 #else
-	offset = sprintf( txt, "CR Error 3(%s:%d): ", my_hostname, my_pid );
+	offset = sprintf( txt, "CR Error(%s:%d): ", my_hostname, my_pid );
 #endif
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );

@@ -35,3 +35,6 @@ crNetReadline
 crNetFree
 crNetConnect
 crNetDisconnect
+crPixelCopy1D
+crPixelCopy2D
+crPixelSize

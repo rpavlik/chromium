@@ -19,20 +19,22 @@ print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_spu.h"
+#include "packspu.h"
+#include "cr_packfunctions.h"
 """
 
-print 'SPUNamedFunctionTable passthrough_table[%d];' % len(keys)
+print 'SPUNamedFunctionTable pack_table[%d];' % len(keys)
 
 print """
 static void __fillin( int offset, char *name, SPUGenericFunction func )
 {
-	passthrough_table[offset].name = crStrdup( name );
-	passthrough_table[offset].fn = func;
+	pack_table[offset].name = crStrdup( name );
+	pack_table[offset].fn = func;
 }
 
-void BuildPassthroughTable( SPU *child )
+void packspuCreateFunctions( )
 {"""
 for index in range(len(keys)):
 	func_name = keys[index]
-	print '\t__fillin( %3d, "%s", (SPUGenericFunction) child->dispatch_table.%s );' % (index, func_name, func_name )
+	print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (index, func_name, func_name )
 print '}'

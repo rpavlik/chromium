@@ -25,6 +25,7 @@ CRConnection *crMothershipConnect( void )
 
 	sprintf( mother_url, "%s:%d", mother_server, mother_port );
 
+	crNetInit( NULL, NULL );
 	conn = crConnectToServer( mother_server, 10000, 8096 );
 	return conn;
 }
@@ -67,4 +68,32 @@ int crMothershipReadResponse( CRConnection *conn, void *buf )
 
 	code = crStrToInt( codestr );
 	return (code == 200);
+}
+
+void crMothershipIdentifySPU( CRConnection *conn, int spu )
+{
+	if (!crMothershipSendString( conn, NULL, "spu %d", spu ))
+	{
+		crError( "Server said it hadn't heard of SPU %d", spu );
+	}
+}
+
+int crMothershipSPUParam( CRConnection *conn, char *response, char *param, ... )
+{
+	va_list args;
+	char txt[8096];
+	va_start( args, param );
+	vsprintf( txt, param, args );
+	va_end( args );
+
+	return crMothershipSendString( conn, response, "spuparam %s", txt );
+}
+
+void crMothershipReset( CRConnection *conn )
+{
+	if (!crMothershipSendString( conn, NULL, "reset" ))
+	{
+		crError( "Couldn't reset the server!" );
+	}
+
 }

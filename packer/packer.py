@@ -16,6 +16,8 @@ print """
 #include "cr_opengl_types.h"
 #include "cr_pack.h"
 #include "cr_opcodes.h"
+#include "cr_packfunctions.h"
+
 #define PACK_UNUSED(x) ((void)(x))
 
 CRPackGlobals __pack_globals;

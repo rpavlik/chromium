@@ -30,7 +30,6 @@ void StubInit(void)
 		return;
 	stub_initialized = 1;
 	
-	crNetInit( NULL, NULL );
 	conn = crMothershipConnect( );
 	if (crGetHostname( hostname, sizeof( hostname ) ) )
 	{

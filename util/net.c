@@ -50,6 +50,7 @@ static struct {
 // networking types here.
 
 NETWORK_TYPE( TCPIP );
+NETWORK_TYPE( Devnull );
 
 // Clients call this function to connect to a server.  The "server" argument is 
 // expected to be a URL type specifier "protocol://servername:port", where the port
@@ -95,17 +96,11 @@ CRConnection *crConnectToServer( char *server,
 
 	// now, just dispatch to the appropriate protocol's initialization functions.
 	
-#if 0
-	// Not implemented (yet)
 	if ( !strcmp( protocol, "devnull" ) )
 	{
-		// good ol' "drop the packets" network
-
-		crDevNullInit( cr_net.recv, cr_net.close );
-		crDevNullConnection( conn );
-		return conn;
+		crDevnullInit( cr_net.recv, cr_net.close );
+		crDevnullConnection( conn );
 	}
-#endif
 #ifdef GM_SUPPORT
 	// XXX UNIMPLEMENTED!!!
 	else if ( !strcmp( protocol, "gm" ) )
@@ -120,7 +115,7 @@ CRConnection *crConnectToServer( char *server,
 		request->gm_port_num = wireGLGmPortNum( );
 	}
 #endif
-	if ( !strcmp( protocol, "tcpip" ) )
+	else if ( !strcmp( protocol, "tcpip" ) )
 	{
 		crTCPIPInit( cr_net.recv, cr_net.close );
 		crTCPIPConnection( conn );

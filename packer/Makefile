@@ -18,7 +18,7 @@ packer.def: packer_defs.py
 	@$(ECHO) Making the packer def file
 	@$(PYTHON) $< > $@
 
-../include/cr_packfunctions.h: pack_header.py packer_get_special
+../include/cr_packfunctions.h: pack_header.py packer_get_special packer_pixel_special
 	@$(ECHO) Making the pack functions header..
 	@$(PYTHON) pack_header.py > $@
 

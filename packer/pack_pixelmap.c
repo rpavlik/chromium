@@ -1,3 +1,4 @@
+#include "cr_packfunctions.h"
 #include "cr_pack.h"
 #include "cr_opengl_types.h"
 #include <string.h>

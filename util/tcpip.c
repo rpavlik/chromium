@@ -467,8 +467,16 @@ void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 {
 	if ( cr_tcpip.initialized )
 	{
-		CRASSERT( cr_tcpip.recv == recvFunc );
-		CRASSERT( cr_tcpip.close == closeFunc );
+		if ( cr_tcpip.recv == NULL && cr_tcpip.close == NULL )
+		{
+			cr_tcpip.recv = recvFunc;
+			cr_tcpip.close = closeFunc;
+		}
+		else
+		{
+			CRASSERT( cr_tcpip.recv == recvFunc );
+			CRASSERT( cr_tcpip.close == closeFunc );
+		}
 		return;
 	}
 

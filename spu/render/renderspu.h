@@ -11,6 +11,7 @@
 
 #include "cr_spu.h"
 
+void renderspuLoadSystemGL( void );
 void renderspuGatherConfiguration( void );
 void renderspuCreateWindow( void );
 

@@ -4,3 +4,6 @@ crMothershipConnect
 crMothershipDisconnect
 crMothershipSendString
 crMothershipReadResponse
+crMothershipIdentifySPU
+crMothershipSPUParam
+crMothershipReset

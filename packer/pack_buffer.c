@@ -7,10 +7,26 @@
 #include <stdlib.h>
 #include <memory.h>
 
-void crPackBuffer( CRPackBuffer *buffer )
+void crPackSetBuffer( CRPackBuffer *buffer )
 {
 	CRASSERT( buffer != NULL );
 	memcpy( &(__pack_globals.buffer), buffer, sizeof(*buffer) );
+}
+
+void crPackGetBuffer( CRPackBuffer *buffer )
+{
+	CRASSERT( buffer != NULL );
+	memcpy( buffer, &(__pack_globals.buffer), sizeof(*buffer) );
+}
+
+void crPackFlushFunc( FlushFunc ff )
+{
+	__pack_globals.Flush = ff;
+}
+
+void crPackSendHugeFunc( SendHugeFunc shf )
+{
+	__pack_globals.SendHuge = shf;
 }
 
 void crPackResetPointers( void )

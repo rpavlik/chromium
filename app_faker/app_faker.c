@@ -684,7 +684,6 @@ int main( int argc, char **argv )
 		int num_args = 1;
 		int args_allocated = 1;
 
-		crNetInit( NULL, NULL );
 		if (mothership)
 			xsetenv( "MOTHERSHIP", mothership );
 		conn = crMothershipConnect( );

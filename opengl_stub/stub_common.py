@@ -129,6 +129,8 @@ def PacketLength( arg_types ):
 def ArgumentString( arg_names, arg_types ):
 	output = '( '
 	for index in range(0,len(arg_names)):
+		if len(arg_names) != 1 and arg_names[index] == '':
+			continue
 		output += arg_types[index]
 		if arg_types[index][-1:] != '*' and arg_names[index] != '':
 			output += " ";

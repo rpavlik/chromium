@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "cr_packfunctions.h"
 #include "cr_pack.h"
 #include "cr_opengl_types.h"
 #include "cr_opengl_enums.h"
@@ -332,7 +333,7 @@ void PACK_APIENTRY crPackTexSubImage1D (GLenum target, GLint level,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, GLuint *textures, GLboolean *residences )
+void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences )
 {
 	unsigned char *data_ptr;
 	int packet_length;

@@ -1,4 +1,5 @@
 TOP = .
-SUBDIRS = glapi_parser util mothership spu app_faker opengl_stub
+SUBDIRS = glapi_parser util state_tracker packer mothership spu \
+	app_faker opengl_stub crserver
 
 include ${TOP}/cr.mk

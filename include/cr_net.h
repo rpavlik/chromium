@@ -7,6 +7,8 @@
 #include <winsock2.h>
 #endif
 
+#include <stdio.h>
+
 typedef struct CRConnection CRConnection;
 
 typedef enum {
@@ -72,6 +74,10 @@ struct CRConnection {
 
 	/* TCP/IP */
 	CRSocket tcp_socket;
+
+	/* FILE Tracing */
+	char *filename;
+	FILE *fp;
 
 	/* Myrinet GM */
 	unsigned int gm_node_id;

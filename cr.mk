@@ -181,7 +181,7 @@ endif
 
 ifndef SUBDIRS
 all: arch $(PRECOMP) dep
-recurse: $(PROG_TARGET) $(LIBNAME)
+recurse: $(PROG_TARGET) $(LIBNAME) done
 else
 SUBDIRS_ALL = $(foreach dir, $(SUBDIRS), $(dir).subdir)
 
@@ -197,10 +197,14 @@ release:
 profile:
 	@$(MAKE) PROFILE=1
 
+done:
+	@$(ECHO) "  Done!"
+	@$(ECHO) ""
+
 arch: 
 	@$(ECHO) "-------------------------------------------------------------------------------"
 ifdef BANNER
-	@$(ECHO) "              $(BANNER) $(RELEASE_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
+	@$(ECHO) "              $(BANNER)"
 else
 ifdef PROGRAM
 	@$(ECHO) "              Building $(TARGET) for $(ARCH) $(RELEASE_STRING) $(MPI_STRING) $(VTK_STRING) $(WARN_STRING)"
@@ -241,7 +245,6 @@ ifdef WINDOWS
 else
 	@$(CR_CXX) $(OBJS) -o $(PROG_TARGET)$(EXESUFFIX) $(LDFLAGS) $(LIBRARIES)
 endif
-	@$(ECHO) ""
 
 endif
 

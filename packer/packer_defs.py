@@ -12,3 +12,9 @@ keys = gl_mapping.keys()
 keys.sort();
 for func_name in keys:
     print "crPack" + func_name
+
+print "crPackResetPointers"
+print "crPackSetBuffer"
+print "crPackGetBuffer"
+print "crPackFlushFunc"
+print "crPackSendHugeFunc"

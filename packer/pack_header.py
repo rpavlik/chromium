@@ -14,6 +14,7 @@ gl_mapping = cPickle.load( parsed_file )
 print """#ifndef CR_PACKFUNCTIONS_H
 #define CR_PACKFUNCTIONS_H
 
+#include "state/cr_pixel.h"
 #include "cr_opengl_types.h"
 #include "cr_pack.h"
 """
@@ -30,5 +31,8 @@ for func_name in keys:
 		else:
 			arg_types.append( "%s *" % return_type )
 			arg_names.append( "return_value" )
+	elif stub_common.FindSpecial( "packer_pixel", func_name ):	
+		arg_types.append( "CRPackState *" )
+		arg_names.append( "packstate" )
 	print 'void PACK_APIENTRY crPack%s%s;' %( func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 print '\n#endif /* CR_PACKFUNCTIONS_H */'
