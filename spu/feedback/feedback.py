@@ -114,26 +114,28 @@ GLint FEEDBACKSPU_APIENTRY feedbackspu_RenderMode ( GLenum mode )
 
 void FEEDBACKSPU_APIENTRY feedbackspu_Begin ( GLenum mode )
 {
-	crStateBegin( mode );
-
 	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackBegin( mode );
 	else if (feedback_spu.render_mode == GL_SELECT)
 		crStateSelectBegin( mode );
 	else
+	{
+		crStateBegin( mode );
 		feedback_spu.super.Begin( mode );
+	}
 }
 
 void FEEDBACKSPU_APIENTRY feedbackspu_End ( void )
 {
-	crStateEnd( );
-
 	if (feedback_spu.render_mode == GL_FEEDBACK)
 		crStateFeedbackEnd( );
 	else if (feedback_spu.render_mode == GL_SELECT)
 		crStateSelectEnd( );
 	else
+	{
+		crStateEnd( );
 		feedback_spu.super.End( );
+	}
 }
 
 void FEEDBACKSPU_APIENTRY feedbackspu_Bitmap ( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap )
