@@ -472,12 +472,19 @@ stubGetWindowGeometry( const WindowInfo *window, int *x, int *y, unsigned int *w
 {
 	float rect[4];
 
-	CGSGetWindowBounds( window->connection, window->drawable, rect );
-
-	*x = (int) rect[0];
-	*y = (int) rect[1];
-	*w = (int) rect[2];
-	*h = (int) rect[3];
+	if( !window ||
+	    !window->connection ||
+	    !window->drawable ||
+	    CGSGetWindowBounds( window->connection, window->drawable, rect ) != noErr )
+	{
+		*x = *y = 0;
+		*w = *h = 0;
+	} else {
+		*x = (int) rect[0];
+		*y = (int) rect[1];
+		*w = (int) rect[2];
+		*h = (int) rect[3];
+	}
 }
 
 
