@@ -36,6 +36,8 @@
 #include <math.h>
 #include <GL/glut.h>
 
+#include "wall2.h"
+#include "roof.h"
 
 struct building {
    float x, y, z;     /* pos */
@@ -56,8 +58,10 @@ static GLfloat StartRot = 0;
 
 static GLint CheckerRows = 20, CheckerCols = 20;
 static GLboolean UseDisplayLists = GL_FALSE;
+static GLboolean Texture = GL_TRUE;
 static GLuint GroundList = 1;
-
+static GLuint wallTex ;
+static GLuint roofTex ;
 
 
 static GLfloat
@@ -100,13 +104,67 @@ static void GenerateBuildings(void)
 static void DrawBuildings(void)
 {
    int i;
+   GLfloat hc, xwc, zwc ;
    for (i = 0; i < NumBuildings; i++) {
       glPushMatrix();
       glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Buildings[i].color);
 
       glTranslatef(Buildings[i].x, Buildings[i].y, Buildings[i].z);
       glScalef(Buildings[i].sx, Buildings[i].sy, Buildings[i].sz);
-      glutSolidCube(1.0);
+
+      hc = floor( 2.*Buildings[i].sy ) ;
+      xwc = floor( 5.*Buildings[i].sx ) ;
+      zwc = floor( 5.*Buildings[i].sz ) ;
+      if ( hc < 1 ) hc = 1. ;
+      if ( xwc < 1 ) xwc = 1. ;
+      if ( zwc < 1 ) zwc = 1. ;
+
+      if (Texture) {
+         glEnable( GL_TEXTURE_2D ) ;
+         glBindTexture( GL_TEXTURE_2D, wallTex ) ;
+      }
+
+      glBegin( GL_QUADS ) ;
+
+      glNormal3f(  0.0,  0.0,  1.0 ) ;
+      glTexCoord2f( 0.0, 0.0 ) ; glVertex3f( -0.5, -0.5,  0.5 ) ;
+      glTexCoord2f( xwc, 0.0 ) ; glVertex3f(  0.5, -0.5,  0.5 ) ;
+      glTexCoord2f( xwc, hc  ) ; glVertex3f(  0.5,  0.5,  0.5 ) ;
+      glTexCoord2f( 0.0, hc  ) ; glVertex3f( -0.5,  0.5,  0.5 ) ;
+
+      glNormal3f(  1.0,  0.0,  0.0 ) ;
+      glTexCoord2f( 0.0, 0.0 ) ; glVertex3f(  0.5, -0.5,  0.5 ) ;
+      glTexCoord2f( zwc, 0.0 ) ; glVertex3f(  0.5, -0.5, -0.5 ) ;
+      glTexCoord2f( zwc, hc  ) ; glVertex3f(  0.5,  0.5, -0.5 ) ;
+      glTexCoord2f( 0.0, hc  ) ; glVertex3f(  0.5,  0.5,  0.5 ) ;
+
+      glNormal3f(  0.0,  0.0, -1.0 ) ;
+      glTexCoord2f( 0.0, 0.0 ) ; glVertex3f(  0.5, -0.5, -0.5 ) ;
+      glTexCoord2f( xwc, 0.0 ) ; glVertex3f( -0.5, -0.5, -0.5 ) ;
+      glTexCoord2f( xwc, hc  ) ; glVertex3f( -0.5,  0.5, -0.5 ) ;
+      glTexCoord2f( 0.0, hc  ) ; glVertex3f(  0.5,  0.5, -0.5 ) ;
+
+      glNormal3f( -1.0,  0.0,  0.0 ) ;
+      glTexCoord2f( 0.0, 0.0 ) ; glVertex3f( -0.5,  0.5, -0.5 ) ;
+      glTexCoord2f( 0.0, hc  ) ; glVertex3f( -0.5, -0.5, -0.5 ) ;
+      glTexCoord2f( zwc, hc  ) ; glVertex3f( -0.5, -0.5,  0.5 ) ;
+      glTexCoord2f( zwc, 0.0 ) ; glVertex3f( -0.5,  0.5,  0.5 ) ;
+
+      glEnd() ;
+
+      if (Texture)
+         glBindTexture( GL_TEXTURE_2D, roofTex ) ;
+      glBegin( GL_QUADS ) ;
+
+      glNormal3f(  0.0,  1.0,  0.0 ) ;
+      glTexCoord2f( 0.0, 0.0 ) ; glVertex3f( -0.5,  0.5, -0.5 ) ;
+      glTexCoord2f( 1.0, 0.0 ) ; glVertex3f( -0.5,  0.5,  0.5 ) ;
+      glTexCoord2f( 1.0, 1.0 ) ; glVertex3f(  0.5,  0.5,  0.5 ) ;
+      glTexCoord2f( 0.0, 1.0 ) ; glVertex3f(  0.5,  0.5, -0.5 ) ;
+
+      glEnd() ;
+      glDisable( GL_TEXTURE_2D ) ;
+      /*glutSolidCube(1.0);*/
       glPopMatrix();
    }
 }
@@ -215,11 +273,11 @@ static void Display( void )
 
 static void Reshape( int width, int height )
 {
-   GLfloat ar = (float) width / (float) height;
+   GLfloat ar = 0.5 * (float) width / (float) height;
    glViewport( 0, 0, width, height );
    glMatrixMode( GL_PROJECTION );
    glLoadIdentity();
-   glFrustum( -ar, ar, -1.0, 1.0, 3.0, 150.0 );
+   glFrustum( -ar, ar, -0.5, 0.5, 1.5, 150.0 );
    glMatrixMode( GL_MODELVIEW );
    glLoadIdentity();
    glTranslatef( 0.0, 0.0, -EyeDist );
@@ -253,6 +311,9 @@ static void Key( unsigned char key, int x, int y )
       case 'd':
          UseDisplayLists = !UseDisplayLists;
          printf("Use display lists: %d\n", (int) UseDisplayLists);
+         break;
+      case 't':
+         Texture = !Texture;
          break;
       case 'z':
          EyeDist -= 1;
@@ -324,6 +385,24 @@ static void Init( void )
    glNewList(GroundList, GL_COMPILE);
    DrawGround();
    glEndList();
+
+   glGenTextures( 1, &wallTex ) ;
+   glBindTexture( GL_TEXTURE_2D, wallTex ) ;
+   glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL ) ;
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT ) ;
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT ) ;
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ) ;
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ) ;
+   glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, wall.width, wall.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, wall.pixel_data ) ;
+
+   glGenTextures( 1, &roofTex ) ;
+   glBindTexture( GL_TEXTURE_2D, roofTex ) ;
+   glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL ) ;
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT ) ;
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT ) ;
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ) ;
+   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ) ;
+   glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, roof.width, roof.height, 0, GL_RGB, GL_UNSIGNED_BYTE, roof.pixel_data ) ;
 }
 
 
