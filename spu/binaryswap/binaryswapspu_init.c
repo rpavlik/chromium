@@ -28,15 +28,6 @@ Binaryswapspu binaryswap_spu;
 CRtsd _BinaryswapTSD;
 #endif
 
-static int
-binaryswapspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
-{
-	(void) conn;
-	(void) buf;
-	(void) len;
-	return 0; /* NOT HANDLED */
-}
-
 
 /**
  * Increment the 'port' part of the given URL by the given amount.
@@ -73,6 +64,8 @@ binaryswapspuConnectToPeers( void )
 	int i, stage, numNodes;
 
 	crDebug("Setting up peer connections:");
+
+	CRASSERT(binaryswap_spu.stages > 0);
 
 	/*
 	 * Number of BinarySwap SPUs we have
@@ -141,9 +134,7 @@ binaryswapspuConnectToPeers( void )
 						stage, binaryswap_spu.swap_partners[stage]);
 	}	
 	
-	/* initialize recv function */
-	crNetInit( binaryswapspuReceiveData, NULL );
-	CRASSERT(binaryswap_spu.stages > 0);
+	crNetInit(NULL, NULL);
 	
 	/* allocate send/recv arrays for OOB communication */
 	binaryswap_spu.peer_recv = crAlloc(binaryswap_spu.stages *

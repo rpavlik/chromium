@@ -19,21 +19,13 @@ SPUFunctions comm_functions = {
 	_cr_comm_table /* THE ACTUAL FUNCTIONS */
 };
 
-static int commspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
-{
-	(void) conn;
-	(void) buf;
-	(void) len;
-
-	return 0; /* Just let the work pile up for later viewing */
-}
 
 static void commspuConnectToPeer( void )
 {
 	char hostname[4096], protocol[4096];
 	unsigned short port;
 
-	crNetInit( commspuReceiveData, NULL );
+	crNetInit( NULL, NULL );
 
 	if (!crParseURL( comm_spu.peer_name, protocol, hostname, &port, COMM_SPU_PORT ) )
 	{

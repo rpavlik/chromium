@@ -24,10 +24,8 @@ static double TotalBytesReceived = 0.0;
  * len - length of buffer in bytes
  */
 static int
-ReceiveFunc( CRConnection *conn, void *buf, unsigned int len )
+ReceiveFunc( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-	CRMessage *msg = (CRMessage *) buf;
-
 	/*
 	printf("In %s len=%d msg.type=0x%x\n", __FUNCTION__, len, msg->header.type);
 	*/
@@ -51,7 +49,7 @@ ReceiveFunc( CRConnection *conn, void *buf, unsigned int len )
 					exit(0);
 				}				 
 				assert(*firstCode == 99);
-				crNetFree( conn, buf );
+				crNetFree( conn, msg );
 				/*printf("Received %d bytes\n", len);*/
 			}
 			break;

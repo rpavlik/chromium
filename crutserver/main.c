@@ -17,10 +17,13 @@ CRUTAPI crut_api;
 
 int curMenuID;
 
+#if 0
+/*
+ * What's the point of this function even existing??? (BP)
+ */
 static int 
-crutServerRecv( CRConnection *conn, void *buf, unsigned int len )
+crutServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-    CRMessage *msg = (CRMessage *) buf;
     (void) len;
     
     switch( msg->header.type )
@@ -35,6 +38,7 @@ crutServerRecv( CRConnection *conn, void *buf, unsigned int len )
   return 0; /* HANDLED */
 #endif
 }
+#endif
 
 static void 
 crutServerClose( unsigned int id )
@@ -303,7 +307,7 @@ crutInitServer(char *mothership, int argc, char *argv[])
     int drawable;
 #endif
 
-    crNetInit( crutServerRecv, crutServerClose );
+    crNetInit( NULL/*crutServerRecv*/, crutServerClose );
 
     crutInitAPI( &crut_api, mothership ); /* here? */
 

@@ -147,7 +147,8 @@ static RunQueue *__getNextClient(void)
 			int done_something = 0;
 			RunQueue *start = cr_server.run_queue;
 
- 			if (!cr_server.run_queue->client->conn || cr_server.run_queue->client->conn->type == CR_NO_CONNECTION) {
+ 			if (!cr_server.run_queue->client->conn
+					|| cr_server.run_queue->client->conn->type == CR_NO_CONNECTION) {
  				crServerDeleteFromRunQueue( cr_server.run_queue->client );
 				start = cr_server.run_queue;
 			}
@@ -162,7 +163,9 @@ static RunQueue *__getNextClient(void)
 				{
 					all_blocked = 0;
 				}
-				if (!cr_server.run_queue->blocked && cr_server.run_queue->client->conn && cr_server.run_queue->client->conn->messageList)
+				if (!cr_server.run_queue->blocked
+						&& cr_server.run_queue->client->conn
+						&& cr_server.run_queue->client->conn->messageList.head)
 				{
 					return cr_server.run_queue;
 				}
@@ -171,7 +174,8 @@ static RunQueue *__getNextClient(void)
 
 			if (all_blocked)
 			{
-				crError( "crserver: DEADLOCK! (numClients=%d, all blocked)", cr_server.numClients );
+				crError( "crserver: DEADLOCK! (numClients=%d, all blocked)",
+								 cr_server.numClients );
 				if (cr_server.numClients < cr_server.maxBarrierCount) {
 					crError("Waiting for more clients!!!");
 					while (cr_server.numClients < cr_server.maxBarrierCount) {
@@ -340,10 +344,8 @@ void crServerSerializeRemoteStreams(void)
 	}
 }
 
-int crServerRecv( CRConnection *conn, void *buf, unsigned int len )
+int crServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-	CRMessage *msg = (CRMessage *) buf;
-
 	switch( msg->header.type )
 	{
 		/* Called when using multiple threads */

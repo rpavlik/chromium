@@ -24,7 +24,7 @@ static CRTimer *MyTimer;
 
 
 static int
-ReceiveFunc( CRConnection *conn, void *buf, unsigned int len )
+ReceiveFunc( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
 	return 0;
 }

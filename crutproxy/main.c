@@ -24,55 +24,54 @@ CRUTProxy crut_proxy;
 CRUTAPI crut_api;
 
 static int 
-crutProxyRecv( CRConnection *conn, void *buf, unsigned int len )
+crutProxyRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-    CRMessage *msg = (CRMessage *) buf;
     switch( msg->header.type )
     {
         case CR_MESSAGE_CRUT:
 
-	    crut_proxy.msg = (CRUTMessage*) buf;
+	    crut_proxy.msg = (CRUTMessage*) msg;
 
 	    /* forward events */
 	    if ( crut_proxy.msg->msg_type == CRUT_MOUSE_EVENT ) 
 	    {
-	        CRUTMouseMsg *msg = (CRUTMouseMsg*) buf;
+	        CRUTMouseMsg *msg = (CRUTMouseMsg*) msg;
 		crutSendMouseEvent( &crut_api, msg->button, msg->state, msg->x, msg->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_RESHAPE_EVENT ) 
 	    {
-	        CRUTReshapeMsg *msg = (CRUTReshapeMsg*) buf;
+	        CRUTReshapeMsg *msg = (CRUTReshapeMsg*) msg;
 		crutSendReshapeEvent( &crut_api, msg->width, msg->height);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_VISIBILITY_EVENT ) 
 	    {
-		 CRUTVisibilityMsg *msg = (CRUTVisibilityMsg*) buf;
+		 CRUTVisibilityMsg *msg = (CRUTVisibilityMsg*) msg;
 		 crutSendVisibilityEvent( &crut_api, msg->state);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_KEYBOARD_EVENT ) 
 	    {
-	        CRUTKeyboardMsg *msg = (CRUTKeyboardMsg*) buf;
+	        CRUTKeyboardMsg *msg = (CRUTKeyboardMsg*) msg;
 		crutSendKeyboardEvent( &crut_api, msg->key, msg->x, msg->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_MOTION_EVENT ) 
 	    {
-	        CRUTMotionMsg *msg = (CRUTMotionMsg*) buf;
+	        CRUTMotionMsg *msg = (CRUTMotionMsg*) msg;
 		crutSendMotionEvent( &crut_api, msg->x, msg->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_PASSIVE_MOTION_EVENT ) 
 	    {
-	        CRUTPassiveMotionMsg *msg = (CRUTPassiveMotionMsg*) buf;
+	        CRUTPassiveMotionMsg *msg = (CRUTPassiveMotionMsg*) msg;
 		crutSendPassiveMotionEvent( &crut_api, msg->x, msg->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_MENU_EVENT ) 
 	    {
-	        CRUTMenuMsg *msg = (CRUTMenuMsg*) buf;
+	        CRUTMenuMsg *msg = (CRUTMenuMsg*) msg;
 		crutSendMenuEvent( &crut_api, msg->menuID, msg->value );
 	    } 
 

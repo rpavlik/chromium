@@ -477,10 +477,8 @@ crutReceiveEvent(CRUTMessage **msg)
 }
 
 static int 
-crutClientRecv( CRConnection *conn, void *buf, unsigned int len )
+crutClientRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-    CRMessage *msg = (CRMessage *) buf;
-
     switch( msg->header.type )
     {
     case CR_MESSAGE_CRUT:

@@ -19,11 +19,9 @@ static SPUFunctions injector_functions = {
 	_cr_injector_table /* THE ACTUAL FUNCTIONS */
 };
 
-static int injectorspuReceiveData( CRConnection* conn, void* buf, unsigned int len )
+static int
+injectorspuReceiveData( CRConnection* conn, CRMessage *msg, unsigned int len )
 {
-
-	CRMessage *msg = (CRMessage *) buf;
-
 	switch ( msg->header.type ) {
 		case CR_MESSAGE_OOB:
 			/*injector_spu.oob_count++ ;*/

@@ -52,7 +52,7 @@ void crServerInitializeTiling(CRMuralInfo *mural);
 void crServerInitDispatch(void);
 void crServerReturnValue( const void *payload, unsigned int payload_len );
 void crServerWriteback(void);
-int crServerRecv( CRConnection *conn, void *buf, unsigned int len );
+int crServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len );
 void crServerSerializeRemoteStreams(void);
 void crServerAddToRunQueue( CRClient *client );
 

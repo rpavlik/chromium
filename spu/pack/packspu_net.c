@@ -12,14 +12,16 @@
 #include "packspu.h"
 #include "packspu_proto.h"
 
-static void packspuWriteback( CRMessageWriteback *wb )
+static void
+packspuWriteback( const CRMessageWriteback *wb )
 {
 	int *writeback;
 	crMemcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
 	*writeback = 0;
 }
 
-static void packspuReadback( CRMessageReadback *rb, unsigned int len )
+static void
+packspuReadback( const CRMessageReadback *rb, unsigned int len )
 {
 	/* minus the header, the destination pointer, 
 	 * *and* the implicit writeback pointer at the head. */
@@ -34,11 +36,12 @@ static void packspuReadback( CRMessageReadback *rb, unsigned int len )
 	crMemcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
-static void packspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
+static void
+packspuReadPixels( const CRMessageReadPixels *rp, unsigned int len )
 {
 	int payload_len = len - sizeof( *rp );
 	char *dest_ptr;
-	const char *src_ptr = (char *) rp + sizeof(*rp);
+	const char *src_ptr = (const char *) rp + sizeof(*rp);
 
 	crMemcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
 
@@ -77,10 +80,9 @@ static void packspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 	--pack_spu.ReadPixels;
 }
 
-static int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+static int
+packspuReceiveData( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-	CRMessage *msg = (CRMessage *) buf;
-
 	switch( msg->header.type )
 	{
 		case CR_MESSAGE_READ_PIXELS:
@@ -96,7 +98,6 @@ static int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			/*crWarning( "Why is the pack SPU getting a message of type 0x%x?", msg->type ); */
 			return 0; /* NOT HANDLED */
 	}
-	(void) len;	
 	return 1; /* HANDLED */
 }
 

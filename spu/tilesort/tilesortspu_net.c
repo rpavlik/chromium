@@ -20,7 +20,7 @@ tilesortspuReadPixels( const CRMessageReadPixels *rp, unsigned int len )
 	GET_THREAD(thread);
 	int payload_len = len - sizeof( *rp );
 	char *dest_ptr;
-	char *src_ptr = (char*)rp + sizeof(*rp);
+	const char *src_ptr = (const char *) rp + sizeof(*rp);
 
 	/* we better be expecting a ReadPixels result! */
 	CRASSERT(thread->currentContext->readPixelsCount > 0);
@@ -69,10 +69,8 @@ tilesortspuReadPixels( const CRMessageReadPixels *rp, unsigned int len )
  * messages (i.e. the return of pixel data) only.
  */
 static int
-tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+tilesortspuReceiveData( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-	CRMessage *msg = (CRMessage *) buf;
-	
 	switch( msg->header.type )
 	{
 		case CR_MESSAGE_READ_PIXELS:
