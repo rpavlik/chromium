@@ -9,10 +9,10 @@
 
 
 /* These define the Chromium release number.
- * Not sure what to do for alpha/beta releases.
+ * Alpha Release = 0.1.0, Beta Release = 0.2.0
  */
 #define CR_MAJOR_VERSION 0
-#define CR_MINOR_VERSION 1
+#define CR_MINOR_VERSION 2
 #define CR_PATCH_VERSION 0
 
 
