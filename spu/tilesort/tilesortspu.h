@@ -263,45 +263,26 @@ struct thread_info_t {
  */
 typedef struct {
 	/**
-	 *  SPU stuff 
+	 * \name Tilesort SPU stuff
 	 */
+	/*@{*/
 	int id;
 	SPUDispatchTable self;
 
-	/**
-	 * \name for display lists 
-	 */
-	/*@{*/
-	SPUDispatchTable packerDispatch; /**< for display list uploads */
-	SPUDispatchTable stateDispatch;  /**< for display list state reconciliation */
+	int num_servers;
+	int swap;  /**< byte swapping */
+	unsigned int MTU;
+	unsigned int buffer_size;
+	unsigned int geom_buffer_size;
+	unsigned int geom_buffer_mtu;
 	/*@}*/
 
 	/**
-	 * \name Threads 
+	 * \name configuration options
 	 */
 	/*@{*/
-	int numThreads;
-	ThreadInfo thread[MAX_THREADS];
-	/*@}*/
-
-	/**
-	 *  \name Contexts 
-	 */
-	/*@{*/
-	CRHashTable *contextTable;
-	/*@}*/
-
-	/**
-	 * \name Windows 
-	 */
-	/*@{*/
-	CRHashTable *windowTable; /**< map SPU window IDs to WindowInfo */
-	/*@}*/
-
-	/**
-	 * \name config options 
-	 */
-	/*@{*/
+	TileSortBucketMode defaultBucketMode;
+	unsigned int fakeWindowWidth, fakeWindowHeight;
 	int splitBeginEnd;
 	int drawBBOX;
 	float bboxLineWidth;
@@ -315,50 +296,42 @@ typedef struct {
 	int autoDListBBoxes;
 	int lazySendDLists;
 	int listTrack;
+	int forceQuadBuffering;
+	int scaleImages;
 	/*@}*/
 
 	/**
-	 * \name stereo config 
+	 * \name stereo variables
 	 */
 	/*@{*/
 	StereoMode stereoMode;
 	GlassesType glassesType;
 	CRmatrix stereoProjMatrices[2]; /**< 0 = left, 1 = right */
 	CRmatrix stereoViewMatrices[2]; /**< 0 = left, 1 = right */
-	TileSortBucketMode defaultBucketMode;
-	unsigned int fakeWindowWidth, fakeWindowHeight;
-	int scaleImages;
 	GLboolean anaglyphMask[2][4]; 	/**< [eye][channel] */
+	/*@}*/
 
-	int swap;  /**< byte swapping */
-	/*RenderSide renderSide;*/  /* left/right side rendering */
-	unsigned int MTU;
-	unsigned int buffer_size;
-	unsigned int geom_buffer_size;
-	unsigned int geom_buffer_mtu;
-	int num_servers;
-	int replay;
-	int forceQuadBuffering;
+	CRHashTable *contextTable;  /**< maps SPU Context IDs to ContextInfo */
+	CRHashTable *windowTable;   /**< maps SPU window IDs to WindowInfo */
+
+	int numThreads;                  /**< Number of threads */
+	ThreadInfo thread[MAX_THREADS];  /**< Table of tread info */
+
+	/**
+	 * \name display list variables
+	 */
+	/*@{*/
+	SPUDispatchTable packerDispatch; /**< for display list uploads */
+	SPUDispatchTable stateDispatch;  /**< for display list state reconciliation */
 	CRHashTable *listTable; /**< map display list ID to sentFlags for each server */
+	CRDLM *dlm;  /**< Display list manager */
 	/*@}*/
 
-	/**
-	 * \name WGL/GLX interface for DMX 
-	 */
-	/*@{*/
-	crOpenGLInterface ws;
-	/*@}*/
-
-	/**
-	 * \name warped display   XXX this might be per-window state 
-	 */
-	/*@{*/
-	WarpDisplayInfo *displays;
-	/*@}*/
+	crOpenGLInterface ws;       /**< Window system interface functions */
+	WarpDisplayInfo *displays;  /**< For warped displays */
 
 	CRLimitsState limits;  /**< OpenGL limits computed from children */
 
-	CRDLM *dlm;  /**< Display list manager */
 } TileSortSPU;
 
 /**

@@ -95,7 +95,6 @@ fprintf(stderr,"tilesortSPUInit call crSetTSD\n");
 			tilesort_spu.MTU - sizeof(CRMessageOpcodes) - (24+END_FLUFF+4+4);
 
 	tilesort_spu.swap = thread0->netServer[0].conn->swap;
-	tilesort_spu.replay = 0;
 
 	tilesortspuInitThreadPacking( thread0 );
 
