@@ -19,6 +19,7 @@ DrawElements
 DrawRangeElements
 InterleavedArrays
 ReadPixels
+DrawPixels
 CopyPixels
 SwapBuffers
 Flush
