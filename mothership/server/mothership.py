@@ -744,7 +744,6 @@ class CR:
 	    do_opengldll:	Identifies the application node in the graph.
 	    do_rank:		Sends the node's rank down.
 	    do_disconnect: 	Disconnects from clients.
-	    do_quit: 		Disconnects from clients and quits the mothership.
 	    do_reset: 		Resets the mothership to its initial state.
 	    do_server:		Identifies the server in the graph.
 	    do_newserver:	Identifies a new server for replication.
