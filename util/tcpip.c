@@ -452,9 +452,13 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 		else
 			crStrcpy(my_hostname, hostname);
 		
+#if 0
+		/* XXX why is this done??? (Brian asks) */
 		temp = crStrchr( my_hostname, '.' );
 		if (temp) *temp='\0';
-		
+#else
+		(void) temp;
+#endif
 		if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest tcpip %s %d %d", my_hostname, conn->port, conn->endianness ) )
 		{
 			crError( "Mothership didn't like my accept request request" );
