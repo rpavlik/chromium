@@ -1,0 +1,151 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body>
+
+<p class="PageHeading">Configuring the Provided SPU's</p>
+<p>This page provides a complete list of all the configuration parameters
+supported by all SPU's shipped with Chromium ALPHA, arranged by SPU.&nbsp; If a
+SPU has <i>no</i> configuration options, it is not listed here.</p>
+<p class="PageSubHeading">Print SPU </p>
+<table border="1" width="100%">
+  <tr class="ConfigTableHeader">
+    <td width="19%">Parameter Name</td>
+    <td width="12%">Value Types</td>
+    <td width="115%">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">log_file</td>
+    <td width="12%" class="ConfigType">String</td>
+    <td width="115%" class="ConfigDesc">Name of log file to generate.&nbsp; If this parameter is not
+      specified, the Print SPU will send its output to standard error.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">log_path</td>
+    <td width="12%" class="ConfigType">String</td>
+    <td width="115%" class="ConfigDesc">Directory that should contain the log file.&nbsp; Only has
+      an effect when used in conjunction with the <code>log_file</code>
+      parameter.</td>
+  </tr>
+</table>
+<p class="PageSubHeading">Render SPU</p>
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">window_geometry</td>
+    <td width="12%" class="ConfigType" height="74">4 Floats</td>
+    <td width="115%" class="ConfigDesc" height="74">Geometry of the window to
+      create.&nbsp; This is specified as four floating point numbers.&nbsp; The
+      first two give the (<i>x</i>,<i>y</i>) position of the upper left corner
+      of the window, relative to the upper left corner of the screen.&nbsp; The
+      second two numbers give the width and height of the window,
+      respectively.&nbsp; The default is (0,0,256,256).</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">fullscreen</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If this flag is set, the <code>window_geometry</code>
+      parameters will be ignored, and the created window will cover the entire
+      screen.&nbsp; The default is 0.</td>
+  </tr>
+</table>
+<p class="PageSubHeading">Tilesort SPU</p>
+
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">split_begin_end</td>
+    <td width="12%" class="ConfigType" height="74">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="74">If this flag is set, the
+      Tilesort SPU will break blocks of geometry into pieces if they happen to
+      fall on a buffer boundary.&nbsp; This can happen if a lot of geometry is
+      specified with no state changes, or if the MTU is small.&nbsp; If the flag
+      is <i>not</i> set, then the Tilesort SPU will simply grow the geometry
+      buffer beyond the MTU.&nbsp; The default is 1.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">broadcast</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If this flag is set, the
+      bucketing algorithm will be disabled, and all geometry will be broadcast
+      to all servers.&nbsp; The default is 0.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">optimize_bucket</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If this flag is set, a more
+      sophisticated algorithm will be used to compute the intersection between
+      the screen-space bounding box and the set of tiles.&nbsp; However, this
+      algorithm <i>only</i> works if the tiling is completely regular; i.e.,
+      each tile is the same size, and they form a perfectly rectangular output
+      space.&nbsp; If the flag is <i>not </i>set, the bounding box will just be
+      tested against each tile in turn.&nbsp; The default is 1.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">sync_on_swap</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If this flag is set, the
+      Tilesort SPU will wait for a <code>SwapBuffers</code> call to be executed
+      by all servers before continuing.&nbsp; This will keep the client
+      application from getting more than one frame ahead of any of the servers,
+      but it requires a round-trip network packet from each server.&nbsp; The
+      default is 1.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">sync_on_finish</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If this flag is set, the
+      Tilesort SPU will wait for a <code>glFinish</code> call to be executed by
+      all servers before continuing.&nbsp; The default is 1.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">draw_bbox</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If this flag is set, the
+      Tilesort SPU will add commands to the stream to draw the object-space
+      bounding box around each block of geometry that is sent.&nbsp; This is
+      useful for seeing the computed granularity of work, but it makes the
+      stream of graphics commands more complex and uses some slow OpenGL
+      commands like <code>glPushAttrib</code>.&nbsp; The default is 0.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">bbox_line_width</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+    <td width="115%" class="ConfigDesc" height="38">The width of lines to use
+      when drawing the bounding box.&nbsp; If the <code>draw_bbox</code> flag is
+      not set, this parameter has no effect.&nbsp; The default is 5.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">fake_window_dims</td>
+    <td width="12%" class="ConfigType" height="38">2 Floats</td>
+    <td width="115%" class="ConfigDesc" height="38">This parameter provides a
+      way to use <code>glViewport</code> or <code>glScissor</code> calls with
+      applications that do not have a window.&nbsp; The Tilesort SPU's <code>glViewport</code>
+      implementation will determine the size of the client window (if it exists)
+      to determine what part of the output space the client is trying to
+      restrict drawing to.&nbsp; However, if the Chromium context has been
+      created out of thin air (i.e., with the <a href="parallelapplication.html">crCreateContext
+      call</a>), these window dimensions will be returned.&nbsp; If these
+      parameters are <i>not</i> set, and there is no client window, using <code>glViewport</code>
+      or <code>glScissor</code> will cause a fatal run-time error.</td>
+  </tr>
+</table>
+
+</body>
+
+</html>
