@@ -162,8 +162,6 @@ static void DoFlush( WindowInfo *window )
   //GLfloat xmax = 0, xmin = 0, ymax = 0, ymin = 0;
   //int x, y, w, h;
   //GLint packAlignment, unpackAlignment;
-  
-  crDebug("############ swap");
 
   if (binaryswap_spu.resizable){
     /* check if window size changed, reallocate buffers if needed */

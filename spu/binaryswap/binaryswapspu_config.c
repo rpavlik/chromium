@@ -63,6 +63,17 @@ static void set_node( void *foo, const char *response )
    }
 }
 
+static void set_swapmtu( void *foo, const char *response )
+{
+   if (*response) {
+      binaryswap_spu.mtu = crStrToInt( response );
+   }
+   else { 
+     binaryswap_spu.mtu = -1;
+     crWarning("No swap MTU specified, using default from mothership" );
+   }
+}
+
 static void set_type( void *foo, const char *response )
 {
    if(strcmp( response, "alpha") == 0){
@@ -152,6 +163,9 @@ SPUOptions binaryswapSPUOptions[] = {
    { "type", CR_STRING, 1, "depth", NULL, NULL, 
      "Composite type (alpha/depth)", (SPUOptionCB)set_type},
 
+   { "swapmtu", CR_STRING, 1, "", NULL, NULL, 
+     "MTU size for swapping", (SPUOptionCB)set_swapmtu},
+
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
 };
@@ -209,8 +223,10 @@ void binaryswapspuGatherConfiguration( BinaryswapSPU *binaryswap_spu )
     }
   }	
 
-  crMothershipGetMTU( conn, response );
-  sscanf( response, "%d", &(binaryswap_spu->mtu) );
+  if(binaryswap_spu->mtu == -1){
+    crMothershipGetMTU( conn, response );
+    sscanf( response, "%d", &(binaryswap_spu->mtu) );
+  }
 
   crMothershipDisconnect( conn );
 }

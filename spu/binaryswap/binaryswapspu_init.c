@@ -48,7 +48,6 @@ void binaryswapspuConnectToPeer( void )
   int i;
   
   /* initialize recv function */
-  crDebug("init");
   crNetInit( binaryswapspuReceiveData, NULL );
   
   /* set up arrary for ports */
@@ -78,28 +77,22 @@ void binaryswapspuConnectToPeer( void )
     binaryswap_spu.highlow[i] = (binaryswap_spu.node_num%((int)pow(2, i+1)))
       /((int)pow(2, i));
     if(binaryswap_spu.highlow[i]){
-      crDebug("accept");
       binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, 
 						       (short) (ports[i]+1), 
 						       binaryswap_spu.mtu, 1 );
-      crDebug("connect");
       binaryswap_spu.peer_send[i] = crNetConnectToServer( binaryswap_spu.swap_partners[i], 
 							  ports[i], 
 							  binaryswap_spu.mtu, 
 							  1 );
-      crDebug("done");
     }
     /* higher of pair => connect,accept */
     else{
-      crDebug("connect");
       binaryswap_spu.peer_send[i] = crNetConnectToServer( binaryswap_spu.swap_partners[i], 
 							  (short) (ports[i]+1),
 							  binaryswap_spu.mtu, 
 							  1 );
-      crDebug("accept");
       binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, ports[i], 
 						       binaryswap_spu.mtu, 1 );
-      crDebug("done");
     }
   }
   /* cleanup */
@@ -133,9 +126,7 @@ SPUFunctions *binaryswapSPUInit( int id, SPU *child, SPU *super,
   binaryswapspuGatherConfiguration( &binaryswap_spu );
    
   binaryswapspuConnectToPeer(); 
-  crDebug("############# connect complete");
   crStateInit();
-  crDebug("############# stateinit complete");
   
   return &binaryswap_functions;
 }
