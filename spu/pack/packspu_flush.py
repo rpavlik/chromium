@@ -30,6 +30,13 @@ for func_name in stub_common.AllSpecials( "packspu_flush" ):
 	(return_type, args, types) = gl_mapping[func_name]
 	print 'void PACKSPU_APIENTRY packspu_%s%s' % ( func_name, stub_common.ArgumentString( args, types ) )
 	print '{'
-	print '\tcrPack%s%s;' % ( func_name, stub_common.CallString( args ) )
+	print '\tif (pack_spu.swap)'
+	print '\t{'
+	print '\t\tcrPack%sSWAP%s;' % ( func_name, stub_common.CallString( args ) )
+	print '\t}'
+	print '\telse'
+	print '\t{'
+	print '\t\tcrPack%s%s;' % ( func_name, stub_common.CallString( args ) )
+	print '\t}'
 	print '\tpackspuFlush( NULL );'
 	print '}\n'
