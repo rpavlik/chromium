@@ -5,18 +5,13 @@
  */
 
 #include <math.h>
+#include <stdlib.h>
 #include "chromium.h"
 #include "crut_api.h"
 #include "crut_clientapi.h"
 #include "cr_error.h"
 #include "cr_string.h"
 
-
-float verts[3][3] = {
-	{ -1, 1, -1 },
-	{ -1, -1, 0 },
-	{ .5, 0, 1 }
-};
 
 float colors[7][4] = {
 	{1,0,0,1},
@@ -88,19 +83,18 @@ doughnut(GLfloat r, GLfloat R, GLint nsides, GLint rings)
 static const GLfloat white[4] = { 1, 1, 1, 1 };
 static const GLfloat gray[4] = { 0.25, 0.25, 0.25, 1 };
 static const GLfloat pos[4] = { -1, -1, 10, 0 };
-int rank = -1, size=-1;
-int i, ctx;
-int frame = 0;
-int window = 0;  /* default window */
-float theta;
-int swapFlag = 0, clearFlag = 0;
-int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
-GLfloat r = (GLfloat) 0.15;
-GLfloat R = (GLfloat) 0.7;
-GLint sides = 15;
-GLint rings = 30;
-
-int events;
+static int rank = -1, size=-1;
+static int i, ctx;
+static int frame = 0;
+static int window = 0;  /* default window */
+static float theta;
+static int swapFlag = 0, clearFlag = 0;
+static int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
+static GLfloat r = (GLfloat) 0.15;
+static GLfloat R = (GLfloat) 0.7;
+static GLint sides = 15;
+static GLint rings = 30;
+static int events;
 
 static void 
 mouse( int button, int state, int x, int y ) 
@@ -120,12 +114,14 @@ keyboard( unsigned char key, int x, int y )
 
     if (key == 'a')
 	sides++;
-    if (key == 'z')
+    else if (key == 'z')
 	sides--;
-    if (key == 's')
+    else if (key == 's')
 	size++;
-    if (key == 'x')
+    else if (key == 'x')
 	size--;
+    else if (key == 27)
+        exit(0);
     events++;
     printf("events: %i\n", events);
 }
