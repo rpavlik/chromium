@@ -5,7 +5,6 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_error.h"
 
 static void __handleMaterialData( GLenum face, GLenum pname, const GLfloat *params )

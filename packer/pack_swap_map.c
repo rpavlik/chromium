@@ -5,11 +5,9 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_opcodes.h"
 #include "cr_error.h"
 
-#include <memory.h>
 
 /* Note -- for these packets, the ustride and vstride are implicit,
  * and are computed into the packet instead of copied.

@@ -11,7 +11,6 @@
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
 #include "cr_rand.h"
-#include "cr_applications.h"
 
 /*
  * Data structures for hash-based bucketing algorithm.

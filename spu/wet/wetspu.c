@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "cr_applications.h"
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_mem.h"

@@ -5,7 +5,6 @@
  */
 
 #include "state.h"
-#include "cr_glwrapper.h"
 #include "state_internals.h"
 #include "state/cr_feedback.h"
 

@@ -7,7 +7,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "cr_applications.h"
+#include "chromium.h"
 #include "cr_string.h"
 #include "cr_error.h"
 
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	}
 	glMakeCurrentCR(window, ctx);
 
-#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x )
+#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
 	LOAD2( BarrierCreate );
 	LOAD2( BarrierExec );
 

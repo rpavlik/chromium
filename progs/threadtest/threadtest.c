@@ -20,13 +20,15 @@
 #include <unistd.h>  /* for sleep() */
 #include <pthread.h>
 #endif
-#include "cr_applications.h"
+#include "chromium.h"
 #include "cr_string.h"
 #include "cr_error.h"
 
 #ifndef M_PI
 # define M_PI		3.14159265358979323846	/* pi */
 #endif
+
+#define NUM_FRAMES 1000
 
 static float colors[7][4] = {
 	{1,0,0,1},
@@ -135,8 +137,8 @@ static void *render_loop( void *threadData )
 
 	/* need to do this after MakeCurrent, unfortunately */
 	GET_FUNCTION(glChromiumParameteriCR, glChromiumParameteriCRProc, "glChromiumParameteriCR");
-	GET_FUNCTION(glBarrierCreateCR, glBarrierCreateCRProc, "glBarrierCreate");
-	GET_FUNCTION(glBarrierExecCR, glBarrierExecCRProc, "glBarrierExec");
+	GET_FUNCTION(glBarrierCreateCR, glBarrierCreateCRProc, "glBarrierCreateCR");
+	GET_FUNCTION(glBarrierExecCR, glBarrierExecCRProc, "glBarrierExecCR");
 
 	glBarrierCreateCR( MASTER_BARRIER, NumThreads );
 
@@ -169,7 +171,7 @@ static void *render_loop( void *threadData )
 	glTranslatef( 0.0, 0.0, -10.0 );
 	/*	glClearColor(0.3, 0.3, 0.3, 0.0);*/
 
-	for (frame = 0; frame < 1000; frame++) {
+	for (frame = 0; frame < NUM_FRAMES; frame++) {
 		if (context->Clear) {
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		}
@@ -350,7 +352,7 @@ int main(int argc, char *argv[])
 #endif
 	}
 
-	printf("threadtest exiting\n");
+	printf("threadtest exiting normally (%d frames).\n", NUM_FRAMES);
 
 	return 0;
 }

@@ -5,7 +5,6 @@
  */
 
 #include "unpacker.h"
-#include "cr_glwrapper.h"
 #include "cr_mem.h"
 
 #define DISPLAY_NAME_LEN 256

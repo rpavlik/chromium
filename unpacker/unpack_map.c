@@ -5,11 +5,9 @@
  */
 
 #include "unpacker.h"
-#include "cr_glwrapper.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 
-#include <memory.h>
 
 void crUnpackMap2d( void  )
 {
@@ -29,7 +27,7 @@ void crUnpackMap2d( void  )
 	if ( n_points & 0x7 )
 		crError( "crUnpackMap2d: n_points=%d, expected multiple of 8\n", n_points );
 	points = (GLdouble *) crAlloc( n_points );
-	memcpy( points, DATA_POINTER( sizeof(int) + 52, GLdouble ), n_points );
+	crMemcpy( points, DATA_POINTER( sizeof(int) + 52, GLdouble ), n_points );
 
 	cr_unpackDispatch.Map2d( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, 
 			 points );
@@ -70,7 +68,7 @@ void crUnpackMap1d( void  )
 	if ( n_points & 0x7 )
 		crError( "crUnpackMap1d: n_points=%d, expected multiple of 8\n", n_points );
 	points = (GLdouble *) crAlloc( n_points );
-	memcpy( points, DATA_POINTER( sizeof(int) + 28, GLdouble ), n_points );
+	crMemcpy( points, DATA_POINTER( sizeof(int) + 28, GLdouble ), n_points );
 	
 	cr_unpackDispatch.Map1d( target, u1, u2, stride, order, points );
 	crFree( points );

@@ -209,8 +209,8 @@ void crServerSetOutputBounds( CRContext *ctx,
 }
 
 void SERVER_DISPATCH_APIENTRY
-crServerDispatchBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len,
-                            GLint num_opcodes )
+crServerDispatchBoundsInfoCR( const GLrecti *bounds, const GLbyte *payload,
+															GLint len, GLint num_opcodes )
 {
 	char *data_ptr = (char*)(payload + ((num_opcodes + 3 ) & ~0x03));
 	int i;

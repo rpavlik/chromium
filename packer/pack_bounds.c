@@ -6,11 +6,9 @@
 
 #include "packer.h"
 #include "cr_opcodes.h"
-#include "cr_glwrapper.h"
+#include "cr_mem.h"
 
-#include <memory.h>
-
-void PACK_APIENTRY crPackBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len, GLint num_opcodes )
+void PACK_APIENTRY crPackBoundsInfoCR( const GLrecti *bounds, const GLbyte *payload, GLint len, GLint num_opcodes )
 {
 	GET_PACKER_CONTEXT(pc);
 	/* Don't get the buffered_ptr here because we've already 
@@ -39,8 +37,8 @@ void PACK_APIENTRY crPackBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len
 	  default: break;
 	}
 
-	memcpy( data_ptr, payload, len );
+	crMemcpy( data_ptr, payload, len );
 
-	WRITE_OPCODE( pc, CR_BOUNDSINFO_OPCODE );
+	WRITE_OPCODE( pc, CR_BOUNDSINFOCR_OPCODE );
 	pc->buffer.data_current += 24 + len_aligned;
 }

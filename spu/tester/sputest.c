@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cr_spu.h"
-#include "cr_glwrapper.h"
 
 #define ANGLE_STEP .5f
 

@@ -22,7 +22,6 @@ stub_common.CopyrightC()
 print """#include <stdio.h>
 #include "hiddenlinespu.h"
 #include "cr_packfunctions.h"
-#include "cr_glwrapper.h"
 #include "cr_glstate.h"
 
 void HIDDENLINESPU_APIENTRY hiddenlinespu_PixelStoref( GLenum pname, GLfloat param )

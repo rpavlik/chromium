@@ -27,7 +27,6 @@ print """
 #include "tilesortspu.h"
 #include "cr_packfunctions.h"
 #include "cr_glstate.h"
-#include "cr_glwrapper.h"
 """
 
 num_funcs = len(keys)

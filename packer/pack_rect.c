@@ -5,7 +5,6 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_opcodes.h"
 
 void PACK_APIENTRY crPackRectdv( const GLdouble *v1, const GLdouble *v2 )

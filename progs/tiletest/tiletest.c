@@ -20,55 +20,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "chromium.h"
 #include <GL/glut.h>
-#define GLX_GLXEXT_LEGACY /* For Mesa's glxext.h */
-#ifdef WINDOWS
-#define WIN32_LEAN_AND_MEAN 
-#include <windows.h>
-#else
-#include <GL/glx.h>
-#endif
 
 
-#ifndef GLX_ARB_get_proc_address
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern void (*glXGetProcAddressARB( const GLubyte *name ))();
-#ifdef __cplusplus
-}
-#endif
-#endif
-
-
-/*
- * typedefs for the GL_CR_state_parameter functions
- */
-typedef void (*glChromiumParameteriCR_t)(GLenum target, GLint value);
-typedef void (*glChromiumParameterfCR_t)(GLenum target, GLfloat value);
-typedef void (*glChromiumParametervCR_t)(GLenum target, GLenum type, GLsizei count, const GLvoid *values);
-typedef void (*glGetChromiumParametervCR_t)(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values);
-
-static glChromiumParameteriCR_t glChromiumParameteriCRptr;
-static glChromiumParameterfCR_t glChromiumParameterfCRptr;
-static glChromiumParametervCR_t glChromiumParametervCRptr;
-static glGetChromiumParametervCR_t glGetChromiumParametervCRptr;
-
-
-/*
- * Chromium extension defines (in case they're not in gl.h or glext.h)
- */
-#ifndef GL_CR_tilesort_info
-#define GL_CR_tilesort_info 1
-
-#define GL_MURAL_SIZE_CR             0x9905 /* unofficial! */
-#define GL_NUM_SERVERS_CR            0x9906 /* unofficial! */
-#define GL_NUM_TILES_CR              0x9907 /* unofficial! */
-#define GL_TILE_BOUNDS_CR            0x9908 /* unofficial! */
-#define GL_VERTEX_COUNTS_CR          0x9909 /* unofficial! */
-#define GL_RESET_VERTEX_COUNTERS_CR  0x990A /* unofficial! */
-
-#endif /* GL_CR_tilesort_info */
+static glChromiumParameteriCRProc glChromiumParameteriCRptr;
+static glChromiumParameterfCRProc glChromiumParameterfCRptr;
+static glChromiumParametervCRProc glChromiumParametervCRptr;
+static glGetChromiumParametervCRProc glGetChromiumParametervCRptr;
 
 
 /*
@@ -78,25 +37,14 @@ static glGetChromiumParametervCR_t glGetChromiumParametervCRptr;
 static void
 GetCrExtensions(void)
 {
-#ifdef WINDOWS
-	glChromiumParameteriCRptr = (glChromiumParameteriCR_t)
-		wglGetProcAddress((const GLbyte*) "glChromiumParameteriCR");
-	glChromiumParameterfCRptr = (glChromiumParameterfCR_t)
-		wglGetProcAddress((const GLbyte*) "glChromiumParameterfCR");
-	glChromiumParametervCRptr = (glChromiumParametervCR_t)
-		wglGetProcAddress((const GLbyte*) "glChromiumParametervCR");
-	glGetChromiumParametervCRptr = (glGetChromiumParametervCR_t)
-		wglGetProcAddress((const GLbyte*) "glGetChromiumParametervCR");
-#else
-	glChromiumParameteriCRptr = (glChromiumParameteriCR_t)
-		glXGetProcAddressARB((GLubyte*) "glChromiumParameteriCR");
-	glChromiumParameterfCRptr = (glChromiumParameterfCR_t)
-		glXGetProcAddressARB((GLubyte*) "glChromiumParameterfCR");
-	glChromiumParametervCRptr = (glChromiumParametervCR_t)
-		glXGetProcAddressARB((GLubyte*) "glChromiumParametervCR");
-	glGetChromiumParametervCRptr = (glGetChromiumParametervCR_t)
-		glXGetProcAddressARB((GLubyte*) "glGetChromiumParametervCR");
-#endif
+	glChromiumParameteriCRptr = (glChromiumParameteriCRProc)
+		GET_PROC("glChromiumParameteriCR");
+	glChromiumParameterfCRptr = (glChromiumParameterfCRProc)
+		GET_PROC("glChromiumParameterfCR");
+	glChromiumParametervCRptr = (glChromiumParametervCRProc)
+		GET_PROC("glChromiumParametervCR");
+	glGetChromiumParametervCRptr = (glGetChromiumParametervCRProc)
+		GET_PROC("glGetChromiumParametervCR");
 
 	if (!glChromiumParameteriCRptr || !glChromiumParameterfCRptr ||
 			!glChromiumParametervCRptr || !glGetChromiumParametervCRptr) {

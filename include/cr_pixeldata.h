@@ -7,7 +7,7 @@
 #ifndef CR_PIXELDATA_H
 #define CR_PIXELDATA_H
 
-#include "cr_glwrapper.h"
+#include "chromium.h"
 #include "state/cr_client.h"
 
 #ifdef __cplusplus

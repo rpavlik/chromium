@@ -7,7 +7,7 @@
 #ifndef CR_LIMITS_H
 #define CR_LIMITS_H
 
-#include "cr_glwrapper.h"
+#include "chromium.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,8 +5,7 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
-#include <string.h>
+#include "cr_mem.h"
 
 static unsigned char * __gl_HandlePixelMapData( GLenum map, GLsizei mapsize, int size_of_value, const GLvoid *values )
 {
@@ -18,7 +17,7 @@ static unsigned char * __gl_HandlePixelMapData( GLenum map, GLsizei mapsize, int
 
 	WRITE_DATA( 0, GLenum, map );
 	WRITE_DATA( 4, GLsizei, mapsize );
-	memcpy( data_ptr + 8, values, mapsize*size_of_value );
+	crMemcpy( data_ptr + 8, values, mapsize*size_of_value );
 	return data_ptr;
 }
 

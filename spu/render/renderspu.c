@@ -8,7 +8,6 @@
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_mem.h"
-#include "cr_applications.h"
 #include "renderspu.h"
 
 
@@ -415,7 +414,7 @@ typedef struct {
 } Barrier;
 
 
-static void RENDER_APIENTRY renderspuBarrierCreate( GLuint name, GLuint count )
+static void RENDER_APIENTRY renderspuBarrierCreateCR( GLuint name, GLuint count )
 {
 	Barrier *b = (Barrier *) crHashtableSearch( render_spu.barrierHash, name );
 	if (b) {
@@ -435,12 +434,12 @@ static void RENDER_APIENTRY renderspuBarrierCreate( GLuint name, GLuint count )
 	}
 }
 
-static void RENDER_APIENTRY renderspuBarrierDestroy( GLuint name )
+static void RENDER_APIENTRY renderspuBarrierDestroyCR( GLuint name )
 {
 	crHashtableDelete( render_spu.barrierHash, name );
 }
 
-static void RENDER_APIENTRY renderspuBarrierExec( GLuint name )
+static void RENDER_APIENTRY renderspuBarrierExecCR( GLuint name )
 {
 	Barrier *b = (Barrier *) crHashtableSearch( render_spu.barrierHash, name );
 	if (b) {
@@ -458,23 +457,23 @@ static void RENDER_APIENTRY renderspuBarrierExec( GLuint name )
  * barriers (see above).
  */
 
-static void RENDER_APIENTRY renderspuSemaphoreCreate( GLuint name, GLuint count )
+static void RENDER_APIENTRY renderspuSemaphoreCreateCR( GLuint name, GLuint count )
 {
 	(void) name;
 	(void) count;
 }
 
-static void RENDER_APIENTRY renderspuSemaphoreDestroy( GLuint name )
+static void RENDER_APIENTRY renderspuSemaphoreDestroyCR( GLuint name )
 {
 	(void) name;
 }
 
-static void RENDER_APIENTRY renderspuSemaphoreP( GLuint name )
+static void RENDER_APIENTRY renderspuSemaphorePCR( GLuint name )
 {
 	(void) name;
 }
 
-static void RENDER_APIENTRY renderspuSemaphoreV( GLuint name )
+static void RENDER_APIENTRY renderspuSemaphoreVCR( GLuint name )
 {
 	(void) name;
 }
@@ -650,7 +649,7 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 }
 
 
-static void RENDER_APIENTRY renderspuBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint
+static void RENDER_APIENTRY renderspuBoundsInfoCR( GLrecti *bounds, GLbyte *payload, GLint
  len, GLint num_opcodes )
 {
 	(void) bounds;
@@ -684,14 +683,14 @@ int renderspuCreateFunctions( SPUNamedFunctionTable table[] )
 	FILLIN( "DestroyWindow", renderspuDestroyWindow );
 	FILLIN( "WindowSize", renderspuWindowSize );
 	FILLIN( "WindowPosition", renderspuWindowPosition );
-	FILLIN( "BarrierCreate", renderspuBarrierCreate );
-	FILLIN( "BarrierDestroy", renderspuBarrierDestroy );
-	FILLIN( "BarrierExec", renderspuBarrierExec );
-	FILLIN( "BoundsInfo", renderspuBoundsInfo );
-	FILLIN( "SemaphoreCreate", renderspuSemaphoreCreate );
-	FILLIN( "SemaphoreDestroy", renderspuSemaphoreDestroy );
-	FILLIN( "SemaphoreP", renderspuSemaphoreP );
-	FILLIN( "SemaphoreV", renderspuSemaphoreV );
+	FILLIN( "BarrierCreateCR", renderspuBarrierCreateCR );
+	FILLIN( "BarrierDestroyCR", renderspuBarrierDestroyCR );
+	FILLIN( "BarrierExecCR", renderspuBarrierExecCR );
+	FILLIN( "BoundsInfoCR", renderspuBoundsInfoCR );
+	FILLIN( "SemaphoreCreateCR", renderspuSemaphoreCreateCR );
+	FILLIN( "SemaphoreDestroyCR", renderspuSemaphoreDestroyCR );
+	FILLIN( "SemaphorePCR", renderspuSemaphorePCR );
+	FILLIN( "SemaphoreVCR", renderspuSemaphoreVCR );
 	FILLIN( "Writeback", renderspuWriteback );
 	FILLIN( "ChromiumParameteriCR", renderspuChromiumParameteriCR );
 	FILLIN( "ChromiumParameterfCR", renderspuChromiumParameterfCR );

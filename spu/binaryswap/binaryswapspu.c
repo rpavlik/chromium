@@ -17,7 +17,6 @@
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_bbox.h"
-#include "cr_applications.h"
 #include "binaryswapspu.h"
 
 #define MTRANSFORM(x, y, z, w, m, vx, vy, vz) \
@@ -261,9 +260,9 @@ static void DoFlush( WindowInfo *window )
   GLint packAlignment;
   
   if (first_time){
-    binaryswap_spu.child.BarrierCreate( BINARYSWAP_CLEARBARRIER, 0 );
-    binaryswap_spu.child.BarrierCreate( BINARYSWAP_SWAPBARRIER, 0 );
-    binaryswap_spu.child.SemaphoreCreate( MUTEX_SEMAPHORE, 1 );
+    binaryswap_spu.child.BarrierCreateCR( BINARYSWAP_CLEARBARRIER, 0 );
+    binaryswap_spu.child.BarrierCreateCR( BINARYSWAP_SWAPBARRIER, 0 );
+    binaryswap_spu.child.SemaphoreCreateCR( MUTEX_SEMAPHORE, 1 );
     binaryswap_spu.child.LoadIdentity();
     binaryswap_spu.child.Ortho( 0, window->width  - 1,	
 				0, window->height - 1,
@@ -656,9 +655,9 @@ static void DoFlush( WindowInfo *window )
    * Make sure everyone has issued a clear to the child,
    * if not, then we'll clear what we are trying to draw... 
    */
-  binaryswap_spu.child.BarrierExec( BINARYSWAP_CLEARBARRIER );
+  binaryswap_spu.child.BarrierExecCR( BINARYSWAP_CLEARBARRIER );
   
-  binaryswap_spu.child.SemaphoreP( MUTEX_SEMAPHORE );
+  binaryswap_spu.child.SemaphorePCR( MUTEX_SEMAPHORE );
   binaryswap_spu.child.MatrixMode(GL_PROJECTION);
   binaryswap_spu.child.LoadIdentity();
   binaryswap_spu.child.Ortho(0.0, (GLdouble) geometry[2], 0.0, 
@@ -672,7 +671,7 @@ static void DoFlush( WindowInfo *window )
 				     binaryswap_spu.outgoing_msg + 
 				     binaryswap_spu.offset );
   }  
-  binaryswap_spu.child.SemaphoreV( MUTEX_SEMAPHORE );
+  binaryswap_spu.child.SemaphoreVCR( MUTEX_SEMAPHORE );
   binaryswap_spu.super.PixelStorei(GL_PACK_ALIGNMENT, packAlignment);
 }
 
@@ -684,7 +683,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuSwapBuffers( GLint window, GLint
   
   DoFlush( &(binaryswap_spu.windows[window]) );
   
-  binaryswap_spu.child.BarrierExec( BINARYSWAP_SWAPBARRIER );
+  binaryswap_spu.child.BarrierExecCR( BINARYSWAP_SWAPBARRIER );
    
   if(binaryswap_spu.node_num == 0){
     binaryswap_spu.child.SwapBuffers( binaryswap_spu.windows[window].childWindow, 0 );
@@ -702,7 +701,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 {
   int i;
   
-  CRASSERT(binaryswap_spu.child.BarrierCreate);
+  CRASSERT(binaryswap_spu.child.BarrierCreateCR);
   
   /* find empty slot in contexts[] array */
   for (i = 0; i < MAX_CONTEXTS; i++) {
@@ -729,7 +728,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 
 static void BINARYSWAPSPU_APIENTRY binaryswapspuDestroyContext( GLint ctx )
 {
-  /*	binaryswap_spu.child.BarrierCreate( DESTROY_CONTEXT_BARRIER, 0 );*/
+  /*	binaryswap_spu.child.BarrierCreateCR( DESTROY_CONTEXT_BARRIER, 0 );*/
   CRASSERT(ctx >= 0);
   CRASSERT(ctx < MAX_CONTEXTS);
   binaryswap_spu.super.DestroyContext(binaryswap_spu.contexts[ctx].renderContext);

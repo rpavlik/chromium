@@ -21,7 +21,6 @@ print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_spu.h"
 #include "state/cr_statetypes.h"
-#include "cr_glwrapper.h"
 
 #if defined(WINDOWS)
 #define ERROR_APIENTRY __stdcall

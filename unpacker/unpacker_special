@@ -57,5 +57,5 @@ TexSubImage1D
 TexSubImage2D
 VertexPointer
 UpdateClientPointer
-BoundsInfo
+BoundsInfoCR
 SecondaryColorPointerEXT

@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include "packspu.h"
 #include "cr_packfunctions.h"
-#include "cr_glwrapper.h"
 #include "cr_glstate.h"
 #include "cr_pixeldata.h"
 

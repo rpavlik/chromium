@@ -5,7 +5,6 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_opcodes.h"
 #include "cr_error.h"
 

@@ -7,7 +7,6 @@
 #ifndef GLTRANS_H
 #define GLTRANS_H
 
-#include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 
 #ifdef __cplusplus

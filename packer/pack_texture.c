@@ -4,15 +4,9 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_pixeldata.h"
 #include "cr_error.h"
-
 #include "state/cr_pixel.h"
 
 void PACK_APIENTRY crPackTexImage1D(GLenum target, GLint level, 

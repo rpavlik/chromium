@@ -5,8 +5,6 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
-#include <string.h>
 
 static unsigned char * __gl_HandlePixelMapData( GLenum map, GLsizei mapsize, int size_of_value, const GLvoid *values )
 {

@@ -161,7 +161,8 @@ void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 	
 	if ( !crPackCanHoldOpcode( 1, len_aligned + 24 ) )
 	{
-		if (src->holds_BeginEnd) {
+		if (src->holds_BeginEnd)
+		{
 			crWarning( "crPackAppendBoundedBuffer: overflowed the destination!" );
 			return;
 		}
@@ -169,7 +170,7 @@ void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 			crError( "crPackAppendBoundedBuffer: overflowed the destination!" );
 	}
 
-	crPackBoundsInfo( bounds, (GLbyte *) src->opcode_current + 1, length,
+	crPackBoundsInfoCR( bounds, (GLbyte *) src->opcode_current + 1, length,
 					src->opcode_start - src->opcode_current );
 	pc->buffer.holds_BeginEnd |= src->holds_BeginEnd;
 	pc->buffer.in_BeginEnd = src->in_BeginEnd;

@@ -28,7 +28,6 @@ print """
 #include "cr_spu.h"
 #include "packspu.h"
 #include "cr_packfunctions.h"
-#include "cr_glwrapper.h"
 """
 
 num_funcs = len(keys) - len(stub_common.AllSpecials('packspu_unimplemented'))

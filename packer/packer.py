@@ -27,7 +27,6 @@ print """
  * packs the function's opcode and arguments into a buffer.
  */
 
-#include "cr_glwrapper.h"
 #include "packer.h"
 #include "cr_opcodes.h"
 

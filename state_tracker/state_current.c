@@ -4,10 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "state.h"
-#include "cr_glwrapper.h"
 #include "state_internals.h"
 
 void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )

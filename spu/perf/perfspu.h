@@ -15,7 +15,7 @@
 
 #include "cr_spu.h"
 #include "cr_timer.h"
-#include "cr_applications.h"
+#include "cr_perf.h"
 
 extern void perfspuDump( char *str );
 void perfspuGatherConfiguration( void );

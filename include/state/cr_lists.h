@@ -7,7 +7,6 @@
 #ifndef CR_STATE_LISTS_H
 #define CR_STATE_LISTS_H
 
-#include "cr_glwrapper.h"
 #include "cr_hash.h"
 #include "state/cr_statetypes.h"
 

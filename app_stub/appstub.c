@@ -46,11 +46,11 @@ typedef WINGDIAPI void (APIENTRY * Func_V_U) ( GLuint );
 typedef WINGDIAPI void (APIENTRY * Func_V_V) ( void );
 
 static struct {
-	Func_V_U_U  glBarrierCreate;
-	Func_V_U    glBarrierExec;
-	Func_V_U_U  glSemaphoreCreate;
-	Func_V_U    glSemaphoreV;
-	Func_V_U    glSemaphoreP;
+	Func_V_U_U  glBarrierCreateCR;
+	Func_V_U    glBarrierExecCR;
+	Func_V_U_U  glSemaphoreCreateCR;
+	Func_V_U    glSemaphoreVCR;
+	Func_V_U    glSemaphorePCR;
 	Func_V_V    crCreateContext;
 	Func_V_V    crMakeCurrent;
 	Func_V_V    crSwapBuffers;
@@ -65,11 +65,11 @@ static struct {
 	const char  *name;
 	void       **pptr;
 } functions[] = {
-	X(glBarrierCreate),
-	X(glBarrierExec),
-	X(glSemaphoreCreate),
-	X(glSemaphoreV),
-	X(glSemaphoreP),
+	X(glBarrierCreateCR),
+	X(glBarrierExecCR),
+	X(glSemaphoreCreateCR),
+	X(glSemaphoreVCR),
+	X(glSemaphorePCR),
 	X(crCreateContext),
 	X(crMakeCurrent),
 	X(crSwapBuffers),
@@ -177,44 +177,44 @@ static void init_fptable( int must_find )
 	first_call = 0;
 }
 
-void APIENTRY glBarrierCreate( GLuint barrier, GLuint count )
+void APIENTRY glBarrierCreateCR( GLuint barrier, GLuint count )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-	fptable.glBarrierCreate( barrier, count );
+	fptable.glBarrierCreateCR( barrier, count );
 }
 
-void APIENTRY glBarrierExec( GLuint barrier )
+void APIENTRY glBarrierExecCR( GLuint barrier )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-	fptable.glBarrierExec( barrier );
+	fptable.glBarrierExecCR( barrier );
 }
 
-void APIENTRY glSemaphoreCreate( GLuint semaphore, GLuint count )
+void APIENTRY glSemaphoreCreateCR( GLuint semaphore, GLuint count )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-	fptable.glSemaphoreCreate( semaphore, count );
+	fptable.glSemaphoreCreateCR( semaphore, count );
 }
 
-void APIENTRY glSemaphoreV( GLuint semaphore )
+void APIENTRY glSemaphoreVCR( GLuint semaphore )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-	fptable.glSemaphoreV( semaphore );
+	fptable.glSemaphoreVCR( semaphore );
 }
 
-void APIENTRY glSemaphoreP( GLuint semaphore )
+void APIENTRY glSemaphorePCR( GLuint semaphore )
 {
 	if ( first_call )
 		init_fptable( 1 );
 
-	fptable.glSemaphoreP( semaphore );
+	fptable.glSemaphorePCR( semaphore );
 }
 
 void APIENTRY crCreateContext( void )

@@ -5,9 +5,8 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_error.h"
-#include <memory.h>
+#include "cr_mem.h"
 
 static int __gl_CallListsNumBytes( GLenum type )
 {
@@ -53,7 +52,7 @@ void PACK_APIENTRY crPackCallLists(GLint n, GLenum type,
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, GLint, n );
 	WRITE_DATA( 4, GLenum, type );
-	memcpy( data_ptr + 8, lists, num_bytes );
+	crMemcpy( data_ptr + 8, lists, num_bytes );
 
 	crHugePacket( CR_CALLLISTS_OPCODE, data_ptr );
 }

@@ -5,11 +5,9 @@
  */
 
 #include "unpacker.h"
-#include "cr_glwrapper.h"
 #include "cr_error.h"
 #include "cr_protocol.h"
-#include <stdio.h>
-#include <memory.h>
+#include "cr_mem.h"
 
 void crUnpackTexImage2D( void )
 {
@@ -188,7 +186,7 @@ void crUnpackTexGendv( void )
 
 	if ( n_param > sizeof(params) )
 		crError( "crUnpackTexGendv: n_param=%d, expected <= %d\n", n_param, (unsigned int)sizeof(params) );
-	memcpy( params, DATA_POINTER( sizeof( int ) + 8, GLdouble ), n_param );
+	crMemcpy( params, DATA_POINTER( sizeof( int ) + 8, GLdouble ), n_param );
 
 	cr_unpackDispatch.TexGendv( coord, pname, params );
 	INCR_VAR_PTR();
@@ -218,7 +216,7 @@ void crUnpackExtendAreTexturesResident( void )
 {
 	GLsizei n = READ_DATA( 8, GLsizei );
 	GLboolean * residences;
-	memcpy( (void *) &(residences), DATA_POINTER( 12 + n*sizeof( GLuint ), void * ), sizeof( GLboolean * ));
+	crMemcpy( (void *) &(residences), DATA_POINTER( 12 + n*sizeof( GLuint ), void * ), sizeof( GLboolean * ));
 
 	(void) cr_unpackDispatch.AreTexturesResident( n, DATA_POINTER( 12, const GLuint ), residences );
 }

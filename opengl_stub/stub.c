@@ -4,7 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_applications.h"
 #include "cr_spu.h"
 #include "cr_error.h" 
 #include "stub.h"

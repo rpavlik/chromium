@@ -9,7 +9,6 @@
 #include "cr_error.h"
 #include "cr_net.h"
 #include "tilesortspu.h"
-#include "cr_applications.h"
 #include "cr_pixeldata.h"
 #include "cr_mem.h"
 

@@ -5,11 +5,9 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_opcodes.h"
 #include "cr_error.h"
-
-#include <memory.h>
+#include "cr_mem.h"
 
 /* Note -- for these packets, the ustride and vstride are implicit,
  * and are computed into the packet instead of copied.
@@ -105,7 +103,7 @@ void PACK_APIENTRY crPackMap2d(GLenum target, GLdouble u1,
 	{
 		for (u = 0 ; u < uorder ; u++)
 		{
-			memcpy( dest_data, src_data, num_components * sizeof( *points ) );
+			crMemcpy( dest_data, src_data, num_components * sizeof( *points ) );
 			dest_data += num_components;
 			src_data += ustride;
 		}
@@ -161,7 +159,7 @@ void PACK_APIENTRY crPackMap2f(GLenum target, GLfloat u1,
 	{
 		for (u = 0 ; u < uorder ; u++)
 		{
-			memcpy( dest_data, src_data, num_components * sizeof( *points ) );
+			crMemcpy( dest_data, src_data, num_components * sizeof( *points ) );
 			dest_data += num_components;
 			src_data += ustride;
 		}
@@ -207,7 +205,7 @@ void PACK_APIENTRY crPackMap1d( GLenum target, GLdouble u1,
 	src_data = (GLdouble *) points;
 	for (u = 0 ; u < order ; u++)
 	{
-		memcpy( dest_data, src_data, num_components * sizeof( *points ) );
+		crMemcpy( dest_data, src_data, num_components * sizeof( *points ) );
 		dest_data += num_components;
 		src_data += stride;
 	}
@@ -251,7 +249,7 @@ void PACK_APIENTRY crPackMap1f( GLenum target, GLfloat u1,
 	src_data = (GLfloat *) points;
 	for (u = 0 ; u < order ; u++)
 	{
-		memcpy( dest_data, src_data, num_components * sizeof( *points ) );
+		crMemcpy( dest_data, src_data, num_components * sizeof( *points ) );
 		dest_data += num_components;
 		src_data += stride;
 	}

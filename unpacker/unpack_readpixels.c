@@ -6,8 +6,6 @@
 
 #include "unpacker.h"
 #include "cr_pixeldata.h"
-#include "cr_glwrapper.h"
-#include <stdio.h>
 #include "cr_mem.h"
 
 void crUnpackReadPixels( void )
@@ -25,7 +23,7 @@ void crUnpackReadPixels( void )
 	GLint bytes_per_row = READ_DATA( 40, GLint );
 	GLvoid *pixels;
 
-	memcpy( &pixels, DATA_POINTER( 44, GLvoid ), sizeof(pixels) );
+	crMemcpy( &pixels, DATA_POINTER( 44, GLvoid ), sizeof(pixels) );
 
 	(void) stride;
 	(void) bytes_per_row;

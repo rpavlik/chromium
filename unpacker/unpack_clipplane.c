@@ -5,15 +5,13 @@
  */
 
 #include "unpacker.h"
-#include "cr_glwrapper.h"
-
-#include <memory.h>
+#include "cr_mem.h"
 
 void crUnpackClipPlane( void  )
 {
 	GLenum plane = READ_DATA( 0, GLenum );
 	GLdouble equation[4];
-	memcpy( equation, DATA_POINTER( 4, GLdouble ), sizeof(equation) );
+	crMemcpy( equation, DATA_POINTER( 4, GLdouble ), sizeof(equation) );
 
 	cr_unpackDispatch.ClipPlane( plane, equation );
 	INCR_DATA_PTR( sizeof( GLenum ) + 4*sizeof( GLdouble ));

@@ -7,7 +7,6 @@
 #ifndef CR_STATE_LINE_H
 #define SR_STATE_LINE_H
 
-#include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 
 #ifdef __cplusplus

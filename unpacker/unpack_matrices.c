@@ -5,13 +5,12 @@
  */
 
 #include "unpacker.h"
-#include "cr_glwrapper.h"
-#include <memory.h>
+#include "cr_mem.h"
 
 void crUnpackMultMatrixd( void  )
 {
 	GLdouble m[16];
-	memcpy( m, DATA_POINTER( 0, GLdouble ), sizeof(m) );
+	crMemcpy( m, DATA_POINTER( 0, GLdouble ), sizeof(m) );
 
 	cr_unpackDispatch.MultMatrixd( m );
 	INCR_DATA_PTR( 16*sizeof( GLdouble ) );
@@ -28,7 +27,7 @@ void crUnpackMultMatrixf( void  )
 void crUnpackLoadMatrixd( void  )
 {
 	GLdouble m[16];
-	memcpy( m, DATA_POINTER( 0, GLdouble ), sizeof(m) );
+	crMemcpy( m, DATA_POINTER( 0, GLdouble ), sizeof(m) );
 
 	cr_unpackDispatch.LoadMatrixd( m );
 	INCR_DATA_PTR( 16*sizeof( GLdouble ) );

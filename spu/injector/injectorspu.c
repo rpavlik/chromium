@@ -10,7 +10,6 @@
 #include "cr_opcodes.h"
 #include "cr_unpack.h"
 #include "injectorspu.h"
-#include "cr_glwrapper.h"
 
 void INJECTORSPU_APIENTRY
 injectorspuSwapBuffers( GLint window, GLint flags )

@@ -7,7 +7,6 @@
 #include "server_dispatch.h"
 #include "server.h"
 #include "cr_error.h"
-#include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixf( const GLfloat *m )

@@ -30,7 +30,7 @@ print """
 #define SERVER_DISPATCH_APIENTRY
 #endif
 
-#include "cr_glwrapper.h"
+#include "chromium.h"
 #include "state/cr_statetypes.h"
 """
 

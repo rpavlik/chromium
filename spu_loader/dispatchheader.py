@@ -31,8 +31,8 @@ print """
 #define SPU_APIENTRY
 #endif
 
+#include "chromium.h"
 #include "state/cr_statetypes.h"
-#include "cr_glwrapper.h"
 """
 
 keys = gl_mapping.keys()

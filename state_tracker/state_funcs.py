@@ -22,7 +22,7 @@ print """
 #ifndef CR_STATE_FUNCS_H
 #define CR_STATE_FUNCS_H
 
-#include "cr_glwrapper.h"
+#include "chromium.h"
 #include "cr_error.h"
 
 #if defined(WINDOWS)

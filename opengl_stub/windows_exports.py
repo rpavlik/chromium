@@ -20,7 +20,7 @@ keys.sort();
 
 stub_common.CopyrightC()
 
-print """#include "cr_glwrapper.h"
+print """#include "chromium.h"
 #include "api_templates.h"
 
 #define NAKED __declspec(naked)

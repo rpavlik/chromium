@@ -28,7 +28,7 @@ print """#ifndef CR_PACKFUNCTIONS_H
 
 /* Prototypes for the OpenGL packer functions in packer.c and pack_bbox.c */
 
-#include "cr_glwrapper.h"
+#include "chromium.h"
 #include "state/cr_pixel.h"
 #include "state/cr_client.h"
 #include "cr_pack.h"

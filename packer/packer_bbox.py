@@ -27,7 +27,6 @@ print """
  * if the cr_packer_globals.updateBBOX variable is non-zero.
  */
 
-#include "cr_glwrapper.h"
 #include "packer.h"
 #include "cr_opcodes.h"
 #include "pack_bbox.h"

@@ -7,7 +7,8 @@
 #ifndef CR_STATE_TYPES_H
 #define CR_STATE_TYPES_H
 
-#include "cr_glwrapper.h"
+#include "chromium.h"
+#include "cr_bits.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,12 +17,12 @@ extern "C" {
 typedef GLfloat GLdefault;
 #define GL_DEFAULTTYPE_FLOAT
 
-#define GL_MAXBYTE		(GLbyte)	0x7F
-#define GL_MAXUBYTE		(GLubyte)	0xFF
-#define GL_MAXSHORT		(GLshort)	0x7FFF
-#define GL_MAXUSHORT	(GLushort)	0xFFFF
-#define GL_MAXINT		(GLint)		0x7FFFFFFF
-#define GL_MAXUINT		(GLuint)	0xFFFFFFFF
+#define GL_MAXBYTE		((GLbyte) 0x7F)
+#define GL_MAXUBYTE		((GLubyte) 0xFF)
+#define GL_MAXSHORT		((GLshort) 0x7FFF)
+#define GL_MAXUSHORT	((GLushort) 0xFFFF)
+#define GL_MAXINT			((GLint) 0x7FFFFFFF)
+#define GL_MAXUINT		((GLuint) 0xFFFFFFFF)
 #define GL_MAXFLOAT		1.0f
 #define GL_MAXDOUBLE	1.0
 

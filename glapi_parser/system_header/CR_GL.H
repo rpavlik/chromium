@@ -3,14 +3,14 @@
  *
  * See the file LICENSE.txt for information on redistributing this software.
  */
-void glBarrierCreate (GLuint name, GLuint count);
-void glBarrierDestroy (GLuint name);
-void glBarrierExec (GLuint name);
-void glSemaphoreCreate (GLuint name, GLuint count);
-void glSemaphoreDestroy (GLuint name);
-void glSemaphoreP (GLuint name);
-void glSemaphoreV (GLuint name);
-void glBoundsInfo (GLrecti *bounds, GLbyte *payload, GLint len, GLint num_opcodes);
+void glBarrierCreateCR (GLuint name, GLuint count);
+void glBarrierDestroyCR (GLuint name);
+void glBarrierExecCR (GLuint name);
+void glSemaphoreCreateCR (GLuint name, GLuint count);
+void glSemaphoreDestroyCR (GLuint name);
+void glSemaphorePCR (GLuint name);
+void glSemaphoreVCR (GLuint name);
+void glBoundsInfoCR (const GLrecti *bounds, const GLbyte *payload, GLint len, GLint num_opcodes);
 void glBlendColorEXT (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 void glBlendEquationEXT (GLenum mode);
 void glMultiTexCoord1dARB (GLenum texture, GLdouble s);

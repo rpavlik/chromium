@@ -7,8 +7,6 @@
 #ifndef CR_PACKER_EXTENSIONS_H
 #define CR_PACKER_EXTENSIONS_H
 
-#include "cr_glwrapper.h"
-
 int __packTexParameterNumParams( GLenum pname );
 int __packFogParamsLength( GLenum pname );
 

@@ -7,7 +7,6 @@
 #include "server.h"
 #include "cr_net.h"
 #include "cr_unpack.h"
-#include "cr_protocol.h"
 #include "cr_error.h"
 #include "cr_glstate.h"
 #include "cr_string.h"

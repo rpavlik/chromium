@@ -7,7 +7,6 @@
 #ifndef CR_STATE_ATTRIB_H 
 #define CR_STATE_ATTRIB_H 
 
-#include "cr_glwrapper.h"
 #include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_extensions.h"

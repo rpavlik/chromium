@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "cr_applications.h"
+#include "chromium.h"
 #include <GL/glut.h>
 
 
@@ -38,25 +38,14 @@ static glGetChromiumParametervCRProc glGetChromiumParametervCRptr;
 static void
 GetCrExtensions(void)
 {
-#ifdef WINDOWS
 	glChromiumParameteriCRptr = (glChromiumParameteriCRProc)
-		wglGetProcAddress((const GLbyte*) "glChromiumParameteriCR");
+ 		GET_PROC("glChromiumParameteriCR");
 	glChromiumParameterfCRptr = (glChromiumParameterfCRProc)
-		wglGetProcAddress((const GLbyte*) "glChromiumParameterfCR");
+		GET_PROC("glChromiumParameterfCR");
 	glChromiumParametervCRptr = (glChromiumParametervCRProc)
-		wglGetProcAddress((const GLbyte*) "glChromiumParametervCR");
+		GET_PROC("glChromiumParametervCR");
 	glGetChromiumParametervCRptr = (glGetChromiumParametervCRProc)
-		wglGetProcAddress((const GLbyte*) "glGetChromiumParametervCR");
-#else
-	glChromiumParameteriCRptr = (glChromiumParameteriCRProc)
-		glXGetProcAddressARB((GLubyte*) "glChromiumParameteriCR");
-	glChromiumParameterfCRptr = (glChromiumParameterfCRProc)
-		glXGetProcAddressARB((GLubyte*) "glChromiumParameterfCR");
-	glChromiumParametervCRptr = (glChromiumParametervCRProc)
-		glXGetProcAddressARB((GLubyte*) "glChromiumParametervCR");
-	glGetChromiumParametervCRptr = (glGetChromiumParametervCRProc)
-		glXGetProcAddressARB((GLubyte*) "glGetChromiumParametervCR");
-#endif
+		GET_PROC("glGetChromiumParametervCR");
 
 	if (!glChromiumParameteriCRptr || !glChromiumParameterfCRptr ||
 			!glChromiumParametervCRptr || !glGetChromiumParametervCRptr) {

@@ -7,11 +7,9 @@
 
 #include "cr_error.h"
 #include "cr_environment.h"
-#include "cr_glwrapper.h"
 #include "cr_pack.h"
 #include "packer.h"
 #include <stdarg.h>
-#include <stdio.h>
 
 void crPackErrorHandlerFunc( CRPackContext *pc, CRPackErrorHandlerFunc errf )
 {

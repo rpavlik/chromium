@@ -14,7 +14,7 @@
 
 
 /*#define GL_GLEXT_PROTOTYPES*/
-#include "cr_glwrapper.h"
+#include "chromium.h"
 #include "cr_error.h"
 
 void glTexImage3D( GLenum target, GLint level,

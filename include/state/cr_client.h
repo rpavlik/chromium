@@ -7,9 +7,9 @@
 #ifndef CR_STATE_CLIENT_H
 #define CR_STATE_CLIENT_H
 
-#include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 #include "state/cr_limits.h"
+#include "cr_bits.h"
 
 #ifdef __cplusplus
 extern "C" {

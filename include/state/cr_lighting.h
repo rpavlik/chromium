@@ -7,7 +7,6 @@
 #ifndef CR_STATE_LIGHTING_H
 #define CR_STATE_LIGHTING_H
 
-#include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 
 #ifdef __cplusplus

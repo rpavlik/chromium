@@ -5,13 +5,11 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_pixeldata.h"
 #include "cr_error.h"
-
+#include "cr_mem.h"
 #include "state/cr_pixel.h"
 
-#include <memory.h>
 
 void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height, 
 																		 GLenum format, GLenum type,
@@ -209,7 +207,7 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 	WRITE_DATA( 24, GLuint, isnull );
 	if ( bitmap )
 	{
-		memcpy( data_ptr + 28, bitmap, data_length );
+		crMemcpy( data_ptr + 28, bitmap, data_length );
 	}
 
 	crHugePacket( CR_BITMAP_OPCODE, data_ptr );

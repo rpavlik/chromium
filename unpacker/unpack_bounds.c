@@ -5,10 +5,9 @@
  */
 
 #include "unpacker.h"
-#include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 
-void crUnpackBoundsInfo( void  )
+void crUnpackBoundsInfoCR( void  )
 {
 	GLrecti bounds;
 	GLint len;
@@ -23,6 +22,6 @@ void crUnpackBoundsInfo( void  )
 	num_opcodes = READ_DATA( 20, GLuint );
 	payload = DATA_POINTER( 24, GLbyte );
 
-	cr_unpackDispatch.BoundsInfo( &bounds, payload, len, num_opcodes );
+	cr_unpackDispatch.BoundsInfoCR( &bounds, payload, len, num_opcodes );
 	INCR_VAR_PTR();
 }

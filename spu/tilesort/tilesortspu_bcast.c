@@ -90,113 +90,113 @@ void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 	tilesortspuShipBuffers();
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_BarrierCreate(GLuint name, GLuint count)
+void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackBarrierCreateSWAP(name,count);
+		crPackBarrierCreateCRSWAP(name,count);
 	}
 	else
 	{
-		crPackBarrierCreate(name,count);
+		crPackBarrierCreateCR(name,count);
 	}
 	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroy(GLuint name)
+void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackBarrierDestroySWAP(name);
+		crPackBarrierDestroyCRSWAP(name);
 	}
 	else
 	{
-		crPackBarrierDestroy(name);
+		crPackBarrierDestroyCR(name);
 	}
 	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_BarrierExec(GLuint name)
+void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 {
 	GET_THREAD(thread);
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackBarrierExecSWAP(name);
+		crPackBarrierExecCRSWAP(name);
 	}
 	else
 	{
-		crPackBarrierExec(name);
+		crPackBarrierExecCR(name);
 	}
 	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreate(GLuint name, GLuint count)
+void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackSemaphoreCreateSWAP(name,count);
+		crPackSemaphoreCreateCRSWAP(name,count);
 	}
 	else
 	{
-		crPackSemaphoreCreate(name,count);
+		crPackSemaphoreCreateCR(name,count);
 	}
 	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroy(GLuint name)
+void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackSemaphoreDestroySWAP(name);
+		crPackSemaphoreDestroyCRSWAP(name);
 	}
 	else
 	{
-		crPackSemaphoreDestroy(name);
+		crPackSemaphoreDestroyCR(name);
 	}
 	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_SemaphoreP(GLuint name)
+void TILESORTSPU_APIENTRY tilesortspu_SemaphorePCR(GLuint name)
 {
 	GET_THREAD(thread);
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackSemaphorePSWAP(name);
+		crPackSemaphorePCRSWAP(name);
 	}
 	else
 	{
-		crPackSemaphoreP(name);
+		crPackSemaphorePCR(name);
 	}
 	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_SemaphoreV(GLuint name)
+void TILESORTSPU_APIENTRY tilesortspu_SemaphoreVCR(GLuint name)
 {
 	GET_THREAD(thread);
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
-		crPackSemaphoreVSWAP(name);
+		crPackSemaphoreVCRSWAP(name);
 	}
 	else
 	{
-		crPackSemaphoreV(name);
+		crPackSemaphoreVCR(name);
 	}
 	tilesortspuBroadcastGeom(0);
 	tilesortspuShipBuffers();

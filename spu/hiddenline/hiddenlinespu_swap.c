@@ -1,8 +1,12 @@
+/* Copyright (c) 2001, Stanford University
+ * All rights reserved
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
+
 #include "hiddenlinespu.h"
-#include "cr_glwrapper.h"
 #include "cr_unpack.h"
 #include "cr_mem.h"
-#include <limits.h>
 
 static void hiddenPlayback( SPUDispatchTable *table )
 {

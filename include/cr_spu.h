@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#define MAX_THREADS               32      /* max threads per spu */
+
 typedef struct _SPUSTRUCT SPU;
 
 typedef void (*SPUGenericFunction)(void);
@@ -89,6 +91,67 @@ struct _SPUSTRUCT {
 	SPUDispatchTable dispatch_table;
 	void *privatePtr;  /* pointer to SPU-private data */
 };
+
+
+/*
+ * These are the OpenGL / window system interface functions
+ */
+#ifdef WINDOWS
+typedef HGLRC (WGL_APIENTRY *wglCreateContextFunc_t)(HDC);
+typedef void (WGL_APIENTRY *wglDeleteContextFunc_t)(HGLRC);
+typedef BOOL (WGL_APIENTRY *wglMakeCurrentFunc_t)(HDC,HGLRC);
+typedef BOOL (WGL_APIENTRY *wglSwapBuffersFunc_t)(HDC);
+typedef int (WGL_APIENTRY *wglChoosePixelFormatFunc_t)(HDC, CONST PIXELFORMATDESCRIPTOR *);
+typedef int (WGL_APIENTRY *wglDescribePixelFormatFunc_t)(HDC, int, UINT, CONST PIXELFORMATDESCRIPTOR *);
+typedef int (WGL_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
+typedef HGLRC (WGL_APIENTRY *wglGetCurrentContextFunc_t)();
+typedef PROC (WGL_APIENTRY *wglGetProcAddressFunc_t)();
+typedef const GLubyte *(WGL_APIENTRY *glGetStringFunc_t)( GLenum );
+#else
+typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
+typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
+typedef XVisualInfo *(*glXChooseVisualFunc_t)( Display *, int, int * );
+typedef GLXContext (*glXCreateContextFunc_t)( Display *, XVisualInfo *, GLXContext, Bool );
+typedef void (*glXDestroyContextFunc_t)( Display *, GLXContext );
+typedef Bool (*glXIsDirectFunc_t)( Display *, GLXContext );
+typedef Bool (*glXMakeCurrentFunc_t)( Display *, GLXDrawable, GLXContext );
+typedef void (*glXSwapBuffersFunc_t)( Display *, GLXDrawable );
+typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
+typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
+typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
+#endif
+
+/*
+ * Package up the WGL/GLX function pointers into a struct.  We use
+ * this in a few different places.
+ */
+typedef struct {
+#ifdef WINDOWS
+	wglGetProcAddressFunc_t wglGetProcAddress;
+	wglCreateContextFunc_t wglCreateContext;
+	wglDeleteContextFunc_t wglDeleteContext;
+	wglMakeCurrentFunc_t wglMakeCurrent;
+	wglSwapBuffersFunc_t wglSwapBuffers;
+	wglGetCurrentContextFunc_t wglGetCurrentContext;
+	wglChoosePixelFormatFunc_t wglChoosePixelFormat;
+	wglDescribePixelFormatFunc_t wglDescribePixelFormat;
+	wglSetPixelFormatFunc_t wglSetPixelFormat;
+#else
+	glXGetConfigFunc_t  glXGetConfig;
+	glXQueryExtensionFunc_t glXQueryExtension;
+	glXChooseVisualFunc_t glXChooseVisual;
+	glXCreateContextFunc_t glXCreateContext;
+	glXDestroyContextFunc_t glXDestroyContext;
+	glXIsDirectFunc_t glXIsDirect;
+	glXMakeCurrentFunc_t glXMakeCurrent;
+	glXSwapBuffersFunc_t glXSwapBuffers;
+	glXGetProcAddressARBFunc_t glXGetProcAddressARB;
+	glXGetCurrentDisplayFunc_t glXGetCurrentDisplay;
+#endif
+	glGetStringFunc_t glGetString;
+} crOpenGLInterface;
+
+
 
 SPU *crSPULoad( SPU *child, int id, char *name, char *dir, void *server);
 SPU *crSPULoadChain( int count, int *ids, char **names, char *dir, void *server );

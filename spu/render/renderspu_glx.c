@@ -11,9 +11,6 @@
 #include <X11/Xmu/StdCmap.h>
 #include <X11/Xatom.h>
 #include <sys/time.h>
-
-#include "cr_glwrapper.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>

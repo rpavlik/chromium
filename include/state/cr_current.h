@@ -8,7 +8,6 @@
 #define CR_STATE_CURRENT_H
 
 #include "state/cr_currentpointers.h"
-#include "cr_glwrapper.h"
 
 #ifdef __cplusplus
 extern "C" {

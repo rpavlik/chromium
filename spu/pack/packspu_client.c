@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include "packspu.h"
 #include "cr_packfunctions.h"
-#include "cr_glwrapper.h"
 #include "cr_glstate.h"
 
 void PACKSPU_APIENTRY packspu_ColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )

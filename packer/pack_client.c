@@ -7,7 +7,6 @@
 #include "packer.h"
 #include "cr_opcodes.h"
 #include "cr_version.h"
-#include "cr_glwrapper.h"
 
 void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 {

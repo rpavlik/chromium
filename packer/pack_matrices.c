@@ -6,7 +6,6 @@
 
 #include "packer.h"
 #include "cr_opcodes.h"
-#include "cr_glwrapper.h"
 
 void PACK_APIENTRY crPackMultMatrixd( const GLdouble *m )
 {

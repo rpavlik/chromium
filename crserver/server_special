@@ -3,7 +3,7 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 #AreTexturesResident
-BoundsInfo
+BoundsInfoCR
 Clear
 GetBooleanv
 GetDoublev
@@ -67,11 +67,11 @@ Indexi
 Indexs
 EdgeFlag
 SelectBuffer
-BarrierCreate
-SemaphoreCreate
-SemaphoreV
-SemaphoreP
-BarrierExec
+BarrierCreateCR
+SemaphoreCreateCR
+SemaphoreVCR
+SemaphorePCR
+BarrierExecCR
 SecondaryColor3ubEXT
 SecondaryColor3bEXT
 SecondaryColor3usEXT

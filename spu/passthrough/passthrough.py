@@ -25,7 +25,6 @@ print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_spu.h"
-#include "cr_glwrapper.h"
 """
 
 print 'SPUNamedFunctionTable passthrough_table[%d];' % ( len(keys) + 1 )

@@ -15,8 +15,8 @@
  */
 
 #include <stdio.h>
+#include "chromium.h"
 #include "cr_logo.h"
-#include "cr_glwrapper.h"
 #include "cr_error.h"
 
 void crExtensionsDrawLogo( int currentWidth, int currentHeight )

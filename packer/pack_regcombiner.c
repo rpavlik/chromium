@@ -6,7 +6,6 @@
 
 #include "packer.h"
 #include "cr_opcodes.h"
-#include "cr_glwrapper.h"
 
 static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *params, GLenum extended_opcode )
 {

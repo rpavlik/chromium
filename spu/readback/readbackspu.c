@@ -9,7 +9,6 @@
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_bbox.h"
-#include "cr_applications.h"
 #include "cr_url.h"
 
 #include "readbackspu.h"
@@ -449,7 +448,7 @@ static void ProcessTiles( WindowInfo *window )
 
 	/* wait for everyone to finish clearing */
 	if (!readback_spu.gather_url)
-		readback_spu.child.BarrierExec( CLEAR_BARRIER );
+		readback_spu.child.BarrierExecCR( CLEAR_BARRIER );
 
 	/*
 	 * Begin critical region.
@@ -458,7 +457,7 @@ static void ProcessTiles( WindowInfo *window )
 	 * putting the mutex outside of the loop, we're more likely to pack more
 	 * data into each buffer when doing image reassembly.
 	 */
-	readback_spu.child.SemaphoreP( MUTEX_SEMAPHORE );
+	readback_spu.child.SemaphorePCR( MUTEX_SEMAPHORE );
 
 	/*
 	 * loop over extents (image regions)
@@ -477,7 +476,7 @@ static void ProcessTiles( WindowInfo *window )
 	/*
 	 * End critical region.
 	 */
-	readback_spu.child.SemaphoreV( MUTEX_SEMAPHORE );
+	readback_spu.child.SemaphoreVCR( MUTEX_SEMAPHORE );
 }
 
 
@@ -494,9 +493,9 @@ static void DoReadback( WindowInfo *window )
 	if (first_time)
 	{
 		/* one-time initializations */
-		readback_spu.child.BarrierCreate(CLEAR_BARRIER, readback_spu.barrierSize);
-		readback_spu.child.BarrierCreate(SWAP_BARRIER, readback_spu.barrierSize);
-		readback_spu.child.SemaphoreCreate(MUTEX_SEMAPHORE, 1);
+		readback_spu.child.BarrierCreateCR(CLEAR_BARRIER, readback_spu.barrierSize);
+		readback_spu.child.BarrierCreateCR(SWAP_BARRIER, readback_spu.barrierSize);
+		readback_spu.child.SemaphoreCreateCR(MUTEX_SEMAPHORE, 1);
 		first_time = 0;
 	}
 	else if (readback_spu.resizable)
@@ -537,7 +536,7 @@ static void READBACKSPU_APIENTRY readbackspuFlush( void )
 	/*
 	 * XXX I'm not sure we need to sync on glFlush, but let's be safe for now.
 	 */
-	readback_spu.child.BarrierExec( SWAP_BARRIER );
+	readback_spu.child.BarrierExecCR( SWAP_BARRIER );
 }
 
 
@@ -579,7 +578,7 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint win, GLint flags 
 	/*
 	 * Everyone syncs up here before calling SwapBuffers().
 	 */
-	readback_spu.child.BarrierExec( SWAP_BARRIER );
+	readback_spu.child.BarrierExecCR( SWAP_BARRIER );
 
 	if (!readback_spu.gather_url)
 	{
@@ -602,7 +601,7 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateContext( const char *dpyName,
 	ContextInfo *context;
 	GLint childVisual = visual;
 
-	CRASSERT(readback_spu.child.BarrierCreate);
+	CRASSERT(readback_spu.child.BarrierCreateCR);
 
 	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
 	if (!context)
@@ -741,19 +740,19 @@ static void READBACKSPU_APIENTRY readbackspuWindowSize( GLint win, GLint w, GLin
 
 
 
-static void READBACKSPU_APIENTRY readbackspuBarrierCreate( GLuint name, GLuint count )
+static void READBACKSPU_APIENTRY readbackspuBarrierCreateCR( GLuint name, GLuint count )
 {
 	(void) name;
 	/* no-op */
 }
 
-static void READBACKSPU_APIENTRY readbackspuBarrierDestroy( GLuint name )
+static void READBACKSPU_APIENTRY readbackspuBarrierDestroyCR( GLuint name )
 {
 	(void) name;
 	/* no-op */
 }
 
-static void READBACKSPU_APIENTRY readbackspuBarrierExec( GLuint name )
+static void READBACKSPU_APIENTRY readbackspuBarrierExecCR( GLuint name )
 {
 	(void) name;
 	/* no-op */
@@ -933,9 +932,9 @@ SPUNamedFunctionTable readback_table[] = {
 	{ "crCreateWindow", (SPUGenericFunction) readbackspuCreateWindow },
 	{ "DestroyWindow", (SPUGenericFunction) readbackspuDestroyWindow },
 	{ "WindowSize", (SPUGenericFunction) readbackspuWindowSize },
-	{ "BarrierCreate", (SPUGenericFunction) readbackspuBarrierCreate },
-	{ "BarrierDestroy", (SPUGenericFunction) readbackspuBarrierDestroy },
-	{ "BarrierExec", (SPUGenericFunction) readbackspuBarrierExec },
+	{ "BarrierCreateCR", (SPUGenericFunction) readbackspuBarrierCreateCR },
+	{ "BarrierDestroyCR", (SPUGenericFunction) readbackspuBarrierDestroyCR },
+	{ "BarrierExecCR", (SPUGenericFunction) readbackspuBarrierExecCR },
 	{ "LoadMatrixf", (SPUGenericFunction) readbackspuLoadMatrixf },
 	{ "LoadMatrixd", (SPUGenericFunction) readbackspuLoadMatrixd },
 	{ "MultMatrixf", (SPUGenericFunction) readbackspuMultMatrixf },

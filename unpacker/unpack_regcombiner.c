@@ -5,7 +5,6 @@
  */
 
 #include "unpacker.h"
-#include "cr_glwrapper.h"
 
 void crUnpackExtendCombinerParameterfvNV( void  )
 {

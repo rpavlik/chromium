@@ -7,7 +7,6 @@
 #ifndef CR_STATE_EXTENSIONS_H
 #define CR_STATE_EXTENSIONS_H
 
-#include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 
 /* Booleans to indicate which OpenGL extensions are supported at runtime */

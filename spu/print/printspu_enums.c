@@ -5,7 +5,7 @@
  * 
  * Stolen from GLT */
 
-#include "cr_glwrapper.h"
+#include "chromium.h"
 #include <stdio.h>
 
 typedef struct {

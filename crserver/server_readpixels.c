@@ -5,7 +5,7 @@
  */
 
 #include "cr_spu.h"
-#include "cr_glwrapper.h"
+#include "chromium.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_net.h"

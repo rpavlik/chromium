@@ -5,10 +5,7 @@
  */
 
 #include "packer.h"
-#include "cr_glwrapper.h"
 #include "cr_error.h"
-
-#include <stdio.h>
 
 void PACK_APIENTRY crPackFeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 {

@@ -11,7 +11,6 @@
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_mem.h"
-#include "cr_applications.h"
 #include "cr_spu.h"
 #include "cr_warp.h"
 #include "cr_hull.h"

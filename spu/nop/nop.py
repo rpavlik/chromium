@@ -20,7 +20,6 @@ stub_common.CopyrightC()
 print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_spu.h"
-#include "cr_glwrapper.h"
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 

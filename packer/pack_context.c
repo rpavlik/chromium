@@ -6,7 +6,6 @@
 
 #include "packer.h"
 #include "cr_opcodes.h"
-#include "cr_glwrapper.h"
 #include "cr_mem.h"
 #include "cr_string.h"
 

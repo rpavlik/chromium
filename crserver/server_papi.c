@@ -8,9 +8,6 @@
 #include "server.h"
 #include "cr_error.h"
 #include "cr_mem.h"
-#include "cr_hash.h"
-#include "cr_glstate.h"
-#include "cr_applications.h"
 #include "state/cr_statetypes.h"
 
 #define DEBUG_BARRIERS 1
@@ -34,7 +31,7 @@ typedef struct {
 
 CRHashTable *cr_barriers, *cr_semaphores;
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreate( GLuint name, GLuint count )
+void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreateCR( GLuint name, GLuint count )
 {
 	CRBarrier *barrier;
 #if DEBUG_BARRIERS
@@ -44,7 +41,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreate( GLuint name, GLuint
 	barrier = (CRBarrier *) crHashtableSearch( cr_barriers, name );
 
 #if DEBUG_BARRIERS
-	sprintf( debug_buf, "BarrierCreate( %d, %d )", name, count );
+	sprintf( debug_buf, "BarrierCreateCR( %d, %d )", name, count );
 	cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
 #endif
 	if (count == 0)
@@ -100,12 +97,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreate( GLuint name, GLuint
 	}
 }
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierDestroy( GLuint name )
+void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierDestroyCR( GLuint name )
 {
 	crError( "NO BARRIER DESTROY FOR YOU!  (name=%u)", name );
 }
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExec( GLuint name )
+void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExecCR( GLuint name )
 {
 	CRBarrier *barrier;
 #if DEBUG_BARRIERS
@@ -141,7 +138,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExec( GLuint name )
 	}
 }
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreate( GLuint name, GLuint count )
+void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GLuint count )
 {
 	CRSemaphore *sema;
 
@@ -151,13 +148,13 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreate( GLuint name, GLui
 	sema->waiting = sema->tail = NULL;
 }
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreDestroy( GLuint name )
+void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreDestroyCR( GLuint name )
 {
 	crError( "NO DESTROY FOR YOU! (name=%u)", name );
 }
 
 /* Semaphore wait */
-void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreP( GLuint name )
+void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 {
 	CRSemaphore *sema;
 
@@ -192,7 +189,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreP( GLuint name )
 }
 
 /* Semaphore signal */
-void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreV( GLuint name )
+void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreVCR( GLuint name )
 {
 	CRSemaphore *sema;
 

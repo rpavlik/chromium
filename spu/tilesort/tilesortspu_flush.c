@@ -11,9 +11,7 @@
 #include "cr_protocol.h"
 #include "cr_error.h"
 #include "cr_packfunctions.h"
-#include "cr_applications.h"
 
-#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <float.h>
@@ -588,9 +586,9 @@ void tilesortspuFlush( ThreadInfo *thread )
 
 	CRPackBuffer old_geometry_pack;
 
-	assert(thread);
-	assert(thread->currentContext);
-	assert(thread->currentContext->State);
+	CRASSERT(thread);
+	CRASSERT(thread->currentContext);
+	CRASSERT(thread->currentContext->State);
 
 	ctx = thread->currentContext->State;
 

@@ -7,7 +7,6 @@
 #ifndef CR_STATE_EVALUATORS
 #define CR_STATE_EVALUATORS
 
-#include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
 
 #define GLEVAL_TOT 9

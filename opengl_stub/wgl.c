@@ -7,7 +7,6 @@
 #include "cr_error.h"
 #include "cr_spu.h"
 #include "cr_environment.h"
-#include "cr_applications.h"
 #include "stub.h"
 
 /* I *know* most of the parameters are unused, dammit. */

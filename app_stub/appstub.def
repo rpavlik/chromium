@@ -4,11 +4,14 @@
 ; See the file LICENSE.txt for information on redistributing this software.
 DESCRIPTION ""
 EXPORTS
-glBarrierCreate
-glBarrierExec
-glSemaphoreCreate
-glSemaphoreV
-glSemaphoreP
+glBarrierCreateCR
+glBarrierDestroyCR
+glBarrierExecCR
+glSemaphoreCreateCR
+glSemaphoreDestroyCR
+glSemaphoreVCR
+glSemaphorePCR
 crCreateContext
+crDestroyContext
 crMakeCurrent
 crSwapBuffers

@@ -18,7 +18,6 @@ stub_common.CopyrightC()
 
 print '''
 #include "state/cr_statetypes.h"
-#include "cr_glwrapper.h"
 
 static double __read_double( void *src )
 {

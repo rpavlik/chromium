@@ -7,7 +7,7 @@
 #ifndef CR_STUB_H
 #define CR_STUB_H
 
-#include "cr_glwrapper.h"
+#include "chromium.h"
 #include "cr_spu.h"
 #include "cr_threads.h"
 #include "spu_dispatch_table.h"

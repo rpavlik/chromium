@@ -22,7 +22,6 @@ print """
 #include <stdio.h>
 #include "cr_error.h"
 #include "cr_spu.h"
-#include "cr_glwrapper.h"
 #include "printspu.h"
 
 #define PRINT_UNUSED(x) ((void)x)"""
