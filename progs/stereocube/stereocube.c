@@ -279,10 +279,10 @@ static void Key( unsigned char key, int x, int y )
 		}
 		break;
 	case 'e':
-		EyeSep -= 0.05;
+		EyeSep -= 0.05f;
 		break;
 	case 'E':
-		EyeSep += 0.05;
+		EyeSep += 0.05f;
 		break;
 	case 'f':
 		FocalDist -= step;
