@@ -24,6 +24,28 @@ static void
 crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj);
 
 
+void crStateTextureDestroy(CRContext *ctx)
+{
+	CRTextureState *t = &ctx->texture;
+
+	crStateTextureDelete_t(t, &(t->base1D));
+	crStateTextureDelete_t(t, &(t->base2D));
+#ifdef CR_OPENGL_VERSION_1_2
+	crStateTextureDelete_t(t, &(t->base3D));
+#endif
+#ifdef CR_ARB_texture_cube_map
+	crStateTextureDelete_t(t, &(t->baseCubeMap));
+#endif
+	crStateTextureDelete_t(t, &(t->proxy1D));
+	crStateTextureDelete_t(t, &(t->proxy2D));
+#ifdef CR_OPENGL_VERSION_1_2
+	crStateTextureDelete_t(t, &(t->proxy3D));
+#endif
+#ifdef CR_ARB_texture_cube_map
+	crStateTextureDelete_t(t, &(t->proxyCubeMap));
+#endif
+}
+
 void crStateTextureInit(CRContext *ctx)
 {
 	CRLimitsState *limits = &ctx->limits;
@@ -563,8 +585,14 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj)
 			tl->bytes = 0;
 		}
 	}
+#ifdef CR_ARB_texture_cube_map
+	crFree(tobj->negativeXlevel);
+	crFree(tobj->positiveYlevel);
+	crFree(tobj->negativeYlevel);
+	crFree(tobj->positiveZlevel);
+	crFree(tobj->negativeZlevel);
+#endif
 	crFree(tobj->level);
-	crFree(tobj);
 }
 
 

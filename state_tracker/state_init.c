@@ -261,6 +261,7 @@ void crStateDestroyContext( CRContext *ctx )
 	crStateEvaluatorDestroy( ctx );
 	crStateListsDestroy( ctx );
 	crStateLightingDestroy( ctx );
+	crStateTextureDestroy( ctx );
 	crStateTransformDestroy( ctx );
 
 	crFree( ctx );

@@ -191,6 +191,7 @@ typedef struct {
 } CRTextureState;
 
 void crStateTextureInit(CRContext *ctx);
+void crStateTextureDestroy(CRContext *ctx);
 void crStateTextureFree(CRTextureState *t);
 
 void crStateTextureInitTexture(GLuint name);
