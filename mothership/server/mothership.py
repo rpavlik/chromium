@@ -124,6 +124,10 @@ class CRNode:
 		self.config = {}
 		self.accept_wait = None
 		self.connect_wait = None
+		self.alias = host
+
+	def Alias( self, name ):
+		self.alias = name
 	
 	def AddSPU( self, spu ):
 	    	"""AddSPU(spu)
@@ -459,7 +463,7 @@ class CR:
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
 		for node in self.nodes:
-			if node.host == args and not node.spokenfor:
+			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
 				if isinstance(node,CRApplicationNode):
 					node.spokenfor = 1
 					sock.node = node
@@ -493,7 +497,7 @@ class CR:
 		"""do_server(sock, args)
 		Identifies the server in the graph. """
 		for node in self.nodes:
-			if node.host == args and not node.spokenfor:
+			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
 				if isinstance(node,CRNetworkNode):
 					node.spokenfor = 1
 					node.spusloaded = 1
