@@ -470,7 +470,7 @@ unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
 		crNetRecv();
 	}
 	// NOTREACHED
-	return 0;
+	// return 0;
 }
 
 // Read a line from a socket.  Useful for reading from the mothership.
