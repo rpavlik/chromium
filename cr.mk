@@ -542,3 +542,23 @@ endif
 	@$(ECHO) "Removing dependency files (if any)"
 	@$(RM) $(DEPDIR)/*.depend
 endif
+
+
+# Make CRNAME.tar.gz and CRNAME.zip files
+CRNAME = cr-1.1
+tarball: clean
+#	remove old files
+	-rm -rf ../$(CRNAME)
+	-rm -f ../$(CRNAME).tar.gz
+	-rm -f ../$(CRNAME).zip
+#	make copy of cr directory
+	cp -r ../cr ../$(CRNAME)
+#	remove CVS files and other unneeded files
+	-find ../$(CRNAME) -name CVS -exec rm -rf '{}' \;
+	rm -f ../$(CRNAME)/mothership/server/crconfig.py
+	rm -rf ../$(CRNAME)/built
+	rm -rf ../$(CRNAME)/bin
+	rm -rf ../$(CRNAME)/lib
+#	make tarball and zip file
+	cd .. ; tar cvf $(CRNAME).tar $(CRNAME) ; gzip $(CRNAME).tar
+	cd .. ; zip -r $(CRNAME).zip $(CRNAME)
