@@ -27,6 +27,8 @@ for func_name in apiutil.AllSpecials( 'state_select' ):
 	print "crStateSelect%s" % func_name
 
 print """crStateInit
+crStateReadPixels
+crStateGetChromiumParametervCR
 crStateCreateContext
 crStateDestroyContext
 crStateDiffContext
