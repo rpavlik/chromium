@@ -25,8 +25,10 @@ class SPUDialog(wxDialog):
 		
 		id_OK = 1
 		id_CANCEL = 2
+		id_RESTORE = 3
 
-		self._Controls = {}
+		self.__Controls = {}
+		self.__Options = options
 
 		outerSizer = wxBoxSizer(wxVERTICAL)
 
@@ -96,18 +98,22 @@ class SPUDialog(wxDialog):
 
 				# Save this option
 				value = default  # a vector
-				self._Controls[name] = controls   # a vector
+				self.__Controls[name] = controls   # a vector
 
 				i += 1
 
 		# XXX still need to write the callbacks for each control
 
-		rowSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
+		rowSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
+		self.RestoreButton = wxButton(parent=self, id=id_RESTORE,
+									  label="Restore Defaults")
+		rowSizer.Add(self.RestoreButton, option=0, flag=wxALIGN_CENTER)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
-		rowSizer.Add(self.OkButton, option=0, flag=wxALIGN_CENTER, border=10)
+		rowSizer.Add(self.OkButton, option=0, flag=wxALIGN_CENTER)
 		self.CancelButton = wxButton(parent=self, id=id_CANCEL, label="Cancel")
-		rowSizer.Add(self.CancelButton, option=0, flag=wxALIGN_CENTER, border=10)
+		rowSizer.Add(self.CancelButton, option=0, flag=wxALIGN_CENTER)
 		outerSizer.Add(rowSizer, option=0, flag=wxGROW|wxBOTTOM, border=10)
+		EVT_BUTTON(self.RestoreButton, id_RESTORE, self._onRestore)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
 
@@ -117,6 +123,12 @@ class SPUDialog(wxDialog):
 		self.SetAutoLayout(true)
 		self.SetSizeHints(minW=min[0], minH=min[1])
 		self.SetSize(min)
+
+	def _onRestore(self, event):
+		"""Called by Restore Defaults button"""
+		for (name, description, type, count, default, mins, maxs) in self.__Options:
+			self.SetValue(name, default)
+		pass
 
 	def _onOK(self, event):
 		"""Called by OK button"""
@@ -128,49 +140,67 @@ class SPUDialog(wxDialog):
 
 	def IsOption(self, name):
 		"""Return true if name is a recognized option."""
-		return name in self._Controls
+		return name in self.__Controls
 
 	# name is an SPU option like bbox_line_width
 	def SetValue(self, name, newValue):
 		"""Set a control's value (a vector of values)"""
-		assert name in self._Controls.keys()
-		ctrls = self._Controls[name]
+		assert name in self.__Controls.keys()
+		ctrls = self.__Controls[name]
 		count = len(ctrls)
 		assert len(newValue) == count
-		if isinstance(ctrls[0], wxSpinCtrl) or isinstance(ctrls[0], wxCheckBox):
+		if (isinstance(ctrls[0], wxSpinCtrl) or
+			isinstance(ctrls[0], wxCheckBox)):
 			for i in range(count):
 				ival = int(newValue[i])
 				ctrls[i].SetValue(ival)
+		else:
+			# must be (a) text box(es)
+			assert isinstance(ctrls[0], wxTextCtrl)
+			for i in range(count):
+				ctrls[i].SetValue(newValue[i])
 
 	# name is an SPU option like bbox_line_width
 	def GetValue(self, name):
 		"""Return current value (vector) of the named control"""
-		assert name in self._Controls.keys()
-		ctrls = self._Controls[name]
+		assert name in self.__Controls.keys()
+		ctrls = self.__Controls[name]
 		result = []
 		count = len(ctrls)
 		for i in range(count):
 			result.append(ctrls[i].GetValue())
 		return result
 
+	def SetValues(self, values):
+		"""Set all SPU Options.  values is a dictionary."""
+		for name in values.keys():
+			self.SetValue(name, values[name])
+
+	def GetValues(self):
+		"""Return a dictionary of the SPU options and values."""
+		values = {}
+		for name in self.__Controls.keys():
+			values[name] = self.GetValue(name)
+		return values
+
 	# Override the wxDialog.ShowModal() method
 	def ShowModal(self):
 		"""Display dialog and return wxID_OK or wxID_CANCEL."""
 		# Save starting values
-		values = {}
-		for name in self._Controls.keys():
-			ctrls = self._Controls[name]
-			vals = []
-			for i in range(len(ctrls)):
-				vals.append(ctrls[i].GetValue())
-			values[name] = vals
+#		values = {}
+#		for name in self.__Controls.keys():
+#			ctrls = self.__Controls[name]
+#			vals = []
+#			for i in range(len(ctrls)):
+#				vals.append(ctrls[i].GetValue())
+#			values[name] = vals
 		# Show the dialog
 		retVal = wxDialog.ShowModal(self)
 		# Finish up
-		if retVal == wxID_CANCEL:
-			# Cancelled, restore original values
-			for name in values.keys():
-				ctrls = self._Controls[name]
-				for i in range(len(ctrls)):
-					ctrls[i].SetValue(values[name][i])
+#		if retVal == wxID_CANCEL:
+#			# Cancelled, restore original values
+#			for name in values.keys():
+#				ctrls = self.__Controls[name]
+#				for i in range(len(ctrls)):
+#					ctrls[i].SetValue(values[name][i])
 		return retVal

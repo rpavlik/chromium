@@ -1,3 +1,11 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+#
+# Authors:
+#   Brian Paul
+
 """Chromium config tool utility functions"""
 
 import re, os, string, sys
@@ -160,6 +168,30 @@ def SPUIsTerminal(spuName):
 
 def NewSPU(spuName):
 	"""Return a new instance of the named SPU"""
-	return crtypes.SpuObject(spuName, SPUIsTerminal(spuName),
-						   SPUMaxServers(spuName))
+	spu = crtypes.SpuObject(spuName, SPUIsTerminal(spuName),
+							SPUMaxServers(spuName))
+	# build dictionary of options -> values
+	(params, options) = GetSPUOptions(spuName)
+	values = {}
+	for (name, description, type, count, default, mins, maxs) in options:
+		values[name] = default
+	spu.SetOptions(values)
+	return spu
+
+def WriteSPUOptions(spu, prefix, file):
+	"""Write SPU options to given file handle."""
+	(params, options) = GetSPUOptions(spu.Name())
+	values = {}
+	for (name, description, type, count, default, mins, maxs) in options:
+		values = spu.GetOption(name)
+		if len(values) == 1:
+			valueStr = str(values[0])
+		else:
+			valueStr = str(values)
+		if type == "INT" or type == "BOOL":
+			file.write("%s_%s = %s\n" % (prefix, name, valueStr))
+		elif type == "FLOAT":
+			file.write("%s_%s = %s\n" % (prefix, name, valueStr))
+		else:
+			file.write("%s_%s = \"%s\"\n" % (prefix, name, valueStr))
 

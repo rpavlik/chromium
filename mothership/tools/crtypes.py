@@ -1,3 +1,11 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+#
+# Authors:
+#   Brian Paul
+
 """Chromium SPU and Node classes used by the config tool.
 This may eventually get rolled into the similar classes defined
 in the mothership.
@@ -29,6 +37,7 @@ class SpuObject:
 		self.__OutlinePen = wxPython.wx.wxPen(wxPython.wx.wxColor(0,0,0),
 											  width=1, style=0)
 		self.__FillBrush = wxPython.wx.wxLIGHT_GREY_BRUSH
+		self.__Options = {}
 
 	def Clone(self):
 		"""Return a deep copy/clone of this SpuObject"""
@@ -92,6 +101,26 @@ class SpuObject:
 
 	def Name(self):
 		return self.__Name
+
+	def GetOptions(self):
+		"""Get the SPU's options (a dictionary)"""
+		return self.__Options
+
+	def SetOptions(self, options):
+		"""Set the SPU's options (a dictionary)"""
+		self.__Options = options
+
+	def GetOption(self, optName):
+		"""Return current value of a particular SPU option"""
+		return self.__Options[optName]
+		
+	def SetOption(self, optName, value):
+		"""Set the value of a particular SPU option"""
+		self.__Options[optName] = value
+		
+	def PrintOptions(self):
+		for name in self.__Options.keys():
+			print "%s is %s" % (name, repr(self.__Options[name]))
 
 	def SetPosition(self, x, y):
 		self.__X = x
@@ -166,6 +195,7 @@ class Node:
 		self.__Color = color
 		self.__Brush = wxPython.wx.wxBrush(color)
 		self.__Host = ""
+		self.__FirstHost = 1
 		self.__Label = ""
 		self.SetHost(host)
 		self.__FontHeight = 0
@@ -215,6 +245,8 @@ class Node:
 
 	def SetHost(self, hostname):
 		"""Set the node's host name"""
+		# XXX we'll eventually want a list of hostnames for explicitly naming
+		# an N-node's hosts.
 		self.__Host = hostname
 		if self.__IsServer:
 			self.__Label = "Server node host=" + hostname
@@ -222,9 +254,17 @@ class Node:
 			self.__Label = "App node host=" + hostname
 		self.InvalidateLayout()
 
-	def Host(self):
+	def GetHost(self):
 		"""Return the host name"""
 		return self.__Host
+
+	def SetFirstHost(self, first):
+		"""Set the number for the first host."""
+		self.__FirstHost = first
+
+	def GetFirstHost(self):
+		"""Get the number for the first host."""
+		return self.__FirstHost
 
 	def SetCount(self, count):
 		"""Set the host count"""

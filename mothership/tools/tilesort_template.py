@@ -1,12 +1,27 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+#
+# Authors:
+#   Brian Paul
+
 """ tilesort_tmp.py
     Tilesort template module.
 """
 
+# The bulk of this module is GUI code.  There are three public entrypoints
+# to this code:
+#   Create_Tilesort() - instantiate a tilesort template
+#   Is_Tilesort() - test if the mothership config is a tilesort config
+#   Edit_Tilesort() - specialized editor for tilesort configs
+
+
+
 import string, cPickle, os.path, re
 from wxPython.wx import *
 import traceback, types
-from spudialog import *
-import intdialog
+import intdialog, spudialog
 import crutils, crtypes
 
 
@@ -170,6 +185,34 @@ cr.Go()
 
 #----------------------------------------------------------------------------
 
+def __FindTilesortSPU(mothership):
+	"""Search the mothership for the tilesort SPU."""
+	nodes = mothership.Nodes()
+	assert len(nodes) == 2
+	if nodes[0].IsAppNode():
+		appNode = nodes[0]
+	else:
+		assert nodes[1].IsAppNode()
+		appNode = nodes[1]
+	tilesortSPU = appNode.LastSPU()
+	assert tilesortSPU.Name() == "tilesort"
+	return tilesortSPU
+
+def __FindRenderSPU(mothership):
+	"""Search the mothership for the render SPU."""
+	nodes = mothership.Nodes()
+	assert len(nodes) == 2
+	if nodes[0].IsServer():
+		serverNode = nodes[0]
+	else:
+		assert nodes[1].IsServer()
+		serverNode = nodes[1]
+	renderSPU = serverNode.LastSPU()
+	assert renderSPU.Name() == "render"
+	return renderSPU
+
+#----------------------------------------------------------------------------
+
 class TilesortDialog(wxDialog):
 	"""Tilesort configuration editor."""
 
@@ -188,13 +231,15 @@ class TilesortDialog(wxDialog):
 		id_vLayout     = 3006
 		id_HostText    = 3007
 		id_HostIndex   = 3008
-		id_OK          = 3009
-		id_CANCEL      = 3010
+		id_TilesortOptions = 3009
+		id_OK          = 3010
+		id_CANCEL      = 3011
 
+		# init misc member vars
 		self.__Mothership = 0
-		self.HostNamePattern = "host##"
-		self.HostNameStart = 0
+		self.dirty = false
 
+		# this sizer holds all the tilesort control widgets
 		toolSizer = wxBoxSizer(wxVERTICAL)
 
 		# Mural width/height (in tiles)
@@ -288,8 +333,7 @@ class TilesortDialog(wxDialog):
 		hostSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		# XXX should probably use a wxComboBox here so we can keep a small
 		# history of frequently used hostname pattern strings.
-		self.hostText = wxTextCtrl(parent=self, id=id_HostText,
-								   value=self.HostNamePattern)
+		self.hostText = wxTextCtrl(parent=self, id=id_HostText, value="")
 		EVT_TEXT(self.hostText, id_HostText, self.__OnHostNameChange)
 		hostSizer.Add(self.hostText, flag=wxEXPAND)
 
@@ -307,9 +351,11 @@ class TilesortDialog(wxDialog):
 		toolSizer.Add(hostSizer, flag=wxEXPAND)
 
 		# SPU option buttons
-		self.tilesortButton = wxButton(parent=self, id=-1,
-									   label="Tilesort SPU Options...")
+		self.tilesortButton = wxButton(parent=self, id=id_TilesortOptions,
+									   label=" Tilesort SPU Options... ")
 		toolSizer.Add(self.tilesortButton, flag=wxALL, border=4)
+		EVT_BUTTON(self.tilesortButton, id_TilesortOptions,
+				   self.__OnTilesortOptions)
 
 		# Setup the drawing area
 		self.drawArea = wxPanel(self, id=-1, style=wxSUNKEN_BORDER)
@@ -353,30 +399,30 @@ class TilesortDialog(wxDialog):
 		self.SetSizeHints(minW=400, minH=minSize[1])
 		self.SetSize(minSize)
 
-		self.dirty = false
-
 		self.__RecomputeTotalSize()
+		# end of dialog construction
 		
 		# Make the Tilesort SPU options dialog
 		self.tilesortInfo = crutils.GetSPUOptions("tilesort")
 		assert self.tilesortInfo
 		(tilesortParams, tilesortOptions) = self.tilesortInfo
-		self.TilesortDialog = SPUDialog(parent=NULL, id=-1,
-										title="Tilesort SPU Options",
-										options=tilesortOptions)
+		self.TilesortDialog = spudialog.SPUDialog(parent=NULL, id=-1,
+												  title="Tilesort SPU Options",
+												  options=tilesortOptions)
 
 		# Make the render SPU options dialog
 		self.renderInfo = crutils.GetSPUOptions("render")
 		assert self.renderInfo
 		(renderParams, renderOptions) = self.renderInfo
-		self.RenderDialog = SPUDialog(parent=NULL, id=-1,
-									  title="Render SPU Options",
-									  options=renderOptions)
+		self.RenderDialog = spudialog.SPUDialog(parent=NULL, id=-1,
+												title="Render SPU Options",
+												options=renderOptions)
 
 		# Make the server options dialog
-		self.ServerDialog = SPUDialog(parent=NULL, id=-1,
-									  title="Server Options",
-									  options=ServerOptions)
+		self.ServerDialog = spudialog.SPUDialog(parent=NULL, id=-1,
+												title="Server Options",
+												options=ServerOptions)
+	# end of __init__()
 
 	def __RecomputeTotalSize(self):
 		"""Called whenever the mural width/height or tile width/height changes.
@@ -460,6 +506,25 @@ class TilesortDialog(wxDialog):
 		self.__UpdateVarsFromWidgets()
 		self.drawArea.Refresh()
 		self.dirty = true
+
+	def __OnTilesortOptions(self, event):
+		"""Called when Tilesort Options button is pressed."""
+		print "tilesort options..."
+		tilesortSPU = __FindTilesortSPU(self.mothership)
+		(params, opts) = crutils.GetSPUOptions("tilesort")
+		# create the dialog
+		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+									 title="Tilesort SPU Options",
+									 options = opts)
+		# set the dialog widget values
+		dialog.SetValues(tilesortSPU.GetOptions())
+		# wait for OK or cancel
+		if dialog.ShowModal() == wxID_OK:
+			# save the new values/options
+			tilesortSPU.SetOptions(dialog.GetValues())
+		else:
+			# user cancelled, do nothing, new values are ignored
+			pass
 
 	def _onOK(self, event):
 		"""Called by OK button"""
@@ -630,71 +695,13 @@ class TilesortDialog(wxDialog):
 		self.dirty = false
 		self.drawArea.Refresh()
 
-	def __WriteOptions(self, file, prefix, options, dialog):
-		"""Helper function for writing config file options"""
-		for (name, descrip, type, count, default, mins, maxs)  in options:
-			values = dialog.GetValue(name)
-			if len(values) == 1:
-				valueStr = str(values[0])
-			else:
-				valueStr = str(values)
-			if type == "INT" or type == "BOOL":
-				file.write("%s_%s = %s\n" % (prefix, name, valueStr))
-			elif type == "FLOAT":
-				file.write("%s_%s = %s\n" % (prefix, name, valueStr))
-			else:
-				file.write("%s_%s = \"%s\"\n" % (prefix, name, valueStr))
-		# endfor
-
-	def SaveConfiguration(self):
-		"""Save the configuration."""
-		f = open(self.fileName, "w")
-		if f:
-			tilesort = self.__Mothership.Tilesort
-			f.write("# Chromium tilesort config file\n")
-			f.write("TILE_ROWS = %d\n" % tilesort.Rows)
-			f.write("TILE_COLS = %d\n" % tilesort.Columns)
-			f.write("TILE_WIDTH = %d\n" % tilesort.TileWidth)
-			f.write("TILE_HEIGHT = %d\n" % tilesort.TileHeight)
-			f.write("RIGHT_TO_LEFT = %d\n" % tilesort.RightToLeft)
-			f.write("BOTTOM_TO_TOP = %d\n" % tilesort.BottomToTop)
-			f.write("HOSTNAME = \"%s\"\n" % tilesort.Hostname)
-			f.write("FIRSTHOST = %d\n" % tilesort.FirstHost)
-			tilesortOptions = self.tilesortInfo[1]
-			self.__WriteOptions(f, "TILESORT", tilesortOptions, self.TilesortDialog)
-			renderOptions = self.renderInfo[1]
-			self.__WriteOptions(f, "RENDER", renderOptions, self.RenderDialog)
-			self.__WriteOptions(f, "SERVER", ServerOptions, self.ServerDialog)
-			f.write("# end of options\n")
-			f.write(__ConfigBody)
-			f.close()
-		self.dirty = false
-
 	def SetMothership(self, mothership):
 		"""Specify the mothership to modify.
 		mothership is a Mothership object.
 		"""
 		self.__Mothership = mothership
-
-		# find the client/tilesort nodes
-		clients = []
-		numClients = 0
-		for node in mothership.Nodes():
-			if node.IsAppNode():
-				clients.append(node)
-				numClients += node.GetCount()
-
-		# find the server/render nodes
-		servers = []
-		numServers = 0
-		for node in mothership.Nodes():
-			if node.IsServer():
-				servers.append(node)
-				numServers += node.GetCount()
-
 		# update all the widgets to the template's values
 		self.__UpdateWidgetsFromVars()
-
 		self.__RecomputeTotalSize()
 
 
@@ -753,19 +760,190 @@ def Create_Tilesort(parentWindow, mothership):
 	return 1
 
 
+def Is_Tilesort(mothership):
+	"""Test if the mothership describes a tilesort configuration.
+	Return 1 if so, 0 otherwise."""
+	# First, check for correct number and type of nodes
+	nodes = mothership.Nodes()
+	if len(nodes) != 2: 
+		return 0
+	if not ((nodes[0].IsAppNode() and nodes[1].IsServer()) or
+			(nodes[1].IsAppNode() and nodes[0].IsServer())):
+		# one node must be the app node, the other the server
+		return 0
+	# Next, check for correct SPU types
+	if nodes[0].IsAppNode():
+		tilesortSPU = nodes[0].LastSPU()
+		serverNode = nodes[1]
+		renderSPU = serverNode.LastSPU()
+	else:
+		tilesortSPU = nodes[1].LastSPU()
+		serverNode = nodes[0]
+		renderSPU = serverNode.LastSPU()
+	if tilesortSPU.Name() != "tilesort":
+		return 0
+	if renderSPU.Name() != "render":
+		return 0
+	# Next, check that the app's servers are correct
+	servers = tilesortSPU.GetServers()
+	if len(servers) != 1 or servers[0] != serverNode:
+		return 0
+	# OK, this is a tilesort config!
+	return 1
+
+
 def Edit_Tilesort(parentWindow, mothership):
 	"""Edit parameters for a Tilesort template"""
 	# XXX we only need to create one instance of the TilesortFrame() and
 	# reuse it in the future.
+	t = Is_Tilesort(mothership)
+	if t:
+		# find the server/render nodes
+		nodes = mothership.Nodes()
+		if nodes[0].IsAppNode():
+			clientNode = nodes[0]
+			serverNode = nodes[1]
+		else:
+			clientNode = nodes[1]
+			serverNode = nodes[0]
+		mothership.Tilesort.NumClients = clientNode.GetCount()
+		mothership.Tilesort.Hostname = serverNode.GetHost()
+		mothership.Tilesort.FirstHost = serverNode.GetFirstHost()
+	else:
+		print "This is not a tilesort configuration!"
+		return
+
 	d = TilesortDialog()
 	d.Centre()
 	backupTilesortParams = mothership.Tilesort.Clone()
 	d.SetMothership(mothership)
+
 	if d.ShowModal() == wxID_CANCEL:
+		# restore original values
 		mothership.Tilesort = backupTilesortParams
 	else:
-		# update the server node count
-		pass
+		# update mothership with new values
+		tiles = mothership.Tilesort.Rows * mothership.Tilesort.Columns
+		serverNode.SetCount(tiles)
+		serverNode.SetHost(mothership.Tilesort.Hostname)
+		serverNode.SetFirstHost(mothership.Tilesort.FirstHost)
+		clientNode.SetCount(mothership.Tilesort.NumClients)
 
 
+def Read_Tilesort(mothership):
+	"""Read a tilesort config from the given file handle."""
+	while true:
+		l = f.readline()
+		if not l:
+			break
+		if re.match("^TILE_ROWS = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			self.heightControl.SetValue(int(l[v.start() : v.end()]))
+		elif re.match("^TILE_COLS = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			self.widthControl.SetValue(int(l[v.start() : v.end()]))
+		elif re.match("^TILE_WIDTH = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			self.tileWidthControl.SetValue(int(l[v.start() : v.end()]))
+		elif re.match("^TILE_HEIGHT = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			self.tileHeightControl.SetValue(int(l[v.start() : v.end()]))
+		elif re.match("^BOTTOM_TO_TOP = [01]$", l):
+			v = re.search("[01]", l)
+			self.vLayoutRadio.SetSelection(int(l[v.start() : v.end()]))
+		elif re.match("^RIGHT_TO_LEFT = [01]$", l):
+			v = re.search("[01]", l)
+			self.hLayoutRadio.SetSelection(int(l[v.start() : v.end()]))
+		elif re.match("^HOSTNAME = ", l):
+			# look for string in quotes
+			v = re.search("\".+\"", l)
+			# extract the string
+			self.HostNamePattern = l[v.start()+1 : v.end()-1]
+			self.hostText.SetValue(self.HostNamePattern)
+		elif re.match("^FIRSTHOST = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			self.HostNameStart = int(l[v.start() : v.end()])
+			self.hostSpin.SetValue(self.HostNameStart)
+		elif re.match("^TILESORT_", l):
+			# A tilesort SPU option
+			# extract the option name and value
+			# parentheses in the regexp define groups
+			# \"? is an optional double-quote character
+			# [^\"] is any character but double-quote
+			v = re.search("^TILESORT_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+			if v:
+				name = v.group(1)
+				value = v.group(2)
+				if self.TilesortDialog.IsOption(name):
+					self.TilesortDialog.SetValue(name, value)
+				else:
+					print "%s is not a recognized tilesort SPU option" % name
+		elif re.match("^RENDER_", l):
+			# A render SPU option
+			v = re.search("^RENDER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+			if v:
+				name = v.group(1)
+				value = v.group(2)
+				if self.RenderDialog.IsOption(name):
+					self.RenderDialog.SetValue(name, value)
+				else:
+					print "%s is not a recognized render SPU option" % name
+		elif re.match("^SERVER_", l):
+			# A server option
+			v = re.search("^SERVER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+			if v:
+				name = v.group(1)
+				value = v.group(2)
+				if self.ServerDialog.IsOption(name):
+					self.ServerDialog.SetValue(name, value)
+				else:
+					print "%s is not a recognized server option" % name
+		elif re.match("^GLOBAL_", l):
+			# A global option
+			v = re.search("^GLOBAL_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+			if v:
+				name = v.group(1)
+				value = v.group(2)
+				if self.GlobalDialog.IsOption(name):
+					self.GlobalDialog.SetValue(name, value)
+				else:
+					print "%s is not a recognized global option" % name
+		elif re.match("^# end of options$", l):
+			# that's the end of the variables
+			# save the rest of the file....
+			break
+		elif not re.match("\s*#", l):
+			print "unrecognized line: %s" % l
+	# endwhile
 
+
+def Write_Tilesort(mothership, file):
+	"""Write a tilesort config to the given file handle."""
+	assert Is_Tilesort(mothership)
+	assert mothership.GetTemplateType() == "Tilesort"
+	tilesort = mothership.Tilesort
+	file.write("TEMPLATE = 'Tilesort'\n")
+	file.write("TILE_ROWS = %d\n" % tilesort.Rows)
+	file.write("TILE_COLS = %d\n" % tilesort.Columns)
+	file.write("TILE_WIDTH = %d\n" % tilesort.TileWidth)
+	file.write("TILE_HEIGHT = %d\n" % tilesort.TileHeight)
+	file.write("RIGHT_TO_LEFT = %d\n" % tilesort.RightToLeft)
+	file.write("BOTTOM_TO_TOP = %d\n" % tilesort.BottomToTop)
+	file.write("HOSTNAME = '%s'\n" % tilesort.Hostname)
+	file.write("FIRSTHOST = %d\n" % tilesort.FirstHost)
+	file.write("NUM_CLIENTS = %d\n" % tilesort.NumClients)
+
+	# write tilesort SPU options
+	tilesortSPU = __FindTilesortSPU(mothership)
+	crutils.WriteSPUOptions(tilesortSPU, "TILESORT", file)
+
+	# write render SPU options
+	renderSPU = __FindRenderSPU(mothership)
+	crutils.WriteSPUOptions(renderSPU, "RENDER", file)
+
+	# XXX write server options
+
+	# XXX write global options
+
+	file.write("# end of options\n")
+	file.write(__ConfigBody)

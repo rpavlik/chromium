@@ -17,9 +17,7 @@ import string, os.path, types, random, copy
 from wxPython.wx import *
 from crutils import *
 from crtypes import *
-import spudialog
-import intdialog
-import templates
+import spudialog, intdialog, templates, configio
 
 
 #----------------------------------------------------------------------
@@ -88,22 +86,6 @@ GlobalOptions = [
 AppNodeBrush = wxBrush(wxColor(55, 160, 55))
 ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
 BackgroundColor = wxColor(90, 150, 190)
-
-ConfigFileHeader = """
-import string
-import sys
-sys.path.append( "../server" )
-sys.path.append( "../tools" )
-from mothership import *
-from crutils import *
-
-cr = CR()
-
-"""
-
-ConfigFileTail = """
-cr.Go()
-"""
 
 
 
@@ -265,11 +247,11 @@ class MainFrame(wxFrame):
 		toolSizer.Add(self.newSpuChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New Template button
-		templateLabel = wxStaticText(parent=self.topPanel, id=-1,
-									 label=" Template:")
-		toolSizer.Add(templateLabel, flag=wxALIGN_CENTRE)
+#		templateLabel = wxStaticText(parent=self.topPanel, id=-1,
+#									 label=" Template:")
+#		toolSizer.Add(templateLabel, flag=wxALIGN_CENTRE)
 
-		templateNames = [ "None" ] + templates.GetTemplateList()
+		templateNames = [ "New Template" ] + templates.GetTemplateList()
 		self.newTemplateChoice = wxChoice(parent=self.topPanel,
 										  id=id_NewTemplate,
 										  choices=templateNames)
@@ -279,10 +261,10 @@ class MainFrame(wxFrame):
 		# Edit template settings button
 		self.templateButton = wxButton(parent=self.topPanel,
 									   id=id_TemplateOptions,
-									   label="Edit...")
+									   label="Edit Template...")
 		toolSizer.Add(self.templateButton, flag=wxEXPAND+wxALL, border=2)
 		EVT_BUTTON(self.templateButton, id_TemplateOptions,
-				   self.onTemplateOptions)
+				   self.onTemplateEdit)
 
 		# Setup the main drawing area.
 		self.drawArea = wxScrolledWindow(self.topPanel, -1,
@@ -319,7 +301,7 @@ class MainFrame(wxFrame):
 		self.SelectDeltaY = 0
 
 		if self.fileName != None:
-			self.loadContents()
+			self.loadConfig()
 
 		self.UpdateMenus()
 
@@ -562,10 +544,12 @@ class MainFrame(wxFrame):
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
-	def onTemplateOptions(self, event):
+	def onTemplateEdit(self, event):
 		templateName = self.mothership.GetTemplateType()
 		if templateName != "":
 			templates.EditTemplate(templateName, self, self.mothership)
+		self.drawArea.Refresh()
+		self.UpdateMenus()
 
 	# Called when the left mouse button is pressed or released.
 	def onMouseEvent(self, event):
@@ -687,7 +671,7 @@ class MainFrame(wxFrame):
 			# Load contents into current (empty) document.
 			self.fileName = fileName
 			self.SetTitle(os.path.basename(fileName))
-			self.loadContents()
+			self.loadConfig()
 		else:
 			# Open a new frame for this document.
 			newFrame = MainFrame(None, -1, os.path.basename(fileName),
@@ -711,7 +695,7 @@ class MainFrame(wxFrame):
 	def doSave(self, event):
 		"""File / Save callback"""
 		if self.fileName != None:
-			self.saveGraph()
+			self.saveConfig()
 
 
 	def doSaveAs(self, event):
@@ -736,7 +720,7 @@ class MainFrame(wxFrame):
 		self.SetTitle(title)
 
 		self.fileName = fileName
-		self.saveGraph()
+		self.saveConfig()
 
 
 	def doRevert(self, event):
@@ -749,7 +733,7 @@ class MainFrame(wxFrame):
 				style = wxOK | wxCANCEL | wxICON_QUESTION,
 				parent=self) == wxCANCEL:
 			return
-		self.loadContents()
+		self.loadConfig()
 
 
 	def doExit(self, event):
@@ -1024,15 +1008,6 @@ class MainFrame(wxFrame):
 		"""Node / Delete SPU callback"""
 		# loop over all nodes, selected or not
 		for node in self.mothership.Nodes():
-			## make list of SPUs to delete
-			#removeList = []
-			#for spu in node.SPUChain():
-			#	if spu.IsSelected():
-			#		removeList.append(spu)
-			#		node.InvalidateLayout()
-			## now remove
-			#for spu in removeList:
-			#	node.RemoveSPU(spu)
 			# [:] syntax makes a copy of the list to prevent iteration problems
 			for spu in node.SPUChain()[:]:
 				if spu.IsSelected():
@@ -1048,10 +1023,21 @@ class MainFrame(wxFrame):
 			name = spuList[0].Name()
 			if name in SPUInfo.keys():
 				(params, opts) = SPUInfo[name]
+				# create the dialog
 				dialog = spudialog.SPUDialog(parent=NULL, id=-1,
 											 title=name + " SPU Options",
 											 options = opts)
-				dialog.ShowModal()
+				# set the dialog widget values
+				dialog.SetValues(spuList[0].GetOptions())
+				# wait for OK or cancel
+				if dialog.ShowModal() == wxID_OK:
+					# save the new values/options
+					spuList[0].SetOptions(dialog.GetValues())
+				else:
+					# user cancelled, do nothing, new values are ignored
+					pass
+			else:
+				print "Invalid SPU name: %s !!!" % name
 		return
 		
 	def doSystemOptions(self, event):
@@ -1059,6 +1045,7 @@ class MainFrame(wxFrame):
 		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
 									 title="System Options",
 									 options=GlobalOptions)
+		# XXX need to store the system options somewhere in mothership!
 		dialog.ShowModal()
 
 
@@ -1203,11 +1190,12 @@ class MainFrame(wxFrame):
 		else:
 			self.editMenu.Enable(menu_REDO, 0)
 		# Template options button
-		type = self.mothership.GetTemplateType()
-		if type == "":
-			self.templateButton.Enable(0)
-		else:
-			self.templateButton.Enable(1)
+		self.templateButton.Enable(1) # XXX fix sometime
+#		type = self.mothership.GetTemplateType()
+#		if type == "":
+#			self.templateButton.Enable(0)
+#		else:
+#			self.templateButton.Enable(1)
 
 	# Display a dialog with a message and OK button.
 	def Notify(self, msg):
@@ -1219,54 +1207,26 @@ class MainFrame(wxFrame):
 	#----------------------------------------------------------------------
 	# File I/O
 
-	def loadContents(self):
+	def loadConfig(self):
 		"""Load a graph from a file"""
+		# XXX load config here
 		self.dirty = false
-
 		self.drawArea.Refresh()
 
 
-	def saveGraph(self):
+	def saveConfig(self):
 		"""Save the Chromium configuration to a file."""
 		print "Saving graph!"
 		f = open(self.fileName, "w")
 		if f:
-			# file header
-			f.write("# Chromium configuration produced by graph.py\n")
-			f.write(ConfigFileHeader)
-			# write the nodes and SPUs
-			nodeNames = {}
-			spuNames = {}
-			n = 0
-			s = 0
-			for node in self.mothership.Nodes():
-				nodeNames[node] = "node%d" % n
-				if node.IsServer():
-					f.write("node%d = crNetworkNode('%s')\n" % (n, node.Host()))
-				else:
-					f.write("node%d = crApplicationNode('%s')\n" % (n, node.Host()))
-				# write the node's SPUs
-				for spu in node.SPUChain():
-					spuNames[spu] = "spu%d" % s
-					f.write("spu%d = SPU('%s')\n" % (s, spu.Name()))
-					f.write("node%d.AddSPU(spu%d)\n" % (n, s))
-					f.write("#set spu options here\n")
-					s += 1
-				n += 1
-				f.write("\n")
-			# add servers to tilesort/packer SPUs
-			for node in self.mothership.Nodes():
-				lastSPU = node.LastSPU()
-				if lastSPU:
-					for server in lastSPU.GetServers():
-						f.write("%s.AddServer(%s)\n" % (spuNames[lastSPU], nodeNames[server]))
-			# endfor
-			f.write("\n")
-			# add nodes to mothership
-			for node in self.mothership.Nodes():
-				f.write("cr.AddNode(%s)\n" % nodeNames[node])
-			# tail of file
-			f.write(ConfigFileTail)
+			template = self.mothership.GetTemplateType()
+			if (template != "" and
+				templates.ValidateTemplate(template, self.mothership)):
+				# write as templatized config
+				templates.WriteTemplate(template, self.mothership, f)
+			else:
+				# write as generic config
+				configio.WriteConfig(self.mothership, f)
 			f.close()
 		else:
 			print "Error opening %s" % self.fileName
@@ -1295,7 +1255,7 @@ class MainFrame(wxFrame):
 					return false # User cancelled.
 				self.fileName = fileName
 
-			self.saveGraph()
+			self.saveConfig()
 			return true
 		elif response == wxNO:
 			return true # User doesn't want changes saved.

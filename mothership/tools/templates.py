@@ -1,3 +1,11 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+#
+# Authors:
+#   Brian Paul
+
 """Functions for Chromium configuration templates"""
 
 from wxPython.wx import *
@@ -66,10 +74,19 @@ def __Create_Sortlast(parentWindow, mothership):
 	dialog.Destroy()
 	return 1
 
+def __Is_Sortlast(mothership):
+	# XXX temporary
+	return 1
+
 def __Edit_Sortlast(parentWindow, mothership):
 	"""Edit parameters for a sort-last template"""
 	pass
 
+def __Read_Sortlast(mothership, file):
+	pass
+
+def __Write_Sortlast(mothership, file):
+	pass
 
 def __Create_BinarySwap(parentWindow, mothership):
 	"""Create a binary-swap, sort-last configuration"""
@@ -126,8 +143,18 @@ def __Create_BinarySwap(parentWindow, mothership):
 	dialog.Destroy()
 	return 1
 
+def __Is_BinarySwap(mothership):
+	# XXX temporary
+	return 1
+
 def __Edit_BinarySwap(parentWindow, mothership):
 	"""Edit parameters for a Tilesort template"""
+	pass
+
+def __Read_BinarySwap(mothership, file):
+	pass
+
+def __Write_BinarySwap(mothership, file):
 	pass
 
 
@@ -136,14 +163,14 @@ def __Edit_BinarySwap(parentWindow, mothership):
 # XXX also specify functions for editing options, saving, validation, etc.
 
 __Templates = {
-	"Tilesort"     : (Create_Tilesort, Edit_Tilesort),
-	"Sort-last"    : (__Create_Sortlast, __Edit_Sortlast),
-	"Binary-swap"  : (__Create_BinarySwap, __Edit_BinarySwap),
+	"Tilesort"     : (Create_Tilesort,Is_Tilesort, Edit_Tilesort, Read_Tilesort, Write_Tilesort),
+	"Sort-last"    : (__Create_Sortlast, __Is_Sortlast, __Edit_Sortlast, __Read_Sortlast, __Write_Sortlast),
+	"Binary-swap"  : (__Create_BinarySwap, __Is_BinarySwap, __Edit_BinarySwap, __Read_BinarySwap, __Write_BinarySwap),
 #	"Lightning-2"  : (__Create_Lightning2, __Edit_Lightning2)
 }
 
 def GetTemplateList():
-	"""Return a list of known templates."""
+	"""Return list of names of known templates."""
 	return __Templates.keys()
 
 
@@ -154,11 +181,47 @@ def CreateTemplate(templateName, parentWindow, mothership):
 	assert create
 	if create(parentWindow, mothership):
 		mothership.SetTemplateType(templateName)
+	else:
+		mothership.SetTemplateType("")
+
+
+def ValidateTemplate(templateName, mothership):
+	"""Determine if the mothership matches the given template type."""
+	assert templateName in __Templates.keys()
+	(create, validate, edit, read, write) = __Templates[templateName]
+	assert validate
+	return validate(mothership)
 
 
 def EditTemplate(templateName, parentWindow, mothership):
 	"""Edit a templatized configuration."""
 	assert templateName in __Templates.keys()
-	edit = __Templates[templateName][1]
+	(create, validate, edit, read, write) = __Templates[templateName]
+	assert validate
 	assert edit
-	edit(parentWindow, mothership)
+	if validate(mothership):
+		edit(parentWindow, mothership)
+	else:
+		# Inform the user that there's a problem
+		dialog = wxMessageDialog(parent=parentWindow,
+						 message="This configuration doesn't appear to be a "
+						 + templateName + " configuration.",
+						 caption="Notice", style=wxOK)
+		dialog.ShowModal()
+		#mothership.SetTemplateType("")
+
+
+def ReadTemplate(templateName, mothership, file):
+	"""Read a templatized mothership config from the given file handle."""
+	assert templateName in __Templates.keys()
+	(create, validate, edit, read, write) = __Templates[templateName]
+	assert validate(mothership)
+	read(mothership, file)
+
+
+def WriteTemplate(templateName, mothership, file):
+	"""Write the mothership config as a template to given file handle."""
+	assert templateName in __Templates.keys()
+	(create, validate, edit, read, write) = __Templates[templateName]
+	assert validate(mothership)
+	write(mothership, file)
