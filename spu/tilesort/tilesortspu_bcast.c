@@ -43,3 +43,18 @@ void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 	tilesortspuBroadcastGeom();
 	tilesortspuShipBuffers();
 }
+
+void TILESORTSPU_APIENTRY tilesortspu_CallList( GLuint list )
+{
+	tilesortspuFlush( tilesort_spu.ctx );
+	crPackCallList( list );
+	tilesortspuBroadcastGeom();
+}
+
+void TILESORTSPU_APIENTRY tilesortspu_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
+{
+	tilesortspuFlush( tilesort_spu.ctx );
+	crPackListBase( tilesort_spu.ctx->lists.base );
+	crPackCallLists( n, type, lists );
+	tilesortspuBroadcastGeom();
+}
