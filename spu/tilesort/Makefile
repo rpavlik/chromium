@@ -26,6 +26,7 @@ FILES = tilesortspu \
 	tilesortspu_lists \
 	tilesortspu_lists_gen \
 	tilesortspu_misc \
+	tilesortspu_material \
 	tilesortspu_net \
 	tilesortspu_occlude \
 	tilesortspu_pinch_gen \

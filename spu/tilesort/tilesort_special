@@ -120,3 +120,7 @@ GetQueryObjectuivARB
 BeginQueryARB
 EndQueryARB
 ZPix
+Materialf
+Materialfv
+Materiali
+Materialiv
