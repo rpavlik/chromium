@@ -217,9 +217,9 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int mtu )
 	buf->opcode_end     = buf->opcode_start - num_opcodes;
 
 	buf->geometry_only = GL_FALSE;
-	buf->holds_BeginEnd = 0;
-	buf->in_BeginEnd = 0;
-	buf->canBarf = 0;
+	buf->holds_BeginEnd = GL_FALSE;
+	buf->in_BeginEnd = GL_FALSE;
+	buf->canBarf = GL_FALSE;
 
 	if (buf->context) {
 		/* Also reset context's packing fields */
