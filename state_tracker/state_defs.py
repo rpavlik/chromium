@@ -51,5 +51,7 @@ crStateTextureCheckDirtyImages
 crStateExtensionsInit
 crStateSetExtensionString
 crStateNativePixelPacking
+crStateUseServerArrays
+crStateComputeVersion
 __currentBits
 """
