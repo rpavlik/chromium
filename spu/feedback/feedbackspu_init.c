@@ -29,6 +29,7 @@ static SPUFunctions *feedbackSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
+	CRContext *ctx;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -44,7 +45,11 @@ static SPUFunctions *feedbackSPUInit( int id, SPU *child, SPU *self,
 	crSPUCopyDispatchTable( &(feedback_spu.super), &(self->superSPU->dispatch_table) );
 	feedbackspuGatherConfiguration();
 
+	/* create/init default state tracker */
 	crStateInit();
+	ctx = crStateGetCurrent();
+	CRASSERT(ctx);
+	crStateSetCurrentPointers(ctx, &feedback_spu.current);
 
 	return &feedback_functions;
 }

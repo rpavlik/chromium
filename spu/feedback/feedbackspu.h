@@ -15,6 +15,7 @@
 
 #include "cr_spu.h"
 #include "cr_timer.h"
+#include "cr_glstate.h"
 
 typedef struct {
 	int id;
@@ -24,6 +25,8 @@ typedef struct {
 	int render_mode;
 
 	int default_viewport;
+
+	CRCurrentStatePointers current;
 } feedbackSPU;
 
 extern feedbackSPU feedback_spu;
