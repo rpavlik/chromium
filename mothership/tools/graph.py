@@ -24,11 +24,14 @@ from crutils import *
 
 menu_SELECT_ALL_NODES   = 200
 menu_DESELECT_ALL_NODES = 201
-menu_DELETE_NODE        = 202
-menu_CONNECT            = 203
-menu_DISCONNECT         = 204
-menu_SET_HOST           = 205
-menu_SERVER_OPTIONS     = 206
+menu_CUT_NODE           = 202
+menu_COPY_NODE          = 203
+menu_PASTE_NODE         = 204
+menu_DELETE_NODE        = 205
+menu_CONNECT            = 206
+menu_DISCONNECT         = 207
+menu_SET_HOST           = 208
+menu_SERVER_OPTIONS     = 209
 
 menu_SELECT_ALL_SPUS    = 300
 menu_DESELECT_ALL_SPUS  = 301
@@ -56,7 +59,7 @@ id_NewTemplate    = 3003
 PAGE_WIDTH  = 1000
 PAGE_HEIGHT = 1000
 
-Templates = [ "New Template", "Tilesort", "Sort-last" ]
+Templates = [ "New Template", "Tilesort", "Sort-last", "N-client Tilesort", "Binary-swap" ]
 
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
@@ -164,6 +167,9 @@ class MainFrame(wxFrame):
 		self.nodeMenu.Append(menu_SELECT_ALL_NODES,   "Select All\tCTRL-A")
 		self.nodeMenu.Append(menu_DESELECT_ALL_NODES, "Deselect All")
 		self.nodeMenu.AppendSeparator()
+		#self.nodeMenu.Append(menu_CUT_NODE,           "Cut\tCTRL-X")
+		#self.nodeMenu.Append(menu_COPY_NODE,          "Copy\tCTRL-C")
+		#self.nodeMenu.Append(menu_PASTE_NODE,         "Paste\tCTRL-V")
 		self.nodeMenu.Append(menu_DELETE_NODE,        "Delete\tCTRL-D")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_CONNECT,            "Connect")
@@ -399,8 +405,10 @@ class MainFrame(wxFrame):
 				tallest = columnSize[col]
 		# set the (x,y) positions for each node
 		for node in self.Nodes:
-			x = nodeColumn[node] * 200 + 10
-			y = nodeRow[node] * 60 + 10
+			col = nodeColumn[node]
+			row = nodeRow[node]
+			x = col * 200 + 10
+			y = 10 + (tallest - columnSize[col]) * 30 + row * 60
 			node.SetPosition(x, y)
 			node.InvalidateLayout()
 
@@ -472,7 +480,9 @@ class MainFrame(wxFrame):
 	def CreateTilesort(self):
 		"""Create a tilesort configuration"""
 		# XXX need an integer dialog here!!!!
-		dialog = wxTextEntryDialog(self, message="Enter number of server/render nodes")
+		# XXX also, a widget for the hostnames???
+		dialog = wxTextEntryDialog(self,
+							message="Enter number of server/render nodes")
 		dialog.SetTitle("Create Tilesort (sort-first) configuration")
 		if dialog.ShowModal() == wxID_OK:
 			numServers = int(dialog.GetValue())
@@ -480,7 +490,7 @@ class MainFrame(wxFrame):
 			self.DeselectAll()
 			# Create the app node
 			xPos = 5
-			yPos = numServers * 70 / 2 - 20
+			yPos = numServers * 60 / 2 - 20
 			appNode = ApplicationNode(host=hostname)
 			appNode.SetPosition(xPos, yPos)
 			appNode.Select()
@@ -498,7 +508,7 @@ class MainFrame(wxFrame):
 				serverNode.AddSPU(renderSPU)
 				self.AddNode(serverNode)
 				tilesortSPU.AddServer(serverNode)
-				yPos += 70
+				yPos += 60
 			
 		dialog.Destroy()
 		return
@@ -506,7 +516,9 @@ class MainFrame(wxFrame):
 	def CreateSortlast(self):
 		"""Create a sort-last configuration"""
 		# XXX need an integer dialog here!!!!
-		dialog = wxTextEntryDialog(self, message="Enter number of application nodes")
+		# XXX also, a widget for the hostnames???
+		dialog = wxTextEntryDialog(self,
+								message="Enter number of application nodes")
 		dialog.SetTitle("Create Sort-last configuration")
 		if dialog.ShowModal() == wxID_OK:
 			numClients = int(dialog.GetValue())
@@ -514,7 +526,7 @@ class MainFrame(wxFrame):
 			self.DeselectAll()
 			# Create the server/render node
 			xPos = 300
-			yPos = numClients * 70 / 2 - 20
+			yPos = numClients * 60 / 2 - 20
 			serverNode = NetworkNode(host="foobar")
 			serverNode.SetPosition(xPos, yPos)
 			serverNode.Select()
@@ -534,11 +546,92 @@ class MainFrame(wxFrame):
 				appNode.AddSPU(packSPU)
 				self.AddNode(appNode)
 				packSPU.AddServer(serverNode)
-				yPos += 70
+				yPos += 60
 			
 		dialog.Destroy()
 		return
 
+	def CreateNClientTilesort(self):
+		"""Create an N-client tilesort configuration"""
+		# XXX need an integer dialog here!!!!
+		# XXX also, a widget for the hostnames???
+		dialog = wxTextEntryDialog(self,
+			message="Enter number of clients, number of server/render nodes")
+		dialog.SetTitle("Create N-Client Tilesort (sort-first) configuration")
+		if dialog.ShowModal() == wxID_OK:
+			paramList = string.split(dialog.GetValue(), ',')
+			numClients = int(paramList[0])
+			numServers = int(paramList[1])
+			m = max(numClients, numServers)
+			hostname = "localhost"
+			self.DeselectAll()
+			# Create the <numClients> app nodes
+			tilesortSPUs = []
+			xPos = 5
+			yPos = 5 + (m - numClients) * 30
+			for i in range(numClients):
+				appNode = ApplicationNode(host=hostname)
+				appNode.SetPosition(xPos, yPos)
+				appNode.Select()
+				tilesortSPU = SpuObject("tilesort")
+				appNode.AddSPU(tilesortSPU)
+				self.AddNode(appNode)
+				tilesortSPUs.append(tilesortSPU)
+				yPos += 60
+			# Create the <numServers> server nodes
+			xPos = 300
+			yPos = 5 + (m - numServers) * 30
+			for i in range(numServers):
+				serverNode = NetworkNode(host=hostname)
+				serverNode.SetPosition(xPos, yPos)
+				serverNode.Select()
+				renderSPU = SpuObject("render")
+				serverNode.AddSPU(renderSPU)
+				self.AddNode(serverNode)
+				for j in range(numClients):
+					tilesortSPUs[j].AddServer(serverNode)
+				yPos += 60
+			
+		dialog.Destroy()
+		return
+
+	def CreateBinarySwap(self):
+		"""Create a binary-swap, sort-last configuration"""
+		# XXX need an integer dialog here!!!!
+		# XXX also, a widget for the hostnames???
+		dialog = wxTextEntryDialog(self,
+								message="Enter number of application nodes")
+		dialog.SetTitle("Create Binary Swap configuration")
+		if dialog.ShowModal() == wxID_OK:
+			numClients = int(dialog.GetValue())
+			hostname = "client##"
+			self.DeselectAll()
+			# Create the server/render node
+			xPos = 300
+			yPos = numClients * 60 / 2 - 20
+			serverNode = NetworkNode(host="foobar")
+			serverNode.SetPosition(xPos, yPos)
+			serverNode.Select()
+			renderSPU = SpuObject("render")
+			serverNode.AddSPU(renderSPU)
+			self.AddNode(serverNode)
+			# Create the client/app nodes
+			xPos = 5
+			yPos = 5
+			for i in range(0, numClients):
+				appNode = ApplicationNode(host=hostname)
+				appNode.SetPosition(xPos, yPos)
+				appNode.Select()
+				readbackSPU = SpuObject("binaryswap")
+				appNode.AddSPU(readbackSPU)
+				packSPU = SpuObject("pack")
+				appNode.AddSPU(packSPU)
+				self.AddNode(appNode)
+				packSPU.AddServer(serverNode)
+				yPos += 60
+			
+		dialog.Destroy()
+		return
 
     #----------------------------------------------------------------------
 	# Event handlers / callbacks
@@ -640,6 +733,10 @@ class MainFrame(wxFrame):
 			self.CreateTilesort()
 		elif t == 2:
 			self.CreateSortlast()
+		elif t == 3:
+			self.CreateNClientTilesort()
+		elif t == 4:
+			self.CreateBinarySwap()
 		self.newTemplateChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
