@@ -1065,7 +1065,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 	if (window && context) {
 		if (window->visual != context->visual) {
-			crDebug("Render SPU:  MakeCurrent visual mismatch (0x%x != 0x%x); remaking window.",
+			crDebug("Render SPU: MakeCurrent visual mismatch (0x%x != 0x%x); remaking window.",
 							window->visual->visAttribs, context->visual->visAttribs);
 			/*
 			 * XXX have to revisit this issue!!!
@@ -1228,8 +1228,9 @@ void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 	CRASSERT(window);
 	CRASSERT(window->visual);
 	CRASSERT(window->window);
-	XGetGeometry(window->visual->dpy, window->window, &root,
-							 &x, &y, &width, &height, &bw, &d);
+	XGetGeometry(window->visual->dpy,
+							 window->nativeWindow ? window->nativeWindow : window->window,
+							 &root, &x, &y, &width, &height, &bw, &d);
 	*w = (int) width;
 	*h = (int) height;
 }
