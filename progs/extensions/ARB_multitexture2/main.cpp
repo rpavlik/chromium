@@ -8,8 +8,7 @@
 
   main.cpp
 
-  This is an example of GL_EXT_texture_filter_anisotropic, described
-  on page 185 of the NVidia OpenGL Extension Specifications.
+  This is an example of using GL_ARB_multitexture.
 
   Christopher Niederauer, ccn@graphics.stanford.edu, 5/30/2001
 

@@ -55,6 +55,7 @@ PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
 
 void	InitGL	( void )
 {
+
   currentWidth = 320;
   currentHeight = 240;
 
@@ -97,6 +98,7 @@ void	InitSpecial	( void )
   glGetIntegerv( GL_ACTIVE_TEXTURE_ARB, &currentActiveUnit );
   cout << "MAX_TEXTURE_SIZE = " << maxTextureSize << endl;
   cout << "MAX_TEXTURE_UNITS_ARB = " << numTexUnits << endl;
+  cout << "EXTENSIONS: " << (char *) glGetString(GL_EXTENSIONS) << endl;
   if( numTexUnits < 2 )
     {
       cout << "Sorry, this program requires at least two texture units to work properly." << endl;
@@ -186,6 +188,7 @@ void	InitSpecial	( void )
 	}
     }
   }
+
   return;
 }
 
@@ -206,7 +209,8 @@ const float		size = 1.0,
 
 	glClear( GL_COLOR_BUFFER_BIT );
 	
-	theta += 0.05;
+	//theta += 0.05;
+        theta = glutGet(GLUT_ELAPSED_TIME) / 100.0;
 
 	glLoadIdentity();
 	glRotated( 90.0, 1.0, 0.0, 0.0 );
