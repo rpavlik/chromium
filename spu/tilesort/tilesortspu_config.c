@@ -157,10 +157,10 @@ SPUOptions tilesortSPUOptions[] = {
 	 "Split glBegin/glEnd", (SPUOptionCB) set_split_begin_end},
 
 	{"sync_on_swap", CR_BOOL, 1, "1", NULL, NULL,
-	 "Sync on Swap", (SPUOptionCB) set_sync_on_swap},
+	 "Sync on SwapBuffers", (SPUOptionCB) set_sync_on_swap},
 
 	{"sync_on_finish", CR_BOOL, 1, "1", NULL, NULL,
-	 "Sync on Finish", (SPUOptionCB) set_sync_on_finish},
+	 "Sync on glFinish", (SPUOptionCB) set_sync_on_finish},
 
 	{"draw_bbox", CR_BOOL, 1, "0", NULL, NULL,
 	 "Draw Bounding Boxes", (SPUOptionCB) set_draw_bbox},
@@ -175,14 +175,14 @@ SPUOptions tilesortSPUOptions[] = {
 	 "Scale to Mural Size", (SPUOptionCB) set_scale_to_mural_size},
 
 	{"emit_GATHER_POST_SWAPBUFFERS", CR_BOOL, 1, "0", NULL, NULL,
-	 "Emit a parameteri after SwapBuffers", (SPUOptionCB) set_emit},
+	 "Emit a glParameteri After SwapBuffers", (SPUOptionCB) set_emit},
 
 	{"local_tile_spec", CR_BOOL, 1, "0", NULL, NULL,
-	 "Specify tiles relative to displays", (SPUOptionCB) set_local_tile_spec},
+	 "Specify Tiles Relative to Displays", (SPUOptionCB) set_local_tile_spec},
 
 	{"bucket_mode", CR_ENUM, 1, "Test All Tiles",
 	 "'Broadcast', 'Test All Tiles', 'Uniform Grid', 'Non-Uniform Grid', 'Random', 'Warped Grid'", NULL,
-	 "Geometry bucketing method", (SPUOptionCB) set_bucket_mode},
+	 "Geometry Bucketing Method", (SPUOptionCB) set_bucket_mode},
 
         /* OBSOLETE option! */
 	{"broadcast", CR_BOOL, 1, "0", NULL, NULL,

@@ -634,8 +634,8 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 			}
 		}
 
-		CRASSERT(top >= bottom);
-		CRASSERT(right >= left);
+		/*CRASSERT(top >= bottom);*/
+		/*CRASSERT(right >= left);*/
 
 		for (i = bottom; i <= top; i++)
 		{
@@ -725,6 +725,15 @@ void tilesortspuBucketingInit( void )
 	if (tilesort_spu.bucketMode == UNIFORM_GRID)
 	{
 		fillBucketingHash();
+	}
+	else if (tilesort_spu.bucketMode == NON_UNIFORM_GRID)
+	{
+		if (!tilesortspuInitGridBucketing())
+		{
+			/* grid isn't even non-uniform! */
+			crWarning("Tilesort bucket_mode = Non-Uniform Grid, but tiles don't form a non-uniform grid!");
+			tilesort_spu.bucketMode = TEST_ALL_TILES;
+		}
 	}
 }
 

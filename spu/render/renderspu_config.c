@@ -117,13 +117,13 @@ SPUOptions renderSPUOptions[] = {
      "Full-screen Window", (SPUOptionCB)set_fullscreen },
 
    { "on_top", CR_BOOL, 1, "0", NULL, NULL, 
-     "Display on top", (SPUOptionCB)set_on_top },
+     "Display on Top", (SPUOptionCB)set_on_top },
 
    { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
-     "Render to app window", (SPUOptionCB)render_to_app_window },
+     "Render to Application window", (SPUOptionCB)render_to_app_window },
 
    { "resizable", CR_BOOL, 1, "0", NULL, NULL,
-     "Resizable window", (SPUOptionCB)resizable },
+     "Resizable Window", (SPUOptionCB)resizable },
 
    { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
      "Window Title", (SPUOptionCB)set_title },
@@ -138,10 +138,11 @@ SPUOptions renderSPUOptions[] = {
      "X Display String", (SPUOptionCB)set_display_string },
 
    { "gather_url", CR_STRING, 1, "", NULL, NULL,
-     "Gatherer Net Config", (SPUOptionCB)gather_url},
+     "Gatherer URL", (SPUOptionCB)gather_url},
 
    { "gather_userbuf_size", CR_INT, 1, "0", NULL, NULL,
-     "Private Buffer to allocate for Gathering", (SPUOptionCB)gather_userbuf},
+     "Size of Buffer to Allocate for Gathering",
+     (SPUOptionCB)gather_userbuf},
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
