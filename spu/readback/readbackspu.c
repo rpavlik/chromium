@@ -765,10 +765,6 @@ readbackspuTweakVisBits(GLint visBits,
 {
 	*childVisBits = visBits;
 
-	/* The child window/context won't need stencil/depth/accum/multisample */
-	*childVisBits &= ~(CR_STENCIL_BIT | CR_DEPTH_BIT |
-										 CR_ACCUM_BIT | CR_MULTISAMPLE_BIT);
-
 	/* we probably don't want a pbuffer either */
 	*childVisBits &= ~CR_PBUFFER_BIT;
 
