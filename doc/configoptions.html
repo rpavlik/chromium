@@ -75,36 +75,36 @@ SPU index
 </li></ul>
 
 
-<a name="array">
-</a><h2 class="PageSubHeading"><a name="array">Array SPU</a></h2>
+
+<a name="array"></a>
+<h2 class="PageSubHeading">Array SPU</h2>
 <p>
-<a name="array">The Array SPU implement's OpenGL's vertex arrays.  If your application uses
+The Array SPU implement's OpenGL's vertex arrays.  If your application uses
 vertex arrays, the array SPU should be the first one in the SPU chain.
 The Array SPU has no configuration options.
-</a></p>
+</p>
 
 
 
-<a name="binaryswap">
-</a><h2 class="PageSubHeading"><a name="binaryswap">Binaryswap SPU</a></h2>
+<a name="binaryswap"></a>
+<h2 class="PageSubHeading">Binaryswap SPU</h2>
 <p>
-<a name="binaryswap">The Binaryswap SPU implements the well known
-<i>binary swap</i> method of image compositing for paralleld rendering.
+The Binaryswap SPU implements the well known
+<i>binary swap</i> method of image compositing for parallel rendering.
 It works similar to the Readback SPU.
 Since the Binaryswap SPU is derived from the Render SPU, all the Render SPU
 options are applicable to the Binaryswap SPU.
 See cr/mothership/configs/psubmit_bswap.conf for an example of how to use
 this SPU.
-</a></p>
-
+</p>
 <p>
-<a name="binaryswap">For background information on the binary swap algorithm read
-</a><a href="http://www.ccs.lanl.gov/ccs1/projects/Viz/pdfs/94-cga.pdf" target="_parent">
+For background information on the binary swap algorithm read
+<a href="http://www.ccs.lanl.gov/ccs1/projects/Viz/pdfs/94-cga.pdf" target="_parent">
 Parallel Volume Rendering Using Binary-Swap Image Composition</a> (pdf).
 </p>
 
 <table border="1" width="100%" height="149">
-  <tbody>
+<tbody>
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
@@ -168,52 +168,53 @@ Parallel Volume Rendering Using Binary-Swap Image Composition</a> (pdf).
 </tbody></table>
 
 
-<a name="dist_texture">
-</a><h2 class="PageSubHeading"><a name="dist_texture">Distributed Texture</a></h2>
+<a name="dist_texture"></a>
+<h2 class="PageSubHeading">Distributed Texture</h2>
 <p>
-<a name="dist_texture">The dist_texture SPU supports server-side loading of texture images.
+The dist_texture SPU supports server-side loading of texture images.
 The goal is to avoid the cost of transmitting texture image data over
 the "wire" with the Pack and Tilesort SPUs.
-</a></p>
+</p>
 
 <p>
-<a name="dist_texture">The dist_texture SPU is typically placed before the Render SPUs on the
+The dist_texture SPU is typically placed before the Render SPUs on the
 crservers in tilesort configurations.
-</a></p>
+</p>
 
 <p>
-<a name="dist_texture">The dist_texture SPU implements a new version of the glTexImage2D function.
+The dist_texture SPU implements a new version of the glTexImage2D function.
 Specifically, the <code>type</code> parameter will accept two new values:
 GL_TRUE and GL_FALSE.
-</a></p>
+</p>
+
 <p>
-<a name="dist_texture">If type==GL_TRUE, then the dist_texture SPU will operate in <b>write mode</b>.
+If type==GL_TRUE, then the dist_texture SPU will operate in <b>write mode</b>.
 The glTexImage2D <code>pixels</code> parameter will point to
 pixel data which is prefixed by a NULL-terminated filename (i.e. the
 pointer points to a block of data consisting of a filename, a zero byte
 and then tightly-packed GL_RGB/GL_UNSIGNED byte image data.
 The dist_texture SPU will write the image data to a PPM image file using
 the given name.
-</a></p>
+</p>
 
 <p>
-<a name="dist_texture">If type==GL_FALSE, then the dist_texture SPU will operate in <b>read mode</b>.
+If type==GL_FALSE, then the dist_texture SPU will operate in <b>read mode</b>.
 The glTexImage2D <code>pixels</code> parameter will point to a NULL-terminated
 filename.
 The dist_texture SPU will read that named PPM image file and give it to
 OpenGL as the texture image.
-</a></p>
+</p>
 
 <p>
-<a name="dist_texture">The idea is that a program can use write-mode to distribute texture image
+The idea is that a program can use write-mode to distribute texture image
 data on a rendering cluster the first time the program is run.
 Then, the second and subsequent runs can use read-mode to quickly read
 the texture data from the render servers, instead of passing it all
 through the Chromium tilesort SPU.
-</a></p>
+</p>
 
 <p>
-<a name="dist_texture">See the </a><a href="http://brighton.ncsa.uiuc.edu/%7Eprajlich/wall/ppb.html" target="_parent">
+See the </a><a href="http://brighton.ncsa.uiuc.edu/%7Eprajlich/wall/ppb.html" target="_parent">
 NCSA Pixel Blaster</a> program for an example of how this features is used.
 </p>
 
@@ -223,26 +224,26 @@ The dist_texture SPU has no configuration options.
 
 
 
-<br>
 
-<a name="expando">
-</a><h2 class="PageSubHeading"><a name="expando">Expando SPU</a></h2>
+<a name="expando"></a>
+<h2 class="PageSubHeading">Expando SPU</h2>
 <p>
-<a name="expando">The Expando SPU records the contents of display lists, then replays the
+The Expando SPU records the contents of display lists, then replays the
 commands when glCallList is called.  The Expando SPU has no options.
-</a></p>
+</p>
 
 
 
-<a name="feedback">
-</a><h2 class="PageSubHeading"><a name="feedback">Feedback SPU</a></h2>
+<a name="feedback"></a>
+<h2 class="PageSubHeading">Feedback SPU</h2>
 <p>
-<a name="feedback">The Feedback SPU implement's OpenGL's selection and feedback features.
+The Feedback SPU implement's OpenGL's selection and feedback features.
 If your application needs either of these features, you should use the
 Feedback SPU in your configuration.
-</a></p>
+</p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
@@ -250,26 +251,29 @@ Feedback SPU in your configuration.
   <tr>
     <td width="19%" class="ConfigOption" height="38">default_viewport</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
-	<td width="100%" class="ConfigDesc" height="38">
-          The feedbackSPU will answer glGet's for GL_VIEWPORT. When
-          enabled the feedbackSPU will return the applications viewport size 
-          rather than the tilesortSPU returning the scaled viewport size.
-          Default 0.
-        </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      The feedbackSPU will answer glGet's for GL_VIEWPORT. When
+      enabled the feedbackSPU will return the applications viewport size 
+      rather than the tilesortSPU returning the scaled viewport size.
+      Default 0.
+    </td>
   </tr>
-</tbody></table>
+</tbody>
+</table>
 
-<a name="fps">
-</a><h2 class="PageSubHeading"><a name="fps">FPS SPU </a></h2>
+
+
+<a name="fps"></a>
+<h2 class="PageSubHeading">FPS SPU</h2>
 <p>
-<a name="fps">The FPS SPU measures the time between calls to
+The FPS SPU measures the time between calls to
 <code>glXSwapBuffers()</code>, and issues performance 
 reports to <code>stderr</code> at regular intervals.  It's useful 
 for determining rendering performance of a Chromium configuration.
-</a></p>
-</a></p>
+</p>
 <table border="1" width="100%">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%">Parameter Name</td>
     <td width="12%">Value Types</td>
     <td width="100%">Description</td>
@@ -310,13 +314,15 @@ for determining rendering performance of a Chromium configuration.
 </tbody></table>
 
 
-<a name="hiddenline">
-</a><h2 class="PageSubHeading"><a name="hiddenline">Hiddenline SPU</a></h2>
+
+<a name="hiddenline"></a>
+<h2 class="PageSubHeading">Hiddenline SPU</h2>
 <p>
-<a name="hiddenline">The Hiddenline SPU draws objects in hidden-line mode.
-</a></p>
+The Hiddenline SPU draws objects in hidden-line mode.
+</p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
@@ -329,58 +335,65 @@ for determining rendering performance of a Chromium configuration.
           (in bytes).  Default is 32768.
         </td>
   </tr>
-  
   <tr>
-<td width="19%" class="ConfigOption" height="38">fog_color</td><td width="12%" class="ConfigType" height="38">3 Floats</td><td width="100%" class="ConfigDesc" height="38">
-	  Sets the fog color (red, green, blue) when using silhouette mode.
-        </td></tr>
-<tr>
+    <td width="19%" class="ConfigOption" height="38">fog_color</td>
+    <td width="12%" class="ConfigType" height="38">3 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Sets the fog color (red, green, blue) when using silhouette mode.
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">line_color</td>
     <td width="12%" class="ConfigType" height="38">3 Floats</td>
-	<td width="100%" class="ConfigDesc" height="38">
-	  Sets the line color (red, green, blue).
-          Default is pale black (0, 0, 0).
-        </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Sets the line color (red, green, blue).
+      Default is pale black (0, 0, 0).
+    </td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">line_width</td>
     <td width="12%" class="ConfigType" height="38">Float</td>
-	<td width="100%" class="ConfigDesc" height="38">
-	  Sets the line width (in pixels).  Default is 3.
-        </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Sets the line width (in pixels).  Default is 3.
+    </td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="38">poly_color</td><td width="12%" class="ConfigType" height="38">3 Floats</td><td width="100%" class="ConfigDesc" height="38">
-	  Sets the polygon color (red, green, blue).
-          Default is white (1, 1, 1).
-        </td></tr>
-<tr>
+    <td width="19%" class="ConfigOption" height="38">poly_color</td>
+    <td width="12%" class="ConfigType" height="38">3 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Sets the polygon color (red, green, blue).
+      Default is white (1, 1, 1).
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">silhouette_mode</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
-	<td width="100%" class="ConfigDesc" height="38">
-          If set, just render silhouette lines instead of all polygon edges.
-        </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If set, just render silhouette lines instead of all polygon edges.
+    </td>
   </tr>
-  
   <tr>
     <td width="19%" class="ConfigOption" height="38">single_clear</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
-	<td width="100%" class="ConfigDesc" height="38">
-          Controls whether glClear commands are ignored when issued but
-          later called in SwapBuffers.  Default is true.
-          You may need to set this to false for sort-last rendering.
-        </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Controls whether glClear commands are ignored when issued but
+      later called in SwapBuffers.  Default is true.
+      You may need to set this to false for sort-last rendering.
+    </td>
   </tr>
-</tbody></table>
+</tbody>
+</table>
 
-<a name="injector">
-</a><h2 class="PageSubHeading"><a name="injector">Injector SPU</a></h2>
+
+
+<a name="injector"></a>
+<h2 class="PageSubHeading">Injector SPU</h2>
 <p>
-<a name="injector">XXX no description?
-</a></p>
-<p></p>
+XXX no description?
+</p>
 <table border="1" width="100%">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%">Parameter Name</td>
     <td width="12%">Value Types</td>
     <td width="100%">Description</td>
@@ -388,19 +401,20 @@ for determining rendering performance of a Chromium configuration.
   <tr>
     <td width="19%" class="ConfigOption">oob_url</td>
     <td width="12%" class="ConfigType">String</td>
-    <td width="100%" class="ConfigDesc">
-	XXX
-	  </td>
+    <td width="100%" class="ConfigDesc">XXX</td>
   </tr>
-</tbody></table>
+</tbody>
+</table>
 
-<a name="matte">
-</a><h2 class="PageSubHeading"><a name="matte">Matte SPU</a></h2>
+
+
+<a name="matte"></a>
+<h2 class="PageSubHeading">Matte SPU</h2>
 <p>
-<a name="matte">The Matte SPU forces all rendering to be within
+The Matte SPU forces all rendering to be within
 a subwindow of a render window, initializing the area outside
 of the subwindow to a matte color.
-</a></p>
+</p>
 <p>
 Beyond simple visual effects (e.g. effectively having a color border around an
 application's rendering area), the Matte SPU can be used to meet constraints
@@ -415,7 +429,8 @@ the accumulation buffer to simulate motion blur of
 moving objects.
 </p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
@@ -477,23 +492,20 @@ moving objects.
     require
     </td>
   </tr>
-</tbody></table>
+</tbody>
+</table>
 
-<td width="19%" class="ConfigOption" height="74">window_geometry</td><td width="12%" class="ConfigType" height="74">4 Integers</td><td width="100%" class="ConfigDesc" height="74">Geometry of the window to
-      create.&nbsp; This is specified as four floating point numbers.&nbsp; The
-      first two give the (<i>x</i>,<i>y</i>) position of the upper left corner
-      of the window, relative to the upper left corner of the screen.&nbsp; The
-      last two numbers give the width and height of the window,
-      respectively.&nbsp; The default is [0, 0, 256, 256].</td></tr>
 
-<a name="motionblur">
-</a><h2 class="PageSubHeading"><a name="motionblur">Motionblur SPU</a></h2>
+
+<a name="motionblur"></a>
+<h2 class="PageSubHeading">Motionblur SPU</h2>
 <p>
-<a name="motionblur">The Motionblur SPU uses the accumulation buffer to simulate motion blur of
+The Motionblur SPU uses the accumulation buffer to simulate motion blur of
 moving objects.
-</a></p>
+</p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
@@ -501,48 +513,59 @@ moving objects.
   <tr>
     <td width="19%" class="ConfigOption" height="38">blur</td>
     <td width="12%" class="ConfigType" height="38">Enum</td>
-	<td width="100%" class="ConfigDesc" height="38">
-	  This specifies the amount of motion blur.
-          Legal values are 'Little', 'Medium', 'Lots', and 'Extreme'.
-          The default is 'Medium'.
-        </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      This specifies the amount of motion blur.
+      Legal values are 'Little', 'Medium', 'Lots', and 'Extreme'.
+      The default is 'Medium'.
+    </td>
   </tr>
-</tbody></table>
+</tbody>
+</table>
 
-<a name="nop">
-</a><h2 class="PageSubHeading"><a name="nop">Nop SPU</a></h2>
+
+
+<a name="nop"></a>
+<h2 class="PageSubHeading">Nop SPU</h2>
 <p>
-<a name="nop">The Nop (No-operation) SPU effectively discards all commands sent to it.
+The Nop (No-operation) SPU effectively discards all commands sent to it.
 One use of the Nop SPU is to replace the Render SPU in order to measure
 system performance without doing any rendering.
-</a></p>
+</p>
 
-<a name="pack">
-</a><h2 class="PageSubHeading"><a name="pack">Pack SPU</a></h2>
+
+
+<a name="pack"></a>
+<h2 class="PageSubHeading">Pack SPU</h2>
 <p>
-<a name="pack">The Pack SPU simply packs all the OpenGL commands into buffer which are
+The Pack SPU simply packs all the OpenGL commands into buffer which are
 sent to the downstream server.
-</a></p>
-<p></p>
+</p>
+
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="38">emit_GATHER_POST_SWAPBUFFERS</td><td width="12%" class="ConfigType" height="38">Bool</td><td width="100%" class="ConfigDesc" height="38">Purpose?
-    </td></tr>
-<tr>
+    <td width="19%" class="ConfigOption" height="38">emit_GATHER_POST_SWAPBUFFERS</td>
+    <td width="12%" class="ConfigType" height="38">Bool</td>
+    <td width="100%" class="ConfigDesc" height="38">Purpose?</td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="74">swapbuffer_sync</td>
     <td width="12%" class="ConfigType" height="74">Boolean</td>
     <td width="100%" class="ConfigDesc" height="74">If set to 1, do a
       synchronization operation in SwapBuffers to that the pack SPU
       doesn't buffer up frames faster than can be rendered downstream.
-      The default is 1.</td>
+      The default is 1.
+    </td>
   </tr>
-  
-</tbody></table>
+</tbody>
+</table>
+
+
 
 <a name="perf">
 </a><h2 class="PageSubHeading"><a name="perf">Perf SPU</a></h2>
@@ -551,66 +574,83 @@ sent to the downstream server.
 performance statistics while running Chromium.
 </p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="38">dump_on_finish</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-          Will cause performance data to be 'dumped' when glFinish is called. Useful if SwapBuffers is not used. Default 0.
-        </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">dump_on_flush</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-          Will cause performance data to be 'dumped' when glFlush is called. Useful if SwapBuffers is not used. Default 0.
-        </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">dump_on_swap_count</td><td width="12%" class="ConfigType" height="38">Integer</td><td width="100%" class="ConfigDesc" height="38">
-          Trigger when data is to be 'dumped' on hitting this amount of SwapBuffer calls. Default 0.
-        </td></tr>
-
+    <td width="19%" class="ConfigOption" height="38">dump_on_finish</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Will cause performance data to be 'dumped' when glFinish is called.
+      Useful if SwapBuffers is not used. Default 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">dump_on_flush</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Will cause performance data to be 'dumped' when glFlush is called.
+      Useful if SwapBuffers is not used. Default 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">dump_on_swap_count</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Trigger when data is to be 'dumped' on hitting this amount of
+      SwapBuffer calls. Default 0.
+    </td>
+  </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">token</td>
     <td width="12%" class="ConfigType" height="38">String</td>
-	<td width="100%" class="ConfigDesc" height="38">
-          Mark 'interesting' performance data with tokens. Default is 'tab'.
-        </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Mark 'interesting' performance data with tokens. Default is 'tab'.
+    </td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">log_separator</td>
     <td width="12%" class="ConfigType" height="38">String</td>
-	<td width="100%" class="ConfigDesc" height="38">
-          Field separator for logged data. Default is 'tab'.
-        </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Field separator for logged data. Default is 'tab'.
+    </td>
   </tr>
   
-    <tr><td width="19%" class="ConfigOption" height="38">mothership_log</td>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">mothership_log</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
-	<td width="100%" class="ConfigDesc" height="38">
-Send performance data to a mothership log file. Set
-CR_PERF_MOTHERSHIP_LOGFILE to a file on the mothership for data
-collection. This allows for gathering of data from multiple nodes.
-Default 0. </td>
-  </tr><tr>
-<td width="19%" class="ConfigOption" height="38">token</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">
-          Mark 'interesting' performance data with tokens. Default is 'tab'.
-        </td></tr>
+    <td width="100%" class="ConfigDesc" height="38">
+      Send performance data to a mothership log file. Set
+      CR_PERF_MOTHERSHIP_LOGFILE to a file on the mothership for data
+      collection. This allows for gathering of data from multiple nodes.
+      Default 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">token</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Mark 'interesting' performance data with tokens. Default is 'tab'.
+    </td>
+  </tr>
+</tbody>
+</table>
 
-    
-  
-    
-</tbody></table>
 
 
-<a name="print">
-</a><h2 class="PageSubHeading"><a name="print">Print SPU </a></h2>
+<a name="print"></a>
+<h2 class="PageSubHeading">Print SPU</h2>
 <p>
-<a name="print">The Print SPU prints each OpenGL command to stderr or a file.
+The Print SPU prints each OpenGL command to stderr or a file.
 It's useful for debugging Chromium and inspecting the OpenGL commands
 issued by applications
-</a></p>
+</p>
 <table border="1" width="100%">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%">Parameter Name</td>
     <td width="12%">Value Types</td>
     <td width="100%">Description</td>
@@ -626,54 +666,70 @@ issued by applications
 	  that the server was launched from, or the start directory specified
 	  for the application node.  If no start directory was specified, the
 	  client log file will appear in the directory that
-	  <code>crappfaker</code> was run from.</td>
+	  <code>crappfaker</code> was run from.
+    </td>
   </tr>
-</tbody></table>
+</tbody>
+</table>
 
-<a name="readback">
-</a><h2 class="PageSubHeading"><a name="readback">Readback SPU</a></h2>
+
+
+<a name="readback"></a>
+<h2 class="PageSubHeading">Readback SPU</h2>
 <p>
-<a name="readback">The Readback SPU is very similar to the Render SPU.  It's special in
+The Readback SPU is very similar to the Render SPU.  It's special in
 that when SwapBuffers is called, the Readback SPU uses glReadPixels to
 read the contents of the color/depth buffer(s) and sends them to the
 next SPU in the chain with glDrawPixels.
 This SPU is commonly used to implement sort-last rendering configurations.
-</a></p>
+</p>
 <p>
-<a name="readback">Since the readback SPU is derived from the render SPU, it accepts all
+Since the readback SPU is derived from the render SPU, it accepts all
 configuration options that the render SPU accepts, plus a few more:
-</a></p>
+</p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="74">extract_alpha</td><td width="12%" class="ConfigType" height="74">Boolean</td><td width="100%" class="ConfigDesc" height="74">If set to 1, the alpha
+    <td width="19%" class="ConfigOption" height="74">extract_alpha</td>
+    <td width="12%" class="ConfigType" height="74">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="74">If set to 1, the alpha
       values will be sent along with the RGB values.
-      The default is 0.</td></tr>
-<tr>
+      The default is 0.
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="74">extract_depth</td>
     <td width="12%" class="ConfigType" height="74">Boolean</td>
     <td width="100%" class="ConfigDesc" height="74">If set to 1, the depth
       buffer values will be used to do <em>Z-compositing</em> of the color
       images.  This is used for <em>sort-last</em> configurations.
-      The default is 0.</td>
+      The default is 0.
+    </td>
   </tr>
-  
   <tr>
-<td width="19%" class="ConfigOption" height="38">gather_mtu</td><td width="12%" class="ConfigType" height="38">Integer</td><td width="100%" class="ConfigDesc" height="38">???
-    </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">gather_url</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">???
-    </td></tr>
-<tr>
+    <td width="19%" class="ConfigOption" height="38">gather_mtu</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">???
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">gather_url</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">???
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">local_visualization</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="100%" class="ConfigDesc" height="38">If set to 1, SwapBuffers
       will be issued by the readback SPU so that you can actually see what's
-      being rendered by the SPU.  The default is 0.</td>
+      being rendered by the SPU.  The default is 0.
+    </td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">visualize_depth</td>
@@ -681,29 +737,36 @@ configuration options that the render SPU accepts, plus a few more:
     <td width="100%" class="ConfigDesc" height="38">If set to 1, the depth
       buffer values will be sent downstream as a luminance image, rather
       than sending the RGB image.  This allows one to see the Z buffer
-      values as a grayscale image.  The default is 0.</td>
+      values as a grayscale image.  The default is 0.
+    </td>
   </tr>
-  
-  
-</tbody></table>
+</tbody>
+</table>
 
-<a name="render">
-</a><h2 class="PageSubHeading"><a name="render">Render SPU</a></h2>
+
+
+<a name="render"></a>
+<h2 class="PageSubHeading">Render SPU</h2>
 <p>
-<a name="render">The Render SPU renders OpenGL commands into a window.  Virtually every
+The Render SPU renders OpenGL commands into a window.  Virtually every
 Chromium configuration uses this SPU.
-</a></p>
+</p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
   </tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">borderless</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">borderless</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
           If non-zero, remove the window border/decoration.
           Only supported on X at this time.
-          Default is 0.</td></tr>
+          Default is 0.
+    </td>
+  </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">default_visual</td>
     <td width="12%" class="ConfigType" height="38">String</td>
@@ -716,65 +779,97 @@ Chromium configuration uses this SPU.
       The default is <em>"rgb"</em>.</td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="38">display_string</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">
+    <td width="19%" class="ConfigOption" height="38">display_string</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
           Name of the X display to create windows on.  The default is the
           null string, so the DISPLAY environment variable will be used.
           This option is only recognized when using the X Window System.
-          </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">force_direct</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-	  If true, do not allow the SPU to start if a direct rendering
-	  visual is not available.  X-Windows ONLY.  The default is 0.</td></tr>
-<tr>
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">force_direct</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If true, do not allow the SPU to start if a direct rendering
+      visual is not available.  X-Windows ONLY.  The default is 0.
+    </td>
+ </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">fullscreen</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="100%" class="ConfigDesc" height="38">If this flag is set, the <code>window_geometry</code>
       parameters will be ignored, and the created window will cover the entire
       screen.&nbsp; The default is 0.</td>
   </tr>
-  
   <tr>
-<td width="19%" class="ConfigOption" height="38">gather_url</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">
+    <td width="19%" class="ConfigOption" height="38">gather_url</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
 	Gatherer URL (default NULL)
-   </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">gather_userbuf_size</td><td width="12%" class="ConfigType" height="38">Integer</td><td width="100%" class="ConfigDesc" height="38">
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">gather_userbuf_size</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
 	XXX Size of Buffer to Allocate for Gathering (default 0).
-   </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">is_swap_master</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-		Specify if this render spu is the master of a "swap group". Default
-		value is 0. There should only be one master per group.
-   </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">lut8</td><td width="12%" class="ConfigType" height="38">768 Integers</td><td width="100%" class="ConfigDesc" height="38">
-		Specify an eight-bit/channel color lookup table. The first
-		256 integers makeup the red lookup values, the next 256 make up the
-		green lookup values, and the final make up the blue lookup values. For
-		example, <br>
-		<center>spu.Conf('lut8', [0, 1, 2, ..., 255, 0, 1, 2, ..., 255, 0, 1, 2, ..., 255]) </center><br>
-
-				would provide the identity mapping.
-		X-Windows ONLY.
-   </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">num_swap_clients</td><td width="12%" class="ConfigType" height="38">Integer</td><td width="100%" class="ConfigDesc" height="38">
-		This specifies the number of clients in a swap group, not counting
-		the master. This should be set for all swap masters.
-   </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">nv_swap_clients</td><td width="12%" class="ConfigType" height="38">Integer</td><td width="100%" class="ConfigDesc" height="38">
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">is_swap_master</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+	Specify if this render spu is the master of a "swap group". Default
+	value is 0. There should only be one master per group.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">lut8</td>
+    <td width="12%" class="ConfigType" height="38">768 Integers</td>
+    <td width="100%" class="ConfigDesc" height="38">
+	Specify an eight-bit/channel color lookup table. The first
+	256 integers makeup the red lookup values, the next 256 make up the
+	green lookup values, and the final make up the blue lookup values. For
+	example, <br>
+	<center>spu.Conf('lut8', [0, 1, 2, ..., 255, 0, 1, 2, ..., 255, 0, 1, 2, ..., 255]) </center><br>
+	would provide the identity mapping.
+	X-Windows ONLY.
+     </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">num_swap_clients</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
+	This specifies the number of clients in a swap group, not counting
+	the master. This should be set for all swap masters.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">nv_swap_clients</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
 	XXX How many swaps to wait on (default 1).
-   </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">nv_swap_group</td><td width="12%" class="ConfigType" height="38">Integer</td><td width="100%" class="ConfigDesc" height="38">
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">nv_swap_group</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
 	NVIDIA Swap Group Number (default 0).
-   </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">ontop</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">If this flag is set, the 
-	  window will appear on top of all other windows.</td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">render_to_app_window</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">ontop</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">If this flag is set, the 
+	  window will appear on top of all other windows.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">render_to_app_window</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
           If non-zero, the render SPU will render back into the original
           application window, instead of creating a new window.
           Default is 0.
@@ -785,7 +880,8 @@ Chromium configuration uses this SPU.
           application display.
           Otherwise, the render SPU will print a warning that the application
           window ID is invalid for the render SPU's display.
-          </td></tr>
+    </td>
+  </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">render_to_crut_window</td>
     <td width="12%" class="ConfigType" height="38">Bool</td>
@@ -846,17 +942,17 @@ Chromium configuration uses this SPU.
     <td width="19%" class="ConfigOption" height="38">swap_master_url</td>
     <td width="12%" class="ConfigType" height="38">String</td>
     <td width="100%" class="ConfigDesc" height="38">
-		Specify the url to a master to attempt to better sync SwapBuffers. 
-		Setting this option also enables the attempted sync. See also
-		<code>is_swap_master</code> and <code>num_swap_clients</code>
+	Specify the url to a master to attempt to better sync SwapBuffers. 
+	Setting this option also enables the attempted sync. See also
+	<code>is_swap_master</code> and <code>num_swap_clients</code>
    </td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">use_osmesa</td>
     <td width="12%" class="ConfigType" height="38">Bool</td>
     <td width="100%" class="ConfigDesc" height="38">
-		If set (and Chromium's compiled for it - see options.mk)
-                use OSMesa for off-screen rendering.
+      If set (and Chromium's compiled for it - see options.mk)
+      use OSMesa for off-screen rendering.
    </td>
   </tr>
   <tr>
@@ -870,51 +966,86 @@ Chromium configuration uses this SPU.
       respectively.&nbsp; The default is [0, 0, 256, 256].
     </td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">pbuffer_size</td>
+    <td width="12%" class="ConfigType" height="74">2 Integers</td>
+    <td width="100%" class="ConfigDesc" height="74">
+      If non-zero, specifies a fixed width and height for pbuffers.
+      All pbuffers will be allocated at this fixed size.
+      This can avoid graphics memory fragmentation issues.
+      The default is [0, 0] - allow any size of pbuffers.
+    </td>
+  </tr>
 </tbody>
 </table>
 
 
-<a name="replicate">
-</a><h2 class="PageSubHeading"><a name="replicate">Replicate SPU</a></h2>
+
+<a name="replicate"></a>
+<h2 class="PageSubHeading">Replicate SPU</h2>
 <p>
-<a name="replicate">The Replicate SPU works in conjunction with the 
-</a><a href="http://xf4vnc.sourceforge.net" target="_parent">
+The Replicate SPU works in conjunction with the 
+<a href="http://xf4vnc.sourceforge.net" target="_parent">
 XF4VNC project</a>.  It gives a specially enhanced-VNC client
 developed by Tungsten Graphics, Inc. the ability to do direct
 rendering and gain the performance of the local graphics card at the
 viewer.  Contact <a href="http://www.tungstengraphics.com" target="_parent"> Tungsten Graphics, Inc.</a> for more information.
 </p>
 
-
-<a name="saveframe">
-</a><h2 class="PageSubHeading"><a name="saveframe">Saveframe SPU</a></h2>
-<p>
-<a name="saveframe">The Savefame SPU saves the image from the colorbuffer to a file whenever
-SwapBuffers is called.  It's useful for "screengrabs".
-</a></p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="38">basename</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">
+    <td width="19%" class="ConfigOption" height="38">render_to_crut_window</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If set, the replicate SPU will work with the CRUT window.
+    </td>
+  </tr>
+</tbody>
+</table>
+
+
+<a name="saveframe"></a>
+<h2 class="PageSubHeading">Saveframe SPU</h2>
+<p>
+The Savefame SPU saves the image from the colorbuffer to a file whenever
+SwapBuffers is called.  It's useful for "screengrabs".
+</p>
+<table border="1" width="100%" height="149">
+<tbody>
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="100%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">basename</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
       <b>Note</b>: This option is obsolete. Use the <code>spec</code> option instead.
       Base of the filename to which to save files.  All files will have a
       four-digit frame number and <code>.ppm</code> appended to them.  Example:
       <code>frame0000.ppm</code>.  This parameter allows you to modify the
       filename.  There is no default. If both a basename and spec option are
       given, the spec option overrides the basename.
-    </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">binary</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">binary</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
           Specifies whether the PPM should be binary or not.
           If this parameter is set to true, saved images will be in "raw"
           PPM format.  If this parameter is set to false, saved images will
           be in "ascii" PPM format.  The default is true (binary).
 
-        </td></tr>
+    </td>
+  </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">enabled</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
@@ -924,15 +1055,18 @@ SwapBuffers is called.  It's useful for "screengrabs".
           <code>glChromiumParameteri(GL_SAVEFRAME_ENABLED_CR,
           GL_TRUE)</code> call.
           The default is true.
-
-        </td>
+    </td>
   </tr>
-<td width="19%" class="ConfigOption" height="38">format</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">format</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
       The format option specifies the file format used to save frames.
       Currently, it must be "<code>ppm</code>" or "<code>jpeg</code>".
       The default is "<code>ppm</code>".
-    </td></tr>
-<tr>
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="74">geometry</td>
     <td width="12%" class="ConfigType" height="74">4 Integers</td>
     <td width="100%" class="ConfigDesc" height="74">
@@ -955,8 +1089,11 @@ SwapBuffers is called.  It's useful for "screengrabs".
           single frame.  Set this to the frame number of the frame to save.
           The default is unset.
         </td>
-  </tr><tr>
-<td width="19%" class="ConfigOption" height="38">spec</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">spec</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
       A full specification of the filename to which to save frames. This
       should include a path (absolute or relative to the working directory
       of the crserver) and a filename. The filename should have <code>%d</code>
@@ -987,10 +1124,12 @@ SwapBuffers is called.  It's useful for "screengrabs".
       Sets the number of frames to skip.  The default is 1.  This means
       that every frame is saved.  Setting to 2 means to only save every
       other frame.
-    </td></tr>
+    </td>
+  </tr>
+</tbody>
+</table>
 
-  
-</tbody></table>
+
 
 
 <a name="simplequery">
@@ -1001,15 +1140,17 @@ simple default values.  This is useful when using <i>file networking</i>
 which records command streams to files.
 </a></p>
 
-<a name="tilesort">
-</a><h2 class="PageSubHeading"><a name="tilesort">Tilesort SPU</a></h2>
+
+<h2 class="PageSubHeading"><a name="tilesort">Tilesort SPU</a></h2>
+
 <p>
-<a name="tilesort">The Tilesort SPU is used to divide the framebuffer into tiles which are
+The Tilesort SPU is used to divide the framebuffer into tiles which are
 rendered by separate render servers.
 The tilesort SPU is usually used to drive tiled, cluster displays (murals).
 The tilesort SPU must be the last SPU in the chain and be connected to
 one or more downstream servers.
-</a></p>
+</p>
+
 <table border="1" width="100%" height="149">
 <tbody>
   <tr class="ConfigTableHeader">
@@ -1056,19 +1197,20 @@ one or more downstream servers.
       Possible values are:
       <ul>
       <li><b>'Broadcast'</b> - send all primitives to all servers.
-      </li><li><b>'Test All Tiles'</b> - test each primitive's bounding box against
-         all tile's bounds.  This is the default value.
-      </li><li><b>'Uniform Grid'</b> - the tiles form a regular grid with uniform
-         column widths and row heights.  Use a specially optimized bucketing
-         algorithm.
-      </li><li><b>'Non-Uniform Grid'</b> - the tiles form a regular grid but the
-         columns and rows don't all have the same width or height.  An
+      </li><li><b>'Test All Tiles'</b> - test each primitive's bounding box
+         against all tile's bounds.  This is the default value.
+      </li><li><b>'Uniform Grid'</b> - the tiles form a regular grid with
+         uniform column widths and row heights.  Use a specially optimized
+         bucketing algorithm.
+      </li><li><b>'Non-Uniform Grid'</b> - the tiles form a regular grid but
+         the columns and rows don't all have the same width or height.  An
          optimized bucketing algorithm will be used, but it's not as efficient
          as the Uniform Grid option.
-      </li><li><b>'Random'</b> - primitives are sent to a randomly-chosen server.
-      </li><li><b>'Warped Grid'</b> - the grid tiles do not form a uniform grid of
-         any sort.  Test primitive's bounding boxes against all tiles, without
-         trivial rejection (slow).
+      </li><li><b>'Random'</b> - primitives are sent to a randomly-chosen
+         server.
+      </li><li><b>'Warped Grid'</b> - the grid tiles do not form a uniform
+         grid of any sort.  Test primitive's bounding boxes against all tiles,
+         without trivial rejection (slow).
       </li><li><b>'Frustum'</b> - intended for use with
           <a href="nonplanar.html">non-planar tilesort</a>.
           Geometry is tested for intersection with each server's viewing
@@ -1146,9 +1288,11 @@ one or more downstream servers.
       determine the size of the client window (if it exists)
       to determine what part of the output space the client is trying to
       restrict drawing to.&nbsp; However, if the Chromium context has been
-      created out of thin air (i.e., with the <a href="parallelapplication.html">crCreateContext
+      created out of thin air (i.e., with the
+      <a href="parallelapplication.html">crCreateContext
       call</a>), the fake window dimensions will be returned.&nbsp; If these
-      parameters are <i>not</i> set, and there is no client window, using <code>glViewport</code>
+      parameters are <i>not</i> set, and there is no client window, using
+      <code>glViewport</code>
       or <code>glScissor</code> will cause a fatal run-time error.</td>
   </tr>
   <tr>
@@ -1195,9 +1339,9 @@ one or more downstream servers.
     <td width="100%" class="ConfigDesc" height="74">If this flag is set, the
       Tilesort SPU will break blocks of geometry into pieces if they happen to
       fall on a buffer boundary.&nbsp; This can happen if a lot of geometry is
-      specified with no state changes, or if the MTU is small.&nbsp; If the flag
-      is <i>not</i> set, then the Tilesort SPU will simply grow the geometry
-      buffer beyond the MTU.&nbsp; The default is 1.</td>
+      specified with no state changes, or if the MTU is small.&nbsp; If the
+      flag is <i>not</i> set, then the Tilesort SPU will simply grow the
+      geometry buffer beyond the MTU.&nbsp; The default is 1.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">stereo_mode</td>
@@ -1246,44 +1390,71 @@ one or more downstream servers.
       The default is 0.
     </td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">display_string</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Specifies the DMX display string.
+      This may be used to override the setting of the DISPLAY environment
+      variable.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">track_window_position</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If set, poll DMX windows for position changes and update tiling
+      parameters.
+      Default is 0 (off).
+    </td>
+  </tr>
 </tbody></table>
 
 
-<h4><a name="tilesort">Additional notes on the Tilesort SPU and display lists</a></h4>
+<h4>Additional notes on the Tilesort SPU and display lists</a></h4>
 
 <ul>
-<li><p><a name="tilesort">Normally, when display lists are created they're sent to all servers.
+  <li>
+    <p>Normally, when display lists are created they're sent to all servers.
     Also, each glCallList() is sent to all servers.
     This inefficiency can be avoided if the display lists have
     associated bounding boxes.
-    </a></p>
-<a name="tilesort">    </a><p><a name="tilesort">A display list can be given a bounding box by two methods:
-    </a></p><ol>
-<a name="tilesort">    <li>Call glChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox)
+    </p>
+    <p>A display list can be given a bounding box by two methods:
+    </p>
+    <ol>
+    <li>Call glChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox)
         prior to glNewList() to specify a bounding box for the subsequent
         list.  Be sure to reset the bounding box after creating the list.
-    </li><li>Set the Tilesort SPU's <b>auto_dlist_bbox</b> option.  This causes the
+    </li>
+    <li>Set the Tilesort SPU's <b>auto_dlist_bbox</b> option.  This causes the
         Tilesort SPU to automatically compute a bounding box from the
         glVertex commands compiled into the list.
         If the display list contains matrix transformations, the bounding
         box may be computed incorrectly.
-    </li></a></ol>
-<a name="tilesort">    </a><p></p>
-</li><li><p><a name="tilesort">Normally, display lists are immediately sent to all servers as
+    </li>
+    </ol>
+  </li>
+  <li>
+    <p>Normally, display lists are immediately sent to all servers as
     they're compiled.
     Instead, display lists can be sent to the servers only when they're
     drawn for the first time if the Tilesort SPU option <b>lazy_send_dlists</b>
     is set.
-    </a></p>
-</li><li><p><a name="tilesort">Normally, state changes encapsulated inside display lists are
+    </p>
+  </li>
+  <li>
+    <p>Normally, state changes encapsulated inside display lists are
     ignored by the Tilesort SPU.  This can result in rendering errors.
     To solve this, set the <b>dlist_state_tracking</b> option.
     Unfortunately, there is a performance penalty for using this option.
-    </a></p>
-</li><li><p><a name="tilesort">There may be problems with nested display lists.  Fortunately,
+    </p>
+  </li>
+  <li><p>There may be problems with nested display lists.  Fortunately,
     few OpenGL applications use nested display lists.
-    </a></p>
-</li></ul>
+    </p>
+  </li>
+</ul>
 
 
 
