@@ -19,8 +19,9 @@ print "EXPORTS"
 
 keys = apiutil.GetDispatchedFunctions()
 for func_name in keys:
-    print "crPack%s" % func_name
-    print "crPack%sSWAP" % func_name
+	if apiutil.CanPack(func_name):
+		print "crPack%s" % func_name
+		print "crPack%sSWAP" % func_name
 
 for func_name in [
 	'crPackVertexAttrib1dARBBBOX',
