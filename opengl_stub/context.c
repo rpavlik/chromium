@@ -63,7 +63,7 @@ static void stubCheckMultithread( void )
 /*
  * Install the given dispatch table as the table used for all gl* calls.
  */
-static void stubSetDispatch( const SPUDispatchTable *table )
+void stubSetDispatch( const SPUDispatchTable *table )
 {
 	CRASSERT(table);
 
@@ -115,14 +115,6 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 #else
 		dpyName = DisplayString(dpy);
 
-#if 0
-		/* Can't do this...
-		 * We don't know whether it's a NATIVE context till
-		 * later, so we shouldn't be calling stub.wsInterface...()
-		 * from the FindVisualInfo() call.
-		 * DISABLING - Alan.
-		 */
-
 		/* 
 		 * Pull apart the context's requested visual information
 		 * and select the correct CR_*_BIT's. The RenderSPU
@@ -132,9 +124,11 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 		 * NOTE: We OR just in case an application has called
 		 * glXChooseVisual to select it's desiredflags, and we honour 
 		 * them!
+		 *
+		 * NOTE: We can only.... do this with a native renderer...
 		 */
-		stub.desiredVisual |= FindVisualInfo( dpy, vis );
-#endif
+		if (stub.haveNativeOpenGL)
+			stub.desiredVisual |= FindVisualInfo( dpy, vis );
 
 		stub.spuWindow = crCreateWindow( dpyName, stub.desiredVisual );
 #endif
