@@ -33,12 +33,10 @@ typedef struct {
 } SPUFunctions;
 
 typedef SPUFunctions *(*SPUInitFuncPtr)(int id, SPU *child,
-		SPU *super, unsigned int, unsigned int, unsigned int, 
-		unsigned int, SPUArgs *, void *);
+		SPU *super, unsigned int, unsigned int );
 typedef void (*SPUSelfDispatchFuncPtr)(SPUDispatchTable *);
 typedef int (*SPUCleanupFuncPtr)(void);
-typedef int (*SPULoadFunction)(char **, char **, void *, void *, 
-		void *, unsigned int *, SPUArgs **);
+typedef int (*SPULoadFunction)(char **, char **, void *, void *, void * );
 
 struct _SPUSTRUCT {
 	char *name;
@@ -49,8 +47,6 @@ struct _SPUSTRUCT {
 	SPUInitFuncPtr init;
 	SPUSelfDispatchFuncPtr self;
 	SPUCleanupFuncPtr cleanup;
-	unsigned int nargs;
-	SPUArgs *args;
 	SPUFunctions *function_table;
 	SPUDispatchTable dispatch_table;
 };
