@@ -41,6 +41,16 @@ static void crServerViewportConvertToOutput (const GLrecti *imagewindow,
 	q->y2 = q->y2 - imagewindow->y2 + outputwindow->y2;
 }
 
+/*
+ * Setup the viewport parameters.  This is called by crServerSetOutputBounds()
+ * when we prepare to render a tile.
+ * Input:  v - viewport params
+ *         outputwindow - tile bounds in server's rendering window
+ *         imagespace - whole mural bounds
+ *         imagewindow - tile bounds in mural space
+ * Output:  clipped_imagespace - imagespace after scissor is applied
+ *          clipped_imagewindow - imagewindow after scissor is applied
+ */
 void crServerSetViewportBounds (CRViewportState *v,
 							  const GLrecti *outputwindow,
 							  const GLrecti *imagespace,
@@ -68,7 +78,7 @@ void crServerSetViewportBounds (CRViewportState *v,
 	*/
 	if (!v->scissorTest) 
 	{
-		cr_server.head_spu->dispatch_table.Scissor (
+		cr_server.head_spu->dispatch_table.Scissor(
 			outputwindow->x1, outputwindow->y1,
 			outputwindow->x2 - outputwindow->x1,
 			outputwindow->y2 - outputwindow->y1);

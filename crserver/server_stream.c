@@ -82,6 +82,10 @@ void crServerAddNewClient( void )
  * Each client has an entry in the run queue (a RunQueue object).
  * This function initialized the per-client tiling information
  * for the client's queue entry.
+ * We basically loop over the RunQueue's extent[] array (which gives
+ * the bounds of each mural tile) and carve out a space for it in the
+ * 'underlying' window.  We carve/allocate in simple top-to-bottom
+ * raster order.
  */
 void crServerInitializeQueueExtents(RunQueue *q)
 {
@@ -92,6 +96,7 @@ void crServerInitializeQueueExtents(RunQueue *q)
 	y = 0;
 	y_max = 0;
 
+	/* the queue's image space is the whole mural space */
 	q->imagespace.x1 = 0;
 	q->imagespace.y1 = 0;
 	q->imagespace.x2 = cr_server.muralWidth;
@@ -107,6 +112,9 @@ void crServerInitializeQueueExtents(RunQueue *q)
 
 		/* extent->display = find_output_display( extent->imagewindow ); */
 
+		/* Compute normalized mural bounds.
+		 * That is, x1, y1, x2, y2 will be in the range [-1, 1].
+		 */
 		extent->bounds.x1 = ( (GLfloat) (2*extent->imagewindow.x1) /
 				cr_server.muralWidth - 1.0f );
 		extent->bounds.y1 = ( (GLfloat) (2*extent->imagewindow.y1) /
@@ -116,6 +124,7 @@ void crServerInitializeQueueExtents(RunQueue *q)
 		extent->bounds.y2 = ( (GLfloat) (2*extent->imagewindow.y2) /
 				cr_server.muralHeight - 1.0f );
 
+		/* Width of height of tile, in mural pixels */
 		w = cr_server.extents[i].x2 - cr_server.extents[i].x1;
 		h = cr_server.extents[i].y2 - cr_server.extents[i].y1;
 

@@ -22,15 +22,15 @@
 extern CRServer cr_server;
 
 typedef struct {
-	GLrecti outputwindow;   /* coordinates in mural space */
-	GLrecti imagewindow;    /* coordinates in render window */
-	GLrectf bounds;         /* coordinates in [-1,-1] x [1,1], I think */
+	GLrecti outputwindow;   /* coordinates in server's rendering window */
+	GLrecti imagewindow;    /* coordinates in mural space */
+	GLrectf bounds;         /* normalized coordinates in [-1,-1] x [1,1] */
 	int     display;        /* not used (historical?) */
 } CRRunQueueExtent;
 
 typedef struct __runqueue {
 	CRClient *client;
-	GLrecti imagespace;
+	GLrecti imagespace;     /* the whole mural rectangle */
 	int numExtents;
 	CRRunQueueExtent extent[CR_MAX_EXTENTS];
 	int blocked;

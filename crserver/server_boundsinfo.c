@@ -142,6 +142,13 @@ void crServerFillBucketingHash(void)
 
 }
 
+/*
+ * Prepare for rendering a tile.  Setup viewport and base projection.
+ * Inputs: ctx - the rendering context (to access the viewport params)
+ *         outputWindow - tile bounds in server's rendering window
+ *         imagespace - whole mural rectangle
+ *         imagewindow - tile bounds within the mural
+ */
 void crServerSetOutputBounds( CRContext *ctx, 
 												const GLrecti *outputwindow, 
 												const GLrecti *imagespace, 
