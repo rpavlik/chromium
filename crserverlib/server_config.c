@@ -103,7 +103,6 @@ crServerGatherConfiguration(char *mothership)
 		crError("CRServer: Couldn't get my own hostname?");
 	}
 
-
 	/* The VNC viewer would set this env var if we (this crserver) is
 	 * starting up in response to starting a new 3D app.
 	 */
@@ -117,6 +116,8 @@ crServerGatherConfiguration(char *mothership)
 	else {
 		crMothershipIdentifyServer(conn, response);
 	}
+
+	crDebug("CRServer: my SPU chain: %s", response);
 
 	/* response will describe the SPU chain.
 	 * Example "2 5 wet 6 render"
@@ -325,6 +326,8 @@ crServerGatherConfiguration(char *mothership)
 	}
 
 
+	crDebug("CRServer: my port number is %d", cr_server.tcpip_port);
+
 	/*
 	 * Load the SPUs
 	 */
@@ -355,6 +358,8 @@ crServerGatherConfiguration(char *mothership)
 	else {
 		crMothershipGetClients(conn, response);
 	}
+
+	crDebug("CRServer: my clients: %s", response);
 
 	/*
 	 * 'response' will now contain a number indicating the number of clients
