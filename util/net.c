@@ -46,7 +46,7 @@ static struct {
 */
 
 	int                  num_clients; /* count the number of total clients (unused?) */
-	CRBufferPool         message_list_pool;
+	CRBufferPool         *message_list_pool;
 #ifdef CHROMIUM_THREADSAFE
 	CRmutex		     mutex;
 #endif
@@ -414,7 +414,7 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 #ifdef CHROMIUM_THREADSAFE
 		crInitMutex(&cr_net.mutex);
 #endif
-		crBufferPoolInit( &cr_net.message_list_pool, 16 );
+		cr_net.message_list_pool = crBufferPoolInit(16);
 
 		cr_net.initialized = 1;
 		cr_net.recv_list = NULL;
@@ -761,7 +761,7 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_net.mutex);
 #endif
-	msglist = (CRMessageList *) crBufferPoolPop( &cr_net.message_list_pool );
+	msglist = (CRMessageList *) crBufferPoolPop( cr_net.message_list_pool, conn->buffer_size );
 	if ( msglist == NULL )
 	{
 		msglist = (CRMessageList *) crAlloc( sizeof( *msglist ) );
@@ -812,7 +812,7 @@ unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message )
 #ifdef CHROMIUM_THREADSAFE
 		crLockMutex(&cr_net.mutex);
 #endif
-		crBufferPoolPush( &(cr_net.message_list_pool), temp );
+		crBufferPoolPush( cr_net.message_list_pool, temp, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_net.mutex);
 #endif

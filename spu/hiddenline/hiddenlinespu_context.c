@@ -66,7 +66,7 @@ GLint HIDDENLINESPU_APIENTRY hiddenlinespu_CreateContext( const char *dpyName, G
 	freeContext++;
 	crHashtableAdd(hiddenline_spu.contextTable, freeContext, (void *) context);
 
-	crBufferPoolInit( &(context->bufpool), 16 );
+	context->bufpool = crBufferPoolInit(16);
 	crPackFlushFunc(context->packer, hiddenlineFlush);
 	crPackSendHugeFunc(context->packer, hiddenlineHuge);
 
@@ -80,4 +80,5 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_DestroyContext( GLint ctx )
 	CRASSERT(context);
 	hiddenline_spu.super.DestroyContext(context->super_context);
 	crHashtableDelete(hiddenline_spu.contextTable, ctx, crFree);
+	crBufferPoolFree(context->bufpool);
 }

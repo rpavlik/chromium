@@ -4,71 +4,100 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
-
 #include "cr_mem.h"
+#include "cr_error.h"
 #include "cr_bufpool.h"
 
-void
-crBufferPoolInit( CRBufferPool *pool, unsigned int max )
+
+/*
+ * New (version 1.4) buffer pool implementation.
+ *
+ * Now, each buffer in the pool can be a different size.
+ * We only return a buffer from crBufferPoolPop() if we have exactly
+ * the right size buffer.
+ *
+ * Note: the old implementation had a 'max buffers' parameter but it
+ * really wasn't good for anything since we always grew the buffer pool
+ * if we pushed a new buffer that would cause use to exceed the limit.
+ * That's gone now.
+ */
+
+#ifndef NULL
+#define NULL  ((void *) 0)
+#endif
+
+typedef struct buffer {
+	 void *address;
+	 unsigned int size;
+	 struct buffer *next;
+} Buffer;
+
+
+struct CRBufferPool_t
 {
-	pool->num = 0;
-	pool->max = max;
-	pool->buf = (void **) crAlloc( pool->max * sizeof(pool->buf[0]) );
+	unsigned int maxBuffers;
+	unsigned int numBuffers;
+	struct buffer *head;
+};
+
+
+CRBufferPool *
+crBufferPoolInit( unsigned int maxBuffers )
+{
+	CRBufferPool *pool = crCalloc(sizeof(CRBufferPool));
+	if (pool) {
+		pool->head = NULL;
+		pool->maxBuffers = maxBuffers;
+		pool->numBuffers = 0;
+	}
+	return pool;
 }
 
 void
 crBufferPoolFree( CRBufferPool *pool )
 {
-	crFree( pool->buf );
-}
+	Buffer *b, *next;
 
-static void
-crBufferPoolGrow( CRBufferPool *pool, unsigned int count )
-{
-	if ( count > pool->max )
-	{
-		unsigned int n_bytes;
-		while ( count > pool->max )
-			pool->max <<= 1;
-		n_bytes = pool->max * sizeof(pool->buf[0]);
-		crRealloc( (void **) &pool->buf, n_bytes );
+	for (b = pool->head; b; b = next) {
+		next = b->next;
+		crFree(b->address);
+		crFree(b);
 	}
 }
 
+
 void
-crBufferPoolLoad( CRBufferPool *pool, void *mem, unsigned int stride,
-					  unsigned int count )
+crBufferPoolPush( CRBufferPool *pool, void *buf, unsigned int bytes )
 {
-	unsigned int   i;
-	unsigned char *buf;
-
-	crBufferPoolGrow( pool, pool->num + count );
-
-	buf = (unsigned char *) mem;
-	for ( i = 0; i < count; i++ )
-	{
-		pool->buf[ pool->num++ ] = buf;
-		buf += stride;
+	Buffer *b = crCalloc(sizeof(Buffer));
+	if (b) {
+		b->address = buf;
+		b->size = bytes;
+		b->next = pool->head;
+		pool->head = b;
+		pool->numBuffers++;
 	}
-}
-
-void
-crBufferPoolPush( CRBufferPool *pool, void *buf )
-{
-	if ( pool->num == pool->max )
-		crBufferPoolGrow( pool, pool->num + 1 );
-
-	pool->buf[ pool->num++ ] = buf;
 }
 
 void *
-crBufferPoolPop( CRBufferPool *pool )
+crBufferPoolPop( CRBufferPool *pool, unsigned int bytes )
 {
-	void *buf = NULL;
-
-	if ( pool->num )
-		buf = pool->buf[ --pool->num ];
-
-	return buf;
+	Buffer *b, *prev;
+	prev = NULL;
+	for (b = pool->head; b; b = b->next) {
+		if (b->size == bytes) {
+			void *p = b->address;
+			if (prev) {
+				prev->next = b->next;
+			}
+			else {
+				pool->head = b->next;
+			}
+			crFree(b);
+			pool->numBuffers--;
+			return p;
+		}
+		prev = b;
+	}
+	return NULL;
 }

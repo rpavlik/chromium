@@ -44,7 +44,7 @@ typedef struct {
 	int super_context;  /* returned by super.CreateContext() */
 	GLcolorf clear_color;
 	BufList *frame_head, *frame_tail;
-	CRBufferPool bufpool;
+	CRBufferPool *bufpool;
 } ContextInfo;
 
 typedef struct {

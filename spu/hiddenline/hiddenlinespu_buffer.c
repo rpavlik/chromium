@@ -12,7 +12,7 @@ void hiddenlineProvidePackBuffer(void)
 
 	CRASSERT(context);
 
-	buf = crBufferPoolPop( &(context->bufpool) );
+	buf = crBufferPoolPop( context->bufpool, hiddenline_spu.buffer_size );
 	if (!buf)
 	{
 		buf = crAlloc( hiddenline_spu.buffer_size );
@@ -30,7 +30,7 @@ void hiddenlineReclaimPackBuffer( BufList *bl )
 	if (bl->can_reclaim)
 	{
 		GET_CONTEXT(context);
-		crBufferPoolPush( &(context->bufpool), bl->buf );
+		crBufferPoolPush( context->bufpool, bl->buf, hiddenline_spu.buffer_size );
 	}
 	else
 	{

@@ -95,7 +95,7 @@ struct {
 	int                  initialized;
 	int                  num_conns;
 	CRConnection         **conns;
-	CRBufferPool         bufpool;
+	CRBufferPool         *bufpool;
 #ifdef CHROMIUM_THREADSAFE
 	CRmutex              mutex;
 	CRmutex              recvmutex;
@@ -328,7 +328,7 @@ static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_tcpip.mutex);
 #endif
-	crBufferPoolPush( &cr_tcpip.bufpool, udptcpip_buffer );
+	crBufferPoolPush( cr_tcpip.bufpool, udptcpip_buffer, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.mutex);
 #endif
@@ -409,7 +409,7 @@ static void crUDPTCPIPBarf( CRConnection *conn, void **bufp,
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_tcpip.mutex);
 #endif
-	crBufferPoolPush( &cr_tcpip.bufpool, udptcpip_buffer );
+	crBufferPoolPush( cr_tcpip.bufpool, udptcpip_buffer, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.mutex);
 #endif

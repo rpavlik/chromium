@@ -184,7 +184,7 @@ struct {
 	int                  initialized;
 	int                  num_conns;
 	CRConnection         **conns;
-	CRBufferPool         bufpool;
+	CRBufferPool         *bufpool;
 #ifdef CHROMIUM_THREADSAFE
 	CRmutex              mutex;
 	CRmutex              recvmutex;
@@ -555,11 +555,12 @@ crTCPIPAlloc( CRConnection *conn )
 	crLockMutex(&cr_tcpip.mutex);
 #endif
 
-	buf = (CRTCPIPBuffer *) crBufferPoolPop( &cr_tcpip.bufpool );
+	buf = (CRTCPIPBuffer *) crBufferPoolPop( cr_tcpip.bufpool, conn->buffer_size );
 
 	if ( buf == NULL )
 	{
-		crDebug( "Buffer pool was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
+		crDebug( "Buffer pool %p was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
+						 cr_tcpip.bufpool,
 			(unsigned int)sizeof(CRTCPIPBuffer) + conn->buffer_size, &cr_tcpip.bufpool );
 		crDebug("sizeof(CRTCPIPBuffer): %d", (unsigned int)sizeof(CRTCPIPBuffer));
 		crDebug("sizeof(conn->buffer_size): %d", conn->buffer_size);
@@ -642,7 +643,7 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_tcpip.mutex);
 #endif
-	crBufferPoolPush( &cr_tcpip.bufpool, tcpip_buffer );
+	crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.mutex);
 #endif
@@ -710,7 +711,7 @@ void crTCPIPFree( CRConnection *conn, void *buf )
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_tcpip.mutex);
 #endif
-			crBufferPoolPush( &cr_tcpip.bufpool, tcpip_buffer );
+			crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_tcpip.mutex);
 #endif
@@ -1096,7 +1097,7 @@ crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mt
 	crInitMutex(&cr_tcpip.mutex);
 	crInitMutex(&cr_tcpip.recvmutex);
 #endif
-	crBufferPoolInit( &cr_tcpip.bufpool, 16 );
+	cr_tcpip.bufpool = crBufferPoolInit(16);
 
 	cr_tcpip.initialized = 1;
 }
@@ -1290,7 +1291,8 @@ crTCPIPDoDisconnect( CRConnection *conn )
 		crFreeMutex(&cr_tcpip.mutex);
 		crFreeMutex(&cr_tcpip.recvmutex);
 #endif
-		crBufferPoolFree( &cr_tcpip.bufpool );
+		crBufferPoolFree( cr_tcpip.bufpool );
+		cr_tcpip.bufpool = NULL;
 		last_port = 0;
 		cr_tcpip.initialized = 0;
 	}

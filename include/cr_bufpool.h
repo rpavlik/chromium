@@ -11,18 +11,13 @@
 extern "C" {
 #endif
 
-typedef struct CRBufferPool {
-	unsigned int   num;
-	unsigned int   max;
-	void         **buf;
-} CRBufferPool;
+typedef struct CRBufferPool_t CRBufferPool;
 
-void  crBufferPoolInit( CRBufferPool *pool, unsigned int max );
+CRBufferPool *crBufferPoolInit( unsigned int maxBuffers );
 void  crBufferPoolFree( CRBufferPool *pool );
-void  crBufferPoolLoad( CRBufferPool *pool, void *mem,
-		unsigned int stride, unsigned int count );
-void  crBufferPoolPush( CRBufferPool *pool, void *buf );
-void *crBufferPoolPop( CRBufferPool *pool );
+
+void  crBufferPoolPush( CRBufferPool *pool, void *buf, unsigned int bytes );
+void *crBufferPoolPop( CRBufferPool *pool, unsigned int bytes );
 
 #ifdef __cplusplus
 }

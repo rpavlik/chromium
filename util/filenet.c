@@ -47,7 +47,7 @@ static struct {
 	int                  initialized;
 	int                  num_conns;
 	CRConnection         **conns;
-	CRBufferPool         bufpool;
+	CRBufferPool         *bufpool;
 #ifdef CHROMIUM_THREADSAFE
 	CRmutex              mutex;
 #endif
@@ -109,7 +109,7 @@ static void
 	crLockMutex(&cr_file.mutex);
 #endif
 
-	buf  = (CRFileBuffer *) crBufferPoolPop( &cr_file.bufpool );
+	buf  = (CRFileBuffer *) crBufferPoolPop( cr_file.bufpool, conn->buffer_size );
 
 	if ( buf == NULL )
 	{
@@ -174,7 +174,7 @@ crFileSend( CRConnection *conn, void **bufp, void *start, unsigned int len )
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_file.mutex);
 #endif
-	crBufferPoolPush( &cr_file.bufpool, file_buffer );
+	crBufferPoolPush( cr_file.bufpool, file_buffer, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_file.mutex);
 #endif
@@ -195,7 +195,7 @@ crFileFree( CRConnection *conn, void *buf )
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_file.mutex);
 #endif
-			crBufferPoolPush( &cr_file.bufpool, file_buffer );
+			crBufferPoolPush( cr_file.bufpool, file_buffer, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_file.mutex);
 #endif
@@ -305,7 +305,7 @@ crFileInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&cr_file.mutex);
 #endif
-	crBufferPoolInit( &cr_file.bufpool, 16 );
+	cr_file.bufpool = crBufferPoolInit(16);
 
 
 	cr_file.initialized = 1;

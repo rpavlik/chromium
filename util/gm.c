@@ -633,7 +633,7 @@ void *crGmAlloc( CRConnection *conn )
 	crLockMutex(&cr_gm.write_mutex);
 #endif
 
-	gm_buffer = (CRGmBuffer *) crBufferPoolPop( &cr_gm.write_pool );
+	gm_buffer = (CRGmBuffer *) crBufferPoolPop( &cr_gm.write_pool, conn->buffer_size );
 
 	while ( gm_buffer == NULL )
 	{
@@ -644,7 +644,7 @@ void *crGmAlloc( CRConnection *conn )
 		}
 		crGmRecv( );
 		gm_buffer = (CRGmBuffer *)
-			crBufferPoolPop( &cr_gm.write_pool );
+			crBufferPoolPop( &cr_gm.write_pool, conn->buffer_size );
 	}
 
 #ifdef CHROMIUM_THREADSAFE
@@ -695,7 +695,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 	crLockMutex(&cr_gm.read_mutex);
 #endif
 
-	temp = (CRGmBuffer *) crBufferPoolPop( &cr_gm.read_pool );
+	temp = (CRGmBuffer *) crBufferPoolPop( &cr_gm.read_pool, gm_conn->buffer_size );
 
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_gm.read_mutex);
@@ -715,7 +715,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		crLockMutex(&cr_gm.read_mutex);
 #endif
 		temp = (CRGmBuffer *) 
-			crBufferPoolPop( &cr_gm.unpinned_read_pool );
+			crBufferPoolPop( &cr_gm.unpinned_read_pool, gm_conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_gm.read_mutex);
 #endif
@@ -792,7 +792,7 @@ cr_gm_send_callback( struct gm_port *port, void *ctx, gm_status_t status )
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_gm.write_mutex);
 #endif
-	crBufferPoolPush( &cr_gm.write_pool, buf );
+	crBufferPoolPush( &cr_gm.write_pool, buf, buf->len );
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_gm.write_mutex);
 #endif
@@ -882,7 +882,7 @@ crGmSendCredits( CRConnection *conn )
 	crLockMutex(&cr_gm.write_mutex);
 #endif
 	gm_buffer = (CRGmBuffer *)
-		crBufferPoolPop( &cr_gm.write_pool );
+		crBufferPoolPop( &cr_gm.write_pool, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_gm.write_mutex);
 #endif
@@ -1165,7 +1165,7 @@ crGmFree( CRConnection *conn, void *buf )
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_gm.read_mutex);
 #endif
-			crBufferPoolPush( &cr_gm.read_pool, gm_buffer );
+			crBufferPoolPush( &cr_gm.read_pool, gm_buffer, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_gm.read_mutex);
 #endif
@@ -1175,7 +1175,7 @@ crGmFree( CRConnection *conn, void *buf )
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_gm.unpinned_read_mutex);
 #endif
-			crBufferPoolPush( &cr_gm.unpinned_read_pool, gm_buffer );
+			crBufferPoolPush( &cr_gm.unpinned_read_pool, gm_buffer, conn->buffer_size );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_gm.unpinned_read_mutex);
 #endif
@@ -1340,7 +1340,7 @@ void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int 
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_gm.read_mutex);
 #endif
-			crBufferPoolPush( &cr_gm.read_pool, buf );
+			crBufferPoolPush( &cr_gm.read_pool, buf, buf->len );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_gm.read_mutex);
 #endif
@@ -1380,7 +1380,7 @@ void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int 
 #ifdef CHROMIUM_THREADSAFE
 		crLockMutex(&cr_gm.write_mutex);
 #endif
-		crBufferPoolPush( &cr_gm.write_pool, buf );
+		crBufferPoolPush( &cr_gm.write_pool, buf, mtu );
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_gm.write_mutex);
 #endif
