@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 	{
 		GLint winsize[2];
 		glGetChromiumParametervCR(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
-		printf("Using window size: %d x %d\n", winsize[0], winsize[1]);
+		printf("psubmit using window size: %d x %d\n", winsize[0], winsize[1]);
 	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
