@@ -29,7 +29,6 @@ FILES = bufpool \
 	pixel \
 	string \
 	tcpip \
-	threads \
 	timer \
 	url
 PRECOMP = debug_opcodes.c

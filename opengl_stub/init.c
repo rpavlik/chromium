@@ -51,6 +51,7 @@ void FakerInit( SPU *spu )
 }
 
 
+#if 000
 
 TSDhandle __DispatchTSD;
 static GLboolean ThreadSafe = GL_FALSE;
@@ -100,3 +101,4 @@ void crSetDispatch( const SPUDispatchTable *table )
 	}
 }
 
+#endif
