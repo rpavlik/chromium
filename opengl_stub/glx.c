@@ -22,10 +22,13 @@ static GLXDrawable currentDrawable = 0;
 /**
  * Set this to 1 if you want to build stub functions for the
  * GL_SGIX_pbuffer and GLX_SGIX_fbconfig extensions.
- * We disable this code by default since there are some messy
- * compilation issues.
+ * This used to be disabled, due to "messy compilation issues",
+ * according to the earlier comment; but they're needed just
+ * to resolve symbols for OpenInventor applications, and I
+ * haven't found any reference to exactly what the "messy compilation
+ * issues" are, so I'm re-enabling the code by default.
  */
-#define GLX_EXTRAS 0
+#define GLX_EXTRAS 1
 
 
 #if GLX_EXTRAS
