@@ -1255,13 +1255,13 @@ void crBitmapCopy( GLsizei width, GLsizei height, GLubyte *dstPtr,
 				src_row_length = ( ( src_row_length + 7 ) & ~7 ) >> 3;
 				break;
 			case 2:
-				src_row_length = ( ( src_row_length + 15 ) & ~15 ) >> 4;
+				src_row_length = ( ( src_row_length + 15 ) & ~15 ) >> 3;
 				break;
 			case 4:
-				src_row_length = ( ( src_row_length + 31 ) & ~31 ) >> 5;
+				src_row_length = ( ( src_row_length + 31 ) & ~31 ) >> 3;
 				break;
 			case 8:
-				src_row_length = ( ( src_row_length + 63 ) & ~63 ) >> 6;
+				src_row_length = ( ( src_row_length + 63 ) & ~63 ) >> 3;
 				break;
 			default:
 				crError( "Invalid unpack alignment in crBitmapCopy");
