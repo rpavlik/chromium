@@ -199,7 +199,9 @@ int main(int argc, char *argv[])
 	GLboolean swapSingle = GL_FALSE;
 	int i;
 
+#ifndef WINDOWS
 	XInitThreads();
+#endif
 
 	if (argc < 3)
 	{
