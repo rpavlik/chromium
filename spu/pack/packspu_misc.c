@@ -47,12 +47,14 @@ void PACKSPU_APIENTRY packspu_Finish( void )
 	if (pack_spu.swap)
 	{
 		crPackFinishSWAP(  );
-		crPackWritebackSWAP( &writeback );
+		if (writeback)
+			crPackWritebackSWAP( &writeback );
 	}
 	else
 	{
 		crPackFinish(  );
-		crPackWriteback( &writeback );
+		if (writeback)
+			crPackWriteback( &writeback );
 	}
 	packspuFlush( (void *) thread );
 	while (writeback)
