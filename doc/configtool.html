@@ -261,99 +261,22 @@ The configuration will be generated when you click on the <b>OK</b> button.
 Click on the <b>Edit Template</b> button to open the editor, if supported.
 </p>
 
-<p>Currently, there are templates for tile-sort, sort-last and Lightning-2
-configurations.
+<p>Currently, there are three templates:
 </p>
+<ul>
 
-
-<h2 class="PageSubHeading">Tilesort Template</h2>
-
-<p>When you create tilesort template you'll be prompted to enter the
-number of application nodes (usually 1) and the mural size in rows
-and columns.
-When you click on <em>OK</em> the tilesort configuration will be created.</p>
-
-<p>Clicking on the <em>Edit Template</em> button will open the tilesort
-editor, shown here:</p>
-
-<p align="center"><img border="0" src="tilesort_template.gif"></p>
-
-<p>The editor is mostly self-explanatory.</p>
-
-<p>The overall mural size is a function of the number of tiles (screens)
-and the size of the tiles.  When the number of rows, columns or tile
-size changes the total size is recomputed and displayed.</p>
-
-<p>By default, the rendering node hosts are numbered from from left to
-right, top to bottom.  The <em>Horizontal Layout</em> and 
-<em>Vertical Layout</em> controls can be used to set right-to-left and
-bottom-to-top if desired.</p>
-
-<p>The names for the rendering node hosts can be set with the
-<em>Tile Host Names</em> button.</p>
-
-<p>Options for the tilesort SPU can be set with the
-<em>Tilesort SPU Options</em> button.</p>
-
-
-<h2 class="PageSubHeading">Sort-last Template</h2>
-
-<p>When you create a sort-last template you'll be prompted to enter
-the number of application (rendering) nodes and the desired window
-size (width and height in pixels).<p>
-
-<p>Clicking on the <em>Edit Template</em> button will open the sort-last
-editor, shown here:</p>
-
-<p align="center"><img border="0" src="sortlast_template.gif"></p>
-
-<p>The dialog lets you specify the window size, the number and names of
-the rendering nodes and set the readback and render SPU options</p>
-
-
-
-<h2 class="PageSubHeading">Lightning-2 Template</h2>
-
-<p>The Lightning-2 template is used to setup a configuration suitable for
-the Lightning-2 hardware image assembler (a specialized piece of equipment).
-</p>
-
-<p>When you create a Lightning-2 template you'll be prompted to enter
-the number of application nodes, number of rendering nodes and the size
-of the display (width and height in tiles).</p>
-
-<p>Clicking on the <em>Edit Template</em> button will open the sort-last
-editor, shown here:</p>
-
-<p align="center"><img border="0" src="lightning2_template.gif"></p>
-
-<p>The editor is similar to the tilesort editor described above, and
-has many of the same controls.</p>
-
-<p>The mural is depicted as colored tiles.  The tiles are labeled and
-colored to indicate the host node for each tile.</p>
-
-<p>Good load balancing is essential for this configuration.
-By observing the colors of the tiles one can get a feel for how well the
-image space is subdivided among the servers.
-That is, you want to have an even, unclustered arrangement of servers.
-</p>
-
-<p>By adjusting the number of servers, the tile size and the tile layout
-you can tune the load balancing.
-The <em>Tile Layout</em> control currently has three layout options.
-Try them all to see how they work.
-More layouts can be easily added to the program.
-</p>
-
-
-
-<h2 class="PageSubHeading">Future Templates</h2>
+<li><a href="tilesort_template.html" target="_self">tile-sort</a>
+- sort-first tiled rendering typically used to drive large mural displays.
+<li><a href="sortlast_template.html" target="_self">sort-last</a>
+- parallel rendering with per-pixel image compositing.
+<li><a href="reassembly_template.html" target="_self">image reassembly</a>
+- sort-first tiled rendering with image reassembly.
+</ul>
 
 <p>The Chromium configuration tool may be extended with new types of
-templates (it's a modular interface).</p>
-
-<p>A template for binary-swap image composition is likely.</p>
+templates (it's a modular interface).
+A template for binary-swap image composition is likely.
+</p>
 
 
 
