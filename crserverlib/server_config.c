@@ -278,6 +278,10 @@ crServerGatherConfiguration(char *mothership)
 
 	}
 
+	/* default client and mural */
+	cr_server.curClient = &cr_server.clients[0];
+	cr_server.curClient->currentMural = defaultMural;
+
 	crFreeStrings(clientchain);
 	crFreeStrings(clientlist);
 
