@@ -53,7 +53,11 @@ else
 ifeq ($(ARCH),FreeBSD)
 LDFLAGS += -lpthread
 else
+ifndef IRIX_64BIT
 LDFLAGS += -ldl -lpthread
+else
+LDFLAGS += -lpthread
+endif
 endif
 endif
 

@@ -57,7 +57,11 @@ static const char *libgl_names[] = {
 #endif
 
 #if defined(IRIX) || defined(IRIX64)
+#ifdef IRIX_64BIT
+#define SYSTEM_LIB_DIR  "/usr/lib64"
+#else
 #define SYSTEM_LIB_DIR  "/usr/lib32"
+#endif
 #else
 #define SYSTEM_LIB_DIR  "/usr/lib"
 #endif

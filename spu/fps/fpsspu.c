@@ -18,12 +18,15 @@ void FPSSPU_APIENTRY fpsSwapBuffers( GLint window, GLint flags )
 	(void) window;
 
 	frame_counter++;
-	if (frame_counter == 10)
+	if ((frame_counter == 10) || (elapsed - elapsed_base > 1))
 	{
 		float fps = frame_counter / (elapsed - elapsed_base);
 		elapsed_base = elapsed;
 		frame_counter = 0;
-		crDebug( "FPS: %f", fps );
+        if (fps<1)
+            crDebug( "SPF: %f", 1.0/fps );
+        else
+            crDebug( "FPS: %f", fps );
 	}
 
 	fps_spu.super.SwapBuffers( window, flags );

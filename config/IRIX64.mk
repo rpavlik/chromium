@@ -9,19 +9,30 @@
 # 1209: The controlling expression is constant.
 # 1552: The variable "i" is set but never used.
 
+# If you want 64 bit support, then uncomment the following line:
+#IRIX_64BIT = 1
+
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = CC
 CC = cc
 
-CXXFLAGS          += -n32 -fullwarn -DIRIX -w2 -woff 1174,3201,1209,1552
 CXX_RELEASE_FLAGS += -O2 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
+ifdef IRIX_64BIT
+CXXFLAGS          += -DIRIX_64BIT -64 -fullwarn -DIRIX -w2 -woff 1174,3201,1209,1552
+CFLAGS            += -DIRIX_64BIT -64 -fullwarn -DIRIX -w2 -woff 1174,3201,1209,1552
+LDFLAGS           += -64 -lm -ignore_unresolved
+SHARED_LDFLAGS = -shared -64
+else
+CXXFLAGS          += -n32 -fullwarn -DIRIX -w2 -woff 1174,3201,1209,1552
 CFLAGS            += -n32 -fullwarn -DIRIX -w2 -woff 1174,3201,1209,1552
+LDFLAGS           += -n32 -lm -ignore_unresolved
+SHARED_LDFLAGS = -shared -n32
+endif
 C_RELEASE_FLAGS   += -O2 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
-LDFLAGS           += -n32 -lm -ignore_unresolved
 LD_RELEASE_FLAGS  += 
 LD_DEBUG_FLAGS    +=
 
@@ -51,7 +62,6 @@ DLLSUFFIX = .so
 LIBSUFFIX = .a
 OBJSUFFIX = .o
 MV = mv
-SHARED_LDFLAGS = -shared -n32
 PERL = perl
 PYTHON = python
 JGRAPH = /u/eldridge/bin/IRIX/jgraph

@@ -64,13 +64,13 @@ ARCH_EXPORTS = $(ARCH)_exports.c
 endif
 
 ifeq ($(ARCH), IRIX64)
-FILES += $(ARCH)_exports glx IRIX_edgeflagpointer
+FILES += $(ARCH)_exports glx IRIX_edgeflagpointer xfont
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
 
 ifeq ($(ARCH), IRIX)
-FILES += IRIX64_exports glx IRIX_edgeflagpointer
+FILES += IRIX64_exports glx IRIX_edgeflagpointer xfont
 ARCH_EXPORTS_PY = IRIX64_exports.py
 ARCH_EXPORTS = IRIX64_exports.c 
 endif

@@ -165,7 +165,7 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 		if ( unpack->skipRows != 0 ||
 			   unpack->skipPixels != 0 )
 		{
-			crError( "crPackBitmap: I don't know how to unpack the data!" );
+			crError( "crPackBitmap: I don't know how to unpack the data!  The skipRows or skipPixels is non-zero." );
 		}
 
 		if (unpack->rowLength > 0)
@@ -187,7 +187,7 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 				row_length = ( ( row_length + 63 ) & ~63 ) >> 6;
 				break;
 			default:
-				crError( "crPackBitmap: I don't know how to unpack the data!" );
+				crError( "crPackBitmap: I don't know how to unpack the data! The alignment isn't one I know." );
 				return;
 		}
 
