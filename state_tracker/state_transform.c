@@ -1092,7 +1092,7 @@ void  STATE_APIENTRY crStateGetClipPlane (GLenum plane, GLdouble *equation)
 void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue *bitID, 
 						 CRTransformState *from, CRTransformState *to) 
 {
-	int i,j;
+	GLuint i,j;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
@@ -1229,7 +1229,7 @@ void crStateTransformSwitch (GLuint maxTextureUnits, CRTransformBits *t, GLbitva
 void crStateTransformDiff(GLuint maxTextureUnits, CRTransformBits *t, GLbitvalue *bitID, 
 						 CRTransformState *from, CRTransformState *to) 
 {
-	GLint i,j;
+	GLuint i,j;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)

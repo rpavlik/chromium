@@ -320,18 +320,18 @@ CRConnection** crNetDump( int* num )
 {
 	CRConnection **c;
 
-	if ( ( c = crTCPIPDump( num ) ) )
-		return c;
-	else
-	if ( ( c = crDevnullDump ( num ) ) )
-		return c;
-	else
-	if ( ( c = crFileDump( num ) ) )
-		return c;
+	c = crTCPIPDump( num );
+	if ( c ) return c;
+
+	c = crDevnullDump( num );
+	if ( c ) return c;
+
+	c = crFileDump( num );
+	if ( c ) return c;
+
 #ifdef GM_SUPPORT
-	else
-	if ( ( c = crGmDump( num ) ) )
-		return c;
+	c = crGmDump( num );
+	if ( c ) return c;
 #endif
 
 	*num = 0;
