@@ -63,8 +63,10 @@ void crServerSetViewportBounds (CRViewportState *v,
 
 	/* If the scissor is invalid 
 	** set it to the whole output
+	** We might as well use the actual scissorTest rather than
+	** scissorValid - it never gets reset anyway.
 	*/
-	if (!v->scissorValid) 
+	if (!v->scissorTest) 
 	{
 		cr_server.head_spu->dispatch_table.Scissor (
 			outputwindow->x1, outputwindow->y1,

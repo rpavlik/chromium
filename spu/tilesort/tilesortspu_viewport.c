@@ -87,11 +87,3 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 			               (int) (width*widthscale + 0.5f), 
 			               (int) (height*heightscale + 0.5f) );
 }
-
-void TILESORTSPU_APIENTRY tilesortspu_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
-{
-	(void) x;
-	(void) y;
-	(void) width;
-	(void) height;
-}

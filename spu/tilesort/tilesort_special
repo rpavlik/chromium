@@ -10,7 +10,6 @@ End
 MakeCurrent
 SwapBuffers
 Viewport
-Scissor
 Finish
 Flush
 ArrayElement
