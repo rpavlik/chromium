@@ -2,20 +2,20 @@
 #include <stdio.h>
 #include "cr_glwrapper.h"
 
-#define ANGLE_STEP .050f
+#define ANGLE_STEP .5f
 
 int main(int argc, char *argv[])
 {
 	SPU *spu;
-	char *spuname = "renderspu";
+	int ids[] = { 0, 1 };
+	char *spunames[] = { "invertspu", "renderspu" };
 	float angle = 0;
 	int frame = 0;
 
-	if (argc > 1)
-	{
-		spuname = argv[1];
-	}
-	spu = crSPULoad( NULL, 0, spuname, NULL );
+	(void) argc;
+	(void) argv;
+
+	spu = crSPULoadChain( 2, ids, spunames, NULL );
 
 	spu->dispatch_table.Viewport( 0, 0, 256, 256 );
 	spu->dispatch_table.ClearColor( 0,0,0,1 );
