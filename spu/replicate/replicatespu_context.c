@@ -396,6 +396,7 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 	GLint *rserverCtx;
 	ContextInfo *newCtx;
 	unsigned int i;
+	unsigned int show_window = 0;
 	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, window );
 	GET_THREAD(thread);
 
@@ -425,7 +426,9 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 			XVncChromiumMonitor( replicate_spu.glx_display, winInfo->id, nativeWindow );
 			winInfo->nativeWindow = nativeWindow;
 
-			replicatespuRePositionWindow(nativeWindow);
+			replicatespuRePositionWindow(winInfo);
+
+			show_window = 1;
 		}
 
 		CRASSERT(newCtx->State);  /* verify valid */
@@ -468,6 +471,21 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 	}
 
 	thread->currentContext = newCtx;
+
+	if (show_window) {
+		/* We may find that the window was mapped before we
+		 * called MakeCurrent, if that's the case then ensure
+		 * the remote end gets the WindowShow event */
+		if (winInfo->viewable) 
+		{
+			if (replicate_spu.swap)
+				crPackWindowShowSWAP( winInfo->id, GL_TRUE );
+			else
+				crPackWindowShow( winInfo->id, GL_TRUE );
+		}
+
+		replicatespuFlush( (void *)thread );
+	}
 
 	{
 		GET_THREAD(t);

@@ -146,6 +146,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_WindowCreate( const char *dpyName, GLin
 			winInfo->width = 0;
 			winInfo->height = 0;
 			winInfo->nativeWindow = 0;
+			winInfo->viewable = GL_FALSE; 
 
 			crHashtableAdd(replicate_spu.windowTable, freeWinID, winInfo);
 			}

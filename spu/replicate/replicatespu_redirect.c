@@ -70,24 +70,31 @@ static void TextureObjDiffCallback( unsigned long key, void *data1, void *data2 
 													 GL_TRUE /* always dirty */);
 }
 
-
-void replicatespuRePositionWindow(int nativeWindow)
+void replicatespuRePositionWindow(WindowInfo *winInfo)
 {
 	Window root;
 	int x, y;
 	unsigned int width, height, bw, d;
+	XWindowAttributes winAtt;
 
 	old_xerror_handler = XSetErrorHandler( x11_error_handler );
 
 	XSync(replicate_spu.glx_display, 0);
-	XGetGeometry(replicate_spu.glx_display, nativeWindow, 
+	XGetGeometry(replicate_spu.glx_display, (Window)winInfo->nativeWindow, 
 		      &root, &x, &y, &width, &height, &bw, &d);
+	XGetWindowAttributes(replicate_spu.glx_display, (Window)winInfo->nativeWindow, &winAtt);
 #if 0
-	XMoveWindow(replicate_spu.glx_display, nativeWindow, x, y);
+	XMoveWindow(replicate_spu.glx_display, winInfo->nativeWindow, x, y);
 #else
-	XResizeWindow(replicate_spu.glx_display, nativeWindow, width, height-1);
-	XResizeWindow(replicate_spu.glx_display, nativeWindow, width, height);
+	XResizeWindow(replicate_spu.glx_display, winInfo->nativeWindow, width, height-1);
+	XResizeWindow(replicate_spu.glx_display, winInfo->nativeWindow, width, height);
 #endif
+	/* Check if the window is mapped */
+	if (winAtt.map_state == IsViewable) 
+		winInfo->viewable = GL_TRUE;
+  	else
+		winInfo->viewable = GL_FALSE;
+
 	XSync(replicate_spu.glx_display, 0);
 	if (caught_x11_error) {
 		caught_x11_error = 0;
@@ -164,7 +171,7 @@ static void replicatespuRePositionWindows(unsigned long key, void *data1, void *
 
 #if 1
 	if (winInfo->nativeWindow)
-		replicatespuRePositionWindow(winInfo->nativeWindow);
+		replicatespuRePositionWindow(winInfo);
 #endif
 }
 

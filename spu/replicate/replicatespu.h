@@ -34,6 +34,8 @@ struct window_info_t {
 	GLint width, height;
 
 	GLint nativeWindow;
+	
+	GLboolean viewable;
 };
 
 #define CHROMIUM_START_PORT 7000
@@ -110,7 +112,7 @@ extern void replicatespuConnectToServer( CRNetServer *server );
 extern void replicatespuFlush( void *arg );
 extern void replicatespuHuge( CROpcode opcode, void *buf );
 extern void replicatespuReplicateCreateContext( int ipaddress );
-extern void replicatespuRePositionWindow(int nativeWindow);
+extern void replicatespuRePositionWindow(WindowInfo *winInfo);
 extern void replicatespuCreateDiffAPI( void );
 
 extern ThreadInfo *replicatespuNewThread( unsigned long id );
