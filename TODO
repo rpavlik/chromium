@@ -1,5 +1,4 @@
 Before Alpha release:
-	tilesort Rect
 	tilesort DrawPixels/RasterPos
 	tilesort Viewport testing
 	tilesort Pinching
