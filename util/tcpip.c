@@ -184,11 +184,6 @@ static int __read_exact( CRSocket sock, void *buf, unsigned int len )
 					crWarning( "__read_exact(TCPIP): "
 							"caught an EINTR, looping for more data" );
 					continue;
-				case EBADF: crWarning( "EBADF" ); break;
-				case ECONNREFUSED: crWarning( "ECONNREFUSED" ); break;
-				case ENOTCONN: crWarning( "ENOTCONN" ); break;
-				case ENOTSOCK: crWarning( "ENOTSOCK" ); break;
-				case EAGAIN: crWarning( "EAGAIN" ); break;
 				case EFAULT: crWarning( "EFAULT" ); break;
 				case EINVAL: crWarning( "EINVAL" ); break;
 				default: break;

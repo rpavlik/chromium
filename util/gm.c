@@ -573,7 +573,7 @@ void crGmDoDisconnect( CRConnection *conn )
 
 
 	static __inline CRGmConnection *
-crGmConnectionLookup( int id )
+crGmConnectionLookup( unsigned int id )
 {
 	CRGmConnection *gm_conn;
 
