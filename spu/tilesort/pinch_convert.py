@@ -50,7 +50,10 @@ for k in current_fns.keys():
 
 	i = 0
 	for member in current_fns[k]['members']:
-		print '\t(dst)%s = vdata[%d];\\' % (member,i)
+		if ucname == 'EDGEFLAG':
+			print '\t(dst)%s = (GLboolean) vdata[%d];\\' % (member,i)
+		else:
+			print '\t(dst)%s = vdata[%d];\\' % (member,i)
 		i += 1
 
 	print '}\n'

@@ -17,7 +17,11 @@
 
 
 /* XXX may need to conditionally define this macro for various platforms */
+#ifdef WINDOWS
+#define FINITE(X) _finite(X)
+#else
 #define FINITE(X) finite(X)
+#endif
 
 
 /*
@@ -578,9 +582,9 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	if (tilesort_spu.bboxScale != 1.0) {
 		GLfloat scale = tilesort_spu.bboxScale;
 		/* compute center point of box */
-		GLfloat cx = 0.5 * (bucketInfo->objectMin.x + bucketInfo->objectMax.x);
-		GLfloat cy = 0.5 * (bucketInfo->objectMin.y + bucketInfo->objectMax.y);
-		GLfloat cz = 0.5 * (bucketInfo->objectMin.z + bucketInfo->objectMax.z);
+		GLfloat cx = 0.5f * (bucketInfo->objectMin.x + bucketInfo->objectMax.x);
+		GLfloat cy = 0.5f * (bucketInfo->objectMin.y + bucketInfo->objectMax.y);
+		GLfloat cz = 0.5f * (bucketInfo->objectMin.z + bucketInfo->objectMax.z);
 		/* scale bounds relative to center point */
 		bucketInfo->objectMin.x = cx + (bucketInfo->objectMin.x - cx) * scale;
 		bucketInfo->objectMin.y = cy + (bucketInfo->objectMin.y - cy) * scale;
