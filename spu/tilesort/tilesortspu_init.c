@@ -4,6 +4,11 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#define DEBUG_FP_EXCEPTIONS 0
+#if DEBUG_FP_EXCEPTIONS
+#include <fpu_control.h>
+#include <math.h>
+#endif
 #include "cr_rand.h"
 #include "cr_spu.h"
 #include "cr_mem.h"
@@ -41,6 +46,16 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *self,
 	(void) num_contexts;
 	(void) child;
 	(void) self;
+
+#if DEBUG_FP_EXCEPTIONS
+	{
+            fpu_control_t mask;
+            _FPU_GETCW(mask);
+            mask &= ~(_FPU_MASK_IM | _FPU_MASK_DM | _FPU_MASK_ZM
+                      | _FPU_MASK_OM | _FPU_MASK_UM);
+            _FPU_SETCW(mask);
+	}
+#endif
 
 	crRandSeed(id);
 
