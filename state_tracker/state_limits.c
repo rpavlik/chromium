@@ -132,6 +132,27 @@ const char *__stateChromiumExtensions =
 #ifdef GL_CR_client_clear_control
 	"GL_CR_client_clear_control "
 #endif
+#ifdef GL_CR_synchronization
+	"GL_CR_synchronization "
+#endif
+#ifdef GL_CR_head_spu_name
+	"GL_CR_head_spu_name "
+#endif
+#ifdef GL_CR_performance_info
+	"GL_CR_performance_info "
+#endif
+#ifdef GL_CR_window_size
+	"GL_CR_window_size "
+#endif
+#ifdef GL_CR_tile_info
+	"GL_CR_tile_info "
+#endif
+#ifdef GL_CR_saveframe
+	"GL_CR_saveframe "
+#endif
+#ifdef GL_CR_readback_barrier_size
+	"GL_CR_readback_barrier_size "
+#endif
 	"";
 
 
