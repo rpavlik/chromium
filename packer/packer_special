@@ -117,3 +117,4 @@ GetCompressedTexImageARB
 DeleteFencesNV
 FogCoordPointerEXT
 PointParameterfvARB
+PointParameteriv
