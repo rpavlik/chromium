@@ -987,7 +987,7 @@ unsigned int
 crNetPeekMessage( CRConnection *conn, CRMessage **message )
 {
 	unsigned int len;
-	CRConnection *dummyConn;
+	CRConnection *dummyConn = NULL;
 	if (crDequeueMessageNoBlock(&conn->messageList, message, &len, &dummyConn))
 		return len;
 	else
