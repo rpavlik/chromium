@@ -18,12 +18,6 @@
 
 #define MAGIC_OFFSET 3000
 
-int StartedVnc = 0;
-
-/* a nice hack to save CPU!! */
-int NOP = 1;
-
-
 /*
  * Allocate a new ThreadInfo structure, setup a connection to the
  * server, allocate/init a packer context, bind this ThreadInfo to
@@ -99,14 +93,14 @@ static void replicatespuStartVnc( void )
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #endif
-	if (StartedVnc) {
+	if (replicate_spu.StartedVnc) {
 #ifdef CHROMIUM_THREADSAFE_notyet
 		crUnlockMutex(&_ReplicateMutex);
 #endif
 		return;
 	}
 
-	StartedVnc = 1;
+	replicate_spu.StartedVnc = 1;
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);
@@ -322,9 +316,9 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 	replicate_spu.thread[0].broadcast = 1;
 
 	if (!crStrcmp( headspuname, "nop" ))
-		NOP = 0;
+		replicate_spu.NOP = 0;
 	else
-		NOP = 1;
+		replicate_spu.NOP = 1;
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);

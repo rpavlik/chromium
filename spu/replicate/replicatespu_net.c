@@ -15,8 +15,6 @@
 #include <X11/Xmd.h>
 #include <X11/extensions/vnc.h>
 
-extern int NOP;
-
 static void replicatespuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
@@ -140,7 +138,7 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
 	return hdr;
 }
 
-static void replicatespuCheckVncEvents()
+static void replicatespuCheckVncEvents(void)
 {
 	if (replicate_spu.glx_display) {
 		while (XPending(replicate_spu.glx_display)) {
@@ -224,7 +222,7 @@ void replicatespuFlush(void *arg )
 
 	/* Send pack buffer to the primary connection, but if it's the nopspu
 	 * we can drop it on the floor, but not if we've turned off broadcast */
-	if (NOP || !thread->broadcast) {
+	if (replicate_spu.NOP || !thread->broadcast) {
 		if ( buf->holds_BeginEnd )
 			crNetBarf( thread->server.conn, NULL, hdr, len );
 		else
@@ -311,7 +309,7 @@ void replicatespuHuge( CROpcode opcode, void *buf )
 
 	/* Send pack buffer to the primary connection, but if it's the nopspu
 	 * we can drop it on the floor, but not if we've turned off broadcast */
-	if (NOP || !thread->broadcast) {
+	if (replicate_spu.NOP || !thread->broadcast) {
 		crNetSend( thread->server.conn, NULL, src, len );
 	}
 

@@ -49,6 +49,8 @@ replicateSPUInit( int id, SPU *child, SPU *self,
 
 	replicate_spu.id = id;
 	replicate_spu.glx_display = NULL;
+	replicate_spu.NOP = 1; /* a nice hack to save CPU!! */
+	replicate_spu.StartedVnc = 0;
 
 	replicatespuGatherConfiguration( child );
 

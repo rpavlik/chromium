@@ -81,6 +81,8 @@ typedef struct {
 	CRHashTable *windowTable;
 
 	int vncAvailable;
+	int NOP;
+	int StartedVnc;
 
 	char *name;
 	int buffer_size;
