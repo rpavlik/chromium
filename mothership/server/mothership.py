@@ -31,7 +31,7 @@ Other internal functions/classes:
     SockWrapper:    Internal convience class for handling sockets
 """
 
-import sys, string, types, traceback, re, threading, os, socket, select
+import sys, string, types, traceback, re, threading, os, socket, select, signal
 
 from crconfig import arch, crdir, crbindir, crlibdir
 
@@ -726,6 +726,20 @@ class CR:
 				# that has requested something be started.
 				spawner = CRSpawner( self.nodes ) ;
 				spawner.start() ;
+
+				# If we're supposed to "phone home" with a signal, do so
+				# with the USR1 signal.  This will happen when we're
+				# auto-starting on Linux - the OpenGL stub will wait
+				# until the mothership is going before attempting to
+				# make contact.  (The CRSIGNAL envariable should never
+				# be set on Windows, since Windows Python doesn't
+				# seem to support os.kill().)
+				if os.environ.has_key('CRSIGNAL'):
+					processString = os.environ['CRSIGNAL']
+					CRInfo("Mothership signalling spawning process %s" % processString)
+					os.kill(int(processString),signal.SIGUSR1)
+				else:
+					CRInfo("Mothership not signalling")
 
 				while 1:
 					ready = select.select( self.all_sockets, [], [], 0.1 )[0]

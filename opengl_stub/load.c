@@ -17,6 +17,10 @@
 #include "stub.h"
 #include <stdlib.h>
 #include <signal.h>
+#ifndef WINDOWS
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 
 /*
@@ -287,6 +291,12 @@ static char **LookupMothershipConfig(const char *procName)
 	return NULL;
 }
 
+static int Mothership_Awake = 0;
+static void MothershipPhoneHome(int signo)
+{
+	crDebug("Got signal %d: mothership is awake!", signo);
+	Mothership_Awake = 1;
+}
 
 void stubInit(void)
 {
@@ -366,6 +376,7 @@ void stubInit(void)
 
 			argv[arg++] = PYTHON_EXE;
             argv[arg++] = "-E"; // Ignores any program-set PYTHONPATH or PYTHONHOME
+
 			for (i = 0; args[i]; i++)
 			{
 				if (crStrcmp(args[i], "%p") == 0)
@@ -397,8 +408,48 @@ void stubInit(void)
 					crDebug("argv[%d] = '%s'", i, argv[i]);
 			}
 
+#ifndef WINDOWS
+			/* We need to spawn the mothership and then wait patiently
+			 * until it comes up.  We'll do this by asking the mothership
+			 * to signal us when it is ready (via the -S option we supplied
+			 * above).  We don't try to do this in Windows because it seems
+			 * Windows Python doesn't support os.kill(), which is what
+			 * the mothership will use to signal us back.
+			 */
+			{
+				void (*oldHandler)(int);
+				char processId[100];
+				int attempts = 5;
+
+				sprintf(processId, "%d", getpid());
+				crSetenv("CRSIGNAL", processId);
+
+				oldHandler = signal(SIGUSR1, MothershipPhoneHome);
+				Mothership_Awake = 0;
+				stub.mothershipPID = crSpawn(PYTHON_EXE, (const char **) argv );
+				while (--attempts) {
+					if (Mothership_Awake) {
+						crDebug("Mothership is awake!");
+						break;
+					}
+					crSleep(10);
+				}
+
+				/* Restore the older handler, in case it was being used */
+				(void) signal(SIGUSR1, oldHandler);
+				if (!Mothership_Awake) {
+					crWarning("Mothership never woke up!");
+				}
+			}
+#else
+			/* This is the old code; the above won't work in a Windows environment
+			 * because the Windows Python implementation doesn't include os.kill(),
+			 * which the mothership will attempt to use if CRSIGNAL is set in the
+			 * environment.
+			 */
 			stub.mothershipPID = crSpawn(PYTHON_EXE, (const char **) argv );
 			crSleep(1);
+#endif
 
 			crFreeStrings(args);
 			conn = crMothershipConnect( );
