@@ -1,5 +1,5 @@
 TOP = ..
 
-SUBDIRS = fonttest psubmit kirchner extensions
+SUBDIRS = fonttest kirchner extensions psubmit
 
 include ${TOP}/cr.mk

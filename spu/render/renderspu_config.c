@@ -15,7 +15,7 @@ static void __setDefaults( void )
 	render_spu.depth_bits = 8;
 	render_spu.stencil_bits = 0;
 #else
-	render_spu.depth_bits = 32;
+	render_spu.depth_bits = 24;
 	render_spu.stencil_bits = 0;
 #endif 
 	render_spu.fullscreen = 0;
@@ -53,6 +53,11 @@ void renderspuGatherConfiguration( void )
 	if (crMothershipSPUParam( conn, response, "fullscreen" ) )
 	{
 		sscanf( response, "%d", &(render_spu.fullscreen) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "stencil_bits" ) )
+	{
+		sscanf( response, "%d", &(render_spu.stencil_bits) );
 	}
 
 	crMothershipDisconnect( conn );

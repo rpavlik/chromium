@@ -220,13 +220,6 @@ void renderspuCreateWindow( void )
 		actual_window_y = 0;
 	}
 
-#if CR_TRACK_DEPTH_COMPLEXITY
-	if ( render_spu.stencil_bits < 8 )
-	{
-		render_spu.stencil_bits = 8;
-	}
-#endif
-
 	makeAttribList( attribList, 8, 8, 8, 
 			render_spu.depth_bits, render_spu.stencil_bits );
 
@@ -596,27 +589,6 @@ void renderspuCreateWindow( void )
 	}
 	crDebug( "Made Current" );
 
-#endif
-
-#if 1
-	// Ye olde hacke
-	//crDebug( "Setting the clear color" );
-	//render_spu.dispatch->ClearColor( 1.0f, 1.0f, 0.0f, 1.0f );
-	//crDebug( "clearing" );
-	//render_spu.dispatch->Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	//crDebug( "swapping buffers" );
-
-	//renderspuSwapBuffers( );
-	//crDebug( "DONE!" );
-#endif
-
-#if CR_TRACK_DEPTH_COMPLEXITY
-	glStencilFunc( GL_ALWAYS, ~0, ~0 );
-	glStencilMask( ~0 );
-	glStencilOp( GL_INCR, GL_INCR, GL_INCR );
-	glEnable( GL_STENCIL_TEST );
-	glClearStencil( 0 );
-	glClear( GL_STENCIL_BUFFER_BIT );
 #endif
 }
 
