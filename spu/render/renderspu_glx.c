@@ -179,13 +179,18 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 
 GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 {
+	const char *dpyName;
 	int screen;
 
 	CRASSERT(visual);
-	if (visual->displayName[0] == 0)
-		visual->dpy = XOpenDisplay(NULL);
+	if (visual->displayName[0])
+		dpyName = visual->displayName;
+	else if (render_spu.display_string[0])
+		dpyName = render_spu.display_string;
 	else
-		visual->dpy = XOpenDisplay(visual->displayName);
+		dpyName = NULL;
+
+	visual->dpy = XOpenDisplay(dpyName);
 
 	if (!visual->dpy)
 	{
@@ -199,7 +204,7 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 		char s[1000];
 		renderspuMakeVisString( visual->visAttribs, s );
 		crWarning( "Render SPU: Display %s doesn't have the necessary visual: %s",
-						 render_spu.display_string, s );
+							 dpyName, s );
 		XCloseDisplay(visual->dpy);
 		return GL_FALSE;
 	}
