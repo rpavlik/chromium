@@ -276,7 +276,7 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 	int read_width = 0, read_height = 0;
 	CRMessage *incoming_msg = NULL;
 	GLubyte *incoming_color = NULL;
-	GLfloat *incoming_depth = NULL;
+	GLuint *incoming_depth = NULL;
 	BinarySwapMsg *render_info = NULL;
 	int draw_x = 0, draw_y = 0;
 	int draw_width = 0, draw_height = 0;
@@ -457,12 +457,10 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 				incoming_color =
 					(GLubyte *) ((GLubyte *) incoming_msg + binaryswap_spu.offset);
 				incoming_depth =
-					(GLfloat *) (incoming_color + draw_width * draw_height * 3);
+					(GLuint *) (incoming_color + draw_width * draw_height * 3);
 
-				/* stupid stecil buffer tricks */
 				/* mask portion to draw */
-				binaryswap_spu.super.ColorMask(GL_FALSE, GL_FALSE, GL_FALSE,
-																			 GL_FALSE);
+				binaryswap_spu.super.ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 				binaryswap_spu.super.Enable(GL_STENCIL_TEST);
 				binaryswap_spu.super.Enable(GL_DEPTH_TEST);
 				binaryswap_spu.super.ClearStencil(0);
