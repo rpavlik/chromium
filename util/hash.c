@@ -63,7 +63,7 @@ void crHashtableDelete( CRHashTable *h, unsigned int key )
 		beftemp = temp;
 	}
 	if ( !temp )
-		crError( "Couldn't find the hashtable element to delete" );
+		return; /* not an error */
 	if ( beftemp )
 		beftemp->next = temp->next;
 	else
