@@ -803,7 +803,8 @@ class CR:
 	def do_opengldll( self, sock, args ):
 		"""do_opengldll(sock, args)
 		XXX Is this right??!  Not sure. (ahern)
-		Identifies the application node in the graph."""
+		Identifies the application node in the graph.
+		Also, return the client's SPU chain."""
 		(id_string, hostname) = args.split( " " )
 		app_id = int(id_string)
 		for node in self.nodes:
