@@ -43,6 +43,16 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( void )
 	static SPUDispatchTable hacked_child_dispatch;
 	BufList *temp, *next;
 	static int frame_counter = 1;
+	static int do_hiddenline = 0;
+
+#ifdef WINDOWS
+#define PRESSED( key ) (GetAsyncKeyState( key ) & (1<<15))
+	if (PRESSED( VK_SCROLL )) do_hiddenline = !do_hiddenline;
+	if (PRESSED( VK_NEXT ) && hiddenline_spu.line_width > 1) hiddenline_spu.line_width--;
+	if (PRESSED( VK_PRIOR )) hiddenline_spu.line_width++;
+#else
+	do_hiddenline = 1;
+#endif
 
 	if (frame_counter == 1)
 	{
@@ -70,36 +80,50 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( void )
 		hacked_child_dispatch.Color4usv = hlHandleColor4usv;
 	} 
 	
-	/* Step 0: Flush the pack buffer so the remainder of the current
+	/* Flush the pack buffer so the remainder of the current
 	 * frame makes it onto the list! */
 
 	hiddenlineFlush( NULL );
 
-	/* Step 1: Play back the frame just to the depth buffer, with polygon
-	 * offsets.  Note that this means we need to ignore calls to glColor,
-	 * disable texturing, disable lighting, things like that. */
-
 	hiddenline_spu.super.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	hiddenline_spu.super.PolygonOffset( 1.5f, 0.000001f );
-	hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-	hiddenline_spu.super.Color3f( hiddenline_spu.poly_r, hiddenline_spu.poly_g, hiddenline_spu.poly_b );
+	if (do_hiddenline)
+	{
+		hiddenline_spu.super.PushAttrib( GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT | GL_LINE_BIT );
+		hiddenline_spu.super.Disable( GL_TEXTURE_2D );
+		hiddenline_spu.super.Disable( GL_LIGHTING );
+		hiddenline_spu.super.Disable( GL_BLEND );
+		hiddenline_spu.super.Enable( GL_DEPTH_TEST );
+		hiddenline_spu.super.Enable( GL_POLYGON_OFFSET_FILL );
+		hiddenline_spu.super.LineWidth( hiddenline_spu.line_width );
 
-	/* Now, Play it back just to the depth buffer */
-	hiddenPlayback( &(hacked_child_dispatch) );
+		/* Play back the frame just to the depth buffer, with polygon
+		 * offsets.  Note that this means we need to ignore calls to glColor,
+		 * disable texturing, disable lighting, things like that. */
 
-	/* Step 2: Play back the frame with polygons set to draw in wireframe 
-	 * mode.  This time there's nothing special to do, just let the thing
-	 * run its course. */
+		hiddenline_spu.super.PolygonOffset( 1.5f, 0.000001f );
+		hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		hiddenline_spu.super.Color3f( hiddenline_spu.poly_r, hiddenline_spu.poly_g, hiddenline_spu.poly_b );
 
-	hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-	hiddenline_spu.super.Color3f( hiddenline_spu.line_r, hiddenline_spu.line_g, hiddenline_spu.line_b );
-	hiddenPlayback( &(hacked_child_dispatch) );
+		/* Now, Play it back just to the depth buffer */
+		hiddenPlayback( &(hacked_child_dispatch) );
 
-	/* Step 3: Actually swap the stupid buffers, duh. */
+		/* Play back the frame with polygons set to draw in wireframe 
+		 * mode.  This time there's nothing special to do, just let the thing
+		 * run its course. */
+
+		hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		hiddenline_spu.super.Color3f( hiddenline_spu.line_r, hiddenline_spu.line_g, hiddenline_spu.line_b );
+		hiddenPlayback( &(hacked_child_dispatch) );
+		hiddenline_spu.super.PopAttrib();
+	}
+	else
+	{
+		hiddenPlayback( &(hiddenline_spu.child) );
+	}
 
 	hiddenline_spu.super.SwapBuffers();
 	
-	/* Step 4: Release the resources needed to record the past frame so we
+	/* Release the resources needed to record the past frame so we
 	 * can record the next one */
 
 	for (temp = hiddenline_spu.frame_head ; temp ; temp = next )

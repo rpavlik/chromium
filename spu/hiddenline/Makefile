@@ -29,6 +29,10 @@ SLOP = $(PRECOMP)
 LIB_DEFS += hiddenlinespu.def
 include ${TOP}/cr.mk
 
+ifeq ($(ARCH), WIN_NT)
+LDFLAGS += user32.lib
+endif
+
 hiddenlinespu.c: hiddenline.py hiddenline_special hiddenline_pixel_special hiddenline_ignore_special
 	@$(ECHO) Building the Hidden Line SPU
 	@$(PYTHON) hiddenline.py > $@
