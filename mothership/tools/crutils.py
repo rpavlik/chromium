@@ -198,6 +198,10 @@ def SplitNode(node, mothership):
 	clients = mothership.FindClients(node)
 	(x, y) = node.GetPosition()
 	names = node.GetHosts()[:]
+	# build list of all tile lists in the node
+	tileList = []
+	for i in range(node.GetCount()):
+		tileList.append( node.GetTiles(i) )
 	# make count-1 new nodes
 	for i in range(node.GetCount() - 1):
 		newNode = node.Clone()
@@ -205,6 +209,9 @@ def SplitNode(node, mothership):
 		y += 70
 		newNode.SetPosition(x, y)
 		newNode.SetHosts( names[i+1 : i+2] )  # name[i+1]
+		newNode.DeleteTiles()
+		if i + 1 < len(tileList):
+			newNode.SetTiles(tileList[i+1], 0)
 		mothership.AddNode(newNode)
 		# connect clients to the new node
 		for c in clients:
@@ -213,6 +220,8 @@ def SplitNode(node, mothership):
 	# fix up the original node
 	node.SetCount(1)
 	node.SetHosts( names[0:1] )
+	node.DeleteTiles()
+	node.SetTiles(tileList[0], 0)
 
 def MergeNodes(nodes, mothership):
 	"""Merge a list of nodes into a single node.
@@ -221,13 +230,18 @@ def MergeNodes(nodes, mothership):
 	# make sure all the nodes are identical (or pretty similar)
 	# Also, compute totalCount
 	# Also, build list of all hostnames
+	# Also, build list of server tiles
 	assert len(nodes) > 1
 	totalCount = 0
 	first = nodes[0]
 	names = []
+	tiles = []
 	for n in nodes:
 		totalCount += n.GetCount()
 		names += n.GetHosts()
+		if n.IsServer():
+			for i in range(n.GetCount()):
+				tiles.append( n.GetTiles(i) )
 		if n != first and not first.IsSimilarTo(n):
 			return 0
 		
@@ -239,7 +253,10 @@ def MergeNodes(nodes, mothership):
 			for c in clients:
 				c.LastSPU().RemoveServer(n)
 			mothership.RemoveNode(n)
+
 	# Set total count on first node
 	first.SetCount(totalCount)
 	first.SetHosts(names)
+	for i in range(totalCount):
+		first.SetTiles(tiles[i], i)
 	return 1
