@@ -86,8 +86,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 		cr_server.context[ctxPos] = NULL;
 	}
 
+	/* If we delete our current context, default back to the null context */
 	if (cr_server.curClient->currentCtx == crCtx)
-		cr_server.curClient->currentCtx = NULL;
+		cr_server.curClient->currentCtx = cr_server.context[0];
 }
 
 

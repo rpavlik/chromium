@@ -121,6 +121,7 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
 	hdr = (CRMessageOpcodes *) 
 		( buf->data_start - ( ( num_opcodes + 3 ) & ~0x3 ) - sizeof(*hdr) );
 
+	CRASSERT(buf->pack);
 	CRASSERT( (void *) hdr >= buf->pack );
 
 	if (replicate_spu.swap)
@@ -163,11 +164,11 @@ static void replicatespuCheckVncEvents()
 				struct in_addr addr;
 
 				addr.s_addr = e->ipaddress;
-				crWarning("ReplicateSPU - someone just connected!\n");
+				crWarning("ReplicateSPU: someone just connected!\n");
 				if (e->ipaddress) {
 					replicatespuReplicateCreateContext(e->ipaddress);
 				} else {
-					crWarning("Someone connected, but with no ipaddress ???????????\n");
+					crWarning("Replicate SPU: Someone connected, but with no ipaddress ???????????\n");
 				}
 			} 
 #if 0
@@ -191,12 +192,12 @@ void replicatespuFlush(void *arg )
 	CRMessageOpcodes *hdr;
 	CRPackBuffer *buf;
 	unsigned int i;
-	unsigned int fired = 0;
 
 	/* we should _always_ pass a valid <arg> value */
 	CRASSERT(thread);
 	buf = &(thread->buffer);
 	CRASSERT(buf);
+	CRASSERT(buf->pack);
 
 	crPackReleaseBuffer( thread->packer );
 
@@ -225,10 +226,9 @@ void replicatespuFlush(void *arg )
 	 * we can drop it on the floor, but not if we've turned off broadcast */
 	if (NOP || !thread->broadcast) {
 		if ( buf->holds_BeginEnd )
-			crNetBarf( thread->server.conn, &(buf->pack), hdr, len );
+			crNetBarf( thread->server.conn, NULL, hdr, len );
 		else
-			crNetSend( thread->server.conn, &(buf->pack), hdr, len );
-		fired = 1;
+			crNetSend( thread->server.conn, NULL, hdr, len );
 	}
 
 	/* Now send it to all our replicants */
@@ -237,15 +237,11 @@ void replicatespuFlush(void *arg )
 		if (thread->broadcast && (replicate_spu.rserver[i].conn && replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION))
 		{
 			if ( buf->holds_BeginEnd )
-				crNetBarf( replicate_spu.rserver[i].conn, &(buf->pack), hdr, len );
+				crNetBarf( replicate_spu.rserver[i].conn, NULL, hdr, len );
 			else
-				crNetSend( replicate_spu.rserver[i].conn, &(buf->pack), hdr, len );
-			fired = 1;
+				crNetSend( replicate_spu.rserver[i].conn, NULL, hdr, len );
 		}
 	}
-
-	if (fired)
-		buf->pack = crNetAlloc( thread->server.conn );
 
 	/* The network may have found a new mtu */
 	buf->mtu = thread->server.conn->mtu;

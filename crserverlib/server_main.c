@@ -171,6 +171,13 @@ int CRServerMain( int argc, char *argv[] )
 
 	crStateLimitsInit( &(cr_server.limits) );
 
+	/*
+	 * Default context
+	 */
+	cr_server.context[0] = crStateCreateContext( &cr_server.limits, CR_RGB_BIT | CR_DEPTH_BIT );
+	cr_server.curClient->currentCtx = cr_server.context[0];
+
+
 	for (j = 0 ; j < cr_server.numClients ; j++)
 	{
 		crServerAddToRunQueue( &cr_server.clients[j] );

@@ -13,7 +13,9 @@ SUBDIRS += saveframe comm array binaryswap hiddenline fps wet perf dist_texture
 SUBDIRS += feedback simplequery motionblur injector expando
 
 ifeq ($(USE_VNC), 1)
+ifeq ($(THREADSAFE), 1)
 SUBDIRS += replicate
+endif
 endif
 
 ifeq ($(ARCH), WIN_NT)
