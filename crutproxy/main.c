@@ -71,7 +71,9 @@ crutProxyRecv( CRConnection *conn, void *buf, unsigned int len )
 	    return 0; /* NOT HANDLED */
     }
     (void) len;	
+#ifndef WINDOWS
     return 0; /* HANDLED */
+#endif
 }
 
 static void 
@@ -117,7 +119,9 @@ main( int argc, char *argv[] )
     for (;;) 
 	crNetRecv();	
 
+#ifndef WINDOWS
     return 0;
+#endif
 }
 
 

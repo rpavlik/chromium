@@ -420,7 +420,9 @@ crutClientRecv( CRConnection *conn, void *buf, unsigned int len )
 	return 0; /* NOT HANDLED */
     }
     (void) len;	
+#ifndef WINDOWS
     return 0; /* NOT HANDLED */
+#endif
 }
 
 static void 
