@@ -822,13 +822,13 @@ SBuffer* teac_getUnreadySendBuffer( Tcomm* tcomm, long size )
 
 SBuffer* teac_makeSendBufferReady( Tcomm* tcomm, SBuffer* buf )
 {
+  int i= 0;
   /* If the input buffer is already ready, just return it */
   if (buf->bufId >= 0 && buf->bufId<NUM_SEND_BUFFERS) return buf;
 
   /* Find a free send buffer.  We'll busy wait in this poll loop
    * if necessary.
    */
-  int i= 0;
   while (1) {
     if (elan3_pollevent_word(tcomm->ctx, tcomm->sbuf_ready[i],
 			     1)) break;
