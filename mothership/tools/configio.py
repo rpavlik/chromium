@@ -42,7 +42,7 @@ elif len(sys.argv) == 2:
 else:
 	print "Usage: %s <program>" % sys.argv[0] 
 	sys.exit(-1)
-if program == "":
+if DEFAULT_APP == "":
 	print "No program to run!"
 	sys.exit(-1)
 
