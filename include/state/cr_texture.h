@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-struct CRTextureFormat {
+typedef struct {
 	GLubyte redbits;
 	GLubyte greenbits;
 	GLubyte bluebits;
@@ -26,7 +26,7 @@ struct CRTextureFormat {
 	GLubyte luminancebits;
 	GLubyte intensitybits;
 	GLubyte indexbits;
-};
+} CRTextureFormat;
 
 typedef struct {
 	GLubyte *img;
@@ -42,7 +42,8 @@ typedef struct {
 #if CR_ARB_texture_compression
 	GLboolean compressed;
 #endif
-	const struct CRTextureFormat *texFormat;
+	GLboolean generateMipmap;
+	const CRTextureFormat *texFormat;
 
 	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRTextureLevel;

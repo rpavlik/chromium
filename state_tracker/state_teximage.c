@@ -156,6 +156,11 @@ generate_mipmap(CRTextureObj *tobj, GLenum target)
 		if (width == 1 && height == 1 && depth == 1)
 			break;
 	}
+
+	/* Set this flag so when we do the state diff, we enable GENERATE_MIPMAP
+	 * prior to calling diff.TexImage().
+	 */
+	levels[tobj->baseLevel].generateMipmap = GL_TRUE;
 }
 
 
@@ -588,6 +593,9 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
 	}
+	else {
+		tl->generateMipmap = GL_FALSE;
+	}
 #endif
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
@@ -688,6 +696,9 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
 	}
+	else {
+		tl->generateMipmap = GL_FALSE;
+	}
 #endif
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
@@ -766,6 +777,9 @@ crStateTexImage3D(GLenum target, GLint level,
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
 	}
+	else {
+		tl->generateMipmap = GL_FALSE;
+	}
 #endif
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
@@ -821,6 +835,9 @@ crStateTexSubImage1D(GLenum target, GLint level, GLint xoffset,
 #ifdef CR_SGIS_generate_mipmap
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
+	}
+	else {
+		tl->generateMipmap = GL_FALSE;
 	}
 #endif
 
@@ -885,6 +902,9 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 #ifdef CR_SGIS_generate_mipmap
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
+	}
+	else {
+		tl->generateMipmap = GL_FALSE;
 	}
 #endif
 
@@ -951,6 +971,9 @@ crStateTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 #ifdef CR_SGIS_generate_mipmap
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
+	}
+	else {
+		tl->generateMipmap = GL_FALSE;
 	}
 #endif
 
@@ -1028,6 +1051,9 @@ crStateCompressedTexImage1DARB(GLenum target, GLint level,
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
 	}
+	else {
+		tl->generateMipmap = GL_FALSE;
+	}
 #endif
 
 	DIRTY(tobj->dirty, g->neg_bitid);
@@ -1102,6 +1128,9 @@ crStateCompressedTexImage2DARB(GLenum target, GLint level,
 #ifdef CR_SGIS_generate_mipmap
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
+	}
+	else {
+		tl->generateMipmap = GL_FALSE;
 	}
 #endif
 
@@ -1179,6 +1208,9 @@ crStateCompressedTexImage3DARB(GLenum target, GLint level,
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
 	}
+	else {
+		tl->generateMipmap = GL_FALSE;
+	}
 #endif
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
@@ -1221,6 +1253,9 @@ crStateCompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
 #ifdef CR_SGIS_generate_mipmap
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
+	}
+	else {
+		tl->generateMipmap = GL_FALSE;
 	}
 #endif
 
@@ -1267,6 +1302,9 @@ crStateCompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
 #ifdef CR_SGIS_generate_mipmap
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
+	}
+	else {
+		tl->generateMipmap = GL_FALSE;
 	}
 #endif
 
@@ -1316,6 +1354,9 @@ crStateCompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 #ifdef CR_SGIS_generate_mipmap
 	if (level == tobj->baseLevel && tobj->generateMipmap) {
 		generate_mipmap(tobj, target);
+	}
+	else {
+		tl->generateMipmap = GL_FALSE;
 	}
 #endif
 

@@ -658,6 +658,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 #ifdef CR_SGIS_generate_mipmap
 		if (fromCtx->extensions.SGIS_generate_mipmap) {
 			diff_api.TexParameteri(tobj->target, GL_GENERATE_MIPMAP_SGIS, tobj->generateMipmap);
+			printf("GENERATE diff %p = %d\n", (void *) tobj, tobj->generateMipmap);
 		}
 #endif
 		if (!alwaysDirty)
@@ -676,6 +677,9 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					CRTextureLevel *tl = &(tobj->level[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
 					{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage1DARB(GL_TEXTURE_1D, lvl,
 																							 tl->internalFormat, tl->width,
@@ -687,6 +691,9 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 							diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
 							diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 							diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+							if (tl->generateMipmap) {
+								diff_api.TexParameteri(GL_TEXTURE_1D, GL_GENERATE_MIPMAP_SGIS, 1);
+							}
 							diff_api.TexImage1D(GL_TEXTURE_1D, lvl,
 																	tl->internalFormat,
 																	tl->width, tl->border,
@@ -703,6 +710,9 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					CRTextureLevel *tl = &(tobj->level[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
 					{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage2DARB(GL_TEXTURE_2D, lvl,
 																							 tl->internalFormat, tl->width,
@@ -732,6 +742,9 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					CRTextureLevel *tl = &(tobj->level[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
 				 	{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_3D, GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage3DARB(GL_TEXTURE_3D, lvl,
 																							 tl->internalFormat, tl->width,
@@ -797,6 +810,10 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					tl = &(tobj->level[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
 					{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+																		 GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_POSITIVE_X,
 																							 lvl, tl->internalFormat,
@@ -821,6 +838,10 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					tl = &(tobj->negativeXlevel[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
 					{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+																		 GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
 																							 lvl, tl->internalFormat,
@@ -845,6 +866,10 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					tl = &(tobj->positiveYlevel[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
 					{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+																		 GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
 																							 lvl, tl->internalFormat,
@@ -869,6 +894,10 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					tl = &(tobj->negativeYlevel[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
 					{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+																		 GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
 																							 lvl, tl->internalFormat,
@@ -893,6 +922,10 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					tl = &(tobj->positiveZlevel[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
 					{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+																		 GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
 																							 lvl, tl->internalFormat,
@@ -917,6 +950,10 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 					tl = &(tobj->negativeZlevel[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
 					{
+						if (tl->generateMipmap) {
+							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+																		 GL_GENERATE_MIPMAP_SGIS, 1);
+						}
 						if (tl->compressed) {
 							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
 																							 lvl, tl->internalFormat,

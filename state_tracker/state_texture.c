@@ -300,7 +300,7 @@ crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj,
  * Texture internal formats:
  */
 
-const struct CRTextureFormat _texformat_rgba8888 = {
+const CRTextureFormat _texformat_rgba8888 = {
    8,				/* RedBits */
    8,				/* GreenBits */
    8,				/* BlueBits */
@@ -310,7 +310,7 @@ const struct CRTextureFormat _texformat_rgba8888 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_argb8888 = {
+const CRTextureFormat _texformat_argb8888 = {
    8,				/* RedBits */
    8,				/* GreenBits */
    8,				/* BlueBits */
@@ -320,7 +320,7 @@ const struct CRTextureFormat _texformat_argb8888 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_rgb888 = {
+const CRTextureFormat _texformat_rgb888 = {
    8,				/* RedBits */
    8,				/* GreenBits */
    8,				/* BlueBits */
@@ -330,7 +330,7 @@ const struct CRTextureFormat _texformat_rgb888 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_rgb565 = {
+const CRTextureFormat _texformat_rgb565 = {
    5,				/* RedBits */
    6,				/* GreenBits */
    5,				/* BlueBits */
@@ -340,7 +340,7 @@ const struct CRTextureFormat _texformat_rgb565 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_argb4444 = {
+const CRTextureFormat _texformat_argb4444 = {
    4,				/* RedBits */
    4,				/* GreenBits */
    4,				/* BlueBits */
@@ -350,7 +350,7 @@ const struct CRTextureFormat _texformat_argb4444 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_argb1555 = {
+const CRTextureFormat _texformat_argb1555 = {
    5,				/* RedBits */
    5,				/* GreenBits */
    5,				/* BlueBits */
@@ -360,7 +360,7 @@ const struct CRTextureFormat _texformat_argb1555 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_al88 = {
+const CRTextureFormat _texformat_al88 = {
    0,				/* RedBits */
    0,				/* GreenBits */
    0,				/* BlueBits */
@@ -370,7 +370,7 @@ const struct CRTextureFormat _texformat_al88 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_rgb332 = {
+const CRTextureFormat _texformat_rgb332 = {
    3,				/* RedBits */
    3,				/* GreenBits */
    2,				/* BlueBits */
@@ -380,7 +380,7 @@ const struct CRTextureFormat _texformat_rgb332 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_a8 = {
+const CRTextureFormat _texformat_a8 = {
    0,				/* RedBits */
    0,				/* GreenBits */
    0,				/* BlueBits */
@@ -390,7 +390,7 @@ const struct CRTextureFormat _texformat_a8 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_l8 = {
+const CRTextureFormat _texformat_l8 = {
    0,				/* RedBits */
    0,				/* GreenBits */
    0,				/* BlueBits */
@@ -400,7 +400,7 @@ const struct CRTextureFormat _texformat_l8 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_i8 = {
+const CRTextureFormat _texformat_i8 = {
    0,				/* RedBits */
    0,				/* GreenBits */
    0,				/* BlueBits */
@@ -410,7 +410,7 @@ const struct CRTextureFormat _texformat_i8 = {
    0,				/* IndexBits */
 };
 
-const struct CRTextureFormat _texformat_ci8 = {
+const CRTextureFormat _texformat_ci8 = {
    0,				/* RedBits */
    0,				/* GreenBits */
    0,				/* BlueBits */
