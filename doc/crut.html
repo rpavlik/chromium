@@ -14,7 +14,12 @@
 
 <P><u>Disclaimer</u>: CRUT is still in its testing phase.  This documentation
 is provided to help people get to know CRUT, but with no warranty that everything
-works exactly as described.
+works exactly as described.  For more information of help using CRUT, contact <a
+href="beermann@cs.virginia.edu")> Dale Beermann</a>.
+
+<p><u>New</u>: CRUT now works with Windows as well.  It is not possible to
+render into the crutserver, but CRUT could be useful for users running a
+display wall under windows.
 
 <p>CRUT is the Cluster Rendering Utility Toolkit for Chromium.  It allows
 for applications to be written that allow for user interaction through a distributed
@@ -22,22 +27,27 @@ event system.  The client-side API for CRUT was designed after GLUT so that it i
 easy to use for people who already know GLUT, and so that applications can be ported
 to Chromium easily.  CRUT does not support every feature of GLUT, but does provide a major subset.
 
-<p>Configuring CRUT requires a few lines to be added to the Chromium configuration files.
-A few different example configurations are provided, <code>crut_fan.conf</code>, <code>crut_ring.conf</code>, and
-<code>crut_proxy.conf</code>.  They are examples of different network configurations.  Because of the
-latency of a network, it may be beneficial to define different configurations of how
-events propagate through the system.  The figures below depict two possible configurations,
-a "fan" configuration, where the event server (<code>crutserver</code>) sends each event to
-every client, and a "ring" configuration, where the event server sends the event to one client,
-and the messages are cascaded through the system.  The <code>crut_proxy.conf</code> file is an
-example of a configuration using a proxy server.  The proxy server can sit between the event server
-and the clients, to receive events from the server and distribute them to the clients in some manner.
-It is unlikely that most users will be using this for a while.
+<p>Configuring CRUT requires a few lines to be added to the Chromium
+configuration files.  A few different example configurations are provided,
+<code>crut_fan.conf</code>, <code>crut_ring.conf</code>, and
+<code>crut_proxy.conf</code>.  They are examples of different network
+configurations.  Because of the latency of a network, it may be beneficial to
+define different configurations of how events propagate through the system.
+The figures below depict two possible configurations, a "fan" configuration,
+where the event server (<code>crutserver</code>) sends each event to every
+client, and a "ring" configuration, where the event server sends the event to
+one client, and the messages are cascaded through the system.  The
+<code>crut_proxy.conf</code> file is an example of a configuration using a
+proxy server.  The proxy server can sit between the event server and the
+clients, to receive events from the server and distribute them to the clients
+in some manner.  It is unlikely that most users will be using this for a
+while.
 <p>
 <center><img src="crut_fan.gif">&nbsp;&nbsp;<img src="crut_ring.gif"></center>
 <p>
 
-<p>The only lines that were added to the original configuration files look like this:
+<p>The only lines that were added to the original configuration files look
+like this:
 <p>
 <table border=0 class="CodeFrame" width=100%>
 <tr><td class="CodeListing"><code>
@@ -52,19 +62,32 @@ appnode2.AddCRUTServer( appnode1 , protocol='tcpip', port=9001 )
 </code></td></tr>
 </table>
 <p>
-The first line tells the <code>renderspu</code> that it will be rendering into a window managed by the <code>crutserver</code>.
-The second and third lines define a <code>crutserver</code>, the fourth and fifth define the event server
-for each client.  This is an example of the ring configuration, where one client is receiving
-events from another, which is in turn receiving events from the <code>crutserver</code>.  That's really all
-that has to be done for the configuration file, now you need to know how to incorporate CRUT into your own applications.
+The first line tells the <code>renderspu</code> that it will be rendering into
+a window managed by the <code>crutserver</code>.  The second and third lines
+define a <code>crutserver</code> node, the fourth and fifth define the event
+server for each client.  This is an example of the ring configuration, where
+one client is receiving events from another, which is in turn receiving events
+from the <code>crutserver</code>.  That's really all that has to be done for
+the configuration file, now you need to know how to incorporate CRUT into your
+own applications.
 
-<p>So far there is only one example application provided with the Chromium distribution
-that uses CRUT, called <code>psubmit_crut</code>, it should serve as a good reference.
-The application <code>psubmit_crut</code> is a modification of the <code>psubmit</code>
-application that allows events to be handled.  The application provides examples of mouse, keyboard, motion, and menu
-event handling.  <u>Important</u>: If you are planning on using the crutserver to handle CRUT menus, then you will
-need the <a href="http://www.sourceforge.net/projects/expat">expat</a> XML parsing library.  The important part of the
-code is shown below:
+<p>NOTE: It is not necessary, nor will it be desirable in many circumstances
+to render into a window put up by the crutserver.  Display Walls, for example,
+can benefit from having a dedicated event server sitting in the viewing room.
+This is possible by commenting out the 'render_to_crut_window' option, and
+making the crutserver a dedicated node on a separate computer
+( <code>crutserver = <nobreak>CRServerNode('event_host')</nobreak></code> where
+<code>event_host</code> is the computer in the viewing room ).
+
+<p>So far there is only one example application provided with the Chromium
+distribution that uses CRUT, called <code>psubmit_crut</code>, it should serve
+as a good reference.  The application <code>psubmit_crut</code> is a
+modification of the <code>psubmit</code> application that allows events to be
+handled.  The application provides examples of mouse, keyboard, motion, and
+menu event handling.  <u>Important</u>: If you are planning on using the
+crutserver to handle CRUT menus, then you will need the <a
+href="http://www.sourceforge.net/projects/expat">expat</a> XML parsing
+library.  The important part of the code is shown below:
 <p>
 <table border=0 class="CodeFrame" width=100%>
 <tr><td class="CodeListing"><code>
