@@ -127,6 +127,8 @@ LayoutMural(int muralWidth, int muralHeight, int tileSize, int numServers)
 	if (cols % numServers != 0)
 		zigzag = GL_TRUE;
 
+	k = 0;
+
 	for (i = 0; i < rows; i++) {
 		/* odd-numbered rows are right-to-left instead of left-to-right */
 		if ((i & 1) && zigzag) {
