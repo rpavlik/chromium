@@ -5,7 +5,7 @@ CXX=xlC
 CC=xlc_r
 CXXFLAGS += -DAIX  -I $(TOP)/include
 CFLAGS += -qcpluscmt -DAIX -I $(TOP)/include 
-LDFLAGS += -L/usr/X11R6/lib
+LDFLAGS += -L/usr/X11R6/lib -lX11 -lpthread
 
 
 DEBUGFLAGS = -g
@@ -49,7 +49,7 @@ MPI_CXX = mpiCC
 MPI_LDFLAGS =
 AIXSHAREDLIB=y
 # SHARED=y
-SHARED_LDFLAGS = -L $(TOP)/lib/$(ARCH) -lX11 -lXmu
+SHARED_LDFLAGS = -L $(TOP)/lib/$(ARCH) -lX11 -lXmu -lpthread
 ifdef OPENGL
     SHARED_LDFLAGS += -lGL
 endif

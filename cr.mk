@@ -385,7 +385,7 @@ ifdef AIXSHAREDLIB
 	pwd
 	@$(ECHO) ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
 	ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
-	ar $(ARCREATEFLAGS)  $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) shr.o
+	ar $(ARCREATEFLAGS)  $@ shr.o
 	cp shr.o $(AIXDLIBNAME)
 	@$(CP) $(AIXDLIBNAME) $(DSO_DIR)
 	rm -f $(DSO_DIR)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)
@@ -411,10 +411,12 @@ ifdef AIXSHAREDLIB
 	pwd
 	@$(ECHO) ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
 	ld -bnoentry -bloadmap:load.map -bM:SRE -o shr.o -bE:tmpAnyDX.exp tmpAnyDX.a -L$(TOP)/lib/AIX $(SHARED_LDFLAGS) $(LIBRARIES) $(XSLIBS) -ldl -lm -lc
-	ar $(ARCREATEFLAGS)  $(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) shr.o
+	#ar $(ARCREATEFLAGS)  $(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) shr.o
+	ar $(ARCREATEFLAGS)  $@ shr.o
 	cp shr.o $(AIXDLIBNAME)
 	@$(CP) $(AIXDLIBNAME) $(DSO_DIR)
-	rm -f $(DSO_DIR)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)
+	echo still have not done cleanup
+	#rm -f $(DSO_DIR)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)
 	rm -f tmpAnyDX.* shr.o load.map
 
 else
