@@ -63,8 +63,6 @@ typedef struct {
 
 	CRCurrentStatePointers   *current;
 
-	GLvectorf    rasterOrigin;   /* needed for tilesort support */
-
 	GLboolean    rasterValid;
 	GLfloat      rasterAttrib[CR_MAX_VERTEX_ATTRIBS][4];
 	GLfloat      rasterAttribPre[CR_MAX_VERTEX_ATTRIBS][4];

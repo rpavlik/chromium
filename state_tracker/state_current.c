@@ -177,24 +177,15 @@ void crStateCurrentSwitch( CRCurrentBits *c, CRbitvalue *bitID,
 
 	if (CHECKDIRTY(c->rasterPos, bitID)) {
 		if (to->rasterValid) {
-		  const GLfloat fromX = from->rasterAttrib[VERT_ATTRIB_POS][0] + from->rasterOrigin.x;
-		  const GLfloat fromY = from->rasterAttrib[VERT_ATTRIB_POS][1] + from->rasterOrigin.y;
-		  const GLfloat toX = to->rasterAttrib[VERT_ATTRIB_POS][0] + to->rasterOrigin.x;
-		  const GLfloat toY = to->rasterAttrib[VERT_ATTRIB_POS][1] + to->rasterOrigin.y;
-		  if (toX != fromX || toY != fromY) {
-#if 1
+		  const GLfloat fromX = from->rasterAttrib[VERT_ATTRIB_POS][0];
+		  const GLfloat fromY = from->rasterAttrib[VERT_ATTRIB_POS][1];
+		  const GLfloat fromZ = from->rasterAttrib[VERT_ATTRIB_POS][2];
+		  const GLfloat toX = to->rasterAttrib[VERT_ATTRIB_POS][0];
+		  const GLfloat toY = to->rasterAttrib[VERT_ATTRIB_POS][1];
+		  const GLfloat toZ = to->rasterAttrib[VERT_ATTRIB_POS][2];
+		  if (toX != fromX || toY != fromY || toZ != fromZ) {
 				/* Use glWindowPos (which updates raster color) */
-				GLfloat pos[3];
-				pos[0] = to->rasterAttrib[VERT_ATTRIB_POS][0] - from->rasterOrigin.x;
-				pos[1] = to->rasterAttrib[VERT_ATTRIB_POS][1] - from->rasterOrigin.y;
-				pos[2] = to->rasterAttrib[VERT_ATTRIB_POS][2];
-				diff_api.WindowPos3fvARB(pos);
-#else
-				/* Use glBitmap (which doesn't update raster color) */
-				const GLfloat dx = toX - fromX;
-				const GLfloat dy = toY - fromY;
-				diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
-#endif
+				diff_api.WindowPos3fvARB(to->rasterAttrib[VERT_ATTRIB_POS]);
 			  FILLDIRTY(c->rasterPos);
 			  FILLDIRTY(c->dirty);
 		  }
@@ -329,30 +320,18 @@ crStateCurrentDiff( CRCurrentBits *c, CRbitvalue *bitID,
 	if (CHECKDIRTY(c->rasterPos, bitID)) {
 		from->rasterValid = to->rasterValid;
 		if (to->rasterValid) {
-			const GLfloat fromX = from->rasterAttrib[VERT_ATTRIB_POS][0] + from->rasterOrigin.x;
-			const GLfloat fromY = from->rasterAttrib[VERT_ATTRIB_POS][1] + from->rasterOrigin.y;
-			const GLfloat toX = to->rasterAttrib[VERT_ATTRIB_POS][0] + to->rasterOrigin.x;
-			const GLfloat toY = to->rasterAttrib[VERT_ATTRIB_POS][1] + to->rasterOrigin.y;
-			if (toX != fromX || toY != fromY) {
-				const GLfloat dx = toX - fromX;
-				const GLfloat dy = toY - fromY;
-#if 1
+			const GLfloat fromX = from->rasterAttrib[VERT_ATTRIB_POS][0];
+			const GLfloat fromY = from->rasterAttrib[VERT_ATTRIB_POS][1];
+			const GLfloat fromZ = from->rasterAttrib[VERT_ATTRIB_POS][2];
+			const GLfloat toX = to->rasterAttrib[VERT_ATTRIB_POS][0];
+			const GLfloat toY = to->rasterAttrib[VERT_ATTRIB_POS][1];
+			const GLfloat toZ = to->rasterAttrib[VERT_ATTRIB_POS][2];
+			if (toX != fromX || toY != fromY || toZ != fromZ) {
 				/* Use glWindowPos (which updates raster color) */
-				GLfloat pos[3];
-				pos[0] = to->rasterAttrib[VERT_ATTRIB_POS][0] - from->rasterOrigin.x;
-				pos[1] = to->rasterAttrib[VERT_ATTRIB_POS][1] - from->rasterOrigin.y;
-				pos[2] = to->rasterAttrib[VERT_ATTRIB_POS][2];
-				diff_api.WindowPos3fvARB(pos);
-#else
-				/*
-				 * Use glBitmap to move the current raster position.
-				 * Problems: we never get the current color (always get white) Z value
-				 * is always zero, no texgen, etc.
-				 */
-				diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
-#endif
-				from->rasterAttrib[VERT_ATTRIB_POS][0] += dx;
-				from->rasterAttrib[VERT_ATTRIB_POS][1] += dy;
+				diff_api.WindowPos3fvARB(to->rasterAttrib[VERT_ATTRIB_POS]);
+				from->rasterAttrib[VERT_ATTRIB_POS][0] = toX;
+				from->rasterAttrib[VERT_ATTRIB_POS][1] = toY;
+				from->rasterAttrib[VERT_ATTRIB_POS][2] = toZ;
 			}
 		}
 		CLEARDIRTY(c->rasterPos, nbitID);

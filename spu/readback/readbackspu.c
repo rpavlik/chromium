@@ -390,6 +390,9 @@ CompositeTile(WindowInfo * window, int w, int h,
 		}
 	}
 
+	CRASSERT(window->width > 0);
+	CRASSERT(window->height > 0);
+
 	/* Clamp the image width and height to the readback SPU window's width
 	 * and height.  We do this because there's nothing preventing someone
 	 * from creating a tile larger than the rendering window.
@@ -430,25 +433,11 @@ CompositeTile(WindowInfo * window, int w, int h,
 																	(GLubyte *) window->depthBuffer + shift);
 	}
 
-	/*
-	 * Set the downstream viewport.  If we don't do this, and the
-	 * downstream window is resized, the glRasterPos command doesn't
-	 * seem to be reliable.  This is a problem both with Mesa and the
-	 * NVIDIA drivers.  Technically, this may not be a driver bug at
-	 * all since we're doing funny stuff.  Anyway, this fixes the problem.
-	 * Note that the width and height are arbitrary since we only care
-	 * about getting the origin right.  glDrawPixels, glClear, etc don't
-	 * care what the viewport size is.  (BrianP)
-	 */
-	CRASSERT(window->width > 0);
-	CRASSERT(window->height > 0);
+	/* Set downstream viewport, in case window size changed */
 	readback_spu.child.Viewport(0, 0, window->width, window->height);
 
-	/* Use the glBitmap trick to set the raster pos.
-	 */
-	readback_spu.child.RasterPos2i(0, 0);
-	readback_spu.child.Bitmap(0, 0, 0, 0, (GLfloat) drawx, (GLfloat) drawy,
-														NULL);
+	/* Set position for glDrawPixels */
+	readback_spu.child.WindowPos2iARB(drawx, drawy);
 
 	/*
 	 * OK, send color/depth images to child.
@@ -558,7 +547,6 @@ ProcessTiles(WindowInfo * window)
 		/* we're running on the server, loop over tiles */
 		numExtents = mural->numExtents;
 		extents = mural->extents;
-		/*outputwindow = mural->outputwindow;*/
 	}
 	else
 	{
@@ -605,7 +593,6 @@ ProcessTiles(WindowInfo * window)
 		extent0.outputwindow.x2 = x + w;
 		extent0.outputwindow.y2 = y + h;
 		extents = &extent0;
-		/*outputwindow = &outputwindow0;*/
 	}
 
 	/*
@@ -645,21 +632,12 @@ ProcessTiles(WindowInfo * window)
 	 */
 	for (i = 0; i < numExtents; i++)
 	{
-#if 0
-		const int readx = outputwindow[i].x1;
-		const int ready = outputwindow[i].y1;
-		const int drawx = extents[i].x1;
-		const int drawy = extents[i].y1;
-		int w = outputwindow[i].x2 - outputwindow[i].x1;
-		int h = outputwindow[i].y2 - outputwindow[i].y1;
-#else
 		const int readx = extents[i].outputwindow.x1;
 		const int ready = extents[i].outputwindow.y1;
 		const int drawx = extents[i].imagewindow.x1;
 		const int drawy = extents[i].imagewindow.y1;
 		const int w = extents[i].outputwindow.x2 - extents[i].outputwindow.x1;
 		const int h = extents[i].outputwindow.y2 - extents[i].outputwindow.y1;
-#endif
 		CompositeTile(window, w, h, readx, ready, drawx, drawy);
 	}
 
@@ -854,13 +832,6 @@ readbackspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 																	 nativeWindow, context->renderContext);
 		readback_spu.child.MakeCurrent(window->childWindow,
 																	 nativeWindow, context->childContext);
-
-		/* Initialize child's projection matrix so that glRasterPos2i(0,0)
-		 * corresponds to window coordinate (0,0).
-		 */
-		readback_spu.child.MatrixMode(GL_PROJECTION);
-		readback_spu.child.LoadIdentity();
-		readback_spu.child.Ortho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
 	}
 	else
 	{

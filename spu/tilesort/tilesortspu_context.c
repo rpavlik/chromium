@@ -430,20 +430,6 @@ fprintf(stderr,"MakeCurrent thread = %p\n",thread);
 				serverWindow = 0;
 			}
 
-			if (!newCtx->validRasterOrigin || !winInfo->validRasterOrigin) {
-				/* set raster origin */
-				if (winInfo->server[i].num_extents > 0) {
-					newCtx->server[i].State->current.rasterOrigin.x
-						= (GLfloat) winInfo->server[i].extents[0].x1;
-					newCtx->server[i].State->current.rasterOrigin.y
-						= (GLfloat) winInfo->server[i].extents[0].y1;
-				}
-				else {
-					newCtx->server[i].State->current.rasterOrigin.x = 0;
-					newCtx->server[i].State->current.rasterOrigin.y = 0;
-				}
-			}
-
 			if (tilesort_spu.swap)
 				crPackMakeCurrentSWAP( serverWindow, nativeWindow, serverCtx );
 			else

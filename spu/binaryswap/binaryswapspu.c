@@ -526,19 +526,19 @@ static void CompositeNode( WindowInfo *window,
 				if(binaryswap_spu.depth >= other_depth)
 				{
 					/* over operator */
-					binaryswap_spu.super.BlendFuncSeparateEXT  ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE ); 
-					binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
-					binaryswap_spu.super.DrawPixels ( draw_width, draw_height, 
-																						GL_RGBA, GL_UNSIGNED_BYTE, incoming_color ); 
+					binaryswap_spu.super.BlendFuncSeparateEXT( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE ); 
+					binaryswap_spu.super.WindowPos2iARB( draw_x, draw_y );
+					binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
+																					 GL_RGBA, GL_UNSIGNED_BYTE, incoming_color ); 
 				}
 				/* other image is under ours */
 				else
 				{  
 					/* under operator */
-					binaryswap_spu.super.BlendFuncSeparateEXT  ( GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA, GL_ONE, GL_ONE );
-					binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
-					binaryswap_spu.super.DrawPixels ( draw_width, draw_height, 
-																						GL_RGBA, GL_UNSIGNED_BYTE, incoming_color );
+					binaryswap_spu.super.BlendFuncSeparateEXT( GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA, GL_ONE, GL_ONE );
+					binaryswap_spu.super.WindowPos2iARB( draw_x, draw_y );
+					binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
+																					 GL_RGBA, GL_UNSIGNED_BYTE, incoming_color );
 				}	
 				
 				if(binaryswap_spu.depth < other_depth)
@@ -604,7 +604,7 @@ static void CompositeNode( WindowInfo *window,
 				binaryswap_spu.super.DepthFunc( GL_LEQUAL );
 				binaryswap_spu.super.StencilFunc( GL_ALWAYS, 0x1, 0x1 );
 				binaryswap_spu.super.StencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
-				binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
+				binaryswap_spu.super.WindowPos2iARB( draw_x, draw_y );
 				binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
 								 GL_DEPTH_COMPONENT, 
 								 GL_UNSIGNED_INT, incoming_depth );
@@ -712,8 +712,7 @@ static void CompositeNode( WindowInfo *window,
 		binaryswap_spu.child.SemaphorePCR( MUTEX_SEMAPHORE );
 		binaryswap_spu.child.Viewport( 0, 0, window->width, window->height );	
 		
-		binaryswap_spu.child.RasterPos2i( 0, 0 );
-		binaryswap_spu.child.Bitmap( 0, 0, 0, 0, (GLfloat)draw_x, (GLfloat)draw_y, NULL); 
+		binaryswap_spu.child.WindowPos2iARB( draw_x, draw_y );
 		binaryswap_spu.child.DrawPixels( draw_width, draw_height, 
 						 GL_RGB, GL_UNSIGNED_BYTE, 
 						 window->msgBuffer + 
@@ -768,7 +767,6 @@ static void DoBinaryswap( WindowInfo *window )
 	/* values used to restore state we change */
 	GLint super_packAlignment, super_unpackAlignment;
 	GLint child_unpackAlignment;
-	GLint super_viewport[4];
 	GLboolean super_blend = GL_FALSE;
 	GLint super_blend_dst = 0, super_blend_src = 0;
 	GLboolean super_color_writemask[4];
@@ -809,9 +807,7 @@ static void DoBinaryswap( WindowInfo *window )
 	binaryswap_spu.super.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	binaryswap_spu.child.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	/* things we are going to change that we need to put back */
-	/* fix things up for reading and drawing pixels */
-	binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, super_viewport );
+	/* Get modelview and projection matrices, for bbox testing */
 	binaryswap_spu.super.GetFloatv ( GL_PROJECTION_MATRIX, binaryswap_spu.proj);
 	binaryswap_spu.super.GetFloatv ( GL_MODELVIEW_MATRIX, binaryswap_spu.modl);
 
@@ -840,15 +836,6 @@ static void DoBinaryswap( WindowInfo *window )
 		super_depth_test = binaryswap_spu.super.IsEnabled( GL_DEPTH_TEST );
 	}
 
-	/* fix viewport and projection for read/draw pixels */
-	binaryswap_spu.super.Viewport( 0, 0, window->width, window->height );
-	binaryswap_spu.super.MatrixMode(GL_PROJECTION);
-	binaryswap_spu.super.LoadIdentity();
-	binaryswap_spu.super.Ortho(0.0, (GLfloat) window->width, 0.0, 
-				   (GLfloat) window->height, -1., 1.);
-	binaryswap_spu.super.MatrixMode(GL_MODELVIEW);
-	binaryswap_spu.super.LoadIdentity();
-
 	ProcessNode(window);
 
 	/*
@@ -857,16 +844,6 @@ static void DoBinaryswap( WindowInfo *window )
 	binaryswap_spu.super.PixelStorei(GL_PACK_ALIGNMENT, super_packAlignment);
 	binaryswap_spu.super.PixelStorei(GL_UNPACK_ALIGNMENT, super_unpackAlignment);
 	binaryswap_spu.child.PixelStorei(GL_UNPACK_ALIGNMENT, child_unpackAlignment);
-
-	/* Fix what we mucked with */
-	binaryswap_spu.super.Viewport( super_viewport[0], 
-				       super_viewport[1], 
-				       super_viewport[2], 
-				       super_viewport[3] );
-	binaryswap_spu.super.MatrixMode(GL_PROJECTION);
-	binaryswap_spu.super.LoadMatrixf(binaryswap_spu.proj);
-	binaryswap_spu.super.MatrixMode(GL_MODELVIEW);
-	binaryswap_spu.super.LoadMatrixf(binaryswap_spu.modl);
 
 	if(binaryswap_spu.alpha_composite)
 	{
@@ -1018,12 +995,6 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuMakeCurrent(GLint win, GLint nat
 						 nativeWindow, context->renderContext);
 		binaryswap_spu.child.MakeCurrent(window->childWindow,
 						 nativeWindow, context->childContext);
-		/* Initialize child's projection matrix so that glRasterPos2i(0,0)
-		 * corresponds to window coordinate (0,0).
-		 */
-		binaryswap_spu.child.MatrixMode(GL_PROJECTION);
-		binaryswap_spu.child.LoadIdentity();
-		binaryswap_spu.child.Ortho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
 	}
 	else {
 #ifdef CHROMIUM_THREADSAFE
