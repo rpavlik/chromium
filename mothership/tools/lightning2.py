@@ -82,41 +82,18 @@ WindowTitle = "Chromium Lightning-2 Configuration"
 
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
-# XXX eventually automatically query these parameters from the SPU
-TilesortOptions = [
-	("broadcast", "bool", 1, false, "Broadcast Primitives"),
-	("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
-	("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
-	("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()"),
-	("sync_on_finish", "bool", 1, false, "Sync on glFinish()"),
-	("draw_bbox", "bool", 1, true, "Draw Bounding Box"),
-	("bbox_line_width", "float", 1, "5.0", "Bounding Box Line Width"),
-	("fake_window_dims", "int", 2, "", "Fake Window Dimensions (w, h)"),
-	("scale_to_mural_size", "bool", 1, true, "Scale to Mural Size")
-]
-
-RenderOptions = [
-	("try_direct", "bool", 1, true, "Try Direct Rendering"),
-	("force_direct", "bool", 1, true, "Force Direct Rendering"),
-	("fullscreen", "bool", 1, false, "Full-screen Window"),
-	("on_top", "bool", 1, false, "Display on top"),
-	("title", "string", 1, "Chromium Render SPU", "Window Title"),
-	("window_geometry", "string", 1, "0, 0, 256, 256", "Window Geometry (x,y,w,h)"),
-	("system_gl_path", "string", 1, "/usr/lib/", "System GL Path"),
-]
-
 ServerOptions = [
-	("optimize_bucket", "bool", 1, true, "Optimized Extent Bucketing"),
-	("lighting2", "bool", 1, false, "Generate Lightning-2 Strip Headers")
+	("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
+	("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], [])
 ]
 
 GlobalOptions = [
-	("minimum_window_size", "string", 1, "0 0", "Minimum Chromium App Window Size (w h)"),
-	("match_window_title", "string", 1, "", "Match App Window Title"),
-	("show_cursor", "bool", 1, false, "Show Virtual cursor"),
-	("MTU", "int", 1, (1024*1024), "Mean Transmission Unit (bytes)"),
-	("default_app", "string", 1, "", "Default Application Program"),
-	("auto_start", "bool", 1, false, "Automatically Start Servers")
+	("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
+	("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
+	("show_cursor", "Show Virtual cursor", "BOOL", 1, [0], [], []),
+	("MTU", "Mean Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
+	("default_app", "Default Application Program", "STRING", 1, [""], [], []),
+	("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], [])
 ]
 
 # This is the guts of the configuration script.
@@ -254,7 +231,7 @@ class MainFrame(wxFrame):
 		self.HostNamePattern = "host##"
 		self.HostNameStart = 0
 		self.HostNameCount = 4
-
+		self.Tiles = []
 
 		# Setup our menu bar.
 		menuBar = wxMenuBar()
@@ -439,17 +416,24 @@ class MainFrame(wxFrame):
 		self.dirty     = false
 		self.fileName  = fileName
 
-		self.recomputeTotalSize()
+		self.RecomputeTotalSize()
+		self.LayoutTiles()
 		
 		# Make the Tilesort SPU options dialog
+		tilesortInfo = GetSPUOptions("tilesort")
+		assert tilesortInfo
+		(tilesortParams, tilesortOptions) = tilesortInfo
 		self.TilesortDialog = SPUDialog(parent=NULL, id=-1,
 										title="Tilesort SPU Options",
-										options=TilesortOptions)
+										options=tilesortOptions)
 
 		# Make the render SPU options dialog
+		renderInfo = GetSPUOptions("render")
+		assert renderInfo
+		(renderParams, renderOptions) = renderInfo
 		self.RenderDialog = SPUDialog(parent=NULL, id=-1,
 									  title="Render SPU Options",
-									  options=RenderOptions)
+									  options=renderOptions)
 
 		# Make the server options dialog
 		self.ServerDialog = SPUDialog(parent=NULL, id=-1,
@@ -465,9 +449,13 @@ class MainFrame(wxFrame):
 			self.loadConfiguration()
 
 
-	# This is called whenever the mural width/height or tile width/height changes.
-	# We recompute the total mural size in pixels and update the widgets.
-	def recomputeTotalSize(self):
+	#----------------------------------------------------------------------
+	# Helper functions
+
+	# This is called whenever the mural width/height or tile width/height
+	# changes.
+	def RecomputeTotalSize(self):
+		"""Recompute the total mural size in pixels and update the widgets."""
 		tileW = self.tileWidthControl.GetValue()
 		tileH = self.tileHeightControl.GetValue()
 		totalW = self.widthControl.GetValue() * tileW
@@ -481,20 +469,94 @@ class MainFrame(wxFrame):
 		# must be custom size
 		self.tileChoice.SetSelection(len(CommonTileSizes))  # "Custom"
 
+	def LayoutTiles(self):
+		"""Compute location and host number for the tiles."""
+		cols = self.widthControl.GetValue()
+		rows = self.heightControl.GetValue()
+		numServers = self.hostCount.GetValue()
+		layoutOrder = self.layoutRadio.GetSelection()
+		self.Tiles = []  # list of (row, tile, server) tuples
+		if layoutOrder == 0:
+			# Simple raster order layout
+			for i in range(rows):
+				for j in range(cols):
+					server = (i * cols + j) % numServers
+					self.Tiles.append((i, j, server))
+			pass
+		else:
+			# Spiral outward from the center (this is a little tricky)
+			assert layoutOrder == 1
+			curRow = (rows - 1) / 2
+			curCol = (cols - 1) / 2
+			radius = 0
+			march = 0
+			colStep = 0
+			rowStep = -1
+			while 1:
+				assert ((rowStep == 0 and colStep != 0) or
+						(rowStep != 0 and colStep == 0))
+				if (curRow >= 0 and curRow < rows and
+					curCol >= 0 and	curCol < cols):
+					# save this tile location
+					server = len(self.Tiles) % numServers
+					assert (curRow, curCol, server) not in self.Tiles
+					self.Tiles.append((curRow, curCol, server))
+					# check if we're done
+					if len(self.Tiles) >= rows * cols:
+						# all done
+						break
+				# advance to next space
+				march += 1
+				if march < radius:
+					# step in current direction
+					curRow += rowStep
+					curCol += colStep
+					pass
+				else:
+					# change direction
+					if colStep == 1 and rowStep == 0:
+						# transition right -> down
+						colStep = 0
+						rowStep = 1
+					elif colStep == 0 and rowStep == 1:
+						# transition down -> left
+						colStep = -1
+						rowStep = 0
+						radius += 1
+					elif colStep == -1 and rowStep == 0:
+						# transition left -> up
+						colStep = 0
+						rowStep = -1
+					else:
+						# transition up -> right
+						assert colStep == 0
+						assert rowStep == -1
+						colStep = 1
+						rowStep = 0
+						radius += 1
+					#endif
+					march = 0
+					curRow += rowStep
+					curCol += colStep
+				#endif
+			#endwhile
+		#endif
+	#enddef
+
 		
-	# ============================
-	# == Event Handling Methods ==
-	# ============================
+	#----------------------------------------------------------------------
+	# Widget callback functions
 
 	def onSizeChange(self, event):
 		"""Called when tile size changes with spin controls."""
-		self.recomputeTotalSize()
+		self.RecomputeTotalSize()
+		self.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
 	def onLayoutChange(self, event):
-		"""Called when left/right top/bottom layout changes."""
-		self.recomputeTotalSize()
+		"""Called when Layout order changes."""
+		self.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -506,7 +568,8 @@ class MainFrame(wxFrame):
 			h = CommonTileSizes[i][1]
 			self.tileWidthControl.SetValue(w)
 			self.tileHeightControl.SetValue(h)
-		self.recomputeTotalSize()
+		self.RecomputeTotalSize()
+		self.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -516,6 +579,7 @@ class MainFrame(wxFrame):
 		self.HostNamePattern = self.hostText.GetValue()
 		self.HostNameStart = self.hostStart.GetValue()
 		self.HostNameCount = self.hostCount.GetValue()
+		self.LayoutTiles()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -565,19 +629,32 @@ class MainFrame(wxFrame):
 		# draw the tiles as boxes
 		numColors = len(ServerColors)
 		numServers = self.hostCount.GetValue()
-		for i in range(rows):
-			for j in range(cols):
-				x = j * (w + space) + border
-				y = i * (h + space) + border
-				server = (i * cols + j) % numServers
-				color = server % numColors
-				dc.SetBrush(wxBrush(ServerColors[color]))
-				dc.DrawRectangle(x, y, w,h)
-				s = MakeHostname(self.HostNamePattern, self.HostNameStart + server)
-				(tw, th) = dc.GetTextExtent(s)
-				dx = (w - tw) / 2
-				dy = (h - th) / 2
-				dc.DrawText(s, x+dx, y+dy)
+		for (row, col, server) in self.Tiles:
+			x = col * (w + space) + border
+			y = row * (h + space) + border
+			color = server % numColors
+			dc.SetBrush(wxBrush(ServerColors[color]))
+			dc.DrawRectangle(x, y, w,h)
+			s = MakeHostname(self.HostNamePattern, self.HostNameStart + server)
+			(tw, th) = dc.GetTextExtent(s)
+			dx = (w - tw) / 2
+			dy = (h - th) / 2
+			dc.DrawText(s, x+dx, y+dy)
+		dc.EndDrawing()
+
+		#for i in range(rows):
+		#	for j in range(cols):
+		#		x = j * (w + space) + border
+		#		y = i * (h + space) + border
+		#		server = (i * cols + j) % numServers
+		#		color = server % numColors
+		#		dc.SetBrush(wxBrush(ServerColors[color]))
+		#		dc.DrawRectangle(x, y, w,h)
+		#		s = MakeHostname(self.HostNamePattern, self.HostNameStart + server)
+		#		(tw, th) = dc.GetTextExtent(s)
+		#		dx = (w - tw) / 2
+		#		dy = (h - th) / 2
+		#		dc.DrawText(s, x+dx, y+dy)
 		dc.EndDrawing()
 
 		# draw top width label
@@ -693,14 +770,14 @@ class MainFrame(wxFrame):
 	def doExit(self, event):
 		"""File / Exit callback"""
 		global _docList, _app
-		for doc in _docList:
-			if not doc.dirty:
-				continue
-			doc.Raise()
-			if not doc.askIfUserWantsToSave("quitting"):
-				return
-			_docList.remove(doc)
-			doc.Destroy()
+#		for doc in _docList:
+#			if not doc.dirty:
+#				continue
+#			doc.Raise()
+#			if not doc.askIfUserWantsToSave("quitting"):
+#				return
+#			_docList.remove(doc)
+#			doc.Destroy()
 
 		_app.ExitMainLoop()
 
@@ -857,7 +934,7 @@ class MainFrame(wxFrame):
 				elif not re.match("\s*#", l):
 					print "unrecognized line: %s" % l
 			f.close()
-			self.recomputeTotalSize()
+			self.RecomputeTotalSize()
 		self.dirty = false
 		self.drawArea.Refresh()
 
