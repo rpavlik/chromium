@@ -596,16 +596,10 @@ void STATE_APIENTRY crStatePushMatrix()
 
 	FLUSH();
 
-	if (t->currentStack->depth + 1 == t->currentStack->maxDepth)
+	if (t->currentStack->depth + 1 >= t->currentStack->maxDepth)
 	{
 		crStateError(__LINE__, __FILE__, GL_STACK_OVERFLOW, "PushMatrix pass the end of allocated stack");
 		return;
-	}
-
-	if (t->currentStack->depth < 0 ||
-		t->currentStack->depth >= t->currentStack->maxDepth)
-	{
-		crError( "Bogus depth in PushMatrix: %d", (int) t->currentStack->depth );
 	}
 
 	/* Perform the copy */
