@@ -44,8 +44,6 @@ void crMothershipDisconnect( CRConnection *conn )
 {
 	crMothershipSendString( conn, NULL, "disconnect" );
 	crNetDisconnect( conn );
-	crFree( conn->hostname );
-	crFree( conn );
 }
 
 int crMothershipSendString( CRConnection *conn, char *response_buf, const char *str, ... )

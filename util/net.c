@@ -611,6 +611,8 @@ int crNetConnect( CRConnection *conn )
 void crNetDisconnect( CRConnection *conn )
 {
 	conn->Disconnect( conn );
+	crFree( conn->hostname );
+	crFree( conn );
 }
 
 
@@ -677,7 +679,7 @@ crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
 
 	if (msg->header.type == CR_MESSAGE_MULTI_TAIL)
 	{
-		/* OK, we've collected the last chunck of the multi-part message */
+		/* OK, we've collected the last chunk of the multi-part message */
 		conn->HandleNewMessage(
 				conn,
 				(CRMessage *) (((char *) multi->buf) + conn->sizeof_buffer_header),
