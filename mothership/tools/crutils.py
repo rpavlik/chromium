@@ -311,14 +311,16 @@ def RemoveNodesFromList(nodeList, removeList):
 	# Second, if any preserved clients have servers in the removal list,
 	# disconnect the client from those servers.
 	for node in nodeList:
-		for server in node.GetServers():
+		servers = node.GetServers()[:]  # make temp copy of list
+		for server in servers:
 			if server in removeList:
 				node.LastSPU().RemoveServer(server)
 
 	# Third, loop over removed nodes, disconnect any servers in the
 	# preserved list.
 	for node in removeList:
-		for server in node.GetServers():
+		servers = node.GetServers()[:]  # make temp copy of list
+		for server in servers:
 			if not server in removeList:
 				node.LastSPU().RemoveServer(server)
 
