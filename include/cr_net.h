@@ -33,6 +33,8 @@ extern "C" {
 #endif
 
 #define DEFAULT_SERVER_PORT 7000
+
+/* If you change this, update DefaultMothershipPort in mothership.py */
 #define DEFAULT_MOTHERSHIP_PORT 10000
 
 typedef struct CRConnection CRConnection;
