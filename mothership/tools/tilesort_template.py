@@ -539,7 +539,6 @@ class TilesortDialog(wxDialog):
 		self.Template.TileHeight = self.tileHeightControl.GetValue()
 		self.Template.RightToLeft = self.hLayoutRadio.GetSelection()
 		self.Template.BottomToTop = self.vLayoutRadio.GetSelection()
-		self.Template.LayoutTiles()
 		# XXX set render SPU's window_geometry = tile size!!
 
 	def __UpdateWidgetsFromVars(self):
