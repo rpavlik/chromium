@@ -57,6 +57,9 @@ int main( int argc, char *argv[] )
 	}
 
 	signal( SIGTERM, ServerCleanup );
+#ifndef WINDOWS
+	signal( SIGPIPE, ServerCleanup );
+#endif
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
 	crServerGatherConfiguration(mothership);
