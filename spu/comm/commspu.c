@@ -22,7 +22,7 @@ void COMMSPU_APIENTRY commSwapBuffers( void )
 
 	comm_spu.msg->header.type = CR_MESSAGE_OOB;
 	comm_spu.msg->frame_counter = frame_counter;
-	crNetSend( comm_spu.peer_send, NULL, comm_spu.msg, sizeof( CommSPUPing ) );
+	crNetSend( comm_spu.peer_send, comm_spu.msg, comm_spu.msg, sizeof( CommSPUPing ) );
 	comm_spu.msg = crNetAlloc( comm_spu.peer_send );
 
 	crNetGetMessage( comm_spu.peer_recv, &incoming_msg );
