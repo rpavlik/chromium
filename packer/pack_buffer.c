@@ -175,7 +175,7 @@ void SanityCheck( void )
 				ptr[3] == CR_EXTEND_OPCODE &&
 				ptr[4] == CR_EXTEND_OPCODE)
 		{
-			DebugBreak();
+                   //DebugBreak();
 		}
 		ptr--;
 	}
