@@ -122,8 +122,10 @@ class CRNode:
 		self.spokenfor = 0
 		self.spusloaded = 0
 		self.config = {}
-		self.accept_wait = None
-		self.connect_wait = None
+		self.tcpip_accept_wait = None
+		self.tcpip_connect_wait = None
+		self.gm_accept_wait = None
+		self.gm_connect_wait = None
 		self.alias = host
 
 	def Alias( self, name ):
@@ -229,8 +231,10 @@ class SockWrapper:
 		self.file = sock.makefile( "r" )
 		self.SPUid = -1
 		self.node = None
-		self.accept_wait = None
-		self.connect_wait = None
+		self.tcpip_accept_wait = None
+		self.tcpip_connect_wait = None
+		self.gm_accept_wait = None
+		self.gm_connect_wait = None
 
 	def readline( self ):
 		return self.file.readline()
@@ -397,16 +401,16 @@ class CR:
 			port = int(port_str)
 			endianness = int(endianness_str)
 			for server_sock in self.wrappers.values():
-				if server_sock.accept_wait != None:
-					(server_hostname, server_port, server_endianness) = server_sock.accept_wait
-					if server_hostname == hostname:
+				if server_sock.tcpip_accept_wait != None:
+					(server_hostname, server_port, server_endianness) = server_sock.tcpip_accept_wait
+					if server_hostname == hostname and server_port == port:
 						sock.Success( "%d %d" % (self.conn_id, server_endianness ) )
 						server_sock.Success( "%d" % self.conn_id )
 						self.conn_id += 1
 						return
 					else:
 						CRDebug( "not connecting to \"%s\" (!= \"%s\")" % (server_hostname, hostname) )
-			sock.connect_wait = (hostname, port, endianness)
+			sock.tcpip_connect_wait = (hostname, port, endianness)
 		elif (protocol == 'gm'):
 			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = connect_info
 			port = int(port_str)
@@ -414,14 +418,14 @@ class CR:
 			port_num = int(port_num_str)
 			endianness = int(endianness_str)
 			for server_sock in self.wrappers.values():
-				if server_sock.accept_wait != None:
-						(server_hostname, server_port, server_node_id, server_port_num, server_endianness) = server_sock.accept_wait
-						if server_hostname == hostname:
+				if server_sock.gm_accept_wait != None:
+						(server_hostname, server_port, server_node_id, server_port_num, server_endianness) = server_sock.gm_accept_wait
+						if server_hostname == hostname and server_port == port:
 							sock.Success( "%d %d %d %d" % (self.conn_id, server_node_id, server_port_num, server_endianness) )
 							server_sock.Success( "%d %d %d" % (self.conn_id, node_id, port_num) )
 							self.conn_id += 1
 							return
-			sock.connect_wait = (hostname, port, node_id, port_num, endianness)
+			sock.gm_connect_wait = (hostname, port, node_id, port_num, endianness)
 		else:
 			self.ClientError( sock, SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
@@ -436,9 +440,9 @@ class CR:
 			port = int(port_str)
 			endianness = int(endianness_str)
 			for client_sock in self.wrappers.values():
-				if client_sock.connect_wait != None:
-					(client_hostname, client_port, client_endianness) = client_sock.connect_wait
-					if client_hostname == hostname:
+				if client_sock.tcpip_connect_wait != None:
+					(client_hostname, client_port, client_endianness) = client_sock.tcpip_connect_wait
+					if client_hostname == hostname and client_port == port:
 						sock.Success( "%d" % self.conn_id )
 						client_sock.Success( "%d %d" % (self.conn_id, endianness )  )
 						self.conn_id += 1
@@ -446,7 +450,7 @@ class CR:
 					else:
 						CRDebug( "not accepting from \"%s\" (!= \"%s\")" % (client_hostname, hostname ) )
 						
-			sock.accept_wait = (hostname, port, endianness)
+			sock.tcpip_accept_wait = (hostname, port, endianness)
 		elif protocol == 'gm':
 			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = accept_info
 			port = int(port_str)
@@ -454,14 +458,14 @@ class CR:
 			port_num = int(port_num_str)
 			endianness = int(endianness_str)
 			for client_sock in self.wrappers.values():
-				if client_sock.connect_wait != None:
-					(client_hostname, client_port, client_node_id, client_port_num, client_endianness) = client_sock.connect_wait
-					if client_hostname == hostname:
+				if client_sock.gm_connect_wait != None:
+					(client_hostname, client_port, client_node_id, client_port_num, client_endianness) = client_sock.gm_connect_wait
+					if client_hostname == hostname and client_port == port:
 						sock.Success( "%d %d %d" % (self.conn_id, client_node_id, client_port_num) )
 						client_sock.Success( "%d %d %d %d" % (self.conn_id, node_id, port_num, endianness) )
 						self.conn_id += 1
 						return
-			sock.accept_wait = (hostname, port, node_id, port_num, endianness)
+			sock.gm_accept_wait = (hostname, port, node_id, port_num, endianness)
 		else:
 			self.ClientError( sock, SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
