@@ -115,10 +115,10 @@ static void replicatespuStartVnc( )
 
 	/* NOTE: should probably check the major/minor version too!! */
 	if (!XVncQueryExtension(replicate_spu.glx_display, &maj, &min)) {
-		crWarning("VNC extension is not available\n");
+		crWarning("Replicate SPU: VNC extension is not available\n");
 		replicate_spu.vncAvailable = GL_FALSE;
 	} else {
-		crWarning("VNC extension available\n");
+		crWarning("Replicate SPU: VNC extension available\n");
 		replicate_spu.vncAvailable = GL_TRUE;
 	}
 
@@ -135,7 +135,7 @@ static void replicatespuStartVnc( )
 			if (vnclist->ipaddress) {
 				replicatespuReplicateCreateContext(vnclist->ipaddress);
 			} else {
-				crWarning("vnclist with no ipaddress ???????????\n");
+				crWarning("Replicate SPU: vnclist with no ipaddress ???????????\n");
 			}
 
 			vnclist++;
@@ -197,7 +197,7 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 #ifdef CHROMIUM_THREADSAFE_notyet
 		crUnlockMutex(&_ReplicateMutex);
 #endif
-		crWarning("Failure in replicatespu_CreateContext");
+		crWarning("Replicate SPU: Failure in replicatespu_CreateContext");
 		return -1;  /* failed */
 	}
 
