@@ -1131,7 +1131,7 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID,
 					to->texture+to->textureDepth,
 					sizeof (GLmatrix))) {
 
-			diff_api.MatrixMode(GL_TEXTURE_MATRIX);		
+			diff_api.MatrixMode(GL_TEXTURE);		
 			LOADMATRIX(to->texture+to->textureDepth);
 		
 			t->matrix[2] = GLBITS_ONES;
@@ -1229,7 +1229,7 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID,
 					to->texture+to->textureDepth,
 					sizeof (GLmatrix))) {
 
-			diff_api.MatrixMode(GL_TEXTURE_MATRIX);		
+			diff_api.MatrixMode(GL_TEXTURE);		
 			LOADMATRIX(to->texture+to->textureDepth);
 
 			memcpy((void *) from->texture, (const void *) to->texture,

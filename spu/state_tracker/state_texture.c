@@ -2561,9 +2561,9 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 			t->envBit = GLBITS_ONES;
 			t->dirty = GLBITS_ONES;
 		}
-		if (from->envColor.r != to->envColor.r &&
-			from->envColor.g != to->envColor.g &&
-			from->envColor.b != to->envColor.b &&
+		if (from->envColor.r != to->envColor.r ||
+			from->envColor.g != to->envColor.g ||
+			from->envColor.b != to->envColor.b ||
 			from->envColor.a != to->envColor.a) {
 			GLfloat f[4];
 			f[0] = to->envColor.r;
@@ -2876,9 +2876,9 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->envMode);
 			from->envMode = to->envMode;
 		}
-		if (from->envColor.r != to->envColor.r &&
-			from->envColor.g != to->envColor.g &&
-			from->envColor.b != to->envColor.b &&
+		if (from->envColor.r != to->envColor.r ||
+			from->envColor.g != to->envColor.g ||
+			from->envColor.b != to->envColor.b ||
 			from->envColor.a != to->envColor.a) {
 			GLfloat f[4];
 			f[0] = to->envColor.r;

@@ -3,21 +3,17 @@
 
 void crStateCurrentInit( CRCurrentState *c )
 {
-	GLvectorf	default_normal = {0.0f, 0.0f, 0.0f, 1.0f};
-	GLcolorf	default_color	= {1.0f, 1.0f, 1.0f, 1.0f};
+	GLvectorf	default_normal     = {0.0f, 0.0f, 1.0f, 1.0f};
+	GLcolorf	default_color	     = {1.0f, 1.0f, 1.0f, 1.0f};
 	GLtexcoordf default_texcoord = {0.0f, 0.0f, 0.0f, 1.0f};
+	GLvectorf default_rasterpos  = {0.0f, 0.0f, 0.0f, 1.0f};
 
 	c->color	= default_color;
 	c->index	= 1.0f;
 	c->texCoord = default_texcoord;
 	c->normal	= default_normal;
-	c->normal.z = 1.0f;
 
-	c->rasterPos.x = 0.0f;
-	c->rasterPos.y = 0.0f;
-	c->rasterPos.z = 0.0f;
-	c->rasterPos.w = 1.0f;
-
+	c->rasterPos = default_rasterpos;
 	c->rasterPosPre = c->rasterPos;
 
 	c->rasterDistance = 0.0f;
