@@ -72,7 +72,8 @@ LIB_COPIES = crserver \
 	nopspu \
 	simplequeryspu \
 	binaryswapspu \
-	readbackspu
+	readbackspu \
+	statecopytest
 
 include $(TOP)/cr.mk
 
