@@ -49,7 +49,7 @@ static GLuint TranslateListID( GLuint id )
 
 static GLuint TranslateTextureID( GLuint id )
 {
-	if (!cr_server.sharedTextureObjects) {
+	if (!cr_server.sharedTextureObjects && id) {
 		int client = cr_server.curClient->number;
 		return id + client * 100000;
 	}
