@@ -115,7 +115,7 @@ class SPU:
 		node.Conf( 'port', port )
 		if protocol == 'tcpip':
 			self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
-		elif protocol.startswith('file'):
+		elif (protocol.startswith('file') or protocol.startswith('swapfile')):
 			self.__add_server( node, "%s" % protocol )
 			# Don't tell the server "node" about this.
 			return

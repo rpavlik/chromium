@@ -127,6 +127,12 @@ CRConnection *crNetConnectToServer( char *server,
 		crFileInit( cr_net.recv, cr_net.close, mtu );
 		crFileConnection( conn );
 	}
+	else if ( !crStrcmp( protocol, "swapfile" ) )
+	{
+		crFileInit( cr_net.recv, cr_net.close, mtu );
+		crFileConnection( conn );
+		conn->swap = 1;
+	}
 #ifdef GM_SUPPORT
 	else if ( !crStrcmp( protocol, "gm" ) )
 	{
@@ -221,7 +227,8 @@ CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsi
 		crDevnullInit( cr_net.recv, cr_net.close, mtu );
 		crDevnullConnection( conn );
 	}
-	if ( !crStrncmp( protocol, "file", crStrlen( "file" ) ) )
+	if ( !crStrncmp( protocol, "file", crStrlen( "file" ) ) ||
+	     !crStrncmp( protocol, "swapfile", crStrlen( "swapfile" ) ) )
 	{
 		char filename[4096];
 		if (!crParseURL( protocol, NULL, filename, NULL, 0 ))

@@ -32,6 +32,8 @@ int crParseURL( const char *url, char *protocol, char *hostname,
 {
 	const char *temp, *temp2;
 
+	crDebug( "Parsing %s", url );
+
 	/* pull off the protocol */
 	temp = crStrstr( url, "://" );
 	if ( temp == NULL && protocol != NULL )

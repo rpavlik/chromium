@@ -41,7 +41,7 @@ static void wetMeshSetup( void )
 	}
 
 	/* wet_spu.super.GenTextures( 1, &(wet_spu.tex_id ) ); */
-	wet_spu.tex_id = 0x6969;
+	wet_spu.tex_id = 0x16969;
 	wet_spu.super.BindTexture( GL_TEXTURE_2D, wet_spu.tex_id );
 	wet_spu.super.TexImage2D( GL_TEXTURE_2D, 0, 4, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
 }
@@ -223,7 +223,7 @@ static void DrawMesh( void )
 	wet_spu.super.MatrixMode( GL_PROJECTION );
 	wet_spu.super.PushMatrix();
 	wet_spu.super.LoadIdentity();
-	wet_spu.super.Ortho( 0, wet_spu.mesh_width, 0, wet_spu.mesh_height, -500, 500 );
+	wet_spu.super.Ortho( 0, wet_spu.mesh_width-1, 0, wet_spu.mesh_height-1, -500, 500 );
 	wet_spu.super.MatrixMode( GL_MODELVIEW );
 	wet_spu.super.PushMatrix();
 	wet_spu.super.LoadIdentity();
@@ -251,7 +251,7 @@ static void DrawMesh( void )
 			wet_spu.super.TexCoord2fv( t );
 			if (t[0] != -1)
 			{
-				wet_spu.super.Color3f(1,1,1);
+				wet_spu.super.Color3f( 1,1,1 );
 			}
 			else
 			{
