@@ -627,7 +627,7 @@ void PERFSPU_APIENTRY perfspuClear( GLbitfield mask )
 
 	if (perf_spu.dump_on_clear_count && 
 		!(perf_spu.clear_counter % perf_spu.dump_on_clear_count) ) {
-		sprintf(cstr, "CLEARCOUNT%s%d", perf_spu.separator, perf_spu.dump_on_clear_count);
+		sprintf(cstr, "CLEARCOUNT%s%d", perf_spu.separator, perf_spu.clear_counter);
 		perfspuDumpCounters(cstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	}
 
@@ -684,7 +684,7 @@ void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 
 	if (perf_spu.dump_on_swap_count && 
 		!(perf_spu.total_frames % perf_spu.dump_on_swap_count) ) {
-		sprintf(sstr, "FRAMESTATS%s%d", perf_spu.separator, perf_spu.dump_on_swap_count);
+		sprintf(sstr, "FRAMESTATS%s%d", perf_spu.separator, perf_spu.total_frames);
 		perfspuDumpCounters(sstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	}
 	
