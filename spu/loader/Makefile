@@ -8,9 +8,9 @@ SHARED = 1
 LIBRARY = spuload
 LIBRARIES = crutil crmothership
 
-FILES = spucopy spuload dispatch limits
+FILES = spuchange spucopy spuload dispatch limits
 
-PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c
+PRECOMP = $(TOP)/include/spu_dispatch_table.h dispatch.c spucopy.c spuchange.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += loader.def
@@ -27,3 +27,7 @@ dispatch.c: dispatch.py
 spucopy.c: spucopy.py
 	@$(ECHO) Making the SPU copier
 	@$(PYTHON) spucopy.py > spucopy.c
+
+spuchange.c: spuchange.py
+	@$(ECHO) Making the SPU interface changer
+	@$(PYTHON) spuchange.py > spuchange.c

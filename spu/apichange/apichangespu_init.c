@@ -5,15 +5,15 @@
  */
 
 #include "cr_spu.h"
-#include "templatespu.h"
+#include "apichangespu.h"
 #include <stdio.h>
 
-extern SPUNamedFunctionTable template_table[];
+extern SPUNamedFunctionTable apichange_table[];
 
 SPUFunctions the_functions = {
 	NULL, // CHILD COPY
 	NULL, // DATA
-	template_table // THE ACTUAL FUNCTIONS
+	apichange_table // THE ACTUAL FUNCTIONS
 };
 
 SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
@@ -25,22 +25,22 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	(void) context_id;
 	(void) num_contexts;
 
-	template_spu.id = id;
-	template_spu.has_child = 0;
+	apichange_spu.id = id;
+	apichange_spu.has_child = 0;
 	if (child)
 	{
-		crSPUCopyDispatchTable( &(template_spu.child), &(child->dispatch_table) );
-		template_spu.has_child = 1;
+		crSPUCopyDispatchTable( &(apichange_spu.child), &(child->dispatch_table) );
+		apichange_spu.has_child = 1;
 	}
-	crSPUCopyDispatchTable( &(template_spu.super), &(super->dispatch_table) );
-	templatespuGatherConfiguration();
+	crSPUCopyDispatchTable( &(apichange_spu.super), &(super->dispatch_table) );
+	apichangespuGatherConfiguration();
 
 	return &the_functions;
 }
 
 void SPUSelfDispatch(SPUDispatchTable *self)
 {
-	crSPUCopyDispatchTable( &(template_spu.self), self );
+	crSPUCopyDispatchTable( &(apichange_spu.self), self );
 }
 
 int SPUCleanup(void)
@@ -51,8 +51,8 @@ int SPUCleanup(void)
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
 {
-	*name = "template";
-	*super = NULL;
+	*name = "apichange";
+	*super = "passthroughspu";
 	*init = SPUInit;
 	*self = SPUSelfDispatch;
 	*cleanup = SPUCleanup;

@@ -13,3 +13,4 @@
 7/19/01: Added missing glGet*() cases for texture state (BrianP)
 7/19/01: Make use of CR_OPENGL_VERSION_1_2, CR_ARB_texture_cube_map, etc. (BrianP)
 7/19/01: Fixed assorted texture state bugs and error checks. (BrianP)
+8/22/01: Changed the opengl_stub library to use SPU dispatch tables (Greg)

@@ -42,7 +42,7 @@ for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
 	print 'typedef %s (SPU_APIENTRY *%sFunc_t)(%s);' % (return_type, func_name, string.join(types, ', '))
 
-print 'typedef struct {'
+print 'typedef struct _spu_dispatch_table {'
 
 for i in range(len(keys)):
 	func_name = keys[i]
@@ -50,6 +50,12 @@ for i in range(len(keys)):
 
 	print "\t%sFunc_t %s; " % ( func_name, func_name )
 
+print '\tstruct _copy_list_node {'
+print '\t\tstruct _spu_dispatch_table *copy;'
+print '\t\tstruct _copy_list_node *next;'
+print '\t} *copyList;'
+print '\tstruct _spu_dispatch_table *copy_of;'
+print '\tstruct _spu_dispatch_table *chain_parent;'
 print '} SPUDispatchTable;'
 
 print '#endif /* CR_SPU_DISPATCH_TABLE_H */'

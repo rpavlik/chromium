@@ -13,8 +13,8 @@
 int main(int argc, char *argv[])
 {
 	SPU *spu;
-	int ids[] = { 0 };
-	char *spunames[] = { "renderspu" };
+	int ids[] = { 0, 1 };
+	char *spunames[] = { "apichangespu", "renderspu" };
 	float angle = 0;
 	int frame = 0;
 

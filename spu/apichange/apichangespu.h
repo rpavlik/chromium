@@ -4,25 +4,27 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#ifndef TEMPLATE_SPU_H
-#define TEMPLATE_SPU_H
+#ifndef APICHANGE_SPU_H
+#define APICHANGE_SPU_H
 
 #ifdef WINDOWS
-#define TEMPLATESPU_APIENTRY __stdcall
+#define APICHANGESPU_APIENTRY __stdcall
 #else
-#define TEMPLATESPU_APIENTRY
+#define APICHANGESPU_APIENTRY
 #endif
 
 #include "cr_spu.h"
 
-void templatespuGatherConfiguration( void );
+void apichangespuGatherConfiguration( void );
 
 typedef struct {
 	int id;
 	int has_child;
 	SPUDispatchTable self, child, super;
-} TemplateSPU;
 
-extern TemplateSPU template_spu;
+	int changeFrequency;
+} ApichangeSPU;
 
-#endif /* TEMPLATE_SPU_H */
+extern ApichangeSPU apichange_spu;
+
+#endif /* APICHANGE_SPU_H */

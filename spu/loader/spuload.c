@@ -50,10 +50,6 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 	CRASSERT( name != NULL );
 
 	the_spu = crAlloc( sizeof( *the_spu ) );
-	if (!the_spu) {
-		crWarning("out of memory in crSPULoad()");
-		return NULL;
-	}
 	the_spu->id = id;
 	path = __findDLL( name, dir );
 	the_spu->dll = crDLLOpen( path );
@@ -85,6 +81,9 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir )
 	}
 	the_spu->function_table = the_spu->init( id, child, the_spu->superSPU, 0, 1 );
 	__buildDispatch( the_spu );
+	the_spu->dispatch_table.copyList = NULL;
+	the_spu->dispatch_table.copy_of = NULL;
+	the_spu->dispatch_table.chain_parent = NULL;
 	the_spu->self( &(the_spu->dispatch_table) );
 
 	return the_spu;
@@ -103,12 +102,21 @@ SPU * crSPULoadChain( int count, int *ids, char **names, char *dir )
 	{
 		int spu_id = ids[i];
 		char *spu_name = names[i];
+		SPU *the_spu;
 		
 		// This call passes the previous version of spu, which is the SPU's
 		// "child" in this chain.
 
-		child_spu = crSPULoad( child_spu, spu_id, spu_name, dir );
+		the_spu = crSPULoad( child_spu, spu_id, spu_name, dir );
+		if (child_spu != NULL)
+		{
+			// keep track of this so that people can pass functions through but
+			// still get updated when API's change on the fly.
+			child_spu->dispatch_table.chain_parent = &(the_spu->dispatch_table);
+		}
+		child_spu = the_spu;
 	}
+	child_spu->dispatch_table.chain_parent = NULL;
 	return child_spu;
 }
 

@@ -5,6 +5,6 @@
 
 TOP = ..
 
-SUBDIRS = atlantis fonttest kirchner extensions psubmit
+SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit
 
 include ${TOP}/cr.mk
