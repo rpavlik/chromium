@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #ifdef WINDOWS
 #include <io.h>
 #else
@@ -316,7 +317,8 @@ void crFileInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned i
 int crFileDoConnect( CRConnection *conn )
 {
 	conn->file_direction = CR_FILE_WRITE;
-	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY );
+	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY,
+                     S_IRUSR | S_IWUSR);
 	if (conn->fd < 0)
 	{
 		crWarning( "Couldn't open %s for writing!", conn->filename );
