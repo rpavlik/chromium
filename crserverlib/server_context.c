@@ -129,11 +129,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 	/* This is a hack to force updating the 'current' attribs */
 	crStateUpdateColorBits();
 
-	/* XXX do we really want to do this here, or wait until we get back to
-	 * the SerializeStreams loop?  It seems to work OK here.
-	 */
-	crStateMakeCurrent( ctx );
-
 	if (ctx)
 		crStateSetCurrentPointers( ctx, &(cr_server.current) );
 
@@ -163,6 +158,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 		cr_server.currentWindow = window;
 		cr_server.currentNativeWindow = nativeWindow;
 	}
+
+	/* This used to be earlier, after crStateUpdateColorBits() call */
+	crStateMakeCurrent( ctx );
 
 	/* This is pessimistic - we really don't have to invalidate the viewport
 	 * info every time we MakeCurrent, but play it safe for now.
