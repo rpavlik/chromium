@@ -13,7 +13,7 @@
  */
 #define CR_MAJOR_VERSION 1
 #define CR_MINOR_VERSION 0
-#define CR_PATCH_VERSION 0
+#define CR_PATCH_VERSION 1
 
 
 /* These define the OpenGL version that Chromium supports.
