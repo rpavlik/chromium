@@ -5,6 +5,6 @@
 
 TOP = .
 SUBDIRS = glapi_parser util mothership packer spu_loader state_tracker \
-	unpacker spu app_faker opengl_stub crserver app_stub progs
+	unpacker spu app_faker opengl_stub crserver progs
 
 include ${TOP}/cr.mk
