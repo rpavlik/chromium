@@ -64,6 +64,9 @@ binaryswapspuConnectToPeer( void )
 		}
 	}
 	
+	CRASSERT(binaryswap_spu.numnodes > 0);
+
+
 	/* allocate send/recv arrays for OOB communication */
 	binaryswap_spu.peer_recv = crAlloc(binaryswap_spu.numnodes*
 					   sizeof(CRConnection*));
@@ -71,8 +74,8 @@ binaryswapspuConnectToPeer( void )
 					   sizeof(CRConnection*));
 	
 	/* tracks network connection order */
-	binaryswap_spu.highlow = crAlloc(binaryswap_spu.numnodes);
-	
+	binaryswap_spu.highlow = crAlloc(binaryswap_spu.numnodes * sizeof(int));
+
 	/* set up accept connect paths for OOB */
 	for(i=0; i<binaryswap_spu.stages; i++){
 		/* lower of pair => accept,connect */
