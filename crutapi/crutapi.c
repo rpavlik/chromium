@@ -120,7 +120,7 @@ crutConnectToClients( CRUTAPI *crut_api )
 	
 	crut_api->crutclients[i].mtu = crMothershipGetMTU( crut_api->mothershipConn );
 	
-	crut_api->crutclients[i].send_conn = crNetAcceptClient( protocol, hostname, port, crut_api->crutclients[i].mtu, 1 );
+	crut_api->crutclients[i].send_conn = crNetAcceptClient( protocol, hostname, port, crut_api->crutclients[i].mtu, 0 );
 	
 	if (!crut_api->crutclients[i].send_conn)
 	{

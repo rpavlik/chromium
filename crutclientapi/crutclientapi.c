@@ -489,7 +489,7 @@ crutInitClient(void)
     mtu = crMothershipGetMTU(crut_api.mothershipConn);
 
     /* set up the connection to recv on */
-    crut_client.recv_conn = crNetConnectToServer( server, DEFAULT_PORT, mtu, 1 );
+    crut_client.recv_conn = crNetConnectToServer( server, DEFAULT_PORT, mtu, 0 );
 
     crutConnectToClients( &crut_api );
 }
