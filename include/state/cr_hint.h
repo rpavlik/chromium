@@ -15,12 +15,13 @@ extern "C" {
 #endif
 
 typedef struct {
+	GLbitvalue dirty;
 	GLbitvalue perspectiveCorrection;
 	GLbitvalue pointSmooth;
 	GLbitvalue lineSmooth;
 	GLbitvalue polygonSmooth;
 	GLbitvalue fog;
-#ifdef CR_NV_clip_volumne_hint
+#ifdef CR_EXT_clip_volume_hint
 	GLbitvalue clipVolumeClipping;
 #endif
 #ifdef CR_ARB_texture_compression
@@ -37,7 +38,7 @@ typedef struct {
 	GLenum lineSmooth;
 	GLenum polygonSmooth;
 	GLenum fog;
-#ifdef CR_NV_clip_volumne_hint
+#ifdef CR_EXT_clip_volume_hint
 	GLenum clipVolumeClipping;
 #endif
 #ifdef CR_ARB_texture_compression
