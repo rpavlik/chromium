@@ -4,8 +4,9 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_spu.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "cr_spu.h"
 #include "cr_glwrapper.h"
 
 #define ANGLE_STEP .5f
@@ -19,11 +20,19 @@ int main(int argc, char *argv[])
 	GLfloat v1[3] = { .25, .25, 0 }; 
 	GLfloat v2[3] = { .25, .5, 0 }; 
 	GLfloat v3[3] = { .5, .25, 0 }; 
+	GLint ctx;
 
 	(void) argc;
 	(void) argv;
 
 	spu = crSPULoadChain( sizeof(spunames)/sizeof(spunames[0]), ids, spunames, NULL, NULL );
+
+	ctx = spu->dispatch_table.CreateContext( NULL, CR_RGB_BIT | CR_DOUBLE_BIT);
+	if (!ctx) {
+		fprintf(stderr, "CreateContext() failed!\n");
+		exit(1);
+	}
+	spu->dispatch_table.MakeCurrent( NULL, 0, ctx );
 
 	spu->dispatch_table.NewList( 1, GL_COMPILE );
 		spu->dispatch_table.Color3f( 1,1,0 );
