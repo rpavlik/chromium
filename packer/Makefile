@@ -36,7 +36,7 @@ packer.def: packer_defs.py
 	@$(ECHO) Making the packer def file
 	@$(PYTHON) $< > $@
 
-../include/cr_packfunctions.h: pack_header.py packer_get_special packer_pixel_special
+../include/cr_packfunctions.h: pack_header.py packer_get_special packer_pixel_special packer_client_special
 	@$(ECHO) Making the pack functions header..
 	@$(PYTHON) pack_header.py > $@
 
@@ -48,7 +48,7 @@ packer.def: packer_defs.py
 	@$(ECHO) Making cr_currentpointers.h
 	@$(PYTHON) pack_currentheader.py > $@
 
-packer.c: packer.py packer_special packer_get_special
+packer.c: packer.py packer_special packer_pixel_special packer_client_special packer_get_special
 	@$(ECHO) Making the Packer...
 	@$(PYTHON) packer.py > $@
 
