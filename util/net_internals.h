@@ -5,10 +5,6 @@
 #include "cr_threads.h"
 
 
-#define DEFAULT_SERVER_PORT 7000
-#define DEFAULT_MOTHERSHIP_PORT 10000
-
-
 /*
  * Mothership networking
  */

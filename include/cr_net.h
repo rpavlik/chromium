@@ -23,9 +23,6 @@
 #define ADDRINFO
 #endif
 #endif
-#endif
-
-#ifndef WINDOWS
 #include <netinet/in.h>
 #endif
 
@@ -34,6 +31,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define DEFAULT_SERVER_PORT 7000
+#define DEFAULT_MOTHERSHIP_PORT 10000
 
 typedef struct CRConnection CRConnection;
 
@@ -56,38 +56,11 @@ typedef SOCKET CRSocket;
 typedef int    CRSocket;
 #endif
 
-int crGetHostname( char *buf, unsigned int len );
-int crGetPID(void);
-
-#define CR_QUADRICS_DEFAULT_LOW_CONTEXT  32
-#define CR_QUADRICS_DEFAULT_HIGH_CONTEXT 35
-
-void crNetSetRank( int my_rank );
-void crNetSetContextRange( int low_context, int high_context );
-void crNetSetNodeRange( const char *low_node, const char *high_node );
-void crNetSetKey( const unsigned char* key, const int keyLength );
-
 typedef void (*CRVoidFunc)( void );
 /* XXX make void *buf const??? */
 typedef int (*CRNetReceiveFunc)( CRConnection *conn, void *buf, unsigned int len );
 typedef int (*CRNetConnectFunc)( CRConnection *conn );
 typedef void (*CRNetCloseFunc)( unsigned int sender_id );
-
-void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc );
-void *crNetAlloc( CRConnection *conn );
-void crNetSend( CRConnection *conn, void **bufp, const void *start, unsigned int len );
-void crNetBarf( CRConnection *conn, void **bufp, const void *start, unsigned int len );
-void crNetSendExact( CRConnection *conn, const void *start, unsigned int len );
-void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len );
-unsigned int  crNetGetMessage( CRConnection *conn, CRMessage **message );
-unsigned int  crNetPeekMessage( CRConnection *conn, CRMessage **message );
-void crNetReadline( CRConnection *conn, void *buf );
-int  crNetRecv( void );
-void crNetFree( CRConnection *conn, void *buf );
-void crNetAccept( CRConnection *conn, const char *hostname, unsigned short port );
-int crNetConnect( CRConnection *conn );
-void crNetDisconnect( CRConnection *conn );
-void crCloseSocket( CRSocket sock );
 
 typedef struct __recvFuncList {
 	CRNetReceiveFunc recv;
@@ -98,9 +71,6 @@ typedef struct __closeFuncList {
 	CRNetCloseFunc close;
 	struct __closeFuncList *next;
 } CRNetCloseFuncList;
-
-void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len );
-void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn, void *buf, unsigned int len );
 
 typedef struct __messageList {
 	CRMessage *mesg;
@@ -117,19 +87,19 @@ typedef struct CRMultiBuffer {
 struct CRConnection {
 	int ignore;
 	CRConnectionType type;
-	unsigned int id; /* from the mothership */
+	unsigned int id;         /* obtained from the mothership (if brokered) */
 
 	CRMessageList *messageList, *messageTail;
 
 	CRMultiBuffer multi;
 
-	unsigned int mtu;
+	unsigned int mtu;        /* max transmission unit size (in bytes) */
 	unsigned int buffer_size;
 	unsigned int krecv_buf_size;
-	int broker;
+	int broker;              /* is connection brokered through mothership? */
 
 	int endianness, swap;
-	int actual_network;
+	int actual_network;      /* is this a real network? */
 
  	unsigned char *userbuf;
  	int userbuf_len;
@@ -137,16 +107,27 @@ struct CRConnection {
 	char *hostname;
 	int port;
 
+	/* To allocate a data buffer */
 	void *(*Alloc)( CRConnection *conn );
-	void  (*Send)( CRConnection *conn, void **buf, const void *start, unsigned int len );
-	void  (*Barf)( CRConnection *conn, void **buf, const void *start, unsigned int len );
-	void  (*SendExact)( CRConnection *conn, const void *start, unsigned int len );
-	void  (*Recv)( CRConnection *conn, void *buf, unsigned int len );
+	/* To indicate the client's done with a data buffer */
 	void  (*Free)( CRConnection *conn, void *buf );
+	/* To send a data buffer */
+	void  (*Send)( CRConnection *conn, void **buf, const void *start, unsigned int len );
+	/* To drop a data buffer on the floor */
+	void  (*Barf)( CRConnection *conn, void **buf, const void *start, unsigned int len );
+	/* To send a data buffer */
+	void  (*SendExact)( CRConnection *conn, const void *start, unsigned int len );
+	/* To receive data */
+	void  (*Recv)( CRConnection *conn, void *buf, unsigned int len );
+	/* What's this??? */
 	void  (*InstantReclaim)( CRConnection *conn, CRMessage *mess );
+	/* What's this??? */
 	void  (*HandleNewMessage)( CRConnection *conn, CRMessage *mess, unsigned int len );
+	/* To accept a new connection from a client */
 	void  (*Accept)( CRConnection *conn, const char *hostname, unsigned short port );
+	/* To connect to a server (return 0 if error, 1 if success) */
 	int  (*Connect)( CRConnection *conn );
+	/* To disconnect from a server */
 	void  (*Disconnect)( CRConnection *conn );
 
 	unsigned int sizeof_buffer_header;
@@ -201,8 +182,49 @@ struct CRConnection {
 	int tcscomm_rank;
 };
 
-CRConnection *crNetConnectToServer( const char *server, unsigned short default_port, int mtu, int broker );
-CRConnection *crNetAcceptClient( const char *protocol, const char *hostname, unsigned short port, unsigned int mtu, int broker );
+
+/*
+ * Network functions
+ */
+extern int crGetHostname( char *buf, unsigned int len );
+extern int crGetPID( void );
+
+extern void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc );
+
+extern void *crNetAlloc( CRConnection *conn );
+extern void crNetFree( CRConnection *conn, void *buf );
+
+extern void crNetAccept( CRConnection *conn, const char *hostname, unsigned short port );
+extern int crNetConnect( CRConnection *conn );
+extern void crNetDisconnect( CRConnection *conn );
+extern void crCloseSocket( CRSocket sock );
+
+extern void crNetSend( CRConnection *conn, void **bufp, const void *start, unsigned int len );
+extern void crNetBarf( CRConnection *conn, void **bufp, const void *start, unsigned int len );
+extern void crNetSendExact( CRConnection *conn, const void *start, unsigned int len );
+extern void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len );
+extern unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message );
+extern unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message );
+extern void crNetReadline( CRConnection *conn, void *buf );
+extern int crNetRecv( void );
+extern void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len );
+extern void crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn, void *buf, unsigned int len );
+
+extern CRConnection *crNetConnectToServer( const char *server, unsigned short default_port, int mtu, int broker );
+extern CRConnection *crNetAcceptClient( const char *protocol, const char *hostname, unsigned short port, unsigned int mtu, int broker );
+
+
+/*
+ * Quadrics stuff
+ */
+#define CR_QUADRICS_DEFAULT_LOW_CONTEXT  32
+#define CR_QUADRICS_DEFAULT_HIGH_CONTEXT 35
+
+void crNetSetRank( int my_rank );
+void crNetSetContextRange( int low_context, int high_context );
+void crNetSetNodeRange( const char *low_node, const char *high_node );
+void crNetSetKey( const unsigned char* key, const int keyLength );
+
 
 #ifdef __cplusplus
 }

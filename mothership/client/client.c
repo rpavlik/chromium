@@ -24,8 +24,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#define MOTHERPORT 10000
-
 CRConnection *crMothershipConnect( void )
 {
 	char *mother_server = NULL;
@@ -39,7 +37,7 @@ CRConnection *crMothershipConnect( void )
 		mother_server = "localhost";
 	}
 
-	return crNetConnectToServer( mother_server, MOTHERPORT, 8096, 0 );
+	return crNetConnectToServer( mother_server, DEFAULT_MOTHERSHIP_PORT, 8096, 0 );
 }
 
 void crMothershipDisconnect( CRConnection *conn )
