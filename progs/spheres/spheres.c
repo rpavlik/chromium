@@ -390,13 +390,14 @@ MakeDemoMesh(const Options *options)
 	float k = sqrt(options->numTris * 0.5);
 	int slices = (int) (k * 1.5);
 	int stacks = slices / 2;
+	TriangleMesh *mesh = NULL;
 
 	if (slices < 4)
 		slices = 4;
 	if (stacks < 2)
 		stacks = 2;
 
-	TriangleMesh *mesh = MakeSphere(options->radius, slices, stacks);
+	mesh = MakeSphere(options->radius, slices, stacks);
 
 	printf("spheres:  %d triangles / sphere\n", mesh->NumTris);
 	printf("spheres:  %d indices / sphere\n", mesh->NumIndices);
