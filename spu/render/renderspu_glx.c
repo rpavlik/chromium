@@ -217,6 +217,9 @@ WaitForMapNotify( Display *display, XEvent *event, char *arg )
 }
 
 
+/**
+ * Wrapper for glXGetConfig().
+ */
 static int
 Attrib( const VisualInfo *visual, int attrib )
 {
@@ -226,6 +229,178 @@ Attrib( const VisualInfo *visual, int attrib )
 }
 
 
+
+/**
+ * This is basically just a homegrown replacement for glXChooseVisual.
+ * It seems that glXChooseVisual() is kind of flakey with ATI's driver.
+ * Specifically, calling glXChooseVisual when the render SPU is hosted
+ * by a CR Application node doesn't work reliably.  It _might_ be a
+ * problem with older XFree86 libGL.so libraries which weren't built
+ * with the -Bsymbolic flag.  But that wouldn't explain why calls to
+ * glXGetConfig() seem OK!  Hmmm.
+ */
+static XVisualInfo *
+myChooseVisual(Display *dpy, int screen, const int attribs[])
+{
+	int rgba = 0, doubleBuffer = 0, stereo = 0;
+	int redSize = 0, greenSize = 0, blueSize = 0, alphaSize = 0;
+	int accRedSize = 0, accGreenSize = 0, accBlueSize = 0, accAlphaSize = 0;
+	int depthSize = 0, stencilSize = 0, bufferSize = 0, level = 0, aux = 0;
+	int multisample = 0, samples = 0;
+	int i;
+	XVisualInfo templateVis, *vis;
+	long templateFlags;
+	int count;
+
+	for (i = 0; attribs[i]; i++) {
+		switch (attribs[i]) {
+		case GLX_USE_GL:
+			/* ignored */
+			break;
+		case GLX_BUFFER_SIZE:
+			i++;
+			bufferSize = attribs[i];
+			break;
+		case GLX_LEVEL:
+			i++;
+			level = attribs[i];
+			break;
+		case GLX_AUX_BUFFERS:
+			i++;
+			aux = attribs[i];
+			break;
+		case GLX_SAMPLE_BUFFERS_SGIS:
+			i++;
+			multisample = attribs[i];
+			break;
+		case GLX_SAMPLES_SGIS:
+			i++;
+			samples = attribs[i];
+			break;
+		case GLX_RGBA:
+			rgba = 1;
+			break;
+		case GLX_DOUBLEBUFFER:
+			doubleBuffer = 1;
+			break;
+		case GLX_STEREO:
+			stereo = 1;
+			break;
+		case GLX_RED_SIZE:
+			i++;
+			redSize = attribs[i];
+			break;
+		case GLX_GREEN_SIZE:
+			i++;
+			greenSize = attribs[i];
+			break;
+		case GLX_BLUE_SIZE:
+			i++;
+			blueSize = attribs[i];
+			break;
+		case GLX_ALPHA_SIZE:
+			i++;
+			alphaSize = attribs[i];
+			break;
+		case GLX_DEPTH_SIZE:
+			i++;
+			depthSize = attribs[i];
+			break;
+		case GLX_STENCIL_SIZE:
+			i++;
+			stencilSize = attribs[i];
+			break;
+		case GLX_ACCUM_RED_SIZE:
+			i++;
+			accRedSize = attribs[i];
+			break;
+		case GLX_ACCUM_GREEN_SIZE:
+			i++;
+			accGreenSize = attribs[i];
+			break;
+		case GLX_ACCUM_BLUE_SIZE:
+			i++;
+			accBlueSize = attribs[i];
+			break;
+		case GLX_ACCUM_ALPHA_SIZE:
+			i++;
+			accAlphaSize = attribs[i];
+			break;
+		default:
+			crError("Unexpected case 0x%x!", attribs[i]);
+		}
+	}
+
+	templateFlags = VisualScreenMask;
+	templateVis.screen = screen;
+	if (rgba) {
+#if defined(__cplusplus) || defined(c_plusplus)
+		templateVis.c_class = TrueColor;
+#else
+		templateVis.class = TrueColor;
+#endif
+		templateFlags |= VisualClassMask;
+	}
+
+	vis = XGetVisualInfo(dpy, templateFlags, &templateVis, &count);
+	/* find first visual that's good enough */
+	for (i = 0; i < count; i++) {
+		int a;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_RGBA, &a);
+		if (a != rgba)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_DOUBLEBUFFER, &a);
+		if (a != doubleBuffer)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_STEREO, &a);
+		if (a != stereo)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_LEVEL, &a);
+		if (a != level)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_RED_SIZE, &a);
+		if (a < redSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_GREEN_SIZE, &a);
+		if (a < greenSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_BLUE_SIZE, &a);
+		if (a < blueSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ALPHA_SIZE, &a);
+		if (a < alphaSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_DEPTH_SIZE, &a);
+		if (a < depthSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_STENCIL_SIZE, &a);
+		if (a < stencilSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ACCUM_RED_SIZE, &a);
+		if (a < accRedSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ACCUM_GREEN_SIZE, &a);
+		if (a < accGreenSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ACCUM_BLUE_SIZE, &a);
+		if (a < accBlueSize)
+			continue;
+		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ACCUM_ALPHA_SIZE, &a);
+		if (a < accAlphaSize)
+			continue;
+ 
+		/* OK! */
+		return vis + i;
+	}
+
+	/* no match */
+	return NULL;
+}
+
+
+/**
+ * Choose a GLX visual based upon a bitmask of CR_*_BIT attributes.
+ */
 static XVisualInfo *
 chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 {
@@ -322,11 +497,15 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 	/* End the list */
 	attribList[i++] = None;
 
-	vis = render_spu.ws.glXChooseVisual( dpy, screen, attribList );
+	vis = myChooseVisual(dpy, screen, attribList);
 	return vis;
 }
 
 
+/**
+ * Find a visual with the specified attributes.  If we fail, turn off an
+ * attribute (like multisample or stereo) and try again.
+ */
 static XVisualInfo *
 chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 {
