@@ -13,19 +13,25 @@ void packspuGatherConfiguration( void )
 {
 	CRConnection *conn;
 	char response[8096];
+	char servername[8096];
+	int num_servers;
 
 	conn = crMothershipConnect();
 	crMothershipIdentifySPU( conn, pack_spu.id );
 
 	__setDefaults();
 
-	if (crMothershipSPUParam( conn, response, "server" ) )
+	crMothershipGetServers( conn, response );
+
+	sscanf( response, "%d %s", &num_servers, servername );
+
+	if (num_servers == 1)
 	{
-		pack_spu.server.name = crStrdup( response );
+		pack_spu.server.name = crStrdup( servername );
 	}
 	else
 	{
-		crError( "No server specified for Pack SPU %d", pack_spu.id );
+		crError( "Bad server specification for Pack SPU %d", pack_spu.id );
 	}
 
 	crMothershipGetMTU( conn, response );
