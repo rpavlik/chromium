@@ -56,9 +56,11 @@ static void set_node( void *spu, const char *response )
 	(void) spu;
 	if (*response) {
 		binaryswap_spu.node_num = crStrToInt( response );
+		if(binaryswap_spu.node_num == -1)
+		     crError( "FATAL: No node number specified for the binaryswap SPU?" );     
 	}
 	else {
-		crError( "No node number specified for the binaryswap SPU?" );
+		crError( "FATAL: No node number specified for the binaryswap SPU?" );
 	}
 }
 
@@ -114,7 +116,7 @@ SPUOptions binaryswapspuOptions[] = {
 	{ "peers", CR_STRING, 1, "", NULL, NULL, 
 	  "Peers", (SPUOptionCB)set_peers},
 	
-	{ "node_number", CR_STRING, 1, "", NULL, NULL, 
+	{ "node_number", CR_INT, 1, "-1", NULL, NULL, 
 	  "Node Number", (SPUOptionCB)set_node},
 	
 	{ "local_visualization", CR_BOOL, 1, "1", NULL, NULL,
