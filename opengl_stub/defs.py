@@ -12,7 +12,7 @@ print "EXPORTS"
 keys = gl_mapping.keys()
 keys.sort();
 for func_name in keys:
-    print "gl" + func_name
+    print "gl%s = cr_gl%s" % (func_name,func_name)
 
 for func_name in ( "wglChoosePixelFormat", 
 		   "wglCopyContext",
