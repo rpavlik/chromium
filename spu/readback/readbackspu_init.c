@@ -27,6 +27,12 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
+#if 1
+	/* XXX temporary */
+	extern CRContext *__currentContext;
+	crDebug("readback SPU: &__currentContext = %p\n", (void *) &__currentContext);
+#endif
+
 	(void) context_id;
 	(void) num_contexts;
 
