@@ -3927,6 +3927,9 @@ void crStateTextureObjDiffCallback( unsigned long key, void *data1, void *data2 
 								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
 								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								/*
+									printf("%s diff TexImage2D\n", __FUNCTION__);
+								*/
 								diff_api.TexImage2D(GL_TEXTURE_2D, lvl,
 																		tl->internalFormat,
 																		tl->width, tl->height, tl->border,
@@ -4119,9 +4122,269 @@ void crStateTextureObjDiffCallback( unsigned long key, void *data1, void *data2 
 	}
 }
 
+
+/*
+ * Do texture state differencing for the given texture object.
+ */
+static void
+crStateTextureObjectDiff(CRContext *fromCtx,
+												 const CRbitvalue *bitID, const CRbitvalue *nbitID,
+												 CRTextureObj *tobj)
+{
+	CRTextureState *from = &(fromCtx->texture);
+	glAble able[2];
+	int u = 0; /* fix */
+
+	able[0] = diff_api.Disable;
+	able[1] = diff_api.Enable;
+
+	/*
+	CRASSERT( CHECKDIRTY(tobj->dirty, bitID) );
+	*/
+
+	if (CHECKDIRTY(tobj->paramsBit[u], bitID)) 
+	{
+		GLfloat f[4];
+		f[0] = tobj->borderColor.r;
+		f[1] = tobj->borderColor.g;
+		f[2] = tobj->borderColor.b;
+		f[3] = tobj->borderColor.a;
+		diff_api.TexParameteri(tobj->target, GL_TEXTURE_MIN_FILTER, tobj->minFilter);
+		diff_api.TexParameteri(tobj->target, GL_TEXTURE_MAG_FILTER, tobj->magFilter);
+		diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_S, tobj->wrapS);
+		diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_T, tobj->wrapT);
+#ifdef CR_OPENGL_VERSION_1_2
+		diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_R, tobj->wrapR);
+		diff_api.TexParameterf(tobj->target, GL_TEXTURE_PRIORITY, tobj->priority);
+#endif
+		diff_api.TexParameterfv(tobj->target, GL_TEXTURE_BORDER_COLOR, (const GLfloat *) f);
+#ifdef CR_EXT_texture_filter_anisotropic
+		if (fromCtx->extensions.EXT_texture_filter_anisotropic) {
+			diff_api.TexParameterf(tobj->target, GL_TEXTURE_MAX_ANISOTROPY_EXT, tobj->maxAnisotropy);
+		}
+#endif
+#ifdef CR_ARB_depth_texture
+		if (fromCtx->extensions.ARB_depth_texture)
+			diff_api.TexParameteri(tobj->target, GL_DEPTH_TEXTURE_MODE_ARB, tobj->depthMode);
+#endif
+#ifdef CR_ARB_shadow
+		if (fromCtx->extensions.ARB_shadow) {
+			diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_MODE_ARB, tobj->compareMode);
+			diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_FUNC_ARB, tobj->compareFunc);
+		}
+#endif
+#ifdef CR_ARB_shadow_ambient
+		if (fromCtx->extensions.ARB_shadow_ambient) {
+			diff_api.TexParameterf(tobj->target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, tobj->compareFailValue);
+		}
+#endif
+#ifdef CR_SGIS_generate_mipmap
+		if (fromCtx->extensions.SGIS_generate_mipmap) {
+			diff_api.TexParameteri(tobj->target, GL_GENERATE_MIPMAP_SGIS, tobj->generateMipmap);
+		}
+#endif
+		CLEARDIRTY(tobj->paramsBit[u], nbitID);
+	}
+
+	/* now, if the texture images are dirty */
+	if (CHECKDIRTY(tobj->imageBit, bitID)) 
+	{
+		int lvl;
+		switch (tobj->target)
+		{
+			case GL_TEXTURE_1D:
+				for (lvl = 0; lvl < from->maxLevel; lvl++) 
+				{
+					CRTextureLevel *tl = &(tobj->level[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID)) 
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage1D(GL_TEXTURE_1D, lvl,
+																tl->internalFormat,
+																tl->width, tl->border,
+																tl->format,	tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+				}
+				break;
+			case GL_TEXTURE_2D:
+				for (lvl = 0; lvl < from->maxLevel; lvl++) 
+				{
+					CRTextureLevel *tl = &(tobj->level[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID)) 
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage2D(GL_TEXTURE_2D, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->border,
+																tl->format, tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+				}
+				break;
+#ifdef CR_OPENGL_VERSION_1_2
+			case GL_TEXTURE_3D:
+				for (lvl = 0; lvl < from->maxLevel; lvl++) 
+				{
+					CRTextureLevel *tl = &(tobj->level[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID)) 
+				 	{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage3D(GL_TEXTURE_3D, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->depth,
+																tl->border, tl->format,
+																tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+				}
+				break;
+#endif
+#ifdef CR_NV_texture_rectangle 
+			case GL_TEXTURE_RECTANGLE_NV:
+				/* only one level */
+				for (lvl = 0; lvl < from->maxRectLevel; lvl++) 
+				{
+					CRTextureLevel *tl;
+					tl = &(tobj->level[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID))
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage2D(GL_TEXTURE_RECTANGLE_NV, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->border,
+																tl->format, tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+				}
+				break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+			case GL_TEXTURE_CUBE_MAP_ARB:
+				for (lvl = 0; lvl < from->maxCubeMapLevel; lvl++) 
+				{
+					CRTextureLevel *tl;
+					/* Positive X */
+					tl = &(tobj->level[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID))
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->border,
+																tl->format, tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+					/* Negative X */
+					tl = &(tobj->negativeXlevel[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID))
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->border,
+																tl->format, tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+					/* Positive Y */
+					tl = &(tobj->positiveYlevel[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID)) 
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->border,
+																tl->format, tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+					/* Negative Y */
+					tl = &(tobj->negativeYlevel[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID))
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->border,
+																tl->format, tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+					/* Positive Z */
+					tl = &(tobj->positiveZlevel[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID))
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->border,
+																tl->format, tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+					/* Negative Z */
+					tl = &(tobj->negativeZlevel[lvl]);
+					if (CHECKDIRTY(tl->dirty, bitID))
+					{
+						/* alignment must be one */
+						diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+						diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+						diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+						diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, lvl,
+																tl->internalFormat,
+																tl->width, tl->height, tl->border,
+																tl->format, tl->type, tl->img);
+						CLEARDIRTY(tl->dirty, nbitID);
+					}
+				}
+				break;
+#endif
+			default:
+				UNIMPLEMENTED();
+
+		}	/* switch */
+	} /* if (CHECKDIRTY(tobj->imageBit, bitID)) */
+}
+
+
+
 void
 crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
-									  CRContext *fromCtx, CRContext *toCtx )
+										CRContext *fromCtx, CRContext *toCtx )
 {
 	CRTextureState *from = &(fromCtx->texture);
 	CRTextureState *to = &(toCtx->texture);
@@ -4535,6 +4798,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 			/* now, if the texture object is dirty */
 			if (CHECKDIRTY(tobj->dirty, bitID)) 
 			{
+#if 1
+				 crStateTextureObjectDiff(fromCtx, bitID, nbitID, tobj);
+#else
 				if (CHECKDIRTY(tobj->paramsBit[u], bitID)) 
 				{
 					GLfloat f[4];
@@ -4615,6 +4881,9 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 									diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
 									diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									/*
+									printf("%s diff TexImage2D\n", __FUNCTION__);
+									*/
 									diff_api.TexImage2D(GL_TEXTURE_2D, lvl,
 																			tl->internalFormat,
 																			tl->width, tl->height, tl->border,
@@ -4770,6 +5039,7 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 							UNIMPLEMENTED();
 					}	
 				} /* if (CHECKDIRTY(tobj->imageBit, bitID)) */
+#endif
 
 			} /* if (CHECKDIRTY(tobj->dirty, bitID)) */
 
@@ -4793,3 +5063,74 @@ crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 
 	CLEARDIRTY(tb->dirty, nbitID);
 }
+
+
+
+struct callback_info
+{
+	CRbitvalue *bitID, *nbitID;
+	CRContext *g;
+};
+
+
+static void
+DiffTextureObjectCallback( unsigned long key, void *texObj , void *cbData)
+{
+	struct callback_info *info = (struct callback_info *) cbData;
+	CRTextureObj *tobj = (CRTextureObj *) texObj;
+	/*
+	printf("  Checking %d 0x%x  bitid=0x%x\n",tobj->name, tobj->dirty[0], info->bitID[0]);
+	*/
+	if (CHECKDIRTY(tobj->dirty, info->bitID)) {
+		 /*
+		printf("  Found Dirty! %d\n", tobj->name);
+		 */
+		diff_api.BindTexture(tobj->target, tobj->name);
+		crStateTextureObjectDiff(info->g, info->bitID, info->nbitID, tobj);
+		CLEARDIRTY(tobj->dirty, info->nbitID);
+	}
+}
+
+
+/*
+ * This isn't used right now, but will be used in the future to fix some
+ * potential display list problems.  Specifically, if glBindTexture is
+ * in a display list, we have to be sure that all outstanding texture object
+ * updates are resolved before the list is called.  If we don't, we may
+ * wind up binding texture objects that are stale.
+ */
+void
+crStateDiffAllTextureObjects( CRContext *g, CRbitvalue *bitID )
+{
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+	CRTextureState *t = &(g->texture);
+	struct callback_info info;
+	int j;
+	int origUnit, orig1D, orig2D, orig3D;
+
+	for (j = 0; j < CR_MAX_BITARRAY; j++)
+		nbitID[j] = ~bitID[j];
+
+	info.bitID = bitID;
+	info.nbitID = nbitID;
+	info.g = g;
+
+	/* save current texture bindings */
+	origUnit = g->texture.curTextureUnit;
+	orig1D = g->texture.unit[0].currentTexture1D->name;
+	orig2D = g->texture.unit[0].currentTexture2D->name;
+	orig3D = g->texture.unit[0].currentTexture3D->name;
+
+	/* use texture unit 0 for updates */
+	diff_api.ActiveTextureARB(GL_TEXTURE0_ARB);
+
+	/* diff all the textures */
+	crHashtableWalk(t->idHash, DiffTextureObjectCallback, (void *) &info);
+
+	/* restore bindings */
+	diff_api.ActiveTextureARB(GL_TEXTURE0_ARB + origUnit);
+	diff_api.BindTexture(GL_TEXTURE_1D, orig1D);
+	diff_api.BindTexture(GL_TEXTURE_2D, orig2D);
+	diff_api.BindTexture(GL_TEXTURE_3D, orig3D);
+}
+

@@ -47,7 +47,7 @@ typedef struct {
 	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRTextureLevel;
 
-typedef struct __CRTextureObj {
+typedef struct {
 	GLenum                 target;
 	GLuint                 name;
 
@@ -221,6 +221,8 @@ void crStateTextureDiff(CRTextureBits *t, CRbitvalue *bitID,
                         CRContext *fromCtx, CRContext *toCtx);
 void crStateTextureSwitch(CRTextureBits *t, CRbitvalue *bitID, 
                           CRContext *fromCtx, CRContext *toCtx);
+
+void crStateDiffAllTextureObjects( CRContext *g, CRbitvalue *bitID );
 
 #ifdef __cplusplus
 }
