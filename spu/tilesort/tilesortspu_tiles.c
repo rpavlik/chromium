@@ -151,7 +151,7 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 	CRASSERT(num_servers == tilesort_spu.num_servers);
 	serverlist = crStrSplit(serverchain[1], ",");
 
-	tilesort_spu.thread[0].net =
+	tilesort_spu.thread[0].netServer =
 		(CRNetServer *) crCalloc(num_servers * sizeof(CRNetServer));
 	tilesort_spu.thread[0].buffer =
 		(CRPackBuffer *) crCalloc(num_servers * sizeof(CRPackBuffer));
@@ -255,8 +255,8 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 			sscanf(serverlist[i], "%s", server_url);
 
 			crDebug("Server %d: %s", i + 1, server_url);
-			thread0->net[i].name = crStrdup(server_url);
-			thread0->net[i].buffer_size = tilesort_spu.buffer_size;
+			thread0->netServer[i].name = crStrdup(server_url);
+			thread0->netServer[i].buffer_size = tilesort_spu.buffer_size;
 
 			/* response is just like regular GetTiles, but each tile
 			 * is preceeded by a display id */
@@ -376,8 +376,8 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 			sscanf(serverlist[i], "%s", server_url);
 
 			crDebug("Server %d: %s", i + 1, server_url);
-			thread0->net[i].name = crStrdup(server_url);
-			thread0->net[i].buffer_size = tilesort_spu.buffer_size;
+			thread0->netServer[i].name = crStrdup(server_url);
+			thread0->netServer[i].buffer_size = tilesort_spu.buffer_size;
 
 			if (!crMothershipGetTiles(conn, response, i))
 			{

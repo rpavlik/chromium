@@ -97,21 +97,21 @@ void tilesortspuConnectToServers( void )
 
 	int some_net_traffic = 0;
 
-	CRASSERT(thread0->net);
+	CRASSERT(thread0->netServer);
 	CRASSERT(thread0->buffer);
 
 	crNetInit( tilesortspuReceiveData, NULL );
 
 	for (i = 0 ; i < tilesort_spu.num_servers; i++)
 	{
-		CRNetServer *net = &(thread0->net[i]);
+		CRNetServer *netServer = &(thread0->netServer[i]);
 
-		crNetServerConnect( net );
+		crNetServerConnect( netServer );
 
 
 		/* the connection may have already detected a smaller MTU */
-		if (tilesort_spu.MTU > net->conn->mtu)
-			tilesort_spu.MTU = net->conn->mtu;
+		if (tilesort_spu.MTU > netServer->conn->mtu)
+			tilesort_spu.MTU = netServer->conn->mtu;
 
 		
 		/* Tear the URL apart into relevant portions. 
@@ -119,9 +119,9 @@ void tilesortspuConnectToServers( void )
 		 * just trying to get at the protocol so we can figure out if 
 		 * we should override the user's choices for synconswap etc. */
 
-		if ( !crParseURL( net->name, protocol, hostname, &port, 0 ) )
+		if ( !crParseURL( netServer->name, protocol, hostname, &port, 0 ) )
 		{
-			crError( "Malformed URL: \"%s\"", net->name );
+			crError( "Malformed URL: \"%s\"", netServer->name );
 		}
 
 		if (!crStrcmp( protocol, "tcpip" ) ||

@@ -73,7 +73,7 @@ void tilesortspuDebugOpcodes( CRPackBuffer *buffer )
 void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 {
 	CRPackBuffer *pack = &(thread->buffer[server_index]);
-	CRNetServer *net = &(thread->net[server_index]);
+	CRNetServer *netServer = &(thread->netServer[server_index]);
 	unsigned int len;
 	CRMessageOpcodes *hdr;
 
@@ -88,15 +88,15 @@ void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 	hdr = __applySendBufferHeader( pack, &len );
 
 	if ( pack->holds_BeginEnd && pack->canBarf ) {
-		crNetBarf( net->conn, &pack->pack, hdr, len );
+		crNetBarf( netServer->conn, &pack->pack, hdr, len );
 	}
 	else {
-		crNetSend( net->conn, &pack->pack, hdr, len );
+		crNetSend( netServer->conn, &pack->pack, hdr, len );
 	}
 
-	crPackInitBuffer( pack, crNetAlloc( net->conn ),
-										net->conn->buffer_size, net->conn->mtu );
-	pack->canBarf = net->conn->Barf ? GL_TRUE : GL_FALSE;
+	crPackInitBuffer( pack, crNetAlloc( netServer->conn ),
+										netServer->conn->buffer_size, netServer->conn->mtu );
+	pack->canBarf = netServer->conn->Barf ? GL_TRUE : GL_FALSE;
 }
 
 /*
@@ -240,7 +240,7 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 	/* the pipeserver's buffer might have data in it, and that should
        go across the wire before this big packet */
 	tilesortspuSendServerBuffer( thread->state_server_index );
-	crNetSend( thread->net[thread->state_server_index].conn, NULL, src, len );
+	crNetSend( thread->netServer[thread->state_server_index].conn, NULL, src, len );
 	crPackFree( buf );
 }
 
@@ -611,7 +611,7 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 			/* Send state-change commands */
 			tilesortspuSendServerBuffer( thread->state_server_index );
 			/* send geometry */
-			crNetSend( thread->net[thread->state_server_index].conn, NULL,
+			crNetSend( thread->netServer[thread->state_server_index].conn, NULL,
 								 big_packet_hdr, big_packet_len );
 		}
 		else
@@ -666,10 +666,10 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 	 * shrink buffer's and tilesortspu's mtu */
 	for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
 	{
-		if (thread->buffer[i].mtu > thread->net[i].conn->mtu)
-			thread->buffer[i].mtu = thread->net[i].conn->mtu;
-		if (tilesort_spu.MTU > thread->net[i].conn->mtu) {
-			tilesort_spu.MTU = thread->net[i].conn->mtu;
+		if (thread->buffer[i].mtu > thread->netServer[i].conn->mtu)
+			thread->buffer[i].mtu = thread->netServer[i].conn->mtu;
+		if (tilesort_spu.MTU > thread->netServer[i].conn->mtu) {
+			tilesort_spu.MTU = thread->netServer[i].conn->mtu;
 		}
 	}
 	/* the geometry must also fit in the mtu */

@@ -61,17 +61,17 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 	crPackSendHugeFunc( thread->packer, tilesortspuHuge );
 	crPackResetBBOX( thread->packer );
 
-	CRASSERT(thread->net[0].conn);
+	CRASSERT(thread->netServer[0].conn);
 	CRASSERT(tilesort_spu.num_servers > 0);
 
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		crPackInitBuffer( &(thread->buffer[i]),
-					crNetAlloc( thread->net[i].conn ),
-					thread->net[i].conn->buffer_size,
-					thread->net[i].conn->mtu );
+					crNetAlloc( thread->netServer[i].conn ),
+					thread->netServer[i].conn->buffer_size,
+					thread->netServer[i].conn->mtu );
 
-		if (thread->net[i].conn->Barf)
+		if (thread->netServer[i].conn->Barf)
 		{
 			thread->buffer[i].canBarf = GL_TRUE;
 			thread->packer->buffer.canBarf = GL_TRUE;
@@ -103,14 +103,14 @@ static ThreadInfo *tilesortspuNewThread(void)
 
 	thread->state_server_index = -1;
 
-	thread->net = (CRNetServer *) crCalloc( tilesort_spu.num_servers * sizeof(CRNetServer) );
+	thread->netServer = (CRNetServer *) crCalloc( tilesort_spu.num_servers * sizeof(CRNetServer) );
 	thread->buffer = (CRPackBuffer *) crCalloc( tilesort_spu.num_servers * sizeof(CRPackBuffer) );
 
 	for (i = 0; i < tilesort_spu.num_servers; i++) {
-		thread->net[i].name = crStrdup( tilesort_spu.thread[0].net[i].name );
-		thread->net[i].buffer_size = tilesort_spu.thread[0].net[i].buffer_size;
+		thread->netServer[i].name = crStrdup( tilesort_spu.thread[0].net[i].name );
+		thread->netServer[i].buffer_size = tilesort_spu.thread[0].net[i].buffer_size;
 		/* Establish new connection to server[i] */
-		crNetNewClient( tilesort_spu.thread[0].net[i].conn, &(thread->net[i]));
+		crNetNewClient( tilesort_spu.thread[0].net[i].conn, &(thread->netServer[i]));
 
 	}
 
@@ -234,7 +234,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBufferThread( i, thread0 );
 
-		if (!thread0->net[0].conn->actual_network)
+		if (!thread0->netServer[0].conn->actual_network)
 		{
 			/* HUMUNGOUS HACK TO MATCH SERVER NUMBERING (from packspu_context.c)
 			 *
@@ -491,7 +491,7 @@ fprintf(stderr,"MakeCurrent thread = %p\n",thread);
 		 * extensions we have and don't have (for this context and the servers'
 		 * contexts).  Omit for file network.
 		 */
-		if (thread->net->conn->actual_network) {
+		if (thread->netServer->conn->actual_network) {
 			int i;
 			const GLubyte *ext = tilesortspuGetExtensionsString();
 			crStateSetExtensionString( newCtx->State, ext );

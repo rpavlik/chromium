@@ -393,7 +393,7 @@ tilesortspuGetNumServers(CRConnection *conn)
 	n = crStrToInt(serverchain[0]);
 
 	if (n == 0) {
-		crError("No servers specified for a tile/sort SPU?!");
+		crError("Tilesort SPU: no servers found.");
 	}
 
 	crFreeStrings(serverchain);

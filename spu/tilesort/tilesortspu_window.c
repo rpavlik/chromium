@@ -650,7 +650,7 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 		/* Flush buffer (send to server) */
 		tilesortspuSendServerBuffer( i );
 
-		if (!thread0->net[0].conn->actual_network)
+		if (!thread0->netServer[0].conn->actual_network)
 		{
 			/* XXX Revisit for DMX!!! */
 

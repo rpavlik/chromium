@@ -194,7 +194,7 @@ struct thread_info_t {
 	int state_server_index;           /* only used during __doFlush() */
 
 	/* Array of network connections to the servers */
-	CRNetServer *net;    /* array net[num_servers] */
+	CRNetServer *netServer;    /* array net[num_servers] */
 
 	/* Array of buffers for packing state changes for servers.
 	 * Usually just used during state differencing.
