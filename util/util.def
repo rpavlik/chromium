@@ -13,6 +13,8 @@ crDebug
 crParseURL
 crAlloc
 crCalloc
+crAllocDebug
+crCallocDebug
 crRealloc
 crMemset
 crFree

@@ -10,7 +10,16 @@
 #include <stdlib.h>
 #include <memory.h>
 
+#if DEBUG_MEM
+#include <stdio.h>
+#define THRESHOLD 100 * 1024
+#endif
+
+#if DEBUG_MEM
+static void *_crAlloc( unsigned int nbytes )
+#else
 void *crAlloc( unsigned int nbytes )
+#endif
 {
 	void *ret = malloc( nbytes );
 	if (!ret) {
@@ -20,7 +29,22 @@ void *crAlloc( unsigned int nbytes )
 	return ret;
 }
 
+void *crAllocDebug( unsigned int nbytes, const char *file, int line )
+{
+#if DEBUG_MEM
+	if (nbytes >= THRESHOLD)
+		fprintf(stderr, "crAllocDebug(%d bytes) in %s at %d\n", nbytes, file, line);
+	return _crAlloc(nbytes);
+#else
+	return crAlloc(nbytes);
+#endif
+}
+
+#if DEBUG_MEM
+static void *_crCalloc( unsigned int nbytes )
+#else
 void *crCalloc( unsigned int nbytes )
+#endif
 {
 	void *ret = malloc( nbytes );
 	if (!ret) {
@@ -29,6 +53,17 @@ void *crCalloc( unsigned int nbytes )
 	}
 	crMemset( ret, 0, nbytes );
 	return ret;
+}
+
+void *crCallocDebug( unsigned int nbytes, const char *file, int line )
+{
+#if DEBUG_MEM
+	if (nbytes >= THRESHOLD)
+		fprintf(stderr, "crCallocDebug(%d bytes) in %s at %d\n", nbytes, file, line);
+	return _crCalloc(nbytes);
+#else
+	return crCalloc(nbytes);
+#endif
 }
 
 void crRealloc( void **ptr, unsigned int nbytes )
