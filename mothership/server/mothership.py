@@ -594,7 +594,7 @@ class CR:
 							self.all_sockets.append( conn )
 						else:
 							self.ProcessRequest( self.wrappers[sock] )
-			Fatal( "Couldn't find local TCP port")
+			Fatal( "Couldn't find local TCP port (make sure that another mothership isn't already running)")
 		except KeyboardInterrupt:
 			try:
 				for sock in self.all_sockets:
