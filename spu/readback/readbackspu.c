@@ -721,11 +721,11 @@ readbackspuSwapBuffers(GLint win, GLint flags)
 
 
 static GLint READBACKSPU_APIENTRY
-readbackspuCreateContext(const char *dpyName, GLint visual)
+readbackspuCreateContext(const char *dpyName, GLint visBits)
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
-	GLint childVisual = visual;
+	GLint childVisBits = visBits;
 
 	CRASSERT(readback_spu.child.BarrierCreateCR);
 
@@ -738,15 +738,15 @@ readbackspuCreateContext(const char *dpyName, GLint visual)
 
 	/* If doing z-compositing, need stencil buffer */
 	if (readback_spu.extract_depth)
-		childVisual |= CR_STENCIL_BIT;
+		childVisBits |= CR_STENCIL_BIT;
 	if (readback_spu.extract_alpha)
-		childVisual |= CR_ALPHA_BIT;
+		childVisBits |= CR_ALPHA_BIT;
 	/* final display window should probably be visible */
-	childVisual &= ~CR_PBUFFER_BIT;
+	childVisBits &= ~CR_PBUFFER_BIT;
 
-	context->renderContext = readback_spu.super.CreateContext(dpyName, visual);
+	context->renderContext = readback_spu.super.CreateContext(dpyName, visBits);
 	context->childContext =
-		readback_spu.child.CreateContext(dpyName, childVisual);
+		readback_spu.child.CreateContext(dpyName, childVisBits);
 
 	/* put into hash table */
 	crHashtableAdd(readback_spu.contextTable, freeID, context);
@@ -804,14 +804,16 @@ static GLint READBACKSPU_APIENTRY
 readbackspuWindowCreate(const char *dpyName, GLint visBits)
 {
 	WindowInfo *window;
-	GLint childVisual = visBits;
+	GLint childVisBits = visBits;
 	static GLint freeID = 1;			/* skip default window 0 */
 
 	/* If doing z-compositing, need stencil buffer */
 	if (readback_spu.extract_depth)
-		childVisual |= CR_STENCIL_BIT;
+		childVisBits |= CR_STENCIL_BIT;
 	if (readback_spu.extract_alpha)
-		childVisual |= CR_ALPHA_BIT;
+		childVisBits |= CR_ALPHA_BIT;
+	/* final display window should probably be visible */
+	childVisBits &= ~CR_PBUFFER_BIT;
 
 	/* allocate window */
 	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
@@ -824,8 +826,7 @@ readbackspuWindowCreate(const char *dpyName, GLint visBits)
 	/* init window */
 	window->index = freeID;
 	window->renderWindow = readback_spu.super.WindowCreate(dpyName, visBits);
-	visBits &= ~CR_PBUFFER_BIT;
-	window->childWindow = readback_spu.child.WindowCreate(dpyName, visBits);
+	window->childWindow = readback_spu.child.WindowCreate(dpyName, childVisBits);
 	window->width = -1;						/* unknown */
 	window->height = -1;					/* unknown */
 	window->colorBuffer = NULL;
