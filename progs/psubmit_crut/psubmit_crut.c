@@ -91,8 +91,8 @@ int window = 0;  /* default window */
 float theta;
 int swapFlag = 0, clearFlag = 0;
 int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
-GLfloat r = 0.15;
-GLfloat R = 0.7;
+GLfloat r = (GLfloat) 0.15;
+GLfloat R = (GLfloat) 0.7;
 GLint sides = 15;
 GLint rings = 30;
 
@@ -103,9 +103,9 @@ mouse( int button, int state, int x, int y )
 {
 
     if (button == CRUT_LEFT_BUTTON && state == CRUT_DOWN)
-	r += 0.02;
+	r += 0.02f;
     if (button == CRUT_RIGHT_BUTTON && state == CRUT_DOWN)
-	r -= 0.02;
+	r -= 0.02f;
     events++;
     printf("events: %i\n", events);
 }
@@ -207,7 +207,7 @@ static void changeSize( int value )
 	r += 0.02f;
 	break;
     case 2:
-	r -= 0.02;;
+	r -= 0.02f;
 	break;
     }
 }

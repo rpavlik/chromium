@@ -6,5 +6,6 @@ FILES = crutclientapi
 SHARED = 1
 LIBRARY = crutclientapi
 LIBRARIES = crutapi crfaker crmothership crutil
+LIB_DEFS = crutclientapi.def
 
 include $(TOP)/cr.mk
