@@ -9,7 +9,7 @@
 #include "fpsspu.h"
 #include "cr_error.h"
 
-void FPSSPU_APIENTRY fpsSwapBuffers( GLint window )
+void FPSSPU_APIENTRY fpsSwapBuffers( GLint window, GLint flags )
 {
 	static int frame_counter = 0;
 	float elapsed = (float) crTimerTime( fps_spu.timer );
@@ -26,7 +26,7 @@ void FPSSPU_APIENTRY fpsSwapBuffers( GLint window )
 		crDebug( "FPS: %f", fps );
 	}
 
-	fps_spu.super.SwapBuffers();
+	fps_spu.super.SwapBuffers( window, flags );
 }
 
 SPUNamedFunctionTable fps_table[] = {
