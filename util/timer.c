@@ -17,6 +17,7 @@
 
 #include "cr_timer.h"
 #include "cr_mem.h"
+#include "cr_error.h"
 
 static double crTimerGetTime( CRTimer *t )
 {
