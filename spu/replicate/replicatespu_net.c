@@ -261,6 +261,11 @@ void replicatespuFlush(void *arg )
 	(void) arg;
 }
 
+
+/**
+ * XXX NOTE: there's a lot of duplicate code here common to the
+ * pack, tilesort and replicate SPUs.  Try to simplify someday!
+ */
 void replicatespuHuge( CROpcode opcode, void *buf )
 {
 	GET_THREAD(thread);

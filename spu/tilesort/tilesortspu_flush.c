@@ -182,6 +182,10 @@ void tilesortspuShipBuffers( void )
  * as glTexImage2D's 'target' parameter.
  * 'opcode' should be the CR opcode, like CR_TEXIMAGE2D_OPCODE.
  */
+/**
+ * XXX NOTE: there's a lot of duplicate code here common to the
+ * pack, tilesort and replicate SPUs.  Try to simplify someday!
+ */
 void tilesortspuHuge( CROpcode opcode, void *buf )
 {
 	GET_THREAD(thread);

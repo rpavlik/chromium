@@ -361,7 +361,7 @@ void *crPackAlloc( unsigned int size )
 	if ( crPackCanHoldOpcode( 1, size ) )
 	{
 		/* we can just put it in the current buffer */
-		GET_BUFFERED_POINTER(pc, size );
+		GET_BUFFERED_POINTER(pc, size );  /* NOTE: this sets data_ptr */
 	}
 	else 
 	{
@@ -369,13 +369,14 @@ void *crPackAlloc( unsigned int size )
 		pc->Flush( pc->flush_arg );
 		if ( crPackCanHoldOpcode( 1, size ) )
 		{
-			GET_BUFFERED_POINTER(pc, size );
+			GET_BUFFERED_POINTER(pc, size );  /* NOTE: this sets data_ptr */
 		}
 		else
 		{
 			/* It's really way too big, so allocate a temporary packet
 			 * with space for the single opcode plus the payload &
-			 * header */
+			 * header.
+			 */
 			data_ptr = (unsigned char *) 
 				crAlloc( sizeof(CRMessageOpcodes) + 4 + size );
 
@@ -383,6 +384,32 @@ void *crPackAlloc( unsigned int size )
 			data_ptr += sizeof(CRMessageOpcodes) + 4;
 		}
 	}
+
+	/* At the top of the function, we added four to the request size and
+	 * rounded it up to the next multiple of four.
+	 *
+	 * At this point, we have:
+	 *
+	 * HIGH MEM        | byte size - 1    |  \
+	 *                   ...                  |
+	 *                   ...                  | - original 'size' bytes for data
+	 *                 | operand data     |   |
+	 * return value -> | operand data     |  /
+	 *                 | byte 3           |  \
+	 *                 | byte 2           |   |- These bytes will store 'size'
+	 *                 | byte 1           |   |  
+	 * data_ptr ->     | byte 0           |  /
+	 *                 | CR opcode        |  <- Set in packspuHuge()
+	 *                 | unused           |
+	 *                 | unused           |
+	 *                 | unused           |
+	 *                 | CRMessageOpcodes |
+	 *                 | CRMessageOpcodes |
+	 *                   ...               
+	 *                 | CRMessageOpcodes |
+	 *                 | CRMessageOpcodes |
+	 * LOW MEM         +------------------+
+	 */
 
 	if (pc->swapping)
 	{
