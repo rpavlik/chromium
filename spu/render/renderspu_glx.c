@@ -482,7 +482,6 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 		if (crStrstr(render_spu.ws.glXQueryExtensionsString( dpy, screen ),
 								"GLX_EXT_visual_info"))
 		{
-							
 			attribList[i++] = GLX_X_VISUAL_TYPE_EXT;
 			attribList[i++] = GLX_DIRECT_COLOR_EXT; 
 		}
@@ -585,8 +584,8 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 
 	crDebug( "Render SPU: Looks like we have GLX" );
 
-	crDebug( "Render SPU: Chose visual id=0x%x: RGBA=(%d,%d,%d,%d) Z=%d stencil=%d"
-					 " double=%d stereo=%d accum=(%d,%d,%d,%d)",
+	crDebug( "Render SPU: Chose visual id=0x%x: RGBA=(%d,%d,%d,%d) Z=%d"
+					 " stencil=%d double=%d stereo=%d accum=(%d,%d,%d,%d)",
 					 (int) visual->visual->visualid,
 					 Attrib( visual, GLX_RED_SIZE ),
 					 Attrib( visual, GLX_GREEN_SIZE ),
@@ -720,7 +719,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		root_window = DefaultRootWindow( dpy );
 		XGetWindowAttributes( dpy, root_window, &xwa );
 
-		crDebug( "Render SPU: root window=%dx%d", xwa.width, xwa.height );
+		crDebug( "Render SPU: root window size: %d x %d", xwa.width, xwa.height );
 
 		window->x = 0;
 		window->y = 0;
@@ -738,6 +737,11 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	if ( !cmap ) {
 		crError( "Render SPU: Unable to get a colormap!" );
 		return GL_FALSE;
+	}
+
+	/* destroy existing window if there is one */
+	if (window->window) {
+		XDestroyWindow(dpy, window->window);
 	}
 
 	/*
@@ -758,20 +762,6 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 	flags = CWBorderPixel | CWColormap | CWEventMask;
 
-#if 0
-	/* old way of removing borders - see new way below */
-	if (render_spu.fullscreen || render_spu.borderless)
-	{
-		swa.override_redirect = True;
-		flags |= CWOverrideRedirect;
-	}
-#endif
-
-	if ( window->window ) {
-		/* destroy the old one */
-		XDestroyWindow( dpy, window->window );
-	}
-
 	/* 
 	 * We pass the VNC's desktop windowID via an environment variable.
 	 * If we don't find one, we're not on a 3D-capable vncviewer, or
@@ -784,18 +774,20 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	 */
 	vncWin = crStrToInt( crGetenv("CRVNCWINDOW") );
 
-	if (!vncWin) {
-		window->window =
-       		XCreateWindow( dpy, RootWindow( dpy, visual->visual->screen ),
-                       window->x, window->y, window->width, window->height,
-                       0, visual->visual->depth, InputOutput,
-                       visual->visual->visual, flags, &swa);
-	} else {
-		window->window =
-       		XCreateWindow( dpy, (Window)vncWin,
-                       window->x, window->y, window->width, window->height,
-                       0, visual->visual->depth, InputOutput,
-                       visual->visual->visual, flags, &swa);
+	if (vncWin) {
+		window->window = XCreateWindow(dpy, (Window) vncWin,
+																	 window->x, window->y,
+																	 window->width, window->height,
+																	 0, visual->visual->depth, InputOutput,
+																	 visual->visual->visual, flags, &swa);
+	}
+	else {
+		window->window = XCreateWindow(dpy,
+																	 RootWindow(dpy, visual->visual->screen),
+																	 window->x, window->y,
+																	 window->width, window->height,
+																	 0, visual->visual->depth, InputOutput,
+																	 visual->visual->visual, flags, &swa);
 	}
 
 	if (!window->window) {
@@ -825,7 +817,6 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		if (prop) {
 			/* not sure this is correct, seems to work, XA_WM_HINTS didn't work */
 			proptype = prop;
-
 			XChangeProperty( dpy, window->window,        /* display, window */
 											 prop, proptype,              /* property, type */
 											 32,                          /* format: 32-bit datums */
@@ -940,15 +931,17 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 	else
 #endif
 	{
-        // The value window->nativeWindow will only be non-NULL if the
-        // render_to_app_window option is set to true.  In this case, we
-        // don't want to do anything, since we're not responsible for this
-        // window.  I know...personal responsibility and all...
-        if (!window->nativeWindow)
-        {
-            XDestroyWindow(window->visual->dpy, window->window);
-            XSync(window->visual->dpy, 0);
-        }
+		/*
+		 * The value window->nativeWindow will only be non-NULL if the
+		 * render_to_app_window option is set to true.  In this case, we
+		 * don't want to do anything, since we're not responsible for this
+		 * window.  I know...personal responsibility and all...
+		 */
+		if (!window->nativeWindow)
+		{
+			XDestroyWindow(window->visual->dpy, window->window);
+			XSync(window->visual->dpy, 0);
+		}
 	}
 	window->visual = NULL;
 	window->window = 0;
@@ -968,7 +961,6 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
 		context->context = (GLXContext) render_spu.OSMesaCreateContext(OSMESA_RGB, 0);
-
 		if (context->context)
 			return GL_TRUE;
 		else
@@ -1051,14 +1043,10 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
-
 		check_buffer_size(window);
-
 		render_spu.OSMesaMakeCurrent( (OSMesaContext) context->context, 
-					       window->buffer,
-					       GL_UNSIGNED_BYTE,
-					       window->width,
-					       window->height);
+																	window->buffer, GL_UNSIGNED_BYTE,
+																	window->width, window->height);
 		return;
 	}
 #endif
@@ -1124,7 +1112,8 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			window->nativeWindow = render_spu.crut_drawable;
 		}
 
-		if ((render_spu.render_to_crut_window || render_spu.render_to_app_window) && nativeWindow)
+		if ((render_spu.render_to_crut_window || render_spu.render_to_app_window)
+				&& nativeWindow)
 		{
 			/* The render_to_app_window option is set and we've got a nativeWindow
 			 * handle, save the handle for later calls to swapbuffers().
@@ -1133,7 +1122,8 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			{
 				window->nativeWindow = (Window) nativeWindow;
 				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
-																			(Window) nativeWindow, context->context );
+																					(Window) nativeWindow,
+																					context->context );
 				/* don't CRASSERT(b) - it causes a problem with CRUT */
 			}
 			else
@@ -1273,6 +1263,7 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 	}
 }
 
+
 void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 {
 	CRASSERT(w);
@@ -1300,21 +1291,3 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 	else
 		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
 }
-
-
-#if 0
-/* for debugging rasterpos problems */
-void RENDER_APIENTRY renderspuBitmap(GLint w, GLint h, GLfloat xo, GLfloat yo, GLfloat xm, GLfloat ym, const GLubyte *b)
-{
-	crDebug("%s %d x %d move %f, %f  %p", __FUNCTION__, w, h,
-					xm, ym, b);
-	 /*	 render_spu.self.Bitmap(w, h, xo, yo, xm, ym, b);*/
-}
-
-
-void RENDER_APIENTRY renderspuRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
-{
-	crDebug("%s %f, %f, %f, %f", __FUNCTION__, x, y, z, w);
-	 /*	 render_spu.self.Bitmap(w, h, xo, yo, xm, ym, b);*/
-}
-#endif
