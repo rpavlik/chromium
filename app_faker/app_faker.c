@@ -47,7 +47,7 @@ static const char *libgl_names[] = {
 	"opengl32.dll"
 };
 
-#else
+#else // _WIN32
 
 #define DEFAULT_TMP_DIR "/tmp"
 #define OPENGL_CLIENT_LIB "libcrfaker.so"
@@ -62,7 +62,7 @@ static const char *libgl_names[] = {
 	"libGL.so"
 };
 
-#endif
+#endif // _WIN32
 
 static const char *progname   = "app_faker";
 static const char *cr_lib     = NULL;
@@ -315,7 +315,7 @@ void do_it( char *argv[] )
 	exit( status ? 1 : 0 );
 }
 
-#else
+#else // _WIN32
 
 char *find_file_on_path( const char *path, const char *basename )
 {
@@ -571,7 +571,7 @@ void do_it( char *argv[] )
 
 	if ( pid == 0 ) {
 		execvp( argv[0], argv );
-		crError( "execvp \"%s\"", argv[0] );
+		crError( "execvp \"%s\" failed (verify program name is correct)", argv[0] );
 	}
 
 	debug( "started \"%s\" [%d]\n", argv[0], pid );
@@ -598,7 +598,7 @@ void do_it( char *argv[] )
 	exit( 1 );
 }
 
-#endif
+#endif // _WIN32
 
 	void
 usage( void )
