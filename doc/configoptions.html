@@ -468,7 +468,7 @@ configuration options that the render SPU accepts, plus a few more:
     <td width="12%" class="ConfigType" height="38">3 Floats</td>
 	<td width="115%" class="ConfigDesc" height="38">
 	  Sets the polygon color (red, green, blue).
-          Default is pale yellow (0.75, 0.75. 0.75).
+          Default is white (1, 1, 1).
         </td>
   </tr>
   <tr>
@@ -483,7 +483,21 @@ configuration options that the render SPU accepts, plus a few more:
     <td width="19%" class="ConfigOption" height="38">line_width</td>
     <td width="12%" class="ConfigType" height="38">Float</td>
 	<td width="115%" class="ConfigDesc" height="38">
-	  Sets the line width (in pixels).  Default is 1.
+	  Sets the line width (in pixels).  Default is 3.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">silhouette_mode</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          If set, just render silhouette lines instead of all polygon edges.
+        </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">fog_color</td>
+    <td width="12%" class="ConfigType" height="38">3 Floats</td>
+	<td width="115%" class="ConfigDesc" height="38">
+	  Sets the fog color (red, green, blue) when using silhouette mode.
         </td>
   </tr>
   <tr>
