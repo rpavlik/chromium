@@ -12,7 +12,7 @@
 
 import string, cPickle, os.path, re
 from wxPython.wx import *
-import crutils, intdialog, hostdialog, configio
+import crtypes, crutils, intdialog, hostdialog, configio
 
 
 class LightningParameters:
@@ -782,7 +782,7 @@ def Create_Lightning2(parentWindow, mothership):
 	else:
 		dialogDefaults = [1, 2, 1]
 
-	# XXX also prompt for tile size?
+	# XXX also prompt for tile size here?
 	dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
 								 title="Lightning-2 Template",
 								 labels=["Number of application nodes:",
@@ -878,8 +878,6 @@ def Is_Lightning2(mothership):
 
 def Edit_Lightning2(parentWindow, mothership):
 	"""Edit parameters for a Lightning2 template"""
-	# XXX we only need to create one instance of the Lightning2Frame() and
-	# reuse it in the future.
 	t = Is_Lightning2(mothership)
 	if not t:
 		print "This is not a Lightning-2 configuration!"
@@ -887,6 +885,8 @@ def Edit_Lightning2(parentWindow, mothership):
 
 	print "Edit lightning-2"
 
+	# XXX we only need to create one instance of the Lightning2Frame() and
+	# reuse it in the future.
 	dialog = LightningDialog(parent=parentWindow)
 	dialog.Centre()
 	retVal = dialog.ShowModal(mothership)
@@ -896,7 +896,87 @@ def Edit_Lightning2(parentWindow, mothership):
 
 def Read_Lightning2(mothership, fileHandle):
 	"""Read a Lightning-2 config from the given file handle."""
-	pass
+	mothership.Template = LightningParameters()
+
+	serverNode = crtypes.NetworkNode()
+	renderSPU = crutils.NewSPU("render")
+	serverNode.AddSPU(renderSPU)
+
+	clientNode = crtypes.ApplicationNode()
+	tilesortSPU = crutils.NewSPU("tilesort")
+	clientNode.AddSPU(tilesortSPU)
+	tilesortSPU.AddServer(serverNode)
+
+	mothership.AddNode(clientNode)
+	mothership.AddNode(serverNode)
+
+	numClients = 1
+	numServers = 1
+
+	while true:
+		l = fileHandle.readline()
+		if not l:
+			break
+		# remove trailing newline character
+		if l[-1:] == '\n':
+			l = l[:-1]
+		if re.match("^NUM_SERVERS = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			numServers = int(l[v.start() : v.end()])
+		elif re.match("^TILE_ROWS = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			mothership.Template.Rows = int(l[v.start() : v.end()])
+		elif re.match("^TILE_COLS = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			mothership.Template.Columns = int(l[v.start() : v.end()])
+		elif re.match("^TILE_WIDTH = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			mothership.Template.TileWidth = int(l[v.start() : v.end()])
+		elif re.match("^TILE_HEIGHT = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			mothership.Template.TileHeight = int(l[v.start() : v.end()])
+		elif re.match("^LAYOUT = [0-9]$", l):
+			v = re.search("[0-9]", l)
+			mothership.Template.Layout = int(l[v.start() : v.end()])
+		elif re.match("^SERVER_HOSTS = ", l):
+			v = re.search("\[.+\]$", l)
+			hosts = eval(l[v.start() : v.end()])
+			serverNode.SetHosts(hosts)
+		elif re.match("^SERVER_PATTERN = ", l):
+			v = re.search("\(.+\)$", l)
+			pattern = eval(l[v.start() : v.end()])
+			serverNode.SetHostNamePattern(pattern)
+		elif re.match("^NUM_APP_NODES = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			numClients = int(l[v.start() : v.end()])
+		elif re.match("^TILESORT_", l):
+			# A tilesort SPU option
+			(name, values) = configio.ParseOption(l, "TILESORT")
+			tilesortSPU.SetOption(name, values)
+		elif re.match("^RENDER_", l):
+			# A render SPU option
+			(name, values) = configio.ParseOption(l, "RENDER")
+			renderSPU.SetOption(name, values)
+		elif re.match("^SERVER_", l):
+			# A server option
+			(name, values) = configio.ParseOption(l, "SERVER")
+			mothership.SetServerOption(name, values)
+		elif re.match("^GLOBAL_", l):
+			# A global option
+			(name, values) = configio.ParseOption(l, "GLOBAL")
+			mothership.SetGlobalOption(name, values)
+		elif re.match("^# end of options", l):
+			# that's the end of the variables
+			# save the rest of the file....
+			break
+		elif (l != "") and (not re.match("\s*#", l)):
+			print "unrecognized line: %s" % l
+	# endwhile
+
+	clientNode.SetCount(numClients)
+	serverNode.SetCount(numServers)
+	mothership.LayoutNodes()
+	return 1
 
 
 def Write_Lightning2(mothership, file):
@@ -907,6 +987,8 @@ def Write_Lightning2(mothership, file):
 	print "Writing Lightning-2 config"
 
 	template = mothership.Template
+	template.LayoutTiles() # just in case this wasn't done already
+
 	clientNode = FindClientNode(mothership)
 	serverNode = FindServerNode(mothership)
 
@@ -920,7 +1002,6 @@ def Write_Lightning2(mothership, file):
 	file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
 	file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
 	file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
-	file.write("TILES = %s\n" % str(template.ServerTiles))
 
 	# write tilesort SPU options
 	tilesortSPU = FindTilesortSPU(mothership)
@@ -935,4 +1016,11 @@ def Write_Lightning2(mothership, file):
 	configio.WriteGlobalOptions(mothership, file)
 
 	file.write("# end of options, the rest is boilerplate\n")
+
+	# The tiles will be recomputed when we reload the config file so
+	# we can put this info after the parameter sectino.
+	file.write("\n")
+	file.write("TILES = %s\n" % str(template.ServerTiles))
+
 	file.write(__ConfigBody)
+	return 1
