@@ -502,6 +502,10 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway,
 		    thread->packer->bounds_max.x == -FLT_MAX) {
 			/*crDebug("No vertices or bounding box set during this flush - Broadcasting geometry\n");*/
 			broadcast = GL_TRUE;
+			/* we'll broadcast the current geometry, but we still need to do
+			 * state differencing to take care of outstanding state changes!
+			 */
+			send_state_anyway = GL_TRUE;
 		} else {
 			/*crDebug( "About to bucket the geometry" ); */
 			bucket_info->objectMin = thread->packer->bounds_min;
