@@ -59,5 +59,5 @@ for index in range(num_funcs):
 	else:
 		print '\t__fillin( i++, "%s", (SPUGenericFunction) (replicate_spu.swap ? crPack%sSWAP : crPack%s) );' % (func_name, func_name, func_name )
 print '\t__fillin( i++, NULL, NULL );'
-print '\tCRASSERT(i < %d);' % num_funcs
+print '\tCRASSERT(i <= %d);' % (num_funcs + 1)
 print '}'

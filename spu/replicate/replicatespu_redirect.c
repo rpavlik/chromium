@@ -210,7 +210,7 @@ void replicatespuReplicateCreateContext(int ipaddress)
 	hosturl = crAlloc(crStrlen(ipstring) + 9);
 	sprintf(hosturl, "tcpip://%s", ipstring);
 
-	crDebug("replicateSPU attaching to %s\n",hosturl);
+	crDebug("Replicate SPU attaching to %s",hosturl);
 
 	/* connect to the remote VNC server */
 	replicate_spu.rserver[r_slot].name = crStrdup( replicate_spu.name );

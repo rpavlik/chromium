@@ -59,7 +59,6 @@ replicateSPUInit( int id, SPU *child, SPU *self,
 
 	/* This connects to the server, sets up the packer, etc. */
 	thread = replicatespuNewThread( crThreadID() );
-	printf("INIT THREAD POINTER %p\n",thread);
 
 	CRASSERT( thread == &(replicate_spu.thread[0]) );
 

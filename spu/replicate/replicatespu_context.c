@@ -109,10 +109,10 @@ static void replicatespuStartVnc( void )
 
 	/* NOTE: should probably check the major/minor version too!! */
 	if (!XVncQueryExtension(replicate_spu.glx_display, &maj, &min)) {
-		crWarning("Replicate SPU: VNC extension is not available\n");
+		crWarning("Replicate SPU: VNC extension is not available.");
 		replicate_spu.vncAvailable = GL_FALSE;
 	} else {
-		crWarning("Replicate SPU: VNC extension available\n");
+		crWarning("Replicate SPU: VNC extension available.");
 		replicate_spu.vncAvailable = GL_TRUE;
 	}
 
@@ -129,7 +129,7 @@ static void replicatespuStartVnc( void )
 			if (vnclist->ipaddress) {
 				replicatespuReplicateCreateContext(vnclist->ipaddress);
 			} else {
-				crWarning("Replicate SPU: vnclist with no ipaddress ???????????\n");
+				crWarning("Replicate SPU: vnclist with no ipaddress ???????????.");
 			}
 
 			vnclist++;
