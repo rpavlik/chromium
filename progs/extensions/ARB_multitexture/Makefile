@@ -10,6 +10,6 @@ OPENGL = 1
 GLUT = 1
 
 FILES = exec main 
-LIBRARIES = crextensionscommon
+LIBRARIES = crutil crextensionscommon
 
 include ${TOP}/cr.mk

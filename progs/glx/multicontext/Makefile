@@ -10,6 +10,6 @@ OPENGL = 1
 
 FILES = multicontext
 
-LIBRARIES = crextensionscommon
+LIBRARIES = crutil crextensionscommon
 
 include ${TOP}/cr.mk
