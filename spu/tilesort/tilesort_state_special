@@ -181,6 +181,7 @@ EnableClientState
 DisableClientState
 VertexPointer
 ColorPointer
+SecondaryColorPointerEXT
 IndexPointer
 NormalPointer
 TexCoordPointer
