@@ -129,10 +129,10 @@ crServerInitializeTiling(CRMuralInfo *mural)
 
 	/* optimized hash-based bucketing setup */
 	if (cr_server.optimizeBucket) {
-		 mural->optimizeBucket = crServerInitializeBucketing(mural);
+		mural->optimizeBucket = crServerInitializeBucketing(mural);
 	}
 	else {
-		 mural->optimizeBucket = GL_FALSE;
+		mural->optimizeBucket = GL_FALSE;
 	}
 }
 
@@ -490,6 +490,13 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 						if (w != reqTileWidth || h != reqTileHeight) {
 							crWarning("Server: optimize_bucket is set, but tiles aren't "
 												"all the same size.  Disabling optimize_bucket.");
+							cr_server.optimizeBucket = 0;
+						}
+						else if (x1 % reqTileWidth != 0 || y1 % reqTileHeight != 0) {
+							crWarning("Server: optimize_bucket is set, but the tile at "
+												"(%d, %d) isn't positioned at a multiple of the "
+												"tile size: %d x %d.  Disabling optimize_bucket",
+												x1, y1,	reqTileWidth, reqTileHeight);
 							cr_server.optimizeBucket = 0;
 						}
 					}
