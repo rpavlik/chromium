@@ -21,23 +21,28 @@ print """#include <stdio.h>
 #include "cr_spu.h"
 #include "cr_glstate.h"
 #include "state/cr_stateerror.h"
+#include "simplequeryspu.h"
 
-void simplequeryChromiumParameteriCR( GLenum target, GLint value )
+void SIMPLEQUERYSPU_APIENTRY
+simplequeryChromiumParameteriCR( GLenum target, GLint value )
 {
 	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
 }
 
-void simplequeryChromiumParameterfCR( GLenum target, GLfloat value )
+void SIMPLEQUERYSPU_APIENTRY
+simplequeryChromiumParameterfCR( GLenum target, GLfloat value )
 {
 	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
 }
 
-void simplequeryChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
+void SIMPLEQUERYSPU_APIENTRY
+simplequeryChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
 {
 	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
 }
 
-void simplequeryGetChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
+void SIMPLEQUERYSPU_APIENTRY
+simplequeryGetChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
 {
 	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
 }
