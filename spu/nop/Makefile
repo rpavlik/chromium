@@ -9,7 +9,7 @@ SHARED = 1
 LIBRARY = nopspu
 FILES = nopspu nopspu_init
 
-LIBRARIES = crutil
+LIBRARIES = crutil spuload
 TRACKS_STATE = 1
 
 PRECOMP = nopspu.c

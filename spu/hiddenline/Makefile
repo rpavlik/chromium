@@ -18,7 +18,7 @@ FILES = hiddenlinespu \
 	hiddenlinespu_pixel \
 	hiddenlinespu_swap
 
-LIBRARIES = spuload crutil crmothership
+LIBRARIES = spuload crutil crmothership crpacker
 TRACKS_STATE=1
 PACKS = 1
 UNPACKS = 1

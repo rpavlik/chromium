@@ -6,7 +6,7 @@
 TOP = ../
 SHARED = 1
 LIBRARY = crstate
-LIBRARIES = spuload crutil
+LIBRARIES = spuload crutil crmothership
 
 REGULAR_FILES = state_attrib \
 	state_buffer \
