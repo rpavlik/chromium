@@ -164,28 +164,20 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 		{
 			case GL_BYTE:
 				crPackSecondaryColor3bvEXT((GLbyte *)p); break;
-				break;
 			case GL_UNSIGNED_BYTE:
 				crPackSecondaryColor3ubvEXT((GLubyte *)p); break;
-				break;
 			case GL_SHORT:
 				crPackSecondaryColor3svEXT((GLshort *)p); break;
-				break;
 			case GL_UNSIGNED_SHORT:
 				crPackSecondaryColor3usvEXT((GLushort *)p); break;
-				break;
 			case GL_INT:
 				crPackSecondaryColor3ivEXT((GLint *)p); break;
-				break;
 			case GL_UNSIGNED_INT:
 				crPackSecondaryColor3uivEXT((GLuint *)p); break;
-				break;
 			case GL_FLOAT:
 				crPackSecondaryColor3fvEXT((GLfloat *)p); break;
-				break;
 			case GL_DOUBLE:
 				crPackSecondaryColor3dvEXT((GLdouble *)p); break;
-				break;
 		}
 	}
 #endif
