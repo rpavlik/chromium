@@ -154,6 +154,7 @@ int getClippedWindow(GLdouble modl[16], GLdouble proj[16],
 	}
 	else{ //no bounding box defined
 		return 0;
+		crDebug("No BBox");
 	}
 		
 	clipCoords(modl, proj, &x1, &y1, &z1, &x2, &y2, &z2);
@@ -180,6 +181,10 @@ int getClippedWindow(GLdouble modl[16], GLdouble proj[16],
 	CLAMP ((*xend),   0, win_width);
 	CLAMP ((*ystart), 0, win_height);
 	CLAMP ((*yend),   0, win_height);
+	crDebug("x: %d, y: %d, w: %d, h: %d", 
+		*xstart, *ystart, 
+		*xstart + *xend,
+		*ystart + *yend);
 	return 1;
 }
 
@@ -454,7 +459,7 @@ static void CompositeNode( WindowInfo *window,
 			if(read_width > 0 && read_height > 0)
 				binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, 
 								 read_width, read_height, 
-								 GL_BGRA_EXT, GL_UNSIGNED_BYTE, 
+								 GL_ABGR_EXT, GL_UNSIGNED_BYTE, 
 								 (GLubyte*)window->msgBuffer +
 								 binaryswap_spu.offset ); 
 			
@@ -510,7 +515,7 @@ static void CompositeNode( WindowInfo *window,
 				
 				binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
 				binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
-								 GL_BGRA_EXT, GL_UNSIGNED_BYTE, incoming_color ); 
+								 GL_ABGR_EXT, GL_UNSIGNED_BYTE, incoming_color ); 
 			}
 		}
 		/* depth composite */
