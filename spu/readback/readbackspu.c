@@ -248,7 +248,7 @@ static void read_and_send_tiles( WindowInfo *window )
 			h = window->height;
 
 		/*
-		crDebug("readback from: %d, %d   to: %d, %d   size: %d x %d\n",
+		crDebug("readback from: %d, %d   to: %d, %d   size: %d x %d",
 						readx, ready, drawx, drawy, w, h);
 		*/
 
@@ -300,8 +300,11 @@ static void read_and_send_tiles( WindowInfo *window )
 			readback_spu.cleared_this_frame = 1;
 		}
 
-
-		readback_spu.child.RasterPos2i(drawx, drawy);
+		/* Use the glBitmap trick to set the raster pos.  This way we
+		 * don't have to worry about the downstream viewport and projection.
+		 */
+		readback_spu.child.RasterPos2i(0, 0);
+		readback_spu.child.Bitmap(0, 0, 0, 0, drawx, drawy, NULL);
 
 		/*
 		 * OK, send color/depth images to child.
@@ -394,7 +397,6 @@ static void DoFlush( WindowInfo *window )
 
 		readback_spu.child.BarrierCreate( READBACK_BARRIER, 0 );
 		readback_spu.child.LoadIdentity();
-
 		readback_spu.child.Ortho( 0, window->width,
 															0, window->height, -10000, 10000);
 		first_time = 0;
