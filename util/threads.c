@@ -20,6 +20,7 @@
 /* Initialize a TSDhandle */
 void crInitTSD(TSDhandle *tsd)
 {
+#if 0
 #ifdef WINDOWS
 	tsd->key = TlsAlloc();
 	if (tsd->key == 0xffffffff) {
@@ -30,6 +31,7 @@ void crInitTSD(TSDhandle *tsd)
 		perror(INIT_TSD_ERROR);
 		crError("crInitTSD failed!");
 	}
+#endif
 #endif
 	tsd->initMagic = INIT_MAGIC;
 }
@@ -42,6 +44,7 @@ void crSetTSD(TSDhandle *tsd, void *ptr)
 		/* initialize this TSDhandle */
 		crInitTSD(tsd);
 	}
+#if 0
 #ifdef WINDOWS
 	if (TlsSetValue(tsd->key, ptr) == 0) {
 		crError("crSetTSD failed!");
@@ -50,6 +53,7 @@ void crSetTSD(TSDhandle *tsd, void *ptr)
 	if (pthread_setspecific(tsd->key, ptr) != 0) {
 		crError("crSetTSD failed!");
 	}
+#endif
 #endif
 }
 
@@ -60,11 +64,14 @@ void *crGetTSD(TSDhandle *tsd)
 	if (tsd->initMagic != (int) INIT_MAGIC) {
 		crInitTSD(tsd);
 	}
+#if 0
 #ifdef WINDOWS
 	return TlsGetValue(tsd->key);
 #else
 	return pthread_getspecific(tsd->key);
 #endif
+#endif
+	return 0;
 }
 
 
@@ -72,11 +79,14 @@ void *crGetTSD(TSDhandle *tsd)
 /* Return ID of calling thread */
 unsigned long crThreadID(void)
 {
+#if 0
 #ifdef WINDOWS
 	/* XXX return calling thread's ID */
 	return 0;
 #else
 	return (unsigned long) pthread_self();
 #endif
+#endif
+	return 0;
 }
 
