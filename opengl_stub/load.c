@@ -267,6 +267,12 @@ static char **LookupMothershipConfig(const char *procName)
 		sprintf(configPath, "%s/%s", home, CONFIG_LOOKUP_FILE);
 	else
 		crStrcpy(configPath, CONFIG_LOOKUP_FILE); /* from current dir */
+	/* Check if the CR_CONFIG_PATH env var is set. */
+	{
+		const char *conf = crGetenv("CR_CONFIG_PATH");
+		if (conf)
+			crStrcpy(configPath, conf); /* from env var */
+	}
 
 	f = fopen(configPath, "r");
 	if (!f) {

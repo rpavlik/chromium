@@ -92,7 +92,7 @@ Save your configuration to a file such as
 <p><b>XXX -temporary</b></p>
 <p>
 For the time being, you may have to edit your configuration file and
-specify the following:
+specify the full path to the Chromium server's python directory:
 <pre>
 sys.path.append( "/usr/local/Chromium-x.y/cr/mothership/server" )
 </pre>
@@ -144,10 +144,24 @@ If %d is present, it will be replaced by the current working directory.
 </p>
 
 
-<p><b>4. The CR_CONFIG environment variable</b></p>
+<p><b>4. The CR_CONFIG_PATH and CR_CONFIG environment variables</b></p>
 <p>
-If the <b>CR_CONFIG</B> environment variable is set, it will override
-the <code>.crconfigs</code> file.  Here's an example:
+If the <b>CR_CONFIG_PATH</B> environment variable is set, it will provide an
+alternate file to look in for configuration.  The file contents are
+identical to that in <code>.crconfigs</code>.  It is merely an alternate way
+of specifying the location.  Here's an example:
+</p>
+<pre>
+   setenv CR_CONFIG_PATH "/tmp/autostart.conf"
+</pre>
+<p>
+If the <b>CR_CONFIG</B> environment variable is set, the
+<code>.crconfigs</code> file is not processed and no matching for program
+names is done.  Instead, the contents of the
+<b>CR_CONFIG</b> variable are used instead to identify which mothership
+configuration file is to be used.  The same syntax is used as for
+the <em>configuration</em> section of a line in the <code>.crconfigs</code> file.
+Here's an example:
 </p>
 <pre>
    setenv CR_CONFIG "/usr/local/Chromium-x.y/cr/mothership/configs/tilecity.conf -r1 -c2"
