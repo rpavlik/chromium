@@ -14,6 +14,7 @@
 
 */
 
+#define GL_GLEXT_PROTOTYPES
 #include "../common/logo.h"
 #include <string.h>
 #include <stdio.h>
