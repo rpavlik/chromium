@@ -90,15 +90,6 @@ initializeExtents(CRMuralInfo *mural)
 				maxTileHeight = 0;
 			}
 
-#if 0
-			/* Allocate space from window in top-to-bottom order.
-			 * This was the original code.
-			 */
-			extent->outputwindow.x1 = x;
-			extent->outputwindow.y1 = ( mural->underlyingDisplay[3] - mural->maxTileHeight - y );
-			extent->outputwindow.x2 = x + w;
-			extent->outputwindow.y2 = ( mural->underlyingDisplay[3] - mural->maxTileHeight - y + h );
-#else
 			/* Allocate space from window in bottom-to-top order.
 			 * This allows multi-level tilesort configurations to work better.
 			 */
@@ -106,7 +97,6 @@ initializeExtents(CRMuralInfo *mural)
 			extent->outputwindow.y1 = y;
 			extent->outputwindow.x2 = x + w;
 			extent->outputwindow.y2 = y + h;
-#endif
 
 			if ((unsigned int)extent->outputwindow.y2 > mural->underlyingDisplay[3])
 				crWarning("No room for %dx%d tile in this server's window (%d x %d)!",
@@ -212,8 +202,6 @@ crServerNewMuralTiling(CRMuralInfo *mural,
 
 	crServerInitializeTiling(mural);
 }
-
-
 
 
 static float

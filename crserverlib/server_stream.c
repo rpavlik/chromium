@@ -116,7 +116,7 @@ static void crServerDeleteFromRunQueue( CRClient *client )
 					crFree(q);
 					cr_server.run_queue = NULL;
 					cr_server.curClient = NULL;
-					crWarning("No RUN_QUEUE!! (quitting) \n");
+					crWarning("Empty run queue! (exiting)");
 				} 
 				else
 				{
