@@ -159,6 +159,9 @@ void crStateInit(void)
 		crFree( defaultContext );
 	}
 
+	/* Reset diff_api */
+	crMemZero(&diff_api, sizeof(SPUDispatchTable));
+
 	/* Allocate the default/NULL context */
 	defaultContext = crStateCreateContextId(0, NULL, CR_RGB_BIT);
 	CRASSERT(g_availableContexts[0] == 0);
