@@ -34,8 +34,6 @@ static void InitVars(void)
 	stub.threadSafe = GL_FALSE;
 
 	signal(SIGTERM, StubCleanup);
-	signal(SIGQUIT, StubCleanup);
-	signal(SIGINT, StubCleanup);
 }
 
 void StubCleanup(int signo)
