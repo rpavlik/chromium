@@ -87,12 +87,15 @@ NVIDIA-specific ones.&nbsp; He also designed the Chromium logo and did a lot of
 really useful slave labor for us last summer when we were building our
 cluster. </p>
 
-<p>For the beta and 1.0 through 1.6 releases
-<a href="mailto:brian-no-spam@tungstengraphics.com" target="_parent">
+<p>For the beta and 1.0 through 1.4 releases
+<a href="mailto:brian.paul-no-spam@tungstengraphics.com" target="_parent">
 Brian Paul</a> and
 <a href="http://www.xfree86.org/~alanh" target="_parent">
 Alan Hourihane</a> of Tungsten
-Graphics, Inc. contributed much of the development.</p>
+Graphics, Inc. contributed much of the development.
+Brian and Alan Matsuoka (of Red Hat) made many contributions to the
+Chromium 1.4 through 1.7 releases. 
+</p>
 
 
 <h2 class="PageSubHeading">Version History</h2>
@@ -467,18 +470,25 @@ Graphics, Inc. contributed much of the development.</p>
 </ul>
 
 
-<p>1.7 Release:  Month day, 2004</p>
+<p>1.7 Release:  April 2004</p>
 
 <ul>
 <li>New Features
   <ul>
   <li>npclient/npserver programs for measuring network performance
+  <li>spheres program for measuring triangle rendering rates
+  <li>packertest for validating Chomium's pack/unpack modules
+  <li>dlistest test for exercising display list support
+  <li>updated documentation
   </ul>
 <li>Bug Fixes
   <ul>
   <li>Fixed some issues with non-planar tilesort and stereo
   <li>Packing/unpacking of glDeleteBuffersARB was broken
   <li>Tilesort SPU used incorrect pixel store parameters for state differencing
+  <li>glDeleteTextures and glDeleteProgramsARB didn't work properly
+  <li>Fixed additional bugs in the tilesort SPU related to display lists
+  <li>Fixed many assorted pack/unpack bugs found with the packertest program
   </ul>
 <li>Known Problems
 </ul>

@@ -113,8 +113,117 @@ To see them, specify the -h option to either program.
 
 <h2 class="PageSubHeading">Packing/unpacking Performance</h2>
 
+<p>
+The packperf program measures the rate at which glVertex commands
+can be processed by the packer.
+</p>
+<p>
+XXX additional measurements with packertest framework???
+</p>
+
+
 
 <h2 class="PageSubHeading">Rendering Performance</h2>
+
+<p>
+The <em>spheres</em> program is a handy program for measuring triangle
+throughput in Chromium.
+It can be used in sort-first, sort-last, or other configurations.
+</p>
+
+<p>
+Basically, spheres draws a user-specified number of spheres (arranged
+in a circle), each with a user-specified number of triangles.
+The spheres may be rendered as immediate-mode vertex arrays, display
+lists or as vertex arrays in vertex buffer objects
+(with GL_ARB_vertex_buffer_object).
+</p>
+
+<p>
+Here's an example of running the spheres demo in a sort-last configuration:
+</p>
+<ul>
+<li>Start the mothership:
+<pre>
+    cd mothership/configs
+    python psubmit_last.conf spheres
+</pre>
+<li>In another shell, start the first application instance:
+<pre>
+    crappfaker
+</pre>
+<li>In another shell, start the second application instance:
+<pre>
+    crappfaker
+</pre>
+<li>In another shell, start the crserver:
+<pre>
+    crserver
+</pre>
+<li><p>You should see threee windows.
+    One application window will show red spheres, the second application
+    window will show green spheres, and the third window will show the
+    red and green spheres Z-composited together.</p>
+<li><p>Each application instance will print the number of triangles rendered
+    per second, as well as the number of pixels being composited per second.
+    You should see something similar to this:</p>
+<pre>
+    spheres:  13456 triangles / sphere
+    spheres:  13686 indices / sphere
+    spheres:  12 spheres / ring
+    spheres:  161472 triangles / ring
+    spheres:  126582 bytes / VBO
+    spheres:  Drawing Mode: Conventional glDrawRangeElements
+    spheres:  6.5 fps   1.051e+06 tris/sec   1.042e+06 pixels/sec
+    spheres:  6.8 fps   1.092e+06 tris/sec   1.082e+06 pixels/sec
+    spheres:  6.7 fps   1.076e+06 tris/sec   1.066e+06 pixels/sec
+</pre>
+</ul>
+
+<p>
+Here's an example of running spheres in a tilesort configuration:
+</p>
+
+<ul>
+<li>Start the mothership
+<pre>
+    python simplemural.conf spheres
+</pre>
+<li>In another shell, start the first crserver:
+<pre>
+    crserver
+</pre>
+<li>In another shell, start the second crserver:
+<pre>
+    crserver
+</pre>
+<li>In another shell, start the application:
+<pre>
+    crappfaker
+</pre>
+<li>Again, the triangle rate will be printed to stdout.
+</ul>
+
+
+<p>
+The spheres program accept several command-line parameters:
+</p>
+<pre>
+   -size N     specifies number of parallel instances
+   -rank I     specifies instance's rank in [0..N-1]
+   -swap       do SwapBuffers
+   -clear      do glClear
+   -s N        specifies number of spheres per frame
+   -t N        specifies approximate number of triangles per sphere
+   -f N        specifies number of frames to render before exiting
+   -v          render with vertex buffer objects
+   -d          render with display lists
+   -h          print help
+</pre>
+
+
+
+
 
 </body>
 </html>

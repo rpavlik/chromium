@@ -88,6 +88,86 @@ Chromium run you have just done corresponds to the following graph of
 nodes:</p>
 <p align="center"><img border="0" src="helloworld.gif" width="662" height="193"></p>
 
+
+<h1 class="PageHeading">Other Sample Configurations</h1>
+
+<p>
+The Chromium distribution includes many sample configurations to demonstrate
+the capabilities of Chromium.
+Here's a summary.
+The scripts are found in mothership/configs/.
+</p>
+
+<ul>
+<li><p><b>crdemo.conf</b> - this is the configuration described above.
+One application node is connected (via a pack or tilesort SPU) to one
+crserver node which has a render SPU.</p>
+
+<li><p><b>local.conf</b> - this configuration demonstrates OpenGL command
+filtering.
+A single application node has a hiddenline SPU and a render SPU.
+The hiddenline SPU manipulates the OpenGL command stream to render the
+demo program's geometry in an outline mode.</p>
+
+<li><p><b>blur.conf</b> - another example of OpenGL command filtering.
+This one demontrates the motion blur SPU.</p>
+
+<li><p><b>simplemural.conf</b> - this configuration demonstrates a two-tile
+tilesort configuration.
+The application node has a tilesort SPU which sends commands to two
+crserver nodes, each with a render SPU.</p>
+
+<li><p><b>reassemble.conf</b> - this configuration demonstrates the tilesort
+SPU and the render SPU's ability to render back into the application's
+window (on X only; not Windows). 
+The application node uses a tilesort SPU to talk to two crservers.
+Each crserver has a readback SPU.
+The readback SPUs render into the original application window, rather
+than separate windows.</p>
+<p>This configuration also demonstrates dynamic retiling.  When the application
+window is resized, the tilesort SPU's tiling is changed.</p>
+
+<li><p><b>psubmit_last.conf</b> - a demonstration of sort-last parallel
+rendering.  Two application nodes, each with a read back SPU, render part
+of the scene.  The partial renderings are sent by pack SPUs to the final
+crserver node's render SPU where the images are Z-composited together.
+The demo can be modified to use more than two application instances.</p>
+
+<li><p><b>psubmit_first.conf</b> - demonstration of combining tilesort
+(sort-first) with sort-last rendering.
+The two application nodes each render half the scene and use the tilesort
+SPU to send rendering commands to two crserver nodes.</p>
+
+<li><p><b>psubmit_bswap.conf</b> - demonstration of sort-last rendering
+with the binary swap SPU.</p>
+
+<li><p><b>multitilesort.conf</b> - demonstration of a two-level tilesort
+configuration.</p>
+
+<li><p><b>stereo[1234].conf</b> - demontrations of various
+<a href="stereo.html">stereo rendering</a>
+solutions.  See the comments in each file for details.</p>
+
+<li><p><b>cavetest[12].conf</b> - demonstrations of
+<a href="nonplanar.html">non-planar tilesorting</a>.
+See the comments in each file for details.</p>
+
+<li><p><b>crut_*.conf</b> - demonstrations of <a href="crut.html">CRUT</a>
+
+<li><p><b>threadtest.conf</b> - demonstration of several multi-threaded
+rendering methods.  See the file's comments for details.</p>
+
+<li><p><b>dmx.conf</b> - a simple demonstration of <a href="dmx.html">DMX</a>
+support.</p>
+
+</ul>
+
+<p>
+There are lots of other samples to look at in the same directory.
+</p>
+
+
+
 </body>
 
 </html>
