@@ -14,14 +14,13 @@ void crStateListsDestroy(CRContext *ctx)
 {
 	CRListsState *l = &ctx->lists;
 	CRListEffect *effect;
-	unsigned int i, num_elements;
 
-	num_elements = crHashtableNumElements( l->hash );
-	for (i = 0; i < num_elements; i++) {
-		effect = (CRListEffect *) crHashtableSearch( l->hash, i );
-		crFree( effect );
-		crHashtableDelete(l->hash, i, GL_TRUE);
-	}
+	CR_HASHTABLE_WALK( l->hash, entry)
+		effect = (CRListEffect *) entry->data;
+		CRASSERT(effect);
+		crFree(effect);
+		entry->data = NULL;
+	CR_HASHTABLE_WALK_END( l->hash)
 	crFreeHashtable(l->hash);
 
 	crFreeIdPool(l->idPool);
