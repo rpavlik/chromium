@@ -91,7 +91,11 @@ void crRealloc( void **ptr, unsigned int nbytes )
 {
 	if ( *ptr == NULL )
 	{
+#if DEBUG_MEM
+		*ptr = _crAlloc( nbytes );
+#else
 		*ptr = crAlloc( nbytes );
+#endif
 	}
 	else
 	{
