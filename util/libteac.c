@@ -278,11 +278,12 @@ static void initialize_node_tables()
 
     /* Build an ordered index into the hosts table */
     if (hostsIndex) crFree(hostsIndex);
-    if (!(hostsIndex= (int*)crAlloc(nodeCount*sizeof(int)))) {
+    if (!(hostsIndex= (int*)crAlloc(nodeRange*sizeof(int)))) {
       fprintf(stderr,"libteac: read_node_map: unable to allocate %d bytes!\n",
 	      nodeCount*sizeof(int));
       abort();
     }
+    for (i=0; i<nodeRange; i++) hostsIndex[i]= 0;
     for (i=0; i<nodeCount; i++) hostsIndex[hosts[i].id]= i;
 
     nodeTablesInitialized= 1;
@@ -474,7 +475,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank,
     crDebug("bitmap is %x\n",result->cap.cap_bitmap[0]);
 #else
   crDebug("Capability: <%s>\n",
-          elan3_capability_string(&(result->cap),junkString));
+	  elan3_capability_string(&(result->cap),junkString));
   crDebug("railmask is %d\n",result->cap.RailMask);
   crDebug("bitmap is %x\n",result->cap.Bitmap[0]);
 #endif
@@ -490,7 +491,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank,
   if ((here= crStrchr(buf,'.')) != NULL) *here= '\0';
 
 #if (TEAC_DEVINFO_TYPE == 2)
-  if (trans_host(buf) != position.pos_nodeid) {
+  if (trans_host(buf) != (int)position.pos_nodeid) {
     fprintf(stderr,
  "teac_Init: Expected Quadrics port id %d does not match real value %d!\n",
 	    trans_host(buf), position.pos_nodeid);

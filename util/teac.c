@@ -72,7 +72,7 @@ int crTeacErrno( void );
 char* crTeacErrorString( int err );
 void crTeacInstantReclaim( CRConnection *conn, CRMessage *msg );
 void crTeacSend( CRConnection *conn, void **bufp,
-		 void *start, unsigned int len );
+		 const void *start, unsigned int len );
 CRConnection *crTeacSelect( void );
 void crTeacAccept( CRConnection *conn, const char *hostname, unsigned short port );
 int crTeacDoConnect( CRConnection *conn );
@@ -80,7 +80,7 @@ void crTeacDoDisconnect( CRConnection *conn );
 void crTeacHandleNewMessage( CRConnection *conn, CRMessage *msg,
 			     unsigned int len );
 void crTeacSingleRecv( CRConnection *conn, void *buf, unsigned int len );
-void crTeacSendExact( CRConnection *conn, void *buf, unsigned int len );
+void crTeacSendExact( CRConnection *conn, const void *buf, unsigned int len );
 
 
 int
@@ -310,6 +310,10 @@ crTeacAlloc( CRConnection *conn )
   char *buf  = NULL;
   char *payload = NULL;
 
+#ifdef never
+  crDebug( "crTeacAlloc:  allocating %d bytes",
+	   CR_TEAC_BUFFER_PAD + conn->mtu);
+#endif
   sbuf= teac_getUnreadySendBuffer( cr_teac.teac_conn,
 				   CR_TEAC_BUFFER_PAD + conn->mtu );
   buf = (char *) sbuf->buf;
@@ -327,6 +331,9 @@ crTeacFree( CRConnection *conn, void *buf )
   char *buffer = payload - CR_TEAC_BUFFER_PAD;
   RBuffer *rbuf = *((RBuffer **) buffer );
 
+#ifdef never
+  crDebug( "crTeacFree: freeing RBuffer at 0x%x",(int)rbuf);
+#endif
   conn->recv_credits += rbuf->validSize;
   teac_Dispose( cr_teac.teac_conn, rbuf );
 
@@ -341,7 +348,7 @@ crTeacInstantReclaim( CRConnection *conn, CRMessage *msg )
 
 void
 crTeacSend( CRConnection *conn, void **bufp,
-	    void *start, unsigned int len )
+	    const void *start, unsigned int len )
 {
   char *payload = NULL;
   char *buf = NULL;
@@ -366,8 +373,17 @@ crTeacSend( CRConnection *conn, void **bufp,
     sbuf->validSize += len; 
     conn->send_credits -= sbuf->validSize;
 
+#ifdef never
+    crDebug("crTeacSend: entering makeSendBufferReady");
+#endif
     sbuf= teac_makeSendBufferReady( cr_teac.teac_conn, sbuf );
+#ifdef never
+    crDebug("crTeacSend: entering Send to id %d",conn->teac_id );
+#endif
     teac_Send( cr_teac.teac_conn, &(conn->teac_id), 1, sbuf, buf );
+#ifdef never
+    crDebug("crTeacSend: finished Send");
+#endif
 
     return;
   }
@@ -438,7 +454,15 @@ crTeacRecv( void )
     return 0;
   }
 
+#ifdef never
+  crDebug("crTeacRecv: entering teac_Recv on id %d",
+	  conn->teac_id);
+#endif
   rbuf = teac_Recv( cr_teac.teac_conn, conn->teac_id );
+#ifdef never
+  crDebug("crTeacRecv: finished teac_Recv on id %d; got RBuffer at 0x%x",
+	  conn->teac_id,(int)rbuf);
+#endif
   if ( !rbuf ) {
     crError( "crTeacRecv:  teac_Recv( teac_id=%d ) failed",
 	     conn->teac_id );
@@ -639,7 +663,7 @@ crTeacSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 }
 
 void
-crTeacSendExact( CRConnection *conn, void *buf, unsigned int len ) 
+crTeacSendExact( CRConnection *conn, const void *buf, unsigned int len ) 
 {
   crError( "crTeacSendExact should not get called." );
   (void) conn;
