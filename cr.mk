@@ -474,7 +474,6 @@ $(OBJDIR)/%.o: %.C Makefile
 
 $(OBJDIR)/%.o: %.c Makefile
 	@$(ECHO) "Compiling $<"
-	@$(ECHO) "$(CR_CC) -o $@ -c $(CFLAGS) $<"
 	@$(CR_CC) -o $@ -c $(CFLAGS) $<
 
 $(OBJDIR)/%.o: %.s Makefile
