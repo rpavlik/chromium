@@ -2344,6 +2344,7 @@ param		i1		GLint
 param		i2		GLint
 category	1.0
 chromium	pack
+props		render
 
 name		EvalPoint1
 return		void
@@ -2362,6 +2363,7 @@ param		j1		GLint
 param		j2		GLint
 category	1.0
 chromium	pack
+props		render
 
 name		EvalPoint2
 return		void
