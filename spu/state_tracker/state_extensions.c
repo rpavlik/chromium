@@ -18,11 +18,13 @@ GLboolean crEnableSetExtensions( CRContext *g, CRStateBits *sb, GLbitvalue neg_b
 {
 	switch( cap )
 	{
+#ifdef CR_ARB_texture_cube_map
 		case GL_TEXTURE_CUBE_MAP_ARB:
-			g->texture.enabledCubeMap[g->texture.curTextureUnit] = val;
+			g->texture.unit[g->texture.curTextureUnit].enabledCubeMap = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
+#endif
 #if 0
 #ifdef GL_NV_register_combiners
 		case GL_REGISTER_COMBINERS_NV:
