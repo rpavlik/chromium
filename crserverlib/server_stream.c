@@ -209,6 +209,20 @@ void crServerSerializeRemoteStreams(void)
 			char *data_ptr;
 			unsigned int len;
 
+			/* Check the current clients connection status, as
+			 * there's the potential we make spin in the new
+			 * code path, when terminating a client connection. */
+			if (!cr_server.curClient->conn || cr_server.curClient->conn->type == CR_NO_CONNECTION) {
+ 				crServerDeleteFromRunQueue( cr_server.curClient );
+				/* Now check the run_queue, and if we've
+				 * no run_queue return, but break and get
+				 * the next client if we're still here */
+				if (cr_server.run_queue)
+					break;
+				else
+					return;
+			}
+
 			/* Don't use GetMessage, because it pulls stuff off
 			 * the network too quickly */
 			len = crNetPeekMessage( cr_server.curClient->conn, &msg );
