@@ -33,6 +33,10 @@ class SortlastParameters:
 		return p
 
 
+DefaultWidth = 512
+DefaultHeight = 512
+
+
 #----------------------------------------------------------------------
 
 # This is the guts of the sortlast configuration script.
@@ -92,6 +96,11 @@ for i in range(NUM_APP_NODES):
 						READBACK_window_geometry[1],
 						READBACK_window_geometry[2],
 						READBACK_window_geometry[3] )
+	readbackSPU.Conf( 'try_direct', READBACK_try_direct )
+	readbackSPU.Conf( 'force_direct', READBACK_force_direct )
+	readbackSPU.Conf( 'fullscreen', READBACK_fullscreen )
+	readbackSPU.Conf( 'title', READBACK_title )
+	readbackSPU.Conf( 'system_gl_path', READBACK_system_gl_path )
 	readbackSPU.Conf( 'extract_depth', READBACK_extract_depth )
 	readbackSPU.Conf( 'extract_alpha', READBACK_extract_alpha )
 	readbackSPU.Conf( 'local_visualization', READBACK_local_visualization )
@@ -154,21 +163,245 @@ def FindRenderSPU(mothership):
 
 #----------------------------------------------------------------------
 
+class SortlastDialog(wxDialog):
+	"""Sortlast configuration editor."""
+
+	def __init__(self, parent=NULL, id=-1):
+		""" Construct a SortlastDialog."""
+		wxDialog.__init__(self, parent, id, title="Sort-last Configuration",
+						 style = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+
+		# Widget IDs
+		id_Width           = 4000
+		id_Height          = 4001
+		id_NumApps         = 4002
+		id_ReadbackOptions = 4003
+		id_RenderOptions   = 4004
+		id_Hostnames       = 4005
+		id_OK              = 4011
+		id_CANCEL          = 4012
+
+		# init misc member vars
+		self.__Mothership = 0
+		self.dirty = false
+
+		# this sizer holds all the sortlast control widgets
+		outerSizer = wxBoxSizer(wxVERTICAL)
+
+		# Window width/height (in pixels)
+		box = wxStaticBox(parent=self, id=-1,
+						  label="Window Size (updates all SPUs)",
+						  style=wxDOUBLE_BORDER)
+		windowSizeSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
+		widthLabel = wxStaticText(parent=self, id=-1, label="Width:")
+		self.widthControl = wxSpinCtrl(parent=self, id=id_Width,
+									   value="1", min=1, max=2048,
+									   size=wxSize(70,25))
+		heightLabel = wxStaticText(parent=self, id=-1, label="Height:")
+		self.heightControl = wxSpinCtrl(parent=self, id=id_Height,
+									   value="1", min=1, max=2048,
+									   size=wxSize(70,25))
+		EVT_SPINCTRL(self.widthControl, id_Width, self.__OnSizeChange)
+		EVT_SPINCTRL(self.heightControl, id_Height, self.__OnSizeChange)
+		windowSizeSizer.Add(widthLabel,
+							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=4)
+		windowSizeSizer.Add(self.widthControl,
+							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=2)
+		windowSizeSizer.Add(heightLabel,
+							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=4)
+		windowSizeSizer.Add(self.heightControl,
+							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=2)
+		# XXX add drop-down widget with common sizes
+		outerSizer.Add(windowSizeSizer, flag=wxALL|wxGROW, border=4)
+
+		# Number of app nodes
+		box = wxStaticBox(parent=self, id=-1, label="Application Nodes",
+						  style=wxDOUBLE_BORDER)
+		appSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
+		numberLabel = wxStaticText(parent=self, id=-1, label="Number:")
+		self.numberControl = wxSpinCtrl(parent=self, id=id_Width,
+										value="1", min=1, max=10000,
+										size=wxSize(70,25))
+		EVT_SPINCTRL(self.numberControl, id_NumApps, self.__OnNumAppsChange)
+		appSizer.Add(numberLabel, flag=wxALIGN_CENTER_VERTICAL|wxALL, border=4)
+		appSizer.Add(self.numberControl,
+					 flag=wxALIGN_CENTER_VERTICAL|wxALL, border=2)
+		self.hostsButton = wxButton(parent=self, id=id_Hostnames,
+									label=" Host Names... ")
+		appSizer.Add(self.hostsButton, flag=wxALL, border=2)
+		EVT_BUTTON(self.hostsButton, id_Hostnames, self.__OnHostnames)
+		outerSizer.Add(appSizer, flag=wxALL|wxGROW, border=4)
+
+		# SPU options box
+		box = wxStaticBox(parent=self, id=-1, label="SPU Options",
+						  style=wxDOUBLE_BORDER)
+		spuSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
+		self.readbackButton = wxButton(parent=self, id=id_ReadbackOptions,
+									   label=" Readback... ")
+		spuSizer.Add(self.readbackButton,
+					  flag=wxALL|wxALIGN_CENTRE_HORIZONTAL, border=2)
+		EVT_BUTTON(self.readbackButton, id_ReadbackOptions,
+				   self.__OnReadbackOptions)
+		self.renderButton = wxButton(parent=self, id=id_RenderOptions,
+									   label=" Render... ")
+		spuSizer.Add(self.renderButton,
+					 flag=wxALL|wxALIGN_CENTRE_HORIZONTAL, border=2)
+		EVT_BUTTON(self.renderButton, id_RenderOptions,
+				   self.__OnRenderOptions)
+		outerSizer.Add(spuSizer, flag=wxALL|wxGROW, border=4)
+
+		# Sizer for the OK, Cancel buttons
+		okCancelSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
+		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
+		okCancelSizer.Add(self.OkButton, option=0,
+						  flag=wxALIGN_CENTER, border=0)
+		self.CancelButton = wxButton(parent=self, id=id_CANCEL,
+									 label="Cancel")
+		okCancelSizer.Add(self.CancelButton, option=0,
+						  flag=wxALIGN_CENTER, border=0)
+		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
+		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
+
+		# horizontal separator (box with height=0)
+		separator = wxStaticBox(parent=self, id=-1,
+								label="", size=wxSize(10,0))
+
+		# outer-most sizer
+		outerSizer.Add(separator, flag=wxGROW|wxALL, border=4)
+		outerSizer.Add(okCancelSizer, option=0, flag=wxALL|wxGROW, border=10)
+
+		self.SetAutoLayout(true)
+		self.SetSizer(outerSizer)
+
+		minSize = outerSizer.GetMinSize()
+		self.SetSizeHints(minW=minSize[0], minH=minSize[1])
+		self.SetSize(minSize)
+
+		# Hostname dialog
+		self.hostsDialog = hostdialog.HostDialog(parent=NULL, id=-1,
+						title="Chromium Hosts",
+						message="Specify host names for the readback nodes")
+
+	# end of __init__()
+
+	def __UpdateVarsFromWidgets(self):
+		"""Get current widget values and update the sortlast parameters."""
+		# XXX do window width, height
+		#tilesort = self.__Mothership.Tilesort
+		#tilesort.Columns = self.widthControl.GetValue()
+		#tilesort.Rows = self.heightControl.GetValue()
+		#tilesort.TileWidth = self.tileWidthControl.GetValue()
+		#tilesort.TileHeight = self.tileHeightControl.GetValue()
+		#tilesort.RightToLeft = self.hLayoutRadio.GetSelection()
+		#tilesort.BottomToTop = self.vLayoutRadio.GetSelection()
+
+	def __UpdateWidgetsFromVars(self):
+		"""Set widget values to the tilesort parameters."""
+		# XXX do window width, height
+		#tilesort = self.__Mothership.Tilesort
+		#self.widthControl.SetValue(tilesort.Columns)
+		#self.heightControl.SetValue(tilesort.Rows)
+		#self.tileWidthControl.SetValue(tilesort.TileWidth)
+		#self.tileHeightControl.SetValue(tilesort.TileHeight)
+		#self.hLayoutRadio.SetSelection(tilesort.RightToLeft)
+		#self.vLayoutRadio.SetSelection(tilesort.BottomToTop)
+
+	# ----------------------------------------------------------------------
+	# Event handling
+
+	def __OnSizeChange(self, event):
+		"""Called when window size changes with spin controls."""
+		self.__UpdateVarsFromWidgets()
+		self.dirty = true
+
+	def __OnNumAppsChange(self, event):
+		"""Called when number of app nodes spin control changes."""
+		#self.__UpdateVarsFromWidgets()
+		self.dirty = true
+
+	def __OnHostnames(self, event):
+		"""Called when the hostnames button is pressed."""
+		sortlast = self.__Mothership.Sortlast
+		clientNode = FindClientNode(self.__Mothership)
+		self.hostsDialog.SetHostPattern(clientNode.GetHostNamePattern())
+		self.hostsDialog.SetCount(clientNode.GetCount())
+		self.hostsDialog.SetHosts(clientNode.GetHosts())
+		if self.hostsDialog.ShowModal() == wxID_OK:
+			clientNode.SetHostNamePattern(self.hostsDialog.GetHostPattern())
+			clientNode.SetHosts(self.hostsDialog.GetHosts())
+
+	def __OnReadbackOptions(self, event):
+		"""Called when Readback SPU Options button is pressed."""
+		readbackSPU = FindReadbackSPU(self.__Mothership)
+		(params, opts) = crutils.GetSPUOptions("readback")
+		# create the dialog
+		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+									 title="Readback SPU Options",
+									 options = opts)
+		# set the dialog widget values
+		dialog.SetValues(readbackSPU.GetOptions())
+		# wait for OK or cancel
+		if dialog.ShowModal() == wxID_OK:
+			# save the new values/options
+			readbackSPU.SetOptions(dialog.GetValues())
+		else:
+			# user cancelled, do nothing, new values are ignored
+			pass
+
+	def __OnRenderOptions(self, event):
+		"""Called when Render SPU Options button is pressed."""
+		renderSPU = FindRenderSPU(self.__Mothership)
+		(params, opts) = crutils.GetSPUOptions("render")
+		# create the dialog
+		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+									 title="Render SPU Options",
+									 options = opts)
+		# set the dialog widget values
+		dialog.SetValues(renderSPU.GetOptions())
+		# wait for OK or cancel
+		if dialog.ShowModal() == wxID_OK:
+			# save the new values/options
+			renderSPU.SetOptions(dialog.GetValues())
+		else:
+			# user cancelled, do nothing, new values are ignored
+			pass
+
+	def _onOK(self, event):
+		"""Called by OK button"""
+		self.EndModal(wxID_OK)
+
+	def _onCancel(self, event):
+		"""Called by Cancel button"""
+		self.EndModal(wxID_CANCEL)
+
+	def SetMothership(self, mothership):
+		"""Specify the mothership to modify.
+		mothership is a Mothership object.
+		"""
+		self.__Mothership = mothership
+		# update all the widgets to the template's values
+		self.__UpdateWidgetsFromVars()
+
+
 def Create_Sortlast(parentWindow, mothership):
 	"""Create a sort-last configuration"""
 	dialog = intdialog.IntDialog(NULL, id=-1,
-								 title="Sort-last Template",
-								 labels=["Number of application nodes:",
-										 "Window Width:",
-										 "Window Height:"],
-								 defaultValues=[2, 512, 512], maxValue=10000)
+							 title="Sort-last Template",
+							 labels=["Number of application nodes:",
+									 "Window Width:",
+									 "Window Height:"],
+							 defaultValues=[2, DefaultWidth, DefaultHeight],
+							 maxValue=10000)
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()
 		return 0
-	numClients = dialog.GetValue()
-	mothership.DeselectAllNodes()
+	numClients = dialog.GetValues()[0]
+	width = dialog.GetValues()[1]
+	height = dialog.GetValues()[2]
 
 	mothership.Sortlast = SortlastParameters()
+
+	mothership.DeselectAllNodes()
 
 	# Create the server/render node
 	xPos = 300
@@ -183,6 +416,7 @@ def Create_Sortlast(parentWindow, mothership):
 	serverNode.SetPosition(xPos, yPos)
 	serverNode.Select()
 	renderSPU = crutils.NewSPU("render")
+	renderSPU.SetOption("window_geometry", [0, 0, width, height])
 	serverNode.AddSPU(renderSPU)
 	mothership.AddNode(serverNode)
 
@@ -196,6 +430,8 @@ def Create_Sortlast(parentWindow, mothership):
 	appNode.SetPosition(xPos, yPos)
 	appNode.Select()
 	readbackSPU = crutils.NewSPU("readback")
+	readbackSPU.SetOption("title", ["Chromium Readback SPU"])
+	readbackSPU.SetOption("window_geometry", [0, 0, width, height])
 	appNode.AddSPU(readbackSPU)
 	packSPU = crutils.NewSPU("pack")
 	appNode.AddSPU(packSPU)
@@ -253,6 +489,30 @@ def Edit_Sortlast(parentWindow, mothership):
 	# Button for Readback SPU ...
 	# Button for Render SPU ...
 	# application name with #rank, #size, #zeroth substitution
+	# info about command-line substitution
+
+	t = Is_Sortlast(mothership)
+	if t:
+		clientNode = FindClientNode(mothership)
+		# find the server/render nodes
+		clientNode = FindClientNode(mothership)
+		serverNode = FindServerNode(mothership)
+	else:
+		print "This is not a sortlast configuration!"
+		return
+
+	d = SortlastDialog()
+	d.Centre()
+	backupSortlastParams = mothership.Sortlast.Clone()
+	d.SetMothership(mothership)
+
+	if d.ShowModal() == wxID_CANCEL:
+		# restore original values
+		mothership.Sortlast = backupSortlastParams
+	else:
+		# update mothership with new values
+		pass
+
 	pass
 
 
@@ -323,7 +583,7 @@ def Read_Sortlast(mothership, file):
 	# endwhile
 
 	mothership.LayoutNodes()
-	return 1
+	return 1  # OK
 
 
 def Write_Sortlast(mothership, file):
@@ -337,7 +597,7 @@ def Write_Sortlast(mothership, file):
 	serverNode = FindServerNode(mothership)
 
 	file.write('TEMPLATE = "Sort-last"\n')
-	file.write('COMPOSIT_HOST = "%s"\n' % serverNode.GetHosts()[0])
+	file.write('COMPOSITE_HOST = "%s"\n' % serverNode.GetHosts()[0])
 	file.write('NUM_APP_NODES = %d\n' % clientNode.GetCount())
 	file.write('APP_HOSTS = %s\n' % str(clientNode.GetHosts()))
 	file.write('ZEROTH_ARG = "%s"\n' % 'fix-me')
@@ -356,5 +616,5 @@ def Write_Sortlast(mothership, file):
 
 	file.write("# end of options, the rest is boilerplate\n")
 	file.write(__ConfigBody)
-	pass
+	return 1  # OK
 
