@@ -190,3 +190,4 @@ GetPointerv
 PushAttrib
 PopAttrib
 Bitmap
+BlendColorEXT

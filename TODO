@@ -1,4 +1,5 @@
 Before July Alpha release:
+	Fix Kirchner's Material bug for real (not just pack 'n' track)
 	DrawPixels/RasterPos 
 		Rasterpos sort of works; needs to be tested on multiple tiles
 	tilesort Viewport testing 

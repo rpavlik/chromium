@@ -25,6 +25,7 @@ typedef struct {
 	GLbitvalue	clearDepth;
 	GLbitvalue	clearAccum;
 	GLbitvalue  depthMask;
+	GLbitvalue  extensions;
 } CRBufferBits;
 
 typedef struct {
@@ -69,6 +70,7 @@ typedef struct {
 	GLint	accumblueBits;
 	GLint	accumalphaBits;
 
+	CRBufferStateExtensions extensions;
 } CRBufferState;
 
 void crStateBufferInitBits(CRBufferBits *bb);

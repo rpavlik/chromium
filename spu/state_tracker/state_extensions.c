@@ -167,3 +167,75 @@ void crStateFogSwitchExtensions( CRFogState *from, CRFogState *to )
 	}
 #endif
 }
+
+int crStateBlendFuncExtensionsCheckFactor( GLenum factor )
+{
+	switch( factor )
+	{
+#ifdef GL_EXT_blend_color
+		case GL_CONSTANT_COLOR_EXT:
+		case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+		case GL_CONSTANT_ALPHA_EXT:
+		case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+			return 1;
+#endif
+		default:
+			return 0;
+	}
+}
+
+void crStateBufferInitExtensions( CRBufferState *b )
+{
+	GLcolorf zero_color = {0.0f, 0.0f, 0.0f, 0.0f};
+	b->extensions.blendColor = zero_color;
+}
+
+void STATE_APIENTRY crStateBlendColorEXT( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
+{
+	CRContext *g = GetCurrentContext();
+	CRBufferState *b = &(g->buffer);
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glBlendColorEXT called inside a Begin/End" );
+		return;
+	}
+
+	b->extensions.blendColor.r = red;
+	b->extensions.blendColor.g = green;
+	b->extensions.blendColor.b = blue;
+	b->extensions.blendColor.a = alpha;
+}
+
+void crStateBufferDiffExtensions( CRBufferState *from, CRBufferState *to )
+{
+#ifdef GL_EXT_blend_color
+	if (from->extensions.blendColor.r != to->extensions.blendColor.r ||
+	    from->extensions.blendColor.g != to->extensions.blendColor.g ||
+	    from->extensions.blendColor.b != to->extensions.blendColor.b ||
+	    from->extensions.blendColor.a != to->extensions.blendColor.a   )
+	{
+		diff_api.BlendColorEXT( to->extensions.blendColor.r,
+														to->extensions.blendColor.g,
+														to->extensions.blendColor.b,
+														to->extensions.blendColor.a );
+		from->extensions.blendColor = to->extensions.blendColor;
+	}
+#endif
+}
+
+void crStateBufferSwitchExtensions( CRBufferState *from, CRBufferState *to )
+{
+#ifdef GL_EXT_blend_color
+	if (from->extensions.blendColor.r != to->extensions.blendColor.r ||
+	    from->extensions.blendColor.g != to->extensions.blendColor.g ||
+	    from->extensions.blendColor.b != to->extensions.blendColor.b ||
+	    from->extensions.blendColor.a != to->extensions.blendColor.a   )
+	{
+		diff_api.BlendColorEXT( to->extensions.blendColor.r,
+														to->extensions.blendColor.g,
+														to->extensions.blendColor.b,
+														to->extensions.blendColor.a );
+	}
+#endif
+}

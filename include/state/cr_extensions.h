@@ -13,4 +13,8 @@ typedef struct {
 	GLenum fogDistanceMode;
 } CRFogStateExtensions;
 
+typedef struct {
+	GLcolorf blendColor;
+} CRBufferStateExtensions;
+
 #endif /* CR_STATE_EXTENSIONS_H */

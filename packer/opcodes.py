@@ -23,7 +23,7 @@ print "typedef enum {"
 
 enum_index = 0
 for func_name in keys:
-	if not stub_common.FindSpecial( "opcode", func_name ):
+	if not stub_common.FindSpecial( "opcode", func_name ) and not stub_common.FindSpecial( "opcode_extend", func_name ):
 		print "\t%s = %d," % ( stub_common.OpcodeName( func_name ), enum_index )
 		enum_index = enum_index + 1
 print "\tCR_EXTEND_OPCODE=%d" % enum_index

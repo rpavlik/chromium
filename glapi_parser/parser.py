@@ -8,7 +8,7 @@ output_mapping_file = open("gl_header.parsed", 'wb')
 output_mapping = {}
 
 for line in system_gl.readlines() + chromium_gl.readlines():
-	return_end = string.find( line, " " )
+	return_end = string.find( line, "gl" ) - 1
 	return_type = line[:return_end]
 
 	func_start = string.find( line, "gl" );

@@ -4,6 +4,7 @@
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
+#include "state_extensionfuncs.h"
 
 void crStateBufferInit (CRBufferState *b) 
 {
@@ -34,6 +35,8 @@ void crStateBufferInit (CRBufferState *b)
 	b->indexClearValue = 0;
 	b->depthClearValue = (GLdefault) 1.0;
 	b->accumClearValue = zero_colorf;
+
+	crStateBufferInitExtensions( b );
 }
 
 void STATE_APIENTRY crStateAlphaFunc (GLenum func, GLclampf ref) 
@@ -141,8 +144,11 @@ void STATE_APIENTRY crStateBlendFunc (GLenum sfactor, GLenum dfactor)
 		case GL_SRC_ALPHA_SATURATE:
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactor passed to glBlendFunc: %d", sfactor);
-			return;
+			if (!crStateBlendFuncExtensionsCheckFactor( sfactor ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactor passed to glBlendFunc: %d", sfactor);
+				return;
+			}
 	}
 
 	switch (dfactor) 
@@ -157,10 +163,12 @@ void STATE_APIENTRY crStateBlendFunc (GLenum sfactor, GLenum dfactor)
 		case GL_ONE_MINUS_DST_ALPHA:
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactor passed to glBlendFunc: %d", dfactor);
-			return;
+			if (!crStateBlendFuncExtensionsCheckFactor( dfactor ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactor passed to glBlendFunc: %d", dfactor);
+				return;
+			}
 	}
-
 
 	b->blendSrc = sfactor;
 	b->blendDst = dfactor;

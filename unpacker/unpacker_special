@@ -51,4 +51,3 @@ TexSubImage2D
 VertexPointer
 UpdateClientPointer
 CreateContext
-Writeback

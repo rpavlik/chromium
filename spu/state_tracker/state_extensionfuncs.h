@@ -17,4 +17,9 @@ int crStateFogivExtensions( GLenum pname, const GLint *params );
 void crStateFogDiffExtensions( CRFogState *from, CRFogState *to );
 void crStateFogSwitchExtensions( CRFogState *from, CRFogState *to );
 
+void crStateBufferInitExtensions( CRBufferState *b );
+int crStateBlendFuncExtensionsCheckFactor( GLenum factor );
+void crStateBufferDiffExtensions( CRBufferState *from, CRBufferState *to );
+void crStateBufferSwitchExtensions( CRBufferState *from, CRBufferState *to );
+
 #endif /* CR_STATE_EXTENSION_FUNCS_H */

@@ -21,6 +21,7 @@ print """
 #include "cr_dll.h"
 #include "cr_spu.h"
 #include "cr_string.h"
+#include "cr_error.h"
 #include "renderspu.h"
 """
 
@@ -39,6 +40,10 @@ print """
 
 static void __fillin( int offset, char *name, SPUGenericFunction func )
 {
+	if (name != NULL && func == NULL)
+	{
+		crError( "NULL function for %s", name );
+	}
 	render_table[offset].name = crStrdup( name );
 	render_table[offset].fn = func;
 }
@@ -71,23 +76,13 @@ for func_name in stub_common.AllSpecials( "render_nop" ):
 	print '}'
 
 print """
-void renderspuLoadSystemGL( )
+void renderspuLoadSystemGL( void )
 {
 	CRDLL *dll = __findSystemGL();
 """
 
-for index in range(len(keys)):
-	func_name = keys[index]
-	(return_type, names, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "render_nop", func_name ):
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) __renderNop%s );' % (index, func_name, func_name )
-	elif stub_common.FindSpecial( "render", func_name ): 
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
-	else:
-		print '\t__fillin( %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
-print '\t__fillin( %3d, NULL, NULL );' % len(keys)
-
 useful_wgl_functions = [
+	"GetProcAddress",
 	"MakeCurrent",
 	"SwapBuffers",
 	"CreateContext",
@@ -111,5 +106,34 @@ for fun in useful_wgl_functions:
 print '#else'
 for fun in useful_glx_functions:
 	print '\trender_spu.%s = (%sFunc_t) crDLLGet( dll, "%s" );' % (fun, fun, fun)
-print """#endif
-}"""
+print '#endif'
+
+index = 0
+for func_name in keys:
+	(return_type, names, types) = gl_mapping[func_name]
+	if stub_common.FindSpecial( "render_nop", func_name ):
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) __renderNop%s );' % (index, func_name, func_name )
+	elif stub_common.FindSpecial( "render", func_name ): 
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) renderspu%s );' % (index, func_name, func_name )
+	elif stub_common.FindSpecial( "render_extensions", func_name ):
+		continue;
+	else:
+		print '\t__fillin( %3d, "%s", crDLLGet( dll, "gl%s" ) );' % (index, func_name, func_name )
+	index += 1
+print '}'
+
+print """
+void renderspuLoadSystemExtensions( void )
+{"""
+print '#ifdef WINDOWS'
+for func_name in stub_common.AllSpecials( 'render_extensions' ):
+	print '\t__fillin( %3d, "%s", (SPUGenericFunction) render_spu.wglGetProcAddress( "gl%s" ) );' % (index, func_name, func_name )
+	index += 1
+print '#else'
+index -= len(stub_common.AllSpecials( 'render_extensions' ) )
+for func_name in stub_common.AllSpecials( 'render_extensions' ):
+	print '\tcrError( "Implement extension getting for Linux, already!" );'
+	index += 1
+print '#endif'
+print '\t__fillin( %3d, NULL, NULL );' % index
+print '}'

@@ -13,6 +13,7 @@
 #include "cr_spu.h"
 
 void renderspuLoadSystemGL( void );
+void renderspuLoadSystemExtensions( void );
 void renderspuGatherConfiguration( void );
 void renderspuCreateWindow( void );
 
@@ -25,6 +26,7 @@ typedef BOOL (RENDER_APIENTRY *wglSwapBuffersFunc_t)(HDC);
 typedef int (RENDER_APIENTRY *wglChoosePixelFormatFunc_t)(HDC, CONST PIXELFORMATDESCRIPTOR *);
 typedef int (RENDER_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
 typedef HGLRC (RENDER_APIENTRY *wglGetCurrentContextFunc_t)();
+typedef PROC (RENDER_APIENTRY *wglGetProcAddressFunc_t)();
 #else
 typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
 typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
@@ -49,6 +51,7 @@ typedef struct {
 	HWND         hWnd;
 	HGLRC        hRC;
 	HDC          device_context;
+	wglGetProcAddressFunc_t wglGetProcAddress;
 	wglCreateContextFunc_t wglCreateContext;
 	wglMakeCurrentFunc_t wglMakeCurrent;
 	wglSwapBuffersFunc_t wglSwapBuffers;

@@ -259,7 +259,8 @@ num_get_values = {
 
 extensions_num_get_values = {
 	'GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT': (1, 'GL_EXT_texture_filter_anisotropic'),
-	'GL_FOG_DISTANCE_MODE_NV': (1, 'GL_NV_fog_distance')
+	'GL_FOG_DISTANCE_MODE_NV': (1, 'GL_NV_fog_distance'),
+	'GL_BLEND_COLOR_EXT': (4, 'GL_EXT_blend_color')
 }
 
 keys = num_get_values.keys() + extensions_num_get_values.keys()

@@ -53,7 +53,7 @@ SLOP = $(PRECOMP)
 
 include $(TOP)/cr.mk
 
-state_get.c: state_get.py state_get.txt
+state_get.c: state_get.py state_get.txt state_extensions_get.txt
 	@$(ECHO) Making the Get functions
 	@$(PYTHON) state_get.py > $@
 
