@@ -21,7 +21,15 @@
 #include <string.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+
+/* Ugly hack to work around problem with NVIDIA's gl.h file.
+ * NVIDIA's gl.h doesn't define function pointers like
+ * PFNGLSECONDARYCOLOR3FEXTPROC.  By undef'ing GL_EXT_secondary_color
+ * we're sure to pick it up from glext.h.
+ */
+#undef GL_EXT_secondary_color
 #include <GL/glext.h>
+
 
 #define TEST_EXTENSION_STRING  "GL_EXT_secondary_color"
 #ifndef GL_EXT_secondary_color
