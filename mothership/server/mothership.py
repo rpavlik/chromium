@@ -1243,9 +1243,11 @@ class CR:
 		else:
 			sock.Failure( SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
-	# A (too?) clever routine.  This handles all the work of matching various types
-	# of nodes, with static matches or with dynamic matches.  It even handles
-	# dynamic resolution and errors.
+	# A (too?) clever routine.  This handles all the work of matching various
+	# types of nodes, with static matches or with dynamic matches.
+	# It even handles dynamic resolution and errors.
+	# Input: args: the hostname of the caller
+	# Return: a node reference
 	def MatchNode(self, nodeTypeName, sock, args):
 		try:
 			(validFunc, claimFunc) = NodeTypes[nodeTypeName]
