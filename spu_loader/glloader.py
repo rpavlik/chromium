@@ -378,6 +378,7 @@ useful_cgl_functions = [
 useful_glx_functions = [
 	"glXGetConfig",
 	"glXQueryExtension",
+	"glXQueryVersion",
 	"glXQueryExtensionsString",
 	"glXChooseVisual",
 	"glXCreateContext",
@@ -387,7 +388,9 @@ useful_glx_functions = [
 	"glXMakeCurrent",
 	"glGetString",
 	"glXSwapBuffers",
-	"glXGetCurrentDisplay"
+	"glXGetCurrentDisplay",
+	"glXGetCurrentContext",
+	"glXGetClientString"
 ]
 possibly_useful_glx_functions = [
 	"glXGetProcAddressARB",
@@ -396,7 +399,17 @@ possibly_useful_glx_functions = [
 	"glXQuerySwapGroupNV",
 	"glXQueryMaxSwapGroupsNV",
 	"glXQueryFrameCountNV",
-	"glXResetFrameCountNV"
+	"glXResetFrameCountNV",
+	"glXChooseFBConfig",
+	"glXGetFBConfigs",
+	"glXGetFBConfigAttrib",
+	"glXGetVisualFromFBConfig",
+	"glXCreateNewContext",
+	"glXCreatePbuffer",
+	"glXDestroyPbuffer",
+	"glXQueryContext",
+	"glXQueryDrawable",
+	"glXMakeContextCurrent"
 ]
 
 print '#ifdef WINDOWS'
