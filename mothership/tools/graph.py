@@ -489,9 +489,21 @@ class GraphFrame(wxFrame):
 		ystart = random.randrange(50, 100, 5)
 		n = self.newServerChoice.GetSelection()
 		if n < 5:
+			# generate the hosts
+			hosts = crutils.GetSiteDefault("cluster_hosts")
+			if not hosts:
+				hosts = ["localhost"]
+			pattern = crutils.GetSiteDefault("cluster_pattern")
+			# generate the nodes and initialize them
 			for i in range(0, n):
 				node = crutils.NewNetworkNode()
 				node.SetPosition(xstart, ystart + i * 65)
+				if i < len(hosts):
+					node.SetHosts( [ hosts[i] ] )
+				else:
+					node.SetHosts( [ hosts[-1] ] )
+				if pattern:
+					node.SetHostNamePattern(pattern)
 				node.Select()
 				self.mothership.AddNode(node)
 		else:
@@ -908,9 +920,14 @@ class GraphFrame(wxFrame):
 		# solving this situation is done via an ad hoc heuristic.
 		if len(serverNodes) == 0:
 			# reassign a network packer as a server
-			if len(netPackerNodes) > 1:
+			if len(appPackerNodes) > 0 and len(netPackerNodes) > 0:
+				# Change all netPacker nodes into servers
+				serverNodes = netPackerNodes[:]
+				netPackerNodes = []
+			elif len(netPackerNodes) > 1:
+				# Change one packer into a server
 				# sort the packer nodes by position
-				self.SortNodesByPosition(netPackerNodes)
+				self.mothership.SortNodesByPosition(netPackerNodes)
 				# look if leftmost node has a tilesorter
 				leftMost = netPackerNodes[0]
 				if leftMost.LastSPU().MaxServers() > 1:
@@ -923,8 +940,13 @@ class GraphFrame(wxFrame):
 					rightMost = netPackerNodes[-1]
 					serverNodes.append(rightMost)
 					netPackerNodes.remove(rightMost)
+			elif len(netPackerNodes) >= 1 and len(appPackerNodes) >= 1:
+				# Change a netPacker node into server node
+				server = netPackerNodes[0]
+				netPackerNodes.remove(server)
+				serverNodes.append(server)
 			else:
-				self.Notify("Can't connect - no available packing SPUs found.")
+				self.Notify("Can't connect - no available server nodes found.")
 				#print "no packers 2!"
 				return
 		packerNodes = appPackerNodes + netPackerNodes
