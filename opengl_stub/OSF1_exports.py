@@ -1,11 +1,14 @@
-# cpg - 5/22/02
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
 
 import sys;
 import cPickle;
 import types;
 import string;
 import re;
-
+import alias_exports;
 import stub_common;
 
 parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
@@ -39,3 +42,15 @@ for func_name in keys:
 
     print "}"
     print ""
+    real_func_name = alias_exports.AliasMap(func_name);
+    if real_func_name:
+   	print "%s gl%s%s" % (return_type, real_func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+    	print "{"
+    	print "\t",
+
+   	if return_type != "void":
+		print "return ",
+    	print "glim.%s%s;" % (func_name, stub_common.CallString( arg_names ))
+
+	print "}"
+  	print ""
