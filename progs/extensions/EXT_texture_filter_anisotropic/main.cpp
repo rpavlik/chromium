@@ -103,7 +103,6 @@ int		main	( int argc, char *argv[] )
 	cout << "ccn@graphics.stanford.edu" << endl << endl;
 
 	InitGL();
-	InitSpecial();
 
 	#ifdef CCN_DEBUG
 		cout << "  Vendor: " << glGetString( GL_VENDOR ) << endl;
@@ -128,6 +127,7 @@ int		main	( int argc, char *argv[] )
 		return 0;
 	}
 
+	InitSpecial();
 	glutMainLoop();
 	
 	return 0;
