@@ -127,15 +127,13 @@ LookupProgram(GLuint id)
 
 
 void SERVER_DISPATCH_APIENTRY
-crServerDispatchProgramLocalParameter4fARB(GLenum target, GLuint index,
-																					 GLfloat x, GLfloat y,
-																					 GLfloat z, GLfloat w)
+crServerDispatchProgramLocalParameter4fARB(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
 	if (target == GL_VERTEX_PROGRAM_ARB) {
 		CRServerProgram *prog = LookupProgram(cr_server.currentProgram);
 
 		if (prog && prog->projParamStart != -1) {
-			if (index >= prog->projParamStart && index <= prog->projParamStart + 3) {
+			if (index >= (GLuint) prog->projParamStart && index <= (GLuint) prog->projParamStart + 3) {
 				/* save the parameters as rows in the matrix */
 				const int i = index - prog->projParamStart;
 				prog->projMat[4*0+i] = x;
@@ -171,25 +169,20 @@ crServerDispatchProgramLocalParameter4fARB(GLenum target, GLuint index,
 
 
 void SERVER_DISPATCH_APIENTRY
-crServerDispatchProgramLocalParameter4dARB(GLenum target, GLuint index,
-																					 GLdouble x, GLdouble y,
-																					 GLdouble z, GLdouble w)
+crServerDispatchProgramLocalParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-	crServerDispatchProgramLocalParameter4fARB(target, index,
-																						 (GLfloat) x, (GLfloat) y,
-																						 (GLfloat) z, (GLfloat) w);
+	crServerDispatchProgramLocalParameter4fARB(target, index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 
 void SERVER_DISPATCH_APIENTRY
-crServerDispatchProgramParameter4fNV(GLenum target, GLuint index,
-																		 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+crServerDispatchProgramParameter4fNV(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
 	if (target == GL_VERTEX_PROGRAM_NV) {
 		CRServerProgram *prog = LookupProgram(cr_server.currentProgram);
 
 		if (prog && prog->projParamStart != -1) {
-			if (index >= prog->projParamStart && index <= prog->projParamStart + 3) {
+			if (index >= (GLuint) prog->projParamStart && index <= (GLuint) prog->projParamStart + 3) {
 				/* save the parameters as rows in the matrix */
 				const int i = index - prog->projParamStart;
 				prog->projMat[4*0+i] = x;
@@ -225,18 +218,14 @@ crServerDispatchProgramParameter4fNV(GLenum target, GLuint index,
 
 
 void SERVER_DISPATCH_APIENTRY
-crServerDispatchProgramParameter4dNV(GLenum target, GLuint index,
-																		 GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+crServerDispatchProgramParameter4dNV(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-	crServerDispatchProgramParameter4fNV(target, index,
-																			 (GLfloat) x, (GLfloat) y,
-																			 (GLfloat) z, (GLfloat) w);
+	crServerDispatchProgramParameter4fNV(target, index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 
 void SERVER_DISPATCH_APIENTRY
-crServerDispatchProgramStringARB(GLenum target, GLenum format,
-																 GLsizei len, const GLvoid *string)
+crServerDispatchProgramStringARB(GLenum target, GLenum format, GLsizei len, const GLvoid *string)
 {
 	if (target == GL_VERTEX_PROGRAM_ARB &&
 			cr_server.vpProjectionMatrixVariable != NULL) {
@@ -272,14 +261,12 @@ crServerDispatchProgramStringARB(GLenum target, GLenum format,
 	}
 
 	/* pass through */
-	cr_server.head_spu->dispatch_table.ProgramStringARB(target, format,
-																											len, string);
+	cr_server.head_spu->dispatch_table.ProgramStringARB(target, format, len, string);
 }
 
 
 void SERVER_DISPATCH_APIENTRY
-crServerDispatchLoadProgramNV(GLenum target, GLuint id, GLsizei len,
-															const GLubyte *string)
+crServerDispatchLoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLubyte *string)
 {
 	if (target == GL_VERTEX_PROGRAM_NV &&
 			cr_server.vpProjectionMatrixVariable != NULL) {
