@@ -18,7 +18,7 @@
 static void set_window_geometry( RenderSPU *render_spu, const char *response )
 {
    float x, y, w, h;
-   sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
+   sscanf( response, "%f, %f, %f, %f", &x, &y, &w, &h );
    render_spu->defaultX = (int) x;
    render_spu->defaultY = (int) y;
    render_spu->defaultWidth = (int) w;
