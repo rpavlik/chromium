@@ -238,7 +238,7 @@ SPUOptions renderSPUOptions[] = {
    { "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
      "System GL Path", (SPUOptionCB)set_system_gl_path },
 
-   { "display_string", CR_STRING, 1, "", NULL, NULL, 
+   { "display_string", CR_STRING, 1, ":0.0", NULL, NULL, 
      "X Display String", (SPUOptionCB)set_display_string },
 
    { "gather_url", CR_STRING, 1, "", NULL, NULL,

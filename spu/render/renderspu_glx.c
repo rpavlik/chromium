@@ -831,6 +831,8 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 	if (window && context) {
 		if (window->visual != context->visual) {
+			crDebug("Render SPU:  MakeCurrent visual mismatch (0x%x != 0x%x); remaking window.",
+							window->visual->visAttribs, context->visual->visAttribs);
 			/*
 			 * XXX have to revisit this issue!!!
 			 *
