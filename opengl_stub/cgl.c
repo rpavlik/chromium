@@ -282,7 +282,154 @@ CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFo
 {
 	stubInit();
 
-	return stub.wsInterface.CGLDescribePixelFormat( pix, pix_num, attrib, value );
+	if( stub.haveNativeOpenGL )
+		return stub.wsInterface.CGLDescribePixelFormat( pix, pix_num, attrib, value );
+
+	// TODO -- this needs to be filled out properly
+	switch( attrib ) {
+		case kCGLPFAAllRenderers:
+			*values = 0;
+			break;
+
+		case kCGLPFADoubleBuffer:
+			*value = 1;
+			break;
+
+		case kCGLPFAStereo:
+			*value = 1;
+			break;
+
+		case kCGLPFAAuxBuffers:
+			*value = 0;
+			break;
+
+		case kCGLPFAColorSize:
+			*value = 24;
+			break;
+
+		case kCGLPFAAlphaSize:
+			*value = 8;
+			break;
+
+		case kCGLPFADepthSize:
+			visBits |= CR_DEPTH_BIT;
+			*value = 16;
+			break;
+
+		case kCGLPFAStencilSize:
+			visBits |= CR_STENCIL_BIT;
+			*value = 8;
+			break;
+
+		case kCGLPFAAccumSize:
+			visBits |= CR_ACCUM_BIT;
+			*value = 0;
+			break;
+
+		case kCGLPFAMinimumPolicy:
+			*value = 0;
+			break;
+
+		case kCGLPFAMaximumPolicy:
+			*value = 0;
+			break;
+
+		case kCGLPFAOffScreen:
+			*value = 0;
+			break;
+
+		case kCGLPFAFullScreen:
+			*value = 0;
+			break;
+
+		case kCGLPFASampleBuffers:
+			*value = 0;
+			break;
+
+		case kCGLPFASamples:
+			*value = 0;
+			break;
+
+		case kCGLPFAAuxDepthStencil:
+			*value = 0;
+			break;
+
+		case kCGLPFAColorFloat:
+			*value = 0;
+			break;
+
+		case kCGLPFAMultisample:
+			*value = 0;
+			break;
+
+		case kCGLPFASupersample:
+			*value = 0;
+			break;
+
+		case kCGLPFASampleAlpha:
+			*value = 0;
+			break;
+
+		case kCGLPFARendererID:
+			*value = 0;
+			break;
+
+		case kCGLPFASingleRenderer:
+			*value = 0;
+			break;
+
+		case kCGLPFANoRecovery:
+			*value = 0;
+			break;
+
+		case kCGLPFAAccelerated:
+			*value = 0;
+			break;
+
+		case kCGLPFAClosestPolicy:
+			*value = 0;
+			break;
+
+		case kCGLPFARobust:
+			*value = 0;
+			break;
+
+		case kCGLPFABackingStore:
+			*value = 0;
+			break;
+
+		case kCGLPFAMPSafe:
+			*value = 0;
+			break;
+
+		case kCGLPFAWindow:
+			*value = 0;
+			break;
+
+		case kCGLPFAMultiScreen:
+			*value = 0;
+			break;
+
+		case kCGLPFACompliant:
+			*value = 0;
+			break;
+
+		case kCGLPFADisplayMask:
+			*value = 0;
+			break;
+
+		case kCGLPFAPBuffer:
+			*value = 0;
+			break;
+
+		case kCGLPFARemotePBuffer:
+			*value = 0;
+			break;
+
+		case kCGLPFAVirtualScreenCount:
+			*value = 1;
+			break;
+	}
 }
 
 
