@@ -33,6 +33,28 @@ extern "C" {
 #define CR_SUPPRESS_SWAP_BIT 0X1
 
 
+/* 
+ * For the performance SPU. Allows application to obtain it's own
+ * statistics, and reset etc. through glChromiumParameter*CR().
+ */
+typedef struct {
+	int 	count;
+
+	int 	v2d, v2f, v2i, v2s;
+	int 	v2dv, v2fv, v2iv, v2sv;
+	int 	v3d, v3f, v3i, v3s;
+	int 	v3dv, v3fv, v3iv, v3sv;
+	int 	v4d, v4f, v4i, v4s;
+	int 	v4dv, v4fv, v4iv, v4sv;
+
+	int	ipoints;	/* Interpreted points */
+	int	ilines; 	/* Interpreted lines */
+	int	itris;		/* Interpreted tris */
+	int	iquads; 	/* Interpreted quads */
+	int	ipolygons; 	/* Interpreted polygons */
+} PerfVertex;
+
+
 typedef void (APIENTRY *glBarrierCreateCRProc) (GLuint name, GLuint count);
 typedef void (APIENTRY *glBarrierDestroyCRProc) (GLuint name);
 typedef void (APIENTRY *glBarrierExecCRProc) (GLuint name);

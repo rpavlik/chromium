@@ -15,6 +15,7 @@
 
 #include "cr_spu.h"
 #include "cr_timer.h"
+#include "cr_applications.h"
 
 /* This is very fine grained.... Don't know whether we want this
  * kind of detail yet. But we maintain a linked list of rendering
@@ -25,6 +26,7 @@
 
 void perfspuGatherConfiguration( void );
 
+#if 0
 typedef struct {
 	int 	count;
 
@@ -41,6 +43,7 @@ typedef struct {
 	int	iquads; 	/* Interpreted quads */
 	int	ipolygons; 	/* Interpreted polygons */
 } PerfVertex;
+#endif
 
 typedef struct __perf_prim {
 	PerfVertex points;

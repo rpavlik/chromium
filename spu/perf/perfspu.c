@@ -316,15 +316,9 @@ void perfspuInterpretVertexData( int old, int new )
 void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
 {
 	switch (target) {
-	case GL_PERF_RESET_VERTEX_COUNTER_CR:
-		break;
-	case GL_PERF_RESET_BEGINEND_COUNTER_CR:
-		break;
 	case GL_PERF_RESET_DRAWPIXELS_COUNTER_CR:
 		break;
 	case GL_PERF_RESET_READPIXELS_COUNTER_CR:
-		break;
-	case GL_PERF_RESET_SWAPBUFFERS_COUNTER_CR:
 		break;
 	case GL_PERF_SET_SWAPBUFFERS_DUMP_COUNT_CR:
 		perf_spu.swapdumpcount = value;
@@ -372,6 +366,12 @@ void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GL
 void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
 {
 	switch (target) {
+	case GL_PERF_GET_FRAME_VERTEX_DATA_CR:
+		values = (GLvoid *)perf_spu.cur_framestats;
+		break;
+	case GL_PERF_GET_TIMER_VERTEX_DATA_CR:
+		values = (GLvoid *)perf_spu.cur_timerstats;
+		break;
 	default:
 		perf_spu.super.GetChromiumParametervCR( target, index, type, count, values);
 	}
