@@ -124,7 +124,7 @@ static void print_option( SPUOptions *opt, int pythonMode )
 			   opt->description,
 			   type_string[(int)opt->type],
 			   opt->numValues);
-		if (opt->type == CR_STRING)
+		if (opt->type == CR_STRING || opt->type == CR_ENUM)
 		   printf("['%s']", opt->deflt);
 		else
 		   printf("[%s]", opt->deflt);
