@@ -20,8 +20,8 @@ LD_RELEASE_FLAGS  +=
 LD_DEBUG_FLAGS    += 
 
 ifeq ($(MACHTYPE), alpha)
-CXXFLAGS          += -mieee -mcpu=ev67
-CFLAGS            += -mieee -mcpu=ev67
+CXXFLAGS          += -mieee 
+CFLAGS            += -mieee
 endif
 
 PROFILEFLAGS = -pg -a
