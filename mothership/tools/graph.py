@@ -68,7 +68,7 @@ menu_DISCONNECT         = 207
 menu_SET_HOST           = 208
 menu_SET_COUNT          = 209
 menu_SPLIT_NODES        = 210
-menu_MERGE_NODES        = 211
+menu_COMBINE_NODES      = 211
 menu_SERVER_OPTIONS     = 212
 menu_APP_OPTIONS        = 213
 menu_SERVER_TILES       = 214
@@ -97,17 +97,24 @@ id_NewSpu         = 3002
 id_NewTemplate    = 3003
 id_TemplateOptions = 3004
 
-# Size of the drawing page, in pixels.
+# Initial size of the drawing page, in pixels.
 PAGE_WIDTH  = 1000
 PAGE_HEIGHT = 1000
 
+# Window title (gets appended with project name)
 TitleString = "Chromium Configuration Tool"
 
+# Config file dialog filename filter
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
-AppNodeBrush = wxBrush(wxColor(55, 160, 55))
-ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
-BackgroundColor = wxColor(90, 150, 190)
+# Brushes and pens for drawing nodes and SPUs
+_AppNodeBrush = wxBrush(wxColor(55, 160, 55))
+_ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
+_BackgroundColor = wxColor(90, 150, 190)
+_ThinBlackPen = wxPen(wxColor(0,0,0), width=1, style=0)
+_WideBlackPen = wxPen(wxColor(0,0,0), width=3, style=0)
+_WirePen = wxPen(wxColor(0, 0, 250), width=2, style=0)
+_SPUBrush = wxLIGHT_GREY_BRUSH
 
 NodeClipboard = []
 
@@ -179,7 +186,7 @@ class GraphFrame(wxFrame):
 		self.nodeMenu.Append(menu_SET_COUNT,          "Set Count...")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SPLIT_NODES,        "Split")
-		self.nodeMenu.Append(menu_MERGE_NODES,        "Merge")
+		self.nodeMenu.Append(menu_COMBINE_NODES,      "Combine")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Node Options...")
 		self.nodeMenu.Append(menu_SERVER_TILES,       "Server Node Tiles...")
@@ -195,7 +202,7 @@ class GraphFrame(wxFrame):
 		EVT_MENU(self, menu_SET_HOST, self.doSetHost)
 		EVT_MENU(self, menu_SET_COUNT, self.doSetCount)
 		EVT_MENU(self, menu_SPLIT_NODES, self.doSplitNodes)
-		EVT_MENU(self, menu_MERGE_NODES, self.doMergeNodes)
+		EVT_MENU(self, menu_COMBINE_NODES, self.doCombineNodes)
 		EVT_MENU(self, menu_SERVER_OPTIONS, self.doServerOptions)
 		EVT_MENU(self, menu_SERVER_TILES, self.doServerTiles)
 		EVT_MENU(self, menu_APP_OPTIONS, self.doAppOptions)
@@ -314,7 +321,7 @@ class GraphFrame(wxFrame):
 										 style=wxSUNKEN_BORDER)
 		self.drawArea.EnableScrolling(true, true)
 		self.drawArea.SetScrollbars(20, 20, PAGE_WIDTH / 20, PAGE_HEIGHT / 20)
-		self.drawArea.SetBackgroundColour(BackgroundColor)
+		self.drawArea.SetBackgroundColour(_BackgroundColor)
 		EVT_PAINT(self.drawArea, self.onPaintEvent)
 
 		EVT_LEFT_DOWN(self.drawArea, self.onMouseEvent)
@@ -348,6 +355,7 @@ class GraphFrame(wxFrame):
 		self.DragStartY = 0
 		self.SelectDeltaX = 0
 		self.SelectDeltaY = 0
+		self.__FontHeight = 0
 
 		self.UpdateMenus()
 
@@ -441,41 +449,113 @@ class GraphFrame(wxFrame):
     #----------------------------------------------------------------------
 	# Event handlers / callbacks
 
+	def __drawSPU(self, dc, spu):
+		"""Draw icon representation of the given SPU."""
+		dc.SetBrush(_SPUBrush)
+		if spu.IsSelected():
+			dc.SetPen(_WideBlackPen)
+		else:
+			dc.SetPen(_ThinBlackPen)
+		# if width is zero, compute width/height now
+		(w, h) = spu.GetSize()
+		if w == 0:
+			spu.Layout(dc.GetTextExtent)
+			(w, h) = spu.GetSize()
+		(x, y) = spu.GetPosition()
+		# draw the SPU as a rectangle with text label
+		dc.DrawRectangle(x, y, w, h)
+		dc.DrawText(spu.Name(), x + 4, y + 4)
+		if spu.MaxServers() > 0:
+			# draw the output plug (a little black rect)
+			dc.SetBrush(wxBLACK_BRUSH)
+			dc.DrawRectangle(x + w, y + h / 2 - 5, 4, 10)
+		elif spu.IsTerminal():
+			# draw a thick right edge on the box
+			dc.SetPen(_WideBlackPen)
+			dc.DrawLine(x + w, y + 1, x + w, y + h - 2)
+
+	def __drawNode(self, dc, node, dx=0, dy=0):
+		"""Draw icon representation of the given node."""
+		if self.__FontHeight == 0:
+			(spam, self.__FontHeight) = dc.GetTextExtent("spam")
+		# set brush and pen
+		if node.IsServer():
+			dc.SetBrush(_ServerNodeBrush)
+		else:
+			dc.SetBrush(_AppNodeBrush)
+		if node.IsSelected():
+			dc.SetPen(_WideBlackPen)
+		else:
+			dc.SetPen(_ThinBlackPen)
+		# get node's position
+		(x, y) = node.GetPosition()
+		# add temporary offset used while dragging nodes
+		x += dx
+		y += dy
+		# get node's size
+		(w, h) = node.GetSize();
+		if w == 0 or h == 0:
+			node.Layout(dc.GetTextExtent)
+			(w, h) = node.GetSize();
+
+		# draw the node's box
+		if node.GetCount() > 1:
+			# draw the "Nth box"
+			dc.DrawRectangle(x + 8, y + self.__FontHeight + 4, w, h)
+			dc.DrawText(" ... Count = %d" % node.GetCount(),
+						x + 12, y + h + 1 )
+		dc.DrawRectangle(x, y, w, h)
+		if node.IsServer():
+			dc.DrawText(node.GetLabel(), x + 4, y + 4)
+			# draw the unpacker plug
+			px = x - 4
+			py = y + h / 2
+			dc.SetBrush(wxBLACK_BRUSH)
+			dc.DrawRectangle(px, py - 5, 4, 10)
+		else:
+			dc.DrawText(node.GetLabel(), x + 4, y + 4)
+
+		# draw the SPUs
+		x = x + 5
+		y = y + 20
+		for spu in node.SPUChain():
+			spu.SetPosition(x, y)
+			self.__drawSPU(dc, spu)
+			(w, h) = spu.GetSize()
+			x += w + 2
+
+
 	def onPaintEvent(self, event):
 		"""Drawing area repaint callback"""
 		dc = wxPaintDC(self.drawArea)
 		self.drawArea.PrepareDC(dc)  # only for scrolled windows
 		dc.BeginDrawing()
 
-		# temporary
-		#b = wxBrush(wxColor(120, 180, 220))
-		#dc.SetBrush(b)
-		#dc.DrawRectangle(50, 60, 350, 180)
-		#dc.DrawText("Tilesort assembly", 55, 65)
-
 		# draw the nodes
 		for node in self.mothership.Nodes():
 			if node.IsSelected():
-				node.Draw(dc, self.SelectDeltaX, self.SelectDeltaY)
+				self.__drawNode(dc, node, self.SelectDeltaX, self.SelectDeltaY)
 			else:
-				node.Draw(dc)
+				self.__drawNode(dc, node)
 
 		# draw the wires between the nodes
-		pen = wxPen(wxColor(0, 0, 250))
-		pen.SetWidth(2)
-		dc.SetPen(pen)
+		dc.SetPen(_WirePen)
 		for node in self.mothership.Nodes():
 			servers = node.GetServers()
 			for serv in servers:
-				p = node.GetOutputPlugPos()
-				q = serv.GetInputPlugPos()
-				dc.DrawLine( p[0], p[1], q[0], q[1] )
+				(px, py) = node.GetOutputPlugPos()
+				(qx, qy) = serv.GetInputPlugPos()
+				if serv.IsSelected():
+					qx += self.SelectDeltaX
+					qy += self.SelectDeltaY
+				dc.DrawLine( px, py, qx, qy)
 				# See if we need to draw triple lines for N-hosts
 				dy1 = (node.GetCount() > 1) * 4
 				dy2 = (serv.GetCount() > 1) * 4
 				if dy1 != 0 or dy2 != 0:
-					dc.DrawLine(p[0], p[1] + dy1, q[0], q[1] + dy2)
-					dc.DrawLine(p[0], p[1] - dy1, q[0], q[1] - dy2)
+					dc.DrawLine(px, py + dy1, qx, qy + dy2)
+					dc.DrawLine(px, py - dy1, qx, qy - dy2)
+		# all done drawing
 		dc.EndDrawing()
 
 	# called when New App Node button is pressed
@@ -1096,11 +1176,11 @@ class GraphFrame(wxFrame):
 		self.UpdateMenus()
 		self.dirty = true
 
-	def doMergeNodes(self, event):
-		"""Node / Merge callback"""
+	def doCombineNodes(self, event):
+		"""Node / Combine callback"""
 		nodes = self.mothership.SelectedNodes()
 		if not crutils.MergeNodes(nodes, self.mothership):
-			self.Notify("The selected nodes are too dissimilar to be merged.")
+			self.Notify("The selected nodes are too dissimilar to be combined.")
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 		self.dirty = true
@@ -1337,10 +1417,10 @@ class GraphFrame(wxFrame):
 			self.nodeMenu.Enable(menu_SET_COUNT, 1)
 			self.nodeMenu.Enable(menu_SPLIT_NODES, 1)
 			if self.mothership.NumSelectedNodes() > 1:
-				self.nodeMenu.Enable(menu_MERGE_NODES, 1)
+				self.nodeMenu.Enable(menu_COMBINE_NODES, 1)
 				self.nodeMenu.Enable(menu_CONNECT, 1)
 			else:
-				self.nodeMenu.Enable(menu_MERGE_NODES, 0)
+				self.nodeMenu.Enable(menu_COMBINE_NODES, 0)
 				self.nodeMenu.Enable(menu_CONNECT, 0)
 			self.newSpuChoice.Enable(1)
 		else:
@@ -1350,7 +1430,7 @@ class GraphFrame(wxFrame):
 			self.nodeMenu.Enable(menu_SET_HOST, 0)
 			self.nodeMenu.Enable(menu_SET_COUNT, 0)
 			self.nodeMenu.Enable(menu_SPLIT_NODES, 0)
-			self.nodeMenu.Enable(menu_MERGE_NODES, 0)
+			self.nodeMenu.Enable(menu_COMBINE_NODES, 0)
 			self.newSpuChoice.Enable(0)
 		# Node menu / servers
 		if self.mothership.NumSelectedServers() > 0:

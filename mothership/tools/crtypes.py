@@ -16,7 +16,6 @@ in the mothership.
 # mothership/node/spu data structures.
 
 
-import wxPython
 import re, string, sys, types
 sys.path.append("../server")
 import crconfig
@@ -245,9 +244,6 @@ class SpuObject:
 		self.__Width = 0
 		self.__Height = 30
 		self.__IsSelected = 0
-		self.__OutlinePen = wxPython.wx.wxPen(wxPython.wx.wxColor(0,0,0),
-											  width=1, style=0)
-		self.__FillBrush = wxPython.wx.wxLIGHT_GREY_BRUSH
 
 	def Clone(self):
 		"""Return a deep copy/clone of this SpuObject"""
@@ -350,17 +346,17 @@ class SpuObject:
 		self.__OptionList.Print()
 
 	def SetPosition(self, x, y):
+		"""Set position for drawing this SPU."""
 		self.__X = x
 		self.__Y = y
 
 	def GetPosition(self):
+		"""Get position as (x, y) for drawing this SPU."""
 		return (self.__X, self.__Y)
 
-	def GetWidth(self):
-		return self.__Width
-
-	def GetHeight(self):
-		return self.__Height
+	def GetSize(self):
+		"""Return (width, height) of this SPU."""
+		return (self.__Width, self.__Height)
 
 	def PickTest(self, x, y):
 		if (x >= self.__X and x < self.__X + self.__Width and
@@ -369,37 +365,12 @@ class SpuObject:
 		else:
 			return 0
 
-	def Layout(self, dc):
+	def Layout(self, getTextExtentsFunc):
 		"""Compute width and height for drawing this SPU"""
-		(w, h) = dc.GetTextExtent(self.__Name)
+		(w, h) = getTextExtentsFunc(self.__Name)
 		self.__Width = w + 8
 		self.__Height = h + 8
 		
-	def Draw(self, dc):
-		"""Draw this SPU as a simple labeled box"""
-		dc.SetBrush(self.__FillBrush)
-		if self.__IsSelected:
-			self.__OutlinePen.SetWidth(3)
-		else:
-			self.__OutlinePen.SetWidth(1)
-		dc.SetPen(self.__OutlinePen)
-		# if width is zero, compute width/height now
-		if self.__Width == 0:
-			self.Layout(dc)
-		# draw the SPU as a rectangle with text label
-		dc.DrawRectangle(self.__X, self.__Y, self.__Width, self.__Height)
-		dc.DrawText(self.__Name, self.__X + 4, self.__Y + 4)
-		if self.__MaxServers > 0:
-			# draw the output plug (a little black rect)
-			dc.SetBrush(wxPython.wx.wxBLACK_BRUSH)
-			dc.DrawRectangle(self.__X + self.__Width,
-							 self.__Y + self.__Height/2 - 5, 4, 10)
-		elif self.__IsTerminal:
-			# draw a thick right edge on the box
-			self.__OutlinePen.SetWidth(3)
-			dc.SetPen(self.__OutlinePen)
-			dc.DrawLine(self.__X + self.__Width, self.__Y + 1,
-						self.__X + self.__Width, self.__Y + self.__Height - 2)
 
 
 # ----------------------------------------------------------------------
@@ -412,7 +383,7 @@ class Node:
 	for may configurations.
 	"""
 
-	def __init__(self, hostnames, isServer, count, color):
+	def __init__(self, hostnames, isServer, count):
 		self.__Count = count
 		self.__X = 0
 		self.__Y = 0
@@ -422,18 +393,15 @@ class Node:
 		self.__IsServer = isServer
 		self.__IsSelected = 0
 		self.__InputPlugPos = (0,0)
-		self.__Color = color
-		self.__Brush = wxPython.wx.wxBrush(color)
 		self.SetHosts(hostnames)
 		self.__HostPattern = (hostnames[0], 1)
-		self.__FontHeight = 0
+		self.__LabelHeight = 0
 		self.__AutoStart = None
 
 
 	def Clone(self):
 		"""Return a deep copy/clone of this Node object"""
-		newNode = Node(self.__Hosts, self.__IsServer, self.__Count,
-					   self.__Color)
+		newNode = Node(self.__Hosts, self.__IsServer, self.__Count)
 		for spu in self.SPUChain():
 			newSpu = spu.Clone()
 			newNode.AddSPU(newSpu)
@@ -593,10 +561,17 @@ class Node:
 		"""Return screen position (x, y) for this node icon."""
 		return (self.__X, self.__Y)
 
+	def GetSize(self):
+		return (self.__Width, self.__Height)
+
+	def GetLabel(self):
+		return self.__Label
+
 	def SetPosition(self, x, y):
 		"""Set screen position for this node icon."""
 		self.__X = x
 		self.__Y = y
+		self.InvalidateLayout()
 
 	def GetInputPlugPos(self):
 		"""Return the (x,y) coordinate of the node's input socket."""
@@ -609,72 +584,36 @@ class Node:
 		last = self.LastSPU()
 		assert last.MaxServers() > 0
 		(x, y) = last.GetPosition()
-		x += last.GetWidth() + 2
-		y += last.GetHeight() / 2
+		(w, h) = last.GetSize()
+		x += w + 2
+		y += h / 2
 		return (x, y)
 
 	def InvalidateLayout(self):
 		"""Signal that this node needs its layout updated."""
 		self.__Width = 0
 
-	def Layout(self, dc):
+	def Layout(self, getTextExtentsFunc):
 		"""Compute width and height for drawing this node"""
 		self.__Width = 5
+		# Layout SPUs
 		for spu in self.__SpuChain:
-			spu.Layout(dc)
-			self.__Width += spu.GetWidth() + 2
+			spu.Layout(getTextExtentsFunc)
+			(w, h) = spu.GetSize()
+			self.__Width += w + 2
 		self.__Width += 8
-		(w, h) = dc.GetTextExtent(self.__Label)
+		(w, h) = getTextExtentsFunc(self.__Label)
 		if self.__Width < w + 8:
 			self.__Width = w + 8
 		if self.__Width < 100:
 			self.__Width = 100
 		if self.__Height == 0:
 			self.__Height = int(h * 3.5)
-		if self.__FontHeight == 0:
-			(span, self.__FontHeight) = dc.GetTextExtent(self.__Label)
-
-	def Draw(self, dc, dx=0, dy=0):
-		"""Draw this node.  (dx,dy) are the temporary translation values
-		used when a mouse drag is in progress."""
-		# setup the brush and pen
-		dc.SetBrush(self.__Brush)
-		p = wxPython.wx.wxPen(wxPython.wx.wxColor(0,0,0), width=1, style=0)
-		if self.__IsSelected:
-			p.SetWidth(3)
-		dc.SetPen(p)
-		x = self.__X + dx
-		y = self.__Y + dy
-
-		if self.__Width == 0 or self.__Height == 0:
-			self.Layout(dc)
-
-		# draw the node's box
-		if self.__Count > 1:
-			# draw the "Nth box"
-			dc.DrawRectangle(x + 8, y + self.__FontHeight + 4,
-							 self.__Width, self.__Height)
-			dc.DrawText(" ... Count = %d" % self.__Count,
-						x + 12, y + self.__Height + 1 )
-		dc.DrawRectangle(x, y, self.__Width, self.__Height)
-		if self.__IsServer:
-			dc.DrawText(self.__Label, x + 4, y + 4)
-			# draw the unpacker plug
-			px = x - 4
-			py = y + self.__Height / 2
-			self.__InputPlugPos = (px, py)
-			dc.SetBrush(wxPython.wx.wxBLACK_BRUSH)
-			dc.DrawRectangle(px, py - 5, 4, 10)
-		else:
-			dc.DrawText(self.__Label, x + 4, y + 4)
-
-		# draw the SPUs
-		x = x + 5
-		y = y + 20
-		for spu in self.__SpuChain:
-			spu.SetPosition(x, y)
-			spu.Draw(dc)
-			x = x + spu.GetWidth() + 2
+		if self.__LabelHeight == 0:
+			self.__LabelHeight = h
+		px = self.__X - 4
+		py = self.__Y + self.__Height / 2
+		self.__InputPlugPos = (px, py)
 
 	def PickTest(self, x, y):
 		"""Return 0 if this node is not picked.
@@ -694,7 +633,7 @@ class Node:
 		elif self.__Count > 1:
 			# adjust pick coord and test against the "Nth box"
 			x -= 8
-			y -= self.__FontHeight + 4
+			y -= self.__LabelHeight + 4
 			if (x >= self.__X and x < self.__X + self.__Width and
 				y >= self.__Y and y < self.__Y + self.__Height):
 				return 1
@@ -730,12 +669,16 @@ class Node:
 		# XXX Eventually we'll remove the '*' for varargs!
 		self._Options.Conf(name, values)
 		
+	def Rank(self, rank):
+		"""Set rank for Quadrics networking"""
+		# XXX to do
+		pass
+
 
 class NetworkNode(Node):
 	"""A CRNetworkNode object"""
 	def __init__(self, hostnames=["localhost"], count=1):
-		Node.__init__(self, hostnames, 1, count,
-					  color=wxPython.wx.wxColor(210,105,135))
+		Node.__init__(self, hostnames, 1, count)
 		# __Tiles is an array[nodeIndex] of arrays of (x,y,w,h) tuples
 		self.__Tiles = [ [] ]
 		# Server node options, defined just like SPU options
@@ -791,8 +734,7 @@ class NetworkNode(Node):
 class ApplicationNode(Node):
 	"""A CRApplicationNode object"""
 	def __init__(self, hostnames=["localhost"], count=1):
-		Node.__init__(self, hostnames, 0, count,
-					  color=wxPython.wx.wxColor(55,160,55))
+		Node.__init__(self, hostnames, 0, count)
 		# Application node options, defined just like SPU options
 		self._Options = OptionList( [
 			Option("command_help",
@@ -895,6 +837,16 @@ class Mothership:
 	def MTU(self, bytes):
 		"""Set the MTU size (in bytes)."""
 		self.SetOption("MTU", [ bytes ])
+
+	def ContextRange(self, minCtx, maxCtx):
+		"""Set context range for Quadrics networking."""
+		# XXX to do
+		pass
+
+	def NodeRange(self, minNode, maxNode):
+		"""Set node range for Quadrics networking."""
+		# XXX to do
+		pass
 
 	def AllSPUConf(self, spuName, var, *values):
 		"""Set var/values for all SPUs that match spuName"""
@@ -1068,19 +1020,6 @@ class Mothership:
 				clients.append(node)
 		return clients
 
-
-# ----------------------------------------------------------------------
-
-class Assembly:
-	"""An assembly represents a specific configuration of nodes and SPUs"""
-	def __init__(self, name):
-		self.__Name = name
-
-
-	def Draw(self, dc):
-		"""Draw this assembly"""
-		pass
-	
 
 # ======================================================================
 # Test routines
