@@ -17,7 +17,7 @@
 
 <h1 class="PageHeading">Adding OpenGL Extensions to Chromium</h1>
 <p>In order to use particular OpenGL extensions in your OpenGL application,
-Chromium must explicitly implement those extensions.  This page describes
+Chromium must also implement those extensions.  This page describes
 how OpenGL extensions are implemented in Chromium and how to add new ones.</p>
 
 <h2 class="PageSubHeading">Compile-time extension support</h2>
@@ -66,17 +66,18 @@ for its children/server SPU limits in order to determine its own limits.</p>
       in <code>spu/state_tracker/state_limits.c</code> to initialize the
       new boolean.
       Update the extension strings in
-      <code>spu/state_tracker/state_limits.c</code> as well.
+      <code>state_tracker/state_limits.c</code> as well.
   <li>Implement the new code for the extension as needed throughout Chromium.
       Specifically, the packer, unpacker and state tracker are the major
       modules which need updating.
       The best advice here is to look at existing extensions for ideas.
   <li>Extensions which only add new tokens to existing functions are easiest
       to implement.  Often, only the state tracker needs to be updated.
-  <li>Extensions which add new OpenGL functions are more work.  The OpenGL
-      API dispatcher is defined by the functions in
-      <code>cr/glapi_parser/system_header/CR_GL.H</code>.  New API functions
-      must be added there.
+  <li>Extensions which add new OpenGL functions are more work.  The
+      file <code>glapi_parser/APIspec.txt</code> defines all the OpenGL
+      API functions (entry points).  New extension functions should be
+      added to this file, following the example of others.
+      Read the information at the top of the file first.
   <li>The code for new extensions should be surrounded by
       <code>#ifdef CR_(extension_name)</code> and <code>#endif</code> so that
       it can be disabled if desired.
@@ -93,8 +94,7 @@ application-side only.
 This means that the extension can only be used by
 SPUs running on the application node (such as the render SPU or readback
 SPU when using a sort-last configuration).
-Examples of current application-only extensions are GL_NV_vertex_program
-and GL_NV_fence.
+An examples of an application-only extension is GL_NV_fence.
 </p>
 <p>
 Basically, only the OpenGL API dispatcher needs to be updated.
