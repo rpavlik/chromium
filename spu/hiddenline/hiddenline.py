@@ -24,6 +24,8 @@ keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 # Determine which functions to ignore
 ignore_functions = []
 for func_name in keys:
+	if func_name == "CreateContext":
+		continue
 	if ("get" in apiutil.Properties(func_name) or
 		"setclient" in apiutil.Properties(func_name) or
 		"useclient" in apiutil.Properties(func_name) or
