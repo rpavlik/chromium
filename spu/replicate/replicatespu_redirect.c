@@ -47,6 +47,30 @@ static int x11_error_handler( Display *dpy, XErrorEvent *ev )
 	return 0;
 }
 
+
+/*
+ * Called from crHashtableWalk().  Basically, setup args and call
+ * crStateTextureObjectDiff().
+ */
+static void TextureObjDiffCallback( unsigned long key, void *data1, void *data2 )
+{
+	CRContext *ctx = (CRContext *) data2;
+	CRTextureObj *tobj = (CRTextureObj *) data1;
+	unsigned int j = 0;
+	CRbitvalue *bitID = ctx->bitid;
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+
+	if (!tobj)
+		return;
+
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	crStateTextureObjectDiff(ctx, bitID, nbitID, tobj,
+													 GL_TRUE /* always dirty */);
+}
+
+
 void replicatespuRePositionWindow(int nativeWindow)
 {
 	Window root;

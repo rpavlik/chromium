@@ -222,6 +222,11 @@ void crStateTextureDiff(CRTextureBits *t, CRbitvalue *bitID,
 void crStateTextureSwitch(CRTextureBits *t, CRbitvalue *bitID, 
                           CRContext *fromCtx, CRContext *toCtx);
 
+void crStateTextureObjectDiff(CRContext *fromCtx,
+															const CRbitvalue *bitID,
+															const CRbitvalue *nbitID,
+															CRTextureObj *tobj, GLboolean alwaysDirty);
+
 void crStateDiffAllTextureObjects( CRContext *g, CRbitvalue *bitID );
 
 #ifdef __cplusplus
