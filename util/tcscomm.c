@@ -610,7 +610,7 @@ crTcscommAccept( CRConnection *conn, const char *hostname, unsigned short port )
 					 "acceptrequest quadrics-tcscomm %s %d %d",
 					 cr_tcscomm.my_hostname, cr_tcscomm.my_rank,
 					 conn->endianness ) ) {
-    crError( "Mothership didn't like my accept request request" );
+    crError( "Mothership didn't like my accept request" );
   }
   
   /* The response will contain the Tcscomm information for the guy who accepted 
@@ -672,7 +672,7 @@ crTcscommDoConnect( CRConnection *conn )
 					 cr_tcscomm.my_hostname, cr_tcscomm.my_rank,
 					 conn->endianness ) )
     {
-      crError( "Mothership didn't like my connect request request" );
+      crError( "Mothership didn't like my connect request" );
     }
   
   /* The response will contain the Tcscomm information for the guy who accepted 

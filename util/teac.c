@@ -524,7 +524,7 @@ crTeacAccept( CRConnection *conn, const char *hostname, unsigned short port )
 					 "acceptrequest quadrics %s %d %d",
 					 cr_teac.my_hostname, cr_teac.my_rank,
 					 conn->endianness ) ) {
-    crError( "crTeacAccept:  Mothership didn't like my accept request request" );
+    crError( "crTeacAccept:  Mothership didn't like my accept request" );
   }
   
   /* The response will contain the Teac information for the guy who accepted 
@@ -580,7 +580,7 @@ crTeacDoConnect( CRConnection *conn )
 					 cr_teac.my_hostname, cr_teac.my_rank,
 					 conn->endianness ) )
     {
-      crError( "crTeacDoConnect:  Mothership didn't like my connect request request" );
+      crError( "crTeacDoConnect:  Mothership didn't like my connect request" );
     }
   
   /* The response will contain the Teac information for the guy who accepted 

@@ -353,7 +353,7 @@ crSDPAccept( CRConnection *conn, char *hostname, unsigned short port )
     (void) temp;
     if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest sdp %s %d %d", temp, conn->port, conn->endianness ) )
     {
-		  crError( "Mothership didn't like my accept request request" );
+		  crError( "Mothership didn't like my accept request" );
     }
     
     __copy_of_crMothershipDisconnect( mother );
@@ -925,7 +925,7 @@ crSDPDoConnect( CRConnection *conn )
 		if (!__copy_of_crMothershipSendString( mother, response, "connectrequest sdp %s %d %d", 
                                            conn->hostname, conn->port, conn->endianness) )
 		{
-			crError( "Mothership didn't like my connect request request" );
+			crError( "Mothership didn't like my connect request" );
 		}
     
 		__copy_of_crMothershipDisconnect( mother );

@@ -455,7 +455,7 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 		
 		if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest tcpip %s %d %d", my_hostname, conn->port, conn->endianness ) )
 		{
-			crError( "Mothership didn't like my accept request request" );
+			crError( "Mothership didn't like my accept request" );
 		}
 		
 		__copy_of_crMothershipDisconnect( mother );
@@ -1151,7 +1151,7 @@ crTCPIPDoConnect( CRConnection *conn )
 #ifdef ADDRINFO
 			freeaddrinfo(res);
 #endif
-			crError( "Mothership didn't like my connect request request" );
+			crError( "Mothership didn't like my connect request" );
 		}
 
 		__copy_of_crMothershipDisconnect( mother );

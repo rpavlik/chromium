@@ -539,7 +539,7 @@ void crGmAccept( CRConnection *conn, const char *hostname, unsigned short port )
 					       my_hostname, conn->port, cr_gm.node_id, 
 					       cr_gm.port_num, conn->endianness ) )
 	{
-		crError( "Mothership didn't like my accept request request" );
+		crError( "Mothership didn't like my accept request" );
 	}
 
 	/* The response will contain the GM information for the guy who accepted 
@@ -573,7 +573,7 @@ int crGmDoConnect( CRConnection *conn )
 					       conn->hostname, conn->port, cr_gm.node_id, 
 					       cr_gm.port_num, conn->endianness ) )
 	{
-		crError( "Mothership didn't like my connect request request" );
+		crError( "Mothership didn't like my connect request" );
 	}
 
 	/* The response will contain the GM information for the guy who accepted 
