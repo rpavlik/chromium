@@ -489,7 +489,6 @@ InitGL(const Options *options)
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 10.0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 							 colors[options->rank % 7]);
-	glEnable(GL_NORMALIZE);
 	glClearColor(0.5, 0.5, 0.5, 0.0);
 
 	Reshape(WinWidth, WinHeight);
