@@ -87,7 +87,7 @@ static void crServerTearDown( void )
 
 	while (1) {
 		if (the_spu && the_spu->cleanup) {
-			crWarning("Cleaning up SPU %s",the_spu->name);
+			crInfo("Cleaning up SPU %s",the_spu->name);
 			the_spu->cleanup();
 		} else 
 			break;

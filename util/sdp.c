@@ -411,11 +411,13 @@ crSDPAlloc( CRConnection *conn )
   
 	if ( buf == NULL )
 	{
-		crDebug( "Buffer pool %p was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
+		crDebug( "Buffer pool %p was empty; allocated new %d byte buffer.", 
              cr_sdp.bufpool,
-             (unsigned int)sizeof(CRSDPBuffer) + conn->buffer_size, &cr_sdp.bufpool );
+             (unsigned int)sizeof(CRSDPBuffer) + conn->buffer_size);
+		/*
 		crDebug("sizeof(CRSDPBuffer): %d", (unsigned int)sizeof(CRSDPBuffer));
 		crDebug("sizeof(conn->buffer_size): %d", conn->buffer_size);
+		*/
 		buf = (CRSDPBuffer *) 
 			crAlloc( sizeof(CRSDPBuffer) + conn->buffer_size );
 		buf->magic = CR_SDP_BUFFER_MAGIC;

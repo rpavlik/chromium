@@ -92,15 +92,16 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
 	{
 		the_spu->superSPU = NULL;
 	}
+	crDebug("Initializing %s SPU", name);
 	the_spu->function_table = the_spu->init( id, child, the_spu, 0, 1 );
 	__buildDispatch( the_spu );
-	crDebug( "initializing dispatch table %p (for SPU %s)", (void*)&(the_spu->dispatch_table), name );
+	/*crDebug( "initializing dispatch table %p (for SPU %s)", (void*)&(the_spu->dispatch_table), name );*/
 	crSPUInitDispatchTable( &(the_spu->dispatch_table) );
-	crDebug( "Done initializing the dispatch table for SPU %s, calling the self function", name );
+	/*crDebug( "Done initializing the dispatch table for SPU %s, calling the self function", name );*/
 
 	the_spu->dispatch_table.server = server;
 	the_spu->self( &(the_spu->dispatch_table) );
-	crDebug( "Done with the self function" );
+	/*crDebug( "Done with the self function" );*/
 
 	return the_spu;
 }

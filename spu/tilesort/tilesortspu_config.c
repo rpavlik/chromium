@@ -135,7 +135,7 @@ set_bucket_mode(TileSortSPU *tilesort_spu, const char *response)
 		tilesort_spu->defaultBucketMode = FRUSTUM;
 	else
 	{
-		crWarning("Bad value (%s) for tilesort bucket_mode", response);
+		crWarning("Tilesort SPU: Bad value (%s) for tilesort bucket_mode", response);
 		tilesort_spu->defaultBucketMode = BROADCAST;
 	}
 }
@@ -186,7 +186,7 @@ set_stereomode(TileSortSPU *server, const char *response)
 			server->stereoMode = SIDE_BY_SIDE;
 		else {
 			crWarning
-				("stereo_mode '%s' is not supported.  Currently supported modes are 'None', 'Passive', 'CrystalEyes', 'Anaglyph' and 'SideBySide'.\n", 
+				("Tilesort SPU: stereo_mode '%s' is not supported.  Currently supported modes are 'None', 'Passive', 'CrystalEyes', 'Anaglyph' and 'SideBySide'.\n", 
 				 mode);
 			server->stereoMode = NONE;
 		}
@@ -272,7 +272,7 @@ set_glasses_type(TileSortSPU *tilesort_spu, const char *response)
 		tilesort_spu->glassesType = CYAN_RED;
 	else
 	{
-		crWarning("Bad value (%s) for tilesort glasses_type", response);
+		crWarning("Tilesort SPU: Bad value (%s) for tilesort glasses_type", response);
 		tilesort_spu->glassesType = RED_BLUE;
 	}
 	tilesortspuSetAnaglyphMask(tilesort_spu);
@@ -414,8 +414,7 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	conn = crMothershipConnect();
 	if (!conn)
 	{
-		crError
-			("Couldn't connect to the mothership -- I have no idea what to do!");
+		crError("Tilesort SPU: Couldn't connect to the mothership -- I have no idea what to do!");
 	}
 	crMothershipIdentifySPU(conn, tilesort_spu.id);
 
@@ -424,12 +423,12 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 
 	tilesort_spu.buffer_size = crMothershipGetMTU(conn);
 	tilesort_spu.MTU = tilesort_spu.buffer_size;
-	crDebug("Got the MTU as %d", tilesort_spu.MTU);
+	crDebug("Tilesort SPU: Got the MTU as %d", tilesort_spu.MTU);
 
 	/* Need to get this, before we create initial window! */
 	tilesort_spu.num_servers = tilesortspuGetNumServers(conn);
 
-	crDebug("Got %d servers!", tilesort_spu.num_servers);
+	crDebug("Tilesort SPU: Got %d servers!", tilesort_spu.num_servers);
 
 	/* Create initial/default window (id=0) */
 	winInfo = tilesortspuCreateWindowInfo(0,
@@ -440,8 +439,8 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	tilesortspuGetTilingFromServers(conn, winInfo);
 	crMothershipDisconnect(conn);
 
-	crWarning("Total output dimensions = (%d, %d)",
-						winInfo->muralWidth, winInfo->muralHeight);
+	crInfo("Tilesort SPU: Total output dimensions = (%d, %d)",
+				 winInfo->muralWidth, winInfo->muralHeight);
 
 	/** XXX \todo we should really query all the servers to compute the limits! */
 	crStateLimitsInit(&tilesort_spu.limits);

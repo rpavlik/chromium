@@ -520,13 +520,12 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 			crFreeStrings(tilelist);
 		}
 		crFreeStrings(serverchain);
-		crWarning("Total output dimensions = (%d, %d)",
-							mural->width, mural->height);
+		crInfo("Total output dimensions = (%d, %d)", mural->width, mural->height);
 	}
 	else
 	{
-		crWarning("It looks like there are nothing but file clients."
-							"  That suits me just fine.");
+		crInfo("It looks like there are nothing but file clients."
+					 "  That suits me just fine.");
 		CRASSERT(mural->numExtents > 0);
 		/* Set mural size equal to extent 0's image window size */
 		mural->width = (mural->extents[0].imagewindow.x2 -

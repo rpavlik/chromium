@@ -109,15 +109,14 @@ static void crServerDeleteFromRunQueue( CRClient *client )
 		do {
 			if (q->client == client)
 			{
-				crWarning( "Deleting from the run queue: client=%p number=%d",
-								 client, client->number );
+				crInfo("Deleting client %d from the run queue.", client->number);
 				if ((q->next == q->prev) && (q->next == q) && (cr_server.run_queue == q))
 				{
 					/* Only one client */
 					crFree(q);
 					cr_server.run_queue = NULL;
 					cr_server.curClient = NULL;
-					crWarning("Empty run queue! (exiting)");
+					crInfo("Empty run queue! (exiting)");
 				} 
 				else
 				{
