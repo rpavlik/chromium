@@ -87,28 +87,68 @@ GLint TILESORTSPU_APIENTRY tilesortspu_crCreateWindow(void *dpy, GLint visBits)
 
 void TILESORTSPU_APIENTRY tilesortspu_ChromiumParameteriCR(GLenum target, GLint value)
 {
+	GET_THREAD(thread);
+	int i;
+
 	(void) value;
+
 	switch (target) {
 	case GL_RESET_VERTEX_COUNTERS_CR:  /* GL_CR_tilesort_info */
 		resetVertexCounters();
 		break;
 	default:
-		/* XXX propogate to the servers */
-		;
+		/* The default buffer */
+		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+
+		for (i = 0; i < tilesort_spu.num_servers; i++)
+		{
+			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+
+			if (tilesort_spu.swap)
+				crPackChromiumParameteriCRSWAP( target, value );
+			else
+				crPackChromiumParameteriCR( target, value );
+
+			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+		}
+
+		/* The default buffer */
+		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+		break;
 	}
 }
 
 
 void TILESORTSPU_APIENTRY tilesortspu_ChromiumParameterfCR(GLenum target, GLfloat value)
 {
+	GET_THREAD(thread);
+	int i;
+
 	(void) value;
+
 	switch (target) {
 	case GL_RESET_VERTEX_COUNTERS_CR:  /* GL_CR_tilesort_info */
 		resetVertexCounters();
 		break;
 	default:
-		/* XXX propogate to the servers */
-		;
+		/* The default buffer */
+		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+
+		for (i = 0; i < tilesort_spu.num_servers; i++)
+		{
+			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+
+			if (tilesort_spu.swap)
+				crPackChromiumParameterfCRSWAP( target, value );
+			else
+				crPackChromiumParameterfCR( target, value );
+
+			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+		}
+
+		/* The default buffer */
+		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+		break;
 	}
 }
 
@@ -116,6 +156,8 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParameterfCR(GLenum target, GLfloa
 void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
 	GET_THREAD(thread);
+	int i;
+
 	switch (target) {
 	case GL_CURSOR_POSITION_CR:  /* GL_CR_cursor_position */
 		PropogateCursorPosition((GLint *) values);
@@ -145,9 +187,23 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 		tilesort_spu.providedBBOX = GL_DEFAULT_BBOX_CR;
 		break;
 	default:
-		/* XXX we should probably propogate/broadcast this call to all servers */
-		crWarning("unexpected target (0x%x) in tilesortspu_ChromiumParameterv()",
-							(int) target);
+		/* The default buffer */
+		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+
+		for (i = 0; i < tilesort_spu.num_servers; i++)
+		{
+			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+
+			if (tilesort_spu.swap)
+				crPackChromiumParametervCRSWAP( target, type, count, values );
+			else
+				crPackChromiumParametervCR( target, type, count, values );
+
+			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+		}
+
+		/* The default buffer */
+		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 		break;
 	}
 }
@@ -155,6 +211,10 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 
 void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
 {
+	GET_THREAD(thread);
+	int writeback = tilesort_spu.num_servers ? 1 : 0;
+	int i;
+
 	switch (target) {
 	case GL_MURAL_SIZE_CR:		 /* GL_CR_tilesort_info */
 		if (type == GL_INT && count == 2)
@@ -190,7 +250,7 @@ void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLu
 	case GL_VERTEX_COUNTS_CR:		 /* GL_CR_tilesort_info */
 		if (type == GL_INT && count >= 1)
 		{
-			int i, n = tilesort_spu.num_servers;
+			int n = tilesort_spu.num_servers;
 			if (count < n)
 				n = count;
 			for (i = 0; i < n; i++)
@@ -201,9 +261,27 @@ void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLu
 		}
 		break;
 	default:
-		/* XXX we should probably propogate/broadcast this call to all servers */
-		crWarning("unexpected target (0x%x) in tilesortspu_GetChromiumParameterv()",
-							(int) target);
+		/* The default buffer */
+		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+
+		for (i = 0; i < tilesort_spu.num_servers; i++)
+		{
+			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+
+			if (tilesort_spu.swap)
+				crPackGetChromiumParametervCRSWAP( target, index, type, count, values, &writeback );
+			else
+				crPackGetChromiumParametervCR( target, index, type, count, values, &writeback );
+
+			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+			
+			tilesortspuFlush( (void *) thread );
+
+			while (writeback)
+				crNetRecv();
+		}
+		/* The default buffer */
+		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
 		break;
 	}
 }
