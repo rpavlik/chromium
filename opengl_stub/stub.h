@@ -145,6 +145,7 @@ typedef struct {
 	int trackWindowPos;
 	int trackWindowVisibility;
 	char *spu_dir;
+	int force_pbuffers;
 
 	/* thread safety stuff */
 	GLboolean threadSafe;

@@ -483,6 +483,11 @@ getConfigurationOptions(CRConnection *conn)
 	{
 		crSetenv( "CR_SYSTEM_GL_PATH", response );
 	}
+
+	if (conn && crMothershipGetFakerParam( conn, response, "force_pbuffers" ))
+	{
+		stub.force_pbuffers = crStrToInt(response);
+	}
 }
 
 

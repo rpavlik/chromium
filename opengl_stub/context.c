@@ -327,6 +327,10 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 		int foo, bar;
 		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) {
 			stub.desiredVisual |= FindVisualInfo( dpy, vis );
+			if (stub.force_pbuffers) {
+				crInfo("Forcing use of Pbuffers");
+				stub.desiredVisual |= CR_PBUFFER_BIT;
+			}
 		}
 	}
 #endif
@@ -880,7 +884,7 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			context->type = CHROMIUM;
 
 			context->spuContext = stub.spu->dispatch_table.CreateContext( context->dpyName, context->visBits );
-			if (window->spuWindow == -1) 
+			if (window->spuWindow == -1)
 				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
 		}
 		else {
