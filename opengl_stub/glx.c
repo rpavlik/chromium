@@ -648,7 +648,7 @@ const char *glXGetClientString( Display *dpy, int name )
 			break;
 
 		case GLX_VERSION:
-			retval  = "1.0 Chromium";
+			retval  = "1.2 Chromium";
 			break;
 
 		case GLX_EXTENSIONS:
@@ -675,7 +675,7 @@ const char *glXQueryServerString( Display *dpy, int screen, int name )
 			break;
 
 		case GLX_VERSION:
-			retval  = "1.0 Chromium";
+			retval  = "1.2 Chromium";
 			break;
 
 		case GLX_EXTENSIONS:
