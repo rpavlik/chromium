@@ -25,7 +25,7 @@ cvs -z3 -d:ext:YOURNAME@cvs.chromium.sf.net:/cvsroot/chromium co .
 cp -r cr cr-1.7
 find cr-1.7 -name CVS -exec rm -rf '{}' \;
 rm -f cr-1.7/mothership/server/crconfig.py
-Edit cr-1.7/options.mk and uncomment the RELEASE=1 line.
+Edit cr-1.7/options.mk and set RELEASE=1
 tar cf cr-1.7.tar cr-1.7
 gzip cr-1.7.tar
 
