@@ -6,9 +6,7 @@
 
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
+<title>Configuration options</title>
 <link rel="stylesheet" type="text/css" href="chromium.css">
 </head>
 
@@ -493,13 +491,19 @@ this SPU.
     <td width="19%" class="ConfigOption" height="20">node_number</td>
     <td width="12%" class="ConfigType" height="20">Integer</td>
     <td width="115%" class="ConfigDesc" height="20">
-    The number of the node.  The nodes must be ordered correctly for
-    the case of alpha composite.  The data must be divided in object
-    space sensitive to composite order.  Basically the data for nodes
-    0,1;2,3;3,4;etc must be next to each other, 01,23;34,56;etc must
-    be next to each other, and so on.  If your final image is
-    composited incorrectly, double check the node ordering you setup
-    here.
+
+The number of the node in relation to the swap ordering.  Binary swap
+compositing requires a specific ordering of the nodes to correctly do
+alpha compositing.  A power-of-two ordering defines this order such that
+nodes 0 and 1 swap, 2 and 3 swap, etc.  The next phase has 0 and 2 swap,
+then 1 and 3, etc.  The number defined here specifies where in this
+compositing order the node should be placed.  If your final image is
+composited incorrectly, double check the node ordering you setup here.  If
+this explanation is confusing, you might read <a
+href="http://www.acl.lanl.gov/viz/pdfs/94-cga.pdf">the original binary swap
+paper</a>.
+
+
     </td>
   </tr>
   <tr>
