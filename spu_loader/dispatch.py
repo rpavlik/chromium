@@ -117,7 +117,13 @@ static int NopFunction(void)
  */
 void crSPUInitDispatchNops(SPUDispatchTable *table)
 {
-	const int numEntries = sizeof(*table) / sizeof(table->Accum);
+	/*
+	 * This is a bit tricky.  We walk over all the function pointers in
+	 * the SPUDispatchTable struct, checking for NULL and setting NULL
+	 * pointers to point to NopFunction().
+	 * But we have to stop when we get to the copyList pointer!
+	 */
+	const int numEntries = (void **) &(table->copyList) - (void **) &(table->Accum);
 	void **ptr = (void **) table;
 	int i;
 	for (i = 0; i < numEntries; i++) {
