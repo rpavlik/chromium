@@ -283,6 +283,12 @@ static int __numOccurrences( const char *str, const char *substr )
 	return ret;
 }
 
+/**
+ * Split str into a NULL-terminated array of strings, using splitstr as
+ * the separator.
+ * It's the same as the Python call string.split(str, splitstr).
+ * Note: crStrSplit("a b  c", " ") returns ["a", "b", "", "c", NULL] though!!!
+ */
 char **crStrSplit( const char *str, const char *splitstr )
 {
 	char  *temp = (char *) str;
