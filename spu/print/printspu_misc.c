@@ -7,7 +7,7 @@
 #include "cr_error.h"
 #include "printspu.h"
 
-void PRINT_APIENTRY printspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
+void PRINT_APIENTRY printChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
 	switch (target) {
 	case GL_PRINT_STRING_CR:
@@ -17,7 +17,7 @@ void PRINT_APIENTRY printspuChromiumParametervCR(GLenum target, GLenum type, GLs
 	}
 }
 
-void PRINT_APIENTRY printspuChromiumParameteriCR(GLenum target, GLint value)
+void PRINT_APIENTRY printChromiumParameteriCR(GLenum target, GLint value)
 {
 	switch (target) {
 	default:
