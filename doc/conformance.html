@@ -61,7 +61,7 @@ some of the failures:
     DrawPixels test (Test number #29) failed.
        GL_DEPTH_COMPONENT test fails because of glRasterPos problem.
     CopyPixels test (Test number #30) failed.
-       GL_STENCIL test fails because of glRasterPos problem.
+       GL_DEPTH test fails because of glRasterPos problem.
     Bitmap Rasterization test (Test number #31) failed.
        Bitmap renders incorrectly due to glRasterPos problem.
     Display Lists test (Test number #72) failed.
@@ -89,7 +89,6 @@ of the failures:
     Viewport Transformation test (Test number #8) failed.
        This may never be fixed because of the way the tilesort SPU
        manipulates the OpenGL viewport.
-    Buffer Clear test (Test number #9) failed.
     Buffer Invariance test (Test number #14) failed.
        This test happens to draw a point which exactly falls in the
        center of the mural and winds up getting culled.  If the point is

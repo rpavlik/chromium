@@ -303,23 +303,26 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 	(void)v;
 	(void)c;
 
+	buffer = (char*) crAlloc(width * height * 4);
+
 	switch (type) {
 		case GL_COLOR:
+			tilesortspu_ReadPixels(x,y,width,height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
+			tilesortspu_DrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
 			break;
 		case GL_DEPTH:
-			crError("CopyPixels - GL_DEPTH not implemented\n");
+			tilesortspu_ReadPixels(x,y,width,height,GL_DEPTH_COMPONENT,GL_FLOAT,buffer);
+			tilesortspu_DrawPixels(width,height,GL_DEPTH_COMPONENT,GL_FLOAT,buffer);
 			return;
 		case GL_STENCIL:
-			crError("CopyPixels - GL_STENCIL not implemented\n");
+			tilesortspu_ReadPixels(x,y,width,height,GL_STENCIL_INDEX,GL_UNSIGNED_BYTE,buffer);
+			tilesortspu_DrawPixels(width,height,GL_STENCIL_INDEX,GL_UNSIGNED_BYTE,buffer);
 			return;
 		default:
 			crError("CopyPixels - unknown type\n");
 			return;
 	}
 
-	buffer = (char*) crAlloc(width * height * 4);
-	tilesortspu_ReadPixels(x,y,width,height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
-	tilesortspu_DrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
 	crFree(buffer);
 }
 
