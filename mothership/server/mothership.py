@@ -623,7 +623,14 @@ class SockWrapper:
 
 
 # Generic ways to map all known node capability types
-NodeTypes = { }
+NodeTypes = { }  # key is a node type, like "faker" or "crutserver"
+
+
+#
+# Now, for each node type, insert a (validate, claim) tuple into the
+# NodeTypes dictionary.
+#
+
 def FakerValidNode(node):
 	return (not node.spokenfor and isinstance(node, CRApplicationNode))
 
