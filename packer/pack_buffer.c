@@ -170,8 +170,13 @@ void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 			crError( "crPackAppendBoundedBuffer: overflowed the destination!" );
 	}
 
-	crPackBoundsInfoCR( bounds, (GLbyte *) src->opcode_current + 1, length,
-					src->opcode_start - src->opcode_current );
+	if (pc->swapping)
+		crPackBoundsInfoCRSWAP( bounds, (GLbyte *) src->opcode_current + 1,length,
+														src->opcode_start - src->opcode_current );
+	else
+		crPackBoundsInfoCR( bounds, (GLbyte *) src->opcode_current + 1, length,
+												src->opcode_start - src->opcode_current);
+
 	pc->buffer.holds_BeginEnd |= src->holds_BeginEnd;
 	pc->buffer.in_BeginEnd = src->in_BeginEnd;
 }
