@@ -207,7 +207,7 @@ static void RefractRay( int x, int y, float n[3], float t[2] )
 static void DrawMesh( void )
 {
 	int x, y;
-	int viewport[4];
+	GLint viewport[4];
 	int win_width, win_height;
 	float s, t;
 
