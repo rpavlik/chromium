@@ -51,14 +51,18 @@ int apichangeSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions apichangeSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "apichange";
 	*super = "passthrough";
 	*init = apichangeSPUInit;
 	*self = apichangeSPUSelfDispatch;
 	*cleanup = apichangeSPUCleanup;
+	*options = apichangeSPUOptions;
 	
 	return 1;
 }

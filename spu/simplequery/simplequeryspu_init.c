@@ -56,14 +56,18 @@ int simplequerySPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions simplequerySPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "simplequery";
 	*super = "sqpassthrough";
 	*init = simplequerySPUInit;
 	*self = simplequerySPUSelfDispatch;
 	*cleanup = simplequerySPUCleanup;
-	
+	*options = simplequerySPUOptions;
+
 	return 1;
 }

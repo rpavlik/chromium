@@ -22,6 +22,14 @@ static void __setDefaults( void )
 	pack_spu.numThreads = 0;
 }
 
+
+/* No SPU options yet.
+ */
+SPUOptions packSPUOptions[] = {
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
+
 void packspuGatherConfiguration( const SPU *child_spu )
 {
 	CRConnection *conn;
@@ -37,6 +45,8 @@ void packspuGatherConfiguration( const SPU *child_spu )
 	crMothershipIdentifySPU( conn, pack_spu.id );
 
 	__setDefaults();
+
+	crSPUGetMothershipParams( conn, &pack_spu, packSPUOptions );
 
 	crMothershipGetServers( conn, response );
 

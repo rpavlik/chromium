@@ -15,6 +15,12 @@ static void __setDefaults( void )
 {
 }
 
+/* option, type, nr, default, min, max, title, callback
+ */
+SPUOptions counterSPUOptions[] = {
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
 void counterspuGatherConfiguration( void )
 {
 	CRConnection *conn;
@@ -32,6 +38,8 @@ void counterspuGatherConfiguration( void )
 		return;
 	}
 	crMothershipIdentifySPU( conn, counter_spu.id );
+
+	crSPUGetMothershipParams( conn, &counter_spu, counterSPUOptions );
 
 	/* CONFIGURATION STUFF HERE */
 

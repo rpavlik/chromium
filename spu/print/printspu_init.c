@@ -47,14 +47,18 @@ int printSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions printSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "print";
 	*super = "passthrough";
 	*init = printSPUInit;
 	*self = printSPUSelfDispatch;
 	*cleanup = printSPUCleanup;
+	*options = printSPUOptions;
 	
 	return 1;
 }

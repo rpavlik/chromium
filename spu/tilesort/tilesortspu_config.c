@@ -21,24 +21,22 @@ static void __setDefaults( void )
 
 	tilesort_spu.num_servers = 0;
 	tilesort_spu.servers = NULL;
-	tilesort_spu.splitBeginEnd = 1;
-	tilesort_spu.broadcast = 0;
-	tilesort_spu.optimizeBucketing = 1;
 	tilesort_spu.muralWidth = 0;
 	tilesort_spu.muralHeight = 0;
-	tilesort_spu.drawBBOX = 0;
-	tilesort_spu.bboxLineWidth = 5;
 
 	tilesort_spu.providedBBOX = GL_DEFAULT_BBOX_CR;
 	tilesort_spu.inDrawPixels = 0;
 
-	tilesort_spu.syncOnFinish = 1;
-	tilesort_spu.syncOnSwap = 1;
-
-	tilesort_spu.fakeWindowWidth = 0;
-	tilesort_spu.fakeWindowHeight = 0;
-
-	tilesort_spu.scaleToMuralSize = GL_TRUE;
+/*  	tilesort_spu.splitBeginEnd = 1; */
+/*  	tilesort_spu.broadcast = 0; */
+/*  	tilesort_spu.optimizeBucketing = 1; */
+/*  	tilesort_spu.drawBBOX = 0; */
+/*  	tilesort_spu.bboxLineWidth = 5; */
+/*  	tilesort_spu.syncOnFinish = 1; */
+/*  	tilesort_spu.syncOnSwap = 1; */
+/*  	tilesort_spu.fakeWindowWidth = 0; */
+/*  	tilesort_spu.fakeWindowHeight = 0; */
+/*  	tilesort_spu.scaleToMuralSize = GL_TRUE; */
 
 #ifdef WINDOWS
 	tilesort_spu.client_hdc = NULL;
@@ -48,6 +46,90 @@ static void __setDefaults( void )
 	tilesort_spu.glx_drawable = 0;
 #endif
 }
+
+
+void set_split_begin_end( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(tilesort_spu.splitBeginEnd) );
+}
+
+void set_broadcast( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(tilesort_spu.broadcast) );
+}
+
+void set_optimize_bucket( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(tilesort_spu.optimizeBucketing) );
+}
+
+void set_sync_on_swap( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(tilesort_spu.syncOnSwap) );
+}
+
+void set_sync_on_finish( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(tilesort_spu.syncOnFinish) );
+}
+
+void set_draw_bbox( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(tilesort_spu.drawBBOX) );
+}
+
+void set_bbox_line_width( void *foo, const char *response )
+{
+   sscanf( response, "%f", &(tilesort_spu.bboxLineWidth) );
+}
+
+void set_fake_window_dims( void *foo, const char *response )
+{
+   float w,h;
+   sscanf( response, "%f %f", &w, &h );
+   tilesort_spu.fakeWindowWidth = (unsigned int) w;
+   tilesort_spu.fakeWindowHeight = (unsigned int) h;
+}
+
+void set_scale_to_mural_size( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(tilesort_spu.scaleToMuralSize) );
+}
+
+
+/* option, type, nr, default, min, max, title, callback
+ */
+SPUOptions tilesortSPUOptions[] = {
+
+   { "split_begin_end", BOOL, 1, "1", NULL, NULL, 
+     "Split Begin/End", (SPUOptionCB)set_split_begin_end },
+
+   { "broadcast", BOOL, 1, "0", NULL, NULL, 
+     "Broadcast", (SPUOptionCB)set_broadcast },
+
+   { "optimize_bucket", BOOL, 1, "1", NULL, NULL, 
+     "Optimize Bucket", (SPUOptionCB)set_optimize_bucket },
+
+   { "sync_on_swap", BOOL, 1, "1", NULL, NULL, 
+     "Sync on Swap", (SPUOptionCB)set_sync_on_swap },
+
+   { "sync_on_finish", BOOL, 1, "1", NULL, NULL, 
+     "Sync on Finish", (SPUOptionCB)set_sync_on_finish },
+
+   { "draw_bbox", BOOL, 1, "0", NULL, NULL, 
+     "Draw BBox", (SPUOptionCB)set_draw_bbox },
+
+   { "bbox_line_width", INT, 1, "5", "0", "100", 
+     "BBox Line Width", (SPUOptionCB)set_bbox_line_width },
+
+   { "fake_window_dims", INT, 2, "0 0", "0 0", NULL, 
+     "Fake Window Dimensions", (SPUOptionCB)set_fake_window_dims },
+
+   { "scale_to_mural_size", BOOL, 1, "1", NULL, NULL, 
+     "Scale to Mural Size", (SPUOptionCB)set_scale_to_mural_size },
+
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
 
 
 void tilesortspuGatherConfiguration( const SPU *child_spu )
@@ -73,58 +155,14 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 	}
 	crMothershipIdentifySPU( conn, tilesort_spu.id );
 
+	crSPUGetMothershipParams( conn, (void *)&tilesort_spu, tilesortSPUOptions );
+
 	crMothershipGetMTU( conn, response );
 	sscanf( response, "%d", &tilesort_spu.MTU );
 
 	crDebug( "Got the MTU as %d", tilesort_spu.MTU );
 
-	if (crMothershipGetSPUParam( conn, response, "split_begin_end") )
-	{
-		sscanf( response, "%d", &(tilesort_spu.splitBeginEnd) );
-	}
 
-	if (crMothershipGetSPUParam( conn, response, "broadcast") )
-	{
-		sscanf( response, "%d", &(tilesort_spu.broadcast) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "optimize_bucket") )
-	{
-		sscanf( response, "%d", &(tilesort_spu.optimizeBucketing) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "sync_on_swap") )
-	{
-		sscanf( response, "%d", &(tilesort_spu.syncOnSwap) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "sync_on_finish") )
-	{
-		sscanf( response, "%d", &(tilesort_spu.syncOnFinish) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "draw_bbox") )
-	{
-		sscanf( response, "%d", &(tilesort_spu.drawBBOX) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "bbox_line_width") )
-	{
-		sscanf( response, "%f", &(tilesort_spu.bboxLineWidth) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "fake_window_dims") )
-	{
-		float w,h;
-		sscanf( response, "%f %f", &w, &h );
-		tilesort_spu.fakeWindowWidth = (unsigned int) w;
-		tilesort_spu.fakeWindowHeight = (unsigned int) h;
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "scale_to_mural_size") )
-	{
-		sscanf( response, "%d", &(tilesort_spu.scaleToMuralSize) );
-	}
 
 	/* The response to this tells us how many servers and where they are 
 	 *

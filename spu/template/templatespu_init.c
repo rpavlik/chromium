@@ -55,14 +55,18 @@ int templateSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions templateSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "template";
 	*super = NULL;
 	*init = templateSPUInit;
 	*self = templateSPUSelfDispatch;
 	*cleanup = templateSPUCleanup;
+	*options = templateSPUOptions;
 	
 	return 1;
 }

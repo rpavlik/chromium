@@ -123,15 +123,19 @@ int binaryswapSPUCleanup(void)
   return 1;
 }
 
+extern SPUOptions binaryswapSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
   *name = "binaryswap";
   *super = "render";
   *init = binaryswapSPUInit;
   *self = binaryswapSPUSelfDispatch;
   *cleanup = binaryswapSPUCleanup;
-  
+  *options = binaryswapSPUOptions;
+
   return 1;
 }
 

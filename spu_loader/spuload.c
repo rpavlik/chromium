@@ -68,8 +68,9 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
 
 	/* This basicall calls the SPU's SPULoad() function */
 	if (!the_spu->entry_point( &(the_spu->name), &(the_spu->super_name), 
-				&(the_spu->init), &(the_spu->self), 
-				&(the_spu->cleanup) ) )
+				   &(the_spu->init), &(the_spu->self), 
+				   &(the_spu->cleanup),
+				   &(the_spu->options) ) )
 	{
 		crError( "I found the SPU \"%s\", but loading it failed!", name );
 	}

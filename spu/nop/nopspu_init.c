@@ -45,14 +45,20 @@ int nopSPUCleanup(void)
 	return 1;
 }
 
+SPUOptions nopSPUOptions[] = {
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "nop";
 	*super = NULL;
 	*init = nopSPUInit;
 	*self = nopSPUSelfDispatch;
 	*cleanup = nopSPUCleanup;
+	*options = nopSPUOptions;
 	
 	return 1;
 }

@@ -55,14 +55,18 @@ int arraySPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions arraySPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "array";
 	*super = "passthrough";
 	*init = arraySPUInit;
 	*self = arraySPUSelfDispatch;
 	*cleanup = arraySPUCleanup;
+	*options = arraySPUOptions;
 	
 	return 1;
 }

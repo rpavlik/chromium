@@ -84,7 +84,7 @@ void crMothershipIdentifySPU( CRConnection *conn, int spu )
 	}
 }
 
-int crMothershipGetSPUParam( CRConnection *conn, char *response, char *param, ... )
+int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *param, ... )
 {
 	va_list args;
 	char txt[8096];
@@ -116,7 +116,7 @@ int crMothershipGetNamedSPUParam( CRConnection *conn, int spu_id, const char *pa
 	return crMothershipSendString( conn, response, "namedspuparam %d %s", spu_id, param );
 }
 
-int crMothershipGetServerParam( CRConnection *conn, char *response, char *param, ... )
+int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param, ... )
 {
 	va_list args;
 	char txt[8096];

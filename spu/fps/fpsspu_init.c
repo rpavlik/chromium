@@ -55,14 +55,18 @@ int fpsSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions fpsSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "fps";
 	*super = "passthrough";
 	*init = fpsSPUInit;
 	*self = fpsSPUSelfDispatch;
 	*cleanup = fpsSPUCleanup;
-	
+	*options = fpsSPUOptions;
+
 	return 1;
 }

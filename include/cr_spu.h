@@ -26,17 +26,6 @@ extern "C" {
 
 typedef struct _SPUSTRUCT SPU;
 
-typedef struct {
-	char *name;
-	int arg_type;
-	int arg_length;
-	union { 
-		char *string;
-		int *intarr;
-		float fltarr;
-	} value;
-} SPUArgs; 
-
 typedef void (*SPUGenericFunction)(void);
 
 typedef struct {
@@ -50,11 +39,26 @@ typedef struct {
 	SPUNamedFunctionTable *table;
 } SPUFunctions;
 
+typedef void (*SPUOptionCB)( void *spu, const char *response );
+
+typedef struct {
+	const char *option;
+	enum { BOOL, INT, FLOAT, STRING } type; 
+	int numValues;  /* usually 1 */
+	const char *deflt;  /* default value, as a string */
+	const char *min;
+	const char *max;
+	const char *description;
+	SPUOptionCB cb;
+} SPUOptions, *SPUOptionsPtr;
+
+
 typedef SPUFunctions *(*SPUInitFuncPtr)(int id, SPU *child,
 		SPU *super, unsigned int, unsigned int );
 typedef void (*SPUSelfDispatchFuncPtr)(SPUDispatchTable *);
 typedef int (*SPUCleanupFuncPtr)(void);
-typedef int (*SPULoadFunction)(char **, char **, void *, void *, void * );
+typedef int (*SPULoadFunction)(char **, char **, void *, void *, void *,
+			       SPUOptionsPtr *);
 
 struct _SPUSTRUCT {
 	char *name;
@@ -67,6 +71,7 @@ struct _SPUSTRUCT {
 	SPUSelfDispatchFuncPtr self;
 	SPUCleanupFuncPtr cleanup;
 	SPUFunctions *function_table;
+	SPUOptions *options;
 	SPUDispatchTable dispatch_table;
 };
 
@@ -75,6 +80,11 @@ SPU *crSPULoadChain( int count, int *ids, char **names, char *dir, void *server 
 void crSPUInitDispatchTable( SPUDispatchTable *table );
 void crSPUCopyDispatchTable( SPUDispatchTable *dst, SPUDispatchTable *src );
 void crSPUChangeInterface( SPUDispatchTable *table, void *origFunc, void *newFunc );
+
+
+void crSPUSetDefaultParams( void *spu, SPUOptions *options );
+void crSPUGetMothershipParams( CRConnection *conn, void *spu, SPUOptions *options );
+
 
 SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const char *fname );
 void crSPUInitDispatch( SPUDispatchTable *dispatch, const SPUNamedFunctionTable *table );

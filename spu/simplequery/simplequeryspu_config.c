@@ -15,10 +15,13 @@ static void __setDefaults( void )
 {
 }
 
+SPUOptions simplequerySPUOptions[] = {
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
 void simplequeryspuGatherConfiguration( void )
 {
 	CRConnection *conn;
-	char response[8096];
 
 	__setDefaults();
 
@@ -29,11 +32,12 @@ void simplequeryspuGatherConfiguration( void )
 	{
 		/* The mothership isn't running.  Some SPU's can recover gracefully, some 
 		 * should issue an error here. */
+         	crSPUSetDefaultParams( &simplequery_spu, simplequerySPUOptions );
 		return;
 	}
 	crMothershipIdentifySPU( conn, simplequery_spu.id );
 
-	/* CONFIGURATION STUFF HERE */
+	crSPUGetMothershipParams( conn, &simplequery_spu, simplequerySPUOptions );
 
 	(void) response;
 

@@ -65,14 +65,18 @@ int packSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions packSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "pack";
 	*super = NULL;
 	*init = packSPUInit;
 	*self = packSPUSelfDispatch;
 	*cleanup = packSPUCleanup;
+	*options = packSPUOptions;
 	
 	return 1;
 }

@@ -67,14 +67,19 @@ int hiddenlineSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions hiddenlineSPUOptions[];
+
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "hiddenline";
 	*super = "hlpassthrough";
 	*init = hiddenlineSPUInit;
 	*self = hiddenlineSPUSelfDispatch;
 	*cleanup = hiddenlineSPUCleanup;
+	*options = hiddenlineSPUOptions;
 	
 	return 1;
 }

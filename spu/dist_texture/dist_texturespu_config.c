@@ -15,6 +15,16 @@ static void __setDefaults( void )
 {
 }
 
+
+/* option, type, nr, default, min, max, title, callback
+ */
+SPUOptions dist_textureSPUOptions[] = {
+
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
+
+
 void dist_texturespuGatherConfiguration( void )
 {
 	CRConnection *conn;
@@ -34,6 +44,7 @@ void dist_texturespuGatherConfiguration( void )
 	crMothershipIdentifySPU( conn, dist_texture_spu.id );
 
 	/* CONFIGURATION STUFF HERE */
+	crSPUGetMothershipParams( conn, &dist_texture_spu, dist_textureSPUOptions );
 
 	(void) response;
 

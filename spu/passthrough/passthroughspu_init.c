@@ -44,14 +44,21 @@ int passthroughSPUCleanup(void)
 	return 1;
 }
 
+SPUOptions passthroughSPUOptions[] = {
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "passthrough";
 	*super = NULL;
 	*init = passthroughSPUInit;
 	*self = passthroughSPUSelfDispatch;
 	*cleanup = passthroughSPUCleanup;
+	*options = passthroughSPUOptions;
 	
 	return 1;
 }

@@ -52,14 +52,18 @@ int dist_textureSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions dist_textureSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "dist_texture";
 	*super = "passthrough";
 	*init = dist_textureSPUInit;
 	*self = dist_textureSPUSelfDispatch;
 	*cleanup = dist_textureSPUCleanup;
+	*options = dist_textureSPUOptions;
 	
 	return 1;
 }

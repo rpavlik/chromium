@@ -92,14 +92,18 @@ int commSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions commSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "comm";
 	*super = "passthrough";
 	*init = commSPUInit;
 	*self = commSPUSelfDispatch;
 	*cleanup = commSPUCleanup;
+	*options = commSPUOptions;
 	
 	return 1;
 }

@@ -15,6 +15,14 @@ static void __setDefaults( void )
 {
 }
 
+/* option, type, nr, default, min, max, title, callback
+ */
+SPUOptions fpsSPUOptions[] = {
+
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
+
 void fpsspuGatherConfiguration( void )
 {
 	CRConnection *conn;
@@ -34,6 +42,7 @@ void fpsspuGatherConfiguration( void )
 	crMothershipIdentifySPU( conn, fps_spu.id );
 
 	/* CONFIGURATION STUFF HERE */
+	crSPUGetMothershipParams( conn, &fps_spu, fpsSPUOptions );
 
 	(void) response;
 

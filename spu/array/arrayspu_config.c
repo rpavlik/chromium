@@ -15,6 +15,13 @@ static void __setDefaults( void )
 {
 }
 
+/* No SPU options yet.
+ */
+SPUOptions arraySPUOptions[] = {
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
+
 void arrayspuGatherConfiguration( void )
 {
 	CRConnection *conn;
@@ -32,6 +39,8 @@ void arrayspuGatherConfiguration( void )
 		return;
 	}
 	crMothershipIdentifySPU( conn, array_spu.id );
+
+	crSPUGetMothershipParams( conn, &array_spu, arraySPUOptions );
 
 	/* CONFIGURATION STUFF HERE */
 

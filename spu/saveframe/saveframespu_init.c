@@ -51,14 +51,18 @@ int SPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions saveframeSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "saveframe";
 	*super = "passthrough";
 	*init = SPUInit;
 	*self = SPUSelfDispatch;
 	*cleanup = SPUCleanup;
+	*options = saveframeSPUOptions;
 	
 	return 1;
 }

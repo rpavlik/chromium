@@ -15,20 +15,97 @@
 #include <stdio.h>
 #include <math.h>
 
-static void __setDefaults( void )
+
+static void set_peers( void *foo, const char *response )
 {
-  binaryswap_spu.depth_composite = 1;
+   char *nodes;
+   char *token;
+   int i;
+
+   /* figure out peer information! */
+   /* grab network configuration */
+   /* get count of things first so we can allocate space */
+   int count = 0;
+   nodes = crStrdup(response);
+   if((token = strtok(nodes, ",\n\t\0 ")) != NULL){
+      count = 1;
+      while((token = strtok(NULL, ",\n\t\0 ")) != NULL){
+	 count++;
+      }
+   }
+   else{
+      crError("Bad mojo: I can't figure out how many peers you have!");
+   }
+   crFree(nodes);
+    
+   /* actually store the network peer list */
+   nodes = crStrdup(response);
+   binaryswap_spu.peer_names = crAlloc(count*sizeof(char*));
+   if((token = strtok(nodes, ",\n\t ")) != NULL){
+      i = 0;
+      binaryswap_spu.peer_names[i++] = crStrdup(token);
+      while((token = strtok(NULL, ",\n\t ")) != NULL){
+	 binaryswap_spu.peer_names[i++] = crStrdup(token);
+      }
+   }
+   crFree(nodes);
+    
+   /* figure out how many stages we have */
+   binaryswap_spu.stages = (int)(log(count)/log(2)+0.1);
+   crDebug("Swapping Stages: %d", binaryswap_spu.stages);
 }
+
+
+static void set_node( void *foo, const char *response )
+{
+   if (*response) {
+      binaryswap_spu.node_num = crStrToInt( response );
+   }
+   else {
+      crError( "No node number specified for the binaryswap SPU?" );
+   }
+}
+
+static void set_type( void *foo, const char *response )
+{
+   if(strcmp( response, "alpha") == 0){
+      binaryswap_spu.alpha_composite = 1;
+      binaryswap_spu.depth_composite = 0;
+   }
+   else if(strcmp( response, "depth") == 0){
+      binaryswap_spu.depth_composite = 1;
+      binaryswap_spu.alpha_composite = 0;
+   }
+   else{
+      crError( "Bad composite type specified for the binaryswap SPU?" );
+   }
+}
+
+/* option, type, nr, default, min, max, title, callback
+ */
+SPUOptions binaryswapSPUOptions[] = {
+
+   { "peers", STRING, 1, "", NULL, NULL, 
+     "Peers", (SPUOptionCB)set_peers},
+
+   { "node#", STRING, 1, "", NULL, NULL, 
+     "Node #", (SPUOptionCB)set_node},
+
+   /* Really an enumerate (alpha/depth), not a string
+    */
+   { "type", STRING, 1, "depth", NULL, NULL, 
+     "Composite type (alpha/depth)", (SPUOptionCB)set_type},
+
+
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
 
 void binaryswapspuGatherConfiguration( void )
 {
   CRConnection *conn;
   char response[8096];
-  char *nodes;
-  char *token;
   int i;
-  
-  __setDefaults();
   
   /* Connect to the mothership and identify ourselves. */
   conn = crMothershipConnect( );
@@ -39,67 +116,7 @@ void binaryswapspuGatherConfiguration( void )
   }
   crMothershipIdentifySPU( conn, binaryswap_spu.id );
   
-  /* figure out peer information! */
-  if (crMothershipGetSPUParam( conn, response, "peers" ) ){
-    /* grab network configuration */
-    /* get count of things first so we can allocate space */
-    int count = 0;
-    nodes = crStrdup(response);
-    if((token = strtok(nodes, ",\n\t\0 ")) != NULL){
-      count = 1;
-      while((token = strtok(NULL, ",\n\t\0 ")) != NULL){
-	count++;
-      }
-    }
-    else{
-      crError("Bad mojo: I can't figure out how many peers you have!");
-    }
-    crFree(nodes);
-    
-    /* actually store the network peer list */
-    nodes = crStrdup(response);
-    binaryswap_spu.peer_names = crAlloc(count*sizeof(char*));
-    if((token = strtok(nodes, ",\n\t ")) != NULL){
-      i = 0;
-      binaryswap_spu.peer_names[i++] = crStrdup(token);
-      while((token = strtok(NULL, ",\n\t ")) != NULL){
-	binaryswap_spu.peer_names[i++] = crStrdup(token);
-      }
-    }
-    crFree(nodes);
-    
-    /* figure out how many stages we have */
-    binaryswap_spu.stages = (int)(log(count)/log(2)+0.1);
-    crDebug("Swapping Stages: %d", binaryswap_spu.stages);
-    
-  }
-  else{
-    crError( "No peers specified for the binaryswap SPU?" );
-  }
-  
-  if (crMothershipGetSPUParam( conn, response, "node#" ) ){
-    binaryswap_spu.node_num = crStrToInt( response );
-  }
-  else{
-    crError( "No node number specified for the binaryswap SPU?" );
-  }
-  
-  if (crMothershipGetSPUParam( conn, response, "type" ) ){
-    if(strcmp( response, "alpha") == 0){
-      binaryswap_spu.alpha_composite = 1;
-      binaryswap_spu.depth_composite = 0;
-    }
-    else if(strcmp( response, "depth") == 0){
-      binaryswap_spu.depth_composite = 1;
-      binaryswap_spu.alpha_composite = 0;
-    }
-    else{
-      crError( "No composite type specified for the binaryswap SPU?" );
-    }
-  }
-  else{
-    crError( "No composite type specified for the binaryswap SPU?" );
-  }
+  crSPUGetMothershipParams( conn, &binaryswap_spu, binaryswapSPUOptions );
   
   /* build list of swap partners */
   binaryswap_spu.swap_partners = crAlloc(binaryswap_spu.stages*sizeof(char*));

@@ -37,14 +37,21 @@ int errorSPUCleanup(void)
 	return 1;
 }
 
+SPUOptions errorSPUOptions[] = {
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "error";
 	*super = NULL;
 	*init = errorSPUInit;
 	*self = errorSPUSelfDispatch;
 	*cleanup = errorSPUCleanup;
+	*options = errorSPUOptions;
 	
 	return 1;
 }

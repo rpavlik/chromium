@@ -26,6 +26,11 @@ RenderSPU render_spu;
 CRtsd _RenderTSD;
 #endif
 
+
+
+
+
+
 SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id, unsigned int num_contexts )
 {
@@ -94,6 +99,10 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 
 	render_spu.barrierHash = crAllocHashtable();
 
+	render_spu.cursorX = 0;
+	render_spu.cursorY = 0;
+	render_spu.use_L2 = 0;
+
 	return &render_functions;
 }
 
@@ -108,14 +117,19 @@ int renderSPUCleanup(void)
 	return 1;
 }
 
+
+extern SPUOptions renderSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "render";
 	*super = NULL;
 	*init = renderSPUInit;
 	*self = renderSPUSelfDispatch;
 	*cleanup = renderSPUCleanup;
+	*options = renderSPUOptions;
 	
 	return 1;
 }

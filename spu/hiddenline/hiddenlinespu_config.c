@@ -11,27 +11,57 @@
 
 #include <stdio.h>
 
-static void __setDefaults( void )
+
+void set_buffer_size( void *foo, const char *response )
 {
-	hiddenline_spu.buffer_size = 32*1024;
-	hiddenline_spu.clear_r = 
-		hiddenline_spu.clear_g = 
-		hiddenline_spu.clear_b = 0.0f;
-	hiddenline_spu.poly_r = .75;
-	hiddenline_spu.poly_g = .75;
-	hiddenline_spu.poly_b = 0;
-	hiddenline_spu.line_r = 0;
-	hiddenline_spu.line_g = 0;
-	hiddenline_spu.line_b = 0;
-	hiddenline_spu.line_width = 1;
+   sscanf( response, "%d", &(hiddenline_spu.buffer_size) );
 }
+
+void set_poly_color( void *foo, const char *response )
+{
+   sscanf( response, "%f %f %f", &(hiddenline_spu.poly_r), 
+	   &(hiddenline_spu.poly_g), &(hiddenline_spu.poly_b) );
+}
+
+void set_line_color( void *foo, const char *response )
+{
+   sscanf( response, "%f %f %f", &(hiddenline_spu.line_r), 
+	   &(hiddenline_spu.line_g), &(hiddenline_spu.line_b) );
+}
+
+void set_line_width( void *foo, const char *response )
+{
+   sscanf( response, "%f", &(hiddenline_spu.line_width) );
+}
+
+
+/* option, type, nr, default, min, max, title, callback
+ */
+SPUOptions hiddenlineSPUOptions[] = {
+
+   { "buffer_size", INT, 1, "32768", "128", "1048576", 
+     "Buffer Size", (SPUOptionCB)set_buffer_size },
+
+   { "poly_color", FLOAT, 3, ".75 .75 0", "0 0 0", "1 1 1", 
+     "Polygon Color", (SPUOptionCB)set_poly_color },
+
+   { "line_color", FLOAT, 3, "0 0 0", "0 0 0", "1 1 1", 
+     "Line Color", (SPUOptionCB)set_line_color },
+
+   { "line_width", FLOAT, 1, "1", "0", "20", 
+     "Line Color", (SPUOptionCB)set_line_color },
+
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+
+};
 
 void hiddenlinespuGatherConfiguration( SPU *child )
 {
 	CRConnection *conn;
-	char response[8096];
 
-	__setDefaults();
+	hiddenline_spu.clear_r = 
+		hiddenline_spu.clear_g = 
+		hiddenline_spu.clear_b = 0.0f;
 
 	/* Connect to the mothership and identify ourselves. */
 	
@@ -40,29 +70,12 @@ void hiddenlinespuGatherConfiguration( SPU *child )
 	{
 		/* The mothership isn't running.  Some SPU's can recover gracefully, some 
 		 * should issue an error here. */
+         	crSPUSetDefaultParams( &hiddenline_spu, hiddenlineSPUOptions );
 		return;
 	}
 	crMothershipIdentifySPU( conn, hiddenline_spu.id );
 
-	if (crMothershipGetSPUParam( conn, response, "buffer_size" ))
-	{
-		sscanf( response, "%d", &(hiddenline_spu.buffer_size) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "poly_color" ))
-	{
-		sscanf( response, "%f %f %f", &(hiddenline_spu.poly_r), &(hiddenline_spu.poly_g), &(hiddenline_spu.poly_b) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "line_color" ))
-	{
-		sscanf( response, "%f %f %f", &(hiddenline_spu.line_r), &(hiddenline_spu.line_g), &(hiddenline_spu.line_b) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "line_width" ))
-	{
-		sscanf( response, "%f", &(hiddenline_spu.line_width) );
-	}
+	crSPUGetMothershipParams( conn, &hiddenline_spu, hiddenlineSPUOptions );
 
 	crSPUPropogateGLLimits( conn, hiddenline_spu.id, child, &(hiddenline_spu.limits) );
 

@@ -54,14 +54,18 @@ int counterSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions counterSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "counter";
 	*super = "passthrough";
 	*init = counterSPUInit;
 	*self = counterSPUSelfDispatch;
 	*cleanup = counterSPUCleanup;
+	*options = counterSPUOptions;
 	
 	return 1;
 }

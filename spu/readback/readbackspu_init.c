@@ -64,14 +64,18 @@ int readbackSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions readbackSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "readback";
 	*super = "render";
 	*init = readbackSPUInit;
 	*self = readbackSPUSelfDispatch;
 	*cleanup = readbackSPUCleanup;
+	*options = readbackSPUOptions;
 	
 	return 1;
 }

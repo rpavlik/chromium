@@ -135,14 +135,18 @@ int tilesortSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions tilesortSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "tilesort";
 	*super = NULL;
 	*init = tilesortSPUInit;
 	*self = tilesortSPUSelfDispatch;
 	*cleanup = tilesortSPUCleanup;
+	*options = tilesortSPUOptions;
 	
 	return 1;
 }

@@ -15,122 +15,123 @@
 #include <stdio.h>
 
 
-static void __setDefaults( RenderSPU *render_spu )
+static void set_window_geometry( RenderSPU *render_spu, const char *response )
 {
-	/* init in (nearly) the same order as declared in the struct */
-	render_spu->window_title = crStrdup( "Chromium Render SPU" );
-	render_spu->defaultX = render_spu->defaultY = 0;
-	render_spu->defaultWidth = render_spu->defaultHeight = 256;
-	render_spu->use_L2 = 0;
-	render_spu->fullscreen = 0;
-	render_spu->ontop = 0;
-
-	render_spu->drawCursor = GL_FALSE;
-	render_spu->cursorX = 0;
-	render_spu->cursorY = 0;
-
-#ifdef WINDOWS
-	/*
-	render_spu->depth_bits = 24;
-	render_spu->stencil_bits = 0;
-	render_spu->hWnd = 0;
-	render_spu->hRC = 0;
-	render_spu->device_context = 0;
-	*/
-#else
-	/*
-	render_spu->depth_bits = 8;
-	render_spu->stencil_bits = 0;
-	*/
-	render_spu->display_string = NULL;
-	render_spu->force_direct = 0;
-	render_spu->try_direct = 1;
-	render_spu->sync = 0;
-#endif 
+   float x, y, w, h;
+   sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
+   render_spu->defaultX = (int) x;
+   render_spu->defaultY = (int) y;
+   render_spu->defaultWidth = (int) w;
+   render_spu->defaultHeight = (int) h;
 }
+
+static void set_fullscreen( RenderSPU *render_spu, const char *response )
+{
+   sscanf( response, "%d", &(render_spu->fullscreen) );
+}
+
+static void set_on_top( RenderSPU *render_spu, const char *response )
+{
+   sscanf( response, "%d", &(render_spu->ontop) );
+}
+
+static void set_system_gl_path( RenderSPU *render_spu, const char *response )
+{
+   crSetenv( "CR_SYSTEM_GL_PATH", response );
+}
+
+static void set_title( RenderSPU *render_spu, const char *response )
+{
+   crFree( render_spu->window_title );
+   render_spu->window_title = crStrdup( response );
+}
+
+#ifndef WINDOWS
+static void set_try_direct( RenderSPU *render_spu, const char *response )
+{
+   sscanf( response, "%d", &(render_spu->try_direct) );
+}
+
+static void set_force_direct( RenderSPU *render_spu, const char *response )
+{
+   sscanf( response, "%d", &(render_spu->force_direct) );
+}
+#endif
+
+
+/* option, type, nr, default, min, max, title, callback
+ */
+SPUOptions renderSPUOptions[] = {
+#ifndef WINDOWS
+   { "try_direct", BOOL, 1, "1", NULL, NULL, 
+     "Try Direct Rendering", (SPUOptionCB)set_try_direct  },
+
+   { "force_direct", BOOL, 1, "0", NULL, NULL, 
+     "Force Direct Rendering", (SPUOptionCB)set_force_direct },
+#endif
+
+   { "fullscreen", BOOL, 1, "0", NULL, NULL, 
+     "Full-screen Window", (SPUOptionCB)set_fullscreen },
+
+   { "on_top", BOOL, 1, "0", NULL, NULL, 
+     "Display on top", (SPUOptionCB)set_on_top },
+
+   { "title", STRING, 1, "Chromium Render SPU", NULL, NULL, 
+     "Window Title", (SPUOptionCB)set_title },
+
+   { "window_geometry", INT, 4, "0 0 256 256", "0 0 1 1", NULL, 
+     "Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
+
+   { "system_gl_path", STRING, 1, "/usr/lib/", NULL, NULL, 
+     "System GL Path", (SPUOptionCB)set_system_gl_path},
+
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
 
 void renderspuGatherConfiguration( RenderSPU *render_spu )
 {
 	CRConnection *conn;
 	char response[8096];
 
-	__setDefaults( render_spu );
-
-	/* Connect to the mothership and identify ourselves. */
-	
 	conn = crMothershipConnect( );
-	if (!conn)
-	{
-		/* the defaults are (maybe) OK. */
-		return;
-	}
-
-	crMothershipIdentifySPU( conn, render_spu->id );
-
-	if (crMothershipGetSPUParam( conn, response, "window_geometry" ) )
-	{
-		float x, y, w, h;
-		sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
-		if (w < 1 || h < 1) {
-			crWarning("Render SPU window width and height must be at least one");
-			if (w < 1)
-				w = 1;
-			if (h < 1)
-				h = 1;
+	
+	if (conn) {
+		crMothershipIdentifySPU( conn, render_spu->id );
+		
+		crSPUGetMothershipParams( conn, 
+					  (void *)render_spu,
+					  renderSPUOptions );
+		
+		/* Additional configuration not expressed in the 
+		 * SPUOptions array:
+		 */
+		if (crMothershipGetParam( conn, "show_cursor", response ) ) {
+			int show_cursor;
+			sscanf( response, "%d", &show_cursor );
+			render_spu->drawCursor = show_cursor 
+				? GL_TRUE : GL_FALSE;
+			crDebug("show_cursor = %d", show_cursor);
 		}
-		render_spu->defaultX = (int) x;
-		render_spu->defaultY = (int) y;
-		render_spu->defaultWidth = (int) w;
-		render_spu->defaultHeight = (int) h;
-	}
+		else {
+		}
 
-	if (crMothershipGetSPUParam( conn, response, "fullscreen" ) )
-	{
-		sscanf( response, "%d", &(render_spu->fullscreen) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "ontop" ) )
-	{
-		sscanf( response, "%d", &(render_spu->ontop) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "window_title" ) )
-	{
-		crFree( render_spu->window_title );
-		render_spu->window_title = crStrdup( response );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "system_gl_path" ) )
-	{
-		crSetenv( "CR_SYSTEM_GL_PATH", response );
-	}
-
-#ifndef WINDOWS
-	if (crMothershipGetSPUParam( conn, response, "try_direct" ) )
-	{
-		sscanf( response, "%d", &(render_spu->try_direct) );
-	}
-
-	if (crMothershipGetSPUParam( conn, response, "force_direct" ) )
-	{
-		sscanf( response, "%d", &(render_spu->force_direct) );
-	}
-#endif
-
-#if 0
-	if (crMothershipGetSPUParam( conn, response, "show_cursor" ) )
-#else
-	if (crMothershipGetParam( conn, "show_cursor", response ) )
-#endif
-	{
-		int show_cursor;
-		sscanf( response, "%d", &show_cursor );
-		render_spu->drawCursor = show_cursor ? GL_TRUE : GL_FALSE;
-		crDebug("show_cursor = %d", show_cursor);
+		crMothershipDisconnect( conn );
 	}
 	else {
-		crDebug("query show_cursor failed!\n");
+		crSPUSetDefaultParams( (void *)render_spu, renderSPUOptions );
 	}
 
-	crMothershipDisconnect( conn );
+	/* Some initialization that doesn't really have anything to do
+	 * with configuration but which was done here before:
+	 */
+	render_spu->use_L2 = 0;
+	render_spu->cursorX = 0;
+	render_spu->cursorY = 0;
+#ifndef WINDOWS	
+	render_spu->sync = 0;
+	render_spu->display_string = NULL;
+#endif
 }
+
+

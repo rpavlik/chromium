@@ -16,6 +16,13 @@ static void __setDefaults( void )
 	apichange_spu.changeFrequency = 1000;
 }
 
+/* No SPU options yet.
+ */
+SPUOptions apichangeSPUOptions[] = {
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+};
+
+
 void apichangespuGatherConfiguration( void )
 {
 	CRConnection *conn;
@@ -33,6 +40,8 @@ void apichangespuGatherConfiguration( void )
 		return;
 	}
 	crMothershipIdentifySPU( conn, apichange_spu.id );
+
+	crSPUGetMothershipParams( conn, &apichange_spu, apichangeSPUOptions );
 
 	/* CONFIGURATION STUFF HERE */
 

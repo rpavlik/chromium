@@ -58,14 +58,18 @@ int wetSPUCleanup(void)
 	return 1;
 }
 
+extern SPUOptions wetSPUOptions[];
+
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
+	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
+	     SPUOptionsPtr *options )
 {
 	*name = "wet";
 	*super = "passthrough";
 	*init = wetSPUInit;
 	*self = wetSPUSelfDispatch;
 	*cleanup = wetSPUCleanup;
+	*options = wetSPUOptions;
 	
 	return 1;
 }

@@ -14,21 +14,68 @@ static void __setDefaults( ReadbackSPU *readback_spu )
 	readback_spu->windows[0].inUse = GL_TRUE;
 	readback_spu->windows[0].renderWindow = 0;
 	readback_spu->windows[0].childWindow = 0;
-
-	readback_spu->extract_depth = 0;
-	readback_spu->extract_alpha = 0;
-	readback_spu->local_visualization = 1;
-	readback_spu->visualize_depth = 0;
 	readback_spu->depthType = GL_FLOAT;
-	readback_spu->drawX = 0;
-	readback_spu->drawY = 0;
 	readback_spu->barrierCount = 0;
 }
+
+
+
+void set_extract_depth( ReadbackSPU *readback_spu, const char *response )
+{
+   readback_spu->extract_depth = crStrToInt( response );
+}
+
+void set_extract_alpha( ReadbackSPU *readback_spu, const char *response )
+{
+   readback_spu->extract_alpha = crStrToInt( response );
+}
+
+void set_local_visualization( ReadbackSPU *readback_spu, const char *response )
+{
+   readback_spu->local_visualization = crStrToInt( response );
+}
+
+void set_visualize_depth( ReadbackSPU *readback_spu, const char *response )
+{
+   readback_spu->visualize_depth = crStrToInt( response );
+}
+
+void set_drawpixels_pos( ReadbackSPU *readback_spu, const char *response )
+{
+   sscanf( response, "%d %d", &readback_spu->drawX, &readback_spu->drawY );
+}
+
+
+/* option, type, nr, default, min, max, title, callback
+ */
+SPUOptions readbackSPUOptions[] = {
+
+   /* Really a multiple choice:  Extract depth or alpha.
+    */
+   { "extract_depth", BOOL, 1, "0", NULL, NULL,
+     "Extract Depth", (SPUOptionCB)set_extract_depth },
+
+   { "extract_alpha", BOOL, 1, "0", NULL, NULL,
+     "Extract Alpha", (SPUOptionCB)set_extract_alpha },
+
+   { "local_visualization", BOOL, 1, "1", NULL, NULL,
+     "Local Visualizatoin", (SPUOptionCB)set_local_visualization },
+
+   { "visualize_depth", BOOL, 1, "0", NULL, NULL,
+     "Visualize Depth", (SPUOptionCB)set_extract_depth },
+
+   { "drawpixels_pos", INT, 2, "0 0", "0 0", NULL,
+     "Depth Type", (SPUOptionCB)set_extract_depth },
+
+
+   { NULL, BOOL, 0, NULL, NULL, NULL, NULL, NULL },
+
+};
+
 
 void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 {
 	CRConnection *conn;
-	char response[8096];
 
 	__setDefaults( readback_spu );
 
@@ -39,30 +86,12 @@ void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 	{
 		/* The mothership isn't running.  Some SPU's can recover gracefully, some 
 		 * should issue an error here. */
+	        crSPUSetDefaultParams( readback_spu, readbackSPUOptions );
 		return;
 	}
 	crMothershipIdentifySPU( conn, readback_spu->id );
 
-	if (crMothershipGetSPUParam( conn, response, "extract_depth" ))
-	{
-		readback_spu->extract_depth = crStrToInt( response );
-	}
-	if (crMothershipGetSPUParam( conn, response, "extract_alpha" ))
-	{
-		readback_spu->extract_alpha = crStrToInt( response );
-	}
-	if (crMothershipGetSPUParam( conn, response, "local_visualization" ))
-	{
-		readback_spu->local_visualization = crStrToInt( response );
-	}
-	if (crMothershipGetSPUParam( conn, response, "visualize_depth" ))
-	{
-		readback_spu->visualize_depth = crStrToInt( response );
-	}
-	if (crMothershipGetSPUParam( conn, response, "drawpixels_pos" ) )
-	{
-		sscanf( response, "%d %d", &readback_spu->drawX, &readback_spu->drawY );
-	}
+	crSPUGetMothershipParams( conn, (void *)readback_spu, readbackSPUOptions );
 
 	/* we can either composite with alpha or Z, but not both */
 	if (readback_spu->extract_depth && readback_spu->extract_alpha) {
