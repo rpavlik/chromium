@@ -35,3 +35,34 @@ list info so that we know which textures are bound in a list.  Then, in
 tilesort, before glCallList, flush (state-diff) all those textures to
 be sure the servers' texture are up to date.  We currently flush all
 textures prior to glCallList (but that code's disabled).
+
+
+
+CRServer context management issue
+---------------------------------
+
+In the CRServer the Cr state tracker is used for "soft" context switching
+between multiple clients.  This is generally faster/cheaper than calling
+glXMakeCurrent() to do context switches.
+
+So, the CRServer asks the first SPU to create one rendering context which is
+thereafter used by all clients and all their contexts.
+
+The problem is, this single rendering context may not be compatible with
+all the different windows we might create on the server side.
+
+We might create several windows, each with different visuals/pixelformats
+(i.e. with/without stencil, accum, alpha, etc).  When we try to bind the
+rendering context to a window, the underlying GLXContext and X Window
+might not be compatible.
+
+Currently, there's a hack in crServerDispatchCreateContext() to try to
+work around this, but it's far from ideal.
+
+The right solution is for the CRServer to create a different rendering
+context for each different visual that's requested.  Then, when we have
+to do a context switch (either from one client to another, or between two
+contexts belonging to one client), do a "soft" context switch if the
+contexts have the same visual.  Otherwise, do a "hard/GLX" context switch
+if the contexts have different visuals.
+
