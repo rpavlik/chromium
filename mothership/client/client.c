@@ -9,6 +9,7 @@
 #include "cr_net.h"
 #include "cr_mothership.h"
 #include "cr_environment.h"
+#include "cr_mem.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -35,6 +36,8 @@ void crMothershipDisconnect( CRConnection *conn )
 {
 	crMothershipSendString( conn, NULL, "quit" );
 	crNetDisconnect( conn );
+	crFree( conn->hostname );
+	crFree( conn );
 }
 
 int crMothershipSendString( CRConnection *conn, char *response_buf, char *str, ... )
