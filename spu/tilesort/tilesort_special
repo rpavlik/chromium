@@ -1,3 +1,5 @@
 Accum
 Clear
+CreateContext
+MakeCurrent
 SwapBuffers

@@ -17,14 +17,12 @@ endif
 
 LIB_DEFS = util.def
 
-include ${TOP}/cr.mk
-
-ifdef WINDOWS
+ifeq ($(ARCH), WIN_NT)
 CFLAGS += -DGM_SUPPORT
 FILES += gm
 LDFLAGS += user32.lib ws2_32.lib gm.lib
-endif
-
-ifndef WINDOWS
+else
 LDFLAGS += -ldl
 endif
+
+include ${TOP}/cr.mk

@@ -41,8 +41,8 @@ void crStateViewportInit(CRViewportState *v)
 	v->getwindowsize = c->getwindowsize;
 	*/
 
-	v->far = 1.0;
-	v->near = 0.0;
+	v->farClip = 1.0;
+	v->nearClip = 0.0;
 
 }
 
@@ -107,12 +107,12 @@ void STATE_APIENTRY crStateDepthRange(GLclampd znear, GLclampd zfar)
 
 	FLUSH();
 
-	v->near = znear;
-	v->far = zfar;
-	if (v->near < 0.0) v->near = 0.0;
-	if (v->near > 1.0) v->near = 1.0;
-	if (v->far < 0.0) v->far = 0.0;
-	if (v->far > 1.0) v->far = 1.0;
+	v->nearClip = znear;
+	v->farClip = zfar;
+	if (v->nearClip < 0.0) v->nearClip = 0.0;
+	if (v->nearClip > 1.0) v->nearClip = 1.0;
+	if (v->farClip < 0.0) v->farClip = 0.0;
+	if (v->farClip > 1.0) v->farClip = 1.0;
 
 	vb->depth = g->neg_bitid;
 	vb->dirty = g->neg_bitid;

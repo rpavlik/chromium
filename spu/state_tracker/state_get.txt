@@ -23,7 +23,7 @@ GLint     GL_MAX_NAME_STACK_DEPTH           0
 GLint     GL_MAX_CLIENT_ATTRIB_STACK_DEPTH  0
 
 GLint     GL_VIEWPORT                     g->viewport.viewportX g->viewport.viewportY g->viewport.viewportW g->viewport.viewportH
-GLclampd  GL_DEPTH_RANGE                  g->viewport.near g->viewport.far
+GLclampd  GL_DEPTH_RANGE                  g->viewport.nearClip g->viewport.farClip
 
 GLenum    GL_COLOR_MATERIAL_PARAMETER     g->lighting.colorMaterialMode
 GLenum    GL_COLOR_MATERIAL_FACE          g->lighting.colorMaterialFace

@@ -35,6 +35,6 @@ GLboolean GL_TEXTURE_GEN_R            g->texture.textureGen.p
 GLboolean GL_TEXTURE_GEN_Q            g->texture.textureGen.q
 GLboolean GL_TEXTURE_1D               g->texture.enabled1D
 GLboolean GL_TEXTURE_2D               g->texture.enabled2D
-GLboolean GL_TEXTURE_3D               g->texture.enabled3D
+# GLboolean GL_TEXTURE_3D               g->texture.enabled3D
 GLboolean GL_UNPACK_SWAP_BYTES        g->pixel.unpack.swapBytes
 GLboolean GL_UNPACK_LSB_FIRST         g->pixel.unpack.LSBFirst

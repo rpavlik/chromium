@@ -22,8 +22,8 @@ typedef struct {
 	GLint viewportY;
 	GLint viewportW;
 	GLint viewportH;
-	GLclampd near;
-	GLclampd far;
+	GLclampd nearClip;
+	GLclampd farClip;
 	GLboolean viewportValid;
 
 	GLint maxViewportDimsWidth, maxViewportDimsHeight;

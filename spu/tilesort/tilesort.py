@@ -41,15 +41,17 @@ for func_name in keys:
 
 print '\nvoid tilesortspuCreateFunctions( )'
 print '{'
+table_index = 0
 for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, args, types) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
 		continue
 	if stub_common.FindSpecial( "tilesort", func_name ):
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) tilesortspu_%s );' % (index, func_name, func_name )
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) tilesortspu_%s );' % (table_index, func_name, func_name )
 	elif stub_common.FindSpecial( "tilesort_state", func_name ):
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crState%s );' % (index, func_name, func_name )
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crState%s );' % (table_index, func_name, func_name )
 	else:
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (index, func_name, func_name )
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (table_index, func_name, func_name )
+	table_index += 1
 print '}'
