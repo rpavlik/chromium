@@ -11,8 +11,7 @@
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_url.h"
-
-#include <memory.h>
+#include "cr_mem.h"
 
 void tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 {
@@ -20,14 +19,14 @@ void tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 	char *dest_ptr;
 	char *src_ptr = (char*)rp + sizeof(*rp);
 
-	memcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
+	crMemcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
 
 	if (rp->alignment == 1 &&
 		rp->skipRows == 0 &&
 		rp->skipPixels == 0 &&
 		rp->stride == rp->bytes_per_row) {
 		/* no special packing is needed */
-		memcpy ( dest_ptr, ((char *)rp) + sizeof(*rp), payload_len );
+		crMemcpy ( dest_ptr, ((char *)rp) + sizeof(*rp), payload_len );
 	}
 	else {
 		/* need special packing */
@@ -47,7 +46,7 @@ void tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 #else
 		GLuint row;
 		for (row = 0; row < rp->rows; row++) {
-		   memcpy( dest_ptr, src_ptr, rp->bytes_per_row );
+		   crMemcpy( dest_ptr, src_ptr, rp->bytes_per_row );
 		   src_ptr += rp->bytes_per_row;
 		   dest_ptr += rp->stride;
 		}

@@ -13,7 +13,6 @@
 
 #include <limits.h>
 #include <float.h>
-#include <memory.h>
 
 static float _vmult(float *m, float x, float y, float z) 
 {
@@ -400,7 +399,7 @@ static TileSortBucketInfo *__doBucket( void )
 		}
 	}
 
-	memcpy((char*)bucketInfo.hits,(char*)retval,sizeof(*retval));
+	crMemcpy((char*)bucketInfo.hits,(char*)retval,sizeof(*retval));
 
 	return &bucketInfo;
 }

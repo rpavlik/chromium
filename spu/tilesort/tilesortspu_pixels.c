@@ -13,8 +13,6 @@
 #include "cr_pixeldata.h"
 #include "cr_mem.h"
 
-#include <memory.h>
-
 void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	GET_CONTEXT(ctx);

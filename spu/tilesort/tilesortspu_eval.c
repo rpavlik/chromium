@@ -11,8 +11,8 @@
 
 #include "tilesortspu.h"
 #include "cr_packfunctions.h"
+#include "cr_mem.h"
 #include <math.h>
-#include <memory.h>
 
 static GLfloat inv_tab[MAX_EVAL_ORDER];
 
@@ -793,19 +793,19 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalCoord1f( GLfloat u )
    CRASSERT(CR_MAX_TEXTURE_UNITS >= ctx->limits.maxTextureUnits);
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
-	   memcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
+	   crMemcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
 
-   memcpy(&normal, &c->normal, 3 * sizeof(GLfloat));
-   memcpy(&color, &c->color, 4 * sizeof(GLfloat));
+   crMemcpy(&normal, &c->normal, 3 * sizeof(GLfloat));
+   crMemcpy(&color, &c->color, 4 * sizeof(GLfloat));
    index = c->index;
 
    do_EvalCoord1f( u );
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
-	   memcpy (&c->texCoord[i], &texcoord[i], 4 * sizeof(GLfloat));
+	   crMemcpy (&c->texCoord[i], &texcoord[i], 4 * sizeof(GLfloat));
 
-   memcpy(&c->normal, &normal, 3 * sizeof(GLfloat));
-   memcpy(&c->color, &color, 4 * sizeof(GLfloat));
+   crMemcpy(&c->normal, &normal, 3 * sizeof(GLfloat));
+   crMemcpy(&c->color, &color, 4 * sizeof(GLfloat));
    c->index = index;
 }
 
@@ -820,19 +820,19 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalCoord2f( GLfloat u, GLfloat v )
    CRASSERT(CR_MAX_TEXTURE_UNITS >= ctx->limits.maxTextureUnits);
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
-	   memcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
+	   crMemcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
 
-   memcpy(&normal, &c->normal, 3 * sizeof(GLfloat));
-   memcpy(&color, &c->color, 4 * sizeof(GLfloat));
+   crMemcpy(&normal, &c->normal, 3 * sizeof(GLfloat));
+   crMemcpy(&color, &c->color, 4 * sizeof(GLfloat));
    index = c->index;
 
    do_EvalCoord2f( u, v );
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
-	   memcpy (&c->texCoord[i], &texcoord[i], 4 * sizeof(GLfloat));
+	   crMemcpy (&c->texCoord[i], &texcoord[i], 4 * sizeof(GLfloat));
 
-   memcpy(&c->normal, &normal, 3 * sizeof(GLfloat));
-   memcpy(&c->color, &color, 4 * sizeof(GLfloat));
+   crMemcpy(&c->normal, &normal, 3 * sizeof(GLfloat));
+   crMemcpy(&c->color, &color, 4 * sizeof(GLfloat));
    c->index = index;
 }
 

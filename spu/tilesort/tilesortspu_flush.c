@@ -14,7 +14,6 @@
 #include "cr_applications.h"
 
 #include <assert.h>
-#include <memory.h>
 #include <math.h>
 #include <stdlib.h>
 #include <float.h>
