@@ -178,3 +178,4 @@ ProgramEnvParameter4fARB
 ProgramEnvParameter4fvARB
 ProgramStringARB
 VertexAttribPointerARB
+WindowShow

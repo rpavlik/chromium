@@ -55,7 +55,8 @@ bonus_functions = [
 	"crWindowCreate",
 	"crWindowDestroy",
 	"crWindowSize",
-	"crWindowPosition"
+	"crWindowPosition",
+	"crWindowShow"
 ]
 
 for func_name in keys:

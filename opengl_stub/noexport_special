@@ -10,3 +10,4 @@ WindowCreate
 WindowDestroy
 WindowSize
 WindowPosition
+WindowShow

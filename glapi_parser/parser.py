@@ -51,6 +51,7 @@ output_mapping['WindowCreate'] = ( 'GLint', ['dpyName', 'visBits'], ['const char
 output_mapping['WindowDestroy'] = ( 'void', ['window'], ['GLint'] )
 output_mapping['WindowSize'] = ( 'void', ['window', 'x', 'y'], ['GLint', 'GLint', 'GLint'] )
 output_mapping['WindowPosition'] = ( 'void', ['window', 'w', 'h'], ['GLint', 'GLint', 'GLint'] )
+output_mapping['WindowShow'] = ( 'void', ['window', 'flag'], ['GLint', 'GLint'] )
 output_mapping['SwapBuffers'] = ( 'void', ['window', 'flags'], ['GLint', 'GLint'] )
 output_mapping['Writeback'] = ( 'void', ['writeback'], ['GLint *'] )
 

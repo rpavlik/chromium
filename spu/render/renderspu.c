@@ -300,6 +300,15 @@ static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y
 		renderspu_SystemWindowPosition( window, x, y );
 }
 
+static void RENDER_APIENTRY renderspuWindowShow( GLint win, GLint flag )
+{
+	WindowInfo *window;
+	CRASSERT(win >= 0);
+	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
+	if (window)
+		renderspu_SystemShowWindow( window, flag );
+}
+
 /*
  * Set the current raster position to the given window coordinate.
  */
@@ -779,6 +788,7 @@ int renderspuCreateFunctions( SPUNamedFunctionTable table[] )
 	FILLIN( "WindowDestroy", renderspuWindowDestroy );
 	FILLIN( "WindowSize", renderspuWindowSize );
 	FILLIN( "WindowPosition", renderspuWindowPosition );
+	FILLIN( "WindowShow", renderspuWindowShow );
 	FILLIN( "BarrierCreateCR", renderspuBarrierCreateCR );
 	FILLIN( "BarrierDestroyCR", renderspuBarrierDestroyCR );
 	FILLIN( "BarrierExecCR", renderspuBarrierExecCR );
