@@ -1,10 +1,18 @@
 
-How to make a Chromium release (on Linux), using 1.4 as an example.
+                   How to make a Chromium release
+                 (on Linux, using 1.4 as an example)
 
+
+
+Coding
+======
 
 Update include/cr_version.h with new version numbers.
 
 
+
+Make the tarballs
+=================
 
 mkdir Chromium-1.4
 cd Chromium-1.4
@@ -18,11 +26,12 @@ gzip cr-1.4.tar
 
 zip -r cr-1.4.zip cr-1.4
 
-
 Now, copy cr-1.4.tar.gz to a temporary directory, unpack, build and test.
 
 
-SourceForge update:
+
+SourceForge update
+==================
 
 Upload tarballs to sourceforge:
    ftp upload.sf.net
@@ -38,4 +47,16 @@ Via "Admin" interface on SF, create a new source release named "Chromium 1.4".
 Add the .tar.gz and .zip files to the release.
 
 Send an email to chromium-dev, chromium-users, and chromium-announce.
+
+
+
+Finally, tag the cvs tree
+=========================
+
+   cd cr
+   cvs tag release-A-B-C-YYYYMMDD
+
+   where:
+      A-B-C is the version, like 1-4-0
+      YYYYMMDD is the year, month, day
 
