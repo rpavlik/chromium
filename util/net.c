@@ -5,6 +5,8 @@
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <process.h>
+#else
+#include <unistd.h>
 #endif
 
 #include "cr_mem.h"

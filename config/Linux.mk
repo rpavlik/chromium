@@ -1,9 +1,8 @@
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++
-CXXFLAGS += -DLINUX
+CXXFLAGS += -DLINUX -Wall -Werror
 CC = gcc
-CFLAGS += -DLINUX
-FULLWARN = -Wall
+CFLAGS += -DLINUX -Wall -Werror
 
 DEBUGFLAGS = -g
 RELEASEFLAGS = -g -O3 -DNDEBUG

@@ -9,6 +9,7 @@ typedef int ssize_t;
 #define write(a,b,c) send(a,b,c,0)
 #else
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -20,6 +21,7 @@ typedef int ssize_t;
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #include "cr_error.h"
 #include "cr_mem.h"
@@ -405,7 +407,7 @@ static void __dead_connection( CRConnection *conn )
 	exit( 0 );
 }
 
-static int __select( int n, fd_set *readfds, struct timeval *timeout )
+static int __crSelect( int n, fd_set *readfds, struct timeval *timeout )
 {
 	for ( ; ; ) 
 	{
@@ -460,12 +462,12 @@ int crTCPIPRecv( void )
 		struct timeval timeout;
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 0;
-		num_ready = __select( max_fd, &read_fds, &timeout );
+		num_ready = __crSelect( max_fd, &read_fds, &timeout );
 	}
 	else
 	{
 		crWarning( "Waiting for first connection..." );
-		num_ready = __select( max_fd, &read_fds, NULL );
+		num_ready = __crSelect( max_fd, &read_fds, NULL );
 	}
 
 	if ( num_ready == 0 )
@@ -670,10 +672,10 @@ void crTCPIPConnection( CRConnection *conn )
 int crGetHostname( char *buf, unsigned int len )
 {
 	int ret = gethostname( buf, len );
-	if (ret)
-	{
-		int err = crTCPIPErrno();
+	//if (ret)
+	//{
+		//int err = crTCPIPErrno();
 		//crWarning( "Couldn't get hostname: %s", crTCPIPErrorString( err ) );
-	}
+	//}
 	return ret;
 }

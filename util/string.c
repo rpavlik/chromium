@@ -81,13 +81,13 @@ int crStrcasecmp( const char *str1, const char *str2 )
 {
 	while (*str1 && *str2)
 	{
-		if (lowercase[*str1] != lowercase[*str2])
+		if (lowercase[(int) *str1] != lowercase[(int) *str2])
 		{
 			break;
 		}
 		str1++; str2++;
 	}
-	return (lowercase[*str1] - lowercase[*str2]);
+	return (lowercase[(int) *str1] - lowercase[(int) *str2]);
 }
 
 void crStrcpy( char *dest, const char *src )

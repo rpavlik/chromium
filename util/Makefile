@@ -9,4 +9,6 @@ include ${TOP}/cr.mk
 
 ifdef WINDOWS
 LDFLAGS += user32.lib ws2_32.lib
+else
+LDFLAGS += -ldl
 endif

@@ -18,7 +18,7 @@ void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height,
 }
 
 void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width, 
-		GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+		GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
 {
 	crError( "Unimplemented crPackReadPixels" );
 
