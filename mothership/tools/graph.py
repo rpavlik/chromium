@@ -13,14 +13,20 @@
 """
 
 
-import string, os.path, types, random
+import string, os.path, types, random, copy
 from wxPython.wx import *
-from spudialog import *
 from crutils import *
+from crtypes import *
+import spudialog
+import intdialog
+import templates
 
 
 #----------------------------------------------------------------------
 # Constants
+
+menu_UNDO               = 100
+menu_REDO               = 101
 
 menu_SELECT_ALL_NODES   = 200
 menu_DESELECT_ALL_NODES = 201
@@ -31,7 +37,10 @@ menu_DELETE_NODE        = 205
 menu_CONNECT            = 206
 menu_DISCONNECT         = 207
 menu_SET_HOST           = 208
-menu_SERVER_OPTIONS     = 209
+menu_SET_COUNT          = 209
+menu_SPLIT_NODES        = 210
+menu_MERGE_NODES        = 211
+menu_SERVER_OPTIONS     = 212
 
 menu_SELECT_ALL_SPUS    = 300
 menu_DESELECT_ALL_SPUS  = 301
@@ -54,12 +63,11 @@ id_NewServerNode  = 3000
 id_NewAppNode     = 3001
 id_NewSpu         = 3002
 id_NewTemplate    = 3003
+id_TemplateOptions = 3004
 
 # Size of the drawing page, in pixels.
 PAGE_WIDTH  = 1000
 PAGE_HEIGHT = 1000
-
-Templates = [ "New Template", "Tilesort", "Sort-last", "N-client Tilesort", "Binary-swap" ]
 
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
@@ -97,33 +105,7 @@ ConfigFileTail = """
 cr.Go()
 """
 
-#----------------------------------------------------------------------
-# Utility functions
 
-def SPUMaxServers(spuName):
-	"""Return the max number of servers this SPU can have."""
-	global SPUInfo
-	if spuName in SPUInfo.keys():
-		(params, options) = SPUInfo[spuName]
-		if params["packer"] == "yes":
-			m = params["maxservers"]
-			if m == "zero":
-				return 0
-			elif m == "one":
-				return 1
-			else:
-				return 100000
-	return 0
-				
-
-def SPUIsTerminal(spuName):
-	"""Return 1 if spuname is a terminal, else return 0."""
-	global SPUInfo
-	if spuName in SPUInfo.keys():
-		(params, options) = SPUInfo[spuName]
-		if params["terminal"] == "yes":
-			return 1
-	return 0
 
 #----------------------------------------------------------------------------
 # Main window frame class
@@ -162,6 +144,14 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, wxID_EXIT,   self.doExit)
 		menuBar.Append(self.fileMenu, "File")
 
+		# Edit menu
+		self.editMenu = wxMenu()
+		self.editMenu.Append(menu_UNDO,   "Undo\tCTRL-Z")
+		self.editMenu.Append(menu_REDO,   "Redo\tSHIFT-CTRL-Z")
+		EVT_MENU(self, menu_UNDO, self.doUndo)
+		EVT_MENU(self, menu_REDO, self.doRedo)
+		menuBar.Append(self.editMenu, "Edit")
+
 		# Node menu
 		self.nodeMenu = wxMenu()
 		self.nodeMenu.Append(menu_SELECT_ALL_NODES,   "Select All\tCTRL-A")
@@ -176,6 +166,11 @@ class MainFrame(wxFrame):
 		self.nodeMenu.Append(menu_DISCONNECT,         "Disconnect")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SET_HOST,           "Set Host...")
+		self.nodeMenu.Append(menu_SET_COUNT,          "Set Count...")
+		self.nodeMenu.AppendSeparator()
+		self.nodeMenu.Append(menu_SPLIT_NODES,        "Split")
+		self.nodeMenu.Append(menu_MERGE_NODES,        "Merge")
+		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Options...")
 		EVT_MENU(self, menu_SELECT_ALL_NODES, self.doSelectAllNodes)
 		EVT_MENU(self, menu_DESELECT_ALL_NODES, self.doDeselectAllNodes)
@@ -183,6 +178,9 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_CONNECT, self.doConnect)
 		EVT_MENU(self, menu_DISCONNECT, self.doDisconnect)
 		EVT_MENU(self, menu_SET_HOST, self.doSetHost)
+		EVT_MENU(self, menu_SET_COUNT, self.doSetCount)
+		EVT_MENU(self, menu_SPLIT_NODES, self.doSplitNodes)
+		EVT_MENU(self, menu_MERGE_NODES, self.doMergeNodes)
 		EVT_MENU(self, menu_SERVER_OPTIONS, self.doServerOptions)
 		menuBar.Append(self.nodeMenu, "Node")
 
@@ -242,18 +240,21 @@ class MainFrame(wxFrame):
 
 		# New app node button
 		appChoices = ["New App Node(s)", "1 App node", "2 App nodes",
-					  "3 App nodes", "4 App nodes"]
+					  "3 App nodes", "4 App nodes", "N App nodes..."]
 		self.newAppChoice = wxChoice(parent=self.topPanel, id=id_NewAppNode,
 									  choices=appChoices)
 		EVT_CHOICE(self.newAppChoice, id_NewAppNode, self.onNewAppNode)
 		toolSizer.Add(self.newAppChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New server node button
-		serverChoices = ["New Server Node(s)", "1 Server node", "2 Server nodes",
-						 "3 Server nodes", "4 Server nodes"]
-		self.newServerChoice = wxChoice(parent=self.topPanel, id=id_NewServerNode,
-									  choices=serverChoices)
-		EVT_CHOICE(self.newServerChoice, id_NewServerNode, self.onNewServerNode)
+		serverChoices = ["New Server Node(s)", "1 Server node",
+						 "2 Server nodes", "3 Server nodes", "4 Server nodes",
+						 "N Server nodes..."]
+		self.newServerChoice = wxChoice(parent=self.topPanel,
+										id=id_NewServerNode,
+										choices=serverChoices)
+		EVT_CHOICE(self.newServerChoice, id_NewServerNode,
+				   self.onNewServerNode)
 		toolSizer.Add(self.newServerChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New SPU button
@@ -264,10 +265,24 @@ class MainFrame(wxFrame):
 		toolSizer.Add(self.newSpuChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New Template button
-		self.newTemplateChoice = wxChoice(parent=self.topPanel, id=id_NewTemplate,
-									 choices=Templates)
+		templateLabel = wxStaticText(parent=self.topPanel, id=-1,
+									 label=" Template:")
+		toolSizer.Add(templateLabel, flag=wxALIGN_CENTRE)
+
+		templateNames = [ "None" ] + templates.GetTemplateList()
+		self.newTemplateChoice = wxChoice(parent=self.topPanel,
+										  id=id_NewTemplate,
+										  choices=templateNames)
 		EVT_CHOICE(self.newTemplateChoice, id_NewTemplate, self.onNewTemplate)
 		toolSizer.Add(self.newTemplateChoice, flag=wxEXPAND+wxALL, border=2)
+
+		# Edit template settings button
+		self.templateButton = wxButton(parent=self.topPanel,
+									   id=id_TemplateOptions,
+									   label="Edit...")
+		toolSizer.Add(self.templateButton, flag=wxEXPAND+wxALL, border=2)
+		EVT_BUTTON(self.templateButton, id_TemplateOptions,
+				   self.onTemplateOptions)
 
 		# Setup the main drawing area.
 		self.drawArea = wxScrolledWindow(self.topPanel, -1,
@@ -294,7 +309,9 @@ class MainFrame(wxFrame):
 
 		self.dirty     = false
 		self.fileName  = fileName
-		self.Nodes = []
+		self.mothership = Mothership()
+		self.undoStack = []
+		self.redoStack = []
 		self.LeftDown = 0
 		self.DragStartX = 0
 		self.DragStartY = 0
@@ -307,111 +324,43 @@ class MainFrame(wxFrame):
 		self.UpdateMenus()
 
 	# ----------------------------------------------------------------------
-	# Node functions
+	# Utility functions
 
-	def AddNode(self, node):
-		"""Add a new node to the system"""
-		self.Nodes.append(node)
+	def SaveState(self):
+		"""Save the current state to the undo stack.  This should be
+		called immediately before any modifications to the project."""
+		# make a deep copy of the current state (the mothership)
+		state = copy.deepcopy(self.mothership)
+		# put the copy on the undo stack
+		self.undoStack.append(state)
+		# erase the redo stack
+		self.redoStack = []
 
-	def RemoveNode(self, node):
-		"""Remove a node from the system"""
-		if node in self.Nodes:
-			self.Nodes.remove(node)
-
-	def SelectAll(self):
-		for node in self.Nodes:
-			node.Select()
-
-	def DeselectAll(self):
-		for node in self.Nodes:
-			node.Deselect()
-
-	def NumSelected(self):
-		"""Return number of selected nodes."""
-		n = 0
-		for node in self.Nodes:
-			if node.IsSelected():
-				n += 1
-		return n
-
-	def NumSelectedServers(self):
-		"""Return number of selected server/network nodes."""
-		n = 0
-		for node in self.Nodes:
-			if node.IsServer() and node.IsSelected():
-				n += 1
-		return n
-
-	def __compareFunc(self, node1, node2):
-		(x1, y1) = node1.GetPosition()
-		(x2, y2) = node2.GetPosition()
-		if x1 < x2:
-			return -1
-		elif x1 > x2:
-			return 1
-		else:
-			if y1 < y2:
-				return -1
-			elif y1 > y2:
-				return 1
-			else:
-				return 0
-
-	def SortNodesByPosition(self, list):
-		"""Return a list all the nodes sorted by position (X-major)"""
-		list.sort(self.__compareFunc)
-
-	def LayoutNodes(self):
-		"""Compute reasonable window positions for all the nodes"""
-		nodeColumn = {}
-		nodeRow = {}
-		# first, put all nodes into column 0
-		for node in self.Nodes:
-			nodeColumn[node] = 0
-		# assign nodes to columns
-		# depth-first traversal over the node graph, using a stack
-		stack = []
-		for node in self.Nodes:
-			stack.append(node)
-		while len(stack) > 0:
-			# pop node
-			node = stack[0]
-			stack.remove(node)
-			# loop over this node's children
-			for server in node.GetServers():
-				if server in stack:
-					stack.remove(server)
-				# position this server to the right of the node
-				nodeColumn[server] = nodeColumn[node] + 1
-				# push the server's children onto the unresolved list
-				if len(server.GetServers()) > 0:
-					stack.insert(0, server)
-
-		# compute rows for nodes
-		columnSize = {}
-		for node in self.Nodes:
-			col = nodeColumn[node]
-			if col in columnSize:
-				row = columnSize[col]
-				columnSize[col] += 1
-			else:
-				row = 0
-				columnSize[col] = 1
-			nodeRow[node] = row
-		# find tallest column
-		tallest = 0
-		for col in columnSize.keys():
-			if columnSize[col] >= tallest:
-				tallest = columnSize[col]
-		# set the (x,y) positions for each node
-		for node in self.Nodes:
-			col = nodeColumn[node]
-			row = nodeRow[node]
-			x = col * 200 + 10
-			y = 10 + (tallest - columnSize[col]) * 30 + row * 60
-			node.SetPosition(x, y)
-			node.InvalidateLayout()
-
+	def Undo(self):
+		"""Undo last change"""
+		if len(self.undoStack) > 0:
+			# put current state (mothership) onto the redo stack
+			# XXX implement a max redo stack depth???
+			self.redoStack.append(self.mothership)
+			# get state from top of stack
+			state = self.undoStack[-1]
+			# replace current state with top of stack
+			self.mothership = state
+			# pop the undo stack
+			self.undoStack.remove(state)
+			
+	def Redo(self):
+		"""Redo last change"""
+		if len(self.redoStack) > 0:
+			# put current state (mothership) onto the undo stack
+			# XXX implement a max undo stack depth???
+			self.undoStack.append(self.mothership)
+			# get top of redo stack
+			state = self.redoStack[-1]
+			# replace current state with top of stack
+			self.mothership = state
+			# pop the redo stack
+			self.redoStack.remove(state)
 
 	SELECT_ONE = 1
 	SELECT_EXTEND = 2
@@ -454,184 +403,6 @@ class MainFrame(wxFrame):
 		else:
 			print "bad mode in UpdateSelection"
 
-	def GetSelectedSPUs(self):
-		"""Return a list of all the selected SPUs"""
-		spuList = []
-		for node in self.Nodes:
-			if node.IsSelected():
-				for spu in node.SPUChain():
-					if spu.IsSelected():
-						spuList.append(spu)
-		return spuList
-
-	def NumSelectedSPUs(self):
-		"""Return number of selected SPUs"""
-		count = 0
-		for node in self.Nodes:
-			if node.IsSelected():
-				for spu in node.SPUChain():
-					if spu.IsSelected():
-						count += 1
-		return count
-
-	#----------------------------------------------------------------------
-	# Template functions
-
-	def CreateTilesort(self):
-		"""Create a tilesort configuration"""
-		# XXX need an integer dialog here!!!!
-		# XXX also, a widget for the hostnames???
-		dialog = wxTextEntryDialog(self,
-							message="Enter number of server/render nodes")
-		dialog.SetTitle("Create Tilesort (sort-first) configuration")
-		if dialog.ShowModal() == wxID_OK:
-			numServers = int(dialog.GetValue())
-			hostname = "localhost"
-			self.DeselectAll()
-			# Create the app node
-			xPos = 5
-			yPos = numServers * 60 / 2 - 20
-			appNode = ApplicationNode(host=hostname)
-			appNode.SetPosition(xPos, yPos)
-			appNode.Select()
-			tilesortSPU = SpuObject("tilesort")
-			appNode.AddSPU(tilesortSPU)
-			self.AddNode(appNode)
-			# Create the server nodes
-			xPos = 300
-			yPos = 5
-			for i in range(0, numServers):
-				serverNode = NetworkNode(host=hostname)
-				serverNode.SetPosition(xPos, yPos)
-				serverNode.Select()
-				renderSPU = SpuObject("render")
-				serverNode.AddSPU(renderSPU)
-				self.AddNode(serverNode)
-				tilesortSPU.AddServer(serverNode)
-				yPos += 60
-			
-		dialog.Destroy()
-		return
-
-	def CreateSortlast(self):
-		"""Create a sort-last configuration"""
-		# XXX need an integer dialog here!!!!
-		# XXX also, a widget for the hostnames???
-		dialog = wxTextEntryDialog(self,
-								message="Enter number of application nodes")
-		dialog.SetTitle("Create Sort-last configuration")
-		if dialog.ShowModal() == wxID_OK:
-			numClients = int(dialog.GetValue())
-			hostname = "client##"
-			self.DeselectAll()
-			# Create the server/render node
-			xPos = 300
-			yPos = numClients * 60 / 2 - 20
-			serverNode = NetworkNode(host="foobar")
-			serverNode.SetPosition(xPos, yPos)
-			serverNode.Select()
-			renderSPU = SpuObject("render")
-			serverNode.AddSPU(renderSPU)
-			self.AddNode(serverNode)
-			# Create the client/app nodes
-			xPos = 5
-			yPos = 5
-			for i in range(0, numClients):
-				appNode = ApplicationNode(host=hostname)
-				appNode.SetPosition(xPos, yPos)
-				appNode.Select()
-				readbackSPU = SpuObject("readback")
-				appNode.AddSPU(readbackSPU)
-				packSPU = SpuObject("pack")
-				appNode.AddSPU(packSPU)
-				self.AddNode(appNode)
-				packSPU.AddServer(serverNode)
-				yPos += 60
-			
-		dialog.Destroy()
-		return
-
-	def CreateNClientTilesort(self):
-		"""Create an N-client tilesort configuration"""
-		# XXX need an integer dialog here!!!!
-		# XXX also, a widget for the hostnames???
-		dialog = wxTextEntryDialog(self,
-			message="Enter number of clients, number of server/render nodes")
-		dialog.SetTitle("Create N-Client Tilesort (sort-first) configuration")
-		if dialog.ShowModal() == wxID_OK:
-			paramList = string.split(dialog.GetValue(), ',')
-			numClients = int(paramList[0])
-			numServers = int(paramList[1])
-			m = max(numClients, numServers)
-			hostname = "localhost"
-			self.DeselectAll()
-			# Create the <numClients> app nodes
-			tilesortSPUs = []
-			xPos = 5
-			yPos = 5 + (m - numClients) * 30
-			for i in range(numClients):
-				appNode = ApplicationNode(host=hostname)
-				appNode.SetPosition(xPos, yPos)
-				appNode.Select()
-				tilesortSPU = SpuObject("tilesort")
-				appNode.AddSPU(tilesortSPU)
-				self.AddNode(appNode)
-				tilesortSPUs.append(tilesortSPU)
-				yPos += 60
-			# Create the <numServers> server nodes
-			xPos = 300
-			yPos = 5 + (m - numServers) * 30
-			for i in range(numServers):
-				serverNode = NetworkNode(host=hostname)
-				serverNode.SetPosition(xPos, yPos)
-				serverNode.Select()
-				renderSPU = SpuObject("render")
-				serverNode.AddSPU(renderSPU)
-				self.AddNode(serverNode)
-				for j in range(numClients):
-					tilesortSPUs[j].AddServer(serverNode)
-				yPos += 60
-			
-		dialog.Destroy()
-		return
-
-	def CreateBinarySwap(self):
-		"""Create a binary-swap, sort-last configuration"""
-		# XXX need an integer dialog here!!!!
-		# XXX also, a widget for the hostnames???
-		dialog = wxTextEntryDialog(self,
-								message="Enter number of application nodes")
-		dialog.SetTitle("Create Binary Swap configuration")
-		if dialog.ShowModal() == wxID_OK:
-			numClients = int(dialog.GetValue())
-			hostname = "client##"
-			self.DeselectAll()
-			# Create the server/render node
-			xPos = 300
-			yPos = numClients * 60 / 2 - 20
-			serverNode = NetworkNode(host="foobar")
-			serverNode.SetPosition(xPos, yPos)
-			serverNode.Select()
-			renderSPU = SpuObject("render")
-			serverNode.AddSPU(renderSPU)
-			self.AddNode(serverNode)
-			# Create the client/app nodes
-			xPos = 5
-			yPos = 5
-			for i in range(0, numClients):
-				appNode = ApplicationNode(host=hostname)
-				appNode.SetPosition(xPos, yPos)
-				appNode.Select()
-				readbackSPU = SpuObject("binaryswap")
-				appNode.AddSPU(readbackSPU)
-				packSPU = SpuObject("pack")
-				appNode.AddSPU(packSPU)
-				self.AddNode(appNode)
-				packSPU.AddServer(serverNode)
-				yPos += 60
-			
-		dialog.Destroy()
-		return
 
     #----------------------------------------------------------------------
 	# Event handlers / callbacks
@@ -642,8 +413,14 @@ class MainFrame(wxFrame):
 		self.drawArea.PrepareDC(dc)  # only for scrolled windows
 		dc.BeginDrawing()
 
+		# temporary
+		#b = wxBrush(wxColor(120, 180, 220))
+		#dc.SetBrush(b)
+		#dc.DrawRectangle(50, 60, 350, 180)
+		#dc.DrawText("Tilesort assembly", 55, 65)
+
 		# draw the nodes
-		for node in self.Nodes:
+		for node in self.mothership.Nodes():
 			if node.IsSelected():
 				node.Draw(dc, self.SelectDeltaX, self.SelectDeltaY)
 			else:
@@ -653,40 +430,79 @@ class MainFrame(wxFrame):
 		pen = wxPen(wxColor(0, 0, 250))
 		pen.SetWidth(2)
 		dc.SetPen(pen)
-		for node in self.Nodes:
+		for node in self.mothership.Nodes():
 			servers = node.GetServers()
-			for s in servers:
+			for serv in servers:
 				p = node.GetOutputPlugPos()
-				q = s.GetInputPlugPos()
+				q = serv.GetInputPlugPos()
 				dc.DrawLine( p[0], p[1], q[0], q[1] )
+				# See if we need to draw triple lines for N-hosts
+				dy1 = (node.GetCount() > 1) * 4
+				dy2 = (serv.GetCount() > 1) * 4
+				if dy1 != 0 or dy2 != 0:
+					dc.DrawLine(p[0], p[1] + dy1, q[0], q[1] + dy2)
+					dc.DrawLine(p[0], p[1] - dy1, q[0], q[1] - dy2)
 		dc.EndDrawing()
 
 	# called when New App Node button is pressed
 	def onNewAppNode(self, event):
-		self.DeselectAll()
+		self.SaveState()
+		self.mothership.DeselectAllNodes()
 		xstart = random.randrange(10, 50, 5)
 		ystart = random.randrange(50, 100, 5)
 		n = self.newAppChoice.GetSelection()
-		for i in range(0, n):
-			node = ApplicationNode("app%d" % i)
-			node.SetPosition(xstart, ystart + i * 65)
-			node.Select()
-			self.AddNode(node)
+		if n < 5:
+			for i in range(0, n):
+				node = ApplicationNode(host="app%d" % i)
+				node.SetPosition(xstart, ystart + i * 65)
+				node.Select()
+				self.mothership.AddNode(node)
+		else:
+			dialog = intdialog.IntDialog(parent=NULL, id=-1,
+							   title="Create Application Nodes",
+							   labels=["Number of Application nodes:"],
+							   defaultValues=[1], minValue=1, maxValue=100)
+			if dialog.ShowModal() == wxID_OK:
+				n = dialog.GetValues()[0]
+				if n > 0:
+					node = ApplicationNode(host="app##")
+					node.SetPosition(xstart, ystart)
+					node.SetCount(n)
+					node.Select()
+					self.mothership.AddNode(node)
+		#endif
 		self.newAppChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
 	# called when New Server Node button is pressed
 	def onNewServerNode(self, event):
-		self.DeselectAll()
+		self.SaveState()
+		self.mothership.DeselectAllNodes()
 		xstart = random.randrange(250, 300, 5)
 		ystart = random.randrange(50, 100, 5)
 		n = self.newServerChoice.GetSelection()
-		for i in range(0, n):
-			node = NetworkNode("cr%d" % i)
-			node.SetPosition(xstart, ystart + i * 65)
-			node.Select()
-			self.AddNode(node)
+		if n < 5:
+			for i in range(0, n):
+				node = NetworkNode(host="cr%d" % i)
+				node.SetPosition(xstart, ystart + i * 65)
+				node.Select()
+				self.mothership.AddNode(node)
+		else:
+			dialog = intdialog.IntDialog(parent=NULL, id=-1,
+							   title="Create Server Nodes",
+							   labels=["Number of Server nodes:"],
+							   defaultValues=[1], minValue=1, maxValue=100)
+			if dialog.ShowModal() == wxID_OK:
+				n = dialog.GetValues()[0]
+				if n > 0:
+					node = NetworkNode(host="cr##")
+					node.SetPosition(xstart, ystart)
+					node.SetCount(n)
+					node.Select()
+					self.mothership.AddNode(node)
+		#endif
+				
 		self.newServerChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
@@ -697,49 +513,59 @@ class MainFrame(wxFrame):
 		i = self.newSpuChoice.GetSelection()
 		if i <= 0:
 			return # didn't really select an SPU class
+		self.SaveState()
 		i -= 1
-		for node in self.Nodes:
-			if node.IsSelected():
-				# we'll insert before the first selected SPU, or at the
-				# end if no SPUs are selected
-				pos = node.GetFirstSelectedSPUPos()
-				# get the predecessor SPU
-				if pos == -1:
-					pred = node.LastSPU()
-				elif pos > 0:
-					pred = node.GetSPU(pos - 1)
-				else:
-					pred = 0
-				# check if it's legal to put this SPU after the predecessor
-				if pred and pred.IsTerminal():
-					self.Notify("You can't put a %s SPU after a %s SPU." %
-								(SpuClasses[i], pred.Name()))
-					break
-				# check if it's legal to put this SPU before another
-				if pos >= 0 and SPUIsTerminal(SpuClasses[i]):
-					self.Notify("You can't insert a %s SPU before a %s SPU." %
-								(SpuClasses[i], node.GetSPU(pos).Name()))
-					break
-				# OK, we're all set, add the SPU
-				s = SpuObject( SpuClasses[i] )
-				node.AddSPU(s, pos)
+		for node in self.mothership.SelectedNodes():
+			# we'll insert before the first selected SPU, or at the
+			# end if no SPUs are selected
+			pos = node.GetFirstSelectedSPUPos()
+			# get the predecessor SPU
+			if pos == -1:
+				pred = node.LastSPU()
+			elif pos > 0:
+				pred = node.GetSPU(pos - 1)
+			else:
+				pred = 0
+			# check if it's legal to put this SPU after the predecessor
+			if pred and pred.IsTerminal():
+				self.Notify("You can't put a %s SPU after a %s SPU." %
+							(SpuClasses[i], pred.Name()))
+				break
+			# check if it's legal to put this SPU before another
+			if pos >= 0 and SPUIsTerminal(SpuClasses[i]):
+				self.Notify("You can't insert a %s SPU before a %s SPU." %
+							(SpuClasses[i], node.GetSPU(pos).Name()))
+				break
+			# OK, we're all set, add the SPU
+			s = NewSPU( SpuClasses[i] )
+			node.AddSPU(s, pos)
 		self.drawArea.Refresh()
 		self.newSpuChoice.SetSelection(0)
 
 	def onNewTemplate(self, event):
 		"""New Template button callback"""
+		self.SaveState()
 		t = self.newTemplateChoice.GetSelection()
-		if t == 1:
-			self.CreateTilesort()
-		elif t == 2:
-			self.CreateSortlast()
-		elif t == 3:
-			self.CreateNClientTilesort()
-		elif t == 4:
-			self.CreateBinarySwap()
-		self.newTemplateChoice.SetSelection(0)
+		if t > 0:
+			templateName = templates.GetTemplateList()[t - 1]
+			assert templateName != ""
+			templates.CreateTemplate(templateName, self, self.mothership)
+#		if t == 1:
+#			templates.CreateTilesort(self, self.mothership)
+#		elif t == 2:
+#			templates.CreateSortlast(self, self.mothership)
+#		elif t == 3:
+#			templates.CreateNClientTilesort(self, self.mothership)
+#		elif t == 4:
+#			templates.CreateBinarySwap(self, self.mothership)
+#		self.newTemplateChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+
+	def onTemplateOptions(self, event):
+		templateName = self.mothership.GetTemplateType()
+		if templateName != "":
+			templates.EditTemplate(templateName, self, self.mothership)
 
 	# Called when the left mouse button is pressed or released.
 	def onMouseEvent(self, event):
@@ -748,8 +574,8 @@ class MainFrame(wxFrame):
 		# iterate backward through the object list so we get the topmost one
 		hitNode = 0
 		hitSPU = 0
-		for i in range(len(self.Nodes) - 1, -1, -1):
-			node = self.Nodes[i]
+		for i in range(len(self.mothership.Nodes()) - 1, -1, -1):
+			node = self.mothership.Nodes()[i]
 			p = node.PickTest(x,y)
 			if p >= 1:
 				hitNode = node
@@ -779,27 +605,28 @@ class MainFrame(wxFrame):
 				if hitSPU:
 					# also hit an SPU
 					self.UpdateSelection(hitNode.SPUChain(), hitSPU, mode)
-					self.UpdateSelection(self.Nodes, hitNode, self.SELECT_EXTEND)
+					self.UpdateSelection(self.mothership.Nodes(), hitNode, self.SELECT_EXTEND)
 				else:
 					self.UpdateSelection(hitNode.SPUChain(), 0, self.DESELECT_ALL)
-					self.UpdateSelection(self.Nodes, hitNode, mode)
+					self.UpdateSelection(self.mothership.Nodes(), hitNode, mode)
 			elif event.ControlDown() or event.ShiftDown():
 				self.LeftDown = 0
 			else: #if not 
 				# didn't hit an SPU or a node
-				for node in self.Nodes:
+				for node in self.mothership.Nodes():
 					self.UpdateSelection(node.SPUChain(), 0, self.DESELECT_ALL)
-				self.UpdateSelection(self.Nodes, 0, self.DESELECT_ALL)
+				self.UpdateSelection(self.mothership.Nodes(), 0, self.DESELECT_ALL)
 		else:
 			# mouse up
-			for node in self.Nodes:
-				if node.IsSelected():
-					p = node.GetPosition()
-					x = p[0]
-					y = p[1]
-					x += self.SelectDeltaX
-					y += self.SelectDeltaY
-					node.SetPosition(x, y)
+			if self.SelectDeltaX != 0 and self.SelectDeltaY != 0:
+				self.SaveState()
+			for node in self.mothership.SelectedNodes():
+				p = node.GetPosition()
+				x = p[0]
+				y = p[1]
+				x += self.SelectDeltaX
+				y += self.SelectDeltaY
+				node.SetPosition(x, y)
 			self.SelectDeltaX = 0
 			self.SelectDeltaY = 0
 			self.LeftDown = 0
@@ -825,10 +652,9 @@ class MainFrame(wxFrame):
 				self.SelectDeltaY = 0
 
 			anySelected = 0
-			for node in self.Nodes:
-				if node.IsSelected():
-					anySelected = 1
-					break
+			for node in self.mothership.SelectedNodes():
+				anySelected = 1
+				break
 			if anySelected:
 				self.drawArea.Refresh()
 
@@ -941,19 +767,32 @@ class MainFrame(wxFrame):
 		_app.ExitMainLoop()
 
 	# ----------------------------------------------------------------------
+	# Edit menu callbacks
+
+	def doUndo(self, event):
+		"""Edit / Undo callback"""
+		self.Undo()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doRedo(self, event):
+		"""Edit / Redo callback"""
+		self.Redo()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	# ----------------------------------------------------------------------
 	# Node menu callbacks
 
 	def doSelectAllNodes(self, event):
 		"""Node / Select All callback"""
-		for node in self.Nodes:
-			node.Select()
+		self.mothership.SelectAllNodes()
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
 	def doDeselectAllNodes(self, event):
 		"""Node / Deselect All callback"""
-		for node in self.Nodes:
-			node.Deselect()
+		self.mothership.DeselectAllNodes()
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
@@ -963,36 +802,36 @@ class MainFrame(wxFrame):
 		# function.
 		# Have to make a temporary list of the objects to delete so we don't
 		# screw-up the iteration as we remove things
+		self.SaveState()
 		deleteList = []
-		for node in self.Nodes:
-			if node.IsSelected():
-				deleteList.append(node)
+		for node in self.mothership.SelectedNodes():
+			deleteList.append(node)
 		# loop over nodes again to remove server connections
-		for node in self.Nodes:
+		for node in self.mothership.Nodes():
 			for server in node.GetServers():
 				if server.IsSelected():
 					node.LastSPU().RemoveServer(server)
 		# now delete the objects in the deleteList
 		for node in deleteList:
-			 self.Nodes.remove(node)
+			 self.mothership.Nodes().remove(node)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
 	def doConnect(self, event):
 		"""Node / Connect callback"""
 		# Make list of packer(app and net) nodes and server nodes
+		self.SaveState()
 		netPackerNodes = []
 		appPackerNodes = []
 		serverNodes = []
-		for node in self.Nodes:
-			if node.IsSelected():
-				if node.HasAvailablePacker():
-					if node.IsServer():
-						netPackerNodes.append(node)
-					else:
-						appPackerNodes.append(node)
-				elif node.IsServer():
-					serverNodes.append(node)
+		for node in self.mothership.SelectedNodes():
+			if node.HasAvailablePacker():
+				if node.IsServer():
+					netPackerNodes.append(node)
+				else:
+					appPackerNodes.append(node)
+			elif node.IsServer():
+				serverNodes.append(node)
 		#print "appPackerNodes: %d" % len(appPackerNodes)
 		#print "netPackerNodes: %d" % len(netPackerNodes)
 		#print "serverNodes: %d" % len(serverNodes)
@@ -1048,23 +887,28 @@ class MainFrame(wxFrame):
 
 	def doDisconnect(self, event):
 		"""Node / Disconnect callback"""
-		for node in self.Nodes:
-			if node.IsSelected():
-				servers = node.GetServers()
-				# make list of servers to remove
-				removeList = []
-				for s in servers:
-					if s.IsSelected():
-						removeList.append(s)
-				# now remove them
-				for s in removeList:
+		self.SaveState()
+		for node in self.mothership.SelectedNodes():
+			#servers = node.GetServers()
+			## make list of servers to remove
+			#removeList = []
+			#for s in servers:
+			#	if s.IsSelected():
+			#		removeList.append(s)
+			## now remove them
+			#for s in removeList:
+			#	node.LastSPU().RemoveServer(s)
+			# [:] syntax makes a copy of the list to prevent iteration problems
+			for s in node.GetServers()[:]:
+				if s.IsSelected():
 					node.LastSPU().RemoveServer(s)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
 	def doLayoutNodes(self, event):
 		"""Node / Layout Nodes callback"""
-		self.LayoutNodes()
+		self.SaveState()
+		self.mothership.LayoutNodes()
 		self.drawArea.Refresh()
 
 	def doSetHost(self, event):
@@ -1073,17 +917,86 @@ class MainFrame(wxFrame):
 		dialog = wxTextEntryDialog(self, message="Enter the hostname for the selected nodes")
 		dialog.SetTitle("Chromium host")
 		if dialog.ShowModal() == wxID_OK:
-			for node in self.Nodes:
-				if node.IsSelected():
-					node.SetHost(dialog.GetValue())
+			for node in self.mothership.SelectedNodes():
+				node.SetHost(dialog.GetValue())
 		dialog.Destroy()
 		self.drawArea.Refresh()
 
+	def doSetCount(self, event):
+		"""Node / Set Count callback"""
+		assert self.mothership.NumSelectedNodes() > 0
+		n = self.mothership.SelectedNodes()[0].GetCount()
+		dialog = intdialog.IntDialog(parent=NULL, id=-1,
+						   title="Set Node Count",
+						   labels=["Number of nodes:"],
+						   defaultValues=[n], minValue=1, maxValue=100)
+		if dialog.ShowModal() == wxID_OK:
+			n = dialog.GetValues()[0]
+			if n > 0:
+				for node in self.mothership.SelectedNodes():
+					node.SetCount(n)
+		dialog.Destroy()
+		self.drawArea.Refresh()
+
+	def doSplitNodes(self, event):
+		"""Node / Split callback"""
+		for node in self.mothership.SelectedNodes():
+			if node.GetCount() > 1:
+				clients = self.mothership.FindClients(node)
+				(x, y) = node.GetPosition()
+				# make count-1 new nodes
+				for i in range(node.GetCount() - 1):
+					#newNode = copy.deepcopy(node)
+					newNode = node.Clone()
+					newNode.SetCount(1)
+					y += 70
+					newNode.SetPosition(x, y)
+					self.mothership.AddNode(newNode)
+					# connect clients to the new node
+					for c in clients:
+						if c.LastSPU().CanAddServer():
+							c.LastSPU().AddServer(newNode)
+				node.SetCount(1)
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doMergeNodes(self, event):
+		"""Node / Merge callback"""
+		nodes = self.mothership.SelectedNodes()
+		# make sure all the nodes are identical (or pretty similar)
+		assert len(nodes) > 1
+		similar = 1
+		first = nodes[0]
+		for n in nodes:
+			if n != first and not first.IsSimilarTo(n):
+				similar = 0
+				break
+		if not similar:
+			self.Notify("The selected nodes are too dissimilar to be merged.")
+			return
+		# determine total node count
+		totalCount = 0
+		for n in nodes:
+			totalCount += n.GetCount()
+		# we'll keep the first node and just change its count
+		# disconnect the extra nodes from their clients
+		for n in nodes:
+			if n != first:
+				clients = self.mothership.FindClients(n)
+				for c in clients:
+					c.LastSPU().RemoveServer(n)
+				self.mothership.RemoveNode(n)
+		# Set total count on first node
+		first.SetCount(totalCount)
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+		pass
+
 	def doServerOptions(self, event):
 		"""Node / Server Options callback"""
-		dialog = SPUDialog(parent=NULL, id=-1,
-						   title="Server Options",
-						   options=ServerOptions)
+		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+									 title="Server Options",
+									 options=ServerOptions)
 		dialog.ShowModal()
 		return
 
@@ -1093,57 +1006,59 @@ class MainFrame(wxFrame):
 
 	def doSelectAllSPUs(self, event):
 		"""SPU / Select All callback"""
-		for node in self.Nodes:
-			if node.IsSelected():
-				for spu in node.SPUChain():
-					spu.Select()
+		for node in self.mothership.SelectedNodes():
+			for spu in node.SPUChain():
+				spu.Select()
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
 	def doDeselectAllSPUs(self, event):
 		"""SPU / Deselect All callback"""
-		for node in self.Nodes:
-			if node.IsSelected():
-				for spu in node.SPUChain():
-					spu.Deselect()
+		for node in self.mothership.SelectedNodes():
+			for spu in node.SPUChain():
+				spu.Deselect()
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
 	def doDeleteSPU(self, event):
 		"""Node / Delete SPU callback"""
 		# loop over all nodes, selected or not
-		for node in self.Nodes:
-			# make list of SPUs to delete
-			removeList = []
-			for spu in node.SPUChain():
+		for node in self.mothership.Nodes():
+			## make list of SPUs to delete
+			#removeList = []
+			#for spu in node.SPUChain():
+			#	if spu.IsSelected():
+			#		removeList.append(spu)
+			#		node.InvalidateLayout()
+			## now remove
+			#for spu in removeList:
+			#	node.RemoveSPU(spu)
+			# [:] syntax makes a copy of the list to prevent iteration problems
+			for spu in node.SPUChain()[:]:
 				if spu.IsSelected():
-					removeList.append(spu)
-					node.InvalidateLayout()
-			# now remove
-			for spu in removeList:
-				node.RemoveSPU(spu)
+					node.RemoveSPU(spu)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
 	def doSpuOptions(self, event):
 		"""SPU / SPU Options callback"""
 		# find first selected SPU
-		spuList = self.GetSelectedSPUs()
+		spuList = self.mothership.GetSelectedSPUs()
 		if len(spuList) > 0:
 			name = spuList[0].Name()
 			if name in SPUInfo.keys():
 				(params, opts) = SPUInfo[name]
-				dialog = SPUDialog(parent=NULL, id=-1,
-								   title=name + " SPU Options",
-								   options = opts)
+				dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+											 title=name + " SPU Options",
+											 options = opts)
 				dialog.ShowModal()
 		return
 		
 	def doSystemOptions(self, event):
 		"""System / Options callback"""
-		dialog = SPUDialog(parent=NULL, id=-1,
-						   title="System Options",
-						   options=GlobalOptions)
+		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+									 title="System Options",
+									 options=GlobalOptions)
 		dialog.ShowModal()
 
 
@@ -1233,23 +1148,33 @@ class MainFrame(wxFrame):
 		"""Enable/disable menu items as needed."""
 		# XXX the enable/disable state for connect/disconnect is more
 		# complicated than this.  So is the newSpuChoice widget state.
-		if self.NumSelected() > 0:
+		# Node menu
+		if self.mothership.NumSelectedNodes() > 0:
 			self.nodeMenu.Enable(menu_DELETE_NODE, 1)
 			self.nodeMenu.Enable(menu_CONNECT, 1)
 			self.nodeMenu.Enable(menu_DISCONNECT, 1)
 			self.nodeMenu.Enable(menu_SET_HOST, 1)
+			self.nodeMenu.Enable(menu_SET_COUNT, 1)
+			self.nodeMenu.Enable(menu_SPLIT_NODES, 1)
+			if self.mothership.NumSelectedNodes() > 1:
+				self.nodeMenu.Enable(menu_MERGE_NODES, 1)
+			else:
+				self.nodeMenu.Enable(menu_MERGE_NODES, 0)
 			self.newSpuChoice.Enable(1)
 		else:
 			self.nodeMenu.Enable(menu_DELETE_NODE, 0)
 			self.nodeMenu.Enable(menu_CONNECT, 0)
 			self.nodeMenu.Enable(menu_DISCONNECT, 0)
 			self.nodeMenu.Enable(menu_SET_HOST, 0)
+			self.nodeMenu.Enable(menu_SET_COUNT, 0)
+			self.nodeMenu.Enable(menu_SPLIT_NODES, 0)
 			self.newSpuChoice.Enable(0)
-		if self.NumSelectedServers() > 0:
+		# Node menu / servers
+		if self.mothership.NumSelectedServers() > 0:
 			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 1)
 		else:
 			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 0)
-		if len(self.Nodes) > 0:
+		if len(self.mothership.Nodes()) > 0:
 			self.nodeMenu.Enable(menu_SELECT_ALL_NODES, 1)
 			self.nodeMenu.Enable(menu_DESELECT_ALL_NODES, 1)
 			self.nodeMenu.Enable(menu_LAYOUT_NODES, 1)
@@ -1259,7 +1184,8 @@ class MainFrame(wxFrame):
 			self.nodeMenu.Enable(menu_DESELECT_ALL_NODES, 0)
 			self.nodeMenu.Enable(menu_LAYOUT_NODES, 0)
 			self.spuMenu.Enable(menu_SELECT_ALL_SPUS, 0)
-		if self.NumSelectedSPUs() > 0:
+		# SPU menu
+		if self.mothership.NumSelectedSPUs() > 0:
 			self.spuMenu.Enable(menu_DESELECT_ALL_SPUS, 1)
 			self.spuMenu.Enable(menu_DELETE_SPU, 1)
 			self.spuMenu.Enable(menu_SPU_OPTIONS, 1)
@@ -1267,6 +1193,21 @@ class MainFrame(wxFrame):
 			self.spuMenu.Enable(menu_DESELECT_ALL_SPUS, 0)
 			self.spuMenu.Enable(menu_DELETE_SPU, 0)
 			self.spuMenu.Enable(menu_SPU_OPTIONS, 0)
+		# Edit menu
+		if len(self.undoStack) > 0:
+			self.editMenu.Enable(menu_UNDO, 1)
+		else:
+			self.editMenu.Enable(menu_UNDO, 0)
+		if len(self.redoStack) > 0:
+			self.editMenu.Enable(menu_REDO, 1)
+		else:
+			self.editMenu.Enable(menu_REDO, 0)
+		# Template options button
+		type = self.mothership.GetTemplateType()
+		if type == "":
+			self.templateButton.Enable(0)
+		else:
+			self.templateButton.Enable(1)
 
 	# Display a dialog with a message and OK button.
 	def Notify(self, msg):
@@ -1298,7 +1239,7 @@ class MainFrame(wxFrame):
 			spuNames = {}
 			n = 0
 			s = 0
-			for node in self.Nodes:
+			for node in self.mothership.Nodes():
 				nodeNames[node] = "node%d" % n
 				if node.IsServer():
 					f.write("node%d = crNetworkNode('%s')\n" % (n, node.Host()))
@@ -1314,7 +1255,7 @@ class MainFrame(wxFrame):
 				n += 1
 				f.write("\n")
 			# add servers to tilesort/packer SPUs
-			for node in self.Nodes:
+			for node in self.mothership.Nodes():
 				lastSPU = node.LastSPU()
 				if lastSPU:
 					for server in lastSPU.GetServers():
@@ -1322,7 +1263,7 @@ class MainFrame(wxFrame):
 			# endfor
 			f.write("\n")
 			# add nodes to mothership
-			for node in self.Nodes:
+			for node in self.mothership.Nodes():
 				f.write("cr.AddNode(%s)\n" % nodeNames[node])
 			# tail of file
 			f.write(ConfigFileTail)
@@ -1360,360 +1301,6 @@ class MainFrame(wxFrame):
 			return true # User doesn't want changes saved.
 		elif response == wxCANCEL:
 			return false # User cancelled.
-
-
-#----------------------------------------------------------------------------
-
-class SpuObject:
-	def __init__(self, name):
-		self.__X = 0
-		self.__Y = 0
-		self.__Name = name
-		self.__Width = 0
-		self.__Height = 30
-		self.__IsSelected = 0
-		self.__IsTerminal = SPUIsTerminal(name)
-		self.__MaxServers = SPUMaxServers(name)
-		self.__Port = 7000
-		self.__Protocol = "tcpip"
-		self.__Servers = []
-		self.__OutlinePen = wxPen(wxColor(0,0,0), width=1, style=0)
-		self.__FillBrush = wxLIGHT_GREY_BRUSH
-
-	def IsTerminal(self):
-		"""Return true if this SPU has to be the last in a chain (a terminal)
-		"""
-		return self.__IsTerminal
-
-	def MaxServers(self):
-		"""Return the max number of servers this SPU can connect to."""
-		return self.__MaxServers
-
-	def Select(self):
-		self.__IsSelected = 1
-
-	def Deselect(self):
-		self.__IsSelected = 0
-
-	def IsSelected(self):
-		return self.__IsSelected
-
-	def CanAddServer(self):
-		"""Test if a server can be added to this SPU.
-		Return "OK" if so, else return reason why not.
-		"""
-		if self.__MaxServers == 0:
-			return "This SPU doesn't have a command packer"
-		if len(self.__Servers) >= self.__MaxServers:
-			return "This SPU is limited to %d server(s)" % self.__MaxServers
-		return "OK"
-
-	def AddServer(self, serverNode, protocol='tcpip', port=7000):
-		"""Add a server to this SPU.  The SPU must have a packer!"""
-		if not serverNode in self.__Servers and len(self.__Servers) < self.__MaxServers:
-			self.__Servers.append(serverNode)
-			self.__Protocol = protocol
-			self.__Port = port
-		else:
-			print "AddServer() failed!"
-
-	def RemoveServer(self, serverNode):
-		if serverNode in self.__Servers:
-			self.__Servers.remove(serverNode)
-
-	def GetServers(self):
-		"""Return the list of servers for this SPU.
-		For a pack SPU the list will contain zero or one server.
-		For a tilesort SPU the list will contain zero or more servers.
-		Other SPU classes have no servers.
-		"""
-		return self.__Servers
-
-	def Name(self):
-		return self.__Name
-
-	def SetPosition(self, x, y):
-		self.__X = x
-		self.__Y = y
-
-	def GetPosition(self):
-		return (self.__X, self.__Y)
-
-	def GetWidth(self):
-		return self.__Width
-
-	def GetHeight(self):
-		return self.__Height
-
-	def PickTest(self, x, y):
-		if x >= self.__X and x < self.__X + self.__Width and y >= self.__Y and y < self.__Y + self.__Height:
-			return 1
-		else:
-			return 0
-
-	def Layout(self, dc):
-		"""Compute width and height for drawing this SPU"""
-		(w, h) = dc.GetTextExtent(self.__Name)
-		self.__Width = w + 8
-		self.__Height = h + 8
-		
-	def Draw(self, dc):
-		"""Draw this SPU as a simple labeled box"""
-		dc.SetBrush(self.__FillBrush)
-		if self.__IsSelected:
-			self.__OutlinePen.SetWidth(3)
-		else:
-			self.__OutlinePen.SetWidth(1)
-		dc.SetPen(self.__OutlinePen)
-		# if width is zero, compute width/height now
-		if self.__Width == 0:
-			self.Layout(dc)
-		# draw the SPU as a rectangle with text label
-		dc.DrawRectangle(self.__X, self.__Y, self.__Width, self.__Height)
-		dc.DrawText(self.__Name, self.__X + 4, self.__Y + 4)
-		if self.__MaxServers > 0:
-			# draw the output socket (a little black rect)
-			dc.SetBrush(wxBLACK_BRUSH)
-			dc.DrawRectangle(self.__X + self.__Width,
-							 self.__Y + self.__Height/2 - 4, 4, 8)
-		elif self.__IsTerminal:
-			# draw a thick right edge on the box
-			self.__OutlinePen.SetWidth(3)
-			dc.SetPen(self.__OutlinePen)
-			dc.DrawLine(self.__X + self.__Width, self.__Y + 1,
-						self.__X + self.__Width, self.__Y + self.__Height - 2)
-
-class Node:
-	""" The graphical representation of a Cr node (app or network).
-	This is the base class for the ServerNode and NetworkNode classes.
-	"""
-
-	def __init__(self, host="localhost", isServer = 0):
-		self.__X = 0
-		self.__Y = 0
-		self.__Width = 0
-		self.__Height = 0
-		self.__SpuChain = []
-		self.__IsServer = isServer
-		self.__IsSelected = 0
-		self.__InputPlugPos = (0,0)
-		self.SetHost(host)
-
-	def IsAppNode(self):
-		"""Return true if this is an app node, false otherwise."""
-		return not self.__IsServer
-
-	def IsServer(self):
-		"""Return true if this is a server, false otherwise."""
-		return self.__IsServer
-
-	def HasAvailablePacker(self):
-		"""Return true if we can connect a server to this node."""
-		if len(self.__SpuChain) >= 1 and self.LastSPU().CanAddServer() == "OK":
-			return 1
-		else:
-			return 0
-
-	def HasPacker(self):
-		"""Return true if the last SPU has a packer."""
-		if len(self.__SpuChain) >= 1 and self.LastSPU().MaxServers() > 0:
-			return 1
-		else:
-			return 0
-
-	def HasChild(self, childCandidate):
-		"""Test if childCandidate is a down-stream child (server) of this node
-		"""
-		if childCandidate in self.GetServers():
-			return 1
-		else:
-			for server in self.GetServers():
-				return server.HasChild(childCandidate)
-			return 0
-
-	def SetHost(self, hostname):
-		self.__Host = hostname
-		if self.__IsServer:
-			self.__Label = "Server node host=" + hostname
-		else:
-			self.__Label = "App node host=" + hostname
-		self.InvalidateLayout()
-
-	def Host(self):
-		return self.__Host
-
-	def Select(self):
-		self.__IsSelected = 1
-
-	def Deselect(self):
-		self.__IsSelected = 0
-
-	def IsSelected(self):
-		return self.__IsSelected
-
-	def NumSPUs(self):
-		"""Return number of SPUs in the chain"""
-		return len(self.__SpuChain)
-
-	def LastSPU(self):
-		"""Return the last SPU in this node's SPU chain"""
-		if len(self.__SpuChain) == 0:
-			return 0
-		else:
-			return self.__SpuChain[-1]
-
-	def GetSPU(self, pos):
-		"""Return this node's SPU chain"""
-		assert pos >= 0
-		assert pos < len(self.__SpuChain)
-		return self.__SpuChain[pos]
-
-	def SPUChain(self):
-		"""Return this node's SPU chain"""
-		return self.__SpuChain
-
-	def GetFirstSelectedSPUPos(self):
-		"""Return the position (index) of this node's first selected SPU"""
-		pos = 0
-		for spu in self.__SpuChain:
-			if spu.IsSelected():
-				return pos
-			pos += 1
-		return -1
-
-	def AddSPU(self, s, pos = -1):
-		"""Add a new SPU at the given position (-1 = the end)"""
-		if pos < 0:
-			# add at tail
-			self.__SpuChain.append(s)
-		else:
-			# insert at [pos]
-			assert pos >= 0
-			assert pos <= len(self.__SpuChain)
-			self.__SpuChain.insert(pos, s)
-		self.InvalidateLayout()
-
-	def RemoveSPU(self, spu):
-		"""Remove an SPU from the node's SPU chain"""
-		if spu in self.__SpuChain:
-			self.__SpuChain.remove(spu)
-		else:
-			print "Problem spu not in spu chain!"
-
-	def GetServers(self):
-		"""Return a list of servers that the last SPU (a packing SPU) are
-		connected to."""
-		if self.NumSPUs() > 0:
-			return self.LastSPU().GetServers()
-		else:
-			return []
-
-	def GetPosition(self):
-		return (self.__X, self.__Y)
-
-	def SetPosition(self, x, y):
-		self.__X = x
-		self.__Y = y
-
-	# Return the (x,y) coordinate of the node's input socket
-	def GetInputPlugPos(self):
-		assert self.__IsServer
-		return self.__InputPlugPos
-
-	# Return the (x,y) coordinate of the node's output socket
-	def GetOutputPlugPos(self):
-		assert self.NumSPUs() > 0
-		last = self.LastSPU()
-		assert last.MaxServers() > 0
-		(x, y) = last.GetPosition()
-		x += last.GetWidth()
-		y += last.GetHeight() / 2
-		return (x, y)
-
-	def InvalidateLayout(self):
-		self.__Width = 0
-
-	def Layout(self, dc):
-		"""Compute width and height for drawing this node"""
-		self.__Width = 5
-		for spu in self.__SpuChain:
-			spu.Layout(dc)
-			self.__Width += spu.GetWidth() + 2
-		self.__Width += 8
-		(w, h) = dc.GetTextExtent(self.__Label)
-		if self.__Width < w + 8:
-			self.__Width = w + 8
-		if self.__Width < 100:
-			self.__Width = 100
-		if self.__Height == 0:
-			self.__Height = int(h * 3.5)
-
-	def Draw(self, dc, dx=0, dy=0):
-		"""Draw this node.  (dx,dy) are the temporary translation values
-		used when a mouse drag is in progress."""
-		# setup the brush and pen
-		if self.__IsServer:
-			dc.SetBrush(ServerNodeBrush)
-		else:
-			dc.SetBrush(AppNodeBrush)
-		p = wxPen(wxColor(0,0,0), width=1, style=0)
-		if self.__IsSelected:
-			p.SetWidth(3)
-		dc.SetPen(p)
-		x = self.__X + dx
-		y = self.__Y + dy
-
-		if self.__Width == 0 or self.__Height == 0:
-			self.Layout(dc)
-
-		# draw the node's box
-		dc.DrawRectangle(x, y, self.__Width, self.__Height)
-		if self.__IsServer:
-			dc.DrawText(self.__Label, x + 4, y + 4)
-			# draw the unpacker plug
-			px = x - 4
-			py = y + self.__Height / 2
-			self.__InputPlugPos = (px, py)
-			dc.SetBrush(wxBLACK_BRUSH)
-			dc.DrawRectangle(px, py - 4, 4, 8)
-		else:
-			dc.DrawText(self.__Label, x + 4, y + 4)
-
-		# draw the SPUs
-		x = x + 5
-		y = y + 20
-		for spu in self.__SpuChain:
-			spu.SetPosition(x, y)
-			spu.Draw(dc)
-			x = x + spu.GetWidth() + 2
-
-
-	def PickTest(self, x, y):
-		"""Return 0 if this node is not picked.
-		Return 1 if the node was picked, but not an SPU
-		Return n if the nth SPU was picked.
-		"""
-		# try the SPUs first
-		i = 0
-		for spu in self.__SpuChain:
-			if spu.PickTest(x,y):
-				return 2 + i
-			i = i + 1
-		# now try the node itself
-		if x >= self.__X and x < self.__X + self.__Width and y >= self.__Y and y < self.__Y + self.__Height:
-			return 1
-		else:
-			return 0
-
-class NetworkNode(Node):
-	"""A CRNetworkNode object"""
-	def __init__(self, host="localhost"):
-		Node.__init__(self, host, isServer=1)
-
-class ApplicationNode(Node):
-	"""A CRApplicationNode object"""
-	def __init__(self, host="localhost"):
-		Node.__init__(self, host, isServer=0)
 
 
 #----------------------------------------------------------------------------
@@ -1810,11 +1397,10 @@ def main():
 	print "Found SPU classes: %s" % str(SpuClasses)
 
 	# Get the params and options for all SPU classes
-	print "foo!"
 	global SPUInfo
 	SPUInfo = {}
 	for spu in SpuClasses:
-		print "get options %s" % spu
+		print "getting options for %s SPU" % spu
 		SPUInfo[spu] = GetSPUOptions(spu)
 
 	# Create and start the application.
