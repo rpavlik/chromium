@@ -343,10 +343,11 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 
 void *crTCPIPAlloc( void )
 {
-	CRTCPIPBuffer *buf = (CRTCPIPBuffer *)
-		crBufferPoolPop( &cr_tcpip.bufpool );
+	CRTCPIPBuffer *buf = (CRTCPIPBuffer *) crBufferPoolPop( &cr_tcpip.bufpool );
 	if ( buf == NULL )
 	{
+		crDebug( "Buffer pool was empty, so I allocated %d bytes", 
+			sizeof(CRTCPIPBuffer) + crNetMTU());
 		buf = (CRTCPIPBuffer *) 
 			crAlloc( sizeof(CRTCPIPBuffer) + crNetMTU() );
 		buf->magic = CR_TCPIP_BUFFER_MAGIC;

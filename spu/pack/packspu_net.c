@@ -44,6 +44,7 @@ void packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			crError( "Why is the pack SPU getting a message of type %d?", msg->type );
 			break;
 	}
+	crNetFree( conn, buf );
 	(void) conn;	
 	(void) len;	
 }

@@ -15,30 +15,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGenTextures( GLsizei n, GLuint *te
 	crServerReturnValue( local_textures, n*sizeof( *local_textures ) );
 	crFree( local_textures );
 }
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetBooleanv( GLenum pname, GLboolean *params )
-{
-	crError( "crServerDispatchGetBooleanv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetBooleanv( pname, params );
-}
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetClipPlane( GLenum plane, GLdouble *equation )
 {
 	crError( "crServerDispatchGetClipPlane unimplemented!" );
 	cr_server.head_spu->dispatch_table.GetClipPlane( plane, equation );
-}
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetDoublev( GLenum pname, GLdouble *params )
-{
-	crError( "crServerDispatchGetDoublev unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetDoublev( pname, params );
-}
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetFloatv( GLenum pname, GLfloat *params )
-{
-	crError( "crServerDispatchGetFloatv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetFloatv( pname, params );
-}
-void SERVER_DISPATCH_APIENTRY crServerDispatchGetIntegerv( GLenum pname, GLint *params )
-{
-	crError( "crServerDispatchGetIntegerv unimplemented!" );
-	cr_server.head_spu->dispatch_table.GetIntegerv( pname, params );
 }
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetLightfv( GLenum light, GLenum pname, GLfloat *params )
 {
