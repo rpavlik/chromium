@@ -15,8 +15,8 @@ GLint     GL_MAX_TEXTURE_STACK_DEPTH        g->transform.maxTextureStackDepth
 # GLint     GL_MAX_COLOR_MATRIX_STACK_DEPTH   g->transform.maxColorStackDepth
 GLint     GL_MAX_EVAL_ORDER                 g->eval.maxEvalOrder
 GLint     GL_MAX_VIEWPORT_DIMS              g->viewport.maxViewportDimsWidth g->viewport.maxViewportDimsHeight
-glint     gl_max_lights                     g->lighting.maxLights
-glint     gl_max_texture_size               g->texture.maxTextureSize
+GLint     GL_MAX_LIGHTS                     g->lighting.maxLights
+GLint     GL_MAX_TEXTURE_SIZE               g->texture.maxTextureSize
 GLint     GL_MAX_PIXEL_MAP_TABLE            0
 GLint     GL_MAX_ATTRIB_STACK_DEPTH         0
 GLint     GL_MAX_NAME_STACK_DEPTH           0
