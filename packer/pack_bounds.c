@@ -3,6 +3,8 @@
 #include "cr_opcodes.h"
 #include "cr_glwrapper.h"
 
+#include <memory.h>
+
 void PACK_APIENTRY crPackBoundsInfo( GLrecti *bounds, GLbyte *payload, GLint len, GLint num_opcodes )
 {
 	// Don't get the buffered_ptr here because we've already

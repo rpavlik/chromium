@@ -21,6 +21,7 @@ print """#include "cr_glwrapper.h"
 """
 
 for func_name in keys:
+    if stub_common.FindSpecial( "noexport", func_name ): continue
     ( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
     print "NAKED " + return_type + " cr_gl" + func_name,

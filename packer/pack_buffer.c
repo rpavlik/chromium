@@ -91,7 +91,7 @@ void crPackAppendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
 	if ( cr_packer_globals.buffer.data_current + length + 24 > cr_packer_globals.buffer.data_end )
 		crError( "crPackAppendBoundedBuffer: overflowed the destination!" );
 
-	crPackBoundsInfo( bounds, src->opcode_current + 1, length,
+	crPackBoundsInfo( bounds, (GLbyte *) src->opcode_current + 1, length,
 					src->opcode_start - src->opcode_current );
 }
 

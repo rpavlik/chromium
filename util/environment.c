@@ -1,5 +1,8 @@
 #include "cr_environment.h"
+#include "cr_string.h"
+
 #include <stdlib.h>
+#include <stdio.h>
 
 void crSetenv( const char *var, const char *value )
 {
@@ -13,8 +16,6 @@ void crSetenv( const char *var, const char *value )
 	buf = (char *) malloc( len );
 	sprintf( buf, "%s=%s", var, value );
 	putenv( buf );
-
-	debug( "%s\n", buf );
 
 	/* don't free the buf, the string is *part* of the environment,
 	 * and can't be reclaimed */

@@ -21,11 +21,13 @@ print """#include <stdio.h>
 print "/* these pointers live in opengl_stub/api_templates.c */"
 for func_name in keys:
     if stub_common.FindSpecial( "exports", func_name ): continue
+    if stub_common.FindSpecial( "noexport", func_name ): continue
     print "extern void *" + stub_common.DoImmediateMapping( func_name ) + ";"
 print ""
 
 for func_name in keys:
     if stub_common.FindSpecial( "exports", func_name ): continue
+    if stub_common.FindSpecial( "noexport", func_name ): continue
     ( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
     print "typedef " + return_type + " (*gl" + func_name + "_ptr)",
@@ -35,6 +37,7 @@ print ""
 
 for func_name in keys:
     if stub_common.FindSpecial( "exports", func_name ): continue
+    if stub_common.FindSpecial( "noexport", func_name ): continue
     ( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
     print return_type + " gl" + func_name,

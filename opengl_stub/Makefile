@@ -62,5 +62,5 @@ init.c: stub_common.py init.py
 	@$(PYTHON) init.py > init.c
 
 $(ARCH_EXPORTS): stub_common.py $(ARCH_EXPORTS_PY)
-	@$(ECHO) "Creating the OpenGL DLL export functions $(ARCH)"
+	@$(ECHO) "Creating the OpenGL DLL export functions (for $(ARCH))"
 	@$(PYTHON) $(ARCH_EXPORTS_PY) > $(ARCH_EXPORTS)
