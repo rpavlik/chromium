@@ -231,13 +231,16 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 
 	if (tilesort_spu.swap)
 	{
-		crPackPushAttribSWAP(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
+		if (tilesort_spu.providedBBOX == GL_SCREEN_BBOX_CR)
+			crPackPushAttribSWAP(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TRANSFORM_BIT);
+		else
+			crPackPushAttribSWAP(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
 		crPackDisableSWAP(GL_TEXTURE_2D);
 		crPackDisableSWAP(GL_TEXTURE_1D);
 		crPackDisableSWAP(GL_LIGHTING);
 		crPackDisableSWAP(GL_BLEND);
 		crPackDisableSWAP(GL_ALPHA_TEST);
-                crPackDisableSWAP(GL_DEPTH_TEST);
+		crPackDisableSWAP(GL_DEPTH_TEST);
 		crPackDisableSWAP(GL_FOG);
 		crPackDisableSWAP(GL_STENCIL_TEST);
 		crPackDisableSWAP(GL_SCISSOR_TEST);
@@ -245,36 +248,60 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 
 		crPackLineWidthSWAP(tilesort_spu.bboxLineWidth);
 		crPackColor3fvSWAP(outcolor);
-		crPackBeginSWAP(GL_LINE_LOOP);
-		crPackVertex3fSWAP(xmin, ymin, zmin);
-		crPackVertex3fSWAP(xmin, ymin, zmax);
-		crPackVertex3fSWAP(xmin, ymax, zmax);
-		crPackVertex3fSWAP(xmin, ymax, zmin);
-		crPackEndSWAP();
-		crPackBeginSWAP(GL_LINE_LOOP);
-		crPackVertex3fSWAP(xmax, ymin, zmin);
-		crPackVertex3fSWAP(xmax, ymin, zmax);
-		crPackVertex3fSWAP(xmax, ymax, zmax);
-		crPackVertex3fSWAP(xmax, ymax, zmin);
-		crPackEndSWAP();
-		crPackBeginSWAP(GL_LINE_LOOP);
-		crPackVertex3fSWAP(xmin, ymin, zmin);
-		crPackVertex3fSWAP(xmax, ymin, zmin);
-		crPackVertex3fSWAP(xmax, ymax, zmin);
-		crPackVertex3fSWAP(xmin, ymax, zmin);
-		crPackEndSWAP();
-		crPackBeginSWAP(GL_LINE_LOOP);
-		crPackVertex3fSWAP(xmin, ymin, zmax);
-		crPackVertex3fSWAP(xmax, ymin, zmax);
-		crPackVertex3fSWAP(xmax, ymax, zmax);
-		crPackVertex3fSWAP(xmin, ymax, zmax);
-		crPackEndSWAP();
+
+		if (tilesort_spu.providedBBOX == GL_SCREEN_BBOX_CR) {
+			crPackMatrixModeSWAP( GL_MODELVIEW ) ;
+			crPackPushMatrixSWAP() ;
+			crPackLoadIdentitySWAP() ;
+			crPackMatrixModeSWAP( GL_PROJECTION ) ;
+			crPackPushMatrixSWAP() ;
+			crPackLoadIdentitySWAP() ;
+
+			crPackBeginSWAP(GL_LINE_LOOP);
+			crPackVertex2fSWAP(xmin, ymin);
+			crPackVertex2fSWAP(xmax, ymin);
+			crPackVertex2fSWAP(xmax, ymax);
+			crPackVertex2fSWAP(xmin, ymax);
+			crPackEndSWAP();
+
+			crPackPopMatrixSWAP() ;
+			crPackMatrixModeSWAP( GL_MODELVIEW ) ;
+			crPackPopMatrixSWAP() ;
+		} else {
+			crPackBeginSWAP(GL_LINE_LOOP);
+			crPackVertex3fSWAP(xmin, ymin, zmin);
+			crPackVertex3fSWAP(xmin, ymin, zmax);
+			crPackVertex3fSWAP(xmin, ymax, zmax);
+			crPackVertex3fSWAP(xmin, ymax, zmin);
+			crPackEndSWAP();
+			crPackBeginSWAP(GL_LINE_LOOP);
+			crPackVertex3fSWAP(xmax, ymin, zmin);
+			crPackVertex3fSWAP(xmax, ymin, zmax);
+			crPackVertex3fSWAP(xmax, ymax, zmax);
+			crPackVertex3fSWAP(xmax, ymax, zmin);
+			crPackEndSWAP();
+			crPackBeginSWAP(GL_LINE_LOOP);
+			crPackVertex3fSWAP(xmin, ymin, zmin);
+			crPackVertex3fSWAP(xmax, ymin, zmin);
+			crPackVertex3fSWAP(xmax, ymax, zmin);
+			crPackVertex3fSWAP(xmin, ymax, zmin);
+			crPackEndSWAP();
+			crPackBeginSWAP(GL_LINE_LOOP);
+			crPackVertex3fSWAP(xmin, ymin, zmax);
+			crPackVertex3fSWAP(xmax, ymin, zmax);
+			crPackVertex3fSWAP(xmax, ymax, zmax);
+			crPackVertex3fSWAP(xmin, ymax, zmax);
+			crPackEndSWAP();
+		}
 
 		crPackPopAttribSWAP();
 	}
 	else
 	{
-		crPackPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
+		if (tilesort_spu.providedBBOX == GL_SCREEN_BBOX_CR)
+			crPackPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TRANSFORM_BIT);
+		else
+			crPackPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
 		crPackDisable(GL_TEXTURE_2D);
 		crPackDisable(GL_TEXTURE_1D);
 		crPackDisable(GL_LIGHTING);
@@ -288,30 +315,50 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 
 		crPackLineWidth(tilesort_spu.bboxLineWidth);
 		crPackColor3fv(outcolor);
-		crPackBegin(GL_LINE_LOOP);
-		crPackVertex3f(xmin, ymin, zmin);
-		crPackVertex3f(xmin, ymin, zmax);
-		crPackVertex3f(xmin, ymax, zmax);
-		crPackVertex3f(xmin, ymax, zmin);
-		crPackEnd();
-		crPackBegin(GL_LINE_LOOP);
-		crPackVertex3f(xmax, ymin, zmin);
-		crPackVertex3f(xmax, ymin, zmax);
-		crPackVertex3f(xmax, ymax, zmax);
-		crPackVertex3f(xmax, ymax, zmin);
-		crPackEnd();
-		crPackBegin(GL_LINE_LOOP);
-		crPackVertex3f(xmin, ymin, zmin);
-		crPackVertex3f(xmax, ymin, zmin);
-		crPackVertex3f(xmax, ymax, zmin);
-		crPackVertex3f(xmin, ymax, zmin);
-		crPackEnd();
-		crPackBegin(GL_LINE_LOOP);
-		crPackVertex3f(xmin, ymin, zmax);
-		crPackVertex3f(xmax, ymin, zmax);
-		crPackVertex3f(xmax, ymax, zmax);
-		crPackVertex3f(xmin, ymax, zmax);
-		crPackEnd();
+		if (tilesort_spu.providedBBOX == GL_SCREEN_BBOX_CR) {
+			crPackMatrixMode( GL_MODELVIEW ) ;
+			crPackPushMatrix() ;
+			crPackLoadIdentity() ;
+			crPackMatrixMode( GL_PROJECTION ) ;
+			crPackPushMatrix() ;
+			crPackLoadIdentity() ;
+
+			crPackBegin(GL_LINE_LOOP);
+			crPackVertex2f(xmin, ymin);
+			crPackVertex2f(xmax, ymin);
+			crPackVertex2f(xmax, ymax);
+			crPackVertex2f(xmin, ymax);
+			crPackEnd();
+
+			crPackPopMatrix() ;
+			crPackMatrixMode( GL_MODELVIEW ) ;
+			crPackPopMatrix() ;
+		} else {
+			crPackBegin(GL_LINE_LOOP);
+			crPackVertex3f(xmin, ymin, zmin);
+			crPackVertex3f(xmin, ymin, zmax);
+			crPackVertex3f(xmin, ymax, zmax);
+			crPackVertex3f(xmin, ymax, zmin);
+			crPackEnd();
+			crPackBegin(GL_LINE_LOOP);
+			crPackVertex3f(xmax, ymin, zmin);
+			crPackVertex3f(xmax, ymin, zmax);
+			crPackVertex3f(xmax, ymax, zmax);
+			crPackVertex3f(xmax, ymax, zmin);
+			crPackEnd();
+			crPackBegin(GL_LINE_LOOP);
+			crPackVertex3f(xmin, ymin, zmin);
+			crPackVertex3f(xmax, ymin, zmin);
+			crPackVertex3f(xmax, ymax, zmin);
+			crPackVertex3f(xmin, ymax, zmin);
+			crPackEnd();
+			crPackBegin(GL_LINE_LOOP);
+			crPackVertex3f(xmin, ymin, zmax);
+			crPackVertex3f(xmax, ymin, zmax);
+			crPackVertex3f(xmax, ymax, zmax);
+			crPackVertex3f(xmin, ymax, zmax);
+			crPackEnd();
+		}
 
 		crPackPopAttrib();
 	}
@@ -381,7 +428,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		} else {
 			/*crDebug( "About to bucket the geometry" ); */
 			tilesortspuBucketGeometry(&bucket_info);
-			if (tilesort_spu.providedBBOX != GL_OBJECT_BBOX_CR)
+			if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR)
 				crPackResetBBOX( thread->packer );
 		}
 	}
