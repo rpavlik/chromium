@@ -112,6 +112,7 @@ crHullInteriorBox
 crNetSetNodeRange
 crNetSetContextRange
 crNetSetRank
+crNetSetKey
 crSleep
 crSpawn
 crKill
