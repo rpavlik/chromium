@@ -13,11 +13,12 @@
 """
 
 
-import string, os.path, types, random, copy
+import string, os.path, types, re, random, copy
 from wxPython.wx import *
-from crutils import *
-from crtypes import *
-import spudialog, intdialog, templates, configio, hostdialog
+
+import crtypes, crutils
+import templates, configio
+import spudialog, intdialog, hostdialog
 
 
 #----------------------------------------------------------------------
@@ -279,7 +280,7 @@ class MainFrame(wxFrame):
 
 		self.dirty     = false
 		self.fileName  = fileName
-		self.mothership = Mothership()
+		self.mothership = crtypes.Mothership()
 		self.undoStack = []
 		self.redoStack = []
 		self.LeftDown = 0
@@ -423,7 +424,7 @@ class MainFrame(wxFrame):
 		n = self.newAppChoice.GetSelection()
 		if n < 5:
 			for i in range(0, n):
-				node = ApplicationNode(host="app%d" % i)
+				node = crutils.NewApplicationNode()
 				node.SetPosition(xstart, ystart + i * 65)
 				node.Select()
 				self.mothership.AddNode(node)
@@ -435,9 +436,9 @@ class MainFrame(wxFrame):
 			if dialog.ShowModal() == wxID_OK:
 				n = dialog.GetValues()[0]
 				if n > 0:
-					node = ApplicationNode(host="app##")
+					node = crutils.NewApplicationNode(n)
 					node.SetPosition(xstart, ystart)
-					node.SetCount(n)
+					#node.SetCount(n)
 					node.Select()
 					self.mothership.AddNode(node)
 		#endif
@@ -454,7 +455,7 @@ class MainFrame(wxFrame):
 		n = self.newServerChoice.GetSelection()
 		if n < 5:
 			for i in range(0, n):
-				node = NetworkNode(host="cr%d" % i)
+				node = crutils.NewNetworkNode()
 				node.SetPosition(xstart, ystart + i * 65)
 				node.Select()
 				self.mothership.AddNode(node)
@@ -466,9 +467,9 @@ class MainFrame(wxFrame):
 			if dialog.ShowModal() == wxID_OK:
 				n = dialog.GetValues()[0]
 				if n > 0:
-					node = NetworkNode(host="cr##")
+					node = crutils.NewNetworkNode(n)
 					node.SetPosition(xstart, ystart)
-					node.SetCount(n)
+					#node.SetCount(n)
 					node.Select()
 					self.mothership.AddNode(node)
 		#endif
@@ -507,7 +508,7 @@ class MainFrame(wxFrame):
 							(SpuClasses[i], node.GetSPU(pos).Name()))
 				break
 			# OK, we're all set, add the SPU
-			s = NewSPU( SpuClasses[i] )
+			s = crutils.NewSPU( SpuClasses[i] )
 			node.AddSPU(s, pos)
 		self.drawArea.Refresh()
 		self.newSpuChoice.SetSelection(0)
@@ -657,12 +658,11 @@ class MainFrame(wxFrame):
 		fileName = os.path.join(os.getcwd(), fileName)
 		os.chdir(curDir)
 
-		title = os.path.basename(fileName)
-
 		if (self.fileName == None) and (len(self.mothership.Nodes()) == 0):
 			# Load contents into current (empty) document.
 			self.fileName = fileName
-			self.SetTitle(os.path.basename(fileName))
+			title = "Chromium Configuration Tool: " +os.path.basename(fileName)
+			self.SetTitle(title)
 			self.loadConfig()
 		else:
 			# Open a new frame for this document.
@@ -709,7 +709,7 @@ class MainFrame(wxFrame):
 		fileName = os.path.join(os.getcwd(), fileName)
 		os.chdir(curDir)
 
-		title = os.path.basename(fileName)
+		title = "Chromium Configuration Tool: " + os.path.basename(fileName)
 		self.SetTitle(title)
 
 		self.fileName = fileName
@@ -1381,11 +1381,15 @@ def main():
 	global _app
 
 	# Redirect python exceptions to a log file.
+	# XXX if we crash upon startup, try commenting-out this next line:
 	sys.stderr = ExceptionHandler()
+
+	# Set the default site file
+	#crutils.SetDefaultSiteFile("tungsten.crsite")
 
 	# Scan for available SPU classes
 	global SpuClasses
-	SpuClasses = FindSPUNames()
+	SpuClasses = crutils.FindSPUNames()
 	print "Found SPU classes: %s" % str(SpuClasses)
 
 	# Get the params and options for all SPU classes
@@ -1393,7 +1397,7 @@ def main():
 	SPUInfo = {}
 	for spu in SpuClasses:
 		print "getting options for %s SPU" % spu
-		SPUInfo[spu] = GetSPUOptions(spu)
+		SPUInfo[spu] = crutils.GetSPUOptions(spu)
 
 	# Create and start the application.
 	_app = ConfigApp(0)

@@ -642,7 +642,12 @@ class TilesortDialog(wxDialog):
 def Create_Tilesort(parentWindow, mothership):
 	"""Create a tilesort configuration"""
 
-	dialogDefaults = [1, 2, 1]
+	defaultMuralSize = crutils.GetSiteDefault("mural_size")
+	if defaultMuralSize:
+		dialogDefaults = [ 1, defaultMuralSize[0], defaultMuralSize[1] ]
+	else:
+		dialogDefaults = [1, 2, 1]
+
 	dialog = intdialog.IntDialog(NULL, id=-1, title="Tilesort Template",
 								 labels=["Number of application nodes:",
 										 "Mural Columns:",
@@ -659,20 +664,26 @@ def Create_Tilesort(parentWindow, mothership):
 	rows = values[2]
 	mothership.Tilesort = TilesortParameters(rows, cols)
 
+	defaultScreenSize = crutils.GetSiteDefault("screen_size")
+	if defaultScreenSize:
+		mothership.Tilesort.TileWidth = defaultScreenSize[0]
+		mothership.Tilesort.TileHeight = defaultScreenSize[1]
+
 	# build the graph
 	numServers = rows * cols
-	hostname = "localhost"
 	mothership.DeselectAllNodes()
 	# Create the <numClients> app nodes
-	appNode = crtypes.ApplicationNode()
+	#	appNode = crtypes.ApplicationNode()
+	#	appNode.SetCount(numClients)
+	appNode = crutils.NewApplicationNode(numClients)
 	appNode.SetPosition(50, 50)
-	appNode.SetCount(numClients)
 	appNode.Select()
 	tilesortSPU = crutils.NewSPU("tilesort")
 	appNode.AddSPU(tilesortSPU)
 	mothership.AddNode(appNode)
 	# Create the <numServers> server nodes
-	serverNode = crtypes.NetworkNode(count=numServers)
+	#serverNode = crtypes.NetworkNode(count=numServers)
+	serverNode = crutils.NewNetworkNode(numServers)
 	serverNode.SetPosition(350, 50)
 	serverNode.Select()
 	renderSPU = crutils.NewSPU("render")
