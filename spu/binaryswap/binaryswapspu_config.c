@@ -123,7 +123,7 @@ SPUOptions binaryswapspuOptions[] = {
      { "type", CR_ENUM, 1, "depth", "'depth', 'alpha'", NULL, 
        "Composite type",  (SPUOptionCB)set_type},
 
-     { "swapmtu", CR_STRING, 1, "", NULL, NULL, 
+     { "swapmtu", CR_INT, 1, "1048576", "1024", NULL, 
        "MTU size for swapping", (SPUOptionCB)set_swapmtu},
      
      { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
