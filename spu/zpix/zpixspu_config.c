@@ -75,17 +75,17 @@ static void set_ztype_parm( ZpixSPU *zpix_spu, const char *response )
  */
 SPUOptions zpixSPUOptions[] = {
    { "ztype", CR_ENUM, 1, "Zlib", "'None', 'Zlib', 'RLE', 'PLE'", NULL,
-      "Compression type from ZTYPE enum", (SPUOptionCB) set_ztype },
-   { "ztype_parm", CR_INT, 1, "-1", NULL, NULL,
-      "Compression parameter for ZTYPE", (SPUOptionCB) set_ztype_parm },
+      "Compression type", (SPUOptionCB) set_ztype },
+   { "ztype_parm", CR_INT, 1, "-1", "-1", NULL,
+      "Compression parameter", (SPUOptionCB) set_ztype_parm },
    { "client_id", CR_INT, 1, "0", NULL, NULL,
-      "Client id when using multiple clients", (SPUOptionCB) set_client_id },
-   { "no_diff", CR_BOOL, 0, "0", NULL, NULL, 
+      "Client ID when using multiple clients", (SPUOptionCB) set_client_id },
+   { "no_diff", CR_BOOL, 1, "0", NULL, NULL, 
       "Suppress buffer differencing", (SPUOptionCB) set_no_diff },
-   { "debug", CR_BOOL, 0, "0", NULL, NULL, 
-      "Debug state true or false", (SPUOptionCB) set_debug },
+   { "debug", CR_BOOL, 1, "0", NULL, NULL, 
+      "Debug mode", (SPUOptionCB) set_debug },
    { "verbose", CR_BOOL, 1, "0", NULL, NULL,
-      "Verbose messages true or false", (SPUOptionCB) set_verbose },
+      "Verbose messages", (SPUOptionCB) set_verbose },
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 
