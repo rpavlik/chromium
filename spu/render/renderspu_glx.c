@@ -1121,13 +1121,13 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 					 * GLX visual as the window.
 					 */
 					renderspu_RecreateContext(context, vid);
-					/* OK, this should work */
-					window->nativeWindow = (Window) nativeWindow;
-					b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
-																						window->nativeWindow,
-																						context->context );
-					CRASSERT(b);
 				}
+				/* OK, this should work */
+				window->nativeWindow = (Window) nativeWindow;
+				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
+																					window->nativeWindow,
+																					context->context );
+				CRASSERT(b);
 			}
 			else
 			{
