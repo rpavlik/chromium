@@ -634,6 +634,17 @@ options are applicable to the Binaryswap SPU.  See
 cr/mothership/configs/psubmit_bswap.conf for an example of how to use
 this SPU.
 </p>
+
+<p>
+For background information on the binary swap algorithm read
+<a href="http://www.ccs.lanl.gov/ccs1/projects/Viz/pdfs/94-cga.pdf" target="_parent">
+Parallel Volume Rendering Using Binary-Swap Image Composition</a> (pdf).
+</p>
+
+
+
+
+
 <table border="1" width="100%" height="149">
   <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -653,19 +664,13 @@ this SPU.
     <td width="19%" class="ConfigOption" height="20">node_number</td>
     <td width="12%" class="ConfigType" height="20">Integer</td>
     <td width="115%" class="ConfigDesc" height="20">
-
-The number of the node in relation to the swap ordering.  Binary swap
-compositing requires a specific ordering of the nodes to correctly do
-alpha compositing.  A power-of-two ordering defines this order such that
-nodes 0 and 1 swap, 2 and 3 swap, etc.  The next phase has 0 and 2 swap,
-then 1 and 3, etc.  The number defined here specifies where in this
-compositing order the node should be placed.  If your final image is
-composited incorrectly, double check the node ordering you setup here.  If
-this explanation is confusing, you might read <a
-href="http://www.acl.lanl.gov/viz/pdfs/94-cga.pdf" target="_parent">
-the original binary swap paper</a>.
-
-
+    The number of the node in relation to the swap ordering.  Binary swap
+    compositing requires a specific ordering of the nodes to correctly do
+    alpha compositing.  A power-of-two ordering defines this order such that
+    nodes 0 and 1 swap, 2 and 3 swap, etc.  The next phase has 0 and 2 swap,
+    then 1 and 3, etc.  The number defined here specifies where in this
+    compositing order the node should be placed.  If your final image is
+    composited incorrectly, double check the node ordering you setup here.
     </td>
   </tr>
   <tr>
