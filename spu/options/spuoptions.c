@@ -129,10 +129,14 @@ static void print_option( SPUOptions *opt, int pythonMode )
 		   printf("[%s]", opt->deflt);
 
 		if (opt->min) {
-			printf(", [%s] ", opt->min);
-			if (opt->max) {
+			printf(", [%s]", opt->min);
+			if (opt->max)
 				printf(", [%s]", opt->max);
-			}
+			else
+				printf(", []");
+		}
+		else {
+			printf(", [], []");
 		}
 		printf("),\n");
 	}
