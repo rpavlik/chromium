@@ -16,7 +16,7 @@ crPackDeleteFencesNV(GLsizei n, const GLuint * fences)
 	WRITE_DATA(0, int, packet_length);
 	WRITE_DATA(sizeof(int) + 0, GLsizei, n);
 	memcpy(data_ptr + sizeof(int) + 4, fences, n * sizeof(*fences));
-	crHugePacket(CR_DELETEFENCESNV_EXTEND_OPCODE, data_ptr);
+	crHugePacket((CROpcode) CR_DELETEFENCESNV_EXTEND_OPCODE, data_ptr);
 }
 
 void PACK_APIENTRY crPackDeleteFencesNVSWAP( GLsizei n, const GLuint *fences )
@@ -32,7 +32,7 @@ void PACK_APIENTRY crPackDeleteFencesNVSWAP( GLsizei n, const GLuint *fences )
 	{
 		WRITE_DATA((i+1)*sizeof( int ) + 4, GLint, SWAP32(fences[i]));
 	}
-	crHugePacket(CR_DELETEFENCESNV_EXTEND_OPCODE, data_ptr);
+	crHugePacket((CROpcode) CR_DELETEFENCESNV_EXTEND_OPCODE, data_ptr);
 	crPackFree(data_ptr);
 }
 
