@@ -1,0 +1,1171 @@
+/* Copyright (c) 2001, Stanford University
+ * All rights reserved
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <memory.h>
+#include "cr_glstate.h"
+#include "state/cr_statetypes.h"
+#include "state_internals.h"
+#include "cr_error.h"
+#include "cr_mem.h"
+
+void crStateAttribInit (CRAttribState *a) 
+{
+	int i;
+	a->attribStackDepth = 0;
+	a->accumBufferStackDepth = 0;
+	a->colorBufferStackDepth = 0;
+	a->currentStackDepth = 0;
+	a->depthBufferStackDepth = 0;
+	a->enableStackDepth = 0;
+	for ( i = 0 ; i < CR_MAX_ATTRIB_STACK_DEPTH ; i++)
+	{
+		a->enableStack[i].clip = NULL;
+		a->enableStack[i].light = NULL;
+		a->lightingStack[i].light = NULL;
+		a->transformStack[i].clip = NULL;
+		a->transformStack[i].clipPlane = NULL;
+	}
+	a->evalStackDepth = 0;
+	a->fogStackDepth = 0;
+	a->lightingStackDepth = 0;
+	a->lineStackDepth = 0;
+	a->listStackDepth = 0;
+	a->pixelModeStackDepth = 0;
+	a->pointStackDepth = 0;
+	a->polygonStackDepth = 0;
+	a->polygonStippleStackDepth = 0;
+	a->scissorStackDepth = 0;
+	a->stencilBufferStackDepth = 0;
+	a->textureStackDepth = 0;
+	a->transformStackDepth = 0;
+	a->viewportStackDepth = 0;
+}
+
+void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
+{
+	CRContext *g = GetCurrentContext();
+	CRAttribState *a = &(g->attrib);
+	CRStateBits *sb = GetCurrentBits();
+	CRAttribBits *ab = &(sb->attrib);
+	unsigned int i;
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glPushAttrib called in Begin/End");
+		return;
+	}
+
+	if (a->attribStackDepth == CR_MAX_ATTRIB_STACK_DEPTH - 1)
+	{
+		crStateError(__LINE__, __FILE__, GL_STACK_OVERFLOW, "glPushAttrib called with a full stack!" );
+	}
+
+	FLUSH();
+
+	a->pushMaskStack[a->attribStackDepth++] = mask;
+
+	if (mask & GL_ACCUM_BUFFER_BIT)
+	{
+		a->accumBufferStack[a->accumBufferStackDepth].accumClearValue = g->buffer.accumClearValue;
+		a->accumBufferStackDepth++;
+	}
+	if (mask & GL_COLOR_BUFFER_BIT)
+	{
+		a->colorBufferStack[a->colorBufferStackDepth].alphaTest = g->buffer.alphaTest;
+		a->colorBufferStack[a->colorBufferStackDepth].alphaTestFunc = g->buffer.alphaTestFunc;
+		a->colorBufferStack[a->colorBufferStackDepth].alphaTestRef = g->buffer.alphaTestRef;
+		a->colorBufferStack[a->colorBufferStackDepth].blend = g->buffer.blend;
+		a->colorBufferStack[a->colorBufferStackDepth].blendSrc = g->buffer.blendSrc;
+		a->colorBufferStack[a->colorBufferStackDepth].blendDst = g->buffer.blendDst;
+#ifdef CR_EXT_blend_color
+		a->colorBufferStack[a->colorBufferStackDepth].blendColor = g->buffer.blendColor;
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+		a->colorBufferStack[a->colorBufferStackDepth].blendEquation = g->buffer.blendEquation;
+#endif
+		a->colorBufferStack[a->colorBufferStackDepth].dither = g->buffer.dither;
+		a->colorBufferStack[a->colorBufferStackDepth].drawBuffer = g->buffer.drawBuffer;
+		a->colorBufferStack[a->colorBufferStackDepth].logicOp = g->buffer.logicOp;
+		a->colorBufferStack[a->colorBufferStackDepth].indexLogicOp = g->buffer.indexLogicOp;
+		a->colorBufferStack[a->colorBufferStackDepth].logicOpMode = g->buffer.logicOpMode;
+		a->colorBufferStack[a->colorBufferStackDepth].colorClearValue = g->buffer.colorClearValue;
+		a->colorBufferStack[a->colorBufferStackDepth].indexClearValue = g->buffer.indexClearValue;
+		a->colorBufferStack[a->colorBufferStackDepth].colorWriteMask = g->buffer.colorWriteMask;
+		a->colorBufferStack[a->colorBufferStackDepth].indexWriteMask = g->buffer.indexWriteMask;
+		a->colorBufferStackDepth++;
+	}
+	if (mask & GL_CURRENT_BIT)
+	{
+		a->currentStack[a->currentStackDepth].color = g->current.color;
+		a->currentStack[a->currentStackDepth].index = g->current.index;
+		a->currentStack[a->currentStackDepth].normal = g->current.normal;
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			a->currentStack[a->currentStackDepth].texCoord[i] = g->current.texCoord[i];
+		}
+		a->currentStack[a->currentStackDepth].rasterPos = g->current.rasterPos;
+		a->currentStack[a->currentStackDepth].rasterValid = g->current.rasterValid;
+		a->currentStack[a->currentStackDepth].rasterColor = g->current.rasterColor;
+		a->currentStack[a->currentStackDepth].rasterIndex = g->current.rasterIndex;
+		a->currentStack[a->currentStackDepth].rasterTexture = g->current.rasterTexture;
+		a->currentStack[a->currentStackDepth].edgeFlag = g->current.edgeFlag;
+		a->currentStackDepth++;
+	}
+	if (mask & GL_DEPTH_BUFFER_BIT)
+	{
+		a->depthBufferStack[a->depthBufferStackDepth].depthTest = g->buffer.depthTest;
+		a->depthBufferStack[a->depthBufferStackDepth].depthFunc = g->buffer.depthFunc;
+		a->depthBufferStack[a->depthBufferStackDepth].depthClearValue = g->buffer.depthClearValue;
+		a->depthBufferStack[a->depthBufferStackDepth].depthMask = g->buffer.depthMask;
+		a->depthBufferStackDepth++;
+	}
+	if (mask & GL_ENABLE_BIT)
+	{
+		if (a->enableStack[a->enableStackDepth].clip == NULL)
+		{
+			a->enableStack[a->enableStackDepth].clip = (GLboolean *) crAlloc( g->limits.maxClipPlanes * sizeof( GLboolean ));
+		}
+		if (a->enableStack[a->enableStackDepth].light == NULL)
+		{
+			a->enableStack[a->enableStackDepth].light = (GLboolean *) crAlloc( g->limits.maxLights * sizeof( GLboolean ));
+		}
+		a->enableStack[a->enableStackDepth].alphaTest = g->buffer.alphaTest;
+		a->enableStack[a->enableStackDepth].autoNormal = g->eval.autoNormal;
+		a->enableStack[a->enableStackDepth].blend = g->buffer.blend;
+		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
+		{
+			a->enableStack[a->enableStackDepth].clip[i] = g->transform.clip[i];
+		}
+		a->enableStack[a->enableStackDepth].colorMaterial = g->lighting.colorMaterial;
+		a->enableStack[a->enableStackDepth].cullFace = g->polygon.cullFace;
+		a->enableStack[a->enableStackDepth].depthTest = g->buffer.depthTest;
+		a->enableStack[a->enableStackDepth].dither = g->buffer.dither;
+		a->enableStack[a->enableStackDepth].fog = g->fog.enable;
+		for (i = 0 ; i < g->limits.maxLights ; i++)
+		{
+			a->enableStack[a->enableStackDepth].light[i] = g->lighting.light[i].enable;
+		}
+		a->enableStack[a->enableStackDepth].lighting = g->lighting.lighting;
+		a->enableStack[a->enableStackDepth].lineSmooth = g->line.lineSmooth;
+		a->enableStack[a->enableStackDepth].lineStipple = g->line.lineStipple;
+		a->enableStack[a->enableStackDepth].logicOp = g->buffer.logicOp;
+		a->enableStack[a->enableStackDepth].indexLogicOp = g->buffer.indexLogicOp;
+		for (i = 0 ; i < GLEVAL_TOT ; i++)
+		{
+			a->enableStack[a->enableStackDepth].map1[i] = g->eval.enable1D[i];
+			a->enableStack[a->enableStackDepth].map2[i] = g->eval.enable2D[i];
+		}
+		a->enableStack[a->enableStackDepth].normalize = g->current.normalize;
+		a->enableStack[a->enableStackDepth].pointSmooth = g->line.pointSmooth;
+		a->enableStack[a->enableStackDepth].polygonOffsetLine = g->polygon.polygonOffsetLine;
+		a->enableStack[a->enableStackDepth].polygonOffsetFill = g->polygon.polygonOffsetFill;
+		a->enableStack[a->enableStackDepth].polygonOffsetPoint = g->polygon.polygonOffsetPoint;
+		a->enableStack[a->enableStackDepth].polygonSmooth = g->polygon.polygonSmooth;
+		a->enableStack[a->enableStackDepth].polygonStipple = g->polygon.polygonStipple;
+#ifdef CR_OPENGL_VERSION_1_2
+		a->enableStack[a->enableStackDepth].rescaleNormals = g->transform.rescaleNormals;
+#endif
+		a->enableStack[a->enableStackDepth].scissorTest = g->viewport.scissorTest;
+		a->enableStack[a->enableStackDepth].stencilTest = g->stencil.stencilTest;
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		{
+			a->enableStack[a->enableStackDepth].texture1D[i] = g->texture.unit[i].enabled1D;
+			a->enableStack[a->enableStackDepth].texture2D[i] = g->texture.unit[i].enabled2D;
+#ifdef CR_OPENGL_VERSION_1_2
+			a->enableStack[a->enableStackDepth].texture3D[i] = g->texture.unit[i].enabled3D;
+#endif
+#ifdef CR_ARB_texture_cube_map
+			a->enableStack[a->enableStackDepth].textureCubeMap[i] = g->texture.unit[i].enabledCubeMap;
+#endif
+			a->enableStack[a->enableStackDepth].textureGenS[i] = g->texture.unit[i].textureGen.s;
+			a->enableStack[a->enableStackDepth].textureGenT[i] = g->texture.unit[i].textureGen.t;
+			a->enableStack[a->enableStackDepth].textureGenR[i] = g->texture.unit[i].textureGen.r;
+			a->enableStack[a->enableStackDepth].textureGenQ[i] = g->texture.unit[i].textureGen.q;
+		}
+		a->enableStackDepth++;
+	}
+	if (mask & GL_EVAL_BIT)
+	{
+		for (i = 0 ; i < GLEVAL_TOT ; i++)
+		{
+			int size1 = g->eval.eval1D[i].order * gleval_sizes[i] * 
+					sizeof (GLfloat);
+			int size2 = g->eval.eval2D[i].uorder * g->eval.eval2D[i].vorder *
+					gleval_sizes[i] * sizeof (GLfloat);
+			a->evalStack[a->evalStackDepth].enable1D[i] = g->eval.enable1D[i];
+			a->evalStack[a->evalStackDepth].enable2D[i] = g->eval.enable2D[i];
+			a->evalStack[a->evalStackDepth].eval1D[i].u1 = g->eval.eval1D[i].u1;
+			a->evalStack[a->evalStackDepth].eval1D[i].u2 = g->eval.eval1D[i].u2;
+			a->evalStack[a->evalStackDepth].eval1D[i].order = g->eval.eval1D[i].order;
+			a->evalStack[a->evalStackDepth].eval1D[i].coeff = (GLfloat*)crAlloc(size1);
+			memcpy(a->evalStack[a->evalStackDepth].eval1D[i].coeff, g->eval.eval1D[i].coeff, size1);
+			a->evalStack[a->evalStackDepth].eval2D[i].u1 = g->eval.eval2D[i].u1;
+			a->evalStack[a->evalStackDepth].eval2D[i].u2 = g->eval.eval2D[i].u2;
+			a->evalStack[a->evalStackDepth].eval2D[i].v1 = g->eval.eval2D[i].v1;
+			a->evalStack[a->evalStackDepth].eval2D[i].v2 = g->eval.eval2D[i].v2;
+			a->evalStack[a->evalStackDepth].eval2D[i].uorder = g->eval.eval2D[i].uorder;
+			a->evalStack[a->evalStackDepth].eval2D[i].vorder = g->eval.eval2D[i].vorder;
+			a->evalStack[a->evalStackDepth].eval2D[i].coeff = (GLfloat*)crAlloc(size2);
+			memcpy(a->evalStack[a->evalStackDepth].eval2D[i].coeff, g->eval.eval2D[i].coeff, size2);
+		}
+		a->evalStack[a->evalStackDepth].autoNormal = g->eval.autoNormal;
+		a->evalStack[a->evalStackDepth].un1D = g->eval.un1D;
+		a->evalStack[a->evalStackDepth].u11D = g->eval.u11D;
+		a->evalStack[a->evalStackDepth].u21D = g->eval.u21D;
+		a->evalStack[a->evalStackDepth].un2D = g->eval.un2D;
+		a->evalStack[a->evalStackDepth].u12D = g->eval.u12D;
+		a->evalStack[a->evalStackDepth].u22D = g->eval.u22D;
+		a->evalStack[a->evalStackDepth].vn2D = g->eval.vn2D;
+		a->evalStack[a->evalStackDepth].v12D = g->eval.v12D;
+		a->evalStack[a->evalStackDepth].v22D = g->eval.v22D;
+		a->evalStackDepth++;
+	}
+	if (mask & GL_FOG_BIT)
+	{
+		a->fogStack[a->fogStackDepth].enable = g->fog.enable;
+		a->fogStack[a->fogStackDepth].color = g->fog.color;
+		a->fogStack[a->fogStackDepth].density = g->fog.density;
+		a->fogStack[a->fogStackDepth].start = g->fog.start;
+		a->fogStack[a->fogStackDepth].end = g->fog.end;
+		a->fogStack[a->fogStackDepth].index = g->fog.index;
+		a->fogStack[a->fogStackDepth].mode = g->fog.mode;
+		a->fogStackDepth++;
+	}
+	if (mask & GL_HINT_BIT)
+	{
+		a->hintStack[a->hintStackDepth].perspectiveCorrection = g->hint.perspectiveCorrection;
+		a->hintStack[a->hintStackDepth].pointSmooth = g->hint.pointSmooth;
+		a->hintStack[a->hintStackDepth].lineSmooth = g->hint.lineSmooth;
+		a->hintStack[a->hintStackDepth].polygonSmooth = g->hint.polygonSmooth;
+		a->hintStack[a->hintStackDepth].fog = g->hint.fog;
+#ifdef CR_EXT_clip_volume_hint
+		a->hintStack[a->hintStackDepth].clipVolumeClipping = g->hint.clipVolumeClipping;
+#endif
+#ifdef CR_ARB_texture_compression
+		a->hintStack[a->hintStackDepth].textureCompression = g->hint.textureCompression;
+#endif
+#ifdef CR_SGIS_generate_mipmap
+		a->hintStack[a->hintStackDepth].generateMipmap = g->hint.generateMipmap;
+#endif
+		a->hintStackDepth++;
+	}
+	if (mask & GL_LIGHTING_BIT)
+	{
+		if (a->lightingStack[a->lightingStackDepth].light == NULL)
+		{
+			a->lightingStack[a->lightingStackDepth].light = (CRLight *) crAlloc( g->limits.maxLights * sizeof( CRLight ));
+		}
+		a->lightingStack[a->lightingStackDepth].lightModelAmbient = g->lighting.lightModelAmbient;
+		a->lightingStack[a->lightingStackDepth].lightModelLocalViewer = g->lighting.lightModelLocalViewer;
+		a->lightingStack[a->lightingStackDepth].lightModelTwoSide = g->lighting.lightModelTwoSide;
+#if defined(CR_EXT_separate_specular_color) || defined(CR_OPENGL_VERSION_1_2)
+		a->lightingStack[a->lightingStackDepth].lightModelColorControlEXT = g->lighting.lightModelColorControlEXT;
+#endif
+		a->lightingStack[a->lightingStackDepth].lighting = g->lighting.lighting;
+		for (i = 0 ; i < g->limits.maxLights; i++)
+		{
+			a->lightingStack[a->lightingStackDepth].light[i].enable = g->lighting.light[i].enable;
+			a->lightingStack[a->lightingStackDepth].light[i].ambient = g->lighting.light[i].ambient;
+			a->lightingStack[a->lightingStackDepth].light[i].diffuse = g->lighting.light[i].diffuse;
+			a->lightingStack[a->lightingStackDepth].light[i].specular = g->lighting.light[i].specular;
+			a->lightingStack[a->lightingStackDepth].light[i].spotDirection = g->lighting.light[i].spotDirection;
+			a->lightingStack[a->lightingStackDepth].light[i].position = g->lighting.light[i].position;
+			a->lightingStack[a->lightingStackDepth].light[i].spotExponent = g->lighting.light[i].spotExponent;
+			a->lightingStack[a->lightingStackDepth].light[i].spotCutoff = g->lighting.light[i].spotCutoff;
+			a->lightingStack[a->lightingStackDepth].light[i].constantAttenuation = g->lighting.light[i].constantAttenuation;
+			a->lightingStack[a->lightingStackDepth].light[i].linearAttenuation = g->lighting.light[i].linearAttenuation;
+			a->lightingStack[a->lightingStackDepth].light[i].quadraticAttenuation = g->lighting.light[i].quadraticAttenuation;
+		}
+		for (i = 0 ; i < 2 ; i++)
+		{
+			a->lightingStack[a->lightingStackDepth].ambient[i] = g->lighting.ambient[i];
+			a->lightingStack[a->lightingStackDepth].diffuse[i] = g->lighting.diffuse[i];
+			a->lightingStack[a->lightingStackDepth].specular[i] = g->lighting.specular[i];
+			a->lightingStack[a->lightingStackDepth].emission[i] = g->lighting.emission[i];
+			a->lightingStack[a->lightingStackDepth].shininess[i] = g->lighting.shininess[i];
+			a->lightingStack[a->lightingStackDepth].indexes[i][0] = g->lighting.indexes[i][0];
+			a->lightingStack[a->lightingStackDepth].indexes[i][1] = g->lighting.indexes[i][1];
+			a->lightingStack[a->lightingStackDepth].indexes[i][2] = g->lighting.indexes[i][2];
+		}
+		a->lightingStack[a->lightingStackDepth].shadeModel = g->lighting.shadeModel;
+		a->lightingStackDepth++;
+	}
+	if (mask & GL_LINE_BIT)
+	{
+		a->lineStack[a->lineStackDepth].lineSmooth = g->line.lineSmooth;
+		a->lineStack[a->lineStackDepth].lineStipple = g->line.lineStipple;
+		a->lineStack[a->lineStackDepth].pattern = g->line.pattern;
+		a->lineStack[a->lineStackDepth].repeat = g->line.repeat;
+		a->lineStack[a->lineStackDepth].width = g->line.width;
+		a->lineStackDepth++;
+	}
+	if (mask & GL_LIST_BIT)
+	{
+		a->listStack[a->listStackDepth].base = g->lists.base;
+		a->listStackDepth++;
+	}
+	if (mask & GL_PIXEL_MODE_BIT)
+	{
+		a->pixelModeStack[a->pixelModeStackDepth].bias = g->pixel.bias;
+		a->pixelModeStack[a->pixelModeStackDepth].scale = g->pixel.scale;
+		a->pixelModeStack[a->pixelModeStackDepth].indexOffset = g->pixel.indexOffset;
+		a->pixelModeStack[a->pixelModeStackDepth].indexShift = g->pixel.indexShift;
+		a->pixelModeStack[a->pixelModeStackDepth].mapColor = g->pixel.mapColor;
+		a->pixelModeStack[a->pixelModeStackDepth].mapStencil = g->pixel.mapStencil;
+		a->pixelModeStack[a->pixelModeStackDepth].xZoom = g->pixel.xZoom;
+		a->pixelModeStack[a->pixelModeStackDepth].yZoom = g->pixel.yZoom;
+		a->pixelModeStack[a->pixelModeStackDepth].readBuffer = g->buffer.readBuffer;
+		a->pixelModeStackDepth++;
+	}
+	if (mask & GL_POINT_BIT)
+	{
+		a->pointStack[a->pointStackDepth].pointSmooth = g->line.pointSmooth;
+		a->pointStack[a->pointStackDepth].pointSize = g->line.pointSize;
+		a->pointStackDepth++;
+	}
+	if (mask & GL_POLYGON_BIT)
+	{
+		a->polygonStack[a->polygonStackDepth].cullFace = g->polygon.cullFace;
+		a->polygonStack[a->polygonStackDepth].cullFaceMode = g->polygon.cullFaceMode;
+		a->polygonStack[a->polygonStackDepth].frontFace = g->polygon.frontFace;
+		a->polygonStack[a->polygonStackDepth].frontMode = g->polygon.frontMode;
+		a->polygonStack[a->polygonStackDepth].backMode = g->polygon.backMode;
+		a->polygonStack[a->polygonStackDepth].polygonSmooth = g->polygon.polygonSmooth;
+		a->polygonStack[a->polygonStackDepth].polygonStipple = g->polygon.polygonStipple;
+		a->polygonStack[a->polygonStackDepth].polygonOffsetFill = g->polygon.polygonOffsetFill;
+		a->polygonStack[a->polygonStackDepth].polygonOffsetLine = g->polygon.polygonOffsetLine;
+		a->polygonStack[a->polygonStackDepth].polygonOffsetPoint = g->polygon.polygonOffsetPoint;
+		a->polygonStack[a->polygonStackDepth].offsetFactor = g->polygon.offsetFactor;
+		a->polygonStack[a->polygonStackDepth].offsetUnits = g->polygon.offsetUnits;
+		a->polygonStackDepth++;
+	}
+	if (mask & GL_POLYGON_STIPPLE_BIT)
+	{
+		memcpy( a->polygonStippleStack[a->polygonStippleStackDepth].pattern, g->polygon.stipple, 32*sizeof(GLint) );
+		a->polygonStippleStackDepth++;
+	}
+	if (mask & GL_SCISSOR_BIT)
+	{
+		a->scissorStack[a->scissorStackDepth].scissorTest = g->viewport.scissorTest;
+		a->scissorStack[a->scissorStackDepth].scissorX = g->viewport.scissorX;
+		a->scissorStack[a->scissorStackDepth].scissorY = g->viewport.scissorY;
+		a->scissorStack[a->scissorStackDepth].scissorW = g->viewport.scissorW;
+		a->scissorStack[a->scissorStackDepth].scissorH = g->viewport.scissorH;
+		a->scissorStackDepth++;
+	}
+	if (mask & GL_STENCIL_BUFFER_BIT)
+	{
+		a->stencilBufferStack[a->stencilBufferStackDepth].stencilTest = g->stencil.stencilTest;
+		a->stencilBufferStack[a->stencilBufferStackDepth].func = g->stencil.func;
+		a->stencilBufferStack[a->stencilBufferStackDepth].mask = g->stencil.mask;
+		a->stencilBufferStack[a->stencilBufferStackDepth].ref = g->stencil.ref;
+		a->stencilBufferStack[a->stencilBufferStackDepth].fail = g->stencil.fail;
+		a->stencilBufferStack[a->stencilBufferStackDepth].passDepthFail = g->stencil.passDepthFail;
+		a->stencilBufferStack[a->stencilBufferStackDepth].passDepthPass = g->stencil.passDepthPass;
+		a->stencilBufferStack[a->stencilBufferStackDepth].clearValue = g->stencil.clearValue;
+		a->stencilBufferStack[a->stencilBufferStackDepth].writeMask = g->stencil.writeMask;
+		a->stencilBufferStackDepth++;
+	}
+	if (mask & GL_TEXTURE_BIT)
+	{
+		a->textureStack[a->textureStackDepth].curTextureUnit = g->texture.curTextureUnit;
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			a->textureStack[a->textureStackDepth].enabled1D[i] = g->texture.unit[i].enabled1D;
+			a->textureStack[a->textureStackDepth].enabled2D[i] = g->texture.unit[i].enabled2D;
+#ifdef CR_OPENGL_VERSION_1_2
+			a->textureStack[a->textureStackDepth].enabled3D[i] = g->texture.unit[i].enabled3D;
+#endif
+#ifdef CR_ARB_texture_cube_map
+			a->textureStack[a->textureStackDepth].enabledCubeMap[i] = g->texture.unit[i].enabledCubeMap;
+#endif
+			a->textureStack[a->textureStackDepth].textureGen[i] = g->texture.unit[i].textureGen;
+			a->textureStack[a->textureStackDepth].objSCoeff[i] = g->texture.unit[i].objSCoeff;
+			a->textureStack[a->textureStackDepth].objTCoeff[i] = g->texture.unit[i].objTCoeff;
+			a->textureStack[a->textureStackDepth].objRCoeff[i] = g->texture.unit[i].objRCoeff;
+			a->textureStack[a->textureStackDepth].objQCoeff[i] = g->texture.unit[i].objQCoeff;
+			a->textureStack[a->textureStackDepth].eyeSCoeff[i] = g->texture.unit[i].eyeSCoeff;
+			a->textureStack[a->textureStackDepth].eyeTCoeff[i] = g->texture.unit[i].eyeTCoeff;
+			a->textureStack[a->textureStackDepth].eyeRCoeff[i] = g->texture.unit[i].eyeRCoeff;
+			a->textureStack[a->textureStackDepth].eyeQCoeff[i] = g->texture.unit[i].eyeQCoeff;
+			a->textureStack[a->textureStackDepth].gen[i] = g->texture.unit[i].gen;
+			a->textureStack[a->textureStackDepth].envMode[i] = g->texture.unit[i].envMode;
+			a->textureStack[a->textureStackDepth].envColor[i] = g->texture.unit[i].envColor;
+		}
+		/* Is this right?  It sure doesn't seem right. */
+		a->textureStack[a->textureStackDepth].borderColor[0] = g->texture.currentTexture1D->borderColor;
+		a->textureStack[a->textureStackDepth].minFilter[0] = g->texture.currentTexture1D->minFilter;
+		a->textureStack[a->textureStackDepth].magFilter[0] = g->texture.currentTexture1D->magFilter;
+		a->textureStack[a->textureStackDepth].wrapS[0] = g->texture.currentTexture1D->wrapS;
+		a->textureStack[a->textureStackDepth].wrapT[0] = g->texture.currentTexture1D->wrapT;
+#ifdef CR_OPENGL_VERSION_1_2
+		a->textureStack[a->textureStackDepth].wrapR[0] = g->texture.currentTexture1D->wrapR;
+		a->textureStack[a->textureStackDepth].priority[0] = g->texture.currentTexture1D->priority;
+		a->textureStack[a->textureStackDepth].minLod[0] = g->texture.currentTexture1D->minLod;
+		a->textureStack[a->textureStackDepth].maxLod[0] = g->texture.currentTexture1D->maxLod;
+		a->textureStack[a->textureStackDepth].baseLevel[0] = g->texture.currentTexture1D->baseLevel;
+		a->textureStack[a->textureStackDepth].maxLevel[0] = g->texture.currentTexture1D->maxLevel;
+#endif
+
+		a->textureStack[a->textureStackDepth].borderColor[1] = g->texture.currentTexture2D->borderColor;
+		a->textureStack[a->textureStackDepth].minFilter[1] = g->texture.currentTexture2D->minFilter;
+		a->textureStack[a->textureStackDepth].magFilter[1] = g->texture.currentTexture2D->magFilter;
+		a->textureStack[a->textureStackDepth].wrapS[1] = g->texture.currentTexture2D->wrapS;
+		a->textureStack[a->textureStackDepth].wrapT[1] = g->texture.currentTexture2D->wrapT;
+#ifdef CR_OPENGL_VERSION_1_2
+		a->textureStack[a->textureStackDepth].wrapR[1] = g->texture.currentTexture2D->wrapR;
+		a->textureStack[a->textureStackDepth].priority[1] = g->texture.currentTexture2D->priority;
+		a->textureStack[a->textureStackDepth].minLod[1] = g->texture.currentTexture2D->minLod;
+		a->textureStack[a->textureStackDepth].maxLod[1] = g->texture.currentTexture2D->maxLod;
+		a->textureStack[a->textureStackDepth].baseLevel[1] = g->texture.currentTexture2D->baseLevel;
+		a->textureStack[a->textureStackDepth].maxLevel[1] = g->texture.currentTexture2D->maxLevel;
+#endif
+
+#ifdef CR_OPENGL_VERSION_1_2
+		a->textureStack[a->textureStackDepth].borderColor[2] = g->texture.currentTexture3D->borderColor;
+		a->textureStack[a->textureStackDepth].minFilter[2] = g->texture.currentTexture3D->minFilter;
+		a->textureStack[a->textureStackDepth].magFilter[2] = g->texture.currentTexture3D->magFilter;
+		a->textureStack[a->textureStackDepth].wrapS[2] = g->texture.currentTexture3D->wrapS;
+		a->textureStack[a->textureStackDepth].wrapT[2] = g->texture.currentTexture3D->wrapT;
+		a->textureStack[a->textureStackDepth].wrapR[2] = g->texture.currentTexture3D->wrapR;
+		a->textureStack[a->textureStackDepth].priority[2] = g->texture.currentTexture3D->priority;
+		a->textureStack[a->textureStackDepth].minLod[2] = g->texture.currentTexture3D->minLod;
+		a->textureStack[a->textureStackDepth].maxLod[2] = g->texture.currentTexture3D->maxLod;
+		a->textureStack[a->textureStackDepth].baseLevel[2] = g->texture.currentTexture3D->baseLevel;
+		a->textureStack[a->textureStackDepth].maxLevel[2] = g->texture.currentTexture3D->maxLevel;
+#endif
+#ifdef CR_ARB_texture_cube_map
+		a->textureStack[a->textureStackDepth].borderColor[3] = g->texture.currentTextureCubeMap->borderColor;
+		a->textureStack[a->textureStackDepth].minFilter[3] = g->texture.currentTextureCubeMap->minFilter;
+		a->textureStack[a->textureStackDepth].magFilter[3] = g->texture.currentTextureCubeMap->magFilter;
+		a->textureStack[a->textureStackDepth].wrapS[3] = g->texture.currentTextureCubeMap->wrapS;
+		a->textureStack[a->textureStackDepth].wrapT[3] = g->texture.currentTextureCubeMap->wrapT;
+#ifdef CR_OPENGL_VERSION_1_2
+		a->textureStack[a->textureStackDepth].wrapR[3] = g->texture.currentTextureCubeMap->wrapR;
+		a->textureStack[a->textureStackDepth].priority[3] = g->texture.currentTextureCubeMap->priority;
+		a->textureStack[a->textureStackDepth].minLod[3] = g->texture.currentTextureCubeMap->minLod;
+		a->textureStack[a->textureStackDepth].maxLod[3] = g->texture.currentTextureCubeMap->maxLod;
+		a->textureStack[a->textureStackDepth].baseLevel[3] = g->texture.currentTextureCubeMap->baseLevel;
+		a->textureStack[a->textureStackDepth].maxLevel[3] = g->texture.currentTextureCubeMap->maxLevel;
+#endif
+#endif
+		a->textureStackDepth++;
+	}
+	if (mask & GL_TRANSFORM_BIT)
+	{
+		if (a->transformStack[a->transformStackDepth].clip == NULL)
+		{
+			a->transformStack[a->transformStackDepth].clip = (GLboolean *) crAlloc( g->limits.maxClipPlanes * sizeof( GLboolean ));
+		}
+		if (a->transformStack[a->transformStackDepth].clipPlane == NULL)
+		{
+			a->transformStack[a->transformStackDepth].clipPlane = (GLvectord *) crAlloc( g->limits.maxClipPlanes * sizeof( GLvectord ));
+		}
+		a->transformStack[a->transformStackDepth].mode = g->transform.mode;
+		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
+		{
+			a->transformStack[a->transformStackDepth].clip[i] = g->transform.clip[i];
+			a->transformStack[a->transformStackDepth].clipPlane[i] = g->transform.clipPlane[i];
+		}
+		a->transformStack[a->transformStackDepth].normalize = g->current.normalize;
+#ifdef CR_OPENGL_VERSION_1_2
+		a->transformStack[a->transformStackDepth].rescaleNormals = g->transform.rescaleNormals;
+#endif
+		a->transformStackDepth++;
+	}
+	if (mask & GL_VIEWPORT_BIT)
+	{
+		a->viewportStack[a->viewportStackDepth].viewportX = g->viewport.viewportX;
+		a->viewportStack[a->viewportStackDepth].viewportY = g->viewport.viewportY;
+		a->viewportStack[a->viewportStackDepth].viewportW = g->viewport.viewportW;
+		a->viewportStack[a->viewportStackDepth].viewportH = g->viewport.viewportH;
+		a->viewportStack[a->viewportStackDepth].nearClip = g->viewport.nearClip;
+		a->viewportStack[a->viewportStackDepth].farClip = g->viewport.farClip;
+		a->viewportStackDepth++;
+	}
+
+	DIRTY(ab->dirty, g->neg_bitid);
+}
+
+void STATE_APIENTRY crStatePopAttrib(void) 
+{
+	CRContext *g = GetCurrentContext();
+	CRAttribState *a = &(g->attrib);
+	CRStateBits *sb = GetCurrentBits();
+	CRAttribBits *ab = &(sb->attrib);
+	GLbitvalue mask;
+	unsigned int i;
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glPopAttrib called in Begin/End");
+		return;
+	}
+
+	if (a->attribStackDepth == 0)
+	{
+		crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty stack!" );
+	}
+
+	FLUSH();
+
+	mask = a->pushMaskStack[--a->attribStackDepth];
+
+	if (mask & GL_ACCUM_BUFFER_BIT)
+	{
+		if (a->accumBufferStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty accum buffer stack!" );
+		}
+		a->accumBufferStackDepth--;
+		g->buffer.accumClearValue = a->accumBufferStack[a->accumBufferStackDepth].accumClearValue;
+		DIRTY(sb->buffer.dirty, g->neg_bitid);
+		DIRTY(sb->buffer.clearAccum, g->neg_bitid);
+	}
+	if (mask & GL_COLOR_BUFFER_BIT)
+	{
+		if (a->colorBufferStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty color buffer stack!" );
+		}
+		a->colorBufferStackDepth--;
+		g->buffer.alphaTest = a->colorBufferStack[a->colorBufferStackDepth].alphaTest;
+		g->buffer.alphaTestFunc = a->colorBufferStack[a->colorBufferStackDepth].alphaTestFunc;
+		g->buffer.alphaTestRef = a->colorBufferStack[a->colorBufferStackDepth].alphaTestRef;
+		g->buffer.blend = a->colorBufferStack[a->colorBufferStackDepth].blend;
+		g->buffer.blendSrc = a->colorBufferStack[a->colorBufferStackDepth].blendSrc;
+		g->buffer.blendDst = a->colorBufferStack[a->colorBufferStackDepth].blendDst;
+#ifdef CR_EXT_blend_color
+		g->buffer.blendColor = a->colorBufferStack[a->colorBufferStackDepth].blendColor;
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+		g->buffer.blendEquation = a->colorBufferStack[a->colorBufferStackDepth].blendEquation;
+#endif
+		g->buffer.dither = a->colorBufferStack[a->colorBufferStackDepth].dither;
+		g->buffer.drawBuffer = a->colorBufferStack[a->colorBufferStackDepth].drawBuffer;
+		g->buffer.logicOp = a->colorBufferStack[a->colorBufferStackDepth].logicOp;
+	 	g->buffer.indexLogicOp = a->colorBufferStack[a->colorBufferStackDepth].indexLogicOp;
+		g->buffer.logicOpMode = a->colorBufferStack[a->colorBufferStackDepth].logicOpMode;
+		g->buffer.colorClearValue = a->colorBufferStack[a->colorBufferStackDepth].colorClearValue;
+		g->buffer.indexClearValue = a->colorBufferStack[a->colorBufferStackDepth].indexClearValue;
+		g->buffer.colorWriteMask = a->colorBufferStack[a->colorBufferStackDepth].colorWriteMask;
+		g->buffer.indexWriteMask = a->colorBufferStack[a->colorBufferStackDepth].indexWriteMask;
+		DIRTY(sb->buffer.dirty, g->neg_bitid);
+		DIRTY(sb->buffer.enable, g->neg_bitid);
+		DIRTY(sb->buffer.alphaFunc, g->neg_bitid);
+		DIRTY(sb->buffer.blendFunc, g->neg_bitid);
+#ifdef CR_EXT_blend_color
+		DIRTY(sb->buffer.blendColor, g->neg_bitid);
+#endif
+#if defined(CR_EXT_blend_minmax) || defined(CR_EXT_blend_subtract)
+		DIRTY(sb->buffer.blendEquation, g->neg_bitid);
+#endif
+		DIRTY(sb->buffer.drawBuffer, g->neg_bitid);
+		DIRTY(sb->buffer.logicOp, g->neg_bitid);
+		DIRTY(sb->buffer.indexLogicOp, g->neg_bitid);
+		DIRTY(sb->buffer.clearColor, g->neg_bitid);
+		DIRTY(sb->buffer.clearIndex, g->neg_bitid);
+		DIRTY(sb->buffer.colorWriteMask, g->neg_bitid);
+		DIRTY(sb->buffer.indexMask, g->neg_bitid);
+	}
+	if (mask & GL_CURRENT_BIT)
+	{
+		if (a->currentStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty current stack!" );
+		}
+		a->currentStackDepth--;
+		g->current.color = a->currentStack[a->currentStackDepth].color;
+		g->current.index = a->currentStack[a->currentStackDepth].index;
+		g->current.normal = a->currentStack[a->currentStackDepth].normal;
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			g->current.texCoord[i] = a->currentStack[a->currentStackDepth].texCoord[i];
+		}
+		g->current.rasterPos = a->currentStack[a->currentStackDepth].rasterPos;
+		g->current.rasterValid = a->currentStack[a->currentStackDepth].rasterValid;
+		g->current.rasterColor = a->currentStack[a->currentStackDepth].rasterColor;
+		g->current.rasterIndex = a->currentStack[a->currentStackDepth].rasterIndex;
+		g->current.rasterTexture = a->currentStack[a->currentStackDepth].rasterTexture;
+		g->current.edgeFlag = a->currentStack[a->currentStackDepth].edgeFlag;
+		DIRTY(sb->current.dirty, g->neg_bitid);
+		DIRTY(sb->current.color, g->neg_bitid);
+		DIRTY(sb->current.index, g->neg_bitid);
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			DIRTY(sb->current.texCoord[i], g->neg_bitid);
+		}
+		DIRTY(sb->current.normal, g->neg_bitid);
+		DIRTY(sb->current.raster, g->neg_bitid);
+		DIRTY(sb->current.edgeFlag, g->neg_bitid);
+	}
+	if (mask & GL_DEPTH_BUFFER_BIT)
+	{
+		if (a->depthBufferStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty depth buffer stack!" );
+		}
+		a->depthBufferStackDepth--;
+		g->buffer.depthTest = a->depthBufferStack[a->depthBufferStackDepth].depthTest;
+		g->buffer.depthFunc = a->depthBufferStack[a->depthBufferStackDepth].depthFunc;
+		g->buffer.depthClearValue = a->depthBufferStack[a->depthBufferStackDepth].depthClearValue;
+		g->buffer.depthMask = a->depthBufferStack[a->depthBufferStackDepth].depthMask;
+		DIRTY(sb->buffer.dirty, g->neg_bitid);
+		DIRTY(sb->buffer.enable, g->neg_bitid);
+		DIRTY(sb->buffer.depthFunc, g->neg_bitid);
+		DIRTY(sb->buffer.clearDepth, g->neg_bitid);
+		DIRTY(sb->buffer.depthMask, g->neg_bitid);
+	}
+	if (mask & GL_ENABLE_BIT)
+	{
+		if (a->enableStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty enable stack!" );
+		}
+		a->enableStackDepth--;
+		g->buffer.alphaTest = a->enableStack[a->enableStackDepth].alphaTest;
+		g->eval.autoNormal = a->enableStack[a->enableStackDepth].autoNormal;
+		g->buffer.blend = a->enableStack[a->enableStackDepth].blend;
+		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
+		{
+			g->transform.clip[i] = a->enableStack[a->enableStackDepth].clip[i];
+		}
+		g->lighting.colorMaterial = a->enableStack[a->enableStackDepth].colorMaterial;
+		g->polygon.cullFace = a->enableStack[a->enableStackDepth].cullFace;
+		g->buffer.depthTest = a->enableStack[a->enableStackDepth].depthTest;
+		g->buffer.dither = a->enableStack[a->enableStackDepth].dither;
+		g->fog.enable = a->enableStack[a->enableStackDepth].fog;
+		for (i = 0 ; i < g->limits.maxLights ; i++)
+		{
+			g->lighting.light[i].enable = a->enableStack[a->enableStackDepth].light[i];
+		}
+		g->lighting.lighting = a->enableStack[a->enableStackDepth].lighting;
+		g->line.lineSmooth = a->enableStack[a->enableStackDepth].lineSmooth;
+		g->line.lineStipple = a->enableStack[a->enableStackDepth].lineStipple;
+		g->buffer.logicOp = a->enableStack[a->enableStackDepth].logicOp;
+		g->buffer.indexLogicOp = a->enableStack[a->enableStackDepth].indexLogicOp;
+		for (i = 0 ; i < GLEVAL_TOT ; i++)
+		{
+			g->eval.enable1D[i] = a->enableStack[a->enableStackDepth].map1[i];
+			g->eval.enable2D[i] = a->enableStack[a->enableStackDepth].map2[i];
+		}
+		g->current.normalize = a->enableStack[a->enableStackDepth].normalize;
+		g->line.pointSmooth = a->enableStack[a->enableStackDepth].pointSmooth;
+		g->polygon.polygonOffsetLine = a->enableStack[a->enableStackDepth].polygonOffsetLine;
+		g->polygon.polygonOffsetFill = a->enableStack[a->enableStackDepth].polygonOffsetFill;
+		g->polygon.polygonOffsetPoint = a->enableStack[a->enableStackDepth].polygonOffsetPoint;
+		g->polygon.polygonSmooth = a->enableStack[a->enableStackDepth].polygonSmooth;
+		g->polygon.polygonStipple = a->enableStack[a->enableStackDepth].polygonStipple;
+#ifdef CR_OPENGL_VERSION_1_2
+		g->transform.rescaleNormals = a->enableStack[a->enableStackDepth].rescaleNormals;
+#endif
+		g->viewport.scissorTest = a->enableStack[a->enableStackDepth].scissorTest;
+		g->stencil.stencilTest = a->enableStack[a->enableStackDepth].stencilTest;
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		{
+			g->texture.unit[i].enabled1D = a->enableStack[a->enableStackDepth].texture1D[i];
+			g->texture.unit[i].enabled2D = a->enableStack[a->enableStackDepth].texture2D[i];
+#ifdef CR_OPENGL_VERSION_1_2
+			g->texture.unit[i].enabled3D = a->enableStack[a->enableStackDepth].texture3D[i];
+#endif
+#ifdef CR_ARB_texture_cube_map
+			g->texture.unit[i].enabledCubeMap = a->enableStack[a->enableStackDepth].textureCubeMap[i];
+#endif
+			g->texture.unit[i].textureGen.s = a->enableStack[a->enableStackDepth].textureGenS[i];
+			g->texture.unit[i].textureGen.t = a->enableStack[a->enableStackDepth].textureGenT[i];
+			g->texture.unit[i].textureGen.r = a->enableStack[a->enableStackDepth].textureGenR[i];
+			g->texture.unit[i].textureGen.q = a->enableStack[a->enableStackDepth].textureGenQ[i];
+		}
+		DIRTY(sb->buffer.dirty, g->neg_bitid);
+		DIRTY(sb->eval.dirty, g->neg_bitid);
+		DIRTY(sb->transform.dirty, g->neg_bitid);
+		DIRTY(sb->lighting.dirty, g->neg_bitid);
+		DIRTY(sb->fog.dirty, g->neg_bitid);
+		DIRTY(sb->line.dirty, g->neg_bitid);
+		DIRTY(sb->polygon.dirty, g->neg_bitid);
+		DIRTY(sb->viewport.dirty, g->neg_bitid);
+		DIRTY(sb->stencil.dirty, g->neg_bitid);
+		DIRTY(sb->texture.dirty, g->neg_bitid);
+
+		DIRTY(sb->buffer.enable, g->neg_bitid);
+		DIRTY(sb->eval.enable, g->neg_bitid);
+		DIRTY(sb->transform.enable, g->neg_bitid);
+		DIRTY(sb->lighting.enable, g->neg_bitid);
+		DIRTY(sb->fog.enable, g->neg_bitid);
+		DIRTY(sb->line.enable, g->neg_bitid);
+		DIRTY(sb->polygon.enable, g->neg_bitid);
+		DIRTY(sb->viewport.enable, g->neg_bitid);
+		DIRTY(sb->stencil.enable, g->neg_bitid);
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			DIRTY(sb->texture.enable[i], g->neg_bitid);
+		}
+	}
+	if (mask & GL_EVAL_BIT)
+	{
+		if (a->evalStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty eval stack!" );
+		}
+		a->evalStackDepth--;
+		for (i = 0 ; i < GLEVAL_TOT ; i++)
+		{
+			int size1 = a->evalStack[a->evalStackDepth].eval1D[i].order * gleval_sizes[i] * sizeof(GLfloat);
+			int size2 = a->evalStack[a->evalStackDepth].eval2D[i].uorder * a->evalStack[a->evalStackDepth].eval2D[i].vorder * gleval_sizes[i] * sizeof (GLfloat);
+			g->eval.enable1D[i] = a->evalStack[a->evalStackDepth].enable1D[i];
+			g->eval.enable2D[i] = a->evalStack[a->evalStackDepth].enable2D[i];
+			g->eval.eval1D[i].u1 = a->evalStack[a->evalStackDepth].eval1D[i].u1;
+			g->eval.eval1D[i].u2 = a->evalStack[a->evalStackDepth].eval1D[i].u2;
+			g->eval.eval1D[i].order = a->evalStack[a->evalStackDepth].eval1D[i].order;
+			memcpy((char*)g->eval.eval1D[i].coeff, a->evalStack[a->evalStackDepth].eval1D[i].coeff, size1);
+			crFree(a->evalStack[a->evalStackDepth].eval1D[i].coeff);
+			g->eval.eval2D[i].u1 = a->evalStack[a->evalStackDepth].eval2D[i].u1;
+			g->eval.eval2D[i].u2 = a->evalStack[a->evalStackDepth].eval2D[i].u2;
+			g->eval.eval2D[i].v1 = a->evalStack[a->evalStackDepth].eval2D[i].v1;
+			g->eval.eval2D[i].v2 = a->evalStack[a->evalStackDepth].eval2D[i].v2;
+			g->eval.eval2D[i].uorder = a->evalStack[a->evalStackDepth].eval2D[i].uorder;
+			g->eval.eval2D[i].vorder = a->evalStack[a->evalStackDepth].eval2D[i].vorder;
+			memcpy((char*)g->eval.eval2D[i].coeff, a->evalStack[a->evalStackDepth].eval2D[i].coeff, size2);
+			crFree(a->evalStack[a->evalStackDepth].eval2D[i].coeff);
+		}
+		g->eval.autoNormal = a->evalStack[a->evalStackDepth].autoNormal;
+		g->eval.un1D = a->evalStack[a->evalStackDepth].un1D;
+		g->eval.u11D = a->evalStack[a->evalStackDepth].u11D;
+		g->eval.u21D = a->evalStack[a->evalStackDepth].u21D;
+		g->eval.un2D = a->evalStack[a->evalStackDepth].un2D;
+		g->eval.u12D = a->evalStack[a->evalStackDepth].u12D;
+		g->eval.u22D = a->evalStack[a->evalStackDepth].u22D;
+		g->eval.vn2D = a->evalStack[a->evalStackDepth].vn2D;
+		g->eval.v12D = a->evalStack[a->evalStackDepth].v12D;
+		g->eval.v22D = a->evalStack[a->evalStackDepth].v22D;
+		for (i = 0; i < GLEVAL_TOT; i++) {
+   			DIRTY(sb->eval.eval1D[i], g->neg_bitid);
+   			DIRTY(sb->eval.eval2D[i], g->neg_bitid);
+		}
+   		DIRTY(sb->eval.dirty, g->neg_bitid);
+		DIRTY(sb->eval.grid1D, g->neg_bitid);
+		DIRTY(sb->eval.grid2D, g->neg_bitid);
+		DIRTY(sb->eval.enable, g->neg_bitid);
+	}
+	if (mask & GL_FOG_BIT)
+	{
+		if (a->fogStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty fog stack!" );
+		}
+		a->fogStackDepth--;
+		g->fog.enable = a->fogStack[a->fogStackDepth].enable;
+		g->fog.color = a->fogStack[a->fogStackDepth].color;
+		g->fog.density = a->fogStack[a->fogStackDepth].density;
+		g->fog.start = a->fogStack[a->fogStackDepth].start;
+		g->fog.end = a->fogStack[a->fogStackDepth].end;
+		g->fog.index = a->fogStack[a->fogStackDepth].index;
+		g->fog.mode = a->fogStack[a->fogStackDepth].mode;
+		DIRTY(sb->fog.dirty, g->neg_bitid);
+		DIRTY(sb->fog.color, g->neg_bitid);
+		DIRTY(sb->fog.index, g->neg_bitid);
+		DIRTY(sb->fog.density, g->neg_bitid);
+		DIRTY(sb->fog.start, g->neg_bitid);
+		DIRTY(sb->fog.end, g->neg_bitid);
+		DIRTY(sb->fog.mode, g->neg_bitid);
+		DIRTY(sb->fog.enable, g->neg_bitid);
+	}
+	if (mask & GL_HINT_BIT)
+	{
+		if (a->hintStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty hint stack!" );
+		}
+		a->hintStackDepth--;
+		g->hint.perspectiveCorrection = a->hintStack[a->hintStackDepth].perspectiveCorrection;
+		g->hint.pointSmooth = a->hintStack[a->hintStackDepth].pointSmooth;
+		g->hint.lineSmooth = a->hintStack[a->hintStackDepth].lineSmooth;
+		g->hint.polygonSmooth = a->hintStack[a->hintStackDepth].polygonSmooth;
+		g->hint.fog = a->hintStack[a->hintStackDepth].fog;
+		DIRTY(sb->hint.dirty, g->neg_bitid);
+		DIRTY(sb->hint.perspectiveCorrection, g->neg_bitid);
+		DIRTY(sb->hint.pointSmooth, g->neg_bitid);
+		DIRTY(sb->hint.lineSmooth, g->neg_bitid);
+		DIRTY(sb->hint.polygonSmooth, g->neg_bitid);
+#ifdef CR_EXT_clip_volume_hint
+		g->hint.clipVolumeClipping = a->hintStack[a->hintStackDepth].clipVolumeClipping;
+		DIRTY(sb->hint.clipVolumeClipping, g->neg_bitid);
+#endif
+#ifdef CR_ARB_texture_compression
+		g->hint.textureCompression = a->hintStack[a->hintStackDepth].textureCompression;
+		DIRTY(sb->hint.textureCompression, g->neg_bitid);
+#endif
+#ifdef CR_SGIS_generate_mipmap
+		g->hint.generateMipmap = a->hintStack[a->hintStackDepth].generateMipmap;
+		DIRTY(sb->hint.generateMipmap, g->neg_bitid);
+#endif
+	}
+	if (mask & GL_LIGHTING_BIT)
+	{
+		if (a->lightingStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty lighting stack!" );
+		}
+		a->lightingStackDepth--;
+		g->lighting.lightModelAmbient = a->lightingStack[a->lightingStackDepth].lightModelAmbient;
+		g->lighting.lightModelLocalViewer = a->lightingStack[a->lightingStackDepth].lightModelLocalViewer;
+		g->lighting.lightModelTwoSide = a->lightingStack[a->lightingStackDepth].lightModelTwoSide;
+#if defined(CR_EXT_separate_specular_color) || defined(CR_OPENGL_VERSION_1_2)
+		g->lighting.lightModelColorControlEXT = a->lightingStack[a->lightingStackDepth].lightModelColorControlEXT;
+#endif
+		g->lighting.lighting = a->lightingStack[a->lightingStackDepth].lighting;
+		for (i = 0 ; i < g->limits.maxLights; i++)
+		{
+			g->lighting.light[i].enable = a->lightingStack[a->lightingStackDepth].light[i].enable;
+			g->lighting.light[i].ambient = a->lightingStack[a->lightingStackDepth].light[i].ambient;
+			g->lighting.light[i].diffuse = a->lightingStack[a->lightingStackDepth].light[i].diffuse;
+			g->lighting.light[i].specular = a->lightingStack[a->lightingStackDepth].light[i].specular;
+			g->lighting.light[i].spotDirection = a->lightingStack[a->lightingStackDepth].light[i].spotDirection;
+			g->lighting.light[i].position = a->lightingStack[a->lightingStackDepth].light[i].position;
+			g->lighting.light[i].spotExponent = a->lightingStack[a->lightingStackDepth].light[i].spotExponent;
+			g->lighting.light[i].spotCutoff = a->lightingStack[a->lightingStackDepth].light[i].spotCutoff;
+			g->lighting.light[i].constantAttenuation = a->lightingStack[a->lightingStackDepth].light[i].constantAttenuation;
+			g->lighting.light[i].linearAttenuation = a->lightingStack[a->lightingStackDepth].light[i].linearAttenuation;
+			g->lighting.light[i].quadraticAttenuation = a->lightingStack[a->lightingStackDepth].light[i].quadraticAttenuation;
+		}
+		for (i = 0 ; i < 2 ; i++)
+		{
+			g->lighting.ambient[i] = a->lightingStack[a->lightingStackDepth].ambient[i];
+			g->lighting.diffuse[i] = a->lightingStack[a->lightingStackDepth].diffuse[i];
+			g->lighting.specular[i] = a->lightingStack[a->lightingStackDepth].specular[i];
+			g->lighting.emission[i] = a->lightingStack[a->lightingStackDepth].emission[i];
+			g->lighting.shininess[i] = a->lightingStack[a->lightingStackDepth].shininess[i];
+			g->lighting.indexes[i][0] = a->lightingStack[a->lightingStackDepth].indexes[i][0];
+			g->lighting.indexes[i][1] = a->lightingStack[a->lightingStackDepth].indexes[i][1];
+			g->lighting.indexes[i][2] = a->lightingStack[a->lightingStackDepth].indexes[i][2];
+		}
+		g->lighting.shadeModel = a->lightingStack[a->lightingStackDepth].shadeModel;
+		DIRTY(sb->lighting.dirty, g->neg_bitid);
+		DIRTY(sb->lighting.shadeModel, g->neg_bitid);
+		DIRTY(sb->lighting.lightModel, g->neg_bitid);
+		DIRTY(sb->lighting.material, g->neg_bitid);
+		DIRTY(sb->lighting.enable, g->neg_bitid);
+		for (i = 0 ; i < g->limits.maxLights; i++)
+		{
+			DIRTY(sb->lighting.light[i].dirty, g->neg_bitid);
+			DIRTY(sb->lighting.light[i].enable, g->neg_bitid);
+			DIRTY(sb->lighting.light[i].ambient, g->neg_bitid);
+			DIRTY(sb->lighting.light[i].diffuse, g->neg_bitid);
+			DIRTY(sb->lighting.light[i].specular, g->neg_bitid);
+			DIRTY(sb->lighting.light[i].position, g->neg_bitid);
+			DIRTY(sb->lighting.light[i].attenuation, g->neg_bitid);
+			DIRTY(sb->lighting.light[i].spot, g->neg_bitid);
+		}
+	}
+	if (mask & GL_LINE_BIT)
+	{
+		if (a->lineStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty line stack!" );
+		}
+		a->lineStackDepth--;
+		g->line.lineSmooth = a->lineStack[a->lineStackDepth].lineSmooth;
+		g->line.lineStipple = a->lineStack[a->lineStackDepth].lineStipple;
+		g->line.pattern = a->lineStack[a->lineStackDepth].pattern;
+		g->line.repeat = a->lineStack[a->lineStackDepth].repeat;
+		g->line.width = a->lineStack[a->lineStackDepth].width;
+		DIRTY(sb->line.dirty, g->neg_bitid);
+		DIRTY(sb->line.enable, g->neg_bitid);
+		DIRTY(sb->line.width, g->neg_bitid);
+		DIRTY(sb->line.stipple, g->neg_bitid);
+	}
+	if (mask & GL_LIST_BIT)
+	{
+		if (a->listStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty list stack!" );
+		}
+		a->listStackDepth--;
+		g->lists.base = a->listStack[a->listStackDepth].base;
+		DIRTY(sb->lists.dirty, g->neg_bitid);
+	}
+	if (mask & GL_PIXEL_MODE_BIT)
+	{
+		if (a->pixelModeStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty pixel mode stack!" );
+		}
+		a->pixelModeStackDepth--;
+		g->pixel.bias = a->pixelModeStack[a->pixelModeStackDepth].bias;
+		g->pixel.scale = a->pixelModeStack[a->pixelModeStackDepth].scale;
+		g->pixel.indexOffset = a->pixelModeStack[a->pixelModeStackDepth].indexOffset;
+		g->pixel.indexShift = a->pixelModeStack[a->pixelModeStackDepth].indexShift;
+		g->pixel.mapColor = a->pixelModeStack[a->pixelModeStackDepth].mapColor;
+		g->pixel.mapStencil = a->pixelModeStack[a->pixelModeStackDepth].mapStencil;
+		g->pixel.xZoom = a->pixelModeStack[a->pixelModeStackDepth].xZoom;
+		g->pixel.yZoom = a->pixelModeStack[a->pixelModeStackDepth].yZoom;
+		g->buffer.readBuffer = a->pixelModeStack[a->pixelModeStackDepth].readBuffer;
+		DIRTY(sb->pixel.dirty, g->neg_bitid);
+		DIRTY(sb->pixel.transfer, g->neg_bitid);
+		DIRTY(sb->pixel.zoom, g->neg_bitid);
+		DIRTY(sb->buffer.dirty, g->neg_bitid);
+		DIRTY(sb->buffer.readBuffer, g->neg_bitid);
+	}
+	if (mask & GL_POINT_BIT)
+	{
+		if (a->pointStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty point stack!" );
+		}
+		a->pointStackDepth--;
+		g->line.pointSmooth = a->pointStack[a->pointStackDepth].pointSmooth;
+		g->line.pointSize = a->pointStack[a->pointStackDepth].pointSize;
+		DIRTY(sb->line.dirty, g->neg_bitid);
+		DIRTY(sb->line.size, g->neg_bitid);
+		DIRTY(sb->line.enable, g->neg_bitid);
+	}
+	if (mask & GL_POLYGON_BIT)
+	{
+		if (a->polygonStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty polygon stack!" );
+		}
+		a->polygonStackDepth--;
+		g->polygon.cullFace = a->polygonStack[a->polygonStackDepth].cullFace;
+		g->polygon.cullFaceMode = a->polygonStack[a->polygonStackDepth].cullFaceMode;
+		g->polygon.frontFace = a->polygonStack[a->polygonStackDepth].frontFace;
+		g->polygon.frontMode = a->polygonStack[a->polygonStackDepth].frontMode;
+		g->polygon.backMode = a->polygonStack[a->polygonStackDepth].backMode;
+		g->polygon.polygonSmooth = a->polygonStack[a->polygonStackDepth].polygonSmooth;
+		g->polygon.polygonStipple = a->polygonStack[a->polygonStackDepth].polygonStipple;
+		g->polygon.polygonOffsetFill = a->polygonStack[a->polygonStackDepth].polygonOffsetFill;
+		g->polygon.polygonOffsetLine = a->polygonStack[a->polygonStackDepth].polygonOffsetLine;
+		g->polygon.polygonOffsetPoint = a->polygonStack[a->polygonStackDepth].polygonOffsetPoint;
+		g->polygon.offsetFactor = a->polygonStack[a->polygonStackDepth].offsetFactor;
+		g->polygon.offsetUnits = a->polygonStack[a->polygonStackDepth].offsetUnits;
+		DIRTY(sb->polygon.dirty, g->neg_bitid);
+		DIRTY(sb->polygon.enable, g->neg_bitid);
+		DIRTY(sb->polygon.offset, g->neg_bitid);
+		DIRTY(sb->polygon.mode, g->neg_bitid);
+		DIRTY(sb->polygon.stipple, g->neg_bitid);
+	}
+	if (mask & GL_POLYGON_STIPPLE_BIT)
+	{
+		if (a->polygonStippleStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty polygon stipple stack!" );
+		}
+		a->polygonStippleStackDepth--;
+		memcpy( g->polygon.stipple, a->polygonStippleStack[a->polygonStippleStackDepth].pattern, 32*sizeof(GLint) );
+		DIRTY(sb->polygon.dirty, g->neg_bitid);
+		DIRTY(sb->polygon.stipple, g->neg_bitid);
+	}
+	if (mask & GL_SCISSOR_BIT)
+	{
+		if (a->scissorStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty scissor stack!" );
+		}
+		a->scissorStackDepth--;
+		g->viewport.scissorTest = a->scissorStack[a->scissorStackDepth].scissorTest;
+		g->viewport.scissorX = a->scissorStack[a->scissorStackDepth].scissorX;
+		g->viewport.scissorY = a->scissorStack[a->scissorStackDepth].scissorY;
+		g->viewport.scissorW = a->scissorStack[a->scissorStackDepth].scissorW;
+		g->viewport.scissorH = a->scissorStack[a->scissorStackDepth].scissorH;
+		DIRTY(sb->viewport.dirty, g->neg_bitid);
+		DIRTY(sb->viewport.enable, g->neg_bitid);
+		DIRTY(sb->viewport.s_dims, g->neg_bitid);
+	}
+	if (mask & GL_STENCIL_BUFFER_BIT)
+	{
+		if (a->stencilBufferStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty stencil stack!" );
+		}
+		a->stencilBufferStackDepth--;
+		g->stencil.stencilTest = a->stencilBufferStack[a->stencilBufferStackDepth].stencilTest;
+		g->stencil.func = a->stencilBufferStack[a->stencilBufferStackDepth].func;
+		g->stencil.mask = a->stencilBufferStack[a->stencilBufferStackDepth].mask;
+		g->stencil.ref = a->stencilBufferStack[a->stencilBufferStackDepth].ref;
+		g->stencil.fail = a->stencilBufferStack[a->stencilBufferStackDepth].fail;
+		g->stencil.passDepthFail = a->stencilBufferStack[a->stencilBufferStackDepth].passDepthFail;
+		g->stencil.passDepthPass = a->stencilBufferStack[a->stencilBufferStackDepth].passDepthPass;
+		g->stencil.clearValue = a->stencilBufferStack[a->stencilBufferStackDepth].clearValue;
+		g->stencil.writeMask = a->stencilBufferStack[a->stencilBufferStackDepth].writeMask;
+		DIRTY(sb->stencil.dirty, g->neg_bitid);
+		DIRTY(sb->stencil.enable, g->neg_bitid);
+		DIRTY(sb->stencil.func, g->neg_bitid);
+		DIRTY(sb->stencil.op, g->neg_bitid);
+		DIRTY(sb->stencil.clearValue, g->neg_bitid);
+		DIRTY(sb->stencil.writeMask, g->neg_bitid);
+	}
+	if (mask & GL_TEXTURE_BIT)
+	{
+		if (a->textureStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty texture stack!" );
+		}
+		a->textureStackDepth--;
+		g->texture.curTextureUnit = a->textureStack[a->textureStackDepth].curTextureUnit;
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			g->texture.unit[i].enabled1D = a->textureStack[a->textureStackDepth].enabled1D[i];
+			g->texture.unit[i].enabled2D = a->textureStack[a->textureStackDepth].enabled2D[i];
+#ifdef CR_OPENGL_VERSION_1_2
+			g->texture.unit[i].enabled3D = a->textureStack[a->textureStackDepth].enabled3D[i];
+#endif
+#ifdef CR_ARB_texture_cube_map
+			g->texture.unit[i].enabledCubeMap = a->textureStack[a->textureStackDepth].enabledCubeMap[i];
+#endif
+			g->texture.unit[i].textureGen = a->textureStack[a->textureStackDepth].textureGen[i];
+			g->texture.unit[i].objSCoeff = a->textureStack[a->textureStackDepth].objSCoeff[i];
+			g->texture.unit[i].objTCoeff = a->textureStack[a->textureStackDepth].objTCoeff[i];
+			g->texture.unit[i].objRCoeff = a->textureStack[a->textureStackDepth].objRCoeff[i];
+			g->texture.unit[i].objQCoeff = a->textureStack[a->textureStackDepth].objQCoeff[i];
+			g->texture.unit[i].eyeSCoeff = a->textureStack[a->textureStackDepth].eyeSCoeff[i];
+			g->texture.unit[i].eyeTCoeff = a->textureStack[a->textureStackDepth].eyeTCoeff[i];
+			g->texture.unit[i].eyeRCoeff = a->textureStack[a->textureStackDepth].eyeRCoeff[i];
+			g->texture.unit[i].eyeQCoeff = a->textureStack[a->textureStackDepth].eyeQCoeff[i];
+			g->texture.unit[i].gen = a->textureStack[a->textureStackDepth].gen[i];
+			g->texture.unit[i].envMode = a->textureStack[a->textureStackDepth].envMode[i];
+			g->texture.unit[i].envColor = a->textureStack[a->textureStackDepth].envColor[i];
+		}
+		/* Is this right?  It sure doesn't seem right. */
+		g->texture.currentTexture1D->borderColor = a->textureStack[a->textureStackDepth].borderColor[0];
+		g->texture.currentTexture2D->borderColor = a->textureStack[a->textureStackDepth].borderColor[1];
+		g->texture.currentTexture3D->borderColor = a->textureStack[a->textureStackDepth].borderColor[2];
+#ifdef CR_ARB_texture_cube_map
+		g->texture.currentTextureCubeMap->borderColor = a->textureStack[a->textureStackDepth].borderColor[3];
+#endif
+		g->texture.currentTexture1D->minFilter = a->textureStack[a->textureStackDepth].minFilter[0];
+		g->texture.currentTexture2D->minFilter = a->textureStack[a->textureStackDepth].minFilter[1];
+		g->texture.currentTexture3D->minFilter = a->textureStack[a->textureStackDepth].minFilter[2];
+#ifdef CR_ARB_texture_cube_map
+		g->texture.currentTextureCubeMap->minFilter = a->textureStack[a->textureStackDepth].minFilter[3];
+#endif
+		g->texture.currentTexture1D->magFilter = a->textureStack[a->textureStackDepth].magFilter[0];
+		g->texture.currentTexture2D->magFilter = a->textureStack[a->textureStackDepth].magFilter[1];
+		g->texture.currentTexture3D->magFilter = a->textureStack[a->textureStackDepth].magFilter[2];
+#ifdef CR_ARB_texture_cube_map
+		g->texture.currentTextureCubeMap->magFilter = a->textureStack[a->textureStackDepth].magFilter[3];
+#endif
+		g->texture.currentTexture1D->wrapS = a->textureStack[a->textureStackDepth].wrapS[0];
+		g->texture.currentTexture2D->wrapS = a->textureStack[a->textureStackDepth].wrapS[1];
+		g->texture.currentTexture3D->wrapS = a->textureStack[a->textureStackDepth].wrapS[2];
+#ifdef CR_ARB_texture_cube_map
+		g->texture.currentTextureCubeMap->wrapS = a->textureStack[a->textureStackDepth].wrapS[3];
+#endif
+		g->texture.currentTexture1D->wrapT = a->textureStack[a->textureStackDepth].wrapT[0];
+		g->texture.currentTexture2D->wrapT = a->textureStack[a->textureStackDepth].wrapT[1];
+		g->texture.currentTexture3D->wrapT = a->textureStack[a->textureStackDepth].wrapT[2];
+#ifdef CR_ARB_texture_cube_map
+		g->texture.currentTextureCubeMap->wrapT = a->textureStack[a->textureStackDepth].wrapT[3];
+#endif
+#ifdef CR_OPENGL_VERSION_1_2
+		g->texture.currentTexture1D->wrapR = a->textureStack[a->textureStackDepth].wrapR[0];
+		g->texture.currentTexture2D->wrapR = a->textureStack[a->textureStackDepth].wrapR[1];
+		g->texture.currentTexture3D->wrapR = a->textureStack[a->textureStackDepth].wrapR[2];
+#ifdef CR_ARB_texture_cube_map
+		g->texture.currentTextureCubeMap->wrapR = a->textureStack[a->textureStackDepth].wrapR[3];
+#endif
+		g->texture.currentTexture1D->priority = a->textureStack[a->textureStackDepth].priority[0];
+		g->texture.currentTexture2D->priority = a->textureStack[a->textureStackDepth].priority[1];
+		g->texture.currentTexture3D->priority = a->textureStack[a->textureStackDepth].priority[2];
+		g->texture.currentTextureCubeMap->priority = a->textureStack[a->textureStackDepth].priority[3];
+		g->texture.currentTexture1D->minLod = a->textureStack[a->textureStackDepth].minLod[0];
+		g->texture.currentTexture2D->minLod = a->textureStack[a->textureStackDepth].minLod[1];
+		g->texture.currentTexture3D->minLod = a->textureStack[a->textureStackDepth].minLod[2];
+		g->texture.currentTextureCubeMap->minLod = a->textureStack[a->textureStackDepth].minLod[3];
+		g->texture.currentTexture1D->maxLod = a->textureStack[a->textureStackDepth].maxLod[0];
+		g->texture.currentTexture2D->maxLod = a->textureStack[a->textureStackDepth].maxLod[1];
+		g->texture.currentTexture3D->maxLod = a->textureStack[a->textureStackDepth].maxLod[2];
+		g->texture.currentTextureCubeMap->maxLod = a->textureStack[a->textureStackDepth].maxLod[3];
+		g->texture.currentTexture1D->baseLevel = a->textureStack[a->textureStackDepth].baseLevel[0];
+		g->texture.currentTexture2D->baseLevel = a->textureStack[a->textureStackDepth].baseLevel[1];
+		g->texture.currentTexture3D->baseLevel = a->textureStack[a->textureStackDepth].baseLevel[2];
+		g->texture.currentTextureCubeMap->baseLevel = a->textureStack[a->textureStackDepth].baseLevel[3];
+		g->texture.currentTexture1D->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[0];
+		g->texture.currentTexture2D->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[1];
+		g->texture.currentTexture3D->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[2];
+		g->texture.currentTextureCubeMap->maxLevel = a->textureStack[a->textureStackDepth].maxLevel[3];
+#endif
+		DIRTY(sb->texture.dirty, g->neg_bitid);
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			DIRTY(sb->texture.enable[i], g->neg_bitid);
+			DIRTY(sb->texture.current[i], g->neg_bitid);
+			DIRTY(sb->texture.objGen[i], g->neg_bitid);
+			DIRTY(sb->texture.eyeGen[i], g->neg_bitid);
+			DIRTY(sb->texture.envBit[i], g->neg_bitid);
+			DIRTY(sb->texture.gen[i], g->neg_bitid);
+		}
+
+		DIRTY(g->texture.currentTexture1D->dirty, g->neg_bitid);
+		DIRTY(g->texture.currentTexture2D->dirty, g->neg_bitid);
+		DIRTY(g->texture.currentTexture3D->dirty, g->neg_bitid);
+
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			DIRTY(g->texture.currentTexture1D->dirty, g->neg_bitid);
+			DIRTY(g->texture.currentTexture2D->dirty, g->neg_bitid);
+			DIRTY(g->texture.currentTexture3D->dirty, g->neg_bitid);
+
+			DIRTY(g->texture.currentTexture1D->paramsBit[i], g->neg_bitid);
+			DIRTY(g->texture.currentTexture2D->paramsBit[i], g->neg_bitid);
+			DIRTY(g->texture.currentTexture3D->paramsBit[i], g->neg_bitid);
+		}
+	}
+	if (mask & GL_TRANSFORM_BIT)
+	{
+		if (a->transformStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty transform stack!" );
+		}
+		a->transformStackDepth--;
+		g->transform.mode = a->transformStack[a->transformStackDepth].mode;
+		for (i = 0 ; i < g->limits.maxClipPlanes ; i++)
+		{
+			g->transform.clip[i] = a->transformStack[a->transformStackDepth].clip[i];
+			g->transform.clipPlane[i] = a->transformStack[a->transformStackDepth].clipPlane[i];
+		}
+		g->current.normalize = a->transformStack[a->transformStackDepth].normalize;
+#ifdef CR_OPENGL_VERSION_1_2
+		g->transform.rescaleNormals = a->transformStack[a->transformStackDepth].rescaleNormals;
+#endif
+		DIRTY(sb->transform.dirty, g->neg_bitid);
+		DIRTY(sb->transform.mode, g->neg_bitid);
+		DIRTY(sb->transform.clipPlane, g->neg_bitid);
+		DIRTY(sb->transform.enable, g->neg_bitid);
+		DIRTY(sb->current.dirty, g->neg_bitid);
+		DIRTY(sb->current.enable, g->neg_bitid);
+	}
+	if (mask & GL_VIEWPORT_BIT)
+	{
+		if (a->viewportStackDepth == 0)
+		{
+			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty viewport stack!" );
+		}
+		a->viewportStackDepth--;
+		g->viewport.viewportX = a->viewportStack[a->viewportStackDepth].viewportX;
+		g->viewport.viewportY = a->viewportStack[a->viewportStackDepth].viewportY;
+		g->viewport.viewportW = a->viewportStack[a->viewportStackDepth].viewportW;
+		g->viewport.viewportH = a->viewportStack[a->viewportStackDepth].viewportH;
+		g->viewport.nearClip = a->viewportStack[a->viewportStackDepth].nearClip;
+		g->viewport.farClip = a->viewportStack[a->viewportStackDepth].farClip;
+		DIRTY(sb->viewport.dirty, g->neg_bitid);
+		DIRTY(sb->viewport.v_dims, g->neg_bitid);
+		DIRTY(sb->viewport.depth, g->neg_bitid);
+	}
+	DIRTY(ab->dirty, g->neg_bitid);
+}
+
+void crStateAttribSwitch( CRAttribBits *bb, GLbitvalue *bitID,
+		CRAttribState *from, CRAttribState *to )
+{
+	if (to->attribStackDepth != 0 || from->attribStackDepth != 0)
+	{
+		crError( "Trying to switch contexts when the attribte stacks weren't zero.  Currently, this is not supported." );
+	}
+	(void) bb;
+	(void) bitID;
+}

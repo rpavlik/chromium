@@ -1,0 +1,52 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+
+# GL_NV_fog_distance
+
+GLenum GL_FOG_DISTANCE_MODE_NV GL_NV_fog_distance g->fog.fogDistanceMode
+
+
+# GL_EXT_texture_filter_anisotropic
+
+GLenum GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT GL_EXT_texture_filter_anisotropic g->limits.maxTextureAnisotropy
+
+
+# GL_EXT_blend_color
+
+GLclampf GL_BLEND_COLOR_EXT GL_EXT_blend_color g->buffer.blendColor.r g->buffer.blendColor.g g->buffer.blendColor.b g->buffer.blendColor.a
+
+# GL_OPENGL_VERSION_1_2
+
+GLboolean GL_RESCALE_NORMAL GL_OPENGL_VERSION_1_2 g->transform.rescaleNormals
+GLenum    GL_LIGHT_MODEL_COLOR_CONTROL GL_OPENGL_VERSION_1_2 g->lighting.lightModelColorControlEXT
+
+# GL_EXT_separate_specular_color
+
+GLenum    GL_LIGHT_MODEL_COLOR_CONTROL_EXT GL_EXT_separate_specular_color g->lighting.lightModelColorControlEXT
+
+# GL_EXT_blend_minmax
+
+GLenum GL_BLEND_EQUATION_EXT GL_EXT_blend_minmax g->buffer.blendEquation
+
+
+# GL_NV_register_combiners
+
+GLint GL_NUM_GENERAL_COMBINERS_NV GL_NV_register_combiners g->regcombiner.numGeneralCombiners
+GLboolean GL_COLOR_SUM_CLAMP_NV GL_NV_register_combiners g->regcombiner.colorSumClamp
+GLfloat GL_CONSTANT_COLOR0_NV GL_NV_register_combiners g->regcombiner.constantColor0.r g->regcombiner.constantColor0.g g->regcombiner.constantColor0.b g->regcombiner.constantColor0.a
+GLfloat GL_CONSTANT_COLOR1_NV GL_NV_register_combiners g->regcombiner.constantColor1.r g->regcombiner.constantColor1.g g->regcombiner.constantColor1.b g->regcombiner.constantColor1.a
+GLint GL_MAX_GENERAL_COMBINERS_NV GL_NV_register_combiners g->limits.maxGeneralCombiners
+
+
+# GL_NV_register_combiners2
+
+GLboolean GL_PER_STAGE_CONSTANTS_NV GL_NV_register_combiners2 g->regcombiner.enabledPerStageConstants
+
+
+# GL_ARB_texture_cube_map
+
+GLboolean GL_TEXTURE_CUBE_MAP_ARB GL_ARB_texture_cube_map g->texture.unit[g->texture.curTextureUnit].enabledCubeMap
+GLint GL_TEXTURE_BINDING_CUBE_MAP_ARB GL_ARB_texture_cube_map g->texture.unit[g->texture.curTextureUnit].currentTextureCubeMapName
+GLint GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB GL_ARB_texture_cube_map g->limits.maxCubeMapTextureSize

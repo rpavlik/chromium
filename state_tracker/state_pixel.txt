@@ -1,0 +1,17 @@
+# Copyright (c) 2001, Stanford University
+# All rights reserved.
+#
+# See the file LICENSE.txt for information on redistributing this software.
+:transfer:indexOffset:PixelTransferi,GL_INDEX_OFFSET
+:transfer:indexShift:PixelTransferi,GL_INDEX_SHIFT
+:transfer:scale.r:PixelTransferf,GL_RED_SCALE
+:transfer:scale.g:PixelTransferf,GL_GREEN_SCALE
+:transfer:scale.b:PixelTransferf,GL_BLUE_SCALE
+:transfer:scale.a:PixelTransferf,GL_ALPHA_SCALE
+:transfer:bias.r:PixelTransferf,GL_RED_BIAS
+:transfer:bias.g:PixelTransferf,GL_GREEN_BIAS
+:transfer:bias.b:PixelTransferf,GL_BLUE_BIAS
+:transfer:bias.a:PixelTransferf,GL_ALPHA_BIAS
+:transfer:depthScale:PixelTransferf,GL_DEPTH_SCALE
+:transfer:depthBias:PixelTransferf,GL_DEPTH_BIAS
+:zoom:xZoom,yZoom:PixelZoom
