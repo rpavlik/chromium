@@ -4,7 +4,6 @@ Before July Alpha release:
 		Rasterpos sort of works; needs to be tested on multiple tiles
 	tilesort Viewport testing 
 		Quake III should do it
-	test tilesort Pinching 
 	test GM support 
 		can't test without a switch -- DAMMIT!
 	Parallel applications
