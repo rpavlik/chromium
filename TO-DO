@@ -17,3 +17,19 @@ Separate auto-start controls for server and app nodes.
 Don't require a program argument in sort-last template.
 
 Sort-last template seems to require all command line args, instead of none.
+
+Wes Bethel:
+  While driving the GUI config tool, I started out with a tilesort
+  template. On the app node, I added an array SPU before the tilesort
+  spu, then save the config file. The config file doesn't contain the
+  array spu I asked for. There may be related problems for other
+  app-side SPU additions - I've not checked.
+
+
+Gary Kong:
+  Is there any particular reason why the system_gl_path configuration option is 
+  not available to set for the application node??? If there is none, would it 
+  be possible to add it for future releases??!!
+
+
+
