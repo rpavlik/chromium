@@ -62,8 +62,6 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 
 	if (tilesort_spu.lazySendDLists)
 	{
-
-
 		/*
 		 * Implement lazy display list upload.
 		 * Don't send display list to server X, until we actually need to
@@ -79,17 +77,16 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 			else
 				crPackNewList(list, mode);
 		} else {
-
 			listSent = crCalloc(tilesort_spu.num_servers * sizeof(int));
 			crHashtableAdd(tilesort_spu.listTable, list, listSent);
 
 			crdlm_NewList(list, mode, &(tilesort_spu.self));
 			crdlm_compile_NewList( list, mode );
 		}
-
 	} 
 	else 
 	{
+		/* pack/send the display list now */
 		if (tilesort_spu.swap)
 			crPackNewListSWAP(list, mode);
 		else
@@ -97,7 +94,6 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 
 		if (tilesort_spu.listTrack)
 			crdlm_NewList(list, mode, &(tilesort_spu.self));
-
 	}
 	if (!tilesort_spu.listTrack)
 		tilesortspuLoadListTable();
@@ -112,7 +108,6 @@ tilesortspu_EndList(void)
 	CRPackContext *c = crPackGetContext();
 	const GLuint mode = ctx->lists.mode;
 	const GLuint list = ctx->lists.currentIndex;
-
 
 	/*crDebug("tilesortspu_EndList()"); */
 
@@ -273,9 +268,9 @@ void TILESORTSPU_APIENTRY
 tilesortspu_CallList(GLuint list)
 {
 	GET_THREAD(thread);
-        WindowInfo *winInfo = thread->currentContext->currentWindow;
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	GLboolean resetBBox = GL_FALSE;
-        TileSortBucketInfo bucket_info;
+	TileSortBucketInfo bucket_info;
 	int i;
 	int *listSent = NULL;
 
@@ -297,7 +292,7 @@ tilesortspu_CallList(GLuint list)
 		 */
 		if (tilesort_spu.lazySendDLists && ! tilesort_spu.autoDListBBoxes && tilesort_spu.listTrack)
 		{
-			if(!crDLMIsListSent(tilesort_spu.dlm, list)) 
+			if (!crDLMIsListSent(tilesort_spu.dlm, list)) 
 			{
 				/*crDebug("REPLAY LAZY list = %u",list); */
 				/* now play the list through the packer to send it to the servers */
@@ -309,9 +304,7 @@ tilesortspu_CallList(GLuint list)
 				crdlm_CallList(list, &tilesort_spu.packerDispatch);
 				tilesort_spu.replay = 0;
 				tilesortspuFlush( thread );
-		
 			}
-
 		}
 
 		/* Execute glCallList */
@@ -324,7 +317,6 @@ tilesortspu_CallList(GLuint list)
 		     thread->currentContext->providedBBOX == GL_OBJECT_BBOX_CR)
 		{
 			CRDLMBounds bounds;
-
 
 			if (tilesort_spu.listTrack
 					&& crDLMGetBounds(tilesort_spu.dlm, list, &bounds) == GL_NO_ERROR
@@ -455,15 +447,17 @@ tilesortspu_CallList(GLuint list)
 
 		/*crDebug("tilesortspu_CallList(%u) call tilesortspuStateCallList", list); */
 
-		if (tilesort_spu.listTrack && tilesort_spu.lazySendDLists) 
-		    for( i = 0; i < tilesort_spu.num_servers; i++)
-		    {
-			if(listSent && listSent[i] == 0) {
-				/*crDebug( "list state sending list %d to server %d", list, i );*/
-				tilesortspuStateCallList(list);
-			} else
-				tilesortspuStateCallList(list);
-		    }
+		if (tilesort_spu.listTrack && tilesort_spu.lazySendDLists) {
+			for (i = 0; i < tilesort_spu.num_servers; i++) {
+				if (listSent && listSent[i] == 0) {
+					/*crDebug( "list state sending list %d to server %d", list, i );*/
+					tilesortspuStateCallList(list);
+				}
+				else {
+					tilesortspuStateCallList(list);
+				}
+			}
+		}
 	}
 
 	/* If we used an auto bounding box, turn it off now */
@@ -607,8 +601,8 @@ tilesortspu_GenLists(GLsizei range)
 
 	}
 
-        /* The default geometry pack buffer */
-        crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
+	/* The default geometry pack buffer */
+	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
 	if (tilesort_spu.listTrack && tilesort_spu.lazySendDLists)
 		crdlm_GenLists(range);
@@ -644,7 +638,7 @@ tilesortspu_DeleteLists(GLuint list, GLsizei range)
 		crdlm_DeleteLists(list, range);
 
 	if (tilesort_spu.lazySendDLists)
-		for( i = list; i <= list + range -1; i++)
+		for (i = list; i <= list + range -1; i++)
 			crHashtableDelete(tilesort_spu.listTable, i, crFree);
 }
 
