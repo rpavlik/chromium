@@ -8,6 +8,7 @@
 #include "tilesortspu_gen.h"
 #include "cr_error.h"
 #include "cr_mem.h"
+#include "cr_mothership.h"
 #include "cr_packfunctions.h"
 #include "cr_string.h"
 #ifdef USE_DMX
@@ -341,9 +342,6 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 	WindowInfo *winInfo;
 
 #ifdef CHROMIUM_THREADSAFE
-#if 0
-fprintf(stderr,"MakeCurrent thread = %p\n",thread);
-#endif
 	if (!thread)
 		thread = tilesortspuNewThread();
 #endif
@@ -365,6 +363,17 @@ fprintf(stderr,"MakeCurrent thread = %p\n",thread);
 #else
 		winInfo->dpy = newCtx->dpy;
 		winInfo->isDMXWindow = GL_FALSE;
+		if (!nativeWindow && tilesort_spu.renderToCrutWindow && !winInfo->xwin) {
+			CRConnection *conn = crMothershipConnect();
+			if (conn) {
+				char response[100];
+				crMothershipGetParam( conn, "crut_drawable", response );
+				winInfo->xwin = crStrToInt(response);
+				crDebug("Tilesort SPU: Got CRUT window 0x%x", (int) winInfo->xwin);
+				crMothershipDisconnect(conn);
+			}
+		}
+
 		if (tilesort_spu.useDMX) {
 #if USE_DMX
 			int event_base, error_base;

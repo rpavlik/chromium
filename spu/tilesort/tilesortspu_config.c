@@ -174,6 +174,13 @@ set_force_quad_buffering(TileSortSPU *tilesort_spu, const char *response)
 	sscanf(response, "%d", &(tilesort_spu->forceQuadBuffering));
 }
 
+
+static void
+set_render_to_crut_window(TileSortSPU *tilesort_spu, const char *response)
+{
+	sscanf(response, "%d", &(tilesort_spu->renderToCrutWindow));
+}
+
 void
 tilesortspuSetAnaglyphMask(TileSortSPU *tilesort_spu)
 {
@@ -342,6 +349,9 @@ SPUOptions tilesortSPUOptions[] = {
 	{"force_quad_buffering", CR_BOOL, 1, "0", NULL, NULL,
 	 "Force Quad-buffered Stereo", (SPUOptionCB) set_force_quad_buffering},
 
+	{"render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
+	 "Render Into CRUT Window", (SPUOptionCB) set_render_to_crut_window},
+
 	{NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL},
 };
 
@@ -383,6 +393,8 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	}
 	crMothershipIdentifySPU(conn, tilesort_spu.id);
 
+	tilesort_spu.rank = crMothershipGetSPURank(conn);
+
 	/* Process SPU config options */
 	crSPUGetMothershipParams(conn, (void *) &tilesort_spu, tilesortSPUOptions);
 
@@ -393,7 +405,7 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	/* Need to get this, before we create initial window! */
 	tilesort_spu.num_servers = tilesortspuGetNumServers(conn);
 
-	crDebug("Tilesort SPU: Got %d servers!", tilesort_spu.num_servers);
+	crDebug("Tilesort SPU: found %d servers.", tilesort_spu.num_servers);
 
 	/* Create initial/default window (id=0) */
 	winInfo = tilesortspuCreateWindowInfo(0,

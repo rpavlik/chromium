@@ -111,7 +111,7 @@ struct context_info_t {
 #elif defined(Darwin)
 	AGLContext context;
 #else
-	Display *dpy;
+	Display *dpy;          /**< DMX server display (front-end) */
 #endif
 
 	ServerContextInfo *server;  /**< array [num_servers] of ServerContextInfo */
@@ -139,7 +139,7 @@ struct backend_window_info_t {
 #ifdef GLX
 	GLXDrawable xwin;     /**< backend server's X window */
 	GLXDrawable xsubwin;  /**< child of xwin, clipped to screen bounds */
-	Display *dpy;
+	Display *dpy;         /**< DMX back-end server display */
 #endif
 	CRrecti visrect; /**< visible rect, in front-end screen coords */
 };
@@ -209,8 +209,8 @@ struct window_info_t {
 #elif defined(Darwin)
 	WindowRef window;
 #else
-	Display *dpy;
-	GLXDrawable xwin;
+	Display *dpy;            /**< DMX server display (front-end) */
+	GLXDrawable xwin;        /**< DMX server window ID (front-end) */
 #endif
 	GLboolean isDMXWindow;   /**< true if this window is on a DMX display */
 };
@@ -275,6 +275,7 @@ typedef struct {
 	unsigned int buffer_size;
 	unsigned int geom_buffer_size;
 	unsigned int geom_buffer_mtu;
+	int rank;
 	/*@}*/
 
 	/**
@@ -298,6 +299,7 @@ typedef struct {
 	int listTrack;
 	int forceQuadBuffering;
 	int scaleImages;
+	int renderToCrutWindow;
 	/*@}*/
 
 	/**
