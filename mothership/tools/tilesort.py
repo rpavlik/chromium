@@ -49,7 +49,9 @@ from spudialog import *
 
 menu_TILESORT      = 100
 menu_RENDER        = 101
-menu_ABOUT         = 102
+menu_SERVER        = 102
+menu_GLOBAL        = 103
+menu_ABOUT         = 104
 
 # Widget IDs
 id_MuralWidth  = 3000
@@ -75,6 +77,43 @@ CommonTileSizes = [ [128, 128],
 
 BackgroundColor = wxColor(90, 150, 190)
 
+WindowTitle = "Chromium Tilesort Configuration"
+
+# XXX eventually automatically query these parameters from the SPU
+TilesortOptions = [
+	("broadcast", "bool", 1, false, "Broadcast Primitives"),
+	("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
+	("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
+	("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()"),
+	("sync_on_finish", "bool", 1, false, "Sync on glFinish()"),
+	("draw_bbox", "bool", 1, true, "Draw Bounding Box"),
+	("bbox_line_width", "float", 1, "5.0", "Bounding Box Line Width"),
+	("fake_window_dims", "int", 2, "", "Fake Window Dimensions (w, h)"),
+	("scale_to_mural_size", "bool", 1, true, "Scale to Mural Size")
+]
+
+RenderOptions = [
+	("try_direct", "bool", 1, true, "Try Direct Rendering"),
+	("force_direct", "bool", 1, true, "Force Direct Rendering"),
+	("fullscreen", "bool", 1, false, "Full-screen Window"),
+	("on_top", "bool", 1, false, "Display on top"),
+	("title", "string", 1, "Chromium Render SPU", "Window Title"),
+	("window_geometry", "string", 1, "0, 0, 256, 256", "Window Geometry (x,y,w,h)"),
+	("system_gl_path", "string", 1, "/usr/lib/", "System GL Path"),
+]
+
+ServerOptions = [
+	("optimize_bucket", "bool", 1, true, "Optimized Extent Bucketing"),
+	("lighting2", "bool", 1, false, "Generate Lightning-2 Strip Headers")
+]
+
+GlobalOptions = [
+	("minimum_window_size", "int", 2, (0,0), "Minimum Chromium App Window Size"),
+	("match_window_title", "string", 1, "", "Match App Window Title"),
+	("show_cursor", "bool", 1, false, "Show Virtual cursor"),
+	("MTU", "int", 1, (1024*1024), "Mean Transmission Unit (bytes)"),
+	("default_app", "string", 1, "", "Default Application Program")
+]
 
 #----------------------------------------------------------------------------
 def MakeHostname(format, number):
@@ -146,11 +185,15 @@ class MainFrame(wxFrame):
 
 		# Options menu
 		self.optionsMenu = wxMenu()
-		self.optionsMenu.Append(menu_TILESORT, "Tilesort...")
-		self.optionsMenu.Append(menu_RENDER,   "Render...")
+		self.optionsMenu.Append(menu_TILESORT, "Tilesort SPU...")
+		self.optionsMenu.Append(menu_RENDER,   "Render SPU...")
+		self.optionsMenu.Append(menu_SERVER,   "Server...")
+		self.optionsMenu.Append(menu_GLOBAL,   "Global...")
 		EVT_MENU(self, menu_TILESORT,  self.doTilesort)
 		EVT_MENU(self, menu_RENDER, self.doRender)
-		menuBar.Append(self.optionsMenu, "SPU Options")
+		EVT_MENU(self, menu_SERVER, self.doServer)
+		EVT_MENU(self, menu_GLOBAL, self.doGlobal)
+		menuBar.Append(self.optionsMenu, "Options")
 
 		# Help menu
 		self.helpMenu = wxMenu()
@@ -297,34 +340,24 @@ class MainFrame(wxFrame):
 		self.recomputeTotalSize()
 		
 		# Make the Tilesort SPU options dialog
-		# XXX eventually automatically query these parameters from the SPU
-		opts = [
-			("broadcast", "bool", 1, false, "Broadcast Primitives"),
-			("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
-			("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
-			("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()"),
-			("sync_on_finish", "bool", 1, false, "Sync on glFinish()"),
-			("draw_bbox", "bool", 1, true, "Draw Bounding Box"),
-			("bbox_line_width", "float", 1, "5.0", "Bounding Box Line Width"),
-			("fake_window_dims", "int", 2, "", "Fake Window Dimensions (w, h)"),
-			("scale_to_mural_size", "bool", 1, true, "Scale to Mural Size")
-			]
 		self.TilesortDialog = SPUDialog(parent=NULL, id=-1,
-										title="Tilesort SPU Options", options=opts)
+										title="Tilesort SPU Options",
+										options=TilesortOptions)
 
 		# Make the render SPU options dialog
-		# XXX eventually automatically query these parameters from the SPU
-		opts = [
-			("try_direct", "bool", 1, true, "Try Direct Rendering"),
-			("force_direct", "bool", 1, true, "Force Direct Rendering"),
-			("fullscreen", "bool", 1, false, "Full-screen Window"),
-			("on_top", "bool", 1, false, "Display on top"),
-			("title", "string", 1, "Chromium Render SPU", "Window Title"),
-			("window_geometry", "float", 4, "", "Window Geometry (x,y,w,h)"),
-			("system_gl_path", "string", 1, "/usr/lib/", "System GL Path"),
-			]
 		self.RenderDialog = SPUDialog(parent=NULL, id=-1,
-									  title="Render SPU Options", options=opts)
+									  title="Render SPU Options",
+									  options=RenderOptions)
+
+		# Make the server options dialog
+		self.ServerDialog = SPUDialog(parent=NULL, id=-1,
+									  title="Server Options",
+									  options=ServerOptions)
+
+		# Make the global options dialog
+		self.GlobalDialog = SPUDialog(parent=NULL, id=-1,
+									  title="Global Chromium Options",
+									  options=GlobalOptions)
 
 		if self.fileName != None:
 			self.loadConfiguration()
@@ -457,7 +490,7 @@ class MainFrame(wxFrame):
 	def doNew(self, event):
 		"""File / New callback"""
 		global _docList
-		newFrame = MainFrame(None, -1, "Chromium Tilesort Configuration")
+		newFrame = MainFrame(None, -1, WindowTitle)
 		newFrame.Show(TRUE)
 		_docList.append(newFrame)
 
@@ -478,7 +511,7 @@ class MainFrame(wxFrame):
 		if (self.fileName == None) and not self.dirty:
 			# Load contents into current (empty) document.
 			self.fileName = fileName
-			self.SetTitle(os.path.basename(fileName))
+			self.SetTitle(WindowTitle + ": " + os.path.basename(fileName))
 			self.loadConfiguration()
 		else:
 			# Open a new frame for this document.
@@ -527,7 +560,7 @@ class MainFrame(wxFrame):
 		os.chdir(curDir)
 
 		title = os.path.basename(fileName)
-		self.SetTitle(title)
+		self.SetTitle(WindowTitle + ": " + title)
 
 		self.fileName = fileName
 		self.saveConfiguration()
@@ -566,6 +599,16 @@ class MainFrame(wxFrame):
 	def doRender(self, event):
 		"""Options / Render menu callback"""
 		v = self.RenderDialog.ShowModal()
+		return
+
+	def doServer(self, event):
+		"""Options / Serverer menu callback"""
+		v = self.ServerDialog.ShowModal()
+		return
+
+	def doGlobal(self, event):
+		"""Options / Global menu callback"""
+		v = self.GlobalDialog.ShowModal()
 		return
 
 	def doShowAbout(self, event):
@@ -642,6 +685,66 @@ class MainFrame(wxFrame):
 				elif re.match("^RIGHT_TO_LEFT = [01]$", l):
 					v = re.search("[01]", l)
 					self.hLayoutRadio.SetSelection(int(l[v.start() : v.end()]))
+				elif re.match("^HOSTNAME = ", l):
+					# look for string in quotes
+					v = re.search("\".+\"", l)
+					# extract the string
+					self.HostNamePattern = l[v.start()+1 : v.end()-1]
+					self.hostText.SetValue(self.HostNamePattern)
+				elif re.match("^FIRSTHOST = [0-9]+$", l):
+					v = re.search("[0-9]+", l)
+					self.HostNameStartIndex = int(l[v.start() : v.end()])
+					self.hostSpin.SetValue(self.HostNameStartIndex)
+				elif re.match("^TILESORT_", l):
+					# A tilesort SPU option
+					# extract the option name and value
+					# parentheses in the regexp define groups
+					# \"? is an optional double-quote character
+					# [^\"] is any character but double-quote
+					v = re.search("^TILESORT_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+					if v:
+						name = v.group(1)
+						value = v.group(2)
+						if self.TilesortDialog.IsOption(name):
+							self.TilesortDialog.SetValue(name, value)
+						else:
+							print "%s is not a recognized tilesort SPU option" % name
+				elif re.match("^RENDER_", l):
+					# A render SPU option
+					v = re.search("^RENDER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+					if v:
+						name = v.group(1)
+						value = v.group(2)
+						if self.RenderDialog.IsOption(name):
+							self.RenderDialog.SetValue(name, value)
+						else:
+							print "%s is not a recognized render SPU option" % name
+				elif re.match("^SERVER_", l):
+					# A server option
+					v = re.search("^SERVER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+					if v:
+						name = v.group(1)
+						value = v.group(2)
+						if self.ServerDialog.IsOption(name):
+							self.ServerDialog.SetValue(name, value)
+						else:
+							print "%s is not a recognized server option" % name
+				elif re.match("^GLOBAL_", l):
+					# A global option
+					v = re.search("^GLOBAL_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
+					if v:
+						name = v.group(1)
+						value = v.group(2)
+						if self.GlobalDialog.IsOption(name):
+							self.GlobalDialog.SetValue(name, value)
+						else:
+							print "%s is not a recognized global option" % name
+				elif re.match("^# end of options$", l):
+					# that's the end of the variables
+					# save the rest of the file....
+					break
+				elif not re.match("\s*#", l):
+					print "unrecognized line: %s" % l
 				# scan for HOSTNAME and FIRSTHOST
 			f.close()
 			self.recomputeTotalSize()
@@ -652,7 +755,6 @@ class MainFrame(wxFrame):
 	def saveConfiguration(self):
 		"""Save the configuration."""
 		f = open(self.fileName, "w")
-		print "Save contents!"
 		if f:
 			f.write("# Chromium tilesort config file\n")
 			f.write("TILE_ROWS = %d\n" % self.heightControl.GetValue())
@@ -663,6 +765,15 @@ class MainFrame(wxFrame):
 			f.write("BOTTOM_TO_TOP = %d\n" % self.vLayoutRadio.GetSelection())
 			f.write("HOSTNAME = \"%s\"\n" % self.HostNamePattern)
 			f.write("FIRSTHOST = %d\n" % self.HostNameStartIndex)
+			for (name, type, count, default, descrip) in TilesortOptions:
+				f.write("TILESORT_%s = \"%s\"\n" %(name, self.TilesortDialog.GetValue(name)))
+			for (name, type, count, default, descrip) in RenderOptions:
+				f.write("RENDER_%s = \"%s\"\n" %(name, self.RenderDialog.GetValue(name)))
+			for (name, type, count, default, descrip) in ServerOptions:
+				f.write("SERVER_%s = \"%s\"\n" %(name, self.ServerDialog.GetValue(name)))
+			for (name, type, count, default, descrip) in GlobalOptions:
+				f.write("GLOBAL_%s = \"%s\"\n" %(name, self.GlobalDialog.GetValue(name)))
+			f.write("# end of options\n")
 			f.close()
 		self.dirty = false
 
@@ -757,7 +868,7 @@ class TilesortApp(wxApp):
 		if len(sys.argv) == 1:
 			# No file name was specified on the command line -> start with a
 			# blank document.
-			frame = MainFrame(None, -1, "Chromium Tilesort Configuration")
+			frame = MainFrame(None, -1, WindowTitle)
 			frame.Centre()
 			frame.Show(TRUE)
 			_docList.append(frame)
