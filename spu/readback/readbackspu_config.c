@@ -14,13 +14,14 @@ static void __setDefaults( ReadbackSPU *readback_spu )
 	readback_spu->windows[0].inUse = GL_TRUE;
 	readback_spu->windows[0].renderWindow = 0;
 	readback_spu->windows[0].childWindow = 0;
-	readback_spu->depthType = GL_FLOAT;
 	readback_spu->barrierCount = 0;
 
 	/* This will make the viewport be computed later */
 	readback_spu->halfViewportWidth = 0;
 	readback_spu->cleared_this_frame = 0;
 	readback_spu->bbox = NULL;
+
+	readback_spu->resizable = 0;
 }
 
 void set_extract_depth( ReadbackSPU *readback_spu, const char *response )
@@ -49,12 +50,6 @@ void set_drawpixels_pos( ReadbackSPU *readback_spu, const char *response )
 }
 
 
-void set_display_resolution( ReadbackSPU *readback_spu, const char *response )
-{
-   sscanf( response, "%d %d", &readback_spu->resX, &readback_spu->resY );
-}
-
-
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions readbackSPUOptions[] = {
@@ -75,9 +70,6 @@ SPUOptions readbackSPUOptions[] = {
 
    { "drawpixels_pos", CR_INT, 2, "0, 0", "0, 0", NULL,
      "glDrawPixels Position (x,y)", (SPUOptionCB)set_drawpixels_pos },
-
-   { "display_resolution", CR_INT, 2, "0", "0", NULL,
-     "resolution of the output device (x,y)", (SPUOptionCB)set_display_resolution },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
@@ -108,6 +100,17 @@ void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 	if (readback_spu->extract_depth && readback_spu->extract_alpha) {
 		crWarning("Readback SPU can't extract both depth and alpha, using depth");
 		readback_spu->extract_alpha = 0;
+	}
+
+	/* Get the render SPU's resizable setting */
+	{
+		char response[1000];
+		if (crMothershipGetSPUParam( conn, response, "resizable" )) {
+			int resizable = 0;
+			sscanf(response, "%d", &resizable);
+			readback_spu->resizable = resizable;
+		}
+		printf(">>>>>>> resizable = %d\n", readback_spu->resizable);
 	}
 
 	crMothershipDisconnect( conn );

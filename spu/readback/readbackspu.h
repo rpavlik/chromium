@@ -27,14 +27,16 @@ typedef struct {
 #ifndef WINDOWS
 	Display *dpy;
 #endif
-	GLubyte *colorBuffer;
-	GLfloat *depthBuffer;
 } ThreadInfo;
 
 typedef struct {
 	GLboolean inUse;
 	GLint renderWindow;
 	GLint childWindow;
+	GLint width, height;
+	GLubyte *colorBuffer;
+	GLvoid *depthBuffer;
+	GLenum depthType;  /* GL_UNSIGNED_SHORT or GL_FLOAT */
 } WindowInfo;
 
 typedef struct {
@@ -55,8 +57,7 @@ typedef struct {
 	int local_visualization;
 	int visualize_depth;
 	int drawX, drawY;
-	int resX, resY;
-	GLenum depthType;
+	int resizable;
 
 	WindowInfo windows[MAX_WINDOWS];
 
