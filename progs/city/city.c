@@ -55,9 +55,8 @@ static int StartTime = 0;
 static GLfloat StartRot = 0;
 
 static GLint CheckerRows = 20, CheckerCols = 20;
-static GLint NumPots = 4;
 static GLboolean UseDisplayLists = GL_FALSE;
-static GLuint GroundList = 1, TeapotList = 2;
+static GLuint GroundList = 1;
 
 
 
@@ -255,13 +254,6 @@ static void Key( unsigned char key, int x, int y )
          UseDisplayLists = !UseDisplayLists;
          printf("Use display lists: %d\n", (int) UseDisplayLists);
          break;
-      case 'p':
-         if (NumPots > 1)
-            NumPots--;
-         break;
-      case 'P':
-         NumPots++;
-         break;
       case 'z':
          EyeDist -= 1;
          glMatrixMode( GL_MODELVIEW );
@@ -277,6 +269,7 @@ static void Key( unsigned char key, int x, int y )
       case ' ':
          GenerateBuildings();
          break;
+      case 'q':
       case 27:
          exit(0);
          break;
