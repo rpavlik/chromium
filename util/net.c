@@ -662,7 +662,8 @@ void crNetSendExact( CRConnection *conn, const void *buf, unsigned int len )
  */
 void crNetServerConnect( CRNetServer *ns )
 {
-	ns->conn = crNetConnectToServer( ns->name, 7000, ns->buffer_size, 1 );
+	ns->conn = crNetConnectToServer( ns->name, DEFAULT_SERVER_PORT,
+																	 ns->buffer_size, 1 );
 }
 
 
@@ -1105,9 +1106,8 @@ crNetSetKey( const unsigned char* key, const int keyLength )
  * Shoot me now.  No wonder academics have such a terrible
  * reputation in industry.
  *
- *      --Humper */
-
-#define MOTHERPORT 10000
+ *      --Humper
+ */
 
 CRConnection *__copy_of_crMothershipConnect( void )
 {
@@ -1123,7 +1123,7 @@ CRConnection *__copy_of_crMothershipConnect( void )
 		mother_server = "localhost";
 	}
 
-	conn = crNetConnectToServer( mother_server, MOTHERPORT, 8096, 0 );
+	conn = crNetConnectToServer( mother_server, DEFAULT_MOTHERSHIP_PORT, 8096, 0 );
 
 	if (!conn)
 		crError("Failed to connect to mothership\n");
