@@ -18,11 +18,28 @@ import sys
 sys.path.append( "../server" )
 from mothership import *
 
+# Get program name
+if len(sys.argv) == 1:
+	program = GLOBAL_default_app
+elif len(sys.argv) == 2:
+	program = sys.argv[1]
+else:
+	print "Usage: %s <program>" % sys.argv[0] 
+	sys.exit(-1)
+if program == "":
+	print "No program to run!"
+	sys.exit(-1)
+
+
 cr = CR()
+cr.MTU( GLOBAL_MTU )
 
 """
 
 __ConfigFileTail = """
+cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
+cr.SetParam('match_window_title', GLOBAL_match_window_title)
+cr.SetParam('show_cursor', GLOBAL_show_cursor)
 cr.Go()
 """
 
@@ -86,6 +103,11 @@ def WriteConfig(mothership, file):
 	"""Write the mothership config to file handle."""
 
 	file.write("# Chromium configuration produced by graph.py\n")
+	# write server and global options
+	WriteServerOptions(mothership, file)
+	WriteGlobalOptions(mothership, file)
+	file.write("\n")
+	# boilerplate
 	file.write(__ConfigFileHeader)
 
 	# Assign an index to each node (needed for AddServer)
@@ -100,14 +122,17 @@ def WriteConfig(mothership, file):
 	# write the code to allocate the nodes
 	i = 0
 	for node in mothership.Nodes():
-		if node.IsServer():
-			type = "crNetworkNode"
-		else:
-			type = "crApplicationNode"
 		# emit N nodes
 		for j in range(node.GetCount()):
-			file.write("nodes[%d] = %s('%s')\n" %
-					   (i, type, node.GetHosts()[j]))
+			if node.IsServer():
+				file.write("nodes[%d] = CRNetworkNode('%s')\n" %
+						   (i, node.GetHosts()[j]))
+			else:
+				# application node
+				file.write("nodes[%d] = CRApplicationNode('%s')\n" %
+						   (i, node.GetHosts()[j]))
+				file.write("nodes[%d].StartDir( GLOBAL_default_dir )\n" % i)
+				file.write("nodes[%d].SetApplication( program )\n" %i)
 			file.write("cr.AddNode(nodes[%d])\n" % i)
 			i += 1
 		#endif
@@ -115,15 +140,15 @@ def WriteConfig(mothership, file):
 	file.write("\n")
 
 	# write the SPUs for each node
+	freeport = 7000
 	for node in mothership.Nodes():
 		for j in range(node.GetCount()):
 			numSPUs = len(node.SPUChain())
 			if numSPUs > 0:
 				if node.IsServer():
-					type = "crNetworkNode"
+					file.write("# network nodes[%d]\n" % (node.index + j))
 				else:
-					type = "crApplicationNode"
-				file.write("# %s nodes[%d]\n" % (type, node.index + j))
+					file.write("# application nodes[%d]\n" % (node.index + j))
 				file.write("spus = range(%d)\n" % numSPUs)
 				k = 0
 				for spu in node.SPUChain():
@@ -132,27 +157,28 @@ def WriteConfig(mothership, file):
 					if k + 1 == numSPUs:
 						# last SPU, add servers, if any
 						for server in node.GetServers():
-							file.write("spus[%d].AddServer(nodes[%d])\n" %
-									   (k, server.index))
-					file.write("nodes[%d].AddSPU(spu[%d])\n" %
+							file.write(("spus[%d].AddServer(nodes[%d], " +
+									   "protocol='tcpip', port=%d)\n") %
+									   (k, server.index, freeport))
+							freeport += 1
+					file.write("nodes[%d].AddSPU(spus[%d])\n" %
 							   (node.index + j, k))
 					k += 1
-				file.write("\n")
 			#endif
-		#endfor
-		if node.IsServer():
-			# write the tiles information
-			for j in range(node.GetCount()):
-				# XXX fix this
-				#file.write("nodes[%d].AddTile(x, y, width, height)\n" %
-				#		   node.index + j)
-				pass
+			if node.IsServer():
+				# write the tile information
+				tiles = node.GetTiles(j)
+				for tile in tiles:
+					file.write("nodes[%d].AddTile(%d, %d, %d, %d)\n" %
+					   (node.index + j, tile[0], tile[1], tile[2], tile[3]))
+			#endif
+			file.write("\n")
 		#endif
 	#endfor
 
 	file.write("\n")
 
-	# tail of file
+	# tail of file, boilerplate
 	file.write(__ConfigFileTail)
 
 
