@@ -115,7 +115,7 @@ DrawObject3(void)
 {
    static const GLfloat purple[4] = {1.0F, 0.0F, 1.0F, 0.5F};
    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, purple);
-   glColor3f(1, 0.2, 0.2);
+   glColor3f(1.0F, 0.2F, 0.2F);
    glEnable(GL_BLEND);
    glEnable(GL_CULL_FACE);
    glEnable(GL_LIGHTING);
@@ -307,7 +307,7 @@ Init(void)
    assert(ChromiumParametervCR);
 #endif
    /* setup lighting, etc */
-   glClearColor(0.1, 0.5, 1.0, 0.0);
+   glClearColor(0.1F, 0.5F, 1.0F, 0.0F);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHT0);
 
