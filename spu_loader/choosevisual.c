@@ -305,7 +305,7 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 			 */
 			templateFlags = VisualScreenMask | VisualClassMask;
 			templateVis.screen = screen;
-			templateVis.visualid = vis[i].visual->visualid;
+			templateVis.visualid = best->visualid;
 			XFree(vis); /* free the list */
 			best = XGetVisualInfo(dpy, templateFlags, &templateVis, &count);
 		}
