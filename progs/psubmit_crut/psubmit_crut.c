@@ -179,11 +179,11 @@ DisplayRings(void)
      */
     
     if (swapFlag) {
-	// really swap 
+	/* really swap */
 	glSwapBuffersCR( window, 0 );
     }
     else {
-	// don't really swap, just mark end of frame 
+	/* don't really swap, just mark end of frame */
 	glSwapBuffersCR( window, CR_SUPPRESS_SWAP_BIT );
     }	
     frame++;
