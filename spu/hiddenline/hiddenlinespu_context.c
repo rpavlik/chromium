@@ -25,6 +25,8 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_MakeCurrent(GLint crWindow, GLint nati
 
 	if (context)
 	{
+		hiddenlineFlush(NULL);
+
 		/* setup initial buffer for packing commands */
 		hiddenlineProvidePackBuffer();
 		crPackSetContext( context->packer );
