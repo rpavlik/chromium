@@ -446,7 +446,7 @@ zpixspuDrawPixels(GLsizei width, GLsizei height,
 			/*  the following atrocity makes IRIX happy */
 			*((GLuint *) & p_run) &= (GLuint) - sizeof(GLuint);
 
-			CRASSERT((GLuint) p_run >= (GLuint) & (p_plebuf->data));
+			CRASSERT((void *) p_run >= (void *) & (p_plebuf->data));
 			p_left = p_run - sizeof(PLEbuf);
 
 			/* scoot header up against run lengths */
@@ -741,7 +741,7 @@ zpixspuZPixCR(GLsizei width, GLsizei height, GLenum format, GLenum type,
 			CRASSERT(n == 0);
 
 			/* Check left and right edges */
-			CRASSERT(sizeof(PLEbuf) <= (GLuint) p_run - (GLuint) p_plebuf);
+			CRASSERT((int) sizeof(PLEbuf) <= (char *) p_run - (char *) p_plebuf);
 
 			/*
 				CRASSERT(zlen >= (GLuint) p_val - (GLuint) p_plebuf );
