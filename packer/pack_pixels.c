@@ -9,6 +9,7 @@
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "state/cr_pixel.h"
+#include "cr_version.h"
 
 
 void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height, 
@@ -64,16 +65,34 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 
 	switch ( type )
 	{
+#ifdef CR_OPENGL_VERSION_1_2
+	  case GL_UNSIGNED_BYTE_3_3_2:
+	  case GL_UNSIGNED_BYTE_2_3_3_REV:
+#endif
 	  case GL_UNSIGNED_BYTE:
 	  case GL_BYTE:
 			 bytes_per_pixel = 1;
 			 break;
 
+#ifdef CR_OPENGL_VERSION_1_2
+	  case GL_UNSIGNED_SHORT_5_6_5:
+	  case GL_UNSIGNED_SHORT_5_6_5_REV:
+	  case GL_UNSIGNED_SHORT_5_5_5_1:
+	  case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	  case GL_UNSIGNED_SHORT_4_4_4_4:
+	  case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+#endif
 	  case GL_UNSIGNED_SHORT:
 	  case GL_SHORT:
 			bytes_per_pixel = 2;
 			break;
 
+#ifdef CR_OPENGL_VERSION_1_2
+	  case GL_UNSIGNED_INT_8_8_8_8:
+	  case GL_UNSIGNED_INT_8_8_8_8_REV:
+	  case GL_UNSIGNED_INT_10_10_10_2:
+	  case GL_UNSIGNED_INT_2_10_10_10_REV:
+#endif
 	  case GL_UNSIGNED_INT:
 	  case GL_INT:
 	  case GL_FLOAT:
