@@ -38,15 +38,18 @@ float colors[7][4] = {
 
 static const int MASTER_BARRIER = 100;
 
-#define LOAD( x ) x##CR = (x##Proc) crGetProcAddress( #x )
 
-crCreateContextProc crCreateContextCR;
-crMakeCurrentProc   crMakeCurrentCR;
-crSwapBuffersProc   crSwapBuffersCR;
-glBarrierCreateProc glBarrierCreateCR;
-glBarrierExecProc   glBarrierExecCR;
-crCreateWindowProc  crCreateWindowCR;
-crWindowPositionProc  crWindowPositionCR;
+#define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
+#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
+
+crCreateContextProc   glCreateContextCR;
+crMakeCurrentProc     glMakeCurrentCR;
+crSwapBuffersProc     glSwapBuffersCR;
+crCreateWindowProc    glCreateWindowCR;
+crWindowPositionProc  glWindowPositionCR;
+
+glBarrierCreateCRProc glBarrierCreateCR;
+glBarrierExecCRProc   glBarrierExecCR;
 
 #define MAXIMUM_THREADS 10
 
@@ -122,10 +125,10 @@ static void *render_loop( void *threadData )
 
 	rank = context->Rank;
 
-	crMakeCurrentCR(context->Window, context->Context);
+	glMakeCurrentCR(context->Window, context->Context);
 
-	LOAD( glBarrierCreate );
-	LOAD( glBarrierExec );
+	LOAD2( BarrierCreate );
+	LOAD2( BarrierExec );
 	if (!glBarrierCreateCR)
 		 crError("BarrierCreateCR is NULL!");
 	if (!glBarrierExecCR)
@@ -178,7 +181,7 @@ static void *render_loop( void *threadData )
 		/* The crserver only executes the SwapBuffers() for the 0th client.
 		 * No need to test for rank==0 as we used to do.
 		 */
-		crSwapBuffersCR(context->Window, context->SwapFlags);
+		glSwapBuffersCR(context->Window, context->SwapFlags);
 	}
 
 	ExitFlag = GL_TRUE;
@@ -231,33 +234,33 @@ int main(int argc, char *argv[])
 		crError( "%d threads is the limit", MAXIMUM_THREADS);
 	}
 
-	LOAD( crCreateContext );
-	LOAD( crMakeCurrent );
-	LOAD( crSwapBuffers );
-	LOAD( crCreateWindow );
-	LOAD( crWindowPosition );
+	LOAD( CreateContext );
+	LOAD( MakeCurrent );
+	LOAD( SwapBuffers );
+	LOAD( CreateWindow );
+	LOAD( WindowPosition );
 
-	Context[0].Window = crCreateWindowCR(dpy, visual);
-	/*	Context[0].Context = crCreateContextCR(dpy, visual);*/
+	Context[0].Window = glCreateWindowCR(dpy, visual);
+	/*	Context[0].Context = glCreateContextCR(dpy, visual);*/
 	if (Context[0].Window < 0) {
 		 crError("Failed to create 0th window!\n");
 		 return 0;
 	}
 	Context[0].Clear = GL_TRUE;
 	Context[0].SwapFlags = 0;
-	crWindowPositionCR(Context[0].Window, 20, 20);
+	glWindowPositionCR(Context[0].Window, 20, 20);
 
 	/* Create a context for each thread */
 	for (i = 0; i < NumThreads; i++) {
 		if (i > 0) {
 			if (multiWindow) {
 				/* a new window */
-				Context[i].Window = crCreateWindowCR(dpy, visual);
+				Context[i].Window = glCreateWindowCR(dpy, visual);
 				if (Context[i].Window < 0) {
-					crError("crCreateWindowCR() failed!\n");
+					crError("glCreateWindowCR() failed!\n");
 					return 0;
 				}
-				crWindowPositionCR(Context[i].Window, 420*i, 20);
+				glWindowPositionCR(Context[i].Window, 420*i, 20);
 				Context[i].Clear = GL_TRUE;
 			}
 			else {
@@ -274,9 +277,9 @@ int main(int argc, char *argv[])
 			}
 		}
 		Context[i].Rank = i;
-		Context[i].Context = crCreateContextCR(dpy, visual);
+		Context[i].Context = glCreateContextCR(dpy, visual);
 		if (Context[i].Context < 0) {
-			crError("crCreateContextCR() call for thread %d failed!\n", i);
+			crError("glCreateContextCR() call for thread %d failed!\n", i);
 			return 0;
 		}
 	}
