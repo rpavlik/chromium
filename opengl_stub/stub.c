@@ -105,10 +105,11 @@ void APIENTRY crWindowPosition( GLint window, GLint x, GLint y )
 
 void APIENTRY crWindowShow( GLint window, GLint flag )
 {
-	const WindowInfo *winInfo = (const WindowInfo *)
+	WindowInfo *winInfo = (WindowInfo *)
 		crHashtableSearch(stub.windowTable, (unsigned int) window);
 	if (winInfo && winInfo->type == CHROMIUM)
 		stub.spu->dispatch_table.WindowShow( window, flag );
+	winInfo->mapped = flag ? GL_TRUE : GL_FALSE;
 }
 
 void APIENTRY stub_GetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values )

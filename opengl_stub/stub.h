@@ -82,7 +82,7 @@ struct context_info_t
 	long surf_order, surf_opacy;
 
 	long disp_mask;
-#else
+#elif defined(GLX)
 	Display *dpy;
 	ContextInfo *share;
 	XVisualInfo *visual;
@@ -106,12 +106,13 @@ struct window_info_t
 	unsigned int width, height;
 	ContextType type;
 	GLint spuWindow;       /* returned by head SPU's WindowCreate() */
+	GLboolean mapped;
 #ifdef WINDOWS
 	HDC drawable;
 #elif defined(DARWIN)
 	CGSWindowID  drawable;
 	CGSSurfaceID surface;
-#else
+#elif defined(GLX)
 	Display *dpy;
 	GLXDrawable drawable;
 #endif
@@ -184,7 +185,6 @@ extern CGSConnectionID    _CGSDefaultConnection(void);
 extern OSStatus CGSGetWindowLevel( CGSConnectionID cid, CGSWindowID wid, CGWindowLevel *level );
 extern OSStatus CGSSetWindowAlpha( const CGSConnectionID cid, CGSWindowID wid, float alpha );
 
-
 /* These don't seem to be included in the OSX glext.h ... */
 extern void glPointParameteri( GLenum pname, GLint param );
 extern void glPointParameteriv( GLenum pname, const GLint * param );
@@ -193,7 +193,7 @@ extern CGLError stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, C
 extern WindowInfo *stubGetWindowInfo( CGSWindowID drawable );
 extern GLuint FindVisualInfo( CGLPixelFormatObj pix );
 
-#else
+#elif defined(GLX)
 
 /* GLX versions */
 extern GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct );
@@ -210,6 +210,7 @@ extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context );
 extern GLint stubNewWindow( const char *dpyName, GLint visBits );
 extern void stubSwapBuffers( const WindowInfo *window, GLint flags );
 extern void stubGetWindowGeometry( const WindowInfo *win, int *x, int *y, unsigned int *w, unsigned int *h );
+extern GLboolean stubIsWindowVisible( const WindowInfo *win );
 extern void stubInit(void);
 
 extern void APIENTRY stub_GetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values );

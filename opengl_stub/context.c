@@ -33,8 +33,7 @@
 #include "stub.h"
 
 
-#if !( defined(WINDOWS) || defined(Darwin) )
-
+#ifdef GLX
 /**
  * Get the display string for the given display pointer.
  * Never return just ":0.0".  In that case, prefix with our host name.
@@ -129,6 +128,7 @@ stubSetDispatch( SPUDispatchTable *table )
 
 /**
  * Create a new _Chromium_ window, not GLX, WGL or CGL.
+ * Called by crWindowCreate() only.
  */
 GLint
 stubNewWindow( const char *dpyName, GLint visBits )
@@ -160,6 +160,7 @@ stubNewWindow( const char *dpyName, GLint visBits )
 	}
 	winInfo->width = size[0];
 	winInfo->height = size[1];
+	winInfo->mapped = 1;
 
 	if (!dpyName)
 		dpyName = "";
@@ -167,12 +168,12 @@ stubNewWindow( const char *dpyName, GLint visBits )
 	crStrncpy(winInfo->dpyName, dpyName, MAX_DPY_NAME);
 	winInfo->dpyName[MAX_DPY_NAME-1] = 0;
 
-	/* Use spuWin as the hash table index and GLX/WGL handle*/
+	/* Use spuWin as the hash table index and GLX/WGL handle */
 #ifdef WINDOWS
 	winInfo->drawable = (HDC) spuWin;
 #elif defined(Darwin)
 	winInfo->drawable = (CGSWindowID) spuWin;
-#else
+#elif defined(GLX)
 	winInfo->drawable = (GLXDrawable) spuWin;
 #endif
 	winInfo->spuWindow = spuWin;
@@ -183,18 +184,37 @@ stubNewWindow( const char *dpyName, GLint visBits )
 }
 
 
+GLboolean
+stubIsWindowVisible( const WindowInfo *win )
+{
+#if defined(WINDOWS)
+	return GL_TRUE;
+#elif defined(Darwin)
+	return GL_TRUE;
+#elif defined(GLX)
+	if (win->dpy) {
+		XWindowAttributes attr;
+		XGetWindowAttributes(win->dpy, win->drawable, &attr);
+		return (attr.map_state != IsUnmapped);
+	}
+	else {
+		/* probably created by crWindowCreate() */
+		return win->mapped;
+	}
+#endif
+}
+
+
 /**
  * Given a Windows HDC or GLX Drawable, return the corresponding
  * WindowInfo structure.  Create a new one if needed.
  */
-#ifdef WINDOWS
 WindowInfo *
+#ifdef WINDOWS
 stubGetWindowInfo( HDC drawable )
 #elif defined(Darwin)
-WindowInfo *
 stubGetWindowInfo( CGSWindowID drawable )
-#else
-WindowInfo *
+#elif defined(GLX)
 stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 #endif
 {
@@ -203,16 +223,15 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 		winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 		if (!winInfo)
 			return NULL;
-#if !( defined(WINDOWS) || defined(Darwin) )
+#ifdef GLX
 		crStrncpy(winInfo->dpyName, DisplayString(dpy), MAX_DPY_NAME);
 		winInfo->dpyName[MAX_DPY_NAME-1] = 0;
+		winInfo->dpy = dpy;
 #endif
 		winInfo->drawable = drawable;
 		winInfo->type = UNDECIDED;
 		winInfo->spuWindow = -1;
-#if !( defined(WINDOWS) || defined(Darwin) )
-		winInfo->dpy = dpy;
-#endif
+		winInfo->mapped = stubIsWindowVisible(winInfo);
 		crHashtableAdd(stub.windowTable, (unsigned int) drawable, winInfo);
 	}
 	return winInfo;
@@ -271,7 +290,7 @@ stubCreateContext( HDC hdc )
 #elif defined(Darwin)
 CGLError
 stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx )
-#else
+#elif defined(GLX)
 GLXContext
 stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct )
 #endif
@@ -302,7 +321,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 	dpyName[0] = '\0';
 	if( stub.haveNativeOpenGL )
 		stub.desiredVisual |= FindVisualInfo( pix );
-#else
+#elif defined(GLX)
 	stubGetDisplayString(dpy, dpyName, MAX_DPY_NAME);
 	if (stub.haveNativeOpenGL) {
 		int foo, bar;
@@ -316,12 +335,12 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 	if (!context)
 		return 0;
 
-#ifndef WINDOWS
-#ifndef Darwin
+#ifdef GLX
 	context->dpy = dpy;
 	context->visual = vis;
 	context->direct = direct;
 #endif
+#if defined(GLX) || defined(Darwin)
 	context->share = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) share);
 #endif
 
@@ -334,7 +353,7 @@ stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct
 
 	*ctx = (CGLContextObj) context->id;
 	return noErr;
-#else
+#elif defined(GLX)
 	return (GLXContext) context->id;
 #endif
 }
@@ -436,7 +455,7 @@ InstantiateNativeContext( WindowInfo *window, ContextInfo *context )
 	}
 
 	return context->cglc ? GL_TRUE : GL_FALSE;
-#else
+#elif defined(GLX)
 	GLXContext shareCtx = 0;
 
 	/* sort out context sharing here */
@@ -582,7 +601,7 @@ stubGetWindowGeometry( const WindowInfo *window, int *x, int *y, unsigned int *w
 static void
 GetWindowTitle( const WindowInfo *window, char *title )
 {
-	/* XXX \todo Darwn window Title */
+	/* XXX \todo Darwin window Title */
 	title[0] = '\0';
 }
 
@@ -602,7 +621,7 @@ GetCursorPosition( const WindowInfo *window, int pos[2] )
 	crDebug( "%i %i", pos[0], pos[1] );
 }
 
-#else
+#elif defined(GLX)
 
 void
 stubGetWindowGeometry( const WindowInfo *window, int *x, int *y,
@@ -896,7 +915,7 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			retVal = (stub.wsInterface.CGLSetCurrentContext(context->cglc) == noErr);
 		else
 			retVal = (stub.wsInterface.CGLSetSurface(context->cglc, _CGSDefaultConnection(), window->drawable, window->surface) == noErr);
-#else
+#elif defined(GLX)
 		retVal = (GLboolean) stub.wsInterface.glXMakeCurrent( window->dpy, window->drawable, context->glxContext );
 #endif
 	}
@@ -951,7 +970,7 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 	}
 
 	if (!window->width && window->type == CHROMIUM) {
-		/* Now call Viewport to setup initial parameters */
+		/* One time window setup */
 		int x, y;
 		unsigned int winW, winH;
 
@@ -968,6 +987,17 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			stub.spuDispatch.WindowSize( window->spuWindow, winW, winH );
 		if (winW > 0 && winH > 0)
 			stub.spu->dispatch_table.Viewport( 0, 0, winW, winH );
+	}
+
+	/* Update window mapping state.
+	 * Basically, this lets us hide render SPU windows which correspond
+	 * to unmapped application windows.  Without this, perfly (for example)
+	 * opens *lots* of temporary windows which otherwise clutter the screen.
+	 */
+	if (window->type == CHROMIUM && window->dpy && window->mapped != 1) {
+		int mapped = stubIsWindowVisible(window);
+		stub.spu->dispatch_table.WindowShow(window->spuWindow, mapped);
+		window->mapped = mapped;
 	}
 
 	return retVal;
@@ -990,7 +1020,7 @@ stubDestroyContext( unsigned long contextId )
 		stub.wsInterface.wglDeleteContext( context->hglrc );
 #elif defined(Darwin)
 		stub.wsInterface.CGLDestroyContext( context->cglc );
-#else
+#elif defined(GLX)
 		stub.wsInterface.glXDestroyContext( context->dpy, context->glxContext );
 #endif
 	}
@@ -1027,7 +1057,7 @@ stubSwapBuffers( const WindowInfo *window, GLint flags )
 		/* ...is this ok? */
 /*		stub.wsInterface.CGLFlushDrawable( context->cglc ); */
 		crDebug("stubSwapBuffers: unable to swap (no context!)");
-#else
+#elif defined(GLX)
 		stub.wsInterface.glXSwapBuffers( window->dpy, window->drawable );
 #endif
 	}
