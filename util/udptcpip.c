@@ -270,7 +270,7 @@ static unsigned int safelen=0;
 static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 				void *start, unsigned int len )
 {
-	static unsigned int safeblip=0;
+	static unsigned int safedone=0;
 	CRTCPIPBuffer *udptcpip_buffer;
 	unsigned int      *lenp;
 
@@ -280,9 +280,9 @@ static void crUDPTCPIPSend( CRConnection *conn, void **bufp,
 	if ( safelen+len > safelen )
 	{
 		safelen+=len;
-		if (safelen-safeblip>100000)
+		if (safelen-safedone>100000)
 		{
-			safeblip=safelen;
+			safedone=safelen;
 			crDebug( "%dKo safe", safelen/1024 );
 		}
 	}
@@ -338,25 +338,17 @@ static unsigned int barflen=0;
 static void crUDPTCPIPBarf( CRConnection *conn, void **bufp,
 				void *start, unsigned int len)
 {
-	static unsigned int barfblip=0;
+	static unsigned int barfdone=0;
 	static const unsigned int sizes[]={
 		0,10,50,100,500,1000,5000,10000,UINT_MAX
 	};
-#if 0
-	/* is this valid C? */
-	static unsigned int nbs[sizeof(sizes)/sizeof(int)] = { [sizeof(sizes)/sizeof(int)-1] 0 };
-#else
-	static unsigned int nbs[sizeof(sizes)/sizeof(int)];
-#endif
+	static unsigned int nbs[sizeof(sizes)/sizeof(int)] = {
+		0, 0, 0,  0,  0,   0,   0,    0,       0
+	};
 	static unsigned int nb;
 	unsigned int      *seqp;
 	CRTCPIPBuffer *udptcpip_buffer;
 	int i;
-
-#if 1
-	for (i = 0; i < sizeof(sizes) / sizeof(unsigned int); i++)
-		nbs[i] = 0;
-#endif
 
 	if (!bufp) {
 		crDebug("writing safely %d bytes because from user memory",len);
@@ -374,12 +366,12 @@ static void crUDPTCPIPBarf( CRConnection *conn, void **bufp,
 		barflen+=len;
 		nb++;
 		for(i=0;;i++)
-			if (len > sizes[i] && len <= sizes[(i+1)]) {
+			if (len > sizes[i] && len <= sizes[i+1]) {
 				nbs[i]++;
 				break;
 			}
-		if (barflen-barfblip>1<<22) {
-			barfblip=barflen;
+		if (barflen-barfdone>1<<22) {
+			barfdone=barflen;
 			crDebug( "send traffic: %d%sMo barfed %dKo safe", barflen/(1024*1024), barflen?"":".0", safelen/1024 );
 			if (nb) {
 				for (i=0;i<sizeof(sizes)/sizeof(int)-1;i++)
