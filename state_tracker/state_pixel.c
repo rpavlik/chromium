@@ -532,6 +532,16 @@ void crStatePixelDiff(CRPixelBits *b, CRbitvalue *bitID,
 	i = 0; /* silence compiler */
 	if (CHECKDIRTY(b->transfer, bitID))
 	{
+		if (from->mapColor != to->mapColor)
+		{		 	
+			diff_api.PixelTransferi (GL_MAP_COLOR, to->mapColor);
+			from->mapColor = to->mapColor;
+		}
+		if (from->mapStencil != to->mapStencil)
+		{
+			diff_api.PixelTransferi (GL_MAP_STENCIL, to->mapStencil);
+			from->mapStencil = to->mapStencil;
+		}
 		if (from->indexOffset != to->indexOffset)
 		{
 			diff_api.PixelTransferi (GL_INDEX_OFFSET, to->indexOffset);
@@ -608,25 +618,25 @@ void crStatePixelDiff(CRPixelBits *b, CRbitvalue *bitID,
 	}
 	if (CHECKDIRTY(b->maps, bitID))
 	{
-		if (crMemcmp(to->mapStoS, from->mapStoS, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapStoS, from->mapStoS, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_S_TO_S,to->mapStoSsize,(GLfloat*)to->mapStoS);
-		if (crMemcmp(to->mapItoI, from->mapItoI, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapItoI, from->mapItoI, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_I,to->mapItoIsize,(GLfloat*)to->mapItoI);
-		if (crMemcmp(to->mapItoR, from->mapItoR, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapItoR, from->mapItoR, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_R,to->mapItoRsize,(GLfloat*)to->mapItoR);
-		if (crMemcmp(to->mapItoG, from->mapItoG, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapItoG, from->mapItoG, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_G,to->mapItoGsize,(GLfloat*)to->mapItoG);
-		if (crMemcmp(to->mapItoB, from->mapItoB, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapItoB, from->mapItoB, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_B,to->mapItoBsize,(GLfloat*)to->mapItoB);
-		if (crMemcmp(to->mapItoA, from->mapItoA, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapItoA, from->mapItoA, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_I_TO_A,to->mapItoAsize,(GLfloat*)to->mapItoA);
-		if (crMemcmp(to->mapRtoR, from->mapRtoR, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapRtoR, from->mapRtoR, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_R_TO_R,to->mapRtoRsize,(GLfloat*)to->mapRtoR);
-		if (crMemcmp(to->mapGtoG, from->mapGtoG, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapGtoG, from->mapGtoG, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_G_TO_G,to->mapGtoGsize,(GLfloat*)to->mapGtoG);
-		if (crMemcmp(to->mapBtoB, from->mapBtoB, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapBtoB, from->mapBtoB, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_B_TO_B,to->mapBtoBsize,(GLfloat*)to->mapBtoB);
-		if (crMemcmp(to->mapAtoA, from->mapAtoA, CR_MAX_PIXEL_MAP_TABLE))
+		if (crMemcmp(to->mapAtoA, from->mapAtoA, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_A_TO_A,to->mapAtoAsize,(GLfloat*)to->mapAtoA);
 		INVERTDIRTY(b->maps, nbitID);
 	}
