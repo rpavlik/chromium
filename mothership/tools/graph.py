@@ -42,10 +42,12 @@ menu_MERGE_NODES        = 211
 menu_SERVER_OPTIONS     = 212
 menu_SERVER_TILES       = 213
 
-menu_SELECT_ALL_SPUS    = 300
-menu_DESELECT_ALL_SPUS  = 301
-menu_DELETE_SPU         = 302
-menu_SPU_OPTIONS        = 303
+menu_SELECT_ALL_SPUS      = 300
+menu_SELECT_ALL_SPUS_TYPE = 301
+menu_DESELECT_ALL_SPUS    = 302
+menu_DELETE_SPU           = 303
+menu_SPU_OPTIONS          = 304
+menu_SPU_TYPES            = 320
 
 menu_LAYOUT_NODES       = 400
 menu_GRAPH              = 401
@@ -139,8 +141,8 @@ class MainFrame(wxFrame):
 		self.nodeMenu.Append(menu_CONNECT,            "Connect")
 		self.nodeMenu.Append(menu_DISCONNECT,         "Disconnect")
 		self.nodeMenu.AppendSeparator()
-		self.nodeMenu.Append(menu_SET_HOST,           "Host name(s)...")
-		self.nodeMenu.Append(menu_SET_COUNT,          "Node Count...")
+		self.nodeMenu.Append(menu_SET_HOST,           "Host name...")
+		self.nodeMenu.Append(menu_SET_COUNT,          "Set Count...")
 		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SPLIT_NODES,        "Split")
 		self.nodeMenu.Append(menu_MERGE_NODES,        "Merge")
@@ -163,11 +165,22 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		menuBar.Append(self.nodeMenu, "Node")
 
+		# SPU types menu
+		self.spuTypesMenu = wxMenu()
+		i = 0
+		for spu in SpuClasses:
+			self.spuTypesMenu.Append(menu_SPU_TYPES + i, spu)
+			EVT_MENU(self, menu_SPU_TYPES + i, self.doSelectAllSPUsByType)
+			i += 1
+
 		# SPU menu
 		self.spuMenu = wxMenu()
 		self.spuMenu.AppendSeparator()
-		self.spuMenu.Append(menu_SELECT_ALL_SPUS,    "Select All ")
-		self.spuMenu.Append(menu_DESELECT_ALL_SPUS,  "Deselect All")
+		self.spuMenu.Append(menu_SELECT_ALL_SPUS,      "Select All ")
+		self.spuMenu.AppendMenu(menu_SELECT_ALL_SPUS_TYPE,
+							"Select All by Type",
+							self.spuTypesMenu)
+		self.spuMenu.Append(menu_DESELECT_ALL_SPUS,    "Deselect All")
 		self.spuMenu.AppendSeparator()
 		self.spuMenu.Append(menu_DELETE_SPU,         "Delete ")
 		self.spuMenu.AppendSeparator()
@@ -438,7 +451,7 @@ class MainFrame(wxFrame):
 			dialog = intdialog.IntDialog(parent=NULL, id=-1,
 							   title="Create Application Nodes",
 							   labels=["Number of Application nodes:"],
-							   defaultValues=[1], minValue=1, maxValue=100)
+							   defaultValues=[2], minValue=1, maxValue=1000)
 			if dialog.ShowModal() == wxID_OK:
 				n = dialog.GetValues()[0]
 				if n > 0:
@@ -469,7 +482,7 @@ class MainFrame(wxFrame):
 			dialog = intdialog.IntDialog(parent=NULL, id=-1,
 							   title="Create Server Nodes",
 							   labels=["Number of Server nodes:"],
-							   defaultValues=[1], minValue=1, maxValue=100)
+							   defaultValues=[4], minValue=1, maxValue=1000)
 			if dialog.ShowModal() == wxID_OK:
 				n = dialog.GetValues()[0]
 				if n > 0:
@@ -978,6 +991,7 @@ class MainFrame(wxFrame):
 		assert server
 		dialog = tiledialog.TileDialog(parent=self, id=-1,
 									   numLists = server.GetCount(),
+									   hosts = server.GetHosts(),
 									   title="Server Tiles")
 		dialog.Centre()
 		# show the dialog
@@ -999,6 +1013,19 @@ class MainFrame(wxFrame):
 		for node in self.mothership.SelectedNodes():
 			for spu in node.SPUChain():
 				spu.Select()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doSelectAllSPUsByType(self, event):
+		"""SPU / Select All by Type callback"""
+		i = event.GetId() - menu_SPU_TYPES
+		spuName = SpuClasses[i]
+		for node in self.mothership.Nodes():
+			for spu in node.SPUChain():
+				if spu.Name() == spuName:
+					spu.Select()
+				else:
+					spu.Deselect()
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
@@ -1026,6 +1053,16 @@ class MainFrame(wxFrame):
 		# find first selected SPU
 		spuList = self.mothership.GetSelectedSPUs()
 		if len(spuList) > 0:
+			# check for a homogeneous list of SPUs
+			homogeneous = 1
+			for spu in spuList:
+				if spu.Name() != spuList[0].Name():
+					homogeneous = 0
+			if not homogeneous:
+				self.Notify("Can't edit SPU options for a " +
+							"heterogeneous list of SPUs.")
+				return
+
 			name = spuList[0].Name()
 			if name in SPUInfo.keys():
 				(params, opts) = SPUInfo[name]
@@ -1038,8 +1075,9 @@ class MainFrame(wxFrame):
 				dialog.SetValues(spuList[0].GetOptions())
 				# wait for OK or cancel
 				if dialog.ShowModal() == wxID_OK:
-					# save the new values/options
-					spuList[0].SetOptions(dialog.GetValues())
+					# save the new values/options in all selected SPUs
+					for spu in spuList:
+						spu.SetOptions(dialog.GetValues())
 				else:
 					# user cancelled, do nothing, new values are ignored
 					pass
@@ -1150,15 +1188,16 @@ class MainFrame(wxFrame):
 		# Node menu
 		if self.mothership.NumSelectedNodes() > 0:
 			self.nodeMenu.Enable(menu_DELETE_NODE, 1)
-			self.nodeMenu.Enable(menu_CONNECT, 1)
 			self.nodeMenu.Enable(menu_DISCONNECT, 1)
 			self.nodeMenu.Enable(menu_SET_HOST, 1)
 			self.nodeMenu.Enable(menu_SET_COUNT, 1)
 			self.nodeMenu.Enable(menu_SPLIT_NODES, 1)
 			if self.mothership.NumSelectedNodes() > 1:
 				self.nodeMenu.Enable(menu_MERGE_NODES, 1)
+				self.nodeMenu.Enable(menu_CONNECT, 1)
 			else:
 				self.nodeMenu.Enable(menu_MERGE_NODES, 0)
+				self.nodeMenu.Enable(menu_CONNECT, 0)
 			self.newSpuChoice.Enable(1)
 		else:
 			self.nodeMenu.Enable(menu_DELETE_NODE, 0)
@@ -1181,11 +1220,13 @@ class MainFrame(wxFrame):
 			self.nodeMenu.Enable(menu_DESELECT_ALL_NODES, 1)
 			self.nodeMenu.Enable(menu_LAYOUT_NODES, 1)
 			self.spuMenu.Enable(menu_SELECT_ALL_SPUS, 1)
+			self.spuMenu.Enable(menu_SELECT_ALL_SPUS_TYPE, 1)
 		else:
 			self.nodeMenu.Enable(menu_SELECT_ALL_NODES, 0)
 			self.nodeMenu.Enable(menu_DESELECT_ALL_NODES, 0)
 			self.nodeMenu.Enable(menu_LAYOUT_NODES, 0)
 			self.spuMenu.Enable(menu_SELECT_ALL_SPUS, 0)
+			self.spuMenu.Enable(menu_SELECT_ALL_SPUS_TYPE, 0)
 		# SPU menu
 		if self.mothership.NumSelectedSPUs() > 0:
 			self.spuMenu.Enable(menu_DESELECT_ALL_SPUS, 1)
@@ -1215,7 +1256,8 @@ class MainFrame(wxFrame):
 	# Display a dialog with a message and OK button.
 	def Notify(self, msg):
 		dialog = wxMessageDialog(parent=self, message=msg,
-								 caption="Hey!", style=wxOK)
+								 caption="Hey!",
+								 style=wxOK|wxCENTRE|wxICON_EXCLAMATION)
 		dialog.ShowModal()
 
 
