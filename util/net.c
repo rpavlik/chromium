@@ -356,15 +356,18 @@ static void crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned in
 
 	conn->InstantReclaim( conn, (CRMessage *) msg );
 
-	/* clean this up before calling the user */
-	multi->buf = NULL;
-	multi->len = 0;
-	multi->max = 0;
+	if (msg->type == CR_MESSAGE_MULTI_TAIL)
+	{
+		conn->HandleNewMessage( 
+				conn, 
+				(CRMessage *) (((char *) multi->buf) + conn->sizeof_buffer_header), 
+				multi->len - conn->sizeof_buffer_header );
 
-	conn->HandleNewMessage( 
-			conn, 
-			(CRMessage *) multi->buf + conn->sizeof_buffer_header, 
-			multi->len - conn->sizeof_buffer_header );
+		/* clean this up before calling the user */
+		multi->buf = NULL;
+		multi->len = 0;
+		multi->max = 0;
+	}
 }
 
 static void crNetRecvFlowControl( CRConnection *conn,
