@@ -120,7 +120,6 @@ static ThreadInfo *tilesortspuNewThread(void)
 
 GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint visBits )
 {
-	GET_THREAD(thread);
 	static GLint freeContextID = 200;
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 	ContextInfo *contextInfo;
@@ -130,9 +129,6 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 
 	/* release geometry buffer */
 	crPackReleaseBuffer( thread0->packer );
-
-	if (!thread)
-		thread = tilesortspuNewThread();
 
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&_TileSortMutex);
