@@ -29,3 +29,5 @@ Rewrite the opengl_stub/defs.py file so that we don't need to manually
 update the stack_sizes array.  The sizes should be obtained by calling
 apiutil.PacketLength() or something similar.
 
+Check unpacker/unpack.c for unfinished special case functions.
+

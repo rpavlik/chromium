@@ -85,11 +85,15 @@ void PACK_APIENTRY
 crPackDeleteBuffersARB(GLsizei n, const GLuint * buffers)
 {
 	unsigned char *data_ptr;
-	int packet_length = sizeof(int) + sizeof(n) + n * sizeof(*buffers);
+	int packet_length = sizeof(GLenum) + sizeof(n) + n * sizeof(*buffers);
+
+	if (!buffers)
+		return;
 
 	data_ptr = (unsigned char *) crPackAlloc(packet_length);
-	WRITE_DATA(0, int, packet_length);
-	WRITE_DATA(sizeof(int) + 0, GLsizei, n);
-	crMemcpy(data_ptr + sizeof(int) + 4, buffers, n * sizeof(*buffers));
-	crHugePacket(CR_DELETEBUFFERSARB_EXTEND_OPCODE, data_ptr);
+	WRITE_DATA( 0, GLenum, CR_DELETEBUFFERSARB_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLsizei, n );
+	crMemcpy( data_ptr + 8, buffers, n * sizeof(*buffers) );
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }

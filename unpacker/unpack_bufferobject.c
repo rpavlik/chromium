@@ -52,3 +52,12 @@ void crUnpackExtendBufferSubDataARB( void )
 
 	cr_unpackDispatch.BufferSubDataARB( target, offset, size, data );
 }
+
+
+void crUnpackExtendDeleteBuffersARB(void)
+{
+	GLsizei n = READ_DATA( 8, GLsizei );
+	const GLuint *buffers = DATA_POINTER( 12, GLuint );
+	cr_unpackDispatch.DeleteBuffersARB( n, buffers );
+}
+

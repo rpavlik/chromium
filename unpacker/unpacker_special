@@ -127,4 +127,5 @@ ProgramStringARB
 BufferDataARB
 BufferSubDataARB
 GetBufferSubDataARB
+DeleteBuffersARB
 ZPix
