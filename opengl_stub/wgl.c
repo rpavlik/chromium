@@ -21,8 +21,6 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 {
 	DWORD okayFlags;
 
-	StubInit();
-
 	/* 
 	 * NOTE!!!
 	 * Here we're telling the renderspu not to use the GDI
@@ -30,6 +28,8 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 	 * There are subtle differences in the use of these calls.
 	 */
 	crSetenv("CR_WGL_DO_NOT_USE_GDI", "yes");
+
+	StubInit();
 
 	if ( pfd->nSize != sizeof(*pfd) || pfd->nVersion != 1 ) {
 		crError( "wglChoosePixelFormat: bad pfd\n" );
@@ -41,6 +41,7 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 			PFD_SUPPORT_OPENGL        |
 			PFD_DOUBLEBUFFER          |
 			PFD_DOUBLEBUFFER_DONTCARE |
+			PFD_STEREO	          |
 			PFD_STEREO_DONTCARE       |
 			PFD_DEPTH_DONTCARE        );
 	if ( pfd->dwFlags & ~okayFlags ) {
@@ -59,9 +60,11 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 		crWarning( "wglChoosePixelFormat: too much color precision requested\n" );
 	}
 
-	if ( pfd->dwFlags & PFD_DOUBLEBUFFER ) {
+	if ( pfd->dwFlags & PFD_DOUBLEBUFFER )
 		stub.desiredVisual |= CR_DOUBLE_BIT;
-	}
+
+	if ( pfd->dwFlags & PFD_STEREO )
+		stub.desiredVisual |= CR_STEREO_BIT;
 
 	if ( pfd->cColorBits > 8)
 		stub.desiredVisual |= CR_RGB_BIT;
