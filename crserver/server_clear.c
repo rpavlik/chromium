@@ -18,15 +18,16 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 
 	if (cr_server.only_swap_once)
 	{
-		/* Only do this if they're clearing color, so we don't
-		 * mess up the readback SPU, which clears stencil mid-frame */
-
-		if ((mask & GL_COLOR_BUFFER_BIT) && 
-				cr_server.curClient != cr_server.clients)
-		{
-			return;
-		}
+		/* NOTE: we only do the clear for the _last_ client in the list.
+		 * This is because in multi-threaded apps the zeroeth client may
+		 * be idle and never call glClear at all.  See threadtest.c
+		 * It's pretty likely that the last client will be active.
+		 */
+		if ((mask & GL_COLOR_BUFFER_BIT) &&
+			(cr_server.curClient != &(cr_server.clients[cr_server.numClients - 1])))
+		   return;
 	}
+
 	if (cr_server.numExtents == 0)
 	{
 		cr_server.head_spu->dispatch_table.Clear( mask );
@@ -61,8 +62,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint f
 {
 	if (cr_server.only_swap_once)
 	{
-		/* We only do SwapBuffers for the 0th client */
-		if (cr_server.curClient != cr_server.clients)
+		/* NOTE: we only do the clear for the _last_ client in the list.
+		 * This is because in multi-threaded apps the zeroeth client may
+		 * be idle and never call glClear at all.  See threadtest.c
+		 * It's pretty likely that the last client will be active.
+		 */
+		if (cr_server.curClient != &(cr_server.clients[cr_server.numClients - 1]))
 		{
 			return;
 		}
