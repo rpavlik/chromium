@@ -14,7 +14,7 @@
 
 static char ppmHeader[]      = "P6\n000000 000000\n255\n" ;
 static char ppmHeaderTempl[] = "P6\n%d %d\n255\n" ;
-static char* buffer ;
+static GLubyte* buffer ;
 static int bufferSize ;
 #if 0
 static int complaint = 0 ;
@@ -101,7 +101,7 @@ static int read_int( int file, int* number )
 		}
 	} while ( 1 ) ; 
 
-	return -1 ;
+	/*return -1 ;*/
 }
 
 static void pad_buffer_texture( GLubyte* dst, const GLubyte* src, int w, int h, int pw, int ph )
@@ -166,7 +166,7 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 			case GL_TRUE:
 				i=sprintf( ppmHeader, ppmHeaderTempl, width, height );
 				write( f, ppmHeader, i ) ;
-				write( f, pixels + filenameLength + 1, width*height*3 ) ;
+				write( f, (char*) pixels + filenameLength + 1, width*height*3 ) ;
 				/* Create padded texture */
 				calc_padded_size( width, height, &paddedWidth, &paddedHeight ) ;
 				if ( (paddedWidth == width) && (paddedHeight == height) ) {
@@ -182,7 +182,7 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 					bufferSize = i ;
 					buffer = realloc( buffer, bufferSize ) ;
 				}
-				pad_buffer_texture( buffer, pixels + filenameLength + 1,
+				pad_buffer_texture( buffer, (const GLubyte *) pixels + filenameLength + 1,
 						width, height, paddedWidth, paddedHeight ) ;
 				break ;
 			case GL_FALSE:
@@ -215,7 +215,7 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 			/* no need to generate padded texture, since width & height are powers of 2 */
 			dist_texture_spu.child.TexImage2D(target, level, internalformat,
 			       			  width, height, border, format,
-						  GL_UNSIGNED_BYTE, pixels + filenameLength + 1 ) ;
+						  GL_UNSIGNED_BYTE, (GLubyte*) pixels + filenameLength + 1 ) ;
 		else
 			/* had to generate padded texture */
 			dist_texture_spu.child.TexImage2D(target, level, internalformat,
