@@ -449,6 +449,8 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 	case GL_SCREEN_BBOX_CR:  /* GL_CR_bounding_box */
 		CRASSERT(type == GL_FLOAT);
 		CRASSERT(count == 8);
+		/* must flush any pending rendering */
+		tilesortspuFlush( thread );
 		if (values) {
 			const GLfloat *bbox = (const GLfloat *) values;
 			thread->packer->bounds_min.x = bbox[0];
@@ -474,6 +476,8 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 	case GL_OBJECT_BBOX_CR:  /* GL_CR_bounding_box */
 		CRASSERT(type == GL_FLOAT);
 		CRASSERT(count == 6);
+		/* must flush any pending rendering */
+		tilesortspuFlush( thread );
 		if (values) {
 			const GLfloat *bbox = (const GLfloat *) values;
 			thread->packer->bounds_min.x = bbox[0];
@@ -497,6 +501,8 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 		}
 		break;
 	case GL_DEFAULT_BBOX_CR:  /* GL_CR_bounding_box */
+		/* must flush any pending rendering */
+		tilesortspuFlush( thread );
 		CRASSERT(count == 0);
 		thread->packer->bounds_min = maxVector;
 		thread->packer->bounds_max = minVector;
