@@ -1,0 +1,770 @@
+# This is the master list of all functions that concern the display
+# list manager.  Each function must be annotated with one of these
+# keywords:
+#
+#	dl - means that the function should be stored in a display list,
+#		and that autogenerator functions should be created for it (for
+#               compiling into display lists, passing through calls, etc.).
+#               Most GL functions fall into this category.
+#
+#       nodl - means that the function is never compiled into display lists.
+#
+#       dlcompile - means that the function itself is not compiled into a
+#               display list but in turn generates commands which _are_
+#               compiled into the list.  These are generally the vertex
+#               array commands like glArrayElement.
+#
+#       setclient - means that the function does not get stored in a display
+#               list, but does affect client state that can affect how later
+#               invocations cause elements to be stored in a display list.
+#               Examples are the PixelStore* functions (which affect how
+#               DrawPixels, Bitmap, textures, and other functions are stored
+#               in display lists), and the various *Pointer functions (which
+#               affect later references with ArrayElement, DrawArrays, and
+#               other indirect calls).  Functions marked with this are always
+#               executed locally (to ensure that local awareness of client
+#               state is maintained) and then passed through to the host SPU.
+#
+#       get - means that the function is a state-get command.  These are never
+#               stored in display lists.
+#       
+#
+# For those functions marked "dl", additional annotations are possible:
+#
+#	bounds - the geometric bounding box is affected by this function
+#
+#	pointer=N - the function takes a pointer parameter that always has
+#           the same size; an indicator, for example, of "pointer=2"
+#           for a parameter of type "GLfloat" means that the parameter
+#           points to an array of 2 GLfloats.  Note that if the pointer size
+#	    can be intuited from the name, a specific pointer size need not
+#           be provided (e.g., "Vertex3fv" implies a pointer size of 3); if
+#	    one is provided, it overrides any guess from the name.
+#
+#           So many common functions (Vertex3dv, et al.) don't need an explicit
+#           pointer size; but others (EdgeFlagv, ClipPlane, LoadMatrix) do, as
+#           the pointer sizes cannot be intuited from the name.
+#
+#       pointer=special - the function takes a pointer parameter that has a
+#           varying size.  A call to a special funciton, crdlm_pointers_<name>,
+#           is issued; this function is responsible for determining (from the
+#           other parameters) what the additional size required is, and for
+#           copying data from the array parameters into the instance memory.
+#
+#       checkpass - the function enters the display list sometimes, and is
+#           directly passed through other times, based on its parameters.
+#           (TexImage* is an example; if proxy textures are used, the function
+#           is handled immediately.  Otherwise, the function enters the display
+#           list.)  If this is present, a call to a function (which must be
+#           provided elsewhere in the module) named "crdlm_checkpass_<name>"
+#           is generated.  If this function returns true, the passthrough is
+#           called; otherwise, the function continues into the display list.
+#
+# Note that any DL-entering function with a pointer parameter must either
+# indicate in this file the size of the pointer parameter, or invoke a
+# crdlm_pointers_<name> function to calculate the size of the pointer parameter.
+# And any DL-entering function with multiple pointer parameters must always
+# have a crdlm_pointers_<name> function, as there is no syntax for indicating
+# the sizes of multiple pointers (nor is there really a need for one, as there
+# are only a handful of functions with multiple pointer parameters: Rect*
+# and PrioritizeTextures are all that I'm aware of at this point).
+# XXX NOTE: glProgramNamedParameter*NV are unresolved. -BP
+
+
+#
+# These functions, all marked with "setclient", affect client state
+# that will be needed (and referenced) if "dlcompile" elements enter
+# the display list.  We need to manage them locally, to keep track
+# of their state.  (We don't need to track other state.)
+#
+EnableClientState		setclient
+DisableClientState		setclient
+PushClientAttrib		setclient
+PopClientAttrib			setclient
+PixelStoref			setclient
+PixelStorei			setclient
+VertexPointer			setclient
+ColorPointer			setclient
+SecondaryColorPointerEXT	setclient
+IndexPointer			setclient
+NormalPointer			setclient
+TexCoordPointer			setclient
+EdgeFlagPointer			setclient
+FogCoordPointerEXT		setclient
+VertexAttribPointerNV		setclient
+InterleavedArrays		setclient
+ClientActiveTextureARB		setclient
+VertexArrayRangeNV		setclient
+FlushVertexArrayRangeNV		setclient
+VertexAttribPointerARB		setclient
+DisableVertexAttribArrayARB	setclient
+EnableVertexAttribArrayARB	setclient
+
+# 
+# These functions all use the client state above; they're all implemented
+# as wrappers around ArrayElement.
+#
+ArrayElement			dlcompile 
+DrawArrays			dlcompile
+DrawElements			dlcompile
+DrawRangeElements		dlcompile
+MultiDrawArraysEXT		dlcompile
+MultiDrawElementsEXT		dlcompile
+
+#
+# These GL functions, which create fragments, all
+# have compile functions that will be referenced by
+# the ArrayElement function above (and indirectly by
+# the related functions).
+#
+Begin				dl
+End				dl
+Vertex2d			dl bounds 
+Vertex2dv			dl bounds
+Vertex2f			dl bounds
+Vertex2fv			dl bounds 
+Vertex2i			dl bounds
+Vertex2iv			dl bounds 
+Vertex2s			dl bounds
+Vertex2sv			dl bounds 
+Vertex3d			dl bounds
+Vertex3dv			dl bounds 
+Vertex3f			dl bounds
+Vertex3fv			dl bounds 
+Vertex3i			dl bounds
+Vertex3iv			dl bounds 
+Vertex3s			dl bounds
+Vertex3sv			dl bounds 
+Vertex4d			dl bounds
+Vertex4dv			dl bounds 
+Vertex4f			dl bounds
+Vertex4fv			dl bounds 
+Vertex4i			dl bounds
+Vertex4iv			dl bounds 
+Vertex4s			dl bounds
+Vertex4sv			dl bounds 
+Normal3b			dl
+Normal3bv			dl 
+Normal3d			dl
+Normal3dv			dl 
+Normal3f			dl
+Normal3fv			dl 
+Normal3i			dl
+Normal3iv			dl 
+Normal3s			dl
+Normal3sv			dl 
+EdgeFlag			dl
+EdgeFlagv			dl pointer=1
+FogCoorddEXT			dl
+FogCoorddvEXT			dl pointer=1
+FogCoordfEXT			dl
+FogCoordfvEXT			dl pointer=1
+TexCoord1d			dl
+TexCoord1dv			dl 
+TexCoord1f			dl
+TexCoord1fv			dl 
+TexCoord1i			dl
+TexCoord1iv			dl 
+TexCoord1s			dl
+TexCoord1sv			dl 
+TexCoord2d			dl
+TexCoord2dv			dl 
+TexCoord2f			dl
+TexCoord2fv			dl 
+TexCoord2i			dl
+TexCoord2iv			dl 
+TexCoord2s			dl
+TexCoord2sv			dl 
+TexCoord3d			dl
+TexCoord3dv			dl 
+TexCoord3f			dl
+TexCoord3fv			dl 
+TexCoord3i			dl
+TexCoord3iv			dl 
+TexCoord3s			dl
+TexCoord3sv			dl 
+TexCoord4d			dl
+TexCoord4dv			dl 
+TexCoord4f			dl
+TexCoord4fv			dl 
+TexCoord4i			dl
+TexCoord4iv			dl 
+TexCoord4s			dl
+TexCoord4sv			dl 
+MultiTexCoord1sARB		dl
+MultiTexCoord2sARB		dl
+MultiTexCoord3sARB		dl
+MultiTexCoord4sARB		dl
+MultiTexCoord1iARB		dl
+MultiTexCoord2iARB		dl
+MultiTexCoord3iARB		dl
+MultiTexCoord4iARB		dl
+MultiTexCoord1fARB		dl
+MultiTexCoord2fARB		dl
+MultiTexCoord3fARB		dl
+MultiTexCoord4fARB		dl
+MultiTexCoord1dARB		dl
+MultiTexCoord2dARB		dl
+MultiTexCoord3dARB		dl
+MultiTexCoord4dARB		dl
+MultiTexCoord1svARB		dl 
+MultiTexCoord2svARB		dl 
+MultiTexCoord3svARB		dl 
+MultiTexCoord4svARB		dl 
+MultiTexCoord1ivARB		dl 
+MultiTexCoord2ivARB		dl 
+MultiTexCoord3ivARB		dl 
+MultiTexCoord4ivARB		dl 
+MultiTexCoord1fvARB		dl 
+MultiTexCoord2fvARB		dl 
+MultiTexCoord3fvARB		dl 
+MultiTexCoord4fvARB		dl 
+MultiTexCoord1dvARB		dl 
+MultiTexCoord2dvARB		dl 
+MultiTexCoord3dvARB		dl 
+MultiTexCoord4dvARB		dl 
+Indexd				dl
+Indexdv				dl pointer=1
+Indexf				dl
+Indexfv				dl pointer=1
+Indexi				dl
+Indexiv				dl pointer=1
+IndexMask			dl
+Indexs				dl
+Indexsv				dl pointer=1
+Indexub				dl
+Indexubv			dl pointer=1
+Color3b				dl
+Color3bv			dl 
+Color3d				dl
+Color3dv			dl 
+Color3f				dl
+Color3fv			dl 
+Color3i				dl
+Color3iv			dl 
+Color3s				dl
+Color3sv			dl 
+Color3ub			dl
+Color3ubv			dl 
+Color3ui			dl
+Color3uiv			dl 
+Color3us			dl
+Color3usv			dl 
+Color4b				dl
+Color4bv			dl 
+Color4d				dl
+Color4dv			dl 
+Color4f				dl
+Color4fv			dl 
+Color4i				dl
+Color4iv			dl 
+Color4s				dl
+Color4sv			dl 
+Color4ub			dl
+Color4ubv			dl 
+Color4ui			dl
+Color4uiv			dl 
+Color4us			dl
+Color4usv			dl 
+SecondaryColor3bEXT		dl
+SecondaryColor3bvEXT		dl 
+SecondaryColor3ubEXT		dl 
+SecondaryColor3ubvEXT		dl 
+SecondaryColor3sEXT		dl
+SecondaryColor3svEXT		dl 
+SecondaryColor3usEXT		dl
+SecondaryColor3usvEXT		dl 
+SecondaryColor3iEXT		dl
+SecondaryColor3ivEXT		dl 
+SecondaryColor3uiEXT		dl
+SecondaryColor3uivEXT		dl 
+SecondaryColor3fEXT		dl
+SecondaryColor3fvEXT		dl 
+SecondaryColor3dEXT		dl
+SecondaryColor3dvEXT		dl 
+
+#
+# Compiled into display lists:
+#
+Accum			dl
+ActiveTextureARB	dl
+AlphaFunc		dl
+BindTexture		dl
+Bitmap			dl pointer=special
+BlendColorEXT		dl
+BlendEquationEXT	dl
+BlendFunc		dl
+BlendFuncSeparateEXT	dl
+CallList		dl
+CallLists		dl pointer=special
+ClearAccum		dl
+ClearColor		dl
+ClearDepth		dl
+Clear			dl
+ClearIndex		dl
+ClearStencil		dl
+ClipPlane		dl pointer=4
+ColorMask		dl
+ColorMaterial		dl
+CopyPixels		dl
+CopyTexImage1D		dl
+CopyTexImage2D		dl
+CopyTexSubImage1D	dl
+CopyTexSubImage2D	dl
+CopyTexSubImage3D	dl
+CullFace		dl
+DepthFunc		dl
+DepthMask		dl
+DepthRange		dl
+Disable			dl
+DrawBuffer		dl
+DrawPixels		dl pointer=special
+Enable			dl
+EvalCoord1d		dl
+EvalCoord1f		dl
+EvalCoord2d		dl
+EvalCoord2f		dl
+EvalCoord1dv		dl 
+EvalCoord1fv		dl 
+EvalCoord2dv		dl 
+EvalCoord2fv		dl 
+EvalMesh1		dl
+EvalMesh2		dl
+EvalPoint1		dl
+EvalPoint2		dl
+Fogf			dl
+Fogfv			dl pointer=special
+Fogi			dl
+Fogiv			dl pointer=special
+FrontFace		dl
+Frustum			dl
+Hint			dl
+#Histogram		dl checkpass
+InitNames		dl
+Lightf			dl
+Lightfv			dl pointer=special 
+Lighti			dl
+Lightiv			dl pointer=special 
+LightModelf		dl
+LightModelfv		dl pointer=special 
+LightModeli		dl
+LightModeliv		dl pointer=special 
+LineStipple		dl
+LineWidth		dl
+ListBase		dl
+LoadIdentity		dl
+LoadMatrixd		dl pointer=16
+LoadMatrixf		dl pointer=16
+LoadName		dl
+LoadTransposeMatrixdARB	dl pointer=16
+LoadTransposeMatrixfARB	dl pointer=16
+LogicOp			dl
+Map1d			dl pointer=special 
+Map1f			dl pointer=special
+Map2d			dl pointer=special
+Map2f			dl pointer=special
+MapGrid1d		dl
+MapGrid1f		dl
+MapGrid2d		dl
+MapGrid2f		dl
+Materiali		dl
+Materialf		dl
+Materialiv		dl pointer=special
+Materialfv		dl pointer=special
+MatrixMode		dl
+# Mesa includes ActiveStencilFaceExt	dl
+# Mesa includes ColorSubTable		dl
+# Mesa includes ColorTable		dl checkpass
+# Mesa includes ColorTableParameterfv	dl
+# Mesa includes ColorTableParameteriv	dl
+# Mesa includes ConvolutionFilter1d	dl
+# Mesa includes ConvolutionFilter2d	dl
+# Mesa includes ConvolutionParameterf	dl
+# Mesa includes ConvolutionParameterfv	dl
+# Mesa includes ConvolutionParameteri	dl
+# Mesa includes ConvolutionParameteriv	dl
+# Mesa includes CopyColorSubTable	dl
+# Mesa includes CopyColorTable		dl
+# Mesa includes MinMax			dl
+# Mesa includes PixelTexgenParameterSGIS	dl
+# Mesa includes PixelTexgenSGIX		dl
+# Mesa includes ResetMinMax		dl
+# Mesa includes SelectTextureCoordSet	dl
+# Mesa includes SelectTextureSGIS	dl
+MultMatrixd			dl pointer=16
+MultMatrixf			dl pointer=16
+MultTransposeMatrixdARB		dl pointer=16
+MultTransposeMatrixfARB		dl pointer=16
+Ortho				dl
+PassThrough			dl
+PixelMapfv			dl pointer=special
+PixelMapusv			dl pointer=special
+PixelMapuiv			dl pointer=special
+PixelTransferf			dl
+PixelTransferi			dl
+PixelZoom			dl
+PointParameterfARB 		dl
+PointParameterfvARB		dl pointer=special
+PointParameteri			dl
+PointParameteriv		dl pointer=special
+PointSize			dl
+PolygonMode			dl
+PolygonOffset			dl
+PolygonStipple			dl pointer=128
+PopAttrib			dl
+PopMatrix			dl
+PopName				dl
+PrioritizeTextures		dl pointer=special
+PushAttrib			dl
+PushMatrix			dl
+PushName			dl
+RasterPos2d			dl
+RasterPos2dv			dl 
+RasterPos2f			dl
+RasterPos2fv			dl 
+RasterPos2i			dl
+RasterPos2iv			dl 
+RasterPos2s			dl
+RasterPos2sv			dl 
+RasterPos3d			dl
+RasterPos3dv			dl 
+RasterPos3f			dl
+RasterPos3fv			dl 
+RasterPos3i			dl
+RasterPos3iv			dl 
+RasterPos3s			dl
+RasterPos3sv			dl 
+RasterPos4d			dl
+RasterPos4dv			dl 
+RasterPos4f			dl
+RasterPos4fv			dl 
+RasterPos4i			dl
+RasterPos4iv			dl 
+RasterPos4s			dl
+RasterPos4sv			dl 
+ReadBuffer			dl
+Rectd				dl
+Rectdv				dl pointer=special
+Rectf				dl
+Rectfv				dl pointer=special
+Recti				dl
+Rectiv				dl pointer=special
+Rects				dl
+Rectsv				dl pointer=special
+#ResetHistogram			dl
+Rotated				dl
+Rotatef				dl
+SampleCoverageARB		dl
+Scaled				dl
+Scalef				dl
+Scissor				dl
+ShadeModel			dl
+StencilFunc			dl
+StencilMask			dl
+StencilOp			dl
+TexEnvf				dl
+TexEnvfv			dl pointer=special
+TexEnvi				dl
+TexEnviv			dl pointer=special
+TexGend				dl
+TexGendv			dl pointer=special
+TexGenf				dl
+TexGenfv			dl pointer=special
+TexGeni				dl
+TexGeniv			dl pointer=special
+TexImage1D			dl pointer=special checkpass
+TexImage2D			dl pointer=special checkpass
+TexImage3D			dl pointer=special checkpass
+TexImage3DEXT			dl pointer=special checkpass
+TexSubImage1D			dl pointer=special
+TexSubImage2D			dl pointer=special
+TexSubImage3D			dl pointer=special
+CompressedTexImage1DARB		dl pointer=special checkpass
+CompressedTexImage2DARB		dl pointer=special checkpass
+CompressedTexImage3DARB		dl pointer=special checkpass
+CompressedTexSubImage1DARB	dl pointer=special
+CompressedTexSubImage2DARB	dl pointer=special
+CompressedTexSubImage3DARB	dl pointer=special
+TexParameterf			dl
+TexParameterfv			dl pointer=special
+TexParameteri			dl
+TexParameteriv			dl pointer=special
+Translated			dl
+Translatef			dl
+Viewport			dl
+WindowPos2dARB			dl
+WindowPos2dvARB			dl 
+WindowPos2fARB			dl
+WindowPos2fvARB			dl 
+WindowPos2iARB			dl
+WindowPos2ivARB			dl 
+WindowPos2sARB			dl
+WindowPos2svARB			dl 
+WindowPos3dARB			dl
+WindowPos3dvARB			dl 
+WindowPos3fARB			dl
+WindowPos3fvARB			dl 
+WindowPos3iARB			dl
+WindowPos3ivARB			dl 
+WindowPos3sARB			dl
+WindowPos3svARB			dl 
+VertexAttrib1dNV		dl
+VertexAttrib1dvNV		dl
+VertexAttrib1fNV		dl
+VertexAttrib1fvNV		dl
+VertexAttrib1sNV		dl
+VertexAttrib1svNV		dl
+VertexAttrib2dNV		dl
+VertexAttrib2dvNV		dl
+VertexAttrib2fNV		dl
+VertexAttrib2fvNV		dl
+VertexAttrib2sNV		dl
+VertexAttrib2svNV		dl
+VertexAttrib3dNV		dl
+VertexAttrib3dvNV		dl
+VertexAttrib3fNV		dl
+VertexAttrib3fvNV		dl
+VertexAttrib3sNV		dl
+VertexAttrib3svNV		dl
+VertexAttrib4dNV		dl
+VertexAttrib4dvNV		dl
+VertexAttrib4fNV		dl
+VertexAttrib4fvNV		dl
+VertexAttrib4sNV		dl
+VertexAttrib4svNV		dl
+VertexAttrib4ubNV		dl
+VertexAttrib4ubvNV		dl
+VertexAttribs1dvNV		dl
+VertexAttribs1fvNV		dl
+VertexAttribs1svNV		dl
+VertexAttribs2dvNV		dl
+VertexAttribs2fvNV		dl
+VertexAttribs2svNV		dl
+VertexAttribs3dvNV		dl
+VertexAttribs3fvNV		dl
+VertexAttribs3svNV		dl
+VertexAttribs4dvNV		dl
+VertexAttribs4fvNV		dl
+VertexAttribs4svNV		dl
+VertexAttribs4ubvNV		dl
+# GL_NV_fence
+SetFenceNV			dl
+FinishFenceNV			dl
+# GL_ARB_multisample
+SampleCoverageARB		dl
+# GL_NV_register_combiners
+CombinerParameterfNV		dl
+CombinerParameteriNV		dl
+CombinerParameterivNV		dl pointer=special
+CombinerParameterfvNV		dl pointer=special
+CombinerInputNV			dl
+CombinerOutputNV		dl
+FinalCombinerInputNV		dl
+CombinerStageParameterfvNV	dl pointer=special
+# GL_NV_vertex_program
+BindProgramNV			dl
+ExecuteProgramNV		dl pointer=special
+RequestResidentProgramsNV	dl pointer=special
+LoadProgramNV			dl pointer=special
+ProgramNamedParameter4dNV	dl pointer=special
+ProgramNamedParameter4dvNV	dl pointer=special
+ProgramNamedParameter4fNV	dl pointer=special
+ProgramNamedParameter4fvNV	dl pointer=special
+ProgramParameter4dNV		dl
+ProgramParameter4dvNV		dl pointer=4
+ProgramParameter4fNV		dl
+ProgramParameter4fvNV		dl pointer=4
+ProgramParameters4dvNV		dl pointer=4
+ProgramParameters4fvNV		dl pointer=4
+TrackMatrixNV			dl
+# GL_ARB_vertex_program
+BindProgramARB			dl
+ProgramEnvParameter4dARB	dl
+ProgramEnvParameter4dvARB	dl
+ProgramEnvParameter4fARB	dl
+ProgramEnvParameter4fvARB	dl
+ProgramLocalParameter4dARB	dl
+ProgramLocalParameter4dvARB	dl
+ProgramLocalParameter4fARB	dl
+ProgramLocalParameter4fvARB	dl
+ProgramStringARB		dl pointer=special
+VertexAttrib1dARB		dl
+VertexAttrib1dvARB		dl
+VertexAttrib1fARB		dl
+VertexAttrib1fvARB		dl
+VertexAttrib1sARB		dl
+VertexAttrib1svARB		dl
+VertexAttrib2dARB		dl
+VertexAttrib2dvARB		dl
+VertexAttrib2fARB		dl
+VertexAttrib2fvARB		dl
+VertexAttrib2sARB		dl
+VertexAttrib2svARB		dl
+VertexAttrib3dARB		dl
+VertexAttrib3dvARB		dl
+VertexAttrib3fARB		dl
+VertexAttrib3fvARB		dl
+VertexAttrib3sARB		dl
+VertexAttrib3svARB		dl
+VertexAttrib4NbvARB		dl
+VertexAttrib4NivARB		dl
+VertexAttrib4NsvARB		dl
+VertexAttrib4NubARB		dl
+VertexAttrib4NubvARB		dl
+VertexAttrib4NuivARB		dl
+VertexAttrib4NusvARB		dl
+VertexAttrib4bvARB		dl
+VertexAttrib4dARB		dl
+VertexAttrib4dvARB		dl
+VertexAttrib4fARB		dl
+VertexAttrib4fvARB		dl
+VertexAttrib4ivARB		dl
+VertexAttrib4sARB		dl
+VertexAttrib4svARB		dl
+VertexAttrib4ubvARB		dl
+VertexAttrib4uivARB		dl
+VertexAttrib4usvARB		dl
+
+#
+# State get functions (never compiled into lists)
+# 
+AreProgramsResidentNV		get
+AreTexturesResident		get
+GenFencesNV			get
+GenLists			get
+GenProgramsARB			get
+GenProgramsNV			get
+GenTextures			get
+GetBooleanv			get
+GetChromiumParametervCR		get
+GetClipPlane			get
+GetCombinerInputParameterfvNV	get
+GetCombinerInputParameterivNV	get
+GetCombinerOutputParameterfvNV	get
+GetCombinerOutputParameterivNV	get
+GetCombinerStageParameterfvNV	get
+GetCompressedTexImageARB	get
+GetDoublev			get
+GetError			get
+GetFenceivNV			get
+GetFloatv			get
+GetFinalCombinerInputParameterfvNV	get
+GetFinalCombinerInputParameterivNV	get
+GetIntegerv			get
+GetLightfv			get
+GetLightiv			get
+GetMapdv			get
+GetMapfv			get
+GetMapiv			get
+GetMaterialfv			get
+GetMaterialiv			get
+GetPixelMapfv			get
+GetPixelMapuiv			get
+GetPixelMapusv			get
+GetPointerv			get
+GetPolygonStipple		get
+GetProgramEnvParameterdvARB	get
+GetProgramEnvParameterfvARB	get
+GetProgramLocalParameterdvARB	get
+GetProgramLocalParameterfvARB	get
+GetProgramNamedParameterdvNV	get
+GetProgramNamedParameterfvNV	get
+GetProgramParameterdvNV		get
+GetProgramParameterfvNV		get
+GetProgramStringARB		get
+GetProgramStringNV		get
+GetProgramivARB			get
+GetProgramivNV			get
+GetString			get
+GetTexEnvfv			get
+GetTexEnviv			get
+GetTexGendv			get
+GetTexGenfv			get
+GetTexGeniv			get
+GetTexImage			get
+GetTexLevelParameterfv		get
+GetTexLevelParameteriv		get
+GetTexParameterfv		get
+GetTexParameteriv		get
+GetTrackMatrixivNV		get
+GetVertexAttribPointervARB	get
+GetVertexAttribPointervNV	get
+GetVertexAttribdvARB		get
+GetVertexAttribdvNV		get
+GetVertexAttribfvARB		get
+GetVertexAttribfvNV		get
+GetVertexAttribivARB		get
+GetVertexAttribivNV		get
+IsEnabled			get
+IsFenceNV			get
+IsList				get
+IsProgramARB			get
+IsProgramNV			get
+IsTexture			get
+TestFenceNV			get
+
+#
+# These non-get functions are never compiled into display lists
+#
+Flush			nodl
+Finish			nodl
+RenderMode		nodl
+FeedbackBuffer		nodl
+SelectBuffer		nodl
+NewList			nodl
+EndList			nodl
+DeleteLists		nodl
+DeleteTextures		nodl
+DeleteProgramsARB	nodl
+DeleteProgramsNV	nodl
+DeleteFencesNV		nodl
+ReadPixels		nodl
+BoundsInfoCR		nodl
+BarrierCreateCR		nodl
+BarrierExecCR		nodl
+BarrierDestroyCR	nodl
+SemaphoreCreateCR	nodl
+SemaphorePCR		nodl
+SemaphoreVCR		nodl
+SemaphoreDestroyCR	nodl
+ChromiumParameterfCR	nodl
+ChromiumParameteriCR	nodl
+ChromiumParametervCR	nodl
+CreateContext		nodl
+MakeCurrent		nodl
+DestroyContext		nodl
+SwapBuffers		nodl
+WindowCreate		nodl
+WindowDestroy		nodl
+WindowSize		nodl
+WindowPosition		nodl
+WindowShow		nodl
+Writeback		nodl
+
+# PICA stuff
+PicaListCompositors		nodl
+PicaGetCompositorParamiv	nodl
+PicaGetCompositorParamfv	nodl
+PicaGetCompositorParamcv	nodl
+PicaListNodes			nodl
+PicaCreateContext		nodl
+PicaDestroyContext		nodl
+PicaSetContextParami		nodl
+PicaSetContextParamiv		nodl
+PicaSetContextParamf		nodl
+PicaSetContextParamfv		nodl
+PicaSetContextParamv		nodl
+PicaGetContextParamiv		nodl
+PicaGetContextParamfv		nodl
+PicaGetContextParamcv		nodl
+PicaGetContextParamv		nodl
+PicaBindLocalContext		nodl
+PicaDestroyLocalContext		nodl
+PicaStartFrame			nodl
+PicaEndFrame			nodl
+PicaCancelFrame			nodl
+PicaQueryFrame			nodl
+PicaAddGfxFramelet		nodl
+PicaAddMemFramelet		nodl
+PicaReadFrame			nodl
+ZPixCR				dl pointer=special
