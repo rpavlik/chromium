@@ -561,52 +561,28 @@ void tilesortspuBucketingInit( void )
 void tilesortspuComputeMaxViewport(void)
 {
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
-	GLint vpdims[2];
 	GLint totalDims[2];
-	int i, j;
+	int i;
 
-	/* 
-	 * With the tilesort configuration we need to reset the 
-	 * maximum viewport size by asking each node what it's
-	 * capabilities are and setting our limits by totalling
-	 * up the results.
+	/*
+	 * It's hard to say what the max viewport size should be.
+	 * We've changed this computation a few times now.
+	 * For now, we set it to twice the mural size, or at least 4K.
+	 * One problem is that the mural size can change dynamically...
 	 */
-	totalDims[0] = totalDims[1] = 0;
-	for (i = 0; i < tilesort_spu.num_servers; i++)
-	{
-		int writeback = tilesort_spu.num_servers ? 1 : 0;
-
-		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
-
-		if (tilesort_spu.swap)
-			crPackGetIntegervSWAP( GL_MAX_VIEWPORT_DIMS, vpdims, &writeback );
-		else
-			crPackGetIntegerv( GL_MAX_VIEWPORT_DIMS, vpdims, &writeback );
-
-		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
-
-		/* Flush buffer (send to server) */
-		tilesortspuSendServerBuffer( i );
-
-		while (writeback) {
-			crNetRecv();
-		}
-
-		for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
-		{
-			if (tilesort_spu.servers[i].extents[j].x1 == 0)
-				totalDims[1] += vpdims[0];
-			if (tilesort_spu.servers[i].extents[j].y2 == (int)tilesort_spu.muralHeight)
-				totalDims[0] += vpdims[1];
-		}
-	}
+	totalDims[0] = 2 * tilesort_spu.muralWidth;
+	totalDims[1] = 2 * tilesort_spu.muralHeight;
+	if (totalDims[0] < 4096)
+		totalDims[0] = 4096;
+	if (totalDims[1] < 4096)
+		totalDims[1] = 4096;
 
 	tilesort_spu.limits.maxViewportDims[0] = totalDims[0];
 	tilesort_spu.limits.maxViewportDims[1] = totalDims[1];
 
 	/* 
 	 * Once we've computed the maximum viewport size, we send
-	 * a message to each server with it's new viewport parameters.
+	 * a message to each server with its new viewport parameters.
 	 */
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
