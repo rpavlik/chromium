@@ -19,28 +19,31 @@ from spudialog import *
 from crutils import *
 
 
-#----------------------------------------------------------------------------
-#                            System Constants
-#----------------------------------------------------------------------------
-
-# Our menu item IDs:
+#----------------------------------------------------------------------
+# Constants
 
 menu_SELECT_ALL_NODES   = 200
 menu_DESELECT_ALL_NODES = 201
 menu_DELETE_NODE        = 202
 menu_CONNECT            = 203
 menu_DISCONNECT         = 204
-menu_LAYOUT_NODES       = 205
-menu_SET_HOST           = 206
-menu_SERVER_OPTIONS     = 207
+menu_SET_HOST           = 205
+menu_SERVER_OPTIONS     = 206
 
 menu_SELECT_ALL_SPUS    = 300
 menu_DESELECT_ALL_SPUS  = 301
 menu_DELETE_SPU         = 302
 menu_SPU_OPTIONS        = 303
 
-menu_HELP               = 400
-menu_ABOUT              = 401
+menu_LAYOUT_NODES       = 400
+menu_GRAPH              = 401
+menu_TILESORT           = 402
+menu_LIGHTNING2         = 403
+
+menu_SYSTEM_OPTIONS     = 500
+
+menu_HELP               = 600
+menu_ABOUT              = 601
 
 
 # Widget IDs
@@ -53,17 +56,23 @@ id_NewTemplate    = 3003
 PAGE_WIDTH  = 1000
 PAGE_HEIGHT = 1000
 
-SpuClasses = [ "New SPU", "Pack", "Tilesort", "Render", "Readback", "Wet", "Hiddenline", "Print", "Saveframe", "Comm", "Binaryswap", "Array", "Counter", "Dist_texture" ]
-
-# How many servers can this SPU connect to
-SpuMaxServers = { "Pack" : 1,  "Tilesort" : 1000 }
-
-# SPUs which must be at the end of a chain, other than packers
-TerminalSPUs = [ "Render", "Pack", "Tilesort" ]
-
 Templates = [ "New Template", "Tilesort", "Sort-last" ]
 
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
+
+ServerOptions = [
+	("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
+	("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], [])
+]
+
+GlobalOptions = [
+	("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
+	("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
+	("show_cursor", "Show Virtual cursor", "BOOL", 1, [0], [], []),
+	("MTU", "Mean Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
+	("default_app", "Default Application Program", "STRING", 1, [""], [], []),
+	("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], [])
+]
 
 AppNodeBrush = wxBrush(wxColor(55, 160, 55))
 ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
@@ -85,31 +94,33 @@ ConfigFileTail = """
 cr.Go()
 """
 
-# XXX this is a temporary hack.  We want to eventually retrieve this
-# info automatically via an external SPU utility program.
-SPUOptions = {
-	"Tilesort" : [
-		("broadcast", "bool", 1, false, "Broadcast Primitives"),
-		("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
-		("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
-		("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()")
-		],
-	"Render" : [
-		("try_direct", "bool", 1, true, "Try Direct Rendering"),
-		("force_direct", "bool", 1, true, "Force Direct Rendering"),
-		("fullscreen", "bool", 1, false, "Full-screen Window"),
-		("on_top", "bool", 1, false, "Display on top")
-		],
-	"Print" : [
-		("log_file", "string", 1, "logfile", "Log file name")
-		],
-	"Readback" : [
-		("extract_depth", "bool", 1, true, "Extract Z Zalues"),
-		("extract_alpha", "bool", 1, true, "Extract Alpha Zalues"),
-		("local_visualization", "bool", 1, false, "Local Visualization")
-		]
-}
+#----------------------------------------------------------------------
+# Utility functions
 
+def SPUMaxServers(spuName):
+	"""Return the max number of servers this SPU can have."""
+	global SPUInfo
+	if spuName in SPUInfo.keys():
+		(params, options) = SPUInfo[spuName]
+		if params["packer"] == "yes":
+			m = params["maxservers"]
+			if m == "zero":
+				return 0
+			elif m == "one":
+				return 1
+			else:
+				return 100000
+	return 0
+				
+
+def SPUIsTerminal(spuName):
+	"""Return 1 if spuname is a terminal, else return 0."""
+	global SPUInfo
+	if spuName in SPUInfo.keys():
+		(params, options) = SPUInfo[spuName]
+		if params["terminal"] == "yes":
+			return 1
+	return 0
 
 #----------------------------------------------------------------------------
 # Main window frame class
@@ -158,8 +169,6 @@ class MainFrame(wxFrame):
 		self.nodeMenu.Append(menu_CONNECT,            "Connect")
 		self.nodeMenu.Append(menu_DISCONNECT,         "Disconnect")
 		self.nodeMenu.AppendSeparator()
-		self.nodeMenu.Append(menu_LAYOUT_NODES,       "Re-layout")
-		self.nodeMenu.AppendSeparator()
 		self.nodeMenu.Append(menu_SET_HOST,           "Set Host...")
 		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Options...")
 		EVT_MENU(self, menu_SELECT_ALL_NODES, self.doSelectAllNodes)
@@ -167,7 +176,6 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_DELETE_NODE, self.doDeleteNodes)
 		EVT_MENU(self, menu_CONNECT, self.doConnect)
 		EVT_MENU(self, menu_DISCONNECT, self.doDisconnect)
-		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		EVT_MENU(self, menu_SET_HOST, self.doSetHost)
 		EVT_MENU(self, menu_SERVER_OPTIONS, self.doServerOptions)
 		menuBar.Append(self.nodeMenu, "Node")
@@ -186,6 +194,22 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_DELETE_SPU, self.doDeleteSPU)
 		EVT_MENU(self, menu_SPU_OPTIONS, self.doSpuOptions)
 		menuBar.Append(self.spuMenu, "SPU")
+
+		# View menu
+		self.viewMenu = wxMenu()
+		self.viewMenu.Append(menu_LAYOUT_NODES, "Auto-Layout")
+		self.viewMenu.AppendSeparator()
+		self.viewMenu.Append(menu_GRAPH,     "As Graph", checkable=TRUE)
+		self.viewMenu.Append(menu_TILESORT,  "As Tilesort", checkable=TRUE)
+		self.viewMenu.Append(menu_LIGHTNING2,"As Lightning-2", checkable=TRUE)
+		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
+		menuBar.Append(self.viewMenu, "View")
+
+		# System menu
+		self.systemMenu = wxMenu()
+		self.systemMenu.Append(menu_SYSTEM_OPTIONS, "Options...")
+		menuBar.Append(self.systemMenu, "System")
+		EVT_MENU(self, menu_SYSTEM_OPTIONS, self.doSystemOptions)
 
 		# Help menu
 		self.helpMenu = wxMenu()
@@ -227,8 +251,9 @@ class MainFrame(wxFrame):
 		toolSizer.Add(self.newServerChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New SPU button
+		spuStrings = ["New SPU"] + SpuClasses
 		self.newSpuChoice = wxChoice(parent=self.topPanel, id=id_NewSpu,
-									 choices=SpuClasses)
+									 choices=spuStrings)
 		EVT_CHOICE(self.newSpuChoice, id_NewSpu, self.onNewSpu)
 		toolSizer.Add(self.newSpuChoice, flag=wxEXPAND+wxALL, border=2)
 
@@ -459,7 +484,7 @@ class MainFrame(wxFrame):
 			appNode = ApplicationNode(host=hostname)
 			appNode.SetPosition(xPos, yPos)
 			appNode.Select()
-			tilesortSPU = SpuObject("Tilesort")
+			tilesortSPU = SpuObject("tilesort")
 			appNode.AddSPU(tilesortSPU)
 			self.AddNode(appNode)
 			# Create the server nodes
@@ -469,7 +494,7 @@ class MainFrame(wxFrame):
 				serverNode = NetworkNode(host=hostname)
 				serverNode.SetPosition(xPos, yPos)
 				serverNode.Select()
-				renderSPU = SpuObject("Render")
+				renderSPU = SpuObject("render")
 				serverNode.AddSPU(renderSPU)
 				self.AddNode(serverNode)
 				tilesortSPU.AddServer(serverNode)
@@ -493,7 +518,7 @@ class MainFrame(wxFrame):
 			serverNode = NetworkNode(host="foobar")
 			serverNode.SetPosition(xPos, yPos)
 			serverNode.Select()
-			renderSPU = SpuObject("Render")
+			renderSPU = SpuObject("render")
 			serverNode.AddSPU(renderSPU)
 			self.AddNode(serverNode)
 			# Create the client/app nodes
@@ -503,9 +528,9 @@ class MainFrame(wxFrame):
 				appNode = ApplicationNode(host=hostname)
 				appNode.SetPosition(xPos, yPos)
 				appNode.Select()
-				readbackSPU = SpuObject("Readback")
+				readbackSPU = SpuObject("readback")
 				appNode.AddSPU(readbackSPU)
-				packSPU = SpuObject("Pack")
+				packSPU = SpuObject("pack")
 				appNode.AddSPU(packSPU)
 				self.AddNode(appNode)
 				packSPU.AddServer(serverNode)
@@ -579,6 +604,7 @@ class MainFrame(wxFrame):
 		i = self.newSpuChoice.GetSelection()
 		if i <= 0:
 			return # didn't really select an SPU class
+		i -= 1
 		for node in self.Nodes:
 			if node.IsSelected():
 				# we'll insert before the first selected SPU, or at the
@@ -597,7 +623,7 @@ class MainFrame(wxFrame):
 								(SpuClasses[i], pred.Name()))
 					break
 				# check if it's legal to put this SPU before another
-				if pos >= 0 and SpuClasses[i] in TerminalSPUs:
+				if pos >= 0 and SPUIsTerminal(SpuClasses[i]):
 					self.Notify("You can't insert a %s SPU before a %s SPU." %
 								(SpuClasses[i], node.GetSPU(pos).Name()))
 					break
@@ -887,7 +913,7 @@ class MainFrame(wxFrame):
 				self.SortNodesByPosition(netPackerNodes)
 				# look if leftmost node has a tilesorter
 				leftMost = netPackerNodes[0]
-				if SpuMaxServers[leftMost.LastSPU().Name()] > 1:
+				if leftMost.LastSPU().MaxServers() > 1:
 					# leftMost node is tilesorter
 					serverNodes = netPackerNodes
 					serverNodes.remove(leftMost)
@@ -946,6 +972,7 @@ class MainFrame(wxFrame):
 
 	def doSetHost(self, event):
 		"""Node / Set Host callback"""
+		# XXX load dialog with default/current hostname???
 		dialog = wxTextEntryDialog(self, message="Enter the hostname for the selected nodes")
 		dialog.SetTitle("Chromium host")
 		if dialog.ShowModal() == wxID_OK:
@@ -957,7 +984,10 @@ class MainFrame(wxFrame):
 
 	def doServerOptions(self, event):
 		"""Node / Server Options callback"""
-		# XXX display the server options dialog
+		dialog = SPUDialog(parent=NULL, id=-1,
+						   title="Server Options",
+						   options=ServerOptions)
+		dialog.ShowModal()
 		return
 
 
@@ -1004,16 +1034,25 @@ class MainFrame(wxFrame):
 		spuList = self.GetSelectedSPUs()
 		if len(spuList) > 0:
 			name = spuList[0].Name()
-			if name in SPUOptions.keys():
-				spuOpts = SPUOptions[name]
+			if name in SPUInfo.keys():
+				(params, opts) = SPUInfo[name]
 				dialog = SPUDialog(parent=NULL, id=-1,
 								   title=name + " SPU Options",
-								   options = spuOpts)
+								   options = opts)
 				dialog.ShowModal()
 		return
 		
+	def doSystemOptions(self, event):
+		"""System / Options callback"""
+		dialog = SPUDialog(parent=NULL, id=-1,
+						   title="System Options",
+						   options=GlobalOptions)
+		dialog.ShowModal()
+
+
 	# ----------------------------------------------------------------------
 	# Help menu callbacks
+
 
 	def doShowIntro(self, event):
 		"""Help / Introduction callback"""
@@ -1236,23 +1275,22 @@ class SpuObject:
 		self.__Width = 0
 		self.__Height = 30
 		self.__IsSelected = 0
+		self.__IsTerminal = SPUIsTerminal(name)
+		self.__MaxServers = SPUMaxServers(name)
 		self.__Port = 7000
 		self.__Protocol = "tcpip"
 		self.__Servers = []
 		self.__OutlinePen = wxPen(wxColor(0,0,0), width=1, style=0)
 		self.__FillBrush = wxLIGHT_GREY_BRUSH
 
-	def IsPacker(self):
-		"""Return true if this SPU has a packer"""
-		if self.__Name in SpuMaxServers.keys():
-			return 1
-		else:
-			return 0
-
 	def IsTerminal(self):
 		"""Return true if this SPU has to be the last in a chain (a terminal)
 		"""
-		return self.__Name in TerminalSPUs
+		return self.__IsTerminal
+
+	def MaxServers(self):
+		"""Return the max number of servers this SPU can connect to."""
+		return self.__MaxServers
 
 	def Select(self):
 		self.__IsSelected = 1
@@ -1267,15 +1305,15 @@ class SpuObject:
 		"""Test if a server can be added to this SPU.
 		Return "OK" if so, else return reason why not.
 		"""
-		if not self.IsPacker():
+		if self.__MaxServers == 0:
 			return "This SPU doesn't have a command packer"
-		if len(self.__Servers) >= SpuMaxServers[self.__Name]:
-			return "This SPU is limited to %d server(s)" % SpuMaxServers[self.__Name]
+		if len(self.__Servers) >= self.__MaxServers:
+			return "This SPU is limited to %d server(s)" % self.__MaxServers
 		return "OK"
 
 	def AddServer(self, serverNode, protocol='tcpip', port=7000):
 		"""Add a server to this SPU.  The SPU must have a packer!"""
-		if self.IsPacker() and not serverNode in self.__Servers and len(self.__Servers) < SpuMaxServers[self.__Name]:
+		if not serverNode in self.__Servers and len(self.__Servers) < self.__MaxServers:
 			self.__Servers.append(serverNode)
 			self.__Protocol = protocol
 			self.__Port = port
@@ -1330,20 +1368,23 @@ class SpuObject:
 		else:
 			self.__OutlinePen.SetWidth(1)
 		dc.SetPen(self.__OutlinePen)
-		# if width is zero, compute it now based on the text width
+		# if width is zero, compute width/height now
 		if self.__Width == 0:
 			self.Layout(dc)
-		# draw the SPU as rectangle with text label
+		# draw the SPU as a rectangle with text label
 		dc.DrawRectangle(self.__X, self.__Y, self.__Width, self.__Height)
 		dc.DrawText(self.__Name, self.__X + 4, self.__Y + 4)
-		if self.IsPacker():
-			# draw the input socket (a little black rect)
+		if self.__MaxServers > 0:
+			# draw the output socket (a little black rect)
 			dc.SetBrush(wxBLACK_BRUSH)
 			dc.DrawRectangle(self.__X + self.__Width,
 							 self.__Y + self.__Height/2 - 4, 4, 8)
-		elif self.__Name in TerminalSPUs:
-			# draw a thick right edge on the box??
-			pass
+		elif self.__IsTerminal:
+			# draw a thick right edge on the box
+			self.__OutlinePen.SetWidth(3)
+			dc.SetPen(self.__OutlinePen)
+			dc.DrawLine(self.__X + self.__Width, self.__Y + 1,
+						self.__X + self.__Width, self.__Y + self.__Height - 2)
 
 class Node:
 	""" The graphical representation of a Cr node (app or network).
@@ -1378,7 +1419,7 @@ class Node:
 
 	def HasPacker(self):
 		"""Return true if the last SPU has a packer."""
-		if len(self.__SpuChain) >= 1 and self.LastSPU().IsPacker():
+		if len(self.__SpuChain) >= 1 and self.LastSPU().MaxServers() > 0:
 			return 1
 		else:
 			return 0
@@ -1486,7 +1527,7 @@ class Node:
 	def GetOutputPlugPos(self):
 		assert self.NumSPUs() > 0
 		last = self.LastSPU()
-		assert last.IsPacker()
+		assert last.MaxServers() > 0
 		(x, y) = last.GetPosition()
 		x += last.GetWidth()
 		y += last.GetHeight() / 2
@@ -1664,11 +1705,22 @@ def main():
 	global _app
 
 	# Redirect python exceptions to a log file.
-
 	sys.stderr = ExceptionHandler()
 
-	# Create and start the Tilesort application.
+	# Scan for available SPU classes
+	global SpuClasses
+	SpuClasses = FindSPUNames()
+	print "Found SPU classes: %s" % str(SpuClasses)
 
+	# Get the params and options for all SPU classes
+	print "foo!"
+	global SPUInfo
+	SPUInfo = {}
+	for spu in SpuClasses:
+		print "get options %s" % spu
+		SPUInfo[spu] = GetSPUOptions(spu)
+
+	# Create and start the application.
 	_app = ConfigApp(0)
 	_app.MainLoop()
 
