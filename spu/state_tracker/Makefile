@@ -10,6 +10,7 @@ REGULAR_FILES = state_buffer \
 	state_enable \
 	state_error \
 	state_evaluators \
+	state_extensions \
 	state_flush \
 	state_fog \
 	state_get \

@@ -235,7 +235,10 @@ void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat *param
 			params_length = 4* sizeof( *params );
 			break;
 		default:
-			crError( "Unnown pname: %d", pname );
+			if (!crPackTexParameterParamsLength( pname ))
+			{
+				crError( "Unnown pname: %d", pname );
+			}
 			break;
 	}
 	packet_length += params_length;

@@ -10,6 +10,7 @@ FILES = packer \
 	pack_clipplane \
 	pack_context \
 	pack_current \
+	pack_extensions \
 	pack_fog \
 	pack_lights \
 	pack_lists \

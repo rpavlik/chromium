@@ -7,6 +7,7 @@
 #include "cr_pixeldata.h"
 #include "cr_mem.h"
 #include "state_internals.h"
+#include "state_extensionfuncs.h"
 
 #define UNIMPLEMENTED() crStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented something or other" )
 #define UNUSED(x) ((void) (x))
@@ -114,6 +115,8 @@ void crStateTextureInit(CRTextureState *t)
 	t->eyeTCoeff = y_vector;
 	t->eyeRCoeff = zero_vector;
 	t->eyeQCoeff = zero_vector;
+
+	crStateTextureInitExtensions( t );
 }
 
 void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint name)
@@ -148,6 +151,8 @@ void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint 
 		tl->type          = GL_UNSIGNED_BYTE;
 		tl->dirty         = 0;  // By default this level is ignored.
 	}
+
+	crStateTextureInitTextureObjExtensions( t, tobj );
 
 	/* UGh. Should be neg_bitid */
 	tobj->dirty = GLBITS_ONES;
@@ -1402,8 +1407,11 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 			tobj->borderColor.a = param[3];
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"TexParamterfv: Invalid pname: %d", pname);
+			if (!crStateTexParameterfvExtensions( t, tobj, pname, param ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+							"TexParamterfv: Invalid pname: %d", pname);
+			}
 			return;
 	}
 
@@ -1438,8 +1446,11 @@ void STATE_APIENTRY crStateTexParameteriv (GLenum target, GLenum pname, const GL
 			crStateTexParameterfv( target, pname, (const GLfloat *) &(f_color) );
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"TexParamteriv: Invalid pname: %d", pname);
+			if (!crStateTexParameterivExtensions( target, pname, param ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+							"TexParamteriv: Invalid pname: %d", pname);
+			}
 			return;
 	}
 }
@@ -2388,8 +2399,10 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 			params[3] = tobj->borderColor.a;
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
-						"glGetTExParameter: invalid pname: %d", pname);
+			if (!crStateGetTexParameterfvExtensions( tobj, pname, params ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glGetTexParameter: invalid pname: %d", pname);
+			}
 			return;
 	}
 }
@@ -2447,8 +2460,11 @@ void STATE_APIENTRY crStateGetTexParameteriv (GLenum target, GLenum pname, GLint
 			params[3] = (GLint) (tobj->borderColor.a * GL_MAXINT);
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
-						"glGetTExParameter: invalid pname: %d", pname);
+			if (!crStateGetTexParameterivExtensions( tobj, pname, params ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+							"glGetTexParameter: invalid pname: %d", pname);
+			}
 			return;
 	}
 }
@@ -2814,6 +2830,7 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_S, tobj->wrapS);
 			diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_T, tobj->wrapT);
 			diff_api.TexParameterfv(tobj->target, GL_TEXTURE_BORDER_COLOR, (const GLfloat *) f);
+			crStateTextureDiffParameterExtensions( tobj );
 			tobj->paramsBit &= nbitID;
 		}
 

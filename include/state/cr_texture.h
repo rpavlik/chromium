@@ -3,6 +3,7 @@
 
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
+#include "state/cr_extensions.h"
 
 #define CRTEXTURE_HASHSIZE 1047
 #define CRTEXTURE_NAMEOFFSET 4
@@ -46,6 +47,7 @@ typedef struct __CRTextureObj {
 	GLbitvalue	           dirty;
 	GLbitvalue             paramsBit;
 	GLbitvalue             imageBit;
+	CRTextureObjExtensions extensions;
 } CRTextureObj;
 
 typedef struct __CRTextureFreeElem {
@@ -110,6 +112,7 @@ typedef struct {
 	GLvectorf	eyeRCoeff;
 	GLvectorf	eyeQCoeff;
 	GLtexcoorde	gen;
+	CRTextureStateExtensions extensions;
 } CRTextureState;
 
 void crStateTextureInitBits (CRTextureBits *t);

@@ -10,5 +10,6 @@
 
 #include "cr_pack.h"
 #include "cr_packfunctions.h"
+#include "packer_extensions.h"
 
 #endif /* CR_PACKER_H */

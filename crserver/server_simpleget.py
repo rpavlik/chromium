@@ -257,12 +257,22 @@ num_get_values = {
 	'GL_ZOOM_Y' : 1,
 }
 
-keys = num_get_values.keys()
+extensions_num_get_values = {
+	'GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT': (1, 'GL_EXT_texture_filter_anisotropic')
+}
+
+keys = num_get_values.keys() + extensions_num_get_values.keys()
 keys.sort()
 
 print "struct nv_struct { GLenum pname; int num_values; } num_values_array[] = {"
 for key in keys:
-	print '\t{ %s, %d },' % (key, num_get_values[key])
+	try:
+		print '\t{ %s, %d },' % (key, num_get_values[key])
+	except KeyError:
+		(nv, ifdef) = extensions_num_get_values[key]
+		print '#ifdef %s' % ifdef
+		print '\t{ %s, %d },' % (key, nv)
+		print '#endif /* %s */' % ifdef
 print "\t{ 0, 0 }"
 print "};"
 
