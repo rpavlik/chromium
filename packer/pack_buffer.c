@@ -87,7 +87,6 @@ void crPackReleaseBuffer( CRPackContext *pc )
 	CRASSERT( pc );
 
 	if (!pc->currentBuffer) {
-		crWarning("crPackReleaseBuffer called with no current buffer");
 		return; /* nothing to do */
 	}
 
