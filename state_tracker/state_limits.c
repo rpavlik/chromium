@@ -401,14 +401,14 @@ void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions 
 				extensions->EXT_shadow_funcs  &&
 				extensions->EXT_stencil_wrap &&
 				extensions->SGIS_generate_mipmap) {
-			extensions->version = (const GLubyte *) "1.4 Chromium " CR_VERSION;
+			extensions->version = (const GLubyte *) "1.4 Chromium " CR_VERSION_STRING;
 		}
 		else {
-			extensions->version = (const GLubyte *) "1.3 Chromium " CR_VERSION;
+			extensions->version = (const GLubyte *) "1.3 Chromium " CR_VERSION_STRING;
 		}
 	}
 	else {
-		extensions->version = (const GLubyte *) "1.2 Chromium " CR_VERSION;
+		extensions->version = (const GLubyte *) "1.2 Chromium " CR_VERSION_STRING;
 	}
 }
 

@@ -18,7 +18,6 @@ extern "C" {
 /* glGetString strings */
 #define CR_RENDERER "Chromium"
 #define CR_VENDOR "Humper"
-#define CR_VERSION "1.2"   /* Chromium version, not OpenGL version */
 
 
 #define CR_MAX_TEXTURE_UNITS		8

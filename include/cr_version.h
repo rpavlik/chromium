@@ -15,6 +15,8 @@
 #define CR_MINOR_VERSION 3
 #define CR_PATCH_VERSION 0
 
+#define CR_VERSION_STRING "1.3"   /* Chromium version, not OpenGL version */
+
 
 /* These define the OpenGL version that Chromium supports.
  * This lets users easily recompile Chromium with/without OpenGL 1.x support.
