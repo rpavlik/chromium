@@ -86,7 +86,7 @@ GLboolean GL_NORMALIZE                g->current.normalize
 GLboolean GL_RGBA_MODE                GL_TRUE
 GLboolean GL_TEXTURE_GEN_S g->texture.textureGen[g->texture.curTextureUnit].s
 GLboolean GL_TEXTURE_GEN_T g->texture.textureGen[g->texture.curTextureUnit].t
-GLboolean GL_TEXTURE_GEN_R g->texture.textureGen[g->texture.curTextureUnit].p
+GLboolean GL_TEXTURE_GEN_R g->texture.textureGen[g->texture.curTextureUnit].r
 GLboolean GL_TEXTURE_GEN_Q g->texture.textureGen[g->texture.curTextureUnit].q
 GLboolean GL_TEXTURE_1D g->texture.enabled1D[g->texture.curTextureUnit]
 GLboolean GL_TEXTURE_2D g->texture.enabled2D[g->texture.curTextureUnit]
@@ -144,7 +144,7 @@ GLint     GL_STENCIL_CLEAR_VALUE      g->stencil.clearValue
 GLfloat   GL_CURRENT_INDEX            g->current.index
 GLclampf  GL_CURRENT_COLOR            g->current.color.r g->current.color.g g->current.color.b g->current.color.a
 GLclampf  GL_CURRENT_NORMAL           g->current.normal.x g->current.normal.y g->current.normal.z
-GLfloat   GL_CURRENT_TEXTURE_COORDS   g->current.texCoord[g->texture.curTextureUnit].s g->current.texCoord[g->texture.curTextureUnit].t g->current.texCoord[g->texture.curTextureUnit].p g->current.texCoord[g->texture.curTextureUnit].q
+GLfloat   GL_CURRENT_TEXTURE_COORDS   g->current.texCoord[g->texture.curTextureUnit].s g->current.texCoord[g->texture.curTextureUnit].t g->current.texCoord[g->texture.curTextureUnit].r g->current.texCoord[g->texture.curTextureUnit].q
 GLboolean GL_EDGE_FLAG                g->current.edgeFlag
 
 ?b?ub?s?us?i?ui?f?d                     GL_CURRENT_RASTER_POSITION       g->current.rasterpos?.x g->current.rasterpos?.y g->current.rasterpos?.z g->current.rasterpos?.w 

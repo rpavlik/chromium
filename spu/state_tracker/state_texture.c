@@ -99,12 +99,12 @@ void crStateTextureInit(CRTextureState *t)
 		t->enabledCubeMap[i] = GL_FALSE;
 		t->textureGen[i].s = GL_FALSE;
 		t->textureGen[i].t = GL_FALSE;
-		t->textureGen[i].p = GL_FALSE;
+		t->textureGen[i].r = GL_FALSE;
 		t->textureGen[i].q = GL_FALSE;
 
 		t->gen[i].s = GL_EYE_LINEAR;
 		t->gen[i].t = GL_EYE_LINEAR;
-		t->gen[i].p = GL_EYE_LINEAR;
+		t->gen[i].r = GL_EYE_LINEAR;
 		t->gen[i].q = GL_EYE_LINEAR;
 
 		t->objSCoeff[i] = x_vector;
@@ -1807,7 +1807,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 							return;
 						}
 					}
-					t->gen[t->curTextureUnit].p = e;
+					t->gen[t->curTextureUnit].r = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1977,7 +1977,7 @@ void STATE_APIENTRY crStateGetTexGendv (GLenum coord, GLenum pname, GLdouble *pa
 					*param = (GLdouble) t->gen[t->curTextureUnit].t;
 					break;
 				case GL_R:
-					*param = (GLdouble) t->gen[t->curTextureUnit].p;
+					*param = (GLdouble) t->gen[t->curTextureUnit].r;
 					break;
 				case GL_Q:
 					*param = (GLdouble) t->gen[t->curTextureUnit].q;
@@ -2080,7 +2080,7 @@ void STATE_APIENTRY crStateGetTexGenfv (GLenum coord, GLenum pname, GLfloat *par
 					*param = (GLfloat) t->gen[t->curTextureUnit].t;
 					break;
 				case GL_R:
-					*param = (GLfloat) t->gen[t->curTextureUnit].p;
+					*param = (GLfloat) t->gen[t->curTextureUnit].r;
 					break;
 				case GL_Q:
 					*param = (GLfloat) t->gen[t->curTextureUnit].q;
@@ -2183,7 +2183,7 @@ void STATE_APIENTRY crStateGetTexGeniv (GLenum coord, GLenum pname, GLint *param
 					*param = (GLint) t->gen[t->curTextureUnit].t;
 					break;
 				case GL_R:
-					*param = (GLint) t->gen[t->curTextureUnit].p;
+					*param = (GLint) t->gen[t->curTextureUnit].r;
 					break;
 				case GL_Q:
 					*param = (GLint) t->gen[t->curTextureUnit].q;
@@ -2592,12 +2592,12 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 			}
 			if (from->textureGen[i].s != to->textureGen[i].s ||
 					from->textureGen[i].t != to->textureGen[i].t ||
-					from->textureGen[i].p != to->textureGen[i].p ||
+					from->textureGen[i].r != to->textureGen[i].r ||
 					from->textureGen[i].q != to->textureGen[i].q) 
 			{
 				able[to->textureGen[i].s](GL_TEXTURE_GEN_S);
 				able[to->textureGen[i].t](GL_TEXTURE_GEN_T);
-				able[to->textureGen[i].p](GL_TEXTURE_GEN_R);
+				able[to->textureGen[i].r](GL_TEXTURE_GEN_R);
 				able[to->textureGen[i].q](GL_TEXTURE_GEN_Q);
 				t->enable[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
@@ -2768,12 +2768,12 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 			if (from->gen[i].s != to->gen[i].s ||
 					from->gen[i].t != to->gen[i].t ||
-					from->gen[i].p != to->gen[i].p ||
+					from->gen[i].r != to->gen[i].r ||
 					from->gen[i].q != to->gen[i].q) 
 			{
 				diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->gen[i].s);
 				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->gen[i].t);
-				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->gen[i].p);
+				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->gen[i].r);
 				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->gen[i].q);	
 				t->gen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
@@ -2974,12 +2974,12 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			}
 			if (from->textureGen[i].s != to->textureGen[i].s ||
 					from->textureGen[i].t != to->textureGen[i].t ||
-					from->textureGen[i].p != to->textureGen[i].p ||
+					from->textureGen[i].r != to->textureGen[i].r ||
 					from->textureGen[i].q != to->textureGen[i].q) 
 			{
 				able[to->textureGen[i].s](GL_TEXTURE_GEN_S);
 				able[to->textureGen[i].t](GL_TEXTURE_GEN_T);
-				able[to->textureGen[i].p](GL_TEXTURE_GEN_R);
+				able[to->textureGen[i].r](GL_TEXTURE_GEN_R);
 				able[to->textureGen[i].q](GL_TEXTURE_GEN_Q);
 				from->textureGen[i] = to->textureGen[i];
 			}
@@ -3168,12 +3168,12 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 			if (from->gen[i].s != to->gen[i].s ||
 					from->gen[i].t != to->gen[i].t ||
-					from->gen[i].p != to->gen[i].p ||
+					from->gen[i].r != to->gen[i].r ||
 					from->gen[i].q != to->gen[i].q) 
 			{
 				diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->gen[i].s);
 				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->gen[i].t);
-				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->gen[i].p);
+				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->gen[i].r);
 				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->gen[i].q);	
 				from->gen[i] = to->gen[i];
 			}

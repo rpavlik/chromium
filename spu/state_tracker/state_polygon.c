@@ -15,7 +15,9 @@ void crStatePolygonInit(CRPolygonState *p)
 {
 	int i;
 	p->polygonSmooth = GL_FALSE;
-	p->polygonOffset = GL_FALSE;
+	p->polygonOffsetFill = GL_FALSE;
+	p->polygonOffsetLine = GL_FALSE;
+	p->polygonOffsetPoint = GL_FALSE;
 	p->polygonStipple = GL_FALSE;
 	p->cullFace = GL_FALSE;
 

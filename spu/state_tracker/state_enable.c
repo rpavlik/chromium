@@ -116,7 +116,17 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->line.dirty = neg_bitid;
 			break;
 		case GL_POLYGON_OFFSET_FILL:
-			g->polygon.polygonOffset = val;
+			g->polygon.polygonOffsetFill = val;
+			sb->polygon.enable = neg_bitid;
+			sb->polygon.dirty = neg_bitid;
+			break;
+		case GL_POLYGON_OFFSET_LINE:
+			g->polygon.polygonOffsetLine = val;
+			sb->polygon.enable = neg_bitid;
+			sb->polygon.dirty = neg_bitid;
+			break;
+		case GL_POLYGON_OFFSET_POINT:
+			g->polygon.polygonOffsetPoint = val;
 			sb->polygon.enable = neg_bitid;
 			sb->polygon.dirty = neg_bitid;
 			break;
@@ -163,7 +173,7 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_GEN_R :
-			g->texture.textureGen[g->texture.curTextureUnit].p = val;
+			g->texture.textureGen[g->texture.curTextureUnit].r = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;

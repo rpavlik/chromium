@@ -3,7 +3,9 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 :enable:polygonSmooth:GL_POLYGON_SMOOTH
-:enable:polygonOffset:GL_POLYGON_OFFSET_FILL
+:enable:polygonOffsetFill:GL_POLYGON_OFFSET_FILL
+:enable:polygonOffsetLine:GL_POLYGON_OFFSET_LINE
+:enable:polygonOffsetPoint:GL_POLYGON_OFFSET_POINT
 :enable:polygonStipple:GL_POLYGON_STIPPLE
 :enable:cullFace:GL_CULL_FACE
 :offset:offsetFactor,offsetUnits:PolygonOffset

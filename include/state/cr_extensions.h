@@ -7,6 +7,9 @@
 #ifndef CR_STATE_EXTENSIONS_H
 #define CR_STATE_EXTENSIONS_H
 
+#include "cr_glwrapper.h"
+#include "state/cr_statetypes.h"
+
 typedef struct {
 	// Cube map is inside the normal texture data.
 	GLfloat maxTextureMaxAnisotropy;

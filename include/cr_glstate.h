@@ -7,7 +7,8 @@
 #ifndef CR_GLSTATE_H
 #define CR_GLSTATE_H
 
-#include "state/cr_attrib.h"
+#include "state/cr_extensions.h"
+
 #include "state/cr_buffer.h"
 #include "state/cr_client.h"
 #include "state/cr_current.h"
@@ -22,6 +23,8 @@
 #include "state/cr_texture.h"
 #include "state/cr_transform.h"
 #include "state/cr_viewport.h"
+
+#include "state/cr_attrib.h"
 
 #include "state/cr_statefuncs.h"
 #include "state/cr_stateerror.h"

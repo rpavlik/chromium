@@ -64,7 +64,7 @@ typedef struct {
 
 #define VECTOR(type, name) typedef struct { type x,y,z,w; } name
 #define COLOR(type, name) typedef struct { type r,g,b,a; } name
-#define TEXCOORD(type, name) typedef struct { type s,t,p,q; } name
+#define TEXCOORD(type, name) typedef struct { type s,t,r,q; } name
 
 VECTOR(GLdefault,GLvector);
 VECTOR(GLenum,GLvectore);
@@ -102,7 +102,7 @@ TEXCOORD(GLdouble,GLtexcoordd);
 #undef TEXCOORD
 
 #define COMPARE_VECTOR(a,b)		((a).x != (b).x || (a).y != (b).y || (a).z != (b).z || (a).w != (b).w)
-#define COMPARE_TEXCOORD(a,b)	((a).s != (b).s || (a).t != (b).t || (a).p != (b).p || (a).q != (b).q)
+#define COMPARE_TEXCOORD(a,b)	((a).s != (b).s || (a).t != (b).t || (a).r != (b).r || (a).q != (b).q)
 #define COMPARE_COLOR(x,y)		((x).r != (y).r || (x).g != (y).g || (x).b != (y).b || (x).a != (y).a)
 
 

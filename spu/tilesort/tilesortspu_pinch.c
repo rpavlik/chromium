@@ -399,7 +399,7 @@ void __pinchIssueParams (CRVertex *vtx)
 	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
 		val[0] = vtx->texCoord[i].s; val[1] = vtx->texCoord[i].t;
-		val[2] = vtx->texCoord[i].p; val[3] = vtx->texCoord[i].q;
+		val[2] = vtx->texCoord[i].r; val[3] = vtx->texCoord[i].q;
 		crPackMultiTexCoord4fvARB( i + GL_TEXTURE0_ARB, (const GLfloat *) val);
 	}
 	val[0] = vtx->normal.x; val[1] = vtx->normal.y;

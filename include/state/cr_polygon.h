@@ -24,7 +24,9 @@ typedef struct {
 
 typedef struct {
 	GLboolean	polygonSmooth;
-	GLboolean polygonOffset;
+	GLboolean polygonOffsetFill;
+	GLboolean polygonOffsetLine;
+	GLboolean polygonOffsetPoint;
 	GLboolean	polygonStipple;
 	GLboolean cullFace;
 	GLfloat		offsetFactor;
