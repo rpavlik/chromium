@@ -129,4 +129,4 @@ BufferDataARB
 BufferSubDataARB
 GetBufferSubDataARB
 DeleteBuffersARB
-ZPix
+ZPixCR

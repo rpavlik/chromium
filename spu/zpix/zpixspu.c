@@ -29,7 +29,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei  width,
                                           GLenum type, 
                                     const GLvoid *pixels );
 
-void ZPIXSPU_APIENTRY zpixZPix( GLsizei width, 
+void ZPIXSPU_APIENTRY zpixZPixCR( GLsizei width, 
                                 GLsizei height, 
                                 GLenum  format, 
                                 GLenum  type, 
@@ -298,7 +298,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              zpix_spu.sum_bytes += plen;
              zpix_spu.sum_zbytes += plen;
        
-             zpix_spu.child.ZPix( width,
+             zpix_spu.child.ZPixCR( width,
                                   height,
                                   format,
                                   type,
@@ -333,7 +333,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              zpix_spu.sum_bytes += plen;
              zpix_spu.sum_zbytes += zlen;
        
-             zpix_spu.child.ZPix( width,
+             zpix_spu.child.ZPixCR( width,
                                   height,
                                   format,
                                   type,
@@ -502,7 +502,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              zpix_spu.sum_bytes += plen;
              zpix_spu.sum_zbytes += zlen;
        
-             zpix_spu.child.ZPix( width,
+             zpix_spu.child.ZPixCR( width,
                                   height,
                                   format,
                                   type,
@@ -528,7 +528,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
 /*--------------------------------------------------------
       Decompress data and then glDrawPixels 
 ----------------------------------------------------------*/       
-void ZPIXSPU_APIENTRY zpixZPix( GLsizei width, 
+void ZPIXSPU_APIENTRY zpixZPixCR( GLsizei width, 
                                 GLsizei height, 
                                 GLenum  format, 
                                 GLenum  type, 
@@ -832,6 +832,6 @@ SPUNamedFunctionTable _cr_zpix_table[] = {
   { "RasterPos2i",    (SPUGenericFunction) zpixRasterPos2i },
   { "DrawPixels", (SPUGenericFunction) zpixDrawPixels },
   /*{ "Bitmap", (SPUGenericFunction) zpixBitmap },*/
-  { "ZPix", (SPUGenericFunction) zpixZPix },
+  { "ZPixCR", (SPUGenericFunction) zpixZPixCR },
   { NULL, NULL }
 }; 

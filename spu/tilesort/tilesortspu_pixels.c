@@ -1052,10 +1052,10 @@ tilesortspu_PackTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 }
 
 /*
- * Execute crZPix().  Immediate mode only.
+ * Execute crZPixCR().  Immediate mode only.
  */
 void TILESORTSPU_APIENTRY
-tilesortspu_ZPix(GLsizei width, GLsizei height, GLenum format,
+tilesortspu_ZPixCR(GLsizei width, GLsizei height, GLenum format,
     GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels)
 {
 	GET_CONTEXT(ctx);
@@ -1075,13 +1075,13 @@ tilesortspu_ZPix(GLsizei width, GLsizei height, GLenum format,
 
 	if (c->inBeginEnd)
 	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "crZPix" );
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "crZPixCR" );
 		return;
 	}
 
 	if (width < 0 || height < 0)
 	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "crZPix" );
+		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "crZPixCR" );
 		return;
 	}
 
@@ -1093,7 +1093,7 @@ tilesortspu_ZPix(GLsizei width, GLsizei height, GLenum format,
 	if (length
 		+ sizeof(format) + sizeof(type) + sizeof(width) + sizeof(height)
 		> tilesort_spu.MTU ) {
-		crWarning("ZPix called with insufficient MTU size\n"
+		crWarning("ZPixCR called with insufficient MTU size\n"
 			"Needed %d, but currently MTU is set at %d\n", 
 			length, 
 			tilesort_spu.MTU );
@@ -1142,17 +1142,17 @@ tilesortspu_ZPix(GLsizei width, GLsizei height, GLenum format,
 	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
 
 	/* 
-	 * don't do a flush, ZPix understand that it needs to flush,
+	 * don't do a flush, ZPixCR understand that it needs to flush,
 	 * and will handle all that for us.  our HugeFunc routine will
-	 * specially handle the ZPix call
+	 * specially handle the ZPixCR call
 	 */
 
 	thread->currentContext->inZPix = GL_TRUE;
 	if (tilesort_spu.swap)
-	     crPackZPixSWAP(width, height, format, type, ztype, zparm, length, 
+	     crPackZPixCRSWAP(width, height, format, type, ztype, zparm, length, 
 				  pixels, &(ctx->client.unpack));
 	else
-	     crPackZPix(width, height, format, type, ztype, zparm, length,
+	     crPackZPixCR(width, height, format, type, ztype, zparm, length,
 			      pixels, &(ctx->client.unpack));
 
 	if (thread->packer->buffer.data_current != thread->packer->buffer.data_start)
@@ -1169,13 +1169,13 @@ tilesortspu_ZPix(GLsizei width, GLsizei height, GLenum format,
  * Wrapper for crPackZPix to provide the unpacking state.
  */
 void TILESORTSPU_APIENTRY
-tilesortspu_PackZPix(GLsizei width, GLsizei height, GLenum format,
+tilesortspu_PackZPixCR(GLsizei width, GLsizei height, GLenum format,
     GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels)
 {
 	if (tilesort_spu.swap)
-		 crPackZPixSWAP(width, height, format, type, ztype, zparm, length, pixels,
+		 crPackZPixCRSWAP(width, height, format, type, ztype, zparm, length, pixels,
 													&crStateNativePixelPacking);
 	else
-		 crPackZPix(width, height, format, type, ztype, zparm, length, pixels,
+		 crPackZPixCR(width, height, format, type, ztype, zparm, length, pixels,
 											&crStateNativePixelPacking);
 }

@@ -151,14 +151,14 @@ void PACKSPU_APIENTRY packspu_TexSubImage3D( GLenum target, GLint level, GLint x
 }
 #endif /* CR_OPENGL_VERSION_1_2 */
 
-void PACKSPU_APIENTRY packspu_ZPix( GLsizei width, GLsizei height, GLenum format, GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels )
+void PACKSPU_APIENTRY packspu_ZPixCR( GLsizei width, GLsizei height, GLenum format, GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels )
 {
 	GET_CONTEXT(ctx);
 	CRClientState *clientState = &(ctx->clientState->client);
 	if (pack_spu.swap)
-		crPackZPixSWAP( width, height, format, type, ztype, zparm, length, pixels, &(clientState->unpack) );
+		crPackZPixCRSWAP( width, height, format, type, ztype, zparm, length, pixels, &(clientState->unpack) );
 	else
-		crPackZPix( width, height, format, type, ztype, zparm, length, pixels, &(clientState->unpack) );
+		crPackZPixCR( width, height, format, type, ztype, zparm, length, pixels, &(clientState->unpack) );
 }
 
 void PACKSPU_APIENTRY packspu_GetTexImage (GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels)

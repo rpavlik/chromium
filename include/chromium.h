@@ -540,6 +540,14 @@ extern void APIENTRY glGetChromiumParametervCR(GLenum target, GLuint index, GLen
 #endif /* GL_CR_server_matrix */
 
 
+#ifndef GL_CR_zpix
+#define GL_CR_zpix 1
+
+extern void APIENTRY glZPixCR(GLsizei, GLsizei, GLenum, GLenum, GLenum, GLint, GLint, const GLvoid *);
+
+#endif /* GL_CR_zpix */
+
+
 
 /**********************************************************************/
 /*****                Chromium-specific API                       *****/

@@ -119,7 +119,7 @@ GetQueryObjectivARB
 GetQueryObjectuivARB
 BeginQueryARB
 EndQueryARB
-ZPix
+ZPixCR
 Materialf
 Materialfv
 Materiali

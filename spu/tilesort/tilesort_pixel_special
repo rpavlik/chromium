@@ -11,4 +11,4 @@ TexSubImage1D
 TexSubImage2D
 TexSubImage3D
 Bitmap
-ZPix
+ZPixCR

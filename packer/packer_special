@@ -137,4 +137,4 @@ BufferSubDataARB
 MapBufferARB
 UnmapBufferARB
 DeleteBuffersARB
-ZPix
+ZPixCR

@@ -937,7 +937,7 @@ int crdlm_pointers_VertexAttribs4ubvNV(struct instanceVertexAttribs4ubvNV *insta
    return 4 * n * sizeof(GLubyte);
 }
 
-int crdlm_pointers_ZPix( struct instanceZPix *instance, GLsizei width, 
+int crdlm_pointers_ZPixCR( struct instanceZPixCR *instance, GLsizei width, 
 			 GLsizei height, GLenum format, GLenum type, 
 			 GLenum ztype, GLint zparm, GLint length, 
 			 const GLvoid *pixels )

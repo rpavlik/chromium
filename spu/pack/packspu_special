@@ -57,4 +57,4 @@ MapBufferARB
 UnmapBufferARB
 BindBufferARB
 BufferDataARB
-ZPix
+ZPixCR

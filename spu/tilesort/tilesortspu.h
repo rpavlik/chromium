@@ -416,7 +416,7 @@ tilesortspu_PackTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 															GLenum type, const GLvoid *pixels);
 
 void TILESORTSPU_APIENTRY
-tilesortspu_PackZPix(GLsizei width, GLsizei height, GLenum format,
+tilesortspu_PackZPixCR(GLsizei width, GLsizei height, GLenum format,
 										 GLenum type, GLenum ztype, GLint zparm, GLint length,
 										 const GLvoid *pixels);
 

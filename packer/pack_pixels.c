@@ -215,7 +215,7 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 /*
        ZPix - compressed DrawPixels
 */
-void PACK_APIENTRY crPackZPix( GLsizei width, GLsizei height, 
+void PACK_APIENTRY crPackZPixCR( GLsizei width, GLsizei height, 
         GLenum format, GLenum type,
         GLenum ztype, GLint zparm, GLint length,
         const GLvoid *pixels,
@@ -244,11 +244,11 @@ void PACK_APIENTRY crPackZPix( GLsizei width, GLsizei height,
 	packet_length += length;
 
 /* XXX JAG
-  crDebug("PackZPix: fb %d x %d, state %d, zlen = %d, plen = %d",
+  crDebug("PackZPixCR: fb %d x %d, state %d, zlen = %d, plen = %d",
                                width, height, ztype, length, packet_length);
 */
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA(  0, GLenum , CR_ZPIX_EXTEND_OPCODE );
+	WRITE_DATA(  0, GLenum , CR_ZPIXCR_EXTEND_OPCODE );
 	WRITE_DATA(  4, GLsizei, width );
 	WRITE_DATA(  8, GLsizei, height );
 	WRITE_DATA( 12, GLenum,  format );

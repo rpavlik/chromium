@@ -27,7 +27,7 @@ SemaphoreVCR
 #
 Begin
 End
-ZPix
+ZPixCR
 AreTexturesResident
 Finish
 CallLists

@@ -102,4 +102,4 @@ RasterPos4i
 RasterPos4iv
 RasterPos4s
 RasterPos4sv
-ZPix
+ZPixCR

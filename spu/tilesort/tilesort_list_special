@@ -45,7 +45,7 @@ GetCombinerStageParameterfvNV
 Bitmap
 DrawPixels
 GetBufferPointervARB
-ZPix
+ZPixCR
 DrawArrays
 DrawElements
 DrawRangeElements

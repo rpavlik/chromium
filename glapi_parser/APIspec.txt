@@ -8879,7 +8879,7 @@ chromium	omit
 #
 #  Simple-minded pixel compression for Mike Houston
 #
-name		ZPix
+name		ZPixCR
 return		void
 param		width		GLsizei
 param		height		GLsizei
@@ -8889,7 +8889,7 @@ param		ztype		GLenum
 param		zparm		GLint
 param		length		GLint
 param		pixels		const GLvoid *
-category	chromium
+category	GL_chromium
 props		render pixelstore
 chromium	extpack
 
