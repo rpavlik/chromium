@@ -188,7 +188,8 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 			crDebug( "Render SPU: GL_VERSION:  %s", render_spu.ws.glGetString( GL_VERSION ) );
 			context->everCurrent = GL_TRUE;
 		}
-		if (crWindow == 0 && window->mapPending) {
+		if (crWindow == 0 && window->mapPending &&
+				!render_spu.render_to_app_window) {
 			/* Window[0] is special, it's the default window and normally hidden.
 			 * If the mapPending flag is set, then we should now make the window
 			 * visible.
