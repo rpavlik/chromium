@@ -40,12 +40,12 @@ void commspuConnectToPeer( void )
 	}
 	if (comm_spu.i_am_the_server)
 	{
-		comm_spu.peer_recv = crNetAcceptClient( protocol, port+1, comm_spu.mtu, 1 );
+		comm_spu.peer_recv = crNetAcceptClient( protocol, (short) (port+1), comm_spu.mtu, 1 );
 		comm_spu.peer_send = crNetConnectToServer( comm_spu.peer_name, port, comm_spu.mtu, 1 );
 	}
 	else
 	{
-		comm_spu.peer_send = crNetConnectToServer( comm_spu.peer_name, port+1, comm_spu.mtu, 1 );
+		comm_spu.peer_send = crNetConnectToServer( comm_spu.peer_name, (short) (port+1), comm_spu.mtu, 1 );
 		comm_spu.peer_recv = crNetAcceptClient( protocol, port, comm_spu.mtu, 1 );
 	}
 }
