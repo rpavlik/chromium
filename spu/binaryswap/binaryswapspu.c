@@ -574,11 +574,15 @@ static void ProcessNode( WindowInfo *window )
 		y2 = window->width;
 	}
 	else {
-		/* clamp the screen bbox union to the window dims */
-		x1 = CLAMP(window->bboxUnion.x1, 0, window->width - 1);
-		y1 = CLAMP(window->bboxUnion.y1, 0, window->height - 1);
-		x2 = CLAMP(window->bboxUnion.x2, 0, window->width - 1);
-		y2 = CLAMP(window->bboxUnion.y2, 0, window->height - 1);
+		/* Clamp the screen bbox union to the window dims.
+		 * The border is kind of a fudge factor to be sure we don't miss
+		 * any pixels right along the edges of the bouding box.
+		 */
+		const int border = 1;
+		x1 = CLAMP(window->bboxUnion.x1 - border, 0, window->width - 1);
+		y1 = CLAMP(window->bboxUnion.y1 - border, 0, window->height - 1);
+		x2 = CLAMP(window->bboxUnion.x2 + border, 0, window->width - 1);
+		y2 = CLAMP(window->bboxUnion.y2 + border, 0, window->height - 1);
 	}
 
 	/* One will typically use serverNode.Conf('only_swap_once', 1) to
