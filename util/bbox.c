@@ -105,7 +105,12 @@ void crTransformBBox( float xmin, float ymin, float zmin, float xmax, float ymax
 				float yk = y[k];
 				float zk = z[k];
 				float wk = w[k];
-				float t = (wp + zp) / (zp+wp-zk-wk);
+				float t;
+
+				if (zp+wp-zk-wk == 0.0)
+					continue; /* avoid divide by zero */
+				else 
+					t = (wp + zp) / (zp+wp-zk-wk);
 
 				if (t < 0.0f || t > 1.0f)
 				{
