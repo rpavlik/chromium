@@ -602,6 +602,11 @@ chooseFBConfig( Display *dpy, int screen, GLbitfield visAttribs )
 		attribs[attrCount++] = 4;
 	}
 
+	if (visAttribs & CR_STEREO_BIT) {
+		attribs[attrCount++] = GLX_STEREO;
+		attribs[attrCount++] = 1;
+	}
+
 	/* terminate */
 	attribs[attrCount++] = 0;
 
@@ -655,10 +660,7 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 #ifdef GLX_VERSION_1_3
 	if (visual->visAttribs & CR_PBUFFER_BIT)
 	{
-		{
-			visual->fbconfig = chooseFBConfig(visual->dpy, screen, visual->visAttribs);
-		}
-
+		visual->fbconfig = chooseFBConfig(visual->dpy, screen, visual->visAttribs);
 		if (!visual->fbconfig) {
 			char s[1000];
 			renderspuMakeVisString( visual->visAttribs, s );
@@ -707,6 +709,12 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 					 Attrib( visual, GLX_ACCUM_BLUE_SIZE ),
 					 Attrib( visual, GLX_ACCUM_ALPHA_SIZE )
 					 );
+	}
+	else if (visual->fbconfig) {
+		int id;
+		render_spu.ws.glXGetFBConfigAttrib(visual->dpy, visual->fbconfig,
+																			 GLX_FBCONFIG_ID, &id);
+		crDebug("Render SPU: Chose FBConfig 0x%x", id);
 	}
 
 	return GL_TRUE;
