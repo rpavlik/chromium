@@ -880,9 +880,15 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParametervCR(GLenum target, 
 	switch( target )
 	{
 		case GL_OBJECT_BBOX_CR:
+			CRASSERT(type == GL_FLOAT);
+			CRASSERT(count == 6);
 			readback_spu.bbox = values;
 			readback_spu.super.GetDoublev( GL_PROJECTION_MATRIX, readback_spu.proj );
 			readback_spu.super.GetDoublev( GL_MODELVIEW_MATRIX,  readback_spu.modl );
+			break;
+		case GL_DEFAULT_BBOX_CR:
+			CRASSERT(count == 0);
+			readback_spu.bbox = NULL;
 			break;
 		default:
 			readback_spu.child.ChromiumParametervCR( target, type, count, values );
