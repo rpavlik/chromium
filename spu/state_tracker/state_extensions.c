@@ -132,6 +132,12 @@ int crStateFogfvExtensions( CRFogState *f, GLenum pname, const GLfloat *params )
 	{
 #ifdef GL_NV_fog_distance
 		case GL_FOG_DISTANCE_MODE_NV:
+			if (params[0] != GL_EYE_RADIAL_NV && params[0] != GL_EYE_PLANE && params[0] != GL_EYE_PLANE_ABSOLUTE_NV )
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+						"Fogfv: GL_FOG_DISTANCE_MODE_NV called with illegal parameter: 0x%x", (GLenum) params[0]);
+				return 0;
+			}
 			f->extensions.fogDistanceMode = (GLenum) params[0];
 			return 1;
 #endif

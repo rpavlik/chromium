@@ -9,7 +9,7 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 	static const GLubyte *vendor = (const GLubyte *) "Humper";
 	static const GLubyte *renderer = (const GLubyte *) "Chromium";
 	static const GLubyte *versions = (const GLubyte *) "1.0";
-	static const GLubyte *extensions = (const GLubyte *) "GL_EXT_texture_filter_anisotropic";
+	static const GLubyte *extensions = (const GLubyte *) "GL_EXT_texture_filter_anisotropic GL_NV_fog_distance";
 	switch( name )
 	{
 		case GL_VENDOR:

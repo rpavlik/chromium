@@ -306,6 +306,12 @@ static void __doFlush( CRContext *ctx, int broadcast )
 		//crDebug( "Broadcasting the geometry!" );
 	}
 
+	// Now, we want to let the state tracker extract the "current" state
+	// from the collection of pointers that we have in the geometry 
+	// buffer.
+
+	crStateCurrentRecover( &(cr_packer_globals.current) );
+
 	// Okay.  Now, we need to un-hide the bonus space for the extra glEnd packet
 	// and try to close off the begin/end if it exists.  This is a pretty
 	// serious hack, but we *did* reserve space in the pack buffer just

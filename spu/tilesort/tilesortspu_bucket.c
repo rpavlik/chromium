@@ -392,12 +392,6 @@ TileSortBucketInfo *tilesortspuBucketGeometry(void)
 	// First, call the real bucketer
 	TileSortBucketInfo *ret = __doBucket();
 
-	// Now, we want to let the state tracker extract the "current" state
-	// from the collection of pointers that we have in the geometry 
-	// buffer.
-
-	crStateCurrentRecover( &(cr_packer_globals.current) );
-
 	// Finally, do pinching.  This is unimplemented currently.
 
 	// PINCHIT();
