@@ -7,4 +7,6 @@ GLUT = 1
 FILES = exec main 
 LIBRARIES = crextensionscommon
 
+CFLAGS = -DGL_GLEXT_PROTOTYPES
+
 include ${TOP}/cr.mk

@@ -877,8 +877,6 @@ crGmSendCredits( CRConnection *conn )
 	cr_gm_debug( "sending %d credits to host %s",
 			conn->recv_credits, conn->hostname );
 #endif
-	crDebug( "sending %d credits to host %s (%d, %d)",
-			conn->recv_credits, conn->hostname, conn->gm_node_id, conn->gm_port_num );
 
 	conn->recv_credits = 0;
 

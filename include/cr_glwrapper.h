@@ -4,6 +4,8 @@
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#define GL_GLEXT_PROTOTYPES
 #endif
 
 #include <GL/gl.h>

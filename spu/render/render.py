@@ -34,6 +34,8 @@ print """
 #define SYSTEM_GL "opengl32.dll"
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux)
 #define SYSTEM_GL "libGL.so"
+typedef void (*glxfuncptr)();
+extern glxfuncptr glxGetProcAddressARB( const GLubyte *name );
 #else
 #error I don't know where your system's GL lives.  Too bad.
 #endif
@@ -132,7 +134,7 @@ for func_name in stub_common.AllSpecials( 'render_extensions' ):
 print '#else'
 index -= len(stub_common.AllSpecials( 'render_extensions' ) )
 for func_name in stub_common.AllSpecials( 'render_extensions' ):
-	print '\tcrError( "Implement extension getting for Linux, already!" );'
+	print '\t//__fillin( %3d, "%s", (SPUGenericFunction) glxGetProcAddressARB( "gl%s" ) );' % (index, func_name, func_name )
 	index += 1
 print '#endif'
 print '\t__fillin( %3d, NULL, NULL );' % index
