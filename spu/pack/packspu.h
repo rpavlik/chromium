@@ -14,6 +14,7 @@
 void packspuCreateFunctions( void );
 void packspuGatherConfiguration( void );
 void packspuConnectToServer( void );
+void packspuFlush( void );
 
 typedef struct {
 	int id;

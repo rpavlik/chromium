@@ -18,13 +18,13 @@ print """#include <stdio.h>
 #include "cr_glwrapper.h"
 #include "cr_glstate.h"
 
-void packspu_PixelStoref( GLenum pname, GLfloat param )
+void PACKSPU_APIENTRY packspu_PixelStoref( GLenum pname, GLfloat param )
 {
 	crStatePixelStoref( pname, param );
 	crPackPixelStoref( pname, param );
 }
 
-void packspu_PixelStorei( GLenum pname, GLint param )
+void PACKSPU_APIENTRY packspu_PixelStorei( GLenum pname, GLint param )
 {
 	crStatePixelStorei( pname, param );
 	crPackPixelStorei( pname, param );
@@ -33,8 +33,8 @@ void packspu_PixelStorei( GLenum pname, GLint param )
 
 for func_name in stub_common.AllSpecials( "packspu_pixel" ):
 	(return_type, args, types) = gl_mapping[func_name]
-	print 'void packspu_%s%s' % ( func_name, stub_common.ArgumentString( args, types ) )
+	print 'void PACKSPU_APIENTRY packspu_%s%s' % ( func_name, stub_common.ArgumentString( args, types ) )
 	print '{'
-	args.append( '&(GetCurrentContext()->pixel.unpack)' )
+	args.append( '&(pack_spu.ctx->pixel.unpack)' )
 	print '\tcrPack%s%s;' % ( func_name, stub_common.CallString( args ) )
 	print '}'

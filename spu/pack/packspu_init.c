@@ -1,4 +1,5 @@
 #include "cr_spu.h"
+#include "cr_glstate.h"
 #include "packspu.h"
 #include <stdio.h>
 
@@ -24,6 +25,8 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	packspuCreateFunctions();
 	packspuGatherConfiguration();
 	packspuConnectToServer();
+	pack_spu.ctx = crStateCreateContext();
+	crStateMakeCurrent( pack_spu.ctx );
 	return &the_functions;
 }
 

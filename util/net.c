@@ -80,7 +80,6 @@ CRConnection *crNetConnectToServer( char *server,
 
 	conn->type               = CR_NO_CONNECTION; // we don't know yet
 	conn->sender_id          = 0;                    // unique ID for every transmitter
-	conn->pending_writebacks = 0;
 	conn->total_bytes        = 0;                    // how many bytes have we sent?
 	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
@@ -139,7 +138,6 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port )
 	conn = (CRConnection *) crAlloc( sizeof( *conn ) );
 	conn->type               = CR_NO_CONNECTION; // we don't know yet
 	conn->sender_id          = 0;                    // unique ID for every transmitter
-	conn->pending_writebacks = 0;
 	conn->total_bytes        = 0;                    // how many bytes have we sent?
 	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;

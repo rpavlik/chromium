@@ -217,13 +217,6 @@ void PACK_APIENTRY crPackTexGeniv( GLenum coord, GLenum pname,
 	WRITE_OPCODE( CR_TEXGENIV_OPCODE );
 }
 
-void PACK_APIENTRY crPackGenTextures (GLsizei n, GLuint *textures)
-{
-	(void)(n);
-	(void)(textures);
-	crError( "GenTextures is unimplemented for some unknown reason." );
-}
-
 void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat *params )
 {
 	unsigned char *data_ptr;
@@ -332,7 +325,7 @@ void PACK_APIENTRY crPackTexSubImage1D (GLenum target, GLint level,
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences, GLboolean *return_val )
+void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences, GLboolean *return_val, int *writeback )
 {
 	unsigned char *data_ptr;
 	int packet_length;
@@ -342,7 +335,7 @@ void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures,
 		sizeof( GLenum ) +       // extend-o opcode
 		sizeof( n ) +            // num_textures
 		n*sizeof( *textures ) +  // textures
-		8 + 8;                   // return pointers
+		8 + 8 + 8;               // return pointers
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, int, packet_length );
@@ -351,5 +344,6 @@ void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures,
 	memcpy( data_ptr + sizeof( int ) + 8, textures, n*sizeof( *textures ) );
 	WRITE_NETWORK_POINTER( sizeof( int ) + 8 + n*sizeof( *textures ), (void *) residences );
 	WRITE_NETWORK_POINTER( sizeof( int ) + 16 + n*sizeof( *textures ), (void *) return_val );
+	WRITE_NETWORK_POINTER( sizeof( int ) + 24 + n*sizeof( *textures ), (void *) writeback );
 	WRITE_OPCODE( CR_EXTEND_OPCODE );
 }

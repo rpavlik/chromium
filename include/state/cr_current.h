@@ -12,6 +12,8 @@ typedef struct {
 	GLenum mode;
 } CRCurrentState;
 
+void crStateCurrentInit( CRCurrentState *current );
+
 #ifdef __cplusplus
 }
 #endif

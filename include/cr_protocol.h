@@ -6,6 +6,7 @@ typedef enum {
 		 recognize bad message types */
 	CR_MESSAGE_OPCODES = 0x77474c01,
 	CR_MESSAGE_WRITEBACK,
+	CR_MESSAGE_READBACK,
 	CR_MESSAGE_READ_PIXELS,
 	CR_MESSAGE_MULTI_BODY,
 	CR_MESSAGE_MULTI_TAIL,
@@ -33,7 +34,14 @@ typedef struct CRMessageOpcodes {
 
 typedef struct CRMessageWriteback {
 	CRMessageType          type;
+	CRNetworkPointer       writeback_ptr;
 } CRMessageWriteback;
+
+typedef struct CRMessageReadback {
+	CRMessageType          type;
+	CRNetworkPointer       writeback_ptr;
+	CRNetworkPointer       readback_ptr;
+} CRMessageReadback;
 
 typedef struct CRMessageMulti {
 	CRMessageType          type;
@@ -56,12 +64,12 @@ typedef union {
 	CRMessageType        type;
 	CRMessageOpcodes     opcodes;
 	CRMessageWriteback   writeback;
+	CRMessageReadback   readback;
 	CRMessageReadPixels  readPixels;
 	CRMessageMulti       multi;
 	CRMessageFlowControl flowControl;
 } CRMessage;
 
-void *crNetworkPointerRead( CRNetworkPointer *src );
 void crNetworkPointerWrite( CRNetworkPointer *dst, void *src );
 
 #endif /* CR_PROTOCOL_H */

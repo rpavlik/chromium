@@ -64,9 +64,6 @@ struct CRConnection {
 	void  (*Connect)( CRConnection *conn );
 	void  (*Disconnect)( CRConnection *conn );
 
-	/* pending writebacks */
-	int pending_writebacks;
-
 	/* logging */
 	int total_bytes;
 

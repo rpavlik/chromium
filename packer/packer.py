@@ -94,8 +94,16 @@ for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "packer", func_name ): continue
 	if return_type != 'void':
-		arg_types.append( "%s *" % return_type )
+		# Yet another gross hack for glGetString
+		if string.find( return_type, '*' ) == -1:
+			arg_types.append( "%s *" % return_type )
+		else:
+			arg_types.append( "%s" % return_type )
 		arg_names.append( "return_value" )
+	if return_type != 'void' or stub_common.FindSpecial( 'packer_get', func_name ):
+		arg_types.append( "int *" )
+		arg_names.append( "writeback" )
+
 	print 'void PACK_APIENTRY ' + stub_common.PackFunction( func_name ),
 	print stub_common.ArgumentString( arg_names, arg_types )
 	print '{'

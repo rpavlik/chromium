@@ -33,8 +33,11 @@ typedef struct {
 	GLfloat		 yZoom;
 } CRPixelState;
 
+void crStatePixelInit( CRPixelState *pixel );
+
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif /* CR_STATE_PIXEL_H */

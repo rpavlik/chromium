@@ -15,5 +15,7 @@ extern CRContext *__currentcontext;
 #define GetCurrentContext() __currentcontext
 
 void crStateInit(void);
+CRContext *crStateCreateContext();
+void crStateMakeCurrent(CRContext *ctx);
 
 #endif /* CR_GLSTATE_H */
