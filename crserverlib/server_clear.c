@@ -188,8 +188,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint f
 				else
 				{
 					cr_server.head_spu->dispatch_table.Color4f(0, 0, 0, 1);
-					crDebug("Blend with one.");
-
 				}
 		
 				p = cr_server.overlap_geom[a];
