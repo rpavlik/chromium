@@ -159,6 +159,43 @@ static void AllocBuffers( WindowInfo *window )
 
 
 /**
+ * Called to resize a window.  This involves allocating new image buffers.
+ */
+static void
+ResizeWindow(WindowInfo *window, int newWidth, int newHeight)
+{
+	window->width = newWidth;
+	window->height = newHeight;
+		
+	if (binaryswap_spu.alpha_composite)
+		window->bytesPerColor = 4 * sizeof(GLubyte);
+	else
+		window->bytesPerColor = 3 * sizeof(GLubyte);
+		
+	if (binaryswap_spu.depth_composite)
+		window->bytesPerDepth = 4;
+	else
+		window->bytesPerDepth = 0;
+		
+	
+	if (binaryswap_spu.resizable)
+	{
+		/* update super/render SPU window size & viewport */
+		CRASSERT(newWidth > 0);
+		CRASSERT(newHeight > 0);
+		binaryswap_spu.super.WindowSize( window->renderWindow, 
+																		 newWidth, newHeight );
+		binaryswap_spu.super.Viewport( 0, 0, newWidth, newHeight );
+		
+		/* set child's viewport too */
+		binaryswap_spu.child.Viewport( 0, 0, newWidth, newHeight );
+	}	
+	AllocBuffers(window);
+	BuildSwapLimits(window);
+}
+
+
+/**
  * Determine the size of the given binaryswap SPU window.
  * We may either have to query the super or child SPU window dims.
  * Reallocate the glReadPixels RGBA/depth buffers if the size changes.
@@ -207,36 +244,7 @@ static void CheckWindowSize( WindowInfo *window )
 	if (newSize[0] != window->width || newSize[1] != window->height)
 	{
 		/* The window size has changed (or first-time init) */
-		window->width = newSize[0];
-		window->height = newSize[1];
-		
-		if (binaryswap_spu.alpha_composite)
-			window->bytesPerColor = 4 * sizeof(GLubyte);
-		else
-			window->bytesPerColor = 3 * sizeof(GLubyte);
-		
-		if (binaryswap_spu.depth_composite)
-		{
-			window->bytesPerDepth = 4;
-		}
-		else
-			window->bytesPerDepth = 0;
-		
-	
-		if (binaryswap_spu.resizable)
-		{
-			/* update super/render SPU window size & viewport */
-			CRASSERT(newSize[0] > 0);
-			CRASSERT(newSize[1] > 0);
-			binaryswap_spu.super.WindowSize( window->renderWindow, 
-							 newSize[0], newSize[1] );
-			binaryswap_spu.super.Viewport( 0, 0, newSize[0], newSize[1] );
-			
-			/* set child's viewport too */
-			binaryswap_spu.child.Viewport( 0, 0, newSize[0], newSize[1] );
-		}	
-		AllocBuffers(window);
-		BuildSwapLimits(window);			
+		ResizeWindow(window, newSize[0], newSize[1]);
 	}
 }
 
@@ -887,7 +895,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
-	GLint childVisual;
+	GLint childVisBits = visBits;
 
 	CRASSERT(binaryswap_spu.child.BarrierCreateCR);
 
@@ -906,14 +914,14 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 
 	/* If doing z-compositing, need stencil buffer */
 	if (binaryswap_spu.depth_composite)
-		visBits |= CR_STENCIL_BIT;
+		childVisBits |= CR_STENCIL_BIT;
 	else if (binaryswap_spu.alpha_composite)
-		visBits |= CR_ALPHA_BIT;
+		childVisBits |= CR_ALPHA_BIT;
 	/* final display window should probably be visible */
-	childVisual = visBits & ~CR_PBUFFER_BIT;
+	childVisBits &= ~CR_PBUFFER_BIT;
 
 	context->renderContext = binaryswap_spu.super.CreateContext(dpyName, visBits);
-	context->childContext = binaryswap_spu.child.CreateContext(dpyName, childVisual);
+	context->childContext = binaryswap_spu.child.CreateContext(dpyName, childVisBits);
 
 	/* put into hash table */
 	crHashtableAdd(binaryswap_spu.contextTable, freeID, context);
@@ -967,7 +975,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyNa
 {
 	WindowInfo *window;
 	static GLint freeID = 1;  /* skip default window 0 */
-	GLint childVisBits;
+	GLint childVisBits = visBits;
 
 	/* Error out on second window */
 	if(freeID != 1)
@@ -978,9 +986,11 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyNa
 
 	/* If doing z-compositing, need stencil buffer */
 	if (binaryswap_spu.depth_composite)
-		visBits |= CR_STENCIL_BIT;
+		childVisBits |= CR_STENCIL_BIT;
 	else if (binaryswap_spu.alpha_composite)
-		visBits |= CR_ALPHA_BIT;
+		childVisBits |= CR_ALPHA_BIT;
+	/* final display window should probably be visible */
+	childVisBits &= ~CR_PBUFFER_BIT;
 
 	/* allocate window */
 	window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
@@ -989,8 +999,6 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyNa
 		crWarning("binaryswap SPU: unable to allocate window.");
 		return -1;
 	}
-
-	childVisBits = visBits & ~CR_PBUFFER_BIT;
 
 	/* init window */
 	window->index = freeID;
@@ -1021,8 +1029,23 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowSize( GLint win, GLint w, 
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(binaryswap_spu.windowTable, win);
 	CRASSERT(window);
+	ResizeWindow(window, w, h);
 	binaryswap_spu.super.WindowSize( window->renderWindow, w, h );
 	binaryswap_spu.child.WindowSize( window->childWindow, w, h );
+}
+
+/**
+ * If you really don't want to allow windows to move, set the
+ * 'ignore_window_moves' config option.  This function propogates
+ * window moves downstream because that's sometimes useful.
+ */
+static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowPosition( GLint win, GLint x, GLint y )
+{
+	WindowInfo *window;
+	window = (WindowInfo *) crHashtableSearch(binaryswap_spu.windowTable, win);
+	CRASSERT(window);
+	binaryswap_spu.super.WindowPosition( window->renderWindow, x, y );
+	binaryswap_spu.child.WindowPosition( window->childWindow, x, y );
 }
 
 /* don't implement WindowPosition() */
@@ -1032,6 +1055,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowSize( GLint win, GLint w, 
  * SOME APPS LIKE PSUBMIT FAIL TO WORK.  BUT, WHAT IF WE ARE NOT AT THE END OF THE CHAIN?
  * FOR EXAMPLE, WHAT IF I WANT TO DO SOME OTHER TYPE OF COMPOSITE BEFORE BINARYSWAP THAT
  * NEEDS BARRIERS?
+ * Likely answer: add an 'ignore_papi' config option, like other SPUs have.
  */
 static void BINARYSWAPSPU_APIENTRY binaryswapspuBarrierCreateCR( GLuint name, GLuint count )
 {
@@ -1101,6 +1125,7 @@ SPUNamedFunctionTable _cr_binaryswap_table[] = {
 	{ "WindowCreate", (SPUGenericFunction) binaryswapspuWindowCreate },
 	{ "WindowDestroy", (SPUGenericFunction) binaryswapspuWindowDestroy },
 	{ "WindowSize", (SPUGenericFunction) binaryswapspuWindowSize },
+	{ "WindowPosition", (SPUGenericFunction) binaryswapspuWindowPosition },
 	{ "BarrierCreateCR", (SPUGenericFunction) binaryswapspuBarrierCreateCR },
 	{ "BarrierDestroyCR", (SPUGenericFunction) binaryswapspuBarrierDestroyCR },
 	{ "BarrierExecCR", (SPUGenericFunction) binaryswapspuBarrierExecCR },
