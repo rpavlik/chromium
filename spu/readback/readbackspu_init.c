@@ -49,6 +49,14 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 		crSPUCopyDispatchTable( &(readback_spu.child), &(child->dispatch_table) );
 		readback_spu.has_child = 1;
 	}
+	else
+	{
+	   /* don't override any API functions - use the Render SPU functions */
+	   static SPUNamedFunctionTable empty_table[] = {
+		  { NULL, NULL }
+	   };
+	   readback_functions.table = empty_table;
+	}
 	crSPUInitDispatchTable( &(readback_spu.super) );
 	crSPUCopyDispatchTable( &(readback_spu.super), &(self->superSPU->dispatch_table) );
 	readbackspuGatherConfiguration( &readback_spu );
