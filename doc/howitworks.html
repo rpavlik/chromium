@@ -1,0 +1,313 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">How Chromium Works</h1>
+<p>This document is intended to give an overview of how the various pieces of
+Chromium work and what's going on behind the scenes when you do one of these
+runs.&nbsp; It will probably be a grab-bag of useful nuggets of information in
+no particular order.&nbsp; Hopefully this will be useful if someone wants to
+experiment with changing some part of the core architecture instead of just
+extending it.</p>
+<h2 class="PageSubHeading">The Mothership</h2>
+<p>The mothership is usually the first thing that you will run for any Chromium
+session.&nbsp; We've already described in detail how the scripts themselves
+work, so let's focus on the mothership itself.&nbsp; The guts of the mothership
+are invoked by the &quot;<code>Go</code>&quot; method of the <code>CR</code>
+objects created in a configuration script.&nbsp; The last line of a Chromium
+configuration script will almost always be:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		cr.Go()</td></tr></table>
+
+<p>This function actually takes a single argument: the port to listen on.&nbsp;
+The default port is 10000, but it can sometimes be useful to have the port be an
+argument to the script if, for example, sockets take a minute to shut down
+properly (like they can on Linux).&nbsp; The <code>Go</code> method will create
+a socket on the specified port, and accept connections from (possibly multiple
+simultaneous) clients.</p>
+<p>The mothership then calls <code>ProcessRequest</code>, which will read a
+single line of data from the connected client.&nbsp; This line is split into
+words.&nbsp; The first word is considered to be a command, and the rest of the
+words are arguments to that command.&nbsp; So, for example, you can connect to
+the mothership (just telnet to port 10000) and send the following line:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		spu 10</td></tr></table>
+
+<p>This will be broken by the mothership into the words &quot;spu&quot; and
+&quot;10&quot;.&nbsp; Then, the Python script will build an on-the-fly reference
+to a method of the CR class, using Python's reflection API.&nbsp; This is done
+by the following lines of <code>ProcessRequest</code> in <code>cr/mothership/server/mothership.py</code>:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		command = string.lower( words[0] )<br>
+		print "command = " + command<br>
+		try:<br>
+      &nbsp;&nbsp;&nbsp; fn = getattr(self, 'do_%s' % command )<br>
+		except AttributeError:<br>
+      &nbsp;&nbsp;&nbsp; self.ClientError( sock_wrapper, SockWrapper.UNKNOWNCOMMAND, "Unknown command: %s" % command )<br>
+      &nbsp;&nbsp;&nbsp; return<br>
+		fn( sock_wrapper, string.join( words[1:] ) )</td></tr></table>
+
+<p>The &quot;<code>getattr</code>&quot; function tries to find a method called,
+in our example &quot;<code>do_spu</code>&quot;.&nbsp; If the method is not
+found, an error is returned to the calling client.&nbsp; Errors are reported
+with a three-digit numeric code and a descriptive string.&nbsp; In this case,
+the code <code>SockWrapper.UNKNOWNCOMMAND</code> happens to be 402.&nbsp; This
+is a lot like the way HTTP works -- a successful reply actually has the ID 200.</p>
+<p>If the function <i>is</i> found, the variable &quot;<code>fn</code>&quot;
+becomes a handle to it, and the rest of the arguments are combined into a single
+string and passed as arguments to the function.</p>
+<p>To continue this example, let's look at the <code>do_spu</code> method:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		def do_spu( self, sock, args ):<br>
+      &nbsp;&nbsp;&nbsp; try:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; spuid = int(args)<br>
+      &nbsp;&nbsp;&nbsp; except:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; self.ClientError( sock,
+      SockWrapper.UNKNOWNSPU, "Bogus SPU name: %s" % args )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return<br>
+      &nbsp;&nbsp;&nbsp; if not allSPUs.has_key( spuid ):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; self.ClientError( sock,
+      SockWrapper.UNKNOWNSPU, "Never heard of SPU %d" % spuid )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return<br>
+      &nbsp;&nbsp;&nbsp; sock.SPUid = spuid<br>
+      &nbsp;&nbsp;&nbsp; sock.Success( "Hello, SPU!&quot; )</td></tr></table>
+
+<p>This method tries to convert the arguments (in our case, the single string
+&quot;10&quot;) into an integer.&nbsp; If the conversion fails, a &quot;Bogus
+SPU name&quot; is returned.&nbsp; This can happen if the client says &quot;<code>spu
+10.5</code>&quot; or &quot;<code>spu 10 foo</code>&quot; or &quot;<code>spu
+clodburger</code>&quot;.&nbsp; Next, the system tries to find the SPU from the
+given ID.&nbsp; Each SPU is assigned a unique numeric identifier by the
+mothership when it is added to a node; these identifiers are communicated to the
+application faker or the server when the SPU is loaded.&nbsp; The ID is then
+passed as the first argument to the SPU's <code>SPUInit</code> function.</p>
+<p>If the SPU is found, the ID is stored along with the socket, so that
+subsequent requests on the same socket are referring to a particular SPU.&nbsp;
+This way, to get many configuration settings for a particular SPU, you set the
+&quot;current&quot; SPU and then send many &quot;<code>spuparam &lt;param_name&gt;</code>&quot;
+commands in succession.</p>
+<p>The mothership also has some rudimentary facilities for brokering out-of-band
+connections between components, although this is not completely implemented
+yet.&nbsp; In fact, the Myrinet implementation of the Chromium networking
+abstraction uses what does exist of this facility to establish its
+connections.&nbsp; Because Myrinet GM is a completely connectionless API, WireGL
+had to have a TCP/IP based handshake occur first in which the two computers
+agreed to use Myrinet and exchanged some information related to the
+connection.&nbsp; In Chromium, that information is exchanged via the mothership.&nbsp;
+This paragraph is deliberately vague because the exact mechanism is likely to
+change in the near future.</p>
+<h2 class="PageSubHeading">The Server</h2>
+<p>The next portion of the system likely to get run is the Chromium
+server.&nbsp; The first thing that the server tries to do is figure out where
+the mothership is.&nbsp; This can be specified with the &quot;-mothership&quot;
+command line option.&nbsp; If this option is omitted, NULL will be passed to <code>crMothershipConnect</code>,
+which will cause the mothership library to look for the <code>CRMOTHERSHIP</code>
+environment variable, and if that fails to default to &quot;<code>localhost:10000</code>&quot;.&nbsp;
+Notice that the format for specifying the location of the mothership is &quot;<code>&lt;host&gt;:port</code>&quot;,
+although the port can be omitted.&nbsp; Eventually, the mothership will remotely
+invoke the server (and the application faker, which has a similar argument), so
+this will be a non-issue.&nbsp; For now, the most likely scenario is that the
+mothership will run on the same machine all the time, so you can set the <code>CRMOTHERSHIP</code>
+environment variable to just the name of that machine.&nbsp; The mothership <i>requires</i>
+TCP/IP to work -- it can not work over GM.</p>
+<p>The server next initializes the state tracking and networking subsystems, and
+then connects to the mothership to configure itself.&nbsp; It turns out that the
+call:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		crServerGatherConfiguration(mothership);</td></tr></table>
+
+<p>Is actually where the server will wait for clients to connect to it.&nbsp;
+Because the mothership knows the connectivity of the node graph, the server
+knows how many clients to wait for and what network protocol they will be using,
+obviating the need for the WireGL-style handshake.&nbsp;&nbsp;</p>
+<p>The other interesting thing that happens at the configuration step is that
+the server pretends to be one of its clients for a while.&nbsp; The server needs
+to know how big the entire logical output space is (to properly handle <code>glViewport</code>
+and <code>glScissor</code> calls), but the tile configuration for the server
+only tells it about its local pieces.&nbsp; So the server finds out the SPU id
+of one of its clients, &quot;poses&quot; as that SPU to the mothership, and asks
+to find out about all of the <i>other</i> servers in the current run and their
+tilings.&nbsp; It uses this information to find the server with the most
+extremal tile boundaries and compute the width and height of the entire logical
+output space.</p>
+<p>Back in the server's <code>main</code>, a &quot;base projection&quot; is then
+computed, which allows the server to place a translate-and-scale matrix at the
+top of the projection matrix stack.&nbsp; This is because any screen tiling is
+handed by the server, not by an individual SPU.</p>
+<p>Next, the server's dispatch table is built (analogous to, but not exactly the
+same as, the <a href="codegen.html">seethrough SPU</a>'s <code>seethroughspuBuildFunctionTable</code>
+function.&nbsp; The state tracker is told to use this function pointer table
+when it computes differences for context switching.</p>
+<p>Finally, the server enters its main loop:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		crServerSerializeRemoteStreams();</td></tr></table>
+
+<p>This function will loop forever and dispatch remote blocks of work to the SPU
+chain that it loaded at configuration time.</p>
+<p><code>crServerSerializeRemoteStreams</code> is actually a pretty simple
+function (it's in <code>cr/crserver/server_stream.c</code>).&nbsp; It gets a
+client off the run queue, makes current to that client's context (causing a
+context difference to be evaluated), and executes blocks of work for that client
+until the client blocks.&nbsp; The code is fairly self-explanatory.&nbsp;&nbsp;</p>
+<p>The function at the very end of <code>cr/crserver/server_stream.c</code>
+merits explanation:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">		int crServerRecv( CRConnection *conn, void *buf, unsigned int len )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp; (void) conn;<br>
+      &nbsp;&nbsp;&nbsp; (void) buf;<br>
+      &nbsp;&nbsp;&nbsp; (void) len;<br>
+      &nbsp;&nbsp;&nbsp; return 0; // Never handle anything -- let packets queue up per-client instead.<br>
+      }</td></tr></table>
+
+<p>When the networking library is initialized (in <code>main</code>), it is
+passed this function as a &quot;handler&quot; for incoming packets.&nbsp; When a
+packet is received by the networking library, it makes sure that it is a valid
+message in the Chromium protocol, and then passes it immediately to the provided
+handler function.&nbsp; If the handler function does something with it, the
+function should return 1, and the message will be discarded.&nbsp; If, however,
+the handler function <i>does not</i> handle the message, it is passed to the
+default message handler. </p>
+<p>The default message handler takes care of flow-control messages, reassembling
+fragmented packets, and queueing actual blocks of OpenGL work.&nbsp; Since the
+server's receive function always returns 0, any work blocks that arrive at the
+server are queued up on a linked list stored inside the <code>CRConnection</code>
+data structure.<i> </i> So the implementation of <code>crNetGetMessage</code>
+(called from <code>crServerSerializeRemoteStreams</code>) simply checks this
+queue, and if it is empty it grabs blocks from the networking library until a
+block of work arrives on the requested queue.&nbsp; In practice, this scheduling
+algorithm has proved to work well, although certainly more sophisticated schemes
+would be possible.</p>
+<h2 class="PageSubHeading">The Application Faker</h2>
+<p>The application faker, or &quot;<code>crappfaker</code>&quot;, is one of the
+ugly system-dependent muddy-voodoo pieces of the system that is probably best
+left alone.&nbsp; It predates WireGL all the way back to the early <a href="http://graphics.stanford.edu/papers/pomegranate" target="new_window">Pomegranate</a>
+simulations.&nbsp; The job of <code>crappfaker</code> is to launch a child
+process in such a way that it will find the Chromium OpenGL DLL.&nbsp; </p>
+<p>On Windows, this is accomplished by creating a temporary directory, copying
+the executable there, copying <code>crfaker.dll</code> to that directory and
+renaming it as <code>opengl32.dll</code>, spawning the executable as a child,
+and deleting the directory when the child exits.&nbsp; Of course, if the child
+crashes, the directory will not be cleaned, so beware of thousands of copies of
+things lying around in temporary directories.</p>
+<p>On UNIX, <code>crappfaker</code> is slightly less invasive.&nbsp; It creates
+a temporary directory and fills it with appropriately named symbolic links to <code>libcrfaker.so</code>.&nbsp;
+It then prepends that temporary directory to the <code>LD_LIBRARY_PATH</code>
+environment variable.&nbsp; Then the executable is spawned and the directory
+cleaned up (again, unless the executable crashes).</p>
+<p><code>crappfaker</code> can also be told where the mothership is on the
+command line.&nbsp; A pointer to the faker DLL can be specified explicitly.</p>
+<p>crappfaker will set an environment variable called <code>CR_APPLICATION_ID_NUMBER</code>,
+which is used by the OpenGL faker DLL to disambiguate itself from other fakers
+that might be running on the same machine (which can happen when debugging
+parallel programs on a uniprocessor).</p>
+<p><code>crappfaker</code> also sets an environment variable called &quot;<code>__CR_LAUNCHED_FROM_APP_FAKER</code>&quot;,
+which SPU's can use to tell if they were loaded manually or by the app
+faker.&nbsp; This can be useful if the SPU wants to behave in a slightly
+different way, or work around a bug.&nbsp; See <code>cr/spu/render/renderspu_window.c</code>
+for an example.</p>
+<h2 class="PageSubHeading">The OpenGL Faker Library</h2>
+<p>This library, called <code>crfaker.dll</code> (or <code>libcrfaker.so</code>
+on UNIX) exports the OpenGL API to an application.&nbsp; When a context is
+created, the mothership is contacted, and a chain of SPU's is loaded.&nbsp; This
+all happens in the function <code>StubInit</code> in <code>cr/opengl_stub/load.c</code>.&nbsp;
+Once the SPU's are loaded, the dispatch table from the head SPU is copied into
+global variables called &quot;<code>__glim_FuncName</code>&quot; (e.g., <code>__glim_Color3f</code>).&nbsp;
+</p>
+<p>These variables are used to dispatch the actual OpenGL API to SPU
+functions.&nbsp; The dispatch method varies from platform to platform; see <code>cr/opengl_stub/Linux_exports.s</code>
+for the most complicated one.</p>
+<h2 class="PageSubHeading">The SPU Loader</h2>
+<p>The SPU Loader, located in <code>cr/spu/loader</code>, is responsible for
+reading a SPU DLL from disk and building a dispatch table for it.&nbsp; It can
+also load a chain of SPU's.</p>
+<p>Loading a single SPU is pretty straightforward.&nbsp; The SPU DLL is opened
+explicitly using <code>crDLLOpen</code>. Then, the SPU's single entry point,
+called <code>SPULoad</code>, is extracted and called.&nbsp; This returns several
+pieces of information to the loader:</p>
+<ul>
+  <li>The SPU's name</li>
+  <li>The SPU's SuperSPU name</li>
+  <li>The SPU's <code>SPUInit</code> function</li>
+  <li>The SPU's <code>SPUSelf</code> function</li>
+  <li>The SPU's <code>SPUCleanup</code> function (currently unused)</li>
+</ul>
+<p>The loader will load the SuperSPU first with a recursive call to
+itself.&nbsp; Note that the loader will default to loading the Error SPU if no
+SuperSPU is provided (unless, of course, the SPU being loaded <i>is </i>the
+Error SPU).&nbsp;&nbsp;&nbsp; </p>
+<p>Then, the <code>SPUInit</code> function is called.&nbsp; This function is
+passed the unique SPU ID given to this SPU by the mothership, a pointer to the
+(already built) dispatch table for the SPU immediately following the one being
+loaded in the chain (the &quot;child&quot; SPU), a pointer to the loaded
+SuperSPU, and two more (currently usused) arguments.</p>
+<p>Based on the named function table returned (see &quot;<a href="newspu.html">Writing
+a new SPU</a>&quot; and &quot;<a href="codegen.html">Automatically generating
+code for a SPU</a>&quot;), the dispatch table is built by the function <code>__buildDispatch</code>,
+implemented in <code>cr/spu/loader/dispatch.c</code>.&nbsp; This function will
+search for named functions through a chain of SuperSPU's.</p>
+<p>The built dispatch table is then passed back to the SPU through the SPUSelf
+function.&nbsp; Currently, no SPU's actually use this, although this is a
+convenient way to get access to your own built dispatch table (including your
+parent's functions, where appropriate) without actually declaring all of your
+own functions as &quot;<code>extern</code>&quot; and calling them
+explicitly.&nbsp; This would be an improvement over the ugly &quot;<code>extern</code>&quot;
+function declarations used in the vertex array implementation in &quot;<a href="codegen.html">Automatically
+generating code for a SPU</a>&quot;.</p>
+<p>To load a SPU chain, SPU's are simply loaded in reverse order, so we can pass
+the built dispatch table for a child to the upstream SPU.</p>
+<h2 class="PageSubHeading">The Packer</h2>
+<p>The library in cr/packer creates buffers suitable for sending over a network
+out of the OpenGL API.&nbsp; It is fairly straightforward, and described in some
+detail in our <a href="http://graphics.stanford.edu/papers/clust_render" target="new_window">Supercomputing
+2000 paper</a>.&nbsp; However, Chromium's packer has some interesting quirks
+that are worth mentioning:</p>
+<ul>
+  <li>The packer doesn't interact with the state tracker at all.&nbsp;
+    Therefore, in order to pack any function that requires knowledge of state (<code>glArrayElement
+    </code>and <code>glTexImage</code> are good examples), the caller of the
+    pack function must provide the relevant state structure.&nbsp; This means
+    that the burden of properly dispatching things to the state tracker lies
+    with the calling SPU, which is a slightly cleaner design.&nbsp; See the
+    functions in <code>cr/spu/pack/packspu_pixel.c</code> for an example of this
+    usage.</li>
+  <li>If you want to maintain multiple buffers for packing (like the TileSort
+    SPU does), you need to swap them in and out yourself.&nbsp; The packer
+    maintains its own pointers into the global pack buffer to tell it where the
+    next opcode and data elements should go.&nbsp; If you are switching between
+    pack buffers, you need to extract those pointers so they can be properly put
+    back when it's time to switch back again.&nbsp; See <code>cr/spu/tilesort/tilesortspu_flush.c</code>,
+    and look for calls to <code>crPackSetBuffer</code> and <code>crPackGetBuffer</code>.</li>
+  <li>There are multiple versions of the packing functions for vertices.&nbsp;
+    The simple ones (e.g., <code>crPackVertex3f</code>) just pack the vertex,
+    and nothing more.&nbsp; There are BBOX packing functions (e.g., <code>crPackVertex3fBBOX</code>)
+    that update a geometry bounding box as they pack.&nbsp; This logic is in the
+    packer instead of in the tilesorter for two reasons.&nbsp; First, it would
+    be inefficient to use an extra function call to keep track of the bounding
+    box on the side.&nbsp; Second, other SPU's may want to track bounding box
+    information.&nbsp; See the initialization of the <code>bucketInfo</code>
+    variable in <code>cr/spu/tilesort/tilesortspu_bucket.c</code> for an example
+    of how to get at this data.&nbsp; Finally, functions are available that can
+    track the bounding box <i>and</i> count the number of vertices (e.g., <code>crPackVertex3fBBOX_COUNT</code>).&nbsp;
+    This is used in the TileSort SPU when the geometry packing buffer fills up
+    in the middle of a primitive, since we need to know how many vertices to
+    save away for re-issuing in a future buffer.&nbsp; See <code>cr/spu/tilesort/tilesortspu_pinch.c</code>
+    (but shield your eyes, this code is complicated).</li>
+  <li>The packer will use a callback function to inform the calling library that
+    the buffer has filled up.&nbsp; The callback function can be set with <code>crPackFlushFunc</code>,
+    and it takes a &quot;<code>void *</code>&quot; argument that can be set with
+    <code>crPackFlushArg</code>.</li>
+</ul>
+
+</body>
+
+</html>
