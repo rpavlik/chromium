@@ -302,10 +302,9 @@ class CRNode:
 	def __init__( self, host, constraint = "name", constraintArg = None ):
 		"""CRNode(host)
 		Creates a node on the given "host"."""
-		self.host = host
 		if (host == 'localhost'):
-			self.host = socket.getfqdn()
-			#print "---> switching %s for localhost" % self.host
+			host = socket.getfqdn()
+		self.host = host
 
 		# unqualify the hostname if it is already that way.
 		# e.g., turn "foo.bar.baz" into "foo"
@@ -1227,17 +1226,26 @@ class CR:
 
 		# Try first to resolve the host with a static match
 		nodenames = ""
+		listedNodenames = { }
 		for node in self.nodes:
-			nodenames += node.host+" "
-			if validFunc(node) and MatchStaticNode(node,args):
-				claimFunc(node, sock)
-				return node
+			if validFunc(node):
+				# Record all the static node names for a message later
+				if not node.dynamic_host and not listedNodenames.has_key(node.host):
+					listedNodenames[node.host] = 1
+					nodenames += node.host+" "
+				if MatchStaticNode(node,args):
+					claimFunc(node, sock)
+					return node
 
 		# No static node matches.  Try dynamic nodes that are already resolved.
 		for node in self.nodes:
-			if validFunc(node) and MatchResolvedNode(node,args):
-				claimFunc(node, sock)
-				return node
+			if validFunc(node):
+				if node.dynamic_host and not listedNodenames.has_key("[dynamic]"):
+					listedNodenames["[dynamic]"] = 1
+					nodenames += "[dynamic] "
+				if MatchResolvedNode(node,args):
+					claimFunc(node, sock)
+					return node
 
 		# If unresolved nodes are present, we can try to resolve them.
 		if len(dynamicHostsNeeded) > 0:
