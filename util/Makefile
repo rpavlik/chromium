@@ -41,6 +41,9 @@ CFLAGS += -DIB_SUPPORT -I/usr/mellanox/include
 FILES += ib
 LDFLAGS += -L/usr/mellanox/lib -lvapi -lmosal -lpthread -lmpga
 endif
+ifeq ($(SDP_SUPPORT), 1)
+CFLAGS += -DSDP_SUPPORT 
+endif
 ifeq ($(GM_SUPPORT), 1)
 ifeq ($(ARCH),Linux)
 CFLAGS += -DGM_SUPPORT

@@ -48,6 +48,7 @@ static struct {
 	int                  use_file;      /* count the number of people using GM */
 	int                  use_udp;      /* count the number of people using GM */
 	int                  use_gm;      /* count the number of people using GM */
+  int                  use_sdp;      /* count the number of people using SDP */
   int                  use_teac;    /* count the number of people using teac */
   int                  use_tcscomm; /* count the number of people using tcscomm
 */
@@ -175,6 +176,7 @@ crNetConnectToServer( const char *server,	unsigned short default_port,
 	conn->Free               = NULL;                 /* How do we free things? */
 	conn->tcp_socket         = 0;
 	conn->udp_socket         = 0;
+	conn->sdp_socket         = 0;
 	crMemset(&conn->remoteaddr, 0, sizeof(conn->remoteaddr));
 	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
@@ -252,7 +254,7 @@ crNetConnectToServer( const char *server,	unsigned short default_port,
 #ifdef SDP_SUPPORT
 	else if ( !crStrcmp( protocol, "sdp" ) )
 	{	
-		cr_net.use_tcpip++;
+		cr_net.use_sdp++;
 		crDebug("Calling crSDPInit()");
 		crSDPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crDebug("Calling crSDPIPConnection");
@@ -369,7 +371,7 @@ crNetAcceptClient( const char *protocol, char *hostname,
 
 
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
-
+	crDebug("In net accept client");
 	if ( !crStrcmp( protocol, "devnull" ) )
 	{
 		crDevnullInit( cr_net.recv_list, cr_net.close_list, mtu );
@@ -421,7 +423,7 @@ crNetAcceptClient( const char *protocol, char *hostname,
 #ifdef SDP_SUPPORT
 	else if ( !crStrcmp( protocol, "sdp" ) )
 	{
-		cr_net.use_tcpip++;
+		cr_net.use_sdp++;
 		crSDPInit( cr_net.recv_list, cr_net.close_list, mtu );
 		crSDPConnection( conn );
 	}
@@ -479,7 +481,7 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 		cr_net.use_gm      = 0;
 		cr_net.use_udp     = 0;
 		cr_net.use_tcpip   = 0;
-		cr_net.use_udp     = 0;
+		cr_net.use_sdp     = 0;
 		cr_net.use_tcscomm = 0;
 		cr_net.use_teac    = 0;
 		cr_net.use_file    = 0;

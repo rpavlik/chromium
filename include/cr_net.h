@@ -159,6 +159,8 @@ struct CRConnection {
 	CRSocket tcp_socket;
 	int index;
 
+	CRSocket sdp_socket;
+
 	/* UDP/IP */
 	CRSocket udp_socket;
 #ifndef ADDRINFO
