@@ -524,10 +524,14 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 			tilesort_spu.servers[server].num_extents = numTiles;
 			for (i = 0; i < numTiles; i++)
 			{
-				tilesort_spu.servers[server].extents[i].x1 = ivalues[4 + i * 4 + 0];
-				tilesort_spu.servers[server].extents[i].y1 = ivalues[4 + i * 4 + 1];
-				tilesort_spu.servers[server].extents[i].x2 = ivalues[4 + i * 4 + 2];
-				tilesort_spu.servers[server].extents[i].y2 = ivalues[4 + i * 4 + 3];
+				const int x = ivalues[4 + i * 4 + 0];
+				const int y = ivalues[4 + i * 4 + 1];
+				const int w = ivalues[4 + i * 4 + 2];
+				const int h = ivalues[4 + i * 4 + 3];
+				tilesort_spu.servers[server].extents[i].x1 = x;
+				tilesort_spu.servers[server].extents[i].y1 = y;
+				tilesort_spu.servers[server].extents[i].x2 = x + w;
+				tilesort_spu.servers[server].extents[i].y2 = y + h;
 			}
 
 			tilesortspuBucketingInit();
