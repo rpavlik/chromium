@@ -221,9 +221,21 @@ int main(int argc, char *argv[])
 
 		glBarrierExecCR_ptr( MASTER_BARRIER );
 
-		/* The crserver only executes the SwapBuffers() for the 0th client.
-		 * No need to test for rank==0 as we used to do.
+		/* All clients need to call crSwapBuffers() to indicate end-of-frame.
+		 * However, the server's window should only do one real swapbuffers for
+		 * N clients (not N swaps for N clients!)
+		 * We can achieve this in one of two ways:
+		 * 1. Have all clients issue a normal SwapBuffers and set the
+		 *    crserver's only_swap_once config flag.  The server will then ensure
+		 *    that only one client's SwapBuffers message gets through to the
+		 *    render SPU.
+		 * 2. Don't set only_swap_once:  explicitly control swapping in the
+		 *    clients with the CR_SUPPRESS_SWAP_BIT flag.  All but one client
+		 *    should pass this flag to crSwapBuffers.  The CR_SUPPRESS_SWAP_BIT
+		 *    tells the render SPU to no-op the swap.  Thus, crSwapBuffers can
+		 *    be used to indicate end-of-frame without swapping the color buffers.
 		 */
+
 		if (swapFlag) {
 			/* really swap */
 			crSwapBuffers_ptr( window, 0 );
