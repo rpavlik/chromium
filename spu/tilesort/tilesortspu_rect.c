@@ -30,12 +30,12 @@ void TILESORTSPU_APIENTRY tilesortspu_Rectf (GLfloat x1, GLfloat y1, GLfloat x2,
 	if (cr_packer_globals.bounds_min.x > x1) cr_packer_globals.bounds_min.x = x1;
 	if (cr_packer_globals.bounds_min.y > y1) cr_packer_globals.bounds_min.y = y1;
 	if (cr_packer_globals.bounds_max.x < x1) cr_packer_globals.bounds_max.x = x1;
-	if (cr_packer_globals.bounds_max.y < x1) cr_packer_globals.bounds_max.y = x1;
+	if (cr_packer_globals.bounds_max.y < y1) cr_packer_globals.bounds_max.y = y1;
 
 	if (cr_packer_globals.bounds_min.x > x2) cr_packer_globals.bounds_min.x = x2;
 	if (cr_packer_globals.bounds_min.y > y2) cr_packer_globals.bounds_min.y = y2;
 	if (cr_packer_globals.bounds_max.x < x2) cr_packer_globals.bounds_max.x = x2;
-	if (cr_packer_globals.bounds_max.y < x2) cr_packer_globals.bounds_max.y = x2;
+	if (cr_packer_globals.bounds_max.y < y2) cr_packer_globals.bounds_max.y = y2;
 
 	if (cr_packer_globals.bounds_min.z > 0.0f) cr_packer_globals.bounds_min.z = 0.0f;
 	if (cr_packer_globals.bounds_max.z < 0.0f) cr_packer_globals.bounds_max.z = 0.0f;
