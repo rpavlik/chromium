@@ -678,7 +678,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->eval.vn2D = a->evalStack[a->evalStackDepth].vn2D;
 		g->eval.v12D = a->evalStack[a->evalStackDepth].v12D;
 		g->eval.v22D = a->evalStack[a->evalStackDepth].v22D;
-		a->evalStackDepth++;
 	}
 	if (mask & GL_FOG_BIT)
 	{
