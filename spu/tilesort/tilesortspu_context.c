@@ -128,13 +128,13 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 
 
 #ifdef WINDOWS
-	crDebug("Tilesort SPU: HDC = %s\n", dpyName);
+	crDebug("Tilesort SPU: HDC = %s", dpyName);
 	if (!dpyName)
 		contextInfo->client_hdc = GetDC(NULL);
 	else
 		contextInfo->client_hdc = (HDC) crStrToInt(dpyName);
 #else
-	crDebug("Tilesort SPU: Displayname = %s\n", (dpyName ? dpyName : "(null)"));
+	crDebug("Tilesort SPU: Displayname = %s", (dpyName ? dpyName : "(null)"));
 	
 	contextInfo->dpy = XOpenDisplay(dpyName);
 #endif
@@ -146,7 +146,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	 */
 	contextInfo->State = crStateCreateContext( &tilesort_spu.limits, visBits );
 	if (!contextInfo->State) {
-		crWarning( "tilesortspuCreateContext: crStateCreateContext() failed\n");
+		crWarning( "tilesortspuCreateContext: crStateCreateContext() failed");
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&_TileSortMutex);
 #endif
