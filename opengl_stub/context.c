@@ -36,6 +36,38 @@ extern int FindVisualInfo( Display *dpy, XVisualInfo *vis);
 
 
 /*
+ * Get the display string for the given display pointer.
+ * Never return just ":0.0".  In that case, prefix with our host name.
+ */
+static void
+stubGetDisplayString( Display *dpy, char *nameResult, int maxResult )
+{
+	const char *dpyName = DisplayString(dpy);
+	char host[1000];
+	if (dpyName[0] == ':')
+	{
+		crGetHostname(host, 1000);
+	}
+	else
+	{
+	  host[0] = 0;
+	}
+	if (crStrlen(host) + crStrlen(dpyName) >= maxResult - 1)
+	{
+		/* return null string */
+		crWarning("Very long host / display name string in stubDisplayString!");
+		nameResult[0] = 0;
+	}
+	else
+	{
+		/* return host concatenated with dpyName */
+		crStrcpy(nameResult, host);
+		crStrcat(nameResult, dpyName);
+	}
+}
+
+
+/*
  * This function should be called from MakeCurrent().  It'll detect if
  * we're in a multi-thread situation, and do the right thing for dispatch.
  */
@@ -106,11 +138,7 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 
 	/* one-time init */
 	if (firstCall) {
-#ifdef WINDOWS
-		char dpyName[20];
-#else
-		const char *dpyName = NULL;
-#endif
+		char dpyName[1000];
 		StubInit();
 		memset(stub.Context, 0, sizeof(stub.Context));
 		firstCall = GL_FALSE;
@@ -124,7 +152,7 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 		stub.spuWindow = crWindowCreate( (const char *)dpyName, stub.desiredVisual );
 			
 #else
-		dpyName = DisplayString(dpy);
+		stubGetDisplayString(dpy, dpyName, 1000);
 
 		/* 
 		 * Pull apart the context's requested visual information
@@ -515,17 +543,17 @@ Bool stubMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext context )
 
 	if (stub.Context[i].type == UNDECIDED) {
 		/* Here's where we really create contexts */
+		char dpyName[1000];
 #ifdef CHROMIUM_THREADSAFE
 		crLockMutex(&stub.mutex);
 #endif
 #ifdef WINDOWS
 		if (UseChromium(drawable)) {
-			char dpyName[20]; /* Enough to convert pointer */
 			sprintf(dpyName, "%d", drawable);
 #else
 		XSync(dpy, 0); /* sync to force window creation on the server */
 		if (UseChromium(dpy, drawable)) {
-			const char *dpyName = DisplayString(dpy);
+			stubGetDisplayString(dpy, dpyName, 1000);
 #endif
 			/*fprintf(stderr,"---------UseChromium(%d) yes  visual 0x%x\n",
 							i, stub.desiredVisual);*/
