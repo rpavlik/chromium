@@ -626,7 +626,8 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 															context->dpyName, stub.desiredVisual );
 			context->type = CHROMIUM;
 
-			window->spuWindow = stub.spu->dispatch_table.WindowCreate(
+			if (!window->spuWindow)
+				window->spuWindow = stub.spu->dispatch_table.WindowCreate(
 													 window->dpyName, context->visBits );
 		}
 		else {
