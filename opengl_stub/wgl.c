@@ -16,9 +16,6 @@
 #include <windows.h>
 #include <stdio.h>
 
-/* For optimizing wglMakeCurrent */
-static HGLRC currenthglrc = NULL;
-
 int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd )
 {
 	DWORD okayFlags;
@@ -97,19 +94,10 @@ BOOL WINAPI wglDeleteContext_prox( HGLRC hglrc )
 
 BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 {
-	BOOL retVal;
-
-	if (hglrc == NULL) {
-		currenthglrc = NULL;
+	if (hglrc == NULL)
 		return 1;
-	}
 
-	retVal = stubMakeCurrent( hdc, hglrc );
-
-	if (retVal)
-		currenthglrc = hglrc;
-
-	return retVal;
+	return (stubMakeCurrent( hdc, hglrc ));
 }
 
 HGLRC WINAPI wglGetCurrentContext_prox( void )
@@ -144,9 +132,9 @@ int WINAPI wglDescribePixelFormat_prox( HDC hdc, int pixelFormat, UINT nBytes,
 	pfd->nSize           = sizeof(*pfd);
 	pfd->nVersion        = 1;
 	pfd->dwFlags         = ( PFD_DRAW_TO_WINDOW |
-			PFD_SUPPORT_GDI    |
-			PFD_SUPPORT_OPENGL |
-			PFD_DOUBLEBUFFER );
+		 		 PFD_SUPPORT_GDI    |
+				 PFD_SUPPORT_OPENGL |
+				 PFD_DOUBLEBUFFER );
 	pfd->iPixelType      = PFD_TYPE_RGBA;
 	pfd->cColorBits      = 32;
 	pfd->cRedBits        = 8;
@@ -177,7 +165,7 @@ int WINAPI wglDescribePixelFormat_prox( HDC hdc, int pixelFormat, UINT nBytes,
 
 BOOL WINAPI wglShareLists_prox( HGLRC hglrc1, HGLRC hglrc2 )
 {
-	crError( "wglShareLists: unsupported" );
+	crWarning( "wglShareLists: unsupported" );
 	return 0;
 }
 
@@ -195,13 +183,13 @@ wglSwapBuffers_prox( HDC hdc )
 
 BOOL WINAPI wglCopyContext_prox( HGLRC src, HGLRC dst, UINT mask )
 {
-	crError( "wglCopyContext: unsupported" );
+	crWarning( "wglCopyContext: unsupported" );
 	return 0;
 }
 
 HGLRC WINAPI wglCreateLayerContext_prox( HDC hdc, int layerPlane )
 {
-	crError( "wglCreateLayerContext: unsupported" );
+	crWarning( "wglCreateLayerContext: unsupported" );
 	return 0;
 }
 
@@ -212,46 +200,46 @@ PROC WINAPI wglGetProcAddress_prox( LPCSTR name )
 
 BOOL WINAPI wglUseFontBitmapsA_prox( HDC hdc, DWORD first, DWORD count, DWORD listBase )
 {
-	crError( "wglUseFontBitmapsA: unsupported" );
+	crWarning( "wglUseFontBitmapsA: unsupported" );
 	return 0;
 }
 
 BOOL WINAPI wglUseFontBitmapsW_prox( HDC hdc, DWORD first, DWORD count, DWORD listBase )
 {
-	crError( "wglUseFontBitmapsW: unsupported" );
+	crWarning( "wglUseFontBitmapsW: unsupported" );
 	return 0;
 }
 
 BOOL WINAPI wglDescribeLayerPlane_prox( HDC hdc, int pixelFormat, int layerPlane,
 		UINT nBytes, LPLAYERPLANEDESCRIPTOR lpd )
 {
-	crError( "wglDescribeLayerPlane: unimplemented" );
+	crWarning( "wglDescribeLayerPlane: unimplemented" );
 	return 0;
 }
 
 int WINAPI wglSetLayerPaletteEntries_prox( HDC hdc, int layerPlane, int start,
 		int entries, CONST COLORREF *cr )
 {
-	crError( "wglSetLayerPaletteEntries: unsupported" );
+	crWarning( "wglSetLayerPaletteEntries: unsupported" );
 	return 0;
 }
 
 int WINAPI wglGetLayerPaletteEntries_prox( HDC hdc, int layerPlane, int start,
 		int entries, COLORREF *cr )
 {
-	crError( "wglGetLayerPaletteEntries: unsupported" );
+	crWarning( "wglGetLayerPaletteEntries: unsupported" );
 	return 0;
 }
 
 BOOL WINAPI wglRealizeLayerPalette_prox( HDC hdc, int layerPlane, BOOL realize )
 {
-	crError( "wglRealizeLayerPalette: unsupported" );
+	crWarning( "wglRealizeLayerPalette: unsupported" );
 	return 0;
 }
 
 DWORD WINAPI wglSwapMultipleBuffers_prox( UINT a, CONST void *b )
 {
-	crError( "wglSwapMultipleBuffer: unsupported" );
+	crWarning( "wglSwapMultipleBuffer: unsupported" );
 	return 0;
 }
 
@@ -259,7 +247,7 @@ BOOL WINAPI wglUseFontOutlinesA_prox( HDC hdc, DWORD first, DWORD count, DWORD l
 		FLOAT deviation, FLOAT extrusion, int format,
 		LPGLYPHMETRICSFLOAT gmf )
 {
-	crError( "wglUseFontOutlinesA: unsupported" );
+	crWarning( "wglUseFontOutlinesA: unsupported" );
 	return 0;
 }
 
@@ -267,12 +255,12 @@ BOOL WINAPI wglUseFontOutlinesW_prox( HDC hdc, DWORD first, DWORD count, DWORD l
 		FLOAT deviation, FLOAT extrusion, int format,
 		LPGLYPHMETRICSFLOAT gmf )
 {
-	crError( "wglUseFontOutlinesW: unsupported" );
+	crWarning( "wglUseFontOutlinesW: unsupported" );
 	return 0;
 }
 
 BOOL WINAPI wglSwapLayerBuffers_prox( HDC hdc, UINT planes )
 {
-	crError( "wglSwapLayerBuffers: unsupported" );
+	crWarning( "wglSwapLayerBuffers: unsupported" );
 	return 0;
 }
