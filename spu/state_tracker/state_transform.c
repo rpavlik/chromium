@@ -75,23 +75,40 @@ void crStateTransformInit(CRTransformState *t)
 	t->maxDepth = t->maxModelViewStackDepth;
 
 	if (t->maxModelViewStackDepth)
+	{
 		t->modelView = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxModelViewStackDepth);
+	}
 	if (t->maxProjectionStackDepth)
+	{
 		t->projection = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxProjectionStackDepth);
+	}
 	if (t->maxTextureStackDepth)
-		t->texture = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxTextureStackDepth);
+	{
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			t->texture[i] = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxTextureStackDepth);
+		}
+	}
 	if (t->maxColorStackDepth)
+	{
 		t->color = (GLmatrix *) crAlloc (sizeof (GLmatrix) * t->maxColorStackDepth);
+	}
 
 	t->modelView[0] = identity_matrix;
 	t->projection[0] = identity_matrix;
-	t->texture[0] = identity_matrix;
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	{
+		t->texture[i][0] = identity_matrix;
+	}
 	t->color[0] = identity_matrix;
 	t->m = t->modelView;
 
 	t->modelViewDepth = 0;
 	t->projectionDepth = 0;
-	t->textureDepth = 0;
+	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+	{
+		t->textureDepth[i] = 0;
+	}
 	t->colorDepth = 0;
 	t->depth = &t->modelViewDepth;
 
@@ -360,6 +377,7 @@ void STATE_APIENTRY crStateMatrixMode(GLenum e)
 {
 	CRContext *g = GetCurrentContext();
 	CRTransformState *t = &(g->transform);
+	CRTextureState *tex = &(g->texture);
 	CRStateBits *sb = GetCurrentBits();
 	CRTransformBits *tb = &(sb->transform);
 
@@ -388,8 +406,8 @@ void STATE_APIENTRY crStateMatrixMode(GLenum e)
 			t->matrixid = 1;
 			break;
 		case GL_TEXTURE:
-			t->m = &(t->texture[t->textureDepth]);
-			t->depth = &t->textureDepth;
+			t->m = &(t->texture[tex->curTextureUnit][t->textureDepth[tex->curTextureUnit]]);
+			t->depth = &t->textureDepth[tex->curTextureUnit];
 			t->maxDepth = t->maxTextureStackDepth;
 			t->mode = GL_TEXTURE;
 			t->matrixid = 2;
@@ -1126,16 +1144,21 @@ void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID,
 		t->matrix[1] &= nbitID;
 	}
 
-	if (t->matrix[2] & bitID) {
-		if (memcmp (from->texture+from->textureDepth,
-					to->texture+to->textureDepth,
-					sizeof (GLmatrix))) {
-
-			diff_api.MatrixMode(GL_TEXTURE);		
-			LOADMATRIX(to->texture+to->textureDepth);
-		
-			t->matrix[2] = GLBITS_ONES;
-			t->dirty = GLBITS_ONES;
+	if (t->matrix[2] & bitID) 
+	{
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
+		{
+			if (memcmp (from->texture[i]+from->textureDepth[i],
+						to->texture[i]+to->textureDepth[i],
+						sizeof (GLmatrix))) 
+			{
+				diff_api.MatrixMode(GL_TEXTURE);		
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				LOADMATRIX(to->texture[i]+to->textureDepth[i]);
+			
+				t->matrix[2] = GLBITS_ONES;
+				t->dirty = GLBITS_ONES;
+			}
 		}
 		t->matrix[2] &= nbitID;
 	}
@@ -1225,16 +1248,20 @@ void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID,
 	}
 
 	if (t->matrix[2] & bitID) {
-		if (memcmp (from->texture+from->textureDepth,
-					to->texture+to->textureDepth,
-					sizeof (GLmatrix))) {
+		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
+		{
+			if (memcmp (from->texture[i]+from->textureDepth[i],
+						to->texture[i]+to->textureDepth[i],
+						sizeof (GLmatrix))) 
+			{
+				diff_api.MatrixMode(GL_TEXTURE);		
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				LOADMATRIX(to->texture[i]+to->textureDepth[i]);
 
-			diff_api.MatrixMode(GL_TEXTURE);		
-			LOADMATRIX(to->texture+to->textureDepth);
-
-			memcpy((void *) from->texture, (const void *) to->texture,
-					sizeof (from->texture[0]) * (to->textureDepth + 1));
-			from->textureDepth = to->textureDepth;
+				memcpy((void *) from->texture[i], (const void *) to->texture[i],
+						sizeof (from->texture[i][0]) * (to->textureDepth[i] + 1));
+				from->textureDepth[i] = to->textureDepth[i];
+			}
 		}
 		t->matrix[2] &= nbitID;
 	}

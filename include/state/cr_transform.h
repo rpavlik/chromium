@@ -29,7 +29,7 @@ typedef struct {
 
 	GLint    modelViewDepth;
 	GLint    projectionDepth;
-	GLint    textureDepth;
+	GLint    textureDepth[CR_MAX_TEXTURE_UNITS];
 	GLint    colorDepth;
 	GLint    *depth;
 
@@ -39,7 +39,7 @@ typedef struct {
 
 	GLmatrix  *modelView;
 	GLmatrix  *projection;
-	GLmatrix  *texture;
+	GLmatrix  *texture[CR_MAX_TEXTURE_UNITS];
 	GLmatrix  *color;
 	GLmatrix  *m;
 
