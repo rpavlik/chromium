@@ -3,3 +3,6 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 EdgeFlagPointer
+TexImage3D
+ProgramParameters4dvNV
+ProgramParameters4fvNV
