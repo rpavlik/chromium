@@ -356,7 +356,6 @@ DrawMesh(const TriangleMesh *mesh, DrawMode drawMode)
 			first = 0;
 		}
 		glBindBufferARB_ptr(GL_ELEMENT_ARRAY_BUFFER_ARB, mesh->ElementBufferObj);
-		assert(mesh->NumIndices <= 65535);
 		if (mesh->NumIndices <= 65535)
 			glDrawRangeElements(GL_TRIANGLE_STRIP, 0, mesh->NumIndices - 1,
 													mesh->NumIndices, GL_UNSIGNED_SHORT, 0);
@@ -399,10 +398,10 @@ MakeDemoMesh(const Options *options)
 
 	TriangleMesh *mesh = MakeSphere(options->radius, slices, stacks);
 
-	printf("%d tri  %d slices  %d stacks\n", options->numTris, slices, stacks);
-	printf("%d indices/strip\n", mesh->NumIndices);
-	printf("%d triangles/sphere\n", mesh->NumTris);
-	printf("%d spheres/ring\n", options->numSpheres);
+	printf("spheres:  %d triangles / sphere\n", mesh->NumTris);
+	printf("spheres:  %d indices / sphere\n", mesh->NumIndices);
+	printf("spheres:  %d spheres / ring\n", options->numSpheres);
+	printf("spheres:  %d triangles / ring\n", mesh->NumTris * options->numSpheres);
 
 	MeshToVBO(mesh);
 	MeshToDisplayList(mesh);
@@ -617,8 +616,6 @@ ChromiumMain(const Options *options)
 	int frameCount;
 	TriangleMesh *mesh;
 
-	printf("spheres: rank=%d size=%d\n", options->rank, options->size);
-
 #define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
 
 	LOAD( crCreateContext );
@@ -628,6 +625,8 @@ ChromiumMain(const Options *options)
 	LOAD( glGetChromiumParametervCR );
 	LOAD( glBarrierCreateCR );
 	LOAD( glBarrierExecCR );
+
+	printf("spheres:  node %d of %d total\n", options->rank, options->size);
 
 	timer = crTimerNewTimer();
 
@@ -641,7 +640,6 @@ ChromiumMain(const Options *options)
 	{
 		GLint winsize[2];
 		glGetChromiumParametervCR_ptr(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
-		printf("psubmit using window size: %d x %d\n", winsize[0], winsize[1]);
 	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
@@ -656,7 +654,7 @@ ChromiumMain(const Options *options)
 	crStartTimer(timer);
 	t0 = crTimerTime(timer);
 
-	printf("Drawing Mode: %s\n", DrawModeString[DrawingMode]);
+	printf("spheres:  Drawing Mode: %s\n", DrawModeString[DrawingMode]);
 
 	for (frame = 0; frame < options->maxFrames; frame++)
 	{
@@ -701,7 +699,12 @@ ChromiumMain(const Options *options)
 		frameCount++;
 		t = crTimerTime(timer);
 		if (t - t0 > 3.0) {
-			printf("%.2g fps   %g tris/sec   %g pixels/sec\n",
+			/* get current window size */
+			GLint winsize[2];
+			glGetChromiumParametervCR_ptr(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
+			WinWidth = winsize[0];
+			WinHeight = winsize[1];
+			printf("spheres:  %.02g fps   %.04g tris/sec   %.04g pixels/sec\n",
 						 frameCount / (t - t0),
 						 drawnTris / (t - t0),
 						 WinWidth * WinHeight * frameCount / (t - t0));
@@ -746,7 +749,10 @@ static void DisplayFrame(void)
 
 	t1 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
 	if (t1 - t0 > 3.0) {
-		printf("%g tri/sec\n", drawnTris / (t1 - t0));
+		printf("spheres:  %.02g fps   %.04g tris/sec   %.04g pixels/sec\n",
+					 frameCount / (t1 - t0),
+					 drawnTris / (t1 - t0),
+					 WinWidth * WinHeight * frameCount / (t1 - t0));
 		t0 = t1;
 		drawnTris = 0;
 	}
@@ -761,7 +767,7 @@ Key( unsigned char key, int x, int y )
 	switch (key) {
 	case 'm':
 		DrawingMode = (DrawingMode + 1) % 3;
-		printf("DrawMode: %s\n", DrawModeString[DrawingMode]);
+		printf("spheres:  DrawMode: %s\n", DrawModeString[DrawingMode]);
 		break;
 	case 27:
 		exit(0);
@@ -789,7 +795,7 @@ GlutMain(const Options *options)
 	TheMesh = MakeDemoMesh(options);
 	TheOptions = options;
 
-	printf("Press 'm' to change rendering mode\n");
+	printf("spheres:  Press 'm' to change rendering mode\n");
 	glutMainLoop();
 }
 
@@ -815,130 +821,3 @@ main(int argc, char *argv[])
 
 	return 0;
 }
-
-
-
-
-#if 0
-int
-main(int argc, char *argv[])
-{
-	int ctx, frame;
-	int window = 0;  /* default window */
-	const char *dpy = NULL;
-	int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
-	TriangleMesh *mesh;
-	CRTimer *timer;
-	int drawnTris;
-	double t0;
-	int frameCount;
-	Options options;
-
-	ParseOptions(argc, argv, &options);
-
-	printf("spheres: rank=%d size=%d\n", options.rank, options.size);
-
-
-#if USE_CHROMIUM
-#define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
-
-	LOAD( crCreateContext );
-	LOAD( crMakeCurrent );
-	LOAD( crSwapBuffers );
-	LOAD( glChromiumParametervCR );
-	LOAD( glGetChromiumParametervCR );
-	LOAD( glBarrierCreateCR );
-	LOAD( glBarrierExecCR );
-
-	timer = crTimerNewTimer();
-
-	ctx = crCreateContext_ptr(dpy, visual);
-	if (ctx < 0) {
-		crError("glCreateContextCR() call failed!\n");
-		return 0;
-	}
-	crMakeCurrent_ptr(window, ctx);
-
-	/* Test getting window size */
-	{
-		GLint winsize[2];
-		glGetChromiumParametervCR_ptr(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
-		printf("psubmit using window size: %d x %d\n", winsize[0], winsize[1]);
-	}
-
-	/* It's OK for everyone to create this, as long as all the "size"s match */
-	glBarrierCreateCR_ptr( MASTER_BARRIER, options.size );
-#endif
-
-	InitGL(&options);
-
-	mesh = MakeDemoMesh(&options);
-
-	frameCount = 0;
-	drawnTris = 0;
-	crStartTimer(timer);
-	t0 = crTimerTime(timer);
-
-	for (frame = 0; frame < options.maxFrames; frame++)
-	{
-		double t;
-
-		if (options.clearFlag)
-			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-#if USE_CHROMIUM
-		if (options.size > 1)
-			 glBarrierExecCR_ptr( MASTER_BARRIER );
-#endif
-
-		DrawFrame(mesh, &options, frame);
-
-#if USE_CHROMIUM
-		if (options.size > 1)
-			 glBarrierExecCR_ptr( MASTER_BARRIER );
-#endif
-
-		/* All clients need to call crSwapBuffers() to indicate end-of-frame.
-		 * However, the server's window should only do one real swapbuffers for
-		 * N clients (not N swaps for N clients!)
-		 * We can achieve this in one of two ways:
-		 * 1. Have all clients issue a normal SwapBuffers and set the
-		 *    crserver's only_swap_once config flag.  The server will then ensure
-		 *    that only one client's SwapBuffers message gets through to the
-		 *    render SPU.
-		 * 2. Don't set only_swap_once:  explicitly control swapping in the
-		 *    clients with the CR_SUPPRESS_SWAP_BIT flag.  All but one client
-		 *    should pass this flag to crSwapBuffers.  The CR_SUPPRESS_SWAP_BIT
-		 *    tells the render SPU to no-op the swap.  Thus, crSwapBuffers can
-		 *    be used to indicate end-of-frame without swapping the color buffers.
-		 */
-
-#if USE_CHROMIUM
-		if (options.swapFlag) {
-			/* really swap */
-			crSwapBuffers_ptr( window, 0 );
-		}
-		else {
-			/* don't really swap, just mark end of frame */
-			crSwapBuffers_ptr( window, CR_SUPPRESS_SWAP_BIT );
-		}
-#endif
-
-		/* Compute performance figures */
-		frameCount++;
-#if USE_CHROMIUM
-		t = crTimerTime(timer);
-#endif
-		if (t - t0 > 3.0) {
-			printf("%.2g fps  %g tris/sec = %d in %g\n",
-						 frameCount / (t - t0), drawnTris / (t - t0), drawnTris, t-t0);
-			t0 = t;
-			drawnTris = 0;
-			frameCount = 0;
-		}
-	}
-
-	printf("spheres: exiting\n");
-	return 0;
-}
-#endif
