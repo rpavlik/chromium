@@ -54,7 +54,7 @@ typedef int socklen_t;
 #include "cr_environment.h"
 #include "net_internals.h"
 
-int __crSelect( int n, fd_set *readfds, struct timeval *timeout );
+int __crSelect( int n, fd_set *readfds, int sec, int usec );
 
 #ifdef ADDRINFO
 #define PF PF_UNSPEC
@@ -659,13 +659,26 @@ __tcpip_dead_connection( CRConnection *conn )
 }
 
 int
-__crSelect( int n, fd_set *readfds, struct timeval *timeout )
+__crSelect( int n, fd_set *readfds, int sec, int usec )
 {
 	for ( ; ; ) 
-	{
+	{ 
 		int err, num_ready;
 
-		num_ready = select( n, readfds, NULL, NULL, timeout );
+		if (sec || usec)
+		{
+			/* We re-init everytime for Linux, as it corrupts
+			 * the timeout structure, but other OS's
+			 * don't have a problem with it.
+			 */
+			struct timeval timeout;
+			timeout.tv_sec = sec;
+			timeout.tv_usec = usec;
+			num_ready = select( n, readfds, NULL, NULL, &timeout );
+		} 
+		else
+			num_ready = select( n, readfds, NULL, NULL, NULL );
+
 
 		if ( num_ready >= 0 )
 		{
@@ -876,15 +889,12 @@ crTCPIPRecv( void )
 
 	if ( num_conns )
 	{
-		struct timeval timeout;
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 500;
-		num_ready = __crSelect( max_fd, &read_fds, &timeout );
+		num_ready = __crSelect( max_fd, &read_fds, 0, 500 );
 	}
 	else
 	{
 		crWarning( "Waiting for first connection..." );
-		num_ready = __crSelect( max_fd, &read_fds, NULL );
+		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
 	}
 
 	if ( num_ready == 0 ) {

@@ -58,7 +58,7 @@ typedef int socklen_t;
 #include "cr_threads.h"
 #include "net_internals.h"
 
-extern int __crSelect( int n, fd_set *readfds, struct timeval *timeout );
+extern int __crSelect( int n, fd_set *readfds, int sec, int usec);
 
 #ifdef ADDRINFO
 #define PF PF_UNSPEC
@@ -502,15 +502,12 @@ crUDPTCPIPRecv( void )
 
 	if ( num_conns )
 	{
-		struct timeval timeout;
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 500;
-		num_ready = __crSelect( max_fd, &read_fds, &timeout );
+		num_ready = __crSelect( max_fd, &read_fds, 0, 500 );
 	}
 	else
 	{
 		crWarning( "Waiting for first connection..." );
-		num_ready = __crSelect( max_fd, &read_fds, NULL );
+		num_ready = __crSelect( max_fd, &read_fds, 0, 0 );
 	}
 
 	if ( num_ready == 0 ) {
