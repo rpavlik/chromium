@@ -69,20 +69,6 @@ PAGE_HEIGHT = 1000
 
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
-ServerOptions = [
-	("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
-	("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], [])
-]
-
-GlobalOptions = [
-	("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
-	("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
-	("show_cursor", "Show Virtual cursor", "BOOL", 1, [0], [], []),
-	("MTU", "Mean Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
-	("default_app", "Default Application Program", "STRING", 1, [""], [], []),
-	("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], [])
-]
-
 AppNodeBrush = wxBrush(wxColor(55, 160, 55))
 ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
 BackgroundColor = wxColor(90, 150, 190)
@@ -658,8 +644,10 @@ class MainFrame(wxFrame):
 		global _docList
 
 		curDir = os.getcwd()
-		fileName = wxFileSelector("Open File", default_extension="conf",
-					  flags = wxOPEN | wxFILE_MUST_EXIST)
+		fileName = wxFileSelector("Open File",
+								  default_extension="conf",
+								  wildcard=WildcardPattern,
+								  flags = wxOPEN | wxFILE_MUST_EXIST)
 		if fileName == "":
 			return
 		fileName = os.path.join(os.getcwd(), fileName)
@@ -667,7 +655,7 @@ class MainFrame(wxFrame):
 
 		title = os.path.basename(fileName)
 
-		if (self.fileName == None) and (len(self.contents) == 0):
+		if (self.fileName == None) and (len(self.mothership.Nodes()) == 0):
 			# Load contents into current (empty) document.
 			self.fileName = fileName
 			self.SetTitle(os.path.basename(fileName))
@@ -707,10 +695,10 @@ class MainFrame(wxFrame):
 
 		curDir = os.getcwd()
 		fileName = wxFileSelector("Save File As",
-					  default_filename=default,
-					  default_extension="conf",
-					  wildcard=WildcardPattern,
-					  flags = wxSAVE | wxOVERWRITE_PROMPT)
+								  default_filename=default,
+								  default_extension="conf",
+								  wildcard=WildcardPattern,
+								  flags = wxSAVE | wxOVERWRITE_PROMPT)
 		if fileName == "":
 			return # User cancelled.
 		fileName = os.path.join(os.getcwd(), fileName)
@@ -980,8 +968,10 @@ class MainFrame(wxFrame):
 		"""Node / Server Options callback"""
 		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
 									 title="Server Options",
-									 options=ServerOptions)
-		dialog.ShowModal()
+									 options=self.mothership.ServerOptions)
+		dialog.SetValues(self.mothership.GetServerOptions())
+		if dialog.ShowModal() == wxID_OK:
+			self.mothership.SetServerOptions(dialog.GetValues())
 		return
 
 
@@ -1040,13 +1030,17 @@ class MainFrame(wxFrame):
 				print "Invalid SPU name: %s !!!" % name
 		return
 		
+	# ----------------------------------------------------------------------
+	# System menu callbacks
+	
 	def doSystemOptions(self, event):
 		"""System / Options callback"""
 		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
 									 title="System Options",
-									 options=GlobalOptions)
-		# XXX need to store the system options somewhere in mothership!
-		dialog.ShowModal()
+									 options=self.mothership.GlobalOptions)
+		dialog.SetValues(self.mothership.GetGlobalOptions())
+		if dialog.ShowModal() == wxID_OK:
+			self.mothership.SetGlobalOptions(dialog.GetValues())
 
 
 	# ----------------------------------------------------------------------
@@ -1209,8 +1203,21 @@ class MainFrame(wxFrame):
 
 	def loadConfig(self):
 		"""Load a graph from a file"""
-		# XXX load config here
-		self.dirty = false
+		f = open(self.fileName, "r")
+		if f:
+			# read first line to check for template
+			l = f.readline()
+			if not l:
+				return
+			v = re.search("^TEMPLATE = \"?([^\"]*)\"?", l)
+			if v:
+				template = v.group(1)
+				if not templates.ReadTemplate(template, self.mothership, f):
+					configio.ReadConfig(self.mothership, f)
+			f.close()
+			self.dirty = false
+		else:
+			self.Notify("Problem opening " + self.fileName)
 		self.drawArea.Refresh()
 
 

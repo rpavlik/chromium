@@ -22,7 +22,7 @@ import string, cPickle, os.path, re
 from wxPython.wx import *
 import traceback, types
 import intdialog, spudialog
-import crutils, crtypes
+import crutils, crtypes, configio
 
 
 
@@ -509,7 +509,6 @@ class TilesortDialog(wxDialog):
 
 	def __OnTilesortOptions(self, event):
 		"""Called when Tilesort Options button is pressed."""
-		print "tilesort options..."
 		tilesortSPU = __FindTilesortSPU(self.mothership)
 		(params, opts) = crutils.GetSPUOptions("tilesort")
 		# create the dialog
@@ -538,7 +537,7 @@ class TilesortDialog(wxDialog):
 		""" Respond to a request to redraw the contents of our drawing panel.
 		"""
 		dc = wxPaintDC(self.drawArea)
-#		self.drawArea.PrepareDC(dc)  # only for scrolled windows
+		#self.drawArea.PrepareDC(dc)  # only for scrolled windows
 		dc.BeginDrawing()
 		dc.SetPen(wxBLACK_PEN);
 		dc.SetBrush(wxLIGHT_GREY_BRUSH);
@@ -599,101 +598,6 @@ class TilesortDialog(wxDialog):
 									 self.__Mothership.Tilesort.FirstHost + k)
 				dc.DrawText(s, x+3, y+3)
 		dc.EndDrawing()
-
-	# ----------------------------------------------------------------------
-	# File I/O
-
-	def LoadConfiguration(self, filename):
-		"""Load a configuration file."""
-		f = open(fileName, "r")
-		if f:
-			tilesort = self.__Mothership.Tilesort
-			while true:
-				l = f.readline()
-				if not l:
-					break
-				if re.match("^TILE_ROWS = [0-9]+$", l):
-					v = re.search("[0-9]+", l)
-					tilesort.Rows = int(l[v.start() : v.end()])
-				elif re.match("^TILE_COLS = [0-9]+$", l):
-					v = re.search("[0-9]+", l)
-					tilesort.Columns = int(l[v.start() : v.end()])
-				elif re.match("^TILE_WIDTH = [0-9]+$", l):
-					v = re.search("[0-9]+", l)
-					tilesort.TileWidth = int(l[v.start() : v.end()])
-				elif re.match("^TILE_HEIGHT = [0-9]+$", l):
-					v = re.search("[0-9]+", l)
-					tilesort.TileHeight = int(l[v.start() : v.end()])
-				elif re.match("^BOTTOM_TO_TOP = [01]$", l):
-					v = re.search("[01]", l)
-					tilesort.BottomToTop = int(l[v.start() : v.end()])
-				elif re.match("^RIGHT_TO_LEFT = [01]$", l):
-					v = re.search("[01]", l)
-					tilesort.RightToLeft = int(l[v.start() : v.end()])
-				elif re.match("^HOSTNAME = ", l):
-					# look for string in quotes
-					v = re.search("\".+\"", l)
-					# extract the string
-					tilesort.Hostname = l[v.start()+1 : v.end()-1]
-				elif re.match("^FIRSTHOST = [0-9]+$", l):
-					v = re.search("[0-9]+", l)
-					tilesort.FirstHost = int(l[v.start() : v.end()])
-				elif re.match("^TILESORT_", l):
-					# A tilesort SPU option
-					# extract the option name and value
-					# parentheses in the regexp define groups
-					# \"? is an optional double-quote character
-					# [^\"] is any character but double-quote
-					v = re.search("^TILESORT_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
-					if v:
-						name = v.group(1)
-						value = v.group(2)
-						if self.TilesortDialog.IsOption(name):
-							self.TilesortDialog.SetValue(name, value)
-						else:
-							print "%s is not a recognized tilesort SPU option" % name
-				elif re.match("^RENDER_", l):
-					# A render SPU option
-					v = re.search("^RENDER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
-					if v:
-						name = v.group(1)
-						value = v.group(2)
-						if self.RenderDialog.IsOption(name):
-							self.RenderDialog.SetValue(name, value)
-						else:
-							print "%s is not a recognized render SPU option" % name
-				elif re.match("^SERVER_", l):
-					# A server option
-					v = re.search("^SERVER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
-					if v:
-						name = v.group(1)
-						value = v.group(2)
-						if self.ServerDialog.IsOption(name):
-							self.ServerDialog.SetValue(name, value)
-						else:
-							print "%s is not a recognized server option" % name
-				elif re.match("^GLOBAL_", l):
-					# A global option
-					v = re.search("^GLOBAL_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
-					if v:
-						name = v.group(1)
-						value = v.group(2)
-						# XXX need globalDialog options in graph tool!!!
-#						if self.GlobalDialog.IsOption(name):
-#							self.GlobalDialog.SetValue(name, value)
-#						else:
-#							print "%s is not a recognized global option" % name
-				elif re.match("^# end of options$", l):
-					# that's the end of the variables
-					# save the rest of the file....
-					break
-				elif not re.match("\s*#", l):
-					print "unrecognized line: %s" % l
-			f.close()
-			self.__UpdateWidgetsFromVars()
-			self.__RecomputeTotalSize()
-		self.dirty = false
-		self.drawArea.Refresh()
 
 	def SetMothership(self, mothership):
 		"""Specify the mothership to modify.
@@ -766,10 +670,12 @@ def Is_Tilesort(mothership):
 	# First, check for correct number and type of nodes
 	nodes = mothership.Nodes()
 	if len(nodes) != 2: 
+		print "not 2 nodes"
 		return 0
 	if not ((nodes[0].IsAppNode() and nodes[1].IsServer()) or
 			(nodes[1].IsAppNode() and nodes[0].IsServer())):
 		# one node must be the app node, the other the server
+		print "bad nodes"
 		return 0
 	# Next, check for correct SPU types
 	if nodes[0].IsAppNode():
@@ -781,12 +687,15 @@ def Is_Tilesort(mothership):
 		serverNode = nodes[0]
 		renderSPU = serverNode.LastSPU()
 	if tilesortSPU.Name() != "tilesort":
+		print "no tilesort SPU"
 		return 0
 	if renderSPU.Name() != "render":
+		print "no render SPU"
 		return 0
 	# Next, check that the app's servers are correct
 	servers = tilesortSPU.GetServers()
 	if len(servers) != 1 or servers[0] != serverNode:
+		print "no client/server connection"
 		return 0
 	# OK, this is a tilesort config!
 	return 1
@@ -830,40 +739,59 @@ def Edit_Tilesort(parentWindow, mothership):
 		clientNode.SetCount(mothership.Tilesort.NumClients)
 
 
-def Read_Tilesort(mothership):
+def Read_Tilesort(mothership, fileHandle):
 	"""Read a tilesort config from the given file handle."""
+
+	mothership.Tilesort = TilesortParameters()
+
+	serverNode = crtypes.NetworkNode()
+	renderSPU = crutils.NewSPU("render")
+	serverNode.AddSPU(renderSPU)
+
+	clientNode = crtypes.ApplicationNode()
+	tilesortSPU = crutils.NewSPU("tilesort")
+	clientNode.AddSPU(tilesortSPU)
+	tilesortSPU.AddServer(serverNode)
+
+	mothership.AddNode(clientNode)
+	mothership.AddNode(serverNode)
+
 	while true:
-		l = f.readline()
+		l = fileHandle.readline()
 		if not l:
 			break
+		# remove trailing newline character
+		if l[-1:] == '\n':
+			l = l[:-1]
 		if re.match("^TILE_ROWS = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
-			self.heightControl.SetValue(int(l[v.start() : v.end()]))
+			mothership.Tilesort.Rows = int(l[v.start() : v.end()])
 		elif re.match("^TILE_COLS = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
-			self.widthControl.SetValue(int(l[v.start() : v.end()]))
+			mothership.Tilesort.Columns = int(l[v.start() : v.end()])
 		elif re.match("^TILE_WIDTH = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
-			self.tileWidthControl.SetValue(int(l[v.start() : v.end()]))
+			mothership.Tilesort.TileWidth = int(l[v.start() : v.end()])
 		elif re.match("^TILE_HEIGHT = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
-			self.tileHeightControl.SetValue(int(l[v.start() : v.end()]))
+			mothership.Tilesort.TileHeight = int(l[v.start() : v.end()])
 		elif re.match("^BOTTOM_TO_TOP = [01]$", l):
 			v = re.search("[01]", l)
-			self.vLayoutRadio.SetSelection(int(l[v.start() : v.end()]))
+			mothership.Tilesort.BottomToTop = int(l[v.start() : v.end()])
 		elif re.match("^RIGHT_TO_LEFT = [01]$", l):
 			v = re.search("[01]", l)
-			self.hLayoutRadio.SetSelection(int(l[v.start() : v.end()]))
+			mothership.Tilesort.RightToLeft = int(l[v.start() : v.end()])
 		elif re.match("^HOSTNAME = ", l):
 			# look for string in quotes
 			v = re.search("\".+\"", l)
 			# extract the string
-			self.HostNamePattern = l[v.start()+1 : v.end()-1]
-			self.hostText.SetValue(self.HostNamePattern)
+			mothership.Tilesort.Hostname = l[v.start()+1 : v.end()-1]
 		elif re.match("^FIRSTHOST = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
-			self.HostNameStart = int(l[v.start() : v.end()])
-			self.hostSpin.SetValue(self.HostNameStart)
+			mothership.Tilesort.FirstHost = int(l[v.start() : v.end()])
+		elif re.match("^NUM_CLIENTS = [0-9]+$", l):
+			v = re.search("[0-9]+", l)
+			mothership.Tilesort.NumClients = int(l[v.start() : v.end()])
 		elif re.match("^TILESORT_", l):
 			# A tilesort SPU option
 			# extract the option name and value
@@ -874,47 +802,42 @@ def Read_Tilesort(mothership):
 			if v:
 				name = v.group(1)
 				value = v.group(2)
-				if self.TilesortDialog.IsOption(name):
-					self.TilesortDialog.SetValue(name, value)
-				else:
-					print "%s is not a recognized tilesort SPU option" % name
+				tilesortSPU.SetOption(name, value)
 		elif re.match("^RENDER_", l):
 			# A render SPU option
 			v = re.search("^RENDER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
 			if v:
 				name = v.group(1)
 				value = v.group(2)
-				if self.RenderDialog.IsOption(name):
-					self.RenderDialog.SetValue(name, value)
-				else:
-					print "%s is not a recognized render SPU option" % name
+				renderSPU.SetOption(name, value)
 		elif re.match("^SERVER_", l):
 			# A server option
 			v = re.search("^SERVER_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
 			if v:
 				name = v.group(1)
 				value = v.group(2)
-				if self.ServerDialog.IsOption(name):
-					self.ServerDialog.SetValue(name, value)
-				else:
-					print "%s is not a recognized server option" % name
+				mothership.SetServerOption(name, value)
 		elif re.match("^GLOBAL_", l):
 			# A global option
 			v = re.search("^GLOBAL_([a-zA-Z0-9\_]+) = \"?([^\"]*)\"?", l)
 			if v:
 				name = v.group(1)
 				value = v.group(2)
-				if self.GlobalDialog.IsOption(name):
-					self.GlobalDialog.SetValue(name, value)
-				else:
-					print "%s is not a recognized global option" % name
+				mothership.SetGlobalOption(name, value)
 		elif re.match("^# end of options$", l):
 			# that's the end of the variables
 			# save the rest of the file....
 			break
-		elif not re.match("\s*#", l):
+		elif (l != "") and (not re.match("\s*#", l)):
 			print "unrecognized line: %s" % l
 	# endwhile
+
+	clientNode.SetCount(mothership.Tilesort.NumClients)
+	serverNode.SetCount(mothership.Tilesort.Rows * mothership.Tilesort.Columns)
+	serverNode.SetHost(mothership.Tilesort.Hostname)
+	serverNode.SetFirstHost(mothership.Tilesort.FirstHost)
+	mothership.LayoutNodes()
+	return 1
 
 
 def Write_Tilesort(mothership, file):
@@ -922,28 +845,28 @@ def Write_Tilesort(mothership, file):
 	assert Is_Tilesort(mothership)
 	assert mothership.GetTemplateType() == "Tilesort"
 	tilesort = mothership.Tilesort
-	file.write("TEMPLATE = 'Tilesort'\n")
+	file.write('TEMPLATE = "Tilesort"\n')
 	file.write("TILE_ROWS = %d\n" % tilesort.Rows)
 	file.write("TILE_COLS = %d\n" % tilesort.Columns)
 	file.write("TILE_WIDTH = %d\n" % tilesort.TileWidth)
 	file.write("TILE_HEIGHT = %d\n" % tilesort.TileHeight)
 	file.write("RIGHT_TO_LEFT = %d\n" % tilesort.RightToLeft)
 	file.write("BOTTOM_TO_TOP = %d\n" % tilesort.BottomToTop)
-	file.write("HOSTNAME = '%s'\n" % tilesort.Hostname)
+	file.write('HOSTNAME = "%s"\n' % tilesort.Hostname)
 	file.write("FIRSTHOST = %d\n" % tilesort.FirstHost)
 	file.write("NUM_CLIENTS = %d\n" % tilesort.NumClients)
 
 	# write tilesort SPU options
 	tilesortSPU = __FindTilesortSPU(mothership)
-	crutils.WriteSPUOptions(tilesortSPU, "TILESORT", file)
+	configio.WriteSPUOptions(tilesortSPU, "TILESORT", file)
 
 	# write render SPU options
 	renderSPU = __FindRenderSPU(mothership)
-	crutils.WriteSPUOptions(renderSPU, "RENDER", file)
+	configio.WriteSPUOptions(renderSPU, "RENDER", file)
 
-	# XXX write server options
-
-	# XXX write global options
+	# write server and global options
+	configio.WriteServerOptions(mothership, file)
+	configio.WriteGlobalOptions(mothership, file)
 
 	file.write("# end of options\n")
 	file.write(__ConfigBody)

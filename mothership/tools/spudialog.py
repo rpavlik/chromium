@@ -63,7 +63,7 @@ class SPUDialog(wxDialog):
 						else:
 							maxValue = 1000000
 						ctrl = wxSpinCtrl(parent=self, id=100+i,
-										  size=wxSize(70,25),
+										  size=wxSize(90,25),
 										  value=str(default[j]),
 										  min=minValue, max=maxValue)
 						rowSizer.Add(ctrl)

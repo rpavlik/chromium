@@ -215,8 +215,12 @@ def ReadTemplate(templateName, mothership, file):
 	"""Read a templatized mothership config from the given file handle."""
 	assert templateName in __Templates.keys()
 	(create, validate, edit, read, write) = __Templates[templateName]
-	assert validate(mothership)
-	read(mothership, file)
+	if read(mothership, file):
+		mothership.SetTemplateType("Tilesort")
+		assert validate(mothership)
+		return 1
+	else:
+		return 0
 
 
 def WriteTemplate(templateName, mothership, file):

@@ -8,6 +8,8 @@
 
 """Functions for reading and writing Chromium config files."""
 
+import crutils
+
 
 __ConfigFileHeader = """
 import string
@@ -25,6 +27,39 @@ __ConfigFileTail = """
 cr.Go()
 """
 
+def __WriteOption(name, type, values, file):
+	"""Helper function"""
+	if len(values) == 1:
+		valueStr = str(values[0])
+	else:
+		valueStr = str(values)
+	if type == "INT" or type == "BOOL":
+		file.write("%s = %s\n" % (name, valueStr))
+	elif type == "FLOAT":
+		file.write("%s = %s\n" % (pname, valueStr))
+	else:
+		file.write("%s = \"%s\"\n" % (name, valueStr))
+	
+
+def WriteGlobalOptions(mothership, file):
+	for (name, description, type, count, default, mins, maxs) in mothership.GlobalOptions:
+		values = mothership.GetGlobalOption(name)
+		__WriteOption("GLOBAL_" + name, type, values, file)
+
+
+def WriteServerOptions(mothership, file):
+	for (name, description, type, count, default, mins, maxs) in mothership.ServerOptions:
+		values = mothership.GetServerOption(name)
+		__WriteOption("SERVER_" + name, type, values, file)
+
+
+def WriteSPUOptions(spu, prefix, file):
+	"""Write SPU options to given file handle."""
+	(params, options) = crutils.GetSPUOptions(spu.Name())
+	values = {}
+	for (name, description, type, count, default, mins, maxs) in options:
+		values = spu.GetOption(name)
+		__WriteOption(prefix + "_" + name, type, values, file)
 
 
 def WriteConfig(mothership, file):

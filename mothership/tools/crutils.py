@@ -177,21 +177,3 @@ def NewSPU(spuName):
 		values[name] = default
 	spu.SetOptions(values)
 	return spu
-
-def WriteSPUOptions(spu, prefix, file):
-	"""Write SPU options to given file handle."""
-	(params, options) = GetSPUOptions(spu.Name())
-	values = {}
-	for (name, description, type, count, default, mins, maxs) in options:
-		values = spu.GetOption(name)
-		if len(values) == 1:
-			valueStr = str(values[0])
-		else:
-			valueStr = str(values)
-		if type == "INT" or type == "BOOL":
-			file.write("%s_%s = %s\n" % (prefix, name, valueStr))
-		elif type == "FLOAT":
-			file.write("%s_%s = %s\n" % (prefix, name, valueStr))
-		else:
-			file.write("%s_%s = \"%s\"\n" % (prefix, name, valueStr))
-

@@ -6,15 +6,34 @@
 # Authors:
 #   Brian Paul
 
-"""Chromium SPU and Node classes used by the config tool.
+"""Chromium SPU, Node and Mothership classes used by the config tool.
 This may eventually get rolled into the similar classes defined
 in the mothership.
 """
 
 # XXX eventually we'll rename these classes to match the mothership.
+# That'll allow us to directly read Cr config files and build the
+# mothership/node/spu data structures.
 
 
 import wxPython
+
+
+# ----------------------------------------------------------------------
+
+class SpuOption:
+	"""Class to describe an SPU option."""
+	# XXX not used yet!  But we need to.
+	def __init__(self, name, description, type, count, default, mins, maxs):
+		self.Name = name
+		self.Description = description
+		self.Type = type        # "BOOL", "INT", "FLOAT", or "STRING"
+		self.Count = count
+		self.Default = default  # vector[count]
+		self.Mins = mins        # vector[count]
+		self.Maxs = maxs        # vector[count]
+		self.Value = default    # vector[count]
+
 
 # ----------------------------------------------------------------------
 
@@ -112,10 +131,12 @@ class SpuObject:
 
 	def GetOption(self, optName):
 		"""Return current value of a particular SPU option"""
+		assert optName in self.__Options.keys() # OK?
 		return self.__Options[optName]
 		
 	def SetOption(self, optName, value):
 		"""Set the value of a particular SPU option"""
+		assert optName in self.__Options.keys() # OK?
 		self.__Options[optName] = value
 		
 	def PrintOptions(self):
@@ -485,25 +506,79 @@ class ApplicationNode(Node):
 
 class Mothership:
 	"""The mothership class"""
+
+	# Global mothership options, defined just like SPU options
+	GlobalOptions = [
+		("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
+		("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
+		("show_cursor", "Show Virtual cursor", "BOOL", 1, [0], [], []),
+		("MTU", "Mean Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
+		("default_app", "Default Application Program", "STRING", 1, [""], [], []),
+		("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], [])
+	]
+
+	# Server node options, defined just like SPU options
+	# XXX we may have to move this into per-server node state someday
+	ServerOptions = [
+		("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
+		("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], [])
+	]
+
 	def __init__(self):
 		self.__Nodes = []
 		self.__MTU = 1024 * 1024  # XXX verify
 		self.__TemplateType = ""
 		self.__TemplateVars = {}
-		pass
+		# build __GlobalOptions dictionary
+		self.__GlobalOptions = {}
+		for (name, description, type, count, default, mins, maxs) in self.GlobalOptions:
+			self.__GlobalOptions[name] = default
+		# build __ServerOptions dictionary
+		self.__ServerOptions = {}
+		for (name, description, type, count, default, mins, maxs) in self.ServerOptions:
+			self.__ServerOptions[name] = default
+
+	def GetGlobalOptions(self):
+		"""Get the global options (a dictionary)"""
+		return self.__GlobalOptions
+
+	def GetGlobalOption(self, name):
+		"""Get a global option value"""
+		return self.__GlobalOptions[name]
+
+	def SetGlobalOptions(self, options):
+		"""Set the global options (a dictionary)"""
+		self.__GlobalOptions = options
+
+	def SetGlobalOption(self, name, value):
+		"""Set a global option value"""
+		assert name in self.__GlobalOptions.keys()
+		self.__GlobalOptions[name] = value
+
+	def GetServerOptions(self):
+		"""Get the server options (a dictionary)"""
+		return self.__ServerOptions
+
+	def GetServerOption(self, name):
+		"""Get a server option value"""
+		return self.__ServerOptions[name]
+
+	def SetServerOptions(self, options):
+		"""Set the server options (a dictionary)"""
+		self.__ServerOptions = options
+
+	def SetServerOption(self, name, value):
+		"""Set a server value"""
+		assert name in self.__ServerOptions.keys()
+		self.__ServerOptions[name] = value
 
 	def MTU(self, bytes):
+		"""Set the MTU size (in bytes)."""
 		self.__MTU = bytes
 
 	def Go(self):
+		"""Run the mothership."""
 		pass
-
-	def AddNode(self, node):
-		self.__Nodes.append(node)
-
-	def RemoveNode(self, node):
-		if node in self.__Nodes:
-			self.__Nodes.remove(node)
 
 	def SetTemplateType(self, type):
 		"""Set the template type."""
@@ -514,8 +589,17 @@ class Mothership:
 		name."""
 		return self.__TemplateType
 
+	def AddNode(self, node):
+		"""Add a node to the mothership."""
+		self.__Nodes.append(node)
+
+	def RemoveNode(self, node):
+		"""Remove a node from the mothership."""
+		if node in self.__Nodes:
+			self.__Nodes.remove(node)
+
 	def Nodes(self):
-		"""Return reference to the mothership's nodes"""
+		"""Return reference to the mothership's node list."""
 		return self.__Nodes
 
 	def SelectedNodes(self):
