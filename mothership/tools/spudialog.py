@@ -106,6 +106,11 @@ class SPUDialog(wxDialog):
 
 				i += 1
 
+		else:
+			# no options, display a message
+			label = wxStaticText(parent=self, id=-1, label="No options")
+			innerSizer.Add(label, flag=wxALIGN_CENTER|wxALL, border=4)
+
 		# XXX still need to write the callbacks for each control
 
 		rowSizer = wxGridSizer(rows=1, cols=3, vgap=4, hgap=20)
@@ -162,10 +167,10 @@ class SPUDialog(wxDialog):
 				ival = int(newValue[i])
 				ctrls[i].SetValue(ival)
 		else:
-			# must be (a) text box(es)
+			# must be (a) text or float box(es)
 			assert isinstance(ctrls[0], wxTextCtrl)
 			for i in range(count):
-				ctrls[i].SetValue(newValue[i])
+				ctrls[i].SetValue(str(newValue[i]))
 
 	# name is an SPU option like bbox_line_width
 	def GetValue(self, name):
