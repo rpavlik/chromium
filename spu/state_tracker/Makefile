@@ -34,7 +34,8 @@ DIFF_FILES = buffer \
 	line \
 	pixel \
 	polygon \
-	stencil
+	stencil \
+	viewport
 
 DIFF_FILES1 = $(addprefix state_, $(DIFF_FILES))
 DIFF_FILES2 = $(addsuffix _gen, $(DIFF_FILES1))
@@ -99,4 +100,8 @@ state_polygon_gen.c: state_polygon.txt gendiffcode.pl
 state_stencil_gen.c: state_stencil.txt gendiffcode.pl
 	@$(ECHO) Making $@
 	@$(PERL) gendiffcode.pl Stencil > $@
+
+state_viewport_gen.c: state_viewport.txt gendiffcode.pl
+	@$(ECHO) Making $@
+	@$(PERL) gendiffcode.pl Viewport > $@
 

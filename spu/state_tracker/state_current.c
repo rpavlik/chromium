@@ -23,16 +23,16 @@ void crStateCurrentInit( CRCurrentState *c )
 	if (cfg->id >= 0 && cfg->id < cfg->numprojectors) {
 		GLrecti *b;
 		b = &cfg->bounds[cfg->id][0];
-		c->rasterpos.x = (GLfloat) b->x1;
-		c->rasterpos.y = (GLfloat) b->y1;
+		c->rasterPos.x = (GLfloat) b->x1;
+		c->rasterPos.y = (GLfloat) b->y1;
 	} else {
-		c->rasterpos.x = 0.0f;
-		c->rasterpos.y = 0.0f;
+		c->rasterPos.x = 0.0f;
+		c->rasterPos.y = 0.0f;
 	}
-	c->rasterpos.z = 0.0f;
-	c->rasterpos.w = 1.0f;
+	c->rasterPos.z = 0.0f;
+	c->rasterPos.w = 1.0f;
 
-	c->rasterpos_pre = c->rasterpos;
+	c->rasterPosPre = c->rasterPos;
 #endif
 
 	c->rasterDistance = 0.0f;
@@ -107,4 +107,167 @@ void STATE_APIENTRY crStateEnd( void )
 	}
 
 	c->inBeginEnd = GL_FALSE;
+}
+
+void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
+					 CRCurrentState *from, CRCurrentState *to) 
+{
+	GLbitvalue nbitID = ~bitID;
+
+	if (c->enable & bitID) {
+		if (from->normalize != to->normalize) {
+			if (to->normalize == GL_TRUE)
+				diff_api.Enable(GL_NORMALIZE);
+			else
+				diff_api.Disable(GL_NORMALIZE);
+			c->enable = GLBITS_ONES;
+		}
+		c->enable &= nbitID;
+		c->dirty = GLBITS_ONES;
+	}
+
+	if (c->raster & bitID) {
+		if (to->rasterValid) {
+			if (to->rasterPosPre.x != from->rasterPos.x ||
+				to->rasterPosPre.y != from->rasterPos.y) {
+					GLvectorf p;
+					p.x = to->rasterPosPre.x - from->rasterPos.x;
+					p.y = to->rasterPosPre.y - from->rasterPos.y;
+					diff_api.Bitmap(0, 0, 0.0f, 0.0f, p.x, p.y, 0);
+					c->raster = GLBITS_ONES;
+					c->dirty  = GLBITS_ONES;
+			}
+		}
+		c->raster &= nbitID;
+	}
+
+	/* Vertex Current State Switch Code */
+
+	/* Its important that we don't do a value check here because
+	** current may not actaully have the correct values, I think...
+	** We also need to restore the current state tracking pointer
+	** since the packing functions will set it.
+	*/
+
+	/* NEED TO FIX THIS!!!!!! */
+	if (c->color & bitID) {
+		if (COMPARE_COLOR(from->color,to->color)) {
+			diff_api.Color4fv ((GLfloat *) &(to->color));
+			c->color = GLBITS_ONES;
+			c->dirty = GLBITS_ONES;
+		}
+		c->color &= nbitID;
+	}
+
+	if (c->index & bitID) {
+		if (to->index != from->index) {
+			diff_api.Indexf (to->index);
+			c->index = GLBITS_ONES;
+			c->dirty = GLBITS_ONES;
+		}
+		c->index &= nbitID;
+	}
+
+	if (c->normal & bitID) {
+		if (COMPARE_VECTOR (from->normal, to->normal)) {
+			diff_api.Normal3fv ((GLfloat *) &(to->normal.x));
+			c->normal = GLBITS_ONES;
+			c->dirty = GLBITS_ONES;
+		}
+		c->normal &= nbitID;
+	}
+
+	if (c->texCoord & bitID) {
+		if (COMPARE_TEXCOORD (from->texCoord, to->texCoordPre)) {
+			diff_api.TexCoord4fv ((GLfloat *) &(to->texCoord.s));
+			c->normal = GLBITS_ONES;
+			c->dirty = GLBITS_ONES;
+		}
+		c->texCoord &= nbitID;
+	}
+
+	c->dirty &= nbitID;
+}
+
+void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
+					 CRCurrentState *from, CRCurrentState *to) 
+{
+	GLbitvalue nbitID = ~bitID;
+
+	if (c->enable & bitID) {
+		if (from->normalize != to->normalize) {
+			if (to->normalize == GL_TRUE)
+				diff_api.Enable(GL_NORMALIZE);
+			else
+				diff_api.Disable(GL_NORMALIZE);
+			from->normalize = to->normalize;
+		}
+		c->enable &= nbitID;
+	}
+
+	if (c->raster & bitID) {
+		from->rasterValid = to->rasterValid;
+		if (to->rasterValid) {
+			if (to->rasterPosPre.x != from->rasterPos.x ||
+				to->rasterPosPre.y != from->rasterPos.y) {
+					GLvectorf p;
+					p.x = to->rasterPosPre.x - from->rasterPos.x;
+					p.y = to->rasterPosPre.y - from->rasterPos.y;
+					diff_api.Bitmap(0, 0, 0.0f, 0.0f, p.x, p.y, 0);
+			}
+			from->rasterPos = to->rasterPos;
+		}
+		c->raster &= nbitID;
+	}
+
+	/* Vertex Current State Sync Code */
+	/* Some things to note here:
+	** 1) Compare is done against the pre value since the
+	**    current value includes the geometry info.
+	** 2) Update is done with the current value since
+	**    the server will be getting the geometry block
+	** 3) Copy is done outside of the compare to ensure
+	**    that it happens.
+	*/
+	if (c->color & bitID) {
+		if (COMPARE_COLOR(from->color,to->colorPre)) {
+			diff_api.Color4fv ((GLfloat *) &(to->colorPre.r));
+		}
+		from->color = to->color;
+		c->color &= nbitID;
+	}
+
+	if (c->index & bitID) {
+		if (from->index != to->indexPre) {
+			diff_api.Indexf (to->index);
+		}
+		from->index = to->index;
+		c->index &= nbitID;
+	}
+
+	if (c->normal & bitID) {
+		if (COMPARE_VECTOR (from->normal, to->normalPre)) {
+			diff_api.Normal3fv ((GLfloat *) &(to->normalPre.x));
+		}
+		from->normal = to->normal;
+		c->normal &= nbitID;
+	}
+
+	if (c->texCoord & bitID) {
+		if (COMPARE_TEXCOORD (from->texCoord, to->texCoordPre)) {
+			diff_api.TexCoord4fv ((GLfloat *) &(to->texCoordPre.s));
+		}
+		from->texCoord = to->texCoord;
+		c->texCoord &= nbitID;
+	}
+
+	if (c->edgeFlag & bitID) {
+		if (from->edgeFlag != to->edgeFlagPre) {
+			diff_api.EdgeFlag (to->edgeFlagPre);
+		}
+		from->edgeFlag = to->edgeFlag;
+		c->edgeFlag &= nbitID;
+	}
+
+	c->dirty &= nbitID;
 }

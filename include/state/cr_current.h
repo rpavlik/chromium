@@ -13,10 +13,10 @@ typedef struct {
 	GLbitvalue  enable;
 	GLbitvalue  color;
 	GLbitvalue  index;
-	GLbitvalue  texcoord;
+	GLbitvalue  texCoord;
 	GLbitvalue  normal;
 	GLbitvalue  raster;
-	GLbitvalue  edgeflag;
+	GLbitvalue  edgeFlag;
 } CRCurrentBits; 
 
 typedef struct {

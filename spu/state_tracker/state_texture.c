@@ -2469,3 +2469,527 @@ GLboolean STATE_APIENTRY crStateAreTexturesResident(GLsizei n, const GLuint * te
 	UNUSED(residences);
 	return GL_TRUE;
 }
+
+void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID, 
+						  CRTextureState *from, CRTextureState *to) 
+{
+	GLbitvalue nbitID = ~bitID;
+
+	if (t->enable & bitID) {
+		glAble able[2];
+		able[0] = diff_api.Disable;
+		able[1] = diff_api.Enable;
+		if (from->enabled1D != to->enabled1D) {
+			able[to->enabled1D](GL_TEXTURE_1D);
+			t->enable = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->enabled2D != to->enabled2D) {
+			able[to->enabled2D](GL_TEXTURE_2D);
+			t->enable = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+#if 0
+		if (from->enabled3D != to->enabled3D) {
+			able[to->enabled3D](GL_TEXTURE_3D);
+			t->enable = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+#endif
+		if (from->textureGen.s != to->textureGen.s ||
+			from->textureGen.t != to->textureGen.t ||
+			from->textureGen.p != to->textureGen.p ||
+			from->textureGen.q != to->textureGen.q) {
+			able[to->textureGen.s](GL_TEXTURE_GEN_S);
+			able[to->textureGen.t](GL_TEXTURE_GEN_T);
+			able[to->textureGen.p](GL_TEXTURE_GEN_R);
+			able[to->textureGen.q](GL_TEXTURE_GEN_Q);
+			t->enable = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->enable &= nbitID;
+	}
+
+	/* 
+	**  A thought on switching with textures:
+	**  Since we are only performing a switch
+	**  and not a sync, we won't need to 
+	**  update individual textures, just
+	**  the bindings....
+	*/
+
+	if (t->current & bitID) {
+		if (from->currentTexture1DName != to->currentTexture1DName) {
+			diff_api.BindTexture(GL_TEXTURE_1D, to->currentTexture1DName);
+			t->current = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->currentTexture2DName != to->currentTexture2DName) {
+			diff_api.BindTexture(GL_TEXTURE_2D, to->currentTexture2DName);
+			t->current = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+#if 0
+		if (from->currenttexture3dname != to->currenttexture3dname) {
+			diff_api.BindTexture(GL_TEXTURE_3D, to->currenttexture3dname);
+			t->current = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+#endif
+	}
+
+	/* Texture enviroment */
+	if (t->envBit & bitID) {
+		if (from->envMode != to->envMode) {
+			diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->envMode);
+			t->envBit = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->envColor.r != to->envColor.r &&
+			from->envColor.g != to->envColor.g &&
+			from->envColor.b != to->envColor.b &&
+			from->envColor.a != to->envColor.a) {
+			GLfloat f[4];
+			f[0] = to->envColor.r;
+			f[1] = to->envColor.g;
+			f[2] = to->envColor.b;
+			f[3] = to->envColor.a;
+			diff_api.TexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, (const GLfloat *) f);
+			t->envBit = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->envBit &= nbitID;
+	}
+
+	if (t->objGen & bitID) {
+		if (from->objSCoeff.x != to->objSCoeff.x ||
+			from->objSCoeff.y != to->objSCoeff.y ||
+			from->objSCoeff.z != to->objSCoeff.z ||
+			from->objSCoeff.w != to->objSCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->objSCoeff.x;
+			f[1] = to->objSCoeff.y;
+			f[2] = to->objSCoeff.z;
+			f[3] = to->objSCoeff.w;
+			diff_api.TexGenfv (GL_S, GL_OBJECT_PLANE, (const GLfloat *) f);
+			t->objGen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->objTCoeff.x != to->objTCoeff.x ||
+			from->objTCoeff.y != to->objTCoeff.y ||
+			from->objTCoeff.z != to->objTCoeff.z ||
+			from->objTCoeff.w != to->objTCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->objTCoeff.x;
+			f[1] = to->objTCoeff.y;
+			f[2] = to->objTCoeff.z;
+			f[3] = to->objTCoeff.w;
+			diff_api.TexGenfv (GL_T, GL_OBJECT_PLANE, (const GLfloat *) f);
+			t->objGen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->objRCoeff.x != to->objRCoeff.x ||
+			from->objRCoeff.y != to->objRCoeff.y ||
+			from->objRCoeff.z != to->objRCoeff.z ||
+			from->objRCoeff.w != to->objRCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->objRCoeff.x;
+			f[1] = to->objRCoeff.y;
+			f[2] = to->objRCoeff.z;
+			f[3] = to->objRCoeff.w;
+			diff_api.TexGenfv (GL_R, GL_OBJECT_PLANE, (const GLfloat *) f);
+			t->objGen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->objQCoeff.x != to->objQCoeff.x ||
+			from->objQCoeff.y != to->objQCoeff.y ||
+			from->objQCoeff.z != to->objQCoeff.z ||
+			from->objQCoeff.w != to->objQCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->objQCoeff.x;
+			f[1] = to->objQCoeff.y;
+			f[2] = to->objQCoeff.z;
+			f[3] = to->objQCoeff.w;
+			diff_api.TexGenfv (GL_Q, GL_OBJECT_PLANE, (const GLfloat *) f);
+			t->objGen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->objGen &= nbitID;
+	}
+	if (t->eyeGen & bitID) {
+		diff_api.MatrixMode(GL_MODELVIEW);
+		diff_api.PushMatrix();
+		diff_api.LoadIdentity();
+		if (from->eyeSCoeff.x != to->eyeSCoeff.x ||
+			from->eyeSCoeff.y != to->eyeSCoeff.y ||
+			from->eyeSCoeff.z != to->eyeSCoeff.z ||
+			from->eyeSCoeff.w != to->eyeSCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->eyeSCoeff.x;
+			f[1] = to->eyeSCoeff.y;
+			f[2] = to->eyeSCoeff.z;
+			f[3] = to->eyeSCoeff.w;
+			diff_api.TexGenfv (GL_S, GL_EYE_PLANE, (const GLfloat *) f);
+			t->eyeGen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->eyeTCoeff.x != to->eyeTCoeff.x ||
+			from->eyeTCoeff.y != to->eyeTCoeff.y ||
+			from->eyeTCoeff.z != to->eyeTCoeff.z ||
+			from->eyeTCoeff.w != to->eyeTCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->eyeTCoeff.x;
+			f[1] = to->eyeTCoeff.y;
+			f[2] = to->eyeTCoeff.z;
+			f[3] = to->eyeTCoeff.w;
+			diff_api.TexGenfv (GL_T, GL_EYE_PLANE, (const GLfloat *) f);
+			t->eyeGen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->eyeRCoeff.x != to->eyeRCoeff.x ||
+			from->eyeRCoeff.y != to->eyeRCoeff.y ||
+			from->eyeRCoeff.z != to->eyeRCoeff.z ||
+			from->eyeRCoeff.w != to->eyeRCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->eyeRCoeff.x;
+			f[1] = to->eyeRCoeff.y;
+			f[2] = to->eyeRCoeff.z;
+			f[3] = to->eyeRCoeff.w;
+			diff_api.TexGenfv (GL_R, GL_EYE_PLANE, (const GLfloat *) f);
+			t->eyeGen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		if (from->eyeQCoeff.x != to->eyeQCoeff.x ||
+			from->eyeQCoeff.y != to->eyeQCoeff.y ||
+			from->eyeQCoeff.z != to->eyeQCoeff.z ||
+			from->eyeQCoeff.w != to->eyeQCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->eyeQCoeff.x;
+			f[1] = to->eyeQCoeff.y;
+			f[2] = to->eyeQCoeff.z;
+			f[3] = to->eyeQCoeff.w;
+			diff_api.TexGenfv (GL_Q, GL_EYE_PLANE, (const GLfloat *) f);
+			t->eyeGen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		diff_api.PopMatrix();
+		t->eyeGen &= nbitID;
+	}
+	if (t->gen & bitID) {
+		if (from->gen.s != to->gen.s ||
+			from->gen.t != to->gen.t ||
+			from->gen.p != to->gen.p ||
+			from->gen.q != to->gen.q) {
+			diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->gen.s);
+			diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->gen.t);
+			diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->gen.p);
+			diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->gen.q);	
+			t->gen = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->gen &= nbitID;
+	}
+	t->dirty &= nbitID;
+}
+
+void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID, 
+						 CRTextureState *from, CRTextureState *to) 
+{
+	GLbitvalue nbitID = ~bitID;
+	CRTextureObj *tobj = NULL;
+	GLuint name=0;
+	GLuint *cname=NULL;
+
+	if (t->enable & bitID) {
+		glAble able[2];
+		able[0] = diff_api.Disable;
+		able[1] = diff_api.Enable;
+		if (from->enabled1D != to->enabled1D) {
+			able[to->enabled1D](GL_TEXTURE_1D);
+			from->enabled1D = to->enabled1D;
+		}
+		if (from->enabled2D != to->enabled2D) {
+			able[to->enabled2D](GL_TEXTURE_2D);
+			from->enabled2D = to->enabled2D;
+		}
+#if 0
+		if (from->enabled3D != to->enabled3D) {
+			able[to->enabled3D](GL_TEXTURE_3D);
+			from->enabled3D = to->enabled3D;
+		}
+#endif
+		if (from->textureGen.s != to->textureGen.s ||
+			from->textureGen.t != to->textureGen.t ||
+			from->textureGen.p != to->textureGen.p ||
+			from->textureGen.q != to->textureGen.q) {
+			able[to->textureGen.s](GL_TEXTURE_GEN_S);
+			able[to->textureGen.t](GL_TEXTURE_GEN_T);
+			able[to->textureGen.p](GL_TEXTURE_GEN_R);
+			able[to->textureGen.q](GL_TEXTURE_GEN_Q);
+			from->textureGen = to->textureGen;
+		}
+		t->enable &= nbitID;
+	}
+
+	/* Get the active texture */
+	if (to->enabled1D == GL_TRUE) {
+		tobj = to->currentTexture1D;
+		name = to->currentTexture1DName;
+		cname = &(from->currentTexture1DName);
+	}
+
+	if (to->enabled2D == GL_TRUE) {
+		tobj = to->currentTexture2D;
+		name = to->currentTexture2DName;
+		cname = &(from->currentTexture2DName);
+	}
+
+#if 0
+	if (to->enabled3d == GL_TRUE) {
+		tobj = to->currenttexture3d;
+		name = to->currenttexture3dname;
+		cname = &(from->currenttexture3dname);
+	}
+#endif
+
+	/* Handle texture broadcasting */
+	if (tex_broadcast != NULL) {
+		tobj = tex_broadcast;
+		switch (tex_broadcast->target) {
+		case GL_TEXTURE_1D:
+			name = to->currentTexture1DName;
+			cname = &(from->currentTexture1DName);
+			break;
+		case GL_TEXTURE_2D:
+			name = to->currentTexture2DName;
+			cname = &(from->currentTexture2DName);
+			break;
+#if 0
+		case GL_TEXTURE_3D:
+			name = to->currenttexture3dname;
+			cname = &(from->currenttexture3dname);
+			break;
+#endif
+		}
+	}
+
+
+	/* if texturing is not enabled, return 
+	** note that we leave the dirty bits set
+	*/
+	if (!tobj) {
+		t->dirty &= nbitID;
+		return;
+	}
+
+	if (t->current & bitID) {
+		if (*cname != name) {
+			diff_api.BindTexture(tobj->target, name);
+			*cname = name;
+		}
+		t->current &= nbitID;
+	}
+
+	/*
+	** Texture Restore 
+	** Since textures are allocated objects
+	** it seems wastefull to allocate each one
+	** on all the pipes.
+	** So instead, we'll skip the value compare
+	** and just use the bit test.
+	*/
+
+	if (tobj->dirty & bitID) {
+			
+		if (tobj->paramsBit & bitID) {
+			GLfloat f[4];
+			f[0] = tobj->borderColor.r;
+			f[1] = tobj->borderColor.g;
+			f[2] = tobj->borderColor.b;
+			f[3] = tobj->borderColor.a;
+			diff_api.TexParameteri(tobj->target, GL_TEXTURE_MIN_FILTER, tobj->minFilter);
+			diff_api.TexParameteri(tobj->target, GL_TEXTURE_MAG_FILTER, tobj->magFilter);
+			diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_S, tobj->wrapS);
+			diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_T, tobj->wrapT);
+			diff_api.TexParameterfv(tobj->target, GL_TEXTURE_BORDER_COLOR, (const GLfloat *) f);
+			tobj->paramsBit &= nbitID;
+		}
+
+		if (tobj->imageBit & bitID) {
+			int i;
+			for (i=0; i<to->maxLevel; i++) {
+				CRTextureLevel *tl = &(tobj->level[i]);
+				if (tl->dirty & bitID) {
+					switch (tobj->target) {
+					case GL_TEXTURE_1D:
+						diff_api.TexImage1D(tobj->target, i, tl->components,
+											tl->width, tl->border, tl->format,
+											tl->type, tl->img);
+						break;
+					case GL_TEXTURE_2D:
+						diff_api.TexImage2D(tobj->target, i, tl->components,
+											tl->width, tl->height, tl->border,
+											tl->format, tl->type, tl->img);
+						break;
+#if 0
+					case GL_TEXTURE_3D:
+						diff_api.TexImage3D(tobj->target, i, tl->components,
+											tl->width, tl->height, tl->depth,
+											tl->border, tl->format, tl->type,
+											tl->img);
+
+						break;
+#endif
+					default:
+						UNIMPLEMENTED();
+					}	
+					tl->dirty &= nbitID;
+				}
+			}
+			tobj->imageBit &= nbitID;
+		}
+		tobj->dirty &= nbitID;
+	}
+
+	/* Texture enviroment */
+	if (t->envBit & bitID) {
+		if (from->envMode != to->envMode) {
+			diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->envMode);
+			from->envMode = to->envMode;
+		}
+		if (from->envColor.r != to->envColor.r &&
+			from->envColor.g != to->envColor.g &&
+			from->envColor.b != to->envColor.b &&
+			from->envColor.a != to->envColor.a) {
+			GLfloat f[4];
+			f[0] = to->envColor.r;
+			f[1] = to->envColor.g;
+			f[2] = to->envColor.b;
+			f[3] = to->envColor.a;
+			diff_api.TexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, (const GLfloat *) f);
+			from->envColor = to->envColor;
+		}
+		t->envBit &= nbitID;
+	}
+
+	if (t->objGen & bitID) {
+		if (from->objSCoeff.x != to->objSCoeff.x ||
+			from->objSCoeff.y != to->objSCoeff.y ||
+			from->objSCoeff.z != to->objSCoeff.z ||
+			from->objSCoeff.w != to->objSCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->objSCoeff.x;
+			f[1] = to->objSCoeff.y;
+			f[2] = to->objSCoeff.z;
+			f[3] = to->objSCoeff.w;
+			diff_api.TexGenfv (GL_S, GL_OBJECT_PLANE, (const GLfloat *) f);
+			from->objSCoeff = to->objSCoeff;
+		}
+		if (from->objTCoeff.x != to->objTCoeff.x ||
+			from->objTCoeff.y != to->objTCoeff.y ||
+			from->objTCoeff.z != to->objTCoeff.z ||
+			from->objTCoeff.w != to->objTCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->objTCoeff.x;
+			f[1] = to->objTCoeff.y;
+			f[2] = to->objTCoeff.z;
+			f[3] = to->objTCoeff.w;
+			diff_api.TexGenfv (GL_T, GL_OBJECT_PLANE, (const GLfloat *) f);
+			from->objTCoeff = to->objTCoeff;
+		}
+		if (from->objRCoeff.x != to->objRCoeff.x ||
+			from->objRCoeff.y != to->objRCoeff.y ||
+			from->objRCoeff.z != to->objRCoeff.z ||
+			from->objRCoeff.w != to->objRCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->objRCoeff.x;
+			f[1] = to->objRCoeff.y;
+			f[2] = to->objRCoeff.z;
+			f[3] = to->objRCoeff.w;
+			diff_api.TexGenfv (GL_R, GL_OBJECT_PLANE, (const GLfloat *) f);
+			from->objRCoeff = to->objRCoeff;
+		}
+		if (from->objQCoeff.x != to->objQCoeff.x ||
+			from->objQCoeff.y != to->objQCoeff.y ||
+			from->objQCoeff.z != to->objQCoeff.z ||
+			from->objQCoeff.w != to->objQCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->objQCoeff.x;
+			f[1] = to->objQCoeff.y;
+			f[2] = to->objQCoeff.z;
+			f[3] = to->objQCoeff.w;
+			diff_api.TexGenfv (GL_Q, GL_OBJECT_PLANE, (const GLfloat *) f);
+			from->objQCoeff = to->objQCoeff;
+		}
+		t->objGen &= nbitID;
+	}
+	if (t->eyeGen & bitID) {
+		diff_api.MatrixMode(GL_MODELVIEW);
+		diff_api.PushMatrix();
+		diff_api.LoadIdentity();
+		if (from->eyeSCoeff.x != to->eyeSCoeff.x ||
+			from->eyeSCoeff.y != to->eyeSCoeff.y ||
+			from->eyeSCoeff.z != to->eyeSCoeff.z ||
+			from->eyeSCoeff.w != to->eyeSCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->eyeSCoeff.x;
+			f[1] = to->eyeSCoeff.y;
+			f[2] = to->eyeSCoeff.z;
+			f[3] = to->eyeSCoeff.w;
+			diff_api.TexGenfv (GL_S, GL_EYE_PLANE, (const GLfloat *) f);
+			from->eyeSCoeff = to->eyeSCoeff;
+		}
+		if (from->eyeTCoeff.x != to->eyeTCoeff.x ||
+			from->eyeTCoeff.y != to->eyeTCoeff.y ||
+			from->eyeTCoeff.z != to->eyeTCoeff.z ||
+			from->eyeTCoeff.w != to->eyeTCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->eyeTCoeff.x;
+			f[1] = to->eyeTCoeff.y;
+			f[2] = to->eyeTCoeff.z;
+			f[3] = to->eyeTCoeff.w;
+			diff_api.TexGenfv (GL_T, GL_EYE_PLANE, (const GLfloat *) f);
+			from->eyeTCoeff = to->eyeTCoeff;
+		}
+		if (from->eyeRCoeff.x != to->eyeRCoeff.x ||
+			from->eyeRCoeff.y != to->eyeRCoeff.y ||
+			from->eyeRCoeff.z != to->eyeRCoeff.z ||
+			from->eyeRCoeff.w != to->eyeRCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->eyeRCoeff.x;
+			f[1] = to->eyeRCoeff.y;
+			f[2] = to->eyeRCoeff.z;
+			f[3] = to->eyeRCoeff.w;
+			diff_api.TexGenfv (GL_R, GL_EYE_PLANE, (const GLfloat *) f);
+			from->eyeRCoeff = to->eyeRCoeff;
+		}
+		if (from->eyeQCoeff.x != to->eyeQCoeff.x ||
+			from->eyeQCoeff.y != to->eyeQCoeff.y ||
+			from->eyeQCoeff.z != to->eyeQCoeff.z ||
+			from->eyeQCoeff.w != to->eyeQCoeff.w) {
+			GLfloat f[4];
+			f[0] = to->eyeQCoeff.x;
+			f[1] = to->eyeQCoeff.y;
+			f[2] = to->eyeQCoeff.z;
+			f[3] = to->eyeQCoeff.w;
+			diff_api.TexGenfv (GL_Q, GL_EYE_PLANE, (const GLfloat *) f);
+			from->eyeQCoeff = to->eyeQCoeff;
+		}
+		diff_api.PopMatrix();
+		t->eyeGen &= nbitID;
+	}
+	if (t->gen & bitID) {
+		if (from->gen.s != to->gen.s ||
+			from->gen.t != to->gen.t ||
+			from->gen.p != to->gen.p ||
+			from->gen.q != to->gen.q) {
+			diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->gen.s);
+			diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->gen.t);
+			diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->gen.p);
+			diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->gen.q);	
+			from->gen = to->gen;
+		}
+		t->gen &= nbitID;
+	}
+	t->dirty &= nbitID;
+}

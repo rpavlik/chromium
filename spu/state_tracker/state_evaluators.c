@@ -43,32 +43,32 @@ void crStateEvaluatorInit(CREvaluatorState *e)
 	/* What are the correct defaults?!? */
 	for (i=0; i < GLEVAL_TOT; i++) 
 	{
-		e->enable1d[i] = GL_FALSE;
-		e->eval1d[i].coeff = (GLdouble *) crAlloc (sizeof(GLdouble) * e->maxEvalOrder*4);
-		e->eval1d[i].order = 0;
-		e->eval1d[i].u1 = 0.0;
-		e->eval1d[i].u2 = 1.0;
+		e->enable1D[i] = GL_FALSE;
+		e->eval1D[i].coeff = (GLdouble *) crAlloc (sizeof(GLdouble) * e->maxEvalOrder*4);
+		e->eval1D[i].order = 0;
+		e->eval1D[i].u1 = 0.0;
+		e->eval1D[i].u2 = 1.0;
 
-		e->enable2d[i] = GL_FALSE;
-		e->eval2d[i].coeff= (GLdouble *) crAlloc (sizeof(GLdouble) * e->maxEvalOrder*4*2);
-		e->eval2d[i].uorder=0;
-		e->eval2d[i].vorder=0;
-		e->eval2d[i].u1=0.0;
-		e->eval2d[i].u2=1.0;
-		e->eval2d[i].v1=0.0;
-		e->eval2d[i].v2=1.0;
+		e->enable2D[i] = GL_FALSE;
+		e->eval2D[i].coeff= (GLdouble *) crAlloc (sizeof(GLdouble) * e->maxEvalOrder*4*2);
+		e->eval2D[i].uorder=0;
+		e->eval2D[i].vorder=0;
+		e->eval2D[i].u1=0.0;
+		e->eval2D[i].u2=1.0;
+		e->eval2D[i].v1=0.0;
+		e->eval2D[i].v2=1.0;
 	}
 
-	e->un1d = 1;
-	e->u11d = 0.0; 
-	e->u21d = 1.0;
+	e->un1D = 1;
+	e->u11D = 0.0; 
+	e->u21D = 1.0;
 
-	e->un2d = 1;
-	e->vn2d = 1;
-	e->u12d = 0.0;
-	e->u22d = 1.0;
-	e->v12d = 0.0;
-	e->v22d = 1.0;
+	e->un2D = 1;
+	e->vn2D = 1;
+	e->u12D = 0.0;
+	e->u22D = 1.0;
+	e->v12D = 0.0;
+	e->v22D = 1.0;
 }
 
 void STATE_APIENTRY crStateMap1d (GLenum target, GLdouble u1, GLdouble u2, 
@@ -76,7 +76,7 @@ void STATE_APIENTRY crStateMap1d (GLenum target, GLdouble u1, GLdouble u2,
 {
 	CRContext *g = GetCurrentContext();
 	CREvaluatorState *e = &(g->eval);
-	CREvaluator1d *eval1d;
+	CREvaluator1D *eval1D;
 	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorBits *eb = &(sb->eval);
 
@@ -118,21 +118,21 @@ void STATE_APIENTRY crStateMap1d (GLenum target, GLdouble u1, GLdouble u2,
 		return;
 	}
 
-	eval1d = e->eval1d+i;
-	eval1d->order = order;
-	eval1d->u1 = u1;
-	eval1d->u2 = u2;
+	eval1D = e->eval1D+i;
+	eval1D->order = order;
+	eval1D->u1 = u1;
+	eval1D->u2 = u2;
 
 	p = points;
 	size = stride;
 	for (j=0; j<order; j++) {
 		for (k=0; k<size; k++)
-			eval1d->coeff[j] = p[k];
+			eval1D->coeff[j] = p[k];
 		p+=size;
 	}
 
 	eb->dirty = g->neg_bitid;
-	eb->eval1d[i] = g->neg_bitid;
+	eb->eval1D[i] = g->neg_bitid;
 }
 
 void STATE_APIENTRY crStateMap1f (GLenum target, GLfloat u1, GLfloat u2, 
@@ -140,7 +140,7 @@ void STATE_APIENTRY crStateMap1f (GLenum target, GLfloat u1, GLfloat u2,
 {
 	CRContext *g = GetCurrentContext();
 	CREvaluatorState *e = &(g->eval);
-	CREvaluator1d *eval1d;
+	CREvaluator1D *eval1D;
 	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorBits *eb = &(sb->eval);
 
@@ -181,20 +181,20 @@ void STATE_APIENTRY crStateMap1f (GLenum target, GLfloat u1, GLfloat u2,
 		return;
 	}
 
-	eval1d = e->eval1d+i;
-	eval1d->order = order;
-	eval1d->u1 = (GLdouble) u1;
-	eval1d->u2 = (GLdouble) u2;
+	eval1D = e->eval1D+i;
+	eval1D->order = order;
+	eval1D->u1 = (GLdouble) u1;
+	eval1D->u2 = (GLdouble) u2;
 
 	p = points;
 	for (j=0; j<order; j++) {
 		for (k=0; k<gleval_sizes[i]; k++)
-			eval1d->coeff[j] = (GLdouble) p[k];
+			eval1D->coeff[j] = (GLdouble) p[k];
 		p+=stride;
 	}
 
 	eb->dirty = g->neg_bitid;
-	eb->eval1d[i] = g->neg_bitid;
+	eb->eval1D[i] = g->neg_bitid;
 }
 
 
@@ -203,7 +203,7 @@ void STATE_APIENTRY crStateMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint us
 {
 	CRContext *g = GetCurrentContext();
 	CREvaluatorState *e = &(g->eval);
-	CREvaluator2d *eval2d;
+	CREvaluator2D *eval2D;
 	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorBits *eb = &(sb->eval);
 
@@ -263,19 +263,19 @@ void STATE_APIENTRY crStateMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint us
 	}
 
 
-	eval2d = e->eval2d+i;
-	eval2d->uorder = uorder;
-	eval2d->vorder = vorder;
-	eval2d->u1 = (GLdouble) u1;
-	eval2d->u2 = (GLdouble) u2;
-	eval2d->v1 = (GLdouble) v1;
-	eval2d->v2 = (GLdouble) v2;
+	eval2D = e->eval2D+i;
+	eval2D->uorder = uorder;
+	eval2D->vorder = vorder;
+	eval2D->u1 = (GLdouble) u1;
+	eval2D->u2 = (GLdouble) u2;
+	eval2D->v1 = (GLdouble) v1;
+	eval2D->v2 = (GLdouble) v2;
 
 	p = points;
 	for (j=0; j<vorder; j++) {
 		for (k=0; k<uorder; k++) {
 			for (m=0; m<gleval_sizes[i]; m++)
-				eval2d->coeff[k+j*uorder] = (GLdouble) p[m];
+				eval2D->coeff[k+j*uorder] = (GLdouble) p[m];
 			p+=ustride;
 		}
 		p-=ustride;
@@ -283,7 +283,7 @@ void STATE_APIENTRY crStateMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint us
 	}
 
 	eb->dirty = g->neg_bitid;
-	eb->eval2d[i] = g->neg_bitid;
+	eb->eval2D[i] = g->neg_bitid;
 }
 
 void STATE_APIENTRY crStateMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder,
@@ -291,7 +291,7 @@ void STATE_APIENTRY crStateMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint 
 {
 	CRContext *g = GetCurrentContext();
 	CREvaluatorState *e = &(g->eval);
-	CREvaluator2d *eval2d;
+	CREvaluator2D *eval2D;
 	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorBits *eb = &(sb->eval);
 
@@ -350,19 +350,19 @@ void STATE_APIENTRY crStateMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint 
 		return;
 	}
 
-	eval2d = e->eval2d+i;
-	eval2d->uorder = uorder;
-	eval2d->vorder = vorder;
-	eval2d->u1 = u1;
-	eval2d->u2 = u2;
-	eval2d->v1 = v1;
-	eval2d->v2 = v2;
+	eval2D = e->eval2D+i;
+	eval2D->uorder = uorder;
+	eval2D->vorder = vorder;
+	eval2D->u1 = u1;
+	eval2D->u2 = u2;
+	eval2D->v1 = v1;
+	eval2D->v2 = v2;
 
 	p = points;
 	for (j=0; j<vorder; j++) {
 		for (k=0; k<uorder; k++) {
 			for (m=0; m<gleval_sizes[i]; m++)
-				eval2d->coeff[k+j*uorder] = (GLfloat) p[m];
+				eval2D->coeff[k+j*uorder] = (GLfloat) p[m];
 			p+=ustride;
 		}
 		p-=ustride;
@@ -370,7 +370,7 @@ void STATE_APIENTRY crStateMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint 
 	}
 
 	eb->dirty = g->neg_bitid;
-	eb->eval2d[i] = g->neg_bitid;
+	eb->eval2D[i] = g->neg_bitid;
 }
 
 
@@ -395,12 +395,12 @@ void STATE_APIENTRY crStateMapGrid1d (GLint un, GLdouble u1, GLdouble u2)
 		return;
 	}
 
-	e->un1d = un;
-	e->u11d = u1;
-	e->u21d = u2;
+	e->un1D = un;
+	e->u11D = u1;
+	e->u21D = u2;
 
 	eb->dirty = g->neg_bitid;
-	eb->grid1d = g->neg_bitid;
+	eb->grid1D = g->neg_bitid;
 }
 
 void STATE_APIENTRY crStateMapGrid1f (GLint un, GLfloat u1, GLfloat u2) 
@@ -424,12 +424,12 @@ void STATE_APIENTRY crStateMapGrid1f (GLint un, GLfloat u1, GLfloat u2)
 		return;
 	}
 
-	e->un1d = un;
-	e->u11d = (GLdouble) u1;
-	e->u21d = (GLdouble) u2;
+	e->un1D = un;
+	e->u11D = (GLdouble) u1;
+	e->u21D = (GLdouble) u2;
 
 	eb->dirty = g->neg_bitid;
-	eb->grid1d = g->neg_bitid;
+	eb->grid1D = g->neg_bitid;
 }
 
 void STATE_APIENTRY crStateMapGrid2d (GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2) 
@@ -459,15 +459,15 @@ void STATE_APIENTRY crStateMapGrid2d (GLint un, GLdouble u1, GLdouble u2, GLint 
 		return;
 	}
 
-	e->un2d = un;
-	e->vn2d = un;
-	e->u12d = u1;
-	e->u22d = u2;
-	e->v12d = v1;
-	e->v22d = v2;
+	e->un2D = un;
+	e->vn2D = un;
+	e->u12D = u1;
+	e->u22D = u2;
+	e->v12D = v1;
+	e->v22D = v2;
 
 	eb->dirty = g->neg_bitid;
-	eb->grid2d = g->neg_bitid;
+	eb->grid2D = g->neg_bitid;
 }
 
 void STATE_APIENTRY crStateMapGrid2f (GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2) 
@@ -497,15 +497,15 @@ void STATE_APIENTRY crStateMapGrid2f (GLint un, GLfloat u1, GLfloat u2, GLint vn
 		return;
 	}
 
-	e->un2d = un;
-	e->vn2d = un;
-	e->u12d = (GLdouble) u1;
-	e->u22d = (GLdouble) u2;
-	e->v12d = (GLdouble) v1;
-	e->v22d = (GLdouble) v2;
+	e->un2D = un;
+	e->vn2D = un;
+	e->u12D = (GLdouble) u1;
+	e->u22D = (GLdouble) u2;
+	e->v12D = (GLdouble) v1;
+	e->v22D = (GLdouble) v2;
 
 	eb->dirty = g->neg_bitid;
-	eb->grid2d = g->neg_bitid;
+	eb->grid2D = g->neg_bitid;
 }
 
 void STATE_APIENTRY crStateGetMapdv(GLenum target, GLenum query, GLdouble * v)
@@ -539,21 +539,21 @@ void STATE_APIENTRY crStateGetMapdv(GLenum target, GLenum query, GLdouble * v)
 		switch (query) 
 		{
 			case GL_COEFF:
-				size = gleval_sizes[i] * e->eval2d[i].uorder * e->eval2d[i].vorder;
+				size = gleval_sizes[i] * e->eval2D[i].uorder * e->eval2D[i].vorder;
 				for (j=0; j<size; j++)
 				{
-					v[j] = e->eval2d[i].coeff[j];
+					v[j] = e->eval2D[i].coeff[j];
 				}
 				break;
 			case GL_ORDER:
-				v[0] = (GLdouble) e->eval2d[i].uorder;
-				v[1] = (GLdouble) e->eval2d[i].vorder;
+				v[0] = (GLdouble) e->eval2D[i].uorder;
+				v[1] = (GLdouble) e->eval2D[i].vorder;
 				break;
 			case GL_DOMAIN:
-				v[0] = e->eval2d[i].u1;
-				v[1] = e->eval2d[i].u2;
-				v[2] = e->eval2d[i].v1;
-				v[3] = e->eval2d[i].v2;
+				v[0] = e->eval2D[i].u1;
+				v[1] = e->eval2D[i].u2;
+				v[2] = e->eval2D[i].v1;
+				v[3] = e->eval2D[i].v2;
 				break;
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -566,18 +566,18 @@ void STATE_APIENTRY crStateGetMapdv(GLenum target, GLenum query, GLdouble * v)
 		switch (query) 
 		{
 			case GL_COEFF:
-				size = gleval_sizes[i] * e->eval1d[i].order;
+				size = gleval_sizes[i] * e->eval1D[i].order;
 				for (j=0; j<size; j++)
 				{
-					v[j] = e->eval1d[i].coeff[j];
+					v[j] = e->eval1D[i].coeff[j];
 				}
 				break;
 			case GL_ORDER:
-				*v = (GLdouble) e->eval1d[i].order;
+				*v = (GLdouble) e->eval1D[i].order;
 				break;
 			case GL_DOMAIN:
-				v[0] = e->eval1d[i].u1;
-				v[1] = e->eval1d[i].u2;
+				v[0] = e->eval1D[i].u1;
+				v[1] = e->eval1D[i].u2;
 				break;
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -614,21 +614,21 @@ void STATE_APIENTRY crStateGetMapfv(GLenum target, GLenum query, GLfloat* v)
 		switch (query) 
 		{
 			case GL_COEFF:
-				size = gleval_sizes[i] * e->eval2d[i].uorder * e->eval2d[i].vorder;
+				size = gleval_sizes[i] * e->eval2D[i].uorder * e->eval2D[i].vorder;
 				for (j=0; j<size; j++)
 				{
-					v[j] = (GLfloat) e->eval2d[i].coeff[j];
+					v[j] = (GLfloat) e->eval2D[i].coeff[j];
 				}
 				break;
 			case GL_ORDER:
-				v[0] = (GLfloat) e->eval2d[i].uorder;
-				v[1] = (GLfloat) e->eval2d[i].vorder;
+				v[0] = (GLfloat) e->eval2D[i].uorder;
+				v[1] = (GLfloat) e->eval2D[i].vorder;
 				break;
 			case GL_DOMAIN:
-				v[0] = (GLfloat) e->eval2d[i].u1;
-				v[1] = (GLfloat) e->eval2d[i].u2;
-				v[2] = (GLfloat) e->eval2d[i].v1;
-				v[3] = (GLfloat) e->eval2d[i].v2;
+				v[0] = (GLfloat) e->eval2D[i].u1;
+				v[1] = (GLfloat) e->eval2D[i].u2;
+				v[2] = (GLfloat) e->eval2D[i].v1;
+				v[3] = (GLfloat) e->eval2D[i].v2;
 				break;
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -641,18 +641,18 @@ void STATE_APIENTRY crStateGetMapfv(GLenum target, GLenum query, GLfloat* v)
 		switch (query) 
 		{
 			case GL_COEFF:
-				size = gleval_sizes[i] * e->eval1d[i].order;
+				size = gleval_sizes[i] * e->eval1D[i].order;
 				for (j=0; j<size; j++)
 				{
-					v[j] = (GLfloat) e->eval1d[i].coeff[j];
+					v[j] = (GLfloat) e->eval1D[i].coeff[j];
 				}
 				break;
 			case GL_ORDER:
-				*v = (GLfloat) e->eval1d[i].order;
+				*v = (GLfloat) e->eval1D[i].order;
 				break;
 			case GL_DOMAIN:
-				v[0] = (GLfloat) e->eval1d[i].u1;
-				v[1] = (GLfloat) e->eval1d[i].u2;
+				v[0] = (GLfloat) e->eval1D[i].u1;
+				v[1] = (GLfloat) e->eval1D[i].u2;
 				break;
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -689,21 +689,21 @@ void STATE_APIENTRY crStateGetMapiv(GLenum target, GLenum query, GLint* v)
 		switch (query) 
 		{
 			case GL_COEFF:
-				size = gleval_sizes[i] * e->eval2d[i].uorder * e->eval2d[i].vorder;
+				size = gleval_sizes[i] * e->eval2D[i].uorder * e->eval2D[i].vorder;
 				for (j=0; j<size; j++)
 				{
-					v[j] = (GLint) e->eval2d[i].coeff[j];
+					v[j] = (GLint) e->eval2D[i].coeff[j];
 				}
 				break;
 			case GL_ORDER:
-				v[0] = e->eval2d[i].uorder;
-				v[1] = e->eval2d[i].vorder;
+				v[0] = e->eval2D[i].uorder;
+				v[1] = e->eval2D[i].vorder;
 				break;
 			case GL_DOMAIN:
-				v[0] = (GLint) e->eval2d[i].u1;
-				v[1] = (GLint) e->eval2d[i].u2;
-				v[2] = (GLint) e->eval2d[i].v1;
-				v[3] = (GLint) e->eval2d[i].v2;
+				v[0] = (GLint) e->eval2D[i].u1;
+				v[1] = (GLint) e->eval2D[i].u2;
+				v[2] = (GLint) e->eval2D[i].v1;
+				v[3] = (GLint) e->eval2D[i].v2;
 				break;
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -716,18 +716,18 @@ void STATE_APIENTRY crStateGetMapiv(GLenum target, GLenum query, GLint* v)
 		switch (query) 
 		{
 			case GL_COEFF:
-				size = gleval_sizes[i] * e->eval1d[i].order;
+				size = gleval_sizes[i] * e->eval1D[i].order;
 				for (j=0; j<size; j++)
 				{
-					v[j] = (GLint) e->eval1d[i].coeff[j];
+					v[j] = (GLint) e->eval1D[i].coeff[j];
 				}
 				break;
 			case GL_ORDER:
-				*v = e->eval1d[i].order;
+				*v = e->eval1D[i].order;
 				break;
 			case GL_DOMAIN:
-				v[0] = (GLint) e->eval1d[i].u1;
-				v[1] = (GLint) e->eval1d[i].u2;
+				v[0] = (GLint) e->eval1D[i].u1;
+				v[1] = (GLint) e->eval1D[i].u2;
 				break;
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -735,4 +735,203 @@ void STATE_APIENTRY crStateGetMapiv(GLenum target, GLenum query, GLint* v)
 				return;
 		}
 	}
+}
+
+void crStateEvaluatorSwitch(CREvaluatorBits *e, GLbitvalue bitID,
+				  CREvaluatorState *from, CREvaluatorState *to) 
+{
+	GLbitvalue nbitID = ~bitID;
+	int i;
+
+	if (e->enable & bitID) {
+		if (from->autoNormal != to->autoNormal) {
+			glAble able[2];
+			able[0] = diff_api.Disable;
+			able[1] = diff_api.Enable;
+			able[to->autoNormal](GL_AUTO_NORMAL);
+			e->enable = GLBITS_ONES;
+			e->dirty = GLBITS_ONES;
+		}
+		e->enable &= nbitID;
+	}
+	for (i=0; i<GLEVAL_TOT; i++) {
+		if (e->eval1D[i] & bitID) {
+			int size = from->eval1D[i].order * gleval_sizes[i] * 
+						sizeof (*from->eval1D[i].coeff);
+			if (from->eval1D[i].order != to->eval1D[i].order ||
+				from->eval1D[i].u1 != from->eval1D[i].u1 ||
+				from->eval1D[i].u2 != from->eval1D[i].u2 ||
+				memcmp ((const void *) from->eval1D[i].coeff,
+						(const void *) to->eval1D[i].coeff, size)) {
+				diff_api.Map1d(i+GL_MAP1_COLOR_4, to->eval1D[i].u1, to->eval1D[i].u2,
+							 gleval_sizes[i], to->eval1D[i].order, to->eval1D[i].coeff);
+				e->dirty = GLBITS_ONES;
+				e->eval1D[i] = GLBITS_ONES;
+			}
+			e->eval1D[i] &= nbitID;
+		}
+	}
+
+	for (i=0; i<GLEVAL_TOT; i++) {
+		if (e->eval2D[i] & bitID) {
+			int size = from->eval2D[i].uorder * from->eval2D[i].vorder *
+						gleval_sizes[i] * sizeof (*from->eval2D[i].coeff);
+			if (from->eval2D[i].uorder != to->eval2D[i].uorder ||
+				from->eval2D[i].vorder != to->eval2D[i].vorder ||
+				from->eval2D[i].u1 != from->eval2D[i].u1 ||
+				from->eval2D[i].u2 != from->eval2D[i].u2 ||
+				from->eval2D[i].v1 != from->eval2D[i].v1 ||
+				from->eval2D[i].v2 != from->eval2D[i].v2 ||
+				memcmp ((const void *) from->eval2D[i].coeff,
+						(const void *) to->eval2D[i].coeff, size)) {
+				diff_api.Map2d(i+GL_MAP2_COLOR_4,
+							 to->eval2D[i].u1, to->eval2D[i].u2,
+							 gleval_sizes[i], to->eval2D[i].uorder,
+							 to->eval2D[i].v1, to->eval2D[i].v2,
+							 gleval_sizes[i], to->eval2D[i].vorder,
+							 to->eval2D[i].coeff);
+				e->dirty = GLBITS_ONES;
+				e->eval2D[i] = GLBITS_ONES;
+			}
+			e->eval2D[i] &= nbitID;
+		}
+	}
+	if (e->grid1D & bitID) {
+		if (from->u11D != to->u11D ||
+			from->u21D != to->u21D ||
+			from->un1D != to->un1D) {
+			diff_api.MapGrid1d (to->un1D, to->u11D, to->u21D);
+			e->dirty = GLBITS_ONES;
+			e->grid1D = GLBITS_ONES;
+		}
+		e->grid1D &= nbitID;
+	}		
+	if (e->grid2D & bitID) {
+		if (from->u12D != to->u12D ||
+			from->u22D != to->u22D ||
+			from->un2D != to->un2D ||
+			from->v12D != to->v12D ||
+			from->v22D != to->v22D ||
+			from->vn2D != to->vn2D) {
+			diff_api.MapGrid2d (to->un2D, to->u12D, to->u22D,
+							  to->vn2D, to->v12D, to->v22D);
+			e->dirty = GLBITS_ONES;
+			e->grid1D = GLBITS_ONES;
+		}
+		e->grid1D &= nbitID;
+	}
+	e->dirty &= nbitID;
+}
+
+void crStateEvaluatorDiff(CREvaluatorBits *e, GLbitvalue bitID,
+				 CREvaluatorState *from, CREvaluatorState *to) 
+{
+	GLbitvalue nbitID = ~bitID;
+	glAble able[2];
+	int i;
+	able[0] = diff_api.Disable;
+	able[1] = diff_api.Enable;
+
+	if (e->enable & bitID) {
+		if (from->autoNormal != to->autoNormal) {
+			able[to->autoNormal](GL_AUTO_NORMAL);
+			from->autoNormal = to->autoNormal;
+		}
+		e->enable &= nbitID;
+	}
+	for (i=0; i<GLEVAL_TOT; i++) {
+		if (e->enable1D[i] & bitID) {
+			if (from->enable1D[i] != to->enable1D[i]) {
+				able[to->enable1D[i]](i+GL_MAP1_COLOR_4);
+				from->enable1D[i] = to->enable1D[i];
+			}
+			e->enable1D[i] &= nbitID;
+		}
+		if (to->enable1D[i] && e->eval1D[i] & bitID) {
+			int size = from->eval1D[i].order * gleval_sizes[i] * 
+						sizeof (*from->eval1D[i].coeff);
+			if (from->eval1D[i].order != to->eval1D[i].order ||
+				from->eval1D[i].u1 != from->eval1D[i].u1 ||
+				from->eval1D[i].u2 != from->eval1D[i].u2 ||
+				memcmp ((const void *) from->eval1D[i].coeff,
+						(const void *) to->eval1D[i].coeff, size)) {
+				diff_api.Map1d(i+GL_MAP1_COLOR_4, to->eval1D[i].u1, to->eval1D[i].u2,
+							 gleval_sizes[i], to->eval1D[i].order, to->eval1D[i].coeff);
+				from->eval1D[i].order = to->eval1D[i].order;
+				from->eval1D[i].u1 = from->eval1D[i].u1;
+				from->eval1D[i].u2 = from->eval1D[i].u2;
+				memcpy ((void *) from->eval1D[i].coeff,
+						(const void *) to->eval1D[i].coeff, size);
+			}
+			e->eval1D[i] &= nbitID;
+		}
+	}
+
+	for (i=0; i<GLEVAL_TOT; i++) {
+		if (e->enable2D[i] & bitID) {
+			if (from->enable2D[i] != to->enable2D[i]) {
+				able[to->enable2D[i]](i+GL_MAP2_COLOR_4);
+				from->enable2D[i] = to->enable2D[i];
+			}
+			e->enable2D[i] &= nbitID;
+		}
+		if (to->enable2D[i] && e->eval2D[i] & bitID) {
+			int size = from->eval2D[i].uorder * from->eval2D[i].vorder *
+						gleval_sizes[i] * sizeof (*from->eval2D[i].coeff);
+			if (from->eval2D[i].uorder != to->eval2D[i].uorder ||
+				from->eval2D[i].vorder != to->eval2D[i].vorder ||
+				from->eval2D[i].u1 != from->eval2D[i].u1 ||
+				from->eval2D[i].u2 != from->eval2D[i].u2 ||
+				from->eval2D[i].v1 != from->eval2D[i].v1 ||
+				from->eval2D[i].v2 != from->eval2D[i].v2 ||
+				memcmp ((const void *) from->eval2D[i].coeff,
+						(const void *) to->eval2D[i].coeff, size)) {
+				diff_api.Map2d(i+GL_MAP2_COLOR_4,
+							 to->eval2D[i].u1, to->eval2D[i].u2,
+							 gleval_sizes[i], to->eval2D[i].uorder,
+							 to->eval2D[i].v1, to->eval2D[i].v2,
+							 gleval_sizes[i], to->eval2D[i].vorder,
+							 to->eval2D[i].coeff);
+				from->eval2D[i].uorder = to->eval2D[i].uorder;
+				from->eval2D[i].vorder = to->eval2D[i].vorder;
+				from->eval2D[i].u1 = from->eval2D[i].u1;
+				from->eval2D[i].u2 = from->eval2D[i].u2;
+				from->eval2D[i].v1 = from->eval2D[i].v1;
+				from->eval2D[i].v2 = from->eval2D[i].v2;
+				memcpy ((void *) from->eval2D[i].coeff,
+						(const void *) to->eval2D[i].coeff, size);
+			}
+			e->eval2D[i] &= nbitID;
+		}
+	}
+	if (e->grid1D & bitID) {
+		if (from->u11D != to->u11D ||
+			from->u21D != to->u21D ||
+			from->un1D != to->un1D) {
+			diff_api.MapGrid1d (to->un1D, to->u11D, to->u21D);
+			from->u11D = to->u11D;
+			from->u21D = to->u21D;
+			from->un1D = to->un1D;
+		}
+		e->grid1D &= nbitID;
+	}		
+	if (e->grid2D & bitID) {
+		if (from->u12D != to->u12D ||
+			from->u22D != to->u22D ||
+			from->un2D != to->un2D ||
+			from->v12D != to->v12D ||
+			from->v22D != to->v22D ||
+			from->vn2D != to->vn2D) {
+			diff_api.MapGrid2d (to->un2D, to->u12D, to->u22D,
+							  to->vn2D, to->v12D, to->v22D);
+			from->u12D = to->u12D;
+			from->u22D = to->u22D;
+			from->un2D = to->un2D;
+			from->v12D = to->v12D;
+			from->v22D = to->v22D;
+			from->vn2D = to->vn2D;
+		}
+		e->grid1D &= nbitID;
+	}
+	e->dirty &= nbitID;
 }

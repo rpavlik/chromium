@@ -119,6 +119,5 @@ void tilesortspuConnectToServers( void )
 	{
 		TileSortSPUServer *server = tilesort_spu.servers + i;
 		crNetServerConnect( &(server->net) );
-		crPackInitBuffer( &(server->pack), crNetAlloc( server->net.conn ), server->net.buffer_size, 0 );
 	}
 }

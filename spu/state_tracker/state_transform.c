@@ -27,6 +27,34 @@ static const GLmatrix identity_matrix =
 #define MAX_MATRIX_STACK_DEPTH 512
 #define MAX_CLIPPLANES 8
 
+#ifdef GL_DEFAULTTYPE_FLOAT
+
+#define LOADMATRIX(a) \
+{ \
+GLfloat f[16]; \
+f[0] = (a)->m00; f[1] = (a)->m01; f[2] = (a)->m02; f[3] = (a)->m03; \
+f[4] = (a)->m10; f[5] = (a)->m11; f[6] = (a)->m12; f[7] = (a)->m13; \
+f[8] = (a)->m20; f[9] = (a)->m21; f[10] = (a)->m22; f[11] = (a)->m23; \
+f[12] = (a)->m30; f[13] = (a)->m31; f[14] = (a)->m32; f[15] = (a)->m33; \
+diff_api.LoadMatrixf((const GLfloat *) f); \
+}
+
+#endif
+
+#ifdef GL_DEFAULTTYPE_DOUBLE
+
+#define LOADMATRIX(a) \
+{ \
+GLdouble f[16]; \
+f[0] = (a)->m00; f[1] = (a)->m01; f[2] = (a)->m02; f[3] = (a)->m03; \
+f[4] = (a)->m10; f[5] = (a)->m11; f[6] = (a)->m12; f[7] = (a)->m13; \
+f[8] = (a)->m20; f[9] = (a)->m21; f[10] = (a)->m22; f[11] = (a)->m23; \
+f[12] = (a)->m30; f[13] = (a)->m31; f[14] = (a)->m32; f[15] = (a)->m33; \
+diff_api.LoadMatrixd((const GLdouble *) f); \
+}
+#endif
+
+
 void crStateTransformInitBits (CRTransformBits *t) 
 {
 	t->dirty = GLBITS_ONES;
@@ -1048,4 +1076,218 @@ void  STATE_APIENTRY crStateGetClipPlane (GLenum plane, GLdouble *equation)
 	equation[1] = t->clipPlane[i].x;
 	equation[2] = t->clipPlane[i].x;
 	equation[3] = t->clipPlane[i].x;
+}
+
+void crStateTransformSwitch (CRTransformBits *t, GLbitvalue bitID, 
+						 CRTransformState *from, CRTransformState *to) 
+{
+	GLbitvalue nbitID = ~bitID;
+	int i;
+
+	if (t->clipPlane & bitID) {
+		for (i=0; i<from->maxClipPlanes; i++) {
+			if (from->clipPlane[i].x != to->clipPlane[i].x ||
+				from->clipPlane[i].y != to->clipPlane[i].y ||
+				from->clipPlane[i].z != to->clipPlane[i].z ||
+				from->clipPlane[i].w != to->clipPlane[i].w) {
+
+				GLdouble cp[4];
+				cp[0] = to->clipPlane[i].x;
+				cp[1] = to->clipPlane[i].y;
+				cp[2] = to->clipPlane[i].z;
+				cp[3] = to->clipPlane[i].w;
+
+				diff_api.MatrixMode (GL_MODELVIEW);
+				diff_api.PushMatrix();
+				diff_api.LoadIdentity();
+				diff_api.ClipPlane(GL_CLIP_PLANE0 + i, (const GLdouble *)(cp));
+				diff_api.PopMatrix();
+
+				t->clipPlane = GLBITS_ONES;
+				t->dirty = GLBITS_ONES;
+			}
+		}
+		t->clipPlane &= nbitID;
+	}
+
+	if (t->matrix[0] & bitID) {
+		if (memcmp (from->modelView+from->modelViewDepth,
+										to->modelView+to->modelViewDepth,
+										sizeof (GLmatrix))) {
+
+			diff_api.MatrixMode(GL_MODELVIEW);		
+			LOADMATRIX(to->modelView+to->modelViewDepth);
+
+			t->matrix[0] = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->matrix[0] &= nbitID;
+	}
+
+	if (t->matrix[1] & bitID) {
+		if (memcmp (from->projection+from->projectionDepth,
+					to->projection+to->projectionDepth,
+					sizeof (GLmatrix))) {
+
+			diff_api.MatrixMode(GL_PROJECTION);		
+			LOADMATRIX(to->projection+to->projectionDepth);
+		
+			t->matrix[1] = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->matrix[1] &= nbitID;
+	}
+
+	if (t->matrix[2] & bitID) {
+		if (memcmp (from->texture+from->textureDepth,
+					to->texture+to->textureDepth,
+					sizeof (GLmatrix))) {
+
+			diff_api.MatrixMode(GL_TEXTURE_MATRIX);		
+			LOADMATRIX(to->texture+to->textureDepth);
+		
+			t->matrix[2] = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->matrix[2] &= nbitID;
+	}
+
+	if (t->matrix[3] & bitID) {
+		if (memcmp (from->color+from->colorDepth,
+					to->color+to->colorDepth,
+					sizeof (GLmatrix))) {
+
+			diff_api.MatrixMode(GL_COLOR);		
+			LOADMATRIX(to->color+to->colorDepth);
+		
+			t->matrix[3] = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->matrix[3] &= nbitID;
+	}
+
+/*  HACK: Don't treat MatrixMode as stand alone state.
+	if (t->mode & bitID) {
+		if (force_mode || from->mode != to->mode) {
+			diff_api.MatrixMode(to->mode);
+			t->mode = GLBITS_ONES;
+			t->dirty = GLBITS_ONES;
+		}
+		t->mode &= nbitID;
+	}
+*/
+
+	to->transformValid = 0;
+	t->dirty &= nbitID;
+}
+
+void crStateTransformDiff(CRTransformBits *t, GLbitvalue bitID, 
+						 CRTransformState *from, CRTransformState *to) 
+{
+	GLbitvalue nbitID = ~bitID;
+	GLint i;
+
+	if (t->clipPlane & bitID) {
+		for (i=0; i<from->maxClipPlanes; i++) {
+			if (from->clipPlane[i].x != to->clipPlane[i].x ||
+				from->clipPlane[i].y != to->clipPlane[i].y ||
+				from->clipPlane[i].z != to->clipPlane[i].z ||
+				from->clipPlane[i].w != to->clipPlane[i].w) {
+				
+				GLdouble cp[4];
+				cp[0] = to->clipPlane[i].x;
+				cp[1] = to->clipPlane[i].y;
+				cp[2] = to->clipPlane[i].z;
+				cp[3] = to->clipPlane[i].w;
+
+				diff_api.MatrixMode (GL_MODELVIEW);
+				diff_api.PushMatrix();
+				diff_api.LoadIdentity();
+				diff_api.ClipPlane(GL_CLIP_PLANE0 + i, (const GLdouble *)(cp));
+				diff_api.PopMatrix();
+				from->clipPlane[i] = to->clipPlane[i];
+			}
+		}
+		t->clipPlane &= nbitID;
+	}
+	
+	if (t->matrix[0] & bitID) {
+		if (memcmp (from->modelView+from->modelViewDepth,
+										to->modelView+to->modelViewDepth,
+										sizeof (GLmatrix))) {
+
+			diff_api.MatrixMode(GL_MODELVIEW);		
+			LOADMATRIX(to->modelView+to->modelViewDepth);
+
+			memcpy((void *) from->modelView, (const void *) to->modelView,
+					sizeof (from->modelView[0]) * (to->modelViewDepth + 1));
+			from->modelViewDepth = to->modelViewDepth;
+		}
+		t->matrix[0] &= nbitID;
+	}
+
+	if (t->matrix[1] & bitID) {
+		diff_api.MatrixMode(GL_PROJECTION);		
+		LOADMATRIX(to->projection+to->projectionDepth);
+
+		memcpy((void *) from->projection, (const void *) to->projection,
+			sizeof (from->projection[0]) * (to->projectionDepth + 1));
+		from->projectionDepth = to->projectionDepth;
+		t->matrix[1] &= nbitID;
+	}
+
+	if (t->matrix[2] & bitID) {
+		if (memcmp (from->texture+from->textureDepth,
+					to->texture+to->textureDepth,
+					sizeof (GLmatrix))) {
+
+			diff_api.MatrixMode(GL_TEXTURE_MATRIX);		
+			LOADMATRIX(to->texture+to->textureDepth);
+
+			memcpy((void *) from->texture, (const void *) to->texture,
+					sizeof (from->texture[0]) * (to->textureDepth + 1));
+			from->textureDepth = to->textureDepth;
+		}
+		t->matrix[2] &= nbitID;
+	}
+
+	if (t->matrix[3] & bitID) {
+		if (memcmp (from->color+from->colorDepth,
+					to->color+to->colorDepth,
+					sizeof (GLmatrix))) {
+			diff_api.MatrixMode(GL_COLOR);		
+			LOADMATRIX(to->color+to->colorDepth);
+
+			memcpy((void *) from->color, (const void *) to->color,
+					sizeof (from->color[0]) * (to->colorDepth + 1));
+			from->colorDepth = to->colorDepth;
+		}
+		t->matrix[3] &= nbitID;
+	}
+
+	/* HACK: Don't treat MatrixMode as stand alone state.
+	if (t->mode & bitID) {
+		if (force_mode || from->mode != to->mode) {
+			diff_api.MatrixMode(to->mode);
+			from->mode = to->mode;
+		}
+		t->mode &= nbitID;
+	}
+	*/
+	
+	if (t->enable & bitID) {
+		for (i=0; i<from->maxClipPlanes; i++) {
+			if (from->clip[i] != to->clip[i]) {
+				if (to->clip[i] == GL_TRUE)
+					diff_api.Enable(GL_CLIP_PLANE0 + i);
+				else
+					diff_api.Disable(GL_CLIP_PLANE0 + i);
+				from->clip[i] = to->clip[i];
+			}
+		}
+		t->enable &= nbitID;
+	}
+
+	to->transformValid = 0;
+	t->dirty &= nbitID;
 }

@@ -167,8 +167,8 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_MAP1_TEXTURE_COORD_4 :
 		case GL_MAP1_VERTEX_3 :
 		case GL_MAP1_VERTEX_4 :
-			g->eval.enable1d[cap - GL_MAP1_COLOR_4] = val;
-			sb->eval.enable1d[cap - GL_MAP1_COLOR_4] = neg_bitid;
+			g->eval.enable1D[cap - GL_MAP1_COLOR_4] = val;
+			sb->eval.enable1D[cap - GL_MAP1_COLOR_4] = neg_bitid;
 			sb->eval.dirty = neg_bitid;
 			break;
 		case GL_MAP2_COLOR_4 :
@@ -180,8 +180,8 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_MAP2_TEXTURE_COORD_4 :
 		case GL_MAP2_VERTEX_3 :
 		case GL_MAP2_VERTEX_4 :
-			g->eval.enable2d[cap - GL_MAP2_COLOR_4] = val;
-			sb->eval.enable2d[cap - GL_MAP2_COLOR_4] = neg_bitid;
+			g->eval.enable2D[cap - GL_MAP2_COLOR_4] = val;
+			sb->eval.enable2D[cap - GL_MAP2_COLOR_4] = neg_bitid;
 			sb->eval.dirty = neg_bitid;
 			break;
 

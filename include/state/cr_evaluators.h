@@ -11,13 +11,13 @@ extern "C" {
 #endif
 
 typedef struct {
-	GLbitvalue eval1d[GLEVAL_TOT];
-	GLbitvalue eval2d[GLEVAL_TOT];
+	GLbitvalue eval1D[GLEVAL_TOT];
+	GLbitvalue eval2D[GLEVAL_TOT];
 	GLbitvalue enable;
-	GLbitvalue enable1d[GLEVAL_TOT];
-	GLbitvalue enable2d[GLEVAL_TOT];
-	GLbitvalue grid1d;
-	GLbitvalue grid2d;
+	GLbitvalue enable1D[GLEVAL_TOT];
+	GLbitvalue enable2D[GLEVAL_TOT];
+	GLbitvalue grid1D;
+	GLbitvalue grid2D;
 	GLbitvalue dirty;
 } CREvaluatorBits;
 
@@ -25,7 +25,7 @@ typedef struct {
 	GLdouble  u1, u2;
 	GLint    order;
 	GLdouble  *coeff;
-} CREvaluator1d;
+} CREvaluator1D;
 
 typedef struct {
 	GLdouble  u1, u2;
@@ -33,25 +33,25 @@ typedef struct {
 	GLint    uorder;
 	GLint    vorder;
 	GLdouble  *coeff;
-} CREvaluator2d;
+} CREvaluator2D;
 
 typedef struct {
-	GLboolean  enable1d[GLEVAL_TOT];
-	GLboolean  enable2d[GLEVAL_TOT];
+	GLboolean  enable1D[GLEVAL_TOT];
+	GLboolean  enable2D[GLEVAL_TOT];
 	GLboolean  autoNormal;
 
 	GLint      maxEvalOrder;
 
-	CREvaluator1d   eval1d[GLEVAL_TOT];
-	CREvaluator2d   eval2d[GLEVAL_TOT];
+	CREvaluator1D   eval1D[GLEVAL_TOT];
+	CREvaluator2D   eval2D[GLEVAL_TOT];
 
-	GLint      un1d;
-	GLdouble   u11d, u21d;
+	GLint      un1D;
+	GLdouble   u11D, u21D;
 
-	GLint      un2d;
-	GLint      vn2d;
-	GLdouble   u12d, u22d;
-	GLdouble   v12d, v22d;
+	GLint      un2D;
+	GLint      vn2D;
+	GLdouble   u12D, u22D;
+	GLdouble   v12D, v22D;
 } CREvaluatorState;
 
 extern const int gleval_sizes[];

@@ -8,6 +8,8 @@ extern "C" {
 #endif
 
 typedef GLfloat GLdefault;
+#define GL_DEFAULTTYPE_FLOAT
+
 #define GL_MAXBYTE		(GLbyte)	0x7F
 #define GL_MAXUBYTE		(GLubyte)	0xFF
 #define GL_MAXSHORT		(GLshort)	0x7FFF

@@ -16,10 +16,13 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
+	int i;
+
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
 	(void) super;
+
 
 	tilesort_spu.id = id;
 	tilesortspuCreateFunctions();
@@ -52,6 +55,13 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	crStateMakeCurrent( tilesort_spu.ctx );
 	crStateFlushArg( tilesort_spu.ctx );
 	crStateSetCurrentPointers( &(cr_packer_globals.current) );
+
+	for (i = 0 ; i < tilesort_spu.num_servers; i++)
+	{
+		TileSortSPUServer *server = tilesort_spu.servers + i;
+		server->ctx = crStateCreateContext();
+		crPackInitBuffer( &(server->pack), crNetAlloc( server->net.conn ), server->net.buffer_size, 0 );
+	}
 	return &the_functions;
 }
 

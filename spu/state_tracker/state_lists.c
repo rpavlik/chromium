@@ -286,3 +286,21 @@ void STATE_APIENTRY crStateListBase (GLuint base)
 
 	l->base = base;
 }
+
+void crStateListsDiff( CRListsBits *b, GLbitvalue bitID, 
+		CRListsState *from, CRListsState *to )
+{
+	(void) b;
+	(void) bitID;
+	(void) from;
+	(void) to;
+}
+
+void crStateListsSwitch( CRListsBits *b, GLbitvalue bitID, 
+		CRListsState *from, CRListsState *to )
+{
+	(void) b;
+	(void) bitID;
+	(void) from;
+	(void) to;
+}
