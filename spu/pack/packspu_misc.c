@@ -60,7 +60,7 @@ void PACKSPU_APIENTRY packspu_Finish( void )
 }
 
 
-GLint PACKSPU_APIENTRY packspu_crCreateWindow( const char *dpyName, GLint visBits )
+GLint PACKSPU_APIENTRY packspu_WindowCreate( const char *dpyName, GLint visBits )
 {
 	static int num_calls = 0;
 	GET_THREAD(thread);
@@ -68,11 +68,11 @@ GLint PACKSPU_APIENTRY packspu_crCreateWindow( const char *dpyName, GLint visBit
 	GLint return_val = (GLint) 0;
 	if (pack_spu.swap)
 	{
-		crPackcrCreateWindowSWAP( dpyName, visBits, &return_val, &writeback );
+		crPackWindowCreateSWAP( dpyName, visBits, &return_val, &writeback );
 	}
 	else
 	{
-		crPackcrCreateWindow( dpyName, visBits, &return_val, &writeback );
+		crPackWindowCreate( dpyName, visBits, &return_val, &writeback );
 	}
 	packspuFlush( (void *) thread );
 	if (!(pack_spu.thread[0].server.conn->actual_network))

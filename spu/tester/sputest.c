@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	win = spu->dispatch_table.crCreateWindow( NULL, CR_RGB_BIT | CR_DOUBLE_BIT);
+	win = spu->dispatch_table.WindowCreate( NULL, CR_RGB_BIT | CR_DOUBLE_BIT);
 	spu->dispatch_table.MakeCurrent( win, 0, ctx );
 
 	spu->dispatch_table.NewList( 1, GL_COMPILE );

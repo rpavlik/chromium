@@ -47,8 +47,8 @@ bonus_functions = [
 	"crDestroyContext",
 	"crMakeCurrent",
 	"crSwapBuffers",
-	"crCreateWindow",
-	"crDestroyWindow",
+	"crWindowCreate",
+	"crWindowDestroy",
 	"crWindowSize",
 	"crWindowPosition"
 ]

@@ -682,7 +682,7 @@ static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint win, GLint nativeW
 }
 
 
-static GLint READBACKSPU_APIENTRY readbackspuCreateWindow( const char *dpyName, GLint visBits )
+static GLint READBACKSPU_APIENTRY readbackspuWindowCreate( const char *dpyName, GLint visBits )
 {
 	WindowInfo *window;
 	GLint childVisual = visBits;
@@ -704,7 +704,7 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateWindow( const char *dpyName, 
 
 	/* init window */
 	window->index = freeID;
-	window->renderWindow = readback_spu.super.crCreateWindow(dpyName, visBits);
+	window->renderWindow = readback_spu.super.WindowCreate(dpyName, visBits);
 	window->childWindow = 0;
 	window->width = -1; /* unknown */
 	window->height = -1; /* unknown */
@@ -718,12 +718,12 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateWindow( const char *dpyName, 
 	return freeID - 1;
 }
 
-static void READBACKSPU_APIENTRY readbackspuDestroyWindow( GLint win )
+static void READBACKSPU_APIENTRY readbackspuWindowDestroy( GLint win )
 {
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
 	CRASSERT(window);
-	readback_spu.super.DestroyWindow(window->renderWindow);
+	readback_spu.super.WindowDestroy(window->renderWindow);
 	crHashtableDelete(readback_spu.windowTable, win);
 }
 
@@ -929,8 +929,8 @@ SPUNamedFunctionTable readback_table[] = {
 	{ "CreateContext", (SPUGenericFunction) readbackspuCreateContext },
 	{ "DestroyContext", (SPUGenericFunction) readbackspuDestroyContext },
 	{ "MakeCurrent", (SPUGenericFunction) readbackspuMakeCurrent },
-	{ "crCreateWindow", (SPUGenericFunction) readbackspuCreateWindow },
-	{ "DestroyWindow", (SPUGenericFunction) readbackspuDestroyWindow },
+	{ "WindowCreate", (SPUGenericFunction) readbackspuWindowCreate },
+	{ "WindowDestroy", (SPUGenericFunction) readbackspuWindowDestroy },
 	{ "WindowSize", (SPUGenericFunction) readbackspuWindowSize },
 	{ "BarrierCreateCR", (SPUGenericFunction) readbackspuBarrierCreateCR },
 	{ "BarrierDestroyCR", (SPUGenericFunction) readbackspuBarrierDestroyCR },

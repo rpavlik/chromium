@@ -337,7 +337,7 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLin
 }
 
 
-GLint TILESORTSPU_APIENTRY tilesortspu_crCreateWindow(void *dpy, GLint visBits)
+GLint TILESORTSPU_APIENTRY tilesortspu_WindowCreate(void *dpy, GLint visBits)
 {
 	int i;
 

@@ -773,7 +773,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuMakeCurrent(GLint window,
 }
 
 
-static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateWindow( const char *dpyName, 
+static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyName, 
 							       GLint visBits )
 {
   int i;
@@ -784,12 +784,12 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateWindow( const char *dpyNa
       break;
   }
   if (i == MAX_WINDOWS) {
-    crWarning("Ran out of windows in binaryswapspuCreateWindow");
+    crWarning("Ran out of windows in binaryswapspuWindowCreate");
     return -1;
   }
     
   binaryswap_spu.windows[i].inUse = GL_TRUE;
-  binaryswap_spu.windows[i].renderWindow = binaryswap_spu.super.crCreateWindow( dpyName, 
+  binaryswap_spu.windows[i].renderWindow = binaryswap_spu.super.WindowCreate( dpyName, 
 										visBits );
   binaryswap_spu.windows[i].childWindow = 0;
   binaryswap_spu.windows[i].width = -1; /* unknown */
@@ -800,11 +800,11 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateWindow( const char *dpyNa
   return i;
 }
 
-static void BINARYSWAPSPU_APIENTRY binaryswapspuDestroyWindow( GLint window )
+static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowDestroy( GLint window )
 {
   CRASSERT(window >= 0);
   CRASSERT(window < MAX_WINDOWS);
-  binaryswap_spu.super.DestroyWindow( binaryswap_spu.windows[window].renderWindow );
+  binaryswap_spu.super.WindowDestroy( binaryswap_spu.windows[window].renderWindow );
   binaryswap_spu.windows[window].inUse = GL_FALSE;
 }
 
@@ -842,8 +842,8 @@ SPUNamedFunctionTable binaryswap_table[] = {
   { "CreateContext", (SPUGenericFunction) binaryswapspuCreateContext },
   { "DestroyContext", (SPUGenericFunction) binaryswapspuDestroyContext },
   { "MakeCurrent", (SPUGenericFunction) binaryswapspuMakeCurrent },
-  { "crCreateWindow", (SPUGenericFunction) binaryswapspuCreateWindow },
-  { "DestroyWindow", (SPUGenericFunction) binaryswapspuDestroyWindow },
+  { "WindowCreate", (SPUGenericFunction) binaryswapspuWindowCreate },
+  { "WindowDestroy", (SPUGenericFunction) binaryswapspuWindowDestroy },
   { "WindowSize", (SPUGenericFunction) binaryswapspuWindowSize },
   { "ChromiumParametervCR", (SPUGenericFunction) binaryswapspuChromiumParametervCR },
   { NULL, NULL }

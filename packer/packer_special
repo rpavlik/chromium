@@ -72,7 +72,7 @@ CombinerParameterfvNV
 CombinerParameterivNV
 CombinerStageParameterfvNV
 ChromiumParametervCR
-crCreateWindow
+WindowCreate
 FeedbackBuffer
 SelectBuffer
 Begin

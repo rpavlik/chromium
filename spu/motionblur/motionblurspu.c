@@ -34,10 +34,10 @@ static void MOTIONBLURSPU_APIENTRY motionblurspuWindowSize( GLint window, GLint 
 }
 
 
-static GLint MOTIONBLURSPU_APIENTRY motionblurspuCreateWindow( const char *dpyName, GLint visBits )
+static GLint MOTIONBLURSPU_APIENTRY motionblurspuWindowCreate( const char *dpyName, GLint visBits )
 {
 	/* request window with accumulation buffer */
-	return motionblur_spu.super.crCreateWindow(dpyName, visBits | CR_ACCUM_BIT);
+	return motionblur_spu.super.WindowCreate(dpyName, visBits | CR_ACCUM_BIT);
 }
 
 
@@ -51,7 +51,7 @@ static GLint MOTIONBLURSPU_APIENTRY motionblurspuCreateContext( const char *dpyN
 SPUNamedFunctionTable motionblur_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) motionblurspuSwapBuffers },
 	{ "WindowSize", (SPUGenericFunction) motionblurspuWindowSize },
-	{ "crCreateWindow", (SPUGenericFunction) motionblurspuCreateWindow },
+	{ "WindowCreate", (SPUGenericFunction) motionblurspuWindowCreate },
 	{ "CreateContext", (SPUGenericFunction) motionblurspuCreateContext },
 	{ NULL, NULL }
 };

@@ -69,12 +69,12 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 
 	/*
 	 * Create the default window and context.  Their indexes are zero and
-	 * a client can use them without calling CreateContext or CreateWindow.
+	 * a client can use them without calling CreateContext or WindowCreate.
 	 */
-	defaultWin = renderspuCreateWindow( NULL, visualBits );
+	defaultWin = renderspuWindowCreate( NULL, visualBits );
 	defaultCtx = renderspuCreateContext( NULL, visualBits );
 
-	crDebug( "CreateWindow returned %d", defaultWin );
+	crDebug( "WindowCreate returned %d", defaultWin );
 	CRASSERT(defaultWin == 0);
 	CRASSERT(defaultCtx == 0);
 	renderspuMakeCurrent( defaultWin, 0, defaultCtx );

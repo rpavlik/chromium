@@ -28,7 +28,7 @@ Finish
 PixelStorei
 PixelStoref
 CreateContext
-crCreateWindow
+WindowCreate
 MakeCurrent
 DestroyContext
 Begin

@@ -44,7 +44,7 @@ ChromiumParameterfCR
 ChromiumParametervCR
 GetChromiumParametervCR
 CreateContext
-crCreateWindow
-DestroyWindow
+WindowCreate
+WindowDestroy
 WindowSize
 WindowPosition

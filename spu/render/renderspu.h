@@ -124,7 +124,7 @@ extern void renderspu_SystemMakeCurrent( WindowInfo *window, GLint windowInfor, 
 extern void renderspu_SystemSwapBuffers( WindowInfo *window, GLint flags );
 extern int renderspuCreateFunctions( SPUNamedFunctionTable table[] );
 
-extern GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits );
+extern GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits );
 extern GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyname, GLint visBits );
 extern void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx);
 extern void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags );

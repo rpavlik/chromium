@@ -6,7 +6,7 @@ BoundsInfoCR
 CreateContext
 DestroyContext
 MakeCurrent
-CreateWindow
-DestroyWindow
+WindowCreate
+WindowDestroy
 WindowSize
 WindowPosition

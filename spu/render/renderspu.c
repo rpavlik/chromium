@@ -184,7 +184,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
  * Window functions
  */
 
-GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits )
+GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits )
 {
 	static GLint freeID = 0;
 	WindowInfo *window;
@@ -229,7 +229,7 @@ GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits 
 	return i;
 }
 
-static void RENDER_APIENTRY renderspuDestroyWindow( GLint win )
+static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )
 {
 	WindowInfo *window;
 	CRASSERT(win >= 0);
@@ -679,8 +679,8 @@ int renderspuCreateFunctions( SPUNamedFunctionTable table[] )
 	FILLIN( "CreateContext", renderspuCreateContext );
 	FILLIN( "DestroyContext", renderspuDestroyContext );
 	FILLIN( "MakeCurrent", renderspuMakeCurrent );
-	FILLIN( "crCreateWindow", renderspuCreateWindow );
-	FILLIN( "DestroyWindow", renderspuDestroyWindow );
+	FILLIN( "WindowCreate", renderspuWindowCreate );
+	FILLIN( "WindowDestroy", renderspuWindowDestroy );
 	FILLIN( "WindowSize", renderspuWindowSize );
 	FILLIN( "WindowPosition", renderspuWindowPosition );
 	FILLIN( "BarrierCreateCR", renderspuBarrierCreateCR );

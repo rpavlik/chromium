@@ -48,8 +48,8 @@ AreTexturesResident
 RenderMode
 GenLists
 GenTextures
-crCreateWindow
-DestroyWindow
+WindowCreate
+WindowDestroy
 WindowPosition
 WindowSize
 BarrierCreateCR

@@ -27,7 +27,7 @@ void crUnpackExtendCreateContext( void )
 	(void) retVal;
 }
 
-void crUnpackExtendcrCreateWindow(void)
+void crUnpackExtendWindowCreate(void)
 {
 	char dpyName[DISPLAY_NAME_LEN];
 	GLint visBits = READ_DATA( DISPLAY_NAME_LEN + 8, GLint );
@@ -38,7 +38,7 @@ void crUnpackExtendcrCreateWindow(void)
 
 	SET_RETURN_PTR( DISPLAY_NAME_LEN + 12 );
 	SET_WRITEBACK_PTR( DISPLAY_NAME_LEN + 20 );
-	retVal = cr_unpackDispatch.crCreateWindow( dpyName, visBits );
+	retVal = cr_unpackDispatch.WindowCreate( dpyName, visBits );
 	(void) retVal;
 }
 

@@ -31,15 +31,15 @@ void APIENTRY crSwapBuffers( GLint window, GLint flags )
 	stub.spu->dispatch_table.SwapBuffers( window, flags );
 }
 
-GLint APIENTRY crCreateWindow( const char *dpyName, GLint visBits )
+GLint APIENTRY crWindowCreate( const char *dpyName, GLint visBits )
 {
 	StubInit();
-	return stub.spu->dispatch_table.crCreateWindow( dpyName, visBits );
+	return stub.spu->dispatch_table.WindowCreate( dpyName, visBits );
 }
 
-void APIENTRY crDestroyWindow( GLint window )
+void APIENTRY crWindowDestroy( GLint window )
 {
-	stub.spu->dispatch_table.DestroyWindow( window );
+	stub.spu->dispatch_table.WindowDestroy( window );
 }
 
 void APIENTRY crWindowSize( GLint window, GLint w, GLint h )
