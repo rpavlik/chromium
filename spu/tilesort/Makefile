@@ -60,23 +60,23 @@ else
 LDFLAGS += -lXmu -lX11
 endif
 
-tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special
+tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the TileSort SPU
 	@$(PYTHON) tilesort.py > $@
 
-tilesortspu_unimplemented.c: tilesort_unimplemented.py tilesort_unimplemented_special
+tilesortspu_unimplemented.c: tilesort_unimplemented.py tilesort_unimplemented_special ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the TileSort Unimplemented Functions
 	@$(PYTHON) tilesort_unimplemented.py > $@
 
-tilesortspu_diffapi.c: diffapi.py
+tilesortspu_diffapi.c: diffapi.py ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the TileSort Differencing API
 	@$(PYTHON) diffapi.py > $@
 
-tilesortspu_lists.c: tilesort_lists.py tilesort_list_special tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special
+tilesortspu_lists.c: tilesort_lists.py tilesort_list_special tilesort_unimplemented_special tilesort_special tilesort_bbox_special tilesort_state_special ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Building the TileSort Display List Manager
 	@$(PYTHON) tilesort_lists.py > $@
 
-tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../../state_tracker/convert.py length_table.py pinch_convert.py
+tilesortspu_pinch_gen.c: tilesortspu_pinch.c ../../state_tracker/convert.py length_table.py pinch_convert.py ../../glapi_parser/gl_header.parsed
 	@$(ECHO) Munging the pincher... yuck
 	@$(PYTHON) ../../state_tracker/convert.py > $@
 	@$(PYTHON) pinch_convert.py >> $@
