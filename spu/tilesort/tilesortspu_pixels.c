@@ -17,23 +17,37 @@
 
 /**
  * Given the position (x, y) and size (width, height) of a glDrawPixels
- * command, the UNPACK_SKIP_PIXELS and UNPACK_SKIP_ROWS values and a scissor
- * box, return modified x, y, width, height, skipPixels and skipRows
- * values so that drawing the image will result in only the pixels inside
- * the scissor box being drawn.
+ * command, the UNPACK_SKIP_PIXELS and UNPACK_SKIP_ROWS values, X/Y zoom
+ * factors and a scissor box, return modified x, y, width, height, skipPixels
+ * and skipRows values so that drawing the image will result in only the
+ * pixels inside the scissor box being drawn.
+ * Note: When xZoom != 1 or yZoom != 1, there can be some off-by-one errors.
+ * We haven't exhaustively examined that problem.
  * \return GL_TRUE if there's something to draw, otherwise GL_FALSE if
  * there's nothing left to draw.
  */
 static GLboolean
 ComputeSubImage(GLint *x, GLint *y, GLsizei *width, GLsizei *height,
 								GLint *skipPixels, GLint *skipRows,
+								GLfloat xZoom, GLfloat yZoom,
 								const CRrecti *scissor)
 {
 	GLint clip; /* number of clipped pixels */
+	GLint w, h;
 
-	if (*x + *width <= scissor->x1 ||
+	if (xZoom != 1.0F || yZoom != 1.0F) {
+		 /* scale up the image to zoomed size, for sake of clipping */
+		 w = (GLint) (*width  * xZoom + 0.5F);
+		 h = (GLint) (*height * yZoom + 0.5F);
+	}
+	else {
+		 w = *width;
+		 h = *height;
+	}
+
+	if (*x + w <= scissor->x1 ||
 			*x >= scissor->x2 ||
-			*y + *height <= scissor->y1 ||
+			*y + h <= scissor->y1 ||
 			*y >= scissor->y2) {
 		/* totally clipped */
 		return GL_FALSE;
@@ -41,40 +55,51 @@ ComputeSubImage(GLint *x, GLint *y, GLsizei *width, GLsizei *height,
 
 	if (*x < scissor->x1) {
 		/* image crosses left edge of scissor box */
-		CRASSERT(*x + *width > scissor->x1);
+		CRASSERT(*x + w > scissor->x1);
 		clip = scissor->x1 - *x;
 		CRASSERT(clip > 0);
 		*x = scissor->x1;
 		*skipPixels += clip;
-		*width -= clip;
+		w -= clip;
 	}
 	if (*y < scissor->y1) {
 		/* image crosses bottom edge of scissor box */
-		CRASSERT(*y + *height > scissor->y1);
+		CRASSERT(*y + h > scissor->y1);
 		clip = scissor->y1 - *y;
 		CRASSERT(clip > 0);
 		*y = scissor->y1;
 		*skipRows += clip;
-		*height -= clip;
+		h -= clip;
 	}
-	if (*x + *width > scissor->x2) {
+	if (*x + w > scissor->x2) {
 		/* image crossed right edge of scissor box */
 		CRASSERT(*x <= scissor->x2);
-		clip = *x + *width - scissor->x2;
+		clip = *x + w - scissor->x2;
 		CRASSERT(clip > 0);
-		*width -= clip;
+		w -= clip;
 	}
-	if (*y + *height > scissor->y2) {
+	if (*y + h > scissor->y2) {
 		/* image crossed top edge of scissor box */
 		CRASSERT(*y <= scissor->y2);
-		clip = *y + *height - scissor->y2;
+		clip = *y + h - scissor->y2;
 		CRASSERT(clip > 0);
-		*height -= clip;
+		h -= clip;
+	}
+
+	/* now undo the zoom factor if needed */
+	if (xZoom != 1.0F || yZoom != 1.0F) {
+		 *width  = (GLint) (w / xZoom + 0.5F);  /* XXX round up more? */
+		 *height = (GLint) (h / yZoom + 0.5F);
+		 *skipPixels = (GLint) (*skipPixels / xZoom); /* don't round up */
+		 *skipRows   = (GLint) (*skipRows   / yZoom);
+	}
+	else {
+		 *width = w;
+		 *height = h;
 	}
 
 	return GL_TRUE;
 }
-
 
 
 /**
@@ -179,7 +204,7 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 
 	thread->currentContext->inDrawPixels = GL_TRUE;
 
-	if (winInfo->bucketMode != BROADCAST && oldZoomX == 1.0 && oldZoomY == 1.0) {
+	if (winInfo->bucketMode != BROADCAST && oldZoomX > 0.0 && oldZoomY > 0.0) {
 		/* Test glDrawPixels image bounds against all tile extents and only
 		 * send sub-images instead of full-size images.
 		 */
@@ -199,20 +224,17 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 			 */
 			for (j = 0; j < winInfo->server[i].num_extents; j++) {
 				CRPixelPackState unpacking = ctx->client.unpack;
-				GLint newX = (GLint)c->rasterAttrib[VERT_ATTRIB_POS][0];
-				GLint newY = (GLint)c->rasterAttrib[VERT_ATTRIB_POS][1];
-				GLsizei newWidth = zoomedWidth;
-				GLsizei newHeight = zoomedHeight;
+				GLint newX = (GLint) c->rasterAttrib[VERT_ATTRIB_POS][0];
+				GLint newY = (GLint) c->rasterAttrib[VERT_ATTRIB_POS][1];
+				GLsizei newWidth = width;
+				GLsizei newHeight = height;
 				if (!unpacking.rowLength)
 					unpacking.rowLength = width;
+
 				if (ComputeSubImage(&newX, &newY, &newWidth, &newHeight,
 														&unpacking.skipPixels, &unpacking.skipRows,
+														oldZoomX, oldZoomY,
 														&winInfo->server[i].extents[j])) {
-					/*
-					printf("clipped: %d, %d  %d x %d  skip %d, %d\n",
-								 newX, newY, newWidth, newHeight,
-								 unpacking.skipPixels, unpacking.skipRows);
-					*/
 					if (tilesort_spu.swap) {
 						crPackWindowPos2iARBSWAP(newX, newY);
 						crPackDrawPixelsSWAP(newWidth, newHeight, format, type, pixels,
