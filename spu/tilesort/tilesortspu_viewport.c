@@ -17,12 +17,6 @@ static int __getWindowSize( int *width_return, int *height_return )
 	unsigned int width, height, border, depth;
 #endif
 
-	if (tilesort_spu.fakeWindowWidth != 0)
-	{
-		*width_return = tilesort_spu.fakeWindowWidth;
-		*height_return = tilesort_spu.fakeWindowHeight;
-		return 1;
-	}
 
 #ifdef WINDOWS
 	if (!tilesort_spu.client_hwnd)
@@ -31,7 +25,7 @@ static int __getWindowSize( int *width_return, int *height_return )
 	}
 	if (!tilesort_spu.client_hwnd)
 	{
-		return 0;
+		goto try_fake;
 	}
 	GetClientRect( tilesort_spu.client_hwnd, &r );
 	*width_return = r.right - r.left;
@@ -41,7 +35,7 @@ static int __getWindowSize( int *width_return, int *height_return )
 
 	if (!tilesort_spu.glx_display)
 	{
-		return 0;
+		goto try_fake;
 	}
 
 	if ( !XGetGeometry( (Display *) tilesort_spu.glx_display, 
@@ -55,6 +49,14 @@ static int __getWindowSize( int *width_return, int *height_return )
 	*height_return = height;
 #endif
 	return 1;
+try_fake:
+	if (tilesort_spu.fakeWindowWidth != 0)
+	{
+		*width_return = tilesort_spu.fakeWindowWidth;
+		*height_return = tilesort_spu.fakeWindowHeight;
+		return 1;
+	}
+	return 0;
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )

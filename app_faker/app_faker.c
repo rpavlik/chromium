@@ -689,7 +689,7 @@ int main( int argc, char **argv )
 		char response[1024];
 
 		if (mothership)
-			crSetenv( "MOTHERSHIP", mothership );
+			crSetenv( "CRMOTHERSHIP", mothership );
 		mothership_conn = crMothershipConnect( );
 		if (!mothership_conn)
 		{

@@ -26,13 +26,13 @@ void crServerClampViewport( int x, int y, unsigned int width, unsigned int heigh
 	{
 		*server_y = 0;
 	}
-	if (*server_width > (unsigned int) (cr_server.x2[extent] - *server_x))
+	if (*server_x + width > (unsigned int) (cr_server.x2[extent] - cr_server.x1[extent]))
 	{
-		*server_width = cr_server.x2[extent] - *server_x;
+		*server_width = cr_server.x2[extent] - cr_server.x1[extent] - *server_x;
 	}
-	if (*server_height > (unsigned int) (cr_server.y2[extent] - *server_y))
+	if (*server_y + height > (unsigned int) (cr_server.y2[extent] - cr_server.y1[extent]))
 	{
-		*server_height = cr_server.y2[extent] - *server_y;
+		*server_height = cr_server.y2[extent] - cr_server.y1[extent] - *server_y;
 	}
 }
 

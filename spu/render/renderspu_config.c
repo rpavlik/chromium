@@ -50,5 +50,10 @@ void renderspuGatherConfiguration( void )
 		render_spu.window_height = (int)h;
 	}
 
+	if (crMothershipSPUParam( conn, response, "fullscreen" ) )
+	{
+		sscanf( response, "%d", &(render_spu.fullscreen) );
+	}
+
 	crMothershipDisconnect( conn );
 }

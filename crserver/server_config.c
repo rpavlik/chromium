@@ -15,7 +15,7 @@ static void __setDefaults( void )
 	cr_server.muralHeight = 0;
 }
 
-void crServerGatherConfiguration(void)
+void crServerGatherConfiguration(char *mothership)
 {
 	CRConnection *conn;
 	char response[8096];
@@ -36,6 +36,11 @@ void crServerGatherConfiguration(void)
 	char **serverchain, **serverlist;
 
 	__setDefaults();
+
+	if (mothership)
+	{
+		crSetenv( "CRMOTHERSHIP", mothership);
+	}
 	
 	conn = crMothershipConnect( );
 

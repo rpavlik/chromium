@@ -4,6 +4,7 @@
 #include "cr_protocol.h"
 #include "cr_error.h"
 #include "cr_glstate.h"
+#include "cr_string.h"
 
 CRServer cr_server;
 
@@ -16,9 +17,23 @@ void crServerClose( unsigned int id )
 int main( int argc, char *argv[] )
 {
 	int i;
+	char *mothership = NULL;
+	for (i = 1 ; i < argc ; i++)
+	{
+		if (!crStrcmp( argv[i], "-mothership" ))
+		{
+			if (i == argc - 1)
+			{
+				crError( "-mothership requires an argument" );
+			}
+			mothership = argv[i+1];
+			i++;
+		}
+	}
+
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();
-	crServerGatherConfiguration();
+	crServerGatherConfiguration(mothership);
 	for ( i = 0 ; i < cr_server.num_clients ; i++)
 	{
 		crServerRecomputeBaseProjection( &(cr_server.clients[i].baseProjection) );
