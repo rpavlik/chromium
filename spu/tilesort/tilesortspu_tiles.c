@@ -413,7 +413,7 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 			crFreeStrings(tilelist);
 
 			/* Determine if the server should receieve left, right or both eye
-			 * views when running in passive stere mode.
+			 * views when running in passive stereo mode.
 			 */
 			servWinInfo->eyeFlags = EYE_LEFT | EYE_RIGHT;
 			if (crMothershipGetServerParamFromSPU( conn, i,
