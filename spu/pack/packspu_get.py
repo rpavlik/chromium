@@ -111,12 +111,15 @@ for func_name in keys:
 			print '\treturn return_val;'
 		if func_name in easy_swaps.keys() and easy_swaps[func_name] != '0':
 			limit = easy_swaps[func_name]
-			print '\tfor (i = 0 ; i < %s ; i++)' % limit
+			print '\tif (pack_spu.swap)'
 			print '\t{'
+			print '\t\tfor (i = 0 ; i < %s ; i++)' % limit
+			print '\t\t{'
 			if types[-1].find( "double" ) == -1:
-				print '\t\t%s[i] = SWAP32(%s[i]);' % (args[-2], args[-2])
+				print '\t\t\t%s[i] = SWAP32(%s[i]);' % (args[-2], args[-2])
 			else:
-				print '\t\t%s[i] = SWAPDOUBLE(%s[i]);' % (args[-2], args[-2])
+				print '\t\t\t%s[i] = SWAPDOUBLE(%s[i]);' % (args[-2], args[-2])
+			print '\t\t}'
 			print '\t}'
 		for index in range(len(simple_funcs)):
 			if simple_funcs[index] == func_name:
