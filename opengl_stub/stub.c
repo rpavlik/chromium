@@ -54,3 +54,17 @@ void APIENTRY crWindowPosition( GLint window, GLint x, GLint y )
 	stub.spu->dispatch_table.WindowPosition( window, x, y );
 }
 
+void APIENTRY stub_GetChromiumParametervCR( GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values )
+{
+	char **ret;
+	switch( target )
+	{
+		case GL_HEAD_SPU_NAME_CR:
+			ret = (char **) values;
+			*ret = stub.spu->name;
+			return;
+		default:
+			stub.spu->dispatch_table.GetChromiumParametervCR( target, index, type, count, values );
+			break;
+	}
+}

@@ -107,7 +107,7 @@ opengl.def: stub_common.py defs.py
 	@$(ECHO) "Creating the defs file..."
 	@$(PYTHON) defs.py > opengl.def
 
-getprocaddress.c: getprocaddress.py
+getprocaddress.c: getprocaddress.py getprocaddress_special
 	@$(ECHO) "Creating crGetProcAddress"
 	@$(PYTHON) getprocaddress.py > getprocaddress.c
 

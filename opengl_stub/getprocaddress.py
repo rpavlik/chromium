@@ -32,8 +32,13 @@ print """
 #ifdef WINDOWS
 #pragma warning( disable: 4055 )
 #endif
+"""
 
+for func_name in stub_common.AllSpecials( "getprocaddress" ):
+	( return_type, arg_names, arg_types ) = gl_mapping[func_name];
+	print 'extern %s stub_%s%s;' % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 
+print """
 CR_PROC CR_APIENTRY crGetProcAddress( const char *name )
 {"""
 
@@ -50,6 +55,9 @@ bonus_functions = [
 
 for func_name in keys:
 	if stub_common.FindSpecial( "noexport", func_name ):
+		continue
+	if stub_common.FindSpecial( "getprocaddress", func_name ):
+		print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) stub_%s;' % ( func_name, func_name )
 		continue
 	print '\tif (!crStrcmp( name, "gl%s" )) return (CR_PROC) glim.%s;' % ( func_name, func_name )
 

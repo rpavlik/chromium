@@ -16,6 +16,7 @@ crMakeCurrentProc   glMakeCurrentCR;
 crSwapBuffersProc   glSwapBuffersCR;
 
 glChromiumParametervCRProc glChromiumParametervCR;
+glGetChromiumParametervCRProc glGetChromiumParametervCR;
 glBarrierCreateCRProc glBarrierCreateCR;
 glBarrierExecCRProc   glBarrierExecCR;
 
@@ -43,11 +44,21 @@ int DrawFrame( void )
 			 model; 
 			 i++,model = model->next)
 	{
-		glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, &(model->bounds) );
 		glCallList( globals.dpy_list_base + i );
+		if (globals.compositor != BINARYSWAP)
+		{
+			glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, &(model->bounds) );
+		}
 		glFlush();
 	}
-	glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bogus_bounds );
+	if (globals.compositor != BINARYSWAP)
+	{
+		glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bogus_bounds );
+	}
+	else
+	{
+		glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, &(globals.local_bounds) );
+	}
 	glSwapBuffersCR( globals.window, 0 );
 
 	return 1;
@@ -57,6 +68,7 @@ void CreateGraphicsContext( )
 {
 	int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
 	const char *dpy = NULL;
+	char *spu_name;
 
 	globals.window = 0;
 #define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
@@ -73,9 +85,27 @@ void CreateGraphicsContext( )
 	glMakeCurrentCR(globals.window, globals.ctx);
 
 #define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
+  LOAD2( GetChromiumParameterv );
   LOAD2( ChromiumParameterv );
 	LOAD2( BarrierCreate );
 	LOAD2( BarrierExec );
+
+	globals.compositor = OTHER;
+	glGetChromiumParametervCR( GL_HEAD_SPU_NAME_CR, 0, GL_BYTE, 1, &(spu_name) );
+	if (!crStrcmp( spu_name, "readback" ))
+	{
+		globals.compositor = READBACK;
+		crDebug( "Detected the readback SPU!" );
+	}
+	else if (!crStrcmp( spu_name, "binaryswap" ))
+	{
+		globals.compositor = BINARYSWAP;
+		crDebug( "Detected the binaryswap SPU!" );
+	}
+	else
+	{
+		crDebug( "Unknown head SPU: %s!", spu_name );
+	}
 }
 
 void SetupGraphicsState( void )
@@ -100,12 +130,12 @@ void SetupGraphicsState( void )
 void SetupCamera( void )
 {
 	GLint viewport[4];
-	globals.center.x = (globals.bounds.max.x+globals.bounds.min.x)/2;
-	globals.center.y = (globals.bounds.max.y+globals.bounds.min.y)/2;
-	globals.center.z = (globals.bounds.max.z+globals.bounds.min.z)/2;
-	globals.width    = (globals.bounds.max.x-globals.bounds.min.x);
-	globals.height   = (globals.bounds.max.y-globals.bounds.min.y);
-	globals.depth    = (globals.bounds.max.z-globals.bounds.min.z);
+	globals.center.x = (globals.global_bounds.max.x+globals.global_bounds.min.x)/2;
+	globals.center.y = (globals.global_bounds.max.y+globals.global_bounds.min.y)/2;
+	globals.center.z = (globals.global_bounds.max.z+globals.global_bounds.min.z)/2;
+	globals.width    = (globals.global_bounds.max.x-globals.global_bounds.min.x);
+	globals.height   = (globals.global_bounds.max.y-globals.global_bounds.min.y);
+	globals.depth    = (globals.global_bounds.max.z-globals.global_bounds.min.z);
  
 	globals.radius= sqrt( globals.width*globals.width/4 + 
 			        globals.height*globals.height/4 + 
@@ -207,7 +237,6 @@ int main(int argc, char *argv[])
 	CreateDisplayLists();
 	SetupGraphicsState();
 	SetupCamera();
-
 
 	while (DrawFrame()) /* Empty */
 		;

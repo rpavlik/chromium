@@ -199,6 +199,12 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 
 #endif /* GL_CR_tilesort_info */
 
+#ifndef GL_CR_head_spu_name
+#define GL_CR_head_spu_name
+
+#define GL_HEAD_SPU_NAME_CR 0x990C /* unofficial! */
+
+#endif /* GL_CR_head_spu_name */
 
 /*
  * These are the OpenGL / window system interface functions

@@ -43,7 +43,7 @@ typedef struct {
 
 	char *ply_root;
 
-	BBOX bounds;
+	BBOX global_bounds, local_bounds;
 	int total_triangles;
 	Point center;
 	float width, height,depth;
@@ -58,6 +58,8 @@ typedef struct {
 
 	int has_nx,has_ny,has_nz;
 	int has_r,has_g,has_b;
+
+	enum { READBACK, BINARYSWAP, OTHER } compositor;
 } Globals;
 
 extern Globals globals;

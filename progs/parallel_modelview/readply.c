@@ -43,8 +43,8 @@ void ParseModelInfo( void )
 	}
 
 	globals.total_triangles = 0;
-	globals.bounds.max.x = globals.bounds.max.y = globals.bounds.max.z = -FLT_MAX;
-	globals.bounds.min.x = globals.bounds.min.y = globals.bounds.min.z = FLT_MAX;
+	globals.global_bounds.max.x = globals.global_bounds.max.y = globals.global_bounds.max.z = -FLT_MAX;
+	globals.global_bounds.min.x = globals.global_bounds.min.y = globals.global_bounds.min.z = FLT_MAX;
 
 	for (;;)
 	{
@@ -76,23 +76,23 @@ void ParseModelInfo( void )
 		mfi_tail = mfi;
 #endif
 		globals.total_triangles += mfi->file_info.num_tris;
-		if (mfi->file_info.bounds.min.x < globals.bounds.min.x) {
-			globals.bounds.min.x = mfi->file_info.bounds.min.x;
+		if (mfi->file_info.bounds.min.x < globals.global_bounds.min.x) {
+			globals.global_bounds.min.x = mfi->file_info.bounds.min.x;
 		}
-		if (mfi->file_info.bounds.min.y < globals.bounds.min.y) {
-			globals.bounds.min.y = mfi->file_info.bounds.min.y;
+		if (mfi->file_info.bounds.min.y < globals.global_bounds.min.y) {
+			globals.global_bounds.min.y = mfi->file_info.bounds.min.y;
 		}
-		if (mfi->file_info.bounds.min.z < globals.bounds.min.z) {
-			globals.bounds.min.z = mfi->file_info.bounds.min.z;
+		if (mfi->file_info.bounds.min.z < globals.global_bounds.min.z) {
+			globals.global_bounds.min.z = mfi->file_info.bounds.min.z;
 		}
-		if (mfi->file_info.bounds.max.x > globals.bounds.max.x) {
-			globals.bounds.max.x = mfi->file_info.bounds.max.x;
+		if (mfi->file_info.bounds.max.x > globals.global_bounds.max.x) {
+			globals.global_bounds.max.x = mfi->file_info.bounds.max.x;
 		}
-		if (mfi->file_info.bounds.max.y > globals.bounds.max.y) {
-			globals.bounds.max.y = mfi->file_info.bounds.max.y;
+		if (mfi->file_info.bounds.max.y > globals.global_bounds.max.y) {
+			globals.global_bounds.max.y = mfi->file_info.bounds.max.y;
 		}
-		if (mfi->file_info.bounds.max.z > globals.bounds.max.z) {
-			globals.bounds.max.z = mfi->file_info.bounds.max.z;
+		if (mfi->file_info.bounds.max.z > globals.global_bounds.max.z) {
+			globals.global_bounds.max.z = mfi->file_info.bounds.max.z;
 		}
 	}
 	crDebug( "I'm done with the model info file" );
@@ -212,14 +212,36 @@ void ReadFiles( void )
 
 	crDebug( "Triangles per node: %d", tris_per_node );
 
+	globals.local_bounds.max.x = globals.local_bounds.max.y = globals.local_bounds.max.z = -FLT_MAX;
+	globals.local_bounds.min.x = globals.local_bounds.min.y = globals.local_bounds.min.z = FLT_MAX;
+
+
 	for (mfi = mfi_head ; mfi ; mfi = mfi->next)
 	{
 		if (node_id == globals.node_id)
 		{
 			Model *model = (Model *) crAlloc( sizeof( *model ) );
 			ReadFile( mfi, model );
-			model->next = globals.models;
+			if (mfi->file_info.bounds.min.x < globals.local_bounds.min.x) {
+				globals.local_bounds.min.x = mfi->file_info.bounds.min.x;
+			}
+			if (mfi->file_info.bounds.min.y < globals.local_bounds.min.y) {
+				globals.local_bounds.min.y = mfi->file_info.bounds.min.y;
+			}
+			if (mfi->file_info.bounds.min.z < globals.local_bounds.min.z) {
+				globals.local_bounds.min.z = mfi->file_info.bounds.min.z;
+			}
+			if (mfi->file_info.bounds.max.x > globals.local_bounds.max.x) {
+				globals.local_bounds.max.x = mfi->file_info.bounds.max.x;
+			}
+			if (mfi->file_info.bounds.max.y > globals.local_bounds.max.y) {
+				globals.local_bounds.max.y = mfi->file_info.bounds.max.y;
+			}
+			if (mfi->file_info.bounds.max.z > globals.local_bounds.max.z) {
+				globals.local_bounds.max.z = mfi->file_info.bounds.max.z;
+			}
 			model->bounds = mfi->file_info.bounds;
+			model->next = globals.models;
 			globals.models = model;
 			globals.num_models++;
 		}
