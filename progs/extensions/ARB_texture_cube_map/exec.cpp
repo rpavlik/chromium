@@ -193,9 +193,9 @@ void	Display		( void )
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	
 	if( object == 0 )
-	  mYaw -= 0.7;
+	  mYaw = 0.7 * glutGet(GLUT_ELAPSED_TIME) * 0.1;
 	else
-	  mYaw -= 0.06;
+	  mYaw = 0.06 * glutGet(GLUT_ELAPSED_TIME) * 0.1;
 	
 	glMatrixMode( GL_TEXTURE );
 	glPushMatrix();
