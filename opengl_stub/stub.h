@@ -75,7 +75,7 @@ typedef struct {
 	/* visual/context/window management */
 	GLuint desiredVisual;  /* Bitwise-or of CR_*_BIT flags */
 	GLint spuWindow;       /* returned by dispatch->CreateWindow() */
-  GLint spuWindowWidth, spuWindowHeight;
+  GLuint spuWindowWidth, spuWindowHeight;
 	GLint currentContext;  /* index into Context[] array, or -1 for none */
 	ContextInfo Context[CR_MAX_CONTEXTS];
 
