@@ -69,7 +69,6 @@ void STATE_APIENTRY crStatePointSize(GLfloat size)
 	DIRTY(pb->dirty, g->neg_bitid);
 }
 
-#ifdef CR_ARB_point_parameters
 void STATE_APIENTRY crStatePointParameterfARB(GLenum pname, GLfloat param)
 {
 	CRContext *g = GetCurrentContext();
@@ -166,4 +165,15 @@ void STATE_APIENTRY crStatePointParameterfvARB(GLenum pname, const GLfloat *para
 
 	DIRTY(pb->dirty, g->neg_bitid);
 }
-#endif
+
+void STATE_APIENTRY crStatePointParameteri(GLenum pname, GLint param)
+{
+	GLfloat f_param = (GLfloat) param;
+	crStatePointParameterfvARB( pname, &f_param );
+}
+
+void STATE_APIENTRY crStatePointParameteriv(GLenum pname, const GLint *params)
+{
+	GLfloat f_param = (GLfloat) (*params);
+	crStatePointParameterfvARB( pname, &f_param );
+}

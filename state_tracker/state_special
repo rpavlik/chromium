@@ -242,6 +242,8 @@ FogCoordPointerEXT
 VertexAttribPointerNV
 PointParameterfARB
 PointParameterfvARB
+PointParameteri
+PointParameteriv
 SampleCoverageARB
 WindowPos2dARB
 WindowPos2dvARB
