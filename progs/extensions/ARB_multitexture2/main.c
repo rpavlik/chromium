@@ -284,10 +284,8 @@ InitSpecial(void)
 		break;
 	}
 
-	glMultiTexCoord2fARB_func =
-		(PFNGLMULTITEXCOORD2FARBPROC) GET_PROC("glMultiTexCoord2fARB");
-	glActiveTextureARB_func =
-		(PFNGLACTIVETEXTUREARBPROC) GET_PROC("glActiveTextureARB");
+	glMultiTexCoord2fARB_func =  (glMultiTexCoord2fARB_t) GET_PROC("glMultiTexCoord2fARB");
+	glActiveTextureARB_func =	(glActiveTextureARB_t) GET_PROC("glActiveTextureARB");
 	if (!glMultiTexCoord2fARB_func || !glActiveTextureARB_func)
 	{
 		printf("getProcAddress() failed\n");
