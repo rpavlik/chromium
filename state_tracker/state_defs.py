@@ -180,4 +180,8 @@ crStateFeedbackEnd
 crStateFeedbackBitmap
 crStateFeedbackCopyPixels
 crStateFeedbackDrawPixels
+crStateFeedbackGetBooleanv
+crStateFeedbackGetDoublev
+crStateFeedbackGetFloatv
+crStateFeedbackGetIntegerv
 """
