@@ -682,7 +682,23 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 
 		render_spu.self.SwapBuffers(((GLint *)values)[6], 0);
 		break;
-		
+	case GL_WINDOW_SIZE_CR:
+		{
+			GLint w, h;
+			WindowInfo *window;
+			CRASSERT(type == GL_INT);
+			CRASSERT(count == 2);
+			CRASSERT(values);
+			w = ((GLint*)values)[0];
+			h = ((GLint*)values)[1];
+			window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, 0);
+			if (window)
+			{
+				renderspu_SystemWindowSize(window, w, h);
+			}
+		}
+		break;
+	
 
 	default:
 #if 0
