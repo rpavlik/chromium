@@ -9,6 +9,7 @@ PROGRAM = crserver
 FILES = main \
 	server_boundsinfo \
 	server_clear \
+	server_clip \
 	server_config \
 	server_context \
 	server_dispatch \

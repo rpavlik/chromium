@@ -28,7 +28,11 @@ __setDefaults(void)
 	cr_server.maxBarrierCount = 0;
 	cr_server.ignore_papi = 0;
 	cr_server.only_swap_once = 0;
+	cr_server.overlapBlending = 0;
 	cr_server.debug_barriers = 0;
+
+	cr_server.num_overlap_intens = 0;
+	cr_server.overlap_intens = 0;
 	cr_server.SpuContext = 0;
 }
 
@@ -150,6 +154,41 @@ crServerGatherConfiguration(char *mothership)
 	if (crMothershipGetServerParam(conn, response, "ignore_papi"))
 	{
 		cr_server.ignore_papi = crStrToInt(response);
+	if (crMothershipGetServerParam(conn, response, "overlap_blending"))
+	{
+		if (!crStrcmp(response, "blend"))
+			cr_server.overlapBlending = 1;
+		else
+		if (!crStrcmp(response, "knockout"))
+			cr_server.overlapBlending = 2;
+	}
+	if (crMothershipGetServerParam(conn, response, "overlap_levels"))
+	{
+		int a;
+		char **levels, *found;
+
+		/* remove the silly []'s */
+		while ((found = crStrchr(response, '[')))
+			*found = ' ';
+		while ((found = crStrchr(response, ']')))
+			*found = ' ';
+
+		levels = crStrSplit(response, ",");
+
+		a = 0;
+		while (levels[a] != NULL)
+		{
+			crDebug("%d: %s", a, levels[a]);
+			cr_server.num_overlap_intens++;
+			a++;
+		}
+
+		cr_server.overlap_intens = (float *)crAlloc(cr_server.num_overlap_intens*sizeof(float));
+		for (a=0; a<cr_server.num_overlap_intens; a++)
+			cr_server.overlap_intens[a] = crStrToFloat(levels[a]);
+
+		crFreeStrings(levels);
+	}
 	}
 	if (crMothershipGetServerParam(conn, response, "only_swap_once"))
 	{
@@ -298,7 +337,7 @@ crServerGetTileInfo(CRConnection * conn)
 
 		if ((cr_server.localTileSpec) && (num_displays))
 		{
-			int w, h, id, idx;
+			int w, h, id, idx, our_idx;
 			float pnt[2], tmp[9], hom[9], hom_inv[9], Sx, Sy;
 			float cent[2], warped[2];
 			double *corners, bbox[4];
@@ -348,11 +387,18 @@ crServerGetTileInfo(CRConnection * conn)
 				if (id == our_id)
 				{
 					crMemcpy(tmp, hom, 9 * sizeof(float));
+					our_idx = (idx / 8) - 1;
 				}
 			}
 
 			/* now compute the bounding box of the display area */
 			crHullInteriorBox(corners, idx / 2, bbox);
+
+			cr_server.num_overlap_levels = idx / 8;
+			crComputeOverlapGeom(corners, cr_server.num_overlap_levels, 
+								&cr_server.overlap_geom);
+			crComputeKnockoutGeom(corners, cr_server.num_overlap_levels, our_idx,
+								&cr_server.overlap_knockout);
 
 			Sx = (float)(bbox[2] - bbox[0]) * (float)0.5;
 			Sy = (float)(bbox[3] - bbox[1]) * (float)0.5;
@@ -382,6 +428,33 @@ crServerGetTileInfo(CRConnection * conn)
 				tmp[5] + tmp[3] * Sx * cent[0] + tmp[4] * Sy * cent[1];
 			cr_server.alignment_matrix[14] = 0;
 			cr_server.alignment_matrix[15] =
+				tmp[8] + tmp[6] * Sx * cent[0] + tmp[7] * Sy * cent[1];
+
+			Sx = Sy = 1;
+			cent[0] = cent[1] = 0;
+
+			cr_server.unnormalized_alignment_matrix[0] = tmp[0] * Sx;
+			cr_server.unnormalized_alignment_matrix[1] = tmp[3] * Sx;
+			cr_server.unnormalized_alignment_matrix[2] = 0;
+			cr_server.unnormalized_alignment_matrix[3] = tmp[6] * Sx;
+			cr_server.unnormalized_alignment_matrix[4] = tmp[1] * Sy;
+			cr_server.unnormalized_alignment_matrix[5] = tmp[4] * Sy;
+			cr_server.unnormalized_alignment_matrix[6] = 0;
+			cr_server.unnormalized_alignment_matrix[7] = tmp[7] * Sy;
+			cr_server.unnormalized_alignment_matrix[8] = 0;
+			cr_server.unnormalized_alignment_matrix[9] = 0;
+			cr_server.unnormalized_alignment_matrix[10] = tmp[6] * Sx * cent[0] + 
+																			 tmp[7] * Sy * cent[1] + 
+																			 tmp[8] -
+																			 absf(tmp[6] * Sx) -
+																			 absf(tmp[7] * Sy);
+			cr_server.unnormalized_alignment_matrix[11] = 0;
+			cr_server.unnormalized_alignment_matrix[12] =
+				tmp[2] + tmp[0] * Sx * cent[0] + tmp[1] * Sy * cent[1];
+			cr_server.unnormalized_alignment_matrix[13] =
+				tmp[5] + tmp[3] * Sx * cent[0] + tmp[4] * Sy * cent[1];
+			cr_server.unnormalized_alignment_matrix[14] = 0;
+			cr_server.unnormalized_alignment_matrix[15] =
 				tmp[8] + tmp[6] * Sx * cent[0] + tmp[7] * Sy * cent[1];
 
 			crFree(corners);

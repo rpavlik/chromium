@@ -65,4 +65,7 @@ void crServerFillBucketingHash(void);
 void crServerNewTiles(int muralWidth, int muralHeight, int numTiles, const int *tileBounds);
 GLboolean crServerCheckTileLayout(void);
 
+void crComputeOverlapGeom(double *quads, int nquad, CRPoly ***res);
+void crComputeKnockoutGeom(double *quads, int nquad, int my_quad_idx, CRPoly **res);
+
 #endif /* CR_SERVER_H */

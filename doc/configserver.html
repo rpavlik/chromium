@@ -66,11 +66,41 @@ for the Chromium server.</p>
     <td width="19%" class="ConfigOption">spu_dir</td>
     <td width="12%" class="ConfigType">String</td>
     <td width="115%" class="ConfigDesc">
-      This options specifies the directory to search for Chromium SPU DLLs.
+      This option specifies the directory to search for Chromium SPU DLLs.
       Setting this option is equivalent to calling the
       <code>appNode.SPUDir()</code> function.
     </td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">overlap_blending</td>
+    <td width="12%" class="ConfigType">String</td>
+    <td width="115%" class="ConfigDesc">
+		This option specifies which mode the blend geometry for warped tiles
+		(if any) should be used. The valid modes are:
+		<ul>
+		<li><B>'knockout'</B> - Only draw the overlap regions once. One server
+					will draw the region with full intensity, all others will
+					draw black
+		<li><B>'blend'</B> - Draw the overlap regions with various intensities,
+					based on how many tiles overlap the region. This doesn't 
+					behave as expected unless you have matched displays. However,
+					using the <code>'overlap_levels'</code> option below one can
+					achieve not-too-objectional results
+		</ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">overlap_levels</td>
+    <td width="12%" class="ConfigType">Array of floats</td>
+    <td width="115%" class="ConfigDesc">
+		This should be used with the <code>'blend'</code> mode of 
+		<code>'overlap_blending'</code>	above. The i-th index of the array 
+		indicates the intensity. Overlap regions outside of the specified
+		range will be drawn at full intensity.
+    </td>
+  </tr>
+
+
 </table>
 </body>
 

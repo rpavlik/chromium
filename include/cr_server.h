@@ -30,6 +30,13 @@ typedef struct {
 	GLint currentWindow;
 } CRClient;
 
+typedef struct st_CRPoly
+{
+	int npoints;
+	double *points;
+	struct st_CRPoly *next;
+} CRPoly;
+
 typedef struct {
 	unsigned short tcpip_port;
 
@@ -74,7 +81,14 @@ typedef struct {
 	int only_swap_once;
 	int debug_barriers;
 	int localTileSpec;
-	GLfloat alignment_matrix[16];
+	int overlapBlending;
+	GLfloat alignment_matrix[16], unnormalized_alignment_matrix[16];
+	
+	CRPoly **overlap_geom;
+	CRPoly *overlap_knockout;
+	float *overlap_intens;
+	int num_overlap_intens;
+	int num_overlap_levels;
 } CRServer;
 
 
