@@ -1,0 +1,13 @@
+RenderMode
+EvalCoord1d
+EvalCoord1dv
+EvalCoord1f
+EvalCoord1fv
+EvalCoord2d
+EvalCoord2dv
+EvalCoord2f
+EvalCoord2fv
+EvalMesh1
+EvalMesh2
+EvalPoint1
+EvalPoint2

@@ -1,0 +1,17 @@
+TOP = ../..
+
+SHARED = 1
+LIBRARY = tilesortspu
+FILES = tilesortspu tilesortspu_init
+
+LIBRARIES = crutil crmothership crstate crpacker
+
+PRECOMP = tilesortspu.c
+SLOP = $(PRECOMP)
+
+LIB_DEFS += tilesort.def
+include ${TOP}/cr.mk
+
+tilesortspu.c: tilesort.py tilesort_special tilesort_state_special
+	@$(ECHO) Building the TileSort SPU
+	@$(PYTHON) tilesort.py > $@
