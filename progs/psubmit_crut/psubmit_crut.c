@@ -86,7 +86,7 @@ static const GLfloat pos[4] = { -1, -1, 10, 0 };
 static int rank = -1, size=-1;
 static int i, ctx;
 static int frame = 0;
-static int window = 0;  /* default window */
+static int window;
 static float theta;
 static int swapFlag = 0, clearFlag = 0;
 static int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
@@ -286,6 +286,7 @@ int main(int argc, char *argv[])
 	crDebug("initializing");
 		
 	ctx = crutCreateContext(visual);  
+	window = crutCreateWindow(visual);
 	
 	crutDisplayFunc(DisplayRings);
 	crutMouseFunc(mouse);
@@ -322,6 +323,8 @@ int main(int argc, char *argv[])
 	LOAD( glChromiumParametervCR );
 	LOAD( glBarrierCreateCR );
 	LOAD( glBarrierExecCR );
+
+	crMakeCurrent_ptr(window, ctx);
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
 	glBarrierCreateCR_ptr( MASTER_BARRIER, size );
