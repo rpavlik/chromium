@@ -114,17 +114,17 @@ typedef struct {
 
 	TileSortBucketMode bucketMode;
 
-	float viewportCenterX, viewportCenterY;
+	float viewportCenterX, viewportCenterY; /* per-window! */
 	float halfViewportWidth, halfViewportHeight;
 
-	GLenum providedBBOX;
+	GLenum providedBBOX; /* per-context! */
 	int inDrawPixels;
 	int ReadPixels;
 
-	unsigned int muralWidth, muralHeight;
+	unsigned int muralWidth, muralHeight;  /* per-window! */
 	unsigned int muralColumns, muralRows;
 
-	float widthScale, heightScale; /* muralSize / windowSize */
+	float widthScale, heightScale; /* = muralSize / windowSize */
 
 	unsigned int MTU;
 	unsigned int buffer_size;

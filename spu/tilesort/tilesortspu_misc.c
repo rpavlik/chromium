@@ -450,7 +450,7 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 		CRASSERT(type == GL_FLOAT);
 		CRASSERT(count == 8);
 		if (values) {
-			GLfloat *bbox = (GLfloat *)values;
+			const GLfloat *bbox = (const GLfloat *) values;
 			thread->packer->bounds_min.x = bbox[0];
 			thread->packer->bounds_min.y = bbox[1];
 			thread->packer->bounds_min.z = bbox[2];
@@ -462,9 +462,40 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 			/*crWarning( "I should really switch to the non-bbox API now, but API switching doesn't work" ); */
 			thread->packer->updateBBOX = 0;
 			tilesort_spu.providedBBOX = target;
-			return;
 		}
-		/* fallthrough */
+		else {
+			/* disable bbox */
+			thread->packer->bounds_min = maxVector;
+			thread->packer->bounds_max = minVector;
+			thread->packer->updateBBOX = 1;
+			tilesort_spu.providedBBOX = GL_DEFAULT_BBOX_CR;
+		}
+		break;
+	case GL_OBJECT_BBOX_CR:  /* GL_CR_bounding_box */
+		CRASSERT(type == GL_FLOAT);
+		CRASSERT(count == 6);
+		if (values) {
+			const GLfloat *bbox = (const GLfloat *) values;
+			thread->packer->bounds_min.x = bbox[0];
+			thread->packer->bounds_min.y = bbox[1];
+			thread->packer->bounds_min.z = bbox[2];
+			thread->packer->bounds_min.w = 1.0;
+			thread->packer->bounds_max.x = bbox[3];
+			thread->packer->bounds_max.y = bbox[4];
+			thread->packer->bounds_max.z = bbox[5];
+			thread->packer->bounds_max.w = 1.0;
+			/*crWarning( "I should really switch to the non-bbox API now, but API switching doesn't work" ); */
+			thread->packer->updateBBOX = 0;
+			tilesort_spu.providedBBOX = target;
+		}
+		else {
+			/* disable bbox */
+			thread->packer->bounds_min = maxVector;
+			thread->packer->bounds_max = minVector;
+			thread->packer->updateBBOX = 1;
+			tilesort_spu.providedBBOX = GL_DEFAULT_BBOX_CR;
+		}
+		break;
 	case GL_DEFAULT_BBOX_CR:  /* GL_CR_bounding_box */
 		CRASSERT(count == 0);
 		thread->packer->bounds_min = maxVector;

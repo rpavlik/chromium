@@ -317,16 +317,31 @@ static void execute_side_effects(GLuint list)
 void TILESORTSPU_APIENTRY tilesortspu_CallList( GLuint list )
 {
 	GET_THREAD(thread);
-	tilesortspuFlush( thread );
+
+	if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR) {
+		tilesortspuFlush( thread );
+	}
+
 	if (tilesort_spu.swap)
-	{
-		crPackCallListSWAP( list );
-	}
+	   crPackCallListSWAP( list );
 	else
-	{
-		crPackCallList( list );
+	   crPackCallList( list );
+
+	if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR) {
+		/* we don't have a bounding box for the geometry in this
+		 * display list, so need to broadcast.
+		 */
+		/*printf("%s broadcast\n", __FUNCTION__);*/
+		tilesortspuBroadcastGeom(1);
 	}
-	tilesortspuBroadcastGeom(1);
+	else {
+		/* we relied upon the bucketing system to send the list to the
+		 * appropriate servers.
+		 */
+		/*printf("%s bucket\n", __FUNCTION__);*/
+		tilesortspuFlush( thread );
+	}
+
 	execute_side_effects(list);
 }
 
@@ -335,24 +350,31 @@ void TILESORTSPU_APIENTRY tilesortspu_CallLists( GLsizei n, GLenum type, const G
 	GET_CONTEXT(ctx);
 	GLint i;
 
-	tilesortspuFlush( thread );
-	if (tilesort_spu.swap)
-	{
+	if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR) {
+		tilesortspuFlush( thread );
+	}
+
+	if (tilesort_spu.swap) {
 		crPackListBaseSWAP( ctx->lists.base );
-	}
-	else
-	{
-		crPackListBase( ctx->lists.base );
-	}
-	if (tilesort_spu.swap)
-	{
 		crPackCallListsSWAP( n, type, lists );
 	}
-	else
-	{
+	else {
+		crPackListBase( ctx->lists.base );
 		crPackCallLists( n, type, lists );
 	}
-	tilesortspuBroadcastGeom(1);
+
+	if (tilesort_spu.providedBBOX == GL_DEFAULT_BBOX_CR) {
+		/* we don't have a bounding box for the geometry in this
+		 * display list, so need to broadcast.
+		 */
+		tilesortspuBroadcastGeom(1);
+	}
+	else {
+		/* we relied upon the bucketing system to send the list to the
+		 * appropriate servers.
+		 */
+		tilesortspuFlush( thread );
+	}
 
 	for (i = 0; i < n; i++) {
 		const GLuint list = translate_id(lists, type, i) + ctx->lists.base;
