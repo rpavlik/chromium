@@ -13,6 +13,7 @@
 
 #include "exec.h"
 #include "../common/logo.h"
+#include <stdlib.h>
 
 
 /* --- Global Variables ----------------------------------------------------- */
@@ -55,7 +56,7 @@ void	InitSpecial	( void )
 {
 #ifdef DISPLAY_LIST
 	GLfloat	texDetail = 2.0;
-	GLfloat	size = 30.0;
+	GLint	size = 30.0;
 #endif
 	GLint	x, y;
 
@@ -76,7 +77,7 @@ void	InitSpecial	( void )
 	glFogf( GL_FOG_START, 0.0 );
 	glFogf( GL_FOG_END, 15.0 );
 	glFogi( GL_FOG_MODE, GL_LINEAR );
-	glGetIntegerv( GL_FOG_DISTANCE_MODE_NV, &defaultFogDistanceMode );
+	glGetIntegerv( (GLenum) GL_FOG_DISTANCE_MODE_NV, &defaultFogDistanceMode );
 
 	cout << "FOG_DISTANCE_MODE_NV = ";
 	switch( defaultFogDistanceMode )
@@ -139,7 +140,7 @@ void	Display		( void )
 	
 	// begin temp
 	static GLfloat	texDetail = 2.0;
-	static GLfloat	size = 30.0;
+	static GLint	size = 30;
 	static GLint	x, y;
 	// end temp
 
@@ -155,7 +156,7 @@ void	Display		( void )
 #ifdef MULTIPLE_VIEWPORTS
 	// Left Viewport
 	glViewport( 0, 0, currentWidth >> 1, currentHeight );
-	glFogi( GL_FOG_DISTANCE_MODE_NV, defaultFogDistanceMode );
+	glFogi( (GLenum) GL_FOG_DISTANCE_MODE_NV, defaultFogDistanceMode );
 #ifdef DISPLAY_LIST
 	glCallList( 1 );
 #else
@@ -184,7 +185,7 @@ void	Display		( void )
 	// Right Viewport
 	glViewport( currentWidth >> 1, 0, currentWidth >> 1, currentHeight );
 #endif
-	glFogi( GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV );
+	glFogi( (GLenum) GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV );
 #ifdef DISPLAY_LIST
 	glCallList( 1 );
 #else

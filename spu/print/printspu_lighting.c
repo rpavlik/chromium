@@ -17,7 +17,7 @@ void PRINT_APIENTRY printMaterialfv( GLenum face, GLenum mode, const GLfloat *pa
 		fprintf( print_spu.fp, "%f", params[i] );
 		if (i != num_params -1)
 		{
-			fprintf( print_spu.fp, ", ", params[i] );
+			fprintf( print_spu.fp, ", " );
 		}
 	}
 	fprintf( print_spu.fp, " ] )\n" );
@@ -41,7 +41,7 @@ void PRINT_APIENTRY printMaterialiv( GLenum face, GLenum mode, const GLint *para
 		fprintf( print_spu.fp, "%d", params[i] );
 		if (i != num_params -1)
 		{
-			fprintf( print_spu.fp, ", ", params[i] );
+			fprintf( print_spu.fp, ", " );
 		}
 	}
 	fprintf( print_spu.fp, " ] )\n" );

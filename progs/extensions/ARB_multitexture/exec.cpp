@@ -291,7 +291,6 @@ void	Idle		( void )
 
 void	Display		( void )
 {
-	const float		size = 50.0;
 	static double	theta = 0.0;
 
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -397,10 +396,8 @@ void	Reshape		( int width, int height )
 }
 
 
-void	Keyboard	( unsigned char key, int x, int y )
+void	Keyboard	( unsigned char key, int , int )
 {
-	static	GLboolean	wireframe = false;
-
 	switch( key )
 	{
 		case 'Q':
@@ -410,23 +407,5 @@ void	Keyboard	( unsigned char key, int x, int y )
 		default:
 			break;
 	}
-	return;
-}
-
-
-void	Mouse		( int button, int state, int x, int y )
-{
-	return;
-}
-
-
-void	Motion		( int x, int y )
-{
-	return;
-}
-
-
-void	Special		( int key, int x, int y )
-{
 	return;
 }

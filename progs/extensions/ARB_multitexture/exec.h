@@ -11,7 +11,8 @@
 
 /* --- Preprocessor --------------------------------------------------------- */
 
-#pragma once
+#ifndef EXEC_H
+#define EXEC_H
 
 #ifdef WIN32
 #pragma warning( push, 3 )
@@ -74,3 +75,5 @@ void	Keyboard	( unsigned char, int, int );
 void	Mouse		( int, int, int, int );
 void	Motion		( int, int );
 void	Special		( int, int, int );
+
+#endif /* EXEC_H */

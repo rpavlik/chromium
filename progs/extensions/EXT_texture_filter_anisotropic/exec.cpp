@@ -95,10 +95,10 @@ void	InitSpecial	( void )
 	glBindTexture( GL_TEXTURE_2D, texture[3] );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, &testAni );
+	glTexParameterfv( GL_TEXTURE_2D, (GLenum) GL_TEXTURE_MAX_ANISOTROPY_EXT, &testAni );
 	glTexImage2D( GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 32, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData );
 
-	glGetTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, &testAni );
+	glGetTexParameterfv( GL_TEXTURE_2D, (GLenum) GL_TEXTURE_MAX_ANISOTROPY_EXT, &testAni );
 	cout << "Current Anisotropy: " << testAni << endl;
 }
 
