@@ -118,9 +118,11 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 
 #ifdef WINDOWS
 		sprintf(dpyName, "%d", hdc);
-		stub.spuWindow = crCreateWindow( (const char *)dpyName, stub.desiredVisual );
+
 		if (stub.haveNativeOpenGL)
 			stub.desiredVisual |= FindVisualInfo( hdc );
+
+		stub.spuWindow = crCreateWindow( (const char *)dpyName, stub.desiredVisual );
 			
 #else
 		dpyName = DisplayString(dpy);
