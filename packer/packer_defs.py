@@ -49,4 +49,6 @@ crPackFlushArg
 crPackSendHugeFunc
 crPackBoundsInfo
 crPackResetBBOX
+crPackOffsetCurrentPointers
+crPackNullCurrentPointers
 """

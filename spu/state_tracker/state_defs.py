@@ -27,4 +27,5 @@ crStateMakeCurrent
 crStateFlushFunc
 crStateFlushArg
 crStateDiffAPI
+crStateSetCurrentPointers
 """

@@ -2,9 +2,9 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = printspu
-FILES = printspu printspu_enums printspu_init
+FILES = printspu printspu_config printspu_enums printspu_init
 
-LIBRARIES = crutil spuload
+LIBRARIES = crutil crmothership spuload
 
 PRECOMP = printspu.c
 SLOP = $(PRECOMP)

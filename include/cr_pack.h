@@ -47,6 +47,8 @@ void crPackResetPointers( int extra );
 void crPackFlushFunc( CRPackFlushFunc ff );
 void crPackFlushArg( void *flush_arg );
 void crPackSendHugeFunc( CRPackSendHugeFunc shf );
+void crPackOffsetCurrentPointers( int offset );
+void crPackNullCurrentPointers( void );
 
 void crPackResetBBOX(void);
 

@@ -51,6 +51,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	tilesort_spu.ctx = crStateCreateContext();
 	crStateMakeCurrent( tilesort_spu.ctx );
 	crStateFlushArg( tilesort_spu.ctx );
+	crStateSetCurrentPointers( &(cr_packer_globals.current) );
 	return &the_functions;
 }
 

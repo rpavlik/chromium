@@ -57,6 +57,13 @@ void crStateCurrentInit( CRCurrentState *c )
 #endif
 }
 
+void crStateSetCurrentPointers( CRCurrentStatePointers *current )
+{
+	CRContext *g = GetCurrentContext();
+	CRCurrentState *c = &(g->current);
+	c->current = current;
+}
+
 void STATE_APIENTRY crStateBegin( GLenum mode )
 {
 	CRContext *g = GetCurrentContext();
@@ -74,6 +81,7 @@ void STATE_APIENTRY crStateBegin( GLenum mode )
 		return;
 	}
 
+	c->current->vtx_count_begin = c->current->vtx_count;
 	c->wind = 0;
 	c->isLoop = 0;
 	c->inBeginEnd = GL_TRUE;

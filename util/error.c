@@ -120,6 +120,7 @@ void crWarning( char *format, ... )
 
 void crDebug( char *format, ... )
 {
+#ifndef NDEBUG
 	va_list args;
 	static char txt[8092];
 	int offset;
@@ -168,4 +169,7 @@ void crDebug( char *format, ... )
 	vsprintf( txt + offset, format, args );
 	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
 	va_end( args );
+#else /* RELEASE */
+	(void) format;
+#endif
 }

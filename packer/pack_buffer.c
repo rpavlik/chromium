@@ -68,6 +68,7 @@ void crPackAppendBuffer( CRPackBuffer *src )
 	int num_data = src->data_current - src->data_start;
 	int num_opcode;
 
+
 	if ( cr_packer_globals.buffer.data_current + num_data > cr_packer_globals.buffer.data_end )
 		crError( "crPackAppendBuffer: overflowed the destination!" );
 	memcpy( cr_packer_globals.buffer.data_current, src->data_start, num_data );

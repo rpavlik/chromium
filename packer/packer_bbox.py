@@ -77,7 +77,9 @@ for num_coords in [2,3,4]:
 		print 'void PACK_APIENTRY %sBBOX' % stub_common.PackFunction( func_name ),
 		print stub_common.ArgumentString( arg_names, arg_types )
 		print '{'
-		packet_length = stub_common.PacketLength( arg_types )
+		packet_length = num_coords * stub_common.lengths[vector_type]
+		if packet_length % 4 != 0:
+			packet_length += 2
 
 		print "\tunsigned char *data_ptr;"
 		if arg_types[0] != 'GLfloat':

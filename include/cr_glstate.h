@@ -79,6 +79,8 @@ void crStateFlushFunc( CRStateFlushFunc ff );
 void crStateFlushArg( void *arg );
 void crStateDiffAPI( SPUDispatchTable *api );
 
+void crStateSetCurrentPointers( CRCurrentStatePointers *current );
+
 void crStateDiffContext( CRContext *from, CRContext *to );
 
 #endif /* CR_GLSTATE_H */

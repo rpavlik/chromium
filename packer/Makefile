@@ -8,6 +8,7 @@ FILES = packer \
 	pack_bounds \
 	pack_buffer \
 	pack_clipplane \
+	pack_current \
 	pack_fog \
 	pack_lights \
 	pack_lists \
@@ -40,7 +41,7 @@ packer.def: packer_defs.py
 	@$(ECHO) Making the opcode header...
 	@$(PYTHON) opcodes.py > $@
 
-../include/state/cr_currentpointers.h: pack_currentheader.py
+../include/state/cr_currentpointers.h: pack_currentheader.py pack_currenttypes.py
 	@$(ECHO) Making cr_currentpointers.h
 	@$(PYTHON) pack_currentheader.py > $@
 
@@ -51,3 +52,7 @@ packer.c: packer.py packer_special packer_get_special
 pack_bbox.c: packer_bbox.py
 	@$(ECHO) Making the BBOX Packer...
 	@$(PYTHON) packer_bbox.py > $@
+
+pack_current.c: pack_current.py pack_currenttypes.py
+	@$(ECHO) Making the current functions...
+	@$(PYTHON) pack_current.py > $@

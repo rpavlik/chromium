@@ -52,21 +52,26 @@ static void __sendServerBuffer( TileSortSPUServer *server )
 
 	crNetSend( server->net.conn, &pack->pack, hdr, len );
 	crPackInitBuffer( pack, crNetAlloc( server->net.conn ), pack->size, END_FLUFF );
+	crPackSetBuffer( pack );
 }
 
 static void __appendBuffer( CRPackBuffer *src )
 {
 	int num_data = src->data_current - src->data_start;
 
+	//crWarning( "In __appendBuffer: %d bytes left, packing %d bytes", cr_packer_globals.buffer.data_end - cr_packer_globals.buffer.data_current, num_data );
+
 	if ( cr_packer_globals.buffer.data_current + num_data > 
 			 cr_packer_globals.buffer.data_end )
 	{
 		// No room to append -- send now
 
+		crWarning( "OUT OF ROOM!") ;
 		__sendServerBuffer( state_server );
 	}
 
 	crPackAppendBuffer( src );
+	//crWarning( "Back from crPackAppendBuffer: 0x%x", cr_packer_globals.buffer.data_current );
 }
 
 void __appendBoundedBuffer( CRPackBuffer *src, GLrecti *bounds )
@@ -214,6 +219,7 @@ static void __doFlush( CRContext *ctx )
 				crDebug( "Appending a NON-bounded buffer" );
 				__appendBuffer( &(tilesort_spu.geometry_pack) );
 			}
+			crPackGetBuffer( &(state_server->pack) );
 		}
 	}
 
@@ -238,7 +244,15 @@ static void __doFlush( CRContext *ctx )
 		crPackResetPointers( END_FLUFF );
 	}
 
-	crError( "Here is where I would do pinching and whatever else goes in __glEndFlush()" );
+	crDebug( "Resetting the current vertex count and friends" );
+
+	cr_packer_globals.current.vtx_count = 0;
+	cr_packer_globals.current.vtx_count_begin = 0;
+
+	crDebug( "Setting all the Current pointers to NULL" );
+	crPackNullCurrentPointers();
+
+	// crError( "Here is where I would do pinching and whatever else goes in __glEndFlush()" );
 }
 
 void tilesortspuFlush( void *arg )
@@ -282,5 +296,14 @@ void tilesortspuFlush( void *arg )
 			              tilesort_spu.geometry_pack.size << 1, END_FLUFF );
 	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
 	crPackAppendBuffer(&(old_geometry_pack));
+
+	// The location of the geometry buffer has changed, so we need to
+	// tell the state tracker to update its "current" pointers.
+	// The "offset" computed here does *not* require that the two
+	// buffers be contiguous -- in fact they almost certainly won't be.
+
+	crPackOffsetCurrentPointers( old_geometry_pack.data_current - 
+			 										     cr_packer_globals.buffer.data_current );
+
 	crFree( old_geometry_pack.pack );
 }

@@ -50,7 +50,7 @@ for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
 	print '\n%s PRINT_APIENTRY print%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ))
 	print '{'
-	print '\tfprintf( stderr, "%s(' % func_name ,
+	print '\tfprintf( print_spu.fp, "%s(' % func_name ,
 
 	printfstr = ""
 	argstr = ", "

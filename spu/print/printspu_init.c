@@ -16,11 +16,13 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
-	(void) id;
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
 	(void) super;
+
+	print_spu.id = id;
+	printspuGatherConfiguration();
 
 	crSPUCopyDispatchTable( &(print_spu.passthrough), &(super->dispatch_table) );
 	return &the_functions;
