@@ -109,6 +109,7 @@ void CRUT_CLIENT_APIENTRY crutDisplayFunc(void (*func)(void));
 void CRUT_CLIENT_APIENTRY crutPostRedisplay(void);
 void CRUT_CLIENT_APIENTRY crutMainLoop(void);
 int  CRUT_CLIENT_APIENTRY crutCreateContext ( unsigned int visual );
+int  CRUT_CLIENT_APIENTRY crutCreateWindow ( unsigned int visual );
 void CRUT_CLIENT_APIENTRY crutReceiveEvent(CRUTMessage **msg);
 int  CRUT_CLIENT_APIENTRY crutCheckEvent( void );
 int  CRUT_CLIENT_APIENTRY crutPeekNextEvent( void );

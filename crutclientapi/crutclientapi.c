@@ -15,6 +15,9 @@
 CRUTClient crut_client;
 CRUTAPI crut_api;
 
+#define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
+
+
 static int
 __getCRUTMessageSize(int type)
 {
@@ -224,8 +227,6 @@ crutCreateContext(unsigned int visual)
     int ctx;
     const char *dpy = NULL;
 
-#define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
-
     LOAD( crCreateContext );
     LOAD( crMakeCurrent );
 
@@ -234,9 +235,27 @@ crutCreateContext(unsigned int visual)
 	crError("crCreateContext_ptr() call failed!\n");
     }
     
-    crMakeCurrent_ptr(0, ctx);
+    crMakeCurrent_ptr(0, ctx); /* XXX what does this do? */
     
     return ctx;
+}
+
+int 
+CRUT_CLIENT_APIENTRY 
+crutCreateWindow(unsigned int visual) 
+{
+    crWindowCreateProc crWindowCreate_ptr;
+    int win;
+    const char *dpy = NULL;
+
+    LOAD( crWindowCreate );
+
+    win = crWindowCreate_ptr(dpy, visual);
+    if (win < 0) {
+	crError("crWindowCreate_ptr() call failed!\n");
+    }
+    
+    return win;
 }
 
 static int
