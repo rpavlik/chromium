@@ -60,11 +60,11 @@ void set_geometry( void *foo, const char *response )
  */
 SPUOptions saveframeSPUOptions[] = {
 
-   { "stride", CR_INT, 1, "1", "1", NULL, 
-     "Filename Number Stride", (SPUOptionCB)set_stride },
-
    { "basename", CR_STRING, 1, "frame", NULL, NULL, 
      "Filename Basename", (SPUOptionCB)set_basename },
+
+   { "stride", CR_INT, 1, "1", "1", NULL, 
+     "Filename Number Stride", (SPUOptionCB)set_stride },
 
    { "single", CR_INT, 1, "-1", "-1", NULL, 
      "Single Frame Number", (SPUOptionCB)set_single },

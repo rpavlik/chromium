@@ -70,7 +70,7 @@ SPUOptions wetSPUOptions[] = {
      "Time Scale", (SPUOptionCB)set_time_scale },
 
    { "ior", CR_FLOAT, 1, "1.2", NULL, NULL, 
-     "IOR", (SPUOptionCB)set_ior },
+     "Index Of Refraction", (SPUOptionCB)set_ior },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 

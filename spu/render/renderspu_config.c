@@ -98,6 +98,12 @@ SPUOptions renderSPUOptions[] = {
    { "on_top", CR_BOOL, 1, "0", NULL, NULL, 
      "Display on top", (SPUOptionCB)set_on_top },
 
+   { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
+     "Render to app window", (SPUOptionCB)render_to_app_window },
+
+   { "resizable", CR_BOOL, 1, "0", NULL, NULL,
+     "Resizable window", (SPUOptionCB)resizable },
+
    { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
      "Window Title", (SPUOptionCB)set_title },
 
@@ -109,12 +115,6 @@ SPUOptions renderSPUOptions[] = {
 
    { "display_string", CR_STRING, 1, "", NULL, NULL, 
      "Display String", (SPUOptionCB)set_display_string },
-
-   { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
-     "Render to app window", (SPUOptionCB)render_to_app_window },
-
-   { "resizable", CR_BOOL, 1, "0", NULL, NULL,
-     "Resizable window", (SPUOptionCB)resizable },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
