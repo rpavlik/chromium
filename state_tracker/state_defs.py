@@ -45,7 +45,6 @@ crStateError
 crStateUpdateColorBits
 crStateClientInit
 crStateGetCurrent
-__currentContext
 __currentBits
 crStateFeedbackVertex2d
 crStateFeedbackVertex2dv
