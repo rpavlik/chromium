@@ -231,6 +231,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 {
 	XVisualInfo *vis;
 	int *attrib, wants_rgb;
+	int foo, bar;
 
 	stubInit();
 
@@ -340,34 +341,34 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 
 	if ( !wants_rgb && !(stub.desiredVisual & CR_OVERLAY_BIT) )
 	{
+		/* normal layer, color index mode not supported */
 		crWarning( "glXChooseVisual: didn't request RGB visual?" );
 		return NULL;
 	}
 
 	/* try to satisfy this request with the native glXChooseVisual() */
-	if (stub.haveNativeOpenGL)
+	if (stub.haveNativeOpenGL &&
+			stub.wsInterface.glXQueryExtension(dpy, &foo, &bar))
 	{
-		int foo, bar;
-		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar))
+		vis = stub.wsInterface.glXChooseVisual(dpy, screen, attribList);
+		if (vis)
 		{
-			vis = stub.wsInterface.glXChooseVisual(dpy, screen, attribList);
-			if (vis)
-			{
-				crDebug("faker native glXChooseVisual returning visual 0x%x",
-								(int) vis->visualid);
-				/* successful glXChooseVisual, so clear ours */
-				stub.desiredVisual = FindVisualInfo(dpy, vis);
-				return vis;
-			}
+			crDebug("faker native glXChooseVisual returning visual 0x%x",
+							(int) vis->visualid);
+			/* successful glXChooseVisual, so clear ours */
+			stub.desiredVisual = FindVisualInfo(dpy, vis);
+		}
+	}
+	else {
+		/* we don't have the GLX extension, so try ordinary X visuals */
+		vis = ReasonableVisual( dpy, screen );
+		if (vis)
+		{
+			crDebug("faker glXChooseVisual returning visual 0x%x",
+							(int) vis->visualid);
 		}
 	}
 
-	vis = ReasonableVisual( dpy, screen );
-	if (vis)
-	{
-		crDebug("faker glXChooseVisual returning visual 0x%x",
-						(int) vis->visualid);
-	}
 	return vis;
 }
 
