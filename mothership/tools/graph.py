@@ -1235,6 +1235,8 @@ class MainFrame(wxFrame):
 				template = v.group(1)
 				if not templates.ReadTemplate(template, self.mothership, f):
 					configio.ReadConfig(self.mothership, f)
+			else:
+				configio.ReadConfig(self.mothership, f)
 			f.close()
 			self.dirty = false
 		else:
