@@ -308,6 +308,35 @@ that are worth mentioning:</p>
     <code>crPackFlushArg</code>.</li>
 </ul>
 
+<h2 class="PageSubHeading">The Unpacker</h2>
+<p>The unpacking library is considerably simpler than the packing library.&nbsp;
+It simply walks over a packed buffer, calling the functions of a <code>SPUDispatchTable</code>.&nbsp;
+The API to be used is passed to the <code>crUnpack</code> function -- see <code>cr/crserver/server_stream.c</code>
+for an example. </p>
+<p>The server also uses features of the unpacker to extract &quot;network
+pointers&quot;.&nbsp; Network pointers are simply memory addresses that reside
+on another machine.&nbsp; Although they're not useful to the server itself, when
+the client wants the server to sent it some information, it can put its local
+memory address in a packet, and the local memory address will get sent back
+along with the response.&nbsp; The networking layer will then take care of
+writing the payload data to the specified address.</p>
+<p>See <code>spu/pack/packspu_net.c</code> for an example of a non-trivial
+receive function (unlike the server's, which always returns 0 to let packets
+queue up) and usage of network pointers.</p>
+<h2 class="PageSubHeading">The state tracker</h2>
+<p>We saw the state tracker in action in the &quot;<a href="codegen.html">Automatically
+generating code for a SPU</a>&quot; section.&nbsp; The state tracker is much too
+complex to describe every detail here.&nbsp; For a description of how it all
+works, read our <a href="http://graphics.stanford.edu/papers/state_tracking" target="new_window">Eurographics/SIGGRAPH
+Hardware Workshop 2000 paper</a>.&nbsp; </p>
+<p>The best way to figure out how state tracking works is to actually step
+through some of the code.&nbsp; Load an application in the debugger using the
+Chromium OpenGL DLL, as described in &quot;<a href="spudebug.html">Debugging a
+SPU</a>&quot;.&nbsp; Once the SPU's have been loaded, set breakpoints in various
+state calls that you think will happen, and see what they do.&nbsp; In
+particular, observing the behavior of <code>crStateDiff</code> in the Tilesort
+SPU is very illuminating for the lazy state update process.</p>
+
 </body>
 
 </html>

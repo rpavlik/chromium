@@ -1,11 +1,11 @@
-Before July Alpha release:
+Before July release:
+	NOTHING!
+
+Before October release:
 	Parallel applications
 		Debug parallel test application (server runs out of memory quick)
 		Test context switching code
 		context switching for pushattrib stack -- yuck
-	Documentation
-
-Before October release:
 	DrawPixels
 		Treat it like bitmaps, or do something more clever with the tilesorter?
 	Implement LSB and SWAP_BYTES for pixel data (un)packing.

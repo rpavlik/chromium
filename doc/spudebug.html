@@ -1,0 +1,100 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Debugging a SPU</h1>
+<p>Because SPU's are usually loaded by our OpenGL implementation, it's not
+always that easy to debug them.&nbsp; You can't just run a debugger on your
+application, since it won't pick up our library.&nbsp; This page describes some
+techniques you can use to debug a SPU.&nbsp;</p>
+<h2 class="PageSubHeading">Technique 1: Write a Windows batch file</h2>
+<p>This is by far the simplest thing you can do (if you're running Windows), and
+it's the way I debug all the time.&nbsp; I use a batch file called <code>crdebug.bat</code>,
+which contains the following commands:</p>
+<table width="100%"><tr><td class="GrayCodeListing">cp %1.exe c:/work/cr/scratch<br>
+      cp c:/work/cr/bin/WIN_NT/crfaker.dll c:/work/cr/scratch/opengl32.dll<br>
+      "C:\VS60\Common\MSDev98\Bin\MSDEV.EXE" c:\work\cr\scratch\%1.exe</td></tr></table>
+<p>Using this batch file (which I put in <code>cr/bin/WIN_NT</code>), I go to
+the directory containing the executable, and type:</p>
+<p><code>crdebug &lt;executable_name&gt;</code></p>
+<p>That's it.&nbsp; Obviously you will want to modify the paths used to reflect
+your system's setup.&nbsp;&nbsp;</p>
+<p>This uses a &quot;scratch&quot; directory that I made in <code>c:\work\cr\scratch</code>.&nbsp;
+It basically copies the faker DLL to the scratch directory, along with the
+executable, and runs the debugger on the executable.&nbsp; Windows will search
+the directory that contains the executable first, so this technique works (it's
+a lot like how the application faker works).</p>
+<p>This technique has a drawback, however.&nbsp; Since SPU's are loaded
+explicitly when an OpenGL context is created, you cannot set a breakpoint inside
+a SPU when the program is loaded.&nbsp; You have to single-step through the
+program until the context is created, and then you may set breakpoints.&nbsp;
+Every time you restart the Microsoft debugger, your breakpoints will all be
+temporarily disabled.&nbsp; You can re-enable them all at once by using the
+&quot;<code>Edit-&gt;Breakpoints</code>&quot; menu item.&nbsp; This is tedious,
+but it's the path of least resistance.</p>
+<h2 class="PageSubHeading">Technique 2: Create a &quot;debug&quot; directory</h2>
+<p>To debug SPU's on Linux, I have a directory called <code>cr/ldebug</code>,
+which I populate with symlinks to the OpenGL faker library.&nbsp; Here is a
+listing of the contents of that directory:</p>
+<table width="100%"><tr><td class="GrayCodeListing">chromite(cr)% ls -l ldebug<br>
+      total 0<br>
+      lrwxrwxrwx    1 humper   graphics       41 Jul  3 10:24 libGL.so ->
+      /u/humper/work/cr/lib/Linux/libcrfaker.so*<br>
+      lrwxrwxrwx    1 humper   graphics        8 Jul  3 10:25 libGL.so.1 ->
+      libGL.so*<br>
+      lrwxrwxrwx    1 humper   graphics        8 Jul  3 10:25 libGL.so.1.0.1251 -> libGL.so*</td></tr></table>
+<p>If you have &quot;<code>.</code>&quot; (the current directory) on your <code>LD_LIBRARY_PATH</code>,
+you can just change to this directory before invoking the debugger.&nbsp; One
+disadvantage to this technique as opposed to technique 1 is that you won't have
+control over the application's working directory.&nbsp; If you need data files
+(textures, usually), I generally would make a symlink to those too.</p>
+<p>This technique has the same drawback of having to step through the code until
+a context is created, but it does work well.</p>
+<h2 class="PageSubHeading">Technique 3: Use a programmatic breakpoint</h2>
+<p>In Windows, you can add the statement:</p>
+<table width="100%"><tr><td class="GrayCodeListing">DebugBreak();</td></tr></table>
+<p>anywhere in your code, and when that statement is executed, you will be
+prompted to load the debugger at that point.&nbsp; The debugger will come up
+pointing at some assembly code, and by stepping forward (with the F10 key)
+twice, you'll be back at the place where <code>DebugBreak</code> appears.&nbsp;
+The program is still running!</p>
+<p>This is often a useful technique for setting conditional breakpoints deep
+within a library, since you don't have to worry about waiting for the context to
+be created, etc.&nbsp; Also, this is by far the best way to enter the debugger
+in your <code>SPUInit</code> function.</p>
+<h2 class="PageSubHeading">Technique 4: Attach a debugger to a running process</h2>
+<p>Many systems will allow you to attach a debugger to a running process without
+interrupting it.&nbsp; In Windows, you can do this simply by right clicking on
+the process name in the Task Manager, in Linux there's some option at the GDB
+prompt (can you tell where I do all my development?).&nbsp; This way, if you
+want to emulate the <code>DebugBreak</code> functionality without using it
+explicitly, you can do something like:</p>
+<table width="100%"><tr><td class="GrayCodeListing">volatile int i = 10; // so
+      the compiler doesn't warn or optimize it away<br>
+      while (i == 10)<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp; // EMPTY BODY<br>
+      }</td></tr></table>
+<p>Once your program starts to loop forever, attach the debugger, force the
+value of <code>i</code> to be something else, and you've got your homemade
+breakpoint.&nbsp; This is pretty tedious, but handy sometimes when <code>DebugBreak</code>
+isn't available.&nbsp; It might be useful to have your program print out its PID,
+since you will probably need that to attach to the process (on UNIX, anyway).</p>
+<h2 class="PageSubHeading">Technique 5: Use the Print SPU liberally</h2>
+<p>The Print SPU has made debugging of other SPU's much easier.&nbsp; By placing
+it between the client and its SPU, and also in front of the Render SPU on a
+server, I can see exactly what transformations are being made to the stream by
+comparing the two printouts.</p>
+
+</body>
+
+</html>
