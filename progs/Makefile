@@ -14,15 +14,12 @@ SUBDIRS = \
 	city \
 	cubes \
 	dlisttest \
-	dlistperf1 \
-	dlistperf2 \
 	extensions \
 	fonttest \
 	fraglight \
 	kirchner \
 	netperf \
 	packperf \
-	packertest \
 	psubmit \
 	psubmit_crut \
 	retile \
@@ -32,6 +29,7 @@ SUBDIRS = \
 	tiletest \
 	viewports
 
+#	packertest \
 
 
 ifeq ($(THREADSAFE), 1)
@@ -45,7 +43,7 @@ endif
 ifeq ($(ARCH), WIN_NT)
 SUBDIRS += wgl
 else
-SUBDIRS += glx
+SUBDIRS += glx dlistperf1 dlistperf2
 endif
 
 include ${TOP}/cr.mk
