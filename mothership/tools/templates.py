@@ -154,7 +154,7 @@ def ReadTemplate(templateName, mothership, file):
 	assert templateName in __Templates.keys()
 	(create, validate, edit, read, write) = __Templates[templateName]
 	if read(mothership, file):
-		mothership.SetTemplateType("Tilesort")
+		mothership.SetTemplateType(templateName)
 		assert validate(mothership)
 		return 1
 	else:
