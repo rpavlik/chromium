@@ -403,6 +403,8 @@ MakeDemoMesh(const Options *options)
 	printf("spheres:  %d indices / sphere\n", mesh->NumIndices);
 	printf("spheres:  %d spheres / ring\n", options->numSpheres);
 	printf("spheres:  %d triangles / ring\n", mesh->NumTris * options->numSpheres);
+	printf("spheres:  %d bytes / VBO\n",
+				 mesh->VertexBytes + mesh->NormalBytes + mesh->IndexBytes);
 
 	MeshToVBO(mesh);
 	MeshToDisplayList(mesh);
@@ -724,17 +726,20 @@ static TriangleMesh *TheMesh = NULL;
 static const Options *TheOptions = NULL;
 
 
-static void Idle(void)
+static void
+Idle(void)
 {
 	CurrentFrame++;
 	glutPostRedisplay();
 }
 
 
-static void DisplayFrame(void)
+static void
+DisplayFrame(void)
 {
 	static double t0 = 0, t1 = 0;
 	static int drawnTris = 0;
+	static int frameCount = 0;
 
 	if (t0 == 0) {
 		t0 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
@@ -745,6 +750,7 @@ static void DisplayFrame(void)
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	drawnTris += DrawFrame(TheMesh, TheOptions, CurrentFrame, DrawingMode);
+	frameCount++;
 
 	glutSwapBuffers();
 
@@ -756,6 +762,7 @@ static void DisplayFrame(void)
 					 WinWidth * WinHeight * frameCount / (t1 - t0));
 		t0 = t1;
 		drawnTris = 0;
+		frameCount = 0;
 	}
 }
 
