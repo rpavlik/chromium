@@ -19,7 +19,7 @@ import crutils
 
 
 class TileDialog(wxDialog):
-	def __init__(self, parent, id, title, numLists, message=""):
+	def __init__(self, parent, id, title, numLists, hosts=[""], message=""):
 		"""parent, id, and title are the standard wxDialog parameters.
 		"""
 		assert numLists >= 1
@@ -43,8 +43,13 @@ class TileDialog(wxDialog):
 										   size=wxSize(50,25),
 										   min=1, max=numLists, value="1")
 			EVT_SPINCTRL(self.instanceCtrl, id_INSTANCE, self._onInstance)
+			self.hostLabel = wxStaticText(parent=self, id=-1,
+										  label="Hostname: %s" % hosts[0])
 			innerSizer.Add(self.instanceCtrl,
 						   flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
+			innerSizer.Add(self.hostLabel, flag=wxALIGN_CENTRE_VERTICAL|wxALL,
+						   border=6)
+
 
 		# editable list of tile tuples
 		box = wxStaticBox(parent=self, id=-1, label="Edit Tile List")
@@ -77,6 +82,7 @@ class TileDialog(wxDialog):
 			self.TileListList.append( [] )
 
 		self.OldInstance = 1
+		self.Hosts = hosts
 
 
 	def __LoadWidget(self, i):
@@ -108,6 +114,11 @@ class TileDialog(wxDialog):
 		i = self.instanceCtrl.GetValue()
 		assert i >= 1
 		self.__LoadWidget(i - 1)
+		if i - 1 < len(self.Hosts):
+			self.hostLabel.SetLabel("Hostname: %s" % self.Hosts[i - 1])
+		else:
+			# use last hostname
+			self.hostLabel.SetLabel("Hostname: %s" % self.Hosts[-1])
 		self.OldInstance = i
 		
 	def _onOK(self, event):
