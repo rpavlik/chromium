@@ -89,7 +89,7 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 		crStateEvaluatorDiff	(&(sb->eval), bitID,
 							 &(from->eval), &(to->eval));
 	}
-#if 0
+#ifdef CR_ARB_imaging
 	if (update & GLUPDATE_IMAGING && sb->imaging.dirty & bitID)
 	{
 		crStateImagingDiff	(&(sb->imaging), bitID,
@@ -194,19 +194,20 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 		crStateEvaluatorSwitch	(&(sb->eval), bitID,
 							 &(from->eval), &(to->eval));
 	}
-#if 0
+#ifdef CR_ARB_imaging
 	if (update & GLUPDATE_IMAGING && sb->imaging.dirty & bitID)
 	{
 		crStateImagingSwitch	(&(sb->imaging), bitID,
 							 &(from->imaging), &(to->imaging));
 	}
+#endif
+#if 0
 	if (update & GLUPDATE_SELECTION && sb->selection.dirty & bitID)
 	{
 		crStateSelectionSwitch	(&(sb->selection), bitID,
 								 &(from->selection), &(to->selection));
 	}
 #endif
-
 	if (update & GLUPDATE_CURRENT && sb->current.dirty & bitID)
 	{
 		crStateCurrentSwitch	(&(sb->current), bitID,

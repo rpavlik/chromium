@@ -171,13 +171,18 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 		a->enableStack[a->enableStackDepth].stencilTest = g->stencil.stencilTest;
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
 		{
-			a->enableStack[a->enableStackDepth].texture1D[i] = g->texture.enabled1D[i];
-			a->enableStack[a->enableStackDepth].texture2D[i] = g->texture.enabled2D[i];
-			a->enableStack[a->enableStackDepth].texture3D[i] = g->texture.enabled3D[i];
-			a->enableStack[a->enableStackDepth].textureGenS[i] = g->texture.textureGen[i].s;
-			a->enableStack[a->enableStackDepth].textureGenT[i] = g->texture.textureGen[i].t;
-			a->enableStack[a->enableStackDepth].textureGenR[i] = g->texture.textureGen[i].r;
-			a->enableStack[a->enableStackDepth].textureGenQ[i] = g->texture.textureGen[i].q;
+			a->enableStack[a->enableStackDepth].texture1D[i] = g->texture.unit[i].enabled1D;
+			a->enableStack[a->enableStackDepth].texture2D[i] = g->texture.unit[i].enabled2D;
+#ifdef CR_OPENGL_VERSION_1_2
+			a->enableStack[a->enableStackDepth].texture3D[i] = g->texture.unit[i].enabled3D;
+#endif
+#ifdef CR_ARB_texture_cube_map
+			a->enableStack[a->enableStackDepth].textureCubeMap[i] = g->texture.unit[i].enabledCubeMap;
+#endif
+			a->enableStack[a->enableStackDepth].textureGenS[i] = g->texture.unit[i].textureGen.s;
+			a->enableStack[a->enableStackDepth].textureGenT[i] = g->texture.unit[i].textureGen.t;
+			a->enableStack[a->enableStackDepth].textureGenR[i] = g->texture.unit[i].textureGen.r;
+			a->enableStack[a->enableStackDepth].textureGenQ[i] = g->texture.unit[i].textureGen.q;
 		}
 		a->enableStackDepth++;
 	}
@@ -322,36 +327,63 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 		{
-			a->textureStack[a->textureStackDepth].enabled1D[i] = g->texture.enabled1D[i];
-			a->textureStack[a->textureStackDepth].enabled2D[i] = g->texture.enabled2D[i];
-			a->textureStack[a->textureStackDepth].enabled3D[i] = g->texture.enabled3D[i];
-			a->textureStack[a->textureStackDepth].textureGen[i] = g->texture.textureGen[i];
-			a->textureStack[a->textureStackDepth].objSCoeff[i] = g->texture.objSCoeff[i];
-			a->textureStack[a->textureStackDepth].objTCoeff[i] = g->texture.objTCoeff[i];
-			a->textureStack[a->textureStackDepth].objRCoeff[i] = g->texture.objRCoeff[i];
-			a->textureStack[a->textureStackDepth].objQCoeff[i] = g->texture.objQCoeff[i];
-			a->textureStack[a->textureStackDepth].eyeSCoeff[i] = g->texture.eyeSCoeff[i];
-			a->textureStack[a->textureStackDepth].eyeTCoeff[i] = g->texture.eyeTCoeff[i];
-			a->textureStack[a->textureStackDepth].eyeRCoeff[i] = g->texture.eyeRCoeff[i];
-			a->textureStack[a->textureStackDepth].eyeQCoeff[i] = g->texture.eyeQCoeff[i];
-			a->textureStack[a->textureStackDepth].gen[i] = g->texture.gen[i];
+			a->textureStack[a->textureStackDepth].enabled1D[i] = g->texture.unit[i].enabled1D;
+			a->textureStack[a->textureStackDepth].enabled2D[i] = g->texture.unit[i].enabled2D;
+#ifdef CR_OPENGL_VERSION_1_2
+			a->textureStack[a->textureStackDepth].enabled3D[i] = g->texture.unit[i].enabled3D;
+#endif
+#ifdef CR_ARB_texture_cube_map
+			a->textureStack[a->textureStackDepth].enabledCubeMap[i] = g->texture.unit[i].enabledCubeMap;
+#endif
+			a->textureStack[a->textureStackDepth].textureGen[i] = g->texture.unit[i].textureGen;
+			a->textureStack[a->textureStackDepth].objSCoeff[i] = g->texture.unit[i].objSCoeff;
+			a->textureStack[a->textureStackDepth].objTCoeff[i] = g->texture.unit[i].objTCoeff;
+			a->textureStack[a->textureStackDepth].objRCoeff[i] = g->texture.unit[i].objRCoeff;
+			a->textureStack[a->textureStackDepth].objQCoeff[i] = g->texture.unit[i].objQCoeff;
+			a->textureStack[a->textureStackDepth].eyeSCoeff[i] = g->texture.unit[i].eyeSCoeff;
+			a->textureStack[a->textureStackDepth].eyeTCoeff[i] = g->texture.unit[i].eyeTCoeff;
+			a->textureStack[a->textureStackDepth].eyeRCoeff[i] = g->texture.unit[i].eyeRCoeff;
+			a->textureStack[a->textureStackDepth].eyeQCoeff[i] = g->texture.unit[i].eyeQCoeff;
+			a->textureStack[a->textureStackDepth].gen[i] = g->texture.unit[i].gen;
 		}
 		// Is this right?  It sure doesn't seem right.
 		a->textureStack[a->textureStackDepth].borderColor[0] = g->texture.currentTexture1D->borderColor;
-		a->textureStack[a->textureStackDepth].borderColor[1] = g->texture.currentTexture2D->borderColor;
-		a->textureStack[a->textureStackDepth].borderColor[2] = g->texture.currentTexture3D->borderColor;
 		a->textureStack[a->textureStackDepth].minFilter[0] = g->texture.currentTexture1D->minFilter;
-		a->textureStack[a->textureStackDepth].minFilter[1] = g->texture.currentTexture2D->minFilter;
-		a->textureStack[a->textureStackDepth].minFilter[2] = g->texture.currentTexture3D->minFilter;
 		a->textureStack[a->textureStackDepth].magFilter[0] = g->texture.currentTexture1D->magFilter;
-		a->textureStack[a->textureStackDepth].magFilter[1] = g->texture.currentTexture2D->magFilter;
-		a->textureStack[a->textureStackDepth].magFilter[2] = g->texture.currentTexture3D->magFilter;
 		a->textureStack[a->textureStackDepth].wrapS[0] = g->texture.currentTexture1D->wrapS;
-		a->textureStack[a->textureStackDepth].wrapS[1] = g->texture.currentTexture2D->wrapS;
-		a->textureStack[a->textureStackDepth].wrapS[2] = g->texture.currentTexture3D->wrapS;
 		a->textureStack[a->textureStackDepth].wrapT[0] = g->texture.currentTexture1D->wrapT;
+#ifdef CR_OPENGL_VERSION_1_2
+		a->textureStack[a->textureStackDepth].wrapR[0] = g->texture.currentTexture1D->wrapR;
+#endif
+
+		a->textureStack[a->textureStackDepth].borderColor[1] = g->texture.currentTexture2D->borderColor;
+		a->textureStack[a->textureStackDepth].minFilter[1] = g->texture.currentTexture2D->minFilter;
+		a->textureStack[a->textureStackDepth].magFilter[1] = g->texture.currentTexture2D->magFilter;
+		a->textureStack[a->textureStackDepth].wrapS[1] = g->texture.currentTexture2D->wrapS;
 		a->textureStack[a->textureStackDepth].wrapT[1] = g->texture.currentTexture2D->wrapT;
+#ifdef CR_OPENGL_VERSION_1_2
+		a->textureStack[a->textureStackDepth].wrapR[1] = g->texture.currentTexture2D->wrapR;
+#endif
+
+#ifdef CR_OPENGL_VERSION_1_2
+		a->textureStack[a->textureStackDepth].borderColor[2] = g->texture.currentTexture3D->borderColor;
+		a->textureStack[a->textureStackDepth].minFilter[2] = g->texture.currentTexture3D->minFilter;
+		a->textureStack[a->textureStackDepth].magFilter[2] = g->texture.currentTexture3D->magFilter;
+		a->textureStack[a->textureStackDepth].wrapS[2] = g->texture.currentTexture3D->wrapS;
 		a->textureStack[a->textureStackDepth].wrapT[2] = g->texture.currentTexture3D->wrapT;
+		a->textureStack[a->textureStackDepth].wrapR[2] = g->texture.currentTexture3D->wrapR;
+#endif
+#ifdef CR_ARB_texture_cube_map
+		a->textureStack[a->textureStackDepth].borderColor[3] = g->texture.currentTextureCubeMap->borderColor;
+		a->textureStack[a->textureStackDepth].minFilter[3] = g->texture.currentTextureCubeMap->minFilter;
+		a->textureStack[a->textureStackDepth].magFilter[3] = g->texture.currentTextureCubeMap->magFilter;
+		a->textureStack[a->textureStackDepth].wrapS[3] = g->texture.currentTextureCubeMap->wrapS;
+		a->textureStack[a->textureStackDepth].wrapT[3] = g->texture.currentTextureCubeMap->wrapT;
+#ifdef CR_OPENGL_VERSION_1_2
+		a->textureStack[a->textureStackDepth].wrapR[3] = g->texture.currentTextureCubeMap->wrapR;
+#endif
+#endif
+
 		a->textureStackDepth++;
 	}
 	if (mask & GL_TRANSFORM_BIT)
@@ -552,13 +584,18 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		g->stencil.stencilTest = a->enableStack[a->enableStackDepth].stencilTest;
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
 		{
-			g->texture.enabled1D[i] = a->enableStack[a->enableStackDepth].texture1D[i];
-			g->texture.enabled2D[i] = a->enableStack[a->enableStackDepth].texture2D[i];
-			g->texture.enabled3D[i] = a->enableStack[a->enableStackDepth].texture3D[i];
-			g->texture.textureGen[i].s = a->enableStack[a->enableStackDepth].textureGenS[i];
-			g->texture.textureGen[i].t = a->enableStack[a->enableStackDepth].textureGenT[i];
-			g->texture.textureGen[i].r = a->enableStack[a->enableStackDepth].textureGenR[i];
-			g->texture.textureGen[i].q = a->enableStack[a->enableStackDepth].textureGenQ[i];
+			g->texture.unit[i].enabled1D = a->enableStack[a->enableStackDepth].texture1D[i];
+			g->texture.unit[i].enabled2D = a->enableStack[a->enableStackDepth].texture2D[i];
+#ifdef CR_OPENGL_VERSION_1_2
+			g->texture.unit[i].enabled3D = a->enableStack[a->enableStackDepth].texture3D[i];
+#endif
+#ifdef CR_ARB_texture_cube_map
+			g->texture.unit[i].enabledCubeMap = a->enableStack[a->enableStackDepth].textureCubeMap[i];
+#endif
+			g->texture.unit[i].textureGen.s = a->enableStack[a->enableStackDepth].textureGenS[i];
+			g->texture.unit[i].textureGen.t = a->enableStack[a->enableStackDepth].textureGenT[i];
+			g->texture.unit[i].textureGen.r = a->enableStack[a->enableStackDepth].textureGenR[i];
+			g->texture.unit[i].textureGen.q = a->enableStack[a->enableStackDepth].textureGenQ[i];
 		}
 		sb->buffer.dirty = g->neg_bitid;
 		sb->eval.dirty = g->neg_bitid;
@@ -815,19 +852,24 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		a->textureStackDepth--;
 		for (i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 		{
-			g->texture.enabled1D[i] = a->textureStack[a->textureStackDepth].enabled1D[i];
-			g->texture.enabled2D[i] = a->textureStack[a->textureStackDepth].enabled2D[i];
-			g->texture.enabled3D[i] = a->textureStack[a->textureStackDepth].enabled3D[i];
-			g->texture.textureGen[i] = a->textureStack[a->textureStackDepth].textureGen[i];
-			g->texture.objSCoeff[i] = a->textureStack[a->textureStackDepth].objSCoeff[i];
-			g->texture.objTCoeff[i] = a->textureStack[a->textureStackDepth].objTCoeff[i];
-			g->texture.objRCoeff[i] = a->textureStack[a->textureStackDepth].objRCoeff[i];
-			g->texture.objQCoeff[i] = a->textureStack[a->textureStackDepth].objQCoeff[i];
-			g->texture.eyeSCoeff[i] = a->textureStack[a->textureStackDepth].eyeSCoeff[i];
-			g->texture.eyeTCoeff[i] = a->textureStack[a->textureStackDepth].eyeTCoeff[i];
-			g->texture.eyeRCoeff[i] = a->textureStack[a->textureStackDepth].eyeRCoeff[i];
-			g->texture.eyeQCoeff[i] = a->textureStack[a->textureStackDepth].eyeQCoeff[i];
-			g->texture.gen[i] = a->textureStack[a->textureStackDepth].gen[i];
+			g->texture.unit[i].enabled1D = a->textureStack[a->textureStackDepth].enabled1D[i];
+			g->texture.unit[i].enabled2D = a->textureStack[a->textureStackDepth].enabled2D[i];
+#ifdef CR_OPENGL_VERSION_1_2
+			g->texture.unit[i].enabled3D = a->textureStack[a->textureStackDepth].enabled3D[i];
+#endif
+#ifdef CR_ARB_texture_cube_map
+			g->texture.unit[i].enabledCubeMap = a->textureStack[a->textureStackDepth].enabledCubeMap[i];
+#endif
+			g->texture.unit[i].textureGen = a->textureStack[a->textureStackDepth].textureGen[i];
+			g->texture.unit[i].objSCoeff = a->textureStack[a->textureStackDepth].objSCoeff[i];
+			g->texture.unit[i].objTCoeff = a->textureStack[a->textureStackDepth].objTCoeff[i];
+			g->texture.unit[i].objRCoeff = a->textureStack[a->textureStackDepth].objRCoeff[i];
+			g->texture.unit[i].objQCoeff = a->textureStack[a->textureStackDepth].objQCoeff[i];
+			g->texture.unit[i].eyeSCoeff = a->textureStack[a->textureStackDepth].eyeSCoeff[i];
+			g->texture.unit[i].eyeTCoeff = a->textureStack[a->textureStackDepth].eyeTCoeff[i];
+			g->texture.unit[i].eyeRCoeff = a->textureStack[a->textureStackDepth].eyeRCoeff[i];
+			g->texture.unit[i].eyeQCoeff = a->textureStack[a->textureStackDepth].eyeQCoeff[i];
+			g->texture.unit[i].gen = a->textureStack[a->textureStackDepth].gen[i];
 		}
 		// Is this right?  It sure doesn't seem right.
 		g->texture.currentTexture1D->borderColor = a->textureStack[a->textureStackDepth].borderColor[0];

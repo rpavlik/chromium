@@ -20,8 +20,10 @@
 
 #define GET_TOBJ(tobj,state,id) 	for (tobj = state->mapping[id%CRTEXTURE_HASHSIZE]; tobj && tobj->name != id; tobj = tobj->next){}
 
-void crStateTextureInitTextureObj (CRTextureState *t, CRTextureObj *tobj, GLuint name);
+void crStateTextureInitTextureObj (CRTextureState *t, CRTextureObj *tobj, GLuint name, GLenum target);
+
 CRTextureObj *crStateTextureAllocate_t(CRTextureState *t, GLuint name);
+
 void crStateTextureDelete_t(CRTextureState *t, GLuint name);
 
 void crStateTextureInit(CRTextureState *t) 
@@ -38,21 +40,25 @@ void crStateTextureInit(CRTextureState *t)
 	t->max3Dtexturesize = c->max3Dtexturesize;
 #endif
 	t->maxTextureUnitsARB = CR_MAX_TEXTURE_UNITS; // XXX
-	t->maxTextureSize = 2048;
-	t->max3DTextureSize = 2048;
-	t->maxCubeMapTextureSize = 2048;
+	t->maxTextureSize = 256;  // FIXME: query from renderers
+	t->max3DTextureSize = 2048;  // FIXME: query from renderers
+#ifdef CR_ARB_texture_cube_map
+	t->maxCubeMapTextureSize = 2048;  // FIXME: query from renderers
+#endif
 
 	for (i=0, a=t->maxTextureSize; a; i++, a=a>>1);
 	t->maxLevel = i;
 	for (i=0, a=t->max3DTextureSize; a; i++, a=a>>1);
 	t->max3DLevel = i;
+#ifdef CR_ARB_texture_cube_map
 	for (i=0, a=t->maxCubeMapTextureSize; a; i++, a=a>>1);
 	t->maxCubeMapLevel = i;
+#endif
 
 	t->allocated = 1;
 
 	t->textures = (CRTextureObj *) crAlloc (sizeof (CRTextureObj));
-	crStateTextureInitTextureObj(t, t->textures, 0);
+	crStateTextureInitTextureObj(t, t->textures, 0, GL_NONE);
 	t->firstFree = t->textures;
 	t->firstFree->next = NULL;
 
@@ -72,59 +78,67 @@ void crStateTextureInit(CRTextureState *t)
 	t->currentTexture3D = &(t->base3D);
 	t->currentTextureCubeMap = &(t->baseCubeMap);
 
-	crStateTextureInitTextureObj(t, &(t->base1D), 0);
-	crStateTextureInitTextureObj(t, &(t->base2D), 0);
-	crStateTextureInitTextureObj(t, &(t->base3D), 0);
-	crStateTextureInitTextureObj(t, &(t->baseCubeMap), 0 );
-
-	t->base1D.target = GL_TEXTURE_1D;
-	t->base2D.target = GL_TEXTURE_2D;
-#if 0
-	t->base3D.target = GL_TEXTURE_3D;
+	crStateTextureInitTextureObj(t, &(t->base1D), 0, GL_TEXTURE_1D);
+	crStateTextureInitTextureObj(t, &(t->base2D), 0, GL_TEXTURE_2D);
+#ifdef CR_OPENGL_VERSION_1_2
+	crStateTextureInitTextureObj(t, &(t->base3D), 0, GL_TEXTURE_3D);
 #endif
-	t->baseCubeMap.target = GL_TEXTURE_CUBE_MAP_ARB;
+#ifdef CR_ARB_texture_cube_map
+	crStateTextureInitTextureObj(t, &(t->baseCubeMap), 0,
+		GL_TEXTURE_CUBE_MAP_ARB);
+#endif
+
+	crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+	crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+#ifdef CR_OPENGL_VERSION_1_2
+	crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+#endif
+#ifdef CR_ARB_texture_cube_map
+	crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+		GL_TEXTURE_CUBE_MAP_ARB);
+#endif
 
 	t->curTextureUnit = 0;
 
+	// Per-unit initialization
 	for ( i = 0 ; i < CR_MAX_TEXTURE_UNITS ; i++)
 	{
-		t->currentTexture1DName[i] = 0;
-		t->currentTexture2DName[i] = 0;
-		t->currentTexture3DName[i] = 0;
-		t->currentTextureCubeMapName[i] = 0;
+		t->unit[i].currentTexture1DName = 0;
+		t->unit[i].currentTexture2DName = 0;
+		t->unit[i].currentTexture3DName = 0;
+		t->unit[i].currentTextureCubeMapName = 0;
 
-		t->enabled1D[i] = GL_FALSE;
-		t->enabled2D[i] = GL_FALSE;
-		t->enabled3D[i] = GL_FALSE;
-		t->enabledCubeMap[i] = GL_FALSE;
-		t->textureGen[i].s = GL_FALSE;
-		t->textureGen[i].t = GL_FALSE;
-		t->textureGen[i].r = GL_FALSE;
-		t->textureGen[i].q = GL_FALSE;
+		t->unit[i].enabled1D = GL_FALSE;
+		t->unit[i].enabled2D = GL_FALSE;
+		t->unit[i].enabled3D = GL_FALSE;
+		t->unit[i].enabledCubeMap = GL_FALSE;
+		t->unit[i].textureGen.s = GL_FALSE;
+		t->unit[i].textureGen.t = GL_FALSE;
+		t->unit[i].textureGen.r = GL_FALSE;
+		t->unit[i].textureGen.q = GL_FALSE;
 
-		t->gen[i].s = GL_EYE_LINEAR;
-		t->gen[i].t = GL_EYE_LINEAR;
-		t->gen[i].r = GL_EYE_LINEAR;
-		t->gen[i].q = GL_EYE_LINEAR;
+		t->unit[i].gen.s = GL_EYE_LINEAR;
+		t->unit[i].gen.t = GL_EYE_LINEAR;
+		t->unit[i].gen.r = GL_EYE_LINEAR;
+		t->unit[i].gen.q = GL_EYE_LINEAR;
 
-		t->objSCoeff[i] = x_vector;
-		t->objTCoeff[i] = y_vector;
-		t->objRCoeff[i] = zero_vector;
-		t->objQCoeff[i] = zero_vector;
+		t->unit[i].objSCoeff = x_vector;
+		t->unit[i].objTCoeff = y_vector;
+		t->unit[i].objRCoeff = zero_vector;
+		t->unit[i].objQCoeff = zero_vector;
 
-		t->eyeSCoeff[i] = x_vector;
-		t->eyeTCoeff[i] = y_vector;
-		t->eyeRCoeff[i] = zero_vector;
-		t->eyeQCoeff[i] = zero_vector;
-		t->envMode[i] = GL_MODULATE;
-		t->envColor[i] = zero_color;
+		t->unit[i].eyeSCoeff = x_vector;
+		t->unit[i].eyeTCoeff = y_vector;
+		t->unit[i].eyeRCoeff = zero_vector;
+		t->unit[i].eyeQCoeff = zero_vector;
+		t->unit[i].envMode = GL_MODULATE;
+		t->unit[i].envColor = zero_color;
 	}
-
 
 	crStateTextureInitExtensions( t );
 }
 
-void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint name)
+void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint name, GLenum target)
 {
 	int i;
 	int j;
@@ -138,28 +152,45 @@ void crStateTextureInitTextureObj(CRTextureState *t, CRTextureObj *tobj, GLuint 
 	tobj->magFilter     = GL_LINEAR;
 	tobj->wrapS         = GL_REPEAT;
 	tobj->wrapT         = GL_REPEAT;
-	tobj->target        = GL_NONE;
+#ifdef CR_OPENGL_VERSION_1_2
+	tobj->wrapR         = GL_REPEAT;
+#endif
+	tobj->target        = target;
 	tobj->name          = name;
 
-	tobj->level = (CRTextureLevel *) crAlloc (sizeof(CRTextureLevel) * t->maxLevel);
-	for (i=0; i<t->maxLevel; i++) 
-	{
-		tl                = &(tobj->level[i]);
-		tl->bytes         = 0;
-		tl->img           = NULL;
-		tl->width         = 0;
-		tl->height        = 0;
-		tl->depth         = 0;
-		tl->border        = 0;
-		tl->components    = 1;
-		tl->bytesPerPixel = 0;
-		tl->format        = GL_RGBA;
-		tl->type          = GL_UNSIGNED_BYTE;
-		for (j = 0 ; j < CR_MAX_TEXTURE_UNITS; j++)
-		{
-			tl->dirty[j]     = 0;  // By default this level is ignored.
-		}
+#define INIT_LEVELS(ARRAY)											\
+	tobj->ARRAY = (CRTextureLevel *) crAlloc(sizeof(CRTextureLevel)	\
+												 * t->maxLevel);	\
+	if (!tobj->ARRAY)												\
+		return; /* out of memory */									\
+	for (i=0; i<t->maxLevel; i++)									\
+	{																\
+		tl                = &(tobj->ARRAY[i]);						\
+		tl->bytes         = 0;										\
+		tl->img           = NULL;									\
+		tl->width         = 0;										\
+		tl->height        = 0;										\
+		tl->depth         = 0;										\
+		tl->border        = 0;										\
+		tl->components    = 1;										\
+		tl->bytesPerPixel = 0;										\
+		tl->format        = GL_RGBA;								\
+		tl->type          = GL_UNSIGNED_BYTE;						\
+		for (j = 0 ; j < CR_MAX_TEXTURE_UNITS; j++)					\
+		{															\
+			tl->dirty[j]     = 0;  /* By default this level is ignored.*/	\
+		}																	\
 	}
+
+	INIT_LEVELS(level);
+
+#ifdef CR_ARB_texture_cube_map
+	INIT_LEVELS(negativeXlevel);
+	INIT_LEVELS(positiveYlevel);
+	INIT_LEVELS(negativeYlevel);
+	INIT_LEVELS(positiveZlevel);
+	INIT_LEVELS(negativeZlevel);
+#endif
 
 	crStateTextureInitTextureObjExtensions( t, tobj );
 
@@ -182,7 +213,7 @@ void crStateTextureInitTexture (GLuint name)
 	GET_TOBJ(tobj, name);
 	if (!tobj) return;
 
-	crStateTextureInitTextureObj(t, tobj, name);
+	crStateTextureInitTextureObj(t, tobj, name, GL_NONE);
 }
 
 CRTextureObj * crStateTextureGet(GLuint name) 
@@ -236,7 +267,7 @@ CRTextureObj * crStateTextureAllocate_t (CRTextureState *t, GLuint name)
 		t->mapping[i] = tobj;
 
 		/* Initalize all of its members */
-		crStateTextureInitTextureObj(t, tobj, name);
+		crStateTextureInitTextureObj(t, tobj, name, GL_NONE);
 
 		/* Include name into the free list */
 		/* First find which region it fits in */
@@ -334,21 +365,25 @@ CRTextureObj * crStateTextureAllocate_t (CRTextureState *t, GLuint name)
 		{
 			t->currentTexture2D = t->textures + (t->currentTexture2D - tobj);
 		}
+#ifdef CR_OPENGL_VERSION_1_2
 		if (t->currentTexture3D != &(t->base3D)) 
 		{
 			t->currentTexture3D = t->textures + (t->currentTexture3D - tobj);
 		}
+#endif
+#ifdef CR_ARB_texture_cube_map
 		if (t->currentTextureCubeMap != &(t->baseCubeMap))
 		{
 			t->currentTextureCubeMap = t->textures + (t->currentTextureCubeMap - tobj);
 		}
+#endif
 	}
 
 	/* Update the free list */
 	t->firstFree = t->textures + t->allocated;
 	for (i=t->allocated; i < t->allocated*2; i++) 
 	{
-		crStateTextureInitTextureObj(t, t->textures+i, 0);		
+		crStateTextureInitTextureObj(t, t->textures+i, 0, GL_NONE);
 		t->textures[i].next = t->textures+i+1;
 	}
 
@@ -571,28 +606,30 @@ void STATE_APIENTRY crStateDeleteTextures(GLsizei n, const GLuint *textures)
 			/* if the currentTexture is deleted, 
 			 ** reset back to the base texture.
 			 */
-			if (name == t->currentTexture1DName[t->curTextureUnit]) 
+			if (name == t->unit[t->curTextureUnit].currentTexture1DName) 
 			{
 				t->currentTexture1D = &(t->base1D);
-				t->currentTexture1DName[t->curTextureUnit] = 0;
+				t->unit[t->curTextureUnit].currentTexture1DName = 0;
 			}
-			if (name == t->currentTexture2DName[t->curTextureUnit]) 
+			if (name == t->unit[t->curTextureUnit].currentTexture2DName) 
 			{
 				t->currentTexture2D = &(t->base2D);
-				t->currentTexture2DName[t->curTextureUnit] = 0;
+				t->unit[t->curTextureUnit].currentTexture2DName = 0;
 			}
-#if 0
+#ifdef CR_OPENGL_VERSION_1_2
 			if (name == t->currentTexture3DName[t->curTextureUnit]) 
 			{
-				t->currentTexture3D[t->curTextureUnit] = &(t->base3D[t->curTextureUnit]);
-				t->currentTexture3DName[t->curTextureUnit] = 0;
+				t->currentTexture3D = &(t->base3D);
+				t->unit[t->curTextureUnit].currentTexture3DName = 0;
 			}
 #endif
-			if (name == t->currentTextureCubeMapName[t->curTextureUnit])
+#ifdef CR_ARB_texture_cube_map
+			if (name == t->unit[t->curTextureUnit].currentTextureCubeMapName)
 			{
 				t->currentTextureCubeMap = &(t->baseCubeMap);
-				t->currentTextureCubeMapName[t->curTextureUnit] = 0;
+				t->unit[t->curTextureUnit].currentTextureCubeMapName = 0;
 			}
+#endif
 		}
 	}
 
@@ -667,22 +704,24 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 		{
 			case GL_TEXTURE_1D:
 				t->currentTexture1D = &(t->base1D);
-				t->currentTexture1DName[t->curTextureUnit] = 0;
+				t->unit[t->curTextureUnit].currentTexture1DName = 0;
 				break;
 			case GL_TEXTURE_2D:
 				t->currentTexture2D = &(t->base2D);
-				t->currentTexture2DName[t->curTextureUnit] = 0;
+				t->unit[t->curTextureUnit].currentTexture2DName = 0;
 				break;
-#if 0
+#ifdef CR_OPENGL_VERSION_1_2
 			case GL_TEXTURE_3D:
-				t->currentTexture3D[t->curTextureUnit] = &(t->base3D[t->curTextureUnit]);
-				t->currentTexture3DName[t->curTextureUnit] = 0;
+				t->currentTexture3D[t->curTextureUnit] = &(t->base3D);
+				t->unit[t->curTextureUnit].currentTexture3DName = 0;
 				break;
 #endif
+#ifdef CR_ARB_texture_cube_map
 			case GL_TEXTURE_CUBE_MAP_ARB:
 				t->currentTextureCubeMap = &(t->baseCubeMap);
-				t->currentTextureCubeMapName[t->curTextureUnit] = 0;
+				t->unit[t->curTextureUnit].currentTextureCubeMapName = 0;
 				break;
+#endif
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid target passed to glBindTexture: %d", target);
 				return;
@@ -719,22 +758,24 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 	{
 		case GL_TEXTURE_1D:
 			t->currentTexture1D = tobj;
-			t->currentTexture1DName[t->curTextureUnit] = texture;
+			t->unit[t->curTextureUnit].currentTexture1DName = texture;
 			break;
 		case GL_TEXTURE_2D:
 			t->currentTexture2D = tobj;
-			t->currentTexture2DName[t->curTextureUnit] = texture;
+			t->unit[t->curTextureUnit].currentTexture2DName = texture;
 			break;
-#if 0
+#ifdef CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_3D:
 			t->currentTexture3D[t->curTextureUnit] = tobj;
-			t->currentTexture3DName[t->curTextureUnit] = texture;
+			t->unit[t->curTextureUnit].currentTexture3DName = texture;
 			break;
 #endif
+#ifdef CR_ARB_texture_cube_map
 		case GL_TEXTURE_CUBE_MAP_ARB:
 			t->currentTextureCubeMap = tobj;
-			t->currentTextureCubeMapName[t->curTextureUnit] = texture;
+			t->unit[t->curTextureUnit].currentTextureCubeMapName = texture;
 			break;
+#endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid target passed to glBindTexture: %d", target);
 			return;
@@ -767,29 +808,47 @@ void STATE_APIENTRY crStateTexImage1D (GLenum target, GLint level, GLint compone
 
 	FLUSH();
 
-	if (target != GL_TEXTURE_1D)
+	if (target != GL_TEXTURE_1D && target != GL_PROXY_TEXTURE_1D)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexImage1D target != GL_TEXTURE_1D: %d", target);
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexImage1D target != (GL_TEXTURE_1D | GL_PROXY_TEXTURE_1D): 0x%x", target);
 		return;
 	}
 
 	if (level < 0 || level > t->maxLevel) 
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage1D level oob: %d", level);
+		if (target == GL_PROXY_TEXTURE_1D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage1D level oob: %d", level);
+		}
 		return;
 	}
 
 	/* Not needed in 1.1
-		 if (componnents < 1 || components > 4)
-		 {
-		 crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage1D components oob: %d", components);
-	 return;
-	 }
-	 */
+	if (componnents < 1 || components > 4)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage1D components oob: %d", components);
+		return;
+	}
+	*/
 
 	if (border != 0 && border != 1)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage1D border oob: %d", border);
+		if (target == GL_PROXY_TEXTURE_1D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage1D border oob: %d", border);
+		}
 		return;
 	}
 
@@ -804,34 +863,64 @@ void STATE_APIENTRY crStateTexImage1D (GLenum target, GLint level, GLint compone
 	}
 	if (width < 0 || i!=1) 
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage1D width is not valid: %d", width);
+		if (target == GL_PROXY_TEXTURE_1D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage1D width is not valid: %d", width);
+		}
 		return;
 	}
 
 	if (width > t->maxTextureSize)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glTexImage1D width oob: %d", width);
+		if (target == GL_PROXY_TEXTURE_1D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy1D), 0, GL_TEXTURE_1D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage1D width oob: %d", width);
+		}
 		return;
 	}
 
-	/*
-	 ** Only set these fields if 
-	 ** defining the base texture.
-	 */
-	tobj = t->currentTexture1D;
-	tl = tobj->level+level;
-	tl->bytes = crPixelSize(format, type, width, 1);
-
-	if (tl->img) 
+	if (target == GL_PROXY_TEXTURE_1D)
 	{
-		crFree (tl->img);
+		tobj = t->currentTexture1D;
+		tl = tobj->level+level;
+		tl->bytes = 0;
 	}
-	tl->img = (GLubyte *) crAlloc (tl->bytes);
-
-	if (pixels) 
+	else
 	{
-		crPixelCopy1D((GLvoid *) tl->img, pixels, format, type, width, &(p->unpack));
+		assert(target == GL_TEXTURE_1D);
+		tobj = t->currentTexture1D;
+		tobj->target = GL_TEXTURE_1D;
+		tl = tobj->level+level;
+		tl->bytes = crPixelSize(format, type, width, 1);
+	}
+
+	if (tl->bytes)
+	{
+		/* this is not a proxy texture target so alloc storage */
+		if (tl->img) 
+			crFree (tl->img);
+		tl->img = (GLubyte *) crAlloc (tl->bytes);
+		if (!tl->img)
+		{
+			crStateError(__LINE__,__FILE__, GL_OUT_OF_MEMORY,
+				     "glTexImage1D out of memory");
+			return;
+		}
+		if (pixels) 
+			crPixelCopy1D((GLvoid *) tl->img, pixels, format, type,
+				width, &(p->unpack));
 	}
 
 	tl->width = width;
@@ -843,8 +932,7 @@ void STATE_APIENTRY crStateTexImage1D (GLenum target, GLint level, GLint compone
 	tl->type = type;
 	tl->bytesPerPixel = tl->bytes / width;
 
-	tobj->target = target;
-
+	/* XXX may need to do some fine-tuning here for proxy textures */
 	tobj->dirty = g->neg_bitid;
 	for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
 	{
@@ -876,22 +964,61 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 	FLUSH();
 
 	if (target != GL_TEXTURE_2D &&
-	    (target < GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
-	    target > GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB))
+	    target != GL_PROXY_TEXTURE_2D
+#ifdef CR_ARB_texture_cube_map
+		 && (target < GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
+	    target > GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) &&
+	    target != GL_PROXY_TEXTURE_CUBE_MAP_ARB
+#endif
+		)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexImage2D target != GL_TEXTURE_2D: %d", target);
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexImage2D invalid target: 0x%x", target);
 		return;
 	}
 
 	if (level < 0 || (target == GL_TEXTURE_2D && level > t->maxLevel) || (target != GL_TEXTURE_2D && level > t->maxCubeMapLevel))
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage2D level oob: %d", level);
+		if (target == GL_PROXY_TEXTURE_2D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+		}
+#ifdef CR_ARB_texture_cube_map
+		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+				GL_TEXTURE_CUBE_MAP_ARB);
+		}
+#endif
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage2D level oob: %d", level);
+		}
 		return;
 	}
 
 	if (border != 0 && border != 1)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage2D border oob: %d", border);
+		if (target == GL_PROXY_TEXTURE_2D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+		}
+#ifdef CR_ARB_texture_cube_map
+		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+				GL_TEXTURE_CUBE_MAP_ARB);
+		}
+#endif
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage2D border oob: %d", border);
+		}
 		return;
 	}
 
@@ -906,7 +1033,24 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 	}
 	if (width < 0 || i!=1) 
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage2D width is not valid: %d", width);
+		if (target == GL_PROXY_TEXTURE_2D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+		}
+#ifdef CR_ARB_texture_cube_map
+		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+				GL_TEXTURE_CUBE_MAP_ARB);
+		}
+#endif
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage2D width is not valid: %d", width);
+		}
 		return;
 	}
 
@@ -940,6 +1084,28 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 			return;
 		}
 	}
+	else if (target == GL_PROXY_TEXTURE_2D)
+	{
+		if (width > t->maxTextureSize || height > t->maxTextureSize)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
+			return;
+		}
+	}
+#ifdef CR_ARB_texture_cube_map
+	else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
+	{
+		if (width > t->maxCubeMapTextureSize ||
+			height > t->maxCubeMapTextureSize ||
+			width != height)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxyCubeMap), 0,
+				GL_TEXTURE_CUBE_MAP_ARB);
+			return;
+		}
+	}
 	else // Cube map
 	{
 		if (width > t->maxCubeMapTextureSize)
@@ -961,47 +1127,83 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 				     "glTexImage2D cube map width and height are unequal: %dx%d", width, height);
 			return;
 		}
+#endif
 	}
 
 	/*
 	 ** Only set these fields if 
 	 ** defining the base texture.
 	 */
-	if( target == GL_TEXTURE_2D )
+	if (target == GL_TEXTURE_2D )
 	{
 		tobj = t->currentTexture2D;
 		tl = tobj->level+level;
 		tl->bytes = crPixelSize(format, type, width, height);
 	}
-	else // Cube map
+	else if (target == GL_PROXY_TEXTURE_2D) {
+		tobj = &(t->proxy2D);
+		tl = tobj->level+level;
+		tl->bytes = 0;
+	}
+#ifdef CR_ARB_texture_cube_map
+	else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB) {
+		tobj = &(t->proxyCubeMap);
+		tl = tobj->level+level;
+		tl->bytes = 0;
+	}
+	else if (target == GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB)
 	{
 		tobj = t->currentTextureCubeMap;
-		tl = tobj->level+level;
-		tl->bytes = 6 * crPixelSize(format, type, width, height);
+		tl = tobj->level + level;
+		tl->bytes = crPixelSize(format, type, width, height);
 	}
+	else if (target == GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB)
+	{
+		tobj = t->currentTextureCubeMap;
+		tl = tobj->negativeXlevel + level;
+		tl->bytes = crPixelSize(format, type, width, height);
+	}
+	else if (target == GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB)
+	{
+		tobj = t->currentTextureCubeMap;
+		tl = tobj->positiveYlevel + level;
+		tl->bytes = crPixelSize(format, type, width, height);
+	}
+	else if (target == GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB)
+	{
+		tobj = t->currentTextureCubeMap;
+		tl = tobj->negativeYlevel + level;
+		tl->bytes = crPixelSize(format, type, width, height);
+	}
+	else if (target == GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB)
+	{
+		tobj = t->currentTextureCubeMap;
+		tl = tobj->positiveZlevel + level;
+		tl->bytes = crPixelSize(format, type, width, height);
+	}
+	else if (target == GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)
+	{
+		tobj = t->currentTextureCubeMap;
+		tl = tobj->negativeZlevel + level;
+		tl->bytes = crPixelSize(format, type, width, height);
+	}
+#endif
 
-	if (tl->img && target == GL_TEXTURE_2D)
+	if (tl->bytes)
 	{
-		crFree (tl->img);
-	}
-	if (!tl->img)
-	{
-		tl->img = (GLubyte *) crAlloc (tl->bytes);
-	}
-
-	if( target == GL_TEXTURE_2D )
-	{
-		if (pixels)
+		/* this is not a proxy texture target so alloc storage */
+		if (tl->img)
+			crFree(tl->img);
+		tl->img = (GLubyte *) crAlloc(tl->bytes);
+		if (!tl->img)
 		{
-			crPixelCopy2D((GLvoid *) (tl->img), pixels, format, type, width, height, &(p->unpack) );
+			crStateError(__LINE__,__FILE__, GL_OUT_OF_MEMORY,
+				     "glTexImage2D out of memory");
+			return;
 		}
-	}
-	else // Cube map
-	{
 		if (pixels)
-		{
-			crPixelCopy2D((GLvoid *) (tl->img+(tl->bytes/6*(target-GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB))), pixels, format, type, width, height, &(p->unpack) );
-		}
+			crPixelCopy2D((GLvoid *) (tl->img), pixels, format,
+				type, width, height, &(p->unpack) );
 	}
 
 	tl->width = width;
@@ -1012,16 +1214,8 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 	tl->border = border;
 	tl->type = type;
 	tl->bytesPerPixel = tl->bytes/ (width*height);
-	if( target != GL_TEXTURE_2D )
-	{
-		tl->bytesPerPixel /= 6;
-		tobj->target = GL_TEXTURE_CUBE_MAP_ARB;
-	}
-	else // Not a cube map
-	{
-		tobj->target = target;
-	}
 
+	/* XXX may need to do some fine-tuning here for proxy textures */
 	tobj->dirty = g->neg_bitid;
 	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
 	{
@@ -1052,7 +1246,7 @@ void STATE_APIENTRY crStateTexSubImage1D (GLenum target, GLint level, GLint xoff
 
 	FLUSH();
 
-	if (target != GL_TEXTURE_1D)
+	if (target != GL_TEXTURE_1D && target != GL_PROXY_TEXTURE_1D)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glSubTexImage1D target != GL_TEXTURE_1D: %d", target);
 		return;
@@ -1060,7 +1254,8 @@ void STATE_APIENTRY crStateTexSubImage1D (GLenum target, GLint level, GLint xoff
 
 	if (level < 0 || level > t->maxLevel) 
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glSubTexImage1D level oob: %d", level);
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+			"glSubTexImage1D level oob: %d", level);
 		return;
 	}
 
@@ -1072,12 +1267,12 @@ void STATE_APIENTRY crStateTexSubImage1D (GLenum target, GLint level, GLint xoff
 	}
 
 	/* Not needed in 1.1
-		 if (componnents < 1 || components > 4)
-		 {
-		 crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage1D components oob: %d", components);
-	 return;
-	 }
-	 */
+	if (componnents < 1 || components > 4)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage1D components oob: %d", components);
+		return;
+	}
+	*/
 
 	/* XXX We need to handle conversion! */	
 	if (format != tl->format) 
@@ -1152,6 +1347,7 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 			return;
 		}
 	}
+#ifdef CR_ARB_texture_cube_map
 	else if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB && target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)
 	{
 		if (level < 0 || level > t->maxCubeMapLevel)
@@ -1172,6 +1368,7 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 			return;
 		}
 	}
+#endif
 	else
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexSubImage2D target != GL_TEXTURE_2D: %d", target);
@@ -1204,19 +1401,9 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 
 	crPixelCopy2D( subimg, pixels, format, type, width, height, &(p->unpack) );
 
-	if (target == GL_TEXTURE_2D )
-	{
-		img =   tl->img +
+	img = tl->img +
 			xoffset*tl->bytesPerPixel +
 			yoffset*tl->width*tl->bytesPerPixel;
-	}
-	else // Cube map
-	{
-		img =	tl->img + 
-			(tl->bytes/6 * (target-GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB)) +
-			xoffset*tl->bytesPerPixel +
-			yoffset*tl->width*tl->bytesPerPixel;
-	}
 
 	src = subimg;
 
@@ -1239,7 +1426,7 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 	tb->dirty = g->neg_bitid;
 }
 
-#if 0
+#ifdef CR_OPENGL_VERSION_1_2
 void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level, GLint components, 
 		GLsizei width, GLsizei height, GLsizei depth,
 		GLint border, GLenum format, GLenum type, const GLvoid *pixels  ) {
@@ -1259,21 +1446,39 @@ void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level, GLint compone
 	}
 
 
-	if (target != GL_TEXTURE_3D)
+	if (target != GL_TEXTURE_3D && target != GL_PROXY_TEXTURE_3D)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexImage3D target != GL_TEXTURE_3D: %d", target);
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexImage3D invalid target: 0x%x", target);
 		return;
 	}
 
 	if (level < 0 || level > t->max3Dlevel) 
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage3D level oob: %d", level);
+		if (target == GL_PROXY_TEXTURE_3D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage3D level oob: %d", level);
+		}
 		return;
 	}
 
 	if (border != 0 && border != 1)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage3D border oob: %d", border);
+		if (target == GL_PROXY_TEXTURE_3D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage3D border oob: %d", border);
+		}
 		return;
 	}
 
@@ -1293,7 +1498,16 @@ void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level, GLint compone
 		for (i=height-2*border; i>0 && !(i&0x1); i = i >> 1);
 	if (height < 0 || i!=1) 
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage3D height is not valid: %d", height);
+		if (target == GL_PROXY_TEXTURE_3D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+			    "glTexImage3D height is not valid: %d", height);
+		}
 		return;
 	}
 
@@ -1303,32 +1517,89 @@ void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level, GLint compone
 		for (i=depth-2*border; i>0 && !(i&0x1); i = i >> 1);
 	if (depth < 0 || i!=1) 
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexImage3D depth is not valid: %d", depth);
+		if (target == GL_PROXY_TEXTURE_3D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage3D depth is not valid: %d", depth);
+		}
 		return;
 	}
 
 	if (width > t->max3Dtexturesize)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glTexImage3D width oob: %d", width);
+		if (target == GL_PROXY_TEXTURE_3D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy3D), 0, GL_TEXTURE_3D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage3D width oob: %d", width);
 		return;
 	}
 
 	if (height > t->max3Dtexturesize)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glTexImage3D height oob: %d", height);
+		if (target == GL_PROXY_TEXTURE_3D)
+		{
+			/* clear all the texture object state */
+			crStateTextureInitTextureObj(t, &(t->proxy3D), 0), GL_TEXTURE_3D);
+		}
+		else
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+				"glTexImage3D height oob: %d", height);
+		}
 		return;
 	}
 
-	/*
-	 ** Only set these fields if 
-	 ** defining the base texture.
-	 */
-	tobj = t->currentTexture3D[t->curTextureUnit];
-	tl = tobj->level+level;
+	if (target == GL_TEXTURE_3D)
+	{
+		tobj = t->currentTexture3D;  /* FIXME: per unit! */
+		tl = tobj->level + level;
+#if 1
+		/* XXX which of these is right? (BrianP) */
+		tl->bytes = crPixelSize(format, type, width, height);
+#else
+		tl->bytes = __glpixel_getdata3Dsize(width, height, depth,
+			format, type);
+#endif
+	}
+	else if (target == GL_PROXY_TEXTURE_3D)
+	{
+		tobj = t->proxyTexture3D;  /* FIXME: per unit! */
+		tl = tobj->level + level;
+		tl->bytes = 0;
+	}
 
-	tobj->target = target;
+	if (tl->bytes)
+	{
+		/* this is not a proxy texture target so alloc storage */
+		if (tl->img)
+			crFree(tl->img);
+		tl->img = (GLubyte *) crAlloc(tl->bytes);
+		if (!tl->img)
+		{
+			crStateError(__LINE__,__FILE__, GL_OUT_OF_MEMORY,
+				     "glTexImage3D out of memory");
+			return;
+		}
+		if (pixels)
+#if 0
+			/* XXX not implemented? */
+			crPixelCopy3D((GLvoid *) (tl->img), pixels, format,
+				type, width, height, &(p->unpack) );
+#else
+			__glpixel_getdata3D_p(p, (GLvoid *) tl->img,
+				width, height, depth, format, type, pixels);
+#endif
+	}
 
 	tl->components = components;
 	tl->border = border;
@@ -1337,12 +1608,8 @@ void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level, GLint compone
 	tl->depth = depth;
 	tl->format = format;
 	tl->type = type;
-	tl->bytes = __glpixel_getdata3Dsize(width, height, depth, format, type);
-	tl->img = (GLubyte *) crAlloc (tl->bytes);
 
-	__glpixel_getdata3D_p(p, (GLvoid *) tl->img,
-			width, height, depth, format, type, pixels);
-
+	/* XXX may need to do some fine-tuning here for proxy textures */
 	tl->dirty = g->neg_bitid;
 	for (i = 0 ; i < CR_MAX_TEXTURE_UNITS; i++)
 	{
@@ -1380,14 +1647,16 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 		case GL_TEXTURE_2D:
 			tobj = t->currentTexture2D;
 			break;
-#if 0
+#ifdef CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D[t->curTextureUnit];
+			tobj = t->currentTexture3D;
 			break;
 #endif
+#ifdef CR_ARB_texture_cube_map
 		case GL_TEXTURE_CUBE_MAP_ARB:
 			tobj = t->currentTextureCubeMap;
 			break;
+#endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 						"TexParamterfv: target is invalid: %d", target);
@@ -1443,6 +1712,20 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 			}
 			tobj->wrapT = e;
 			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_WRAP_R:
+			if (e != GL_CLAMP && e != GL_REPEAT)
+			{
+				if (!crStateTexParameterfvExtensions( t, tobj, pname, param ))
+				{
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+							"TexParameterfv: GL_TEXTURE_WRAP_R invalid param: %d", e);
+					return;
+				}
+			}
+			tobj->wrapR = e;
+			break;
+#endif
 		case GL_TEXTURE_BORDER_COLOR:
 			tobj->borderColor.r = param[0];
 			tobj->borderColor.g = param[1];
@@ -1547,7 +1830,7 @@ void STATE_APIENTRY crStateTexEnvfv (GLenum target, GLenum pname, const GLfloat 
 							"glTexEnvfv: invalid param: %f", *param);
 				return;
 			}
-			t->envMode[t->curTextureUnit] = e;
+			t->unit[t->curTextureUnit].envMode = e;
 			break;
 		case GL_TEXTURE_ENV_COLOR:
 			c.r = param[0];
@@ -1562,7 +1845,7 @@ void STATE_APIENTRY crStateTexEnvfv (GLenum target, GLenum pname, const GLfloat 
 			if (c.g < 0.0f) c.g = 0.0f;
 			if (c.b < 0.0f) c.b = 0.0f;
 			if (c.a < 0.0f) c.a = 0.0f;
-			t->envColor[t->curTextureUnit] = c;
+			t->unit[t->curTextureUnit].envColor = c;
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -1630,13 +1913,13 @@ void STATE_APIENTRY crStateGetTexEnvfv (GLenum target, GLenum pname, GLfloat *pa
 
 	switch (pname) {
 		case GL_TEXTURE_ENV_MODE:
-			*param = (GLfloat) t->envMode[t->curTextureUnit];
+			*param = (GLfloat) t->unit[t->curTextureUnit].envMode;
 			break;
 		case GL_TEXTURE_ENV_COLOR:
-			param[0] = t->envColor[t->curTextureUnit].r;
-			param[1] = t->envColor[t->curTextureUnit].g;
-			param[2] = t->envColor[t->curTextureUnit].b;
-			param[3] = t->envColor[t->curTextureUnit].a;
+			param[0] = t->unit[t->curTextureUnit].envColor.r;
+			param[1] = t->unit[t->curTextureUnit].envColor.g;
+			param[2] = t->unit[t->curTextureUnit].envColor.b;
+			param[3] = t->unit[t->curTextureUnit].envColor.a;
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -1666,13 +1949,13 @@ void STATE_APIENTRY crStateGetTexEnviv (GLenum target, GLenum pname, GLint *para
 
 	switch (pname) {
 		case GL_TEXTURE_ENV_MODE:
-			*param = (GLint) t->envMode[t->curTextureUnit];
+			*param = (GLint) t->unit[t->curTextureUnit].envMode;
 			break;
 		case GL_TEXTURE_ENV_COLOR:
-			param[0] = (GLint) (t->envColor[t->curTextureUnit].r * GL_MAXINT);
-			param[0] = (GLint) (t->envColor[t->curTextureUnit].g * GL_MAXINT);
-			param[0] = (GLint) (t->envColor[t->curTextureUnit].b * GL_MAXINT);
-			param[0] = (GLint) (t->envColor[t->curTextureUnit].a * GL_MAXINT);
+			param[0] = (GLint) (t->unit[t->curTextureUnit].envColor.r * GL_MAXINT);
+			param[0] = (GLint) (t->unit[t->curTextureUnit].envColor.g * GL_MAXINT);
+			param[0] = (GLint) (t->unit[t->curTextureUnit].envColor.b * GL_MAXINT);
+			param[0] = (GLint) (t->unit[t->curTextureUnit].envColor.a * GL_MAXINT);
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -1719,7 +2002,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 							return;
 						}
 					}
-					t->gen[t->curTextureUnit].s = e;
+					t->unit[t->curTextureUnit].gen.s = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1728,7 +2011,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					t->objSCoeff[t->curTextureUnit] = v;
+					t->unit[t->curTextureUnit].objSCoeff = v;
 					tb->objGen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1739,7 +2022,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.w = (GLfloat) param[3];
 					crStateTransformInvertTransposeMatrix(&inv, trans->modelView+trans->modelViewDepth);
 					crStateTransformXformPointMatrixf(&inv, &v);
-					t->eyeSCoeff[t->curTextureUnit] = v;
+					t->unit[t->curTextureUnit].eyeSCoeff = v;
 					tb->eyeGen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1764,7 +2047,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 							return;
 						}
 					}
-					t->gen[t->curTextureUnit].t = e;
+					t->unit[t->curTextureUnit].gen.t = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1773,7 +2056,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					t->objTCoeff[t->curTextureUnit] = v;
+					t->unit[t->curTextureUnit].objTCoeff = v;
 					tb->objGen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1784,7 +2067,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.w = (GLfloat) param[3];
 					crStateTransformInvertTransposeMatrix(&inv, trans->modelView+trans->modelViewDepth);
 					crStateTransformXformPointMatrixf(&inv, &v);
-					t->eyeTCoeff[t->curTextureUnit] = v;
+					t->unit[t->curTextureUnit].eyeTCoeff = v;
 					tb->eyeGen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1807,7 +2090,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 							return;
 						}
 					}
-					t->gen[t->curTextureUnit].r = e;
+					t->unit[t->curTextureUnit].gen.r = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1816,7 +2099,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					t->objRCoeff[t->curTextureUnit] = v;
+					t->unit[t->curTextureUnit].objRCoeff = v;
 					tb->objGen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1827,7 +2110,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.w = (GLfloat) param[3];
 					crStateTransformInvertTransposeMatrix(&inv, trans->modelView+trans->modelViewDepth);
 					crStateTransformXformPointMatrixf(&inv, &v);
-					t->eyeRCoeff[t->curTextureUnit] = v;
+					t->unit[t->curTextureUnit].eyeRCoeff = v;
 					tb->eyeGen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1851,7 +2134,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 							return;
 						}
 					}
-					t->gen[t->curTextureUnit].q = e;
+					t->unit[t->curTextureUnit].gen.q = e;
 					tb->gen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1860,7 +2143,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					t->objQCoeff[t->curTextureUnit] = v;
+					t->unit[t->curTextureUnit].objQCoeff = v;
 					tb->objGen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1871,7 +2154,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.w = (GLfloat) param[3];
 					crStateTransformInvertTransposeMatrix(&inv, trans->modelView+trans->modelViewDepth);
 					crStateTransformXformPointMatrixf(&inv, &v);
-					t->eyeQCoeff[t->curTextureUnit] = v;
+					t->unit[t->curTextureUnit].eyeQCoeff = v;
 					tb->eyeGen[t->curTextureUnit] = g->neg_bitid;
 					tb->dirty = g->neg_bitid;
 					break;
@@ -1971,16 +2254,16 @@ void STATE_APIENTRY crStateGetTexGendv (GLenum coord, GLenum pname, GLdouble *pa
 		case GL_TEXTURE_GEN_MODE:
 			switch (coord) {
 				case GL_S:
-					*param = (GLdouble) t->gen[t->curTextureUnit].s;
+					*param = (GLdouble) t->unit[t->curTextureUnit].gen.s;
 					break;
 				case GL_T:
-					*param = (GLdouble) t->gen[t->curTextureUnit].t;
+					*param = (GLdouble) t->unit[t->curTextureUnit].gen.t;
 					break;
 				case GL_R:
-					*param = (GLdouble) t->gen[t->curTextureUnit].r;
+					*param = (GLdouble) t->unit[t->curTextureUnit].gen.r;
 					break;
 				case GL_Q:
-					*param = (GLdouble) t->gen[t->curTextureUnit].q;
+					*param = (GLdouble) t->unit[t->curTextureUnit].gen.q;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -1991,28 +2274,28 @@ void STATE_APIENTRY crStateGetTexGendv (GLenum coord, GLenum pname, GLdouble *pa
 		case GL_OBJECT_PLANE:
 			switch (coord) {
 				case GL_S:
-					param[0] = (GLdouble) t->objSCoeff[t->curTextureUnit].x;
-					param[1] = (GLdouble) t->objSCoeff[t->curTextureUnit].y;
-					param[2] = (GLdouble) t->objSCoeff[t->curTextureUnit].z;
-					param[3] = (GLdouble) t->objSCoeff[t->curTextureUnit].w;
+					param[0] = (GLdouble) t->unit[t->curTextureUnit].objSCoeff.x;
+					param[1] = (GLdouble) t->unit[t->curTextureUnit].objSCoeff.y;
+					param[2] = (GLdouble) t->unit[t->curTextureUnit].objSCoeff.z;
+					param[3] = (GLdouble) t->unit[t->curTextureUnit].objSCoeff.w;
 					break;
 				case GL_T:
-					param[0] = (GLdouble) t->objTCoeff[t->curTextureUnit].x;
-					param[1] = (GLdouble) t->objTCoeff[t->curTextureUnit].y;
-					param[2] = (GLdouble) t->objTCoeff[t->curTextureUnit].z;
-					param[3] = (GLdouble) t->objTCoeff[t->curTextureUnit].w;
+					param[0] = (GLdouble) t->unit[t->curTextureUnit].objTCoeff.x;
+					param[1] = (GLdouble) t->unit[t->curTextureUnit].objTCoeff.y;
+					param[2] = (GLdouble) t->unit[t->curTextureUnit].objTCoeff.z;
+					param[3] = (GLdouble) t->unit[t->curTextureUnit].objTCoeff.w;
 					break;
 				case GL_R:
-					param[0] = (GLdouble) t->objRCoeff[t->curTextureUnit].x;
-					param[1] = (GLdouble) t->objRCoeff[t->curTextureUnit].y;
-					param[2] = (GLdouble) t->objRCoeff[t->curTextureUnit].z;
-					param[3] = (GLdouble) t->objRCoeff[t->curTextureUnit].w;
+					param[0] = (GLdouble) t->unit[t->curTextureUnit].objRCoeff.x;
+					param[1] = (GLdouble) t->unit[t->curTextureUnit].objRCoeff.y;
+					param[2] = (GLdouble) t->unit[t->curTextureUnit].objRCoeff.z;
+					param[3] = (GLdouble) t->unit[t->curTextureUnit].objRCoeff.w;
 					break;
 				case GL_Q:
-					param[0] = (GLdouble) t->objQCoeff[t->curTextureUnit].x;
-					param[1] = (GLdouble) t->objQCoeff[t->curTextureUnit].y;
-					param[2] = (GLdouble) t->objQCoeff[t->curTextureUnit].z;
-					param[3] = (GLdouble) t->objQCoeff[t->curTextureUnit].w;
+					param[0] = (GLdouble) t->unit[t->curTextureUnit].objQCoeff.x;
+					param[1] = (GLdouble) t->unit[t->curTextureUnit].objQCoeff.y;
+					param[2] = (GLdouble) t->unit[t->curTextureUnit].objQCoeff.z;
+					param[3] = (GLdouble) t->unit[t->curTextureUnit].objQCoeff.w;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -2023,28 +2306,28 @@ void STATE_APIENTRY crStateGetTexGendv (GLenum coord, GLenum pname, GLdouble *pa
 		case GL_EYE_PLANE:
 			switch (coord) {
 				case GL_S:
-					param[0] = (GLdouble) t->eyeSCoeff[t->curTextureUnit].x;
-					param[1] = (GLdouble) t->eyeSCoeff[t->curTextureUnit].y;
-					param[2] = (GLdouble) t->eyeSCoeff[t->curTextureUnit].z;
-					param[3] = (GLdouble) t->eyeSCoeff[t->curTextureUnit].w;
+					param[0] = (GLdouble) t->unit[t->curTextureUnit].eyeSCoeff.x;
+					param[1] = (GLdouble) t->unit[t->curTextureUnit].eyeSCoeff.y;
+					param[2] = (GLdouble) t->unit[t->curTextureUnit].eyeSCoeff.z;
+					param[3] = (GLdouble) t->unit[t->curTextureUnit].eyeSCoeff.w;
 					break;
 				case GL_T:
-					param[0] = (GLdouble) t->eyeTCoeff[t->curTextureUnit].x;
-					param[1] = (GLdouble) t->eyeTCoeff[t->curTextureUnit].y;
-					param[2] = (GLdouble) t->eyeTCoeff[t->curTextureUnit].z;
-					param[3] = (GLdouble) t->eyeTCoeff[t->curTextureUnit].w;
+					param[0] = (GLdouble) t->unit[t->curTextureUnit].eyeTCoeff.x;
+					param[1] = (GLdouble) t->unit[t->curTextureUnit].eyeTCoeff.y;
+					param[2] = (GLdouble) t->unit[t->curTextureUnit].eyeTCoeff.z;
+					param[3] = (GLdouble) t->unit[t->curTextureUnit].eyeTCoeff.w;
 					break;
 				case GL_R:
-					param[0] = (GLdouble) t->eyeRCoeff[t->curTextureUnit].x;
-					param[1] = (GLdouble) t->eyeRCoeff[t->curTextureUnit].y;
-					param[2] = (GLdouble) t->eyeRCoeff[t->curTextureUnit].z;
-					param[3] = (GLdouble) t->eyeRCoeff[t->curTextureUnit].w;
+					param[0] = (GLdouble) t->unit[t->curTextureUnit].eyeRCoeff.x;
+					param[1] = (GLdouble) t->unit[t->curTextureUnit].eyeRCoeff.y;
+					param[2] = (GLdouble) t->unit[t->curTextureUnit].eyeRCoeff.z;
+					param[3] = (GLdouble) t->unit[t->curTextureUnit].eyeRCoeff.w;
 					break;
 				case GL_Q:
-					param[0] = (GLdouble) t->eyeQCoeff[t->curTextureUnit].x;
-					param[1] = (GLdouble) t->eyeQCoeff[t->curTextureUnit].y;
-					param[2] = (GLdouble) t->eyeQCoeff[t->curTextureUnit].z;
-					param[3] = (GLdouble) t->eyeQCoeff[t->curTextureUnit].w;
+					param[0] = (GLdouble) t->unit[t->curTextureUnit].eyeQCoeff.x;
+					param[1] = (GLdouble) t->unit[t->curTextureUnit].eyeQCoeff.y;
+					param[2] = (GLdouble) t->unit[t->curTextureUnit].eyeQCoeff.z;
+					param[3] = (GLdouble) t->unit[t->curTextureUnit].eyeQCoeff.w;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -2074,16 +2357,16 @@ void STATE_APIENTRY crStateGetTexGenfv (GLenum coord, GLenum pname, GLfloat *par
 		case GL_TEXTURE_GEN_MODE:
 			switch (coord) {
 				case GL_S:
-					*param = (GLfloat) t->gen[t->curTextureUnit].s;
+					*param = (GLfloat) t->unit[t->curTextureUnit].gen.s;
 					break;
 				case GL_T:
-					*param = (GLfloat) t->gen[t->curTextureUnit].t;
+					*param = (GLfloat) t->unit[t->curTextureUnit].gen.t;
 					break;
 				case GL_R:
-					*param = (GLfloat) t->gen[t->curTextureUnit].r;
+					*param = (GLfloat) t->unit[t->curTextureUnit].gen.r;
 					break;
 				case GL_Q:
-					*param = (GLfloat) t->gen[t->curTextureUnit].q;
+					*param = (GLfloat) t->unit[t->curTextureUnit].gen.q;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -2094,28 +2377,28 @@ void STATE_APIENTRY crStateGetTexGenfv (GLenum coord, GLenum pname, GLfloat *par
 		case GL_OBJECT_PLANE:
 			switch (coord) {
 				case GL_S:
-					param[0] = t->objSCoeff[t->curTextureUnit].x;
-					param[1] = t->objSCoeff[t->curTextureUnit].y;
-					param[2] = t->objSCoeff[t->curTextureUnit].z;
-					param[3] = t->objSCoeff[t->curTextureUnit].w;
+					param[0] = t->unit[t->curTextureUnit].objSCoeff.x;
+					param[1] = t->unit[t->curTextureUnit].objSCoeff.y;
+					param[2] = t->unit[t->curTextureUnit].objSCoeff.z;
+					param[3] = t->unit[t->curTextureUnit].objSCoeff.w;
 					break;
 				case GL_T:
-					param[0] =  t->objTCoeff[t->curTextureUnit].x;
-					param[1] =  t->objTCoeff[t->curTextureUnit].y;
-					param[2] =  t->objTCoeff[t->curTextureUnit].z;
-					param[3] =  t->objTCoeff[t->curTextureUnit].w;
+					param[0] =  t->unit[t->curTextureUnit].objTCoeff.x;
+					param[1] =  t->unit[t->curTextureUnit].objTCoeff.y;
+					param[2] =  t->unit[t->curTextureUnit].objTCoeff.z;
+					param[3] =  t->unit[t->curTextureUnit].objTCoeff.w;
 					break;
 				case GL_R:
-					param[0] =  t->objRCoeff[t->curTextureUnit].x;
-					param[1] =  t->objRCoeff[t->curTextureUnit].y;
-					param[2] =  t->objRCoeff[t->curTextureUnit].z;
-					param[3] =  t->objRCoeff[t->curTextureUnit].w;
+					param[0] =  t->unit[t->curTextureUnit].objRCoeff.x;
+					param[1] =  t->unit[t->curTextureUnit].objRCoeff.y;
+					param[2] =  t->unit[t->curTextureUnit].objRCoeff.z;
+					param[3] =  t->unit[t->curTextureUnit].objRCoeff.w;
 					break;
 				case GL_Q:
-					param[0] =  t->objQCoeff[t->curTextureUnit].x;
-					param[1] =  t->objQCoeff[t->curTextureUnit].y;
-					param[2] =  t->objQCoeff[t->curTextureUnit].z;
-					param[3] =  t->objQCoeff[t->curTextureUnit].w;
+					param[0] =  t->unit[t->curTextureUnit].objQCoeff.x;
+					param[1] =  t->unit[t->curTextureUnit].objQCoeff.y;
+					param[2] =  t->unit[t->curTextureUnit].objQCoeff.z;
+					param[3] =  t->unit[t->curTextureUnit].objQCoeff.w;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -2126,28 +2409,28 @@ void STATE_APIENTRY crStateGetTexGenfv (GLenum coord, GLenum pname, GLfloat *par
 		case GL_EYE_PLANE:
 			switch (coord) {
 				case GL_S:
-					param[0] =  t->eyeSCoeff[t->curTextureUnit].x;
-					param[1] =  t->eyeSCoeff[t->curTextureUnit].y;
-					param[2] =  t->eyeSCoeff[t->curTextureUnit].z;
-					param[3] =  t->eyeSCoeff[t->curTextureUnit].w;
+					param[0] =  t->unit[t->curTextureUnit].eyeSCoeff.x;
+					param[1] =  t->unit[t->curTextureUnit].eyeSCoeff.y;
+					param[2] =  t->unit[t->curTextureUnit].eyeSCoeff.z;
+					param[3] =  t->unit[t->curTextureUnit].eyeSCoeff.w;
 					break;
 				case GL_T:
-					param[0] =  t->eyeTCoeff[t->curTextureUnit].x;
-					param[1] =  t->eyeTCoeff[t->curTextureUnit].y;
-					param[2] =  t->eyeTCoeff[t->curTextureUnit].z;
-					param[3] =  t->eyeTCoeff[t->curTextureUnit].w;
+					param[0] =  t->unit[t->curTextureUnit].eyeTCoeff.x;
+					param[1] =  t->unit[t->curTextureUnit].eyeTCoeff.y;
+					param[2] =  t->unit[t->curTextureUnit].eyeTCoeff.z;
+					param[3] =  t->unit[t->curTextureUnit].eyeTCoeff.w;
 					break;
 				case GL_R:
-					param[0] =  t->eyeRCoeff[t->curTextureUnit].x;
-					param[1] =  t->eyeRCoeff[t->curTextureUnit].y;
-					param[2] =  t->eyeRCoeff[t->curTextureUnit].z;
-					param[3] =  t->eyeRCoeff[t->curTextureUnit].w;
+					param[0] =  t->unit[t->curTextureUnit].eyeRCoeff.x;
+					param[1] =  t->unit[t->curTextureUnit].eyeRCoeff.y;
+					param[2] =  t->unit[t->curTextureUnit].eyeRCoeff.z;
+					param[3] =  t->unit[t->curTextureUnit].eyeRCoeff.w;
 					break;
 				case GL_Q:
-					param[0] =  t->eyeQCoeff[t->curTextureUnit].x;
-					param[1] =  t->eyeQCoeff[t->curTextureUnit].y;
-					param[2] =  t->eyeQCoeff[t->curTextureUnit].z;
-					param[3] =  t->eyeQCoeff[t->curTextureUnit].w;
+					param[0] =  t->unit[t->curTextureUnit].eyeQCoeff.x;
+					param[1] =  t->unit[t->curTextureUnit].eyeQCoeff.y;
+					param[2] =  t->unit[t->curTextureUnit].eyeQCoeff.z;
+					param[3] =  t->unit[t->curTextureUnit].eyeQCoeff.w;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -2177,16 +2460,16 @@ void STATE_APIENTRY crStateGetTexGeniv (GLenum coord, GLenum pname, GLint *param
 		case GL_TEXTURE_GEN_MODE:
 			switch (coord) {
 				case GL_S:
-					*param = (GLint) t->gen[t->curTextureUnit].s;
+					*param = (GLint) t->unit[t->curTextureUnit].gen.s;
 					break;
 				case GL_T:
-					*param = (GLint) t->gen[t->curTextureUnit].t;
+					*param = (GLint) t->unit[t->curTextureUnit].gen.t;
 					break;
 				case GL_R:
-					*param = (GLint) t->gen[t->curTextureUnit].r;
+					*param = (GLint) t->unit[t->curTextureUnit].gen.r;
 					break;
 				case GL_Q:
-					*param = (GLint) t->gen[t->curTextureUnit].q;
+					*param = (GLint) t->unit[t->curTextureUnit].gen.q;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -2197,28 +2480,28 @@ void STATE_APIENTRY crStateGetTexGeniv (GLenum coord, GLenum pname, GLint *param
 		case GL_OBJECT_PLANE:
 			switch (coord) {
 				case GL_S:
-					param[0] = (GLint) t->objSCoeff[t->curTextureUnit].x;
-					param[1] = (GLint) t->objSCoeff[t->curTextureUnit].y;
-					param[2] = (GLint) t->objSCoeff[t->curTextureUnit].z;
-					param[3] = (GLint) t->objSCoeff[t->curTextureUnit].w;
+					param[0] = (GLint) t->unit[t->curTextureUnit].objSCoeff.x;
+					param[1] = (GLint) t->unit[t->curTextureUnit].objSCoeff.y;
+					param[2] = (GLint) t->unit[t->curTextureUnit].objSCoeff.z;
+					param[3] = (GLint) t->unit[t->curTextureUnit].objSCoeff.w;
 					break;
 				case GL_T:
-					param[0] = (GLint) t->objTCoeff[t->curTextureUnit].x;
-					param[1] = (GLint) t->objTCoeff[t->curTextureUnit].y;
-					param[2] = (GLint) t->objTCoeff[t->curTextureUnit].z;
-					param[3] = (GLint) t->objTCoeff[t->curTextureUnit].w;
+					param[0] = (GLint) t->unit[t->curTextureUnit].objTCoeff.x;
+					param[1] = (GLint) t->unit[t->curTextureUnit].objTCoeff.y;
+					param[2] = (GLint) t->unit[t->curTextureUnit].objTCoeff.z;
+					param[3] = (GLint) t->unit[t->curTextureUnit].objTCoeff.w;
 					break;
 				case GL_R:
-					param[0] = (GLint) t->objRCoeff[t->curTextureUnit].x;
-					param[1] = (GLint) t->objRCoeff[t->curTextureUnit].y;
-					param[2] = (GLint) t->objRCoeff[t->curTextureUnit].z;
-					param[3] = (GLint) t->objRCoeff[t->curTextureUnit].w;
+					param[0] = (GLint) t->unit[t->curTextureUnit].objRCoeff.x;
+					param[1] = (GLint) t->unit[t->curTextureUnit].objRCoeff.y;
+					param[2] = (GLint) t->unit[t->curTextureUnit].objRCoeff.z;
+					param[3] = (GLint) t->unit[t->curTextureUnit].objRCoeff.w;
 					break;
 				case GL_Q:
-					param[0] = (GLint) t->objQCoeff[t->curTextureUnit].x;
-					param[1] = (GLint) t->objQCoeff[t->curTextureUnit].y;
-					param[2] = (GLint) t->objQCoeff[t->curTextureUnit].z;
-					param[3] = (GLint) t->objQCoeff[t->curTextureUnit].w;
+					param[0] = (GLint) t->unit[t->curTextureUnit].objQCoeff.x;
+					param[1] = (GLint) t->unit[t->curTextureUnit].objQCoeff.y;
+					param[2] = (GLint) t->unit[t->curTextureUnit].objQCoeff.z;
+					param[3] = (GLint) t->unit[t->curTextureUnit].objQCoeff.w;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -2229,28 +2512,28 @@ void STATE_APIENTRY crStateGetTexGeniv (GLenum coord, GLenum pname, GLint *param
 		case GL_EYE_PLANE:
 			switch (coord) {
 				case GL_S:
-					param[0] = (GLint) t->eyeSCoeff[t->curTextureUnit].x;
-					param[1] = (GLint) t->eyeSCoeff[t->curTextureUnit].y;
-					param[2] = (GLint) t->eyeSCoeff[t->curTextureUnit].z;
-					param[3] = (GLint) t->eyeSCoeff[t->curTextureUnit].w;
+					param[0] = (GLint) t->unit[t->curTextureUnit].eyeSCoeff.x;
+					param[1] = (GLint) t->unit[t->curTextureUnit].eyeSCoeff.y;
+					param[2] = (GLint) t->unit[t->curTextureUnit].eyeSCoeff.z;
+					param[3] = (GLint) t->unit[t->curTextureUnit].eyeSCoeff.w;
 					break;
 				case GL_T:
-					param[0] = (GLint) t->eyeTCoeff[t->curTextureUnit].x;
-					param[1] = (GLint) t->eyeTCoeff[t->curTextureUnit].y;
-					param[2] = (GLint) t->eyeTCoeff[t->curTextureUnit].z;
-					param[3] = (GLint) t->eyeTCoeff[t->curTextureUnit].w;
+					param[0] = (GLint) t->unit[t->curTextureUnit].eyeTCoeff.x;
+					param[1] = (GLint) t->unit[t->curTextureUnit].eyeTCoeff.y;
+					param[2] = (GLint) t->unit[t->curTextureUnit].eyeTCoeff.z;
+					param[3] = (GLint) t->unit[t->curTextureUnit].eyeTCoeff.w;
 					break;
 				case GL_R:
-					param[0] = (GLint) t->eyeRCoeff[t->curTextureUnit].x;
-					param[1] = (GLint) t->eyeRCoeff[t->curTextureUnit].y;
-					param[2] = (GLint) t->eyeRCoeff[t->curTextureUnit].z;
-					param[3] = (GLint) t->eyeRCoeff[t->curTextureUnit].w;
+					param[0] = (GLint) t->unit[t->curTextureUnit].eyeRCoeff.x;
+					param[1] = (GLint) t->unit[t->curTextureUnit].eyeRCoeff.y;
+					param[2] = (GLint) t->unit[t->curTextureUnit].eyeRCoeff.z;
+					param[3] = (GLint) t->unit[t->curTextureUnit].eyeRCoeff.w;
 					break;
 				case GL_Q:
-					param[0] = (GLint) t->eyeQCoeff[t->curTextureUnit].x;
-					param[1] = (GLint) t->eyeQCoeff[t->curTextureUnit].y;
-					param[2] = (GLint) t->eyeQCoeff[t->curTextureUnit].z;
-					param[3] = (GLint) t->eyeQCoeff[t->curTextureUnit].w;
+					param[0] = (GLint) t->unit[t->curTextureUnit].eyeQCoeff.x;
+					param[1] = (GLint) t->unit[t->curTextureUnit].eyeQCoeff.y;
+					param[2] = (GLint) t->unit[t->curTextureUnit].eyeQCoeff.z;
+					param[3] = (GLint) t->unit[t->curTextureUnit].eyeQCoeff.w;
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
@@ -2277,66 +2560,210 @@ void STATE_APIENTRY crStateGetTexImage (GLenum target, GLint level, GLenum forma
 }
 
 
+/*
+ * Return the texture image corresponding the given texture unit, target
+ * and mipmap level.  Return NULL if any error.
+ * This is a useful helper function.
+ */
+static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
+	GLenum target, GLint level)
+{
+	CRTextureState *t = &(g->texture);  // FIXME: active texture unit!
+	CRTextureObj *tobj;
+	CRTextureLevel *timg;
+
+	assert(level >= 0);
+
+	switch (target)
+	{
+		case GL_TEXTURE_1D:
+			tobj = t->currentTexture1D;
+			timg = tobj->level + level;
+			break;
+
+		case GL_PROXY_TEXTURE_1D:
+			tobj = &(t->proxy1D);
+			timg = tobj->level + level;
+			break;
+
+		case GL_TEXTURE_2D:
+			tobj = t->currentTexture2D;
+			timg = tobj->level + level;
+			break;
+
+		case GL_PROXY_TEXTURE_2D:
+			tobj = &(t->proxy2D);
+			timg = tobj->level + level;
+			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_3D:
+			tobj = t->currentTexture3D;
+			timg = tobj->level + level;
+			break;
+
+		case GL_PROXY_TEXTURE_3D:
+			tobj = t->proxyTexture3D;
+			timg = tobj->level + level;
+			break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+			tobj = t->currentTextureCubeMap;
+			timg = tobj->level + level;
+			break;
+
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+			tobj = t->currentTextureCubeMap;
+			timg = tobj->negativeXlevel + level;
+			break;
+
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+			tobj = t->currentTextureCubeMap;
+			timg = tobj->positiveYlevel + level;
+			break;
+
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+			tobj = t->currentTextureCubeMap;
+			timg = tobj->negativeYlevel + level;
+			break;
+
+		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+			tobj = t->currentTextureCubeMap;
+			timg = tobj->positiveZlevel + level;
+			break;
+
+		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+			tobj = t->currentTextureCubeMap;
+			timg = tobj->negativeYlevel + level;
+			break;
+#endif
+		default: 
+			timg = NULL;
+			break;
+	}
+
+	return timg;
+}
+
+
+/*
+ * Return the texture object corresponding the given texture unit and target.
+ * Return NULL if any error.
+ * This is a useful helper function.
+ */
+static CRTextureObj * crStateGetTexObject (CRContext *g, GLuint texUnit,
+	GLenum target)
+{
+	CRTextureState *t = &(g->texture);  // FIXME: active texture unit!
+	CRTextureObj *tobj;
+
+	switch (target)
+	{
+		case GL_TEXTURE_1D:
+			tobj = t->currentTexture1D;
+			break;
+
+		case GL_PROXY_TEXTURE_1D:
+			tobj = &(t->proxy1D);
+			break;
+
+		case GL_TEXTURE_2D:
+			tobj = t->currentTexture2D;
+			break;
+
+		case GL_PROXY_TEXTURE_2D:
+			tobj = &(t->proxy2D);
+			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_3D:
+			tobj = t->currentTexture3D;
+			break;
+
+		case GL_PROXY_TEXTURE_3D:
+			tobj = &(t->proxy3D);
+			break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+		case GL_TEXTURE_CUBE_MAP_ARB:
+			tobj = t->currentTextureCubeMap;
+			break;
+
+		case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+			tobj = &(t->proxyCubeMap);
+			break;
+#endif
+		default: 
+			tobj = NULL;
+			break;
+	}
+
+	return tobj;
+}
+
+
+
 void STATE_APIENTRY crStateGetTexLevelParameterfv (GLenum target, GLint level, 
 		GLenum pname, GLfloat *params) 
 {
 	CRContext *g = GetCurrentContext();
 	CRTextureState *t = &(g->texture);
-	CRTextureObj *tobj = NULL;
+	CRTextureLevel *timg;
 
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-					"glGetTexLevelParameter called in begin/end");
+			"glGetTexLevelParameterfv called in begin/end");
 		return;
 	}
 
 	if (level < 0 && level > t->maxLevel)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glGetTexLevelParameter: level oob: %d", level);
+			"glGetTexLevelParameterfv: level oob: %d", level);
 		return;
 	}
 
-	switch (target) 
+	timg = crStateGetTexLevel(g, t->curTextureUnit, target, level);
+	if (!timg)
 	{
-		case GL_TEXTURE_1D:
-			tobj = t->currentTexture1D;
-			break;
-		case GL_TEXTURE_2D:
-			tobj = t->currentTexture2D;
-			break;
-#if 0
-		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D;
-			break;
-#endif
-		case GL_TEXTURE_CUBE_MAP_ARB:
-			tobj = t->currentTextureCubeMap;
-			break;
-		default: 
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"GetTexLevelParameter: invalid target: %d", target);
-			return;
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+			"GetTexLevelParameterfv: invalid target: 0x%x",
+			target);
+		return;
 	}
+
 
 	switch (pname) 
 	{
 		case GL_TEXTURE_WIDTH:
-			*params = (GLfloat) tobj->level[level].width;
+			*params = (GLfloat) timg->width;
 			break;
 		case GL_TEXTURE_HEIGHT:
-			*params = (GLfloat) tobj->level[level].height;
+			*params = (GLfloat) timg->height;
 			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_DEPTH:
+			*params = (GLfloat) timg->depth;
+			break;
+#endif
 		case GL_TEXTURE_COMPONENTS:
-			*params = (GLfloat) tobj->level[level].components;
+			*params = (GLfloat) timg->components;
 			break;
 		case GL_TEXTURE_BORDER:
-			*params = (GLfloat) tobj->level[level].border;
+			*params = (GLfloat) timg->border;
 			break;
+		case GL_TEXTURE_RED_SIZE:
+		case GL_TEXTURE_GREEN_SIZE:
+		case GL_TEXTURE_BLUE_SIZE:
+		case GL_TEXTURE_ALPHA_SIZE:
+		case GL_TEXTURE_INTENSITY_SIZE:
+		case GL_TEXTURE_LUMINANCE_SIZE:
+			UNIMPLEMENTED();
+			return;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"GetTexLevelParameter: invalid pname: %d", pname);
+				"GetTexLevelParameterfv: invalid pname: 0x%x",
+				pname);
 			return;
 	}
 }
@@ -2346,61 +2773,62 @@ void STATE_APIENTRY crStateGetTexLevelParameteriv (GLenum target, GLint level,
 {
 	CRContext *g = GetCurrentContext();
 	CRTextureState *t = &(g->texture);
-	CRTextureObj *tobj = NULL;
+	CRTextureLevel *timg;
 
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-					"glGetTexLevelParameter called in begin/end");
+			"glGetTexLevelParameteriv called in begin/end");
 		return;
 	}
 
 	if (level < 0 && level > t->maxLevel)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-					"glGetTexLevelParameter: level oob: %d", level);
+			"glGetTexLevelParameteriv: level oob: %d", level);
 		return;
 	}
 
-	switch (target) 
+	timg = crStateGetTexLevel(g, t->curTextureUnit, target, level);
+	if (!timg)
 	{
-		case GL_TEXTURE_1D:
-			tobj = t->currentTexture1D;
-			break;
-		case GL_TEXTURE_2D:
-			tobj = t->currentTexture2D;
-			break;
-#if 0
-		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D;
-			break;
-#endif
-		case GL_TEXTURE_CUBE_MAP_ARB:
-			tobj = t->currentTextureCubeMap;
-			break;
-		default: 
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"GetTexLevelParameter: invalid target: %d", target);
-			return;
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+			"GetTexLevelParameteriv: invalid target: 0x%x",
+			target);
+		return;
 	}
 
 	switch (pname) 
 	{
 		case GL_TEXTURE_WIDTH:
-			*params = (GLint) tobj->level[level].width;
+			*params = (GLint) timg->width;
 			break;
 		case GL_TEXTURE_HEIGHT:
-			*params = (GLint) tobj->level[level].height;
+			*params = (GLint) timg->height;
 			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_DEPTH:
+			*params = (GLint) timg->depth;
+			break;
+#endif
 		case GL_TEXTURE_COMPONENTS:
-			*params = (GLint) tobj->level[level].components;
+			*params = (GLint) timg->components;
 			break;
 		case GL_TEXTURE_BORDER:
-			*params = (GLint) tobj->level[level].border;
+			*params = (GLint) timg->border;
 			break;
+		case GL_TEXTURE_RED_SIZE:
+		case GL_TEXTURE_GREEN_SIZE:
+		case GL_TEXTURE_BLUE_SIZE:
+		case GL_TEXTURE_ALPHA_SIZE:
+		case GL_TEXTURE_INTENSITY_SIZE:
+		case GL_TEXTURE_LUMINANCE_SIZE:
+			UNIMPLEMENTED();
+			return;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"GetTexLevelParameter: invalid pname: %d", pname);
+				"GetTexLevelParameteriv: invalid pname: 0x%x",
+				pname);
 			return;
 	}
 }
@@ -2409,7 +2837,7 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 {
 	CRContext *g = GetCurrentContext();
 	CRTextureState *t = &(g->texture);
-	CRTextureObj *tobj = NULL;
+	CRTextureObj *tobj;
 
 	if (g->current.inBeginEnd)
 	{
@@ -2418,26 +2846,12 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 		return;
 	}
 
-	switch (target) 
+	tobj = crStateGetTexObject(g, t->curTextureUnit, target);
+	if (!tobj)
 	{
-		case GL_TEXTURE_1D:
-			tobj = t->currentTexture1D;
-			break;
-		case GL_TEXTURE_2D:
-			tobj = t->currentTexture2D;
-			break;
-#if 0
-		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D;
-			break;
-#endif
-		case GL_TEXTURE_CUBE_MAP_ARB:
-			tobj = t->currentTextureCubeMap;
-			break;
-		default: 
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"glGetTexParameter: invalid target: %d", target);
-			return;
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+			"glGetTexParameterfv: invalid target: 0x%x", target);
+		return;
 	}
 
 	switch (pname) 
@@ -2454,12 +2868,26 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 		case GL_TEXTURE_WRAP_T:
 			*params = (GLfloat) tobj->wrapT;
 			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_WRAP_R:
+			*params = (GLfloat) tobj->wrapR;
+			break;
+#endif
 		case GL_TEXTURE_BORDER_COLOR:
 			params[0] = tobj->borderColor.r;
 			params[1] = tobj->borderColor.g;
 			params[2] = tobj->borderColor.b;
 			params[3] = tobj->borderColor.a;
 			break;
+        case GL_TEXTURE_RESIDENT:
+			// XXX todo
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_MIN_LOD:
+		case GL_TEXTURE_MAX_LOD:
+		case GL_TEXTURE_BASE_LEVEL:
+		case GL_TEXTURE_MAX_LEVEL:
+			// XXX todo
+#endif
 		default:
 			if (!crStateGetTexParameterfvExtensions( tobj, pname, params ))
 			{
@@ -2473,7 +2901,7 @@ void STATE_APIENTRY crStateGetTexParameteriv (GLenum target, GLenum pname, GLint
 {
 	CRContext *g = GetCurrentContext();
 	CRTextureState *t = &(g->texture);
-	CRTextureObj *tobj = NULL;
+	CRTextureObj *tobj;
 
 	if (g->current.inBeginEnd)
 	{
@@ -2482,26 +2910,12 @@ void STATE_APIENTRY crStateGetTexParameteriv (GLenum target, GLenum pname, GLint
 		return;
 	}
 
-	switch (target) 
+	tobj = crStateGetTexObject(g, t->curTextureUnit, target);
+	if (!tobj)
 	{
-		case GL_TEXTURE_1D:
-			tobj = t->currentTexture1D;
-			break;
-		case GL_TEXTURE_2D:
-			tobj = t->currentTexture2D;
-			break;
-#if 0
-		case GL_TEXTURE_3D:
-			tobj = t->currentTexture3D;
-			break;
-#endif
-		case GL_TEXTURE_CUBE_MAP_ARB:
-			tobj = t->currentTextureCubeMap;
-			break;
-		default: 
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"glGetTexParameter: invalid target: %d", target);
-			return;
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+			"glGetTexParameteriv: invalid target: 0x%x", target);
+		return;
 	}
 
 	switch (pname) 
@@ -2518,12 +2932,26 @@ void STATE_APIENTRY crStateGetTexParameteriv (GLenum target, GLenum pname, GLint
 		case GL_TEXTURE_WRAP_T:
 			*params = (GLint) tobj->wrapT;
 			break;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_WRAP_R:
+			*params = (GLint) tobj->wrapR;
+			break;
+#endif
 		case GL_TEXTURE_BORDER_COLOR:
 			params[0] = (GLint) (tobj->borderColor.r * GL_MAXINT);
 			params[1] = (GLint) (tobj->borderColor.g * GL_MAXINT);
 			params[2] = (GLint) (tobj->borderColor.b * GL_MAXINT);
 			params[3] = (GLint) (tobj->borderColor.a * GL_MAXINT);
 			break;
+        case GL_TEXTURE_RESIDENT:
+			// XXX todo
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_TEXTURE_MIN_LOD:
+		case GL_TEXTURE_MAX_LOD:
+		case GL_TEXTURE_BASE_LEVEL:
+		case GL_TEXTURE_MAX_LEVEL:
+			// XXX todo
+#endif
 		default:
 			if (!crStateGetTexParameterivExtensions( tobj, pname, params ))
 			{
@@ -2554,7 +2982,7 @@ GLboolean STATE_APIENTRY crStateAreTexturesResident(GLsizei n, const GLuint * te
 void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID, 
 						  CRTextureState *from, CRTextureState *to) 
 {
-	GLbitvalue nbitID = ~bitID;
+	const GLbitvalue nbitID = ~bitID;
 	int i;
 	glAble able[2];
 	able[0] = diff_api.Disable;
@@ -2565,40 +2993,42 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 		if (t->enable[i] & bitID) 
 		{
 			diff_api.ActiveTextureARB( i+GL_TEXTURE0_ARB );
-			if (from->enabled1D[i] != to->enabled1D[i]) 
+			if (from->unit[i].enabled1D != to->unit[i].enabled1D) 
 			{
-				able[to->enabled1D[i]](GL_TEXTURE_1D);
+				able[to->unit[i].enabled1D](GL_TEXTURE_1D);
 				t->enable[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->enabled2D[i] != to->enabled2D[i]) 
+			if (from->unit[i].enabled2D != to->unit[i].enabled2D) 
 			{
-				able[to->enabled2D[i]](GL_TEXTURE_2D);
+				able[to->unit[i].enabled2D](GL_TEXTURE_2D);
 				t->enable[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-#if 0
-			if (from->enabled3D[i] != to->enabled3D[i]) {
-				able[to->enabled3D[i]](GL_TEXTURE_3D);
+#ifdef CR_OPENGL_VERSION_1_2
+			if (from->unit[i].enabled3D != to->unit[i].enabled3D) {
+				able[to->unit[i].enabled3D](GL_TEXTURE_3D);
 				t->enable[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
 #endif
-			if (from->enabledCubeMap[i] != to->enabledCubeMap[i])
+#ifdef CR_ARB_texture_cube_map
+			if (from->unit[i].enabledCubeMap != to->unit[i].enabledCubeMap)
 			{
-				able[to->enabledCubeMap[i]](GL_TEXTURE_CUBE_MAP_ARB);
+				able[to->unit[i].enabledCubeMap](GL_TEXTURE_CUBE_MAP_ARB);
 				t->enable[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->textureGen[i].s != to->textureGen[i].s ||
-					from->textureGen[i].t != to->textureGen[i].t ||
-					from->textureGen[i].r != to->textureGen[i].r ||
-					from->textureGen[i].q != to->textureGen[i].q) 
+#endif
+			if (from->unit[i].textureGen.s != to->unit[i].textureGen.s ||
+					from->unit[i].textureGen.t != to->unit[i].textureGen.t ||
+					from->unit[i].textureGen.r != to->unit[i].textureGen.r ||
+					from->unit[i].textureGen.q != to->unit[i].textureGen.q) 
 			{
-				able[to->textureGen[i].s](GL_TEXTURE_GEN_S);
-				able[to->textureGen[i].t](GL_TEXTURE_GEN_T);
-				able[to->textureGen[i].r](GL_TEXTURE_GEN_R);
-				able[to->textureGen[i].q](GL_TEXTURE_GEN_Q);
+				able[to->unit[i].textureGen.s](GL_TEXTURE_GEN_S);
+				able[to->unit[i].textureGen.t](GL_TEXTURE_GEN_T);
+				able[to->unit[i].textureGen.r](GL_TEXTURE_GEN_R);
+				able[to->unit[i].textureGen.q](GL_TEXTURE_GEN_Q);
 				t->enable[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
@@ -2616,85 +3046,87 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 		if (t->current[i] & bitID) 
 		{
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-			if (from->currentTexture1DName[i] != to->currentTexture1DName[i]) 
+			if (from->unit[i].currentTexture1DName != to->unit[i].currentTexture1DName) 
 			{
-				diff_api.BindTexture(GL_TEXTURE_1D, to->currentTexture1DName[i]);
+				diff_api.BindTexture(GL_TEXTURE_1D, to->unit[i].currentTexture1DName);
 				t->current[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->currentTexture2DName[i] != to->currentTexture2DName[i]) 
+			if (from->unit[i].currentTexture2DName != to->unit[i].currentTexture2DName) 
 			{
-				diff_api.BindTexture(GL_TEXTURE_2D, to->currentTexture2DName[i]);
+				diff_api.BindTexture(GL_TEXTURE_2D, to->unit[i].currentTexture2DName);
 				t->current[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-#if 0
-			if (from->currentTexture3DName[i] != to->currentTexture3DName[i]) {
-				diff_api.BindTexture(GL_TEXTURE_3D, to->currentTexture3DName[i]);
+#ifdef CR_OPENGL_VERSION_1_2
+			if (from->unit[i].currentTexture3DName != to->unit[i].currentTexture3DName) {
+				diff_api.BindTexture(GL_TEXTURE_3D, to->unit[i].currentTexture3DName);
 				t->current[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
 #endif
-			if (from->currentTextureCubeMapName[i] != to->currentTextureCubeMapName[i]) {
-				diff_api.BindTexture(GL_TEXTURE_CUBE_MAP_ARB, to->currentTextureCubeMapName[i]);
+#ifdef CR_ARB_texture_cube_map
+			if (from->unit[i].currentTextureCubeMapName != to->unit[i].currentTextureCubeMapName) {
+				diff_api.BindTexture(GL_TEXTURE_CUBE_MAP_ARB, to->unit[i].currentTextureCubeMapName);
 				t->current[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
+#endif
 		}
 
 		if (t->objGen[i] & bitID) 
 		{
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 
-			if (from->objSCoeff[i].x != to->objSCoeff[i].x ||
-				  from->objSCoeff[i].y != to->objSCoeff[i].y ||
-				  from->objSCoeff[i].z != to->objSCoeff[i].z ||
-				  from->objSCoeff[i].w != to->objSCoeff[i].w) 
+			if (from->unit[i].objSCoeff.x != to->unit[i].objSCoeff.x ||
+				  from->unit[i].objSCoeff.y != to->unit[i].objSCoeff.y ||
+				  from->unit[i].objSCoeff.z != to->unit[i].objSCoeff.z ||
+				  from->unit[i].objSCoeff.w != to->unit[i].objSCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->objSCoeff[i].x;
-				f[1] = to->objSCoeff[i].y;
-				f[2] = to->objSCoeff[i].z;
-				f[3] = to->objSCoeff[i].w;
+				f[0] = to->unit[i].objSCoeff.x;
+				f[1] = to->unit[i].objSCoeff.y;
+				f[2] = to->unit[i].objSCoeff.z;
+				f[3] = to->unit[i].objSCoeff.w;
 				diff_api.TexGenfv (GL_S, GL_OBJECT_PLANE, (const GLfloat *) f);
 				t->objGen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->objTCoeff[i].x != to->objTCoeff[i].x ||
-				from->objTCoeff[i].y != to->objTCoeff[i].y ||
-				from->objTCoeff[i].z != to->objTCoeff[i].z ||
-				from->objTCoeff[i].w != to->objTCoeff[i].w) {
+			if (from->unit[i].objTCoeff.x != to->unit[i].objTCoeff.x ||
+				from->unit[i].objTCoeff.y != to->unit[i].objTCoeff.y ||
+				from->unit[i].objTCoeff.z != to->unit[i].objTCoeff.z ||
+				from->unit[i].objTCoeff.w != to->unit[i].objTCoeff.w) {
 				GLfloat f[4];
-				f[0] = to->objTCoeff[i].x;
-				f[1] = to->objTCoeff[i].y;
-				f[2] = to->objTCoeff[i].z;
-				f[3] = to->objTCoeff[i].w;
+				f[0] = to->unit[i].objTCoeff.x;
+				f[1] = to->unit[i].objTCoeff.y;
+				f[2] = to->unit[i].objTCoeff.z;
+				f[3] = to->unit[i].objTCoeff.w;
 				diff_api.TexGenfv (GL_T, GL_OBJECT_PLANE, (const GLfloat *) f);
 				t->objGen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->objRCoeff[i].x != to->objRCoeff[i].x ||
-				from->objRCoeff[i].y != to->objRCoeff[i].y ||
-				from->objRCoeff[i].z != to->objRCoeff[i].z ||
-				from->objRCoeff[i].w != to->objRCoeff[i].w) {
+			if (from->unit[i].objRCoeff.x != to->unit[i].objRCoeff.x ||
+				from->unit[i].objRCoeff.y != to->unit[i].objRCoeff.y ||
+				from->unit[i].objRCoeff.z != to->unit[i].objRCoeff.z ||
+				from->unit[i].objRCoeff.w != to->unit[i].objRCoeff.w) {
 				GLfloat f[4];
-				f[0] = to->objRCoeff[i].x;
-				f[1] = to->objRCoeff[i].y;
-				f[2] = to->objRCoeff[i].z;
-				f[3] = to->objRCoeff[i].w;
+				f[0] = to->unit[i].objRCoeff.x;
+				f[1] = to->unit[i].objRCoeff.y;
+				f[2] = to->unit[i].objRCoeff.z;
+				f[3] = to->unit[i].objRCoeff.w;
 				diff_api.TexGenfv (GL_R, GL_OBJECT_PLANE, (const GLfloat *) f);
 				t->objGen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->objQCoeff[i].x != to->objQCoeff[i].x ||
-				from->objQCoeff[i].y != to->objQCoeff[i].y ||
-				from->objQCoeff[i].z != to->objQCoeff[i].z ||
-				from->objQCoeff[i].w != to->objQCoeff[i].w) {
+			if (from->unit[i].objQCoeff.x != to->unit[i].objQCoeff.x ||
+				from->unit[i].objQCoeff.y != to->unit[i].objQCoeff.y ||
+				from->unit[i].objQCoeff.z != to->unit[i].objQCoeff.z ||
+				from->unit[i].objQCoeff.w != to->unit[i].objQCoeff.w) {
 				GLfloat f[4];
-				f[0] = to->objQCoeff[i].x;
-				f[1] = to->objQCoeff[i].y;
-				f[2] = to->objQCoeff[i].z;
-				f[3] = to->objQCoeff[i].w;
+				f[0] = to->unit[i].objQCoeff.x;
+				f[1] = to->unit[i].objQCoeff.y;
+				f[2] = to->unit[i].objQCoeff.z;
+				f[3] = to->unit[i].objQCoeff.w;
 				diff_api.TexGenfv (GL_Q, GL_OBJECT_PLANE, (const GLfloat *) f);
 				t->objGen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
@@ -2708,54 +3140,54 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 			diff_api.MatrixMode(GL_MODELVIEW);
 			diff_api.PushMatrix();
 			diff_api.LoadIdentity();
-			if (from->eyeSCoeff[i].x != to->eyeSCoeff[i].x ||
-				from->eyeSCoeff[i].y != to->eyeSCoeff[i].y ||
-				from->eyeSCoeff[i].z != to->eyeSCoeff[i].z ||
-				from->eyeSCoeff[i].w != to->eyeSCoeff[i].w) {
+			if (from->unit[i].eyeSCoeff.x != to->unit[i].eyeSCoeff.x ||
+				from->unit[i].eyeSCoeff.y != to->unit[i].eyeSCoeff.y ||
+				from->unit[i].eyeSCoeff.z != to->unit[i].eyeSCoeff.z ||
+				from->unit[i].eyeSCoeff.w != to->unit[i].eyeSCoeff.w) {
 				GLfloat f[4];
-				f[0] = to->eyeSCoeff[i].x;
-				f[1] = to->eyeSCoeff[i].y;
-				f[2] = to->eyeSCoeff[i].z;
-				f[3] = to->eyeSCoeff[i].w;
+				f[0] = to->unit[i].eyeSCoeff.x;
+				f[1] = to->unit[i].eyeSCoeff.y;
+				f[2] = to->unit[i].eyeSCoeff.z;
+				f[3] = to->unit[i].eyeSCoeff.w;
 				diff_api.TexGenfv (GL_S, GL_EYE_PLANE, (const GLfloat *) f);
 				t->eyeGen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->eyeTCoeff[i].x != to->eyeTCoeff[i].x ||
-				from->eyeTCoeff[i].y != to->eyeTCoeff[i].y ||
-				from->eyeTCoeff[i].z != to->eyeTCoeff[i].z ||
-				from->eyeTCoeff[i].w != to->eyeTCoeff[i].w) {
+			if (from->unit[i].eyeTCoeff.x != to->unit[i].eyeTCoeff.x ||
+				from->unit[i].eyeTCoeff.y != to->unit[i].eyeTCoeff.y ||
+				from->unit[i].eyeTCoeff.z != to->unit[i].eyeTCoeff.z ||
+				from->unit[i].eyeTCoeff.w != to->unit[i].eyeTCoeff.w) {
 				GLfloat f[4];
-				f[0] = to->eyeTCoeff[i].x;
-				f[1] = to->eyeTCoeff[i].y;
-				f[2] = to->eyeTCoeff[i].z;
-				f[3] = to->eyeTCoeff[i].w;
+				f[0] = to->unit[i].eyeTCoeff.x;
+				f[1] = to->unit[i].eyeTCoeff.y;
+				f[2] = to->unit[i].eyeTCoeff.z;
+				f[3] = to->unit[i].eyeTCoeff.w;
 				diff_api.TexGenfv (GL_T, GL_EYE_PLANE, (const GLfloat *) f);
 				t->eyeGen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->eyeRCoeff[i].x != to->eyeRCoeff[i].x ||
-				from->eyeRCoeff[i].y != to->eyeRCoeff[i].y ||
-				from->eyeRCoeff[i].z != to->eyeRCoeff[i].z ||
-				from->eyeRCoeff[i].w != to->eyeRCoeff[i].w) {
+			if (from->unit[i].eyeRCoeff.x != to->unit[i].eyeRCoeff.x ||
+				from->unit[i].eyeRCoeff.y != to->unit[i].eyeRCoeff.y ||
+				from->unit[i].eyeRCoeff.z != to->unit[i].eyeRCoeff.z ||
+				from->unit[i].eyeRCoeff.w != to->unit[i].eyeRCoeff.w) {
 				GLfloat f[4];
-				f[0] = to->eyeRCoeff[i].x;
-				f[1] = to->eyeRCoeff[i].y;
-				f[2] = to->eyeRCoeff[i].z;
-				f[3] = to->eyeRCoeff[i].w;
+				f[0] = to->unit[i].eyeRCoeff.x;
+				f[1] = to->unit[i].eyeRCoeff.y;
+				f[2] = to->unit[i].eyeRCoeff.z;
+				f[3] = to->unit[i].eyeRCoeff.w;
 				diff_api.TexGenfv (GL_R, GL_EYE_PLANE, (const GLfloat *) f);
 				t->eyeGen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->eyeQCoeff[i].x != to->eyeQCoeff[i].x ||
-				from->eyeQCoeff[i].y != to->eyeQCoeff[i].y ||
-				from->eyeQCoeff[i].z != to->eyeQCoeff[i].z ||
-				from->eyeQCoeff[i].w != to->eyeQCoeff[i].w) {
+			if (from->unit[i].eyeQCoeff.x != to->unit[i].eyeQCoeff.x ||
+				from->unit[i].eyeQCoeff.y != to->unit[i].eyeQCoeff.y ||
+				from->unit[i].eyeQCoeff.z != to->unit[i].eyeQCoeff.z ||
+				from->unit[i].eyeQCoeff.w != to->unit[i].eyeQCoeff.w) {
 				GLfloat f[4];
-				f[0] = to->eyeQCoeff[i].x;
-				f[1] = to->eyeQCoeff[i].y;
-				f[2] = to->eyeQCoeff[i].z;
-				f[3] = to->eyeQCoeff[i].w;
+				f[0] = to->unit[i].eyeQCoeff.x;
+				f[1] = to->unit[i].eyeQCoeff.y;
+				f[2] = to->unit[i].eyeQCoeff.z;
+				f[3] = to->unit[i].eyeQCoeff.w;
 				diff_api.TexGenfv (GL_Q, GL_EYE_PLANE, (const GLfloat *) f);
 				t->eyeGen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
@@ -2766,15 +3198,15 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 		if (t->gen[i] & bitID) 
 		{
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-			if (from->gen[i].s != to->gen[i].s ||
-					from->gen[i].t != to->gen[i].t ||
-					from->gen[i].r != to->gen[i].r ||
-					from->gen[i].q != to->gen[i].q) 
+			if (from->unit[i].gen.s != to->unit[i].gen.s ||
+				from->unit[i].gen.t != to->unit[i].gen.t ||
+				from->unit[i].gen.r != to->unit[i].gen.r ||
+				from->unit[i].gen.q != to->unit[i].gen.q) 
 			{
-				diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->gen[i].s);
-				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->gen[i].t);
-				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->gen[i].r);
-				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->gen[i].q);	
+				diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->unit[i].gen.s);
+				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->unit[i].gen.t);
+				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->unit[i].gen.r);
+				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->unit[i].gen.q);	
 				t->gen[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
@@ -2785,22 +3217,22 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 		if (t->envBit[i] & bitID) 
 		{
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-			if (from->envMode[i] != to->envMode[i]) 
+			if (from->unit[i].envMode != to->unit[i].envMode) 
 			{
-				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->envMode[i]);
+				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->unit[i].envMode);
 				t->envBit[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
 			}
-			if (from->envColor[i].r != to->envColor[i].r ||
-					from->envColor[i].g != to->envColor[i].g ||
-					from->envColor[i].b != to->envColor[i].b ||
-					from->envColor[i].a != to->envColor[i].a) 
+			if (from->unit[i].envColor.r != to->unit[i].envColor.r ||
+				from->unit[i].envColor.g != to->unit[i].envColor.g ||
+				from->unit[i].envColor.b != to->unit[i].envColor.b ||
+				from->unit[i].envColor.a != to->unit[i].envColor.a) 
 			{
 				GLfloat f[4];
-				f[0] = to->envColor[i].r;
-				f[1] = to->envColor[i].g;
-				f[2] = to->envColor[i].b;
-				f[3] = to->envColor[i].a;
+				f[0] = to->unit[i].envColor.r;
+				f[1] = to->unit[i].envColor.g;
+				f[2] = to->unit[i].envColor.b;
+				f[3] = to->unit[i].envColor.a;
 				diff_api.TexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, (const GLfloat *) f);
 				t->envBit[i] = GLBITS_ONES;
 				t->dirty = GLBITS_ONES;
@@ -2813,7 +3245,7 @@ void crStateTextureSwitch(CRTextureBits *t, GLbitvalue bitID,
 void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID, 
 						 CRTextureState *from, CRTextureState *to) 
 {
-	GLbitvalue nbitID = ~bitID;
+	const GLbitvalue nbitID = ~bitID;
 	CRTextureObj *tobj = NULL;
 	GLuint name=0;
 	GLuint *cname=NULL;
@@ -2828,38 +3260,52 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 		// objects before mucking with the individual 
 		// units.
 
-		if (to->enabled1D[i] == GL_TRUE) 
+		if (to->unit[i].enabled1D == GL_TRUE) 
 		{
-			GET_TOBJ(tobj,to,to->currentTexture1DName[i]);
+			GET_TOBJ(tobj, to, to->unit[i].currentTexture1DName);
 			if (!tobj)
 			{
 				tobj = to->currentTexture1D;
 			}
-			name = to->currentTexture1DName[i];
-			cname = &(from->currentTexture1DName[i]);
+			name = to->unit[i].currentTexture1DName;
+			cname = &(from->unit[i].currentTexture1DName);
 		}
 
-		if (to->enabled2D[i] == GL_TRUE) 
+		if (to->unit[i].enabled2D == GL_TRUE) 
 		{
-			GET_TOBJ(tobj,to,to->currentTexture2DName[i]);
+			GET_TOBJ(tobj, to, to->unit[i].currentTexture2DName);
 			if (!tobj)
 			{
 				tobj = to->currentTexture2D;
 			}
-			name = to->currentTexture2DName[i];
-			cname = &(from->currentTexture2DName[i]);
+			name = to->unit[i].currentTexture2DName;
+			cname = &(from->unit[i].currentTexture2DName);
 		}
 
-		if (to->enabledCubeMap[i] == GL_TRUE)
+#ifdef CR_OPENGL_VERSION_1_2
+		if (to->unit[i].enabled3D == GL_TRUE) 
 		{
-			GET_TOBJ(tobj,to,to->currentTextureCubeMapName[i]);
+			GET_TOBJ(tobj, to, to->unit[i].currentTexture3DName);
+			if (!tobj)
+			{
+				tobj = to->currentTexture3D;
+			}
+			name = to->unit[i].currentTexture3DName;
+			cname = &(from->unit[i].currentTexture3DName);
+		}
+#endif
+#ifdef CR_ARB_texture_cube_map
+		if (to->unit[i].enabledCubeMap == GL_TRUE)
+		{
+			GET_TOBJ(tobj, to, to->unit[i].currentTextureCubeMapName);
 			if (!tobj)
 			{
 				tobj = to->currentTextureCubeMap;
 			}
-			name = to->currentTextureCubeMapName[i];
-			cname = &(from->currentTextureCubeMapName[i]);
+			name = to->unit[i].currentTextureCubeMapName;
+			cname = &(from->unit[i].currentTextureCubeMapName);
 		}
+#endif
 
 		if (!tobj)
 		{
@@ -2881,6 +3327,9 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 				diff_api.TexParameteri(tobj->target, GL_TEXTURE_MAG_FILTER, tobj->magFilter);
 				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_S, tobj->wrapS);
 				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_T, tobj->wrapT);
+#ifdef CR_OPENGL_VERSION_1_2
+				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_R, tobj->wrapR);
+#endif
 				diff_api.TexParameterfv(tobj->target, GL_TEXTURE_BORDER_COLOR, (const GLfloat *) f);
 				crStateTextureDiffParameterExtensions( tobj );
 				tobj->paramsBit[i] &= nbitID;
@@ -2889,60 +3338,128 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			if (tobj->imageBit[i] & bitID) 
 			{
 				int j;
-				for (j=0; j<to->maxLevel; j++) 
+				switch (tobj->target)
 				{
-					CRTextureLevel *tl = &(tobj->level[j]);
-					if (tl->dirty[i] & bitID) 
-					{
-						switch (tobj->target) 
+					case GL_TEXTURE_1D:
+						for (j=0; j<to->maxLevel; j++) 
 						{
-						case GL_TEXTURE_1D:
-							diff_api.TexImage1D(tobj->target, j, tl->components,
-												tl->width, tl->border, tl->format,
-												tl->type, tl->img);
-							break;
-						case GL_TEXTURE_2D:
-							diff_api.TexImage2D(tobj->target, j, tl->components,
-												tl->width, tl->height, tl->border,
-												tl->format, tl->type, tl->img);
-							break;
-#if 0
-						case GL_TEXTURE_3D:
-							diff_api.TexImage3D(tobj->target, i, tl->components,
-												tl->width, tl->height, tl->depth,
-												tl->border, tl->format, tl->type,
-												tl->img);
-
-							break;
+							CRTextureLevel *tl = &(tobj->level[j]);
+							if (tl->dirty[i] & bitID) 
+							{
+								diff_api.TexImage1D(GL_TEXTURE_1D, j,
+													tl->components,
+													tl->width, tl->border,
+													tl->format,
+													tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+						}
+						break;
+					case GL_TEXTURE_2D:
+						for (j=0; j<to->maxLevel; j++) 
+						{
+							CRTextureLevel *tl = &(tobj->level[j]);
+							if (tl->dirty[i] & bitID) 
+							{
+								diff_api.TexImage2D(GL_TEXTURE_2D, j,
+													tl->components,
+													tl->width, tl->height,
+													tl->border, tl->format,
+													tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+						}
+						break;
+#ifdef CR_OPENGL_VERSION_1_2
+					case GL_TEXTURE_3D:
+						for (j=0; j<to->maxLevel; j++) 
+						{
+							CRTextureLevel *tl = &(tobj->level[j]);
+							if (tl->dirty[i] & bitID) 
+							{
+								diff_api.TexImage3D(GL_TEXTURE_3D, j,
+													tl->components,
+													tl->width, tl->height,
+													tl->depth,
+													tl->border, tl->format,
+													tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+						}
+						break;
 #endif
-						case GL_TEXTURE_CUBE_MAP_ARB:
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, i, tl->components,
-									tl->width, tl->height, tl->border,
-									tl->format, tl->type, tl->img + tl->bytes/6*0);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, i, tl->components,
-									tl->width, tl->height, tl->border,
-									tl->format, tl->type, tl->img + tl->bytes/6*1);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, i, tl->components,
-									tl->width, tl->height, tl->border,
-									tl->format, tl->type, tl->img + tl->bytes/6*2);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, i, tl->components,
-									tl->width, tl->height, tl->border,
-									tl->format, tl->type, tl->img + tl->bytes/6*3);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, i, tl->components,
-									tl->width, tl->height, tl->border,
-									tl->format, tl->type, tl->img + tl->bytes/6*4);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, i, tl->components,
-									tl->width, tl->height, tl->border,
-									tl->format, tl->type, tl->img + tl->bytes/6*5);
-							break;
-						default:
-							UNIMPLEMENTED();
-						}	
-						tl->dirty[i] &= nbitID;
-					}
-				}
-				tobj->imageBit[i] &= nbitID;
-			}
+#ifdef CR_ARB_texture_cube_map
+					case GL_TEXTURE_CUBE_MAP_ARB:
+						for (j=0; j<to->maxLevel; j++) 
+						{
+							CRTextureLevel *tl;
+							/* Positive X */
+							tl = &(tobj->level[j]);
+							if (tl->dirty[i] & bitID)
+							{
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
+													j, tl->components,
+													tl->width, tl->height, tl->border,
+													tl->format, tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+							/* Negative X */
+							tl = &(tobj->negativeXlevel[j]);
+							if (tl->dirty[i] & bitID)
+							{
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
+													j, tl->components,
+													tl->width, tl->height, tl->border,
+													tl->format, tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+							/* Positive Y */
+							tl = &(tobj->positiveYlevel[j]);
+							if (tl->dirty[i] & bitID) 
+							{
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
+													j, tl->components,
+													tl->width, tl->height, tl->border,
+													tl->format, tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+							/* Negative Y */
+							tl = &(tobj->negativeYlevel[j]);
+							if (tl->dirty[i] & bitID)
+							{
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
+													j, tl->components,
+													tl->width, tl->height, tl->border,
+													tl->format, tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+							/* Positive Z */
+							tl = &(tobj->positiveZlevel[j]);
+							if (tl->dirty[i] & bitID)
+							{
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
+													j, tl->components,
+													tl->width, tl->height, tl->border,
+													tl->format, tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+							/* Negative Z */
+							tl = &(tobj->negativeZlevel[j]);
+							if (tl->dirty[i] & bitID)
+							{
+								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
+													j, tl->components,
+													tl->width, tl->height, tl->border,
+													tl->format, tl->type, tl->img);
+								tl->dirty[i] &= nbitID;
+							}
+						}
+						break;
+#endif
+					default:
+						UNIMPLEMENTED();
+				}	
+			} // if (tobj->imageBit[i] & bitID)
 			tobj->dirty &= nbitID;
 		}
 	}
@@ -2952,71 +3469,75 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 		if (t->enable[i] & bitID) 
 		{
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-			if (from->enabled1D[i] != to->enabled1D[i]) 
+			if (from->unit[i].enabled1D != to->unit[i].enabled1D) 
 			{
-				able[to->enabled1D[i]](GL_TEXTURE_1D);
-				from->enabled1D[i] = to->enabled1D[i];
+				able[to->unit[i].enabled1D](GL_TEXTURE_1D);
+				from->unit[i].enabled1D = to->unit[i].enabled1D;
 			}
-			if (from->enabled2D[i] != to->enabled2D[i]) 
+			if (from->unit[i].enabled2D != to->unit[i].enabled2D) 
 			{
-				able[to->enabled2D[i]](GL_TEXTURE_2D);
-				from->enabled2D[i] = to->enabled2D[i];
+				able[to->unit[i].enabled2D](GL_TEXTURE_2D);
+				from->unit[i].enabled2D = to->unit[i].enabled2D;
 			}
-#if 0
-			if (from->enabled3D[i] != to->enabled3D[i]) {
-				able[to->enabled3D[i]](GL_TEXTURE_3D);
-				from->enabled3D[i] = to->enabled3D[i];
+#ifdef CR_OPENGL_VERSION_1_2
+			if (from->unit[i].enabled3D != to->unit[i].enabled3D) {
+				able[to->unit[i].enabled3D](GL_TEXTURE_3D);
+				from->unit[i].enabled3D = to->unit[i].enabled3D;
 			}
 #endif
-			if (from->enabledCubeMap[i] != to->enabledCubeMap[i]) {
-				able[to->enabledCubeMap[i]](GL_TEXTURE_CUBE_MAP_ARB);
-				from->enabledCubeMap[i] = to->enabledCubeMap[i];
+#ifdef CR_ARB_texture_cube_map
+			if (from->unit[i].enabledCubeMap != to->unit[i].enabledCubeMap) {
+				able[to->unit[i].enabledCubeMap](GL_TEXTURE_CUBE_MAP_ARB);
+				from->unit[i].enabledCubeMap = to->unit[i].enabledCubeMap;
 			}
-			if (from->textureGen[i].s != to->textureGen[i].s ||
-					from->textureGen[i].t != to->textureGen[i].t ||
-					from->textureGen[i].r != to->textureGen[i].r ||
-					from->textureGen[i].q != to->textureGen[i].q) 
+#endif
+			if (from->unit[i].textureGen.s != to->unit[i].textureGen.s ||
+					from->unit[i].textureGen.t != to->unit[i].textureGen.t ||
+					from->unit[i].textureGen.r != to->unit[i].textureGen.r ||
+					from->unit[i].textureGen.q != to->unit[i].textureGen.q) 
 			{
-				able[to->textureGen[i].s](GL_TEXTURE_GEN_S);
-				able[to->textureGen[i].t](GL_TEXTURE_GEN_T);
-				able[to->textureGen[i].r](GL_TEXTURE_GEN_R);
-				able[to->textureGen[i].q](GL_TEXTURE_GEN_Q);
-				from->textureGen[i] = to->textureGen[i];
+				able[to->unit[i].textureGen.s](GL_TEXTURE_GEN_S);
+				able[to->unit[i].textureGen.t](GL_TEXTURE_GEN_T);
+				able[to->unit[i].textureGen.r](GL_TEXTURE_GEN_R);
+				able[to->unit[i].textureGen.q](GL_TEXTURE_GEN_Q);
+				from->unit[i].textureGen = to->unit[i].textureGen;
 			}
 			t->enable[i] &= nbitID;
 		}
 
 		/* Get the active texture */
-		if (to->enabled1D[i] == GL_TRUE) 
+		if (to->unit[i].enabled1D == GL_TRUE) 
 		{
-			GET_TOBJ(tobj,to,to->currentTexture1DName[i]);
+			GET_TOBJ(tobj, to, to->unit[i].currentTexture1DName);
 			//tobj = to->currentTexture1D;
-			name = to->currentTexture1DName[i];
-			cname = &(from->currentTexture1DName[i]);
+			name = to->unit[i].currentTexture1DName;
+			cname = &(from->unit[i].currentTexture1DName);
 		}
 
-		if (to->enabled2D[i] == GL_TRUE) 
+		if (to->unit[i].enabled2D == GL_TRUE) 
 		{
-			GET_TOBJ(tobj,to,to->currentTexture2DName[i]);
+			GET_TOBJ(tobj, to, to->unit[i].currentTexture2DName);
 			//tobj = to->currentTexture2D;
-			name = to->currentTexture2DName[i];
-			cname = &(from->currentTexture2DName[i]);
+			name = to->unit[i].currentTexture2DName;
+			cname = &(from->unit[i].currentTexture2DName);
 		}
 
-#if 0
-		if (to->enabled3d[i] == GL_TRUE) {
-			tobj = to->currenttexture3d[i];
-			name = to->currenttexture3dname[i];
-			cname = &(from->currenttexture3dname[i]);
+#ifdef CR_OPENGL_VERSION_1_2
+		if (to->unit[i].enabled3d == GL_TRUE) {
+			GET_TOBJ(tobj, to, to->unit[i].currentTexture3DName);
+			//tobj = to->currenttexture3d[i];
+			name = to->unit[i].currenttexture3dname;
+			cname = &(from->unit[i].currenttexture3dname);
 		}
 #endif
-
-		if (to->enabledCubeMap[i] == GL_TRUE) {
-			GET_TOBJ(tobj,to,to->currentTextureCubeMapName[i]);
+#ifdef CR_ARB_texture_cube_map
+		if (to->unit[i].enabledCubeMap == GL_TRUE) {
+			GET_TOBJ(tobj, to, to->unit[i].currentTextureCubeMapName);
 			//tobj = to->currentTextureCubeMap;
-			name = to->currentTextureCubeMapName[i];
-			cname = &(from->currentTextureCubeMapName[i]);
+			name = to->unit[i].currentTextureCubeMapName;
+			cname = &(from->unit[i].currentTextureCubeMapName);
 		}
+#endif
 
 		if (!tobj) 
 		{
@@ -3048,57 +3569,57 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 		if (t->objGen[i] & bitID) 
 		{
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-			if (from->objSCoeff[i].x != to->objSCoeff[i].x ||
-					from->objSCoeff[i].y != to->objSCoeff[i].y ||
-					from->objSCoeff[i].z != to->objSCoeff[i].z ||
-					from->objSCoeff[i].w != to->objSCoeff[i].w) 
+			if (from->unit[i].objSCoeff.x != to->unit[i].objSCoeff.x ||
+					from->unit[i].objSCoeff.y != to->unit[i].objSCoeff.y ||
+					from->unit[i].objSCoeff.z != to->unit[i].objSCoeff.z ||
+					from->unit[i].objSCoeff.w != to->unit[i].objSCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->objSCoeff[i].x;
-				f[1] = to->objSCoeff[i].y;
-				f[2] = to->objSCoeff[i].z;
-				f[3] = to->objSCoeff[i].w;
+				f[0] = to->unit[i].objSCoeff.x;
+				f[1] = to->unit[i].objSCoeff.y;
+				f[2] = to->unit[i].objSCoeff.z;
+				f[3] = to->unit[i].objSCoeff.w;
 				diff_api.TexGenfv (GL_S, GL_OBJECT_PLANE, (const GLfloat *) f);
-				from->objSCoeff[i] = to->objSCoeff[i];
+				from->unit[i].objSCoeff = to->unit[i].objSCoeff;
 			}
-			if (from->objTCoeff[i].x != to->objTCoeff[i].x ||
-					from->objTCoeff[i].y != to->objTCoeff[i].y ||
-					from->objTCoeff[i].z != to->objTCoeff[i].z ||
-					from->objTCoeff[i].w != to->objTCoeff[i].w) 
+			if (from->unit[i].objTCoeff.x != to->unit[i].objTCoeff.x ||
+					from->unit[i].objTCoeff.y != to->unit[i].objTCoeff.y ||
+					from->unit[i].objTCoeff.z != to->unit[i].objTCoeff.z ||
+					from->unit[i].objTCoeff.w != to->unit[i].objTCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->objTCoeff[i].x;
-				f[1] = to->objTCoeff[i].y;
-				f[2] = to->objTCoeff[i].z;
-				f[3] = to->objTCoeff[i].w;
+				f[0] = to->unit[i].objTCoeff.x;
+				f[1] = to->unit[i].objTCoeff.y;
+				f[2] = to->unit[i].objTCoeff.z;
+				f[3] = to->unit[i].objTCoeff.w;
 				diff_api.TexGenfv (GL_T, GL_OBJECT_PLANE, (const GLfloat *) f);
-				from->objTCoeff[i] = to->objTCoeff[i];
+				from->unit[i].objTCoeff = to->unit[i].objTCoeff;
 			}
-			if (from->objRCoeff[i].x != to->objRCoeff[i].x ||
-					from->objRCoeff[i].y != to->objRCoeff[i].y ||
-					from->objRCoeff[i].z != to->objRCoeff[i].z ||
-					from->objRCoeff[i].w != to->objRCoeff[i].w) 
+			if (from->unit[i].objRCoeff.x != to->unit[i].objRCoeff.x ||
+					from->unit[i].objRCoeff.y != to->unit[i].objRCoeff.y ||
+					from->unit[i].objRCoeff.z != to->unit[i].objRCoeff.z ||
+					from->unit[i].objRCoeff.w != to->unit[i].objRCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->objRCoeff[i].x;
-				f[1] = to->objRCoeff[i].y;
-				f[2] = to->objRCoeff[i].z;
-				f[3] = to->objRCoeff[i].w;
+				f[0] = to->unit[i].objRCoeff.x;
+				f[1] = to->unit[i].objRCoeff.y;
+				f[2] = to->unit[i].objRCoeff.z;
+				f[3] = to->unit[i].objRCoeff.w;
 				diff_api.TexGenfv (GL_R, GL_OBJECT_PLANE, (const GLfloat *) f);
-				from->objRCoeff[i] = to->objRCoeff[i];
+				from->unit[i].objRCoeff = to->unit[i].objRCoeff;
 			}
-			if (from->objQCoeff[i].x != to->objQCoeff[i].x ||
-					from->objQCoeff[i].y != to->objQCoeff[i].y ||
-					from->objQCoeff[i].z != to->objQCoeff[i].z ||
-					from->objQCoeff[i].w != to->objQCoeff[i].w) 
+			if (from->unit[i].objQCoeff.x != to->unit[i].objQCoeff.x ||
+					from->unit[i].objQCoeff.y != to->unit[i].objQCoeff.y ||
+					from->unit[i].objQCoeff.z != to->unit[i].objQCoeff.z ||
+					from->unit[i].objQCoeff.w != to->unit[i].objQCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->objQCoeff[i].x;
-				f[1] = to->objQCoeff[i].y;
-				f[2] = to->objQCoeff[i].z;
-				f[3] = to->objQCoeff[i].w;
+				f[0] = to->unit[i].objQCoeff.x;
+				f[1] = to->unit[i].objQCoeff.y;
+				f[2] = to->unit[i].objQCoeff.z;
+				f[3] = to->unit[i].objQCoeff.w;
 				diff_api.TexGenfv (GL_Q, GL_OBJECT_PLANE, (const GLfloat *) f);
-				from->objQCoeff[i] = to->objQCoeff[i];
+				from->unit[i].objQCoeff = to->unit[i].objQCoeff;
 			}
 			t->objGen[i] &= nbitID;
 		}
@@ -3108,57 +3629,57 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			diff_api.MatrixMode(GL_MODELVIEW);
 			diff_api.PushMatrix();
 			diff_api.LoadIdentity();
-			if (from->eyeSCoeff[i].x != to->eyeSCoeff[i].x ||
-					from->eyeSCoeff[i].y != to->eyeSCoeff[i].y ||
-					from->eyeSCoeff[i].z != to->eyeSCoeff[i].z ||
-					from->eyeSCoeff[i].w != to->eyeSCoeff[i].w) 
+			if (from->unit[i].eyeSCoeff.x != to->unit[i].eyeSCoeff.x ||
+					from->unit[i].eyeSCoeff.y != to->unit[i].eyeSCoeff.y ||
+					from->unit[i].eyeSCoeff.z != to->unit[i].eyeSCoeff.z ||
+					from->unit[i].eyeSCoeff.w != to->unit[i].eyeSCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->eyeSCoeff[i].x;
-				f[1] = to->eyeSCoeff[i].y;
-				f[2] = to->eyeSCoeff[i].z;
-				f[3] = to->eyeSCoeff[i].w;
+				f[0] = to->unit[i].eyeSCoeff.x;
+				f[1] = to->unit[i].eyeSCoeff.y;
+				f[2] = to->unit[i].eyeSCoeff.z;
+				f[3] = to->unit[i].eyeSCoeff.w;
 				diff_api.TexGenfv (GL_S, GL_EYE_PLANE, (const GLfloat *) f);
-				from->eyeSCoeff[i] = to->eyeSCoeff[i];
+				from->unit[i].eyeSCoeff = to->unit[i].eyeSCoeff;
 			}
-			if (from->eyeTCoeff[i].x != to->eyeTCoeff[i].x ||
-					from->eyeTCoeff[i].y != to->eyeTCoeff[i].y ||
-					from->eyeTCoeff[i].z != to->eyeTCoeff[i].z ||
-					from->eyeTCoeff[i].w != to->eyeTCoeff[i].w) 
+			if (from->unit[i].eyeTCoeff.x != to->unit[i].eyeTCoeff.x ||
+					from->unit[i].eyeTCoeff.y != to->unit[i].eyeTCoeff.y ||
+					from->unit[i].eyeTCoeff.z != to->unit[i].eyeTCoeff.z ||
+					from->unit[i].eyeTCoeff.w != to->unit[i].eyeTCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->eyeTCoeff[i].x;
-				f[1] = to->eyeTCoeff[i].y;
-				f[2] = to->eyeTCoeff[i].z;
-				f[3] = to->eyeTCoeff[i].w;
+				f[0] = to->unit[i].eyeTCoeff.x;
+				f[1] = to->unit[i].eyeTCoeff.y;
+				f[2] = to->unit[i].eyeTCoeff.z;
+				f[3] = to->unit[i].eyeTCoeff.w;
 				diff_api.TexGenfv (GL_T, GL_EYE_PLANE, (const GLfloat *) f);
-				from->eyeTCoeff[i] = to->eyeTCoeff[i];
+				from->unit[i].eyeTCoeff = to->unit[i].eyeTCoeff;
 			}
-			if (from->eyeRCoeff[i].x != to->eyeRCoeff[i].x ||
-					from->eyeRCoeff[i].y != to->eyeRCoeff[i].y ||
-					from->eyeRCoeff[i].z != to->eyeRCoeff[i].z ||
-					from->eyeRCoeff[i].w != to->eyeRCoeff[i].w) 
+			if (from->unit[i].eyeRCoeff.x != to->unit[i].eyeRCoeff.x ||
+					from->unit[i].eyeRCoeff.y != to->unit[i].eyeRCoeff.y ||
+					from->unit[i].eyeRCoeff.z != to->unit[i].eyeRCoeff.z ||
+					from->unit[i].eyeRCoeff.w != to->unit[i].eyeRCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->eyeRCoeff[i].x;
-				f[1] = to->eyeRCoeff[i].y;
-				f[2] = to->eyeRCoeff[i].z;
-				f[3] = to->eyeRCoeff[i].w;
+				f[0] = to->unit[i].eyeRCoeff.x;
+				f[1] = to->unit[i].eyeRCoeff.y;
+				f[2] = to->unit[i].eyeRCoeff.z;
+				f[3] = to->unit[i].eyeRCoeff.w;
 				diff_api.TexGenfv (GL_R, GL_EYE_PLANE, (const GLfloat *) f);
-				from->eyeRCoeff[i] = to->eyeRCoeff[i];
+				from->unit[i].eyeRCoeff = to->unit[i].eyeRCoeff;
 			}
-			if (from->eyeQCoeff[i].x != to->eyeQCoeff[i].x ||
-					from->eyeQCoeff[i].y != to->eyeQCoeff[i].y ||
-					from->eyeQCoeff[i].z != to->eyeQCoeff[i].z ||
-					from->eyeQCoeff[i].w != to->eyeQCoeff[i].w) 
+			if (from->unit[i].eyeQCoeff.x != to->unit[i].eyeQCoeff.x ||
+					from->unit[i].eyeQCoeff.y != to->unit[i].eyeQCoeff.y ||
+					from->unit[i].eyeQCoeff.z != to->unit[i].eyeQCoeff.z ||
+					from->unit[i].eyeQCoeff.w != to->unit[i].eyeQCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->eyeQCoeff[i].x;
-				f[1] = to->eyeQCoeff[i].y;
-				f[2] = to->eyeQCoeff[i].z;
-				f[3] = to->eyeQCoeff[i].w;
+				f[0] = to->unit[i].eyeQCoeff.x;
+				f[1] = to->unit[i].eyeQCoeff.y;
+				f[2] = to->unit[i].eyeQCoeff.z;
+				f[3] = to->unit[i].eyeQCoeff.w;
 				diff_api.TexGenfv (GL_Q, GL_EYE_PLANE, (const GLfloat *) f);
-				from->eyeQCoeff[i] = to->eyeQCoeff[i];
+				from->unit[i].eyeQCoeff = to->unit[i].eyeQCoeff;
 			}
 			diff_api.PopMatrix();
 			t->eyeGen[i] &= nbitID;
@@ -3166,41 +3687,41 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 		if (t->gen[i] & bitID) 
 		{
 			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-			if (from->gen[i].s != to->gen[i].s ||
-					from->gen[i].t != to->gen[i].t ||
-					from->gen[i].r != to->gen[i].r ||
-					from->gen[i].q != to->gen[i].q) 
+			if (from->unit[i].gen.s != to->unit[i].gen.s ||
+					from->unit[i].gen.t != to->unit[i].gen.t ||
+					from->unit[i].gen.r != to->unit[i].gen.r ||
+					from->unit[i].gen.q != to->unit[i].gen.q) 
 			{
-				diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->gen[i].s);
-				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->gen[i].t);
-				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->gen[i].r);
-				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->gen[i].q);	
-				from->gen[i] = to->gen[i];
+				diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->unit[i].gen.s);
+				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->unit[i].gen.t);
+				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->unit[i].gen.r);
+				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->unit[i].gen.q);	
+				from->unit[i].gen = to->unit[i].gen;
 			}
 			t->gen[i] &= nbitID;
 		}
 		t->dirty &= nbitID;
 
-	/* Texture enviroment  */
+		/* Texture enviroment  */
 		if (t->envBit[i] & bitID) 
 		{
-			if (from->envMode[i] != to->envMode[i]) 
+			if (from->unit[i].envMode != to->unit[i].envMode) 
 			{
-				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->envMode[i]);
-				from->envMode[i] = to->envMode[i];
+				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->unit[i].envMode);
+				from->unit[i].envMode = to->unit[i].envMode;
 			}
-			if (from->envColor[i].r != to->envColor[i].r ||
-					from->envColor[i].g != to->envColor[i].g ||
-					from->envColor[i].b != to->envColor[i].b ||
-					from->envColor[i].a != to->envColor[i].a) 
+			if (from->unit[i].envColor.r != to->unit[i].envColor.r ||
+					from->unit[i].envColor.g != to->unit[i].envColor.g ||
+					from->unit[i].envColor.b != to->unit[i].envColor.b ||
+					from->unit[i].envColor.a != to->unit[i].envColor.a) 
 			{
 				GLfloat f[4];
-				f[0] = to->envColor[i].r;
-				f[1] = to->envColor[i].g;
-				f[2] = to->envColor[i].b;
-				f[3] = to->envColor[i].a;
+				f[0] = to->unit[i].envColor.r;
+				f[1] = to->unit[i].envColor.g;
+				f[2] = to->unit[i].envColor.b;
+				f[3] = to->unit[i].envColor.a;
 				diff_api.TexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, (const GLfloat *) f);
-				from->envColor[i] = to->envColor[i];
+				from->unit[i].envColor = to->unit[i].envColor;
 			}
 			t->envBit[i] &= nbitID;
 		}

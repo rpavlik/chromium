@@ -151,39 +151,46 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 			sb->stencil.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_1D :
-			g->texture.enabled1D[g->texture.curTextureUnit] = val;
+			g->texture.unit[g->texture.curTextureUnit].enabled1D = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_2D :
-			g->texture.enabled2D[g->texture.curTextureUnit] = val;
+			g->texture.unit[g->texture.curTextureUnit].enabled2D = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
-#if 0
+#ifdef CR_OPENGL_VERSION_1_1
 		case GL_TEXTURE_3D :
-			g->texture.enabled3D[g->texture.curTextureUnit] = val;
+			g->texture.unit[g->texture.curTextureUnit].enabled3D = val;
+			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
+			sb->texture.dirty = neg_bitid;
+			break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+		case GL_TEXTURE_CUBE_MAP_ARB :
+			g->texture.unit[g->texture.curTextureUnit].enabledCubeMap = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 #endif
 		case GL_TEXTURE_GEN_Q :
-			g->texture.textureGen[g->texture.curTextureUnit].q = val;
+			g->texture.unit[g->texture.curTextureUnit].textureGen.q = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_GEN_R :
-			g->texture.textureGen[g->texture.curTextureUnit].r = val;
+			g->texture.unit[g->texture.curTextureUnit].textureGen.r = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_GEN_S :
-			g->texture.textureGen[g->texture.curTextureUnit].s = val;
+			g->texture.unit[g->texture.curTextureUnit].textureGen.s = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;
 		case GL_TEXTURE_GEN_T :
-			g->texture.textureGen[g->texture.curTextureUnit].t = val;
+			g->texture.unit[g->texture.curTextureUnit].textureGen.t = val;
 			sb->texture.enable[g->texture.curTextureUnit] = neg_bitid;
 			sb->texture.dirty = neg_bitid;
 			break;

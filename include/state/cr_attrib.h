@@ -96,6 +96,9 @@ typedef struct {
 	GLboolean texture1D[CR_MAX_TEXTURE_UNITS];
 	GLboolean texture2D[CR_MAX_TEXTURE_UNITS];
 	GLboolean texture3D[CR_MAX_TEXTURE_UNITS];
+#ifdef CR_ARB_texture_cube_map
+	GLboolean textureCubeMap[CR_MAX_TEXTURE_UNITS];
+#endif
 	GLboolean textureGenS[CR_MAX_TEXTURE_UNITS];
 	GLboolean textureGenT[CR_MAX_TEXTURE_UNITS];
 	GLboolean textureGenR[CR_MAX_TEXTURE_UNITS];
@@ -206,11 +209,17 @@ typedef struct {
 	GLboolean	enabled1D[CR_MAX_TEXTURE_UNITS];
 	GLboolean	enabled2D[CR_MAX_TEXTURE_UNITS];
 	GLboolean	enabled3D[CR_MAX_TEXTURE_UNITS];
-	GLcolorf borderColor[3];
-	GLenum minFilter[3];
-	GLenum magFilter[3];
-	GLenum wrapS[3];
-	GLenum wrapT[3];
+#ifdef CR_ARB_texture_cube_map
+	GLboolean	enabledCubeMap[CR_MAX_TEXTURE_UNITS];
+#endif
+	GLcolorf borderColor[4];  // 4 = 1D, 2D, 3D and cube map textures
+	GLenum minFilter[4];
+	GLenum magFilter[4];
+	GLenum wrapS[4];
+	GLenum wrapT[4];
+#ifdef CR_OPENGL_VERSION_1_2
+	GLenum wrapR[4];
+#endif
 	GLtexcoordb	textureGen[CR_MAX_TEXTURE_UNITS];
 	GLvectorf	objSCoeff[CR_MAX_TEXTURE_UNITS];
 	GLvectorf	objTCoeff[CR_MAX_TEXTURE_UNITS];

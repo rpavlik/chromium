@@ -42,6 +42,13 @@ typedef struct {
 typedef struct __CRTextureObj {
 
 	CRTextureLevel        *level;
+#ifdef CR_ARB_texture_cube_map
+	CRTextureLevel        *negativeXlevel;
+	CRTextureLevel        *positiveYlevel;
+	CRTextureLevel        *negativeYlevel;
+	CRTextureLevel        *positiveZlevel;
+	CRTextureLevel        *negativeZlevel;
+#endif
 	
 	GLcolorf	             borderColor;
 	GLenum		             target;
@@ -49,6 +56,9 @@ typedef struct __CRTextureObj {
 	struct __CRTextureObj *next;
 	GLenum		             minFilter, magFilter;
 	GLenum		             wrapS, wrapT;
+#ifdef CR_OPENGL_VERSION_1_2
+	GLenum		             wrapR;
+#endif
 
 	GLbitvalue	           dirty;
 	GLbitvalue             paramsBit[CR_MAX_TEXTURE_UNITS];
@@ -74,39 +84,71 @@ typedef struct {
 } CRTextureBits;
 
 typedef struct {
+	GLuint        currentTexture1DName;
+	GLuint        currentTexture2DName;
+	GLuint        currentTexture3DName;
+#ifdef CR_ARB_texture_cube_map
+	GLuint	      currentTextureCubeMapName;
+#endif
+
+	GLboolean	enabled1D;
+	GLboolean	enabled2D;
+	GLboolean	enabled3D;
+#ifdef CR_ARB_texture_cube_map
+	GLboolean	enabledCubeMap;
+#endif
+
+	GLenum		envMode;
+	GLcolorf	envColor;
+	
+	GLtexcoordb	textureGen;
+	GLvectorf	objSCoeff;
+	GLvectorf	objTCoeff;
+	GLvectorf	objRCoeff;
+	GLvectorf	objQCoeff;
+	GLvectorf	eyeSCoeff;
+	GLvectorf	eyeTCoeff;
+	GLvectorf	eyeRCoeff;
+	GLvectorf	eyeQCoeff;
+	GLtexcoorde	gen;
+} CRTextureUnit;
+
+typedef struct {
 	GLuint allocated;
 	CRTextureObj *textures;
-
 	CRTextureObj *firstFree;
-	CRTextureObj *currentTexture1D;
-	CRTextureObj *currentTexture2D;
-	CRTextureObj *currentTexture3D;
-	CRTextureObj *currentTextureCubeMap;
-	GLuint        currentTexture1DName[CR_MAX_TEXTURE_UNITS];
-	GLuint        currentTexture2DName[CR_MAX_TEXTURE_UNITS];
-	GLuint        currentTexture3DName[CR_MAX_TEXTURE_UNITS];
-	GLuint	      currentTextureCubeMapName[CR_MAX_TEXTURE_UNITS];
 
-	GLint		curTextureUnit;
-
-	GLenum		envMode[CR_MAX_TEXTURE_UNITS];
-	GLcolorf	envColor[CR_MAX_TEXTURE_UNITS];
-	
-	GLboolean	enabled1D[CR_MAX_TEXTURE_UNITS];
-	GLboolean	enabled2D[CR_MAX_TEXTURE_UNITS];
-	GLboolean	enabled3D[CR_MAX_TEXTURE_UNITS];
-	GLboolean	enabledCubeMap[CR_MAX_TEXTURE_UNITS];
-	GLtexcoordb	textureGen[CR_MAX_TEXTURE_UNITS];
-
+	// FIXME: these should be moved into a shared-context structure
 	CRTextureObj      *mapping[CRTEXTURE_HASHSIZE];
 	CRTextureFreeElem *freeList;
 	CRTextureID       *hwidhash[CRTEXTURE_HASHSIZE];
 
+	// Current texture objects (in terms of glBindTexture and glActiveTexture)
+	CRTextureObj *currentTexture1D;
+	CRTextureObj *currentTexture2D;
+	CRTextureObj *currentTexture3D;
+#ifdef CR_ARB_texture_cube_map
+	CRTextureObj *currentTextureCubeMap;
+#endif
+
+	// Default texture objects (name = 0)
 	CRTextureObj base1D;
 	CRTextureObj base2D;
 	CRTextureObj base3D;
+#ifdef CR_ARB_texture_cube_map
 	CRTextureObj baseCubeMap;
+#endif
 	
+	// Proxy texture objects
+	CRTextureObj proxy1D;
+	CRTextureObj proxy2D;
+	CRTextureObj proxy3D;
+#ifdef CR_ARB_texture_cube_map
+	CRTextureObj proxyCubeMap;
+#endif
+
+	GLint		curTextureUnit;
+
 	GLint		maxTextureUnitsARB;
 	GLint		maxTextureSize;
 	GLint		max3DTextureSize;
@@ -117,16 +159,8 @@ typedef struct {
 	
 	GLboolean	broadcastTextures;
 
-	/* Texture gen mode */
-	GLvectorf	objSCoeff[CR_MAX_TEXTURE_UNITS];
-	GLvectorf	objTCoeff[CR_MAX_TEXTURE_UNITS];
-	GLvectorf	objRCoeff[CR_MAX_TEXTURE_UNITS];
-	GLvectorf	objQCoeff[CR_MAX_TEXTURE_UNITS];
-	GLvectorf	eyeSCoeff[CR_MAX_TEXTURE_UNITS];
-	GLvectorf	eyeTCoeff[CR_MAX_TEXTURE_UNITS];
-	GLvectorf	eyeRCoeff[CR_MAX_TEXTURE_UNITS];
-	GLvectorf	eyeQCoeff[CR_MAX_TEXTURE_UNITS];
-	GLtexcoorde	gen[CR_MAX_TEXTURE_UNITS];
+	// Per-texture unit state:
+	CRTextureUnit	unit[CR_MAX_TEXTURE_UNITS];
 
 	CRTextureStateExtensions extensions;
 } CRTextureState;

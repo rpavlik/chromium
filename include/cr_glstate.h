@@ -7,6 +7,7 @@
 #ifndef CR_GLSTATE_H
 #define CR_GLSTATE_H
 
+#include "cr_version.h"
 #include "state/cr_extensions.h"
 
 #include "state/cr_buffer.h"
@@ -30,6 +31,7 @@
 #include "state/cr_stateerror.h"
 
 #include "spu_dispatch_table.h"
+
 
 #define CR_MAX_EXTENTS 256
 
