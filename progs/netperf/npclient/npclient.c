@@ -26,7 +26,6 @@ static CRTimer *MyTimer;
 static int
 ReceiveFunc( CRConnection *conn, void *buf, unsigned int len )
 {
-	printf("client In %s\n", __FUNCTION__);
 	return 0;
 }
 
@@ -34,7 +33,6 @@ ReceiveFunc( CRConnection *conn, void *buf, unsigned int len )
 static void
 CloseFunc( unsigned int sender_id )
 {
-	printf("client In %s\n", __FUNCTION__);
 }
 
 
