@@ -114,6 +114,7 @@ typedef struct {
 	int SpuContextVisBits; /* Context's visual attributes */
 
 	CRContext *context[CR_MAX_CONTEXTS]; /* XXX replace with hash table someday*/
+	CRContext *DummyContext;    /* used when no other bound context */
 
 	CRHashTable *programTable;  /* for vertex programs */
 	GLuint currentProgram;

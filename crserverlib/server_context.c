@@ -88,7 +88,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 
 	/* If we delete our current context, default back to the null context */
 	if (cr_server.curClient->currentCtx == crCtx)
-		cr_server.curClient->currentCtx = cr_server.context[0];
+		cr_server.curClient->currentCtx = cr_server.DummyContext;
 }
 
 
@@ -118,7 +118,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 		ctx = cr_server.context[ctxPos];
 	}
 	else {
-		ctx = NULL;
+		ctx = cr_server.DummyContext;
 		window = -1;
 		mural = NULL;
 	}

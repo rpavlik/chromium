@@ -63,6 +63,7 @@ static void crServerAddNewClient( void )
 	newClient->number = cr_server.numClients;
 	newClient->spu_id = cr_server.clients[0].spu_id;
 	newClient->conn = crNetAcceptClient( cr_server.protocol, NULL, cr_server.tcpip_port, cr_server.mtu, 1 );
+	newClient->currentCtx = cr_server.DummyContext;
 
 	crServerAddToRunQueue( newClient );
 
