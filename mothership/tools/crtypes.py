@@ -53,6 +53,10 @@ class OptionList:
 		for opt in options:
 			self.__Options.append(opt)
 
+	def __len__(self):
+		"""Return number of options in the list."""
+		return len(self.__Options)
+
 	def Clone(self):
 		"""Return a new copy of this OptionList."""
 		newList = []
