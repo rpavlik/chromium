@@ -13,11 +13,13 @@ ReadBuffer
 DeleteLists
 NewList
 EndList
+GenLists
 ListBase
 PushAttrib
 PopAttrib
 PushClientAttrib
 PopClientAttrib
+RenderMode
 BarrierCreateCR
 BarrierDestroyCR
 BarrierExecCR
@@ -85,7 +87,6 @@ VertexArrayRangeNV
 FlushVertexArrayRangeNV
 AreProgramsResidentNV
 BindProgramNV
-DeleteProgramsNV
 ExecuteProgramNV
 GenProgramsNV
 GetProgramParameterdvNV

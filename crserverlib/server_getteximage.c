@@ -18,3 +18,13 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexImage( GLenum target, GLint 
 	(void) type;
 	(void) pixels;
 }
+
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchGetCompressedTexImageARB( GLenum target, GLint level, GLvoid *img )
+{
+	crError( "glGetCompressedTexImageARB isn't *ever* allowed to be on the wire!" );
+	(void) target;
+	(void) level;
+	(void) img;
+}
+

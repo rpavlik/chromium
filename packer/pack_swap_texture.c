@@ -922,7 +922,7 @@ void PACK_APIENTRY crPackCompressedTexSubImage3DARBSWAP( GLenum target, GLint le
 	crPackFree( data_ptr );
 }
 
-void PACK_APIENTRY crPackGetCompressedTexImageARBSWAP( GLenum target, GLint level, GLvoid *img )
+void PACK_APIENTRY crPackGetCompressedTexImageARBSWAP( GLenum target, GLint level, GLvoid *img, int *writeback )
 {
 	GET_PACKER_CONTEXT(pc);
 	crError ( "GetCompressedTexImageARB needs to be special cased!");
@@ -930,4 +930,5 @@ void PACK_APIENTRY crPackGetCompressedTexImageARBSWAP( GLenum target, GLint leve
 	(void) target;
 	(void) level;
 	(void) img;
+	(void) writeback;
 }

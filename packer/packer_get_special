@@ -63,3 +63,4 @@ GetProgramStringARB
 GetProgramivARB
 GetProgramEnvParameterdvARB
 GetProgramEnvParameterfvARB
+GetCompressedTexImageARB

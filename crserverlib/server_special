@@ -148,3 +148,4 @@ LoadProgramNV
 BindProgramNV
 ProgramParameter4fNV
 ProgramParameter4dNV
+GetCompressedTexImageARB

@@ -203,7 +203,7 @@ FinishFenceNV
 SetFenceNV
 FogCoorddvEXT
 FogCoordfvEXT
-FogCoordPointer
+FogCoordPointerEXT
 PointParameterfARB
 PointParameterfvARB
 ProgramParameter4fvNV

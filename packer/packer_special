@@ -103,7 +103,6 @@ VertexAttribs4dvNV
 VertexAttribs4fvNV
 VertexAttribs4svNV
 VertexAttribs4ubvNV
-DeleteProgramsNV
 ExecuteProgramNV
 LoadProgramNV
 RequestResidentProgramsNV
