@@ -236,7 +236,7 @@ crStateGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 }
 
 
-void GLAPIENTRY
+void STATE_APIENTRY
 crStateBeginQueryARB(GLenum target, GLuint id)
 {
 	CRContext *g = GetCurrentContext();
@@ -285,7 +285,7 @@ crStateBeginQueryARB(GLenum target, GLuint id)
 }
 
 
-void GLAPIENTRY
+void STATE_APIENTRY
 crStateEndQueryARB(GLenum target)
 {
 	CRContext *g = GetCurrentContext();
