@@ -50,6 +50,10 @@ typedef struct {
 	int draw_pixels;
 	int read_pixels;
 
+	int teximageBytes;  /* bytes given to glTex[Sub]Image[1/2/3]D */
+	int newLists;       /* glNewList calls */
+	int callLists;      /* glCallList(s) calls */
+
 	PerfVertex *cur_vertex;
 	PerfVertex vertex_snapshot;
 	PerfPrim vertex_data;

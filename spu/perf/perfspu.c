@@ -102,6 +102,10 @@ static void perfspuDumpCounters(char *pstring, PerfData *old, PerfData *new)
 	DUMP_DATA("DRAWPIXELS", old->draw_pixels, new->draw_pixels);
 	DUMP_DATA("READPIXELS", old->read_pixels, new->read_pixels);
 		
+	DUMP_DATA("TEXELS", old->teximageBytes, new->teximageBytes);
+	DUMP_DATA("NEWLISTS", old->newLists, new->newLists);
+	DUMP_DATA("CALLLISTS", old->callLists, new->callLists);
+
 	/* Copy to the old structures for variance output */
 	crMemcpy(old, new, sizeof(PerfData));
 }
@@ -685,6 +689,80 @@ static void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 	perf_spu.super.SwapBuffers( window, flags );
 }
 
+static void PERFSPU_APIENTRY perfspuTexImage1D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid * pixels)
+{
+	perf_spu.framestats.teximageBytes += crImageSize( format, type, width, 1 );
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.teximageBytes += crImageSize( format, type, width, 1 );
+	perf_spu.super.TexImage1D(target, level, internalFormat, width, border, format, type, pixels);
+}
+
+static void PERFSPU_APIENTRY perfspuTexImage2D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * pixels)
+{
+	perf_spu.framestats.teximageBytes += crImageSize( format, type, width, height );
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.teximageBytes += crImageSize( format, type, width, height );
+	perf_spu.super.TexImage2D(target, level, internalFormat, width, height, border, format, type, pixels);
+}
+
+static void PERFSPU_APIENTRY perfspuTexImage3D(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * pixels)
+{
+	perf_spu.framestats.teximageBytes += crImageSize( format, type, width, height ) * depth;
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.teximageBytes += crImageSize( format, type, width, height ) * depth;
+	perf_spu.super.TexImage3D(target, level, internalFormat, width, height, depth, border, format, type, pixels);
+}
+
+static void PERFSPU_APIENTRY perfspuTexSubImage1D(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid * pixels)
+{
+	perf_spu.framestats.teximageBytes += crImageSize( format, type, width, 1 );
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.teximageBytes += crImageSize( format, type, width, 1 );
+	perf_spu.super.TexSubImage1D(target, level, xoffset, width, format, type, pixels);
+}
+
+static void PERFSPU_APIENTRY perfspuTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels)
+{
+	perf_spu.framestats.teximageBytes += crImageSize( format, type, width, height );
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.teximageBytes += crImageSize( format, type, width, height );
+	perf_spu.super.TexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+}
+
+static void PERFSPU_APIENTRY perfspuTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels)
+{
+	perf_spu.framestats.teximageBytes += crImageSize( format, type, width, height ) * depth;
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.teximageBytes += crImageSize( format, type, width, height ) * depth;
+	perf_spu.super.TexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+}
+
+static void PERFSPU_APIENTRY perfspuNewList(GLuint list, GLenum mode)
+{
+	perf_spu.framestats.newLists += 1;
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.newLists += 1;
+	perf_spu.super.NewList(list, mode);
+}
+
+static void PERFSPU_APIENTRY perfspuCallList(GLuint list)
+{
+	perf_spu.framestats.callLists += 1;
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.callLists += 1;
+	perf_spu.super.CallList(list);
+}
+
+static void PERFSPU_APIENTRY perfspuCallLists(GLsizei n, GLenum type, const GLvoid *lists)
+{
+	perf_spu.framestats.callLists += n;
+	if (perf_spu.timer_event)
+		perf_spu.timerstats.callLists += n;
+	perf_spu.super.CallLists(n, type, lists);
+
+}
+
+
 SPUNamedFunctionTable _cr_perf_table[] = {
 	{ "ChromiumParameteriCR", (SPUGenericFunction) perfspuChromiumParameteriCR },
 	{ "ChromiumParameterfCR", (SPUGenericFunction) perfspuChromiumParameterfCR },
@@ -722,5 +800,14 @@ SPUNamedFunctionTable _cr_perf_table[] = {
 	{ "Clear", (SPUGenericFunction) perfspuClear },
 	{ "Finish", (SPUGenericFunction) perfspuFinish },
 	{ "Flush", (SPUGenericFunction) perfspuFlush },
+	{ "TexImage1D", (SPUGenericFunction) perfspuTexImage1D },
+	{ "TexImage2D", (SPUGenericFunction) perfspuTexImage2D },
+	{ "TexImage3D", (SPUGenericFunction) perfspuTexImage3D },
+	{ "TexSubImage1D", (SPUGenericFunction) perfspuTexSubImage1D },
+	{ "TexSubImage2D", (SPUGenericFunction) perfspuTexSubImage2D },
+	{ "TexSubImage3D", (SPUGenericFunction) perfspuTexSubImage3D },
+	{ "NewList", (SPUGenericFunction) perfspuNewList },
+	{ "CallList", (SPUGenericFunction) perfspuCallList },
+	{ "CallLists", (SPUGenericFunction) perfspuCallLists },
 	{ NULL, NULL }
 };
