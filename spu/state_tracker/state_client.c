@@ -519,7 +519,7 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 			break;
 		case GL_T2F_V3F:
 			cp->p = base+2*sizeof(GLfloat);
-			cp->size = 2;
+			cp->size = 3;
 			break;
 		case GL_C4UB_V3F:
 			cp->p = base+4*sizeof(GLubyte);
@@ -592,6 +592,7 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 		case GL_C4UB_V2F:
 		case GL_V2F:
 			cp->enabled = GL_FALSE;
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glInterleavedArrays: Unrecognized format: %d", format);
 			return;
@@ -683,6 +684,7 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 		case GL_V3F:
 		case GL_V2F:
 			cp->enabled = GL_FALSE;
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glInterleavedArrays: Unrecognized format: %d", format);
 			return;
@@ -703,20 +705,20 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 			if (!stride) cp->stride = 4*sizeof(GLfloat)+4*sizeof(GLfloat)+3*sizeof(GLfloat)+4*sizeof(GLfloat);
 			break;
 		case GL_T2F_C4F_N3F_V3F:
-			cp->size = 2;
+			cp->size = 3;
 			cp->p = base;
 			cp->stride = stride;
 			if (!stride) cp->stride = 2*sizeof(GLfloat)+4*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_T2F_C3F_V3F:
 		case GL_T2F_N3F_V3F:
-			cp->size = 2;
+			cp->size = 3;
 			cp->p = base;
 			cp->stride = stride;
 			if (!stride) cp->stride = 2*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_T2F_C4UB_V3F:
-			cp->size = 2;
+			cp->size = 3;
 			cp->p = base;
 			cp->stride = stride;
 			if (!stride) cp->stride = 2*sizeof(GLfloat)+4*sizeof(GLubyte)+3*sizeof(GLfloat);
@@ -728,7 +730,7 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 			if (!stride) cp->stride = 4*sizeof(GLfloat)+4*sizeof(GLfloat);
 			break;
 		case GL_T2F_V3F:
-			cp->size = 2;
+			cp->size = 3;
 			cp->p = base;
 			cp->stride = stride;
 			if (!stride) cp->stride = 2*sizeof(GLfloat)+3*sizeof(GLfloat);
@@ -741,6 +743,7 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 		case GL_V3F:
 		case GL_V2F:
 			cp->enabled = GL_FALSE;
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glInterleavedArrays: Unrecognized format: %d", format);
 			return;
