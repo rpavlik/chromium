@@ -29,7 +29,7 @@
 #endif
 
 
-static char *__findDLL( char *name, char *dir )
+static char *__findDLL( const char *name, const char *dir )
 {
 	static char path[8092];
 	
@@ -50,7 +50,7 @@ static char *__findDLL( char *name, char *dir )
  * call any initialization functions from which the spu might try to
  * connect to the mothership, etc.  
  */
-SPU * SPULoadLite( SPU *child, int id, char *name, char *dir, void *server )
+SPU * SPULoadLite( SPU *child, int id, const char *name, char *dir, void *server )
 {
 	SPU *the_spu;
 	char *path;
@@ -69,7 +69,7 @@ SPU * SPULoadLite( SPU *child, int id, char *name, char *dir, void *server )
 				SPU_ENTRY_POINT_NAME, name );
 	}
 
-	/* This basicall calls the SPU's SPULoad() function */
+	/* This basically calls the SPU's SPULoad() function */
 	if (!the_spu->entry_point( &(the_spu->name), &(the_spu->super_name), 
 				   &(the_spu->init), &(the_spu->self), 
 				   &(the_spu->cleanup),
@@ -78,7 +78,7 @@ SPU * SPULoadLite( SPU *child, int id, char *name, char *dir, void *server )
 	{
 		crError( "I found the SPU \"%s\", but loading it failed!", name );
 	}
-	
+
 	/* ... and that's all
 	 */
 	return the_spu;
@@ -182,12 +182,28 @@ int main(int argc, char *argv[])
 			pythonMode = 1;
 		}
 		else {
-			spu = SPULoadLite( NULL, 1, argv[i], NULL, NULL );
+			const char *spuName = argv[i];
+			int i;
 
-			print_spu_header( spu, pythonMode );
+			/* loop to walk up the inheritance tree */
+			for (i = 0; ; i++) {
+				spu = SPULoadLite( NULL, 1, spuName, NULL, NULL );
 
-			for ( opt = &spu->options[0] ; opt->option ; opt++ ) 
-				print_option( opt, pythonMode );
+				if (i == 0) {
+					print_spu_header( spu, pythonMode );
+				}
+
+				for ( opt = &spu->options[0] ; opt->option ; opt++ ) 
+					print_option( opt, pythonMode );
+
+				if (spu && spu->super_name) {
+					/* traverse up to parent SPU class to get its options */
+					spuName = spu->super_name;
+				}
+				else {
+					break;
+				}
+			}
 
 			print_spu_footer( spu, pythonMode );
 
