@@ -68,6 +68,8 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 			PFD_SUPPORT_OPENGL        |
 			PFD_DOUBLEBUFFER          |
 			PFD_DOUBLEBUFFER_DONTCARE |
+			PFD_SWAP_EXCHANGE         |
+			PFD_SWAP_COPY             |
 			PFD_STEREO	          |
 			PFD_STEREO_DONTCARE       |
 			PFD_DEPTH_DONTCARE        );
