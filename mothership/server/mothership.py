@@ -127,16 +127,10 @@ def ConstraintMatches(constraint, hostname):
 
 # This structure will contain a list of all dynamic host indicators
 # found during definition; they will be assigned as servers come in
-# through the AvailableMatchingNode() routine (following).
+# through the MatchNode() routine (following).
 dynamicHosts = { }
 
-def AvailableMatchingNode(node, type, hostToMatch):
-	# If this node has already been claimed, or is not a node of
-	# the appropriate type, we don't want it.
-	if node.spokenfor:
-		return 0
-	if not isinstance(node, type):
-		return 0
+def MatchNode(node, hostToMatch):
 
 	hostspec = node.host
 	
@@ -1054,7 +1048,7 @@ class CR:
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
 		for node in self.nodes:
-			if AvailableMatchingNode(node, CRApplicationNode, args):
+			if not node.spokenfor and isinstance(node,CRApplicationNode) and MatchNode(node,args):
 				try:
 					application = node.config['application']
 				except:
@@ -1076,7 +1070,7 @@ class CR:
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutserver running somewhere."""
 		for node in self.nodes:
-			if AvailableMatchingNode(node,CRUTProxyNode,args):
+			if not node.spokenfor and isinstance(node,CRUTProxyNode) and MatchNode(node,args):
 				node.spokenfor = 1
 				sock.node = node
 				sock.Success( " " )
@@ -1087,7 +1081,7 @@ class CR:
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutserver running somewhere."""
 		for node in self.nodes:
-			if AvailableMatchingNode(node,CRUTServerNode,args):
+			if not node.spokenfor and isinstance(node,CRUTServerNode) and MatchNode(node,args):
 				node.spokenfor = 1
 				sock.node = node
 				sock.Success( " " )
@@ -1098,12 +1092,11 @@ class CR:
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutclient running somewhere."""
 		for node in self.nodes:
-			if AvailableMatchingNode(node,CRApplicationNode,args):
-				if (len(node.crutservers) > 0):
-					node.crut_spokenfor = 1
-					sock.node = node
-					sock.Success( " " )
-					return
+			if not node.crut_spokenfor and isinstance(node,CRApplicationNode) and len(node.crutservers) > 0 and MatchNode(node,args):
+				node.crut_spokenfor = 1
+				sock.node = node
+				sock.Success( " " )
+				return
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutclient host %s" % args )
 
 	def do_server( self, sock, args ):
@@ -1112,7 +1105,7 @@ class CR:
 		nodenames = ""
 		for node in self.nodes:
 			nodenames += node.host+" "
-			if AvailableMatchingNode(node,CRNetworkNode,args):
+			if not node.spokenfor and isinstance(node,CRNetworkNode) and MatchNode(node,args):
 				node.spokenfor = 1
 				node.spusloaded = 1
 				sock.node = node
