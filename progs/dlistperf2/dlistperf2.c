@@ -6,6 +6,8 @@
 
 static void draw_cube(void)
 {
+    GLfloat c[3] = { 1.0, 1.0, 1.0 };
+
     glColor3f(1.0, 0.0, 0.0);
     glBegin(GL_POLYGON);
     glVertex3f(-1.0, -1.0, -1.0);
@@ -53,8 +55,6 @@ static void draw_cube(void)
     glVertex3f(-1.0, 1.0, 1.0);
     glVertex3f(-1.0, -1.0, 1.0);
     glEnd();
-
-    GLfloat c[3] = { 1.0, 1.0, 1.0 };
 
     glColor3fv(c);
 }

@@ -180,6 +180,9 @@ void OGLwin_Open_Window(int x, int y, int width, int height, char *name,
 {
     XSetWindowAttributes swa;
     XEvent event;
+    unsigned long attr_mask;
+    Window parent;
+    Window root_win;
 
     if (!Dsp) {
 	if (global_display != NULL) {
@@ -204,11 +207,11 @@ void OGLwin_Open_Window(int x, int y, int width, int height, char *name,
 	PointerMotionMask | ButtonPressMask | ButtonReleaseMask |
 	KeyPressMask | KeyReleaseMask;
     swa.override_redirect = OGLwin_override_redirect;
-    unsigned long attr_mask =
+    attr_mask =
 	CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect;
 
-    Window parent = parent_win;
-    Window root_win = RootWindow(Dsp, Vi->screen);
+    parent = parent_win;
+    root_win = RootWindow(Dsp, Vi->screen);
 
     if (!parent)
 	parent = root_win;
