@@ -100,12 +100,14 @@ static const GLfloat colors[7][4] = {
 	{1,1,1,1}
 };
 
+typedef void (APIENTRYP glDrawRangeElements_t) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
+
 
 static PFNGLGENBUFFERSARBPROC glGenBuffersARB_ptr;
 static PFNGLBINDBUFFERARBPROC glBindBufferARB_ptr;
 static PFNGLBUFFERDATAARBPROC glBufferDataARB_ptr;
 static PFNGLBUFFERSUBDATAARBPROC glBufferSubDataARB_ptr;
-static PFNGLDRAWRANGEELEMENTSPROC glDrawRangeElements_ptr;
+static glDrawRangeElements_t glDrawRangeElements_ptr;
 
 
 #if USE_CHROMIUM
@@ -470,7 +472,7 @@ InitGL(const Options *options)
 	glBindBufferARB_ptr = (PFNGLBINDBUFFERARBPROC) crGetProcAddress("glBindBufferARB");
 	glBufferDataARB_ptr = (PFNGLBUFFERDATAARBPROC) crGetProcAddress("glBufferDataARB");
 	glBufferSubDataARB_ptr = (PFNGLBUFFERSUBDATAARBPROC) crGetProcAddress("glBufferSubDataARB");
-	glDrawRangeElements_ptr = (PFNGLDRAWRANGEELEMENTSPROC) crGetProcAddress("glDrawRangeElements");
+	glDrawRangeElements_ptr = (glDrawRangeElements_t) crGetProcAddress("glDrawRangeElements");
 
 	extensions = glGetString(GL_EXTENSIONS);
 	if (!strstr(extensions, "GL_ARB_vertex_buffer_object")) {
@@ -500,13 +502,15 @@ PrintHelp(void)
 {
 	printf("Usage: spheres [options]\n");
 	printf("Options:\n");
-	printf("  -size N   specify number of parallel instances\n");
+	printf("  -size N   specifies number of parallel instances\n");
 	printf("  -rank I   specifies instance's rank in [0..N-1]\n");
 	printf("  -swap     do SwapBuffers\n");
 	printf("  -clear    do glClear\n");
 	printf("  -s N      specifies number of spheres per frame\n");
-	printf("  -t N      specifies number of triangles per sphere\n");
-	printf("  -f N      specifies number of frames to render\n");
+	printf("  -t N      specifies approximate number of triangles per sphere\n");
+	printf("  -f N      specifies number of frames to render before exiting\n");
+  printf("  -v        render with vertex buffer objects\n");
+	printf("  -d        render with display lists\n");
 	printf("  -h        print this information\n");
 }
 
@@ -560,7 +564,7 @@ ParseOptions(int argc, char *argv[], Options *options)
 		{
 			if (i == argc - 1)
 			{
-				fprintf(stderr, "-t requires an argument" );
+				fprintf(stderr, "-s requires an argument" );
 				exit(1);
 			}
 			options->numSpheres = atoi(argv[i+1]);
@@ -586,10 +590,12 @@ ParseOptions(int argc, char *argv[], Options *options)
 			options->maxFrames = atoi(argv[i+1]);
 			i++;
 		}
-		else if (!strcmp( argv[i], "-v" )) {
+		else if (!strcmp( argv[i], "-v" ))
+		{
 			DrawingMode = DRAW_VBO;
 		}
-		else if (!strcmp( argv[i], "-d" )) {
+		else if (!strcmp( argv[i], "-d" ))
+		{
 			DrawingMode = DRAW_DISPLAY_LIST;
 		}
 		else if (!strcmp( argv[i], "-h" ) || !strcmp(argv[i], "--help"))
