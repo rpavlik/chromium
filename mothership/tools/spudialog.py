@@ -111,7 +111,7 @@ class SPUDialog(wxDialog):
 	# name is an SPU option like bbox_line_width
 	def SetValue(self, name, newValue):
 		"""Set a control's value"""
-		assert name in self._Controls
+		assert name in self._Controls.keys()
 		ctrl = self._Controls[name]
 		if isinstance(ctrl, wxSpinCtrl) or isinstance(ctrl, wxCheckBox):
 			newValue = int(newValue)
@@ -120,7 +120,7 @@ class SPUDialog(wxDialog):
 	# name is an SPU option like bbox_line_width
 	def GetValue(self, name):
 		"""Return current value of the named control"""
-		assert name in self._Controls
+		assert name in self._Controls.keys()
 		ctrl = self._Controls[name]
 		return ctrl.GetValue()
 
@@ -129,12 +129,12 @@ class SPUDialog(wxDialog):
 		"""Display dialog and return 0 for cancel, 1 for OK."""
 		# Save starting values
 		values = {}
-		for name in self._Controls:
+		for name in self._Controls.keys():
 			values[name] = self._Controls[name].GetValue()
 		# Show the dialog
 		retVal = wxDialog.ShowModal(self)
 		if retVal == 0:
 			# Cancelled, restore original values
-			for name in values:
+			for name in values.keys():
 				self._Controls[name].SetValue(values[name])
 		return retVal

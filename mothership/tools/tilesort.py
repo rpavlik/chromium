@@ -591,7 +591,8 @@ class MainFrame(wxFrame):
 		global _docList
 
 		curDir = os.getcwd()
-		fileName = wxFileSelector("Open File", default_extension="psk",
+		fileName = wxFileSelector("Open File", default_extension="conf",
+					  wildcard="*.conf",
 					  flags = wxOPEN | wxFILE_MUST_EXIST)
 		if fileName == "": return
 		fileName = os.path.join(os.getcwd(), fileName)
