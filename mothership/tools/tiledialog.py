@@ -8,7 +8,9 @@
 
 
 """The TileDialog class is a dialog used to edit a list of tiles for
-a server/network node.
+a server/network node.  If the server node is an N-instance node the
+dialog will display a spin control [1 .. N] to edit the tile list for
+any of the N instances.
 """
 
 from wxPython.wx import *
@@ -17,20 +19,32 @@ import crutils
 
 
 class TileDialog(wxDialog):
-	def __init__(self, parent, id, title, message=""):
+	def __init__(self, parent, id, title, numLists, message=""):
 		"""parent, id, and title are the standard wxDialog parameters.
 		"""
+		assert numLists >= 1
 		wxDialog.__init__(self, parent, id, title, pos=wxPoint(-1,-1),
 						  style = wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER)
 		
 		id_OK = 1
 		id_CANCEL = 2
-		id_PATTERN = 3
-		id_START = 4
-		id_COUNT = 5
-		id_GENERATE = 6
+		id_INSTANCE = 3
 
 		outerSizer = wxBoxSizer(wxVERTICAL)
+
+		if numLists > 1:
+			# spin box to choose node instance
+			box = wxStaticBox(parent=self, id=-1, label="Node Instance")
+			innerSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
+			outerSizer.Add(innerSizer, option=0, flag=wxGROW|wxALL, border=4)
+			label = wxStaticText(parent=self, id=-1, label="Instance:")
+			innerSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
+			self.instanceCtrl = wxSpinCtrl(parent=self, id=id_INSTANCE,
+										   size=wxSize(50,25),
+										   min=1, max=numLists, initial=1)
+			EVT_SPINCTRL(self.instanceCtrl, id_INSTANCE, self._onInstance)
+			innerSizer.Add(self.instanceCtrl,
+						   flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
 
 		# editable list of tile tuples
 		box = wxStaticBox(parent=self, id=-1, label="Edit Tile List")
@@ -57,24 +71,27 @@ class TileDialog(wxDialog):
 		self.SetSizeHints(minW=min[0], minH=min[1])
 		self.SetSize(min)
 
-	def _onOK(self, event):
-		"""Called by OK button"""
-		self.EndModal(wxID_OK)
+		self.TileListList = []   # array [numLists] of array of (x, y, w, h)
+		self.NumLists = numLists
+		for i in range(numLists):
+			self.TileListList.append( [] )
 
-	def _onCancel(self, event):
-		"""Called by Cancel button"""
-		self.EndModal(wxID_CANCEL)
+		self.OldInstance = 1
 
-	def SetTiles(self, tiles):
-		"""Specify list tiles (x,y,w,h) to edit."""
+
+	def __LoadWidget(self, i):
+		"""Load the widget with the ith tile list."""
 		strings = []
-		for tile in tiles:
-			tileString = "(%d, %d, %d, %d)" % tile
-			strings.append(tileString)
+		if i < len(self.TileListList):
+			for tile in self.TileListList[i]:
+				tileString = "(%d, %d, %d, %d)" % tile
+				strings.append(tileString)
 		self.listBox.SetStrings(strings)
-
-	def GetTiles(self):
-		"""Return lists of tiles (x,y,w,h)."""
+		
+	def __ReadWidget(self, i):
+		"""Get the strings from the listBox and update the ith tile list."""
+		assert i >= 0
+		assert i < self.NumLists
 		strings = self.listBox.GetStrings()
 		tiles = []
 		for s in strings:
@@ -83,5 +100,39 @@ class TileDialog(wxDialog):
 			tile = eval(s)
 			if tile and len(tile) == 4:
 				tiles.append(tile)
-		return tiles
+		self.TileListList[i] = tiles
+		
+	def _onInstance(self, event):
+		"""Called when the instance spin control changes."""
+		self.__ReadWidget(self.OldInstance - 1)
+		i = self.instanceCtrl.GetValue()
+		assert i >= 1
+		self.__LoadWidget(i - 1)
+		self.OldInstance = i
+		
+	def _onOK(self, event):
+		"""Called by OK button"""
+		self.EndModal(wxID_OK)
+
+	def _onCancel(self, event):
+		"""Called by Cancel button"""
+		self.EndModal(wxID_CANCEL)
+
+	def SetTileLists(self, tiles):
+		"""Specify list of list of tiles (x,y,w,h) to edit."""
+		self.TileListList = tiles
+		while len(self.TileListList) < self.NumLists:
+			self.TileListList.append( [] )
+		self.__LoadWidget(0)
+		if self.NumLists > 1:
+			self.instanceCtrl.SetValue(1)
+
+	def GetTileLists(self):
+		"""Return list of list of tiles (x,y,w,h)."""
+		if self.NumLists > 1:
+			i = self.instanceCtrl.GetValue() - 1
+		else:
+			i = 0
+		self.__ReadWidget(i)
+		return self.TileListList
 

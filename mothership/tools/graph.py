@@ -969,9 +969,6 @@ class MainFrame(wxFrame):
 
 	def doServerTiles(self, event):
 		"""Node / Server Tiles callback"""
-		dialog = tiledialog.TileDialog(parent=self, id=-1,
-									   title="Server Tiles")
-		dialog.Centre()
 		# find first server
 		server = 0
 		for node in self.mothership.SelectedNodes():
@@ -979,10 +976,19 @@ class MainFrame(wxFrame):
 				server = node
 				break
 		assert server
+		dialog = tiledialog.TileDialog(parent=self, id=-1,
+									   numLists = server.GetCount(),
+									   title="Server Tiles")
+		dialog.Centre()
 		# show the dialog
-		dialog.SetTiles( server.GetTiles() )
+		tileLists = []
+		for i in range(server.GetCount()):
+			tileLists.append( server.GetTiles(i) )
+		dialog.SetTileLists( tileLists )
 		if dialog.ShowModal() == wxID_OK:
-			server.SetTiles( dialog.GetTiles() )
+			tileLists = dialog.GetTileLists()
+			for i in range(server.GetCount()):
+				server.SetTiles( tileLists[i], i )
 
 
 	# ----------------------------------------------------------------------
