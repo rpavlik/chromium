@@ -57,6 +57,25 @@ to run the program directly, without invoking python directly.
 </p>
 
 
+
+<h2 class="PageSubHeading">Overview</h2>
+
+<p>
+A Chromium configuration is usually a directed acyclic graph (DAG).
+The graph's nodes are displayed as boxes and the edges are drawn as lines.
+With the graphical configuration tool you can add, remove and edit nodes
+and edges with a graphical interface, instead of editing the text-based
+Python configuration file.
+</p>
+<p>Typically, a new configuration will be created with a
+<a href="#templates" target="_self">template</a>.
+Alternately, a configuration can be built from scratch by creating
+nodes, adding SPUs to the nodes, connecting the nodes and setting
+various configuration options.
+</p>
+
+
+
 <h2 class="PageSubHeading">Nodes</h2>
 
 <p>Application nodes are represented by green boxes and network/server
@@ -184,32 +203,23 @@ the other must have an SPU chain that ends with a packing SPU.</p>
 its best to determine the desired connection topology, but it may make
 mistakes.</p>
 
-<p>Two nodes may be disconnected by selecting the nodes and choosing
+<p>Nodes may be disconnected by selecting the nodes and choosing
 the <b>Node / Disconnect</b> menu item.<p>
 
 
 
-<h2 class="PageSubHeading">Application Options</h2>
+<h2 class="PageSubHeading">Application Node Options</h2>
 
-<p>Under the <b>Application</b> menu is an <b>Options</b> item.
+<p>Application nodes can be configured by selecting them and then choosing
+<b>App Node Options</b> from the <b>Node</b> menu.
 When you chose it, the following dialog appears:</p>
 
 <p align="center"><img border="0" src="appoptions_dialog.gif"></p>
 
-<p>This dialog allows you to set global and application-related options.</p>
-
-<p>The <b>Minimum Chromium App Window Size</b> and <b>Match App Window
-Title</b> controls are useful for multi-context/window applications.
-They're described in <a href="configglobal.html" target="_self">
-Global configuration options</a>, as is the <b>Show Virtual Cursor</b>
-option.</p>
-
-<p>The <b>Automatically Start Servers</b> option, when enabled, will
-cause the mothership to automatically spawn crserver and crappfaker
-processes for each node (currently limited to rsh on Unix).</p>
-
-<p>The remaining three fields, <b>Command</b>, <b>Zeroth arg</b>, and
-<b>Directory</b> control execution of the application program.</p>
+<p>
+The three fields labeled <b>Command</b>, <b>Zeroth arg</b>, and
+<b>Start Directory</b> control execution of the application program.
+</p>
 
 <p>
 <b>Command</b> specifies the the default program and command line
@@ -239,13 +249,128 @@ run with the following command lines:<p>
 <li>App node 3:  <code>psubmit -size 4 -rank 3 -clear</code>
 </ul>
 
-<p>Finally, the <b>Directory</b> parameter specifies the directory in
-which the crappfaker should be started.  This will be the application's
-current working directory.</p>
+<p>
+The <b>Start Directory</b> parameter specifies the directory in which the
+crappfaker should be started.  This will be the application's current
+working directory.
+</p>
+
+<p>
+The <b>Client DLL</b> parameter specifies the directory to search to
+find the <em>faker</em> library.
+</p>
+
+<p>
+The <b>SPU Directory</b> parameter specifies the directory to search
+when loading SPUs.
+</p>
+
+<p>
+The <b>Minimum Chromium App Window Size</b> and
+<b>Match App Window Title</b> controls are useful for multi-context/window
+applications.
+They're described in the <a href="configapp.html" target="_self">
+application node configuration</a> section.
+<p
+</p>
+
+<p>
+When the <b>Track App Window Size Changes</b> control is checked,
+Chromium will monitor the size of the original application window and
+tell down stream Chromium SPUs to adjust their window sizes whenever
+the application window is resized.
+</p>
+
+<p>
+When the <b>Show Virtual Cursor</b> control is checked, Chromium will
+monitor the current mouse pointer position in the application window
+and draw a virtual cursor in the Chromium render SPU windows.
+This is useful for interactive application that have direct manipulation.
+</p>
+
+
+<h2 class="PageSubHeading">Server Node Options</h2>
+
+
+<p>Server nodes can be configured by selecting them and then choosing
+<b>Server Node Options</b> from the <b>Node</b> menu.
+When you chose it, the following dialog appears:</p>
+
+<p align="center"><img border="0" src="serveroptions_dialog.gif"></p>
+
+<p>
+The <b>Optimized Extent Bucketing</b> control is used when there are
+two or more images tiles present in the server node's rendering window.
+A special hash-based algorithm will be used to determine which tiles
+a primitive intersects.
+If option offers improved server performance, but all tiles must be
+the same size.
+</b>
+
+<p>
+The <b>Generate Lightning-2 Strip Headers</b> option is for use with
+the Lightning-2 hardware image compositor.
+It controls whether special compositing codes are embedded in 2-pixel
+wide columns between tiles.
+(currently not implemented in the server)
+</p>
+
+<p>
+The <b>Only swap once for N clients</b> option is useful for sort-last
+rendering, or when a server has several clients.
+When enabled, OpenGL SwapBuffer commands will only be executed for
+one of the N client nodes.
+If all clients were to do a SwapBuffers, the image would flicker.
+</p>
+
+<p>
+The <b>SPU Directory</b> parameter specifies the directory to search
+when loading SPUs.
+</p>
 
 
 
+<h2 class="PageSubHeading">Mothership Options</h2>
+
+<p>
+Choosing <b>Options</b> from the <b>Mothership</b> menu opens the
+mothership options dialog.
+There are only two controls.
+</p>
+
+<p>
+The <b>Max Transmission Unit</b> controls the maximum buffer sized
+used for inter-node communication, in bytes.
+The default is 1MB.
+</p>
+
+<p>
+The <b>Automatically Start Servers</b> option, when enabled, will
+cause the mothership to automatically spawn crserver and crappfaker
+processes for each node (currently limited to sh and rsh on Unix).
+This means you don't have to manually start these processes.
+</p>
+
+
+<h2 class="PageSubHeading">Mothership Run / Stop</h2>
+
+<p>The <b>Mothership</b> menu has <b>Run</b> and <b>Stop</b> items.
+The <b>Run</b> item will spawn the Chromium mothership as a new
+process.
+The <b>Stop</b> item will kill the spawned mothership.
+</p>
+<p>
+If the mothership option to automatically start crservers and crappfakers
+is enabled, your Chromium configuration and application should run
+automatically.
+Otherwise, you'll have to start the crserver and crappfaker processes
+yourself, as this option <em>only</em> directly spawns the mothership.
+</p>
+
+
+<a name="templates">
 <h2 class="PageSubHeading">Templates</h2>
+</a>
 
 <p>Templates allow one to quickly create common Chromium configurations
 without having to create individual nodes, SPUs and connections.
