@@ -395,7 +395,7 @@ static void Init( void )
       assert(v[1] == 20.0);
       assert(v[2] == 30.0);
       assert(v[3] == 40.0);
-      glGetProgramNamedParameterdvNV_func(FragProg, 7, "Diffuse", v);
+      glGetProgramNamedParameterdvNV_func(FragProg, 7, (GLubyte *) "Diffuse", v);
       assert(v[0] == Diffuse[0]);
       assert(v[1] == Diffuse[1]);
       assert(v[2] == Diffuse[2]);
