@@ -80,9 +80,9 @@ def FindSPUNamesInDir(spuDirectory):
 	"""Return list of SPUs in the given directory."""
 	# filenames to match:
 	if os.name == "posix":
-		matchPattern = "lib([a-zA-Z0-9]+)spu.so"
+		matchPattern = "lib([a-zA-Z0-9\_]+)spu.so"
 	elif os.name == "nt":
-		matchPattern = "lib([a-zA-Z0-9]+).dll"
+		matchPattern = "lib([a-zA-Z0-9\_]+).dll"
 	else:
 		print "fix me:  unexpected os.name result!"
 		abort
