@@ -274,13 +274,14 @@ void StubInit(void)
 	}
 	else
 	{
-		/* No mothership running.  Try swapning it ourselves with a config
+		/* No mothership running.  Try spawning it ourselves with a config
 		 * file that we'll get from an env var or the ~/.crconfig file.
 		 */
 		char procName[1000], currentDir[1000], **args;
 
 		crGetProcName(procName, 999);
 		crGetCurrentDir(currentDir, 999);
+
 		args = LookupMothershipConfig(procName);
 		if (!args)
 		{
@@ -292,7 +293,11 @@ void StubInit(void)
 			/* Build the argument vector and try spawning the mothership! */
 			char *argv[1000];
 
+#ifdef WINDOWS
+			argv[0] = "python.exe";
+#else
 			argv[0] = "python";
+#endif
 			for (i = 0; args[i]; i++)
 			{
 				if (crStrcmp(args[i], "%p") == 0)
@@ -310,7 +315,11 @@ void StubInit(void)
 					crDebug("argv[%d] = '%s'", i, argv[i]);
 			}
 
-			stub.mothershipPID = crSpawn("python", (const char **) argv);
+#ifdef WINDOWS
+			stub.mothershipPID = crSpawn("python.exe", (const char **) argv );
+#else
+			stub.mothershipPID = crSpawn("python", (const char **) argv );
+#endif
 			crSleep(1);
 
 			crFreeStrings(args);

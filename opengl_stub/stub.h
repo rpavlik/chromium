@@ -72,7 +72,11 @@ typedef struct {
 	CRmutex mutex;
 #endif
 
+#ifdef WINDOWS
+	HANDLE mothershipPID;
+#else
 	unsigned long mothershipPID;
+#endif
 
 	/* visual/context/window management */
 	GLuint desiredVisual;  /* Bitwise-or of CR_*_BIT flags */

@@ -7,17 +7,16 @@
 #include "cr_error.h"
 #include "cr_process.h"
 #include "cr_string.h"
+#include "cr_mem.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifdef WINDOWS
-/* include something */
-#else
 #include <sys/types.h>
-#include <unistd.h>
 #include <signal.h>
+#ifndef WINDOWS
+#include <unistd.h>
+#else
+#pragma warning ( disable : 4127 )
 #endif
-
 
 /*
  * Sleep/pause for the given time.
@@ -25,7 +24,7 @@
 void crSleep( unsigned int seconds )
 {
 #ifdef WINDOWS
-  /* XXX need Windows solution */
+  Sleep(seconds*1000); /* milliseconds */
 #else
   sleep(seconds);
 #endif
@@ -35,11 +34,37 @@ void crSleep( unsigned int seconds )
 /*
  * Spawn (i.e. fork/exec) a new process.
  */
+#ifdef WINDOWS
+HANDLE crSpawn( const char *command, const char *argv[] )
+#else
 unsigned long crSpawn( const char *command, const char *argv[] )
+#endif
 {
 #ifdef WINDOWS
-	/* XXX need Windows solution */
-	return 0;
+	char newargv[1000];
+	int i;
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+
+	(void) command;
+
+	ZeroMemory( &si, sizeof(si) );
+	si.cb = sizeof(si);
+	ZeroMemory( &pi, sizeof(pi) );
+
+	strncpy(newargv, argv[0], 1000 );
+	for (i = 1; argv[i]; i++) {
+		strcat(newargv, " ");
+		strcat(newargv, argv[i]);
+	}
+
+	if ( !CreateProcess(NULL, newargv, NULL, NULL, FALSE, 0, NULL,
+				NULL, &si, &pi) )
+	{
+		crWarning("crSpawn failed, %d", GetLastError());
+		return 0;
+	}
+	return pi.hProcess;
 #else
 	pid_t pid;
 	if ((pid = fork()) == 0)
@@ -57,10 +82,14 @@ unsigned long crSpawn( const char *command, const char *argv[] )
 /*
  * Kill the named process.
  */
+#ifdef WINDOWS
+void crKill( HANDLE pid )
+#else
 void crKill( unsigned long pid )
+#endif
 {
 #ifdef WINDOWS
-	/* XXX need Windows solution */
+	TerminateProcess( pid, 0 );
 #else
 	kill((pid_t) pid, SIGKILL);
 #endif
@@ -74,8 +103,26 @@ void crKill( unsigned long pid )
 void crGetProcName( char *name, int maxLen )
 {
 #ifdef WINDOWS
-	/* XXX Need a Windows solution here */
+	char command[1000];
+	int c = 0;
+
 	*name = 0;
+	
+	if (!GetModuleFileName( NULL, command, maxLen ))
+		return;
+
+	while (1) {
+		/* crude mechanism to blank out the backslashes
+		 * in the Windows filename and recover the actual
+		 * program name to return */
+		if (strstr(command, "\\")) {
+			strncpy(name, command+c+1, maxLen);
+			command[c] = 32;
+			c++;
+		}
+		else
+			break;
+	}
 #else
 	/* Unix:
 	 * Call getpid() to get our process ID.
@@ -125,8 +172,8 @@ void crGetProcName( char *name, int maxLen )
 void crGetCurrentDir( char *dir, int maxLen )
 {
 #ifdef WINDOWS
-  /* XXX need Windows solution here */
-  dir[0] = 0;
+  if (!GetCurrentDirectory(maxLen, dir))
+	dir[0] = 0;
 #else
   if (!getcwd(dir, maxLen))
 	dir[0] = 0;
