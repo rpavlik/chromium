@@ -295,14 +295,12 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
  */
 void
 glXCopyContext( Display *dpy, GLXContext src, GLXContext dst, 
-#if defined(AIX)
+#if defined(AIX) || defined(PLAYSTATION2)
 GLuint mask )
-#else
-#if defined(SunOS)
+#elif defined(SunOS)
 unsigned int mask )
 #else
 unsigned long mask )
-#endif
 #endif
 {
 	(void) dpy;

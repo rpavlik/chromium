@@ -142,6 +142,9 @@ endif
 endif
 
 INCLUDE_DIRS += -I$(TOP)/include -I.
+ifdef PLAYSTATION2
+INCLUDE_DIRS += -I/usr/X11R6/include
+endif
 
 PRINT_COMMAND := lpr
 

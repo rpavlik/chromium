@@ -87,6 +87,8 @@ __findSystemGL( char *provided_system_path )
 		GetSystemDirectory(system_path, MAX_PATH);
 #elif defined(IRIX) || defined(IRIX64)
 		crStrcpy( system_path, "/usr/lib32" );
+#elif defined(PLAYSTATION2)
+		crStrcpy( system_path, "/usr/X11R6/lib" );
 #else
 		crStrcpy( system_path, "/usr/lib" ); 
 #endif

@@ -24,6 +24,14 @@ CXXFLAGS          += -mieee
 CFLAGS            += -mieee
 endif
 
+ifeq ($(MACHTYPE), mips)
+ifeq ($(shell ls /proc/ps2pad), /proc/ps2pad)
+PLAYSTATION2      =   1
+CXXFLAGS          += -DPLAYSTATION2
+CFLAGS            += -DPLAYSTATION2
+endif
+endif
+
 PROFILEFLAGS = -pg -a
 
 CAT = cat
