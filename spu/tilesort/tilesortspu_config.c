@@ -102,7 +102,7 @@ void set_scale_to_mural_size( void *foo, const char *response )
 SPUOptions tilesortSPUOptions[] = {
 
    { "split_begin_end", BOOL, 1, "1", NULL, NULL, 
-     "Split Begin/End", (SPUOptionCB)set_split_begin_end },
+     "Split glBegin/glEnd", (SPUOptionCB)set_split_begin_end },
 
    { "broadcast", BOOL, 1, "0", NULL, NULL, 
      "Broadcast", (SPUOptionCB)set_broadcast },
@@ -117,13 +117,13 @@ SPUOptions tilesortSPUOptions[] = {
      "Sync on Finish", (SPUOptionCB)set_sync_on_finish },
 
    { "draw_bbox", BOOL, 1, "0", NULL, NULL, 
-     "Draw BBox", (SPUOptionCB)set_draw_bbox },
+     "Draw Bounding Box", (SPUOptionCB)set_draw_bbox },
 
-   { "bbox_line_width", INT, 1, "5", "0", "100", 
-     "BBox Line Width", (SPUOptionCB)set_bbox_line_width },
+   { "bbox_line_width", INT, 1, "5", "0", "10", 
+     "Bounding Box Line Width", (SPUOptionCB)set_bbox_line_width },
 
-   { "fake_window_dims", INT, 2, "0 0", "0 0", NULL, 
-     "Fake Window Dimensions", (SPUOptionCB)set_fake_window_dims },
+   { "fake_window_dims", INT, 2, "0 0", "1 1", NULL, 
+     "Fake Window Dimensions (w, h)", (SPUOptionCB)set_fake_window_dims },
 
    { "scale_to_mural_size", BOOL, 1, "1", NULL, NULL, 
      "Scale to Mural Size", (SPUOptionCB)set_scale_to_mural_size },
