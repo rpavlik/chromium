@@ -134,14 +134,6 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, wxID_EXIT,   self.doExit)
 		menuBar.Append(self.fileMenu, "File")
 
-		# Edit menu
-		self.editMenu = wxMenu()
-		self.editMenu.Append(menu_UNDO,          "Undo\tCTRL-Z")
-		self.editMenu.AppendSeparator()
-		self.editMenu.Append(menu_SELECT_ALL,    "Select All\tCTRL-A")
-		self.editMenu.AppendSeparator()
-		menuBar.Append(self.editMenu, "Edit")
-
 		# Help menu
 		self.helpMenu = wxMenu()
 		self.helpMenu.Append(menu_ABOUT, "About Tilesort Config...")
@@ -234,13 +226,15 @@ class MainFrame(wxFrame):
 									   label="Vertical Layout", choices=vChoices,
 									   majorDimension=1, style=wxRA_SPECIFY_COLS )
 		toolSizer.Add(self.vLayoutRadio, flag=wxEXPAND)
-		EVT_RADIOBOX(self.hLayoutRadio, id_hLayout, self.onSizeChange)
-		EVT_RADIOBOX(self.vLayoutRadio, id_vLayout, self.onSizeChange)
+		EVT_RADIOBOX(self.hLayoutRadio, id_hLayout, self.onLayoutChange)
+		EVT_RADIOBOX(self.vLayoutRadio, id_vLayout, self.onLayoutChange)
 
 		# Host naming
 		box = wxStaticBox(parent=self.topPanel, id=-1, label="Host Names",
 						  style=wxDOUBLE_BORDER)
 		hostSizer = wxStaticBoxSizer(box, wxVERTICAL)
+		# XXX should probably use a wxComboBox here so we can keep a small
+		# history of frequently used hostname pattern strings.
 		self.hostText = wxTextCtrl(parent=self.topPanel, id=id_HostText,
 								   value=self.HostNamePattern)
 		EVT_TEXT(self.hostText, id_HostText, self.onHostChange)
@@ -285,7 +279,7 @@ class MainFrame(wxFrame):
 		self.recomputeTotalSize()
 		
 		if self.fileName != None:
-			self.loadContents()
+			self.loadConfiguration()
 
 
 	# This is called whenever the mural width/height or tile width/height changes.
@@ -310,13 +304,19 @@ class MainFrame(wxFrame):
 	# ============================
 
 	def onSizeChange(self, event):
-		"""Respond to spin control changes"""
+		"""Called when tile size changes with spin controls."""
 		self.recomputeTotalSize()
 		self.drawArea.Refresh()
+		self.dirty = true
+
+	def onLayoutChange(self, event):
+		"""Called when left/right top/bottom layout changes."""
+		self.recomputeTotalSize()
+		self.drawArea.Refresh()
+		self.dirty = true
 
 	def onTileChoice(self, event):
-		""" Respond to the "Tile Size" choice widget.
-		"""
+		"""Called when tile size changes with combo-box control."""
 		i = self.tileChoice.GetSelection()
 		if i < len(CommonTileSizes):
 			w = CommonTileSizes[i][0]
@@ -325,6 +325,15 @@ class MainFrame(wxFrame):
 			self.tileHeightControl.SetValue(h)
 		self.recomputeTotalSize()
 		self.drawArea.Refresh()
+		self.dirty = true
+
+	# Called when hostname or first host index changes
+	def onHostChange(self, event):
+		"""Called when the host name pattern or first index changes."""
+		self.HostNamePattern = self.hostText.GetValue()
+		self.HostNameStartIndex = self.hostSpin.GetValue()
+		self.drawArea.Refresh()
+		self.dirty = true
 
 
 	def onPaintEvent(self, event):
@@ -392,12 +401,6 @@ class MainFrame(wxFrame):
 				dc.DrawText(s, x+3, y+3)
 		dc.EndDrawing()
 
-	# Called when hostname or first host index changes
-	def onHostChange(self, event):
-		self.HostNamePattern = self.hostText.GetValue()
-		self.HostNameStartIndex = self.hostSpin.GetValue()
-		self.drawArea.Refresh()
-
 
 	# ==========================
 	# == Menu Command Methods ==
@@ -426,11 +429,11 @@ class MainFrame(wxFrame):
 
 		title = os.path.basename(fileName)
 
-		if (self.fileName == None) and (len(self.contents) == 0):
+		if (self.fileName == None) and not self.dirty:
 			# Load contents into current (empty) document.
 			self.fileName = fileName
 			self.SetTitle(os.path.basename(fileName))
-			self.loadContents()
+			self.loadConfiguration()
 		else:
 			# Open a new frame for this document.
 			newFrame = MainFrame(None, -1, os.path.basename(fileName),
@@ -445,7 +448,8 @@ class MainFrame(wxFrame):
 		global _docList
 
 		if self.dirty:
-			if not self.askIfUserWantsToSave("closing"): return
+			if not self.askIfUserWantsToSave("closing"):
+				return
 
 		_docList.remove(self)
 		self.Destroy()
@@ -454,8 +458,10 @@ class MainFrame(wxFrame):
 	def doSave(self, event):
 		""" Respond to the "Save" menu command.
 		"""
-		if self.fileName != None:
-			self.saveContents()
+		if self.fileName == None:
+			self.doSaveAs(event)
+		else:
+			self.saveConfiguration()
 
 
 	def doSaveAs(self, event):
@@ -467,12 +473,13 @@ class MainFrame(wxFrame):
 			default = self.fileName
 
 		curDir = os.getcwd()
-		fileName = wxFileSelector("Save File As", "Saving",
+		fileName = wxFileSelector("Save Configuration As",
 					  default_filename=default,
-					  default_extension="psk",
-					  wildcard="*.psk",
+					  default_extension="conf",
+					  wildcard="*.conf",
 					  flags = wxSAVE | wxOVERWRITE_PROMPT)
-		if fileName == "": return # User cancelled.
+		if fileName == "":
+			return # User cancelled.
 		fileName = os.path.join(os.getcwd(), fileName)
 		os.chdir(curDir)
 
@@ -480,18 +487,19 @@ class MainFrame(wxFrame):
 		self.SetTitle(title)
 
 		self.fileName = fileName
-		self.saveContents()
+		self.saveConfiguration()
 
 
 	def doRevert(self, event):
 		""" Respond to the "Revert" menu command.
 		"""
-		if not self.dirty: return
+		if not self.dirty:
+			return
 
 		if wxMessageBox("Discard changes made to this document?", "Confirm",
 				style = wxOK | wxCANCEL | wxICON_QUESTION,
 				parent=self) == wxCANCEL: return
-		self.loadContents()
+		self.loadConfiguration()
 
 
 	def doExit(self, event):
@@ -499,9 +507,11 @@ class MainFrame(wxFrame):
 		"""
 		global _docList, _app
 		for doc in _docList:
-			if not doc.dirty: continue
+			if not doc.dirty:
+				continue
 			doc.Raise()
-			if not doc.askIfUserWantsToSave("quitting"): return
+			if not doc.askIfUserWantsToSave("quitting"):
+				return
 			_docList.remove(doc)
 			doc.Destroy()
 
@@ -557,38 +567,54 @@ class MainFrame(wxFrame):
 		btn = dialog.ShowModal()
 		dialog.Destroy()
 
-	# ======================
-	# == File I/O Methods ==
-	# ======================
-
-	def loadContents(self):
-		""" Load the contents of our document into memory.
-		"""
-		f = open(self.fileName, "rb")
-		objData = cPickle.load(f)
-		f.close()
-
-#		for type, data in objData:
-#			obj = DrawingObject(type)
-#			obj.setData(data)
-#			self.contents.append(obj)
-
+	def loadConfiguration(self):
+		"""Load a configuration file."""
+		f = open(self.fileName, "r")
+		if f:
+			while true:
+				l = f.readline()
+				if not l:
+					break
+				if re.match("^TILE_ROWS = [0-9]+$", l):
+					v = re.search("[0-9]+", l)
+					self.heightControl.SetValue(int(l[v.start() : v.end()]))
+				elif re.match("^TILE_COLS = [0-9]+$", l):
+					v = re.search("[0-9]+", l)
+					self.widthControl.SetValue(int(l[v.start() : v.end()]))
+				elif re.match("^TILE_WIDTH = [0-9]+$", l):
+					v = re.search("[0-9]+", l)
+					self.tileWidthControl.SetValue(int(l[v.start() : v.end()]))
+				elif re.match("^TILE_HEIGHT = [0-9]+$", l):
+					v = re.search("[0-9]+", l)
+					self.tileHeightControl.SetValue(int(l[v.start() : v.end()]))
+				elif re.match("^BOTTOM_TO_TOP = [01]$", l):
+					v = re.search("[01]", l)
+					self.vLayoutRadio.SetSelection(int(l[v.start() : v.end()]))
+				elif re.match("^RIGHT_TO_LEFT = [01]$", l):
+					v = re.search("[01]", l)
+					self.hLayoutRadio.SetSelection(int(l[v.start() : v.end()]))
+				# scan for HOSTNAME and FIRSTHOST
+			f.close()
+			self.recomputeTotalSize()
 		self.dirty = false
-
 		self.drawArea.Refresh()
 
 
-	def saveContents(self):
-		""" Save the contents of our document to disk.
-		"""
-		objData = []
-		for obj in self.contents:
-			objData.append([obj.getType(), obj.getData()])
-
-		f = open(self.fileName, "wb")
-		cPickle.dump(objData, f)
-		f.close()
-
+	def saveConfiguration(self):
+		"""Save the configuration."""
+		f = open(self.fileName, "w")
+		print "Save contents!"
+		if f:
+			f.write("# Chromium tilesort config file\n")
+			f.write("TILE_ROWS = %d\n" % self.heightControl.GetValue())
+			f.write("TILE_COLS = %d\n" % self.widthControl.GetValue())
+			f.write("TILE_WIDTH = %d\n" % self.tileWidthControl.GetValue())
+			f.write("TILE_HEIGHT = %d\n" % self.tileHeightControl.GetValue())
+			f.write("RIGHT_TO_LEFT = %d\n" % self.hLayoutRadio.GetSelection())
+			f.write("BOTTOM_TO_TOP = %d\n" % self.vLayoutRadio.GetSelection())
+			f.write("HOSTNAME = \"%s\"\n" % self.HostNamePattern)
+			f.write("FIRSTHOST = %d\n" % self.HostNameStartIndex)
+			f.close()
 		self.dirty = false
 
 
@@ -606,14 +632,14 @@ class MainFrame(wxFrame):
 
 		if response == wxYES:
 			if self.fileName == None:
-				fileName = wxFileSelector("Save File As", "Saving",
-						  default_extension="psk",
-						  wildcard="*.psk",
-						  flags = wxSAVE | wxOVERWRITE_PROMPT)
+				fileName = wxFileSelector(message = "Save Configuration As",
+										  default_extension="conf",
+										  wildcard="*.conf",
+										  flags = wxSAVE | wxOVERWRITE_PROMPT)
 				if fileName == "": return false # User cancelled.
 				self.fileName = fileName
 
-			self.saveContents()
+			self.saveConfiguration()
 			return true
 		elif response == wxNO:
 			return true # User doesn't want changes saved.
