@@ -58,13 +58,11 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 		crStateBufferDiff	(&(sb->buffer), bitID,
 							 &(from->buffer), &(to->buffer));
 	}
-#if 0
 	if (update & GLUPDATE_HINT && sb->hint.dirty & bitID)
 	{
 		crStateHintDiff	(&(sb->hint), bitID,
 							 &(from->hint), &(to->hint));
 	}
-#endif
 	if (update & GLUPDATE_LIGHTING && sb->lighting.dirty & bitID)
 	{
 		crStateLightingDiff	(&(sb->lighting), bitID,

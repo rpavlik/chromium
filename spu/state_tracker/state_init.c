@@ -59,6 +59,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 	crStateEvaluatorInit( &(ctx->eval) );
 	crStateExtensionsInit( ctx );
 	crStateFogInit( &(ctx->fog) );
+	crStateHintInit( &(ctx->hint) );
 	crStateLightingInit( &(ctx->lighting) );
 	crStateLineInit( &(ctx->line) );
 	crStateListsInit (&(ctx->lists) );

@@ -21,6 +21,7 @@ REGULAR_FILES = state_attrib \
 	state_fog \
 	state_get \
 	state_getstring \
+	state_hint \
 	state_init \
 	state_isenabled \
 	state_lighting \
@@ -39,6 +40,7 @@ REGULAR_FILES = state_attrib \
 DIFF_FILES = buffer \
 	current \
 	fog \
+	hint \
 	lighting \
 	line \
 	pixel \
@@ -97,6 +99,10 @@ state_current_gen.c: state_current.py convert.py
 state_fog_gen.c: state_fog.txt gendiffcode.pl
 	@$(ECHO) Making $@
 	@$(PERL) gendiffcode.pl Fog > $@
+
+state_hint_gen.c: state_hint.txt gendiffcode.pl
+	@$(ECHO) Making $@
+	@$(PERL) gendiffcode.pl Hint > $@
 
 state_lighting_gen.c: state_lighting.txt gendiffcode.pl
 	@$(ECHO) Making $@
