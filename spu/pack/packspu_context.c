@@ -168,8 +168,8 @@ void PACKSPU_APIENTRY packspu_DestroyContext( GLint ctx )
 	else
 		crPackDestroyContext( context->serverCtx );
 
-	/* Deallocate this context slot */
-	crFree(context->clientState);
+	crStateDestroyContext( context->clientState );
+
 	context->clientState = NULL;
 	context->serverCtx = 0;
 
