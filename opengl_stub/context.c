@@ -614,6 +614,8 @@ Bool stubMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext context )
 
 		stub.spuWindowWidth = winW;
 		stub.spuWindowHeight = winH;
+		if (stub.trackWindowSize)
+			stub.spuDispatch.WindowSize( stub.spuWindow, winW, winH );
 	}
 
 	return retVal;
