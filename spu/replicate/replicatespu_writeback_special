@@ -1,0 +1,9 @@
+# These are queries where a server round-trip is required to get the
+# right answer.  (For most other queries, a crState call suffices.)
+GenFencesNV
+GetFenceivNV
+IsFenceNV
+TestFenceNV
+GetCompressedTexImageARB
+GetChromiumParametervCR
+GetProgramivARB
