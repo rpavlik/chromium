@@ -15,7 +15,7 @@ crconfig.py:
 	@echo Generating crconfig.py
 	@echo "arch = \"${ARCH}\"" > crconfig.py
 ifdef WINDOWS
-	@echo "crdir = \"$(shell cygpath -w $(shell dirname $(shell pwd)))\"" >> crconfig.py
+	@echo "crdir = \"$(shell cygpath -w $(shell dirname $(shell dirname $(shell pwd))))\"" >> crconfig.py
 else
 	@echo "crdir = \"$(shell dirname $(shell dirname $(shell pwd)))\"" >> crconfig.py
 endif
