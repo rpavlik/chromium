@@ -7,3 +7,4 @@ void glSemaphoreP (GLuint name);
 void glSemaphoreV (GLuint name);
 void glBoundsInfo (GLrecti *bounds, GLbyte *payload, GLint len, GLint num_opcodes);
 void glBlendColorEXT (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+void glBlendEquationEXT (GLenum mode);

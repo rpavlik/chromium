@@ -1,4 +1,4 @@
-GLenum    GL_FOG_DISTANCE_MODE_NV GL_NV_fog_distance  g->fog.extensions.fogDistanceMode
-GLenum GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT GL_EXT_texture_filter_anisotropic
-g->texture.extensions.maxAnisotropy
-GLclampf  GL_BLEND_COLOR_EXT GL_EXT_blend_color          g->buffer.extensions.blendColor.r g->buffer.extensions.blendColor.g g->buffer.extensions.blendColor.b g->buffer.extensions.blendColor.a 
+GLenum GL_FOG_DISTANCE_MODE_NV GL_NV_fog_distance g->fog.extensions.fogDistanceMode
+GLenum GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT GL_EXT_texture_filter_anisotropic g->texture.extensions.maxTextureMaxAnisotropy
+GLclampf GL_BLEND_COLOR_EXT GL_EXT_blend_color g->buffer.extensions.blendColor.r g->buffer.extensions.blendColor.g g->buffer.extensions.blendColor.b g->buffer.extensions.blendColor.a
+GLenum GL_BLEND_EQUATION_EXT GL_EXT_blend_minmax g->buffer.extensions.blendEquation

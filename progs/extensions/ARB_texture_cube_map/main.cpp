@@ -2,10 +2,9 @@
 
   main.cpp
 
-  This is an example of GL_EXT_texture_filter_anisotropic, described
-  on page 185 of the NVidia OpenGL Extension Specifications.
+  This is the framework I am using to test extensions on Chromium.
 
-  Christopher Niederauer, ccn@graphics.stanford.edu, 5/30/2001
+  Christopher Niederauer, ccn@graphics.stanford.edu, 6/25/2001
 
 */
 

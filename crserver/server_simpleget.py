@@ -258,9 +258,13 @@ num_get_values = {
 }
 
 extensions_num_get_values = {
-	'GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT': (1, 'GL_EXT_texture_filter_anisotropic'),
+	'GL_BLEND_COLOR_EXT': (4, 'GL_EXT_blend_color'),
+	'GL_BLEND_EQUATION_EXT': (1, 'GL_EXT_blend_minmax'),
 	'GL_FOG_DISTANCE_MODE_NV': (1, 'GL_NV_fog_distance'),
-	'GL_BLEND_COLOR_EXT': (4, 'GL_EXT_blend_color')
+	'GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB': (1, 'GL_ARB_texture_cube_map'),
+	'GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT': (1, 'GL_EXT_texture_filter_anisotropic'),
+	'GL_TEXTURE_BINDING_CUBE_MAP_ARB': (1, 'GL_ARB_texture_cube_map'),
+	'GL_TEXTURE_CUBE_MAP_ARB': (1, 'GL_ARB_texture_cube_map')
 }
 
 keys = num_get_values.keys() + extensions_num_get_values.keys()

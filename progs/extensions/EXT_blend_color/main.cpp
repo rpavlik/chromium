@@ -108,12 +108,8 @@ int		main	( int argc, char *argv[] )
 
 	if( CheckForExtension( TEST_EXTENSION_STRING ))
 	{
-		float maxAni;
-		glGetFloatv( (GLenum) GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAni );
-
 		cout << "Extension " << TEST_EXTENSION_STRING
 			<< " supported.  Executing..." << endl;
-		cout << "GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT = " << maxAni << endl;
 	}
 	else
 	{

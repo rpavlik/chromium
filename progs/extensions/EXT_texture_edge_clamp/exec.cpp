@@ -2,10 +2,10 @@
 
   exec.cpp
 
-  This is an example of GL_EXT_blend_color, described
-  on page 86 of the NVidia OpenGL Extension Specifications.
+  This is an example of GL_EXT_secondary_color, described
+  on page 170 of the NVidia OpenGL Extension Specifications.
 
-  Christopher Niederauer, ccn@graphics.stanford.edu, 6/27/2001
+  Christopher Niederauer, ccn@graphics.stanford.edu, 6/29/2001
 
 */
 
@@ -14,20 +14,22 @@
 #include "exec.h"
 #include "../common/logo.h"
 
+#include <math.h>
 #ifndef WIN32
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glext.h>
-#else
-PFNGLBLENDCOLOREXTPROC glBlendColorEXT;
+#include <GL/glxext.h>
 #endif
 
 
 /* --- Global Variables ----------------------------------------------------- */
 
-GLuint	currentWidth, currentHeight;
+static GLuint	currentWidth, currentHeight;
+static GLuint	textureID[2];
+static GLfloat	bgColor[4] = { 0.2, 0.3, 0.8, 0 };
 
-static GLuint	texture[1];
-static GLfloat	bgColor[4] = { 0.2, 0.3, 0.8, 0.0 };
+
+/* --- Extension Declarations ---------------------------------------------- */
+
+//PFNGLBLENDCOLOREXTPROC glBlendColorEXT;
 
 
 /* --- Function Definitions ------------------------------------------------- */
@@ -35,7 +37,7 @@ static GLfloat	bgColor[4] = { 0.2, 0.3, 0.8, 0.0 };
 void	InitGL	( void )
 {
 	currentWidth = 320;
-	currentHeight = 240;
+	currentHeight = 320;
 
 #ifdef MULTIPLE_VIEWPORTS
 	currentWidth <<= 1;
@@ -63,35 +65,38 @@ void	InitSpecial	( void )
 {
 	GLubyte	textureData[ 32*32 ];
 
+	// Create the tile texture.
 	for( int x=0; x<32; x++ )
 	{
 		for( int y=0; y<32; y++ )
 		{
-			if(( x < 16 && y < 16 ) || ( x >= 16 && y >= 16 ))
-				textureData[ y*32+x ] = 0;
-			else
-				textureData[ y*32+x ] = 255;
+			float result = (255.0/15)*sqrt( (x-16)*(x-16)+(y-16)*(y-16) );
+			
+			textureData[ y*32+x ] = result > 255 ? 255: result;
 		}
 	}
-	
-	// Create the tile texture.
-	glGenTextures( 1, texture );
-	
-	// Create Trilinear MipMapped Texture
-	glBindTexture( GL_TEXTURE_2D, texture[0] );
-	glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR );
-	gluBuild2DMipmaps( GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData );
-	
-#ifdef WIN32
-	glBlendColorEXT = (PFNGLBLENDCOLOREXTPROC)wglGetProcAddress( "glBlendColorEXT" );
-	if ( glBlendColorEXT == NULL )
-	{
-		cout << "Error linking to extensions!" << endl;
-		exit( 0 );
-	}
+
+	// Create the texture IDs.
+	glGenTextures( 2, textureID );
+
+#ifdef MULTIPLE_VIEWPORTS
+	// Create Bilinear Filtered texture with normal clamping.
+	glBindTexture( GL_TEXTURE_2D, textureID[0] );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 32, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData );
 #endif
 
+	// Create Bilinear Filtered texture with normal clamping.
+	glBindTexture( GL_TEXTURE_2D, textureID[1] );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE_EXT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE_EXT );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 32, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData );
+	
 	return;
 }
 
@@ -105,62 +110,67 @@ void	Idle		( void )
 
 void	Display		( void )
 {
-	const float		size = 50.0;
+	const float		size = 1.0,
+					texDetail = 1.0,
+					texOffset = 0.5;
 	static double	theta = 0.0;
 
 	glClear( GL_COLOR_BUFFER_BIT );
 	
-	theta += 0.005;
+	theta += 0.05;
 
 	glLoadIdentity();
-	glTranslatef( 0.0, -2.0, 0.0 );
-	glRotated( 30.0, 1.0, 0.0, 0.0 );
-	glRotated( theta, 0.0, 1.0, 0.0 );
-	glColor3f( 1.0, 1.0, 1.0 );
+	glRotated( 90.0, 1.0, 0.0, 0.0 );
+	glTranslatef( 0.0, -2.0, .0 );
+	glRotated( theta, 0.0, -1.0, 0.0 );
 
 #ifdef MULTIPLE_VIEWPORTS
-
 	// Left Viewport
 	glViewport( 0, 0, currentWidth >> 1, currentHeight );
+	glColor3f( 1.0, 1.0, 1.0 );
 	glEnable( GL_TEXTURE_2D );
-	glBindTexture( GL_TEXTURE_2D, texture[0] );
+	glBindTexture( GL_TEXTURE_2D, textureID[0] );
 	glBegin( GL_QUADS );
-		glTexCoord2f( -size/2, size/2 );
+		glTexCoord2f( -texDetail+texOffset,  texDetail+texOffset );
 		glVertex3f( -size, 0.0,  size );
-		glTexCoord2f( size/2, size/2 );
+
+		glTexCoord2f(  texDetail+texOffset,  texDetail+texOffset );
 		glVertex3f(  size, 0.0,  size );
-		glTexCoord2f( size/2, -size/2 );
+		
+		glTexCoord2f(  texDetail+texOffset, -texDetail+texOffset );
 		glVertex3f(  size, 0.0, -size );
-		glTexCoord2f( -size/2, -size/2 );
+		
+		glTexCoord2f( -texDetail+texOffset, -texDetail+texOffset );
 		glVertex3f( -size, 0.0, -size );
 	glEnd();
+
 	glDisable( GL_TEXTURE_2D );
 	glPushMatrix();glLoadIdentity();
-	RenderString( -1.1, 1, "Constant Color Blending Off" );
+	RenderString( -1.1, 1, "GL_CLAMP" );
 	glPopMatrix();
 
 	// Upper Right Viewport
 	glViewport( currentWidth >> 1, 0, currentWidth >> 1, currentHeight );
 #endif
-	glEnable( GL_BLEND );
-	glBlendColorEXT( 1.0, 1.0, 0.0, 0.0 );
-	glBlendFunc( GL_CONSTANT_COLOR_EXT, GL_ZERO );
 	glEnable( GL_TEXTURE_2D );
-	glBindTexture( GL_TEXTURE_2D, texture[0] );
+	glBindTexture( GL_TEXTURE_2D, textureID[1] );
 	glBegin( GL_QUADS );
-		glTexCoord2f( -size/2, size/2 );
+		glTexCoord2f( -texDetail+texOffset,  texDetail+texOffset );
 		glVertex3f( -size, 0.0,  size );
-		glTexCoord2f( size/2, size/2 );
+
+		glTexCoord2f(  texDetail+texOffset,  texDetail+texOffset );
 		glVertex3f(  size, 0.0,  size );
-		glTexCoord2f( size/2, -size/2 );
+		
+		glTexCoord2f(  texDetail+texOffset, -texDetail+texOffset );
 		glVertex3f(  size, 0.0, -size );
-		glTexCoord2f( -size/2, -size/2 );
+		
+		glTexCoord2f( -texDetail+texOffset, -texDetail+texOffset );
 		glVertex3f( -size, 0.0, -size );
 	glEnd();
+	
 	glDisable( GL_TEXTURE_2D );
-	glDisable( GL_BLEND );
 	glPushMatrix();glLoadIdentity();
-	RenderString( -1.1, 1, "Constant Color Blending On" );
+	RenderString( -1.1, 1, "GL_CLAMP_TO_EDGE_EXT" );
 	glViewport( 0, 0, currentWidth, currentHeight );
 	crExtensionsDrawLogo( currentWidth, currentHeight );
 	glPopMatrix();
@@ -183,6 +193,8 @@ void	Reshape		( int width, int height )
 
 void	Keyboard	( unsigned char key, int x, int y )
 {
+	static	GLboolean	wireframe = false;
+
 	switch( key )
 	{
 		case 'Q':

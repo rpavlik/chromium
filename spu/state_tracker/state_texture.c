@@ -1377,8 +1377,7 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 			tobj->minFilter = e;
 			break;
 		case GL_TEXTURE_MAG_FILTER:
-			if (e != GL_NEAREST &&
-					e != GL_LINEAR)
+			if (e != GL_NEAREST && e != GL_LINEAR)
 			{
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"TexParamterfv: GL_TEXTURE_MAG_FILTER invalid param: %d", e);
@@ -1387,22 +1386,26 @@ void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GL
 			tobj->magFilter = e;
 			break;
 		case GL_TEXTURE_WRAP_S:
-			if (e != GL_CLAMP &&
-					e != GL_REPEAT)
+			if (e != GL_CLAMP && e != GL_REPEAT)
 			{
-				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+				if (!crStateTexParameterfvExtensions( t, tobj, pname, param ))
+				{ 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"TexParameterfv: GL_TEXTURE_WRAP_S invalid param: %d", e);
-				return;
+					return;
+				}
 			}
 			tobj->wrapS = e;
 			break;
 		case GL_TEXTURE_WRAP_T:
-			if (e != GL_CLAMP &&
-					e != GL_REPEAT)
+			if (e != GL_CLAMP && e != GL_REPEAT)
 			{
-				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+				if (!crStateTexParameterfvExtensions( t, tobj, pname, param ))
+				{
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"TexParameterfv: GL_TEXTURE_WRAP_T invalid param: %d", e);
-				return;
+					return;
+				}
 			}
 			tobj->wrapT = e;
 			break;

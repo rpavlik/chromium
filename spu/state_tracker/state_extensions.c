@@ -27,6 +27,16 @@ int crStateTexParameterfvExtensions( CRTextureState *t, CRTextureObj *tobj, GLen
 {
 	switch( pname)
 	{
+#ifdef GL_EXT_texture_edge_clamp
+		case GL_TEXTURE_WRAP_S:
+		case GL_TEXTURE_WRAP_T:
+		case GL_TEXTURE_WRAP_R:
+			if (param[0] != GL_CLAMP_TO_EDGE_EXT)
+			{
+				return 0;
+			}
+			return 1;
+#endif
 #ifdef GL_EXT_texture_filter_anisotropic
 		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
 			if (param[0] < 1.0f)
@@ -53,6 +63,11 @@ int crStateTexParameterivExtensions( GLenum target, GLenum pname, const GLint *p
 	GLfloat f_param = 0;
 	switch( pname )
 	{
+#ifdef GL_EXT_texture_edge_clamp
+		case GL_TEXTURE_WRAP_S:
+		case GL_TEXTURE_WRAP_T:
+		case GL_TEXTURE_WRAP_R:
+#endif
 #ifdef GL_EXT_texture_filter_anisotropic
 		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
 #endif
@@ -188,16 +203,21 @@ void crStateBufferInitExtensions( CRBufferState *b )
 {
 	GLcolorf zero_color = {0.0f, 0.0f, 0.0f, 0.0f};
 	b->extensions.blendColor = zero_color;
+#if defined(GL_EXT_blend_minmax) || defined(GL_EXT_blend_subtract)
+	b->extensions.blendEquation = GL_FUNC_ADD_EXT;
+#endif
 }
 
 void STATE_APIENTRY crStateBlendColorEXT( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
 	CRContext *g = GetCurrentContext();
 	CRBufferState *b = &(g->buffer);
+	CRStateBits *sb = GetCurrentBits();
+	CRBufferBits *bb = &(sb->buffer);
 
 	if (g->current.inBeginEnd)
 	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glBlendColorEXT called inside a Begin/End" );
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "BlendColorEXT called inside a Begin/End" );
 		return;
 	}
 
@@ -205,6 +225,43 @@ void STATE_APIENTRY crStateBlendColorEXT( GLclampf red, GLclampf green, GLclampf
 	b->extensions.blendColor.g = green;
 	b->extensions.blendColor.b = blue;
 	b->extensions.blendColor.a = alpha;
+	bb->extensions = g->neg_bitid;
+	bb->dirty = g->neg_bitid;
+}
+
+void STATE_APIENTRY crStateBlendEquationEXT( GLenum mode )
+{
+	CRContext *g = GetCurrentContext();
+	CRBufferState *b = &(g->buffer);
+	CRStateBits *sb = GetCurrentBits();
+	CRBufferBits *bb = &(sb->buffer);
+
+	if( g->current.inBeginEnd )
+	{
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "BlendEquationEXT called inside a Begin/End" );
+		return;
+	}
+	switch( mode )
+	{
+#if defined(GL_EXT_blend_minmax) || defined(GL_EXT_blend_subtract)
+		case GL_FUNC_ADD_EXT:
+#ifdef GL_EXT_blend_subtract
+		case GL_FUNC_SUBTRACT_EXT:
+#endif /* GL_EXT_blend_subtract */
+#ifdef GL_EXT_blend_minmax
+		case GL_MIN_EXT:
+		case GL_MAX_EXT:
+#endif /* GL_EXT_blend_minmax */
+			b->extensions.blendEquation = mode;
+			break;
+#endif /* defined(GL_EXT_blend_minmax) || defined(GL_EXT_blend_subtract) */
+		default:
+			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
+				"BlendEquationEXT: mode called with illegal parameter: 0x%x", (GLenum) mode );
+			return;
+	}
+	bb->extensions = g->neg_bitid;
+	bb->dirty = g->neg_bitid;
 }
 
 void crStateBufferDiffExtensions( CRBufferState *from, CRBufferState *to )
@@ -216,10 +273,17 @@ void crStateBufferDiffExtensions( CRBufferState *from, CRBufferState *to )
 	    from->extensions.blendColor.a != to->extensions.blendColor.a   )
 	{
 		diff_api.BlendColorEXT( to->extensions.blendColor.r,
-														to->extensions.blendColor.g,
-														to->extensions.blendColor.b,
-														to->extensions.blendColor.a );
+					to->extensions.blendColor.g,
+					to->extensions.blendColor.b,
+					to->extensions.blendColor.a );
 		from->extensions.blendColor = to->extensions.blendColor;
+	}
+#endif
+#if defined(GL_EXT_blend_minmax) || defined(GL_EXT_blend_subtract)
+	if( from->extensions.blendEquation != to->extensions.blendEquation )
+	{
+		diff_api.BlendEquationEXT( to->extensions.blendEquation );
+		from->extensions.blendEquation = to->extensions.blendEquation;
 	}
 #endif
 }
@@ -233,9 +297,15 @@ void crStateBufferSwitchExtensions( CRBufferState *from, CRBufferState *to )
 	    from->extensions.blendColor.a != to->extensions.blendColor.a   )
 	{
 		diff_api.BlendColorEXT( to->extensions.blendColor.r,
-														to->extensions.blendColor.g,
-														to->extensions.blendColor.b,
-														to->extensions.blendColor.a );
+					to->extensions.blendColor.g,
+					to->extensions.blendColor.b,
+					to->extensions.blendColor.a );
+	}
+#endif
+#if defined(GL_EXT_blend_minmax) || defined(GL_EXT_blend_subtract)
+	if( from->extensions.blendEquation != to->extensions.blendEquation )
+	{
+		diff_api.BlendEquationEXT( to->extensions.blendEquation );
 	}
 #endif
 }

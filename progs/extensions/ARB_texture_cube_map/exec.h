@@ -2,20 +2,18 @@
 
   exec.h
 
-  This is an example of GL_ARB_multitexture, described
-  on page 18 of the NVidia OpenGL Extension Specifications.
+  This is an example of GL_ARB_texture_cube_map, described
+  on page 48 of the NVidia OpenGL Extension Specifications.
 
-  Christopher Niederauer, ccn@graphics.stanford.edu, 6/25/2001
+  Christopher Niederauer, ccn@graphics.stanford.edu, 7/2/2001
 
 */
 
 /* --- Preprocessor --------------------------------------------------------- */
 
-#ifndef EXEC_H
-#define EXEC_H
+#pragma once
 
 #ifdef WIN32
-#pragma warning( push, 3 )
 #include <windows.h>
 #endif
 
@@ -25,14 +23,13 @@
 #include <GL/glext.h>
 #include <iostream.h>
 
-
 //#define	CCN_DEBUG
-#define	DISPLAY_LISTS
+#define DISPLAY_LISTS
 #define	MULTIPLE_VIEWPORTS
 #define	SMOOTH_TEXT
 
-#define	TEST_EXTENSION_STRING	"GL_ARB_multitexture"
-#ifndef	GL_ARB_multitexture
+#define	TEST_EXTENSION_STRING	"GL_ARB_texture_cube_map"
+#ifndef	GL_ARB_texture_cube_map
 #error	Please update your GL/glext.h header file.
 #endif
 
@@ -49,5 +46,6 @@ void	Idle		( void );
 void	Display		( void );
 void	Reshape		( int, int );
 void	Keyboard	( unsigned char, int, int );
-
-#endif /* EXEC_H */
+void	Mouse		( int, int, int, int );
+void	Motion		( int, int );
+void	Special		( int, int, int );

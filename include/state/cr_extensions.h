@@ -15,6 +15,7 @@ typedef struct {
 
 typedef struct {
 	GLcolorf blendColor;
+	GLenum blendEquation;
 } CRBufferStateExtensions;
 
 #endif /* CR_STATE_EXTENSIONS_H */
