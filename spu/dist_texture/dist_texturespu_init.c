@@ -56,7 +56,7 @@ extern SPUOptions dist_textureSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
-	     SPUOptionsPtr *options )
+	     SPUOptionsPtr *options, int *flags )
 {
 	*name = "dist_texture";
 	*super = "passthrough";
@@ -64,6 +64,7 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	*self = dist_textureSPUSelfDispatch;
 	*cleanup = dist_textureSPUCleanup;
 	*options = dist_textureSPUOptions;
+	*flags = (SPU_NO_PACKER|SPU_NOT_TERMINAL|SPU_MAX_SERVERS_ZERO);
 	
 	return 1;
 }

@@ -55,7 +55,7 @@ extern SPUOptions saveframeSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
-	     SPUOptionsPtr *options )
+	     SPUOptionsPtr *options, int *flags )
 {
 	*name = "saveframe";
 	*super = "passthrough";
@@ -63,6 +63,7 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	*self = SPUSelfDispatch;
 	*cleanup = SPUCleanup;
 	*options = saveframeSPUOptions;
+	*flags = (SPU_NO_PACKER|SPU_NOT_TERMINAL|SPU_MAX_SERVERS_ZERO);
 	
 	return 1;
 }

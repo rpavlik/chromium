@@ -72,7 +72,8 @@ SPU * SPULoadLite( SPU *child, int id, char *name, char *dir, void *server )
 	if (!the_spu->entry_point( &(the_spu->name), &(the_spu->super_name), 
 				   &(the_spu->init), &(the_spu->self), 
 				   &(the_spu->cleanup),
-				   &(the_spu->options) ) )
+				   &(the_spu->options),
+				   &(the_spu->spu_flags)) )
 	{
 		crError( "I found the SPU \"%s\", but loading it failed!", name );
 	}
@@ -86,7 +87,13 @@ SPU * SPULoadLite( SPU *child, int id, char *name, char *dir, void *server )
 
 static void print_spu_header( SPU *spu )
 {
-   printf("SPU %s:\n", spu->name);
+   printf("SPU %s: (packer %s, terminal %s, max-servers %s)\n", 
+	  spu->name,
+	  (spu->spu_flags & SPU_HAS_PACKER) ? "y" : "n",
+	  (spu->spu_flags & SPU_IS_TERMINAL) ? "y" : "n",
+	  ((spu->spu_flags & SPU_MAX_SERVERS_ONE) ? "one" : 
+	   (spu->spu_flags & SPU_MAX_SERVERS_UNLIMITED) ? "unlimited" : 
+	   "zero"));
 }
 
 static const char *type_string[] = {

@@ -58,12 +58,26 @@ typedef SPUFunctions *(*SPUInitFuncPtr)(int id, SPU *child,
 typedef void (*SPUSelfDispatchFuncPtr)(SPUDispatchTable *);
 typedef int (*SPUCleanupFuncPtr)(void);
 typedef int (*SPULoadFunction)(char **, char **, void *, void *, void *,
-			       SPUOptionsPtr *);
+			       SPUOptionsPtr *, int *);
+
+
+#define SPU_PACKER_MASK           0x1
+#define SPU_NO_PACKER             0x0
+#define SPU_HAS_PACKER            0x1
+#define SPU_TERMINAL_MASK         0x2
+#define SPU_NOT_TERMINAL          0x0
+#define SPU_IS_TERMINAL           0x2
+#define SPU_MAX_SERVERS_MASK      0xc
+#define SPU_MAX_SERVERS_ZERO      0x0
+#define SPU_MAX_SERVERS_ONE       0x4
+#define SPU_MAX_SERVERS_UNLIMITED 0x8
+
 
 struct _SPUSTRUCT {
 	char *name;
 	char *super_name;
 	int id;
+        int spu_flags;
 	struct _SPUSTRUCT *superSPU;
 	CRDLL *dll;
 	SPULoadFunction entry_point;

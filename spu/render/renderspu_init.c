@@ -122,7 +122,7 @@ extern SPUOptions renderSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
-	     SPUOptionsPtr *options )
+	     SPUOptionsPtr *options, int *flags )
 {
 	*name = "render";
 	*super = NULL;
@@ -130,6 +130,7 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	*self = renderSPUSelfDispatch;
 	*cleanup = renderSPUCleanup;
 	*options = renderSPUOptions;
+	*flags = (SPU_NO_PACKER|SPU_IS_TERMINAL|SPU_MAX_SERVERS_ZERO);
 	
 	return 1;
 }

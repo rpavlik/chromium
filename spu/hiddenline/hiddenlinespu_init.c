@@ -72,7 +72,7 @@ extern SPUOptions hiddenlineSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
-	     SPUOptionsPtr *options )
+	     SPUOptionsPtr *options, int *flags )
 {
 	*name = "hiddenline";
 	*super = "hlpassthrough";
@@ -80,6 +80,7 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	*self = hiddenlineSPUSelfDispatch;
 	*cleanup = hiddenlineSPUCleanup;
 	*options = hiddenlineSPUOptions;
+	*flags = (SPU_NO_PACKER|SPU_NOT_TERMINAL|SPU_MAX_SERVERS_ZERO);
 	
 	return 1;
 }

@@ -51,7 +51,7 @@ SPUOptions passthroughSPUOptions[] = {
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
-	     SPUOptionsPtr *options )
+	     SPUOptionsPtr *options, int *flags )
 {
 	*name = "passthrough";
 	*super = NULL;
@@ -59,6 +59,7 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	*self = passthroughSPUSelfDispatch;
 	*cleanup = passthroughSPUCleanup;
 	*options = passthroughSPUOptions;
+	*flags = (SPU_NO_PACKER|SPU_NOT_TERMINAL|SPU_MAX_SERVERS_ZERO);
 	
 	return 1;
 }

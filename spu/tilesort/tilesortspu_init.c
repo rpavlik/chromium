@@ -139,7 +139,7 @@ extern SPUOptions tilesortSPUOptions[];
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	     SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup,
-	     SPUOptionsPtr *options )
+	     SPUOptionsPtr *options, int *flags )
 {
 	*name = "tilesort";
 	*super = NULL;
@@ -147,6 +147,9 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 	*self = tilesortSPUSelfDispatch;
 	*cleanup = tilesortSPUCleanup;
 	*options = tilesortSPUOptions;
+	*flags = (SPU_HAS_PACKER|
+		  SPU_IS_TERMINAL|
+		  SPU_MAX_SERVERS_UNLIMITED);
 	
 	return 1;
 }
