@@ -9,6 +9,6 @@ TOP = ..
 # the dispatch table header.  I know that sucks.
 
 SUBDIRS = loader tester state_tracker
-SUBDIRS += error nop pack passthrough print render template tilesort
+SUBDIRS += error nop pack passthrough print readback render template tilesort
 
 include ${TOP}/cr.mk
