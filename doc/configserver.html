@@ -42,7 +42,9 @@ for the Chromium server.</p>
     <td width="19%" class="ConfigOption">ignore_papi</td>
     <td width="12%" class="ConfigType">Boolean</td>
     <td width="115%" class="ConfigDesc">
-       If set, make all barrier and semaphore operations into no-ops.
+       If set, the crserver passes barrier and semaphore functions through
+       to the head SPU, instead of processing them locally.  The default is
+       0 (off).
     </td>
   </tr>
 
