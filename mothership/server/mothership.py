@@ -496,7 +496,7 @@ class CR:
 
 					spuchain = "%d" % len(node.SPUs)
 					for spu in node.SPUs:
-						spuchain += " %d %sspu" % (spu.ID, spu.name)
+						spuchain += " %d %s" % (spu.ID, spu.name)
 					sock.Success( spuchain )
 					return
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of server host %s" % args )
