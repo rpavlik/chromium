@@ -34,8 +34,8 @@ void PACKSPU_APIENTRY packspu_DrawPixels( GLsizei width, GLsizei height, GLenum 
 	CRClientState *clientState = &(ctx->clientState->client);
 
 	if (crImageSize(format, type, width, height) > thread->server.conn->mtu ) {
-		crError("DrawPixels called with insufficient MTU size\n"
-			"Needed %d, but currently MTU is set at %d\n", 
+		crError("DrawPixels called with insufficient MTU size\\n"
+			"Needed %d, but currently MTU is set at %d\\n", 
 			crImageSize(format, type, width, height), 
 			thread->server.conn->mtu );
 		return;
