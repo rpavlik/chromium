@@ -294,28 +294,11 @@ which is documented separately.
 
 <h2 class="PageHeading">Advanced Features</h2>
 
-<p>The 
-<a href="autostart.html">AutoStart</a>
-command allows you to execute an arbitrary shell command in
-order to start Chromium crserver and crappfaker programs. &nbsp;
-This is especially useful for distributed configurations. &nbsp;
-Here's an example from a Linux system:&nbsp;</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="100%" class="CodeListing">
-	  server_node.AutoStart( ["/bin/rsh", "mars", "/bin/sh -c 'DISPLAY=:0.0 crserver'" ]  )<br>
-  </tr>
-</table>
-
-<p>mars is the remote host name.  Note that the arguments are specified in
-a list.
-We use /bin/sh to be sure that we use the Bourne shell so that the
-environment variables will be interpreted correctly.
-More advanced applications may require some tinkering with the quoting to get
-things working correctly.
-
+<p>
+Also see the <a href="autostart.html">autostart</a> section for information about
+automatically starting application and crserver processes.
 </p>
+
 
 </body>
 

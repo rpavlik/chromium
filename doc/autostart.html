@@ -25,7 +25,84 @@ With the auto-start / auto-config feature you can simply run an OpenGL
 program normally and have it run on Chromium.
 </p>
 
-<h2 class="PageSubHeading">Preparation</h2>
+
+
+<h2 class="PageSubHeading">Auto-Start</h2>
+
+
+
+<p>The node.AutoStart() function allows you to execute an arbitrary shell
+command in order to spawn the Chromium crserver and crappfaker programs.
+This saves you from having to manually starting the programs yourself.
+</p>
+
+<p>
+To start, let's define two strings with some environment variables and
+the name of the program to run:
+</p>
+
+<pre class="GrayCodeListing2">
+env = "LD_LIBRARY_PATH=" + crlibdir
+prog = crbindir + "/crserver"
+</pre>
+
+<p>
+Now, here's an example of how to autmatically start a crserver on a remote
+host named "mars" using rsh:
+</p>
+
+<pre class="GrayCodeListing2">
+node.AutoStart( [ "/usr/bin/rsh", "mars",
+		  "/bin/sh -c '" + env + " " + prog + "'" ] )
+</pre>
+
+<p>
+Here's an example of how to autmatically start a crserver on the local host
+just using sh:
+</p>
+
+<pre class="GrayCodeListing2">
+node.AutoStart( ["/bin/sh", "-c", env + " " + prog] )
+</pre>
+
+<p>
+To start the crappfaker instead of crserver, just change the <code>prog</code>
+assignment above.
+</p>
+
+
+<p>
+Basically, the AutoStart() function takes a list of command line arguments
+which are passed to the Python os.spawnv() function.
+</p>
+
+<p>
+We use /bin/sh (the Bourne shell) to be sure that the
+environment variables will be interpreted correctly.
+You may have to do some tinkering to make things work correctly on your
+system.  Some things to check:
+</p>
+<ul>
+<li>Manually check that rsh or sh works without having to type in a password.
+<li>Check where sh and rsh live in your filesystem and set the paths
+    accordingly.
+<li>Add extra environment vars as needed, such as CRMOTHERSHIP, if they're not
+    set in your .bashrc file.
+<li>To debug things, try typing the rsh or sh commands in a terminal window
+    and see what happens (instead of using AutoStart right away).
+</ul>
+
+
+<h2 class="PageSubHeading">Auto-Config</h2>
+
+<p>
+Auto-Config is a feature that automatically starts the mothership when
+you run an OpenGL program.  In turn, the mothership can automatically
+start all the crappfaker and crserver processes (as described above).
+The end result is that
+users can run their OpenGL programs in the normal manner and automatically
+use Chromium.
+</p>
 
 <p>
 This example assumes that Chromium is located in /usr/local/Chromium-x.y/.
