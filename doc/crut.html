@@ -124,6 +124,13 @@ This is because the <code>crutserver</code> needs to know what events it will be
 finds out from the client, and the <code>crserver</code> needs to know what window it will be rendering into, which it
 finds out from the <code>crutserver</code>.
 
+<p>
+<b>Note</b>: If you're a Chromium developer and have made symlinks pointing
+from libGL.so and libGL.so.1 to libcrfaker you'll have to remove those symlinks
+in order for CRUT to work.
+</p>
+
+
 </body>
 
 </html>
