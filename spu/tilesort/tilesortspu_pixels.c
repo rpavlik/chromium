@@ -200,6 +200,8 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 				GLint newY = (GLint)c->rasterAttrib[VERT_ATTRIB_POS][1];
 				GLsizei newWidth = zoomedWidth;
 				GLsizei newHeight = zoomedHeight;
+				if (!unpacking.rowLength)
+					 unpacking.rowLength = width;
 				if (ComputeSubImage(&newX, &newY, &newWidth, &newHeight,
 														&unpacking.skipPixels, &unpacking.skipRows,
 														&winInfo->server[i].extents[j])) {
