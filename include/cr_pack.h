@@ -20,7 +20,7 @@
 
 #ifdef WINDOWS
 #ifndef DLLDATA 
-#define DLLDATA __declspec(dllimport)
+#define DLLDATA __declspec(dllexport)
 #endif
 #else
 #define DLLDATA
