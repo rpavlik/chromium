@@ -31,7 +31,7 @@ Other internal functions/classes:
     SockWrapper:    Internal convenience class for handling sockets
 """
 
-import sys, string, types, traceback, re, threading, os, socket, select, signal
+import sys, string, types, traceback, re, threading, os, socket, select, signal, pickle, copy
 
 from crconfig import arch, crdir, crbindir, crlibdir
 
@@ -509,6 +509,7 @@ class CRApplicationNode(CRNode):
 
 class SockWrapper:
 	"Internal convenience class for handling sockets"
+	NOERROR_MORE = 100
 	NOERROR = 200
 	UNKNOWNHOST = 400
 	NOTHINGTOSAY = 401
@@ -534,7 +535,7 @@ class SockWrapper:
 		self.tcscomm_connect_wait = []
 
 	def readline( self ):
-		return self.file.readline()
+		return string.strip(self.file.readline())
 
 	def Send(self, str):
 		self.sock.send( str + "\n" )
@@ -548,6 +549,9 @@ class SockWrapper:
 
 	def Success( self, msg ):
 		self.Reply( SockWrapper.NOERROR, msg )
+
+	def MoreComing( self, msg ):
+		self.Reply( SockWrapper.NOERROR_MORE, msg )
 
 	def Failure( self, code, msg ):
 		self.Reply( code, msg )
@@ -656,13 +660,15 @@ class CR:
 	"""
 
 	startupCallbacks = []
-	
+
 	def __init__( self ):
 		self.nodes = []
 		self.all_sockets = []
 		self.wrappers = {}
 		self.allSPUConf = []
+		self.daughters = []
 		self.conn_id = 1
+		self.enable_autostart = True
 		self.config = {"MTU" : 1024 * 1024,
 			       "low_context" : 32,
 			       "high_context" : 35,
@@ -671,6 +677,8 @@ class CR:
 			       "comm_key": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				   "autostart_branches": 0,
 				   "autostart_max_nodes_per_thread": 1}
+		# This is set only on daughterships
+		self.mother = None
 
 	def AddNode( self, node ):
 		"""AddNode(node)
@@ -761,7 +769,10 @@ class CR:
 		"""Go(PORT=10000)
 		Starts the ball rolling.
 		This starts the mothership's event loop."""
-		CRInfo("This is Chromium, Version 1.5")
+		if self.mother:
+			CRInfo("This is Chromium Daughtership, Version 1.5")
+		else:
+			CRInfo("This is Chromium, Version 1.5")
 		try:
 			if PORT == -1:
 				# Port was not specified.  Get it from
@@ -830,8 +841,9 @@ class CR:
 				# possibly recursively) to handle subsets of the
 				# nodes (if autostart_branches is greater than 1, 
 				# this will be a tree of threads).
-				spawner = CRSpawner(self.nodes, self.config['autostart_branches'], self.config['autostart_max_nodes_per_thread'])
-				spawner.start()
+				if self.enable_autostart:
+					spawner = CRSpawner(self.nodes, self.config['autostart_branches'], self.config['autostart_max_nodes_per_thread'])
+					spawner.start()
 
 				# If we're supposed to "phone home" with a signal, do so
 				# with the USR1 signal.  This will happen when we're
@@ -1456,6 +1468,10 @@ class CR:
 		sock.Success( "Bye" )
 		self.ClientDisconnect( sock )
 
+	def propagate_quit(self, daughter, args):
+		daughter.Send("quit")
+		line = daughter.readline() # ignore since we're going away
+
 	def do_logperf( self, sock, args ):
 		"""do_logperf(sock, args)
 		Logs Data to a logfile."""
@@ -1494,18 +1510,60 @@ class CR:
 		assert len(result) < 8000  # see limit in getNewTiling in tilesort SPU
 		sock.Success( result )
 		return
-		
+
+	def do_daughter( self, sock, args ):
+		# This socket has identified itself as a daughter socket.  She
+		# wants the node graph in reply; and in the future, she'll receive
+		# propagated commands.
+		self.daughters.append(sock)
+
+		# Make a copy of the node graph; we'll munge the copy up
+		# before sending it along.
+		copyCR = copy.copy(self)
+
+		# The daughter has no interest in any of our connections;
+		# and the mothership has already autostarted everything
+		copyCR.all_sockets = []
+		copyCR.wrappers = {}
+		copyCR.daughters = []
+		copyCR.mother = None
+		copyCR.enable_autostart = None
+
+		# Package the copy of CR up with the other necessary globals
+		globals = { }
+		globals['cr'] = copyCR
+		globals['allSPUs'] = allSPUs
+		globals['dynamicHosts'] = dynamicHosts
+
+		# Send them to the daughtership
+		pickledGlobals = pickle.dumps(globals)
+		# The current interface only sends one line at a time
+		lines = pickledGlobals.splitlines()
+		for line in lines:
+			sock.MoreComing(line)
+		sock.Success("hi sweetheart")
+
 	def ProcessRequest( self, sock_wrapper ):
 		"""ProcessRequest(sock_wrapper)
 		Handles an incoming request, mapping it to an appropriate
 		do_* function."""
 		try:
-			line = string.strip(sock_wrapper.readline())
+			line = sock_wrapper.readline()
 			CRDebug("Processing mothership request: \"%s\"" % line)
 		except:
-			CRDebug( "Client quit without saying goodbye?  How rude!" )
-			self.ClientDisconnect( sock_wrapper )
-			return
+			# Client is gone.  Make sure it isn't a special client
+			if sock_wrapper in self.daughters:
+				CRDebug("Daughter quit without saying goodbye?  How rude!")
+				self.daughters.remove(sock_wrapper)
+				self.ClientDisconnect( sock_wrapper )
+				return
+			elif sock_wrapper == self.mother:
+				Fatal("Mother is gone; so am I.")
+			else:
+				CRDebug( "Client quit without saying goodbye?  How rude!" )
+				self.ClientDisconnect( sock_wrapper )
+				return
+
 		words = string.split( line )
 		if len(words) == 0: 
 			self.ClientError( sock_wrapper,
@@ -1513,9 +1571,136 @@ class CR:
 			#sock_wrapper.Failure( SockWrapper.NOTHINGTOSAY, "Request was empty?" )
 			return
 		command = string.lower( words[0] )
+		arguments = string.join( words[1:] )
+
 		try:
 			fn = getattr(self, 'do_%s' % command )
 		except AttributeError:
 			sock_wrapper.Failure( SockWrapper.UNKNOWNCOMMAND, "Unknown command: %s" % command )
 			return
-		fn( sock_wrapper, string.join( words[1:] ) )
+
+		# If we have any daughterships, and if we need to propagate this request
+		# to them, do so.
+		if len(self.daughters) > 0:
+			try:
+				fn = getattr(self, 'propagate_%s' % command)
+				for daughter in self.daughters:
+					fn(daughter, arguments)
+			except AttributeError:
+				# Don't have to propagate this request.
+				pass
+
+		# If we're actually a daughtership, we'll have a valid mother attribute,
+		# and we might have to propagate this command upward.
+		if self.mother:
+			try:
+				fn = getattr(self, 'tattle_%s' % command)
+				fn(self.mother, arguments)
+			except AttributeError:
+				# Don't have to propagate this one.
+				pass
+
+		# Here, we're in the normal case: finish executing the command locally.
+		# (We have to propagate before executing locally because some commands,
+		# like "quit", will stop us from continuing.)
+		fn( sock_wrapper, arguments)
+
+class CRDaughtership:
+	def __init__( self, mother = None ):
+		self.mother = None
+		self.cr = None
+
+		# Poor little lost daughtership, looking for her mother
+		if mother == None:
+			if os.environ.has_key('CRMOTHER'):
+				mother = os.environ['CRMOTHER']
+		if mother == None:
+			CRInfo("Lost daughter - using localhost on default port")
+			motherHost = 'localhost'
+			motherPort = 10000
+		else:
+			colon = string.find(mother, ':')
+			if colon >= 0:
+				motherHost = mother[0:loc-1]
+				try:
+					motherPort = int(mother[colon+1:])
+				except:
+					CRInfo("Illegal port number %s, using default" % mother[colon+1:])
+					motherPort = 10000
+			else:
+				motherHost = mother
+				motherPort = 10000
+				
+		# Try all available socket types to reach our mothership
+		motherSocket = None
+		for res in socket.getaddrinfo(motherHost, motherPort, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
+			(af, socktype, proto, canonname, sa) = res
+
+			try:
+				motherSocket = socket.socket( af, socktype, proto )
+			except:
+				CRDebug( "Couldn't create socket of family %u, trying another one" % af );
+				motherSocket = None
+				continue
+
+			try:
+				motherSocket.connect( sa )
+			except:
+				s.close()
+				CRDebug( "Couldn't connect to mothership at %s:%d" % (motherHost, motherPort));
+				motherSocket = None
+				continue
+
+		if motherSocket == None:
+			Fatal("Could not open connection to mothership at %s:%d" % (motherHost, motherPort))
+
+		self.mother = SockWrapper(motherSocket)
+		# Tell the mothership that we are a daughtership, so that we'll
+		# receive propagated commands.
+		self.mother.Send("daughter")
+
+		# The response will come in multiple lines
+		done = False
+		pickledGlobals = ""
+		while not done:
+			reply = self.mother.readline()
+			words = string.split(reply, None, 1)
+			if len(words) == 0:
+				Fatal("Mothership returned empty reply?")
+			if words[0] == "200":
+				# Done
+				done = True
+			elif words[0] == "100":
+				# More coming
+				pickledGlobals = pickledGlobals + words[1] + "\n"
+			else:
+				Fatal("Mothership doesn't recognize its daughter [%s]" % words[0])
+		
+		# By now we've got the whole pickle.  See if we can unpickle it.
+		try:
+			globals = pickle.loads(pickledGlobals)
+		except:
+			Fatal("Could not unpickle Cr globals")
+
+		# Unpack all the globals that we were given
+		try:
+			global allSPUs, dynamicHosts
+			self.cr = globals['cr']
+			allSPUs = globals['allSPUs']
+			dynamicHosts = globals['dynamicHosts']
+		except KeyError, badKey:
+			Fatal("Globals were missing the key '%s'" % badKey)
+				
+		# Modify the CR configuration so it knows it has a mother.
+		# Some commands will then automatically propagate to the
+		# mothership from us.
+		self.cr.mother = self.mother
+
+		# The mothership should already have taken care of eliminating
+		# other things we don't want to see (like the mothership's own
+		# sockets, etc.), so we should be ready to go.
+
+	def Go(self):
+		# Just tell the Chromium configuration to go.  It should be
+		# all set up and ready.
+		self.cr.Go()
