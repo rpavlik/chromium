@@ -82,7 +82,6 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 	GLint serverCtx = (GLint) -1;
 	int slot;
 
-        printf("********* %s\n", __FUNCTION__);
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&_PackMutex);
 #endif
