@@ -22,12 +22,12 @@ static GLXDrawable currentDrawable = 0;
 /*
  * Prototypes, in case they're not in glx.h or glxext.h
  */
-GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfig config, unsigned int width, unsigned int height, const int *attrib_list);
-GLXFBConfig glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis);
+GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, const int *attrib_list);
+GLXFBConfigSGIX glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis);
 XVisualInfo *glXGetVisualFromFBConfigSGIX(Display *dpy, GLXFBConfig config);
 GLXContext glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct);
 GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfig config, Pixmap pixmap);
-GLXFBConfig *glXChooseFBConfigSGIX(Display *dpy, int screen, const int *attrib_list, int *nelements);
+GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, const int *attrib_list, int *nelements);
 int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config, int attribute, int *value);
 void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
 void glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf);
@@ -751,7 +751,7 @@ GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
 	return NULL;
 }
 
-GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfig config,
+GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
 																	 unsigned int width, unsigned int height,
 																	 const int *attrib_list)
 {
@@ -793,8 +793,8 @@ int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config,
 	return 0;
 }
 
-GLXFBConfig *glXChooseFBConfigSGIX(Display *dpy, int screen,
-																	 const int *attrib_list, int *nelements)
+GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen,
+																			 const int *attrib_list, int *nelements)
 {
 	(void) dpy;
 	(void) screen;
