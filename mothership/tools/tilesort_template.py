@@ -73,14 +73,11 @@ import string, sys
 sys.path.append( "../server" )
 from mothership import *
 
-# Get program name
+# Check for program name/args on command line
 if len(sys.argv) == 1:
 	program = GLOBAL_default_app
-elif len(sys.argv) == 2:
-	program = sys.argv[1]
 else:
-	print "Usage: %s <program>" % sys.argv[0] 
-	sys.exit(-1)
+	program = string.join(sys.argv[1:])
 if program == "":
 	print "No program to run!"
 	sys.exit(-1)
@@ -100,7 +97,7 @@ cr.MTU( GLOBAL_MTU )
 tilesortSPUs = []
 clientNodes = []
 
-for i in range(NUM_CLIENTS):
+for i in range(NUM_APP_NODES):
 	tilesortspu = SPU('tilesort')
 	tilesortspu.Conf('broadcast', TILESORT_broadcast)
 	tilesortspu.Conf('optimize_bucket', TILESORT_optimize_bucket)
@@ -115,9 +112,16 @@ for i in range(NUM_CLIENTS):
 	clientnode = CRApplicationNode()
 	clientnode.AddSPU(tilesortspu)
 
-	clientnode.StartDir( crbindir )
-	clientnode.SetApplication( os.path.join(crbindir, program) )
+	# argument substitutions
+	if i == 0 and GLOBAL_zeroth_arg != "":
+		app_string = string.replace( program, '%0', GLOBAL_zeroth_arg)
+	else:
+		app_string = string.replace( program, '%0', '' )
+	app_string = string.replace( app_string, '%I', str(i) )
+	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
+	clientnode.SetApplication( app_string )
 	clientnode.StartDir( GLOBAL_default_dir )
+
 	if GLOBAL_auto_start:
 		clientnode.AutoStart( ["/bin/sh", "-c",
 				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
@@ -167,7 +171,7 @@ for row in range(TILE_ROWS):
 		servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
 
 		cr.AddNode(servernode)
-		for i in range(NUM_CLIENTS):
+		for i in range(NUM_APP_NODES):
 			tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port = 7000 + index)
 
 		if GLOBAL_auto_start:
@@ -175,7 +179,7 @@ for row in range(TILE_ROWS):
 									"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
 
 
-for i in range(NUM_CLIENTS):
+for i in range(NUM_APP_NODES):
 	cr.AddNode(clientNodes[i])
 cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
 cr.SetParam('match_window_title', GLOBAL_match_window_title)
@@ -727,6 +731,8 @@ def Read_Tilesort(mothership, fileHandle):
 	mothership.AddNode(clientNode)
 	mothership.AddNode(serverNode)
 
+	numClients = 1
+
 	while true:
 		l = fileHandle.readline()
 		if not l:
@@ -760,7 +766,7 @@ def Read_Tilesort(mothership, fileHandle):
 			v = re.search("\(.+\)$", l)
 			pattern = eval(l[v.start() : v.end()])
 			serverNode.SetHostNamePattern(pattern)
-		elif re.match("^NUM_CLIENTS = [0-9]+$", l):
+		elif re.match("^NUM_APP_NODES = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
 			numClients = int(l[v.start() : v.end()])
 		elif re.match("^TILESORT_", l):
@@ -812,7 +818,7 @@ def Write_Tilesort(mothership, file):
 	file.write("BOTTOM_TO_TOP = %d\n" % tilesort.BottomToTop)
 	file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
 	file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
-	file.write("NUM_CLIENTS = %d\n" % clientNode.GetCount())
+	file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
 
 	# write tilesort SPU options
 	tilesortSPU = FindTilesortSPU(mothership)
