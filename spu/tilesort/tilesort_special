@@ -8,6 +8,8 @@ CallList
 CallLists
 ListBase
 DeleteLists
+DeleteTextures
+DeleteProgramsARB
 GenLists
 Accum
 Begin
