@@ -122,12 +122,17 @@ static void set_lut8( RenderSPU *render_spu, const char *response )
 
 void set_master_url ( RenderSPU *render_spu, char *response )
 {
-	render_spu->swap_master_url = crStrdup( response );
+	if (response[0])
+		render_spu->swap_master_url = crStrdup( response );
+	else
+		render_spu->swap_master_url = NULL;
 }
+
 void set_is_master ( RenderSPU *render_spu, char *response )
 {
 	render_spu->is_swap_master = crStrToInt( response );
 }
+
 void set_num_clients ( RenderSPU *render_spu, char *response )
 {
 	render_spu->num_swap_clients = crStrToInt( response );
