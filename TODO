@@ -18,6 +18,8 @@ Before July Alpha release:
 		Code organization
 
 Before October release:
+	Implement LSB and SWAP_BYTES for pixel data (un)packing.
+		Lazy lazy lazy who uses this stuff anyhow?
 	ReadPixels
 		let's get it right this time, OK?
 	PushAttrib/PopAttrib
