@@ -69,6 +69,7 @@ SPU index
 <li><a href="#replicate">Replicate</a>
 <li><a href="#simplequery">Simplequery</a>
 <li><a href="#zpix">ZPix</a>
+<li><a href="#dist_texture">Distributed Texture</a>
 <li><a href="#nop">Nop</a>
 </ul>
 
@@ -1166,6 +1167,60 @@ and debugging.
         </td>
   </tr>
 </table>
+
+
+<a name="dist_texture">
+<h2 class="PageSubHeading">Distributed Texture</h2>
+<p>
+The dist_texture SPU supports server-side loading of texture images.
+The goal is to avoid the cost of transmitting texture image data over
+the "wire" with the Pack and Tilesort SPUs.
+</p>
+
+<p>
+The dist_texture SPU is typically placed before the Render SPUs on the
+crservers in tilesort configurations.
+</p>
+
+<p>
+The dist_texture SPU implements a new version of the glTexImage2D function.
+Specifically, the <code>type</code> parameter will accept two new values:
+GL_TRUE and GL_FALSE.
+</p>
+<p>
+If type==GL_TRUE, then the dist_texture SPU will operate in <b>write mode</b>.
+The glTexImage2D <code>pixels</code> parameter will point to
+pixel data which is prefixed by a NULL-terminated filename (i.e. the
+pointer points to a block of data consisting of a filename, a zero byte
+and then tightly-packed GL_RGB/GL_UNSIGNED byte image data.
+The dist_texture SPU will write the image data to a PPM image file using
+the given name.
+</p>
+
+<p>
+If type==GL_FALSE, then the dist_texture SPU will operate in <b>read mode</b>.
+The glTexImage2D <code>pixels</code> parameter will point to a NULL-terminated
+filename.
+The dist_texture SPU will read that named PPM image file and give it to
+OpenGL as the texture image.
+</p>
+
+<p>
+The idea is that a program can use write-mode to distribute texture image
+data on a rendering cluster the first time the program is run.
+Then, the second and subsequent runs can use read-mode to quickly read
+the texture data from the render servers, instead of passing it all
+through the Chromium tilesort SPU.
+</p>
+
+<p>
+See the <a href="http://brighton.ncsa.uiuc.edu/~prajlich/wall/ppb.html">
+NCSA Pixel Blaster</a> program for an example of how this features is used.
+</p>
+
+<p>
+The dist_texture SPU has no configuration options.
+</p>
 
 
 <a name="nop">
