@@ -54,7 +54,8 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 			int i = 0;
 
 			/* Build the attribute list */
-			if (visBits & CR_RGB_BIT) {
+			if (visBits & CR_RGB_BIT)
+			{
 				attribList[i++] = GLX_RGBA;
 				attribList[i++] = GLX_RED_SIZE;
 				attribList[i++] = 1;
@@ -71,10 +72,14 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 			}
 
 			if (visBits & CR_DOUBLE_BIT)
+			{
 				attribList[i++] = GLX_DOUBLEBUFFER;
+			}
 
 			if (visBits & CR_STEREO_BIT)
+			{
 				attribList[i++] = GLX_STEREO;
+			}
 
 			if (visBits & CR_DEPTH_BIT)
 			{
@@ -123,7 +128,7 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 				 * See if we have have GLX_EXT_visual_info so we
 				 * can grab a Direct Color visual
 				 */
-#ifdef GLX_EXT_visual_info   
+#ifdef GLX_EXT_visual_info
 				if (crStrstr(ws->glXQueryExtensionsString(dpy, screen),
 										"GLX_EXT_visual_info"))
 				{
@@ -159,36 +164,42 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 
 			vis = XGetVisualInfo(dpy, templateFlags, &templateVis, &count);
 			/* find first visual that's good enough */
-			for (i = 0; i < count; i++) {
+			for (i = 0; i < count; i++)
+			{
 				int val;
 
 				/* Need exact match on RGB, DOUBLEBUFFER, STEREO, LEVEL, MULTISAMPLE */
 				ws->glXGetConfig(dpy, vis + i, GLX_RGBA, &val);
 				if (((visBits & CR_RGB_BIT) && !val) ||
-						(((visBits & CR_RGB_BIT) == 0) && val)) {
+						(((visBits & CR_RGB_BIT) == 0) && val))
+				{
 					continue;
 				}
 
 				ws->glXGetConfig(dpy, vis + i, GLX_DOUBLEBUFFER, &val);
 				if (((visBits & CR_DOUBLE_BIT) && !val) ||
-						(((visBits & CR_DOUBLE_BIT) == 0) && val)) {
+						(((visBits & CR_DOUBLE_BIT) == 0) && val))
+				{
 					continue;
 				}
 
 				ws->glXGetConfig(dpy, vis + i, GLX_STEREO, &val);
 				if (((visBits & CR_STEREO_BIT) && !val) ||
-						(((visBits & CR_STEREO_BIT) == 0) && val)) {
+						(((visBits & CR_STEREO_BIT) == 0) && val))
+				{
 					continue;
 				}
 
 				ws->glXGetConfig(dpy, vis + i, GLX_LEVEL, &val);
 				if (((visBits & CR_OVERLAY_BIT) && !val) ||
-						(((visBits & CR_OVERLAY_BIT) == 0) && val)) {
+						(((visBits & CR_OVERLAY_BIT) == 0) && val))
+				{
 					continue;
 				}
 
 				ws->glXGetConfig(dpy, vis + i, GLX_SAMPLE_BUFFERS_SGIS, &val);
-				if (visBits & CR_MULTISAMPLE_BIT) {
+				if (visBits & CR_MULTISAMPLE_BIT)
+				{
 					if (!val)
 						continue;
 					ws->glXGetConfig(dpy, vis + i, GLX_SAMPLES_SGIS, &val);
@@ -202,29 +213,34 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 				}
 
 				/* Need good enough for ALPHA, DEPTH, STENCIL, ACCUM */
-				if (visBits & CR_ALPHA_BIT) {
+				if (visBits & CR_ALPHA_BIT)
+				{
 					ws->glXGetConfig(dpy, vis + i, GLX_ALPHA_SIZE, &val);
 					if (!val)
 						continue;
 				}
 
-				if (visBits & CR_DEPTH_BIT) {
+				if (visBits & CR_DEPTH_BIT)
+				{
 					ws->glXGetConfig(dpy, vis + i, GLX_DEPTH_SIZE, &val);
 					if (!val)
 						continue;
 				}
 
-				if (visBits & CR_STENCIL_BIT) {
+				if (visBits & CR_STENCIL_BIT)
+				{
 					ws->glXGetConfig(dpy, vis + i, GLX_STENCIL_SIZE, &val);
 					if (!val)
 						continue;
 				}
 
-				if (visBits & CR_ACCUM_BIT) {
+				if (visBits & CR_ACCUM_BIT)
+				{
 					ws->glXGetConfig(dpy, vis + i, GLX_ACCUM_RED_SIZE, &val);
 					if (!val)
 						continue;
-					if (visBits & CR_ALPHA_BIT) {
+					if (visBits & CR_ALPHA_BIT)
+					{
 						ws->glXGetConfig(dpy, vis + i, GLX_ACCUM_ALPHA_SIZE, &val);
 						if (!val)
 							continue;
@@ -295,7 +311,6 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 		}
 
 		return best;
-
 	}
 }
 
