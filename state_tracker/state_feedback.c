@@ -189,7 +189,6 @@ clip_line(const CRVertex *v0in, const CRVertex *v1in,
    if (OUTSIDE(v0)) {                                                   \
       if (OUTSIDE(v1)) {                                                \
          /* both verts are outside ==> return 0 */                      \
-         CRASSERT(0);  /* should never happen */                          \
          return 0;                                                      \
       }                                                                 \
       else {                                                            \
