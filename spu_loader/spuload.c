@@ -136,3 +136,46 @@ SPU * crSPULoadChain( int count, int *ids, char **names, char *dir, void *server
 	}
 	return child_spu;
 }
+
+
+#if 00
+/* XXXX experimental code - not used at this time */
+/**
+ * Like crSPUChangeInterface(), but don't loop over all functions in
+ * the table to search for 'old_func'.
+ */
+void
+crSPUChangeFunction(SPUDispatchTable *table, unsigned int funcOffset,
+                    void *newFunc)
+{
+	SPUGenericFunction *f = (SPUGenericFunction *) table + funcOffset;
+	struct _copy_list_node *temp;
+
+	CRASSERT(funcOffset < sizeof(*table) / sizeof(SPUGenericFunction));
+
+	printf("%s\n", __FUNCTION__);
+	if (table->mark == 1)
+		return;
+	table->mark = 1;
+	*f = newFunc;
+
+	/* update all copies of this table */
+#if 1
+	for (temp = table->copyList ; temp ; temp = temp->next)
+	{
+		crSPUChangeFunction( temp->copy, funcOffset, newFunc );
+	}
+#endif
+	if (table->copy_of != NULL)
+	{
+		crSPUChangeFunction( table->copy_of, funcOffset, newFunc );
+	}
+#if 0
+	for (temp = table->copyList ; temp ; temp = temp->next)
+	{
+		crSPUChangeFunction( temp->copy, funcOffset, newFunc );
+	}
+#endif
+	table->mark = 0;
+}
+#endif

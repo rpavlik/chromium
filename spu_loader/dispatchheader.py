@@ -32,14 +32,24 @@ print """
 keys = apiutil.GetDispatchedFunctions("../glapi_parser/APIspec.txt")
 
 
+print '/* Offsets of each function within the dispatch table */'
+offset = 0
+for func_name in keys:
+	print '#define DISPATCH_OFFSET_%s %d' % (func_name, offset)
+	offset += 1
+print ''
+
+print '/* Function typedefs */'
 for func_name in keys:
 	return_type = apiutil.ReturnType(func_name)
 	params = apiutil.Parameters(func_name)
 
 	print 'typedef %s (SPU_APIENTRY *%sFunc_t)(%s);' % (return_type, func_name, apiutil.MakePrototypeString(params))
+print ''
 
 print 'struct _copy_list_node;'
-
+print ''
+print '/* The SPU dispatch table */'
 print 'typedef struct _spu_dispatch_table {'
 
 for func_name in keys:
