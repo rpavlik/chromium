@@ -421,48 +421,44 @@ static void CompositeNode( WindowInfo *window,
 	/* figure out our portion for each stage */
 	for(i=0; i<binaryswap_spu.stages; i++)
 	{
+		BinarySwapMsg *msg = (BinarySwapMsg *) window->msgBuffer;
+
 		/* set up message header */
-		((BinarySwapMsg*) window->msgBuffer)->start_x        = window->read_x[i];
-		((BinarySwapMsg*) window->msgBuffer)->start_y        = window->read_y[i];
-		((BinarySwapMsg*) window->msgBuffer)->width          = window->read_width[i];
-		((BinarySwapMsg*) window->msgBuffer)->height         = window->read_height[i];
-		((BinarySwapMsg*) window->msgBuffer)->depth          = binaryswap_spu.depth;
-		
+		msg->start_x        = window->read_x[i];
+		msg->start_y        = window->read_y[i];
+		msg->width          = window->read_width[i];
+		msg->height         = window->read_height[i];
+		msg->depth          = binaryswap_spu.depth;
+
 		if(startx < window->read_x[i])
-			((BinarySwapMsg*) window->msgBuffer)->clipped_x = window->read_x[i];
+			msg->clipped_x = window->read_x[i];
 		else
-			((BinarySwapMsg*) window->msgBuffer)->clipped_x = startx;
+			msg->clipped_x = startx;
 		
 		if(starty < window->read_y[i])
-			((BinarySwapMsg*) window->msgBuffer)->clipped_y = window->read_y[i];
+			msg->clipped_y = window->read_y[i];
 		else
-			((BinarySwapMsg*) window->msgBuffer)->clipped_y = starty;
+			msg->clipped_y = starty;
 		
-		if(endx > (window->read_x[i]+window->read_width[i]))
-			((BinarySwapMsg*) window->msgBuffer)->clipped_width  = 
-				(window->read_x[i]+window->read_width[i]) - 
-				((BinarySwapMsg*) window->msgBuffer)->clipped_x;
+		if(endx > (window->read_x[i] + window->read_width[i]))
+			msg->clipped_width = (window->read_x[i] + window->read_width[i]) - msg->clipped_x;
 		else
-			((BinarySwapMsg*) window->msgBuffer)->clipped_width  = 
-				endx - ((BinarySwapMsg*) window->msgBuffer)->clipped_x;
+			msg->clipped_width = endx - msg->clipped_x;
 		
-		if(endy > (window->read_y[i]+window->read_height[i]))
-			((BinarySwapMsg*) window->msgBuffer)->clipped_height = 
-				(window->read_y[i]+window->read_height[i]) - 
-				((BinarySwapMsg*) window->msgBuffer)->clipped_y;
+		if(endy > (window->read_y[i] + window->read_height[i]))
+			msg->clipped_height =	(window->read_y[i] + window->read_height[i]) - msg->clipped_y;
 		else
-			((BinarySwapMsg*) window->msgBuffer)->clipped_height = 
-				endy - ((BinarySwapMsg*) window->msgBuffer)->clipped_y;
+			msg->clipped_height = endy - msg->clipped_y;
 		
-		if(((BinarySwapMsg*) window->msgBuffer)->clipped_width < 0)
-			((BinarySwapMsg*) window->msgBuffer)->clipped_width = 0; 
-		if(((BinarySwapMsg*) window->msgBuffer)->clipped_height < 0)
-			((BinarySwapMsg*) window->msgBuffer)->clipped_height = 0;
+		if(msg->clipped_width < 0)
+			msg->clipped_width = 0; 
+		if(msg->clipped_height < 0)
+			msg->clipped_height = 0;
 		
-		read_start_x = ((BinarySwapMsg*) window->msgBuffer)->clipped_x;
-		read_start_y = ((BinarySwapMsg*) window->msgBuffer)->clipped_y;
-		read_width   = ((BinarySwapMsg*) window->msgBuffer)->clipped_width;
-		read_height  = ((BinarySwapMsg*) window->msgBuffer)->clipped_height;
+		read_start_x = msg->clipped_x;
+		read_start_y = msg->clipped_y;
+		read_width   = msg->clipped_width;
+		read_height  = msg->clipped_height;
 		
 		/* read our portion for this pass */
 		/* figure out which mode to use, depth or alpha */
