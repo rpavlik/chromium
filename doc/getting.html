@@ -76,7 +76,6 @@ before building.&nbsp; There are instructions in that file.</p>
     there's no <code> LD_LIBRARY_PATH</code> silliness.</li>
   <li>IRIX:&nbsp; GNU make is required.  Build Chromium by typing
     <code>gmake</code> instead of <code>make</code>.
-
   <li>AIX:&nbsp;
     Shared libraries are somewhat different on this platform.  For Cr clients
     and servers to run, a dlopen-able system GL is needed.  At present, do this
@@ -88,7 +87,8 @@ before building.&nbsp; There are instructions in that file.</p>
     ar archives) and .so's.  So to run clients without the app_faker, prepend
     LIBPATH with a dir that has a link libGL.a ->  lib/AIX/libcrfaker.a . As
     with other platforms, you also need to set the CR_APPLICATION_ID_NUMBER  .
-
+  <li>Darwin:&nbsp;
+    Support for this operating system is not complete.
 
 </ul>
 
