@@ -75,6 +75,12 @@ static void set_single_clear( void *spu, const char *response )
 	sscanf( response, "%d", &(hiddenline_spu.single_clear) );
 }
 
+static void set_silhouette_mode( void *spu, const char *response )
+{
+	(void) spu;
+	sscanf( response, "%d", &(hiddenline_spu.silhouette_mode) );
+}
+
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions hiddenlineSPUOptions[] = {
@@ -93,6 +99,9 @@ SPUOptions hiddenlineSPUOptions[] = {
 
 	{ "line_width", CR_FLOAT, 1, "3", "0", "20",
 	  "Line Width", (SPUOptionCB)set_line_width },
+
+	{ "silhouette_mode", CR_BOOL, 1, "0", NULL, NULL,
+	  "Silhouette mode", (SPUOptionCB)set_silhouette_mode },
 
 	{ "single_clear", CR_BOOL, 1, "1", NULL, NULL,
 	  "Single glClear per Frame", (SPUOptionCB)set_single_clear },

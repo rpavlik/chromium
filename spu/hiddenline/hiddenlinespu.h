@@ -60,6 +60,7 @@ typedef struct {
 	float line_r, line_g, line_b;
 	float line_width;
 	int single_clear;
+	int silhouette_mode;
 
 	CRHashTable *contextTable;
 #ifndef CHROMIUM_THREADSAFE

@@ -110,31 +110,31 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 		hiddenline_spu.super.Disable( GL_LIGHTING );
 		hiddenline_spu.super.Disable( GL_BLEND );
 		hiddenline_spu.super.Enable( GL_DEPTH_TEST );
-		hiddenline_spu.super.Enable( GL_FOG );
-/* 		hiddenline_spu.super.Enable( GL_CULL_FACE ); */
+		if (hiddenline_spu.silhouette_mode)
+				hiddenline_spu.super.Enable( GL_FOG );
 		hiddenline_spu.super.Enable( GL_POLYGON_OFFSET_FILL );
 
 		/* Play back the frame just to the depth buffer, with polygon
 		 * offsets.  Note that this means we need to ignore calls to glColor,
-		 * disable texturing, disable lighting, things like that. */
-
-		hiddenline_spu.super.PolygonOffset( -2.5f, 0.000001f );
-/* 		hiddenline_spu.super.CullFace( GL_FRONT ); */
+		 * disable texturing, disable lighting, things like that.
+		 */
+		if (hiddenline_spu.silhouette_mode)
+				hiddenline_spu.super.PolygonOffset( -2.5f, 0.000001f );
+		else
+				hiddenline_spu.super.PolygonOffset( +1.5f, 0.000001f );
 		hiddenline_spu.super.Fogi( GL_FOG_MODE, GL_LINEAR );
 		hiddenline_spu.super.Fogf( GL_FOG_START, 1.0 );
 		hiddenline_spu.super.Fogf( GL_FOG_END, 1800.0 );
 		hiddenline_spu.super.Fogfv( GL_FOG_COLOR, hiddenline_spu.fog_color );
 		hiddenline_spu.super.Color3f( hiddenline_spu.poly_r, hiddenline_spu.poly_g, hiddenline_spu.poly_b );
 
-		/* Now, Play it back just to the depth buffer */
 		hiddenPlayback( &(hacked_child_dispatch) );
 
 		/* Play back the frame with polygons set to draw in wireframe 
 		 * mode.  This time there's nothing special to do, just let the thing
-		 * run its course. */
-
+		 * run its course.
+		 */
 		hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-/* 		hiddenline_spu.super.CullFace( GL_BACK ); */
 		hiddenline_spu.super.LineWidth( hiddenline_spu.line_width );
 		hiddenline_spu.super.Color3f( hiddenline_spu.line_r, hiddenline_spu.line_g, hiddenline_spu.line_b );
 		hiddenPlayback( &(hacked_child_dispatch) );
