@@ -411,7 +411,7 @@ void tilesortspuPinchRestoreTriangle( void )
 
 	if (c->inBeginEnd) 
 	{
-		crDebug( "Restoring something..." );
+		//crDebug( "Restoring something..." );
 		crPackBegin(c->mode);
 
 		/* If the winding flag is set, it means
@@ -429,7 +429,7 @@ void tilesortspuPinchRestoreTriangle( void )
 				 i < tilesort_spu.pinchState.numRestore; 
 				 i++) 
 		{
-			crDebug( "issuing a vertex..." );
+			//crDebug( "issuing a vertex..." );
 			__pinchIssueVertex(tilesort_spu.pinchState.vtx + i);
 		}
 

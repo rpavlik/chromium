@@ -372,6 +372,7 @@ static void crNetRecvFlowControl( CRConnection *conn,
 {
 	CRASSERT( len == sizeof(CRMessageFlowControl) );
 
+	//crWarning ("Getting %d credits!", msg->credits);
 	conn->send_credits += msg->credits;
 
 	conn->InstantReclaim( conn, (CRMessage *) msg );

@@ -1125,7 +1125,7 @@ void crGmInstantReclaim( CRConnection *conn, CRMessage *msg )
 	switch ( gm_buffer->kind )
 	{
 		case CRGmMemoryPinned:
-			cr_gm_provide_receive_buffer( gm_buffer );
+			cr_gm_provide_receive_buffer( msg );
 			break;
 
 		case CRGmMemoryUnpinned:
