@@ -110,6 +110,17 @@ class SPUDialog(wxDialog):
 					rowSizer.Add(ctrl, option=1, flag=wxEXPAND)
 					innerSizer.Add(rowSizer, flag=wxALL|wxEXPAND, border=4)
 					controls.append(ctrl)
+				elif opt.Type == "ENUM":
+					assert opt.Count == 1
+					rowSizer = wxBoxSizer(wxHORIZONTAL)
+					labString = opt.Description + ": "
+					label = wxStaticText(parent=self, id=-1, label=labString)
+					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
+					ctrl = wxChoice(parent=self, id=-1, choices = opt.Mins)
+					ctrl.SetStringSelection(opt.Value[0])
+					rowSizer.Add(ctrl, flag=wxALIGN_CENTRE_VERTICAL)
+					controls.append(ctrl)
+					innerSizer.Add(rowSizer, flag=wxALL|wxEXPAND, border=4)
 				else:
 					assert opt.Type == "LABEL"
 					# just label text
@@ -186,6 +197,9 @@ class SPUDialog(wxDialog):
 				for i in range(count):
 					ival = int(newValue[i])
 					ctrls[i].SetValue(ival)
+			elif isinstance(ctrls[0], wxChoice):
+				assert len(ctrls) == 1  # ENUM limitation, for now
+				ctrls[0].SetStringSelection( newValue[0] )
 			else:
 				# must be (a) text or float box(es)
 				assert isinstance(ctrls[0], wxTextCtrl)
@@ -202,10 +216,14 @@ class SPUDialog(wxDialog):
 			result = []
 			count = len(ctrls)
 			for i in range(count):
-				s = ctrls[i].GetValue()
-				if isinstance(ctrls[i], wxTextCtrl):
+				if isinstance(ctrls[i], wxChoice):
+					result.append(ctrls[i].GetStringSelection())
+				elif isinstance(ctrls[i], wxTextCtrl):
+					s = ctrls[i].GetValue()
 					s = _UnBackslashChars(s)
-				result.append(s)
+					result.append(s)
+				else:
+					result.append(ctrls[i].GetValue())
 			return result
 		else:
 			return [] # empty list
