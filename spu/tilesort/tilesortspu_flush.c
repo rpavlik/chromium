@@ -178,7 +178,6 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 	crPackFree( buf );
 }
 
-
 static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 {
 	
@@ -195,8 +194,6 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 	GLfloat ymax = bucket_info->objectMax.y;
 	GLfloat zmin = bucket_info->objectMin.z;
 	GLfloat zmax = bucket_info->objectMax.z;
-
-	return;
 
 	if (!init) 
 	{
@@ -317,7 +314,6 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 		crPackPopAttrib();
 	}
 }
-
 
 static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 {
