@@ -252,6 +252,7 @@ extensions_num_get_values = {
 	'GL_TEXTURE_BINDING_CUBE_MAP_ARB': (1, 'CR_ARB_texture_cube_map'),
 	'GL_TEXTURE_CUBE_MAP_ARB': (1, 'CR_ARB_texture_cube_map'),
 	'GL_ACTIVE_TEXTURE_ARB': (1, 'CR_ARB_multitexture'),
+	'GL_CLIENT_ACTIVE_TEXTURE_ARB': (1, 'CR_ARB_multitexture'),
 	'GL_MAX_TEXTURE_UNITS_ARB': (1, 'CR_ARB_multitexture'),
 	'GL_NUM_GENERAL_COMBINERS_NV': (1, 'CR_NV_register_combiners'),
 	'GL_MAX_GENERAL_COMBINERS_NV': (1, 'CR_NV_register_combiners'),
