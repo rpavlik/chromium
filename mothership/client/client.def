@@ -25,3 +25,4 @@ crMothershipGetParam
 crMothershipGetMTU
 crMothershipGetTiles
 crMothershipGetServerTiles
+crMothershipRequestTileLayout
