@@ -91,7 +91,7 @@ typedef struct {
         int verbose;     /* 0 = quiet; 1 = chatty */
         int debug;       /* 0 = normal; 1 = debug */
         int no_diff;     /* 0 = difference; 1 = suppress  */ 
-        int ztype;       /* compression type - See ZStateType enum */
+        ZTYPE ztype;       /* compression type - See ZStateType enum */
         int zparm;       /* parameter for ztype */
  
         /* instance data */
