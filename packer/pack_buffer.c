@@ -116,18 +116,21 @@ int crPackCanHoldOpcode( int num_opcode, int num_data )
 		&& pc->buffer.data_current + num_data <= pc->buffer.data_end );
 }
 
-int crPackCanHoldBuffer( CRPackBuffer *src )
+int crPackCanHoldBuffer( const CRPackBuffer *src )
 {
 	int num_data = src->data_current - src->data_start;
 	int num_opcode = src->opcode_start - src->opcode_current;
 	return crPackCanHoldOpcode( num_opcode, num_data );
 }
 
-void crPackAppendBuffer( CRPackBuffer *src )
+void crPackAppendBuffer( const CRPackBuffer *src )
 {
 	GET_PACKER_CONTEXT(pc);
-	int num_data = src->data_current - src->data_start;
-	int num_opcode = src->opcode_start - src->opcode_current;
+	int num_data = src->data_current - src->data_start; /* in bytes */
+	int num_opcode = src->opcode_start - src->opcode_current; /* in bytes */
+
+	CRASSERT(num_data >= 0);
+	CRASSERT(num_opcode >= 0);
 
 	if (!crPackCanHoldBuffer(src))
 	{
@@ -140,9 +143,11 @@ void crPackAppendBuffer( CRPackBuffer *src )
 			crError( "crPackAppendBuffer: overflowed the destination!" );
 	}
 
+	/* Copy the buffer data/operands which are at the head of the buffer */
 	crMemcpy( pc->buffer.data_current, src->data_start, num_data );
 	pc->buffer.data_current += num_data;
 
+	/* Copy the buffer opcodes which are at the tail of the buffer */
 	CRASSERT( pc->buffer.opcode_current - num_opcode >= pc->buffer.opcode_end );
 	crMemcpy( pc->buffer.opcode_current + 1 - num_opcode, src->opcode_current + 1,
 			num_opcode );
@@ -152,7 +157,7 @@ void crPackAppendBuffer( CRPackBuffer *src )
 }
 
 
-void crPackAppendBoundedBuffer( CRPackBuffer *src, CRrecti *bounds )
+void crPackAppendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 {
 	GET_PACKER_CONTEXT(pc);
 	int length = src->data_current - src->opcode_current - 1;
