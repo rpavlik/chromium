@@ -146,30 +146,60 @@ contributed many new features.</p>
 
 <p><EM>Upcoming</EM> 1.0 Release:  (month) (day), 2002</p>
 
+<p>New Features</p>
 <ul>
   <li>Graphical configuration tool
+  <li>New SPUs:
+  <ul>
+    <li>Feedback (OpenGL feedback & selection support)
+    <li>Perf (performance SPU) for collecting performance statistics
+    <li>Wet
+    <li>Motion blur
+  </ul>
+  <li>New configuration options and features:
+  <ul>
+    <li>Render SPU: render_to_app_window, resizable, display_string, lut8
+    <li>Tilesort SPU: bucket_mode, dynamic tile configuration (tile layout
+        changable at runtime), warped tile support
+    <li>Readback SPU: tile/image reassembly
+    <li>Saveframe SPU: many new options
+    <li>New network (server) node options: only_swap_once, spu_dir
+    <li>New application node option: track_window_size, application, start_dir,
+        client_dll, spu_dir
+  </ul>
+  <li>SunOS support (Jorge Luis Williams)
+  <li>OpenGL 1.2 support (but not ARB_imaging)
+  <li>New OpenGL extensions:
+  <ul>
+    <li>GL_EXT_fog_coord support
+    <li>GL_ARB_point_parameters
+    <li>GL_NV_vertex_program  (on app nodes only)
+    <li>GL_NV_fence  (on app nodes only)
+  </ul>
+  <li>IPv6 support
+  <li>Quadrics network support
+  <li>OpenGL limits computed per context, not just once during start-up
+  <li>Header file clean-up (client apps should include chromium.h)
+  <li>Namespace cleanup (ex: BoundsInfo() is now BoundsInfoCR(), similarly for
+      semaphore and barrier functions)
+  <li>Thread safety clean-ups and fixes
+  <li>Improved OpenGL error handling
+  <li>city demo
+</ul>
+
+<p>Bug Fixes</p>
+<ul>
   <li>Fixed GM memory leak (Michael Brodeur)
   <li>Cygwin 5.1 patches (Sebastien Barre)
-  <li>New server/network node parameter: only_swap_once
-  <li>New render SPU options: render_to_app_window, resizable
-  <li>New performance SPU (perf) for collecting performance statistics
-  <li>feedback & selection support (feedback SPU)
-  <li>SunOS support (Jorge Luis Williams)
-  <li>GL_EXT_fog_coord support
-  <li>OpenGL extensions supported on app nodes only:
-  <ul>
-    <li>GL_NV_vertex_program
-    <li>GL_NV_fence
-  </ul>
-  <li>3D texture support
-  <li>OpenGL 1.2 support (but not ARB_imaging)
   <li>Fixed sort-last rendering synchronization problems
-  <li>Render SPU render_to_app_window option
-  <li>Tile reassembly support in Readback SPU (see reassembly.conf)
-  <li>Dynamic tilesort configuration
   <li>Fixed glRasterPos/glBitmap/display list bug in tilesort SPU
   <li>Working binaryswap SPU
-  <li>Lots of bug fixes
+  <li>Fixed tilesort bounding box / state broadcast bug
+  <li>Fixed overlapping tile bug in tilesort SPU / server
+  <li>glAreTexturesResident() fixed
+  <li>glGenTextures() fixed
+  <li>Fixed state tracker link bug (use static state tracker lib on Unix)
+  <li>Lots of other bug fixes
 </ul>
 
 
