@@ -8,6 +8,7 @@
 
 """Functions for reading and writing Chromium config files."""
 
+import re
 import crutils
 
 
@@ -62,11 +63,6 @@ def WriteSPUOptions(spu, prefix, file):
 		__WriteOption(prefix + "_" + name, type, values, file)
 
 
-def ReadConfig(mothership, file):
-	"""Read a mothership config from file handle."""
-	pass
-
-
 
 def WriteConfig(mothership, file):
 	"""Write the mothership config to file handle."""
@@ -112,4 +108,37 @@ def WriteConfig(mothership, file):
 
 	# tail of file
 	f.write(__ConfigFileTail)
+
+
+#----------------------------------------------------------------------
+
+def ParseOption(s, prefix):
+	"""Parsing helper function"""
+	# s will be a string like:  RENDER_system_gl_path = "/usr/lib"
+	# We'll return a (name, value) tuple like ("system_gl_path", ["/usr/lib"])
+	# The name is a string and the value is a list.
+
+	# extract the option name and value
+	# parentheses in the regexp define groups
+	# \"? is an optional double-quote character
+	# [^\"] is any character but double-quote
+	pattern = "^" + prefix + "_([a-zA-Z0-9\_]+) = (\"?[^\"]*\"?)"
+	v = re.search(pattern, s)
+	if v:
+		name = v.group(1)
+		value = v.group(2)
+		if value[0] != '[':
+			value = '[' + value + ']'
+		values = eval(value)
+		return (name, values)
+	else:
+		print "PROBLEM: " + pattern
+		print "LINE: " + s
+		return 0
+
+
+def ReadConfig(mothership, file):
+	"""Read a mothership config from file handle."""
+	pass
+
 
