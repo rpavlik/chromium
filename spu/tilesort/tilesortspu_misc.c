@@ -333,7 +333,7 @@ void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLu
 
 			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
 			
-			tilesortspuFlush( (void *) thread );
+			tilesortspuSendServerBuffer( i );
 
 			while (writeback)
 				crNetRecv();
