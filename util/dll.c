@@ -33,13 +33,14 @@ CRDLL *crDLLOpen( const char *dllname, int resolveGlobal )
 	dll->name = crStrdup( dllname );
 
 #if defined(WINDOWS)
+	(void) resolveGlobal;
 	dll->hinstLib = LoadLibrary( dllname );
 	dll_err = NULL;
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined (DARWIN) || defined(SunOS) || defined(OSF1)
-        if (resolveGlobal)
-           dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL );
-        else
-           dll->hinstLib = dlopen( dllname, RTLD_LAZY );
+	if (resolveGlobal)
+		dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL );
+	else
+		dll->hinstLib = dlopen( dllname, RTLD_LAZY );
 	dll_err = (char*) dlerror();
 #else
 #error DSO
