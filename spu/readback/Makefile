@@ -22,6 +22,11 @@ LIBRARIES = spuload crutil crmothership crstate
 endif
 
 
+ifdef BINUTIL_LINK_HACK
+TRACKS_STATE = 1
+LIBRARIES -= crstate
+endif
+
 SLOP = $(PRECOMP)
 
 LIB_DEFS += readbackspu.def

@@ -18,6 +18,13 @@ else
 LIBRARIES = crutil spuload crstate
 endif
 
+
+ifdef BINUTIL_LINK_HACK
+TRACKS_STATE = 1
+LIBRARIES -= crstate
+endif
+
+
 PRECOMP = nopspu.c
 SLOP = $(PRECOMP)
 

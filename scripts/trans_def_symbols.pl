@@ -9,25 +9,43 @@
 my $numArgs	= @ARGV;
 
 if ($numArgs != 4) {
-	die ("usage: trans_def_symbols <prefix> <lib> <input_dir> <output_dir>\n");
+	die ("$0 Error:\n\tUsage: trans_def_symbols <prefix> <lib> <input_dir> <output_dir>\n");
 }
 
-my $prefix	= $ARGV[0] . "_";
-my $lib		= $ARGV[1];
-my $inputDir	= $ARGV[2];
-my $outputDir	= $ARGV[3];
+my $prefix    = $ARGV[0] . "_";
+my $lib       = $ARGV[1];
+my $inputDir  = $ARGV[2];
+my $outputDir = $ARGV[3];
 
-my $OS		= $^O; 
+my $OS        = `uname`; 
 
-# either using gnm (SunOS) or nm 
-# either using gobjcopy (SunOS) or objcopy 
-my $nmCommand = $OS =~ /solaris/ ? "gnm" : "nm";
-my $objCopyCommand = $OS =~ /solaris/ ? "gobjcopy" : "objcopy";
+# checking to see if input directory exists
+if (-e $inputDir) { # exists?
+	if (!(-d $inputDir)) { # directory?
+		die "$0 Error:\n\t\"$inputDir\" exists, but is not a directory.\n";
+	}
+} else {
+	die "$0 Error:\n\tDirectory \"$inputDir\" does not exist.\n";
+}
+
+# checking to see if output directory exists
+if (-e $outputDir) { # exists?
+	if (!(-d $outputDir)) { # is it really a directory?
+		die "$0 Error:\n\t\"$outputDir\" already exists, but it is not a directory.\n";
+	}
+} else {
+	mkdir($outputDir, 0755) || die "$0 Error:\n\tCannot create directory \"$outputDir\": $!";
+}
 
 # checking to see if library exists
 if (!(-e $lib)) {
-	die "Input library does not exist.\n";
+	die "$0 Error:\n\tInput library \"$lib\" does not exist.\n";
 }
+
+# either using gnm (SunOS) or nm 
+# either using gobjcopy (SunOS) or objcopy 
+my $nmCommand = $OS =~ /SunOS/ ? "gnm" : "nm";
+my $objCopyCommand = $OS =~ /SunOS/ ? "gobjcopy" : "objcopy";
 
 # adding a trailing / to $intputDir if necessary
 if ($inputDir !~ /\/$/) {
@@ -45,38 +63,18 @@ if ($outputDir !~ /\/$/) {
 # Store the names in an array
 
 my @nmResults = `$nmCommand -D --defined-only $lib`;
-my @storedNames;
+my (@storedNames, $line, $hex, $type, $name);
 my $line;
 foreach $line (@nmResults) {
-	# we don't actually use $hex, it's just a place-holder
-	my ($hex, $type, $name);
 	chomp $line;
+	# we don't actually use $hex, it's just a place-holder
 	($hex, $type, $name) = split ' ', $line;
 	if ($type =~ /T|D|B/) {
 		push @storedNames, $name;
 	}
 }
 
-# checking to see if input directory exists
-if (-e $inputDir) { # exists?
-	if (!(-d $inputDir)) { # directory?
-		die "$inputDir is not a directory.\n";
-	}
-} else {
-	die "$inputDir does not exist.\n";
-}
-
-# checking to see if output directory exists
-if (-e $outputDir) { # exists?
-	if (!(-d $outputDir)) { # is it really a directory?
-		die "$outputDir already exists, but it is not a directory.\n";
-	}
-} else {
-	mkdir($outputDir, 0755) || die "Cannot create directory $outputDir: $!";
-}
-
 my $objectCopyCall;
-my $oFile;
 my $newLine;
 
 # constructing the objCopy call, except for the input and output files
@@ -91,17 +89,21 @@ foreach $line (@storedNames) {
 my @oFiles = <$inputDir*.o>;
 
 my $outFile;
-my $oFileName;
+my $oFile;
 my $ret;
 
 # calling the objCopy command with the input and output files
 foreach $oFile (@oFiles) {
-	$oFile =~ /\/([\w\.]+)$/;
+  $oFile =~ /\/([\w\.]+)$/;
 	$outFile = $outputDir . $1;
-	$ret = system "$objectCopyCall $oFile $outFile";
+  
+  # for debug
+  #print "Would be calling $objectCopyCall $oFile $outFile";
+
+  $ret = system "$objectCopyCall $oFile $outFile";
 	$ret >>= 8;	# divide return value by 256, only because the Perl documentation tells me to
 	if ($ret) {
-			warn "$objCopyCommand returned a system value of $ret\n";
+			warn "$0 Warning:\n\t$objCopyCommand returned a system value of $ret\n";
 	}
 }
 

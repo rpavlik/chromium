@@ -17,4 +17,9 @@ else
 LIBRARIES = crutil spuload crmothership crstate
 endif
 
+ifdef BINUTIL_LINK_HACK
+TRACKS_STATE = 1
+LIBRARIES -= crstate
+endif
+
 include ${TOP}/cr.mk

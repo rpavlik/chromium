@@ -30,6 +30,11 @@ else
 LIBRARIES = crutil spuload crmothership crstate
 endif
 
+ifdef BINUTIL_LINK_HACK
+TRACKS_STATE = 1
+LIBRARIES -= crstate
+endif
+
 PACKS = 1
 
 PRECOMP = packspu.c packspu_get.c packspu_flush.c packspu_pixel.c 

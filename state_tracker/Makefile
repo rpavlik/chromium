@@ -82,6 +82,21 @@ else
 # make static libcrstate.a library on everything else
 endif
 
+ifdef BINUTIL_LINK_HACK
+SHARED = 1
+LIB_COPIES = crserver \
+	packspu \
+	tilesortspu \
+	arrayspu \
+	hiddenlinespu \
+	feedbackspu \
+	nopspu \
+	simplequeryspu \
+	binaryswapspu \
+	readbackspu \
+	statecopytest
+endif
+
 
 include $(TOP)/cr.mk
 

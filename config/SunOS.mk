@@ -6,6 +6,7 @@
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++
 CC = gcc
+BINUTIL_LINK_HACK=1
 
 #
 # You'll need to recompile GLUT and GLU libs with SUN_OGL_NO_VERTEX_MACROS set.

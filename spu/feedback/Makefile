@@ -21,6 +21,12 @@ else
 LIBRARIES = spuload crutil crmothership crstate
 endif
 
+ifdef BINUTIL_LINK_HACK
+TRACKS_STATE = 1
+LIBRARIES -= crstate
+endif
+
+
 PRECOMP = feedbackspu.c feedbackspu_state.c feedback.h
 SLOP = $(PRECOMP)
 

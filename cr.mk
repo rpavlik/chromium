@@ -279,7 +279,7 @@ else
 LDFLAGS += -L$(DSO_DIR)
 LIBRARIES := $(foreach lib,$(LIBRARIES),-l$(lib))
 LIBRARIES += $(foreach lib,$(PERSONAL_LIBRARIES),-l$(SHORT_TARGET_NAME)_$(lib)_copy)
-
+P_LIB_FILES := $(foreach lib,$(PERSONAL_LIBRARIES),$(TOP)/lib/$(ARCH)/$(LIBPREFIX)$(SHORT_TARGET_NAME)_$(lib)_copy$(DLLSUFFIX) )
 endif
 
 
@@ -292,6 +292,11 @@ ifdef PROGRAM
 ifdef WINDOWS
 	@$(CR_CXX) $(OBJS) /Fe$(PROG_TARGET)$(EXESUFFIX) $(LIBRARIES) $(LDFLAGS)
 else
+ifdef BINUTIL_LINK_HACK
+ifdef PERSONAL_LIBRARIES
+	@$(PERL) $(TOP)/scripts/trans_undef_symbols.pl $(PROGRAM) $(TOP)/built/$(PROGRAM)/$(ARCH) $(P_LIB_FILES)
+endif
+endif
 	@$(CR_CXX) $(OBJS) -o $(PROG_TARGET)$(EXESUFFIX) $(LDFLAGS) $(LIBRARIES)
 endif
 
@@ -325,6 +330,11 @@ ifdef AIXSHAREDLIB
 	rm -f tmpAnyDX.* shr.o load.map
 	rm -f $(DSO_DIR)/$(LIBPREFIX)$(SHORT_TARGET_NAME)$(DLLSUFFIX)
 else #aixsharedlib
+ifdef BINUTIL_LINK_HACK
+ifdef PERSONAL_LIBRARIES
+	@$(PERL) $(TOP)/scripts/trans_undef_symbols.pl $(SHORT_TARGET_NAME) $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH) $(P_LIB_FILES)
+endif
+endif
 	@$(LD) $(SHARED_LDFLAGS) -o $(LIBNAME) $(OBJS) $(LDFLAGS) $(LIBRARIES)
 endif #aixsharedlib
 else #shared
@@ -374,7 +384,13 @@ ifdef AIXSHAREDLIB
 	rm -f tmpAnyDX.* shr.o load.map
 
 else
+ifdef BINUTIL_LINK_HACK
+	@$(MKDIR) $(TOP)/built/$(LIBPREFIX)$*$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)/$(ARCH)
+	@$(PERL) $(TOP)/scripts/trans_def_symbols.pl $* $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)$(SHORT_TARGET_NAME)$(DLLSUFFIX) $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH) $(TOP)/built/$(LIBPREFIX)$*$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)/$(ARCH)
+	@$(LD) $(SHARED_LDFLAGS) -o $@ $(TOP)/built/$(LIBPREFIX)$*$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)/$(ARCH)/*.o $(LDFLAGS) $(LIBRARIES)
+else
 	@$(LD) $(SHARED_LDFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(LIBRARIES)
+endif
 endif
 endif
 	@$(CP) $@ $(DSO_DIR)

@@ -40,6 +40,11 @@ else
 LIBRARIES = spuload crutil crmothership crpacker crstate
 endif
 
+ifdef BINUTIL_LINK_HACK
+TRACKS_STATE = 1
+LIBRARIES -= crstate
+endif
+
 UNPACKS = 1
 
 include $(TOP)/cr.mk

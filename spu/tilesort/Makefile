@@ -40,6 +40,11 @@ else
 LIBRARIES = crutil crmothership spuload crstate
 endif
 
+ifdef BINUTIL_LINK_HACK
+TRACKS_STATE = 1
+LIBRARIES -= crstate
+endif
+
 PACKS = 1
 
 PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_unimplemented.c

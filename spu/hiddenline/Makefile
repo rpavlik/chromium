@@ -27,6 +27,11 @@ else
 LIBRARIES = spuload crutil crmothership crpacker crstate
 endif
 
+ifdef BINUTIL_LINK_HACK
+TRACKS_STATE = 1
+LIBRARIES -= crstate
+endif
+
 PACKS = 1
 UNPACKS = 1
 
