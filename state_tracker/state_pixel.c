@@ -163,7 +163,10 @@ void STATE_APIENTRY crStateBitmap( GLsizei width, GLsizei height,
 	(void) xorig;
 	(void) yorig;
 	(void) bitmap;
-	
+
+	if (g->lists.mode == GL_COMPILE)
+		return;
+
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, 
