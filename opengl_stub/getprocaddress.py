@@ -26,6 +26,7 @@ print """
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_spu.h"
+#include "cr_version.h"
 #include "stub.h"
 
 #include <stdio.h>
