@@ -257,6 +257,12 @@ void crStateLimitsPrint (const CRLimitsState *l)
 }
 
 
+void crStateLimitsDestroy(CRLimitsState *l)
+{
+	crFree(l->extensions);
+}
+
+
 /*
  * Initialize the CRLimitsState object to Chromium's defaults.
  */

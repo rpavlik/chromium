@@ -158,6 +158,7 @@ typedef struct {
 
 
 extern void crStateLimitsInit(CRLimitsState *limits);
+extern void crStateLimitsDestroy(CRLimitsState *limits);
 
 extern void crStateLimitsPrint(const CRLimitsState *limits);
 

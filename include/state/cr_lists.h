@@ -42,6 +42,7 @@ typedef struct {
 
 
 void crStateListsInit(CRContext *ctx);
+void crStateListsDestroy(CRContext *ctx);
 
 void crStateListsDiff(CRListsBits *bb, CRbitvalue *bitID, 
 		CRListsState *from, CRListsState *to);

@@ -256,7 +256,10 @@ void crStateDestroyContext( CRContext *ctx )
 	g_availableContexts[ctx->id] = 0;
 
 	crStateClientDestroy( &(ctx->client) );
+	crStateLimitsDestroy( &(ctx->limits) );
+
 	crStateEvaluatorDestroy( ctx );
+	crStateListsDestroy( ctx );
 	crStateLightingDestroy( ctx );
 	crStateTransformDestroy( ctx );
 

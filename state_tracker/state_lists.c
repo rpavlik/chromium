@@ -10,6 +10,23 @@
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
+void crStateListsDestroy(CRContext *ctx)
+{
+	CRListsState *l = &ctx->lists;
+	CRListEffect *effect;
+	unsigned int i, num_elements;
+
+	num_elements = crHashtableNumElements( l->hash );
+	for (i = 0; i < num_elements; i++) {
+		effect = (CRListEffect *) crHashtableSearch( l->hash, i );
+		crFree( effect );
+		crHashtableDelete(l->hash, i, GL_TRUE);
+	}
+	crFreeHashtable(l->hash);
+
+	crFreeIdPool(l->idPool);
+}
+
 void crStateListsInit(CRContext *ctx)
 {
 	CRListsState *l = &ctx->lists;
