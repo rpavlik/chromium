@@ -282,7 +282,7 @@ void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfact
 				break; /* OK */
 #endif
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactorRGB passed to glBlendFunc: %d", sfactorRGB);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactorRGB passed to glBlendFuncSeparateEXT: %d", sfactorRGB);
 			return;
 	}
 
@@ -307,7 +307,7 @@ void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfact
 				break; /* OK */
 #endif
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactorA passed to glBlendFunc: %d", sfactorA);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid sfactorA passed to glBlendFuncSeparateEXT: %d", sfactorA);
 			return;
 	}
 
@@ -316,11 +316,14 @@ void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfact
 		case GL_ZERO:
 		case GL_ONE:
 		case GL_SRC_COLOR:
+		case GL_DST_COLOR:
+		case GL_ONE_MINUS_DST_COLOR:
 		case GL_ONE_MINUS_SRC_COLOR:
 		case GL_SRC_ALPHA:
 		case GL_ONE_MINUS_SRC_ALPHA:
 		case GL_DST_ALPHA:
 		case GL_ONE_MINUS_DST_ALPHA:
+		case GL_SRC_ALPHA_SATURATE:
 			break; /* OK */
 #ifdef CR_EXT_blend_color
 		case GL_CONSTANT_COLOR_EXT:
@@ -331,7 +334,7 @@ void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfact
 				break; /* OK */
 #endif
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactorRGB passed to glBlendFunc: %d", dfactorRGB);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactorRGB passed to glBlendFuncSeparateEXT: %d", dfactorRGB);
 			return;
 	}
 
@@ -339,12 +342,15 @@ void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfact
 	{
 		case GL_ZERO:
 		case GL_ONE:
+		case GL_DST_COLOR:
 		case GL_SRC_COLOR:
 		case GL_ONE_MINUS_SRC_COLOR:
+		case GL_ONE_MINUS_DST_COLOR:
 		case GL_SRC_ALPHA:
 		case GL_ONE_MINUS_SRC_ALPHA:
 		case GL_DST_ALPHA:
 		case GL_ONE_MINUS_DST_ALPHA:
+		case GL_SRC_ALPHA_SATURATE:
 			break; /* OK */
 #ifdef CR_EXT_blend_color
 		case GL_CONSTANT_COLOR_EXT:
@@ -355,7 +361,7 @@ void STATE_APIENTRY crStateBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfact
 				break; /* OK */
 #endif
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactorA passed to glBlendFunc: %d", dfactorA);
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid dfactorA passed to glBlendFuncSeparateEXT: %d", dfactorA);
 			return;
 	}
 

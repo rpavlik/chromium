@@ -45,6 +45,7 @@ typedef struct {
 #ifndef WINDOWS
 	Window window;
 	Window nativeWindow;  /* for render_to_app_window */
+	Window appWindow;       /* Same as nativeWindow but for garbage collections purposes */
 #else
 	HDC nativeWindow; /* for render_to_app_window */
 #endif
@@ -166,6 +167,7 @@ extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
 extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
 extern void renderspu_SystemMakeCurrent( WindowInfo *window, GLint windowInfor, ContextInfo *context );
 extern void renderspu_SystemSwapBuffers( WindowInfo *window, GLint flags );
+extern void renderspu_GCWindow(void);
 extern int renderspuCreateFunctions( SPUNamedFunctionTable table[] );
 
 extern GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits );

@@ -68,6 +68,40 @@ WindowExists( Display *dpy, Window w )
 	return WindowExistsFlag;
 }
 
+static GLboolean
+renderDestroyWindow( Display *dpy, Window w )
+{
+	XWindowAttributes xwa;
+	int (*oldXErrorHandler)(Display *, XErrorEvent *);
+
+	WindowExistsFlag = GL_TRUE;
+	oldXErrorHandler = XSetErrorHandler(WindowExistsErrorHandler);
+	XGetWindowAttributes(dpy, w, &xwa); /* dummy request */
+	if (xwa.map_state == IsViewable) {
+		XDestroyWindow (dpy, w); /* dummy request */
+		XSync (dpy,0);
+	}
+	XSetErrorHandler(oldXErrorHandler);
+	return WindowExistsFlag;
+}
+
+void renderspu_GCWindow(void)
+{
+	int i;
+	WindowInfo *window;
+
+	for (i = 0; i < (int)render_spu.window_id - 1; i++) {
+		window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, i);
+		if (window->visual->dpy) {
+			if (!WindowExists (window->visual->dpy, window->appWindow) ) {
+				XSync(window->visual->dpy,0);
+				if(WindowExists(window->visual->dpy, window->window)) {
+					renderDestroyWindow(window->visual->dpy, window->window);
+				}
+			}
+		}
+	}
+}
 
 static Colormap 
 GetLUTColormap( Display *dpy, XVisualInfo *vi )
@@ -826,6 +860,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 	Bool b;
 
 	CRASSERT(render_spu.ws.glXMakeCurrent);
+	window->appWindow = nativeWindow;
 
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
@@ -938,6 +973,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		}
 
 	}
+	renderspu_GCWindow();
 }
 
 

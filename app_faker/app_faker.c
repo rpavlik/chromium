@@ -38,6 +38,7 @@
 #include "cr_string.h"
 #include "cr_error.h"
 
+static void appExit(void);
 #ifdef _WIN32
 
 #define DEFAULT_TMP_DIR "C:\\"
@@ -683,6 +684,13 @@ static void usage( void )
 			"is \nsearched for \"" OPENGL_CLIENT_LIB "\".\n", stderr );
 }
 
+static void appExit(void)
+{
+	/* kill the mothership we spawned earlier */
+	crMothershipExit( mothership_conn);
+
+}
+
 int main( int argc, char **argv )
 {
 	int i;
@@ -798,6 +806,7 @@ int main( int argc, char **argv )
 
 	/* This will let SPUS do things differently if they want. */
 	crSetenv( "__CR_LAUNCHED_FROM_APP_FAKER", "yes" );
+	atexit(appExit);
 	do_it( faked_argv );
 
 	return 0;

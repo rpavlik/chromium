@@ -20,6 +20,7 @@ SUBDIRS = \
 	kirchner \
 	netperf \
 	packperf \
+	packertest \
 	psubmit \
 	psubmit_crut \
 	retile \

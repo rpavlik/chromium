@@ -38,7 +38,9 @@ num_components = {
 	'GL_TEXTURE_ALPHA_SIZE': 1,
 	'GL_TEXTURE_LUMINANCE_SIZE': 1,
 	'GL_TEXTURE_INTENSITY_SIZE': 1,
-	'GL_TEXTURE_COMPONENTS': 1
+	'GL_TEXTURE_COMPONENTS': 1,
+	'GL_COMPRESSED_TEXTURE_FORMATS': 1,
+	'GL_TEXTURE_RESIDENT': 1
 }
 
 num_extended_components = {
@@ -64,6 +66,8 @@ num_extended_components = {
 	'GL_COMBINER_INPUT_NV': ( 1, 'CR_NV_register_combiners'),
 	'GL_COMBINER_MAPPING_NV': ( 1, 'CR_NV_register_combiners'),
 	'GL_COMBINER_COMPONENT_USAGE_NV': ( 1, 'CR_NV_register_combiners'),
+	'GL_CONSTANT_COLOR0_NV': ( 4, 'CR_NV_register_combiners'),
+	'GL_CONSTANT_COLOR1_NV': ( 4, 'CR_NV_register_combiners'),
 	'GL_COMBINE_RGB_ARB': (1, 'CR_ARB_texture_env_combine'),
 	'GL_COMBINE_ALPHA_ARB': (1, 'CR_ARB_texture_env_combine'),
 	'GL_SOURCE0_RGB_ARB': (1, 'CR_ARB_texture_env_combine'),
@@ -81,21 +85,33 @@ num_extended_components = {
 	'GL_RGB_SCALE_ARB': (1, 'CR_ARB_texture_env_combine'),
 	'GL_ALPHA_SCALE': (1, 'CR_ARB_texture_env_combine'),
 	'GL_DEPTH_TEXTURE_MODE_ARB': (1, 'CR_ARB_depth_texture'),
+	'GL_TEXTURE_DEPTH_SIZE_ARB': (1, 'CR_ARB_depth_texture'),
 	'GL_TEXTURE_COMPARE_MODE_ARB': (1, 'CR_ARB_shadow'),
 	'GL_TEXTURE_COMPARE_FUNC_ARB': (1, 'CR_ARB_shadow'),
 	'GL_TEXTURE_COMPARE_FAIL_VALUE_ARB': (1, 'CR_ARB_shadow_ambient'),
 	'GL_GENERATE_MIPMAP_SGIS': (1, 'CR_SGIS_generate_mipmap'),
 	'GL_TEXTURE_LOD_BIAS_EXT': (1, 'CR_EXT_texture_lod_bias'),
+	'GL_VERTEX_ATTRIB_ARRAY_POINTER_ARB': (4, 'CR_any_vertex_program'),
 	'GL_CURRENT_VERTEX_ATTRIB_ARB': (4, 'CR_any_vertex_program'),
+	'GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB': (4, 'CR_any_vertex_program'),
+	'GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB': (4, 'CR_any_vertex_program'),
+	'GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB': (4, 'CR_any_vertex_program'),
+	'GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB': (4, 'CR_any_vertex_program'),
+	'GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB': (4, 'CR_any_vertex_program'),
+	'GL_TRACK_MATRIX_NV': (24, 'CR_any_vertex_program'),
+	'GL_TRACK_MATRIX_TRANSFORM_NV': (24, 'CR_any_vertex_program'),
 	'GL_BUFFER_SIZE_ARB': (1, 'CR_ARB_vertex_buffer_object'),
 	'GL_BUFFER_USAGE_ARB': (1, 'CR_ARB_vertex_buffer_object'),
 	'GL_BUFFER_ACCESS_ARB': (1, 'CR_ARB_vertex_buffer_object'),
 	'GL_BUFFER_MAPPED_ARB': (1, 'CR_ARB_vertex_buffer_object'),
+	'GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING': (4, 'CR_ARB_vertex_buffer_object'),
 	'GL_QUERY_COUNTER_BITS_ARB': (1, 'CR_ARB_occlusion_query'),
 	'GL_QUERY_RESULT_AVAILABLE_ARB': (1, 'CR_ARB_occlusion_query'),
 	'GL_QUERY_RESULT_ARB': (1, 'CR_ARB_occlusion_query'),
 	'GL_CURRENT_QUERY_ARB': (1, 'CR_ARB_occlusion_query'),
 	'GL_TEXTURE_COMPRESSED_IMAGE_SIZE': (1, 'CR_ARB_texture_compression'),
+	'GL_POINT_SPRITE_ARB': (1, 'CR_ARB_point_sprite'),
+	'GL_COORD_REPLACE_ARB': (4, 'CR_ARB_point_sprite')
 }
 
 print """static unsigned int lookupComponents( GLenum pname )

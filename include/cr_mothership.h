@@ -29,6 +29,7 @@ void crMothershipIdentifyCRUTClient( CRConnection *conn, char *response );
 void crMothershipIdentifyCRUTProxy( CRConnection *conn, char *response );
 
 /* Mothership functions */
+void crMothershipExit( CRConnection *conn );
 void crMothershipReset( CRConnection *conn );
 void crMothershipSetParam( CRConnection *conn, const char *param, const char *value );
 int crMothershipGetParam( CRConnection *conn, const char *param, char *value );

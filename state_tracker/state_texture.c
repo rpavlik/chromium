@@ -2079,7 +2079,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					}
 					else {
 						crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glTexGen called with bad param: %lf", *param);
+							"glTexGendv called with bad param: %lf", *param);
 						return;
 					}
 					break;
@@ -2105,7 +2105,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								"glTexGen called with bogus pname: %d", pname);
+								"glTexGendv called with bogus pname: %d", pname);
 					return;
 			}
 			break;
@@ -2127,7 +2127,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					}
 					else {
 						crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-							"glTexGen called with bad param: %lf", *param);
+							"glTexGendv called with bad param: %lf", *param);
 						return;
 					}
 					break;
@@ -3152,6 +3152,8 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 #endif
         	case GL_TEXTURE_RESIDENT:
 			/* XXX todo */
+			crWarning("glGetTexParameterfv GL_TEXTURE_RESIDENT is unimplemented");
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 				"glGetTexParameterfv: invalid pname: %d", pname);
@@ -3294,6 +3296,8 @@ void STATE_APIENTRY crStateGetTexParameteriv (GLenum target, GLenum pname, GLint
 #endif
 		case GL_TEXTURE_RESIDENT:
 			/* XXX todo */
+			crWarning("glGetTexParameteriv GL_TEXTURE_RESIDENT is unimplemented");
+			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
 				"glGetTexParameter: invalid pname: %d", pname);

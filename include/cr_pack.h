@@ -14,6 +14,9 @@
 #include "state/cr_statetypes.h"
 #include "state/cr_currentpointers.h"
 #include "state/cr_client.h"
+#ifdef CHROMIUM_THREADSAFE
+#include "cr_threads.h"
+#endif
 
 #ifdef WINDOWS
 #ifndef DLLDATA 
@@ -21,6 +24,20 @@
 #endif
 #else
 #define DLLDATA
+#endif
+
+
+/* Function inlining */
+#if defined(__GNUC__)
+#  define INLINE __inline__
+#elif defined(__MSC__)
+#  define INLINE __inline
+#elif defined(_MSC_VER)
+#  define INLINE __inline
+#elif defined(__ICL)
+#  define INLINE __inline
+#else
+#  define INLINE
 #endif
 
 #ifdef __cplusplus
@@ -71,14 +88,13 @@ void crPackSetContext( CRPackContext *pc );
 CRPackContext *crPackGetContext( void );
 
 void crPackSetBuffer( CRPackContext *pc, CRPackBuffer *buffer );
-void crPackSetBufferDEBUG( const char *file, int line,
-													 CRPackContext *pc, CRPackBuffer *buffer );
+void crPackSetBufferDEBUG( const char *file, int line, CRPackContext *pc, CRPackBuffer *buffer );
 void crPackReleaseBuffer( CRPackContext *pc );
+void crPackResetPointers( CRPackContext *pc );
 
 int crPackNumOpcodes( int buffer_size );
 int crPackNumData( int buffer_size );
 void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int mtu );
-void crPackResetPointers( CRPackContext *pc );
 void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff );
 void crPackFlushArg( CRPackContext *pc, void *flush_arg );
 void crPackSendHugeFunc( CRPackContext *pc, CRPackSendHugeFunc shf );
@@ -90,7 +106,6 @@ void crPackResetBBOX( CRPackContext *pc );
 
 void crPackAppendBuffer( const CRPackBuffer *buffer );
 void crPackAppendBoundedBuffer( const CRPackBuffer *buffer, const CRrecti *bounds );
-int crPackCanHoldOpcode( int num_opcode, int num_data );
 int crPackCanHoldBuffer( const CRPackBuffer *buffer );
 int crPackCanHoldBoundedBuffer( const CRPackBuffer *buffer );
 
@@ -126,6 +141,31 @@ void crPackExpandMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum
 void crPackExpandMultiDrawElementsEXTSWAP( GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount, CRClientState *c );
 
 
+#ifdef CHROMIUM_THREADSAFE
+extern CRtsd _PackerTSD;
+#define GET_PACKER_CONTEXT(C) CRPackContext *C = (CRPackContext *) crGetTSD(&_PackerTSD)
+#else
+extern DLLDATA CRPackContext cr_packer_globals;
+#define GET_PACKER_CONTEXT(C) CRPackContext *C = &cr_packer_globals
+#endif
+
+static INLINE int crPackCanHoldOpcode( int num_opcode, int num_data )
+{
+        int fitsInMTU, opcodesFit, dataFits;
+        GET_PACKER_CONTEXT(pc);
+
+        CRASSERT(pc->currentBuffer);
+
+        fitsInMTU = (((pc->buffer.data_current - pc->buffer.opcode_current - 1
+                                                                 + num_opcode + num_data
+                                                                 + 0x3 ) & ~0x3) + sizeof(CRMessageOpcodes)
+                                                         <= pc->buffer.mtu);
+        opcodesFit = (pc->buffer.opcode_current - num_opcode
+                                                                >= pc->buffer.opcode_end);
+        dataFits = (pc->buffer.data_current + num_data <= pc->buffer.data_end);
+
+        return fitsInMTU && opcodesFit && dataFits;
+}
 
 #define GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len ) \
   THREADASSERT( pc ); \

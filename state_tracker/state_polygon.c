@@ -58,7 +58,7 @@ void STATE_APIENTRY crStateCullFace(GLenum mode)
 
 	FLUSH();
 
-	if (mode != GL_FRONT && mode != GL_BACK)
+	if (mode != GL_FRONT && mode != GL_BACK && mode != GL_FRONT_AND_BACK)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 				"glCullFace called with bogus mode: 0x%x", mode);

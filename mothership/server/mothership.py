@@ -883,6 +883,9 @@ class CR:
 		sock.Success( response )
 		return
 
+	def do_exit( self, sock, args ):
+		raise KeyboardInterrupt
+
 	def Go( self, PORT = -1 ):
 		"""Go(PORT=10000)
 		Starts the ball rolling.

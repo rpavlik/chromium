@@ -200,6 +200,7 @@ void crPackInitBuffer( CRPackBuffer *buf, void *pack, int size, int mtu )
 	}
 }
 
+#if 0
 int crPackCanHoldOpcode( int num_opcode, int num_data )
 {
 	int fitsInMTU, opcodesFit, dataFits;
@@ -217,6 +218,7 @@ int crPackCanHoldOpcode( int num_opcode, int num_data )
 
 	return fitsInMTU && opcodesFit && dataFits;
 }
+#endif
 
 int crPackCanHoldBuffer( const CRPackBuffer *src )
 {

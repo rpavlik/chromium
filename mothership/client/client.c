@@ -166,6 +166,12 @@ void crMothershipIdentifyCRUTProxy( CRConnection *conn, char *response )
  * Mothership functions.
  */
 
+/* Send exit message to the mothership */
+void crMothershipExit( CRConnection *conn )
+{
+	(void)crMothershipSendString( conn, NULL, "exit" );
+}
+
 /* Send reset message to the mothership */
 void crMothershipReset( CRConnection *conn )
 {

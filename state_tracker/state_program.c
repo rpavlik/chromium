@@ -904,11 +904,19 @@ void STATE_APIENTRY crStateTrackMatrixNV(GLenum target, GLuint address,
 		case GL_MATRIX5_NV:
 		case GL_MATRIX6_NV:
 		case GL_MATRIX7_NV:
+		case GL_TEXTURE0_ARB:
+		case GL_TEXTURE1_ARB:
+		case GL_TEXTURE2_ARB:
+		case GL_TEXTURE3_ARB:
+		case GL_TEXTURE4_ARB:
+		case GL_TEXTURE5_ARB:
+		case GL_TEXTURE6_ARB:
+		case GL_TEXTURE7_ARB:
 			/* OK, fallthrough */
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTrackMatrixNV(matrix)");
+									 "glTrackMatrixNV(matrix = %x)",matrix);
 			return;
 		}
 
@@ -921,7 +929,7 @@ void STATE_APIENTRY crStateTrackMatrixNV(GLenum target, GLuint address,
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "glTrackMatrixNV(transform)");
+									 "glTrackMatrixNV(transform = %x)",transform);
 			return;
 		}
 
@@ -932,7 +940,7 @@ void STATE_APIENTRY crStateTrackMatrixNV(GLenum target, GLuint address,
 	}
 	else {
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTrackMatrixNV(target)");
+								 "glTrackMatrixNV(target = %x)",target);
 	}
 }
 

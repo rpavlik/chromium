@@ -39,6 +39,11 @@ class APIFunction:
 		self.alias = ''
 		self.vectoralias = ''
 		self.params = []
+		self.paramlist = []
+		self.paramvec = []
+		self.paramaction = []
+		self.paramprop = []
+		self.paramset = []
 		self.props = []
 		self.chromium = []
 
@@ -78,6 +83,53 @@ def ProcessSpecFile(filename, userFunc):
 				type = string.join(tokens[2:], ' ')
 				vecSize = 0
 				record.params.append((name, type, vecSize))
+
+			elif tokens[0] == 'paramprop':
+				name = tokens[1]
+				str = tokens[2:]
+				enums = []
+				for i in range(len(str)):
+					enums.append(str[i]) 
+				record.paramprop.append((name, enums))
+
+			elif tokens[0] == 'paramlist':
+				name = tokens[1]
+				str = tokens[2:]
+				list = []
+				for i in range(len(str)):
+					list.append(str[i]) 
+				record.paramlist.append((name,list))
+
+			elif tokens[0] == 'paramvec':
+				name = tokens[1]
+				str = tokens[2:]
+				vec = []
+				for i in range(len(str)):
+					vec.append(str[i]) 
+				record.paramvec.append((name,vec))
+
+			elif tokens[0] == 'paramset':
+				line = tokens[1:]
+				result = []
+				for i in range(len(line)):
+					tset = line[i]
+                                	if tset == '[':
+                                        	nlist = []
+                                	elif tset == ']':
+                                        	result.append(nlist)
+						nlist = []
+                                	else:
+                                        	nlist.append(tset)
+				if result != []:
+					record.paramset.append(result)
+
+			elif tokens[0] == 'paramaction':
+				name = tokens[1]
+				str = tokens[2:]
+				list = []
+				for i in range(len(str)):
+					list.append(str[i]) 
+				record.paramaction.append((name,list))
 
 			elif tokens[0] == 'category':
 				record.category = tokens[1]
@@ -119,17 +171,6 @@ def ProcessSpecFile(filename, userFunc):
 
 
 
-def PrintRecord(record):
-	argList = MakeCArgList(record.params)
-	if record.category == "Chromium":
-		prefix = "cr"
-	else:
-		prefix = "gl"
-	print '%s %s%s(%s);' % (record.returnType, prefix, record.name, argList )
-	if len(record.props) > 0:
-		print '   /* %s */' % string.join(record.props, ' ')
-
-#ProcessSpecFile("APIspec.txt", PrintRecord)
 
 
 # Dictionary [name] of APIFunction:
@@ -144,8 +185,8 @@ __ReverseAliases = {}
 
 def AddFunction(record):
 	assert not __FunctionDict.has_key(record.name)
-	if not "omit" in record.chromium:
-		__FunctionDict[record.name] = record
+	#if not "omit" in record.chromium:
+	__FunctionDict[record.name] = record
 
 
 
@@ -210,6 +251,26 @@ def Parameters(funcName):
 	d = GetFunctionDict()
 	return d[funcName].params
 
+def ParamAction(funcName):
+	"""Return list of names of actions for testing."""
+	d = GetFunctionDict()
+	return d[funcName].paramaction
+
+def ParamList(funcName):
+	"""Return list of tuples (name, list of values) of function parameters."""
+	d = GetFunctionDict()
+	return d[funcName].paramlist
+
+def ParamVec(funcName):
+	"""Return list of tuples (name, vector of values) of function parameters."""
+	d = GetFunctionDict()
+	return d[funcName].paramvec
+
+def ParamSet(funcName):
+	"""Return list of tuples (name, list of values) of function parameters."""
+	d = GetFunctionDict()
+	return d[funcName].paramset
+
 
 def Properties(funcName):
 	"""Return list of properties of the named GL function."""
@@ -228,6 +289,10 @@ def ChromiumProps(funcName):
 	d = GetFunctionDict()
 	return d[funcName].chromium
 
+def ParamProps(funcName):
+	"""Return list of Parameter-specific properties of the named GL function."""
+	d = GetFunctionDict()
+	return d[funcName].paramprop
 
 def Alias(funcName):
 	"""Return the function that the named function is an alias of.
@@ -556,3 +621,16 @@ def NumSpecials( table_file ):
 	except KeyError:
 		table = LoadSpecials(filename)
 	return len(table.keys())
+
+def PrintRecord(record):
+	argList = MakeDeclarationString(record.params)
+	if record.category == "Chromium":
+		prefix = "cr"
+	else:
+		prefix = "gl"
+	print '%s %s%s(%s);' % (record.returnType, prefix, record.name, argList )
+	if len(record.props) > 0:
+		print '   /* %s */' % string.join(record.props, ' ')
+
+#ProcessSpecFile("APIspec.txt", PrintRecord)
+
