@@ -224,15 +224,17 @@ void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 																				 visInfo->visual, AllocNone);
 			attribMask = /*CWBackPixel |*/ CWBorderPixel | CWColormap;
 
-			backend->xsubwin = XCreateWindow(backend->dpy,
-																			 backend->xwin, /* parent */
-																			 subwinX, subwinY,
-																			 subwinW, subwinH,
-																			 0, /* border width */
-																			 visInfo->depth, /* depth */
-																			 InputOutput, /* class */
-																			 visInfo->visual,
-																			 attribMask, &attribs);
+			backend->xsubwin =
+				XCreateWindow(backend->dpy,
+							  backend->xwin, /* parent */
+							  subwinX, subwinY,
+							  subwinW, subwinH,
+							  0, /* border width */
+							  visInfo->depth, /* depth */
+							  InputOutput, /* class */
+							  visInfo->visual,
+							  attribMask, &attribs);
+
 			/*
 			crDebug("Created child 0x%x of 0x%x on server %d with visual 0x%x\n",
 						 (int)backend->xsubwin, (int)backend->xwin, i,
