@@ -59,7 +59,7 @@ static struct {
 	//Func_V_V    wireGLUseSystemGL;
 } fptable;
 
-#define X(a)	{ # a, (void **) &fptable.##a }
+#define X(a)	{ #a, (void **) &fptable.a }
 
 static struct {
 	const char  *name;
