@@ -12,7 +12,6 @@
 
 #include <math.h>
 
-
 static void set_peers( void *foo, const char *response )
 {
    char *nodes;
@@ -63,6 +62,11 @@ static void set_node( void *foo, const char *response )
    }
 }
 
+static void set_clip( void *foo, const char *response )
+{
+   sscanf( response, "%d", &(binaryswap_spu.clipped_window) );  
+}
+
 static void set_swapmtu( void *foo, const char *response )
 {
    if (*response) {
@@ -97,37 +101,10 @@ static void __setDefaults( BinaryswapSPU *binaryswap_spu )
   binaryswap_spu->windows[0].childWindow = 0;
   binaryswap_spu->barrierCount = 0;
   
-  /* This will make the viewport be computed later */
-  binaryswap_spu->halfViewportWidth = 0;
   binaryswap_spu->cleared_this_frame = 0;
   binaryswap_spu->bbox = NULL;
   
   binaryswap_spu->resizable = 0;
-}
-
-void set_extract_depth( BinaryswapSPU *binaryswap_spu, const char *response )
-{
-   binaryswap_spu->extract_depth = crStrToInt( response );
-}
-
-void set_extract_alpha( BinaryswapSPU *binaryswap_spu, const char *response )
-{
-   binaryswap_spu->extract_alpha = crStrToInt( response );
-}
-
-void set_local_visualization( BinaryswapSPU *binaryswap_spu, const char *response )
-{
-   binaryswap_spu->local_visualization = crStrToInt( response );
-}
-
-void set_visualize_depth( BinaryswapSPU *binaryswap_spu, const char *response )
-{
-   binaryswap_spu->visualize_depth = crStrToInt( response );
-}
-
-void set_drawpixels_pos( BinaryswapSPU *binaryswap_spu, const char *response )
-{
-   sscanf( response, "%d %d", &binaryswap_spu->drawX, &binaryswap_spu->drawY );
 }
 
 
@@ -137,21 +114,6 @@ SPUOptions binaryswapSPUOptions[] = {
 
    /* Really a multiple choice:  Extract depth or alpha.
     */
-   { "extract_depth", CR_BOOL, 1, "0", NULL, NULL,
-     "Extract Depth Values", (SPUOptionCB)set_extract_depth },
-
-   { "extract_alpha", CR_BOOL, 1, "0", NULL, NULL,
-     "Extract Alpha Values", (SPUOptionCB)set_extract_alpha },
-
-   { "local_visualization", CR_BOOL, 1, "1", NULL, NULL,
-     "Local Visualization", (SPUOptionCB)set_local_visualization },
-
-   { "visualize_depth", CR_BOOL, 1, "0", NULL, NULL,
-     "Visualize Depth as Grayscale", (SPUOptionCB)set_visualize_depth },
-
-   { "drawpixels_pos", CR_INT, 2, "0, 0", "0, 0", NULL,
-     "glDrawPixels Position (x,y)", (SPUOptionCB)set_drawpixels_pos },
-
    { "peers", CR_STRING, 1, "", NULL, NULL, 
      "Peers", (SPUOptionCB)set_peers},
 
@@ -161,7 +123,12 @@ SPUOptions binaryswapSPUOptions[] = {
    /* Really an enumerate (alpha/depth), not a string
     */
    { "type", CR_STRING, 1, "depth", NULL, NULL, 
-     "Composite type (alpha/depth)", (SPUOptionCB)set_type},
+     "Composite type (alpha/depth)", 
+     (SPUOptionCB)set_type},
+   
+   { "clipping", CR_BOOL, 1, "0", NULL, NULL, 
+     "Clip composite to bounding box", 
+     (SPUOptionCB)set_clip},
 
    { "swapmtu", CR_STRING, 1, "", NULL, NULL, 
      "MTU size for swapping", (SPUOptionCB)set_swapmtu},
@@ -191,13 +158,7 @@ void binaryswapspuGatherConfiguration( BinaryswapSPU *binaryswap_spu )
   crMothershipIdentifySPU( conn, binaryswap_spu->id );
   
   crSPUGetMothershipParams( conn, (void *)binaryswap_spu, binaryswapSPUOptions );
-  
-  /* we can either composite with alpha or Z, but not both */
-  if (binaryswap_spu->extract_depth && binaryswap_spu->extract_alpha) {
-    crWarning("Binaryswap SPU can't extract both depth and alpha, using depth");
-    binaryswap_spu->extract_alpha = 0;
-  }
-  
+    
   /* Get the render SPU's resizable setting */
   {
     char response[1000];
@@ -225,6 +186,5 @@ void binaryswapspuGatherConfiguration( BinaryswapSPU *binaryswap_spu )
   if(binaryswap_spu->mtu == -1){
     binaryswap_spu->mtu = crMothershipGetMTU( conn );
   }
-
   crMothershipDisconnect( conn );
 }

@@ -13,111 +13,212 @@
 #include "cr_applications.h"
 #include "binaryswapspu.h"
 
-#define WINDOW_MAGIC 7000
-#define CONTEXT_MAGIC 8000
+#define MTRANSFORM(x, y, z, w, m, vx, vy, vz) \
+    x = m[0]*vx + m[4]*vy + m[8]*vz  + m[12]; \
+    y = m[1]*vx + m[5]*vy + m[9]*vz  + m[13]; \
+    z = m[2]*vx + m[6]*vy + m[10]*vz + m[14]; \
+    w = m[3]*vx + m[7]*vy + m[11]*vz + m[15]
 
-/*
- * Allocate the color and depth buffers needed for the glDraw/ReadPixels
- * commands for the given window.
- */
-static void AllocBuffers( WindowInfo *window )
+#define I_TRANSFORM(num, m, vx, vy, vz) \
+    MTRANSFORM (x[num], y[num], z[num], w[num], m, vx, vy, vz)
+
+#define FLT_MAX 3.402823466e+38f
+
+#define CLAMP(a, b, c) \
+if (a < b) a = b; if (a > c) a = c
+
+BinaryswapSPU binaryswap_spu;
+GLfloat modl[16];
+GLfloat proj[16];
+
+/****************************************************************
+ *
+ * These functions below are used to do bounding box calculations
+ *
+ ****************************************************************/
+void clipCoords (GLfloat *x1, GLfloat *y1, GLfloat *z1,
+		 GLfloat *x2, GLfloat *y2, GLfloat *z2) 
 {
-  CRASSERT(window);
-  CRASSERT(window->width >= 0);
-  CRASSERT(window->height >= 0);
+  static GLfloat m[16];
+  int i;
   
-  if (window->colorBuffer)
-    crFree(window->colorBuffer);
+  GLfloat x[8], y[8], z[8], w[8];
+  GLfloat vx1, vy1, vz1;
+  GLfloat vx2, vy2, vz2;
   
-  window->colorBuffer = (GLubyte *) crAlloc( window->width * window->height * 
-					     4 * sizeof(GLubyte) );
-  if (binaryswap_spu.extract_depth){
-    GLint depthBytes;
+  GLfloat xmin=FLT_MAX, ymin=FLT_MAX, zmin=FLT_MAX;
+  GLfloat xmax=-FLT_MAX, ymax=-FLT_MAX, zmax=-FLT_MAX;
+  
+  m[0] =  proj[0]*modl[0]  + proj[4]*modl[1]  + 
+    proj[8]*modl[2]   + proj[12]*modl[3];	
+
+  m[1] =  proj[1]*modl[0]  + proj[5]*modl[1]  + 
+    proj[9]*modl[2]   + proj[13]*modl[3];	
+
+  m[2] =  proj[2]*modl[0]  + proj[6]*modl[1]  + 
+    proj[10]*modl[2]  + proj[14]*modl[3];	
+
+  m[3] =  proj[3]*modl[0]  + proj[7]*modl[1]  + 
+    proj[11]*modl[2]  + proj[15]*modl[3];	
+
+  m[4] =  proj[0]*modl[4]  + proj[4]*modl[5]  + 
+    proj[8]*modl[6]   + proj[12]*modl[7];	
+
+  m[5] =  proj[1]*modl[4]  + proj[5]*modl[5]  + 
+    proj[9]*modl[6]   + proj[13]*modl[7];	
+
+  m[6] =  proj[2]*modl[4]  + proj[6]*modl[5]  + 
+    proj[10]*modl[6]  + proj[14]*modl[7];	
+
+  m[7] =  proj[3]*modl[4]  + proj[7]*modl[5]  + 
+    proj[11]*modl[6]  + proj[15]*modl[7];	
+
+  m[8] =  proj[0]*modl[8]  + proj[4]*modl[9]  + 
+    proj[8]*modl[10]  + proj[12]*modl[11];	
+
+  m[9] =  proj[1]*modl[8]  + proj[5]*modl[9]  + 
+    proj[9]*modl[10]  + proj[13]*modl[11];
+	
+  m[10] = proj[2]*modl[8]  + proj[6]*modl[9]  + 
+    proj[10]*modl[10] + proj[14]*modl[11];	
+
+  m[11] = proj[3]*modl[8]  + proj[7]*modl[9]  + 
+    proj[11]*modl[10] + proj[15]*modl[11];	
+
+  m[12] = proj[0]*modl[12] + proj[4]*modl[13] + 
+    proj[8]*modl[14]  + proj[12]*modl[15];	
+
+  m[13] = proj[1]*modl[12] + proj[5]*modl[13] + 
+    proj[9]*modl[14]  + proj[13]*modl[15];	
+
+  m[14] = proj[2]*modl[12] + proj[6]*modl[13] + 
+    proj[10]*modl[14] + proj[14]*modl[15];	
+
+  m[15] = proj[3]*modl[12] + proj[7]*modl[13] + 
+    proj[11]*modl[14] + proj[15]*modl[15]; 
+      
+  /* Tranform the point by m */
+  vx1 = *x1;
+  vy1 = *y1;
+  vz1 = *z1;
+  vx2 = *x2;
+  vy2 = *y2;
+  vz2 = *z2;
+  
+  I_TRANSFORM (0 , m, vx1, vy1, vz1);
+  I_TRANSFORM (1 , m, vx1, vy1, vz2);
+  I_TRANSFORM (2 , m, vx1, vy2, vz1);
+  I_TRANSFORM (3 , m, vx1, vy2, vz2);
+  I_TRANSFORM (4 , m, vx2, vy1, vz1);
+  I_TRANSFORM (5 , m, vx2, vy1, vz2);
+  I_TRANSFORM (6 , m, vx2, vy2, vz1);
+  I_TRANSFORM (7 , m, vx2, vy2, vz2);
+  
+  for (i=0; i<8; i++) {   
+    x[i] /= w[i];
+    y[i] /= w[i];
+    z[i] /= w[i];
     
-    if (window->depthBuffer)
-      crFree(window->depthBuffer);
+    if (x[i] > xmax) xmax = x[i];
+    if (y[i] > ymax) ymax = y[i];
+    if (z[i] > zmax) zmax = z[i]; 
+    if (x[i] < xmin) xmin = x[i];
+    if (y[i] < ymin) ymin = y[i];
+    if (z[i] < zmin) zmin = z[i];
+  }    
     
-    if (!window->depthType){
-      /* Determine best type for the depth buffer image */
-      GLint zBits;
-      binaryswap_spu.super.GetIntegerv( GL_DEPTH_BITS, &zBits );
-      if (zBits <= 16)
-	window->depthType = GL_UNSIGNED_SHORT;
-      else
-	window->depthType = GL_FLOAT;
-    }
-    
-    if (window->depthType == GL_UNSIGNED_SHORT){
-      depthBytes = sizeof(GLushort);
-    }
-    else{
-      CRASSERT(window->depthType == GL_FLOAT);
-      depthBytes = sizeof(GLfloat);
-    }
-    
-    window->depthBuffer = (GLfloat *) crAlloc( window->width * window->height
-					       * depthBytes );
-  }
+  *x1 = xmin;
+  *y1 = ymin;
+  *z1 = zmin;
+  *x2 = xmax;
+  *y2 = ymax;
+  *z2 = zmax;
+  binaryswap_spu.depth = zmax;
 }
 
-
-static void CheckWindowSize( WindowInfo *window )
+/**************************************************************
+ *
+ * For now, this just strips the depth out of the box.  We should
+ * also do a screen bounding box to lighten network traffic.
+ *
+ **************************************************************/
+void setupBBox()
 {
-  GLint geometry[4];
-  
-  GLint w = window - binaryswap_spu.windows; /* pointer hack */
-  CRASSERT(w >= 0);
-  CRASSERT(w < MAX_WINDOWS);
-  
-  if ((binaryswap_spu.server) && (binaryswap_spu.server->numExtents)){
-    /* no sense in reading the whole window if the tile 
-     * only convers part of it..
-     */
-    geometry[2] = binaryswap_spu.server->extents[0].x2 - 
-      binaryswap_spu.server->extents[0].x1;
-    geometry[3] = binaryswap_spu.server->extents[0].y2 - 
-      binaryswap_spu.server->extents[0].y1;
+  glGetFloatv (GL_MODELVIEW_MATRIX,  modl);
+  glGetFloatv (GL_PROJECTION_MATRIX, proj);
+}
+
+int getClippedWindow(int *xstart, int* ystart,int* xend, int* yend )
+{
+  GLfloat viewport[4];
+  GLint   window_dim[4];
+  GLfloat x1, x2, y1, y2, z1, z2;
+  int win_height, win_width;
+
+  glGetFloatv (GL_MODELVIEW_MATRIX,  modl);
+  glGetFloatv (GL_PROJECTION_MATRIX, proj);
+
+  if(binaryswap_spu.bounding_box != NULL){
+    x1=binaryswap_spu.bounding_box->x1;
+    y1=binaryswap_spu.bounding_box->y1;
+    z1=binaryswap_spu.bounding_box->z1;
+    x2=binaryswap_spu.bounding_box->x2; 
+    y2=binaryswap_spu.bounding_box->y2;
+    z2=binaryswap_spu.bounding_box->z2;
   }
+  else{ //no bounding box defined
+    return 0;
+  }
+
+  clipCoords(&x1, &y1, &z1, &x2, &y2, &z2);
+  /* Sanity check... */
+  if( x2 < x1 || y2 < y1 || z2 < z1){
+    crWarning( "Damnit!!!!, we screwed up the clipping somehow..." );
+    return 0;
+  }
+  binaryswap_spu.super.GetFloatv( GL_VIEWPORT, viewport );
+  (*xstart) = (x1+1.0f)*(viewport[2] / 2.0f) + viewport[0];
+  (*ystart) = (y1+1.0f)*(viewport[3] / 2.0f) + viewport[1];
+  (*xend)   = (x2+1.0f)*(viewport[2] / 2.0f) + viewport[0];
+  (*yend)   = (y2+1.0f)*(viewport[3] / 2.0f) + viewport[1];
+  
+  binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, window_dim );
+  win_width  = window_dim[2];
+  win_height = window_dim[3];
+  
+  CLAMP ((*xstart), 0, win_width);
+  CLAMP ((*xend),   0, win_width);
+  CLAMP ((*ystart), 0, win_height);
+  CLAMP ((*yend),   0, win_height);
+  return 1;
+}
+
+/**************************************************************************
+ *
+ * Right now this is the only nice way to generically pass information into
+ * Chromium.  Yes this is hacky...
+ *
+ **************************************************************************/
+void BINARYSWAPSPU_APIENTRY binaryswapspuHint( GLenum target,
+					    GLenum mode )
+{
+  /* intercept Z info */
+  if( target == 0x4200 ){
+    /* mode is really a float, cast it and grab info */
+    binaryswap_spu.depth = (float)mode;
+  } 
+  if( target == 0x4201 ){
+    /* mode is really a pointer, cast it and grab info */
+    binaryswap_spu.bounding_box = (BBox*)mode;
+    /* figure out all of the info we need */
+    setupBBox();
+  }
+  /* Pass on all other hints to child */
   else{
-    /* if the server is null, we are running on the 
-     * app node, not a network node, so just readout
-     * the whole shebang. if we dont have tiles, we're 
-     * likely not doing sort-first., so do it all 
-     */
-    if (binaryswap_spu.resizable){
-      /* ask downstream SPU (probably render) for its window size */
-      GLint size[2];
-      size[0] = size[1] = 0;
-      binaryswap_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-						   w, GL_INT, 2, size);
-      if (size[0] == 0){
-	/* something went wrong - recover */
-	binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, geometry );
-      }
-      else{
-	geometry[2] = size[0];
-	geometry[3] = size[1];
-      }
-    }
-    else{
-      /* not resizable - ask render SPU for viewport size */
-      binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, geometry );
-    }
-  }
-  
-  if (geometry[2] != window->width || geometry[3] != window->height){
-    if (binaryswap_spu.resizable){
-      /* update super/render SPU window size & viewport */
-      binaryswap_spu.super.WindowSize( w, geometry[2], geometry[3] );
-      binaryswap_spu.super.Viewport( 0, 0, geometry[2], geometry[3] );
-      /* set child's viewport too */
-      binaryswap_spu.child.Viewport( 0, 0, geometry[2], geometry[3] );
-    }
-    window->width = geometry[2];
-    window->height = geometry[3];
-    AllocBuffers(window);
+    binaryswap_spu.child.Hint( target, mode );
   }
 }
+
 
 /*
  * Allocate a new ThreadInfo structure and bind this to the calling thread
@@ -137,7 +238,6 @@ static ThreadInfo *binaryswapspuNewThread( unsigned long id )
 }
 #endif
 
-
 static void DoFlush( WindowInfo *window )
 { 
 
@@ -154,39 +254,29 @@ static void DoFlush( WindowInfo *window )
   float other_depth;
   int draw_x = 0, draw_y = 0;
   int draw_width = 0, draw_height = 0;
+  int start_clipped_x, start_clipped_y, end_clipped_x, end_clipped_y;
+  int read_start_x, read_start_y, read_width, read_height;
   GLubyte* incoming_color;
   GLfloat* incoming_depth;
   CRMessage *incoming_msg;
   BinarySwapMsg *render_info;
-
-  //GLfloat xmax = 0, xmin = 0, ymax = 0, ymin = 0;
-  //int x, y, w, h;
-  //GLint packAlignment, unpackAlignment;
-
-  if (binaryswap_spu.resizable){
-    /* check if window size changed, reallocate buffers if needed */
-    CheckWindowSize( window );
-  }
   
   if (first_time){
-    CheckWindowSize( window );
-    
-    binaryswap_spu.child.BarrierCreate( BINARYSWAP_BARRIER, 0 );
+    binaryswap_spu.child.BarrierCreate( BINARYSWAP_CLEARBARRIER, 0 );
+    binaryswap_spu.child.BarrierCreate( BINARYSWAP_SWAPBARRIER, 0 );
+    binaryswap_spu.child.SemaphoreCreate( MUTEX_SEMAPHORE, 1 );
     binaryswap_spu.child.LoadIdentity();
-    binaryswap_spu.child.Ortho( 0, window->width - 1,	
+    binaryswap_spu.child.Ortho( 0, window->width  - 1,	
 				0, window->height - 1,
 				-10000, 10000 );
 
     binaryswap_spu.super.GetIntegerv( GL_VIEWPORT, geometry );
     if(binaryswap_spu.alpha_composite){
-      binaryswap_spu.outgoing_msg = (GLubyte *) crAlloc( (geometry[2] * geometry[3] * 4)/2 
-							 + sizeof(BinarySwapMsg));
+      binaryswap_spu.outgoing_msg = (GLubyte *) crAlloc( (geometry[2] * geometry[3] * 4) + sizeof(BinarySwapMsg));
     }
     else{
       binaryswap_spu.outgoing_msg = 
-	(GLubyte *) crAlloc( sizeof(BinarySwapMsg) +
-			     (geometry[2] * geometry[3] * 
-			      (3 * sizeof(GLubyte) + sizeof(GLfloat))/2)); 
+	(GLubyte *) crAlloc( sizeof(BinarySwapMsg) + (geometry[2] * geometry[3] * (3 * sizeof(GLubyte) + sizeof(GLfloat)))); 
     }
     
     binaryswap_spu.offset = sizeof( BinarySwapMsg );
@@ -250,8 +340,21 @@ static void DoFlush( WindowInfo *window )
       crDebug("Width: %d, Height: %d", width[i], height[i]);
       crDebug("x: %d, y: %d", read_x[i], read_y[i]);
     }
-
     first_time = 0;
+  }
+
+  if(binaryswap_spu.clipped_window){
+    start_clipped_x = 0;
+    start_clipped_y = 0;
+    end_clipped_x = 0;
+    end_clipped_y = 0;
+    
+    if(!getClippedWindow(&start_clipped_x, &start_clipped_y, 
+			 &end_clipped_x, &end_clipped_y )){
+      crWarning("Bounding box was null, I'll no longer attempt to clip");
+      binaryswap_spu.clipped_window = !binaryswap_spu.clipped_window;
+    }
+    
   }
   
   /* setup positions so we can do a draw pixels correctly! */
@@ -261,25 +364,75 @@ static void DoFlush( WindowInfo *window )
 			     (GLdouble) geometry[3], -10.0, 1000000.0);
   binaryswap_spu.super.MatrixMode(GL_MODELVIEW);
   binaryswap_spu.super.LoadIdentity();  
+  
+  /************ need to restore this after drawing.... ******************/
+  /* fix pixel alignment */
+  binaryswap_spu.super.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+  binaryswap_spu.super.PixelStorei( GL_PACK_ALIGNMENT, 1 );
 
   /* blend other guy's stuff with ours */
   binaryswap_spu.super.Enable( GL_BLEND );
 
   /* make sure everyone is up to speed */
-  //binaryswap_spu.child.BarrierExec( BINARYSWAP_BARRIER );
   /* figure out our portion for each stage */
   for(i=0; i<stages; i++){
     /* set up message header */
-    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->start_x = read_x[i];
-    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->start_y = read_y[i];
-    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->width   = width[i];
-    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->height  = height[i];
-    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->depth   = binaryswap_spu.depth;
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->start_x         = read_x[i];
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->start_y         = read_y[i];
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->width           = width[i];
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->height          = height[i];
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_x       = 0;
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_y       = 0;
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_width   = 0;
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_height  = 0;
+    ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->depth           = binaryswap_spu.depth;
 
+    if(binaryswap_spu.clipped_window){
+      if(start_clipped_x < read_x[i])
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_x = read_x[i];
+      else
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_x = start_clipped_x;
+      
+      if(start_clipped_y < read_y[i])
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_y = read_y[i];
+      else
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_y = start_clipped_y;
+      
+      if(end_clipped_x > (read_x[i]+width[i]))
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_width  = 
+	  (read_x[i]+width[i]) - ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_x+1;
+      else
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_width  = 
+	  end_clipped_x - ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_x+1;
+      
+      if(end_clipped_y > (read_y[i]+height[i]))
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_height = 
+	  (read_y[i]+height[i]) - ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_y+1;
+      else
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_height = 
+	  end_clipped_y - ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_y+1;
+      
+      if(((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_width < 0)
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_width = 0; 
+      if(((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_height < 0)
+	((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_height = 0;
+      
+      read_start_x = ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_x;
+      read_start_y = ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_y;
+      read_width   = ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_width;
+      read_height  = ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->clipped_height;
+    }
+    else{
+      read_start_x = ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->start_x;
+      read_start_y = ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->start_y;
+      read_width   = ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->width;
+      read_height  = ((BinarySwapMsg*) binaryswap_spu.outgoing_msg)->height;
+    }
+    
     /* read our portion for this pass */
     /* figure out which mode to use, depth or alpha */
     if(binaryswap_spu.alpha_composite){
-      binaryswap_spu.super.ReadPixels( read_x[i], read_y[i], width[i], height[i], 
+      binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, read_width, read_height, 
 				       GL_BGRA_EXT, GL_UNSIGNED_BYTE, 
 				       (unsigned char*)binaryswap_spu.outgoing_msg +
 				       binaryswap_spu.offset ); 
@@ -288,14 +441,14 @@ static void DoFlush( WindowInfo *window )
       if(binaryswap_spu.highlow[i]){
 	crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
 	crNetSend( binaryswap_spu.peer_send[i], NULL, binaryswap_spu.outgoing_msg, 
-		   (width[i]*height[i]*4) + binaryswap_spu.offset);
+		   (read_width * read_height * 4) + binaryswap_spu.offset);
 	if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
 		binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
       }
       /* higher of pair => send,recv */
       else{
 	crNetSend( binaryswap_spu.peer_send[i], NULL, binaryswap_spu.outgoing_msg, 
-		   (width[i]*height[i]*4) + binaryswap_spu.offset);
+		   (read_width * read_height * 4) + binaryswap_spu.offset);
 	if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
 		binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 	crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
@@ -303,10 +456,18 @@ static void DoFlush( WindowInfo *window )
       
       /* get render info from other node */
       render_info = (BinarySwapMsg*)incoming_msg;
-      draw_x = render_info->start_x;
-      draw_y = render_info->start_y;
-      draw_width = render_info->width;
-      draw_height = render_info->height;
+      if(binaryswap_spu.clipped_window){
+	draw_x = render_info->clipped_x;
+	draw_y = render_info->clipped_y;
+	draw_width = render_info->clipped_width;
+	draw_height = render_info->clipped_height;
+      }
+      else{
+	draw_x = render_info->start_x;
+	draw_y = render_info->start_y;
+	draw_width = render_info->width;
+	draw_height = render_info->height;
+      }
       other_depth = render_info->depth;
 
       if(binaryswap_spu.depth < other_depth){
@@ -321,7 +482,6 @@ static void DoFlush( WindowInfo *window )
       if(binaryswap_spu.depth > other_depth){
 	/* over operator */
 	binaryswap_spu.super.BlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); 
-	
       }
       /* other image is under ours */
       else{  
@@ -335,11 +495,11 @@ static void DoFlush( WindowInfo *window )
     }
     /* depth composite */
     else{ 
-      binaryswap_spu.super.ReadPixels( read_x[i], read_y[i], width[i], height[i], 
+      binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, read_width, read_height, 
 				       GL_BGR_EXT, GL_UNSIGNED_BYTE, 
 				       (unsigned char*)binaryswap_spu.outgoing_msg +
 				       binaryswap_spu.offset ); 
-      binaryswap_spu.super.ReadPixels( read_x[i], read_y[i], width[i], height[i], 
+      binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, read_width, read_height, 
 				       GL_DEPTH_COMPONENT, GL_FLOAT, 
 				       (unsigned char*)binaryswap_spu.outgoing_msg + // base address
 				       (width[i] * height[i] * 3) + // color information
@@ -349,7 +509,7 @@ static void DoFlush( WindowInfo *window )
       if(binaryswap_spu.highlow[i]){
 	crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
 	crNetSend( binaryswap_spu.peer_send[i], NULL, binaryswap_spu.outgoing_msg,  
-		   width[i]*height[i]*(3+4) + binaryswap_spu.offset);
+		   read_width*read_height*(3+4) + binaryswap_spu.offset);
 	if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
 		binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 	
@@ -357,7 +517,7 @@ static void DoFlush( WindowInfo *window )
       /* higher of pair => send,recv */
       else{
 	crNetSend( binaryswap_spu.peer_send[i], NULL, binaryswap_spu.outgoing_msg, 
-		  width[i]*height[i]*(3+4) + binaryswap_spu.offset);
+		  read_width*read_height*(3+4) + binaryswap_spu.offset);
 	if (binaryswap_spu.mtu > binaryswap_spu.peer_send[i]->mtu)
 		binaryswap_spu.mtu = binaryswap_spu.peer_send[i]->mtu;
 	crNetGetMessage( binaryswap_spu.peer_recv[i], &incoming_msg);
@@ -404,6 +564,75 @@ static void DoFlush( WindowInfo *window )
     
     /* make sure everything got drawn for next pass */
     binaryswap_spu.super.Flush();
+
+    /* more fun with clipped windowing... */
+    if(binaryswap_spu.clipped_window){
+      int end_x, end_y;
+      int start_x, start_y;
+      int temp;
+      
+      /* find optimal starting point */
+      start_x = render_info->start_x;
+      if(start_clipped_x < render_info->clipped_x){
+	temp = start_clipped_x;
+      }
+      else{
+	temp = render_info->clipped_x;
+	if(render_info->clipped_width > 0 && render_info->clipped_height > 0)
+	  start_clipped_x = temp;
+      }
+      if(temp > start_x){
+	start_x = temp;
+      }
+
+      start_y = render_info->start_y;
+      if(start_clipped_y < render_info->clipped_y){
+	temp = start_clipped_y;
+      }
+      else{
+	temp = render_info->clipped_y;
+	if(render_info->clipped_width > 0 && render_info->clipped_height > 0)
+	  start_clipped_y = temp;
+      }
+      if(temp > start_y){
+	start_y = temp;
+      }
+           
+      /* find optimal ending point */
+      end_x = render_info->start_x + render_info->width - 1;
+      if(end_clipped_x > (render_info->clipped_x + render_info->clipped_width - 1)){
+	temp = end_clipped_x;
+      }
+      else{
+	temp = (render_info->clipped_x + render_info->clipped_width - 1);
+	if(render_info->clipped_width > 0 && render_info->clipped_height > 0)
+	  end_clipped_x = temp;
+      }
+      if(end_x > temp){
+	end_x = temp;
+      }
+     
+      end_y = render_info->start_y + render_info->height - 1;
+      if(end_clipped_y > (render_info->clipped_y + render_info->clipped_height - 1)){
+	temp = end_clipped_y;
+      }
+      else{
+	temp = (render_info->clipped_y + render_info->clipped_height - 1);
+	if(render_info->clipped_width > 0 && render_info->clipped_height > 0)
+	  end_clipped_y = temp;
+      }
+      if(end_y > temp){
+	end_y = temp;
+      }
+      
+      if((i+1) >= stages){
+	/* setup final info */
+	draw_x = start_x;
+	draw_y = start_y;
+	draw_width = end_x - start_x + 1;
+	draw_height = end_y - start_y + 1;
+      }
+    }
     
     /* clean up the memory allocated for the recv */
     crNetFree( binaryswap_spu.peer_recv[i], incoming_msg );
@@ -419,25 +648,30 @@ static void DoFlush( WindowInfo *window )
 				   binaryswap_spu.outgoing_msg + 
 				   binaryswap_spu.offset ); 
   binaryswap_spu.child.Clear( GL_COLOR_BUFFER_BIT );
+  binaryswap_spu.child.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+  binaryswap_spu.child.PixelStorei( GL_PACK_ALIGNMENT, 1 );
   
   /* 
    * Make sure everyone has issued a clear to the child,
    * if not, then we'll clear what we are trying to draw... 
    */
-  binaryswap_spu.child.BarrierExec( BINARYSWAP_BARRIER );
+  binaryswap_spu.child.BarrierExec( BINARYSWAP_CLEARBARRIER );
+  
+  binaryswap_spu.child.SemaphoreP( MUTEX_SEMAPHORE );
   binaryswap_spu.child.MatrixMode(GL_PROJECTION);
   binaryswap_spu.child.LoadIdentity();
   binaryswap_spu.child.Ortho(0.0, (GLdouble) geometry[2], 0.0, 
 			     (GLdouble) geometry[3], 10.0, -10.0);
   binaryswap_spu.child.MatrixMode(GL_MODELVIEW);
   binaryswap_spu.child.LoadIdentity();
-  binaryswap_spu.child.RasterPos2i( draw_x, draw_y );
-  
-  binaryswap_spu.child.DrawPixels( draw_width, draw_height, 
-				   GL_RGB, GL_UNSIGNED_BYTE, 
-				   binaryswap_spu.outgoing_msg + 
-				   binaryswap_spu.offset );
-  
+  if(draw_width > 0 && draw_height > 0){
+    binaryswap_spu.child.RasterPos2i( draw_x, draw_y );    
+    binaryswap_spu.child.DrawPixels( draw_width, draw_height, 
+				     GL_RGB, GL_UNSIGNED_BYTE, 
+				     binaryswap_spu.outgoing_msg + 
+				     binaryswap_spu.offset );
+  }  
+  binaryswap_spu.child.SemaphoreV( MUTEX_SEMAPHORE );
 }
 
 
@@ -448,16 +682,15 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuSwapBuffers( GLint window, GLint
   
   DoFlush( &(binaryswap_spu.windows[window]) );
   
-  binaryswap_spu.child.BarrierExec( BINARYSWAP_BARRIER );
+  binaryswap_spu.child.BarrierExec( BINARYSWAP_SWAPBARRIER );
    
-  binaryswap_spu.child.SwapBuffers( binaryswap_spu.windows[window].childWindow, 0 );
-
-  binaryswap_spu.child.Finish();
-
-  if (binaryswap_spu.local_visualization){
-	  binaryswap_spu.super.SwapBuffers( binaryswap_spu.windows[window].renderWindow, 0 );
+  if(binaryswap_spu.node_num == 0){
+    binaryswap_spu.child.SwapBuffers( binaryswap_spu.windows[window].childWindow, 0 );
+    binaryswap_spu.child.Finish();
   }
+
   binaryswap_spu.cleared_this_frame = 0;
+  
   (void) flags;
 }
 
@@ -542,7 +775,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuMakeCurrent(GLint window,
 static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateWindow( const char *dpyName, 
 							       GLint visBits )
 {
-  GLint childVisual = visBits;
+  //GLint childVisual = visBits;
   int i;
   
   /* find empty slot in windows[] array */
@@ -554,13 +787,7 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateWindow( const char *dpyNa
     crWarning("Ran out of windows in binaryswapspuCreateWindow");
     return -1;
   }
-  
-  /* If doing z-compositing, need stencil buffer */
-  if (binaryswap_spu.extract_depth)
-    childVisual |= CR_STENCIL_BIT;
-  if (binaryswap_spu.extract_alpha)
-    childVisual |= CR_ALPHA_BIT;
-  
+    
   binaryswap_spu.windows[i].inUse = GL_TRUE;
   binaryswap_spu.windows[i].renderWindow = binaryswap_spu.super.crCreateWindow( dpyName, 
 										visBits );
@@ -611,6 +838,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum targ
 
 SPUNamedFunctionTable binaryswap_table[] = {
   { "SwapBuffers", (SPUGenericFunction) binaryswapspuSwapBuffers },
+  { "Hint", (SPUGenericFunction) binaryswapspuHint },
   { "CreateContext", (SPUGenericFunction) binaryswapspuCreateContext },
   { "DestroyContext", (SPUGenericFunction) binaryswapspuDestroyContext },
   { "MakeCurrent", (SPUGenericFunction) binaryswapspuMakeCurrent },
