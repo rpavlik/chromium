@@ -180,7 +180,7 @@ void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 		readback_spu->extract_alpha = 0;
 	}
 
-	/* Get the a few options from the Render SPU from which we inherit */
+	/* Get a few options from the Render SPU from which we inherit */
 	{
 		char response[1000];
 		if (crMothershipGetSPUParam( conn, response, "resizable" )) {
@@ -200,7 +200,6 @@ void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 			/* This *MUST* match the default in the Render SPU */
 			readback_spu->default_visual = CR_RGB_BIT | CR_DOUBLE_BIT | CR_DEPTH_BIT;
 		}
-
 	}
 
 	crMothershipDisconnect( conn );
