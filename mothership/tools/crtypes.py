@@ -378,9 +378,7 @@ class Node:
 		if len(chain1) != len(chain2):
 			return 0
 		for i in range(len(chain1)):
-			spu1 = chain1[i]
-			spu2 = chain2[i]
-			if spu1.Name() != spu2.Name():
+			if chain1[i].Name() != chain2[i].Name():
 				return 0
 		return 1  # close enough
 
@@ -504,6 +502,21 @@ class NetworkNode(Node):
 		# __Tiles is an array[nodeIndex] of arrays of (x,y,w,h) tuples
 		self.__Tiles = [ [] ]
 
+	def Clone(self):
+		"""Return a deep copy of this NetworkNode."""
+		newNode = NetworkNode(self.GetHosts(), self.GetCount())
+		for spu in self.SPUChain():
+			newSpu = spu.Clone()
+			newNode.AddSPU(newSpu)
+		pos = self.GetPosition()
+		newNode.SetPosition(pos[0], pos[1])
+		if self.IsSelected():
+			newNode.Select()
+		newNode.SetHostNamePattern( self.GetHostNamePattern() )
+		newNode.__Tiles = self.__Tiles[:]
+		assert isinstance(newNode, NetworkNode)
+		return newNode
+		
 	def AddTile(self, x, y, width, height, nodeIndex=0):
 		"""Add a tile to nth server (for tilesort only)"""
 		# lengthen the tiles list if needed
@@ -515,6 +528,8 @@ class NetworkNode(Node):
 
 	def SetTiles(self, tileList, nodeIndex=0):
 		"""Set the tile list for the nth server."""
+		while nodeIndex > len(self.__Tiles) - 1:
+			self.__Tiles.append( [] )
 		self.__Tiles[nodeIndex] = tileList
 
 	def GetTiles(self, nodeIndex=0):
