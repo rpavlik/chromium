@@ -48,6 +48,7 @@ typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
 typedef struct {
 	SPUDispatchTable *dispatch;
 	int id;
+	char *window_title;
 	int window_x, window_y;
 	unsigned int window_width, window_height;
 	unsigned int actual_window_width, actual_window_height;

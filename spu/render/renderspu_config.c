@@ -8,6 +8,7 @@
 
 #include "cr_mothership.h"
 #include "cr_string.h"
+#include "cr_mem.h"
 #include "cr_error.h"
 
 #include <stdio.h>
@@ -29,6 +30,7 @@ static void __setDefaults( void )
 	render_spu.fullscreen = 0;
 	render_spu.ontop = 0;
 	render_spu.use_L2 = 0;
+	render_spu.window_title = crStrdup( "Chromium Render SPU" );
 }
 
 void renderspuGatherConfiguration( void )
@@ -72,6 +74,12 @@ void renderspuGatherConfiguration( void )
 	if (crMothershipGetSPUParam( conn, response, "stencil_bits" ) )
 	{
 		sscanf( response, "%d", &(render_spu.stencil_bits) );
+	}
+
+	if (crMothershipGetSPUParam( conn, response, "window_title" ) )
+	{
+		crFree( render_spu.window_title );
+		render_spu.window_title = crStrdup( response );
 	}
 
 #ifndef WINDOWS

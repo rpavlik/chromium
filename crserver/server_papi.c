@@ -37,6 +37,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreate( GLuint name, GLuint
 
 	barrier = (CRBarrier *) crHashtableSearch( cr_barriers, name );
 
+	if (count == 0)
+	{
+		count = cr_server.numClients;
+	}
+
 	if ( barrier == NULL )
 	{
 		barrier = (CRBarrier *) crAlloc( sizeof(*barrier) );

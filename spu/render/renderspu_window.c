@@ -29,7 +29,7 @@
 #include "cr_string.h"
 #include "renderspu.h"
 
-#define WINDOW_NAME "Chromium Render SPU"
+#define WINDOW_NAME render_spu.window_title
 
 #ifndef WINDOWS
 
