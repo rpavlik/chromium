@@ -521,6 +521,7 @@ class SockWrapper:
 	UNKNOWNSERVER = 405
 	UNKNOWNPROTOCOL = 406
 	NOAPPLICATION = 407
+	INVALIDPARAM = 408
 
 	def __init__(self, sock):
 		self.sock = sock
@@ -659,6 +660,7 @@ class CR:
 	    do_logperf:		Logs Performance Data to a logfile.
 	    do_gettilelayout:   Calls the user's LayoutTiles() function and returns
 		                   the list of new tiles.
+		 do_getstatus:		Returns information about the state of the nodes.
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
 	"""
@@ -1556,6 +1558,97 @@ class CR:
 		assert len(result) < 8000  # see limit in getNewTiling in tilesort SPU
 		sock.Success( result )
 		return
+
+	def do_getstatus( self, sock, args ):
+		"""Returns status information for the mothership.
+		
+		The first argument determines what information is sent:
+		0 [or nonexistent] - Send simple summary info back.
+		1 - Send detailed summary info back.
+		2 - Send node count.
+		3 n attr - Send attr value for node n.
+		
+		# Not yet implemented, intended for GUI use
+		4 [n] - Send node setup information for node n [if n not given, is sent for all nodes].
+		5 [n] - Send node status information for node n [if n not given, is sent for all nodes].
+		"""
+		
+		args = string.split(args)
+		
+		node_types = [ [CRNetworkNode, "network node"],
+							[CRUTServerNode, "CRUT server node"],
+							[CRUTProxyNode, "CRUT proxy node"],
+							[CRApplicationNode, "application node"] ]
+		
+		TYPE, NAME, COUNT, CONNECTED = 0, 1, 2, 3
+		
+		result = ""
+		
+		if len(args) == 0 or (args[0] == "0" or args[0] == "1"):
+			total_connected = 0
+			
+			# Set the node type count and node type connected counts to 0
+			for node_type in node_types:
+				node_type.append(0)
+				node_type.append(0)
+			
+			for node in self.nodes:
+				for node_type in node_types:
+					if isinstance(node, node_type[TYPE]):
+						node_type[COUNT] = node_type[COUNT] + 1
+						if node.spokenfor:
+							node_type[CONNECTED] = node_type[CONNECTED] + 1
+							total_connected = total_connected + 1
+			
+			result = "%d nodes, %d connected" % (len(self.nodes), total_connected)
+			
+			is_detailed = (len(args) > 0 and args[0] == "1")
+			
+			for node_type in node_types:
+				if node_type[COUNT]:
+					if is_detailed:
+						result = result + ("<br>  %sS:" % string.upper(node_type[NAME])) + self.__create_detailed_summary(node_type[TYPE])
+					else:
+						result = result + "<br>  %d %ss, %d connected" % (node_type[COUNT], node_type[NAME], node_type[CONNECTED])
+			
+		elif args[0] == "2":
+			result = "%d" % len(self.nodes)
+			
+		elif args[0] == "3":
+			if len(args) < 2:
+				sock.Failure(SockWrapper.INVALIDPARAM, "getstatus usage: 3 n attr - Get attr value for node n.")
+				return
+			
+			try:
+				attr = getattr(self.nodes[int(args[1])], args[2])
+			except AttributeError:
+				sock.Failure(SockWrapper.INVALIDPARAM, "Invalid node attribute: %s" % args[2])
+				return
+			except IndexError:
+				sock.Failure(SockWrapper.INVALIDPARAM, "Node index out of range: %s" % args[1])
+				return
+			except ValueError:
+				sock.Failure(SockWrapper.INVALIDPARAM, "Invalid node index: %s" % args[1])
+				return
+			
+			result = MakeString(attr)
+		
+		sock.Success( result )
+
+	def __create_detailed_summary ( self, node_type ):
+		"""Creates a detailed summary string."""
+		
+		result = ""
+		
+		for node_num in range(len(self.nodes)):
+			node = self.nodes[node_num]
+			if isinstance(node, node_type):
+				if node.spokenfor:
+					result = result + "<br>    %s[%d] has connected" % (node.host, node_num)
+				else:
+					result = result + "<br>    %s[%d] has NOT connected" % (node.host, node_num)
+		
+		return result
 
 	def do_daughter( self, sock, args ):
 		# This socket has identified itself as a daughter socket.  She
