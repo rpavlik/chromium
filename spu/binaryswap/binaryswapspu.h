@@ -36,6 +36,7 @@ typedef struct {
 	GLubyte *msgBuffer;
 	GLint bytesPerColor, bytesPerDepth;  /**< bytes per pixel */
 	GLenum depthType;  /**< GL_UNSIGNED_SHORT or GL_FLOAT */
+	GLint visBits;
 	
 	int* read_x;
 	int* read_y;
@@ -61,6 +62,7 @@ typedef struct {
 	GLint renderContext;
 	GLint childContext;
 	WindowInfo *currentWindow;
+	GLint visBits;
 } ContextInfo;
 
 typedef struct {

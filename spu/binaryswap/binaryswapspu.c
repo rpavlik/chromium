@@ -923,6 +923,12 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuCreateContext( const char *dpyN
 
 	context->renderContext = binaryswap_spu.super.CreateContext(dpyName, visBits);
 	context->childContext = binaryswap_spu.child.CreateContext(dpyName, childVisBits);
+	context->visBits = visBits;
+
+	if (context->renderContext < 0 || context->childContext < 0) {
+		 crFree(context);
+		 return -1;
+	}
 
 	/* put into hash table */
 	crHashtableAdd(binaryswap_spu.contextTable, freeID, context);
@@ -951,6 +957,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuMakeCurrent(GLint win, GLint nat
 
 	if (context && window)
 	{
+		CRASSERT(context->visBits == window->visBits);
 #ifdef CHROMIUM_THREADSAFE
 		crSetTSD(&_BinaryswapTSD, context);
 #else
@@ -1009,6 +1016,12 @@ static GLint BINARYSWAPSPU_APIENTRY binaryswapspuWindowCreate( const char *dpyNa
 	window->width = -1; /* unknown */
 	window->height = -1; /* unknown */
 	window->msgBuffer = NULL;
+	window->visBits = visBits;
+
+	if (window->renderWindow < 0 || window->childWindow < 0) {
+		 crFree(window);
+		 return -1;
+	}
 
 	/* put into hash table */
 	crHashtableAdd(binaryswap_spu.windowTable, window->index, window);
