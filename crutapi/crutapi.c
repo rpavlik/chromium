@@ -1,6 +1,12 @@
 /* Written by Dale Beermann (beermann@cs.virginia.edu) */
 
 #include "crut_api.h"
+#include "cr_environment.h"
+#include "cr_error.h"
+#include "cr_mem.h"
+#include "cr_mothership.h"
+#include "cr_string.h"
+#include "cr_url.h"
 
 CRUTAPI crut_api;
 
@@ -64,10 +70,10 @@ crutGetMenuXML(void)
     
     crMothershipGetParam( crut_api.mothershipConn, "crut_menu_xml", response );
     
-    if (strlen(response) < MENU_MAX_SIZE)
-	memcpy(crut_api.menuBuffer, response, strlen(response));
+    if (crStrlen(response) < MENU_MAX_SIZE)
+		crMemcpy(crut_api.menuBuffer, response, crStrlen(response));
     else
-	crError("Menu XML is too long for buffer");
+		crError("Menu XML is too long for buffer");
 }
 
 
