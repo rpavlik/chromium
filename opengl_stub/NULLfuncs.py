@@ -26,6 +26,7 @@ for func_name in keys:
 	print "static %s SPULOAD_APIENTRY NULL_%s( %s )" % (return_type, func_name, apiutil.MakeDeclarationString(params))
 	print "{"
 	print "\t/* do nothing */"
+	print "\tcrWarning(\"YOU ARE CALLING A NULLED FUNCTION\");"
 	for (name, type, vecSize) in params:
 		print "\t(void) %s;" % name
 	if return_type != "void":

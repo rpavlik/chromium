@@ -98,10 +98,15 @@ APIFILES = ../glapi_parser/apiutil.py ../glapi_parser/APIspec.txt
 opengl.def: defs.py $(APIFILES)
 	@$(ECHO) "Creating the defs file..."
 	@$(PYTHON) defs.py > opengl.def
-
+ifeq ($(ARCH), WIN_NT)
+getprocaddress.c: windows_getprocaddress.py $(APIFILES)
+	@$(ECHO) "Creating crGetProcAddress"
+	@$(PYTHON) windows_getprocaddress.py > getprocaddress.c
+else
 getprocaddress.c: getprocaddress.py $(APIFILES)
 	@$(ECHO) "Creating crGetProcAddress"
 	@$(PYTHON) getprocaddress.py > getprocaddress.c
+endif
 
 $(ARCH_EXPORTS): $(ARCH_EXPORTS_PY) $(APIFILES) entrypoints.py
 	@$(ECHO) "Creating the OpenGL DLL export functions (for $(ARCH))"
