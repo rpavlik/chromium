@@ -41,7 +41,7 @@ class TileDialog(wxDialog):
 			innerSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
 			self.instanceCtrl = wxSpinCtrl(parent=self, id=id_INSTANCE,
 										   size=wxSize(50,25),
-										   min=1, max=numLists, initial=1)
+										   min=1, max=numLists, value="1")
 			EVT_SPINCTRL(self.instanceCtrl, id_INSTANCE, self._onInstance)
 			innerSizer.Add(self.instanceCtrl,
 						   flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)

@@ -51,13 +51,13 @@ class HostDialog(wxDialog):
 		label = wxStaticText(parent=self, id=-1, label="First index:")
 		innerSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
 		self.startCtrl = wxSpinCtrl(parent=self, id=id_START,
-									size=wxSize(50,25), min=0, initial=1)
+									size=wxSize(50,25), min=0, value="1")
 		innerSizer.Add(self.startCtrl,
 					   flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
 		label = wxStaticText(parent=self, id=-1, label="Count:")
 		innerSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
 		self.countCtrl = wxSpinCtrl(parent=self, id=id_COUNT,
-									size=wxSize(50,25), min=0, initial=1)
+									size=wxSize(50,25), min=0, value="1")
 		innerSizer.Add(self.countCtrl,
 					   flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
 		self.generateButton = wxButton(parent=self, id=id_GENERATE,

@@ -41,7 +41,7 @@ class IntDialog(wxDialog):
 						  flag=wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL)
 			spinner = wxSpinCtrl(parent=self, id=id_SPINNER,
 								 min=minValue, max=maxValue,
-								 initial=defaultValues[i])
+								 value=str(defaultValues[i]))
 			flexSizer.Add(spinner, 0, wxALIGN_CENTER)
 			self.spinners.append(spinner)
 			i += 1
