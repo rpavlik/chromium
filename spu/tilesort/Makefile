@@ -56,7 +56,16 @@ endif
 
 PACKS = 1
 
-PRECOMP = tilesortspu_gen.h tilesortspu_gen.c tilesortspu.c tilesortspu_diffapi.c tilesortspu_pinch_gen.c tilesortspu_dlpack_gen.c tilesortspu_dlpack_gen.h tilesortspu_dlstate_gen.c tilesortspu_dlstate_gen.h
+PRECOMP = tilesortspu_gen.h \
+	tilesortspu_gen.c \
+	tilesortspu.c \
+	tilesortspu_diffapi.c \
+	tilesortspu_pinch_gen.c \
+	tilesortspu_dlpack_gen.c \
+	tilesortspu_dlpack_gen.h \
+	tilesortspu_dlstate_gen.c \
+	tilesortspu_dlstate_gen.h \
+	tilesortspu_dlpacker_gen.c
 
 SLOP = $(PRECOMP)
 
