@@ -293,3 +293,13 @@ char **crStrSplitn( const char *str, const char *splitstr, int n )
 	faked_argv[num_args] = NULL;
 	return faked_argv;
 }
+
+/* Free an array of strings, as returned by crStrSplit() and crStrSplitn(). */
+void crFreeStrings( char **strings )
+{
+	int i;
+	for (i = 0; strings[i]; i++) {
+		crFree(strings[i]);
+	}
+	crFree(strings);
+}

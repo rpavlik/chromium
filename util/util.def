@@ -17,6 +17,7 @@ crRealloc
 crFree
 crStrSplit
 crStrSplitn
+crFreeStrings
 crStrlen
 crStrchr
 crStrrchr

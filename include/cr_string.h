@@ -27,6 +27,7 @@ int    crStrToInt( const char *str );
 double crStrToFloat( const char *str );
 char **crStrSplit( const char *str, const char *splitstr );
 char **crStrSplitn( const char *str, const char *splitstr, int n );
+void   crFreeStrings( char **strings );
 
 void   crBytesToString( char *string, int nstring, void *data, int ndata );
 void   crWordsToString( char *string, int nstring, void *data, int ndata );
