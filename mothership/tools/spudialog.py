@@ -65,7 +65,7 @@ class SPUDialog(wxDialog):
 						if opt.Count <= 2:
 							width = 90
 						else:
-							width = 70
+							width = 60
 						ctrl = wxSpinCtrl(parent=self, id=100+i,
 										  size=wxSize(width,25),
 										  value=str(opt.Value[j]),
