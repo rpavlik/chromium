@@ -159,7 +159,7 @@ main(int argc, char *argv[])
 
 	printf("npclient:  Connecting to servers\n");
 	for (i = 0; i < numServers; i++) {
-		conn[i] = crNetConnectToServer(servers[i], port, MTU, 0);
+		conn[i] = crNetConnectToServer(servers[i], (unsigned short) port, MTU, 0);
 		if (conn[i]) {
 			printf("npclient:  Connection to %s OK.\n", servers[i]);
 		}
