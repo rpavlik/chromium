@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <GL/gl.h>
+#include "chromium.h"
 #include "cr_mem.h"
 #include "dlm.h"
 #include "dlm_client.h"

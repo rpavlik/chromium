@@ -72,7 +72,8 @@ crdlm_NewList(GLuint listIdentifier, GLenum mode, SPUDispatchTable * table)
 			return;
 		}
 
-		if (!(listInfo = (DLMListInfo *) crAlloc(sizeof(DLMListInfo))))
+		listInfo = (DLMListInfo *) crAlloc(sizeof(DLMListInfo));
+		if (!(listInfo))
 		{
 			char msg[1000];
 			sprintf(msg, "could not allocate %d bytes of memory in NewList",
@@ -82,7 +83,8 @@ crdlm_NewList(GLuint listIdentifier, GLenum mode, SPUDispatchTable * table)
 		}
 
 		listInfo->first = listInfo->last = NULL;
-		if (!(listInfo->references = crAllocHashtable()))
+		listInfo->references = crAllocHashtable();
+		if (!(listInfo->references))
 		{
 			crFree(listInfo);
 			crdlm_error(__LINE__, __FILE__, GL_OUT_OF_MEMORY,
@@ -229,7 +231,7 @@ void
 crdlm_DeleteLists(GLuint firstListIdentifier, GLsizei range)
 {
 	CRDLMContextState *listState = CURRENT_STATE();
-	register unsigned int i;
+	register int i;
 
 	if (listState == NULL)
 	{
@@ -262,17 +264,16 @@ crdlm_DeleteLists(GLuint firstListIdentifier, GLsizei range)
 	DLM_LOCK(listState->dlm);
 	for (i = 0; i < range; i++)
 	{
-		crHashtableDelete(listState->dlm->displayLists,
-											firstListIdentifier + i, crdlm_free_list);
+		crHashtableDelete(listState->dlm->displayLists, 
+				  firstListIdentifier + i, crdlm_free_list);
 	}
 	DLM_UNLOCK(listState->dlm);
 }
 
 
 void
-crdlm_add_to_dl(CRDLMContextState * state, void *x,
-								void (*execute) (DLMInstanceList * instance,
-																 SPUDispatchTable * dispatchTable))
+crdlm_add_to_dl(CRDLMContextState * state, void *x, 
+		void (*execute) (DLMInstanceList * instance, SPUDispatchTable * dispatchTable))
 {
 	DLMInstanceList *instance = (DLMInstanceList *) x;
 	instance->next = NULL;
@@ -340,7 +341,7 @@ crdlm_CallLists(GLsizei n, GLenum type, const GLvoid * lists,
 	case typeIndicator: { \
 	    type *data = (type *)lists; \
       /*printf("Calling %d (b=%d)\n", (int)(base + *data), base);*/\
-	    for (i = 0; i < n; i++, data++) crdlm_CallList(base + *data, table); \
+	    for (i = 0; i < n; i++, data++) crdlm_CallList(base + (GLuint) *data, table); \
 	} \
 	break
 

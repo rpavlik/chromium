@@ -121,7 +121,7 @@ def wrap_header(functionName):
 	# Start writing the header
 	print 'struct instance%s {' % (functionName)
 	print '	DLMInstanceList *next;'
-	print '	void (*execute)(DLMInstanceList *instance, SPUDispatchTable *dispatchTable);'
+	print '	void (DLM_APIENTRY *execute)(DLMInstanceList *instance, SPUDispatchTable *dispatchTable);'
 	for index in range(len(args)):
 		# Watch out for the word "const" (which should be ignored)
 		# and for types that end in "*" (which are pointers and need
@@ -213,17 +213,17 @@ def generate_bbox_code(functionName):
 
 		if normalize == "N":
 			if type == "b":
-				denom = "128.0"
+				denom = "128.0f"
 			elif type == "s":
-				denom = "32768.0"
+				denom = "32768.0f"
 			elif type == "i":
-				denom = "2147483647.0"
+				denom = "2147483647.0f"
 			elif type == "ub":
-				denom = "255.0"
+				denom = "255.0f"
 			elif type == "us":
-				denom = "65535.0"
+				denom = "65535.0f"
 			elif type == "ui":
-				denom = "4294967295.0"
+				denom = "4294967295.0f"
 			
 			print '\t\tGLfloat nx = (GLfloat) %s / %s;' % (xName, denom)
 			xName = "nx"
@@ -519,7 +519,7 @@ else:
 	print "{"
 	for func_name in keys:
 		print '\tif (t->%s != original->%s)' % (func_name, func_name)
-		print '\t\tcrSPUChangeInterface(t, t->%s, original->%s);' % (func_name, func_name)
+		print '\t\tcrSPUChangeInterface(t, (void *) t->%s, (void *) original->%s);' % (func_name, func_name)
 	print "}"
 
 

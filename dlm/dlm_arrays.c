@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <GL/gl.h>
+#include "chromium.h"
 #include "cr_dlm.h"
 #include "dlm.h"
 #include "dlm_dispatch.h"
@@ -16,7 +16,7 @@
  * We should try to write something reusable.
  */
 
-void crdlm_compile_ArrayElement (GLint index)
+void DLM_APIENTRY crdlm_compile_ArrayElement (GLint index)
 {
   unsigned char *p;
   int unit;
@@ -227,7 +227,7 @@ void crdlm_compile_ArrayElement (GLint index)
   }
 }
 
-void crdlm_compile_DrawArrays(GLenum mode, GLint first, GLsizei count)
+void APIENTRY crdlm_compile_DrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   int i;
 
@@ -251,7 +251,7 @@ void crdlm_compile_DrawArrays(GLenum mode, GLint first, GLsizei count)
   crdlm_compile_End();
 }
 
-void crdlm_compile_DrawElements(GLenum mode, GLsizei count,
+void APIENTRY crdlm_compile_DrawElements(GLenum mode, GLsizei count,
                                       GLenum type, const GLvoid *indices)
 {
   int i;
@@ -305,7 +305,7 @@ void crdlm_compile_DrawElements(GLenum mode, GLsizei count,
   crdlm_compile_End();
 }
 
-void crdlm_compile_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, 
+void APIENTRY crdlm_compile_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, 
                                       GLenum type, const GLvoid *indices)
 {
   int i;
@@ -362,7 +362,7 @@ void crdlm_compile_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsi
 }
 
 #ifdef CR_EXT_multi_draw_arrays
-void crdlm_compile_MultiDrawArraysEXT( GLenum mode, GLint *first,
+void APIENTRY crdlm_compile_MultiDrawArraysEXT( GLenum mode, GLint *first,
                           GLsizei *count, GLsizei primcount)
 {
    GLint i;
@@ -375,7 +375,7 @@ void crdlm_compile_MultiDrawArraysEXT( GLenum mode, GLint *first,
 }
 
 
-void crdlm_compile_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
+void APIENTRY crdlm_compile_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
                             const GLvoid **indices, GLsizei primcount)
 {
    GLint i;

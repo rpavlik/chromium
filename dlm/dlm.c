@@ -73,7 +73,8 @@ CRDLM *crDLMNewDLM(int userConfigSize, const CRDLMConfig *userConfig)
      * memory allocation, so we can free up all the memory if there's
      * a problem.
      */
-    if (!(dlm->displayLists = crAllocHashtable())) {
+    dlm->displayLists = crAllocHashtable();
+    if (!(dlm->displayLists)) {
 	crFree(dlm);
 	return NULL;
     }
@@ -303,7 +304,8 @@ CRDLMError crDLMDeleteListContent(CRDLM *dlm, unsigned long listIdentifier)
     DLMInstanceList *instance;
 
     listInfo = (DLMListInfo *) crHashtableSearch(dlm->displayLists, listIdentifier);
-    if (listInfo && (instance = listInfo->first)) {
+    if (listInfo) {
+        instance = listInfo->first;
 	while (instance) {
 	    DLMInstanceList *nextInstance;
 	    nextInstance = instance->next;
