@@ -144,7 +144,7 @@ extern CRtsd _ThreadTSD;
 	CRContext *C = thread->currentContext->State
 
 
-extern TileSortBucketInfo *tilesortspuBucketGeometry(void);
+extern void tilesortspuBucketGeometry(TileSortBucketInfo *info);
 
 extern TileSortSPU tilesort_spu;
 

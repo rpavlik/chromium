@@ -25,24 +25,26 @@ typedef struct BucketRegion {
 } BucketRegion;
 
 #define HASHRANGE 256
-BucketRegion *rhash[HASHRANGE][HASHRANGE];
-BucketRegion *rlist;
-int rlist_alloc = 0;
+static BucketRegion *rhash[HASHRANGE][HASHRANGE];
+/*static BucketRegion *rlist;*/
 
 #define BKT_DOWNHASH(a, range) ((a)*HASHRANGE/(range))
 #define BKT_UPHASH(a, range) ((a)*HASHRANGE/(range) + ((a)*HASHRANGE%(range)?1:0))
 
-void __fillBucketingHash (void) 
+
+/*
+ * Initialize the hash table used for optimized bucketing.
+ */
+static void fillBucketingHash(void) 
 {
 	int i, j, k, m;
 	int r_len=0;
 	BucketRegion *rlist;
 	int id;
+	int rlist_alloc = 64 * 128;
 
-	/* Allocate rlist */
-	rlist_alloc = 64*128;
 	/* rlist_alloc = GLCONFIG_MAX_PROJECTORS*GLCONFIG_MAX_EXTENTS; */
-	rlist = (BucketRegion *) crAlloc (rlist_alloc * sizeof (*rlist));
+	rlist = (BucketRegion *) crAlloc(rlist_alloc * sizeof (*rlist));
 
 	for (i=0; i<HASHRANGE; i++) 
 	{
@@ -128,10 +130,14 @@ void __fillBucketingHash (void)
 	}
 }
 
-static TileSortBucketInfo *__doBucket( void )
+
+/*
+ * Compute bounding box/tile intersections.
+ * Output:  bucketInfo - results of intersection tests
+ */
+static void doBucket( TileSortBucketInfo *bucketInfo )
 {
 	GET_CONTEXT(g);
-	static TileSortBucketInfo bucketInfo;
 	CRTransformState *t = &(g->transform);
 	GLmatrix *m = &(t->transform);
 
@@ -147,13 +153,13 @@ static TileSortBucketInfo *__doBucket( void )
 	GLbitvalue retval[CR_MAX_BITARRAY];
 
 	/* Init bucketInfo */
-	bucketInfo.objectMin = thread->packer->bounds_min;
-	bucketInfo.objectMax = thread->packer->bounds_max;
-	bucketInfo.screenMin = zero_vect;
-	bucketInfo.screenMax = zero_vect;
-	bucketInfo.pixelBounds = nullscreen;
+	bucketInfo->objectMin = thread->packer->bounds_min;
+	bucketInfo->objectMax = thread->packer->bounds_max;
+	bucketInfo->screenMin = zero_vect;
+	bucketInfo->screenMax = zero_vect;
+	bucketInfo->pixelBounds = nullscreen;
 	for (j=0;j<CR_MAX_BITARRAY;j++)
-	     bucketInfo.hits[j] = 0;
+	     bucketInfo->hits[j] = 0;
 
 	/* Check to make sure the transform is valid */
 	if (!t->transformValid)
@@ -168,19 +174,19 @@ static TileSortBucketInfo *__doBucket( void )
 
 	if (tilesort_spu.broadcast || g->lists.newEnd)
 	{
-		bucketInfo.screenMin = neg_vect;
-		bucketInfo.screenMax = one_vect;
-		bucketInfo.pixelBounds = fullscreen;
-		FILLDIRTY(bucketInfo.hits);
-		return &bucketInfo;
+		bucketInfo->screenMin = neg_vect;
+		bucketInfo->screenMax = one_vect;
+		bucketInfo->pixelBounds = fullscreen;
+		FILLDIRTY(bucketInfo->hits);
+		return;
 	}
 
-	xmin = bucketInfo.objectMin.x;
-	ymin = bucketInfo.objectMin.y;
-	zmin = bucketInfo.objectMin.z;
-	xmax = bucketInfo.objectMax.x;
-	ymax = bucketInfo.objectMax.y;
-	zmax = bucketInfo.objectMax.z;
+	xmin = bucketInfo->objectMin.x;
+	ymin = bucketInfo->objectMin.y;
+	zmin = bucketInfo->objectMin.z;
+	xmax = bucketInfo->objectMax.x;
+	ymax = bucketInfo->objectMax.y;
+	zmax = bucketInfo->objectMax.z;
 
 	if (tilesort_spu.providedBBOX != GL_SCREEN_BBOX_CR)
 	{
@@ -189,19 +195,19 @@ static TileSortBucketInfo *__doBucket( void )
 	}
 
 	/* Copy for export */
-	bucketInfo.screenMin.x = xmin;
-	bucketInfo.screenMin.y = ymin;
-	bucketInfo.screenMin.z = zmin;
-	bucketInfo.screenMax.x = xmax;
-	bucketInfo.screenMax.y = ymax;
-	bucketInfo.screenMax.z = zmax;
+	bucketInfo->screenMin.x = xmin;
+	bucketInfo->screenMin.y = ymin;
+	bucketInfo->screenMin.z = zmin;
+	bucketInfo->screenMax.x = xmax;
+	bucketInfo->screenMax.y = ymax;
+	bucketInfo->screenMax.z = zmax;
 
 	/* triv reject */
 	if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
 	{
 		for (j=0;j<CR_MAX_BITARRAY;j++)
-	     		bucketInfo.hits[j] = 0;
-		return &bucketInfo;
+	     		bucketInfo->hits[j] = 0;
+		return;
 	}
 
 	/* clamp */
@@ -215,17 +221,26 @@ static TileSortBucketInfo *__doBucket( void )
 	ibounds.y1 = (int) (tilesort_spu.halfViewportHeight*ymin + tilesort_spu.viewportCenterY);
 	ibounds.y2 = (int) (tilesort_spu.halfViewportHeight*ymax + tilesort_spu.viewportCenterY);
 
-	bucketInfo.pixelBounds = ibounds;
+	bucketInfo->pixelBounds = ibounds;
 
-	for (j=0;j<CR_MAX_BITARRAY;j++)
+	/* Initialize the retval bitvector.
+	 */
+	for (j = 0; j < CR_MAX_BITARRAY; j++)
 	     retval[j] = 0;
 
+	/* Compute the retval bitvector values.
+	 * Bit [i] is set if the bounding box intersects any tile on server [i].
+	 */
 	if (!tilesort_spu.optimizeBucketing) 
 	{
+		/* Explicitly test the bounding box (ibounds) against all tiles on
+		 * all servers.
+		 */
 		for (i=0; i < tilesort_spu.num_servers; i++) 
 		{
-			int node32 = i >> 5;
-			int node = i & 0x1f;
+			/* 32 bits (flags) per element in retval */
+			const int node32 = i >> 5;
+			const int node = i & 0x1f;
 			for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
 			{
 				if (ibounds.x1 < tilesort_spu.servers[i].x2[j] && 
@@ -241,6 +256,9 @@ static TileSortBucketInfo *__doBucket( void )
 	} 
 	else 
 	{
+		/* Use optimized hash table solution to determine
+		 * bounding box / server intersections.
+		 */
 		BucketRegion *r;
 		BucketRegion *q;
 
@@ -264,22 +282,19 @@ static TileSortBucketInfo *__doBucket( void )
 		}
 	}
 
-	crMemcpy((char*)bucketInfo.hits, (char*)retval,
+	/* XXX why use retval at all?  Why not just use bucketInfo->hits? */
+	crMemcpy((char*)bucketInfo->hits, (char*)retval,
 				sizeof(GLbitvalue) * CR_MAX_BITARRAY);
 
-	return &bucketInfo;
+	return;
 }
 
-TileSortBucketInfo *tilesortspuBucketGeometry(void)
+void tilesortspuBucketGeometry(TileSortBucketInfo *info)
 {
 	/* First, call the real bucketer */
-	TileSortBucketInfo *ret = __doBucket();
-
+	doBucket( info );
 	/* Finally, do pinching.  This is unimplemented currently. */
-
 	/* PINCHIT(); */
-
-	return ret;
 }
 
 void tilesortspuSetBucketingBounds( int x, int y, unsigned int w, unsigned int h )
@@ -296,7 +311,7 @@ void tilesortspuBucketingInit( void )
 
 	if (tilesort_spu.optimizeBucketing)
 	{
-		__fillBucketingHash();
+		fillBucketingHash();
 	}
 }
 

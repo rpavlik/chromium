@@ -239,11 +239,11 @@ void tilesortspuGetTileInformation(CRConnection *conn)
 			server->y2[tile] = server->y1[tile] + h;
 
 			/* update mural size */
-			if (server->x2[tile] > (int) tilesort_spu.muralWidth )
+			if (server->x2[tile] > (int) tilesort_spu.muralWidth)
 			{
 				tilesort_spu.muralWidth = server->x2[tile];
 			}
-			if (server->y2[tile] > (int) tilesort_spu.muralHeight )
+			if (server->y2[tile] > (int) tilesort_spu.muralHeight)
 			{
 				tilesort_spu.muralHeight = server->y2[tile];
 			}

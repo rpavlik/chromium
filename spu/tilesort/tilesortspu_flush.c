@@ -316,8 +316,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	GET_THREAD(thread);
 	CRMessageOpcodes *big_packet_hdr = NULL;
 	unsigned int big_packet_len = 0;
-	GLrecti bounds;
-	const TileSortBucketInfo * bucket_info = NULL;
+	TileSortBucketInfo bucket_info;
 	int i;
 
 	/*crDebug( "in __doFlush (broadcast = %d)", broadcast ); */
@@ -375,8 +374,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		    return;
 		}
 		/*crDebug( "About to bucket the geometry" ); */
-		bucket_info = tilesortspuBucketGeometry();
-		bounds = bucket_info->pixelBounds;
+		tilesortspuBucketGeometry(&bucket_info);
 		if (tilesort_spu.providedBBOX != GL_OBJECT_BBOX_CR)
 		{
 			crPackResetBBOX( thread->packer );
@@ -448,7 +446,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		thread->state_server_index = i;
 
 		/* Check to see if this server needs geometry from us. */
-		if (!broadcast && !(bucket_info->hits[node32] & (1 << node)))
+		if (!broadcast && !(bucket_info.hits[node32] & (1 << node)))
 		{
 			/*crDebug( "NOT sending to server %d", i ); */
 			continue;
@@ -470,7 +468,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			crStateDiffContext( serverContext, ctx );
 			if (tilesort_spu.drawBBOX && !broadcast)
 			{
-				__drawBBOX( bucket_info );
+				__drawBBOX( &bucket_info );
 			}
 			crPackGetBuffer( thread->packer, &(thread->pack[thread->state_server_index]) );
 			/*crDebug( "pack buffer after differencing" ); 
@@ -504,7 +502,8 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 			if ( !broadcast )
 			{
 				/*crDebug( "Appending a bounded buffer" ); */
-				__appendBoundedBuffer( &(thread->geometry_pack), &bounds );
+				__appendBoundedBuffer( &(thread->geometry_pack),
+									   &bucket_info.pixelBounds );
 			}
 			else
 			{
