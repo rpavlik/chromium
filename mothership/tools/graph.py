@@ -19,6 +19,9 @@ import traceback, types
 menu_UNDO          = 10001 # Edit menu items.
 menu_SELECT_ALL    = 10002
 menu_DELETE        = 10003
+menu_CONNECT       = 10004
+menu_DISCONNECT    = 10005
+menu_SET_HOST      = 10006
 
 menu_HELP          = 2001 # Help menu items.
 menu_ABOUT         = 2002 # Help menu items.
@@ -105,11 +108,16 @@ class DrawingFrame(wxFrame):
 		self.editMenu.Append(menu_UNDO,          "Undo\tCTRL-Z")
 		self.editMenu.AppendSeparator()
 		self.editMenu.Append(menu_DELETE,        "Delete\tCTRL-D")
-		self.editMenu.AppendSeparator()
 		self.editMenu.Append(menu_SELECT_ALL,    "Select All\tCTRL-A")
 		self.editMenu.AppendSeparator()
+		self.editMenu.Append(menu_CONNECT,       "Connect Nodes")
+		self.editMenu.Append(menu_DISCONNECT,    "Disconnect Nodes")
+		self.editMenu.Append(menu_SET_HOST,      "Set Host...")
 		EVT_MENU(self, menu_DELETE, self.doDelete)
 		EVT_MENU(self, menu_SELECT_ALL, self.doSelectAll)
+		EVT_MENU(self, menu_CONNECT, self.doConnect)
+		EVT_MENU(self, menu_DISCONNECT, self.doDisconnect)
+		EVT_MENU(self, menu_SET_HOST, self.doSetHost)
 		menuBar.Append(self.editMenu, "Edit")
 
 		# Help menu
@@ -182,6 +190,7 @@ class DrawingFrame(wxFrame):
 		self.dirty     = false
 		self.fileName  = fileName
 		self.Objects = []
+		self.Connections = []
 		self.LeftDown = 0
 		self.DragStartX = 0
 		self.DragStartY = 0
@@ -200,6 +209,17 @@ class DrawingFrame(wxFrame):
 		for obj in self.Objects:
 			obj.Deselect()
 
+	def AddConnection(self, fromNode, toNode):
+		self.Connections.append((fromNode, toNode))
+
+	def RemoveConnections(self, targetNode):
+		# XXX this isn't 100% correct
+		for c in self.Connections:
+			(fromNode, toNode) = c
+			if fromNode == targetNode or toNode == targetNode:
+				self.Connections.remove(c)
+
+
 	# ============================
 	# == Event Handling Methods ==
 	# ============================
@@ -210,13 +230,23 @@ class DrawingFrame(wxFrame):
 		dc = wxPaintDC(self.drawArea)
 		self.drawArea.PrepareDC(dc)  # only for scrolled windows
 		dc.BeginDrawing()
-		dc.SetPen(wxBLACK_PEN);
 
+		# draw the nodes
 		for obj in self.Objects:
 			if obj.IsSelected():
 				obj.Draw(dc, self.SelectDeltaX, self.SelectDeltaY)
 			else:
 				obj.Draw(dc)
+
+		# draw the wires between the nodes
+		pen = wxPen(wxColor(0, 0, 250))
+		pen.SetWidth(2)
+		dc.SetPen(pen);
+		for conn in self.Connections:
+			(fromNode, toNode) = conn
+			p = fromNode.GetOutputPlugPos()
+			q = toNode.GetInputPlugPos()
+			dc.DrawLine( p[0], p[1], q[0], q[1])
 
 		dc.EndDrawing()
 
@@ -225,7 +255,7 @@ class DrawingFrame(wxFrame):
 		self.DeselectAll()
 		n = self.newAppChoice.GetSelection()
 		for i in range(0, n):
-			obj = NodeObject(10, 50+i*65, isServer=0)
+			obj = NodeObject(x=10, y=50+i*65, isServer=0)
 			obj.Select()
 			self.Objects.append(obj)
 		self.newAppChoice.SetSelection(0)
@@ -236,7 +266,7 @@ class DrawingFrame(wxFrame):
 		self.DeselectAll()
 		n = self.newServerChoice.GetSelection()
 		for i in range(0, n):
-			obj = NodeObject(250, 50+i*65, isServer=1)
+			obj = NodeObject(x=250, y=50+i*65, isServer=1)
 			obj.Select()
 			self.Objects.append(obj)
 		self.newServerChoice.SetSelection(0)
@@ -249,7 +279,7 @@ class DrawingFrame(wxFrame):
 		if i > 0:
 			for obj in self.Objects:
 				if obj.IsSelected():
-					if obj.NumSPUs() > 0 and (obj.LastSPU().Name() in PackingSPUs or obj.LastSPU().Name() in TerminalSPUs):
+					if obj.NumSPUs() > 0 and (obj.LastSPU().IsPacker() or obj.LastSPU().IsTerminal()):
 						self.Notify("You can't chain a %s SPU after a %s SPU." % (SpuClasses[i], obj.LastSPU().Name()))
 						break
 					else:
@@ -267,10 +297,19 @@ class DrawingFrame(wxFrame):
 		hitObj = 0
 		for i in range(len(self.Objects) - 1, -1, -1):
 			obj = self.Objects[i]
-			if obj.PickTest(x,y):
+			p = obj.PickTest(x,y)
+			if p >= 1:
 				hitObj = obj
+				if p > 1 and event.LeftDown():
+					# clicked on the p-2 SPU in the node
+					if obj.IsSelectedSPU(p-2):
+						obj.DeselectSPU(p - 2)
+					else:
+						obj.SelectSPU(p - 2)
 				break
-		
+			# endif
+		# endfor
+
 		self.LeftDown = event.LeftDown()
 
 		# Now handle selection/deselection
@@ -466,7 +505,44 @@ class DrawingFrame(wxFrame):
 			obj.Select()
 		self.drawArea.Refresh()
 
+	# Called by the Connect menu item
+	def doConnect(self, event):
+		for obj in self.Objects:
+			if obj.IsSelected():
+				if not obj.IsServer() and obj.HasPacker():
+					# Connect this app node to all selected servers
+					for s in self.Objects:
+						if s.IsServer() and s.IsSelected():
+							self.AddConnection(obj, s)
+							
+		self.drawArea.Refresh()
 
+	# Called by the Disconnect menu item
+	def doDisconnect(self, event):
+		# Make list of connections to remove
+		removeList = []
+		for conn in self.Connections:
+			(fromNode, toNode) = conn
+			if fromNode.IsSelected() and not conn in removeList:
+				removeList.append(conn)
+			elif toNode.IsSelected() and not conn in removeList:
+				removeList.append(conn)
+		# Now remove those connections
+		for conn in removeList:
+			self.Connections.remove(conn)
+		self.drawArea.Refresh()
+
+	# Called by the Edit/SetHost menu item
+	def doSetHost(self, event):
+		dialog = wxTextEntryDialog(self, "Enter the hostname for the selected nodes")
+		if dialog.ShowModal() == wxID_OK:
+			for obj in self.Objects:
+				if obj.IsSelected():
+					obj.SetHost(dialog.GetValue())
+		dialog.Destroy()
+		self.drawArea.Refresh()
+
+	# Called by the Help/Introdunction menu item
 	def doShowIntro(self, event):
 		""" Respond to the "Introduction" menu command.
 		"""
@@ -683,8 +759,16 @@ class SpuObject:
 		self._Name = name
 		self.Width = 0
 		self.Height = 30
-		self.HasPacker = packer
+		self._IsPacker = packer
 		self._IsSelected = 0
+
+	# Return true if this SPU has a packer
+	def IsPacker(self):
+		return self._IsPacker
+
+	# Return true if this SPU has to be the last in a chain (a terminal)
+	def IsTerminal(self):
+		return self._Name in TerminalSPUs
 
 	def Select(self):
 		self._IsSelected = 1
@@ -718,12 +802,16 @@ class SpuObject:
 		# draw the SPU as rectangle with text label
 		dc.DrawRectangle(self.X, self.Y, self.Width, self.Height)
 		dc.DrawText(self._Name, self.X + 3, self.Y + 3)
-		if self.HasPacker:
+		if self._IsPacker:
 			dc.SetBrush(wxBLACK_BRUSH)
 			dc.DrawRectangle(self.X + self.Width, self.Y + self.Height/2 - 4, 4, 8)
 
 	def Name(self):
 		return self._Name
+
+	def GetPosition(self):
+		return (self.X, self.Y)
+
 	def GetWidth(self):
 		return self.Width
 
@@ -734,7 +822,7 @@ class NodeObject:
 	""" The graphical representation of a Cr node.
 	"""
 
-	def __init__(self, x=100, y=100, isServer = 0):
+	def __init__(self, host="localhost", x=100, y=100, isServer = 0):
 		self.X = x
 		self.Y = y
 		self.Width = 200
@@ -742,6 +830,21 @@ class NodeObject:
 		self.SpuChain = []
 		self._IsServer = isServer
 		self._IsSelected = 0
+		self._InputPlugPos = (0,0)
+		self._Host = host
+
+	# Return true if this is a server, false otherwise
+	def IsServer(self):
+		return self._IsServer
+
+	# Return true if the last SPU has a packer:
+	def HasPacker(self):
+		if len(self.SpuChain) >= 1 and self.LastSPU().IsPacker():
+			return 1
+		else:
+			return 0
+	def SetHost(self, hostname):
+		self._Host = hostname
 
 	def Select(self):
 		self._IsSelected = 1
@@ -761,12 +864,36 @@ class NodeObject:
 	def LastSPU(self):
 		return self.SpuChain[-1]
 
+	def SelectSPU(self, i):
+		self.SpuChain[i].Select()
+
+	def DeselectSPU(self, i):
+		self.SpuChain[i].Deselect()
+
+	def IsSelectedSPU(self, i):
+		return self.SpuChain[i].IsSelected()
+
 	def GetPosition(self):
 		return (self.X, self.Y)
 
 	def SetPosition(self, x, y):
 		self.X = x;
 		self.Y = y;
+
+	# Return the (x,y) coordinate of the node's input socket
+	def GetInputPlugPos(self):
+		assert self._IsServer
+		return self._InputPlugPos
+
+	# Return the (x,y) coordinate of the node's output socket
+	def GetOutputPlugPos(self):
+		assert self.NumSPUs() > 0
+		last = self.LastSPU()
+		assert last.IsPacker()
+		(x, y) = last.GetPosition()
+		x += last.GetWidth()
+		y += last.GetHeight() / 2
+		return (x, y)
 
 	def Draw(self, dc, dx=0, dy=0):
 		# setup the brush and pen
@@ -782,13 +909,16 @@ class NodeObject:
 		y = self.Y + dy
 		# draw the node's box
 		dc.DrawRectangle(x, y, self.Width, self.Height)
-		# draw the unpacker plug
 		if self._IsServer:
-			dc.DrawText("crServer node host=cr1", x + 3, y + 3)
+			dc.DrawText("Server node host=%s" % self._Host, x + 3, y + 3)
+			# draw the unpacker plug
+			px = x - 4
+			py = y + self.Height / 2
+			self._InputPlugPos = (px, py)
 			dc.SetBrush(wxBLACK_BRUSH)
-			dc.DrawRectangle(x - 4, y + self.Height / 2 - 4, 4, 8)
+			dc.DrawRectangle(px, py - 4, 4, 8)
 		else:
-			dc.DrawText("crApp node host=cr1", x + 3, y + 3)
+			dc.DrawText("App node host=%s" % self._Host, x + 3, y + 3)
 
 		# draw the SPUs
 		x = x + 5
