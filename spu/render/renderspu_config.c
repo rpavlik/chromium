@@ -17,49 +17,55 @@
 
 static void set_window_geometry( RenderSPU *render_spu, const char *response )
 {
-   float x, y, w, h;
-   if (crStrchr(response, ','))
-      sscanf( response, "%f, %f, %f, %f", &x, &y, &w, &h );
-   else
-      sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
-   render_spu->defaultX = (int) x;
-   render_spu->defaultY = (int) y;
-   render_spu->defaultWidth = (int) w;
-   render_spu->defaultHeight = (int) h;
+	float x, y, w, h;
+	if (crStrchr(response, ','))
+		sscanf( response, "%f, %f, %f, %f", &x, &y, &w, &h );
+	else
+		sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
+	render_spu->defaultX = (int) x;
+	render_spu->defaultY = (int) y;
+	render_spu->defaultWidth = (int) w;
+	render_spu->defaultHeight = (int) h;
 }
 
 static void set_fullscreen( RenderSPU *render_spu, const char *response )
 {
-   sscanf( response, "%d", &(render_spu->fullscreen) );
+	sscanf( response, "%d", &(render_spu->fullscreen) );
 }
 
 static void set_on_top( RenderSPU *render_spu, const char *response )
 {
-   sscanf( response, "%d", &(render_spu->ontop) );
+	sscanf( response, "%d", &(render_spu->ontop) );
 }
 
 static void set_system_gl_path( RenderSPU *render_spu, const char *response )
 {
-   crSetenv( "CR_SYSTEM_GL_PATH", response );
+	crSetenv( "CR_SYSTEM_GL_PATH", response );
 }
 
 static void set_title( RenderSPU *render_spu, const char *response )
 {
-   crFree( render_spu->window_title );
-   render_spu->window_title = crStrdup( response );
+	crFree( render_spu->window_title );
+	render_spu->window_title = crStrdup( response );
 }
 
 #ifndef WINDOWS
 static void set_try_direct( RenderSPU *render_spu, const char *response )
 {
-   sscanf( response, "%d", &(render_spu->try_direct) );
+	sscanf( response, "%d", &(render_spu->try_direct) );
 }
 
 static void set_force_direct( RenderSPU *render_spu, const char *response )
 {
-   sscanf( response, "%d", &(render_spu->force_direct) );
+	sscanf( response, "%d", &(render_spu->force_direct) );
 }
 #endif
+
+static void render_to_app_window( RenderSPU *render_spu, const char *response )
+{
+	sscanf( response, "%d", &(render_spu->render_to_app_window) );
+}
+
 
 
 /* option, type, nr, default, min, max, title, callback
@@ -86,7 +92,10 @@ SPUOptions renderSPUOptions[] = {
      "Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
 
    { "system_gl_path", CR_STRING, 1, "", NULL, NULL, 
-     "System GL Path", (SPUOptionCB)set_system_gl_path},
+     "System GL Path", (SPUOptionCB)set_system_gl_path },
+
+   { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
+     "Render to app window", (SPUOptionCB)render_to_app_window },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
@@ -115,8 +124,6 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 			render_spu->drawCursor = show_cursor 
 				? GL_TRUE : GL_FALSE;
 			crDebug("show_cursor = %d", show_cursor);
-		}
-		else {
 		}
 
 		crMothershipDisconnect( conn );

@@ -152,10 +152,6 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 {
 	GET_THREAD(thread);
 
-	/*
-	printf("***** %s(%d, %d, %d)\n", __FUNCTION__, crWindow, nativeWindow, ctx);
-	*/
-
 #ifdef CHROMIUM_THREADSAFE
 	if (!thread) {
 		thread = renderspuNewThread( crThreadID() );
@@ -171,7 +167,8 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		thread->currentContext = ctx;
 		window = &(render_spu.windows[crWindow]);
 		context = &(render_spu.contexts[ctx]);
-		renderspu_SystemMakeCurrent( thread, window, context );
+
+		renderspu_SystemMakeCurrent( thread, window, nativeWindow, context );
 		if (!context->everCurrent) {
 			/* print OpenGL info */
 			crDebug( "Render SPU: GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
@@ -191,7 +188,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 	else {
 		thread->currentWindow = -1;
 		thread->currentContext = -1;
-		renderspu_SystemMakeCurrent( thread, NULL, NULL );
+		renderspu_SystemMakeCurrent( thread, NULL, 0, NULL );
 	}
 }
 
@@ -227,7 +224,10 @@ GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits 
 	}
 
 	/* Have GLX/WGL create the window */
-	showIt = i > 0;
+	if (render_spu.render_to_app_window)
+		showIt = 0;
+	else
+		showIt = i > 0;
 	if (!renderspu_SystemCreateWindow( visual, showIt, &(render_spu.windows[i]) ))
 	{
 		crWarning( "Couldn't create a window, renderspu_SystemCreateWindow failed" );

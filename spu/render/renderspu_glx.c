@@ -234,6 +234,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	window->y = render_spu.defaultY;
 	window->width  = render_spu.defaultWidth;
 	window->height = render_spu.defaultHeight;
+	window->nativeWindow = 0;
 
 	dpy = visual->dpy;
 
@@ -469,7 +470,7 @@ void renderspu_SystemDestroyContext( ContextInfo *context )
 }
 
 
-void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context )
+void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint nativeWindow, ContextInfo *context )
 {
 	CRASSERT(render_spu.ws.glXMakeCurrent);
 
@@ -489,16 +490,30 @@ void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, Contex
 			*/
 		}
 
-		CRASSERT(window->window);
 		CRASSERT(context->context);
 
 		if (thread)
 			thread->dpy = window->visual->dpy;
 
-		render_spu.ws.glXMakeCurrent( window->visual->dpy,
-					window->window, context->context );
+		if (render_spu.render_to_app_window && nativeWindow)
+		{
+			/* The render_to_app_window option is set and we've got a nativeWindow
+			 * handle, save the handle for later calls to swapbuffers().
+			 */
+			window->nativeWindow = (Window) nativeWindow;
+			render_spu.ws.glXMakeCurrent( window->visual->dpy,
+																		(Window) nativeWindow, context->context );
+		}
+		else
+		{
+			CRASSERT(window->window);
+			render_spu.ws.glXMakeCurrent( window->visual->dpy,
+																		window->window, context->context );
+		}
 	
-	} else if (thread && thread->dpy) {
+	}
+	else if (thread && thread->dpy)
+	{
 		render_spu.ws.glXMakeCurrent( thread->dpy, 0, 0 );
 	}
 }

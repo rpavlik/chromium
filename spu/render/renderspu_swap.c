@@ -175,7 +175,16 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 		CRASSERT(window >= 0);
 		CRASSERT(window < MAX_WINDOWS);
 		w = &(render_spu.windows[window]);
-		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
+		/* render_to_app_window:
+		 * w->nativeWindow will only be non-zero if the
+		 * render_spu.render_to_app_window option is true and
+		 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
+		 * structure.
+		 */
+		if (w->nativeWindow)
+			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
+		else
+			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
 	}
 	else
 		crWarning("renderspu_SwapBuffers(NULL window)");

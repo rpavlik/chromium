@@ -43,6 +43,7 @@ typedef struct {
 	GLboolean mapPending;
 #ifndef WINDOWS
 	Window window;
+	Window nativeWindow;  /* for render_to_app_window */
 #endif
 } WindowInfo;
 
@@ -82,6 +83,7 @@ typedef struct {
 	int          force_direct;
 	int          sync;
 #endif
+	int render_to_app_window;
 
 	GLboolean drawCursor;
 	GLint cursorX, cursorY;
@@ -122,7 +124,7 @@ extern void renderspu_SystemDestroyWindow( WindowInfo *window );
 extern void renderspu_SystemWindowSize( WindowInfo *window, int w, int h );
 extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
 extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
-extern void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context );
+extern void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint windowInfor, ContextInfo *context );
 extern int renderspuCreateFunctions( SPUNamedFunctionTable table[] );
 
 extern GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits );
