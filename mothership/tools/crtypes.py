@@ -756,6 +756,7 @@ class ApplicationNode(Node):
 			Option("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
 			Option("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
 			Option("track_window_size", "Track App Window Size Changes", "BOOL", 1, [0], [], []),
+			Option("track_window_Position", "Track App Window Position Changes", "BOOL", 1, [0], [], []),
 			Option("show_cursor", "Show Virtual Cursor", "BOOL", 1, [0], [], []),
 			] )
 

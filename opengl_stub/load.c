@@ -78,17 +78,21 @@ static void stubCheckWindowSize(void)
 	stubGetWindowGeometry( window, &winX, &winY, &winW, &winH );
 
 	if (winW && winH) {
-		if (winW != window->width || winH != window->height) {
-			if (window->type == CHROMIUM)
-				stub.spuDispatch.WindowSize( window->spuWindow, winW, winH );
-			window->width = winW;
-			window->height = winH;
+		if (stub.trackWindowSize) {
+			if (winW != window->width || winH != window->height) {
+				if (window->type == CHROMIUM)
+					stub.spuDispatch.WindowSize( window->spuWindow, winW, winH );
+				window->width = winW;
+				window->height = winH;
+			}
 		}
-		if (winX != window->x || winY != window->y) {
-			if (window->type == CHROMIUM)
-				stub.spuDispatch.WindowPosition( window->spuWindow, winX, winY );
-			window->x = winX;
-			window->y = winY;
+		if (stub.trackWindowPos) {
+			if (winX != window->x || winY != window->y) {
+				if (window->type == CHROMIUM)
+					stub.spuDispatch.WindowPosition( window->spuWindow, winX, winY );
+				window->x = winX;
+				window->y = winY;
+			}
 		}
 	}
 }
@@ -126,7 +130,7 @@ static void stubInitSPUDispatch(SPU *spu)
 	crSPUInitDispatchTable( &stub.spuDispatch );
 	crSPUCopyDispatchTable( &stub.spuDispatch, &(spu->dispatch_table) );
 
-	if (stub.trackWindowSize) {
+	if (stub.trackWindowSize || stub.trackWindowPos) {
 		/* patch-in special glClear/Viewport function to track window sizing */
 		origClear = stub.spuDispatch.Clear;
 		origViewport = stub.spuDispatch.Viewport;
@@ -201,6 +205,7 @@ static void stubInitVars(void)
 	stub.matchWindowTitle = NULL;
 	stub.threadSafe = GL_FALSE;
 	stub.trackWindowSize = 0;
+	stub.trackWindowPos = 0;
 	stub.mothershipPID = 0;
 
 	stub.freeContextNumber = MAGIC_CONTEXT_BASE;
@@ -440,6 +445,10 @@ void stubInit(void)
 
 	if (conn && crMothershipGetFakerParam( conn, response, "track_window_size" ) ) {
 		sscanf( response, "%d", &stub.trackWindowSize );
+	}
+
+	if (conn && crMothershipGetFakerParam( conn, response, "track_window_position" ) ) {
+		sscanf( response, "%d", &stub.trackWindowPos );
 	}
 
 	if (conn && crMothershipGetFakerParam( conn, response, "match_window_count" )

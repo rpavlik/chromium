@@ -84,6 +84,18 @@ for the Chromium application node/faker.</p>
     </td>
   </tr>
   <tr>
+    <td width="19%" class="ConfigOption">track_window_position</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+      This option controls whether Chromium monitors the application
+      window for position changes.  When this is enabled and the application
+      window is moved the head SPU's WindowPosition() function will be called
+      with the new window position.
+      This is useful for <a href="dmx.html">DMX</a>.
+      The default is false/0.
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption">minimum_window_size</td>
     <td width="12%" class="ConfigType">2 Integers</td>
     <td width="115%" class="ConfigDesc">

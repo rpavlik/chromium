@@ -113,6 +113,7 @@ typedef struct {
 	GLuint matchChromiumWindowCounter;
 	char *matchWindowTitle;
 	int trackWindowSize;
+	int trackWindowPos;
 
 	/* thread safety stuff */
 	GLboolean threadSafe;

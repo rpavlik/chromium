@@ -191,10 +191,12 @@ there are a few critical settings to be aware of.
 </p>
 
 <p>
-The client/application node must be configured to track window size changes:
+The client/application node must be configured to track window size and
+position changes:
 </p>
 <pre>
      clientnode.Conf('track_window_size', 1)
+     clientnode.Conf('track_window_position', 1)
 </pre>
 
 <p>
