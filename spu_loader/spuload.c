@@ -16,7 +16,7 @@
 #ifdef WINDOWS
 #define DLL_SUFFIX ".dll"
 #define DLL_PREFIX ""
-#elif defined(DARWIN)
+#elif defined(Darwin)
 #define DLL_SUFFIX ".bundle"
 #define DLL_PREFIX ""
 #else

@@ -28,7 +28,7 @@ print """
 #include <process.h>
 #include <direct.h>
 #define SYSTEM_GL "opengl32.dll"
-#elif defined (DARWIN)
+#elif defined (Darwin)
 #define SYSTEM_GL "libGL.dylib"
 #define SYSTEM_CGL "OpenGL"
 #define SYSTEM_AGL "AGL"
@@ -141,17 +141,14 @@ __findSystemLib( const char *provided_system_path, char *lib )
 
 
 static CRDLL *
-#ifdef DARWIN
-__findSystemGL( const char *provided_system_path, char *default_system_path, char *provided_lib_name )
+#ifdef Darwin
+__findSystemGL( const char *provided_system_path, const char *default_system_path, char *provided_lib_name )
 #else
 __findSystemGL( const char *provided_system_path )
 #endif
 {
-#ifdef DARWIN
-	char *the_path = default_system_path;
-
-	if( provided_system_path && crStrlen(provided_system_path) > 0 )
-		the_path = provided_system_path;
+#ifdef Darwin
+	const char *the_path = (provided_system_path && crStrlen(provided_system_path) > 0) ? provided_system_path : default_system_path;
 
 	/* Fallback for loading frameworks */
 	if( !provided_lib_name )
@@ -179,7 +176,7 @@ findExtFunction( const crOpenGLInterface *interface, const char *funcName )
 	SPUGenericFunction f = crDLLGetNoError(glDll, funcName);
 	if (f)
 		return f;
-#if !defined(DARWIN)
+#if !defined(Darwin)
 	else if (interface->glXGetProcAddressARB)
 		return interface->glXGetProcAddressARB( (const GLubyte *) funcName );
 #endif
@@ -234,7 +231,7 @@ crUnloadOpenGL( void )
 	crDLLClose( glDll );
 	glDll = NULL;
 
-#ifdef DARWIN
+#ifdef Darwin
 	crDLLClose( cglDll );
 	cglDll = NULL;
 
@@ -267,13 +264,13 @@ print """
 	int i;
 
 	const char *env_syspath = crGetenv( "CR_SYSTEM_GL_PATH" );
-#ifdef DARWIN
+#ifdef Darwin
 	const char *env_cgl_syspath = crGetenv( "CR_SYSTEM_CGL_PATH" );
 	const char *env_agl_syspath = crGetenv( "CR_SYSTEM_AGL_PATH" );
 #endif
 	
 	crDebug( "Looking for the system's OpenGL library..." );
-#ifdef DARWIN
+#ifdef Darwin
 	glDll = __findSystemGL( env_syspath, SYSTEM_GL_LIB_DIR, SYSTEM_GL );
 #else
 	glDll = __findSystemGL( env_syspath );
@@ -286,7 +283,7 @@ print """
 	
 	crDebug( "Found it in %s.", !env_syspath ? "default path" : env_syspath );
 
-#ifdef DARWIN
+#ifdef Darwin
 	crDebug( "Looking for the system's CGL library..." );
 	cglDll = __findSystemGL( env_cgl_syspath, SYSTEM_CGL_DIR, SYSTEM_CGL );
 	if (!cglDll)
@@ -407,7 +404,7 @@ print '#ifdef WINDOWS'
 for fun in useful_wgl_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun,fun,fun)
 
-print '#elif defined(DARWIN)'
+print '#elif defined(Darwin)'
 for fun in useful_agl_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( aglDll, "%s" );' % (fun,fun,fun)
 
@@ -483,7 +480,7 @@ print """
 #ifdef WINDOWS
 	if (interface->wglGetProcAddress == NULL)
 		crWarning("Unable to find wglGetProcAddress() in system GL library");
-#elif !defined(DARWIN)
+#elif !defined(Darwin)
 	if (interface->glXGetProcAddressARB == NULL)
 		crWarning("Unable to find glXGetProcAddressARB() in system GL library");
 #endif
