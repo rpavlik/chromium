@@ -106,9 +106,9 @@ class LightningParameters:
 		"""Compute locations and hosts for the tiles."""
 
 		# initialize tile lists
-		self.ServerTiles = []
-		self.Tiles = []  # tuples (row, col, server)
-		self.NextTile = []  # array [server] of array (row,col)
+		self.ServerTiles = []  # array [server] of array of (x,y,w,h)
+		self.Tiles = []        # tuples (row, col, server)
+		self.NextTile = []     # array [server] of (row,col)
 		for i in range(self.NumServers):
 			self.ServerTiles.append( [] )
 			self.NextTile.append( (0, 0) )
