@@ -25,6 +25,8 @@ void crFreeHashtable( CRHashTable *hash )
 {
 	int i;
 
+	if ( !hash) return;
+
 	for ( i = 0; i < CR_NUM_BUCKETS; i++ )
 	{
 		if ( hash->buckets[i] ) 
@@ -115,5 +117,8 @@ void crHashtableReplace( CRHashTable *h, unsigned int key, void *data, int free_
 
 unsigned int crHashtableNumElements( CRHashTable *h) 
 {
-	return h->num_elements;
+	if (h)
+		return h->num_elements;
+	else
+		return 0;
 }
