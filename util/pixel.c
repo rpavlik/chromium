@@ -9,6 +9,52 @@
 #include "cr_mem.h"
 #include "cr_version.h"
 
+
+/**
+ * Maybe export this someday.
+ */
+static int crSizeOfType( GLenum type )
+{
+	switch (type) {
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_UNSIGNED_BYTE_3_3_2:
+		case GL_UNSIGNED_BYTE_2_3_3_REV:
+#endif
+		case GL_UNSIGNED_BYTE:
+		case GL_BYTE:
+			return 1;
+		case GL_BITMAP:
+			return 0;  /* special case */
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_UNSIGNED_SHORT_5_6_5:
+		case GL_UNSIGNED_SHORT_5_6_5_REV:
+		case GL_UNSIGNED_SHORT_5_5_5_1:
+		case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+		case GL_UNSIGNED_SHORT_4_4_4_4:
+		case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+#endif
+		case GL_UNSIGNED_SHORT:
+		case GL_SHORT:
+			return 2;
+#ifdef CR_OPENGL_VERSION_1_2
+		case GL_UNSIGNED_INT_8_8_8_8:
+		case GL_UNSIGNED_INT_8_8_8_8_REV:
+		case GL_UNSIGNED_INT_10_10_10_2:
+		case GL_UNSIGNED_INT_2_10_10_10_REV:
+#endif
+		case GL_UNSIGNED_INT:
+		case GL_INT:
+		case GL_FLOAT:
+			return 4;
+		case GL_DOUBLE:
+			return 8;
+		default: 
+			crError( "Unknown pixel type in crSizeOfType: 0x%x", (unsigned int) type );
+			return 0;
+	}
+}
+
+
 /*
  * Return bytes per pixel for the given format/type combination.
  */
@@ -20,6 +66,7 @@ int crPixelSize( GLenum format, GLenum type )
 #ifdef CR_OPENGL_VERSION_1_2
 		case GL_UNSIGNED_BYTE_3_3_2:
 		case GL_UNSIGNED_BYTE_2_3_3_REV:
+			return 1;
 #endif
 		case GL_UNSIGNED_BYTE:
 		case GL_BYTE:
@@ -34,6 +81,7 @@ int crPixelSize( GLenum format, GLenum type )
 		case GL_UNSIGNED_SHORT_1_5_5_5_REV:
 		case GL_UNSIGNED_SHORT_4_4_4_4:
 		case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+			return 2;
 #endif
 		case GL_UNSIGNED_SHORT:
 		case GL_SHORT:
@@ -44,6 +92,7 @@ int crPixelSize( GLenum format, GLenum type )
 		case GL_UNSIGNED_INT_8_8_8_8_REV:
 		case GL_UNSIGNED_INT_10_10_10_2:
 		case GL_UNSIGNED_INT_2_10_10_10_REV:
+			return 4;
 #endif
 		case GL_UNSIGNED_INT:
 		case GL_INT:
@@ -510,12 +559,38 @@ static void get_row(const char *src, GLenum srcFormat, GLenum srcType,
 						break;
 #ifdef CR_OPENGL_VERSION_1_2
 					case GL_UNSIGNED_BYTE_3_3_2:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((ubSrc[i] >> 5)      ) / 7.0f;
+							tmpRow[i*4+1] = (GLfloat) ((ubSrc[i] >> 2) & 0x7) / 7.0f;
+							tmpRow[i*4+b] = (GLfloat) ((ubSrc[i]     ) & 0x3) / 3.0f;
+							tmpRow[i*4+3] = 1.0;
+						}
+						break;
 					case GL_UNSIGNED_BYTE_2_3_3_REV:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((ubSrc[i]     ) & 0x7) / 7.0f;
+							tmpRow[i*4+1] = (GLfloat) ((ubSrc[i] >> 3) & 0x7) / 7.0f;
+							tmpRow[i*4+b] = (GLfloat) ((ubSrc[i] >> 6)      ) / 3.0f;
+							tmpRow[i*4+3] = 1.0;
+						}
+						break;
 					case GL_UNSIGNED_SHORT_5_6_5:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 11) & 0x1f) / 31.0f;
+							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x3f) / 63.0f;
+							tmpRow[i*4+b] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
+							tmpRow[i*4+3] = 1.0;
+						}
+						break;
 					case GL_UNSIGNED_SHORT_5_6_5_REV:
-						/* XXX to do */
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
+							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x3f) / 63.0f;
+							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >> 11) & 0x1f) / 31.0f;
+							tmpRow[i*4+3] = 1.0;
+						}
+						break;
 #endif
-
 					default:
 						crError("unexpected type in get_row in pixel.c");
 				}
@@ -600,14 +675,69 @@ static void get_row(const char *src, GLenum srcFormat, GLenum srcType,
 						break;
 #ifdef CR_OPENGL_VERSION_1_2
 					case GL_UNSIGNED_SHORT_5_5_5_1:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 11)       ) / 31.0f;
+							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  6) & 0x1f) / 31.0f;
+							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  1) & 0x1f) / 31.0f;
+							tmpRow[i*4+3] = (GLfloat) ((usSrc[i]      ) & 0x01);
+						}
+						break;
 					case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
+							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x1f) / 31.0f;
+							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >> 10) & 0x1f) / 31.0f;
+							tmpRow[i*4+3] = (GLfloat) ((usSrc[i] >> 15)       );
+						}
+						break;
 					case GL_UNSIGNED_SHORT_4_4_4_4:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 12) & 0xf) / 15.0f;
+							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  8) & 0xf) / 15.0f;
+							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  4) & 0xf) / 15.0f;
+							tmpRow[i*4+3] = (GLfloat) ((usSrc[i]      ) & 0xf) / 15.0f;
+						}
+						break;
 					case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0xf) / 15.0f;
+							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  4) & 0xf) / 15.0f;
+							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  8) & 0xf) / 15.0f;
+							tmpRow[i*4+3] = (GLfloat) ((usSrc[i] >> 12) & 0xf) / 15.0f;
+						}
+						break;
 					case GL_UNSIGNED_INT_8_8_8_8:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((uiSrc[i] >> 24) & 0xff) / 255.0f;
+							tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 16) & 0xff) / 255.0f;
+							tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >>  8) & 0xff) / 255.0f;
+							tmpRow[i*4+3] = (GLfloat) ((uiSrc[i]      ) & 0xff) / 255.0f;
+						}
+						break;
 					case GL_UNSIGNED_INT_8_8_8_8_REV:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((uiSrc[i]      ) & 0xff) / 255.0f;
+							tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >>  8) & 0xff) / 255.0f;
+							tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >> 16) & 0xff) / 255.0f;
+							tmpRow[i*4+3] = (GLfloat) ((uiSrc[i] >> 24) & 0xff) / 255.0f;
+						}
+						break;
 					case GL_UNSIGNED_INT_10_10_10_2:
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((uiSrc[i] >> 22) & 0x3ff) / 1023.0f;
+							tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 12) & 0x3ff) / 1023.0f;
+							tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >>  2) & 0x3ff) / 1023.0f;
+							tmpRow[i*4+3] = (GLfloat) ((uiSrc[i]      ) & 0x003) /    3.0f;
+						}
+						break;
 					case GL_UNSIGNED_INT_2_10_10_10_REV:
-						/* XXX to do */
+						for (i = 0; i < width; i++) {
+							tmpRow[i*4+r] = (GLfloat) ((uiSrc[i]      ) & 0x3ff) / 1023.0f;
+							tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 10) & 0x3ff) / 1023.0f;
+							tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >> 20) & 0x3ff) / 1023.0f;
+							tmpRow[i*4+3] = (GLfloat) ((uiSrc[i] >> 30) & 0x003) /    3.0f;
+						}
+						break;
 #endif
 
 					default:
@@ -893,10 +1023,37 @@ static void put_row(char *dst, GLenum dstFormat, GLenum dstType,
 						break;
 #ifdef CR_OPENGL_VERSION_1_2
 					case GL_UNSIGNED_BYTE_3_3_2:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 7.0);
+							int green = (int) (tmpRow[i*4+1] * 7.0);
+							int blue  = (int) (tmpRow[i*4+b] * 3.0);
+							ubDst[i] = (red << 5) | (green << 2) | blue;
+						}
+						break;
 					case GL_UNSIGNED_BYTE_2_3_3_REV:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 7.0);
+							int green = (int) (tmpRow[i*4+1] * 7.0);
+							int blue  = (int) (tmpRow[i*4+b] * 3.0);
+							ubDst[i] = red | (green << 3) | (blue << 6);
+						}
+						break;
 					case GL_UNSIGNED_SHORT_5_6_5:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 31.0);
+							int green = (int) (tmpRow[i*4+1] * 63.0);
+							int blue  = (int) (tmpRow[i*4+b] * 31.0);
+							usDst[i] = (red << 11) | (green << 5) | blue;
+						}
+						break;
 					case GL_UNSIGNED_SHORT_5_6_5_REV:
-						/* XXX to do */
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 31.0);
+							int green = (int) (tmpRow[i*4+1] * 63.0);
+							int blue  = (int) (tmpRow[i*4+b] * 31.0);
+							usDst[i] = (blue << 11) | (green << 5) | red;
+						}
+						break;
 #endif
 					default:
 						crError("unexpected type in put_row in pixel.c");
@@ -982,14 +1139,77 @@ static void put_row(char *dst, GLenum dstFormat, GLenum dstType,
 						break;
 #ifdef CR_OPENGL_VERSION_1_2
 					case GL_UNSIGNED_SHORT_5_5_5_1:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 31.0);
+							int green = (int) (tmpRow[i*4+1] * 31.0);
+							int blue  = (int) (tmpRow[i*4+b] * 31.0);
+							int alpha = (int) (tmpRow[i*4+3]);
+							usDst[i] = (red << 11) | (green << 6) | (blue << 1) | alpha;
+						}
+						break;
 					case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 31.0);
+							int green = (int) (tmpRow[i*4+1] * 31.0);
+							int blue  = (int) (tmpRow[i*4+b] * 31.0);
+							int alpha = (int) (tmpRow[i*4+3]);
+							usDst[i] = (alpha << 15) | (blue << 10) | (green << 5) | red;
+						}
+						break;
 					case GL_UNSIGNED_SHORT_4_4_4_4:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 15.0f);
+							int green = (int) (tmpRow[i*4+1] * 15.0f);
+							int blue  = (int) (tmpRow[i*4+b] * 15.0f);
+							int alpha = (int) (tmpRow[i*4+3] * 15.0f);
+							usDst[i] = (red << 12) | (green << 8) | (blue << 4) | alpha;
+						}
+						break;
 					case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 15.0f);
+							int green = (int) (tmpRow[i*4+1] * 15.0f);
+							int blue  = (int) (tmpRow[i*4+b] * 15.0f);
+							int alpha = (int) (tmpRow[i*4+3] * 15.0f);
+							usDst[i] = (alpha << 12) | (blue << 8) | (green << 4) | red;
+						}
+						break;
 					case GL_UNSIGNED_INT_8_8_8_8:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 255.0f);
+							int green = (int) (tmpRow[i*4+1] * 255.0f);
+							int blue  = (int) (tmpRow[i*4+b] * 255.0f);
+							int alpha = (int) (tmpRow[i*4+3] * 255.0f);
+							uiDst[i] = (red << 24) | (green << 16) | (blue << 8) | alpha;
+						}
+						break;
 					case GL_UNSIGNED_INT_8_8_8_8_REV:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 255.0f);
+							int green = (int) (tmpRow[i*4+1] * 255.0f);
+							int blue  = (int) (tmpRow[i*4+b] * 255.0f);
+							int alpha = (int) (tmpRow[i*4+3] * 255.0f);
+							uiDst[i] = (alpha << 24) | (blue << 16) | (green << 8) | red;
+						}
+						break;
 					case GL_UNSIGNED_INT_10_10_10_2:
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 1023.0f);
+							int green = (int) (tmpRow[i*4+1] * 1023.0f);
+							int blue  = (int) (tmpRow[i*4+b] * 1023.0f);
+							int alpha = (int) (tmpRow[i*4+3] *    3.0f);
+							uiDst[i] = (red << 22) | (green << 12) | (blue << 2) | alpha;
+						}
+						break;
 					case GL_UNSIGNED_INT_2_10_10_10_REV:
-						/* XXX to do */
+						for (i = 0; i < width; i++) {
+							int red   = (int) (tmpRow[i*4+r] * 1023.0f);
+							int green = (int) (tmpRow[i*4+1] * 1023.0f);
+							int blue  = (int) (tmpRow[i*4+b] * 1023.0f);
+							int alpha = (int) (tmpRow[i*4+3] *    3.0f);
+							uiDst[i] = (alpha << 30) | (blue << 20) | (green << 10) | red;
+						}
+						break;
 #endif
 					default:
 						crError("unexpected type in put_row in pixel.c");
@@ -998,6 +1218,36 @@ static void put_row(char *dst, GLenum dstFormat, GLenum dstType,
 			break;
 		default:
 			crError("unexpected type in put_row in pixel.c");
+	}
+}
+
+
+/**
+ * Byte-swap an array of GLushorts
+ */
+static void
+swap2(GLushort *us, GLuint n)
+{
+	GLuint i;
+	for (i = 0; i < n; i++) {
+		us[i] = (us[i] >> 8) | (us[i] << 8);
+	}
+}
+
+
+/**
+ * Byte-swap an array of GLuints
+ */
+static void
+swap4(GLuint *ui, GLuint n)
+{
+	GLuint i;
+	for (i = 0; i < n; i++) {
+		GLuint b = ui[i];
+		ui[i] =  (b >> 24)
+				| ((b >> 8) & 0xff00)
+				| ((b << 8) & 0xff0000)
+				| ((b << 24) & 0xff000000);
 	}
 }
 
@@ -1156,15 +1406,11 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 		src += srcPacking->skipPixels * srcBytesPerPixel;
 		dst += dstPacking->skipPixels * dstBytesPerPixel;
 
-		/* we don't do LSBFirst or byteswapping, yet */
+		/* we don't do LSBFirst yet */
 		if (srcPacking->psLSBFirst)
 			crError( "Sorry, no lsbfirst for you" );
-		if (srcPacking->swapBytes)
-			crError( "Sorry, no swapbytes for you" );
 		if (dstPacking->psLSBFirst)
 			crError( "Sorry, no lsbfirst for you" );
-		if (dstPacking->swapBytes)
-			crError( "Sorry, no swapbytes for you" );
 
 		if (srcFormat == dstFormat && srcType == dstType)
 		{
@@ -1172,6 +1418,17 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 			for (i = 0; i < height; i++)
 			{
 				crMemcpy( (void *) dst, (const void *) src, srcBytesPerRow );
+				/* check if src XOR dst swapping */
+				if (srcPacking->swapBytes ^ dstPacking->swapBytes) {
+					const GLint size = crSizeOfType(srcType);
+					CRASSERT(srcType == dstType);
+					if (size == 2) {
+						swap2((GLushort *) dst, srcBytesPerRow / size);
+					}
+					else if (size == 4) {
+						swap4((GLuint *)  dst, srcBytesPerRow / size);
+					}
+				}
 				dst += dstRowStrideBytes;
 				src += srcRowStrideBytes;
 			}
@@ -1179,19 +1436,57 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 		else
 		{
 			/* need to do format and/or type conversion */
+			GLubyte *swapRow = NULL;
 			GLfloat *tmpRow = crAlloc( 4 * width * sizeof(GLfloat) );
 			if (!tmpRow)
 				crError("Out of memory in crPixelCopy2D");
 
+			if (srcPacking->swapBytes) {
+				swapRow = (GLubyte *) crAlloc(width * srcBytesPerPixel);
+				if (!swapRow) {
+					crError("Out of memory in crPixelCopy2D");
+				}
+			}
+
 			for (i = 0; i < height; i++)
 			{
-				get_row(src, srcFormat, srcType, width, tmpRow);
-				put_row(dst, dstFormat, dstType, width, tmpRow);
+				/* get src row as floats */
+				if (srcPacking->swapBytes) {
+					const GLint size = crSizeOfType(srcType);
+					const GLint bytes = width * srcBytesPerPixel;
+					crMemcpy(swapRow, src, bytes);
+					if (size == 2)
+						swap2((GLushort *) swapRow, bytes / 2);
+					else if (size == 4)
+						swap4((GLuint *) swapRow, bytes / 4);
+					get_row(swapRow, srcFormat, srcType, width, tmpRow);
+				}
+				else {
+					get_row(src, srcFormat, srcType, width, tmpRow);
+				}
+
+				/* store floats in dest row */
+				if (dstPacking->swapBytes) {
+					const GLint size = crSizeOfType(dstType);
+					const GLint bytes = dstBytesPerPixel * width;
+					put_row(dst, dstFormat, dstType, width, tmpRow);
+					if (size == 2)
+						swap2((GLushort *) dst, bytes / 2);
+					else if (size == 4)
+						swap4((GLuint *) dst, bytes / 4);
+				}
+				else {
+					put_row(dst, dstFormat, dstType, width, tmpRow);
+				}
+
+				/* increment pointers for next row */
 				dst += dstRowStrideBytes;
 				src += srcRowStrideBytes;
 			}
 
 			crFree(tmpRow);
+			if (swapRow)
+				crFree(swapRow);
 		}
 	}
 }
