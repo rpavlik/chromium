@@ -427,7 +427,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
                                                      impossible count */
 
              /* check for buffer underrun */
-             (uint) p_run &=  (uint) -sizeof(uint);     /* round left edge */
+             *((uint*) &p_run) &=  (uint) -sizeof(uint);     /* round left edge */
              CRASSERT( (uint) p_run >=  (uint) &(p_plebuf->data) );
              p_left = p_run - sizeof(PLEbuf);
              
@@ -438,7 +438,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
              pletmp.beg = (uint) p_data - (uint) p_plebuf;
              
              zlen = (ulong) p_val - (ulong) p_plebuf;
-             pletmp.len = zlen;
+             pletmp.len = (int) zlen;
 
              *p_plebuf = pletmp;
 
@@ -499,6 +499,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
         int     bufi;
         int     pixsize;
         FBTYPE  FBtype;           /* frame buffer type */
+        ulong   dlen;
 
         zpix_spu.n++;
 
@@ -558,14 +559,14 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
                                       width, height, plen);
         crDebug("zpixZPix: fBuf %p-%p, dBuf %p-%p", 
                                       zpix_spu.fBuf[FBtype],
-                                      zpix_spu.fBuf[FBtype]+plen, 
+                                      (char *) zpix_spu.fBuf[FBtype]+plen, 
                                       zpix_spu.dBuf[FBtype], 
-                                      zpix_spu.dBuf[FBtype]+plen
+                                      (char *) zpix_spu.dBuf[FBtype]+plen
                                       );
         
        }
        
-       ulong  dlen = zpix_spu.fbLen[FBtype];     /* available space */
+       dlen = zpix_spu.fbLen[FBtype];     /* available space */
 
        switch (ztype) {
 
