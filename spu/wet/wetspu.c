@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "cr_applications.h"
 #include "cr_spu.h"
 #include "cr_error.h"
 #include "cr_mem.h"
@@ -313,23 +314,85 @@ static void DrawMesh( void )
 
 void WETSPU_APIENTRY wetSwapBuffers( GLint window, GLint flags )
 {
-	static int first = 1;
-	if (first)
+	/* CR_SUPPRESS_SWAP_BIT is typically only used with multi-threaded
+	 * programs in which there are N threads rendering to the same window.
+	 * We only want to do a SwapBuffers() once per N windows.  BUT, the
+	 * app must still call SwapBuffers() so that the SPU can do its
+	 * end-of-frame stuff (consider the readback SPU, or this SPU).
+	 */
+	if ((flags & CR_SUPPRESS_SWAP_BIT) == 0)
 	{
-		wetMeshSetup();
-		first = 0;
+		wet_spu.frame_counter++;
+
+		GenerateNewDrop();
+		UpdateMesh();
+		DrawMesh();
 	}
-
-	wet_spu.frame_counter++;
-
-	GenerateNewDrop();
-	UpdateMesh();
-	DrawMesh();
-
 	wet_spu.super.SwapBuffers( window, flags );
 }
 
+
+/* Keep track of context numbers which we've seen before */
+struct context_info {
+	GLint ctx;
+	struct context_info *next;
+};
+static struct context_info *knownContexts = NULL;
+
+
+static void WETSPU_APIENTRY wetMakeCurrent(GLint window, GLint nativeWindow, GLint ctx)
+{
+	struct context_info *c;
+	int found = 0;
+
+	wet_spu.super.MakeCurrent(window, nativeWindow, ctx);
+
+	/* have we seen this context before? */
+	for (c = knownContexts; c; c = c->next) {
+		if (c->ctx == ctx) {
+			found = 1;
+			break;
+		}
+	}
+	if (!found) {
+		/* this is the first time we've seen this context */
+		/* save this context number */
+		c = crAlloc(sizeof(struct context_info));
+		if (c) {
+			c->ctx = ctx;
+			c->next = knownContexts;
+			knownContexts = c;
+		}
+		/* do our per-context SPU initialization */
+		wetMeshSetup();
+	}
+}
+
+
+static void WETSPU_APIENTRY wetDestroyContext( GLint ctx )
+{
+	struct context_info *c, *prev;
+
+	/* remove this context number from the list of known contexts */
+	prev = NULL;
+	for (c = knownContexts; c; c = c->next) {
+		if (c->ctx == ctx) {
+			/* remove c from the list */
+			if (prev)
+				prev->next = c->next;
+			else
+				knownContexts = c->next;
+			crFree(c);
+			return;
+		}
+	}
+}
+
+
 SPUNamedFunctionTable wet_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) wetSwapBuffers },
+	{ "MakeCurrent", (SPUGenericFunction) wetMakeCurrent },
+	{ "DestroyContext", (SPUGenericFunction) wetDestroyContext },
 	{ NULL, NULL }
 };
+
