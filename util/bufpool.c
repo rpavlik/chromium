@@ -48,6 +48,22 @@ struct CRBufferPool_t
 };
 
 
+int
+crBufferPoolGetNumBuffers( CRBufferPool *pool )
+{
+	if ( pool )
+		return pool->numBuffers;
+	return 0;
+}
+
+int
+crBufferPoolGetMaxBuffers( CRBufferPool *pool )
+{
+	if ( pool )
+		return pool->maxBuffers;
+	return 0;
+}
+
 CRBufferPool *
 crBufferPoolInit( unsigned int maxBuffers )
 {

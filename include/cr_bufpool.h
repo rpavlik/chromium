@@ -19,6 +19,9 @@ void  crBufferPoolFree( CRBufferPool *pool );
 void  crBufferPoolPush( CRBufferPool *pool, void *buf, unsigned int bytes );
 void *crBufferPoolPop( CRBufferPool *pool, unsigned int bytes );
 
+int crBufferPoolGetNumBuffers( CRBufferPool *pool );
+int crBufferPoolGetMaxBuffers( CRBufferPool *pool );
+
 #ifdef __cplusplus
 }
 #endif

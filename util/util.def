@@ -83,6 +83,8 @@ crBufferPoolInit
 crBufferPoolPush
 crBufferPoolPop
 crTimerNewTimer
+crBufferPoolGetNumBuffers
+crBufferPoolGetMaxBuffers
 crDestroyTimer
 crStartTimer
 crStopTimer
