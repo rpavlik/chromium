@@ -32,8 +32,6 @@
 extern int FindVisualInfo( HDC hdc );
 #else
 extern int FindVisualInfo( Display *dpy, XVisualInfo *vis);
-#endif
-
 
 /*
  * Get the display string for the given display pointer.
@@ -67,6 +65,7 @@ stubGetDisplayString( Display *dpy, char *nameResult, int maxResult )
 		crStrcat(nameResult, dpyName);
 	}
 }
+#endif
 
 
 /*
