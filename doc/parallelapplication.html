@@ -69,7 +69,7 @@ appear:</p>
 <p>crCreateContextCR and crMakeCurrentCR are actually function pointers
 initialized via crGetProcAddress.
 The typedefs for these functions are in the header file
-&quot;<code>cr_applications.h</code>&quot;.
+&quot;<code>chromium.h</code>&quot;.
 They provide a mechanism to use Chromium without using GLX or WGL and
 having to create applications windows, etc.
 This is particularly useful for parallel applications, since it doesn't
@@ -83,7 +83,7 @@ parameters are initialied earlier in the function.</p>
 
 <p>The next thing that the application does is create a GL barrier:</p>
 
-<table width="100%"><tr><td class="GrayCodeListing">		glBarrierCreate( MASTER_BARRIER, size );</td></tr></table>
+<table width="100%"><tr><td class="GrayCodeListing">		glBarrierCreateCR( MASTER_BARRIER, size );</td></tr></table>
 
 <p>Notice that every node in the cluster will create this barrier.&nbsp; This is
 perfectly legal, as long as the &quot;size&quot; parameter matches up.&nbsp; <code>MASTER_BARRIER</code>
@@ -130,7 +130,7 @@ for (frame = 0; ; frame++)
     client.
   <li>In a sort-first configuration <code>clearFlag</code> and
     <code>swapFlag</code> will be set only for the zeroth client.
-  <li><code>glBarrierExec</code> (also declared in <code>cr_applications.h</code>)
+  <li><code>glBarrierExecCR</code> (also declared in <code>chromium.h</code>)
     is the call to enter a barrier.</li>
   <li>The barrier following the clear ensures that the clear has happened before
     <i>anyone</i> starts drawing</li>

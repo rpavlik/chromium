@@ -15,7 +15,7 @@
 
 <body bgcolor="#FFFFFF">
 
-<h1 class="PageHeading">OpenGL Extensions</h1>
+<h1 class="PageHeading">Adding OpenGL Extensions to Chromium</h1>
 <p>In order to use particular OpenGL extensions in your OpenGL application,
 Chromium must explicitly implement those extensions.  This page describes
 how OpenGL extensions are implemented in Chromium and how to add new ones.</p>
@@ -38,7 +38,7 @@ However, Chromium-specific applications may use these tokens if needed.</p>
 should be enabled.  If one wants to disable a particular extension in
 Chromium you can simply comment-out the appropriate <code>#define</code>.</p>
 
-<p>When addeing a new extension to chromium you should surround all the new
+<p>When adding a new extension to chromium you should surround all the new
 code for that extension with <code>#ifdef CR_(extension name)</code> and
 <code>#endif</code>.</p>
 

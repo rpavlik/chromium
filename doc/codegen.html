@@ -143,7 +143,7 @@ Python <code>print</code> statement:</p>
 <table width="100%"><tr><td class="GrayCodeListing">print """<br>
       #include <stdio.h>&lt;stdio.h&gt;<br>
 #include &quot;cr_spu.h&quot;<br>
-      #include &quot;cr_glwrapper.h&quot;<br>
+      #include &quot;chromium.h&quot;<br>
       #include &quot;cr_string.h&quot;<br>
 #include &quot;seethroughspu.h&quot;<br>
 <br>
@@ -151,7 +151,7 @@ Python <code>print</code> statement:</p>
 """</td></tr></table>
 
 <p>In Python, strings enclosed in triple quotes (<code>"""</code>) can have
-embedded newlines in them.&nbsp; Notice the include of &quot;<code>cr_glwrapper.h</code>&quot;
+embedded newlines in them.&nbsp; Notice the include of &quot;<code>chromium.h</code>&quot;
 -- this is a wrapper for the system's OpenGL header, required on Windows (since <code>&lt;windows.h&gt;</code>
 has to be included before <code>&lt;GL/gl.h&gt;</code> will work on Windows).&nbsp;
 Also, we've added &quot;<code>cr_string.h</code>&quot;, which will be used when
@@ -409,7 +409,7 @@ first.&nbsp; They're totally straightforward, so they're presented without
 comment.&nbsp; Add these functions to a new file called <code>seethrough_misc.c</code>:</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">#include &quot;seethroughspu.h&quot;<br>
-      #include &quot;cr_glwrapper.h&quot;<br>
+      #include &quot;chromium.h&quot;<br>
       #include &quot;cr_error.h&quot;<br>
       <br>
       void SEETHROUGHSPU_APIENTRY seethroughMaterialfv( GLenum face, GLenum mode, const GLfloat
