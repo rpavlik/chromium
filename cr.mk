@@ -168,6 +168,11 @@ ifdef LIBRARY
 SHORT_TARGET_NAME = $(LIBRARY)
 ifdef SHARED
 TARGET := $(LIBPREFIX)$(LIBRARY)$(DLLSUFFIX)
+ifdef DARWIN
+ifndef SPU
+LDFLAGS += -install_name $(DSO_DIR)/$(TARGET)
+endif
+endif
 else
 TARGET := $(LIBPREFIX)$(LIBRARY)$(LIBSUFFIX)
 endif
