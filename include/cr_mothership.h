@@ -42,6 +42,8 @@ int crMothershipGetServerParamFromSPU( CRConnection *conn, int server_num, const
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num );
 int crMothershipGetDisplays( CRConnection *conn, char *response );
 int crMothershipGetDisplayTiles( CRConnection *conn, char *response, int server_num );
+int crMothershipGetSPURank( CRConnection *conn );
+
 
 /* Server node functions */
 void crMothershipGetClients( CRConnection *conn, char *response );

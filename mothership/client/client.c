@@ -46,6 +46,10 @@ void crMothershipDisconnect( CRConnection *conn )
 	crNetDisconnect( conn );
 }
 
+/**
+ * Send a mesage to the mothership and get a response.
+ * \return 1 if OK, 0 if error
+ */
 int crMothershipSendString( CRConnection *conn, char *response_buf, const char *str, ... )
 {
 	va_list args;
@@ -68,6 +72,10 @@ int crMothershipSendString( CRConnection *conn, char *response_buf, const char *
 	}
 }
 
+/**
+ * Get response string from mothership.
+ * \return 1 if OK, 0 if error
+ */
 int crMothershipReadResponse( CRConnection *conn, void *buf )
 {
 	char codestr[4];
@@ -260,6 +268,26 @@ int crMothershipGetDisplayTiles( CRConnection *conn, char *response, int server_
 {
 	return crMothershipSendString( conn, response, "display_tiles %d", server_num );
 }
+
+/**
+ * If several SPUs (such as Pack SPUs) are connected to a server,
+ * this function will return a unique rank/index for each such SPU.
+ * For example, if three Pack SPUs are connected to a crserver, and
+ * each SPU calls this function, they'll be returned "0", "1" and "2",
+ * respectively.
+ * \return SPU index or -1 if error
+ */
+int crMothershipGetSPURank( CRConnection *conn )
+{
+	char response[1000];
+	if (crMothershipSendString( conn, response, "get_spu_rank")) {
+		return crStrToInt(response);
+	}
+	else {
+		return -1;
+	}
+}
+
 
 
 /**********************************************************************

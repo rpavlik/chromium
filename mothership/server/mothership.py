@@ -247,9 +247,6 @@ class SPU:
 		Associates a server with an SPU and tells it how to connect to it.
 		The SPU will typically be a pack SPU or tilesort SPU.
 		"""
-#		if protocol == 'tcpip':
-#			self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
-#		elif (protocol.startswith('file') or protocol.startswith('swapfile')):
 		if (protocol.startswith('file') or protocol.startswith('swapfile')):
 			self.__add_server( node, "%s" % protocol )
 			# Don't tell the server "node" about this.
@@ -335,7 +332,7 @@ class CRNode:
 
 	def AddSPU( self, spu ):
 		"""AddSPU(spu)
-		Adds the given SPU to the front of the SPU chain."""
+		Adds the given SPU to the tail of the SPU chain."""
 		self.SPUs.append( spu )
 		spu.ID = CRNode.SPUIndex
 		spu.node = self
@@ -376,6 +373,11 @@ class CRNode:
 			dynamicHostsNeeded[self.host] = 1
 		self.constraints.append( (constraint, arg) )
 
+	def GetClients( self ):
+		"""Return list of (spu, protocol) tuples who are clients of
+		this node.  The CRNetworkNode class will override this."""
+		return None
+
 
 class CRNetworkNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
@@ -384,7 +386,7 @@ class CRNetworkNode(CRNode):
 	public functions:
 
 	    Conf:	Sets a key/value list in this node's configuration
-	    AddClient:	Adds a client to the list of clients.
+	    AddClient:	Adds a SPU to the list of clients.
 		FileClient: Add a file-readback client
 	    AddTile:	Adds a tile to the list of tiles
 		AddTileToDisplay: Adds a tile to a specified collection of tiles (a display)
@@ -394,16 +396,20 @@ class CRNetworkNode(CRNode):
 		"""CRNetworkNode(host='localhost')
 		Creates a network node for the given "host"."""
 		CRNode.__init__(self,host,constraint,constraintArg)
-		self.clients = []
-		self.file_clients = []
-		self.tiles = []
+		self.clients = []         # list of SPUs
+		self.file_clients = []    # list of "file://name" URLs
+		self.tiles = []           # list of (x,y,w,h) tuples
 		self.tiles_on_displays = []
 
-	def AddClient( self, node, protocol ):
-		"""AddClient(node, protocol)
-		Adds a client node, communicating with "protocol", to the
-		list of clients."""
-		self.clients.append( (node,protocol) )
+	def AddClient( self, spu, protocol ):
+		"""AddClient(spu, protocol)
+		Adds a spu, communicating with "protocol", to the list of clients."""
+		self.clients.append( (spu, protocol) )
+
+	def GetClients( self ):
+		"""Return list of (spu, protocol) tuples who are clients of
+		this node."""
+		return self.clients
 
 	def FileClient( self, fname ):
 		"""FileClient(node, fname)
@@ -862,6 +868,14 @@ class CR:
 		Sets the maximum buffer size allowed in communication
 		between SPUs."""
 		self.Conf("MTU", mtu)
+
+	def FindSPUHost( self, spu ):
+		"""Seach all nodes to find the one that hosts the given SPU."""
+		for node in self.nodes:
+			for s in node.SPUs:
+				if s == spu:
+					return node
+		return None
 
 	def do_setparam( self, sock, args ):
 		"""Set a global mothership parameter value (via C)"""
@@ -1571,6 +1585,43 @@ class CR:
 		CRDebug("responding with args = " + `response`)
 #		sock.Success( string.join( response, " " ) )
 		sock.Success( response )
+
+	def do_get_spu_rank( self, sock, args ):
+		"""When a number of SPUs are connected to a server, this function
+		will return the rank/index of this SPU with respect to the server.
+		For example, if there are three pack SPUs connected to a server and
+		each pack SPU calls this function, we'll uniquely return "0", "1"
+		and "2" to the those SPUs."""
+		if sock.SPUid == -1:
+			sock.Failure( SockWrapper.UNKNOWNSPU,
+						  "You can't ask for SPU peers without telling me" +
+						  "what SPU id you are!" )
+			return
+		### This is a bit tricky.  Some searching is involved.
+		# Find the last SPU in SPU chain that I belong to.
+		spu = allSPUs[sock.SPUid]
+		spuHost = self.FindSPUHost(spu)
+		lastSPU = spuHost.SPUs[-1]
+		# Check if there's no upstream server node.
+		if len(lastSPU.servers) == 0:
+			sock.Success( "0" )
+			return
+		# Get the last SPU's server node.
+		(serverNode, url) = lastSPU.servers[0]
+		rank = 0
+		# Loop over client SPUs of the server node.
+		for (clientSpu, protocol) in serverNode.GetClients():
+			# Find the node that hosts this SPU.
+			clientNode = self.FindSPUHost(clientSpu)
+			# Try to find target SPU in this node's SPU chain.
+			for s in clientNode.SPUs:
+				if s == spu:
+					# Found it!
+					sock.Success( str(rank) )
+					return
+			rank += 1
+		# Strange, maybe this SPU is on a crserver.
+		sock.Success( "-1" )
 
 	def do_crutserverparam( self, sock, args ):
 		"""do_crutserverparam(sock, args)
