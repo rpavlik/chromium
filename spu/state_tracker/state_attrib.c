@@ -32,7 +32,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	{
 		crStateError(__LINE__, __FILE__, GL_STACK_OVERFLOW, "glPushAttrib called with a full stack!" );
 	}
-	crDebug( "pushAttrib called with value 0x%x", mask );
+	crDebug( "pushAttrib called with value 0x%x", (unsigned int) mask );
 
 	a->pushMaskStack[a->pushMaskDepth++] = mask;
 
@@ -61,7 +61,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 
 	mask = a->pushMaskStack[a->pushMaskDepth--];
 
-	crDebug( "PopAttrib was called, the mask on the top of the stack was 0x%x", mask );
+	crDebug( "PopAttrib was called, the mask on the top of the stack was 0x%x", (unsigned int) mask );
 
 	ab->dirty = g->neg_bitid;
 }
