@@ -58,6 +58,11 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 
 	FLUSH();
 
+	/* Must log that this key is used */
+	if (!crHashtableIsKeyUsed(l->hash, list)) {
+	    crHashtableAdd(l->hash, list, NULL);
+	}
+
 	/* Need this???
 	crStateCurrentRecover();
 	*/
