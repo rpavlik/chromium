@@ -83,28 +83,17 @@ void PACKSPU_APIENTRY packspu_Bitmap( GLsizei width, GLsizei height, GLfloat xor
 
 void PACKSPU_APIENTRY packspu_PixelStoref( GLenum pname, GLfloat param )
 {
+	/* NOTE: we do not send pixel store parameters to the server!
+	 * When we pack a glDrawPixels or glTexImage2D image we interpret
+	 * the user's pixel store parameters at that time and pack the
+	 * image in a canonical layout (see util/pixel.c).
+	 */
 	crStatePixelStoref( pname, param );
-	if (pack_spu.swap)
-	{
-		crPackPixelStorefSWAP( pname, param );
-	}
-	else
-	{
-		crPackPixelStoref( pname, param );
-	}
 }
 
 void PACKSPU_APIENTRY packspu_PixelStorei( GLenum pname, GLint param )
 {
 	crStatePixelStorei( pname, param );
-	if (pack_spu.swap)
-	{
-		crPackPixelStoreiSWAP( pname, param );
-	}
-	else
-	{
-		crPackPixelStorei( pname, param );
-	}
 }
 
 void PACKSPU_APIENTRY packspu_TexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
@@ -123,6 +112,7 @@ void PACKSPU_APIENTRY packspu_TexImage1D( GLenum target, GLint level, GLint inte
 		crPackTexImage1D( target, level, internalformat, width, border, format, type, pixels, &(clientState->unpack) );
 	}
 }
+
 void PACKSPU_APIENTRY packspu_TexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	GET_CONTEXT(ctx);
