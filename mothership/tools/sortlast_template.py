@@ -22,19 +22,13 @@ class SortlastParameters:
 	# This is where we set all the default sortlast parameters.
 	def __init__(self):
 		self.ZerothArg = ''
-		self.NthArg = ''
 
 	def Clone(self):
 		"""Return a clone of this object."""
 		# We're not using the copy.copy() function since it's flakey
 		p = SortlastParameters()
 		p.ZerothArg = self.ZerothArg
-		p.NthArg = self.NthArg
 		return p
-
-
-DefaultWidth = 512
-DefaultHeight = 512
 
 
 #----------------------------------------------------------------------
@@ -83,10 +77,11 @@ for i in range(NUM_APP_NODES):
 	node = CRApplicationNode( APP_HOSTS[i] )
 	# argument substitutions
 	if i == 0 and ZEROTH_ARG != "":
-		app_string = string.replace( program, '#zeroth', ZEROTH_ARG)
+		app_string = string.replace( program, '%zeroth', ZEROTH_ARG)
 	else:
-		app_string = string.replace( program, '#zeroth', '' )
-	app_string = string.replace( app_string, '#nth', str(i) )
+		app_string = string.replace( program, '%0', '' )
+	app_string = string.replace( app_string, '%I', str(i) )
+	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 	node.SetApplication( app_string )
 	node.StartDir( GLOBAL_default_dir )
 
@@ -178,6 +173,8 @@ class SortlastDialog(wxDialog):
 		id_ReadbackOptions = 4003
 		id_RenderOptions   = 4004
 		id_Hostnames       = 4005
+		id_Command         = 4006
+		id_Zeroth          = 4007
 		id_OK              = 4011
 		id_CANCEL          = 4012
 
@@ -189,8 +186,7 @@ class SortlastDialog(wxDialog):
 		outerSizer = wxBoxSizer(wxVERTICAL)
 
 		# Window width/height (in pixels)
-		box = wxStaticBox(parent=self, id=-1,
-						  label="Window Size (updates all SPUs)",
+		box = wxStaticBox(parent=self, id=-1, label="Window Size",
 						  style=wxDOUBLE_BORDER)
 		windowSizeSizer = wxStaticBoxSizer(box, wxHORIZONTAL)
 		widthLabel = wxStaticText(parent=self, id=-1, label="Width:")
@@ -250,6 +246,37 @@ class SortlastDialog(wxDialog):
 				   self.__OnRenderOptions)
 		outerSizer.Add(spuSizer, flag=wxALL|wxGROW, border=4)
 
+		# Command-line stuff
+		box = wxStaticBox(parent=self, id=-1, label="Application Command Line",
+						  style=wxDOUBLE_BORDER)
+		appSizer = wxStaticBoxSizer(box, wxVERTICAL)
+		label = wxStaticText(parent=self, id=-1,
+				label="Enter program name and arguments.\n" +
+				"%N will be replaced by the number of application nodes.\n" +
+				"%I (eye) will be replaced by the application node index.\n" +
+				"%0 (zero) will be replaced by the Zeroth argument on the " +
+				"first app node only.\n" +
+				"Example command: 'psubmit -size %N -rank %I -clear %0'\n" +
+				"Zeroth arg: '-swap'")
+		appSizer.Add(label, flag=wxALL, border=10)
+		self.cmdText = wxTextCtrl(parent=self, id=id_Command,
+							 size=wxSize(420,25), value="")
+		appSizer.Add(self.cmdText)
+		rowSizer = wxBoxSizer(wxHORIZONTAL)
+		label = wxStaticText(parent=self, id=-1, label="Zeroth arg:")
+		rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
+		self.zerothText = wxTextCtrl(parent=self, id=id_Zeroth,
+									 size=wxSize(200,25), value="")
+		rowSizer.Add(self.zerothText, flag=wxALIGN_CENTRE_VERTICAL|wxALL,
+					 border=2)
+		appSizer.Add(rowSizer, flag=wxALL, border=2)
+		outerSizer.Add(appSizer, option=0, flag=wxALL|wxGROW, border=4)
+
+		# horizontal separator (box with height=0)
+		separator = wxStaticBox(parent=self, id=-1,
+								label="", size=wxSize(10,0))
+		outerSizer.Add(separator, flag=wxGROW|wxALL, border=4)
+
 		# Sizer for the OK, Cancel buttons
 		okCancelSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
 		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
@@ -261,15 +288,9 @@ class SortlastDialog(wxDialog):
 						  flag=wxALIGN_CENTER, border=0)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
-
-		# horizontal separator (box with height=0)
-		separator = wxStaticBox(parent=self, id=-1,
-								label="", size=wxSize(10,0))
-
-		# outer-most sizer
-		outerSizer.Add(separator, flag=wxGROW|wxALL, border=4)
 		outerSizer.Add(okCancelSizer, option=0, flag=wxALL|wxGROW, border=10)
 
+		# Finish-up the dialog
 		self.SetAutoLayout(true)
 		self.SetSizer(outerSizer)
 
@@ -281,42 +302,53 @@ class SortlastDialog(wxDialog):
 		self.hostsDialog = hostdialog.HostDialog(parent=NULL, id=-1,
 						title="Chromium Hosts",
 						message="Specify host names for the readback nodes")
+		self.hostsDialog.Centre()
 
 	# end of __init__()
 
 	def __UpdateVarsFromWidgets(self):
 		"""Get current widget values and update the sortlast parameters."""
-		# XXX do window width, height
-		#tilesort = self.__Mothership.Tilesort
-		#tilesort.Columns = self.widthControl.GetValue()
-		#tilesort.Rows = self.heightControl.GetValue()
-		#tilesort.TileWidth = self.tileWidthControl.GetValue()
-		#tilesort.TileHeight = self.tileHeightControl.GetValue()
-		#tilesort.RightToLeft = self.hLayoutRadio.GetSelection()
-		#tilesort.BottomToTop = self.vLayoutRadio.GetSelection()
+		renderSPU = FindRenderSPU(self.__Mothership)
+		readbackSPU = FindReadbackSPU(self.__Mothership)
+		appNode = FindClientNode(self.__Mothership)
+		appNode.SetCount( self.numberControl.GetValue() )
+		geom = readbackSPU.GetOption("window_geometry")
+		geom[2] = self.widthControl.GetValue()
+		geom[3] = self.heightControl.GetValue()
+		readbackSPU.SetOption("window_geometry", geom)
+		geom = renderSPU.GetOption("window_geometry")
+		geom[2] = self.widthControl.GetValue()
+		geom[3] = self.heightControl.GetValue()
+		renderSPU.SetOption("window_geometry", geom)
+		cmdLine = self.cmdText.GetValue()
+		self.__Mothership.SetGlobalOption("default_app", [ cmdLine ] )
+		self.__Mothership.Sortlast.ZerothArg = self.zerothText.GetValue()
 
 	def __UpdateWidgetsFromVars(self):
 		"""Set widget values to the tilesort parameters."""
-		# XXX do window width, height
-		#tilesort = self.__Mothership.Tilesort
-		#self.widthControl.SetValue(tilesort.Columns)
-		#self.heightControl.SetValue(tilesort.Rows)
-		#self.tileWidthControl.SetValue(tilesort.TileWidth)
-		#self.tileHeightControl.SetValue(tilesort.TileHeight)
-		#self.hLayoutRadio.SetSelection(tilesort.RightToLeft)
-		#self.vLayoutRadio.SetSelection(tilesort.BottomToTop)
+		renderSPU = FindRenderSPU(self.__Mothership)
+		readbackSPU = FindReadbackSPU(self.__Mothership)
+		appNode = FindClientNode(self.__Mothership)
+		self.numberControl.SetValue( appNode.GetCount() )
+		geom = readbackSPU.GetOption("window_geometry")
+		self.widthControl.SetValue(geom[2])
+		self.heightControl.SetValue(geom[3])
+		geom = renderSPU.GetOption("window_geometry")
+		self.widthControl.SetValue(geom[2])
+		self.heightControl.SetValue(geom[3])
+		cmdLine = self.__Mothership.GetGlobalOption("default_app")[0]
+		self.cmdText.SetValue( cmdLine )
+		self.zerothText.SetValue( self.__Mothership.Sortlast.ZerothArg )
 
 	# ----------------------------------------------------------------------
 	# Event handling
 
 	def __OnSizeChange(self, event):
 		"""Called when window size changes with spin controls."""
-		self.__UpdateVarsFromWidgets()
 		self.dirty = true
 
 	def __OnNumAppsChange(self, event):
 		"""Called when number of app nodes spin control changes."""
-		#self.__UpdateVarsFromWidgets()
 		self.dirty = true
 
 	def __OnHostnames(self, event):
@@ -368,6 +400,7 @@ class SortlastDialog(wxDialog):
 
 	def _onOK(self, event):
 		"""Called by OK button"""
+		self.__UpdateVarsFromWidgets()
 		self.EndModal(wxID_OK)
 
 	def _onCancel(self, event):
@@ -385,17 +418,36 @@ class SortlastDialog(wxDialog):
 
 def Create_Sortlast(parentWindow, mothership):
 	"""Create a sort-last configuration"""
-	dialog = intdialog.IntDialog(NULL, id=-1,
+	
+	# Yes, client/server are transposed here
+	appHosts = crutils.GetSiteDefault("server_hosts")
+	if not appHosts:
+		appHosts = ["localhost"]
+
+	serverHosts = crutils.GetSiteDefault("client_hosts")
+	if not serverHosts:
+		serverHosts = ["localhost"]
+
+	defaultNodes = len(appHosts)
+	(defaultWidth, defaultHeight) = crutils.GetSiteDefault("screen_size")
+	if defaultWidth < 128:
+		defaultWidth = 128
+	if defaultHeight < 128:
+		defaultHeight = 128
+
+	dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
 							 title="Sort-last Template",
 							 labels=["Number of application nodes:",
 									 "Window Width:",
 									 "Window Height:"],
-							 defaultValues=[2, DefaultWidth, DefaultHeight],
+							 defaultValues=[defaultNodes,
+											defaultWidth, defaultHeight],
 							 maxValue=10000)
+	dialog.Centre()
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()
 		return 0
-	numClients = dialog.GetValues()[0]
+	numApps = dialog.GetValues()[0]
 	width = dialog.GetValues()[1]
 	height = dialog.GetValues()[2]
 
@@ -408,11 +460,8 @@ def Create_Sortlast(parentWindow, mothership):
 	if 1:
 		yPos = 5
 	else:
-		yPos = numClients * 60 / 2 - 20
-	hosts = crutils.GetSiteDefault("client_hosts")
-	if not hosts:
-		hosts = ["localhost"]
-	serverNode = crtypes.NetworkNode(hosts, 1)
+		yPos = numApps * 60 / 2 - 20
+	serverNode = crtypes.NetworkNode(serverHosts, 1)
 	serverNode.SetPosition(xPos, yPos)
 	serverNode.Select()
 	renderSPU = crutils.NewSPU("render")
@@ -423,10 +472,7 @@ def Create_Sortlast(parentWindow, mothership):
 	# Create the client/app nodes
 	xPos = 5
 	yPos = 5
-	hosts = crutils.GetSiteDefault("server_hosts")
-	if not hosts:
-		hosts = ["localhost"]
-	appNode = crtypes.ApplicationNode(hosts, numClients)
+	appNode = crtypes.ApplicationNode(appHosts, numApps)
 	appNode.SetPosition(xPos, yPos)
 	appNode.Select()
 	readbackSPU = crutils.NewSPU("readback")
@@ -485,12 +531,6 @@ def Is_Sortlast(mothership):
 
 def Edit_Sortlast(parentWindow, mothership):
 	"""Edit parameters for a sort-last template"""
-	# widgets:
-	# Button for Readback SPU ...
-	# Button for Render SPU ...
-	# application name with #rank, #size, #zeroth substitution
-	# info about command-line substitution
-
 	t = Is_Sortlast(mothership)
 	if t:
 		clientNode = FindClientNode(mothership)
@@ -501,7 +541,7 @@ def Edit_Sortlast(parentWindow, mothership):
 		print "This is not a sortlast configuration!"
 		return
 
-	d = SortlastDialog()
+	d = SortlastDialog(parent=parentWindow)
 	d.Centre()
 	backupSortlastParams = mothership.Sortlast.Clone()
 	d.SetMothership(mothership)
@@ -555,6 +595,10 @@ def Read_Sortlast(mothership, file):
 			v = re.search("\[.+\]$", l)
 			hosts = eval(l[v.start() : v.end()])
 			clientNode.SetHosts( hosts )
+		elif re.match("^APP_PATTERN = ", l):
+			v = re.search("\(.+\)$", l)
+			pattern = eval(l[v.start() : v.end()])
+			clientNode.SetHostNamePattern(pattern)
 		elif re.match("^ZEROTH_ARG = ", l):
 			v = re.search('\".+\"$', l)
 			mothership.Sortlast.ZerothArg = l[v.start()+1 : v.end()-1]
@@ -600,7 +644,8 @@ def Write_Sortlast(mothership, file):
 	file.write('COMPOSITE_HOST = "%s"\n' % serverNode.GetHosts()[0])
 	file.write('NUM_APP_NODES = %d\n' % clientNode.GetCount())
 	file.write('APP_HOSTS = %s\n' % str(clientNode.GetHosts()))
-	file.write('ZEROTH_ARG = "%s"\n' % 'fix-me')
+	file.write('APP_PATTERN = %s\n' % str(clientNode.GetHostNamePattern()))
+	file.write('ZEROTH_ARG = "%s"\n' % sortlast.ZerothArg)
 
 	# write render SPU options
 	renderSPU = FindRenderSPU(mothership)
