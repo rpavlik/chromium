@@ -65,8 +65,24 @@ static void resetVertexCounters(void)
 
 void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLint y)
 {
-	/* do nothing ??? */
+	/* do nothing */
 }
+
+void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
+{
+	/* Ugh - this is going to be some work!!!
+	 *
+	 * If we're driving a large mural, we probably don't want to
+	 * resize the mural in response to the app window size changing
+	 * (except maybe to preserve aspect ratio?).
+	 *
+	 * But if we're using the tilesort SPU for tile-reassembly (ala
+	 * Lightning-2) then we'll want to resize all the tiles so that
+	 * the set of tiles matches the app window size.
+	 */
+	printf("%s w=%d %d x %d\n", __FUNCTION__, window, w, h);
+}
+
 
 GLint TILESORTSPU_APIENTRY tilesortspu_crCreateWindow(void *dpy, GLint visBits)
 {

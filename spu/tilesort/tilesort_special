@@ -75,3 +75,4 @@ CopyTexSubImage2D
 Scissor
 crCreateWindow
 WindowPosition
+WindowSize
