@@ -23,6 +23,7 @@ NORMAL_FILES = packer \
 	pack_lists \
 	pack_swap_lists \
 	pack_map \
+	pack_regcombiner \
 	pack_swap_map \
 	pack_materials \
 	pack_matrices \
@@ -47,6 +48,7 @@ SWAP_FILES = pack_arrays \
 	pack_materials \
 	pack_matrices \
 	pack_pixels \
+	pack_regcombiner \
 	pack_rect \
 	pack_stipple
 NAMED_SWAP_FILES = $(addsuffix _swap, $(SWAP_FILES))

@@ -55,3 +55,8 @@ void crUnpackInterleavedArrays(void)
 {
 	crError( "Can't decode InterleavedArrays" );
 }
+
+void crUnpackSecondaryColorPointerEXT(void)
+{
+	crError( "Can't decode SecondaryColorPointerEXT" );
+}

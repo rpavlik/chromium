@@ -3,5 +3,6 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 Writeback
-CombinerParameterfv
-CombinerParameteriv
+CombinerParameterfvNV
+CombinerParameterivNV
+CombinerStageParameterfvNV

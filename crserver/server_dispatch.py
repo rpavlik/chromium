@@ -47,6 +47,11 @@ for func_name in keys:
 		current = 1
 		name = string.lower( m.group(1)[:1] ) + m.group(1)[1:]
 		type = m.group(3) + m.group(2)
+	m = re.search( r"^(SecondaryColor)(3)(ub|b|us|s|ui|i|f|d)(EXT)$", func_name )
+	if m :
+		current = 1
+		name = string.lower(m.group(1)[:1] ) + m.group(1)[1:]
+		type = m.group(3) + m.group(2)
 	m = re.search( r"^(TexCoord)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
 	if m :
 		current = 1

@@ -72,3 +72,11 @@ SemaphoreCreate
 SemaphoreV
 SemaphoreP
 BarrierExec
+SecondaryColor3ubEXT
+SecondaryColor3bEXT
+SecondaryColor3usEXT
+SecondaryColor3sEXT
+SecondaryColor3uiEXT
+SecondaryColor3iEXT
+SecondaryColor3fEXT
+SecondaryColor3dEXT

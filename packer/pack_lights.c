@@ -79,7 +79,7 @@ static void __handleLightModelData( GLenum pname, const GLfloat *params )
 			params_length = sizeof( *params );
 			break;
 		default:
-			crError( "Unkown parameter: %d", pname );
+			crError( "Unknown parameter: %d", pname );
 	}
 	packet_length += params_length;
 	GET_BUFFERED_POINTER( packet_length );

@@ -108,7 +108,7 @@ void STATE_APIENTRY crStateCombinerParameterfvNV( GLenum pname, const GLfloat *p
 	CRRegCombinerState *r = &(g->regcombiner);
 	CRStateBits *sb = GetCurrentBits();
 	CRRegCombinerBits *rb = &(sb->regcombiner);
-	
+
 	switch( pname )
 	{
 		case GL_CONSTANT_COLOR0_NV:

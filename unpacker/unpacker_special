@@ -57,3 +57,4 @@ VertexPointer
 UpdateClientPointer
 CreateContext
 BoundsInfo
+SecondaryColorPointerEXT

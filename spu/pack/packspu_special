@@ -6,6 +6,7 @@ GetString
 EnableClientState
 DisableClientState
 ColorPointer
+SecondaryColorPointerEXT
 GetPointerv
 VertexPointer
 NormalPointer
@@ -19,4 +20,3 @@ Flush
 Finish
 PixelStorei
 PixelStoref
-SecondaryColorPointerEXT

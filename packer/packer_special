@@ -5,6 +5,7 @@
 BoundsInfo
 VertexPointer
 ColorPointer
+SecondaryColorPointerEXT
 NormalPointer
 TexCoordPointer
 EdgeFlagPointer
@@ -57,4 +58,6 @@ CreateContext
 ArrayElement
 DrawArrays
 DrawElements
-SecondaryColorPointerEXT
+CombinerParameterfvNV
+CombinerParameterivNV
+CombinerStageParameterfvNV

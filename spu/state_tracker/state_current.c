@@ -149,7 +149,7 @@ void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 #ifdef CR_EXT_secondary_color
 	if (c->secondaryColor & bitID) {
 		if (COMPARE_COLOR(from->secondaryColor,to->secondaryColor)) {
-			diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->color));
+			diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->secondaryColor));
 			c->secondaryColor = GLBITS_ONES;
 			c->dirty = GLBITS_ONES;
 		}

@@ -36,4 +36,4 @@ GetTexParameteriv
 #GetCombinerOutputParameterivNV
 #GetFinalCombinerInputParameterfvNV
 #GetFinalCombinerInputParameterivNV
-#GetCombinerStageParameterfvNV
+GetCombinerStageParameterfvNV

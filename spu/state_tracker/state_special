@@ -185,6 +185,7 @@ EnableClientState
 DisableClientState
 VertexPointer
 ColorPointer
+SecondaryColorPointerEXT
 IndexPointer
 NormalPointer
 TexCoordPointer
@@ -212,4 +213,3 @@ FinalCombinerInputNV
 #GetFinalCombinerInputParameterivNV
 CombinerStageParameterfvNV
 GetCombinerStageParameterfvNV
-SecondaryColorPointerEXT

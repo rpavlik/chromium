@@ -22,6 +22,7 @@ FILES = unpack \
 	unpack_matrices \
 	unpack_pixelmap \
 	unpack_readpixels \
+	unpack_regcombiner \
 	unpack_stipple \
 	unpack_texture \
 	unpack_writeback
@@ -37,7 +38,7 @@ include $(TOP)/cr.mk
 ../include/cr_unpackfuncs.h: unpack_header.py 
 	@$(ECHO) Making the Unpack Function header...
 	@$(PYTHON) unpack_header.py > $@
-	
+
 unpack.c: unpack.py unpacker_special unpacker_vector_special
 	@$(ECHO) Making the UnPacker...
 	@$(PYTHON) unpack.py > $@

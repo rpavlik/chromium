@@ -31,6 +31,7 @@ keys.sort()
 
 max_components = {
 	'GetClipPlane': 4,
+	'GetCombinerStageParameterfvNV': 4,
 	'GetLightfv': 4,
 	'GetLightiv': 4,
 	'GetMaterialfv': 4, 
