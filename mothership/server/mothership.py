@@ -674,9 +674,9 @@ class CR:
 	def do_server( self, sock, args ):
 		"""do_server(sock, args)
 		Identifies the server in the graph. """
-                nodenames = ""
+		nodenames = ""
 		for node in self.nodes:
-                        nodenames += node.host+" "
+			nodenames += node.host+" "
 			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
 				if isinstance(node,CRNetworkNode):
 					node.spokenfor = 1
