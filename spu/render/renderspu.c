@@ -779,7 +779,7 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 	switch (target) {
 	case GL_WINDOW_SIZE_CR:
 		{
-			GLint w, h, *size = (GLint *) values;
+			GLint x, y, w, h, *size = (GLint *) values;
 			WindowInfo *window;
 			CRASSERT(type == GL_INT);
 			CRASSERT(count == 2);
@@ -788,7 +788,7 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 			window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, index);
 			if (window)
 			{
-				renderspu_SystemGetWindowSize(window, &w, &h);
+				renderspu_SystemGetWindowGeometry(window, &x, &y, &w, &h);
 				size[0] = w;
 				size[1] = h;
 			}
@@ -798,6 +798,7 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 		/* return window position, as a screen coordinate */
 		{
 			GLint *pos = (GLint *) values;
+			GLint x, y, w, h;
 			WindowInfo *window;
 			CRASSERT(type == GL_INT);
 			CRASSERT(count == 2);
@@ -806,8 +807,9 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 			window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, index);
 			if (window)
 			{
-				pos[0] = window->x;
-				pos[1] = window->y;
+				renderspu_SystemGetWindowGeometry(window, &x, &y, &w, &h);
+				pos[0] = x;/*window->x;*/
+				pos[1] = y;/*window->y;*/
 			}
 		}
 		break;

@@ -1261,12 +1261,9 @@ renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 
 
 void
-renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
+renderspu_SystemGetWindowGeometry( WindowInfo *window,
+																	 int *x, int *y, int *w, int *h )
 {
-	Window root;
-	int x, y;
-	unsigned int width, height, bw, d;
-
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
 		*w = window->width;
@@ -1280,20 +1277,35 @@ renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 	CRASSERT(window->window);
 	if (window->visual->visAttribs & CR_PBUFFER_BIT)
 	{
+		*x = 0;
+		*y = 0;
 		*w = window->width;
 		*h = window->height;
 	}
 	else
 	{
+		Window xw, child, root;
+		unsigned int width, height, bw, d;
+		int rx, ry;
+
 		if ((render_spu.render_to_app_window || render_spu.render_to_crut_window)
 				&& window->nativeWindow) {
-			XGetGeometry(window->visual->dpy, window->nativeWindow, &root,
-									 &x, &y, &width, &height, &bw, &d);
+			xw = window->nativeWindow;
 		}
 		else {
-			XGetGeometry(window->visual->dpy, window->window, &root,
-									 &x, &y, &width, &height, &bw, &d);
+			xw = window->window;
 		}
+
+		XGetGeometry(window->visual->dpy, xw, &root,
+								 x, y, &width, &height, &bw, &d);
+
+		/* translate x/y to screen coords */
+		if (!XTranslateCoordinates(window->visual->dpy, xw, root,
+															 0, 0, &rx, &ry, &child)) {
+			rx = ry = 0;
+		}
+		*x = rx;
+		*y = ry;
 		*w = (int) width;
 		*h = (int) height;
 	}

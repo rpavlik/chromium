@@ -617,7 +617,7 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 }
 
 
-void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
+void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int *w, int *h )
 {
 	RECT rect;
 
@@ -625,6 +625,8 @@ void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 	CRASSERT(window->visual);
 
 	GetClientRect( window->visual->hWnd, &rect );
+	*x = rect.left;
+	*y = rect.top;
 	*w = rect.right - rect.left;
 	*h = rect.bottom - rect.top;
 }

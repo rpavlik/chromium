@@ -438,7 +438,7 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 }
 
 
-void renderspu_SystemGetWindowSize( WindowInfo *window, GLint *w, GLint *h )
+void renderspu_SystemGetWindowGeometry( WindowInfo *window, int *x, int *y, int *w, int *h )
 {
 	GrafPtr save;
 	Rect r;
@@ -451,8 +451,10 @@ void renderspu_SystemGetWindowSize( WindowInfo *window, GLint *w, GLint *h )
 	GetWindowPortBounds( window->window, &r );
 	SetPort( save );
 
-	*w = (GLint)( r.right - r.left );
-	*h = (GLint)( r.bottom - r.top );
+	*x = (int) r.left;
+	*y = (int) r.top;
+	*w = (int) (r.right - r.left);
+	*h = (int) (r.bottom - r.top);
 }
 
 
