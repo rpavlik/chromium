@@ -183,6 +183,11 @@ int WINAPI wglDescribePixelFormat_prox( HDC hdc, int pixelFormat, UINT nBytes,
  *		return 0; 
  *	} */
 
+	if ( !pfd ) {
+		crWarning( "wglDescribePixelFormat: pfd=NULL\n" );
+		return 1; /* There's only one, baby */
+	}
+
 	if ( nBytes != sizeof(*pfd) ) {
 		crWarning( "wglDescribePixelFormat: nBytes=%u?\n", nBytes );
 		return 1; /* There's only one, baby */
