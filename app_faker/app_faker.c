@@ -639,6 +639,8 @@ int main( int argc, char **argv )
 	int i;
 	char *mothership;
 	char **faked_argv = NULL;
+	char response[1024];
+	char **chain;
 
 	progname = basename( argv[0] );
 
@@ -691,28 +693,26 @@ int main( int argc, char **argv )
 	argc -= i;
 	argv += i;
 
+
+	if (mothership)
+		crSetenv( "CRMOTHERSHIP", mothership );
+	mothership_conn = crMothershipConnect( );
+	if (!mothership_conn)
+	{
+		crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
+	}
+
+	crMothershipIdentifyFaker( mothership_conn, response );
+	chain = crStrSplitn( response, " ", 1 );
+
+	/* the OpenGL faker DLL needs to have a unique ID in case there 
+	* are multiple apps running on the same host. */
+	crSetenv( "CR_APPLICATION_ID_NUMBER", chain[0] );
+
 	if ( argc < 1 )
 	{
 		/* No command specified, contact the configuration server to 
-		 * ask what I should do. */
-	
-		char response[1024];
-		char **chain;
-
-		if (mothership)
-			crSetenv( "CRMOTHERSHIP", mothership );
-		mothership_conn = crMothershipConnect( );
-		if (!mothership_conn)
-		{
-			crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
-		}
-	
-		crMothershipIdentifyFaker( mothership_conn, response );
-		chain = crStrSplitn( response, " ", 1 );
-
-		/* the OpenGL faker DLL needs to have a unique ID in case there 
-		 * are multiple apps running on the same host. */
-		crSetenv( "CR_APPLICATION_ID_NUMBER", chain[0] );
+		* ask what I should do. */
 
 		faked_argv = crStrSplit( chain[1], " " );
 
