@@ -8,7 +8,7 @@ Before July Alpha release:
 	GM support 
 		can't test without a switch -- DAMMIT!
 	Parallel applications
-		PAPI support for server
+		Debug parallel test application (server runs out of memory quick)
 		Test context switching code
 		context switching for pushattrib stack -- yuck
 	Documentation
