@@ -35,7 +35,6 @@ static int __gl_Map2NumComponents( GLenum target )
 	default:
 		return -1;
 	}
-	return -1;
 }
 
 static int __gl_Map1NumComponents( GLenum target )
@@ -58,7 +57,6 @@ static int __gl_Map1NumComponents( GLenum target )
 	default:
 		return -1;
 	}
-	return -1;
 }
 
 void PACK_APIENTRY crPackMap2d(GLenum target, GLdouble u1, 

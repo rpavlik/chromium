@@ -29,7 +29,6 @@ static int __gl_CallListsNumBytes( GLenum type )
 		default:
 			return -1;
 	}
-	return -1;
 }
 
 void PACK_APIENTRY crPackCallLists(GLint n, GLenum type, 
