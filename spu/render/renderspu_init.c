@@ -100,10 +100,12 @@ renderSPUInit( int id, SPU *child, SPU *self,
 
 	numFuncs += numSpecial;
 
+#ifdef GLX
 	if (!render_spu.use_glxchoosevisual) {
 		/* sometimes want to set this option with ATI drivers */
 		render_spu.ws.glXChooseVisual = NULL;
 	}
+#endif
 
 	render_spu.window_id = 0;
 	render_spu.context_id = 0;
