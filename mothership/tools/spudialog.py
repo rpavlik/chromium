@@ -162,6 +162,7 @@ class SPUDialog(wxDialog):
 		ctrls = self.__Controls[name]
 		if ctrls:
 			count = len(ctrls)
+			#print "name = %s  newValue = %s" % (name, str(newValue))
 			if len(newValue) != count:
 				print "bad newValue %s = --%s--" % (name, newValue)
 				print "len = %d  count = %d" % (len(newValue), count)

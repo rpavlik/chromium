@@ -11,6 +11,11 @@
 """
 
 
+# Known issues:
+# 1. All tiles must be the same size
+# 2. Tiles can't overlap
+
+
 import string, cPickle, os.path, re
 from wxPython.wx import *
 import traceback, types
@@ -446,7 +451,7 @@ class TilesortDialog(wxDialog):
 		self.SetSizeHints(minW=400, minH=minSize[1])
 		self.SetSize(minSize)
 
-		#self.__UpdateDependentWidgets()
+		self.__UpdateDependentWidgets()
 	# end of __init__()
 
 	def __UpdateDependentWidgets(self):
@@ -614,6 +619,7 @@ class TilesortDialog(wxDialog):
 		self.Template = mothership.Template.Clone()
 		self.Template.UpdateFromMothership(mothership)
 		self.__UpdateWidgetsFromVars()
+		self.__UpdateDependentWidgets()
 		self.Template.LayoutTiles()
 		# show the dialog
 		retVal = wxDialog.ShowModal(self)

@@ -10,6 +10,14 @@
     Template for setting up Lightning-2 (tile-reassembly) configurations.
 """
 
+
+# Known issues:
+# 1. Tiles must all be same size
+# 2. Tiles cannot overlap
+# 3. No support for the Lightning-2 border pixel / reassembly codes
+
+
+
 import string, cPickle, os.path, re
 from wxPython.wx import *
 import crtypes, crutils, intdialog, hostdialog, configio
@@ -209,7 +217,7 @@ CommonTileSizes = [ [32, 32],
 					[256, 256],
 					[512, 512] ]
 
-BackgroundColor = wxColor(90, 150, 190)
+BackgroundColor = wxColor(70, 170, 130)
 
 ServerColors = [
 	wxColor(255, 50, 50),   # red
