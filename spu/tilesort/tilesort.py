@@ -52,7 +52,7 @@ for index in range(len(keys)):
 	elif stub_common.FindSpecial( "tilesort_state", func_name ):
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crState%s );' % (table_index, func_name, func_name )
 	elif stub_common.FindSpecial( "tilesort_bbox", func_name ):
-		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%sBBOX );' % (table_index, func_name, func_name )
+		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%sBBOX_COUNT );' % (table_index, func_name, func_name )
 	else:
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (table_index, func_name, func_name )
 	table_index += 1

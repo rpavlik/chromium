@@ -43,15 +43,19 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 		tilesort_spu.geom_pack_size -= (24 + 1); // 24 is the size of the BoundsInfo packet
 	}
 
+	// need to have the ctx first so we can give it as an argument o
+	// crPackFlushArg.
+	crStateInit();
+	tilesort_spu.ctx = crStateCreateContext();
+
 	crPackInitBuffer( &(tilesort_spu.geometry_pack), crAlloc( tilesort_spu.geom_pack_size ), 
 			              tilesort_spu.geom_pack_size, END_FLUFF );
 	crPackSetBuffer( &(tilesort_spu.geometry_pack) );
 	crPackFlushFunc( tilesortspuFlush );
+	crPackFlushArg( tilesort_spu.ctx );
 	crPackSendHugeFunc( tilesortspuHuge );
 	crPackResetBBOX();
 
-	crStateInit();
-	tilesort_spu.ctx = crStateCreateContext();
 	crStateMakeCurrent( tilesort_spu.ctx );
 	crStateFlushArg( tilesort_spu.ctx );
 	tilesortspuCreateDiffAPI();

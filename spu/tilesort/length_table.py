@@ -32,6 +32,8 @@ static const int __cr_packet_length_table[] = {
 """
 for func_name in keys:
 	(return_type, arg_names, arg_types ) = gl_mapping[func_name]
+	if stub_common.FindSpecial( "../../packer/opcode", func_name ) or stub_common.FindSpecial( "../../packer/opcode_extend", func_name ):
+		continue
 	if func_name in things_pinch_cares_about:
 		print "\t%d, /* %s */" %(stub_common.PacketLength( arg_types ),  func_name)
 	else:

@@ -141,7 +141,7 @@ for num_coords in [2,3,4]:
 		if arg_types[0] != 'GLfloat':
 			print "\tCREATE_%dD_VFLOATS();" % num_coords
 
-		print "\tGET_BUFFERED_POINTER( %d );" % packet_length
+		print "\tGET_BUFFERED_COUNT_POINTER( %d );" % packet_length
 		print "\tif (cr_packer_globals.updateBBOX)"
 		print "\t{"
 		if num_coords < 4:
