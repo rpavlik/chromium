@@ -22,7 +22,7 @@ stub_common.CopyrightC()
 print """#include <stdio.h>
 #include <stdlib.h>
 
-#define SUN_OGL_NO_VERTEX_MACROS
+
 #include <GL/gl.h>
 
 #include "api_templates.h"
