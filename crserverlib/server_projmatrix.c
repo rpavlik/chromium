@@ -261,6 +261,7 @@ crServerDispatchProgramStringARB(GLenum target, GLenum format, GLsizei len, cons
 	}
 
 	/* pass through */
+	crStateProgramStringARB(target, format, len, string);
 	cr_server.head_spu->dispatch_table.ProgramStringARB(target, format, len, string);
 }
 
@@ -302,6 +303,7 @@ crServerDispatchLoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLuby
 	}
 
 	/* pass through */
+	crStateLoadProgramNV(target, id, len, string);
 	cr_server.head_spu->dispatch_table.LoadProgramNV(target, id, len, string);
 }
 
@@ -316,6 +318,7 @@ crServerDispatchBindProgramARB(GLenum target, GLuint id)
 	}
 
 	/* pass through */
+	crStateBindProgramARB(target, id);
 	cr_server.head_spu->dispatch_table.BindProgramARB(target, id);
 }
 
@@ -329,5 +332,6 @@ crServerDispatchBindProgramNV(GLenum target, GLuint id)
 		cr_server.currentProgram = id;
 	}
 	/* pass through */
+	crStateBindProgramNV(target, id);
 	cr_server.head_spu->dispatch_table.BindProgramNV(target, id);
 }
