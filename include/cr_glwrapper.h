@@ -162,6 +162,7 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 
 #ifndef GL_CR_cursor_position
 #define GL_CR_cursor_position 1
+/* For virtual cursor feature (show_cursor) */
 
 #define GL_CURSOR_POSITION_CR  0x9900  /* unofficial! */
 
@@ -170,6 +171,7 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 
 #ifndef GL_CR_bounding_box
 #define GL_CR_bounding_box 1
+/* To set bounding box from client app */
 
 #define GL_DEFAULT_BBOX_CR	0x9901 /* unofficial! */
 #define GL_SCREEN_BBOX_CR	0x9902 /* unofficial! */
@@ -180,7 +182,7 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 
 #ifndef GL_CR_print_string
 #define GL_CR_print_string 1
-
+/* To print a string to stdout */
 #define GL_PRINT_STRING_CR	0x9904 /* unofficial! */
 
 #endif /* GL_CR_print_string */
@@ -188,6 +190,7 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 
 #ifndef GL_CR_tilesort_info
 #define GL_CR_tilesort_info 1
+/* To query tilesort information */
 
 #define GL_MURAL_SIZE_CR             0x9905 /* unofficial! */
 #define GL_NUM_SERVERS_CR            0x9906 /* unofficial! */
@@ -199,15 +202,19 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 
 #endif /* GL_CR_tilesort_info */
 
+
 #ifndef GL_CR_head_spu_name
 #define GL_CR_head_spu_name 1
+/* To fetch name of first SPU on a node */
 
 #define GL_HEAD_SPU_NAME_CR 0x990C /* unofficial! */
 
 #endif /* GL_CR_head_spu_name */
 
+
 #ifndef GL_CR_performance_info
 #define GL_CR_performance_info 1
+/* For gathering performance metrics */
 
 #define GL_PERF_GET_FRAME_DATA_CR       0x990D /* unofficial! */
 #define GL_PERF_GET_TIMER_DATA_CR       0x990E /* unofficial! */
@@ -221,12 +228,24 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 
 #endif /* GL_CR_performance_info */
 
+
 #ifndef GL_CR_window_size
 #define GL_CR_window_size 1
+/* To communicate window size changes */
 
-#define GL_WINDOW_SIZE_CR               0x9920 /* unofficial */
+#define GL_WINDOW_SIZE_CR               0x9920 /* unofficial! */
 
 #endif /* GL_CR_window_size */
+
+
+#ifndef GL_CR_tile_info
+#define GL_CR_tile_info 1
+/* To send new tile information to a server */
+
+#define GL_TILE_INFO_CR                 0x9921 /* unofficial! */
+
+#endif /* GL_CR_tile_info */
+
 
 
 /*
