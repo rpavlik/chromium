@@ -101,147 +101,147 @@ void PACK_APIENTRY crPackTexImage2DSWAP(GLenum target, GLint level,
 
 #if defined( GL_EXT_texture3D ) 
 void PACK_APIENTRY crPackTexImage3DEXTSWAP(GLenum target, GLint level,
-                                                                         GLenum internalformat,
+																					 GLenum internalformat,
                 GLsizei width, GLsizei height, GLsizei depth, GLint border,
                 GLenum format, GLenum type, const GLvoid *pixels,
                 const CRPixelPackState *unpackstate )
 {
-        unsigned char *data_ptr;
-        int packet_length;
-        int isnull = (pixels == NULL);
-        int is_distrib = ( (type == GL_TRUE) || (type == GL_FALSE) ) ;
-        int distrib_buf_len = 0;
-      int tex_size = 0;
+	unsigned char *data_ptr;
+	int packet_length;
+	int isnull = (pixels == NULL);
+	int is_distrib = ( (type == GL_TRUE) || (type == GL_FALSE) ) ;
+	int distrib_buf_len = 0;
+	int tex_size = 0;
 
-        packet_length =
-                sizeof( target ) +
-                sizeof( level ) +
-                sizeof( internalformat ) +
-                sizeof( width ) +
-                sizeof( height ) +
-                sizeof( depth ) +
-                sizeof( border ) +
-                sizeof( format ) +
-                sizeof( type ) +
-                sizeof( int );
+	packet_length =
+		sizeof( target ) +
+		sizeof( level ) +
+		sizeof( internalformat ) +
+		sizeof( width ) +
+		sizeof( height ) +
+		sizeof( depth ) +
+		sizeof( border ) +
+		sizeof( format ) +
+		sizeof( type ) +
+		sizeof( int );
 
-        if (pixels)
-        {
-                if ( is_distrib )
-                {
-                        distrib_buf_len = strlen( pixels ) + 1 +
-                                ( (type == GL_TRUE) ? width*height*3 : 0 ) ;
-                        packet_length += distrib_buf_len ;
-                }
-                else
-                {
-                      tex_size = crTextureSize( format, type, width, height, depth );
-                      packet_length += tex_size;
-                }
-        }
+	if (pixels)
+	{
+		if ( is_distrib )
+		{
+			distrib_buf_len = strlen( pixels ) + 1 +
+				( (type == GL_TRUE) ? width*height*3 : 0 ) ;
+			packet_length += distrib_buf_len ;
+		}
+		else
+		{
+			tex_size = crTextureSize( format, type, width, height, depth );
+			packet_length += tex_size;
+		}
+	}
 
-        data_ptr = (unsigned char *) crPackAlloc( packet_length );
-        WRITE_DATA( 0, GLenum, SWAP32( target ) );
-        WRITE_DATA( 4, GLint, SWAP32( level ) );
-        WRITE_DATA( 8, GLint, SWAP32( internalformat ) );
-        WRITE_DATA( 12, GLsizei, SWAP32( width ) );
-        WRITE_DATA( 16, GLsizei, SWAP32( height ) );
-        WRITE_DATA( 20, GLsizei, SWAP32( depth ) );
-        WRITE_DATA( 24, GLint, SWAP32( border ) );
-        WRITE_DATA( 28, GLenum, SWAP32( format ) );
-        WRITE_DATA( 32, GLenum, SWAP32( type ) );
-        WRITE_DATA( 36, int, SWAP32( isnull ) );
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, GLenum, SWAP32( target ) );
+	WRITE_DATA( 4, GLint, SWAP32( level ) );
+	WRITE_DATA( 8, GLint, SWAP32( internalformat ) );
+	WRITE_DATA( 12, GLsizei, SWAP32( width ) );
+	WRITE_DATA( 16, GLsizei, SWAP32( height ) );
+	WRITE_DATA( 20, GLsizei, SWAP32( depth ) );
+	WRITE_DATA( 24, GLint, SWAP32( border ) );
+	WRITE_DATA( 28, GLenum, SWAP32( format ) );
+	WRITE_DATA( 32, GLenum, SWAP32( type ) );
+	WRITE_DATA( 36, int, SWAP32( isnull ) );
 
-        if (pixels)
-        {
-          if ( is_distrib )
-                {
-                        memcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
-                }
-                else
-                {
-                        crPixelCopy3D( width, height, depth,
-                                       (void *)(data_ptr + 40), format, type, NULL,
-                                       pixels, format, type, unpackstate );
-                }
-        }
+	if (pixels)
+	{
+		if ( is_distrib )
+		{
+			memcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
+		}
+		else
+		{
+			crPixelCopy3D( width, height, depth,
+										 (void *)(data_ptr + 40), format, type, NULL,
+										 pixels, format, type, unpackstate );
+		}
+	}
 
-        crHugePacket( CR_TEXIMAGE3DEXT_OPCODE, data_ptr );
+	crHugePacket( CR_TEXIMAGE3DEXT_OPCODE, data_ptr );
 }
 #endif /* GL_EXT_texture3D */
 
 #ifdef CR_OPENGL_VERSION_1_2
 void PACK_APIENTRY crPackTexImage3DSWAP(GLenum target, GLint level,
 #if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS)
-                                                                         GLenum internalformat,
+																				GLenum internalformat,
 #else
-                                                                         GLint internalformat,
+																				GLint internalformat,
 #endif
                 GLsizei width, GLsizei height, GLsizei depth, GLint border,
                 GLenum format, GLenum type, const GLvoid *pixels,
                 const CRPixelPackState *unpackstate )
 {
-        unsigned char *data_ptr;
-        int packet_length;
-        int isnull = (pixels == NULL);
-        int is_distrib = ( (type == GL_TRUE) || (type == GL_FALSE) ) ;
-        int distrib_buf_len = 0;
-      int tex_size = 0;
+	unsigned char *data_ptr;
+	int packet_length;
+	int isnull = (pixels == NULL);
+	int is_distrib = ( (type == GL_TRUE) || (type == GL_FALSE) ) ;
+	int distrib_buf_len = 0;
+	int tex_size = 0;
 
-        packet_length =
-                sizeof( target ) +
-                sizeof( level ) +
-                sizeof( internalformat ) +
-                sizeof( width ) +
-                sizeof( height ) +
-                sizeof( depth ) +
-                sizeof( border ) +
-                sizeof( format ) +
-                sizeof( type ) +
-                sizeof( int );
+	packet_length =
+		sizeof( target ) +
+		sizeof( level ) +
+		sizeof( internalformat ) +
+		sizeof( width ) +
+		sizeof( height ) +
+		sizeof( depth ) +
+		sizeof( border ) +
+		sizeof( format ) +
+		sizeof( type ) +
+		sizeof( int );
 
-        if (pixels)
-        {
-                if ( is_distrib )
-                {
-                        distrib_buf_len = strlen( pixels ) + 1 +
-                                ( (type == GL_TRUE) ? width*height*3 : 0 ) ;
-                        packet_length += distrib_buf_len ;
-                }
-                else
-                {
-                      tex_size = crTextureSize( format, type, width, height, depth );
-                      packet_length += tex_size;
-                }
-        }
+	if (pixels)
+	{
+		if ( is_distrib )
+		{
+			distrib_buf_len = strlen( pixels ) + 1 +
+				( (type == GL_TRUE) ? width*height*3 : 0 ) ;
+			packet_length += distrib_buf_len ;
+		}
+		else
+		{
+			tex_size = crTextureSize( format, type, width, height, depth );
+			packet_length += tex_size;
+		}
+	}
 
-        data_ptr = (unsigned char *) crPackAlloc( packet_length );
-        WRITE_DATA( 0, GLenum, SWAP32( target ) );
-        WRITE_DATA( 4, GLint, SWAP32( level ) );
-        WRITE_DATA( 8, GLint, SWAP32( internalformat ) );
-        WRITE_DATA( 12, GLsizei, SWAP32( width ) );
-        WRITE_DATA( 16, GLsizei, SWAP32( height ) );
-        WRITE_DATA( 20, GLsizei, SWAP32( depth ) );
-        WRITE_DATA( 24, GLint, SWAP32( border ) );
-        WRITE_DATA( 28, GLenum, SWAP32( format ) );
-        WRITE_DATA( 32, GLenum, SWAP32( type ) );
-        WRITE_DATA( 36, int, SWAP32( isnull ) );
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, GLenum, SWAP32( target ) );
+	WRITE_DATA( 4, GLint, SWAP32( level ) );
+	WRITE_DATA( 8, GLint, SWAP32( internalformat ) );
+	WRITE_DATA( 12, GLsizei, SWAP32( width ) );
+	WRITE_DATA( 16, GLsizei, SWAP32( height ) );
+	WRITE_DATA( 20, GLsizei, SWAP32( depth ) );
+	WRITE_DATA( 24, GLint, SWAP32( border ) );
+	WRITE_DATA( 28, GLenum, SWAP32( format ) );
+	WRITE_DATA( 32, GLenum, SWAP32( type ) );
+	WRITE_DATA( 36, int, SWAP32( isnull ) );
 
-        if (pixels)
-        {
-          if ( is_distrib )
-                {
-                        memcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
-                }
-                else
-                {
-                        crPixelCopy3D( width, height, depth,
-                                       (void *)(data_ptr + 40), format, type, NULL,
-                                       pixels, format, type, unpackstate );
-                }
-        }
+	if (pixels)
+	{
+		if ( is_distrib )
+		{
+			memcpy( (void*)(data_ptr + 40), pixels, distrib_buf_len ) ;
+		}
+		else
+		{
+			crPixelCopy3D( width, height, depth,
+										 (void *)(data_ptr + 40), format, type, NULL,
+										 pixels, format, type, unpackstate );
+		}
+	}
 
-        crHugePacket( CR_TEXIMAGE3D_OPCODE, data_ptr );
+	crHugePacket( CR_TEXIMAGE3D_OPCODE, data_ptr );
 }
 #endif /* CR_OPENGL_VERSION_1_2 */
 
