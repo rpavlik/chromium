@@ -568,13 +568,13 @@ void PACK_APIENTRY crPackAreTexturesResidentSWAP( GLsizei n, const GLuint *textu
 	int i;
 
 	packet_length = 
-		sizeof(int) +            /* packet length */
+		sizeof( int ) +            /* packet length */
 		sizeof( GLenum ) +       /* extend-o opcode */
 		sizeof( n ) +            /* num_textures */
 		n*sizeof( *textures ) +  /* textures */
 		8 + 8 + 8;               /* return pointers */
 
-	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length);
 	WRITE_DATA( 0, int, SWAP32(packet_length) );
 	WRITE_DATA( sizeof( int ) + 0, GLenum, SWAP32(CR_ARETEXTURESRESIDENT_EXTEND_OPCODE) );
 	WRITE_DATA( sizeof( int ) + 4, GLsizei, SWAP32(n) );

@@ -558,15 +558,15 @@ void PACK_APIENTRY crPackAreTexturesResident( GLsizei n, const GLuint *textures,
 	int packet_length;
 
 	packet_length = 
-		sizeof(int) +            /* packet length */
+		sizeof( int ) +		 /* packet length */
 		sizeof( GLenum ) +       /* extend-o opcode */
 		sizeof( n ) +            /* num_textures */
 		n*sizeof( *textures ) +  /* textures */
 		8 + 8 + 8;               /* return pointers */
 
-	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	GET_BUFFERED_POINTER(pc, packet_length);
 	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( sizeof( int ) + 0, GLenum, CR_ARETEXTURESRESIDENT_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, CR_ARETEXTURESRESIDENT_EXTEND_OPCODE );
 	WRITE_DATA( sizeof( int ) + 4, GLsizei, n );
 	memcpy( data_ptr + sizeof( int ) + 8, textures, n*sizeof( *textures ) );
 	WRITE_NETWORK_POINTER( sizeof( int ) + 8 + n*sizeof( *textures ), (void *) residences );
