@@ -587,26 +587,39 @@ one or more downstream servers.
 
 <h4>Additional notes on the Tilesort SPU and display lists</h4>
 
-<nl>
-<li>There may be problems with nested calls inside display lists
-    since it isn't possible to track the bounding boxes of display
-    lists with nested calls
-<li>Some problems may occur with glRasterPos glDrawPixels etc..
-<li>The lazy send support for glCallLists does only broadcast on
-    demand since there is no support for auto bounding boxes for
-    glCallLists.
-<li>If a screen-space or object-space bounding box is active, display
-    lists are subjected to bucketing like other glBegin/End
-    primitives.  It's up to the application programmer to call
-    glChromiumParameterv(GL_OBJECT_BBOX_CR, ...) to specify a
-    bounding box for subsequent glCallLists.
-<li>If a bounding box is not active when glCallList is called, the
-    display list (and any outstanding state changes) are broadcast
-    to all servers.  We really have to play it safe in this
-    situation since the tilesort SPU has no idea what's
-    encapsulated inside a display list.
-
-</nl>
+<ul>
+<li><p>Normally, when display lists are created they're sent to all servers.
+    Also, each glCallList() is sent to all servers.
+    This inefficiency can be avoided if the display lists have
+    associated bounding boxes.
+    </p>
+    <p>A display list can be given a bounding box by two methods:
+    <ol>
+    <li>Call glChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox)
+        prior to glNewList() to specify a bounding box for the subsequent
+        list.  Be sure to reset the bounding box after creating the list.
+    <li>Set the Tilesort SPU's <b>auto_dlist_bbox</b> option.  This causes the
+        Tilesort SPU to automatically compute a bounding box from the
+        glVertex commands compiled into the list.
+        If the display list contains matrix transformations, the bounding
+        box may be computed incorrectly.
+    </ol>
+    </p>
+<li><p>Normally, display lists are immediately sent to all servers as
+    they're compiled.
+    Instead, display lists can be sent to the servers only when they're
+    drawn for the first time if the Tilesort SPU option <b>lazy_send_dlists</b>
+    is set.
+    </p>
+<li><p>Normally, state changes encapsulated inside display lists are
+    ignored by the Tilesort SPU.  This can result in rendering errors.
+    To solve this, set the <b>dlist_state_tracking</b> option.
+    Unfortunately, there is a performance penalty for using this option.
+    </p>
+<li><p>There may be problems with nested display lists.  Fortunately,
+    few OpenGL applications use nested display lists.
+    </p>
+</ul>
 
 
 
