@@ -15,19 +15,22 @@
 #include "cr_mem.h"
 
 static void
-tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
+tilesortspuReadPixels( const CRMessageReadPixels *rp, unsigned int len )
 {
 	GET_THREAD(thread);
 	int payload_len = len - sizeof( *rp );
 	char *dest_ptr;
 	char *src_ptr = (char*)rp + sizeof(*rp);
 
+	/* we better be expecting a ReadPixels result! */
+	CRASSERT(thread->currentContext->readPixelsCount > 0);
+
 	crMemcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
 
 	if (rp->alignment == 1 &&
-		rp->skipRows == 0 &&
-		rp->skipPixels == 0 &&
-		rp->stride == rp->bytes_per_row) {
+			rp->skipRows == 0 &&
+			rp->skipPixels == 0 &&
+			rp->stride == rp->bytes_per_row) {
 		/* no special packing is needed */
 		crMemcpy ( dest_ptr, ((char *)rp) + sizeof(*rp), payload_len );
 	}
@@ -57,8 +60,14 @@ tilesortspuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 	}
 
 	thread->currentContext->readPixelsCount--;
+	CRASSERT(thread->currentContext->readPixelsCount >= 0);
 }
 
+/*
+ * This is a callback function that's called from the crNet receiver
+ * code in util/net.c.  We're interested in handling CR_MESSAGE_READ_PIXELS
+ * messages (i.e. the return of pixel data) only.
+ */
 static int
 tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
@@ -68,13 +77,16 @@ tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 	{
 		case CR_MESSAGE_READ_PIXELS:
 			tilesortspuReadPixels( &(msg->readPixels), len );
-			break;
+			return 1; /* HANDLED */
 		default:
-			/*crWarning( "Why is the tilesort SPU getting a message of type 0x%x?", msg->type ); */
+			/*
+			crWarning("Why is the tilesort SPU getting a message of type 0x%x?",
+								msg->type);
+			*/
 			return 0; /* NOT HANDLED */
 	}
-	(void) len;	
-	return 1; /* HANDLED */
+	CRASSERT(0);
+	return 0; /* never get here */
 }
 
 void tilesortspuConnectToServers( void )
