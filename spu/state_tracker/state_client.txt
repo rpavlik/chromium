@@ -1,9 +1,9 @@
-:clientPointer:v.size,v.type,v.stride,v.p:VertexPointer
-:clientPointer:c.size,c.type,c.stride,c.p:ColorPointer
-:clientPointer:i.type,i.stride,i.p:IndexPointer
-:clientPointer:n.type,n.stride,n.p:NormalPointer
-:clientPointer:t.size,t.type,t.stride,t.p:TexCoordPointer
-:clientPointer:e.stride,e.p:EdgeFlagPointer
+#:clientPointer:v.size,v.type,v.stride,v.p:VertexPointer
+#:clientPointer:c.size,c.type,c.stride,c.p:ColorPointer
+#:clientPointer:i.type,i.stride,i.p:IndexPointer
+#:clientPointer:n.type,n.stride,n.p:NormalPointer
+#:clientPointer:t.size,t.type,t.stride,t.p:TexCoordPointer
+#:clientPointer:e.stride,e.p:EdgeFlagPointer
 :enableClientState:*glAble able[2];
 :enableClientState:*able[0] = diff_api.DisableClientState;
 :enableClientState:*able[1] = diff_api.EnableClientState;

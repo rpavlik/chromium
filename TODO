@@ -1,4 +1,5 @@
 Before Alpha release:
+	tilesort Huge packets
 	tilesort DrawPixels/RasterPos
 	tilesort Viewport testing
 	tilesort Pinching
@@ -38,3 +39,4 @@ Future:
 		Byte-swapping
 	VIA port?
 	Display list state changes?
+	More efficient Vertex Array support?

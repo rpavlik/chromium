@@ -7,6 +7,7 @@ FILES = packer \
 	pack_bbox \
 	pack_bounds \
 	pack_buffer \
+	pack_client \
 	pack_clipplane \
 	pack_context \
 	pack_current \

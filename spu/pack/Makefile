@@ -2,8 +2,14 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = packspu
-FILES = packspu packspu_config packspu_get packspu_getstring \
-	packspu_init packspu_net packspu_pixel
+FILES = packspu \
+	packspu_client \
+	packspu_config \
+	packspu_get \
+	packspu_getstring \
+	packspu_init \
+	packspu_net \
+	packspu_pixel
 
 LIBRARIES = crutil crmothership crstate crpacker
 
@@ -13,7 +19,7 @@ SLOP = $(PRECOMP)
 LIB_DEFS += pack.def
 include ${TOP}/cr.mk
 
-packspu.c: pack.py packspu_special packspu_unimplemented_special
+packspu.c: pack.py packspu_pixel_special packspu_client_special packspu_special packspu_unimplemented_special
 	@$(ECHO) Building the Pack SPU
 	@$(PYTHON) pack.py > $@
 	

@@ -112,6 +112,43 @@ void tilesortspuShipBuffers( void )
 	}
 }
 
+void tilesortspuHuge( CROpcode opcode, void *buf )
+{
+#if 1
+	unsigned int          len;
+	unsigned char        *src;
+	CRMessageOpcodes *msg;
+
+	/* packet length is indicated by the variable length field, and
+	   includes an additional word for the opcode (with alignment) and
+	   a header */
+	len = ((unsigned int *) buf)[-1] + 4 + sizeof(CRMessageOpcodes);
+
+	/* write the opcode in just before the length */
+	((unsigned char *) buf)[-5] = (unsigned char) opcode;
+
+	/* fix up the pointer to the packet to include the length & opcode
+       & header */
+	src = (unsigned char *) buf - 8 - sizeof(CRMessageOpcodes);
+
+	msg = (CRMessageOpcodes *) src;
+
+	msg->type       = CR_MESSAGE_OPCODES;
+	msg->senderId   = state_server->net.conn->sender_id;
+	msg->numOpcodes = 1;
+
+	/* the pipeserver's buffer might have data in it, and that should
+       go across the wire before this big packet */
+	__sendServerBuffer( state_server );
+	crNetSend( state_server->net.conn, NULL, src, len );
+#else
+	crError( "Trying to send a huge packet, which is unimplemented!" );
+	(void) opcode;
+	(void) buf;
+#endif
+}
+
+
 static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 {
 	

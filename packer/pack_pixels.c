@@ -36,7 +36,7 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 		GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove,
 		const GLubyte *bitmap )
 {
-	crError( "Unimplemented crPackDrawPixels" );
+	crError( "Unimplemented crPackBitmap" );
 
 	(void) width;
 	(void) height;

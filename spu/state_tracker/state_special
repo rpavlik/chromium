@@ -185,4 +185,5 @@ IndexPointer
 NormalPointer
 TexCoordPointer
 EdgeFlagPointer
+InterleavedArrays
 GetPointerv

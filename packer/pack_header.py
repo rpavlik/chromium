@@ -15,6 +15,7 @@ print """#ifndef CR_PACKFUNCTIONS_H
 #define CR_PACKFUNCTIONS_H
 
 #include "cr_glwrapper.h"
+#include "state/cr_client.h"
 #include "state/cr_pixel.h"
 #include "cr_pack.h"
 
@@ -40,6 +41,9 @@ for func_name in keys:
 	elif stub_common.FindSpecial( "packer_pixel", func_name ):	
 		arg_types.append( "CRPackState *" )
 		arg_names.append( "packstate" )
+	elif stub_common.FindSpecial( "packer_client", func_name ):	
+		arg_types.append( "CRClientState *" )
+		arg_names.append( "c" )
 	if return_type != 'void' or stub_common.FindSpecial( 'packer_get', func_name ):
 		arg_types.append( "int *" )
 		arg_names.append( "writeback" )

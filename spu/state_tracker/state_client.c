@@ -333,6 +333,344 @@ void STATE_APIENTRY crStateEdgeFlagPointer(GLsizei stride, const GLvoid *p)
 	cb->clientPointer = g->neg_bitid;
 }
 
+
+/* 
+** Currently I treat Interleaved Arrays as if the 
+** user uses them as separate arrays.
+** Certainly not the most efficient method but it 
+** lets me use the same glDrawArrays method.
+*/
+void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *p) 
+{
+	CRContext *g = GetCurrentContext();
+	CRClientState *c = &(g->client);
+	CRStateBits *sb = GetCurrentBits();
+	CRClientBits *cb = &(sb->client);
+	CRClientPointer *cp;
+	unsigned char *base = (unsigned char *) p;
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glInterleavedArrays called in begin/end");
+		return;
+	}
+
+	FLUSH();
+
+	if (stride < 0)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glInterleavedArrays: stride < 0: %d", stride);
+		return;
+	}
+
+	switch (format) 
+	{
+		case GL_T4F_C4F_N3F_V4F:
+		case GL_T2F_C4F_N3F_V3F:
+		case GL_C4F_N3F_V3F:
+		case GL_T4F_V4F:
+		case GL_T2F_C3F_V3F:
+		case GL_T2F_N3F_V3F:
+		case GL_C3F_V3F:
+		case GL_N3F_V3F:
+		case GL_T2F_C4UB_V3F:
+		case GL_T2F_V3F:
+		case GL_C4UB_V3F:
+		case GL_V3F:
+		case GL_C4UB_V2F:
+		case GL_V2F:
+			break;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glInterleavedArrays: Unrecognized format: %d", format);
+			return;
+	}
+
+	cb->dirty = g->neg_bitid;
+	cb->clientPointer = g->neg_bitid;
+
+/* p, size, type, stride, enabled, bytesPerIndex */
+/*
+**  VertexPointer 
+*/
+	
+	cp = &(c->v);
+	cp->type = GL_FLOAT;
+	cp->enabled = GL_TRUE;
+
+	switch (format) 
+	{
+		case GL_T4F_C4F_N3F_V4F:
+			cp->p = base+4*sizeof(GLfloat)+4*sizeof(GLfloat)+3*sizeof(GLfloat);
+			cp->size = 4;
+			break;
+		case GL_T2F_C4F_N3F_V3F:
+			cp->p = base+2*sizeof(GLfloat)+4*sizeof(GLfloat)+3*sizeof(GLfloat);
+			cp->size = 3;
+			break;
+		case GL_C4F_N3F_V3F:
+			cp->p = base+4*sizeof(GLfloat)+3*sizeof(GLfloat);
+			cp->size = 3;
+			break;
+		case GL_T4F_V4F:
+			cp->p = base+4*sizeof(GLfloat);
+			cp->size = 4;
+			break;
+		case GL_T2F_C3F_V3F:
+			cp->p = base+2*sizeof(GLfloat)+3*sizeof(GLfloat);
+			cp->size = 3;
+			break;
+		case GL_T2F_N3F_V3F:
+			cp->p = base+2*sizeof(GLfloat)+3*sizeof(GLfloat);
+			cp->size = 3;
+			break;
+		case GL_C3F_V3F:
+			cp->p = base+3*sizeof(GLfloat);
+			cp->size = 3;
+			break;
+		case GL_N3F_V3F:
+			cp->p = base+3*sizeof(GLfloat);
+			cp->size = 3;
+			break;
+		case GL_T2F_C4UB_V3F:
+			cp->p = base+2*sizeof(GLfloat)+4*sizeof(GLubyte);
+			cp->size = 3;
+			break;
+		case GL_T2F_V3F:
+			cp->p = base+2*sizeof(GLfloat);
+			cp->size = 2;
+			break;
+		case GL_C4UB_V3F:
+			cp->p = base+4*sizeof(GLubyte);
+			cp->size = 3;
+			break;
+		case GL_V3F:
+			cp->p = base;
+			cp->size = 3;
+			break;
+		case GL_C4UB_V2F:
+			cp->p = base+4*sizeof(GLubyte);
+			cp->size = 2;
+			break;
+		case GL_V2F:
+			cp->p = base;
+			cp->size = 2;
+			break;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glInterleavedArrays: Unrecognized format: %d", format);
+			return;
+	}
+
+	cp->bytesPerIndex = cp->size * sizeof (GLfloat);
+
+	if (stride)
+		cp->stride = stride + (cp->p - base);
+	else
+		cp->stride = cp->bytesPerIndex + (cp->p - base);
+
+/*
+**  NormalPointer
+*/
+
+	cp = &(c->n);
+	cp->enabled = GL_TRUE;
+	switch (format) 
+	{
+		case GL_T4F_C4F_N3F_V4F:
+			cp->p = base+4*sizeof(GLfloat)+4*sizeof(GLfloat);
+			cp->stride = 4*sizeof(GLfloat)+4*sizeof(GLfloat)+stride;
+			if (!stride) cp->stride += 3*sizeof(GLfloat)+4*sizeof(GLfloat);
+			break;
+		case GL_T2F_C4F_N3F_V3F:
+			cp->p = base+2*sizeof(GLfloat)+4*sizeof(GLfloat);
+			cp->stride = 2*sizeof(GLfloat)+4*sizeof(GLfloat)+stride;
+			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_C4F_N3F_V3F:
+			cp->p = base+4*sizeof(GLfloat);
+			cp->stride = 4*sizeof(GLfloat)+stride;
+			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_T2F_N3F_V3F:
+			cp->p = base+2*sizeof(GLfloat);
+			cp->stride = 2*sizeof(GLfloat)+stride;
+			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_N3F_V3F:
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_T4F_V4F:
+		case GL_T2F_C3F_V3F:
+		case GL_C3F_V3F:
+		case GL_T2F_C4UB_V3F:
+		case GL_T2F_V3F:
+		case GL_C4UB_V3F:
+		case GL_V3F:
+		case GL_C4UB_V2F:
+		case GL_V2F:
+			cp->enabled = GL_FALSE;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glInterleavedArrays: Unrecognized format: %d", format);
+			return;
+	}
+
+	if (cp->enabled) 
+	{
+		cp->type = GL_FLOAT;
+		cp->size = 3;
+		cp->bytesPerIndex = cp->size * sizeof (GLfloat);
+	}
+	
+/*
+**  ColorPointer
+*/
+
+	cp = &(c->c);
+	cp->enabled = GL_TRUE;
+	switch (format) 
+	{
+		case GL_T4F_C4F_N3F_V4F:
+			cp->size = 4;
+			cp->type = GL_FLOAT;
+			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
+			cp->p = base+4*sizeof(GLfloat);
+			cp->stride = 4*sizeof(GLfloat)+stride;
+			if (!stride) cp->stride += 4*sizeof(GLfloat)+3*sizeof(GLfloat)+4*sizeof(GLfloat);
+			break;
+		case GL_T2F_C4F_N3F_V3F:
+			cp->size = 4;
+			cp->type = GL_FLOAT;
+			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
+			cp->p = base+2*sizeof(GLfloat);
+			cp->stride = 2*sizeof(GLfloat)+stride;
+			if (!stride) cp->stride += 4*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_C4F_N3F_V3F:
+			cp->size = 4;
+			cp->type = GL_FLOAT;
+			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride += 4*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_T2F_C3F_V3F:
+			cp->size = 3;
+			cp->type = GL_FLOAT;
+			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
+			cp->p = base+2*sizeof(GLfloat);
+			cp->stride = 2*sizeof(GLfloat)+stride;
+			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_C3F_V3F:
+			cp->size = 3;
+			cp->type = GL_FLOAT;
+			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride += 3*sizeof(GLfloat) + 3*sizeof(GLfloat);
+			break;
+		case GL_T2F_C4UB_V3F:
+			cp->size = 4;
+			cp->type = GL_UNSIGNED_BYTE;
+			cp->bytesPerIndex = cp->size * sizeof(GLubyte);
+			cp->p = base+2*sizeof(GLfloat);
+			cp->stride = 2*sizeof(GLfloat)+stride;
+			if (!stride) cp->stride += 4*sizeof(GLubyte)+2*sizeof(GLfloat);
+			break;
+		case GL_C4UB_V3F:
+			cp->size = 4;
+			cp->type = GL_UNSIGNED_BYTE;
+			cp->bytesPerIndex = cp->size * sizeof(GLubyte);
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride += 4*sizeof(GLubyte)+3*sizeof(GLfloat);
+			break;
+		case GL_C4UB_V2F:
+			cp->size = 4;
+			cp->type = GL_UNSIGNED_BYTE;
+			cp->bytesPerIndex = cp->size * sizeof(GLubyte);
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride += 4*sizeof(GLubyte)+2*sizeof(GLfloat);
+			break;
+		case GL_T2F_N3F_V3F:
+		case GL_N3F_V3F:
+		case GL_T4F_V4F:
+		case GL_T2F_V3F:
+		case GL_V3F:
+		case GL_V2F:
+			cp->enabled = GL_FALSE;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glInterleavedArrays: Unrecognized format: %d", format);
+			return;
+	}
+
+/*
+**  TexturePointer
+*/
+
+	cp = &(c->t);
+	cp->enabled = GL_TRUE;
+	switch (format) 
+	{
+		case GL_T4F_C4F_N3F_V4F:
+			cp->size = 4;
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride = 4*sizeof(GLfloat)+4*sizeof(GLfloat)+3*sizeof(GLfloat)+4*sizeof(GLfloat);
+			break;
+		case GL_T2F_C4F_N3F_V3F:
+			cp->size = 2;
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride = 2*sizeof(GLfloat)+4*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_T2F_C3F_V3F:
+		case GL_T2F_N3F_V3F:
+			cp->size = 2;
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride = 2*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_T2F_C4UB_V3F:
+			cp->size = 2;
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride = 2*sizeof(GLfloat)+4*sizeof(GLubyte)+3*sizeof(GLfloat);
+			break;
+		case GL_T4F_V4F:
+			cp->size = 4;
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride = 4*sizeof(GLfloat)+4*sizeof(GLfloat);
+			break;
+		case GL_T2F_V3F:
+			cp->size = 2;
+			cp->p = base;
+			cp->stride = stride;
+			if (!stride) cp->stride = 2*sizeof(GLfloat)+3*sizeof(GLfloat);
+			break;
+		case GL_C4UB_V3F:
+		case GL_C4UB_V2F:
+		case GL_C3F_V3F:
+		case GL_C4F_N3F_V3F:
+		case GL_N3F_V3F:
+		case GL_V3F:
+		case GL_V2F:
+			cp->enabled = GL_FALSE;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glInterleavedArrays: Unrecognized format: %d", format);
+			return;
+	}
+
+	if (cp->enabled) 
+	{
+		cp->type = GL_FLOAT;
+		cp->bytesPerIndex = cp->size * sizeof (GLfloat);
+	}	
+}
+
 void STATE_APIENTRY crStateGetPointerv(GLenum pname, GLvoid * * params) 
 {
 	CRContext *g = GetCurrentContext();
@@ -347,29 +685,27 @@ void STATE_APIENTRY crStateGetPointerv(GLenum pname, GLvoid * * params)
 
 	switch (pname) 
 	{
-		case GL_VERTEX_ARRAY:
+		case GL_VERTEX_ARRAY_POINTER:
 			*params = (GLvoid *) c->v.p;
 			break;
-		case GL_COLOR_ARRAY:
+		case GL_COLOR_ARRAY_POINTER:
 			*params = (GLvoid *) c->c.p;
 			break;
-		case GL_NORMAL_ARRAY:
+		case GL_NORMAL_ARRAY_POINTER:
 			*params = (GLvoid *) c->n.p;
 			break;
-		case GL_INDEX_ARRAY:
+		case GL_INDEX_ARRAY_POINTER:
 			*params = (GLvoid *) c->i.p;
 			break;
-		case GL_TEXTURE_COORD_ARRAY:
+		case GL_TEXTURE_COORD_ARRAY_POINTER:
 			*params = (GLvoid *) c->t.p;
 			break;
-		case GL_EDGE_FLAG_ARRAY:
+		case GL_EDGE_FLAG_ARRAY_POINTER:
 			*params = (GLvoid *) c->e.p;
 			break;
 		default:
-			{
-				crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-						"glGetPointerv: invalid pname: %d", pname);
-				return;
-			}
+			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+					"glGetPointerv: invalid pname: %d", pname);
+			return;
 	}
 }
