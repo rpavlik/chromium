@@ -636,95 +636,290 @@ void PACK_APIENTRY crPackAreTexturesResidentSWAP( GLsizei n, const GLuint *textu
 
 void PACK_APIENTRY crPackCompressedTexImage1DARBSWAP( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imagesize, const GLvoid *data )
 {
-	GET_PACKER_CONTEXT(pc);
-	crError ( "CompressedTexImage1DARB needs to be special cased!");
-	(void) pc;
-	(void) target;
-	(void) level;
-	(void) internalformat;
-	(void) width;
-	(void) border;
-	(void) imagesize;
-	(void) data;
+	unsigned char *data_ptr;
+	int packet_length;
+	int isnull = (data == NULL);
+
+	/* All extended opcodes have their first 8 bytes predefined:
+	 * the first four indicate the packet size, and the next four
+	 * indicate the actual extended opcode.
+	 */
+	packet_length = 
+		sizeof( int ) + /* packet size */
+		sizeof( GLenum) + /* extended opcode */
+		sizeof( target ) +
+		sizeof( level ) +
+		sizeof( internalformat ) +
+		sizeof( width ) + 
+		sizeof( border ) +
+		sizeof( imagesize ) +
+		sizeof( int );
+
+	if (data)
+	{
+		packet_length += imagesize;
+	}
+
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( 4, GLenum, SWAP32(CR_COMPRESSEDTEXIMAGE1DARB_EXTEND_OPCODE) );
+	WRITE_DATA( 8, GLenum, SWAP32(target) );
+	WRITE_DATA( 12, GLint, SWAP32(level) );
+	WRITE_DATA( 16, GLint, SWAP32(internalformat) );
+	WRITE_DATA( 20, GLsizei, SWAP32(width) );
+	WRITE_DATA( 24, GLint, SWAP32(border) );
+	WRITE_DATA( 28, GLsizei, SWAP32(imagesize) );
+	WRITE_DATA( 32, int, SWAP32(isnull) );
+
+	if (data) {
+		crMemcpy( (void *)(data_ptr + 36), (void *)data, imagesize);
+	}
+
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackCompressedTexImage2DARBSWAP( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imagesize, const GLvoid *data )
 {
-	GET_PACKER_CONTEXT(pc);
-	crError ( "CompressedTexImage2DARB needs to be special cased!");
-	(void) pc;
-	(void) target;
-	(void) level;
-	(void) internalformat;
-	(void) width;
-	(void) height;
-	(void) border;
-	(void) imagesize;
-	(void) data;
+	unsigned char *data_ptr;
+	int packet_length;
+	int isnull = (data == NULL);
+
+	/* All extended opcodes have their first 8 bytes predefined:
+	 * the first four indicate the packet size, and the next four
+	 * indicate the actual extended opcode.
+	 */
+	packet_length = 
+		sizeof( int ) + /* packet size */
+		sizeof( GLenum) + /* extended opcode */
+		sizeof( target ) +
+		sizeof( level ) +
+		sizeof( internalformat ) +
+		sizeof( width ) + 
+		sizeof( height ) + 
+		sizeof( border ) +
+		sizeof( imagesize ) +
+		sizeof( int ); /* isnull */
+
+	if (data)
+	{
+		packet_length += imagesize;
+	}
+
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( 4, GLenum, SWAP32(CR_COMPRESSEDTEXIMAGE2DARB_EXTEND_OPCODE) );
+	WRITE_DATA( 8, GLenum, SWAP32(target) );
+	WRITE_DATA( 12, GLint, SWAP32(level) );
+	WRITE_DATA( 16, GLint, SWAP32(internalformat) );
+	WRITE_DATA( 20, GLsizei, SWAP32(width) );
+	WRITE_DATA( 24, GLsizei, SWAP32(height) );
+	WRITE_DATA( 28, GLint, SWAP32(border) );
+	WRITE_DATA( 32, GLsizei, SWAP32(imagesize) );
+	WRITE_DATA( 36, int, SWAP32(isnull) );
+
+	if (data) {
+		crMemcpy( (void *)(data_ptr + 40), (void *)data, imagesize);
+	}
+
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackCompressedTexImage3DARBSWAP( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imagesize, const GLvoid *data )
 {
-	GET_PACKER_CONTEXT(pc);
-	crError ( "CompressedTexImage3DARB needs to be special cased!");
-	(void) pc;
-	(void) target;
-	(void) level;
-	(void) internalformat;
-	(void) width;
-	(void) height;
-	(void) depth;
-	(void) border;
-	(void) imagesize;
-	(void) data;
+	unsigned char *data_ptr;
+	int packet_length;
+	int isnull = (data == NULL);
+
+	/* All extended opcodes have their first 8 bytes predefined:
+	 * the first four indicate the packet size, and the next four
+	 * indicate the actual extended opcode.
+	 */
+	packet_length = 
+		sizeof( int ) + /* packet size */
+		sizeof( GLenum) + /* extended opcode */
+		sizeof( target ) +
+		sizeof( level ) +
+		sizeof( internalformat ) +
+		sizeof( width ) + 
+		sizeof( height ) + 
+		sizeof( depth ) + 
+		sizeof( border ) +
+		sizeof( imagesize ) +
+		sizeof( int ); /* isnull */
+
+	if (data)
+	{
+		packet_length += imagesize;
+	}
+
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( 4, GLenum, SWAP32(CR_COMPRESSEDTEXIMAGE3DARB_EXTEND_OPCODE) );
+	WRITE_DATA( 8, GLenum, SWAP32(target) );
+	WRITE_DATA( 12, GLint, SWAP32(level) );
+	WRITE_DATA( 16, GLint, SWAP32(internalformat) );
+	WRITE_DATA( 20, GLsizei, SWAP32(width) );
+	WRITE_DATA( 24, GLsizei, SWAP32(height) );
+	WRITE_DATA( 28, GLsizei, SWAP32(depth) );
+	WRITE_DATA( 32, GLint, SWAP32(border) );
+	WRITE_DATA( 36, GLsizei, SWAP32(imagesize) );
+	WRITE_DATA( 40, int, SWAP32(isnull) );
+
+	if (data) {
+		crMemcpy( (void *)(data_ptr + 44), (void *)data, imagesize);
+	}
+
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackCompressedTexSubImage1DARBSWAP( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imagesize, const GLvoid *data )
 {
-	GET_PACKER_CONTEXT(pc);
-	crError ( "CompressedTexSubImage1DARB needs to be special cased!");
-	(void) pc;
-	(void) target;
-	(void) level;
-	(void) xoffset;
-	(void) width;
-	(void) format;
-	(void) imagesize;
-	(void) data;
+	unsigned char *data_ptr;
+	int packet_length;
+	int isnull = (data == NULL);
+
+	/* All extended opcodes have their first 8 bytes predefined:
+	 * the first four indicate the packet size, and the next four
+	 * indicate the actual extended opcode.
+	 */
+	packet_length = 
+		sizeof( int ) + /* packet size */
+		sizeof( GLenum) + /* extended opcode */
+		sizeof( target ) +
+		sizeof( level ) +
+		sizeof( xoffset ) +
+		sizeof( width ) + 
+		sizeof( format ) +
+		sizeof( imagesize ) +
+		sizeof( int ); /* isnull */
+
+	if (data)
+	{
+		packet_length += imagesize;
+	}
+
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( 4, GLenum, SWAP32(CR_COMPRESSEDTEXSUBIMAGE1DARB_EXTEND_OPCODE) );
+	WRITE_DATA( 8, GLenum, SWAP32(target) );
+	WRITE_DATA( 12, GLint, SWAP32(level) );
+	WRITE_DATA( 16, GLint, SWAP32(xoffset) );
+	WRITE_DATA( 20, GLsizei, SWAP32(width) );
+	WRITE_DATA( 24, GLenum, SWAP32(format) );
+	WRITE_DATA( 28, GLsizei, SWAP32(imagesize) );
+	WRITE_DATA( 32, int, SWAP32(isnull) );
+
+	if (data) {
+		crMemcpy( (void *)(data_ptr + 36), (void *)data, imagesize);
+	}
+
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackCompressedTexSubImage2DARBSWAP( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imagesize, const GLvoid *data )
 {
-	GET_PACKER_CONTEXT(pc);
-	crError ( "CompressedTexSubImage2DARB needs to be special cased!");
-	(void) pc;
-	(void) target;
-	(void) level;
-	(void) xoffset;
-	(void) yoffset;
-	(void) width;
-	(void) height;
-	(void) format;
-	(void) imagesize;
-	(void) data;
+	unsigned char *data_ptr;
+	int packet_length;
+	int isnull = (data == NULL);
+
+	/* All extended opcodes have their first 8 bytes predefined:
+	 * the first four indicate the packet size, and the next four
+	 * indicate the actual extended opcode.
+	 */
+	packet_length = 
+		sizeof( int ) + /* packet size */
+		sizeof( GLenum) + /* extended opcode */
+		sizeof( target ) +
+		sizeof( level ) +
+		sizeof( xoffset ) +
+		sizeof( yoffset ) +
+		sizeof( width ) + 
+		sizeof( height ) + 
+		sizeof( format ) +
+		sizeof( imagesize ) +
+		sizeof( int ); /* isnull */
+
+	if (data)
+	{
+		packet_length += imagesize;
+	}
+
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( 4, GLenum, SWAP32(CR_COMPRESSEDTEXSUBIMAGE2DARB_EXTEND_OPCODE) );
+	WRITE_DATA( 8, GLenum, SWAP32(target) );
+	WRITE_DATA( 12, GLint, SWAP32(level) );
+	WRITE_DATA( 16, GLint, SWAP32(xoffset) );
+	WRITE_DATA( 20, GLint, SWAP32(yoffset) );
+	WRITE_DATA( 24, GLsizei, SWAP32(width) );
+	WRITE_DATA( 28, GLsizei, SWAP32(height) );
+	WRITE_DATA( 32, GLenum, SWAP32(format) );
+	WRITE_DATA( 36, GLsizei, SWAP32(imagesize) );
+	WRITE_DATA( 40, int, SWAP32(isnull) );
+
+	if (data) {
+		crMemcpy( (void *)(data_ptr + 44), (void *)data, imagesize);
+	}
+
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackCompressedTexSubImage3DARBSWAP( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imagesize, const GLvoid *data )
 {
-	GET_PACKER_CONTEXT(pc);
-	crError ( "CompressedTexSubImage3DARB needs to be special cased!");
-	(void) pc;
-	(void) target;
-	(void) level;
-	(void) xoffset;
-	(void) yoffset;
-	(void) zoffset;
-	(void) width;
-	(void) height;
-	(void) depth;
-	(void) format;
-	(void) imagesize;
-	(void) data;
+	unsigned char *data_ptr;
+	int packet_length;
+	int isnull = (data == NULL);
+
+	/* All extended opcodes have their first 8 bytes predefined:
+	 * the first four indicate the packet size, and the next four
+	 * indicate the actual extended opcode.
+	 */
+	packet_length = 
+		sizeof( int ) + /* packet size */
+		sizeof( GLenum) + /* extended opcode */
+		sizeof( target ) +
+		sizeof( level ) +
+		sizeof( xoffset ) +
+		sizeof( yoffset ) +
+		sizeof( zoffset ) +
+		sizeof( width ) + 
+		sizeof( height ) + 
+		sizeof( depth ) + 
+		sizeof( format ) +
+		sizeof( imagesize ) +
+		sizeof( int ); /* isnull */
+
+	if (data)
+	{
+		packet_length += imagesize;
+	}
+
+	data_ptr = (unsigned char *) crPackAlloc( packet_length );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( 4, GLenum, SWAP32(CR_COMPRESSEDTEXSUBIMAGE3DARB_EXTEND_OPCODE) );
+	WRITE_DATA( 8, GLenum, SWAP32(target) );
+	WRITE_DATA( 12, GLint, SWAP32(level) );
+	WRITE_DATA( 16, GLint, SWAP32(xoffset) );
+	WRITE_DATA( 20, GLint, SWAP32(yoffset) );
+	WRITE_DATA( 24, GLint, SWAP32(zoffset) );
+	WRITE_DATA( 28, GLsizei, SWAP32(width) );
+	WRITE_DATA( 32, GLsizei, SWAP32(height) );
+	WRITE_DATA( 36, GLsizei, SWAP32(depth) );
+	WRITE_DATA( 40, GLenum, SWAP32(format) );
+	WRITE_DATA( 44, GLsizei, SWAP32(imagesize) );
+	WRITE_DATA( 48, int, SWAP32(isnull) );
+
+	if (data) {
+		crMemcpy( (void *)(data_ptr + 52), (void *)data, imagesize);
+	}
+
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackGetCompressedTexImageARBSWAP( GLenum target, GLint level, GLvoid *img )
