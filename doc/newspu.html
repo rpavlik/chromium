@@ -260,25 +260,62 @@ like this</a>.</p>
     </tr>
   </table>
 
-<h2 class="PageSubHeading">Step 7: Think about what you've done</h2>
+<h2 class="PageSubHeading">Step 7: Overriding default OpenGL state</h2>
 <p>OpenGL is a tricky business, and getting simple things right can sometimes be
 a little hard.&nbsp; For example, what if the user <i>never</i> sets the color,
 material, or clear color, and simply uses the defaults?&nbsp; Surely we'd want
-those colors to be inverted too, right?</p>
-<p>The best way to do this is to put a few calls in the <code>SPUInit</code>
-function in <code>invertspu_init.c</code>.&nbsp; Looking in <code>spu/state_tracker/state_lighting.c</code>
-reveals that OpenGL's default diffuse material is <code>{0.8, 0.8, 0.8, 1}</code>, so
-declare the following variable at the top of <code>SPUInit</code>:</p>
-<table width="100%"><tr><td class="GrayCodeListing">GLfloat diffuse[4] = { 1-0.8f, 1-0.8f, 1-0.8f, 1.0f };</td></tr></table>
-<p>Now add the following three calls immediately before the return at the end of
-the <code>SPUInit</code> function:</p>
-<table width="100%"><tr><td class="GrayCodeListing">	invert_spu.super.Color3f( 0, 0, 0 );&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-// default color is white<br>
-	invert_spu.super.ClearColor( 1, 1, 1, 1 ); // default clear color is black<br>
-	invert_spu.super.Materialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse );</td></tr></table
->
-<p>A cleaner design would have been to call the functions from step 5 with the
-OpenGL defaults, so we don't have inverting logic in too many places.&nbsp;
+those colors to be inverted too, right?
+The solution is to override the default OpenGL state.</p>
+
+<p>At this point we must consider OpenGL rendering contexts.
+A rendering context keeps track of all OpenGL state (such as current color,
+lighting state, blending, textures, etc).
+Application programs must create at least one rendering context (with
+glXCreateContext, for example) and bind a context (with glXMakeCurrent)
+before drawing anything.
+Furthermore, an application may create many rendering contexts and bind
+them at different times to different windows.
+</p>
+
+<p>If we want to override the default state in an OpenGL rendering context,
+the time to do it is immediately after we bind the context for the first
+time.
+That means we have to override Chromium's <code>MakeCurrent</code> function.
+</p>
+
+<p>Here's an example that overrides the default color, material and
+clear color:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">
+void INVERTSPU_APIENTRY invertMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;static GLfloat diffuse[4] = { 1-0.8f, 1-0.8f, 1-0.8f, 1.0f };<br>
+&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.MakeCurrent(crWindow, nativeWindow, ctx);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Color3f( 0, 0, 0 );       // default color is white<br>
+&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.ClearColor( 1, 1, 1, 1 ); // default clear color is black<br>
+&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Materialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse );<br>
+}
+</td></tr></table>
+
+<p>Note: in this example we're actually overriding the default state
+<em>every</em> time <code>MakeCurrent</code> is called.
+That's OK if only a little state is being set.
+Otherwise, we'd  have to keep track of the context (<code>ctx</code>)
+parameter and only set the state when we saw a new context handle.
+</p>
+
+<p>The <code>crWindow</code> parameter is Chromium's internal window ID
+number.  It's typically a small integer.</p>
+
+<p>The <code>nativeWindow</code> parameter is the handle of the corresponding
+native window system window (i.e. an X Window ID).</p>
+
+<p>The <code>ctx</code> parameter is Chromium's internal context ID.
+It's typically a small integer.</p>
+
+
+<p>We might have alternately called the functions from step 5 with the
+OpenGL defaults, so we wouldn't have inverting logic in too many places.&nbsp;
 Also, careful implementors will want to invert the default specular, emission,
 and ambient colors as well.</p>
 <p>A good program to test this SPU with is the &quot;bluepony&quot; demo that
