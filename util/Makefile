@@ -102,7 +102,7 @@ endif
 ifeq ($(TCSCOMM_SUPPORT), 1)
 CFLAGS += -DTCSCOMM_SUPPORT -DCHROMIUM -I/usr/opt/rms/include
 LDFLAGS += -lelan3
-FILES += tcscomm 
+FILES += tcscomm
 endif
 
 include ${TOP}/cr.mk
