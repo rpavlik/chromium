@@ -12,7 +12,7 @@
 #include "cr_spu.h"
 #include "saveframespu.h"
 
-static int RGBA_to_PPM(char *basename, int width, int height, GLubyte *buffer);
+static int RGBA_to_PPM(char *basename, int width, int height, GLubyte *buffer, int binary);
 
 SaveFrameSPU saveframe_spu;
 
@@ -52,7 +52,7 @@ swapBuffers(GLint window, GLint flags)
                                        saveframe_spu.buffer);
 
         RGBA_to_PPM(filename, saveframe_spu.width, saveframe_spu.height,
-                    saveframe_spu.buffer);
+                    saveframe_spu.buffer, saveframe_spu.binary);
     }
 
     saveframe_spu.framenum++;
@@ -90,7 +90,8 @@ ResizeBuffer(void)
 }
 
 static int
-RGBA_to_PPM(char *basename, int width, int height, GLubyte *buffer)
+RGBA_to_PPM(char *basename, int width, int height, GLubyte *buffer,
+            int binary)
 {
     char *filename = (char*)malloc(sizeof(char)*crStrlen(basename)+4);
     FILE   *file;
@@ -107,17 +108,27 @@ RGBA_to_PPM(char *basename, int width, int height, GLubyte *buffer)
         return 1;
     }
 
-    fprintf(file, "P3\n%d %d\n255\n", width, height);
+    if (binary)
+        fprintf(file, "P6\n%d %d\n255\n", width, height);
+    else
+        fprintf(file, "P3\n%d %d\n255\n", width, height);
     for (i = height - 1; i >= 0; i--)
     {
         for (j = 0; j < width; j++)
         {
-            fprintf(file, "%d %d %d \n",
-                    buffer[i * width * 4 + j * 4 + 0],
-                    buffer[i * width * 4 + j * 4 + 1],
-                    buffer[i * width * 4 + j * 4 + 2]);
+            if (binary)
+                fprintf(file, "%c%c%c",
+                        buffer[i * width * 4 + j * 4 + 0],
+                        buffer[i * width * 4 + j * 4 + 1],
+                        buffer[i * width * 4 + j * 4 + 2]);
+            else
+                fprintf(file, "%d %d %d \n",
+                        buffer[i * width * 4 + j * 4 + 0],
+                        buffer[i * width * 4 + j * 4 + 1],
+                        buffer[i * width * 4 + j * 4 + 2]);
         }
-        fprintf(file, "\n");
+        if (!binary)
+            fprintf(file, "\n");
     }
 
     fclose(file);

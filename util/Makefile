@@ -42,9 +42,9 @@ PRECOMP = debug_opcodes.c
 SLOP += ${PRECOMP}
 
 ifeq ($(ARCH),Linux)
-CFLAGS += -DGM_SUPPORT
-FILES += gm
-LDFLAGS += -lgm
+#CFLAGS += -DGM_SUPPORT
+#FILES += gm
+#LDFLAGS += -lgm
 endif
 
 LIB_DEFS = util.def

@@ -24,6 +24,7 @@ typedef struct {
 	SPUDispatchTable self, child, super;
 
     int stride;
+    int binary;
     long framenum;
     long single;
     char *basename;

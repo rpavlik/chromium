@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <unistd.h>
 #include "saveframespu.h"
 
 #include "cr_mothership.h"
@@ -21,6 +22,11 @@ static void __setDefaults( void )
 void set_stride( void *foo, const char *response ) 
 {
    sscanf(response, "%d", &saveframe_spu.stride);
+}
+
+void set_binary( void *foo, const char *response ) 
+{
+   sscanf(response, "%d", &saveframe_spu.binary);
 }
 
 void set_basename( void *foo, const char *response ) 
@@ -60,6 +66,9 @@ SPUOptions saveframeSPUOptions[] = {
 
    { "single", CR_INT, 1, "-1", "-1", NULL, 
      "Single Frame Number", (SPUOptionCB)set_single },
+
+   { "binary", CR_BOOL, 1, "1", NULL, NULL,
+     "Binary PPM format", (SPUOptionCB)set_binary },
 
    { "geometry", CR_INT, 4, "0, 0, 100, 100", "0, 0, 1, 1", NULL,
      "Geometry (x, y, w, h)", (SPUOptionCB)set_geometry },
