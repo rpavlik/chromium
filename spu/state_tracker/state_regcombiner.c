@@ -471,7 +471,7 @@ void STATE_APIENTRY crStateFinalCombinerInputNV( GLenum variable, GLenum input, 
 	rb->dirty = g->neg_bitid;
 }
 
-#ifdef 0
+#if 0
 /* XXX Unfinished RegCombiner State functions */
 void STATE_APIENTRY crStateGetCombinerInputParameterfvNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params ){}
 void STATE_APIENTRY crStateGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params ){}
