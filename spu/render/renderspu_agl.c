@@ -39,12 +39,12 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 	if( !disp_valid ) {
 		display = CGMainDisplayID();
 		if( !display ) {
-			crWarning( "Couldn't open display" );
+			crWarning( "Render SPU: Couldn't open display" );
 			return GL_FALSE;
 		}
 
 		if( DMGetGDeviceByDisplayID((DisplayIDType) display, &hDisplay, false) != noErr ) {
-			crWarning("Unable to get GDevice");
+			crWarning("Render SPU: Unable to get GDevice");
 			return GL_FALSE;
 		}
 
@@ -186,7 +186,7 @@ void renderspuFullscreen( WindowInfo *window, GLboolean fullscreen ) {
 	OSStatus err;
 
 	if( fullscreen ) {
-		crDebug("Going Fullscreen");
+		crDebug("Render SPU: Going Fullscreen");
 
 		if( !CGDisplayIsCaptured(display) )
 			err = CGDisplayCapture(display);
@@ -194,7 +194,7 @@ void renderspuFullscreen( WindowInfo *window, GLboolean fullscreen ) {
 		if( current_dispMode && current_dispMode != _curr )
 			TransitionToDisplayMode( display, current_dispMode );
 	} else {
-		crDebug("Reverting from Fullscreen");
+		crDebug("Render SPU: Reverting from Fullscreen");
 
 		if( old_dispMode != _curr )
 			TransitionToDisplayMode( display, old_dispMode );
@@ -217,7 +217,7 @@ GLboolean renderspuWindowAttachContext( WindowInfo *wi, WindowRef window, Contex
 
 		b = render_spu.ws.aglSetCurrentContext( context->context );
 		if( !b ) {
-			crDebug("SetCurrentContext Failed");
+			crDebug("Render SPU: SetCurrentContext Failed");
 			return GL_FALSE;
 		}
 
@@ -228,7 +228,7 @@ GLboolean renderspuWindowAttachContext( WindowInfo *wi, WindowRef window, Contex
 		b = render_spu.ws.aglSetFullScreen( context->context, wi->width, wi->height, 0, 0 );
 #endif
 		if( !b )
-			crDebug("SetFullScreen Failed");
+			crDebug("Render SPU: SetFullScreen Failed");
 	} else {
 		CGrafPtr	save;
 		CGrafPtr	port;
@@ -283,7 +283,7 @@ static pascal OSStatus windowEvtHndlr (EventHandlerCallRef myHandler, EventRef e
 			HideWindow( window );
 			SetWRefCon( window, NULL );
 
-			crWarning( "caught kEventWindowClose -- quitting." );
+			crWarning( "Render SPU: caught kEventWindowClose -- quitting." );
 			exit(0);
 			break;
 		}
@@ -368,7 +368,8 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		/* note: returns a display mode with the specified property,
 		 *       or the current display mode if no matching display mode is found
 		 */
-		disp_mode = CGDisplayBestModeForParametersAndRefreshRate( display, CGDisplayBitsPerPixel(display), window->width, window->height, refresh, NULL );
+		disp_mode = CGDisplayBestModeForParametersAndRefreshRate( display, CGDisplayBitsPerPixel(display),
+																  window->width, window->height, refresh, NULL );
 
 		if( !current_dispMode || disp_mode != current_dispMode )
 			current_dispMode = disp_mode;
@@ -378,13 +379,14 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		EventTypeSpec list[] = { { kEventClassWindow, kEventWindowClose } };
 		window->event_handler = NewEventHandlerUPP(windowEvtHndlr); 
 
-		InstallWindowEventHandler( window->window, window->event_handler, GetEventTypeCount(list), list, (void*)window->window, &ref );
+		InstallWindowEventHandler( window->window, window->event_handler, GetEventTypeCount(list), list,
+								   (void*)window->window, &ref );
 	}
 
 	if( showIt )
 		renderspu_SystemShowWindow( window, GL_TRUE );
 
-	crDebug( "Render SPU: actual window x, y, width, height: %d, %d, %d, %d",
+	crDebug( "Render SPU: actual window (x, y, width, height): %d, %d, %d, %d",
 			 window->x, window->y, window->width, window->height );
 
 	return GL_TRUE;
@@ -522,8 +524,8 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 				b = renderspuWindowAttachContext( window, window->nativeWindow, context );
 				/* don't CRASSERT(b) - it causes a problem with CRUT */
 			} else {
-				crWarning("render SPU's render_to_app_window option is set"
-						  "but the application window ID 0x%x is invalid", (unsigned int) nativeWindow);
+				crWarning("Render SPU: render_to_app_window option is set,"
+						  "but the application window ID (0x%x) is invalid", (unsigned int) nativeWindow);
 				CRASSERT(window->window);
 				b = renderspuWindowAttachContext( window, window->window, context );
 				CRASSERT(b);
@@ -542,7 +544,7 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			GLfloat f[4];
 			render_spu.self.GetFloatv(GL_CURRENT_RASTER_POSITION, f);
 			if (!window->everCurrent || f[1] < 0.0) {
-				crDebug("Resetting raster pos");
+				crDebug("Render SPU: Resetting raster pos");
 				render_spu.self.WindowPos2iARB(0, 0);
 			}
 		}
@@ -559,7 +561,7 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 	context = GetWContext( w );
 
 	if( !context )
-		crError( "SwapBuffers: got a null context from the window" );
+		crError( "Render SPU: SwapBuffers got a null context from the window" );
 
 	render_spu.ws.aglSwapBuffers( context->context );
 }
