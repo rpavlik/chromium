@@ -381,6 +381,7 @@ void crSPUChangeInterface( SPUDispatchTable *table, void *origFunc, void *newFun
 
 void crSPUSetDefaultParams( void *spu, SPUOptions *options );
 void crSPUGetMothershipParams( CRConnection *conn, void *spu, SPUOptions *options );
+int crSPUGetEnumIndex( const SPUOptions *option, const char *optName, const char *value );
 
 
 SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const char *fname );
