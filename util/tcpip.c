@@ -760,6 +760,7 @@ crTCPIPRecv( void )
 	int msock = -1; /* assumed mothership socket */
 	/* ensure we don't get caught with a new thread connecting */
 	int num_conns = cr_tcpip.num_conns;
+	int none_left = 1;
 
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_tcpip.recvmutex);
@@ -771,6 +772,8 @@ crTCPIPRecv( void )
 	{
 		CRConnection *conn = cr_tcpip.conns[i];
 		if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
+
+		none_left = 0;
 
 		if ( conn->recv_credits > 0 || conn->type != CR_TCPIP )
 		{
@@ -830,6 +833,19 @@ crTCPIPRecv( void )
 			if ((int)sock == msock+1)
 				FD_CLR(sock, &read_fds);
 		}
+	}
+
+	if (none_left) {
+		/*
+		 * Caught no more connections.
+		 * Review this if we want to try 
+		 * restarting crserver's dynamically.
+		 */
+#ifdef CHROMIUM_THREADSAFE
+		crUnlockMutex(&cr_tcpip.recvmutex);
+#endif
+		crError("No more connections to process, terminating...\n");
+		exit(0); /* shouldn't get here */
 	}
 
 	if (!max_fd) {
