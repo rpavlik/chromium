@@ -120,9 +120,20 @@ import string, sys
 sys.path.append( "../server" )
 from mothership import *
 
+# Look for some special mothership params
+for (name, value) in MOTHERSHIP_OPTIONS:
+	if name == "zeroth_arg":
+		ZEROTH_ARG = value
+	elif name == "default_dir":
+		DEFAULT_DIR = value
+	elif name == "auto_start":
+		AUTO_START = value
+	elif name == "default_app":
+		DEFAULT_APP = value
+
 # Check for program name/args on command line
 if len(sys.argv) == 1:
-	program = GLOBAL_default_app
+	program = DEFAULT_APP
 else:
 	program = string.join(sys.argv[1:])
 if program == "":
@@ -137,8 +148,8 @@ else:
 
 localHostname = os.uname()[1]
 
+
 cr = CR()
-cr.MTU( GLOBAL_MTU )
 
 
 tilesortSPUs = []
@@ -146,30 +157,24 @@ clientNodes = []
 
 for i in range(NUM_APP_NODES):
 	tilesortspu = SPU('tilesort')
-	tilesortspu.Conf('broadcast', TILESORT_broadcast)
-	tilesortspu.Conf('optimize_bucket', TILESORT_optimize_bucket)
-	tilesortspu.Conf('sync_on_swap', TILESORT_sync_on_swap)
-	tilesortspu.Conf('sync_on_finish', TILESORT_sync_on_finish)
-	tilesortspu.Conf('draw_bbox', TILESORT_draw_bbox)
-	tilesortspu.Conf('bbox_line_width', TILESORT_bbox_line_width)
-	#tilesortspu.Conf('fake_window_dims', fixme)
-	tilesortspu.Conf('scale_to_mural_size', TILESORT_scale_to_mural_size)
+	for (name, value) in TILESORT_OPTIONS:
+		tilesortspu.Conf(name, value)
 	tilesortSPUs.append(tilesortspu)
 
 	clientnode = CRApplicationNode()
 	clientnode.AddSPU(tilesortspu)
 
 	# argument substitutions
-	if i == 0 and GLOBAL_zeroth_arg != "":
-		app_string = string.replace( program, '%0', GLOBAL_zeroth_arg)
+	if i == 0 and ZEROTH_ARG != "":
+		app_string = string.replace( program, '%0', ZEROTH_ARG)
 	else:
 		app_string = string.replace( program, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 	clientnode.SetApplication( app_string )
-	clientnode.StartDir( GLOBAL_default_dir )
+	clientnode.StartDir( DEFAULT_DIR )
 
-	if GLOBAL_auto_start:
+	if AUTO_START:
 		clientnode.AutoStart( ["/bin/sh", "-c",
 				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
 
@@ -193,13 +198,8 @@ for row in range(TILE_ROWS):
 		index = i * TILE_COLS + j
 
 		renderspu = SPU('render')
-		renderspu.Conf('try_direct', RENDER_try_direct)
-		renderspu.Conf('force_direct', RENDER_force_direct)
-		renderspu.Conf('fullscreen', RENDER_fullscreen)
-		renderspu.Conf('resizable', RENDER_resizable)
-		renderspu.Conf('render_to_app_window', RENDER_render_to_app_window)
-		renderspu.Conf('title', RENDER_title)
-		renderspu.Conf('system_gl_path', RENDER_system_gl_path)
+		for (name, value) in RENDER_OPTIONS:
+			renderspu.Conf(name, value)
 
 		if singleServer:
 			renderspu.Conf('window_geometry',
@@ -217,23 +217,26 @@ for row in range(TILE_ROWS):
 						   TILE_WIDTH, TILE_HEIGHT)
 
 		servernode.AddSPU(renderspu)
-		servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
-		servernode.Conf('only_swap_once', SERVER_only_swap_once)
+		for (name, value) in SERVER_OPTIONS:
+			servernode.Conf(name, value)
 
 		cr.AddNode(servernode)
 		for i in range(NUM_APP_NODES):
 			tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port = 7000 + index)
 
-		if GLOBAL_auto_start:
+		if AUTO_START:
 			servernode.AutoStart( ["/usr/bin/rsh", host,
 									"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
 
 
+# Add nodes to mothership
 for i in range(NUM_APP_NODES):
 	cr.AddNode(clientNodes[i])
-cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
-cr.SetParam('match_window_title', GLOBAL_match_window_title)
-cr.SetParam('show_cursor', GLOBAL_show_cursor)
+
+# Set mothership params
+for (name, value) in MOTHERSHIP_OPTIONS:
+	cr.Conf(name, value)
+
 cr.Go()
 
 """
@@ -482,6 +485,7 @@ class TilesortDialog(wxDialog):
 		self.Template.TileHeight = self.tileHeightControl.GetValue()
 		self.Template.RightToLeft = self.hLayoutRadio.GetSelection()
 		self.Template.BottomToTop = self.vLayoutRadio.GetSelection()
+		# XXX set render SPU's window_geometry = tile size!!
 
 	def __UpdateWidgetsFromVars(self):
 		"""Set widget values to the tilesort parameters."""
@@ -830,22 +834,14 @@ def Read_Tilesort(mothership, fileHandle):
 		elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
 			numClients = int(l[v.start() : v.end()])
-		elif re.match("^TILESORT_", l):
-			# A tilesort SPU option
-			(name, values) = configio.ParseOption(l, "TILESORT")
-			tilesortSPU.SetOption(name, values)
-		elif re.match("^RENDER_", l):
-			# A render SPU option
-			(name, values) = configio.ParseOption(l, "RENDER")
-			renderSPU.SetOption(name, values)
-		elif re.match("^SERVER_", l):
-			# A server option
-			(name, values) = configio.ParseOption(l, "SERVER")
-			serverNode.SetOption(name, values)
-		elif re.match("^GLOBAL_", l):
-			# A global option
-			(name, values) = configio.ParseOption(l, "GLOBAL")
-			mothership.SetOption(name, values)
+		elif re.match("^TILESORT_OPTIONS = \[", l):
+			tilesortSPU.GetOptions().Read(fileHandle)
+		elif re.match("^RENDER_OPTIONS = \[", l):
+			renderSPU.GetOptions().Read(fileHandle)
+		elif re.match("^SERVER_OPTIONS = \[", l):
+			serverNode.GetOptions().Read(fileHandle)
+		elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
+			mothership.GetOptions().Read(fileHandle)
 		elif re.match("^# end of options", l):
 			# that's the end of the variables
 			# save the rest of the file....
@@ -883,15 +879,15 @@ def Write_Tilesort(mothership, file):
 
 	# write tilesort SPU options
 	tilesortSPU = FindTilesortSPU(mothership)
-	configio.WriteSPUOptions(tilesortSPU, "TILESORT", file)
+	tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS")
 
 	# write render SPU options
 	renderSPU = FindRenderSPU(mothership)
-	configio.WriteSPUOptions(renderSPU, "RENDER", file)
+	renderSPU.GetOptions().Write(file, "RENDER_OPTIONS")
 
-	# write server and global options
-	configio.WriteServerOptions(serverNode, file)
-	configio.WriteGlobalOptions(mothership, file)
+	# write server and mothership options
+	serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
+	mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
 
 	file.write("# end of options, the rest is boilerplate\n")
 	file.write(__ConfigBody)

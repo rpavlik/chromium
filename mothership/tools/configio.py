@@ -44,44 +44,11 @@ cr.MTU( GLOBAL_MTU )
 """
 
 __ConfigFileTail = """
-cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
-cr.SetParam('match_window_title', GLOBAL_match_window_title)
-cr.SetParam('show_cursor', GLOBAL_show_cursor)
+cr.Conf('minimum_window_size', GLOBAL_minimum_window_size)
+cr.Conf('match_window_title', GLOBAL_match_window_title)
+cr.Conf('show_cursor', GLOBAL_show_cursor)
 cr.Go()
 """
-
-def __WriteOption(name, type, values, file):
-	"""Helper function"""
-	if len(values) == 1:
-		valueStr = str(values[0])
-	else:
-		valueStr = str(values)
-	if type == "INT" or type == "BOOL":
-		file.write("%s = %s\n" % (name, valueStr))
-	elif type == "FLOAT":
-		file.write("%s = %s\n" % (pname, valueStr))
-	elif type == "STRING":
-		file.write("%s = \"%s\"\n" % (name, valueStr))
-	else:
-		assert type == "LABEL"
-		pass
-
-def WriteGlobalOptions(mothership, file):
-	for opt in mothership.GetOptions().Options():
-		values = mothership.GetOption(opt.Name)
-		__WriteOption("GLOBAL_" + opt.Name, opt.Type, values, file)
-
-
-def WriteServerOptions(serverNode, file):
-	for opt in serverNode.GetOptions().Options():
-		__WriteOption("SERVER_" + opt.Name, opt.Type, opt.Value, file)
-
-
-def WriteSPUOptions(spu, prefix, file):
-	"""Write SPU options to given file handle."""
-	for opt in spu.GetOptions().Options():
-		values = spu.GetOption(opt.Name)
-		__WriteOption(prefix + "_" + opt.Name, opt.Type, values, file)
 
 def WriteSPUConfs(spu, spuName, file):
 	"""Write a spu.Conf() line to the file handle for all SPU options."""
@@ -227,34 +194,6 @@ def WriteConfig(mothership, file):
 	file.write(__ConfigFileTail)
 
 
-#----------------------------------------------------------------------
-
-def ParseOption(s, prefix):
-	"""Parsing helper function"""
-	# s will be a string like:  RENDER_system_gl_path = "/usr/lib"
-	# We'll return a (name, value) tuple like ("system_gl_path", ["/usr/lib"])
-	# The name is a string and the value is a list.
-
-	# extract the option name and value
-	# parentheses in the regexp define groups
-	# \"? is an optional double-quote character
-	# [^\"] is any character but double-quote
-	varNamePat = "[\w\_]+"    # \w = alphanumeric
-	quotedPat = '\"?[^\"]*\"?'   # string in optional double-quotes
-	pattern = "^" + prefix + "_(" + varNamePat + ") = (" + quotedPat + ")$"
-	v = re.search(pattern, s)
-	if v:
-		name = v.group(1)
-		value = v.group(2)
-		if value[0] != '[':
-			value = '[' + value + ']'
-		values = eval(value)
-		return (name, values)
-	else:
-		print "PROBLEM: " + pattern
-		print "LINE: " + s
-		return 0
-
 
 #----------------------------------------------------------------------
 # Config file writing
@@ -331,9 +270,12 @@ def ReadConfig(mothership, file, filename=""):
 		sys.argv = newArgv
 		dialog.Destroy()
 
+	exec contents
+		
 	# Try to execute the config file
 	try:
-		exec contents
+		pass
+#		exec contents
 	except:
 		# get exception info
 		(type, value, callStack) = sys.exc_info()

@@ -43,7 +43,7 @@ class LightningParameters:
 		self.ScreenHeight = 1024
 		self.Layout = 0
 		self.DynamicSize = 0   # 0, 1, or 2
-		self.Reassembly = 0
+		self.Reassembly = 0  # 0, 1, o
 
 	def Clone(self):
 		"""Return a clone of this object."""
@@ -64,6 +64,7 @@ class LightningParameters:
 		return p
 
 	def UpdateFromMothership(self, mothership):
+		"""Update template values by examining the mothership/graph."""
 		serverNode = FindServerNode(mothership)
 		clientNode = FindClientNode(mothership)
 		self.NumServers = serverNode.GetCount()
@@ -77,6 +78,27 @@ class LightningParameters:
 		#self.DynamicSize = ??
 		#self.Reassembly = ??
 		
+	def UpdateMothership(self, mothership):
+		"""Update the mothership/graph from the template parameters."""
+		clientNode = FindClientNode(mothership)
+		serverNode = FindServerNode(mothership)
+		serverNode.SetCount(self.NumServers)
+		serverNode.SetHostNamePattern(self.ServerPattern)
+		serverNode.SetHosts(self.ServerHosts)
+		renderSPU = FindReassemblySPU(mothership)
+		
+		for i in range(serverNode.GetCount()):
+			serverNode.SetTiles(self.ServerTiles[i], i)
+		if self.DynamicSize:
+			mothership.Conf('track_window_size', 1)
+		else:
+			mothership.Conf('track_window_size', 0)
+		if self.Reassembly == 2:
+			renderSPU.Conf('render_to_app_window', 1)
+		else:
+			renderSPU.Conf('render_to_app_window', 0)
+
+
 	def __AllocTile(self, server, row, col):
 		"""Allocate a tile for mural position (row, col) on the nth server.
 		Return 1 for success, 0 if we run out of room on the server."""
@@ -92,7 +114,7 @@ class LightningParameters:
 			# ran out of room on this server!!!
 			return 0
 		elif x + self.TileWidth > self.ScreenWidth:
-			# to to next row
+			# go to next row
 			x = 0
 			y += self.TileHeight
 			if y + self.TileHeight > self.ScreenHeight:
@@ -254,9 +276,20 @@ import string, sys
 sys.path.append( "../server" )
 from mothership import *
 
+# Look for some special mothership params
+for (name, value) in MOTHERSHIP_OPTIONS:
+	if name == "zeroth_arg":
+		ZEROTH_ARG = value
+	elif name == "default_dir":
+		DEFAULT_DIR = value
+	elif name == "auto_start":
+		AUTO_START = value
+	elif name == "default_app":
+		DEFAULT_APP = value
+
 # Check for program name/args on command line
 if len(sys.argv) == 1:
-	program = GLOBAL_default_app
+	program = DEFAULT_APP
 else:
 	program = string.join(sys.argv[1:])
 if program == "":
@@ -271,13 +304,7 @@ else:
 
 localHostname = os.uname()[1]
 
-if REASSEMBLY == 2:
-	RENDER_TO_APP_WINDOW = 1
-else:
-	RENDER_TO_APP_WINDOW = 0
-
 cr = CR()
-cr.MTU( GLOBAL_MTU )
 
 
 tilesortSPUs = []
@@ -285,30 +312,26 @@ clientNodes = []
 
 for i in range(NUM_APP_NODES):
 	tilesortspu = SPU('tilesort')
-	tilesortspu.Conf('broadcast', TILESORT_broadcast)
-	tilesortspu.Conf('optimize_bucket', TILESORT_optimize_bucket)
-	tilesortspu.Conf('sync_on_swap', TILESORT_sync_on_swap)
-	tilesortspu.Conf('sync_on_finish', TILESORT_sync_on_finish)
-	tilesortspu.Conf('draw_bbox', TILESORT_draw_bbox)
-	tilesortspu.Conf('bbox_line_width', TILESORT_bbox_line_width)
-	#tilesortspu.Conf('fake_window_dims', fixme)
-	tilesortspu.Conf('scale_to_mural_size', TILESORT_scale_to_mural_size)
+	for (name, value) in TILESORT_OPTIONS:
+		tilesortspu.Conf( name, value )
+	if DYNAMIC_SIZE:
+		tilesortspu.Conf('optimize_bucket', 0)
 	tilesortSPUs.append(tilesortspu)
 
 	clientnode = CRApplicationNode()
 	clientnode.AddSPU(tilesortspu)
 
 	# argument substitutions
-	if i == 0 and GLOBAL_zeroth_arg != "":
-		app_string = string.replace( program, '%0', GLOBAL_zeroth_arg)
+	if i == 0 and ZEROTH_ARG != "":
+		app_string = string.replace( program, '%0', ZEROTH_ARG)
 	else:
 		app_string = string.replace( program, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 	clientnode.SetApplication( app_string )
-	clientnode.StartDir( GLOBAL_default_dir )
+	clientnode.StartDir( DEFAULT_DIR )
 
-	if GLOBAL_auto_start:
+	if AUTO_START:
 		clientnode.AutoStart( ["/bin/sh", "-c",
 				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
 
@@ -323,36 +346,21 @@ if REASSEMBLY:
 	reassembleNode = CRNetworkNode()  # xxx host?
 	reassembleSPU = SPU('render')
 	reassembleNode.AddSPU(reassembleSPU)
-	# xxx reassembleSPU.Conf()
-	if RENDER_TO_APP_WINDOW:
-		reassembleSPU.Conf('render_to_app_window', '1')
-	else:
-		reassembleSPU.Conf('window_geometry',
-								REASSEMBLE_window_geometry[0],
-								REASSEMBLE_window_geometry[1],
-								REASSEMBLE_window_geometry[2],
-								REASSEMBLE_window_geometry[3])
+	for (name, value) in REASSEMBLE_OPTIONS:
+		reassembleSPU.Conf( name, value )
 
 # Loop over servers
 for serverIndex in range(NumServers):
 
-	# Create this server's render SPU
+	# Create this server's readback/render SPU
 	if REASSEMBLY:
 		renderspu = SPU('readback')
 	else:
 		renderspu = SPU('render')
-	renderspu.Conf('try_direct', READBACK_try_direct)
-	renderspu.Conf('force_direct', READBACK_force_direct)
-	renderspu.Conf('fullscreen', READBACK_fullscreen)
-	renderspu.Conf('title', READBACK_title)
-	renderspu.Conf('system_gl_path', READBACK_system_gl_path)
+	for (name, value) in READBACK_OPTIONS:
+		renderspu.Conf(name, value)
 
-	# Setup render SPU's window geometry
-	renderspu.Conf('window_geometry',
-					READBACK_window_geometry[0],
-					READBACK_window_geometry[1],
-					READBACK_window_geometry[2],
-					READBACK_window_geometry[3] )
+	# Create network node
 	if singleServer:
 		host = SERVER_HOSTS[0]
 	else:
@@ -371,7 +379,8 @@ for serverIndex in range(NumServers):
 		servernode.AddSPU(packspu)
 		packspu.AddServer( reassembleNode, protocol='tcpip', port=7777 )
 
-	servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
+	for (name, value) in SERVER_OPTIONS:
+		servernode.Conf(name, value)
 	cr.AddNode(servernode)
 
 	# connect app nodes to server
@@ -379,20 +388,21 @@ for serverIndex in range(NumServers):
 		tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port=7000+serverIndex)
 
 	# auto-start
-	if GLOBAL_auto_start:
+	if AUTO_START:
 		servernode.AutoStart( ["/usr/bin/rsh", host,
 								"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
 
 
+# Add nodes to mothership
 for i in range(NUM_APP_NODES):
 	cr.AddNode(clientNodes[i])
 if REASSEMBLY:
 	cr.AddNode(reassembleNode)
 
-cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
-cr.SetParam('match_window_title', GLOBAL_match_window_title)
-cr.SetParam('show_cursor', GLOBAL_show_cursor)
-cr.SetParam('track_window_size', DYNAMIC_SIZE)
+# Set mothership params
+for (name, value) in MOTHERSHIP_OPTIONS:
+	cr.Conf(name, value)
+
 cr.Go()
 
 """
@@ -410,7 +420,6 @@ def FindClientNode(mothership):
 
 def FindServerNode(mothership):
 	"""Search the mothership for the server node."""
-	# XXX avoid the reassembly node
 	client = FindClientNode(mothership)
 	assert client != None
 	servers = client.GetServers()
@@ -711,7 +720,7 @@ class LightningDialog(wxDialog):
 
 
 	def __UpdateWidgetsFromVars(self):
-		"""Update the widgets from internal vars."""
+		"""Update the widgets from template values."""
 		self.numberControl.SetValue(self.Template.NumServers)
 		self.columnsControl.SetValue(self.Template.Columns)
 		self.rowsControl.SetValue(self.Template.Rows)
@@ -722,6 +731,7 @@ class LightningDialog(wxDialog):
 		self.reassemblyRadio.SetSelection(self.Template.Reassembly)
 
 	def __UpdateVarsFromWidgets(self):
+		"""Update the template values from the widgets."""
 		self.Template.NumServers = self.numberControl.GetValue()
 		self.Template.Rows = self.rowsControl.GetValue()
 		self.Template.Columns = self.columnsControl.GetValue()
@@ -910,14 +920,7 @@ class LightningDialog(wxDialog):
 		if retVal == wxID_OK:
 			# update the template vars and mothership
 			self.__UpdateVarsFromWidgets()
-			mothership.Template = self.Template
-			clientNode = FindClientNode(mothership)
-			serverNode = FindServerNode(mothership)
-			serverNode.SetCount(mothership.Template.NumServers)
-			serverNode.SetHostNamePattern(mothership.Template.ServerPattern)
-			serverNode.SetHosts(mothership.Template.ServerHosts)
-			for i in range(serverNode.GetCount()):
-				serverNode.SetTiles(mothership.Template.ServerTiles[i], i)
+			self.Template.UpdateMothership(mothership)
 		return retVal
 
 
@@ -969,14 +972,14 @@ def Create_Lightning2(parentWindow, mothership):
 	mothership.DeselectAllNodes()
 	# Create the <numClients> app nodes
 	appNode = crutils.NewApplicationNode(numClients)
-	appNode.SetPosition(10, 50)
+	appNode.SetPosition(20, 80)
 	appNode.Select()
 	tilesortSPU = crutils.NewSPU("tilesort")
 	appNode.AddSPU(tilesortSPU)
 	mothership.AddNode(appNode)
 	# Create the <numServers> server nodes
 	serverNode = crutils.NewNetworkNode(numServers)
-	serverNode.SetPosition(210, 50)
+	serverNode.SetPosition(210, 80)
 	serverNode.Select()
 	readbackSPU = crutils.NewSPU("readback")
 	packSPU = crutils.NewSPU("pack")
@@ -986,7 +989,7 @@ def Create_Lightning2(parentWindow, mothership):
 	tilesortSPU.AddServer(serverNode)
 	# Create the tile reassembly node
 	reassemblyNode = crutils.NewNetworkNode(1)
-	reassemblyNode.SetPosition(420, 50)
+	reassemblyNode.SetPosition(420, 80)
 	reassemblyNode.Select()
 	reassemblySPU = crutils.NewSPU('render')
 	reassemblyNode.AddSPU(reassemblySPU)
@@ -1125,28 +1128,16 @@ def Read_Lightning2(mothership, fileHandle):
 		elif re.match("^DYNAMIC_SIZE = " + integerPat + "$", l):
 			v = re.search(integerPat, l)
 			mothership.Template.DynamicSize = int(l[v.start() : v.end()])
-			
-		elif re.match("^TILESORT_", l):
-			# A tilesort SPU option
-			(name, values) = configio.ParseOption(l, "TILESORT")
-			tilesortSPU.SetOption(name, values)
-		elif re.match("^REASSEMBLE_", l):
-			# A render SPU option
-			(name, values) = configio.ParseOption(l, "REASSEMBLE")
-			reassembleSPU.SetOption(name, values)
-		elif re.match("^READBACK_", l):
-			# A readback SPU option
-			(name, values) = configio.ParseOption(l, "READBACK")
-			readbackSPU.SetOption(name, values)
-
-		elif re.match("^SERVER_", l):
-			# A server option
-			(name, values) = configio.ParseOption(l, "SERVER")
-			serverNode.SetOption(name, values)
-		elif re.match("^GLOBAL_", l):
-			# A global option
-			(name, values) = configio.ParseOption(l, "GLOBAL")
-			mothership.SetOption(name, values)
+		elif re.match("^TILESORT_OPTIONS = \[", l):
+			tilesortSPU.GetOptions().Read(fileHandle)
+		elif re.match("^REASSEMBLE_OPTIONS = \[", l):
+			reassembleSPU.GetOptions().Read(fileHandle)
+		elif re.match("^READBACK_OPTIONS = \[", l):
+			readbackSPU.GetOptions().Read(fileHandle)
+		elif re.match("^SERVER_OPTIONS = \[", l):
+			serverNode.GetOptions().Read(fileHandle)
+		elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
+			mothership.GetOptions().Read(fileHandle)
 		elif re.match("^# end of options", l):
 			# that's the end of the variables
 			# save the rest of the file....
@@ -1196,20 +1187,20 @@ def Write_Lightning2(mothership, file):
 
 	# write tilesort SPU options
 	tilesortSPU = FindTilesortSPU(mothership)
-	configio.WriteSPUOptions(tilesortSPU, "TILESORT", file)
+	tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS")
 
 	# write render SPU options
 	readbackSPU = FindReadbackSPU(mothership)
-	configio.WriteSPUOptions(readbackSPU, "READBACK", file)
+	readbackSPU.GetOptions().Write(file, "READBACK_OPTIONS")
 
 	# write reassemble SPU options
 	reassemblySPU = FindReassemblySPU(mothership)
-	configio.WriteSPUOptions(reassemblySPU, "REASSEMBLE", file)
+	reassemblySPU.GetOptions().Write(file, "REASSEMBLE_OPTIONS")
 
 
 	# write server and global options
-	configio.WriteServerOptions(serverNode, file)
-	configio.WriteGlobalOptions(mothership, file)
+	serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
+	mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
 
 	file.write("# end of options, the rest is boilerplate\n")
 

@@ -49,9 +49,20 @@ import string, sys
 sys.path.append( "../server" )
 from mothership import *
 
+# Look for some special mothership params
+for (name, value) in MOTHERSHIP_OPTIONS:
+	if name == "zeroth_arg":
+		ZEROTH_ARG = value
+	elif name == "default_dir":
+		DEFAULT_DIR = value
+	elif name == "auto_start":
+		AUTO_START = value
+	elif name == "default_app":
+		DEFAULT_APP = value
+
 # Check for program name/args on command line
 if len(sys.argv) == 1:
-	program = GLOBAL_default_app
+	program = DEFAULT_APP
 else:
 	program = string.join(sys.argv[1:])
 if program == "":
@@ -59,24 +70,17 @@ if program == "":
 	sys.exit(-1)
 
 cr = CR()
-cr.MTU( GLOBAL_MTU )
 
 # Make the server/compositing node
 serverNode = CRNetworkNode( COMPOSITE_HOST )
+for (name, value) in SERVER_OPTIONS:
+	serverNode.Conf(name, value)
 renderSPU = SPU( 'render' )
-renderSPU.Conf( 'window_geometry',
-				RENDER_window_geometry[0],
-				RENDER_window_geometry[1],
-				RENDER_window_geometry[2],
-				RENDER_window_geometry[3] )
-renderSPU.Conf( 'try_direct', RENDER_try_direct )
-renderSPU.Conf( 'force_direct', RENDER_force_direct )
-renderSPU.Conf( 'fullscreen', RENDER_fullscreen )
-renderSPU.Conf( 'title', RENDER_title )
-renderSPU.Conf( 'system_gl_path', RENDER_system_gl_path )
+for (name, value) in RENDER_OPTIONS:
+	renderSPU.Conf(name, value)
 serverNode.AddSPU( renderSPU )
 
-if GLOBAL_auto_start:
+if AUTO_START:
 	# XXX this probably doesn't work yet!
 	node.AutoStart( ["/usr/bin/rsh", host,
 							"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
@@ -92,38 +96,24 @@ for i in range(NUM_APP_NODES):
 	node = CRApplicationNode( APP_HOSTS[i] )
 
 	# argument substitutions
-	if i == 0 and GLOBAL_zeroth_arg != "":
-		app_string = string.replace( program, '%0', GLOBAL_zeroth_arg)
+	if i == 0 and ZEROTH_ARG != "":
+		app_string = string.replace( program, '%0', ZEROTH_ARG)
 	else:
 		app_string = string.replace( program, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 	node.SetApplication( app_string )
-	node.StartDir( GLOBAL_default_dir )
+	node.StartDir( DEFAULT_DIR )
 
-	if GLOBAL_auto_start:
+	if AUTO_START:
 		# XXX this probably doesn't work yet!
 		node.AutoStart( ["/bin/sh", "-c",
 				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
 
 
 	readbackSPU = SPU( 'readback' )
-	readbackSPU.Conf( 'window_geometry',
-						READBACK_window_geometry[0],
-						READBACK_window_geometry[1],
-						READBACK_window_geometry[2],
-						READBACK_window_geometry[3] )
-	readbackSPU.Conf( 'try_direct', READBACK_try_direct )
-	readbackSPU.Conf( 'force_direct', READBACK_force_direct )
-	readbackSPU.Conf( 'fullscreen', READBACK_fullscreen )
-	readbackSPU.Conf( 'title', READBACK_title )
-	readbackSPU.Conf( 'system_gl_path', READBACK_system_gl_path )
-	readbackSPU.Conf( 'extract_depth', READBACK_extract_depth )
-	readbackSPU.Conf( 'extract_alpha', READBACK_extract_alpha )
-	readbackSPU.Conf( 'local_visualization', READBACK_local_visualization )
-	readbackSPU.Conf( 'visualize_depth', READBACK_visualize_depth )
-	readbackSPU.Conf( 'drawpixels_pos', READBACK_drawpixels_pos[0],
-						READBACK_drawpixels_pos[1] )
+	for (name, value) in READBACK_OPTIONS:
+		readbackSPU.Conf(name, value)
 	node.AddSPU( readbackSPU )
 	packSPU = SPU( 'pack' )
 	node.AddSPU( packSPU )
@@ -133,6 +123,10 @@ for i in range(NUM_APP_NODES):
 	readbackSPUs.append( readbackSPU )
 	cr.AddNode( node )
 
+
+# Set mothership params
+for (name, value) in MOTHERSHIP_OPTIONS:
+	cr.Conf(name, value)
 
 # Run mothership
 cr.Go()
@@ -617,22 +611,14 @@ def Read_Sortlast(mothership, file):
 			v = re.search(tuplePat + "$", l)
 			pattern = eval(l[v.start() : v.end()])
 			clientNode.SetHostNamePattern(pattern)
-		elif re.match("^READBACK_", l):
-			# A readback SPU option
-			(name, values) = configio.ParseOption(l, "READBACK")
-			readbackSPU.SetOption(name, values)
-		elif re.match("^RENDER_", l):
-			# A render SPU option
-			(name, values) = configio.ParseOption(l, "RENDER")
-			renderSPU.SetOption(name, values)
-		elif re.match("^SERVER_", l):
-			# A server option
-			(name, values) = configio.ParseOption(l, "SERVER")
-			serverNode.SetOption(name, values)
-		elif re.match("^GLOBAL_", l):
-			# A global option
-			(name, values) = configio.ParseOption(l, "GLOBAL")
-			mothership.SetOption(name, values)
+		elif re.match("^READBACK_OPTIONS = \[", l):
+			readbackSPU.GetOptions().Read(file)
+		elif re.match("^RENDER_OPTIONS = \[", l):
+			renderSPU.GetOptions().Read(file)
+		elif re.match("^SERVER_OPTIONS = \[", l):
+			serverNode.GetOptions().Read(file)
+		elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
+			mothership.GetOptions().Read(file)
 		elif re.match("^# end of options", l):
 			# that's the end of the variables
 			# save the rest of the file....
@@ -663,15 +649,15 @@ def Write_Sortlast(mothership, file):
 
 	# write render SPU options
 	renderSPU = FindRenderSPU(mothership)
-	configio.WriteSPUOptions(renderSPU, "RENDER", file)
+	renderSPU.GetOptions().Write(file, "RENDER_OPTIONS")
 
 	# write readback SPU options
 	readbackSPU = FindReadbackSPU(mothership)
-	configio.WriteSPUOptions(readbackSPU, "READBACK", file)
+	readbackSPU.GetOptions().Write(file, "READBACK_OPTIONS")
 
-	# write server and global options
-	configio.WriteServerOptions(serverNode, file)
-	configio.WriteGlobalOptions(mothership, file)
+	# write server and mothership options
+	serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
+	mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
 
 	file.write("# end of options, the rest is boilerplate\n")
 	file.write(__ConfigBody)
