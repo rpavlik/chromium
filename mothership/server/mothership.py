@@ -745,12 +745,13 @@ class CR:
 			endianness = int(endianness_str)
 			for server_sock in self.wrappers.values():
 				if server_sock.gm_accept_wait != None:
-						(server_hostname, server_port, server_node_id, server_port_num, server_endianness) = server_sock.gm_accept_wait
-						if SameHost(server_hostname, hostname) and server_port == port:
-							sock.Success( "%d %d %d %d" % (self.conn_id, server_node_id, server_port_num, server_endianness) )
-							server_sock.Success( "%d %d %d" % (self.conn_id, node_id, port_num) )
-							self.conn_id += 1
-							return
+					(server_hostname, server_port, server_node_id, server_port_num, server_endianness) = server_sock.gm_accept_wait
+					if SameHost(server_hostname, hostname) and server_port == port:
+						sock.Success( "%d %d %d %d" % (self.conn_id, server_node_id, server_port_num, server_endianness) )
+						server_sock.Success( "%d %d %d" % (self.conn_id, node_id, port_num) )
+						server_sock.gm_accept_wait = None
+						self.conn_id += 1
+						return
 			sock.gm_connect_wait = (hostname, port, node_id, port_num, endianness)
 		elif (protocol == 'quadrics'):
 			(p, remote_hostname, remote_rank_str, my_hostname, my_rank_str, my_endianness_str) = connect_info
@@ -820,6 +821,7 @@ class CR:
 						sock.Success( "%d %d %d" % (self.conn_id, client_node_id, client_port_num) )
 						client_sock.Success( "%d %d %d %d" % (self.conn_id, node_id, port_num, endianness) )
 						self.conn_id += 1
+						client_sock.gm_connect_wait = None
 						return
 			sock.gm_accept_wait = (hostname, port, node_id, port_num, endianness)
 		elif protocol == 'quadrics':
