@@ -17,7 +17,7 @@ endif
 
 SHARED = 1
 LIBRARY = crfaker
-FILES = getprocaddress init load stub
+FILES = getprocaddress init load stub dummyfuncs
 LIBRARIES = crmothership crutil spuload
 
 ifeq ($(ARCH), WIN_NT)
