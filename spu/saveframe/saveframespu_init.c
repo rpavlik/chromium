@@ -37,7 +37,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *self,
 	}
 	crSPUInitDispatchTable( &(saveframe_spu.super) );
 	crSPUCopyDispatchTable( &(saveframe_spu.super), &(self->superSPU->dispatch_table) );
-	saveframespuGatherConfiguration();
+	saveframespuGatherConfiguration( child );
 
 	return &the_functions;
 }

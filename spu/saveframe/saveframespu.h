@@ -22,7 +22,7 @@
 
 #include "cr_spu.h"
 
-void saveframespuGatherConfiguration( void );
+void saveframespuGatherConfiguration( const SPU *child_spu );
 void ResizeBuffer(void);
 
 typedef struct {
