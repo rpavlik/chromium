@@ -36,9 +36,9 @@ void crStateBufferObjectInit (CRContext *ctx)
 
 	b->retainBufferData = GL_FALSE;
 	b->nullBuffer = AllocBufferObject(0);
-	b->nullBuffer->refCount = 2;
 	b->arrayBuffer = b->nullBuffer;
 	b->elementsBuffer = b->nullBuffer;
+	b->nullBuffer->refCount = 3;
 
 	b->buffers = crAllocHashtable();
 }
@@ -87,11 +87,11 @@ crStateBindBufferARB (GLenum target, GLuint buffer)
 		newObj = (CRBufferObject *) crHashtableSearch(b->buffers, buffer);
 		if (!newObj) {
 			newObj = AllocBufferObject(buffer);
+			if (!newObj) {
+				crStateError(__LINE__, __FILE__, GL_OUT_OF_MEMORY, "glBindBuffer");
+				return;
+			}
 			crHashtableAdd( b->buffers, buffer, newObj );
-		}
-		if (!newObj) {
-			crStateError(__LINE__, __FILE__, GL_OUT_OF_MEMORY, "glBindBuffer");
-			return;
 		}
 	}
 
@@ -145,11 +145,13 @@ crStateDeleteBuffersARB(GLsizei n, const GLuint *buffers)
 			if (obj) {
 				if (obj == b->arrayBuffer) {
 					b->arrayBuffer = b->nullBuffer;
+					b->arrayBuffer->refCount++;
 					DIRTY(bb->dirty, g->neg_bitid);
 					DIRTY(bb->arrayBinding, g->neg_bitid);
 				}
 				if (obj == b->elementsBuffer) {
 					b->elementsBuffer = b->nullBuffer;
+					b->elementsBuffer->refCount++;
 					DIRTY(bb->dirty, g->neg_bitid);
 					DIRTY(bb->elementsBinding, g->neg_bitid);
 				}

@@ -22,7 +22,16 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 
 	if (array->e.enabled)
 	{
-		array_spu.self.EdgeFlagv(array->e.p + index * array->e.stride);
+		p = array->e.p + index * array->e.stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+		if (array->e.buffer->data)
+		{
+			p = (unsigned char *)(array->e.buffer->data) + (unsigned int)p;
+		}
+#endif
+
+		array_spu.self.EdgeFlagv(p);
 	}
 
 	/*
@@ -37,6 +46,14 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 			{
 				GLint *iPtr;
 				p = array->a[attr].p + index * array->a[attr].stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+				if (array->a[attr].buffer->data)
+				{
+					p = (unsigned char *)(array->a[attr].buffer->data) + (unsigned int)p;
+				}
+#endif
+
 				switch (array->a[attr].type)
 				{
 					case GL_SHORT:
@@ -90,6 +107,14 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 		if (array->t[unit].enabled && !(vpEnabled && array->a[VERT_ATTRIB_TEX0+unit].enabled))
 		{
 			p = array->t[unit].p + index * array->t[unit].stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+			if (array->t[unit].buffer->data)
+			{
+				p = (unsigned char *)(array->t[unit].buffer->data) + (unsigned int)p;
+			}
+#endif
+
 			switch (array->t[unit].type)
 			{
 				case GL_SHORT:
@@ -134,6 +159,14 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 	if (array->i.enabled)
 	{
 		p = array->i.p + index * array->i.stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+		if (array->i.buffer->data)
+		{
+			p = (unsigned char *)(array->i.buffer->data) + (unsigned int)p;
+		}
+#endif
+
 		switch (array->i.type)
 		{
 			case GL_SHORT: array_spu.self.Indexsv((GLshort *)p); break;
@@ -145,6 +178,14 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 	if (array->c.enabled && !(vpEnabled && array->a[VERT_ATTRIB_COLOR0].enabled))
 	{
 		p = array->c.p + index * array->c.stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+		if (array->c.buffer->data)
+		{
+			p = (unsigned char *)(array->c.buffer->data) + (unsigned int)p;
+		}
+#endif
+
 		switch (array->c.type)
 		{
 			case GL_BYTE:
@@ -208,6 +249,14 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 	if (array->n.enabled && !(vpEnabled && array->a[VERT_ATTRIB_NORMAL].enabled))
 	{
 		p = array->n.p + index * array->n.stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+		if (array->n.buffer->data)
+		{
+			p = (unsigned char *)(array->n.buffer->data) + (unsigned int)p;
+		}
+#endif
+
 		switch (array->n.type)
 		{
 			case GL_BYTE: array_spu.self.Normal3bv((GLbyte *)p); break;
@@ -221,6 +270,14 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 	if (array->s.enabled && !(vpEnabled && array->a[VERT_ATTRIB_COLOR1].enabled))
 	{
 		p = array->s.p + index * array->s.stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+		if (array->s.buffer->data)
+		{
+			p = (unsigned char *)(array->s.buffer->data) + (unsigned int)p;
+		}
+#endif
+
 		switch (array->s.type)
 		{
 			case GL_BYTE:
@@ -241,19 +298,35 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 				array_spu.self.SecondaryColor3dvEXT((GLdouble *)p); break;
 		}
 	}
-#endif
+#endif // CR_EXT_secondary_color
 #ifdef CR_EXT_fog_coord
 	if (array->f.enabled && !(vpEnabled && array->a[VERT_ATTRIB_FOG].enabled))
 	{
 		p = array->f.p + index * array->f.stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+		if (array->f.buffer->data)
+		{
+			p = (unsigned char *)(array->f.buffer->data) + (unsigned int)p;
+		}
+#endif
+
 		array_spu.self.FogCoordfEXT( *((GLfloat *) p) );
 	}
-#endif
+#endif // CR_EXT_fog_coord
 
 	/* Need to do attrib[0] / vertex position last */
 	if (array->a[VERT_ATTRIB_POS].enabled) {
 		GLint *iPtr;
 		p = array->a[VERT_ATTRIB_POS].p + index * array->a[VERT_ATTRIB_POS].stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+		if (array->a[VERT_ATTRIB_POS].buffer->data)
+		{
+			p = (unsigned char *)(array->a[VERT_ATTRIB_POS].buffer->data) + (unsigned int)p;
+		}
+#endif
+
 		switch (array->a[VERT_ATTRIB_POS].type)
 		{
 			case GL_SHORT:
@@ -300,6 +373,14 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 	else if (array->v.enabled)
 	{
 		p = array->v.p + index * array->v.stride;
+
+#ifdef CR_ARB_vertex_buffer_object
+		if (array->v.buffer->data)
+		{
+			p = (unsigned char *)(array->v.buffer->data) + (unsigned int)p;
+		}
+#endif
+
 		switch (array->v.type)
 		{
 			case GL_SHORT:
@@ -367,6 +448,9 @@ static void ARRAYSPU_APIENTRY arrayspu_DrawElements(GLenum mode, GLsizei count,
 {
 	int i;
 	GLubyte *p = (GLubyte *)indices;
+#ifdef CR_ARB_vertex_buffer_object
+	CRBufferObject *elementsBuffer = array_spu.ctx->bufferobject.elementsBuffer;
+#endif
 
 	if (count < 0)
 	{
@@ -382,6 +466,13 @@ static void ARRAYSPU_APIENTRY arrayspu_DrawElements(GLenum mode, GLsizei count,
 	{
 		crError("array_spu.self.DrawElements called with invalid type: %d", type);
 	}
+
+#ifdef CR_ARB_vertex_buffer_object
+	if (elementsBuffer->data)
+	{
+		p = (unsigned char *)(elementsBuffer->data) + (unsigned int)p;
+	}
+#endif
 
 	array_spu.self.Begin(mode);
 	switch (type)
@@ -436,6 +527,11 @@ static void ARRAYSPU_APIENTRY arrayspu_TexCoordPointer( GLint size, GLenum type,
 static void ARRAYSPU_APIENTRY arrayspu_NormalPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateNormalPointer( type, stride, pointer );
+}
+
+static void ARRAYSPU_APIENTRY arrayspu_IndexPointer( GLenum type, GLsizei stride, const GLvoid *pointer )
+{
+	crStateIndexPointer( type, stride, pointer );
 }
 
 static void ARRAYSPU_APIENTRY arrayspu_EdgeFlagPointer( GLsizei stride, const GLvoid *pointer )
@@ -584,6 +680,74 @@ arrayspu_PopClientAttrib( void )
 }
 
 
+static void ARRAYSPU_APIENTRY
+arrayspu_GenBuffersARB( GLsizei n, GLuint * buffers )
+{
+	crStateGenBuffersARB(n, buffers);
+}
+
+static void ARRAYSPU_APIENTRY
+arrayspu_DeleteBuffersARB( GLsizei n, const GLuint *buffers )
+{
+	crStateDeleteBuffersARB(n, buffers);
+}
+
+static void ARRAYSPU_APIENTRY
+arrayspu_BindBufferARB( GLenum target, GLuint buffer )
+{
+	crStateBindBufferARB(target, buffer);
+}
+
+static GLboolean ARRAYSPU_APIENTRY
+arrayspu_IsBufferARB (GLuint buffer)
+{
+	return crStateIsBufferARB(buffer);
+}
+
+static void ARRAYSPU_APIENTRY
+arrayspu_BufferDataARB( GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage )
+{
+	crStateBufferDataARB(target, size, data, usage);
+}
+
+static void ARRAYSPU_APIENTRY
+arrayspu_BufferSubDataARB( GLenum target, GLintptrARB offset,
+						   GLsizeiptrARB size, const GLvoid * data )
+{
+	crStateBufferSubDataARB(target, offset, size, data);
+}
+
+static void ARRAYSPU_APIENTRY
+arrayspu_GetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data)
+{
+	crStateGetBufferSubDataARB(target, offset, size, data);
+}
+
+static void * ARRAYSPU_APIENTRY
+arrayspu_MapBufferARB(GLenum target, GLenum access)
+{
+	return crStateMapBufferARB(target, access);
+}
+
+static GLboolean ARRAYSPU_APIENTRY
+arrayspu_UnmapBufferARB(GLenum target)
+{
+	return crStateUnmapBufferARB(target);
+}
+
+static void ARRAYSPU_APIENTRY
+arrayspu_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
+{
+	crStateGetBufferParameterivARB(target, pname, params);
+}
+
+static void ARRAYSPU_APIENTRY
+arrayspu_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params)
+{
+	crStateGetBufferPointervARB(target, pname, params);
+}
+
+
 SPUNamedFunctionTable _cr_array_table[] = {
 	{ "ArrayElement", (SPUGenericFunction) arrayspu_ArrayElement },
 	{ "DrawArrays", (SPUGenericFunction) arrayspu_DrawArrays},
@@ -593,6 +757,7 @@ SPUNamedFunctionTable _cr_array_table[] = {
 	{ "VertexPointer", (SPUGenericFunction) arrayspu_VertexPointer},
 	{ "TexCoordPointer", (SPUGenericFunction) arrayspu_TexCoordPointer},
 	{ "NormalPointer", (SPUGenericFunction) arrayspu_NormalPointer},
+	{ "IndexPointer", (SPUGenericFunction) arrayspu_IndexPointer},
 	{ "EdgeFlagPointer", (SPUGenericFunction) arrayspu_EdgeFlagPointer},
 	{ "VertexAttribPointerNV", (SPUGenericFunction) arrayspu_VertexAttribPointerNV},
 	{ "FogCoordPointerEXT", (SPUGenericFunction) arrayspu_FogCoordPointerEXT},
@@ -609,5 +774,16 @@ SPUNamedFunctionTable _cr_array_table[] = {
 	{ "VertexAttribPointerARB", (SPUGenericFunction) arrayspu_VertexAttribPointerARB },
 	{ "EnableVertexAttribArrayARB", (SPUGenericFunction) arrayspu_EnableVertexAttribArrayARB },
 	{ "DisableVertexAttribArrayARB", (SPUGenericFunction) arrayspu_DisableVertexAttribArrayARB },
+	{ "GenBuffersARB", (SPUGenericFunction) arrayspu_GenBuffersARB },
+	{ "DeleteBuffersARB", (SPUGenericFunction) arrayspu_DeleteBuffersARB },
+	{ "BindBufferARB", (SPUGenericFunction) arrayspu_BindBufferARB },
+	{ "IsBufferARB", (SPUGenericFunction) arrayspu_IsBufferARB },
+	{ "BufferDataARB", (SPUGenericFunction) arrayspu_BufferDataARB },
+	{ "BufferSubDataARB", (SPUGenericFunction) arrayspu_BufferSubDataARB },
+	{ "GetBufferSubDataARB", (SPUGenericFunction) arrayspu_GetBufferSubDataARB },
+	{ "MapBufferARB", (SPUGenericFunction) arrayspu_MapBufferARB },
+	{ "UnmapBufferARB", (SPUGenericFunction) arrayspu_UnmapBufferARB },
+	{ "GetBufferParameterivARB", (SPUGenericFunction) arrayspu_GetBufferParameterivARB},
+	{ "GetBufferPointervARB", (SPUGenericFunction) arrayspu_GetBufferPointervARB},
 	{ NULL, NULL }
 };

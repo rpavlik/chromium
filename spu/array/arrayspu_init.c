@@ -40,6 +40,9 @@ static SPUFunctions *arraySPUInit( int id, SPU *child, SPU *self,
 
 	crStateInit();
 	array_spu.ctx = crStateCreateContext( NULL, 0 );
+#ifdef CR_ARB_vertex_buffer_object
+	array_spu.ctx->bufferobject.retainBufferData = GL_TRUE;
+#endif
 	/* we call SetCurrent instead of MakeCurrent as the differencer
 	 * isn't setup yet anyway */
 	crStateSetCurrent( array_spu.ctx );
