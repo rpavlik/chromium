@@ -287,13 +287,18 @@ void PACK_APIENTRY crPackGetProgramNamedParameterdvNV( GLuint id, GLsizei len, c
 
 void PACK_APIENTRY crPackDeleteProgramsARB( GLsizei n, const GLuint *ids )
 {
-	GET_PACKER_CONTEXT(pc);
-#if 0
-	crError ( "DeleteProgramsARBNV needs to be special cased!");
-#endif
-	(void) pc;
-	(void) n;
-	(void) ids;
+	unsigned char *data_ptr;
+	int packet_length = sizeof(GLenum) + sizeof(n) + n * sizeof(*ids);
+
+	if (!ids)
+		return;
+
+	data_ptr = (unsigned char *) crPackAlloc(packet_length);
+	WRITE_DATA( 0, GLenum, CR_DELETEPROGRAMSARB_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLsizei, n );
+	crMemcpy( data_ptr + 8, ids, n * sizeof(*ids) );
+	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 
 
