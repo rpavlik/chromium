@@ -16,6 +16,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum qu
 	int dimension = 0;
 	unsigned int size = sizeof(GLdouble);
 
+	(void) v;
+
 	switch( target )
 	{
 		case GL_MAP1_COLOR_4:
@@ -88,6 +90,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum qu
 	int dimension = 0;
 	unsigned int size = sizeof(GLfloat);
 
+	(void) v;
 	switch( target )
 	{
 		case GL_MAP1_COLOR_4:
@@ -160,6 +163,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum qu
 	int dimension = 0;
 	unsigned int size = sizeof(GLint);
 
+	(void) v;
 	switch( target )
 	{
 		case GL_MAP1_COLOR_4:

@@ -1,5 +1,6 @@
 #include "cr_unpack.h"
 #include "cr_glwrapper.h"
+#include <memory.h>
 
 void crUnpackMultMatrixd( void  )
 {

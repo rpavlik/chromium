@@ -20,5 +20,5 @@ dispatch.c: dispatch.py
 	@$(PYTHON) dispatch.py > dispatch.c
 
 spucopy.c: spucopy.py
-	@$(ECHO) Making the SPU copyer
+	@$(ECHO) Making the SPU copier
 	@$(PYTHON) spucopy.py > spucopy.c

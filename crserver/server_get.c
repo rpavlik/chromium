@@ -47,6 +47,7 @@ unsigned int LookupComponents( GLenum pname )
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetClipPlane( GLenum plane, GLdouble *equation )
 {
 	GLdouble  local_equation[4];
+	(void) equation;
 	cr_server.head_spu->dispatch_table.GetClipPlane( plane, local_equation );
 	crServerReturnValue( &(local_equation[0]), 4*sizeof(GLdouble ) );
 }
@@ -54,6 +55,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetClipPlane( GLenum plane, GLdoub
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetLightfv( GLenum light, GLenum pname, GLfloat *params )
 {
 	GLfloat  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetLightfv( light, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
@@ -61,6 +63,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetLightfv( GLenum light, GLenum p
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetLightiv( GLenum light, GLenum pname, GLint *params )
 {
 	GLint  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetLightiv( light, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
@@ -68,6 +71,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetLightiv( GLenum light, GLenum p
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
 {
 	GLfloat  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetMaterialfv( face, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
@@ -75,6 +79,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMaterialfv( GLenum face, GLenum
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMaterialiv( GLenum face, GLenum pname, GLint *params )
 {
 	GLint  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetMaterialiv( face, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
@@ -82,6 +87,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMaterialiv( GLenum face, GLenum
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetPolygonStipple( GLubyte *mask )
 {
 	GLubyte  local_mask[128];
+	(void) mask;
 	cr_server.head_spu->dispatch_table.GetPolygonStipple( local_mask );
 	crServerReturnValue( &(local_mask[0]), 128*sizeof(GLubyte ) );
 }
@@ -89,6 +95,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetPolygonStipple( GLubyte *mask )
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
 	GLfloat  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexEnvfv( target, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
@@ -96,6 +103,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexEnvfv( GLenum target, GLenum
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexEnviv( GLenum target, GLenum pname, GLint *params )
 {
 	GLint  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexEnviv( target, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
@@ -103,6 +111,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexEnviv( GLenum target, GLenum
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 {
 	GLdouble  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexGendv( coord, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLdouble ) );
 }
@@ -110,6 +119,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGendv( GLenum coord, GLenum 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
 	GLfloat  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexGenfv( coord, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
@@ -117,6 +127,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGenfv( GLenum coord, GLenum 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 {
 	GLint  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexGeniv( coord, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }
@@ -124,6 +135,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexGeniv( GLenum coord, GLenum 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat *params )
 {
 	GLfloat  local_params[1];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexLevelParameterfv( target, level, pname, local_params );
 	crServerReturnValue( &(local_params[0]), 1*sizeof(GLfloat ) );
 }
@@ -131,6 +143,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexLevelParameterfv( GLenum tar
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint *params )
 {
 	GLint  local_params[1];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexLevelParameteriv( target, level, pname, local_params );
 	crServerReturnValue( &(local_params[0]), 1*sizeof(GLint ) );
 }
@@ -138,6 +151,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexLevelParameteriv( GLenum tar
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
 	GLfloat  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexParameterfv( target, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLfloat ) );
 }
@@ -145,6 +159,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexParameterfv( GLenum target, 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 {
 	GLint  local_params[4];
+	(void) params;
 	cr_server.head_spu->dispatch_table.GetTexParameteriv( target, pname, local_params );
 	crServerReturnValue( &(local_params[0]), LookupComponents(pname)*sizeof(GLint ) );
 }

@@ -96,6 +96,7 @@ for func_name in keys:
 		local_argtype = string.replace( arg_types[len(arg_types)-1], '*', '' )
 		local_argname = 'local_%s' % arg_names[len(arg_names)-1]
 		print '\t%s %s[%d];' % ( local_argtype, local_argname, max_components[func_name] )
+		print '\t(void) %s;' % arg_names[len(arg_names)-1]
 		arg_names[len(arg_names)-1] = local_argname
 		print '\tcr_server.head_spu->dispatch_table.%s%s;' % ( func_name, stub_common.CallString(arg_names) )
 		if func_name in no_pnames:

@@ -63,7 +63,7 @@ extern CRStateBits *__currentBits;
 #define GetCurrentBits() __currentBits
 
 void crStateInit(void);
-CRContext *crStateCreateContext();
+CRContext *crStateCreateContext(void);
 void crStateMakeCurrent(CRContext *ctx);
 
 #endif /* CR_GLSTATE_H */

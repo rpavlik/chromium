@@ -3,6 +3,7 @@
 #include "cr_error.h"
 #include "cr_protocol.h"
 #include <stdio.h>
+#include <memory.h>
 
 void crUnpackTexImage2D( void )
 {

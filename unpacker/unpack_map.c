@@ -3,6 +3,8 @@
 #include "cr_error.h"
 #include "cr_mem.h"
 
+#include <memory.h>
+
 void crUnpackMap2d( void  )
 {
 	GLenum target = READ_DATA( sizeof( int ) + 0, GLenum );

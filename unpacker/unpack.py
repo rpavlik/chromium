@@ -20,10 +20,17 @@ print """#include "cr_unpack.h"
 #include "cr_error.h"
 #include "cr_spu.h"
 #include <stdio.h>
+#include <memory.h>
 
 unsigned char *cr_unpackData = NULL;
 SPUDispatchTable cr_unpackDispatch;
+
+extern void crUnpackExtend(void);
 """
+
+for func_name in keys:
+	if stub_common.FindSpecial( "unpacker", func_name ):
+		print 'extern void crUnpack%s(void);' % func_name
 
 def MakeVector( func_name ):
 	return func_name + "v"

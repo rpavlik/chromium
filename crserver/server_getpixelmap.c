@@ -31,6 +31,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetPixelMapfv( GLenum map, GLfloat
 	int tabsize = __sizeQuery( map );
 	GLfloat *local_values;
 
+	(void) values;
+
 	size *= tabsize;
 	local_values = crAlloc( size );
 
@@ -44,6 +46,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetPixelMapuiv( GLenum map, GLuint
 	int size = sizeof( GLuint );
 	int tabsize = __sizeQuery( map );
 	GLuint *local_values;
+	(void) values;
 
 	size *= tabsize;
 	local_values = crAlloc( size );
@@ -58,6 +61,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetPixelMapusv( GLenum map, GLusho
 	int size = sizeof( GLushort );
 	int tabsize = __sizeQuery( map );
 	GLushort *local_values;
+	(void) values;
 
 	size *= tabsize;
 	local_values = crAlloc( size );

@@ -1,6 +1,8 @@
 #include "cr_unpack.h"
 #include "cr_glwrapper.h"
 
+#include <memory.h>
+
 void crUnpackClipPlane( void  )
 {
 	GLenum plane = READ_DATA( 0, GLenum );

@@ -4,6 +4,8 @@
 #include "cr_protocol.h"
 #include "cr_error.h"
 
+#include <memory.h>
+
 void packspuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
@@ -16,7 +18,6 @@ void packspuReadback( CRMessageReadback *rb, unsigned int len )
 	// minus the header, the destination pointer,
 	// *and* the implicit writeback pointer at the head.
 
-	char *temp = (char *) rb;
 	int payload_len = len - sizeof( *rb );
 	int *writeback;
 	void *dest_ptr; 
@@ -24,7 +25,6 @@ void packspuReadback( CRMessageReadback *rb, unsigned int len )
 	memcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
 
 	*writeback = 0;
-	temp = dest_ptr;
 	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 

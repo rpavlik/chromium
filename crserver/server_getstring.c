@@ -6,5 +6,6 @@
 const GLubyte * SERVER_DISPATCH_APIENTRY crServerDispatchGetString( GLenum name )
 {
 	crError( "glGetString isn't *ever* allowed to be on the wire!" );
+	(void) name;
 	return NULL;
 }

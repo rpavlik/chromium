@@ -17,6 +17,8 @@ void crServerRecv( CRConnection *conn, void *buf, unsigned int len )
 	CRMessage *msg = (CRMessage *) buf;
 	CRMessageOpcodes *ops;
 	char *data_ptr;
+
+	(void) len;
 	switch(msg->type)
 	{
 		case CR_MESSAGE_OPCODES:
@@ -35,6 +37,7 @@ void crServerRecv( CRConnection *conn, void *buf, unsigned int len )
 void crServerClose( unsigned int id )
 {
 	crError( "Client disconnected!" );
+	(void) id;
 }
 
 int main( int argc, char *argv[] )

@@ -17,6 +17,8 @@ print """#include "cr_spu.h"
 #include "server_dispatch.h"
 #include "server.h"
 
+#include <memory.h>
+
 void crServerReturnValue( const void *payload, unsigned int payload_len )
 {
 	CRMessageReadback *rb;

@@ -1,8 +1,8 @@
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = CC
-CXXFLAGS += -n32 -fullwarn 
+CXXFLAGS += -n32 -fullwarn -w2
 CC = cc
-CFLAGS += -n32 -fullwarn 
+CFLAGS += -n32 -fullwarn -w2
 
 DEBUGFLAGS = -g
 RELEASEFLAGS = -O2 -DNDEBUG
@@ -21,7 +21,7 @@ MKDIR = mkdir -p
 RM = rm -f
 CP = cp
 MAKE = gmake -s
-# PARALLELMAKEFLAGS = -j
+PARALLELMAKEFLAGS = -j
 NOWEB = noweb
 LATEX = latex
 BIBTEX = bibtex

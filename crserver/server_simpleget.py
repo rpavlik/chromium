@@ -291,6 +291,7 @@ for index in range(len(funcs)):
 	print '{'
 	print '\t%s get_values[16]; // Be safe' % types[index]
 	print '\tint num_values;'
+	print '\t(void) params;'
 	print '\tcr_server.head_spu->dispatch_table.%s( pname, get_values );' % func_name
 	if types[index] == 'GLint':
 		print '\tcrDebug( "I called %s(0x%%x), and got %%d", pname, get_values[0] );' % func_name
