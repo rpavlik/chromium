@@ -256,6 +256,12 @@ void StubInit(void)
 		crMothershipDisconnect( conn );
 	}
 
+	/*
+	 * NOTICE:
+	 * if you add new app node config options, please add them to the
+	 * configuration options list in mothership/tools/crtypes.py
+	 */
+
 	stub.spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir, NULL );
 
 	crFree( spuchain );

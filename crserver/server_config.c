@@ -160,6 +160,13 @@ crServerGatherConfiguration(char *mothership)
 		cr_server.debug_barriers = crStrToInt(response);
 	}
 
+
+	/*
+	 * NOTICE:
+	 * if you add new network node config options, please add them to the
+	 * configuration options list in mothership/tools/crtypes.py
+	 */
+
 	cr_server.mtu = crMothershipGetMTU( conn );
 
 	/* The response will tell us what protocols we need to serve 
