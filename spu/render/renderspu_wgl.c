@@ -301,16 +301,18 @@ GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowIn
 		ShowWindow( visual->hWnd, SW_SHOWNORMAL );
 
 	SetForegroundWindow( visual->hWnd );
+
+	SetWindowPos( visual->hWnd, HWND_TOPMOST, 
+			window->x, window->y,
+			window_plus_caption_width, 
+			window_plus_caption_height,
+			( render_spu.fullscreen ?
+			  (SWP_SHOWWINDOW | SWP_NOSENDCHANGING | 
+			   SWP_NOREDRAW | SWP_NOACTIVATE ) :
+  			  SWP_SHOWWINDOW ) );
+
 	if ( render_spu.fullscreen )
-	{
-		SetWindowPos( visual->hWnd, HWND_TOPMOST, 
-				window->x, window->y,
-				window_plus_caption_width, 
-				window_plus_caption_height,
-				SWP_SHOWWINDOW | SWP_NOSENDCHANGING | 
-				SWP_NOREDRAW | SWP_NOACTIVATE );
 		ShowCursor( FALSE );
-	}
 
 	visual->device_context = GetDC( visual->hWnd );
 
@@ -372,24 +374,33 @@ void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo 
 
 void renderspu_WindowSize( WindowInfo *window, int w, int h )
 {
+	int winprop;
 	CRASSERT(window);
 	CRASSERT(window->visual);
+	if ( render_spu.fullscreen )
+		winprop = SWP_SHOWWINDOW | SWP_NOSENDCHANGING |
+			  SWP_NOREDRAW | SWP_NOACTIVATE;
+	else 
+		winprop = SWP_SHOWWINDOW;
 	SetWindowPos( window->visual->hWnd, HWND_TOPMOST, 
 			window->x, window->y,
-			w, h,
-			SWP_SHOWWINDOW | SWP_NOSENDCHANGING | 
-			SWP_NOREDRAW | SWP_NOACTIVATE );
+			w, h, winprop );
 }
 
 
 void renderspu_WindowPosition( WindowInfo *window, int x, int y )
 {
+	int winprop;
 	CRASSERT(window);
 	CRASSERT(window->visual);
+	if ( render_spu.fullscreen )
+		winprop = SWP_SHOWWINDOW | SWP_NOSENDCHANGING |
+			  SWP_NOREDRAW | SWP_NOACTIVATE;
+	else 
+		winprop = SWP_SHOWWINDOW;
 	SetWindowPos( window->visual->hWnd, HWND_TOPMOST, 
 			x, y,
 			window->width,
 			window->height,
-			SWP_SHOWWINDOW | SWP_NOSENDCHANGING | 
-			SWP_NOREDRAW | SWP_NOACTIVATE );
+			winprop );
 }
