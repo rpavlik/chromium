@@ -160,20 +160,6 @@ Provided SPU's</a>&quot; section.</p>
       server_node.AddSPU( server_spu )</td>
   </tr>
 </table>
-<p>The mothership understands the amount of server and client nodes to start. &nbsp;
-Although this doesn't make much sense for this particular example of code as we are passing no hostname to CRNetworkNode above.&nbsp;
-To enable this functionality you can use the autostart parameters like so.&nbsp;</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	  29:<br>
-	  30:</td>
-    <td width="93%" class="CodeListing">
-	  server_node.autostart( "/usr/bin/ssh" ) )<br>
-          server_node.autostart_argv( "ssh", node.host, "setenv DISPLAY :0.0; crserver" )</td>
-  </tr>
-</table>
 
 <p>Once all the SPU's have been defined and configured, it's now time to
 describe the graph of nodes itself.&nbsp; The server node is created as an
@@ -191,8 +177,8 @@ method.&nbsp; Here, the server node only has one SPU, so order is irrelevant.</p
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
-	  31:<br>
-	  32:</td>
+	  30:<br>
+	  31:</td>
     <td width="93%" class="CodeListing">
 	  if (clientspuname == 'tilesort' ):<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; server_node.AddTile( 0, 0, 500, 500 )</td>
@@ -283,6 +269,30 @@ This version adds two more SPU's, one at each node.&nbsp; These SPU's, called
 log files for debugging or analysis.&nbsp; The reader should look at 
 both <code>crdemo_full.conf</code> and <code>crdemo.conf</code>
 and make sure that the differences are clear.</p>
+
+
+<h2 class="PageHeading">Advanced Features</h2>
+
+<p>The AutoStart command allows you to execute an arbitrary shell command in
+order to start Chromium crserver and crappfaker programs. &nbsp;
+This is especially useful for distributed configurations. &nbsp;
+Here's an example from a Linux system:&nbsp;</p>
+
+<table border="0" width="100%" class="CodeFrame">
+  <tr>
+    <td width="100%" class="CodeListing">
+	  server_node.AutoStart( ["/bin/rsh", "mars", "/bin/sh -c 'DISPLAY=:0.0 crserver'" ]  )<br>
+  </tr>
+</table>
+
+<p>mars is the remote host name.  Note that the arguments are specified in
+a list.
+We use /bin/sh to be sure that we use the Bourne shell so that the
+environment variables will be interpreted correctly.
+More advanced applications may require some tinkering with the quoting to get
+things working correctly.
+
+</p>
 
 </body>
 
