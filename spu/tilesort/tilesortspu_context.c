@@ -401,7 +401,7 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 				serverWindow = 0;
 			}
 
-			if (!winInfo->validRasterOrigin) {
+			if (!newCtx->validRasterOrigin || !winInfo->validRasterOrigin) {
 				/* set raster origin */
 				if (winInfo->server[i].num_extents > 0) {
 					newCtx->server[i].State->current.rasterOrigin.x
@@ -430,6 +430,11 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 		/* release server buffer */
 		crPackReleaseBuffer( thread->packer );
 	}
+
+	/* Both the context and window have these flags.  If either one is
+	 * invalid, we have to reset the contexts' raster origins.
+	 */
+	newCtx->validRasterOrigin = GL_TRUE;
 	winInfo->validRasterOrigin = GL_TRUE;
 
 	/* Do one-time initializations */

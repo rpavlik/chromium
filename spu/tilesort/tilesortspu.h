@@ -72,7 +72,7 @@ struct context_info_t {
 	GLboolean inDrawPixels;
 	int readPixelsCount;   /* for gathering pieces of glReadPixels image */
 	GLboolean everCurrent; /* has this context ever been bound? */
-
+	GLboolean validRasterOrigin;
 };
 
 /* For DMX */
