@@ -54,7 +54,7 @@ int crPixelSize( GLenum format, GLenum type )
 			bytes = 4;
 			break;
 		default: 
-			crError( "Unknown pixel type in crPixelSize: 0x%x", type );
+			crError( "Unknown pixel type in crPixelSize: 0x%x", (unsigned int) type );
 	}
 
 	switch (format) {
@@ -87,7 +87,7 @@ int crPixelSize( GLenum format, GLenum type )
 			bytes *= 4;
 			break;
 		default:
-			crError( "Unknown pixel format in crPixelSize: 0x%x", format );
+			crError( "Unknown pixel format in crPixelSize: 0x%x", (unsigned int) format );
 	}
 
 	return bytes;

@@ -16,7 +16,6 @@ typedef int ssize_t;
 #include <sys/types.h>
 #include <sys/wait.h>
 #ifdef DARWIN
-typedef unsigned int socklen_t;
 #elif defined(OSF1)
 typedef int socklen_t;
 #endif
