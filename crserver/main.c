@@ -67,8 +67,31 @@ int main( int argc, char *argv[] )
 	{
 		crServerAddToRunQueue( &cr_server.clients[j] );
 	}
+
+	crServerInitializeTiling();
+
+	crServerInitDispatch();
+	crStateDiffAPI( &(cr_server.head_spu->dispatch_table) );
+
+	crUnpackSetReturnPointer( &(cr_server.return_ptr) );
+	crUnpackSetWritebackPointer( &(cr_server.writeback_ptr) );
+
+	cr_barriers = crAllocHashtable();
+	cr_semaphores = crAllocHashtable();
+	crServerSerializeRemoteStreams();
+	return 0;
+}
+
+
+/*
+ * After we've received the tile parameters from the mothership
+ * we do all the initialization to perform tile sorting.
+ */
+void crServerInitializeTiling(void)
+{
 	if (cr_server.numExtents > 0)
 	{
+		int j;
 		for ( j = 0 ; j < cr_server.numClients ; j++)
 		{
 			crServerRecomputeBaseProjection( &(cr_server.clients[j].baseProjection), 0, 0, cr_server.muralWidth, cr_server.muralHeight );
@@ -80,14 +103,4 @@ int main( int argc, char *argv[] )
 			crServerFillBucketingHash();
 		}
 	}
-	crServerInitDispatch();
-	crStateDiffAPI( &(cr_server.head_spu->dispatch_table) );
-
-	crUnpackSetReturnPointer( &(cr_server.return_ptr) );
-	crUnpackSetWritebackPointer( &(cr_server.writeback_ptr) );
-
-	cr_barriers = crAllocHashtable();
-	cr_semaphores = crAllocHashtable();
-	crServerSerializeRemoteStreams();
-	return 0;
 }
