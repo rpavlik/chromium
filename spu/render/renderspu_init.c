@@ -170,6 +170,7 @@ static int renderSPUCleanup(void)
 	CR_HASHTABLE_WALK( render_spu.contextTable, entry)
 		context = (ContextInfo *) entry->data;
 		CRASSERT(context);
+		renderspu_SystemDestroyContext(context);
 		crFree(context);
 		entry->data = NULL;
 	CR_HASHTABLE_WALK_END( render_spu.contextTable )
@@ -178,6 +179,7 @@ static int renderSPUCleanup(void)
 	CR_HASHTABLE_WALK( render_spu.windowTable, entry)
 		window = (WindowInfo *) entry->data;
 		CRASSERT(window);
+		renderspu_SystemDestroyWindow(window);
 		crFree(window);
 		entry->data = NULL;
 	CR_HASHTABLE_WALK_END( render_spu.windowTable )
