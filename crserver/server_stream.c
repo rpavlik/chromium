@@ -48,11 +48,11 @@ void crServerAddToRunQueue( int index )
 		/* extent->display = find_output_display( extent->imagewindow ); */
 
 		extent->bounds.x1 = ( (GLfloat) (2*extent->imagewindow.x1) /
-				cr_server.muralHeight - 1.0f );
+				cr_server.muralWidth - 1.0f );
 		extent->bounds.y1 = ( (GLfloat) (2*extent->imagewindow.y1) /
 				cr_server.muralHeight - 1.0f );
 		extent->bounds.x2 = ( (GLfloat) (2*extent->imagewindow.x2) /
-				cr_server.muralHeight - 1.0f );
+				cr_server.muralWidth - 1.0f );
 		extent->bounds.y2 = ( (GLfloat) (2*extent->imagewindow.y2) /
 				cr_server.muralHeight - 1.0f );
 
