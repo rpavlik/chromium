@@ -474,6 +474,7 @@ void STATE_APIENTRY crStateLightiv (GLenum light, GLenum pname, const GLint *par
 			f_vector.z = (GLfloat) param[2];
 			f_vector.w = (GLfloat) param[3];
 			crStateLightfv( light, pname, (GLfloat *) &f_vector );
+			break;
 		case GL_SPOT_EXPONENT:
 		case GL_SPOT_CUTOFF:
 		case GL_CONSTANT_ATTENUATION:
