@@ -319,7 +319,29 @@ tilesortspu_CallList(GLuint list)
 			crdlm_compile_CallList( list );
 	}
 	else {
-		/* We're executing a glCallList.
+		/* We're executing a glCallList. */
+
+#if 0
+		/* This is experimental code to fix some issues with glBindTexture
+		 * inside display lists.  Basically, if a BindTexture is called in
+		 * a display list, we need to have flushed any changes to the texture
+		 * object before calling the list.
+		 */
+		{
+			int i;
+			crPackReleaseBuffer( thread->packer );
+			for ( i = 0 ; i < tilesort_spu.num_servers; i++ ) {
+				CRContext *serverState = thread->currentContext->server[i].State;
+				crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
+				crStateDiffAllTextureObjects(thread->currentContext->State,
+																		 serverState->bitid);
+				crPackReleaseBuffer( thread->packer );
+			}
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
+		}
+#endif
+
+		/*
 		 * Determine which servers will get this display list.
 		 */
 		if (crDLMListHasBounds(tilesort_spu.dlm, list)) {
@@ -409,25 +431,6 @@ tilesortspu_CallList(GLuint list)
 			tilesortspuFlush( thread );
 		}
 	}
-
-	/* This is experimental code to fix some issues with glBindTexture
-	 * inside display lists.  Basically, if a BindTexture is called in
-	 * a display list, we need to have flushed any changes to the texture
-	 * object before calling the list.
-	 */
-#if 0
-	{
-		 int i;
-		 crPackReleaseBuffer( thread->packer );
-		 for ( i = 0 ; i < tilesort_spu.num_servers; i++ ) {
-			CRContext *serverState = thread->currentContext->server[i].State;
-			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
-			crStateDiffAllTextureObjects(ctx, serverState->bitid);
-			crPackReleaseBuffer( thread->packer );
-		 }
-		 crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
-	}
-#endif
 
 
 	/* Always pack CallList.  It'll get sent to servers based on the usual
