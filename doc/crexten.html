@@ -45,7 +45,6 @@ extension provides no new features.  Instead, other Chromium extensions
 are layered on top of this one.
 </p>
 
-</p>
 <dl>
 <dt>glChromiumParameteriCR(GLenum target, GLint value)</dt>
 <dd>Set a Chromium parameter to an integer value.<br>
@@ -238,6 +237,114 @@ may be reset to zero with either of the following commands:</p>
 <li><code>glChromiumParameteriCR(GL_RESET_VERTEX_COUNTERS_CR, 0);</code>
 <li><code>glChromiumParameterfCR(GL_RESET_VERTEX_COUNTERS_CR, 0.0);</code>
 </ul>
+
+
+<h2 class="PageSubHeading">GL_CR_window_size</h2>
+<p>This extension allows you to query the size of the currently bound
+rendering window.
+This extension requires the GL_CR_state_parameter extension.</p>
+
+<p>New tokens accepted by the <code>target</code> parameter to
+<code>glGetChromiumParametervCR</code>:
+
+<dl>
+<dt>GL_WINDOW_SIZE_CR</dt>
+<dd>The <code>count</code> parameter should be 2.
+    The <code>type</code> parameter should be GL_INT.
+    <code>values[0]</code> will be the window width.
+    <code>values[1]</code> will be the window height.
+    </dd>
+</dl>
+
+
+
+<h2 class="PageSubHeading">GL_CR_readback_barrier_size</h2>
+<p>This extension allows you to specify the number of clients which should
+synchronize on barriers within the readback SPU.  This <em>does not</em>
+set the barrier size for the application's barriers.
+This extension requires the GL_CR_state_parameter extension.</p>
+<p>See the <code>threadtest.c</code> file for an example.</p>
+
+<p>New tokens accepted by the <code>target</code> parameter to
+<code>glChromiumParameteriCR</code>:
+
+<dl>
+<dt>GL_WINDOW_SIZE_CR</dt>
+<dd>The <code>value</code> parameter indicates the barrier size.
+    </dd>
+</dl>
+
+
+
+<h2 class="PageSubHeading">GL_CR_tile_info</h2>
+<p>This extension allows you to specify the tilesort parameters (number
+of tiles and their sizes) to the tilesort SPU and servers.
+This extension requires the GL_CR_state_parameter extension.</p>
+
+<p>New tokens accepted by the <code>target</code> parameter to
+<code>glChromiumParametervCR</code>:
+
+<dl>
+<dt>GL_TILE_INFO_SIZE_CR</dt>
+<dd>The <code>count</code> parameter indicates the number of tile parameters,
+    defined below.
+    </dd>
+    The <code>type</code> parameter should be GL_INT.
+    The <code>values</code> parameter defines an array of values as
+    follows:
+<pre>
+   values[0] = the server number
+   values[1] = the overall mural width
+   values[2] = the overall mural height
+   values[3] = number of tiles
+   values[4] = first tile x1
+   values[5] = first tile y1
+   values[6] = first tile x2
+   values[7] = first tile y2
+   values[8] = second tile x1
+   ...
+</pre>
+   <code>count</code> should be 4 + 4 * (number of tiles).
+</dl>
+
+
+<h2 class="PageSubHeading">GL_CR_synchronization</h2>
+<p>This extension defines semaphore and barrier functions for synchronization.
+
+<dl>
+<dt>glBarrierCreateCR(GLuint name, GLuint count)</dt>
+<dd>Create a barrier with the given name and count.  The count indicates
+how many clients must meet at the barrier before it is released.
+If count is zero, the crserver will automatically set count to the number
+of clients currently connected to the server.
+</dd>
+
+<dt>glBarrierDestroyCR(GLuint name)</dt>
+<dd>Destroys the named barrier.
+
+<dt>glBarrierExecCR(GLuint name)</dt>
+<dd>Causes the caller to wait on the barrier until all peers meet the
+barrier.
+
+<dt>glSemaphoreCreateCR(GLuint name, GLuint value)</dt>
+<dd>Creates a semaphore with the given name and value.  Value indicates
+the initial semaphore value.
+
+<dt>glSemaphoreDestroyCR(GLuint name)</dt>
+<dd>Destroys the named semaphore.
+
+<dt>glSemaphorePCR(GLuint name)</dt>
+<dd>Decrements the named semaphore.  This is the <em>wait</em> operation.
+
+<dt>glSemaphoreVCR(GLuint name)</dt>
+<dd>Increments the named semaphore.  This is the <em>signal</em> operation.
+
+</dd>
+<p>See the <a href="parallelapplication.html">Writing a parallel
+application section</a> for more information.
+</p>
+
+
 
 </body>
 
