@@ -352,13 +352,13 @@ endif
 endif
 
 ifdef LIB_COPIES
-COPY_TARGETS := $(foreach copy, $(LIB_COPIES), $(TOP)/built/$(copy)_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$(copy)_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) )
+COPY_TARGETS := $(foreach copy, $(LIB_COPIES), $(TOP)/built/$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$(copy)_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) )
 
 copies: 
 	@$(MAKE) relink
 else 
 ifdef SPU_COPIES
-COPY_TARGETS := $(foreach copy, $(SPU_COPIES), $(TOP)/built/$(copy)/$(ARCH)/$(LIBPREFIX)$(copy)$(DLLSUFFIX) )
+COPY_TARGETS := $(foreach copy, $(SPU_COPIES), $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)$(copy)_copy$(DLLSUFFIX) )
 
 copies: 
 	@$(MAKE) relink
@@ -367,13 +367,13 @@ copies:
 endif
 endif
 
-relink: $(LIB_COPIES) $(SPU_COPIES)
+relink: $(COPY_TARGETS)
 
-$(LIB_COPIES):
-	@$(ECHO) "Linking $(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)"
-	$(MKDIR) $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)
+$(TOP)/built/$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)%_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX): $(OBJS)
+	@$(ECHO) "Linking $(LIBPREFIX)$*_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX)"
+	$(MKDIR) $(TOP)/built/$(SHORT_TARGET_NAME)_copy/$(ARCH)
 ifdef WINDOWS
-	@$(LD) $(SHARED_LDFLAGS) /Fe$(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
+	@$(LD) $(SHARED_LDFLAGS) /Fe$@ $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else
 ifdef AIXSHAREDLIB
 	@$(ECHO) "AIX shared obj link"
@@ -390,16 +390,16 @@ ifdef AIXSHAREDLIB
 	rm -f tmpAnyDX.* shr.o load.map
 
 else
-	@$(LD) $(SHARED_LDFLAGS) -o $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(OBJS) $(LDFLAGS) $(LIBRARIES)
+	@$(LD) $(SHARED_LDFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(LIBRARIES)
 endif
 endif
-	@$(CP) $(TOP)/built/$@_$(SHORT_TARGET_NAME)_copy/$(ARCH)/$(LIBPREFIX)$@_$(SHORT_TARGET_NAME)_copy$(DLLSUFFIX) $(DSO_DIR)
+	@$(CP) $@ $(DSO_DIR)
 
-$(SPU_COPIES):
-	@$(ECHO) "Linking $(LIBPREFIX)$@$(DLLSUFFIX)"
-	$(MKDIR) $(TOP)/built/$@/$(ARCH)
+$(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%_copy$(DLLSUFFIX): $(OBJS)
+	@$(ECHO) "Linking $(LIBPREFIX)$*_copy$(DLLSUFFIX)"
+	$(MKDIR) $(TOP)/built/$*/$(ARCH)
 ifdef WINDOWS
-	@$(LD) $(SHARED_LDFLAGS) /Fe$(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
+	@$(LD) $(SHARED_LDFLAGS) /Fe$@ $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
 else
 ifdef AIXSHAREDLIB
 	@$(ECHO) "AIX shared obj link"
@@ -416,10 +416,10 @@ ifdef AIXSHAREDLIB
 	rm -f tmpAnyDX.* shr.o load.map
 
 else
-	@$(LD) $(SHARED_LDFLAGS) -o $(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) $(OBJS) $(LDFLAGS) $(LIBRARIES)
+	@$(LD) $(SHARED_LDFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(LIBRARIES)
 endif
 endif
-	@$(CP) $(TOP)/built/$@/$(ARCH)/$(LIBPREFIX)$@$(DLLSUFFIX) $(DSO_DIR)
+	@$(CP) $@ $(DSO_DIR)
 
 
 
