@@ -199,7 +199,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
 
 		/* Flush buffer (send to server) */
-		tilesortspuSendServerBuffer( i );
+		tilesortspuSendServerBufferThread( i, thread0 );
 
 		if (!thread0->net[0].conn->actual_network)
 		{

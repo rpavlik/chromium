@@ -233,6 +233,7 @@ void tilesortspuConnectToServers( void );
 
 /* tilesortspu_flush.c */
 void tilesortspuSendServerBuffer( int server_index );
+void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread );
 void tilesortspuHuge( CROpcode opcode, void *buf );
 void tilesortspuFlush( ThreadInfo *thread );
 void tilesortspuFlush_callback( void *arg );

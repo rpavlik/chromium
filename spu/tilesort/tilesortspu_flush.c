@@ -66,11 +66,11 @@ void tilesortspuDebugOpcodes( CRPackBuffer *pack )
 }
 
 /*
- * Send this thread's packing buffer to the named server.
+ * Send this thread's packing buffer to the named server using a
+ * specific thread's packer.
  */
-void tilesortspuSendServerBuffer( int server_index )
+void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 {
-	GET_THREAD(thread);
 	CRPackBuffer *pack = &(thread->pack[server_index]);
 	CRNetServer *net = &(thread->net[server_index]);
 	unsigned int len;
@@ -93,6 +93,16 @@ void tilesortspuSendServerBuffer( int server_index )
 										net->conn->buffer_size, net->conn->mtu );
 	pack->canBarf = net->conn->Barf ? GL_TRUE : GL_FALSE;
 }
+
+/*
+ * As above, but use the calling thread.
+ */
+void tilesortspuSendServerBuffer( int server_index )
+{
+	GET_THREAD(thread);
+	tilesortspuSendServerBufferThread(server_index, thread);
+}
+
 
 static void __appendBuffer( const CRPackBuffer *src )
 {
