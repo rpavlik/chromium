@@ -33,6 +33,7 @@ menu_SET_HOST      = 10006
 menu_SPU_OPTIONS   = 10007
 menu_HELP          = 10008
 menu_ABOUT         = 10009
+menu_DELETE_SPU    = 10010
 
 # Widget IDs
 id_NewServerNode  = 3000
@@ -125,7 +126,8 @@ class MainFrame(wxFrame):
 		self.editMenu = wxMenu()
 		self.editMenu.Append(menu_UNDO,          "Undo\tCTRL-Z")
 		self.editMenu.AppendSeparator()
-		self.editMenu.Append(menu_DELETE,        "Delete\tCTRL-D")
+		self.editMenu.Append(menu_DELETE,        "Delete Node(s)\tCTRL-D")
+		self.editMenu.Append(menu_DELETE_SPU,    "Delete SPU(s)\tCTRL-D")
 		self.editMenu.Append(menu_SELECT_ALL,    "Select All\tCTRL-A")
 		self.editMenu.AppendSeparator()
 		self.editMenu.Append(menu_CONNECT,       "Connect Nodes")
@@ -133,6 +135,7 @@ class MainFrame(wxFrame):
 		self.editMenu.Append(menu_SET_HOST,      "Set Host...")
 		self.editMenu.Append(menu_SPU_OPTIONS,   "SPU Options...")
 		EVT_MENU(self, menu_DELETE, self.doDelete)
+		EVT_MENU(self, menu_DELETE_SPU, self.doDeleteSPU)
 		EVT_MENU(self, menu_SELECT_ALL, self.doSelectAll)
 		EVT_MENU(self, menu_CONNECT, self.doConnect)
 		EVT_MENU(self, menu_DISCONNECT, self.doDisconnect)
@@ -226,17 +229,10 @@ class MainFrame(wxFrame):
 		if self.fileName != None:
 			self.loadContents()
 
+		self.UpdateMenus()
 
 	# ----------------------------------------------------------------------
 	# Node functions
-
-	def SelectAll(self):
-		for node in self.Nodes:
-			node.Select()
-
-	def DeselectAll(self):
-		for node in self.Nodes:
-			node.Deselect()
 
 	def AddNode(self, node):
 		"""Add a new node to the system"""
@@ -247,6 +243,63 @@ class MainFrame(wxFrame):
 		if node in self.Nodes:
 			self.Nodes.remove(node)
 
+	def SelectAll(self):
+		for node in self.Nodes:
+			node.Select()
+
+	def DeselectAll(self):
+		for node in self.Nodes:
+			node.Deselect()
+
+	def NumSelected(self):
+		"""Return number of selected nodes."""
+		n = 0
+		for node in self.Nodes:
+			if node.IsSelected():
+				n += 1
+		return n
+
+	SELECT_ONE = 1
+	SELECT_EXTEND = 2
+	SELECT_TOGGLE = 3
+	SELECT_ALL = 4
+	DESELECT_ALL = 5
+
+	def UpdateSelection(self, list, obj, mode):
+		"""General purpose selection-update function.  Used both for
+		nodes and SPUs.
+		<list> is a list of objects
+		<obj> is one object in the list, the one clicked on, if any
+		<mode> may be one of SELECT_ONE, SELECT_EXTEND, SELECT_TOGGLE,
+		SELECT_ALL or DESELECT_ALL
+		"""
+		if mode == self.SELECT_ONE:
+			if obj.IsSelected():
+				# do nothing
+				pass
+			else:
+				# make obj the only one selected
+				for object in list:
+					if object == obj:
+						object.Select()
+					else:
+						object.Deselect()
+		elif mode == self.SELECT_EXTEND:
+			obj.Select()
+		elif mode == self.SELECT_TOGGLE:
+			if obj.IsSelected():
+				obj.Deselect()
+			else:
+				obj.Select()
+		elif mode == self.SELECT_ALL:
+			for object in list:
+				object.Select()
+		elif mode == self.DESELECT_ALL:
+			for object in list:
+				object.Deselect()
+		else:
+			print "bad mode in UpdateSelection"
+			
 
 	#----------------------------------------------------------------------
 	# Template functions
@@ -361,6 +414,7 @@ class MainFrame(wxFrame):
 			self.AddNode(node)
 		self.newAppChoice.SetSelection(0)
 		self.drawArea.Refresh()
+		self.UpdateMenus()
 
 	# called when New Server Node button is pressed
 	def onNewServerNode(self, event):
@@ -373,6 +427,7 @@ class MainFrame(wxFrame):
 			self.AddNode(node)
 		self.newServerChoice.SetSelection(0)
 		self.drawArea.Refresh()
+		self.UpdateMenus()
 
 	def onNewSpu(self, event):
 		"""New SPU button callback"""
@@ -399,7 +454,7 @@ class MainFrame(wxFrame):
 			self.CreateSortlast()
 		self.newTemplateChoice.SetSelection(0)
 		self.drawArea.Refresh()
-		return
+		self.UpdateMenus()
 
 	# Called when the left mouse button is pressed or released.
 	def onMouseEvent(self, event):
@@ -407,17 +462,14 @@ class MainFrame(wxFrame):
 		# First, determine if we're clicking on an object
 		# iterate backward through the object list so we get the topmost one
 		hitNode = 0
+		hitSPU = 0
 		for i in range(len(self.Nodes) - 1, -1, -1):
 			node = self.Nodes[i]
 			p = node.PickTest(x,y)
 			if p >= 1:
 				hitNode = node
 				if p > 1 and event.LeftDown():
-					# clicked on the p-2 SPU in the node
-					if node.IsSelectedSPU(p-2):
-						node.DeselectSPU(p - 2)
-					else:
-						node.SelectSPU(p - 2)
+					hitSPU = hitNode.GetSPUs()[p-2]
 				break
 			# endif
 		# endfor
@@ -428,25 +480,29 @@ class MainFrame(wxFrame):
 		if self.LeftDown:
 			# mouse down
 			if hitNode:
+				# hit a node (and maybe an SPU)
 				self.DragStartX = x
 				self.DragStartY = y
 				self.SelectDeltaX = 0
 				self.SelectDeltaY = 0
 				if event.ControlDown():
-					# toggle selection status of one object
-					if hitNode.IsSelected():
-						hitNode.Deselect()
-					else:
-						hitNode.Select()
-				elif not hitNode.IsSelected():
-					if not event.ShiftDown():
-						for node in self.Nodes:
-							node.Deselect()
-					hitNode.Select()
+					mode = self.SELECT_TOGGLE
+				elif event.ShiftDown():
+					mode = self.SELECT_EXTEND
+				else:
+					mode = self.SELECT_ONE
+				if hitSPU:
+					# also hit an SPU
+					self.UpdateSelection(hitNode.GetSPUs(), hitSPU, mode)
+					self.UpdateSelection(self.Nodes, hitNode, self.SELECT_EXTEND)
+				else:
+					self.UpdateSelection(hitNode.GetSPUs(), 0, self.DESELECT_ALL)
+					self.UpdateSelection(self.Nodes, hitNode, mode)
 			else:
-				# deselect all
+				# didn't hit an SPU or a node
 				for node in self.Nodes:
-					node.Deselect()
+					self.UpdateSelection(node.GetSPUs(), 0, self.DESELECT_ALL)
+				self.UpdateSelection(self.Nodes, 0, self.DESELECT_ALL)
 		else:
 			# mouse up
 			for node in self.Nodes:
@@ -460,6 +516,7 @@ class MainFrame(wxFrame):
 			self.SelectDeltaX = 0
 			self.SelectDeltaY = 0
 
+		self.UpdateMenus()
 		self.drawArea.Refresh()
 
 	# Called when the mouse moves.  We only really need to call this when a
@@ -591,7 +648,7 @@ class MainFrame(wxFrame):
 
 
 	def doDelete(self, event):
-		"""Edit / Delete callback"""
+		"""Edit / Delete Node callback"""
 		# Ugh, I can't find a Python counterpart to the C++ STL's remove_if()
 		# function.
 		# Have to make a temporary list of the objects to delete so we don't
@@ -604,6 +661,14 @@ class MainFrame(wxFrame):
 		for node in deleteList:
 			 self.Nodes.remove(node)
 		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doDeleteSPU(self, event):
+		"""Edit / Delete SPU callback"""
+		for node in self.Nodes:
+			node.DeleteSelectedSPUs()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
 
 	def doSelectAll(self, event):
 		"""Edit / Select All callback"""
@@ -770,6 +835,33 @@ class MainFrame(wxFrame):
 		btn = dialog.ShowModal()
 		dialog.Destroy()
 
+	# ----------------------------------------------------------------------
+	def UpdateMenus(self):
+		"""Enable/disable menu items as needed."""
+		# XXX the enable/disable state for connect/disconnect is more
+		# complicated than this.
+		if self.NumSelected() > 0:
+			self.editMenu.Enable(menu_DELETE, 1)
+			self.editMenu.Enable(menu_CONNECT, 1)
+			self.editMenu.Enable(menu_DISCONNECT, 1)
+			self.editMenu.Enable(menu_SET_HOST, 1)
+			self.editMenu.Enable(menu_SPU_OPTIONS, 1)
+			self.newSpuChoice.Enable(1)
+		else:
+			self.editMenu.Enable(menu_DELETE, 0)
+			self.editMenu.Enable(menu_CONNECT, 0)
+			self.editMenu.Enable(menu_DISCONNECT, 0)
+			self.editMenu.Enable(menu_SET_HOST, 0)
+			self.editMenu.Enable(menu_SPU_OPTIONS, 0)
+			self.newSpuChoice.Enable(0)
+		if len(self.Nodes) > 0:
+			self.editMenu.Enable(menu_SELECT_ALL, 1)
+		else:
+			self.editMenu.Enable(menu_SELECT_ALL, 0)
+		# always disabled for now
+		self.editMenu.Enable(menu_UNDO, 0)
+
+
 	# Display a dialog with a message and OK button.
 	def Notify(self, msg):
 		dialog = wxMessageDialog(parent=self, message=msg,
@@ -872,19 +964,21 @@ class ExceptionHandler:
 
 class SpuObject:
 	def __init__(self, name):
-		self.X = 0
-		self.Y = 0
-		self._Name = name
-		self.Width = 0
-		self.Height = 30
-		self._IsSelected = 0
-		self._Port = 7000
-		self._Protocol = "tcpip"
-		self._Servers = []
+		self.__X = 0
+		self.__Y = 0
+		self.__Name = name
+		self.__Width = 0
+		self.__Height = 30
+		self.__IsSelected = 0
+		self.__Port = 7000
+		self.__Protocol = "tcpip"
+		self.__Servers = []
+		self.__OutlinePen = wxPen(wxColor(0,0,0), width=1, style=0)
+		self.__FillBrush = wxLIGHT_GREY_BRUSH
 
 	def IsPacker(self):
 		"""Return true if this SPU has a packer"""
-		if self._Name in SpuMaxServers.keys():
+		if self.__Name in SpuMaxServers.keys():
 			return 1
 		else:
 			return 0
@@ -892,16 +986,16 @@ class SpuObject:
 	def IsTerminal(self):
 		"""Return true if this SPU has to be the last in a chain (a terminal)
 		"""
-		return self._Name in TerminalSPUs
+		return self.__Name in TerminalSPUs
 
 	def Select(self):
-		self._IsSelected = 1
+		self.__IsSelected = 1
 
 	def Deselect(self):
-		self._IsSelected = 0
+		self.__IsSelected = 0
 
 	def IsSelected(self):
-		return self._IsSelected
+		return self.__IsSelected
 
 	def CanAddServer(self):
 		"""Test if a server can be added to this SPU.
@@ -909,67 +1003,79 @@ class SpuObject:
 		"""
 		if not self.IsPacker():
 			return "This SPU doesn't have a command packer"
-		if len(self._Servers) >= SpuMaxServers[self._Name]:
-			return "This SPU is limited to %d server(s)" % SpuMaxServers[self._Name]
+		if len(self.__Servers) >= SpuMaxServers[self.__Name]:
+			return "This SPU is limited to %d server(s)" % SpuMaxServers[self.__Name]
 		return "OK"
 
 	def AddServer(self, serverNode, protocol='tcpip', port=7000):
 		"""Add a server to this SPU.  The SPU must have a packer!"""
-		if self.IsPacker() and len(self._Servers) < SpuMaxServers[self._Name]:
-			self._Servers.append(serverNode)
-			self._Protocol = protocol
-			self._Port = port
+		if self.IsPacker() and len(self.__Servers) < SpuMaxServers[self.__Name]:
+			self.__Servers.append(serverNode)
+			self.__Protocol = protocol
+			self.__Port = port
 
 	def RemoveServer(self, serverNode):
-		if serverNode in self._Servers:
-			self._Servers.remove(serverNode)
+		if serverNode in self.__Servers:
+			self.__Servers.remove(serverNode)
 
 	def GetServers(self):
 		"""Return the list of servers for this SPU.
 		For a pack SPU the list will contain zero or one server.
 		For a tilesort SPU the list will contain zero or more servers.
-		Otherw SPU classes have no servers.
+		Other SPU classes have no servers.
 		"""
-		return self._Servers
+		return self.__Servers
 
 	def Name(self):
-		return self._Name
+		return self.__Name
 
 	def SetPosition(self, x, y):
-		self.X = x
-		self.Y = y
+		self.__X = x
+		self.__Y = y
 
 	def GetPosition(self):
-		return (self.X, self.Y)
+		return (self.__X, self.__Y)
 
 	def GetWidth(self):
-		return self.Width
+		return self.__Width
 
 	def GetHeight(self):
-		return self.Height
+		return self.__Height
 
 	def PickTest(self, x, y):
-		if x >= self.X and x < self.X + self.Width and y >= self.Y and y < self.Y + self.Height:
+		if x >= self.__X and x < self.__X + self.__Width and y >= self.__Y and y < self.__Y + self.__Height:
 			return 1
 		else:
 			return 0
 
+	def Layout(self, dc):
+		"""Compute width and height for drawing this SPU"""
+		(w, h) = dc.GetTextExtent(self.__Name)
+		self.__Width = w + 8
+		self.__Height = h + 8
+		
 	def Draw(self, dc):
-		dc.SetBrush(wxLIGHT_GREY_BRUSH)
-		p = wxPen(wxColor(0,0,0), width=1, style=0)
-		if self._IsSelected:
-			p.SetWidth(3)
-		dc.SetPen(p)
+		"""Draw this SPU as a simple labeled box"""
+		dc.SetBrush(self.__FillBrush)
+		if self.__IsSelected:
+			self.__OutlinePen.SetWidth(3)
+		else:
+			self.__OutlinePen.SetWidth(1)
+		dc.SetPen(self.__OutlinePen)
 		# if width is zero, compute it now based on the text width
-		if self.Width == 0:
-			(self.Width, unused) = dc.GetTextExtent(self._Name)
-			self.Width += 10
+		if self.__Width == 0:
+			self.Layout(dc)
 		# draw the SPU as rectangle with text label
-		dc.DrawRectangle(self.X, self.Y, self.Width, self.Height)
-		dc.DrawText(self._Name, self.X + 3, self.Y + 3)
+		dc.DrawRectangle(self.__X, self.__Y, self.__Width, self.__Height)
+		dc.DrawText(self.__Name, self.__X + 4, self.__Y + 4)
 		if self.IsPacker():
+			# draw the input socket (a little black rect)
 			dc.SetBrush(wxBLACK_BRUSH)
-			dc.DrawRectangle(self.X + self.Width, self.Y + self.Height/2 - 4, 4, 8)
+			dc.DrawRectangle(self.__X + self.__Width,
+							 self.__Y + self.__Height/2 - 4, 4, 8)
+		elif self.__Name in TerminalSPUs:
+			# draw a thick right edge on the box??
+			pass
 
 class Node:
 	""" The graphical representation of a Cr node (app or network).
@@ -977,85 +1083,131 @@ class Node:
 	"""
 
 	def __init__(self, host="localhost", isServer = 0):
-		self.X = 0
-		self.Y = 0
-		self.Width = 200
-		self.Height = 60
-		self.SpuChain = []
-		self._IsServer = isServer
-		self._IsSelected = 0
-		self._InputPlugPos = (0,0)
-		self._Host = host
+		self.__X = 0
+		self.__Y = 0
+		self.__Width = 0
+		self.__Height = 0
+		self.__SpuChain = []
+		self.__IsServer = isServer
+		self.__IsSelected = 0
+		self.__InputPlugPos = (0,0)
+		self.SetHost(host)
 
 	def IsAppNode(self):
 		"""Return true if this is an app node, false otherwise."""
-		return not self._IsServer
+		return not self.__IsServer
 
 	def IsServer(self):
 		"""Return true if this is a server, false otherwise."""
-		return self._IsServer
+		return self.__IsServer
 
 	def HasAvailablePacker(self):
 		"""Return true if we can connect a server to this node."""
-		if len(self.SpuChain) >= 1 and self.LastSPU().CanAddServer() == "OK":
+		if len(self.__SpuChain) >= 1 and self.LastSPU().CanAddServer() == "OK":
 			return 1
 		else:
 			return 0
 
 	def HasPacker(self):
 		"""Return true if the last SPU has a packer."""
-		if len(self.SpuChain) >= 1 and self.LastSPU().IsPacker():
+		if len(self.__SpuChain) >= 1 and self.LastSPU().IsPacker():
 			return 1
 		else:
 			return 0
 
 	def SetHost(self, hostname):
-		self._Host = hostname
+		self.__Host = hostname
+		if self.__IsServer:
+			self.__Label = "Server node host=" + hostname
+		else:
+			self.__Label = "App node host=" + hostname
+		self.InvalidateLayout()
 
 	def Select(self):
-		self._IsSelected = 1
+		self.__IsSelected = 1
 
 	def Deselect(self):
-		self._IsSelected = 0
+		self.__IsSelected = 0
 
 	def IsSelected(self):
-		return self._IsSelected
+		return self.__IsSelected
 
-	def AddSPU(self, s):
-		self.SpuChain.append(s)
+	def GetFirstSelectedSPUPos(self):
+		"""Return the position (index) of this node's first selected SPU"""
+		pos = 0
+		for spu in self.__SpuChain:
+			if spu.IsSelected():
+				return pos
+			pos += 1
+		return -1
+
+	def AddSPU(self, s, pos = -1):
+		if pos < 0:
+			# add at tail
+			self.__SpuChain.append(s)
+		else:
+			# insert at [pos]
+			assert pos >= 0
+			assert pos <= len(self.__SpuChain)
+			self.__SpuChain.insert(pos, s)
+		self.InvalidateLayout()
 
 	def NumSPUs(self):
-		return len(self.SpuChain)
+		return len(self.__SpuChain)
+
+	def DeleteSelectedSPUs(self):
+		"""Delete all selected SPUs in this node"""
+		deleteList = []
+		for spu in self.__SpuChain:
+			if spu.IsSelected():
+				deleteList.append(spu)
+		for spu in deleteList:
+			self.__SpuChain.remove(spu)
+		self.InvalidateLayout()
 
 	def LastSPU(self):
-		return self.SpuChain[-1]
+		"""Return the last SPU in this node's SPU chain"""
+		if len(self.__SpuChain) == 0:
+			return 0
+		else:
+			return self.__SpuChain[-1]
+
+	def GetSPUs(self):
+		"""Return this node's SPU chain"""
+		return self.__SpuChain
 
 	def GetServers(self):
+		"""Return a list of servers that the last SPU (a packing SPU) are
+		connected to."""
 		if self.NumSPUs() > 0:
 			return self.LastSPU().GetServers()
 		else:
 			return []
 
 	def SelectSPU(self, i):
-		self.SpuChain[i].Select()
+		self.__SpuChain[i].Select()
 
 	def DeselectSPU(self, i):
-		self.SpuChain[i].Deselect()
+		self.__SpuChain[i].Deselect()
+
+	def DeselectAllSPUs(self):
+		for spu in self.__SpuChain:
+			spu.Deselect()
 
 	def IsSelectedSPU(self, i):
-		return self.SpuChain[i].IsSelected()
+		return self.__SpuChain[i].IsSelected()
 
 	def GetPosition(self):
-		return (self.X, self.Y)
+		return (self.__X, self.__Y)
 
 	def SetPosition(self, x, y):
-		self.X = x;
-		self.Y = y;
+		self.__X = x;
+		self.__Y = y;
 
 	# Return the (x,y) coordinate of the node's input socket
 	def GetInputPlugPos(self):
-		assert self._IsServer
-		return self._InputPlugPos
+		assert self.__IsServer
+		return self.__InputPlugPos
 
 	# Return the (x,y) coordinate of the node's output socket
 	def GetOutputPlugPos(self):
@@ -1067,49 +1219,77 @@ class Node:
 		y += last.GetHeight() / 2
 		return (x, y)
 
+	def InvalidateLayout(self):
+		self.__Width = 0
+
+	def Layout(self, dc):
+		"""Compute width and height for drawing this node"""
+		self.__Width = 5
+		for spu in self.__SpuChain:
+			spu.Layout(dc)
+			self.__Width += spu.GetWidth() + 2
+		self.__Width += 8
+		(w, h) = dc.GetTextExtent(self.__Label)
+		if self.__Width < w + 8:
+			self.__Width = w + 8
+		if self.__Width < 100:
+			self.__Width = 100
+		if self.__Height == 0:
+			self.__Height = 4 * h
+
 	def Draw(self, dc, dx=0, dy=0):
+		"""Draw this node.  (dx,dy) are the temporary translation values
+		used when a mouse drag is in progress."""
 		# setup the brush and pen
-		if self._IsServer:
+		if self.__IsServer:
 			dc.SetBrush(ServerNodeBrush);
 		else:
 			dc.SetBrush(AppNodeBrush);
 		p = wxPen(wxColor(0,0,0), width=1, style=0)
-		if self._IsSelected:
+		if self.__IsSelected:
 			p.SetWidth(3)
 		dc.SetPen(p)
-		x = self.X + dx
-		y = self.Y + dy
+		x = self.__X + dx
+		y = self.__Y + dy
+
+		if self.__Width == 0 or self.__Height == 0:
+			self.Layout(dc)
+
 		# draw the node's box
-		dc.DrawRectangle(x, y, self.Width, self.Height)
-		if self._IsServer:
-			dc.DrawText("Server node host=%s" % self._Host, x + 3, y + 3)
+		dc.DrawRectangle(x, y, self.__Width, self.__Height)
+		if self.__IsServer:
+			dc.DrawText(self.__Label, x + 4, y + 4)
 			# draw the unpacker plug
 			px = x - 4
-			py = y + self.Height / 2
-			self._InputPlugPos = (px, py)
+			py = y + self.__Height / 2
+			self.__InputPlugPos = (px, py)
 			dc.SetBrush(wxBLACK_BRUSH)
 			dc.DrawRectangle(px, py - 4, 4, 8)
 		else:
-			dc.DrawText("App node host=%s" % self._Host, x + 3, y + 3)
+			dc.DrawText(self.__Label, x + 4, y + 4)
 
 		# draw the SPUs
 		x = x + 5
 		y = y + 20
-		for spu in self.SpuChain:
+		for spu in self.__SpuChain:
 			spu.SetPosition(x, y)
 			spu.Draw(dc)
 			x = x + spu.GetWidth() + 2
 
 
 	def PickTest(self, x, y):
+		"""Return 0 if this node is not picked.
+		Return 1 if the node was picked, but not an SPU
+		Return n if the nth SPU was picked.
+		"""
 		# try the SPUs first
 		i = 0
-		for spu in self.SpuChain:
+		for spu in self.__SpuChain:
 			if spu.PickTest(x,y):
 				return 2 + i
 			i = i + 1
 		# now try the node itself
-		if x >= self.X and x < self.X + self.Width and y >= self.Y and y < self.Y + self.Height:
+		if x >= self.__X and x < self.__X + self.__Width and y >= self.__Y and y < self.__Y + self.__Height:
 			return 1
 		else:
 			return 0
@@ -1118,7 +1298,6 @@ class NetworkNode(Node):
 	"""A CRNetworkNode object"""
 	def __init__(self, host="localhost"):
 		Node.__init__(self, host, isServer=1)
-
 
 class ApplicationNode(Node):
 	"""A CRApplicationNode object"""
