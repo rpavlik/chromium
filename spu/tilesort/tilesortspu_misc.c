@@ -202,6 +202,7 @@ static GLboolean getNewTiling(int muralWidth, int muralHeight)
 	char **n_tiles;
 	char **tiles;
 	int numTiles, i;
+	int maxX, maxY;
 
 	CRConnection *conn = crMothershipConnect();
 	CRASSERT(conn);
@@ -219,6 +220,7 @@ static GLboolean getNewTiling(int muralWidth, int muralHeight)
 		tilesort_spu.servers[i].num_extents = 0;
 
 	/* parse new tile string */
+	maxX = maxY = 0;
 	CRASSERT(n_tiles[1]);
 	tiles = crStrSplit(n_tiles[1], ",");
 	for (i = 0; i < numTiles; i++)
@@ -232,11 +234,26 @@ static GLboolean getNewTiling(int muralWidth, int muralHeight)
 		tilesort_spu.servers[server].extents[t].x2 = x + w;
 		tilesort_spu.servers[server].extents[t].y2 = y + h;
 		tilesort_spu.servers[server].num_extents = t + 1;
+		/* update maxX, maxY */
+		if (x + w > maxX)
+			maxX = x + w;
+		if (y + h > maxY)
+			maxY = y + h;
 	}
 
 	/* new mural size */
+#if 0
+	/* old code - remove someday */
 	tilesort_spu.muralWidth = muralWidth;
 	tilesort_spu.muralHeight = muralHeight;
+#else
+	/* Set mural size to max of X and Y tile edges.  What this implies is
+	 * that if the tile size is fixed, but the rows and columns is variable,
+	 * the mural size will be a multiple of the tile size.
+	 */
+	tilesort_spu.muralWidth = maxX;
+	tilesort_spu.muralHeight = maxY;
+#endif
 
 	tilesortspuBucketingInit();
 #if 0
