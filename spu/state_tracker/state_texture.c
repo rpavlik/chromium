@@ -2005,9 +2005,9 @@ void STATE_APIENTRY crStateGetTexEnviv (GLenum target, GLenum pname, GLint *para
 			break;
 		case GL_TEXTURE_ENV_COLOR:
 			param[0] = (GLint) (t->unit[t->curTextureUnit].envColor.r * GL_MAXINT);
-			param[0] = (GLint) (t->unit[t->curTextureUnit].envColor.g * GL_MAXINT);
-			param[0] = (GLint) (t->unit[t->curTextureUnit].envColor.b * GL_MAXINT);
-			param[0] = (GLint) (t->unit[t->curTextureUnit].envColor.a * GL_MAXINT);
+			param[1] = (GLint) (t->unit[t->curTextureUnit].envColor.g * GL_MAXINT);
+			param[2] = (GLint) (t->unit[t->curTextureUnit].envColor.b * GL_MAXINT);
+			param[3] = (GLint) (t->unit[t->curTextureUnit].envColor.a * GL_MAXINT);
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
