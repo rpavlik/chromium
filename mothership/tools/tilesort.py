@@ -78,6 +78,8 @@ BackgroundColor = wxColor(90, 150, 190)
 
 WindowTitle = "Chromium Tilesort Configuration"
 
+WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
+
 # XXX eventually automatically query these parameters from the SPU
 TilesortOptions = [
 	("broadcast", "bool", 1, false, "Broadcast Primitives"),
@@ -138,7 +140,7 @@ if program == "":
 	sys.exit(-1)
 
 # Determine if tiles are on one server or many
-if string.find(HOSTNAME, "#") == -1:
+if string.find(HOSTNAME, '#') == -1:
 	singleServer = 1
 else:
 	singleServer = 0
@@ -248,7 +250,7 @@ class MainFrame(wxFrame):
 					 wxNO_FULL_REPAINT_ON_RESIZE)
 
 		self.HostNamePattern = "host##"
-		self.HostNameStartIndex = 0
+		self.HostNameStart = 0
 
 
 		# Setup our menu bar.
@@ -320,9 +322,9 @@ class MainFrame(wxFrame):
 										value="3", min=1, max=16, size=wxSize(50,25))
 		EVT_SPINCTRL(self.widthControl, id_MuralWidth, self.onSizeChange)
 		EVT_SPINCTRL(self.heightControl, id_MuralHeight, self.onSizeChange)
-		flexSizer.Add(columnsLabel)
+		flexSizer.Add(columnsLabel, flag=wxALIGN_CENTER_VERTICAL)
 		flexSizer.Add(self.widthControl)
-		flexSizer.Add(rowsLabel)
+		flexSizer.Add(rowsLabel, flag=wxALIGN_CENTER_VERTICAL)
 		flexSizer.Add(self.heightControl)
 		muralSizer.Add(flexSizer)
 		toolSizer.Add(muralSizer, flag=wxEXPAND)
@@ -352,9 +354,9 @@ class MainFrame(wxFrame):
 		EVT_SPINCTRL(self.tileWidthControl, id_TileWidth, self.onSizeChange)
 		EVT_SPINCTRL(self.tileHeightControl, id_TileHeight, self.onSizeChange)
 		EVT_CHOICE(self.tileChoice, id_TileChoice, self.onTileChoice)
-		flexSizer.Add(self.tileWidthLabel)
+		flexSizer.Add(self.tileWidthLabel, flag=wxALIGN_CENTER_VERTICAL)
 		flexSizer.Add(self.tileWidthControl)
-		flexSizer.Add(self.tileHeightLabel)
+		flexSizer.Add(self.tileHeightLabel, flag=wxALIGN_CENTER_VERTICAL)
 		flexSizer.Add(self.tileHeightControl)
 		tileSizer.Add(self.tileChoice, flag=wxALIGN_CENTER)
 		tileSizer.Add(flexSizer)
@@ -396,7 +398,7 @@ class MainFrame(wxFrame):
 		firstLabel = wxStaticText(parent=self.topPanel, id=-1, label="First index: ")
 		spinSizer.Add(firstLabel, flag=wxALIGN_CENTER_VERTICAL)
 		self.hostSpin = wxSpinCtrl(parent=self.topPanel, id=id_HostIndex,
-								   value=str(self.HostNameStartIndex), min=0,
+								   value=str(self.HostNameStart), min=0,
 								   size=wxSize(60,25))
 		EVT_SPINCTRL(self.hostSpin, id_HostIndex, self.onHostChange)
 		spinSizer.Add(self.hostSpin)
@@ -503,7 +505,7 @@ class MainFrame(wxFrame):
 	def onHostChange(self, event):
 		"""Called when the host name pattern or first index changes."""
 		self.HostNamePattern = self.hostText.GetValue()
-		self.HostNameStartIndex = self.hostSpin.GetValue()
+		self.HostNameStart = self.hostSpin.GetValue()
 		self.drawArea.Refresh()
 		self.dirty = true
 
@@ -569,7 +571,7 @@ class MainFrame(wxFrame):
 				else:
 					jj = cols - j - 1
 				k = ii * cols + jj
-				s = MakeHostname(self.HostNamePattern, self.HostNameStartIndex + k)
+				s = MakeHostname(self.HostNamePattern, self.HostNameStart + k)
 				dc.DrawText(s, x+3, y+3)
 		dc.EndDrawing()
 
@@ -592,7 +594,7 @@ class MainFrame(wxFrame):
 
 		curDir = os.getcwd()
 		fileName = wxFileSelector("Open File", default_extension="conf",
-					  wildcard="*.conf",
+					  wildcard=WildcardPattern,
 					  flags = wxOPEN | wxFILE_MUST_EXIST)
 		if fileName == "": return
 		fileName = os.path.join(os.getcwd(), fileName)
@@ -644,7 +646,7 @@ class MainFrame(wxFrame):
 		fileName = wxFileSelector("Save Configuration As",
 					  default_filename=default,
 					  default_extension="conf",
-					  wildcard="*.conf",
+					  wildcard=WildcardPattern,
 					  flags = wxSAVE | wxOVERWRITE_PROMPT)
 		if fileName == "":
 			return # User cancelled.
@@ -785,8 +787,8 @@ class MainFrame(wxFrame):
 					self.hostText.SetValue(self.HostNamePattern)
 				elif re.match("^FIRSTHOST = [0-9]+$", l):
 					v = re.search("[0-9]+", l)
-					self.HostNameStartIndex = int(l[v.start() : v.end()])
-					self.hostSpin.SetValue(self.HostNameStartIndex)
+					self.HostNameStart = int(l[v.start() : v.end()])
+					self.hostSpin.SetValue(self.HostNameStart)
 				elif re.match("^TILESORT_", l):
 					# A tilesort SPU option
 					# extract the option name and value
@@ -837,7 +839,6 @@ class MainFrame(wxFrame):
 					break
 				elif not re.match("\s*#", l):
 					print "unrecognized line: %s" % l
-				# scan for HOSTNAME and FIRSTHOST
 			f.close()
 			self.recomputeTotalSize()
 		self.dirty = false
@@ -866,7 +867,7 @@ class MainFrame(wxFrame):
 			f.write("RIGHT_TO_LEFT = %d\n" % self.hLayoutRadio.GetSelection())
 			f.write("BOTTOM_TO_TOP = %d\n" % self.vLayoutRadio.GetSelection())
 			f.write("HOSTNAME = \"%s\"\n" % self.HostNamePattern)
-			f.write("FIRSTHOST = %d\n" % self.HostNameStartIndex)
+			f.write("FIRSTHOST = %d\n" % self.HostNameStart)
 			self.writeOptions(f, "TILESORT", TilesortOptions, self.TilesortDialog)
 			self.writeOptions(f, "RENDER", RenderOptions, self.RenderDialog)
 			self.writeOptions(f, "SERVER", ServerOptions, self.ServerDialog)
@@ -893,7 +894,7 @@ class MainFrame(wxFrame):
 			if self.fileName == None:
 				fileName = wxFileSelector(message = "Save Configuration As",
 										  default_extension="conf",
-										  wildcard="*.conf",
+										  wildcard=WildcardPattern,
 										  flags = wxSAVE | wxOVERWRITE_PROMPT)
 				if fileName == "": return false # User cancelled.
 				self.fileName = fileName
