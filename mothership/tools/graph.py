@@ -9,8 +9,8 @@
 
 """ graph.py
 
-    Tool for making arbitrary Chromium configuration graphs.
-
+This module defines the GraphFrame class which is the top-level window
+for creating/editing Chromium graphs.
 """
 
 
@@ -20,6 +20,9 @@ from wxPython.wx import *
 import crtypes, crutils
 import templates, configio
 import spudialog, intdialog, hostdialog, tiledialog
+
+
+App = None
 
 
 #----------------------------------------------------------------------
@@ -87,15 +90,13 @@ NodeClipboard = []
 
 
 #----------------------------------------------------------------------------
-# Main window frame class
+# Main window frame class for editing Chromium graphs
 
-class MainFrame(wxFrame):
-	""" A frame showing the contents of a single document. """
+class GraphFrame(wxFrame):
+	"""This is a frame for editing a Chromium graph / mothership config."""
 
-	def __init__(self, parent, id, title, fileName=None):
-		"""parent, id, title are the usual wxFrame parameters.
-		fileName is the name and path of a config file to load, if any.
-		"""
+	def __init__(self, parent, id, title):
+		"""parent, id, title are the usual wxFrame parameters."""
 		wxFrame.__init__(self, parent, id, title,
 				 style = wxDEFAULT_FRAME_STYLE | wxWANTS_CHARS |
 					 wxNO_FULL_REPAINT_ON_RESIZE)
@@ -178,10 +179,12 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		menuBar.Append(self.nodeMenu, "Node")
 
+		spuClasses = crutils.FindSPUNames()
+
 		# SPU types menu
 		self.spuTypesMenu = wxMenu()
 		i = 0
-		for spu in SpuClasses:
+		for spu in spuClasses:
 			self.spuTypesMenu.Append(menu_SPU_TYPES + i, spu)
 			EVT_MENU(self, menu_SPU_TYPES + i, self.doSelectAllSPUsByType)
 			i += 1
@@ -277,7 +280,7 @@ class MainFrame(wxFrame):
 		toolSizer.Add(self.newServerChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New SPU button
-		spuStrings = ["New SPU"] + SpuClasses
+		spuStrings = ["New SPU"] + spuClasses
 		self.newSpuChoice = wxChoice(parent=self.topPanel, id=id_NewSpu,
 									 choices=spuStrings)
 		EVT_CHOICE(self.newSpuChoice, id_NewSpu, self.onNewSpu)
@@ -312,9 +315,9 @@ class MainFrame(wxFrame):
 						message="Specify host names for the selected nodes")
 
 
-		self.dirty     = false
-		self.fileName  = fileName
-		self.mothership = crtypes.Mothership()
+		self.dirty = false
+		self.fileName = None
+		self.mothership = crtypes.Mothership() # a new mothership object
 		self.undoStack = []
 		self.redoStack = []
 		self.LeftDown = 0
@@ -322,9 +325,6 @@ class MainFrame(wxFrame):
 		self.DragStartY = 0
 		self.SelectDeltaX = 0
 		self.SelectDeltaY = 0
-
-		if self.fileName != None:
-			self.loadConfig()
 
 		self.UpdateMenus()
 
@@ -479,6 +479,7 @@ class MainFrame(wxFrame):
 		self.newAppChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	# called when New Server Node button is pressed
 	def onNewServerNode(self, event):
@@ -511,6 +512,7 @@ class MainFrame(wxFrame):
 		self.newServerChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	def onNewSpu(self, event):
 		"""New SPU button callback"""
@@ -520,6 +522,7 @@ class MainFrame(wxFrame):
 			return # didn't really select an SPU class
 		self.SaveState()
 		i -= 1
+		spuClasses = crutils.FindSPUNames()
 		for node in self.mothership.SelectedNodes():
 			# we'll insert before the first selected SPU, or at the
 			# end if no SPUs are selected
@@ -534,18 +537,19 @@ class MainFrame(wxFrame):
 			# check if it's legal to put this SPU after the predecessor
 			if pred and pred.IsTerminal():
 				self.Notify("You can't put a %s SPU after a %s SPU." %
-							(SpuClasses[i], pred.Name()))
+							(spuClasses[i], pred.Name()))
 				break
 			# check if it's legal to put this SPU before another
-			if pos >= 0 and crutils.SPUIsTerminal(SpuClasses[i]):
+			if pos >= 0 and crutils.SPUIsTerminal(spuClasses[i]):
 				self.Notify("You can't insert a %s SPU before a %s SPU." %
-							(SpuClasses[i], node.GetSPU(pos).Name()))
+							(spuClasses[i], node.GetSPU(pos).Name()))
 				break
 			# OK, we're all set, add the SPU
-			s = crutils.NewSPU( SpuClasses[i] )
+			s = crutils.NewSPU( spuClasses[i] )
 			node.AddSPU(s, pos)
 		self.drawArea.Refresh()
 		self.newSpuChoice.SetSelection(0)
+		self.dirty = true
 
 	def onNewTemplate(self, event):
 		"""New Template button callback"""
@@ -668,21 +672,20 @@ class MainFrame(wxFrame):
 				break
 			if anySelected:
 				self.drawArea.Refresh()
+			self.dirty = true
 
 	# ----------------------------------------------------------------------
 	# File menu callbacks
 
 	def doNew(self, event):
 		"""File / New callback"""
-		global _docList
-		newFrame = MainFrame(None, -1, TitleString)
+		newFrame = GraphFrame(None, -1, TitleString)
 		newFrame.Show(TRUE)
-		_docList.append(newFrame)
+		App.DocList.append(newFrame)
 
 
 	def doOpen(self, event):
 		"""File / Open callback"""
-		global _docList
 
 		curDir = os.getcwd()
 		fileName = wxFileSelector("Open File",
@@ -697,7 +700,7 @@ class MainFrame(wxFrame):
 		if (self.fileName == None) and (len(self.mothership.Nodes()) == 0):
 			# Load contents into current (empty) document.
 			self.fileName = fileName
-			if self.loadConfig():
+			if self.loadConfig(fileName):
 				title = TitleString + ": " + os.path.basename(fileName)
 				self.SetTitle(title)
 			else:
@@ -705,22 +708,23 @@ class MainFrame(wxFrame):
 		else:
 			# Open a new frame for this document.
 			title = TitleString + ": " + os.path.basename(fileName)
-			newFrame = MainFrame(None, -1, title, fileName=fileName)
-			newFrame.Show(true)
-			_docList.append(newFrame)
+			newFrame = GraphFrame(None, -1, title)
+			if newFrame.loadConfig(fileName):
+				newFrame.Show(true)
+				App.DocList.append(newFrame)
+			else:
+				newFrame.Destroy()
 
 
 	def doClose(self, event):
 		"""File / Close callback"""
-		global _docList
-
 		if self.dirty:
 			if not self.askIfUserWantsToSave("closing"):
 				return
 
-		_docList.remove(self)
-		if len(_docList) == 0:
-			_app.ExitMainLoop()
+		App.DocList.remove(self)
+		if len(App.DocList) == 0:
+			App.ExitMainLoop()
 
 		self.Destroy()
 
@@ -767,23 +771,22 @@ class MainFrame(wxFrame):
 				style = wxOK | wxCANCEL | wxICON_QUESTION,
 				parent=self) == wxCANCEL:
 			return
-		self.loadConfig()
+		self.loadConfig(self.fileName)
 
 
 	def doExit(self, event):
 		""" Respond to the "Quit" menu command.
 		"""
-		global _docList, _app
-		for doc in _docList:
+		for doc in App.DocList:
 			if not doc.dirty:
 				continue
 			doc.Raise()
 			if not doc.askIfUserWantsToSave("quitting"):
 				return
-			_docList.remove(doc)
+			App.DocList.remove(doc)
 			doc.Destroy()
 
-		_app.ExitMainLoop()
+		App.ExitMainLoop()
 
 	# ----------------------------------------------------------------------
 	# Edit menu callbacks
@@ -1128,7 +1131,8 @@ class MainFrame(wxFrame):
 	def doSelectAllSPUsByType(self, event):
 		"""SPU / Select All by Type callback"""
 		i = event.GetId() - menu_SPU_TYPES
-		spuName = SpuClasses[i]
+		spuClasses = crutils.FindSPUNames()
+		spuName = spuClasses[i]
 		for node in self.mothership.Nodes():
 			for spu in node.SPUChain():
 				if spu.Name() == spuName:
@@ -1174,8 +1178,9 @@ class MainFrame(wxFrame):
 				return
 
 			name = spuList[0].Name()
-			if name in SPUInfo.keys():
-				(params, optionlist) = SPUInfo[name]
+			spuClasses = crutils.FindSPUNames()
+			if name in spuClasses:  ###SPUInfo.keys():
+				(params, optionlist) = crutils.GetSPUOptions(name) ##SPUInfo[name]
 				# create the dialog
 				dialog = spudialog.SPUDialog(parent=self, id=-1,
 											 title=name + " SPU Options",
@@ -1388,9 +1393,9 @@ class MainFrame(wxFrame):
 	#----------------------------------------------------------------------
 	# File I/O
 
-	def loadConfig(self):
+	def loadConfig(self, fileName):
 		"""Load a graph from the file named self.fileName"""
-		f = open(self.fileName, "r")
+		f = open(fileName, "r")
 		r = 0  # result
 		if f:
 			# read first line to check for template
@@ -1403,20 +1408,22 @@ class MainFrame(wxFrame):
 				if templates.ReadTemplate(template, self.mothership, f):
 					r = 1
 				else:
-					r = configio.ReadConfig(self.mothership, f, self.fileName)
+					r = configio.ReadConfig(self.mothership, f, fileName)
 			else:
-				r = configio.ReadConfig(self.mothership, f, self.fileName)
+				r = configio.ReadConfig(self.mothership, f, fileName)
 			#print "Done reading config file, retVal = %d" % r
 			f.close()
 			self.dirty = false
+			self.fileName = fileName
 		else:
-			self.Notify("Problem opening " + self.fileName)
+			self.Notify("Problem opening " + fileName)
 		self.drawArea.Refresh()
 		return r
 
 	def saveConfig(self):
 		"""Save the Chromium configuration to a file."""
-		print "Saving graph!"
+		assert self.fileName != None
+		# XXX may need to catch exceptions for open()
 		f = open(self.fileName, "w")
 		if f:
 			template = self.mothership.GetTemplateType()
@@ -1429,7 +1436,9 @@ class MainFrame(wxFrame):
 				configio.WriteConfig(self.mothership, f)
 			f.close()
 		else:
-			print "Error opening %s" % self.fileName
+			response = wxMessageBox("Couldn't open %s for writing."
+									% self.fileName,
+									"Error", wxOK, self)
 		self.dirty = false
 
 
@@ -1442,7 +1451,11 @@ class MainFrame(wxFrame):
 		if not self.dirty:
 			return true # Nothing to do.
 
-		response = wxMessageBox("Save changes before " + action + "?",
+		if self.fileName:
+			name = self.fileName
+		else:
+			name = "(untitled)"
+		response = wxMessageBox("Save changes to " + name + " before " + action + "?",
 					"Confirm", wxYES_NO | wxCANCEL, self)
 
 		if response == wxYES:
@@ -1463,114 +1476,5 @@ class MainFrame(wxFrame):
 			return false # User cancelled.
 
 
-#----------------------------------------------------------------------------
-
-class ConfigApp(wxApp):
-	""" The main application object.
-	"""
-	def OnInit(self):
-		""" Initialise the application.
-		"""
-		wxInitAllImageHandlers()
-
-		global _docList
-		_docList = []
-
-		if len(sys.argv) == 1:
-			# No file name was specified on the command line -> start with a
-			# blank document.
-			frame = MainFrame(None, -1, TitleString)
-			#frame.Centre()
-			frame.Show(TRUE)
-			_docList.append(frame)
-		else:
-			# Load the file(s) specified on the command line.
-			for arg in sys.argv[1:]:
-				fileName = os.path.join(os.getcwd(), arg)
-				if os.path.isfile(fileName):
-					title = TitleString + ": " + os.path.basename(fileName)
-					frame = MainFrame(None, -1, title, fileName=fileName)
-					frame.Show(TRUE)
-					_docList.append(frame)
-
-		return TRUE
-
-#----------------------------------------------------------------------------
-
-class ExceptionHandler:
-	""" A simple error-handling class to write exceptions to a text file.
-
-	    Under MS Windows, the standard DOS console window doesn't scroll and
-	    closes as soon as the application exits, making it hard to find and
-	    view Python exceptions.  This utility class allows you to handle Python
-	    exceptions in a more friendly manner.
-	"""
-
-	def __init__(self):
-		""" Standard constructor.
-		"""
-		self._buff = ""
-		if os.path.exists("errors.txt"):
-			os.remove("errors.txt") # Delete previous error log, if any.
-
-
-	def write(self, s):
-		""" Write the given error message to a text file.
-
-			Note that if the error message doesn't end in a carriage return, we
-			have to buffer up the inputs until a carriage return is received.
-		"""
-		if (s[-1] != "\n") and (s[-1] != "\r"):
-			self._buff = self._buff + s
-			return
-
-		try:
-			s = self._buff + s
-			self._buff = ""
-
-			if s[:9] == "Traceback":
-			# Tell the user than an exception occurred.
-				wxMessageBox("An internal error has occurred.\nPlease " + \
-					 "refer to the 'errors.txt' file for details.",
-					 "Error", wxOK | wxCENTRE | wxICON_EXCLAMATION)
-
-			f = open("errors.txt", "a")
-			f.write(s)
-			f.close()
-		except:
-			pass # Don't recursively crash on errors.
-
-#----------------------------------------------------------------------------
-
-def main():
-	""" Start up the configuration tool.
-	"""
-	global _app
-
-	# Redirect python exceptions to a log file.
-	# XXX if we crash upon startup, try commenting-out this next line:
-	sys.stderr = ExceptionHandler()
-
-	# Set the default site file
-	#crutils.SetDefaultSiteFile("tungsten.crsite")
-
-	# Scan for available SPU classes
-	global SpuClasses
-	SpuClasses = crutils.FindSPUNames()
-	print "Found SPU classes: %s" % str(SpuClasses)
-
-	# Get the params and options for all SPU classes
-	global SPUInfo
-	SPUInfo = {}
-	for spu in SpuClasses:
-		print "getting options for %s SPU" % spu
-		SPUInfo[spu] = crutils.GetSPUOptions(spu)
-
-	# Create and start the application.
-	_app = ConfigApp(0)
-	_app.MainLoop()
-
-
 if __name__ == "__main__":
-	main()
-
+	print "Run configtool.py instead, please."
