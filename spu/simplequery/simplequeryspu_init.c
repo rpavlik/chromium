@@ -38,6 +38,7 @@ SPUFunctions *simplequerySPUInit( int id, SPU *child, SPU *self,
 	crSPUCopyDispatchTable( &(simplequery_spu.super), &(self->superSPU->dispatch_table) );
 	simplequeryspuGatherConfiguration();
 
+	crStateInit();
 	simplequery_spu.ctx = crStateCreateContext( NULL );
 	crStateMakeCurrent( simplequery_spu.ctx );
 

@@ -29,6 +29,7 @@ SPUFunctions *nopSPUInit( int id, SPU *child, SPU *self,
 	(void) child;
 	(void) self;
 
+	crStateInit();
 	nop_spu.ctx = crStateCreateContext( NULL );
 	crStateMakeCurrent( nop_spu.ctx );
 
