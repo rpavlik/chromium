@@ -5,7 +5,9 @@
  */
 
 /* 1 = Use Chromium parallel API, 0 = use GLUT */
+#ifndef USE_CHROMIUM
 #define USE_CHROMIUM 1
+#endif
 
 #include <assert.h>
 #include <math.h>
@@ -85,7 +87,7 @@ static const char *DrawModeString[] = {
 };
 
 
-static GLint WinWidth = 500, WinHeight = 500;
+static GLint WinWidth = 400, WinHeight = 400;
 static DrawMode DrawingMode = DRAW_VERTEX_ARRAYS;
 
 static const GLfloat colors[7][4] = {
@@ -151,20 +153,19 @@ MakeSphere(GLfloat radius, GLuint slices, GLuint stacks)
 	GLuint iPhi, iTheta;
 	GLuint iVert, iIndex;
 
-	mesh = (TriangleMesh *) calloc(sizeof(*mesh), 0);
+	mesh = (TriangleMesh *) calloc(sizeof(*mesh), 1);
 
 	mesh->NumVerts = 2 + slices * (stacks - 1);
 	mesh->NumIndices = stacks * (slices + 1) * 2  /* vertices per stack */
                    + 2 * (stacks - 1);          /* stitching vertices */
 	mesh->NumTris = slices * stacks * 2;
 
-	mesh->Vertices = (GLfloat *) malloc(mesh->NumVerts * 3 * sizeof(GLfloat));
-	mesh->Normals = (GLbyte *) malloc(mesh->NumVerts * 3 * sizeof(GLbyte));
-	mesh->Indices = (GLuint *) malloc(mesh->NumIndices * sizeof(GLuint));
-
 	mesh->VertexBytes = mesh->NumVerts * 3 * sizeof(GLfloat);
 	mesh->NormalBytes = mesh->NumVerts * 3 * sizeof(GLbyte);
 
+	mesh->Vertices = (GLfloat *) malloc(mesh->VertexBytes);
+	mesh->Normals = (GLbyte *) malloc(mesh->NormalBytes);
+	mesh->Indices = (GLuint *) malloc(mesh->NumIndices * sizeof(GLuint));
 	if (mesh->NumIndices <= 65535)
 		mesh->IndexBytes = mesh->NumIndices * sizeof(GLushort);
 	else
@@ -391,6 +392,11 @@ MakeDemoMesh(const Options *options)
 	int slices = (int) (k * 1.5);
 	int stacks = slices / 2;
 
+	if (slices < 4)
+		slices = 4;
+	if (stacks < 2)
+		stacks = 2;
+
 	TriangleMesh *mesh = MakeSphere(options->radius, slices, stacks);
 
 	printf("%d tri  %d slices  %d stacks\n", options->numTris, slices, stacks);
@@ -590,6 +596,8 @@ ParseOptions(int argc, char *argv[], Options *options)
 
 	options->theta = 360.0 / (float) options->numSpheres;
 	options->radius = options->theta * 0.005;
+	if (options->radius > 0.3)
+		options->radius = 0.3;
 	options->zPos = 1.0 * (2.0 * options->rank * options->radius
 												 - (options->size * options->radius));
 }
@@ -660,7 +668,7 @@ ChromiumMain(const Options *options)
 		if (options->size > 1)
 			 glBarrierExecCR_ptr( MASTER_BARRIER );
 
-		DrawFrame(mesh, options, frame, DrawingMode);
+		drawnTris += DrawFrame(mesh, options, frame, DrawingMode);
 
 		if (options->size > 1)
 			 glBarrierExecCR_ptr( MASTER_BARRIER );
@@ -693,8 +701,10 @@ ChromiumMain(const Options *options)
 		frameCount++;
 		t = crTimerTime(timer);
 		if (t - t0 > 3.0) {
-			printf("%.2g fps  %g tris/sec = %d in %g\n",
-						 frameCount / (t - t0), drawnTris / (t - t0), drawnTris, t-t0);
+			printf("%.2g fps   %g tris/sec   %g pixels/sec\n",
+						 frameCount / (t - t0),
+						 drawnTris / (t - t0),
+						 WinWidth * WinHeight * frameCount / (t - t0));
 			t0 = t;
 			drawnTris = 0;
 			frameCount = 0;
