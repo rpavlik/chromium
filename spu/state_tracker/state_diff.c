@@ -120,111 +120,110 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 void crStateSwitchContext( CRContext *from, CRContext *to )
 {
 	CRContext *g = GetCurrentContext();
-	GLbitvalue bitID = from->bitid;
-	GLbitvalue update = to->update;
+	GLbitvalue bitID = to->bitid;
 	CRStateBits *sb = GetCurrentBits();
 
-	if (update & GLUPDATE_ATTRIB && sb->attrib.dirty & bitID)
+	if (sb->attrib.dirty & bitID)
 	{
 		crStateAttribSwitch (&(sb->attrib), bitID,
 							 &(from->attrib), &(to->attrib));
 	}
-	if (update & GLUPDATE_TRANS && sb->transform.dirty & bitID)
+	if (sb->transform.dirty & bitID)
 	{
 		crStateTransformSwitch (&(sb->transform), bitID,
 							 &(from->transform), &(to->transform));
 	}
-	if (update & GLUPDATE_PIXEL && sb->pixel.dirty & bitID)
+	if (sb->pixel.dirty & bitID)
 	{
 		crStatePixelSwitch	(&(sb->pixel), bitID,
 							 &(from->pixel), &(to->pixel));
 	}
-	if (update & GLUPDATE_VIEWPORT && sb->viewport.dirty & bitID)
+	if (sb->viewport.dirty & bitID)
 	{
 		crStateViewportSwitch	(&(sb->viewport), bitID,
 								 &(from->viewport), &(to->viewport));
 	}
-	if (update & GLUPDATE_FOG && sb->fog.dirty & bitID)
+	if (sb->fog.dirty & bitID)
 	{
 		crStateFogSwitch	(&(sb->fog), bitID,
 							 &(from->fog), &(to->fog));
 	}
-	if (update & GLUPDATE_TEXTURE && sb->texture.dirty & bitID)
+	if (sb->texture.dirty & bitID)
 	{
 		crStateTextureSwitch	(from, &(sb->texture), bitID,
 							 &(from->texture), &(to->texture));
 	}
-	if (update & GLUPDATE_LISTS && sb->lists.dirty & bitID)
+	if (sb->lists.dirty & bitID)
 	{
 		crStateListsSwitch	(&(sb->lists), bitID,
 							 &(from->lists), &(to->lists));
 	}
 #if 0
-	if (update & GLUPDATE_CLIENT && sb->client.dirty & bitID)
+	if (sb->client.dirty & bitID)
 	{
 		crStateClientSwitch	(&(sb->client), bitID,
 							 &(from->client), &(to->client));
 	}
 #endif
-	if (update & GLUPDATE_BUFFER && sb->buffer.dirty & bitID)
+	if (sb->buffer.dirty & bitID)
 	{
 		crStateBufferSwitch	(&(sb->buffer), bitID,
 							 &(from->buffer), &(to->buffer));
 	}
 #if 0
-	if (update & GLUPDATE_HINT && sb->hint.dirty & bitID)
+	if (sb->hint.dirty & bitID)
 	{
 		crStateHintSwitch	(&(sb->hint), bitID,
 							 &(from->hint), &(to->hint));
 	}
 #endif
-	if (update & GLUPDATE_LIGHTING && sb->lighting.dirty & bitID)
+	if (sb->lighting.dirty & bitID)
 	{
 		crStateLightingSwitch	(&(sb->lighting), bitID,
 								 &(from->lighting), &(to->lighting));
 	}
-	if (update & GLUPDATE_LINE && sb->line.dirty & bitID)
+	if (sb->line.dirty & bitID)
 	{
 		crStateLineSwitch	(&(sb->line), bitID,
 							 &(from->line), &(to->line));
 	}
-	if (update & GLUPDATE_POLYGON && sb->polygon.dirty & bitID)
+	if (sb->polygon.dirty & bitID)
 	{
 		crStatePolygonSwitch	(&(sb->polygon), bitID,
 							 &(from->polygon), &(to->polygon));
 	}
-	if (update & GLUPDATE_STENCIL && sb->stencil.dirty & bitID)
+	if (sb->stencil.dirty & bitID)
 	{
 		crStateStencilSwitch	(&(sb->stencil), bitID,
 							 &(from->stencil), &(to->stencil));
 	}
-	if (update & GLUPDATE_EVAL && sb->eval.dirty & bitID)
+	if (sb->eval.dirty & bitID)
 	{
 		crStateEvaluatorSwitch	(&(sb->eval), bitID,
 							 &(from->eval), &(to->eval));
 	}
 #ifdef CR_ARB_imaging
-	if (update & GLUPDATE_IMAGING && sb->imaging.dirty & bitID)
+	if (sb->imaging.dirty & bitID)
 	{
 		crStateImagingSwitch	(&(sb->imaging), bitID,
 							 &(from->imaging), &(to->imaging));
 	}
 #endif
 #if 0
-	if (update & GLUPDATE_SELECTION && sb->selection.dirty & bitID)
+	if (sb->selection.dirty & bitID)
 	{
 		crStateSelectionSwitch	(&(sb->selection), bitID,
 								 &(from->selection), &(to->selection));
 	}
 #endif
 #ifdef CR_NV_register_combiners
-	if (update & GLUPDATE_REGCOMBINER && sb->regcombiner.dirty & bitID && g->extensions.NV_register_combiners)
+	if (sb->regcombiner.dirty & bitID && g->extensions.NV_register_combiners)
 	{
 		crStateRegCombinerSwitch	(&(sb->regcombiner), bitID,
 									 &(from->regcombiner), &(to->regcombiner));
 	}
 #endif
-	if (update & GLUPDATE_CURRENT && sb->current.dirty & bitID)
+	if (sb->current.dirty & bitID)
 	{
 		crStateCurrentSwitch	(&(sb->current), bitID,
 							 &(from->current), &(to->current));
