@@ -20,6 +20,7 @@ import crutils, crtypes, configio
 class SortlastParameters:
 	"""C-style struct describing a sortlast configuration"""
 	# This is where we set all the default sortlast parameters.
+	# XXX this class will probably go away!  Not really needed.
 	def __init__(self):
 		self.ZerothArg = ''
 
@@ -65,9 +66,15 @@ renderSPU.Conf( 'force_direct', RENDER_force_direct )
 renderSPU.Conf( 'fullscreen', RENDER_fullscreen )
 renderSPU.Conf( 'title', RENDER_title )
 renderSPU.Conf( 'system_gl_path', RENDER_system_gl_path )
-
 serverNode.AddSPU( renderSPU )
+
+if GLOBAL_auto_start:
+	# XXX this probably doesn't work yet!
+	node.AutoStart( ["/usr/bin/rsh", host,
+							"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
+
 cr.AddNode( serverNode )
+
 
 # Make the client/app nodes
 readbackSPUs = []
@@ -75,15 +82,22 @@ appNodes = []
 
 for i in range(NUM_APP_NODES):
 	node = CRApplicationNode( APP_HOSTS[i] )
+
 	# argument substitutions
-	if i == 0 and ZEROTH_ARG != "":
-		app_string = string.replace( program, '%zeroth', ZEROTH_ARG)
+	if i == 0 and GLOBAL_zeroth_arg != "":
+		app_string = string.replace( program, '%0', GLOBAL_zeroth_arg)
 	else:
 		app_string = string.replace( program, '%0', '' )
 	app_string = string.replace( app_string, '%I', str(i) )
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 	node.SetApplication( app_string )
 	node.StartDir( GLOBAL_default_dir )
+
+	if GLOBAL_auto_start:
+		# XXX this probably doesn't work yet!
+		node.AutoStart( ["/bin/sh", "-c",
+				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
+
 
 	readbackSPU = SPU( 'readback' )
 	readbackSPU.Conf( 'window_geometry',
@@ -111,7 +125,6 @@ for i in range(NUM_APP_NODES):
 	readbackSPUs.append( readbackSPU )
 	cr.AddNode( node )
 
-	# XXX do auto_run code!
 
 # Run mothership
 cr.Go()
@@ -174,7 +187,6 @@ class SortlastDialog(wxDialog):
 		id_RenderOptions   = 4004
 		id_Hostnames       = 4005
 		id_Command         = 4006
-		id_Zeroth          = 4007
 		id_OK              = 4011
 		id_CANCEL          = 4012
 
@@ -246,36 +258,10 @@ class SortlastDialog(wxDialog):
 				   self.__OnRenderOptions)
 		outerSizer.Add(spuSizer, flag=wxALL|wxGROW, border=4)
 
-		# Command-line stuff
-		box = wxStaticBox(parent=self, id=-1, label="Application Command Line",
-						  style=wxDOUBLE_BORDER)
-		appSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		label = wxStaticText(parent=self, id=-1,
-				label="Enter program name and arguments.\n" +
-				"%N will be replaced by the number of application nodes.\n" +
-				"%I (eye) will be replaced by the application node index.\n" +
-				"%0 (zero) will be replaced by the Zeroth argument on the " +
-				"first app node only.\n" +
-				"Example command: 'psubmit -size %N -rank %I -clear %0'\n" +
-				"Zeroth arg: '-swap'")
-		appSizer.Add(label, flag=wxALL, border=10)
-		self.cmdText = wxTextCtrl(parent=self, id=id_Command,
-							 size=wxSize(420,25), value="")
-		appSizer.Add(self.cmdText)
-		rowSizer = wxBoxSizer(wxHORIZONTAL)
-		label = wxStaticText(parent=self, id=-1, label="Zeroth arg:")
-		rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL|wxALL, border=2)
-		self.zerothText = wxTextCtrl(parent=self, id=id_Zeroth,
-									 size=wxSize(200,25), value="")
-		rowSizer.Add(self.zerothText, flag=wxALIGN_CENTRE_VERTICAL|wxALL,
-					 border=2)
-		appSizer.Add(rowSizer, flag=wxALL, border=2)
-		outerSizer.Add(appSizer, option=0, flag=wxALL|wxGROW, border=4)
-
 		# horizontal separator (box with height=0)
-		separator = wxStaticBox(parent=self, id=-1,
-								label="", size=wxSize(10,0))
-		outerSizer.Add(separator, flag=wxGROW|wxALL, border=4)
+#		separator = wxStaticBox(parent=self, id=-1,
+#								label="", size=wxSize(10,0))
+#		outerSizer.Add(separator, flag=wxGROW|wxALL, border=4)
 
 		# Sizer for the OK, Cancel buttons
 		okCancelSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
@@ -320,9 +306,6 @@ class SortlastDialog(wxDialog):
 		geom[2] = self.widthControl.GetValue()
 		geom[3] = self.heightControl.GetValue()
 		renderSPU.SetOption("window_geometry", geom)
-		cmdLine = self.cmdText.GetValue()
-		self.__Mothership.SetGlobalOption("default_app", [ cmdLine ] )
-		self.__Mothership.Sortlast.ZerothArg = self.zerothText.GetValue()
 
 	def __UpdateWidgetsFromVars(self):
 		"""Set widget values to the tilesort parameters."""
@@ -336,9 +319,6 @@ class SortlastDialog(wxDialog):
 		geom = renderSPU.GetOption("window_geometry")
 		self.widthControl.SetValue(geom[2])
 		self.heightControl.SetValue(geom[3])
-		cmdLine = self.__Mothership.GetGlobalOption("default_app")[0]
-		self.cmdText.SetValue( cmdLine )
-		self.zerothText.SetValue( self.__Mothership.Sortlast.ZerothArg )
 
 	# ----------------------------------------------------------------------
 	# Event handling
@@ -599,9 +579,6 @@ def Read_Sortlast(mothership, file):
 			v = re.search("\(.+\)$", l)
 			pattern = eval(l[v.start() : v.end()])
 			clientNode.SetHostNamePattern(pattern)
-		elif re.match("^ZEROTH_ARG = ", l):
-			v = re.search('\".+\"$', l)
-			mothership.Sortlast.ZerothArg = l[v.start()+1 : v.end()-1]
 		elif re.match("^READBACK_", l):
 			# A readback SPU option
 			(name, values) = configio.ParseOption(l, "READBACK")
@@ -645,7 +622,6 @@ def Write_Sortlast(mothership, file):
 	file.write('NUM_APP_NODES = %d\n' % clientNode.GetCount())
 	file.write('APP_HOSTS = %s\n' % str(clientNode.GetHosts()))
 	file.write('APP_PATTERN = %s\n' % str(clientNode.GetHostNamePattern()))
-	file.write('ZEROTH_ARG = "%s"\n' % sortlast.ZerothArg)
 
 	# write render SPU options
 	renderSPU = FindRenderSPU(mothership)
