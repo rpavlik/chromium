@@ -610,14 +610,15 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLin
 GLint TILESORTSPU_APIENTRY
 tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 {
-   GET_THREAD(thread);
+	GET_THREAD(thread);
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 	static GLint freeWinID = 1 /*400*/;
 	WindowInfo *winInfo;
 	int i;
 
-	if (tilesort_spu.forceQuadBuffering)
-		visBits |=  CR_STEREO_BIT;
+	if (tilesort_spu.forceQuadBuffering && tilesort_spu.stereoMode == CRYSTAL)
+		visBits |= CR_STEREO_BIT;
+
 	/* release geometry buffer */
 	crPackReleaseBuffer(thread->packer );
 
