@@ -38,6 +38,7 @@ SLOP = $(PRECOMP)
 LIB_COPIES = crserver \
 	hiddenlinespu \
 	injectorspu \
+	vncviewer \
 	archsplitspu
 
 include $(TOP)/cr.mk
