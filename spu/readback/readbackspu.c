@@ -37,6 +37,11 @@ static void AllocBuffers( WindowInfo *window )
 	else
 		window->colorBuffer = (GLubyte *) crAlloc( window->width * window->height
 																						 * 4 * sizeof(GLubyte) );
+
+	/* XXX we might try GL_ABGR on NVIDIA - it might be a faster path */
+	window->rgbaFormat = GL_RGBA;
+	window->rgbFormat = GL_RGB;
+
 	if (readback_spu.extract_depth)
 	{
 		GLint depthBytes;
@@ -324,13 +329,13 @@ static void read_and_send_tiles( WindowInfo *window )
 		if (readback_spu.extract_alpha)
 		{
 			readback_spu.super.ReadPixels( readx, ready, w, h,
-					GL_RGBA, GL_UNSIGNED_BYTE,
+					window->rgbaFormat, GL_UNSIGNED_BYTE,
 					window->colorBuffer + shift );
 		}
 		else 
 		{
 			readback_spu.super.ReadPixels( readx, ready, w, h, 
-					GL_RGB, GL_UNSIGNED_BYTE,
+					window->rgbFormat, GL_UNSIGNED_BYTE,
 					window->colorBuffer + shift );
 		}
 
@@ -392,7 +397,6 @@ static void read_and_send_tiles( WindowInfo *window )
 			readback_spu.child.DrawPixels( w, h,
 																		 GL_DEPTH_COMPONENT, window->depthType,
 																		 (GLubyte *) window->depthBuffer + shift );
-
 			/* Now draw the RGBA image, only where the stencil is one, reset stencil
 			 * to zero as we go (to avoid calling glClear(STENCIL_BUFFER_BIT)).
 			 */
@@ -401,6 +405,7 @@ static void read_and_send_tiles( WindowInfo *window )
 			readback_spu.child.StencilFunc( GL_EQUAL, 1, ~0 );
 			readback_spu.child.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 			if (readback_spu.visualize_depth) {
+				/* draw depth as grayscale image */
 				readback_spu.child.PixelTransferf(GL_RED_BIAS, 1.0);
 				readback_spu.child.PixelTransferf(GL_GREEN_BIAS, 1.0);
 				readback_spu.child.PixelTransferf(GL_BLUE_BIAS, 1.0);
@@ -414,7 +419,7 @@ static void read_and_send_tiles( WindowInfo *window )
 			else {
 				/* the usual case */
 				readback_spu.child.DrawPixels( w, h,
-						GL_RGB, GL_UNSIGNED_BYTE,
+						window->rgbFormat, GL_UNSIGNED_BYTE,
 						window->colorBuffer );
 			}
 			readback_spu.child.Disable(GL_STENCIL_TEST);
@@ -424,7 +429,7 @@ static void read_and_send_tiles( WindowInfo *window )
 			readback_spu.child.BlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
 			readback_spu.child.Enable( GL_BLEND );
 			readback_spu.child.DrawPixels( w, h,
-																		 GL_RGBA, GL_UNSIGNED_BYTE,
+																		 window->rgbaFormat, GL_UNSIGNED_BYTE,
 																		 window->colorBuffer + shift );
 		}
 		else
@@ -433,7 +438,7 @@ static void read_and_send_tiles( WindowInfo *window )
 			{
 				/* just send color image */
 				readback_spu.child.DrawPixels( w, h,
-																			 GL_RGB, GL_UNSIGNED_BYTE,
+																			 window->rgbFormat, GL_UNSIGNED_BYTE,
 																			 window->colorBuffer + shift );
 			}
 		}

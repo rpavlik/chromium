@@ -39,6 +39,8 @@ typedef struct {
 	GLvoid *depthBuffer;
 	GLint cppColor, cppDepth;
 	GLenum depthType;  /* GL_UNSIGNED_SHORT or GL_FLOAT */
+	GLenum rgbaFormat; /* GL_RGBA or GL_BGRA */
+	GLenum rgbFormat;  /* GL_RGB or GL_BGR */
 } WindowInfo;
 
 typedef struct {
