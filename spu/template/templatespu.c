@@ -5,5 +5,5 @@
 TemplateSPU template_spu;
 
 SPUNamedFunctionTable template_table[] = {
-	{ "", NULL }
+	{ NULL, NULL }
 };

@@ -95,7 +95,7 @@ implement</h2>
 <p>Open the file invertspu.c.&nbsp; You will see the following code at the
 bottom of the file:</p>
 <table width="100%"><tr><td class="GrayCodeListing">SPUNamedFunctionTable invert_table[] = {<br>
-&nbsp; { "", NULL }<br>
+&nbsp; { NULL, NULL }<br>
 };</td></tr></table>
 <p>This table is a NULL-terminated list of&nbsp; <code>{ name, function }&nbsp;</code>
 pairs that will be parsed by the SPU loader to build a SPU dispatch table.&nbsp;
@@ -110,7 +110,7 @@ implementation in this list.&nbsp; Change the above code to:</p>
 invertColor3f },<br>
 &nbsp; { &quot;ClearColor&quot;, (SPUGenericFunction) invertClearColor },<br>
 &nbsp; { &quot;Materialfv&quot;, (SPUGenericFunction) invertMaterialfv },<br>
-&nbsp; { "", NULL }<br>
+&nbsp; { NULL, NULL }<br>
 };&nbsp;</td></tr></table>
 <p>Notice two things about this table:&nbsp; First, the function names on the left
 do not begin with &quot;gl&quot;.&nbsp; Second, the functions on the right
