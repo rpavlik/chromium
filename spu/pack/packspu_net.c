@@ -94,7 +94,7 @@ void packspuFlush( void )
 	crPackResetPointers();
 }
 
-void packspuHuge( CROpcode opcode, char *buf )
+void packspuHuge( CROpcode opcode, void *buf )
 {
 	unsigned int          len;
 	unsigned char        *src;

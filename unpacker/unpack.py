@@ -19,6 +19,7 @@ print """#include "cr_unpack.h"
 #include "cr_glwrapper.h"
 #include "cr_error.h"
 #include "cr_spu.h"
+#include <stdio.h>
 
 unsigned char *cr_unpackData = NULL;
 SPUDispatchTable cr_unpackDispatch;

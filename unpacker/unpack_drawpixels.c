@@ -1,5 +1,6 @@
 #include "cr_unpack.h"
 #include "cr_glwrapper.h"
+#include <stdio.h>
 
 void crUnpackDrawPixels( void )
 {

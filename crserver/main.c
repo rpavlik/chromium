@@ -26,6 +26,9 @@ void crServerRecv( CRConnection *conn, void *buf, unsigned int len )
 			crUnpack( data_ptr,data_ptr-1,ops->numOpcodes,&(cr_server.dispatch) );
 			crNetFree( conn, msg );
 			break;
+		default:
+			crError( "Bad message type in crServerRecv: %d\n", msg->type );
+			break;
 	}
 }
 

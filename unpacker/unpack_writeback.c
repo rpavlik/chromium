@@ -1,4 +1,5 @@
 #include "cr_unpack.h"
+#include <stdio.h>
 
 CRNetworkPointer *return_ptr = NULL, *writeback_ptr = NULL;
 

@@ -13,6 +13,7 @@
 
 static char my_hostname[256];
 static int my_pid = 0;
+static int canada = 0;
 
 static void __getHostInfo( void )
 {
@@ -29,6 +30,18 @@ static void __getHostInfo( void )
 	my_pid = crGetPID();
 }
 
+static void __crCheckCanada(void)
+{
+	static int first = 1;
+	if (first)
+	{
+		char *env = getenv( "CR_CANADA" );
+		if (env)
+			canada = 1;
+		first = 0;
+	}
+}
+
 void crError( char *format, ... )
 {
 	va_list args;
@@ -38,6 +51,7 @@ void crError( char *format, ... )
 	DWORD err;
 #endif
 
+	__crCheckCanada();
 	if (!my_hostname[0])
 		__getHostInfo();
 	#ifdef WINDOWS
@@ -76,12 +90,14 @@ void crError( char *format, ... )
 #endif
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
+	if (canada)
+		crStrcat( txt, ", eh?" );
+	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
 #ifdef WINDOWS
 	if (getenv( "CR_GUI_ERROR" ) != NULL)
 		MessageBox( NULL, txt, "Chromium Error", MB_OK );
 	else
 #endif
-	fprintf( stderr, "%s\n", txt );
 	va_end( args );
 	exit(1);
 }
@@ -92,12 +108,13 @@ void crWarning( char *format, ... )
 	static char txt[8092];
 	int offset;
 
+	__crCheckCanada();
 	if (!my_hostname[0])
 		__getHostInfo();
 	offset = sprintf( txt, "CR Warning(%s:%d): ", my_hostname, my_pid );
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
-	fprintf( stderr, "%s\n", txt );
+	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
 	va_end( args );
 }
 
@@ -110,6 +127,7 @@ void crDebug( char *format, ... )
 	DWORD err;
 #endif
 
+	__crCheckCanada();
 	if (!my_hostname[0])
 		__getHostInfo();
 #ifdef WINDOWS
@@ -148,6 +166,6 @@ void crDebug( char *format, ... )
 #endif
 	va_start( args, format );
 	vsprintf( txt + offset, format, args );
-	fprintf( stderr, "%s\n", txt );
+	fprintf( stderr, "%s%s\n", txt, canada ? ", eh?" : "" );
 	va_end( args );
 }

@@ -2,6 +2,7 @@
 #include "cr_glwrapper.h"
 #include "cr_error.h"
 #include "cr_protocol.h"
+#include <stdio.h>
 
 void crUnpackTexImage2D( void )
 {
