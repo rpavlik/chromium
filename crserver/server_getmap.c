@@ -43,11 +43,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum qu
 	GLdouble order[2];
 	GLdouble domain[4];
 	GLdouble *retptr = NULL;
+	GLint tempOrder[2];
 	int dimension = 0;
 	unsigned int size = sizeof(GLdouble);
 	int evalcomp = __evaluator_components(target);
-
-	coeffs = (GLdouble *)crAlloc(sizeof(GLdouble) * evalcomp);
 
 	(void) v;
 
@@ -90,13 +89,16 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum qu
 		case GL_DOMAIN:
 			cr_server.head_spu->dispatch_table.GetMapdv( target, query, domain );
 			retptr = &(domain[0]);
-			size *= dimension*2;
+			size *= dimension * 2;
 			break;
 		case GL_COEFF:
+			cr_server.head_spu->dispatch_table.GetMapiv( target, GL_ORDER, tempOrder );
+			size *= evalcomp * tempOrder[0];
+			if (dimension == 2)
+				size *= tempOrder[1];
+			coeffs = (GLdouble *) crAlloc( size );
 			cr_server.head_spu->dispatch_table.GetMapdv( target, query, coeffs );
 			retptr = coeffs;
-			size *= evalcomp;
-			size *= dimension;
 			break;
 		default:
 			crError( "Bad query in crServerDispatchGetMapdv: %d", query );
@@ -116,13 +118,13 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum qu
 	GLfloat order[2];
 	GLfloat domain[4];
 	GLfloat *retptr = NULL;
+	GLint tempOrder[2];
 	int dimension = 0;
 	unsigned int size = sizeof(GLfloat);
 	int evalcomp = __evaluator_components(target);
 
-	coeffs = (GLfloat *)crAlloc(sizeof(GLdouble) * evalcomp);
-
 	(void) v;
+
 	switch( target )
 	{
 		case GL_MAP1_COLOR_4:
@@ -162,13 +164,16 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum qu
 		case GL_DOMAIN:
 			cr_server.head_spu->dispatch_table.GetMapfv( target, query, domain );
 			retptr = &(domain[0]);
-			size *= dimension*2;
+			size *= dimension * 2;
 			break;
 		case GL_COEFF:
+			cr_server.head_spu->dispatch_table.GetMapiv( target, GL_ORDER, tempOrder );
+			size *= evalcomp * tempOrder[0];
+			if (dimension == 2)
+				size *= tempOrder[1];
+			coeffs = (GLfloat *) crAlloc( size );
 			cr_server.head_spu->dispatch_table.GetMapfv( target, query, coeffs );
 			retptr = coeffs;
-			size *= evalcomp;
-			size *= dimension;
 			break;
 		default:
 			crError( "Bad query in crServerDispatchGetMapfv: %d", query );
@@ -188,13 +193,13 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum qu
 	GLint order[2];
 	GLint domain[4];
 	GLint *retptr = NULL;
+	GLint tempOrder[2];
 	int dimension = 0;
 	unsigned int size = sizeof(GLint);
 	int evalcomp = __evaluator_components(target);
 
-	coeffs = (GLint *)crAlloc(sizeof(GLdouble) * evalcomp);
-
 	(void) v;
+
 	switch( target )
 	{
 		case GL_MAP1_COLOR_4:
@@ -234,13 +239,16 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum qu
 		case GL_DOMAIN:
 			cr_server.head_spu->dispatch_table.GetMapiv( target, query, domain );
 			retptr = &(domain[0]);
-			size *= dimension*2;
+			size *= dimension * 2;
 			break;
 		case GL_COEFF:
+			cr_server.head_spu->dispatch_table.GetMapiv( target, GL_ORDER, tempOrder );
+			size *= evalcomp * tempOrder[0];
+			if (dimension == 2)
+				size *= tempOrder[1];
+			coeffs = (GLint *) crAlloc( size );
 			cr_server.head_spu->dispatch_table.GetMapiv( target, query, coeffs );
 			retptr = coeffs;
-			size *= evalcomp;
-			size *= dimension;
 			break;
 		default:
 			crError( "Bad query in crServerDispatchGetMapiv: %d", query );
