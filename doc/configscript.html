@@ -245,7 +245,7 @@ was run from.</p>
 	  44:</td>
     <td width="93%" class="CodeListing">
 	  cr = CR()<br>
-      cr.MTU( 16*1024 );<br>
+      cr.MTU( 32*1024 );<br>
       cr.AddNode( client_node )<br>
       cr.AddNode( server_node )<br>
       cr.Go()</td>
@@ -269,6 +269,15 @@ This version adds two more SPU's, one at each node.&nbsp; These SPU's, called
 log files for debugging or analysis.&nbsp; The reader should look at 
 both <code>crdemo_full.conf</code> and <code>crdemo.conf</code>
 and make sure that the differences are clear.</p>
+
+
+<h2 class="PageHeading">Graphical Configuration</h2>
+
+<p>
+An alternative to writing configuration scripts by hand is to generated
+them with the <a href="configtool.html">graphical configuration tool</a>
+which is documented separately.
+</p>
 
 
 <h2 class="PageHeading">Advanced Features</h2>

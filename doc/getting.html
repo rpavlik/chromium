@@ -26,23 +26,34 @@ to chromium-announce to receive information about updated releases.</p>
 
 <p>To get the source code, you do <i>not</i> have to be a registered SourceForge
 user.&nbsp; You can get the source in one of two ways:</p>
-<p>First, you can download the actual alpha release snapshot, which is available
+<p>First, you can download the latest release, which is available
 from the <a href="http://www.sourceforge.net/projects/chromium">main
-project page</a>, under &quot;Latest File Releases&quot;.&nbsp; This will be a
+project page</a>, under <b>Latest File Releases</b>.
+This will be a
 gzip'ed tar file of the entire source tree on the release date, along with a
 copy of this documentation.&nbsp; Simply extract the archive and you've got
-everything.</p>
+everything.  For example:</p>
+<pre>
+      tar zxvf cr-1.0.tar.gz
+</pre>
+or
+<pre>
+      gzcat cr-1.0.tar.gz | tar xvf -
+</pre>
+
 <p>Alternately, you can check out the top-of-tree source code from the CVS
-repository, if you want to live on the bleeding edge.&nbsp; Between the time of
-this release and the BETA release scheduled for October, many bugs will surely
-be fixed, and many new features and modules will be added.&nbsp; Announcements
-will be sent to chromium-announce when particularly interesting features are
-available or particularly bad bugs are fixed.&nbsp; To check out the source
-code, just follow the instructions on the <a
+repository, if you want to live on the bleeding edge.&nbsp;
+To check out the source code, just follow the instructions on the <a
 href="http://sourceforge.net/cvs/?group_id=16529">CVS repository
 page</a>.&nbsp; If you're unfamiliar with CVS, useful documentation is
 available in <i><a href="http://cvsbook.red-bean.com/cvsbook.html">Open Source
-Development with CVS</a></i>.</p>
+Development with CVS</a></i>.
+If you want to track the CVS sources you should subscribe to the developers
+and CVS check-in <a href="http://sourceforge.net/mail/?group_id=16529">
+mailing lists</a>.  That's where new development is discussed.
+</p>
+
+
 
 <h2 class="PageSubHeading">Compiling the source</h2>
 
@@ -66,6 +77,8 @@ before building.&nbsp; There are instructions in that file.</p>
     You will need to add this directory to your <code> LD_LIBRARY_PATH</code> environment
     variable.&nbsp; Chromium builds a <i>lot</i> of shared libraries, so you
     can't skip this step.</li>
+  <br>
+  <br>
   <li><b>Windows</b>:&nbsp; You will also need to install the <a href="http://sources.redhat.com/cygwin/">cygwin
     tools</a> to build Chromium.&nbsp; If you're building from the Windows shell
     (as opposed to the cygwin bash implementation), you will need to set the
@@ -74,8 +87,12 @@ before building.&nbsp; There are instructions in that file.</p>
     which is required.&nbsp; Shared libraries on Windows get put in <code>cr/bin/WIN_NT</code>,
     which (since it's on your path, right?) will be searched automatically, so
     there's no <code> LD_LIBRARY_PATH</code> silliness.</li>
+  <br>
+  <br>
   <li><b>IRIX</b>:&nbsp; GNU make is required.  Build Chromium by typing
     <code>gmake</code> instead of <code>make</code>.
+  <br>
+  <br>
   <li><b>AIX</b>:&nbsp;
     Shared libraries are somewhat different on this platform.  For Cr clients
     and servers to run, a dlopen-able system GL is needed.  At present, do this
@@ -87,6 +104,8 @@ before building.&nbsp; There are instructions in that file.</p>
     ar archives) and .so's.  So to run clients without the app_faker, prepend
     LIBPATH with a dir that has a link libGL.a ->  lib/AIX/libcrfaker.a . As
     with other platforms, you also need to set the CR_APPLICATION_ID_NUMBER  .
+  <br>
+  <br>
   <li><b>SunOS</b>:&nbsp;
     OpenGL apps must be compiled with SUN_OGL_NO_VERTEX_MACROS defined so
     that macros aren't used for OpenGL API functions.
@@ -98,17 +117,23 @@ before building.&nbsp; There are instructions in that file.</p>
     There seems to be a bug in the version of Xsun that comes with Solaris 9.
     To go around it set SOLARIS_9_X_BUG. Even if you're compiling say the
     Linux version but are using a sun for the display you should set this.
+  <br>
+  <br>
   <li><b>Darwin</b>:&nbsp;
     Support for this operating system is not complete.
 
 </ul>
 
-<p>If you want to enable thread safety, compile with
-<code>make threadsafe</code>.
-This introduces a slight performance penalty but allows applications to
-create multiple Chromium rendering threads.
-See the <code>progs/threadtest/threadtest.c</code> program for an example.
-</p>
+<p>Build options:</p>
+<ul>
+<li><code>make debug</code> will build Chromium with debugging information
+    (this is the default).
+<li><code>make release</code> will build Chromium with optimizations and
+    no debugging information.
+<li><code>make threadsafe</code> will build Chromium with thread safety.
+    See the <code>progs/threadtest/threadtest.c</code> program for an example.
+    There is a <em>slight</em> performance penalty for thread safety.
+</ul>
 
 
 </body>

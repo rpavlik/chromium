@@ -14,39 +14,43 @@
 
 <body bgcolor="#FFFFFF">
 
-<h1 class="PageHeading">What Comes With Chromium ALPHA?</h1>
-<p>Chromium can (thankfully) do more than just the <a href="helloworld.html">Hello,
-World</a> demo, even in this alpha release.&nbsp; In particular, it comes with a
-couple of other SPU's that let it behave like <a href="http://graphics.stanford.edu/software/wiregl" target="new_window">WireGL</a>
-with a few new features to boot.&nbsp; Note that since this is an alpha release,
-statements like &quot;the full OpenGL API&quot; or &quot;the full OpenGL
-graphics state&quot; should be taken with a grain of salt; some things haven't
-been fully implemented, and some things probably don't work right.</p>
-<h2 class="PageSubHeading">What you've seen so far</h2>
-<p>If you've been reading the documentation in order, you've already seen a few
-crucial Chromium components, and those are (obviously) provided with the alpha
-release:</p>
+<h1 class="PageHeading">What Comes With Chromium?</h1>
+<p>
+This section describes the major components of Chromium and how they
+fit together.
+</p>
+
 <ul>
   <li><p class="ProvidedThing">The configuration mothership</p> 
-    <p class="ProvidedDesc">The mothership handles all configuration requests for all
-    components of the system.</p></li>
+    <p class="ProvidedDesc">The mothership handles all configuration requests
+    for all components of the system.  The mothership is written in python
+    and can be found in the <code>cr/mothership/server/mothership.py</code>
+    file.</p></li>
+
   <li><p class="ProvidedThing">Several example configuration scripts</p>
-  <p class="ProvidedDesc"> The provided example scripts are the ones that I use
-    from day-to-day.&nbsp; Many of them are quite similar and just point at
-    different demo directories, although some are set up specifically to drive
-    Stanford's display wall</p></li>
+    <p class="ProvidedDesc"> The <code>cr/mothership/configs/</code> directory
+    contains a number of sample configuration scripts.  You'll probably want
+    to use one of these scripts as the basis for making your own.</p></li>
+
   <li><p class="ProvidedThing">A &quot;render&quot; SPU</p>
-  <p class="ProvidedDesc"> This SPU hands all OpenGL calls to the system's OpenGL
-    implementation.</p></li>
-  <li><p class="ProvidedThing">A &quot;pack&quot; SPU that generates a network stream</p>
-  <p class="ProvidedDesc"> This SPU generates a streaming encoding of its OpenGL
-    calls.&nbsp; Although the calls are encoded verbatim (i.e., with no
+  <p class="ProvidedDesc"> This SPU hands all OpenGL calls to the system's
+    OpenGL implementation.  Nearly every Chromium configuration will use the
+    render SPU (or readback SPU).</p></li>
+
+  <li><p class="ProvidedThing">A &quot;pack&quot; SPU</p>
+  <p class="ProvidedDesc"> This SPU packs a stream of OpenGL commands into a
+    buffer which is sent over the network to a <em>network server node</em>.
+    &nbsp; Although the calls are encoded verbatim (i.e., with no
     analysis), some state tracking is still necessary in order to properly
     unpack pixel data for texture maps.</p></li>
-  <li><p class="ProvidedThing">An OpenGL replacement library</p>
+
+  <li><p class="ProvidedThing">An OpenGL replacement / faker library</p>
   <p class="ProvidedDesc"> This library &quot;fakes&quot; unmodified
-    applications into rendering to a SPU.&nbsp; Although SPU's implement the
-    OpenGL interface, they actually only export a very small number of
+    applications into using Chromium.&nbsp;  The main thing that the faker
+    library does is to load the client-side SPUs and dispatch OpenGL calls
+    to the first SPU in the chain.
+    Although SPU's implement the
+    OpenGL interface, they typically only export a very small number of
     symbols.&nbsp; The SPU loader will create a collection of function pointers
     for the SPU's functions.&nbsp; The replacement library is necessary to
     actually resemble the system's OpenGL interface sufficiently to broker
@@ -54,24 +58,27 @@ release:</p>
     easily load a SPU from disk itself and use it without the OpenGL library,
     which would be one possible way to render to a local screen and over a
     network simultaneously.</p></li>
+
   <li><p class="ProvidedThing">An application launcher</p>
   <p class="ProvidedDesc"> The launcher, called &quot;<code>crappfaker</code>&quot;,
     launches applications in a special way that causes them to load the OpenGL
     replacement library rather than the system's library.</p></li>
+
   <li><p class="ProvidedThing">A network server</p>
   <p class="ProvidedDesc"> This server, called &quot;<code>crserver</code>&quot;, is
-    responsible for dispatching incoming blocks of encoded OpenGL commands to a
+    responsible for dispatching incoming blocks of encoded OpenGL commands
+    (such as from the Pack SPU) to a
     chain of SPU's.&nbsp; In fact, as we will see, the network server is really
     a stream &quot;serializer&quot;.&nbsp; It is the job of the server to accept
     streams from multiple clients, and context switch between them as
     allowed by the <a href="parallelapplication.html">parallel API extensions</a>.&nbsp;
-    In addition, a server can manage multiple tiles, and is responsible for
+    In addition, a server can manage multiple display tiles, and is responsible for
     re-decoding a block of work multiple times, with appropriate modifications
     to the viewing matrices for multiple tiles.</p></li>
 </ul>
 <h2 class="PageSubHeading">Other SPU's</h2>
 <p>In addition to the SPU's shown so far, several more are provided.&nbsp; Some
-of the SPU's are intended to be used directly in a graph, and others are more
+of the SPU's are intended to be used directly in a configuration graph, and others are more
 useful as starting points for new SPU's, or SPU's to <a href="newspu.html">inherit
 from</a>.</p>
 <ul>
@@ -165,6 +172,12 @@ from</a>.</p>
     don't bug him about this version; all the bugs are due to
     <a href="dcthomp@sandia.gov">David Thompson</a>.
     </p></li>
+  <li><p class="ProvidedThing">The &quot;motion blur&quot; SPU</p>
+  <p class="ProvidedDesc"> The motion blur SPU uses the OpenGL accumulation
+    buffer to simulate motion blur in a dynamic (animated) scene.</p></li>
+  <li><p class="ProvidedThing">The &quot;wet&quot; SPU</p>
+  <p class="ProvidedDesc"> The wet SPU warps and distorts the rendered
+    image to simulate a watery surface.</p></li>
 
 </ul>
 <h2 class="PageSubHeading">Useful libraries</h2>
@@ -189,7 +202,7 @@ component.</p>
     that the mothership is possibly on a remote machine through an opaque &quot;<code>CRConnection</code>&quot;
     data structure.&nbsp; New SPU's or other system components can access any
     piece of configuration through this library.</p></li>
-  <li><p class="ProvidedThing">A library for packing WireGL-format network buffers</p>
+  <li><p class="ProvidedThing">A packer library for packing OpenGL commands into network buffers</p>
   <p class="ProvidedDesc"> This library provides a &quot;packing&quot; function for
     each OpenGL function.&nbsp; When such a function is called, the function
     arguments and an opcode are packed into a buffer for eventual
@@ -219,7 +232,7 @@ component.</p>
     library is used heavily by both the &quot;tilesort&quot; SPU and the server,
     and the &quot;pack&quot; SPU uses it sparingly to keep track of the pixel
     unpack state for textures.</p></li>
-  <li><p class="ProvidedThing">A library for unpacking WireGL-format network buffers</p>
+  <li><p class="ProvidedThing">A library for unpacking OpenGL command buffers</p>
   <p class="ProvidedDesc"> The dual of the packing library mentioned above, this
     library decodes network-encoded OpenGL streams and dispatches them to an
     arbitrary SPU interface.&nbsp; Currently this is only used by the server,
@@ -253,6 +266,7 @@ component.</p>
           without involving the actual physical transport medium.</li>
     	<li>A TCP/IP implementation of the networking abstraction</li>
     	<li>A Myrinet GM implementation of the networking abstraction</li>
+        <li>Thread and process management
     </ul>
   </li>
 </ul>
@@ -297,7 +311,7 @@ Niederauer</a> (all found in the <code>cr/progs/extensions/*</code>
 directories).&nbsp; Run them.&nbsp; Show off anisotropic texture filtering on
 your display wall, it's fun.</p>
 <h2 class="PageSubHeading">Miscellany</h2>
-<p>The Chromium ALPHA distribution contains some other useful stuff that isn't a
+<p>The Chromium distribution contains some other useful stuff that isn't a
 SPU, library, or program:</p>
 <ul>
   <li><p class="ProvidedThing">A pretty slick build system</p>
