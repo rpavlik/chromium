@@ -20,8 +20,15 @@
 
 #define WINDOW_NAME render_spu.window_title
 
+static BOOL
+bSetupPixelFormat( HDC hdc, GLbitfield visAttribs );
+
 GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 {
+	/* In the windows world, we need a window before a context.
+	 * Use the device_context as a marker to do just that */
+	visual->device_context = 0;
+
 	return TRUE;
 }
 
@@ -235,7 +242,7 @@ bSetupPixelFormatNormal( HDC hdc, GLbitfield visAttribs )
 		}
 		if ( !SetPixelFormat( hdc, pixelformat, ppfd ) ) 
 		{
-			crError( "SetPixelFormat failed" );
+			crError( "SetPixelFormat failed 0x%x", GetLastError() );
 		}
 		
 		DescribePixelFormat( hdc, pixelformat, sizeof(ppfd), ppfd );
@@ -482,13 +489,22 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 
 GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 {
-	crDebug( " Using the DC: 0x%x", visual->device_context );
-	context->hRC = render_spu.ws.wglCreateContext( visual->device_context );
-	if (!context->hRC)
-	{
-		crError( "Couldn't create the context for the window 0x%x !", GetLastError() );
-		return GL_FALSE;
+	/* Found a visual, so we're o.k. to create the context now */
+	if (visual->device_context) {
+
+		crDebug( " Using the DC: 0x%x", visual->device_context );
+
+		context->hRC = render_spu.ws.wglCreateContext( visual->device_context );
+		if (!context->hRC)
+		{
+			crError( "Couldn't create the context for the window 0x%x !", GetLastError() );
+			return GL_FALSE;
+		}
+	} else {
+		crDebug( " Delaying DC creation " );
+		context->hRC = NULL;	/* create it later in makecurrent */
 	}
+
 
 	return GL_TRUE;
 }
@@ -504,17 +520,42 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 	CRASSERT(render_spu.ws.wglMakeCurrent);
 
 	if (context && window) {
-		CRASSERT(context->hRC);
 		if (render_spu.render_to_app_window && nativeWindow)
 		{
 			/* The render_to_app_window option is set and we've got a nativeWindow
 			 * handle, save the handle for later calls to swapbuffers().
 			 */
 			window->nativeWindow = (HDC) nativeWindow;
+			if (context->hRC == 0) {
+				context->hRC = render_spu.ws.wglCreateContext( window->nativeWindow );
+				if (!context->hRC)
+				{
+					crError( "(MakeCurrent) Couldn't create the context for the window 0x%x !", GetLastError() );
+				}
+			}
 			render_spu.ws.wglMakeCurrent( window->nativeWindow, context->hRC );
 		}
 		else
 		{
+			if (!window->visual->device_context) {
+				window->visual->device_context = GetDC( window->visual->hWnd );
+
+				crDebug( " MakeCurrent made the DC: 0x%x", window->visual->device_context );
+
+				if ( !bSetupPixelFormat( window->visual->device_context, window->visual->visAttribs ) )
+				{
+					crError( "(MakeCurrent) Couldn't set up the device context!  Yikes!" );
+				}
+			}
+
+			if (!context->hRC) {
+				context->hRC = render_spu.ws.wglCreateContext( window->visual->device_context );
+				if (!context->hRC)
+				{
+					crError( "(MakeCurrent) Couldn't create the context for the window 0x%x !", GetLastError() );
+				}
+			}
+
 			render_spu.ws.wglMakeCurrent( window->visual->device_context, context->hRC );
 		}
 
@@ -595,10 +636,11 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 	 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
 	 * structure.
 	 */
-	if (w->nativeWindow)
+	if (render_spu.render_to_app_window && w->nativeWindow) {
 		return_value = render_spu.ws.wglSwapBuffers( w->nativeWindow );
-	else
+	} else {
 		return_value = render_spu.ws.wglSwapBuffers( w->visual->device_context );
+	}
 	if (!return_value)
 	{
 		/* GOD DAMN IT.  The latest versions of the NVIDIA drivers

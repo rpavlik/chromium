@@ -75,19 +75,26 @@ void renderspuMakeVisString( GLbitfield visAttribs, char *s )
  */
 VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 {
-#ifndef WINDOWS
 	int i;
 
 	if (!displayName)
 		displayName = "";
 
 	/* first, try to find a match */
+#ifndef WINDOWS
 	for (i = 0; i < render_spu.numVisuals; i++) {
 		if (crStrcmp(displayName, render_spu.visuals[i].displayName) == 0
 			&& visAttribs == render_spu.visuals[i].visAttribs) {
 			return &(render_spu.visuals[i]);
 		}
 	}
+#else
+	for (i = 0; i < render_spu.numVisuals; i++) {
+		if (visAttribs == render_spu.visuals[i].visAttribs) {
+			return &(render_spu.visuals[i]);
+		}
+	}
+#endif
 
 	if (render_spu.numVisuals >= MAX_VISUALS)
 	{
@@ -107,10 +114,6 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 		crWarning( "Couldn't get a visual, renderspu_SystemInitVisual failed" );
 		return NULL;
 	}
-#else
-	render_spu.visuals[0].visAttribs = visAttribs;
-	return &(render_spu.visuals[0]);
-#endif
 }
 
 /*
@@ -184,6 +187,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		if (!context->everCurrent) {
 			/* print OpenGL info */
 			const char *extString = (const char *) render_spu.ws.glGetString( GL_EXTENSIONS );
+			crDebug( "Render SPU: GL_EXTENSIONS:   %s", render_spu.ws.glGetString( GL_EXTENSIONS ) );
 			crDebug( "Render SPU: GL_VENDOR:   %s", render_spu.ws.glGetString( GL_VENDOR ) );
 			crDebug( "Render SPU: GL_RENDERER: %s", render_spu.ws.glGetString( GL_RENDERER ) );
 			crDebug( "Render SPU: GL_VERSION: %s", render_spu.ws.glGetString( GL_VERSION ) );
