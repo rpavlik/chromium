@@ -25,6 +25,10 @@ typedef struct {
 	CRbitvalue grid1D[CR_MAX_BITARRAY];
 	CRbitvalue grid2D[CR_MAX_BITARRAY];
 	CRbitvalue dirty[CR_MAX_BITARRAY];
+#ifdef CR_NV_vertex_program
+	CRbitvalue enableAttrib1D[CR_MAX_VERTEX_ATTRIBS];
+	CRbitvalue enableAttrib2D[CR_MAX_VERTEX_ATTRIBS];
+#endif
 } CREvaluatorBits;
 
 typedef struct {
@@ -46,10 +50,18 @@ typedef struct {
 typedef struct {
 	GLboolean  enable1D[GLEVAL_TOT];
 	GLboolean  enable2D[GLEVAL_TOT];
+#ifdef CR_NV_vertex_program
+	GLboolean  enableAttrib1D[CR_MAX_VERTEX_ATTRIBS];
+	GLboolean  enableAttrib2D[CR_MAX_VERTEX_ATTRIBS];
+#endif
 	GLboolean  autoNormal;
 
 	CREvaluator1D   eval1D[GLEVAL_TOT];
 	CREvaluator2D   eval2D[GLEVAL_TOT];
+#ifdef CR_NV_vertex_program
+	CREvaluator1D   attribEval1D[CR_MAX_VERTEX_ATTRIBS];
+	CREvaluator2D   attribEval2D[CR_MAX_VERTEX_ATTRIBS];
+#endif
 
 	GLint      un1D;        /* GL_MAP1_GRID_SEGMENTS */
 	GLfloat    u11D, u21D;  /* GL_MAP1_GRID_DOMAIN */

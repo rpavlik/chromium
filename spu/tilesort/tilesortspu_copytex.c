@@ -146,18 +146,27 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexImage2D( GLenum target, GLint level
 
 void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
 {
-	GLubyte *buffer = crAlloc(width * sizeof(GLubyte) * 4);
+	GLenum format, type;
+	GLint intFormat;
+	void *buffer;
+
+	crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
+																 &intFormat );
+
+	format = baseFormat( intFormat );
+	if (format == GL_DEPTH_COMPONENT)
+	{
+		type = GL_FLOAT;
+		buffer = crAlloc(width * sizeof(GLfloat));
+	}
+	else
+	{
+		type = GL_UNSIGNED_BYTE;
+		buffer = crAlloc(width * 4 * sizeof(GLubyte));
+	}
+
 	if (buffer)
 	{
-		const GLenum type = GL_UNSIGNED_BYTE;
-		GLenum format;
-		GLint intFormat;
-
-		crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
-																	 &intFormat );
-
-		format = baseFormat( intFormat );
-
 		tilesortspu_ReadPixels( x, y, width, 1, format, type, buffer );
 
 		crStateTexSubImage1D( target, level, xoffset, width,
@@ -174,18 +183,27 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage1D( GLenum target, GLint le
 
 void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
 {
-	GLubyte *buffer = crAlloc(width * height * sizeof(GLubyte) * 4);
+	GLenum format, type;
+	GLint intFormat;
+	void *buffer;
+
+	crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
+																 &intFormat );
+
+	format = baseFormat( intFormat );
+	if (format == GL_DEPTH_COMPONENT)
+	{
+		type = GL_FLOAT;
+		buffer = crAlloc(width * height * sizeof(GLfloat));
+	}
+	else
+	{
+		type = GL_UNSIGNED_BYTE;
+		buffer = crAlloc(width * height * 4 * sizeof(GLubyte));
+	}
+
 	if (buffer)
 	{
-		const GLenum type = GL_UNSIGNED_BYTE;
-		GLenum format;
-		GLint intFormat;
-
-		crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
-																	 &intFormat );
-
-		format = baseFormat( intFormat );
-
 		tilesortspu_ReadPixels( x, y, width, height, format, type, buffer );
 
 		crStateTexSubImage2D( target, level, xoffset, yoffset, width, height,
@@ -202,28 +220,37 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage2D( GLenum target, GLint le
 #if defined(CR_OPENGL_VERSION_1_2)
 void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
 {
-        GLubyte *buffer = crAlloc(width * height * sizeof(GLubyte) * 4);
-        if (buffer)
-        {
-                const GLenum type = GL_UNSIGNED_BYTE;
-                GLenum format;
-                GLint intFormat;
+	GLenum format, type;
+	GLint intFormat;
+	void *buffer;
 
-                crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
+	crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
+																 &intFormat );
 
-                        &intFormat );
+	format = baseFormat( intFormat );
+	if (format == GL_DEPTH_COMPONENT)
+	{
+		type = GL_FLOAT;
+		buffer = crAlloc(width * height * sizeof(GLfloat));
+	}
+	else
+	{
+		type = GL_UNSIGNED_BYTE;
+		buffer = crAlloc(width * height * 4 * sizeof(GLubyte));
+	}
 
-                format = baseFormat( intFormat );
+	if (buffer)
+	{
+		tilesortspu_ReadPixels( x, y, width, height, format, type, buffer );
 
-                tilesortspu_ReadPixels( x, y, width, height, format, type, buffer );
+		crStateTexSubImage3D( target, level, xoffset, yoffset, zoffset,
+													width, height, 1 /* depth */, format, type, buffer );
 
-                crStateTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, 1 /* depth */, format, type, buffer );
-
-                crFree(buffer);
-        }
-        else
-        {
-                crStateError( __LINE__, __FILE__, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
-        }
+		crFree(buffer);
+	}
+	else
+	{
+		crStateError( __LINE__, __FILE__, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
+	}
 }
 #endif /* CR_OPENGL_VERSION_1_2 */

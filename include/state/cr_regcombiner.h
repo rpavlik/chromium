@@ -48,10 +48,10 @@ typedef struct {
 	CRbitvalue regCombinerVars[CR_MAX_BITARRAY]; /* numGeneralCombiners, colorSumClamp */
 	CRbitvalue regCombinerColor0[CR_MAX_BITARRAY];
 	CRbitvalue regCombinerColor1[CR_MAX_BITARRAY];
-	CRbitvalue regCombinerStageColor0[CR_MAX_BITARRAY];
-	CRbitvalue regCombinerStageColor1[CR_MAX_BITARRAY];
-	CRbitvalue regCombinerInput[CR_MAX_BITARRAY]; /* rgb/alpha[].a/b/c/d, .aMapping, .aPortion */
-	CRbitvalue regCombinerOutput[CR_MAX_BITARRAY]; /* rgb/alpha[].abOutput, .cdOutput, .sumOutput, .scale, .bias, .abDotProduct, .cdDotProduct, .muxSum */
+	CRbitvalue regCombinerStageColor0[CR_MAX_GENERAL_COMBINERS][CR_MAX_BITARRAY];
+	CRbitvalue regCombinerStageColor1[CR_MAX_GENERAL_COMBINERS][CR_MAX_BITARRAY];
+	CRbitvalue regCombinerInput[CR_MAX_GENERAL_COMBINERS][CR_MAX_BITARRAY]; /* rgb/alpha[].a/b/c/d, .aMapping, .aPortion */
+	CRbitvalue regCombinerOutput[CR_MAX_GENERAL_COMBINERS][CR_MAX_BITARRAY]; /* rgb/alpha[].abOutput, .cdOutput, .sumOutput, .scale, .bias, .abDotProduct, .cdDotProduct, .muxSum */
 	CRbitvalue regCombinerFinalInput[CR_MAX_BITARRAY]; /* a/b/c/d/e/f/g, aMapping, aPortion */
 } CRRegCombinerBits;
 

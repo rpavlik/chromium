@@ -39,7 +39,7 @@ void crStateFogInit (CRContext *ctx)
 	f->fogCoordinateSource = GL_FRAGMENT_DEPTH_EXT;
 	RESET(fb->fogCoordinateSource, ctx->bitid);
 #endif
-	RESET(fb->dirty, ctx->bitid);
+	CLEARDIRTY(fb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateFogf(GLenum pname, GLfloat param) 

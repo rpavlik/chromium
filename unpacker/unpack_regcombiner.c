@@ -12,7 +12,7 @@ void crUnpackExtendCombinerParameterfvNV( void  )
 	GLfloat *params = DATA_POINTER( sizeof( int ) + 8, GLfloat );
 
 	cr_unpackDispatch.CombinerParameterfvNV( pname, params );
-	INCR_VAR_PTR();
+        /* Don't call INCR_VAR_PTR(); - it's done in crUnpackExtend() */
 }
 
 void crUnpackExtendCombinerParameterivNV( void  )
@@ -21,7 +21,7 @@ void crUnpackExtendCombinerParameterivNV( void  )
 	GLint *params = DATA_POINTER( sizeof( int ) + 8, GLint );
 
 	cr_unpackDispatch.CombinerParameterivNV( pname, params );
-	INCR_VAR_PTR();
+        /* Don't call INCR_VAR_PTR(); - it's done in crUnpackExtend() */
 }
 
 void crUnpackExtendCombinerStageParameterfvNV( void  )
@@ -31,5 +31,5 @@ void crUnpackExtendCombinerStageParameterfvNV( void  )
 	GLfloat *params = DATA_POINTER( sizeof( int ) + 12, GLfloat );
 
 	cr_unpackDispatch.CombinerStageParameterfvNV( stage, pname, params );
-	INCR_VAR_PTR();
+        /* Don't call INCR_VAR_PTR(); - it's done in crUnpackExtend() */
 }

@@ -82,6 +82,19 @@ for func_name in keys:
 		name = string.lower( m.group(1)[:1] ) + m.group(1)[1:]
 		type = m.group(2) + "1"
 		
+	# Vertex attribute commands w/ some special cases
+	m = re.search( r"^(VertexAttrib)([1234])(s|i|f|d)ARB$", func_name )
+	if m :
+		current = 1
+		name = string.lower( m.group(1)[:1] ) + m.group(1)[1:]
+		type = m.group(3) + m.group(2)
+		array = "[index]"
+	if func_name == "VertexAttrib4NubARB":
+		current = 1
+		name = "vertexAttrib"
+		type = "ub4"
+		array = "[index]"
+
 	if current:
 		(return_type, names, types) = gl_mapping[func_name]
 		print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s%s' % ( func_name, stub_common.ArgumentString( names, types ) )

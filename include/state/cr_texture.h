@@ -44,7 +44,7 @@ typedef struct {
 #endif
 	const struct CRTextureFormat *texFormat;
 
-	CRbitvalue dirty[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue dirty[CR_MAX_BITARRAY];
 } CRTextureLevel;
 
 typedef struct __CRTextureObj {
@@ -88,9 +88,9 @@ typedef struct __CRTextureObj {
 #ifdef CR_SGIS_generate_mipmap
 	GLboolean              generateMipmap;
 #endif
-	CRbitvalue	           dirty[CR_MAX_BITARRAY];
+	CRbitvalue             dirty[CR_MAX_BITARRAY];
+	CRbitvalue             imageBit[CR_MAX_BITARRAY];
 	CRbitvalue             paramsBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	CRbitvalue             imageBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 } CRTextureObj;
 
 typedef struct {
@@ -99,9 +99,9 @@ typedef struct {
 	CRbitvalue current[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 	CRbitvalue objGen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 	CRbitvalue eyeGen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
+	CRbitvalue genMode[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 	/* XXX someday create more bits for texture env state */
 	CRbitvalue envBit[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	CRbitvalue gen[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
 } CRTextureBits;
 
 typedef struct {
@@ -112,12 +112,18 @@ typedef struct {
 #ifdef CR_ARB_texture_cube_map
 	CRTextureObj *currentTextureCubeMap;
 #endif
+#ifdef CR_NV_texture_rectangle
+	CRTextureObj *currentTextureRect;
+#endif
 
 	GLboolean	enabled1D;
 	GLboolean	enabled2D;
 	GLboolean	enabled3D;
 #ifdef CR_ARB_texture_cube_map
 	GLboolean	enabledCubeMap;
+#endif
+#ifdef CR_NV_texture_rectangle
+	GLboolean	enabledRect;
 #endif
 #ifdef CR_EXT_texture_lod_bias
 	GLfloat     lodBias;
@@ -154,9 +160,13 @@ typedef struct {
 #ifdef CR_ARB_texture_cube_map
 	CRTextureObj SavedCubeMap;
 #endif
+#ifdef CR_NV_texture_rectangle
+	CRTextureObj SavedRect;
+#endif
 } CRTextureUnit;
 
 typedef struct {
+	/* FIXME: these should be moved into a shared-context structure */
 	CRHashTable       *idHash;  /* to map IDs to CRTextureObj objects */
 
 	/* Default texture objects (name = 0) */
@@ -166,6 +176,9 @@ typedef struct {
 #ifdef CR_ARB_texture_cube_map
 	CRTextureObj baseCubeMap;
 #endif
+#ifdef CR_NV_texture_rectangle
+	CRTextureObj baseRect;
+#endif
 	
 	/* Proxy texture objects */
 	CRTextureObj proxy1D;
@@ -174,12 +187,16 @@ typedef struct {
 #ifdef CR_ARB_texture_cube_map
 	CRTextureObj proxyCubeMap;
 #endif
+#ifdef CR_NV_texture_rectangle
+	CRTextureObj proxyRect;
+#endif
 
 	GLuint		curTextureUnit; /* GL_ACTIVE_TEXTURE */
 
 	GLint		maxLevel;
 	GLint		max3DLevel;
 	GLint		maxCubeMapLevel;
+	GLint	  maxRectLevel;
 	
 	GLboolean	broadcastTextures;
 

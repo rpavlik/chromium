@@ -10,41 +10,41 @@ current_fns = {
 		'types': ['b','ub','s','us','i','ui','f','d'],
 		'sizes': [3,4],
 		'default': [0,0,0,1],
-		'members': ['r', 'g', 'b', 'a']
+		'members': ['[0]', '[1]', '[2]', '[3]']
 	},
 	'SecondaryColor': {
 		'types': ['b','ub','s','us','i','ui','f','d'],
 		'sizes': [3],
 		'default': [0,0,0],
-		'members': ['r', 'g', 'b']
+		'members': ['[0]', '[1]', '[2]']
 	},
 	'Normal': {
 		'types': ['b','s','i','f','d'],
 		'sizes': [3],
 		'default': [0,0,0],
-		'members': ['x', 'y', 'z']
+		'members': ['[0]', '[1]', '[2]']
 	},
 	'TexCoord': {
 		'types': ['s','i','f','d'],
 		'sizes': [1,2,3,4],
 		'default': [0,0,0,1],
-		'members': ['s', 't', 'r', 'q'],
+		'members': ['[0]', '[1]', '[2]', '[3]'],
 		'array': 'CR_MAX_TEXTURE_UNITS'
 	},
 	'EdgeFlag': {
 		'types': ['l'],
 		'sizes': [1],
 		'default': [1],
-		'members': []
+		'members': ['[0]']
 	},
 	'Index': {
 		'types': ['ub','s','i','f','d'],
 		'sizes': [1],
 		'default': [0],
-		'members': []
+		'members': ['[0]']
 	},
 	'VertexAttrib': {
-		'types': ['s','f','d','ub'],
+		'types': ['s','f','d','b','i','ub','ui','us','Nub','Nus','Nui','Nb','Ns','Ni'],
 		'sizes': [1,2,3,4],
 		'default': [0,0,0,1],
 		'members': ['x', 'y', 'z', 'w'],
@@ -103,5 +103,30 @@ gltypes = {
 	'd': {
 		'type': 'GLdouble',
 		'size': 8
+	},
+
+	'Nb': {
+		'type': 'GLbyte',
+		'size': 1
+	},
+	'Nub': {
+		'type': 'GLubyte',
+		'size': 1
+	},
+	'Ns': {
+		'type': 'GLshort',
+		'size': 2
+	},
+	'Nus': {
+		'type': 'GLushort',
+		'size': 2
+	},
+	'Ni': {
+		'type': 'GLint',
+		'size': 4
+	},
+	'Nui': {
+		'type': 'GLuint',
+		'size': 4
 	}
 }

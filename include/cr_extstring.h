@@ -21,6 +21,9 @@ static const char *crExtensions =
 #ifdef CR_ARB_depth_texture
 	"GL_ARB_depth_texture "
 #endif
+#ifdef CR_ARB_fragment_program
+	"GL_ARB_fragment_program "
+#endif
 #ifdef CR_ARB_imaging
 	"GL_ARB_imaging "
 #endif
@@ -66,6 +69,9 @@ static const char *crExtensions =
 #ifdef CR_ARB_transpose_matrix
 	"GL_ARB_transpose_matrix "
 #endif
+#ifdef CR_ARB_vertex_program
+	"GL_ARB_vertex_program "
+#endif
 #ifdef CR_ARB_window_pos
 	"GL_ARB_window_pos "
 #endif
@@ -102,6 +108,9 @@ static const char *crExtensions =
 #ifdef CR_EXT_separate_specular_color
 	"GL_EXT_separate_specular_color "
 #endif
+#ifdef CR_EXT_shadow_funcs
+	"GL_EXT_shadow_funcs "
+#endif
 #ifdef CR_EXT_stencil_wrap
 	"GL_EXT_stencil_wrap "
 #endif
@@ -129,6 +138,9 @@ static const char *crExtensions =
 #ifdef CR_NV_fog_distance
 	"GL_NV_fog_distance "
 #endif
+#ifdef CR_NV_fragment_program
+	"GL_NV_fragment_program "
+#endif
 #ifdef CR_NV_register_combiners
 	"GL_NV_register_combiners "
 #endif
@@ -137,6 +149,18 @@ static const char *crExtensions =
 #endif
 #ifdef CR_NV_texgen_reflection
 	"GL_NV_texgen_reflection "
+#endif
+#ifdef CR_NV_texture_rectangle
+	"GL_NV_texture_rectangle GL_EXT_texture_rectangle "
+#endif
+#ifdef CR_NV_vertex_program
+	"GL_NV_vertex_program "
+#endif
+#ifdef CR_NV_vertex_program1_1
+	"GL_NV_vertex_program1_1 "
+#endif
+#ifdef CR_NV_vertex_program2
+	"GL_NV_vertex_program2 "
 #endif
 #ifdef CR_SGIS_generate_mipmap
 	"GL_SGIS_generate_mipmap "
@@ -159,9 +183,8 @@ static const char *crAppOnlyExtensions =
   "GL_NV_fence " \
   "GL_NV_texture_env_combine4 " \
   "GL_NV_texture_shader " \
-  "GL_NV_vertex_array_range " \
-  "GL_NV_vertex_program " \
-  "GL_NV_vertex_program1_1";
+  "GL_NV_vertex_array_range "
+;
 
 
 /*

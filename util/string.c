@@ -391,3 +391,8 @@ char *crStrIntersect( const char *s1, const char *s2 )
 	return result;
 }
 
+
+int crIsDigit(char c)
+{
+  return c >= '0' && c <= '9';
+}

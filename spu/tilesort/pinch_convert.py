@@ -50,7 +50,7 @@ for k in current_fns.keys():
 
 	i = 0
 	for member in current_fns[k]['members']:
-		print '\t(dst).%s = vdata[%d];\\' % (member,i)
+		print '\t(dst)%s = vdata[%d];\\' % (member,i)
 		i += 1
 
 	print '}\n'

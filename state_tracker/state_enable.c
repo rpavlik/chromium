@@ -181,6 +181,19 @@ static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 			}
 			break;
 #endif
+#ifdef CR_NV_texture_rectangle
+		case GL_TEXTURE_RECTANGLE_NV:
+			if (g->extensions.NV_texture_rectangle) {
+				g->texture.unit[g->texture.curTextureUnit].enabledRect = val;
+				DIRTY(sb->texture.enable[g->texture.curTextureUnit], neg_bitid);
+				DIRTY(sb->texture.dirty, neg_bitid);
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
+				return;
+			}
+			break;
+#endif /* CR_NV_texture_rectangle */
 #ifdef CR_OPENGL_VERSION_1_2
 		case GL_RESCALE_NORMAL :
 			g->transform.rescaleNormals = val;
@@ -275,11 +288,13 @@ static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 		case GL_MAP2_TEXTURE_COORD_4 :
 		case GL_MAP2_VERTEX_3 :
 		case GL_MAP2_VERTEX_4 :
+#if 0
 			if (g->texture.curTextureUnit != 0)
 			{
 				crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "Map stuff was enabled while the current texture unit was not GL_TEXTURE0_ARB!" );
 				return;
 			}
+#endif
 			g->eval.enable2D[cap - GL_MAP2_COLOR_4] = val;
 			DIRTY(sb->eval.enable2D[cap - GL_MAP2_COLOR_4], neg_bitid);
 			DIRTY(sb->eval.dirty, neg_bitid);
@@ -312,6 +327,129 @@ static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 			DIRTY(sb->multisample.dirty, neg_bitid);
 			break;
 #endif
+#ifdef CR_NV_vertex_program
+		case GL_VERTEX_PROGRAM_NV:
+			if (g->extensions.NV_vertex_program) {
+				g->program.vpEnabled = val;
+				DIRTY(sb->program.vpEnable, neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			else if (g->extensions.ARB_vertex_program) {
+				g->program.vpEnabled = val;
+				DIRTY(sb->program.vpEnable, neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
+				return;
+			}
+			break;
+		case GL_VERTEX_PROGRAM_POINT_SIZE_NV:
+			if (g->extensions.NV_vertex_program) {
+				g->program.vpPointSize = val;
+				DIRTY(sb->program.vpEnable, neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			else if (g->extensions.ARB_vertex_program) {
+				g->program.vpPointSize = val;
+				DIRTY(sb->program.vpEnable, neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
+				return;
+			}
+			break;
+		case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
+			if (g->extensions.NV_vertex_program) {
+				g->program.vpTwoSide = val;
+				DIRTY(sb->program.vpEnable, neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			else if (g->extensions.ARB_vertex_program) {
+				g->program.vpTwoSide = val;
+				DIRTY(sb->program.vpEnable, neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
+				return;
+			}
+			break;
+
+		case GL_MAP1_VERTEX_ATTRIB0_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB1_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB2_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB3_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB4_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB5_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB6_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB7_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB8_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB9_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB10_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB11_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB12_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB13_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB14_4_NV:
+		case GL_MAP1_VERTEX_ATTRIB15_4_NV:
+			{
+				const GLint i = cap - GL_MAP1_VERTEX_ATTRIB0_4_NV;
+				g->eval.enableAttrib1D[i] = val;
+				DIRTY(sb->program.map1AttribArrayEnable[i], neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			break;
+		case GL_MAP2_VERTEX_ATTRIB0_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB1_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB2_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB3_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB4_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB5_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB6_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB7_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB8_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB9_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB10_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB11_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB12_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB13_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB14_4_NV:
+		case GL_MAP2_VERTEX_ATTRIB15_4_NV:
+			{
+				const GLint i = cap - GL_MAP2_VERTEX_ATTRIB0_4_NV;
+				g->eval.enableAttrib2D[i] = val;
+				DIRTY(sb->program.map2AttribArrayEnable[i], neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			break;
+#endif
+#ifdef CR_NV_fragment_program
+		case GL_FRAGMENT_PROGRAM_NV:
+			if (g->extensions.NV_fragment_program) {
+				g->program.fpEnabled = val;
+				DIRTY(sb->program.fpEnable, neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
+				return;
+			}
+			break;
+#endif
+#ifdef CR_ARB_fragment_program
+		case GL_FRAGMENT_PROGRAM_ARB:
+			if (g->extensions.ARB_fragment_program) {
+				g->program.fpEnabledARB = val;
+				DIRTY(sb->program.fpEnable, neg_bitid);
+				DIRTY(sb->program.dirty, neg_bitid);
+			}
+			else {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable(0x%x)", cap);
+				return;
+			}
+			break;
+#endif
 #ifdef CR_IBM_rasterpos_clip
 		case GL_RASTER_POSITION_UNCLIPPED_IBM:
 			g->transform.rasterPositionUnclipped = val;
@@ -319,6 +457,7 @@ static void __enableSet (CRContext *g, CRStateBits *sb, CRbitvalue *neg_bitid,
 			DIRTY(sb->transform.dirty, neg_bitid);
 			break;
 #endif
+
 
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glEnable/glDisable called with bogus cap: 0x%x", cap);

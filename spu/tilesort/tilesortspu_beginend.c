@@ -32,7 +32,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Begin( GLenum mode )
 		crPackBegin( mode );
 	}
 	crStateBegin( mode );
-	if (! t->transformValid)
+	if (! t->modelViewProjectionValid)
 	{
 		/* Make sure that the state tracker has the very very 
 		 * latest composite modelview + projection matrix 
@@ -50,38 +50,40 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 	{
 		unsigned int i;
 
+		/* XXX vertex attribs */
+
 		for (i = 0 ; i < limits->maxTextureUnits; i++)
 		{
 			if (i == 0)
 			{
 				if (tilesort_spu.swap)
 				{
-					crPackTexCoord4fvSWAP ( (GLfloat *) &(thread->pinchState.vtx->texCoord[i].s));
+					crPackTexCoord4fvSWAP ( (GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_TEX0 + i][0]));
 				}
 				else
 				{
-					crPackTexCoord4fv ( (GLfloat *) &(thread->pinchState.vtx->texCoord[i].s));
+					crPackTexCoord4fv ( (GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_TEX0 + i][0]));
 				}
 			}
 			else
 			{
 				if (tilesort_spu.swap)
 				{
-					crPackMultiTexCoord4fvARBSWAP ( i + GL_TEXTURE0_ARB, (GLfloat *) &(thread->pinchState.vtx->texCoord[i].s));
+					crPackMultiTexCoord4fvARBSWAP ( i + GL_TEXTURE0_ARB, (GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_TEX0 + i][0]));
 				}
 				else
 				{
-					crPackMultiTexCoord4fvARB ( i + GL_TEXTURE0_ARB, (GLfloat *) &(thread->pinchState.vtx->texCoord[i].s));
+					crPackMultiTexCoord4fvARB ( i + GL_TEXTURE0_ARB, (GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_TEX0 + i][0]));
 				}
 			}
 		}
 		if (tilesort_spu.swap)
 		{
-			crPackNormal3fvSWAP((GLfloat *) &(thread->pinchState.vtx->normal.x));
+			crPackNormal3fvSWAP((GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_NORMAL][0]));
 		}
 		else
 		{
-			crPackNormal3fv((GLfloat *) &(thread->pinchState.vtx->normal.x));
+			crPackNormal3fv((GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_NORMAL][0]));
 		}
 		if (tilesort_spu.swap)
 		{
@@ -93,19 +95,19 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 		}
 		if (tilesort_spu.swap)
 		{
-			crPackColor4fvSWAP((GLfloat *) &(thread->pinchState.vtx->color.r));
+			crPackColor4fvSWAP((GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_COLOR0][0]));
 		}
 		else
 		{
-			crPackColor4fv((GLfloat *) &(thread->pinchState.vtx->color.r));
+			crPackColor4fv((GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_COLOR0][0]));
 		}
 		if (tilesort_spu.swap)
 		{
-			crPackVertex4fvBBOX_COUNTSWAP((GLfloat *) &(thread->pinchState.vtx->pos.x));
+			crPackVertex4fvBBOX_COUNTSWAP((GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_POS][0]));
 		}
 		else
 		{
-			crPackVertex4fvBBOX_COUNT((GLfloat *) &(thread->pinchState.vtx->pos.x));
+			crPackVertex4fvBBOX_COUNT((GLfloat *) &(thread->pinchState.vtx->attrib[VERT_ATTRIB_POS][0]));
 		}
 
 		thread->pinchState.isLoop = 0;

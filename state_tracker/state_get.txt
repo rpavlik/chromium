@@ -3,14 +3,14 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 GLenum    GL_MATRIX_MODE                  g->transform.matrixMode
-GLint     GL_MODELVIEW_STACK_DEPTH        g->transform.modelViewDepth+1
-GLint     GL_PROJECTION_STACK_DEPTH       g->transform.projectionDepth+1
-GLint     GL_TEXTURE_STACK_DEPTH g->transform.textureDepth[g->texture.curTextureUnit]+1
-GLint     GL_COLOR_MATRIX_STACK_DEPTH     g->transform.colorDepth+1
-GLdefault GL_MODELVIEW_MATRIX             g->transform.modelView[g->transform.modelViewDepth].m00 g->transform.modelView[g->transform.modelViewDepth].m01 g->transform.modelView[g->transform.modelViewDepth].m02 g->transform.modelView[g->transform.modelViewDepth].m03 g->transform.modelView[g->transform.modelViewDepth].m10 g->transform.modelView[g->transform.modelViewDepth].m11 g->transform.modelView[g->transform.modelViewDepth].m12 g->transform.modelView[g->transform.modelViewDepth].m13 g->transform.modelView[g->transform.modelViewDepth].m20 g->transform.modelView[g->transform.modelViewDepth].m21 g->transform.modelView[g->transform.modelViewDepth].m22 g->transform.modelView[g->transform.modelViewDepth].m23 g->transform.modelView[g->transform.modelViewDepth].m30 g->transform.modelView[g->transform.modelViewDepth].m31 g->transform.modelView[g->transform.modelViewDepth].m32 g->transform.modelView[g->transform.modelViewDepth].m33
-GLdefault GL_PROJECTION_MATRIX            g->transform.projection[g->transform.projectionDepth].m00 g->transform.projection[g->transform.projectionDepth].m01 g->transform.projection[g->transform.projectionDepth].m02 g->transform.projection[g->transform.projectionDepth].m03 g->transform.projection[g->transform.projectionDepth].m10 g->transform.projection[g->transform.projectionDepth].m11 g->transform.projection[g->transform.projectionDepth].m12 g->transform.projection[g->transform.projectionDepth].m13 g->transform.projection[g->transform.projectionDepth].m20 g->transform.projection[g->transform.projectionDepth].m21 g->transform.projection[g->transform.projectionDepth].m22 g->transform.projection[g->transform.projectionDepth].m23 g->transform.projection[g->transform.projectionDepth].m30 g->transform.projection[g->transform.projectionDepth].m31 g->transform.projection[g->transform.projectionDepth].m32 g->transform.projection[g->transform.projectionDepth].m33
-GLdefault GL_TEXTURE_MATRIX               g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m00 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m01 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m02 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m03 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m10 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m11 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m12 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m13 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m20 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m21 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m22 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m23 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m30 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m31 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m32 g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]].m33
-GLdefault GL_COLOR_MATRIX                 g->transform.color[g->transform.colorDepth].m00 g->transform.color[g->transform.colorDepth].m01 g->transform.color[g->transform.colorDepth].m02 g->transform.color[g->transform.colorDepth].m03 g->transform.color[g->transform.colorDepth].m10 g->transform.color[g->transform.colorDepth].m11 g->transform.color[g->transform.colorDepth].m12 g->transform.color[g->transform.colorDepth].m13 g->transform.color[g->transform.colorDepth].m20 g->transform.color[g->transform.colorDepth].m21 g->transform.color[g->transform.colorDepth].m22 g->transform.color[g->transform.colorDepth].m23 g->transform.color[g->transform.colorDepth].m30 g->transform.color[g->transform.colorDepth].m31 g->transform.color[g->transform.colorDepth].m32 g->transform.color[g->transform.colorDepth].m33
+GLint     GL_MODELVIEW_STACK_DEPTH        g->transform.modelViewStack.depth+1
+GLint     GL_PROJECTION_STACK_DEPTH       g->transform.projectionStack.depth+1
+GLint     GL_TEXTURE_STACK_DEPTH g->transform.textureStack[g->texture.curTextureUnit].depth+1
+GLint     GL_COLOR_MATRIX_STACK_DEPTH     g->transform.colorStack.depth+1
+GLdefault GL_MODELVIEW_MATRIX             g->transform.modelViewStack.top->m00 g->transform.modelViewStack.top->m01 g->transform.modelViewStack.top->m02 g->transform.modelViewStack.top->m03 g->transform.modelViewStack.top->m10 g->transform.modelViewStack.top->m11 g->transform.modelViewStack.top->m12 g->transform.modelViewStack.top->m13 g->transform.modelViewStack.top->m20 g->transform.modelViewStack.top->m21 g->transform.modelViewStack.top->m22 g->transform.modelViewStack.top->m23 g->transform.modelViewStack.top->m30 g->transform.modelViewStack.top->m31 g->transform.modelViewStack.top->m32 g->transform.modelViewStack.top->m33
+GLdefault GL_PROJECTION_MATRIX            g->transform.projectionStack.top->m00 g->transform.projectionStack.top->m01 g->transform.projectionStack.top->m02 g->transform.projectionStack.top->m03 g->transform.projectionStack.top->m10 g->transform.projectionStack.top->m11 g->transform.projectionStack.top->m12 g->transform.projectionStack.top->m13 g->transform.projectionStack.top->m20 g->transform.projectionStack.top->m21 g->transform.projectionStack.top->m22 g->transform.projectionStack.top->m23 g->transform.projectionStack.top->m30 g->transform.projectionStack.top->m31 g->transform.projectionStack.top->m32 g->transform.projectionStack.top->m33
+GLdefault GL_TEXTURE_MATRIX               g->transform.textureStack[g->texture.curTextureUnit].top->m00 g->transform.textureStack[g->texture.curTextureUnit].top->m01 g->transform.textureStack[g->texture.curTextureUnit].top->m02 g->transform.textureStack[g->texture.curTextureUnit].top->m03 g->transform.textureStack[g->texture.curTextureUnit].top->m10 g->transform.textureStack[g->texture.curTextureUnit].top->m11 g->transform.textureStack[g->texture.curTextureUnit].top->m12 g->transform.textureStack[g->texture.curTextureUnit].top->m13 g->transform.textureStack[g->texture.curTextureUnit].top->m20 g->transform.textureStack[g->texture.curTextureUnit].top->m21 g->transform.textureStack[g->texture.curTextureUnit].top->m22 g->transform.textureStack[g->texture.curTextureUnit].top->m23 g->transform.textureStack[g->texture.curTextureUnit].top->m30 g->transform.textureStack[g->texture.curTextureUnit].top->m31 g->transform.textureStack[g->texture.curTextureUnit].top->m32 g->transform.textureStack[g->texture.curTextureUnit].top->m33
+GLdefault GL_COLOR_MATRIX                 g->transform.colorStack.top->m00 g->transform.colorStack.top->m01 g->transform.colorStack.top->m02 g->transform.colorStack.top->m03 g->transform.colorStack.top->m10 g->transform.colorStack.top->m11 g->transform.colorStack.top->m12 g->transform.colorStack.top->m13 g->transform.colorStack.top->m20 g->transform.colorStack.top->m21 g->transform.colorStack.top->m22 g->transform.colorStack.top->m23 g->transform.colorStack.top->m30 g->transform.colorStack.top->m31 g->transform.colorStack.top->m32 g->transform.colorStack.top->m33
 
 GLint	  GL_ATTRIB_STACK_DEPTH        g->attrib.attribStackDepth
 GLint     GL_ACTIVE_TEXTURE_ARB        g->texture.curTextureUnit+GL_TEXTURE0_ARB
@@ -40,6 +40,9 @@ GLenum    GL_FRONT_FACE               g->polygon.frontFace
 GLenum    GL_CULL_FACE_MODE           g->polygon.cullFaceMode
 GLenum    GL_POLYGON_MODE             g->polygon.frontMode g->polygon.backMode
 GLboolean GL_CULL_FACE                g->polygon.cullFace
+GLboolean GL_POLYGON_OFFSET_FILL      g->polygon.polygonOffsetFill
+GLboolean GL_POLYGON_OFFSET_LINE      g->polygon.polygonOffsetLine
+GLboolean GL_POLYGON_OFFSET_POINT     g->polygon.polygonOffsetPoint
 GLboolean GL_POLYGON_SMOOTH           g->polygon.polygonSmooth
 GLboolean GL_POLYGON_STIPPLE          g->polygon.polygonStipple
 GLfloat   GL_POLYGON_OFFSET_FACTOR    g->polygon.offsetFactor
@@ -170,27 +173,28 @@ GLenum    GL_PERSPECTIVE_CORRECTION_HINT  g->hint.perspectiveCorrection
 GLint     GL_TEXTURE_BINDING_1D g->texture.unit[g->texture.curTextureUnit].currentTexture1D->name
 GLint     GL_TEXTURE_BINDING_2D g->texture.unit[g->texture.curTextureUnit].currentTexture2D->name
 GLint     GL_TEXTURE_BINDING_3D g->texture.unit[g->texture.curTextureUnit].currentTexture3D->name
+GLenum    GL_TEXTURE_ENV_MODE   g->texture.unit[g->texture.curTextureUnit].envMode
 
-GLboolean GL_VERTEX_ARRAY             g->client.v.enabled
-GLint     GL_VERTEX_ARRAY_SIZE        g->client.v.size
-GLint     GL_VERTEX_ARRAY_STRIDE      g->client.v.stride
-GLint     GL_VERTEX_ARRAY_TYPE        g->client.v.type
-GLboolean GL_NORMAL_ARRAY             g->client.n.enabled
-GLint     GL_NORMAL_ARRAY_STRIDE      g->client.n.stride
-GLint     GL_NORMAL_ARRAY_TYPE        g->client.n.type
-GLboolean GL_COLOR_ARRAY              g->client.c.enabled
-GLint     GL_COLOR_ARRAY_SIZE         g->client.c.size
-GLint     GL_COLOR_ARRAY_STRIDE       g->client.c.stride
-GLint     GL_COLOR_ARRAY_TYPE         g->client.c.type
-GLboolean GL_INDEX_ARRAY              g->client.i.enabled
-GLint     GL_INDEX_ARRAY_STRIDE       g->client.i.stride
-GLint     GL_INDEX_ARRAY_TYPE         g->client.i.type
-GLboolean GL_TEXTURE_COORD_ARRAY      g->client.t[g->client.curClientTextureUnit].enabled
-GLint     GL_TEXTURE_COORD_ARRAY_SIZE g->client.t[g->client.curClientTextureUnit].size
-GLint     GL_TEXTURE_COORD_ARRAY_STRIDE g->client.t[g->client.curClientTextureUnit].stride
-GLint     GL_TEXTURE_COORD_ARRAY_TYPE g->client.t[g->client.curClientTextureUnit].type
-GLboolean GL_EDGE_FLAG_ARRAY          g->client.e.enabled
-GLint     GL_EDGE_FLAG_ARRAY_STRIDE   g->client.e.stride
+GLboolean GL_VERTEX_ARRAY             g->client.array.v.enabled
+GLint     GL_VERTEX_ARRAY_SIZE        g->client.array.v.size
+GLint     GL_VERTEX_ARRAY_STRIDE      g->client.array.v.stride
+GLint     GL_VERTEX_ARRAY_TYPE        g->client.array.v.type
+GLboolean GL_NORMAL_ARRAY             g->client.array.n.enabled
+GLint     GL_NORMAL_ARRAY_STRIDE      g->client.array.n.stride
+GLint     GL_NORMAL_ARRAY_TYPE        g->client.array.n.type
+GLboolean GL_COLOR_ARRAY              g->client.array.c.enabled
+GLint     GL_COLOR_ARRAY_SIZE         g->client.array.c.size
+GLint     GL_COLOR_ARRAY_STRIDE       g->client.array.c.stride
+GLint     GL_COLOR_ARRAY_TYPE         g->client.array.c.type
+GLboolean GL_INDEX_ARRAY              g->client.array.i.enabled
+GLint     GL_INDEX_ARRAY_STRIDE       g->client.array.i.stride
+GLint     GL_INDEX_ARRAY_TYPE         g->client.array.i.type
+GLboolean GL_TEXTURE_COORD_ARRAY      g->client.array.t[g->client.curClientTextureUnit].enabled
+GLint     GL_TEXTURE_COORD_ARRAY_SIZE g->client.array.t[g->client.curClientTextureUnit].size
+GLint     GL_TEXTURE_COORD_ARRAY_STRIDE g->client.array.t[g->client.curClientTextureUnit].stride
+GLint     GL_TEXTURE_COORD_ARRAY_TYPE g->client.array.t[g->client.curClientTextureUnit].type
+GLboolean GL_EDGE_FLAG_ARRAY          g->client.array.e.enabled
+GLint     GL_EDGE_FLAG_ARRAY_STRIDE   g->client.array.e.stride
 
 GLboolean GL_RGBA_MODE                g->limits.rgbaMode
 GLboolean GL_INDEX_MODE               (!g->limits.rgbaMode)
@@ -238,23 +242,23 @@ GLboolean GL_STENCIL_TEST             g->stencil.stencilTest
 GLint     GL_STENCIL_VALUE_MASK       g->stencil.mask
 GLint     GL_STENCIL_WRITEMASK        g->stencil.writeMask
 
-GLfloat   GL_CURRENT_INDEX            g->current.index
-GLclampf  GL_CURRENT_COLOR            g->current.color.r g->current.color.g g->current.color.b g->current.color.a
-GLclampf  GL_CURRENT_NORMAL           g->current.normal.x g->current.normal.y g->current.normal.z
-GLfloat   GL_CURRENT_TEXTURE_COORDS   g->current.texCoord[g->texture.curTextureUnit].s g->current.texCoord[g->texture.curTextureUnit].t g->current.texCoord[g->texture.curTextureUnit].r g->current.texCoord[g->texture.curTextureUnit].q
+GLfloat   GL_CURRENT_INDEX            g->current.colorIndex
+GLclampf  GL_CURRENT_COLOR            g->current.vertexAttrib[VERT_ATTRIB_COLOR0][0] g->current.vertexAttrib[VERT_ATTRIB_COLOR0][1] g->current.vertexAttrib[VERT_ATTRIB_COLOR0][2] g->current.vertexAttrib[VERT_ATTRIB_COLOR0][3]
+GLclampf  GL_CURRENT_NORMAL           g->current.vertexAttrib[VERT_ATTRIB_NORMAL][0] g->current.vertexAttrib[VERT_ATTRIB_NORMAL][1] g->current.vertexAttrib[VERT_ATTRIB_NORMAL][2]
+GLfloat   GL_CURRENT_TEXTURE_COORDS   g->current.vertexAttrib[VERT_ATTRIB_TEX0+g->texture.curTextureUnit][0] g->current.vertexAttrib[VERT_ATTRIB_TEX0+g->texture.curTextureUnit][1] g->current.vertexAttrib[VERT_ATTRIB_TEX0+g->texture.curTextureUnit][2] g->current.vertexAttrib[VERT_ATTRIB_TEX0+g->texture.curTextureUnit][3]
 GLboolean GL_EDGE_FLAG                g->current.edgeFlag
 
 #?b?ub?s?us?i?ui?f?d                     GL_CURRENT_RASTER_POSITION       g->current.rasterpos?.x g->current.rasterpos?.y g->current.rasterpos?.z g->current.rasterpos?.w
-GLfloat					 GL_CURRENT_RASTER_POSITION	  g->current.rasterPos.x g->current.rasterPos.y g->current.rasterPos.z g->current.rasterPos.w
+GLfloat					 GL_CURRENT_RASTER_POSITION	  g->current.rasterAttrib[VERT_ATTRIB_POS][0] g->current.rasterAttrib[VERT_ATTRIB_POS][1] g->current.rasterAttrib[VERT_ATTRIB_POS][2] g->current.rasterAttrib[VERT_ATTRIB_POS][3]
 GLboolean                                       GL_CURRENT_RASTER_POSITION_VALID g->current.rasterValid
 #?s?i?f?d                                        GL_CURRENT_RASTER_TEXTURE_COORDS g->current.rastertexture?.s g->current.rastertexture?.t g->current.rastertexture?.p g->current.rastertexture?.q
-GLfloat          GL_CURRENT_RASTER_TEXTURE_COORDS g->current.rasterTexture.s g->current.rasterTexture.t g->current.rasterTexture.r g->current.rasterTexture.q
+GLfloat          GL_CURRENT_RASTER_TEXTURE_COORDS g->current.rasterAttrib[VERT_ATTRIB_TEX0][0] g->current.rasterAttrib[VERT_ATTRIB_TEX0][1] g->current.rasterAttrib[VERT_ATTRIB_TEX0][2] g->current.rasterAttrib[VERT_ATTRIB_TEX0][3]
 #GLclampf?b?ub?s?us?i?ui?f?d     GL_CURRENT_RASTER_COLOR          g->current.rastercolor?.r g->current.rastercolor?.g g->current.rastercolor?.b g->current.rastercolor?.a
-GLfloat				 GL_CURRENT_RASTER_COLOR	  g->current.rasterColor.r g->current.rasterColor.g g->current.rasterColor.b g->current.rasterColor.a
-GLfloat                                         GL_CURRENT_RASTER_DISTANCE       g->current.rasterDistance
+GLfloat				 GL_CURRENT_RASTER_COLOR	  g->current.rasterAttrib[VERT_ATTRIB_COLOR0][0] g->current.rasterAttrib[VERT_ATTRIB_COLOR0][1] g->current.rasterAttrib[VERT_ATTRIB_COLOR0][2] g->current.rasterAttrib[VERT_ATTRIB_COLOR0][3]
+GLfloat                                         GL_CURRENT_RASTER_DISTANCE       g->current.rasterAttrib[VERT_ATTRIB_FOG][0]
 GLdouble                                        GL_CURRENT_RASTER_INDEX          g->current.rasterIndex
 
-#GLclampf  GL_CURRENT_SECONDARY_COLOR_EXT g->lighting.secondaryColor.r g->lighting.secondaryColor.g g->lighting.secondaryColor.b
+#GLclampf  GL_CURRENT_SECONDARY_COLOR_EXT g->lighting.vertexAttrib[VERT_ATTRIB_COLOR1][0] g->lighting.vertexAttrib[VERT_ATTRIB_COLOR1][1] g->lighting.vertexAttrib[VERT_ATTRIB_COLOR1][2]
 #GLint     GL_SECONDARY_COLOR_ARRAY_SIZE_EXT
 #GLint     GL_SECONDARY_COLOR_ARRAY_TYPE_EXT
 #GLint     GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT
@@ -287,3 +291,9 @@ GLfloat GL_ALIASED_LINE_WIDTH_RANGE      g->limits.aliasedLineWidthRange[0] g->l
 GLfloat GL_SMOOTH_LINE_WIDTH_RANGE       g->limits.smoothLineWidthRange[0] g->limits.smoothLineWidthRange[1]
 GLfloat GL_SMOOTH_LINE_WIDTH_GRANULARITY g->limits.lineWidthGranularity
 GLint	GL_RENDER_MODE					 GL_RENDER
+
+# Feedback
+
+GLint GL_FEEDBACK_BUFFER_SIZE g->feedback.bufferSize
+GLint GL_FEEDBACK_BUFFER_TYPE g->feedback.type
+GLint GL_SELECTION_BUFFER_SIZE g->selection.bufferSize

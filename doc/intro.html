@@ -320,14 +320,32 @@ Graphics, Inc. contributed many new features.</p>
 </ul>
 
 
-<p>NEXT Release:  month day, 2003</p>
+<p>1.3 Release:  July ??, 2003</p>
 
 <ul>
 <li>New Features
   <ul>
   <li>Added borderless option to render SPU
   <li>Added track_window_position option for application nodes
+  <li>New OpenGL extensions support:
+    <ul>
+    <li>GL_ARB_fragment_program
+    <li>GL_ARB_vertex_program
+    <li>GL_NV_fragment_program
+    <li>GL_NV_vertex_program
+    <li>GL_NV_vertex_program1_1
+    <li>GL_NV_vertex_program2
+    <p>NOTE: During development we've found that some graphics card/driver
+       combinations have bugs in the vertex (and fragment?) program extensions
+       that cause some demo programs to fail.  For more info, ask on the
+       Chromium mailing lists.
+    <li>GL_NV_texture_rectangle
+    <li>GL_EXT_shadow_funcs
+    <li>GL_EXT_texture_rectangle
+    </ul>
   </ul>
+  <li>vertprog_projection_parameter config option for crserver.
+      This is useful for running Cg demos on tilesort displays, for example.
 <li>Bug Fixes
   <ul>
   <li>Fixed Alpha compilation problem

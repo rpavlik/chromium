@@ -309,8 +309,8 @@ static void execute_side_effects(GLuint list)
 			CRContext *serverState = thread->currentContext->server[j].State;
 			CRASSERT(serverState);
 			/* update context's raster pos */
-			serverState->current.rasterPos.x += effect->rasterPosDx;
-			serverState->current.rasterPos.y += effect->rasterPosDy;
+			serverState->current.rasterAttrib[VERT_ATTRIB_POS][0] += effect->rasterPosDx;
+			serverState->current.rasterAttrib[VERT_ATTRIB_POS][1] += effect->rasterPosDy;
 			/*
 			printf("Post CallLists %d  ctx=%p dx/dy = %f, %f  new=%f, %f\n", list,
 						 (void *) (&c->current),

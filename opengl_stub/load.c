@@ -34,6 +34,7 @@
 
 
 SPUDispatchTable glim;
+SPUDispatchTable stubThreadsafeDispatch;
 Stub stub;
 
 
@@ -163,6 +164,9 @@ static void stubSPUTearDown(void)
 		the_spu = next_spu;
 	}
 	stub.spu = NULL;
+
+	/* shutdown, now trap any calls to a NULL dispatcher */
+	crSPUCopyDispatchTable(&glim, &stubNULLDispatch);
 
 	crUnloadOpenGL();
 }

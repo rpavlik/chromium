@@ -28,7 +28,7 @@ typedef struct {
 } CRDLL;
 
 typedef void (*CRDLLFunc)(void);
-CRDLL *crDLLOpen( const char *dllname );
+CRDLL *crDLLOpen( const char *dllname, int resolveGlobal );
 CRDLLFunc crDLLGetNoError( CRDLL *dll, const char *symname );
 CRDLLFunc crDLLGet( CRDLL *dll, const char *symname );
 void crDLLClose( CRDLL *dll );

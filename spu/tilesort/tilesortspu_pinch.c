@@ -17,12 +17,14 @@
 ** and our protocol generator sorts the opcodes,
 ** so why not just do greater than less than?
 */
-#define IS_VERTEX(a)	((a) >= CR_VERTEX2D_OPCODE && (a) <= CR_VERTEX4S_OPCODE)
+#define IS_VERTEX(a)	(((a) >= CR_VERTEX2D_OPCODE && (a) <= CR_VERTEX4S_OPCODE) \
+											 || ((a) >= CR_VERTEXATTRIB1DARB_OPCODE && (a) <= CR_VERTEXATTRIB4USVARB_OPCODE))
 #define IS_COLOR(a)		((a) >= CR_COLOR3B_OPCODE && (a) <= CR_COLOR4US_OPCODE)
 #define IS_NORMAL(a)	((a) >= CR_NORMAL3B_OPCODE && (a) <= CR_NORMAL3S_OPCODE)
 #define IS_INDEX(a)		((a) >= CR_INDEXD_OPCODE && (a) <= CR_INDEXS_OPCODE)
 #define IS_TEXCOORD(a)	(((a) >= CR_TEXCOORD1D_OPCODE && (a) <= CR_TEXCOORD4S_OPCODE) || (((a) >= CR_MULTITEXCOORD1DARB_OPCODE) && ((a) <= CR_MULTITEXCOORD4SARB_OPCODE)))
 #define IS_EDGEFLAG(a)	((a) == CR_EDGEFLAG_OPCODE)
+#define IS_VERTEX_ATTRIB(a)	((a) >= CR_VERTEXATTRIB1DARB_OPCODE && (a) <= CR_VERTEXATTRIB4USVARB_OPCODE)
 
 #define ASSERT_BOUNDS(op, data) \
 				CRASSERT(op <= thread->packer->buffer.opcode_start); \
@@ -37,7 +39,7 @@ void tilesortspuPinch (void)
 {
 	GET_CONTEXT(ctx);
 	CRCurrentState *c = &(ctx->current);
-	int vtx_count = c->current->vtx_count - c->current->vtx_count_begin;
+	const int vtx_count = c->current->vtx_count - c->current->vtx_count_begin;
 	int numRestore;
 	int loop = 0;
 	int wind = 0;
@@ -88,17 +90,64 @@ void tilesortspuPinch (void)
 	(void) __convert_rescale_ub1;
 	(void) __convert_rescale_ub2;
 	(void) __convert_boolean;
+	(void) __convert_Ni1;
+	(void) __convert_Ni2;
+	(void) __convert_Ni3;
+	(void) __convert_Ni4;
+	(void) __convert_Nb1;
+	(void) __convert_Nb2;
+	(void) __convert_Nb3;
+	(void) __convert_Nb4;
+	(void) __convert_Nus1;
+	(void) __convert_Nus2;
+	(void) __convert_Nus3;
+	(void) __convert_Nus4;
+	(void) __convert_Nui1;
+	(void) __convert_Nui2;
+	(void) __convert_Nui3;
+	(void) __convert_Nui4;
+	(void) __convert_Ns1;
+	(void) __convert_Ns2;
+	(void) __convert_Ns3;
+	(void) __convert_Ns4;
+	(void) __convert_Nub1;
+	(void) __convert_Nub2;
+	(void) __convert_Nub3;
+	(void) __convert_Nub4;
+	(void) __convert_rescale_Ni1;
+	(void) __convert_rescale_Ni2;
+	(void) __convert_rescale_Ni3;
+	(void) __convert_rescale_Ni4;
+	(void) __convert_rescale_Nb1;
+	(void) __convert_rescale_Nb2;
+	(void) __convert_rescale_Nb3;
+	(void) __convert_rescale_Nb4;
+	(void) __convert_rescale_Nus1;
+	(void) __convert_rescale_Nus2;
+	(void) __convert_rescale_Nus3;
+	(void) __convert_rescale_Nus4;
+	(void) __convert_rescale_Nui1;
+	(void) __convert_rescale_Nui2;
+	(void) __convert_rescale_Nui3;
+	(void) __convert_rescale_Nui4;
+	(void) __convert_rescale_Ns1;
+	(void) __convert_rescale_Ns2;
+	(void) __convert_rescale_Ns3;
+	(void) __convert_rescale_Ns4;
+	(void) __convert_rescale_Nub1;
+	(void) __convert_rescale_Nub2;
+	(void) __convert_rescale_Nub3;
+	(void) __convert_rescale_Nub4;
 
-	v_current.pos = vdefault;
-	v_current.color = c->color;
-	v_current.normal = c->normal;
+	for (i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++) {
+		 COPY_4V(v_current.attrib[i], c->vertexAttrib[i]);
+	}
 	for (i = 0 ; i < ctx->limits.maxTextureUnits ; i++)
 	{
 		texCoord_ptr[i] = ctx->current.current->texCoord.ptr[i];
-		v_current.texCoord[i] = c->texCoord[i];
 	}
 	v_current.edgeFlag = c->edgeFlag;
-	v_current.index = c->index;
+	v_current.colorIndex = c->colorIndex;
 
 	/* First lets figure out how many vertices
 	 * we need to recover.  Note to self --
@@ -118,7 +167,7 @@ void tilesortspuPinch (void)
 			numRestore = vtx_count % 2;
 			break;
 		case GL_LINE_STRIP:
-			/* A seperate flag is used to inidcate
+			/* A seperate flag is used to indicate
 			 ** that this is really a line loop that 
 			 ** we're sending down as a line strip.
 			 ** If so, we need to recover the first 
@@ -226,6 +275,7 @@ void tilesortspuPinch (void)
 
 			do 
 			{
+				CRASSERT(*op < sizeof(__cr_packet_length_table) / sizeof(int) - 1);
 				data += __cr_packet_length_table[*op]; /* generated */
 				op--;
 				ASSERT_BOUNDS(op, data);
@@ -236,6 +286,7 @@ void tilesortspuPinch (void)
 			do 
 			{
 				op++;
+				CRASSERT(*op < sizeof(__cr_packet_length_table) / sizeof(int) - 1);
 				data -= __cr_packet_length_table[*op];
 				ASSERT_BOUNDS(op, data);
 			} while (!IS_VERTEX(*op));
@@ -266,13 +317,13 @@ void tilesortspuPinch (void)
 				/* Did I hit the begining of the buffer? */
 				if (op > thread->packer->buffer.opcode_start) 
 				{
-					v_current.color = c->colorPre;
+					COPY_4V(v_current.attrib[VERT_ATTRIB_COLOR0], c->vertexAttrib[VERT_ATTRIB_COLOR0]);
 					color_ptr = NULL;
 				} 
 				else 
 				{
 					ASSERT_BOUNDS (op, data);
-					VPINCH_CONVERT_COLOR (*op, data, v_current.color);
+					VPINCH_CONVERT_COLOR (*op, data, v_current.attrib[VERT_ATTRIB_COLOR0]);
 					color_ptr = data;
 				}
 			}
@@ -292,13 +343,13 @@ void tilesortspuPinch (void)
 				/* Did I hit the begining of the buffer? */
 				if (op > thread->packer->buffer.opcode_start) 
 				{
-					v_current.normal = c->normalPre;
+					COPY_4V(v_current.attrib[VERT_ATTRIB_NORMAL], c->vertexAttrib[VERT_ATTRIB_NORMAL]);
 					normal_ptr = NULL;
 				} 
 				else 
 				{
 					ASSERT_BOUNDS (op, data);
-					VPINCH_CONVERT_NORMAL (*op, data, v_current.normal)
+					VPINCH_CONVERT_NORMAL (*op, data, v_current.attrib[VERT_ATTRIB_NORMAL])
 						normal_ptr = data;
 				}
 			}
@@ -321,13 +372,13 @@ void tilesortspuPinch (void)
 					/* Did I hit the begining of the buffer? */
 					if (op > thread->packer->buffer.opcode_start) 
 					{
-						v_current.texCoord[j] = c->texCoordPre[j];
+						COPY_4V(v_current.attrib[VERT_ATTRIB_TEX0 + j], c->vertexAttribPre[VERT_ATTRIB_TEX0 + j]);
 						texCoord_ptr[j] = NULL;
 					} 
 					else 
 					{
 						ASSERT_BOUNDS (op, data);
-						VPINCH_CONVERT_TEXCOORD (*op, data, v_current.texCoord[j])
+						VPINCH_CONVERT_TEXCOORD (*op, data, v_current.attrib[VERT_ATTRIB_TEX0 + j])
 							texCoord_ptr[j] = data;
 					}
 				}
@@ -355,18 +406,18 @@ void tilesortspuPinch (void)
 				else
 				{
 					ASSERT_BOUNDS (op, data);
-					VPINCH_CONVERT_EDGEFLAG (*op, data, v_current.edgeFlag)
+					VPINCH_CONVERT_EDGEFLAG (*op, data, &v_current.edgeFlag)
 						edgeFlag_ptr = data;
 				}
 			}
+
+			/* XXX other vertex attribs */
 		} 
 		else 
 		{
-			v_current.color = c->colorPre;
-			v_current.normal = c->normalPre;
-			for (j = 0 ; j < ctx->limits.maxTextureUnits; j++)
-			{
-				v_current.texCoord[j] = c->texCoordPre[j];
+			int attr;
+			for (attr = 1; attr < CR_MAX_VERTEX_ATTRIBS; attr++) {
+				COPY_4V(v_current.attrib[attr], c->vertexAttribPre[attr]);
 			}
 			v_current.edgeFlag = c->edgeFlagPre;
 		}
@@ -378,40 +429,112 @@ void tilesortspuPinch (void)
 		switch (*vtx_op) 
 		{
 			case CR_VERTEX2D_OPCODE:
-				__convert_d2(&(vtx->pos.x), (GLdouble *) vtx_data);
+				__convert_d2(vtx->attrib[VERT_ATTRIB_POS], (GLdouble *) vtx_data);
 				break;
 			case CR_VERTEX2F_OPCODE:
-				__convert_f2(&(vtx->pos.x), (GLfloat *) vtx_data);
+				__convert_f2(vtx->attrib[VERT_ATTRIB_POS], (GLfloat *) vtx_data);
 				break;
 			case CR_VERTEX2I_OPCODE:
-				__convert_i2(&(vtx->pos.x), (GLint *) vtx_data);
+				__convert_i2(vtx->attrib[VERT_ATTRIB_POS], (GLint *) vtx_data);
 				break;
 			case CR_VERTEX2S_OPCODE:
-				__convert_s2(&(vtx->pos.x), (GLshort *) vtx_data);
+				__convert_s2(vtx->attrib[VERT_ATTRIB_POS], (GLshort *) vtx_data);
 				break;
 			case CR_VERTEX3D_OPCODE:
-				__convert_d3(&(vtx->pos.x), (GLdouble *) vtx_data);
+				__convert_d3(vtx->attrib[VERT_ATTRIB_POS], (GLdouble *) vtx_data);
 				break;
 			case CR_VERTEX3F_OPCODE:
-				__convert_f3(&(vtx->pos.x), (GLfloat *) vtx_data);
+				__convert_f3(vtx->attrib[VERT_ATTRIB_POS], (GLfloat *) vtx_data);
 				break;
 			case CR_VERTEX3I_OPCODE:
-				__convert_i3(&(vtx->pos.x), (GLint *) vtx_data);
+				__convert_i3(vtx->attrib[VERT_ATTRIB_POS], (GLint *) vtx_data);
 				break;
 			case CR_VERTEX3S_OPCODE:
-				__convert_s3(&(vtx->pos.x), (GLshort *) vtx_data);
+				__convert_s3(vtx->attrib[VERT_ATTRIB_POS], (GLshort *) vtx_data);
 				break;
 			case CR_VERTEX4D_OPCODE:
-				__convert_d4(&(vtx->pos.x), (GLdouble *) vtx_data);
+				__convert_d4(vtx->attrib[VERT_ATTRIB_POS], (GLdouble *) vtx_data);
 				break;
 			case CR_VERTEX4F_OPCODE:
-				__convert_f4(&(vtx->pos.x), (GLfloat *) vtx_data);
+				__convert_f4(vtx->attrib[VERT_ATTRIB_POS], (GLfloat *) vtx_data);
 				break;
 			case CR_VERTEX4I_OPCODE:
-				__convert_i4(&(vtx->pos.x), (GLint *) vtx_data);
+				__convert_i4(vtx->attrib[VERT_ATTRIB_POS], (GLint *) vtx_data);
 				break;
 			case CR_VERTEX4S_OPCODE:
-				__convert_s4(&(vtx->pos.x), (GLshort *) vtx_data);
+				__convert_s4(vtx->attrib[VERT_ATTRIB_POS], (GLshort *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB1DARB_OPCODE:
+				__convert_d1(vtx->attrib[VERT_ATTRIB_POS], (GLdouble *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB1FARB_OPCODE:
+				__convert_f1(vtx->attrib[VERT_ATTRIB_POS], (GLfloat *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB1SARB_OPCODE:
+				__convert_s1(vtx->attrib[VERT_ATTRIB_POS], (GLshort *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB2DARB_OPCODE:
+				__convert_d2(vtx->attrib[VERT_ATTRIB_POS], (GLdouble *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB2FARB_OPCODE:
+				__convert_f2(vtx->attrib[VERT_ATTRIB_POS], (GLfloat *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB2SARB_OPCODE:
+				__convert_s2(vtx->attrib[VERT_ATTRIB_POS], (GLshort *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB3DARB_OPCODE:
+				__convert_d3(vtx->attrib[VERT_ATTRIB_POS], (GLdouble *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB3FARB_OPCODE:
+				__convert_f3(vtx->attrib[VERT_ATTRIB_POS], (GLfloat *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB3SARB_OPCODE:
+				__convert_s3(vtx->attrib[VERT_ATTRIB_POS], (GLshort *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4NBVARB_OPCODE:
+				__convert_Nb4(vtx->attrib[VERT_ATTRIB_POS], (GLbyte *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4NIVARB_OPCODE:
+				__convert_Ni4(vtx->attrib[VERT_ATTRIB_POS], (GLint *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4NSVARB_OPCODE:
+				__convert_Ns4(vtx->attrib[VERT_ATTRIB_POS], (GLshort *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4NUBARB_OPCODE:
+				__convert_Nub4(vtx->attrib[VERT_ATTRIB_POS], (GLubyte *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4NUBVARB_OPCODE:
+				__convert_Nub4(vtx->attrib[VERT_ATTRIB_POS], (GLubyte *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4NUIVARB_OPCODE:
+				__convert_Nui4(vtx->attrib[VERT_ATTRIB_POS], (GLuint *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4NUSVARB_OPCODE:
+				__convert_Nus4(vtx->attrib[VERT_ATTRIB_POS], (GLushort *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4BVARB_OPCODE:
+				__convert_b4(vtx->attrib[VERT_ATTRIB_POS], (GLbyte *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4DARB_OPCODE:
+				__convert_d4(vtx->attrib[VERT_ATTRIB_POS], (GLdouble *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4FARB_OPCODE:
+				__convert_f4(vtx->attrib[VERT_ATTRIB_POS], (GLfloat *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4IVARB_OPCODE:
+				__convert_Ni4(vtx->attrib[VERT_ATTRIB_POS], (GLint *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4SARB_OPCODE:
+				__convert_s4(vtx->attrib[VERT_ATTRIB_POS], (GLshort *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4UBVARB_OPCODE:
+				__convert_ub4(vtx->attrib[VERT_ATTRIB_POS], (GLubyte *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4UIVARB_OPCODE:
+				__convert_ui4(vtx->attrib[VERT_ATTRIB_POS], (GLuint *) vtx_data);
+				break;
+			case CR_VERTEXATTRIB4USVARB_OPCODE:
+				__convert_us4(vtx->attrib[VERT_ATTRIB_POS], (GLushort *) vtx_data);
 				break;
 			default:
 				crError( "Bad pinch opcode: %d", *vtx_op );
@@ -426,7 +549,7 @@ void tilesortspuPinch (void)
 	thread->pinchState.wind = wind;
 }
 
-static void __pinchIssueParams (CRVertex *vtx) 
+static void __pinchIssueParams(const CRVertex *vtx) 
 {
 	GET_CONTEXT(ctx);
 	GLfloat val[4];
@@ -434,8 +557,7 @@ static void __pinchIssueParams (CRVertex *vtx)
 
 	for (i = 0 ; i < ctx->limits.maxTextureUnits ; i++)
 	{
-		val[0] = vtx->texCoord[i].s; val[1] = vtx->texCoord[i].t;
-		val[2] = vtx->texCoord[i].r; val[3] = vtx->texCoord[i].q;
+		COPY_4V(val, vtx->attrib[VERT_ATTRIB_TEX0 + i]);
 		if (i == 0)
 		{
 			if (tilesort_spu.swap)
@@ -459,8 +581,7 @@ static void __pinchIssueParams (CRVertex *vtx)
 			}
 		}
 	}
-	val[0] = vtx->normal.x; val[1] = vtx->normal.y;
-	val[2] = vtx->normal.z;
+	COPY_4V(val, vtx->attrib[VERT_ATTRIB_NORMAL]);
 	if (tilesort_spu.swap)
 	{
 		crPackNormal3fvSWAP((const GLfloat *) val);
@@ -471,8 +592,7 @@ static void __pinchIssueParams (CRVertex *vtx)
 		crPackNormal3fv((const GLfloat *) val);
 		crPackEdgeFlag(vtx->edgeFlag);
 	}
-	val[0] = vtx->color.r; val[1] = vtx->color.g;
-	val[2] = vtx->color.b; val[3] = vtx->color.a;
+	COPY_4V(val, vtx->attrib[VERT_ATTRIB_COLOR0]);
 	if (tilesort_spu.swap)
 	{
 		crPackColor4fvSWAP((const GLfloat *) val);
@@ -481,16 +601,25 @@ static void __pinchIssueParams (CRVertex *vtx)
 	{
 		crPackColor4fv((const GLfloat *) val);
 	}
+	COPY_4V(val, vtx->attrib[VERT_ATTRIB_COLOR1]);
+	if (tilesort_spu.swap)
+	{
+		crPackSecondaryColor3fvEXTSWAP((const GLfloat *) val);
+	}
+	else
+	{
+		crPackSecondaryColor3fvEXT((const GLfloat *) val);
+	}
+	/* XXX do other attribs */
 }
 
-static void __pinchIssueVertex (CRVertex *vtx) 
+static void __pinchIssueVertex(const CRVertex *vtx) 
 {
 	GLfloat val[4];
 
-	__pinchIssueParams (vtx);
+	__pinchIssueParams(vtx);
 
-	val[0] = vtx->pos.x; val[1] = vtx->pos.y;
-	val[2] = vtx->pos.z; val[3] = vtx->pos.w;
+	COPY_4V(val, vtx->attrib[VERT_ATTRIB_POS]);
 	if (tilesort_spu.swap)
 	{
 		crPackVertex4fvBBOX_COUNTSWAP((const GLfloat *) val);
@@ -544,13 +673,12 @@ void tilesortspuPinchRestoreTriangle( void )
 		}
 
 		/* Setup values for next vertex */
-		for (j = 0 ; j < ctx->limits.maxTextureUnits; j++)
+		for (j = 1 ; j < CR_MAX_VERTEX_ATTRIBS; j++)
 		{
-			v.texCoord[j] = c->texCoord[j];
+			COPY_4V(v.attrib[j], c->vertexAttrib[j]);
 		}
-		v.normal   = c->normal;
 		v.edgeFlag = c->edgeFlag;
-		v.color    = c->color;
+		v.colorIndex = c->colorIndex;
 
 		__pinchIssueParams (&v);
 	}

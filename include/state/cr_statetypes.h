@@ -98,9 +98,127 @@ TEXCOORD(GLdouble,GLtexcoordd);
 #undef COLOR
 #undef TEXCOORD
 
-#define COMPARE_VECTOR(a,b)		((a).x != (b).x || (a).y != (b).y || (a).z != (b).z || (a).w != (b).w)
-#define COMPARE_TEXCOORD(a,b)	((a).s != (b).s || (a).t != (b).t || (a).r != (b).r || (a).q != (b).q)
-#define COMPARE_COLOR(x,y)		((x).r != (y).r || (x).g != (y).g || (x).b != (y).b || (x).a != (y).a)
+#define COMPARE_VECTOR(a,b)		((a)[0] != (b)[0] || (a)[1] != (b)[1] || (a)[2] != (b)[2] || (a)[3] != (b)[3])
+#define COMPARE_TEXCOORD(a,b)	((a)[0] != (b)[0] || (a)[1] != (b)[1] || (a)[2] != (b)[2] || (a)[3] != (b)[3])
+#define COMPARE_COLOR(x,y)		((x)[0] != (y)[0] || (x)[1] != (y)[1] || (x)[2] != (y)[2] || (x)[3] != (y)[3])
+
+/* Assign scalers to short vectors: */
+#define ASSIGN_2V( V, V0, V1 )	\
+do { 				\
+    (V)[0] = V0; 			\
+    (V)[1] = V1; 			\
+} while(0)
+
+#define ASSIGN_3V( V, V0, V1, V2 )	\
+do { 				 	\
+    (V)[0] = V0; 				\
+    (V)[1] = V1; 				\
+    (V)[2] = V2; 				\
+} while(0)
+
+#define ASSIGN_4V( V, V0, V1, V2, V3 ) 		\
+do { 						\
+    (V)[0] = V0;					\
+    (V)[1] = V1;					\
+    (V)[2] = V2;					\
+    (V)[3] = V3; 					\
+} while(0)
+
+
+/* Copy short vectors: */
+#define COPY_2V( DST, SRC )			\
+do {						\
+   (DST)[0] = (SRC)[0];				\
+   (DST)[1] = (SRC)[1];				\
+} while (0)
+
+#define COPY_3V( DST, SRC )			\
+do {						\
+   (DST)[0] = (SRC)[0];				\
+   (DST)[1] = (SRC)[1];				\
+   (DST)[2] = (SRC)[2];				\
+} while (0)
+
+#define COPY_4V( DST, SRC )			\
+do {						\
+   (DST)[0] = (SRC)[0];				\
+   (DST)[1] = (SRC)[1];				\
+   (DST)[2] = (SRC)[2];				\
+   (DST)[3] = (SRC)[3];				\
+} while (0)
+
+#define COPY_2V_CAST( DST, SRC, CAST )		\
+do {						\
+   (DST)[0] = (CAST)(SRC)[0];			\
+   (DST)[1] = (CAST)(SRC)[1];			\
+} while (0)
+
+#define COPY_3V_CAST( DST, SRC, CAST )		\
+do {						\
+   (DST)[0] = (CAST)(SRC)[0];			\
+   (DST)[1] = (CAST)(SRC)[1];			\
+   (DST)[2] = (CAST)(SRC)[2];			\
+} while (0)
+
+#define COPY_4V_CAST( DST, SRC, CAST )		\
+do {						\
+   (DST)[0] = (CAST)(SRC)[0];			\
+   (DST)[1] = (CAST)(SRC)[1];			\
+   (DST)[2] = (CAST)(SRC)[2];			\
+   (DST)[3] = (CAST)(SRC)[3];			\
+} while (0)
+
+#if defined(__i386__)
+#define COPY_4UBV(DST, SRC)			\
+do {						\
+   *((GLuint*)(DST)) = *((GLuint*)(SRC));	\
+} while (0)
+#else
+/* The GLuint cast might fail if DST or SRC are not dword-aligned (RISC) */
+#define COPY_4UBV(DST, SRC)			\
+do {						\
+   (DST)[0] = (SRC)[0];				\
+   (DST)[1] = (SRC)[1];				\
+   (DST)[2] = (SRC)[2];				\
+   (DST)[3] = (SRC)[3];				\
+} while (0)
+#endif
+
+#define COPY_2FV( DST, SRC )			\
+do {						\
+   const GLfloat *_tmp = (SRC);			\
+   (DST)[0] = _tmp[0];				\
+   (DST)[1] = _tmp[1];				\
+} while (0)
+
+#define COPY_3FV( DST, SRC )			\
+do {						\
+   const GLfloat *_tmp = (SRC);			\
+   (DST)[0] = _tmp[0];				\
+   (DST)[1] = _tmp[1];				\
+   (DST)[2] = _tmp[2];				\
+} while (0)
+
+#define COPY_4FV( DST, SRC )			\
+do {						\
+   const GLfloat *_tmp = (SRC);			\
+   (DST)[0] = _tmp[0];				\
+   (DST)[1] = _tmp[1];				\
+   (DST)[2] = _tmp[2];				\
+   (DST)[3] = _tmp[3];				\
+} while (0)
+
+
+
+#define COPY_SZ_4V(DST, SZ, SRC) 		\
+do {						\
+   switch (SZ) {				\
+   case 4: (DST)[3] = (SRC)[3];			\
+   case 3: (DST)[2] = (SRC)[2];			\
+   case 2: (DST)[1] = (SRC)[1];			\
+   case 1: (DST)[0] = (SRC)[0];			\
+   }  						\
+} while(0)
 
 
 #ifdef __cplusplus

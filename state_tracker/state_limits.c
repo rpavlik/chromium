@@ -77,6 +77,9 @@ void crStateLimitsInit (CRLimitsState *l)
 	l->maxTextureSize = CR_MAX_TEXTURE_SIZE;
 	l->max3DTextureSize = CR_MAX_3D_TEXTURE_SIZE;
 	l->maxCubeMapTextureSize = CR_MAX_CUBE_TEXTURE_SIZE;
+#ifdef CR_NV_texture_rectangle
+	l->maxRectTextureSize  = CR_MAX_RECTANGLE_TEXTURE_SIZE;
+#endif
 	l->maxTextureAnisotropy = CR_MAX_TEXTURE_ANISOTROPY;
 	l->maxGeneralCombiners = CR_MAX_GENERAL_COMBINERS;
 	l->maxLights = CR_MAX_LIGHTS;
@@ -106,8 +109,36 @@ void crStateLimitsInit (CRLimitsState *l)
 	l->smoothLineWidthRange[0] = CR_SMOOTH_LINE_WIDTH_MIN;
 	l->smoothLineWidthRange[1] = CR_SMOOTH_LINE_WIDTH_MAX;
 	l->lineWidthGranularity = CR_LINE_WIDTH_GRANULARITY;
-#if CR_EXT_texture_lod_bias
+#ifdef CR_EXT_texture_lod_bias
 	l->maxTextureLodBias = CR_MAX_TEXTURE_LOD_BIAS;
+#endif
+#ifdef CR_NV_fragment_program
+	l->maxTextureCoords = CR_MAX_TEXTURE_COORDS;
+	l->maxTextureImageUnits = CR_MAX_TEXTURE_IMAGE_UNITS;
+	l->maxFragmentProgramLocalParams = CR_MAX_FRAGMENT_LOCAL_PARAMS;
+#endif
+#ifdef CR_NV_vertex_program
+	l->maxProgramMatrixStackDepth = CR_MAX_PROGRAM_MATRIX_STACK_DEPTH;
+	l->maxProgramMatrices = CR_MAX_PROGRAM_MATRICES;
+#endif
+#ifdef CR_ARB_fragment_program
+	l->maxFragmentProgramInstructions = CR_MAX_FRAGMENT_PROGRAM_INSTRUCTIONS;
+	l->maxFragmentProgramLocalParams = CR_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMS;
+	l->maxFragmentProgramEnvParams = CR_MAX_FRAGMENT_PROGRAM_ENV_PARAMS;
+	l->maxFragmentProgramTemps = CR_MAX_FRAGMENT_PROGRAM_TEMPS;
+	l->maxFragmentProgramAttribs = CR_MAX_FRAGMENT_PROGRAM_ATTRIBS;
+	l->maxFragmentProgramAddressRegs = CR_MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
+	l->maxFragmentProgramAluInstructions = CR_MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS;
+	l->maxFragmentProgramTexInstructions = CR_MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS;
+	l->maxFragmentProgramTexIndirections = CR_MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS;
+#endif
+#ifdef CR_ARB_vertex_program
+	l->maxVertexProgramInstructions = CR_MAX_VERTEX_PROGRAM_INSTRUCTIONS;
+	l->maxVertexProgramLocalParams = CR_MAX_VERTEX_PROGRAM_LOCAL_PARAMS;
+	l->maxVertexProgramEnvParams = CR_MAX_VERTEX_PROGRAM_ENV_PARAMS;
+	l->maxVertexProgramTemps = CR_MAX_VERTEX_PROGRAM_TEMPS;
+	l->maxVertexProgramAttribs = CR_MAX_VERTEX_PROGRAM_ATTRIBS;
+	l->maxVertexProgramAddressRegs = CR_MAX_VERTEX_PROGRAM_ADDRESS_REGS;
 #endif
 
 	l->extensions = (GLubyte *) crStrdup(crExtensions);
@@ -164,9 +195,6 @@ GLubyte * crStateMergeExtensions(GLuint n, const GLubyte **extensions)
 	return (GLubyte *) result;
 }
 
-
-
-
 static GLboolean hasExtension(const char *haystack, const char *needle)
 {
 	const int needleLen = crStrlen(needle);
@@ -186,14 +214,16 @@ static GLboolean hasExtension(const char *haystack, const char *needle)
  * Examine the context's extension string and set the boolean extension
  * flags accordingly.  This is to be called during context initialization.
  */
-void
-crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
+void crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
 {
 	/* init all booleans to false */
 	crMemZero(extensions, sizeof(CRExtensionState));
 
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_depth_texture"))
 		extensions->ARB_depth_texture = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_fragment_program"))
+		extensions->ARB_fragment_program = GL_TRUE;
 
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_imaging"))
 		extensions->ARB_imaging = GL_TRUE;
@@ -244,6 +274,9 @@ crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_transpose_matrix"))
 		extensions->ARB_transpose_matrix = GL_TRUE;
 
+	if (hasExtension((const char*)limits->extensions, "GL_ARB_vertex_program"))
+		extensions->ARB_vertex_program = GL_TRUE;
+
 	if (hasExtension((const char*)limits->extensions, "GL_ARB_window_pos"))
 		extensions->ARB_window_pos = GL_TRUE;
 
@@ -277,6 +310,9 @@ crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
 	if (hasExtension((const char*)limits->extensions, "GL_EXT_separate_specular_color"))
 		extensions->EXT_separate_specular_color = GL_TRUE;
 
+	if (hasExtension((const char*)limits->extensions, "GL_EXT_shadow_funcs"))
+		extensions->EXT_shadow_funcs = GL_TRUE;
+
 	if (hasExtension((const char*)limits->extensions, "GL_EXT_stencil_wrap"))
 		extensions->EXT_stencil_wrap = GL_TRUE;
 
@@ -296,6 +332,9 @@ crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
 	if (hasExtension((const char*)limits->extensions, "GL_NV_fog_distance"))
 		extensions->NV_fog_distance = GL_TRUE;
 
+	if (hasExtension((const char*)limits->extensions, "GL_NV_fragment_program"))
+		extensions->NV_fragment_program = GL_TRUE;
+
 	if (hasExtension((const char*)limits->extensions, "GL_NV_register_combiners"))
 		extensions->NV_register_combiners = GL_TRUE;
 
@@ -305,11 +344,36 @@ crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
 	if (hasExtension((const char*)limits->extensions, "GL_NV_texgen_reflection"))
 		extensions->NV_texgen_reflection = GL_TRUE;
 
+	if (hasExtension((const char*)limits->extensions, "GL_NV_texture_rectangle")
+			|| hasExtension((const char*)limits->extensions, "GL_EXT_texture_rectangle"))
+		extensions->NV_texture_rectangle = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_NV_vertex_program"))
+		extensions->NV_vertex_program = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_NV_vertex_program1_1"))
+		extensions->NV_vertex_program1_1 = GL_TRUE;
+
+	if (hasExtension((const char*)limits->extensions, "GL_NV_vertex_program2"))
+		extensions->NV_vertex_program2 = GL_TRUE;
+
 	if (hasExtension((const char*)limits->extensions, "GL_EXT_texture3D"))
 		extensions->EXT_texture3D = GL_TRUE;
 
 	if (hasExtension((const char*)limits->extensions, "GL_SGIS_generate_mipmap"))
 		extensions->SGIS_generate_mipmap = GL_TRUE;
+
+	if (extensions->NV_vertex_program2)
+		limits->maxVertexProgramEnvParams = 256;
+	else
+		limits->maxVertexProgramEnvParams = 96;
+
+	if (extensions->NV_vertex_program || extensions->ARB_vertex_program)
+		extensions->any_vertex_program = GL_TRUE;
+	if (extensions->NV_fragment_program || extensions->ARB_fragment_program)
+		extensions->any_fragment_program = GL_TRUE;
+	if (extensions->any_vertex_program || extensions->any_fragment_program)
+		extensions->any_program = GL_TRUE;
 
 	/* Now, determine what level of OpenGL we support */
 	if (extensions->ARB_multisample &&
@@ -334,6 +398,7 @@ crStateExtensionsInit( CRLimitsState *limits, CRExtensionState *extensions )
 				extensions->EXT_fog_coord &&
 				extensions->EXT_multi_draw_arrays &&
 				extensions->EXT_secondary_color &&
+				extensions->EXT_shadow_funcs  &&
 				extensions->EXT_stencil_wrap &&
 				extensions->SGIS_generate_mipmap) {
 			extensions->version = (const GLubyte *) "1.4 Chromium " CR_VERSION;

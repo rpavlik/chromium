@@ -34,6 +34,13 @@ typedef struct {
 	wqnode *waiting, *tail;
 } CRServerSemaphore;
 
+typedef struct {
+	GLuint id;
+  GLint projParamStart;
+	GLfloat projMat[16];  /* projection matrix, accumulated via calls to */
+                        /* glProgramLocalParameterARB, glProgramParameterNV */
+} CRServerProgram;
+
 void crServerGatherConfiguration(char *mothership);
 void crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural );
 void crServerInitializeTiling(CRMuralInfo *mural);

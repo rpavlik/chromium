@@ -153,19 +153,14 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	}
 	if (mask & GL_CURRENT_BIT)
 	{
-		a->currentStack[a->currentStackDepth].color = g->current.color;
-		a->currentStack[a->currentStackDepth].index = g->current.index;
-		a->currentStack[a->currentStackDepth].normal = g->current.normal;
-		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
+		for (i = 0 ; i < CR_MAX_VERTEX_ATTRIBS ; i++)
 		{
-			a->currentStack[a->currentStackDepth].texCoord[i] = g->current.texCoord[i];
+			COPY_4V(a->currentStack[a->currentStackDepth].attrib[i] , g->current.vertexAttrib[i]);
+			COPY_4V(a->currentStack[a->currentStackDepth].rasterAttrib[i] , g->current.rasterAttrib[i]);
 		}
-		a->currentStack[a->currentStackDepth].rasterPos = g->current.rasterPos;
 		a->currentStack[a->currentStackDepth].rasterValid = g->current.rasterValid;
-		a->currentStack[a->currentStackDepth].rasterColor = g->current.rasterColor;
-		a->currentStack[a->currentStackDepth].rasterIndex = g->current.rasterIndex;
-		a->currentStack[a->currentStackDepth].rasterTexture = g->current.rasterTexture;
 		a->currentStack[a->currentStackDepth].edgeFlag = g->current.edgeFlag;
+		a->currentStack[a->currentStackDepth].colorIndex = g->current.colorIndex;
 		a->currentStackDepth++;
 	}
 	if (mask & GL_DEPTH_BUFFER_BIT)
@@ -233,6 +228,9 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 #endif
 #ifdef CR_ARB_texture_cube_map
 			a->enableStack[a->enableStackDepth].textureCubeMap[i] = g->texture.unit[i].enabledCubeMap;
+#endif
+#ifdef CR_NV_texture_rectangle
+			a->enableStack[a->enableStackDepth].textureRect[i] = g->texture.unit[i].enabledRect;
 #endif
 			a->enableStack[a->enableStackDepth].textureGenS[i] = g->texture.unit[i].textureGen.s;
 			a->enableStack[a->enableStackDepth].textureGenT[i] = g->texture.unit[i].textureGen.t;
@@ -443,6 +441,9 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 #ifdef CR_ARB_texture_cube_map
 			copy_texobj(&tState->unit[i].SavedCubeMap, g->texture.unit[i].currentTextureCubeMap, GL_TRUE);
 #endif
+#ifdef CR_NV_texture_rectangle
+			copy_texobj(&tState->unit[i].SavedRect, g->texture.unit[i].currentTextureRect, GL_TRUE);
+#endif
 		}
 		a->textureStackDepth++;
 	}
@@ -578,29 +579,19 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			return;
 		}
 		a->currentStackDepth--;
-		g->current.color = a->currentStack[a->currentStackDepth].color;
-		g->current.index = a->currentStack[a->currentStackDepth].index;
-		g->current.normal = a->currentStack[a->currentStackDepth].normal;
-		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
+		for (i = 0 ; i < CR_MAX_VERTEX_ATTRIBS ; i++)
 		{
-			g->current.texCoord[i] = a->currentStack[a->currentStackDepth].texCoord[i];
+			COPY_4V(g->current.vertexAttrib[i], a->currentStack[a->currentStackDepth].attrib[i]);
+			COPY_4V(g->current.rasterAttrib[i],  a->currentStack[a->currentStackDepth].rasterAttrib[i]);
+			DIRTY(sb->current.vertexAttrib[i], g->neg_bitid);
 		}
-		g->current.rasterPos = a->currentStack[a->currentStackDepth].rasterPos;
 		g->current.rasterValid = a->currentStack[a->currentStackDepth].rasterValid;
-		g->current.rasterColor = a->currentStack[a->currentStackDepth].rasterColor;
-		g->current.rasterIndex = a->currentStack[a->currentStackDepth].rasterIndex;
-		g->current.rasterTexture = a->currentStack[a->currentStackDepth].rasterTexture;
 		g->current.edgeFlag = a->currentStack[a->currentStackDepth].edgeFlag;
+		g->current.colorIndex = a->currentStack[a->currentStackDepth].colorIndex;
 		DIRTY(sb->current.dirty, g->neg_bitid);
-		DIRTY(sb->current.color, g->neg_bitid);
-		DIRTY(sb->current.index, g->neg_bitid);
-		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
-		{
-			DIRTY(sb->current.texCoord[i], g->neg_bitid);
-		}
-		DIRTY(sb->current.normal, g->neg_bitid);
-		DIRTY(sb->current.raster, g->neg_bitid);
 		DIRTY(sb->current.edgeFlag, g->neg_bitid);
+		DIRTY(sb->current.colorIndex, g->neg_bitid);
+		DIRTY(sb->current.rasterPos, g->neg_bitid);
 	}
 	if (mask & GL_DEPTH_BUFFER_BIT)
 	{
@@ -675,6 +666,9 @@ void STATE_APIENTRY crStatePopAttrib(void)
 #endif
 #ifdef CR_ARB_texture_cube_map
 			g->texture.unit[i].enabledCubeMap = a->enableStack[a->enableStackDepth].textureCubeMap[i];
+#endif
+#ifdef CR_NV_texture_rectangle
+			g->texture.unit[i].enabledRect = a->enableStack[a->enableStackDepth].textureRect[i];
 #endif
 			g->texture.unit[i].textureGen.s = a->enableStack[a->enableStackDepth].textureGenS[i];
 			g->texture.unit[i].textureGen.t = a->enableStack[a->enableStackDepth].textureGenT[i];
@@ -1042,6 +1036,10 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->texture.unit[i].currentTextureCubeMap = crStateTextureGet(GL_TEXTURE_CUBE_MAP_ARB, tState->unit[i].SavedCubeMap.name);
 			copy_texobj(g->texture.unit[i].currentTextureCubeMap, &tState->unit[i].SavedCubeMap, GL_FALSE);
 #endif
+#ifdef CR_NV_texture_rectangle
+			g->texture.unit[i].currentTextureRect = crStateTextureGet(GL_TEXTURE_CUBE_MAP_ARB, tState->unit[i].SavedRect.name);
+			copy_texobj(g->texture.unit[i].currentTextureRect, &tState->unit[i].SavedRect, GL_FALSE);
+#endif
 		}
 		DIRTY(sb->texture.dirty, g->neg_bitid);
 		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
@@ -1051,7 +1049,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			DIRTY(sb->texture.objGen[i], g->neg_bitid);
 			DIRTY(sb->texture.eyeGen[i], g->neg_bitid);
 			DIRTY(sb->texture.envBit[i], g->neg_bitid);
-			DIRTY(sb->texture.gen[i], g->neg_bitid);
+			DIRTY(sb->texture.genMode[i], g->neg_bitid);
 		}
 
 		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
@@ -1062,11 +1060,17 @@ void STATE_APIENTRY crStatePopAttrib(void)
 #ifdef CR_ARB_texture_cube_map
 			DIRTY(g->texture.unit[i].currentTextureCubeMap->dirty, g->neg_bitid);
 #endif
+#ifdef CR_NV_texture_rectangle
+			DIRTY(g->texture.unit[i].currentTextureRect->dirty, g->neg_bitid);
+#endif
 			DIRTY(g->texture.unit[i].currentTexture1D->paramsBit[i], g->neg_bitid);
 			DIRTY(g->texture.unit[i].currentTexture2D->paramsBit[i], g->neg_bitid);
 			DIRTY(g->texture.unit[i].currentTexture3D->paramsBit[i], g->neg_bitid);
 #ifdef CR_ARB_texture_cube_map
 			DIRTY(g->texture.unit[i].currentTextureCubeMap->paramsBit[i], g->neg_bitid);
+#endif
+#ifdef CR_NV_texture_rectangle
+			DIRTY(g->texture.unit[i].currentTextureRect->paramsBit[i], g->neg_bitid);
 #endif
 		}
 	}

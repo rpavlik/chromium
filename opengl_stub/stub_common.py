@@ -24,6 +24,16 @@ def DecoderName( glName ):
 	return "crUnpack" + glName
 
 def OpcodeName( glName ):
+	# This is a bit of a hack.  We want to implement the glVertexAttrib*NV
+	# functions in terms of the glVertexAttrib*ARB opcodes.
+	m = re.search( "VertexAttrib([1234](ub|b|us|s|ui|i|f|d|)v?)NV", glName )
+	if m:
+		dataType = m.group(1)
+		if dataType == "4ub":
+			dataType = "4Nub"
+		elif dataType == "4ubv":
+			dataType = "4Nubv"
+		glName = "VertexAttrib" + dataType + "ARB"
 	return "CR_" + string.upper( glName ) + "_OPCODE"
 
 def ExtendedOpcodeName( glName ):
@@ -185,7 +195,7 @@ def CallString( arg_names ):
 	return output
 
 def IsVector ( func_name ) :
-	m = re.search( r"^(SecondaryColor|Color|EdgeFlag|EvalCoord|Index|Normal|TexCoord|MultiTexCoord|Vertex|RasterPos|VertexAttrib|FogCoord|WindowPos|ProgramParameter)([1234]?)(ub|b|us|s|ui|i|f|d|)v(ARB|EXT|NV)?$", func_name )
+	m = re.search( r"^(SecondaryColor|Color|EdgeFlag|EvalCoord|Index|Normal|TexCoord|MultiTexCoord|Vertex|RasterPos|VertexAttrib|FogCoord|WindowPos|ProgramParameter)([1234]?)N?(ub|b|us|s|ui|i|f|d|)v(ARB|EXT|NV)?$", func_name )
 	if m :
 		if m.group(2) :
 			return string.atoi( m.group(2) )

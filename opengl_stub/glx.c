@@ -20,6 +20,32 @@ static GLXDrawable currentDrawable = 0;
 
 
 /*
+ * Return string for a GLX error code
+ */
+static const char *glx_error_string(int err)
+{
+	static const char *glxErrors[] = {
+		"none",
+		"GLX_BAD_SCREEN",
+		"GLX_BAD_ATTRIBUTE",
+		"GLX_NO_EXTENSION",
+		"GLX_BAD_VISUAL",
+		"GLX_BAD_CONTEXT",
+		"GLX_BAD_VALUE",
+		"GLX_BAD_ENUM"
+	};
+	if (err > 0 && err < 8) {
+		return glxErrors[err];
+	}
+	else {
+		static char tmp[100];
+		sprintf(tmp, "0x%x", err);
+		return tmp;
+	}
+}
+
+
+/*
  * This function is used to satisfy an application's calls to glXChooseVisual
  * when the display server many not even support GLX.
  */
@@ -361,6 +387,9 @@ Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 		XSync(dpy, 0); /* sync to force window creation on the server */
 	}
 
+	currentDisplay = dpy;
+	currentDrawable = drawable;
+
 	retVal = stubMakeCurrent(window, context);
 	return retVal;
 }
@@ -402,7 +431,8 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			return_val = stub.wsInterface.glXGetConfig( dpy, vis, attrib, value );
 			if (return_val)
 			{
-				crDebug("faker native glXGetConfig returning 0x%x\n", return_val);
+				crDebug("faker native glXGetConfig returned %s",
+								glx_error_string(return_val));
 			}
 			return return_val;
 		}
@@ -696,3 +726,109 @@ CR_GLXFuncPtr glXGetProcAddress( const GLubyte *name )
 {
 	return (CR_GLXFuncPtr) crGetProcAddress( (const char *) name );
 }
+
+
+GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
+{
+	(void) dpy;
+	(void) screen;
+	(void) nelements;
+	crWarning("glXGetFBConfigs not implemented by Chromium");
+	return NULL;
+}
+
+GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfig config,
+																	 unsigned int width, unsigned int height,
+																	 const int *attrib_list)
+{
+	(void) dpy;
+	(void) config;
+	(void) width;
+	(void) height;
+	(void) attrib_list;
+	crWarning("glXCreateGLXPbufferSGIX not implemented by Chromium");
+	return 0;
+}
+
+void glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf)
+{
+	(void) dpy;
+	(void) pbuf;
+	crWarning("glXDestroyGLXPbufferSGIX not implemented by Chromium");
+}
+
+
+void glXQueryGLXPbufferSGIX(Display *dpy,	GLXPbuffer pbuf,
+														int attribute, unsigned int *value)
+{
+	(void) dpy;
+	(void) pbuf;
+	(void) attribute;
+	(void) value;
+	crWarning("glXQueryGLXPbufferSGIX not implemented by Chromium");
+}
+
+int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config,
+														 int attribute, int *value)
+{
+	(void) dpy;
+	(void) config;
+	(void) attribute;
+	(void) value;
+	crWarning("glXGetFBConfigAttribSGIX not implemented by Chromium");
+	return 0;
+}
+
+GLXFBConfig *glXChooseFBConfigSGIX(Display *dpy, int screen,
+																	 const int *attrib_list, int *nelements)
+{
+	(void) dpy;
+	(void) screen;
+	(void) attrib_list;
+	(void) nelements;
+	crWarning("glXChooseFBConfigSGIX not implemented by Chromium");
+	return NULL;
+}
+
+GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display *dpy,
+																					 GLXFBConfig config,
+																					 Pixmap pixmap)
+{
+	(void) dpy;
+	(void) config;
+	(void) pixmap;
+	crWarning("glXCreateGLXPixmapWithConfigSGIX not implemented by Chromium");
+	return 0;	}
+
+GLXContext glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfig config,
+																					int render_type,
+																					GLXContext share_list,
+																					Bool direct)
+{
+	(void) dpy;
+	(void) config;
+	(void) render_type;
+	(void) share_list;
+	(void) direct;
+	crWarning("glXCreateContextWithConfigSGIX not implemented by Chromium");
+	return NULL;
+}
+
+XVisualInfo *glXGetVisualFromFBConfigSGIX(Display *dpy,
+																					GLXFBConfig config)
+{
+	(void) dpy;
+	(void) config;
+	crWarning("glXGetVisualFromFBConfigSGIX not implemented by Chromium");
+	return NULL;
+}
+
+GLXFBConfig glXGetFBConfigFromVisualSGIX(Display *dpy,
+																				 XVisualInfo *vis)
+{
+	(void) dpy;
+	(void) vis;
+	crWarning("glXGetFBConfigFromVisualSGIX not implemented by Chromium");
+	return NULL;
+}
+

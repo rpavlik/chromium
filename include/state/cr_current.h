@@ -13,34 +13,42 @@
 extern "C" {
 #endif
 
+
+#define VERT_ATTRIB_POS      0
+#define VERT_ATTRIB_WEIGHT   1
+#define VERT_ATTRIB_NORMAL   2
+#define VERT_ATTRIB_COLOR0   3
+#define VERT_ATTRIB_COLOR1   4
+#define VERT_ATTRIB_FOG      5
+#define VERT_ATTRIB_SIX      6
+#define VERT_ATTRIB_SEVEN    7
+#define VERT_ATTRIB_TEX0     8
+#define VERT_ATTRIB_TEX1     9
+#define VERT_ATTRIB_TEX2     10
+#define VERT_ATTRIB_TEX3     11
+#define VERT_ATTRIB_TEX4     12
+#define VERT_ATTRIB_TEX5     13
+#define VERT_ATTRIB_TEX6     14
+#define VERT_ATTRIB_TEX7     15
+#define VERT_ATTRIB_MAX      16
+
+
 typedef struct {
 	CRbitvalue  dirty[CR_MAX_BITARRAY];
-	CRbitvalue  enable[CR_MAX_BITARRAY];
-	CRbitvalue  color[CR_MAX_BITARRAY];
-	CRbitvalue  secondaryColor[CR_MAX_BITARRAY];
-	CRbitvalue  index[CR_MAX_BITARRAY];
-	CRbitvalue  texCoord[CR_MAX_TEXTURE_UNITS][CR_MAX_BITARRAY];
-	CRbitvalue  normal[CR_MAX_BITARRAY];
-	CRbitvalue  raster[CR_MAX_BITARRAY];
-	CRbitvalue  edgeFlag[CR_MAX_BITARRAY];
-#ifdef CR_EXT_fog_coord
-	CRbitvalue  fogCoord[CR_MAX_BITARRAY];
-#endif
+	/* Regardless of NV_vertex_program, we use this array */
 	CRbitvalue  vertexAttrib[CR_MAX_VERTEX_ATTRIBS][CR_MAX_BITARRAY];
+	CRbitvalue  edgeFlag[CR_MAX_BITARRAY];
+	CRbitvalue  colorIndex[CR_MAX_BITARRAY];
+	CRbitvalue  rasterPos[CR_MAX_BITARRAY];
 } CRCurrentBits;
+
 
 typedef struct {
 	/* Pre-transform values */
-	GLvectorf	pos;
-	GLcolorf	color;
-	GLcolorf	secondaryColor;
-	GLtexcoordf	texCoord[CR_MAX_TEXTURE_UNITS];
-	GLvectorf	normal;
-	GLboolean	edgeFlag;
-	GLfloat		index;
-#ifdef CR_EXT_fog_coord
-	GLfloat		fogCoord;
-#endif
+	/* Regardless of NV_vertex_program, we use this array */
+	GLfloat   attrib[CR_MAX_VERTEX_ATTRIBS][4];
+	GLboolean edgeFlag;
+	GLfloat   colorIndex;
 	/* Post-transform values */
 	GLvectorf	eyePos;
 	GLvectorf	clipPos;
@@ -48,48 +56,27 @@ typedef struct {
 } CRVertex;
 
 
-/*
- * XXX NV vertex attribs should alias conventional attribs.
- */
 typedef struct {
-	/* XXX use a CRVertex for this state */
-	GLcolorf     color;
-	GLcolorf     secondaryColor;
-	GLfloat      index;
-	GLtexcoordf  texCoord[CR_MAX_TEXTURE_UNITS];
-	GLvectorf    normal;
-	GLboolean    edgeFlag;
-	GLvectorf    vertexAttrib[CR_MAX_VERTEX_ATTRIBS];
-#ifdef CR_EXT_fog_coord
-	GLfloat      fogCoord;
-#endif
-
-	/* XXX use a CRVertex for this state */
-	GLcolorf     colorPre;
-	GLcolorf     secondaryColorPre;
-	GLfloat      indexPre;
-	GLtexcoordf  texCoordPre[CR_MAX_TEXTURE_UNITS];
-	GLvectorf    normalPre;
-	GLboolean    edgeFlagPre;
-	GLvectorf    vertexAttribPre[CR_MAX_VERTEX_ATTRIBS];
-#ifdef CR_EXT_fog_coord
-	GLfloat      fogCoordPre;
-#endif
+	/* Regardless of NV_vertex_program, we use this array */
+	GLfloat  vertexAttrib[CR_MAX_VERTEX_ATTRIBS][4];
+	GLfloat  vertexAttribPre[CR_MAX_VERTEX_ATTRIBS][4];
 
 	CRCurrentStatePointers   *current;
 
 	GLvectorf    rasterOrigin;   /* needed for tilesort support */
 
-	/* XXX use a CRVertex for this state */
-	GLvectorf    rasterPos;
-	GLfloat      rasterDistance; /* aka fog coord */
-	GLcolorf     rasterColor;
-	GLcolorf     rasterSecondaryColor;
-	GLtexcoordf  rasterTexture;
-	GLdouble     rasterIndex;
 	GLboolean    rasterValid;
+	GLfloat      rasterAttrib[CR_MAX_VERTEX_ATTRIBS][4];
+	GLfloat      rasterAttribPre[CR_MAX_VERTEX_ATTRIBS][4];
 
-	/* glBegin/End state */
+	GLdouble     rasterIndex;
+	GLboolean    edgeFlag;
+	GLboolean    edgeFlagPre;
+	GLfloat      colorIndex;
+	GLfloat      colorIndexPre;
+
+	/* XXX this isn't really "current" state - move someday */
+	GLuint       attribsUsedMask;  /* for ARB_vertex_program */
 	GLboolean    inBeginEnd;
 	GLenum       mode;
 	GLuint       beginEndMax;

@@ -21,10 +21,10 @@ typedef struct {
 
 typedef struct {
 	GLboolean newEnd;
-	GLuint base;
-	GLuint currentIndex;  /* list being built */
-	GLenum mode;
-	CRHashTable *hash;  /* map display list IDs to CRListEffect structs */
+	GLuint base;          /* set by glListBase */
+	GLuint currentIndex;  /* list currently being built (or zero) */
+	GLenum mode;          /* GL_COMPILE, GL_COMPILE_AND_EXECUTE or zero */
+	CRHashTable *hash;    /* map display list IDs to CRListEffect structs */
 } CRListsState;
 
 /*

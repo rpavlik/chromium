@@ -50,3 +50,16 @@ GetVertexAttribivNV
 GetVertexAttribPointervNV
 GenFencesNV
 GetFenceivNV
+GetProgramLocalParameterdvARB
+GetProgramLocalParameterfvARB
+GetProgramNamedParameterdvNV
+GetProgramNamedParameterfvNV
+GenProgramsARB
+GetVertexAttribdvARB
+GetVertexAttribfvARB
+GetVertexAttribivARB
+GetVertexAttribPointervARB
+GetProgramStringARB
+GetProgramivARB
+GetProgramEnvParameterdvARB
+GetProgramEnvParameterfvARB

@@ -75,7 +75,6 @@ void crUnpackExtendAreProgramsResidentNV(void)
 {
 	GLsizei n = READ_DATA( 8, GLsizei );
 	crError( "AreProgramsResidentNV needs to be special cased!" );
-	crError( "AreProgramsResidentNV needs to be special cased!" );
 	SET_RETURN_PTR( 28 );
 	SET_WRITEBACK_PTR( 36 );
 	(void) cr_unpackDispatch.AreProgramsResidentNV( n, NULL, NULL );
@@ -87,8 +86,8 @@ void crUnpackExtendLoadProgramNV(void)
 	GLenum target = READ_DATA( 8, GLenum );
 	GLuint id = READ_DATA( 12, GLuint );
 	GLsizei len = READ_DATA( 16, GLsizei );
-	crError( "LoadProgramNV needs to be special cased!" );
-	cr_unpackDispatch.LoadProgramNV( target, id, len, NULL );
+	GLvoid *program = DATA_POINTER( 20, GLvoid );
+	cr_unpackDispatch.LoadProgramNV( target, id, len, program );
 }
 
 
@@ -113,4 +112,240 @@ void crUnpackExtendRequestResidentProgramsNV(void)
 	GLsizei n = READ_DATA( 8, GLsizei );
 	crError( "RequestResidentProgramsNV needs to be special cased!" );
 	cr_unpackDispatch.RequestResidentProgramsNV( n, NULL );
+}
+
+
+void crUnpackExtendProgramLocalParameter4fvARB(void)
+{
+	GLenum target = READ_DATA( 8, GLenum );
+	GLuint index = READ_DATA( 12, GLuint );
+	GLfloat params[4];
+	params[0] = READ_DATA( 16, GLfloat );
+	params[1] = READ_DATA( 20, GLfloat );
+	params[2] = READ_DATA( 24, GLfloat );
+	params[3] = READ_DATA( 28, GLfloat );
+	cr_unpackDispatch.ProgramLocalParameter4fvARB( target, index, params );
+}
+
+
+void crUnpackExtendProgramLocalParameter4dvARB(void)
+{
+	GLenum target = READ_DATA( 8, GLenum );
+	GLuint index = READ_DATA( 12, GLuint );
+	GLdouble params[4];
+	params[0] = READ_DOUBLE( 16 );
+	params[1] = READ_DOUBLE( 24 );
+	params[2] = READ_DOUBLE( 32 );
+	params[3] = READ_DOUBLE( 40 );
+	cr_unpackDispatch.ProgramLocalParameter4dvARB( target, index, params );
+}
+
+
+
+void crUnpackExtendProgramNamedParameter4dvNV(void)
+{
+	GLuint id = READ_DATA( 8, GLuint );
+	GLsizei len = READ_DATA( 12, GLsizei );
+	GLdouble params[4];
+	GLubyte *name = crAlloc( len );
+	params[0] = READ_DOUBLE( 16 );
+	params[1] = READ_DOUBLE( 24 );
+	params[2] = READ_DOUBLE( 32 );
+	params[3] = READ_DOUBLE( 40 );
+	crMemcpy( name, DATA_POINTER( 48, GLubyte ), len );
+	cr_unpackDispatch.ProgramNamedParameter4dvNV( id, len, name, params );
+}
+
+void crUnpackExtendProgramNamedParameter4dNV(void)
+{
+	GLuint id = READ_DATA( 8, GLuint );
+	GLsizei len = READ_DATA( 12, GLsizei );
+	GLdouble params[4];
+	GLubyte *name = crAlloc ( len );
+	params[0] = READ_DOUBLE( 16 );
+	params[1] = READ_DOUBLE( 24 );
+	params[2] = READ_DOUBLE( 32 );
+	params[3] = READ_DOUBLE( 40 );
+	crMemcpy( name, DATA_POINTER( 48, GLubyte ), len );
+	cr_unpackDispatch.ProgramNamedParameter4dNV( id, len, name, params[0], params[1], params[2], params[3] );
+}
+
+void crUnpackExtendProgramNamedParameter4fNV(void)
+{
+	GLenum id = READ_DATA( 8, GLuint );
+	GLsizei len = READ_DATA( 12, GLsizei );
+	GLfloat params[4];
+	GLubyte *name = crAlloc( len);
+	params[0] = READ_DATA( 16, GLfloat );
+	params[1] = READ_DATA( 20, GLfloat );
+	params[2] = READ_DATA( 24, GLfloat );
+	params[3] = READ_DATA( 28, GLfloat );
+	crMemcpy( name, DATA_POINTER( 32,  GLubyte ), len );
+	cr_unpackDispatch.ProgramNamedParameter4fNV( id, len, name, params[0], params[1], params[2], params[3] );
+}
+
+void crUnpackExtendProgramNamedParameter4fvNV(void)
+{
+	GLenum id = READ_DATA( 8, GLuint );
+	GLsizei len = READ_DATA( 12, GLsizei );
+	GLfloat params[4];
+	GLubyte *name = crAlloc( len);
+	params[0] = READ_DATA( 16, GLfloat );
+	params[1] = READ_DATA( 20, GLfloat );
+	params[2] = READ_DATA( 24, GLfloat );
+	params[3] = READ_DATA( 28, GLfloat );
+	crMemcpy( name, DATA_POINTER( 32, GLubyte ), len );
+	cr_unpackDispatch.ProgramNamedParameter4fvNV( id, len, name, params );
+}
+
+void crUnpackExtendGetProgramNamedParameterdvNV(void)
+{
+	GLuint id = READ_DATA( 8, GLuint );
+	GLsizei len = READ_DATA( 12, GLsizei );
+	const GLubyte *name = DATA_POINTER( 16, GLubyte );
+	SET_RETURN_PTR( 16+len );
+	SET_WRITEBACK_PTR( 16+len+8 );
+	cr_unpackDispatch.GetProgramNamedParameterdvNV( id, len, name, NULL );
+}
+
+void crUnpackExtendGetProgramNamedParameterfvNV(void)
+{
+	GLuint id = READ_DATA( 8, GLuint );
+	GLsizei len = READ_DATA( 12, GLsizei );
+	const GLubyte *name = DATA_POINTER( 16, GLubyte );
+	SET_RETURN_PTR( 16+len );
+	SET_WRITEBACK_PTR( 16+len+8 );
+	cr_unpackDispatch.GetProgramNamedParameterfvNV( id, len, name, NULL );
+}
+
+void crUnpackExtendProgramStringARB(void)
+{ 
+      GLenum target = READ_DATA( 8, GLenum );
+      GLenum format = READ_DATA( 12, GLuint );
+      GLsizei len = READ_DATA( 16, GLsizei );
+      GLvoid *program = DATA_POINTER( 20, GLvoid );
+      cr_unpackDispatch.ProgramStringARB( target, format, len, program );
+}
+
+void crUnpackExtendGetProgramStringARB(void)
+{
+}
+
+void crUnpackExtendProgramEnvParameter4dvARB(void)
+{
+	GLenum target = READ_DATA( 8, GLenum );
+	GLuint index = READ_DATA( 12, GLuint );
+	GLdouble params[4];
+	params[0] = READ_DOUBLE( 16 );
+	params[1] = READ_DOUBLE( 24 );
+	params[2] = READ_DOUBLE( 32 );
+	params[3] = READ_DOUBLE( 40 );
+	cr_unpackDispatch.ProgramEnvParameter4dvARB( target, index, params );
+}
+
+void crUnpackExtendProgramEnvParameter4fvARB(void)
+{
+	GLenum target = READ_DATA( 8, GLenum );
+	GLuint index = READ_DATA( 12, GLuint );
+	GLfloat params[4];
+	params[0] = READ_DATA( 16, GLfloat );
+	params[1] = READ_DATA( 20, GLfloat );
+	params[2] = READ_DATA( 24, GLfloat );
+	params[3] = READ_DATA( 28, GLfloat );
+	cr_unpackDispatch.ProgramEnvParameter4fvARB( target, index, params );
+}
+
+void crUnpackExtendDeleteProgramsARB(void)
+{
+	GLsizei n = READ_DATA( 8, GLsizei );
+	crError( "DeleteProgramsARB needs to be special cased!" );
+	cr_unpackDispatch.DeleteProgramsARB( n, NULL );
+}
+
+void crUnpackVertexAttrib4NbvARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLbyte *v = (const GLbyte *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4NbvARB( index, v );
+	INCR_DATA_PTR( 8 );
+}
+
+void crUnpackVertexAttrib4NivARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLint *v = (const GLint *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4NivARB( index, v );
+	INCR_DATA_PTR( 20 );
+}
+
+void crUnpackVertexAttrib4NsvARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLshort *v = (const GLshort *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4NsvARB( index, v );
+	INCR_DATA_PTR( 12 );
+}
+
+void crUnpackVertexAttrib4NubvARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLubyte *v = (const GLubyte *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4NubvARB( index, v );
+	INCR_DATA_PTR( 8 );
+}
+
+void crUnpackVertexAttrib4NuivARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLuint *v = (const GLuint *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4NuivARB( index, v );
+	INCR_DATA_PTR( 20 );
+}
+
+void crUnpackVertexAttrib4NusvARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLushort *v = (const GLushort *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4NusvARB( index, v );
+	INCR_DATA_PTR( 12 );
+}
+
+void crUnpackVertexAttrib4bvARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLbyte *v = (const GLbyte *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4bvARB( index, v );
+	INCR_DATA_PTR( 8 );
+}
+
+void crUnpackVertexAttrib4ivARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLint *v = (const GLint *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4ivARB( index, v );
+	INCR_DATA_PTR( 20 );
+}
+
+void crUnpackVertexAttrib4ubvARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLubyte *v = (const GLubyte *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4ubvARB( index, v );
+	INCR_DATA_PTR( 8 );
+}
+
+void crUnpackVertexAttrib4uivARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLuint *v = (const GLuint *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4uivARB( index, v );
+	INCR_DATA_PTR( 20 );
+}
+
+void crUnpackVertexAttrib4usvARB(void)
+{
+	GLuint index = READ_DATA( 0, GLuint );
+	const GLushort *v = (const GLushort *) (cr_unpackData + 4);
+	cr_unpackDispatch.VertexAttrib4usvARB( index, v );
+	INCR_DATA_PTR( 12 );
 }

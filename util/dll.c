@@ -14,7 +14,17 @@
 #include <dlfcn.h>
 #endif
 
-CRDLL *crDLLOpen( const char *dllname )
+/*
+ * Open the named shared library.
+ * If resolveGlobal is non-zero, unresolved symbols can be satisfied by
+ * any matching symbol already defined globally.  Otherwise, if resolveGlobal
+ * is zero, unresolved symbols should be resolved using symbols in that
+ * object (in preference to global symbols).
+ * NOTE: this came about because we found that for libGL, we need the
+ * global-resolve option but for SPU's we need the non-global option (consider
+ * the state tracker duplicated in the array, tilesort, etc. SPUs).
+ */
+CRDLL *crDLLOpen( const char *dllname, int resolveGlobal )
 {
 	CRDLL *dll;
 	char *dll_err;
@@ -26,7 +36,10 @@ CRDLL *crDLLOpen( const char *dllname )
 	dll->hinstLib = LoadLibrary( dllname );
 	dll_err = NULL;
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined (DARWIN) || defined(SunOS) || defined(OSF1)
-	dll->hinstLib = dlopen( dllname, RTLD_LAZY );
+        if (resolveGlobal)
+           dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL );
+        else
+           dll->hinstLib = dlopen( dllname, RTLD_LAZY );
 	dll_err = (char*) dlerror();
 #else
 #error DSO

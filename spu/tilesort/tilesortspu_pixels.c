@@ -56,13 +56,13 @@ static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum f
 	tilesortspuFlush( thread );
 
 	/* min x, y, z, w */
-	screen_bbox[0] = (c->rasterPos.x) / v->viewportW;
-	screen_bbox[1] = (c->rasterPos.y) / v->viewportH;
+	screen_bbox[0] = (c->rasterAttrib[VERT_ATTRIB_POS][0]) / v->viewportW;
+	screen_bbox[1] = (c->rasterAttrib[VERT_ATTRIB_POS][1]) / v->viewportH;
 	screen_bbox[2] = 0.0;
 	screen_bbox[3] = 1.0;
 	/* max x, y, z, w */
-	screen_bbox[4] = (c->rasterPos.x + zoomedWidth) / v->viewportW;
-	screen_bbox[5] = (c->rasterPos.y + zoomedHeight) / v->viewportH;
+	screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] + zoomedWidth) / v->viewportW;
+	screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] + zoomedHeight) / v->viewportH;
 	screen_bbox[6] = 0.0;
 	screen_bbox[7] = 1.0;
 
@@ -162,13 +162,13 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	}
 
 	/* min x, y, z, w */
-	screen_bbox[0] = (c->rasterPos.x)/v->viewportW;
-	screen_bbox[1] = (c->rasterPos.y)/v->viewportH;
+	screen_bbox[0] = (c->rasterAttrib[VERT_ATTRIB_POS][0])/v->viewportW;
+	screen_bbox[1] = (c->rasterAttrib[VERT_ATTRIB_POS][1])/v->viewportH;
 	screen_bbox[2] = 0.0;
 	screen_bbox[3] = 1.0;
 	/* max x, y, z, w */
-	screen_bbox[4] = (c->rasterPos.x + width)/v->viewportW;
-	screen_bbox[5] = (c->rasterPos.y + height)/v->viewportH;
+	screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] + width)/v->viewportW;
+	screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] + height)/v->viewportH;
 	screen_bbox[6] = 0.0;
 	screen_bbox[7] = 1.0;
 
@@ -450,13 +450,13 @@ static void tilesortspu_exec_Bitmap(
 		 ** relevant servers.
 		 **/
 		/* min x, y, z, w */
-		screen_bbox[0] = (c->rasterPos.x - xorig)/v->viewportW;
-		screen_bbox[1] = (c->rasterPos.y - yorig)/v->viewportH;
+		screen_bbox[0] = (c->rasterAttrib[VERT_ATTRIB_POS][0] - xorig)/v->viewportW;
+		screen_bbox[1] = (c->rasterAttrib[VERT_ATTRIB_POS][1] - yorig)/v->viewportH;
 		screen_bbox[2] = 0.0;
 		screen_bbox[3] = 1.0;
 		/* max x, y, z, w */
-		screen_bbox[4] = (c->rasterPos.x - xorig + width) / v->viewportW;
-		screen_bbox[5] = (c->rasterPos.y - yorig + height) / v->viewportH;
+		screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] - xorig + width) / v->viewportW;
+		screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] - yorig + height) / v->viewportH;
 		screen_bbox[6] = 0.0;
 		screen_bbox[7] = 1.0;
 	}
@@ -498,8 +498,8 @@ static void tilesortspu_exec_Bitmap(
 
 	if (ctx->extensions.IBM_rasterpos_clip) {
 		/* update our local notion of the raster pos, but don't set dirty state */
-		ctx->current.rasterPos.x += xmove;
-		ctx->current.rasterPos.y += ymove;
+		ctx->current.rasterAttrib[VERT_ATTRIB_POS][0] += xmove;
+		ctx->current.rasterAttrib[VERT_ATTRIB_POS][1] += ymove;
 	}
 	else {
 		/* update state and set dirty flag */
@@ -546,6 +546,8 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 		}
 	}
 }
+
+
 /* 
  * Here we want to flush texture state before we call PixelTransfer*().
  * This will ensure that situations such as:
@@ -569,7 +571,8 @@ static void pixeltransfer_flush(void)
 	tex_state[0] = 
 	tex_state[1] = 
 	tex_state[2] = 
-	tex_state[3] = 0;
+	tex_state[3] = 
+	tex_state[4] = 0;
 	
 	crStateGetIntegerv(GL_ACTIVE_TEXTURE_ARB, &orig_active_unit);
 	/* 
@@ -598,6 +601,12 @@ static void pixeltransfer_flush(void)
 			crStateGetBooleanv(GL_TEXTURE_CUBE_MAP_ARB, &tex_state[3]);
 		if (tex_state[3])
 			crStateDisable(GL_TEXTURE_CUBE_MAP_ARB);
+#endif
+#ifdef CR_NV_texture_rectangle
+		if (ctx->extensions.NV_texture_rectangle)
+			crStateGetBooleanv(GL_TEXTURE_RECTANGLE_NV, &tex_state[4]);
+		if (tex_state[4])
+			crStateDisable(GL_TEXTURE_RECTANGLE_NV);
 #endif
  	
 		/* 

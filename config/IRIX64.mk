@@ -81,3 +81,7 @@ ifeq ($(QT),1)
     UIC=$(QTDIR)/bin/uic
 endif
 
+ifeq ($(USE_DMX), 1)
+CXXFLAGS += -DUSE_DMX
+CFLAGS += -DUSE_DMX
+endif

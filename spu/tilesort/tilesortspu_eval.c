@@ -787,54 +787,54 @@ void TILESORTSPU_APIENTRY tilesortspu_EvalCoord1f( GLfloat u )
 {
    GET_CONTEXT(ctx);
    CRCurrentState *c = &(ctx->current);
-   GLfloat normal[3], texcoord[CR_MAX_TEXTURE_UNITS][4], color[4];
+   GLfloat normal[4], texcoord[CR_MAX_TEXTURE_UNITS][4], color[4];
    GLfloat index;
    GLint i;
 
    CRASSERT(CR_MAX_TEXTURE_UNITS >= ctx->limits.maxTextureUnits);
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
-	   crMemcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
+		 COPY_4V(texcoord[i], c->vertexAttrib[VERT_ATTRIB_TEX0 + i]);
 
-   crMemcpy(&normal, &c->normal, 3 * sizeof(GLfloat));
-   crMemcpy(&color, &c->color, 4 * sizeof(GLfloat));
-   index = c->index;
+   COPY_4V(normal, c->vertexAttrib[VERT_ATTRIB_NORMAL]);
+   COPY_4V(color, c->vertexAttrib[VERT_ATTRIB_COLOR0]);
+   index = c->colorIndex;
 
    do_EvalCoord1f( u );
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
-	   crMemcpy (&c->texCoord[i], &texcoord[i], 4 * sizeof(GLfloat));
+		 COPY_4V(c->vertexAttrib[VERT_ATTRIB_TEX0 + i], texcoord[i]);
 
-   crMemcpy(&c->normal, &normal, 3 * sizeof(GLfloat));
-   crMemcpy(&c->color, &color, 4 * sizeof(GLfloat));
-   c->index = index;
+   COPY_4V(c->vertexAttrib[VERT_ATTRIB_NORMAL], normal);
+   COPY_4V(c->vertexAttrib[VERT_ATTRIB_COLOR0], color);
+   c->colorIndex = index;
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_EvalCoord2f( GLfloat u, GLfloat v )
 {
    GET_CONTEXT(ctx);
    CRCurrentState *c = &(ctx->current);
-   GLfloat normal[3], texcoord[CR_MAX_TEXTURE_UNITS][4], color[4];
+   GLfloat normal[4], texcoord[CR_MAX_TEXTURE_UNITS][4], color[4];
    GLfloat index;
    GLint i;
 
    CRASSERT(CR_MAX_TEXTURE_UNITS >= ctx->limits.maxTextureUnits);
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
-	   crMemcpy (&texcoord[i], &c->texCoord[i], 4 * sizeof(GLfloat));
+	   COPY_4V(texcoord[i], c->vertexAttrib[VERT_ATTRIB_TEX0 + i]);
 
-   crMemcpy(&normal, &c->normal, 3 * sizeof(GLfloat));
-   crMemcpy(&color, &c->color, 4 * sizeof(GLfloat));
-   index = c->index;
+   COPY_4V(normal, c->vertexAttrib[VERT_ATTRIB_NORMAL]);
+   COPY_4V(color, c->vertexAttrib[VERT_ATTRIB_COLOR0]);
+   index = c->colorIndex;
 
    do_EvalCoord2f( u, v );
 
    for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
-	   crMemcpy (&c->texCoord[i], &texcoord[i], 4 * sizeof(GLfloat));
+	   COPY_4V(c->vertexAttrib[VERT_ATTRIB_TEX0 + i], texcoord[i]);
 
-   crMemcpy(&c->normal, &normal, 3 * sizeof(GLfloat));
-   crMemcpy(&c->color, &color, 4 * sizeof(GLfloat));
-   c->index = index;
+   COPY_4V(c->vertexAttrib[VERT_ATTRIB_NORMAL], normal);
+   COPY_4V(c->vertexAttrib[VERT_ATTRIB_COLOR0], color);
+   c->colorIndex = index;
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_EvalCoord1fv( const GLfloat *u )

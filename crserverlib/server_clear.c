@@ -133,7 +133,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint f
 		blendSrc = ctx->buffer.blendSrcRGB;
 		blendDst = ctx->buffer.blendDstRGB;
 		mm = ctx->transform.matrixMode;
-		crMemcpy(&col, &ctx->current.color, sizeof(GLcolorf));
+		col.r = ctx->current.vertexAttrib[VERT_ATTRIB_COLOR0][0];
+		col.g = ctx->current.vertexAttrib[VERT_ATTRIB_COLOR0][1];
+		col.b = ctx->current.vertexAttrib[VERT_ATTRIB_COLOR0][2];
+		col.a = ctx->current.vertexAttrib[VERT_ATTRIB_COLOR0][3];
 
 		baseProj = &(cr_server.curClient->currentMural->extents[0].baseProjection);
 	

@@ -102,7 +102,7 @@ mainloop: while ($line = <FILE>) {
 
 	if ($line =~ /%flush/) {
 		if (($current_guard ne "")) {
-			print $tab."INVERTDIRTY($bit->$current_guard, nbitID);\n";
+			print $tab."CLEARDIRTY($bit->$current_guard, nbitID);\n";
 			chop ($tab);
 			print $tab."}\n";
 		}
@@ -121,7 +121,7 @@ mainloop: while ($line = <FILE>) {
 
 ## Close the guardbit and dependancy
   if (($current_guard ne "") && ($current_guard ne $guardbit)) {
-	print $tab."INVERTDIRTY($bit->$current_guard, nbitID);\n";
+	print $tab."CLEARDIRTY($bit->$current_guard, nbitID);\n";
 	chop ($tab);
 	print $tab."}\n";
   }
@@ -283,7 +283,7 @@ mainloop: while ($line = <FILE>) {
 
 ## Do final closures
 if ($current_guard ne "") {
-  print $tab."INVERTDIRTY($bit->$current_guard, nbitID);\n";
+  print $tab."CLEARDIRTY($bit->$current_guard, nbitID);\n";
   chop ($tab);
   print $tab."}\n";
 }
@@ -292,7 +292,7 @@ if ($docopy && $current_dependancy ne "") {
   print $tab."} \/*$current_dependancy*\/\n"
 }
 
-print $tab."INVERTDIRTY($bit->dirty, nbitID);\n";
+print $tab."CLEARDIRTY($bit->dirty, nbitID);\n";
 
 }
 

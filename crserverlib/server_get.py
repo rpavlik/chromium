@@ -62,9 +62,21 @@ max_components = {
 	'GetVertexAttribfvNV': 4,
 	'GetVertexAttribivNV': 4,
 	'GetFenceivNV': 1,
+	'GetVertexAttribdvARB': 4,
+	'GetVertexAttribfvARB': 4,
+	'GetVertexAttribivARB': 4,
+	'GetVertexAttribPointervARB': 1,
+	'GetProgramNamedParameterdvNV': 4, 
+	'GetProgramNamedParameterfvNV': 4,
+	'GetProgramLocalParameterdvARB': 4, 
+	'GetProgramLocalParameterfvARB': 4, 
+	'GetProgramEnvParameterdvARB': 4,
+	'GetProgramEnvParameterfvARB': 4,
+	'GetProgramivARB': 1,
+
 }
 
-no_pnames = [ 'GetClipPlane', 'GetPolygonStipple' ];
+no_pnames = [ 'GetClipPlane', 'GetPolygonStipple', 'GetProgramLocalParameterdvARB', 'GetProgramLocalParameterfvARB', 'GetProgramNamedParameterdvNV', 'GetProgramNamedParameterfvNV', 'GetProgramNamedParameterdvNV', 'GetProgramNamedParameterfvNV', 'GetProgramEnvParameterdvARB', 'GetProgramEnvParameterfvARB', 'GetProgramivARB'   ];
 
 from get_components import *;
 

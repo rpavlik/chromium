@@ -75,6 +75,10 @@ void crStateTextureInit(CRContext *ctx)
 	for (i=0, a=limits->maxCubeMapTextureSize; a; i++, a=a>>1);
 	t->maxCubeMapLevel = i;
 #endif
+#ifdef CR_NV_texture_rectangle
+	for (i=0, a=limits->maxRectTextureSize; a; i++, a=a>>1);
+	t->maxRectLevel = i;
+#endif
 
 	/* Initalize id pool and hash table */
 	t->idHash = crAllocHashtable();
@@ -88,6 +92,10 @@ void crStateTextureInit(CRContext *ctx)
 	crStateTextureInitTextureObj(ctx, &(t->baseCubeMap), 0,
 		GL_TEXTURE_CUBE_MAP_ARB);
 #endif
+#ifdef CR_NV_texture_rectangle
+	crStateTextureInitTextureObj(ctx, &(t->baseRect), 0,
+		GL_TEXTURE_RECTANGLE_NV);
+#endif
 
 	crStateTextureInitTextureObj(ctx, &(t->proxy1D), 0, GL_TEXTURE_1D);
 	crStateTextureInitTextureObj(ctx, &(t->proxy2D), 0, GL_TEXTURE_2D);
@@ -97,6 +105,10 @@ void crStateTextureInit(CRContext *ctx)
 #ifdef CR_ARB_texture_cube_map
 	crStateTextureInitTextureObj(ctx, &(t->proxyCubeMap), 0,
 		GL_TEXTURE_CUBE_MAP_ARB);
+#endif
+#ifdef CR_NV_texture_rectangle
+	crStateTextureInitTextureObj(ctx, &(t->proxyRect), 0,
+		GL_TEXTURE_RECTANGLE_NV);
 #endif
 
 	t->curTextureUnit = 0;
@@ -110,11 +122,17 @@ void crStateTextureInit(CRContext *ctx)
 #ifdef CR_ARB_texture_cube_map
 		t->unit[i].currentTextureCubeMap = &(t->baseCubeMap);
 #endif
+#ifdef CR_NV_texture_rectangle
+		t->unit[i].currentTextureRect = &(t->baseRect);
+#endif
 
 		t->unit[i].enabled1D = GL_FALSE;
 		t->unit[i].enabled2D = GL_FALSE;
 		t->unit[i].enabled3D = GL_FALSE;
 		t->unit[i].enabledCubeMap = GL_FALSE;
+#ifdef CR_NV_texture_rectangle
+		t->unit[i].enabledRect = GL_FALSE;
+#endif
 		t->unit[i].textureGen.s = GL_FALSE;
 		t->unit[i].textureGen.t = GL_FALSE;
 		t->unit[i].textureGen.r = GL_FALSE;
@@ -160,7 +178,7 @@ void crStateTextureInit(CRContext *ctx)
 		RESET(tb->current[i], ctx->bitid);
 		RESET(tb->objGen[i], ctx->bitid);
 		RESET(tb->eyeGen[i], ctx->bitid);
-		RESET(tb->gen[i], ctx->bitid);
+		RESET(tb->genMode[i], ctx->bitid);
 		RESET(tb->envBit[i], ctx->bitid);
 	}
 	RESET(tb->dirty, ctx->bitid);
@@ -187,9 +205,9 @@ void crStateTextureFree( CRTextureState *t )
 
 void crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj, GLuint name, GLenum target)
 {
-	CRTextureState *t = &(ctx->texture);
+	const CRTextureState *t = &(ctx->texture);
 	CRTextureLevel *tl;
-	int i, j;
+	int i, k;
 
 	tobj->borderColor.r = 0.0f;
 	tobj->borderColor.g = 0.0f;
@@ -210,28 +228,28 @@ void crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj, GLuint nam
 	tobj->target        = target;
 	tobj->name          = name;
 
-#define INIT_LEVELS(ARRAY)							\
-	tobj->ARRAY = (CRTextureLevel *) crCalloc(sizeof(CRTextureLevel)	\
-					* t->maxLevel);				\
-	if (!tobj->ARRAY)							\
-		return; /* out of memory */					\
-	for (i=0; i<t->maxLevel; i++)						\
-	{									\
-		tl                = &(tobj->ARRAY[i]);				\
-		tl->compressed    = GL_FALSE;					\
-		tl->bytes         = 0;						\
-		tl->img           = NULL;					\
-		tl->width         = 0;						\
-		tl->height        = 0;						\
-		tl->depth         = 0;						\
-		tl->border        = 0;						\
-		tl->internalFormat= GL_RGBA;					\
-		tl->bytesPerPixel = 0;						\
-		tl->format        = GL_RGBA;					\
+#define INIT_LEVELS(ARRAY)											\
+	tobj->ARRAY = (CRTextureLevel *) crAlloc(sizeof(CRTextureLevel)	\
+												 * t->maxLevel);				\
+	if (!tobj->ARRAY)															\
+		return; /* out of memory */									\
+	for (i=0; i<t->maxLevel; i++)									\
+	{																							\
+		tl                = &(tobj->ARRAY[i]);			\
+		tl->compressed    = GL_FALSE;								\
+		tl->bytes         = 0;											\
+		tl->img           = NULL;										\
+		tl->width         = 0;											\
+		tl->height        = 0;											\
+		tl->depth         = 0;											\
+		tl->border        = 0;											\
+		tl->internalFormat= GL_ONE;									\
+		tl->bytesPerPixel = 0;											\
+		tl->format        = GL_RGBA;								\
 		tl->type          = GL_UNSIGNED_BYTE;				\
-		crStateTextureInitTextureFormat( tl, tl->internalFormat );	\
-		for (j = 0; j < CR_MAX_TEXTURE_UNITS; j++)			\
-			RESET(tl->dirty[j], ctx->bitid);			\
+		crStateTextureInitTextureFormat( tl, tl->internalFormat );			\
+		for (k = 0; k < CR_MAX_BITARRAY; k++)														\
+			tl->dirty[k]     = 0;  /* By default this level is ignored.*/	\
 	}
 
 	INIT_LEVELS(level);
@@ -243,6 +261,7 @@ void crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj, GLuint nam
 	INIT_LEVELS(positiveZlevel);
 	INIT_LEVELS(negativeZlevel);
 #endif
+
 
 #ifdef CR_EXT_texture_filter_anisotropic
 	tobj->maxAnisotropy = 1.0f;
@@ -262,10 +281,10 @@ void crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj, GLuint nam
 #endif
 
 	RESET(tobj->dirty, ctx->bitid);
+	RESET(tobj->imageBit, ctx->bitid);
 	for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++)
 	{
 		RESET(tobj->paramsBit[i], ctx->bitid);
-		RESET(tobj->imageBit[i], ctx->bitid);
 	}
 }
 
@@ -525,6 +544,10 @@ CRTextureObj * crStateTextureGet(GLenum target, GLuint name)
 		case GL_TEXTURE_CUBE_MAP_ARB:
 			return &t->baseCubeMap;
 #endif
+#ifdef CR_NV_texture_rectangle
+		case GL_TEXTURE_RECTANGLE_NV:
+			return &t->baseRect;
+#endif
 		default:
 			return NULL;
 		}
@@ -694,6 +717,12 @@ void STATE_APIENTRY crStateDeleteTextures(GLsizei n, const GLuint *textures)
 					t->unit[u].currentTextureCubeMap = &(t->baseCubeMap);
 				}
 #endif
+#ifdef CR_NV_texture_rectangle
+				if (tObj == t->unit[u].currentTextureRect)
+				{
+					t->unit[u].currentTextureRect = &(t->baseRect);
+				}
+#endif
 			}
 		}
 	}
@@ -811,6 +840,16 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 				t->unit[t->curTextureUnit].currentTextureCubeMap = &(t->baseCubeMap);
 				break;
 #endif
+#ifdef CR_NV_texture_rectangle
+			case GL_TEXTURE_RECTANGLE_NV:
+				if (!g->extensions.NV_texture_rectangle) {
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+						"Invalid target passed to glBindTexture: %d", target);
+					return;
+				}
+				t->unit[t->curTextureUnit].currentTextureRect = &(t->baseRect);
+				break;
+#endif
 			default:
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "Invalid target passed to glBindTexture: %d", target);
 				return;
@@ -859,6 +898,11 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 #ifdef CR_ARB_texture_cube_map
 		case GL_TEXTURE_CUBE_MAP_ARB:
 			t->unit[t->curTextureUnit].currentTextureCubeMap = tobj;
+			break;
+#endif
+#ifdef CR_NV_texture_rectangle
+		case GL_TEXTURE_RECTANGLE_NV:
+			t->unit[t->curTextureUnit].currentTextureRect = tobj;
 			break;
 #endif
 		default:
@@ -914,6 +958,16 @@ void STATE_APIENTRY crStateTexParameterfv(GLenum target, GLenum pname, const GLf
 				return;
 			}
 			tobj = unit->currentTextureCubeMap;
+			break;
+#endif
+#ifdef CR_NV_texture_rectangle
+		case GL_TEXTURE_RECTANGLE_NV:
+			if (!g->extensions.NV_texture_rectangle) {
+				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+					"TexParamterfv: target is invalid: %d", target);
+				return;
+			}
+			tobj = unit->currentTextureRect;
 			break;
 #endif
 		default:
@@ -1124,13 +1178,24 @@ void STATE_APIENTRY crStateTexParameterfv(GLenum target, GLenum pname, const GLf
 				if (param[0] == GL_LEQUAL ||
 				    param[0] == GL_GEQUAL) {
 					tobj->compareFunc = (GLenum) param[0];
-				}
-				else
-				{
+				} 
+			}
+#ifdef CR_EXT_shadow_funcs
+			else if (g->extensions.EXT_shadow_funcs) {
+				if (param[0] == GL_LEQUAL ||
+				    param[0] == GL_GEQUAL ||
+				    param[0] == GL_LESS ||
+				    param[0] == GL_GREATER ||
+				    param[0] == GL_ALWAYS ||
+				    param[0] == GL_NEVER ) {
+					tobj->compareFunc = (GLenum) param[0];
+				} 
+			}
+#endif
+			else {
 					crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 						"TexParameterfv: GL_TEXTURE_COMPARE_FUNC_ARB called with invalid parameter: 0x%x", param[0]);
 					return;
-				}
 			}
 			break;
 #endif
@@ -1936,7 +2001,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 #endif
 					) {
 						t->unit[t->curTextureUnit].gen.s = e;
-						DIRTY(tb->gen[t->curTextureUnit], g->neg_bitid);
+						DIRTY(tb->genMode[t->curTextureUnit], g->neg_bitid);
 						DIRTY(tb->dirty, g->neg_bitid);
 					}
 					else {
@@ -1959,7 +2024,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					crStateTransformInvertTransposeMatrix(&inv, trans->modelView+trans->modelViewDepth);
+					crStateTransformInvertTransposeMatrix(&inv, trans->modelViewStack.top);
 					crStateTransformXformPointMatrixf(&inv, &v);
 					t->unit[t->curTextureUnit].eyeSCoeff = v;
 					DIRTY(tb->eyeGen[t->curTextureUnit], g->neg_bitid);
@@ -1984,7 +2049,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 #endif
 					) {
 						t->unit[t->curTextureUnit].gen.t = e;
-						DIRTY(tb->gen[t->curTextureUnit], g->neg_bitid);
+						DIRTY(tb->genMode[t->curTextureUnit], g->neg_bitid);
 						DIRTY(tb->dirty, g->neg_bitid);
 					}
 					else {
@@ -2007,7 +2072,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					crStateTransformInvertTransposeMatrix(&inv, trans->modelView+trans->modelViewDepth);
+					crStateTransformInvertTransposeMatrix(&inv, trans->modelViewStack.top);
 					crStateTransformXformPointMatrixf(&inv, &v);
 					t->unit[t->curTextureUnit].eyeTCoeff = v;
 					DIRTY(tb->eyeGen[t->curTextureUnit], g->neg_bitid);
@@ -2032,7 +2097,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 #endif
 					) {
 						t->unit[t->curTextureUnit].gen.r = e;
-						DIRTY(tb->gen[t->curTextureUnit], g->neg_bitid);
+						DIRTY(tb->genMode[t->curTextureUnit], g->neg_bitid);
 						DIRTY(tb->dirty, g->neg_bitid);
 					}
 					else {
@@ -2055,7 +2120,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					crStateTransformInvertTransposeMatrix(&inv, trans->modelView+trans->modelViewDepth);
+					crStateTransformInvertTransposeMatrix(&inv, trans->modelViewStack.top);
 					crStateTransformXformPointMatrixf(&inv, &v);
 					t->unit[t->curTextureUnit].eyeRCoeff = v;
 					DIRTY(tb->eyeGen[t->curTextureUnit], g->neg_bitid);
@@ -2076,7 +2141,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 						e == GL_SPHERE_MAP)
 					{
 						t->unit[t->curTextureUnit].gen.q = e;
-						DIRTY(tb->gen[t->curTextureUnit], g->neg_bitid);
+						DIRTY(tb->genMode[t->curTextureUnit], g->neg_bitid);
 						DIRTY(tb->dirty, g->neg_bitid);
 					}
 					else {
@@ -2099,7 +2164,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					crStateTransformInvertTransposeMatrix(&inv, trans->modelView+trans->modelViewDepth);
+					crStateTransformInvertTransposeMatrix(&inv, trans->modelViewStack.top);
 					crStateTransformXformPointMatrixf(&inv, &v);
 					t->unit[t->curTextureUnit].eyeQCoeff = v;
 					DIRTY(tb->eyeGen[t->curTextureUnit], g->neg_bitid);
@@ -2296,7 +2361,7 @@ void STATE_APIENTRY crStateGetTexGenfv (GLenum coord, GLenum pname, GLfloat *par
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-					"glGetTexGen called in begin/end");
+					"glGetTexGenfv called in begin/end");
 		return;
 	}
 
@@ -2317,7 +2382,7 @@ void STATE_APIENTRY crStateGetTexGenfv (GLenum coord, GLenum pname, GLfloat *par
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								"glGetTexGen called with bogus coord: %d", coord);
+								"glGetTexGenfv called with bogus coord: %d", coord);
 					return;
 			}
 			break;
@@ -2349,7 +2414,7 @@ void STATE_APIENTRY crStateGetTexGenfv (GLenum coord, GLenum pname, GLfloat *par
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								"glGetTexGen called with bogus coord: %d", coord);
+								"glGetTexGenfv called with bogus coord: %d", coord);
 					return;
 			}
 			break;
@@ -2381,13 +2446,13 @@ void STATE_APIENTRY crStateGetTexGenfv (GLenum coord, GLenum pname, GLfloat *par
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								"glGetTexGen called with bogus coord: %d", coord);
+								"glGetTexGenfv called with bogus coord: %d", coord);
 					return;
 			}
 			break;
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-						"glGetTexGen called with bogus pname: %d", pname);
+						"glGetTexGenfv called with bogus pname: %d", pname);
 			return;
 	}
 }
@@ -2399,7 +2464,7 @@ void STATE_APIENTRY crStateGetTexGeniv (GLenum coord, GLenum pname, GLint *param
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-					"glGetTexGen called in begin/end");
+					"glGetTexGeniv called in begin/end");
 		return;
 	}
 
@@ -2420,7 +2485,7 @@ void STATE_APIENTRY crStateGetTexGeniv (GLenum coord, GLenum pname, GLint *param
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								"glGetTexGen called with bogus coord: %d", coord);
+								"glGetTexGeniv called with bogus coord: %d", coord);
 					return;
 			}
 			break;
@@ -2452,7 +2517,7 @@ void STATE_APIENTRY crStateGetTexGeniv (GLenum coord, GLenum pname, GLint *param
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								"glGetTexGen called with bogus coord: %d", coord);
+								"glGetTexGeniv called with bogus coord: %d", coord);
 					return;
 			}
 			break;
@@ -2484,7 +2549,7 @@ void STATE_APIENTRY crStateGetTexGeniv (GLenum coord, GLenum pname, GLint *param
 					break;
 				default:
 					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								"glGetTexGen called with bogus coord: %d", coord);
+								"glGetTexGeniv called with bogus coord: %d", coord);
 					return;
 			}
 			break;
@@ -2545,7 +2610,18 @@ static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
 			timg = tobj->level + level;
 			break;
 #endif
+#ifdef CR_NV_texture_rectangle
+		case GL_TEXTURE_RECTANGLE_NV:
+			tobj = unit->currentTextureRect;
+			timg = tobj->level + level;
+			break;
+#endif
 #ifdef CR_ARB_texture_cube_map
+		case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+			tobj = &(t->proxyCubeMap);
+			timg = tobj->level + level;
+			break;
+
 		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
 			tobj = unit->currentTextureCubeMap;
 			timg = tobj->level + level;
@@ -2632,6 +2708,15 @@ static CRTextureObj * crStateGetTexObject (CRContext *g, GLuint texUnit,
 
 		case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
 			tobj = &(t->proxyCubeMap);
+			break;
+#endif
+#ifdef CR_NV_texture_rectangle
+		case GL_TEXTURE_RECTANGLE_NV:
+			tobj = unit->currentTextureRect;
+			break;
+
+		case GL_PROXY_TEXTURE_RECTANGLE_NV:
+			tobj = &(t->proxyRect);
 			break;
 #endif
 		default: 
@@ -2766,7 +2851,7 @@ void STATE_APIENTRY crStateGetTexLevelParameteriv (GLenum target, GLint level,
 		case GL_TEXTURE_HEIGHT:
 			*params = (GLint) timg->height;
 			break;
-#ifdef CR_OPENGL_VERSION_1_2
+#if CR_OPENGL_VERSION_1_2
 		case GL_TEXTURE_DEPTH:
 			*params = (GLint) timg->depth;
 			break;
@@ -2795,6 +2880,13 @@ void STATE_APIENTRY crStateGetTexLevelParameteriv (GLenum target, GLint level,
 		case GL_TEXTURE_LUMINANCE_SIZE:
 			*params = (GLint) timg->texFormat->luminancebits;
 			break;
+
+#if 0
+		/* XXX TODO */
+		case GL_TEXTURE_DEPTH_SIZE:
+			*params = (GLint) timg->texFormat->depthSize;
+			break;
+#endif
 #if CR_ARB_texture_compression
 		case GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB:
 			*params = (GLint) timg->bytes;
@@ -2820,7 +2912,7 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 	if (g->current.inBeginEnd)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
-					"glGetTexParameter called in begin/end");
+					"glGetTexParameterfv called in begin/end");
 		return;
 	}
 
@@ -2867,7 +2959,7 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 			}
 			else {
 				crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-					"glGetTexParameter: invalid pname: 0x%x", pname);
+					"glGetTexParameterfv: invalid pname: 0x%x", pname);
 				return;
 			}
 			break;
@@ -2944,11 +3036,17 @@ void STATE_APIENTRY crStateGetTexParameterfv (GLenum target, GLenum pname, GLflo
 			*params = (GLfloat) tobj->maxLevel;
 			break;
 #endif
+#if 0
+		case GL_TEXTURE_LOD_BIAS_EXT:
+			/* XXX todo */
+			*params = (GLfloat) tobj->lodBias;
+			break;
+#endif
         	case GL_TEXTURE_RESIDENT:
 			/* XXX todo */
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-				"glGetTexParameter: invalid pname: %d", pname);
+				"glGetTexParameterfv: invalid pname: %d", pname);
 			return;
 	}
 }
@@ -3124,7 +3222,7 @@ GLboolean STATE_APIENTRY crStateIsTexture(GLuint texture)
 }
 
 
-void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID, 
+void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID, 
 													 CRContext *fromCtx, CRContext *toCtx )
 {
 	CRTextureState *from = &(fromCtx->texture);
@@ -3140,30 +3238,27 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 
 	for (i = 0; i < fromCtx->limits.maxTextureUnits; i++)
 	{
-		if (CHECKDIRTY(t->enable[i], bitID)) 
+		if (CHECKDIRTY(tb->enable[i], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
-			}
+			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 			if (from->unit[i].enabled1D != to->unit[i].enabled1D) 
 			{
 				able[to->unit[i].enabled1D](GL_TEXTURE_1D);
-				FILLDIRTY(t->enable[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->enable[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].enabled2D != to->unit[i].enabled2D) 
 			{
 				able[to->unit[i].enabled2D](GL_TEXTURE_2D);
-				FILLDIRTY(t->enable[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->enable[i]);
+				FILLDIRTY(tb->dirty);
 			}
 #ifdef CR_OPENGL_VERSION_1_2
 			if (from->unit[i].enabled3D != to->unit[i].enabled3D)
 			{
 				able[to->unit[i].enabled3D](GL_TEXTURE_3D);
-				FILLDIRTY(t->enable[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->enable[i]);
+				FILLDIRTY(tb->dirty);
 			}
 #endif
 #ifdef CR_ARB_texture_cube_map
@@ -3171,8 +3266,17 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				from->unit[i].enabledCubeMap != to->unit[i].enabledCubeMap)
 			{
 				able[to->unit[i].enabledCubeMap](GL_TEXTURE_CUBE_MAP_ARB);
-				FILLDIRTY(t->enable[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->enable[i]);
+				FILLDIRTY(tb->dirty);
+			}
+#endif
+#ifdef CR_NV_texture_rectangle
+			if (fromCtx->extensions.NV_texture_rectangle &&
+				from->unit[i].enabledRect != to->unit[i].enabledRect)
+			{
+				able[to->unit[i].enabledRect](GL_TEXTURE_RECTANGLE_NV);
+				FILLDIRTY(tb->enable[i]);
+				FILLDIRTY(tb->dirty);
 			}
 #endif
 			if (from->unit[i].textureGen.s != to->unit[i].textureGen.s ||
@@ -3184,10 +3288,10 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				able[to->unit[i].textureGen.t](GL_TEXTURE_GEN_T);
 				able[to->unit[i].textureGen.r](GL_TEXTURE_GEN_R);
 				able[to->unit[i].textureGen.q](GL_TEXTURE_GEN_Q);
-				FILLDIRTY(t->enable[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->enable[i]);
+				FILLDIRTY(tb->dirty);
 			}
-			INVERTDIRTY(t->enable[i], nbitID);
+			CLEARDIRTY(tb->enable[i], nbitID);
 		}
 
 		/* 
@@ -3198,48 +3302,49 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 		**  the bindings....
 		*/
 
-		if (CHECKDIRTY(t->current[i], bitID)) 
+		if (CHECKDIRTY(tb->current[i], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
-			}
+			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 			if (from->unit[i].currentTexture1D->name != to->unit[i].currentTexture1D->name) 
 			{
 				diff_api.BindTexture(GL_TEXTURE_1D, to->unit[i].currentTexture1D->name);
-				FILLDIRTY(t->current[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->current[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].currentTexture2D->name != to->unit[i].currentTexture2D->name) 
 			{
 				diff_api.BindTexture(GL_TEXTURE_2D, to->unit[i].currentTexture2D->name);
-				FILLDIRTY(t->current[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->current[i]);
+				FILLDIRTY(tb->dirty);
 			}
 #ifdef CR_OPENGL_VERSION_1_2
 			if (from->unit[i].currentTexture3D->name != to->unit[i].currentTexture3D->name) {
 				diff_api.BindTexture(GL_TEXTURE_3D, to->unit[i].currentTexture3D->name);
-				FILLDIRTY(t->current[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->current[i]);
+				FILLDIRTY(tb->dirty);
 			}
 #endif
 #ifdef CR_ARB_texture_cube_map
 			if (fromCtx->extensions.ARB_texture_cube_map &&
 				from->unit[i].currentTextureCubeMap->name != to->unit[i].currentTextureCubeMap->name) {
 				diff_api.BindTexture(GL_TEXTURE_CUBE_MAP_ARB, to->unit[i].currentTextureCubeMap->name);
-				FILLDIRTY(t->current[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->current[i]);
+				FILLDIRTY(tb->dirty);
+			}
+#endif
+#ifdef CR_NV_texture_rectangle
+			if (fromCtx->extensions.NV_texture_rectangle &&
+				from->unit[i].currentTextureRect->name != to->unit[i].currentTextureRect->name) {
+				diff_api.BindTexture(GL_TEXTURE_RECTANGLE_NV, to->unit[i].currentTextureRect->name);
+				FILLDIRTY(tb->current[i]);
+				FILLDIRTY(tb->dirty);
 			}
 #endif
 		}
 
-		if (CHECKDIRTY(t->objGen[i], bitID)) 
+		if (CHECKDIRTY(tb->objGen[i], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
-			}
-
+			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 			if (from->unit[i].objSCoeff.x != to->unit[i].objSCoeff.x ||
 				  from->unit[i].objSCoeff.y != to->unit[i].objSCoeff.y ||
 				  from->unit[i].objSCoeff.z != to->unit[i].objSCoeff.z ||
@@ -3251,8 +3356,8 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].objSCoeff.z;
 				f[3] = to->unit[i].objSCoeff.w;
 				diff_api.TexGenfv (GL_S, GL_OBJECT_PLANE, (const GLfloat *) f);
-				FILLDIRTY(t->objGen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->objGen[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].objTCoeff.x != to->unit[i].objTCoeff.x ||
 				from->unit[i].objTCoeff.y != to->unit[i].objTCoeff.y ||
@@ -3264,8 +3369,8 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].objTCoeff.z;
 				f[3] = to->unit[i].objTCoeff.w;
 				diff_api.TexGenfv (GL_T, GL_OBJECT_PLANE, (const GLfloat *) f);
-				FILLDIRTY(t->objGen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->objGen[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].objRCoeff.x != to->unit[i].objRCoeff.x ||
 				from->unit[i].objRCoeff.y != to->unit[i].objRCoeff.y ||
@@ -3277,8 +3382,8 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].objRCoeff.z;
 				f[3] = to->unit[i].objRCoeff.w;
 				diff_api.TexGenfv (GL_R, GL_OBJECT_PLANE, (const GLfloat *) f);
-				FILLDIRTY(t->objGen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->objGen[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].objQCoeff.x != to->unit[i].objQCoeff.x ||
 				from->unit[i].objQCoeff.y != to->unit[i].objQCoeff.y ||
@@ -3290,17 +3395,14 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].objQCoeff.z;
 				f[3] = to->unit[i].objQCoeff.w;
 				diff_api.TexGenfv (GL_Q, GL_OBJECT_PLANE, (const GLfloat *) f);
-				FILLDIRTY(t->objGen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->objGen[i]);
+				FILLDIRTY(tb->dirty);
 			}
-			INVERTDIRTY(t->objGen[i], nbitID);
+			CLEARDIRTY(tb->objGen[i], nbitID);
 		}
-		if (CHECKDIRTY(t->eyeGen[i], bitID)) 
+		if (CHECKDIRTY(tb->eyeGen[i], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
-			}
+			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 			diff_api.MatrixMode(GL_MODELVIEW);
 			diff_api.PushMatrix();
 			diff_api.LoadIdentity();
@@ -3314,8 +3416,8 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].eyeSCoeff.z;
 				f[3] = to->unit[i].eyeSCoeff.w;
 				diff_api.TexGenfv (GL_S, GL_EYE_PLANE, (const GLfloat *) f);
-				FILLDIRTY(t->eyeGen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->eyeGen[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].eyeTCoeff.x != to->unit[i].eyeTCoeff.x ||
 				from->unit[i].eyeTCoeff.y != to->unit[i].eyeTCoeff.y ||
@@ -3327,8 +3429,8 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].eyeTCoeff.z;
 				f[3] = to->unit[i].eyeTCoeff.w;
 				diff_api.TexGenfv (GL_T, GL_EYE_PLANE, (const GLfloat *) f);
-				FILLDIRTY(t->eyeGen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->eyeGen[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].eyeRCoeff.x != to->unit[i].eyeRCoeff.x ||
 				from->unit[i].eyeRCoeff.y != to->unit[i].eyeRCoeff.y ||
@@ -3340,8 +3442,8 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].eyeRCoeff.z;
 				f[3] = to->unit[i].eyeRCoeff.w;
 				diff_api.TexGenfv (GL_R, GL_EYE_PLANE, (const GLfloat *) f);
-				FILLDIRTY(t->eyeGen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->eyeGen[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].eyeQCoeff.x != to->unit[i].eyeQCoeff.x ||
 				from->unit[i].eyeQCoeff.y != to->unit[i].eyeQCoeff.y ||
@@ -3353,18 +3455,15 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].eyeQCoeff.z;
 				f[3] = to->unit[i].eyeQCoeff.w;
 				diff_api.TexGenfv (GL_Q, GL_EYE_PLANE, (const GLfloat *) f);
-				FILLDIRTY(t->eyeGen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->eyeGen[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			diff_api.PopMatrix();
-			INVERTDIRTY(t->eyeGen[i], nbitID);
+			CLEARDIRTY(tb->eyeGen[i], nbitID);
 		}
-		if (CHECKDIRTY(t->gen[i], bitID)) 
+		if (CHECKDIRTY(tb->genMode[i], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
-			}
+			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 			if (from->unit[i].gen.s != to->unit[i].gen.s ||
 				from->unit[i].gen.t != to->unit[i].gen.t ||
 				from->unit[i].gen.r != to->unit[i].gen.r ||
@@ -3374,24 +3473,22 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->unit[i].gen.t);
 				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->unit[i].gen.r);
 				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->unit[i].gen.q);	
-				FILLDIRTY(t->gen[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->genMode[i]);
+				FILLDIRTY(tb->dirty);
 			}
-			INVERTDIRTY(t->gen[i], nbitID);
+			CLEARDIRTY(tb->genMode[i], nbitID);
 		}
-		INVERTDIRTY(t->dirty, nbitID);
-/* Texture enviroment */
-		if (CHECKDIRTY(t->envBit[i], bitID)) 
+		CLEARDIRTY(tb->dirty, nbitID);
+
+		/* Texture enviroment */
+		if (CHECKDIRTY(tb->envBit[i], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
-			}
+			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
 			if (from->unit[i].envMode != to->unit[i].envMode) 
 			{
 				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->unit[i].envMode);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].envColor.r != to->unit[i].envColor.r ||
 				from->unit[i].envColor.g != to->unit[i].envColor.g ||
@@ -3404,112 +3501,112 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 				f[2] = to->unit[i].envColor.b;
 				f[3] = to->unit[i].envColor.a;
 				diff_api.TexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, (const GLfloat *) f);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineModeRGB != to->unit[i].combineModeRGB)
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, to->unit[i].combineModeRGB);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineModeA != to->unit[i].combineModeA)
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, to->unit[i].combineModeA);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineSourceRGB[0] != to->unit[i].combineSourceRGB[0])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, to->unit[i].combineSourceRGB[0]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineSourceRGB[1] != to->unit[i].combineSourceRGB[1])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, to->unit[i].combineSourceRGB[1]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineSourceRGB[2] != to->unit[i].combineSourceRGB[2])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB, to->unit[i].combineSourceRGB[2]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineSourceA[0] != to->unit[i].combineSourceA[0])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, to->unit[i].combineSourceA[0]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineSourceA[1] != to->unit[i].combineSourceA[1])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, to->unit[i].combineSourceA[1]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineSourceA[2] != to->unit[i].combineSourceA[2])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA_ARB, to->unit[i].combineSourceA[2]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineOperandRGB[0] != to->unit[i].combineOperandRGB[0])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, to->unit[i].combineOperandRGB[0]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineOperandRGB[1] != to->unit[i].combineOperandRGB[1])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, to->unit[i].combineOperandRGB[1]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineOperandRGB[2] != to->unit[i].combineOperandRGB[2])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, to->unit[i].combineOperandRGB[2]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineOperandA[0] != to->unit[i].combineOperandA[0])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, to->unit[i].combineOperandA[0]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineOperandA[1] != to->unit[i].combineOperandA[1])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, to->unit[i].combineOperandA[1]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineOperandA[2] != to->unit[i].combineOperandA[2])
 			{
 				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA_ARB, to->unit[i].combineOperandA[2]);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineScaleRGB != to->unit[i].combineScaleRGB)
 			{
 				diff_api.TexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, to->unit[i].combineScaleRGB);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
 			if (from->unit[i].combineScaleA != to->unit[i].combineScaleA)
 			{
 				diff_api.TexEnvf(GL_TEXTURE_ENV, GL_ALPHA_SCALE, to->unit[i].combineScaleA);
-				FILLDIRTY(t->envBit[i]);
-				FILLDIRTY(t->dirty);
+				FILLDIRTY(tb->envBit[i]);
+				FILLDIRTY(tb->dirty);
 			}
-			INVERTDIRTY(t->envBit[i], nbitID);
+			CLEARDIRTY(tb->envBit[i], nbitID);
 		}
 	}
 
- 	/* After possible fiddling with the active unit, put it back now */
- 	if (fromCtx->texture.curTextureUnit != toCtx->texture.curTextureUnit)
- 		diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
+	/* After possible fiddling put them back now */
+	diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
+	diff_api.MatrixMode(toCtx->transform.matrixMode);
 }
 
 /* 
@@ -3560,7 +3657,7 @@ int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target
 #ifdef CR_NV_texture_rectangle
 		case GL_TEXTURE_RECTANGLE_NV:
 			if (g->extensions.NV_texture_rectangle) {
-				tobj = tsto->unit[textureUnit].currentTextureRectangle;
+				tobj = tsto->unit[textureUnit].currentTextureRect;
 				maxLevel = 1;
 			}
 			break;
@@ -3576,22 +3673,22 @@ int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target
 	}
 
 	for (i = 0; i < maxLevel; i++) {
-		if (CHECKDIRTY(tobj->level[i].dirty[textureUnit], bitID))
+		if (CHECKDIRTY(tobj->level[i].dirty, bitID))
 			return 1;
 	}
 
 	if (target == GL_TEXTURE_CUBE_MAP) {
 		for (i = 0; i < maxLevel; i++) {
 			/* check -X, +Y, -Y, etc images */
-			if (CHECKDIRTY(tobj->negativeXlevel[i].dirty[textureUnit], bitID))
+			if (CHECKDIRTY(tobj->negativeXlevel[i].dirty, bitID))
 				return 1;
-			if (CHECKDIRTY(tobj->positiveYlevel[i].dirty[textureUnit], bitID))
+			if (CHECKDIRTY(tobj->positiveYlevel[i].dirty, bitID))
 				return 1;
-			if (CHECKDIRTY(tobj->negativeYlevel[i].dirty[textureUnit], bitID))
+			if (CHECKDIRTY(tobj->negativeYlevel[i].dirty, bitID))
 				return 1;
-			if (CHECKDIRTY(tobj->positiveZlevel[i].dirty[textureUnit], bitID))
+			if (CHECKDIRTY(tobj->positiveZlevel[i].dirty, bitID))
 				return 1;
-			if (CHECKDIRTY(tobj->negativeZlevel[i].dirty[textureUnit], bitID))
+			if (CHECKDIRTY(tobj->negativeZlevel[i].dirty, bitID))
 				return 1;
 		}
 	}
@@ -3599,425 +3696,156 @@ int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target
 	return 0;
 }
 
+
 void
-crStateTextureDiff( CRTextureBits *t, CRbitvalue *bitID,
+crStateTextureDiff( CRTextureBits *tb, CRbitvalue *bitID,
 									  CRContext *fromCtx, CRContext *toCtx )
 {
 	CRTextureState *from = &(fromCtx->texture);
 	CRTextureState *to = &(toCtx->texture);
-	CRTextureObj *tobj = NULL;
-	GLuint name=0;
-	GLuint *cname=NULL;
-	unsigned int i;
-	int j;
+	unsigned int u, t, j;
 	glAble able[2];
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
+	const GLboolean haveFragProg = fromCtx->extensions.ARB_fragment_program || fromCtx->extensions.NV_fragment_program;
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
+
 	able[0] = diff_api.Disable;
 	able[1] = diff_api.Enable;
 
-	for (i = 0; i < fromCtx->limits.maxTextureUnits; i++)
+	/* loop over texture units */
+	for (u = 0; u < fromCtx->limits.maxTextureUnits; u++)
 	{
-		/* First, try to create the current texture 
-		 * objects before mucking with the individual 
-		 * units. */
-		tobj = NULL;
+		CRTextureObj **fromBinding = NULL;
+		CRTextureObj *tobj;
 
-		if (to->unit[i].enabled1D == GL_TRUE) 
+		/* take care of enables/disables */
+		if (CHECKDIRTY(tb->enable[u], bitID)) 
 		{
-			tobj = to->unit[i].currentTexture1D;
-			name = tobj->name;
-			cname = &(from->unit[i].currentTexture1D->name);
-		}
 
-		if (to->unit[i].enabled2D == GL_TRUE) 
-		{
-			tobj = to->unit[i].currentTexture2D;
-			name = tobj->name;
-			cname = &(from->unit[i].currentTexture2D->name);
-		}
-
-#ifdef CR_OPENGL_VERSION_1_2
-		if (to->unit[i].enabled3D == GL_TRUE) 
-		{
-			tobj = to->unit[i].currentTexture3D;
-			name = tobj->name;
-			cname = &(from->unit[i].currentTexture3D->name);
-		}
-#endif
-#ifdef CR_ARB_texture_cube_map
-		if (fromCtx->extensions.ARB_texture_cube_map && to->unit[i].enabledCubeMap == GL_TRUE)
-		{
-			tobj = to->unit[i].currentTextureCubeMap;
-			name = tobj->name;
-			cname = &(from->unit[i].currentTextureCubeMap->name);
-		}
-#endif
-
-		if (!tobj)
-		{
-			continue;
-		}
-
-		if (CHECKDIRTY(tobj->dirty, bitID)) 
-		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
-			}
-			diff_api.BindTexture( tobj->target, name );
-			if (CHECKDIRTY(tobj->paramsBit[i], bitID)) 
-			{
-				GLfloat f[4];
-				f[0] = tobj->borderColor.r;
-				f[1] = tobj->borderColor.g;
-				f[2] = tobj->borderColor.b;
-				f[3] = tobj->borderColor.a;
-				diff_api.TexParameteri(tobj->target, GL_TEXTURE_MIN_FILTER, tobj->minFilter);
-				diff_api.TexParameteri(tobj->target, GL_TEXTURE_MAG_FILTER, tobj->magFilter);
-				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_S, tobj->wrapS);
-				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_T, tobj->wrapT);
-#ifdef CR_OPENGL_VERSION_1_2
-				diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_R, tobj->wrapR);
-				diff_api.TexParameterf(tobj->target, GL_TEXTURE_PRIORITY, tobj->priority);
-#endif
-				diff_api.TexParameterfv(tobj->target, GL_TEXTURE_BORDER_COLOR, (const GLfloat *) f);
-#ifdef CR_EXT_texture_filter_anisotropic
-				if (fromCtx->extensions.EXT_texture_filter_anisotropic) {
-					diff_api.TexParameterf(tobj->target, GL_TEXTURE_MAX_ANISOTROPY_EXT, tobj->maxAnisotropy);
-				}
-#endif
-#ifdef CR_ARB_depth_texture
-				if (fromCtx->extensions.ARB_depth_texture)
-					diff_api.TexParameteri(tobj->target, GL_DEPTH_TEXTURE_MODE_ARB, tobj->depthMode);
-#endif
-#ifdef CR_ARB_shadow
-				if (fromCtx->extensions.ARB_shadow) {
-					diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_MODE_ARB, tobj->compareMode);
-					diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_FUNC_ARB, tobj->compareFunc);
-				}
-#endif
-#ifdef CR_ARB_shadow_ambient
-				if (fromCtx->extensions.ARB_shadow_ambient) {
-					diff_api.TexParameterf(tobj->target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, tobj->compareFailValue);
-				}
-#endif
-#ifdef CR_SGIS_generate_mipmap
-				if (fromCtx->extensions.SGIS_generate_mipmap) {
-					diff_api.TexParameteri(tobj->target, GL_GENERATE_MIPMAP_SGIS, tobj->generateMipmap);
-				}
-#endif
-				INVERTDIRTY(tobj->paramsBit[i], nbitID);
+			/* Activate texture unit u if needed */
+			if (fromCtx->texture.curTextureUnit != u) {
+				diff_api.ActiveTextureARB( GL_TEXTURE0_ARB + u);
+				fromCtx->texture.curTextureUnit = u;
 			}
 
-			if (CHECKDIRTY(tobj->imageBit[i], bitID)) 
+			if (from->unit[u].enabled1D != to->unit[u].enabled1D) 
 			{
-				int j;
-				switch (tobj->target)
-				{
-					case GL_TEXTURE_1D:
-						for (j=0; j<to->maxLevel; j++) 
-						{
-							CRTextureLevel *tl = &(tobj->level[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID)) 
-							{
-								diff_api.TexImage1D(GL_TEXTURE_1D, j,
-													tl->internalFormat,
-													tl->width, tl->border,
-													tl->format,
-													tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-						}
-						break;
-					case GL_TEXTURE_2D:
-						for (j=0; j<to->maxLevel; j++) 
-						{
-							CRTextureLevel *tl = &(tobj->level[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID)) 
-							{
-								diff_api.TexImage2D(GL_TEXTURE_2D, j,
-													tl->internalFormat,
-													tl->width, tl->height,
-													tl->border, tl->format,
-													tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-						}
-						break;
-#ifdef CR_OPENGL_VERSION_1_2
-					case GL_TEXTURE_3D:
-						for (j=0; j<to->maxLevel; j++) 
-						{
-							CRTextureLevel *tl = &(tobj->level[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID)) 
-							{
-								diff_api.TexImage3D(GL_TEXTURE_3D, j,
-													tl->internalFormat,
-													tl->width, tl->height,
-													tl->depth,
-													tl->border, tl->format,
-													tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-						}
-						break;
-#endif
-#ifdef CR_ARB_texture_cube_map
-					case GL_TEXTURE_CUBE_MAP_ARB:
-						for (j=0; j<to->maxLevel; j++) 
-						{
-							CRTextureLevel *tl;
-							/* Positive X */
-							tl = &(tobj->level[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID))
-							{
-								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
-													j, tl->internalFormat,
-													tl->width, tl->height, tl->border,
-													tl->format, tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-							/* Negative X */
-							tl = &(tobj->negativeXlevel[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID))
-							{
-								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
-													j, tl->internalFormat,
-													tl->width, tl->height, tl->border,
-													tl->format, tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-							/* Positive Y */
-							tl = &(tobj->positiveYlevel[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID)) 
-							{
-								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
-													j, tl->internalFormat,
-													tl->width, tl->height, tl->border,
-													tl->format, tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-							/* Negative Y */
-							tl = &(tobj->negativeYlevel[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID))
-							{
-								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
-													j, tl->internalFormat,
-													tl->width, tl->height, tl->border,
-													tl->format, tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-							/* Positive Z */
-							tl = &(tobj->positiveZlevel[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID))
-							{
-								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
-													j, tl->internalFormat,
-													tl->width, tl->height, tl->border,
-													tl->format, tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-							/* Negative Z */
-							tl = &(tobj->negativeZlevel[j]);
-							if (CHECKDIRTY(tl->dirty[i], bitID))
-							{
-								diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
-													j, tl->internalFormat,
-													tl->width, tl->height, tl->border,
-													tl->format, tl->type, tl->img);
-								INVERTDIRTY(tl->dirty[i], nbitID);
-							}
-						}
-						break;
-#endif
-					default:
-						UNIMPLEMENTED();
-				}	
-			} /* if (CHECKDIRTY(tobj->imageBit[i], bitID)) */
-			INVERTDIRTY(tobj->dirty, nbitID);
-		}
-	}
-
-	for (i = 0; i < fromCtx->limits.maxTextureUnits; i++)
-	{
-		if (CHECKDIRTY(t->enable[i], bitID)) 
-		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
+				able[to->unit[u].enabled1D](GL_TEXTURE_1D);
+				from->unit[u].enabled1D = to->unit[u].enabled1D;
 			}
-			if (from->unit[i].enabled1D != to->unit[i].enabled1D) 
+			if (from->unit[u].enabled2D != to->unit[u].enabled2D) 
 			{
-				able[to->unit[i].enabled1D](GL_TEXTURE_1D);
-				from->unit[i].enabled1D = to->unit[i].enabled1D;
-			}
-			if (from->unit[i].enabled2D != to->unit[i].enabled2D) 
-			{
-				able[to->unit[i].enabled2D](GL_TEXTURE_2D);
-				from->unit[i].enabled2D = to->unit[i].enabled2D;
+				able[to->unit[u].enabled2D](GL_TEXTURE_2D);
+				from->unit[u].enabled2D = to->unit[u].enabled2D;
 			}
 #ifdef CR_OPENGL_VERSION_1_2
-			if (from->unit[i].enabled3D != to->unit[i].enabled3D)
+			if (from->unit[u].enabled3D != to->unit[u].enabled3D)
 			{
-				able[to->unit[i].enabled3D](GL_TEXTURE_3D);
-				from->unit[i].enabled3D = to->unit[i].enabled3D;
+				able[to->unit[u].enabled3D](GL_TEXTURE_3D);
+				from->unit[u].enabled3D = to->unit[u].enabled3D;
 			}
 #endif
 #ifdef CR_ARB_texture_cube_map
 			if (fromCtx->extensions.ARB_texture_cube_map &&
-				from->unit[i].enabledCubeMap != to->unit[i].enabledCubeMap)
+				from->unit[u].enabledCubeMap != to->unit[u].enabledCubeMap)
 			{
-				able[to->unit[i].enabledCubeMap](GL_TEXTURE_CUBE_MAP_ARB);
-				from->unit[i].enabledCubeMap = to->unit[i].enabledCubeMap;
+				able[to->unit[u].enabledCubeMap](GL_TEXTURE_CUBE_MAP_ARB);
+				from->unit[u].enabledCubeMap = to->unit[u].enabledCubeMap;
 			}
 #endif
-			if (from->unit[i].textureGen.s != to->unit[i].textureGen.s ||
-					from->unit[i].textureGen.t != to->unit[i].textureGen.t ||
-					from->unit[i].textureGen.r != to->unit[i].textureGen.r ||
-					from->unit[i].textureGen.q != to->unit[i].textureGen.q) 
+#ifdef CR_NV_texture_rectangle
+			if (fromCtx->extensions.NV_texture_rectangle &&
+				from->unit[u].enabledRect != to->unit[u].enabledRect)
 			{
-				able[to->unit[i].textureGen.s](GL_TEXTURE_GEN_S);
-				able[to->unit[i].textureGen.t](GL_TEXTURE_GEN_T);
-				able[to->unit[i].textureGen.r](GL_TEXTURE_GEN_R);
-				able[to->unit[i].textureGen.q](GL_TEXTURE_GEN_Q);
-				from->unit[i].textureGen = to->unit[i].textureGen;
+				able[to->unit[u].enabledRect](GL_TEXTURE_RECTANGLE_NV);
+				from->unit[u].enabledRect = to->unit[u].enabledRect;
 			}
-			INVERTDIRTY(t->enable[i], nbitID);
-		}
-
-		tobj = NULL;
-
-		/* Get the active texture */
-		if (to->unit[i].enabled1D == GL_TRUE) 
-		{
-			tobj = to->unit[i].currentTexture1D;
-			name = tobj->name;
-			cname = &(from->unit[i].currentTexture1D->name);
-		}
-
-		if (to->unit[i].enabled2D == GL_TRUE) 
-		{
-			tobj = to->unit[i].currentTexture2D;
-			name = tobj->name;
-			cname = &(from->unit[i].currentTexture2D->name);
-		}
-
-#ifdef CR_OPENGL_VERSION_1_2
-		if (to->unit[i].enabled3D == GL_TRUE)
-		{
-			tobj = to->unit[i].currentTexture3D;
-			name = tobj->name;
-			cname = &(from->unit[i].currentTexture3D->name);
-		}
-#endif
-#ifdef CR_ARB_texture_cube_map
-		if (fromCtx->extensions.ARB_texture_cube_map &&
-			to->unit[i].enabledCubeMap == GL_TRUE)
-		{
-			tobj = to->unit[i].currentTextureCubeMap;
-			name = tobj->name;
-			cname = &(from->unit[i].currentTextureCubeMap->name);
-		}
 #endif
 
-		if (!tobj) 
-		{
-			/* texturing is not enabled for this unit */
-			continue;
-		}
-
-		if (CHECKDIRTY(t->current[i], bitID)) 
-		{
-			if (*cname != name) 
+			/* texgen enables */
+			if (from->unit[u].textureGen.s != to->unit[u].textureGen.s ||
+					from->unit[u].textureGen.t != to->unit[u].textureGen.t ||
+					from->unit[u].textureGen.r != to->unit[u].textureGen.r ||
+					from->unit[u].textureGen.q != to->unit[u].textureGen.q) 
 			{
-				if (fromCtx->texture.curTextureUnit != i) {
-					diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-					fromCtx->texture.curTextureUnit = i;
-				}
-				diff_api.BindTexture(tobj->target, name);
-				*cname = name;
+				able[to->unit[u].textureGen.s](GL_TEXTURE_GEN_S);
+				able[to->unit[u].textureGen.t](GL_TEXTURE_GEN_T);
+				able[to->unit[u].textureGen.r](GL_TEXTURE_GEN_R);
+				able[to->unit[u].textureGen.q](GL_TEXTURE_GEN_Q);
+				from->unit[u].textureGen = to->unit[u].textureGen;
 			}
-			INVERTDIRTY(t->current[i], nbitID);
+			CLEARDIRTY(tb->enable[u], nbitID);
 		}
 
-		/*
-		** Texture Restore 
-		** Since textures are allocated objects
-		** it seems wastefull to allocate each one
-		** on all the pipes.
-		** So instead, we'll skip the value compare
-		** and just use the bit test.
-		*/
 
-
-		if (CHECKDIRTY(t->objGen[i], bitID)) 
+		/* Texgen coefficients */
+		if (CHECKDIRTY(tb->objGen[u], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
+			if (fromCtx->texture.curTextureUnit != u) {
+				diff_api.ActiveTextureARB( u + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = u;
 			}
-			if (from->unit[i].objSCoeff.x != to->unit[i].objSCoeff.x ||
-					from->unit[i].objSCoeff.y != to->unit[i].objSCoeff.y ||
-					from->unit[i].objSCoeff.z != to->unit[i].objSCoeff.z ||
-					from->unit[i].objSCoeff.w != to->unit[i].objSCoeff.w) 
+			if (from->unit[u].objSCoeff.x != to->unit[u].objSCoeff.x ||
+					from->unit[u].objSCoeff.y != to->unit[u].objSCoeff.y ||
+					from->unit[u].objSCoeff.z != to->unit[u].objSCoeff.z ||
+					from->unit[u].objSCoeff.w != to->unit[u].objSCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].objSCoeff.x;
-				f[1] = to->unit[i].objSCoeff.y;
-				f[2] = to->unit[i].objSCoeff.z;
-				f[3] = to->unit[i].objSCoeff.w;
+				f[0] = to->unit[u].objSCoeff.x;
+				f[1] = to->unit[u].objSCoeff.y;
+				f[2] = to->unit[u].objSCoeff.z;
+				f[3] = to->unit[u].objSCoeff.w;
 				diff_api.TexGenfv (GL_S, GL_OBJECT_PLANE, (const GLfloat *) f);
-				from->unit[i].objSCoeff = to->unit[i].objSCoeff;
+				from->unit[u].objSCoeff = to->unit[u].objSCoeff;
 			}
-			if (from->unit[i].objTCoeff.x != to->unit[i].objTCoeff.x ||
-					from->unit[i].objTCoeff.y != to->unit[i].objTCoeff.y ||
-					from->unit[i].objTCoeff.z != to->unit[i].objTCoeff.z ||
-					from->unit[i].objTCoeff.w != to->unit[i].objTCoeff.w) 
+			if (from->unit[u].objTCoeff.x != to->unit[u].objTCoeff.x ||
+					from->unit[u].objTCoeff.y != to->unit[u].objTCoeff.y ||
+					from->unit[u].objTCoeff.z != to->unit[u].objTCoeff.z ||
+					from->unit[u].objTCoeff.w != to->unit[u].objTCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].objTCoeff.x;
-				f[1] = to->unit[i].objTCoeff.y;
-				f[2] = to->unit[i].objTCoeff.z;
-				f[3] = to->unit[i].objTCoeff.w;
+				f[0] = to->unit[u].objTCoeff.x;
+				f[1] = to->unit[u].objTCoeff.y;
+				f[2] = to->unit[u].objTCoeff.z;
+				f[3] = to->unit[u].objTCoeff.w;
 				diff_api.TexGenfv (GL_T, GL_OBJECT_PLANE, (const GLfloat *) f);
-				from->unit[i].objTCoeff = to->unit[i].objTCoeff;
+				from->unit[u].objTCoeff = to->unit[u].objTCoeff;
 			}
-			if (from->unit[i].objRCoeff.x != to->unit[i].objRCoeff.x ||
-					from->unit[i].objRCoeff.y != to->unit[i].objRCoeff.y ||
-					from->unit[i].objRCoeff.z != to->unit[i].objRCoeff.z ||
-					from->unit[i].objRCoeff.w != to->unit[i].objRCoeff.w) 
+			if (from->unit[u].objRCoeff.x != to->unit[u].objRCoeff.x ||
+					from->unit[u].objRCoeff.y != to->unit[u].objRCoeff.y ||
+					from->unit[u].objRCoeff.z != to->unit[u].objRCoeff.z ||
+					from->unit[u].objRCoeff.w != to->unit[u].objRCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].objRCoeff.x;
-				f[1] = to->unit[i].objRCoeff.y;
-				f[2] = to->unit[i].objRCoeff.z;
-				f[3] = to->unit[i].objRCoeff.w;
+				f[0] = to->unit[u].objRCoeff.x;
+				f[1] = to->unit[u].objRCoeff.y;
+				f[2] = to->unit[u].objRCoeff.z;
+				f[3] = to->unit[u].objRCoeff.w;
 				diff_api.TexGenfv (GL_R, GL_OBJECT_PLANE, (const GLfloat *) f);
-				from->unit[i].objRCoeff = to->unit[i].objRCoeff;
+				from->unit[u].objRCoeff = to->unit[u].objRCoeff;
 			}
-			if (from->unit[i].objQCoeff.x != to->unit[i].objQCoeff.x ||
-					from->unit[i].objQCoeff.y != to->unit[i].objQCoeff.y ||
-					from->unit[i].objQCoeff.z != to->unit[i].objQCoeff.z ||
-					from->unit[i].objQCoeff.w != to->unit[i].objQCoeff.w) 
+			if (from->unit[u].objQCoeff.x != to->unit[u].objQCoeff.x ||
+					from->unit[u].objQCoeff.y != to->unit[u].objQCoeff.y ||
+					from->unit[u].objQCoeff.z != to->unit[u].objQCoeff.z ||
+					from->unit[u].objQCoeff.w != to->unit[u].objQCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].objQCoeff.x;
-				f[1] = to->unit[i].objQCoeff.y;
-				f[2] = to->unit[i].objQCoeff.z;
-				f[3] = to->unit[i].objQCoeff.w;
+				f[0] = to->unit[u].objQCoeff.x;
+				f[1] = to->unit[u].objQCoeff.y;
+				f[2] = to->unit[u].objQCoeff.z;
+				f[3] = to->unit[u].objQCoeff.w;
 				diff_api.TexGenfv (GL_Q, GL_OBJECT_PLANE, (const GLfloat *) f);
-				from->unit[i].objQCoeff = to->unit[i].objQCoeff;
+				from->unit[u].objQCoeff = to->unit[u].objQCoeff;
 			}
-			INVERTDIRTY(t->objGen[i], nbitID);
+			CLEARDIRTY(tb->objGen[u], nbitID);
 		}
-		if (CHECKDIRTY(t->eyeGen[i], bitID)) 
+		if (CHECKDIRTY(tb->eyeGen[u], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
+			if (fromCtx->texture.curTextureUnit != u) {
+				diff_api.ActiveTextureARB( u + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = u;
 			}
 			if (fromCtx->transform.matrixMode != GL_MODELVIEW) {
 				diff_api.MatrixMode(GL_MODELVIEW);
@@ -4025,197 +3853,491 @@ crStateTextureDiff( CRTextureBits *t, CRbitvalue *bitID,
 			}
 			diff_api.PushMatrix();
 			diff_api.LoadIdentity();
-			if (from->unit[i].eyeSCoeff.x != to->unit[i].eyeSCoeff.x ||
-					from->unit[i].eyeSCoeff.y != to->unit[i].eyeSCoeff.y ||
-					from->unit[i].eyeSCoeff.z != to->unit[i].eyeSCoeff.z ||
-					from->unit[i].eyeSCoeff.w != to->unit[i].eyeSCoeff.w) 
+			if (from->unit[u].eyeSCoeff.x != to->unit[u].eyeSCoeff.x ||
+					from->unit[u].eyeSCoeff.y != to->unit[u].eyeSCoeff.y ||
+					from->unit[u].eyeSCoeff.z != to->unit[u].eyeSCoeff.z ||
+					from->unit[u].eyeSCoeff.w != to->unit[u].eyeSCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].eyeSCoeff.x;
-				f[1] = to->unit[i].eyeSCoeff.y;
-				f[2] = to->unit[i].eyeSCoeff.z;
-				f[3] = to->unit[i].eyeSCoeff.w;
+				f[0] = to->unit[u].eyeSCoeff.x;
+				f[1] = to->unit[u].eyeSCoeff.y;
+				f[2] = to->unit[u].eyeSCoeff.z;
+				f[3] = to->unit[u].eyeSCoeff.w;
 				diff_api.TexGenfv (GL_S, GL_EYE_PLANE, (const GLfloat *) f);
-				from->unit[i].eyeSCoeff = to->unit[i].eyeSCoeff;
+				from->unit[u].eyeSCoeff = to->unit[u].eyeSCoeff;
 			}
-			if (from->unit[i].eyeTCoeff.x != to->unit[i].eyeTCoeff.x ||
-					from->unit[i].eyeTCoeff.y != to->unit[i].eyeTCoeff.y ||
-					from->unit[i].eyeTCoeff.z != to->unit[i].eyeTCoeff.z ||
-					from->unit[i].eyeTCoeff.w != to->unit[i].eyeTCoeff.w) 
+			if (from->unit[u].eyeTCoeff.x != to->unit[u].eyeTCoeff.x ||
+					from->unit[u].eyeTCoeff.y != to->unit[u].eyeTCoeff.y ||
+					from->unit[u].eyeTCoeff.z != to->unit[u].eyeTCoeff.z ||
+					from->unit[u].eyeTCoeff.w != to->unit[u].eyeTCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].eyeTCoeff.x;
-				f[1] = to->unit[i].eyeTCoeff.y;
-				f[2] = to->unit[i].eyeTCoeff.z;
-				f[3] = to->unit[i].eyeTCoeff.w;
+				f[0] = to->unit[u].eyeTCoeff.x;
+				f[1] = to->unit[u].eyeTCoeff.y;
+				f[2] = to->unit[u].eyeTCoeff.z;
+				f[3] = to->unit[u].eyeTCoeff.w;
 				diff_api.TexGenfv (GL_T, GL_EYE_PLANE, (const GLfloat *) f);
-				from->unit[i].eyeTCoeff = to->unit[i].eyeTCoeff;
+				from->unit[u].eyeTCoeff = to->unit[u].eyeTCoeff;
 			}
-			if (from->unit[i].eyeRCoeff.x != to->unit[i].eyeRCoeff.x ||
-					from->unit[i].eyeRCoeff.y != to->unit[i].eyeRCoeff.y ||
-					from->unit[i].eyeRCoeff.z != to->unit[i].eyeRCoeff.z ||
-					from->unit[i].eyeRCoeff.w != to->unit[i].eyeRCoeff.w) 
+			if (from->unit[u].eyeRCoeff.x != to->unit[u].eyeRCoeff.x ||
+					from->unit[u].eyeRCoeff.y != to->unit[u].eyeRCoeff.y ||
+					from->unit[u].eyeRCoeff.z != to->unit[u].eyeRCoeff.z ||
+					from->unit[u].eyeRCoeff.w != to->unit[u].eyeRCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].eyeRCoeff.x;
-				f[1] = to->unit[i].eyeRCoeff.y;
-				f[2] = to->unit[i].eyeRCoeff.z;
-				f[3] = to->unit[i].eyeRCoeff.w;
+				f[0] = to->unit[u].eyeRCoeff.x;
+				f[1] = to->unit[u].eyeRCoeff.y;
+				f[2] = to->unit[u].eyeRCoeff.z;
+				f[3] = to->unit[u].eyeRCoeff.w;
 				diff_api.TexGenfv (GL_R, GL_EYE_PLANE, (const GLfloat *) f);
-				from->unit[i].eyeRCoeff = to->unit[i].eyeRCoeff;
+				from->unit[u].eyeRCoeff = to->unit[u].eyeRCoeff;
 			}
-			if (from->unit[i].eyeQCoeff.x != to->unit[i].eyeQCoeff.x ||
-					from->unit[i].eyeQCoeff.y != to->unit[i].eyeQCoeff.y ||
-					from->unit[i].eyeQCoeff.z != to->unit[i].eyeQCoeff.z ||
-					from->unit[i].eyeQCoeff.w != to->unit[i].eyeQCoeff.w) 
+			if (from->unit[u].eyeQCoeff.x != to->unit[u].eyeQCoeff.x ||
+					from->unit[u].eyeQCoeff.y != to->unit[u].eyeQCoeff.y ||
+					from->unit[u].eyeQCoeff.z != to->unit[u].eyeQCoeff.z ||
+					from->unit[u].eyeQCoeff.w != to->unit[u].eyeQCoeff.w) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].eyeQCoeff.x;
-				f[1] = to->unit[i].eyeQCoeff.y;
-				f[2] = to->unit[i].eyeQCoeff.z;
-				f[3] = to->unit[i].eyeQCoeff.w;
+				f[0] = to->unit[u].eyeQCoeff.x;
+				f[1] = to->unit[u].eyeQCoeff.y;
+				f[2] = to->unit[u].eyeQCoeff.z;
+				f[3] = to->unit[u].eyeQCoeff.w;
 				diff_api.TexGenfv (GL_Q, GL_EYE_PLANE, (const GLfloat *) f);
-				from->unit[i].eyeQCoeff = to->unit[i].eyeQCoeff;
+				from->unit[u].eyeQCoeff = to->unit[u].eyeQCoeff;
 			}
 			diff_api.PopMatrix();
-			INVERTDIRTY(t->eyeGen[i], nbitID);
+			CLEARDIRTY(tb->eyeGen[u], nbitID);
 		}
-		if (CHECKDIRTY(t->gen[i], bitID)) 
+		if (CHECKDIRTY(tb->genMode[u], bitID)) 
 		{
-			if (fromCtx->texture.curTextureUnit != i) {
-				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
-				fromCtx->texture.curTextureUnit = i;
+			if (fromCtx->texture.curTextureUnit != u) {
+				diff_api.ActiveTextureARB( u + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = u;
 			}
-			if (from->unit[i].gen.s != to->unit[i].gen.s ||
-					from->unit[i].gen.t != to->unit[i].gen.t ||
-					from->unit[i].gen.r != to->unit[i].gen.r ||
-					from->unit[i].gen.q != to->unit[i].gen.q) 
+			if (from->unit[u].gen.s != to->unit[u].gen.s ||
+					from->unit[u].gen.t != to->unit[u].gen.t ||
+					from->unit[u].gen.r != to->unit[u].gen.r ||
+					from->unit[u].gen.q != to->unit[u].gen.q) 
 			{
-				diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->unit[i].gen.s);
-				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->unit[i].gen.t);
-				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->unit[i].gen.r);
-				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->unit[i].gen.q);	
-				from->unit[i].gen = to->unit[i].gen;
+				diff_api.TexGeni (GL_S, GL_TEXTURE_GEN_MODE, to->unit[u].gen.s);
+				diff_api.TexGeni (GL_T, GL_TEXTURE_GEN_MODE, to->unit[u].gen.t);
+				diff_api.TexGeni (GL_R, GL_TEXTURE_GEN_MODE, to->unit[u].gen.r);
+				diff_api.TexGeni (GL_Q, GL_TEXTURE_GEN_MODE, to->unit[u].gen.q);	
+				from->unit[u].gen = to->unit[u].gen;
 			}
-			INVERTDIRTY(t->gen[i], nbitID);
+			CLEARDIRTY(tb->genMode[u], nbitID);
 		}
-		INVERTDIRTY(t->dirty, nbitID);
 
 		/* Texture enviroment  */
-		if (CHECKDIRTY(t->envBit[i], bitID)) 
+		if (CHECKDIRTY(tb->envBit[u], bitID)) 
 		{
-			if (from->unit[i].envMode != to->unit[i].envMode) 
+			if (from->unit[u].envMode != to->unit[u].envMode) 
 			{
-				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->unit[i].envMode);
-				from->unit[i].envMode = to->unit[i].envMode;
+				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->unit[u].envMode);
+				from->unit[u].envMode = to->unit[u].envMode;
 			}
-			if (from->unit[i].envColor.r != to->unit[i].envColor.r ||
-					from->unit[i].envColor.g != to->unit[i].envColor.g ||
-					from->unit[i].envColor.b != to->unit[i].envColor.b ||
-					from->unit[i].envColor.a != to->unit[i].envColor.a) 
+			if (from->unit[u].envColor.r != to->unit[u].envColor.r ||
+					from->unit[u].envColor.g != to->unit[u].envColor.g ||
+					from->unit[u].envColor.b != to->unit[u].envColor.b ||
+					from->unit[u].envColor.a != to->unit[u].envColor.a) 
 			{
 				GLfloat f[4];
-				f[0] = to->unit[i].envColor.r;
-				f[1] = to->unit[i].envColor.g;
-				f[2] = to->unit[i].envColor.b;
-				f[3] = to->unit[i].envColor.a;
+				f[0] = to->unit[u].envColor.r;
+				f[1] = to->unit[u].envColor.g;
+				f[2] = to->unit[u].envColor.b;
+				f[3] = to->unit[u].envColor.a;
 				diff_api.TexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, (const GLfloat *) f);
-				from->unit[i].envColor = to->unit[i].envColor;
+				from->unit[u].envColor = to->unit[u].envColor;
 			}
 #ifdef CR_ARB_texture_env_combine
-			if (from->unit[i].combineModeRGB != to->unit[i].combineModeRGB)
+			if (from->unit[u].combineModeRGB != to->unit[u].combineModeRGB)
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, to->unit[i].combineModeRGB);
-				from->unit[i].combineModeRGB = to->unit[i].combineModeRGB;
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, to->unit[u].combineModeRGB);
+				from->unit[u].combineModeRGB = to->unit[u].combineModeRGB;
 			}
-			if (from->unit[i].combineModeA != to->unit[i].combineModeA)
+			if (from->unit[u].combineModeA != to->unit[u].combineModeA)
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, to->unit[i].combineModeA);
-				from->unit[i].combineModeA = to->unit[i].combineModeA;
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, to->unit[u].combineModeA);
+				from->unit[u].combineModeA = to->unit[u].combineModeA;
 			}
-			if (from->unit[i].combineSourceRGB[0] != to->unit[i].combineSourceRGB[0])
+			if (from->unit[u].combineSourceRGB[0] != to->unit[u].combineSourceRGB[0])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, to->unit[i].combineSourceRGB[0]);
-				from->unit[i].combineSourceRGB[0] = to->unit[i].combineSourceRGB[0];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, to->unit[u].combineSourceRGB[0]);
+				from->unit[u].combineSourceRGB[0] = to->unit[u].combineSourceRGB[0];
 			}
-			if (from->unit[i].combineSourceRGB[1] != to->unit[i].combineSourceRGB[1])
+			if (from->unit[u].combineSourceRGB[1] != to->unit[u].combineSourceRGB[1])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, to->unit[i].combineSourceRGB[1]);
-				from->unit[i].combineSourceRGB[1] = to->unit[i].combineSourceRGB[1];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, to->unit[u].combineSourceRGB[1]);
+				from->unit[u].combineSourceRGB[1] = to->unit[u].combineSourceRGB[1];
 			}
-			if (from->unit[i].combineSourceRGB[2] != to->unit[i].combineSourceRGB[2])
+			if (from->unit[u].combineSourceRGB[2] != to->unit[u].combineSourceRGB[2])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB, to->unit[i].combineSourceRGB[2]);
-				from->unit[i].combineSourceRGB[2] = to->unit[i].combineSourceRGB[2];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB, to->unit[u].combineSourceRGB[2]);
+				from->unit[u].combineSourceRGB[2] = to->unit[u].combineSourceRGB[2];
 			}
-			if (from->unit[i].combineSourceA[0] != to->unit[i].combineSourceA[0])
+			if (from->unit[u].combineSourceA[0] != to->unit[u].combineSourceA[0])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, to->unit[i].combineSourceA[0]);
-				from->unit[i].combineSourceA[0] = to->unit[i].combineSourceA[0];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, to->unit[u].combineSourceA[0]);
+				from->unit[u].combineSourceA[0] = to->unit[u].combineSourceA[0];
 			}
-			if (from->unit[i].combineSourceA[1] != to->unit[i].combineSourceA[1])
+			if (from->unit[u].combineSourceA[1] != to->unit[u].combineSourceA[1])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, to->unit[i].combineSourceA[1]);
-				from->unit[i].combineSourceA[1] = to->unit[i].combineSourceA[1];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, to->unit[u].combineSourceA[1]);
+				from->unit[u].combineSourceA[1] = to->unit[u].combineSourceA[1];
 			}
-			if (from->unit[i].combineSourceA[2] != to->unit[i].combineSourceA[2])
+			if (from->unit[u].combineSourceA[2] != to->unit[u].combineSourceA[2])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA_ARB, to->unit[i].combineSourceA[2]);
-				from->unit[i].combineSourceA[2] = to->unit[i].combineSourceA[2];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA_ARB, to->unit[u].combineSourceA[2]);
+				from->unit[u].combineSourceA[2] = to->unit[u].combineSourceA[2];
 			}
-			if (from->unit[i].combineOperandRGB[0] != to->unit[i].combineOperandRGB[0])
+			if (from->unit[u].combineOperandRGB[0] != to->unit[u].combineOperandRGB[0])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, to->unit[i].combineOperandRGB[0]);
-				from->unit[i].combineOperandRGB[0] = to->unit[i].combineOperandRGB[0];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, to->unit[u].combineOperandRGB[0]);
+				from->unit[u].combineOperandRGB[0] = to->unit[u].combineOperandRGB[0];
 			}
-			if (from->unit[i].combineOperandRGB[1] != to->unit[i].combineOperandRGB[1])
+			if (from->unit[u].combineOperandRGB[1] != to->unit[u].combineOperandRGB[1])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, to->unit[i].combineOperandRGB[1]);
-				from->unit[i].combineOperandRGB[1] = to->unit[i].combineOperandRGB[1];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, to->unit[u].combineOperandRGB[1]);
+				from->unit[u].combineOperandRGB[1] = to->unit[u].combineOperandRGB[1];
 			}
-			if (from->unit[i].combineOperandRGB[2] != to->unit[i].combineOperandRGB[2])
+			if (from->unit[u].combineOperandRGB[2] != to->unit[u].combineOperandRGB[2])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, to->unit[i].combineOperandRGB[2]);
-				from->unit[i].combineOperandRGB[2] = to->unit[i].combineOperandRGB[2];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, to->unit[u].combineOperandRGB[2]);
+				from->unit[u].combineOperandRGB[2] = to->unit[u].combineOperandRGB[2];
 			}
-			if (from->unit[i].combineOperandA[0] != to->unit[i].combineOperandA[0])
+			if (from->unit[u].combineOperandA[0] != to->unit[u].combineOperandA[0])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, to->unit[i].combineOperandA[0]);
-				from->unit[i].combineOperandA[0] = to->unit[i].combineOperandA[0];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, to->unit[u].combineOperandA[0]);
+				from->unit[u].combineOperandA[0] = to->unit[u].combineOperandA[0];
 			}
-			if (from->unit[i].combineOperandA[1] != to->unit[i].combineOperandA[1])
+			if (from->unit[u].combineOperandA[1] != to->unit[u].combineOperandA[1])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, to->unit[i].combineOperandA[1]);
-				from->unit[i].combineOperandA[1] = to->unit[i].combineOperandA[1];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, to->unit[u].combineOperandA[1]);
+				from->unit[u].combineOperandA[1] = to->unit[u].combineOperandA[1];
 			}
-			if (from->unit[i].combineOperandA[2] != to->unit[i].combineOperandA[2])
+			if (from->unit[u].combineOperandA[2] != to->unit[u].combineOperandA[2])
 			{
-				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA_ARB, to->unit[i].combineOperandA[2]);
-				from->unit[i].combineOperandA[2] = to->unit[i].combineOperandA[2];
+				diff_api.TexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA_ARB, to->unit[u].combineOperandA[2]);
+				from->unit[u].combineOperandA[2] = to->unit[u].combineOperandA[2];
 			}
-			if (from->unit[i].combineScaleRGB != to->unit[i].combineScaleRGB)
+			if (from->unit[u].combineScaleRGB != to->unit[u].combineScaleRGB)
 			{
-				diff_api.TexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, to->unit[i].combineScaleRGB);
-				from->unit[i].combineScaleRGB = to->unit[i].combineScaleRGB;
+				diff_api.TexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, to->unit[u].combineScaleRGB);
+				from->unit[u].combineScaleRGB = to->unit[u].combineScaleRGB;
 			}
-			if (from->unit[i].combineScaleA != to->unit[i].combineScaleA)
+			if (from->unit[u].combineScaleA != to->unit[u].combineScaleA)
 			{
-				diff_api.TexEnvf(GL_TEXTURE_ENV, GL_ALPHA_SCALE, to->unit[i].combineScaleA);
-				from->unit[i].combineScaleA = to->unit[i].combineScaleA;
+				diff_api.TexEnvf(GL_TEXTURE_ENV, GL_ALPHA_SCALE, to->unit[u].combineScaleA);
+				from->unit[u].combineScaleA = to->unit[u].combineScaleA;
 			}
 #endif
 #if CR_EXT_texture_lod_bias
-			if (from->unit[i].lodBias != to->unit[i].lodBias)
+			if (from->unit[u].lodBias != to->unit[u].lodBias)
 			{
-				diff_api.TexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, to->unit[i].lodBias);
-				from->unit[i].lodBias = to->unit[i].lodBias;
+				diff_api.TexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, to->unit[u].lodBias);
+				from->unit[u].lodBias = to->unit[u].lodBias;
 			}
 #endif
-			INVERTDIRTY(t->envBit[i], nbitID);
+			CLEARDIRTY(tb->envBit[u], nbitID);
 		}
-	}
+
+		/* loop over texture targets */
+		for (t = 0; t < 5; t++)
+		{
+			tobj = NULL;
+
+			switch (t) {
+			case 0:
+				if (to->unit[u].enabled1D || haveFragProg) {
+					tobj = to->unit[u].currentTexture1D;
+					fromBinding = &(from->unit[u].currentTexture1D);
+				}
+				break;
+			case 1:
+				if (to->unit[u].enabled2D || haveFragProg) {
+					tobj = to->unit[u].currentTexture2D;
+					fromBinding = &(from->unit[u].currentTexture2D);
+				}
+				break;
+#ifdef CR_OPENGL_VERSION_1_2
+			case 2:
+				if (to->unit[u].enabled3D || haveFragProg) {
+					tobj = to->unit[u].currentTexture3D;
+					fromBinding = &(from->unit[u].currentTexture3D);
+				}
+				break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+			case 3:
+				if (fromCtx->extensions.ARB_texture_cube_map &&
+						(to->unit[u].enabledCubeMap || haveFragProg)) {
+					tobj = to->unit[u].currentTextureCubeMap;
+					fromBinding = &(from->unit[u].currentTextureCubeMap);
+				}
+				break;
+#endif
+#ifdef CR_NV_texture_rectangle
+			case 4:
+				if (fromCtx->extensions.NV_texture_rectangle &&
+						(to->unit[u].enabledRect || haveFragProg)) {
+					tobj = to->unit[u].currentTextureRect;
+					fromBinding = &(from->unit[u].currentTextureRect);
+				}
+				break;
+#endif
+			default:
+				/* maybe don't support cube maps or rects */
+				continue;
+			}
+
+			if (!tobj) {
+				continue; /* with next target */
+			}
+
+			/* Activate texture unit u if needed */
+			if (fromCtx->texture.curTextureUnit != u) {
+				diff_api.ActiveTextureARB( GL_TEXTURE0_ARB + u);
+				fromCtx->texture.curTextureUnit = u;
+			}
+
+			/* bind this texture if needed */
+			if (CHECKDIRTY(tb->current[u], bitID)) 
+			{
+				if (*fromBinding != tobj)
+				{
+					diff_api.BindTexture(tobj->target, tobj->name);
+					*fromBinding = tobj;
+				}
+			}
+
+			/* now, if the texture object is dirty */
+			if (CHECKDIRTY(tobj->dirty, bitID)) 
+			{
+				if (CHECKDIRTY(tobj->paramsBit[u], bitID)) 
+				{
+					GLfloat f[4];
+					f[0] = tobj->borderColor.r;
+					f[1] = tobj->borderColor.g;
+					f[2] = tobj->borderColor.b;
+					f[3] = tobj->borderColor.a;
+					diff_api.TexParameteri(tobj->target, GL_TEXTURE_MIN_FILTER, tobj->minFilter);
+					diff_api.TexParameteri(tobj->target, GL_TEXTURE_MAG_FILTER, tobj->magFilter);
+					diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_S, tobj->wrapS);
+					diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_T, tobj->wrapT);
+#ifdef CR_OPENGL_VERSION_1_2
+					diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_R, tobj->wrapR);
+					diff_api.TexParameterf(tobj->target, GL_TEXTURE_PRIORITY, tobj->priority);
+#endif
+					diff_api.TexParameterfv(tobj->target, GL_TEXTURE_BORDER_COLOR, (const GLfloat *) f);
+#ifdef CR_EXT_texture_filter_anisotropic
+					if (fromCtx->extensions.EXT_texture_filter_anisotropic) {
+						diff_api.TexParameterf(tobj->target, GL_TEXTURE_MAX_ANISOTROPY_EXT, tobj->maxAnisotropy);
+					}
+#endif
+#ifdef CR_ARB_depth_texture
+					if (fromCtx->extensions.ARB_depth_texture)
+						diff_api.TexParameteri(tobj->target, GL_DEPTH_TEXTURE_MODE_ARB, tobj->depthMode);
+#endif
+#ifdef CR_ARB_shadow
+					if (fromCtx->extensions.ARB_shadow) {
+						diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_MODE_ARB, tobj->compareMode);
+						diff_api.TexParameteri(tobj->target, GL_TEXTURE_COMPARE_FUNC_ARB, tobj->compareFunc);
+					}
+#endif
+#ifdef CR_ARB_shadow_ambient
+					if (fromCtx->extensions.ARB_shadow_ambient) {
+						diff_api.TexParameterf(tobj->target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, tobj->compareFailValue);
+					}
+#endif
+#ifdef CR_SGIS_generate_mipmap
+					if (fromCtx->extensions.SGIS_generate_mipmap) {
+						diff_api.TexParameteri(tobj->target, GL_GENERATE_MIPMAP_SGIS, tobj->generateMipmap);
+					}
+#endif
+					CLEARDIRTY(tobj->paramsBit[u], nbitID);
+				}
+
+				/* now, if the texture images are dirty */
+				if (CHECKDIRTY(tobj->imageBit, bitID)) 
+				{
+					int lvl;
+					switch (tobj->target)
+					{
+						case GL_TEXTURE_1D:
+							for (lvl = 0; lvl < to->maxLevel; lvl++) 
+							{
+								CRTextureLevel *tl = &(tobj->level[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID)) 
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage1D(GL_TEXTURE_1D, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->border,
+																			tl->format,	tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+							}
+							break;
+						case GL_TEXTURE_2D:
+							for (lvl = 0; lvl < to->maxLevel; lvl++) 
+							{
+								CRTextureLevel *tl = &(tobj->level[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID)) 
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage2D(GL_TEXTURE_2D, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->border,
+																			tl->format, tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+							}
+							break;
+#ifdef CR_OPENGL_VERSION_1_2
+						case GL_TEXTURE_3D:
+							for (lvl = 0; lvl < to->maxLevel; lvl++) 
+							{
+								CRTextureLevel *tl = &(tobj->level[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID)) 
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage3D(GL_TEXTURE_3D, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->depth,
+																			tl->border, tl->format,
+																			tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+							}
+							break;
+#endif
+#ifdef CR_NV_texture_rectangle 
+						case GL_TEXTURE_RECTANGLE_NV:
+							/* only one level */
+							for (lvl = 0; lvl < to->maxRectLevel; lvl++) 
+							{
+								CRTextureLevel *tl;
+								tl = &(tobj->level[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID))
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage2D(GL_TEXTURE_RECTANGLE_NV, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->border,
+																			tl->format, tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+							}
+							break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+						case GL_TEXTURE_CUBE_MAP_ARB:
+							for (lvl = 0; lvl < to->maxCubeMapLevel; lvl++) 
+							{
+								CRTextureLevel *tl;
+								/* Positive X */
+								tl = &(tobj->level[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID))
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->border,
+																			tl->format, tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+								/* Negative X */
+								tl = &(tobj->negativeXlevel[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID))
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->border,
+																			tl->format, tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+								/* Positive Y */
+								tl = &(tobj->positiveYlevel[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID)) 
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->border,
+																			tl->format, tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+								/* Negative Y */
+								tl = &(tobj->negativeYlevel[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID))
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->border,
+																			tl->format, tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+								/* Positive Z */
+								tl = &(tobj->positiveZlevel[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID))
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->border,
+																			tl->format, tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+								/* Negative Z */
+								tl = &(tobj->negativeZlevel[lvl]);
+								if (CHECKDIRTY(tl->dirty, bitID))
+								{
+									/* alignment must be one */
+									diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+									diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, lvl,
+																			tl->internalFormat,
+																			tl->width, tl->height, tl->border,
+																			tl->format, tl->type, tl->img);
+									CLEARDIRTY(tl->dirty, nbitID);
+								}
+							}
+							break;
+#endif
+						default:
+							UNIMPLEMENTED();
+					}	
+				} /* if (CHECKDIRTY(tobj->imageBit, bitID)) */
+
+			} /* if (CHECKDIRTY(tobj->dirty, bitID)) */
+
+			CLEARDIRTY(tobj->dirty, nbitID);
+
+		} /* loop over targets */
+
+		CLEARDIRTY(tb->current[u], nbitID);
+
+	} /* loop over units */
 
 	/* After possible fiddling with the active unit, put it back now */
-	if (fromCtx->texture.curTextureUnit != toCtx->texture.curTextureUnit)
+	if (fromCtx->texture.curTextureUnit != toCtx->texture.curTextureUnit) {
 		diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
+		fromCtx->texture.curTextureUnit = toCtx->texture.curTextureUnit;
+	}
+	if (fromCtx->transform.matrixMode != toCtx->transform.matrixMode) {
+		diff_api.MatrixMode(toCtx->transform.matrixMode);
+		fromCtx->transform.matrixMode = toCtx->transform.matrixMode;
+	}
+
+	CLEARDIRTY(tb->dirty, nbitID);
 }

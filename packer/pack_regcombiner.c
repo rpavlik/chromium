@@ -18,7 +18,7 @@ static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *par
 	{
 		case GL_CONSTANT_COLOR0_NV:
 		case GL_CONSTANT_COLOR1_NV:
-			params_length = 4*sizeof( *params );
+			params_length = 4 * sizeof( *params );
 			break;
 		case GL_NUM_GENERAL_COMBINERS_NV:
 		case GL_COLOR_SUM_CLAMP_NV:
@@ -27,6 +27,7 @@ static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *par
 		default:
 			__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
 									 "crPackCombinerParameter(bad pname)" );
+			CRASSERT(0);
 			return GL_FALSE;
 	}
 	packet_length += params_length;
@@ -40,6 +41,7 @@ static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *par
 		WRITE_DATA( sizeof( int ) + 12, GLfloat, params[1] );
 		WRITE_DATA( sizeof( int ) + 16, GLfloat, params[2] );
 		WRITE_DATA( sizeof( int ) + 20, GLfloat, params[3] );
+		CRASSERT(packet_length == sizeof(int) + 20 + 4);
 	}
 	return GL_TRUE;
 }
@@ -64,14 +66,14 @@ void PACK_APIENTRY crPackCombinerStageParameterfvNV( GLenum stage, GLenum pname,
 	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 
-	GET_BUFFERED_POINTER(pc, 28 );
-	WRITE_DATA( 0, int, 28 );
-	WRITE_DATA( sizeof( int ) + 0, GLenum, CR_COMBINERSTAGEPARAMETERFVNV_EXTEND_OPCODE );
-	WRITE_DATA( sizeof( int ) + 4, GLenum, stage );
-	WRITE_DATA( sizeof( int ) + 8, GLenum, pname );
-	WRITE_DATA( sizeof( int ) + 12, GLfloat, params[0] );
-	WRITE_DATA( sizeof( int ) + 16, GLfloat, params[1] );
-	WRITE_DATA( sizeof( int ) + 20, GLfloat, params[2] );
-	WRITE_DATA( sizeof( int ) + 24, GLfloat, params[3] );
+	GET_BUFFERED_POINTER(pc, 32 );
+	WRITE_DATA( 0, GLint, 32 );
+	WRITE_DATA( 4, GLenum, CR_COMBINERSTAGEPARAMETERFVNV_EXTEND_OPCODE );
+	WRITE_DATA( 8, GLenum, stage );
+	WRITE_DATA( 12, GLenum, pname );
+	WRITE_DATA( 16, GLfloat, params[0] );
+	WRITE_DATA( 20, GLfloat, params[1] );
+	WRITE_DATA( 24, GLfloat, params[2] );
+	WRITE_DATA( 28, GLfloat, params[3] );
 	WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
 }

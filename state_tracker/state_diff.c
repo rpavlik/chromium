@@ -6,7 +6,6 @@
 
 #include "state.h"
 #include "cr_error.h"
-#include <stdio.h>
 
 void crStateDiffContext( CRContext *from, CRContext *to )
 {
@@ -68,6 +67,10 @@ void crStateDiffContext( CRContext *from, CRContext *to )
 	if (CHECKDIRTY(sb->polygon.dirty, bitID))
 	{
 		crStatePolygonDiff( &(sb->polygon), bitID, from, to );
+	}
+	if (CHECKDIRTY(sb->program.dirty, bitID))
+	{
+		crStateProgramDiff( &(sb->program), bitID, from, to );
 	}
 	if (CHECKDIRTY(sb->stencil.dirty, bitID))
 	{
@@ -173,6 +176,10 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	{
 		crStatePolygonSwitch( &(sb->polygon), bitID, from, to );
 	}
+	if (CHECKDIRTY(sb->program.dirty, bitID))
+	{
+		crStateProgramSwitch( &(sb->program), bitID, from, to );
+	}
 	if (CHECKDIRTY(sb->stencil.dirty, bitID))
 	{
 		crStateStencilSwitch( &(sb->stencil), bitID, from, to );
@@ -203,6 +210,12 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	if (CHECKDIRTY(sb->multisample.dirty, bitID))
 	{
 		crStateMultisampleSwitch( &(sb->multisample), bitID, from, to );
+	}
+#endif
+#ifdef CR_ARB_multisample
+	if (CHECKDIRTY(sb->multisample.dirty, bitID))
+	{
+		crStateMultisampleSwitch(&(sb->multisample), bitID, from, to );
 	}
 #endif
 	if (CHECKDIRTY(sb->current.dirty, bitID))

@@ -31,6 +31,7 @@ char **crStrSplit( const char *str, const char *splitstr );
 char **crStrSplitn( const char *str, const char *splitstr, int n );
 void   crFreeStrings( char **strings );
 char  *crStrIntersect( const char *s1, const char *s2 );
+int    crIsDigit( char c );
 
 void   crBytesToString( char *string, int nstring, void *data, int ndata );
 void   crWordsToString( char *string, int nstring, void *data, int ndata );

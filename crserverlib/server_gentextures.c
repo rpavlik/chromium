@@ -40,3 +40,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGenFencesNV( GLsizei n, GLuint * i
 	crFree( local_fences );
 }
 
+void SERVER_DISPATCH_APIENTRY crServerDispatchGenProgramsARB( GLsizei n, GLuint * ids )
+{
+	GLuint *local_progs = (GLuint *) crAlloc( n*sizeof( *local_progs) );
+	(void) ids;
+	cr_server.head_spu->dispatch_table.GenProgramsARB( n, local_progs );
+	crServerReturnValue( local_progs, n*sizeof( *local_progs ) );
+	crFree( local_progs );
+}

@@ -7,71 +7,65 @@
 #include "state.h"
 #include "state_internals.h"
 
+/*
+ * Note: regardless of GL_NV_vertex_program, we store all per-vertex
+ * attributes in an array now, instead of specially named attributes
+ * like color, normal, texcoord, etc.
+ */
+
+
 void crStateCurrentInit( CRContext *ctx )
 {
-	CRLimitsState *limits = &ctx->limits;
 	CRCurrentState *c = &ctx->current;
 	CRStateBits *sb = GetCurrentBits();
 	CRCurrentBits *cb = &(sb->current);
-	GLvectorf	default_normal     = {0.0f, 0.0f, 1.0f, 1.0f};
-	GLcolorf	default_color	     = {1.0f, 1.0f, 1.0f, 1.0f};
-	GLcolorf	default_secondaryColor = {0.0f, 0.0f, 0.0f, 0.0f};
-	GLfloat     default_fogCoord = 0.0f;
-	GLtexcoordf default_texcoord = {0.0f, 0.0f, 0.0f, 1.0f};
-	GLvectorf default_rasterpos  = {0.0f, 0.0f, 0.0f, 1.0f};
-  	unsigned int i;
+	static const GLfloat default_normal[4]         = {0.0f, 0.0f, 1.0f, 1.0f};
+	static const GLfloat default_color[4]          = {1.0f, 1.0f, 1.0f, 1.0f};
+	static const GLfloat default_secondaryColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+	static const GLfloat default_attrib[4]         = {0.0f, 0.0f, 0.0f, 1.0f};
+	unsigned int i;
 
-	c->color	= default_color;
-	c->colorPre	= default_color;
-	RESET(cb->color, ctx->bitid);
-	c->secondaryColor = default_secondaryColor;
-	c->secondaryColorPre = default_secondaryColor;
-	RESET(cb->secondaryColor, ctx->bitid);
-	c->index	= 1.0f;
-	c->indexPre	= 1.0f;
-	RESET(cb->index, ctx->bitid);
-	for (i = 0 ; i < limits->maxTextureUnits ; i++)
-	{
-		c->texCoord[i] = default_texcoord;
-		c->texCoordPre[i] = default_texcoord;
-		RESET(cb->texCoord[i], ctx->bitid);
+	/*
+	 * initialize all vertex attributes to <0,0,0,1> for starters
+	 */
+	for (i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++) {
+		COPY_4V(c->vertexAttrib[i], default_attrib);
+		COPY_4V(c->vertexAttribPre[i], default_attrib);
 	}
-	c->normal	= default_normal;
-	c->normalPre	= default_normal;
-	RESET(cb->normal, ctx->bitid);
-#ifdef CR_EXT_fog_coord
-	c->fogCoord = default_fogCoord;
-	c->fogCoordPre = default_fogCoord;
-	RESET(cb->fogCoord, ctx->bitid);
-#endif
+	/* now re-do the exceptions */
+	COPY_4V(c->vertexAttrib[VERT_ATTRIB_COLOR0], default_color);
+	COPY_4V(c->vertexAttrib[VERT_ATTRIB_COLOR1], default_secondaryColor);
+	COPY_4V(c->vertexAttrib[VERT_ATTRIB_NORMAL], default_normal);
 
-	c->rasterPos = default_rasterpos;
+	c->rasterIndex =  1.0f;
+	c->colorIndex = c->colorIndexPre = 1.0;
+	c->edgeFlag = c->edgeFlagPre = GL_TRUE;
 
-	c->rasterOrigin = default_rasterpos; /* (0, 0, 0, 1) */
+	/* Set the "pre" values and raster position attributes */
+	for (i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++) {
+		COPY_4V(c->vertexAttribPre[i], c->vertexAttrib[i]);
+		COPY_4V(c->rasterAttrib[i],    c->vertexAttrib[i]);
+		COPY_4V(c->rasterAttribPre[i], c->vertexAttrib[i]);
+	}
 
-	c->rasterDistance = 0.0f; /* aka fog coord */
-	c->rasterColor = default_color;
-	c->rasterSecondaryColor = default_secondaryColor;
-	c->rasterTexture = default_texcoord;
 	c->rasterValid = GL_TRUE;
-	c->rasterIndex = 1.0f;
-	RESET(cb->raster, ctx->bitid);
-
-	c->edgeFlag = GL_TRUE;
-	c->edgeFlagPre = GL_TRUE;
-	RESET(cb->edgeFlag, ctx->bitid);
 
 	c->inBeginEnd = GL_FALSE;
 	c->beginEndNum = 0;
-#if 0
-	c->beginEndMax = cfg->beginend_max;
-#endif
+	/*c->beginEndMax = cfg->beginend_max;*/
 	c->mode = 0x10; /* Undefined Mode */
 	c->flushOnEnd = 0;
 
 	c->current = 0; /* picked up by crStateSetCurrentPointers() */
 
+	/* init dirty bits */
 	RESET(cb->dirty, ctx->bitid);
+	for (i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++) {
+		RESET(cb->vertexAttrib[i], ctx->bitid);
+	}
+	RESET(cb->edgeFlag, ctx->bitid);
+	RESET(cb->colorIndex, ctx->bitid);
+	RESET(cb->rasterPos, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateColor3f( GLfloat r, GLfloat g, GLfloat b )
@@ -93,13 +87,13 @@ void STATE_APIENTRY crStateColor4f( GLfloat red, GLfloat green, GLfloat blue, GL
 
 	FLUSH();
 
-	c->color.r = red;
-	c->color.g = green;
-	c->color.b = blue;
-	c->color.a = alpha;
+	c->vertexAttrib[VERT_ATTRIB_COLOR0][0] = red;
+	c->vertexAttrib[VERT_ATTRIB_COLOR0][1] = green;
+	c->vertexAttrib[VERT_ATTRIB_COLOR0][2] = blue;
+	c->vertexAttrib[VERT_ATTRIB_COLOR0][3] = alpha;
 
 	DIRTY(cb->dirty, g->neg_bitid);
-	DIRTY(cb->color, g->neg_bitid);
+	DIRTY(cb->vertexAttrib[VERT_ATTRIB_COLOR0], g->neg_bitid);
 }
 
 void STATE_APIENTRY crStateColor4fv( const GLfloat *color )
@@ -130,6 +124,7 @@ void STATE_APIENTRY crStateBegin( GLenum mode )
 		return;
 	}
 
+	c->attribsUsedMask = 0;
 	c->inBeginEnd = GL_TRUE;
 	c->mode = mode;
 	c->beginEndNum++;
@@ -146,37 +141,36 @@ void STATE_APIENTRY crStateEnd( void )
 		return;
 	}
 
-
 	c->inBeginEnd = GL_FALSE;
 }
 
 void crStateCurrentSwitch( CRCurrentBits *c, CRbitvalue *bitID,
 													 CRContext *fromCtx, CRContext *toCtx )
 {
-	CRCurrentState *from = &(fromCtx->current);
-	CRCurrentState *to = &(toCtx->current);
+	const CRCurrentState *from = &(fromCtx->current);
+	const CRCurrentState *to = &(toCtx->current);
 	const GLuint maxTextureUnits = fromCtx->limits.maxTextureUnits;
-	unsigned int i,j;
+	unsigned int i, j;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
 
-	if (CHECKDIRTY(c->raster, bitID)) {
+	if (CHECKDIRTY(c->rasterPos, bitID)) {
 		if (to->rasterValid) {
-		  const GLfloat fromX = from->rasterPos.x + from->rasterOrigin.x;
-		  const GLfloat fromY = from->rasterPos.y + from->rasterOrigin.y;
-		  const GLfloat toX = to->rasterPos.x + to->rasterOrigin.x;
-		  const GLfloat toY = to->rasterPos.y + to->rasterOrigin.y;
+		  const GLfloat fromX = from->rasterAttrib[VERT_ATTRIB_POS][0] + from->rasterOrigin.x;
+		  const GLfloat fromY = from->rasterAttrib[VERT_ATTRIB_POS][1] + from->rasterOrigin.y;
+		  const GLfloat toX = to->rasterAttrib[VERT_ATTRIB_POS][0] + to->rasterOrigin.x;
+		  const GLfloat toY = to->rasterAttrib[VERT_ATTRIB_POS][1] + to->rasterOrigin.y;
 		  if (toX != fromX || toY != fromY) {
 			  const GLfloat dx = toX - fromX;
 			  const GLfloat dy = toY - fromY;
 			  diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
-			  FILLDIRTY(c->raster);
+			  FILLDIRTY(c->rasterPos);
 			  FILLDIRTY(c->dirty);
 		  }
 		}
-		INVERTDIRTY(c->raster, nbitID);
+		CLEARDIRTY(c->rasterPos, nbitID);
 	}
 
 	/* Vertex Current State Switch Code */
@@ -187,71 +181,108 @@ void crStateCurrentSwitch( CRCurrentBits *c, CRbitvalue *bitID,
 	** since the packing functions will set it.
 	*/
 
-	/* NEED TO FIX THIS!!!!!! */
-	if (CHECKDIRTY(c->color, bitID)) {
-           if (COMPARE_COLOR(from->color,to->color)) {
-			diff_api.Color4fv ((GLfloat *) &(to->color));
-			FILLDIRTY(c->color);
+	if (CHECKDIRTY(c->colorIndex, bitID)) {
+		if (to->colorIndex != from->colorIndex) {
+			diff_api.Indexf(to->colorIndex);
+			FILLDIRTY(c->colorIndex);
 			FILLDIRTY(c->dirty);
 		}
-		INVERTDIRTY(c->color, nbitID);
+		CLEARDIRTY(c->colorIndex, nbitID);
 	}
 
-	/* NEED TO FIX THIS, ALSO?!!!!! */
-#ifdef CR_EXT_secondary_color
-	if (CHECKDIRTY(c->secondaryColor, bitID)) {
-		if (COMPARE_COLOR(from->secondaryColor,to->secondaryColor)) {
-			diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->secondaryColor));
-			FILLDIRTY(c->secondaryColor);
+	if (CHECKDIRTY(c->edgeFlag, bitID)) {
+		if (to->edgeFlag != from->edgeFlag) {
+			diff_api.EdgeFlag(to->edgeFlag);
+			FILLDIRTY(c->edgeFlag);
 			FILLDIRTY(c->dirty);
 		}
-		INVERTDIRTY(c->secondaryColor, nbitID);
+		CLEARDIRTY(c->edgeFlag, nbitID);
 	}
+
+	/* If using a vertex program, update the generic vertex attributes,
+	 * which may or may not be aliased with conventional attributes.
+	 */
+#if defined(CR_ARB_vertex_program) || defined(CR_NV_vertex_progra)
+	if (toCtx->program.vpEnabled &&
+			(toCtx->extensions.ARB_vertex_program ||
+			 (toCtx->extensions.NV_vertex_program))) {
+		const unsigned attribsUsedMask = toCtx->current.attribsUsedMask;
+		for (i = 1; i < CR_MAX_VERTEX_ATTRIBS; i++)	{  /* skip zero */
+			if ((attribsUsedMask & (1 << i))
+					&& CHECKDIRTY(c->vertexAttrib[i], bitID)) {
+				if (COMPARE_VECTOR (from->vertexAttrib[i], to->vertexAttribPre[i])) {
+					diff_api.VertexAttrib4fvARB(i, &(to->vertexAttrib[i][0]));
+					FILLDIRTY(c->vertexAttrib[i]);
+					FILLDIRTY(c->dirty);
+				}
+				CLEARDIRTY(c->vertexAttrib[i], nbitID);
+			}
+		}
+	}
+	/* Fall-through so that attributes which don't have their bit set in the
+	 * attribsUsedMask get handled via the conventional attribute functions.
+	 */
 #endif
 
-	/* NEED TO FIX THIS, ALSO?!!!!! */
-#ifdef CR_EXT_fog_coord
-	if (CHECKDIRTY(c->fogCoord, bitID)) {
-		if (from->fogCoord != to->fogCoord) {
-			diff_api.FogCoordfvEXT ((GLfloat *) &(to->fogCoord));
-			FILLDIRTY(c->fogCoord);
-			FILLDIRTY(c->dirty);
-		}
-		INVERTDIRTY(c->fogCoord, nbitID);
-	}
-#endif
-
-	if (CHECKDIRTY(c->index, bitID)) {
-		if (to->index != from->index) {
-			diff_api.Indexf (to->index);
-			FILLDIRTY(c->index);
-			FILLDIRTY(c->dirty);
-		}
-		INVERTDIRTY(c->index, nbitID);
-	}
-
-	if (CHECKDIRTY(c->normal, bitID)) {
-		if (COMPARE_VECTOR (from->normal, to->normal)) {
-			diff_api.Normal3fv ((GLfloat *) &(to->normal.x));
-			FILLDIRTY(c->normal);
-			FILLDIRTY(c->dirty);
-		}
-		INVERTDIRTY(c->normal, nbitID);
-	}
-
-	for (i = 0; i < maxTextureUnits; i++)
 	{
-		if (CHECKDIRTY(c->texCoord[i], bitID)) {
-			if (COMPARE_TEXCOORD (from->texCoord[i], to->texCoordPre[i])) {
-				diff_api.MultiTexCoord4fvARB (i+GL_TEXTURE0_ARB, (GLfloat *) &(to->texCoord[i].s));
-				FILLDIRTY(c->normal);
+		/* use conventional attribute functions */
+
+		/* NEED TO FIX THIS!!!!!! */
+		if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR0], bitID)) {
+			if (COMPARE_COLOR(from->vertexAttrib[VERT_ATTRIB_COLOR0],to->vertexAttrib[VERT_ATTRIB_COLOR0])) {
+				diff_api.Color4fv ((GLfloat *) &(to->vertexAttrib[VERT_ATTRIB_COLOR0]));
+				FILLDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR0]);
 				FILLDIRTY(c->dirty);
 			}
-			INVERTDIRTY(c->texCoord[i], nbitID);
+			CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR0], nbitID);
+		}
+
+		/* NEED TO FIX THIS, ALSO?!!!!! */
+#ifdef CR_EXT_secondary_color
+		if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR1], bitID)) {
+			if (COMPARE_COLOR(from->vertexAttrib[VERT_ATTRIB_COLOR1],to->vertexAttrib[VERT_ATTRIB_COLOR1])) {
+				diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->vertexAttrib[VERT_ATTRIB_COLOR1]));
+				FILLDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR1]);
+				FILLDIRTY(c->dirty);
+			}
+			CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR1], nbitID);
+		}
+#endif
+
+		/* NEED TO FIX THIS, ALSO?!!!!! */
+#ifdef CR_EXT_fog_coord
+		if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_FOG], bitID)) {
+			if (from->vertexAttrib[VERT_ATTRIB_FOG][0] != to->vertexAttrib[VERT_ATTRIB_FOG][0] ) {
+				diff_api.FogCoordfvEXT ((GLfloat *) &(to->vertexAttrib[VERT_ATTRIB_FOG][0] ));
+				FILLDIRTY(c->vertexAttrib[VERT_ATTRIB_FOG]);
+				FILLDIRTY(c->dirty);
+			}
+			CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_FOG], nbitID);
+		}
+#endif
+
+		if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_NORMAL], bitID)) {
+			if (COMPARE_VECTOR (from->vertexAttrib[VERT_ATTRIB_NORMAL], to->vertexAttrib[VERT_ATTRIB_NORMAL])) {
+				diff_api.Normal3fv ((GLfloat *) &(to->vertexAttrib[VERT_ATTRIB_NORMAL][0]));
+				FILLDIRTY(c->vertexAttrib[VERT_ATTRIB_NORMAL]);
+				FILLDIRTY(c->dirty);
+			}
+			CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_NORMAL], nbitID);
+		}
+
+		for (i = 0; i < maxTextureUnits; i++)	{
+			if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_TEX0 + i], bitID)) {
+				if (COMPARE_TEXCOORD (from->vertexAttrib[VERT_ATTRIB_TEX0 + i], to->vertexAttribPre[VERT_ATTRIB_TEX0 + i])) {
+					diff_api.MultiTexCoord4fvARB (i+GL_TEXTURE0_ARB, (GLfloat *) &(to->vertexAttrib[VERT_ATTRIB_TEX0+ i][0]));
+					FILLDIRTY(c->vertexAttrib[VERT_ATTRIB_TEX0 + i]);
+					FILLDIRTY(c->dirty);
+				}
+				CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_TEX0 + i], nbitID);
+			}
 		}
 	}
 
-	INVERTDIRTY(c->dirty, nbitID);
+	CLEARDIRTY(c->dirty, nbitID);
 }
 
 void
@@ -259,7 +290,7 @@ crStateCurrentDiff( CRCurrentBits *c, CRbitvalue *bitID,
                     CRContext *fromCtx, CRContext *toCtx )
 {
 	CRCurrentState *from = &(fromCtx->current);
-	CRCurrentState *to= &(toCtx->current);
+	const CRCurrentState *to = &(toCtx->current);
 	unsigned int i, j;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 
@@ -271,22 +302,22 @@ crStateCurrentDiff( CRCurrentBits *c, CRbitvalue *bitID,
 	 * Problems: we never get the current color (always get white) Z value
 	 * is always zero, no texgen, etc.
 	 */
-	if (CHECKDIRTY(c->raster, bitID)) {
+	if (CHECKDIRTY(c->rasterPos, bitID)) {
 		from->rasterValid = to->rasterValid;
 		if (to->rasterValid) {
-			const GLfloat fromX = from->rasterPos.x + from->rasterOrigin.x;
-			const GLfloat fromY = from->rasterPos.y + from->rasterOrigin.y;
-			const GLfloat toX = to->rasterPos.x + to->rasterOrigin.x;
-			const GLfloat toY = to->rasterPos.y + to->rasterOrigin.y;
+			const GLfloat fromX = from->rasterAttrib[VERT_ATTRIB_POS][0] + from->rasterOrigin.x;
+			const GLfloat fromY = from->rasterAttrib[VERT_ATTRIB_POS][1] + from->rasterOrigin.y;
+			const GLfloat toX = to->rasterAttrib[VERT_ATTRIB_POS][0] + to->rasterOrigin.x;
+			const GLfloat toY = to->rasterAttrib[VERT_ATTRIB_POS][1] + to->rasterOrigin.y;
 			if (toX != fromX || toY != fromY) {
 				const GLfloat dx = toX - fromX;
 				const GLfloat dy = toY - fromY;
 				diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
-				from->rasterPos.x += dx;
-				from->rasterPos.y += dy;
+				from->rasterAttrib[VERT_ATTRIB_POS][0] += dx;
+				from->rasterAttrib[VERT_ATTRIB_POS][1] += dy;
 			}
 		}
-		INVERTDIRTY(c->raster, nbitID);
+		CLEARDIRTY(c->rasterPos, nbitID);
 	}
 
 	/* Vertex Current State Sync Code */
@@ -298,68 +329,100 @@ crStateCurrentDiff( CRCurrentBits *c, CRbitvalue *bitID,
 	** 3) Copy is done outside of the compare to ensure
 	**    that it happens.
 	*/
-	if (CHECKDIRTY(c->color, bitID)) {
-		if (COMPARE_COLOR(from->color,to->colorPre)) {
-			diff_api.Color4fv ((GLfloat *) &(to->colorPre.r));
-		}
-		from->color = to->color;
-		INVERTDIRTY(c->color, nbitID);
-	}
 
-#ifdef CR_EXT_secondary_color
-	if (CHECKDIRTY(c->secondaryColor, bitID)) {
-		if (COMPARE_COLOR(from->secondaryColor,to->secondaryColorPre)) {
-			diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->secondaryColorPre.r));
-		}
-		from->secondaryColor = to->secondaryColor;
-		INVERTDIRTY(c->secondaryColor, nbitID);
-	}
-#endif
-
-#ifdef CR_EXT_fog_coord
-	if (CHECKDIRTY(c->fogCoord, bitID)) {
-		if (from->fogCoord != to->fogCoordPre) {
-			diff_api.FogCoordfvEXT ((GLfloat *) &(to->fogCoordPre));
-		}
-		from->fogCoord = to->fogCoord;
-		INVERTDIRTY(c->fogCoord, nbitID);
-	}
-#endif
-
-	if (CHECKDIRTY(c->index, bitID)) {
-		if (from->index != to->indexPre) {
-			diff_api.Indexf (to->index);
-		}
-		from->index = to->index;
-		INVERTDIRTY(c->index, nbitID);
-	}
-
-	if (CHECKDIRTY(c->normal, bitID)) {
-		if (COMPARE_VECTOR (from->normal, to->normalPre)) {
-			diff_api.Normal3fv ((GLfloat *) &(to->normalPre.x));
-		}
-		from->normal = to->normal;
-		INVERTDIRTY(c->normal, nbitID);
-	}
-
-	for ( i = 0 ; i < fromCtx->limits.maxTextureUnits ; i++)
-	{
-		if (CHECKDIRTY(c->texCoord[i], bitID)) {
-			if (COMPARE_TEXCOORD (from->texCoord[i], to->texCoordPre[i])) {
-				diff_api.MultiTexCoord4fvARB (GL_TEXTURE0_ARB + i, (GLfloat *) &(to->texCoordPre[i].s));
-			}
-			from->texCoord[i] = to->texCoord[i];
-			INVERTDIRTY(c->texCoord[i], nbitID);
-		}
-	}
-
+	/* edge flag */
 	if (CHECKDIRTY(c->edgeFlag, bitID)) {
 		if (from->edgeFlag != to->edgeFlagPre) {
 			diff_api.EdgeFlag (to->edgeFlagPre);
 		}
 		from->edgeFlag = to->edgeFlag;
-		INVERTDIRTY(c->edgeFlag, nbitID);
+		CLEARDIRTY(c->edgeFlag, nbitID);
 	}
 
-	INVERTDIRTY(c->dirty, nbitID);
+	/* color index */
+	if (CHECKDIRTY(c->colorIndex, bitID)) {
+		if (from->colorIndex != to->colorIndexPre) {
+			diff_api.Indexf (to->colorIndex);
+		}
+		from->colorIndex = to->colorIndex;
+		CLEARDIRTY(c->colorIndex, nbitID);
+	}
+
+
+	/* If using a vertex program, update the generic vertex attributes,
+	 * which may or may not be aliased with conventional attributes.
+	 */
+#if defined(CR_ARB_vertex_program) || defined(CR_NV_vertex_progra)
+	if (toCtx->program.vpEnabled &&
+			(toCtx->extensions.ARB_vertex_program ||
+			 (toCtx->extensions.NV_vertex_program))) {
+		const unsigned attribsUsedMask = toCtx->current.attribsUsedMask;
+		int i;
+		for (i = 1; i < CR_MAX_VERTEX_ATTRIBS; i++) {  /* skip zero */
+			if ((attribsUsedMask & (1 << i))
+					&& CHECKDIRTY(c->vertexAttrib[i], bitID)) {
+				if (COMPARE_VECTOR (from->vertexAttrib[i], to->vertexAttribPre[i])) {
+					diff_api.VertexAttrib4fvARB(i, &(to->vertexAttribPre[i][0]));
+				}
+				COPY_4V(from->vertexAttrib[i] , to->vertexAttrib[i]);
+				CLEARDIRTY(c->vertexAttrib[i], nbitID);
+			}
+		}
+	}
+	/* Fall-through so that attributes which don't have their bit set in the
+	 * attribsUsedMask get handled via the conventional attribute functions.
+	 */
+#endif
+
+	{
+		/* use conventional attribute functions */
+		if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR0], bitID)) {
+			if (COMPARE_COLOR(from->vertexAttrib[VERT_ATTRIB_COLOR0],to->vertexAttribPre[VERT_ATTRIB_COLOR0])) {
+				diff_api.Color4fv ((GLfloat *) &(to->vertexAttribPre[VERT_ATTRIB_COLOR0]));
+			}
+			COPY_4V(from->vertexAttrib[VERT_ATTRIB_COLOR0] , to->vertexAttrib[VERT_ATTRIB_COLOR0]);
+			CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR0], nbitID);
+		}
+
+#ifdef CR_EXT_secondary_color
+		if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR1], bitID)) {
+			if (COMPARE_COLOR(from->vertexAttrib[VERT_ATTRIB_COLOR1],to->vertexAttribPre[VERT_ATTRIB_COLOR1])) {
+				diff_api.SecondaryColor3fvEXT ((GLfloat *) &(to->vertexAttribPre[VERT_ATTRIB_COLOR1]));
+			}
+			COPY_4V(from->vertexAttrib[VERT_ATTRIB_COLOR1] , to->vertexAttrib[VERT_ATTRIB_COLOR1]);
+			CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_COLOR1], nbitID);
+		}
+#endif
+
+#ifdef CR_EXT_fog_coord
+		if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_FOG], bitID)) {
+			if (from->vertexAttrib[VERT_ATTRIB_FOG]  != to->vertexAttribPre[VERT_ATTRIB_FOG]) {
+				diff_api.FogCoordfvEXT ((GLfloat *) &(to->vertexAttribPre[VERT_ATTRIB_FOG]));
+			}
+			COPY_4V(from->vertexAttrib[VERT_ATTRIB_FOG]  , to->vertexAttrib[VERT_ATTRIB_FOG]);
+			CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_FOG], nbitID);
+		}
+#endif
+
+		if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_NORMAL], bitID)) {
+			if (COMPARE_VECTOR (from->vertexAttrib[VERT_ATTRIB_NORMAL], to->vertexAttribPre[VERT_ATTRIB_NORMAL])) {
+				diff_api.Normal3fv ((GLfloat *) &(to->vertexAttribPre[VERT_ATTRIB_NORMAL]));
+			}
+			COPY_4V(from->vertexAttrib[VERT_ATTRIB_NORMAL] , to->vertexAttrib[VERT_ATTRIB_NORMAL]);
+			CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_NORMAL], nbitID);
+		}
+
+		for ( i = 0 ; i < fromCtx->limits.maxTextureUnits ; i++)
+		{
+			if (CHECKDIRTY(c->vertexAttrib[VERT_ATTRIB_TEX0 + i], bitID)) {
+				if (COMPARE_TEXCOORD (from->vertexAttrib[VERT_ATTRIB_TEX0 + i], to->vertexAttribPre[VERT_ATTRIB_TEX0 + i])) {
+					diff_api.MultiTexCoord4fvARB (GL_TEXTURE0_ARB + i, (GLfloat *) &(to->vertexAttribPre[VERT_ATTRIB_TEX0 + i]));
+				}
+				COPY_4V(from->vertexAttrib[VERT_ATTRIB_TEX0 + i] , to->vertexAttrib[VERT_ATTRIB_TEX0 + i]);
+				CLEARDIRTY(c->vertexAttrib[VERT_ATTRIB_TEX0 + i], nbitID);
+			}
+		}
+	}
+
+	CLEARDIRTY(c->dirty, nbitID);
 }

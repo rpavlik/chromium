@@ -73,11 +73,11 @@ void crStateRegCombinerInit( CRContext *ctx )
 		reg->alpha[i].abDotProduct = GL_FALSE;
 		reg->alpha[i].cdDotProduct = GL_FALSE;
 		reg->alpha[i].muxSum = GL_FALSE;
+		RESET(rb->regCombinerInput[i], ctx->bitid);
+		RESET(rb->regCombinerOutput[i], ctx->bitid);
 	}
-	RESET(rb->regCombinerInput, ctx->bitid);
-	RESET(rb->regCombinerOutput, ctx->bitid);
-	reg->numGeneralCombiners = 1;
 	RESET(rb->regCombinerVars, ctx->bitid);
+	reg->numGeneralCombiners = 1;
 	reg->colorSumClamp = GL_TRUE;
 	reg->a = GL_FOG;
 	reg->b = GL_SPARE0_PLUS_SECONDARY_COLOR_NV;
@@ -107,9 +107,9 @@ void crStateRegCombinerInit( CRContext *ctx )
 	{
 		reg->stageConstantColor0[i] = zero_color;
 		reg->stageConstantColor1[i] = zero_color;
+		RESET(rb->regCombinerStageColor0[i], ctx->bitid);
+		RESET(rb->regCombinerStageColor1[i], ctx->bitid);
 	}
-	RESET(rb->regCombinerStageColor0, ctx->bitid);
-	RESET(rb->regCombinerStageColor1, ctx->bitid);
 #endif /* CR_NV_register_combiners2 */
 #endif /* CR_NV_register_combiners */
 
@@ -308,7 +308,7 @@ void STATE_APIENTRY crStateCombinerInputNV( GLenum stage, GLenum portion, GLenum
 		return;
 	}
 
-	DIRTY(rb->regCombinerInput, g->neg_bitid);
+	DIRTY(rb->regCombinerInput[stage], g->neg_bitid);
 	DIRTY(rb->dirty, g->neg_bitid);
 }
 
@@ -319,6 +319,14 @@ void STATE_APIENTRY crStateCombinerOutputNV( GLenum stage, GLenum portion, GLenu
 	CRStateBits *sb = GetCurrentBits();
 	CRRegCombinerBits *rb = &(sb->regcombiner);
 
+	/*
+	  crDebug("%s(stage=0x%x portion=0x%x abOutput=0x%x cdOutput=0x%x "
+               "sumOutput=0x%x scale=0x%x bias=0x%x abDotProduct=0x%x "
+               "cdDotProduct=%d muxSum=%d)\n",
+               __FUNCTION__,
+               stage, portion, abOutput, cdOutput, sumOutput, scale, bias,
+               abDotProduct, cdDotProduct, muxSum);
+	*/
 	if( stage < GL_COMBINER0_NV || stage >= GL_COMBINER0_NV + g->limits.maxGeneralCombiners )
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "CombinerOutputNV passed bogus stage: 0x%x", stage );
@@ -403,7 +411,7 @@ void STATE_APIENTRY crStateCombinerOutputNV( GLenum stage, GLenum portion, GLenu
 		return;
 	}
 
-	DIRTY(rb->regCombinerOutput, g->neg_bitid);
+	DIRTY(rb->regCombinerOutput[stage], g->neg_bitid);
 	DIRTY(rb->dirty, g->neg_bitid);
 }
 
@@ -489,13 +497,118 @@ void STATE_APIENTRY crStateFinalCombinerInputNV( GLenum variable, GLenum input, 
 
 #if 0
 /* XXX Unfinished RegCombiner State functions */
-void STATE_APIENTRY crStateGetCombinerInputParameterfvNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params ){}
-void STATE_APIENTRY crStateGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params ){}
 void STATE_APIENTRY crStateGetCombinerOutputParameterfvNV( GLenum stage, GLenum portion, GLenum pname, GLfloat *params ){}
 void STATE_APIENTRY crStateGetCombinerOutputParameterivNV( GLenum stage, GLenum portion, GLenum pname, GLint *params ){}
 void STATE_APIENTRY crStateGetFinalCombinerInputParameterfvNV( GLenum variable, GLenum pname, GLfloat *params ){}
 void STATE_APIENTRY crStateGetFinalCombinerInputParameterivNV( GLenum variable, GLenum pname, GLfloat *params ){}
 #endif /* 0 */
+
+
+void STATE_APIENTRY crStateGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params )
+{
+	CRContext *g = GetCurrentContext();
+	CRRegCombinerState *r = &(g->regcombiner);
+	int i = stage - GL_COMBINER0_NV;
+	GLenum input, mapping, usage;
+
+	if (g->current.inBeginEnd) 
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+				"glGetCombinerParameterivNV called in begin/end");
+		return;
+	}
+
+	if (i < 0 || i > CR_MAX_GENERAL_COMBINERS) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								 "GetCombinerInputParameterivNV(stage=0x%x)", stage);
+		return;
+	}
+
+	if (portion == GL_RGB) {
+		switch (variable) {
+		case GL_VARIABLE_A_NV:
+			input = r->rgb[i].a;
+			mapping = r->rgb[i].aMapping;
+			usage = r->rgb[i].aPortion;
+			break;
+		case GL_VARIABLE_B_NV:
+			input = r->rgb[i].b;
+			mapping = r->rgb[i].bMapping;
+			usage = r->rgb[i].bPortion;
+			break;
+		case GL_VARIABLE_C_NV:
+			input = r->rgb[i].c;
+			mapping = r->rgb[i].cMapping;
+			usage = r->rgb[i].cPortion;
+			break;
+		case GL_VARIABLE_D_NV:
+			input = r->rgb[i].d;
+			mapping = r->rgb[i].dMapping;
+			usage = r->rgb[i].dPortion;
+			break;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glGetCombinerInputParameterivNV(variable=0x%x)", variable);
+			return;
+		}
+	}
+	else if (portion == GL_ALPHA) {
+		switch (variable) {
+		case GL_VARIABLE_A_NV:
+			input = r->alpha[i].a;
+			mapping = r->alpha[i].aMapping;
+			usage = r->alpha[i].aPortion;
+			break;
+		case GL_VARIABLE_B_NV:
+			input = r->alpha[i].b;
+			mapping = r->alpha[i].bMapping;
+			usage = r->alpha[i].bPortion;
+			break;
+		case GL_VARIABLE_C_NV:
+			input = r->alpha[i].c;
+			mapping = r->alpha[i].cMapping;
+			usage = r->alpha[i].cPortion;
+			break;
+		case GL_VARIABLE_D_NV:
+			input = r->alpha[i].d;
+			mapping = r->alpha[i].dMapping;
+			usage = r->alpha[i].dPortion;
+			break;
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glGetCombinerInputParameterivNV(variable=0x%x)", variable);
+			return;
+		}
+	}
+	else {
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								 "glGetCombinerInputParameterivNV(portion=0x%x)", portion);
+	}
+	switch (pname) {
+	case GL_COMBINER_INPUT_NV:
+		*params = input;
+		return;
+	case GL_COMBINER_MAPPING_NV:
+		*params = mapping;
+		return;
+	case GL_COMBINER_COMPONENT_USAGE_NV:
+		*params = usage;
+		return;
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								 "glGetCombinerInputParameterivNV(pname=0x%x)", pname);
+		return;
+	}
+}
+
+
+void STATE_APIENTRY crStateGetCombinerInputParameterfvNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params )
+{
+		GLint iparams;
+		crStateGetCombinerInputParameterivNV(stage, portion, variable, pname, &iparams);
+		*params = (GLfloat) iparams;
+}
+
 
 void STATE_APIENTRY crStateCombinerStageParameterfvNV( GLenum stage, GLenum pname, const GLfloat *params )
 {
@@ -518,14 +631,14 @@ void STATE_APIENTRY crStateCombinerStageParameterfvNV( GLenum stage, GLenum pnam
 			r->stageConstantColor0[stage].g = params[1];
 			r->stageConstantColor0[stage].b = params[2];
 			r->stageConstantColor0[stage].a = params[3];
-			DIRTY(rb->regCombinerStageColor0, g->neg_bitid);
+			DIRTY(rb->regCombinerStageColor0[stage], g->neg_bitid);
 			break;
 		case GL_CONSTANT_COLOR1_NV:
 			r->stageConstantColor1[stage].r = params[0];
 			r->stageConstantColor1[stage].g = params[1];
 			r->stageConstantColor1[stage].b = params[2];
 			r->stageConstantColor1[stage].a = params[3];
-			DIRTY(rb->regCombinerStageColor1, g->neg_bitid);
+			DIRTY(rb->regCombinerStageColor1[stage], g->neg_bitid);
 			break;
 		default:
 			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "CombinerStageParameter passed bogus pname: 0x%x", pname );

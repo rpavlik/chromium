@@ -363,8 +363,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 			y = param[1];
 			z = param[2];
 			w = param[3];
-			mat = &(t->modelView[t->modelViewDepth]);
-
+			mat = t->modelViewStack.top;
 			lt->objPosition.x = x;
 			lt->objPosition.y = y;
 			lt->objPosition.z = z;
@@ -382,7 +381,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 			lt->spotDirection.y = param[1];
 			lt->spotDirection.z = param[2];
 			lt->spotDirection.w = 0.0f;
-			mat = t->modelView+t->modelViewDepth;
+			mat = t->modelViewStack.top;
 
 			if (lt->objPosition.w != 0.0f)
 			{
@@ -1198,6 +1197,6 @@ void crStateColorMaterialRecover(void)
 
 	if (l->colorMaterial)
 	{
-		crStateMaterialfv( l->colorMaterialFace, l->colorMaterialMode, &(c->color.r) );
+		crStateMaterialfv( l->colorMaterialFace, l->colorMaterialMode, &(c->vertexAttrib[VERT_ATTRIB_COLOR0][0]) );
 	}
 }

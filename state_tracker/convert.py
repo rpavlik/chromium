@@ -55,11 +55,15 @@ scale = {
 
 for k in gltypes.keys():
 	if k != 'f' and k != 'd' and k != 'l':
+		if k[0:1] == "N":
+			k2 = k[1:]
+		else:
+			k2 = k
 		for i in range(1,5):
-			print 'static void __convert_rescale_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k]['type'])
+			print 'static void __convert_rescale_%s%d (GLfloat *dst, %s *src) {' % (k,i,gltypes[k2]['type'])
 			for j in range(i-1):
-				print '\t*dst++ = ((GLfloat) *src++) / %s;' % scale[k]
-			print '\t*dst = ((GLfloat) *src) / %s;' % scale[k]
+				print '\t*dst++ = ((GLfloat) *src++) / %s;' % scale[k2]
+			print '\t*dst = ((GLfloat) *src) / %s;' % scale[k2]
 			print '}\n'
 
 print '''

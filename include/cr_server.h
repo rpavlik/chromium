@@ -114,6 +114,9 @@ typedef struct {
 
 	CRContext *context[CR_MAX_CONTEXTS];
 
+	CRHashTable *programTable;  /* for vertex programs */
+	GLuint currentProgram;
+
 	/* configuration options */
 	int useL2;
 	int ignore_papi;
@@ -128,6 +131,8 @@ typedef struct {
 	int localTileSpec;
 	int useDMX;
 	int overlapBlending;
+	int vpProjectionMatrixParameter;
+	const char *vpProjectionMatrixVariable;
 
 	GLfloat alignment_matrix[16], unnormalized_alignment_matrix[16];
 	

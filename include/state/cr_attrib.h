@@ -46,17 +46,11 @@ typedef struct {
 } CRColorBufferStack;
 
 typedef struct {
-	GLcolorf     color;
-	GLfloat      index;
-	GLtexcoordf  texCoord[CR_MAX_TEXTURE_UNITS];
-	GLvectorf    normal;
-	GLboolean    edgeFlag;
-
-	GLvectorf    rasterPos;
-	GLcolorf     rasterColor;
-	GLtexcoordf  rasterTexture;
-	GLdouble     rasterIndex;
 	GLboolean    rasterValid;
+	GLfloat	     attrib[CR_MAX_VERTEX_ATTRIBS][4];
+	GLfloat      rasterAttrib[CR_MAX_VERTEX_ATTRIBS][4];
+	GLboolean    edgeFlag;
+	GLfloat      colorIndex;
 } CRCurrentStack;
 
 typedef struct {
@@ -101,6 +95,9 @@ typedef struct {
 	GLboolean texture3D[CR_MAX_TEXTURE_UNITS];
 #ifdef CR_ARB_texture_cube_map
 	GLboolean textureCubeMap[CR_MAX_TEXTURE_UNITS];
+#endif
+#ifdef CR_NV_texture_rectangle
+	GLboolean textureRect[CR_MAX_TEXTURE_UNITS];
 #endif
 	GLboolean textureGenS[CR_MAX_TEXTURE_UNITS];
 	GLboolean textureGenT[CR_MAX_TEXTURE_UNITS];

@@ -12,6 +12,7 @@
 
 #include "packer.h"
 #include "cr_error.h"
+#include "pack_bbox.h"
 
 
 void PACK_APIENTRY crPackProgramParameters4dvNV (GLenum target, GLuint index, GLuint num, const GLdouble * params)
@@ -51,14 +52,15 @@ void PACK_APIENTRY crPackProgramParameters4fvNV (GLenum target, GLuint index, GL
 void PACK_APIENTRY crPackVertexAttribPointerNV( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	GET_PACKER_CONTEXT(pc);
-	crError ( "VertexAttribPointerNV needs to be special cased!");
 	(void) pc;
 	(void) index;
 	(void) size;
 	(void) type;
 	(void) stride;
 	(void) pointer;
+	crWarning("Unimplemented VertexAttribPointerNV");
 }
+
 
 
 void PACK_APIENTRY crPackVertexAttribs1dvNV( GLuint index, GLsizei n, const GLdouble *v )
@@ -66,7 +68,7 @@ void PACK_APIENTRY crPackVertexAttribs1dvNV( GLuint index, GLsizei n, const GLdo
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib1dvNV(index + i, v + i);
+		crPackVertexAttrib1dvARB(index + i, v + i);
 }
 
 
@@ -75,7 +77,7 @@ void PACK_APIENTRY crPackVertexAttribs1fvNV( GLuint index, GLsizei n, const GLfl
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib1fvNV(index + i, v + i);
+		crPackVertexAttrib1fvARB(index + i, v + i);
 }
 
 
@@ -84,7 +86,7 @@ void PACK_APIENTRY crPackVertexAttribs1svNV( GLuint index, GLsizei n, const GLsh
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib1svNV(index + i, v + i);
+		crPackVertexAttrib1svARB(index + i, v + i);
 }
 
 
@@ -93,7 +95,7 @@ void PACK_APIENTRY crPackVertexAttribs2dvNV( GLuint index, GLsizei n, const GLdo
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib2dvNV(index + i, v + 2 * i);
+		crPackVertexAttrib2dvARB(index + i, v + 2 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs2fvNV( GLuint index, GLsizei n, const GLfloat *v )
@@ -101,7 +103,7 @@ void PACK_APIENTRY crPackVertexAttribs2fvNV( GLuint index, GLsizei n, const GLfl
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib2fvNV(index + i, v + 2 * i);
+		crPackVertexAttrib2fvARB(index + i, v + 2 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs2svNV( GLuint index, GLsizei n, const GLshort *v )
@@ -109,7 +111,7 @@ void PACK_APIENTRY crPackVertexAttribs2svNV( GLuint index, GLsizei n, const GLsh
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib2svNV(index + i, v + 2 * i);
+		crPackVertexAttrib2svARB(index + i, v + 2 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs3dvNV( GLuint index, GLsizei n, const GLdouble *v )
@@ -117,7 +119,7 @@ void PACK_APIENTRY crPackVertexAttribs3dvNV( GLuint index, GLsizei n, const GLdo
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib3dvNV(index + i, v + 3 * i);
+		crPackVertexAttrib3dvARB(index + i, v + 3 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs3fvNV( GLuint index, GLsizei n, const GLfloat *v )
@@ -125,7 +127,7 @@ void PACK_APIENTRY crPackVertexAttribs3fvNV( GLuint index, GLsizei n, const GLfl
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib3fvNV(index + i, v + 3 * i);
+		crPackVertexAttrib3fvARB(index + i, v + 3 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs3svNV( GLuint index, GLsizei n, const GLshort *v )
@@ -133,7 +135,7 @@ void PACK_APIENTRY crPackVertexAttribs3svNV( GLuint index, GLsizei n, const GLsh
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib3svNV(index + i, v + 3 * i);
+		crPackVertexAttrib3svARB(index + i, v + 3 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs4dvNV( GLuint index, GLsizei n, const GLdouble *v )
@@ -141,7 +143,7 @@ void PACK_APIENTRY crPackVertexAttribs4dvNV( GLuint index, GLsizei n, const GLdo
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib4dvNV(index + i, v + 4 * i);
+		crPackVertexAttrib4dvARB(index + i, v + 4 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs4fvNV( GLuint index, GLsizei n, const GLfloat *v )
@@ -149,7 +151,7 @@ void PACK_APIENTRY crPackVertexAttribs4fvNV( GLuint index, GLsizei n, const GLfl
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib4fvNV(index + i, v + 4 * i);
+		crPackVertexAttrib4fvARB(index + i, v + 4 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs4svNV( GLuint index, GLsizei n, const GLshort *v )
@@ -157,7 +159,7 @@ void PACK_APIENTRY crPackVertexAttribs4svNV( GLuint index, GLsizei n, const GLsh
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib4svNV(index + i, v + 4 * i);
+		crPackVertexAttrib4svARB(index + i, v + 4 * i);
 }
 
 void PACK_APIENTRY crPackVertexAttribs4ubvNV( GLuint index, GLsizei n, const GLubyte *v )
@@ -165,13 +167,16 @@ void PACK_APIENTRY crPackVertexAttribs4ubvNV( GLuint index, GLsizei n, const GLu
 	GLint i;
 	/* reverse order so we hit index 0 last (provoking glVertex) */
 	for (i = n - 1; i >= 0; i--)
-		crPackVertexAttrib4ubvNV(index + i, v + 4 * i);
+		crPackVertexAttrib4ubvARB(index + i, v + 4 * i);
 }
+
 
 void PACK_APIENTRY crPackDeleteProgramsNV( GLsizei n, const GLuint *ids )
 {
 	GET_PACKER_CONTEXT(pc);
+#if 0
 	crError ( "DeleteProgramsNV needs to be special cased!");
+#endif
 	(void) pc;
 	(void) n;
 	(void) ids;
@@ -179,30 +184,432 @@ void PACK_APIENTRY crPackDeleteProgramsNV( GLsizei n, const GLuint *ids )
 
 void PACK_APIENTRY crPackExecuteProgramNV( GLenum target, GLuint id, const GLfloat *params )
 {
+	const int packet_length = 32;
+	unsigned char *data_ptr;
 	GET_PACKER_CONTEXT(pc);
-	crError ( "ExecuteProgramNV needs to be special cased!");
-	(void) pc;
-	(void) target;
-	(void) id;
-	(void) params;
+
+	GET_BUFFERED_POINTER(pc, packet_length);
+	WRITE_DATA(0, int, packet_length);
+	WRITE_DATA(4, GLenum, CR_EXECUTEPROGRAMNV_EXTEND_OPCODE);
+	WRITE_DATA(8, GLenum, target);
+	WRITE_DATA(12, GLuint, id);
+	WRITE_DATA(16, GLfloat, params[0] );
+	WRITE_DATA(20, GLfloat, params[1] );
+	WRITE_DATA(24, GLfloat, params[2] );
+	WRITE_DATA(28, GLfloat, params[3] );
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
 }
 
 void PACK_APIENTRY crPackLoadProgramNV( GLenum target, GLuint id, GLsizei len, const GLubyte *program )
 {
+	const int packet_length = 20 + len;
+	unsigned char *data_ptr;
 	GET_PACKER_CONTEXT(pc);
-	crError ( "LoadProgramNV needs to be special cased!");
-	(void) pc;
-	(void) target;
-	(void) id;
-	(void) len;
-	(void) program;
+
+	GET_BUFFERED_POINTER(pc, packet_length);
+	WRITE_DATA(0, int, packet_length);
+	WRITE_DATA(4, GLenum, CR_LOADPROGRAMNV_EXTEND_OPCODE);
+	WRITE_DATA(8, GLenum, target);
+	WRITE_DATA(12, GLuint, id);
+	WRITE_DATA(16, GLsizei, len );
+	crMemcpy( (void *) (data_ptr + 20), program, len );
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
 }
 
 void PACK_APIENTRY crPackRequestResidentProgramsNV( GLsizei n, const GLuint *ids )
 {
 	GET_PACKER_CONTEXT(pc);
-	crError ( "RequestResidentProgramsNV needs to be special cased!");
+	(void) pc;
+	(void) n;
+	(void) ids;
+	/* We're no-op'ing this function for now. */
+}
+
+
+void PACK_APIENTRY crPackProgramLocalParameter4dARB (GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+
+	GET_BUFFERED_POINTER(pc, 48);
+	WRITE_DATA(0, int, 48);
+	WRITE_DATA(4, GLenum, CR_PROGRAMLOCALPARAMETER4DARB_EXTEND_OPCODE);
+	WRITE_DATA(8, GLenum, target);
+	WRITE_DATA(12, GLuint, index);
+	WRITE_DOUBLE(16, x);
+	WRITE_DOUBLE(24, y);
+	WRITE_DOUBLE(32, z);
+	WRITE_DOUBLE(40, w);
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
+}
+
+void PACK_APIENTRY crPackProgramLocalParameter4dvARB (GLenum target, GLuint index, const GLdouble * params)
+{
+	crPackProgramLocalParameter4dARB(target, index,
+																	 params[0], params[1], params[2], params[3]);
+}
+
+void PACK_APIENTRY crPackProgramLocalParameter4fARB (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+
+	GET_BUFFERED_POINTER(pc, 32);
+	WRITE_DATA(0, int, 32);
+	WRITE_DATA(4, GLenum, CR_PROGRAMLOCALPARAMETER4FARB_EXTEND_OPCODE);
+	WRITE_DATA(8, GLenum, target);
+	WRITE_DATA(12, GLuint, index);
+	WRITE_DATA(16, GLfloat, x);
+	WRITE_DATA(20, GLfloat, y);
+	WRITE_DATA(24, GLfloat, z);
+	WRITE_DATA(28, GLfloat, w);
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
+}
+
+void PACK_APIENTRY crPackProgramLocalParameter4fvARB (GLenum target, GLuint index, const GLfloat * params)
+{
+	crPackProgramLocalParameter4fARB(target, index,
+																	 params[0], params[1], params[2], params[3]);
+}
+
+void PACK_APIENTRY crPackProgramNamedParameter4fNV (GLuint id, GLsizei len, const GLubyte * name, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	int packet_length = 32 + len;
+
+	GET_BUFFERED_POINTER(pc, packet_length);
+	WRITE_DATA(0, GLint, packet_length);
+	WRITE_DATA(4, GLenum, CR_PROGRAMNAMEDPARAMETER4FNV_EXTEND_OPCODE);
+	WRITE_DATA(8, GLuint, id);
+	WRITE_DATA(12, GLsizei, len);
+	WRITE_DATA(16, GLfloat, x);
+	WRITE_DATA(20, GLfloat, y);
+	WRITE_DATA(24, GLfloat, z);
+	WRITE_DATA(28, GLfloat, w);
+	crMemcpy( (void *) (data_ptr + 32), name, len );
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
+}
+
+void PACK_APIENTRY crPackProgramNamedParameter4dNV (GLuint id, GLsizei len, const GLubyte * name, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	int packet_length = 48 + len;
+
+	GET_BUFFERED_POINTER(pc, packet_length);
+	WRITE_DATA(0, GLint, packet_length);
+	WRITE_DATA(4, GLenum, CR_PROGRAMNAMEDPARAMETER4DNV_EXTEND_OPCODE);
+	WRITE_DATA(8, GLenum, id);
+	WRITE_DATA(12, GLuint, len);
+	WRITE_DOUBLE(16, x);
+	WRITE_DOUBLE(24, y);
+	WRITE_DOUBLE(32, z);
+	WRITE_DOUBLE(40, w);
+	crMemcpy( (void *) (data_ptr + 48), name, len );
+
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
+}
+
+void PACK_APIENTRY crPackProgramNamedParameter4fvNV (GLuint id, GLsizei len, const GLubyte * name, const GLfloat * v)
+{
+	crPackProgramNamedParameter4fNV(id, len, name, v[0], v[1], v[2], v[3]);
+}
+
+void PACK_APIENTRY crPackProgramNamedParameter4dvNV (GLuint id, GLsizei len, const GLubyte * name, const GLdouble * v)
+{
+	crPackProgramNamedParameter4dNV(id, len, name, v[0], v[1], v[2], v[3]);
+}
+
+
+
+void PACK_APIENTRY crPackGetProgramNamedParameterfvNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat *params, int *writeback )
+{
+	int packet_length = 32 + len;
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	GET_BUFFERED_POINTER( pc, packet_length );
+	WRITE_DATA( 0, GLint, packet_length );
+	WRITE_DATA( 4, GLenum, CR_GETPROGRAMNAMEDPARAMETERFVNV_EXTEND_OPCODE );
+	WRITE_DATA( 8, GLuint, id );
+	WRITE_DATA( 12, GLsizei, len );
+	crMemcpy(data_ptr + 16, name, len);
+	WRITE_NETWORK_POINTER( 16 + len, (void *) params );
+	WRITE_NETWORK_POINTER( 16 + len + 8, (void *) writeback );
+	WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
+}
+
+void PACK_APIENTRY crPackGetProgramNamedParameterdvNV( GLuint id, GLsizei len, const GLubyte *name, GLdouble *params, int *writeback )
+{
+	int packet_length = 32 + len;
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	GET_BUFFERED_POINTER( pc, packet_length );
+	WRITE_DATA( 0, GLint, packet_length );
+	WRITE_DATA( 4, GLenum, CR_GETPROGRAMNAMEDPARAMETERDVNV_EXTEND_OPCODE );
+	WRITE_DATA( 8, GLuint, id );
+	WRITE_DATA( 12, GLsizei, len );
+	crMemcpy(data_ptr + 16, name, len);
+	WRITE_NETWORK_POINTER( 16 + len, (void *) params );
+	WRITE_NETWORK_POINTER( 16 + len + 8, (void *) writeback );
+	WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
+}
+
+
+void PACK_APIENTRY crPackVertexAttribPointerARB( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer )
+{
+	GET_PACKER_CONTEXT(pc);
+	(void) pc;
+	(void) index;
+	(void) size;
+	(void) type;
+	(void) normalized;
+	(void) stride;
+	(void) pointer;
+	crWarning("Unimplemented VertexAttribPointerARB");
+}
+
+void PACK_APIENTRY crPackDeleteProgramsARB( GLsizei n, const GLuint *ids )
+{
+	GET_PACKER_CONTEXT(pc);
+#if 0
+	crError ( "DeleteProgramsARBNV needs to be special cased!");
+#endif
 	(void) pc;
 	(void) n;
 	(void) ids;
 }
+void PACK_APIENTRY  crPackProgramStringARB( GLenum target, GLenum format, GLsizei len, const void *string )
+{
+	const int packet_length = 20 + len;
+	unsigned char *data_ptr;
+	GET_PACKER_CONTEXT(pc);
+
+	GET_BUFFERED_POINTER(pc, packet_length);
+	WRITE_DATA(0, int, packet_length);
+	WRITE_DATA(4, GLenum, CR_PROGRAMSTRINGARB_EXTEND_OPCODE);
+	WRITE_DATA(8, GLenum, target);
+	WRITE_DATA(12, GLuint, format);
+	WRITE_DATA(16, GLsizei, len );
+	crMemcpy( (void *) (data_ptr + 20), string, len );
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
+}
+
+
+void PACK_APIENTRY crPackProgramEnvParameter4dvARB( GLenum target, GLuint index, const GLdouble *params ) 
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+
+	GET_BUFFERED_POINTER(pc, 48);
+	WRITE_DATA(0, int, 48);
+	WRITE_DATA(4, GLenum, CR_PROGRAMENVPARAMETER4DARB_EXTEND_OPCODE);
+	WRITE_DATA(8, GLenum, target);
+	WRITE_DATA(12, GLuint, index);
+	WRITE_DOUBLE(16, params[0]);
+	WRITE_DOUBLE(24, params[1]);
+	WRITE_DOUBLE(32, params[2]);
+	WRITE_DOUBLE(40, params[3]);
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
+}
+
+void PACK_APIENTRY crPackProgramEnvParameter4fvARB( GLenum target, GLuint index, const GLfloat *params ) 
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+
+	GET_BUFFERED_POINTER(pc, 32);
+	WRITE_DATA(0, int, 32);
+	WRITE_DATA(4, GLenum, CR_PROGRAMENVPARAMETER4FVARB_EXTEND_OPCODE);
+	WRITE_DATA(8, GLenum, target);
+	WRITE_DATA(12, GLuint, index);
+	WRITE_DATA(16, GLfloat, params[0]);
+	WRITE_DATA(20, GLfloat, params[1]);
+	WRITE_DATA(24, GLfloat, params[2]);
+	WRITE_DATA(28, GLfloat, params[3]);
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
+}
+
+
+/*
+ * Can't easily auto-generate these functions since there aren't
+ * non-vector versions.
+ */
+
+void PACK_APIENTRY crPackVertexAttrib4NbvARB( GLuint index, const GLbyte *v )
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 8 );
+	pc->current.vertexAttrib.b4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLbyte, v[0] );
+	WRITE_DATA( 5, GLbyte, v[1] );
+	WRITE_DATA( 6, GLbyte, v[2] );
+	WRITE_DATA( 7, GLbyte, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4NBVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4NivARB( GLuint index, const GLint *v )
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 20 );
+	pc->current.vertexAttrib.i4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLint, v[0] );
+	WRITE_DATA( 8, GLint, v[1] );
+	WRITE_DATA( 12, GLint, v[2] );
+	WRITE_DATA( 16, GLint, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4NIVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4NsvARB( GLuint index, const GLshort *v )
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 12 );
+	pc->current.vertexAttrib.s4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLshort, v[0] );
+	WRITE_DATA( 6, GLshort, v[1] );
+	WRITE_DATA( 8, GLshort, v[2] );
+	WRITE_DATA( 10, GLshort, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4NSVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4NubvARB(GLuint index, const GLubyte * v)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 8 );
+	pc->current.vertexAttrib.ub4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLubyte, v[0] );
+	WRITE_DATA( 5, GLubyte, v[1] );
+	WRITE_DATA( 6, GLubyte, v[2] );
+	WRITE_DATA( 7, GLubyte, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4NUBVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4NuivARB(GLuint index, const GLuint * v)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 20 );
+	pc->current.vertexAttrib.ui4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLuint, v[0] );
+	WRITE_DATA( 8, GLuint, v[1] );
+	WRITE_DATA( 12, GLuint, v[2] );
+	WRITE_DATA( 16, GLuint, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4NUIVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4NusvARB(GLuint index, const GLushort * v)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 12 );
+	pc->current.vertexAttrib.s4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLushort, v[0] );
+	WRITE_DATA( 6, GLushort, v[1] );
+	WRITE_DATA( 8, GLushort, v[2] );
+	WRITE_DATA( 10, GLushort, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4NUSVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4bvARB(GLuint index, const GLbyte * v)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 8 );
+	pc->current.vertexAttrib.b4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLbyte, v[0] );
+	WRITE_DATA( 5, GLbyte, v[1] );
+	WRITE_DATA( 6, GLbyte, v[2] );
+	WRITE_DATA( 7, GLbyte, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4BVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4ivARB(GLuint index, const GLint * v)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 20 );
+	pc->current.vertexAttrib.i4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLint, v[0] );
+	WRITE_DATA( 8, GLint, v[1] );
+	WRITE_DATA( 12, GLint, v[2] );
+	WRITE_DATA( 16, GLint, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4IVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4uivARB(GLuint index, const GLuint * v)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 20 );
+	pc->current.vertexAttrib.ui4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLuint, v[0] );
+	WRITE_DATA( 8, GLuint, v[1] );
+	WRITE_DATA( 12, GLuint, v[2] );
+	WRITE_DATA( 16, GLuint, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4UIVARB_OPCODE );
+}
+
+void PACK_APIENTRY crPackVertexAttrib4usvARB(GLuint index, const GLushort * v)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 12 );
+	pc->current.vertexAttrib.s4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLushort, v[0] );
+	WRITE_DATA( 6, GLushort, v[1] );
+	WRITE_DATA( 8, GLushort, v[2] );
+	WRITE_DATA( 10, GLushort, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4USVARB_OPCODE );
+}
+
+
+void PACK_APIENTRY crPackVertexAttrib4ubvARB(GLuint index, const GLubyte * v)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 8 );
+	pc->current.vertexAttrib.ub4[index] = data_ptr + 12;
+	pc->current.attribsUsedMask |= (1 << index);
+	WRITE_DATA( 0, GLuint, index );
+	WRITE_DATA( 4, GLubyte, v[0] );
+	WRITE_DATA( 5, GLubyte, v[1] );
+	WRITE_DATA( 6, GLubyte, v[2] );
+	WRITE_DATA( 7, GLubyte, v[3] );
+	WRITE_OPCODE( pc, CR_VERTEXATTRIB4UBVARB_OPCODE );
+}
+

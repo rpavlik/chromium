@@ -17,36 +17,42 @@ extern "C" {
 
 typedef struct {
 	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue *currentMatrix; /* points to one of the following */
 	CRbitvalue matrixMode[CR_MAX_BITARRAY];
-	CRbitvalue matrix[NUM_MATRICES][CR_MAX_BITARRAY];
+	CRbitvalue modelviewMatrix[CR_MAX_BITARRAY];
+	CRbitvalue projectionMatrix[CR_MAX_BITARRAY];
+	CRbitvalue colorMatrix[CR_MAX_BITARRAY];
+	CRbitvalue textureMatrix[CR_MAX_BITARRAY];
+	CRbitvalue programMatrix[CR_MAX_BITARRAY];
 	CRbitvalue clipPlane[CR_MAX_BITARRAY];
 	CRbitvalue enable[CR_MAX_BITARRAY];
 	CRbitvalue base[CR_MAX_BITARRAY];
 } CRTransformBits;
 
 typedef struct {
-	GLenum   matrixMode;
-	GLint    matrixid;    /* 0=modelview, 1=projection, 2=texture, 3=color */
+   CRmatrix *top;      /* points into stack */
+   CRmatrix *stack;    /* array [maxDepth] of CRmatrix */
+   GLuint depth;       /* 0 <= depth < maxDepth */
+   GLuint maxDepth;    /* size of stack[] array */
+} CRMatrixStack;
 
-	GLint    maxDepth;		/* Max depth of current matrix stack/mode */
-
-	GLint    modelViewDepth;
-	GLint    projectionDepth;
-	GLint    textureDepth[CR_MAX_TEXTURE_UNITS];
-	GLint    colorDepth;
-	GLint    *depth;      /* points to one of above depth fields */
-
+typedef struct {
 	GLvectord  *clipPlane;
 	GLboolean  *clip;
 
-	CRmatrix  *modelView;
-	CRmatrix  *projection;
-	CRmatrix  *texture[CR_MAX_TEXTURE_UNITS];
-	CRmatrix  *color;
-	CRmatrix  *m;
+	GLenum matrixMode;
 
-	GLboolean  transformValid;
-	CRmatrix  transform;
+	/* matrix stacks */
+	CRMatrixStack modelViewStack;
+	CRMatrixStack projectionStack;
+	CRMatrixStack colorStack;
+	CRMatrixStack textureStack[CR_MAX_TEXTURE_UNITS];
+	CRMatrixStack programStack[CR_MAX_PROGRAM_MATRICES];
+	CRMatrixStack *currentStack;
+
+	GLboolean modelViewProjectionValid;
+	CRmatrix  modelViewProjection;  /* product of modelview and projection */
+
 #ifdef CR_OPENGL_VERSION_1_2
 	GLboolean rescaleNormals;
 #endif
@@ -56,20 +62,16 @@ typedef struct {
 	GLboolean normalize;
 } CRTransformState;
 
-void crStateTransformSetOutputBounds (CRTransformState *t,
-		CRrecti *outputwindow,
-		CRrecti *imagespace,
-		CRrecti *imagewindow);
 
-void crStateTransformInit (CRContext *ctx);
-void crStateTransformDestroy (CRContext *ctx);
+void crStateTransformInit(CRContext *ctx);
+void crStateTransformDestroy(CRContext *ctx);
 
 void crStateTransformUpdateTransform(CRTransformState *t);
-void crStateTransformXformPoint  (CRTransformState *t, GLvectorf *p);
-void crStateTransformXformPointMatrixf(CRmatrix *m, GLvectorf *p);
-void crStateTransformXformPointMatrixd(CRmatrix *m, GLvectord *p);
-void crStateTransformInvertTransposeMatrix(CRmatrix *inv, CRmatrix *mat);
-void crStateTransformNormalizedDims(CRrectf *p, CRrecti *r, CRrecti *q);
+void crStateTransformXformPoint(CRTransformState *t, GLvectorf *p);
+
+void crStateTransformXformPointMatrixf(const CRmatrix *m, GLvectorf *p);
+void crStateTransformXformPointMatrixd(const CRmatrix *m, GLvectord *p);
+void crStateTransformInvertTransposeMatrix(CRmatrix *inv, const CRmatrix *mat);
 
 void crStateTransformDiff(CRTransformBits *t, CRbitvalue *bitID,
                           CRContext *fromCtx, CRContext *toCtx);

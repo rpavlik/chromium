@@ -62,6 +62,7 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
 	crStatePixelInit( ctx );
 	crStatePolygonInit( ctx );
 	crStatePointInit( ctx );
+	crStateProgramInit( ctx );
 	crStateRegCombinerInit( ctx );
 	crStateStencilInit( ctx );
 	crStateTextureInit( ctx );
@@ -152,14 +153,11 @@ void crStateInit(void)
 		crStateEvaluatorDestroy( defaultContext );
 		crStateListsDestroy( defaultContext );
 		crStateLightingDestroy( defaultContext );
+		crStateProgramDestroy( defaultContext );
 		crStateTextureDestroy( defaultContext );
 		crStateTransformDestroy( defaultContext );
-
 		crFree( defaultContext );
 	}
-
-	/* Reset diff_api */
-	crMemZero(&diff_api, sizeof(SPUDispatchTable));
 
 	/* Allocate the default/NULL context */
 	defaultContext = crStateCreateContextId(0, NULL, CR_RGB_BIT);
@@ -256,16 +254,18 @@ void crStateDestroyContext( CRContext *ctx )
 #else
 		__currentContext = defaultContext;
 #endif
+		/* ensure matrix state is also current */
+		crStateMatrixMode(defaultContext->transform.matrixMode);
 	}
 	crDebug( "Destroying a context (id=%d addr=%p)", ctx->id, (void *)ctx);
 	g_availableContexts[ctx->id] = 0;
 
 	crStateClientDestroy( &(ctx->client) );
 	crStateLimitsDestroy( &(ctx->limits) );
-
 	crStateEvaluatorDestroy( ctx );
 	crStateListsDestroy( ctx );
 	crStateLightingDestroy( ctx );
+	crStateProgramDestroy( ctx );
 	crStateTextureDestroy( ctx );
 	crStateTransformDestroy( ctx );
 
@@ -297,6 +297,9 @@ void crStateMakeCurrent( CRContext *ctx )
 #else
 	__currentContext = ctx;
 #endif
+
+	/* ensure matrix state is also current */
+	crStateMatrixMode(ctx->transform.matrixMode);
 }
 
 
@@ -320,6 +323,9 @@ void crStateSetCurrent( CRContext *ctx )
 #else
 	__currentContext = ctx;
 #endif
+
+	/* ensure matrix state is also current */
+	crStateMatrixMode(ctx->transform.matrixMode);
 }
 
 
@@ -334,5 +340,5 @@ void crStateUpdateColorBits(void)
 	/* This is a hack to force updating the 'current' attribs */
 	CRStateBits *sb = GetCurrentBits();
 	FILLDIRTY(sb->current.dirty);
-	FILLDIRTY(sb->current.color);
+	FILLDIRTY(sb->current.vertexAttrib[VERT_ATTRIB_COLOR0]);
 }

@@ -127,6 +127,14 @@ GetLimit(GLenum pname, GLenum type, void *results)
 	case GL_MAX_TEXTURE_LOD_BIAS_EXT:
 		params[0] = CR_MAX_TEXTURE_LOD_BIAS;
 		break;
+#if defined(CR_NV_fragment_program) || defined(GL_ARB_fragment_program)
+	case GL_MAX_TEXTURE_COORDS_ARB:
+		params[0] = (GLfloat) CR_MAX_TEXTURE_COORDS;
+		break;
+	case GL_MAX_TEXTURE_IMAGE_UNITS_ARB:
+		params[0] = (GLfloat) CR_MAX_TEXTURE_IMAGE_UNITS;
+		break;
+#endif
 	default:
 		return GL_FALSE; /* not a GL limit */
 	}
@@ -215,24 +223,62 @@ void TILESORTSPU_APIENTRY tilesortspu_GetDoublev( GLenum pname, GLdouble *params
 {
 	if (!GetLimit(pname, GL_DOUBLE, params))
 		crStateGetDoublev( pname, params );
+
+	if (pname == GL_VIEWPORT) {
+		/* undo mural scaling */
+		GET_THREAD(thread);
+		WindowInfo *winInfo = thread->currentContext->currentWindow;
+		CRASSERT(winInfo);
+		params[0] = (GLdouble) (params[0] / winInfo->widthScale);
+		params[1] = (GLdouble) (params[1] / winInfo->heightScale);
+		params[2] = (GLdouble) (params[2] / winInfo->widthScale);
+		params[3] = (GLdouble) (params[3] / winInfo->heightScale);
+	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_GetFloatv( GLenum pname, GLfloat *params )
 {
 	if (!GetLimit(pname, GL_FLOAT, params))
 		crStateGetFloatv( pname, params );
+
+	if (pname == GL_VIEWPORT) {
+		/* undo mural scaling */
+		GET_THREAD(thread);
+		WindowInfo *winInfo = thread->currentContext->currentWindow;
+		CRASSERT(winInfo);
+		params[0] = (GLfloat) (params[0] / winInfo->widthScale);
+		params[1] = (GLfloat) (params[1] / winInfo->heightScale);
+		params[2] = (GLfloat) (params[2] / winInfo->widthScale);
+		params[3] = (GLfloat) (params[3] / winInfo->heightScale);
+	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_GetIntegerv( GLenum pname, GLint *params )
 {
 	if (!GetLimit(pname, GL_INT, params))
 		crStateGetIntegerv( pname, params );
+
+	if (pname == GL_VIEWPORT) {
+		/* undo mural scaling */
+		GET_THREAD(thread);
+		WindowInfo *winInfo = thread->currentContext->currentWindow;
+		CRASSERT(winInfo);
+		params[0] = (GLint) (params[0] / winInfo->widthScale);
+		params[1] = (GLint) (params[1] / winInfo->heightScale);
+		params[2] = (GLint) (params[2] / winInfo->widthScale);
+		params[3] = (GLint) (params[3] / winInfo->heightScale);
+	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_GetBooleanv( GLenum pname, GLboolean *params )
 {
 	if (!GetLimit(pname, GL_BOOL, params))
 		crStateGetBooleanv( pname, params );
+
+	if (pname == GL_VIEWPORT) {
+		/* undo mural scaling */
+		/* Don't need to do it for GetBooleanv */
+	}
 }
 
 
@@ -311,6 +357,9 @@ const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 	}
 	else
 	{
+		/* XXX for GL_PROGRAM_ERROR_STRING_NV it would be nice to get the
+		 * real error string from the servers.
+		 */
 		return crStateGetString(pname);
 	}
 }

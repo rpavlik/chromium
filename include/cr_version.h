@@ -12,7 +12,7 @@
  * Alpha Release = 0.1.0, Beta Release = 0.2.0
  */
 #define CR_MAJOR_VERSION 1
-#define CR_MINOR_VERSION 2
+#define CR_MINOR_VERSION 3
 #define CR_PATCH_VERSION 0
 
 
@@ -36,6 +36,7 @@
 
 /*#define CR_ARB_imaging 1    not yet */
 #define CR_ARB_depth_texture 1
+#define CR_ARB_fragment_program 1
 #define CR_ARB_multitexture 1
 #define CR_ARB_multisample 1
 #define CR_ARB_point_parameters 1
@@ -50,6 +51,7 @@
 #define CR_ARB_texture_env_dot3 1
 #define CR_ARB_texture_mirrored_repeat 1
 #define CR_ARB_transpose_matrix 1
+#define CR_ARB_vertex_program 1
 #define CR_ARB_window_pos 1
 
 #define CR_EXT_blend_color 1
@@ -60,6 +62,7 @@
 #define CR_EXT_clip_volume_hint 1
 #define CR_EXT_fog_coord 1
 #define CR_EXT_multi_draw_arrays 1
+#define CR_EXT_shadow_funcs 1
 #define CR_EXT_secondary_color 1
 #ifndef CR_OPENGL_VERSION_1_2
 #define CR_EXT_separate_specular_color 1
@@ -79,7 +82,11 @@
 #define CR_NV_register_combiners 1
 #define CR_NV_register_combiners2 1
 #define CR_NV_texgen_reflection 1
-/*#define CR_NV_vertex_program 1    not yet */
+#define CR_NV_texture_rectangle  1
+#define CR_NV_vertex_program 1
+#define CR_NV_vertex_program1_1 1
+#define CR_NV_vertex_program2 1
+#define CR_NV_fragment_program 1
 
 #define CR_SGIS_texture_border_clamp 1
 #define CR_SGIS_texture_edge_clamp 1

@@ -85,6 +85,7 @@ num_extended_components = {
 	'GL_TEXTURE_COMPARE_FAIL_VALUE_ARB': (1, 'CR_ARB_shadow_ambient'),
 	'GL_GENERATE_MIPMAP_SGIS': (1, 'CR_SGIS_generate_mipmap'),
 	'GL_TEXTURE_LOD_BIAS_EXT': (1, 'CR_EXT_texture_lod_bias'),
+	'GL_CURRENT_VERTEX_ATTRIB_ARB': (4, 'CR_any_vertex_program')
 }
 
 print """static unsigned int __lookupComponents( GLenum pname )

@@ -23,6 +23,50 @@ crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	CRTransformState *t = &(g->transform);
 	CRViewportState *v = &(g->viewport);
 	GLvectorf p;
+	CRStateBits *sb = GetCurrentBits();
+	CRCurrentBits *cb = &(sb->current);
+	int i;
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
+		return;
+	}
+
+	FLUSH();
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
+		return;
+	}
+
+	FLUSH();
+
+	/* update current color, texcoord, etc from the CurrentStatePointers */
+	crStateCurrentRecover();
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
+		return;
+	}
+
+	FLUSH();
+
+	/* update current color, texcoord, etc from the CurrentStatePointers */
+	crStateCurrentRecover();
+
+	if (g->current.inBeginEnd)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "RasterPos called in Begin/End");
+		return;
+	}
+
+	FLUSH();
+
+	/* update current color, texcoord, etc from the CurrentStatePointers */
+	crStateCurrentRecover();
 
 	if (g->current.inBeginEnd)
 	{
@@ -61,19 +105,31 @@ crStateRasterPosUpdate(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	crStateViewportApply(v, &p);
 
 	c->rasterValid = GL_TRUE;
-	c->rasterPos = p;
-	c->rasterColor = c->color;
-	c->rasterSecondaryColor = c->secondaryColor;
-	c->rasterIndex = c->index;
-	c->rasterTexture = c->texCoord[0];
+	ASSIGN_4V(c->rasterAttrib[VERT_ATTRIB_POS],    p.x, p.y, p.z, p.w);
+	ASSIGN_4V(c->rasterAttribPre[VERT_ATTRIB_POS], p.x, p.y, p.z, p.w);
+	for (i = 1; i < CR_MAX_VERTEX_ATTRIBS; i++) {
+		COPY_4V(c->rasterAttrib[i] , c->vertexAttrib[i]);
+	}
+
+	/* XXX need to update raster distance... */
+	/* from Mesa... */
 #ifdef CR_EXT_fog_coord
 	if (g->fog.fogCoordinateSource == GL_FOG_COORDINATE_EXT)
-		 c->rasterDistance = c->fogCoord;
+		 c->rasterAttrib[VERT_ATTRIB_FOG][0] = c->vertexAttrib[VERT_ATTRIB_FOG][0];
 	else
 #endif
-		/* XXX FIX */
-		c->rasterDistance = 0.0; /*(GLfloat)
+		 c->rasterAttrib[VERT_ATTRIB_FOG][0] = 0.0; /*(GLfloat)
 						sqrt( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );*/
+
+	/*
+	**  Need handle these for glGet...
+	**  c->rasterdistance;
+	**  c->rastercolor;
+	**  c->rasterindex;
+	**  c->rastertexture;
+	*/
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->rasterPos, g->neg_bitid);
 }
 
 
@@ -87,9 +143,8 @@ static void RasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	crStateRasterPosUpdate(x, y, z, w);
 
 	DIRTY(cb->dirty, g->neg_bitid);
-	DIRTY(cb->raster, g->neg_bitid);
+	DIRTY(cb->rasterPos, g->neg_bitid);
 }
-
 
 void STATE_APIENTRY crStateRasterPos2d(GLdouble x, GLdouble y)
 {
@@ -222,6 +277,7 @@ crStateWindowPosUpdate(GLfloat x, GLfloat y, GLfloat z)
 	CRCurrentState *c = &(g->current);
 	CRStateBits *sb = GetCurrentBits();
 	CRCurrentBits *cb = &(sb->current);
+	int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -231,18 +287,14 @@ crStateWindowPosUpdate(GLfloat x, GLfloat y, GLfloat z)
 
 	FLUSH();
 	DIRTY(cb->dirty, g->neg_bitid);
-	DIRTY(cb->raster, g->neg_bitid);
+	DIRTY(cb->rasterPos, g->neg_bitid);
 
 	c->rasterValid = GL_TRUE;
-	c->rasterPos.x = x;
-	c->rasterPos.y = y;
-	c->rasterPos.z = z;
-	c->rasterPos.w = 1.0;
-
-	c->rasterColor = c->color;
-	c->rasterSecondaryColor = c->secondaryColor;
-	c->rasterIndex = c->index;
-	c->rasterTexture = c->texCoord[0];
+	ASSIGN_4V(c->rasterAttrib[VERT_ATTRIB_POS],    x, y , z, 1.0);
+	ASSIGN_4V(c->rasterAttribPre[VERT_ATTRIB_POS], x, y, z, 1.0);
+	for (i = 1; i < CR_MAX_VERTEX_ATTRIBS; i++) {
+		COPY_4V(c->rasterAttrib[i] , c->vertexAttrib[i]);
+	}
 }
 
 

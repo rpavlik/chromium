@@ -59,11 +59,22 @@ extern void crUnpackExtend(void);
 # Useful functions
 #
 def MakeVector( func_name ):
+	"""Given 'Normal3f' return 'Normal3fv'.
+	A little harder for extension functions."""
+	if func_name[-3:] == "EXT":
+		return func_name[:-3] + "vEXT"
+	elif func_name[-3:] == "ARB":
+		return func_name[:-3] + "vARB"
+	elif func_name[-2:] == "NV":
+		return func_name[:-2] + "vNV"
 	return func_name + "v"
 
 def VectorLength( func_name ):
 	m = re.search( r"([0-9])", func_name )
-	return string.atoi( m.group(1) )
+	if m:
+		return string.atoi( m.group(1) )
+	else:
+		return 1
 
 def ReadData( offset, arg_type ):
 	if arg_type == "GLdouble" or arg_type == "GLclampd":

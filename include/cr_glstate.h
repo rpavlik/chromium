@@ -28,7 +28,7 @@ typedef struct CRContext CRContext;
 #include "state/cr_pixel.h"
 #include "state/cr_point.h"
 #include "state/cr_polygon.h"
-/*#include "state/cr_program.h"*/
+#include "state/cr_program.h"
 #include "state/cr_regcombiner.h"
 #include "state/cr_stencil.h"
 #include "state/cr_texture.h"
@@ -65,7 +65,7 @@ typedef struct {
 	CRPixelBits       pixel;
 	CRPointBits	      point;
 	CRPolygonBits     polygon;
-   /*	CRProgramBits     program;*/
+	CRProgramBits     program;
 	CRRegCombinerBits regcombiner;
 	CRSelectionBits	  selection;
 	CRStencilBits     stencil;
@@ -105,7 +105,7 @@ struct CRContext {
 	CRPixelState       pixel;
 	CRPointState       point;
 	CRPolygonState     polygon;
-   /*	CRProgramState     program;*/
+	CRProgramState     program;
 	CRRegCombinerState regcombiner;
 	CRSelectionState   selection;
 	CRStencilState     stencil;

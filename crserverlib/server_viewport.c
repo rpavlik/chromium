@@ -229,7 +229,7 @@ crServerSetOutputBounds( const CRMuralInfo *mural, int extNum )
 void
 crServerApplyBaseProjection(const CRmatrix *baseProj)
 {
-	const CRmatrix *projMatrix = cr_server.curClient->currentCtx->transform.projection + cr_server.curClient->currentCtx->transform.projectionDepth;
+	const CRmatrix *projMatrix = cr_server.curClient->currentCtx->transform.projectionStack.top;
 
 	cr_server.head_spu->dispatch_table.PushAttrib( GL_TRANSFORM_BIT );
 	cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );

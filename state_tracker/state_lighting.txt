@@ -12,6 +12,10 @@
 :lightModel:lightModelTwoSide:*diff_api.LightModeli(GL_LIGHT_MODEL_TWO_SIDE, to->lightModelTwoSide==GL_TRUE);
 :lightModel:lightModelColorControlEXT:*diff_api.LightModeli(GL_LIGHT_MODEL_COLOR_CONTROL_EXT, to->lightModelColorControlEXT);
 %flush
++>if (!to->lighting) {
++>CLEARDIRTY(b->dirty, nbitID);
++>return;
++>}
 :material:ambient[0]|r,g,b,a:Materialfv, GL_FRONT, GL_AMBIENT
 :material:ambient[1]|r,g,b,a:Materialfv, GL_BACK, GL_AMBIENT
 :material:diffuse[0]|r,g,b,a:Materialfv, GL_FRONT, GL_DIFFUSE
@@ -40,6 +44,7 @@
 :attenuation:constantAttenuation:Lightf, GL_LIGHT0+i, GL_CONSTANT_ATTENUATION
 :attenuation:linearAttenuation:Lightf, GL_LIGHT0+i, GL_LINEAR_ATTENUATION
 :attenuation:quadraticAttenuation:Lightf, GL_LIGHT0+i, GL_QUADRATIC_ATTENUATION
+:attenuation:constantAttenuation:Lightf, GL_LIGHT0+i, GL_CONSTANT_ATTENUATION
 :position:*if (fromCtx->transform.matrixMode != GL_MODELVIEW) { diff_api.MatrixMode(GL_MODELVIEW); fromCtx->transform.matrixMode = GL_MODELVIEW; }
 :position:*diff_api.PushMatrix();
 :position:*diff_api.LoadIdentity();
@@ -53,7 +58,7 @@
 :spot:spotCutoff:Lightf, GL_LIGHT0+i, GL_SPOT_CUTOFF
 :spot:*diff_api.PopMatrix();
 %flush
->INVERTDIRTY(lb->dirty, nbitID);
+>CLEARDIRTY(lb->dirty, nbitID);
 >}
 %target=to
 %current=from

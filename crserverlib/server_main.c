@@ -67,6 +67,9 @@ static void crServerTearDown( void )
 	crFreeHashtable(cr_server.barriers, DeleteBarrierCallback);
 	cr_server.barriers = NULL;
 
+	/* Free vertex programs */
+	crFreeHashtable(cr_server.programTable, crFree);
+
 	while (1) {
 		if (the_spu && the_spu->cleanup) {
 			crWarning("Cleaning up SPU %s",the_spu->name);
@@ -142,6 +145,8 @@ int CRServerMain( int argc, char *argv[] )
 	cr_server.muralTable = crAllocHashtable();
 	defaultMural = (CRMuralInfo *) crCalloc(sizeof(CRMuralInfo));
 	crHashtableAdd(cr_server.muralTable, 0, defaultMural);
+
+	cr_server.programTable = crAllocHashtable();
 
 	crNetInit(crServerRecv, crServerClose);
 	crStateInit();

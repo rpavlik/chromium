@@ -18,6 +18,10 @@ print '''
 
 #include <stdio.h>
 
+#ifdef WINDOWS
+#pragma warning( disable : 4127 )
+#endif
+
 typedef void (*convert_func) (GLfloat *, unsigned char *);
 '''
 
@@ -44,6 +48,11 @@ for k in current_fns.keys():
 
 	print '\tswitch (op) { \\'
 	for type in current_fns[k]['types']:
+		if type[0:1] == "N":
+			normalize = 1
+			type = type[1:]
+		else:
+			normalize = 0
 		for size in current_fns[k]['sizes']:
 			uctype = type.upper()
 			if ucname == 'EDGEFLAG':
@@ -51,7 +60,7 @@ for k in current_fns.keys():
 			else:
 				print '\tcase CR_%s%d%s_OPCODE: \\' % (ucname,size,uctype)
 			
-			if (ucname == 'COLOR' or ucname == 'NORMAL' or ucname == 'SECONDARYCOLOR') and type != 'f' and type != 'd':
+			if (ucname == 'COLOR' or ucname == 'NORMAL' or ucname == 'SECONDARYCOLOR' or normalize) and type != 'f' and type != 'd':
 				print '\t\t__convert_rescale_%s%d (vdata, (%s *) (data)); \\' % (type,size,gltypes[type]['type'])
 			else:
 				print '\t\t__convert_%s%d (vdata, (%s *) (data)); \\' % (type,size,gltypes[type]['type'])
@@ -78,13 +87,13 @@ void crStateCurrentRecover( void )
 	CRCurrentState *c = &(g->current);
 	CRStateBits *sb = GetCurrentBits();
 	CRCurrentBits *cb = &(sb->current);
-	static const GLcolorf color_default			= {0.0f, 0.0f, 0.0f, 1.0f};
-	static const GLcolorf secondaryColor_default= {0.0f, 0.0f, 0.0f, 0.0f};
-	static const GLtexcoordf texCoord_default	= {0.0f, 0.0f, 0.0f, 1.0f};
-	static const GLvectorf normal_default		= {0.0f, 0.0f, 0.0f, 1.0f};
+	static const GLfloat color_default[4]			= {0.0f, 0.0f, 0.0f, 1.0f};
+	static const GLfloat secondaryColor_default[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	static const GLfloat texCoord_default[4]	= {0.0f, 0.0f, 0.0f, 1.0f};
+	static const GLfloat normal_default[4]		= {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLfloat index_default			= 0.0f;
 	static const GLboolean edgeFlag_default		= GL_TRUE;
-	static const GLvectorf vertexAttrib_default = {0.0f, 0.0f, 0.0f, 1.0f};
+	static const GLfloat vertexAttrib_default[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLfloat fogCoord_default = 0.0f;
 	GLnormal_p		*normal		= &(c->current->normal);
 	GLcolor_p		*color		= &(c->current->color);
@@ -110,6 +119,8 @@ void crStateCurrentRecover( void )
 		return; /* never get here */
 	}
 
+	c->attribsUsedMask = c->current->attribsUsedMask;
+	
 	/* silence warnings */
 	(void) __convert_b1;
 	(void) __convert_b2;
@@ -143,20 +154,39 @@ void crStateCurrentRecover( void )
 	(void) __convert_rescale_us2;
 	(void) __convert_rescale_ub1;
 	(void) __convert_rescale_ub2;
+	(void) __convert_Ni1;
+	(void) __convert_Ni2;
+	(void) __convert_Ni3;
+	(void) __convert_Ni4;
+	(void) __convert_Nb1;
+	(void) __convert_Nb2;
+	(void) __convert_Nb3;
+	(void) __convert_Nb4;
+	(void) __convert_Nus1;
+	(void) __convert_Nus2;
+	(void) __convert_Nus3;
+	(void) __convert_Nus4;
+	(void) __convert_Nui1;
+	(void) __convert_Nui2;
+	(void) __convert_Nui3;
+	(void) __convert_Nui4;
+	(void) __convert_Ns1;
+	(void) __convert_Ns2;
+	(void) __convert_Ns3;
+	(void) __convert_Ns4;
+	(void) __convert_Nub1;
+	(void) __convert_Nub2;
+	(void) __convert_Nub3;
+	(void) __convert_Nub4;
 
 	DIRTY(nbitID, g->neg_bitid);
 
 	/* Save pre state */
-	c->normalPre = c->normal;
-	c->colorPre = c->color;
-	c->secondaryColorPre = c->secondaryColor;
-	c->fogCoordPre = c->fogCoord;
-	for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
-	{
-		c->texCoordPre[i] = c->texCoord[i];
+	for (i = 0; i < CR_MAX_VERTEX_ATTRIBS; i++) {
+		COPY_4V(c->vertexAttribPre[i]  , c->vertexAttrib[i]);
 	}
-	c->indexPre = c->index;
 	c->edgeFlagPre = c->edgeFlag;
+	c->colorIndexPre = c->colorIndex;
 
 '''
 
@@ -171,6 +201,12 @@ for k in current_fns.keys():
 		print '\t{'
 		indent += "\t"
 	for type in current_fns[k]['types']:
+		if type[0:1] == "N":
+			normalized = 1
+			type2 = type[1:]
+		else:
+			normalized = 0
+			type2 = type
 		for size in current_fns[k]['sizes']:
 			ptr = '%s->%s%d' % (name, type, size )
 			if current_fns[k].has_key( 'array' ):
@@ -178,7 +214,7 @@ for k in current_fns.keys():
 			print '%s\tif (v < %s)' % (indent, ptr)
 			print '%s\t{' % indent
 			print '%s\t\tv = %s;' % (indent, ptr)
-			if (k == 'Color' or k == 'Normal' or k == 'SecondaryColor') and type != 'f' and type != 'd' and type != 'l':
+			if (k == 'Color' or k == 'Normal' or k == 'SecondaryColor' or normalized) and type != 'f' and type != 'd' and type != 'l':
 				print '%s\t\tconvert = (convert_func) __convert_rescale_%s%d;' % (indent,type,size)
 			else:
 				print '%s\t\tconvert = (convert_func) __convert_%s%d;' % (indent,type,size)
@@ -186,27 +222,63 @@ for k in current_fns.keys():
 	print ''
 	print '%s\tif (v != NULL) {' % indent
 	if current_fns[k].has_key( 'array' ):
-		print '%s\t\tc->%s[i] = %s_default;' % (indent,name,name)
+		if k == 'TexCoord':
+			print '%s\t\tCOPY_4V(c->vertexAttrib[VERT_ATTRIB_TEX0 + i], %s_default);' % (indent,name)
+		else:
+			print '%s\t\tCOPY_4V(c->%s[i], %s_default);' % (indent,name,name)
 	else:
-		print '%s\t\tc->%s = %s_default;' % (indent,name,name)
+		if k == 'Normal':
+			print '%s\t\tCOPY_4V(c->vertexAttrib[VERT_ATTRIB_NORMAL], %s_default);' % (indent,name)
+		elif k == 'FogCoord':
+			print '%s\t\tc->vertexAttrib[VERT_ATTRIB_FOG][0] =  %s_default;' % (indent,name)
+		elif k == 'Color':
+			print '%s\t\tCOPY_4V(c->vertexAttrib[VERT_ATTRIB_COLOR0], %s_default);' % (indent,name)
+		elif k == 'SecondaryColor':
+			print '%s\t\tCOPY_4V(c->vertexAttrib[VERT_ATTRIB_COLOR1],  %s_default);' % (indent,name)
+		elif k == 'TexCoord':
+			print '%s\t\tCOPY_4V(c->vertexAttrib[VERT_ATTRIB_TEX0], %s_default);' % (indent,name)
+		elif k == 'Index':
+			print '%s\t\tc->colorIndex =  %s_default;' % (indent,name)
+		elif k == 'EdgeFlag':
+			print '%s\t\tc->edgeFlag =  %s_default;' % (indent,name)
+		else:
+			print '%s\t\tc->%s = %s_default;' % (indent,name,name)
 	if k == 'EdgeFlag':
-		print '%s\t\t__convert_boolean (&(c->%s), v);' % (indent, name)
-	elif k == 'Index':
-		print '%s\t\tconvert(&(c->%s), v);' % (indent,name)
+		print '%s\t\t__convert_boolean (&c->edgeFlag, v);' % (indent)
+		dirtyVar = 'cb->edgeFlag'
 	elif k == 'Normal':
-		print '%s\t\tconvert(&(c->%s.x), v);' % (indent,name)
+		print '%s\t\tconvert(&(c->vertexAttrib[VERT_ATTRIB_NORMAL][0]), v);' % (indent)
+		dirtyVar = 'cb->vertexAttrib[VERT_ATTRIB_NORMAL]'
 	elif k == 'TexCoord':
-		print '%s\t\tconvert(&(c->%s[i].s), v);' % (indent,name)
+		print '%s\t\tconvert(&(c->vertexAttrib[VERT_ATTRIB_TEX0 + i][0]), v);' % (indent)
+		dirtyVar = 'cb->vertexAttrib[VERT_ATTRIB_TEX0 + i]'
 	elif k == 'Color':
-		print '%s\t\tconvert(&(c->%s.r), v);' % (indent,name)
+		print '%s\t\tconvert(&(c->vertexAttrib[VERT_ATTRIB_COLOR0][0]), v);' % (indent)
+		dirtyVar = 'cb->vertexAttrib[VERT_ATTRIB_COLOR0]'
+	elif k == 'Index':
+		print '%s\t\tconvert(&(c->colorIndex), v);' % (indent)
+		dirtyVar = 'cb->colorIndex'
 	elif k == 'SecondaryColor':
-		print '%s\t\tconvert(&(c->%s.r), v);' % (indent,name)
+		print '%s\t\tconvert(&(c->vertexAttrib[VERT_ATTRIB_COLOR1][0]), v);' % (indent)
+		dirtyVar = 'cb->vertexAttrib[VERT_ATTRIB_COLOR1]'
 	elif k == 'FogCoord':
-		print '%s\t\tconvert(&(c->%s), v);' % (indent,name)
-	if current_fns[k].has_key( 'array' ):
-		print '%s\t\tDIRTY(cb->%s[i], nbitID);' % (indent,name)
+		print '%s\t\tconvert(&(c->vertexAttrib[VERT_ATTRIB_FOG][0]), v);' % (indent)
+		dirtyVar = 'cb->vertexAttrib[VERT_ATTRIB_FOG]'
+	elif k == 'VertexAttrib':
+		print '%s\t\tconvert(&(c->vertexAttrib[i][0]), v);' % (indent)
+		dirtyVar = 'cb->vertexAttrib[i]'
 	else:
-		print '%s\t\tDIRTY(cb->%s, nbitID);' % (indent,name)
+		assert 0  # should never get here
+
+	print '%s\t\tDIRTY(%s, nbitID);' % (indent, dirtyVar)
+
+#	if current_fns[k].has_key( 'array' ):
+#		print '%s\t\tDIRTY(cb->%s[i], nbitID);' % (indent,name)
+#	else:
+#		print '%s\t\tDIRTY(cb->%s, nbitID);' % (indent,name)
+
+
+
 	print '%s\t\tDIRTY(cb->dirty, nbitID);' % indent
 	print '%s\t}' % indent
 	if current_fns[k].has_key( 'array' ):

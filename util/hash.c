@@ -405,7 +405,7 @@ void crHashtableDeleteBlock( CRHashTable *h, unsigned long key, GLsizei range, C
 {
 	/* XXX optimize someday */
 	GLuint i;
-	for (i = 0; i < range; i++) {
+	for (i = 0; i < (GLuint)range; i++) {
 		crHashtableDelete( h, key, deleteFunc );
 	}
 }

@@ -61,7 +61,7 @@ SPULoadLite( SPU *child, int id, const char *name, char *dir, void *server )
 	the_spu = (SPU*)crAlloc( sizeof( *the_spu ) );
 	the_spu->id = id;
 	path = __findDLL( name, dir );
-	the_spu->dll = crDLLOpen( path );
+	the_spu->dll = crDLLOpen( path, 0 /*resolveGlobal*/ );
 	the_spu->entry_point = 
 		(SPULoadFunction) crDLLGetNoError( the_spu->dll, SPU_ENTRY_POINT_NAME );
 	if (!the_spu->entry_point)

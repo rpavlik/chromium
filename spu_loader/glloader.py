@@ -99,7 +99,7 @@ __findSystemGL( char *provided_system_path )
 	}
 	crStrcat( system_path, "/" );
 	crStrcat( system_path, SYSTEM_GL );
-	dll = crDLLOpen( system_path );
+	dll = crDLLOpen( system_path, 1 /*resolveGlobal*/ );
 	return dll;
 }
 
@@ -204,6 +204,9 @@ useful_wgl_functions = [
 	"wglChoosePixelFormat",
 	"wglDescribePixelFormat",
 	"wglSetPixelFormat",
+	"wglChoosePixelFormatEXT",
+	"wglGetPixelFormatAttribivEXT",
+	"wglGetPixelFormatAttribfvEXT",
 	"glGetString"
 ]
 useful_glx_functions = [

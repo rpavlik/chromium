@@ -35,8 +35,60 @@ things_pinch_cares_about = [ 'Begin', 'End', 'Vertex2d', 'Vertex2f', 'Vertex2i',
 	'MultiTexCoord2iARB', 'MultiTexCoord2sARB', 'MultiTexCoord3dARB', 'MultiTexCoord3fARB', 'MultiTexCoord3iARB', 'MultiTexCoord3sARB',
 	'MultiTexCoord4dARB', 'MultiTexCoord4fARB', 'MultiTexCoord4iARB', 'MultiTexCoord4sARB', 'EvalCoord1d', 'EvalCoord1f',
 	'EvalCoord2d', 'EvalCoord2f', 'EvalPoint1', 'EvalPoint2', 'Materialf', 'Materiali',
-	'Materialfv', 'Materialiv', 'EdgeFlag', 'CallList'
+	'Materialfv', 'Materialiv',
+	'EdgeFlag',
+	'CallList',
+	'SecondaryColor3bEXT',
+	'SecondaryColor3dEXT',
+	'SecondaryColor3fEXT',
+	'SecondaryColor3iEXT',
+	'SecondaryColor3sEXT',
+	'SecondaryColor3ubEXT',
+	'SecondaryColor3uiEXT',
+	'SecondaryColor3usEXT',
+	'FogCoordfEXT',
+	'FogCoorddEXT',
+	'VertexAttrib1dARB',
+	'VertexAttrib1fARB',
+	'VertexAttrib1sARB',
+	'VertexAttrib2dARB',
+	'VertexAttrib2fARB',
+	'VertexAttrib2sARB',
+	'VertexAttrib3dARB',
+	'VertexAttrib3fARB',
+	'VertexAttrib3sARB',
+	'VertexAttrib4dARB',
+	'VertexAttrib4fARB',
+	'VertexAttrib4sARB',
+	'VertexAttrib4bvARB',
+	'VertexAttrib4ivARB',
+	'VertexAttrib4ubvARB',
+	'VertexAttrib4uivARB',
+	'VertexAttrib4usvARB',
+	'VertexAttrib4NbvARB',
+	'VertexAttrib4NivARB',
+	'VertexAttrib4NsvARB',
+	'VertexAttrib4NubARB',
+	'VertexAttrib4NubvARB',
+	'VertexAttrib4NuivARB',
+	'VertexAttrib4NusvARB'
 ]
+
+special_sizes = {
+	'VertexAttrib4bvARB' : 4 + 4,
+	'VertexAttrib4ivARB' : 16 + 4,
+	'VertexAttrib4ubvARB' : 4 + 4,
+	'VertexAttrib4uivARB' : 16 + 4,
+	'VertexAttrib4usvARB' : 8 + 4,
+	'VertexAttrib4NbvARB' : 4 + 4,
+	'VertexAttrib4NivARB' : 16 + 4,
+	'VertexAttrib4NsvARB' : 8 + 4,
+	'VertexAttrib4NubARB' : 4 + 4,
+	'VertexAttrib4NubvARB' : 4 + 4,
+	'VertexAttrib4NuivARB' : 16 + 4,
+	'VertexAttrib4NusvARB' : 8 + 4
+}
+
 
 stub_common.CopyrightC()
 
@@ -48,7 +100,11 @@ for func_name in keys:
 	if stub_common.FindSpecial( "../../packer/opcode", func_name ) or stub_common.FindSpecial( "../../packer/opcode_extend", func_name ):
 		continue
 	if func_name in things_pinch_cares_about:
-		print "\t%d, /* %s */" %(stub_common.PacketLength( arg_types ),  func_name)
+		if func_name in special_sizes.keys():
+			size = special_sizes[func_name]
+		else:
+			size = stub_common.PacketLength( arg_types )
+		print "\t%2d, /* %s */" % (size,  func_name)
 	else:
 		print '\t-1, /* %s */' % func_name
 print '\t0 /* crap */'

@@ -34,6 +34,7 @@ REGULAR_FILES = state_attrib \
 	state_pixel \
 	state_point \
 	state_polygon \
+	state_program \
 	state_rasterpos \
 	state_regcombiner \
 	state_stencil \

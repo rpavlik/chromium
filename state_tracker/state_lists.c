@@ -94,6 +94,7 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 {
 	CRContext *g = GetCurrentContext();
 	CRListsState *l = &(g->lists);
+	GLuint start;
 
 	if (g->current.inBeginEnd)
 	{
@@ -107,7 +108,9 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 		return 0;
 	}
 
-	return crHashtableAllocKeys(l->hash, range);
+	start = crHashtableAllocKeys(l->hash, range);
+	CRASSERT(start > 0);
+	return start;
 }
 	
 void STATE_APIENTRY crStateDeleteLists (GLuint list, GLsizei range)

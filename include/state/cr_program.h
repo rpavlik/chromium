@@ -12,12 +12,26 @@
 #include "state/cr_limits.h"
 
 
-#define MAX_VERTEX_PROGRAM_PARAMETERS  96
-#define MAX_FRAGMENT_PROGRAM_PARAMETERS 16
-
-
+/*
+ * Dirty bits for per-context program state.  Per-program dirty bits
+ * are in the CRProgram structure.
+ */
 typedef struct {
-	int foo;
+	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue vpEnable[CR_MAX_BITARRAY];
+	CRbitvalue fpEnable[CR_MAX_BITARRAY];
+	CRbitvalue vpBinding[CR_MAX_BITARRAY];
+	CRbitvalue fpBinding[CR_MAX_BITARRAY];
+	CRbitvalue vertexAttribArrayEnable[CR_MAX_VERTEX_ATTRIBS][CR_MAX_BITARRAY];
+	CRbitvalue map1AttribArrayEnable[CR_MAX_VERTEX_ATTRIBS][CR_MAX_BITARRAY];
+	CRbitvalue map2AttribArrayEnable[CR_MAX_VERTEX_ATTRIBS][CR_MAX_BITARRAY];
+	/* per-param flags: */
+	CRbitvalue vertexEnvParameter[CR_MAX_VERTEX_PROGRAM_ENV_PARAMS][CR_MAX_BITARRAY];
+	CRbitvalue fragmentEnvParameter[CR_MAX_FRAGMENT_PROGRAM_ENV_PARAMS][CR_MAX_BITARRAY];
+	/* any param flags: */
+	CRbitvalue vertexEnvParameters[CR_MAX_BITARRAY];
+	CRbitvalue fragmentEnvParameters[CR_MAX_BITARRAY];
+	CRbitvalue trackMatrix[CR_MAX_VERTEX_PROGRAM_ENV_PARAMS / 4][CR_MAX_BITARRAY];
 } CRProgramBits;
 
 
@@ -30,12 +44,32 @@ struct CRProgramSymbol;
 typedef struct {
 	GLenum target;
 	GLuint id;
+	GLboolean isARBprogram;  /* to distinguish between NV and ARB programs */
 	const GLubyte *string;
 	GLsizei length;
 	GLboolean resident;
+	GLenum format;
+
+	/* Set with ProgramNamedParameterNV */
 	struct CRProgramSymbol *symbolTable;
-	GLfloat fragmentLocalParameters[MAX_FRAGMENT_PROGRAM_PARAMETERS][4];
+
+	/* Set with ProgramLocalParameterARB: */
+	GLfloat parameters[CR_MAX_PROGRAM_LOCAL_PARAMS][4];
+
+	/* ARB info (this could be impossible to implement without parsing */
+	GLint numInstructions;
+	GLint numTemporaries;
+	GLint numParameters;
+	GLint numAttributes;
+	GLint numAddressRegs;
+	GLint numAluInstructions;
+	GLint numTexInstructions;
+	GLint numTexIndirections;
+
+	CRbitvalue dirtyNamedParams[CR_MAX_BITARRAY];
+	CRbitvalue dirtyParam[CR_MAX_PROGRAM_LOCAL_PARAMS][CR_MAX_BITARRAY];
 	CRbitvalue dirtyParams[CR_MAX_BITARRAY];
+	CRbitvalue dirtyProgram[CR_MAX_BITARRAY];
 } CRProgram;
 
 
@@ -45,115 +79,38 @@ typedef struct {
 	CRProgram *currentFragmentProgram;
 	GLint errorPos;
 	const GLubyte *errorString;
+	GLboolean loadedProgram; 	/* XXX temporary */
+
+	CRProgram *defaultVertexProgram;
+	CRProgram *defaultFragmentProgram;
 
 	/* tracking matrices for vertex programs */
-	GLenum TrackMatrix[MAX_VERTEX_PROGRAM_PARAMETERS / 4];
-	GLenum TrackMatrixTransform[MAX_VERTEX_PROGRAM_PARAMETERS / 4];
+	GLenum TrackMatrix[CR_MAX_VERTEX_PROGRAM_LOCAL_PARAMS / 4];
+	GLenum TrackMatrixTransform[CR_MAX_VERTEX_PROGRAM_LOCAL_PARAMS / 4];
 
-	GLfloat VertexProgramParameters[MAX_VERTEX_PROGRAM_PARAMETERS][4];
+	/* global/env params shared by all programs */
+	GLfloat fragmentParameters[CR_MAX_FRAGMENT_PROGRAM_ENV_PARAMS][4];
+	GLfloat vertexParameters[CR_MAX_VERTEX_PROGRAM_ENV_PARAMS][4];
 
 	CRHashTable *programHash;  /* XXX belongs in shared state, actually */
+
+	GLuint vpProgramBinding;
+	GLuint fpProgramBinding;
+	GLboolean vpEnabled;    /* GL_VERTEX_PROGRAM_NV / ARB*/
+	GLboolean fpEnabled;    /* GL_FRAGMENT_PROGRAM_NV */
+	GLboolean fpEnabledARB; /* GL_FRAGMENT_PROGRAM_ARB */
+	GLboolean vpPointSize;  /* GL_VERTEX_PROGRAM_NV */
+	GLboolean vpTwoSide;    /* GL_VERTEX_PROGRAM_NV */
 } CRProgramState;
 
 
 
-extern void crStateProgramInit(const CRLimitsState *limits, CRProgramState *t);
-extern void crStateProgramFree(CRProgramState *t);
+extern void crStateProgramInit(CRContext *ctx);
+extern void crStateProgramDestroy(CRContext *ctx);
 
-
-#if 1  /* temporary */
-
-
-extern GLboolean crStateAreProgramsResidentNV (GLsizei, const GLuint *, GLboolean *);
-extern void crStateBindProgramNV (GLenum, GLuint);
-extern void crStateDeleteProgramsNV (GLsizei, const GLuint *);
-extern void crStateExecuteProgramNV (GLenum, GLuint, const GLfloat *);
-extern void crStateGenProgramsNV (GLsizei, GLuint *);
-extern void crStateGetProgramParameterdvNV (GLenum, GLuint, GLenum, GLdouble *);
-extern void crStateGetProgramParameterfvNV (GLenum, GLuint, GLenum, GLfloat *);
-extern void crStateGetProgramivNV (GLuint, GLenum, GLint *);
-extern void crStateGetProgramStringNV (GLuint, GLenum, GLubyte *);
-extern void crStateGetTrackMatrixivNV (GLenum, GLuint, GLenum, GLint *);
-extern void crStateGetVertexAttribdvNV (GLuint, GLenum, GLdouble *);
-extern void crStateGetVertexAttribfvNV (GLuint, GLenum, GLfloat *);
-extern void crStateGetVertexAttribivNV (GLuint, GLenum, GLint *);
-extern void crStateGetVertexAttribPointervNV (GLuint, GLenum, GLvoid* *);
-extern GLboolean crStateIsProgramNV (GLuint);
-extern void crStateLoadProgramNV (GLenum, GLuint, GLsizei, const GLubyte *);
-extern void crStateProgramParameter4dNV (GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble);
-extern void crStateProgramParameter4dvNV (GLenum, GLuint, const GLdouble *);
-extern void crStateProgramParameter4fNV (GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void crStateProgramParameter4fvNV (GLenum, GLuint, const GLfloat *);
-extern void crStateProgramParameters4dvNV (GLenum, GLuint, GLuint, const GLdouble *);
-extern void crStateProgramParameters4fvNV (GLenum, GLuint, GLuint, const GLfloat *);
-extern void crStateRequestResidentProgramsNV (GLsizei, const GLuint *);
-extern void crStateTrackMatrixNV (GLenum, GLuint, GLenum, GLenum);
-extern void crStateVertexAttribPointerNV (GLuint, GLint, GLenum, GLsizei, const GLvoid *);
-extern void crStateVertexAttrib1dNV (GLuint, GLdouble);
-extern void crStateVertexAttrib1dvNV (GLuint, const GLdouble *);
-extern void crStateVertexAttrib1fNV (GLuint, GLfloat);
-extern void crStateVertexAttrib1fvNV (GLuint, const GLfloat *);
-extern void crStateVertexAttrib1sNV (GLuint, GLshort);
-extern void crStateVertexAttrib1svNV (GLuint, const GLshort *);
-extern void crStateVertexAttrib2dNV (GLuint, GLdouble, GLdouble);
-extern void crStateVertexAttrib2dvNV (GLuint, const GLdouble *);
-extern void crStateVertexAttrib2fNV (GLuint, GLfloat, GLfloat);
-extern void crStateVertexAttrib2fvNV (GLuint, const GLfloat *);
-extern void crStateVertexAttrib2sNV (GLuint, GLshort, GLshort);
-extern void crStateVertexAttrib2svNV (GLuint, const GLshort *);
-extern void crStateVertexAttrib3dNV (GLuint, GLdouble, GLdouble, GLdouble);
-extern void crStateVertexAttrib3dvNV (GLuint, const GLdouble *);
-extern void crStateVertexAttrib3fNV (GLuint, GLfloat, GLfloat, GLfloat);
-extern void crStateVertexAttrib3fvNV (GLuint, const GLfloat *);
-extern void crStateVertexAttrib3sNV (GLuint, GLshort, GLshort, GLshort);
-extern void crStateVertexAttrib3svNV (GLuint, const GLshort *);
-extern void crStateVertexAttrib4dNV (GLuint, GLdouble, GLdouble, GLdouble, GLdouble);
-extern void crStateVertexAttrib4dvNV (GLuint, const GLdouble *);
-extern void crStateVertexAttrib4fNV (GLuint, GLfloat, GLfloat, GLfloat, GLfloat);
-extern void crStateVertexAttrib4fvNV (GLuint, const GLfloat *);
-extern void crStateVertexAttrib4sNV (GLuint, GLshort, GLshort, GLshort, GLshort);
-extern void crStateVertexAttrib4svNV (GLuint, const GLshort *);
-extern void crStateVertexAttrib4ubNV (GLuint, GLubyte, GLubyte, GLubyte, GLubyte);
-extern void crStateVertexAttrib4ubvNV (GLuint, const GLubyte *);
-extern void crStateVertexAttribs1dvNV (GLuint, GLsizei, const GLdouble *);
-extern void crStateVertexAttribs1fvNV (GLuint, GLsizei, const GLfloat *);
-extern void crStateVertexAttribs1svNV (GLuint, GLsizei, const GLshort *);
-extern void crStateVertexAttribs2dvNV (GLuint, GLsizei, const GLdouble *);
-extern void crStateVertexAttribs2fvNV (GLuint, GLsizei, const GLfloat *);
-extern void crStateVertexAttribs2svNV (GLuint, GLsizei, const GLshort *);
-extern void crStateVertexAttribs3dvNV (GLuint, GLsizei, const GLdouble *);
-extern void crStateVertexAttribs3fvNV (GLuint, GLsizei, const GLfloat *);
-extern void crStateVertexAttribs3svNV (GLuint, GLsizei, const GLshort *);
-extern void crStateVertexAttribs4dvNV (GLuint, GLsizei, const GLdouble *);
-extern void crStateVertexAttribs4fvNV (GLuint, GLsizei, const GLfloat *);
-extern void crStateVertexAttribs4svNV (GLuint, GLsizei, const GLshort *);
-extern void crStateVertexAttribs4ubvNV (GLuint, GLsizei, const GLubyte *);
-
-void crStateProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-
-void crStateProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
-
-void crStateProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name, const GLfloat v[]);
-
-void crStateProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name, const GLdouble v[]);
-
-void crStateGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name, GLfloat *params);
-
-void crStateGetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name, GLdouble *params);
-
-void crStateProgramLocalParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
-
-void crStateProgramLocalParameter4dvARB(GLenum target, GLuint index, const GLdouble *params);
-
-void crStateProgramLocalParameter4fARB(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-
-void crStateProgramLocalParameter4fvARB(GLenum target, GLuint index, const GLfloat *params);
-
-void crStateGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble *params);
-
-void crStateGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params);
-
-#endif
-
+extern void crStateProgramDiff(CRProgramBits *b, CRbitvalue *bitID,
+															 CRContext *fromCtx, CRContext *toCtx);
+extern void crStateProgramSwitch(CRProgramBits *b, CRbitvalue *bitID,
+																 CRContext *fromCtx, CRContext *toCtx);
 
 #endif /* CR_STATE_PROGRAM_H */

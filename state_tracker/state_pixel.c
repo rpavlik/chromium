@@ -183,11 +183,13 @@ void STATE_APIENTRY crStateBitmap( GLsizei width, GLsizei height,
 		return;
 	}
 
-	c->rasterPos.x += xmove;
-	c->rasterPos.y += ymove;
-
-	DIRTY(cb->raster, g->neg_bitid);
+	c->rasterAttrib[VERT_ATTRIB_POS][0] += xmove;
+	c->rasterAttrib[VERT_ATTRIB_POS][1] += ymove;
+	DIRTY(cb->rasterPos, g->neg_bitid);
 	DIRTY(cb->dirty, g->neg_bitid);
+
+	c->rasterAttribPre[VERT_ATTRIB_POS][0] += xmove;
+	c->rasterAttribPre[VERT_ATTRIB_POS][1] += ymove;
 }
  
 
@@ -603,7 +605,7 @@ void crStatePixelDiff(CRPixelBits *b, CRbitvalue *bitID,
 			diff_api.PixelTransferf (GL_DEPTH_BIAS, to->depthBias);
 			from->depthBias = to->depthBias;
 		}
-		INVERTDIRTY(b->transfer, nbitID);
+		CLEARDIRTY(b->transfer, nbitID);
 	}
 	if (CHECKDIRTY(b->zoom, bitID))
 	{
@@ -615,7 +617,7 @@ void crStatePixelDiff(CRPixelBits *b, CRbitvalue *bitID,
 			from->xZoom = to->xZoom;
 			from->yZoom = to->yZoom;
 		}
-		INVERTDIRTY(b->zoom, nbitID);
+		CLEARDIRTY(b->zoom, nbitID);
 	}
 	if (CHECKDIRTY(b->maps, bitID))
 	{
@@ -639,9 +641,9 @@ void crStatePixelDiff(CRPixelBits *b, CRbitvalue *bitID,
 			diff_api.PixelMapfv(GL_PIXEL_MAP_B_TO_B,to->mapBtoBsize,(GLfloat*)to->mapBtoB);
 		if (crMemcmp(to->mapAtoA, from->mapAtoA, CR_MAX_PIXEL_MAP_TABLE*sizeof(GLfloat)))
 			diff_api.PixelMapfv(GL_PIXEL_MAP_A_TO_A,to->mapAtoAsize,(GLfloat*)to->mapAtoA);
-		INVERTDIRTY(b->maps, nbitID);
+		CLEARDIRTY(b->maps, nbitID);
 	}
-	INVERTDIRTY(b->dirty, nbitID);
+	CLEARDIRTY(b->dirty, nbitID);
 }
 
 void crStatePixelSwitch(CRPixelBits *b, CRbitvalue *bitID,
@@ -740,7 +742,7 @@ void crStatePixelSwitch(CRPixelBits *b, CRbitvalue *bitID,
 			FILLDIRTY(b->transfer);
 			FILLDIRTY(b->dirty);
 		}
-		INVERTDIRTY(b->transfer, nbitID);
+		CLEARDIRTY(b->transfer, nbitID);
 	}
 	if (CHECKDIRTY(b->zoom, bitID))
 	{
@@ -752,7 +754,7 @@ void crStatePixelSwitch(CRPixelBits *b, CRbitvalue *bitID,
 			FILLDIRTY(b->zoom);
 			FILLDIRTY(b->dirty);
 		}
-		INVERTDIRTY(b->zoom, nbitID);
+		CLEARDIRTY(b->zoom, nbitID);
 	}
 	if (CHECKDIRTY(b->maps, bitID))
 	{
@@ -806,8 +808,8 @@ void crStatePixelSwitch(CRPixelBits *b, CRbitvalue *bitID,
 			FILLDIRTY(b->maps);
 			FILLDIRTY(b->dirty);
 		}
-		INVERTDIRTY(b->maps, nbitID);
+		CLEARDIRTY(b->maps, nbitID);
 	}
-	INVERTDIRTY(b->dirty, nbitID);
+	CLEARDIRTY(b->dirty, nbitID);
 }
 

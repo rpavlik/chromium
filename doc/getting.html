@@ -68,9 +68,22 @@ Windows, where <a href="http://cygwin.com/">cygwin's</a>
 &quot;<code>uname</code>&quot; returns something long and silly, so it gets
 re-written to &quot;<code>WIN_NT</code>&quot;.).&nbsp; You should add this
 directory to your <code>PATH</code>.</p>
+
 <p>NOTE: If you do not have <a href="http://www.myri.com/scs/index.html">Myrinet
 GM libraries</a>, you should turn off GM support in the file <code>cr/util/Makefile</code>
 before building.&nbsp; There are instructions in that file.</p>
+
+<p>NOTE: A few compile-time options can be specified in the
+<code>options.mk</code> file.  DMX support and threadsafety options are
+specified in this file, for example.
+<p>
+
+<h3>Prerequisites</h3>
+<p>
+You'll need GLUT installed so that the demonstration programs will compile.
+</p>
+
+
 <p>Platform specific notes:</p>
 <ul>
   <li><b>Any UNIX</b>: Shared libraries will be put in the directory <code> cr/lib/&lt;ARCH&gt;</code>.

@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <math.h>
 #include <float.h>
 #include "tilesortspu.h"
 #include "tilesortspu_proto.h"
@@ -13,6 +14,11 @@
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
 #include "cr_rand.h"
+
+
+/* XXX may need to conditionally define this macro for various platforms */
+#define FINITE(X) finite(X)
+
 
 /*
  * Data structures for hash-based bucketing algorithm.
@@ -534,7 +540,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	static const CRrecti nullscreen = {0, 0, 0, 0};
 	GET_CONTEXT(g);
 	CRTransformState *t = &(g->transform);
-	const CRmatrix *m = &(t->transform);
+	const CRmatrix *mvp = &(t->modelViewProjection);
 	float xmin, ymin, xmax, ymax, zmin, zmax;
 	CRrecti ibounds;
 	int i, j;
@@ -551,7 +557,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	     bucketInfo->hits[j] = 0;
 
 	/* Check to make sure the transform is valid */
-	if (!t->transformValid)
+	if (!t->modelViewProjectionValid)
 	{
 		/* I'm pretty sure this is always the case, but I'll leave it. */
 		crStateTransformUpdateTransform(t);
@@ -582,7 +588,20 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		 * GL_OBJECT_BBOX_CR or computed automatically by Chromium (in
 		 * object coords.  Transform the box to window coords.
 		 */
-		crTransformBBox( xmin, ymin, zmin, xmax, ymax, zmax, m,
+
+		/* Check for infinite bounding box values.  If so, broadcast.
+		 * This can happen when glVertex4f() is called with w=0.  This
+		 * is done in the NVIDIA infinite_shadow_volume demo.
+		 */
+		if (!FINITE(xmin) || !FINITE(xmax)) {
+			bucketInfo->screenMin = neg_vect;
+			bucketInfo->screenMax = one_vect;
+			bucketInfo->pixelBounds = fullscreen;
+			FILLDIRTY(bucketInfo->hits);
+			return;
+		}
+
+		crTransformBBox( xmin, ymin, zmin, xmax, ymax, zmax, mvp,
 		                 &xmin, &ymin, &zmin, &xmax, &ymax, &zmax );
 	}
 

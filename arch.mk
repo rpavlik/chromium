@@ -3,6 +3,8 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+include $(TOP)/options.mk
+
 ifneq ($(ARCH), WIN_NT)
 ifneq ($(ARCH), WIN_98)
 ARCH=$(shell uname | sed -e 's/-//g')

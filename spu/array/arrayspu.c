@@ -1,7 +1,7 @@
 /* Copyright (c) 2001, Stanford University
-* All rights reserved
-*
-* See the file LICENSE.txt for information on redistributing this software.
+ * All rights reserved
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
  */
 
 #include <stdio.h>
@@ -14,23 +14,86 @@ ArraySPU array_spu;
 
 static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 {
+	const CRClientState *c = &(array_spu.ctx->client);
+	const CRVertexArrays *array = &(c->array);
+	const GLboolean vpEnabled = array_spu.ctx->program.vpEnabled;
 	unsigned char *p;
-	CRClientState *c = &(array_spu.ctx->client);
-  unsigned int unit;
+	unsigned int unit, attr;
 
-	if (c->e.enabled)
+	if (array->e.enabled)
 	{
-		array_spu.self.EdgeFlagv(c->e.p + index*c->e.stride);
+		array_spu.self.EdgeFlagv(array->e.p + index * array->e.stride);
 	}
+
+	/*
+	 * Vertex attribute arrays (GL_NV_vertex_program) have priority over
+	 * the conventional vertex arrays.
+	 */
+	if (vpEnabled)
+	{
+		for (attr = 1; attr < VERT_ATTRIB_MAX; attr++)
+		{
+			if (array->a[attr].enabled)
+			{
+				GLint *iPtr;
+				p = array->a[attr].p + index * array->a[attr].stride;
+				switch (array->a[attr].type)
+				{
+					case GL_SHORT:
+						switch (array->a[attr].size)
+						{
+							case 1: array_spu.self.VertexAttrib1svARB(attr, (GLshort *)p); break;
+							case 2: array_spu.self.VertexAttrib2svARB(attr, (GLshort *)p); break;
+							case 3: array_spu.self.VertexAttrib3svARB(attr, (GLshort *)p); break;
+							case 4: array_spu.self.VertexAttrib4svARB(attr, (GLshort *)p); break;
+						}
+						break;
+					case GL_INT:
+						iPtr = (GLint *) p;
+						switch (array->a[attr].size)
+						{
+							case 1: array_spu.self.VertexAttrib1fARB(attr, p[0]); break;
+							case 2: array_spu.self.VertexAttrib2fARB(attr, p[0], p[1]); break;
+							case 3: array_spu.self.VertexAttrib3fARB(attr, p[0], p[1], p[2]); break;
+							case 4: array_spu.self.VertexAttrib4fARB(attr, p[0], p[1], p[2], p[3]); break;
+						}
+						break;
+					case GL_FLOAT:
+						switch (array->a[attr].size)
+						{
+							case 1: array_spu.self.VertexAttrib1fvARB(attr, (GLfloat *)p); break;
+							case 2: array_spu.self.VertexAttrib2fvARB(attr, (GLfloat *)p); break;
+							case 3: array_spu.self.VertexAttrib3fvARB(attr, (GLfloat *)p); break;
+							case 4: array_spu.self.VertexAttrib4fvARB(attr, (GLfloat *)p); break;
+						}
+						break;
+					case GL_DOUBLE:
+						switch (array->a[attr].size)
+						{
+							case 1: array_spu.self.VertexAttrib1dvARB(attr, (GLdouble *)p); break;
+							case 2: array_spu.self.VertexAttrib2dvARB(attr, (GLdouble *)p); break;
+							case 3: array_spu.self.VertexAttrib3dvARB(attr, (GLdouble *)p); break;
+							case 4: array_spu.self.VertexAttrib4dvARB(attr, (GLdouble *)p); break;
+						}
+						break;
+					default:
+						crWarning("Bad datatype for vertex attribute [%d] array: 0x%x\n",
+											attr, array->a[attr].type);
+				}
+			}
+		}
+	}
+
+	/* Now do conventional arrays, unless overriden by generic arrays above */
 	for (unit = 0 ; unit < array_spu.ctx->limits.maxTextureUnits ; unit++)
 	{
-		if (c->t[unit].enabled)
+		if (array->t[unit].enabled && !(vpEnabled && array->a[VERT_ATTRIB_TEX0+unit].enabled))
 		{
-			p = c->t[unit].p + index*c->t[unit].stride;
-			switch (c->t[unit].type)
+			p = array->t[unit].p + index * array->t[unit].stride;
+			switch (array->t[unit].type)
 			{
 				case GL_SHORT:
-					switch (c->t[unit].size)
+					switch (array->t[unit].size)
 					{
 						case 1: array_spu.self.MultiTexCoord1svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
 						case 2: array_spu.self.MultiTexCoord2svARB(GL_TEXTURE0_ARB + unit, (GLshort *)p); break;
@@ -39,7 +102,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 					}
 					break;
 				case GL_INT:
-					switch (c->t[unit].size)
+					switch (array->t[unit].size)
 					{
 						case 1: array_spu.self.MultiTexCoord1ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
 						case 2: array_spu.self.MultiTexCoord2ivARB(GL_TEXTURE0_ARB + unit, (GLint *)p); break;
@@ -48,7 +111,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 					}
 					break;
 				case GL_FLOAT:
-					switch (c->t[unit].size)
+					switch (array->t[unit].size)
 					{
 						case 1: array_spu.self.MultiTexCoord1fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
 						case 2: array_spu.self.MultiTexCoord2fvARB(GL_TEXTURE0_ARB + unit, (GLfloat *)p); break;
@@ -57,7 +120,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 					}
 					break;
 				case GL_DOUBLE:
-					switch (c->t[unit].size)
+					switch (array->t[unit].size)
 					{
 						case 1: array_spu.self.MultiTexCoord1dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
 						case 2: array_spu.self.MultiTexCoord2dvARB(GL_TEXTURE0_ARB + unit, (GLdouble *)p); break;
@@ -68,10 +131,10 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 			}
 		}
 	}
-	if (c->i.enabled)
+	if (array->i.enabled)
 	{
-		p = c->i.p + index*c->i.stride;
-		switch (c->i.type)
+		p = array->i.p + index * array->i.stride;
+		switch (array->i.type)
 		{
 			case GL_SHORT: array_spu.self.Indexsv((GLshort *)p); break;
 			case GL_INT: array_spu.self.Indexiv((GLint *)p); break;
@@ -79,62 +142,62 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 			case GL_DOUBLE: array_spu.self.Indexdv((GLdouble *)p); break;
 		}
 	}
-	if (c->c.enabled)
+	if (array->c.enabled && !(vpEnabled && array->a[VERT_ATTRIB_COLOR0].enabled))
 	{
-		p = c->c.p + index*c->c.stride;
-		switch (c->c.type)
+		p = array->c.p + index * array->c.stride;
+		switch (array->c.type)
 		{
 			case GL_BYTE:
-				switch (c->c.size)
+				switch (array->c.size)
 				{
 					case 3: array_spu.self.Color3bv((GLbyte *)p); break;
 					case 4: array_spu.self.Color4bv((GLbyte *)p); break;
 				}
 				break;
 			case GL_UNSIGNED_BYTE:
-				switch (c->c.size)
+				switch (array->c.size)
 				{
 					case 3: array_spu.self.Color3ubv((GLubyte *)p); break;
 					case 4: array_spu.self.Color4ubv((GLubyte *)p); break;
 				}
 				break;
 			case GL_SHORT:
-				switch (c->c.size)
+				switch (array->c.size)
 				{
 					case 3: array_spu.self.Color3sv((GLshort *)p); break;
 					case 4: array_spu.self.Color4sv((GLshort *)p); break;
 				}
 				break;
 			case GL_UNSIGNED_SHORT:
-				switch (c->c.size)
+				switch (array->c.size)
 				{
 					case 3: array_spu.self.Color3usv((GLushort *)p); break;
 					case 4: array_spu.self.Color4usv((GLushort *)p); break;
 				}
 				break;
 			case GL_INT:
-				switch (c->c.size)
+				switch (array->c.size)
 				{
 					case 3: array_spu.self.Color3iv((GLint *)p); break;
 					case 4: array_spu.self.Color4iv((GLint *)p); break;
 				}
 				break;
 			case GL_UNSIGNED_INT:
-				switch (c->c.size)
+				switch (array->c.size)
 				{
 					case 3: array_spu.self.Color3uiv((GLuint *)p); break;
 					case 4: array_spu.self.Color4uiv((GLuint *)p); break;
 				}
 				break;
 			case GL_FLOAT:
-				switch (c->c.size)
+				switch (array->c.size)
 				{
 					case 3: array_spu.self.Color3fv((GLfloat *)p); break;
 					case 4: array_spu.self.Color4fv((GLfloat *)p); break;
 				}
 				break;
 			case GL_DOUBLE:
-				switch (c->c.size)
+				switch (array->c.size)
 				{
 					case 3: array_spu.self.Color3dv((GLdouble *)p); break;
 					case 4: array_spu.self.Color4dv((GLdouble *)p); break;
@@ -142,10 +205,10 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 				break;
 		}
 	}
-	if (c->n.enabled)
+	if (array->n.enabled && !(vpEnabled && array->a[VERT_ATTRIB_NORMAL].enabled))
 	{
-		p = c->n.p + index*c->n.stride;
-		switch (c->n.type)
+		p = array->n.p + index * array->n.stride;
+		switch (array->n.type)
 		{
 			case GL_BYTE: array_spu.self.Normal3bv((GLbyte *)p); break;
 			case GL_SHORT: array_spu.self.Normal3sv((GLshort *)p); break;
@@ -155,10 +218,10 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 		}
 	}
 #ifdef CR_EXT_secondary_color
-	if (c->s.enabled)
+	if (array->s.enabled && !(vpEnabled && array->a[VERT_ATTRIB_COLOR1].enabled))
 	{
-		p = c->s.p + index*c->s.stride;
-		switch (c->s.type)
+		p = array->s.p + index * array->s.stride;
+		switch (array->s.type)
 		{
 			case GL_BYTE:
 				array_spu.self.SecondaryColor3bvEXT((GLbyte *)p); break;
@@ -179,14 +242,68 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 		}
 	}
 #endif
-	if (c->v.enabled)
+#ifdef CR_EXT_fog_coord
+	if (array->f.enabled && !(vpEnabled && array->a[VERT_ATTRIB_FOG].enabled))
 	{
-		p = c->v.p + (index*c->v.stride);
+		p = array->f.p + index * array->f.stride;
+		array_spu.self.FogCoordfEXT( *((GLfloat *) p) );
+	}
+#endif
 
-		switch (c->v.type)
+	/* Need to do attrib[0] / vertex position last */
+	if (array->a[VERT_ATTRIB_POS].enabled) {
+		GLint *iPtr;
+		p = array->a[VERT_ATTRIB_POS].p + index * array->a[VERT_ATTRIB_POS].stride;
+		switch (array->a[VERT_ATTRIB_POS].type)
 		{
 			case GL_SHORT:
-				switch (c->v.size)
+				switch (array->a[VERT_ATTRIB_POS].size)
+				{
+					case 1: array_spu.self.VertexAttrib1svARB(0, (GLshort *)p); break;
+					case 2: array_spu.self.VertexAttrib2svARB(0, (GLshort *)p); break;
+					case 3: array_spu.self.VertexAttrib3svARB(0, (GLshort *)p); break;
+					case 4: array_spu.self.VertexAttrib4svARB(0, (GLshort *)p); break;
+				}
+				break;
+			case GL_INT:
+				iPtr = (GLint *) p;
+				switch (array->a[VERT_ATTRIB_POS].size)
+				{
+					case 1: array_spu.self.VertexAttrib1fARB(0, p[0]); break;
+					case 2: array_spu.self.VertexAttrib2fARB(0, p[0], p[1]); break;
+					case 3: array_spu.self.VertexAttrib3fARB(0, p[0], p[1], p[2]); break;
+					case 4: array_spu.self.VertexAttrib4fARB(0, p[0], p[1], p[2], p[3]); break;
+				}
+				break;
+			case GL_FLOAT:
+				switch (array->a[VERT_ATTRIB_POS].size)
+				{
+					case 1: array_spu.self.VertexAttrib1fvARB(0, (GLfloat *)p); break;
+					case 2: array_spu.self.VertexAttrib2fvARB(0, (GLfloat *)p); break;
+					case 3: array_spu.self.VertexAttrib3fvARB(0, (GLfloat *)p); break;
+					case 4: array_spu.self.VertexAttrib4fvARB(0, (GLfloat *)p); break;
+				}
+				break;
+			case GL_DOUBLE:
+				switch (array->a[VERT_ATTRIB_POS].size)
+				{
+					case 1: array_spu.self.VertexAttrib1dvARB(0, (GLdouble *)p); break;
+					case 2: array_spu.self.VertexAttrib2dvARB(0, (GLdouble *)p); break;
+					case 3: array_spu.self.VertexAttrib3dvARB(0, (GLdouble *)p); break;
+					case 4: array_spu.self.VertexAttrib4dvARB(0, (GLdouble *)p); break;
+				}
+				break;
+			default:
+				crWarning("Bad datatype for vertex attribute [0] array: 0x%x\n", array->a[0].type);
+		}
+	}
+	else if (array->v.enabled)
+	{
+		p = array->v.p + index * array->v.stride;
+		switch (array->v.type)
+		{
+			case GL_SHORT:
+				switch (array->v.size)
 				{
 					case 2: array_spu.self.Vertex2sv((GLshort *)p); break;
 					case 3: array_spu.self.Vertex3sv((GLshort *)p); break;
@@ -194,7 +311,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 				}
 				break;
 			case GL_INT:
-				switch (c->v.size)
+				switch (array->v.size)
 				{
 					case 2: array_spu.self.Vertex2iv((GLint *)p); break;
 					case 3: array_spu.self.Vertex3iv((GLint *)p); break;
@@ -202,7 +319,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 				}
 				break;
 			case GL_FLOAT:
-				switch (c->v.size)
+				switch (array->v.size)
 				{
 					case 2: array_spu.self.Vertex2fv((GLfloat *)p); break;
 					case 3: array_spu.self.Vertex3fv((GLfloat *)p); break;
@@ -210,18 +327,20 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 				}
 				break;
 			case GL_DOUBLE:
-				switch (c->v.size)
+				switch (array->v.size)
 				{
 					case 2: array_spu.self.Vertex2dv((GLdouble *)p); break;
 					case 3: array_spu.self.Vertex3dv((GLdouble *)p); break;
 					case 4: array_spu.self.Vertex4dv((GLdouble *)p); break;
 				}
 				break;
+			default:
+				crWarning("Bad datatype for vertex array: 0x%x\n", array->v.type);
 		}
 	}
 }
 
-static void ARRAYSPU_APIENTRY arrayspu_DrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c)
+static void ARRAYSPU_APIENTRY arrayspu_DrawArrays(GLenum mode, GLint first, GLsizei count)
 {
 	int i;
 
@@ -244,7 +363,7 @@ static void ARRAYSPU_APIENTRY arrayspu_DrawArrays(GLenum mode, GLint first, GLsi
 }
 
 static void ARRAYSPU_APIENTRY arrayspu_DrawElements(GLenum mode, GLsizei count,
-		GLenum type, const GLvoid *indices, CRClientState *c)
+																										GLenum type, const GLvoid *indices)
 {
 	int i;
 	GLubyte *p = (GLubyte *)indices;
@@ -351,10 +470,10 @@ static void ARRAYSPU_APIENTRY arrayspu_DisableClientState( GLenum array )
 
 static void ARRAYSPU_APIENTRY arrayspu_ClientActiveTextureARB( GLenum texture )
 {
-	crStateDisableClientState( texture );
+	crStateClientActiveTextureARB( texture );
 }
 
-static void ARRAYSPU_APIENTRY arrayspu_MultiDrawArraysEXT(GLenum mode, GLint *first, GLsizei *count, GLsizei primcount, CRClientState *c)
+static void ARRAYSPU_APIENTRY arrayspu_MultiDrawArraysEXT(GLenum mode, GLint *first, GLsizei *count, GLsizei primcount)
 {
 	int i;
 
@@ -374,7 +493,7 @@ static void ARRAYSPU_APIENTRY arrayspu_MultiDrawArraysEXT(GLenum mode, GLint *fi
 	}
 }
 
-static void ARRAYSPU_APIENTRY arrayspu_MultiDrawElementsEXT(GLenum mode, GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount, CRClientState *c)
+static void ARRAYSPU_APIENTRY arrayspu_MultiDrawElementsEXT(GLenum mode, GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount)
 {
 	int i;
 
@@ -399,6 +518,72 @@ static void ARRAYSPU_APIENTRY arrayspu_MultiDrawElementsEXT(GLenum mode, GLsizei
 	}
 }
 
+/*
+ * We need to know when vertex program mode is enabled/disabled
+ * in order to handle vertex attribute arrays correctly.
+ */
+static void ARRAYSPU_APIENTRY arrayspu_Enable(GLenum cap)
+{
+	 if (cap == GL_VERTEX_PROGRAM_NV) {
+			array_spu.ctx->program.vpEnabled = GL_TRUE;
+	 }
+	 array_spu.child.Enable(cap);
+}
+
+
+static void ARRAYSPU_APIENTRY arrayspu_Disable(GLenum cap)
+{
+	 if (cap == GL_VERTEX_PROGRAM_NV) {
+			array_spu.ctx->program.vpEnabled = GL_FALSE;
+	 }
+	 array_spu.child.Disable(cap);
+}
+
+
+
+static void ARRAYSPU_APIENTRY
+arrayspu_VertexAttribPointerARB(GLuint index, GLint size, GLenum type, 
+																GLboolean normalized, GLsizei stride,
+																const GLvoid *pointer)
+{
+	crStateVertexAttribPointerARB( index, size, type, normalized, stride, pointer );
+}
+
+
+static void ARRAYSPU_APIENTRY
+arrayspu_EnableVertexAttribArrayARB(GLuint index)
+{
+	crStateEnableVertexAttribArrayARB(index);
+}
+
+
+static void ARRAYSPU_APIENTRY
+arrayspu_DisableVertexAttribArrayARB(GLuint index)
+{
+	crStateDisableVertexAttribArrayARB(index);
+}
+
+
+/* We need to implement Push/PopClientAttrib here so that _our_ state
+ * tracker gets used.  Also, pass the call onto the next SPU (in case
+ * it's the GL_CLIENT_PIXEL_STORE_BIT, etc).
+ */
+static void ARRAYSPU_APIENTRY
+arrayspu_PushClientAttrib( GLbitfield mask )
+{
+	 crStatePushClientAttrib(mask);
+	 array_spu.child.PushClientAttrib(mask);
+}
+
+
+static void ARRAYSPU_APIENTRY
+arrayspu_PopClientAttrib( void )
+{
+	 crStatePopClientAttrib();
+	 array_spu.child.PopClientAttrib();
+}
+
+
 SPUNamedFunctionTable _cr_array_table[] = {
 	{ "ArrayElement", (SPUGenericFunction) arrayspu_ArrayElement },
 	{ "DrawArrays", (SPUGenericFunction) arrayspu_DrawArrays},
@@ -417,5 +602,12 @@ SPUNamedFunctionTable _cr_array_table[] = {
 	{ "ClientActiveTextureARB", (SPUGenericFunction) arrayspu_ClientActiveTextureARB },
 	{ "MultiDrawArraysEXT", (SPUGenericFunction) arrayspu_MultiDrawArraysEXT },
 	{ "MultiDrawElementsEXT", (SPUGenericFunction) arrayspu_MultiDrawElementsEXT },
+	{ "Enable", (SPUGenericFunction) arrayspu_Enable },
+	{ "Disable", (SPUGenericFunction) arrayspu_Disable },
+	{ "PushClientAttrib", (SPUGenericFunction) arrayspu_PushClientAttrib },
+	{ "PopClientAttrib", (SPUGenericFunction) arrayspu_PopClientAttrib },
+	{ "VertexAttribPointerARB", (SPUGenericFunction) arrayspu_VertexAttribPointerARB },
+	{ "EnableVertexAttribArrayARB", (SPUGenericFunction) arrayspu_EnableVertexAttribArrayARB },
+	{ "DisableVertexAttribArrayARB", (SPUGenericFunction) arrayspu_DisableVertexAttribArrayARB },
 	{ NULL, NULL }
 };

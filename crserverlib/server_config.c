@@ -35,6 +35,9 @@ __setDefaults(void)
 	cr_server.sharedTextureObjects = 1;
 	cr_server.sharedPrograms = 1;
 	cr_server.useDMX = 0;
+	cr_server.vpProjectionMatrixParameter = -1;
+	cr_server.vpProjectionMatrixVariable = NULL;
+	cr_server.currentProgram = 0;
 
 	cr_server.num_overlap_intens = 0;
 	cr_server.overlap_intens = 0;
@@ -217,6 +220,16 @@ crServerGatherConfiguration(char *mothership)
 	{
 		cr_server.useDMX = crStrToInt(response);
 	}
+	if (crMothershipGetServerParam(conn, response, "vertprog_projection_param"))
+	{
+		if (crIsDigit(response[0])) {
+			cr_server.vpProjectionMatrixParameter = crStrToInt(response);
+		}
+		else {
+			cr_server.vpProjectionMatrixVariable = crStrdup(response);
+		}
+	}
+
 
 	/*
 	 * Load the SPUs

@@ -150,6 +150,33 @@ for the Chromium server.</p>
     </td>
   </tr>
 
+  <tr>
+    <td width="19%" class="ConfigOption">vertprog_projection_param</td>
+    <td width="12%" class="ConfigType">String or Integer</td>
+    <td width="115%" class="ConfigDesc">
+       This option is useful for programs that use GL_NV_vertex_program
+       or GL_ARB_vertex_program (or Cg) on tilesort configurations.
+       <p>
+       Since tile sorting requires manipulating the projection matrix and
+       vertex programs may use projection parameters passed via generic
+       program parameters, Chromium may be unable to manipulate the projection
+       matrix in the normal manner.
+       This option allows one to give a hint to Chromium as to which program
+       parameters contain the projection matrix information.
+       <p>
+       If vertprog_projection_param is an integer N, then Chromium will
+       assume that (local) program parameters N through N+3 contain the
+       projection matrix.
+       <p>
+       If vertprog_projection_param is a string S and you're using Cg,
+       Chromium will look for S in the vertex program string comments (emitted
+       by Cg) and try to deduce which program parameters contain the
+       projection matrix.  In the Cg demo programs, the combined modelview and
+       projection matrix is usually named "ModelViewProj".
+       <p>
+    </td>
+  </tr>
+
 </table>
 </body>
 

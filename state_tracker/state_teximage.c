@@ -15,6 +15,29 @@
 #include "state_internals.h"
 
 
+
+static int
+bitcount(int value)
+{
+	int bits = 0;
+	for (; value > 0; value >>= 1) {
+		if (value & 0x1)
+			bits++;
+	}
+	return bits;
+}
+
+
+static GLboolean
+IsProxyTarget(GLenum target)
+{
+	return (target == GL_PROXY_TEXTURE_2D ||
+					target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
+					target == GL_PROXY_TEXTURE_CUBE_MAP);
+}
+
+
+
 /*
  * If GL_GENERATE_MIPMAP_SGIS is true and we modify the base level texture
  * image we have to finish the mipmap.
@@ -233,13 +256,153 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0; i < g->limits.maxTextureUnits; i++)
-	{
-		DIRTY(tl->dirty[i], g->neg_bitid);
-		DIRTY(tobj->imageBit[i], g->neg_bitid);
-	}
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
+
+
+/*
+ * Do parameter error checking for glTexImage2D
+ * Return GL_TRUE if any errors, GL_FALSE if no errors.
+ */
+static GLboolean
+ErrorCheckTexImage2D(GLenum target, GLint level, GLsizei width, GLsizei height,
+										 GLint border)
+{
+	CRContext *g = GetCurrentContext();
+	CRTextureState *t = &(g->texture);
+
+	/*
+	 * Test target
+	 */
+	switch (target)
+	{
+	case GL_TEXTURE_2D:
+	case GL_PROXY_TEXTURE_2D:
+		break;											/* legal */
+#ifdef CR_NV_texture_rectangle
+	case GL_TEXTURE_RECTANGLE_NV:
+	case GL_PROXY_TEXTURE_RECTANGLE_NV:
+		if (!g->extensions.NV_texture_rectangle) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexImage2D invalid target: 0x%x", target);
+			return GL_TRUE;
+		}
+		break;
+#endif
+#ifdef CR_ARB_texture_cube_map
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+		if (!g->extensions.ARB_texture_cube_map) {
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+									 "glTexImage2D invalid target: 0x%x", target);
+			return GL_TRUE;
+		}
+		break;
+#endif
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								 "glTexImage2D invalid target: 0x%x", target);
+		return GL_TRUE;
+	}
+
+	/*
+	 * Test level
+	 */
+	if (level < 0) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(level=%d)", level);
+		return GL_TRUE;
+	}
+	if ((target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D)
+			&& level > t->maxLevel) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(level=%d)", level);
+		return GL_TRUE;
+	}
+#ifdef CR_ARB_texture_cube_map
+	else if ((target != GL_TEXTURE_2D && target != GL_PROXY_TEXTURE_2D)
+					 && level > t->maxCubeMapLevel) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(level=%d)", level);
+		return GL_TRUE;
+	}
+#endif
+#ifdef CR_NV_texture_rectangle
+	else if ((target != GL_TEXTURE_2D && target != GL_PROXY_TEXTURE_2D)
+					 && level > t->maxRectLevel) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(level=%d)", level);
+		return GL_TRUE;
+	}
+#endif
+
+	/*
+	 * Test border
+	 */
+	if (border != 0 && border != 1) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(border=%d)", border);
+		return GL_TRUE;
+	}
+
+	if ((target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
+			 target == GL_TEXTURE_RECTANGLE_NV) && border != 0) {
+		if (!IsProxyTarget(target))
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexImage2D(border=%d)", border);
+		return GL_TRUE;
+	}
+
+	/*
+	 * Test width and height
+	 */
+	if (target == GL_PROXY_TEXTURE_2D || target == GL_TEXTURE_2D) {
+		if (width < 0 || width > (int) g->limits.maxTextureSize ||
+				height < 0 || height > (int) g->limits.maxTextureSize) {
+			if (!IsProxyTarget(target))
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+										 "glTexImage2D(width=%d, height=%d)", width, height);
+			return GL_TRUE;
+		}
+	}
+	else if (target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
+					 target == GL_TEXTURE_RECTANGLE_NV) {
+		if (width < 0 || width > (int) g->limits.maxRectTextureSize ||
+				height < 0 || height > (int) g->limits.maxRectTextureSize) {
+			if (!IsProxyTarget(target))
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+										 "glTexImage2D(width=%d, height=%d)", width, height);
+			return GL_TRUE;
+		}
+	}
+	else {
+		/* cube map */
+		if (width < 0 || width > (int) g->limits.maxCubeMapTextureSize ||
+				height < 0 || height > (int) g->limits.maxCubeMapTextureSize ||
+				bitcount(width) != 1 || width != height) {
+			if (!IsProxyTarget(target))
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+										 "glTexImage2D(width=%d, height=%d)", width, height);
+			return GL_TRUE;
+		}
+	}
+
+	/* OK, no errors */
+	return GL_FALSE;
+}
+
 
 void STATE_APIENTRY
 crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
@@ -253,7 +416,6 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	CRTextureLevel *tl = NULL;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
-	unsigned int i;
 	int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
 	CRTextureUnit *unit;
 
@@ -266,191 +428,17 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 
 	FLUSH();
 
-	switch (target)
-	{
-	case GL_TEXTURE_2D:
-	case GL_PROXY_TEXTURE_2D:
-		break;											/* legal */
-#ifdef CR_ARB_texture_cube_map
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-		if (g->extensions.ARB_texture_cube_map)
-			break;										/* legal */
-#endif
-	default:
-		/* error */
-		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								 "glTexImage2D invalid target: 0x%x", target);
-		return;
-	}
-
-	if (level < 0
-			|| ((target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D)
-					&& level > t->maxLevel)
-#ifdef CR_ARB_texture_cube_map
-			|| ((target != GL_TEXTURE_2D && target != GL_PROXY_TEXTURE_2D)
-					&& level > t->maxCubeMapLevel)
-#endif
-		)
-	{
-		if (target == GL_PROXY_TEXTURE_2D)
-		{
-			/* clear all the texture object state */
+	if (ErrorCheckTexImage2D(target, level, width, height, border)) {
+		if (IsProxyTarget(target)) {
+			/* clear all state, but don't generate error */
 			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
 		}
-#ifdef CR_ARB_texture_cube_map
-		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxyCubeMap), 0,
-																	 GL_TEXTURE_CUBE_MAP_ARB);
-		}
-#endif
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D level oob: %d", level);
+		else {
+			/* error was already recorded */
 		}
 		return;
 	}
 
-	if (border != 0 && border != 1)
-	{
-		if (target == GL_PROXY_TEXTURE_2D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
-		}
-#ifdef CR_ARB_texture_cube_map
-		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxyCubeMap), 0,
-																	 GL_TEXTURE_CUBE_MAP_ARB);
-		}
-#endif
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D border oob: %d", border);
-		}
-		return;
-	}
-
-	/* check the bits in width */
-	i = 1;
-	if (width > 0)
-	{
-		for (i = width - 2 * border; i > 0 && !(i & 0x1); i = i >> 1)
-		{
-			/* EMPTY BODY */
-		}
-	}
-	if (width < 0 || ((i != 1) && (!is_distrib)))
-	{
-		if (target == GL_PROXY_TEXTURE_2D)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
-		}
-#ifdef CR_ARB_texture_cube_map
-		else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxyCubeMap), 0,
-																	 GL_TEXTURE_CUBE_MAP_ARB);
-		}
-#endif
-		else
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D width is not valid: %d", width);
-		}
-		return;
-	}
-
-	/* check the bits in height */
-	i = 1;
-	if (height > 0)
-	{
-		for (i = height - 2 * border; i > 0 && !(i & 0x1); i = i >> 1)
-		{
-			/* EMPTY BODY */
-		}
-	}
-	if (height < 0 || ((i != 1) && (!is_distrib)))
-	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexImage2D height is not valid: %d", height);
-		return;
-	}
-
-	if (target == GL_TEXTURE_2D)
-	{
-		if (width > ((int) g->limits.maxTextureSize + 2))
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D width oob: %d", width);
-			return;
-		}
-		if (height > ((int) g->limits.maxTextureSize + 2))
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D height oob: %d", height);
-			return;
-		}
-	}
-	else if (target == GL_PROXY_TEXTURE_2D)
-	{
-		if (width > ((int) g->limits.maxTextureSize + 2)
-				|| height > ((int) g->limits.maxTextureSize + 2))
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxy2D), 0, GL_TEXTURE_2D);
-			return;
-		}
-	}
-#ifdef CR_ARB_texture_cube_map
-	else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
-	{
-		if (width > (int) g->limits.maxCubeMapTextureSize ||
-				height > (int) g->limits.maxCubeMapTextureSize || width != height)
-		{
-			/* clear all the texture object state */
-			crStateTextureInitTextureObj(g, &(t->proxyCubeMap), 0,
-																	 GL_TEXTURE_CUBE_MAP_ARB);
-			return;
-		}
-	}
-	else													/* Cube map */
-	{
-		if (width > (int) g->limits.maxCubeMapTextureSize)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D width oob: %d", width);
-			return;
-		}
-		if (height > (int) g->limits.maxCubeMapTextureSize)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D height oob: %d", height);
-			return;
-		}
-		/* Check that cube map width and height are equal. */
-		if (width != height)
-		{
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-									 "glTexImage2D cube map width and height are unequal: %dx%d",
-									 width, height);
-			return;
-		}
-#endif
-	}
 
 	unit = t->unit + t->curTextureUnit;
 
@@ -478,6 +466,20 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 		tl = tobj->level + level;
 		tl->bytes = 0;
 	}
+#ifdef CR_NV_texture_rectangle 
+	else if (target == GL_PROXY_TEXTURE_RECTANGLE_NV)
+	{
+		tobj = &(t->proxyRect);
+		tl = tobj->level + level;
+		tl->bytes = 0;
+	}
+	else if (target == GL_TEXTURE_RECTANGLE_NV)
+	{
+		tobj = unit->currentTextureRect;
+		tl = tobj->level + level;
+		tl->bytes = crImageSize(format, type, width, height);
+	}
+#endif
 #ifdef CR_ARB_texture_cube_map
 	else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB)
 	{
@@ -575,11 +577,8 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0; i < g->limits.maxTextureUnits; i++)
-	{
-		DIRTY(tl->dirty[i], g->neg_bitid);
-		DIRTY(tobj->imageBit[i], g->neg_bitid);
-	}
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -598,7 +597,6 @@ crStateTexSubImage1D(GLenum target, GLint level, GLint xoffset,
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 	CRTextureObj *tobj = unit->currentTexture1D;
 	CRTextureLevel *tl = tobj->level + level;
-	unsigned int i;
 
 	if (g->current.inBeginEnd)
 	{
@@ -650,11 +648,8 @@ crStateTexSubImage1D(GLenum target, GLint level, GLint xoffset,
 #endif
 
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0; i < g->limits.maxTextureUnits; i++)
-	{
-		DIRTY(tl->dirty[i], g->neg_bitid);
-		DIRTY(tobj->imageBit[i], g->neg_bitid);
-	}
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -669,8 +664,8 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
-	CRTextureObj *tobj = unit->currentTexture2D;
-	CRTextureLevel *tl = tobj->level + level;
+	CRTextureObj *tobj;
+	CRTextureLevel *tl;
 	int i;
 
 	GLubyte *subimg = NULL;
@@ -706,7 +701,33 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 									 "glTexSubImage2D height oob: %d", height);
 			return;
 		}
+		tobj = unit->currentTexture2D;
 	}
+#ifdef CR_NV_texture_rectangle
+	else if (target == GL_TEXTURE_RECTANGLE_NV
+					 && g->extensions.NV_texture_rectangle)
+	{
+		if (level < 0 || level > t->maxRectLevel)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexSubImage2D level oob: %d", level);
+			return;
+		}
+		if (width < 0 || width > (int) g->limits.maxRectTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexSubImage2D width oob: %d", width);
+			return;
+		}
+		if (height < 0 || height > (int) g->limits.maxRectTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+									 "glTexSubImage2D height oob: %d", height);
+			return;
+		}
+		tobj = unit->currentTextureRect;
+	}
+#endif
 #ifdef CR_ARB_texture_cube_map
 	else if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB
 					 && target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB
@@ -730,6 +751,7 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 									 "glTexSubImage2D height oob: %d", height);
 			return;
 		}
+		tobj = unit->currentTextureCubeMap;
 	}
 #endif /* CR_ARB_texture_cube_map */
 	else
@@ -739,10 +761,13 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 		return;
 	}
 
+	tl = tobj->level + level;
+
 	if (width + xoffset > tl->width)
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage2D(bad width or xoffset)");
+								 "glTexSubImage2D(width %d + xoffset %d > %d)",
+								 width, xoffset, tl->width);
 		return;
 	}
 	if (height + yoffset > tl->height)
@@ -783,14 +808,8 @@ crStateTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 #endif
 
 	DIRTY(tobj->dirty, g->neg_bitid);
-	{
-		unsigned int i;
-		for (i = 0; i < g->limits.maxTextureUnits; i++)
-		{
-			DIRTY(tobj->imageBit[i], g->neg_bitid);
-			DIRTY(tl->dirty[i], g->neg_bitid);
-		}
-	}
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
@@ -941,14 +960,8 @@ crStateTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 #endif
 
 	DIRTY(tobj->dirty, g->neg_bitid);
-	{
-		unsigned int i;
-		for (i = 0; i < g->limits.maxTextureUnits; i++)
-		{
-			DIRTY(tobj->imageBit[i], g->neg_bitid);
-			DIRTY(tl->dirty[i], g->neg_bitid);
-		}
-	}
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 #endif /* CR_OPENGL_VERSION_1_2 || GL_EXT_texture3D */
@@ -1141,11 +1154,8 @@ crStateTexImage3D(GLenum target, GLint level,
 
 	/* XXX may need to do some fine-tuning here for proxy textures */
 	DIRTY(tobj->dirty, g->neg_bitid);
-	for (i = 0; i < g->limits.maxTextureUnits; i++)
-	{
-		DIRTY(tl->dirty[i], g->neg_bitid);
-		DIRTY(tobj->imageBit[i], g->neg_bitid);
-	}
+	DIRTY(tobj->imageBit, g->neg_bitid);
+	DIRTY(tl->dirty, g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 #endif /* CR_OPENGL_VERSION_1_2 || GL_EXT_texture3D */
@@ -1274,6 +1284,13 @@ crStateGetTexImage(GLenum target, GLint level, GLenum format,
 	else if (target == GL_TEXTURE_3D)
 	{
 		tobj = unit->currentTexture3D;
+		tl = tobj->level + level;
+	}
+#endif
+#ifdef CR_NV_texture_rectangle 
+	else if (target == GL_TEXTURE_RECTANGLE_NV)
+	{
+		tobj = unit->currentTextureRect;
 		tl = tobj->level + level;
 	}
 #endif

@@ -7,8 +7,10 @@ TOP = ..
 
 include ${TOP}/arch.mk
 
-SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit retile \
-	statecopytest tiletest city psubmit_crut bboxtest viewports
+SUBDIRS = arbfraglight atlantis cubes fonttest kirchner extensions \
+	psubmit retile \
+	statecopytest tiletest city psubmit_crut bboxtest viewports \
+	fraglight
 
 ifeq ($(THREADSAFE), 1)
 SUBDIRS += threadtest

@@ -6,6 +6,7 @@
 
 #include "state.h"
 #include "state_internals.h"
+#include "state/cr_statetypes.h"
 #include "state/cr_feedback.h"
 
 /* 
@@ -40,10 +41,16 @@
  * Transform a point (column vector) by a matrix:   Q = M * P
  */
 #define TRANSFORM_POINT( Q, M, P )					                    \
-   Q.x = M.m00 * P.x + M.m10 * P.y + M.m20 * P.z + M.m30 * P.w; \
-   Q.y = M.m01 * P.x + M.m11 * P.y + M.m21 * P.z + M.m31 * P.w; \
-   Q.z = M.m02 * P.x + M.m12 * P.y + M.m22 * P.z + M.m32 * P.w; \
-   Q.w = M.m03 * P.x + M.m13 * P.y + M.m23 * P.z + M.m33 * P.w;
+   Q.x = (M).m00 * P.x + (M).m10 * P.y + (M).m20 * P.z + (M).m30 * P.w; \
+   Q.y = (M).m01 * P.x + (M).m11 * P.y + (M).m21 * P.z + (M).m31 * P.w; \
+   Q.z = (M).m02 * P.x + (M).m12 * P.y + (M).m22 * P.z + (M).m32 * P.w; \
+   Q.w = (M).m03 * P.x + (M).m13 * P.y + (M).m23 * P.z + (M).m33 * P.w;
+
+#define TRANSFORM_POINTA( Q, M, P )					                    \
+   Q.x = (M).m00 * (P)[0] + (M).m10 * (P)[1] + (M).m20 * (P)[2] + (M).m30 * (P)[3]; \
+   Q.y = (M).m01 * (P)[0] + (M).m11 * (P)[1] + (M).m21 * (P)[2] + (M).m31 * (P)[3]; \
+   Q.z = (M).m02 * (P)[0] + (M).m12 * (P)[1] + (M).m22 * (P)[2] + (M).m32 * (P)[3]; \
+   Q.w = (M).m03 * (P)[0] + (M).m13 * (P)[1] + (M).m23 * (P)[2] + (M).m33 * (P)[3];
 
 /*
  * clip coord to window coord mapping
@@ -79,17 +86,17 @@ interpolate_vertex(GLfloat t,
 	vOut->clipPos.z = INTERPOLATE(t, v0->clipPos.z, v1->clipPos.z);
 	vOut->clipPos.w = INTERPOLATE(t, v0->clipPos.w, v1->clipPos.w);
 
-	vOut->color.r = INTERPOLATE(t, v0->color.r, v1->color.r);
-	vOut->color.g = INTERPOLATE(t, v0->color.g, v1->color.g);
-	vOut->color.b = INTERPOLATE(t, v0->color.b, v1->color.b);
-	vOut->color.a = INTERPOLATE(t, v0->color.a, v1->color.a);
+	vOut->attrib[VERT_ATTRIB_COLOR0][0] = INTERPOLATE(t, v0->attrib[VERT_ATTRIB_COLOR0][0], v1->attrib[VERT_ATTRIB_COLOR0][0]);
+	vOut->attrib[VERT_ATTRIB_COLOR0][1] = INTERPOLATE(t, v0->attrib[VERT_ATTRIB_COLOR0][1], v1->attrib[VERT_ATTRIB_COLOR0][1]);
+	vOut->attrib[VERT_ATTRIB_COLOR0][2] = INTERPOLATE(t, v0->attrib[VERT_ATTRIB_COLOR0][2], v1->attrib[VERT_ATTRIB_COLOR0][2]);
+	vOut->attrib[VERT_ATTRIB_COLOR0][3] = INTERPOLATE(t, v0->attrib[VERT_ATTRIB_COLOR0][3], v1->attrib[VERT_ATTRIB_COLOR0][3]);
 
-	vOut->index = INTERPOLATE(t, v0->index, v1->index);
+	vOut->colorIndex = INTERPOLATE(t, v0->colorIndex, v1->colorIndex);
 
-	vOut->texCoord[0].s = INTERPOLATE(t, v0->texCoord[0].s, v1->texCoord[0].s);
-	vOut->texCoord[0].t = INTERPOLATE(t, v0->texCoord[0].t, v1->texCoord[0].t);
-	vOut->texCoord[0].r = INTERPOLATE(t, v0->texCoord[0].r, v1->texCoord[0].r);
-	vOut->texCoord[0].q = INTERPOLATE(t, v0->texCoord[0].q, v1->texCoord[0].q);
+	vOut->attrib[VERT_ATTRIB_TEX0][0] = INTERPOLATE(t, v0->attrib[VERT_ATTRIB_TEX0][0], v1->attrib[VERT_ATTRIB_TEX0][0]);
+	vOut->attrib[VERT_ATTRIB_TEX0][1] = INTERPOLATE(t, v0->attrib[VERT_ATTRIB_TEX0][1], v1->attrib[VERT_ATTRIB_TEX0][0]);
+	vOut->attrib[VERT_ATTRIB_TEX0][2] = INTERPOLATE(t, v0->attrib[VERT_ATTRIB_TEX0][2], v1->attrib[VERT_ATTRIB_TEX0][0]);
+	vOut->attrib[VERT_ATTRIB_TEX0][3] = INTERPOLATE(t, v0->attrib[VERT_ATTRIB_TEX0][3], v1->attrib[VERT_ATTRIB_TEX0][0]);
 }
 
 
@@ -476,26 +483,26 @@ feedback_vertex(const CRVertex *v)
 	/* We don't deal with color index in Chromium */
 	if (f->mask & FB_INDEX)
 	{
-		FEEDBACK_TOKEN(v->index);
+		FEEDBACK_TOKEN(v->colorIndex);
 	}
 
 	if (f->mask & FB_COLOR)
 	{
-		FEEDBACK_TOKEN(v->color.r);
-		FEEDBACK_TOKEN(v->color.g);
-		FEEDBACK_TOKEN(v->color.b);
-		FEEDBACK_TOKEN(v->color.a);
+		FEEDBACK_TOKEN(v->attrib[VERT_ATTRIB_COLOR0][0]);
+		FEEDBACK_TOKEN(v->attrib[VERT_ATTRIB_COLOR0][1]);
+		FEEDBACK_TOKEN(v->attrib[VERT_ATTRIB_COLOR0][2]);
+		FEEDBACK_TOKEN(v->attrib[VERT_ATTRIB_COLOR0][3]);
 	}
 
 	if (f->mask & FB_TEXTURE)
 	{
 		GLvectorf coord, transCoord;
 		/* Ugh, copy (s,t,r,q) to (x,y,z,w) */
-		coord.x = v->texCoord[0].s;
-		coord.y = v->texCoord[0].t;
-		coord.z = v->texCoord[0].r;
-		coord.w = v->texCoord[0].q;
-		TRANSFORM_POINT(transCoord, t->texture[0][t->textureDepth[0]], coord);
+		coord.x = v->attrib[VERT_ATTRIB_TEX0][0];
+		coord.y = v->attrib[VERT_ATTRIB_TEX0][1];
+		coord.z = v->attrib[VERT_ATTRIB_TEX0][2];
+		coord.w = v->attrib[VERT_ATTRIB_TEX0][3];
+		TRANSFORM_POINT(transCoord, *(t->textureStack[0].top), coord);
 		FEEDBACK_TOKEN(transCoord.x);
 		FEEDBACK_TOKEN(transCoord.y);
 		FEEDBACK_TOKEN(transCoord.z);
@@ -512,17 +519,20 @@ feedback_rasterpos(void)
 	CRVertex *tv = g->vBuffer + g->vCount;
 	CRVertex v;
 
-	v.winPos = g->current.rasterPos;
-	v.color = g->current.rasterColor;  /* XXX need to apply lighting */
-	v.secondaryColor = g->current.rasterSecondaryColor;
-	v.index = (GLfloat) g->current.rasterIndex;  /* XXX need to apply lighting */
+	v.winPos.x = g->current.rasterAttrib[VERT_ATTRIB_POS][0];
+	v.winPos.y = g->current.rasterAttrib[VERT_ATTRIB_POS][1];
+	v.winPos.z = g->current.rasterAttrib[VERT_ATTRIB_POS][2];
+	v.winPos.w = g->current.rasterAttrib[VERT_ATTRIB_POS][3];
+	COPY_4V(v.attrib[VERT_ATTRIB_COLOR0] , g->current.rasterAttrib[VERT_ATTRIB_COLOR0]);  /* XXX need to apply lighting */
+	COPY_4V(v.attrib[VERT_ATTRIB_COLOR1] , g->current.rasterAttrib[VERT_ATTRIB_COLOR1]);
+	v.colorIndex = (GLfloat) g->current.rasterIndex;
 
 	/* Don't do this, we're capturing TexCoord ourselves and
 	 * we'd miss the conversion in RasterPosUpdate */
 	/* v.texCoord[0] = g->current.rasterTexture; */
 
 	/* So we do this instead, and pluck it from the current vertex */
-	v.texCoord[0] = tv->texCoord[0];
+	COPY_4V(v.attrib[VERT_ATTRIB_TEX0] , tv->attrib[VERT_ATTRIB_TEX0]);
 
 	feedback_vertex(&v);
 }
@@ -593,19 +603,19 @@ crStateFeedbackVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	CRVertex *v = g->vBuffer + g->vCount;
 
 	/* store the vertex */
-	v->pos.x = x;
-	v->pos.y = y;
-	v->pos.z = z;
-	v->pos.w = w;
-	v->color = g->current.color;  /* XXX need to apply lighting */
-	v->index = g->current.index;  /* XXX need to apply lighting */
+	v->attrib[VERT_ATTRIB_POS][0] = x;
+	v->attrib[VERT_ATTRIB_POS][1] = y;
+	v->attrib[VERT_ATTRIB_POS][2] = z;
+	v->attrib[VERT_ATTRIB_POS][3] = w;
+	COPY_4V(v->attrib[VERT_ATTRIB_COLOR0] , g->current.vertexAttrib[VERT_ATTRIB_COLOR0]);  /* XXX need to apply lighting */
+	v->colorIndex = g->current.colorIndex;  /* XXX need to apply lighting */
 	/* Don't do this, we're capturing TexCoord ourselves as 
 	 * we don't have a pincher like the tilesortSPU */
 	/* v->texCoord[0] = g->current.texCoord[0]; */
 
 	/* transform to eye space, then clip space */
-	TRANSFORM_POINT(v->eyePos, t->modelView[t->modelViewDepth], v->pos);
-	TRANSFORM_POINT(v->clipPos, t->projection[t->projectionDepth], v->eyePos);
+	TRANSFORM_POINTA(v->eyePos, *(t->modelViewStack.top), v->attrib[VERT_ATTRIB_POS]);
+	TRANSFORM_POINT(v->clipPos, *(t->projectionStack.top), v->eyePos);
 
 	switch (g->current.mode) {
 	case GL_POINTS:
@@ -1057,8 +1067,8 @@ crStateFeedbackBitmap(GLsizei width, GLsizei height, GLfloat xorig,
 
 	if (g->current.rasterValid)
 	{
-		g->current.rasterPos.x += xmove;
-		g->current.rasterPos.y += ymove;
+		g->current.rasterAttrib[VERT_ATTRIB_POS][0] += xmove;
+		g->current.rasterAttrib[VERT_ATTRIB_POS][1] += ymove;
 	}
 }
 
@@ -1216,10 +1226,10 @@ crStateFeedbackTexCoord4f( GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
 	CRVertex *v = g->vBuffer + g->vCount;
 
 	/* store the texCoord in the current vertex */
-	v->texCoord[0].s = v0;
-	v->texCoord[0].t = v1;
-	v->texCoord[0].r = v2;
-	v->texCoord[0].q = v3;
+	v->attrib[VERT_ATTRIB_TEX0][0] = v0;
+	v->attrib[VERT_ATTRIB_TEX0][1] = v1;
+	v->attrib[VERT_ATTRIB_TEX0][2] = v2;
+	v->attrib[VERT_ATTRIB_TEX0][3] = v3;
 }
  
 void STATE_APIENTRY
@@ -1697,7 +1707,7 @@ select_rasterpos(void)
 	CRContext *g = GetCurrentContext();
    
 	if (g->current.rasterValid)
-		update_hitflag(g->current.rasterPos.z);
+		update_hitflag(g->current.rasterAttrib[VERT_ATTRIB_POS][2]);
 }
 
 static void
@@ -1757,19 +1767,19 @@ crStateSelectVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	CRVertex *v = g->vBuffer + g->vCount;
 
 	/* store the vertex */
-	v->pos.x = x;
-	v->pos.y = y;
-	v->pos.z = z;
-	v->pos.w = w;
-	v->color = g->current.color;  /* XXX need to apply lighting */
-	v->index = g->current.index;  /* XXX need to apply lighting */
+	v->attrib[VERT_ATTRIB_POS][0] = x;
+	v->attrib[VERT_ATTRIB_POS][1] = y;
+	v->attrib[VERT_ATTRIB_POS][2] = z;
+	v->attrib[VERT_ATTRIB_POS][3] = w;
+	COPY_4V(v->attrib[VERT_ATTRIB_COLOR0] , g->current.vertexAttrib[VERT_ATTRIB_COLOR0]);  /* XXX need to apply lighting */
+	v->colorIndex = g->current.colorIndex;  /* XXX need to apply lighting */
 	/* Don't do this, we're capturing TexCoord ourselves as 
 	 * we don't have a pincher like the tilesortSPU */
 	/* v->texCoord[0] = g->current.texCoord[0]; */
 
 	/* transform to eye space, then clip space */
-	TRANSFORM_POINT(v->eyePos, t->modelView[t->modelViewDepth], v->pos);
-	TRANSFORM_POINT(v->clipPos, t->projection[t->projectionDepth], v->eyePos);
+	TRANSFORM_POINTA(v->eyePos, *(t->modelViewStack.top), v->attrib[VERT_ATTRIB_POS]);
+	TRANSFORM_POINT(v->clipPos, *(t->projectionStack.top), v->eyePos);
 
 	switch (g->current.mode) {
 	case GL_POINTS:
@@ -2442,8 +2452,8 @@ crStateSelectBitmap(GLsizei width, GLsizei height, GLfloat xorig,
 	select_rasterpos();
 	if (g->current.rasterValid)
 	{
-		g->current.rasterPos.x += xmove;
-		g->current.rasterPos.y += ymove;
+		g->current.rasterAttrib[VERT_ATTRIB_POS][0] += xmove;
+		g->current.rasterAttrib[VERT_ATTRIB_POS][1] += ymove;
 	}
 }
 

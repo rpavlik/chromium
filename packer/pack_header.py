@@ -77,6 +77,82 @@ for n in [2,3,4]:
 			print 'void PACK_APIENTRY crPack%sBBOXSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 			print 'void PACK_APIENTRY crPack%sBBOX_COUNTSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 
+for n in [1,2,3,4]:
+	for t in ['d', 'f', 's']:
+		for v in ['', 'v']:
+			func_name = 'VertexAttrib%d%s%sARB' % (n,t,v)
+			( return_type, arg_names, arg_types ) = gl_mapping[func_name]
+			print 'void PACK_APIENTRY crPack%sBBOX%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+			print 'void PACK_APIENTRY crPack%sBBOX_COUNT%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+			print 'void PACK_APIENTRY crPack%sBBOXSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+			print 'void PACK_APIENTRY crPack%sBBOX_COUNTSWAP%s;' % (func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+
+# special cases
+print "void PACK_APIENTRY crPackVertexAttrib4ubARBBBOX( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+print "void PACK_APIENTRY crPackVertexAttrib4ubARBBBOX_COUNT( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+print "void PACK_APIENTRY crPackVertexAttrib4ubARBBBOXSWAP( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+print "void PACK_APIENTRY crPackVertexAttrib4ubARBBBOX_COUNTSWAP( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+
+print "void PACK_APIENTRY crPackVertexAttrib4ubvARBBBOX( GLuint index, const GLubyte *v );"
+print "void PACK_APIENTRY crPackVertexAttrib4ubvARBBBOX_COUNT( GLuint index, const GLubyte *v );"
+print "void PACK_APIENTRY crPackVertexAttrib4ubvARBBBOXSWAP( GLuint index, const GLubyte *v );"
+print "void PACK_APIENTRY crPackVertexAttrib4ubvARBBBOX_COUNTSWAP( GLuint index, const GLubyte *v );"
+
+print "void PACK_APIENTRY crPackVertexAttrib4NbvARBBBOX(GLuint index, const GLbyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NbvARBBBOX_COUNT(GLuint index, const GLbyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NbvARBBBOXSWAP(GLuint index, const GLbyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NbvARBBBOX_COUNTSWAP(GLuint index, const GLbyte * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4bvARBBBOX(GLuint index, const GLbyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4bvARBBBOX_COUNT(GLuint index, const GLbyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4bvARBBBOXSWAP(GLuint index, const GLbyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4bvARBBBOX_COUNTSWAP(GLuint index, const GLbyte * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4NivARBBBOX(GLuint index, const GLint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NivARBBBOX_COUNT(GLuint index, const GLint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NivARBBBOXSWAP(GLuint index, const GLint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NivARBBBOX_COUNTSWAP(GLuint index, const GLint * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4NuivARBBBOX(GLuint index, const GLuint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NuivARBBBOX_COUNT(GLuint index, const GLuint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NuivARBBBOXSWAP(GLuint index, const GLuint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NuivARBBBOX_COUNTSWAP(GLuint index, const GLuint * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4ivARBBBOX(GLuint index, const GLint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4ivARBBBOX_COUNT(GLuint index, const GLint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4ivARBBBOXSWAP(GLuint index, const GLint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4ivARBBBOX_COUNTSWAP(GLuint index, const GLint * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4NubvARBBBOX(GLuint index, const GLubyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NubvARBBBOX_COUNT(GLuint index, const GLubyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NubvARBBBOXSWAP(GLuint index, const GLubyte * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NubvARBBBOX_COUNTSWAP(GLuint index, const GLubyte * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4NubARBBBOX( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+print "void PACK_APIENTRY crPackVertexAttrib4NubARBBBOX_COUNT( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+print "void PACK_APIENTRY crPackVertexAttrib4NubARBBBOXSWAP( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+print "void PACK_APIENTRY crPackVertexAttrib4NubARBBBOX_COUNTSWAP( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w );"
+
+print "void PACK_APIENTRY crPackVertexAttrib4NsvARBBBOX(GLuint index, const GLshort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NsvARBBBOX_COUNT(GLuint index, const GLshort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NsvARBBBOXSWAP(GLuint index, const GLshort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NsvARBBBOX_COUNTSWAP(GLuint index, const GLshort * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4NusvARBBBOX(GLuint index, const GLushort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NusvARBBBOX_COUNT(GLuint index, const GLushort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NusvARBBBOXSWAP(GLuint index, const GLushort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4NusvARBBBOX_COUNTSWAP(GLuint index, const GLushort * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4uivARBBBOX(GLuint index, const GLuint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4uivARBBBOX_COUNT(GLuint index, const GLuint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4uivARBBBOXSWAP(GLuint index, const GLuint * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4uivARBBBOX_COUNTSWAP(GLuint index, const GLuint * v);"
+
+print "void PACK_APIENTRY crPackVertexAttrib4usvARBBBOX(GLuint index, const GLushort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4usvARBBBOX_COUNT(GLuint index, const GLushort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4usvARBBBOXSWAP(GLuint index, const GLushort * v);"
+print "void PACK_APIENTRY crPackVertexAttrib4usvARBBBOX_COUNTSWAP(GLuint index, const GLushort * v);"
+
 print """
 #ifdef __cplusplus
 }

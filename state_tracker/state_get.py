@@ -53,6 +53,12 @@ convert = {
 			  'Float'   : '(GLfloat) %s',
 			  'Integer' : '(GLint) %s'
 			 },
+	       'GLuint'  : {
+			  'Boolean' : '(GLboolean) ( %s != 0 )',
+			  'Double'  : '(GLdouble) %s',
+			  'Float'   : '(GLfloat) %s',
+			  'Integer' : '(GLint) %s'
+			 },
 	       'GLfloat' : {
 			  'Boolean' : '(GLboolean) ( %s != 0.0f )',
 			  'Double'  : '(GLdouble) %s',
@@ -170,7 +176,7 @@ for rettype in types:
 				print '\t\t\tparams[%d] = %s;' % (i,expr)
 				i += 1
 		except:
-			print '\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented GLGet!");'
+			print '\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented glGet!");'
 		print "\t\t\tbreak;"
 
 
@@ -199,7 +205,7 @@ for rettype in types:
 					print '\t\t\tparams[%d] = %s;' % (i,expr)
 				i += 1
 		except:
-			print '\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented GLGet!");'
+			print '\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented glGet!");'
 		if ext != 'OPENGL_VERSION_1_2':
 			print "\t\t\t}"
 			print "\t\t\telse {"

@@ -48,7 +48,7 @@ static INLINE void FILLDIRTY( unsigned int *b )
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		b[j] = 0xffffffff;
 }
-static INLINE void INVERTDIRTY( unsigned int *b, const unsigned int *d )
+static INLINE void CLEARDIRTY( unsigned int *b, const unsigned int *d )
 {
 	int j;
 	for (j=0;j<CR_MAX_BITARRAY;j++)

@@ -127,13 +127,17 @@ def UpdateCurrentPointer( func_name ):
 		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
 		return
 
-	m = re.search( r"^(VertexAttrib)([1234])(ub|s|f|d)NV$", func_name )
+	m = re.search( r"^(VertexAttrib)([1234])N?(ub|b|s|f|d)(NV|ARB)$", func_name )
 	if m :
 		k = m.group(1)
 		name = 'vertexAttrib'
 		type = m.group(3) + m.group(2)
-		print "\tpc->current.%s.%s[index] = data_ptr;" % (name,type)
+		# Add 12 to skip the packet length, opcode and index fields
+		print "\tpc->current.%s.%s[index] = data_ptr + 12;" % (name,type)
+		if m.group(4) == "ARB" or m.group(4) == "NV":
+			print "\tpc->current.attribsUsedMask |= (1 << index);"
 		return
+
 
 for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
@@ -182,7 +186,7 @@ for func_name in keys:
 
 		for arg_type in arg_types:
 			if not vector_nelem and not can_have_pointers and (arg_type.find( '*' ) != -1) :
-				print '\tcrError ( "%s needs to be special cased!");' % orig_func_name
+				print '\tcrError ( "%s needs to be special cased %d %d!");' % (orig_func_name, vector_nelem, can_have_pointers)
 				print '\t(void) pc;'
 
 				for arg in arg_names:
@@ -193,7 +197,7 @@ for func_name in keys:
 			print '\t(void) pc;'
 #			if func_name == "Enable" or func_name == "Disable":
 #				print "\tCRASSERT(!pc->buffer.geometry_only); /* sanity check */"
-			if packet_length == 0:
+			if packet_length == 0 and not is_extended:
 				print "\tGET_BUFFERED_POINTER_NO_ARGS( pc );"
 			elif func_name[:9] == "Translate" or func_name[:5] == "Color":
 				if is_extended:

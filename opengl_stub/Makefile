@@ -9,10 +9,10 @@ include ${TOP}/arch.mk
 
 SHARED = 1
 LIBRARY = crfaker
-FILES = getprocaddress load stub context dummyfuncs
+FILES = getprocaddress load stub context dummyfuncs NULLfuncs
 LIBRARIES = crmothership crutil spuload
 
-ifdef THREADSAFE
+ifeq ($(THREADSAFE), 1)
 FILES += tsfuncs
 endif
 
@@ -82,7 +82,7 @@ ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
 
-PRECOMP = $(ARCH_EXPORTS) getprocaddress.c opengl.def
+PRECOMP = $(ARCH_EXPORTS) getprocaddress.c opengl.def NULLfuncs.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS = opengl.def
@@ -104,6 +104,10 @@ getprocaddress.c: getprocaddress.py getprocaddress_special alias_exports.py
 $(ARCH_EXPORTS): stub_common.py $(ARCH_EXPORTS_PY) alias_exports.py
 	@$(ECHO) "Creating the OpenGL DLL export functions (for $(ARCH))"
 	@$(PYTHON) $(ARCH_EXPORTS_PY) > $(ARCH_EXPORTS)
+
+NULLfuncs.c: NULLfuncs.py ../glapi_parser/gl_header.parsed
+	@$(ECHO) "Creating the NULL dispatch table functions"
+	@$(PYTHON) NULLfuncs.py > NULLfuncs.c
 
 tsfuncs.c: tsfuncs.py ../glapi_parser/gl_header.parsed
 	@$(ECHO) "Building thread-safe dispatch code"

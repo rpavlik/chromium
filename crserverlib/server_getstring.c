@@ -28,3 +28,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetProgramStringNV( GLuint id, GLe
 	(void) pname;
 	(void) program;
 }
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchGetProgramStringARB( GLuint id, GLenum pname, void * program )
+{
+	crError( "glGetProgramStringARB isn't *ever* allowed to be on the wire!" );
+	(void) id;
+	(void) pname;
+	(void) program;
+}

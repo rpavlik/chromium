@@ -5,8 +5,11 @@
  */
 
 /*
- * Eventually these functions should be properly implemented in Chromium.
- * For now this is a simple way to coax more OpenGL programs to run.
+ * When functions can be aliased (like glBindTexture and glBindTextureEXT)
+ * we can express that here.
+ *
+ * Also, we can stub-out misc functions until they're implemented in the
+ * future.  This is a simple way to coax more OpenGL programs to run.
  *
  * Aliased functions, like glBlendFunc(), should be reimplemented in
  * assembly sometime.
@@ -109,15 +112,6 @@ void CR_APIENTRY glGetColorTableParameteriv( GLenum target, GLenum pname,
 	(void) params;
 	crWarning("glGetColorTableParameteriv not implemented by Chromium");
 }
-
-#ifndef WINDOWS
-extern void CR_APIENTRY glBlendEquationEXT(GLenum);
-
-void CR_APIENTRY glBlendEquation( GLenum mode )
-{
-	glBlendEquationEXT(mode);
-}
-#endif
 
 void CR_APIENTRY glHistogram( GLenum target, GLsizei width,
 									GLenum internalformat, GLboolean sink )
@@ -423,6 +417,7 @@ void glDrawArraysEXT( GLenum mode, GLint first, GLsizei count )
  * GL_EXT_texture_object, just call the standard functions
  */
 
+#if 0
 void glGenTexturesEXT(GLsizei n, GLuint *textures)
 {
 	glGenTextures(n, textures);
@@ -454,4 +449,6 @@ GLboolean glIsTextureEXT(GLuint texture)
 {
 	return glIsTexture(texture);
 }
+#endif
+
 #endif

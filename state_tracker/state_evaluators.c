@@ -439,7 +439,9 @@ map2(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
 	CRStateBits *sb = GetCurrentBits();
 	CREvaluatorState *e = &(g->eval);
 	CREvaluatorBits *eb = &(sb->eval);
+#if 0
 	CRTextureState *t = &(g->texture);
+#endif
 	GLint i;
 	GLint k;
 	GLfloat *pnts;
@@ -471,7 +473,12 @@ map2(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
 		return;
 	}
 
-	i = target - GL_MAP2_COLOR_4;
+	if (g->extensions.NV_vertex_program) {
+/* XXX FIXME */
+		i = target - GL_MAP2_COLOR_4;
+	} else {
+		i = target - GL_MAP2_COLOR_4;
+	}
 
 	k = gleval_sizes[i];
 
@@ -489,11 +496,17 @@ map2(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
 		return;
 	}
 
+#if 00
+	/* Disable this check for now - it looks like various OpenGL drivers
+	 * don't do this error check.  So, a bunch of the NVIDIA demos
+	 * generate errors/warnings.
+	 */
 	if (t->curTextureUnit != 0) {
 		/* See OpenGL 1.2.1 spec, section F.2.13 */
 		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glMap2d()");
 		return;
 	}
+#endif
 
 	switch (target) {
 	case GL_MAP2_VERTEX_3:
@@ -877,7 +890,7 @@ crStateEvaluatorSwitch(CREvaluatorBits *e, CRbitvalue * bitID,
 			FILLDIRTY(e->enable);
 			FILLDIRTY(e->dirty);
 		}
-		INVERTDIRTY(e->enable, nbitID);
+		CLEARDIRTY(e->enable, nbitID);
 	}
 	for (i = 0; i < GLEVAL_TOT; i++) {
 		if (CHECKDIRTY(e->eval1D[i], bitID)) {
@@ -894,7 +907,7 @@ crStateEvaluatorSwitch(CREvaluatorBits *e, CRbitvalue * bitID,
 				FILLDIRTY(e->dirty);
 				FILLDIRTY(e->eval1D[i]);
 			}
-			INVERTDIRTY(e->eval1D[i], nbitID);
+			CLEARDIRTY(e->eval1D[i], nbitID);
 		}
 	}
 
@@ -919,7 +932,7 @@ crStateEvaluatorSwitch(CREvaluatorBits *e, CRbitvalue * bitID,
 				FILLDIRTY(e->dirty);
 				FILLDIRTY(e->eval2D[i]);
 			}
-			INVERTDIRTY(e->eval2D[i], nbitID);
+			CLEARDIRTY(e->eval2D[i], nbitID);
 		}
 	}
 	if (CHECKDIRTY(e->grid1D, bitID)) {
@@ -929,7 +942,7 @@ crStateEvaluatorSwitch(CREvaluatorBits *e, CRbitvalue * bitID,
 			FILLDIRTY(e->dirty);
 			FILLDIRTY(e->grid1D);
 		}
-		INVERTDIRTY(e->grid1D, nbitID);
+		CLEARDIRTY(e->grid1D, nbitID);
 	}
 	if (CHECKDIRTY(e->grid2D, bitID)) {
 		if (from->u12D != to->u12D ||
@@ -942,9 +955,9 @@ crStateEvaluatorSwitch(CREvaluatorBits *e, CRbitvalue * bitID,
 			FILLDIRTY(e->dirty);
 			FILLDIRTY(e->grid1D);
 		}
-		INVERTDIRTY(e->grid1D, nbitID);
+		CLEARDIRTY(e->grid1D, nbitID);
 	}
-	INVERTDIRTY(e->dirty, nbitID);
+	CLEARDIRTY(e->dirty, nbitID);
 }
 
 void
@@ -968,7 +981,7 @@ crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
 			able[to->autoNormal] (GL_AUTO_NORMAL);
 			from->autoNormal = to->autoNormal;
 		}
-		INVERTDIRTY(e->enable, nbitID);
+		CLEARDIRTY(e->enable, nbitID);
 	}
 	for (i = 0; i < GLEVAL_TOT; i++) {
 		if (CHECKDIRTY(e->enable1D[i], bitID)) {
@@ -976,7 +989,7 @@ crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
 				able[to->enable1D[i]] (i + GL_MAP1_COLOR_4);
 				from->enable1D[i] = to->enable1D[i];
 			}
-			INVERTDIRTY(e->enable1D[i], nbitID);
+			CLEARDIRTY(e->enable1D[i], nbitID);
 		}
 		if (to->enable1D[i] && CHECKDIRTY(e->eval1D[i], bitID)) {
 			int size = from->eval1D[i].order * gleval_sizes[i] *
@@ -995,7 +1008,7 @@ crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
 				crMemcpy((void *) from->eval1D[i].coeff,
 								 (const void *) to->eval1D[i].coeff, size);
 			}
-			INVERTDIRTY(e->eval1D[i], nbitID);
+			CLEARDIRTY(e->eval1D[i], nbitID);
 		}
 	}
 
@@ -1005,7 +1018,7 @@ crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
 				able[to->enable2D[i]] (i + GL_MAP2_COLOR_4);
 				from->enable2D[i] = to->enable2D[i];
 			}
-			INVERTDIRTY(e->enable2D[i], nbitID);
+			CLEARDIRTY(e->enable2D[i], nbitID);
 		}
 		if (to->enable2D[i] && CHECKDIRTY(e->eval2D[i], bitID)) {
 			int size = from->eval2D[i].uorder * from->eval2D[i].vorder *
@@ -1033,7 +1046,7 @@ crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
 				crMemcpy((void *) from->eval2D[i].coeff,
 								 (const void *) to->eval2D[i].coeff, size);
 			}
-			INVERTDIRTY(e->eval2D[i], nbitID);
+			CLEARDIRTY(e->eval2D[i], nbitID);
 		}
 	}
 	if (CHECKDIRTY(e->grid1D, bitID)) {
@@ -1044,7 +1057,7 @@ crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
 			from->u21D = to->u21D;
 			from->un1D = to->un1D;
 		}
-		INVERTDIRTY(e->grid1D, nbitID);
+		CLEARDIRTY(e->grid1D, nbitID);
 	}
 	if (CHECKDIRTY(e->grid2D, bitID)) {
 		if (from->u12D != to->u12D ||
@@ -1061,7 +1074,7 @@ crStateEvaluatorDiff(CREvaluatorBits *e, CRbitvalue *bitID,
 			from->v22D = to->v22D;
 			from->vn2D = to->vn2D;
 		}
-		INVERTDIRTY(e->grid1D, nbitID);
+		CLEARDIRTY(e->grid1D, nbitID);
 	}
-	INVERTDIRTY(e->dirty, nbitID);
+	CLEARDIRTY(e->dirty, nbitID);
 }

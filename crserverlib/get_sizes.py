@@ -152,6 +152,7 @@ num_get_values = {
 	'GL_MAX_PIXEL_MAP_TABLE' : 1,
 	'GL_MAX_PROJECTION_STACK_DEPTH' : 1,
 	'GL_MAX_TEXTURE_SIZE' : 1,
+	'GL_MAX_3D_TEXTURE_SIZE' : 1,
 	'GL_MAX_TEXTURE_STACK_DEPTH' : 1,
 	'GL_MAX_VIEWPORT_DIMS': 2, 
 	'GL_MODELVIEW_MATRIX': 16,
@@ -297,6 +298,11 @@ extensions_num_get_values = {
 	'GL_SAMPLE_COVERAGE_VALUE_ARB': (1, 'CR_ARB_multisample'),
 	'GL_SAMPLE_COVERAGE_INVERT_ARB': (1, 'CR_ARB_multisample'),
 	'GL_MAX_TEXTURE_LOD_BIAS_EXT': (1, 'CR_EXT_texture_lod_bias'),
+	'GL_PROGRAM_ERROR_POSITION_NV': (1, 'CR_NV_vertex_program'),
+	'GL_VERTEX_PROGRAM_BINDING_NV': (1, 'CR_NV_vertex_program'),
+	'GL_PROGRAM_ERROR_POSITION_NV': (1, 'CR_NV_fragment_program'),
+	'GL_FRAGMENT_PROGRAM_BINDING_NV': (1, 'CR_NV_fragment_program'),
+	'GL_MAX_RECTANGLE_TEXTURE_SIZE_NV': (1, 'CR_NV_texture_rectangle'),
 }
 
 get_keys = num_get_values.keys() + extensions_num_get_values.keys()

@@ -51,6 +51,7 @@ print """
 	unsigned int vtx_count;
 	unsigned int vtx_max;
 	unsigned int vtx_count_begin;
+	unsigned int attribsUsedMask;
 
 } CRCurrentStatePointers;
 

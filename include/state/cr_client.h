@@ -32,7 +32,9 @@ typedef struct {
 	CRbitvalue	*e; /* edgeflag */
 	CRbitvalue	*s; /* secondary color */
 	CRbitvalue	*f; /* fog coord */
+#ifdef CR_NV_vertex_program
 	CRbitvalue	*a[CR_MAX_VERTEX_ATTRIBS]; /* NV_vertex_program */
+#endif
 	int valloc;
 	int nalloc;
 	int calloc;
@@ -61,30 +63,47 @@ typedef struct {
 	GLint type;
 	GLint stride;
 	GLboolean enabled;
+	GLboolean normalized; /* Added with GL_ARB_vertex_program */
 	int bytesPerIndex;
 } CRClientPointer;
+
+typedef struct {
+	CRClientPointer v;                         /* vertex */
+	CRClientPointer n;                         /* normal */
+	CRClientPointer c;                         /* color */
+	CRClientPointer i;                         /* color index */
+	CRClientPointer t[CR_MAX_TEXTURE_UNITS];   /* texcoords */
+	CRClientPointer e;                         /* edge flags */
+	CRClientPointer s;                         /* secondary color */
+	CRClientPointer f;                         /* fog coord */
+#ifdef CR_NV_vertex_program
+	CRClientPointer a[CR_MAX_VERTEX_ATTRIBS];  /* vertex attribs */
+#endif
+} CRVertexArrays;
 
 typedef struct {
 	/* pixel pack/unpack */
 	CRPixelPackState pack;
 	CRPixelPackState unpack;
 
-	/* vertex array */
-	CRClientPointer v;
-	CRClientPointer n;
-	CRClientPointer c;
-	CRClientPointer i;
-	CRClientPointer t[CR_MAX_TEXTURE_UNITS];
-	CRClientPointer e;
-	CRClientPointer s;
-	CRClientPointer f;
-	CRClientPointer a[CR_MAX_VERTEX_ATTRIBS];
+	CRVertexArrays array;
 
 	GLint curClientTextureUnit;
 
 	int *list;
 	int list_alloc;
 	int list_size;
+
+	/* state stacks (glPush/PopClientState) */
+	GLint attribStackDepth;
+	CRbitvalue pushMaskStack[CR_MAX_CLIENT_ATTRIB_STACK_DEPTH];
+
+	GLint pixelStoreStackDepth;
+	CRPixelPackState pixelPackStoreStack[CR_MAX_CLIENT_ATTRIB_STACK_DEPTH];
+	CRPixelPackState pixelUnpackStoreStack[CR_MAX_CLIENT_ATTRIB_STACK_DEPTH];
+
+	GLint vertexArrayStackDepth;
+	CRVertexArrays vertexArrayStack[CR_MAX_CLIENT_ATTRIB_STACK_DEPTH];
 } CRClientState;
 
 void crStateClientInitBits(CRClientBits *c);

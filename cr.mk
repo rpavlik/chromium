@@ -5,6 +5,7 @@
 
 include $(TOP)/arch.mk
 
+
 ###########################
 # LEAVE THESE THINGS ALONE!
 ###########################
@@ -183,7 +184,7 @@ CXXFLAGS += $(CXX_DEBUG_FLAGS) $(PROFILE_FLAGS)
 LDFLAGS += $(LD_DEBUG_FLAGS) $(PROFILE_LAGS)
 RELEASE_STRING = (PROFILE)
 else
-ifdef THREADSAFE
+ifeq ($(THREADSAFE), 1)
 CFLAGS += $(C_DEBUG_FLAGS) -DCHROMIUM_THREADSAFE=1
 CXXFLAGS += $(CXX_DEBUG_FLAGS) -DCHROMIUM_THREADSAFE=1
 LDFLAGS += $(LD_DEBUG_FLAGS)
@@ -234,9 +235,6 @@ subdirs: $(SUBDIRS_ALL)
 $(SUBDIRS_ALL):
 	@$(MAKE) -C $(basename $@) $(RELEASE_FLAGS)
 endif
-
-threadsafe:
-	@$(MAKE) THREADSAFE=1
 
 release:
 	@$(MAKE) RELEASE=1
