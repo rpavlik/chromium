@@ -11,12 +11,12 @@ CC = cl
 # NOTE:  If you're compiling on Windows and find that some code warnings
 # stop compilation, remove the /WX flags in the next few lines.
 
-CXXFLAGS          += /nologo /DWIN32 /DWINDOWS /TP /W4 /WX /GX /QIfist
+CXXFLAGS          += /nologo /DWIN32 /DWINDOWS /TP /W3 /WX /GX /QIfist
 CXX_RELEASE_FLAGS += /MD /Ox /DNDEBUG
 # This is just not working for me on VC++ 7 --> CXX_DEBUG_FLAGS   += /GZ
 CXX_DEBUG_FLAGS   += /MDd /Yd /Z7
 
-CFLAGS          += /nologo /DWIN32 /DWINDOWS /W4 /WX /TC /GX /QIfist /Zm1024
+CFLAGS          += /nologo /DWIN32 /DWINDOWS /W3 /WX /TC /GX /QIfist /Zm1024
 C_RELEASE_FLAGS += /MD /Ox /DNDEBUG
 # This is just not working for me on VC++ 7 --> C_DEBUG_FLAGS   += /GZ
 C_DEBUG_FLAGS   += /MDd /Yd /Z7
