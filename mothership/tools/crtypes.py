@@ -85,6 +85,14 @@ class OptionList:
 				return opt.Count
 		return 0
 
+	def GetValue(self, optName):
+		"""Return value of named option."""
+		for opt in self.__Options:
+			if opt.Name == optName:
+				assert len(opt.Value) == opt.Count
+				return opt.Value
+		return None
+
 	def SetValue(self, optName, value):
 		"""Set value of named option.  Value is a list"""
 		for opt in self.__Options:
@@ -93,13 +101,39 @@ class OptionList:
 				opt.Value = value
 				return
 
-	def GetValue(self, optName):
-		"""Return value of named option."""
-		for opt in self.__Options:
-			if opt.Name == optName:
-				assert len(opt.Value) == opt.Count
-				return opt.Value
-		return None
+	def Conf(self, name, valueTuple):
+		"""Like SetValue(), but take a tuple instead of list."""
+				# Get count and type of expected values
+		count = self.GetCount(name)
+		if count == 0:
+			print "Bad config option: %s" % name
+			return
+		type = self.GetType(name)
+		assert type != None
+
+		# values is a tuple, we need to convert it to list.
+		valueList = []
+		if len(valueTuple) == count:
+			# the tuple size matches the expected length
+			for i in range(count):
+				if type == "INT" or type == "BOOL":
+					valueList.append(int(valueTuple[i]))
+				elif type == "FLOAT":
+					valueList.append(float(valueTuple[i]))
+				else:
+					valueList.append(valueTuple[i])
+		else:
+			assert len(valueTuple) == 1
+			valueString = valueTuple[0]
+			stringList = string.split(valueString)
+			for i in range(count):
+				if type == "INT" or type == "BOOL":
+					valueList.append(int(stringList[i]))
+				elif type == "FLOAT":
+					valueList.append(float(stringList[i]))
+				else:
+					valueList.append(stringList[i])
+		self.SetValue(name, valueList)
 
 	def RestoreDefaults(self):
 		"""Restore all options to their default values."""
@@ -224,41 +258,7 @@ class SpuObject:
 		
 	def Conf(self, var, *values):
 		"""Set an option, via config file"""
-		print "Conf %s" % var
-		# Get count and type of expected values
-		count = self.__OptionList.GetCount(var)
-		if count == 0:
-			print "Bad config option: %s" % var
-			return
-		type = self.__OptionList.GetType(var)
-		assert type != None
-
-		# values is a tuple, we need to convert it to list.
-		valueList = []
-		if len(values) == count:
-			# the tuple size matches the expected length
-			for i in range(count):
-				if type == "INT" or type == "BOOL":
-					valueList.append(int(values[i]))
-				elif type == "FLOAT":
-					valueList.append(float(values[i]))
-				else:
-					valueList.append(values[i])
-		else:
-			assert len(values) == 1
-			valueString = values[0]
-			stringList = string.split(valueString)
-			for i in range(count):
-				if type == "INT" or type == "BOOL":
-					valueList.append(int(stringList[i]))
-				elif type == "FLOAT":
-					valueList.append(float(stringList[i]))
-				else:
-					valueList.append(stringList[i])
-
-		self.SetOption(var, valueList)
-		return
-
+		self.__OptionList.Conf(var, values)
 
 	def PrintOptions(self):
 		self.__OptionList.Print()
@@ -652,7 +652,8 @@ class NetworkNode(Node):
 		# Server node options, defined just like SPU options
 		self.__Options = OptionList( [
 			Option("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
-			Option("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], [])
+			Option("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], []),
+			Option("only_swap_once", "Only swap once for N clients", "BOOL", 1, [0], [], [])
 			] )
 
 	def Clone(self):
@@ -709,6 +710,10 @@ class NetworkNode(Node):
 		"""Return the server OptionList."""
 		return self.__Options
 
+	def Conf(self, name, *values):
+		"""Set an option, via config file"""
+		self.__Options.Conf(name, values)
+		
 
 class ApplicationNode(Node):
 	"""A CRApplicationNode object"""
