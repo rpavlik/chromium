@@ -33,7 +33,9 @@ print """
 
 #if defined(WINDOWS)
 #define SYSTEM_GL "opengl32.dll"
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(DARWIN) || defined(AIX) || defined(SunOS) || defined(OSF1)
+#elif defined (DARWIN)
+#define SYSTEM_GL "libdl.dylib"
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
 #if defined(AIX)
 #define SYSTEM_GL "libGL.o"
 #else
@@ -127,8 +129,10 @@ __findExtFunction( const crOpenGLInterface *interface, const char *funcName )
 	SPUGenericFunction f = crDLLGetNoError(glDll, funcName);
 	if (f)
 		return f;
+#if !defined(DARWIN)
 	else if (interface->glXGetProcAddressARB)
 		return interface->glXGetProcAddressARB( (const GLubyte *) funcName );
+#endif
 	else
 		return NULL;
 #endif
@@ -217,6 +221,14 @@ useful_wgl_functions = [
 	"wglGetPixelFormatAttribfvEXT",
 	"glGetString"
 ]
+useful_agl_functions = [
+       "aglChoosePixelFormat",
+       "aglCreateContext",
+       "aglUseFont",
+       "aglDestroyContext",
+       "aglSetCurrentContext",
+       "aglSwapBuffers"
+]
 useful_glx_functions = [
 	"glXGetConfig",
 	"glXQueryExtension",
@@ -238,6 +250,10 @@ possibly_useful_glx_functions = [
 print '#ifdef WINDOWS'
 
 for fun in useful_wgl_functions:
+	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun,fun,fun)
+
+print '#elif defined(DARWIN)'
+for fun in useful_agl_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun,fun,fun)
 
 print '#else'
@@ -283,7 +299,7 @@ crLoadOpenGLExtensions( const crOpenGLInterface *interface, SPUNamedFunctionTabl
 #ifdef WINDOWS
 	if (interface->wglGetProcAddress == NULL)
 		crWarning("Unable to find wglGetProcAddress() in system GL library");
-#else
+#elif !defined(DARWIN)
 	if (interface->glXGetProcAddressARB == NULL)
 		crWarning("Unable to find glXGetProcAddressARB() in system GL library");
 #endif
