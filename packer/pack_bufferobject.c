@@ -52,7 +52,6 @@ crPackBufferDataARB( GLenum target, GLsizeiptrARB size,
 		 crMemcpy( data_ptr + 16, data, size );
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 
@@ -77,7 +76,6 @@ crPackBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size,
 	crMemcpy( data_ptr + 16, data, size );
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
 
 
@@ -95,5 +93,4 @@ crPackDeleteBuffersARB(GLsizei n, const GLuint * buffers)
 	WRITE_DATA( 4, GLsizei, n );
 	crMemcpy( data_ptr + 8, buffers, n * sizeof(*buffers) );
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
-	crPackFree( data_ptr );
 }
