@@ -74,9 +74,10 @@ void crUnpackExtendProgramParameters4fvNV(void)
 void crUnpackExtendAreProgramsResidentNV(void)
 {
 	GLsizei n = READ_DATA( 8, GLsizei );
-	GLboolean * residences;
-	crMemcpy( (void *) &(residences), DATA_POINTER( 12 + n*sizeof( GLuint ), void * ), sizeof( GLboolean * ));
-	(void) cr_unpackDispatch.AreProgramsResidentNV( n, NULL, NULL );
+	const GLuint *programs = DATA_POINTER( 12, const GLuint );
+	SET_RETURN_PTR(12 + n * sizeof(GLuint));
+	SET_WRITEBACK_PTR(20 + n * sizeof(GLuint));
+	(void) cr_unpackDispatch.AreProgramsResidentNV( n, programs, NULL );
 }
 
 

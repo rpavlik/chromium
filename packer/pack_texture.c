@@ -625,23 +625,21 @@ crPackAreTexturesResident(GLsizei n, const GLuint * textures,
 	unsigned char *data_ptr;
 	int packet_length;
 
+	(void) return_val; /* Caller must compute this from residences!!! */
+
 	packet_length = sizeof(int) +	/* packet length */
 		sizeof(GLenum) +						/* extend-o opcode */
 		sizeof(n) +									/* num_textures */
 		n * sizeof(*textures) +			/* textures */
-		8 + 8 + 8;									/* return pointers */
+		8 + 8;
 
 	GET_BUFFERED_POINTER(pc, packet_length);
 	WRITE_DATA(0, int, packet_length);
 	WRITE_DATA(4, GLenum, CR_ARETEXTURESRESIDENT_EXTEND_OPCODE);
-	WRITE_DATA(sizeof(int) + 4, GLsizei, n);
-	crMemcpy(data_ptr + sizeof(int) + 8, textures, n * sizeof(*textures));
-	WRITE_NETWORK_POINTER(sizeof(int) + 8 + n * sizeof(*textures),
-												(void *) residences);
-	WRITE_NETWORK_POINTER(sizeof(int) + 16 + n * sizeof(*textures),
-												(void *) return_val);
-	WRITE_NETWORK_POINTER(sizeof(int) + 24 + n * sizeof(*textures),
-												(void *) writeback);
+	WRITE_DATA(8, GLsizei, n);
+	crMemcpy(data_ptr + 12, textures, n * sizeof(*textures));
+	WRITE_NETWORK_POINTER(12 + n * sizeof(*textures),	(void *) residences);
+	WRITE_NETWORK_POINTER(20 + n * sizeof(*textures), (void *) writeback);
 	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
 }
 

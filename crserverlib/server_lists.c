@@ -56,6 +56,16 @@ static GLuint TranslateTextureID( GLuint id )
 	return id;
 }
 
+/* XXXX Note: shared/separate Program ID numbers aren't totally implemented! */
+static GLuint TranslateProgramID( GLuint id )
+{
+	if (!cr_server.sharedPrograms && id) {
+		int client = cr_server.curClient->number;
+		return id + client * 100000;
+	}
+	return id;
+}
+
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchNewList( GLuint list, GLenum mode )
 {
@@ -190,7 +200,57 @@ GLboolean SERVER_DISPATCH_APIENTRY crServerDispatchIsTexture( GLuint texture )
 }
 
 
-/* XXX todo: PrioritizeTextures and AreTextureResident */
+GLboolean SERVER_DISPATCH_APIENTRY
+crServerDispatchAreTexturesResident(GLsizei n, const GLuint *textures,
+                                    GLboolean *residences)
+{
+	GLboolean retval;
+	GLboolean *res = (GLboolean *) crAlloc(n * sizeof(GLboolean));
+	GLsizei i;
 
-/* XXX todo: vertex program IDs */
+	(void) residences;
 
+	if (!cr_server.sharedTextureObjects) {
+		GLuint *textures2 = (GLuint *) crAlloc(n * sizeof(GLuint));
+		for (i = 0; i < n; i++)
+			textures2[i] = TranslateTextureID(textures[i]);
+		retval = cr_server.head_spu->dispatch_table.AreTexturesResident(n, textures2, res);
+		crFree(textures2);
+	}
+	else {
+		retval = cr_server.head_spu->dispatch_table.AreTexturesResident(n, textures, res);
+	}
+	crServerReturnValue(res, n * sizeof(GLboolean));
+
+	crFree(res);
+
+	return retval; /* WILL PROBABLY BE IGNORED */
+}
+
+
+GLboolean SERVER_DISPATCH_APIENTRY
+crServerDispatchAreProgramsResidentNV(GLsizei n, const GLuint *programs,
+																			GLboolean *residences)
+{
+	GLboolean retval;
+	GLboolean *res = (GLboolean *) crAlloc(n * sizeof(GLboolean));
+	GLsizei i;
+
+	(void) residences;
+
+	if (!cr_server.sharedTextureObjects) {
+		GLuint *programs2 = (GLuint *) crAlloc(n * sizeof(GLuint));
+		for (i = 0; i < n; i++)
+			programs2[i] = TranslateProgramID(programs[i]);
+		retval = cr_server.head_spu->dispatch_table.AreProgramsResidentNV(n, programs2, res);
+		crFree(programs2);
+	}
+	else {
+		retval = cr_server.head_spu->dispatch_table.AreProgramsResidentNV(n, programs, res);
+	}
+
+	crServerReturnValue(res, n * sizeof(GLboolean));
+	crFree(res);
+
+	return retval; /* WILL PROBABLY BE IGNORED */
+}

@@ -251,6 +251,33 @@ void PACK_APIENTRY crPackProgramNamedParameter4dvNV (GLuint id, GLsizei len, con
 }
 
 
+void PACK_APIENTRY
+crPackAreProgramsResidentNV(GLsizei n, const GLuint * programs,
+														GLboolean *residences, GLboolean *return_val,
+														int *writeback)
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	int packet_length;
+
+	(void) return_val; /* Caller must compute this from residences!!! */
+
+	packet_length = sizeof(int) +	/* packet length */
+		sizeof(GLenum) +						/* extend opcode */
+		sizeof(n) +									/* num programs */
+		n * sizeof(*programs) +			/* programs */
+		8 + 8;
+
+	GET_BUFFERED_POINTER(pc, packet_length);
+	WRITE_DATA(0, int, packet_length);
+	WRITE_DATA(4, GLenum, CR_AREPROGRAMSRESIDENTNV_EXTEND_OPCODE);
+	WRITE_DATA(8, GLsizei, n);
+	crMemcpy(data_ptr + 12, programs, n * sizeof(*programs));
+	WRITE_NETWORK_POINTER(12 + n * sizeof(*programs),	(void *) residences);
+	WRITE_NETWORK_POINTER(20 + n * sizeof(*programs), (void *) writeback);
+	WRITE_OPCODE(pc, CR_EXTEND_OPCODE);
+}
+
 
 void PACK_APIENTRY crPackGetProgramNamedParameterfvNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat *params, int *writeback )
 {

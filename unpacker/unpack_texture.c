@@ -294,8 +294,8 @@ void crUnpackTexGeniv( void )
 void crUnpackExtendAreTexturesResident( void )
 {
 	GLsizei n = READ_DATA( 8, GLsizei );
-	GLboolean * residences;
-	crMemcpy( (void *) &(residences), DATA_POINTER( 12 + n*sizeof( GLuint ), void * ), sizeof( GLboolean * ));
-
-	(void) cr_unpackDispatch.AreTexturesResident( n, DATA_POINTER( 12, const GLuint ), residences );
+	const GLuint *textures = DATA_POINTER( 12, const GLuint );
+	SET_RETURN_PTR(12 + n * sizeof(GLuint));
+	SET_WRITEBACK_PTR(20 + n * sizeof(GLuint));
+	(void) cr_unpackDispatch.AreTexturesResident( n, textures, NULL );
 }

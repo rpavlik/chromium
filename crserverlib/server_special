@@ -126,6 +126,8 @@ DeleteLists
 BindTexture
 DeleteTextures
 IsTexture
+AreTexturesResident
+AreProgramsResidentNV
 GenProgramsARB
 GetProgramStringARB
 GetVertexAttribPointervARB
