@@ -17,17 +17,24 @@
 
 /* --- Preprocessor --------------------------------------------------------- */
 
+#define GL_GLEXT_PROTOTYPES
 #include "exec.h"
 #include "../common/logo.h"
-
-#ifndef WIN32
-#define GL_GLEXT_PROTOTYPES
-#include <GL/glext.h>
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>
 
+
+#ifdef IRIX
+/* this lets us compile the demo, but not run it */
+void glActiveTextureARB(GLenum texture)
+{
+}
+
+void glMultiTexCoord2fARB(GLenum texture, GLfloat s, GLfloat t)
+{
+}
+#endif
 
 enum
   {

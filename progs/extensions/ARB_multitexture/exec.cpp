@@ -20,12 +20,9 @@
 
 /* --- Preprocessor --------------------------------------------------------- */
 
+#define GL_GLEXT_PROTOTYPES
 #include "exec.h"
 #include "../common/logo.h"
-
-#ifndef WIN32
-#include <GL/glext.h>
-#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,6 +31,18 @@
 
 #ifndef DISPLAY_LISTS
 #error This program requires display lists to do anything :-(
+#endif
+
+
+#ifdef IRIX
+/* this lets us compile the demo, but not run it */
+void glActiveTextureARB(GLenum texture)
+{
+}
+
+void glMultiTexCoord2fARB(GLenum texture, GLfloat s, GLfloat t)
+{
+}
 #endif
 
 
