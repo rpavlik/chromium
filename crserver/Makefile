@@ -32,8 +32,14 @@ FILES = main \
 PRECOMP = server_dispatch.h server_dispatch.c server_get.c server_retval.c server_simpleget.c
 SLOP = ${PRECOMP}
 
-LIBRARIES = spuload crutil crmothership crpacker
+ifdef WINDOWS
 TRACKS_STATE = 1
+LIBRARIES = spuload crutil crmothership crpacker
+else
+# use static crstate library
+LIBRARIES = spuload crutil crmothership crpacker crstate
+endif
+
 UNPACKS = 1
 
 include $(TOP)/cr.mk
