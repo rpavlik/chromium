@@ -146,7 +146,19 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 		}
 		else
 		{
-			/* Don't use glXChooseVisual, use glXGetConfig */
+			/* Don't use glXChooseVisual, use glXGetConfig.
+			 *
+			 * Here's the deal:
+			 * Some (all?) versions of the libGL.so that's shipped with ATI's
+			 * drivers aren't built with the -Bsymbolic flag.  That's bad.
+			 *
+			 * If we call the glXChooseVisual() function that's built into ATI's
+			 * libGL, it in turn calls the glXGetConfig() function.  Now, there's
+			 * a glXGetConfig function in libGL.so **AND** there's a glXGetConfig
+			 * function in Chromium's libcrfaker.so library.  Unfortunately, the
+			 * later one gets called instead of the former.  At this point, things
+			 * go haywire.  If -Bsymbolic were used, this would not happen.
+			 */
 			XVisualInfo templateVis;
 			long templateFlags;
 			int count, i, visType;
