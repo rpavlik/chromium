@@ -17,12 +17,12 @@ SPUFunctions passthrough_functions = {
 	passthrough_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *passthroughSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *passthroughSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 	(void) id;
-	(void) super;
+	(void) self;
 	(void) context_id;
 	(void) num_contexts;
 

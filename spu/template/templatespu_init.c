@@ -17,12 +17,12 @@ SPUFunctions template_functions = {
 	template_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *templateSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *templateSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
+	(void) self;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -36,7 +36,7 @@ SPUFunctions *templateSPUInit( int id, SPU *child, SPU *super,
 		template_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(template_spu.super) );
-	crSPUCopyDispatchTable( &(template_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(template_spu.super), &(self->superSPU->dispatch_table) );
 	templatespuGatherConfiguration();
 
 	return &template_functions;

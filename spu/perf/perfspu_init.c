@@ -28,12 +28,11 @@ SPUFunctions perf_functions = {
 	perf_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *perfSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *perfSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -46,7 +45,7 @@ SPUFunctions *perfSPUInit( int id, SPU *child, SPU *super,
 		perf_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(perf_spu.super) );
-	crSPUCopyDispatchTable( &(perf_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(perf_spu.super), &(self->superSPU->dispatch_table) );
 	perfspuGatherConfiguration();
 
 	crGetHostname(perf_spu.hostname, sizeof(perf_spu.hostname));

@@ -17,12 +17,11 @@ SPUFunctions hiddenline_functions = {
 	hiddenline_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -35,7 +34,7 @@ SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *super,
 		hiddenline_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(hiddenline_spu.super) );
-	crSPUCopyDispatchTable( &(hiddenline_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(hiddenline_spu.super), &(self->superSPU->dispatch_table) );
 	hiddenlinespuGatherConfiguration( child );
 
 	hiddenline_spu.frame_head = hiddenline_spu.frame_tail = NULL;

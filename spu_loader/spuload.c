@@ -56,6 +56,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
 
 	the_spu = (SPU*)crAlloc( sizeof( *the_spu ) );
 	the_spu->id = id;
+	the_spu->privatePtr = NULL;
 	path = __findDLL( name, dir );
 	the_spu->dll = crDLLOpen( path );
 	the_spu->entry_point = 
@@ -88,7 +89,7 @@ SPU * crSPULoad( SPU *child, int id, char *name, char *dir, void *server )
 	{
 		the_spu->superSPU = NULL;
 	}
-	the_spu->function_table = the_spu->init( id, child, the_spu->superSPU, 0, 1 );
+	the_spu->function_table = the_spu->init( id, child, the_spu, 0, 1 );
 	__buildDispatch( the_spu );
 	crDebug( "initializing dispatch table %p (for SPU %s)", &(the_spu->dispatch_table), name );
 	crSPUInitDispatchTable( &(the_spu->dispatch_table) );

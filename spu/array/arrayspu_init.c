@@ -16,12 +16,11 @@ SPUFunctions array_functions = {
 	array_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *arraySPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *arraySPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -34,7 +33,7 @@ SPUFunctions *arraySPUInit( int id, SPU *child, SPU *super,
 		array_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(array_spu.super) );
-	crSPUCopyDispatchTable( &(array_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(array_spu.super), &(self->superSPU->dispatch_table) );
 	arrayspuGatherConfiguration();
 
 	crStateInit();

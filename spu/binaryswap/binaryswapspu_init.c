@@ -101,11 +101,10 @@ void binaryswapspuConnectToPeer( void )
 
 
 
-SPUFunctions *binaryswapSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *binaryswapSPUInit( int id, SPU *child, SPU *self,
 				 unsigned int context_id,
 				 unsigned int num_contexts )
 {
-  (void) super;
   (void) context_id;
   (void) num_contexts;
   
@@ -122,7 +121,7 @@ SPUFunctions *binaryswapSPUInit( int id, SPU *child, SPU *super,
     binaryswap_spu.has_child = 1;
   }
   crSPUInitDispatchTable( &(binaryswap_spu.super) );
-  crSPUCopyDispatchTable( &(binaryswap_spu.super), &(super->dispatch_table) );
+  crSPUCopyDispatchTable( &(binaryswap_spu.super), &(self->superSPU->dispatch_table) );
   binaryswapspuGatherConfiguration( &binaryswap_spu );
    
   binaryswapspuConnectToPeer(); 

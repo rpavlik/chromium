@@ -51,12 +51,11 @@ void commspuConnectToPeer( void )
 	}
 }
 
-SPUFunctions *commSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *commSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -69,7 +68,7 @@ SPUFunctions *commSPUInit( int id, SPU *child, SPU *super,
 		comm_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(comm_spu.super) );
-	crSPUCopyDispatchTable( &(comm_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(comm_spu.super), &(self->superSPU->dispatch_table) );
 	commspuGatherConfiguration();
 
 	commspuConnectToPeer();

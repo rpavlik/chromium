@@ -19,7 +19,7 @@ SPUFunctions nop_functions = {
 	nop_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *nopSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *nopSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -27,7 +27,7 @@ SPUFunctions *nopSPUInit( int id, SPU *child, SPU *super,
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
-	(void) super;
+	(void) self;
 
 	nop_spu.ctx = crStateCreateContext( NULL );
 	crStateMakeCurrent( nop_spu.ctx );

@@ -19,21 +19,20 @@ SPUFunctions print_functions = {
 
 PrintSpu print_spu;
 
-SPUFunctions *printSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *printSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
-	(void) super;
 
 	print_spu.id = id;
 	printspuGatherConfiguration( child );
 
 	crSPUInitDispatchTable( &(print_spu.passthrough) );
-	crSPUCopyDispatchTable( &(print_spu.passthrough), &(super->dispatch_table) );
-	crDebug( "print_spu.passthrough = %p, super->dispatch_table = %p", &(print_spu.passthrough), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(print_spu.passthrough), &(self->superSPU->dispatch_table) );
+	crDebug( "print_spu.passthrough = %p, super->dispatch_table = %p", &(print_spu.passthrough), &(self->superSPU->dispatch_table) );
 	return &print_functions;
 }
 

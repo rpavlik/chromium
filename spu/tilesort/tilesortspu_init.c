@@ -25,7 +25,7 @@ CRtsd _ThreadTSD;
 
 extern void _math_init_eval(void);
 
-SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -39,7 +39,7 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *super,
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
-	(void) super;
+	(void) self;
 
 	crMemZero( &tilesort_spu, sizeof(TileSortSPU) );
 

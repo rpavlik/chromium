@@ -15,7 +15,7 @@ SPUFunctions error_functions = {
 	error_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *errorSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *errorSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -23,7 +23,7 @@ SPUFunctions *errorSPUInit( int id, SPU *child, SPU *super,
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
-	(void) super;
+	(void) self;
 	return &error_functions;
 }
 

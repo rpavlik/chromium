@@ -17,12 +17,11 @@ SPUFunctions dist_texture_functions = {
 	dist_texture_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *dist_textureSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *dist_textureSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -35,7 +34,7 @@ SPUFunctions *dist_textureSPUInit( int id, SPU *child, SPU *super,
 		dist_texture_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(dist_texture_spu.super) );
-	crSPUCopyDispatchTable( &(dist_texture_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(dist_texture_spu.super), &(self->superSPU->dispatch_table) );
 	dist_texturespuGatherConfiguration();
 
 	return &dist_texture_functions;

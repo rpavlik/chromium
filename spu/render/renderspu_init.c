@@ -27,11 +27,7 @@ CRtsd _RenderTSD;
 #endif
 
 
-
-
-
-
-SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id, unsigned int num_contexts )
 {
 	CRLimitsState limits[3];
@@ -41,9 +37,10 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 	const GLuint visualBits = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT | CR_STENCIL_BIT /*| CR_ALPHA_BIT*/;
 
 	(void) child;
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
+
+	self->privatePtr = (void *) &render_spu;
 
 #ifdef CHROMIUM_THREADSAFE
 	crDebug("Render SPU: thread-safe");

@@ -17,12 +17,11 @@ SPUFunctions fps_functions = {
 	fps_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *fpsSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *fpsSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -35,7 +34,7 @@ SPUFunctions *fpsSPUInit( int id, SPU *child, SPU *super,
 		fps_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(fps_spu.super) );
-	crSPUCopyDispatchTable( &(fps_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(fps_spu.super), &(self->superSPU->dispatch_table) );
 	fpsspuGatherConfiguration();
 
 	fps_spu.timer = crTimerNewTimer();

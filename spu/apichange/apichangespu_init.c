@@ -16,12 +16,11 @@ SPUFunctions apichange_functions = {
 	apichange_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -34,7 +33,7 @@ SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *super,
 		apichange_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(apichange_spu.super) );
-	crSPUCopyDispatchTable( &(apichange_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(apichange_spu.super), &(self->superSPU->dispatch_table) );
 	apichangespuGatherConfiguration();
 
 	return &apichange_functions;

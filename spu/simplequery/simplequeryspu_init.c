@@ -18,12 +18,11 @@ SPUFunctions simplequery_functions = {
 	simplequery_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *simplequerySPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *simplequerySPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -36,7 +35,7 @@ SPUFunctions *simplequerySPUInit( int id, SPU *child, SPU *super,
 		simplequery_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(simplequery_spu.super) );
-	crSPUCopyDispatchTable( &(simplequery_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(simplequery_spu.super), &(self->superSPU->dispatch_table) );
 	simplequeryspuGatherConfiguration();
 
 	simplequery_spu.ctx = crStateCreateContext( NULL );

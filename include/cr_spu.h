@@ -87,6 +87,7 @@ struct _SPUSTRUCT {
 	SPUFunctions *function_table;
 	SPUOptions *options;
 	SPUDispatchTable dispatch_table;
+	void *privatePtr;  /* pointer to SPU-private data */
 };
 
 SPU *crSPULoad( SPU *child, int id, char *name, char *dir, void *server);

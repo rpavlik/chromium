@@ -17,12 +17,11 @@ SPUFunctions wet_functions = {
 	wet_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *wetSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *wetSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -36,7 +35,7 @@ SPUFunctions *wetSPUInit( int id, SPU *child, SPU *super,
 		wet_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(wet_spu.super) );
-	crSPUCopyDispatchTable( &(wet_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(wet_spu.super), &(self->superSPU->dispatch_table) );
 	wetspuGatherConfiguration();
 
 	wet_spu.frame_counter = 0;

@@ -16,12 +16,11 @@ SPUFunctions the_functions = {
 	saveframe_table /* THE ACTUAL FUNCTIONS */
 };
 
-SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *SPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
 
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -34,7 +33,7 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 		saveframe_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(saveframe_spu.super) );
-	crSPUCopyDispatchTable( &(saveframe_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(saveframe_spu.super), &(self->superSPU->dispatch_table) );
 	saveframespuGatherConfiguration();
 
 	return &the_functions;

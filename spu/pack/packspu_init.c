@@ -26,7 +26,7 @@ CRtsd _PackTSD;
 CRmutex _PackMutex;
 #endif
 
-SPUFunctions *packSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *packSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
@@ -35,7 +35,7 @@ SPUFunctions *packSPUInit( int id, SPU *child, SPU *super,
 	(void) context_id;
 	(void) num_contexts;
 	(void) child;
-	(void) super;
+	(void) self;
 
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&_PackMutex);

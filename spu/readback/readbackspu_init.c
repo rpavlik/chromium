@@ -23,11 +23,10 @@ ReadbackSPU readback_spu;
 CRtsd _ReadbackTSD;
 #endif
 
-SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *super,
+SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id,
 		unsigned int num_contexts )
 {
-	(void) super;
 	(void) context_id;
 	(void) num_contexts;
 
@@ -45,7 +44,7 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *super,
 		readback_spu.has_child = 1;
 	}
 	crSPUInitDispatchTable( &(readback_spu.super) );
-	crSPUCopyDispatchTable( &(readback_spu.super), &(super->dispatch_table) );
+	crSPUCopyDispatchTable( &(readback_spu.super), &(self->superSPU->dispatch_table) );
 	readbackspuGatherConfiguration( &readback_spu );
 
 	crStateInit();
