@@ -27,11 +27,6 @@ static GLboolean CallLists = GL_FALSE;
 static GLuint Objects[MAX_OBJECTS];
 static GLuint NumObjects = 0;
 
-static GLuint RedTexture = 0, GreenTexture = 0;
-
-static const GLfloat White[4] = {1.0F, 1.0F, 1.0F, 1.0F};
-
-
 #if USE_CHROMIUM
 static glChromiumParametervCRProc ChromiumParametervCR = NULL;
 #endif
@@ -56,19 +51,11 @@ Idle(void)
 static void
 DrawObject0(void)
 {
-#if 0
    static const GLfloat green[4] = {0.0F, 1.0F, 0.0F, 1.0F};
    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, green);
-#else
-   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, White);
-   glBindTexture(GL_TEXTURE_2D, GreenTexture);
-   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-   glEnable(GL_TEXTURE_2D);
-#endif
    glEnable(GL_LIGHTING);
    glutSolidCube(2.0);
    /*glDisable(GL_LIGHTING);*/
-   glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -90,22 +77,13 @@ DrawObject1(void)
 static void
 DrawObject2(void)
 {
-#if 0
    glColor3f(1, 0.2, 0.2);
-#else
-   glColor3f(0, 0, 0);
-   glBindTexture(GL_TEXTURE_2D, RedTexture);
-   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-   glEnable(GL_TEXTURE_2D);
-#endif
-
    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
    glLineWidth(4);
    glutSolidCube(2.0);
    /* Do this outside of a list, below:
    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
    */
-   glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -299,9 +277,6 @@ MakeObjects(void)
 static void
 Init(void)
 {
-   GLubyte tex[4*4][3];
-   GLuint i;
-
 #if USE_CHROMIUM
    ChromiumParametervCR = (glChromiumParametervCRProc) glXGetProcAddress("glChromiumParametervCR");
    assert(ChromiumParametervCR);
@@ -310,34 +285,6 @@ Init(void)
    glClearColor(0.1F, 0.5F, 1.0F, 0.0F);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHT0);
-
-   /* make textures */
-   glGenTextures(1, &RedTexture);
-   assert(RedTexture != 0);
-   glBindTexture(GL_TEXTURE_2D, RedTexture);
-   for (i = 0; i < 4 * 4; i++) {
-      tex[i][0] = 255;
-      tex[i][1] = 0;
-      tex[i][2] = 0;
-   }
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 4, 4, 0, GL_RGB, GL_UNSIGNED_BYTE, tex);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-   glGenTextures(1, &GreenTexture);
-   assert(GreenTexture != 0);
-   glBindTexture(GL_TEXTURE_2D, GreenTexture);
-   for (i = 0; i < 4 * 4; i++) {
-      tex[i][0] = 0;
-      tex[i][1] = 255;
-      tex[i][2] = 0;
-   }
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 4, 4, 0, GL_RGB, GL_UNSIGNED_BYTE, tex);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-   glBindTexture(GL_TEXTURE_2D, 0);
-
    MakeObjects();
 }
 
