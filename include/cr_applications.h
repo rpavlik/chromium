@@ -54,6 +54,19 @@ typedef struct {
 	int	ipolygons; 	/* Interpreted polygons */
 } PerfVertex;
 
+typedef struct {
+	PerfVertex points;
+	PerfVertex lines;
+	PerfVertex lineloop;
+	PerfVertex linestrip;
+	PerfVertex triangles;
+	PerfVertex tristrip;
+	PerfVertex trifan;
+	PerfVertex quads;
+	PerfVertex quadstrip;
+	PerfVertex polygon;
+} PerfPrim;
+
 
 typedef void (APIENTRY *glBarrierCreateCRProc) (GLuint name, GLuint count);
 typedef void (APIENTRY *glBarrierDestroyCRProc) (GLuint name);

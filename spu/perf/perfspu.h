@@ -43,9 +43,8 @@ typedef struct {
 	int	iquads; 	/* Interpreted quads */
 	int	ipolygons; 	/* Interpreted polygons */
 } PerfVertex;
-#endif
 
-typedef struct __perf_prim {
+typedef struct {
 	PerfVertex points;
 	PerfVertex lines;
 	PerfVertex lineloop;
@@ -57,6 +56,7 @@ typedef struct __perf_prim {
 	PerfVertex quadstrip;
 	PerfVertex polygon;
 } PerfPrim;
+#endif
 
 typedef struct {
 	/* performance counters */

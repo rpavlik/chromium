@@ -367,10 +367,10 @@ void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index
 {
 	switch (target) {
 	case GL_PERF_GET_FRAME_VERTEX_DATA_CR:
-		values = (GLvoid *)perf_spu.cur_framestats;
+		values = (GLvoid *)&perf_spu.framestats;
 		break;
 	case GL_PERF_GET_TIMER_VERTEX_DATA_CR:
-		values = (GLvoid *)perf_spu.cur_timerstats;
+		values = (GLvoid *)&perf_spu.timerstats;
 		break;
 	default:
 		perf_spu.super.GetChromiumParametervCR( target, index, type, count, values);
