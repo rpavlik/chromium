@@ -99,9 +99,6 @@ bSetupPixelFormat( HDC hdc )
 	 *pfd.cColorBits = GetDeviceCaps(hdc,BITSPIXEL); */
 	ppfd = &pfd;
 
-#if 0
-	/* Seems we don't need this anymore..... */
-
 	/* calling the wgl functions directly if the SPU was loaded by the 
 	 * application (i.e., if the app didn't create a window and get 
 	 * faked out) seems to not work. */
@@ -120,7 +117,6 @@ bSetupPixelFormat( HDC hdc )
 		}
 	}
 	else
-#endif
 	{
 		/* Okay, we were loaded manually.  Call the GDI functions. */
 		pixelformat = ChoosePixelFormat( hdc, ppfd );
