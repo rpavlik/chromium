@@ -2,6 +2,10 @@
 How to make a Chromium release (on Linux), using 1.4 as an example.
 
 
+Update include/cr_version.h with new version numbers.
+
+
+
 mkdir Chromium-1.4
 cd Chromium-1.4
 cvs -z3 -d:ext:YOURNAME@cvs.chromium.sf.net:/cvsroot/chromium co .
