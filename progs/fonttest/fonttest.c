@@ -3,10 +3,10 @@
  *
  * See the file LICENSE.txt for information on redistributing this software.
  */
-
 #include <GL/glut.h>
 #include <string.h>
 #include <stdlib.h>
+
 
 static void myReshape( int w, int h )
 {
@@ -32,7 +32,7 @@ static void display( void )
 	glRasterPos2i( 100, 100 );
 	printstring( GLUT_BITMAP_TIMES_ROMAN_24, "Welcome to Chromium!" );
 	glutSwapBuffers();
-} 
+}
 
 static void keyboard( unsigned char key, int x, int y )
 {
