@@ -591,7 +591,9 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint window, GLint fla
 
 	if (!readback_spu.gather_url)
 	{
-		readback_spu.child.SwapBuffers( readback_spu.windows[window].childWindow, 0 );
+		/* Note: we don't pass the CR_SUPPRESS_SWAP_BIT flag here. */
+		readback_spu.child.SwapBuffers( readback_spu.windows[window].childWindow,
+																		flags & ~CR_SUPPRESS_SWAP_BIT );
 		readback_spu.child.Finish();
 	}
 
