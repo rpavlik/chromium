@@ -1,16 +1,31 @@
 .PageHeading { font-weight: normal; text-align: Center; font-size: 36pt }
-.CodeFrame { background-color: #E6E6E6 }
-.LineNumbers { font-family: Courier New; font-size: 12pt; text-align: right }
-.CodeListing { white-space: nowrap; font-family: Courier New; color: #DD0000; font-size: 12pt }
+
+table.CodeFrame { background-color: #E6E6E6; font-family: Courier New; font-size: 12pt }
+table.CodeFrame td.LineNumbers { text-align: right; color: #000000; width: 7% }
+table.CodeFrame td.CodeListing { white-space: nowrap; color: #DD0000; width: 93% }
+
 .GrayCodeListing { white-space: nowrap; font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt }
 .GrayCodeListing2 { font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt }
 .GrayBackground { background-color: #E6E6E6 }
 .PageSubHeading { font-weight: normal; text-align: Center; font-size: 24pt }
 .ProvidedThing { font-style: italic }
 .ProvidedDesc { margin-left: 36pt; margin-right: 72pt }
-.Directory { font-family: Courier New; font-size: 12pt }
 .DirDesc { margin-left: 36pt; margin-right: 72pt }
 .ConfigOption { font-family: Courier New; font-size: 12pt }
 .ConfigType { }
 .ConfigDesc { }
-.ConfigTableHeader { background-color: #BBBBFF } 
+.ConfigTableHeader { background-color: #BBBBFF }
+
+.Directory { font-family: monospace }
+.File { font-family: monospace; font-weight: bold }
+.SPU { font-family: monospace;  }
+.App { font-family: monospace }
+.CrApp { font-family: monospace }
+.CrProg { font-family: monospace; font-style: italic }
+.EnvVar { font-family: monospace; font-weight: bold }
+.Command { font-family: monospace }
+
+code { font-family: monospace; whitespace: pre }
+code.Class { font-weight: bold }
+code.Function { font-weight: bold }
+code.BuildOption { font-weight: bold }
