@@ -41,6 +41,10 @@ Version = "1.6"
 # This controls whether debug messages are printed (1=yes, 0=no)
 DebugMode = 0
 
+# It seems these aren't defined in all versions of Python
+True = 1
+False = 0
+
 # Some help in figuring out the domains of some non-qualified hostnames
 __hostPrefixPairs__= [ ('iam','.psc.edu'), ('tg-v','.uc.teragrid.org') ]
 
@@ -301,6 +305,7 @@ class CRNode:
 		self.host = host
 		if (host == 'localhost'):
 			self.host = socket.getfqdn()
+			#print "---> switching %s for localhost" % self.host
 
 		# unqualify the hostname if it is already that way.
 		# e.g., turn "foo.bar.baz" into "foo"
@@ -331,7 +336,7 @@ class CRNode:
 
 		# Add the default constraint to the node.
 		self.constraints = []
-		if constraintArg == None: constraintArg = host
+		if constraintArg == None: constraintArg = self.host
 		self.AddConstraint(constraint, constraintArg)
 
 	def Alias( self, name ):
