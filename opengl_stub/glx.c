@@ -116,6 +116,43 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 	return visual;
 }
 
+int FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
+{
+	int desiredVisual = 0;
+	GLint doubleBuffer, stereo;
+	GLint alphaSize, depthSize, stencilSize;
+	GLint accumRedSize, accumGreenSize, accumBlueSize;
+	/* Should check more ??? */
+
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_DOUBLEBUFFER, &doubleBuffer);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_STEREO, &stereo);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ALPHA_SIZE, &alphaSize);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_DEPTH_SIZE, &depthSize);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_STENCIL_SIZE, &stencilSize);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_RED_SIZE, &accumRedSize);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_RED_SIZE, &accumRedSize);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_RED_SIZE, &accumRedSize);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_GREEN_SIZE, &accumGreenSize);
+   	stub.wsInterface.glXGetConfig(dpy, vInfo, GLX_ACCUM_BLUE_SIZE, &accumBlueSize);
+
+	desiredVisual |= CR_RGB_BIT;	/* assuming we always want this... */
+
+	if (alphaSize > 0)
+		desiredVisual |= CR_ALPHA_BIT;
+	if (depthSize > 0)
+		desiredVisual |= CR_DEPTH_BIT;
+	if (stencilSize > 0)
+		desiredVisual |= CR_STENCIL_BIT;
+	if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0)
+		desiredVisual |= CR_ACCUM_BIT;
+	if (doubleBuffer)
+		desiredVisual |= CR_DOUBLE_BIT;
+	if (stereo)
+		desiredVisual |= CR_STEREO_BIT;
+	/* Should we be checking more ... ??? */
+
+	return desiredVisual;
+}
 
 XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 {

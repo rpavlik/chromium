@@ -63,7 +63,9 @@ static ContextInfo Context[CR_MAX_CONTEXTS];
 /* To convert array indexes into an easily recognized numbers for debugging. */
 #define MAGIC 500
 
-
+#ifndef WINDOWS
+extern int FindVisualInfo( Display *dpy, XVisualInfo *vis);
+#endif
 
 #ifdef WINDOWS
 HGLRC stubCreateContext( HDC hdc )
@@ -94,6 +96,14 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 		stub.spuWindow = crCreateWindow( (const char *)dpyName, 0 );
 #else
 		dpyName = DisplayString(dpy);
+
+		/* 
+		 * Pull apart the context's requested visual information
+		 * and select the correct CR_*_BIT's. The RenderSPU
+		 * will do the right thing and select the appropriate
+	  	 * visual at it's node */
+		stub.desiredVisual = FindVisualInfo( dpy, vis );
+
 		stub.spuWindow = crCreateWindow( dpyName, stub.desiredVisual );
 #endif
 	}

@@ -16,20 +16,13 @@
 
 static void InitVars(void)
 {
-	stub.haveNativeOpenGL = GL_FALSE;
-
-	/*
-	 * If the application queries a visual's stencil size, etc we assume
-	 * that the application wants that feature.  This gets propogated down
-	 * to the render SPU so that it chooses an appropriate visual.
-	 * This bitmask of CR_ flags indicates what the user (probably) wants.
-	 */
-	stub.desiredVisual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
-
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&stub.mutex);
 #endif
 
+	/* At the very least we want CR_RGB_BIT. */
+	stub.desiredVisual = CR_RGB_BIT;
+	stub.haveNativeOpenGL = GL_FALSE;
 	stub.spu = NULL;
 	stub.appDrawCursor = 0;
 	stub.minChromiumWindowWidth = 0;
