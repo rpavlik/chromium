@@ -508,3 +508,165 @@ void TILESORTSPU_APIENTRY tilesortspu_PixelMapusv (GLenum map, GLint mapsize, co
 		crPackPixelMapusv ( map, mapsize, values );
 	}
 }
+
+/* 
+ * Here we want to flush texture state before we call PixelTransfer*().
+ * This will ensure that situations such as:
+ *
+ *    glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+ *    glTexImage2D(....);
+ *    glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
+ *
+ * are handled correctly. If the state is not flushed, the transfer map 
+ * will not effect the texture, as it will have been disabled by the time
+ * the state differences are evaluated
+ */
+static void pixeltransfer_flush(void)
+{
+	GET_CONTEXT(ctx);
+	GLboolean tex_state[5];
+	int a, unit, orig_active_unit;
+	int already_flushed[5];
+	
+	tex_state[0] = 
+	tex_state[1] = 
+	tex_state[2] = 
+	tex_state[3] = 0;
+	
+	crStateGetIntegerv(GL_ACTIVE_TEXTURE_ARB, &orig_active_unit);
+	/* 
+ 	* First, we need to enable texture state, so that the state tracker
+ 	* will actually do a diff. So, save the current enabled texture modes
+ 	*/
+	for (unit=0; unit<ctx->limits.maxTextureUnits; unit++)
+	{
+		crStateActiveTextureARB(GL_TEXTURE0_ARB+unit);
+
+		crStateGetBooleanv(GL_TEXTURE_1D, &tex_state[0]);
+		if (tex_state[0])
+			crStateDisable(GL_TEXTURE_1D);
+
+		crStateGetBooleanv(GL_TEXTURE_2D, &tex_state[1]);
+		if (tex_state[1])
+			crStateDisable(GL_TEXTURE_2D);
+ 
+#ifdef CR_OPENGL_VERSION_1_2
+		crStateGetBooleanv(GL_TEXTURE_3D, &tex_state[2]);
+		if (tex_state[2])
+			crStateDisable(GL_TEXTURE_3D);
+#endif
+#ifdef CR_ARB_texture_cube_map
+		if (ctx->extensions.ARB_texture_cube_map)
+			crStateGetBooleanv(GL_TEXTURE_CUBE_MAP_ARB, &tex_state[3]);
+		if (tex_state[3])
+			crStateDisable(GL_TEXTURE_CUBE_MAP_ARB);
+#endif
+ 	
+		/* 
+		 * Texture precidence rules in the state tracker as well. We know
+		 *	that we've munged with _some_ texture type, but we're not really
+		 * sure which. So, flush each of them individually 
+		 */
+		crMemset(already_flushed, 0, 5 * sizeof(int));
+		for (a = 0; a < tilesort_spu.num_servers; a++)
+		{
+			GET_THREAD(thread);
+			TileSortSPUServer *serv = 	tilesort_spu.servers+a;
+			CRContext *serv_ctx = serv->context[thread->currentContextIndex];
+
+			/* First flush, 1D */
+			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_1D, unit)) && 
+								 (!already_flushed[0]))
+			{
+				crStateEnable(GL_TEXTURE_1D);
+				tilesortspuBroadcastGeom(1);
+				crStateDisable(GL_TEXTURE_1D);
+				already_flushed[0] = 1;
+			}
+
+			/* Now, flush 2D */
+			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_2D, unit)) &&
+								 (!already_flushed[1]))
+			{
+				crStateEnable(GL_TEXTURE_2D);
+				tilesortspuBroadcastGeom(1);
+				crStateDisable(GL_TEXTURE_2D);
+				already_flushed[1] = 1;
+ 			}
+		
+			/* yada yada yada */
+#ifdef CR_OPENGL_VERSION_1_2
+			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_3D, unit)) && 
+								 (!already_flushed[2]))
+			{
+				crStateEnable(GL_TEXTURE_3D);
+				tilesortspuBroadcastGeom(1);
+				crStateDisable(GL_TEXTURE_3D);
+				already_flushed[2] = 1;
+			}
+#endif
+ 	
+#ifdef CR_ARB_texture_cube_map
+			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_CUBE_MAP_ARB, unit)) &&
+								(!already_flushed[3]))
+			{
+				if (ctx->extensions.ARB_texture_cube_map)
+				{
+					crStateEnable(GL_TEXTURE_CUBE_MAP_ARB);
+					tilesortspuBroadcastGeom(1);
+					crStateDisable(GL_TEXTURE_CUBE_MAP_ARB);
+					already_flushed[3] = 1;
+				}
+			}
+#endif
+
+#ifdef CR_NV_texture_rectangle
+			if ((crStateTextureCheckDirtyImages(serv_ctx, ctx, GL_TEXTURE_RECTANGLE_NV, unit)) &&
+								(!already_flushed[4]))
+			{
+				if (ctx->extensions.ARB_texture_rectangle)
+				{
+					crStateEnable(GL_TEXTURE_RECTANGLE_NV);
+					tilesortspuBroadcastGeom(1);
+					crStateDisable(GL_TEXTURE_RECTANGLE_NV);
+					already_flushed[4] = 1;
+				}
+			}
+#endif
+		}
+
+		/* Finally, restore the state to the way it originally was */
+		if (tex_state[0])
+			crStateEnable(GL_TEXTURE_1D);
+		if (tex_state[1])
+			crStateEnable(GL_TEXTURE_2D);
+#ifdef CR_OPENGL_VERSION_1_2
+		if (tex_state[2])
+			crStateEnable(GL_TEXTURE_3D);
+#endif
+#ifdef CR_ARB_texture_cube_map
+		if (tex_state[3])
+			crStateEnable(GL_TEXTURE_CUBE_MAP_ARB);
+#endif
+#ifdef CR_NV_texture_rectangle
+		if (tex_state[4])
+			crStateEnable(GL_TEXTURE_RECTANGLE_NV);
+#endif
+	}
+
+	crStateActiveTextureARB(orig_active_unit);
+
+}
+void TILESORTSPU_APIENTRY tilesortspu_PixelTransferi (GLenum pname, GLint param)
+{
+	pixeltransfer_flush();
+ 	
+	crStatePixelTransferi ( pname, param );
+}
+ 
+void TILESORTSPU_APIENTRY tilesortspu_PixelTransferf (GLenum pname, GLfloat param)
+{
+	pixeltransfer_flush();
+ 
+	crStatePixelTransferf ( pname, param );
+}

@@ -47,6 +47,8 @@ CopyPixels
 PixelMapfv
 PixelMapuiv
 PixelMapusv
+PixelTransferi
+PixelTransferf
 ChromiumParameteriCR
 ChromiumParameterfCR
 ChromiumParametervCR
