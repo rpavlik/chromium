@@ -338,7 +338,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 		}
 	}
 
-	if ( !wants_rgb )
+	if ( !wants_rgb && !(stub.desiredVisual & CR_OVERLAY_BIT) )
 	{
 		crWarning( "glXChooseVisual: didn't request RGB visual?" );
 		return NULL;
