@@ -1,0 +1,172 @@
+<!-- See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Dynamic Host Matching</h1>
+
+<p>
+By default, hostnames are associated with nodes directly, when the node is
+specified:</p>
+<table width="100%"><tr><td class="GrayCodeListing">node = CRNetworkNode("hostname")</td></tr></table>
+
+<p>
+This arrangement is the easiest to create; but it can be difficult to manage if the
+list of hosts participating in a Chromium session are not known when the <code>config</code>
+script is written.</p>
+
+<p>As a <code>config</code> script is a fully functional <a href="http://www.python.org/">Python</a>
+script, it might be possible to use the full power of Python to make appropriate queries
+and determine the host names when the <code>config</code> script is run; this is one way to
+create a <em>dynamic</em> configuration that still appears to have well-defined <em>static</em>
+hostnames as far as Chromium is concerned.</p>
+
+<p>It is also possible to use true dynamic hosts within Chromium.  By using Chromium's own
+dynamic host matching, Chromium can automatically associate connecting servers with
+appropriate nodes, freeing the <code>config</code> file of the need to know all the
+server host names in advance.</p>
+
+<h2 class="PageSubHeading">Dynamic Host Syntax in Config Files</h2>
+
+<p>
+The syntax used to specify dynamic hosts is an extension of the syntax used
+to specify "normal" static hosts (or rather, static host syntax is a special
+case of the more general host syntax).  For example:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">node = CRNetworkNode("server1", "dynamic")</td></tr></table>
+
+<p>can be used to specify a dynamic host called <code>server1</code>.  Note that
+<code>server1</code> does <em>not</em> refer to a host named "server1"; it serves as
+a variable, or placeholder.  When the mothership receives a connection from an appropriate
+process (in this case, a <code>crserver</code> process), the dynamic host reference 
+<code>server1</code> will be <em>resolved</em> to the name of whatever host connected
+to the mothership.  From that point on, all dynamic nodes with a specified host identifier of
+<code>"server1"</code> will behave as though they were static nodes specified with the
+resolved hostname.</p>
+
+<p>So if a second node were specified in the same way:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">node2 = CRNetworkNode("server1", "dynamic")</td></tr></table>
+
+<p>
+the same host name has been specified, so a second <code>crserver</code> must connect from
+the same machine in order to be associated with the node.</p>
+
+<p>More flexibly, if the second node were declared with a unique host identifier:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">node2 = CRNetworkNode("server2", "dynamic")</td></tr></table>
+
+<p>then any connecting server host (including the same host that resolved <code>server1</code>)
+could be associated with the node.  In other words, a single host identifier can only be
+associated with a single host name; but the same host name may be associated with multiple
+host identifiers, depending only on which servers connect to the mothership.</p>
+
+<p>The easiest way, for example, to specify nodes in a <code>config</code> file that will
+dynamically match to whatever <code>crserver</code> processes connect to the mothership
+would be with something like:</p>
+<table width="100%"><tr><td class="GrayCodeListing">for serverNumber in range(NUM_SERVERS):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;node = CRNetworkNode("server%d" % serverNumber, "dynamic")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;# configure the node, SPUs, etc.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;...<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cr.AddNode(node)</td></tr></table>
+
+<h2 class="PageSubHeading">Constraining Dynamic Matches</h2>
+
+If you need more control over which servers are associated with which nodes,
+you can use additional constraint tests.  In fact, all nodes have constraint
+tests; the <code>"dynamic"</code> test is a special case of a constraint test
+that matches any connecting host name.  And the default constraint test, used for static
+node definitions, is called <code>"name"</code>; it matches any connecting host name
+that represents the same host (i.e. has the same network address) as the corresponding 
+host identifier.</p>
+
+<p>In general, constraint tests take a corresponding constraint argument (although
+the argument is not used for the <code>"dynamic"</code> and <code>"name</code>
+tests).  Constraints are usually specified in the node constructor:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">node = CRNetworkNode(hostIdentifier, constraintTest, constraintArg)</td></tr></table>
+
+<p>The following constraint tests are provided:</p>
+
+<table width="100%" border="1">
+    <tr class="GrayBackground">
+	<th>Constraint Test</th>
+	<th>Constraint Argument</th>
+	<th>Description</th>
+	<th>Example</th>
+    </tr>
+
+    <tr>
+	<td align="center"><code>name</code></td>
+	<td align="center"><i>None</i></td>
+	<td>Matches only connecting host names that represent the same host as the specified
+	host identifier.</td>
+	<td class="CodeListing">node = CRNetworkNode("mymachine")</td>
+    </tr>
+
+    <tr class="GrayBackground">
+	<td align="center"><code>dynamic</code></td>
+	<td align="center"><i>None</i></td>
+	<td>Matches any connecting host name.</td>
+	<td class="GrayCodeListing">node = CRNetworkNode("server1", "dynamic")</td>
+    </tr>
+
+    <tr>
+	<td align="center"><code>regex</code></td>
+	<td align="center"><code>pattern_string</code></td>
+	<td>Matches connecting host names that match the regular expression
+	specified in <code>pattern_string</code>.
+	<td class="CodeListing">node = CRNetworkNode("server1", "regex", "abc[0-9]*")</td>
+    </tr>
+
+    <tr class="GrayBackground">
+	<td align="center"><code>pattern</code></td>
+	<td align="center"><code>compiled_pattern</code></td>
+	<td>Matches connecting host names that match the compiled regular
+	expression specified in <code>compiled_pattern</code>.
+	<td class="GrayCodeListing">pattern = re.compile("abc[0-9]*")<br>
+	node = CRNetworkNode("server1", "pattern", pattern)</td>
+    </tr>
+
+    <tr>
+	<td align="center"><code>regex_full</code></td>
+	<td align="center"><code>pattern_string</code></td>
+	<td>Matches connecting host names whose fully qualified domain names
+	match the regular expression specified in <code>pattern_string</code>.
+	<td class="CodeListing">node = CRNetworkNode("server1", "regex", ".*\.psc\.edu")</td>
+    </tr>
+
+    <tr class="GrayBackground">
+	<td align="center"><code>pattern_full</code></td>
+	<td align="center"><code>compiled_pattern</code></td>
+	<td>Matches connecting host names whose fully qualified domain names
+	match the compiled regular expression specified in <code>compiled_pattern</code>.
+	<td class="GrayCodeListing">pattern = re.compile(".*\.psc\.edu")<br>
+	node = CRNetworkNode("server1", "pattern_full", pattern)</td>
+    </tr>
+
+</table>
+
+
+<h2 class="PageSubHeading">Multiple Constraints</h2>
+
+<p>All nodes have at least one constraint associated with them.  It is
+possible for nodes to have additional constraints added, with the
+<code>AddConstraint(constraintTest, constraintArg)</code> node method:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">node = CRNetworkNode("server1", "regex", "abc[0-9]*")<br>
+node.AddConstraint("regex_full", ".*\.psc\.edu")</td></tr></table>
+
+
+</body>
+
+</html>

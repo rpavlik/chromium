@@ -1,0 +1,91 @@
+<!-- See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Scalability and Daughterships</h1>
+
+<p>
+It is possible to run <em>daughtership</em> processes that read their configuration from
+a mothership process, and then act as that mothership would.  This can provide advantages
+in some configurations, such as superclusters comprised of subclusters (interconnected with 
+relatively fast networks) connected together across relatively slow networks.
+If each subcluster has a single dedicated daughtership process, only the daughtership need
+connect to the mothership to collect data; the other processes in the subcluster can get
+their connection information from the daughtership.</p>
+
+<p>Daughterships can be arranged in something of a matriarchal hierarchy, with one
+<em>grandmothership</em> having multiple daughterships, and each of those daughterships
+also having daughterships of its own.  This might provide startup performance advantages
+for very-large-scale clusters.  (Note that only one grandmothership can exist in any
+configuration; there must be one and only one mothership at the top of the hierarchy.)</p>
+
+<h2 class="PageSubHeading">Running a Daughtership Process</h2>
+
+<p>To create a daughtership process, set appropriate environment variables, then run
+the <code>daughtership.py</code> Python script:</p>
+
+<table width="100%"><tr><td class="GrayCodeListing">$ export CRMOTHERSHIP=<i>mothermachine</i>:<i>port</i><br>
+$ export CRDAUGHTERSHIP=localhost:<i>port</i><br>
+$ python daughtership.py</td></tr></table>
+
+<p>The daughtership will connect to the specified mothership, and will request and read
+all of the configuration information from that mothership.  The mothership will, in turn,
+register the existence of the daughtership (so that dynamic configuration information will
+be shared with the daughtership).</p>
+
+<p>The daughtership will then start listening for connections just as a mothership would.
+Other processes (say, a <code>crserver</code>) can be told to connect to the daughtership
+(by setting the <code>CRMOTHERSHIP</code> environment variable to point at the daughtership,
+rather than the mothership) and can operate (with a few limitations) just as though they
+were connected to the mothership.</p>
+
+<h2 class="PageSubHeading">Daughtership Limitations</h2>
+
+<ul>
+    <li><a href="dynamichost.html">Dynamic host matching</a> does work with daughterships,
+    but performance suffers.  When a daughtership needs to resolve a dynamic host, it
+    must ask that its mothership resolve the host on its behalf.  If that mothership is
+    also a daughtership, it must pass the request to its mother, until the grandmothership
+    is reached.
+    <p>
+    Once the grandmothership resolves the dynamic host, it sends the information to all
+    its daughterships, who register the information and then continue to pass the
+    information to their daughterships, etc.
+    <p>
+    So each dynamic host matched at a daughtership requires at least a round trip to the 
+    mothership, and possibly more.  For optimum performance, all dynamic hosts should 
+    connect directly to the grandmothership; daughterships should be reserved for use
+    in static host configurations or subconfigurations.
+    <p>
+
+    <li><em>Processes intended to communicate with each other must both contact the same
+    daughtership or mothership</em>.  The motherships and daughterships are each capable
+    of brokering connections, so that if a server and its associated client both connect,
+    any of the motherships or daughterships can manage the connection.
+    <p>
+    But information on pending connections is <em>not</em> shared between daughterships
+    and motherships.  (If it were, every connection request and every connection matching
+    would require considerable communication between motherships and daughterships, defeating
+    any potential performance improvements gained by having the mothership/daughtership
+    hierarchy.)
+    <p>
+    So if a particular client and a particular server needed to connect with each other,
+    they would first connect to a mothership (or daughtership) which would broker the
+    connection.  If they connect to the same mothership or daughtership, everything works.
+    But if they happen to connect to different motherships or daughterships, both of them
+    will hang, waiting for the other one to connect (which will never happen).
+</ul>
+
+</body>
+
+</html>

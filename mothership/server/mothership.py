@@ -105,166 +105,92 @@ def SameHost( host1, host2 ):
 		else:
 			return 0
 
-def __qualifyHostname__( host ):
-	"""__qualifyHostname__(host)
-	Converts host to a fully qualified domain name """
-	if string.find(host,'.')>=0:
-		return host
-	else:
-		for (prefix, domain) in __hostPrefixPairs__:
-			if string.find(host,prefix)==0:
-				return "%s%s"%(host,domain)
-		return socket.getfqdn(host)
 
-# Return true if the specified hostname fulfills the specified
-# constraint.  The constraint is of the form "test:predicate".
-# Right now we only implement a single test (a name match), but
-# there is room for others.
-reportedConstraintWarnings = { }
-def ConstraintMatches(constraint, hostname):
-	pieces = string.split(constraint, ":", 1)
-	test = pieces[0]
-	try:
-		predicate=pieces[1]
-	except:
-		predicate=None
+# Constraint tests.  These are used to match hosts, either statically
+# or dynamically.  Each test must define whether it is appropriate
+# for use with static host matching or dynamic host matching.
+STATIC_CONSTRAINT = True
+DYNAMIC_CONSTRAINT = False
 
-	if test == "name":
-		# The predicate is a pattern that the hostname should match.
-		return re.search(predicate, hostname)
-	elif not reportedConstraintWarnings.has_key(test):
-		print "***WARNING: Unknown constraint test '%s'" % test
-		reportedConstraintWarnings[test] = 1
-		return 0
-	else:
-		return 0
+ConstraintTests = { }
+
+def NameConstraint(testName, matchName):
+	return SameHost(string.lower(testName), string.lower(matchName))
+ConstraintTests["name"] = (NameConstraint, STATIC_CONSTRAINT)
+
+def DynamicConstraint(testName, dummy):
+	return 1
+ConstraintTests["dynamic"] = (DynamicConstraint, DYNAMIC_CONSTRAINT)
+
+def RegexConstraint(testName, pattern):
+	return re.search(pattern, testName)
+ConstraintTests["regex"] = (RegexConstraint, DYNAMIC_CONSTRAINT)
+
+def RegexFullConstraint(testName, pattern):
+	fullName = __qualifyHostname__(testName)
+	return re.search(pattern, fullName)
+ConstraintTests["regex_full"] = (RegexFullConstraint, DYNAMIC_CONSTRAINT)
+
+def PatternConstraint(testName, compiledPattern):
+	return compiledPattern.search(testName)
+ConstraintTests["pattern"] = (PatternConstraint, DYNAMIC_CONSTRAINT)
+
+def PatternFullConstraint(testName, compiledPattern):
+	fullName = __qualifyHostname__(testName)
+	return compiledPattern.search(fullName)
+ConstraintTests["pattern_full"] = (PatternFullConstraint, DYNAMIC_CONSTRAINT)
+
+def MatchDynamicConstraints(node, hostToMatch):
+	for (constraintName, constraintArg) in node.constraints:
+		(testFunction, constraintType) = ConstraintTests[constraintName]
+		if not testFunction(hostToMatch, constraintArg):
+			return 0
+	return 1
+
+def MatchStaticConstraints(node, hostToMatch):
+	for (constraintName, constraintArg) in node.constraints:
+		(testFunction, constraintType) = ConstraintTests[constraintName]
+		if constraintType != STATIC_CONSTRAINT or not testFunction(hostToMatch, constraintArg):
+			return 0
+	return 1
+	
 
 # This structure will contain a list of all dynamic host indicators
 # found during definition; they will be assigned as servers come in
 # through the MatchNode() routine (following).
 dynamicHosts = { }
 
-def MatchNode(node, hostToMatch):
+# This structure will contain an entry for every dynamic host
+# indicator that has not yet been resolved.  It is used to
+# know when the main application (which needs a list of all
+# servers) may continue.
+dynamicHostsNeeded = { }
 
-	hostspec = node.host
-	
-	# If the node is specified dynamically, we'll use its
-	# dynamic replacement for its hostname.  Otherwise,
-	# we'll use its hostname as specified.
-	if hostspec[0:1] == "#":
-		# This node is dynamic; it may or may not have already
-		# been resolved to a hostname.  See whether it has.
-		if dynamicHosts.has_key(hostspec):
-			actualHost = dynamicHosts[hostspec]
-		else:
-			# It hasn't yet been resolved.  See whether
-			# there are any other constraints on the match.
-			# Any failed constraint means the match fails.
-			if node.config.has_key('dynamic_constraints'):
-				constraints = node.config['dynamic_constraints']
-				# A single fix-up: if the node only has a single
-				# string for a constraint, treat it as a one-item
-				# list.  In all other cases, constraints are treated
-				# as a list.
-				if isinstance(constraints, str):
-					constraints = [constraints]
-				for constraint in constraints:
-					if not ConstraintMatches(constraint, hostToMatch):
-						return 0
 
-			# If we get here, we have a full match on
-			# the unresolved dynamic host name, and a
-			# host name for it.  Resolve the host name,
-			# and report the match.
-			dynamicHosts[hostspec] = hostToMatch
-			return 1
+def MatchStaticNode(node, hostToMatch):
+	return MatchStaticConstraints(node, hostToMatch)
+
+def MatchResolvedNode(node, hostToMatch):
+	if dynamicHosts.has_key(node.host):
+		return SameHost(string.lower(dynamicHosts[node.host]), string.lower(hostToMatch))
 	else:
-		# The node is specified by name.  Use the specified name.
-		actualHost = hostspec
+		return 0
 
-	# This will report whether the two hosts actually match.
-	return SameHost(string.lower(actualHost), string.lower(hostToMatch))
-
-def __qualifyHostname__( host ):
-	"""__qualifyHostname__(host)
-	Converts host to a fully qualified domain name """
-	if string.find(host,'.')>=0:
-		return host
-	else:
-		for (prefix, domain) in __hostPrefixPairs__:
-			if string.find(host,prefix)==0:
-				return "%s%s"%(host,domain)
-		return socket.getfqdn(host)
-
-# Return true if the specified hostname fulfills the specified
-# constraint.  The constraint is of the form "test:predicate".
-# Right now we only implement a single test (a name match), but
-# there is room for others.
-reportedConstraintWarnings = { }
-def ConstraintMatches(constraint, hostname):
-	pieces = string.split(constraint, ":", 1)
-	test = pieces[0]
+# Only the "grandmothership" may resolve nodes.
+def ResolveNode(node, hostToMatch):
+	dynamicHosts[node.host] = hostToMatch
 	try:
-		predicate=pieces[1]
+		del dynamicHostsNeeded[node.host]
 	except:
-		predicate=None
+		pass
 
-	if test == "name":
-		# The predicate is a pattern that the hostname should match.
-		return re.search(predicate, hostname)
-	elif not reportedConstraintWarnings.has_key(test):
-		print "***WARNING: Unknown constraint test '%s'" % test
-		reportedConstraintWarnings[test] = 1
-		return 0
+def MatchUnresolvedNode(node, hostToMatch):
+	if MatchDynamicConstraints(node, hostToMatch):
+		ResolveNode(node, hostToMatch)
+		return 1
 	else:
 		return 0
-
-# This structure will contain a list of all dynamic host indicators
-# found during definition; they will be assigned as servers come in
-# through the MatchNode() routine (following).
-dynamicHosts = { }
-
-def MatchNode(node, hostToMatch):
-
-	hostspec = node.host
-	
-	# If the node is specified dynamically, we'll use its
-	# dynamic replacement for its hostname.  Otherwise,
-	# we'll use its hostname as specified.
-	if hostspec[0:1] == "#":
-		# This node is dynamic; it may or may not have already
-		# been resolved to a hostname.  See whether it has.
-		if dynamicHosts.has_key(hostspec):
-			actualHost = dynamicHosts[hostspec]
-		else:
-			# It hasn't yet been resolved.  See whether
-			# there are any other constraints on the match.
-			# Any failed constraint means the match fails.
-			if node.config.has_key('dynamic_constraints'):
-				constraints = node.config['dynamic_constraints']
-				# A single fix-up: if the node only has a single
-				# string for a constraint, treat it as a one-item
-				# list.  In all other cases, constraints are treated
-				# as a list.
-				if isinstance(constraints, str):
-					constraints = [constraints]
-				for constraint in constraints:
-					if not ConstraintMatches(constraint, hostToMatch):
-						return 0
-
-			# If we get here, we have a full match on
-			# the unresolved dynamic host name, and a
-			# host name for it.  Resolve the host name,
-			# and report the match.
-			dynamicHosts[hostspec] = hostToMatch
-			return 1
-	else:
-		# The node is specified by name.  Use the specified name.
-		actualHost = hostspec
-
-	# This will report whether the two hosts actually match.
-	return SameHost(string.lower(actualHost), string.lower(hostToMatch))
-
+		
 def __qualifyHostname__( host ):
 	"""__qualifyHostname__(host)
 	Converts host to a fully qualified domain name """
@@ -275,87 +201,6 @@ def __qualifyHostname__( host ):
 			if string.find(host,prefix)==0:
 				return "%s%s"%(host,domain)
 		return socket.getfqdn(host)
-
-# Return true if the specified hostname fulfills the specified
-# constraint.  The constraint is of the form "test:predicate".
-# Right now we only implement a single test (a name match), but
-# there is room for others.
-reportedConstraintWarnings = { }
-def ConstraintMatches(constraint, hostname):
-	pieces = string.split(constraint, ":", 1)
-	test = pieces[0]
-	try:
-		predicate=pieces[1]
-	except:
-		predicate=None
-
-	if test == "name":
-		# The predicate is a pattern that the hostname should match.
-		return re.search(predicate, hostname)
-	elif not reportedConstraintWarnings.has_key(test):
-		print "***WARNING: Unknown constraint test '%s'" % test
-		reportedConstraintWarnings[test] = 1
-		return 0
-	else:
-		return 0
-
-# This structure will contain a list of all dynamic host indicators
-# found during definition; they will be assigned as servers come in
-# through the MatchNode() routine (following).
-dynamicHosts = { }
-
-def MatchNode(node, hostToMatch):
-
-	hostspec = node.host
-	
-	# If the node is specified dynamically, we'll use its
-	# dynamic replacement for its hostname.  Otherwise,
-	# we'll use its hostname as specified.
-	if hostspec[0:1] == "#":
-		# This node is dynamic; it may or may not have already
-		# been resolved to a hostname.  See whether it has.
-		if dynamicHosts.has_key(hostspec):
-			actualHost = dynamicHosts[hostspec]
-		else:
-			# It hasn't yet been resolved.  See whether
-			# there are any other constraints on the match.
-			# Any failed constraint means the match fails.
-			if node.config.has_key('dynamic_constraints'):
-				constraints = node.config['dynamic_constraints']
-				# A single fix-up: if the node only has a single
-				# string for a constraint, treat it as a one-item
-				# list.  In all other cases, constraints are treated
-				# as a list.
-				if isinstance(constraints, str):
-					constraints = [constraints]
-				for constraint in constraints:
-					if not ConstraintMatches(constraint, hostToMatch):
-						return 0
-
-			# If we get here, we have a full match on
-			# the unresolved dynamic host name, and a
-			# host name for it.  Resolve the host name,
-			# and report the match.
-			dynamicHosts[hostspec] = hostToMatch
-			return 1
-	else:
-		# The node is specified by name.  Use the specified name.
-		actualHost = hostspec
-
-	# This will report whether the two hosts actually match.
-	return SameHost(string.lower(actualHost), string.lower(hostToMatch))
-
-def __qualifyHostname__( host ):
-	"""__qualifyHostname__(host)
-	Converts host to a fully qualified domain name """
-	if string.find(host,'.')>=0:
-		return host
-	else:
-		for (prefix, domain) in __hostPrefixPairs__:
-			if string.find(host,prefix)==0:
-				return "%s%s"%(host,domain)
-		return socket.getfqdn(host)
-
 
 class SPU:
 	"""Main class that defines a Stream Processing Unit.
@@ -388,8 +233,8 @@ class SPU:
 		else:
 			self.config[key] = values[0]
 
-	def __add_server( self, node, url ):
-		self.servers.append( (node, url) )
+	def __add_server( self, node, formatURL ):
+		self.servers.append( (node, formatURL) )
 
 	def AddServer( self, node, protocol='tcpip', port=7000 ):
 		"""AddServer(node, protocol='tcpip', port=7000)
@@ -404,7 +249,9 @@ class SPU:
 			# Don't tell the server "node" about this.
 		else:
 			# XXX use node.host or node.ipaddr here??? (BP)
-			self.__add_server( node, "%s://%s:%d" % (protocol, node.host, port) )
+			# Note that this is a format that will be later converted;
+			# if there's a dynamic host reference, we cannot convert it now.
+			self.__add_server( node, "%s://%%(host)s:%d" % (protocol, port) )
 			# use this for tcp/ip : send hostname rather than ip
 			# (waiting for getaddrinfo, for probing which one is
 			#  available)
@@ -423,12 +270,6 @@ class SPU:
 		# Set the tile layout function for a tilesort SPU
 		assert self.name == "tilesort"
 		self.layoutFunction = layoutFunc
-
-# This structure will be used just to count how many dynamic host
-# indicators we find while creating our SPU graph.  We'll use
-# it to know when to signal the main application to continue
-# (when all the dynamic hosts have been identified)
-dynamicHostsNeeded = { }
 
 class CRNode:
 	"""Base class that defines a node in the SPU graph
@@ -454,15 +295,12 @@ class CRNode:
 	"""
 	SPUIndex = 0
 
-	def __init__( self, host ):
+	def __init__( self, host, constraint = "name", constraintArg = None ):
 		"""CRNode(host)
 		Creates a node on the given "host"."""
 		self.host = host
 		if (host == 'localhost'):
 			self.host = socket.getfqdn()
-		elif host[0:1] == "#":
-			# Count how many dynamic nodes have been specified.
-			dynamicHostsNeeded[host] = 1
 
 		# unqualify the hostname if it is already that way.
 		# e.g., turn "foo.bar.baz" into "foo"
@@ -488,6 +326,13 @@ class CRNode:
 		self.alias = host
 		self.autostart = ""
 		self.autostart_argv = []
+		self.dynamic_host = False
+		self.nodeIndex = -1 # set when added to a CR
+
+		# Add the default constraint to the node.
+		self.constraints = []
+		if constraintArg == None: constraintArg = host
+		self.AddConstraint(constraint, constraintArg)
 
 	def Alias( self, name ):
 		self.alias = name
@@ -528,6 +373,18 @@ class CRNode:
 		# not used by mothership, set by graphical config tool
 		pass
 
+	def AddConstraint(self, constraint, arg = None):
+		# Make sure it's a valid constraint
+		try:
+			(testFunction, constraintType) = ConstraintTests[constraint]
+		except:
+			print "***WARNING: unknown constraint '%s' on host '%s' ignored" % (constraint, self.host)
+			return
+		if constraintType != STATIC_CONSTRAINT: 
+			self.dynamic_host = True
+			dynamicHostsNeeded[self.host] = 1
+		self.constraints.append( (constraint, arg) )
+
 class CRNetworkNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
 	handles incoming and outgoing network traffic.
@@ -541,10 +398,10 @@ class CRNetworkNode(CRNode):
 		AddTileToDisplay: Adds a tile to a specified collection of tiles (a display)
 
 	"""
-	def __init__( self, host='localhost' ):
+	def __init__( self, host='localhost', constraint = "name", constraintArg = None ):
 		"""CRNetworkNode(host='localhost')
 		Creates a network node for the given "host"."""
-		CRNode.__init__(self,host)
+		CRNode.__init__(self,host,constraint,constraintArg)
 		self.clients = []
 		self.file_clients = []
 		self.tiles = []
@@ -586,10 +443,10 @@ class CRUTServerNode(CRNode):
 	    AddCRUTClient:	Adds a client to the list of crutclients.
 	"""
 
-	def __init__( self, host='localhost' ):
+	def __init__( self, host='localhost', constraint = "name", constraintArg = None ):
 		"""CRUTServerNode(host='localhost')
 		Creates a network node for the given "host"."""
-		CRNode.__init__(self,host)
+		CRNode.__init__(self,host,constraint,constraintArg)
 		self.crutclients = []
 
 	#A crutserver will be creating events, it should be the only server
@@ -611,10 +468,10 @@ class CRUTProxyNode(CRNode):
 	    AddCRUTClient:	Adds a client to the list of clients.
 	"""
 
-	def __init__( self, host='localhost' ):
+	def __init__( self, host='localhost', constraint = "name", constraintArg = None ):
 		"""CRUTProxyNode(host='localhost')
 		Creates a network node for the given "host"."""
-		CRNode.__init__(self,host)
+		CRNode.__init__(self,host,constraint,constraintArg)
 		self.crutclients = []
 		self.crutservers = []
 
@@ -645,10 +502,10 @@ class CRApplicationNode(CRNode):
 	"""
 	AppID = 0
 
-	def __init__(self, host='localhost'):
+	def __init__( self, host='localhost', constraint = "name", constraintArg = None ):
 		"""CRApplicationNode(host='localhost')
 		Creates an application node for the given "host"."""
-		CRNode.__init__(self, host)
+		CRNode.__init__(self, host,constraint,constraintArg)
 		self.crutservers = []
 		self.crutclients = []
 		self.id = CRApplicationNode.AppID
@@ -737,6 +594,67 @@ class SockWrapper:
 
 	def Failure( self, code, msg ):
 		self.Reply( code, msg )
+
+
+# Generic ways to map all known node capability types
+NodeTypes = { }
+def FakerValidNode(node):
+	return (not node.spokenfor and isinstance(node, CRApplicationNode))
+def FakerClaim(node, sock):
+	try:
+		application = node.config['application']
+	except:
+		if sock != None:
+			sock.Failure( SockWrapper.NOAPPLICATION, "Client node has no application!" )
+		return
+	node.spokenfor = 1
+	if sock != None:
+		sock.node = node
+		sock.Success( "%d %s" % (node.id, application) )
+NodeTypes["faker"] = (FakerValidNode, FakerClaim)
+
+def CrutProxyValidNode(node):
+	return (not node.spokenfor and isinstance(node, CRUTProxyNode))
+def CrutProxyClaim(node, sock):
+	node.spokenfor = 1
+	if sock != None:
+		sock.node = node
+		sock.Success( " " )
+NodeTypes["crutproxy"] = (CrutProxyValidNode, CrutProxyClaim)
+
+def CrutServerValidNode(node):
+	return (not node.spokenfor and isinstance(node, CRUTServerNode))
+def CrutServerClaim(node, sock):
+	node.spokenfor = 1
+	if sock != None:
+		sock.node = node
+		sock.Success( " " )
+NodeTypes["crutserver"] = (CrutServerValidNode, CrutServerClaim)
+
+# CRUTClients are different, in that they aren't unique nodes; they're
+# a subset of application nodes (that identify themselves with the "crutclient" command)
+def CrutClientValidNode(node):
+	return (not node.crut_spokenfor and isinstance(node, CRApplicationNode) and len(node.crutservers) > 0)
+def CrutClientClaim(node, sock):
+	node.crut_spokenfor = 1
+	if sock != None:
+		sock.node = node
+		sock.Success( " " )
+NodeTypes["crutclient"] = (CrutClientValidNode, CrutClientClaim)
+
+def ServerValidNode(node):
+	return (not node.spokenfor and isinstance(node, CRNetworkNode))
+def ServerClaim(node, sock):
+	node.spokenfor = 1
+	node.spusloaded = 1
+	if sock != None:
+		sock.node = node
+		spuchain = "%d" % len(node.SPUs)
+		for spu in node.SPUs:
+			spuchain += " %d %s" % (spu.ID, spu.name)
+		sock.Success( spuchain )
+NodeTypes["server"] = (ServerValidNode, ServerClaim)
+
 
 class CRSpawner(threading.Thread):
 	"""A class used to start processes on nodes.
@@ -859,12 +777,15 @@ class CR:
 				"comm_key": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				"autostart_branches": 0,
 				"autostart_max_nodes_per_thread": 1}
-		# This is set only on daughterships
+		# This is set only on daughterships; "grandmotherships" don't
+		# have mothers, and never have pending resolutions.
 		self.mother = None
+		self.pendingResolution = [ ]
 
 	def AddNode( self, node ):
 		"""AddNode(node)
 		Adds a node to the SPU graph."""
+		node.nodeIndex = len(self.nodes)
 		self.nodes.append( node )
 	
 	def Conf( self, key, value ):
@@ -964,6 +885,9 @@ class CR:
 		This starts the mothership's event loop."""
 		if self.mother:
 			CRInfo("This is Chromium Daughtership, Version " + Version)
+			# You must always listen to your mother.
+			self.all_sockets.append(self.mother.sock)
+			self.wrappers[self.mother.sock] = self.mother
 		else:
 			CRInfo("This is Chromium, Version " + Version)
 		try:
@@ -1056,7 +980,7 @@ class CR:
 					# and we don't know the answer until all dynamic nodes are
 					# resolved.  Note that this essentially prevents Windows
 					# users from using dynamic hosts, because they cannot signal.
-					if needToSignal and len(dynamicHosts) == len(dynamicHostsNeeded):
+					if needToSignal and len(dynamicHostsNeeded) == 0:
 						process = int(os.environ['CRSIGNAL'])
 						CRInfo("Mothership signalling spawning process %d" % process)
 						os.kill(process,signal.SIGUSR1)
@@ -1286,21 +1210,66 @@ class CR:
 		else:
 			sock.Failure( SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
+	# A (too?) clever routine.  This handles all the work of matching various types
+	# of nodes, with static matches or with dynamic matches.  It even handles
+	# dynamic resolution and errors.
+	def MatchNode(self, nodeTypeName, sock, args):
+		try:
+			(validFunc, claimFunc) = NodeTypes[nodeTypeName]
+		except:
+			print "*** ERROR: trying to match unknown node type '%s'" % nodeTypeName
+			return None
+
+		# Try first to resolve the host with a static match
+		nodenames = ""
+		for node in self.nodes:
+			nodenames += node.host+" "
+			if validFunc(node) and MatchStaticNode(node,args):
+				claimFunc(node, sock)
+				return node
+
+		# No static node matches.  Try dynamic nodes that are already resolved.
+		for node in self.nodes:
+			if validFunc(node) and MatchResolvedNode(node,args):
+				claimFunc(node, sock)
+				return node
+
+		# If unresolved nodes are present, we can try to resolve them.
+		if len(dynamicHostsNeeded) > 0:
+			# Only the "grandmothership" (i.e., a mothership with no mother)  may
+			# resolve nodes.
+			if not self.mother: # i.e. I'm the grandmother
+				index = 0
+				for node in self.nodes:
+					if validFunc(node) and MatchUnresolvedNode(node,args):
+						# We matched the server with an appropriate node.  Tell the daughters.
+						self.Broadcast(self.daughters, "match %d %s" % (index, args))
+						claimFunc(node, sock)
+						return node
+					index += 1
+			else:
+				# A daughtership must ask its mother to resolve nodes; the answer will come back
+				# asynchronously, so we'll have to save our request and deal with it later.
+				# When we get the match back, we'll pull all matching pending resolutions from
+				# here and restart their processing.  The exception raised prevents the
+				# main routine (which called us) from continuing with normal processing.
+				self.mother.Send("requestmatch %s %s" % (nodeTypeName, args))
+				self.pendingResolution.append( ("do_%s" % nodeTypeName, sock, args) )
+				return node
+
+		# Nothing matches, and we've tried most everything.
+		if sock != None:
+			sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of %s host %s.  Expected one of: %s" % (nodeTypeName, args, nodenames))
+		return None
+
+	def Broadcast(self, sockets, message):
+		for s in sockets:
+			s.Send(message)
+
 	def do_faker( self, sock, args ):
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
-		for node in self.nodes:
-			if not node.spokenfor and isinstance(node,CRApplicationNode) and MatchNode(node,args):
-				try:
-					application = node.config['application']
-				except:
-					sock.Failure( SockWrapper.NOAPPLICATION, "Client node has no application!" )
-					return
-				node.spokenfor = 1
-				sock.node = node
-				sock.Success( "%d %s" % (node.id, application) )
-				return
-		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
+		self.MatchNode( "faker", sock, args)
 
 	def do_newserver( self, sock, args ):
 		"""do_newserver(sock, args)
@@ -1311,55 +1280,67 @@ class CR:
 		CRDebug ( " Seeing if we have a crutproxy." )
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutserver running somewhere."""
-		for node in self.nodes:
-			if not node.spokenfor and isinstance(node,CRUTProxyNode) and MatchNode(node,args):
-				node.spokenfor = 1
-				sock.node = node
-				sock.Success( " " )
-				return
-		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutproxy host %s" % args )
+		self.MatchNode("crutproxy", sock, args)
 		
 	def do_crutserver( self, sock, args ):
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutserver running somewhere."""
-		for node in self.nodes:
-			if not node.spokenfor and isinstance(node,CRUTServerNode) and MatchNode(node,args):
-				node.spokenfor = 1
-				sock.node = node
-				sock.Success( " " )
-				return
-		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutserver host %s" % args )
+		self.MatchNode("crutserver", sock, args)
 
 	def do_crutclient( self, sock, args ):
 		"""do_crutserver(sock, args)
 		Hopefully tells us that we have a crutclient running somewhere."""
-		for node in self.nodes:
-			if not node.crut_spokenfor and isinstance(node,CRApplicationNode) and len(node.crutservers) > 0 and MatchNode(node,args):
-				node.crut_spokenfor = 1
-				sock.node = node
-				sock.Success( " " )
-				return
-		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of crutclient host %s" % args )
+		self.MatchNode("crutclient", sock, args)
 
 	def do_server( self, sock, args ):
 		"""do_server(sock, args)
 		Identifies the server in the graph. """
-		nodenames = ""
-		for node in self.nodes:
-			nodenames += node.host+" "
-			if not node.spokenfor and isinstance(node,CRNetworkNode) and MatchNode(node,args):
-				node.spokenfor = 1
-				node.spusloaded = 1
-				sock.node = node
+		self.MatchNode("server", sock, args)
 
-				spuchain = "%d" % len(node.SPUs)
-				for spu in node.SPUs:
-					spuchain += " %d %s" % (spu.ID, spu.name)
-				sock.Success( spuchain )
-				return
-		# Wasn't able to find the server.  Figure out what ones
-		# were expected.
-		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of server host %s.  Expected one of: %s" % (args, nodenames))
+	def do_match(self, sock, args):
+		# This can either come in as a result of a request we made for a match,
+		# or spontaneously (to notify us of a match the mothership has made).
+		# We are to notify our daughters, log the node ourselves, and to release
+		# and activate any resolutions that were waiting on this node.
+		self.Broadcast(self.daughters, "match %s" % args)
+
+		words = string.split(args)
+		node = self.nodes[int(words[0])]
+		hostname = words[1]
+
+		ResolveNode(node, hostname)
+		stillUnresolved = []
+		for (pendingCommand, pendingSock, pendingHost) in self.pendingResolution:
+			if MatchResolvedNode(node, pendingHost):
+				fn = getattr(self, pendingCommand)
+				fn(pendingSock, pendingHost)
+			else:
+				stillUnresolved.append((pendingCommand, pendingSock, pendingHost))
+		self.pendingResolution = stillUnresolved
+
+	def do_requestmatch(self, sock, args):
+		# This can only come from a daughter to a mother.  If we're the grandmother, we
+		# process it.  Otherwise, we pass it up.  We'll eventually get a "match"
+		# command back, with information we need.
+		if self.mother:
+			self.mother.Send("requestmatch %s" % args)
+			return
+		# Here, we're the grandmother.  We can resolve this by doing a normal
+		# match at our level.  Note that we don't really have a socket - the
+		# socket we are passed is a daughter, not the real client.
+		words = string.split(args)
+		nodeTypeName = words[0]
+		hostName = words[1]
+		node = self.MatchNode(nodeTypeName, None, hostName)
+		if node == None:
+			# This is bad.  Daughters will likely hang, failing to respond
+			# to connections, because they're waiting for a match.
+			print "*** ERROR: requestmatch couldn't match a node!"
+			return
+
+		# The MatchNode method will already have passed the necessary information
+		# on to the daughterships, so we don't have to do it again.
+		return
 
 	def do_opengldll( self, sock, args ):
 		"""do_opengldll(sock, args)
@@ -1468,12 +1449,12 @@ class CR:
 
 		servers = "%d " % len(spu.servers)
 		for i in range(len(spu.servers)):
-			(node, url) = spu.servers[i]
-			# The URL may include a dynamic host reference.  Replace it if it does.
-			match = re.search("://(#[^:]*)", url)
-			if match:
-				# Replace the dynamic spec with its real counterpart
-				url = string.replace(url, match.group(1), dynamicHosts[match.group(1)])
+			(node, formatURL) = spu.servers[i]
+			# The formatURL string may include a reference to the resolved hostname.
+			# Replace it if it does.
+			host = node.host
+			if node.dynamic_host: host = dynamicHosts[host]
+			url = formatURL % {'host': host}
 			servers += "%s" % (url)
 			if i != len(spu.servers) -1:
 				servers += ','
@@ -1721,10 +1702,6 @@ class CR:
 		sock.Success( "Bye" )
 		self.ClientDisconnect( sock )
 
-	def propagate_quit(self, daughter, args):
-		daughter.Send("quit")
-		line = daughter.readline() # ignore since we're going away
-
 	def do_logperf( self, sock, args ):
 		"""do_logperf(sock, args)
 		Logs Data to a logfile."""
@@ -1878,6 +1855,7 @@ class CR:
 		globals['cr'] = copyCR
 		globals['allSPUs'] = allSPUs
 		globals['dynamicHosts'] = dynamicHosts
+		globals['dynamicHostsNeeded'] = dynamicHostsNeeded
 
 		# Send them to the daughtership
 		pickledGlobals = pickle.dumps(globals)
@@ -1923,30 +1901,6 @@ class CR:
 			sock_wrapper.Failure( SockWrapper.UNKNOWNCOMMAND, "Unknown command: %s" % command )
 			return
 
-		# If we have any daughterships, and if we need to propagate this request
-		# to them, do so.
-		if len(self.daughters) > 0:
-			try:
-				fn = getattr(self, 'propagate_%s' % command)
-				for daughter in self.daughters:
-					fn(daughter, arguments)
-			except AttributeError:
-				# Don't have to propagate this request.
-				pass
-
-		# If we're actually a daughtership, we'll have a valid mother attribute,
-		# and we might have to propagate this command upward.
-		if self.mother:
-			try:
-				fn = getattr(self, 'tattle_%s' % command)
-				fn(self.mother, arguments)
-			except AttributeError:
-				# Don't have to propagate this one.
-				pass
-
-		# Here, we're in the normal case: finish executing the command locally.
-		# (We have to propagate before executing locally because some commands,
-		# like "quit", will stop us from continuing.)
 		fn( sock_wrapper, arguments)
 
 class CRDaughtership:
@@ -1956,10 +1910,10 @@ class CRDaughtership:
 
 		# Poor little lost daughtership, looking for her mother
 		if mother == None:
-			if os.environ.has_key('CRMOTHER'):
-				mother = os.environ['CRMOTHER']
+			if os.environ.has_key('CRMOTHERSHIP'):
+				mother = os.environ['CRMOTHERSHIP']
 		if mother == None:
-			CRInfo("Lost daughter - using localhost on default port")
+			CRInfo("I lost my mother - using localhost on default port")
 			motherHost = 'localhost'
 			motherPort = 10000
 		else:
@@ -1974,6 +1928,14 @@ class CRDaughtership:
 			else:
 				motherHost = mother
 				motherPort = 10000
+
+		# When we start the daughtership as a surrogate mothership, it will
+		# read the CRMOTHERSHIP variable to configure itself.  Make sure it
+		# reads the CRDAUGHTERSHIP variable instead, by munging the environment.
+		if os.environ.has_key('CRDAUGHTERSHIP'):
+			os.environ['CRMOTHERSHIP'] = os.environ['CRDAUGHTERSHIP']
+		else:
+			os.environ['CRMOTHERSHIP'] = ':10001'
 				
 		# Try all available socket types to reach our mothership
 		motherSocket = None
@@ -2028,10 +1990,11 @@ class CRDaughtership:
 
 		# Unpack all the globals that we were given
 		try:
-			global allSPUs, dynamicHosts
+			global allSPUs, dynamicHosts, dynamicHostsNeeded
 			self.cr = globals['cr']
 			allSPUs = globals['allSPUs']
 			dynamicHosts = globals['dynamicHosts']
+			dynamicHostsNeeded = globals['dynamicHostsNeeded']
 		except KeyError, badKey:
 			Fatal("Globals were missing the key '%s'" % badKey)
 				
