@@ -98,6 +98,7 @@ for func_name in keys:
 				argstr += ", "
 				
 	print '%s )\\n"%s );' % ( printfstr, argstr )
+	print '\tfflush( print_spu.fp );'
 
 	if return_type != "void":
 		print '\treturn',

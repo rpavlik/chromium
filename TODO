@@ -1,10 +1,9 @@
 Before Alpha release:
-	tilesort Huge packets
+	tilesort Rect
 	tilesort DrawPixels/RasterPos
 	tilesort Viewport testing
 	tilesort Pinching
 	GM support
-	Vertex arrays
 	Parallel applications
 	Documentation
 		How to run
@@ -14,6 +13,7 @@ Before Alpha release:
 
 Before First release:
 	ReadPixels
+	PushAttrib/PopAttrib
 	Tilesort display lists
 	Readback SPU
 	Binary Swap SPU

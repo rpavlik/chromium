@@ -9,7 +9,8 @@ FILES = packspu \
 	packspu_getstring \
 	packspu_init \
 	packspu_net \
-	packspu_pixel
+	packspu_pixel \
+	packspu_swap
 
 LIBRARIES = crutil crmothership crstate crpacker
 

@@ -14,6 +14,7 @@ void PRINT_APIENTRY printLoadMatrixf( GLfloat *m )
 		}
 	}
 	fprintf( print_spu.fp, "] )\n" );
+	fflush( print_spu.fp );
 	print_spu.passthrough.LoadMatrixf( m );
 }
 
@@ -30,6 +31,7 @@ void PRINT_APIENTRY printLoadMatrixd( GLdouble *m )
 		}
 	}
 	fprintf( print_spu.fp, "] )\n" );
+	fflush( print_spu.fp );
 	print_spu.passthrough.LoadMatrixd( m );
 }
 
@@ -46,6 +48,7 @@ void PRINT_APIENTRY printMultMatrixf( GLfloat *m )
 		}
 	}
 	fprintf( print_spu.fp, "] )\n" );
+	fflush( print_spu.fp );
 	print_spu.passthrough.MultMatrixf( m );
 }
 
@@ -62,5 +65,6 @@ void PRINT_APIENTRY printMultMatrixd( GLdouble *m )
 		}
 	}
 	fprintf( print_spu.fp, "] )\n" );
+	fflush( print_spu.fp );
 	print_spu.passthrough.MultMatrixd( m );
 }

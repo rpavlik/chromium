@@ -12,3 +12,11 @@ Flush
 ArrayElement
 DrawArrays
 DrawElements
+Rectd
+Rectdv
+Rectf
+Rectfv
+Recti
+Rectiv
+Rects
+Rectsv

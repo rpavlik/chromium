@@ -9,3 +9,6 @@ EdgeFlagPointer
 ArrayElement
 DrawArrays
 DrawElements
+SwapBuffers
+Flush
+Finish

@@ -13,6 +13,7 @@ FILES = tilesortspu \
 	tilesortspu_init \
 	tilesortspu_misc \
 	tilesortspu_net \
+	tilesortspu_rect \
 	tilesortspu_swap \
 	tilesortspu_viewport
 
