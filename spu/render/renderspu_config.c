@@ -31,6 +31,28 @@ static void set_window_geometry( RenderSPU *render_spu, const char *response )
 	render_spu->defaultHeight = (int) h;
 }
 
+static void set_default_visual( RenderSPU *render_spu, const char *response )
+{
+	if (crStrlen(response) > 0) {
+		if (crStrstr(response, "rgb"))
+				render_spu->default_visual |= CR_RGB_BIT;
+		if (crStrstr(response, "alpha"))
+				render_spu->default_visual |= CR_ALPHA_BIT;
+		if (crStrstr(response, "z") || crStrstr(response, "depth"))
+				render_spu->default_visual |= CR_DEPTH_BIT;
+		if (crStrstr(response, "stencil"))
+				render_spu->default_visual |= CR_STENCIL_BIT;
+		if (crStrstr(response, "accum"))
+				render_spu->default_visual |= CR_ACCUM_BIT;
+		if (crStrstr(response, "stereo"))
+				render_spu->default_visual |= CR_STEREO_BIT;
+		if (crStrstr(response, "multisample"))
+				render_spu->default_visual |= CR_MULTISAMPLE_BIT;
+		if (crStrstr(response, "double"))
+				render_spu->default_visual |= CR_DOUBLE_BIT;
+	}
+}
+
 static void set_display_string( RenderSPU *render_spu, const char *response )
 {
    	crStrncpy(render_spu->display_string, response, sizeof(render_spu->display_string));
@@ -185,6 +207,9 @@ SPUOptions renderSPUOptions[] = {
 
    { "window_geometry", CR_INT, 4, "0, 0, 256, 256", "0, 0, 1, 1", NULL, 
      "Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
+
+   { "default_visual", CR_STRING, 1, "rgb", NULL, NULL,
+     "Default GL Visual", (SPUOptionCB) set_default_visual },
 
    { "borderless", CR_BOOL, 1, "0", NULL, NULL,
      "Borderless Window", (SPUOptionCB) set_borderless },

@@ -76,6 +76,7 @@ typedef struct {
 	char *window_title;
 	int defaultX, defaultY;
 	unsigned int defaultWidth, defaultHeight;
+	int default_visual;
 	int use_L2;
 	int fullscreen, ontop;
 	char display_string[100];

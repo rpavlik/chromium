@@ -69,7 +69,6 @@ renderSPUInit( int id, SPU *child, SPU *self,
 	int numFuncs, numSpecial;
 	GLint defaultWin, defaultCtx;
 	/* Don't ask for ALPHA, if we don't have it, we fail immediately */
-	GLuint visualBits = CR_RGB_BIT;
 	WindowInfo *windowInfo;
 
 	(void) child;
@@ -107,24 +106,26 @@ renderSPUInit( int id, SPU *child, SPU *self,
 	render_spu.contextTable = crAllocHashtable();
 	render_spu.windowTable = crAllocHashtable();
 
+	CRASSERT(render_spu.default_visual & CR_RGB_BIT);
+
 	/*
 	 * Create the default window and context.  Their indexes are zero and
 	 * a client can use them without calling CreateContext or WindowCreate.
 	 */
-	crDebug("Render SPU: Creating default window (visBits=0x%x, id=0)", visualBits);
-	defaultWin = renderspuWindowCreate( NULL, visualBits );
+	crDebug("Render SPU: Creating default window (visBits=0x%x, id=0)", render_spu.default_visual);
+	defaultWin = renderspuWindowCreate( NULL, render_spu.default_visual );
 	if (defaultWin < 0) {
 		/* If we failed to get a default single buffered visual,
 		 * let's try a double buffered one
 		 */
 		crDebug( "WindowCreate returned %d, trying CR_DOUBLE_BIT", defaultWin );
-		visualBits = CR_RGB_BIT | CR_DOUBLE_BIT;
-		defaultWin = renderspuWindowCreate( NULL, visualBits );
+		render_spu.default_visual = CR_RGB_BIT | CR_DOUBLE_BIT;
+		defaultWin = renderspuWindowCreate( NULL, render_spu.default_visual );
 	}
 	crDebug( "WindowCreate returned %d", defaultWin );
 	CRASSERT(defaultWin == 0);
 
-	defaultCtx = renderspuCreateContext( NULL, visualBits );
+	defaultCtx = renderspuCreateContext( NULL, render_spu.default_visual );
 	CRASSERT(defaultCtx == 0);
 
 	renderspuMakeCurrent( defaultWin, 0, defaultCtx );
