@@ -18,8 +18,7 @@
 
 <h1 class="PageHeading">Source Code Organization</h1>
 
-<p>Here I will simply present a description of every directory that contains
-code in Chromium:</p>
+<p>This section summarizes the the Chromium directory tree.</p>
 <ul>
   <li><p class="Directory">cr/app_faker</p> 
     <p class="DirDesc">The source to the <code>crappfaker</code> program.</p></li>
@@ -75,30 +74,47 @@ code in Chromium:</p>
   <li><p class="Directory">cr/spu_loader</p>
   <p class="DirDesc"> The SPU loader, and also functions for manipulating
   the SPU dispatch tables.</p></li>
-  <li><p class="Directory">cr/spu/error</p>
-  <p class="DirDesc"> The Error SPU, the implicit parent of all other 
-  SPU's.</p></li>
-  <li><p class="Directory">cr/spu/nop</p>
-  <p class="DirDesc"> The NOP (do nothing) SPU.</p></li>
-  <li><p class="Directory">cr/spu/pack</p>
-  <p class="DirDesc"> The Pack SPU for sending unanalyzed streams of
-  OpenGL over a network.</p></li>
-  <li><p class="Directory">cr/spu/passthrough</p>
-  <p class="DirDesc"> The Passthrough SPU, mainly a starting point for
-  new filter-SPU's</p></li>
-  <li><p class="Directory">cr/spu/print</p>
-  <p class="DirDesc"> The Print SPU.</p></li>
-  <li><p class="Directory">cr/spu/render</p>
-  <p class="DirDesc"> The Render SPU.</p></li>
-  <li><p class="Directory">cr/spu/readback</p>
-  <p class="DirDesc"> The Readback SPU.</p></li>
-  <li><p class="Directory">cr/spu/template</p>
-  <p class="DirDesc"> The starting point for new SPU's.</p></li>
-  <li><p class="Directory">cr/spu/tester</p>
-  <p class="DirDesc"> A simple program that loads a SPU explicitly and uses
-  it to draw.</p></li>
-  <li><p class="Directory">cr/spu/tilesort</p>
-  <p class="DirDesc"> The TileSort SPU for driving tiled displays.</p></li>
+  <li><p class="Directory">cr/spu</p>
+  <p class="DirDesc"> The spu directory is where all the SPUs are found
+  (not all of them are listed here).
+  </p></li>
+
+  <ul>
+    <li><p class="Directory">cr/spu/array</p>
+    <p class="DirDesc"> The Array SPU.  This SPU implements OpenGL's
+    vertex array functions.</p></li>
+    <li><p class="Directory">cr/spu/error</p>
+    <p class="DirDesc"> The Error SPU, the implicit parent of all other 
+    SPU's.</p></li>
+    <li><p class="Directory">cr/spu/nop</p>
+    <p class="DirDesc"> The NOP (do nothing) SPU.</p></li>
+    <li><p class="Directory">cr/spu/motionblur</p>
+    <p class="DirDesc"> The Motion blur SPU.</p></li>
+    <li><p class="Directory">cr/spu/options</p>
+    <p class="DirDesc"> The <code>spuoptions</code> program.</p></li>
+    <li><p class="Directory">cr/spu/pack</p>
+    <p class="DirDesc"> The Pack SPU for sending unanalyzed streams of
+    OpenGL over a network.</p></li>
+    <li><p class="Directory">cr/spu/passthrough</p>
+    <p class="DirDesc"> The Passthrough SPU, mainly a starting point for
+    new filter-SPU's</p></li>
+    <li><p class="Directory">cr/spu/print</p>
+    <p class="DirDesc"> The Print SPU.</p></li>
+    <li><p class="Directory">cr/spu/render</p>
+    <p class="DirDesc"> The Render SPU.</p></li>
+    <li><p class="Directory">cr/spu/readback</p>
+    <p class="DirDesc"> The Readback SPU.</p></li>
+    <li><p class="Directory">cr/spu/template</p>
+    <p class="DirDesc"> The starting point for new SPU's.</p></li>
+    <li><p class="Directory">cr/spu/tester</p>
+    <p class="DirDesc"> A simple program that loads a SPU explicitly and uses
+    it to draw.</p></li>
+    <li><p class="Directory">cr/spu/tilesort</p>
+    <p class="DirDesc"> The TileSort SPU for driving tiled displays.</p></li>
+    <li><p class="Directory">cr/spu/wet</p>
+    <p class="DirDesc"> The Wet SPU.</p></li>
+  </ul>
+
   <li><p class="Directory">cr/unpacker</p>
   <p class="DirDesc"> The unpacking library.</p></li>
   <li><p class="Directory">cr/util</p>
