@@ -3,10 +3,17 @@
 
 #define ANGLE_STEP .1f
 
-void main(void)
+int main(int argc, char *argv[])
 {
-	SPU *spu = LoadSPU( NULL, 1, "renderspu" );
+	SPU *spu;
+	char *spuname = "renderspu";
 	float angle = 0;
+
+	if (argc > 1)
+	{
+		spuname = argv[1];
+	}
+	spu = LoadSPU( NULL, 1, spuname );
 
 	spu->dispatch_table.ClearColor( 0,0,0,1 );
 	for (;;)
