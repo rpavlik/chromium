@@ -612,10 +612,9 @@ int crTCPIPRecv( void )
 		if (!cr_tcpip.recv( conn, tcpip_buffer + 1, len ))
 		{
 			crNetDefaultRecv( conn, tcpip_buffer + 1, len );
+			if (msg->type != CR_MESSAGE_OPCODES)
+				crTCPIPFree( conn, tcpip_buffer + 1 );
 		}
-
-		if (msg->type != CR_MESSAGE_OPCODES)
-			crTCPIPFree( conn, tcpip_buffer + 1 );
 	}
 
 	return 1;
