@@ -257,6 +257,12 @@ static void GetWindowSize( HDC drawable, unsigned int *w, unsigned int *h )
 	RECT rect;
 	HWND hwnd;
 
+	if (!drawable)
+	{
+		*w = *h = 0;
+		return;
+	}
+
 	hwnd = WindowFromDC( drawable );
 
 	if (!hwnd) {
@@ -310,7 +316,7 @@ static void GetWindowSize( Display *dpy, GLXDrawable drawable,
 	Window root;
 	int x, y;
 	unsigned int border, depth;
-	if (!XGetGeometry(dpy, drawable, &root, &x, &y, w, h, &border, &depth))
+	if (!drawable || !XGetGeometry(dpy, drawable, &root, &x, &y, w, h, &border, &depth))
 		*w = *h = 0;
 }
 
