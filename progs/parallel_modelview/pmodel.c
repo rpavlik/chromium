@@ -10,24 +10,17 @@ Globals globals;
 
 static const int MASTER_BARRIER = 100;
 
-crCreateContextProc glCreateContextCR;
-crMakeCurrentProc   glMakeCurrentCR;
-crSwapBuffersProc   glSwapBuffersCR;
+static crCreateContextProc crCreateContext_ptr;
+static crMakeCurrentProc   crMakeCurrent_ptr;
+static crSwapBuffersProc   crSwapBuffers_ptr;
 
-glChromiumParametervCRProc glChromiumParametervCR;
-glGetChromiumParametervCRProc glGetChromiumParametervCR;
-glBarrierCreateCRProc glBarrierCreateCR;
-glBarrierExecCRProc   glBarrierExecCR;
-
-int DrawFrame( void );
-void CreateGraphicsContext( void );
-void SetupGraphicsState( void );
-void SetupCamera( void );
-void CreateDisplayLists( void );
-void ParseArguments( int argc, char *argv[] );
+static glChromiumParametervCRProc glChromiumParametervCR_ptr;
+static glGetChromiumParametervCRProc glGetChromiumParametervCR_ptr;
+static glBarrierCreateCRProc glBarrierCreateCR_ptr;
+static glBarrierExecCRProc   glBarrierExecCR_ptr;
 
 
-int DrawFrame( void )
+static int DrawFrame( void )
 {
 	int i;
 	static int frame_count = 0;
@@ -54,51 +47,49 @@ int DrawFrame( void )
 		glCallList( globals.dpy_list_base + i );
 		if (globals.compositor != BINARYSWAP)
 		{
-			glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, &(model->bounds) );
+			glChromiumParametervCR_ptr( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, &(model->bounds) );
 		}
 		glFlush();
 	}
 	if (globals.compositor != BINARYSWAP)
 	{
-		glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bogus_bounds );
+		glChromiumParametervCR_ptr( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bogus_bounds );
 	}
 	else
 	{
-		glChromiumParametervCR( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, &(globals.local_bounds) );
+		glChromiumParametervCR_ptr( GL_OBJECT_BBOX_CR, GL_FLOAT, 6, &(globals.local_bounds) );
 	}
-	glSwapBuffersCR( globals.window, 0 );
+	crSwapBuffers_ptr( globals.window, 0 );
 
 	return 1;
 }
 
-void CreateGraphicsContext( )
+static void CreateGraphicsContext(void)
 {
 	int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
 	const char *dpy = NULL;
 	char *spu_name;
 
 	globals.window = 0;
-#define LOAD( x ) gl##x##CR = (cr##x##Proc) crGetProcAddress( "cr"#x )
 
-	LOAD( CreateContext );
-	LOAD( MakeCurrent );
-	LOAD( SwapBuffers );
+	/* Get function pointers */
+	crCreateContext_ptr = (crCreateContextProc) crGetProcAddress("crCreateContext");
+	crMakeCurrent_ptr = (crMakeCurrentProc) crGetProcAddress("crMakeCurrent");
+	crSwapBuffers_ptr = (crSwapBuffersProc) crGetProcAddress("crSwapBuffers");
+  glGetChromiumParametervCR_ptr = (glGetChromiumParametervCRProc) crGetProcAddress("glGetChromiumParametervCR");
+  glChromiumParametervCR_ptr = (glChromiumParametervCRProc) crGetProcAddress("glChromiumParametervCR");
+	glBarrierCreateCR_ptr = (glBarrierCreateCRProc) crGetProcAddress("glBarrierCreateCR");
+	glBarrierExecCR_ptr = (glBarrierExecCRProc) crGetProcAddress("glBarrierExecCR");
 
-	globals.ctx = glCreateContextCR(dpy, visual);
+	globals.ctx = crCreateContext_ptr(dpy, visual);
 	if (globals.ctx < 0) 
 	{
-		crError("glCreateContextCR() call failed!\n");
+		crError("crCreateContext() call failed!\n");
 	}
-	glMakeCurrentCR(globals.window, globals.ctx);
-
-#define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
-  LOAD2( GetChromiumParameterv );
-  LOAD2( ChromiumParameterv );
-	LOAD2( BarrierCreate );
-	LOAD2( BarrierExec );
+	crMakeCurrent_ptr(globals.window, globals.ctx);
 
 	globals.compositor = OTHER;
-	glGetChromiumParametervCR( GL_HEAD_SPU_NAME_CR, 0, GL_BYTE, 1, &(spu_name) );
+	glGetChromiumParametervCR_ptr( GL_HEAD_SPU_NAME_CR, 0, GL_BYTE, 1, &(spu_name) );
 	if (!crStrcmp( spu_name, "readback" ))
 	{
 		globals.compositor = READBACK;
@@ -115,7 +106,7 @@ void CreateGraphicsContext( )
 	}
 }
 
-void SetupGraphicsState( void )
+static void SetupGraphicsState( void )
 {
 	glClearColor( 0, 0, 0, 1 );
 	glEnable( GL_DEPTH_TEST );
@@ -134,7 +125,7 @@ void SetupGraphicsState( void )
 	}
 }
 
-void SetupCamera( void )
+static void SetupCamera( void )
 {
 	GLint viewport[4];
 	globals.center.x = (globals.global_bounds.max.x+globals.global_bounds.min.x)/2;
@@ -154,7 +145,7 @@ void SetupCamera( void )
 	gluPerspective( 45, (float) viewport[2]/(float) viewport[3], globals.radius, 4*globals.radius );
 }
 
-void CreateDisplayLists()
+static void CreateDisplayLists( void )
 {
 	Model *model;
 	int dpy_list;
@@ -183,7 +174,7 @@ void CreateDisplayLists()
 
 }
 
-void ParseArguments( int argc, char *argv[] )
+static void ParseArguments( int argc, char *argv[] )
 {
 	int i;
 
