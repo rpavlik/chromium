@@ -9,9 +9,9 @@ FILES = statecopytest
 
 ifdef WINDOWS
 TRACKS_STATE = 1
-LIBRARIES = crutil spuload
+LIBRARIES = crutil spuload crmothership
 else
-LIBRARIES = crutil spuload crstate
+LIBRARIES = crutil spuload crmothership crstate
 endif
 
 
