@@ -123,7 +123,7 @@ typedef struct {
 	struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;  
 
 	/* Store model and projection matix for clip */
-	GLdouble *modl, *proj;
+	GLdouble modl[16], proj[16];
 	
 } Binaryswapspu;
 
