@@ -488,6 +488,41 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint newWidth, G
 		winInfo->muralHeight = newHeight;
 		tilesortspuGetNewTiling(winInfo);
 	}
+
+	/*
+	 * If WindowSize() is called and there's only one server for this
+	 * tilesorter, propogate the WindowSize() call to the server (and
+	 * likely the render SPU).
+	 * This generally only happens if the app node's track_window_size option
+	 * is set.  Normally, track_window_size is zero in tilesort configurations
+	 * so this window resize business isn't of any concern.
+	 *
+	 * This feature was requested by Wes Bethel.
+	 */
+	if (tilesort_spu.num_servers == 1) {
+		GET_THREAD(thread);
+		int i;
+
+		/* The default buffer */
+		crPackGetBuffer( thread->packer, &(thread->geometry_pack) );
+
+		/* keep this loop, in case we change the behaviour someday */
+		for (i = 0; i < tilesort_spu.num_servers; i++)
+		{
+			const int serverWin = winInfo->server[i].window;
+			crPackSetBuffer( thread->packer, &(thread->pack[i]) );
+
+			if (tilesort_spu.swap)
+				crPackWindowSizeSWAP( serverWin, newWidth, newHeight );
+			else
+				crPackWindowSize( serverWin, newWidth, newHeight );
+
+			crPackGetBuffer( thread->packer, &(thread->pack[i]) );
+		}
+
+		/* The default buffer */
+		crPackSetBuffer( thread->packer, &(thread->geometry_pack) );
+	}
 }
 
 
