@@ -14,5 +14,7 @@ keys.sort();
 print '#include <stdio.h>'
 
 for func_name in keys:
-    print "void *" + stub_common.DoImmediateMapping( func_name ) + " = NULL;"
+	if stub_common.FindSpecial( 'noexport', func_name ):
+		continue
+	print "void *" + stub_common.DoImmediateMapping( func_name ) + " = NULL;"
 print ""

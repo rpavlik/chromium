@@ -29,6 +29,7 @@ crWordsToString
 crGetHostname
 crGetPID
 crNetSetMTU
+crNetMTU
 crNetAcceptClient
 crNetConnectToServer
 crNetInit

@@ -41,6 +41,7 @@ crPackVertex4svBBOX
 crPackInitBuffer
 crPackResetPointers
 crPackAppendBuffer
+crPackAppendBoundedBuffer
 crPackSetBuffer
 crPackGetBuffer
 crPackFlushFunc

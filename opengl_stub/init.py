@@ -23,6 +23,8 @@ keys = gl_mapping.keys()
 keys.sort();
 
 for func_name in keys:
-    print "\t%s = (void *) spu->dispatch_table.%s;" % (stub_common.DoImmediateMapping( func_name ), func_name )
+	if stub_common.FindSpecial( 'noexport', func_name ):
+		continue
+	print "\t%s = (void *) spu->dispatch_table.%s;" % (stub_common.DoImmediateMapping( func_name ), func_name )
 
 print '}'

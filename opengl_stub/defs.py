@@ -2,6 +2,7 @@
 import sys,os;
 import cPickle;
 import string;
+import stub_common;
 
 parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
 gl_mapping = cPickle.load( parsed_file )
@@ -12,7 +13,9 @@ print "EXPORTS"
 keys = gl_mapping.keys()
 keys.sort();
 for func_name in keys:
-    print "gl%s = cr_gl%s" % (func_name,func_name)
+	if stub_common.FindSpecial( 'noexport', func_name ):
+		continue
+	print "gl%s = cr_gl%s" % (func_name,func_name)
 
 for func_name in ( "wglChoosePixelFormat", 
 		   "wglCopyContext",
