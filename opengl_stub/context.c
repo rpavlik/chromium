@@ -44,11 +44,13 @@ stubGetDisplayString( Display *dpy, char *nameResult, int maxResult )
 {
 	const char *dpyName = DisplayString(dpy);
 	char host[1000];
+#if 0
 	if (dpyName[0] == ':')
 	{
 		crGetHostname(host, 1000);
 	}
 	else
+#endif
 	{
 	  host[0] = 0;
 	}
