@@ -24,6 +24,7 @@ Other internal functions/classes:
     Conf:           Sets a key/values list of configuration values.
     CRNode:         Base class that defines a node in the SPU graph
     CRDebug:        Used to print out debugging messages.
+    CROutput:       Used to print messages to a logfile.
     Fatal:          Used to print out a debugging messages and exit.
     MakeString:     Converts a Python object to a string.
     SockWrapper:    Internal convience class for handling sockets
@@ -46,6 +47,20 @@ def CRDebug( str ):
 	Prints debugging message to stderr."""
 	if DebugMode:
 		print >> sys.stderr, str
+
+def CROutput( str ):
+	"""CROutput(str)
+	Prints message to logfile."""
+	file = os.environ.get("CR_PERF_MOTHERSHIP_LOGFILE")
+	if file:
+		f = open(file, "a")
+		if f:
+			f.write("%s\n" % str )
+			f.close()
+		else:
+			CRDebug("Unable to open performance monitoring log file %s\n" % file)
+	else:
+		CRDebug("NO Performance Logfile set, check CR_PERF_MOTHERSHIP_LOGFILE")
 
 allSPUs = {}
 
@@ -367,6 +382,7 @@ class CR:
 	    do_tiles:		Sends the defined tiles for a SPU.
 	    do_setparam:        Sets a mothership parameter value
 	    do_getparam:        Returns a mothership parameter value
+	    do_logperf:		Logs Performance Data to a logfile.
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
 	    ClientError:	Sends an error message on the given socket.
@@ -862,6 +878,12 @@ class CR:
 		Disconnects from clients."""
 		sock.Success( "Bye" )
 		self.ClientDisconnect( sock )
+
+	def do_logperf( self, sock, args ):
+		"""do_logperf(sock, args)
+		Logs Data to a logfile."""
+		CROutput("%s" % args)
+		sock.Success( "Dumped" )
 
 	def do_startdir( self, sock, args ):
 		"""do_startdir(sock, args)
