@@ -31,6 +31,13 @@ static void crServerTearDown( void )
 {
 	SPU *the_spu = cr_server.head_spu;
 	unsigned int i;
+	static int tearingdown = 0;
+
+	/* avoid a race condition */
+	if (tearingdown)
+		return;
+
+	tearingdown = 1;
 
 	crStateSetCurrent( NULL );
 
