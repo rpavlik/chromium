@@ -202,6 +202,7 @@ getClippedWindow(GLfloat modl[16], GLfloat proj[16],
 static void
 AllocBuffers(WindowInfo * window)
 {
+	GLint colorBytes = 0, depthBytes = 0;
 	CRASSERT(window);
 	CRASSERT(window->width >= 0);
 	CRASSERT(window->height >= 0);
@@ -220,11 +221,10 @@ AllocBuffers(WindowInfo * window)
 	/* XXX we might try GL_ABGR on NVIDIA - it might be a faster path */
 	window->rgbaFormat = GL_RGBA;
 	window->rgbFormat = GL_RGB;
+	colorBytes = readback_spu.extract_alpha ? 4 : 3;
 
 	if (readback_spu.extract_depth)
 	{
-		GLint depthBytes;
-
 		if (window->depthBuffer)
 			crFree(window->depthBuffer);
 
@@ -257,6 +257,12 @@ AllocBuffers(WindowInfo * window)
 			window->depthBuffer = (GLfloat *) crAlloc(window->width * window->height
 																								* depthBytes);
 	}
+
+	crDebug("Readback SPU: %d bytes per pixel (%d RGB[A] + %d Z)",
+					colorBytes + depthBytes, colorBytes, depthBytes);
+	crDebug("Readback SPU: %d bytes per %dx%d image",
+					(colorBytes + depthBytes) * window->width * window->height,
+					window->width, window->height);
 }
 
 
