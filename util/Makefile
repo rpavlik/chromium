@@ -11,6 +11,7 @@ SHARED = 1
 LIBRARY = crutil
 FILES = bbox \
 	bufpool \
+	calllists \
 	devnull \
 	dll \
 	endian \
