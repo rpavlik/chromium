@@ -331,12 +331,12 @@ tilesortspu_CallList(GLuint list)
 			/* Run the bucket sort routine to determine which servers will
 			 * receive this display list.
 			 */
-			bucket_info.objectMin.x = bounds.xmin;
-			bucket_info.objectMin.y = bounds.ymin;
-			bucket_info.objectMin.z = bounds.zmin;
-			bucket_info.objectMax.x = bounds.xmax;
-			bucket_info.objectMax.y = bounds.ymax;
-			bucket_info.objectMax.z = bounds.zmax;
+			bucket_info.objectMin.x = (GLfloat) bounds.xmin;
+			bucket_info.objectMin.y = (GLfloat) bounds.ymin;
+			bucket_info.objectMin.z = (GLfloat) bounds.zmin;
+			bucket_info.objectMax.x = (GLfloat) bounds.xmax;
+			bucket_info.objectMax.y = (GLfloat) bounds.ymax;
+			bucket_info.objectMax.z = (GLfloat) bounds.zmax;
 			tilesortspuBucketGeometry(winInfo, &bucket_info);
 
 			/*
@@ -500,7 +500,7 @@ tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
       {                                                  \
         const typeCast *data = (const typeCast *) lists; \
         for (i = 0; i < n; i++) {                        \
-          tilesortspu_CallList(base + data[i]);          \
+          tilesortspu_CallList(base + (GLuint) data[i]); \
         }                                                \
       }                                                  \
       break
