@@ -660,7 +660,7 @@ static void pixeltransfer_flush(void)
 			if ((crStateTextureCheckDirtyImages(serverState, ctx, GL_TEXTURE_RECTANGLE_NV, unit)) &&
 								(!already_flushed[4]))
 			{
-				if (ctx->extensions.ARB_texture_rectangle)
+				if (ctx->extensions.NV_texture_rectangle)
 				{
 					crStateEnable(GL_TEXTURE_RECTANGLE_NV);
 					tilesortspuBroadcastGeom(1);
