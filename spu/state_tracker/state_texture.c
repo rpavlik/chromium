@@ -949,8 +949,8 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 	CRContext *g = GetCurrentContext();
 	CRTextureState *t = &(g->texture);
 	CRPixelState *p = &(g->pixel);
-	CRTextureObj *tobj;
-	CRTextureLevel *tl;
+	CRTextureObj *tobj = NULL;
+	CRTextureLevel *tl = NULL;
 	CRStateBits *sb = GetCurrentBits();
 	CRTextureBits *tb = &(sb->texture);
 	int i;
@@ -2574,6 +2574,8 @@ static CRTextureLevel * crStateGetTexLevel (CRContext *g, GLuint texUnit,
 
 	assert(level >= 0);
 
+	(void) texUnit;
+
 	switch (target)
 	{
 		case GL_TEXTURE_1D:
@@ -2656,6 +2658,8 @@ static CRTextureObj * crStateGetTexObject (CRContext *g, GLuint texUnit,
 {
 	CRTextureState *t = &(g->texture);  // FIXME: active texture unit!
 	CRTextureObj *tobj;
+
+	(void) texUnit;
 
 	switch (target)
 	{
