@@ -13,15 +13,15 @@
 int main(int argc, char *argv[])
 {
 	SPU *spu;
-	int ids[] = { 0, 1 };
-	char *spunames[] = { "invertspu", "renderspu" };
+	int ids[] = { 0 };
+	char *spunames[] = { "renderspu" };
 	float angle = 0;
 	int frame = 0;
 
 	(void) argc;
 	(void) argv;
 
-	spu = crSPULoadChain( 2, ids, spunames, NULL );
+	spu = crSPULoadChain( sizeof(spunames)/sizeof(spunames[0]), ids, spunames, NULL );
 
 	spu->dispatch_table.Viewport( 0, 0, 256, 256 );
 	spu->dispatch_table.ClearColor( 0,0,0,1 );
