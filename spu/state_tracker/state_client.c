@@ -193,7 +193,7 @@ void crStateClientSetPointer (CRClientPointer *cp, GLint size,
 	}
 
 	/* 
-	 **  Note: If stide==0 then we set the 
+	 **  Note: If stride==0 then we set the 
 	 **  stride equal address offset
 	 **  therefore stride can never equal
 	 **  zero.

@@ -1,0 +1,15 @@
+.cvsignore
+state_get.c
+state_isenabled.c
+state.def
+state_buffer_gen.c
+state_current_gen.c
+convert.pyc
+state_fog_gen.c
+state_lighting_gen.c
+state_line_gen.c
+state_pixel_gen.c
+state_polygon_gen.c
+state_regcombiner_gen.c
+state_stencil_gen.c
+state_viewport_gen.c

@@ -1,0 +1,5 @@
+.cvsignore
+cr_packfunctions.h
+cr_opcodes.h
+spu_dispatch_table.h
+cr_unpackfuncs.h

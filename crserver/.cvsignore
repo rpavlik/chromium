@@ -1,0 +1,8 @@
+.cvsignore
+get_sizes.pyc
+get_components.pyc
+server_dispatch.h
+server_dispatch.c
+server_get.c
+server_retval.c
+server_simpleget.c
