@@ -46,11 +46,6 @@ void crServerGatherConfiguration(char *mothership)
 
 	char **serverchain;
 
-
-#if 0
-	CRLimitsState limits;
-#endif
-
 	__setDefaults();
 
 	if (mothership)
@@ -96,10 +91,6 @@ void crServerGatherConfiguration(char *mothership)
 
 	/* Get OpenGL limits from first SPU */
 	crSPUQueryGLLimits( conn, spu_ids[0], &cr_server.limits);
-
-	/* XXX revisit viewport clamping someday */
-	cr_server.limits.maxViewportDims[0] = MAX_MURAL_WIDTH;
-	cr_server.limits.maxViewportDims[1] = MAX_MURAL_HEIGHT;
 
 	crFree( spu_ids );
 	crFree( spu_names );

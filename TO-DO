@@ -4,25 +4,13 @@ Clean-up the glFinish/glCopyPixels implementation (don't use glGetInteger)
 
 Finish up tilesort glReadPixels pixelstore parameters.
 
-Incorporate the patch for remote job starting.
-
 Implement an error callback facility in packer/pack_error.c so that
 errors detected in the packer lib can be handled by the client (such
 as the pack SPU.
 
-The GLX visual handling code could use a bit more work.  How do we
-reconcile differences in visuals between the client and server displays?
-
 Some packed pixel formats still aren't implemented in util/pixel.c
 
 Grep the code for 'XXX' for miscellaneous loose ends.
-
-Fix viewport clamping for tile configs.  It looks like the crserver
-or tilesort spu is using the underlying OpenGL MAX_VIEWPORT_DIMS to
-do some clamping.  The NV driver has a 4K MAX_VIEWPORT_DIMS limit
-while Mesa has 2K.  For now, we're overriding the ctx->limits->viewport
-settings to 1280*8 in the crserver and tilesort SPU to get around
-this.
 
 Convert the last two Perl scripts in scripts/fastdep.pl and
 state_tracker/gendiffcode.pl to Python. 

@@ -206,6 +206,7 @@ extern void glGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, 
 #define GL_TILE_BOUNDS_CR            0x9908 /* unofficial! */
 #define GL_VERTEX_COUNTS_CR          0x9909 /* unofficial! */
 #define GL_RESET_VERTEX_COUNTERS_CR  0x990A /* unofficial! */
+#define GL_SET_MAX_VIEWPORT_CR       0x990B /* unofficial! */
 
 #endif /* GL_CR_tilesort_info */
 
@@ -280,10 +281,6 @@ typedef struct {
 #define CR_MAX_BITARRAY      (CR_MAX_CONTEXTS / 32) /* 32 contexts per uint */
 
 #define MAX_THREADS		32	/* max threads per spu */
-
-/* These might belong elsewhere */
-#define MAX_MURAL_WIDTH  (1280*8)
-#define MAX_MURAL_HEIGHT  (1280*8)
 
 
 /* Function inlining */

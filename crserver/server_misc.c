@@ -15,7 +15,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSelectBuffer( GLsizei size, GLuint
 	crError( "Unsupported network glSelectBuffer call." );
 }
 
-
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
 {
 	GLubyte local_storage[4096];
@@ -50,4 +49,20 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetChromiumParametervCR(GLenum tar
 	cr_server.head_spu->dispatch_table.GetChromiumParametervCR( target, index, type, count, local_storage );
 
 	crServerReturnValue( local_storage, bytes );
+}
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
+{
+	switch (target) {
+	case GL_SET_MAX_VIEWPORT_CR:
+	    {
+		GLint *maxDims = (GLint *)values;
+		cr_server.limits.maxViewportDims[0] = maxDims[0];
+		cr_server.limits.maxViewportDims[1] = maxDims[1];
+	    }
+	    break;
+	default:
+		cr_server.head_spu->dispatch_table.ChromiumParametervCR( target, type, count, values );
+		break;
+	}
 }
