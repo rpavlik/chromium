@@ -181,10 +181,6 @@ int getClippedWindow(GLdouble modl[16], GLdouble proj[16],
 	CLAMP ((*xend),   0, win_width);
 	CLAMP ((*ystart), 0, win_height);
 	CLAMP ((*yend),   0, win_height);
-	crDebug("x: %d, y: %d, w: %d, h: %d", 
-		*xstart, *ystart, 
-		*xstart + *xend,
-		*ystart + *yend);
 	return 1;
 }
 
@@ -706,7 +702,7 @@ static void CompositeNode( WindowInfo *window,
  *   - doing glClear
  *   - call CompositeNode() for each region
  */
-static void ProcessNode( WindowInfo *window, GLdouble modl[16], GLdouble proj[16] )
+static void ProcessNode( WindowInfo *window )
 {
 	int read_start_x = 0;
 	int read_start_y = 0;	
@@ -714,7 +710,7 @@ static void ProcessNode( WindowInfo *window, GLdouble modl[16], GLdouble proj[16
 	int read_end_y = window->height;
 
 	/* deal with clipping */
-	getClippedWindow( modl, proj, 
+	getClippedWindow( binaryswap_spu.modl, binaryswap_spu.proj, 
 			  &read_start_x, &read_start_y, 
 			  &read_end_x, &read_end_y);
 	
@@ -825,7 +821,7 @@ static void DoBinaryswap( WindowInfo *window )
 	binaryswap_spu.super.MatrixMode(GL_MODELVIEW);
 	binaryswap_spu.super.LoadIdentity();
 
-	ProcessNode(window, super_modl_matrix, super_proj_matrix);
+	ProcessNode(window);
 
 	/*
 	 * Restore pack/unpack alignments
@@ -1090,6 +1086,15 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuBarrierExecCR( GLuint name )
 	/* no-op */
 }
 
+static void BINARYSWAPSPU_APIENTRY binaryswapspuClearColor( GLclampf red,
+							    GLclampf green,
+							    GLclampf blue,
+							    GLclampf alpha )
+{
+     binaryswap_spu.super.ClearColor( red, green, blue, alpha );
+     binaryswap_spu.child.ClearColor( red, green, blue, alpha );
+}
+
 static void BINARYSWAPSPU_APIENTRY binaryswapspuViewport( GLint x,
 							  GLint y, GLint w, GLint h )
 {
@@ -1103,12 +1108,14 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum targ
 {
 	switch( target )
 	{
-		case GL_OBJECT_BBOX_CR:
-			binaryswap_spu.bbox = values;
-			break;
-		default:
-			binaryswap_spu.child.ChromiumParametervCR( target, type, count, values );
-			break;
+	case GL_OBJECT_BBOX_CR:
+		binaryswap_spu.bbox = values;
+		binaryswap_spu.super.GetDoublev( GL_PROJECTION_MATRIX, binaryswap_spu.proj );
+		binaryswap_spu.super.GetDoublev( GL_MODELVIEW_MATRIX,  binaryswap_spu.modl );
+		break;
+	default:
+		binaryswap_spu.child.ChromiumParametervCR( target, type, count, values );
+		break;
 	}
 }
 
@@ -1126,6 +1133,7 @@ SPUNamedFunctionTable binaryswap_table[] = {
 	{ "BarrierExecCR", (SPUGenericFunction) binaryswapspuBarrierExecCR },
  	{ "Viewport", (SPUGenericFunction) binaryswapspuViewport }, 
 	{ "Flush", (SPUGenericFunction) binaryswapspuFlush },
+	{ "ClearColor", (SPUGenericFunction) binaryswapspuClearColor }, 
 	{ "ChromiumParametervCR", (SPUGenericFunction) binaryswapspuChromiumParametervCR },
 	{ NULL, NULL }
 };

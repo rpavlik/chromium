@@ -121,7 +121,9 @@ typedef struct {
 	
 	/* Stores the bounding box if used */
 	struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;  
-	
+
+	/* Store model and projection matix for clip */
+	GLdouble *modl, *proj;
 	
 } Binaryswapspu;
 
