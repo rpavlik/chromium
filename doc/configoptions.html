@@ -532,34 +532,11 @@ one or more downstream servers.
     <td width="19%" class="ConfigOption" height="38">auto_dlist_bbox</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="115%" class="ConfigDesc" height="38">
-	Automatically compute/use bounding boxes for display lists.
-
-	Previously display list calls (glCallList(s)) were always being
-	broadcast to all servers.  If a screen-space or object-space
-	bounding box is active, display lists are subjected to bucketing like
-	other glBegin/End primitives.  It's up to the application programmer to call
-	glChromiumParameterv(GL_OBJECT_BBOX_CR, ...) to specify a bounding box
-	for subsequent glCallLists.
-
-	If a bounding box is not active when glCallList is called, the display
-	list (and any outstanding state changes) are broadcast to all servers.
-	We really have to play it safe in this situation since the tilesort SPU
-	has no idea what's encapsulated inside a display list.
-
-	In tilesortspu_CallList we'd first determine which server's tiles
-	intersect the projection of the display list's bounding box.For those that
-	intersect, send the display list contents to the server (if it doesn't
-	already have it).Finally, send the glCallList to the relevant servers.
-      Several caveats are attached to these ehancements:
-      <nl>
-      <li> - There may be problems with nested calls inside display lists since
-          it isn't possible to track the bounding boxes of display lists with
-          nested calls
-      <li> - Some problems may occur with glRasterPos glDrawPixels etc..
-      <li> - The lazy send support for glCallLists does only broadcast on demand since
-          there is no support for auto bounding boxes for glCallLists.
-      </nl>
-    The default is 1 (broadcast to all servers).</td>
+	If set, automatically compute/use bounding boxes for display lists
+        and bucketing.
+        Without bounding boxes, all glCallList calls are broadcast to all
+	servers.
+        The default is 1.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">lazy_send_dlists</td>
@@ -607,6 +584,30 @@ one or more downstream servers.
   </tr>
 
 </table>
+
+<h4>Additional notes on the Tilesort SPU and display lists</h4>
+
+<nl>
+<li>There may be problems with nested calls inside display lists
+    since it isn't possible to track the bounding boxes of display
+    lists with nested calls
+<li>Some problems may occur with glRasterPos glDrawPixels etc..
+<li>The lazy send support for glCallLists does only broadcast on
+    demand since there is no support for auto bounding boxes for
+    glCallLists.
+<li>If a screen-space or object-space bounding box is active, display
+    lists are subjected to bucketing like other glBegin/End
+    primitives.  It's up to the application programmer to call
+    glChromiumParameterv(GL_OBJECT_BBOX_CR, ...) to specify a
+    bounding box for subsequent glCallLists.
+<li>If a bounding box is not active when glCallList is called, the
+    display list (and any outstanding state changes) are broadcast
+    to all servers.  We really have to play it safe in this
+    situation since the tilesort SPU has no idea what's
+    encapsulated inside a display list.
+
+</nl>
+
 
 
 <a name="binaryswap">
