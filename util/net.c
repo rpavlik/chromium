@@ -111,7 +111,7 @@ NETWORK_TYPE( SDP );
  * \param broker  broker flag (need more info)
  */
 CRConnection *
-crNetConnectToServer( const char *server,	unsigned short default_port,
+crNetConnectToServer( const char *server, unsigned short default_port,
 											int mtu, int broker )
 {
 	char hostname[4096], protocol[4096];
