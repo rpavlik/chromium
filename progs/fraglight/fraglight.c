@@ -19,10 +19,10 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-static GLfloat Diffuse[4] = { 0.5, 0.5, 1.0, 1.0 };
-static GLfloat Specular[4] = { 0.8, 0.8, 0.8, 1.0 };
-static GLfloat LightPos[4] = { 0.0, 10.0, 20.0, 1.0 };
-static GLfloat Delta = 1.0;
+static GLfloat Diffuse[4] = { 0.5f, 0.5f, 1.0f, 1.0f };
+static GLfloat Specular[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
+static GLfloat LightPos[4] = { 0.0f, 10.0f, 20.0f, 1.0f };
+static GLfloat Delta = 1.0f;
 
 static GLuint FragProg;
 static GLuint VertProg;
@@ -416,7 +416,7 @@ static void Init( void )
    /*
     * Misc init
     */
-   glClearColor(0.3, 0.3, 0.3, 0.0);
+   glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
    glEnable(GL_ALPHA_TEST); /* temporary hack */
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHT0);

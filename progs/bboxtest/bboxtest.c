@@ -23,8 +23,8 @@ static GLfloat ObjectBoundingBox[8] = {
 	1.0, 1.0, 1.0,								/* xmax, ymax, zmax */
 };
 
-static const GLfloat Red[4] = { 1, .2, .2, 1 };
-static const GLfloat Green[4] = { .2, 1, .2, 1 };
+static const GLfloat Red[4] = { 1, .2f, .2f, 1 };
+static const GLfloat Green[4] = { .2f, 1, .2f, 1 };
 
 static GLuint Objects[2];
 static GLboolean UseBoundingBox = 1;

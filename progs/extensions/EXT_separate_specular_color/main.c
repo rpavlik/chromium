@@ -44,7 +44,7 @@ extern "C"
 
 static GLuint currentWidth, currentHeight;
 static GLuint textureID, sphereList;
-static GLfloat bgColor[4] = { 0.1, 0.2, 0.4, 0.0 };
+static GLfloat bgColor[4] = { 0.1f, 0.2f, 0.4f, 0.0f };
 
 
 static void
@@ -67,7 +67,7 @@ Display(void)
 	glRotatef(theta, 0, 1, 0);
 	glRotatef(90, 1, 0, 0);
 
-	theta += 0.1;
+	theta += 0.1f;
 	if (theta > 90)
 		theta -= 90;
 
@@ -91,7 +91,7 @@ Display(void)
 
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "SINGLE_COLOR_EXT");
+	RenderString(-1.1f, 1, "SINGLE_COLOR_EXT");
 	glPopMatrix();
 
 	/* Upper Right Viewport */
@@ -109,7 +109,7 @@ Display(void)
 
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "SEPARATE_SPECULAR_COLOR_EXT");
+	RenderString(-1.1f, 1, "SEPARATE_SPECULAR_COLOR_EXT");
 	glPopMatrix();
 
 	glMatrixMode(GL_TEXTURE);

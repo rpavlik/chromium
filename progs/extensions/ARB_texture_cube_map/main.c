@@ -38,7 +38,7 @@ static GLuint currentWidth, currentHeight;
 static GLenum envMapMode = (GLenum) GL_REFLECTION_MAP_ARB;
 static short object = 1;
 static GLuint textureID[1];
-static GLfloat bgColor[4] = { 0.2, 0.3, 0.8, 0.0 };
+static GLfloat bgColor[4] = { 0.2f, 0.3f, 0.8f, 0.0f };
 
 static GLint mX, mY, mButton;
 static GLfloat mPitch = 0, mYaw = 0, oPitch = 0, oYaw = 0;

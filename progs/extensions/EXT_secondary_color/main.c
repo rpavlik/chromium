@@ -64,7 +64,7 @@ static glSecondaryColorPointerEXT_t glSecondaryColorPointerEXTptr;
 static glSecondaryColor3fEXT_t glSecondaryColor3fEXTptr;
 
 static GLuint currentWidth, currentHeight;
-static GLfloat bgColor[4] = { 0.1, 0.2, 0.4, 0.0 };
+static GLfloat bgColor[4] = { 0.1f, 0.2f, 0.4f, 0.0f };
 
 
 static void
@@ -86,19 +86,19 @@ Display(void)
 		/* Color3f */
 		/* SecondaryColor3fEXT */
 
-		-size, -size,
+		(float)-size, (float)-size,
 		1.0, 1.0, 1.0,
 		1.0, 0.0, 1.0,
 
-		-size, size,
+		(float)-size, (float)size,
 		1.0, 1.0, 1.0,
 		1.0, 0.0, 0.0,
 
-		size, size,
+		(float)size, (float)size,
 		0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0,
 
-		size, -size,
+		(float)size, (float)-size,
 		0.0, 0.0, 0.0,
 		0.0, 0.0, 1.0
 	};
@@ -109,7 +109,7 @@ Display(void)
 	glTranslatef(0, 0, -2);
 	glRotatef(theta, 0, 0, 1);
 
-	theta += 0.01;
+	theta += 0.01f;
 
 #ifdef MULTIPLE_VIEWPORTS
 	/* Left Viewport */
@@ -120,17 +120,17 @@ Display(void)
 	{
 		glColor3f(1, 1, 1);
 		glSecondaryColor3fEXTptr(1, 0, 1);
-		glVertex2f(-size, -size);
+		glVertex2f((float)-size, (float)-size);
 
 		glSecondaryColor3fEXTptr(1, 0, 0);
-		glVertex2f(-size, size);
+		glVertex2f((float)-size, (float)size);
 
 		glColor3f(0, 0, 0);
 		glSecondaryColor3fEXTptr(0, 1, 0);
-		glVertex2f(size, size);
+		glVertex2f((float)size, (float)size);
 
 		glSecondaryColor3fEXTptr(0, 0, 1);
-		glVertex2f(size, -size);
+		glVertex2f((float)size, (float)-size);
 	}
 	glEnd();
 	glDisable((GLenum) GL_COLOR_SUM_EXT);
@@ -138,7 +138,7 @@ Display(void)
 	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "SecondaryColor3fEXT");
+	RenderString(-1.1f, 1, "SecondaryColor3fEXT");
 	glPopMatrix();
 
 	/* Upper Right Viewport */
@@ -161,7 +161,7 @@ Display(void)
 	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "SecondaryColorPointerEXT");
+	RenderString(-1.1f, 1, "SecondaryColorPointerEXT");
 	glPopMatrix();
 
 	glViewport(0, 0, currentWidth, currentHeight);

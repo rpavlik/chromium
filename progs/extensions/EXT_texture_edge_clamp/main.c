@@ -43,7 +43,7 @@
 
 static GLuint currentWidth, currentHeight;
 static GLuint textureID[2];
-static GLfloat bgColor[4] = { 0.2, 0.3, 0.8, 0 };
+static GLfloat bgColor[4] = { 0.2f, 0.3f, 0.8f, 0 };
 
 
 static void
@@ -92,7 +92,7 @@ Display(void)
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "GL_CLAMP");
+	RenderString(-1.1f, 1, "GL_CLAMP");
 	glPopMatrix();
 
 	/* Upper Right Viewport */
@@ -117,7 +117,7 @@ Display(void)
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "GL_CLAMP_TO_EDGE_EXT");
+	RenderString(-1.1f, 1, "GL_CLAMP_TO_EDGE_EXT");
 	glViewport(0, 0, currentWidth, currentHeight);
 	crExtensionsDrawLogo(currentWidth, currentHeight);
 	glPopMatrix();

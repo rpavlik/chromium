@@ -34,7 +34,7 @@
 
 static GLuint currentWidth, currentHeight;
 static GLuint texture[1];
-static GLfloat bgColor[4] = { 0.8, 0.8, 1.0, 0.0 };
+static GLfloat bgColor[4] = { 0.8f, 0.8f, 1.0f, 0.0f };
 static GLint defaultFogDistanceMode;
 
 
@@ -74,7 +74,7 @@ Display(void)
 	glCallList(1);
 #else
 	glEnable(GL_TEXTURE_2D);
-	glColor3f(0.6, 1.0, 0.2);
+	glColor3f(0.6f, 1.0f, 0.2f);
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
 	for (y = -size; y < size; y++)
 	{
@@ -93,8 +93,8 @@ Display(void)
 
 	glColor3f(0, 0, 0);
 	glDisable(GL_FOG);
-	RenderString(-1.08, 1, "EYE_PLANE_ABSOLUTE_NV");
-	RenderString(-1.08, .85, "(implementation specific default)");
+	RenderString(-1.08f, 1, "EYE_PLANE_ABSOLUTE_NV");
+	RenderString(-1.08f, .85f, "(implementation specific default)");
 	glEnable(GL_FOG);
 
 	/* Right Viewport */
@@ -105,7 +105,7 @@ Display(void)
 	glCallList(1);
 #else
 	glEnable(GL_TEXTURE_2D);
-	glColor3f(0.6, 1.0, 0.2);
+	glColor3f(0.6f, 1.0f, 0.2f);
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
 	for (y = -size; y < size; y++)
 	{
@@ -123,7 +123,7 @@ Display(void)
 #endif /* !DISPLAY_LIST */
 	glColor3f(0, 0, 0);
 	glDisable(GL_FOG);
-	RenderString(-1.08, 1, "EYE_RADIAL_NV");
+	RenderString(-1.08f, 1, "EYE_RADIAL_NV");
 	glViewport(0, 0, currentWidth, currentHeight);
 	crExtensionsDrawLogo(currentWidth, currentHeight);
 	glEnable(GL_FOG);
@@ -167,7 +167,7 @@ Keyboard(unsigned char key, int x, int y)
 		{
 			printf("Outputting wireframe mode...\n");
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glClearColor(0.2, 0.3, 0.8, 0.0);
+			glClearColor(0.2f, 0.3f, 0.8f, 0.0f);
 		}
 		else
 		{

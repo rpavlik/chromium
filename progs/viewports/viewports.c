@@ -46,11 +46,11 @@ static void DrawObject( int x, int y, int w, int h, const GLfloat *color )
 
 static void Display( void )
 {
-   static const GLfloat red[3] = { 0.9, 0.2, 0.2 };
-   static const GLfloat green[3] = { 0.2, 0.9, 0.2 };
-   static const GLfloat blue[3] = { 0.2, 0.2, 0.9 };
-   static const GLfloat gray[3] = { 0.3, 0.3, 0.3 };
-   static const GLfloat white[3] = { 0.9, 0.9, 0.9 };
+   static const GLfloat red[3] = { 0.9f, 0.2f, 0.2f };
+   static const GLfloat green[3] = { 0.2f, 0.9f, 0.2f };
+   static const GLfloat blue[3] = { 0.2f, 0.2f, 0.9f };
+   static const GLfloat gray[3] = { 0.3f, 0.3f, 0.3f };
+   static const GLfloat white[3] = { 0.9f, 0.9f, 0.9f };
 
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 

@@ -56,7 +56,7 @@ enum
 
 static GLuint currentWidth, currentHeight;
 static GLuint textureID[numTextures];
-static GLfloat bgColor[4] = { 0.4, 0.7, 1.0, 0.0 };
+static GLfloat bgColor[4] = { 0.4f, 0.7f, 1.0f, 0.0f };
 
 /* NVIDIA's gl.h may not include glext.h or defined the PFNGL pointers,
  * so we define our own with unique names.
@@ -113,7 +113,7 @@ Redisplay(void)
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
 	glBegin(GL_QUADS);
-	glColor4f(0.0, 0.0, 0.8, 0.7);
+	glColor4f(0.0f, 0.0f, 0.8f, 0.7f);
 	glVertex3f(-50, -7, -50);
 	glVertex3f(-50, -7, 50);
 	glVertex3f(50, -7, 50);
@@ -127,7 +127,7 @@ Redisplay(void)
 	glPushMatrix();
 	glLoadIdentity();
 	glColor3f(0, 0, 0);
-	RenderString(-1.1, 1, "Multiple Passes (3)");
+	RenderString(-1.1f, 1, "Multiple Passes (3)");
 	glPopMatrix();
 
 	/* Right viewport */
@@ -143,7 +143,7 @@ Redisplay(void)
 
 	glEnable(GL_BLEND);
 	glBegin(GL_QUADS);
-	glColor4f(0.0, 0.0, 0.8, 0.7);
+	glColor4f(0.0f, 0.0f, 0.8f, 0.7f);
 	glVertex3f(-50, -7, -50);
 	glVertex3f(-50, -7, 50);
 	glVertex3f(50, -7, 50);
@@ -157,7 +157,7 @@ Redisplay(void)
 	glPushMatrix();
 	glLoadIdentity();
 	glColor3f(0, 0, 0);
-	RenderString(-1.1, 1, "Single Pass");
+	RenderString(-1.1f, 1, "Single Pass");
 	glPopMatrix();
 
 	glViewport(0, 0, currentWidth, currentHeight);
@@ -354,7 +354,7 @@ InitSpecial(void)
 	{
 		const int heightmapX = 128,
 			heightmapY = 128, heightNormRow = 3 * heightmapX;
-		const float size = 0.5, sizeV = 0.05, offsetV = -10, texScale = 0.15;
+		const float size = 0.5f, sizeV = 0.05f, offsetV = -10, texScale = 0.15f;
 
 		FILE *file;
 		GLubyte *height;

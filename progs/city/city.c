@@ -103,9 +103,9 @@ static void GenerateBuildings(void)
 #endif
       atten = atten * atten;
       /* height */
-      Buildings[i].sy = Random(0.2, 8) * atten;
+      Buildings[i].sy = Random(0.2f, 8) * atten;
       Buildings[i].y = 0.5 * Buildings[i].sy;
-      g = Random(0.3, 0.7);
+      g = Random(0.3f, 0.7f);
       Buildings[i].color[0] = g;
       Buildings[i].color[1] = g;
       Buildings[i].color[2] = g;
@@ -193,8 +193,8 @@ static void Idle( void )
 static void DrawGround(void)
 {
    static const GLfloat colors[2][3] = {
-      { 0.3, 0.6, 0.3 },
-      { 0.4, 0.4, 0.4 }
+      { 0.3f, 0.6f, 0.3f },
+      { 0.4f, 0.4f, 0.4f }
    };
    int i, j;
    float stepx = 80.0 / CheckerCols;
@@ -379,7 +379,7 @@ static void SpecialKey( int key, int x, int y )
 static void Init( void )
 {
    GLfloat one[4] = { 1, 1, 1, 1 };
-   GLfloat amb[4] = { 0.4, 0.4, 0.4, 1.0 };
+   GLfloat amb[4] = { 0.4f, 0.4f, 0.4f, 1.0f };
 
    glEnable(GL_NORMALIZE);
    glEnable(GL_DEPTH_TEST);

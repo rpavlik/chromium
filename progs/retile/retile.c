@@ -202,8 +202,8 @@ UpdateMural(void)
 static void
 DrawMolecule(void)
 {
-	static const GLfloat red[4]  = {1.0, 0.2, 0.2, 1.0};
-	static const GLfloat blue[4] = {0.2, 0.2, 1.0, 1.0};
+	static const GLfloat red[4]  = {1.0f, 0.2f, 0.2f, 1.0f};
+	static const GLfloat blue[4] = {0.2f, 0.2f, 1.0f, 1.0f};
 	const float radius = 5.0;
 	const float sphereRad = 0.5;
 	int angle;
@@ -217,12 +217,12 @@ DrawMolecule(void)
 			glPushMatrix();
 				glRotatef(-9.0 * angle, 0, 1, 0);
 				glPushMatrix();
-					glTranslatef(-0.7, 0, 0);
+					glTranslatef(-0.7f, 0, 0);
 					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, red);
 					glutSolidSphere(sphereRad, 20, 10);
 				glPopMatrix();
 				glPushMatrix();
-					glTranslatef(0.7, 0, 0);
+					glTranslatef(0.7f, 0, 0);
 					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, blue);
 					glutSolidSphere(sphereRad, 20, 10);
 				glPopMatrix();

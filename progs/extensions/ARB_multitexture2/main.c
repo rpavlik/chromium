@@ -40,7 +40,7 @@ enum
 
 static GLuint currentWidth, currentHeight;
 static GLuint textureID[eNumTextures];
-static GLfloat bgColor[4] = { 0.1, 0.1, 0.1, 0.0 };
+static GLfloat bgColor[4] = { 0.1f, 0.1f, 0.1f, 0.0f };
 
 /* NVIDIA's gl.h may not include glext.h or defined the PFNGL pointers,
  * so we define our own with unique names.
@@ -115,7 +115,7 @@ Redisplay(void)
 	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "GL_MODULATE");
+	RenderString(-1.1f, 1, "GL_MODULATE");
 	glPopMatrix();
 
 	/* Upper Right Viewport */
@@ -165,7 +165,7 @@ Redisplay(void)
 	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "GL_ADD");
+	RenderString(-1.1f, 1, "GL_ADD");
 	glViewport(0, 0, currentWidth, currentHeight);
 	crExtensionsDrawLogo(currentWidth, currentHeight);
 	glPopMatrix();

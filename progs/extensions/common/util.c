@@ -13,12 +13,12 @@
 void
 RenderString(float x, float y, char *string)
 {
-	GLfloat size = 0.0009;
+	GLfloat size = 0.0009f;
 	int len, i;
 
 	glPushMatrix();
 	glLoadIdentity();
-	glTranslatef(x, y, -1.2);
+	glTranslatef(x, y, -1.2f);
 	glScalef(size, size, size);
 	len = (int) strlen(string);
 

@@ -79,7 +79,7 @@ Display(void)
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "Bilinear Filtering");
+	RenderString(-1.1f, 1, "Bilinear Filtering");
 	glPopMatrix();
 
 	/* Upper Left Viewport */
@@ -99,7 +99,7 @@ Display(void)
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.08, 1, "Bilinear Mipmapped Filtering");
+	RenderString(-1.08f, 1, "Bilinear Mipmapped Filtering");
 	glPopMatrix();
 
 	/* Upper Right Viewport */
@@ -120,7 +120,7 @@ Display(void)
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "Trilinear Mipmapped Filtering");
+	RenderString(-1.1f, 1, "Trilinear Mipmapped Filtering");
 	glPopMatrix();
 
 	/* Lower Right Viewport */
@@ -141,7 +141,7 @@ Display(void)
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.13, 1, "Anisotropic Filtering");
+	RenderString(-1.13f, 1, "Anisotropic Filtering");
 	glPopMatrix();
 
 	glViewport(0, 0, currentWidth, currentHeight);
@@ -199,7 +199,7 @@ InitGL(void)
 	glutInitWindowSize(currentWidth, currentHeight);
 	glutCreateWindow(TEST_EXTENSION_STRING);
 
-	glClearColor(0.2, 0.3, 0.8, 0.0);
+	glClearColor(0.2f, 0.3f, 0.8f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glutIdleFunc(Idle);

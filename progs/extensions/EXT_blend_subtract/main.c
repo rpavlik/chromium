@@ -81,7 +81,7 @@ Display(void)
 	glPushMatrix();
 	glLoadIdentity();
 	glRotated(90, 1, 0, 0);
-	glTranslatef(0, -2.1, 0);
+	glTranslatef(0, -2.1f, 0);
 	glBegin(GL_QUADS);
 	glColor3f(0, 1, 0);
 	glVertex3f(-size, 0.0, size);
@@ -114,7 +114,7 @@ Display(void)
 	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "FUNC_SUBTRACT_EXT");
+	RenderString(-1.1f, 1, "FUNC_SUBTRACT_EXT");
 	glPopMatrix();
 
 	/* Upper Right Viewport */
@@ -123,7 +123,7 @@ Display(void)
 	glPushMatrix();
 	glLoadIdentity();
 	glRotated(90, 1, 0, 0);
-	glTranslatef(0, -2.1, 0);
+	glTranslatef(0, -2.1f, 0);
 	glBegin(GL_QUADS);
 	glColor3f(0, 1, 0);
 	glVertex3f(-size, 0.0, size);
@@ -156,7 +156,7 @@ Display(void)
 	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "FUNC_REVERSE_SUBTRACT_EXT");
+	RenderString(-1.1f, 1, "FUNC_REVERSE_SUBTRACT_EXT");
 	glViewport(0, 0, currentWidth, currentHeight);
 	crExtensionsDrawLogo(currentWidth, currentHeight);
 	glPopMatrix();

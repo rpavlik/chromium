@@ -52,7 +52,7 @@ typedef void (APIENTRY * GLBLENDCOLOREXTPROC) (GLclampf red, GLclampf green,
 static GLBLENDCOLOREXTPROC glBlendColor_ext;
 static GLuint currentWidth, currentHeight;
 static GLuint texture[1];
-static GLfloat bgColor[4] = { 0.2, 0.3, 0.8, 0.0 };
+static GLfloat bgColor[4] = { 0.2f, 0.3f, 0.8f, 0.0f };
 
 
 static void
@@ -95,7 +95,7 @@ Display(void)
 	glDisable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "Constant Color Blending Off");
+	RenderString(-1.1f, 1, "Constant Color Blending Off");
 	glPopMatrix();
 
 	/* Upper Right Viewport */
@@ -120,7 +120,7 @@ Display(void)
 	glDisable(GL_BLEND);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "Constant Color Blending On");
+	RenderString(-1.1f, 1, "Constant Color Blending On");
 	glViewport(0, 0, currentWidth, currentHeight);
 	crExtensionsDrawLogo(currentWidth, currentHeight);
 	glPopMatrix();

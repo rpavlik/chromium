@@ -52,7 +52,7 @@ typedef void (APIENTRY * GLBLENDEQUATIONEXTPROC) (GLenum mode);
 GLBLENDEQUATIONEXTPROC glBlendEquation_ext;
 
 static GLuint currentWidth, currentHeight;
-static GLfloat bgColor[4] = { 0.2, 0.3, 0.8, 0.0 };
+static GLfloat bgColor[4] = { 0.2f, 0.3f, 0.8f, 0.0f };
 
 
 static void
@@ -70,7 +70,7 @@ Display(void)
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	theta += 0.05;
+	theta += 0.05f;
 
 	glLoadIdentity();
 	glRotated(90, 1, 0, 0);
@@ -111,7 +111,7 @@ Display(void)
 	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "MIN_EXT Blending");
+	RenderString(-1.1f, 1, "MIN_EXT Blending");
 	glPopMatrix();
 
 	/* Upper Right Viewport */
@@ -145,7 +145,7 @@ Display(void)
 	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glLoadIdentity();
-	RenderString(-1.1, 1, "MAX_EXT Blending");
+	RenderString(-1.1f, 1, "MAX_EXT Blending");
 	glViewport(0, 0, currentWidth, currentHeight);
 	crExtensionsDrawLogo(currentWidth, currentHeight);
 	glPopMatrix();
