@@ -1,3 +1,6 @@
+AreTextureResident
+GenLists
+GenTextures
 GetBooleanv 
 GetClipPlane 
 GetCombinerStageParameterfvNV 
@@ -30,4 +33,4 @@ GetTexParameterfv
 GetTexParameteriv 
 IsEnabled 
 IsList 
-AreTexturesResident
+IsTexture
