@@ -46,7 +46,7 @@ GLint HIDDENLINESPU_APIENTRY hiddenlinespu_CreateContext( const char *dpyName, G
 	ContextInfo *context;
 
 	/* allocate new ContextInfo */
-	context = (ContextInfo *) crAlloc(sizeof(ContextInfo));
+	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
 	if (!context)
 		return 0;
 
