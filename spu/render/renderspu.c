@@ -692,10 +692,6 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 		remove_trailing_space(s1);
 		s2 = crStrjoin3(s1, " ", __stateChromiumExtensions);
 		remove_trailing_space(s2);
-		printf("native: %s\n", nativeExt);
-		printf("crExt: %s.\n", crExt);
-		printf("s1: %s.\n", s1);
-		printf("s2: %s.\n", s2);
 		crFree(crExt);
 		crFree(s1);
 		return s2;  /* leak - this never gets freed! */
