@@ -26,7 +26,7 @@ void StubInit(void)
 	 * HOW can I pass the mothership address to this if I already know it?
 	 */
 	
-	CRConnection *conn;
+	CRConnection *conn = NULL;
 	char response[1024];
 	char **spuchain;
 	int num_spus;
@@ -56,9 +56,14 @@ void StubInit(void)
 	conn = crMothershipConnect( );
 	if (!conn)
 	{
-		crError( "Couldn't connect to the mothership -- I have no idea what to do!" ); 
+		crWarning( "Couldn't connect to the mothership -- I have no idea what to do!" ); 
+		crWarning( "For the purposes of this demonstration, I'm loading the RENDER SPU!" );
+		crStrcpy( response, "1 0 render" );
 	}
-	crMothershipIdentifyOpenGL( conn, response, app_id );
+	else
+	{
+		crMothershipIdentifyOpenGL( conn, response, app_id );
+	}
 	crDebug( "response = \"%s\"", response );
 	spuchain = crStrSplit( response, " " );
 	num_spus = crStrToInt( spuchain[0] );
@@ -71,13 +76,13 @@ void StubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	if (crMothershipGetParam( conn, "show_cursor", response ) )
+	if (conn && crMothershipGetParam( conn, "show_cursor", response ) )
 		sscanf( response, "%d", &crAppDrawCursor );
 	else
 		crAppDrawCursor = 0;
 	crDebug( "show_cursor = %d\n", crAppDrawCursor );
 
-	if (crMothershipGetParam( conn, "minimum_window_size", response )
+	if (conn && crMothershipGetParam( conn, "minimum_window_size", response )
 		&& response[0]) {
 		int w, h;
 		sscanf( response, "%d %d", &w, &h );
@@ -89,7 +94,7 @@ void StubInit(void)
 		minX = minY = 0;
 	}
 
-	if (crMothershipGetParam( conn, "match_window_title", response )
+	if (conn && crMothershipGetParam( conn, "match_window_title", response )
 		&& response[0]) {
 		crDebug("match_window_title: %s\n", response );
 		stubMatchWindowTitle( response );
@@ -98,7 +103,7 @@ void StubInit(void)
 	}
 
 
-	if (crMothershipGetSPUDir( conn, response ))
+	if (conn && crMothershipGetSPUDir( conn, response ))
 	{
 		spu_dir = response;
 	}
@@ -107,7 +112,10 @@ void StubInit(void)
 		spu_dir = NULL;
 	}
 
-	crMothershipDisconnect( conn );
+	if (conn)
+	{
+		crMothershipDisconnect( conn );
+	}
 
 	stub_spu = crSPULoadChain( num_spus, spu_ids, spu_names, spu_dir, NULL );
 

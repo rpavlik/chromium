@@ -261,28 +261,21 @@ void RENDER_APIENTRY renderspuSwapBuffers( void )
 {
 #ifdef WINDOWS
 	static int first = 1;
+	int return_value;
 #endif
 
 	if (render_spu.drawCursor)
 		DrawCursor( render_spu.cursorX, render_spu.cursorY );
 
 #ifdef WINDOWS
-	if (first)
-	{
-		first = 0;
-		ComputeCube( 1 );
-		crDebug( "Swapping HDC=0x%x", render_spu.device_context );
-		crDebug( "The current context is 0x%x", render_spu.ws.wglGetCurrentContext() );
-		crDebug( "The context *I* created is 0x%x", render_spu.hRC );
-	}
-	/* CubeDisplay(); */
-	if (!render_spu.ws.wglSwapBuffers( render_spu.device_context ))
+	return_value=render_spu.wglSwapBuffers( render_spu.device_context );
+	if (!return_value)
 	{
 		/* GOD DAMN IT.  The latest versions of the NVIDIA drivers
 		 * return failure from wglSwapBuffers, but it works just fine.
 		 * WHAT THE HELL?! */
 
-		/* crError( "wglSwapBuffers failed!"); */
+		crWarning( "wglSwapBuffers failed: return value of %d!", return_value);
 	}
 	first = 0;
 #else
