@@ -4,11 +4,15 @@
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#else
-#define GL_GLEXT_PROTOTYPES
 #endif
 
 #include <GL/gl.h>
 #include <GL/glext.h>
+
+#ifndef WINDOWS
+#define GL_GLEXT_PROTOTYPES
+typedef void (*CR_GLXFuncPtr)();
+CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
+#endif
 
 #endif /* CR_GLWRAPPER_H */

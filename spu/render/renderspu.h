@@ -36,6 +36,7 @@ typedef Bool (*glXIsDirectFunc_t)( Display *, GLXContext );
 typedef Bool (*glXMakeCurrentFunc_t)( Display *, GLXDrawable, GLXContext );
 typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
 typedef void (*glXSwapBuffersFunc_t)( Display *, GLXDrawable );
+typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
 #endif
 
 typedef struct {
@@ -67,6 +68,7 @@ typedef struct {
 	glXMakeCurrentFunc_t glXMakeCurrent;
 	glGetStringFunc_t glGetString;
 	glXSwapBuffersFunc_t glXSwapBuffers;
+	glXGetProcAddressARBFunc_t glXGetProcAddressARB;
 	Display     *dpy;
 	XVisualInfo *visual;
 	GLXContext   context;

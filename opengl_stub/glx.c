@@ -1,8 +1,11 @@
 /* opengl_stub/glx.c */
 
 #include <GL/glx.h>
+
+#include "cr_glwrapper.h"
 #include "cr_error.h"
 #include "cr_spu.h"
+#include "cr_applications.h"
 
 extern SPU *stub_spu;
 extern void StubInit(void);
@@ -475,4 +478,14 @@ const char *glXQueryServerString( Display *dpy, int screen, int name )
 	}
 
 	return retval;
+}
+
+CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name )
+{
+	return (CR_GLXFuncPtr) crGetProcAddress( name );
+}
+
+CR_GLXFuncPtr glXGetProcAddress( const GLubyte *name )
+{
+	return (CR_GLXFuncPtr) crGetProcAddress( name );
 }

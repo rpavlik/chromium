@@ -102,12 +102,18 @@ useful_glx_functions = [
 	"glGetString",
 	"glXSwapBuffers"
 ]
+possibly_useful_glx_functions = [
+	"glXGetProcAddressARB"
+]
+
 print '#ifdef WINDOWS'
 for fun in useful_wgl_functions:
 	print '\trender_spu.wgl%s = (wgl%sFunc_t) crDLLGet( dll, "wgl%s" );' % (fun,fun,fun)
 print '#else'
 for fun in useful_glx_functions:
 	print '\trender_spu.%s = (%sFunc_t) crDLLGet( dll, "%s" );' % (fun, fun, fun)
+for fun in possibly_useful_glx_functions:
+	print '\trender_spu.%s = (%sFunc_t) crDLLGetNoError( dll, "%s" );' % (fun, fun, fun)
 print '#endif'
 
 index = 0
@@ -133,9 +139,17 @@ for func_name in stub_common.AllSpecials( 'render_extensions' ):
 	index += 1
 print '#else'
 index -= len(stub_common.AllSpecials( 'render_extensions' ) )
+print '\tif (render_spu.glXGetProcAddressARB == NULL)'
+print '\t{'
+print '\t\t__fillin( %3d, NULL, NULL );' % index
+print '\t\treturn;'
+print '\t}'
+print '\telse'
+print '\t{'
 for func_name in stub_common.AllSpecials( 'render_extensions' ):
-	print '\t//__fillin( %3d, "%s", (SPUGenericFunction) glxGetProcAddressARB( "gl%s" ) );' % (index, func_name, func_name )
+	print '\t\t__fillin( %3d, "%s", (SPUGenericFunction) render_spu.glXGetProcAddressARB( "gl%s" ) );' % (index, func_name, func_name )
 	index += 1
+print '\t}'
 print '#endif'
 print '\t__fillin( %3d, NULL, NULL );' % index
 print '}'
