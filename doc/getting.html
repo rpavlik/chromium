@@ -55,38 +55,56 @@ mailing lists</a>.  That's where new development is discussed.
 
 
 
+<h2 class="PageSubHeading">Prerequisites</h2>
+
+<p>
+You will need <a href="http://www.python.org">Python 2.2</a> or later,
+and <a href="http://www.perl.org">Perl 5.0</a> or later to build on any
+platform.
+</p>
+
+<p>
+You'll need GLUT installed so that the demonstration programs will compile.
+</p>
+
+
+
 <h2 class="PageSubHeading">Compiling the source</h2>
 
-<p>All of Chromium lives under a directory called &quot;<code>cr</code>&quot;.&nbsp; Change
-to that directory, and type &quot;<code>make</code>&quot;.&nbsp; You will need <a href="http://www.python.org">Python
-2.2</a> or later, and <a href="http://www.perl.org">Perl 5.0</a> or later to
-build on any platform.&nbsp; Binaries are put in <code> cr/bin/&lt;ARCH&gt;</code>, where
-<code>
-&lt;ARCH&gt;</code> is the name of your architecture (Actually, it's what's
+<p>
+There are a few compile-time options that can be specified in the
+<code>options.mk</code> file.  DMX support and threadsafety options are
+specified in this file, for example.
+At least initially, you shouldn't have to change anything in this file.
+</p>
+
+<p>
+If you have <a href="http://www.myri.com/scs/index.html">Myrinet
+GM libraries</a>, you can turn on GM support in the file
+<code>cr-X.Y/util/Makefile</code> before building.
+There are instructions in that file.
+</p>
+
+<p>
+All of Chromium lives under a directory called &quot;<code>cr-X.Y</code>&quot;
+(where X.Y is the version).&nbsp; Change
+to that directory, and type &quot;<code>make</code>&quot;.&nbsp;
+</p>
+<p>
+Binaries are put in <code> cr-X.Y/bin/&lt;ARCH&gt;</code>, where
+<code>&lt;ARCH&gt;</code>
+is the name of your architecture (Actually, it's what's
 returned by the &quot;<code>uname</code>&quot; command.&nbsp; Except on
 Windows, where <a href="http://cygwin.com/">cygwin's</a>
 &quot;<code>uname</code>&quot; returns something long and silly, so it gets
 re-written to &quot;<code>WIN_NT</code>&quot;.).&nbsp; You should add this
 directory to your <code>PATH</code>.</p>
 
-<p>NOTE: If you do not have <a href="http://www.myri.com/scs/index.html">Myrinet
-GM libraries</a>, you should turn off GM support in the file <code>cr/util/Makefile</code>
-before building.&nbsp; There are instructions in that file.</p>
-
-<p>NOTE: A few compile-time options can be specified in the
-<code>options.mk</code> file.  DMX support and threadsafety options are
-specified in this file, for example.
-<p>
-
-<h3>Prerequisites</h3>
-<p>
-You'll need GLUT installed so that the demonstration programs will compile.
-</p>
 
 
 <p>Platform specific notes:</p>
 <ul>
-  <li><b>Any UNIX</b>: Shared libraries will be put in the directory <code> cr/lib/&lt;ARCH&gt;</code>.
+  <li><b>Any UNIX</b>: Shared libraries will be put in the directory <code> cr-X.Y/lib/&lt;ARCH&gt;</code>.
     You will need to add this directory to your <code> LD_LIBRARY_PATH</code> environment
     variable.&nbsp; Chromium builds a <i>lot</i> of shared libraries, so you
     can't skip this step.</li>
@@ -96,7 +114,7 @@ You'll need GLUT installed so that the demonstration programs will compile.
     (as opposed to the cygwin bash implementation), you will need to set the
     environment variable &quot;<code>MAKE_MODE</code>&quot; to the string &quot;<code>unix</code>&quot;.&nbsp;
     This lets <code>gmake</code> use <code> bash</code> as its subshell instead of the Windows shell,
-    which is required.&nbsp; Shared libraries on Windows get put in <code>cr/bin/WIN_NT</code>,
+    which is required.&nbsp; Shared libraries on Windows get put in <code>cr-X.Y/bin/WIN_NT</code>,
     which (since it's on your path, right?) will be searched automatically, so
     there's no <code> LD_LIBRARY_PATH</code> silliness.</li>
   <br>
@@ -135,15 +153,6 @@ You'll need GLUT installed so that the demonstration programs will compile.
 </ul>
 
 
-<h3>Build Options</h3>
-
-<p>
-See the cr/options.mk file for some configuration options which control
-thread safety, debug vs release, DMX support, etc.
-</p>
-
-
-
 
 <h2 class="PageSubHeading">Special Notes</h2>
 
@@ -161,7 +170,7 @@ instead of /usr/lib/, thus avoiding some thread-related problems.
 <h3>Additional Compiler Optimizations</h3>
 
 <p>
-Look at the <code>cr/config/Linux.mk</code> for some additional gcc
+Look at the <code>cr-X.Y/config/Linux.mk</code> for some additional gcc
 compiler flags that can increase performance on x86 Linux systems.
 </p>
 
