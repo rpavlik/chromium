@@ -458,13 +458,18 @@ void STATE_APIENTRY crStateDisableClientState (GLenum array)
 	setClientState(c, cb, g->neg_bitid, array, GL_FALSE);
 }
 
-static void crStateClientSetPointer (CRClientPointer *cp, GLint size, 
-		GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer) 
+static void
+crStateClientSetPointer(CRClientPointer *cp, GLint size, 
+												GLenum type, GLboolean normalized,
+												GLsizei stride, const GLvoid *pointer) 
 {
+	CRContext *g = GetCurrentContext();
+
 	cp->p = (unsigned char *) pointer;
 	cp->size = size;
 	cp->type = type;
 	cp->normalized = normalized;
+
 	/* Calculate the bytes per index for address calculation */
 	cp->bytesPerIndex = size;
 	switch (type) 
@@ -487,7 +492,8 @@ static void crStateClientSetPointer (CRClientPointer *cp, GLint size,
 			cp->bytesPerIndex *= sizeof(GLdouble);
 			break;
 		default:
-			crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "Unknown type of vertex array: %d", type );
+			crStateError( __LINE__, __FILE__, GL_INVALID_VALUE,
+										"Unknown type of vertex array: %d", type );
 			return;
 	}
 
@@ -501,6 +507,10 @@ static void crStateClientSetPointer (CRClientPointer *cp, GLint size,
 		cp->stride = stride;
 	else
 		cp->stride = cp->bytesPerIndex;
+
+#ifdef CR_ARB_vertex_buffer_object
+	cp->buffer = g->bufferobject.arrayBuffer;
+#endif
 }
 
 void STATE_APIENTRY crStateVertexPointer(GLint size, GLenum type, 
@@ -531,9 +541,6 @@ void STATE_APIENTRY crStateVertexPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->array.v), size, type, GL_FALSE, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.v.buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->v, g->neg_bitid);
@@ -569,9 +576,6 @@ void STATE_APIENTRY crStateColorPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->array.c), size, type, GL_TRUE, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.c.buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->c, g->neg_bitid);
@@ -613,9 +617,6 @@ void STATE_APIENTRY crStateSecondaryColorPointerEXT(GLint size,
 	}
 
 	crStateClientSetPointer(&(c->array.s), size, type, GL_TRUE, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.s.buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->s, g->neg_bitid);
@@ -644,9 +645,6 @@ void STATE_APIENTRY crStateIndexPointer(GLenum type, GLsizei stride,
 	}
 
 	crStateClientSetPointer(&(c->array.i), 1, type, GL_TRUE, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.i.buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->i, g->neg_bitid);
@@ -676,9 +674,6 @@ void STATE_APIENTRY crStateNormalPointer(GLenum type, GLsizei stride,
 	}
 
 	crStateClientSetPointer(&(c->array.n), 3, type, GL_TRUE, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.n.buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->n, g->neg_bitid);
@@ -712,9 +707,6 @@ void STATE_APIENTRY crStateTexCoordPointer(GLint size, GLenum type,
 	}
 
 	crStateClientSetPointer(&(c->array.t[c->curClientTextureUnit]), size, type, GL_FALSE, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.t[c->curClientTextureUnit].buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->t[c->curClientTextureUnit], g->neg_bitid);
@@ -736,9 +728,6 @@ void STATE_APIENTRY crStateEdgeFlagPointer(GLsizei stride, const GLvoid *p)
 	}
 
 	crStateClientSetPointer(&(c->array.e), 1, GL_UNSIGNED_BYTE, GL_FALSE, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.e.buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->e, g->neg_bitid);
@@ -768,9 +757,6 @@ void STATE_APIENTRY crStateFogCoordPointerEXT(GLenum type, GLsizei stride, const
 	}
 
 	crStateClientSetPointer(&(c->array.f), 1, type, GL_FALSE, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.f.buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->f, g->neg_bitid);
@@ -825,9 +811,6 @@ void STATE_APIENTRY crStateVertexAttribPointerARB(GLuint index, GLint size, GLen
 	}
 
 	crStateClientSetPointer(&(c->array.a[index]), size, type, normalized, stride, p);
-#ifdef CR_ARB_vertex_buffer_object
-	c->array.a[index].buffer = g->bufferobject.arrayBuffer;
-#endif
 	DIRTY(cb->dirty, g->neg_bitid);
 	DIRTY(cb->clientPointer, g->neg_bitid);
 	DIRTY(cb->a[index], g->neg_bitid);
