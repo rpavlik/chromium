@@ -11,7 +11,7 @@ endif
 
 SHARED = 1
 LIBRARY = crutil
-FILES = bufpool debug_opcodes devnull dll environment error hash mem net pixel string tcpip url
+FILES = bufpool devnull dll environment error hash mem net pixel string tcpip url
 PRECOMP = debug_opcodes.c
 SLOP += ${PRECOMP}
 
