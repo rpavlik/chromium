@@ -211,6 +211,13 @@ Graphics, Inc. contributed many new features.</p>
 <p>1.0.1 Release:  November 7, 2002</p>
 
 <ul>
+  <li>New Features
+  <ul>
+    <li>Added ChromiumParameter*() functions to simplequery spu (David Jones)
+    <li>Added overlap_blending option to crserver (Karl Rasche)
+    <li>Render SPU swapbuffers synchronization (Karl Rasche)
+    <li>Added default_viewport option to feedbackSPU
+  </ul>
   <li>Bug Fixes
   <ul>
     <li>Fixed bug in binaryswap SPU when using 32 nodes (Mike Houston)
@@ -220,16 +227,10 @@ Graphics, Inc. contributed many new features.</p>
     <li>Fixed a few problems in the feedback SPU (Brian Paul)
     <li>glIsList() with tilesort didn't work.
     <li>glDeleteLists() with a non-list index no longer causes an exit.
-    <li>Add option 'default_viewport' to feedbackSPU.
     <li>Fixed RasterPos calculation of transformed Z component.
     <li>Fixed FP exceptions caused by a bug in crPackMultiTexCoord functions
     <li>glPush/PopAttrib() didn't handle texture state correctly.
   </ul>
-  <li>New
-  <ul>
-    <li>Added ChromiumParameter functions to simplequery spu (David Jones)
-    <li>Added overlap_blending option to crserver (Karl Rasche)
-    <li>Render SPU swapbuffers synchronization (Karl Rasche)
 </ul>
 
 
