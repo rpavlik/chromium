@@ -66,6 +66,96 @@ static struct {
 
 
 /**
+ * Helper routine used by both crNetConnectToServer() and crNetAcceptClient().
+ * Call the protocol-specific Init() and Connection() functions.
+ *
+ */
+static void
+InitConnection(CRConnection *conn, const char *protocol, unsigned int mtu)
+{
+	if (!crStrcmp(protocol, "devnull"))
+	{
+		crDevnullInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crDevnullConnection(conn);
+	}
+	else if (!crStrcmp(protocol, "file") ||
+					 !crStrcmp(protocol, "swapfile"))
+	{	
+		cr_net.use_file++;
+		crFileInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crFileConnection(conn);
+	}
+	else if (!crStrcmp(protocol, "tcpip"))
+	{	
+		cr_net.use_tcpip++;
+		crTCPIPInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crTCPIPConnection(conn);
+	}
+	else if (!crStrcmp(protocol, "udptcpip"))
+	{	
+		cr_net.use_udp++;
+		crUDPTCPIPInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crUDPTCPIPConnection(conn);
+	}
+#ifdef GM_SUPPORT
+	else if (!crStrcmp(protocol, "gm"))
+	{
+		cr_net.use_gm++;
+		crGmInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crGmConnection(conn);
+	}
+#endif
+#ifdef TEAC_SUPPORT
+	else if (!crStrcmp(protocol, "quadrics"))
+	{
+		cr_net.use_teac++;
+		crTeacInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crTeacConnection(conn);
+	}
+#endif
+#ifdef TCSCOMM_SUPPORT
+	else if (!crStrcmp(protocol, "quadrics-tcscomm"))
+	{
+		cr_net.use_tcscomm++;
+		crTcscommInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crTcscommConnection(conn);
+	}
+#endif
+#ifdef SDP_SUPPORT
+	else if (!crStrcmp(protocol, "sdp"))
+	{	
+		cr_net.use_sdp++;
+		crSDPInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crSDPConnection(conn);
+	}
+#endif
+#ifdef IB_SUPPORT
+	else if (!crStrcmp(protocol, "ib"))
+	{	
+		cr_net.use_ib++;
+		crDebug("Calling crIBInit()");
+		crIBInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crIBConnection(conn);
+		crDebug("Done Calling crIBInit()");
+	}
+#endif
+#ifdef HP_MULTICAST_SUPPORT
+	else if (!crStrcmp(protocol, "hpmc"))
+	{	
+		cr_net.use_hpmc++;
+		crHPMCInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crHPMCConnection(conn);
+	}
+#endif
+	else
+	{
+		crError("Unknown protocol: \"%s\"", protocol);
+	}
+}
+
+
+
+/**
  * Establish a connection with a server.
  * \param server  the server to connect to, in the form
  *                "protocol://servername:port" where the port specifier
@@ -73,7 +163,8 @@ static struct {
  *                to be "tcpip".
  * \param default_port  the port to connect to
  * \param mtu  desired maximum transmission unit size (in bytes)
- * \param broker  broker flag (need more info)
+ * \param broker  either 1 or 0 to indicate if connection is brokered through
+ *                the mothership
  */
 CRConnection *
 crNetConnectToServer( const char *server, unsigned short default_port,
@@ -83,12 +174,15 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 	unsigned short port;
 	CRConnection *conn;
 
-	crDebug( "calling crNetConnectToServer( \"%s\", %d, %d, %d )", server, default_port, mtu, broker );
+	crDebug( "In crNetConnectToServer( \"%s\", port=%d, mtu=%d, broker=%d )",
+					 server, default_port, mtu, broker );
 
 	CRASSERT( cr_net.initialized );
+
 	if (mtu < CR_MINIMUM_MTU)
 	{
-		crError( "You tried to connect to server \"%s\" with an mtu of %d, but the minimum MTU is %d", server, mtu, CR_MINIMUM_MTU );
+		crError( "You tried to connect to server \"%s\" with an mtu of %d, "
+						 "but the minimum MTU is %d", server, mtu, CR_MINIMUM_MTU );
 	}
 
 	/* Tear the URL apart into relevant portions. */
@@ -107,6 +201,10 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 		(void) rv;
 	}
 
+	/* XXX why is this here???  I think it could be moved into the
+	 * crTeacConnection() function with no problem. I.e. change the
+	 * connection's port, teac_rank and tcscomm_rank there.  (BrianP)
+	 */
 	if ( !crStrcmp( protocol, "quadrics" ) ||
 	     !crStrcmp( protocol, "quadrics-tcscomm" ) ) {
 	  /* For Quadrics protocols, treat "port" as "rank" */
@@ -115,13 +213,9 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 		       port, CR_QUADRICS_LOWEST_RANK );
 	    port = CR_QUADRICS_LOWEST_RANK;
 	  }
-	  crDebug( "Connecting to server %s:%d via Quadrics",
-		   hostname, port );
 	}
-	else {
-	  crDebug( "Connecting to server %s on port %d, with protocol %s",
-		   hostname, port, protocol );
-	}
+	crDebug( "Connecting to server %s on port %d, with protocol %s",
+					 hostname, port, protocol );
 
 	/* This makes me ill, but we need to "fix" the hostname for sdp. MCH */
 	if (!crStrcmp(protocol, "sdp")) {
@@ -136,139 +230,38 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 	if (!conn)
 		return NULL;
 
+	/* init the non-zero fields */
 	conn->type               = CR_NO_CONNECTION; /* we don't know yet */
-	conn->id                 = 0;                /* Each connection has an id */
-	conn->total_bytes_sent   = 0;                /* how many bytes have we sent? */
-	conn->total_bytes_recv   = 0;                /* how many bytes have we recv? */
-	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
 	conn->hostname           = crStrdup( hostname );
 	conn->port               = port;
-	conn->Alloc              = NULL;                 /* How do we allocate buffers to send? */
-	conn->Send               = NULL;                 /* How do we send things? */
-	conn->Barf               = NULL;                 /* How do we barf things? */
-	conn->Free               = NULL;                 /* How do we free things? */
-	conn->tcp_socket         = 0;
-	conn->udp_socket         = 0;
-	conn->sdp_socket         = 0;
-	crMemset(&conn->remoteaddr, 0, sizeof(conn->remoteaddr));
-	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
 	conn->buffer_size        = mtu;
 	conn->broker             = broker;
-	conn->swap               = 0;
 	conn->endianness         = crDetermineEndianness();
-	conn->actual_network     = 0;
+	/* XXX why are these here??? Move them into the crTeacConnection()
+	 * and crTcscommConnection() functions.
+	 */
 	conn->teac_id            = -1;
 	conn->teac_rank          = port;
 	conn->tcscomm_id         = -1;
 	conn->tcscomm_rank       = port;
 
-	conn->multi.len = 0;
-	conn->multi.max = 0;
-	conn->multi.buf = NULL;
-
-	conn->messageList        = NULL;
-	conn->messageTail        = NULL;
-
-	conn->userbuf            = NULL;
-	conn->userbuf_len        = 0;
-
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
-	if ( !crStrcmp( protocol, "devnull" ) )
-	{
-		crDevnullInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crDevnullConnection( conn );
-	}
-	else if ( !crStrcmp( protocol, "file" ) )
-	{	
-		cr_net.use_file++;
-		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crFileConnection( conn );
-	}
-	else if ( !crStrcmp( protocol, "swapfile" ) )
-	{	cr_net.use_file++;
-		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crFileConnection( conn );
+	InitConnection(conn, protocol, mtu);
+	/* special case */
+	if (!crStrcmp(protocol, "swapfile")) {
 		conn->swap = 1;
-	}
-	else if ( !crStrcmp( protocol, "tcpip" ) )
-	{	
-		cr_net.use_tcpip++;
-		crDebug("Calling crTCPIPInit()");
-		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crDebug("Calling crTCPIPConnection");
-		crTCPIPConnection( conn );
-		crDebug("Done calling crTCPIPConnection");
-	}
-	else if ( !crStrcmp( protocol, "udptcpip" ) )
-	{	
-		cr_net.use_udp++;
-		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crUDPTCPIPConnection( conn );
-	}
-#ifdef GM_SUPPORT
-	else if ( !crStrcmp( protocol, "gm" ) )
-	{
-		cr_net.use_gm++;
-		crGmInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crGmConnection( conn );
-	}
-#endif
-#ifdef TEAC_SUPPORT
-	else if ( !crStrcmp( protocol, "quadrics" ) )
-	{
-		cr_net.use_teac++;
-		crTeacInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crTeacConnection( conn );
-	}
-#endif
-#ifdef TCSCOMM_SUPPORT
-	else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
-	{
-		cr_net.use_tcscomm++;
-		crTcscommInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crTcscommConnection( conn );
-	}
-#endif
-#ifdef SDP_SUPPORT
-	else if ( !crStrcmp( protocol, "sdp" ) )
-	{	
-		cr_net.use_sdp++;
-		crDebug("Calling crSDPInit()");
-		crSDPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crDebug("Calling crSDPConnection");
-		crSDPConnection( conn );
-		crDebug("Done calling crSDPConnection");
-	}
-#endif
-#ifdef IB_SUPPORT
-	else if ( !crStrcmp( protocol, "ib" ) )
-	{	
-		cr_net.use_ib++;
-		crDebug("Calling crIBInit()");
-		crIBInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crIBConnection( conn );
-		crDebug("Done Calling crIBInit()");
-	}
-#endif
-	else
-	{
-		crError( "Unknown Protocol: \"%s\"", protocol );
 	}
 
 	if (!crNetConnect( conn ))
 	{
-		crDebug("crNetConnect() failed, freeing the connection");
+		crDebug("crNetConnectToServer() failed, freeing the connection");
 		crFree( conn );
 		return NULL;
 	}
 
-	if (conn->swap)
-	{
-		crWarning( "crNetConnectToServer: Creating a byte-swapped connection!" );
-	}
-	crDebug( "Done connecting to server." );
+	crDebug( "Done connecting to server %s (swapping=%d)", server, conn->swap );
 	return conn;
 }
 
@@ -295,7 +288,14 @@ void crNetNewClient( CRConnection *conn, CRNetServer *ns )
 
 
 /**
- * Accept a client on various interfaces.
+ * Accept a connection from a client.
+ * \param protocol  the protocol to use (such as "tcpip" or "gm")
+ * \param hostname  optional hostname of the expected client (may be NULL)
+ * \param port  number of the port to accept on
+ * \param mtu  maximum transmission unit
+ * \param broker  either 1 or 0 to indicate if connection is brokered through
+ *                the mothership
+ * \return  new CRConnection object, or NULL
  */
 CRConnection *
 crNetAcceptClient( const char *protocol, const char *hostname,
@@ -309,53 +309,26 @@ crNetAcceptClient( const char *protocol, const char *hostname,
 	if (!conn)
 		return NULL;
 
+	/* init the non-zero fields */
 	conn->type               = CR_NO_CONNECTION; /* we don't know yet */
-	conn->id                 = 0;                /* Each connection has an id */
-	conn->total_bytes_sent   = 0;              /* how many bytes have we sent? */
-	conn->total_bytes_recv   = 0;              /* how many bytes have we recv? */
-	conn->send_credits       = 0;
 	conn->recv_credits       = CR_INITIAL_RECV_CREDITS;
-	/*conn->hostname           = crStrdup( hostname ); */
 	conn->port               = port;
-	conn->Alloc              = NULL;    /* How do we allocate buffers to send? */
-	conn->Send               = NULL;    /* How do we send things? */
-	conn->Barf               = NULL;    /* How do we barf things? */
-	conn->Free               = NULL;    /* How do we receive things? */
-	conn->tcp_socket         = 0;
-	conn->udp_socket         = 0;
-	crMemset(&conn->remoteaddr, 0, sizeof(conn->remoteaddr));
-	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
 	conn->buffer_size        = mtu;
 	conn->broker             = broker;
-	conn->swap               = 0;
 	conn->endianness         = crDetermineEndianness();
-	conn->actual_network     = 0;
 	conn->teac_id            = -1;
 	conn->teac_rank          = -1;
 	conn->tcscomm_id         = -1;
 	conn->tcscomm_rank       = -1;
 
-	conn->multi.len = 0;
-	conn->multi.max = 0;
-	conn->multi.buf = NULL;
-
-	conn->messageList        = NULL;
-	conn->messageTail        = NULL;
-
-	conn->userbuf            = NULL;
-	conn->userbuf_len        = 0;
-
-
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
-	crDebug("In net accept client");
-	if ( !crStrcmp( protocol, "devnull" ) )
-	{
-		crDevnullInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crDevnullConnection( conn );
-	}
-	else if ( !crStrncmp( protocol, "file", crStrlen( "file" ) ) ||
-						!crStrncmp( protocol, "swapfile", crStrlen( "swapfile" ) ) )
+	crDebug("In crNetAcceptClient( protocol=\"%s\" port=%d mtu=%d )",
+					protocol, (int) port, (int) mtu);
+
+	/* special case */
+	if ( !crStrncmp( protocol, "file", crStrlen( "file" ) ) ||
+			 !crStrncmp( protocol, "swapfile", crStrlen( "swapfile" ) ) )
 	{
 		char filename[4096];
 		cr_net.use_file++;
@@ -364,76 +337,21 @@ crNetAcceptClient( const char *protocol, const char *hostname,
 			crError( "Malformed URL: \"%s\"", protocol );
 		}
 		conn->hostname = crStrdup( filename );
-		crFileInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crFileConnection( conn );
 	}
-	else if ( !crStrcmp( protocol, "tcpip" ) )
-	{
-		cr_net.use_tcpip++;
-		crTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crTCPIPConnection( conn );
-	}
-	else if ( !crStrcmp( protocol, "udptcpip" ) )
-	{
-		cr_net.use_udp++;
-		crUDPTCPIPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crUDPTCPIPConnection( conn );
-	}
-#ifdef GM_SUPPORT
-	else if ( !crStrcmp( protocol, "gm" ) )
-	{
-		cr_net.use_gm++;
-		crGmInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crGmConnection( conn );
-	}
-#endif
-#ifdef TEAC_SUPPORT
-	else if ( !crStrcmp( protocol, "quadrics" ) )
-	{
-		cr_net.use_teac++;
-		crTeacInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crTeacConnection( conn );
-	}
-#endif
-#ifdef TCSCOMM_SUPPORT
-	else if ( !crStrcmp( protocol, "quadrics-tcscomm" ) )
-	{
-		cr_net.use_tcscomm++;
-		crTcscommInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crTcscommConnection( conn );
-	}
-#endif
-#ifdef SDP_SUPPORT
-	else if ( !crStrcmp( protocol, "sdp" ) )
-	{
-		cr_net.use_sdp++;
-		crSDPInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crSDPConnection( conn );
-	}
-#endif
-#ifdef IB_SUPPORT
-	else if ( !crStrcmp( protocol, "ib" ) )
-	{
-		cr_net.use_ib++;
-		crDebug("Calling crIBInit() from crNetAcceptClient");
-		crIBInit( cr_net.recv_list, cr_net.close_list, mtu );
-		crIBConnection( conn );
-		crDebug("Done Calling crIBInit()");
-	}
-#endif
-	else
-	{
-		crError( "Unknown Protocol: \"%s\"", protocol );
-	}
+
+	/* call the protocol-specific init routines */
+	InitConnection(conn, protocol, mtu);
 
 	crNetAccept( conn, hostname, port );
 	return conn;
 }
 
-/* Start the ball rolling.  give functions to handle incoming traffic
- * (usually placing blocks on a queue), and a handler for dropped
- * connections. */
 
+/**
+ * Start the ball rolling.  give functions to handle incoming traffic
+ * (usually placing blocks on a queue), and a handler for dropped
+ * connections.
+ */
 void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 {
 	CRNetReceiveFuncList *rfl;
@@ -441,7 +359,7 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 
 	if ( cr_net.initialized )
 	{
-		crDebug( "Networking already initialized!" );
+		/*crDebug( "Networking already initialized!" );*/
 	}
 	else
 	{
@@ -841,9 +759,8 @@ void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
 		case CR_MESSAGE_READBACK:
 			crNetRecvReadback( &(msg->readback), len );
 			return;
-	        case CR_MESSAGE_CRUT:
-		  {
-		  }
+		case CR_MESSAGE_CRUT:
+			/* nothing */
 		  break;
 		default:
 			/* We can end up here if anything strange happens in
@@ -1050,7 +967,6 @@ void
 crNetSetRank( int my_rank )
 {
 	cr_net.my_rank = my_rank;
-	crDebug( "crNetSetRank:  set my_rank to %d", cr_net.my_rank );
 #ifdef TEAC_SUPPORT
 	crTeacSetRank( cr_net.my_rank );
 #endif

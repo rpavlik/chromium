@@ -434,32 +434,25 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 #endif
 	}
 	
-	if (conn->broker)
-	{
+	/* If brokered, we'll contact the mothership to broker the network
+	 * connection.  We'll send the mothership our hostname, the port and
+	 * our endianness and will get in return a connection ID number.
+	 */
+	if (conn->broker) {
 		CRConnection *mother;
 		char response[8096];
 		char my_hostname[256];
-		char *temp;
 
 		mother = __copy_of_crMothershipConnect( );
 		
-		if (!hostname)
-		{
-			if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
-			{
+		if (!hostname) {
+			if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) ) {
 				crError( "Couldn't determine my own hostname in crTCPIPAccept!" );
 			}
 		}
 		else
 			crStrcpy(my_hostname, hostname);
 		
-#if 0
-		/* XXX why is this done??? (Brian asks) */
-		temp = crStrchr( my_hostname, '.' );
-		if (temp) *temp='\0';
-#else
-		(void) temp;
-#endif
 		if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest tcpip %s %d %d", my_hostname, conn->port, conn->endianness ) )
 		{
 			crError( "Mothership didn't like my accept request request" );
@@ -543,8 +536,6 @@ crTCPIPAlloc( CRConnection *conn )
 		crDebug( "Buffer pool %p was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
 			 cr_tcpip.bufpool,
 			 (unsigned int)sizeof(CRTCPIPBuffer) + conn->buffer_size, &cr_tcpip.bufpool );
-		crDebug("sizeof(CRTCPIPBuffer): %d", (unsigned int)sizeof(CRTCPIPBuffer));
-		crDebug("sizeof(conn->buffer_size): %d", conn->buffer_size);
 		buf = (CRTCPIPBuffer *) 
 			crAlloc( sizeof(CRTCPIPBuffer) + conn->buffer_size );
 		buf->magic = CR_TCPIP_BUFFER_MAGIC;
@@ -1085,7 +1076,6 @@ crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 	}
 
 	cr_tcpip.initialized = 1;
-	crDebug("Initializing TCPIP\n");
 
 	cr_tcpip.num_conns = 0;
 	cr_tcpip.conns     = NULL;
@@ -1157,6 +1147,10 @@ crTCPIPDoConnect( CRConnection *conn )
 	}
 #endif
 
+	/* If brokered, we'll contact the mothership to broker the network
+	 * connection.  We'll send the mothership our hostname, the port and
+	 * our endianness and will get in return a connection ID number.
+	 */
 	if (conn->broker)
 	{
 		CRConnection *mother;
@@ -1177,11 +1171,11 @@ crTCPIPDoConnect( CRConnection *conn )
 
 		sscanf( response, "%u %d", &(conn->id), &(remote_endianness) );
 
-		if (conn->endianness != remote_endianness)
-		{
+		if (conn->endianness != remote_endianness) {
 			conn->swap = 1;
 		}
 	}
+
 #ifndef ADDRINFO
 	for (i=1;i;)
 #else
@@ -1296,6 +1290,11 @@ crTCPIPDoDisconnect( CRConnection *conn )
 	}
 }
 
+
+/*
+ * Initialize a CRConnection for tcp/ip.  This is called via the
+ * crNetAcceptClient() and crNetConnectToServer() functions.
+ */
 void
 crTCPIPConnection( CRConnection *conn )
 {
@@ -1339,6 +1338,7 @@ crTCPIPConnection( CRConnection *conn )
 	}
 }
 
+
 int crGetHostname( char *buf, unsigned int len )
 {
 	char *override = NULL;
@@ -1352,15 +1352,9 @@ int crGetHostname( char *buf, unsigned int len )
 	}
 	else
 		ret = gethostname( buf, len );
-	/*if (ret) 
-	 *{ 
-		 *int err = crTCPIPErrno(); 
-		 *crWarning( "Couldn't get hostname: %s", crTCPIPErrorString( err ) ); 
-	 *} */
-
-
 	return ret;
 }
+
 
 CRConnection** crTCPIPDump( int *num )
 {
