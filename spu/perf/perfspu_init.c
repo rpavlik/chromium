@@ -10,7 +10,9 @@
 #include "cr_error.h"
 #include "perfspu.h"
 #include <fcntl.h>
+#ifndef WINDOWS
 #include <unistd.h>
+#endif
 
 extern SPUNamedFunctionTable perf_table[];
 perfSPU perf_spu;
