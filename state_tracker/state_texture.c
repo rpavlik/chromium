@@ -3130,7 +3130,10 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 	{
 		if (CHECKDIRTY(t->enable[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i+GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			if (from->unit[i].enabled1D != to->unit[i].enabled1D) 
 			{
 				able[to->unit[i].enabled1D](GL_TEXTURE_1D);
@@ -3185,7 +3188,10 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 
 		if (CHECKDIRTY(t->current[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			if (from->unit[i].currentTexture1D->name != to->unit[i].currentTexture1D->name) 
 			{
 				diff_api.BindTexture(GL_TEXTURE_1D, to->unit[i].currentTexture1D->name);
@@ -3217,7 +3223,10 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 
 		if (CHECKDIRTY(t->objGen[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 
 			if (from->unit[i].objSCoeff.x != to->unit[i].objSCoeff.x ||
 				  from->unit[i].objSCoeff.y != to->unit[i].objSCoeff.y ||
@@ -3276,7 +3285,10 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 		}
 		if (CHECKDIRTY(t->eyeGen[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			diff_api.MatrixMode(GL_MODELVIEW);
 			diff_api.PushMatrix();
 			diff_api.LoadIdentity();
@@ -3337,7 +3349,10 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 		}
 		if (CHECKDIRTY(t->gen[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			if (from->unit[i].gen.s != to->unit[i].gen.s ||
 				from->unit[i].gen.t != to->unit[i].gen.t ||
 				from->unit[i].gen.r != to->unit[i].gen.r ||
@@ -3356,7 +3371,10 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 /* Texture enviroment */
 		if (CHECKDIRTY(t->envBit[i], bitID)) 
 		{
-			diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+			if (fromCtx->texture.curTextureUnit != i) {
+				diff_api.ActiveTextureARB( i + GL_TEXTURE0_ARB );
+				fromCtx->texture.curTextureUnit = i;
+			}
 			if (from->unit[i].envMode != to->unit[i].envMode) 
 			{
 				diff_api.TexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, to->unit[i].envMode);
@@ -3477,7 +3495,9 @@ void crStateTextureSwitch( CRTextureBits *t, CRbitvalue *bitID,
 		}
 	}
 
-	diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
+ 	/* After possible fiddling with the active unit, put it back now */
+ 	if (fromCtx->texture.curTextureUnit != toCtx->texture.curTextureUnit)
+ 		diff_api.ActiveTextureARB( toCtx->texture.curTextureUnit + GL_TEXTURE0_ARB );
 }
 
 /* 
