@@ -2,11 +2,11 @@
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
+:colorMaterial:colorMaterialFace,colorMaterialMode:ColorMaterial
 :enable:lighting:GL_LIGHTING
 :enable:colorMaterial:GL_COLOR_MATERIAL
 :enable:colorSumEXT:GL_COLOR_SUM_EXT
 :shadeModel:shadeModel:ShadeModel
-:colorMaterial:colorMaterialFace,colorMaterialMode:ColorMaterial
 %flush
 +>if (!to->lighting) {
 +>INVERTDIRTY(b->dirty, nbitID);
