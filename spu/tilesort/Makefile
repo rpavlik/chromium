@@ -12,6 +12,6 @@ SLOP = $(PRECOMP)
 LIB_DEFS += tilesort.def
 include ${TOP}/cr.mk
 
-tilesortspu.c: tilesort.py tilesort_special tilesort_state_special
+tilesortspu.c: tilesort.py tilesort_special tilesort_state_special tilesort_unimplemented_special
 	@$(ECHO) Building the TileSort SPU
 	@$(PYTHON) tilesort.py > $@

@@ -1,4 +1,3 @@
-Accum
 AlphaFunc
 AreTexturesResident
 BindTexture
@@ -65,7 +64,6 @@ GetTexParameteriv
 Hint
 IndexMask
 InitNames
-InterleavedArrays
 IsEnabled
 IsList
 IsTexture
@@ -179,3 +177,12 @@ TexSubImage2D
 Translated
 Translatef
 Viewport
+EnableClientState
+DisableClientState
+VertexPointer
+ColorPointer
+IndexPointer
+NormalPointer
+TexCoordPointer
+EdgeFlagPointer
+GetPointerv

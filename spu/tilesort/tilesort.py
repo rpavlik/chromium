@@ -21,7 +21,9 @@ print """#include <stdio.h>
 #include "cr_glwrapper.h"
 """
 
-print 'SPUNamedFunctionTable tilesort_table[%d];' % len(keys)
+num_funcs = len(keys) - len(stub_common.AllSpecials('tilesort_unimplemented'))
+
+print 'SPUNamedFunctionTable tilesort_table[%d];' % num_funcs
 
 print """
 static void __fillin( int offset, char *name, SPUGenericFunction func )
@@ -32,6 +34,8 @@ static void __fillin( int offset, char *name, SPUGenericFunction func )
 
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
+	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
+		continue
 	if stub_common.FindSpecial( "tilesort", func_name ):
 		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
@@ -40,6 +44,8 @@ print '{'
 for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, args, types) = gl_mapping[func_name]
+	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
+		continue
 	if stub_common.FindSpecial( "tilesort", func_name ):
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) tilesortspu_%s );' % (index, func_name, func_name )
 	elif stub_common.FindSpecial( "tilesort_state", func_name ):

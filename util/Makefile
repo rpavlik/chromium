@@ -13,7 +13,7 @@ FILES += gm
 LDFLAGS += user32.lib ws2_32.lib gm.lib
 endif
 
-ifdef LINUX
+ifeq ($(ARCH),Linux)
 CFLAGS += -DGM_SUPPORT
 FILES += gm
 LDFLAGS += -lgm

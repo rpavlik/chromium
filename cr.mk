@@ -107,7 +107,7 @@ else
 LIBNAME := dummy_libname
 endif
 
-TEMPFILES := *~ \\\#*\\\#
+TEMPFILES := *~ \\\#*\\\# so_locations *.pyc
 
 ifdef PROGRAM
 PROG_TARGET := $(BINDIR)/$(PROGRAM)
