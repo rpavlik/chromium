@@ -16,6 +16,9 @@
 #include <windows.h>
 #include <stdio.h>
 
+/* For optimizing wglMakeCurrent */
+static HDC currenthdc = NULL;
+static HGLRC currenthglrc = NULL;
 
 int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd )
 {
@@ -95,9 +98,22 @@ BOOL WINAPI wglDeleteContext_prox( HGLRC hglrc )
 
 BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 {
-	stubMakeCurrent( hdc, hglrc );
+	BOOL retVal;
 
-	return 1;
+	if (hdc == NULL && hglrc == NULL) {
+		currenthdc = NULL;
+		currenthglrc = NULL;
+		return 1;
+	}
+
+	retVal = stubMakeCurrent( hdc, hglrc );
+
+	if (retVal) {
+		currenthglrc = hglrc;
+		currenthdc = hdc;
+	}
+
+	return retVal;
 }
 
 HGLRC WINAPI wglGetCurrentContext_prox( void )
