@@ -283,8 +283,30 @@ Chromium configuration uses this SPU.
 <h2 class="PageSubHeading">Pack SPU</h2>
 <p>
 The Pack SPU simply packs all the OpenGL commands into buffer which are
-sent to the downstream server.  The Pack SPU has no configuration options.
+sent to the downstream server.
 </p>
+</p>
+<table border="1" width="100%" height="149">
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="115%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">swapbuffer_sync</td>
+    <td width="12%" class="ConfigType" height="74">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="74">If set to 1, do a
+      synchronization operation in SwapBuffers to that the pack SPU
+      doesn't buffer up frames faster than can be rendered downstream.
+      The default is 1.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">emit_GATHER_POST_SWAPBUFFERS</td>
+    <td width="12%" class="ConfigType" height="38">Bool</td>
+    <td width="115%" class="ConfigDesc" height="38">Purpose?
+    </td>
+  </tr>
+</table>
 
 
 <a name="readback">
@@ -336,7 +358,6 @@ configuration options that the render SPU accepts, plus a few more:
       than sending the RGB image.  This allows one to see the Z buffer
       values as a grayscale image.  The default is 0.</td>
   </tr>
-
   <tr>
     <td width="19%" class="ConfigOption" height="38">gather_url</td>
     <td width="12%" class="ConfigType" height="38">String</td>
