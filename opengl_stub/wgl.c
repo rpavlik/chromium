@@ -1,4 +1,4 @@
-/* Copyright (c) 2001, Stanford University
+
  * All rights reserved
  *
  * See the file LICENSE.txt for information on redistributing this software.
@@ -47,7 +47,7 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 			pfd->cGreenBits > 8  ||
 			pfd->cBlueBits  > 8  ||
 			pfd->cAlphaBits > 8 ) {
-		crError( "wglChoosePixelFormat: too much color precision requested\n" );
+		crWarning( "wglChoosePixelFormat: too much color precision requested\n" );
 	}
 
 	if ( pfd->cAccumBits      > 0 ||
@@ -55,7 +55,7 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 			pfd->cAccumGreenBits > 0 ||
 			pfd->cAccumBlueBits  > 0 ||
 			pfd->cAccumAlphaBits > 0 ) {
-		crError( "wglChoosePixelFormat: asked for accumulation buffer, ignoring\n" );
+		crWarning( "wglChoosePixelFormat: asked for accumulation buffer, ignoring\n" );
 	}
 
 	if ( pfd->cDepthBits > 32 ) {
