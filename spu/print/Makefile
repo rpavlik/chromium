@@ -18,7 +18,7 @@ FILES = printspu \
 
 LIBRARIES = crutil crmothership spuload
 
-PRECOMP = printspu.c printspu_enums.c
+PRECOMP = printspu.c
 SLOP = $(PRECOMP)
 
 SPU_COPIES = COPYprintspu
