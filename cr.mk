@@ -310,7 +310,6 @@ ifdef SPU_COPIES
 COPY_TARGETS := $(foreach copy, $(SPU_COPIES), $(TOP)/built/$(copy)/$(ARCH)/$(LIBPREFIX)$(copy)$(DLLSUFFIX) )
 
 copies: 
-	@$(ECHO) "COPY_TARGETS = $(COPY_TARGETS)"
 	@$(MAKE) relink
 else
 copies:
