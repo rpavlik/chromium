@@ -69,6 +69,7 @@ SPU index
 </li><li><a href="#saveframe">Saveframe</a>
 </li><li><a href="#simplequery">Simplequery</a>
 </li><li><a href="#tilesort">Tilesort</a>
+</li><li><a href="#vnc">VNC</a>
 </li><li><a href="#wet">Wet</a>
 </li><li><a href="#zpix">ZPix</a>
 </li></ul>
@@ -917,10 +918,6 @@ SwapBuffers is called.  It's useful for "screengrabs".
 
     </td>
   </tr>
-  
-  
-  
-  
   <tr>
     <td width="19%" class="ConfigOption" height="38">single</td>
     <td width="12%" class="ConfigType" height="38">Integer</td>
@@ -986,30 +983,43 @@ The tilesort SPU must be the last SPU in the chain and be connected to
 one or more downstream servers.
 </a></p>
 <table border="1" width="100%" height="149">
-  <tbody><tr class="ConfigTableHeader">
+<tbody>
+  <tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="38">auto_dlist_bbox</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
+    <td width="19%" class="ConfigOption" height="38">auto_dlist_bbox</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
 	If set, automatically compute/use bounding boxes for display lists
         and bucketing.
         Without bounding boxes, all glCallList calls are broadcast to all
 	servers.
-        The default is 0 (off).</td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">bbox_line_width</td><td width="12%" class="ConfigType" height="38">Float</td><td width="100%" class="ConfigDesc" height="38">The width in pixels of the
-	lines used to draw the bounding box.&nbsp; If the <code>draw_bbox</code>
-	flag is not set, this parameter has no effect.&nbsp; The default is 5.</td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">bbox_scale</td><td width="12%" class="ConfigType" height="38">Float</td><td width="100%" class="ConfigDesc" height="38">
+        The default is 0 (off).
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">bbox_line_width</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+    <td width="100%" class="ConfigDesc" height="38">The width in pixels of the
+      lines used to draw the bounding box.&nbsp; If the <code>draw_bbox</code>
+      flag is not set, this parameter has no effect.&nbsp; The default is 5.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">bbox_scale</td>
+    <td width="12%" class="ConfigType" height="38">Float</td>
+    <td width="100%" class="ConfigDesc" height="38">
         Specifies a scaling factor for bounding boxes.
         This is useful for vertex programs which perturb vertex positions.
         By setting the scale factor to 2.0, for example, you can be sure
         that warped/perturbed geometry still lies inside the bounding box.
-	The default is 1.</td></tr>
-<tr>
+	The default is 1.
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">bucket_mode</td>
     <td width="12%" class="ConfigType" height="38">Enum</td>
     <td width="100%" class="ConfigDesc" height="38">
@@ -1036,34 +1046,48 @@ one or more downstream servers.
           Geometry is tested for intersection with each server's viewing
           frustum.
       </li></ul>
-  </td></tr>
-
+    </td>
+  </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="38">dlist_state_tracking</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-    If set, record state changes in display lists to keep GL state consistant.
-    There is a performance penalty for enabling state tracking.
-    The default is 0 (off).
-  </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">draw_bbox</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">If this flag is set, the
+    <td width="19%" class="ConfigOption" height="38">dlist_state_tracking</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If set, record state changes in display lists to keep GL state
+      consistant.
+      There is a performance penalty for enabling state tracking.
+      The default is 0 (off).
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">draw_bbox</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">If this flag is set, the
       Tilesort SPU will add commands to the stream to draw the object-space
       bounding box around each block of geometry that is sent.&nbsp; This is
       useful for seeing the computed granularity of work, but it makes the
       stream of graphics commands more complex and uses some slow OpenGL
-      commands like <code>glPushAttrib</code>.&nbsp; The default is 0.</td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">emit_GATHER_POST_SWAPBUFFERS</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-    Emit a glChromiumParameteri After SwapBuffers.
-    The default is 0 (off).
-  </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">force_quad_bufferingf</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-    If set, force a non-stereo application into stereo mode.
-    Each frame will be rendered twice, once with glDrawBuffer(GL_LEFT) and
-    once with glDrawBuffer(GL_RIGHT).
-    Off by default.
-  </td></tr>
-<tr>
+      commands like <code>glPushAttrib</code>.&nbsp; The default is 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">emit_GATHER_POST_SWAPBUFFERS</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Emit a glChromiumParameteri After SwapBuffers.
+      The default is 0 (off).
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">force_quad_bufferingf</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      If set, force a non-stereo application into stereo mode.
+      Each frame will be rendered twice, once with glDrawBuffer(GL_LEFT) and
+      once with glDrawBuffer(GL_RIGHT).
+      Off by default.
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">scale_to_mural_size</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="100%" class="ConfigDesc" height="38">If set to 1, the OpenGL
@@ -1099,27 +1123,37 @@ one or more downstream servers.
       parameters are <i>not</i> set, and there is no client window, using <code>glViewport</code>
       or <code>glScissor</code> will cause a fatal run-time error.</td>
   </tr>
-
   <tr>
-<td width="19%" class="ConfigOption" height="38">glasses_type</td><td width="12%" class="ConfigType" height="38">Enum</td><td width="100%" class="ConfigDesc" height="38">
-    Specifies the type of colored glasses used for anaglyph stereo mode.
-    May be one of <b>RedBlue, RedGreen, RedCyan, BlueRed, GreenRed,
-    CyanRed</b>.
-    The default is RedBlue.
-  </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">lazy_send_dlists</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-	
-    Send display lists to servers only when needed (lazy).
-    Display lists are sent to each server as needed (by testing bounding
-    boxes) instead of broadcasting the lists to all servers.
-    The default is 0 (off; broadcast to all servers).</td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">local_tile_spec</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
-    Specify Tiles Relative to Displays (see <a href="file:///notnfs/alanm/Tar/CT/cr/doc/warped_tile.html">Warped Tile Sorting</a>) .
-    The default is 0 (off).
-  </td></tr>
-<tr>
+    <td width="19%" class="ConfigOption" height="38">glasses_type</td>
+    <td width="12%" class="ConfigType" height="38">Enum</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Specifies the type of colored glasses used for anaglyph stereo mode.
+      May be one of <b>RedBlue, RedGreen, RedCyan, BlueRed, GreenRed,
+      CyanRed</b>.
+      The default is RedBlue.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">lazy_send_dlists</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Send display lists to servers only when needed (lazy).
+      Display lists are sent to each server as needed (by testing bounding
+      boxes) instead of broadcasting the lists to all servers.
+      The default is 0 (off; broadcast to all servers).
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">local_tile_spec</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Specify Tiles Relative to Displays (see
+      <a href="file:///notnfs/alanm/Tar/CT/cr/doc/warped_tile.html">Warped
+      Tile Sorting</a>) .
+      The default is 0 (off).
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">scale_images</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="100%" class="ConfigDesc" height="38">
@@ -1127,7 +1161,6 @@ one or more downstream servers.
     match the mural's size.  glCopyPixels images are also scaled.
     The default is 0 (don't scale).</td>
   </tr>
-
   <tr>
     <td width="19%" class="ConfigOption" height="74">split_begin_end</td>
     <td width="12%" class="ConfigType" height="74">Boolean</td>
@@ -1139,12 +1172,15 @@ one or more downstream servers.
       buffer beyond the MTU.&nbsp; The default is 1.</td>
   </tr>
   <tr>
-<td width="19%" class="ConfigOption" height="38">stereo_mode</td><td width="12%" class="ConfigType" height="38">Enum</td><td width="100%" class="ConfigDesc" height="38">
-    Specifies the stereo rendering mode to use.
-    May be one of <b>None, Passive, CrystalEyes, SideBySide, Anaglyph</b>.
-    The default is None.
-  </td></tr>
-<tr>
+    <td width="19%" class="ConfigOption" height="38">stereo_mode</td>
+    <td width="12%" class="ConfigType" height="38">Enum</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Specifies the stereo rendering mode to use.
+      May be one of <b>None, Passive, CrystalEyes, SideBySide, Anaglyph</b>.
+      The default is None.
+    </td>
+  </tr>
+  <tr>
     <td width="19%" class="ConfigOption" height="38">sync_on_swap</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="100%" class="ConfigDesc" height="38">If this flag is set, the
@@ -1161,29 +1197,19 @@ one or more downstream servers.
       Tilesort SPU will wait for a <code>glFinish</code> call to be executed by
       all servers before continuing.&nbsp; The default is 1.</td>
   </tr>
-  
-  
-  
   <tr>
     <td width="19%" class="ConfigOption" height="38">use_dmx</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="100%" class="ConfigDesc" height="38">
-    This should be set to 1 if using DMX.  When set, this option makes the
-    tilesort SPU query the DMX server for updated window size/position
-    information whenever the application window size/position changes.
-    The DMX server information will be used to compute a new tile arrangment.
-    The default is 0.</td>
+      This should be set to 1 if using DMX.  When set, this option makes the
+      tilesort SPU query the DMX server for updated window size/position
+      information whenever the application window size/position changes.
+      The DMX server information will be used to compute a new tile arrangment.
+      The default is 0.
+    </td>
   </tr>
-  
-  
-  
-  
-  
-  
-  
-  
-
 </tbody></table>
+
 
 <h4><a name="tilesort">Additional notes on the Tilesort SPU and display lists</a></h4>
 
@@ -1224,12 +1250,64 @@ one or more downstream servers.
 
 
 
+<a name="vnc">
+</a><h2 class="PageSubHeading"><a name="vnc">VNC SPU</a></h2>
+<p>
+The VNC SPU allows one to view Chromium rendering remotely with a VNC viewer.
+The VNC SPU is derived from the Render SPU.
+It renders the incoming OpenGL command stream into a window.
+Upon SwapBuffers, the window contents are read back and saved into a buffer.
+In another thread, a VNC server is running.
+It accepts connections from VNC viewers and returns the window image that
+was saved in the buffer.
+</p>
+<p>
+For more information about VNC see
+<a href="http://www.realvnc.com/" target="_parent">RealVNC</a>, or
+<a href="http://www.tightvnc.com/" target="_parent">TightVNC</a>.
+</p>
+
+<table border="1" width="100%" height="149">
+<tbody>
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="100%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">server_port</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
+       The VNC port number.  Default is 5905.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">screen_size</td>
+    <td width="12%" class="ConfigType" height="38">2 Integers</td>
+    <td width="100%" class="ConfigDesc" height="38">
+       Width and height of the screen buffer.
+       Default is [1024, 768].
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">max_update_rate</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
+       Maximum frame rate at which to send updates to VNC clients/viewers.
+       Useful for load balancing.
+       Default is 10 frames per second.
+    </td>
+  </tr>
+</tbody>
+</table>
+
+
 
 <a name="wet">
 </a><h2 class="PageSubHeading"><a name="wet">Wet SPU</a></h2>
 <p>
-<a name="wet">The Wet SPU causes the image to appear wavy, as if viewed through water.
-</a></p>
+The Wet SPU causes the image to appear wavy, as if viewed through water.
+</p>
 <table border="1" width="100%" height="149">
   <tbody><tr class="ConfigTableHeader">
     <td width="19%" height="19">Parameter Name</td>
@@ -1299,7 +1377,7 @@ one or more downstream servers.
 <a name="zpix">
 </a><h2 class="PageSubHeading"><a name="zpix">ZPix SPU</a></h2>
 <p>
-<a name="zpix">The ZPix SPU offers frame differencing and some simple-minded compression 
+The ZPix SPU offers frame differencing and some simple-minded compression 
 schemes to reduce network bandwidth for glDrawPixels.
 ZPix was built to work with the ReadbackSPU and currently only
 handles frame buffer writes which begin at 0,0. 
