@@ -4,19 +4,8 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ..
-ifneq ($(ARCH), WIN_NT)
-ifneq ($(ARCH), WIN_98)
-ARCH=$(shell uname | sed -e 's/-//g')
-endif
-endif
 
-ifeq ($(ARCH),CYGWIN_NT5.0)
-ARCH=WIN_NT
-endif
-
-ifeq ($(ARCH),CYGWIN_NT5.1)
-ARCH=WIN_NT
-endif
+include ${TOP}/arch.mk
 
 SHARED = 1
 LIBRARY = crutil
@@ -41,11 +30,11 @@ FILES = bbox \
 PRECOMP = debug_opcodes.c
 SLOP += ${PRECOMP}
 
-ifeq ($(ARCH),Linux)
-CFLAGS += -DGM_SUPPORT
-FILES += gm
-LDFLAGS += -lgm
-endif
+#ifeq ($(ARCH),Linux)
+#CFLAGS += -DGM_SUPPORT
+#FILES += gm
+#LDFLAGS += -lgm
+#endif
 
 ifeq ($(ARCH), SunOS)
 LDFLAGS+= -lsocket -lnsl

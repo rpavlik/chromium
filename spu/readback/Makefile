@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = readbackspu
 FILES = readbackspu \
@@ -23,4 +25,5 @@ endif
 SLOP = $(PRECOMP)
 
 LIB_DEFS += readbackspu.def
+
 include ${TOP}/cr.mk

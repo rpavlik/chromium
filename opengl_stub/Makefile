@@ -5,32 +5,7 @@
 
 TOP = ..
 
-ifneq ($(ARCH), WIN_NT)
-ifneq ($(ARCH), WIN_98)
-ARCH=$(shell uname | sed -e 's/-//g')
-MACHTYPE=$(shell uname -m)
-endif
-endif
-
-ifeq ($(ARCH),CYGWIN_NT5.0)
-ARCH=WIN_NT
-endif
-
-ifeq ($(ARCH),CYGWIN_NT5.1)
-ARCH=WIN_NT
-endif
-
-ifeq ($(MACHTYPE),i686)
-MACHTYPE=i386
-endif
-
-ifeq ($(MACHTYPE),i586)
-MACHTYPE=i386
-endif
-
-ifeq ($(MACHTYPE),i486)
-MACHTYPE=i386
-endif
+include ${TOP}/arch.mk
 
 SHARED = 1
 LIBRARY = crfaker
@@ -104,6 +79,7 @@ PRECOMP = $(ARCH_EXPORTS) getprocaddress.c opengl.def
 SLOP = $(PRECOMP)
 
 LIB_DEFS = opengl.def
+
 include ${TOP}/cr.mk
 
 ifdef WINDOWS

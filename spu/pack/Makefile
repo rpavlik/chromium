@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = packspu
 FILES = packspu \
@@ -33,6 +35,7 @@ PRECOMP = packspu.c packspu_get.c packspu_flush.c packspu_pixel.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += pack.def
+
 include ${TOP}/cr.mk
 
 packspu.c: pack.py packspu_pixel_special packspu_special packspu_unimplemented_special

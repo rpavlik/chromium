@@ -7,10 +7,6 @@ TOP = ..
 
 SUBDIRS = tester options
 SUBDIRS += error nop pack passthrough print readback render template tilesort
-SUBDIRS += saveframe comm array binaryswap hiddenline fps wet perf
-
-ifneq ($(ARCH), WIN_NT)
-SUBDIRS += dist_texture
-endif
+SUBDIRS += saveframe comm array binaryswap hiddenline fps wet perf dist_texture
 
 include ${TOP}/cr.mk

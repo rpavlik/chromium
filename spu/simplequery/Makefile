@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = simplequeryspu
 FILES = simplequeryspu \
@@ -22,6 +24,7 @@ PRECOMP = simplequeryspu.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += simplequeryspu.def
+
 include ${TOP}/cr.mk
 
 simplequeryspu.c: simplequery.py simplequery_special

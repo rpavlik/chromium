@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = arrayspu
 FILES = arrayspu \
@@ -21,4 +23,5 @@ endif
 SLOP = $(PRECOMP)
 
 LIB_DEFS += arrayspu.def
+
 include ${TOP}/cr.mk

@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = hiddenlinespu
 FILES = hiddenlinespu \
@@ -32,6 +34,7 @@ PRECOMP = hiddenlinespu.c hiddenlinespu_pixel.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS += hiddenlinespu.def
+
 include ${TOP}/cr.mk
 
 ifeq ($(ARCH), WIN_NT)

@@ -4,6 +4,9 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ../..
+
+include ${TOP}/arch.mk
+
 PROGRAM = statecopytest
 FILES = statecopytest
 
@@ -13,6 +16,5 @@ LIBRARIES = crutil spuload crmothership
 else
 LIBRARIES = crutil spuload crmothership crstate
 endif
-
 
 include ${TOP}/cr.mk

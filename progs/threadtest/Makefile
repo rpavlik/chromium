@@ -3,14 +3,9 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-ifneq ($(ARCH), WIN_NT)
-ifneq ($(ARCH), WIN_98)
-ARCH=$(shell uname | sed -e 's/-//g')
-MACHTYPE=$(shell uname -m)
-endif
-endif
-
 TOP = ../..
+
+include ${TOP}/arch.mk
 
 PROGRAM = threadtest
 FILES = threadtest

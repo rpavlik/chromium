@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = dist_texturespu
 FILES = dist_texturespu \
@@ -18,4 +20,5 @@ PRECOMP =
 SLOP = $(PRECOMP)
 
 LIB_DEFS += dist_texturespu.def
+
 include ${TOP}/cr.mk

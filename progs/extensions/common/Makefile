@@ -5,6 +5,8 @@
 
 TOP = ../../..
 
+include ${TOP}/arch.mk
+
 LIBRARY = crextensionscommon
 FILES = logo
 SHARED = 1

@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = tilesortspu
 FILES = tilesortspu \
@@ -44,6 +46,7 @@ PRECOMP = tilesortspu.c tilesortspu_lists.c tilesortspu_diffapi.c tilesortspu_pi
 SLOP = $(PRECOMP)
 
 LIB_DEFS += tilesort.def
+
 include ${TOP}/cr.mk
 
 ifdef WINDOWS

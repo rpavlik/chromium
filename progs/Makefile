@@ -5,19 +5,7 @@
 
 TOP = ..
 
-ifneq ($(ARCH), WIN_NT)
-ifneq ($(ARCH), WIN_98)
-ARCH=$(shell uname | sed -e 's/-//g')
-endif
-endif
-
-ifeq ($(ARCH), CYGWIN_NT5.0)
-ARCH=WIN_NT
-endif
-
-ifeq ($(ARCH), CYGWIN_NT5.1)
-ARCH=WIN_NT
-endif
+include ${TOP}/arch.mk
 
 SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit retile \
 	statecopytest tiletest
@@ -27,6 +15,5 @@ SUBDIRS += wgl
 else
 SUBDIRS += glx threadtest
 endif
-
 
 include ${TOP}/cr.mk
