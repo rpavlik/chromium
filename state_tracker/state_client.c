@@ -411,7 +411,7 @@ static void setClientState(CRClientState *c, CRClientBits *cb,
 			c->array.e.enabled = state;
 			break;	
 #ifdef CR_EXT_fog_coord
-		case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
+		case GL_FOG_COORDINATE_ARRAY_EXT:
 			c->array.f.enabled = state;
 			break;
 #endif
