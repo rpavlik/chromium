@@ -263,6 +263,8 @@ static void RENDER_APIENTRY renderspuWindowSize( GLint window, GLint w, GLint h 
 {
 	CRASSERT(window >= 0);
 	CRASSERT(window < MAX_WINDOWS);
+	CRASSERT(w > 0);
+	CRASSERT(h > 0);
 	renderspu_SystemWindowSize( &(render_spu.windows[window]), w, h );
 }
 
