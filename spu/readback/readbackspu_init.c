@@ -67,7 +67,7 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *self,
 	window->childWindow = 0;  /* default child SPU window */
 	crHashtableAdd(readback_spu.windowTable, 0, window);
 
-	crStateInit();
+	//crStateInit();
 	readback_spu.gather_conn = NULL;
 
 	return &readback_functions;
@@ -111,8 +111,8 @@ int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
  * tracker.  See the progs/statecopytest/statecopytest.c program for
  * more information.
  */
-void * READBACKSPU_APIENTRY readbackspu_state_test(void)
+/*void * READBACKSPU_APIENTRY readbackspu_state_test(void)
 {
 		extern CRStateBits *__currentBits;
 		return &__currentBits;
-}
+}*/

@@ -14,17 +14,17 @@ FILES = readbackspu \
 	readbackspu_init
 
 ifdef WINDOWS
-TRACKS_STATE = 1
+TRACKS_STATE = 0
 LIBRARIES = spuload crutil crmothership
 else
 # use static libcrstate.a on everything else
-LIBRARIES = spuload crutil crmothership crstate
+LIBRARIES = spuload crutil crmothership #crstate
 endif
 
 
 ifdef BINUTIL_LINK_HACK
-TRACKS_STATE = 1
-LIBRARIES -= crstate
+TRACKS_STATE = 0
+LIBRARIES -= #crstate
 endif
 
 SLOP = $(PRECOMP)

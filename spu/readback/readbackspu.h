@@ -40,6 +40,8 @@ typedef struct {
 	WindowInfo *currentWindow;
 } ContextInfo;
 
+typedef struct { float xmin, ymin, zmin, xmax, ymax, zmax; } BBox;
+
 typedef struct {
 	int id;
 	int has_child;
@@ -68,7 +70,8 @@ typedef struct {
 
 	/* XXX Are these per-context or per-window variables? */
 	float halfViewportWidth, halfViewportHeight, viewportCenterX, viewportCenterY;
-	struct { float xmin, ymin, zmin, xmax, ymax, zmax; } *bbox;
+     BBox *bbox;
+     GLdouble modl[16], proj[16];
 
 } ReadbackSPU;
 

@@ -10,11 +10,150 @@
 #include "cr_error.h"
 #include "cr_bbox.h"
 #include "cr_url.h"
+#include <float.h>
 
 #include "readbackspu.h"
 
 #define WINDOW_MAGIC 7000
 #define CONTEXT_MAGIC 8000
+#define MTRANSFORM(x, y, z, w, m, vx, vy, vz) \
+    x = m[0]*vx + m[4]*vy + m[8]*vz  + m[12]; \
+    y = m[1]*vx + m[5]*vy + m[9]*vz  + m[13]; \
+    z = m[2]*vx + m[6]*vy + m[10]*vz + m[14]; \
+    w = m[3]*vx + m[7]*vy + m[11]*vz + m[15]
+
+#define I_TRANSFORM(num, m, vx, vy, vz) \
+    MTRANSFORM (x[num], y[num], z[num], w[num], m, vx, vy, vz)
+
+#define CLAMP(a, b, c) \
+    if (a < b) a = b; if (a > c) a = c
+
+/****************************************************************
+ *
+ * These functions below are used to do bounding box calculations
+ *
+ ****************************************************************/
+void clipCoords (GLdouble modl[16], GLdouble proj[16], 
+		 GLdouble *x1, GLdouble *y1, GLdouble *z1,
+		 GLdouble *x2, GLdouble *y2, GLdouble *z2) 
+{
+     static GLdouble m[16];
+     int i;
+     
+     GLdouble x[8], y[8], z[8], w[8];
+     GLdouble vx1, vy1, vz1;
+     GLdouble vx2, vy2, vz2;
+     
+     GLdouble xmin=DBL_MAX, ymin=DBL_MAX, zmin=DBL_MAX;
+     GLdouble xmax=-DBL_MAX, ymax=-DBL_MAX, zmax=-DBL_MAX;
+     
+     m[0]  =  proj[0]*modl[0] + proj[4]*modl[1]  + proj[8]*modl[2]   + proj[12]*modl[3];	
+     m[1]  =  proj[1]*modl[0] + proj[5]*modl[1]  + proj[9]*modl[2]   + proj[13]*modl[3];	
+     m[2]  =  proj[2]*modl[0] + proj[6]*modl[1]  + proj[10]*modl[2]  + proj[14]*modl[3];	
+     m[3]  =  proj[3]*modl[0] + proj[7]*modl[1]  + proj[11]*modl[2]  + proj[15]*modl[3];	
+     m[4]  =  proj[0]*modl[4] + proj[4]*modl[5]  + proj[8]*modl[6]   + proj[12]*modl[7];	
+     m[5]  =  proj[1]*modl[4] + proj[5]*modl[5]  + proj[9]*modl[6]   + proj[13]*modl[7];	
+     m[6]  =  proj[2]*modl[4] + proj[6]*modl[5]  + proj[10]*modl[6]  + proj[14]*modl[7];	
+     m[7]  =  proj[3]*modl[4] + proj[7]*modl[5]  + proj[11]*modl[6]  + proj[15]*modl[7];	
+     m[8]  =  proj[0]*modl[8] + proj[4]*modl[9]  + proj[8]*modl[10]  + proj[12]*modl[11];	
+     m[9]  =  proj[1]*modl[8] + proj[5]*modl[9]  + proj[9]*modl[10]  + proj[13]*modl[11];	
+     m[10] = proj[2]*modl[8]  + proj[6]*modl[9]  + proj[10]*modl[10] + proj[14]*modl[11];	
+     m[11] = proj[3]*modl[8]  + proj[7]*modl[9]  + proj[11]*modl[10] + proj[15]*modl[11];	
+     m[12] = proj[0]*modl[12] + proj[4]*modl[13] + proj[8]*modl[14]  + proj[12]*modl[15];	
+     m[13] = proj[1]*modl[12] + proj[5]*modl[13] + proj[9]*modl[14]  + proj[13]*modl[15];	
+     m[14] = proj[2]*modl[12] + proj[6]*modl[13] + proj[10]*modl[14] + proj[14]*modl[15];	
+     m[15] = proj[3]*modl[12] + proj[7]*modl[13] + proj[11]*modl[14] + proj[15]*modl[15];     
+     
+     /* Tranform the point by m */
+     vx1 = *x1;
+     vy1 = *y1;
+     vz1 = *z1;
+     vx2 = *x2;
+     vy2 = *y2;
+     vz2 = *z2;
+     
+     I_TRANSFORM (0 , m, vx1, vy1, vz1);
+     I_TRANSFORM (1 , m, vx1, vy1, vz2);
+     I_TRANSFORM (2 , m, vx1, vy2, vz1);
+     I_TRANSFORM (3 , m, vx1, vy2, vz2);
+     I_TRANSFORM (4 , m, vx2, vy1, vz1);
+     I_TRANSFORM (5 , m, vx2, vy1, vz2);
+     I_TRANSFORM (6 , m, vx2, vy2, vz1);
+     I_TRANSFORM (7 , m, vx2, vy2, vz2);
+     
+     for (i=0; i<8; i++) {
+	  
+	  x[i] /= w[i];
+	  y[i] /= w[i];
+	  z[i] /= w[i];
+	  
+	  if (x[i] > xmax) xmax = x[i];
+	  if (y[i] > ymax) ymax = y[i];
+	  if (z[i] > zmax) zmax = z[i]; 
+	  if (x[i] < xmin) xmin = x[i];
+	  if (y[i] < ymin) ymin = y[i];
+	  if (z[i] < zmin) zmin = z[i];
+	  
+     }    
+     
+     *x1 = xmin;
+     *y1 = ymin;
+     *z1 = zmin;
+     *x2 = xmax;
+     *y2 = ymax;
+     *z2 = zmax;
+}
+
+/*******************************************************
+ * Get the clipped window based on the projection and 
+ * model matrices and the bounding box supplied by the
+ * application.
+ *******************************************************/
+int getClippedWindow(GLdouble modl[16], GLdouble proj[16], 
+		     int* xstart, int* ystart,
+		     int* xend, int* yend )
+{
+	GLfloat viewport[4];
+	GLdouble x1, x2, y1, y2, z1, z2;
+	int win_height, win_width;
+	
+	if(readback_spu.bbox != NULL){
+		x1=readback_spu.bbox->xmin;
+		y1=readback_spu.bbox->ymin;
+		z1=readback_spu.bbox->zmin;
+		x2=readback_spu.bbox->xmax; 
+		y2=readback_spu.bbox->ymax;
+		z2=readback_spu.bbox->zmax;
+	    
+	}
+	else{ /* no bounding box defined */
+		crDebug("No BBox");
+		return 0;
+	}
+		
+	clipCoords(modl, proj, &x1, &y1, &z1, &x2, &y2, &z2);
+	/* Sanity check... */
+	if( x2 < x1 || y2 < y1 || z2 < z1){
+		crWarning( "Damnit!!!!, we screwed up the clipping somehow..." );
+		return 0;
+	}
+	
+	/* can we remove this get to speed things up? */
+	readback_spu.super.GetFloatv( GL_VIEWPORT, viewport );
+	(*xstart) = (int)((x1+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
+	(*ystart) = (int)((y1+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
+	(*xend)   = (int)((x2+1.0f)*(viewport[2] / 2.0f) + viewport[0]);
+	(*yend)   = (int)((y2+1.0f)*(viewport[3] / 2.0f) + viewport[1]);
+
+	win_width  = (int)viewport[2];
+	win_height = (int)viewport[3];
+	
+	CLAMP ((*xstart), 0, win_width);
+	CLAMP ((*xend),   0, win_width);
+	CLAMP ((*ystart), 0, win_height);
+	CLAMP ((*yend),   0, win_height);
+	return 1;
+}
 
 /*
  * Allocate the color and depth buffers needed for the glDraw/ReadPixels
@@ -358,11 +497,6 @@ static void ProcessTiles( WindowInfo *window )
 		 */
 		if (readback_spu.bbox != NULL)
 		{
-			CRContext *ctx = crStateGetCurrent();
-			CRTransformState *t = &(ctx->transform);
-			GLmatrix *m = &(t->transform);
-			GLfloat xmax = 0, xmin = 0, ymax = 0, ymin = 0;
-
 			if (readback_spu.bbox->xmin == readback_spu.bbox->xmax)
 			{
 				/* client can tell us to do nothing */
@@ -370,52 +504,16 @@ static void ProcessTiles( WindowInfo *window )
 			}
 			else
 			{
-				/* Check to make sure the transform is valid */
-				if (!t->transformValid)
-				{
-					/* I'm pretty sure this is always the case, but I'll leave it. */
-					crStateTransformUpdateTransform(t);
-				}
-
-				crTransformBBox( 
-						readback_spu.bbox->xmin,
-						readback_spu.bbox->ymin,
-						readback_spu.bbox->zmin,
-						readback_spu.bbox->xmax,
-						readback_spu.bbox->ymax,
-						readback_spu.bbox->zmax,
-						m,
-						&xmin, &ymin, NULL, 
-						&xmax, &ymax, NULL );
-
-				/* triv reject */
-				if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
-				{
-					numExtents = 0;   /* used to return here */
-				}
-				else
-				{
-					/* clamp */
-					if (xmin < -1.0f) xmin = -1.0f;
-					if (ymin < -1.0f) ymin = -1.0f;
-					if (xmax > 1.0f) xmax = 1.0f;
-					if (ymax > 1.0f) ymax = 1.0f;
-
-					if (readback_spu.halfViewportWidth == 0)
-					{
-						/* we haven't computed it, and they haven't
-						 * called glViewport, so set it to the full window */
-
-						readback_spu.halfViewportWidth = (window->width / 2.0f);
-						readback_spu.halfViewportHeight = (window->height / 2.0f);
-						readback_spu.viewportCenterX = readback_spu.halfViewportWidth;
-						readback_spu.viewportCenterY = readback_spu.halfViewportHeight;
-					}
-					x = (int) (readback_spu.halfViewportWidth*xmin + readback_spu.viewportCenterX);
-					w = (int) (readback_spu.halfViewportWidth*xmax + readback_spu.viewportCenterX) - x;
-					y = (int) (readback_spu.halfViewportHeight*ymin + readback_spu.viewportCenterY);
-					h = (int) (readback_spu.halfViewportHeight*ymax + readback_spu.viewportCenterY) - y;
-				}
+			     int read_start_x, read_start_y, read_end_x, read_end_y;
+			     GLdouble *proj = readback_spu.proj;
+			     GLdouble *modl = readback_spu.modl;
+			     getClippedWindow( modl, proj, 
+					       &read_start_x, &read_start_y, 
+					       &read_end_x, &read_end_y);
+			     x = read_start_x;
+			     y = read_start_y;
+			     w = read_end_x - read_start_x;
+			     h = read_end_y - read_start_y;
 			}
 		}
 
@@ -446,7 +544,7 @@ static void ProcessTiles( WindowInfo *window )
 	 * whole color buffer. (neat!)
 	 */
 	if (readback_spu.extract_depth) 
-		readback_spu.child.Clear( GL_DEPTH_BUFFER_BIT );
+		readback_spu.child.Clear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	else 
 		readback_spu.child.Clear( GL_COLOR_BUFFER_BIT );
 
@@ -623,9 +721,6 @@ static GLint READBACKSPU_APIENTRY readbackspuCreateContext( const char *dpyName,
 	context->renderContext = readback_spu.super.CreateContext(dpyName, visual);
 	context->childContext = readback_spu.child.CreateContext(dpyName, childVisual);
 
-	/* create a state tracker (to record matrix operations) for this context */
-	context->tracker = crStateCreateContext( NULL );
-
 	/* put into hash table */
 	crHashtableAdd(readback_spu.contextTable, freeID, context);
 	freeID++;
@@ -639,7 +734,6 @@ static void READBACKSPU_APIENTRY readbackspuDestroyContext( GLint ctx )
 	context = (ContextInfo *) crHashtableSearch(readback_spu.contextTable, ctx);
 	CRASSERT(context);
 	readback_spu.super.DestroyContext(context->renderContext);
-	crStateDestroyContext( context->tracker );
 	crHashtableDelete(readback_spu.contextTable, ctx);
 }
 
@@ -672,9 +766,6 @@ static void READBACKSPU_APIENTRY readbackspuMakeCurrent(GLint win, GLint nativeW
 		readback_spu.child.MatrixMode(GL_PROJECTION);
 		readback_spu.child.LoadIdentity();
 		readback_spu.child.Ortho( 0.0, 1.0, 0.0, 1.0, -1.0, 1.0 );
-
-		/* state tracker (for matrices) */
-		crStateMakeCurrent( context->tracker );
 	}
 	else {
 #ifdef CHROMIUM_THREADSAFE
@@ -762,85 +853,17 @@ static void READBACKSPU_APIENTRY readbackspuBarrierExecCR( GLuint name )
 	/* no-op */
 }
 
-static void READBACKSPU_APIENTRY readbackspuMatrixMode( GLenum mode )
+static void READBACKSPU_APIENTRY readbackspuClearColor( GLclampf red,
+																												GLclampf green,
+																												GLclampf blue,
+																												GLclampf alpha )
 {
-	crStateMatrixMode( mode );
-	readback_spu.super.MatrixMode( mode );
+	readback_spu.super.ClearColor( red, green, blue, alpha );
+	readback_spu.child.ClearColor( red, green, blue, alpha );
 }
 
-static void READBACKSPU_APIENTRY readbackspuLoadMatrixf( GLfloat *m )
-{
-	crStateLoadMatrixf( m );
-	readback_spu.super.LoadMatrixf( m );
-}
 
-static void READBACKSPU_APIENTRY readbackspuLoadMatrixd( GLdouble *m )
-{
-	crStateLoadMatrixd( m );
-	readback_spu.super.LoadMatrixd( m );
-}
 
-static void READBACKSPU_APIENTRY readbackspuMultMatrixf( GLfloat *m )
-{
-	crStateMultMatrixf( m );
-	readback_spu.super.MultMatrixf( m );
-}
-
-static void READBACKSPU_APIENTRY readbackspuMultMatrixd( GLdouble *m )
-{
-	crStateMultMatrixd( m );
-	readback_spu.super.MultMatrixd( m );
-}
-
-static void READBACKSPU_APIENTRY readbackspuLoadIdentity( )
-{
-	crStateLoadIdentity(  );
-	readback_spu.super.LoadIdentity( );
-}
-
-static void READBACKSPU_APIENTRY readbackspuRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
-{
-	crStateRotatef( angle, x, y, z );
-	readback_spu.super.Rotatef( angle, x, y, z );
-}
-
-static void READBACKSPU_APIENTRY readbackspuRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
-{
-	crStateRotated( angle, x, y, z );
-	readback_spu.super.Rotated( angle, x, y, z );
-}
-
-static void READBACKSPU_APIENTRY readbackspuScalef( GLfloat x, GLfloat y, GLfloat z )
-{
-	crStateScalef( x, y, z );
-	readback_spu.super.Scalef( x, y, z );
-}
-
-static void READBACKSPU_APIENTRY readbackspuScaled( GLdouble x, GLdouble y, GLdouble z )
-{
-	crStateScaled( x, y, z );
-	readback_spu.super.Scaled( x, y, z );
-}
-
-static void READBACKSPU_APIENTRY readbackspuTranslatef( GLfloat x, GLfloat y, GLfloat z )
-{
-	crStateTranslatef( x, y, z );
-	readback_spu.super.Translatef( x, y, z );
-}
-
-static void READBACKSPU_APIENTRY readbackspuTranslated( GLdouble x, GLdouble y, GLdouble z )
-{
-	crStateTranslated( x, y, z );
-	readback_spu.super.Translated( x, y, z );
-}
-
-static void READBACKSPU_APIENTRY readbackspuFrustum( GLdouble left, 
-		GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, 
-		GLdouble zFar)
-{
-	crStateFrustum( left, right, bottom, top, zNear, zFar );
-	readback_spu.super.Frustum( left, right, bottom, top, zNear, zFar );
-}
 
 static void READBACKSPU_APIENTRY readbackspuViewport( GLint x, 
 		GLint y, GLint w, GLint h )
@@ -858,13 +881,14 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParametervCR(GLenum target, 
 	{
 		case GL_OBJECT_BBOX_CR:
 			readback_spu.bbox = values;
+			readback_spu.super.GetDoublev( GL_PROJECTION_MATRIX, readback_spu.proj );
+			readback_spu.super.GetDoublev( GL_MODELVIEW_MATRIX,  readback_spu.modl );
 			break;
 		default:
 			readback_spu.child.ChromiumParametervCR( target, type, count, values );
 			break;
 	}
 }
-
 
 static void READBACKSPU_APIENTRY readbackspuChromiumParameteriCR(GLenum target,  GLint value)
 {
@@ -927,7 +951,6 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParameteriCR(GLenum target, 
 	}
 }
 
-
 SPUNamedFunctionTable readback_table[] = {
 	{ "SwapBuffers", (SPUGenericFunction) readbackspuSwapBuffers },
 	{ "CreateContext", (SPUGenericFunction) readbackspuCreateContext },
@@ -939,22 +962,9 @@ SPUNamedFunctionTable readback_table[] = {
 	{ "BarrierCreateCR", (SPUGenericFunction) readbackspuBarrierCreateCR },
 	{ "BarrierDestroyCR", (SPUGenericFunction) readbackspuBarrierDestroyCR },
 	{ "BarrierExecCR", (SPUGenericFunction) readbackspuBarrierExecCR },
-	{ "LoadMatrixf", (SPUGenericFunction) readbackspuLoadMatrixf },
-	{ "LoadMatrixd", (SPUGenericFunction) readbackspuLoadMatrixd },
-	{ "MultMatrixf", (SPUGenericFunction) readbackspuMultMatrixf },
-	{ "MultMatrixd", (SPUGenericFunction) readbackspuMultMatrixd },
-	{ "MatrixMode", (SPUGenericFunction) readbackspuMatrixMode },
-	{ "LoadIdentity", (SPUGenericFunction) readbackspuLoadIdentity },
-	{ "Rotatef", (SPUGenericFunction) readbackspuRotatef },
-	{ "Rotated", (SPUGenericFunction) readbackspuRotated },
-	{ "Translatef", (SPUGenericFunction) readbackspuTranslatef },
-	{ "Translated", (SPUGenericFunction) readbackspuTranslated },
-	{ "Scalef", (SPUGenericFunction) readbackspuScalef },
-	{ "Scaled", (SPUGenericFunction) readbackspuScaled },
-	{ "Frustum", (SPUGenericFunction) readbackspuFrustum },
 	{ "Viewport", (SPUGenericFunction) readbackspuViewport },
 	{ "Flush", (SPUGenericFunction) readbackspuFlush },
-	
+	{ "ClearColor", (SPUGenericFunction) readbackspuClearColor }, 
 	{ "ChromiumParametervCR", (SPUGenericFunction) readbackspuChromiumParametervCR },
 	{ "ChromiumParameteriCR", (SPUGenericFunction) readbackspuChromiumParameteriCR },
 	{ NULL, NULL }
