@@ -75,8 +75,6 @@ for num_coords in [2,3,4]:
 	for argtype in ['d', 'f', 'i', 's']:
 		func_name = 'Vertex%d%s' % (num_coords,argtype)
 		( return_type, arg_names, arg_types ) = gl_mapping[func_name]
-		if argtype == 'f':
-			arg_names = map( lambda(s): 'f%s' % s, arg_names )
 
 		def PrintFunction( func_name, return_type, arg_names, arg_types, num_coords, argtype, is_swapped ):
 			if is_swapped:
@@ -87,8 +85,7 @@ for num_coords in [2,3,4]:
 			packet_length = stub_common.PacketLength( arg_types )
 
 			print "\tunsigned char *data_ptr;"
-			if arg_types[0] != 'GLfloat':
-				print "\tCREATE_%dD_FLOATS();" % num_coords
+			print "\tCREATE_%dD_FLOATS();" % num_coords
 
 			print "\tGET_BUFFERED_POINTER( %d );" % packet_length
 			print "\tif (cr_packer_globals.updateBBOX)"
@@ -114,8 +111,7 @@ for num_coords in [2,3,4]:
 			packet_length = stub_common.PacketLength( arg_types )
 
 			print "\tunsigned char *data_ptr;"
-			if arg_types[0] != 'GLfloat':
-				print "\tCREATE_%dD_FLOATS();" % num_coords
+			print "\tCREATE_%dD_FLOATS();" % num_coords
 
 			print "\tGET_BUFFERED_COUNT_POINTER( %d );" % packet_length
 			print "\tif (cr_packer_globals.updateBBOX)"
@@ -149,8 +145,7 @@ for num_coords in [2,3,4]:
 				packet_length += 2
 
 			print "\tunsigned char *data_ptr;"
-			if arg_types[0] != 'GLfloat':
-				print "\tCREATE_%dD_VFLOATS();" % num_coords
+			print "\tCREATE_%dD_VFLOATS();" % num_coords
 
 			print "\tGET_BUFFERED_POINTER( %d );" % packet_length
 			print "\tif (cr_packer_globals.updateBBOX)"
@@ -178,8 +173,7 @@ for num_coords in [2,3,4]:
 				packet_length += 2
 
 			print "\tunsigned char *data_ptr;"
-			if arg_types[0] != 'GLfloat':
-				print "\tCREATE_%dD_VFLOATS();" % num_coords
+			print "\tCREATE_%dD_VFLOATS();" % num_coords
 
 			print "\tGET_BUFFERED_COUNT_POINTER( %d );" % packet_length
 			print "\tif (cr_packer_globals.updateBBOX)"
