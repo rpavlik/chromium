@@ -621,12 +621,12 @@ static int crUDPTCPIPDoConnect( CRConnection *conn )
 	in_port_t port;
 #endif
 #ifdef LINUX
-	int err;
 	int opt = IP_PMTUDISC_DO;
 #endif
 #ifndef ADDRINFO
 	struct hostent *hp;
 #else
+	int err;
 	char port_s[NI_MAXSERV];
 	struct addrinfo *res,*cur;
 	struct addrinfo hints;

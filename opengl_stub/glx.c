@@ -30,8 +30,6 @@ static GLXDrawable currentDrawable = 0;
  */
 #define GLX_EXTRAS 1
 
-
-#if GLX_EXTRAS
 /**
  * Prototypes, in case they're not in glx.h or glxext.h
  * Unfortunately, there's some inconsistency between the extension
@@ -40,15 +38,15 @@ static GLXDrawable currentDrawable = 0;
  */
 #if defined(GLX_GLXEXT_VERSION)
 /* match glxext.h, XFree86, Mesa */
+#define ATTRIB_TYPE const int
+#else
+#define ATTRIB_TYPE int
+#endif
+
+#if GLX_EXTRAS
 GLXPbufferSGIX glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, int *attrib_list);
 int glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
 GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, int *attrib_list, int *nelements);
-#else
-/* match SGI's glx.h header */
-GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, const int *attrib_list);
-void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
-GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, const int *attrib_list, int *nelements);
-#endif
 
 void glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf);
 void glXSelectEventSGIX (Display *dpy, GLXDrawable drawable, unsigned long mask);
@@ -60,15 +58,14 @@ GLXContext glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfig config, int 
 GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfig config, Pixmap pixmap);
 int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config, int attribute, int *value);
 
-
 /*
  * GLX 1.3 functions
  */
-GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, const int *attrib_list, int *nelements);
+GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, ATTRIB_TYPE *attrib_list, int *nelements);
+GLXPbuffer glXCreatePbuffer(Display *dpy, GLXFBConfig config, ATTRIB_TYPE *attrib_list);
+GLXPixmap glXCreatePixmap(Display *dpy, GLXFBConfig config, Pixmap pixmap, ATTRIB_TYPE *attrib_list);
+GLXWindow glXCreateWindow(Display *dpy, GLXFBConfig config, Window win, ATTRIB_TYPE *attrib_list);
 GLXContext glXCreateNewContext(Display *dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct);
-GLXPbuffer glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attrib_list);
-GLXPixmap glXCreatePixmap(Display *dpy, GLXFBConfig config, Pixmap pixmap, const int *attrib_list);
-GLXWindow glXCreateWindow(Display *dpy, GLXFBConfig config, Window win, const int *attrib_list);
 void glXDestroyPbuffer(Display *dpy, GLXPbuffer pbuf);
 void glXDestroyPixmap(Display *dpy, GLXPixmap pixmap);
 void glXDestroyWindow(Display *dpy, GLXWindow win);
@@ -838,15 +835,9 @@ CR_GLXFuncPtr glXGetProcAddress( const GLubyte *name )
 
 #if GLX_EXTRAS
 
-#if defined(GLX_GLXEXT_VERSION)
 GLXPbufferSGIX glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
 																			 unsigned int width, unsigned int height,
 																			 int *attrib_list)
-#else
-GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
-																	 unsigned int width, unsigned int height,
-																	 const int *attrib_list)
-#endif
 {
 	(void) dpy;
 	(void) config;
@@ -878,22 +869,15 @@ void glXGetSelectedEventSGIX(Display *dpy, GLXDrawable drawable, unsigned long *
 	(void) mask;
 }
 
-#if defined(GLX_GLXEXT_VERSION)
 int glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
 													 int attribute, unsigned int *value)
-#else
-void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
-														int attribute, unsigned int *value)
-#endif
 {
 	(void) dpy;
 	(void) pbuf;
 	(void) attribute;
 	(void) value;
 	crWarning("glXQueryGLXPbufferSGIX not implemented by Chromium");
-#if defined(GLX_GLXEXT_VERSION)
 	return 0;
-#endif
 }
 
 int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config,
@@ -907,13 +891,8 @@ int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config,
 	return 0;
 }
 
-#if defined(GLX_GLXEXT_VERSION)
 GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen,
-																			 int *attrib_list, int *nelements)
-#else
-GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen,
-																			 const int *attrib_list, int *nelements)
-#endif
+					 int *attrib_list, int *nelements)
 {
 	(void) dpy;
 	(void) screen;
@@ -967,7 +946,7 @@ GLXFBConfigSGIX glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis)
 /*
  * GLX 1.3 functions
  */
-GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, const int *attrib_list, int *nelements)
+GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, ATTRIB_TYPE *attrib_list, int *nelements)
 {
 	(void) dpy;
 	(void) screen;
@@ -988,7 +967,7 @@ GLXContext glXCreateNewContext(Display *dpy, GLXFBConfig config, int render_type
 	return NULL;
 }
 
-GLXPbuffer glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attrib_list)
+GLXPbuffer glXCreatePbuffer(Display *dpy, GLXFBConfig config, ATTRIB_TYPE *attrib_list)
 {
 	(void) dpy;
 	(void) config;
@@ -997,7 +976,7 @@ GLXPbuffer glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attrib_
 	return 0;
 }
 
-GLXPixmap glXCreatePixmap(Display *dpy, GLXFBConfig config, Pixmap pixmap, const int *attrib_list)
+GLXPixmap glXCreatePixmap(Display *dpy, GLXFBConfig config, Pixmap pixmap, ATTRIB_TYPE *attrib_list)
 {
 	(void) dpy;
 	(void) config;
@@ -1007,7 +986,7 @@ GLXPixmap glXCreatePixmap(Display *dpy, GLXFBConfig config, Pixmap pixmap, const
 	return 0;
 }
 
-GLXWindow glXCreateWindow(Display *dpy, GLXFBConfig config, Window win, const int *attrib_list)
+GLXWindow glXCreateWindow(Display *dpy, GLXFBConfig config, Window win, ATTRIB_TYPE *attrib_list)
 {
 	(void) dpy;
 	(void) config;
