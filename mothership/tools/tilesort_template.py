@@ -80,7 +80,6 @@ import sys
 sys.path.append( "../server" )
 sys.path.append( "../tools" )
 from mothership import *
-from crutils import *
 
 # Get program name
 if len(sys.argv) == 1:
@@ -101,6 +100,25 @@ else:
 	singleServer = 0
 
 localHostname = os.uname()[1]
+
+def MakeHostname(format, number):
+	# find the hash characters first
+	p = re.search("#+", format)
+	if not p:
+		return format
+	numHashes = p.end() - p.start()
+	numDigits = len(str(number))
+	# start building result string
+	result = format[0:p.start()]
+	# insert padding zeros as needed
+	while numHashes > numDigits:
+		result += "0"
+		numHashes -= 1
+	# append the number
+	result += str(number)
+	# append rest of format string
+	result += format[p.end():]
+	return result
 
 cr = CR()
 cr.MTU( GLOBAL_MTU )
@@ -739,6 +757,31 @@ def Edit_Tilesort(parentWindow, mothership):
 		clientNode.SetCount(mothership.Tilesort.NumClients)
 
 
+def __ParseOption(s, prefix):
+	"""Parsing helper function"""
+	# s will be a string like:  RENDER_system_gl_path = "/usr/lib"
+	# We'll return a (name, value) tuple like ("system_gl_path", ["/usr/lib"])
+	# The name is a string and the value is a list.
+
+	# extract the option name and value
+	# parentheses in the regexp define groups
+	# \"? is an optional double-quote character
+	# [^\"] is any character but double-quote
+	pattern = "^" + prefix + "_([a-zA-Z0-9\_]+) = (\"?[^\"]*\"?)"
+	v = re.search(pattern, s)
+	if v:
+		name = v.group(1)
+		value = v.group(2)
+		if value[0] != '[':
+			value = '[' + value + ']'
+		values = eval(value)
+		return (name, values)
+	else:
+		print "PROBLEM: " + pattern
+		print "LINE: " + s
+		return 0
+
+
 def Read_Tilesort(mothership, fileHandle):
 	"""Read a tilesort config from the given file handle."""
 
@@ -782,9 +825,7 @@ def Read_Tilesort(mothership, fileHandle):
 			v = re.search("[01]", l)
 			mothership.Tilesort.RightToLeft = int(l[v.start() : v.end()])
 		elif re.match("^HOSTNAME = ", l):
-			# look for string in quotes
 			v = re.search("\".+\"", l)
-			# extract the string
 			mothership.Tilesort.Hostname = l[v.start()+1 : v.end()-1]
 		elif re.match("^FIRSTHOST = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
@@ -794,48 +835,20 @@ def Read_Tilesort(mothership, fileHandle):
 			mothership.Tilesort.NumClients = int(l[v.start() : v.end()])
 		elif re.match("^TILESORT_", l):
 			# A tilesort SPU option
-			# extract the option name and value
-			# parentheses in the regexp define groups
-			# \"? is an optional double-quote character
-			# [^\"] is any character but double-quote
-			v = re.search("^TILESORT_([a-zA-Z0-9\_]+) = (\"[^\"]*\")", l)
-			if v:
-				name = v.group(1)
-				value = v.group(2)
-				if value[0] != '[':
-					value = '[' + value + ']'
-				value = eval(value)
-				tilesortSPU.SetOption(name, value)
+			(name, values) = __ParseOption(l, "TILESORT")
+			tilesortSPU.SetOption(name, values)
 		elif re.match("^RENDER_", l):
 			# A render SPU option
-			v = re.search("^RENDER_([a-zA-Z0-9\_]+) = (\"[^\"]*\")", l)
-			if v:
-				name = v.group(1)
-				value = v.group(2)
-				if value[0] != '[':
-					value = '[' + value + ']'
-				value = eval(value)
-				renderSPU.SetOption(name, value)
+			(name, values) = __ParseOption(l, "RENDER")
+			renderSPU.SetOption(name, values)
 		elif re.match("^SERVER_", l):
 			# A server option
-			v = re.search("^SERVER_([a-zA-Z0-9\_]+) = (\"[^\"]*\")", l)
-			if v:
-				name = v.group(1)
-				value = v.group(2)
-				if value[0] != '[':
-					value = '[' + value + ']'
-				value = eval(value)
-				mothership.SetServerOption(name, value)
+			(name, values) = __ParseOption(l, "SERVER")
+			mothership.SetServerOption(name, values)
 		elif re.match("^GLOBAL_", l):
 			# A global option
-			v = re.search("^GLOBAL_([a-zA-Z0-9\_]+) = (\"[^\"]*\")", l)
-			if v:
-				name = v.group(1)
-				value = v.group(2)
-				if value[0] != '[':
-					value = '[' + value + ']'
-				value = eval(value)
-				mothership.SetGlobalOption(name, value)
+			(name, values) = __ParseOption(l, "GLOBAL")
+			mothership.SetGlobalOption(name, values)
 		elif re.match("^# end of options$", l):
 			# that's the end of the variables
 			# save the rest of the file....
