@@ -87,8 +87,8 @@ typedef struct {
 	unsigned short tcpip_port;
 
 	unsigned int numClients;
-	CRClient *clients;
-	CRClient *curClient;
+	CRClient *clients;  /* array [numClients] */
+	CRClient *curClient;  /* points into clients[] array */
 	CRCurrentStatePointers current;
 
 	GLboolean firstCallCreateContext;
@@ -113,7 +113,7 @@ typedef struct {
 	int SpuContext; /* Rendering context for the head SPU */
 	int SpuContextVisBits; /* Context's visual attributes */
 
-	CRContext *context[CR_MAX_CONTEXTS];
+	CRContext *context[CR_MAX_CONTEXTS]; /* XXX replace with hash table someday*/
 
 	CRHashTable *programTable;  /* for vertex programs */
 	GLuint currentProgram;
