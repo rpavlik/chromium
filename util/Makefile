@@ -79,7 +79,7 @@ endif
 endif
 
 ifeq ($(TEAC_SUPPORT), 1)
-CFLAGS += -DTEAC_SUPPORT -DCHROMIUM
+CFLAGS += -DTEAC_SUPPORT -DCHROMIUM -DHOST_TABLE_FILENAME="\"${PWD}/util/teac_host_map.t\""
 ifeq ($(ARCH), OSF1)
 CFLAGS += -I/usr/opt/rms/include
 endif

@@ -8,15 +8,6 @@
 #include <elan3/events.h>
 #include <elan3/dma.h>
 
-#define EADDR_ALLOC_ELAN            0x200000
-#define ALLOC_ELAN_SIZE	            0x200000
-#define EADDR_ALLOC_MAIN            0x400000
-#define ALLOC_MAIN_SIZE	            0x2000000
-#ifdef never
-#define EADDR_ALLOC_MYSDRAM         0x600000
-#define ALLOC_MYSDRAM_SIZE	    0x200000
-#endif
-
 #define E_BUFFER_INITIAL_SIZE 	0x200000
 #define NUM_SEND_BUFFERS 4
 
@@ -73,8 +64,10 @@ typedef struct _teac_comm  {
 
 typedef struct _host {
   char	*name;
-  int	rail;
+  int	railMask;
   int	id;
+  sdramaddr_t sdramAddrBase;
+  E3_Addr elanAddrBase;
 } host_t;
 
 #ifdef __cplusplus
@@ -172,6 +165,14 @@ extern "C" {
     and host.  
   */
   extern int teac_getConnId(Tcomm *c, const char* host, int rank);
+
+  /*
+    - Returns information needed for this host's entry in the host table.
+  */
+  extern int teac_getHostInfo(Tcomm *c, char* host, const int hostLength,
+			      int* railMask, int *nodeId, 
+			      long* sdramBaseAddr, long* elanBaseAddr);
+			      
   
 #ifdef __cplusplus
 }
