@@ -32,6 +32,14 @@ class SortlastParameters:
 		return p
 
 
+# Predefined window sizes shown in the wxChoice widget (feel free to change)
+CommonWindowSizes = [ [128, 128],
+					  [256, 256],
+					  [512, 512],
+					  [1024, 1024],
+					  [1280, 1024],
+					  [1600, 1200] ]
+
 #----------------------------------------------------------------------
 
 # This is the guts of the sortlast configuration script.
@@ -187,6 +195,7 @@ class SortlastDialog(wxDialog):
 		id_RenderOptions   = 4004
 		id_Hostnames       = 4005
 		id_Command         = 4006
+		id_WindowSize      = 4007
 		id_OK              = 4011
 		id_CANCEL          = 4012
 
@@ -209,8 +218,15 @@ class SortlastDialog(wxDialog):
 		self.heightControl = wxSpinCtrl(parent=self, id=id_Height,
 									   value="1", min=1, max=2048,
 									   size=wxSize(70,25))
+		sizeChoices = []
+		for i in CommonWindowSizes:
+			sizeChoices.append( str("%d x %d" % (i[0], i[1])) )
+		sizeChoices.append("Custom")
+		self.sizeChoice = wxChoice(parent=self, id=id_WindowSize,
+								   choices=sizeChoices)
 		EVT_SPINCTRL(self.widthControl, id_Width, self.__OnSizeChange)
 		EVT_SPINCTRL(self.heightControl, id_Height, self.__OnSizeChange)
+		EVT_CHOICE(self.sizeChoice, id_WindowSize, self.__OnSizeChoice)
 		windowSizeSizer.Add(widthLabel,
 							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=4)
 		windowSizeSizer.Add(self.widthControl,
@@ -219,7 +235,8 @@ class SortlastDialog(wxDialog):
 							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=4)
 		windowSizeSizer.Add(self.heightControl,
 							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=2)
-		# XXX add drop-down widget with common sizes
+		windowSizeSizer.Add(self.sizeChoice,
+							flag=wxALIGN_CENTER_VERTICAL|wxALL, border=2)
 		outerSizer.Add(windowSizeSizer, flag=wxALL|wxGROW, border=4)
 
 		# Number of app nodes
@@ -292,6 +309,16 @@ class SortlastDialog(wxDialog):
 
 	# end of __init__()
 
+	def __UpdateSizeWidgets(self):
+		w = self.widthControl.GetValue()
+		h = self.heightControl.GetValue()
+		for i in range(0, len(CommonWindowSizes)):
+			if w == CommonWindowSizes[i][0] and h == CommonWindowSizes[i][1]:
+				self.sizeChoice.SetSelection(i)
+				return
+		# must be custom size
+		self.sizeChoice.SetSelection(len(CommonWindowSizes))  # "Custom"
+		
 	def __UpdateVarsFromWidgets(self):
 		"""Get current widget values and update the sortlast parameters."""
 		renderSPU = FindRenderSPU(self.__Mothership)
@@ -319,12 +346,28 @@ class SortlastDialog(wxDialog):
 		geom = renderSPU.GetOption("window_geometry")
 		self.widthControl.SetValue(geom[2])
 		self.heightControl.SetValue(geom[3])
+		self.__UpdateSizeWidgets()
+
 
 	# ----------------------------------------------------------------------
 	# Event handling
 
 	def __OnSizeChange(self, event):
 		"""Called when window size changes with spin controls."""
+		self.__UpdateSizeWidgets()
+		self.dirty = true
+
+	def __OnSizeChoice(self, event):
+		"""Window size list choice callback."""
+		i = self.sizeChoice.GetSelection()
+		if i < len(CommonWindowSizes):
+			w = CommonWindowSizes[i][0]
+			h = CommonWindowSizes[i][1]
+			self.widthControl.SetValue(w)
+			self.heightControl.SetValue(h)
+		else:
+			self.__UpdateSizeWidgets()
+		self.__UpdateVarsFromWidgets()
 		self.dirty = true
 
 	def __OnNumAppsChange(self, event):
