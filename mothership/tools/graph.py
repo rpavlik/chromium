@@ -215,9 +215,9 @@ class MainFrame(wxFrame):
 
 		# Help menu
 		self.helpMenu = wxMenu()
-		self.helpMenu.Append(menu_HELP,  "Introduction...")
+		#self.helpMenu.Append(menu_HELP,  "Introduction...")
 		self.helpMenu.Append(menu_ABOUT, "About Config tool...")
-		EVT_MENU(self, menu_HELP, self.doShowIntro)
+		#EVT_MENU(self, menu_HELP, self.doShowIntro)
 		EVT_MENU(self, menu_ABOUT, self.doShowAbout)
 		menuBar.Append(self.helpMenu, "Help")
 
@@ -565,6 +565,7 @@ class MainFrame(wxFrame):
 		self.newTemplateChoice.SetSelection(0)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	def onTemplateEdit(self, event):
 		templateName = self.mothership.GetTemplateType()
@@ -574,6 +575,7 @@ class MainFrame(wxFrame):
 			self.Notify("This configuration doesn't match any template.")
 		self.drawArea.Refresh()
 		self.UpdateMenus()
+		self.dirty = true
 
 	# Called when the left mouse button is pressed or released.
 	def onMouseEvent(self, event):
@@ -1042,13 +1044,23 @@ class MainFrame(wxFrame):
 
 	def doServerOptions(self, event):
 		"""Node / Server Options callback"""
+		serverNode = 0
+		for node in self.mothership.SelectedNodes():
+			if node.IsServer():
+				serverNode = node
+				break
+		assert serverNode
 		dialog = spudialog.SPUDialog(parent=self, id=-1,
-									 title="Server Options",
-									 options=self.mothership.ServerOptions)
+								title="Server Options",
+								optionList=serverNode.GetOptions())
 		dialog.Centre()
-		dialog.SetValues(self.mothership.GetServerOptions())
 		if dialog.ShowModal() == wxID_OK:
-			self.mothership.SetServerOptions(dialog.GetValues())
+			for opt in serverNode.GetOptions().Options():
+				value = dialog.GetValue(opt.Name)
+				for node in self.mothership.SelectedNodes():
+					if node.IsServer():
+						node.SetOption(opt.Name, value)
+			#endfor
 			self.dirty = true
 
 	def doServerTiles(self, event):
@@ -1159,19 +1171,19 @@ class MainFrame(wxFrame):
 
 			name = spuList[0].Name()
 			if name in SPUInfo.keys():
-				(params, opts) = SPUInfo[name]
+				(params, optionlist) = SPUInfo[name]
 				# create the dialog
 				dialog = spudialog.SPUDialog(parent=self, id=-1,
 											 title=name + " SPU Options",
-											 options = opts)
+											 optionList = optionlist)
 				dialog.Centre()
-				# set the dialog widget values
-				dialog.SetValues(spuList[0].GetOptions())
 				# wait for OK or cancel
 				if dialog.ShowModal() == wxID_OK:
 					# save the new values/options in all selected SPUs
 					for spu in spuList:
-						spu.SetOptions(dialog.GetValues())
+						for opt in optionlist.Options():
+							value = dialog.GetValue(opt.Name)
+							spu.SetOption(opt.Name, value)
 				else:
 					# user cancelled, do nothing, new values are ignored
 					pass
@@ -1186,12 +1198,13 @@ class MainFrame(wxFrame):
 	def doAppOptions(self, event):
 		"""Application / Options callback"""
 		dialog = spudialog.SPUDialog(parent=self, id=-1,
-									 title="Application Options",
-									 options=self.mothership.GlobalOptions)
+								title="Application Options",
+								optionList=self.mothership.GetOptions())
 		dialog.Centre()
-		dialog.SetValues(self.mothership.GetGlobalOptions())
 		if dialog.ShowModal() == wxID_OK:
-			self.mothership.SetGlobalOptions(dialog.GetValues())
+			for opt in self.mothership.GetOptions().Options():
+				value = dialog.GetValue(opt.Name)
+				self.mothership.SetOption(opt.Name, value)
 			self.dirty = true
 
 
@@ -1258,8 +1271,9 @@ class MainFrame(wxFrame):
 		panelSizer = wxBoxSizer(wxVERTICAL)
 
 		text = wxStaticText(parent=panel, id=-1, label=
-			"Chromium configuration tool\n"
-			"Version 0.0\n")
+					"Chromium configuration tool\n" +
+					"Version 0.0\n" +
+					"Please see the Chromium documentation for instructions.")
 
 		btnOK = wxButton(panel, wxID_OK, "OK")
 
@@ -1462,7 +1476,7 @@ class ConfigApp(wxApp):
 			# No file name was specified on the command line -> start with a
 			# blank document.
 			frame = MainFrame(None, -1, TitleString)
-			frame.Centre()
+			#frame.Centre()
 			frame.Show(TRUE)
 			_docList.append(frame)
 		else:
@@ -1531,7 +1545,7 @@ def main():
 
 	# Redirect python exceptions to a log file.
 	# XXX if we crash upon startup, try commenting-out this next line:
-	sys.stderr = ExceptionHandler()
+	#sys.stderr = ExceptionHandler()
 
 	# Set the default site file
 	#crutils.SetDefaultSiteFile("tungsten.crsite")

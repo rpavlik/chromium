@@ -529,23 +529,24 @@ class TilesortDialog(wxDialog):
 		if self.hostsDialog.ShowModal() == wxID_OK:
 			self.Template.ServerHosts = self.hostsDialog.GetHosts()
 			self.Template.ServerPattern = self.hostsDialog.GetHostPattern()
-		self.drawArea.Refresh()
+			self.Template.LayoutTiles()
+			self.drawArea.Refresh()
 
 	def __OnTilesortOptions(self, event):
 		"""Called when Tilesort Options button is pressed."""
 		tilesortSPU = FindTilesortSPU(self.__Mothership)
-		(params, opts) = crutils.GetSPUOptions("tilesort")
 		# create the dialog
 		dialog = spudialog.SPUDialog(parent=self, id=-1,
 									 title="Tilesort SPU Options",
-									 options = opts)
+									 optionList = tilesortSPU.GetOptions())
 		dialog.Centre()
-		# set the dialog widget values
-		dialog.SetValues(tilesortSPU.GetOptions())
 		# wait for OK or cancel
 		if dialog.ShowModal() == wxID_OK:
 			# save the new values/options
-			tilesortSPU.SetOptions(dialog.GetValues())
+			for opt in tilesortSPU.GetOptions().Options():
+				value = dialog.GetValue(opt.Name)
+				tilesortSPU.SetOption(opt.Name, value)
+		return
 
 	def _onOK(self, event):
 		"""Called by OK button"""
@@ -831,11 +832,11 @@ def Read_Tilesort(mothership, fileHandle):
 		elif re.match("^SERVER_", l):
 			# A server option
 			(name, values) = configio.ParseOption(l, "SERVER")
-			mothership.SetServerOption(name, values)
+			serverNode.SetOption(name, values)
 		elif re.match("^GLOBAL_", l):
 			# A global option
 			(name, values) = configio.ParseOption(l, "GLOBAL")
-			mothership.SetGlobalOption(name, values)
+			mothership.SetOption(name, values)
 		elif re.match("^# end of options", l):
 			# that's the end of the variables
 			# save the rest of the file....
@@ -880,7 +881,7 @@ def Write_Tilesort(mothership, file):
 	configio.WriteSPUOptions(renderSPU, "RENDER", file)
 
 	# write server and global options
-	configio.WriteServerOptions(mothership, file)
+	configio.WriteServerOptions(serverNode, file)
 	configio.WriteGlobalOptions(mothership, file)
 
 	file.write("# end of options, the rest is boilerplate\n")

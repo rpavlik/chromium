@@ -84,8 +84,7 @@ __InfoCache = {}
 def GetSPUOptions(spuName):
 	"""Use the spuoptions program to get the params/options for the SPU.
 	The return value is a tuple (params, options) where params is a
-	dictionary of parameter values and options is an array of tuples
-	of the form (name, description, type, count, default, mins, maxs).
+	dictionary of parameter values and options is an OptionList object.
 	Run 'spuoptions --pythonmode tilesort' to see an example.
 	"""
 	global __InfoCache
@@ -108,7 +107,7 @@ def GetSPUOptions(spuName):
 
 def SPUMaxServers(spuName):
 	"""Return the max number of servers this SPU can have."""
-	(params, opts) = GetSPUOptions(spuName)
+	(params, optionlist) = GetSPUOptions(spuName)
 	if params["packer"] == "yes":
 		m = params["maxservers"]
 		if m == "zero":
@@ -122,7 +121,7 @@ def SPUMaxServers(spuName):
 
 def SPUIsTerminal(spuName):
 	"""Return 1 if spuname is a terminal, else return 0."""
-	(params, opts) = GetSPUOptions(spuName)
+	(params, optionlist) = GetSPUOptions(spuName)
 	if params["terminal"] == "yes":
 		return 1
 	else:
@@ -133,12 +132,10 @@ def NewSPU(spuName):
 	SPU object and then attaches the list of SPU parameters and options."""
 	spu = crtypes.SpuObject(spuName, SPUIsTerminal(spuName),
 							SPUMaxServers(spuName))
-	# build dictionary of options -> values
-	(params, options) = GetSPUOptions(spuName)
-	values = {}
-	for (name, description, type, count, default, mins, maxs) in options:
-		values[name] = default
-	spu.SetOptions(values)
+	# Set the SPU's option list
+	(params, optionlist) = GetSPUOptions(spuName)
+	assert isinstance(optionlist, crtypes.OptionList)
+	spu.SetOptions(optionlist)
 	return spu
 
 #----------------------------------------------------------------------

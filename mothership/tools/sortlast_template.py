@@ -388,38 +388,32 @@ class SortlastDialog(wxDialog):
 	def __OnReadbackOptions(self, event):
 		"""Called when Readback SPU Options button is pressed."""
 		readbackSPU = FindReadbackSPU(self.__Mothership)
-		(params, opts) = crutils.GetSPUOptions("readback")
 		# create the dialog
 		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
 									 title="Readback SPU Options",
-									 options = opts)
-		# set the dialog widget values
-		dialog.SetValues(readbackSPU.GetOptions())
+									 optionList = readbackSPU.GetOptions())
 		# wait for OK or cancel
 		if dialog.ShowModal() == wxID_OK:
 			# save the new values/options
-			readbackSPU.SetOptions(dialog.GetValues())
-		else:
-			# user cancelled, do nothing, new values are ignored
-			pass
+			for opt in readbackSPU.GetOptions().Options():
+				value = dialog.GetValue(opt.Name)
+				readbackSPU.SetOption(opt.Name, value)
+		return
 
 	def __OnRenderOptions(self, event):
 		"""Called when Render SPU Options button is pressed."""
 		renderSPU = FindRenderSPU(self.__Mothership)
-		(params, opts) = crutils.GetSPUOptions("render")
 		# create the dialog
 		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
 									 title="Render SPU Options",
-									 options = opts)
-		# set the dialog widget values
-		dialog.SetValues(renderSPU.GetOptions())
+									 optionList = renderSPU.GetOptions())
 		# wait for OK or cancel
 		if dialog.ShowModal() == wxID_OK:
 			# save the new values/options
-			renderSPU.SetOptions(dialog.GetValues())
-		else:
-			# user cancelled, do nothing, new values are ignored
-			pass
+			for opt in renderSPU.GetOptions().Options():
+				value = dialog.GetValue(opt.Name)
+				renderSPU.SetOption(opt.Name, value)
+		return
 
 	def _onOK(self, event):
 		"""Called by OK button"""
@@ -633,11 +627,11 @@ def Read_Sortlast(mothership, file):
 		elif re.match("^SERVER_", l):
 			# A server option
 			(name, values) = configio.ParseOption(l, "SERVER")
-			mothership.SetServerOption(name, values)
+			serverNode.SetOption(name, values)
 		elif re.match("^GLOBAL_", l):
 			# A global option
 			(name, values) = configio.ParseOption(l, "GLOBAL")
-			mothership.SetGlobalOption(name, values)
+			mothership.SetOption(name, values)
 		elif re.match("^# end of options", l):
 			# that's the end of the variables
 			# save the rest of the file....
@@ -675,7 +669,7 @@ def Write_Sortlast(mothership, file):
 	configio.WriteSPUOptions(readbackSPU, "READBACK", file)
 
 	# write server and global options
-	configio.WriteServerOptions(mothership, file)
+	configio.WriteServerOptions(serverNode, file)
 	configio.WriteGlobalOptions(mothership, file)
 
 	file.write("# end of options, the rest is boilerplate\n")

@@ -67,42 +67,37 @@ def __WriteOption(name, type, values, file):
 		pass
 
 def WriteGlobalOptions(mothership, file):
-	for (name, description, type, count, default, mins, maxs) in mothership.GlobalOptions:
-		values = mothership.GetGlobalOption(name)
-		__WriteOption("GLOBAL_" + name, type, values, file)
+	for opt in mothership.GetOptions().Options():
+		values = mothership.GetOption(opt.Name)
+		__WriteOption("GLOBAL_" + opt.Name, opt.Type, values, file)
 
 
-def WriteServerOptions(mothership, file):
-	for (name, description, type, count, default, mins, maxs) in mothership.ServerOptions:
-		values = mothership.GetServerOption(name)
-		__WriteOption("SERVER_" + name, type, values, file)
+def WriteServerOptions(serverNode, file):
+	for opt in serverNode.GetOptions().Options():
+		__WriteOption("SERVER_" + opt.Name, opt.Type, opt.Value, file)
 
 
 def WriteSPUOptions(spu, prefix, file):
 	"""Write SPU options to given file handle."""
-	(params, options) = crutils.GetSPUOptions(spu.Name())
-	values = {}
-	for (name, description, type, count, default, mins, maxs) in options:
-		values = spu.GetOption(name)
-		__WriteOption(prefix + "_" + name, type, values, file)
+	for opt in spu.GetOptions().Options():
+		values = spu.GetOption(opt.Name)
+		__WriteOption(prefix + "_" + opt.Name, opt.Type, values, file)
 
-def WriteSPUConfs(spu, lvalue, file):
+def WriteSPUConfs(spu, spuName, file):
 	"""Write a spu.Conf() line to the file handle for all SPU options."""
-	(params, options) = crutils.GetSPUOptions(spu.Name())
-	values = {}
-	for (name, description, type, count, default, mins, maxs) in options:
-		values = spu.GetOption(name)
-		if values != default:
-			if type == "STRING":
-				assert count == 1
-				file.write("%s('%s', '%s')\n" % (lvalue, name, values[0]))
+	for opt in spu.GetOptions().Options():
+		values = spu.GetOption(opt.Name)
+		if values != opt.Default:
+			if opt.Type == "STRING":
+				assert opt.Count == 1
+				file.write("%s('%s', '%s')\n" % (spuName, opt.Name, values[0]))
 			else:
 				valueStr = ""
 				for val in values:
 					valueStr += "%s " % str(val)
 				# remove last space
 				valueStr = valueStr[:-1]
-				file.write("%s('%s', '%s')\n" % (lvalue, name, valueStr))
+				file.write("%s('%s', '%s')\n" % (spuName, opt.Name, valueStr))
 	
 def WriteAutoStart(nodeName, isServer, hostName, file):
 	"""Write the tricky autostart code for the given node on given host"""
@@ -140,8 +135,7 @@ def WriteConfig(mothership, file):
 	"""Write the mothership config to file handle."""
 
 	file.write("# Chromium configuration produced by graph.py\n")
-	# write server and global options
-	WriteServerOptions(mothership, file)
+	# write mothership/global options
 	WriteGlobalOptions(mothership, file)
 	file.write("\n")
 	# boilerplate
@@ -164,6 +158,7 @@ def WriteConfig(mothership, file):
 			if node.IsServer():
 				file.write("nodes[%d] = CRNetworkNode('%s')\n" %
 						   (i, node.GetHosts()[j]))
+				#XXX to do: WriteServerOptions(node, file)
 			else:
 				# application node
 				file.write("nodes[%d] = CRApplicationNode('%s')\n" %
@@ -335,6 +330,8 @@ def ReadConfig(mothership, file, filename=""):
 		sys.argv = newArgv
 		dialog.Destroy()
 
+	exec contents
+
 	# Try to execute the config file
 	try:
 		exec contents
@@ -383,12 +380,12 @@ def ReadConfig(mothership, file, filename=""):
 		if node.IsAppNode():
 			app = node.GetApplication()
 			if app != "":
-				mothership.SetGlobalOption("default_app", [app])
+				mothership.SetOption("default_app", [app])
 			dir = node.GetStartDir()
 			if dir != "":
-				mothership.SetGlobalOption("default_dir", [dir])
+				mothership.SetOption("default_dir", [dir])
 		autoStart = node.GetAutoStart()
 		if autoStart != None:
-			mothership.SetGlobalOption("auto_start", [1])
+			mothership.SetOption("auto_start", [1])
 
 	return retValue

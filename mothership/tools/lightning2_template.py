@@ -976,11 +976,11 @@ def Read_Lightning2(mothership, fileHandle):
 		elif re.match("^SERVER_", l):
 			# A server option
 			(name, values) = configio.ParseOption(l, "SERVER")
-			mothership.SetServerOption(name, values)
+			serverNode.SetOption(name, values)
 		elif re.match("^GLOBAL_", l):
 			# A global option
 			(name, values) = configio.ParseOption(l, "GLOBAL")
-			mothership.SetGlobalOption(name, values)
+			mothership.SetOption(name, values)
 		elif re.match("^# end of options", l):
 			# that's the end of the variables
 			# save the rest of the file....
@@ -1028,7 +1028,7 @@ def Write_Lightning2(mothership, file):
 	configio.WriteSPUOptions(renderSPU, "RENDER", file)
 
 	# write server and global options
-	configio.WriteServerOptions(mothership, file)
+	configio.WriteServerOptions(serverNode, file)
 	configio.WriteGlobalOptions(mothership, file)
 
 	file.write("# end of options, the rest is boilerplate\n")
