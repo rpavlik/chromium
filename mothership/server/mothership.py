@@ -519,7 +519,7 @@ class CR:
 	    do_connectrequest:	Connects the given socket.
 	    do_faker:		Maps a faker app to an ApplicationNode.
 	    do_opengldll:	Identifies the application node in the graph.
-		do_rank:        Sends the node's rank down.
+	    do_rank:            Sends the node's rank down.
 	    do_quit: 		Disconnects from clients.
 	    do_reset: 		Resets the mothership to its initial state.
 	    do_server:		Identifies the server in the graph.
@@ -534,7 +534,7 @@ class CR:
 	    do_setparam:        Sets a mothership parameter value
 	    do_getparam:        Returns a mothership parameter value
 	    do_logperf:		Logs Performance Data to a logfile.
-		do_gettilelayout:  Calls the user's LayoutTiles() function and returns
+	    do_gettilelayout:   Calls the user's LayoutTiles() function and returns
 		                   the list of new tiles.
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
@@ -803,6 +803,8 @@ class CR:
 						return
 					else:
 						CRDebug( "not accepting from \"%s:%d\" (!= \"%s:%d\")" % (client_hostname, client_port, hostname, port ) )
+				else:
+					CRDebug( "tcpip_connect_wait" )
 						
 			sock.tcpip_accept_wait = (hostname, port, endianness)
 		elif protocol == 'gm':
