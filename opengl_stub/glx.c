@@ -292,14 +292,24 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 	if (stub.haveNativeOpenGL)
 	{
 		int foo, bar;
-		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) {
+		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar))
+		{
 			vis = stub.wsInterface.glXChooseVisual(dpy, screen, attribList);
 			if (vis)
+			{
+				crDebug("faker native glXChooseVisual returning visual 0x%x\n",
+								(int) vis->visualid);
 				return vis;
+			}
 		}
 	}
 
 	vis = ReasonableVisual( dpy, screen );
+	if (vis)
+	{
+		crDebug("faker glXChooseVisual returning visual 0x%x\n",
+						(int) vis->visualid);
+	}
 	return vis;
 }
 
