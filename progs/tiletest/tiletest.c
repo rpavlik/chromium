@@ -34,7 +34,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern void *glXGetProcAddressARB( const GLubyte *name );
+extern void (*glXGetProcAddressARB( const GLubyte *name ))();
 #ifdef __cplusplus
 }
 #endif
