@@ -167,7 +167,7 @@ quad_overlap(float *quad, float xmin, float ymin, float xmax, float ymax)
 	/* a20 = (-f0y, f0x, 0) */
 	p0 = v[1][0]*v[0][1] - v[0][0]*v[1][1];
 	p1 = v[2][1]*f[0][0] - v[2][0]*f[0][1];
-	p2 = v[3][1]*f[0][0] - v[3][1]*f[0][1];
+	p2 = v[3][1]*f[0][0] - v[3][0]*f[0][1];
 	
 	r  = h[0]*_fabs(f[0][1]) + h[1]*_fabs(f[0][0]);
 	if ((_min3f(p0, p1, p2) > r) || (_max3f(p0, p1, p2) < -r)) return 0;
