@@ -225,6 +225,10 @@ crStateGetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
 				*obj = &(t->proxyCubeMap);
 				*img = t->proxyCubeMap.level + level;
 				return;
+			case GL_TEXTURE_CUBE_MAP_ARB:
+				*obj = unit->currentTextureCubeMap;
+				*img = NULL;
+				return;
 			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
 				*obj = unit->currentTextureCubeMap;
 				*img = unit->currentTextureCubeMap->level + level;
@@ -491,14 +495,14 @@ ErrorCheckTexSubImage(GLuint dims, GLenum target, GLint level,
 	/* test x/y/zoffset and size */
 	if (xoffset < -tl->border || xoffset + width > tl->width) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage%uD(xoffset=%d and/or width=%d)",
-								 dims, xoffset, width);
+								 "glTexSubImage%uD(xoffset=%d + width=%d > %d)",
+								 dims, xoffset, width, tl->width);
 		return GL_TRUE;
 	}
 	if (dims > 1 && (yoffset < -tl->border || yoffset + height > tl->height)) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
-								 "glTexSubImage%uD(yoffset=%d and/or height=%d)",
-								 dims, yoffset, height);
+								 "glTexSubImage%uD(yoffset=%d + height=%d > %d)",
+								 dims, yoffset, height, tl->height);
 		return GL_TRUE;
 	}
 	if (dims > 2 && (zoffset < -tl->border || zoffset + depth > tl->depth)) {
@@ -654,7 +658,8 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 			}
 			else
 			{
-				crPixelCopy2D(width, height, (GLvoid *) (tl->img), format, type, NULL,	/* dst */
+				crPixelCopy2D(width, height,
+											(GLvoid *) tl->img, format, type, NULL,	/* dst */
 											pixels, format, type, &(c->unpack));	/* src */
 			}
 		}
