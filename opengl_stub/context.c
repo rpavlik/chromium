@@ -115,6 +115,14 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 #else
 		dpyName = DisplayString(dpy);
 
+#if 0
+		/* Can't do this...
+		 * We don't know whether it's a NATIVE context till
+		 * later, so we shouldn't be calling stub.wsInterface...()
+		 * from the FindVisualInfo() call.
+		 * DISABLING - Alan.
+		 */
+
 		/* 
 		 * Pull apart the context's requested visual information
 		 * and select the correct CR_*_BIT's. The RenderSPU
@@ -126,6 +134,7 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 		 * them!
 		 */
 		stub.desiredVisual |= FindVisualInfo( dpy, vis );
+#endif
 
 		stub.spuWindow = crCreateWindow( dpyName, stub.desiredVisual );
 #endif
