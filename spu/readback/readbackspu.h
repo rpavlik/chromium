@@ -26,7 +26,7 @@ typedef struct {
 	GLint childWidth, childHeight;
 	GLubyte *colorBuffer;
 	GLvoid *depthBuffer;
-	GLint cppColor, cppDepth;  /* bytes per pixel */
+	GLint bytesPerColor, bytesPerDepth;  /* bytes per pixel */
 	GLenum depthType;  /* GL_UNSIGNED_SHORT or GL_FLOAT */
 	GLenum rgbaFormat; /* GL_RGBA or GL_BGRA */
 	GLenum rgbFormat;  /* GL_RGB or GL_BGR */

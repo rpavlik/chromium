@@ -81,6 +81,7 @@ static void AllocBuffers( WindowInfo *window )
 }
 
 
+
 /*
  * Determine the size of the given readback SPU window.
  * We may either have to query the super or child SPU window dims.
@@ -92,8 +93,8 @@ static void CheckWindowSize( WindowInfo *window )
 	const GLint w = window->index;
 	CRMessage *msg;
 
-	/* XXX this code seems rather redundant with what's immediately below */
-	if (readback_spu.gather_url)
+	newSize[0] = newSize[1] = 0;
+	if (readback_spu.gather_url || readback_spu.resizable)
 	{
 		/* ask downstream SPU (probably render) for its window size */
 		readback_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
@@ -109,22 +110,6 @@ static void CheckWindowSize( WindowInfo *window )
 		window->childWidth = newSize[0];
 		window->childHeight = newSize[1];
 	}
-
-	newSize[0] = newSize[1] = 0;
-	if (readback_spu.resizable)
-	{
-		/* ask downstream SPU (probably render) for its window size */
-		readback_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-																							 w, GL_INT, 2, newSize);
-		if (newSize[0] == 0 && newSize[1] == 0)
-		{
-			/* something went wrong - recover - try viewport */
-			GLint geometry[4];
-			readback_spu.super.GetIntegerv( GL_VIEWPORT, geometry );
-			newSize[0] = geometry[2];
-			newSize[1] = geometry[3];
-		}
-	}
 	else
 	{
 		/* not resizable - ask render SPU for its window size */
@@ -134,6 +119,7 @@ static void CheckWindowSize( WindowInfo *window )
 
 	if (newSize[0] != window->width || newSize[1] != window->height)
 	{
+		/* The window size has changed (or first-time init) */
 		window->width = newSize[0];
 		window->height = newSize[1];
 		AllocBuffers(window);
@@ -150,18 +136,26 @@ static void CheckWindowSize( WindowInfo *window )
 			readback_spu.child.Viewport( 0, 0, newSize[0], newSize[1] );
 		}
 
- 		window->cppColor = 3;
  		if (readback_spu.extract_alpha)
- 			window->cppColor++;
+			window->bytesPerColor = 4 * sizeof(GLubyte);
+		else
+			window->bytesPerColor = 3 * sizeof(GLubyte);
 
 		msg = (CRMessage *)window->colorBuffer; 
 		msg->header.type = CR_MESSAGE_GATHER;
 		
  		if (readback_spu.extract_depth)
  		{
- 			readback_spu.super.GetIntegerv( GL_DEPTH_BITS, &window->cppDepth );
- 			window->cppDepth /= 8;
- 			msg = (CRMessage *)window->depthBuffer; 
+			GLint zBits;
+ 			readback_spu.super.GetIntegerv( GL_DEPTH_BITS, &zBits );
+			if (zBits > 16)
+				window->bytesPerDepth = 4;
+			else if (zBits > 8)
+				window->bytesPerDepth = 2;
+			else
+				window->bytesPerDepth = 1;
+			CRASSERT(window->depthBuffer);
+ 			msg = (CRMessage *) window->depthBuffer; 
  			msg->header.type = CR_MESSAGE_GATHER;
  		}
 	}
@@ -169,13 +163,172 @@ static void CheckWindowSize( WindowInfo *window )
 
 
 /*
- * Read color/alpha/depth from the rendering window, send it to
- * the child SPU via glDrawPixels.
- * Do this for all the tiles (if running on a crserver) or the
- * whole window if running on the appfaker.
- * Do Greg's bounding box test only if running on the faker (whole window).
+ * This is the guts of the readback operation.  Here, we call glReadPixels
+ * to read a region of the color and depth buffers from the parent (render
+ * SPU) window.  Then, we call glDrawPixels (and some other GL functions)
+ * on the child/downstream SPU to composite those regions.
+ * Input:  window - the window we're processing
+ *         w, h - size of image region to process
+ *         readx, ready - glReadPixels source location
+ *         drawx, drawy - glDrawPixels dest location.
  */
-static void read_and_send_tiles( WindowInfo *window )
+static void CompositeTile( WindowInfo *window, int w, int h,
+													 int readx, int ready, int drawx, int drawy )
+{
+	unsigned int shift;
+	CRMessage *msg;
+
+	if (readback_spu.gather_url)
+	{
+		msg = (CRMessage *) window->colorBuffer;
+		msg->gather.offset = window->bytesPerColor * (drawy * window->childWidth + drawx);
+
+		msg->gather.len = window->bytesPerColor * (w * h);
+		if (readback_spu.extract_depth)
+		{
+			msg = (CRMessage *) window->depthBuffer;
+			msg->gather.offset = window->bytesPerDepth * (drawx * window->childWidth + drawx);
+			msg->gather.len = window->bytesPerDepth * (w * h);
+		}
+	}
+		
+	/* Clamp the image width and height to the readback SPU window's width
+	 * and height.  We do this because there's nothing preventing someone
+	 * from creating a tile larger than the rendering window.
+	 * Our RGBA and depth buffers are the size of the window so trying to
+	 * glReadPixels a larger size will cause a segfault.
+	 */
+	if (w > window->width)
+		w = window->width;
+	if (h > window->height)
+		h = window->height;
+
+	/*
+		crDebug("readback from: %d, %d   to: %d, %d   size: %d x %d",
+						readx, ready, drawx, drawy, w, h);
+	*/
+
+	/* Karl's gather code */
+	shift = readback_spu.gather_url ? sizeof(CRMessageGather) : 0;
+
+	/* Read RGB image, possibly alpha, possibly depth from framebuffer */
+	if (readback_spu.extract_alpha)
+	{
+		readback_spu.super.ReadPixels( readx, ready, w, h,
+																	 window->rgbaFormat, GL_UNSIGNED_BYTE,
+																	 window->colorBuffer + shift );
+	}
+	else 
+	{
+		readback_spu.super.ReadPixels( readx, ready, w, h, 
+																	 window->rgbFormat, GL_UNSIGNED_BYTE,
+																	 window->colorBuffer + shift );
+	}
+
+	if (readback_spu.extract_depth)
+	{
+		readback_spu.super.ReadPixels( readx, ready, w, h,
+																	 GL_DEPTH_COMPONENT, window->depthType,
+																	 (GLubyte *) window->depthBuffer + shift);
+	}
+
+	/*
+	 * Set the downstream viewport.  If we don't do this, and the
+	 * downstream window is resized, the glRasterPos command doesn't
+	 * seem to be reliable.  This is a problem both with Mesa and the
+	 * NVIDIA drivers.  Technically, this may not be a driver bug at
+	 * all since we're doing funny stuff.  Anyway, this fixes the problem.
+	 * Note that the width and height are arbitrary since we only care
+	 * about getting the origin right.  glDrawPixels, glClear, etc don't
+	 * care what the viewport size is.  (BrianP)
+	 */
+	CRASSERT(window->width > 0);
+	CRASSERT(window->height > 0);
+	readback_spu.child.Viewport( 0, 0, window->width, window->height );
+
+	/* Use the glBitmap trick to set the raster pos.
+	 */
+	readback_spu.child.RasterPos2i(0, 0);
+	readback_spu.child.Bitmap(0, 0, 0, 0, (GLfloat)drawx, (GLfloat)drawy, NULL);
+
+	/*
+	 * OK, send color/depth images to child.
+	 */
+	if (readback_spu.extract_depth)
+	{
+		/* Draw the depth image into the depth buffer, setting the stencil
+		 * to one wherever we pass the Z test, clearinging to zero where we fail.
+		 */
+		readback_spu.child.ColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+		readback_spu.child.StencilOp( GL_KEEP, GL_ZERO, GL_REPLACE );
+		readback_spu.child.StencilFunc( GL_ALWAYS, 1, ~0 );
+		readback_spu.child.Enable( GL_STENCIL_TEST );
+		readback_spu.child.Enable( GL_DEPTH_TEST );
+		readback_spu.child.DepthFunc( GL_LESS );
+		readback_spu.child.DrawPixels( w, h,
+																	 GL_DEPTH_COMPONENT, window->depthType,
+																	 (GLubyte *) window->depthBuffer + shift );
+		/* Now draw the RGBA image, only where the stencil is one, reset stencil
+		 * to zero as we go (to avoid calling glClear(STENCIL_BUFFER_BIT)).
+		 */
+		readback_spu.child.Disable( GL_DEPTH_TEST );
+		readback_spu.child.StencilOp( GL_ZERO, GL_ZERO, GL_ZERO );
+		readback_spu.child.StencilFunc( GL_EQUAL, 1, ~0 );
+		readback_spu.child.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+		if (readback_spu.visualize_depth)
+		{
+			/* draw depth as grayscale image */
+			readback_spu.child.PixelTransferf(GL_RED_BIAS, 1.0);
+			readback_spu.child.PixelTransferf(GL_GREEN_BIAS, 1.0);
+			readback_spu.child.PixelTransferf(GL_BLUE_BIAS, 1.0);
+			readback_spu.child.PixelTransferf(GL_RED_SCALE, -1.0);
+			readback_spu.child.PixelTransferf(GL_GREEN_SCALE, -1.0);
+			readback_spu.child.PixelTransferf(GL_BLUE_SCALE, -1.0);
+			readback_spu.child.DrawPixels(w, h, 
+																		GL_LUMINANCE, window->depthType,
+																		(GLubyte *) window->depthBuffer + shift);
+		}
+		else
+		{
+			/* the usual case */
+			readback_spu.child.DrawPixels( w, h,
+																		 window->rgbFormat, GL_UNSIGNED_BYTE,
+																		 window->colorBuffer + shift );
+		}
+		readback_spu.child.Disable(GL_STENCIL_TEST);
+	}
+	else if (readback_spu.extract_alpha)
+	{
+		/* alpha compositing */
+		readback_spu.child.BlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+		readback_spu.child.Enable( GL_BLEND );
+		readback_spu.child.DrawPixels( w, h,
+																	 window->rgbaFormat, GL_UNSIGNED_BYTE,
+																	 window->colorBuffer + shift );
+	}
+	else
+	{
+		if (!readback_spu.gather_url)
+		{
+			/* just send color image */
+			readback_spu.child.DrawPixels( w, h,
+																		 window->rgbFormat, GL_UNSIGNED_BYTE,
+																		 window->colorBuffer + shift );
+		}
+	}
+}
+
+
+/*
+ * Do readback/composite for a window.
+ * This involves:
+ *   - computing the image regions (tiles) to process
+ *   - bounding box testing (only if running on the faker / whole window)
+ *   - doing glClear
+ *   - semaphore-based synchronization
+ *   - call ProcessTile() for each region
+ */
+static void ProcessTiles( WindowInfo *window )
 {
 	GLrecti extent0, outputwindow0;
 	const GLrecti *extents;
@@ -282,7 +435,7 @@ static void read_and_send_tiles( WindowInfo *window )
 	/*
 	 * NOTE: numExtents may be zero here if the bounding box test
 	 * determined that nothing was drawn.  We can't just return though!
-	 * we have to go through the barriers below so that we don't deadlock
+	 * We have to go through the barriers below so that we don't deadlock
 	 * the server.
 	 */
 
@@ -300,8 +453,8 @@ static void read_and_send_tiles( WindowInfo *window )
 
 	/*
 	 * Begin critical region.
-	 * NOTE: we could put the SemaphoreP and SemaphoreV calls inside this
-	 * loop to more tightly bracket the glDrawPixels calls.  However, by
+	 * NOTE: we could put the SemaphoreP and SemaphoreV calls inside the
+	 * tile loop  to more tightly bracket the glDrawPixels calls.  However, by
 	 * putting the mutex outside of the loop, we're more likely to pack more
 	 * data into each buffer when doing image reassembly.
 	 */
@@ -318,146 +471,7 @@ static void read_and_send_tiles( WindowInfo *window )
 		const int drawy = extents[i].y1;
 		int w = outputwindow[i].x2 - outputwindow[i].x1;
 		int h = outputwindow[i].y2 - outputwindow[i].y1;
-		unsigned int shift;
-		CRMessage *msg;
-
-		if (readback_spu.gather_url)
-		{
-			msg = (CRMessage *) window->colorBuffer;
-	 		msg->gather.offset = window->cppColor * (drawy * window->childWidth + drawx);
-
- 			msg->gather.len = window->cppColor*(w*h);
-			if (readback_spu.extract_depth)
-			{
-				msg = (CRMessage *) window->depthBuffer;
-		 		msg->gather.offset = window->cppDepth * (drawx * window->childWidth + drawx);
- 				msg->gather.len = window->cppDepth*(w*h);
-			}
-		}
-		
-		/* Clamp the image width and height to the readback SPU window's width
-		 * and height.  We do this because there's nothing preventing someone
-		 * from creating a tile larger than the rendering window.
-		 * Our RGBA and depth buffers are the size of the window so trying to
-		 * glReadPixels a larger size will cause a segfault.
-		 */
-		if (w > window->width)
-			w = window->width;
-		if (h > window->height)
-			h = window->height;
-
-		/*
-		crDebug("readback from: %d, %d   to: %d, %d   size: %d x %d",
-						readx, ready, drawx, drawy, w, h);
-		*/
-
-		/* Karl's gather code */
-		shift = readback_spu.gather_url ? sizeof(CRMessageGather) : 0;
-
-		/* Read RGB image, possibly alpha, possibly depth from framebuffer */
-		if (readback_spu.extract_alpha)
-		{
-			readback_spu.super.ReadPixels( readx, ready, w, h,
-					window->rgbaFormat, GL_UNSIGNED_BYTE,
-					window->colorBuffer + shift );
-		}
-		else 
-		{
-			readback_spu.super.ReadPixels( readx, ready, w, h, 
-					window->rgbFormat, GL_UNSIGNED_BYTE,
-					window->colorBuffer + shift );
-		}
-
-		if (readback_spu.extract_depth)
-		{
-			readback_spu.super.ReadPixels( readx, ready, w, h,
-																		 GL_DEPTH_COMPONENT, window->depthType,
-																		 (GLubyte *) window->depthBuffer + shift);
-		}
-
-		/*
-		 * Set the downstream viewport.  If we don't do this, and the
-		 * downstream window is resized, the glRasterPos command doesn't
-		 * seem to be reliable.  This is a problem both with Mesa and the
-		 * NVIDIA drivers.  Technically, this may not be a driver bug at
-		 * all since we're doing funny stuff.  Anyway, this fixes the problem.
-		 * Note that the width and height are arbitrary since we only care
-		 * about getting the origin right.  glDrawPixels, glClear, etc don't
-		 * care what the viewport size is.  (BrianP)
-		 */
-		CRASSERT(window->width > 0);
-		CRASSERT(window->height > 0);
-		readback_spu.child.Viewport( 0, 0, window->width, window->height );
-
-		/* Use the glBitmap trick to set the raster pos.
-		 */
-		readback_spu.child.RasterPos2i(0, 0);
-		readback_spu.child.Bitmap(0, 0, 0, 0, (GLfloat)drawx, (GLfloat)drawy, NULL);
-
-		/*
-		 * OK, send color/depth images to child.
-		 */
-		if (readback_spu.extract_depth)
-		{
-			/* Draw the depth image into the depth buffer, setting the stencil
-			 * to one wherever we pass the Z test, clearinging to zero where we fail.
-			 */
-			readback_spu.child.ColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-			readback_spu.child.StencilOp( GL_KEEP, GL_ZERO, GL_REPLACE );
-			readback_spu.child.StencilFunc( GL_ALWAYS, 1, ~0 );
-			readback_spu.child.Enable( GL_STENCIL_TEST );
-			readback_spu.child.Enable( GL_DEPTH_TEST );
-			readback_spu.child.DepthFunc( GL_LESS );
-			readback_spu.child.DrawPixels( w, h,
-																		 GL_DEPTH_COMPONENT, window->depthType,
-																		 (GLubyte *) window->depthBuffer + shift );
-			/* Now draw the RGBA image, only where the stencil is one, reset stencil
-			 * to zero as we go (to avoid calling glClear(STENCIL_BUFFER_BIT)).
-			 */
-			readback_spu.child.Disable( GL_DEPTH_TEST );
-			readback_spu.child.StencilOp( GL_ZERO, GL_ZERO, GL_ZERO );
-			readback_spu.child.StencilFunc( GL_EQUAL, 1, ~0 );
-			readback_spu.child.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-			if (readback_spu.visualize_depth)
-			{
-				/* draw depth as grayscale image */
-				readback_spu.child.PixelTransferf(GL_RED_BIAS, 1.0);
-				readback_spu.child.PixelTransferf(GL_GREEN_BIAS, 1.0);
-				readback_spu.child.PixelTransferf(GL_BLUE_BIAS, 1.0);
-				readback_spu.child.PixelTransferf(GL_RED_SCALE, -1.0);
-				readback_spu.child.PixelTransferf(GL_GREEN_SCALE, -1.0);
-				readback_spu.child.PixelTransferf(GL_BLUE_SCALE, -1.0);
-				readback_spu.child.DrawPixels(w, h, 
-																			GL_LUMINANCE, window->depthType,
-																			(GLubyte *) window->depthBuffer + shift);
-			}
-			else {
-				/* the usual case */
-				readback_spu.child.DrawPixels( w, h,
-						window->rgbFormat, GL_UNSIGNED_BYTE,
-						window->colorBuffer );
-			}
-			readback_spu.child.Disable(GL_STENCIL_TEST);
-		}
-		else if (readback_spu.extract_alpha)
-		{
-			/* alpha compositing */
-			readback_spu.child.BlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
-			readback_spu.child.Enable( GL_BLEND );
-			readback_spu.child.DrawPixels( w, h,
-																		 window->rgbaFormat, GL_UNSIGNED_BYTE,
-																		 window->colorBuffer + shift );
-		}
-		else
-		{
-			if (!readback_spu.gather_url)
-			{
-				/* just send color image */
-				readback_spu.child.DrawPixels( w, h,
-																			 window->rgbFormat, GL_UNSIGNED_BYTE,
-																			 window->colorBuffer + shift );
-			}
-		}
+		CompositeTile(window, w, h, readx, ready, drawx, drawy);
 	}
 
 	/*
@@ -476,18 +490,13 @@ static void DoReadback( WindowInfo *window )
 	{
 		CheckWindowSize( window );
 	}
+
 	if (first_time)
 	{
 		/* one-time initializations */
 		readback_spu.child.BarrierCreate(CLEAR_BARRIER, readback_spu.barrierSize);
 		readback_spu.child.BarrierCreate(SWAP_BARRIER, readback_spu.barrierSize);
 		readback_spu.child.SemaphoreCreate(MUTEX_SEMAPHORE, 1);
-#if 000
-		readback_spu.child.MatrixMode(GL_PROJECTION);
-		readback_spu.child.LoadIdentity();
-		readback_spu.child.Ortho( 0, window->width,
-															0, window->height, -1, 1);
-#endif
 		first_time = 0;
 	}
 	else if (readback_spu.resizable)
@@ -504,7 +513,7 @@ static void DoReadback( WindowInfo *window )
 	readback_spu.super.PixelStorei(GL_PACK_ALIGNMENT, 1);
 	readback_spu.child.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	read_and_send_tiles(window);
+	ProcessTiles(window);
 
 	/*
 	 * Restore pack/unpack alignments
@@ -539,7 +548,8 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint win, GLint flags 
 	unsigned short port = 3000;
 	char url[4098];
 	
-	(void) flags;
+	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
+	CRASSERT(window);
 
 	/* setup OOB gather connections, if necessary */
 	if (readback_spu.gather_url)
@@ -564,8 +574,6 @@ static void READBACKSPU_APIENTRY readbackspuSwapBuffers( GLint win, GLint flags 
 		}
 	}
 	
-	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
-	CRASSERT(window);
 	DoReadback( window );
 
 	/*
@@ -899,9 +907,9 @@ static void READBACKSPU_APIENTRY readbackspuChromiumParameteriCR(GLenum target, 
 					else
 						first_time = 0;
 	
-					/* send the framebuffer */
+					/* send the color image */
 					crNetSend(readback_spu.gather_conn, NULL, window->colorBuffer, 
-										sizeof(CRMessageGather) + window->cppColor * w * h);
+										sizeof(CRMessageGather) + window->bytesPerColor * w * h);
 
 					/* inform the child that their is a frame on the way */
 					readback_spu.child.ChromiumParametervCR(GL_GATHER_DRAWPIXELS_CR,
