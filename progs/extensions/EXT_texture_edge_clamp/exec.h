@@ -40,7 +40,7 @@ using namespace std;
 #define	SMOOTH_TEXT
 
 #define	TEST_EXTENSION_STRING	"GL_EXT_texture_edge_clamp"
-#ifndef	GL_EXT_texture_edge_clamp
+#if !defined(GL_EXT_texture_edge_clamp) && !defined(GL_SGIS_texture_edge_clamp)
 #error	Please update your GL/glext.h header file.
 #endif
 

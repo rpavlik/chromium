@@ -34,6 +34,14 @@ static GLfloat	bgColor[4] = { 0.2, 0.3, 0.8, 0 };
 
 //PFNGLBLENDCOLOREXTPROC glBlendColorEXT;
 
+#ifdef GL_CLAMP_TO_EDGE
+/* OpenGL 1.3 - do nothing */
+#elif defined(GL_CLAMP_TO_EDGE_SGIS)
+#define GL_CLAMP_TO_EDGE GL_CLAMP_TO_EDGE_SGIS
+#elif defined(GL_CLAMP_TO_EDGE_EXT)
+#define GL_CLAMP_TO_EDGE GL_CLAMP_TO_EDGE_EXT
+#endif
+
 
 /* --- Function Definitions ------------------------------------------------- */
 
@@ -96,8 +104,8 @@ void	InitSpecial	( void )
 	glBindTexture( GL_TEXTURE_2D, textureID[1] );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE_EXT );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE_EXT );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	glTexImage2D( GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 32, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, textureData );
 	
 	return;
