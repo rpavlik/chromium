@@ -1,7 +1,8 @@
 TOP = ..
 
 PROGRAM = crserver
-FILES = main server_config server_dispatch server_get server_retval server_simpleget
+FILES = main server_config server_dispatch server_get server_getstring\
+	server_retval server_simpleget
 
 PRECOMP = server_dispatch.h server_dispatch.c server_retval.c server_simpleget.c
 SLOP = ${PRECOMP}

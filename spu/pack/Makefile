@@ -2,7 +2,8 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = packspu
-FILES = packspu packspu_config packspu_get packspu_init packspu_net packspu_pixel
+FILES = packspu packspu_config packspu_get packspu_getstring \
+	packspu_init packspu_net packspu_pixel
 
 LIBRARIES = crutil crmothership crstate crpacker
 

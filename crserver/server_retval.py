@@ -43,9 +43,6 @@ for func_name in keys:
 		print '{'
 		print '\t%s retval;' % return_type
 		print '\tretval = cr_server.head_spu->dispatch_table.%s%s;' % (func_name, stub_common.CallString( names ) );
-		if string.find( return_type, '*' ) != -1:
-			print '\tcrServerReturnValue( retval, strlen(retval) + 1 );'
-		else:
-			print '\tcrServerReturnValue( &retval, sizeof(retval) );'
+		print '\tcrServerReturnValue( &retval, sizeof(retval) );'
 		print '\treturn retval; // WILL PROBABLY BE IGNORED'
 		print '}'
