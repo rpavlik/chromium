@@ -1214,11 +1214,12 @@ DrawShark(fishRec * fish)
     P070[0] = iP070[0] + seg4;
 
     fish->vtail += ((fish->dtheta - fish->vtail) * 0.1);
-
     if (fish->vtail > 0.5) {
         fish->vtail = 0.5;
     } else if (fish->vtail < -0.5) {
         fish->vtail = -0.5;
+    } else if (fish->vtail < 1.0e-10 && fish->vtail > -1.0e-10) {
+        fish->vtail = 0.0;
     }
     segup = thrash * fish->vtail;
 

@@ -60,6 +60,7 @@ InitFishs(void)
     int i;
 
     for (i = 0; i < NUM_SHARKS; i++) {
+        memset(sharks + i, 0, sizeof(fishRec));
         sharks[i].x = 70000.0 + rand() % 6000;
         sharks[i].y = rand() % 6000;
         sharks[i].z = rand() % 6000;
@@ -67,6 +68,7 @@ InitFishs(void)
         sharks[i].v = 1.0;
     }
 
+    memset(&dolph, 0, sizeof(fishRec));
     dolph.x = 30000.0;
     dolph.y = 0.0;
     dolph.z = 6000.0;
@@ -74,6 +76,7 @@ InitFishs(void)
     dolph.theta = 0.0;
     dolph.v = 3.0;
 
+    memset(&momWhale, 0, sizeof(fishRec));
     momWhale.x = 70000.0;
     momWhale.y = 0.0;
     momWhale.z = 0.0;
@@ -81,6 +84,7 @@ InitFishs(void)
     momWhale.theta = 0.0;
     momWhale.v = 3.0;
 
+    memset(&babyWhale, 0, sizeof(fishRec));
     babyWhale.x = 60000.0;
     babyWhale.y = -2000.0;
     babyWhale.z = -2000.0;
