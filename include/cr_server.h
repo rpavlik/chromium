@@ -67,7 +67,7 @@ typedef struct {
 
 	unsigned int maxBarrierCount;
 	unsigned int clearCount;
-	unsigned int swapCount;
+	int only_swap_once;
 } CRServer;
 
 

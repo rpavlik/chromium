@@ -18,8 +18,6 @@ static void __setDefaults( ReadbackSPU *readback_spu )
 	readback_spu->barrierCount = 0;
 }
 
-
-
 void set_extract_depth( ReadbackSPU *readback_spu, const char *response )
 {
    readback_spu->extract_depth = crStrToInt( response );

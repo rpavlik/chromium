@@ -3,13 +3,12 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-TOP = ../..
+TOP = ../../..
 
-PROGRAM = pmodel
-FILES = ball plyfile pmodel readply
+PROGRAM = plybbox
+FILES = ../plyfile bbox
+LIBRARIES = crutil
 
-LDFLAGS += -lGLU
-
-LIBRARIES = crutil crfaker
+CFLAGS += -I..
 
 include ${TOP}/cr.mk

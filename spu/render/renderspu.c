@@ -61,7 +61,7 @@ void renderspuMakeVisString( GLbitfield visAttribs, char *s )
  * Find a VisualInfo which matches the given display name and attribute
  * bitmask, or return a pointer to a new visual.
  */
-VisualInfo *renderspu_FindVisual(const char *displayName, GLbitfield visAttribs )
+VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 {
 #ifndef WINDOWS
 	int i;
@@ -78,17 +78,21 @@ VisualInfo *renderspu_FindVisual(const char *displayName, GLbitfield visAttribs 
 	}
 
 	if (render_spu.numVisuals >= MAX_VISUALS)
+	{
+		crWarning( "Couldn't create a visual, too many visuals already" );
 		return NULL;
+	}
 
 	/* create a new visual */
 	i = render_spu.numVisuals;
 	render_spu.visuals[i].displayName = crStrdup(displayName);
 	render_spu.visuals[i].visAttribs = visAttribs;
-	if (renderspu_InitVisual(&(render_spu.visuals[i]))) {
+	if (renderspu_SystemInitVisual(&(render_spu.visuals[i]))) {
 		render_spu.numVisuals++;
 		return &(render_spu.visuals[i]);
 	}
 	else {
+		crWarning( "Couldn't get a visual, renderspu_SystemInitVisual failed" );
 		return NULL;
 	}
 #else
@@ -107,7 +111,7 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 
 	if (!dpyName)
 		dpyName = render_spu.display_string;
-	visual = renderspu_FindVisual( dpyName, visBits );
+	visual = renderspuFindVisual( dpyName, visBits );
 	if (!visual)
 		return -1;
 
@@ -119,7 +123,7 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 	if (i == MAX_CONTEXTS)
 		return -1;
 
-	if (!renderspu_CreateContext( visual, &(render_spu.contexts[i]) ))
+	if (!renderspu_SystemCreateContext( visual, &(render_spu.contexts[i]) ))
 		return -1;
 
 	render_spu.contexts[i].inUse = GL_TRUE;
@@ -139,7 +143,7 @@ static void RENDER_APIENTRY renderspuDestroyContext( GLint ctx )
 	CRASSERT(ctx);
 
 	context = &(render_spu.contexts[ctx]);
-	renderspu_DestroyContext( context );
+	renderspu_SystemDestroyContext( context );
 	context->inUse = GL_FALSE;
 	context->everCurrent = GL_FALSE;
 }
@@ -167,7 +171,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		thread->currentContext = ctx;
 		window = &(render_spu.windows[crWindow]);
 		context = &(render_spu.contexts[ctx]);
-		renderspu_MakeCurrent( thread, window, context );
+		renderspu_SystemMakeCurrent( thread, window, context );
 		if (!context->everCurrent) {
 #ifdef WINDOWS
 			/* XXX */
@@ -184,14 +188,14 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 			 * If the mapPending flag is set, then we should now make the window
 			 * visible.
 			 */
-			renderspu_ShowWindow( window, GL_TRUE );
+			renderspu_SystemShowWindow( window, GL_TRUE );
 			window->mapPending = GL_FALSE;
 		}
 	}
 	else {
 		thread->currentWindow = -1;
 		thread->currentContext = -1;
-		renderspu_MakeCurrent( thread, NULL, NULL );
+		renderspu_SystemMakeCurrent( thread, NULL, NULL );
 	}
 }
 
@@ -208,9 +212,12 @@ GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits 
 
 	if (!dpyName)
 		dpyName = render_spu.display_string;
-	visual = renderspu_FindVisual( dpyName, visBits );
+	visual = renderspuFindVisual( dpyName, visBits );
 	if (!visual)
+	{
+		crWarning( "Couldn't create a window, renderspuFindVisual returned NULL" );
 		return -1;
+	}
 
 	/* find an empty slot in windows[] array */
 	for (i = 0; i < MAX_WINDOWS; i++) {
@@ -218,12 +225,18 @@ GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits 
 			break;
 	}
 	if (i == MAX_WINDOWS)
+	{
+		crWarning( "Couldn't create a window, i == MAX_WINDOWS" );
 		return -1;
+	}
 
 	/* Have GLX/WGL create the window */
 	showIt = i > 0;
-	if (!renderspu_CreateWindow( visual, showIt, &(render_spu.windows[i]) ))
+	if (!renderspu_SystemCreateWindow( visual, showIt, &(render_spu.windows[i]) ))
+	{
+		crWarning( "Couldn't create a window, renderspu_SystemCreateWindow failed" );
 		return -1;
+	}
 
 	render_spu.windows[i].inUse = GL_TRUE;
 
@@ -234,7 +247,7 @@ static void RENDER_APIENTRY renderspuDestroyWindow( GLint window )
 {
 	CRASSERT(window >= 0);
 	CRASSERT(window < MAX_WINDOWS);
-	renderspu_DestroyWindow( &(render_spu.windows[window]) );
+	renderspu_SystemDestroyWindow( &(render_spu.windows[window]) );
 	render_spu.windows[window].inUse = GL_FALSE;
 }
 
@@ -242,14 +255,14 @@ static void RENDER_APIENTRY renderspuWindowSize( GLint window, GLint w, GLint h 
 {
 	CRASSERT(window >= 0);
 	CRASSERT(window < MAX_WINDOWS);
-	renderspu_WindowSize( &(render_spu.windows[window]), w, h );
+	renderspu_SystemWindowSize( &(render_spu.windows[window]), w, h );
 }
 
 static void RENDER_APIENTRY renderspuWindowPosition( GLint window, GLint x, GLint y )
 {
 	CRASSERT(window >= 0);
 	CRASSERT(window < MAX_WINDOWS);
-	renderspu_WindowPosition( &(render_spu.windows[window]), x, y );
+	renderspu_SystemWindowPosition( &(render_spu.windows[window]), x, y );
 }
 
 

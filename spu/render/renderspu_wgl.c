@@ -21,12 +21,12 @@
 
 #define WINDOW_NAME render_spu.window_title
 
-GLboolean renderspu_InitVisual( VisualInfo *visual )
+GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 {
 	return TRUE;
 }
 
-void renderspu_DestroyWindow( WindowInfo *window )
+void renderspu_SystemDestroyWindow( WindowInfo *window )
 {
 	CRASSERT(window);
 	DestroyWindow( window->visual->hWnd );
@@ -135,7 +135,7 @@ bSetupPixelFormat( HDC hdc )
 	return TRUE;
 }
 
-GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
+GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 {
 	HDESK     desktop;
 	HINSTANCE hinstance;
@@ -332,7 +332,7 @@ GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowIn
 
 
 /* Either show or hide the render SPU's window. */
-void renderspu_ShowWindow( WindowInfo *window, GLboolean showIt )
+void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 {
 	if (showIt)
 		ShowWindow( window->visual->hWnd, SW_SHOWNORMAL );
@@ -340,7 +340,7 @@ void renderspu_ShowWindow( WindowInfo *window, GLboolean showIt )
 		ShowWindow( window->visual->hWnd, SW_HIDE );
 }
 
-GLboolean renderspu_CreateContext( VisualInfo *visual, ContextInfo *context )
+GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 {
 	crDebug( " Using the DC: 0x%x", visual->device_context );
 	context->hRC = render_spu.ws.wglCreateContext( visual->device_context );
@@ -353,13 +353,13 @@ GLboolean renderspu_CreateContext( VisualInfo *visual, ContextInfo *context )
 	return GL_TRUE;
 }
 
-void renderspu_DestroyContext( ContextInfo *context )
+void renderspu_SystemDestroyContext( ContextInfo *context )
 {
 	render_spu.ws.wglDeleteContext( context->hRC );
 	context->hRC = NULL;
 }
 
-void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context )
+void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context )
 {
 	CRASSERT(render_spu.ws.wglMakeCurrent);
 
@@ -372,7 +372,7 @@ void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo 
 	}
 }
 
-void renderspu_WindowSize( WindowInfo *window, int w, int h )
+void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 {
 	int winprop;
 	CRASSERT(window);
@@ -388,7 +388,7 @@ void renderspu_WindowSize( WindowInfo *window, int w, int h )
 }
 
 
-void renderspu_WindowPosition( WindowInfo *window, int x, int y )
+void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 {
 	int winprop;
 	CRASSERT(window);

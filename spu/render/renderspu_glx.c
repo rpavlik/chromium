@@ -154,7 +154,7 @@ chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
 }
 
 
-GLboolean renderspu_InitVisual( VisualInfo *visual )
+GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 {
 	int screen;
 
@@ -165,14 +165,17 @@ GLboolean renderspu_InitVisual( VisualInfo *visual )
 		visual->dpy = XOpenDisplay(visual->displayName);
 
 	if (!visual->dpy)
+	{
+		crWarning( "Couldn't initialize the visual because visual->dpy was NULL" );
 		return GL_FALSE;
+	}
 
 	screen = DefaultScreen(visual->dpy);
 	visual->visual = chooseVisual(visual->dpy, screen, visual->visAttribs);
 	if (!visual->visual) {
 		char s[1000];
 		renderspuMakeVisString( visual->visAttribs, s );
-		crError( "Render SPU: Display %s doesn't have the necessary visual: %s",
+		crWarning( "Render SPU: Display %s doesn't have the necessary visual: %s",
 						 render_spu.display_string, s );
 		XCloseDisplay(visual->dpy);
 		return GL_FALSE;
@@ -186,7 +189,7 @@ GLboolean renderspu_InitVisual( VisualInfo *visual )
 
 	if ( !render_spu.ws.glXQueryExtension( visual->dpy, NULL, NULL ) )
 	{
-		crError( "Render SPU: Display %s doesn't support GLX", visual->displayName );
+		crWarning( "Render SPU: Display %s doesn't support GLX", visual->displayName );
 		return GL_FALSE;
 	}
 
@@ -213,7 +216,7 @@ GLboolean renderspu_InitVisual( VisualInfo *visual )
 }
 
 
-GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
+GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 {
 	Display             *dpy;
 	Colormap             cmap;
@@ -415,7 +418,7 @@ GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowIn
 }
 
 
-void renderspu_DestroyWindow( WindowInfo *window )
+void renderspu_SystemDestroyWindow( WindowInfo *window )
 {
 	CRASSERT(window);
 	CRASSERT(window->visual);
@@ -426,7 +429,7 @@ void renderspu_DestroyWindow( WindowInfo *window )
 }
 
 
-GLboolean renderspu_CreateContext( VisualInfo *visual, ContextInfo *context )
+GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 {
 	Bool is_direct;
 
@@ -458,7 +461,7 @@ GLboolean renderspu_CreateContext( VisualInfo *visual, ContextInfo *context )
 }
 
 
-void renderspu_DestroyContext( ContextInfo *context )
+void renderspu_SystemDestroyContext( ContextInfo *context )
 {
 	render_spu.ws.glXDestroyContext( context->visual->dpy, context->context );
 	context->visual = NULL;
@@ -466,7 +469,7 @@ void renderspu_DestroyContext( ContextInfo *context )
 }
 
 
-void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context )
+void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context )
 {
 	CRASSERT(render_spu.ws.glXMakeCurrent);
 
@@ -478,10 +481,10 @@ void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo 
 			 * But for now we destroy the current window
 			 * and re-create it with the context's visual abilities
 			 */
-			renderspu_DestroyWindow( window );
-			renderspu_CreateWindow( context->visual, GL_FALSE, window );
+			renderspu_SystemDestroyWindow( window );
+			renderspu_SystemCreateWindow( context->visual, GL_FALSE, window );
 			/*
-			crError("In renderspu_MakeCurrent() window and context"
+			crError("In renderspu_SystemMakeCurrent() window and context"
 							" weren't created with same visual!");
 			*/
 		}
@@ -501,7 +504,7 @@ void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo 
 }
 
 
-void renderspu_WindowSize( WindowInfo *window, int w, int h )
+void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 {
 	CRASSERT(window);
 	CRASSERT(window->visual);
@@ -509,7 +512,7 @@ void renderspu_WindowSize( WindowInfo *window, int w, int h )
 }
 
 
-void renderspu_WindowPosition( WindowInfo *window, int x, int y )
+void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 {
 	CRASSERT(window);
 	CRASSERT(window->visual);
@@ -518,7 +521,7 @@ void renderspu_WindowPosition( WindowInfo *window, int x, int y )
 
 
 /* Either show or hide the render SPU's window. */
-void renderspu_ShowWindow( WindowInfo *window, GLboolean showIt )
+void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 {
 	if ( window->visual->dpy && window->window )
 	{

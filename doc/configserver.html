@@ -50,6 +50,18 @@ node.Conf('optimize_bucket', 0)<br>
 	their swapping.  Currently, this option is mostly unimplemented (only
 	the gaps are left).</td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">only_swap_once</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">If this flag is set, 
+	the Chromium server will only execute swap and clear commands
+	from one of the connected clients (whichever connects first).
+	This greatly simplifies the design of a parallel application,
+	and allows parallel applications to run without modification using
+	sort-first or sort-last architectures.  When using sort-first,
+	this option should be used in conjunction with the <code>auto_barrier</code>
+	option in the <code>tilesort</code> SPU.  The default is <code>false</code>.</td>
+  </tr>
 </table>
 </body>
 

@@ -72,6 +72,8 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 	 */
 	defaultWin = renderspuCreateWindow( NULL, visualBits );
 	defaultCtx = renderspuCreateContext( NULL, visualBits );
+
+	crDebug( "CreateWindow returned %d", defaultWin );
 	CRASSERT(defaultWin == 0);
 	CRASSERT(defaultCtx == 0);
 	renderspuMakeCurrent( defaultWin, 0, defaultCtx );

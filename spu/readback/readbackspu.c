@@ -77,6 +77,7 @@ static void READBACKSPU_APIENTRY readbackSwapBuffers( GLint window, GLint flags 
 		else
 			readback_spu.depthType = GL_FLOAT;
 
+		crDebug( "BC( %d, %d )", READBACK_BARRIER, readback_spu.barrierCount );
 		readback_spu.child.BarrierCreate( READBACK_BARRIER, readback_spu.barrierCount );
 	}
 
@@ -366,7 +367,9 @@ static void READBACKSPU_APIENTRY readbackspuBarrierCreate( GLuint name, GLuint c
 	/* We'll propogate this value downstream to the server when we create
 	 * private readback SPU barriers.
 	 */
-	readback_spu.barrierCount = count;
+	// readback_spu.barrierCount = count;
+	
+	// this is totally wrong -- the barrierCount should be zero.
 }
 
 static void READBACKSPU_APIENTRY readbackspuBarrierDestroy( GLuint name )

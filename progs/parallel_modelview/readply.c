@@ -1,3 +1,5 @@
+#include <float.h>
+
 #include "pmodel.h"
 #include "cr_mem.h"
 #include "cr_error.h"
@@ -19,24 +21,85 @@ PlyProperty face_props[] = { /* list of property information for a vertex */
 		1, PLY_UCHAR, PLY_UCHAR, offsetof(Face,nverts)},
 };
 
-int nverts,nfaces;
-Vertex *vlist;
-Face *flist;
-unsigned int *faces;
-int has_nx,has_ny,has_nz; /* are normals in PLY file? */
-int has_r,has_g,has_b; /* are normals in PLY file? */
-
-static PlyOtherElems *other_elements = NULL;
-// static PlyOtherProp *vert_other,*face_other;
 static int nelems;
 static char **elist;
-static int num_comments;
-static char **comments;
-static int num_obj_info;
-static char **obj_info;
 static int file_type;
 
-void ReadFile( char *fname )
+typedef struct mfi_list {
+	ModelFileInfo file_info;
+	struct mfi_list *next;
+} MFIList;
+
+MFIList *mfi_head = NULL, *mfi_tail = NULL;
+
+void ParseModelInfo( void )
+{
+	FILE *fp;
+	char fname[1024];
+	sprintf( fname, "%s/model_info", globals.ply_root );
+	if ((fp = fopen( fname, "r" )) == NULL)
+	{
+		crError( "Can't open %s", fname );
+	}
+
+	globals.total_triangles = 0;
+	globals.bounds.max.x = globals.bounds.max.y = globals.bounds.max.z = -FLT_MAX;
+	globals.bounds.min.x = globals.bounds.min.y = globals.bounds.min.z = FLT_MAX;
+
+	for (;;)
+	{
+		MFIList *mfi;
+		char buf[8192];
+		char path[8192];
+		fgets( buf, 8192, fp );
+		if (feof(fp))
+		{
+			break;
+		}
+		mfi = (MFIList *) crAlloc( sizeof( *mfi ) );
+		sscanf( buf, "%s %d %f %f %f %f %f %f", 
+				path, &(mfi->file_info.num_tris),
+				&(mfi->file_info.bounds.min.x),
+				&(mfi->file_info.bounds.min.y),
+				&(mfi->file_info.bounds.min.z),
+				&(mfi->file_info.bounds.max.x),
+				&(mfi->file_info.bounds.max.y),
+				&(mfi->file_info.bounds.max.z) );
+		sprintf( mfi->file_info.path, "%s/%s", globals.ply_root, path );
+#if 1
+		mfi->next = mfi_head;
+		mfi_head = mfi;
+#else
+		mfi->next = NULL;
+		if (mfi_tail != NULL) mfi_tail->next = mfi;
+		else mfi_head = mfi;
+		mfi_tail = mfi;
+#endif
+		globals.total_triangles += mfi->file_info.num_tris;
+		if (mfi->file_info.bounds.min.x < globals.bounds.min.x) {
+			globals.bounds.min.x = mfi->file_info.bounds.min.x;
+		}
+		if (mfi->file_info.bounds.min.y < globals.bounds.min.y) {
+			globals.bounds.min.y = mfi->file_info.bounds.min.y;
+		}
+		if (mfi->file_info.bounds.min.z < globals.bounds.min.z) {
+			globals.bounds.min.z = mfi->file_info.bounds.min.z;
+		}
+		if (mfi->file_info.bounds.max.x > globals.bounds.max.x) {
+			globals.bounds.max.x = mfi->file_info.bounds.max.x;
+		}
+		if (mfi->file_info.bounds.max.y > globals.bounds.max.y) {
+			globals.bounds.max.y = mfi->file_info.bounds.max.y;
+		}
+		if (mfi->file_info.bounds.max.z > globals.bounds.max.z) {
+			globals.bounds.max.z = mfi->file_info.bounds.max.z;
+		}
+	}
+	crDebug( "I'm done with the model info file" );
+	fclose( fp );
+}
+
+void ReadFile( MFIList *mfi, Model *model )
 {
 	int i,j;
 	PlyFile *ply;
@@ -47,11 +110,9 @@ void ReadFile( char *fname )
 	float version;
 	FILE *fp;
 
-	/*** Read in the original PLY object ***/
-
-	if ((fp = fopen(fname, "rb")) == NULL)
+	if ((fp = fopen(mfi->file_info.path, "rb")) == NULL)
 	{
-		crError( "Can't open %s for reading!", fname );
+		crError( "Can't open %s for reading!", mfi->file_info.path );
 	}
 
 	ply  = ply_read (fp, &nelems, &elist);
@@ -66,76 +127,111 @@ void ReadFile( char *fname )
 		if (equal_strings ("vertex", elem_name)) {
 
 			/* see if vertex holds any normal information */
-			has_nx = has_ny = has_nz = 0;
-			has_r = has_g = has_b = 0;
+			globals.has_nx = globals.has_ny = globals.has_nz = 0;
+			globals.has_r = globals.has_g = globals.has_b = 0;
 			for (j = 0; j < nprops; j++) {
-				if (equal_strings ("nx", plist[j]->name)) has_nx = 1;
-				if (equal_strings ("ny", plist[j]->name)) has_ny = 1;
-				if (equal_strings ("nz", plist[j]->name)) has_nz = 1;
-				if (equal_strings ("red", plist[j]->name)) has_r = 1;
-				if (equal_strings ("green", plist[j]->name)) has_g = 1;
-				if (equal_strings ("blue", plist[j]->name)) has_b = 1;
+				if (equal_strings ("nx", plist[j]->name)) globals.has_nx = 1;
+				if (equal_strings ("ny", plist[j]->name)) globals.has_ny = 1;
+				if (equal_strings ("nz", plist[j]->name)) globals.has_nz = 1;
+				if (equal_strings ("red", plist[j]->name)) globals.has_r = 1;
+				if (equal_strings ("green", plist[j]->name)) globals.has_g = 1;
+				if (equal_strings ("blue", plist[j]->name)) globals.has_b = 1;
 			}
 
 			/* create a vertex list to hold all the vertices */
-			vlist = (Vertex *) crAlloc (sizeof (*vlist) * num_elems);
-			nverts = num_elems;
-			crDebug( "Reading %d vertices...", nverts );
+			model->vlist = (Vertex *) crAlloc (sizeof (*(model->vlist)) * num_elems);
+			model->nverts = num_elems;
 
 			/* set up for getting vertex elements */
 
 			ply_get_property (ply, elem_name, &vert_props[0]);
 			ply_get_property (ply, elem_name, &vert_props[1]);
 			ply_get_property (ply, elem_name, &vert_props[2]);
-			if (has_r) ply_get_property (ply, elem_name, &vert_props[3]);
-			if (has_g) ply_get_property (ply, elem_name, &vert_props[4]);
-			if (has_b) ply_get_property (ply, elem_name, &vert_props[5]);
-			if (has_nx) ply_get_property (ply, elem_name, &vert_props[6]);
-			if (has_ny) ply_get_property (ply, elem_name, &vert_props[7]);
-			if (has_nz) ply_get_property (ply, elem_name, &vert_props[8]);
-			// vert_other = ply_get_other_properties (ply, elem_name, devnull);
+			if (globals.has_r) ply_get_property (ply, elem_name, &vert_props[3]);
+			if (globals.has_g) ply_get_property (ply, elem_name, &vert_props[4]);
+			if (globals.has_b) ply_get_property (ply, elem_name, &vert_props[5]);
+			if (globals.has_nx) ply_get_property (ply, elem_name, &vert_props[6]);
+			if (globals.has_ny) ply_get_property (ply, elem_name, &vert_props[7]);
+			if (globals.has_nz) ply_get_property (ply, elem_name, &vert_props[8]);
 
 			/* grab all the vertex elements */
 			for (j = 0; j < num_elems; j++) {
-				vlist[j].r = 1.0f;
-				vlist[j].g = 1.0f;
-				vlist[j].b = 1.0f;
-				vlist[j].nx = 1.0f;
-				vlist[j].ny = 1.0f;
-				vlist[j].nz = 1.0f;
-				ply_get_element (ply, vlist+j);
-				vlist[j].r /= 255.0f;
-				vlist[j].g /= 255.0f;
-				vlist[j].b /= 255.0f;
+				model->vlist[j].r = 1.0f;
+				model->vlist[j].g = 1.0f;
+				model->vlist[j].b = 1.0f;
+				model->vlist[j].nx = 1.0f;
+				model->vlist[j].ny = 1.0f;
+				model->vlist[j].nz = 1.0f;
+				ply_get_element (ply, model->vlist+j);
+				model->vlist[j].r /= 255.0f;
+				model->vlist[j].g /= 255.0f;
+				model->vlist[j].b /= 255.0f;
 			}
 		}
 		else if (equal_strings ("face", elem_name)) {
 
 			/* create a list to hold all the face elements */
-			flist = (Face *) crAlloc (sizeof (*flist) * num_elems);
-			nfaces = num_elems;
+			model->flist = (Face *) crAlloc (sizeof (*(model->flist)) * num_elems);
+			model->nfaces = num_elems;
 
 			/* set up for getting face elements */
 
 			ply_get_property (ply, elem_name, &face_props[0]);
-			// face_other = ply_get_other_properties (ply, elem_name,devnull);
 
 			/* grab all the face elements */
-			crDebug( "Reading %d faces...", nfaces );
-			faces = (unsigned int *) crAlloc( nfaces * 3 * sizeof( *faces ) );
+			crDebug( "Reading %s (%d faces)", mfi->file_info.path, model->nfaces );
+			model->faces = (unsigned int *) crAlloc( model->nfaces * 3 * sizeof( *(model->faces) ) );
 			for (j = 0; j < num_elems; j++) {
-				ply_get_element (ply, flist + j);
-				faces[j*3+0] = flist[j].verts[0];
-				faces[j*3+1] = flist[j].verts[1];
-				faces[j*3+2] = flist[j].verts[2];
+				ply_get_element (ply, model->flist + j);
+				model->faces[j*3+0] = model->flist[j].verts[0];
+				model->faces[j*3+1] = model->flist[j].verts[1];
+				model->faces[j*3+2] = model->flist[j].verts[2];
 			}
 		}
-		else
-			other_elements = ply_get_other_element (ply, elem_name, num_elems);
 	}
-
-	comments = ply_get_comments (ply, &num_comments);
-	obj_info = ply_get_obj_info (ply, &num_obj_info);
 
 	ply_close (ply);
 }
+void ReadFiles( void )
+{
+	int node_id = 0;
+	int cur_node_tris;
+	MFIList *mfi;
+	int tris_per_node;
+
+	ParseModelInfo();
+	crDebug( "Parsed the model information!" );
+	crDebug( "Total triangles: %d", globals.total_triangles );
+	crDebug( "Number of nodes: %d", globals.num_nodes );
+
+	tris_per_node = globals.total_triangles / globals.num_nodes;
+	globals.models = NULL;
+	globals.num_models = 0;
+
+	tris_per_node = 50000;
+
+	crDebug( "Triangles per node: %d", tris_per_node );
+
+	for (mfi = mfi_head ; mfi ; mfi = mfi->next)
+	{
+		if (node_id == globals.node_id)
+		{
+			Model *model = (Model *) crAlloc( sizeof( *model ) );
+			ReadFile( mfi, model );
+			model->next = globals.models;
+			globals.models = model;
+			globals.num_models++;
+		}
+		cur_node_tris += mfi->file_info.num_tris;
+		if (cur_node_tris >= tris_per_node)
+		{
+			node_id++;
+			cur_node_tris = 0;
+		}
+		if (node_id > globals.node_id)
+		{
+			break;
+		}
+	}
+}
+

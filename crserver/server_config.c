@@ -22,8 +22,7 @@ static void __setDefaults( void )
 	cr_server.optimizeBucket = 1;
 	cr_server.useL2 = 0;
 	cr_server.maxBarrierCount = 0;
-	cr_server.clearCount = 0;
-	cr_server.swapCount = 0;
+	cr_server.only_swap_once = 0;
 }
 
 void crServerGatherConfiguration(char *mothership)
@@ -108,6 +107,10 @@ void crServerGatherConfiguration(char *mothership)
 	if (crMothershipGetServerParam( conn, response, "lightning2" ))
 	{
 		cr_server.useL2 = crStrToInt( response );
+	}
+	if (crMothershipGetServerParam( conn, response, "only_swap_once" ))
+	{
+		cr_server.only_swap_once = crStrToInt( response );
 	}
 
 	crMothershipGetMTU( conn, response );

@@ -16,6 +16,17 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 {
 	const RunQueue *q = run_queue;
 
+	if (cr_server.only_swap_once)
+	{
+		/* Only do this if they're clearing color, so we don't
+		 * mess up the readback SPU, which clears stencil mid-frame */
+
+		if ((mask & GL_COLOR_BUFFER_BIT) && 
+				cr_server.curClient != cr_server.clients)
+		{
+			return;
+		}
+	}
 	if (cr_server.numExtents == 0)
 	{
 		cr_server.head_spu->dispatch_table.Clear( mask );
@@ -48,13 +59,13 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint flags )
 {
-	/* We only do SwapBuffers for the 0th client */
-#if 0
-	/* No, it should be the client's responsibility to do just one swap */
-	cr_server.swapCount++;
-	if (cr_server.swapCount < cr_server.maxBarrierCount)
-		return;
-	cr_server.swapCount = 0;
-#endif
+	if (cr_server.only_swap_once)
+	{
+		/* We only do SwapBuffers for the 0th client */
+		if (cr_server.curClient != cr_server.clients)
+		{
+			return;
+		}
+	}
 	cr_server.head_spu->dispatch_table.SwapBuffers( window, flags );
 }

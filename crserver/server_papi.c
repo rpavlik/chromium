@@ -13,6 +13,8 @@
 #include "cr_applications.h"
 #include "state/cr_statetypes.h"
 
+#define DEBUG_BARRIERS 1
+
 typedef struct _wqnode {
 	RunQueue *q;
 	struct _wqnode *next;
@@ -34,13 +36,25 @@ CRHashTable *cr_barriers, *cr_semaphores;
 void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreate( GLuint name, GLuint count )
 {
 	CRBarrier *barrier;
+#if DEBUG_BARRIERS
+	char debug_buf[4096];
+#endif
 
 	barrier = (CRBarrier *) crHashtableSearch( cr_barriers, name );
 
+#if DEBUG_BARRIERS
+	sprintf( debug_buf, "BarrierCreate( %d, %d )", name, count );
+	cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
+#endif
 	if (count == 0)
 	{
 		count = cr_server.numClients;
+#if DEBUG_BARRIERS
+		sprintf( debug_buf, "changing count to %d", count );
+		cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
+#endif
 	}
+
 
 	/* we use maxBarrierCount in Clear() and SwapBuffers() and also use it
 	 * in __getNextClient() for deadlock detection.  The issue is that all
@@ -59,14 +73,26 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreate( GLuint name, GLuint
 			crAlloc( count * sizeof(*(barrier->waiting)) );
 
 		crHashtableAdd( cr_barriers, name, barrier );
+#if DEBUG_BARRIERS
+		sprintf( debug_buf, "This was a new barrier!" );
+		cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
+#endif
 	}
 	else
 	{
 		/* HACK -- this allows everybody to create a barrier, and all
            but the first creation are ignored, assuming the count
            match. */
+#if DEBUG_BARRIERS
+		sprintf( debug_buf, "I already knew about this barrier." );
+		cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
+#endif
 		if ( barrier->count != count )
 		{
+#if DEBUG_BARRIERS
+			sprintf( debug_buf, "And someone messed up the count!." );
+			cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
+#endif
 			crError( "Barrier name=%u created with count=%u, but already "
 						 "exists with count=%u", name, count, barrier->count );
 		}
@@ -81,7 +107,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierDestroy( GLuint name )
 void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExec( GLuint name )
 {
 	CRBarrier *barrier;
-#if 0
+#if DEBUG_BARRIERS
 	char debug_buf[4096];
 #endif
 
@@ -91,7 +117,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExec( GLuint name )
 		crError( "No such barrier: %d", name );
 	}
 
-#if 0
+#if DEBUG_BARRIERS
 	sprintf( debug_buf, "BarrierExec( %d )", name );
 	cr_server.head_spu->dispatch_table.ChromiumParametervCR( GL_PRINT_STRING_CR, GL_UNSIGNED_BYTE, sizeof(debug_buf), debug_buf );
 	sprintf( debug_buf, "num_waiting = %d", barrier->num_waiting );

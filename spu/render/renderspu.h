@@ -115,16 +115,16 @@ extern CRtsd _RenderTSD;
 
 extern void renderspuGatherConfiguration( RenderSPU *spu );
 extern void renderspuMakeVisString( GLbitfield visAttribs, char *s );
-extern VisualInfo *renderspu_FindVisual(const char *displayName, GLbitfield visAttribs );
-extern GLboolean renderspu_InitVisual( VisualInfo *visual );
-extern GLboolean renderspu_CreateContext( VisualInfo *visual, ContextInfo *context );
-extern void renderspu_DestroyContext( ContextInfo *context );
-extern GLboolean renderspu_CreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window );
-extern void renderspu_DestroyWindow( WindowInfo *window );
-extern void renderspu_WindowSize( WindowInfo *window, int w, int h );
-extern void renderspu_WindowPosition( WindowInfo *window, int x, int y );
-extern void renderspu_ShowWindow( WindowInfo *window, GLboolean showIt );
-extern void renderspu_MakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context );
+extern VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs );
+extern GLboolean renderspu_SystemInitVisual( VisualInfo *visual );
+extern GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context );
+extern void renderspu_SystemDestroyContext( ContextInfo *context );
+extern GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window );
+extern void renderspu_SystemDestroyWindow( WindowInfo *window );
+extern void renderspu_SystemWindowSize( WindowInfo *window, int w, int h );
+extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
+extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
+extern void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, ContextInfo *context );
 extern int renderspuCreateFunctions( SPUNamedFunctionTable table[] );
 
 extern GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits );
