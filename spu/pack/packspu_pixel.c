@@ -160,11 +160,7 @@ void PACKSPU_APIENTRY packspu_TexImage3DEXT( GLenum target, GLint level, GLenum 
 
 #ifdef CR_OPENGL_VERSION_1_2
 void PACKSPU_APIENTRY packspu_TexImage3D(GLenum target, GLint level,
-#if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS)
-                                    GLenum internalformat,
-#else
                                     GLint internalformat,
-#endif
                                     GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels )
 {
         GET_CONTEXT(ctx);
