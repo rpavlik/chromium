@@ -38,7 +38,7 @@ void tilesortspuPinch (void)
 	int numRestore;
 	int loop = 0;
 	int wind = 0;
-	int i, j;
+	unsigned int i, j;
 	unsigned char * op;
 	unsigned char * data;
 	unsigned char * vtx_op;
@@ -145,7 +145,7 @@ void tilesortspuPinch (void)
 	vtx_op = cr_packer_globals.buffer.opcode_current;
 	vtx_data = cr_packer_globals.buffer.data_current;
 
-	for (i = numRestore; i > 0 ; i--) 
+	for (i = numRestore; i != 0 ; i--) 
 	{
 		CRVertex *vtx = tilesort_spu.pinchState.vtx + i - 1;
 
@@ -393,7 +393,7 @@ void tilesortspuPinch (void)
 void __pinchIssueParams (CRVertex *vtx) 
 {
 	GLfloat val[4];
-	int i;
+	unsigned int i;
 
 	for (i = 0 ; i < tilesort_spu.ctx->limits.maxTextureUnits ; i++)
 	{
@@ -471,6 +471,7 @@ void tilesortspuPinchRestoreTriangle( void )
 {
 	CRCurrentState *c = &(tilesort_spu.ctx->current);
 	int i;
+	unsigned int j;
 	CRVertex v;
 
 	if (c->inBeginEnd) 
@@ -505,9 +506,9 @@ void tilesortspuPinchRestoreTriangle( void )
 		}
 
 		/* Setup values for next vertex */
-		for (i = 0 ; i < tilesort_spu.ctx->limits.maxTextureUnits; i++)
+		for (j = 0 ; j < tilesort_spu.ctx->limits.maxTextureUnits; j++)
 		{
-			v.texCoord[i] = c->texCoord[i];
+			v.texCoord[j] = c->texCoord[j];
 		}
 		v.normal   = c->normal;
 		v.edgeFlag = c->edgeFlag;

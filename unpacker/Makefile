@@ -42,6 +42,6 @@ include $(TOP)/cr.mk
 	@$(ECHO) Making the Unpack Function header...
 	@$(PYTHON) unpack_header.py > $@
 
-unpack.c: unpack.py unpacker_special unpacker_vector_special
+unpack.c: unpack.py ../packer/opcode_special ../packer/opcode_extend_special unpacker_special unpacker_vector_special
 	@$(ECHO) Making the UnPacker...
 	@$(PYTHON) unpack.py > $@

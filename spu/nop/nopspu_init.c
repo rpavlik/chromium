@@ -4,10 +4,14 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "nopspu.h"
 #include "cr_spu.h"
+#include "cr_glstate.h"
 #include <stdio.h>
 
 extern SPUNamedFunctionTable nop_table[];
+
+NOPSPU nop_spu;
 
 SPUFunctions nop_functions = {
 	NULL, /* CHILD COPY */
@@ -24,6 +28,10 @@ SPUFunctions *nopSPUInit( int id, SPU *child, SPU *super,
 	(void) num_contexts;
 	(void) child;
 	(void) super;
+
+	nop_spu.ctx = crStateCreateContext( NULL );
+	crStateMakeCurrent( nop_spu.ctx );
+
 	return &nop_functions;
 }
 

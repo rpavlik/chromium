@@ -16,7 +16,7 @@ void FPSSPU_APIENTRY fpsSwapBuffers( void )
 	static float elapsed_base = 0;
 
 	frame_counter++;
-	if (elapsed - elapsed_base > 1)
+	if (frame_counter == 10)
 	{
 		float fps = frame_counter / (elapsed - elapsed_base);
 		elapsed_base = elapsed;

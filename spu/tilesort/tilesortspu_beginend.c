@@ -45,7 +45,7 @@ void TILESORTSPU_APIENTRY tilesortspu_End( void )
 {
 	if (tilesort_spu.pinchState.isLoop)
 	{
-		int i;
+		unsigned int i;
 
 		for (i = 0 ; i < tilesort_spu.ctx->limits.maxTextureUnits; i++)
 		{

@@ -21,6 +21,7 @@ print """#include <stdio.h>
 #include "cr_error.h"
 #include "cr_spu.h"
 #include "cr_glwrapper.h"
+#include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 
 #if defined(WINDOWS)
@@ -49,6 +50,9 @@ for func_name in keys:
 print 'SPUNamedFunctionTable nop_table[] = {'
 for index in range(len(keys)):
 	func_name = keys[index]
-	print '\t{ "%s", (SPUGenericFunction) nop%s },' % (func_name, func_name )
+	if stub_common.FindSpecial( "nop_state", func_name ):
+		print '\t{ "%s", (SPUGenericFunction) crState%s },' % (func_name, func_name )
+	else:
+		print '\t{ "%s", (SPUGenericFunction) nop%s },' % (func_name, func_name )
 print '\t{ NULL, NULL }'
 print '};'

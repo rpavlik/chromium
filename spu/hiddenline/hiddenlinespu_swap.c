@@ -43,7 +43,7 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( void )
 	static SPUDispatchTable hacked_child_dispatch;
 	BufList *temp, *next;
 	static int frame_counter = 1;
-	static int do_hiddenline = 0;
+	static int do_hiddenline = 1;
 
 #ifdef WINDOWS
 #define PRESSED( key ) (GetAsyncKeyState( key ) & (1<<15))
