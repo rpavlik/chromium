@@ -280,11 +280,36 @@ void perfspuInterpretVertexData( int old, int new )
 	int diff = new - old;
 
 	if (diff) {
-		if (diff == 1) perf_spu.cur_framestats->ipoints++;
-		if (diff == 2) perf_spu.cur_framestats->ilines++;
-		if (diff == 3) perf_spu.cur_framestats->itris++;
-		if (diff == 4) perf_spu.cur_framestats->iquads++;
-		if (diff > 4)  perf_spu.cur_framestats->ipolygons++;
+
+		if (diff == 1) {
+			perf_spu.cur_framestats->ipoints++;
+			if (perf_spu.timer_event)
+				perf_spu.cur_timerstats->ipoints++;
+		}
+
+		if (diff == 2) {
+			perf_spu.cur_framestats->ilines++;
+			if (perf_spu.timer_event)
+				perf_spu.cur_timerstats->ilines++;
+		}
+
+		if (diff == 3) {
+			perf_spu.cur_framestats->itris++;
+			if (perf_spu.timer_event)
+				perf_spu.cur_timerstats->itris++;
+		}
+
+		if (diff == 4) {
+			perf_spu.cur_framestats->iquads++;
+			if (perf_spu.timer_event)
+				perf_spu.cur_timerstats->iquads++;
+		}
+
+		if (diff > 4) {
+			perf_spu.cur_framestats->ipolygons++;
+			if (perf_spu.timer_event)
+				perf_spu.cur_timerstats->ipolygons++;
+		}
 	}
 }
 
@@ -460,6 +485,8 @@ void PERFSPU_APIENTRY perfspuBegin( GLenum mode )
 	/* Make a snapshot of all vertex data, so we can interpret the
 	 * geometric shapes in End() */
 	crMemcpy(&perf_spu.snapshot, perf_spu.cur_framestats, sizeof(PerfVertex));
+	if (perf_spu.timer_event)
+		crMemcpy(&perf_spu.timer_snapshot, perf_spu.cur_timerstats, sizeof(PerfVertex));
 
 	perf_spu.cur_framestats->count++;
 
@@ -497,6 +524,33 @@ void PERFSPU_APIENTRY perfspuEnd( )
 	perfspuInterpretVertexData(perf_spu.snapshot.v4fv, perf_spu.cur_framestats->v4fv);
 	perfspuInterpretVertexData(perf_spu.snapshot.v4iv, perf_spu.cur_framestats->v4iv);
 	perfspuInterpretVertexData(perf_spu.snapshot.v4sv, perf_spu.cur_framestats->v4sv);
+
+	if (perf_spu.timer_event) {
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v2d, perf_spu.cur_timerstats->v2d);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v2f, perf_spu.cur_timerstats->v2f);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v2i, perf_spu.cur_timerstats->v2i);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v2s, perf_spu.cur_timerstats->v2s);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v2dv, perf_spu.cur_timerstats->v2dv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v2fv, perf_spu.cur_timerstats->v2fv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v2iv, perf_spu.cur_timerstats->v2iv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v2sv, perf_spu.cur_timerstats->v2sv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v3d, perf_spu.cur_timerstats->v3d);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v3f, perf_spu.cur_timerstats->v3f);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v3i, perf_spu.cur_timerstats->v3i);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v3s, perf_spu.cur_timerstats->v3s);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v3dv, perf_spu.cur_timerstats->v3dv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v3fv, perf_spu.cur_timerstats->v3fv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v3iv, perf_spu.cur_timerstats->v3iv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v3sv, perf_spu.cur_timerstats->v3sv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v4d, perf_spu.cur_timerstats->v4d);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v4f, perf_spu.cur_timerstats->v4f);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v4i, perf_spu.cur_timerstats->v4i);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v4s, perf_spu.cur_timerstats->v4s);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v4dv, perf_spu.cur_timerstats->v4dv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v4fv, perf_spu.cur_timerstats->v4fv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v4iv, perf_spu.cur_timerstats->v4iv);
+		perfspuInterpretVertexData(perf_spu.timer_snapshot.v4sv, perf_spu.cur_timerstats->v4sv);
+	}
 
 	perf_spu.super.End( );
 }

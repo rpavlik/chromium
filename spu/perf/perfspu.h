@@ -90,6 +90,7 @@ typedef struct {
 	int read_pixels;
 
 	PerfVertex snapshot;
+	PerfVertex timer_snapshot;
 
 	PerfPrim framestats;
 	PerfPrim old_framestats;
