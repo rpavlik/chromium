@@ -114,6 +114,7 @@ TexImage3D
 TexImage3DEXT
 TexSubImage1D
 TexSubImage2D
+TexSubImage3D
 TexParameterfv
 TexParameteriv
 TexParameterf

@@ -40,3 +40,4 @@ TexImage2D
 TexSubImage2D
 TexImage3D
 TexImage3DEXT
+TexSubImage3D

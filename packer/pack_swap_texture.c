@@ -492,6 +492,49 @@ void PACK_APIENTRY crPackTexParameteriSWAP( GLenum target, GLenum pname, GLint p
 	crPackTexParameterivSWAP( target, pname, &param );
 }
 
+#ifdef CR_OPENGL_VERSION_1_2
+void PACK_APIENTRY crPackTexSubImage3DSWAP (GLenum target, GLint level,
+                GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth,
+                GLenum format, GLenum type, const GLvoid *pixels,
+                const CRPixelPackState *unpackstate )
+{
+        unsigned char *data_ptr;
+        int packet_length;
+
+        packet_length =
+                sizeof( target ) +
+                sizeof( level ) +
+                sizeof( xoffset ) +
+                sizeof( yoffset ) +
+		sizeof( zoffset ) +
+                sizeof( width ) +
+                sizeof( height ) +
+		sizeof( depth ) +
+                sizeof( format ) +
+                sizeof( type ) +
+                crTextureSize( format, type, width, height, depth );
+
+        data_ptr = (unsigned char *) crPackAlloc( packet_length );
+        WRITE_DATA( 0, GLenum, SWAP32(target) );
+        WRITE_DATA( 4, GLint, SWAP32(level) );
+        WRITE_DATA( 8, GLint, SWAP32(xoffset) );
+        WRITE_DATA( 12, GLint, SWAP32(yoffset) );
+	WRITE_DATA( 16, GLint, SWAP32(zoffset) );
+        WRITE_DATA( 20, GLsizei, SWAP32(width) );
+        WRITE_DATA( 24, GLsizei, SWAP32(height) );
+	WRITE_DATA( 28, GLsizei, SWAP32(depth) );
+        WRITE_DATA( 32, GLenum, SWAP32(format) );
+        WRITE_DATA( 36, GLenum, SWAP32(type) );
+
+        crPixelCopy3D( width, height, depth,
+                                                                 (GLvoid *) (data_ptr + 36), format, type, NULL,  /* dst */
+                                                                 pixels, format, type, unpackstate );  /* src */
+
+        crHugePacket( CR_TEXSUBIMAGE3D_OPCODE, data_ptr );
+        crPackFree( data_ptr );
+}
+#endif /* CR_OPENGL_VERSION_1_2 */
+
 void PACK_APIENTRY crPackTexSubImage2DSWAP (GLenum target, GLint level, 
 		GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, 
 		GLenum format, GLenum type, const GLvoid *pixels,

@@ -60,6 +60,7 @@ void glCopyTexImage1D (GLenum target, GLint level, GLenum internalFormat, GLint 
 void glCopyTexImage2D (GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
 void glCopyTexSubImage1D (GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width);
 void glCopyTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
+void glCopyTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height);
 void glCullFace (GLenum mode);
 void glDeleteLists (GLuint list, GLsizei range);
 void glDeleteTextures (GLsizei n, const GLuint *textures);
@@ -313,6 +314,7 @@ void glTexParameteri (GLenum target, GLenum pname, GLint param);
 void glTexParameteriv (GLenum target, GLenum pname, const GLint *params);
 void glTexSubImage1D (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels);
 void glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+void glTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels);
 void glTranslated (GLdouble x, GLdouble y, GLdouble z);
 void glTranslatef (GLfloat x, GLfloat y, GLfloat z);
 void glVertex2d (GLdouble x, GLdouble y);

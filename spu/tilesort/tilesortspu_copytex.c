@@ -198,3 +198,32 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage2D( GLenum target, GLint le
 		crStateError( __LINE__, __FILE__, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
 	}
 }
+
+#if defined(CR_OPENGL_VERSION_1_2)
+void TILESORTSPU_APIENTRY tilesortspu_CopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+        GLubyte *buffer = crAlloc(width * height * sizeof(GLubyte) * 4);
+        if (buffer)
+        {
+                const GLenum type = GL_UNSIGNED_BYTE;
+                GLenum format;
+                GLint intFormat;
+
+                crStateGetTexLevelParameteriv( target, level, GL_TEXTURE_INTERNAL_FORMAT,
+
+                        &intFormat );
+
+                format = baseFormat( intFormat );
+
+                tilesortspu_ReadPixels( x, y, width, height, format, type, buffer );
+
+                crStateTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, 1 /* depth */, format, type, buffer );
+
+                crFree(buffer);
+        }
+        else
+        {
+                crStateError( __LINE__, __FILE__, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
+        }
+}
+#endif /* CR_OPENGL_VERSION_1_2 */

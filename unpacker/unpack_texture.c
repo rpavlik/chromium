@@ -165,6 +165,32 @@ void crUnpackTexParameteri( void )
 	INCR_DATA_PTR( 12 );
 }
 
+#if defined(CR_OPENGL_VERSION_1_2)
+void crUnpackTexSubImage3D( void )
+{
+        GLenum target = READ_DATA( sizeof( int ) + 0, GLenum );
+        GLint level = READ_DATA( sizeof( int ) + 4, GLint );
+        GLint xoffset = READ_DATA( sizeof( int ) + 8, GLint );
+        GLint yoffset = READ_DATA( sizeof( int ) + 12, GLint );
+	GLint zoffset = READ_DATA( sizeof( int ) + 16, GLint );
+        GLsizei width = READ_DATA( sizeof( int ) + 20, GLsizei );
+        GLsizei height = READ_DATA( sizeof( int ) + 24, GLsizei );
+	GLsizei depth = READ_DATA( sizeof( int ) + 28, GLsizei );
+        GLenum format = READ_DATA( sizeof( int ) + 32, GLenum );
+        GLenum type = READ_DATA( sizeof( int ) + 36, GLenum );
+        GLvoid *pixels = DATA_POINTER( sizeof( int ) + 40, GLvoid );
+
+        cr_unpackDispatch.PixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+        cr_unpackDispatch.PixelStorei( GL_UNPACK_SKIP_PIXELS, 0 );
+        cr_unpackDispatch.PixelStorei( GL_UNPACK_SKIP_ROWS, 0 );
+        cr_unpackDispatch.PixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+
+        cr_unpackDispatch.TexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth,
+                                                         format, type, pixels );
+        INCR_VAR_PTR();
+}
+#endif /* CR_OPENGL_VERSION_1_2 */
+
 void crUnpackTexSubImage2D( void )
 {
 	GLenum target = READ_DATA( sizeof( int ) + 0, GLenum );

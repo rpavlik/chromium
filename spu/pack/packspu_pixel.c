@@ -183,7 +183,6 @@ void PACKSPU_APIENTRY packspu_TexImage3D(GLenum target, GLint level,
 }
 #endif /* CR_OPENGL_VERSION_1_2 */
 
-
 void PACKSPU_APIENTRY packspu_TexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	GET_CONTEXT(ctx);
@@ -200,6 +199,7 @@ void PACKSPU_APIENTRY packspu_TexSubImage1D( GLenum target, GLint level, GLint x
 		crPackTexSubImage1D( target, level, xoffset, width, format, type, pixels, &(clientState->unpack) );
 	}
 }
+
 void PACKSPU_APIENTRY packspu_TexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	GET_CONTEXT(ctx);
@@ -216,3 +216,22 @@ void PACKSPU_APIENTRY packspu_TexSubImage2D( GLenum target, GLint level, GLint x
 		crPackTexSubImage2D( target, level, xoffset, yoffset, width, height, format, type, pixels, &(clientState->unpack) );
 	}
 }
+
+#ifdef CR_OPENGL_VERSION_1_2
+void PACKSPU_APIENTRY packspu_TexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels )
+{
+        GET_CONTEXT(ctx);
+        CRClientState *clientState = &(ctx->clientState->client);
+
+        crStateTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
+
+        if (pack_spu.swap)
+        {
+                crPackTexSubImage3DSWAP( target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels, &(clientState->unpack) );
+        }
+        else
+        {
+                crPackTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels, &(clientState->unpack) );
+        }
+}
+#endif /* CR_OPENGL_VERSION_1_2 */

@@ -172,6 +172,7 @@ TexParameteri
 TexParameteriv
 TexSubImage1D
 TexSubImage2D
+TexSubImage3D
 Translated
 Translatef
 Viewport

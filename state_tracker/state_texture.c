@@ -1699,7 +1699,144 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 	DIRTY(tb->dirty, g->neg_bitid);
 }
 
-#if defined( CR_OPENGL_VERSION_1_2 ) || defined( GL_EXT_texture3D )
+#if defined( CR_OPENGL_VERSION_1_2 )
+void STATE_APIENTRY crStateTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels  )
+{
+        CRContext *g = GetCurrentContext();
+        CRTextureState *t = &(g->texture);
+        CRClientState *c = &(g->client);
+        CRStateBits *sb = GetCurrentBits();
+        CRTextureBits *tb = &(sb->texture);
+        CRTextureObj *tobj = t->currentTexture3D;
+        CRTextureLevel *tl = tobj->level + level;
+        int i;
+
+        GLubyte *subimg = NULL;
+        GLubyte *img = NULL;
+        GLubyte *src;
+
+        if (g->current.inBeginEnd)
+        {
+                crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
+                                                                 "glTexSubImage3D called in Begin/End");
+                return;
+        }
+
+        FLUSH();
+
+        if (target == GL_TEXTURE_3D)
+        {
+                if (level < 0 || level > t->maxLevel)
+                {
+                        crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+                                                                         "glTexSubImage3D level oob: %d", level);
+                        return;
+                }
+                if (width < 0 || width > ((int) g->limits.maxTextureSize + 2))
+                {
+                        crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+                                     "glTexSubImage3D width oob: %d", width);
+                        return;
+                }
+                if (height < 0 || height > ((int) g->limits.maxTextureSize + 2))
+                {
+                        crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+                                     "glTexSubImage3D height oob: %d", height);
+                        return;
+                }
+		if (depth < 0 || depth > ((int) g->limits.maxTextureSize + 2))
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage3D depth oob: %d", depth);
+			return;
+		}
+        }
+#ifdef CR_ARB_texture_cube_map
+        else if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB && target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB && g->extensions.ARB_texture_cube_map)
+        {
+                if (level < 0 || level > t->maxCubeMapLevel)
+                {
+                        crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+                                                                         "glTexSubImage3D level oob: %d", level);
+                        return;
+                }
+                if (width < 0 || width > (int) g->limits.maxCubeMapTextureSize)
+                {
+                        crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+                                     "glTexSubImage3D width oob: %d", width);
+                        return;
+                }
+                if (height < 0 || height > (int) g->limits.maxCubeMapTextureSize)
+                {
+                        crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
+                                     "glTexSubImage3D height oob: %d", height);
+                        return;
+                }
+		if (depth < 0 || depth > (int) g->limits.maxCubeMapTextureSize)
+		{
+			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage3D depth oob:  %d", depth);
+		}
+        }
+#endif /* CR_ARB_texture_cube_map */
+        else
+        {
+                crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glTexSubImage3D target != GL_TEXTURE_3D: %d", target);
+                return;
+        }
+
+        if (width + xoffset > tl->width)
+        {
+                crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage3D(bad width or xoffset)" );
+                return;
+        }
+        if (height + yoffset > tl->height)
+        {
+                crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage3D(bad height or yoffset)" );
+                return;
+        }
+	if (depth + zoffset > tl->depth)
+	{
+		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage3D(bad depth or zoffset)" );
+		return;
+	}
+
+        xoffset += tl->border;
+        yoffset += tl->border;
+	zoffset += tl->border;
+
+        subimg = (GLubyte *) crAlloc (crTextureSize(tl->format, tl->type, width, height, depth));
+
+        crPixelCopy3D( width, height, depth, subimg, tl->format, tl->type, NULL,  pixels, format, type, &(c->unpack) );
+
+        img = tl->img + xoffset * tl->bytesPerPixel +
+                        yoffset * tl->width * tl->bytesPerPixel +
+			zoffset * tl->width * tl->height * tl->bytesPerPixel;
+
+        src = subimg;
+
+        /* Copy the data into the texture */
+       	for (i=0; i<depth; i++)
+       	{
+               	crMemcpy (img, src, tl->bytesPerPixel * width * height);
+               	img += tl->width * tl->height * tl->bytesPerPixel;
+               	src += width * height * tl->bytesPerPixel;
+       	}
+
+        crFree (subimg);
+
+        DIRTY(tobj->dirty, g->neg_bitid);
+  {
+    unsigned int i;
+        for (i = 0; i < g->limits.maxTextureUnits; i++)
+        {
+                DIRTY(tobj->imageBit[i], g->neg_bitid);
+                DIRTY(tl->dirty[i], g->neg_bitid);
+        }
+  }
+        DIRTY(tb->dirty, g->neg_bitid);
+}
+#endif /* CR_OPENGL_VERSION_1_2 || GL_EXT_texture3D */
+
+#if defined( CR_OPENGL_VERSION_1_2 ) || defined( GL_EXT_texture3D ) 
 void STATE_APIENTRY crStateTexImage3D (GLenum target, GLint level,
 #if defined(IRIX) || defined(IRIX64) || defined(AIX) || defined (SunOS)
                                                                          GLenum internalFormat,
@@ -1894,19 +2031,6 @@ void STATE_APIENTRY crStateTexImage3DEXT (GLenum target, GLint level,
 	crStateTexImage3D( target, level, (GLint)internalFormat, width, height, depth, border, format, type, pixels );
 }
 #endif /* GL_EXT_texture3D */
-
-#ifdef CR_OPENGL_VERSION_1_2
-void STATE_APIENTRY crStateTexSubImage3D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
-		GLsizei width, GLsizei height, GLsizei depth,
-		GLenum format, GLenum type, const GLvoid *pixels  ) 
-{
-#if 0
-	CRContext *g = GetCurrentContext();
-	CRTextureState *t = &(g->texture);
-	CRClientState *c = &(g->client);
-#endif
-}
-#endif /* CR_OPENGL_VERSION_1_2 */
 
 void STATE_APIENTRY crStateTexParameterfv (GLenum target, GLenum pname, const GLfloat *param) 
 {
@@ -2954,11 +3078,13 @@ void STATE_APIENTRY crStateGetTexImage (GLenum target, GLint level, GLenum forma
 		return;
 	}
 
+#ifdef CR_OPENGL_VERSION_1_2
 	if (target == GL_TEXTURE_3D )
 	{
 		tobj = t->currentTexture3D;
 		tl = tobj->level+level;
 	} else
+#endif
 	if (target == GL_TEXTURE_2D )
 	{
 		tobj = t->currentTexture2D;
@@ -3005,12 +3131,13 @@ void STATE_APIENTRY crStateGetTexImage (GLenum target, GLint level, GLenum forma
 		return;
 	}
 
-
+#ifdef CR_OPENGL_VERSION_1_2
 	if ( target == GL_TEXTURE_3D )
 	{
 		crPixelCopy3D( tl->width, tl->height, tl->depth, (GLvoid *) pixels, format, type, NULL, (tl->img), format, type, &(c->pack) );
-	}
-	else /* GL_TEXTURE_2D || GL_TEXTURE_1D */
+	} else
+#endif
+	if ( ( target == GL_TEXTURE_2D ) || ( target == GL_TEXTURE_1D ) )
 	{
 		crPixelCopy2D( tl->width, tl->height,
 								 (GLvoid *) pixels, format, type, NULL,  /* dst */

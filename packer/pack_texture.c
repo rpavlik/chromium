@@ -485,6 +485,48 @@ void PACK_APIENTRY crPackTexParameteri( GLenum target, GLenum pname, GLint param
 	crPackTexParameteriv( target, pname, &param );
 }
 
+#ifdef CR_OPENGL_VERSION_1_2
+void PACK_APIENTRY crPackTexSubImage3D (GLenum target, GLint level,
+                GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth,
+                GLenum format, GLenum type, const GLvoid *pixels,
+                const CRPixelPackState *unpackstate )
+{
+        unsigned char *data_ptr;
+        int packet_length;
+
+        packet_length =
+                sizeof( target ) +
+                sizeof( level ) +
+                sizeof( xoffset ) +
+                sizeof( yoffset ) +
+		sizeof( zoffset ) +
+                sizeof( width ) +
+                sizeof( height ) +
+		sizeof( depth ) +
+                sizeof( format ) +
+                sizeof( type ) +
+                crTextureSize( format, type, width, height, depth );
+
+        data_ptr = (unsigned char *) crPackAlloc( packet_length );
+        WRITE_DATA( 0, GLenum, target );
+        WRITE_DATA( 4, GLint, level );
+        WRITE_DATA( 8, GLint, xoffset );
+        WRITE_DATA( 12, GLint, yoffset );
+	WRITE_DATA( 16, GLint, zoffset );
+        WRITE_DATA( 20, GLsizei, width );
+        WRITE_DATA( 24, GLsizei, height );
+	WRITE_DATA( 28, GLsizei, depth );
+        WRITE_DATA( 32, GLenum, format );
+        WRITE_DATA( 36, GLenum, type );
+
+        crPixelCopy3D( width, height, depth,
+                                                                 (GLvoid *) (data_ptr + 40), format, type, NULL,  /* dst */
+                                                                 pixels, format, type, unpackstate );  /* src */
+
+        crHugePacket( CR_TEXSUBIMAGE3D_OPCODE, data_ptr );
+}
+#endif /* CR_OPENGL_VERSION_1_2 */
+
 void PACK_APIENTRY crPackTexSubImage2D (GLenum target, GLint level, 
 		GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, 
 		GLenum format, GLenum type, const GLvoid *pixels,

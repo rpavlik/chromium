@@ -17,42 +17,6 @@
 #include "cr_error.h"
 #include "cr_version.h"
 
-void CR_APIENTRY glTexSubImage3D( GLenum target, GLint level,
-											GLint xoffset, GLint yoffset,	GLint zoffset,
-											GLsizei width, GLsizei height, GLsizei depth,
-											GLenum format, GLenum type, const GLvoid *pixels)
-{
-	(void) target;
-	(void) level;
-	(void) xoffset;
-	(void) yoffset;
-	(void) zoffset;
-	(void) width;
-	(void) height;
-	(void) depth;
-	(void) format;
-	(void) type;
-	(void) pixels;
-	crWarning("glTexSubImage3D not implemented by Chromium");
-}
-
-void CR_APIENTRY glCopyTexSubImage3D( GLenum target, GLint level,
-                          GLint xoffset, GLint yoffset,
-                          GLint zoffset, GLint x, GLint y, GLsizei width,
-                          GLsizei height )
-{
-	(void) target;
-	(void) level;
-	(void) xoffset;
-	(void) yoffset;
-	(void) zoffset;
-	(void) x;
-	(void) y;
-	(void) width;
-	(void) height;
-	crWarning("glCopyTexSubImage3D not implemented by Chromium");
-}
-
 void CR_APIENTRY glColorTable( GLenum target, GLenum internalformat,
 									 GLsizei width, GLenum format,
 									 GLenum type, const GLvoid *table )

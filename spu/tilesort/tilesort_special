@@ -72,6 +72,7 @@ CopyTexImage1D
 CopyTexImage2D
 CopyTexSubImage1D
 CopyTexSubImage2D
+CopyTexSubImage3D
 Scissor
 WindowCreate
 WindowPosition
