@@ -20,6 +20,8 @@ static void __setDefaults( void )
 #ifndef WINDOWS
 	render_spu.depth_bits = 8;
 	render_spu.stencil_bits = 0;
+	render_spu.force_direct = 1;
+	render_spu.try_direct = 1;
 #else
 	render_spu.depth_bits = 24;
 	render_spu.stencil_bits = 0;
@@ -27,8 +29,6 @@ static void __setDefaults( void )
 	render_spu.fullscreen = 0;
 	render_spu.ontop = 0;
 	render_spu.use_L2 = 0;
-	render_spu.force_direct = 1;
-	render_spu.try_direct = 1;
 }
 
 void renderspuGatherConfiguration( void )
@@ -74,6 +74,7 @@ void renderspuGatherConfiguration( void )
 		sscanf( response, "%d", &(render_spu.stencil_bits) );
 	}
 
+#ifndef WINDOWS
 	if (crMothershipSPUParam( conn, response, "try_direct" ) )
 	{
 		sscanf( response, "%d", &(render_spu.try_direct) );
@@ -83,6 +84,7 @@ void renderspuGatherConfiguration( void )
 	{
 		sscanf( response, "%d", &(render_spu.force_direct) );
 	}
+#endif
 
 	crMothershipDisconnect( conn );
 }
