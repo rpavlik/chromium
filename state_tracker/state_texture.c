@@ -579,12 +579,18 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj)
 	}
 #ifdef CR_ARB_texture_cube_map
 	crFree(tobj->negativeXlevel);
+	tobj->negativeXlevel = NULL;
 	crFree(tobj->positiveYlevel);
+	tobj->positiveYlevel = NULL;
 	crFree(tobj->negativeYlevel);
+	tobj->negativeYlevel = NULL;
 	crFree(tobj->positiveZlevel);
+	tobj->positiveZlevel = NULL;
 	crFree(tobj->negativeZlevel);
+	tobj->negativeZlevel = NULL;
 #endif
 	crFree(tobj->level);
+	tobj->level = NULL;
 }
 
 
