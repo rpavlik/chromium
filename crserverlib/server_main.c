@@ -17,6 +17,8 @@
 
 CRServer cr_server;
 
+static int tearingdown = 0;
+
 int CRServerMain( int argc, char *argv[] );
 
 static void DeleteBarrierCallback( void *data )
@@ -31,7 +33,6 @@ static void crServerTearDown( void )
 {
 	SPU *the_spu = cr_server.head_spu;
 	unsigned int i;
-	static int tearingdown = 0;
 
 	/* avoid a race condition */
 	if (tearingdown)
@@ -77,6 +78,8 @@ static void crServerClose( unsigned int id )
 static void crServerCleanup( int sigio )
 {
 	crServerTearDown();
+
+	tearingdown = 0;
 
 	exit(0);
 }
@@ -150,6 +153,8 @@ int CRServerMain( int argc, char *argv[] )
 	crServerSerializeRemoteStreams();
 
 	crServerTearDown();
+
+	tearingdown = 0;
 
 	return 0;
 }
