@@ -34,6 +34,7 @@ crMakeCurrentProc   glMakeCurrentCR;
 crSwapBuffersProc   glSwapBuffersCR;
 
 glChromiumParametervCRProc glChromiumParametervCR;
+glGetChromiumParametervCRProc glGetChromiumParametervCR;
 glBarrierCreateCRProc glBarrierCreateCR;
 glBarrierExecCRProc   glBarrierExecCR;
 
@@ -160,8 +161,16 @@ int main(int argc, char *argv[])
 
 #define LOAD2( x ) gl##x##CR = (gl##x##CRProc) crGetProcAddress( "gl"#x"CR" )
 	LOAD2( ChromiumParameterv );
+	LOAD2( GetChromiumParameterv );
 	LOAD2( BarrierCreate );
 	LOAD2( BarrierExec );
+
+	/* Test getting window size */
+	{
+		GLint winsize[2];
+		glGetChromiumParametervCR(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
+		printf("Using window size: %d x %d\n", winsize[0], winsize[1]);
+	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
 	glBarrierCreateCR( MASTER_BARRIER, size );
