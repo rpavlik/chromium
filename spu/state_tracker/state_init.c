@@ -10,6 +10,8 @@
 CRContext *__currentContext = NULL;
 CRStateBits *__currentBits = NULL;
 
+CRContext *__hwcontext = NULL;
+
 void crStateInit(void)
 {
 	__currentBits = (CRStateBits *) crAlloc( sizeof( *__currentBits) );
@@ -72,4 +74,19 @@ void crStateMakeCurrent( CRContext *ctx )
 {
 	crDebug( "Making current to 0x%p", ctx );
 	__currentContext = ctx;
+
+	if (ctx && !ctx->viewport.viewportValid && !ctx->viewport.scissorValid)
+	{
+		crStateViewportMakeCurrent( &(ctx->viewport), &(__currentBits->viewport) );
+	}
+
+	if (__hwcontext && ctx)
+	{
+		crStateSwitchContext( __hwcontext, ctx );	
+	}
+
+	if (ctx)
+	{
+		__hwcontext = ctx;
+	}
 }

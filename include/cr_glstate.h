@@ -104,5 +104,6 @@ void crStateDiffAPI( SPUDispatchTable *api );
 void crStateSetCurrentPointers( CRCurrentStatePointers *current );
 
 void crStateDiffContext( CRContext *from, CRContext *to );
+void crStateSwitchContext( CRContext *from, CRContext *to );
 
 #endif /* CR_GLSTATE_H */

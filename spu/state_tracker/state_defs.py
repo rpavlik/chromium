@@ -23,6 +23,7 @@ for func_name in stub_common.AllSpecials( 'state' ):
 print """crStateInit
 crStateCreateContext
 crStateDiffContext
+crStateSwitchContext
 crStateMakeCurrent
 crStateFlushFunc
 crStateFlushArg

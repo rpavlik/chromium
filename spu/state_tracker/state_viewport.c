@@ -12,7 +12,7 @@ void crStateViewportInit(CRViewportState *v)
 	v->maxViewportDimsWidth = 16834; // XXX
 	v->maxViewportDimsHeight = 16834; // XXX
 
-	v->viewportValid = GL_TRUE;
+	v->viewportValid = GL_FALSE;
 	v->viewportX = 0;
 	v->viewportY = 0;
 	v->viewportW = 640;
