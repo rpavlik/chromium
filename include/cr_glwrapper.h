@@ -200,14 +200,14 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 #endif /* GL_CR_tilesort_info */
 
 #ifndef GL_CR_head_spu_name
-#define GL_CR_head_spu_name
+#define GL_CR_head_spu_name 1
 
 #define GL_HEAD_SPU_NAME_CR 0x990C /* unofficial! */
 
 #endif /* GL_CR_head_spu_name */
 
 #ifndef GL_CR_performance_info
-#define GL_CR_performance_info
+#define GL_CR_performance_info 1
 
 #define GL_PERF_GET_FRAME_DATA_CR       0x990D /* unofficial! */
 #define GL_PERF_GET_TIMER_DATA_CR       0x990E /* unofficial! */
@@ -220,6 +220,14 @@ CR_GLXFuncPtr glXGetProcAddressARB( const GLubyte *name );
 #define GL_PERF_STOP_TIMER_CR           0x9915 /* unofficial! */
 
 #endif /* GL_CR_performance_info */
+
+#ifndef GL_CR_window_size
+#define GL_CR_window_size 1
+
+#define GL_WINDOW_SIZE_CR               0x9920 /* unofficial */
+
+#endif /* GL_CR_window_size */
+
 
 /*
  * These are the OpenGL / window system interface functions
