@@ -760,7 +760,9 @@ crTCPIPRecv( void )
 	int msock = -1; /* assumed mothership socket */
 	/* ensure we don't get caught with a new thread connecting */
 	int num_conns = cr_tcpip.num_conns;
+#if CRAPPFAKER_SHOULD_DIE
 	int none_left = 1;
+#endif
 
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_tcpip.recvmutex);
@@ -773,7 +775,9 @@ crTCPIPRecv( void )
 		CRConnection *conn = cr_tcpip.conns[i];
 		if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
 
+#if CRAPPFAKER_SHOULD_DIE
 		none_left = 0;
+#endif
 
 		if ( conn->recv_credits > 0 || conn->type != CR_TCPIP )
 		{
@@ -835,6 +839,7 @@ crTCPIPRecv( void )
 		}
 	}
 
+#if CRAPPFAKER_SHOULD_DIE
 	if (none_left) {
 		/*
 		 * Caught no more connections.
@@ -847,6 +852,7 @@ crTCPIPRecv( void )
 		crError("No more connections to process, terminating...\n");
 		exit(0); /* shouldn't get here */
 	}
+#endif
 
 	if (!max_fd) {
 #ifdef CHROMIUM_THREADSAFE
