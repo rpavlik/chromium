@@ -38,6 +38,8 @@ void crRandSeed(unsigned long seed)
 	   in [KNUTH 1981, The Art of Computer Programming Vol. 2 (2nd Ed.),
 	   pp102
 	*/
+	if (seed == 0)
+		seed = 4357;   /* pick default seed if seed=0 (Guy Zadickario) */
 	mt[0]= seed & 0xffffffff;
 	for (mti=1; mti<N; mti++)
 		mt[mti] = (69069 * mt[mti-1]) & 0xffffffff;
