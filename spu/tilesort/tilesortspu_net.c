@@ -80,7 +80,7 @@ void tilesortspuConnectToServers( void )
 
 		if ( !crParseURL( server->net.name, protocol, hostname, &port, 0 ) )
 		{
-			crError( "Malformed URL: \"%s\"", server );
+			crError( "Malformed URL: \"%s\"", server->net.name );
 		}
 
 		if (!crStrcmp( protocol, "tcpip" ) ||
