@@ -147,6 +147,7 @@ return		void
 param		list		GLuint
 category	1.0
 chromium	pack
+props		render
 
 name		CallLists
 return		void
@@ -156,6 +157,7 @@ paramprop	type		GL_BYTE GL_UNSIGNED_BYTE GL_SHORT GL_UNSIGNED_SHORT GL_INT GL_UN
 param		lists		const GLvoid *
 category	1.0
 chromium	pack
+props		render
 
 name		DeleteLists
 return		void
