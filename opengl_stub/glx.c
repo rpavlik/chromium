@@ -21,16 +21,32 @@ static GLXDrawable currentDrawable = 0;
 
 /*
  * Prototypes, in case they're not in glx.h or glxext.h
+ * Unfortunately, there's some inconsistency between the extension
+ * specs, and the SGI, NVIDIA, XFree86 and common glxext.h header
+ * files.
  */
+#if defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX)
+/* match SGI's glx.h header */
 GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, const int *attrib_list);
+void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
+GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, const int *attrib_list, int *nelements);
+#else
+/* match glxext.h, XFree86, Mesa */
+GLXPbufferSGIX glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config, unsigned int width, unsigned int height, int *attrib_list);
+int glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
+GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, int *attrib_list, int *nelements);
+#endif
+
+void glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf);
+void glXSelectEventSGIX (Display *dpy, GLXDrawable drawable, unsigned long mask);
+void glXGetSelectedEventSGIX (Display *dpy, GLXDrawable drawable, unsigned long *mask);
+
 GLXFBConfigSGIX glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis);
 XVisualInfo *glXGetVisualFromFBConfigSGIX(Display *dpy, GLXFBConfig config);
 GLXContext glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct);
 GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfig config, Pixmap pixmap);
-GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen, const int *attrib_list, int *nelements);
 int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config, int attribute, int *value);
-void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf, int attribute, unsigned int *value);
-void glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf);
+
 
 
 /*
@@ -755,9 +771,15 @@ GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
 	return NULL;
 }
 
+#if defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX)
 GLXPbuffer glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
 																	 unsigned int width, unsigned int height,
 																	 const int *attrib_list)
+#else
+GLXPbufferSGIX glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
+																			 unsigned int width, unsigned int height,
+																			 int *attrib_list)
+#endif
 {
 	(void) dpy;
 	(void) config;
@@ -775,15 +797,36 @@ void glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf)
 	crWarning("glXDestroyGLXPbufferSGIX not implemented by Chromium");
 }
 
+void glXSelectEventSGIX(Display *dpy, GLXDrawable drawable, unsigned long mask)
+{
+	(void) dpy;
+	(void) drawable;
+	(void) mask;
+}
 
-void glXQueryGLXPbufferSGIX(Display *dpy,	GLXPbuffer pbuf,
+void glXGetSelectedEventSGIX(Display *dpy, GLXDrawable drawable, unsigned long *mask)
+{
+	(void) dpy;
+	(void) drawable;
+	(void) mask;
+}
+
+#if defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX)
+void glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
 														int attribute, unsigned int *value)
+#else
+int glXQueryGLXPbufferSGIX(Display *dpy, GLXPbuffer pbuf,
+													 int attribute, unsigned int *value)
+#endif
 {
 	(void) dpy;
 	(void) pbuf;
 	(void) attribute;
 	(void) value;
 	crWarning("glXQueryGLXPbufferSGIX not implemented by Chromium");
+#if !(defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX))
+	return 0;
+#endif
 }
 
 int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config,
@@ -797,8 +840,13 @@ int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config,
 	return 0;
 }
 
+#if defined(IRIX) || defined(IRIX64) || defined(NVIDIA_GLX)
 GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen,
 																			 const int *attrib_list, int *nelements)
+#else
+GLXFBConfigSGIX *glXChooseFBConfigSGIX(Display *dpy, int screen,
+																			 int *attrib_list, int *nelements)
+#endif
 {
 	(void) dpy;
 	(void) screen;
