@@ -47,8 +47,8 @@ extern "C" {
 typedef struct CRPackContext_t CRPackContext;
 
 typedef struct {
-	void          *pack;
-	unsigned int   size;
+	void          *pack;  /* the actual storage space/buffer */
+	unsigned int   size;  /* size of pack[] buffer */
 	unsigned int   mtu;
 	unsigned char *data_start, *data_current, *data_end;
 	unsigned char *opcode_start, *opcode_current, *opcode_end;
