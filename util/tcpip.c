@@ -461,11 +461,12 @@ void crTCPIPSend( CRConnection *conn, void **bufp,
 		/* we are doing synchronous sends from user memory, so no need
 		 * to get fancy.  Simply write the length & the payload and
 		 * return. */
+		int sendable_len=len;/* can't swap len then use it for length*/
 		if (conn->swap)
 		{
-			len = SWAP32(len);
+			sendable_len = SWAP32(len);
 		}
-		crTCPIPWriteExact( conn, &len, sizeof(len) );
+		crTCPIPWriteExact( conn, &sendable_len, sizeof(len) );
 		crTCPIPWriteExact( conn, start, len );
 		return;
 	}
