@@ -10,7 +10,7 @@ typedef struct {
 } CRClient;
 
 typedef struct {
-	int tcpip_port;
+	unsigned short tcpip_port;
 
 	int num_clients;
 	CRClient *clients;
