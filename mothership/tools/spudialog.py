@@ -44,11 +44,12 @@ class SPUDialog(wxDialog):
 					ctrl.SetValue( default )
 				elif type == "int":
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
-					label = wxStaticText(parent=self, id=-1, label=description)
+					labString = description + ": "
+					label = wxStaticText(parent=self, id=-1, label=labString)
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
 					for j in range(0, count):
 						ctrl = wxSpinCtrl(parent=self, id=100+i, value=str(default),
-										  max=2048)
+										  max=2048*2048)
 						rowSizer.Add(ctrl)
 						i += 1
 					innerSizer.Add(rowSizer, flag=wxALL, border=4)
@@ -103,11 +104,17 @@ class SPUDialog(wxDialog):
 		"""Called by Cancel button"""
 		self.EndModal(0)
 
+	def IsOption(self, name):
+		"""Return true if name is a recognized option."""
+		return name in self._Controls
+
 	# name is an SPU option like bbox_line_width
 	def SetValue(self, name, newValue):
 		"""Set a control's value"""
 		assert name in self._Controls
 		ctrl = self._Controls[name]
+		if isinstance(ctrl, wxSpinCtrl) or isinstance(ctrl, wxCheckBox):
+			newValue = int(newValue)
 		ctrl.SetValue(newValue)
 
 	# name is an SPU option like bbox_line_width
