@@ -166,7 +166,6 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 			sscanf( response, "%d", &show_cursor );
 			render_spu->drawCursor = show_cursor 
 				? GL_TRUE : GL_FALSE;
-			crDebug("show_cursor = %d", show_cursor);
 		}
 
 		crMothershipDisconnect( conn );
