@@ -949,7 +949,7 @@ Chromium configuration uses this SPU.
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">use_osmesa</td>
-    <td width="12%" class="ConfigType" height="38">Bool</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="100%" class="ConfigDesc" height="38">
       If set (and Chromium's compiled for it - see options.mk)
       use OSMesa for off-screen rendering.
@@ -974,6 +974,16 @@ Chromium configuration uses this SPU.
       All pbuffers will be allocated at this fixed size.
       This can avoid graphics memory fragmentation issues.
       The default is [0, 0] - allow any size of pbuffers.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">use_glxchoosevisual</td>
+    <td width="12%" class="ConfigType" height="74">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="74">
+      If zero, don't use the glXChooseVisual function.
+      This is used as a work-around for some OpenGL drivers on Linux
+      which seem to have a problem with symbol resolution (ATI).
+      The default is 1 (use glXChooseVisual).
     </td>
   </tr>
 </tbody>
