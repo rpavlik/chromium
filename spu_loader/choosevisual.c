@@ -44,8 +44,6 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 	XVisualInfo *vis;
 	int errorBase, eventBase;
 
-	CRASSERT(visBits & CR_RGB_BIT);  /* color index not supported */
-
 	if (ws->glXQueryExtension(dpy, &errorBase, &eventBase))
 	{
 
@@ -56,13 +54,15 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 			int i = 0;
 
 			/* Build the attribute list */
-			attribList[i++] = GLX_RGBA;
-			attribList[i++] = GLX_RED_SIZE;
-			attribList[i++] = 1;
-			attribList[i++] = GLX_GREEN_SIZE;
-			attribList[i++] = 1;
-			attribList[i++] = GLX_BLUE_SIZE;
-			attribList[i++] = 1;
+			if (visBits & CR_RGB_BIT) {
+				attribList[i++] = GLX_RGBA;
+				attribList[i++] = GLX_RED_SIZE;
+				attribList[i++] = 1;
+				attribList[i++] = GLX_GREEN_SIZE;
+				attribList[i++] = 1;
+				attribList[i++] = GLX_BLUE_SIZE;
+				attribList[i++] = 1;
+			}
 
 			if (visBits & CR_ALPHA_BIT)
 			{
@@ -254,7 +254,10 @@ crChooseVisual(const crOpenGLInterface *ws, Display *dpy, int screen,
 		long templateFlags;
 		int i, count, visType;
 
-		visType = directColor ? DirectColor : TrueColor;
+		if (visBits & CR_RGB_BIT)
+			visType = directColor ? DirectColor : TrueColor;
+		else
+			visType = PseudoColor;
 
 		/* Get list of candidate visuals */
 		templateFlags = VisualScreenMask | VisualClassMask;
