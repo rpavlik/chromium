@@ -387,7 +387,7 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 	if (window > 0) {
 		/* copy the default window's tiling info */
 		WindowInfo *winInfo0 = (WindowInfo *) crHashtableSearch(tilesort_spu.windowTable, 0);
-		int i, j;
+		int i, j, k;
 		CRASSERT(winInfo0);
 		winInfo->muralWidth = winInfo0->muralWidth;
 		winInfo->muralHeight = winInfo0->muralHeight;
@@ -395,6 +395,9 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 			winInfo->server[i].num_extents = winInfo0->server[i].num_extents;
 			for (j = 0; j < winInfo0->server[i].num_extents; j++) {
 				winInfo->server[i].extents[j] = winInfo0->server[i].extents[j];
+				for (k=0; k<8; k++) {
+					winInfo->server[i].world_extents[j][k] = winInfo0->server[i].world_extents[j][k];
+				}
 			}
 		}
 	}
