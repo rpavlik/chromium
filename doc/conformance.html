@@ -41,14 +41,6 @@ changes contained in display lists aren't visible to the state
 tracker.  A concrete example of this problem is text rendering.
 </p>
 <p>
-glBitmap commands, encapsulated in display lists, are the conventional
-way to render bitmap text with OpenGL.  The xmove, ymove parameters to
-glBitmap specify how the raster position is to be updated after
-rendering a glyph.  But since Chromium's state tracker doesn't notice
-the raster position deltas in display lists, text won't be rendered as
-expected.
-</p>
-<p>
 This display list problem should be addressed in the future.
 </p>
 <p>
@@ -56,6 +48,7 @@ Here are the results of running the OpenGL conformance tests with
 the tilesort SPU (1 tile, 100x100 pixels) with comments explaining
 some of the failures:
 </p>
+<pre>
     DrawPixels test (Test number #29) failed.
        GL_DEPTH_COMPONENT test fails because of glRasterPos problem.
     CopyPixels test (Test number #30) failed.
@@ -77,6 +70,7 @@ some of the failures:
     Texture Cube Map test (Test number #86) failed.
     Transpose Matrix test (Test number #87) not supported (not an error).
     Texture Add test (Test number #88) not supported (not an error).
+</pre>
 <p>
 To show the differences of the tilesort SPU failures, here are the
 results of running the OpenGL conformance tests with the tilesort SPU
