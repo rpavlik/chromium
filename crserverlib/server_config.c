@@ -72,7 +72,7 @@ crServerGatherConfiguration(char *mothership)
 	int high_context = CR_QUADRICS_DEFAULT_HIGH_CONTEXT;
 	char *low_node = "none";
 	char *high_node = "none";
-	char *newserver = NULL;
+	const char *newserver;
 	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	char **clientchain, **clientlist;

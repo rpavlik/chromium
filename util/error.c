@@ -5,6 +5,7 @@
  */
 
 #include "cr_error.h"
+#include "cr_environment.h"
 #include "cr_string.h"
 #include "cr_net.h"
 
@@ -44,7 +45,7 @@ static void __crCheckCanada(void)
 	static int first = 1;
 	if (first)
 	{
-		char *env = getenv( "CR_CANADA" );
+		const char *env = crGetenv( "CR_CANADA" );
 		if (env)
 			canada = 1;
 		first = 0;
@@ -56,7 +57,7 @@ static void __crCheckSwedishChef(void)
 	static int first = 1;
 	if (first)
 	{
-		char *env = getenv( "CR_SWEDEN" );
+		const char *env = crGetenv( "CR_SWEDEN" );
 		if (env)
 			swedish_chef = 1;
 		first = 0;
@@ -68,8 +69,8 @@ static void __crCheckAustralia(void)
 	static int first = 1;
 	if (first)
 	{
-		char *env = getenv( "CR_AUSTRALIA" );
-		char *env2 = getenv( "CR_AUSSIE" );
+		const char *env = crGetenv( "CR_AUSTRALIA" );
+		const char *env2 = crGetenv( "CR_AUSSIE" );
 		if (env || env2)
 			australia = 1;
 		first = 0;
@@ -101,7 +102,7 @@ void crError( char *format, ... )
 	if (!my_hostname[0])
 		__getHostInfo();
 #ifdef WINDOWS
-	if ((err = GetLastError()) != 0 && getenv( "CR_WINDOWS_ERRORS" ) != NULL )
+	if ((err = GetLastError()) != 0 && crGetenv( "CR_WINDOWS_ERRORS" ) != NULL )
 	{
 		static char buf[8092], *temp;
 
@@ -139,7 +140,7 @@ void crError( char *format, ... )
 	vsprintf( txt + offset, format, args );
 	outputChromiumMessage( stderr, txt );
 #ifdef WINDOWS
-	if (getenv( "CR_GUI_ERROR" ) != NULL)
+	if (crGetenv( "CR_GUI_ERROR" ) != NULL)
 	{
 		MessageBox( NULL, txt, "Chromium Error", MB_OK );
 	}
@@ -149,7 +150,7 @@ void crError( char *format, ... )
 		va_end( args );
 #ifdef WINDOWS
 	}
-	if (getenv( "CR_DEBUG_ON_ERROR" ) != NULL)
+	if (crGetenv( "CR_DEBUG_ON_ERROR" ) != NULL)
 	{
 		DebugBreak();
 	}
@@ -192,7 +193,7 @@ void crDebug( char *format, ... )
 
 	if (first_time)
 	{
-		char *fname = getenv( "CR_DEBUG_FILE" );
+		const char *fname = crGetenv( "CR_DEBUG_FILE" );
 		first_time = 0;
 		if (fname)
 		{
@@ -214,7 +215,7 @@ void crDebug( char *format, ... )
 	if (!my_hostname[0])
 		__getHostInfo();
 #ifdef WINDOWS
-	if ((err = GetLastError()) != 0 && getenv( "CR_WINDOWS_ERRORS" ) != NULL )
+	if ((err = GetLastError()) != 0 && crGetenv( "CR_WINDOWS_ERRORS" ) != NULL )
 	{
 		static char buf[8092], *temp;
 

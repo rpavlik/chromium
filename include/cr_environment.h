@@ -11,8 +11,8 @@
 extern "C" {
 #endif
 
-void crSetenv( const char *var, const char *value );
-char *crGetenv( const char *var );
+extern void crSetenv( const char *var, const char *value );
+extern const char *crGetenv( const char *var );
 
 #ifdef __cplusplus
 }

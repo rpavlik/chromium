@@ -26,7 +26,7 @@
 
 CRConnection *crMothershipConnect( void )
 {
-	char *mother_server = NULL;
+	const char *mother_server;
 
 	crNetInit( NULL, NULL );
 
@@ -115,7 +115,7 @@ void crMothershipIdentifyFaker( CRConnection *conn, char *response )
 }
 
 /* Called by OpenGL faker library to identify itself to the mothership */
-void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_id )
+void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, const char *app_id )
 {
 	char hostname[1024];
 	if ( crGetHostname( hostname, sizeof(hostname) ) )

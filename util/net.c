@@ -1052,7 +1052,7 @@ crNetSetKey( const unsigned char* key, const int keyLength )
 CRConnection *__copy_of_crMothershipConnect( void )
 {
 	CRConnection *conn;
-	char *mother_server = NULL;
+	const char *mother_server = NULL;
 
 	crNetInit( NULL, NULL );
 

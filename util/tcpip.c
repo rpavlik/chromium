@@ -1332,7 +1332,7 @@ crTCPIPConnection( CRConnection *conn )
 
 int crGetHostname( char *buf, unsigned int len )
 {
-	char *override = NULL;
+	const char *override;
 	int ret;
 
  	override = crGetenv("CR_HOSTNAME");

@@ -427,7 +427,7 @@ static char *find_file_on_path( const char *path, const char *basename )
 
 static void make_tmpdir( char *name )
 {
-	char *tmp;
+	const char *tmp;
 	int   index;
 
 	tmp = crGetenv( "TMP" );
@@ -456,7 +456,7 @@ static void make_tmpdir( char *name )
 
 static void prefix_env_var( const char *prefix, const char *varname )
 {
-	char *val;
+	const char *val;
 
 	val = crGetenv( varname );
 	if ( val ) {
@@ -787,7 +787,7 @@ static void do_it( char *argv[] )
 
 static void usage( void )
 {
-	char *cr_lib;
+	const char *cr_lib;
 
 	fprintf( stderr,
 			"usage: %s [options] <cmd> [args]\n"
@@ -859,7 +859,7 @@ int main( int argc, char **argv )
 			mothership = argv[i];
 		}
 		else if ( !crStrcmp( argv[i], "-mesa" ) ) {
-			char *mesa_path = crGetenv( "CR_MESA_LIB_PATH" );
+			const char *mesa_path = crGetenv( "CR_MESA_LIB_PATH" );
 			if (mesa_path)
 			{
 				crSetenv( "CR_SYSTEM_GL_PATH", mesa_path );

@@ -256,7 +256,8 @@ static char **LookupMothershipConfig(const char *procName)
 {
 	const int procNameLen = crStrlen(procName);
 	FILE *f;
-	char *home, configPath[1000];
+	const char *home;
+	char configPath[1000];
 
 	/* first, check if the CR_CONFIG env var is set */
 	{
@@ -330,7 +331,7 @@ void stubInit(void)
 	char *high_node = "none";
 	char **spu_names;
 	char *spu_dir;
-	char * app_id;
+	const char *app_id;
 	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	int i;
 
@@ -480,7 +481,7 @@ void stubInit(void)
 		sprintf( response, "1 0 %s", defaultSPU );
 	}
 
-	crDebug( "response = \"%s\"", response );
+	/*crDebug( "response = \"%s\"", response );*/
 	spuchain = crStrSplit( response, " " );
 	num_spus = crStrToInt( spuchain[0] );
 	spu_ids = (int *) crAlloc( num_spus * sizeof( *spu_ids ) );

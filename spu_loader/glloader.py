@@ -96,7 +96,7 @@ static int FileExists(char *directory, char *filename)
  * handle.
  */
 static CRDLL *
-__findSystemLib( char *provided_system_path, char *lib )
+__findSystemLib( const char *provided_system_path, char *lib )
 {
 	CRDLL *dll;
 	char system_path[8096];
@@ -142,9 +142,9 @@ __findSystemLib( char *provided_system_path, char *lib )
 
 static CRDLL *
 #ifdef DARWIN
-__findSystemGL( char *provided_system_path, char *default_system_path, char *provided_lib_name )
+__findSystemGL( const char *provided_system_path, char *default_system_path, char *provided_lib_name )
 #else
-__findSystemGL( char *provided_system_path )
+__findSystemGL( const char *provided_system_path )
 #endif
 {
 #ifdef DARWIN
@@ -266,10 +266,10 @@ print """
 	SPUNamedFunctionTable *entry = table;
 	int i;
 
-	char *env_syspath = crGetenv( "CR_SYSTEM_GL_PATH" );
+	const char *env_syspath = crGetenv( "CR_SYSTEM_GL_PATH" );
 #ifdef DARWIN
-	char *env_cgl_syspath = crGetenv( "CR_SYSTEM_CGL_PATH" );
-	char *env_agl_syspath = crGetenv( "CR_SYSTEM_AGL_PATH" );
+	const char *env_cgl_syspath = crGetenv( "CR_SYSTEM_CGL_PATH" );
+	const char *env_agl_syspath = crGetenv( "CR_SYSTEM_AGL_PATH" );
 #endif
 	
 	crDebug( "Looking for the system's OpenGL library..." );
@@ -518,7 +518,7 @@ int crLoadOSMesa( OSMesaContext (**createContext)( GLenum format, OSMesaContext 
 {
 	static CRDLL *osMesaDll = NULL;
 
-	char *env_syspath = crGetenv( "CR_SYSTEM_GL_PATH" );
+	const char *env_syspath = crGetenv( "CR_SYSTEM_GL_PATH" );
 	
 	crDebug( "Looking for the system's OSMesa library..." );
 	osMesaDll = __findSystemLib( env_syspath, "libOSMesa.so" );

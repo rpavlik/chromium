@@ -28,7 +28,7 @@ void crSetenv( const char *var, const char *value )
 #endif
 }
 
-char *crGetenv( const char *var )
+const char *crGetenv( const char *var )
 {
 	return getenv( var );
 }
