@@ -168,18 +168,23 @@ void crServerApplyBaseProjection(void)
 	cr_server.head_spu->dispatch_table.PopAttrib( );
 }
 
-void crServerRecomputeBaseProjection(GLmatrix *base) 
+void crServerRecomputeBaseProjection(GLmatrix *base, GLint x, GLint y, GLint w, GLint h)
 {
 	GLfloat xscale, yscale;
 	GLfloat xtrans, ytrans;
-
 	GLrectf p;
 
-	p.x1 = ((GLfloat) (cr_server.x1[cr_server.curExtent])) / cr_server.muralWidth;
-	p.x2 = ((GLfloat) (cr_server.x2[cr_server.curExtent])) / cr_server.muralWidth;
-	p.y1 = ((GLfloat) (cr_server.y1[cr_server.curExtent])) / cr_server.muralHeight;
-	p.y2 = ((GLfloat) (cr_server.y2[cr_server.curExtent])) / cr_server.muralHeight;
-	
+	/* 
+	 * We need to take account of the current viewport parameters,
+	 * and they are passed to this function as x, y, w, h.
+ 	 * In the default case (from main.c) we pass the the
+	 * full muralsize of 0, 0, muralWidth, muralHeight
+	 */
+	p.x1 = ((GLfloat) (cr_server.x1[cr_server.curExtent]) - x) / (w);
+	p.x2 = ((GLfloat) (cr_server.x2[cr_server.curExtent]) - x) / (w);
+	p.y1 = ((GLfloat) (cr_server.y1[cr_server.curExtent]) - y) / (h);
+	p.y2 = ((GLfloat) (cr_server.y2[cr_server.curExtent]) - y) / (h);
+
 	/* Rescale [0,1] -> [-1,1] */
 	p.x1 = p.x1*2.0f - 1.0f;
 	p.x2 = p.x2*2.0f - 1.0f;

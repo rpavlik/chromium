@@ -50,7 +50,7 @@ int crServerRecv( CRConnection *conn, void *buf, unsigned int len );
 void crServerSerializeRemoteStreams(void);
 void crServerAddToRunQueue( int index );
 
-void crServerRecomputeBaseProjection(GLmatrix *base);
+void crServerRecomputeBaseProjection(GLmatrix *base, int x, int y, int w, int h);
 void crServerApplyBaseProjection(void);
 
 void crServerSetOutputBounds( CRContext *ctx, const GLrecti *outputwindow, const GLrecti *imagespace, const GLrecti *imagewindow );

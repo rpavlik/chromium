@@ -153,7 +153,7 @@ void crServerSetOutputBounds( CRContext *ctx,
 	GLrecti p,q;
 
 	crServerSetViewportBounds( &(ctx->viewport), outputwindow, imagespace, imagewindow, &p, &q );
-	crServerRecomputeBaseProjection( &(cr_server.curClient->baseProjection) );
+	crServerRecomputeBaseProjection( &(cr_server.curClient->baseProjection), ctx->viewport.viewportX, ctx->viewport.viewportY, ctx->viewport.viewportW, ctx->viewport.viewportH );
 	crServerApplyBaseProjection();
 	
 }
