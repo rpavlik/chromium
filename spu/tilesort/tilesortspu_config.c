@@ -147,7 +147,6 @@ SPUOptions tilesortSPUOptions[] = {
 void tilesortspuGatherConfiguration( const SPU *child_spu )
 {
 	CRConnection *conn;
-	char response[8096];
 
 	__setDefaults();
 
@@ -162,8 +161,7 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 
 	crSPUGetMothershipParams( conn, (void *)&tilesort_spu, tilesortSPUOptions );
 
-	crMothershipGetMTU( conn, response );
-	sscanf( response, "%d", &tilesort_spu.MTU );
+	tilesort_spu.MTU = crMothershipGetMTU( conn );
 	crDebug( "Got the MTU as %d", tilesort_spu.MTU );
 
 	tilesortspuGetTileInformation(conn);

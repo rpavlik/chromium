@@ -47,7 +47,6 @@ SPUOptions commSPUOptions[] = {
 void commspuGatherConfiguration( void )
 {
 	CRConnection *conn;
-	char response[8096];
 
 	/* Connect to the mothership and identify ourselves. */
 	
@@ -66,8 +65,7 @@ void commspuGatherConfiguration( void )
 
 	crSPUGetMothershipParams( conn, &comm_spu, commSPUOptions );
 
-	crMothershipGetMTU( conn, response );
-	sscanf( response, "%d", &(comm_spu.mtu) );
+	comm_spu.mtu = crMothershipGetMTU( conn );
 
 	crMothershipDisconnect( conn );
 }

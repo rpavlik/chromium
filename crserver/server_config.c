@@ -71,7 +71,7 @@ void crServerGatherConfiguration(char *mothership)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	if (crMothershipGetSPUDir( conn, response ))
+	if (crMothershipGetServerParam( conn, response, "spu_dir" ) && crStrlen(response) > 0)
 	{
 		spu_dir = response;
 	}
@@ -111,8 +111,7 @@ void crServerGatherConfiguration(char *mothership)
 		cr_server.only_swap_once = crStrToInt( response );
 	}
 
-	crMothershipGetMTU( conn, response );
-	sscanf( response, "%ud", &cr_server.mtu );
+	cr_server.mtu = crMothershipGetMTU( conn );
 
 	/* The response will tell us what protocols we need to serve 
 	 * example: "3 tcpip 1,gm 2,via 10" */

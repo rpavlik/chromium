@@ -175,7 +175,6 @@ void binaryswapspuGatherConfiguration( BinaryswapSPU *binaryswap_spu )
 {
   int i;
   CRConnection *conn;
-  char response[8096];
   
   __setDefaults( binaryswap_spu );
   
@@ -224,8 +223,7 @@ void binaryswapspuGatherConfiguration( BinaryswapSPU *binaryswap_spu )
   }	
 
   if(binaryswap_spu->mtu == -1){
-    crMothershipGetMTU( conn, response );
-    sscanf( response, "%d", &(binaryswap_spu->mtu) );
+    binaryswap_spu->mtu = crMothershipGetMTU( conn );
   }
 
   crMothershipDisconnect( conn );

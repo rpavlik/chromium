@@ -54,7 +54,7 @@ static void stubCheckWindowSize(void)
 	if (c < 0)
 		return;
 	stubGetWindowSize( &(stub.Context[c]), &winW, &winH );
-	if (winW != stub.spuWindowWidth || winH != stub.spuWindowHeight) {
+	if (winW && winH && (winW != stub.spuWindowWidth || winH != stub.spuWindowHeight)) {
 		stub.spuDispatch.WindowSize( stub.spuWindow, winW, winH );
 		stub.spuWindowWidth = winW;
 		stub.spuWindowHeight = winH;
@@ -214,11 +214,11 @@ void StubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	if (conn && crMothershipGetParam( conn, "show_cursor", response ) ) {
+	if (conn && crMothershipGetFakerParam( conn, response, "show_cur2sor" ) ) {
 		sscanf( response, "%d", &stub.appDrawCursor );
 	}
 
-	if (conn && crMothershipGetParam( conn, "minimum_window_size", response )
+	if (conn && crMothershipGetFakerParam( conn, response, "minimum_window_size" )
 		&& response[0]) {
 		int w, h;
 		sscanf( response, "[%d, %d]", &w, &h );
@@ -227,17 +227,22 @@ void StubInit(void)
 		stub.minChromiumWindowHeight = h;
 	}
 
-	if (conn && crMothershipGetParam( conn, "match_window_title", response )
+	if (conn && crMothershipGetFakerParam( conn, response, "match_window_title" )
 		&& response[0]) {
 		crDebug("match_window_title: %s\n", response );
 		stub.matchWindowTitle = crStrdup( response );
 	}
 
-	if (conn && crMothershipGetParam( conn, "track_window_size", response ) ) {
+	if (conn && crMothershipGetFakerParam( conn, response, "track_window_size" ) ) {
 		sscanf( response, "%d", &stub.trackWindowSize );
 	}
 
+
+#if 0
 	if (conn && crMothershipGetSPUDir( conn, response ))
+#else
+	if (conn && crMothershipGetFakerParam( conn, response, "spu_dir" ) && crStrlen(response) > 0)
+#endif
 	{
 		spu_dir = response;
 	}

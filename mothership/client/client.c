@@ -127,6 +127,18 @@ int crMothershipGetServerParam( CRConnection *conn, char *response, const char *
 	return crMothershipSendString( conn, response, "serverparam %s", txt );
 }
 
+int crMothershipGetFakerParam( CRConnection *conn, char *response, const char *param, ... )
+{
+	va_list args;
+	char txt[8096];
+	va_start( args, param );
+	vsprintf( txt, param, args );
+	va_end( args );
+
+	return crMothershipSendString( conn, response, "fakerparam %s", txt );
+}
+
+
 void crMothershipReset( CRConnection *conn )
 {
 	if (!crMothershipSendString( conn, NULL, "reset" ))
@@ -188,14 +200,13 @@ int crMothershipGetParam( CRConnection *conn, const char *param, char *response 
 }
 
 
-void crMothershipGetMTU( CRConnection *conn, char *response )
+int crMothershipGetMTU( CRConnection *conn )
 {
-	INSIST( crMothershipSendString( conn, response, "mtu" ) );
-}
-
-void crMothershipGetStartdir( CRConnection *conn, char *response )
-{
-	INSIST( crMothershipSendString( conn, response, "startdir" ));
+	char response[4096];
+	int mtu;
+	INSIST( crMothershipGetParam( conn, "MTU", response ) );
+	sscanf( response, "%d", &mtu );
+	return mtu;
 }
 
 void crMothershipGetClients( CRConnection *conn, char *response )
@@ -206,16 +217,6 @@ void crMothershipGetClients( CRConnection *conn, char *response )
 void crMothershipGetServers( CRConnection *conn, char *response )
 {
 	INSIST( crMothershipSendString( conn, response, "servers" ));
-}
-
-int crMothershipGetClientDLL( CRConnection *conn, char *response )
-{
-	return crMothershipSendString( conn, response, "clientDLL" );
-}
-
-int crMothershipGetSPUDir( CRConnection *conn, char *response )
-{
-	return crMothershipSendString( conn, response, "SPUdir" );
 }
 
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num )

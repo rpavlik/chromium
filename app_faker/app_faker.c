@@ -267,7 +267,7 @@ void do_it( char *argv[] )
 	}
 
 	if ( cr_lib == NULL ) {
-		if (crMothershipGetClientDLL( mothership_conn, response ) )
+		if (crMothershipGetFakerParam( mothership_conn, response, "client_dll" ) )
 		{
 			cr_lib = crStrdup( response );
 		}
@@ -509,7 +509,7 @@ void do_it( char *argv[] )
 	}
 
 	if ( cr_lib == NULL ) {
-		if (crMothershipGetClientDLL( mothership_conn, response ) )
+		if (crMothershipGetFakerParam( mothership_conn, response, "client_dll" ) )
 		{
 			cr_lib = crStrdup( response );
 		}
@@ -577,7 +577,7 @@ void do_it( char *argv[] )
 #endif
 
     debug( "contacting mothership to determine SPU directory \n");
-	if (crMothershipGetSPUDir( mothership_conn, response ))
+	if (crMothershipGetFakerParam( mothership_conn, response, "spu_dir" ) && crStrlen(response) > 0)
 	{
 		crSetenv( "SPU_DIR", response );
 	}
@@ -740,7 +740,7 @@ int main( int argc, char **argv )
 
 		faked_argv = crStrSplit( chain[1], " " );
 
-		crMothershipGetStartdir( mothership_conn, response );
+		crMothershipGetFakerParam( mothership_conn, response, "start_dir" );
 
 		if (chdir( response ))
 		{

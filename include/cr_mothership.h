@@ -23,20 +23,17 @@ void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, char *app_i
 void crMothershipIdentifyFaker( CRConnection *conn, char *response );
 void crMothershipIdentifyServer( CRConnection *conn, char *response );
 
-void crMothershipGetStartdir( CRConnection *conn, char *response );
-
 void crMothershipSetParam( CRConnection *conn, const char *param, const char *value );
 int crMothershipGetParam( CRConnection *conn, const char *param, char *value );
 
 int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param, ...);
+int crMothershipGetFakerParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipSetSPUParam( CRConnection *conn, const char *param, const char *value);
 int crMothershipGetNamedSPUParam( CRConnection *conn, int spu_id, const char *param, char *response);
 void crMothershipGetClients( CRConnection *conn, char *response );
 void crMothershipGetServers( CRConnection *conn, char *response );
-int crMothershipGetClientDLL( CRConnection *conn, char *response );
-int crMothershipGetSPUDir( CRConnection *conn, char *response );
-void crMothershipGetMTU( CRConnection *conn, char *response );
+int crMothershipGetMTU( CRConnection *conn );
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num );
 int crMothershipGetServerTiles( CRConnection *conn, char *response );
 int crMothershipRequestTileLayout( CRConnection *conn, char *response, int muralWidth, int muralHeight );

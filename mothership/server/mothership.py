@@ -78,11 +78,11 @@ def MakeString( x ):
 	else:
 		return repr(x)
 
-def Conf( config, key, *values ):
-	"""Conf(config, key, *values)
-	Sets the configuration in "config" of "key" to a list
-	containing "values"."""
-	config[key] = map( MakeString, values )
+def Conf( config, key, value ):
+	"""Sets the configuration in "config" of "key" to "value".  The value is
+	either a simple integer, float or string or a list."""
+	#config[key] = map( MakeString, value )
+	config[key] = value
 
 
 class SPU:
@@ -94,8 +94,7 @@ class SPU:
 	    AddServer:  Tells a client node where to find its server.
 	"""
 	def __init__( self, name ):
-                """SPU(name)
-		Creates a SPU with the given "name"."""
+		"""Creates a SPU with the given name."""
 		self.name = name
 		self.config = {}
 		self.clientargs = []
@@ -103,9 +102,12 @@ class SPU:
 		self.layoutFunction = None
 
 	def Conf( self, key, *values ):
-                """Conf(key,*values)
-		Sets a key/value list in this SPU's configuration"""
-		Conf( self.config, key, *values )
+		"""Set a configuration option."""
+		# XXX we'll eventually force values to be a single value or a list!
+		if len(values) > 1:
+			Conf( self.config, key, list(values) )
+		else:
+			Conf( self.config, key, values[0] )
 
 	def __add_server( self, node, url ):
 		self.servers.append( (node, url) )
@@ -161,6 +163,7 @@ class CRNode:
 		if (host == 'localhost'):
 			self.host = socket.gethostname()
 		self.ipaddr = socket.gethostbyname(self.host)
+		self.ipaddr = self.host
 
 		# unqualify the hostname if it is already that way.
 		# e.g., turn "foo.bar.baz" into "foo"
@@ -193,10 +196,14 @@ class CRNode:
 		CRNode.SPUIndex += 1
 		allSPUs[spu.ID] = spu
 
+	def Conf( self, key, value ):
+		"""Sets a key/value list in this node's configuration"""
+		Conf( self.config, key, value )
+
 	def SPUDir( self, dir ):
 	    	"""SPUDir(dir)
 		Sets the directory that SPUs start in."""
-		self.config['SPUdir'] = dir
+		self.config['spu_dir'] = dir
 
 	def AutoStart( self, program ):
 		if type( program ) == types.StringType:
@@ -229,11 +236,6 @@ class CRNetworkNode(CRNode):
 		self.file_clients = []
 		self.tiles = []
 
-	def Conf( self, key, *values ):
-		"""Conf(key, *values)
-		Sets a key/value list in this node's configuration"""
-		Conf( self.config, key, *values )
-
 	def AddClient( self, node, protocol ):
 		"""AddClient(node, protocol)
 		Adds a client node, communicating with "protocol", to the
@@ -263,28 +265,27 @@ class CRApplicationNode(CRNode):
 	"""
 	AppID = 0
 
-	def __init__(self,host='localhost'):
+	def __init__(self, host='localhost'):
 	    	"""CRApplicationNode(host='localhost')
 		Creates an application node for the given "host"."""
-		CRNode.__init__(self,host)
+		CRNode.__init__(self, host)
 		self.id = CRApplicationNode.AppID
 		CRApplicationNode.AppID += 1;
+		self.config['start_dir'] = '.'
 
 	def SetApplication( self, app ):
 		"""SetApplication(name)
 		Sets the name of the application that's run."""
-		self.application = app
+		self.config['application'] = app
 
 	def StartDir( self, dir ):
 		"""SetApplication(dir)
 		Sets the directory the application starts in."""
-		self.config['startdir'] = dir
+		self.config['start_dir'] = dir
 
 	def ClientDLL( self, dir ):
-		"""ClientDLL(dir)
-		XXX Don't know what this does (ahern)
-		Sets the client DLL."""
-		self.config['clientdll'] = dir
+		"""Set the directory to search for the crfaker library."""
+		self.config['client_dll'] = dir
 
 class SockWrapper:
 	"Internal convenience class for handling sockets"
@@ -314,12 +315,12 @@ class SockWrapper:
 	def Send(self, str):
 		self.sock.send( str + "\n" )
 
-	def Reply(self, code, str=None):
+	def Reply(self, code, s=None):
 		tosend = `code`
-		if str != None:
-			tosend += " " + str
+		if s != None:
+			tosend += " " + str(s)
 		self.Send( tosend )
-		CRDebug( 'Replying (%d): "%s"' % ( code, str ) )
+		CRDebug( 'Replying (%d): "%s"' % ( code, s ) )
 
 	def Success( self, msg ):
 		self.Reply( SockWrapper.NOERROR, msg )
@@ -372,32 +373,28 @@ class CR:
 	    MTU: 	Sets the maximum communication buffer size.
 	    Go:		Starts the ball rolling.
 	    AllSPUConf: Adds the key/values list to all SPUs' configuration.
-	    SetParam:   Set a mothership parameter
-	    GetParam:   Return value of a mothership parameter
+	    Conf:   Set a mothership parameter
 
 	internal functions:
             ProcessRequest:     Handles an incoming request, mapping it to
                                 an appropriate do_* function.
 	    do_acceptrequest:	Accepts the given socket.
-	    do_clientdll: 	Sends the clientdll configuration down.
 	    do_clients: 	Sends the list of clients to a server.
 	    do_connectrequest:	Connects the given socket.
 	    do_faker:		Maps a faker app to an ApplicationNode.
-	    do_mtu:
 	    do_namedspuparam:   Sends the given SPU parameter.
 	    do_opengldll:	Identifies the application node in the graph.
 	    do_quit: 		Disconnects from clients.
 	    do_reset: 		Resets the mothership to its initial state.
 	    do_server:		Identifies the server in the graph.
 	    do_serverids:	Sends the list of server IDs.
-	    do_serverparam: 	Sends the given server parameter.
+	    do_serverparam:	Sends the given server parameter.
+	    do_fakerparam:	Sends the given app faker parameter.
 	    do_servers: 	Sends the list of servers.
 	    do_servertiles: 	Sends the defined tiles for a server.
 	    do_setspuparam: 	Sets a SPU parameter.
-	    do_spudir: 		Sends the spudir configuration down.
 	    do_spu:		Identifies a SPU.
 	    do_spuparam:	Sends the given SPU (or global) parameter.
-	    do_startdir:	Sends the startup directory to a SPU or server.
 	    do_tiles:		Sends the defined tiles for a SPU.
 	    do_setparam:        Sets a mothership parameter value
 	    do_getparam:        Returns a mothership parameter value
@@ -413,7 +410,7 @@ class CR:
 		self.all_sockets = []
 		self.wrappers = {}
 		self.allSPUConf = []
-		self.param = {"MTU": 1024*1024}
+		self.config = {"MTU": 1024*1024}
 		self.conn_id = 1
 
 	def AddNode( self, node ):
@@ -421,11 +418,23 @@ class CR:
 		Adds a node to the SPU graph."""
 		self.nodes.append( node )
 	
-	def MTU( self, mtu ):
-		"""MTU(size)
-		Sets the maximum buffer size allowed in communication
-		between SPUs."""
-		self.param["MTU"] = mtu
+	def Conf( self, key, value ):
+		"""Set a global mothership configuration value (via Python)"""
+		appOptions = ["minimum_window_size",
+					  "match_window_title",
+					  "track_window_size",
+					  "show_cursor"]
+		try:
+			i = appOptions.index(key)
+		except:
+			# this is a mothership option
+			Conf(self.config, key, value)
+		else:
+			# this is an app node option (backward compatibility hack)
+			print "NOTICE: %s is an obsolete mothership option; it's now an app node option" % key
+			for node in self.nodes:
+				if isinstance(node, CRApplicationNode):
+					node.Conf(key, value)
 
 	def AllSPUConf( self, regex, key, *values ):
 		"""AllSPUConf(regex, key, *values)
@@ -433,27 +442,17 @@ class CR:
 		Adds the key/values list to all SPUs' configuration."""
 		self.allSPUConf.append( (regex, key, map( MakeString, values) ) )
 		
-	def Conf( self, key, value ):
-		"""Set a global mothership configuration value (via Python)"""
-		self.param[key] = value
+	# XXX obsolete; use Conf('MTU', value) instead
+	def MTU( self, mtu ):
+		"""MTU(size)
+		Sets the maximum buffer size allowed in communication
+		between SPUs."""
+		Conf(self.config, "MTU", mtu)
 
 	# XXX obsolete; use Conf() instead
 	def SetParam( self, key, value ):
-		self.param[key] = value
-
-	def GetConf( self, key ):
-		"""Get a global mothership configuration value (via Python)"""
-		if self.param.has_key(key):
-			return string.join(self.param[key], "")
-		else:
-			return ""
-
-	# XXX obsolete; use GetConf() instead
-	def GetParam( self, key ):
-		if self.param.has_key(key):
-			return string.join(self.param[key], "")
-		else:
-			return ""
+		print "NOTICE: cr.SetParam() is obsolete; use cr.Conf() instead."
+		Conf(self.config, key, value)
 
 	# Added by BrianP
 	def do_setparam( self, sock, args ):
@@ -461,7 +460,7 @@ class CR:
 		params = args.split( " ", 1 )
 		key = params[0]
 		value = params[1]
-		self.param[key] = value
+		Conf(self.config, key, value)
 		sock.Success( "OK" )
 		return
 		
@@ -469,10 +468,10 @@ class CR:
 	def do_getparam( self, sock, args ):
 		"""Get a global mothership parameter value (via C)"""
 		key = args
-		if not self.param.has_key(key):
+		if not self.config.has_key(key):
 			response = ""
 		else:
-			response = str(self.param[key])
+			response = str(self.config[key])
 		sock.Success( response )
 		return
 		
@@ -572,7 +571,7 @@ class CR:
 						self.conn_id += 1
 						return
 					else:
-						CRDebug( "not connecting to \"%s\" (!= \"%s\")" % (server_hostname, hostname) )
+						CRDebug( "not connecting to \"%s:%d\" (!= \"%s:%d\")" % (server_hostname, server_port, hostname, port) )
 			sock.tcpip_connect_wait = (hostname, port, endianness)
 		elif (protocol == 'gm'):
 			(p, hostname, port_str, node_id_str, port_num_str, endianness_str) = connect_info
@@ -635,41 +634,30 @@ class CR:
 	def do_faker( self, sock, args ):
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
+		print "********* args=%s" % args
 		for node in self.nodes:
+			print "************ %s ?= %s  spoken=%d app=%d" % (string.lower(node.host), string.lower(args), node.spokenfor, isinstance(node, CRApplicationNode))
+			if string.lower(node.host) == string.lower(args):
+				print "*** point 0"
+			else:
+				print "*** different hosts"
 			if string.lower(node.host) == string.lower(args) and not node.spokenfor:
+				print "*** point 1"
 				if isinstance(node,CRApplicationNode):
+					print "*** point 2"
 					try:
-						application = node.application
+						print "*** point 3"
+						application = node.config['application']
 					except:
+						print "*** point 4"
 						self.ClientError( sock, SockWrapper.NOAPPLICATION, "Client node has no application!" )
 						return
+					print "*** point 5"
 					node.spokenfor = 1
 					sock.node = node
-					sock.Success( "%d %s" % (node.id, node.application) )
+					sock.Success( "%d %s" % (node.id, application) )
 					return
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
-
-	def do_clientdll( self, sock, args ):
-		"""do_clientdll(sock, args)
-		Retrieves the clientdll configuration and sends it on the socket."""
-		if sock.node == None or not isinstance(sock.node,CRApplicationNode):
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You're not a faker!" )
-			return
-		if not sock.node.config.has_key( 'clientdll' ):
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "Faker didn't say where it was." )
-			return
-		sock.Success( sock.node.config['clientdll'] )
-
-	def do_spudir( self, sock, args ):
-		"""do_spudir(sock, args)
-		Retrieves the spudir configuration and sends it on the socket."""
-		if sock.node == None:
-			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "Identify yourself!" )
-			return
-		if not sock.node.config.has_key( 'SPUdir' ):
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "Node didn't say where the SPUs were." )
-			return
-		sock.Success( sock.node.config['SPUdir'] )
 
 	def do_server( self, sock, args ):
 		"""do_server(sock, args)
@@ -747,7 +735,8 @@ class CR:
 		else:
 			response = spu.config[args]
 		CRDebug("responding with args = " + `response`)
-		sock.Success( string.join( response, " " ) )	
+#		sock.Success( string.join( response, " " ) )
+		sock.Success( response )
 
 	def do_namedspuparam( self, sock, args ):
 		"""do_namedspuparam(sock, args)
@@ -791,7 +780,19 @@ class CR:
 		if not sock.node.config.has_key( args ):
 			sock.Reply( SockWrapper.UNKNOWNPARAM, "Server doesn't have param %s" % (args) )
 			return
-		sock.Success( string.join( sock.node.config[args], " " ) )
+		#sock.Success( string.join( sock.node.config[args], " " ) )
+		sock.Success( sock.node.config[args] )
+
+	def do_fakerparam( self, sock, args ):
+		"""do_fakerparam(sock, args)
+		Sends the given app faker parameter."""
+		if sock.node == None or not isinstance(sock.node,CRApplicationNode):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for faker parameters without telling me what app faker you are!" )
+			return
+		if not sock.node.config.has_key( args ):
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "Faker doesn't have param %s" % (args) )
+			return
+		sock.Success( sock.node.config[args] )
 
 	def do_servers( self, sock, args ):
 		"""do_servers(sock, args)
@@ -901,12 +902,6 @@ class CR:
 			node.spusloaded = 0
 		sock.Success( "Server Reset" );
 
-	def do_mtu( self, sock, args ):
-		"""do_mtu(sock, args)
-		Returns the max transmission unit (bytes)"""
-		mtu = self.param["MTU"]
-		sock.Success( str(mtu) )
-
 	def do_quit( self, sock, args ):
 		"""do_quit(sock, args)
 		Disconnects from clients."""
@@ -952,16 +947,6 @@ class CR:
 		sock.Success( result )
 		return
 		
-	def do_startdir( self, sock, args ):
-		"""do_startdir(sock, args)
-		Sends the startup directory to a SPU or server."""
-		if not sock.node:
-			self.ClientError( sock_wrapper, SockWrapper.UNKNOWNHOST, "Can't ask me where to start until you tell me who you are." )
-		if not sock.node.config.has_key( "startdir" ):
-			sock.Success( "." )
-		else:
-			sock.Success( sock.node.config['startdir'] )
-
 	def ProcessRequest( self, sock_wrapper ):
 		"""ProcessRequest(sock_wrapper)
 		Handles an incoming request, mapping it to an appropriate

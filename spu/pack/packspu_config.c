@@ -61,8 +61,7 @@ void packspuGatherConfiguration( const SPU *child_spu )
 		crError( "Bad server specification for Pack SPU %d", pack_spu.id );
 	}
 
-	crMothershipGetMTU( conn, response );
-	sscanf( response, "%d", &(pack_spu.buffer_size) );
+	pack_spu.buffer_size = crMothershipGetMTU( conn );
 
 	crSPUPropogateGLLimits( conn, pack_spu.id, child_spu, &pack_spu.limits );
 
