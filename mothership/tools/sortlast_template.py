@@ -15,6 +15,7 @@ from wxPython.wx import *
 import traceback, types
 import intdialog, spudialog, hostdialog
 import crutils, crtypes, configio
+import templatebase
 
 
 class SortlastParameters:
@@ -44,7 +45,7 @@ CommonWindowSizes = [ [128, 128],
 
 # This is the guts of the sortlast configuration script.
 # It's simply appended to the file after we write all the configuration options
-__ConfigBody = """
+_ConfigBody = """
 import string, sys
 sys.path.append( "../server" )
 from mothership import *
@@ -427,7 +428,7 @@ class SortlastDialog(wxDialog):
 		self.__UpdateWidgetsFromVars()
 
 
-def Create_Sortlast(parentWindow, mothership):
+def Create_Sortlast0(parentWindow, mothership):
 	"""Create a sort-last configuration"""
 	
 	# Yes, client/server are transposed here
@@ -501,167 +502,248 @@ def Create_Sortlast(parentWindow, mothership):
 	return 1
 
 
-def Is_Sortlast(mothership):
-	"""Test if the mothership describes a sort-last configuration.
-	Return 1 if so, 0 otherwise."""
-	# First, check for correct number and type of nodes
-	nodes = mothership.Nodes()
-	if len(nodes) != 2: 
-		print "not 2 nodes"
-		return 0
-	if not ((nodes[0].IsAppNode() and nodes[1].IsServer()) or
-			(nodes[1].IsAppNode() and nodes[0].IsServer())):
-		# one node must be the app node, the other the server
-		print "bad nodes"
-		return 0
-	# Find app/server nodes
-	if nodes[0].IsAppNode():
-		appNode = nodes[0]
-		serverNode = nodes[1]
-	else:
-		appNode = nodes[1]
-		serverNode = nodes[0]
-	# Find SPUs
-	renderSPU = serverNode.LastSPU()
-	if renderSPU.Name() != "render":
-		print "no render SPU"
-		return 0
-	readbackSPU = appNode.SPUChain()[0]
-	if readbackSPU.Name() != "readback":
-		print "no readback SPU"
-		return 0
-	packSPU = appNode.SPUChain()[1]
-	if packSPU.Name() != "pack":
-		print "no pack SPU"
-		return 0
-	# Next, check that the app's servers are correct
-	servers = packSPU.GetServers()
-	if len(servers) != 1 or servers[0] != serverNode:
-		print "no client/server connection"
-		return 0
-	# OK, this is a sort-last config!
-	return 1
+#----------------------------------------------------------------------
 
 
-def Edit_Sortlast(parentWindow, mothership):
-	"""Edit parameters for a sort-last template"""
-	t = Is_Sortlast(mothership)
-	if not t:
-		print "This is not a sortlast configuration!"
-		return
-
-	d = SortlastDialog(parent=parentWindow)
-	d.Centre()
-	backupSortlastParams = mothership.Sortlast.Clone()
-	d.SetMothership(mothership)
-
-	if d.ShowModal() == wxID_CANCEL:
-		# restore original values
-		mothership.Sortlast = backupSortlastParams
-	else:
-		# update mothership with new values
-		# already done in __UpdateVarsFromWidgets()
+class SortlastTemplate(templatebase.TemplateBase):
+	"""Template for creating/editing/reading/writing tilesort configs."""
+	def __init__(self):
+		# no-op for now
 		pass
+		
+	def Name(self):
+		return "Sort-last"
 
+	def Create(self, parentWindow, mothership):
+		"""Create the nodes/spus/etc for a sort-last config."""
 
-def Read_Sortlast(mothership, file):
-	"""Read a sortlast config from the given file handle."""
+		# Yes, client/server are transposed here
+		appHosts = crutils.GetSiteDefault("cluster_hosts")
+		if not appHosts:
+			appHosts = ["localhost"]
 
-	mothership.Sortlast = SortlastParameters()
+		serverHosts = crutils.GetSiteDefault("frontend_hosts")
+		if not serverHosts:
+			serverHosts = ["localhost"]
 
-	serverNode = crtypes.NetworkNode()
-	renderSPU = crutils.NewSPU("render")
-	serverNode.AddSPU(renderSPU)
+		defaultNodes = len(appHosts)
+		(defaultWidth, defaultHeight) = crutils.GetSiteDefault("screen_size")
+		if defaultWidth < 128:
+			defaultWidth = 128
+		if defaultHeight < 128:
+			defaultHeight = 128
 
-	clientNode = crtypes.ApplicationNode()
-	readbackSPU = crutils.NewSPU("readback")
-	clientNode.AddSPU(readbackSPU)
-	packSPU = crutils.NewSPU("pack")
-	clientNode.AddSPU(packSPU)
-	packSPU.AddServer(serverNode)
+		dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
+								 title="Sort-last Template",
+								 labels=["Number of application nodes:",
+										 "Window Width:",
+										 "Window Height:"],
+								 defaultValues=[defaultNodes,
+												defaultWidth, defaultHeight],
+								 minValue=1, maxValue=10000)
+		dialog.Centre()
+		if dialog.ShowModal() == wxID_CANCEL:
+			dialog.Destroy()
+			return 0
+		numApps = dialog.GetValues()[0]
+		width = dialog.GetValues()[1]
+		height = dialog.GetValues()[2]
 
-	mothership.AddNode(clientNode)
-	mothership.AddNode(serverNode)
+		mothership.Sortlast = SortlastParameters()
 
-	numAppNodes = 1
+		mothership.DeselectAllNodes()
 
-	# useful regex patterns
-	integerPat = "[0-9]+"
-	listPat = "\[.+\]"
-	tuplePat = "\(.+\)"
-	quotedStringPat = '\".+\"'
+		# Create the server/render node
+		xPos = 300
+		yPos = 5
+		serverNode = crtypes.NetworkNode(serverHosts, 1)
+		serverNode.SetPosition(xPos, yPos)
+		serverNode.Select()
+		renderSPU = crutils.NewSPU("render")
+		renderSPU.SetOption("window_geometry", [0, 0, width, height])
+		serverNode.AddSPU(renderSPU)
+		serverNode.SetOption( "only_swap_once", [1] )
+		mothership.AddNode(serverNode)
 
-	while true:
-		l = file.readline()
-		if not l:
-			break
-		# remove trailing newline character
-		if l[-1:] == '\n':
-			l = l[:-1]
-		if re.match("^COMPOSITE_HOST = ", l):
-			v = re.search(quotedStringPat + "$", l)
-			host = eval(l[v.start() : v.end()])
-			serverNode.SetHosts( [ host ] )
-		elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
-			v = re.search(integerPat, l)
-			clientNode.SetCount( int(l[v.start() : v.end()]) )
-		elif re.match("^APP_HOSTS = ", l):
-			v = re.search(listPat + "$", l)
-			hosts = eval(l[v.start() : v.end()])
-			clientNode.SetHosts( hosts )
-		elif re.match("^APP_PATTERN = ", l):
-			v = re.search(tuplePat + "$", l)
-			pattern = eval(l[v.start() : v.end()])
-			clientNode.SetHostNamePattern(pattern)
-		elif re.match("^READBACK_OPTIONS = \[", l):
-			readbackSPU.GetOptions().Read(file)
-		elif re.match("^RENDER_OPTIONS = \[", l):
-			renderSPU.GetOptions().Read(file)
-		elif re.match("^SERVER_OPTIONS = \[", l):
-			serverNode.GetOptions().Read(file)
-		elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
-			mothership.GetOptions().Read(file)
-		elif re.match("^# end of options", l):
-			# that's the end of the variables
-			# save the rest of the file....
-			break
-		elif (l != "") and (not re.match("\s*#", l)):
-			print "unrecognized line: %s" % l
-	# endwhile
+		# Create the client/app nodes
+		xPos = 5
+		yPos = 5
+		appNode = crtypes.ApplicationNode(appHosts, numApps)
+		cluster_pattern = crutils.GetSiteDefault("cluster_pattern")
+		if cluster_pattern:
+			appNode.SetHostNamePattern(cluster_pattern);
+		appNode.SetPosition(xPos, yPos)
+		appNode.Select()
+		readbackSPU = crutils.NewSPU("readback")
+		readbackSPU.SetOption("title", ["Chromium Readback SPU"])
+		readbackSPU.SetOption("window_geometry", [0, 0, width, height])
+		readbackSPU.SetOption("extract_depth", [1])
+		readbackSPU.Conf("extract_depth", 1)
+		appNode.AddSPU(readbackSPU)
+		packSPU = crutils.NewSPU("pack")
+		appNode.AddSPU(packSPU)
+		mothership.AddNode(appNode)
+		packSPU.AddServer(serverNode)
+		dialog.Destroy()
+		return 1
 
-	mothership.LayoutNodes()
-	return 1  # OK
+	def Validate(self, mothership):
+		"""Test if the mothership config is a sort-last config."""
+		# First, check for correct number and type of nodes
+		nodes = mothership.Nodes()
+		if len(nodes) != 2: 
+			print "not 2 nodes"
+			return 0
+		if not ((nodes[0].IsAppNode() and nodes[1].IsServer()) or
+				(nodes[1].IsAppNode() and nodes[0].IsServer())):
+			# one node must be the app node, the other the server
+			print "bad nodes"
+			return 0
+		# Find app/server nodes
+		if nodes[0].IsAppNode():
+			appNode = nodes[0]
+			serverNode = nodes[1]
+		else:
+			appNode = nodes[1]
+			serverNode = nodes[0]
+		# Find SPUs
+		renderSPU = serverNode.LastSPU()
+		if renderSPU.Name() != "render":
+			print "no render SPU"
+			return 0
+		readbackSPU = appNode.SPUChain()[0]
+		if readbackSPU.Name() != "readback":
+			print "no readback SPU"
+			return 0
+		packSPU = appNode.SPUChain()[1]
+		if packSPU.Name() != "pack":
+			print "no pack SPU"
+			return 0
+		# Next, check that the app's servers are correct
+		servers = packSPU.GetServers()
+		if len(servers) != 1 or servers[0] != serverNode:
+			print "no client/server connection"
+			return 0
+		# OK, this is a sort-last config!
+		return 1
 
+	def Edit(self, parentWindow, mothership):
+		"""Open editor window and edit the mothership config"""
+		if not self.Validate(mothership):
+			print "Editing - This is not a sort-last config!!!!"
+			return 0
 
-def Write_Sortlast(mothership, file):
-	"""Write a sort-last config to the file handle."""
-	assert Is_Sortlast(mothership)
-	assert mothership.GetTemplateType() == "Sort-last"
+		d = SortlastDialog(parent=parentWindow)
+		d.Centre()
+		backupSortlastParams = mothership.Sortlast.Clone()
+		d.SetMothership(mothership)
 
-	print "Writing sort-last config"
-	sortlast = mothership.Sortlast
-	clientNode = FindClientNode(mothership)
-	serverNode = FindServerNode(mothership)
+		if d.ShowModal() == wxID_CANCEL:
+			# restore original values
+			mothership.Sortlast = backupSortlastParams
+		else:
+			# update mothership with new values
+			# already done in __UpdateVarsFromWidgets()
+			pass
+		return 1
 
-	file.write('TEMPLATE = "Sort-last"\n')
-	file.write('COMPOSITE_HOST = "%s"\n' % serverNode.GetHosts()[0])
-	file.write('NUM_APP_NODES = %d\n' % clientNode.GetCount())
-	file.write('APP_HOSTS = %s\n' % str(clientNode.GetHosts()))
-	file.write('APP_PATTERN = %s\n' % str(clientNode.GetHostNamePattern()))
+	def Read(self, mothership, fileHandle):
+		"""Read sort-last config from file"""
+		mothership.Sortlast = SortlastParameters()
 
-	# write render SPU options
-	renderSPU = FindRenderSPU(mothership)
-	renderSPU.GetOptions().Write(file, "RENDER_OPTIONS")
+		serverNode = crtypes.NetworkNode()
+		renderSPU = crutils.NewSPU("render")
+		serverNode.AddSPU(renderSPU)
 
-	# write readback SPU options
-	readbackSPU = FindReadbackSPU(mothership)
-	readbackSPU.GetOptions().Write(file, "READBACK_OPTIONS")
+		clientNode = crtypes.ApplicationNode()
+		readbackSPU = crutils.NewSPU("readback")
+		clientNode.AddSPU(readbackSPU)
+		packSPU = crutils.NewSPU("pack")
+		clientNode.AddSPU(packSPU)
+		packSPU.AddServer(serverNode)
 
-	# write server and mothership options
-	serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
-	mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
+		mothership.AddNode(clientNode)
+		mothership.AddNode(serverNode)
 
-	file.write("# end of options, the rest is boilerplate\n")
-	file.write(__ConfigBody)
-	return 1  # OK
+		numAppNodes = 1
+
+		# useful regex patterns
+		integerPat = "[0-9]+"
+		listPat = "\[.+\]"
+		tuplePat = "\(.+\)"
+		quotedStringPat = '\".+\"'
+
+		while true:
+			l = fileHandle.readline()
+			if not l:
+				break
+			# remove trailing newline character
+			if l[-1:] == '\n':
+				l = l[:-1]
+			if re.match("^COMPOSITE_HOST = ", l):
+				v = re.search(quotedStringPat + "$", l)
+				host = eval(l[v.start() : v.end()])
+				serverNode.SetHosts( [ host ] )
+			elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
+				v = re.search(integerPat, l)
+				clientNode.SetCount( int(l[v.start() : v.end()]) )
+			elif re.match("^APP_HOSTS = ", l):
+				v = re.search(listPat + "$", l)
+				hosts = eval(l[v.start() : v.end()])
+				clientNode.SetHosts( hosts )
+			elif re.match("^APP_PATTERN = ", l):
+				v = re.search(tuplePat + "$", l)
+				pattern = eval(l[v.start() : v.end()])
+				clientNode.SetHostNamePattern(pattern)
+			elif re.match("^READBACK_OPTIONS = \[", l):
+				readbackSPU.GetOptions().Read(fileHandle)
+			elif re.match("^RENDER_OPTIONS = \[", l):
+				renderSPU.GetOptions().Read(fileHandle)
+			elif re.match("^SERVER_OPTIONS = \[", l):
+				serverNode.GetOptions().Read(fileHandle)
+			elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
+				mothership.GetOptions().Read(fileHandle)
+			elif re.match("^# end of options", l):
+				# that's the end of the variables
+				# save the rest of the file....
+				break
+			elif (l != "") and (not re.match("\s*#", l)):
+				print "unrecognized line: %s" % l
+		# endwhile
+
+		mothership.LayoutNodes()
+		return 1  # OK
+
+	def Write(self, mothership, fileHandle):
+		"""Write a sort-last config to the file handle."""
+		if not self.Validate(mothership):
+			print "Write: this isn't a sort-last config!"
+			return 0
+
+		print "Writing sort-last config"
+		sortlast = mothership.Sortlast
+		clientNode = FindClientNode(mothership)
+		serverNode = FindServerNode(mothership)
+
+		fileHandle.write('TEMPLATE = "%s"\n' % self.Name())
+		fileHandle.write('COMPOSITE_HOST = "%s"\n' % serverNode.GetHosts()[0])
+		fileHandle.write('NUM_APP_NODES = %d\n' % clientNode.GetCount())
+		fileHandle.write('APP_HOSTS = %s\n' % str(clientNode.GetHosts()))
+		fileHandle.write('APP_PATTERN = %s\n' % str(clientNode.GetHostNamePattern()))
+
+		# write render SPU options
+		renderSPU = FindRenderSPU(mothership)
+		renderSPU.GetOptions().Write(fileHandle, "RENDER_OPTIONS")
+
+		# write readback SPU options
+		readbackSPU = FindReadbackSPU(mothership)
+		readbackSPU.GetOptions().Write(fileHandle, "READBACK_OPTIONS")
+
+		# write server and mothership options
+		serverNode.GetOptions().Write(fileHandle, "SERVER_OPTIONS")
+		mothership.GetOptions().Write(fileHandle, "MOTHERSHIP_OPTIONS")
+
+		fileHandle.write("# end of options, the rest is boilerplate\n")
+		fileHandle.write(_ConfigBody)
+		return 1  # OK
 

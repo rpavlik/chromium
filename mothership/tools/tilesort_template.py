@@ -22,7 +22,7 @@ from wxPython.wx import *
 import traceback, types
 import intdialog, spudialog, hostdialog
 import crutils, crtypes, configio
-
+import templatebase
 
 
 class TilesortParameters:
@@ -115,7 +115,7 @@ BackgroundColor = wxColor(70, 170, 130)
 
 # This is the guts of the tilesort configuration script.
 # It's simply appended to the file after we write all the configuration options
-__ConfigBody = """
+_ConfigBody = """
 import string, sys
 sys.path.append( "../server" )
 from mothership import *
@@ -651,244 +651,243 @@ class TilesortDialog(wxDialog):
 
 
 #----------------------------------------------------------------------
-# Global entrypoints called from the templates.py module, everthing else
-# above here is private.
 
-def Create_Tilesort(parentWindow, mothership):
-	"""Create a tilesort configuration"""
+class TilesortTemplate(templatebase.TemplateBase):
+	"""Template for creating/editing/reading/writing tilesort configs."""
+	def __init__(self):
+		# no-op for now
+		pass
 
-	defaultMuralSize = crutils.GetSiteDefault("mural_size")
-	if defaultMuralSize:
-		dialogDefaults = [ 1, defaultMuralSize[0], defaultMuralSize[1] ]
-	else:
-		dialogDefaults = [1, 2, 1]
+	def Name(self):
+		return "Tilesort"
 
-	dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
-								 title="Tilesort Template",
-								 labels=["Number of application nodes:",
-										 "Mural Columns:",
-										 "Mural Rows:"],
-								 defaultValues=dialogDefaults,
-								 minValue=1, maxValue=10000)
-	dialog.Centre()
-	if dialog.ShowModal() == wxID_CANCEL:
+	def Create(self, parentWindow, mothership):
+		"""Create the nodes/spus/etc for a tilesort config."""
+		defaultMuralSize = crutils.GetSiteDefault("mural_size")
+		if defaultMuralSize:
+			dialogDefaults = [ 1, defaultMuralSize[0], defaultMuralSize[1] ]
+		else:
+			dialogDefaults = [1, 2, 1]
+
+		dialog = intdialog.IntDialog(parent=parentWindow, id=-1,
+									 title="Tilesort Template",
+									 labels=["Number of application nodes:",
+											 "Mural Columns:",
+											 "Mural Rows:"],
+									 defaultValues=dialogDefaults,
+									 minValue=1, maxValue=10000)
+		dialog.Centre()
+		if dialog.ShowModal() == wxID_CANCEL:
+			dialog.Destroy()
+			return 0
+
+		# Init tilesort parameters
+		values = dialog.GetValues()
+		numClients = values[0]
+		cols = values[1]
+		rows = values[2]
+		mothership.Template = TilesortParameters(rows, cols)
+
+		defaultScreenSize = crutils.GetSiteDefault("screen_size")
+		if defaultScreenSize:
+			mothership.Template.TileWidth = defaultScreenSize[0]
+			mothership.Template.TileHeight = defaultScreenSize[1]
+
+		# build the graph
+		numServers = rows * cols
+		mothership.DeselectAllNodes()
+		# Create the <numClients> app nodes
+		appNode = crutils.NewApplicationNode(numClients)
+		appNode.SetPosition(50, 50)
+		appNode.Select()
+		tilesortSPU = crutils.NewSPU("tilesort")
+		appNode.AddSPU(tilesortSPU)
+		mothership.AddNode(appNode)
+		# Create the <numServers> server nodes
+		serverNode = crutils.NewNetworkNode(numServers)
+		serverNode.SetPosition(350, 50)
+		serverNode.Select()
+		renderSPU = crutils.NewSPU("render")
+		serverNode.AddSPU(renderSPU)
+		mothership.AddNode(serverNode)
+		tilesortSPU.AddServer(serverNode)
+
+		# Do initial tile layout
+		mothership.Template.UpdateFromMothership(mothership)
+		mothership.Template.LayoutTiles()
+
+		# Set the initial tile list for each server
+		i = 0
+		for tileList in mothership.Template.ServerTiles:
+			serverNode.SetTiles(tileList, i)
+			i += 1
+
+		# done with the dialog
 		dialog.Destroy()
-		return 0
+		return 1
 
-	# Init tilesort parameters
-	values = dialog.GetValues()
-	numClients = values[0]
-	cols = values[1]
-	rows = values[2]
-	mothership.Template = TilesortParameters(rows, cols)
+	def Validate(self, mothership):
+		"""Test if the mothership config is a tilesort config."""
+		# First, check for correct number and type of nodes
+		nodes = mothership.Nodes()
+		if len(nodes) != 2: 
+			print "not 2 nodes"
+			return 0
+		if not ((nodes[0].IsAppNode() and nodes[1].IsServer()) or
+				(nodes[1].IsAppNode() and nodes[0].IsServer())):
+			# one node must be the app node, the other the server
+			print "bad nodes"
+			return 0
+		# Next, check for correct SPU types
+		if nodes[0].IsAppNode():
+			tilesortSPU = nodes[0].LastSPU()
+			serverNode = nodes[1]
+			renderSPU = serverNode.LastSPU()
+		else:
+			tilesortSPU = nodes[1].LastSPU()
+			serverNode = nodes[0]
+			renderSPU = serverNode.LastSPU()
+		if tilesortSPU.Name() != "tilesort":
+			print "no tilesort SPU"
+			return 0
+		if renderSPU.Name() != "render":
+			print "no render SPU"
+			return 0
+		# Next, check that the app's servers are correct
+		servers = tilesortSPU.GetServers()
+		if len(servers) != 1 or servers[0] != serverNode:
+			print "no client/server connection"
+			return 0
+		# OK, this is a tilesort config!
+		return 1
 
-	defaultScreenSize = crutils.GetSiteDefault("screen_size")
-	if defaultScreenSize:
-		mothership.Template.TileWidth = defaultScreenSize[0]
-		mothership.Template.TileHeight = defaultScreenSize[1]
+	def Edit(self, parentWindow, mothership):
+		"""Open editor window and edit the mothership config"""
+		if not self.Validate(mothership):
+			print "Editing - This is not a tilesort config!!!!"
+			return 0
+		dialog = TilesortDialog(parent=parentWindow)
+		dialog.Centre()
+		retVal = dialog.ShowModal(mothership)
+		dialog.Destroy()
+		return retVal
 
-	# build the graph
-	numServers = rows * cols
-	mothership.DeselectAllNodes()
-	# Create the <numClients> app nodes
-	appNode = crutils.NewApplicationNode(numClients)
-	appNode.SetPosition(50, 50)
-	appNode.Select()
-	tilesortSPU = crutils.NewSPU("tilesort")
-	appNode.AddSPU(tilesortSPU)
-	mothership.AddNode(appNode)
-	# Create the <numServers> server nodes
-	serverNode = crutils.NewNetworkNode(numServers)
-	serverNode.SetPosition(350, 50)
-	serverNode.Select()
-	renderSPU = crutils.NewSPU("render")
-	serverNode.AddSPU(renderSPU)
-	mothership.AddNode(serverNode)
-	tilesortSPU.AddServer(serverNode)
+	def Read(self, mothership, fileHandle):
+		"""Read tilesort config from file"""
+		mothership.Template = TilesortParameters()
 
-	# Do initial tile layout
-	mothership.Template.UpdateFromMothership(mothership)
-	mothership.Template.LayoutTiles()
+		serverNode = crtypes.NetworkNode()
+		renderSPU = crutils.NewSPU("render")
+		serverNode.AddSPU(renderSPU)
 
-	# Set the initial tile list for each server
-	i = 0
-	for tileList in mothership.Template.ServerTiles:
-		serverNode.SetTiles(tileList, i)
-		i += 1
+		clientNode = crtypes.ApplicationNode()
+		tilesortSPU = crutils.NewSPU("tilesort")
+		clientNode.AddSPU(tilesortSPU)
+		tilesortSPU.AddServer(serverNode)
 
-	# done with the dialog
-	dialog.Destroy()
-	return 1
+		mothership.AddNode(clientNode)
+		mothership.AddNode(serverNode)
 
+		numClients = 1
 
-def Is_Tilesort(mothership):
-	"""Test if the mothership describes a tilesort configuration.
-	Return 1 if so, 0 otherwise."""
-	# First, check for correct number and type of nodes
-	nodes = mothership.Nodes()
-	if len(nodes) != 2: 
-		print "not 2 nodes"
-		return 0
-	if not ((nodes[0].IsAppNode() and nodes[1].IsServer()) or
-			(nodes[1].IsAppNode() and nodes[0].IsServer())):
-		# one node must be the app node, the other the server
-		print "bad nodes"
-		return 0
-	# Next, check for correct SPU types
-	if nodes[0].IsAppNode():
-		tilesortSPU = nodes[0].LastSPU()
-		serverNode = nodes[1]
-		renderSPU = serverNode.LastSPU()
-	else:
-		tilesortSPU = nodes[1].LastSPU()
-		serverNode = nodes[0]
-		renderSPU = serverNode.LastSPU()
-	if tilesortSPU.Name() != "tilesort":
-		print "no tilesort SPU"
-		return 0
-	if renderSPU.Name() != "render":
-		print "no render SPU"
-		return 0
-	# Next, check that the app's servers are correct
-	servers = tilesortSPU.GetServers()
-	if len(servers) != 1 or servers[0] != serverNode:
-		print "no client/server connection"
-		return 0
-	# OK, this is a tilesort config!
-	return 1
+		# useful regex patterns
+		integerPat = "[0-9]+"
+		listPat = "\[.+\]"
+		tuplePat = "\(.+\)"
 
+		while true:
+			l = fileHandle.readline()
+			if not l:
+				break
+			# remove trailing newline character
+			if l[-1:] == '\n':
+				l = l[:-1]
+			if re.match("^TILE_ROWS = " + integerPat + "$", l):
+				v = re.search(integerPat, l)
+				mothership.Template.Rows = int(l[v.start() : v.end()])
+			elif re.match("^TILE_COLS = " + integerPat + "$", l):
+				v = re.search(integerPat, l)
+				mothership.Template.Columns = int(l[v.start() : v.end()])
+			elif re.match("^TILE_WIDTH = " + integerPat + "$", l):
+				v = re.search(integerPat, l)
+				mothership.Template.TileWidth = int(l[v.start() : v.end()])
+			elif re.match("^TILE_HEIGHT = " + integerPat + "$", l):
+				v = re.search(integerPat, l)
+				mothership.Template.TileHeight = int(l[v.start() : v.end()])
+			elif re.match("^BOTTOM_TO_TOP = " + integerPat + "$", l):
+				v = re.search(integerPat, l)
+				mothership.Template.BottomToTop = int(l[v.start() : v.end()])
+			elif re.match("^RIGHT_TO_LEFT = " + integerPat + "$", l):
+				v = re.search(integerPat, l)
+				mothership.Template.RightToLeft = int(l[v.start() : v.end()])
+			elif re.match("^SERVER_HOSTS = ", l):
+				v = re.search(listPat + "$", l)
+				hosts = eval(l[v.start() : v.end()])
+				serverNode.SetHosts(hosts)
+			elif re.match("^SERVER_PATTERN = ", l):
+				v = re.search(tuplePat + "$", l)
+				pattern = eval(l[v.start() : v.end()])
+				serverNode.SetHostNamePattern(pattern)
+			elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
+				v = re.search(integerPat, l)
+				numClients = int(l[v.start() : v.end()])
+			elif re.match("^TILESORT_OPTIONS = \[", l):
+				tilesortSPU.GetOptions().Read(fileHandle)
+			elif re.match("^RENDER_OPTIONS = \[", l):
+				renderSPU.GetOptions().Read(fileHandle)
+			elif re.match("^SERVER_OPTIONS = \[", l):
+				serverNode.GetOptions().Read(fileHandle)
+			elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
+				mothership.GetOptions().Read(fileHandle)
+			elif re.match("^# end of options", l):
+				# that's the end of the variables
+				# save the rest of the file....
+				break
+			elif (l != "") and (not re.match("\s*#", l)):
+				print "unrecognized line: %s" % l
+		# endwhile
 
-def Edit_Tilesort(parentWindow, mothership):
-	"""Edit parameters for a Tilesort template"""
-	# XXX we only need to create one instance of the TilesortFrame() and
-	# reuse it in the future.
-	t = Is_Tilesort(mothership)
-	if not t:
-		print "This is not a tilesort configuration!"
-		return
+		clientNode.SetCount(numClients)
+		serverNode.SetCount(mothership.Template.Rows * mothership.Template.Columns)
+		mothership.LayoutNodes()
+		return 1
 
-	dialog = TilesortDialog(parent=parentWindow)
-	dialog.Centre()
-	retVal = dialog.ShowModal(mothership)
-	dialog.Destroy()
-	return retVal
+	def Write(self, mothership, fileHandle):
+		"""Write tilesort config to file."""
+		if not self.Validate(mothership):
+			print "Writing - This is not a tilesort config!!!!"
+			return 0
 
+		print "Writing tilesort config"
+		template = mothership.Template
+		clientNode = FindClientNode(mothership)
+		serverNode = FindServerNode(mothership)
 
-def Read_Tilesort(mothership, fileHandle):
-	"""Read a tilesort config from the given file handle."""
+		file = fileHandle
+		file.write('TEMPLATE = "%s"\n' % self.Name())
+		file.write("TILE_ROWS = %d\n" % template.Rows)
+		file.write("TILE_COLS = %d\n" % template.Columns)
+		file.write("TILE_WIDTH = %d\n" % template.TileWidth)
+		file.write("TILE_HEIGHT = %d\n" % template.TileHeight)
+		file.write("RIGHT_TO_LEFT = %d\n" % template.RightToLeft)
+		file.write("BOTTOM_TO_TOP = %d\n" % template.BottomToTop)
+		file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
+		file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
+		file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
 
-	mothership.Template = TilesortParameters()
+		# write tilesort SPU options
+		tilesortSPU = FindTilesortSPU(mothership)
+		tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS")
 
-	serverNode = crtypes.NetworkNode()
-	renderSPU = crutils.NewSPU("render")
-	serverNode.AddSPU(renderSPU)
+		# write render SPU options
+		renderSPU = FindRenderSPU(mothership)
+		renderSPU.GetOptions().Write(file, "RENDER_OPTIONS")
 
-	clientNode = crtypes.ApplicationNode()
-	tilesortSPU = crutils.NewSPU("tilesort")
-	clientNode.AddSPU(tilesortSPU)
-	tilesortSPU.AddServer(serverNode)
+		# write server and mothership options
+		serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
+		mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
 
-	mothership.AddNode(clientNode)
-	mothership.AddNode(serverNode)
+		file.write("# end of options, the rest is boilerplate\n")
+		file.write(_ConfigBody)
+		return 1
 
-	numClients = 1
-
-	# useful regex patterns
-	integerPat = "[0-9]+"
-	listPat = "\[.+\]"
-	tuplePat = "\(.+\)"
-
-	while true:
-		l = fileHandle.readline()
-		if not l:
-			break
-		# remove trailing newline character
-		if l[-1:] == '\n':
-			l = l[:-1]
-		if re.match("^TILE_ROWS = " + integerPat + "$", l):
-			v = re.search(integerPat, l)
-			mothership.Template.Rows = int(l[v.start() : v.end()])
-		elif re.match("^TILE_COLS = " + integerPat + "$", l):
-			v = re.search(integerPat, l)
-			mothership.Template.Columns = int(l[v.start() : v.end()])
-		elif re.match("^TILE_WIDTH = " + integerPat + "$", l):
-			v = re.search(integerPat, l)
-			mothership.Template.TileWidth = int(l[v.start() : v.end()])
-		elif re.match("^TILE_HEIGHT = " + integerPat + "$", l):
-			v = re.search(integerPat, l)
-			mothership.Template.TileHeight = int(l[v.start() : v.end()])
-		elif re.match("^BOTTOM_TO_TOP = " + integerPat + "$", l):
-			v = re.search(integerPat, l)
-			mothership.Template.BottomToTop = int(l[v.start() : v.end()])
-		elif re.match("^RIGHT_TO_LEFT = " + integerPat + "$", l):
-			v = re.search(integerPat, l)
-			mothership.Template.RightToLeft = int(l[v.start() : v.end()])
-		elif re.match("^SERVER_HOSTS = ", l):
-			v = re.search(listPat + "$", l)
-			hosts = eval(l[v.start() : v.end()])
-			serverNode.SetHosts(hosts)
-		elif re.match("^SERVER_PATTERN = ", l):
-			v = re.search(tuplePat + "$", l)
-			pattern = eval(l[v.start() : v.end()])
-			serverNode.SetHostNamePattern(pattern)
-		elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
-			v = re.search(integerPat, l)
-			numClients = int(l[v.start() : v.end()])
-		elif re.match("^TILESORT_OPTIONS = \[", l):
-			tilesortSPU.GetOptions().Read(fileHandle)
-		elif re.match("^RENDER_OPTIONS = \[", l):
-			renderSPU.GetOptions().Read(fileHandle)
-		elif re.match("^SERVER_OPTIONS = \[", l):
-			serverNode.GetOptions().Read(fileHandle)
-		elif re.match("^MOTHERSHIP_OPTIONS = \[", l):
-			mothership.GetOptions().Read(fileHandle)
-		elif re.match("^# end of options", l):
-			# that's the end of the variables
-			# save the rest of the file....
-			break
-		elif (l != "") and (not re.match("\s*#", l)):
-			print "unrecognized line: %s" % l
-	# endwhile
-
-	clientNode.SetCount(numClients)
-	serverNode.SetCount(mothership.Template.Rows * mothership.Template.Columns)
-	mothership.LayoutNodes()
-	return 1
-
-
-def Write_Tilesort(mothership, file):
-	"""Write a tilesort config to the given file handle."""
-	assert Is_Tilesort(mothership)
-	assert mothership.GetTemplateType() == "Tilesort"
-
-	print "Writing tilesort config"
-	template = mothership.Template
-	clientNode = FindClientNode(mothership)
-	serverNode = FindServerNode(mothership)
-
-	file.write('TEMPLATE = "Tilesort"\n')
-	file.write("TILE_ROWS = %d\n" % template.Rows)
-	file.write("TILE_COLS = %d\n" % template.Columns)
-	file.write("TILE_WIDTH = %d\n" % template.TileWidth)
-	file.write("TILE_HEIGHT = %d\n" % template.TileHeight)
-	file.write("RIGHT_TO_LEFT = %d\n" % template.RightToLeft)
-	file.write("BOTTOM_TO_TOP = %d\n" % template.BottomToTop)
-	file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
-	file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
-	file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
-
-	# write tilesort SPU options
-	tilesortSPU = FindTilesortSPU(mothership)
-	tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS")
-
-	# write render SPU options
-	renderSPU = FindRenderSPU(mothership)
-	renderSPU.GetOptions().Write(file, "RENDER_OPTIONS")
-
-	# write server and mothership options
-	serverNode.GetOptions().Write(file, "SERVER_OPTIONS")
-	mothership.GetOptions().Write(file, "MOTHERSHIP_OPTIONS")
-
-	file.write("# end of options, the rest is boilerplate\n")
-	file.write(__ConfigBody)
-	return 1
