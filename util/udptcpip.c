@@ -58,8 +58,6 @@ typedef int socklen_t;
 #include "cr_threads.h"
 #include "net_internals.h"
 
-extern int __crSelect( int n, fd_set *readfds, int sec, int usec);
-
 #ifdef ADDRINFO
 #define PF PF_UNSPEC
 #endif
@@ -74,37 +72,6 @@ extern int __crSelect( int n, fd_set *readfds, int sec, int usec);
  */
 #undef AF_INET6
 #endif
-
-typedef enum {
-	CRTCPIPMemory,
-	CRTCPIPMemoryBig
-} CRTCPIPBufferKind;
-
-#define CR_TCPIP_BUFFER_MAGIC 0x89134532
-
-typedef struct CRTCPIPBuffer {
-	unsigned int          magic;
-	CRTCPIPBufferKind     kind;
-	unsigned int          len;
-	unsigned int          allocated;
-	unsigned int          pad;
-} CRTCPIPBuffer;
-
-
-struct {
-	int                  initialized;
-	int                  num_conns;
-	CRConnection         **conns;
-	CRBufferPool         *bufpool;
-#ifdef CHROMIUM_THREADSAFE
-	CRmutex              mutex;
-	CRmutex              recvmutex;
-#endif
-	CRNetReceiveFuncList *recv_list;
-	CRNetCloseFuncList *close_list;
-	CRSocket             server_sock;
-} cr_tcpip;
-
 
 #if defined( WINDOWS ) || defined( IRIX ) || defined( IRIX64 )
 typedef int socklen_t;

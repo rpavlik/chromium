@@ -53,8 +53,6 @@ typedef int socklen_t;
 #include "cr_environment.h"
 #include "net_internals.h"
 
-int __crSelect( int n, fd_set *readfds, int sec, int usec );
-
 #ifdef ADDRINFO
 #define PF PF_UNSPEC
 #endif
@@ -63,21 +61,6 @@ int __crSelect( int n, fd_set *readfds, int sec, int usec );
 #define EADDRINUSE   WSAEADDRINUSE
 #define ECONNREFUSED WSAECONNREFUSED
 #endif
-
-typedef enum {
-	CRTCPIPMemory,
-	CRTCPIPMemoryBig
-} CRTCPIPBufferKind;
-
-#define CR_TCPIP_BUFFER_MAGIC 0x89134532
-
-typedef struct CRTCPIPBuffer {
-	unsigned int          magic;
-	CRTCPIPBufferKind     kind;
-	unsigned int          len;
-	unsigned int          allocated;
-	unsigned int          pad;
-} CRTCPIPBuffer;
 
 #ifdef WINDOWS
 
@@ -179,19 +162,7 @@ void crCloseSocket( CRSocket sock )
 
 static unsigned short last_port = 0;
 
-struct {
-	int                  initialized;
-	int                  num_conns;
-	CRConnection         **conns;
-	CRBufferPool         *bufpool;
-#ifdef CHROMIUM_THREADSAFE
-	CRmutex              mutex;
-	CRmutex              recvmutex;
-#endif
-	CRNetReceiveFuncList *recv_list;
-	CRNetCloseFuncList *close_list;
-	CRSocket             server_sock;
-} cr_tcpip;
+cr_tcpip_data cr_tcpip;
 
 int
 __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len )
