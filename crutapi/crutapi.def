@@ -15,4 +15,3 @@ crutSendReshapeEvent
 crutSendMotionEvent
 crutSendPassiveMotionEvent
 crutSendMenuEvent
-crut_api

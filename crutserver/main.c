@@ -7,6 +7,7 @@
 #include "cr_string.h"
 
 CRUTServer crut_server;
+CRUTAPI crut_api;
 
 int curMenuID;
 
@@ -23,8 +24,10 @@ crutServerRecv( CRConnection *conn, void *buf, unsigned int len )
     default:
 	return 0; /* NOT HANDLED */
     }
-  (void) len;	
+  (void) len;
+#ifndef WINDOWS	
   return 0; /* HANDLED */
+#endif
 }
 
 static void 
@@ -48,7 +51,7 @@ handleMenu( int value )
     int menuID = crut_server.valueTable[value].menuID;
     int retValue = crut_server.valueTable[value].value;
 
-    crutSendMenuEvent( menuID, retValue );
+    crutSendMenuEvent( &crut_api, menuID, retValue );
 }
 
 #ifdef USE_CRUT_MENUS
@@ -290,33 +293,37 @@ static void
 crutInitServer(char *mothership, int argc, char *argv[])
 {
     char response[8096];
+#ifndef WINDOWS
     int drawable;
+#endif
 
-    crNetInit(crutServerRecv, crutServerClose);
+    crNetInit( crutServerRecv, crutServerClose );
 
-    crutInitAPI(mothership);
+    crutInitAPI( &crut_api, mothership ); /* here? */
 
-    crMothershipIdentifyCRUTServer(crut_api.mothershipConn, response);
+    crMothershipIdentifyCRUTServer( crut_api.mothershipConn, response );
 
-    crutGetWindowParams();
+    crutGetWindowParams( &crut_api );
     
     /* set up GLUT window */
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
     printf("******** CRUT w/ STENCIL\n");
-    glutInitWindowPosition(crut_api.winX,crut_api.winY);
-    glutInitWindowSize(crut_api.winWidth,crut_api.winHeight);
+    glutInitWindowPosition( crut_api.winX,crut_api.winY );
+    glutInitWindowSize( crut_api.winWidth,crut_api.winHeight );
     
     glutCreateWindow("CRUTServer Interactive Window"); 
     
     glutDisplayFunc(showWin);
     
     /* give window id to mothership */
+#ifndef WINDOWS
     drawable = glXGetCurrentDrawable();
-    crutSetWindowID(drawable);
+    crutSetWindowID( &crut_api, drawable);
+#endif
 
     /* use API to connect to clients */
-    crutConnectToClients();
+    crutConnectToClients( &crut_api );
 
     /* Retrieve events to send out */
     crMothershipGetParam( crut_api.mothershipConn, "crut_callbacks_mouse", response );
@@ -348,31 +355,31 @@ crutInitServer(char *mothership, int argc, char *argv[])
 static void 
 handleMouse(int button, int state, int x, int y)
 {
-    crutSendMouseEvent( button, state, x, y);
+    crutSendMouseEvent( &crut_api, button, state, x, y);
 }
 
 static void 
 handleReshape(int width, int height)
 {
-    crutSendReshapeEvent( width, height );
+    crutSendReshapeEvent( &crut_api, width, height );
 }
 
 static void 
 handleKeyboard(unsigned char key, int x, int y) 
 {
-    crutSendKeyboardEvent( key, x, y );
+    crutSendKeyboardEvent( &crut_api, key, x, y );
 }
 
 static void 
 handleMotion(int x, int y)
 {
-    crutSendMotionEvent(  x, y );
+    crutSendMotionEvent(  &crut_api, x, y );
 }
 
 static void 
 handlePassiveMotion(int x, int y)
 {
-    crutSendPassiveMotionEvent( x, y );
+    crutSendPassiveMotionEvent( &crut_api, x, y );
 }
 
 int 
@@ -380,7 +387,9 @@ main( int argc, char *argv[] )
 {
     int i;
     char *mothership = NULL;
+#ifndef WINDOWS
     Display *disp = NULL;
+#endif
 
     for (i = 1 ; i < argc ; i++)
     {
@@ -413,8 +422,10 @@ main( int argc, char *argv[] )
         glutReshapeFunc(handleReshape);
   
     /* Need to 'release' the current drawable so render SPU can make current to it*/
+#ifndef WINDOWS
     disp = glXGetCurrentDisplay();
     glXMakeCurrent(disp, None, NULL);
+#endif
     
     glutMainLoop();
   

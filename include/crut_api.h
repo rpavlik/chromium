@@ -79,14 +79,14 @@
 #define MENU_ITEM_SUBMENU 1
 
 /* CRUTMessage is just a placeholder to find the msg_type */
-typedef struct 
+typedef struct
 {
 	CRMessageHeader header;
 	int msg_type;
 
 } CRUTMessage;
 
-typedef struct 
+typedef struct
 {
     CRMessageHeader header;
     int msg_type;
@@ -97,7 +97,7 @@ typedef struct
 
 } CRUTMouseMsg;
 
-typedef struct 
+typedef struct
 {
     CRMessageHeader header;
     int msg_type;
@@ -106,7 +106,7 @@ typedef struct
 
 } CRUTReshapeMsg;
 
-typedef struct 
+typedef struct
 {
     CRMessageHeader header;
     int msg_type;
@@ -116,7 +116,7 @@ typedef struct
 
 } CRUTKeyboardMsg;
 
-typedef struct 
+typedef struct
 {
     CRMessageHeader header;
     int msg_type;
@@ -125,7 +125,7 @@ typedef struct
 
 } CRUTMotionMsg;
 
-typedef struct 
+typedef struct
 {
     CRMessageHeader header;
     int msg_type;
@@ -134,7 +134,7 @@ typedef struct
 
 } CRUTPassiveMotionMsg;
 
-typedef struct 
+typedef struct
 {
     CRMessageHeader header;
     int msg_type;
@@ -143,16 +143,16 @@ typedef struct
 
 } CRUTMenuMsg;
 
-typedef struct 
+typedef struct
 {
     unsigned short tcpip_port;
-    int mtu; 
+    int mtu;
     char protocol[1024];
     CRConnection *send_conn;
 
 } CRUTClientPointer;
 
-typedef struct 
+typedef struct
 {
     CRUTClientPointer *crutclients;
     CRConnection *mothershipConn;
@@ -169,18 +169,18 @@ typedef struct
 #define MAX_MSG_SIZE sizeof(CRUTMouseMsg)
 
 
-extern CRUTAPI crut_api;
+//extern CRUTAPI crut_api;
 
-void CRUT_APIENTRY crutInitAPI( const char *mothership );
-void CRUT_APIENTRY crutGetWindowParams( void );
-void CRUT_APIENTRY crutGetMenuXML( void );
-void CRUT_APIENTRY crutSetWindowID( int windowID );
-void CRUT_APIENTRY crutConnectToClients( void );
-void CRUT_APIENTRY crutSendMouseEvent( int button, int state, int x, int y );
-void CRUT_APIENTRY crutSendKeyboardEvent( int key, int x, int y );
-void CRUT_APIENTRY crutSendReshapeEvent( int width, int height );
-void CRUT_APIENTRY crutSendMotionEvent( int x, int y );
-void CRUT_APIENTRY crutSendPassiveMotionEvent( int x, int y );
-void CRUT_APIENTRY crutSendMenuEvent( int menuID, int value );
+void CRUT_APIENTRY crutInitAPI( CRUTAPI *crut_api, const char *mothership );
+void CRUT_APIENTRY crutGetWindowParams( CRUTAPI *crut_api );
+void CRUT_APIENTRY crutGetMenuXML( CRUTAPI *crut_api );
+void CRUT_APIENTRY crutSetWindowID( CRUTAPI *crut_api, int windowID );
+void CRUT_APIENTRY crutConnectToClients( CRUTAPI *crut_api );
+void CRUT_APIENTRY crutSendMouseEvent( CRUTAPI *crut_api, int button, int state, int x, int y );
+void CRUT_APIENTRY crutSendKeyboardEvent( CRUTAPI *crut_api, int key, int x, int y );
+void CRUT_APIENTRY crutSendReshapeEvent( CRUTAPI *crut_api, int width, int height );
+void CRUT_APIENTRY crutSendMotionEvent( CRUTAPI *crut_api, int x, int y );
+void CRUT_APIENTRY crutSendPassiveMotionEvent( CRUTAPI *crut_api, int x, int y );
+void CRUT_APIENTRY crutSendMenuEvent( CRUTAPI *crut_api, int menuID, int value );
 
 #endif /* CRUTAPI_H */

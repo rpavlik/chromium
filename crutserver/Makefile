@@ -8,8 +8,10 @@ FILES = main \
 PRECOMP = 
 SLOP = ${PRECOMP}
 
-ifndef WINDOWS
-LIBRARIES = crutil crmothership crutapi X11 Xi Xext Xmu GL GLU glut
-endif
+OPENGL = 1
+GLUT = 1
+MATH = 1
+
+LIBRARIES = crmothership crutil crutapi
 
 include $(TOP)/cr.mk

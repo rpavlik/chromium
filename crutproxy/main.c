@@ -15,6 +15,7 @@ typedef struct
 } CRUTProxy;
 
 CRUTProxy crut_proxy;
+CRUTAPI crut_api;
 
 static int 
 crutProxyRecv( CRConnection *conn, void *buf, unsigned int len )
@@ -30,37 +31,37 @@ crutProxyRecv( CRConnection *conn, void *buf, unsigned int len )
 	    if ( crut_proxy.msg->msg_type == CRUT_MOUSE_EVENT ) 
 	    {
 	        CRUTMouseMsg *msg = (CRUTMouseMsg*) buf;
-		crutSendMouseEvent( msg->button, msg->state, msg->x, msg->y);
+		crutSendMouseEvent( &crut_api, msg->button, msg->state, msg->x, msg->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_RESHAPE_EVENT ) 
 	    {
 	        CRUTReshapeMsg *msg = (CRUTReshapeMsg*) buf;
-		crutSendReshapeEvent( msg->width, msg->height);
+		crutSendReshapeEvent( &crut_api, msg->width, msg->height);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_KEYBOARD_EVENT ) 
 	    {
 	        CRUTKeyboardMsg *msg = (CRUTKeyboardMsg*) buf;
-		crutSendKeyboardEvent( msg->key, msg->x, msg->y);
+		crutSendKeyboardEvent( &crut_api, msg->key, msg->x, msg->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_MOTION_EVENT ) 
 	    {
 	        CRUTMotionMsg *msg = (CRUTMotionMsg*) buf;
-		crutSendMotionEvent( msg->x, msg->y);
+		crutSendMotionEvent( &crut_api, msg->x, msg->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_PASSIVE_MOTION_EVENT ) 
 	    {
 	        CRUTPassiveMotionMsg *msg = (CRUTPassiveMotionMsg*) buf;
-		crutSendPassiveMotionEvent( msg->x, msg->y);
+		crutSendPassiveMotionEvent( &crut_api, msg->x, msg->y);
 	    } 
 
 	    else if ( crut_proxy.msg->msg_type == CRUT_MENU_EVENT ) 
 	    {
 	        CRUTMenuMsg *msg = (CRUTMenuMsg*) buf;
-		crutSendMenuEvent( msg->menuID, msg->value );
+		crutSendMenuEvent( &crut_api, msg->menuID, msg->value );
 	    } 
 
 	    return 1; /* HANDLED */
@@ -91,7 +92,7 @@ crutInitProxy(char *mothership)
     char* server;
     int mtu;
     
-    crutInitAPI(mothership);
+    crutInitAPI(&crut_api, mothership);
 
     crMothershipIdentifyCRUTProxy( crut_api.mothershipConn, response );
 
@@ -103,7 +104,7 @@ crutInitProxy(char *mothership)
  
     /* set up the connection to recv on */
     crut_proxy.recv_conn = crNetConnectToServer( server, DEFAULT_PORT, mtu, 1 );
-    crutConnectToClients( );
+    crutConnectToClients( &crut_api );
 
 }
 

@@ -7,7 +7,11 @@
 #include "crut_api.h"
 
 #include <GL/gl.h>
+
+#ifndef WINDOWS
 #include <GL/glx.h>
+#endif
+
 #include <GL/glut.h>
 
 #ifdef USE_CRUT_MENUS

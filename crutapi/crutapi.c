@@ -8,70 +8,74 @@
 #include "cr_string.h"
 #include "cr_url.h"
 
-CRUTAPI crut_api;
+//CRUTAPI crut_api;
 
 void 
 CRUT_APIENTRY
-crutInitAPI(const char* mothership) 
+crutInitAPI(CRUTAPI *crut_api, const char* mothership) 
 {    
     if (mothership)
     {
 	crSetenv("CRMOTHERSHIP", mothership);
     }
 
-    crut_api.mothershipConn = crMothershipConnect();
+    crut_api->mothershipConn = crMothershipConnect();
     
-    if (!crut_api.mothershipConn)
+    if (!crut_api->mothershipConn)
     {
 	crError("Couldn't connect to the mothership -- I have no idea what to do!");
+    }
+    else
+    {
+	crDebug("CRUT Connected to mothership");
     }
 }
 
 void
 CRUT_APIENTRY
-crutGetWindowParams(void)
+crutGetWindowParams( CRUTAPI *crut_api)
 {
     char response[8096];
 
-    if (!crut_api.mothershipConn)
+    if (!crut_api->mothershipConn)
         crError("Checking for Window Params but no connection!");
 
-    crMothershipGetCRUTServerParam( crut_api.mothershipConn, response, "window_geometry" );
+    crMothershipGetCRUTServerParam( crut_api->mothershipConn, response, "window_geometry" );
     crDebug("CRUTserver window geometry is %s", response);
 
     if (response[0] == '[')
         sscanf( response, "[ %i, %i, %i, %i ]", 
-		&crut_api.winX, 
-		&crut_api.winY, 
-		&crut_api.winWidth, 
-		&crut_api.winHeight );
+		&crut_api->winX, 
+		&crut_api->winY, 
+		&crut_api->winWidth, 
+		&crut_api->winHeight );
     else if (crStrchr(response, ','))
         sscanf( response, "%i, %i, %i, %i", 
-		&crut_api.winX, 
-		&crut_api.winY, 
-		&crut_api.winWidth, 
-		&crut_api.winHeight );
+		&crut_api->winX, 
+		&crut_api->winY, 
+		&crut_api->winWidth, 
+		&crut_api->winHeight );
     else
         sscanf( response, "%i %i %i %i", 
-		&crut_api.winX, 
-		&crut_api.winY, 
-		&crut_api.winWidth, 
-		&crut_api.winHeight );
+		&crut_api->winX, 
+		&crut_api->winY, 
+		&crut_api->winWidth, 
+		&crut_api->winHeight );
 }
 
 void
 CRUT_APIENTRY
-crutGetMenuXML(void)
+crutGetMenuXML( CRUTAPI *crut_api )
 {
     char response[8096];
     
-    if (!crut_api.mothershipConn)
+    if (!crut_api->mothershipConn)
 	crError("Checking for Menu XML but no connection!"); 
     
-    crMothershipGetParam( crut_api.mothershipConn, "crut_menu_xml", response );
+    crMothershipGetParam( crut_api->mothershipConn, "crut_menu_xml", response );
     
     if (crStrlen(response) < MENU_MAX_SIZE)
-		crMemcpy(crut_api.menuBuffer, response, crStrlen(response));
+		crMemcpy(crut_api->menuBuffer, response, crStrlen(response));
     else
 		crError("Menu XML is too long for buffer");
 }
@@ -79,17 +83,17 @@ crutGetMenuXML(void)
 
 void 
 CRUT_APIENTRY
-crutSetWindowID(int windowID)
+crutSetWindowID(CRUTAPI *crut_api, int windowID)
 {
     char to_send[sizeof(int)*8+1];
 
     sprintf(to_send, "%d", windowID);
-    crMothershipSetParam(crut_api.mothershipConn, "crut_drawable", (const char*)to_send);
+    crMothershipSetParam(crut_api->mothershipConn, "crut_drawable", (const char*)to_send);
 }
 
 void 
 CRUT_APIENTRY
-crutConnectToClients(void)
+crutConnectToClients( CRUTAPI *crut_api )
 {   
     int i, ind;     
     char response[8096], hostname[4096], protocol[4096];
@@ -97,15 +101,15 @@ crutConnectToClients(void)
     char* client;
     unsigned short port;
 
-    crMothershipGetCRUTClients(crut_api.mothershipConn, response);
+    crMothershipGetCRUTClients(crut_api->mothershipConn, response);
 
     newclients = crStrSplit(response, " ");
-    crut_api.numclients = crStrToInt(newclients[0]);
+    crut_api->numclients = crStrToInt(newclients[0]);
     ind = 1;
 
-    crut_api.crutclients = crAlloc(crut_api.numclients*sizeof(CRUTClientPointer));
+    crut_api->crutclients = crAlloc(crut_api->numclients*sizeof(CRUTClientPointer));
 
-    for (i=0; i<crut_api.numclients; i++) {
+    for (i=0; i<crut_api->numclients; i++) {
       
         client = newclients[ind++];
 	
@@ -114,11 +118,11 @@ crutConnectToClients(void)
 	    crError( "Malformed URL: \"%s\"", response );
 	}   
 	
-	crut_api.crutclients[i].mtu = crMothershipGetMTU( crut_api.mothershipConn );
+	crut_api->crutclients[i].mtu = crMothershipGetMTU( crut_api->mothershipConn );
 	
-	crut_api.crutclients[i].send_conn = crNetAcceptClient( protocol, hostname, port, crut_api.crutclients[i].mtu, 1 );
+	crut_api->crutclients[i].send_conn = crNetAcceptClient( protocol, hostname, port, crut_api->crutclients[i].mtu, 1 );
 	
-	if (!crut_api.crutclients[i].send_conn)
+	if (!crut_api->crutclients[i].send_conn)
 	{
 	    crError("Couldn't connect to the CRUT client");
 	}
@@ -129,7 +133,7 @@ crutConnectToClients(void)
 
 void 
 CRUT_APIENTRY
-crutSendMouseEvent( int button, int state, int x, int y ) 
+crutSendMouseEvent( CRUTAPI *crut_api, int button, int state, int x, int y ) 
 {
     int i;
 
@@ -141,16 +145,16 @@ crutSendMouseEvent( int button, int state, int x, int y )
     msg->x = x;
     msg->y = y;
     
-    for (i=0; i<crut_api.numclients; i++) 
+    for (i=0; i<crut_api->numclients; i++) 
     {
-        crNetSend( crut_api.crutclients[i].send_conn, NULL, msg, sizeof(CRUTMouseMsg) );
+        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTMouseMsg) );
     }
     crFree(msg);
 }
 
 void 
 CRUT_APIENTRY
-crutSendKeyboardEvent( int key, int x, int y ) 
+crutSendKeyboardEvent( CRUTAPI *crut_api, int key, int x, int y ) 
 {
     int i;
 
@@ -160,16 +164,16 @@ crutSendKeyboardEvent( int key, int x, int y )
     msg->key = key;
     msg->x = x;
     msg->y = y;
-    for (i=0; i<crut_api.numclients; i++) 
+    for (i=0; i<crut_api->numclients; i++) 
     {
-      crNetSend( crut_api.crutclients[i].send_conn, NULL, msg, sizeof(CRUTKeyboardMsg) );
+      crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTKeyboardMsg) );
     }
     crFree(msg);
 }
 
 void 
 CRUT_APIENTRY
-crutSendReshapeEvent( int width, int height )
+crutSendReshapeEvent( CRUTAPI *crut_api, int width, int height )
 {
     int i;
 
@@ -178,16 +182,16 @@ crutSendReshapeEvent( int width, int height )
     msg->msg_type = CRUT_RESHAPE_EVENT;
     msg->width = width;
     msg->height = height;
-    for (i=0; i<crut_api.numclients; i++) 
+    for (i=0; i<crut_api->numclients; i++) 
     {
-        crNetSend( crut_api.crutclients[i].send_conn, NULL, msg, sizeof(CRUTReshapeMsg) );
+        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTReshapeMsg) );
     }
     crFree(msg);
 }
 
 void 
 CRUT_APIENTRY
-crutSendMotionEvent( int x, int y )
+crutSendMotionEvent( CRUTAPI *crut_api, int x, int y )
 {
     int i;
 
@@ -196,16 +200,16 @@ crutSendMotionEvent( int x, int y )
     msg->msg_type = CRUT_MOTION_EVENT;
     msg->x = x;
     msg->y = y;
-    for (i=0; i<crut_api.numclients; i++) 
+    for (i=0; i<crut_api->numclients; i++) 
     {
-        crNetSend( crut_api.crutclients[i].send_conn, NULL, msg, sizeof(CRUTMotionMsg) );
+        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTMotionMsg) );
     }
     crFree(msg);
 }
 
 void 
 CRUT_APIENTRY
-crutSendPassiveMotionEvent( int x, int y )
+crutSendPassiveMotionEvent( CRUTAPI *crut_api, int x, int y )
 {
     int i;
 
@@ -214,16 +218,16 @@ crutSendPassiveMotionEvent( int x, int y )
     msg->msg_type = CRUT_PASSIVE_MOTION_EVENT;
     msg->x = x;
     msg->y = y;
-    for (i=0; i<crut_api.numclients; i++) 
+    for (i=0; i<crut_api->numclients; i++) 
     {
-        crNetSend( crut_api.crutclients[i].send_conn, NULL, msg, sizeof(CRUTPassiveMotionMsg) );
+        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTPassiveMotionMsg) );
     }
     crFree(msg);
 }
 
 void
 CRUT_APIENTRY
-crutSendMenuEvent( int menuID, int value )
+crutSendMenuEvent( CRUTAPI *crut_api, int menuID, int value )
 {
     int i;
 
@@ -232,9 +236,9 @@ crutSendMenuEvent( int menuID, int value )
     msg->msg_type = CRUT_MENU_EVENT;
     msg->menuID = menuID;
     msg->value = value;
-    for (i=0; i<crut_api.numclients; i++) 
+    for (i=0; i<crut_api->numclients; i++) 
     {
-        crNetSend( crut_api.crutclients[i].send_conn, NULL, msg, sizeof(CRUTMenuMsg) );
+        crNetSend( crut_api->crutclients[i].send_conn, NULL, msg, sizeof(CRUTMenuMsg) );
     }
     crFree(msg);
 }

@@ -7,6 +7,7 @@
 #include "cr_string.h"
 
 CRUTClient crut_client;
+CRUTAPI crut_api;
 
 static int
 __getCRUTMessageSize(CRUTMessage* msg)
@@ -453,7 +454,7 @@ crutInitClient(void)
     
     crNetInit(crutClientRecv, crutClientClose);
     
-    crutInitAPI(mothership);
+    crutInitAPI( &crut_api, mothership);
     
     crMothershipIdentifyCRUTClient(crut_api.mothershipConn, response);
     
@@ -490,7 +491,7 @@ crutInitClient(void)
     /* set up the connection to recv on */
     crut_client.recv_conn = crNetConnectToServer( server, DEFAULT_PORT, mtu, 1 );
 
-    crutConnectToClients();
+    crutConnectToClients( &crut_api );
 }
 
 void
@@ -509,42 +510,42 @@ crutMainLoop( )
 	    if (crut_client.msg->msg_type == CRUT_MOUSE_EVENT && crut_client.callbacks.mouse) 
 	    {  
 	        CRUTMouseMsg *msg = (CRUTMouseMsg*) crut_client.msg;
-		crutSendMouseEvent( msg->button, msg->state, msg->x, msg->y);
+		crutSendMouseEvent( &crut_api, msg->button, msg->state, msg->x, msg->y);
 		crut_client.callbacks.mouse(msg->button,msg->state,msg->x,msg->y);
 	    }
 	  
 	    else if (crut_client.msg->msg_type == CRUT_RESHAPE_EVENT && crut_client.callbacks.reshape) 
 	    {
 	        CRUTReshapeMsg *msg = (CRUTReshapeMsg*) crut_client.msg;
-		crutSendReshapeEvent( msg->width, msg->height);
+		crutSendReshapeEvent( &crut_api, msg->width, msg->height);
 		crut_client.callbacks.reshape(msg->width,msg->height);
 	    }
 	  
 	    else if (crut_client.msg->msg_type == CRUT_KEYBOARD_EVENT && crut_client.callbacks.keyboard) 
 	    {      
 		CRUTKeyboardMsg *msg = (CRUTKeyboardMsg*) crut_client.msg;
-		crutSendKeyboardEvent( msg->key, msg->x, msg->y);
+		crutSendKeyboardEvent( &crut_api, msg->key, msg->x, msg->y);
 		crut_client.callbacks.keyboard(msg->key,msg->x,msg->y);
 	    }
 	  
 	    else if (crut_client.msg->msg_type == CRUT_MOTION_EVENT && crut_client.callbacks.motion) 
 	    {
 		CRUTMotionMsg *msg = (CRUTMotionMsg*) crut_client.msg;
-		crutSendMotionEvent( msg->x, msg->y);
+		crutSendMotionEvent( &crut_api, msg->x, msg->y);
 		crut_client.callbacks.motion(msg->x,msg->y);
 	    }
 	  
 	    else if (crut_client.msg->msg_type == CRUT_PASSIVE_MOTION_EVENT && crut_client.callbacks.passivemotion) 
 	    {
 		CRUTPassiveMotionMsg *msg = (CRUTPassiveMotionMsg*) crut_client.msg;
-		crutSendPassiveMotionEvent( msg->x, msg->y);
+		crutSendPassiveMotionEvent( &crut_api, msg->x, msg->y);
 		crut_client.callbacks.passivemotion(msg->x,msg->y);
 	    }
 
 	    else if (crut_client.msg->msg_type == CRUT_MENU_EVENT) 
 	    {
 		CRUTMenuMsg *msg = (CRUTMenuMsg*) crut_client.msg;
-		crutSendMenuEvent( msg->menuID, msg->value );
+		crutSendMenuEvent( &crut_api, msg->menuID, msg->value );
 		
 		for (menus = crut_client.beginMenuList; (menus); menus = menus->next)
 		{
