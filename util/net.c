@@ -109,7 +109,11 @@ CRConnection *crNetConnectToServer( char *server,
 		crError( "Unknown Protocol: \"%s\"", protocol );
 	}
 
-	crNetConnect( conn );
+	if (!crNetConnect( conn ))
+	{
+		crFree( conn );
+		return NULL;
+	}
 	crDebug( "Done connecting to server." );
 	return conn;
 }
@@ -274,9 +278,9 @@ void crNetFree( CRConnection *conn, void *buf )
 
 // Actually do the connection implied by the argument
 
-void crNetConnect( CRConnection *conn )
+int crNetConnect( CRConnection *conn )
 {
-	conn->Connect( conn );
+	return conn->Connect( conn );
 }
 
 // Tear it down

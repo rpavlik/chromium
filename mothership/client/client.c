@@ -13,7 +13,6 @@ CRConnection *crMothershipConnect( void )
 {
 	char *mother_server = NULL;
 	int   mother_port = MOTHERPORT;
-	CRConnection *conn;
 	char mother_url[1024];
 
 	crNetInit( NULL, NULL );
@@ -27,8 +26,7 @@ CRConnection *crMothershipConnect( void )
 
 	sprintf( mother_url, "%s:%d", mother_server, mother_port );
 
-	conn = crNetConnectToServer( mother_server, 10000, 8096 );
-	return conn;
+	return crNetConnectToServer( mother_server, 10000, 8096 );
 }
 
 void crMothershipDisconnect( CRConnection *conn )

@@ -31,7 +31,7 @@ int crGetPID(void);
 
 typedef void (*CRVoidFunc)( void );
 typedef void (*CRNetReceiveFunc)( CRConnection *conn, void *buf, unsigned int len );
-typedef void (*CRNetConnectFunc)( CRConnection *conn );
+typedef int (*CRNetConnectFunc)( CRConnection *conn );
 typedef void (*CRNetCloseFunc)( unsigned int sender_id );
 
 void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc );
@@ -43,7 +43,7 @@ void crNetReadline( CRConnection *conn, void *buf );
 int  crNetRecv( void );
 void crNetFree( CRConnection *conn, void *buf );
 void crNetAccept( CRConnection *conn, unsigned short port );
-void crNetConnect( CRConnection *conn );
+int crNetConnect( CRConnection *conn );
 void crNetDisconnect( CRConnection *conn );
 void crCloseSocket( CRSocket sock );
 
@@ -62,7 +62,7 @@ struct CRConnection {
 	void  (*Recv)( CRConnection *conn, void *buf, unsigned int len );
 	void  (*Free)( CRConnection *conn, void *buf );
 	void  (*Accept)( CRConnection *conn, unsigned short port );
-	void  (*Connect)( CRConnection *conn );
+	int  (*Connect)( CRConnection *conn );
 	void  (*Disconnect)( CRConnection *conn );
 
 	/* logging */

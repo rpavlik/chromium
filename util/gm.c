@@ -371,10 +371,11 @@ void crGmAccept( CRConnection *conn, unsigned short port )
 	(void) port;
 }
 
-void crGmDoConnect( CRConnection *conn )
+int crGmDoConnect( CRConnection *conn )
 {
 	crError( "crGmDoConnect shouldn't ever get called." );
 	(void) conn;
+	return 1;
 }
 
 void crGmDoDisconnect( CRConnection *conn )

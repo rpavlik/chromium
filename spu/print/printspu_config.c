@@ -21,6 +21,11 @@ void printspuGatherConfiguration( void )
 	// Connect to the mothership and identify ourselves.
 	
 	conn = crMothershipConnect( );
+	if (!conn)
+	{
+		// defaults are fine.
+		return;
+	}
 	crMothershipIdentifySPU( conn, print_spu.id );
 
 	if (crMothershipSPUParam( conn, response, "log_file") )

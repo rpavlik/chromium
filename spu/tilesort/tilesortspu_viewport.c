@@ -74,6 +74,10 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 									 (int) (y*heightscale + 0.5f),
 			             (int) (width*widthscale + 0.5f), 
 									 (int) (height*heightscale + 0.5f) );
+	tilesortspuSetBucketingBounds( (int) (x*widthscale + 0.5f), 
+									               (int) (y*heightscale + 0.5f),
+			                           (int) (width*widthscale + 0.5f), 
+									               (int) (height*heightscale + 0.5f) );
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )

@@ -17,6 +17,10 @@ void packspuGatherConfiguration( void )
 	int num_servers;
 
 	conn = crMothershipConnect();
+	if (!conn)
+	{
+		crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
+	}
 	crMothershipIdentifySPU( conn, pack_spu.id );
 
 	__setDefaults();

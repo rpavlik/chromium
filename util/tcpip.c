@@ -586,7 +586,7 @@ void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 // The function that actually connects.  This should only be called by clients
 // Servers have another way to set up the socket.
 
-void crTCPIPDoConnect( CRConnection *conn )
+int crTCPIPDoConnect( CRConnection *conn )
 {
 	struct sockaddr_in servaddr;
 	struct hostent *hp;
@@ -596,8 +596,8 @@ void crTCPIPDoConnect( CRConnection *conn )
 	if ( conn->tcp_socket < 0 )
 	{
 		int err = crTCPIPErrno( );
-		crError( "socket error: %s", 
-				crTCPIPErrorString( err ) );
+		crWarning( "socket error: %s", crTCPIPErrorString( err ) );
+		return 0;
 	}
 
 	// Set up the socket the way *we* want.
@@ -607,7 +607,8 @@ void crTCPIPDoConnect( CRConnection *conn )
 	hp = gethostbyname( conn->hostname );
 	if ( !hp )
 	{
-		crError( "Unknown host: \"%s\"", conn->hostname );
+		crWarning( "Unknown host: \"%s\"", conn->hostname );
+		return 0;
 	}
 
 	memset( &servaddr, 0, sizeof(servaddr) );
@@ -627,8 +628,9 @@ void crTCPIPDoConnect( CRConnection *conn )
 		{
 			// Here's where we might try again on another
 			// port -- don't think we'll do that any more.
-			crError( "Couldn't connect to %s:%d, %s",
+			crWarning( "Couldn't connect to %s:%d, %s",
 					conn->hostname, conn->port, crTCPIPErrorString( err ) );
+			return 0;
 		}
 		else if ( err == EINTR )
 		{
@@ -637,10 +639,12 @@ void crTCPIPDoConnect( CRConnection *conn )
 		}
 		else
 		{
-			crError( "Couldn't connect to %s:%d, %s",
+			crWarning( "Couldn't connect to %s:%d, %s",
 					conn->hostname, conn->port, crTCPIPErrorString( err ) );
+			return 0;
 		}
 	}
+	return 1;
 }
 
 void crTCPIPDoDisconnect( CRConnection *conn )

@@ -27,12 +27,18 @@ void renderspuGatherConfiguration( void )
 	CRConnection *conn;
 	char response[8096];
 
+	__setDefaults();
+
 	// Connect to the mothership and identify ourselves.
 	
 	conn = crMothershipConnect( );
-	crMothershipIdentifySPU( conn, render_spu.id );
+	if (!conn)
+	{
+		// the defaults are (maybe) OK.
+		return;
+	}
 
-	__setDefaults();
+	crMothershipIdentifySPU( conn, render_spu.id );
 
 	if (crMothershipSPUParam( conn, response, "window_geometry" ) )
 	{

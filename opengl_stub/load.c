@@ -31,6 +31,10 @@ void StubInit(void)
 	stub_initialized = 1;
 	
 	conn = crMothershipConnect( );
+	if (!conn)
+	{
+		crError( "Couldn't connect to the mothership -- I have no idea what to do!" ); 
+	}
 	crMothershipIdentifyOpenGL( conn, response );
 	crDebug( "response = \"%s\"", response );
 	spuchain = crStrSplit( response, " " );

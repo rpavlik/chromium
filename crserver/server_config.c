@@ -31,6 +31,11 @@ void crServerGatherConfiguration(void)
 	
 	conn = crMothershipConnect( );
 
+	if (!conn)
+	{
+		crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
+	}
+
 	// The response will tell which SPUs to load
 	crMothershipIdentifyServer( conn, response );
 

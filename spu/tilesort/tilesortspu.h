@@ -44,6 +44,8 @@ typedef struct {
 	int drawBBOX;
 	float bboxLineWidth;
 
+	unsigned int fake_window_width, fake_window_height;
+
 	int syncOnSwap;
 
 	float viewportCenterX, viewportCenterY;

@@ -691,6 +691,10 @@ int main( int argc, char **argv )
 		if (mothership)
 			crSetenv( "MOTHERSHIP", mothership );
 		mothership_conn = crMothershipConnect( );
+		if (!mothership_conn)
+		{
+			crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
+		}
 	
 		crMothershipIdentifyFaker( mothership_conn, response );
 		faked_argv = crStrSplit( response, " " );

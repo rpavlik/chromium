@@ -47,6 +47,10 @@ void tilesortspuGatherConfiguration( void )
 	// Connect to the mothership and identify ourselves.
 	
 	conn = crMothershipConnect( );
+	if (!conn)
+	{
+		crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
+	}
 	crMothershipIdentifySPU( conn, tilesort_spu.id );
 
 	crMothershipGetMTU( conn, response );
@@ -82,6 +86,14 @@ void tilesortspuGatherConfiguration( void )
 	if (crMothershipSPUParam( conn, response, "bbox_line_width") )
 	{
 		sscanf( response, "%f", &(tilesort_spu.bboxLineWidth) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "fake_window_dims") )
+	{
+		float w,h;
+		sscanf( response, "%f %f", &w, &h );
+		tilesort_spu.fakeWindowWidth = (unsigned int) w;
+		tilesort_spu.fakeWindowHeight = (unsigned int) h;
 	}
 
 	// The response to this tells us how many servers, what the

@@ -67,9 +67,10 @@ void crDevnullAccept( CRConnection *conn, unsigned short port )
 	(void) port;
 }
 
-void crDevnullDoConnect( CRConnection *conn )
+int crDevnullDoConnect( CRConnection *conn )
 {
-	(void) conn;
+	(void) conn; 
+	return 1;
 }
 
 void crDevnullDoDisconnect( CRConnection *conn )
