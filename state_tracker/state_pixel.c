@@ -52,6 +52,7 @@ void crStatePixelInit(CRContext *ctx)
 	p->mapGtoGsize   = 1;
 	p->mapBtoBsize   = 1;
 	p->mapAtoAsize   = 1;
+	RESET(pb->maps, ctx->bitid);
 
 	RESET(pb->dirty, ctx->bitid);
 }
