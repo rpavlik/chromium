@@ -412,9 +412,8 @@ class CR:
 		self.nodes = []
 		self.all_sockets = []
 		self.wrappers = {}
-		self.mtu = 1024*1024
 		self.allSPUConf = []
-		self.param = {}
+		self.param = {"MTU": 1024*1024}
 		self.conn_id = 1
 
 	def AddNode( self, node ):
@@ -426,7 +425,7 @@ class CR:
 		"""MTU(size)
 		Sets the maximum buffer size allowed in communication
 		between SPUs."""
-		self.mtu = mtu;
+		self.param["MTU"] = mtu
 
 	def AllSPUConf( self, regex, key, *values ):
 		"""AllSPUConf(regex, key, *values)
@@ -904,9 +903,9 @@ class CR:
 
 	def do_mtu( self, sock, args ):
 		"""do_mtu(sock, args)
-		XXX Is this basically a NOP?  (ahern)
-		Does nothing but indicate success."""
-		sock.Success( `self.mtu` )
+		Returns the max transmission unit (bytes)"""
+		mtu = self.param["MTU"]
+		sock.Success( str(mtu) )
 
 	def do_quit( self, sock, args ):
 		"""do_quit(sock, args)
