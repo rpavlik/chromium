@@ -88,8 +88,8 @@ void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits
 void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merged );
 void crSPUPropogateGLLimits( CRConnection *conn, int spu_id, const SPU *child_spu, CRLimitsState *limitsResult );
 
-int crLoadOpenGL( crOpenGLInterface *interface, SPUNamedFunctionTable table[] );
-int crLoadOpenGLExtensions( const crOpenGLInterface *interface, SPUNamedFunctionTable table[] );
+int crLoadOpenGL( crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );
+int crLoadOpenGLExtensions( const crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );
 
 #ifdef __cplusplus
 }
