@@ -8,7 +8,7 @@ TOP = ..
 include ${TOP}/arch.mk
 
 SUBDIRS = atlantis cubes fonttest kirchner extensions psubmit retile \
-	statecopytest tiletest
+	statecopytest tiletest city
 
 ifeq ($(QT), 1)
 SUBDIRS += cr-recorder
@@ -17,7 +17,7 @@ endif
 ifeq ($(ARCH), WIN_NT)
 SUBDIRS += wgl
 else
-SUBDIRS += glx threadtest city
+SUBDIRS += glx threadtest
 endif
 
 include ${TOP}/cr.mk

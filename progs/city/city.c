@@ -34,16 +34,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <memory.h>
 #include <GL/glut.h>
+
+#ifdef WINDOWS
+#pragma warning(disable : 4125)
+#endif
 
 #include "wall2.h"
 #include "roof.h"
+
+unsigned char *wall;
 
 struct building {
    float x, y, z;     /* pos */
    float sx, sy, sz;  /* size */
    float color[4];
 };
+
+#define WALL_WIDTH 128
+#define WALL_HEIGHT 256
+#define WALL_BYTES_PER_PIXEL 4
 
 #define MAX_BUILDINGS 300
 
@@ -393,7 +404,7 @@ static void Init( void )
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT ) ;
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ) ;
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ) ;
-   glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, wall.width, wall.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, wall.pixel_data ) ;
+   glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, WALL_WIDTH, WALL_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, wall ) ;
 
    glGenTextures( 1, &roofTex ) ;
    glBindTexture( GL_TEXTURE_2D, roofTex ) ;
@@ -408,6 +419,12 @@ static void Init( void )
 
 int main( int argc, char *argv[] )
 {
+   /* Work around compiler issues that have 64k limits */
+   wall = malloc(WALL_WIDTH * WALL_HEIGHT * WALL_BYTES_PER_PIXEL);
+   memcpy(wall, walldata1, sizeof(walldata1) );
+   memcpy(wall + sizeof(walldata1), walldata2, sizeof(walldata2) );
+   memcpy(wall + sizeof(walldata1) + sizeof(walldata2), walldata3, sizeof(walldata3) );
+
    glutInit( &argc, argv );
    glutInitWindowSize( 400, 250 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
