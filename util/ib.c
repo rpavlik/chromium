@@ -103,9 +103,6 @@ void crIBSend( CRConnection *conn, void **bufp,
 void
 crIBSendExact( CRConnection *conn, const void *buf, unsigned int len );
 
-void
-*crIBAlloc( CRConnection *conn );
-
 typedef enum {
 	CRIBMemory,
 	CRIBMemoryBig
@@ -235,31 +232,30 @@ u_int64_t cpu_CLCKS_PER_SECS = 1000000.0;
 #define COND_PRINTF(aa)
 #endif
 
-#define COND_PRINTF0(aa) 
-#define COND_PRINTF1(aa) 
-#define COND_PRINTF2(aa) 
-#define COND_PRINTF3(aa) 
-#define COND_PRINTF7(aa) 
-
 #if DEBUG_LEVEL >= 0
-#undef COND_PRINTF0
 #define COND_PRINTF0(aa) printf aa
+#else
+#define COND_PRINTF0(aa)
 #endif
 #if DEBUG_LEVEL >= 1
-#undef COND_PRINTF1
 #define COND_PRINTF1(aa) printf aa
+#else
+#define COND_PRINTF1(aa)
 #endif
 #if DEBUG_LEVEL >= 2
-#undef COND_PRINTF2
 #define COND_PRINTF2(aa) printf aa
+#else
+#define COND_PRINTF2(aa)
 #endif
 #if DEBUG_LEVEL >= 3
-#undef COND_PRINTF3
 #define COND_PRINTF3(aa) printf aa
+#else
+#define COND_PRINTF3(aa)
 #endif
 #if DEBUG_LEVEL >= 7
-#undef COND_PRINTF7
 #define COND_PRINTF7(aa) printf aa
+#else
+#define COND_PRINTF7(aa)
 #endif
 
 #define BW_MBSEC(__clk,__bytes) (((ADJUST_TYPE)(__clk))) > 0 ? (1.0*((ADJUST_TYPE)cpu_CLCKS_PER_SECS)*(1.0*((ADJUST_TYPE)(__bytes))))/(1024.0*1024*(1.0*((ADJUST_TYPE)(__clk)))): 0
@@ -317,7 +313,7 @@ ret_val_t qp_create(params_tx *params)
 			 &qp_hndl, 
 			 &qp_prop);
      if (res != VAPI_OK) {
-	     printf("Error: Creating QP : %s\n", VAPI_strerror(res));
+	     crWarning("IB: Error: Creating QP : %s", VAPI_strerror(res));
 	     return(RET_ERR);
      }
      params->qp_hndl = qp_hndl;
@@ -334,18 +330,18 @@ ret_val_t open_hca(void)
 	/********************** HCA handle **********************/
 	res = EVAPI_get_hca_hndl(cr_ib.hca_id, &hca_hndl); 
 	if (res != VAPI_OK) {
-		printf("Error: Opening HCA : %s\n", VAPI_strerror(res));
+		crWarning("IB: Error: Opening HCA : %s", VAPI_strerror(res));
 		return(RET_ERR);
 	}
 	cr_ib.hca_hndl = hca_hndl;
-	crWarning("open hca handle = %d:%d",cr_ib.hca_hndl,hca_hndl );
+	crWarning("IB: open hca handle = %d:%d",cr_ib.hca_hndl,hca_hndl );
 	
 	/************* get some configuration info *************/
 	res = VAPI_query_hca_cap( hca_hndl, 
 				  &cr_ib.hca_vendor, 
 				  &cr_ib.hca_cap);
 	if (res != VAPI_OK) {
-		printf("Error on VAPI_query_hca_cap : %s\n", VAPI_strerror(res));
+		crWarning("IB: Error on VAPI_query_hca_cap : %s", VAPI_strerror(res));
 		return(RET_ERR);
 	}
 
@@ -380,8 +376,8 @@ ret_val_t create_common_resources(params_tx *params)
      /********************** PD **********************/
      res = EVAPI_alloc_pd(hca_hndl, cr_ib.num_ah, &pd_hndl);
      if (res != VAPI_OK) {
-	  printf("Error: Allocating PD : %s\n", VAPI_strerror(res));
-	  return(RET_ERR);
+	     crWarning("IB: Error: Allocating PD : %s", VAPI_strerror(res));
+	     return(RET_ERR);
      }
      params->pd_hndl = pd_hndl;
      
@@ -394,25 +390,25 @@ ret_val_t create_common_resources(params_tx *params)
 				    (IB_port_t)params->port_num,
 				    ( VAPI_hca_port_t *)&hca_port);
      if (res != VAPI_OK) {
-	  printf("Error on VAPI_query_hca_port_prop: %s\n", 
-		 VAPI_strerror(res));
-	  return(RET_ERR);
+	     crWarning("IB: Error on VAPI_query_hca_port_prop: %s", 
+			VAPI_strerror(res));
+	     return(RET_ERR);
      }
      params->lid = hca_port.lid;
      
      /********************** Send CQ **********************/
      res = VAPI_create_cq(hca_hndl, num_cqe, &s_cq_hndl, &act_num_cqe);
      if (res != VAPI_OK) {
-	  printf("Error: Creating CQ : %s\n", VAPI_strerror(res));
-	  return(RET_ERR);
+	     crWarning("IB: Error: Creating CQ : %s", VAPI_strerror(res));
+	     return(RET_ERR);
      }
      params->s_cq_hndl = s_cq_hndl;
      
      /********************** RECV CQ **********************/
      res = VAPI_create_cq(hca_hndl, num_cqe, &r_cq_hndl, &act_num_cqe);
      if (res != VAPI_OK) {
-	  printf("Error: Creating CQ : %s\n", VAPI_strerror(res));
-	  return(RET_ERR);
+	     crWarning("IB: Error: Creating CQ : %s", VAPI_strerror(res));
+	     return(RET_ERR);
      }
      params->r_cq_hndl = r_cq_hndl;
 	  
@@ -420,9 +416,9 @@ ret_val_t create_common_resources(params_tx *params)
      res= EVAPI_set_async_event_handler(hca_hndl,async_events_handler,
 					params,&(params->async_hndl));
      if (res != VAPI_OK) {
-	  printf("Error: Creating in EVAPI_set_async_eventh (send) : %s\n", 
-		 VAPI_strerror(res));
-	  return(RET_ERR);
+	     crWarning("IB: Error: Creating in EVAPI_set_async_eventh (send) : %s", 
+		       VAPI_strerror(res));
+	     return(RET_ERR);
      }
      
      /********************** SEND MR **********************/
@@ -430,10 +426,10 @@ ret_val_t create_common_resources(params_tx *params)
 	     real_send_buf = VMALLOC(size+2*sizeof(CRIBBuffer)+PAGE_SIZE_ALIGN);
 	     send_buf = (void *) MT_UP_ALIGNX_VIRT((int)real_send_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
 	     
-	     COND_PRINTF3(("real=%p after=%p\n",real_send_buf,send_buf));
+	     COND_PRINTF3(("IB: real=%p after=%p\n",real_send_buf,send_buf));
 	     
 	     if (send_buf == NULL) {
-		     printf("Try again..alloc memory failed\n");
+		     crWarning("IB: Try again..alloc memory failed");
 		     return(RET_ERR);
 	     }
 	     
@@ -455,7 +451,7 @@ ret_val_t create_common_resources(params_tx *params)
 	     
 	     res = VAPI_register_mr(hca_hndl, &mr_in, &mr_hndl, &mr_out);
 	     if (res != VAPI_OK) {
-		     printf("Error: Registering MR : %s\n", VAPI_strerror(res));
+		     crWarning("IB: Error: Registering MR : %s", VAPI_strerror(res));
 		     return(RET_ERR);
 	     }
 	     params->s_buffers[i].send_lkey = mr_out.l_key;
@@ -466,10 +462,10 @@ ret_val_t create_common_resources(params_tx *params)
 	     real_recv_buf = VMALLOC(size+2*sizeof(CRIBBuffer)+PAGE_SIZE_ALIGN);
 	     recv_buf = (void *) MT_UP_ALIGNX_VIRT((int)real_recv_buf+sizeof(CRIBBuffer), LOG_PAGE_SIZE_ALIGN);
 
-	     COND_PRINTF(("real=%p after=%p\n",real_recv_buf,recv_buf));
+	     COND_PRINTF(("IB: real=%p after=%p\n",real_recv_buf,recv_buf));
 	     
 	     if (recv_buf == NULL) {
-		     printf("Try again..alloc memory failed\n");
+		     crWarning("IB: Try again..alloc memory failed");
 		     return(RET_ERR);
 	     }
 	     
@@ -490,14 +486,14 @@ ret_val_t create_common_resources(params_tx *params)
 	     mr_in.size  = size;            
 	     res = VAPI_register_mr(hca_hndl, &mr_in, &mr_hndl, &mr_out);
 	     if (res != VAPI_OK) {
-		     printf("Error: Registering MR : %s\n", VAPI_strerror(res));
+		     crWarning("IB: Error: Registering MR : %s", VAPI_strerror(res));
 		     return(RET_ERR);
 	     }
 	     params->r_buffers[i].recv_lkey = mr_out.l_key;
 	     params->r_buffers[i].recv_rkey = mr_out.r_key;
 	     params->r_buffers[i].mr_hndl_r = mr_hndl;
      }
-     COND_PRINTF(("registerd mem\n"));
+     COND_PRINTF(("IB: registerd mem\n"));
      
      return(RET_OK);
 }
@@ -511,10 +507,10 @@ static void show_qp_state(VAPI_hca_hndl_t  hca_hndl, VAPI_qp_hndl_t qp_hndl, VAP
      
      res = VAPI_query_qp(hca_hndl, qp_hndl, &qp_attr, &qp_attr_mask, &qp_init_attr );
      if (res == VAPI_OK) {
-	  crWarning("=== QP handle 0x%x, QP num 0x%x: state %d\n", (unsigned)qp_hndl, (unsigned)qp_num, qp_attr.qp_state);
+	  crWarning("IB: QP handle 0x%x, QP num 0x%x: state %d", (unsigned)qp_hndl, (unsigned)qp_num, qp_attr.qp_state);
      }
      else {
-	  crWarning("Error on VAPI_query_qp: %s\n", VAPI_strerror(res));
+	  crWarning("IB: Error on VAPI_query_qp: %s", VAPI_strerror(res));
      }
 }
 
@@ -552,10 +548,10 @@ static ret_val_t qp_init2rts_one_qp(params_tx *params)
      
      res = VAPI_modify_qp(hca_hndl, qp_hndl, &qp_attr, &qp_attr_mask, &qp_cap);
      if (res != VAPI_OK) {
-	  printf("Error: Modifying  QP to INIT: %s\n", VAPI_strerror(res));
-	  return(RET_ERR);
+	     crWarning("IB: Error: Modifying  QP to INIT: %s", VAPI_strerror(res));
+	     return(RET_ERR);
      }
-     COND_PRINTF(("Modified QP to INIT\n"));
+     COND_PRINTF(("IB: Modified QP to INIT\n"));
      
      /**************************** RTR *************************************/   
      QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
@@ -592,10 +588,10 @@ static ret_val_t qp_init2rts_one_qp(params_tx *params)
      
      res = VAPI_modify_qp(hca_hndl, qp_hndl, &qp_attr, &qp_attr_mask, &qp_cap);
      if (res != VAPI_OK) {
-	  printf("Error: Modifying  QP to RTR: %s\n", VAPI_strerror(res));      
+	  crWarning("IB: Error: Modifying  QP to RTR: %s", VAPI_strerror(res));      
 	  return(RET_ERR);
      }
-     COND_PRINTF(("Moodified QP to RTR\n"));
+     COND_PRINTF(("IB: Moodified QP to RTR\n"));
      
      /***************************** RTS **********************************/   
      
@@ -621,10 +617,10 @@ static ret_val_t qp_init2rts_one_qp(params_tx *params)
      
      res = VAPI_modify_qp(hca_hndl,qp_hndl,&qp_attr,&qp_attr_mask,&qp_cap);
      if (res != VAPI_OK) {
-	  printf("Error: Modifying  QP to RTS: %s\n", VAPI_strerror(res));
+	  crWarning("IB: Error: Modifying  QP to RTS: %s", VAPI_strerror(res));
 	  return(RET_ERR);
      }
-     COND_PRINTF(("Modified QP to RTS\n"));
+     COND_PRINTF(("IB: Modified QP to RTS\n"));
      return(RET_OK);
 }
 
@@ -641,13 +637,13 @@ ret_val_t poll_cq(VAPI_hca_hndl_t hca_hndl,
      }
      
      if (res != VAPI_OK) {
-	  printf("Error: Polling CQ : %s\n", VAPI_strerror(res));
+	  crWarning("IB: Error: Polling CQ : %s", VAPI_strerror(res));
 	  return(RET_ERR);
      }
      if (sc_p->status != VAPI_SUCCESS) {
-	  printf("Completion with error on queue (syndrome=0x%x=%s , opcode=%d=%s)\n",
+	  crWarning("IB: Completion with error on queue (syndrome=0x%x=%s , opcode=%d=%s)",
 		 sc_p->vendor_err_syndrome,VAPI_wc_status_sym(sc_p->status),sc_p->opcode,VAPI_cqe_opcode_sym(sc_p->opcode));
-	  printf("%s: completion with error (%d) detected\n", __func__, sc_p->status);
+	  crWarning("IB: %s: completion with error (%d) detected", __func__, sc_p->status);
 	  return(RET_ERR);
      }
      return(RET_OK);
@@ -670,9 +666,9 @@ VAPI_ret_t poll_cq_nowait(VAPI_hca_hndl_t hca_hndl,
      
      if (res == VAPI_OK) {
 	     if (sc_p->status != VAPI_SUCCESS) {
-		     printf("Completion with error on queue (syndrome=0x%x=%s , opcode=%d=%s)\n",
+		     crWarning("IB: Completion with error on queue (syndrome=0x%x=%s , opcode=%d=%s)",
 			    sc_p->vendor_err_syndrome,VAPI_wc_status_sym(sc_p->status),sc_p->opcode,VAPI_cqe_opcode_sym(sc_p->opcode));
-		     printf("%s: completion with error (%d) detected\n", __func__, sc_p->status);
+		     crWarning("IB: %s: completion with error (%d) detected", __func__, sc_p->status);
 		     return(VAPI_EGEN);
 	     }
      }
@@ -681,11 +677,12 @@ VAPI_ret_t poll_cq_nowait(VAPI_hca_hndl_t hca_hndl,
 }
 
 
-static void async_events_handler( VAPI_hca_hndl_t hca_hndl, 
-				  VAPI_event_record_t *event_p, 
-				  void* priv_data)
+static void
+async_events_handler( VAPI_hca_hndl_t hca_hndl, 
+		      VAPI_event_record_t *event_p, 
+		      void* priv_data)
 {    
-     printf("Got async. event: %s (0x%x - %s)\n",
+     crWarning("IB: Got async. event: %s (0x%x - %s)",
 	    VAPI_event_record_sym(event_p->type),
 	    event_p->syndrome,VAPI_event_syndrome_sym(event_p->syndrome));
 }
@@ -697,10 +694,11 @@ static void async_events_handler( VAPI_hca_hndl_t hca_hndl,
  *   Clean all IB reasources and memory allocations
  *
  *************************************************************************/ 
-static void clean_up(params_tx *params)
+static void
+clean_up(params_tx *params)
 {
 	int i;
-	crWarning("Cleaning up VAPI resources\n\n");
+	crWarning("IB: Cleaning up VAPI resources");
 	if (params->qp_hndl != VAPI_INVAL_HNDL) {
 		VAPI_destroy_qp(cr_ib.hca_hndl,
 				params->qp_hndl);
@@ -750,7 +748,8 @@ static void clean_up(params_tx *params)
  *   Initialize all IB resources
  *
  *************************************************************************/ 
-static void   init_params(params_tx *params)
+static void
+init_params(params_tx *params)
 {
 	int i;
 	params->pd_hndl     = VAPI_INVAL_HNDL;
@@ -776,7 +775,8 @@ static void   init_params(params_tx *params)
 	}
 }
 
-static void msg2num(char *msg, char *label, long def, void *out, unsigned int len)
+static void
+msg2num(char *msg, char *label, long def, void *out, unsigned int len)
 {
 	char *startstr;
 	u_int64_t tmp_val;
@@ -810,36 +810,38 @@ static void msg2num(char *msg, char *label, long def, void *out, unsigned int le
 }
 
 
-static void   print_params(params_tx *p_params)
+static void
+print_params(params_tx *p_params)
 {
 	params_tx *p = p_params;
 	
-	printf("========== parameters ==========\n");
+	crWarning("IB: ========== parameters ==========");
 	
-	printf("IN: size %d, mtu %d\n", 
+	crWarning("IB: IN: size %d, mtu %d", 
 		     cr_ib.size, cr_ib.mtu);
-	printf("IN: alloc_aligned %d\n", cr_ib.alloc_aligned);
-	printf("IN: port_num %d\n", 
+	crWarning("IB: IN: alloc_aligned %d", cr_ib.alloc_aligned);
+	crWarning("IB: IN: port_num %d", 
 		     p->port_num);
-	printf("IN: NUMs: cqe %d, r_wqe %d, s_wqe %d, rsge %d, ssge %d\n",
+	crWarning("IB: IN: NUMs: cqe %d, r_wqe %d, s_wqe %d, rsge %d, ssge %d",
 		     cr_ib.num_cqe, cr_ib.num_r_wqe, cr_ib.num_s_wqe, cr_ib.num_rsge, cr_ib.num_ssge);
-	printf("HANDLEs: hca 0x%x, pd 0x%x, qp 0x%x\n",
+	crWarning("IB: HANDLEs: hca 0x%x, pd 0x%x, qp 0x%x",
 		     (unsigned int)cr_ib.hca_hndl, (unsigned int)p->pd_hndl, (unsigned int)p->qp_hndl);
-	printf("max_inline_size %d, max_cap_inline_size %d, ous_src_rd_atom %d, ous_dst_rd_atom %d\n",
+	crWarning("IB: max_inline_size %d, max_cap_inline_size %d, ous_src_rd_atom %d, ous_dst_rd_atom %d",
 	       p->max_inline_size, p->max_cap_inline_size, cr_ib.hca_cap.max_qp_ous_rd_atom, p->qp_ous_rd_atom );
-	printf("port %d, lid %d, dlid %d, s_cq 0x%x, r_cq 0x%x, "
-	       "\n\t\tqps %d, qp0 0x%x, dqp0 0x%x\n",
+	crWarning("IB: port %d, lid %d, dlid %d, s_cq 0x%x, r_cq 0x%x, "
+	       "\n\t\tqps %d, qp0 0x%x, dqp0 0x%x",
 	       p->port_num, p->lid, p->d_lid, 
 	       (unsigned int)p->s_cq_hndl, (unsigned int)p->r_cq_hndl, 
 	       p->num_of_qps,
 	       p->qp_num, p->d_qpnum
 	     );
-	printf("============================================\n");
+	crWarning("IB: ============================================");
 }
 
 /******************* END VAPI JUNK *****************/
 
-ret_val_t ib_post_recv_buffers( params_tx *params_p)
+ret_val_t
+ib_post_recv_buffers( params_tx *params_p)
 {
 	
 	VAPI_rr_desc_t      rr;
@@ -863,7 +865,7 @@ ret_val_t ib_post_recv_buffers( params_tx *params_p)
 		sg_entry_r.addr = (VAPI_virt_addr_t)(MT_virt_addr_t)params_p->r_buffers[i].recv_buf+sizeof(CRIBBuffer);
 		res = VAPI_post_rr(hca_hndl, qp_hndl, &rr);
 		if (res != VAPI_OK) {
-			printf("Error: Pre-posting Recv buffer (port %d) : %s\n", params_p->port_num, VAPI_strerror(res));
+			crWarning("IB: Error: Pre-posting Recv buffer (port %d) : %s", params_p->port_num, VAPI_strerror(res));
 			return RET_ERR;
 		}
 	}
@@ -885,7 +887,9 @@ crIBSendExact( CRConnection *conn, const void *buf, unsigned int len )
  * because we expect the IB node numbering to be dense */
 #define CR_IB_HASH(n)	cr_ib.ib_conn_hash[ (n) & (CR_IB_CONN_HASH_SIZE-1) ]
 
-static __inline CRIBConnection * crIBConnectionLookup( unsigned int id )
+
+static __inline CRIBConnection *
+crIBConnectionLookup( unsigned int id )
 {
 	CRIBConnection *ib_conn;
 
@@ -905,13 +909,14 @@ static __inline CRIBConnection * crIBConnectionLookup( unsigned int id )
 	return NULL;
 }
 
-static void crIBConnectionAdd( CRConnection *conn, CRIBConnection* ib_conn_in )
+static void
+crIBConnectionAdd( CRConnection *conn, CRIBConnection* ib_conn_in )
 {
 	CRIBConnection *ib_conn, **bucket;
 	
-	crDebug( "Adding a connection with id 0x%x", conn->id );
+	crDebug( "IB: Adding a connection with id 0x%x", conn->id );
 	bucket = &CR_IB_HASH( conn->id );
-	crDebug( "The initial bucket was %p", bucket );
+	crDebug( "IB: The initial bucket was %p", bucket );
 	
 	for ( ib_conn = *bucket; ib_conn != NULL; 
 	      ib_conn = ib_conn->hash_next )
@@ -966,10 +971,10 @@ void* cr_ib_recv( CRConnection *conn,
 		return dst;
 	}
 	else if( res == VAPI_EGEN){
-	     crWarning("RECV error on conn %d", conn->id);
+	     crWarning("IB: RECV error on conn %d", conn->id);
 	     show_qp_state(hca_hndl, ib_conn->params.qp_hndl, ib_conn->params.qp_num);
 	     if(rc.byte_len > 0){
-		  crWarning("recovering");
+		  crWarning("IB: recovering");
 		  dst = ib_conn->params.r_buffers[rc.id].recv_buf;
 		  *len = rc.byte_len;
 		  return dst;
@@ -985,8 +990,8 @@ void* cr_ib_recv( CRConnection *conn,
 	}
 }
 
-ret_val_t cr_ib_send( CRConnection *conn, const void *buf, 
-		      unsigned int len, int id)
+ret_val_t
+cr_ib_send( CRConnection *conn, const void *buf, unsigned int len, int id)
 {
 	CRIBConnection* ib_conn;
 	VAPI_ret_t          res;
@@ -1025,14 +1030,14 @@ ret_val_t cr_ib_send( CRConnection *conn, const void *buf,
 	res = VAPI_post_sr(hca_hndl, qp_hndl, &sr);
 	
 	if (res != VAPI_OK) {
-		printf("sg_list_len %d\n", sr.sg_lst_len );
-		printf("Error: Posting send desc (%d): %s\n", id, VAPI_strerror(res));
+		crWarning("IB: sg_list_len %d", sr.sg_lst_len );
+		crWarning("IB: Error: Posting send desc (%d): %s", id, VAPI_strerror(res));
 		return RET_ERR;
 	}
 	return RET_OK;
 }
 
-void
+static void
 crIBAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
      CRConnection *mother;
@@ -1042,7 +1047,7 @@ crIBAccept( CRConnection *conn, const char *hostname, unsigned short port )
      int i;
      CRIBConnection *ib_conn;
 
-     crWarning( "crIBAccept is being called -- brokering the connection through the mothership!." );
+     crWarning( "IB: crIBAccept is being called -- brokering the connection through the mothership!." );
      
      mother = __copy_of_crMothershipConnect( );
      
@@ -1050,7 +1055,7 @@ crIBAccept( CRConnection *conn, const char *hostname, unsigned short port )
      {	
 	     if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
 	     {
-		     crError( "Couldn't determine my own hostname in crIBAccept!" );
+		     crError( "IB: Couldn't determine my own hostname in crIBAccept!" );
 	     }
      }
      else
@@ -1085,7 +1090,7 @@ crIBAccept( CRConnection *conn, const char *hostname, unsigned short port )
      /* Tell the mothership I'm willing to receive a client, and what my IB info is */
      if (!__copy_of_crMothershipSendString( mother, response, tmp_msg) )
      {
-	  crError( "Mothership didn't like my accept request" );
+	  crError( "IB: Mothership didn't like my accept request" );
      }
      sscanf( response, "%d %d %d", 
 	     &(conn->id), 
@@ -1137,14 +1142,15 @@ crIBAccept( CRConnection *conn, const char *hostname, unsigned short port )
 	     ib_buffer->id = i;
 	     crBufferPoolPush( ib_conn->send_pool, ib_buffer, conn->buffer_size);
      } 
-     crWarning("conn: %d buffer count = %d", conn->id, crBufferPoolGetNumBuffers( ib_conn->send_pool));
+     crWarning("IB: conn: %d buffer count = %d", conn->id, crBufferPoolGetNumBuffers( ib_conn->send_pool));
      
-     crDebug("Accept!");
+     crDebug("IB: Accept!");
      __copy_of_crMothershipDisconnect( mother );
 }
 
-void
-*crIBAlloc( CRConnection *conn )
+
+static void *
+crIBAlloc( CRConnection *conn )
 {
 	CRIBBuffer *ib_buffer;
 	VAPI_wc_desc_t      sc;
@@ -1176,9 +1182,9 @@ void
 
 	if ( ib_buffer == NULL )
 	{
-		crWarning("Crap: out of IB buffers, blocking to try to get one!");
+		crWarning("IB: Crap: out of IB buffers, blocking to try to get one!");
 		poll_cq(hca_hndl,s_cq_hndl,&sc);
-		fprintf(stderr, "Got one!: conn: %d, recovered #%d\n", conn->id, (int)sc.id);
+		fprintf(stderr, "IB: Got one!: conn: %d, recovered #%d\n", conn->id, (int)sc.id);
 		ib_buffer = (CRIBBuffer*)(ib_conn->params.s_buffers[sc.id].send_buf);
 	}
 	
@@ -1187,7 +1193,8 @@ void
 	return (void*)(ib_buffer + 1);
 }
 
-static void crIBSendMulti( CRConnection *conn, const void *buf, unsigned int len )
+static void
+crIBSendMulti( CRConnection *conn, const void *buf, unsigned int len )
 {
 	unsigned char *src;
 	CRASSERT( buf != NULL && len > 0 );
@@ -1212,25 +1219,25 @@ static void crIBSendMulti( CRConnection *conn, const void *buf, unsigned int len
 		int id = ((CRIBBuffer*)msg - 1)->id;
 		unsigned int        n_bytes;
 		char string[128];
-		crDebug("slow multi, len: %d", len);
+		crDebug("IB: slow multi, len: %d", len);
 		
 		if ( len + sizeof(*msg) > conn->buffer_size )
 		{
 			msg->header.type = CR_MESSAGE_MULTI_BODY;
-			crDebug("MULTI_BODY");
+			crDebug("IB: MULTI_BODY");
 			msg->header.conn_id = conn->id;
 			n_bytes   = conn->buffer_size - sizeof(*msg);
 		}
 		else
 		{
 			msg->header.type = CR_MESSAGE_MULTI_TAIL;
-			crDebug("MULTI_TAIL");
+			crDebug("IB: MULTI_TAIL");
 			msg->header.conn_id = conn->id;
 			n_bytes   = len;
 		}
 		crMemcpy( msg + 1, src, n_bytes );
 		crBytesToString( string, sizeof(string), msg, len );
-		crDebug( "IBSendMulti: sending message: "
+		crDebug( "IB: IBSendMulti: sending message: "
 			 "buf=[%s]", string );
 		cr_ib_send( conn, msg, n_bytes + sizeof(*msg), id);
 		
@@ -1239,8 +1246,9 @@ static void crIBSendMulti( CRConnection *conn, const void *buf, unsigned int len
 	}
 }
 
-void crIBSend( CRConnection *conn, void **bufp, 
-		      const void *start, unsigned int len )
+void
+crIBSend( CRConnection *conn, void **bufp, 
+	  const void *start, unsigned int len )
 {
 	CRIBBuffer *ib_buffer;
 	
@@ -1259,7 +1267,7 @@ void crIBSend( CRConnection *conn, void **bufp,
 	*bufp = NULL;
 }
 
-void
+static void
 crIBFree( CRConnection *conn, void *buf )
 {
 	CRIBBuffer *ib_buffer = (CRIBBuffer *) buf - 1;	
@@ -1288,25 +1296,25 @@ crIBFree( CRConnection *conn, void *buf )
 			sg_entry_r.addr = (VAPI_virt_addr_t)(MT_virt_addr_t)(ib_conn->params.r_buffers[rr.id].recv_buf+sizeof(CRIBBuffer));
 			res = VAPI_post_rr(hca_hndl, qp_hndl, &rr);
 			if (res != VAPI_OK) {
-				printf("Error: Re-posting Recv buffer: %s\n", 
+				crWarning("IB: Error: Re-posting Recv buffer: %s", 
 				       VAPI_strerror(res));
 			}
 			break;
 
 		case CRIBMemoryBig:
-			crDebug("Big");
+			crDebug("IB: Big");
 			crFree( ib_buffer );
 			break;
 
 		default:
-			crError( "Weird buffer kind trying to free in crIBFree: %d", ib_buffer->kind );
+			crError( "IB: Weird buffer kind trying to free in crIBFree: %d", ib_buffer->kind );
 	}
 }
 
 static void
 crIBSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 {
-	crWarning("IBSingleRecv should NEVER be called according to net.c:~683");
+	crWarning("IB: IBSingleRecv should NEVER be called according to net.c:~683");
 }
 
 int
@@ -1319,7 +1327,7 @@ crIBRecv( void )
 
 	if (!cr_ib.num_conns)
 	{
-		crError("crIBRecv got called but I don't have any IB connections yet, WTF?");
+		crError("IB: crIBRecv got called but I don't have any IB connections yet, WTF?");
 		return 0;
 	}
 	
@@ -1373,7 +1381,7 @@ crIBHandleNewMessage( CRConnection *conn, CRMessage *msg,
 	ib_buffer->len   = len;
 	
 	crBytesToString( string, sizeof(string), msg, len );
-	crDebug("HandleNewMessage buf=[%s]", string);
+	crDebug("IB: HandleNewMessage buf=[%s]", string);
 
 	crNetDispatchMessage( cr_ib.recv_list, conn, msg, len );
 }
@@ -1421,7 +1429,7 @@ crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
 	open_hca();
 }
 
-int
+static int
 crIBDoConnect( CRConnection *conn )
 {	
      CRConnection *mother;
@@ -1518,11 +1526,11 @@ crIBDoConnect( CRConnection *conn )
 	     ib_buffer->id = i;
 	     crBufferPoolPush( ib_conn->send_pool, ib_buffer, conn->buffer_size);
      } 
-     crWarning("conn: %d buffer count = %d", conn->id, crBufferPoolGetNumBuffers( ib_conn->send_pool));
+     crWarning("IB: conn: %d buffer count = %d", conn->id, crBufferPoolGetNumBuffers( ib_conn->send_pool));
 
      if (remote_endianness != conn->endianness)
      {
-	     crError("Why am I turning on swapping!?");
+	     crError("IB: Why am I turning on swapping!?");
 	     conn->swap = 1;
      }
 
@@ -1531,12 +1539,12 @@ crIBDoConnect( CRConnection *conn )
      return 1;
 }
 
-void
+static void
 crIBDoDisconnect( CRConnection *conn )
 {
 	CRIBConnection* ib_conn;
 	ib_conn = crIBConnectionLookup(conn->id);
-	crWarning("Disconnect being called!  Bad mojo?");
+	crWarning("IB: Disconnect being called!  Bad mojo?");
 	clean_up( &ib_conn->params );
 }
 
@@ -1545,7 +1553,7 @@ crIBConnection( CRConnection *conn )
 {
 	int n_bytes, i, found = 0;
 
-	crDebug("crIBConnection");
+	crDebug("IB: crIBConnection");
 
 	CRASSERT( cr_ib.initialized );
 
@@ -1580,7 +1588,7 @@ crIBConnection( CRConnection *conn )
 		crRealloc( (void **) &cr_ib.conns, n_bytes );
 		cr_ib.conns[cr_ib.num_conns++] = conn;
 	}
-	crDebug("num_conns = %d", cr_ib.num_conns);
+	crDebug("IB: num_conns = %d", cr_ib.num_conns);
 }
 
 CRConnection**

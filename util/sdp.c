@@ -58,10 +58,50 @@ typedef int ssize_t;
 #include "cr_environment.h"
 #include "net_internals.h"
 
+typedef enum {
+	CRSDPMemory,
+	CRSDPMemoryBig
+} CRSDPBufferKind;
+
+#define CR_SDP_BUFFER_MAGIC 0x89134532
+
+typedef struct CRSDPBuffer {
+	unsigned int          magic;
+	CRSDPBufferKind     kind;
+	unsigned int          len;
+	unsigned int          allocated;
+	unsigned int          pad;
+} CRSDPBuffer;
+
+typedef struct {
+	int                  initialized;
+	int                  num_conns;
+	CRConnection         **conns;
+	CRBufferPool         *bufpool;
+#ifdef CHROMIUM_THREADSAFE
+	CRmutex              mutex;
+	CRmutex              recvmutex;
+#endif
+	CRNetReceiveFuncList *recv_list;
+	CRNetCloseFuncList *close_list;
+	CRSocket             server_sock;
+} cr_sdp_data;
+
+
+/* XXX these could be removed by reordering the functions below */
+static void
+__sdp_dead_connection( CRConnection *conn );
+
+static void
+crSDPDoDisconnect( CRConnection *conn );
+
+
+
 #ifdef WINDOWS
 #define EADDRINUSE   WSAEADDRINUSE
 #define ECONNREFUSED WSAECONNREFUSED
 #endif
+
 
 #ifdef WINDOWS
 
@@ -71,12 +111,14 @@ typedef int ssize_t;
 #define EINTR       WSAEINTR
 
 
-int crSDPErrno( void )
+static int
+crSDPErrno( void )
 {
 	return WSAGetLastError( );
 }
 
-char *crSDPErrorString( int err )
+static char *
+crSDPErrorString( int err )
 {
 	static char buf[512], *temp;
 	
@@ -115,14 +157,16 @@ char *crSDPErrorString( int err )
 
 #else /* WINDOWS */
 
-int crSDPErrno( void )
+static int
+crSDPErrno( void )
 {
 	int err = errno;
 	errno = 0;
 	return err;
 }
 
-char *crSDPErrorString( int err )
+static char *
+crSDPErrorString( int err )
 {
 	static char buf[512], *temp;
 	
@@ -143,9 +187,9 @@ char *crSDPErrorString( int err )
 #endif /* WINDOWS */
 
 static unsigned short last_port = 0;
-cr_sdp_data cr_sdp;
+static cr_sdp_data cr_sdp;
 
-int
+static int
 __sdp_read_exact( CRSocket sock, void *buf, unsigned int len )
 {
 	char *dst = (char *) buf;
@@ -190,7 +234,7 @@ __sdp_read_exact( CRSocket sock, void *buf, unsigned int len )
 	return 1;
 }
 
-void
+static void
 crSDPReadExact( CRConnection *conn, void *buf, unsigned int len )
 {
 	if ( __sdp_read_exact( conn->sdp_socket, buf, len ) <= 0 )
@@ -199,7 +243,7 @@ crSDPReadExact( CRConnection *conn, void *buf, unsigned int len )
 	}
 }
 
-int
+static int
 __sdp_write_exact( CRSocket sock, const void *buf, unsigned int len )
 {
 	int err;
@@ -234,7 +278,7 @@ __sdp_write_exact( CRSocket sock, const void *buf, unsigned int len )
 	return 1;
 }
 
-void
+static void
 crSDPWriteExact( CRConnection *conn, const void *buf, unsigned int len )
 {
 	if ( __sdp_write_exact( conn->sdp_socket, buf, len) <= 0 )
@@ -289,7 +333,7 @@ spankSocket( CRSocket sock )
 typedef int socklen_t;
 #endif
 
-void
+static void
 crSDPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 {
 	int err;
@@ -398,7 +442,7 @@ crSDPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 	crDebug( "Accepted connection from \"%s\".", conn->hostname );
 }
 
-void *
+static void *
 crSDPAlloc( CRConnection *conn )
 {
   CRSDPBuffer *buf;
@@ -411,13 +455,11 @@ crSDPAlloc( CRConnection *conn )
   
 	if ( buf == NULL )
 	{
-		crDebug( "Buffer pool %p was empty; allocated new %d byte buffer.", 
+		crDebug( "Buffer pool %p was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
              cr_sdp.bufpool,
-             (unsigned int)sizeof(CRSDPBuffer) + conn->buffer_size);
-		/*
+             (unsigned int)sizeof(CRSDPBuffer) + conn->buffer_size, &cr_sdp.bufpool );
 		crDebug("sizeof(CRSDPBuffer): %d", (unsigned int)sizeof(CRSDPBuffer));
 		crDebug("sizeof(conn->buffer_size): %d", conn->buffer_size);
-		*/
 		buf = (CRSDPBuffer *) 
 			crAlloc( sizeof(CRSDPBuffer) + conn->buffer_size );
 		buf->magic = CR_SDP_BUFFER_MAGIC;
@@ -502,7 +544,7 @@ crSDPSend( CRConnection *conn, void **bufp,
 }
 
 
-void
+static void
 __sdp_dead_connection( CRConnection *conn )
 {
 	crDebug( "Dead connection (sock=%d, host=%s), removing from pool",
@@ -513,7 +555,7 @@ __sdp_dead_connection( CRConnection *conn )
 }
 
 
-int
+static int
 __crSDPSelect( int n, fd_set *readfds, int sec, int usec )
 {
 	for ( ; ; ) 
@@ -552,7 +594,8 @@ __crSDPSelect( int n, fd_set *readfds, int sec, int usec )
 }
 
 
-void crSDPFree( CRConnection *conn, void *buf )
+static void
+crSDPFree( CRConnection *conn, void *buf )
 {
 	CRSDPBuffer *sdp_buffer = (CRSDPBuffer *) buf - 1;
   
@@ -881,7 +924,7 @@ crSDPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 
 /* The function that actually connects.  This should only be called by clients 
  * Servers have another way to set up the socket. */
-int
+static int
 crSDPDoConnect( CRConnection *conn )
 {
 	int err;
@@ -973,7 +1016,7 @@ crSDPDoConnect( CRConnection *conn )
 	return 0;
 }
 
-void
+static void
 crSDPDoDisconnect( CRConnection *conn )
 {
 	int num_conns = cr_sdp.num_conns;

@@ -123,54 +123,10 @@ extern int crTcscommRecv( void );
  * SDP network interface
  */
 #ifdef SDP_SUPPORT
-typedef enum {
-	CRSDPMemory,
-	CRSDPMemoryBig
-} CRSDPBufferKind;
-
-#define CR_SDP_BUFFER_MAGIC 0x89134532
-
-typedef struct CRSDPBuffer {
-	unsigned int          magic;
-	CRSDPBufferKind     kind;
-	unsigned int          len;
-	unsigned int          allocated;
-	unsigned int          pad;
-} CRSDPBuffer;
-
-typedef struct {
-	int                  initialized;
-	int                  num_conns;
-	CRConnection         **conns;
-	CRBufferPool         *bufpool;
-#ifdef CHROMIUM_THREADSAFE
-	CRmutex              mutex;
-	CRmutex              recvmutex;
-#endif
-	CRNetReceiveFuncList *recv_list;
-	CRNetCloseFuncList *close_list;
-	CRSocket             server_sock;
-} cr_sdp_data;
-
-extern cr_sdp_data cr_sdp;
-
 extern void crSDPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
 extern void crSDPConnection( CRConnection *conn );
 extern int crSDPRecv( void );
 extern CRConnection** crSDPDump( int *num );
-extern int crSDPDoConnect( CRConnection *conn );
-extern void crSDPDoDisconnect( CRConnection *conn );
-extern int crSDPErrno( void );
-extern char *crSDPErrorString( int err );
-extern void crSDPAccept( CRConnection *conn, const char *hostname, unsigned short port );
-extern void crSDPWriteExact( CRConnection *conn, const void *buf, unsigned int len );
-extern void crSDPFree( CRConnection *conn, void *buf );
-extern void *crSDPAlloc( CRConnection *conn );
-extern void crSDPReadExact( CRConnection *conn, void *buf, unsigned int len );
-extern int __sdp_write_exact( CRSocket sock, const void *buf, unsigned int len );
-extern int __sdp_read_exact( CRSocket sock, void *buf, unsigned int len );
-extern void __sdp_dead_connection( CRConnection *conn );
-extern int __crSDPSelect( int n, fd_set *readfds, int sec, int usec );
 #endif /* SDP_SUPPORT */
 
 
@@ -182,18 +138,6 @@ extern void crIBInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsign
 extern void crIBConnection( CRConnection *conn );
 extern int crIBRecv( void );
 extern CRConnection** crIBDump( int *num );
-extern int crIBDoConnect( CRConnection *conn );
-extern void crIBDoDisconnect( CRConnection *conn );
-extern int crIBErrno( void );
-extern char *crIBErrorString( int err );
-extern void crIBAccept( CRConnection *conn, const char *hostname, unsigned short port );
-extern void crIBWriteExact( CRConnection *conn, const void *buf, unsigned int len );
-extern void crIBFree( CRConnection *conn, void *buf );
-extern void *crIBAlloc( CRConnection *conn );
-extern void crIBReadExact( CRConnection *conn, void *buf, unsigned int len );
-extern int __ib_write_exact( CRConnection *conn, CRSocket sock, void *buf, unsigned int len );
-extern int __ib_read_exact( CRSocket sock, CRConnection *conn, void *buf, unsigned int len );
-extern void __ib_dead_connection( CRConnection *conn );
 #endif /* IB_SUPPORT */
 
 
