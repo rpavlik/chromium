@@ -11,5 +11,5 @@
 
 void glEdgeFlagPointer( GLsizei stride, const GLboolean *pointer )
 {
-	glim.dgeFlagPointer( stride, pointer );
+	glim.EdgeFlagPointer( stride, pointer );
 }
