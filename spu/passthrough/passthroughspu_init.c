@@ -1,4 +1,5 @@
 #include "cr_spu.h"
+#include "cr_error.h"
 #include <stdio.h>
 
 extern SPUNamedFunctionTable passthrough_table[];
@@ -19,6 +20,10 @@ SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
 	(void) context_id;
 	(void) num_contexts;
 
+	if (child == NULL)
+	{
+		crError( "You can't load the passthrough SPU as the last SPU in a chain!" );
+	}
 	BuildPassthroughTable( child );
 	return &the_functions;
 }
