@@ -61,9 +61,13 @@ class SPUDialog(wxDialog):
 						if len(maxs) > j:
 							maxValue = maxs[j]
 						else:
-							maxValue = 1000000
+							maxValue = 1000 * 1000 * 1000 # infinity
+						if count <= 2:
+							width = 90
+						else:
+							width = 70
 						ctrl = wxSpinCtrl(parent=self, id=100+i,
-										  size=wxSize(90,25),
+										  size=wxSize(width,25),
 										  value=str(default[j]),
 										  min=minValue, max=maxValue)
 						rowSizer.Add(ctrl)
@@ -148,6 +152,9 @@ class SPUDialog(wxDialog):
 		assert name in self.__Controls.keys()
 		ctrls = self.__Controls[name]
 		count = len(ctrls)
+		if len(newValue) != count:
+			print "bad newValue %s = --%s--" % (name, newValue)
+			print "len = %d  count = %d" % (len(newValue), count)
 		assert len(newValue) == count
 		if (isinstance(ctrls[0], wxSpinCtrl) or
 			isinstance(ctrls[0], wxCheckBox)):
@@ -186,21 +193,5 @@ class SPUDialog(wxDialog):
 	# Override the wxDialog.ShowModal() method
 	def ShowModal(self):
 		"""Display dialog and return wxID_OK or wxID_CANCEL."""
-		# Save starting values
-#		values = {}
-#		for name in self.__Controls.keys():
-#			ctrls = self.__Controls[name]
-#			vals = []
-#			for i in range(len(ctrls)):
-#				vals.append(ctrls[i].GetValue())
-#			values[name] = vals
-		# Show the dialog
 		retVal = wxDialog.ShowModal(self)
-		# Finish up
-#		if retVal == wxID_CANCEL:
-#			# Cancelled, restore original values
-#			for name in values.keys():
-#				ctrls = self.__Controls[name]
-#				for i in range(len(ctrls)):
-#					ctrls[i].SetValue(values[name][i])
 		return retVal
