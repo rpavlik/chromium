@@ -214,17 +214,17 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 
 	crSPUGetMothershipParams(conn, (void *) &tilesort_spu, tilesortSPUOptions);
 
-        /* If tilesort_spu.optimizeBucketing is not 1 (the default) use
-         * its value to override bucketMode.
-         * Similarly, if tilesort_spu.broadcast is not 0, use its value
-         * to override bucketMode.
-         * XXX remove this code when we remove the 'optimize_bucket' and
-         * 'broadcast' config options.
-         */
-        if (tilesort_spu.optimizeBucketing != 1)
-          tilesort_spu.bucketMode = TEST_ALL_TILES;
-        if (tilesort_spu.broadcast)
-          tilesort_spu.bucketMode = BROADCAST;
+	/* If tilesort_spu.optimizeBucketing is not 1 (the default) use
+	 * its value to override bucketMode.
+	 * Similarly, if tilesort_spu.broadcast is not 0, use its value
+	 * to override bucketMode.
+	 * XXX remove this code when we remove the 'optimize_bucket' and
+	 * 'broadcast' config options.
+	 */
+	if (tilesort_spu.optimizeBucketing != 1)
+		tilesort_spu.bucketMode = TEST_ALL_TILES;
+	if (tilesort_spu.broadcast)
+		tilesort_spu.bucketMode = BROADCAST;
 
 	tilesort_spu.MTU = crMothershipGetMTU(conn);
 	crDebug("Got the MTU as %d", tilesort_spu.MTU);
