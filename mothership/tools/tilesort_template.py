@@ -13,6 +13,7 @@ import crutils, crtypes
 
 class TilesortParameters:
 	"""C-style struct describing a tilesort configuration"""
+	# This is where we set all the default tilesort parameters.
 	NumClients = 1
 	Columns = 2
 	Rows = 1
@@ -22,6 +23,21 @@ class TilesortParameters:
 	BottomToTop = 0
 	Hostname = "host##"
 	FirstHost = 1
+
+	def Clone(self):
+		"""Return a clone of this object."""
+		# We're not using the copy.copy() function since it's flakey
+		p = TilesortParameters()
+		p.NumClients = self.NumClients
+		p.Columns = self.Columns
+		p.Rows = self.Rows
+		p.TileWidth = self.TileWidth
+		p.TileHeight = self.TileHeight
+		p.RightToLeft = self.RightToLeft
+		p.BottomToTop = self.BottomToTop
+		p.HostName = self.Hostname
+		p.FirstHost = self.FirstHost
+		return p
 
 
 
@@ -154,14 +170,13 @@ cr.Go()
 
 #----------------------------------------------------------------------------
 
-class TilesortFrame(wxFrame):
+class TilesortDialog(wxDialog):
 	"""Tilesort configuration editor."""
 
 	def __init__(self, parent=NULL, id=-1):
 		""" Construct a TilesortFrame."""
-		wxFrame.__init__(self, parent, id, title="Tilesort Configuration",
-						 style = wxDEFAULT_FRAME_STYLE | wxWANTS_CHARS |
-						 wxNO_FULL_REPAINT_ON_RESIZE)
+		wxDialog.__init__(self, parent, id, title="Tilesort Configuration",
+						 style = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 
 		# Widget IDs
 		id_MuralWidth  = 3000
@@ -173,26 +188,27 @@ class TilesortFrame(wxFrame):
 		id_vLayout     = 3006
 		id_HostText    = 3007
 		id_HostIndex   = 3008
+		id_OK          = 3009
+		id_CANCEL      = 3010
 
 		self.__Mothership = 0
 		self.HostNamePattern = "host##"
 		self.HostNameStart = 0
 
-		self.topPanel = wxPanel(self, id=-1)
 		toolSizer = wxBoxSizer(wxVERTICAL)
 
 		# Mural width/height (in tiles)
-		box = wxStaticBox(parent=self.topPanel, id=-1, label="Mural Size",
+		box = wxStaticBox(parent=self, id=-1, label="Mural Size",
 						  style=wxDOUBLE_BORDER)
 		muralSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
-		columnsLabel = wxStaticText(parent=self.topPanel, id=-1,
+		columnsLabel = wxStaticText(parent=self, id=-1,
 									label="Columns:")
-		self.widthControl = wxSpinCtrl(parent=self.topPanel, id=id_MuralWidth,
+		self.widthControl = wxSpinCtrl(parent=self, id=id_MuralWidth,
 									   value="1", min=1, max=16,
 									   size=wxSize(50,25))
-		rowsLabel = wxStaticText(parent=self.topPanel, id=-1, label="Rows:")
-		self.heightControl = wxSpinCtrl(parent=self.topPanel,
+		rowsLabel = wxStaticText(parent=self, id=-1, label="Rows:")
+		self.heightControl = wxSpinCtrl(parent=self,
 										id=id_MuralHeight,
 										value="1", min=1, max=16,
 										size=wxSize(50,25))
@@ -206,7 +222,7 @@ class TilesortFrame(wxFrame):
 		toolSizer.Add(muralSizer, flag=wxEXPAND)
 
 		# Tile size (in pixels)
-		box = wxStaticBox(parent=self.topPanel, id=-1, label="Tile Size",
+		box = wxStaticBox(parent=self, id=-1, label="Tile Size",
 						  style=wxDOUBLE_BORDER)
 		tileSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
@@ -214,18 +230,18 @@ class TilesortFrame(wxFrame):
 		for i in CommonTileSizes:
 			tileChoices.append( str("%d x %d" % (i[0], i[1])) )
 		tileChoices.append("Custom")
-		self.tileChoice = wxChoice(parent=self.topPanel, id=id_TileChoice,
+		self.tileChoice = wxChoice(parent=self, id=id_TileChoice,
 								   choices=tileChoices)
 		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
-		self.tileWidthLabel = wxStaticText(parent=self.topPanel, id=-1,
+		self.tileWidthLabel = wxStaticText(parent=self, id=-1,
 										   label="Width:")
-		self.tileWidthControl = wxSpinCtrl(parent=self.topPanel,
+		self.tileWidthControl = wxSpinCtrl(parent=self,
 										   id=id_TileWidth,
 										   value="512", min=128, max=2048,
 										   size=wxSize(80,25))
-		self.tileHeightLabel = wxStaticText(parent=self.topPanel, id=-1,
+		self.tileHeightLabel = wxStaticText(parent=self, id=-1,
 											label="Height:")
-		self.tileHeightControl = wxSpinCtrl(parent=self.topPanel,
+		self.tileHeightControl = wxSpinCtrl(parent=self,
 											id=id_TileHeight,
 											value="512", min=128, max=2048,
 											size=wxSize(80,25))
@@ -241,23 +257,23 @@ class TilesortFrame(wxFrame):
 		toolSizer.Add(tileSizer, flag=wxEXPAND)
 
 		# Total mural size (in pixels)
-		box = wxStaticBox(parent=self.topPanel, id=-1, label="Total Size",
+		box = wxStaticBox(parent=self, id=-1, label="Total Size",
 						  style=wxDOUBLE_BORDER)
 		totalSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		self.totalSizeLabel = wxStaticText(parent=self.topPanel, id=-1,
+		self.totalSizeLabel = wxStaticText(parent=self, id=-1,
 										   label="??")
 		totalSizer.Add(self.totalSizeLabel, flag=wxEXPAND)
 		toolSizer.Add(totalSizer, flag=wxEXPAND)
 
 		hChoices = [ 'Left to right', 'Right to left' ]
-		self.hLayoutRadio = wxRadioBox(parent=self.topPanel, id=id_hLayout,
+		self.hLayoutRadio = wxRadioBox(parent=self, id=id_hLayout,
 									   label="Horizontal Layout",
 									   choices=hChoices,
 									   majorDimension=1,
 									   style=wxRA_SPECIFY_COLS )
 		toolSizer.Add(self.hLayoutRadio, flag=wxEXPAND)
 		vChoices = [ 'Top to bottom', 'Bottom to top' ]
-		self.vLayoutRadio = wxRadioBox(parent=self.topPanel, id=id_vLayout,
+		self.vLayoutRadio = wxRadioBox(parent=self, id=id_vLayout,
 									   label="Vertical Layout",
 									   choices=vChoices,
 									   majorDimension=1,
@@ -267,21 +283,21 @@ class TilesortFrame(wxFrame):
 		EVT_RADIOBOX(self.vLayoutRadio, id_vLayout, self.__OnLayoutChange)
 
 		# Host naming
-		box = wxStaticBox(parent=self.topPanel, id=-1, label="Host Names",
+		box = wxStaticBox(parent=self, id=-1, label="Host Names",
 						  style=wxDOUBLE_BORDER)
 		hostSizer = wxStaticBoxSizer(box, wxVERTICAL)
 		# XXX should probably use a wxComboBox here so we can keep a small
 		# history of frequently used hostname pattern strings.
-		self.hostText = wxTextCtrl(parent=self.topPanel, id=id_HostText,
+		self.hostText = wxTextCtrl(parent=self, id=id_HostText,
 								   value=self.HostNamePattern)
 		EVT_TEXT(self.hostText, id_HostText, self.__OnHostNameChange)
 		hostSizer.Add(self.hostText, flag=wxEXPAND)
 
 		spinSizer = wxBoxSizer(wxHORIZONTAL)
-		firstLabel = wxStaticText(parent=self.topPanel, id=-1,
+		firstLabel = wxStaticText(parent=self, id=-1,
 								  label="First index: ")
 		spinSizer.Add(firstLabel, flag=wxALIGN_CENTER_VERTICAL)
-		self.hostSpin = wxSpinCtrl(parent=self.topPanel, id=id_HostIndex,
+		self.hostSpin = wxSpinCtrl(parent=self, id=id_HostIndex,
 								   value="0", min=0,
 								   size=wxSize(60,25))
 		EVT_SPINCTRL(self.hostSpin, id_HostIndex, self.__OnHostStartChange)
@@ -291,34 +307,53 @@ class TilesortFrame(wxFrame):
 		toolSizer.Add(hostSizer, flag=wxEXPAND)
 
 		# SPU option buttons
-		self.tilesortButton = wxButton(parent=self.topPanel, id=-1,
+		self.tilesortButton = wxButton(parent=self, id=-1,
 									   label="Tilesort SPU Options...")
 		toolSizer.Add(self.tilesortButton, flag=wxALL, border=4)
-		#self.renderButton = wxButton(parent=self.topPanel, id=-1,
-		#							 label="Render SPU Options...")
-		#toolSizer.Add(self.renderButton, flag=wxALL, border=4)
 
 		# Setup the drawing area
-		self.drawArea = wxPanel(self.topPanel, id=-1, style=wxSUNKEN_BORDER)
+		self.drawArea = wxPanel(self, id=-1, style=wxSUNKEN_BORDER)
 		self.drawArea.SetBackgroundColour(BackgroundColor)
 		EVT_PAINT(self.drawArea, self.__OnPaintEvent)
 
-		# Position everything in the window.
-		topSizer = wxBoxSizer(wxHORIZONTAL)
-		topSizer.Add(toolSizer, option=0,
-					 flag=wxTOP | wxLEFT | wxRIGHT | wxALIGN_TOP, border=5)
-		topSizer.Add(self.drawArea, 1, wxEXPAND)
+		# Sizer for the OK, Cancel buttons
+		okCancelSizer = wxGridSizer(rows=1, cols=2, vgap=4, hgap=20)
+		self.OkButton = wxButton(parent=self, id=id_OK, label="OK")
+		okCancelSizer.Add(self.OkButton, option=0,
+						  flag=wxALIGN_CENTER, border=0)
+		self.CancelButton = wxButton(parent=self, id=id_CANCEL,
+									 label="Cancel")
+		okCancelSizer.Add(self.CancelButton, option=0,
+						  flag=wxALIGN_CENTER, border=0)
+		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
+		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
 
-		self.topPanel.SetAutoLayout(true)
-		self.topPanel.SetSizer(topSizer)
+		# The toolAndDrawSizer contains the toolpanel and drawing area
+		toolAndDrawSizer = wxBoxSizer(wxHORIZONTAL)
+		toolAndDrawSizer.Add(toolSizer, option=0,
+ 					 flag=wxALL|wxALIGN_TOP, border=4)
+		toolAndDrawSizer.Add(self.drawArea, 1, wxEXPAND)
+
+		# horizontal separator (box with height=0)
+		separator = wxStaticBox(parent=self, id=-1,
+								label="", size=wxSize(100,0))
+
+		# The topsizer contains the toolAndDrawSizer and the okCancelSizer
+		topSizer = wxBoxSizer(wxVERTICAL)
+		topSizer.Add(toolAndDrawSizer, flag=wxGROW, border=0)
+		topSizer.Add(separator, flag=wxGROW, border=0)
+		topSizer.Add(okCancelSizer, option=0, flag=wxGROW|wxTOP, border=10)
+
+		self.SetAutoLayout(true)
+		self.SetSizer(topSizer)
 
 		minSize = topSizer.GetMinSize()
 		minSize[0] = 600
 		minSize[1] += 10
-		self.SetSizeHints(minW=250, minH=200)
+		self.SetSizeHints(minW=400, minH=minSize[1])
 		self.SetSize(minSize)
 
-		self.dirty     = false
+		self.dirty = false
 
 		self.__RecomputeTotalSize()
 		
@@ -426,6 +461,13 @@ class TilesortFrame(wxFrame):
 		self.drawArea.Refresh()
 		self.dirty = true
 
+	def _onOK(self, event):
+		"""Called by OK button"""
+		self.EndModal(wxID_OK)
+
+	def _onCancel(self, event):
+		"""Called by Cancel button"""
+		self.EndModal(wxID_CANCEL)
 
 	def __OnPaintEvent(self, event):
 		""" Respond to a request to redraw the contents of our drawing panel.
@@ -614,6 +656,8 @@ class TilesortFrame(wxFrame):
 			f.write("TILE_COLS = %d\n" % tilesort.Columns)
 			f.write("TILE_WIDTH = %d\n" % tilesort.TileWidth)
 			f.write("TILE_HEIGHT = %d\n" % tilesort.TileHeight)
+			f.write("RIGHT_TO_LEFT = %d\n" % tilesort.RightToLeft)
+			f.write("BOTTOM_TO_TOP = %d\n" % tilesort.BottomToTop)
 			f.write("HOSTNAME = \"%s\"\n" % tilesort.Hostname)
 			f.write("FIRSTHOST = %d\n" % tilesort.FirstHost)
 			tilesortOptions = self.tilesortInfo[1]
@@ -655,7 +699,8 @@ class TilesortFrame(wxFrame):
 
 
 #----------------------------------------------------------------------
-# Global entrypoints
+# Global entrypoints called from the templates.py module, everthing else
+# above here is private.
 
 def Create_Tilesort(parentWindow, mothership):
 	"""Create a tilesort configuration"""
@@ -712,10 +757,15 @@ def Edit_Tilesort(parentWindow, mothership):
 	"""Edit parameters for a Tilesort template"""
 	# XXX we only need to create one instance of the TilesortFrame() and
 	# reuse it in the future.
-	d = TilesortFrame()
+	d = TilesortDialog()
 	d.Centre()
-	d.Show(TRUE)
+	backupTilesortParams = mothership.Tilesort.Clone()
 	d.SetMothership(mothership)
-	pass
+	if d.ShowModal() == wxID_CANCEL:
+		mothership.Tilesort = backupTilesortParams
+	else:
+		# update the server node count
+		pass
+
 
 
