@@ -11,6 +11,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #define RENDER_APIENTRY __stdcall
+#elif defined(DARWIN)
+#include <AGL/AGL.h>
+#define RENDER_APIENTRY
 #else
 #include <GL/glx.h>
 #define RENDER_APIENTRY
@@ -31,6 +34,8 @@ typedef struct {
 #ifdef WINDOWS
 	HDC device_context;
 	HWND hWnd;
+#elif defined(DARWIN)
+	WindowRef window;
 #else
 	Display *dpy;
 	XVisualInfo *visual;
@@ -38,7 +43,7 @@ typedef struct {
 } VisualInfo;
 
 /**
- * Window info 
+ * Window info
  */
 typedef struct {
 	int x, y;
@@ -48,12 +53,19 @@ typedef struct {
 	GLboolean mapPending;
 	GLboolean visible;
 	GLboolean everCurrent; /**< has this window ever been bound? */
-#ifndef WINDOWS
+#ifdef WINDOWS
+	HDC nativeWindow; /**< for render_to_app_window */
+#elif defined(DARWIN)
+	WindowRef window;
+	WindowRef nativeWindow; /**< for render_to_app_window */
+	WindowRef appWindow;
+
+	EventHandlerUPP event_handler;
+/*	unsigned long context_ptr; */
+#else
 	Window window;
 	Window nativeWindow;  /**< for render_to_app_window */
 	Window appWindow;       /**< Same as nativeWindow but for garbage collections purposes */
-#else
-	HDC nativeWindow; /**< for render_to_app_window */
 #endif
 	int nvSwapGroup;
 
@@ -74,6 +86,8 @@ typedef struct {
 	GLboolean haveWindowPosARB;
 #ifdef WINDOWS
 	HGLRC hRC;
+#elif defined(DARWIN)
+	AGLContext context;
 #else
 	GLXContext context;
 #endif
@@ -179,7 +193,7 @@ extern void renderspu_SystemDestroyContext( ContextInfo *context );
 extern GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window );
 extern void renderspu_SystemDestroyWindow( WindowInfo *window );
 extern void renderspu_SystemWindowSize( WindowInfo *window, int w, int h );
-extern void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h );
+extern void renderspu_SystemGetWindowSize( WindowInfo *window, GLint *w, GLint *h );
 extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
 extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
 extern void renderspu_SystemMakeCurrent( WindowInfo *window, GLint windowInfor, ContextInfo *context );

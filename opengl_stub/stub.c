@@ -12,7 +12,7 @@
 /**
  * Returns -1 on error
  */
-int APIENTRY crCreateContext( const char *dpyName, GLint visBits )
+GLint APIENTRY crCreateContext( const char *dpyName, GLint visBits )
 {
 	ContextInfo *context;
 	stubInit();
@@ -38,7 +38,11 @@ void APIENTRY crMakeCurrent( GLint window, GLint context )
 		crWarning("Can't call crMakeCurrent with native GL context");
 		return;
 	}
+#ifdef DARWIN
+	stubMakeCurrent(winInfo, contextInfo, GL_TRUE);
+#else
 	stubMakeCurrent(winInfo, contextInfo);
+#endif
 }
 
 GLint APIENTRY crGetCurrentContext( void )

@@ -49,7 +49,7 @@ static struct {
 	int           initialized;
 } __timer;
 
-#elif defined( Linux ) || defined( FreeBSD ) || defined(AIX) || defined (SunOS) || defined(OSF1) || defined( DARWIN)
+#elif defined( Linux ) || defined( FreeBSD ) || defined(AIX) || defined (SunOS) || defined(OSF1) || defined(DARWIN)
 
 static struct {
 	int initialized;

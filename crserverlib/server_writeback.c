@@ -11,7 +11,7 @@
 
 #include <memory.h>
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchWriteback( int *writeback )
+void SERVER_DISPATCH_APIENTRY crServerDispatchWriteback( GLint *writeback )
 {
 	(void) writeback;
 	crServerWriteback( );

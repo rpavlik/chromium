@@ -5,9 +5,8 @@
 
 TOP = ../..
 
-SPU=1
+SPU = 1
 include ${TOP}/arch.mk
-
 
 SHARED = 1
 LIBRARY = tilesortspu
@@ -66,6 +65,9 @@ include ${TOP}/cr.mk
 ifdef WINDOWS
     LDFLAGS += user32.lib gdi32.lib
 else
+ifdef DARWIN
+    LDFLAGS += -framework Carbon
+else
     LDFLAGS += -lXmu -lX11
     ifeq ($(USE_DMX), 1)
         ifdef DMX_LIBDIR
@@ -76,6 +78,7 @@ else
             CFLAGS += -I${DMX_INCDIR}
         endif
     endif
+endif
 endif
 
 APIFILES = ../../glapi_parser/apiutil.py ../../glapi_parser/APIspec.txt

@@ -53,6 +53,18 @@ def GenerateEntrypoints(hacks = []):
 				print "{"
 				print "\tglim.TexImage3D( target, level, (GLint) internalformat, width, height, depth, border, format, type, pixels );"
 				print "}"
+			elif func_name == "TexImage2D":
+				# Pretty common: internalformat is GLenum, not GLint
+				print "void glTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels )"
+				print "{"
+				print "\tglim.TexImage2D( target, level, (GLint) internalformat, width, height, border, format, type, pixels );"
+				print "}"
+			elif func_name == "TexImage1D":
+				# Pretty common: internalformat is GLenum, not GLint
+				print "void glTexImage1D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels )"
+				print "{"
+				print "\tglim.TexImage1D( target, level, (GLint) internalformat, width, border, format, type, pixels );"
+				print "}"
 			elif func_name == "EdgeFlagPointer":
 				# second arg is GLboolean instead of GLvoid
 				print "void glEdgeFlagPointer( GLsizei stride, const GLboolean *pointer )"
@@ -105,18 +117,25 @@ def GenerateEntrypoints(hacks = []):
 		# alias is the function we're aliasing
 		alias = apiutil.Alias(func_name)
 		if alias:
-			return_type = apiutil.ReturnType(func_name)
-			params = apiutil.Parameters(func_name)
-			print "%s gl%s( %s );" % (return_type, func_name, apiutil.MakeDeclarationString(params))
-			print ""
-			print "%s gl%s( %s )" % (return_type, func_name, apiutil.MakeDeclarationString(params))
-			print "{"
-			print "\t",
-			if return_type != "void":
-				print "return ",
-			print "glim.%s( %s );" % (alias, apiutil.MakeCallString(params))
-			print "}"
-			print ""
+			if func_name in hacks:
+				if func_name == "MultiDrawArrays":
+					print "void glMultiDrawArrays( GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount )"
+					print "{"
+					print "\tglim.MultiDrawArraysEXT( mode, (GLint*)first, (GLsizei*)count, primcount );"
+					print "}"
+			else:
+				return_type = apiutil.ReturnType(func_name)
+				params = apiutil.Parameters(func_name)
+				print "%s gl%s( %s );" % (return_type, func_name, apiutil.MakeDeclarationString(params))
+				print ""
+				print "%s gl%s( %s )" % (return_type, func_name, apiutil.MakeDeclarationString(params))
+				print "{"
+				print "\t",
+				if return_type != "void":
+					print "return ",
+				print "glim.%s( %s );" % (alias, apiutil.MakeCallString(params))
+				print "}"
+				print ""
 
 	print '/*'
 	print '* No-op stubs'

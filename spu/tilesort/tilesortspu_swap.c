@@ -21,7 +21,7 @@
 void TILESORTSPU_APIENTRY tilesortspu_SwapBuffers( GLint window, GLint flags )
 {
 	GET_THREAD(thread);
-	int writeback = tilesort_spu.num_servers;
+	GLint writeback = tilesort_spu.num_servers;
 	WindowInfo *winInfo;
 	int serverWindow;
 

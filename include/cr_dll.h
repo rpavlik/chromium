@@ -20,8 +20,11 @@ typedef struct {
 	char *name;
 #if defined(WINDOWS)
 	HINSTANCE hinstLib;
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(DARWIN) || defined(AIX) || defined(SunOS) || defined(OSF1)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
 	void *hinstLib;
+#elif defined(DARWIN)
+	void *hinstLib;		/* void to avoid including the headers */
+	int type;		/* to avoid calling crStrstr all the time */
 #else
 #error ARCHITECTURE DLL NOT IMPLEMENTED
 #endif

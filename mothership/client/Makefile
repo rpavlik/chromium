@@ -5,9 +5,7 @@
 
 TOP = ../..
 
-MOTHERSHIP=1
-
-include ${TOP}/arch.mk
+MOTHERSHIP = 1
 
 SHARED = 1
 LIBRARY = crmothership

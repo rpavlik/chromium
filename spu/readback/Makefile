@@ -14,12 +14,7 @@ FILES = readbackspu \
 	readbackspu_config \
 	readbackspu_init
 
-ifdef WINDOWS
 LIBRARIES = spuload crutil crmothership
-else
-LIBRARIES = spuload crutil crmothership
-endif
-
 
 ifdef BINUTIL_LINK_HACK
 TRACKS_STATE = 0

@@ -57,8 +57,9 @@ ARCH_EXPORTS = $(ARCH)_exports.c
 endif
 
 ifeq ($(ARCH), Darwin)
-LDFLAGS +=  -lX11 -compatibility_version 1.2 -current_version 1.4 
-FILES += $(ARCH)_exports glx xfont cgl
+LDFLAGS += -L/System/Library/Frameworks/OpenGL.framework/Libraries
+LDFLAGS += -framework Carbon -compatibility_version 1.0.0 -current_version 1.0.0 -sub_library libGLU -lGLU
+FILES += $(ARCH)_exports cgl
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif

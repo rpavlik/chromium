@@ -91,7 +91,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 {
 	GET_THREAD(thread);
-	int writeback = tilesort_spu.num_servers;
+	GLint writeback = tilesort_spu.num_servers;
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{

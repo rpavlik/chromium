@@ -15,13 +15,15 @@ typedef int ssize_t;
 #else
 #include <sys/types.h>
 #include <sys/wait.h>
-#if defined(OSF1)
+#ifdef OSF1
 typedef int socklen_t;
 #endif
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#ifndef DARWIN
 #include <netinet/tcp.h>
+#endif
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>

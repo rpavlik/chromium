@@ -41,7 +41,9 @@ endif
 ifeq ($(ARCH), WIN_NT)
 SUBDIRS += wgl
 else
+ifndef DARWIN
 SUBDIRS += glx dlistperf1 dlistperf2 packertest
+endif
 endif
 
 include ${TOP}/cr.mk

@@ -51,7 +51,11 @@ LDFLAGS += glut32.lib
 CFLAGS += -DGLUT_DISABLE_ATEXIT_HACK
 CXXFLAGS += -DGLUT_DISABLE_ATEXIT_HACK
 else
+ifdef DARWIN
+LDFLAGS += -framework GLUT -lobjc
+else
 LDFLAGS += -L/usr/X11R6/lib -lglut
+endif
 endif
 OPENGL = 1
 endif
@@ -60,10 +64,18 @@ ifdef OPENGL
 ifdef WINDOWS
 LDFLAGS += glu32.lib opengl32.lib gdi32.lib user32.lib shell32.lib
 else
+ifdef DARWIN
+ifdef FORCE_FAKER
+LDFLAGS += -bind_at_load -multiply_defined suppress
+else
+LDFLAGS += -framework OpenGL
+endif
+else
 ifdef SYSTEM_OPENGL_LIBRARY
 LDFLAGS += -L/usr/X11R6/lib -lGLU $(SYSTEM_OPENGL_LIBRARY) -lXmu -lXi -lX11
 else
 LDFLAGS += -L/usr/X11R6/lib -lGLU -lGL -lXmu -lXi -lX11
+endif
 endif
 endif
 endif
@@ -130,6 +142,9 @@ TEMPFILES := *~ \\\#*\\\# so_locations *.pyc tmpAnyDX.a tmpAnyDX.exp load.map sh
 
 ifdef PROGRAM
 PROG_TARGET := $(BINDIR)/$(PROGRAM)
+ifdef DARWIN
+LDFLAGS += -execute
+endif
 TARGET := $(PROGRAM)
 SHORT_TARGET_NAME = $(PROGRAM)
 else

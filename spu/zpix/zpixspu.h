@@ -16,9 +16,6 @@
 #include "cr_spu.h"
 #include "cr_server.h"
 
-#ifdef DARWIN
-typedef unsigned long ulong;
-#endif
 
 /* 
      compression types

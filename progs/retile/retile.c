@@ -38,6 +38,12 @@ static glGetChromiumParametervCRProc glGetChromiumParametervCRptr;
 static void
 GetCrExtensions(void)
 {
+#ifdef DARWIN
+	glChromiumParameteriCRptr = glChromiumParameteriCR;
+	glChromiumParameterfCRptr = glChromiumParameterfCR;
+	glChromiumParametervCRptr = glChromiumParametervCR;
+	glGetChromiumParametervCRptr = glGetChromiumParametervCR;
+#else
 	glChromiumParameteriCRptr = (glChromiumParameteriCRProc)
  		GET_PROC("glChromiumParameteriCR");
 	glChromiumParameterfCRptr = (glChromiumParameterfCRProc)
@@ -46,6 +52,7 @@ GetCrExtensions(void)
 		GET_PROC("glChromiumParametervCR");
 	glGetChromiumParametervCRptr = (glGetChromiumParametervCRProc)
 		GET_PROC("glGetChromiumParametervCR");
+#endif
 
 	if (!glChromiumParameteriCRptr || !glChromiumParameterfCRptr ||
 			!glChromiumParametervCRptr || !glGetChromiumParametervCRptr) {

@@ -95,7 +95,7 @@ glChromiumParametervCRProc glChromiumParametervCR_ptr;
 
 
 static GLfloat
-Random(GLfloat min, GLfloat max)
+_Random(GLfloat min, GLfloat max)
 {
 	GLfloat x = (float) rand() / (float) RAND_MAX;
 	return x * (max - min) + min;
@@ -198,10 +198,10 @@ GenerateBuildings(void)
 		GLfloat g;
 
 		/* x/y position and size */
-		b->x = Random(-14, 14);
-		b->z = Random(-14, 14);
-		b->sx = Random(0.5, 2);
-		b->sz = Random(0.5, 2);
+		b->x = _Random(-14, 14);
+		b->z = _Random(-14, 14);
+		b->sx = _Random(0.5, 2);
+		b->sz = _Random(0.5, 2);
 		/* make buildings in middle generally taller than outlying buildings */
 #if 1
 		atten = 0.2 + cos(b->x / 12) * cos(b->z / 12);
@@ -210,9 +210,9 @@ GenerateBuildings(void)
 #endif
 		atten = atten * atten;
 		/* height */
-		b->sy = Random(0.2f, 8) * atten;
+		b->sy = _Random(0.2f, 8) * atten;
 		b->y = 0.5 * b->sy;
-		g = Random(0.3f, 0.7f);
+		g = _Random(0.3f, 0.7f);
 		b->color[0] = g;
 		b->color[1] = g;
 		b->color[2] = g;

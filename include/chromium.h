@@ -40,12 +40,21 @@
 #include <windows.h>
 #endif
 
+#ifndef DARWIN
 #include <GL/gl.h>
+#endif
 
 #ifndef WINDOWS
 #define CR_APIENTRY
+#ifndef DARWIN
 #include <GL/glx.h>
 #include <GL/glu.h>
+#else
+#include <AGL/agl.h>
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#endif
 #endif
 
 
@@ -612,6 +621,8 @@ CR_PROC APIENTRY crGetProcAddress( const char *name );
 
 #ifdef WINDOWS
 #define GET_PROC(NAME) wglGetProcAddress((const GLbyte *) (NAME))
+#elif defined(DARWIN)
+#define GET_PROC(NAME) NULL
 #elif defined(GLX_ARB_get_proc_address)
 #define GET_PROC(NAME) glXGetProcAddressARB((const GLubyte *) (NAME))
 #else

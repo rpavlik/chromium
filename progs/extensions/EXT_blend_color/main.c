@@ -17,9 +17,15 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef DARWIN
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
+#else
+#include <OpenGL/glu.h>
+#include <GLUT/glut.h>
+#include <OpenGL/glext.h>
+#endif
 
 #ifndef GL_EXT_blend_color
 #error Please update your GL/glext.h header file.
@@ -217,7 +223,7 @@ InitSpecial(void)
 #ifdef WIN32
 	glBlendColor_ext =
 		(GLBLENDCOLOREXTPROC) wglGetProcAddress("glBlendColorEXT");
-#elif defined(IRIX) || defined (SunOS)
+#elif defined(IRIX) || defined (SunOS) || defined(DARWIN)
 	glBlendColor_ext = glBlendColorEXT;
 #else
 	glBlendColor_ext =

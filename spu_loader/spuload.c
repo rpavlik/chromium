@@ -16,20 +16,18 @@
 #ifdef WINDOWS
 #define DLL_SUFFIX ".dll"
 #define DLL_PREFIX ""
+#elif defined(DARWIN)
+#define DLL_SUFFIX ".bundle"
+#define DLL_PREFIX ""
 #else
 #ifdef AIX
 #define DLL_SUFFIX ".o"
-#define DLL_PREFIX "lib"
-#else
-#ifdef DARWIN
-#define DLL_SUFFIX ".dylib"
 #define DLL_PREFIX "lib"
 #else
 #define DLL_SUFFIX ".so"
 #define DLL_PREFIX "lib"
 #endif
 #endif
-#endif 
 
 extern void __buildDispatch( SPU *spu );
 

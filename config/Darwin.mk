@@ -3,20 +3,21 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
-DARWIN=1
+DARWIN = 1
+
 G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++ -fno-common
-CC = gcc -I/sw/include -I$(TOP)/include -I/usr/X11R6/include -fno-common
+CC = gcc -fno-common
 
-CXXFLAGS          += -DDARWIN -Wall -Werror -Wno-format
+CXXFLAGS          += -DDARWIN -DDarwin -Wall -Wno-format
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
-CFLAGS            += -DDARWIN -Wall -Werror -Wno-format
+CFLAGS            += -DDARWIN -DDarwin -Wall -Wno-format
 C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
-LDFLAGS           += -L/usr/X11R6/lib -L/sw/lib
+LDFLAGS           += 
 LD_RELEASE_FLAGS  += 
 LD_DEBUG_FLAGS    += 
 
@@ -41,21 +42,9 @@ LATEX = latex
 BIBTEX = bibtex
 DVIPS = dvips -t letter
 GHOSTSCRIPT = gs
-LIBPREFIX = lib
-DLLSUFFIX = .dylib
 LIBSUFFIX = .a
 OBJSUFFIX = .o
 MV = mv
-ifdef MOTHERSHIP
-SHARED_LDFLAGS += -dynamiclib -noprebind
-else
-ifdef SPU
-SHARED_LDFLAGS += -bundle -noprebind
-else
-SHARED_LDFLAGS += -dynamiclib -noprebind -multiply_defined suppress 
-endif
-endif
-
 PERL = perl
 PYTHON = python
 JGRAPH = /u/eldridge/bin/IRIX/jgraph
@@ -66,6 +55,22 @@ PS2PDF = ps2pdf
 MPI_CC = mpicc
 MPI_CXX = mpiCC
 MPI_LDFLAGS =
+
+ifdef MOHERSHIP
+LIBPREFIX = lib
+DLLSUFFIX = .dylib
+SHARED_LDFLAGS += -dynamiclib
+else
+ifdef SPU
+LIBPREFIX = 
+DLLSUFFIX = .bundle
+SHARED_LDFLAGS = -bundle
+else
+LIBPREFIX = lib
+DLLSUFFIX = .dylib
+SHARED_LDFLAGS = -dynamiclib -multiply_defined suppress
+endif
+endif
 
 QT=0
 ifeq ($(QT),1)

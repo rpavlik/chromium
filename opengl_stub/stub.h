@@ -68,6 +68,16 @@ struct context_info_t
 	WindowInfo *currentDrawable;
 #ifdef WINDOWS
 	HGLRC hglrc;
+#elif defined(DARWIN)
+	ContextInfo *share;
+	CGLContextObj cglc;
+
+	/* This is all for delaying the CGLSetParameter calls */
+	GLint parambits;
+	long swap_rect[4];
+	long swap_interval;
+	unsigned long client_storage;
+	long	disp_mask;
 #else
 	Display *dpy;
 	ContextInfo *share;
@@ -76,6 +86,14 @@ struct context_info_t
 	GLXContext glxContext;
 #endif
 };
+
+#ifdef DARWIN
+enum {
+	VISBIT_SWAP_RECT,
+	VISBIT_SWAP_INTERVAL,
+	VISBIT_CLIENT_STORAGE
+};
+#endif
 
 struct window_info_t
 {
@@ -86,6 +104,8 @@ struct window_info_t
 	GLint spuWindow;       /* returned by head SPU's WindowCreate() */
 #ifdef WINDOWS
 	HDC drawable;
+#elif defined(DARWIN)
+	WindowRef drawable;
 #else
 	Display *dpy;
 	GLXDrawable drawable;
@@ -153,6 +173,16 @@ extern HGLRC stubCreateContext( HDC hdc );
 extern WindowInfo *stubGetWindowInfo( HDC drawable );
 extern GLuint FindVisualInfo( HDC hdc );
 
+#elif defined(DARWIN)
+
+/* These don't seem to be included in the OSX glext.h ... */
+extern void glPointParameteri( GLenum pname, GLint param );
+extern void glPointParameteriv( GLenum pname, const GLint * param );
+
+extern CGLError stubCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx );
+extern WindowInfo *stubGetWindowInfo( WindowRef drawable );
+extern GLuint FindVisualInfo( CGLPixelFormatObj pix );
+
 #else
 
 /* GLX versions */
@@ -166,7 +196,12 @@ extern void stubUseXFont( Display *dpy, Font font, int first, int count, int lis
 
 extern ContextInfo *stubNewContext( const char *dpyName, GLint visBits, ContextType type );
 extern void stubDestroyContext( unsigned long contextId );
+#ifdef DARWIN
+extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context, GLboolean have_drawable );
+extern void stubSwapContextBuffers( const ContextInfo *context, GLint flags );
+#else
 extern GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context );
+#endif
 extern GLint stubNewWindow( const char *dpyName, GLint visBits );
 extern void stubSwapBuffers( const WindowInfo *window, GLint flags );
 extern void stubGetWindowGeometry( const WindowInfo *win, int *x, int *y, unsigned int *w, unsigned int *h );

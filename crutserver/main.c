@@ -31,7 +31,7 @@ crutServerRecv( CRConnection *conn, void *buf, unsigned int len )
     default:
 	return 0; /* NOT HANDLED */
     }
-#ifndef WINDOWS	
+#if !( defined(WINDOWS) || defined(DARWIN) )
   return 0; /* HANDLED */
 #endif
 }
@@ -323,8 +323,13 @@ crutInitServer(char *mothership, int argc, char *argv[])
     
     /* give window id to mothership */
 #ifndef WINDOWS
+#ifdef DARWIN
+	/* XXX \todo crut get current drawable (this only gets glut win_num) */
+	drawable = glutGetWindow();
+#else
     /* XXX is this cast safe? */
     drawable = (int) glXGetCurrentDrawable();
+#endif
     crutSetWindowID( &crut_api, drawable);
 #endif
 
@@ -402,7 +407,8 @@ main( int argc, char *argv[] )
 {
     int i;
     char *mothership = NULL;
-#ifndef WINDOWS
+#ifdef DARWIN
+#elif !defined(WINDOWS)
     Display *disp = NULL;
 #endif
 
@@ -440,7 +446,8 @@ main( int argc, char *argv[] )
         glutReshapeFunc(handleReshape);
   
     /* Need to 'release' the current drawable so render SPU can make current to it*/
-#ifndef WINDOWS
+#ifdef DARWIN
+#elif !defined(WINDOWS)
     disp = glXGetCurrentDisplay();
     glXMakeCurrent(disp, None, NULL);
 #endif

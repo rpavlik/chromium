@@ -44,7 +44,7 @@ typedef enum {
 } StereoMode;
 
 /**
- *  Glasses filter types 
+ *  Glasses filter types
  */
 typedef enum {
 	RED_BLUE,
@@ -55,8 +55,8 @@ typedef enum {
 	CYAN_RED
 } GlassesType;
 
-/** 
- * Which view/projection matrices do we use? 
+/**
+ * Which view/projection matrices do we use?
  */
 typedef enum {
 	MATRIX_SOURCE_APP = 0,   /**< application's matrices */
@@ -106,6 +106,8 @@ struct context_info_t {
 	CRDLMContextState *dlmContext; /**< display list manager state */
 #ifdef WINDOWS
 	HDC client_hdc;
+#elif defined(DARWIN)
+	AGLContext context;
 #else
 	Display *dpy;
 #endif
@@ -113,7 +115,7 @@ struct context_info_t {
 	ServerContextInfo *server;  /**< array [num_servers] of ServerContextInfo */
 
 	/**
-	 * \name Misc per-context tilesort state 
+	 * \name Misc per-context tilesort state
 	 */
 	/*@{*/
 	GLenum providedBBOX;  /**< GL_OBJECT/SCREEN/DEFAULT_BBOX_CR */
@@ -129,10 +131,10 @@ struct context_info_t {
 };
 
 /**
- * For DMX 
+ * For DMX
  */
 struct backend_window_info_t {
-#ifndef WINDOWS
+#if !( defined(WINDOWS) || defined(DARWIN) )
 	GLXDrawable xwin;     /**< backend server's X window */
 	GLXDrawable xsubwin;  /**< child of xwin, clipped to screen bounds */
 	Display *dpy;
@@ -153,7 +155,7 @@ struct server_window_info_t {
 	CRmatrix projectionMatrix[2]; /**< 0=left, 1=right */
  	/*@}*/
 	/**
-	 *  \name warped grid 
+	 *  \name warped grid
 	 */
 	/*@{*/
 	int display_ndx[CR_MAX_EXTENTS];
@@ -174,7 +176,7 @@ struct window_info_t {
 	BackendWindowInfo *backendWindows;       /**< array [num_servers] */
 
 	/**
-	 *  \name tilesort stuff 
+	 *  \name tilesort stuff
 	 */
 	/*@{*/
 	GLint muralWidth, muralHeight;  /**< may not match window size */
@@ -185,9 +187,9 @@ struct window_info_t {
 	void *bucketInfo;          /**< private to tilesortspu_bucket.c */
 	/*@}*/
 
-	/** 
-	 * \name stereo stuff 
- 	 */
+	/**
+	 * \name stereo stuff
+	 */
 	/*@{*/
 	GLboolean passiveStereo;  /**< true if working in passive stereo mode */
 	GLboolean forceQuadBuffering;
@@ -202,6 +204,8 @@ struct window_info_t {
 
 #ifdef WINDOWS
 	HWND client_hwnd;
+#elif defined(DARWIN)
+	WindowRef window;
 #else
 	Display *dpy;
 	GLXDrawable xwin;

@@ -11,6 +11,10 @@
 #include "cr_spu.h"
 #include "zpixspu.h"
 
+#ifdef DARWIN
+typedef unsigned long ulong;
+#endif
+
 /*  Forward declarations */
 
 void ZPIXSPU_APIENTRY zpixRasterPos2i( GLint x,  GLint y );

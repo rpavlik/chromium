@@ -18,6 +18,9 @@
 #ifdef WINDOWS
 #define DLL_SUFFIX ".dll"
 #define DLL_PREFIX ""
+#elif defined(DARWIN)
+#define DLL_SUFFIX ".bundle"
+#define DLL_PREFIX ""
 #else
 #ifdef AIX
 #define DLL_SUFFIX ".o"

@@ -5,21 +5,14 @@
 
 TOP = ../..
 
-SPU=1
-include ${TOP}/arch.mk
-
-
+SPU = 1
 SHARED = 1
 LIBRARY = binaryswapspu
 FILES = binaryswapspu \
 	binaryswapspu_config \
 	binaryswapspu_init
 
-ifdef WINDOWS
 LIBRARIES = spuload crutil crmothership
-else
-LIBRARIES = spuload crutil crmothership
-endif
 
 SLOP = $(PRECOMP)
 

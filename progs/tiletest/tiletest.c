@@ -37,6 +37,12 @@ static glGetChromiumParametervCRProc glGetChromiumParametervCRptr;
 static void
 GetCrExtensions(void)
 {
+#ifdef DARWIN
+	glChromiumParameteriCRptr = glChromiumParameteriCR;
+	glChromiumParameterfCRptr = glChromiumParameterfCR;
+	glChromiumParametervCRptr = glChromiumParametervCR;
+	glGetChromiumParametervCRptr = glGetChromiumParametervCR;
+#else
 	glChromiumParameteriCRptr = (glChromiumParameteriCRProc)
 		GET_PROC("glChromiumParameteriCR");
 	glChromiumParameterfCRptr = (glChromiumParameterfCRProc)
@@ -45,6 +51,7 @@ GetCrExtensions(void)
 		GET_PROC("glChromiumParametervCR");
 	glGetChromiumParametervCRptr = (glGetChromiumParametervCRProc)
 		GET_PROC("glGetChromiumParametervCR");
+#endif
 
 	if (!glChromiumParameteriCRptr || !glChromiumParameterfCRptr ||
 			!glChromiumParametervCRptr || !glGetChromiumParametervCRptr) {
@@ -319,7 +326,7 @@ PrintMuralInformation(const mural_t *m)
 
 
 static void
-DrawString(GLint x, GLint y, const char *s, float scale)
+_DrawString(GLint x, GLint y, const char *s, float scale)
 {
 	 int i;
 	 glPushMatrix();
@@ -398,7 +405,7 @@ DrawTileMapping(const mural_t *m)
 			sprintf(name, "s%dt%d", s, t);
 
 			scale = .002 * (b->x1 - b->x0);
-			DrawString(b->x0 + 5, b->y0 + 5, name, scale);
+			_DrawString(b->x0 + 5, b->y0 + 5, name, scale);
 		}
 	}
 	glutSwapBuffers();

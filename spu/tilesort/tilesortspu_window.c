@@ -339,6 +339,41 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
 		}
 	}
+#elif defined(DARWIN)
+	GrafPtr save;
+	Rect rect;
+
+	if( !winInfo->window ) {
+		if( tilesort_spu.fakeWindowWidth != 0 ) {
+			winInfo->lastWidth = tilesort_spu.fakeWindowWidth;
+			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
+		} else {
+			winInfo->lastWidth = 0;
+			winInfo->lastHeight = 0;
+		}
+		return;
+	}
+
+#if 1
+	GetWindowBounds( winInfo->window, kWindowContentRgn, &rect );
+#else
+	GetPort( &save );
+	SetPortWindowPort( winInfo->window );
+	GetWindowPortBounds( winInfo->window, &rect );
+	SetPort( save );
+#endif
+
+	winInfo->lastWidth = rect.right - rect.left;
+	winInfo->lastHeight = rect.bottom - rect.top;
+	winInfo->lastX = rect.left;
+	winInfo->lastY = rect.top;
+
+	if( winInfo->lastWidth == 0 || winInfo->lastHeight == 0 ) {
+		if( tilesort_spu.fakeWindowWidth != 0 ) {
+			winInfo->lastWidth = tilesort_spu.fakeWindowWidth;
+			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
+		}
+	}
 #else
 	int x, y;
 	unsigned int width, height, borderWidth, depth;
@@ -484,6 +519,9 @@ WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint xwindowID)
 #ifdef WINDOWS
 	if (!winInfo->client_hwnd)
 		winInfo->client_hwnd = (HWND) xwindowID;
+#elif defined(DARWIN)
+	if( !winInfo->window )
+		winInfo->window = (WindowRef) xwindowID;
 #else
 	if (!winInfo->xwin)
 		winInfo->xwin = xwindowID;

@@ -18,9 +18,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef DARWIN
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/glext.h>
+#else
+#include <OpenGL/glu.h>
+#include <GLUT/glut.h>
+#include <OpenGL/glext.h>
+#endif
 
 #define TEST_EXTENSION_STRING  "GL_EXT_blend_subtract"
 #ifndef GL_EXT_blend_subtract
@@ -231,7 +237,7 @@ InitSpecial(void)
 #ifdef WIN32
 	glBlendEquation_ext =
 		(GLBLENDEQUATIONEXTPROC) wglGetProcAddress("glBlendEquationEXT");
-#elif defined(IRIX) || defined (SunOS)
+#elif defined(IRIX) || defined (SunOS) || defined (DARWIN)
 	glBlendEquation_ext = glBlendEquationEXT;
 #else
 	glBlendEquation_ext =

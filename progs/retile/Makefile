@@ -17,4 +17,9 @@ ifeq ($(ARCH), SunOS)
 LDFLAGS += -lcrfaker
 endif
 
+ifeq ($(ARCH), Darwin)
+LIBRARIES = crutil crfaker crmothership spuload
+FORCE_FAKER = 1
+endif
+
 include ${TOP}/cr.mk

@@ -57,6 +57,10 @@ LDFLAGS += gm.lib
 endif
 endif
 
+ifeq ($(ARCH), Darwin)
+LDFLAGS += -framework Carbon -framework CoreFoundation
+endif
+
 ifeq ($(ARCH), SunOS)
 LDFLAGS+= -lsocket -lnsl
 endif

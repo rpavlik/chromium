@@ -688,7 +688,9 @@ getTilingFromDMX( WindowInfo *winInfo )
 void
 tilesortspuGetNewTiling(WindowInfo *winInfo)
 {
+#if !( defined(WINDOWS) || defined(DARWIN) )
 	GET_THREAD(thread);
+#endif
 
 	switch (winInfo->bucketMode) {
 		case UNIFORM_GRID:
@@ -731,7 +733,7 @@ tilesortspuGetNewTiling(WindowInfo *winInfo)
 	/* This forces the GL context to update it's raster origin */
 	winInfo->validRasterOrigin = GL_FALSE;
 
-#ifndef WINDOWS
+#if !( defined(WINDOWS) || defined(DARWIN) )
 	/*
 	 * If we've redone the tiling and now we've got new back-end DMX windows
 	 * we have to do a MakeCurrent to bind the back-end OpenGL renderers to

@@ -68,8 +68,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 	case GL_TILE_INFO_CR:
 		/* message from tilesort SPU to set new tile bounds */
 		{
-			int numTiles, muralWidth, muralHeight, server, tiles;
-			int *tileBounds;
+			GLint numTiles, muralWidth, muralHeight, server, tiles;
+			GLint *tileBounds;
 			CRASSERT(count >= 4);
 			CRASSERT((count - 4) % 4 == 0); /* must be multiple of four */
 			CRASSERT(type == GL_INT);

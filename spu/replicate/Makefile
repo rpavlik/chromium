@@ -6,8 +6,8 @@
 TOP = ../..
 
 include ${TOP}/arch.mk
-SPU=1
 
+SPU = 1
 SHARED = 1
 LIBRARY = replicatespu
 FILES = replicatespu \

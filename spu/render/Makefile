@@ -14,10 +14,14 @@ FILES = renderspu \
 	renderspu_config \
 	renderspu_init
 
-ifeq ($(ARCH), WIN_NT)
+ifdef WINDOWS
 FILES += renderspu_wgl
 else
+ifdef DARWIN
+FILES += renderspu_agl
+else
 FILES += renderspu_glx
+endif
 endif
 
 LIBRARIES += crutil crmothership spuload
@@ -30,5 +34,9 @@ include ${TOP}/cr.mk
 ifdef WINDOWS
 LDFLAGS += user32.lib gdi32.lib
 else
+ifdef DARWIN
+LDFLAGS += -framework Carbon -framework ApplicationServices
+else
 LDFLAGS += -lXmu -lX11
+endif
 endif

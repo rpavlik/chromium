@@ -17,9 +17,11 @@
 
 #ifndef WINDOWS
 #include <sys/socket.h>
+#ifndef DARWIN
 #ifdef AF_INET6
 /* getaddrinfo & co appeared with ipv6 */
 #define ADDRINFO
+#endif
 #endif
 #endif
 

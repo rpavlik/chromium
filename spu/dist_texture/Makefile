@@ -5,10 +5,7 @@
 
 TOP = ../..
 
-SPU=1
-include ${TOP}/arch.mk
-
-
+SPU = 1
 SHARED = 1
 LIBRARY = dist_texturespu
 FILES = dist_texturespu \

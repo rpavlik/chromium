@@ -711,7 +711,7 @@ static void pixeltransfer_flush(void)
 {
 	GET_CONTEXT(ctx);  /* this gets thread too */
 	GLboolean tex_state[5];
-	int i, orig_active_unit;
+	GLint i, orig_active_unit;
 	int already_flushed[5];
 	unsigned int unit;
 	

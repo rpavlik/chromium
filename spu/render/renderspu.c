@@ -82,16 +82,16 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 		displayName = "";
 
 	/* first, try to find a match */
-#ifndef WINDOWS
+#if ( defined(WINDOWS) || defined(DARWIN) )
 	for (i = 0; i < render_spu.numVisuals; i++) {
-		if (crStrcmp(displayName, render_spu.visuals[i].displayName) == 0
-			&& visAttribs == render_spu.visuals[i].visAttribs) {
+		if (visAttribs == render_spu.visuals[i].visAttribs) {
 			return &(render_spu.visuals[i]);
 		}
 	}
 #else
 	for (i = 0; i < render_spu.numVisuals; i++) {
-		if (visAttribs == render_spu.visuals[i].visAttribs) {
+		if (crStrcmp(displayName, render_spu.visuals[i].displayName) == 0
+			&& visAttribs == render_spu.visuals[i].visAttribs) {
 			return &(render_spu.visuals[i]);
 		}
 	}
@@ -254,7 +254,7 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	window->id = render_spu.window_id;
 	render_spu.window_id++;
 
-	/* Have GLX/WGL create the window */
+	/* Have GLX/WGL/AGL create the window */
 	if (render_spu.render_to_app_window && !crGetenv("CRNEWSERVER"))
 		showIt = 0;
 	else

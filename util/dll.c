@@ -14,6 +14,102 @@
 #include <dlfcn.h>
 #endif
 
+#ifdef DARWIN
+
+#include <Carbon/Carbon.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <mach-o/dyld.h>
+
+CFBundleRef LoadFramework( const char *frameworkName ) {
+	CFBundleRef bundle;
+	CFURLRef bundleURL;
+	char fullfile[8096];
+
+	if( frameworkName[0] != '/' ) {
+		/* load a system framework */
+		crStrcpy( fullfile, "/System/Library/Frameworks/" );
+		crStrcat( fullfile, frameworkName );
+	} else {
+		/* load any framework */
+		crStrcpy( fullfile, frameworkName );
+	}
+
+	bundleURL = CFURLCreateWithString( NULL, CFStringCreateWithCStringNoCopy(NULL, fullfile, CFStringGetSystemEncoding(), NULL), NULL );
+	if( !bundleURL ) {
+		crDebug("Could not create OpenGL Framework bundle URL");
+		return NULL;
+	}
+
+	bundle = CFBundleCreate( kCFAllocatorDefault, bundleURL );
+	CFRelease( bundleURL );
+
+	if( !bundle ) {
+		crDebug("Could not create OpenGL Framework bundle");
+		return NULL;
+	}
+
+	if( !CFBundleLoadExecutable(bundle) ) {
+		crDebug("Could not load MachO executable");
+		return NULL;
+	}
+
+	return bundle;
+}
+
+void *LoadBundle( const char *filename ) {
+	NSObjectFileImage fileImage;
+	NSModule handle = NULL;
+	char _filename[PATH_MAX];
+
+	if( filename[0] != '/' ) {
+		/* default to a chromium bundle */
+		crStrcpy( _filename, "/cr/lib/Darwin/" );
+		crStrcat( _filename, filename );
+	} else {
+		crStrcpy( _filename, filename );
+	}
+
+	if( NSCreateObjectFileImageFromFile(_filename, &fileImage) == NSObjectFileImageSuccess )
+	{
+		handle = NSLinkModule( fileImage, filename,
+							   NSLINKMODULE_OPTION_RETURN_ON_ERROR |
+							   NSLINKMODULE_OPTION_PRIVATE );
+		NSDestroyObjectFileImage( fileImage );
+	}
+
+	return handle;
+}
+
+int check_extension( const char *name, const char *extension ) {
+	int nam_len = crStrlen( name );
+	int ext_len = crStrlen( extension );
+	char *pos = crStrstr( name, extension );
+	return ( pos == &(name[nam_len-ext_len]) );
+}
+
+enum {
+	CR_DLL_NONE,
+	CR_DLL_FRAMEWORK,
+	CR_DLL_DYLIB,
+	CR_DLL_BUNDLE,
+	CR_DLL_UNKNOWN
+};
+
+#define NS_ADD 1
+
+int get_dll_type( const char *name ) {
+	if( check_extension(name, ".framework") )
+		return CR_DLL_FRAMEWORK;
+	if( check_extension(name, ".bundle") )
+		return CR_DLL_BUNDLE;
+//	if( check_extension(name, ".dylib") )
+//		return CR_DLL_DYLIB;
+	return CR_DLL_DYLIB;
+}
+
+#endif
+
+
 /*
  * Open the named shared library.
  * If resolveGlobal is non-zero, unresolved symbols can be satisfied by
@@ -36,7 +132,38 @@ CRDLL *crDLLOpen( const char *dllname, int resolveGlobal )
 	(void) resolveGlobal;
 	dll->hinstLib = LoadLibrary( dllname );
 	dll_err = NULL;
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined (DARWIN) || defined(SunOS) || defined(OSF1)
+#elif defined(DARWIN)
+
+	dll->type = get_dll_type( dllname );
+
+	switch( dll->type ) {
+	case CR_DLL_FRAMEWORK:
+		dll->hinstLib = LoadFramework( dllname );
+		if( !dll->hinstLib )
+			dll_err = "Error loading the framework";
+		break;
+
+	case CR_DLL_BUNDLE:
+		dll->hinstLib = LoadBundle( dllname );
+		break;
+
+	case CR_DLL_DYLIB:
+#if NS_ADD
+		dll->hinstLib = (void*)NSAddImage( dllname, NSADDIMAGE_OPTION_RETURN_ON_ERROR );
+#else
+		if( resolveGlobal )
+			dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL );
+		else
+			dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_LOCAL );
+#endif
+		break;
+
+	default:
+		dll->hinstLib = NULL;
+		dll_err = "Unknown DLL type";
+		break;
+	};
+#elif defined(DARWIN) || defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
 	if (resolveGlobal)
 		dll->hinstLib = dlopen( dllname, RTLD_LAZY | RTLD_GLOBAL );
 	else
@@ -65,7 +192,35 @@ CRDLLFunc crDLLGetNoError( CRDLL *dll, const char *symname )
 {
 #if defined(WINDOWS)
 	return (CRDLLFunc) GetProcAddress( dll->hinstLib, symname );
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(DARWIN) || defined(SunOS) || defined(OSF1)
+#elif defined(DARWIN)
+	NSSymbol nssym;
+
+	if( dll->type == CR_DLL_FRAMEWORK )
+		return (CRDLLFunc) CFBundleGetFunctionPointerForName( (CFBundleRef) dll->hinstLib, CFStringCreateWithCStringNoCopy(NULL, symname, CFStringGetSystemEncoding(), NULL) );
+
+	if( dll->type == CR_DLL_DYLIB )
+#if NS_ADD
+		nssym = NSLookupSymbolInImage( dll->hinstLib, symname, NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR );
+#else
+		return (CRDLLFunc) dlsym( dll->hinstLib, symname );
+#endif
+	else
+		nssym = NSLookupSymbolInModule( dll->hinstLib, symname );
+
+	if( !nssym ) {
+		char name[PATH_MAX];
+		crStrcpy( name, "_" );
+		crStrcat( name, symname );
+
+		if( dll->type == CR_DLL_DYLIB )
+			nssym = NSLookupSymbolInImage( dll->hinstLib, name, NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR );
+		else
+			nssym = NSLookupSymbolInModule( dll->hinstLib, name );
+	}
+
+	return (CRDLLFunc) NSAddressOfSymbol( nssym );
+
+#elif defined(DARWIN) || defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
 	return (CRDLLFunc) dlsym( dll->hinstLib, symname );
 #else
 #error CR DLL ARCHITETECTURE
@@ -91,7 +246,25 @@ void crDLLClose( CRDLL *dll )
 
 #if defined(WINDOWS)
 	FreeLibrary( dll->hinstLib );
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined (DARWIN) || defined(SunOS) || defined(OSF1)
+#elif defined(DARWIN)
+	switch( dll->type ) {
+	case CR_DLL_FRAMEWORK:
+		CFBundleUnloadExecutable( dll->hinstLib );
+		CFRelease(dll->hinstLib);
+		dll->hinstLib = NULL;
+		break;
+
+	case CR_DLL_DYLIB:
+#if !NS_ADD
+		dlclose( dll->hinstLib );
+#endif
+		break;
+
+	case CR_DLL_BUNDLE:
+		NSUnLinkModule( (NSModule) dll->hinstLib, 0L );
+		break;
+	}
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(SunOS) || defined(OSF1)
 	dll_err = dlclose( dll->hinstLib );
 #else
 #error DSO

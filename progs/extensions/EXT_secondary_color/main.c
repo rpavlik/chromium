@@ -19,9 +19,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifndef DARWIN
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+#else
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <GLUT/glut.h>
+#endif
 
 /* Ugly hack to work around problem with NVIDIA's gl.h file.
  * NVIDIA's gl.h doesn't define function pointers like
@@ -31,7 +38,12 @@
 #ifndef GL_GLEXT_VERSION  /* glext.h wasn't already included */
 #undef GL_EXT_secondary_color
 #endif
+
+#ifndef DARWIN
 #include <GL/glext.h>
+#else
+#include <OpenGL/glext.h>
+#endif
 
 
 #define TEST_EXTENSION_STRING  "GL_EXT_secondary_color"
@@ -238,6 +250,9 @@ InitSpecial(void)
 		wglGetProcAddress("glSecondaryColorPointerEXT");
 	glSecondaryColor3fEXTptr =
 		(glSecondaryColor3fEXT_t) wglGetProcAddress("glSecondaryColor3fEXT");
+#elif defined(DARWIN)
+	glSecondaryColorPointerEXTptr = glSecondaryColorPointerEXT;
+	glSecondaryColor3fEXTptr = glSecondaryColor3fEXT;
 #else
 	glSecondaryColorPointerEXTptr =
 		(glSecondaryColorPointerEXT_t)

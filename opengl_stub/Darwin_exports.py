@@ -5,7 +5,7 @@
 
 import entrypoints
 
-hacks = ["TexImage3D" ]
+hacks = ["TexImage3D", "TexImage2D", "TexImage1D", "MultiDrawArrays" ]
 
 entrypoints.GenerateEntrypoints(hacks)
 

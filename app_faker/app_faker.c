@@ -84,14 +84,12 @@ static const char *libgl_names[] = {
 #else /* _WIN32 */
 
 #define DEFAULT_TMP_DIR "/tmp"
-#if defined(DARWIN)
-#define OPENGL_CLIENT_LIB "libcrfaker.dylib"
-#else
 #if defined(AIX)
 #define OPENGL_CLIENT_LIB "libcrfaker.a"
+#elif defined(DARWIN)
+#define OPENGL_CLIENT_LIB "libcrfaker.dylib"
 #else
 #define OPENGL_CLIENT_LIB "libcrfaker.so"
-#endif
 #endif
 
 #if defined(IRIX) || defined(IRIX64)
@@ -100,27 +98,28 @@ static const char *libgl_names[] = {
 #else
 #define SYSTEM_LIB_DIR  "/usr/lib32"
 #endif
-#else
-#if defined(DARWIN)
-#define SYSTEM_LIB_DIR      "/System/Library/Frameworks/OpenGL.framework/Libraries"
-#define SYSTEM_CGL_LIB_DIR  "/System/Library/Frameworks/OpenGL.framework"
-#define SYSTEM_GLX_LIB_DIR  "/usr/x11R6/lib"
+#elif defined(DARWIN)
+#define SYSTEM_LIB_DIR  "/System/Library/Frameworks/OpenGL.framework/Libraries"
+#define SYSTEM_CGL_DIR  "/System/Library/Frameworks/OpenGL.framework"
+#define SYSTEM_AGL_DIR  "/System/Library/Frameworks/AGL.framework"  
+#define USE_FRAMEWORKS 1
 #else
 #define SYSTEM_LIB_DIR  "/usr/lib"
-#endif
 #endif
 
 static const char *libgl_names[] = {
 #ifdef AIX
 	"libGL.a"
+#elif defined(DARWIN)
+#if USE_FRAMEWORKS
+	"OpenGL.framework"
 #else
-#ifdef DARWIN
 	"libGL.dylib",
 	"OpenGL",
-       	"libGL" /* This is a hack. We'll end up using this as a basename to find lib versions */
+	"libGL" /* This is a hack. We'll end up using this as a basename to find lib versions */
+#endif
 #else
 	"libGL.so"
-#endif
 #endif
 };
 
@@ -484,28 +483,29 @@ static int is_a_version_of( const char *basename, const char *libname )
 	/* names must match */
 	debug( "%s -> %s (%d)\n", basename, libname, len );
 	if ( crStrncmp( libname, basename, len ) ) return 0;
+
 #ifdef DARWIN
-        //don't find the base library twice...
-	if (crStrcmp (libname, "libGL.dylib") == 0) return 0;
+	/* don't find the base library twice... */
+	if( crStrcmp(libname, "libGL.dylib") == 0 ) return 0;
 #endif
 
 	libname += len;
 	/* is this a version? */
 	if ( *libname != '.' ) return 0;
 
-        /* remainder of libname should be digits and periods */
+	/* remainder of libname should be digits and periods */
 	while ( *libname == '.' || isdigit((int)*libname) )
 		libname++;
 
 #ifdef DARWIN
-        /* remainder of libname should be dylib */
-	return ((crStrlen (libname) == 5) &&
-		(crStrncmp (libname, "dylib",5) == 0));
-#endif
-
+	/* remainder of libname should be dylib */
+	return ( crStrlen(libname) == 5 &&
+			 crStrncmp(libname, "dylib", 5) == 0 );
+#else
 
 	/* did we make it to the end of the libname? */
 	return ( *libname == '\0' );
+#endif
 }
 
 static const char *find_next_version_name( DIR *dir, const char *basename )
@@ -536,19 +536,82 @@ static int make_temp_link( const char *dir, const char *name, const char *target
 
 	if ( symlink( target, link_name ) ) {
 #ifdef DARWIN
-	  // It's possible to find multiple libraries with the same name 
-	  // in Darwin since we must look in more than one directory
-	  // so if this failed 'cus the file already exist then 
-	  // ignore the error..
-	  if (errno == EEXIST) return 1;
+		/*
+		 * It's possible to find multiple libraries with the same name 
+		 * in Darwin since we must look in more than one directory
+		 * so if this failed 'cus the file already exist then 
+		 * ignore the error..
+		 */
+		if( errno == EEXIST ) return 1;
 #endif
-		crError( "link \"%s\" -> \"%s\"", link_name, target );
+		crError( "link \"%s\" -> \"%s\" (%i)", link_name, target, errno );
 		return 0;
 	}
 
 	add_file_to_temp_list( link_name );
 	return 1;
 }
+
+#ifdef DARWIN
+/*
+ * This creates a full framework to be used in conjunction with
+ * the faker library. Unless something was missed, there seems to
+ * be no other way to fully 'fake' Darwin/OSX OpenGL programs
+ */
+static void make_temp_framework( const char *dir ) {
+	char name[1024];
+
+	(void) libgl_names;
+
+#define TEMP_FRAMEWORK_NAME "OpenGL.framework"
+#define MAKEADD_DIR(n) ( mkdir((n),0777), add_dir_to_temp_list((n)) )
+
+	crStrcpy( name, dir );
+	crStrcat( name, "/" TEMP_FRAMEWORK_NAME );
+	MAKEADD_DIR( name );
+
+	crStrcat( name, "/Versions" );
+	MAKEADD_DIR( name );
+
+	make_temp_link( name, "Current", "A" );
+
+	crStrcat( name, "/A" );
+	MAKEADD_DIR( name );
+
+	crStrcat( name, "/Frameworks" );
+	MAKEADD_DIR( name );
+
+	crStrcpy( name, dir );
+	crStrcat( name, "/" TEMP_FRAMEWORK_NAME "/Versions/A/Libraries" );
+	MAKEADD_DIR( name );
+
+	crStrcpy( name, dir );
+	crStrcat( name, "/" TEMP_FRAMEWORK_NAME );
+
+	make_temp_link( name, "Frameworks", "Versions/Current/Frameworks" );
+	make_temp_link( name, "Headers", "Versions/Current/Headers" );
+	make_temp_link( name, "Libraries", "Versions/Current/Libraries" );
+	make_temp_link( name, "OpenGL", "Versions/Current/OpenGL" );
+	make_temp_link( name, "Resources", "Versions/Current/Resources" );
+
+	crStrcat( name, "/Versions/A" );
+	make_temp_link( name, "Headers", SYSTEM_CGL_DIR "/Headers" );
+	make_temp_link( name, "OpenGL", cr_lib );
+	make_temp_link( name, "Resources", SYSTEM_CGL_DIR "/Resources" );
+
+	/* These are the most important parts */
+
+	/* Creates a link to the actual OpenGL framework.
+	 * This is the fallback for functions that the dynamic linker cannot find.
+	 */
+	make_temp_link( name, "Frameworks/OpenGL.framework", SYSTEM_CGL_DIR );
+
+	/* Links the dynamic library and the executable to the faker lib */
+	crStrcat( name, "/Libraries" );
+	make_temp_link( name, "libGL.dylib", cr_lib );
+	make_temp_link( name, "libGLU.dylib", SYSTEM_CGL_DIR "/Libraries/libGLU.dylib" );
+}
+#endif
 
 static void do_it( char *argv[] )
 {
@@ -610,36 +673,41 @@ static void do_it( char *argv[] )
 
 	add_dir_to_temp_list( tmpdir );
 
-#if defined(DARWIN)
+#ifdef DARWIN
+#ifdef USE_FRAMEWORKS
+	if( !crGetenv("CR_DISABLE_FRAMEWORKS") )
+		make_temp_framework( tmpdir );
+#else
 	/*
-	  Apple's GLX makes internal CGL calls.  We don't want to
-	  faker library to catch these instead, we want them to go to
-	  the actual system libraries so in glx mode we link the
-	  default libs to our temp directory.  We don't expect a GLX
-	  app to be making CGL calls anyway.
-
-	  To disable this behavior set the CR_DARWIN_DISABLE_GLX_CGL_LINK
-	  environment variable. 
-	*/
-
-	if (!crGetenv ("CR_DARWIN_DISABLE_GLX_CGL_LINK"))
-	  {
-	    make_temp_link (tmpdir, "libGL.dylib", "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib");
-	    make_temp_link (tmpdir, "OpenGL", "/System/Library/Frameworks/OpenGL.framework/OpenGL");
-	  }
+	 * Apple's AGL makes internal CGL calls.  We don't want to 
+	 * faker library to catch these instead, we want them to go to
+	 * the actual system libraries so in cgl mode we link the
+	 * default libs to our temp directory.  We don't expect a GLX
+	 * app to be making CGL calls anyway.
+	 * To disable this behavior set the CR_DARWIN_DISABLE_AGL_CGL_LINK
+	 * environment variable. 
+	 */
+	if( !crGetenv("CR_DARWIN_DISABLE_AGL_CGL_LINK") ) {
+		make_temp_link( tmpdir, "libGL.dylib", "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib" );
+		make_temp_link( tmpdir, "OpenGL", "/System/Library/Frameworks/OpenGL.framework/OpenGL" );
+	}
 #endif
-	for ( i = 0; i < sizeof(libgl_names)/sizeof(libgl_names[0]); i++ ) {
 
+#endif
+
+	for ( i = 0; i < sizeof(libgl_names)/sizeof(libgl_names[0]); i++ ) {
 		DIR *dir;
 
+#ifndef USE_FRAMEWORKS
 		make_temp_link( tmpdir, libgl_names[i], cr_lib );
+#endif
 
 		dir = opendir( SYSTEM_LIB_DIR );
 		if ( dir ) {
 			const char *version_name;
 			version_name = find_next_version_name( dir, libgl_names[i] );
 			while ( version_name ) {
-				debug( "found version of \"%s\" as \"%s\", linking it", 
+				debug( "found version of \"%s\" as \"%s\", linking it\n", 
 						libgl_names[i], version_name );
 				make_temp_link( tmpdir, version_name, cr_lib );
 				version_name = find_next_version_name( dir, libgl_names[i] );
@@ -649,49 +717,48 @@ static void do_it( char *argv[] )
 			crError( "opendir( \"%s\" )", SYSTEM_LIB_DIR );
 		}
 #ifdef DARWIN
-		//We need to repeat the search for glx and cgl libs
-		//it's possible that we may find the library name more 
-		//then once
-		dir = opendir( SYSTEM_CGL_LIB_DIR );
-		if ( dir ) {
-			const char *version_name;
-			version_name = find_next_version_name( dir, libgl_names[i] );
-			while ( version_name ) {
-				debug( "found version of \"%s\" as \"%s\", linking it", 
-						libgl_names[i], version_name );
+		/* We need to repeat the search for agl and cgl libs.
+		 * It's possible that we may find the library name more
+		 * than once.
+		 */
+		dir = opendir( SYSTEM_CGL_DIR );
+		if( dir ) {
+			const char *version_name = find_next_version_name( dir, libgl_names[i] );
+			while( version_name ) {
+				debug( "found version of \"%s\" as \"%s\", linking it\n",
+					   libgl_names[i], version_name );
 				make_temp_link( tmpdir, version_name, cr_lib );
 				version_name = find_next_version_name( dir, libgl_names[i] );
 			}
-			closedir( dir );
 		} else {
-			crError( "opendir( \"%s\" )", SYSTEM_LIB_DIR );
+			crError( "opendir( \"%s\" )", SYSTEM_CGL_DIR );
 		}
 
-		dir = opendir( SYSTEM_GLX_LIB_DIR );
-		if ( dir ) {
-			const char *version_name;
-			version_name = find_next_version_name( dir, libgl_names[i] );
-			while ( version_name ) {
-				debug( "found version of \"%s\" as \"%s\", linking it", 
-						libgl_names[i], version_name );
+		dir = opendir( SYSTEM_AGL_DIR );
+		if( dir ) {
+			const char *version_name = find_next_version_name( dir, libgl_names[i] );
+			while( version_name ) {
+				debug( "found version of \"%s\" as \"%s\", linking it\n",
+					   libgl_names[i], version_name );
 				make_temp_link( tmpdir, version_name, cr_lib );
 				version_name = find_next_version_name( dir, libgl_names[i] );
 			}
-			closedir( dir );
 		} else {
-			crError( "opendir( \"%s\" )", SYSTEM_LIB_DIR );
+			crError( "opendir( \"%s\" )", SYSTEM_AGL_DIR );
 		}
 #endif
 	}
 
 #ifdef AIX
 	prefix_env_var( tmpdir, "LIBPATH" );
+#elif defined(DARWIN)
+#ifdef USE_FRAMEWORKS
+	prefix_env_var( tmpdir, "DYLD_FRAMEWORK_PATH" );
 #else
-#ifdef DARWIN
-        prefix_env_var( tmpdir, "DYLD_LIBRARY_PATH");
+	prefix_env_var( tmpdir, "DYLD_LIBRARY_PATH" );
+#endif
 #else
 	prefix_env_var( tmpdir, "LD_LIBRARY_PATH" );
-#endif
 #endif
 
 #if defined(IRIX) || defined(IRIX64)
@@ -764,7 +831,7 @@ static void do_it( char *argv[] )
 #define E(x) s==x?#x
 		crError( "\"%s\" terminated with uncaught signal=%d (%s)\n", argv[0], s,
 		    E(SIGHUP):E(SIGINT):E(SIGQUIT):E(SIGILL):E(SIGABRT):E(SIGFPE):E(SIGSEGV):
-		    E(SIGPIPE):E(SIGALRM):E(SIGTERM):E(SIGCHLD):"unknown");
+		    E(SIGPIPE):E(SIGALRM):E(SIGTERM):E(SIGCHLD):E(SIGBUS):"unknown");
 		exit( 1 );
 	}
 
