@@ -788,14 +788,18 @@ SwapBuffers is called.  It's useful for "screengrabs".
           be in "ascii" PPM format.  The default is true (binary).
 
         </td></tr>
-<tr>
-    <td width="19%" class="ConfigOption" height="74">enabled</td>
-    <td width="12%" class="ConfigType" height="74">Boolean</td>
-    <td width="100%" class="ConfigDesc" height="74">
-	Start spu enabled default is 1 (on)
-    </td>
-  </tr>
   <tr>
+    <td width="19%" class="ConfigOption" height="38">enabled</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+	<td width="115%" class="ConfigDesc" height="38">
+          Specifies whether the SPU should start off saving images or not.
+          If false, the SPU will not save frames until it receives a
+          <code>glChromiumParameteri(GL_SAVEFRAME_ENABLED_CR,
+          GL_TRUE)</code> call.
+          The default is true.
+
+        </td>
+  </tr>
 <td width="19%" class="ConfigOption" height="38">format</td><td width="12%" class="ConfigType" height="38">String</td><td width="100%" class="ConfigDesc" height="38">
       The format option specifies the file format used to save frames.
       Currently, it must be "<code>ppm</code>" or "<code>jpeg</code>".
@@ -842,9 +846,21 @@ SwapBuffers is called.  It's useful for "screengrabs".
       would be named <code>frame1.ppm</code>, <code>frame2.ppm</code>, 
       <code>frame3.ppm</code>, ...  <code>frame<i>n</i>.ppm</code>. 
       The default is "<code>frame%04d.ppm</code>".
-    </td></tr>
-    <tr>
-<td width="19%" class="ConfigOption" height="38">stride</td><td width="12%" class="ConfigType" height="38">Integer</td><td width="100%" class="ConfigDesc" height="38">
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">format</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">
+      The format option specifies the file format used to save frames.
+      Currently, it must be "<code>ppm</code>" or "<code>jpeg</code>".
+      The default is "<code>ppm</code>".
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">stride</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="115%" class="ConfigDesc" height="38">
       Sets the number of frames to skip.  The default is 1.  This means
       that every frame is saved.  Setting to 2 means to only save every
       other frame.
