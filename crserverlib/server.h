@@ -36,7 +36,7 @@ typedef struct {
 
 typedef struct {
 	GLuint id;
-  GLint projParamStart;
+	GLint projParamStart;
 	GLfloat projMat[16];  /* projection matrix, accumulated via calls to */
                         /* glProgramLocalParameterARB, glProgramParameterNV */
 } CRServerProgram;
