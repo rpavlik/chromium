@@ -122,9 +122,8 @@ int crStrcasecmp( const char *str1, const char *str2 )
 
 void crStrcpy( char *dest, const char *src )
 {
-	int len = crStrlen(src);
-	crMemcpy( dest, src, len );
-	dest[len] = '\0';
+	while ((*dest++ = *src++))
+		;
 }
 
 void crStrncpy( char *dest, const char *src, unsigned int len )
