@@ -107,15 +107,6 @@ TitleString = "Chromium Configuration Tool"
 # Config file dialog filename filter
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
-# Brushes and pens for drawing nodes and SPUs
-_AppNodeBrush = wxBrush(wxColor(55, 160, 55))
-_ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
-_BackgroundColor = wxColor(90, 150, 190)
-_ThinBlackPen = wxPen(wxColor(0,0,0), width=1, style=0)
-_WideBlackPen = wxPen(wxColor(0,0,0), width=3, style=0)
-_WirePen = wxPen(wxColor(0, 0, 250), width=2, style=0)
-_SPUBrush = wxLIGHT_GREY_BRUSH
-
 NodeClipboard = []
 
 
@@ -130,6 +121,15 @@ class GraphFrame(wxFrame):
 		wxFrame.__init__(self, parent, id, title,
 				 style = wxDEFAULT_FRAME_STYLE | wxWANTS_CHARS |
 					 wxNO_FULL_REPAINT_ON_RESIZE)
+
+		# Brushes and pens for drawing nodes and SPUs
+		self._AppNodeBrush = wxBrush(wxColor(55, 160, 55))
+		self._ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
+		self._BackgroundColor = wxColor(90, 150, 190)
+		self._ThinBlackPen = wxPen(wxColor(0,0,0), width=1, style=0)
+		self._WideBlackPen = wxPen(wxColor(0,0,0), width=3, style=0)
+		self._WirePen = wxPen(wxColor(0, 0, 250), width=2, style=0)
+		self._SPUBrush = wxLIGHT_GREY_BRUSH
 
 		# Setup our menu bar.
 		menuBar = wxMenuBar()
@@ -322,7 +322,7 @@ class GraphFrame(wxFrame):
 										 style=wxSUNKEN_BORDER)
 		self.drawArea.EnableScrolling(true, true)
 		self.drawArea.SetScrollbars(20, 20, PAGE_WIDTH / 20, PAGE_HEIGHT / 20)
-		self.drawArea.SetBackgroundColour(_BackgroundColor)
+		self.drawArea.SetBackgroundColour(self._BackgroundColor)
 		EVT_PAINT(self.drawArea, self.onPaintEvent)
 
 		EVT_LEFT_DOWN(self.drawArea, self.onMouseEvent)
@@ -454,11 +454,11 @@ class GraphFrame(wxFrame):
 
 	def __drawSPU(self, dc, spu):
 		"""Draw icon representation of the given SPU."""
-		dc.SetBrush(_SPUBrush)
+		dc.SetBrush(self._SPUBrush)
 		if spu.IsSelected():
-			dc.SetPen(_WideBlackPen)
+			dc.SetPen(self._WideBlackPen)
 		else:
-			dc.SetPen(_ThinBlackPen)
+			dc.SetPen(self._ThinBlackPen)
 		# if width is zero, compute width/height now
 		(w, h) = spu.GetSize()
 		if w == 0:
@@ -474,7 +474,7 @@ class GraphFrame(wxFrame):
 			dc.DrawRectangle(x + w, y + h / 2 - 5, 4, 10)
 		elif spu.IsTerminal():
 			# draw a thick right edge on the box
-			dc.SetPen(_WideBlackPen)
+			dc.SetPen(self._WideBlackPen)
 			dc.DrawLine(x + w, y + 1, x + w, y + h - 2)
 
 	def __drawNode(self, dc, node, dx=0, dy=0):
@@ -483,13 +483,13 @@ class GraphFrame(wxFrame):
 			(spam, self.__FontHeight) = dc.GetTextExtent("spam")
 		# set brush and pen
 		if node.IsServer():
-			dc.SetBrush(_ServerNodeBrush)
+			dc.SetBrush(self._ServerNodeBrush)
 		else:
-			dc.SetBrush(_AppNodeBrush)
+			dc.SetBrush(self._AppNodeBrush)
 		if node.IsSelected():
-			dc.SetPen(_WideBlackPen)
+			dc.SetPen(self._WideBlackPen)
 		else:
-			dc.SetPen(_ThinBlackPen)
+			dc.SetPen(self._ThinBlackPen)
 		# get node's position
 		(x, y) = node.GetPosition()
 		# add temporary offset used while dragging nodes
@@ -542,7 +542,7 @@ class GraphFrame(wxFrame):
 				self.__drawNode(dc, node)
 
 		# draw the wires between the nodes
-		dc.SetPen(_WirePen)
+		dc.SetPen(self._WirePen)
 		for node in self.mothership.Nodes():
 			servers = node.GetServers()
 			for serv in servers:
