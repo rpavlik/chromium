@@ -22,6 +22,7 @@ print """#ifndef SERVER_DISPATCH_HEADER
 #endif
 
 #include "cr_glwrapper.h"
+#include "state/cr_statetypes.h"
 """
 
 for func_name in keys:

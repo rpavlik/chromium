@@ -26,6 +26,7 @@ void crServerGatherConfiguration(void)
 
 	char **clientchain, **clientlist;
 	int num_clients;
+	char **tilechain, **tilelist;
 
 	__setDefaults();
 	
@@ -85,13 +86,36 @@ void crServerGatherConfiguration(void)
 	cr_server.num_clients = num_clients;
 	cr_server.clients = (CRClient *) crAlloc( num_clients * sizeof( *(cr_server.clients) ) );
 
+	if (!crMothershipGetServerTiles( conn, response ))
+	{
+		crDebug( "No tiling information for server!" );
+		cr_server.num_extents = 0;
+	}
+	else
+	{
+		tilechain = crStrSplitn( response, " ", 1 );
+		cr_server.num_extents = crStrToInt( tilechain[0] );
+		tilelist = crStrSplit( tilechain[1], "," );
+		for (i = 0 ; i < cr_server.num_extents; i++)
+		{
+			float x, y, w, h;
+			sscanf( tilelist[i], "%f %f %f %f", &x, &y, &w, &h );
+			cr_server.x1[i] = (int) x;
+			cr_server.y1[i] = (int) y;
+			cr_server.x2[i] = cr_server.x1[i] + (int) w;
+			cr_server.y2[i] = cr_server.y1[i] + (int) h;
+			crDebug( "Added tile: %d %d %d %d", cr_server.x1[i], cr_server.y1[i], cr_server.x2[i], cr_server.y2[i] );
+		}
+	}
+
+	crMothershipDisconnect( conn );
 	for (i = 0 ; i < num_clients ; i++)
 	{
 		char protocol[1024];
 
 		sscanf( clientlist[i], "%s %d", protocol, &(cr_server.clients[i].spu_id) );
 		cr_server.clients[i].conn = crNetAcceptClient( protocol, cr_server.tcpip_port, mtu );
+		cr_server.clients[i].ctx = crStateCreateContext();
+		crServerAddToRunQueue( i );
 	}
-
-	crMothershipDisconnect( conn );
 }

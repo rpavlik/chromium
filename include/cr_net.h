@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 
+#include "cr_protocol.h"
+
 typedef struct CRConnection CRConnection;
 
 typedef enum {
@@ -29,8 +31,10 @@ typedef int    CRSocket;
 int crGetHostname( char *buf, unsigned int len );
 int crGetPID(void);
 
+void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len );
+
 typedef void (*CRVoidFunc)( void );
-typedef void (*CRNetReceiveFunc)( CRConnection *conn, void *buf, unsigned int len );
+typedef int (*CRNetReceiveFunc)( CRConnection *conn, void *buf, unsigned int len );
 typedef int (*CRNetConnectFunc)( CRConnection *conn );
 typedef void (*CRNetCloseFunc)( unsigned int sender_id );
 
@@ -39,6 +43,7 @@ void *crNetAlloc( CRConnection *conn );
 void crNetSend( CRConnection *conn, void **bufp, void *start, unsigned int len );
 void crNetSendExact( CRConnection *conn, void *start, unsigned int len );
 void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len );
+unsigned int  crNetGetMessage( CRConnection *conn, CRMessage **message );
 void crNetReadline( CRConnection *conn, void *buf );
 int  crNetRecv( void );
 void crNetFree( CRConnection *conn, void *buf );
@@ -47,9 +52,25 @@ int crNetConnect( CRConnection *conn );
 void crNetDisconnect( CRConnection *conn );
 void crCloseSocket( CRSocket sock );
 
+typedef struct __messageList {
+	CRMessage *mesg;
+	unsigned int len;
+	struct __messageList *next;
+} CRMessageList;
+
+typedef struct CRMultiBuffer {
+	unsigned int  len;
+	unsigned int  max;
+	void         *buf;
+} CRMultiBuffer;
+
 struct CRConnection {
 	CRConnectionType type;
 	unsigned int sender_id;
+
+	CRMessageList *messageList, *messageTail;
+
+	CRMultiBuffer multi;
 
 	unsigned int mtu;
 
@@ -61,9 +82,13 @@ struct CRConnection {
 	void  (*SendExact)( CRConnection *conn, void *start, unsigned int len );
 	void  (*Recv)( CRConnection *conn, void *buf, unsigned int len );
 	void  (*Free)( CRConnection *conn, void *buf );
+	void  (*InstantReclaim)( CRConnection *conn, CRMessage *mess );
+	void  (*HandleNewMessage)( CRConnection *conn, CRMessage *mess, unsigned int len );
 	void  (*Accept)( CRConnection *conn, unsigned short port );
 	int  (*Connect)( CRConnection *conn );
 	void  (*Disconnect)( CRConnection *conn );
+
+	unsigned int sizeof_buffer_header;
 
 	/* logging */
 	int total_bytes;

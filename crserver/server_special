@@ -1,4 +1,5 @@
 #AreTexturesResident
+BoundsInfo
 GetBooleanv
 GetDoublev
 GetFloatv

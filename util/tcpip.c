@@ -526,10 +526,30 @@ int crTCPIPRecv( void )
 #endif
 
 		conn->recv_credits -= len;
-		cr_tcpip.recv( conn, tcpip_buffer + 1, len );
+		if (!cr_tcpip.recv( conn, tcpip_buffer + 1, len ))
+		{
+			crNetDefaultRecv( conn, tcpip_buffer + 1, len );
+		}
 	}
 
 	return 1;
+}
+
+void crTCPIPHandleNewMessage( CRConnection *conn, CRMessage *msg,
+		unsigned int len )
+{
+	CRTCPIPBuffer *buf = ((CRTCPIPBuffer *) msg) - 1;
+
+	/* build a header so we can delete the message later */
+	buf->magic = CR_TCPIP_BUFFER_MAGIC;
+	buf->kind  = CRTCPIPMemory;
+	buf->len   = len;
+	buf->pad   = 0;
+
+	if (!cr_tcpip.recv( conn, msg, len ))
+	{
+		crNetDefaultRecv( conn, msg, len );
+	}
 }
 
 void crTCPIPFree( CRConnection *conn, void *buf )
@@ -552,6 +572,11 @@ void crTCPIPFree( CRConnection *conn, void *buf )
 		default:
 			crError( "Weird buffer kind trying to free in crTCPIPFree: %d", tcpip_buffer->kind );
 	}
+}
+
+void crTCPIPInstantReclaim( CRConnection *conn, CRMessage *mess )
+{
+	crTCPIPFree( conn, mess );
 }
 
 void crTCPIPInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
@@ -672,7 +697,10 @@ void crTCPIPConnection( CRConnection *conn )
 	conn->Accept = crTCPIPAccept;
 	conn->Connect = crTCPIPDoConnect;
 	conn->Disconnect = crTCPIPDoDisconnect;
+	conn->InstantReclaim = crTCPIPInstantReclaim;
+	conn->HandleNewMessage = crTCPIPHandleNewMessage;
 	conn->index = cr_tcpip.num_conns;
+	conn->sizeof_buffer_header = sizeof( CRTCPIPBuffer );
 
 	n_bytes = ( cr_tcpip.num_conns + 1 ) * sizeof(*cr_tcpip.conns);
 	crRealloc( (void **) &cr_tcpip.conns, n_bytes );

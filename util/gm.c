@@ -60,17 +60,11 @@ typedef struct CRGmBuffer {
 	unsigned int       pad;
 } CRGmBuffer;
 
-typedef struct CRMultiBuffer {
-	unsigned int  len;
-	unsigned int  max;
-	void         *buf;
-} CRMultiBuffer;
 
 typedef struct CRGmConnection {
 	unsigned int       		   node_id;
 	unsigned int       		   port_num;
 	CRConnection   		  *conn;
-	CRMultiBuffer  		   multi;
 	struct CRGmConnection *hash_next;
 	struct CRGmConnection *credit_prev;
 	struct CRGmConnection *credit_next;
@@ -514,9 +508,6 @@ crGmConnectionAdd( CRConnection *conn )
 	gm_conn->node_id   = conn->gm_node_id;
 	gm_conn->port_num  = conn->gm_port_num;
 	gm_conn->conn      = conn;
-	gm_conn->multi.len = 0;
-	gm_conn->multi.max = 0;
-	gm_conn->multi.buf = NULL;
 	gm_conn->hash_next = *bucket;
 
 	*bucket = gm_conn;
@@ -574,71 +565,20 @@ cr_gm_provide_receive_buffer( void *buf )
 			CR_GM_PRIORITY );
 }
 
-static void
-crGmRecvFlowControl( CRGmConnection *gm_conn,
-		CRMessageFlowControl *msg, unsigned int len )
-{
-	CRASSERT( len == sizeof(CRMessageFlowControl) );
-
-	gm_conn->conn->send_credits += msg->credits;
-
-#if CR_GM_CREDITS_DEBUG
-	cr_gm_debug( "received %u credits for host=%s, have %d total",
-			msg->credits, gm_conn->conn->hostname,
-			gm_conn->conn->send_credits );
-#endif
-
-	cr_gm_provide_receive_buffer( msg );
-}
-
-static void
-crGmRecvMulti( CRGmConnection *gm_conn, CRMessageMulti *msg,
+void crGmHandleNewMessage( CRConnection *conn, CRMessage *msg,
 		unsigned int len )
 {
-	CRMultiBuffer *multi = &gm_conn->multi;
-	CRMessageType type = msg->type;
-	unsigned char *src, *dst;
+	CRGmBuffer *gm_buffer = ((CRGmBuffer *) msg) - 1;
 
-	CRASSERT( len > sizeof(*msg) );
-	len -= sizeof(*msg);
+	/* build a header so we can delete the message later */
+	gm_buffer->magic = CR_GM_BUFFER_RECV_MAGIC;
+	gm_buffer->kind  = CRGmMemoryBig;
+	gm_buffer->len   = len;
+	gm_buffer->pad   = 0;
 
-	if ( len + multi->len > multi->max )
+	if (!cr_gm.recv( conn, msg, len ))
 	{
-		if ( multi->max == 0 )
-		{
-			multi->len = sizeof(CRGmBuffer);
-			multi->max = 8192;
-		}
-		while ( len + multi->len > multi->max )
-		{
-			multi->max <<= 1;
-		}
-		crRealloc( &multi->buf, multi->max );
-	}
-
-	dst = (unsigned char *) multi->buf + multi->len;
-	src = (unsigned char *) msg + sizeof(*msg);
-	memcpy( dst, src, len );
-	multi->len += len;
-
-	cr_gm_provide_receive_buffer( msg );
-
-	if ( type == CR_MESSAGE_MULTI_TAIL )
-	{
-		CRGmBuffer *gm_buffer = (CRGmBuffer *) multi->buf;
-
-		/* build a header so we can delete the message later */
-		gm_buffer->magic = CR_GM_BUFFER_RECV_MAGIC;
-		gm_buffer->kind  = CRGmMemoryBig;
-		gm_buffer->len   = multi->len - sizeof(*gm_buffer);
-		gm_buffer->pad   = 0;
-
-		/* clean this up before calling the user */
-		multi->buf = NULL;
-		multi->len = 0;
-		multi->max = 0;
-
-		cr_gm.recv( gm_conn->conn, gm_buffer + 1, gm_buffer->len );
+		crNetDefaultRecv( conn, msg, len );
 	}
 }
 
@@ -647,8 +587,6 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		unsigned int len )
 {
 	CRGmBuffer *temp;
-
-	CRASSERT( gm_conn->multi.buf == NULL );
 
 	temp = (CRGmBuffer *) crBufferPoolPop( &cr_gm.read_pool );
 
@@ -676,7 +614,10 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 
 		cr_gm_provide_receive_buffer( msg );
 
-		cr_gm.recv( gm_conn->conn, temp+1, len );
+		if (!cr_gm.recv( gm_conn->conn, temp+1, len ))
+		{
+			crNetDefaultRecv( gm_conn->conn, temp+1, len );
+		}
 	}
 	else
 	{
@@ -685,7 +626,10 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		temp = (CRGmBuffer *) msg - 1;
 		temp->len = len;
 
-		cr_gm.recv( gm_conn->conn, msg, len );
+		if (!cr_gm.recv( gm_conn->conn, msg, len ))
+		{
+			crNetDefaultRecv( gm_conn->conn, msg, len );
+		}
 	}
 }
 
@@ -889,40 +833,7 @@ int crGmRecv( void )
 						cr_gm_str_event_type( event ) );
 #endif
 
-				switch ( msg->type )
-				{
-					case CR_MESSAGE_MULTI_BODY:
-					case CR_MESSAGE_MULTI_TAIL:
-						crGmRecvMulti( gm_conn, &msg->multi, len );
-						break;
-
-					case CR_MESSAGE_FLOW_CONTROL:
-						crGmRecvFlowControl( gm_conn, &msg->flowControl, len );
-						break;
-
-					case CR_MESSAGE_OPCODES:
-					case CR_MESSAGE_READ_PIXELS:
-					case CR_MESSAGE_WRITEBACK:
-						crGmRecvOther( gm_conn, msg, len );
-						break;
-
-					default:
-						/* We can end up here if anything strange happens in
-						 * the GM layer.  In particular, if the user tries to
-						 * send unpinned memory over GM it gets sent as all
-						 * 0xAA instead.  This can happen when a program exits
-						 * ungracefully, so the GM is still DMAing memory as
-						 * it is disappearing out from under it.  We can also
-						 * end up here if somebody adds a message type, and
-						 * doesn't put it in the above case block.  That has
-						 * an obvious fix. */
-						{
-							char string[128];
-							crBytesToString( string, sizeof(string), msg, len );
-							crError( "GM: received a bad message: src=%u len=%u "
-									"buf=[%s]", src_node, len, string );
-						}
-				}
+				crGmRecvOther( gm_conn, msg, len );
 			}
 			break;
 
@@ -1078,6 +989,11 @@ void crGmSend( CRConnection *conn, void **bufp,
 	cr_gm_send( conn, start, len, *bufp );
 
 	*bufp = NULL;
+}
+
+void crGmInstantReclaim( CRConnection *conn, CRMessage *msg )
+{
+	cr_gm_provide_receive_buffer( msg );
 }
 
 	void
@@ -1335,9 +1251,12 @@ void crGmConnection( CRConnection *conn )
 	conn->SendExact = crGmSendExact;
 	conn->Recv = crGmBogusRecv;
 	conn->Free  = crGmFree;
+	conn->InstantReclaim = crGmInstantReclaim;
+	conn->HandleNewMessage = crGmHandleNewMessage;
 	conn->Accept = crGmAccept;
 	conn->Connect = crGmDoConnect;
 	conn->Disconnect = crGmDoDisconnect;
+	conn->sizeof_buffer_header = sizeof( CRGmBuffer );
 
 	crWarning( "GM: accepted connection from "
 			"host=%s id=%d (gm_name=%s)", conn->hostname,

@@ -41,6 +41,7 @@ crNetFree
 crNetConnect
 crNetDisconnect
 crNetServerConnect
+crNetGetMessage
 crPixelCopy1D
 crPixelCopy2D
 crPixelSize

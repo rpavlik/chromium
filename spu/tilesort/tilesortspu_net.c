@@ -28,7 +28,7 @@ void tilesortspuReadback( CRMessageReadback *rb, unsigned int len )
 	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
-void tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+int tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) buf;
 
@@ -41,12 +41,12 @@ void tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			tilesortspuReadback( &(msg->readback), len );
 			break;
 		default:
-			crError( "Why is the tilesort SPU getting a message of type %d?", msg->type );
-			break;
+			crWarning( "Why is the tilesort SPU getting a message of type %d?", msg->type );
+			return 0; // NOT HANDLED
 	}
 	crNetFree( conn, buf );
-	(void) conn;	
 	(void) len;	
+	return 1;  // HANDLED
 }
 
 void tilesortspuHuge( CROpcode opcode, void *buf )

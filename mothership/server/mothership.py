@@ -283,7 +283,7 @@ class CR:
 
 	def do_tiles( self, sock, args ):
 		if sock.SPUid == -1:
-			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU, "You can't ask for tiles without telling me what SPU id you are!" )
 			return
 		spu = allSPUs[sock.SPUid]
 		if len(spu.servers) == 0:
@@ -293,8 +293,17 @@ class CR:
 		if server_num < 0 or server_num >= len(spu.servers):
 			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "SPU %d doesn't have a server numbered %d" % (sock.SPUid, server_num) )
 		(node, url) = spu.servers[server_num]
+		self.tileReply( sock, node )
+
+	def do_servertiles( self, sock, args ):
+		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You can't ask for tiles without telling me what server you are!" )
+			return
+		self.tileReply( sock, sock.node )
+
+	def tileReply( self, sock, node ):
 		if len(node.tiles) == 0:
-			sock.Reply( SockWrapper.UNKNOWNPARAM, "SPU %d's server #%d doesn't have tiles!" % (sock.SPUid, server_num) )
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "server doesn't have tiles!" )
 			return
 		tiles = "%d " % len(node.tiles)
 		for i in range(len(node.tiles)):

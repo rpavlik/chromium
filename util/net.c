@@ -15,6 +15,7 @@
 #include "cr_url.h"
 #include "cr_net.h"
 #include "cr_netserver.h"
+#include "cr_bufpool.h"
 
 #define CR_INITIAL_RECV_CREDITS ( 1 << 21 ) // 2MB
 
@@ -24,6 +25,7 @@ static struct {
 	CRNetCloseFunc       close;       // what to do when a client goes down
 	int                  use_gm;      // count the number of people using GM
 	int                  num_clients; // count the number of total clients (unused?)
+	CRBufferPool         message_list_pool;
 } cr_net;
 
 // This the common interface that every networking type should export in order
@@ -80,10 +82,17 @@ CRConnection *crNetConnectToServer( char *server,
 	conn->port               = port;
 	conn->Alloc              = NULL;                 // How do we allocate buffers to send?
 	conn->Send               = NULL;                 // How do we send things?
-	conn->Free               = NULL;                 // How do we receive things?
+	conn->Free               = NULL;                 // How do we free things?
 	conn->tcp_socket         = 0;
 	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
+
+	conn->multi.len = 0;
+	conn->multi.max = 0;
+	conn->multi.buf = NULL;
+
+	conn->messageList        = NULL;
+	conn->messageTail        = NULL;
 
 	// now, just dispatch to the appropriate protocol's initialization functions.
 	
@@ -140,6 +149,13 @@ CRConnection *crNetAcceptClient( char *protocol, unsigned short port, unsigned i
 	conn->tcp_socket         = 0;
 	conn->gm_node_id         = 0;
 	conn->mtu                = mtu;
+
+	conn->multi.len = 0;
+	conn->multi.max = 0;
+	conn->multi.buf = NULL;
+
+	conn->messageList        = NULL;
+	conn->messageTail        = NULL;
 
 	// now, just dispatch to the appropriate protocol's initialization functions.
 	
@@ -215,6 +231,7 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 		cr_net.close       = closeFunc;
 		cr_net.use_gm      = 0;
 		cr_net.num_clients = 0;
+		crBufferPoolInit( &cr_net.message_list_pool, 16 );
 
 		cr_net.initialized = 1;
 	}
@@ -306,6 +323,142 @@ void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 		crError( "Can't do a crNetSingleReceive on anything other than TCPIP." );
 	}
 	conn->Recv( conn, buf, len );
+}
+
+static void crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
+{
+	CRMultiBuffer *multi = &(conn->multi);
+	unsigned char *src, *dst;
+
+	CRASSERT( len > sizeof(*msg) );
+	len -= sizeof(*msg);
+
+	if ( len + multi->len > multi->max )
+	{
+		if ( multi->max == 0 )
+		{
+			multi->len = conn->sizeof_buffer_header;
+			multi->max = 8192;
+		}
+		while ( len + multi->len > multi->max )
+		{
+			multi->max <<= 1;
+		}
+		crRealloc( &multi->buf, multi->max );
+	}
+
+	dst = (unsigned char *) multi->buf + multi->len;
+	src = (unsigned char *) msg + sizeof(*msg);
+	memcpy( dst, src, len );
+	multi->len += len;
+
+	conn->InstantReclaim( conn, (CRMessage *) msg );
+
+	/* clean this up before calling the user */
+	multi->buf = NULL;
+	multi->len = 0;
+	multi->max = 0;
+
+	conn->HandleNewMessage( 
+			conn, 
+			(CRMessage *) multi->buf + conn->sizeof_buffer_header, 
+			multi->len - conn->sizeof_buffer_header );
+}
+
+static void crNetRecvFlowControl( CRConnection *conn,
+		CRMessageFlowControl *msg, unsigned int len )
+{
+	CRASSERT( len == sizeof(CRMessageFlowControl) );
+
+	conn->send_credits += msg->credits;
+
+	conn->InstantReclaim( conn, (CRMessage *) msg );
+}
+
+
+void crNetDefaultRecv( CRConnection *conn, void *buf, unsigned int len )
+{
+	CRMessageList *msglist;
+	
+	CRMessage *msg = (CRMessage *) buf;
+
+	switch( msg->type )
+	{
+		case CR_MESSAGE_MULTI_BODY:
+		case CR_MESSAGE_MULTI_TAIL:
+			crNetRecvMulti( conn, &(msg->multi), len );
+			break;
+		case CR_MESSAGE_FLOW_CONTROL:
+			crNetRecvFlowControl( conn, &(msg->flowControl), len );
+			break;
+		case CR_MESSAGE_OPCODES:
+		case CR_MESSAGE_READ_PIXELS:
+		case CR_MESSAGE_WRITEBACK:
+			// do nothing -- just checking that it's OK!
+			break;
+		default:
+			/* We can end up here if anything strange happens in
+			 * the GM layer.  In particular, if the user tries to
+			 * send unpinned memory over GM it gets sent as all
+			 * 0xAA instead.  This can happen when a program exits
+			 * ungracefully, so the GM is still DMAing memory as
+			 * it is disappearing out from under it.  We can also
+			 * end up here if somebody adds a message type, and
+			 * doesn't put it in the above case block.  That has
+			 * an obvious fix. */
+			{
+				char string[128];
+				crBytesToString( string, sizeof(string), msg, len );
+				crWarning( "\n\nI'm ABOUT TO EXPLODE!  Did you add a new\n"
+						       "message type and forget to tell crNetDefaultRecv\n"
+									 "about it?\n\n" );
+				crError( "crNetDefaultRecv: received a bad message: "
+						"buf=[%s]", string );
+			}
+	}
+
+	// If we make it this far, it's not a special message, so
+	// just tack it on to the end of the connection's list of 
+	// work blocks.
+	
+	msglist = (CRMessageList *) crBufferPoolPop( &cr_net.message_list_pool );
+	if ( msglist == NULL )
+	{
+		msglist = (CRMessageList *) crAlloc( sizeof( *msglist ) );
+	}
+	msglist->mesg = buf;
+	msglist->len = len;
+	msglist->next = NULL;
+	if (conn->messageTail)
+	{
+		conn->messageTail->next = msglist;
+	}
+	else
+	{
+		conn->messageList = msglist;
+	}
+	conn->messageTail = msglist;
+}
+
+unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message )
+{
+	if (conn->messageList != NULL)
+	{
+		CRMessageList *temp;
+		unsigned int len;
+		*message = conn->messageList->mesg;
+		len = conn->messageList->len;
+		temp = conn->messageList;
+		conn->messageList = conn->messageList->next;
+		if (!conn->messageList)
+		{
+			conn->messageTail = NULL;
+		}
+		crBufferPoolPush( &(cr_net.message_list_pool), temp );
+		return len;
+	}
+	crNetRecv();
+	return 0;
 }
 
 // Read a line from a socket.  Useful for reading from the mothership.

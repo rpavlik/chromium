@@ -2,6 +2,7 @@ TOP = ..
 
 PROGRAM = crserver
 FILES = main \
+	server_boundsinfo \
 	server_config \
 	server_dispatch \
 	server_gentextures \
@@ -13,13 +14,14 @@ FILES = main \
 	server_getteximage \
 	server_retval \
 	server_simpleget \
+	server_stream \
 	server_viewport \
 	server_writeback
 
 PRECOMP = server_dispatch.h server_dispatch.c server_get.c server_retval.c server_simpleget.c
 SLOP = ${PRECOMP}
 
-LIBRARIES = spuload crunpacker crutil crmothership
+LIBRARIES = spuload crunpacker crutil crmothership crstate
 
 include $(TOP)/cr.mk
 

@@ -28,7 +28,7 @@ void packspuReadback( CRMessageReadback *rb, unsigned int len )
 	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
-void packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
+int packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 {
 	CRMessage *msg = (CRMessage *) buf;
 
@@ -41,12 +41,12 @@ void packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			packspuReadback( &(msg->readback), len );
 			break;
 		default:
-			crError( "Why is the pack SPU getting a message of type %d?", msg->type );
-			break;
+			crWarning( "Why is the pack SPU getting a message of type %d?", msg->type );
+			return 0; // NOT HANDLED
 	}
 	crNetFree( conn, buf );
-	(void) conn;	
 	(void) len;	
+	return 1; // HANDLED
 }
 
 static CRMessageOpcodes *

@@ -3,8 +3,6 @@
 
 #include "cr_net.h"
 
-#define CR_MAX_EXTENTS 256
-
 typedef struct {
 	char *name;
 	int buffer_size;

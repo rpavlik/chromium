@@ -21,6 +21,8 @@
 
 #include "spu_dispatch_table.h"
 
+#define CR_MAX_EXTENTS 256
+
 typedef struct {
 	CRBufferBits    buffer;
 	CRClientBits    client;
