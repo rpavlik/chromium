@@ -546,6 +546,7 @@ class Mothership:
 
 	def GetGlobalOption(self, name):
 		"""Get a global option value"""
+		assert name in self.__GlobalOptions.keys()
 		return self.__GlobalOptions[name]
 
 	def SetGlobalOptions(self, options):
