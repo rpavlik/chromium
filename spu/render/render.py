@@ -16,7 +16,7 @@ keys.sort();
 
 print """
 #include <stdio.h>
-#include "cr_opengl_types.h"
+#include <GL/gl.h>
 #include "cr_error.h"
 #include "cr_dll.h"
 #include "cr_spu.h"
@@ -50,7 +50,7 @@ static CRDLL *__findSystemGL( void )
 #if defined(WINDOWS)
 	GetSystemDirectory(system_path, MAX_PATH);
 #else
-	crStrcpy( system_path, "/usr/lib" )
+	crStrcpy( system_path, "/usr/lib" );
 #endif
 	crStrcat( system_path, "/" );
 	crStrcat( system_path, SYSTEM_GL );
@@ -87,10 +87,21 @@ useful_wgl_functions = [
 	"ChoosePixelFormat",
 	"SetPixelFormat"
 ]
+useful_glx_functions = [
+	"glXGetConfig",
+	"glXQueryExtension",
+	"glXChooseVisual",
+	"glXCreateContext",
+	"glXIsDirect",
+	"glXMakeCurrent",
+	"glGetString",
+	"glXSwapBuffers"
+]
 print '#ifdef WINDOWS'
 for fun in useful_wgl_functions:
 	print 'render_spu.wgl%s = (wgl%sFunc_t) crDLLGet( dll, "wgl%s" );' % (fun,fun,fun)
-print """#else
-#error WORK ON IT
-#endif
+print '#else'
+for fun in useful_glx_functions:
+	print 'render_spu.%s = (%sFunc_t) crDLLGet( dll, "%s" );' % (fun, fun, fun)
+print """#endif
 }"""

@@ -11,9 +11,9 @@ gl_mapping = cPickle.load( parsed_file )
 import stub_common;
 
 print """#include <stdio.h>
-#include "cr_opengl_types.h"
 #include "cr_error.h"
 #include "cr_spu.h"
+#include <GL/gl.h>
 
 #if defined(WINDOWS)
 #define NOP_APIENTRY __stdcall

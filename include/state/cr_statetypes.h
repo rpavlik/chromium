@@ -1,14 +1,11 @@
 #ifndef CR_STATE_TYPES_H
 #define CR_STATE_TYPES_H
 
-#include "cr_opengl_types.h"
+#include <GL/gl.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define GL_FALSE 0
-#define GL_TRUE 1
 
 typedef GLfloat GLdefault;
 #define GL_MAXBYTE		(GLbyte)	0x7F

@@ -1,7 +1,7 @@
 #ifndef CR_PIXELDATA_H
 #define CR_PIXELDATA_H
 
-#include "cr_opengl_types.h"
+#include <GL/gl.h>
 #include "state/cr_pixel.h"
 
 int crPixelSize( GLenum format, GLenum type, GLsizei width, GLsizei height );

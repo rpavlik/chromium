@@ -32,6 +32,7 @@ LIBSUFFIX = .a
 OBJSUFFIX = .o
 MV = mv
 SHARED_LDFLAGS = -shared 
+LDFLAGS = -L/usr/X11R6/lib
 PERL = perl
 PYTHON = python
 JGRAPH = /u/eldridge/bin/IRIX/jgraph

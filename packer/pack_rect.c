@@ -1,6 +1,6 @@
 #include "cr_packfunctions.h"
 #include "cr_pack.h"
-#include "cr_opengl_types.h"
+#include <GL/gl.h>
 #include "cr_opcodes.h"
 
 void PACK_APIENTRY crPackRectdv( const GLdouble *v1, const GLdouble *v2 )

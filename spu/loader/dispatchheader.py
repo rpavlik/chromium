@@ -12,13 +12,14 @@ import stub_common;
 
 print """#ifndef CR_SPU_DISPATCH_TABLE_H
 #define CR_SPU_DISPATCH_TABLE_H
-#include "cr_opengl_types.h"
 
 #ifdef WINDOWS
 #define SPU_APIENTRY __stdcall
 #else
 #define SPU_APIENTRY
 #endif
+
+#include <GL/gl.h>
 """
 
 keys = gl_mapping.keys()

@@ -15,10 +15,10 @@ keys.sort();
 
 
 print """#include <stdio.h>
-#include "cr_opengl_types.h"
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_spu.h"
+#include <GL/gl.h>
 """
 
 print 'SPUNamedFunctionTable passthrough_table[%d];' % len(keys)

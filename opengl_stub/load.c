@@ -62,7 +62,7 @@ void StubInit(void)
 
 #ifdef LINUX
 // GCC crap
-void (*stub_init_ptr)(void) __attribute__((section(".ctors"))) = __stubInit;
+//void (*stub_init_ptr)(void) __attribute__((section(".ctors"))) = __stubInit;
 #endif
 
 #ifdef WINDOWS

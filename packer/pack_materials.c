@@ -1,7 +1,6 @@
 #include "cr_packfunctions.h"
 #include "cr_pack.h"
-#include "cr_opengl_types.h"
-#include "cr_opengl_enums.h"
+#include <GL/gl.h>
 #include "cr_error.h"
 
 static void __handleMaterialData( GLenum face, GLenum pname, const GLfloat *params )

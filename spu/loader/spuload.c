@@ -8,9 +8,11 @@
 #include <stdio.h>
 
 #ifdef WINDOWS
-#define DLL_EXTENSION ".dll"
+#define DLL_SUFFIX ".dll"
+#define DLL_PREFIX ""
 #else
-#define DLL_EXTENSION ".so"
+#define DLL_SUFFIX ".so"
+#define DLL_PREFIX "lib"
 #endif
 
 extern void __buildDispatch( SPU *spu );
@@ -22,7 +24,7 @@ static char *__findDLL( char *name )
 	char *dir = getenv( "SPU_DIR" );
 	if (!dir)
 		dir = ".";
-	sprintf ( path, "%s/%s%s", dir, name, DLL_EXTENSION );
+	sprintf ( path, "%s/%s%s%s", dir, DLL_PREFIX, name, DLL_SUFFIX );
 	return path;
 }
 

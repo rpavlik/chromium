@@ -12,3 +12,5 @@ crMothershipIdentifyOpenGL
 crMothershipIdentifyServer
 crMothershipGetStartdir
 crMothershipGetClients
+crMothershipGetClientDLL
+crMothershipGetSPUDir

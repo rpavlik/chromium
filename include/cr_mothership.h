@@ -17,5 +17,7 @@ void crMothershipGetStartdir( CRConnection *conn, char *response );
 int crMothershipServerParam( CRConnection *conn, char *response, char *param, ...);
 int crMothershipSPUParam( CRConnection *conn, char *response, char *param, ...);
 void crMothershipGetClients( CRConnection *conn, char *response );
+int crMothershipGetClientDLL( CRConnection *conn, char *response );
+int crMothershipGetSPUDir( CRConnection *conn, char *response );
 
 #endif /* CR_MOTHERSHIP_H */

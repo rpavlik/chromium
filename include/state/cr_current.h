@@ -1,7 +1,7 @@
 #ifndef CR_STATE_CURRENT_H
 #define CR_STATE_CURRENT_H
 
-#include "cr_opengl_types.h"
+#include <GL/gl.h>
 
 #ifdef __cplusplus
 extern "C" {

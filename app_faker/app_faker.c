@@ -60,6 +60,7 @@ static const char *libgl_names[] = {
 static const char *progname   = "app_faker";
 static const char *cr_lib     = NULL;
 static int         verbose    = 0;
+CRConnection *mothership_conn;
 
 #ifdef _WIN32
 
@@ -100,7 +101,7 @@ void debug( const char *format, ... )
 const char *basename( const char *path )
 {
 	char *last;
-	last = strrchr( path, '/' );
+	last = crStrrchr( path, '/' );
 	if ( !last )
 		return path;
 	else
@@ -115,7 +116,7 @@ void xsetenv( const char *var, const char *value )
 	unsigned long len;
 	char *buf;
 
-	len = strlen(var) + 1 + strlen(value) + 1;
+	len = crStrlen(var) + 1 + crStrlen(value) + 1;
 	buf = (char *) malloc( len );
 	sprintf( buf, "%s=%s", var, value );
 	putenv( buf );
@@ -139,8 +140,7 @@ void add_to_list( List **list, const char *name )
 {
 	List *node = (List *) crAlloc( sizeof(*node) );
 
-	node->name = (char *) crAlloc( strlen(name) + 1 );
-	crStrcpy( node->name, name );
+	node->name = crStrdup( name );
 	node->next = *list;
 	*list = node;
 }
@@ -262,6 +262,7 @@ void copy_file( const char *dst_filename, const char *src_filename )
 void do_it( char *argv[] )
 {
 	char tmpdir[1024], argv0[1024], *tail;
+	char response[8096];
 	int i, status;
 
 	if ( cr_lib == NULL ) {
@@ -271,10 +272,18 @@ void do_it( char *argv[] )
 	}
 
 	if ( cr_lib == NULL ) {
+		if (crMothershipGetClientDLL( mothership_conn, response ) )
+		{
+			cr_lib = crStrdup( response );
+		}
+	}
+
+	if ( cr_lib == NULL ) {
 		crError( "I don't know where to find the client library.  You could "
 				"have set CR_FAKER_LIB, but didn't.  You could have used -lib "
 				"on the command line, but didn't.  I searched the PATH for "
-				"\"%s\", but couldn't find it.\n", OPENGL_CLIENT_LIB );
+				"\"%s\", but couldn't find it.  I even asked the configuration"
+				"manager!\n", OPENGL_CLIENT_LIB );
 	}
 
 	debug( "cr_lib=\"%s\"\n", cr_lib );
@@ -300,6 +309,11 @@ void do_it( char *argv[] )
 		crStrcat( name, libgl_names[i] );
 		copy_file( name, cr_lib );
 		add_file_to_temp_list( name );
+	}
+
+	if (crMothershipGetSPUDir( mothership_conn, response ))
+	{
+		xsetenv( "SPU_DIR", response );
 	}
 
 	status = spawnv( _P_WAIT, argv[0], argv );
@@ -344,7 +358,7 @@ char *find_file_on_path( const char *path, const char *basename )
 				crError( "find_on_path: getcwd" );
 				continue;
 			}
-			i = strlen( name );
+			i = crStrlen( name );
 		}
 		else if ( name[0] != '/' ) {
 			crError( "find_on_path: relative paths anger me (%s)", name );
@@ -406,7 +420,7 @@ void prefix_env_var( const char *prefix, const char *varname )
 
 	val = getenv( varname );
 	if ( val ) {
-		unsigned long len = strlen( prefix ) + 1 + strlen( val ) + 1;
+		unsigned long len = crStrlen( prefix ) + 1 + crStrlen( val ) + 1;
 		char *buf = (char *) crAlloc( len );
 		sprintf( buf, "%s:%s", prefix, val );
 		xsetenv( varname, buf );
@@ -417,10 +431,11 @@ void prefix_env_var( const char *prefix, const char *varname )
 
 int is_a_version_of( const char *basename, const char *libname )
 {
-	int len = strlen( basename );
+	int len = crStrlen( basename );
 
 	/* names must match */
-	if ( strncmp( libname, basename, len ) ) return 0;
+	debug( "%s -> %s (%d)\n", basename, libname, len );
+	if ( crStrncmp( libname, basename, len ) ) return 0;
 
 	libname += len;
 	/* is this a version? */
@@ -441,7 +456,10 @@ const char *find_next_version_name( DIR *dir, const char *basename )
 	entry = readdir( dir );
 	while ( entry ) {
 		if ( is_a_version_of( basename, entry->d_name ) )
+		{
+			debug( entry->d_name );
 			return entry->d_name;
+		}
 		entry = readdir( dir );
 	}
 
@@ -472,6 +490,7 @@ void do_it( char *argv[] )
 	int status;
 	char tmpdir[1024];
 	int i;
+	char response[8096];
 	struct stat stat_buf;
 
 	if ( cr_lib == NULL ) {
@@ -492,13 +511,21 @@ void do_it( char *argv[] )
 	}
 
 	if ( cr_lib == NULL ) {
+		if (crMothershipGetClientDLL( mothership_conn, response ) )
+		{
+			cr_lib = crStrdup( response );
+		}
+	}
+
+	if ( cr_lib == NULL ) {
 		crError( "I don't know where to find the client library.  You could "
 				"have set CR_FAKER_LIB, but didn't.  You could have used -lib "
 				"on the command line, but didn't.  I searched the LD_LIBRARY_PATH "
 #if defined(IRIX) || defined(IRIX64)
 				"(actually, I looked in LD_LIBRARYN32_PATH first) "
 #endif
-				"for \"%s\", but couldn't find it.\n", OPENGL_CLIENT_LIB );
+				"for \"%s\", but couldn't find it.  I even asked the"
+				"mothership!\n", OPENGL_CLIENT_LIB );
 	}
 
 	debug( "cr_lib=\"%s\"\n", cr_lib );
@@ -546,6 +573,11 @@ void do_it( char *argv[] )
 	if ( getenv( "LD_LIBRARY64_PATH" ) )
 		prefix_env_var( tmpdir, "LD_LIBRARY64_PATH" );
 #endif
+
+	if (crMothershipGetSPUDir( mothership_conn, response ))
+	{
+		xsetenv( "SPU_DIR", response );
+	}
 
 	pid = fork( );
 	if ( pid < 0 )
@@ -678,24 +710,20 @@ int main( int argc, char **argv )
 		// No command specified, contact the configuration server to
 		// ask what I should do.
 	
-		CRConnection *conn;
 		char response[1024];
-		int num_args = 1;
-		int args_allocated = 1;
 
 		if (mothership)
 			xsetenv( "MOTHERSHIP", mothership );
-		conn = crMothershipConnect( );
+		mothership_conn = crMothershipConnect( );
 	
-		crMothershipIdentifyFaker( conn, response );
+		crMothershipIdentifyFaker( mothership_conn, response );
 		faked_argv = crStrSplit( response, " " );
-		crMothershipGetStartdir( conn, response );
+		crMothershipGetStartdir( mothership_conn, response );
 
 		if (chdir( response ))
 		{
 			crError( "Couldn't change to the starting directory: %s", response );
 		}
-		crMothershipDisconnect( conn );
 	}
 	else
 	{

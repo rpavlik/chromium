@@ -9,6 +9,7 @@
 CRDLL *crDLLOpen( const char *dllname )
 {
 	CRDLL *dll;
+	char *dll_err;
 	
 	dll = (CRDLL *) crAlloc( sizeof( CRDLL ) );
 	dll->name = (char *) crAlloc( strlen(dllname) + 1 );
@@ -16,14 +17,20 @@ CRDLL *crDLLOpen( const char *dllname )
 
 #if defined(WINDOWS)
 	dll->hinstLib = LoadLibrary( dllname );
+	dll_err = NULL;
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux)
 	dll->hinstLib = dlopen( dllname, RTLD_NOW /* RTLD_LAZY */ );
+	dll_err = dlerror();
 #else
 #error DSO
 #endif
 
 	if (!dll->hinstLib)
 	{
+		if (dll_err)
+		{
+			crDebug( "DLL_ERROR: %s", dll_err );
+		}
 		crError( "DLL Loader couldn't find %s", dllname );
 	}
 	return dll;

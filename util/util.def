@@ -18,6 +18,7 @@ crStrchr
 crStrrchr
 crStrdup
 crStrcmp
+crStrncmp
 crStrcasecmp
 crStrcpy
 crStrncpy

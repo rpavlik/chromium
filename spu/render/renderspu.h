@@ -6,6 +6,7 @@
 #include <windows.h>
 #define RENDER_APIENTRY __stdcall
 #else
+#include <GL/glx.h>
 #define RENDER_APIENTRY
 #endif
 
@@ -25,7 +26,14 @@ typedef int (RENDER_APIENTRY *wglChoosePixelFormatFunc_t)(HDC, CONST PIXELFORMAT
 typedef int (RENDER_APIENTRY *wglSetPixelFormatFunc_t)(HDC, int, CONST PIXELFORMATDESCRIPTOR *);
 typedef HGLRC (RENDER_APIENTRY *wglGetCurrentContextFunc_t)();
 #else
-#error FOO
+typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
+typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
+typedef XVisualInfo *(*glXChooseVisualFunc_t)( Display *, int, int * );
+typedef GLXContext (*glXCreateContextFunc_t)( Display *, XVisualInfo *, GLXContext, Bool );
+typedef Bool (*glXIsDirectFunc_t)( Display *, GLXContext );
+typedef Bool (*glXMakeCurrentFunc_t)( Display *, GLXDrawable, GLXContext );
+typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
+typedef void (*glXSwapBuffersFunc_t)( Display *, GLXDrawable );
 #endif
 
 typedef struct {
@@ -48,6 +56,14 @@ typedef struct {
 	wglChoosePixelFormatFunc_t wglChoosePixelFormat;
 	wglSetPixelFormatFunc_t wglSetPixelFormat;
 #else
+	glXGetConfigFunc_t  glXGetConfig;
+	glXQueryExtensionFunc_t glXQueryExtension;
+	glXChooseVisualFunc_t glXChooseVisual;
+	glXCreateContextFunc_t glXCreateContext;
+	glXIsDirectFunc_t glXIsDirect;
+	glXMakeCurrentFunc_t glXMakeCurrent;
+	glGetStringFunc_t glGetString;
+	glXSwapBuffersFunc_t glXSwapBuffers;
 	Display     *dpy;
 	XVisualInfo *visual;
 	GLXContext   context;

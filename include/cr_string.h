@@ -5,6 +5,7 @@ char  *crStrdup( const char *str );
 char  *crStrndup( const char *str, unsigned int len );
 int    crStrlen( const char *str );
 int    crStrcmp( const char *str1, const char *str2 );
+int    crStrncmp( const char *str1, const char *str2, int n );
 int    crStrcasecmp( const char *str1, const char *str2 );
 void   crStrcpy( char *dst, const char *src );
 void   crStrncpy( char *dst, const char *src, unsigned int len );

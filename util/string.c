@@ -42,6 +42,21 @@ int crStrcmp( const char *str1, const char *str2 )
 	return (*str1 - *str2);
 }
 
+int crStrncmp( const char *str1, const char *str2, int n )
+{
+	int i = 0;
+	while (*str1 && *str2 && i < n)
+	{
+		if (*str1 != *str2)
+		{
+			break;
+		}
+		str1++; str2++; i++;
+	}
+	if (i == n) return 0;
+	return (*str1 - *str2);
+}
+
 char lowercase[256] = {
 	'\000', '\001', '\002', '\003', '\004', '\005', '\006', '\007', 
 	'\010', '\011', '\012', '\013', '\014', '\015', '\016', '\017', 

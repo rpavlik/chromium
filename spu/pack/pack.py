@@ -15,12 +15,12 @@ keys.sort();
 
 
 print """#include <stdio.h>
-#include "cr_opengl_types.h"
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_spu.h"
 #include "packspu.h"
 #include "cr_packfunctions.h"
+#include <GL/gl.h>
 """
 
 print 'SPUNamedFunctionTable pack_table[%d];' % len(keys)

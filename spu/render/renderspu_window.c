@@ -3,7 +3,6 @@
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
 #elif defined( IRIX ) || defined( IRIX64 ) || defined( Linux )
-	#include "glxtokens.h"
 	#include <GL/glx.h>
 	#include <X11/Xlib.h>
 	#include <X11/Xutil.h>
@@ -11,7 +10,7 @@
 	#include <X11/Xatom.h>
 	#include <sys/time.h>
 #else
-	#error I don't know how to make windows on this platform.
+	#error "I don't know how to make windows on this platform."
 #endif
 
 #include <GL/gl.h>
@@ -20,6 +19,7 @@
 #include <stdio.h>
 
 #include "cr_error.h"
+#include "cr_string.h"
 #include "renderspu.h"
 
 #define WINDOW_NAME "Chromium Render SPU"
@@ -39,7 +39,7 @@ GetShareableColormap( Display *dpy, XVisualInfo *vi )
 
 	if ( vi->class != TrueColor )
 	{
-		wireGLError( "No support for non-TrueColor visuals." );
+		crError( "No support for non-TrueColor visuals." );
 	}
 
 	status = XmuLookupStandardColormap( dpy, vi->screen, vi->visualid,
@@ -73,7 +73,7 @@ GetShareableColormap( Display *dpy, XVisualInfo *vi )
 	static int
 WaitForMapNotify( Display *display, XEvent *event, char *arg )
 {
-	WIREGL_UNUSED(display);
+	(void)display;
 	return ( event->type == MapNotify && event->xmap.window == (Window)arg );
 }
 
@@ -91,7 +91,7 @@ static BOOL bSetupPixelFormat( HDC );
 Attrib( int attrib )
 {
 	int value = 0;
-	glXGetConfig( wiregl_pipe.dpy, wiregl_pipe.visual, attrib, &value );
+	render_spu.glXGetConfig( render_spu.dpy, render_spu.visual, attrib, &value );
 	return value;
 }
 
@@ -163,158 +163,158 @@ void renderspuCreateWindow( void )
 
 #ifndef WINDOWS
 	// WireGL Holdover
-	if ( wiregl_pipe.display_string == NULL )
+	if ( render_spu.display_string == NULL )
 	{
-		wiregl_pipe.display_string = ":0.0";
+		render_spu.display_string = ":0.0";
 	}
 
-	wiregl_pipe.dpy = XOpenDisplay( wiregl_pipe.display_string );
-	if ( !wiregl_pipe.dpy )
+	render_spu.dpy = XOpenDisplay( render_spu.display_string );
+	if ( !render_spu.dpy )
 	{
-		wireGLSimpleError( "Couldn't open display \"%s\"", 
-				XDisplayName( wiregl_pipe.display_string ) );
+		crError( "Couldn't open display \"%s\"", 
+				XDisplayName( render_spu.display_string ) );
 	}
 
-	wiregl_pipe.display_string = 
-		XDisplayName( DisplayString( wiregl_pipe.dpy ) );
+	render_spu.display_string = 
+		XDisplayName( DisplayString( render_spu.dpy ) );
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "Opened the display: %s", 
-			wiregl_pipe.display_string );
+	crDebug( "Opened the display: %s", 
+			render_spu.display_string );
 
-	if ( wiregl_pipe.sync )
+	if ( render_spu.sync )
 	{
-		wireGLWarning( WIREGL_WARN_DEBUG, "Turning on XSynchronize" );
-		XSynchronize( wiregl_pipe.dpy, True );
+		crDebug( "Turning on XSynchronize" );
+		XSynchronize( render_spu.dpy, True );
 	}
 
-	if ( !glXQueryExtension( wiregl_pipe.dpy, NULL, NULL ) )
+	if ( !render_spu.glXQueryExtension( render_spu.dpy, NULL, NULL ) )
 	{
-		wireGLError( "Display %s doesn't support GLX", 
-				wiregl_pipe.display_string );
+		crError( "Display %s doesn't support GLX", 
+				render_spu.display_string );
 	}
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "Looks like we have GLX" );
+	crDebug( "Looks like we have GLX" );
 
-	if ( wiregl_pipe.fullscreen )
+	if ( render_spu.fullscreen )
 	{
 		XWindowAttributes xwa;
 		Window root_window;
 
 		/* disable the screensaver */
-		XSetScreenSaver( wiregl_pipe.dpy, 0, 0, PreferBlanking,
+		XSetScreenSaver( render_spu.dpy, 0, 0, PreferBlanking,
 				AllowExposures );
-		wireGLWarning( WIREGL_WARN_DEBUG, "Just turned off the screensaver" );
+		crDebug( "Just turned off the screensaver" );
 
 		/* Figure out how big the screen is, and make the window that size */
 
-		root_window = DefaultRootWindow( wiregl_pipe.dpy );
-		XGetWindowAttributes( wiregl_pipe.dpy, root_window, &xwa );
+		root_window = DefaultRootWindow( render_spu.dpy );
+		XGetWindowAttributes( render_spu.dpy, root_window, &xwa );
 
-		wiregl_pipe.actual_window_width  = xwa.width;
-		wiregl_pipe.actual_window_height = xwa.height;
+		render_spu.actual_window_width  = xwa.width;
+		render_spu.actual_window_height = xwa.height;
 
-		wireGLWarning( WIREGL_WARN_DEBUG, "root window=%dx%d",
+		crDebug( "root window=%dx%d",
 				xwa.width, xwa.height );
 
 		actual_window_x = 0;
 		actual_window_y = 0;
 	}
 
-#if WIREGL_TRACK_DEPTH_COMPLEXITY
-	if ( wiregl_pipe.stencil_bits < 8 )
+#if CR_TRACK_DEPTH_COMPLEXITY
+	if ( render_spu.stencil_bits < 8 )
 	{
-		wiregl_pipe.stencil_bits = 8;
+		render_spu.stencil_bits = 8;
 	}
 #endif
 
 	makeAttribList( attribList, 8, 8, 8, 
-			wiregl_pipe.depth_bits, wiregl_pipe.stencil_bits );
+			render_spu.depth_bits, render_spu.stencil_bits );
 
 	/* choose visual seems to be somewhat busted, so work it a bit */
-	wiregl_pipe.visual = 
-		glXChooseVisual( wiregl_pipe.dpy, 
-				DefaultScreen( wiregl_pipe.dpy ), 
+	render_spu.visual = 
+		render_spu.glXChooseVisual( render_spu.dpy, 
+				DefaultScreen( render_spu.dpy ), 
 				attribList );
-	if ( !wiregl_pipe.visual )
+	if ( !render_spu.visual )
 	{
 		makeAttribList( attribList, 5, 6, 5,
-				wiregl_pipe.depth_bits, wiregl_pipe.stencil_bits );
-		wiregl_pipe.visual = 
-			glXChooseVisual( wiregl_pipe.dpy, 
-					DefaultScreen( wiregl_pipe.dpy), 
+				render_spu.depth_bits, render_spu.stencil_bits );
+		render_spu.visual = 
+			render_spu.glXChooseVisual( render_spu.dpy, 
+					DefaultScreen( render_spu.dpy), 
 					attribList );
 	}
 
-	if ( !wiregl_pipe.visual )
+	if ( !render_spu.visual )
 	{
 		makeAttribList( attribList, 4, 4, 4,
-				wiregl_pipe.depth_bits, wiregl_pipe.stencil_bits );
-		wiregl_pipe.visual = 
-			glXChooseVisual( wiregl_pipe.dpy, 
-					DefaultScreen( wiregl_pipe.dpy ), 
+				render_spu.depth_bits, render_spu.stencil_bits );
+		render_spu.visual = 
+			render_spu.glXChooseVisual( render_spu.dpy, 
+					DefaultScreen( render_spu.dpy ), 
 					attribList );
 	}
 
-	if ( !wiregl_pipe.visual )
+	if ( !render_spu.visual )
 	{
 		makeAttribList( attribList, 1, 1, 1,
-				wiregl_pipe.depth_bits, wiregl_pipe.stencil_bits );
-		wiregl_pipe.visual = 
-			glXChooseVisual( wiregl_pipe.dpy, 
-					DefaultScreen( wiregl_pipe.dpy ), 
+				render_spu.depth_bits, render_spu.stencil_bits );
+		render_spu.visual = 
+			render_spu.glXChooseVisual( render_spu.dpy, 
+					DefaultScreen( render_spu.dpy ), 
 					attribList );
 	}
 
-	if ( !wiregl_pipe.visual && wiregl_pipe.depth_bits > 24 ) {
+	if ( !render_spu.visual && render_spu.depth_bits > 24 ) {
 		/* MWE -- why does Francois end up here? */
-		wiregl_pipe.depth_bits = 24;
+		render_spu.depth_bits = 24;
 
 		makeAttribList( attribList, 8, 8, 8, 
-				wiregl_pipe.depth_bits, wiregl_pipe.stencil_bits );
+				render_spu.depth_bits, render_spu.stencil_bits );
 
-		wiregl_pipe.visual = 
-			glXChooseVisual( wiregl_pipe.dpy, 
-					DefaultScreen( wiregl_pipe.dpy ), 
+		render_spu.visual = 
+			render_spu.glXChooseVisual( render_spu.dpy, 
+					DefaultScreen( render_spu.dpy ), 
 					attribList );
 	}
 
-	if ( !wiregl_pipe.visual )
+	if ( !render_spu.visual )
 	{
-		wireGLSimpleError( "Display %s doesn't have the necessary visual "
+		crError( "Display %s doesn't have the necessary visual "
 				"(RGB=%d, Z=%d stencil=%d double=%d)",
-				wiregl_pipe.display_string, 8, 
-				wiregl_pipe.depth_bits, wiregl_pipe.stencil_bits,
+				render_spu.display_string, 8, 
+				render_spu.depth_bits, render_spu.stencil_bits,
 				1 );
 	}
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "Chose a visual (id=%d)",
-			wiregl_pipe.visual->visualid );
-	wireGLWarning( WIREGL_WARN_DEBUG, "Visual: RGBA=<%d,%d,%d,%d> "
+	crDebug( "Chose a visual (id=%d)",
+			render_spu.visual->visualid );
+	crDebug( "Visual: RGBA=<%d,%d,%d,%d> "
 			"Z=%d stencil=%d double=%d", Attrib( GLX_RED_SIZE ),
 			Attrib( GLX_GREEN_SIZE ), Attrib( GLX_BLUE_SIZE ),
 			Attrib( GLX_ALPHA_SIZE ), Attrib( GLX_DEPTH_SIZE ),
 			Attrib( GLX_STENCIL_SIZE ), Attrib( GLX_DOUBLEBUFFER ) );
 
-	cmap = GetShareableColormap( wiregl_pipe.dpy, wiregl_pipe.visual );
-	wireGLWarning( WIREGL_WARN_DEBUG, "Chose a colormap" );
+	cmap = GetShareableColormap( render_spu.dpy, render_spu.visual );
+	crDebug( "Chose a colormap" );
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "Creating the OpenGL context" );
+	crDebug( "Creating the OpenGL context" );
 
-	wiregl_pipe.context = glXCreateContext( wiregl_pipe.dpy, 
-			wiregl_pipe.visual,
-			NULL, wiregl_pipe.try_direct );
+	render_spu.context = render_spu.glXCreateContext( render_spu.dpy, 
+			render_spu.visual,
+			NULL, render_spu.try_direct );
 
-	if ( wiregl_pipe.context == NULL )
-		wireGLError( "Couldn't create rendering context" ); 
+	if ( render_spu.context == NULL )
+		crError( "Couldn't create rendering context" ); 
 
-	is_direct = glXIsDirect( wiregl_pipe.dpy, wiregl_pipe.context );
+	is_direct = render_spu.glXIsDirect( render_spu.dpy, render_spu.context );
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "Created a context (%s)",
+	crDebug( "Created a context (%s)",
 			is_direct ? "direct" : "indirect" );
 
-	if ( wiregl_pipe.force_direct && !is_direct )
+	if ( render_spu.force_direct && !is_direct )
 	{
-		wireGLSimpleError( "Direct rendering not possible." );
+		crError( "Direct rendering not possible." );
 	}
 
 	swa.colormap     = cmap;
@@ -323,31 +323,31 @@ void renderspuCreateWindow( void )
 
 	flags = CWBorderPixel | CWColormap | CWEventMask;
 
-	if (wiregl_pipe.fullscreen)
+	if (render_spu.fullscreen)
 	{
 		swa.override_redirect = True;
 		flags |= CWOverrideRedirect;
 	}
 
-	wiregl_pipe.window = 
-		XCreateWindow( wiregl_pipe.dpy,
-				RootWindow( wiregl_pipe.dpy, 
-					wiregl_pipe.visual->screen ),
+	render_spu.window = 
+		XCreateWindow( render_spu.dpy,
+				RootWindow( render_spu.dpy, 
+					render_spu.visual->screen ),
 				actual_window_x,
 				actual_window_y,
-				wiregl_pipe.actual_window_width, 
-				wiregl_pipe.actual_window_height,
-				0, wiregl_pipe.visual->depth, InputOutput,
-				wiregl_pipe.visual->visual,
+				render_spu.actual_window_width, 
+				render_spu.actual_window_height,
+				0, render_spu.visual->depth, InputOutput,
+				render_spu.visual->visual,
 				flags, &swa );
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "actual_window_x: %d", 
+	crDebug( "actual_window_x: %d", 
 			actual_window_x);
-	wireGLWarning( WIREGL_WARN_DEBUG, "actual_window_y: %d", 
+	crDebug( "actual_window_y: %d", 
 			actual_window_y);
 
 
-	if ( wiregl_pipe.fullscreen )
+	if ( render_spu.fullscreen )
 	{
 		/* Make a clear cursor to get rid of the monitor cursor */
 		Pixmap pixmap;
@@ -357,53 +357,53 @@ void renderspuCreateWindow( void )
 
 		memset( clear_bits, 0, sizeof(clear_bits) );
 
-		pixmap = XCreatePixmapFromBitmapData( wiregl_pipe.dpy, 
-				wiregl_pipe.window,
+		pixmap = XCreatePixmapFromBitmapData( render_spu.dpy, 
+				render_spu.window,
 				clear_bits, 16, 16, 1, 0, 1 );
-		cursor = XCreatePixmapCursor( wiregl_pipe.dpy, pixmap, pixmap,
+		cursor = XCreatePixmapCursor( render_spu.dpy, pixmap, pixmap,
 				&color, &color, 8, 8 );
-		XDefineCursor( wiregl_pipe.dpy, wiregl_pipe.window, cursor );
+		XDefineCursor( render_spu.dpy, render_spu.window, cursor );
 
-		XFreePixmap( wiregl_pipe.dpy, pixmap );
+		XFreePixmap( render_spu.dpy, pixmap );
 	}
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "Created the window" );
+	crDebug( "Created the window" );
 	hints.x = actual_window_x;
 	hints.y = actual_window_y;
-	hints.width = wiregl_pipe.actual_window_width;
-	hints.height = wiregl_pipe.actual_window_height;
+	hints.width = render_spu.actual_window_width;
+	hints.height = render_spu.actual_window_height;
 	hints.min_width = hints.width;
 	hints.min_height = hints.height;
 	hints.max_width = hints.width;
 	hints.max_height = hints.height;
 	hints.flags = USPosition | USSize | PMinSize | PMaxSize;
-	XSetStandardProperties( wiregl_pipe.dpy, wiregl_pipe.window,
+	XSetStandardProperties( render_spu.dpy, render_spu.window,
 			WINDOW_NAME, WINDOW_NAME,
 			None, NULL, 0, &hints );
 #if 1
 	/* New item!  This is needed so that the sgimouse server can find
-	 * the wireGLserver window. 
+	 * the crDebug window. 
 	 */
 	name = WINDOW_NAME;
 	XStringListToTextProperty( &name, 1, &text_prop );
-	XSetWMName( wiregl_pipe.dpy, wiregl_pipe.window, &text_prop );
+	XSetWMName( render_spu.dpy, render_spu.window, &text_prop );
 #endif
 	class_hints = XAllocClassHint( );
-	class_hints->res_name = strdup( "foo" );
-	class_hints->res_class = strdup( "WireGL" );
-	XSetClassHint( wiregl_pipe.dpy, wiregl_pipe.window, class_hints );
+	class_hints->res_name = crStrdup( "foo" );
+	class_hints->res_class = crStrdup( "Chromium" );
+	XSetClassHint( render_spu.dpy, render_spu.window, class_hints );
 	free( class_hints->res_name );
 	free( class_hints->res_class );
 	XFree( class_hints );
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "About to make current to the context" );
+	crDebug( "About to make current to the context" );
 
-	XMapWindow( wiregl_pipe.dpy, wiregl_pipe.window );
-	XIfEvent( wiregl_pipe.dpy, &event, WaitForMapNotify, 
-			(char *) wiregl_pipe.window );
+	XMapWindow( render_spu.dpy, render_spu.window );
+	XIfEvent( render_spu.dpy, &event, WaitForMapNotify, 
+			(char *) render_spu.window );
 
 #if 0
-	/* Note: There is a nasty bug somewhere in glXMakeCurrent() for
+	/* Note: There is a nasty bug somewhere in render_spu.glXMakeCurrent() for
 		 the 0.9.5 version of the NVIDIA OpenGL drivers, and has been
 		 observed under both RedHat 6.2 (running a 2.2.16-3 kernel) and
 		 RedHat 7.0 (running the stock 2.2.16-22 kernel).  The bug
@@ -411,23 +411,20 @@ void renderspuCreateWindow( void )
 		 power-cycled (hard reset).  In both cases we had built the
 		 NVIDIA kernel module from source, because there was no
 		 appropriate binary release. */
-	wireGLWarning( WIREGL_WARN_CRITICAL, "*** You are screwed, this will "
+	crDebug( "*** You are screwed, this will "
 			"almost certainly wedge the machine." );
 #endif
 
-	if ( !glXMakeCurrent( wiregl_pipe.dpy, wiregl_pipe.window, 
-				wiregl_pipe.context ) )
+	if ( !render_spu.glXMakeCurrent( render_spu.dpy, render_spu.window, 
+				render_spu.context ) )
 	{
-		wireGLError( "Error making current" );
+		crError( "Error making current" );
 	}
-	wireGLWarning( WIREGL_WARN_DEBUG, "Made current to the context" );
+	crDebug( "Made current to the context" );
 
-	wireGLWarning( WIREGL_WARN_DEBUG, "GL_VENDOR:   %s",
-			glGetString( GL_VENDOR ) );
-	wireGLWarning( WIREGL_WARN_DEBUG, "GL_RENDERER: %s",
-			glGetString( GL_RENDERER ) );
-	wireGLWarning( WIREGL_WARN_DEBUG, "GL_VERSION:  %s",
-			glGetString( GL_VERSION ) );
+	crDebug( "GL_VENDOR:   %s", render_spu.glGetString( GL_VENDOR ) );
+	crDebug( "GL_RENDERER: %s", render_spu.glGetString( GL_RENDERER ) );
+	crDebug( "GL_VERSION:  %s", render_spu.glGetString( GL_VERSION ) );
 
 #else
 	hinstance = GetModuleHandle( NULL );
@@ -504,19 +501,19 @@ void renderspuCreateWindow( void )
 		int smCyFixedFrame = GetSystemMetrics( SM_CXFIXEDFRAME ) + 1;
 		int smCyCaption = GetSystemMetrics( SM_CYCAPTION );
 
-		wiregl_pipe.actual_window_width = GetSystemMetrics( SM_CXSCREEN ) ;
-		wiregl_pipe.actual_window_height = GetSystemMetrics( SM_CYSCREEN ) ;
+		render_spu.actual_window_width = GetSystemMetrics( SM_CXSCREEN ) ;
+		render_spu.actual_window_height = GetSystemMetrics( SM_CYSCREEN ) ;
 
-		wireGLWarning( WIREGL_WARN_DEBUG, "Window Dims: %d, %d\n", 
-				wiregl_pipe.actual_window_width,
-				wiregl_pipe.actual_window_height);
+		crDebug( "Window Dims: %d, %d\n", 
+				render_spu.actual_window_width,
+				render_spu.actual_window_height);
 
-		actual_window_x = wiregl_pipe.window_x - smCxFixedFrame - 1;
-		actual_window_y = wiregl_pipe.window_y - smCyFixedFrame - smCyCaption;
+		actual_window_x = render_spu.window_x - smCxFixedFrame - 1;
+		actual_window_y = render_spu.window_y - smCyFixedFrame - smCyCaption;
 
-		window_plus_caption_width = wiregl_pipe.actual_window_width +
+		window_plus_caption_width = render_spu.actual_window_width +
 			2 * smCxFixedFrame;
-		window_plus_caption_height = wiregl_pipe.actual_window_height + 
+		window_plus_caption_height = render_spu.actual_window_height + 
 			2 * smCyFixedFrame + smCyCaption;
 
 #else
@@ -614,7 +611,7 @@ void renderspuCreateWindow( void )
 	//crDebug( "DONE!" );
 #endif
 
-#if WIREGL_TRACK_DEPTH_COMPLEXITY
+#if CR_TRACK_DEPTH_COMPLEXITY
 	glStencilFunc( GL_ALWAYS, ~0, ~0 );
 	glStencilMask( ~0 );
 	glStencilOp( GL_INCR, GL_INCR, GL_INCR );
@@ -649,10 +646,10 @@ MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 
 			// glViewport( 0, 0, w, h );
 #if 0
-			glViewport( -wiregl_pipe.mural_x, -wiregl_pipe.mural_y, 
-					wiregl_pipe.mural_width, wiregl_pipe.mural_height );
-			glScissor( -wiregl_pipe.mural_x, -wiregl_pipe.mural_y, 
-					wiregl_pipe.mural_width, wiregl_pipe.mural_height );
+			glViewport( -render_spu.mural_x, -render_spu.mural_y, 
+					render_spu.mural_width, render_spu.mural_height );
+			glScissor( -render_spu.mural_x, -render_spu.mural_y, 
+					render_spu.mural_width, render_spu.mural_height );
 #endif
 			break;
 

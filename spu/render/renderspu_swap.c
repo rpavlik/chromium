@@ -25,5 +25,6 @@ void SPU_APIENTRY renderspuSwapBuffers( void )
 		crError( "wglSwapBuffers failed!");
 	}
 #else
+	render_spu.glXSwapBuffers( render_spu.dpy, render_spu.window );
 #endif
 }

@@ -35,6 +35,7 @@ class CRNode:
 		self.SPUs = []
 		self.spokenfor = 0
 		self.spusloaded = 0
+		self.config = {}
 	
 	def AddSPU( self, spu ):
 		self.SPUs.append( spu )
@@ -47,7 +48,6 @@ class CRNode:
 class CRNetworkNode(CRNode):
 	def __init__( self, host ):
 		CRNode.__init__(self,host)
-		self.config = {}
 		self.clients = []
 
 	def Conf( self, key, *values ):
@@ -61,7 +61,13 @@ class CRApplicationNode(CRNode):
 		self.application = app
 
 	def StartDir( self, dir ):
-		self.startdir = dir
+		self.config['startdir'] = dir
+
+	def ClientDLL( self, dir ):
+		self.config['clientdll'] = dir
+
+	def SPUDir( self, dir ):
+		self.config['SPUdir'] = dir
 
 class SockWrapper:
 	NOERROR = 200
@@ -104,23 +110,30 @@ class CR:
 		self.nodes.append( node )
 
 	def Go( self ):
-		HOST = ""
-		PORT = 10000
-		s = socket( AF_INET, SOCK_STREAM )
-		s.bind( (HOST, PORT) )
-		s.listen(100)
-
-		self.all_sockets.append(s)
-
-		while 1:
-			ready = select( self.all_sockets, [], [], 0.1 )[0]
-			for sock in ready:
-				if sock == s:
-					conn, addr = s.accept()
-					self.wrappers[conn] = SockWrapper(conn)
-					self.all_sockets.append( conn )
-				else:
-					self.ProcessRequest( self.wrappers[sock] )
+		try:
+			HOST = ""
+			PORT = 10000
+			s = socket( AF_INET, SOCK_STREAM )
+			s.bind( (HOST, PORT) )
+			s.listen(100)
+	
+			self.all_sockets.append(s)
+	
+			while 1:
+				ready = select( self.all_sockets, [], [], 0.1 )[0]
+				for sock in ready:
+					if sock == s:
+						conn, addr = s.accept()
+						self.wrappers[conn] = SockWrapper(conn)
+						self.all_sockets.append( conn )
+					else:
+						self.ProcessRequest( self.wrappers[sock] )
+		except:
+			try:
+				s.shutdown( 2 )
+			except:
+				pass
+			print >> sys.stderr, "\n\nThank you for using Chromium!"
 
 	def ClientError( self, sock_wrapper, code, msg ):
 		sock_wrapper.Reply( code, msg )
@@ -128,7 +141,10 @@ class CR:
 
 	def ClientDisconnect( self, sock_wrapper ):
 		self.all_sockets.remove( sock_wrapper.sock )
-		sock_wrapper.sock.shutdown( 2 )
+		try:
+			sock_wrapper.sock.shutdown( 2 )
+		except:
+			pass
 
 	def do_faker( self, sock, args ):
 		for node in self.nodes:
@@ -139,6 +155,24 @@ class CR:
 					sock.Success( node.application )
 					return
 		self.ClientError( sock, SockWrapper.UNKNOWNHOST, "Never heard of faker host %s" % args )
+
+	def do_clientdll( self, sock, args ):
+		if sock.node == None or not isinstance(sock.node,CRApplicationNode):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You're not a faker!" )
+			return
+		if not sock.node.config.has_key( 'clientdll' ):
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "Faker didn't say where it was." )
+			return
+		sock.Success( sock.node.config['clientdll'] )
+
+	def do_spudir( self, sock, args ):
+		if sock.node == None or not isinstance(sock.node,CRApplicationNode):
+			self.ClientError( sock, SockWrapper.UNKNOWNSERVER, "You're not a faker!" )
+			return
+		if not sock.node.config.has_key( 'SPUdir' ):
+			sock.Reply( SockWrapper.UNKNOWNPARAM, "Faker didn't say where it was." )
+			return
+		sock.Success( sock.node.config['SPUdir'] )
 
 	def do_server( self, sock, args ):
 		for node in self.nodes:
@@ -220,10 +254,10 @@ class CR:
 	def do_startdir( self, sock, args ):
 		if not sock.node:
 			self.ClientError( sock_wrapper, SockWrapper.UNKNOWNHOST, "Can't ask me where to start until you tell me who you are." )
-		if not hasattr( sock.node, "startdir" ):
+		if not sock.node.config.has_key( "startdir" ):
 			sock.Success( "." )
 		else:
-			sock.Success( sock.node.startdir )
+			sock.Success( sock.node.config['startdir'] )
 
 	def ProcessRequest( self, sock_wrapper ):
 		try:
