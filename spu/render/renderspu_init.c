@@ -9,6 +9,7 @@
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_mothership.h"
+#include "cr_url.h"
 #include "renderspu.h"
 #include <stdio.h>
 
@@ -25,6 +26,40 @@ RenderSPU render_spu;
 #ifdef CHROMIUM_THREADSAFE
 CRtsd _RenderTSD;
 #endif
+
+void swapsyncConnect()
+{
+	char hostname[4096], protocol[4096];
+	unsigned short port;
+
+	crNetInit(NULL, NULL);
+
+	if (!crParseURL( render_spu.swap_master_url, protocol, hostname, 
+					&port, 9876))
+		crError( "Bad URL: %s", render_spu.swap_master_url );
+
+	if (render_spu.is_swap_master)
+	{
+		int a;
+
+		render_spu.swap_conns = (CRConnection **)crAlloc(
+						render_spu.num_swap_clients*sizeof(CRConnection *));
+		for (a=0; a<render_spu.num_swap_clients; a++)
+		{
+			render_spu.swap_conns[a] = crNetAcceptClient( protocol, hostname, port,
+														render_spu.swap_mtu, 1);
+		}
+	}
+	else
+	{
+		render_spu.swap_conns = (CRConnection **)crAlloc(sizeof(CRConnection *));
+
+		render_spu.swap_conns[0] = crNetConnectToServer(render_spu.swap_master_url,
+									port, render_spu.swap_mtu, 1);
+		if (!render_spu.swap_conns[0])
+			crError("Failed connection");
+	}
+}
 
 
 SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
@@ -50,6 +85,9 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 
 	render_spu.id = id;
 	renderspuGatherConfiguration(&render_spu);
+	if (render_spu.swap_master_url)
+		swapsyncConnect();
+
 
 	/* Get our special functions. */
 	numSpecial = renderspuCreateFunctions( render_table );

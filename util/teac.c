@@ -494,7 +494,7 @@ void crTeacInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc,
 }
 
 void
-crTeacAccept( CRConnection *conn, unsigned short port )
+crTeacAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
   CRConnection *mother;
   char          response[8096];

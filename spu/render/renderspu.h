@@ -98,6 +98,12 @@ typedef struct {
 	crOpenGLInterface ws;  /* Window System interface */
 
 	CRHashTable *barrierHash;
+
+	int is_swap_master, num_swap_clients;
+	int swap_mtu;
+	char *swap_master_url;
+	CRConnection **swap_conns;
+	
 } RenderSPU;
 
 extern RenderSPU render_spu;

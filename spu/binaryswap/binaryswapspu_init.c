@@ -75,7 +75,7 @@ void binaryswapspuConnectToPeer( void )
 		binaryswap_spu.highlow[i] = (binaryswap_spu.node_num%((int)pow(2, i+1)))
 			/((int)pow(2, i));
 		if(binaryswap_spu.highlow[i]){
-			binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, 
+			binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, NULL,
 									 (short) (ports[i]+1), 
 									 binaryswap_spu.mtu, 1 );
 			binaryswap_spu.peer_send[i] = crNetConnectToServer( binaryswap_spu.swap_partners[i], 
@@ -89,7 +89,7 @@ void binaryswapspuConnectToPeer( void )
 									    (short) (ports[i]+1),
 									    binaryswap_spu.mtu, 
 									    1 );
-			binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, ports[i], 
+			binaryswap_spu.peer_recv[i] = crNetAcceptClient( protocol, NULL,ports[i], 
 									 binaryswap_spu.mtu, 1 );
 		}
 	}

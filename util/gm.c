@@ -509,7 +509,7 @@ static void crGmConnectionAdd( CRConnection *conn )
 }
 
 
-void crGmAccept( CRConnection *conn, unsigned short port )
+void crGmAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	CRConnection *mother;
 	char response[8096];
@@ -518,11 +518,16 @@ void crGmAccept( CRConnection *conn, unsigned short port )
 
 	mother = __copy_of_crMothershipConnect( );
 
-	if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
-	{
-		crError( "Couldn't determine my own hostname in crGmAccept!" );
+	if (!hostname)
+	{	
+		if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
+		{
+			crError( "Couldn't determine my own hostname in crGmAccept!" );
+		}
 	}
-	
+	else
+		crStrcpy(my_hostname, hostname);
+
 	/* Tell the mothership I'm willing to receive a client, and what my GM info is */
 	if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest gm %s %d %d %d %d", my_hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
 	{

@@ -178,8 +178,8 @@ void crUDPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
 	}
 }
 
-extern void crTCPIPAccept( CRConnection *conn, unsigned short port );
-static void crUDPTCPIPAccept( CRConnection *conn, unsigned short port )
+extern void crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port );
+static void crUDPTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	int err;
 	socklen_t		addr_length;
@@ -192,7 +192,7 @@ static void crUDPTCPIPAccept( CRConnection *conn, unsigned short port )
 	struct addrinfo         hints;
 #endif
 
-	crTCPIPAccept( conn, port );
+	crTCPIPAccept( conn, hostname, port );
 
 #ifndef ADDRINFO
 	conn->udp_socket = socket( AF_INET, SOCK_DGRAM, 0 );

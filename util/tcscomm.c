@@ -64,7 +64,7 @@ void crTcscommFree( CRConnection *, void * );
 int  crTcscommRecv( void );
 void crTCPIPReadExact( CRSocket sock, void *buf, unsigned int len );
 void crTCPIPWriteExact( CRConnection *conn, void *buf, unsigned int len );
-void crTCPIPAccept( CRConnection *conn, unsigned short port );
+void crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port );
 int  crTCPIPDoConnect( CRConnection *conn );
 
 int
@@ -584,7 +584,7 @@ void crTcscommInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc,
 }
 
 void
-crTcscommAccept( CRConnection *conn, unsigned short port )
+crTcscommAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
   CRConnection *mother;
   char          response[8096];
@@ -596,7 +596,7 @@ crTcscommAccept( CRConnection *conn, unsigned short port )
 	   "brokering the connection through the mothership!." );
   
   mother = __copy_of_crMothershipConnect( );
-  
+
   /* Tell the mothership I'm willing to receive a client, and what my Tcscomm info is */
   if (!__copy_of_crMothershipSendString( mother, response,
 					 "acceptrequest quadrics-tcscomm %s %d %d",

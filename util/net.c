@@ -260,7 +260,7 @@ void crNetNewClient( CRConnection *conn, CRNetServer *ns )
 
 /* Accept a client on various interfaces. */
 
-CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsigned int mtu, int broker )
+CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned short port, unsigned int mtu, int broker )
 {
 	CRConnection *conn;
 
@@ -366,7 +366,7 @@ CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsi
 		crError( "Unknown Protocol: \"%s\"", protocol );
 	}
 
-	crNetAccept( conn, port );
+	crNetAccept( conn, hostname, port );
 	return conn;
 }
 
@@ -559,9 +559,9 @@ void crNetDisconnect( CRConnection *conn )
 	conn->Disconnect( conn );
 }
 
-void crNetAccept( CRConnection *conn, unsigned short port )
+void crNetAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
-	conn->Accept( conn, port );
+	conn->Accept( conn, hostname, port );
 }
 
 /* Do a blocking receive on a particular connection.  This only 

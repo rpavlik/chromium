@@ -120,6 +120,20 @@ static void set_lut8( RenderSPU *render_spu, const char *response )
 	render_spu->use_lut8 = 1;
 }
 
+void set_master_url ( RenderSPU *render_spu, char *response )
+{
+	render_spu->swap_master_url = crStrdup( response );
+}
+void set_is_master ( RenderSPU *render_spu, char *response )
+{
+	render_spu->is_swap_master = crStrToInt( response );
+}
+void set_num_clients ( RenderSPU *render_spu, char *response )
+{
+	render_spu->num_swap_clients = crStrToInt( response );
+}
+
+
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions renderSPUOptions[] = {
@@ -165,6 +179,15 @@ SPUOptions renderSPUOptions[] = {
    { "lut8", CR_STRING, 1, "", NULL, NULL,
      "8 bit RGB LUT", (SPUOptionCB)set_lut8},
 
+   { "swap_master_url", CR_STRING, 1, NULL, NULL, NULL,
+     "The URL to the master swapper", (SPUOptionCB)set_master_url },
+
+   { "is_swap_master", CR_BOOL, 1, "0", NULL, NULL,
+     "Is this the swap master", (SPUOptionCB)set_is_master },
+
+   { "num_swap_clients", CR_INT, 1, "1", NULL, NULL,
+     "How many swaps to wait on", (SPUOptionCB)set_num_clients },
+
      
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
@@ -193,6 +216,8 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 					  (void *)render_spu,
 					  renderSPUOptions );
 		
+		render_spu->swap_mtu = crMothershipGetMTU( conn );
+
 		/* Additional configuration not expressed in the 
 		 * SPUOptions array:
 		 */

@@ -11,6 +11,33 @@
 #include "cr_spu.h"
 #include "renderspu.h"
 
+static void __doSync()
+{
+	CRMessage *in, out;
+
+	out.header.type = CR_MESSAGE_OOB;
+	
+	if (render_spu.is_swap_master)
+	{
+		int a;
+	
+		for (a=0; a<render_spu.num_swap_clients; a++)
+		{
+			crNetGetMessage( render_spu.swap_conns[a], &in );			
+			crNetFree( render_spu.swap_conns[a], in);
+		}
+
+		for (a=0; a<render_spu.num_swap_clients; a++)
+			crNetSend( render_spu.swap_conns[a], NULL, &out, sizeof(CRMessage));
+	}
+	else
+	{
+		crNetSend( render_spu.swap_conns[0], NULL, &out, sizeof(CRMessage));
+
+		crNetGetMessage( render_spu.swap_conns[0], &in );			
+		crNetFree( render_spu.swap_conns[0], in);
+	}
+}
 
 /*
  * Visual functions
@@ -381,6 +408,7 @@ static void DrawCursor( GLint x, GLint y )
 void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 {
 	WindowInfo *w = (WindowInfo *) crHashtableSearch(render_spu.windowTable, window);
+
 	if (!w)
 	{
 		crDebug("renderspuSwapBuffers: invalid window id: %d", window);
@@ -395,6 +423,9 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 
 	if (render_spu.drawCursor)
 		DrawCursor( render_spu.cursorX, render_spu.cursorY );
+
+	if (render_spu.swap_master_url)
+		__doSync();
 
 	renderspu_SystemSwapBuffers( w, flags );
 }
@@ -484,10 +515,13 @@ static void RENDER_APIENTRY renderspuSemaphoreVCR( GLuint name )
  * Misc functions
  */
 
+
+
 static void RENDER_APIENTRY renderspuChromiumParameteriCR(GLenum target, GLint value)
 {
 	(void) target;
 	(void) value;
+
 
 #if 0
 	switch (target) 
@@ -496,7 +530,6 @@ static void RENDER_APIENTRY renderspuChromiumParameteriCR(GLenum target, GLint v
 			crWarning("Unhandled target in renderspuChromiumParameteriCR()");
 			break;
 	}
-
 #endif
 }
 
@@ -545,12 +578,12 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 						crDebug("AcceptClient from %s on %d", 
 							render_spu.server->clients[client_num].conn->hostname, render_spu.gather_port);
 						render_spu.gather_conns[client_num] = 
-								crNetAcceptClient("tcpip", port, 1024*1024,  1);
+								crNetAcceptClient("tcpip", NULL, port, 1024*1024,  1);
 						break;
 					
 					case CR_GM:
 						render_spu.gather_conns[client_num] = 
-								crNetAcceptClient("gm", port, 1024*1024,  1);
+								crNetAcceptClient("gm", NULL, port, 1024*1024,  1);
 						break;
 						
 					default:
@@ -597,8 +630,6 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 			if (msg->header.type == CR_MESSAGE_GATHER)
 			{
 				crNetFree(render_spu.gather_conns[client_num], msg);
-				crNetSend(render_spu.gather_conns[client_num], NULL, &pingback,
-										sizeof(CRMessageHeader));
 			}
 			else
 			{
@@ -607,10 +638,25 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 			}
 		}
 
+		/* 
+		 * We're only hitting the case if we're not actually calling 
+		 * child.SwapBuffers from readback, so a switch about which
+		 * call to __doSync() we really want [this one, or the one
+		 * in SwapBuffers above] is not necessary -- karl
+		 */
+		
+		if (render_spu.swap_master_url)
+			__doSync();
+
+		for (client_num=0; client_num< render_spu.server->numClients; client_num++)
+			crNetSend(render_spu.gather_conns[client_num], NULL, &pingback,
+										sizeof(CRMessageHeader));
+
 		render_spu.self.RasterPos2i(((GLint *)values)[0], ((GLint *)values)[1]);
 		render_spu.self.DrawPixels(  ((GLint *)values)[2], ((GLint *)values)[3], 
 										((GLint *)values)[4], ((GLint *)values)[5], 
 									render_spu.gather_conns[0]->userbuf);
+
 
 		render_spu.self.SwapBuffers(((GLint *)values)[6], 0);
 		break;

@@ -170,6 +170,31 @@ spu.Conf('bucket_mode', 'Uniform Grid')
 		X-Windows ONLY.
    </td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">swap_master_url</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="115%" class="ConfigDesc" height="38">
+		Specify the url to a master to attempt to better sync SwapBuffers. 
+		Setting this option also enables the attempted sync. See also
+		<code>is_swap_master</code> and <code>num_swap_clients</code>
+   </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">is_swap_master</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">
+		Specify if this render spu is the master of a "swap group". Default
+		value is 0. There should only be one master per group.
+   </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">num_swap_clients</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="115%" class="ConfigDesc" height="38">
+		This specifies the number of clients in a swap group, not counting
+		the master. This should be set for all swap masters.
+   </td>
+  </tr>
 
 </table>
 

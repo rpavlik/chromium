@@ -72,7 +72,7 @@ unsigned int  crNetPeekMessage( CRConnection *conn, CRMessage **message );
 void crNetReadline( CRConnection *conn, void *buf );
 int  crNetRecv( void );
 void crNetFree( CRConnection *conn, void *buf );
-void crNetAccept( CRConnection *conn, unsigned short port );
+void crNetAccept( CRConnection *conn, char *hostname, unsigned short port );
 int crNetConnect( CRConnection *conn );
 void crNetDisconnect( CRConnection *conn );
 void crCloseSocket( CRSocket sock );
@@ -90,6 +90,7 @@ typedef struct CRMultiBuffer {
 } CRMultiBuffer;
 
 struct CRConnection {
+	int ignore;
 	CRConnectionType type;
 	unsigned int id; /* from the mothership */
 
@@ -119,7 +120,7 @@ struct CRConnection {
 	void  (*Free)( CRConnection *conn, void *buf );
 	void  (*InstantReclaim)( CRConnection *conn, CRMessage *mess );
 	void  (*HandleNewMessage)( CRConnection *conn, CRMessage *mess, unsigned int len );
-	void  (*Accept)( CRConnection *conn, unsigned short port );
+	void  (*Accept)( CRConnection *conn, char *hostname, unsigned short port );
 	int  (*Connect)( CRConnection *conn );
 	void  (*Disconnect)( CRConnection *conn );
 
@@ -170,7 +171,7 @@ struct CRConnection {
 };
 
 CRConnection *crNetConnectToServer( char *server, unsigned short default_port, int mtu, int broker );
-CRConnection *crNetAcceptClient( const char *protocol, unsigned short port, unsigned int mtu, int broker );
+CRConnection *crNetAcceptClient( const char *protocol, char *hostname, unsigned short port, unsigned int mtu, int broker );
 
 #ifdef __cplusplus
 }

@@ -340,7 +340,7 @@ void __crSpankSocket( CRSocket sock )
 typedef int socklen_t;
 #endif
 
-void crTCPIPAccept( CRConnection *conn, unsigned short port )
+void crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	int err;
 	socklen_t		addr_length;
@@ -446,10 +446,16 @@ void crTCPIPAccept( CRConnection *conn, unsigned short port )
 		char *temp;
 		mother = __copy_of_crMothershipConnect( );
 
-		if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
+		if (!hostname)
 		{
-			crError( "Couldn't determine my own hostname in crTCPIPAccept!" );
+			if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
+			{
+				crError( "Couldn't determine my own hostname in crTCPIPAccept!" );
+			}
 		}
+		else
+			crStrcpy(my_hostname, hostname);
+
 		temp = crStrchr( my_hostname, '.' );
 		if (temp) *temp='\0';
 
@@ -734,6 +740,7 @@ int crTCPIPRecv( void )
 	{
 		CRConnection *conn = cr_tcpip.conns[i];
 		if (!conn) continue;
+
 		if ( conn->recv_credits > 0 || conn->type != CR_TCPIP )
 		{
 			/* 
@@ -884,6 +891,7 @@ int crTCPIPRecv( void )
 		{
 			tcpip_buffer = (CRTCPIPBuffer *) 
 				crAlloc( sizeof(*tcpip_buffer) + len );
+
 			tcpip_buffer->magic = CR_TCPIP_BUFFER_MAGIC;
 			tcpip_buffer->kind  = CRTCPIPMemoryBig;
 			tcpip_buffer->pad   = 0;
@@ -965,7 +973,9 @@ int crTCPIPRecv( void )
 		{
 			crTCPIPFree( conn, tcpip_buffer + 1 );
 		}
+		
 	}
+
 
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.recvmutex);

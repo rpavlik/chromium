@@ -52,7 +52,7 @@ void injectorspuConnect( void )
 	injector_spu.oob_conn = crAlloc( sizeof(CRConnection*) ) ;
 	if ( ! crParseURL( injector_spu.oob_url, protocol, hostname, &port, (unsigned short) INJECTORSPU_OOB_PORT ) )
 			crError( "Malformed URL: \"%s\"", injector_spu.oob_url ) ;
-	injector_spu.oob_conn = crNetAcceptClient( protocol, (short) port, 32768 /*mtu*/, 0 /*broker*/ ) ;
+	injector_spu.oob_conn = crNetAcceptClient( protocol, NULL, (short) port, 32768 /*mtu*/, 0 /*broker*/ ) ;
 
 	/* Initialize the message we send back after every frame */
 	injector_spu.info_msg.header.type = CR_MESSAGE_OOB ;

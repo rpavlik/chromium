@@ -86,7 +86,7 @@ void crFileWriteExact( CRConnection *conn, void *buf, unsigned int len )
 	}
 }
 
-void crFileAccept( CRConnection *conn, unsigned short port )
+void crFileAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	conn->file_direction = CR_FILE_READ;
 	conn->fd = open( conn->filename, O_RDONLY | O_BINARY );
