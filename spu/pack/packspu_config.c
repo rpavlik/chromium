@@ -48,9 +48,7 @@ void packspuGatherConfiguration( const SPU *child_spu )
 	crMothershipGetMTU( conn, response );
 	sscanf( response, "%d", &(pack_spu.server.buffer_size) );
 
-	fprintf(stderr, "******** pack spu %d begin propogate\n", pack_spu.id);
 	crSPUPropogateGLLimits( conn, pack_spu.id, child_spu, &pack_spu.limits );
-	fprintf(stderr, "******** pack spu %d end propogate\n", pack_spu.id);
 
 	crMothershipDisconnect( conn );
 }
