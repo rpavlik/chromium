@@ -74,10 +74,23 @@ before building.&nbsp; There are instructions in that file.</p>
     which is required.&nbsp; Shared libraries on Windows get put in <code>cr/bin/WIN_NT</code>,
     which (since it's on your path, right?) will be searched automatically, so
     there's no <code> LD_LIBRARY_PATH</code> silliness.</li>
+  <li>IRIX:&nbsp; GNU make is required.  Build Chromium by typing
+    <code>gmake</code> instead of <code>make</code>.
+
+  <li>AIX:&nbsp;
+    Shared libraries are somewhat different on this platform.  For Cr clients
+    and servers to run, a dlopen-able system GL is needed.  At present, do this
+    (once) manually (ar -x /usr/lib/libGL.a && mv shr.o libGL.o ) . Set
+    CR_SYSTEM_GL_PATH to the directory with libGL.o  for AIX clients and
+    servers.
+    <br>
+    The exec loader will continue to look for .a's (rather, shared objects in
+    ar archives) and .so's.  So to run clients without the app_faker, prepend
+    LIBPATH with a dir that has a link libGL.a ->  lib/AIX/libcrfaker.a . As
+    with other platforms, you also need to set the CR_APPLICATION_ID_NUMBER  .
+
+
 </ul>
-<p>Note that Chromium version ALPHA does not support byte-swapping of arguments,
-so all machines involved in the cluster have to have the same endianness.&nbsp;
-This will be fixed for the next release.</p>
 
 </body>
 

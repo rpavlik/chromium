@@ -20,29 +20,38 @@ programs built during the compile of the Chromium system is called &quot;<code>f
 you can go ahead and run it now.&nbsp; If everything is OK, you should see a
 window appear with a text message in it.&nbsp; This window is using the system's
 OpenGL - nothing Chromium-related has happened yet.&nbsp; To run this program
-using Chromium, you will need to follow these three steps (you'll need three
+using Chromium, you will need to follow these four steps (you'll need three
 shell windows open):</p>
 <ol>
-  <li>Components of any Chromium run will need to know what they are supposed to be
+  <li>Set up your search path.<br>
+    <br>
+    The Chromium executable programs are located in
+    <code>cr/bin/<em>ARCH</em>/</code>.
+    On Linux, for example, it'll be <code>cr/bin/Linux/</code>.
+    If you're using Unix you should edit your <code>.cshrc</code> or
+    <code>.bash</code> or similar shell start-up file and add
+    <code>cr/bin/<em>ARCH</em>/</code> to the search path.<br>
+    <br>
+    If you don't do this you'll have to provide the full path to the
+    crserver and crappfaker programs below.<br>
+    <br>
+    
+  <li>Start the mothership.<br>
+    <br>
+    Components of any Chromium run will need to know what they are supposed to be
     doing.&nbsp; They get this information from the <i>configuration mothership</i>.&nbsp;
     The mothership is controlled by scripts written in the <a href="http://www.python.org" target="_blank">Python</a>
     programming language.&nbsp; One such script is located in <code> cr/mothership/configs/crdemo.conf</code>.&nbsp;&nbsp;<br>
     <br>
-    <b>NOTE</b>: You must edit this file to point at the directory containing
-    binaries for Chromium.&nbsp; 
-    I personally install things in a directory called
-    &quot;C:\work&quot;, so if you installed things somewhere else, you need to
-    edit the value of <code>CR_BIN_DIR</code> at the top of the file.&nbsp; No other changes to the file should be necessary.<br>
-    <br>
-    Now change to the <code> cr/mothership/configs</code> directory, and type:<br>
+    Change to the <code> cr/mothership/configs</code> directory, and type:<br>
     <br>
     <code>python crdemo.conf fonttest</code><br>
     <br>
     The mothership will now be running, and you should see a message to that
     effect.<br><br>
   </li>
-  <li>In another window, start the Chromium server.&nbsp; From <i>any</i>
-    directory, run<br>
+  <li>Start a Chromium server.<br>
+    <br>In another window run<br>
     <br>
     <code>crserver</code><br>
     <br>
@@ -53,11 +62,12 @@ shell windows open):</p>
     Note: previous versions of Chromium would open a window at this point.<br>
     <br>
   </li>
-  <li>In a third window, start the Chromium &quot;application
+  <li>Start the application.<br>
+    <br>
+    In a third window, start the Chromium &quot;application
     faker&quot;.&nbsp; This is a loader program that will start another
     unmodified application and make sure that it finds the Chromium
-    OpenGL shared library instead of the system's.&nbsp; From <i>any</i>
-    directory, run<br>
+    OpenGL shared library instead of the system's.&nbsp; Run<br>
     <br>
     <code>crappfaker</code><br>
     <br>

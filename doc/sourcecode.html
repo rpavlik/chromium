@@ -65,17 +65,19 @@ code in Chromium:</p>
   of useful files, include the structures for tracking "current" state
   (which, for performance reasons, is partially done by the packer).</p></li>
   <li><p class="Directory">cr/progs</p>
-  <p class="DirDesc"> A number of programs that I have found useful to run 
-  against Chromium for testing.</p></li>
+  <p class="DirDesc"> Demonstration and test programs.</p></li>
   <li><p class="Directory">cr/scripts</p>
   <p class="DirDesc"> <a href="http://graphics.stanford.edu/~eldridge/" target="new_window">Matthew
   Eldridge</a>'s Perl-based fast C/C++ dependency generator.</p></li>
+  <li><p class="Directory">cr/state_tracker</p>
+  <p class="DirDesc"> The state tracking library.  There's a lot of code in 
+  here, and some of it is pretty hairy.</p></li>
+  <li><p class="Directory">cr/spu_loader</p>
+  <p class="DirDesc"> The SPU loader, and also functions for manipulating
+  the SPU dispatch tables.</p></li>
   <li><p class="Directory">cr/spu/error</p>
   <p class="DirDesc"> The Error SPU, the implicit parent of all other 
   SPU's.</p></li>
-  <li><p class="Directory">cr/spu/loader</p>
-  <p class="DirDesc"> The SPU loader, and also functions for manipulating
-  the SPU dispatch tables.</p></li>
   <li><p class="Directory">cr/spu/nop</p>
   <p class="DirDesc"> The NOP (do nothing) SPU.</p></li>
   <li><p class="Directory">cr/spu/pack</p>
@@ -88,9 +90,8 @@ code in Chromium:</p>
   <p class="DirDesc"> The Print SPU.</p></li>
   <li><p class="Directory">cr/spu/render</p>
   <p class="DirDesc"> The Render SPU.</p></li>
-  <li><p class="Directory">cr/spu/state_tracker</p>
-  <p class="DirDesc"> The state tracking library.  There's a lot of code in 
-  here, and some of it is pretty hairy.</p></li>
+  <li><p class="Directory">cr/spu/readback</p>
+  <p class="DirDesc"> The Readback SPU.</p></li>
   <li><p class="Directory">cr/spu/template</p>
   <p class="DirDesc"> The starting point for new SPU's.</p></li>
   <li><p class="Directory">cr/spu/tester</p>

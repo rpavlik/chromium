@@ -59,9 +59,9 @@ not done our import this way.</p>
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
+	10:<br>
 	11:<br>
-	12:<br>
-	13:</td>
+	12:</td>
     <td width="93%" class="CodeListing">
 	  if len(sys.argv) &gt; 3 or len(sys.argv) &lt; 2:<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print 'Usage: %s <demo>   [spu]' % sys.argv[0]<br>
@@ -69,7 +69,7 @@ not done our import this way.</p>
   </tr>
 </table>
 
-<p>Lines 5-7 make sure that the arguments to the script are correct.&nbsp;
+<p>Thise lines make sure that the arguments to the script are correct.&nbsp;
 Recall that this script determines which program to run by its first argument, so
 &quot;<code>sys.argv</code>&quot; (analogous to the &quot;<code>argv</code>&quot;
 parameter to &quot;<code>main</code>&quot; in C/C++) must have at least two
@@ -83,27 +83,24 @@ it).</p>
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
-	15:<br>
-	16:</td>
+	14:</td>
     <td width="93%" class="CodeListing">
-	  CR_BIN_DIR = r'c:\work\cr\bin\WIN_NT'<br>
-      demo = sys.argv[1]</td>
+        demo = sys.argv[1]</td>
   </tr>
 </table>
 
-<p>Lines 9-10 set up two important global variables.&nbsp; &quot;<code>CR_BIN_DIR</code>&quot;
-is the directory containing the demo to be run.&nbsp; &quot;<code>demo</code>&quot;
-is the first script argument, or the name of the program to be run.&nbsp; This,
+<p>Line 14 assigns "demo" the first script argument, or the name of
+the program to be run.&nbsp; This,
 for example, would hold the value &quot;fonttest&quot; in the <a href="helloworld.html">Hello,
 World</a> example.</p>
 
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
+	16:<br>
+	17:<br>
 	18:<br>
-	19:<br>
-	20:<br>
-	21:</td>
+	19:</td>
     <td width="93%" class="CodeListing">
 	  if len(sys.argv) == 3:<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clientspuname = sys.argv[2]<br>
@@ -111,21 +108,21 @@ World</a> example.</p>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clientspuname = 'pack'</td>
   </tr>
 </table>
-<p>Lines 12-15 figure out which SPU will be loaded by the application.&nbsp; If
+<p>Lines 16-19 figure out which SPU will be loaded by the application.&nbsp; If
 the user has specified three arguments to the script, then the third one will be
 the name of the spu.&nbsp; Otherwise, it defaults to &quot;<code>pack</code>&quot;.</p>
 
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
-	  23:<br>
-	  24:</td>
+	  21:<br>
+	  22:</td>
     <td width="93%" class="CodeListing">
 	  server_spu = SPU( 'render' )<br>
       client_spu = SPU( clientspuname )</td>
   </tr>
 </table>
-<p>Lines 17-18 create &quot;<code>SPU</code>&quot; objects.&nbsp; These are the
+<p>Lines 21-22 create &quot;<code>SPU</code>&quot; objects.&nbsp; These are the
 plug-in modules that implement the OpenGL API.&nbsp; In the <a href="helloworld.html">Hello,
 World</a> example, we created two SPU's: a &quot;render&quot; spu that
 dispatches OpenGL calls to the system's implementation, and a &quot;pack&quot;
@@ -133,12 +130,12 @@ SPU that encodes its commands and sends them over the network verbatim (i.e.,
 with [almost] no analysis).&nbsp; Each SPU in a system needs to have a separate
 &quot;<code>SPU</code>&quot; object created for it in the configuration
 script.&nbsp; Notice that we are using the client SPU name that was computed in
-lines 12-15.
+lines 16-19.
 </p>
 
 <table border="0" width="100%" class="CodeFrame">
   <tr>
-    <td width="7%" class="LineNumbers">26:</td>
+    <td width="7%" class="LineNumbers">24:</td>
     <td width="93%" class="CodeListing">
 	  server_spu.Conf( 'window_geometry', 100, 100, 500, 500 )</td>
   </tr>
@@ -156,8 +153,8 @@ Provided SPU's</a>&quot; section.</p>
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
-	  28:<br>
-	  29:</td>
+	  27:<br>
+	  28:</td>
     <td width="93%" class="CodeListing">
 	  server_node = CRNetworkNode( )<br>
       server_node.AddSPU( server_spu )</td>
@@ -179,8 +176,8 @@ method.&nbsp; Here, the server node only has one SPU, so order is irrelevant.</p
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
-	  31:<br>
-	  32:</td>
+	  30:<br>
+	  31:</td>
     <td width="93%" class="CodeListing">
 	  if (clientspuname == 'tilesort' ):<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; server_node.AddTile( 0, 0, 500, 500 )</td>
@@ -197,9 +194,9 @@ node, not the &quot;render&quot; SPU.</p>
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
+	  33:<br>
 	  34:<br>
-	  35:<br>
-	  36:</td>
+	  35:</td>
     <td width="93%" class="CodeListing">
 	  client_node = CRApplicationNode( )<br>
       client_node.AddSPU( client_spu )<br>
@@ -207,30 +204,30 @@ node, not the &quot;render&quot; SPU.</p>
   </tr>
 </table>
 <p>Now that the server node has been completely defined, we define the client
-node.&nbsp; Notice that lines 28 and 29 are almost identical to lines 22 and 23,
+node.&nbsp; Notice that lines 33 and 34 are almost identical to lines 27 and 28,
 except the client node is defined as an instance of a &quot;<code>CRApplicationNode</code>&quot;
 object.&nbsp; Line 30 adds the server node (defined on line 22) to the client
 SPU.&nbsp; Recall that the client SPU defaults to the &quot;pack&quot;
 SPU, or the &quot;tilesort&quot; SPU could be used instead.&nbsp; In fact, it is possible to make the client SPU the &quot;render&quot;
 SPU, in which case the server is not needed.&nbsp; In such a case, calling
 &quot;<code>AddServer</code>&quot; won't hurt anything, so we always create a
-client-server relationship, regardless of the client SPU being used.&nbsp; This is in contrast to lines 25 and 26, where
+client-server relationship, regardless of the client SPU being used.&nbsp; This is in contrast to lines 30 and 31, where
 we don't want to define a tiling if we're not using a tiling-aware client SPU.</p>
 
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
-	  38:<br>
-	  39:</td>
+	  37:<br>
+	  38:</td>
     <td width="93%" class="CodeListing">
-	  client_node.SetApplication( '%s/%s' % (CR_BIN_DIR, demo) )<br>
-      client_node.StartDir( CR_BIN_DIR )</td>
+	  client_node.SetApplication( '%s/%s' % (crbindir, demo) )<br>
+      client_node.StartDir( crbindir )</td>
   </tr>
 </table>
 <p>So far, the node graph and SPU collection have been completely generic.&nbsp;
-Lines 32 and 33 bind a specific application to the client node.&nbsp; Line 32
+Lines 37 and 38 bind a specific application to the client node.&nbsp; Line 37
 tells the application faker running on the client node which application to
-run.&nbsp; Line 33 tells the application faker to change directories to &quot;<code>CR_BIN_DIR</code>&quot;
+run.&nbsp; Line 38 tells the application faker to change directories to &quot;<code>crbindir</code>&quot;
 before launching the application.&nbsp; This is an optional step, but it is
 useful for applications that need to find certain input files, such as textures
 or application configuration information.&nbsp; If this line is omitted, the
@@ -240,11 +237,11 @@ was run from.</p>
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
+	  40:<br>
 	  41:<br>
 	  42:<br>
 	  43:<br>
-	  44:<br>
-	  45:</td>
+	  44:</td>
     <td width="93%" class="CodeListing">
 	  cr = CR()<br>
       cr.MTU( 16*1024 );<br>
@@ -254,12 +251,12 @@ was run from.</p>
   </tr>
 </table>
 <p>The final 5 lines of the configuration script set everything in motion.&nbsp;
-Line 35 creates a &quot;<code>CR</code>&quot; object, which is the network-aware
+Line 40 creates a &quot;<code>CR</code>&quot; object, which is the network-aware
 mothership that will respond to queries about the nodes it manages.&nbsp; The
 mothership has a single global parameter, the &quot;<code>MTU</code>&quot;, set
-on line 36.&nbsp; This is the largest buffer size that is allowed to pass
+on line 41.&nbsp; This is the largest buffer size that is allowed to pass
 between a client and a server (in future versions of Chromium, this
-parameter may be specified in a different way).&nbsp; Lines 37 and 38 add the two
+parameter may be specified in a different way).&nbsp; Lines 43 and 44 add the two
 nodes we have created to the mothership.&nbsp; Finally, the &quot;<code>Go</code>&quot;
 method is called, which will loop forever, answering configuration queries over
 the network.</p>
