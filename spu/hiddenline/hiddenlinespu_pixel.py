@@ -42,6 +42,6 @@ for func_name in stub_common.AllSpecials( "hiddenline_pixel" ):
 	(return_type, args, types) = gl_mapping[func_name]
 	print 'void HIDDENLINESPU_APIENTRY hiddenlinespu_%s%s' % ( func_name, stub_common.ArgumentString( args, types ) )
 	print '{'
-	args.append( '&(hiddenline_spu.ctx->pixel.unpack)' )
+	args.append( '&(hiddenline_spu.ctx->client.unpack)' )
 	print '\tcrPack%s%s;' % ( func_name, stub_common.CallString( args ) )
 	print '}'
