@@ -160,6 +160,21 @@ Provided SPU's</a>&quot; section.</p>
       server_node.AddSPU( server_spu )</td>
   </tr>
 </table>
+<p>The mothership understands the amount of server and client nodes to start. &nbsp;
+Although this doesn't make much sense for this particular example of code as we are passing no hostname to CRNetworkNode above.&nbsp;
+To enable this functionality you can use the autostart parameters like so.&nbsp;</p>
+
+<table border="0" width="100%" class="CodeFrame">
+  <tr>
+    <td width="7%" class="LineNumbers">
+	  29:<br>
+	  30:</td>
+    <td width="93%" class="CodeListing">
+	  server_node.autostart( "/usr/bin/ssh" ) )<br>
+          server_node.autostart_argv( "ssh", node.host, "setenv DISPLAY :0.0; crserver" )</td>
+  </tr>
+</table>
+
 <p>Once all the SPU's have been defined and configured, it's now time to
 describe the graph of nodes itself.&nbsp; The server node is created as an
 instance of a &quot;<code>CRNetworkNode</code>&quot; object.&nbsp; Notice that
@@ -176,8 +191,8 @@ method.&nbsp; Here, the server node only has one SPU, so order is irrelevant.</p
 <table border="0" width="100%" class="CodeFrame">
   <tr>
     <td width="7%" class="LineNumbers">
-	  30:<br>
-	  31:</td>
+	  31:<br>
+	  32:</td>
     <td width="93%" class="CodeListing">
 	  if (clientspuname == 'tilesort' ):<br>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; server_node.AddTile( 0, 0, 500, 500 )</td>
