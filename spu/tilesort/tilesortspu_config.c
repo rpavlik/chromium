@@ -69,7 +69,7 @@ set_bounding_box_scale(TileSortSPU *tilesort_spu, const char *response)
 static void
 set_fake_window_dims(TileSortSPU *tilesort_spu, const char *response)
 {
-	float w, h;
+	float w = 0.0, h = 0.0;
 	if (response[0] == '[')
 		sscanf(response, "[ %f, %f ]", &w, &h);
 	else
