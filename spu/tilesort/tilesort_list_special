@@ -43,3 +43,5 @@ GetTexParameterfv
 GetTexParameteriv
 GetPointerv
 GetCombinerStageParameterfvNV
+Bitmap
+DrawPixels

@@ -13,7 +13,10 @@
 #include "cr_pixeldata.h"
 #include "cr_mem.h"
 
-void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+/*
+ * Execute glDrawPixels().
+ */
+static void tilesortspu_exec_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
 {
 	GET_CONTEXT(ctx);
 	CRCurrentState *c = &(ctx->current);
@@ -84,6 +87,36 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height,
 	tilesort_spu.inDrawPixels = 0;
 
 	tilesort_spu.providedBBOX = hint;
+}
+
+
+/*
+ * glDrawPixels entry point.  We'll either execute DrawPixels, compile it
+ * into the display list, or both.
+ * We can't just call the crPackDrawPixels() function from the dispatch table
+ * since it requires a pixel-unpacking argument.
+ */
+void TILESORTSPU_APIENTRY tilesortspu_DrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels )
+{
+	GET_CONTEXT(ctx);
+
+	if (ctx->lists.mode == 0 || ctx->lists.mode == GL_COMPILE_AND_EXECUTE)
+	{
+		/* execute */
+		tilesortspu_exec_DrawPixels(width, height, format, type, pixels);
+	}
+	if (ctx->lists.mode != 0)
+	{
+		/* compile into display list */
+		if (tilesort_spu.swap)
+		{
+			crPackDrawPixelsSWAP(width, height, format, type, pixels, &(ctx->client.unpack));
+		}
+		else
+		{
+			crPackDrawPixels(width, height, format, type, pixels, &(ctx->client.unpack));
+		}
+	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
@@ -344,7 +377,11 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 	crFree(buffer);
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_Bitmap( 
+
+/*
+ * Execute glBitmap.
+ */
+static void tilesortspu_exec_Bitmap( 
 		GLsizei width, GLsizei height,
 		GLfloat xorig, GLfloat yorig,
 		GLfloat xmove, GLfloat ymove,
@@ -401,6 +438,42 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 
 	tilesort_spu.providedBBOX = hint;
 }
+
+
+/*
+ * glBitmap entry point.  We'll either execute Bitmap, compile it
+ * into the display list, or both.
+ * We can't just call the crPackBitmap() function from the dispatch table
+ * since it requires a pixel-unpacking argument.
+ */
+void TILESORTSPU_APIENTRY tilesortspu_Bitmap( 
+		GLsizei width, GLsizei height,
+		GLfloat xorig, GLfloat yorig,
+		GLfloat xmove, GLfloat ymove,
+		const GLubyte * bitmap)
+{
+	GET_CONTEXT(ctx);
+
+	if (ctx->lists.mode == 0 || ctx->lists.mode == GL_COMPILE_AND_EXECUTE)
+	{
+		/* execute */
+		tilesortspu_exec_Bitmap(width, height, xorig, yorig, xmove, ymove, bitmap);
+	}
+	if (ctx->lists.mode != 0)
+	{
+		/* compile into display list */
+		if (tilesort_spu.swap)
+		{
+			crPackBitmapSWAP(width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack));
+		}
+		else
+		{
+			crPackBitmap(width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack));
+		}
+	}
+}
+
+
 
 void TILESORTSPU_APIENTRY tilesortspu_PixelMapfv (GLenum map, GLint mapsize, const GLfloat * values)
 {
