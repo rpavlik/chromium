@@ -1417,7 +1417,7 @@ class GraphFrame(wxFrame):
 		panelSizer = wxBoxSizer(wxVERTICAL)
 
 		text = wxStaticText(parent=panel, id=-1, label=
-				("Chromium 1.7 graphical configuration tool\n\n" +
+				("Chromium 1.8 graphical configuration tool\n\n" +
 				 "Using Python version %d.%d.%d\n" +
 				 "Using wxWindows version %d.%d.%d") %
 				(sys.version_info[0], sys.version_info[1], sys.version_info[2],
