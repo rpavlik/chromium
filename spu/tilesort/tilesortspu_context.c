@@ -107,10 +107,10 @@ static ThreadInfo *tilesortspuNewThread(void)
 	thread->buffer = (CRPackBuffer *) crCalloc( tilesort_spu.num_servers * sizeof(CRPackBuffer) );
 
 	for (i = 0; i < tilesort_spu.num_servers; i++) {
-		thread->netServer[i].name = crStrdup( tilesort_spu.thread[0].net[i].name );
-		thread->netServer[i].buffer_size = tilesort_spu.thread[0].net[i].buffer_size;
+		thread->netServer[i].name = crStrdup( tilesort_spu.thread[0].netServer[i].name );
+		thread->netServer[i].buffer_size = tilesort_spu.thread[0].netServer[i].buffer_size;
 		/* Establish new connection to server[i] */
-		crNetNewClient( tilesort_spu.thread[0].net[i].conn, &(thread->netServer[i]));
+		crNetNewClient( tilesort_spu.thread[0].netServer[i].conn, &(thread->netServer[i]));
 
 	}
 
