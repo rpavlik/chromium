@@ -31,7 +31,9 @@ typedef int socklen_t;
 #include <netinet/ip6.h>
 #endif
 #include <netinet/udp.h>
+#ifndef DARWIN
 #include <netinet/tcp.h>
+#endif
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
