@@ -80,41 +80,19 @@ WindowTitle = "Chromium Tilesort Configuration"
 
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
-# XXX eventually automatically query these parameters from the SPU
-TilesortOptions = [
-	("broadcast", "bool", 1, false, "Broadcast Primitives"),
-	("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
-	("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
-	("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()"),
-	("sync_on_finish", "bool", 1, false, "Sync on glFinish()"),
-	("draw_bbox", "bool", 1, true, "Draw Bounding Box"),
-	("bbox_line_width", "float", 1, "5.0", "Bounding Box Line Width"),
-	("fake_window_dims", "int", 2, "", "Fake Window Dimensions (w, h)"),
-	("scale_to_mural_size", "bool", 1, true, "Scale to Mural Size")
-]
-
-RenderOptions = [
-	("try_direct", "bool", 1, true, "Try Direct Rendering"),
-	("force_direct", "bool", 1, true, "Force Direct Rendering"),
-	("fullscreen", "bool", 1, false, "Full-screen Window"),
-	("on_top", "bool", 1, false, "Display on top"),
-	("title", "string", 1, "Chromium Render SPU", "Window Title"),
-	("window_geometry", "string", 1, "0, 0, 256, 256", "Window Geometry (x,y,w,h)"),
-	("system_gl_path", "string", 1, "/usr/lib/", "System GL Path"),
-]
-
+# We use the SPU options infrastructure to handle server and global options!
 ServerOptions = [
-	("optimize_bucket", "bool", 1, true, "Optimized Extent Bucketing"),
-	("lighting2", "bool", 1, false, "Generate Lightning-2 Strip Headers")
+	("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
+	("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], [])
 ]
 
 GlobalOptions = [
-	("minimum_window_size", "string", 1, "0 0", "Minimum Chromium App Window Size (w h)"),
-	("match_window_title", "string", 1, "", "Match App Window Title"),
-	("show_cursor", "bool", 1, false, "Show Virtual cursor"),
-	("MTU", "int", 1, (1024*1024), "Mean Transmission Unit (bytes)"),
-	("default_app", "string", 1, "", "Default Application Program"),
-	("auto_start", "bool", 1, false, "Automatically Start Servers")
+	("minimum_window_size", "Minimum Chromium App Window Size (w h)", "INT", 2, [0, 0], [0, 0], []),
+	("match_window_title", "Match App Window Title", "STRING", 1, [""], [], []),
+	("show_cursor", "Show Virtual cursor", "BOOL", 1, [0], [], []),
+	("MTU", "Mean Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
+	("default_app", "Default Application Program", "STRING", 1, [""], [], []),
+	("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], [])
 ]
 
 # This is the guts of the tilesort configuration script.
@@ -433,14 +411,20 @@ class MainFrame(wxFrame):
 		self.recomputeTotalSize()
 		
 		# Make the Tilesort SPU options dialog
+		tilesortInfo = GetSPUOptions("tilesort")
+		assert tilesortInfo
+		(tilesortParams, tilesortOptions) = tilesortInfo
 		self.TilesortDialog = SPUDialog(parent=NULL, id=-1,
 										title="Tilesort SPU Options",
-										options=TilesortOptions)
+										options=tilesortOptions)
 
 		# Make the render SPU options dialog
+		renderInfo = GetSPUOptions("render")
+		assert renderInfo
+		(renderParams, renderOptions) = renderInfo
 		self.RenderDialog = SPUDialog(parent=NULL, id=-1,
 									  title="Render SPU Options",
-									  options=RenderOptions)
+									  options=renderOptions)
 
 		# Make the server options dialog
 		self.ServerDialog = SPUDialog(parent=NULL, id=-1,
@@ -846,13 +830,19 @@ class MainFrame(wxFrame):
 
 	def writeOptions(self, file, prefix, options, dialog):
 		"""Helper function for writing config file options"""
-		for (name, type, count, default, descrip) in options:
-			if type == "int" or type == "bool":
-				file.write("%s_%s = %d\n" % (prefix, name, int(dialog.GetValue(name))))
-			elif type == "float":
-				file.write("%s_%s = %f\n" % (prefix, name, float(dialog.GetValue(name))))
+		for name in options.keys():
+			(descrip, type, count, default, mins, maxs) = options[name]
+			values = dialog.GetValue(name)
+			if len(values) == 1:
+				valueStr = str(values[0])
 			else:
-				file.write("%s_%s = \"%s\"\n" % (prefix, name, dialog.GetValue(name)))
+				valueStr = str(values)
+			if type == "INT" or type == "BOOL":
+				file.write("%s_%s = %s\n" % (prefix, name, valueStr))
+			elif type == "FLOAT":
+				file.write("%s_%s = %s\n" % (prefix, name, valueStr))
+			else:
+				file.write("%s_%s = \"%s\"\n" % (prefix, name, valueStr))
 		# endfor
 
 	def saveConfiguration(self):
