@@ -29,7 +29,6 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 	}
 	if (cr_server.numExtents == 0)
 	{
-		cr_server.head_spu->dispatch_table.ClearColor( .5, .5, .5, 0 );
 		cr_server.head_spu->dispatch_table.Clear( mask );
 	}
 	else
