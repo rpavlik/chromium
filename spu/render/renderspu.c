@@ -8,6 +8,7 @@
 #include "cr_string.h"
 #include "cr_error.h"
 #include "cr_mem.h"
+#include "cr_spu.h"
 #include "renderspu.h"
 
 
@@ -664,6 +665,24 @@ static void RENDER_APIENTRY renderspuWriteback( GLint *writeback )
 }
 
 
+static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
+{
+	if (!render_spu.ws.glGetString)
+		return NULL;
+	if (pname == GL_EXTENSIONS)
+	{
+		const GLubyte *extensions, *ext;
+		extensions = render_spu.ws.glGetString(GL_EXTENSIONS);
+		ext = crStateMergeExtensions(1, &extensions);
+		return ext;
+	}
+	else
+	{
+		return crStateGetString(pname);
+	}
+}
+
+
 #define FILLIN( NAME, FUNC ) \
   table[i].name = crStrdup(NAME); \
   table[i].fn = (SPUGenericFunction) FUNC; \
@@ -696,5 +715,6 @@ int renderspuCreateFunctions( SPUNamedFunctionTable table[] )
 	FILLIN( "ChromiumParameterfCR", renderspuChromiumParameterfCR );
 	FILLIN( "ChromiumParametervCR", renderspuChromiumParametervCR );
 	FILLIN( "GetChromiumParametervCR", renderspuGetChromiumParametervCR );
+	FILLIN( "GetString", renderspuGetString );
 	return i;
 }

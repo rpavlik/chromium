@@ -126,9 +126,6 @@ crServerGatherConfiguration(char *mothership)
 																								 (GLint *) cr_server.
 																								 underlyingDisplay);
 
-	/* Get OpenGL limits from first SPU */
-	crSPUQueryGLLimits(conn, spu_ids[0], &cr_server.limits);
-
 	crFree(spu_ids);
 	crFree(spu_names);
 	crFree(spuchain);

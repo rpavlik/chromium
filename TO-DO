@@ -9,3 +9,5 @@ Grep the code for 'XXX' for miscellaneous loose ends.
 Convert the last two Perl scripts in scripts/fastdep.pl and
 state_tracker/gendiffcode.pl to Python. 
 
+state-diffing for PointParameters is incomplete (state_point.txt)
+

@@ -75,7 +75,5 @@ void packspuGatherConfiguration( const SPU *child_spu )
 	 * against packer/pack_buffer.c) */
 	pack_spu.buffer_size = ((((pack_spu.buffer_size - sizeof(CRMessageOpcodes)) * 5 + 3) / 4 + 0x03) & ~0x03) + sizeof(CRMessageOpcodes);
 
-	crSPUPropogateGLLimits( conn, pack_spu.id, child_spu, &pack_spu.limits );
-
 	crMothershipDisconnect( conn );
 }

@@ -30,7 +30,8 @@ void crPackOffsetCurrentPointers( int offset )
 	GLtexcoord_p	*texCoord	= &(pc->current.texCoord);
 	GLindex_p		*index		= &(pc->current.index);
 	GLedgeflag_p	*edgeFlag	= &(pc->current.edgeFlag);
-	
+	GLvertexattrib_p *vertexAttrib = &(pc->current.vertexAttrib);
+	GLfogcoord_p    *fogCoord   = &(pc->current.fogCoord);
 	int i;
 """
 
@@ -63,7 +64,8 @@ void crPackNullCurrentPointers( void )
 	GLtexcoord_p	*texCoord	= &(pc->current.texCoord);
 	GLindex_p		*index		= &(pc->current.index);
 	GLedgeflag_p	*edgeFlag	= &(pc->current.edgeFlag);
-
+	GLvertexattrib_p *vertexAttrib = &(pc->current.vertexAttrib);
+	GLfogcoord_p    *fogCoord   = &(pc->current.fogCoord);
 	int i;
 """
 

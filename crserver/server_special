@@ -87,3 +87,7 @@ ReadPixels
 GetChromiumParametervCR
 ChromiumParametervCR
 SwapBuffers
+GenProgramsNV
+GetProgramStringNV
+GetVertexAttribPointervNV
+GenFencesNV

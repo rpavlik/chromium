@@ -57,5 +57,7 @@
 #define CR_SGIS_texture_edge_clamp 1
 /*#define CR_ARB_imaging 1    not yet */
 /*#define CR_NV_vertex_program 1    not yet */
+#define CR_EXT_fog_coord 1
+#define CR_ARB_point_parameters 1
 
 #endif /* CR_VERSION_H */

@@ -84,12 +84,16 @@ void crStateCurrentRecover( void )
 	static const GLvectorf normal_default		= {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLfloat index_default			= 0.0f;
 	static const GLboolean edgeFlag_default		= GL_TRUE;
+	static const GLvectorf vertexAttrib_default = {0.0f, 0.0f, 0.0f, 1.0f};
+	static const GLfloat fogCoord_default = 0.0f;
 	GLnormal_p		*normal		= &(c->current->normal);
 	GLcolor_p		*color		= &(c->current->color);
 	GLsecondarycolor_p *secondaryColor = &(c->current->secondaryColor);
 	GLtexcoord_p	*texCoord	= &(c->current->texCoord);
 	GLindex_p		*index		= &(c->current->index);
 	GLedgeflag_p	*edgeFlag	= &(c->current->edgeFlag);
+	GLvertexattrib_p *vertexAttrib = &(c->current->vertexAttrib);
+	GLfogcoord_p *fogCoord = &(c->current->fogCoord);
 	unsigned int i;
 	GLbitvalue nbitID[CR_MAX_BITARRAY];
 
@@ -133,6 +137,7 @@ void crStateCurrentRecover( void )
 	c->normalPre = c->normal;
 	c->colorPre = c->color;
 	c->secondaryColorPre = c->secondaryColor;
+	c->fogCoordPre = c->fogCoord;
 	for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
 	{
 		c->texCoordPre[i] = c->texCoord[i];
@@ -183,6 +188,8 @@ for k in current_fns.keys():
 		print '%s\t\tconvert(&(c->%s.r), v);' % (indent,name)
 	elif k == 'SecondaryColor':
 		print '%s\t\tconvert(&(c->%s.r), v);' % (indent,name)
+	elif k == 'FogCoord':
+		print '%s\t\tconvert(&(c->%s), v);' % (indent,name)
 	if current_fns[k].has_key( 'array' ):
 		print '%s\t\tDIRTY(cb->%s[i], nbitID);' % (indent,name)
 	else:

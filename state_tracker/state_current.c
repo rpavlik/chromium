@@ -12,6 +12,7 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 	GLvectorf	default_normal     = {0.0f, 0.0f, 1.0f, 1.0f};
 	GLcolorf	default_color	     = {1.0f, 1.0f, 1.0f, 1.0f};
 	GLcolorf	default_secondaryColor = {0.0f, 0.0f, 0.0f, 0.0f};
+	GLfloat     default_fogCoord = 0.0f;
 	GLtexcoordf default_texcoord = {0.0f, 0.0f, 0.0f, 1.0f};
 	GLvectorf default_rasterpos  = {0.0f, 0.0f, 0.0f, 1.0f};
   	unsigned int i;
@@ -24,11 +25,14 @@ void crStateCurrentInit( CRLimitsState *limits, CRCurrentState *c )
 		c->texCoord[i] = default_texcoord;
 	}
 	c->normal	= default_normal;
+#ifdef CR_EXT_fog_coord
+	c->fogCoord = default_fogCoord;
+#endif
 
 	c->rasterPos = default_rasterpos;
 	c->rasterPosPre = c->rasterPos;
 
-	c->rasterDistance = 0.0f;
+	c->rasterDistance = 0.0f; /* aka fog coord */
 	c->rasterColor = default_color;
 	c->rasterSecondaryColor = default_secondaryColor;
 	c->rasterTexture = default_texcoord;
@@ -179,6 +183,18 @@ void crStateCurrentSwitch( GLuint maxTextureUnits,
 	}
 #endif
 
+	/* NEED TO FIX THIS, ALSO?!!!!! */
+#ifdef CR_EXT_fog_coord
+	if (CHECKDIRTY(c->fogCoord, bitID)) {
+		if (from->fogCoord != to->fogCoord) {
+			diff_api.FogCoordfvEXT ((GLfloat *) &(to->fogCoord));
+			FILLDIRTY(c->fogCoord);
+			FILLDIRTY(c->dirty);
+		}
+		INVERTDIRTY(c->fogCoord, nbitID);
+	}
+#endif
+
 	if (CHECKDIRTY(c->index, bitID)) {
 		if (to->index != from->index) {
 			diff_api.Indexf (to->index);
@@ -261,6 +277,16 @@ void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue *bitID,
 		}
 		from->secondaryColor = to->secondaryColor;
 		INVERTDIRTY(c->secondaryColor, nbitID);
+	}
+#endif
+
+#ifdef CR_EXT_fog_coord
+	if (CHECKDIRTY(c->fogCoord, bitID)) {
+		if (from->fogCoord != to->fogCoordPre) {
+			diff_api.FogCoordfvEXT ((GLfloat *) &(to->fogCoordPre));
+		}
+		from->fogCoord = to->fogCoord;
+		INVERTDIRTY(c->fogCoord, nbitID);
 	}
 #endif
 

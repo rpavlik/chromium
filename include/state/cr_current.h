@@ -23,6 +23,10 @@ typedef struct {
 	GLbitvalue  normal[CR_MAX_BITARRAY];
 	GLbitvalue  raster[CR_MAX_BITARRAY];
 	GLbitvalue  edgeFlag[CR_MAX_BITARRAY];
+#ifdef CR_EXT_fog_coord
+	GLbitvalue  fogCoord[CR_MAX_BITARRAY];
+#endif
+	GLbitvalue  vertexAttrib[CR_MAX_VERTEX_ATTRIBS][CR_MAX_BITARRAY];
 } CRCurrentBits;
 
 typedef struct {
@@ -33,9 +37,15 @@ typedef struct {
 	GLvectorf	normal;
 	GLboolean	edgeFlag;
 	GLfloat		index;
+#ifdef CR_EXT_fog_coord
+	GLfloat		fogCoord;
+#endif
 } CRVertex;
 
 
+/*
+ * XXX NV vertex attribs should alias conventional attribs.
+ */
 typedef struct {
 	GLcolorf     color;
 	GLcolorf     secondaryColor;
@@ -43,6 +53,10 @@ typedef struct {
 	GLtexcoordf  texCoord[CR_MAX_TEXTURE_UNITS];
 	GLvectorf    normal;
 	GLboolean    edgeFlag;
+	GLvectorf    vertexAttrib[CR_MAX_VERTEX_ATTRIBS];
+#ifdef CR_EXT_fog_coord
+	GLfloat      fogCoord;
+#endif
 
 	GLcolorf     colorPre;
 	GLcolorf     secondaryColorPre;
@@ -50,13 +64,17 @@ typedef struct {
 	GLtexcoordf  texCoordPre[CR_MAX_TEXTURE_UNITS];
 	GLvectorf    normalPre;
 	GLboolean    edgeFlagPre;
+	GLvectorf    vertexAttribPre[CR_MAX_VERTEX_ATTRIBS];
+#ifdef CR_EXT_fog_coord
+	GLfloat      fogCoordPre;
+#endif
 
 	CRCurrentStatePointers   *current;
 
 	GLvectorf    rasterPos;
 	GLvectorf    rasterPosPre;
 
-	GLfloat      rasterDistance;
+	GLfloat      rasterDistance; /* aka fog coord */
 	GLcolorf     rasterColor;
 	GLcolorf     rasterSecondaryColor;
 	GLtexcoordf  rasterTexture;

@@ -73,6 +73,8 @@ int main( int argc, char *argv[] )
 
 	crServerGatherConfiguration(mothership);
 
+	crStateLimitsInit( &(cr_server.limits) );
+
 	for (j = 0 ; j < cr_server.numClients ; j++)
 	{
 		crServerAddToRunQueue( &cr_server.clients[j] );

@@ -29,8 +29,6 @@ int crMothershipGetParam( CRConnection *conn, const char *param, char *value );
 int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipGetFakerParam( CRConnection *conn, char *response, const char *param, ...);
 int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *param, ...);
-int crMothershipSetSPUParam( CRConnection *conn, const char *param, const char *value);
-int crMothershipGetNamedSPUParam( CRConnection *conn, int spu_id, const char *param, char *response);
 void crMothershipGetClients( CRConnection *conn, char *response );
 void crMothershipGetServers( CRConnection *conn, char *response );
 int crMothershipGetRank( CRConnection *conn, char *response );

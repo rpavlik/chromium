@@ -127,6 +127,14 @@ def UpdateCurrentPointer( func_name ):
 		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
 		return
 
+	m = re.search( r"^(VertexAttrib)([1234])(ub|s|f|d)NV$", func_name )
+	if m :
+		k = m.group(1)
+		name = 'vertexAttrib'
+		type = m.group(3) + m.group(2)
+		print "\tpc->current.%s.%s[index] = data_ptr;" % (name,type)
+		return
+
 for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "packer", func_name ): continue

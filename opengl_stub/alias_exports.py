@@ -43,7 +43,17 @@ aliases = [
 	('LoadTransposeMatrixf','LoadTransposeMatrixfARB'),
 	('LoadTransposeMatrixd','LoadTransposeMatrixdARB'),
 	('MultTransposeMatrixf','MultTransposeMatrixfARB'),
-	('MultTransposeMatrixd','MultTransposeMatrixdARB')
+	('MultTransposeMatrixd','MultTransposeMatrixdARB'),
+	# GL_ARB_texture_compression / OpenGL 1.3
+	('CompressedTexImage3D', 'CompressedTexImage3DARB'),
+	('CompressedTexImage2D', 'CompressedTexImage2DARB'),
+	('CompressedTexImage1D', 'CompressedTexImage1DARB'),
+	('CompressedTexSubImage3D', 'CompressedTexSubImage3DARB'),
+	('CompressedTexSubImage2D', 'CompressedTexSubImage2DARB'),
+	('CompressedTexSubImage1D', 'CompressedTexSubImage1DARB'),
+	('GetCompressedTexImage', 'GetCompressedTexImageARB'),
+	# GL_ARB_multisample / OpenGL 1.3
+	('SampleCoverage', 'SampleCoverageARB'),
 ]
 
 def AliasMap( func_name ):

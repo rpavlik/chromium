@@ -20,8 +20,6 @@
 #include "cr_pack.h"
 #include "cr_threads.h"
 
-#include "state/cr_limits.h"
-
 
 typedef struct _buflist {
 	void *buf;
@@ -62,8 +60,6 @@ typedef struct {
 	float line_r, line_g, line_b;
 	float line_width;
 	int single_clear;
-
-	CRLimitsState limits;
 
 	CRHashTable *contextTable;
 #ifndef CHROMIUM_THREADSAFE

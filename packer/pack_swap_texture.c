@@ -1,4 +1,4 @@
-/* cOpyright (c) 2001, Stanford University
+/* Copyright (c) 2001, Stanford University
  * All rights reserved
  *
  * See the file LICENSE.txt for information on redistributing this software.
@@ -627,4 +627,112 @@ void PACK_APIENTRY crPackAreTexturesResidentSWAP( GLsizei n, const GLuint *textu
 	WRITE_NETWORK_POINTER( sizeof( int ) + 16 + n*sizeof( *textures ), (void *) return_val );
 	WRITE_NETWORK_POINTER( sizeof( int ) + 24 + n*sizeof( *textures ), (void *) writeback );
 	WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
+}
+
+
+/**********************************************************************
+ * Texture compression
+ */
+
+void PACK_APIENTRY crPackCompressedTexImage1DARBSWAP( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imagesize, const GLvoid *data )
+{
+	GET_PACKER_CONTEXT(pc);
+	crError ( "CompressedTexImage1DARB needs to be special cased!");
+	(void) pc;
+	(void) target;
+	(void) level;
+	(void) internalformat;
+	(void) width;
+	(void) border;
+	(void) imagesize;
+	(void) data;
+}
+
+void PACK_APIENTRY crPackCompressedTexImage2DARBSWAP( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imagesize, const GLvoid *data )
+{
+	GET_PACKER_CONTEXT(pc);
+	crError ( "CompressedTexImage2DARB needs to be special cased!");
+	(void) pc;
+	(void) target;
+	(void) level;
+	(void) internalformat;
+	(void) width;
+	(void) height;
+	(void) border;
+	(void) imagesize;
+	(void) data;
+}
+
+void PACK_APIENTRY crPackCompressedTexImage3DARBSWAP( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imagesize, const GLvoid *data )
+{
+	GET_PACKER_CONTEXT(pc);
+	crError ( "CompressedTexImage3DARB needs to be special cased!");
+	(void) pc;
+	(void) target;
+	(void) level;
+	(void) internalformat;
+	(void) width;
+	(void) height;
+	(void) depth;
+	(void) border;
+	(void) imagesize;
+	(void) data;
+}
+
+void PACK_APIENTRY crPackCompressedTexSubImage1DARBSWAP( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imagesize, const GLvoid *data )
+{
+	GET_PACKER_CONTEXT(pc);
+	crError ( "CompressedTexSubImage1DARB needs to be special cased!");
+	(void) pc;
+	(void) target;
+	(void) level;
+	(void) xoffset;
+	(void) width;
+	(void) format;
+	(void) imagesize;
+	(void) data;
+}
+
+void PACK_APIENTRY crPackCompressedTexSubImage2DARBSWAP( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imagesize, const GLvoid *data )
+{
+	GET_PACKER_CONTEXT(pc);
+	crError ( "CompressedTexSubImage2DARB needs to be special cased!");
+	(void) pc;
+	(void) target;
+	(void) level;
+	(void) xoffset;
+	(void) yoffset;
+	(void) width;
+	(void) height;
+	(void) format;
+	(void) imagesize;
+	(void) data;
+}
+
+void PACK_APIENTRY crPackCompressedTexSubImage3DARBSWAP( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imagesize, const GLvoid *data )
+{
+	GET_PACKER_CONTEXT(pc);
+	crError ( "CompressedTexSubImage3DARB needs to be special cased!");
+	(void) pc;
+	(void) target;
+	(void) level;
+	(void) xoffset;
+	(void) yoffset;
+	(void) zoffset;
+	(void) width;
+	(void) height;
+	(void) depth;
+	(void) format;
+	(void) imagesize;
+	(void) data;
+}
+
+void PACK_APIENTRY crPackGetCompressedTexImageARBSWAP( GLenum target, GLint level, GLvoid *img )
+{
+	GET_PACKER_CONTEXT(pc);
+	crError ( "GetCompressedTexImageARB needs to be special cased!");
+	(void) pc;
+	(void) target;
+	(void) level;
+	(void) img;
 }

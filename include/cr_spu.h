@@ -15,7 +15,6 @@
 
 #include "cr_dll.h"
 #include "spu_dispatch_table.h"
-#include "state/cr_limits.h"
 #include "cr_net.h"
 
 #define SPU_ENTRY_POINT_NAME "SPULoad"
@@ -169,14 +168,6 @@ void crSPUGetMothershipParams( CRConnection *conn, void *spu, SPUOptions *option
 SPUGenericFunction crSPUFindFunction( const SPUNamedFunctionTable *table, const char *fname );
 void crSPUInitDispatch( SPUDispatchTable *dispatch, const SPUNamedFunctionTable *table );
 void crSPUInitDispatchNops(SPUDispatchTable *table);
-
-void crSPUInitGLLimits( CRLimitsState *limits );
-void crSPUCopyGLLimits( CRLimitsState *dest, const CRLimitsState *src );
-void crSPUQueryGLLimits( CRConnection *conn, int spu_id, CRLimitsState *limits );
-void crSPUReportGLLimits( const CRLimitsState *limits, int spu_id );
-void crSPUGetGLLimits( const SPUNamedFunctionTable *table, CRLimitsState *limits );
-void crSPUMergeGLLimits( int n, const CRLimitsState *limits, CRLimitsState *merged );
-void crSPUPropogateGLLimits( CRConnection *conn, int spu_id, const SPU *child_spu, CRLimitsState *limitsResult );
 
 int crLoadOpenGL( crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );
 int crLoadOpenGLExtensions( const crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );

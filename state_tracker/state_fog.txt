@@ -10,3 +10,4 @@ enable:start:start:Fogf,GL_FOG_START
 enable:end:end:Fogf,GL_FOG_END
 enable:mode:mode:Fogi,GL_FOG_MODE
 enable:fogDistanceMode:fogDistanceMode:Fogi,GL_FOG_DISTANCE_MODE_NV
+enable:fogCoordinateSource:fogCoordinateSource:Fogi,GL_FOG_COORDINATE_SOURCE_EXT

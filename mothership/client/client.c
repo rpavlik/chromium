@@ -91,27 +91,6 @@ int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *par
 	return crMothershipSendString( conn, response, "spuparam %s", txt );
 }
 
-/*
- * Set an SPU parameter.
- * Added by BrianP
- */
-int crMothershipSetSPUParam( CRConnection *conn, const char *param, const char *value)
-{
-	/* Ex: param = "GL_MAX_TEXTURE_SIZE", value = "1024" */
-	return crMothershipSendString( conn, NULL, "setspuparam %s %s", param, value );
-}
-
-/*
- * Get a parameter from a named SPU.
- * Input: spu_id = the integer SPU number
- *        param = the parameter to query
- * Output: response
- */
-int crMothershipGetNamedSPUParam( CRConnection *conn, int spu_id, const char *param, char *response )
-{
-	return crMothershipSendString( conn, response, "namedspuparam %d %s", spu_id, param );
-}
-
 int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param, ... )
 {
 	va_list args;

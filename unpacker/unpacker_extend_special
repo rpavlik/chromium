@@ -17,3 +17,4 @@ LoadTransposeMatrixfARB
 LoadTransposeMatrixdARB
 MultTransposeMatrixdARB
 MultTransposeMatrixfARB
+PointParameterfvARB

@@ -24,13 +24,15 @@ typedef struct {
 	GLbitvalue	enableClientState[CR_MAX_BITARRAY];
 	GLbitvalue	clientPointer[CR_MAX_BITARRAY];
 	GLbitvalue	element[CR_MAX_BITARRAY];
-	GLbitvalue	*v;
-	GLbitvalue	*n;
-	GLbitvalue	*c;
-	GLbitvalue	*i;
-	GLbitvalue	*t;
-	GLbitvalue	*e;
-	GLbitvalue	*s;
+	GLbitvalue	*v; /* vertex */
+	GLbitvalue	*n; /* normal */
+	GLbitvalue	*c; /* color */
+	GLbitvalue	*i; /* index */
+	GLbitvalue	*t; /* texcoord */
+	GLbitvalue	*e; /* edgeflag */
+	GLbitvalue	*s; /* secondary color */
+	GLbitvalue	*f; /* fog coord */
+	GLbitvalue	*a[CR_MAX_VERTEX_ATTRIBS]; /* NV_vertex_program */
 	int valloc;
 	int nalloc;
 	int calloc;
@@ -38,6 +40,8 @@ typedef struct {
 	int talloc;
 	int ealloc;
 	int salloc;
+	int falloc;
+	int aalloc;
 } CRClientBits;
 
 typedef struct {
@@ -73,6 +77,8 @@ typedef struct {
 	CRClientPointer t[CR_MAX_TEXTURE_UNITS];
 	CRClientPointer e;
 	CRClientPointer s;
+	CRClientPointer f;
+	CRClientPointer a[CR_MAX_VERTEX_ATTRIBS];
 
 	GLint curClientTextureUnit;
 

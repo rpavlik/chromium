@@ -13,6 +13,15 @@
 void crStatePointInit (CRPointState *l) {
 	l->pointSmooth = GL_FALSE;
 	l->pointSize = 1.0f;
+#ifdef CR_ARB_point_parameters
+	l->minSize = 0.0f;
+	l->maxSize = CR_ALIASED_POINT_SIZE_MAX;
+	l->fadeThresholdSize = 1.0f;
+	l->distanceAttenuation[0] = 1.0f;
+	l->distanceAttenuation[1] = 0.0f;
+	l->distanceAttenuation[2] = 0.0f;
+#endif
+
 	/*
 	 *l->aliasedpointsizerange_min = c->aliasedpointsizerange_min; 
 	 *l->aliasedpointsizerange_max = c->aliasedpointsizerange_max; 
@@ -48,3 +57,18 @@ void STATE_APIENTRY crStatePointSize(GLfloat size)
 	DIRTY(lb->size, g->neg_bitid);
 	DIRTY(lb->dirty, g->neg_bitid);
 }
+
+
+#ifdef CR_ARB_point_parameters
+void STATE_APIENTRY crStatePointParameterfARB(GLenum pname, GLfloat param)
+{
+
+
+}
+
+
+void STATE_APIENTRY crStatePointParameterfvARB(GLenum pname, const GLfloat *params)
+{
+
+}
+#endif

@@ -324,6 +324,16 @@ void ARRAYSPU_APIENTRY arrayspu_EdgeFlagPointer( GLsizei stride, const GLvoid *p
 	crStateEdgeFlagPointer( stride, pointer );
 }
 
+void ARRAYSPU_APIENTRY arrayspu_VertexAttribPointerNV( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid * pointer )
+{
+	crStateVertexAttribPointerNV( index, size, type, stride, pointer );
+}
+
+void ARRAYSPU_APIENTRY arrayspu_FogCoordPointerEXT( GLenum type, GLsizei stride, const GLvoid *pointer )
+{
+	crStateFogCoordPointerEXT( type, stride, pointer );
+}
+
 void ARRAYSPU_APIENTRY arrayspu_GetPointerv( GLenum pname, GLvoid **params )
 {
 	crStateGetPointerv( pname, params );
@@ -354,6 +364,8 @@ SPUNamedFunctionTable array_table[] = {
 	{ "TexCoordPointer", (SPUGenericFunction) arrayspu_TexCoordPointer},
 	{ "NormalPointer", (SPUGenericFunction) arrayspu_NormalPointer},
 	{ "EdgeFlagPointer", (SPUGenericFunction) arrayspu_EdgeFlagPointer},
+	{ "VertexAttribPointerNV", (SPUGenericFunction) arrayspu_VertexAttribPointerNV},
+	{ "FogCoordPointerEXT", (SPUGenericFunction) arrayspu_FogCoordPointerEXT},
 	{ "GetPointerv", (SPUGenericFunction) arrayspu_GetPointerv},
 	{ "EnableClientState", (SPUGenericFunction) arrayspu_EnableClientState},
 	{ "DisableClientState", (SPUGenericFunction) arrayspu_DisableClientState},

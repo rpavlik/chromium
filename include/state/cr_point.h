@@ -16,12 +16,23 @@ extern "C" {
 typedef struct {
 	GLbitvalue enable[CR_MAX_BITARRAY];
 	GLbitvalue size[CR_MAX_BITARRAY];
+#ifdef CR_ARB_point_parameters
+	GLbitvalue minSize[CR_MAX_BITARRAY];
+	GLbitvalue maxSize[CR_MAX_BITARRAY];
+	GLbitvalue fadeThresholdSize[CR_MAX_BITARRAY];
+	GLbitvalue distanceAttenuation[CR_MAX_BITARRAY];
+#endif
 	GLbitvalue dirty[CR_MAX_BITARRAY];
 } CRPointBits;
 
 typedef struct {
 	GLboolean	pointSmooth;
 	GLfloat		pointSize;
+#ifdef CR_ARB_point_parameters
+	GLfloat		minSize, maxSize;
+	GLfloat		fadeThresholdSize;
+	GLfloat		distanceAttenuation[3];
+#endif
 } CRPointState;
 
 void crStatePointInitBits (CRPointBits *l);

@@ -38,3 +38,15 @@ GetFinalCombinerInputParameterfvNV
 GetFinalCombinerInputParameterivNV
 GetCombinerStageParameterfvNV
 GetChromiumParametervCR
+GenProgramsNV
+GetProgramParameterdvNV
+GetProgramParameterfvNV
+GetProgramivNV
+GetProgramStringNV
+GetTrackMatrixivNV
+GetVertexAttribdvNV
+GetVertexAttribfvNV
+GetVertexAttribivNV
+GetVertexAttribPointervNV
+GenFencesNV
+GetFenceivNV

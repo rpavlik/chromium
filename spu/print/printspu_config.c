@@ -70,7 +70,5 @@ void printspuGatherConfiguration( const SPU *child_spu )
 
 	crSPUGetMothershipParams( conn, &print_spu, printSPUOptions );
 
-	crSPUPropogateGLLimits( conn, print_spu.id, child_spu, NULL );
-
 	crMothershipDisconnect( conn );
 }

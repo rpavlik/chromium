@@ -185,7 +185,7 @@ def CallString( arg_names ):
 	return output
 
 def IsVector ( func_name ) :
-	m = re.search( r"^(SecondaryColor|Color|EdgeFlag|EvalCoord|Index|Normal|TexCoord|MultiTexCoord|Vertex|RasterPos)([1234]?)(ub|b|us|s|ui|i|f|d|)v(ARB|EXT|NV)?$", func_name )
+	m = re.search( r"^(SecondaryColor|Color|EdgeFlag|EvalCoord|Index|Normal|TexCoord|MultiTexCoord|Vertex|RasterPos|VertexAttrib|FogCoord)([1234]?)(ub|b|us|s|ui|i|f|d|)v(ARB|EXT|NV)?$", func_name )
 	if m :
 		if m.group(2) :
 			return string.atoi( m.group(2) )

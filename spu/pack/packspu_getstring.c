@@ -7,9 +7,50 @@
 #include "packspu.h"
 #include "cr_packfunctions.h"
 #include "state/cr_statefuncs.h"
+#include "cr_string.h"
+
+static const GLubyte *
+GetExtensions(void)
+{
+	GLubyte return_value[10*1000];
+	const GLubyte *extensions, *ext;
+	GET_THREAD(thread);
+	int writeback = 1;
+
+	if (pack_spu.swap)
+	{
+		crPackGetStringSWAP( GL_EXTENSIONS, return_value, &writeback );
+	}
+	else
+	{
+		crPackGetString( GL_EXTENSIONS, return_value, &writeback );
+	}
+	packspuFlush( (void *) thread );
+
+	while (writeback)
+		crNetRecv();
+
+	CRASSERT(crStrlen(return_value) < 10*1000);
+
+	/* OK, we got the result from the server.  Now we have to
+	 * intersect is with the set of extensions that Chromium understands
+	 * and tack on the Chromium-specific extensions.
+	 */
+	extensions = return_value;
+	ext = crStateMergeExtensions(1, &extensions);
+
+	return ext;  /* XXX we should return a static string here! */
+}
+
 
 const GLubyte * PACKSPU_APIENTRY packspu_GetString( GLenum name )
 {
-	/* It must be this way. */
-	return crStateGetString( name );
+	if (name == GL_EXTENSIONS)
+	{
+		return GetExtensions();
+	}
+	else
+	{
+		return crStateGetString(name);
+	}
 }

@@ -142,7 +142,7 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 	}
 
 	/* Fill in the new context info */
-	pack_spu.context[slot].clientState = crStateCreateContext(&pack_spu.limits);
+	pack_spu.context[slot].clientState = crStateCreateContext(NULL);
 	pack_spu.context[slot].serverCtx = serverCtx;
 
 #ifdef CHROMIUM_THREADSAFE

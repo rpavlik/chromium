@@ -230,3 +230,7 @@ LoadName
 PushName
 PopName
 PassThrough
+FogCoordPointerEXT
+VertexAttribPointerNV
+PointParameterfARB
+PointParameterfvARB

@@ -85,3 +85,11 @@ void PACK_APIENTRY crPackVertexArrayRangeNV( GLsizei length, const GLvoid *point
 	crWarning( "Unimplemented crPackVertexArrayRangeNV" );
 }
 
+void PACK_APIENTRY crPackFogCoordPointerEXT( GLenum type, GLsizei stride, const GLvoid * pointer )
+{
+	UNUSED( type );
+	UNUSED( stride );
+	UNUSED( pointer );
+	crWarning( "Unimplemented crPackFogCoordPointerEXT" );
+}
+

@@ -595,6 +595,71 @@ void STATE_APIENTRY crStateEdgeFlagPointer(GLsizei stride, const GLvoid *p)
 	DIRTY(cb->clientPointer, g->neg_bitid);
 }
 
+void STATE_APIENTRY crStateFogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *p) 
+{
+	CRContext *g = GetCurrentContext();
+	CRClientState *c = &(g->client);
+	CRStateBits *sb = GetCurrentBits();
+	CRClientBits *cb = &(sb->client);
+
+	FLUSH();
+
+	if (type != GL_BYTE && type != GL_UNSIGNED_BYTE &&
+			type != GL_SHORT && type != GL_UNSIGNED_SHORT &&
+			type != GL_INT && type != GL_UNSIGNED_INT &&
+			type != GL_FLOAT && type != GL_DOUBLE)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glFogCoordPointerEXT: invalid type: %d", type);
+		return;
+	}
+	if (stride < 0) 
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glFogCoordPointerEXT: stride was negative: %d", stride);
+		return;
+	}
+
+	crStateClientSetPointer(&(c->f), 1, type, stride, p);
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
+}
+
+void STATE_APIENTRY crStateVertexAttribPointerNV(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid *p) 
+{
+	CRContext *g = GetCurrentContext();
+	CRClientState *c = &(g->client);
+	CRStateBits *sb = GetCurrentBits();
+	CRClientBits *cb = &(sb->client);
+
+	FLUSH();
+
+	if (index > CR_MAX_VERTEX_ATTRIBS)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glVertexAttribPointerNV: invalid index: %d", (int) index);
+		return;
+	}
+	if (size != 1 && size != 2 && size != 3 && size != 4)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glVertexAttribPointerNV: invalid size: %d", size);
+		return;
+	}
+	if (type != GL_SHORT && type != GL_UNSIGNED_BYTE &&
+			type != GL_FLOAT && type != GL_DOUBLE)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glVertexAttribPointerNV: invalid type: %d", type);
+		return;
+	}
+	if (stride < 0) 
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glVertexAttribPointerNV: stride was negative: %d", stride);
+		return;
+	}
+
+	crStateClientSetPointer(&(c->a[index]), size, type, stride, p);
+	DIRTY(cb->dirty, g->neg_bitid);
+	DIRTY(cb->clientPointer, g->neg_bitid);
+}
+
+
 
 /* 
 ** Currently I treat Interleaved Arrays as if the 
@@ -968,6 +1033,11 @@ void STATE_APIENTRY crStateGetPointerv(GLenum pname, GLvoid * * params)
 		case GL_EDGE_FLAG_ARRAY_POINTER:
 			*params = (GLvoid *) c->e.p;
 			break;
+#ifdef CR_EXT_fog_coord
+		case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
+			*params = (GLvoid *) c->f.p;
+			break;
+#endif
 #ifdef CR_EXT_secondary_color
 		case GL_SECONDARY_COLOR_ARRAY_POINTER_EXT:
 			if( g->extensions.EXT_secondary_color ){

@@ -55,6 +55,7 @@ GetFloatv
 GetIntegerv
 GetBooleanv
 GetDoublev
+GetString
 EvalCoord1d
 EvalCoord1f
 EvalCoord1dv

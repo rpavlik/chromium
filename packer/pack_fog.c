@@ -37,11 +37,12 @@ static GLboolean __handleFogData( GLenum pname, const GLfloat *params )
 	}
 	packet_length += params_length;
 
+        printf("Pack Fog packet_length=%d pname=0x%x\n", packet_length, pname);
 	GET_BUFFERED_POINTER(pc, packet_length );
 	WRITE_DATA( 0, int, packet_length );
 	WRITE_DATA( 4, GLenum, pname );
 	WRITE_DATA( 8, GLfloat, params[0] );
-	if (packet_length > 8) 
+	if (packet_length > 12)
 	{
 		WRITE_DATA( 12, GLfloat, params[1] );
 		WRITE_DATA( 16, GLfloat, params[2] );

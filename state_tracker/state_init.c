@@ -46,15 +46,8 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 
 	crDebug( "Creating a context (id=%d addr=%p)", ctx->id, ctx);
 
-	/* This has to come first. */
-	if (limits) {
-		/* use provided OpenGL limits */
-		crSPUCopyGLLimits( &(ctx->limits), limits);
-	}
-	else {
-		/* use Chromium's OpenGL defaults */
-		crSPUInitGLLimits( &(ctx->limits) );
-	}
+	/* use Chromium's OpenGL defaults */
+	crStateLimitsInit( &(ctx->limits) );
 
 	crStateBufferInit( &(ctx->buffer) );
 	crStateClientInit (&(ctx->limits), &(ctx->client) );

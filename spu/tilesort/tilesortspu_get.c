@@ -7,6 +7,7 @@
 #include "tilesortspu.h"
 #include "cr_packfunctions.h"
 #include "cr_mem.h"
+#include "cr_string.h"
 
 
 /* OpenGL doesn't have this token, be we want it here */
@@ -231,18 +232,19 @@ void TILESORTSPU_APIENTRY tilesortspu_GetBooleanv( GLenum pname, GLboolean *para
 }
 
 
-#if 000
-/* NOT FINISHED YET (BP) */
-
+/*
+ * Query all downstream servers for their extension strings, merge them,
+ * intersect with Chromium's known extensions, and append the Chromium-
+ * specific extensions.
+ */
 static const GLubyte *
 GetExtensionsString(void)
 {
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
-	GLubyte **extensions;
+	const GLubyte **extensions, *ext;
 	GLint i;
-	GLubyte *ext;
 
-	extensions = (GLubyte **) crCalloc(tilesort_spu.num_servers * sizeof(GLubyte *));
+	extensions = (const GLubyte **) crCalloc(tilesort_spu.num_servers * sizeof(GLubyte *));
 	if (!extensions)
 	{
 		crWarning("Out of memory in tilesortspu::GetExtensionsString");
@@ -262,7 +264,6 @@ GetExtensionsString(void)
 
 		extensions[i] = crCalloc(50 * 1000);
 		CRASSERT(extensions[i]);
-		extensions[i][50*1000-1] = 123;
 
 		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
 
@@ -282,25 +283,24 @@ GetExtensionsString(void)
 		}
 
 		/* make sure we didn't overflow the buffer */
-		CRASSERT(extensions[i][50*1000-1] == 123);
-
+		CRASSERT(crStrlen(extensions[i]) < 50*1000);
 	}
 
 	/* Restore the default pack buffer */
 	crPackSetBuffer( thread0->packer, &(thread0->geometry_pack) );
 
-	ext = crSPUMergeExtensions(tilesort_spu.num_servers, extensions);
+	ext = crStateMergeExtensions(tilesort_spu.num_servers, extensions);
 
 	for (i = 0; i < tilesort_spu.num_servers; i++)
-		crFree(extensions[i]);
-	crFree(extensions);
+		crFree((void *) extensions[i]);
+	crFree((void *)extensions);
 
 	return ext;
 }
 
 const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 {
-	if (pname == GL_EXTENSIONS+1000)
+	if (pname == GL_EXTENSIONS)
 	{
 		/* Query all servers for their extensions, return the intersection */
 		return GetExtensionsString();
@@ -310,4 +310,4 @@ const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 		return crStateGetString(pname);
 	}
 }
-#endif
+

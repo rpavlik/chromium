@@ -25,6 +25,9 @@ void crStateFogInit (CRFogState *f)
 #ifdef CR_NV_fog_distance
 	f->fogDistanceMode = GL_EYE_PLANE_ABSOLUTE_NV;
 #endif
+#ifdef CR_EXT_fog_coord
+	f->fogCoordinateSource = GL_FRAGMENT_DEPTH_EXT;
+#endif
 }
 
 void STATE_APIENTRY crStateFogf(GLenum pname, GLfloat param) 
@@ -61,6 +64,12 @@ void STATE_APIENTRY crStateFogiv(GLenum pname, const GLint *param)
 			break;
 #ifdef CR_NV_fog_distance
 		case GL_FOG_DISTANCE_MODE_NV:
+			f_param = (GLfloat) (*param);
+			crStateFogfv( pname, &f_param );
+			break;
+#endif
+#ifdef CR_EXT_fog_coord
+		case GL_FOG_COORDINATE_SOURCE_EXT:
 			f_param = (GLfloat) (*param);
 			crStateFogfv( pname, &f_param );
 			break;
@@ -129,7 +138,8 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 			break;
 #ifdef CR_NV_fog_distance
 		case GL_FOG_DISTANCE_MODE_NV:
-			if (g->extensions.NV_fog_distance) {
+			if (g->extensions.NV_fog_distance)
+			{
 				if (param[0] != GL_EYE_RADIAL_NV &&
 					param[0] != GL_EYE_PLANE &&
 					param[0] != GL_EYE_PLANE_ABSOLUTE_NV )
@@ -140,11 +150,35 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 				}
 				f->fogDistanceMode = (GLenum) param[0];
 				DIRTY(fb->fogDistanceMode, g->neg_bitid);
-				break;
 			}
-			/* FALL-THROUGH */
+			else
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
+				return;
+			}
+			break;
 #endif
-
+#ifdef CR_EXT_fog_coord
+		case GL_FOG_COORDINATE_SOURCE_EXT:
+			if (g->extensions.EXT_fog_coord)
+			{
+				if (param[0] != GL_FOG_COORDINATE_EXT &&
+						param[0] != GL_FRAGMENT_DEPTH_EXT)
+				{
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+						"Fogfv: GL_FOG_COORDINATE_SOURCE_EXT called with illegal parameter: 0x%x", (GLenum) param[0]);
+					return;
+				}
+				f->fogCoordinateSource = (GLenum) param[0];
+				DIRTY(fb->fogCoordinateSource, g->neg_bitid);
+			}
+			else
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
+				return;
+			}
+			break;
+#endif
 		default:
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
 			return;

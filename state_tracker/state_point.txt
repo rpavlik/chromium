@@ -4,3 +4,7 @@
 # See the file LICENSE.txt for information on redistributing this software.
 :enable:pointSmooth:GL_POINT_SMOOTH
 :size:pointSize:PointSize
+:minSize:minSize:PointParameterfARB,GL_POINT_SIZE_MIN_ARB
+:maxSize:maxSize:PointParameterfARB,GL_POINT_SIZE_MAX_ARB
+:fadeThresholdSize:fadeThresholdSize:PointParameterfARB,GL_POINT_FADE_THRESHOLD_SIZE_ARB
+#XXX fix this :distanceAttenuation:distanceAttenuation:PointParameterfvARB,GL_POINT_DISTANCE_ATTENUATION_ARB

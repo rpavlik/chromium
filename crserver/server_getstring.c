@@ -8,10 +8,23 @@
 #include "cr_error.h" 
 #include "server_dispatch.h"
 #include "server.h"
+#include "cr_string.h"
 
 const GLubyte * SERVER_DISPATCH_APIENTRY crServerDispatchGetString( GLenum name )
 {
-	crError( "glGetString isn't *ever* allowed to be on the wire!" );
-	(void) name;
-	return NULL;
+	const GLubyte *retval;
+	retval = cr_server.head_spu->dispatch_table.GetString( name );
+	if (retval)
+		crServerReturnValue( retval, crStrlen(retval) + 1 );
+	else
+		crServerReturnValue( "", 1 ); /* empty string */
+	return retval; /* WILL PROBABLY BE IGNORED */
+}
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchGetProgramStringNV( GLuint id, GLenum pname, GLubyte * program )
+{
+	crError( "glGetProgramStringNV isn't *ever* allowed to be on the wire!" );
+	(void) id;
+	(void) pname;
+	(void) program;
 }

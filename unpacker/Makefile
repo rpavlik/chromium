@@ -21,6 +21,7 @@ FILES = unpack \
 	unpack_matrices \
 	unpack_misc \
 	unpack_pixelmap \
+	unpack_point \
 	unpack_readpixels \
 	unpack_regcombiner \
 	unpack_stipple \

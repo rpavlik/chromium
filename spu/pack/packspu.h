@@ -19,7 +19,6 @@
 #include "cr_spu.h"
 #include "cr_threads.h"
 #include "state/cr_client.h"
-#include "state/cr_limits.h"
 
 typedef struct thread_info_t ThreadInfo;
 typedef struct context_info_t ContextInfo;
@@ -50,8 +49,6 @@ typedef struct {
 
 	char *name;
 	int buffer_size;
-
-	CRLimitsState limits;   /* OpenGL limits of receiving unpacker */
 
 	int numThreads;
 	ThreadInfo thread[MAX_THREADS];

@@ -117,7 +117,5 @@ void hiddenlinespuGatherConfiguration( SPU *child )
 
 	crSPUGetMothershipParams( conn, &hiddenline_spu, hiddenlineSPUOptions );
 
-	crSPUPropogateGLLimits( conn, hiddenline_spu.id, child, &(hiddenline_spu.limits) );
-
 	crMothershipDisconnect( conn );
 }

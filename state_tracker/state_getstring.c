@@ -13,21 +13,6 @@
 
 const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 {
-   /*	CRContext   *g = GetCurrentContext( ); */
-	static const GLubyte *vendor = (const GLubyte *) "Humper";
-	static const GLubyte *renderer = (const GLubyte *) "Chromium";
-#if defined(CR_OPENGL_VERSION_1_3)
-	static const GLubyte *version = (const GLubyte *) "1.3";
-#elif defined(CR_OPENGL_VERSION_1_2)
-	static const GLubyte *version = (const GLubyte *) "1.2";
-#elif defined(CR_OPENGL_VERSION_1_1)
-	static const GLubyte *version = (const GLubyte *) "1.1";
-#elif defined(CR_OPENGL_VERSION_1_0)
-	static const GLubyte *version = (const GLubyte *) "1.0";
-#else
-#error "cr_version.h wasn't included!"
-#endif
-
 	CRContext *g = GetCurrentContext();
 	if (!g)
 		return NULL;
@@ -35,13 +20,17 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 	switch( name )
 	{
 		case GL_VENDOR:
-			return vendor;
+			return (const GLubyte *) CR_VENDOR;
 		case GL_RENDERER:
-			return renderer;
+			return (const GLubyte *) CR_RENDERER;
 		case GL_VERSION:
-			return version;
+			return (const GLubyte *) CR_VERSION;
 		case GL_EXTENSIONS:
-			return g->limits.extensions;
+			/* This shouldn't normally be queried - the relevant SPU should
+			 * catch this query and do all the extension string merging/mucking.
+			 */
+			return (const GLubyte *) __stateExtensionString;
+			/*return g->limits.extensions;  OLD colde */
 		default:
 			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
 									"calling glGetString() with invalid name" );

@@ -19,3 +19,24 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGenTextures( GLsizei n, GLuint *te
 	crServerReturnValue( local_textures, n*sizeof( *local_textures ) );
 	crFree( local_textures );
 }
+
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchGenProgramsNV( GLsizei n, GLuint * ids )
+{
+	GLuint *local_progs = (GLuint *) crAlloc( n*sizeof( *local_progs) );
+	(void) ids;
+	cr_server.head_spu->dispatch_table.GenProgramsNV( n, local_progs );
+	crServerReturnValue( local_progs, n*sizeof( *local_progs ) );
+	crFree( local_progs );
+}
+
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchGenFencesNV( GLsizei n, GLuint * ids )
+{
+	GLuint *local_fences = (GLuint *) crAlloc( n*sizeof( *local_fences) );
+	(void) ids;
+	cr_server.head_spu->dispatch_table.GenFencesNV( n, local_fences );
+	crServerReturnValue( local_fences, n*sizeof( *local_fences ) );
+	crFree( local_fences );
+}
+

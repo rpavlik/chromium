@@ -20,21 +20,24 @@ NORMAL_FILES = packer \
 	pack_error \
 	pack_extensions \
 	pack_feedback \
+	pack_fence \
 	pack_fog \
 	pack_init \
 	pack_lights \
 	pack_lists \
 	pack_swap_lists \
 	pack_map \
-	pack_misc \
-	pack_regcombiner \
+	pack_point \
 	pack_swap_map \
+	pack_misc \
 	pack_materials \
 	pack_matrices \
+	pack_pixels \
 	pack_pixelmap \
 	pack_swap_pixelmap \
-	pack_pixels \
+	pack_program \
 	pack_rect \
+	pack_regcombiner \
 	pack_stipple \
 	pack_texture \
 	pack_swap_texture
@@ -52,6 +55,8 @@ SWAP_FILES = pack_arrays \
 	pack_matrices \
 	pack_misc \
 	pack_pixels \
+	pack_point \
+	pack_program \
 	pack_regcombiner \
 	pack_rect \
 	pack_stipple
@@ -69,15 +74,15 @@ LIB_COPIES = packspu \
 
 include $(TOP)/cr.mk
 
-packer.def: packer_defs.py
+packer.def: packer_defs.py ../glapi_parser/gl_header.parsed
 	@$(ECHO) Making the packer def file
 	@$(PYTHON) $< > $@
 
-../include/cr_packfunctions.h: pack_header.py packer_get_special packer_pixel_special packer_client_special
+../include/cr_packfunctions.h: pack_header.py packer_get_special packer_pixel_special packer_client_special ../glapi_parser/gl_header.parsed
 	@$(ECHO) Making the pack functions header..
 	@$(PYTHON) pack_header.py > $@
 
-../include/cr_opcodes.h: opcodes.py opcode_special packer_get_special opcode_extend_special
+../include/cr_opcodes.h: opcodes.py opcode_special packer_get_special opcode_extend_special ../glapi_parser/gl_header.parsed
 	@$(ECHO) Making the opcode header...
 	@$(PYTHON) opcodes.py > $@
 
@@ -85,7 +90,7 @@ packer.def: packer_defs.py
 	@$(ECHO) Making cr_currentpointers.h
 	@$(PYTHON) pack_currentheader.py > $@
 
-packer.c: packer.py packer_special packer_pixel_special packer_client_special packer_get_special opcode_extend_special
+packer.c: packer.py packer_special packer_pixel_special packer_client_special packer_get_special opcode_extend_special ../glapi_parser/gl_header.parsed
 	@$(ECHO) Making the Packer...
 	@$(PYTHON) packer.py > $@
 

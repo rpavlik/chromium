@@ -42,7 +42,20 @@ current_fns = {
 		'sizes': [1],
 		'default': [0],
 		'members': []
-	}
+	},
+	'VertexAttrib': {
+		'types': ['s','f','d','ub'],
+		'sizes': [1,2,3,4],
+		'default': [0,0,0,1],
+		'members': ['x', 'y', 'z', 'w'],
+		'array': 'CR_MAX_VERTEX_ATTRIBS'
+	},
+	'FogCoord': {
+		'types': ['f','d'],
+		'sizes': [1],
+		'default': [0],
+		'members': []
+	},
 }
 
 current_vtx = {

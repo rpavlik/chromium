@@ -170,6 +170,9 @@ extern "C" {
 #define GL_PER_STAGE_CONSTANTS_NV 		0x8535
 #endif
 
+#ifndef GL_FOG_COORDINATE_ARRAY_POINTER_EXT
+#define GL_FOG_COORDINATE_ARRAY_POINTER_EXT     0x8456
+#endif
 
 typedef void (*CR_GLXFuncPtr)();
 #ifndef GLX_ARB_get_proc_address

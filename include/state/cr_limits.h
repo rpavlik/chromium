@@ -8,6 +8,7 @@
 #define CR_LIMITS_H
 
 #include "chromium.h"
+#include "cr_version.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +46,23 @@ extern "C" {
 #define CR_SMOOTH_LINE_WIDTH_MIN	1.0
 #define CR_SMOOTH_LINE_WIDTH_MAX	64.0
 #define CR_LINE_WIDTH_GRANULARITY	0.5
+#define CR_MAX_VERTEX_ATTRIBS           16
+
+
+/* glGetString strings */
+#define CR_RENDERER "Chromium"
+#define CR_VENDOR "Humper"
+#if defined(CR_OPENGL_VERSION_1_4)
+#define CR_VERSION "1.4"
+#elif defined(CR_OPENGL_VERSION_1_3)
+#define CR_VERSION "1.3"
+#elif defined(CR_OPENGL_VERSION_1_2)
+#define CR_VERSION "1.2"
+#elif defined(CR_OPENGL_VERSION_1_1)
+#define CR_VERSION "1.1"
+#elif defined(CR_OPENGL_VERSION_1_0)
+#define CR_VERSION "1.0"
+#endif
 
 
 /*
@@ -92,9 +110,12 @@ typedef struct {
 
 } CRLimitsState;
 
-void crStateLimitsInit(CRLimitsState *limits);
+extern void crStateLimitsInit(CRLimitsState *limits);
 
-void crStateLimitsPrint(const CRLimitsState *limits);
+extern void crStateLimitsPrint(const CRLimitsState *limits);
+
+extern GLubyte * crStateMergeExtensions(GLuint n, const GLubyte **extensions);
+
 
 #ifdef __cplusplus
 }

@@ -431,7 +431,6 @@ class CR:
 	    do_clients: 	Sends the list of clients to a server.
 	    do_connectrequest:	Connects the given socket.
 	    do_faker:		Maps a faker app to an ApplicationNode.
-	    do_namedspuparam:   Sends the given SPU parameter.
 	    do_opengldll:	Identifies the application node in the graph.
 		do_rank:        Sends the node's rank down.
 	    do_quit: 		Disconnects from clients.
@@ -442,7 +441,6 @@ class CR:
 	    do_fakerparam:	Sends the given app faker parameter.
 	    do_servers: 	Sends the list of servers.
 	    do_servertiles: 	Sends the defined tiles for a server.
-	    do_setspuparam: 	Sets a SPU parameter.
 	    do_spu:		Identifies a SPU.
 	    do_spuparam:	Sends the given SPU (or global) parameter.
 	    do_tiles:		Sends the defined tiles for a SPU.
@@ -767,7 +765,6 @@ class CR:
 	def do_faker( self, sock, args ):
 		"""do_faker(sock, args)
 		Maps the incoming "faker" app to a previously-defined node."""
-		print "********* args=%s" % args
 		for node in self.nodes:
 			if SameHost(string.lower(node.host), string.lower(args)) and not node.spokenfor:
 				if isinstance(node,CRApplicationNode):
@@ -860,39 +857,6 @@ class CR:
 		CRDebug("responding with args = " + `response`)
 #		sock.Success( string.join( response, " " ) )
 		sock.Success( response )
-
-	def do_namedspuparam( self, sock, args ):
-		"""do_namedspuparam(sock, args)
-		Sends the given SPU parameter."""
-		params = args.split( " " )
-		spuid = int(params[0])
-		key = params[1]
-		spu = allSPUs[spuid]
-		if spu.config.has_key( key ):
-			response = spu.config[key]
-		else:
-			# Okay, there's no specific parameter for the SPU.  Try the global SPU configurations.
-			sock.Failure( SockWrapper.UNKNOWNPARAM, "SPU %d doesn't have param %s" % (spuid, args) )
-			return
-		CRDebug("responding with args = " + `response`)
-		sock.Success( string.join( response, " " ) )	
-
-
-	def do_setspuparam( self, sock, args):
-		"""do_setspuparam(sock, args)
-		Sets a SPU parameter."""
-		# XXX this should be reviewed by Greg  (BrianP)
-		if sock.SPUid == -1:
-			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't set SPU parameters without telling me what SPU id you are!" )
-			return
-		spu = allSPUs[sock.SPUid]
-		#spu = self.allSPUConf
-		params = args.split( " ", 1 )
-		key = params[0]
-		value = params[1]
-		spu.config[key] = [value]
-		CRDebug("responding with OK")
-		sock.Success( "OK" )
 
 	def do_serverparam( self, sock, args ):
 		"""do_serverparam(sock, args)

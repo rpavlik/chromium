@@ -50,7 +50,7 @@ GLint HIDDENLINESPU_APIENTRY hiddenlinespu_CreateContext( const char *dpyName, G
 	/* init ContextInfo */
 	context->packer = crPackNewContext( 0 ); /* no byte swapping */
 	/* context->pack_buffer initialized in hiddenlineProvidePackBuffer() */
-	context->ctx = crStateCreateContext( &hiddenline_spu.limits );
+	context->ctx = crStateCreateContext( NULL );
 	context->super_context = hiddenline_spu.super.CreateContext(dpyName, visBits);
 	context->clear_color.r = 0.0f;
 	context->clear_color.g = 0.0f;

@@ -25,6 +25,9 @@ typedef struct {
 #ifdef CR_NV_fog_distance
 	GLbitvalue fogDistanceMode[CR_MAX_BITARRAY];
 #endif
+#ifdef CR_EXT_fog_coord
+	GLbitvalue fogCoordinateSource[CR_MAX_BITARRAY];
+#endif
 } CRFogBits;
 
 typedef struct {
@@ -37,6 +40,9 @@ typedef struct {
 	GLboolean enable;
 #ifdef CR_NV_fog_distance
 	GLenum fogDistanceMode;
+#endif
+#ifdef CR_EXT_fog_coord
+	GLenum fogCoordinateSource;
 #endif
 } CRFogState;
 

@@ -28,6 +28,8 @@ typedef struct {
   GLboolean NV_register_combiners2;
   GLboolean NV_texgen_reflection;
   GLboolean EXT_texture3D;
+  GLboolean EXT_fog_coord;
+  GLboolean ARB_point_parameters;
 } CRExtensionState;
 
 void crStateExtensionsInit( CRContext *g );

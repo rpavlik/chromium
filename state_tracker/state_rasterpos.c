@@ -48,6 +48,15 @@ void crStateRasterPosUpdate(CRContext *g,
 	c->rasterIndex = c->index;
 	c->rasterTexture = c->texCoord[0];
 
+	/* XXX need to update raster distance... */
+#if 0
+	/* from Mesa... */
+	if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
+		 ctx->Current.RasterDistance = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
+	else
+		 ctx->Current.RasterDistance = (GLfloat)
+				GL_SQRT( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
+#endif
 
 	/*
 	**  Need handle these for glGet...

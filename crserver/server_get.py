@@ -52,7 +52,16 @@ max_components = {
 	'GetTexLevelParameterfv': 1,
 	'GetTexLevelParameteriv': 1,
 	'GetTexParameterfv': 4,
-	'GetTexParameteriv': 4
+	'GetTexParameteriv': 4,
+	'GetProgramParameterdvNV': 4,
+	'GetProgramParameterfvNV': 4,
+	'GetProgramivNV': 1,
+	'GetTrackMatrixivNV': 1,
+	'GetVertexAttribPointervNV': 1,
+	'GetVertexAttribdvNV': 4,
+	'GetVertexAttribfvNV': 4,
+	'GetVertexAttribivNV': 4,
+	'GetFenceivNV': 1,
 }
 
 no_pnames = [ 'GetClipPlane', 'GetPolygonStipple' ];

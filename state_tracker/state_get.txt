@@ -74,6 +74,10 @@ GLboolean GL_LINE_STIPPLE             g->line.lineStipple
 GLint     GL_LOGIC_OP_MODE            g->buffer.logicOpMode
 GLboolean GL_POINT_SMOOTH             g->point.pointSmooth
 GLfloat   GL_POINT_SIZE               g->point.pointSize
+GLfloat   GL_POINT_SIZE_MIN_ARB	      g->point.minSize
+GLfloat   GL_POINT_SIZE_MAX_ARB       g->point.maxSize
+GLfloat   GL_POINT_FADE_THRESHOLD_SIZE_ARB g->point.fadeThresholdSize
+GLfloat   GL_POINT_DISTANCE_ATTENUATION_ARB g->point.distanceAttenuation[0] g->point.distanceAttenuation[1] g->point.distanceAttenuation[2]
 GLboolean GL_NORMALIZE                g->transform.normalize
 
 GLboolean GL_TEXTURE_GEN_S g->texture.unit[g->texture.curTextureUnit].textureGen.s

@@ -8,13 +8,6 @@ crSPULoad
 crSPULoadChain
 crSPUCopyDispatchTable
 crSPUFindFunction
-crSPUInitGLLimits
-crSPUCopyGLLimits
-crSPUQueryGLLimits
-crSPUReportGLLimits
-crSPUGetGLLimits
-crSPUMergeGLLimits
-crSPUPropogateGLLimits
 crSPUChangeInterface
 crSPUInitDispatchTable
 crSPUInitDispatchNops
@@ -23,3 +16,4 @@ crSPUGetMothershipParams
 crSPUSetDefaultParams
 crLoadOpenGLExtensions
 crLoadOpenGL
+

@@ -30,7 +30,6 @@ CRtsd _RenderTSD;
 SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 		unsigned int context_id, unsigned int num_contexts )
 {
-	CRLimitsState limits[3];
 	int numFuncs, numSpecial;
 	GLint defaultWin, defaultCtx;
 	/* Don't ask for ALPHA, if we don't have it, we fail immediately */
@@ -91,17 +90,6 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *self,
 	 */
 	numFuncs += crLoadOpenGLExtensions( &render_spu.ws, render_table + numFuncs );
 	CRASSERT(numFuncs < 1000);
-
-	/* Report OpenGL limits to the mothership.
-	 * We use crSPUGetGLLimits() to query the real OpenGL limits via
-	 * glGetString, glGetInteger, etc.
-	 * Then, we intersect those limits with Chromium's OpenGL limits.
-	 * Finally, we report the intersected limits to the mothership.
-	 */
-	crSPUGetGLLimits( render_table, &limits[0] );  /* OpenGL */
-	crSPUInitGLLimits( &limits[1] );               /* Chromium */
-	crSPUMergeGLLimits( 2, limits, &limits[2] );   /* intersection */
-	crSPUReportGLLimits( &limits[2], render_spu.id );
 
 	render_spu.barrierHash = crAllocHashtable();
 

@@ -158,7 +158,5 @@ saveframespuGatherConfiguration( const SPU *child_spu )
 
 	crSPUGetMothershipParams(conn, &saveframe_spu, saveframeSPUOptions);
 
-        crSPUPropogateGLLimits( conn, saveframe_spu.id, child_spu, NULL );
-
 	crMothershipDisconnect(conn);
 }

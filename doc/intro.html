@@ -147,14 +147,29 @@ contributed many new features.</p>
 <p><EM>Upcoming</EM> 1.0 Release:  (month) (day), 2002</p>
 
 <ul>
-  <li>Graphical configuration tools
+  <li>Graphical configuration tool
   <li>Fixed GM memory leak (Michael Brodeur)
   <li>Cygwin 5.1 patches (Sebastien Barre)
   <li>New server/network node parameter: only_swap_once
   <li>New render SPU options: render_to_app_window, resizable
   <li>New performance SPU (perf) for collecting performance statistics
-  <li>New feedback & selection SPU (feedback)
+  <li>feedback & selection support (feedback SPU)
   <li>SunOS support (Jorge Luis Williams)
+  <li>GL_EXT_fog_coord support
+  <li>OpenGL extensions supported on app nodes only:
+  <ul>
+    <li>GL_NV_vertex_program
+    <li>GL_NV_fence
+  </ul>
+  <li>3D texture support
+  <li>OpenGL 1.2 support (but not ARB_imaging)
+  <li>Fixed sort-last rendering synchronization problems
+  <li>Render SPU render_to_app_window option
+  <li>Tile reassembly support in Readback SPU (see reassembly.conf)
+  <li>Dynamic tilesort configuration
+  <li>Fixed glRasterPos/glBitmap/display list bug in tilesort SPU
+  <li>Working binaryswap SPU
+  <li>Lots of bug fixes
 </ul>
 
 
