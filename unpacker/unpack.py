@@ -97,6 +97,7 @@ def MakeNormalCall( return_type, func_name, arg_types, arg_names, counter_init =
 			if string.find( copy_of_types[i], '*' ) != -1:
 				arg_names[i] = 'NULL'
 				copy_of_types[i] = 'void'
+				print '\tcrError( "%s needs to be special cased!" );' % func_name
 			else:
 				print "\t%s %s = %s;" % ( copy_of_types[i], arg_names[i], ReadData( counter, copy_of_types[i] ) )
 			#counter = counter + arg_len

@@ -141,6 +141,7 @@ for func_name in keys:
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "packer", func_name ): continue
 	is_extended = 0
+	pointers_ok = 0
 	if return_type != 'void':
 		# Yet another gross hack for glGetString
 		if string.find( return_type, '*' ) == -1:
@@ -152,8 +153,9 @@ for func_name in keys:
 		is_extended = 1
 		arg_types.append( "int *" )
 		arg_names.append( "writeback" )
+		pointers_ok = 1
 
-	def PrintFunc( func_name, arg_names, arg_types, is_extended, is_swapped ):
+	def PrintFunc( func_name, arg_names, arg_types, is_extended, is_swapped, can_have_pointers ):
 		if is_swapped:
 			print 'void PACK_APIENTRY crPack%sSWAP%s' % ( func_name, stub_common.ArgumentString( arg_names, arg_types ) )
 		else:
@@ -180,12 +182,14 @@ for func_name in keys:
 		if stub_common.FindSpecial( "opcode_extend", func_name ):
 			is_extended = 1
 
-		if packet_length == -1:
-			print '\tcrError ( "%s needs to be special cased!");' % orig_func_name
-			print '\t(void) pc;'
+		for arg_type in arg_types:
+			if not vector_nelem and not can_have_pointers and (arg_type.find( '*' ) != -1) :
+				print '\tcrError ( "%s needs to be special cased!");' % orig_func_name
+				print '\t(void) pc;'
 
-			for arg in arg_names:
-				print "\t(void) %s;" % arg
+				for arg in arg_names:
+					print "\t(void) %s;" % arg
+				break
 		else:
 			print "\tunsigned char *data_ptr;"
 			print '\t(void) pc;'
@@ -221,5 +225,7 @@ for func_name in keys:
 				print "\tWRITE_OPCODE( pc, %s );" % stub_common.OpcodeName( func_name )
 		print '}\n'
 
-	PrintFunc( func_name, arg_names, arg_types, is_extended, 0 )
-	PrintFunc( func_name, arg_names, arg_types, is_extended, 1 )
+	if func_name == 'Writeback':
+		pointers_ok = 1
+	PrintFunc( func_name, arg_names, arg_types, is_extended, 0, pointers_ok )
+	PrintFunc( func_name, arg_names, arg_types, is_extended, 1, pointers_ok )
