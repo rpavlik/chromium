@@ -44,17 +44,21 @@
 extern "C"
 {
 #endif
-	extern void *glXGetProcAddressARB(const GLubyte * name);
+   extern void *glXGetProcAddressARB(const GLubyte * name);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* GLX_ARB_get_proc_address */
 
 #define CCN_DEBUG
 #define MULTIPLE_VIEWPORTS
 
-static PFNGLSECONDARYCOLORPOINTEREXTPROC glSecondaryColorPointerEXTptr;
-static PFNGLSECONDARYCOLOR3FEXTPROC glSecondaryColor3fEXTptr;
+
+typedef void (APIENTRY * glSecondaryColor3fEXT_t) (GLfloat red, GLfloat green, GLfloat blue);
+typedef void (APIENTRY * glSecondaryColorPointerEXT_t) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+
+static glSecondaryColorPointerEXT_t glSecondaryColorPointerEXTptr;
+static glSecondaryColor3fEXT_t glSecondaryColor3fEXTptr;
 
 static GLuint currentWidth, currentHeight;
 static GLfloat bgColor[4] = { 0.1, 0.2, 0.4, 0.0 };
@@ -227,16 +231,16 @@ InitSpecial(void)
 {
 #ifdef WIN32
 	glSecondaryColorPointerEXTptr =
-		(PFNGLSECONDARYCOLORPOINTEREXTPROC)
+		(glSecondaryColorPointerEXT_t)
 		wglGetProcAddress("glSecondaryColorPointerEXT");
 	glSecondaryColor3fEXTptr =
-		(PFNGLSECONDARYCOLOR3FEXTPROC) wglGetProcAddress("glSecondaryColor3fEXT");
+		(glSecondaryColor3fEXT_t) wglGetProcAddress("glSecondaryColor3fEXT");
 #else
 	glSecondaryColorPointerEXTptr =
-		(PFNGLSECONDARYCOLORPOINTEREXTPROC)
+		(glSecondaryColorPointerEXT_t)
 		glXGetProcAddressARB((const GLubyte *) "glSecondaryColorPointerEXT");
 	glSecondaryColor3fEXTptr =
-		(PFNGLSECONDARYCOLOR3FEXTPROC) glXGetProcAddressARB((const GLubyte *)
+		(glSecondaryColor3fEXT_t) glXGetProcAddressARB((const GLubyte *)
 								    "glSecondaryColor3fEXT");
 #endif
 	if (!glSecondaryColor3fEXTptr || !glSecondaryColorPointerEXTptr)
