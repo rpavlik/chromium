@@ -202,7 +202,7 @@ for i in range(NUM_APP_NODES):
 		tilesortspu.Conf(name, value)
 	tilesortSPUs.append(tilesortspu)
 
-	appnode = CRApplicationNode()
+	appnode = CRApplicationNode(APP_NODES[i])
 	for (name, value) in APP_OPTIONS:
 		appnode.Conf(name, value)
 
@@ -894,6 +894,14 @@ class TilesortTemplate(templatebase.TemplateBase):
 				v = re.search(tuplePat + "$", l)
 				pattern = eval(l[v.start() : v.end()])
 				serverNode.SetHostNamePattern(pattern)
+			elif re.match("^APP_HOSTS = ", l):
+				v = re.search(listPat + "$", l)
+				hosts = eval(l[v.start() : v.end()])
+				clientNode.SetHosts(hosts)
+			elif re.match("^APP_PATTERN = ", l):
+				v = re.search(tuplePat + "$", l)
+				pattern = eval(l[v.start() : v.end()])
+				clientNode.SetHostNamePattern(pattern)
 			elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
 				v = re.search(integerPat, l)
 				numClients = int(l[v.start() : v.end()])
@@ -942,10 +950,18 @@ class TilesortTemplate(templatebase.TemplateBase):
 		file.write("BOTTOM_TO_TOP = %d\n" % template.BottomToTop)
 		file.write("SERVER_HOSTS = %s\n" % str(serverNode.GetHosts()))
 		file.write('SERVER_PATTERN = %s\n' % str(serverNode.GetHostNamePattern()))
+		file.write("APP_HOSTS = %s\n" % str(clientNode.GetHosts()))
+		file.write('APP_PATTERN = %s\n' % str(clientNode.GetHostNamePattern()))
 		file.write("NUM_APP_NODES = %d\n" % clientNode.GetCount())
 
 		# write tilesort SPU options
 		tilesortSPU = FindTilesortSPU(mothership)
+		fakeDims = tilesortSPU.GetOption('fake_window_dims')
+		if fakeDims[0] == 0 and fakeDims[1] == 0:
+			# set fake window dims to mural size
+			w = template.Columns * template.TileWidth
+			h = template.Rows * template.TileHeight
+			tilesortSPU.SetOption('fake_window_dims', [w, h])
 		tilesortSPU.GetOptions().Write(file, "TILESORT_OPTIONS")
 
 		# write render SPU options
