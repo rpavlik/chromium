@@ -15,17 +15,14 @@
 
 */
 
-#define GL_GLEXT_LEGACY /* for glActiveTextureARB etc */
-#define GL_GLEXT_PROTOTYPES
 
 #include "../common/logo.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <GL/glu.h>
 #include <GL/glut.h>
-#include <GL/glext.h>
+#include "chromium.h"
 
 /* #define CCN_DEBUG */
 #define DISPLAY_LISTS
@@ -61,22 +58,14 @@ static GLuint currentWidth, currentHeight;
 static GLuint textureID[numTextures];
 static GLfloat bgColor[4] = { 0.4, 0.7, 1.0, 0.0 };
 
-#ifdef WINDOWS
-PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
-PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-#endif
+/* NVIDIA's gl.h may not include glext.h or defined the PFNGL pointers,
+ * so we define our own with unique names.
+ */
+typedef void (APIENTRY * glActiveTextureARB_t)(GLenum texture);
+typedef void (APIENTRY * glMultiTexCoord2fARB_t) (GLenum target, GLfloat s, GLfloat t);
 
-#ifdef IRIX  /* IRIX work-around */
-void
-glActiveTextureARB(GLenum texture)
-{
-}
-
-void
-glMultiTexCoord2fARB(GLenum texture, GLfloat s, GLfloat t)
-{
-}
-#endif
+static glActiveTextureARB_t glActiveTextureARB_func;
+static glMultiTexCoord2fARB_t glMultiTexCoord2fARB_func;
 
 
 static void
@@ -88,7 +77,7 @@ Idle(void)
 
 
 static void
-Display(void)
+Redisplay(void)
 {
 	static double theta = 0.0;
 
@@ -229,7 +218,7 @@ InitGL(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glutIdleFunc(Idle);
-	glutDisplayFunc(Display);
+	glutDisplayFunc(Redisplay);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(NULL);
@@ -292,17 +281,16 @@ InitSpecial(void)
 		printf("ACTIVE_TETURE_ARB = 0x%x\n", currentActiveUnit);
 		break;
 	}
-#ifdef WIN32
-	glMultiTexCoord2fARB =
-		(PFNGLMULTITEXCOORD2FARBPROC) wglGetProcAddress("glMultiTexCoord2fARB");
-	glActiveTextureARB =
-		(PFNGLACTIVETEXTUREARBPROC) wglGetProcAddress("glActiveTextureARB");
-	if (!glMultiTexCoord2fARB || !glActiveTextureARB)
+
+	glMultiTexCoord2fARB_func =
+		(PFNGLMULTITEXCOORD2FARBPROC) GET_PROC("glMultiTexCoord2fARB");
+	glActiveTextureARB_func =
+		(PFNGLACTIVETEXTUREARBPROC) GET_PROC("glActiveTextureARB");
+	if (!glMultiTexCoord2fARB_func || !glActiveTextureARB_func)
 	{
 		printf("Error trying to link to extensions!\n");
 		exit(0);
 	}
-#endif
 	/* Gets of CURRENT_TEXTURE_COORDS return that of the active unit.
 	 * ActiveTextureARB( enum texture ) changes active unit for:
 	 *  - Seperate Texture Matrices
@@ -374,8 +362,8 @@ InitSpecial(void)
 		GLubyte *height;
 		GLfloat *normals, vec1[3], vec2[3];
 
-		height = malloc(heightmapX * heightmapY);
-		normals = malloc(heightmapX * heightmapY * 3);
+		height = (GLubyte *) malloc(heightmapX * heightmapY);
+		normals = (GLfloat *) calloc(heightmapX * heightmapY * 3, sizeof(GLfloat));
 
 		file = fopen("height.raw", "rb");
 		if (file == NULL)
@@ -392,7 +380,7 @@ InitSpecial(void)
 			for (x = 0; x < heightmapX; x++)
 			{
 				/* Sets all normals to 0,1,0 by default. */
-				normals[y * heightNormRow + x * 3 + 1] = 1;
+				normals[y * heightNormRow + x * 3 + 1] = 1.0F;
 			}
 		}
 		for (y = 1; y < heightmapY - 1; y++)
@@ -421,8 +409,6 @@ InitSpecial(void)
 				normals[y * heightNormRow + x * 3 + 2] = k * magInv;
 			}
 		}
-		free(normals);
-		free(height);
 
 #ifdef DISPLAY_LISTS
 		glNewList(eGrassList, GL_COMPILE);
@@ -497,16 +483,16 @@ InitSpecial(void)
 		/* Multitexturing */
 		glNewList(eMultiTexList, GL_COMPILE);
 
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glActiveTextureARB_func(GL_TEXTURE0_ARB);
 		glBindTexture(GL_TEXTURE_2D, textureID[eGrassTex]);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glActiveTextureARB_func(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, textureID[eSandTex]);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glActiveTextureARB_func(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -518,30 +504,33 @@ InitSpecial(void)
 			for (x = 0; x < heightmapX; x++)
 			{
 				glColor4f(shade, shade, shade, sandAlpha);
-				glMultiTexCoord2fARB(GL_TEXTURE0_ARB, x * texScale, y * texScale);
-				glMultiTexCoord2fARB(GL_TEXTURE1_ARB, x * texScale, y * texScale);
-/* 				glMultiTexCoord2fARB( GL_TEXTURE2_ARB, x*texScale, y*texScale ); */
+				glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, x * texScale, y * texScale);
+				glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, x * texScale, y * texScale);
+/* 				glMultiTexCoord2fARB_func( GL_TEXTURE2_ARB, x*texScale, y*texScale ); */
 				glVertex3f(size * (x - (heightmapX >> 1)),
 					   sizeV * height[y * heightmapX + x] + offsetV,
 					   size * (y - (heightmapY >> 1)));
 
 				glColor4f(shade, shade, shade, sandAlpha);
-				glMultiTexCoord2fARB(GL_TEXTURE0_ARB, x * texScale,
+				glMultiTexCoord2fARB_func(GL_TEXTURE0_ARB, x * texScale,
 						     (y + 1) * texScale);
-				glMultiTexCoord2fARB(GL_TEXTURE1_ARB, x * texScale,
+				glMultiTexCoord2fARB_func(GL_TEXTURE1_ARB, x * texScale,
 						     (y + 1) * texScale);
-/* 				glMultiTexCoord2fARB( GL_TEXTURE2_ARB, x*texScale, (y+1)*texScale ); */
+/* 				glMultiTexCoord2fARB_func( GL_TEXTURE2_ARB, x*texScale, (y+1)*texScale ); */
 				glVertex3f(size * (x - (heightmapX >> 1)),
 					   sizeV * height[(y + 1) * heightmapX + x] + offsetV,
 					   size * (y + 1 - (heightmapY >> 1)));
 			}
 			glEnd();
 		}
-		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glActiveTextureARB_func(GL_TEXTURE1_ARB);
 		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glActiveTextureARB_func(GL_TEXTURE0_ARB);
 		glEndList();
 #endif /* DISPLAY_LISTS */
+
+		free(normals);
+		free(height);
 	}
 
 	return;
