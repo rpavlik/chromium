@@ -162,7 +162,7 @@ def wrap_header(functionName):
 def wrap_compile_header(functionName):
 	(return_type, args, types) = gl_mapping[functionName]
 	argstring = stub_common.InternalArgumentString(args, types)
-	print 'void crdlm_compile_%s(%s);' % (functionName, argstring)
+	print 'void DLM_APIENTRY crdlm_compile_%s(%s);' % (functionName, argstring)
 
 
 def generate_bbox_code(functionName):
