@@ -41,7 +41,7 @@ crServerGatherConfiguration(char *mothership)
 	int num_spus;
 	int *spu_ids;
 	char **spu_names;
-	char *spu_dir;
+	char *spu_dir = NULL;
 	int i;
 	/* Quadrics defaults */
 	int my_rank = 0;
@@ -74,7 +74,7 @@ crServerGatherConfiguration(char *mothership)
 	spuchain = crStrSplit(response, " ");
 	num_spus = crStrToInt(spuchain[0]);
 	spu_ids = (int *) crAlloc(num_spus * sizeof(*spu_ids));
-	spu_names = (char **) crAlloc(num_spus * sizeof(*spu_names));
+	spu_names = (char **) crAlloc((num_spus + 1) * sizeof(*spu_names));
 	for (i = 0; i < num_spus; i++)
 	{
 		spu_ids[i] = crStrToInt(spuchain[2 * i + 1]);
@@ -82,14 +82,11 @@ crServerGatherConfiguration(char *mothership)
 		crDebug("SPU %d/%d: (%d) \"%s\"", i + 1, num_spus, spu_ids[i],
 						spu_names[i]);
 	}
+	spu_names[i] = NULL;
 
 	if (crMothershipGetServerParam( conn, response, "spu_dir" ) && crStrlen(response) > 0)
 	{
-		spu_dir = response;
-	}
-	else
-	{
-		spu_dir = NULL;
+		spu_dir = crStrdup(response);
 	}
 
 	if (crMothershipGetRank(conn, response))
@@ -127,8 +124,10 @@ crServerGatherConfiguration(char *mothership)
 																								 underlyingDisplay);
 
 	crFree(spu_ids);
-	crFree(spu_names);
-	crFree(spuchain);
+	crFreeStrings(spu_names);
+	crFreeStrings(spuchain);
+	if (spu_dir)
+		crFree(spu_dir);
 
 
 	if (crMothershipGetServerParam(conn, response, "port"))
@@ -199,6 +198,9 @@ crServerGatherConfiguration(char *mothership)
 																		 cr_server.tcpip_port, cr_server.mtu, 1);
 
 	}
+
+	crFreeStrings(clientchain);
+	crFreeStrings(clientlist);
 
 	/* Ask the mothership for the tile info */
 	crServerGetTileInfo(conn);
