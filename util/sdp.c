@@ -672,11 +672,114 @@ crSDPUserbufRecv(CRConnection *conn, CRMessage *msg)
 }
 
 
-int
-crSDPRecv( void )
+/**
+ * Receive the next message on the given connection.
+ * If we're being called by crSDPRecv(), we already know there's
+ * something to receive.
+ */
+static void
+crSDPReceiveMessage(CRConnection *conn)
 {
 	CRMessage *msg;
 	CRMessageType cached_type;
+	CRSDPBuffer *sdp_buffer;
+	unsigned int len, total, leftover;
+	const CRSocket sock = conn->sdp_socket;
+
+	/* this reads the length of the message */
+	if ( __sdp_read_exact( sock, &len, sizeof(len)) <= 0 )
+	{
+		__sdp_dead_connection( conn );
+		return;
+	}
+
+	if (conn->swap)
+		len = SWAP32(len);
+
+	CRASSERT( len > 0 );
+
+	if ( len <= conn->buffer_size )
+	{
+		sdp_buffer = (CRSDPBuffer *) crSDPAlloc( conn ) - 1;
+	}
+	else
+	{
+     crWarning("Sending as BIG, the performance is going to tank!!!.  You need larger buffers!!!");
+     sdp_buffer = (CRSDPBuffer *) crAlloc( sizeof(*sdp_buffer) + len );
+     sdp_buffer->magic = CR_SDP_BUFFER_MAGIC;
+     sdp_buffer->kind  = CRSDPMemoryBig;
+     sdp_buffer->pad   = 0;
+	}
+
+	sdp_buffer->len = len;
+
+	/* if we have set a userbuf, and there is room in it, we probably 
+	 * want to stick the message into that, instead of our allocated
+	 * buffer.  */
+	leftover = 0;
+	total = len;
+	if ((conn->userbuf != NULL) && (conn->userbuf_len >= (int) sizeof(CRMessageHeader)))
+	{
+		leftover = len - sizeof(CRMessageHeader);
+		total = sizeof(CRMessageHeader);
+	}
+	if ( __sdp_read_exact( sock, sdp_buffer + 1, total) <= 0 )
+	{
+		crWarning( "Bad juju: %d %d on sock %x", sdp_buffer->allocated, total, sock );
+		crFree( sdp_buffer );
+		__sdp_dead_connection( conn );
+		return;
+	}
+
+	conn->recv_credits -= total;
+	conn->total_bytes_recv +=  total;
+    
+	msg = (CRMessage *) (sdp_buffer + 1);
+	cached_type = msg->header.type;
+	if (conn->swap)
+	{
+		msg->header.type = (CRMessageType) SWAP32( msg->header.type );
+		msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
+	}
+    
+	/* if there is still data pending, it should go into the user buffer */
+	if (leftover)
+	{
+		unsigned int handled = crSDPUserbufRecv(conn, msg);
+      
+		/* if there is anything left, plop it into the recv_buffer */
+		if (leftover - handled)
+		{
+			if ( __sdp_read_exact( sock, sdp_buffer + 1 + total, leftover-handled) <= 0 )
+			{
+				crWarning( "Bad juju: %d %d", sdp_buffer->allocated, leftover-handled);
+				crFree( sdp_buffer );
+				__sdp_dead_connection( conn );
+				return;
+			}
+		}
+
+		conn->recv_credits -= handled;
+		conn->total_bytes_recv +=  handled;
+	}
+
+	crNetDispatchMessage( cr_sdp.recv_list, conn, msg, len );
+
+	/* CR_MESSAGE_OPCODES is freed in crserverlib/server_stream.c with crNetFree.
+	 * OOB messages are the programmer's problem.  -- Humper 12/17/01
+	 */
+	if (cached_type != CR_MESSAGE_OPCODES && cached_type != CR_MESSAGE_OOB
+			&&	cached_type != CR_MESSAGE_GATHER) 
+	{
+		crSDPFree( conn, sdp_buffer + 1 );
+	}
+}
+
+
+
+int
+crSDPRecv( void )
+{
 	int    num_ready, max_fd;
 	fd_set read_fds;
 	int i;
@@ -689,30 +792,32 @@ crSDPRecv( void )
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_sdp.recvmutex);
 #endif
-  
+
+	/*
+	 * First determine which connections are ready with data.
+	 */
 	max_fd = 0;
 	FD_ZERO( &read_fds );
 	for ( i = 0; i < num_conns; i++ )
 	{
     CRConnection *conn = cr_sdp.conns[i];
-    if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
-    
+    if ( !conn || conn->type == CR_NO_CONNECTION )
+			continue;
+
 #if CRAPPFAKER_SHOULD_DIE
     none_left = 0;
 #endif
-    
+
     if ( conn->recv_credits > 0 || conn->type != CR_SDP )
     {
-		  
 		  CRSocket sock = conn->sdp_socket;
-		  
 		  if ( (int) sock + 1 > max_fd ){
         max_fd = (int) sock + 1;
 		  }
 		  FD_SET( sock, &read_fds );	
     }
 	}
-	
+
 #if CRAPPFAKER_SHOULD_DIE
 	if (none_left) {
 		/*
@@ -727,14 +832,14 @@ crSDPRecv( void )
 		exit(0); /* shouldn't get here */
 	}
 #endif
-  
+
 	if (!max_fd) {
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_sdp.recvmutex);
 #endif
 		return 0;
 	}
-  
+
 	if ( num_conns )
 	{
 		num_ready = __crSDPSelect( max_fd, &read_fds, 0, 500 );
@@ -744,128 +849,33 @@ crSDPRecv( void )
 		crWarning( "Waiting for first connection..." );
 		num_ready = __crSDPSelect( max_fd, &read_fds, 0, 0 );
 	}
-  
+
 	if ( num_ready == 0 ) {
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_sdp.recvmutex);
 #endif
 		return 0;
 	}
-  
+
+	/*
+	 * Now do the actual socket reads.
+	 */
 	for ( i = 0; i < num_conns; i++ )
 	{
-		CRSDPBuffer *sdp_buffer;
-		unsigned int   len, total, handled, leftover;
-#ifdef RECV_BAIL_OUT
-		int inbuf;
-#endif
 		CRConnection  *conn = cr_sdp.conns[i];
 		CRSocket       sock;
-    
-		if ( !conn || conn->type == CR_NO_CONNECTION ) continue;
-    
+
+		if ( !conn || conn->type == CR_NO_CONNECTION )
+			continue;
+
 		sock = conn->sdp_socket;
-    
 		if ( !FD_ISSET( sock, &read_fds ) )
 			continue;
-    
-		/* this reads the length of the message */
-		if ( __sdp_read_exact( sock, &len, sizeof(len)) <= 0 )
-		{
-			__sdp_dead_connection( conn );
-			i--;
+
+		if (conn->threaded)
 			continue;
-		}
-    
-		if (conn->swap)
-		{
-			len = SWAP32(len);
-		}
-    
-		CRASSERT( len > 0 );
-    
-		if ( len <= conn->buffer_size )
-		{
-			sdp_buffer = (CRSDPBuffer *) crSDPAlloc( conn ) - 1;
-		}
-		else
-		{
-      crWarning("Sending as BIG, the performance is going to tank!!!.  You need larger buffers!!!");
-      sdp_buffer = (CRSDPBuffer *) 
-			  crAlloc( sizeof(*sdp_buffer) + len );
-      
-      sdp_buffer->magic = CR_SDP_BUFFER_MAGIC;
-      sdp_buffer->kind  = CRSDPMemoryBig;
-      sdp_buffer->pad   = 0;
-		}
-    
-		sdp_buffer->len = len;
-    
-		/* if we have set a userbuf, and there is room in it, we probably 
-		 * want to stick the message into that, instead of our allocated
-		 * buffer.  */
-		leftover = 0;
-		total = len;
-		if ((conn->userbuf != NULL) && (conn->userbuf_len >= (int) sizeof(CRMessageHeader)))
-		{
-			leftover = len - sizeof(CRMessageHeader);
-			total = sizeof(CRMessageHeader);
-		}
-		if ( __sdp_read_exact( sock, sdp_buffer + 1, total) <= 0 )
-		{
-			crWarning( "Bad juju: %d %d on sock %x", sdp_buffer->allocated, total, sock );
-			crFree( sdp_buffer );
-			__sdp_dead_connection( conn );
-			i--;
-			continue;
-		}
-		
-		conn->recv_credits -= total;
-		conn->total_bytes_recv +=  total;
-    
-		msg = (CRMessage *) (sdp_buffer + 1);
-		cached_type = msg->header.type;
-		if (conn->swap)
-		{
-			msg->header.type = (CRMessageType) SWAP32( msg->header.type );
-			msg->header.conn_id = (CRMessageType) SWAP32( msg->header.conn_id );
-		}
-    
-		/* if there is still data pending, it should go into the user buffer */
-		if (leftover)
-		{
-			handled = crSDPUserbufRecv(conn, msg);
-      
-			/* if there is anything left, plop it into the recv_buffer */
-			if (leftover-handled)
-			{
-				if ( __sdp_read_exact( sock, sdp_buffer + 1 + total, leftover-handled) <= 0 )
-				{
-					crWarning( "Bad juju: %d %d", sdp_buffer->allocated, leftover-handled);
-					crFree( sdp_buffer );
-					__sdp_dead_connection( conn );
-					i--;
-					continue;
-				}
-			}
-			
-			conn->recv_credits -= handled;
-			conn->total_bytes_recv +=  handled;
-		}
-    
-		crNetDispatchMessage( cr_sdp.recv_list, conn, msg, len );
-    
-    
-		/* CR_MESSAGE_OPCODES is freed in
-		 * crserverlib/server_stream.c 
-		 *
-		 * OOB messages are the programmer's problem.  -- Humper 12/17/01 */
-		if (cached_type != CR_MESSAGE_OPCODES && cached_type != CR_MESSAGE_OOB
-		    &&	cached_type != CR_MESSAGE_GATHER) 
-		{
-			crSDPFree( conn, sdp_buffer + 1 );
-		}
-		
+
+		crSDPReceiveMessage(conn);
 	}
   
 #ifdef CHROMIUM_THREADSAFE
@@ -1067,6 +1077,7 @@ crSDPConnection( CRConnection *conn )
 	conn->Send  = crSDPSend;
 	conn->SendExact  = crSDPWriteExact;
 	conn->Recv  = crSDPSingleRecv;
+	conn->RecvMsg = crSDPReceiveMessage;
 	conn->Free  = crSDPFree;
 	conn->Accept = crSDPAccept;
 	conn->Connect = crSDPDoConnect;
