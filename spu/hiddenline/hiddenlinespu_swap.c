@@ -26,7 +26,7 @@ static void hiddenPlayback( SPUDispatchTable *table )
 
 void HIDDENLINESPU_APIENTRY hlHandleEnable( GLenum cap )
 {
-	if (cap != GL_TEXTURE_2D && cap != GL_BLEND && cap != GL_LIGHTING)
+	if( cap != GL_TEXTURE_2D && cap != GL_BLEND && cap != GL_LIGHTING )
 	{
 		hiddenline_spu.child.Enable( cap );
 	}
@@ -108,6 +108,8 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 		hiddenline_spu.super.Disable( GL_LIGHTING );
 		hiddenline_spu.super.Disable( GL_BLEND );
 		hiddenline_spu.super.Enable( GL_DEPTH_TEST );
+		hiddenline_spu.super.Enable( GL_FOG );
+/* 		hiddenline_spu.super.Enable( GL_CULL_FACE ); */
 		hiddenline_spu.super.Enable( GL_POLYGON_OFFSET_FILL );
 		hiddenline_spu.super.LineWidth( hiddenline_spu.line_width );
 
@@ -115,9 +117,17 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 		 * offsets.  Note that this means we need to ignore calls to glColor,
 		 * disable texturing, disable lighting, things like that. */
 
-		hiddenline_spu.super.PolygonOffset( +1.5f, 0.000001f );
+		hiddenline_spu.super.PolygonOffset( -2.5f, 0.000001f );
 		hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-		hiddenline_spu.super.Color3f( hiddenline_spu.poly_r, hiddenline_spu.poly_g, hiddenline_spu.poly_b );
+		hiddenline_spu.super.CullFace( GL_FRONT );
+		hiddenline_spu.super.Fogi( GL_FOG_MODE, GL_LINEAR );
+		hiddenline_spu.super.Fogf( GL_FOG_START, 1.0 );
+		hiddenline_spu.super.Fogf( GL_FOG_END, 1800.0 );
+		hiddenline_spu.super.Fogfv( GL_FOG_COLOR, &hiddenline_spu.line_r );
+/* 		hiddenline_spu.super.Color3f( 0.0f, 0.0f, 1.0f ); */
+/* 		hiddenline_spu.super.Color3f( hiddenline_spu.poly_r, 0.6f, hiddenline_spu.poly_b ); */
+/* 		hiddenline_spu.super.Color3f( hiddenline_spu.poly_r, hiddenline_spu.poly_g, hiddenline_spu.poly_b ); */
+		hiddenline_spu.super.Color3f( 1.0f, 1.0f, 1.0f );
 
 		/* Now, Play it back just to the depth buffer */
 		hiddenPlayback( &(hacked_child_dispatch) );
@@ -127,6 +137,7 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 		 * run its course. */
 
 		hiddenline_spu.super.PolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		hiddenline_spu.super.CullFace( GL_BACK );
 		hiddenline_spu.super.Color3f( hiddenline_spu.line_r, hiddenline_spu.line_g, hiddenline_spu.line_b );
 		hiddenPlayback( &(hacked_child_dispatch) );
 		hiddenline_spu.super.PopAttrib();
