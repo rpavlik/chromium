@@ -55,8 +55,6 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	crMemZero( &tilesort_spu, sizeof(TileSortSPU) );
 
 #ifdef CHROMIUM_THREADSAFE
-	
-fprintf(stderr,"tilesortSPUInit call crSetTSD\n");
 	crSetTSD(&_ThreadTSD, thread0);
 	crInitMutex(&_TileSortMutex);
 #endif
