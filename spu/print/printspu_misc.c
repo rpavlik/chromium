@@ -39,11 +39,11 @@ void PRINT_APIENTRY printChromiumParametervCR(GLenum target, GLenum type, GLsize
 				break ;
 			case GL_BYTE:
 				for (i=0; i<count; i++)
-					fprintf( print_spu.fp, "%hhd ", ((char*)values)[i] ) ;
+					fprintf( print_spu.fp, "%d ", (int)((char*)values)[i] ) ;
 				break ;
 			case GL_UNSIGNED_BYTE:
 				for (i=0; i<count; i++)
-					fprintf( print_spu.fp, "%hhu ", ((unsigned char*)values)[i] ) ;
+					fprintf( print_spu.fp, "%u ", (unsigned int)((unsigned char*)values)[i] ) ;
 				break ;
 			case GL_FLOAT:
 				for (i=0; i<count; i++)

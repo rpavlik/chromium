@@ -46,7 +46,7 @@ static void set_log_file( void *foo, const char *response )
       perf_spu.log_file = stdout;
    }
    else {
-      crStrncpy( filename, response, crStrlen( filename ));
+      crStrncpy( filename, response, sizeof(filename));
 
       /* break up the string with our specialized tokens.
        *
@@ -76,8 +76,8 @@ static void set_log_file( void *foo, const char *response )
    	crStrcpy(filename, ffilename);
       }
 
-      perf_spu.log_filename = (char *) crAlloc( crStrlen(ffilename) + 1 );
-      crStrcpy(perf_spu.log_filename, ffilename);
+      perf_spu.log_filename = (char *) crAlloc( crStrlen(filename) + 1 );
+      crStrcpy(perf_spu.log_filename, filename);
    }
 }
 
