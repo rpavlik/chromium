@@ -189,7 +189,7 @@ def generate_bbox_code(functionName):
 		# find names of the X, Y, Z, W values
 		xName = ""
 		yName = ""
-		zName = ""
+		zName = "0.0"
 		wName = ""
 		if vector == "v":
 			xName = "v[0]"
