@@ -668,7 +668,7 @@ class CR:
 		self.allSPUConf = []
 		self.daughters = []
 		self.conn_id = 1
-		self.enable_autostart = True
+		self.enable_autostart = 1
 		self.config = {"MTU" : 1024 * 1024,
 			       "low_context" : 32,
 			       "high_context" : 35,
@@ -1449,6 +1449,11 @@ class CR:
 			node.spokenfor = 0
 			node.spusloaded = 0
 			node.crut_spokenfor = 0
+		# respawn auto-start nodes
+		for cb in CR.startupCallbacks:
+			cb(self)
+		spawner = CRSpawner( self.nodes )
+		spawner.start()
 		sock.Success( "Server Reset" );
 
 	def do_rank( self, sock, args ):
@@ -1669,7 +1674,7 @@ class CRDaughtership:
 				Fatal("Mothership returned empty reply?")
 			if words[0] == "200":
 				# Done
-				done = True
+				done = 1
 			elif words[0] == "100":
 				# More coming
 				pickledGlobals = pickledGlobals + words[1] + "\n"
