@@ -49,7 +49,6 @@ void crFree( void *ptr )
 {
 	if (ptr)
 		free(ptr);
-	ptr = NULL;
 }
 
 void crMemcpy( void *dst, const void *src, unsigned int bytes )

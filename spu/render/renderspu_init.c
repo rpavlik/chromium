@@ -210,8 +210,11 @@ static void DeleteWindowCallback( void *data )
 static int renderSPUCleanup(void)
 {
 	crFreeHashtable(render_spu.contextTable, DeleteContextCallback);
+	render_spu.contextTable = NULL;
 	crFreeHashtable(render_spu.windowTable, DeleteWindowCallback);
+	render_spu.windowTable = NULL;
 	crFreeHashtable(render_spu.barrierHash, crFree);
+	render_spu.barrierHash = NULL;
 	return 1;
 }
 

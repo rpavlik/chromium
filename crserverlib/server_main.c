@@ -46,18 +46,25 @@ static void crServerTearDown( void )
 	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
 		if (cr_server.context[i] != NULL) {
 			crStateDestroyContext( cr_server.context[i] );
+			cr_server.context[i] = NULL;
 		}
 	}
 
 	cr_server.curClient = NULL;
+
 	crFree( cr_server.clients );
+	cr_server.clients = NULL;
+
 	crFree( cr_server.overlap_intens );
+	cr_server.overlap_intens = NULL;
 
 	/* Deallocate all semaphores */
 	crFreeHashtable(cr_server.semaphores, crFree);
+	cr_server.semaphores = NULL;
  
 	/* Deallocate all barriers */
 	crFreeHashtable(cr_server.barriers, DeleteBarrierCallback);
+	cr_server.barriers = NULL;
 
 	while (1) {
 		if (the_spu && the_spu->cleanup) {
