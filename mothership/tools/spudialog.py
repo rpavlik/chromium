@@ -61,7 +61,7 @@ class SPUDialog(wxDialog):
 						else:
 							maxValue = 1000000
 						ctrl = wxSpinCtrl(parent=self, id=100+i,
-										  size=wxSize(60,25),
+										  size=wxSize(70,25),
 										  value=str(default[j]),
 										  min=minValue, max=maxValue)
 						rowSizer.Add(ctrl)
@@ -75,7 +75,7 @@ class SPUDialog(wxDialog):
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
 					for j in range(0, count):
 						ctrl = wxTextCtrl(parent=self, id=100+i,
-										  size=wxSize(60,25),
+										  size=wxSize(70,25),
 										  value=str(default[j]))
 						rowSizer.Add(ctrl)
 						controls.append(ctrl)
