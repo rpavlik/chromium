@@ -299,3 +299,24 @@ void crUnpackExtendAreTexturesResident( void )
 	SET_WRITEBACK_PTR(20 + n * sizeof(GLuint));
 	(void) cr_unpackDispatch.AreTexturesResident( n, textures, NULL );
 }
+
+void crUnpackExtendCompressedTexImage2DARB( void )
+{
+	GLenum target =         READ_DATA( 4 + sizeof( int ) + 0, GLenum );
+	GLint level =           READ_DATA( 4 + sizeof( int ) + 4, GLenum );
+	GLenum internalformat = READ_DATA( 4 + sizeof( int ) + 8, GLenum );
+	GLsizei width =         READ_DATA( 4 + sizeof( int ) + 12, GLenum );
+	GLsizei height =        READ_DATA( 4 + sizeof( int ) + 16, GLenum );
+	GLint border =          READ_DATA( 4 + sizeof( int ) + 20, GLenum );
+	GLsizei imagesize =     READ_DATA( 4 + sizeof( int ) + 24, GLenum );
+	int is_null =           READ_DATA( 4 + sizeof( int ) + 28, int );
+        GLvoid *pixels;
+
+        if ( is_null )
+                pixels = NULL;
+        else
+                pixels = DATA_POINTER( 4 + sizeof( int ) + 32, GLvoid );
+
+        cr_unpackDispatch.CompressedTexImage2DARB( target, level, internalformat, width, height, 
+                                      border, imagesize, pixels );
+}

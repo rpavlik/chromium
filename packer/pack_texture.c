@@ -659,7 +659,6 @@ void PACK_APIENTRY crPackCompressedTexImage1DARB( GLenum target, GLint level, GL
 	 * indicate the actual extended opcode.
 	 */
 	packet_length = 
-		sizeof( int ) + /* packet size */
 		sizeof( GLenum) + /* extended opcode */
 		sizeof( target ) +
 		sizeof( level ) +
@@ -674,19 +673,19 @@ void PACK_APIENTRY crPackCompressedTexImage1DARB( GLenum target, GLint level, GL
 		packet_length += imagesize;
 	}
 
+
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( 4, GLenum, CR_COMPRESSEDTEXIMAGE1DARB_EXTEND_OPCODE );
-	WRITE_DATA( 8, GLenum, target );
-	WRITE_DATA( 12, GLint, level );
-	WRITE_DATA( 16, GLint, internalformat );
-	WRITE_DATA( 20, GLsizei, width );
-	WRITE_DATA( 24, GLint, border );
-	WRITE_DATA( 28, GLsizei, imagesize );
-	WRITE_DATA( 32, int, isnull );
+	WRITE_DATA( 0, GLenum, CR_COMPRESSEDTEXIMAGE1DARB_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, target );
+	WRITE_DATA( 8, GLint, level );
+	WRITE_DATA( 12, GLint, internalformat );
+	WRITE_DATA( 16, GLsizei, width );
+	WRITE_DATA( 20, GLint, border );
+	WRITE_DATA( 24, GLsizei, imagesize );
+	WRITE_DATA( 28, int, isnull );
 
 	if (data) {
-		crMemcpy( (void *)(data_ptr + 36), (void *)data, imagesize);
+		crMemcpy( (void *)(data_ptr + 32), (void *)data, imagesize);
 	}
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
@@ -704,7 +703,6 @@ void PACK_APIENTRY crPackCompressedTexImage2DARB( GLenum target, GLint level, GL
 	 * indicate the actual extended opcode.
 	 */
 	packet_length = 
-		sizeof( int ) + /* packet size */
 		sizeof( GLenum) + /* extended opcode */
 		sizeof( target ) +
 		sizeof( level ) +
@@ -720,20 +718,21 @@ void PACK_APIENTRY crPackCompressedTexImage2DARB( GLenum target, GLint level, GL
 		packet_length += imagesize;
 	}
 
+	//crDebug( "Compressing that shit: %d", level );
+
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( 4, GLenum, CR_COMPRESSEDTEXIMAGE2DARB_EXTEND_OPCODE );
-	WRITE_DATA( 8, GLenum, target );
-	WRITE_DATA( 12, GLint, level );
-	WRITE_DATA( 16, GLint, internalformat );
-	WRITE_DATA( 20, GLsizei, width );
-	WRITE_DATA( 24, GLsizei, height );
-	WRITE_DATA( 28, GLint, border );
-	WRITE_DATA( 32, GLsizei, imagesize );
-	WRITE_DATA( 36, int, isnull );
+	WRITE_DATA( 0, GLenum, CR_COMPRESSEDTEXIMAGE2DARB_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, target );
+	WRITE_DATA( 8, GLint, level );
+	WRITE_DATA( 12, GLint, internalformat );
+	WRITE_DATA( 16, GLsizei, width );
+	WRITE_DATA( 20, GLsizei, height );
+	WRITE_DATA( 24, GLint, border );
+	WRITE_DATA( 28, GLsizei, imagesize );
+	WRITE_DATA( 32, int, isnull );
 
 	if (data) {
-		crMemcpy( (void *)(data_ptr + 40), (void *)data, imagesize);
+		crMemcpy( (void *)(data_ptr + 36), (void *)data, imagesize);
 	}
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
@@ -751,7 +750,6 @@ void PACK_APIENTRY crPackCompressedTexImage3DARB( GLenum target, GLint level, GL
 	 * indicate the actual extended opcode.
 	 */
 	packet_length = 
-		sizeof( int ) + /* packet size */
 		sizeof( GLenum) + /* extended opcode */
 		sizeof( target ) +
 		sizeof( level ) +
@@ -769,20 +767,19 @@ void PACK_APIENTRY crPackCompressedTexImage3DARB( GLenum target, GLint level, GL
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( 4, GLenum, CR_COMPRESSEDTEXIMAGE3DARB_EXTEND_OPCODE );
-	WRITE_DATA( 8, GLenum, target );
-	WRITE_DATA( 12, GLint, level );
-	WRITE_DATA( 16, GLint, internalformat );
-	WRITE_DATA( 20, GLsizei, width );
-	WRITE_DATA( 24, GLsizei, height );
-	WRITE_DATA( 28, GLsizei, depth );
-	WRITE_DATA( 32, GLint, border );
-	WRITE_DATA( 36, GLsizei, imagesize );
-	WRITE_DATA( 40, int, isnull );
+	WRITE_DATA( 0, GLenum, CR_COMPRESSEDTEXIMAGE3DARB_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, target );
+	WRITE_DATA( 8, GLint, level );
+	WRITE_DATA( 12, GLint, internalformat );
+	WRITE_DATA( 16, GLsizei, width );
+	WRITE_DATA( 20, GLsizei, height );
+	WRITE_DATA( 24, GLsizei, depth );
+	WRITE_DATA( 28, GLint, border );
+	WRITE_DATA( 32, GLsizei, imagesize );
+	WRITE_DATA( 36, int, isnull );
 
 	if (data) {
-		crMemcpy( (void *)(data_ptr + 44), (void *)data, imagesize);
+		crMemcpy( (void *)(data_ptr + 40), (void *)data, imagesize);
 	}
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
@@ -800,7 +797,6 @@ void PACK_APIENTRY crPackCompressedTexSubImage1DARB( GLenum target, GLint level,
 	 * indicate the actual extended opcode.
 	 */
 	packet_length = 
-		sizeof( int ) + /* packet size */
 		sizeof( GLenum) + /* extended opcode */
 		sizeof( target ) +
 		sizeof( level ) +
@@ -816,18 +812,17 @@ void PACK_APIENTRY crPackCompressedTexSubImage1DARB( GLenum target, GLint level,
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( 4, GLenum, CR_COMPRESSEDTEXSUBIMAGE1DARB_EXTEND_OPCODE );
-	WRITE_DATA( 8, GLenum, target );
-	WRITE_DATA( 12, GLint, level );
-	WRITE_DATA( 16, GLint, xoffset );
-	WRITE_DATA( 20, GLsizei, width );
-	WRITE_DATA( 24, GLenum, format );
-	WRITE_DATA( 28, GLsizei, imagesize );
-	WRITE_DATA( 32, int, isnull );
+	WRITE_DATA( 0, GLenum, CR_COMPRESSEDTEXSUBIMAGE1DARB_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, target );
+	WRITE_DATA( 8, GLint, level );
+	WRITE_DATA( 12, GLint, xoffset );
+	WRITE_DATA( 16, GLsizei, width );
+	WRITE_DATA( 20, GLenum, format );
+	WRITE_DATA( 24, GLsizei, imagesize );
+	WRITE_DATA( 28, int, isnull );
 
 	if (data) {
-		crMemcpy( (void *)(data_ptr + 36), (void *)data, imagesize);
+		crMemcpy( (void *)(data_ptr + 32), (void *)data, imagesize);
 	}
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
@@ -845,7 +840,6 @@ void PACK_APIENTRY crPackCompressedTexSubImage2DARB( GLenum target, GLint level,
 	 * indicate the actual extended opcode.
 	 */
 	packet_length = 
-		sizeof( int ) + /* packet size */
 		sizeof( GLenum) + /* extended opcode */
 		sizeof( target ) +
 		sizeof( level ) +
@@ -863,20 +857,19 @@ void PACK_APIENTRY crPackCompressedTexSubImage2DARB( GLenum target, GLint level,
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( 4, GLenum, CR_COMPRESSEDTEXSUBIMAGE2DARB_EXTEND_OPCODE );
-	WRITE_DATA( 8, GLenum, target );
-	WRITE_DATA( 12, GLint, level );
-	WRITE_DATA( 16, GLint, xoffset );
-	WRITE_DATA( 20, GLint, yoffset );
-	WRITE_DATA( 24, GLsizei, width );
-	WRITE_DATA( 28, GLsizei, height );
-	WRITE_DATA( 32, GLenum, format );
-	WRITE_DATA( 36, GLsizei, imagesize );
-	WRITE_DATA( 40, int, isnull );
+	WRITE_DATA( 0, GLenum, CR_COMPRESSEDTEXSUBIMAGE2DARB_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, target );
+	WRITE_DATA( 8, GLint, level );
+	WRITE_DATA( 12, GLint, xoffset );
+	WRITE_DATA( 16, GLint, yoffset );
+	WRITE_DATA( 20, GLsizei, width );
+	WRITE_DATA( 24, GLsizei, height );
+	WRITE_DATA( 28, GLenum, format );
+	WRITE_DATA( 32, GLsizei, imagesize );
+	WRITE_DATA( 36, int, isnull );
 
 	if (data) {
-		crMemcpy( (void *)(data_ptr + 44), (void *)data, imagesize);
+		crMemcpy( (void *)(data_ptr + 40), (void *)data, imagesize);
 	}
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
@@ -894,7 +887,6 @@ void PACK_APIENTRY crPackCompressedTexSubImage3DARB( GLenum target, GLint level,
 	 * indicate the actual extended opcode.
 	 */
 	packet_length = 
-		sizeof( int ) + /* packet size */
 		sizeof( GLenum) + /* extended opcode */
 		sizeof( target ) +
 		sizeof( level ) +
@@ -914,22 +906,21 @@ void PACK_APIENTRY crPackCompressedTexSubImage3DARB( GLenum target, GLint level,
 	}
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( 4, GLenum, CR_COMPRESSEDTEXSUBIMAGE3DARB_EXTEND_OPCODE );
-	WRITE_DATA( 8, GLenum, target );
-	WRITE_DATA( 12, GLint, level );
-	WRITE_DATA( 16, GLint, xoffset );
-	WRITE_DATA( 20, GLint, yoffset );
-	WRITE_DATA( 24, GLint, zoffset );
-	WRITE_DATA( 28, GLsizei, width );
-	WRITE_DATA( 32, GLsizei, height );
-	WRITE_DATA( 36, GLsizei, depth );
-	WRITE_DATA( 40, GLenum, format );
-	WRITE_DATA( 44, GLsizei, imagesize );
-	WRITE_DATA( 48, int, isnull );
+	WRITE_DATA( 0, GLenum, CR_COMPRESSEDTEXSUBIMAGE3DARB_EXTEND_OPCODE );
+	WRITE_DATA( 4, GLenum, target );
+	WRITE_DATA( 8, GLint, level );
+	WRITE_DATA( 12, GLint, xoffset );
+	WRITE_DATA( 16, GLint, yoffset );
+	WRITE_DATA( 20, GLint, zoffset );
+	WRITE_DATA( 24, GLsizei, width );
+	WRITE_DATA( 28, GLsizei, height );
+	WRITE_DATA( 32, GLsizei, depth );
+	WRITE_DATA( 36, GLenum, format );
+	WRITE_DATA( 40, GLsizei, imagesize );
+	WRITE_DATA( 44, int, isnull );
 
 	if (data) {
-		crMemcpy( (void *)(data_ptr + 52), (void *)data, imagesize);
+		crMemcpy( (void *)(data_ptr + 48), (void *)data, imagesize);
 	}
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
