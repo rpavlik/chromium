@@ -1466,7 +1466,12 @@ class CR:
 			# The formatURL string may include a reference to the resolved hostname.
 			# Replace it if it does.
 			host = node.host
-			if node.dynamic_host: host = dynamicHosts[host]
+			if node.dynamic_host: 
+				if dynamicHosts.has_key(host):
+					host = dynamicHosts[host]
+				else:
+					sock.Failure( SockWrapper.UNKNOWNSERVER, "Server for dynamic host '%s' must be started before the appfaker" % (host) )
+					return
 			url = formatURL % {'host': host}
 			servers += "%s" % (url)
 			if i != len(spu.servers) -1:
