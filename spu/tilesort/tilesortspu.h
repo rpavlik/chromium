@@ -129,7 +129,7 @@ void tilesortspuDebugOpcodes( CRPackBuffer *pack );
 
 void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values);
 void TILESORTSPU_APIENTRY tilesortspu_Begin(GLenum prim);
-void TILESORTSPU_APIENTRY tilesortspu_End();
+void TILESORTSPU_APIENTRY tilesortspu_End(void);
 
 void tilesortspuSendServerBuffer( TileSortSPUServer *server );
 
