@@ -20,6 +20,28 @@ stub_common.CopyrightC()
 print """#include <stdio.h>
 #include "cr_spu.h"
 #include "cr_glstate.h"
+#include "state/cr_stateerror.h"
+
+void simplequeryChromiumParameteriCR( GLenum target, GLint value )
+{
+	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
+}
+
+void simplequeryChromiumParameterfCR( GLenum target, GLfloat value )
+{
+	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
+}
+
+void simplequeryChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
+{
+	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
+}
+
+void simplequeryGetChromiumParametervCR( GLenum target, GLenum type, GLsizei count, const GLvoid *values )
+{
+	crStateError(__LINE__,__FILE__,GL_INVALID_ENUM,"This is not a simple query");
+}
+
 """
 
 keys = gl_mapping.keys()
@@ -30,5 +52,9 @@ for index in range(len(keys)):
 	func_name = keys[index]
 	if stub_common.FindSpecial( "simplequery", func_name ):
 		print '\t{ "%s", (SPUGenericFunction) crState%s },' % (func_name, func_name )
-print '\t{ NULL, NULL }'
-print '};'
+print """	{ "ChromiumParameteriCR", (SPUGenericFunction) simplequeryChromiumParameteriCR },
+	{ "ChromiumParameterfCR", (SPUGenericFunction) simplequeryChromiumParameterfCR },
+	{ "ChromiumParametervCR", (SPUGenericFunction) simplequeryChromiumParametervCR },
+	{ "GetChromiumParametervCR", (SPUGenericFunction) simplequeryGetChromiumParametervCR },
+	{ NULL, NULL }
+};"""
