@@ -62,9 +62,9 @@ def CRDebug( str ):
 def CROutput( str ):
 	"""CROutput(str)
 	Prints message to logfile."""
-	file = os.environ.get("CR_PERF_MOTHERSHIP_LOGFILE")
-	if file:
-		f = open(file, "a")
+	filename = os.environ.get("CR_PERF_MOTHERSHIP_LOGFILE")
+	if filename:
+		f = open(filename, "a")
 		if f:
 			f.write("%s\n" % str )
 			f.close()
@@ -795,21 +795,7 @@ class CR:
 	
 	def Conf( self, key, value ):
 		"""Set a global mothership configuration value (via Python)"""
-		appOptions = ["minimum_window_size",
-					  "match_window_title",
-					  "track_window_size",
-					  "show_cursor"]
-		try:
-			i = appOptions.index(key)
-		except:
-			# this is a mothership option
-			self.config[key] = value
-		else:
-			# this is an app node option (backward compatibility hack)
-			print "NOTICE: %s is an obsolete mothership option; it's now an app node option" % key
-			for node in self.nodes:
-				if isinstance(node, CRApplicationNode):
-					node.Conf(key, value)
+		self.config[key] = value
 
 	def ContextRange( self, low_context, high_context ):
 		"""ContextRange( low_context, high_context )
@@ -1310,10 +1296,10 @@ class CR:
 		for client_sock in self.wrappers.values():
 			if client_sock.tcscomm_connect_wait != []:
 				(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.tcscomm_connect_wait[0]
-				if SameHost(remote_hostname, hostname) and remote_rank == rank:
+				if SameHost(server_hostname, hostname) and server_rank == rank:
 					client_sock.tcscomm_connect_wait.pop(0)
 					sock.Success( "%d %s %d %d" % (self.conn_id, client_hostname, client_rank, client_endianness) )
-					client_sock.Success("%d %d" % (self.conn_id, my_endianness))
+					client_sock.Success("%d %d" % (self.conn_id, endianness))
 					self.conn_id += 1
 					return
 		sock.tcscomm_accept_wait.append( (hostname, rank, endianness) )
@@ -2081,7 +2067,7 @@ class CRDaughtership:
 		else:
 			colon = string.find(mother, ':')
 			if colon >= 0:
-				motherHost = mother[0:loc-1]
+				motherHost = mother[0:colon-1]
 				try:
 					motherPort = int(mother[colon+1:])
 				except:
@@ -2114,7 +2100,7 @@ class CRDaughtership:
 			try:
 				motherSocket.connect( sa )
 			except:
-				s.close()
+				sa.close()
 				CRDebug( "Couldn't connect to mothership at %s:%d" % (motherHost, motherPort))
 				motherSocket = None
 				continue
