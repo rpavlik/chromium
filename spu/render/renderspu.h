@@ -140,6 +140,7 @@ typedef struct {
 	int ignore_papi;
 	int ignore_window_moves;
 	int pbufferWidth, pbufferHeight;
+	int use_glxchoosevisual;
 	/*@}*/
 
 	CRServer *server;

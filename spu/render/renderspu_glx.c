@@ -245,277 +245,6 @@ Attrib( const VisualInfo *visual, int attrib )
 
 
 /**
- * This is basically just a homegrown replacement for glXChooseVisual.
- * It seems that glXChooseVisual() is kind of flakey with ATI's driver.
- * Specifically, calling glXChooseVisual when the render SPU is hosted
- * by a CR Application node doesn't work reliably.  It _might_ be a
- * problem with older XFree86 libGL.so libraries which weren't built
- * with the -Bsymbolic flag.  But that wouldn't explain why calls to
- * glXGetConfig() seem OK!  Hmmm.
- */
-static XVisualInfo *
-myChooseVisual(Display *dpy, int screen, const int attribs[])
-{
-	int rgba = 0, doubleBuffer = 0, stereo = 0;
-	int redSize = 0, greenSize = 0, blueSize = 0, alphaSize = 0;
-	int accRedSize = 0, accGreenSize = 0, accBlueSize = 0, accAlphaSize = 0;
-	int depthSize = 0, stencilSize = 0, bufferSize = 0, level = 0, aux = 0;
-	int multisample = 0, samples = 0;
-	int i;
-	XVisualInfo templateVis, *vis;
-	long templateFlags;
-	int count;
-
-	for (i = 0; attribs[i]; i++) {
-		switch (attribs[i]) {
-		case GLX_USE_GL:
-			/* ignored */
-			break;
-		case GLX_BUFFER_SIZE:
-			i++;
-			bufferSize = attribs[i];
-			break;
-		case GLX_LEVEL:
-			i++;
-			level = attribs[i];
-			break;
-		case GLX_AUX_BUFFERS:
-			i++;
-			aux = attribs[i];
-			break;
-		case GLX_SAMPLE_BUFFERS_SGIS:
-			i++;
-			multisample = attribs[i];
-			break;
-		case GLX_SAMPLES_SGIS:
-			i++;
-			samples = attribs[i];
-			break;
-		case GLX_RGBA:
-			rgba = 1;
-			break;
-		case GLX_DOUBLEBUFFER:
-			doubleBuffer = 1;
-			break;
-		case GLX_STEREO:
-			stereo = 1;
-			break;
-		case GLX_RED_SIZE:
-			i++;
-			redSize = attribs[i];
-			break;
-		case GLX_GREEN_SIZE:
-			i++;
-			greenSize = attribs[i];
-			break;
-		case GLX_BLUE_SIZE:
-			i++;
-			blueSize = attribs[i];
-			break;
-		case GLX_ALPHA_SIZE:
-			i++;
-			alphaSize = attribs[i];
-			break;
-		case GLX_DEPTH_SIZE:
-			i++;
-			depthSize = attribs[i];
-			break;
-		case GLX_STENCIL_SIZE:
-			i++;
-			stencilSize = attribs[i];
-			break;
-		case GLX_ACCUM_RED_SIZE:
-			i++;
-			accRedSize = attribs[i];
-			break;
-		case GLX_ACCUM_GREEN_SIZE:
-			i++;
-			accGreenSize = attribs[i];
-			break;
-		case GLX_ACCUM_BLUE_SIZE:
-			i++;
-			accBlueSize = attribs[i];
-			break;
-		case GLX_ACCUM_ALPHA_SIZE:
-			i++;
-			accAlphaSize = attribs[i];
-			break;
-		default:
-			crError("Unexpected case 0x%x!", attribs[i]);
-		}
-	}
-
-	templateFlags = VisualScreenMask;
-	templateVis.screen = screen;
-	if (rgba) {
-#if defined(__cplusplus) || defined(c_plusplus)
-		templateVis.c_class = TrueColor;
-#else
-		templateVis.class = TrueColor;
-#endif
-		templateFlags |= VisualClassMask;
-	}
-
-	vis = XGetVisualInfo(dpy, templateFlags, &templateVis, &count);
-	/* find first visual that's good enough */
-	for (i = 0; i < count; i++) {
-		int a;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_RGBA, &a);
-		if (a != rgba)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_DOUBLEBUFFER, &a);
-		if (a != doubleBuffer)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_STEREO, &a);
-		if (a != stereo)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_LEVEL, &a);
-		if (a != level)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_RED_SIZE, &a);
-		if (a < redSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_GREEN_SIZE, &a);
-		if (a < greenSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_BLUE_SIZE, &a);
-		if (a < blueSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ALPHA_SIZE, &a);
-		if (a < alphaSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_DEPTH_SIZE, &a);
-		if (a < depthSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_STENCIL_SIZE, &a);
-		if (a < stencilSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ACCUM_RED_SIZE, &a);
-		if (a < accRedSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ACCUM_GREEN_SIZE, &a);
-		if (a < accGreenSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ACCUM_BLUE_SIZE, &a);
-		if (a < accBlueSize)
-			continue;
-		render_spu.ws.glXGetConfig(dpy, vis + i, GLX_ACCUM_ALPHA_SIZE, &a);
-		if (a < accAlphaSize)
-			continue;
- 
-		/* OK! */
-		return vis + i;
-	}
-
-	/* no match */
-	return NULL;
-}
-
-
-/**
- * Choose a GLX visual based upon a bitmask of CR_*_BIT attributes.
- */
-static XVisualInfo *
-chooseVisual( Display *dpy, int screen, GLbitfield visAttribs )
-{
-	XVisualInfo *vis;
-	int attribList[100];
-	int i = 0;
-
-	CRASSERT(visAttribs & CR_RGB_BIT);  /* anybody need color index */
-
-	attribList[i++] = GLX_RGBA;
-	attribList[i++] = GLX_RED_SIZE;
-	attribList[i++] = 1;
-	attribList[i++] = GLX_GREEN_SIZE;
-	attribList[i++] = 1;
-	attribList[i++] = GLX_BLUE_SIZE;
-	attribList[i++] = 1;
-
-	if (visAttribs & CR_ALPHA_BIT)
-	{
-		attribList[i++] = GLX_ALPHA_SIZE;
-		attribList[i++] = 1;
-	}
-
-	if (visAttribs & CR_DOUBLE_BIT)
-		attribList[i++] = GLX_DOUBLEBUFFER;
-
-	if (visAttribs & CR_STEREO_BIT)
-		attribList[i++] = GLX_STEREO;
-
-	if (visAttribs & CR_DEPTH_BIT)
-	{
-		attribList[i++] = GLX_DEPTH_SIZE;
-		attribList[i++] = 1;
-	}
-
-	if (visAttribs & CR_STENCIL_BIT)
-	{
-		attribList[i++] = GLX_STENCIL_SIZE;
-		attribList[i++] = 1;
-	}
-
-	if (visAttribs & CR_ACCUM_BIT)
-	{
-		attribList[i++] = GLX_ACCUM_RED_SIZE;
-		attribList[i++] = 1;
-		attribList[i++] = GLX_ACCUM_GREEN_SIZE;
-		attribList[i++] = 1;
-		attribList[i++] = GLX_ACCUM_BLUE_SIZE;
-		attribList[i++] = 1;
-		if (visAttribs & CR_ALPHA_BIT)
-		{
-			attribList[i++] = GLX_ACCUM_ALPHA_SIZE;
-			attribList[i++] = 1;
-		}
-	}
-
-	if (visAttribs & CR_MULTISAMPLE_BIT)
-	{
-		attribList[i++] = GLX_SAMPLE_BUFFERS_SGIS;
-		attribList[i++] = 1;
-		attribList[i++] = GLX_SAMPLES_SGIS;
-		attribList[i++] = 4;
-	}
-
-	if (visAttribs & CR_OVERLAY_BIT)
-	{
-		attribList[i++] = GLX_LEVEL;
-		attribList[i++] = 1;
-	}
-
-	if (render_spu.use_lut8)
-	{
-		/* 
-		 * See if we have have GLX_EXT_visual_info so we
-		 * can grab a Direct Color visual
-		 */
-#ifdef GLX_EXT_visual_info   
-		if (crStrstr(render_spu.ws.glXQueryExtensionsString( dpy, screen ),
-								"GLX_EXT_visual_info"))
-		{
-			attribList[i++] = GLX_X_VISUAL_TYPE_EXT;
-			attribList[i++] = GLX_DIRECT_COLOR_EXT; 
-		}
-		else
-		{
-			render_spu.use_lut8 = 0;	
-		}
-#else
-		render_spu.use_lut8 = 0;
-#endif  
-	}
-
-	/* End the list */
-	attribList[i++] = None;
-
-	vis = myChooseVisual(dpy, screen, attribList);
-	return vis;
-}
-
-
-/**
  * Find a visual with the specified attributes.  If we fail, turn off an
  * attribute (like multisample or stereo) and try again.
  */
@@ -523,7 +252,9 @@ static XVisualInfo *
 chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 {
 	while (1) {
-		XVisualInfo *vis = chooseVisual(dpy, screen, visAttribs);
+		XVisualInfo *vis = crChooseVisual(&render_spu.ws, dpy, screen,
+																			(GLboolean) render_spu.use_lut8,
+																			visAttribs);
 		if (vis)
 			return vis;
 
@@ -539,7 +270,7 @@ chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 			visAttribs &= ~CR_ALPHA_BIT;
 		else
 			return NULL;
-  }
+	}
 }
 
 
@@ -927,7 +658,8 @@ createWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 		return GL_FALSE;
 	}
 
-	crDebug( "Render SPU: Created window on display %s, Xvisual 0x%x",
+	crDebug( "Render SPU: Created window 0x%x on display %s, Xvisual 0x%x",
+					 (int) window->window,
 					 DisplayString(visual->dpy),
 					 (int) visual->visual->visual->visualid  /* yikes */
 					 );
@@ -1192,10 +924,11 @@ renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 
 	is_direct = render_spu.ws.glXIsDirect( visual->dpy, context->context );
 	if (visual->visual)
-		crDebug( "Render SPU: Created %s context on display %s, Xvisual 0x%x",
-					 is_direct ? "DIRECT" : "INDIRECT",
-					 DisplayString(visual->dpy),
-					 (int) visual->visual->visual->visualid );
+		crDebug( "Render SPU: Created %s context (%d) on display %s, Xvisual 0x%x",
+						 is_direct ? "DIRECT" : "INDIRECT",
+						 context->id,
+						 DisplayString(visual->dpy),
+						 (int) visual->visual->visual->visualid );
 
 	if ( render_spu.force_direct && !is_direct )
 	{
@@ -1258,6 +991,8 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 	CRASSERT(render_spu.ws.glXMakeCurrent);
 	window->appWindow = nativeWindow;
 
+	/*crDebug("%s nativeWindow=0x%x", __FUNCTION__, (int) nativeWindow);*/
+
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
 		check_buffer_size(window);
@@ -1270,8 +1005,10 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 
 	if (window && context) {
 		if (window->visual != context->visual) {
-			crDebug("Render SPU: MakeCurrent visual mismatch (0x%x != 0x%x); remaking window.",
-							window->visual->visAttribs, context->visual->visAttribs);
+			crDebug("Render SPU: MakeCurrent visual mismatch (win(%d) bits:0x%x != ctx(%d) bits:0x%x); remaking window.",
+							window->id, window->visual->visAttribs,
+							context->id, context->visual->visAttribs);
+			return;
 			/*
 			 * XXX have to revisit this issue!!!
 			 *
@@ -1344,8 +1081,9 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 				int vid = GetWindowVisualID(window->visual->dpy, nativeWindow);
 				if (vid != (int) context->visual->visual->visualid) {
 					crWarning("Render SPU: Can't bind context %d to CRUT/native window "
-										"0x%x because of different visuals!",
-										context->id, (int) nativeWindow);
+										"0x%x because of different X visuals (0x%x != 0x%x)!",
+										context->id, (int) nativeWindow,
+										vid, (int) context->visual->visual->visualid);
 				}
 				else {
 					/* OK, this should work */
@@ -1372,9 +1110,19 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 		{
 			/* This is the normal case - rendering to the render SPU's own window */
 			CRASSERT(window->window);
+#if 0
+			crDebug("calling glXMakecurrent(%p, 0x%x, 0x%x)",
+									window->visual->dpy,
+									(int) window->window, (int) context->context );
+#endif
 			b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
-																		window->window, context->context );
-			CRASSERT(b);
+																				window->window, context->context );
+			if (!b) {
+				crWarning("glXMakecurrent(%p, 0x%x, 0x%x) failed!",
+									window->visual->dpy,
+									(int) window->window, (int) context->context );
+			}
+			/*CRASSERT(b);*/
 		}
 
 		/* XXX this is a total hack to work around an NVIDIA driver bug */
@@ -1564,8 +1312,10 @@ MarkWindow(WindowInfo *w)
 {
 	static GC gc = 0;
 	if (!gc) {
+		/* Create a GC for drawing invisible lines */
 		XGCValues gcValues;
-		gc = XCreateGC(w->visual->dpy, w->nativeWindow, 0, &gcValues);
+		gcValues.function = GXnoop;
+		gc = XCreateGC(w->visual->dpy, w->nativeWindow, GCFunction, &gcValues);
 	}
 	XDrawLine(w->visual->dpy, w->nativeWindow, gc, 0, 0, w->width, w->height);
 }
@@ -1597,12 +1347,12 @@ renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 		 * structure.
 		 */
 		if (w->nativeWindow) {
+			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
 #if 0
 			MarkWindow(w);
 #else
 			(void) MarkWindow;
 #endif
-			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
 		}
 		else {
 			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );

@@ -139,12 +139,17 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
 	if (!context)
 		return -1;
+	context->id = render_spu.context_id;
 	if (!renderspu_SystemCreateContext( visual, context ))
 		return -1;
 
 	crHashtableAdd(render_spu.contextTable, render_spu.context_id, context);
-	context->id = render_spu.context_id;
 	render_spu.context_id++;
+
+	/*
+	crDebug("Render SPU: CreateContext(%s, 0x%x) returning %d",
+					dpyName, visBits, context->id);
+	*/
 
 	return context->id;
 }
@@ -166,6 +171,10 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 {
 	WindowInfo *window;
 	ContextInfo *context;
+
+	/*
+	crDebug("%s win=%d native=0x%x ctx=%d", __FUNCTION__, crWindow, (int) nativeWindow, ctx);
+	*/
 
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, crWindow);
 	context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
@@ -284,7 +293,9 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 		}
 	}
 
+	/*
 	crDebug("Render SPU: Creating window (visBits=0x%x, id=%d)", visBits, window->id);
+	*/
 	/* Have GLX/WGL/AGL create the window */
 	if (!renderspu_SystemCreateWindow( visual, showIt, window ))
 	{

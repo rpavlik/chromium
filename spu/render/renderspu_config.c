@@ -219,6 +219,11 @@ static void set_pbuffer_size( RenderSPU *render_spu, const char *response )
 					&render_spu->pbufferWidth, &render_spu->pbufferHeight);
 }
 
+static void set_use_glxchoosevisual( RenderSPU *render_spu, char *response )
+{
+	render_spu->use_glxchoosevisual = crStrToInt( response );
+}
+
 
 /* option, type, nr, default, min, max, title, callback
  */
@@ -299,6 +304,9 @@ SPUOptions renderSPUOptions[] = {
 
 	{ "pbuffer_size", CR_INT, 2, "[0, 0]", "[0, 0]", NULL,
 		"Fixed PBuffer Size", (SPUOptionCB) set_pbuffer_size },
+
+	{ "use_glxchoosevisual", CR_BOOL, 1, "1", NULL, NULL,
+		"Use glXChooseVisual", (SPUOptionCB) set_use_glxchoosevisual },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

@@ -100,6 +100,11 @@ renderSPUInit( int id, SPU *child, SPU *self,
 
 	numFuncs += numSpecial;
 
+	if (!render_spu.use_glxchoosevisual) {
+		/* sometimes want to set this option with ATI drivers */
+		render_spu.ws.glXChooseVisual = NULL;
+	}
+
 	render_spu.window_id = 0;
 	render_spu.context_id = 0;
 	render_spu.contextTable = crAllocHashtable();
@@ -187,6 +192,7 @@ renderSPUInit( int id, SPU *child, SPU *self,
 
 	render_spu.gather_conns = NULL;
 
+	crDebug("Render SPU: ---------- End of Init -------------");
 	return &render_functions;
 }
 
