@@ -332,7 +332,7 @@ crTeacFree( CRConnection *conn, void *buf )
   RBuffer *rbuf = *((RBuffer **) buffer );
 
 #ifdef never
-  crDebug( "crTeacFree: freeing RBuffer at 0x%x",(int)rbuf);
+  crDebug( "crTeacFree: freeing RBuffer at 0x%x from buffer 0x%x",(int)rbuf,(int)buf);
 #endif
   conn->recv_credits += rbuf->validSize;
   teac_Dispose( cr_teac.teac_conn, rbuf );
@@ -343,7 +343,7 @@ crTeacFree( CRConnection *conn, void *buf )
 void
 crTeacInstantReclaim( CRConnection *conn, CRMessage *msg )
 {
-  crTeacFree( conn, msg );
+  /* Do nothing- message will be freed after dispatching in crTeacRecv() */
 }
 
 void
@@ -442,6 +442,7 @@ crTeacRecv( void )
   RBuffer *rbuf = NULL;
   char *buf = NULL;
   char *payload = NULL;
+  CRMessage* msg= NULL;
   int len = 0;
 
   cr_teac.inside_recv++;
@@ -460,7 +461,7 @@ crTeacRecv( void )
 #endif
   rbuf = teac_Recv( cr_teac.teac_conn, conn->teac_id );
 #ifdef never
-  crDebug("crTeacRecv: finished teac_Recv on id %d; got RBuffer at 0x%x",
+  crError("crTeacRecv: finished teac_Recv on id %d; got RBuffer at 0x%x",
 	  conn->teac_id,(int)rbuf);
 #endif
   if ( !rbuf ) {
@@ -471,10 +472,20 @@ crTeacRecv( void )
   buf = (char *) rbuf->buf;
   payload = buf + CR_TEAC_BUFFER_PAD;
   len = rbuf->validSize - CR_TEAC_BUFFER_PAD; 
+  msg= (CRMessage*)payload;
 
   *((RBuffer **) buf ) = rbuf;
 
-  crNetDispatchMessage( cr_teac.recv_list, conn, payload, len );
+  crNetDispatchMessage( cr_teac.recv_list, conn, msg, len );
+
+  /* CR_MESSAGE_OPCODES is freed in
+   * crserverlib/server_stream.c 
+   *
+   * OOB messages are the programmer's problem.  -- Humper 12/17/01 */
+  if (msg->header.type != CR_MESSAGE_OPCODES
+      && msg->header.type != CR_MESSAGE_OOB) {
+    crTeacFree( conn, msg );
+  }
 
   cr_teac.inside_recv--;
 
