@@ -423,7 +423,7 @@ int main( int argc, char *argv[] )
    int mode;
 
    /* Work around compiler issues that have 64k limits */
-   wall = malloc(WALL_WIDTH * WALL_HEIGHT * WALL_BYTES_PER_PIXEL);
+   wall = malloc(sizeof(walldata1) + sizeof(walldata2) + sizeof(walldata3));
    memcpy(wall, walldata1, sizeof(walldata1) );
    memcpy(wall + sizeof(walldata1), walldata2, sizeof(walldata2) );
    memcpy(wall + sizeof(walldata1) + sizeof(walldata2), walldata3, sizeof(walldata3) );
