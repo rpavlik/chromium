@@ -5,15 +5,15 @@
 
 # This script generates the packer.c file from the gl_header.parsed file.
 
-import sys;
-import cPickle;
-import types;
-import string;
-import re;
+import sys
+import cPickle
+import types
+import string
+import re
 
 sys.path.append( "../opengl_stub" )
 
-import stub_common;
+import stub_common
 
 parsed_file = open( "../glapi_parser/gl_header.parsed", "rb" )
 gl_mapping = cPickle.load( parsed_file )
