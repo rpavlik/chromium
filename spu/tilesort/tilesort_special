@@ -9,3 +9,6 @@ Viewport
 Scissor
 Finish
 Flush
+ArrayElement
+DrawArrays
+DrawElements

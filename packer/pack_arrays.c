@@ -54,12 +54,3 @@ void PACK_APIENTRY crPackIndexPointer( GLenum type, GLsizei stride, const GLvoid
 	UNUSED( pointer );
 	crError( "Unimplemented crPackIndexPointer!" );
 }
-
-void PACK_APIENTRY crPackDrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices )
-{
-	UNUSED( mode );
-	UNUSED( count );
-	UNUSED( type );
-	UNUSED( indices );
-	crError( "Unimplemented crPackDrawElements!" );
-}

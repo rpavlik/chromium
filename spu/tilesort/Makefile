@@ -6,6 +6,7 @@ FILES = tilesortspu \
 	tilesortspu_bcast \
 	tilesortspu_beginend \
 	tilesortspu_bucket \
+	tilesortspu_client \
 	tilesortspu_config \
 	tilesortspu_diffapi \
 	tilesortspu_flush \

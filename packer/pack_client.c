@@ -2,9 +2,10 @@
 #include "cr_opcodes.h"
 #include "cr_glwrapper.h"
 
-void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c) 
+void PACK_APIENTRY crPackArrayElement (GLint index, CRContext *ctx) 
 {
 	unsigned char *p;
+	CRClientState *c = &(ctx->client);
 
 #if 0
 	if (index < 0)
@@ -186,4 +187,84 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 	}
 }
 
+void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRContext *ctx) 
+{
+	int i;
+	if (ctx->current.inBeginEnd)
+	{
+		crError("crPackDrawArrays called in begin/end");
+	}
 
+	if (count < 0)
+	{
+		crError("crPackDrawArrays passed negative count: %d", count);
+	}
+
+	if (mode > GL_POLYGON)
+	{
+		crError("crPackDrawArrays called with invalid mode: %d", mode);
+	}
+
+	crPackBegin (mode);
+	for (i=0; i<count; i++) 
+	{
+		crPackArrayElement(first++, ctx);
+	}
+	crPackEnd();
+}
+
+void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count, 
+																			GLenum type, const GLvoid *indices, CRContext *ctx) 
+{
+	int i;
+	GLubyte *p = (GLubyte *)indices;
+
+	if (ctx->current.inBeginEnd)
+	{
+		crError("crPackDrawElements called in begin/end");
+	}
+
+	if (count < 0)
+	{
+		crError("crPackDrawElements passed negative count: %d", count);
+	}
+
+	if (mode > GL_POLYGON)
+	{
+		crError("crPackDrawElements called with invalid mode: %d", mode);
+	}
+
+	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
+	{
+		crError("crPackDrawElements called with invalid type: %d", type);
+	}
+	
+	crPackBegin (mode);
+	switch (type) 
+	{
+	case GL_UNSIGNED_BYTE:
+		for (i=0; i<count; i++)
+		{
+			crPackArrayElement((GLint) *p++, ctx);
+		}
+		break;
+	case GL_UNSIGNED_SHORT:
+		for (i=0; i<count; i++) 
+		{
+			crPackArrayElement((GLint) * (GLushort *) p, ctx);
+			p+=sizeof (GLushort);
+		}
+		break;
+	case GL_UNSIGNED_INT:
+		for (i=0; i<count; i++) 
+		{
+			crPackArrayElement((GLint) * (GLuint *) p, ctx);
+			p+=sizeof (GLuint);
+		}
+		break;
+	default:
+		crError( "this can't happen: crPackDrawElements" );
+		break;
+	}
+	crPackEnd();
+}
